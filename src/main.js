@@ -538,7 +538,11 @@ async function bootDungeon(canvas, renderer, params, status) {
     if (!t || record >= t.recordCount) continue;
     uploadRecord(archive, record);
     const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
-    billboardBatches.push(renderer.createBillboardBatch(archive, record, size, centers));
+    // DFU's RDB AddFlat centers the billboard pivot at the raw position
+    // (no AlignToBase, unlike the RMB/interior paths); our batches take
+    // BASE positions, so shift down half the height - identical placement.
+    const based = centers.map(([x, y, z]) => [x, y - size.h / 2, z]);
+    billboardBatches.push(renderer.createBillboardBatch(archive, record, size, based));
   }
 
   // Camera at the start marker (the classic dungeon spawn).

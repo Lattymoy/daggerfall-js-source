@@ -38,8 +38,15 @@ brick 72100 exempt) placed closed with the 16-entry starting-lock table;
 static doors accumulate per model; flats at (X, -Y, Z) * scale with editor
 199 as data-only markers (record 10 start - carrying water level
 -8 * soundIndex else 10000 and castleBlock = magnitude != 0 - record 8
-enter) and fixed-treasure 216 hidden; lights as point data
-(radius * scale). Action records port AddAction verbatim: enum-defined
+enter) and fixed-treasure 216 hidden; lights as point data (radius * scale).
+AUDIT NOTE (M6 audit): the RDB flat position is the billboard CENTER -
+DFU's AddFlat performs no AlignToBase, unlike the RMB and interior paths.
+Scene batches shift down half the scaled height for our base-anchored
+billboards. All 4232 dungeons in the game lay out clean (40263 block
+instances); RemoveOverlappingDoors fires on real seams (4968 doors
+disabled across 2072 dungeons); every dungeon resolves a start marker;
+2163 unique texture tables; lock decode never exceeds the 16-entry table
+(raw sweep max 240 -> nibble 15 -> 0xff). Action records port AddAction verbatim: enum-defined
 flag/trigger guards, translation vectors negating x/z, rotation vectors /
 RotationDivisor, PositiveX..NegativeZ flag cases (duration 50, magnitude
 axisRaw * 8), LID/WHE rotation overrides, the TRP raw-axis-13 hack, and

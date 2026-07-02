@@ -68,6 +68,10 @@ World layout:
   scope); archive 156 (Scourg exterior) only exempts the base-archive
   reduction and never becomes a door; ruin-enter 331 record 0 is plain
   stone, skipped.
+- RDB flat positions are billboard CENTERS: AddFlat performs no
+  AlignToBase, unlike the RMB exterior (AlignToBase) and interior
+  (+size.y/2) paths which are base-anchored. Renderer-side base batches
+  shift down half the scaled height.
 - RDB model matrix composes T * Rz * Rx * Ry - a different rotation order
   than RMB's TRS (Ry * Rx * Rz). Red-brick doors (72100) carry the DOR tag
   but are never action doors. Flat actions pass the flat's MAGNITUDE as
@@ -86,7 +90,7 @@ World layout:
 
 | Feature | DFU source | Target |
 |---|---|---|
-| Door + ladder activation (open/close, enter/exit via static doors) | DaggerfallActionDoor, DaggerfallLadder, PlayerActivate | Player arc (data shipped: staticDoors.js, openRotation) |
+| Door + ladder activation, and exterior-building static-door emission at the location scene level | DaggerfallActionDoor, DaggerfallLadder, PlayerActivate, GameObjectHelper.GetStaticDoors on RMB buildings | Player arc (helpers shipped: staticDoors.js, openRotation; extraction runs on every model) |
 | Interior people flats | DaggerfallInterior.AddPeople | Characters arc |
 | Interior furniture actions, house containers, loot, spawn points | DaggerfallInterior AddFurnitureAction/MakeHouseContainer/AddSpawnPoints | Systems arc |
 | Point lights for interior 210 flats | DaggerfallInterior.AddLight | Rendering arc (with the exterior 210 row) |

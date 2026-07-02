@@ -327,6 +327,46 @@ test('dungeon: Privateer\'s Hold layout pins', { skip: skipReal }, () => {
   assert.equal(d.blocks.every((b) => b.layout.waterLevel === 10000), true);
 });
 
+test('dungeon: full dungeon corpus - all 4232 lay out, overlap removal fires', { skip: skipReal }, () => {
+  const { blocks, maps, getModel } = loadReal();
+  let dungeons = 0, blocksTotal = 0, disabled = 0, withDisabled = 0, noStart = 0;
+  let maxLock = 0;
+  const tables = new Set();
+  for (let r = 0; r < maps.regionCount; r++) {
+    const region = maps.getRegion(r);
+    if (!region) continue;
+    for (let l = 0; l < region.locationCount; l++) {
+      const loc = maps.getLocation(r, l);
+      if (!loc || !loc.hasDungeon) continue;
+      const d = layoutDungeon(loc, blocks, getModel);
+      dungeons++;
+      blocksTotal += d.blocks.length;
+      tables.add(d.textureTable.join(','));
+      let dis = 0;
+      for (const b of d.blocks) {
+        for (const a of b.layout.actionDoors) {
+          if (a.disabled) dis++;
+          if (a.startingLockValue > maxLock) maxLock = a.startingLockValue;
+        }
+      }
+      disabled += dis;
+      if (dis) withDisabled++;
+      if (!d.startMarker) noStart++;
+    }
+  }
+  assert.equal(dungeons, 4232);
+  assert.equal(blocksTotal, 40263);
+  // RemoveOverlappingDoors fires on real block seams.
+  assert.equal(disabled, 4968);
+  assert.equal(withDisabled, 2072);
+  // Every dungeon in the game resolves a spawn.
+  assert.equal(noStart, 0);
+  assert.equal(tables.size, 2163);
+  // Lock decode stays inside the 16-entry table on all classic data
+  // (raw values sweep to 240 -> nibble 15 -> lock 0xff).
+  assert.equal(maxLock, 0xff);
+});
+
 test('dungeon: RDB corpus - every block lays out clean, resource closure holds', { skip: skipReal }, () => {
   const { blocks, getModel } = loadReal();
   let n = 0;
