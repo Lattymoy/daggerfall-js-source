@@ -300,6 +300,18 @@ rasterization ties), buildings identical. FOLLOW-UP: the exterior scene's RMB gr
 ground quads) still uses the per-tile-quad path - converting it to
 this shader is queued; the classic dungeon water texture rides the
 same texture-array family.
+AUDIT NOTE (R9 audit): rotBit 0x40 / flipBit 0x80 / WorldMapTileDim
+128 re-verified against source; convertTilemap's mask-then-add is
+proven equal to the C# add-then-(byte)-cast (record bits <= 252, +3
+never overflows - extreme pinned at 254 -> 251). DFU's tile texture
+array wraps CLAMP (TextureReader) - ours switched from REPEAT to
+match; the ~340 px residual vs the retired quad path is boundary-tie
+noise either way. Integer texelFetch replaces DFU's alpha * MaxIndex
++ 0.5 float round-trip exactly. destroyMesh confirmed compatible with
+terrain surfaces (shared index buffer is renderer-owned and
+survives). Dead terrainMesh.js (zero consumers post-R9) deleted. All
+four draw entry points own their program binding and restore
+cull/blend/depth state - the drawMesh assumption class is closed.
 
 ## Queue
 

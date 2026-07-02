@@ -379,6 +379,9 @@ test('world: R9 tilemap conversion - verbatim UpdateTileMapDataJob', async () =>
   const src = new Uint8Array([2, 66, 130, 194, 0xff, 0, 63, 55 | 64 | 128]);
   assert.deepEqual([...convertTilemap(src)],
     [8, 9, 10, 11, 0, 0, 252, 223]);
+  // Masking-order equivalence with the C# (byte) cast: record bits <= 252
+  // so + rotate + flip never overflows - pinned at the extreme.
+  assert.deepEqual([...convertTilemap(new Uint8Array([254]))], [251]);
   // Grid shape + corner-height law match the retired quad path: corner
   // (x, z) samples data[x * hDim + z] * MAX_TERRAIN_HEIGHT * scale.
   const { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, DEFAULT_TERRAIN_SCALE } =
