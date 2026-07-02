@@ -19,7 +19,8 @@ Read `01-Overview/Port-Doctrine.md` before touching anything.
 
 ## Active arcs
 
-- `02-Formats/Readers-Arc.md` - ACTIVE. Everything gates on this.
+- `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
+- World-Arc (03-World) - NEXT, not started. Block assembly + terrain on our renderer.
 
 ## Ground rules carried from project-final
 

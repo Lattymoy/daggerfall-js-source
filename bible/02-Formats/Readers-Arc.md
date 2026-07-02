@@ -1,4 +1,4 @@
-# Readers-Arc (ACTIVE)
+# Readers-Arc (COMPLETE)
 
 Goal: JS readers for every Daggerfall binary format we need, each validated against real ARENA2 data before the next begins. Nothing else in the project starts until its formats read clean.
 
@@ -15,7 +15,7 @@ Reference source: Daggerfall Unity `DaggerfallConnect` namespace (C#), plus dfwo
 | 5 | ARCH3D | 3D model records | **complete** (`src/formats/arch3dFile.js`, `faceUVTool.js`, `arch3dPatch.js`) |
 | 6 | BLOCKS | RMB (exterior) + RDB (dungeon) blocks | **complete** (`src/formats/blocksFile.js`) |
 | 7 | MAPS | regions, locations | **complete** (`src/formats/mapsFile.js`, `pakFile.js`) |
-| 8 | SND / music | audio containers | not started |
+| 8 | SND / music | audio containers | **complete** for SFX (`src/formats/sndFile.js`); music (HMI/XMI) deferred to Audio arc, see decisions |
 
 ## Validation gate (every reader)
 
@@ -41,3 +41,11 @@ Reference source: Daggerfall Unity `DaggerfallConnect` namespace (C#), plus dfwo
 - ARCH3D: 1:1 Arch3dFile.cs + FaceUVTool.cs + mechanically-extracted Arch3dPatch table (905 byte fixes, model comments preserved). Full corpus: all 10251 records decompose, zero failures, ~0.9s. Pinned totals: 797433 verts, 388475 tris, 31922 submeshes. Model 456 pinned to the point level. Quirks kept: bounding min/max seeded at 0 so Size spans origin, UVunpack only for first 3 points of records with id < 905, v2.5 offset x3, fixed decomposition buffer sizes throw-on-overflow exactly where C# would. Patch applies to a working copy, never the caller's buffer. Numeric departure documented in faceUVTool.js: JS doubles replace the C# float/double mix, (Int32) casts preserved as Math.trunc; corpus pins guard the output.
 - BLOCKS: 1:1 BlocksFile.cs + DFBlock structures. Full corpus: 920 RMB + 187 RDB + 187 RDI decompose, junk FOO record rejected as unknown type, zero failures, ~0.3s. Resource closure: 39468 RDB objects = 22962 models + 12238 flats + 4268 lights exactly; 423 linked action chains. All 8 FixRdbData dungeon repairs (994, 945/946, 958, 975, 1025, 1034, 1036) ported verbatim and pinned - W0000009's wall lands at model slot 0 because the raw file holds non-numeric "REF_CUBE" there, matching C# TryParse=0 semantics (modelIdNum hardened to /^\d+$/). 179 RDBs carry the DAGR signature, 8 carry 0xff padding. DFU's WorldDataReplacement mod-injection hooks not ported (Unity AssetInjection, no equivalent runtime).
 - MAPS: 1:1 MapsFile.cs + PakFile.cs (CLIMATE.PAK/POLITIC.PAK RLE expansion) + FALL.EXE tables (62 region names/races/temples, 45 block prefixes). Full corpus: 62 regions, exactly the 17 empty regions rejected (45 populated, matching classic), 15251 locations all decode, 4232 dungeons. Quirks verified live: both 32-byte-no-terminator names truncate where DFU documents them (Porcupine Hostel/Bhoriane, Feather and Barbarian/Kambria); letter2 (byte)(2*char)>>6 truncation pinned; map-table uint wraparound decode; Orsinium 50015 Z=-2 hack. Daggerfall city pinned (8x8, 316 buildings, politic 145, WALLAA02.RMB) and Privateer's Hold (5 blocks, S0000999.RDB start). Not ported: WorldDataReplacement hooks, smaller-dungeon generation and PatchRegionIndex (quest/save systems - Systems arcs), GetNameBankOfRegion (townsfolk names arc; REGION_RACES table is here).
+- SND: 1:1 SndFile.cs. DAGGER.SND is a number-record BSA of raw unsigned 8-bit mono PCM at 11025 Hz with a synthesized 44-byte RIFF header, byte-exact against the reference. Corpus: 459 sounds, 7658090 PCM bytes, header consistency everywhere, record index 5 ships zero-length (real quirk, pinned). Music (MIDI.BSA HMI/XMI) is NOT part of DFU's DaggerfallConnect readers - DFU plays music through Unity-side synthesis. It moves to the Audio arc (08-Audio) where the playback strategy gets decided, matching the arc-table note.
+
+## Arc close-out
+
+All 8 readers complete, translated 1:1 from DaggerfallConnect with real-data corpus gates:
+BSA containers, 8 palettes, 472 texture archives / 11211 frames, 260 IMG + 76 CIF/RCI files,
+10251 meshes, 1295 blocks, 15251 locations across 45 regions, 459 sounds.
+Suite: 52 tests, all green with and without ARENA2_PATH. Next per Port-Doctrine phase plan: World-Arc.
