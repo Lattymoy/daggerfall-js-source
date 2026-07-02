@@ -6,7 +6,7 @@ Read `01-Overview/Port-Doctrine.md` before touching anything.
 
 ## Sections
 
-- `01-Overview/` - vision, port doctrine, phase plan
+- `01-Overview/` - vision, port doctrine, phase plan, Port-Ledger (departures/quirks/unported)
 - `02-Formats/` - binary format readers (BSA, TEXTURE, IMG/CIF, ARCH3D, BLOCKS, MAPS, SND)
 - `03-World/` - block assembly, terrain, location layout, streaming
 - `04-Characters/` - voxel rigs, paperdoll-as-outfits, NPCs

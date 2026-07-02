@@ -15,3 +15,4 @@ with `ARENA2_PATH`.
 - `npm test` - Node test runner
 - `npm run build` - production build
 - `npm run check` - test + build (pre-push gate)
+- `npm run shot [out.png]` - headless render proof (needs ARENA2_PATH + provisioned Chromium)

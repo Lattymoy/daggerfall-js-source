@@ -11,8 +11,8 @@
 //   - Ground tiles read GroundTiles[x][15 - y]; records >= 56 are random
 //     markers reset to grass (record 8). Ground sits at GroundOffset (-1)
 //     to minimise depth-fighting, tile size 256, 16x16 tiles.
-// Interiors, flats/billboards, and people records are later features of this
-// arc; see bible/03-World/World-Arc.md.
+// Flats/billboards live in rmbFlats.js (milestone 3). Interiors and people
+// records are later features of this arc; see bible/03-World/World-Arc.md.
 
 import { ROTATION_DIVISOR, RMB_DIMENSION } from '../formats/blocksFile.js';
 import { GLOBAL_SCALE } from './meshReader.js';

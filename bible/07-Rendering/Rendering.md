@@ -1,3 +1,17 @@
 # Rendering
 
-Not started. Gated behind Readers-Arc (see 02-Formats/Readers-Arc.md). Scope defined in 01-Overview/Port-Doctrine.md phase plan.
+Started with World-Arc milestone 1. Presentation is ours per Port-Doctrine;
+this section owns renderer specifics.
+
+Current (`src/render/`):
+- `renderer.js` - WebGL2, two programs: lit solid geometry (MVP, directional
+  light 0.45 + 0.55*diffuse, alpha < 0.5 discard) and Y-locked billboards
+  expanded in the vertex shader. Textures per (archive, record), REPEAT +
+  NEAREST, uploaded bottom-up exactly as getColor32 emits (matches GL texel
+  order; DFU's negative-V UVs rely on REPEAT).
+- `groundMesh.js` - per-tile quads with UV rotate/flip; renderer-side
+  equivalent of DFU's tilemap-shader atlas (ledgered departure).
+
+Owned queue (from Port-Ledger C): climate texture swaps + seasons, window
+emission materials, point lights for archive 210, sky (SKY??.DAT), spectral/
+firewall emission colors when spectral enemies land.

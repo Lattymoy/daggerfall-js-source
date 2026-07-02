@@ -1,0 +1,80 @@
+# Port-Ledger
+
+Single source of truth for everything that is not a plain 1:1 line. Three
+categories. If a departure or gap is not on this page, it does not exist.
+Adding to category A requires Mac approval; B records data reality; C is the
+work queue routed to arcs.
+
+## A. Approved departures from DFU
+
+| What | Ours | Approved via |
+|---|---|---|
+| Presentation layer | Hand-rolled WebGL2, no Unity concepts | Port-Doctrine |
+| Characters/paperdoll | Mac's voxel system | Port-Doctrine |
+| Music (HMI/XMI, MIDI.BSA) | Routed to Audio arc; DFU has no reader for it (Unity-side synthesis) | Mac, Readers-Arc close |
+| Spectral/firewall emission colors (BaseImageFile helpers) | Routed to Rendering arc with spectral enemies | Mac ("best option") |
+| Ground plane | Per-tile quads with UV rotate/flip instead of DFU's tilemap-shader atlas; same picture | Renderer-side (code authority) |
+| Billboards | Vertex-shader expansion, Y-locked, batched per (archive, record) instead of Unity GameObjects/BillboardBatch | Renderer-side |
+| FaceUVTool arithmetic | JS doubles instead of C# float mix; (Int32) casts become Math.trunc | Documented in faceUVTool.js, validated against corpus |
+| Data access | Bytes in, objects out; no FileProxy/disk-usage modes | Runtime difference |
+
+## B. Verbatim quirks preserved (real-data reality)
+
+Readers:
+- BSA: junk record 669 "FOO" in BLOCKS.BSA; structural closure invariant.
+- Palettes: MAP.PAL filename triggers x4 six-bit expansion.
+- TEXTURE: archives 215/217/436 unsupported (as DFU); wild compression values
+  0x900/0x101/0x100 fall through to the uncompressed default; getColor32
+  vertical flip and double alpha assignment kept.
+- IMG: 6 palettized files read their embedded palette; FMAP0I00/01/16
+  unsupported; ImgFile reads raw w*h regardless of the compression field.
+- CIF: WEAPON09 (bow) has no wield record; FACES.CIF routes as RCI 64x64.
+- ARCH3D: UV unpack only first 3 points AND recordId < 905 with the -7168 ->
+  1024 exception; 905-entry patch table applied to a working copy; fixed
+  buffers throw on overflow exactly like the C# arrays; min/max seeded at 0
+  so Size spans the origin.
+- BLOCKS: RMB subrecords step by blockDataSizes, not bytes read; RDB unknown
+  list sized by the FIRST node's index; object root must start at the header
+  offset; flat factionOrMobileId re-reads two bytes as LE u16; "REF_CUBE"
+  and 0xff model ids parse to 0 via strict TryParse semantics; FixRdbData
+  repairs blocks 994, 945/946, 958, 975, 1025, 1034, 1036; 8 RDBs carry
+  0xff padding instead of the DAGR signature.
+- MAPS: 17 regions ship empty records and are rejected (45 populated, as
+  classic); two 32-byte names truncate exactly (Porcupine Hostel/Bhoriane,
+  Feather and Barbarian/Kambria); letter2 = LETTER2[((2*char)&0xff)>>6], the
+  8-bit truncation is load-bearing; LocationType decode uses uint
+  wraparound; Orsinium (locationId 50015) border block moved to Z=-2.
+- SND: record index 5 is zero-length; synthesized 44-byte RIFF header is
+  byte-exact.
+
+World layout:
+- Exterior subrecord FLATS use the unrotated (subX, 0, -subZ) offset - DFU
+  does not rotate flats with the building subrecord.
+- Climate-swapped nature flats get `billboardPosition.z = natureFlatsOffsetY`
+  (raw -2): suspected upstream y/z typo in RMBLayout.cs, kept verbatim for
+  parity. No visible artifact in Daggerfall city. Revisit in a DFU
+  side-by-side.
+- Ground tiles read [x][15 - y]; scenery skips records < 1; tile records
+  >= 56 reset to grass 8; offsets propsOffsetY -4, blockFlatsOffsetY -6,
+  natureFlatsOffsetY -2; classic data never sets model scale.
+
+## C. DFU features not yet ported (routed)
+
+| Feature | DFU source | Target |
+|---|---|---|
+| ModelDoor extraction (archives 74/56/331/156/95) | MeshReader.LoadVertices | World-Arc queue 1 (interiors), consumed by Player arc |
+| Building interiors | RMBLayout interior sections | World-Arc queue 1 |
+| RDB dungeon layout + action records | RDBLayout.cs | World-Arc queue 2 |
+| Terrain heightmap + streaming | WoodsFile.cs, StreamingWorld | World-Arc queue 3 |
+| Climate texture swaps on architecture, seasons/snow | ClimateSwaps.cs | Rendering arc |
+| Window emission maps | getWindowColors32 is ported; material path is not | Rendering arc |
+| Point lights for archive 210 flats | RMBLayout.AddLights prefab path | Rendering arc |
+| Sky (SKY??.DAT) | SkyFile.cs | Rendering arc |
+| NPC faction metadata / StaticNPC | RMBLayout exterior flats | Characters arc |
+| Townsfolk name banks (GetNameBankOfRegion) | NameHelper | Characters arc (REGION_RACES table already ported) |
+| Animal audio sources | GameObjectHelper | Audio arc |
+| Music playback (HMI/XMI) | Unity synthesis, no reader | Audio arc |
+| Smaller-dungeons generation | MapsFile + QuestMachine | Systems arc |
+| PatchRegionIndex legacy-save fix | MapsFile | Systems arc (saves) |
+| WorldDataReplacement / BuildingReplacement mod hooks | AssetInjection | Not planned (mod system) |
+| TangentSolver / lightmap UVs | MeshReader | Not planned (Unity-specific) |
