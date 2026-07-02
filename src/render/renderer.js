@@ -15,26 +15,45 @@ uniform mat4 uView;
 uniform mat4 uModel;
 out vec3 vNormal;
 out vec2 vUV;
+out vec3 vWorldPos;
 void main() {
   vNormal = mat3(uModel) * aNormal;
   vUV = aUV;
-  gl_Position = uProj * uView * uModel * vec4(aPos, 1.0);
+  vec4 world = uModel * vec4(aPos, 1.0);
+  vWorldPos = world.xyz;
+  gl_Position = uProj * uView * world;
 }`;
 
 const FS = `#version 300 es
 precision highp float;
 in vec3 vNormal;
 in vec2 vUV;
+in vec3 vWorldPos;
 uniform sampler2D uTex;
 uniform sampler2D uEmissionTex;
 uniform vec3 uLightDir;
 uniform vec3 uEmissionColor;
+uniform int uPointCount;
+uniform vec4 uPointLights[16]; // xyz scene-space, w range
+uniform vec3 uPointColor;
 out vec4 outColor;
 void main() {
   vec4 tex = texture(uTex, vUV);
   if (tex.a < 0.5) discard;
-  float diff = max(dot(normalize(vNormal), uLightDir), 0.0);
+  vec3 n = normalize(vNormal);
+  float diff = max(dot(n, uLightDir), 0.0);
   vec3 lit = tex.rgb * (0.45 + 0.55 * diff);
+  // Point lights (city lanterns): N.L with a squared linear falloff to the
+  // range - documented equivalence to the Unity point light this replaces.
+  float pointDiff = 0.0;
+  for (int i = 0; i < 16; i++) {
+    if (i >= uPointCount) break;
+    vec3 L = uPointLights[i].xyz - vWorldPos;
+    float d = length(L);
+    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
+    pointDiff += att * att * max(dot(n, L / max(d, 1e-4)), 0.0);
+  }
+  lit += tex.rgb * pointDiff * uPointColor;
   // Window emission: white mask from getWindowColors32, tinted by the
   // active window style (MaterialReader semantics: emission adds on top).
   vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
@@ -91,10 +110,15 @@ export class Renderer {
     this.uTex = gl.getUniformLocation(this.program, 'uTex');
     this.uEmissionTex = gl.getUniformLocation(this.program, 'uEmissionTex');
     this.uEmissionColor = gl.getUniformLocation(this.program, 'uEmissionColor');
+    this.uPointCount = gl.getUniformLocation(this.program, 'uPointCount');
+    this.uPointLights = gl.getUniformLocation(this.program, 'uPointLights');
+    this.uPointColor = gl.getUniformLocation(this.program, 'uPointColor');
 
     this.textures = new Map(); // "archive_record" -> WebGLTexture
     this.emissionTextures = new Map(); // "archive_record" -> window mask
     this._windowEmission = new Float32Array([0, 0, 0]);
+    this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
+    this._pointColor = new Float32Array([1, 1, 1]);
     // 1x1 black bound for every non-window submesh (branchless shader).
     this._blackTex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this._blackTex);
@@ -207,6 +231,10 @@ export class Renderer {
     gl.uniform1i(this.uTex, 0);
     gl.uniform1i(this.uEmissionTex, 1);
     gl.uniform3fv(this.uEmissionColor, this._windowEmission);
+    const count = this._pointLights.length / 4;
+    gl.uniform1i(this.uPointCount, count);
+    if (count > 0) gl.uniform4fv(this.uPointLights, this._pointLights);
+    gl.uniform3fv(this.uPointColor, this._pointColor);
     gl.activeTexture(gl.TEXTURE0);
     this._proj = proj;
     this._view = view;
@@ -215,6 +243,12 @@ export class Renderer {
   /** Active window style emission (windowEmissionRGB output). */
   setWindowEmission(rgb) {
     this._windowEmission = rgb;
+  }
+
+  /** Scene-space point lights as flat vec4s [x,y,z,range], max 16. */
+  setPointLights(data, color) {
+    this._pointLights = data.subarray ? data.subarray(0, 16 * 4) : data;
+    if (color) this._pointColor = color;
   }
 
   /** Upload a getWindowColors32 mask for a window (archive, record). */

@@ -6,11 +6,13 @@ import { dfMeshToModel, GLOBAL_SCALE } from '../src/world/meshReader.js';
 import { layoutRmbBlock, buildGroundTilemap, GROUND_OFFSET, GROUND_TILE_SIZE } from '../src/world/rmbLayout.js';
 import { layoutLocation, RMB_SIDE } from '../src/world/locationLayout.js';
 import { collectBlockFlats, scaledBillboardSize } from '../src/world/rmbFlats.js';
+import { collectCityLights, nearestLights, CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLOR } from '../src/world/cityLights.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
 import { trs, multiply, transformPoint, identity } from '../src/world/mat4.js';
 import { Arch3dFile } from '../src/formats/arch3dFile.js';
 import { BlocksFile, BLOCK_TYPES } from '../src/formats/blocksFile.js';
 import { TextureFile } from '../src/formats/textureFile.js';
+import { DFPalette } from '../src/formats/dfPalette.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
@@ -328,4 +330,43 @@ test('world: exterior nature-range flats do not exist in classic data', { skip: 
     }
   }
   assert.equal(hits, 0);
+});
+
+test('world: city light constants and nearest selection', () => {
+  // DaggerfallLight [City] prefab: point light, range 18, intensity 1, white.
+  assert.equal(CITY_LIGHT_RANGE, 18);
+  assert.equal(CITY_LIGHT_INTENSITY, 1);
+  assert.deepEqual(Array.from(CITY_LIGHT_COLOR), [1, 1, 1]);
+
+  const lights = [
+    { x: 100, y: 0, z: 0 },
+    { x: 1, y: 0, z: 0 },
+    { x: 10, y: 0, z: 0 },
+  ];
+  const near = nearestLights(lights, [0, 0, 0], 2, 18);
+  assert.equal(near.length, 8); // 2 lights x vec4
+  assert.deepEqual(Array.from(near), [1, 0, 0, 18, 10, 0, 0, 18]);
+});
+
+test('world: MAGEAA00 city lights pinned - both verbatim paths', { skip: skipReal }, () => {
+  const pal = new DFPalette();
+  pal.load(new Uint8Array(readFileSync(join(ARENA2, 'ART_PAL.COL'))), 'ART_PAL.COL');
+  const t210 = new TextureFile();
+  t210.load(new Uint8Array(readFileSync(join(ARENA2, 'TEXTURE.210'))), 'TEXTURE.210', pal);
+  const blocks = new BlocksFile();
+  blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA'))));
+  const mage = blocks.getBlockByName('MAGEAA00.RMB');
+
+  const size = (r) => scaledBillboardSize(t210.getSize(r), t210.getScale(r));
+  const lights = collectCityLights(mage, size);
+  assert.equal(lights.length, 3);
+
+  // Same lantern as the archive-210 flat pin (84.325, -0.05, 43.45): the
+  // LIGHT uses -Y + size.h (record 29 scaled height 4) instead of the -6
+  // billboard offset, so y = (4 + 4) * 0.025 = 0.2. Cross-checks both
+  // verbatim formulas on real data.
+  assert.deepEqual(size(29), { w: 0.525, h: 4 });
+  approx(lights[0].x, 84.325);
+  approx(lights[0].y, 0.2);
+  approx(lights[0].z, 43.45);
 });

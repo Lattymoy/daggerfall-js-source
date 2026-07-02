@@ -64,6 +64,9 @@ World layout:
 - Ground tiles read [x][15 - y]; scenery skips records < 1; tile records
   >= 56 reset to grass 8; offsets propsOffsetY -4, blockFlatsOffsetY -6,
   natureFlatsOffsetY -2; classic data never sets model scale.
+- City LIGHTS (archive 210) place at -Y + size.y where size.y is the SCALED
+  billboard height added to native units pre-scale (as DFU wrote it), and
+  the light Y differs from the billboard's -6 offset by design.
 - ModelDoor extraction: door Index resets per submesh (DFU's doorCount
   scope); archive 156 (Scourg exterior) only exempts the base-archive
   reduction and never becomes a door; ruin-enter 331 record 0 is plain
@@ -105,7 +108,6 @@ World layout:
 | Dungeon water plane + point lights | RDBLayout.AddWater/AddLights prefab paths (levels + light data shipped) | Rendering arc |
 | Torch audio sources | RDBLayout.AddTorchAudioSource | Audio arc |
 | Climate texture swaps on architecture, seasons/snow | ClimateSwaps.cs | Rendering arc |
-| Point lights for archive 210 flats | RMBLayout.AddLights prefab path | Rendering arc |
 | Sky (SKY??.DAT) | SkyFile.cs | Rendering arc |
 | NPC faction metadata / StaticNPC | RMBLayout exterior flats | Characters arc |
 | Townsfolk name banks (GetNameBankOfRegion) | NameHelper | Characters arc (REGION_RACES table already ported) |

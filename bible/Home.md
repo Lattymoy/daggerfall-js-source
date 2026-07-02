@@ -35,7 +35,7 @@ streaming scene at seconds per frame, so sleeps sample stale state
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9 shipped: floating-origin streaming world (?world). Build queue empty.
-- `07-Rendering/Rendering-Arc.md` - ACTIVE. R1 shipped: climate texture swaps + seasons (?season=summer|winter|rain). Next: window emission.
+- `07-Rendering/Rendering-Arc.md` - ACTIVE. R3 shipped: city lantern point lights (night-gated). Next: sky.
 
 ## Ground rules carried from project-final
 

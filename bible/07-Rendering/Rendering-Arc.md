@@ -68,6 +68,29 @@ Daggerfall night shot: amber leaded windows across the whole city.
 NOTE tools/screenshot.mjs queries ride SHOT_QUERY env, not argv - a
 session tripped on the old contract; the usage header documents it.
 
+## Milestone R3 - city lantern point lights (SHIPPED)
+
+One point light per archive-210 flat, verbatim RMBLayout AddLights/AddLight
+positions on both paths: misc flats at (X, -Y + size.y, Z + 4096) * scale
+and exterior-subrecord flats with the unrotated (subX, 0, -subZ) offset.
+As-written DFU quirk kept: size.y is the SCALED billboard size added to
+native units before the scale multiply (contributes size.y * 0.025) - and
+the light Y intentionally differs from the billboard's blockFlatsOffsetY.
+Light properties from the DaggerfallLight [City] prefab: point, range 18,
+intensity 1, white. Renderer: solid program gains a 16-slot point-light
+loop (world-position varying, N.L, squared linear falloff to range -
+documented equivalence to the Unity point light + its distance culling);
+per-frame nearest-16 selection (cityLights.nearestLights). Wired into the
+exterior scene (world-space) and the streaming world (pixel-local lights
+placed under the current compensation each frame). EQUIVALENCE: lights are
+gated on ?window=night, standing in for the prefab's night-only enable
+script until the day/night cycle lands; the Animate flicker flag is queued
+with that cycle. MAGEAA00 pins: 3 lights, the shared lantern cross-checks
+flat y -0.05 (offset -6) vs light y 0.2 (-Y + size.h 4) on real data.
+Daggerfall city: 155 lights; before/after diff pools 28k pixels on walls
+and cobbles - subtle in daylight, correct until night ambient drops.
+`src/world/cityLights.js`, pins in test/world.test.js.
+
 ## Queue
 
-Owned by `Rendering.md`. Next up: point lights for archive 210 flats.
+Owned by `Rendering.md`. Next up: sky (SKY??.DAT).

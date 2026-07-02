@@ -35,6 +35,7 @@ import { WoodsFile } from './formats/woodsFile.js';
 import { dfMeshToModel } from './world/meshReader.js';
 import { layoutLocation, RMB_SIDE } from './world/locationLayout.js';
 import { collectBlockFlats, scaledBillboardSize } from './world/rmbFlats.js';
+import { collectCityLights, nearestLights, CITY_LIGHT_COLOR, LIGHTS_ARCHIVE } from './world/cityLights.js';
 import { layoutInterior, INTERIOR_MARKER } from './world/interiorLayout.js';
 import { layoutDungeon } from './world/dungeonLayout.js';
 import { applyTextureTable } from './world/dungeonTextures.js';
@@ -126,7 +127,7 @@ async function boot() {
 
   // Decompose every referenced mesh once, collecting texture archives.
   const dfMeshes = new Map(); // modelIdNum -> dfMesh
-  const archives = new Set([groundArchive]);
+  const archives = new Set([groundArchive, LIGHTS_ARCHIVE]);
   for (const b of loc.blocks) {
     for (const placed of b.layout.models) {
       if (dfMeshes.has(placed.modelIdNum)) continue;
@@ -185,6 +186,13 @@ async function boot() {
 
   // Per-block scene list: world matrices with the block origin folded in,
   // plus one ground mesh per block, plus flats grouped into billboard batches.
+  const cityLights = []; // archive-210 lantern point lights (R3)
+  const nightLights = (params.get('window') || 'day') === 'night';
+  const CITY_LIGHT_COLOR_F32 = new Float32Array(CITY_LIGHT_COLOR);
+  const lightSize = (record) => {
+    const t = textureFiles.get(LIGHTS_ARCHIVE);
+    return scaledBillboardSize(t.getSize(record), t.getScale(record));
+  };
   const drawList = [];
   const flatGroups = new Map(); // "archive_record" -> [centers]
   for (const b of loc.blocks) {
@@ -202,6 +210,9 @@ async function boot() {
       const key = `${flat.archive}_${flat.record}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([flat.x + b.originX, flat.y, flat.z + b.originZ]);
+    }
+    for (const light of collectCityLights(b.dfBlock, lightSize)) {
+      cityLights.push({ x: light.x + b.originX, y: light.y, z: light.z + b.originZ });
     }
   }
 
@@ -259,7 +270,7 @@ async function boot() {
   status(`${locationName} - ${loc.blocks.length} blocks, ${drawList.length} draws`);
   console.log(
     `scene: ${loc.blocks.length} blocks, ${drawList.length} placements, ` +
-    `${gpuMeshes.size} meshes, ${renderer.textures.size} textures, ${flatCount} flats in ${billboardBatches.length} batches, ` +
+    `${gpuMeshes.size} meshes, ${renderer.textures.size} textures, ${flatCount} flats in ${billboardBatches.length} batches, ${cityLights.length} lights, ` +
     `ground ${groundArchive}, climate ${climateBase}, season ${season}, ${texRemap.size} swaps, ${renderer.emissionTextures.size} window masks`
   );
 
@@ -292,6 +303,12 @@ async function boot() {
     );
     const view = lookAt(eye, target, [0, 1, 0]);
 
+    // City lanterns light the scene at night (DFU's night-only city lights;
+    // gated on the window style as the documented equivalence).
+    renderer.setPointLights(
+      nightLights ? nearestLights(cityLights, eye) : new Float32Array(0),
+      CITY_LIGHT_COLOR_F32
+    );
     renderer.beginFrame(proj, view, lightDir);
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
     // Classic Daggerfall billboards rotate about Y only: right from the view,
@@ -860,6 +877,9 @@ async function bootWorld(canvas, renderer, params, status) {
   const startPixel = longitudeLatitudeToMapPixel(
     startLoc.mapTableData.longitude, startLoc.mapTableData.latitude);
 
+  const nightLights = (params.get('window') || 'day') === 'night';
+  const CITY_LIGHT_COLOR_F32 = new Float32Array(CITY_LIGHT_COLOR);
+
   // --- Shared caches ---------------------------------------------------
   const textureFiles = new Map();
   const texturePromises = new Map();
@@ -936,6 +956,10 @@ async function bootWorld(canvas, renderer, params, status) {
 
     // Flat groups: pixel-local base positions.
     const groups = new Map();
+    const pixelLights = []; // archive-210 lanterns, pixel-local (R3)
+    const light210 = await getTexture(LIGHTS_ARCHIVE);
+    const lightSize = (record) =>
+      scaledBillboardSize(light210.getSize(record), light210.getScale(record));
     const addFlat = (archive, record, x, y, z) => {
       const k = `${archive}_${record}`;
       if (!groups.has(k)) groups.set(k, []);
@@ -974,6 +998,13 @@ async function bootWorld(canvas, renderer, params, status) {
           addFlat(flat.archive, flat.record,
             locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
         }
+        for (const light of collectCityLights(b.dfBlock, lightSize)) {
+          pixelLights.push([
+            locLocal[0] + b.originX + light.x,
+            locLocal[1] + light.y,
+            locLocal[2] + b.originZ + light.z,
+          ]);
+        }
       }
     }
 
@@ -997,7 +1028,7 @@ async function bootWorld(canvas, renderer, params, status) {
     }
 
     built.set(key, {
-      px, py, terrain, models, batches, texRemap, natureCount: nature.length,
+      px, py, terrain, models, batches, texRemap, lights: pixelLights, natureCount: nature.length,
       location: dfLocation ? dfLocation.name : null,
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
@@ -1114,6 +1145,21 @@ async function bootWorld(canvas, renderer, params, status) {
 
     const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.2, 6000);
     const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
+    // Night lanterns: pixel-local lights placed under the current
+    // compensation, nearest 16 to the camera (uniforms upload in beginFrame).
+    if (nightLights) {
+      const sceneLights = [];
+      for (const p of built.values()) {
+        if (!p.lights.length) continue;
+        const t = state.pixelTranslation(p.px, p.py);
+        for (const l of p.lights) {
+          sceneLights.push({ x: l[0] + t[0], y: l[1] + t[1], z: l[2] + t[2] });
+        }
+      }
+      renderer.setPointLights(nearestLights(sceneLights, cam.pos), CITY_LIGHT_COLOR_F32);
+    } else {
+      renderer.setPointLights(new Float32Array(0));
+    }
     renderer.beginFrame(proj, view, lightDir);
 
     const allBatches = [];
