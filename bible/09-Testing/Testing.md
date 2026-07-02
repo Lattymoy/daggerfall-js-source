@@ -27,7 +27,7 @@ Node 22). Suite: 117 tests across 19 files.
 
 Two tiers per module:
 1. **Synthetic fixtures** - in-memory data built inside the test. Always run;
-   CI stays green with no game data (64 pass, 42 skip).
+   CI stays green with no game data (71 pass, 46 skip).
 2. **Real-data validation** - gated on `ARENA2_PATH`; skip cleanly when
    absent. Pin observed counts, names, ids, checksums, and structural
    closure invariants.
@@ -37,7 +37,11 @@ Sourcing data in a fresh session: `sh tools/fetch-data.sh`, then
 
 Visual proof: `npm run shot [out.png]` boots vite in-process and drives the
 provisioned Chromium (playwright@1.56.0 <-> /opt/pw-browsers chromium-1194;
-bump both together). `?shot` in main.js fixes the vantage and raises
+bump both together). CONTRACT: the scene query rides the SHOT_QUERY env
+var, NOT argv (`SHOT_QUERY='shot&world&tod=22:00' npm run shot out.png`) -
+argv[2] is only the output path. SHOT_TIMEOUT overrides the 30s ready
+wait (streaming world wants 90000); SHOT_EVAL runs a JS snippet in-page
+after ready. `?shot` in main.js fixes the vantage and raises
 `window.__shotReady`. Manual proof, not a suite gate.
 
 Pre-push gate: `npm run check` (test + build).

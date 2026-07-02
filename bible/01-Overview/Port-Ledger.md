@@ -101,13 +101,12 @@ World layout:
 | Door + ladder activation, and exterior-building static-door emission at the location scene level | DaggerfallActionDoor, DaggerfallLadder, PlayerActivate, GameObjectHelper.GetStaticDoors on RMB buildings | Player arc (helpers shipped: staticDoors.js, openRotation; extraction runs on every model) |
 | Interior people flats | DaggerfallInterior.AddPeople | Characters arc |
 | Interior furniture actions, house containers, loot, spawn points | DaggerfallInterior AddFurnitureAction/MakeHouseContainer/AddSpawnPoints | Systems arc |
-| Point lights for interior 210 flats | DaggerfallInterior.AddLight | Rendering arc (with the exterior 210 row) |
-| Terrain heightmap + streaming | WoodsFile.cs, StreamingWorld | World-Arc queue 1 |
+| Point lights for interior 210 flats | DaggerfallInterior.AddLight | Rendering arc (exterior 210 shipped R3; interiors need the interior ambient model first) |
 | Dungeon enemies (fixed + random) | RDBLayout.AddFixedEnemies/AddRandomEnemies | Characters arc |
 | Dungeon treasure piles + loot | RDBLayout AssignFixedTreasure/AddRandomTreasure | Systems arc |
 | Dungeon water plane + point lights | RDBLayout.AddWater/AddLights prefab paths (levels + light data shipped) | Rendering arc |
 | Torch audio sources | RDBLayout.AddTorchAudioSource | Audio arc |
-| Climate texture swaps on architecture, seasons/snow | ClimateSwaps.cs | Rendering arc |
+| Weather: fog, rain, snow (owns the Fog window style) | WeatherManager, RainParticles | Rendering arc |
 | NPC faction metadata / StaticNPC | RMBLayout exterior flats | Characters arc |
 | Townsfolk name banks (GetNameBankOfRegion) | NameHelper | Characters arc (REGION_RACES table already ported) |
 | Animal audio sources | GameObjectHelper | Audio arc |

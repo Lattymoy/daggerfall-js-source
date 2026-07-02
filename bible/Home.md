@@ -35,6 +35,7 @@ streaming scene at seconds per frame, so sleeps sample stale state
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9 shipped: floating-origin streaming world (?world). Build queue empty.
+- `03-World/Player-Arc.md` - NOT STARTED. Movement, collision, activation; inputs (staticDoors, action records) already shipped.
 - `07-Rendering/Rendering-Arc.md` - ACTIVE. R5 shipped: day/night cycle (?tod=HH:MM, ?timescale). Next: weather or spectral emission.
 
 ## Ground rules carried from project-final
