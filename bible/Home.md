@@ -26,7 +26,12 @@ build a screen-projection ground-truth probe: rebuild the scene's data
 the framebuffer pixels - single far pixels are rounding-limited, so
 verify laws on NEAR tiles (a shot-mode override hook can force test
 bytes). The R9 HLSL-row-major/GLSL-column-major transpose was only
-provable this way.
+provable this way. But probes verify what they sample: R9 initially
+shipped with every building missing because the probes only ever read
+terrain fragments - when a diff spans a large frame fraction, check
+full-frame composition (every draw pass still present?) before
+explaining the diff away. Draw entry points must own their program
+binding; interleaving a new pass exposed drawMesh's assumption.
 
 ## Sections
 

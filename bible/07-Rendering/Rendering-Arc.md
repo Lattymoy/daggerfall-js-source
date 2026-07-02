@@ -287,11 +287,16 @@ Node, projects tile-relative points to screen, and reads the
 framebuffer - pure tiles matched the old path texel-for-texel at 40/40
 points; forced-transform tiles (a shot-mode tile-override hook)
 confirmed t1/t2/t3 at 15/15 points against the verbatim law, and an
-in-shader transform-bit visualization pass confirmed the decode. The
-residual pre/post diff (~270k px) is confined to the city footprint:
-the old per-tile-quad path lost/won depth against coplanar location
-geometry differently - the new path is spec-true and the old one is
-gone. FOLLOW-UP: the exterior scene's RMB groundMesh (city-block
+in-shader transform-bit visualization pass confirmed the decode.
+DEFECT (caught by Mac, fixed in the follow-up commit): drawMesh
+assumed the solid program was bound; interleaving drawTerrain before
+the model loop silently ran every location mesh on the terrain
+program - buildings and walls vanished from the streaming world.
+Every draw entry point now owns its program binding. The R9-era claim
+that the ~270k px pre/post diff was coplanar-depth behavior was a
+misreading of that bug: with the fix the full frame matches the
+retired quad path at 332 residual pixels (isolated tile-seam /
+rasterization ties), buildings identical. FOLLOW-UP: the exterior scene's RMB groundMesh (city-block
 ground quads) still uses the per-tile-quad path - converting it to
 this shader is queued; the classic dungeon water texture rides the
 same texture-array family.
