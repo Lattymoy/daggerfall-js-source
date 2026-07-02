@@ -421,11 +421,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     window.__doors = () => buildingDoors.slice(0, 40).map((e, i) => {
       const d = shiftedDoor(e);
-      return { i, pos: doorWorldPosition(d), normal: doorWorldNormal(d), record: e.recordIndex };
+      return { i, pos: doorWorldPosition(d), normal: doorWorldNormal(d), record: e.recordIndex, block: e.dfBlock.name };
     });
     window.__enter = () => tryEnter();
     window.__exit = () => tryExit();
-    window.__exit = () => tryExit();
+    window.__interiorActions = () => interiorCtx ? JSON.stringify(
+      [...interiorCtx.actions.objects.values()].map((o) => ({ key: o.key, state: o.state, pos: [o.matrix[12], o.matrix[13], o.matrix[14]].map((v) => +v.toFixed(2)), fwd: [o.matrix[8], o.matrix[9], o.matrix[10]].map((v) => +v.toFixed(3)) }))) : null;
+    window.__interiorActivate = (k) => interiorCtx.actions.activate(k);
+    window.__interiorRay = () => {
+      const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+      return interiorCtx.collider.raycast(player.eye, dir, 50);
+    };
     window.__mode = () => mode;
     window.__frame = 0;
   }
@@ -486,14 +492,39 @@ export async function bootWorld(canvas, renderer, params, status) {
     return true;
   }
 
+  function interiorDoorAabb(o) {
+    let minX = Infinity; let minY = Infinity; let minZ = Infinity;
+    let maxX = -Infinity; let maxY = -Infinity; let maxZ = -Infinity;
+    const pos = o.cpu.positions;
+    const m = o.matrix;
+    for (let i = 0; i < pos.length; i += 3) {
+      const wx = m[0] * pos[i] + m[4] * pos[i + 1] + m[8] * pos[i + 2] + m[12];
+      const wy = m[1] * pos[i] + m[5] * pos[i + 1] + m[9] * pos[i + 2] + m[13];
+      const wz = m[2] * pos[i] + m[6] * pos[i + 1] + m[10] * pos[i + 2] + m[14];
+      if (wx < minX) minX = wx; if (wx > maxX) maxX = wx;
+      if (wy < minY) minY = wy; if (wy > maxY) maxY = wy;
+      if (wz < minZ) minZ = wz; if (wz > maxZ) maxZ = wz;
+    }
+    return { min: [minX, minY, minZ], max: [maxX, maxY, maxZ] };
+  }
+
   function tryExit() {
     const eye = player.eye;
     const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-    const targets = interiorCtx.doors.map((d, i) => ({ key: i, aabb: doorWorldAabb(d) }));
+    // Exit doors and interior swing doors share the E ray; swing doors
+    // use their LIVE matrices via the ActionSystem objects.
+    const targets = interiorCtx.doors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
+    for (const o of interiorCtx.actions.objects.values()) {
+      targets.push({ key: o.key, aabb: interiorDoorAabb(o) });
+    }
     const key = pickActivatable(eye, dir, targets, interiorCtx.collider);
     if (key === null) return false;
+    if (!key.startsWith('exit:')) {
+      interiorCtx.actions.activate(key);
+      return true;
+    }
     const landing = exteriorLanding(
-      doorWorldPosition(interiorCtx.doors[key]),
+      doorWorldPosition(interiorCtx.doors[Number(key.split(':')[1])]),
       exitReturn.siblings.map(shiftedDoor));
     interiorCtx.destroy();
     interiorCtx = null;
@@ -536,8 +567,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.setPointLights(
         nearestLights(interiorCtx.lights, cam.pos, 16, INTERIOR_LIGHT_RANGE),
         new Float32Array(INTERIOR_LIGHT_COLOR));
+      interiorCtx.actions.update(dt);
       renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
       for (const d of interiorCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
+      for (const d of interiorCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, interiorCtx.texRemap);
       const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
       renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
       requestAnimationFrame(frame);

@@ -101,14 +101,25 @@ in the console), the return trip lands exactly 1.05 from a sibling
 door. test/enterexit.test.js pins the offsets, transforms, and
 landing selection.
 
-Queue (items 1-3 shipped):
+## Milestone P4 - interior swing doors (SHIPPED)
+
+The audit's sealed-rooms finding closed: blockDoorRecords now run on
+the P2 ActionSystem inside interiorContext (verbatim -90 / 1.5 s
+toggle, trigger-at-open-start, solid-at-close-complete), drawn live
+with the interior's texRemap. The interior E ray targets exit doors
+and swing doors together - swing doors via their live matrices -
+nearest wins. Probes __interiorActions / __interiorActivate /
+__interiorRay mirror the dungeon set. In-engine proof (BOOKAL02:0,
+4 swing doors): the ray along the door's facing axis reads 1.33
+closed, the swing completes to end, and the same ray reads 4.53 -
+through the doorway into the next room. Duplicate __exit hook from
+the P3 reconciliation removed.
+
+Queue (items 1-4 shipped):
 1. DONE - grounded movement + gravity + collision (P1).
 2. DONE - activation ray + dungeon action doors/chains (P2).
 3. DONE - building interior transitions in ?world (P3).
-4. Interior ACTION doors on the ActionSystem - interiorContext
-   currently draws blockDoorRecords static and SOLID, so rooms behind
-   closed interior doors are sealed until this lands (audit finding,
-   highest-priority queue item).
+4. DONE - interior swing doors on the ActionSystem (P4).
 5. Exterior scene mirrors the P3 machine (needs a lazy mesh loader);
    dungeon exitDoors transitions; ladders.
 6. Parent interiors in the building world frame - multi-door exit

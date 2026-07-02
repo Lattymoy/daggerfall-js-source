@@ -19,6 +19,7 @@ import { collectInteriorLights } from '../world/interiorLights.js';
 import { applyClimate } from '../world/climateSwaps.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
+import { ActionSystem } from '../world/actionSystem.js';
 
 /**
  * @param deps {{
@@ -69,10 +70,19 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
 
   const drawList = [];
   const collider = new Collider(() => -Infinity);
-  for (const p of [...interior.placements, ...interior.actionDoors]) {
+  for (const p of interior.placements) {
     drawList.push({ mesh: await getGpuMesh(p.modelIdNum), matrix: p.matrix });
     const cpu = cpuModels.get(p.modelIdNum);
     collider.addMesh('interior', cpu.positions, cpu.indices, p.matrix);
+  }
+  // Interior swing doors run on the ActionSystem (P4): the verbatim
+  // -90 / 1.5 s toggle with trigger-at-open-start - inner rooms open.
+  const actions = new ActionSystem(collider);
+  const dynamicDraws = [];
+  for (const d of interior.actionDoors) {
+    const cpu = cpuModels.get(d.modelIdNum);
+    const o = actions.addDoor(cpu, d.matrix);
+    dynamicDraws.push({ gpu: await getGpuMesh(d.modelIdNum), object: o });
   }
 
   const billboardBatches = [];
@@ -101,6 +111,8 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
 
   return {
     drawList,
+    actions,
+    dynamicDraws,
     billboardBatches,
     lights,
     texRemap,

@@ -50,7 +50,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9 shipped: floating-origin streaming world (?world). Build queue empty.
-- `03-World/Player-Arc.md` - ACTIVE. P3 shipped: walk into building interiors and back in ?world (verbatim landings 0.75/1.05). Next: interior action doors (rooms currently sealed), then dungeon/ladder transitions.
+- `03-World/Player-Arc.md` - ACTIVE. P3 shipped: walk into building interiors and back in ?world (verbatim landings 0.75/1.05). P4 shipped: interior swing doors open (rooms unsealed). Next: dungeon/ladder transitions.
 - `07-Rendering/Rendering-Arc.md` - R13 shipped: precipitation + verbatim storm lightning. Queue empty except spectral emission (blocked on Characters). Next arc decision: Player.
 
 ## Repo layout
