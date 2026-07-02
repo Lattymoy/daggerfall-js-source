@@ -9,7 +9,8 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
 import { TextureFile } from '../formats/textureFile.js';
-import { buildGroundMesh } from '../render/groundMesh.js';
+import { convertTilemap } from '../world/terrainSurface.js';
+import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { applyClimate, getGroundArchive, getNatureArchive, isExteriorWindow } from '../world/climateSwaps.js';
@@ -125,6 +126,11 @@ export async function bootExterior(canvas, renderer, params, status) {
   // Per-block scene list: world matrices with the block origin folded in,
   // plus one ground mesh per block, plus flats grouped into billboard batches.
   const sky = createSkyController(renderer.gl, params);
+  // R9 ground: one tilemap for the whole location grid (16 tiles per
+  // block side, square texture over max(w, h) blocks; the flat surface
+  // only spans the real extent so padding is never sampled).
+  const tilemapDim = GROUND_TILE_DIM * Math.max(loc.width, loc.height);
+  const locationTilemap = new Uint8Array(tilemapDim * tilemapDim);
   const cityLights = []; // archive-210 lantern point lights (R3)
   const CITY_LIGHT_COLOR_F32 = new Float32Array(CITY_LIGHT_COLOR);
   // World clock (R5): ?tod=HH:MM (default noon), ?timescale=game-min/sec.
@@ -148,9 +154,20 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (!mesh) continue;
       drawList.push({ mesh, matrix: multiply(originMatrix, placed.matrix) });
     }
-    const groundModel = buildGroundMesh(b.layout.groundTiles, groundArchive);
-    for (const sm of groundModel.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
-    drawList.push({ mesh: renderer.createMesh(groundModel), matrix: originMatrix });
+    // Ground tiles gather into one location-wide tilemap for the R9
+    // tilemap-shader pass (raw RMB bytes; random markers >= 56 reset to
+    // grass 8 exactly as buildGroundTilemap, zeros as the 0xFF sentinel).
+    const srcTiles = b.dfBlock.rmbBlock.fldHeader.groundData.groundTiles;
+    for (let ty = 0; ty < GROUND_TILE_DIM; ty++) {
+      for (let tx = 0; tx < GROUND_TILE_DIM; tx++) {
+        const tile = srcTiles[tx][GROUND_TILE_DIM - 1 - ty];
+        const raw = tile.textureRecord >= 56
+          ? 8
+          : (tile.tileBitfield === 0 ? 0xff : tile.tileBitfield);
+        locationTilemap[(b.x * GROUND_TILE_DIM + tx) +
+          (b.y * GROUND_TILE_DIM + ty) * tilemapDim] = raw;
+      }
+    }
 
     for (const flat of collectBlockFlats(b.dfBlock, natureArchive)) {
       const key = `${flat.archive}_${flat.record}`;
@@ -161,6 +178,29 @@ export async function bootExterior(canvas, renderer, params, status) {
       cityLights.push({ x: light.x + b.originX, y: light.y, z: light.z + b.originZ });
     }
   }
+
+  // R9 ground GL: cached tile array per archive, the location tilemap,
+  // and a flat 2x2 surface at GroundOffset spanning the exact extent
+  // (winding matches buildTerrainIndices' quad diagonal).
+  if (!renderer.tileArrays.has(groundArchive)) {
+    const groundTex = textureFiles.get(groundArchive);
+    const layers = [];
+    for (let r = 0; r < groundTex.recordCount; r++) {
+      layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
+    }
+    renderer.uploadTileArray(groundArchive, layers);
+  }
+  const tilemapTex = renderer.uploadTilemapTexture(convertTilemap(locationTilemap), tilemapDim);
+  const groundSurface = (() => {
+    const gy = GROUND_OFFSET * 0.025;
+    const gw = loc.width * RMB_SIDE;
+    const gh = loc.height * RMB_SIDE;
+    const positions = new Float32Array([0, gy, 0, gw, gy, 0, 0, gy, gh, gw, gy, gh]);
+    const normals = new Float32Array([0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]);
+    const indices = new Uint32Array([0, 2, 3, 0, 3, 1]);
+    return renderer.createTerrainSurface(positions, normals, indices);
+  })();
+  const identityMatrix = trs(0, 0, 0, 0, 0, 0);
 
   // Load any flat archives not already fetched, then build one batch per
   // (archive, record) with its scaled billboard size.
@@ -271,6 +311,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), Math.PI / 3,
         canvas.clientWidth / canvas.clientHeight);
     }
+    renderer.drawTerrain(groundSurface, identityMatrix,
+      renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
     // Classic Daggerfall billboards rotate about Y only: right from the view,
     // up stays world-Y.
