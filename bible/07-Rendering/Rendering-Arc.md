@@ -48,6 +48,26 @@ pinned: 735 distinct mesh (archive,record) pairs x 4 climates x 3
 seasons = 8820 combos, 6538 identity, 2282 swapped, 0 missing TEXTURE
 files. Pins in test/climate.test.js.
 
+## Milestone R2 - window emission materials (SHIPPED)
+
+The iconic glowing windows. Data side is verbatim MaterialReader:
+WINDOW_STYLES day (89,154,178)x0.5 / night (255,182,56)x0.8 / fog
+(117,117,117)x0.5 / custom (200,0,200)x1.0, applied emission =
+color * intensity (ChangeWindowEmissionColor); glass texels are palette
+index 0xff via the already-ported getWindowColors32; which
+(archive, record) pairs are windows comes from R1's isExteriorWindow
+table, evaluated on the RESOLVED (post-climate-swap) pair. Renderer:
+solid program gains an emission sampler on unit 1 (1x1 black for
+non-windows, branchless) and `lit + mask.rgb * uEmissionColor`;
+uploadEmissionTexture / setWindowEmission; every scene's uploadRecord
+auto-uploads masks for window pairs; style from ?window=day|night|fog|
+custom set once in the dispatcher (DFU GetMaterial defaults to Day).
+`src/render/windowEmission.js`, pins in test/window.test.js (312/3 =
+638 glass texels, 358/3 = 1440, 309/3 = 0 - real data variance).
+Daggerfall night shot: amber leaded windows across the whole city.
+NOTE tools/screenshot.mjs queries ride SHOT_QUERY env, not argv - a
+session tripped on the old contract; the usage header documents it.
+
 ## Queue
 
-Owned by `Rendering.md`. Next up: window emission materials.
+Owned by `Rendering.md`. Next up: point lights for archive 210 flats.

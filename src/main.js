@@ -48,7 +48,8 @@ import {
 } from './world/terrainTiles.js';
 import { layoutNature } from './world/terrainNature.js';
 import { StreamingWorldState } from './world/streamingWorld.js';
-import { applyClimate, getGroundArchive, getNatureArchive, SEASON } from './world/climateSwaps.js';
+import { applyClimate, getGroundArchive, getNatureArchive, isExteriorWindow, SEASON } from './world/climateSwaps.js';
+import { windowEmissionRGB } from './render/windowEmission.js';
 import { buildTerrainMesh } from './render/terrainMesh.js';
 import { getWorldClimateSettings, longitudeLatitudeToMapPixel } from './formats/mapsFile.js';
 import { perspective, lookAt, trs, multiply } from './world/mat4.js';
@@ -79,6 +80,8 @@ async function boot() {
   const status = (msg) => {
     document.title = `project-dagger - ${msg}`;
   };
+  // Window emission style for every scene. DFU's GetMaterial default is Day.
+  renderer.setWindowEmission(windowEmissionRGB(params.get('window') || 'day'));
   if (params.has('interior')) return bootInterior(canvas, renderer, params, status);
   if (params.has('dungeon')) return bootDungeon(canvas, renderer, params, status);
   if (params.has('terrain')) return bootTerrain(canvas, renderer, params, status);
@@ -157,8 +160,13 @@ async function boot() {
   };
   const uploadRecord = (archive, record) => {
     const t = textureFiles.get(archive);
-    const color32 = t.getColor32(t.getDFBitmap(record, 0), 0);
-    renderer.uploadTexture(archive, record, color32);
+    const bitmap = t.getDFBitmap(record, 0);
+    renderer.uploadTexture(archive, record, t.getColor32(bitmap, 0));
+    // Exterior windows also get their emission mask (R2, MaterialReader
+    // semantics: glass texels glow with the active window style).
+    if (isExteriorWindow(archive, record)) {
+      renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap));
+    }
   };
 
   // GPU meshes shared across blocks. UVs come from the ORIGINAL archive;
@@ -252,7 +260,7 @@ async function boot() {
   console.log(
     `scene: ${loc.blocks.length} blocks, ${drawList.length} placements, ` +
     `${gpuMeshes.size} meshes, ${renderer.textures.size} textures, ${flatCount} flats in ${billboardBatches.length} batches, ` +
-    `ground ${groundArchive}, climate ${climateBase}, season ${season}, ${texRemap.size} swaps`
+    `ground ${groundArchive}, climate ${climateBase}, season ${season}, ${texRemap.size} swaps, ${renderer.emissionTextures.size} window masks`
   );
 
   let frames = 0;
@@ -369,8 +377,13 @@ async function bootInterior(canvas, renderer, params, status) {
   };
   const uploadRecord = (archive, record) => {
     const t = textureFiles.get(archive);
-    const color32 = t.getColor32(t.getDFBitmap(record, 0), 0);
-    renderer.uploadTexture(archive, record, color32);
+    const bitmap = t.getDFBitmap(record, 0);
+    renderer.uploadTexture(archive, record, t.getColor32(bitmap, 0));
+    // Exterior windows also get their emission mask (R2, MaterialReader
+    // semantics: glass texels glow with the active window style).
+    if (isExteriorWindow(archive, record)) {
+      renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap));
+    }
   };
 
   const gpuMeshes = new Map();
@@ -545,8 +558,13 @@ async function bootDungeon(canvas, renderer, params, status) {
   };
   const uploadRecord = (archive, record) => {
     const t = textureFiles.get(archive);
-    const color32 = t.getColor32(t.getDFBitmap(record, 0), 0);
-    renderer.uploadTexture(archive, record, color32);
+    const bitmap = t.getDFBitmap(record, 0);
+    renderer.uploadTexture(archive, record, t.getColor32(bitmap, 0));
+    // Exterior windows also get their emission mask (R2, MaterialReader
+    // semantics: glass texels glow with the active window style).
+    if (isExteriorWindow(archive, record)) {
+      renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap));
+    }
   };
 
   // GPU meshes: UVs from the original archive, submesh archives remapped
@@ -863,8 +881,13 @@ async function bootWorld(canvas, renderer, params, status) {
   };
   const uploadRecord = (archive, record) => {
     const t = textureFiles.get(archive);
-    const color32 = t.getColor32(t.getDFBitmap(record, 0), 0);
-    renderer.uploadTexture(archive, record, color32);
+    const bitmap = t.getDFBitmap(record, 0);
+    renderer.uploadTexture(archive, record, t.getColor32(bitmap, 0));
+    // Exterior windows also get their emission mask (R2, MaterialReader
+    // semantics: glass texels glow with the active window style).
+    if (isExteriorWindow(archive, record)) {
+      renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap));
+    }
   };
   const gpuMeshes = new Map(); // shared across pixels, never destroyed
   async function getGpuMesh(modelIdNum) {

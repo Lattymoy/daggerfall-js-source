@@ -105,7 +105,6 @@ World layout:
 | Dungeon water plane + point lights | RDBLayout.AddWater/AddLights prefab paths (levels + light data shipped) | Rendering arc |
 | Torch audio sources | RDBLayout.AddTorchAudioSource | Audio arc |
 | Climate texture swaps on architecture, seasons/snow | ClimateSwaps.cs | Rendering arc |
-| Window emission maps | getWindowColors32 is ported; material path is not | Rendering arc |
 | Point lights for archive 210 flats | RMBLayout.AddLights prefab path | Rendering arc |
 | Sky (SKY??.DAT) | SkyFile.cs | Rendering arc |
 | NPC faction metadata / StaticNPC | RMBLayout exterior flats | Characters arc |

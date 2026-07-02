@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 106 tests across 16 files.
+Node 22). Suite: 108 tests across 17 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -19,6 +19,7 @@ Node 22). Suite: 106 tests across 16 files.
 | climate.test.js | 5 | applyClimate verbatim rules, texture-info classification, exterior-window table, nature/ground archives, 8820-combo corpus sweep (735 pairs, 0 missing) |
 | streaming.test.js | 7 | world-coord conversions, nearest-first 7x7, crossing offsets + column swaps, two-pixel jumps, vertical recenter, 30-crossing floating-origin invariant, 2000-step invariant fuzz |
 | terrain.test.js | 14 | WOODS.WLD reader + corpus pins, perlin, cubic, sampler pins, umRandom (float + int), marching-squares lookup, blend flattening, Daggerfall-on-terrain integration, 15251-location corpus sweep, terrain key, nature scatter rules + integration |
+| window.test.js | 2 | MaterialReader style constants, real glass-texel mask pins |
 | world.test.js | 10 | mat4, meshReader, rmbLayout, location grid, flats, nature-quirk dead-path pin |
 | manifest.test.js | 1 | drift guard: this table and the total against the real suite |
 

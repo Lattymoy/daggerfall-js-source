@@ -26,14 +26,19 @@ precision highp float;
 in vec3 vNormal;
 in vec2 vUV;
 uniform sampler2D uTex;
+uniform sampler2D uEmissionTex;
 uniform vec3 uLightDir;
+uniform vec3 uEmissionColor;
 out vec4 outColor;
 void main() {
   vec4 tex = texture(uTex, vUV);
   if (tex.a < 0.5) discard;
   float diff = max(dot(normalize(vNormal), uLightDir), 0.0);
   vec3 lit = tex.rgb * (0.45 + 0.55 * diff);
-  outColor = vec4(lit, 1.0);
+  // Window emission: white mask from getWindowColors32, tinted by the
+  // active window style (MaterialReader semantics: emission adds on top).
+  vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
+  outColor = vec4(lit + emission, 1.0);
 }`;
 
 const BB_VS = `#version 300 es
@@ -84,8 +89,19 @@ export class Renderer {
     this.uModel = gl.getUniformLocation(this.program, 'uModel');
     this.uLightDir = gl.getUniformLocation(this.program, 'uLightDir');
     this.uTex = gl.getUniformLocation(this.program, 'uTex');
+    this.uEmissionTex = gl.getUniformLocation(this.program, 'uEmissionTex');
+    this.uEmissionColor = gl.getUniformLocation(this.program, 'uEmissionColor');
 
     this.textures = new Map(); // "archive_record" -> WebGLTexture
+    this.emissionTextures = new Map(); // "archive_record" -> window mask
+    this._windowEmission = new Float32Array([0, 0, 0]);
+    // 1x1 black bound for every non-window submesh (branchless shader).
+    this._blackTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this._blackTex);
+    gl.texImage2D(
+      gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+      new Uint8Array([0, 0, 0, 255])
+    );
 
     this.bbProgram = this._buildProgram(BB_VS, BB_FS);
     this.bbUProj = gl.getUniformLocation(this.bbProgram, 'uProj');
@@ -189,9 +205,38 @@ export class Renderer {
     gl.uniformMatrix4fv(this.uView, false, view);
     gl.uniform3fv(this.uLightDir, lightDir);
     gl.uniform1i(this.uTex, 0);
+    gl.uniform1i(this.uEmissionTex, 1);
+    gl.uniform3fv(this.uEmissionColor, this._windowEmission);
     gl.activeTexture(gl.TEXTURE0);
     this._proj = proj;
     this._view = view;
+  }
+
+  /** Active window style emission (windowEmissionRGB output). */
+  setWindowEmission(rgb) {
+    this._windowEmission = rgb;
+  }
+
+  /** Upload a getWindowColors32 mask for a window (archive, record). */
+  uploadEmissionTexture(archive, record, color32) {
+    const key = `${archive}_${record}`;
+    if (this.emissionTextures.has(key)) return this.emissionTextures.get(key);
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(
+      gl.TEXTURE_2D, 0, gl.RGBA, color32.width, color32.height, 0,
+      gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(color32.colors.buffer)
+    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.activeTexture(gl.TEXTURE0);
+    this.emissionTextures.set(key, tex);
+    return tex;
   }
 
   /**
@@ -299,8 +344,12 @@ export class Renderer {
     gl.bindVertexArray(mesh.vao);
     for (const sm of mesh.subMeshes) {
       const key = `${sm.textureArchive}_${sm.textureRecord}`;
-      const tex = this.textures.get(texRemap && texRemap.has(key) ? texRemap.get(key) : key);
+      const resolved = texRemap && texRemap.has(key) ? texRemap.get(key) : key;
+      const tex = this.textures.get(resolved);
       if (!tex) continue;
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, this.emissionTextures.get(resolved) || this._blackTex);
+      gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.drawElements(gl.TRIANGLES, sm.primitiveCount * 3, gl.UNSIGNED_INT, sm.startIndex * 4);
     }
