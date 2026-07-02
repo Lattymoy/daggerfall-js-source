@@ -10,6 +10,9 @@ Doc edits are part of the change: every scripted bible edit must ASSERT
 the needle matched (a silent `.replace` no-op shipped a stale
 Rendering.md queue in the M6 audit and was only caught in the M7 audit).
 Verify doc diffs in `git diff` before committing, same as code.
+Sprite-orientation checks must compare close-up render crops against
+the raw record art - a distant screenshot passed a vertically flipped
+billboard shader for six milestones (caught by Mac after M8).
 
 ## Sections
 

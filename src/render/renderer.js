@@ -50,7 +50,10 @@ void main() {
   vec3 world = aCenter
     + uRight * (aCorner.x * uSize.x)
     + uUp * ((aCorner.y + 0.5) * uSize.y);
-  vUV = vec2(aCorner.x + 0.5, 0.5 - aCorner.y);
+  // Textures are bottom-up (v=0 = image bottom), so the quad top
+  // (aCorner.y = +0.5) samples v = 1 - matching the mesh path's negated-V
+  // convention. The previous 0.5 - aCorner.y flipped every billboard.
+  vUV = vec2(aCorner.x + 0.5, aCorner.y + 0.5);
   gl_Position = uProj * uView * vec4(world, 1.0);
 }`;
 

@@ -6,6 +6,19 @@ rendering is ours per Port-Doctrine.
 
 ## Milestone 8 - nature flats on terrain (SHIPPED)
 
+DEFECT FIX (post-ship, caught by Mac): every billboard rendered
+vertically flipped since M2. The billboard shader mapped the quad top to
+v = 0 (0.5 - aCorner.y) while getColor32 textures upload bottom-up
+(v = 0 = image bottom); the mesh path was always correct via its
+negated-V + REPEAT convention. Fix: vUV.y = aCorner.y + 0.5. Verified
+with close-up before/after crops: nature trees root at the ground,
+city skyline canopies point up, the street lamp head sits atop its
+pole; dungeon tapestries were unaffected (archive 74 meshes, not
+flats). LESSON: the M8 orientation "verification" compared
+display-flipped art against a distant screenshot and passed a flipped
+render - sprite-orientation checks must be close-up crops against the
+raw record art.
+
 `src/world/terrainNature.js` ports DefaultTerrainNature.LayoutNature:
 location rects (when present) expand by natureClearance 4 and exclude
 scatter (Rect.Contains min-inclusive / max-exclusive); elevationScale =
