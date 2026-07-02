@@ -17,6 +17,7 @@ work queue routed to arcs.
 | Billboards | Vertex-shader expansion, Y-locked, batched per (archive, record) instead of Unity GameObjects/BillboardBatch | Renderer-side |
 | FaceUVTool arithmetic | JS doubles instead of C# float mix; (Int32) casts become Math.trunc | Documented in faceUVTool.js, validated against corpus |
 | Data access | Bytes in, objects out; no FileProxy/disk-usage modes | Runtime difference |
+| Terrain ground-detail noise | Ken Perlin reference improved noise (perlin.js) in place of Unity's engine-internal Mathf.PerlinNoise (not in DFU source); same role, different samples; all pins pin our pipeline | PENDING Mac review (flagged at M6 ship) |
 
 ## B. Verbatim quirks preserved (real-data reality)
 
@@ -46,6 +47,10 @@ Readers:
   wraparound; Orsinium (locationId 50015) border block moved to Z=-2.
 - SND: record index 5 is zero-length; synthesized 44-byte RIFF header is
   byte-exact.
+- WOODS: GetHeightMapValue clamps both axes with `>= dim - 1`;
+  GetLargeHeightMapValuesRange strips the 5x5 to the interior 3x3 with
+  INVERTED sample Y (src[ix][4 - iy]) and walks source pixels with a
+  DESCENDING map Y (mapPixelY - y).
 
 World layout:
 - Exterior subrecord FLATS use the unrotated (subX, 0, -subZ) offset - DFU

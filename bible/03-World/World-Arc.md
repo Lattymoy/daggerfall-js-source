@@ -4,6 +4,31 @@ Assemble Daggerfall's world from decoded data onto our WebGL2 stack.
 Data math is ported 1:1 from DFU (MeshReader.cs geometry paths, RMBLayout.cs);
 rendering is ours per Port-Doctrine.
 
+## Milestone 6 - terrain: WOODS.WLD + height sampling (SHIPPED)
+
+`src/formats/woodsFile.js` ports WoodsFile.cs 1:1: header gate
+(Width * Height must be 500000), 500000 per-pixel data offsets, the raw
+1000x500 small heightmap, the verbatim `>= dim - 1` clamps, 5x5 large map
+data at offset + 22, and GetLargeHeightMapValuesRange's interior-3x3 strip
+with inverted sample Y AND descending source map Y. Corpus pins: header
+closure (offsets fill 144..2000144 exactly, heightmap at 2001168), buffer
+sum 11699810 / max 255 / 20237 zeros, Daggerfall environs raw height 20.
+`src/world/terrainSampler.js` ports DefaultTerrainSampler +
+TerrainHelper.CubicInterpolator/GetNoise: 129x129 samples per map pixel,
+bicubic base (4x4 small window at mx-2,my-2, rows Y-inverted, x8) +
+bicubic feature noise (9x9 large window at mx-1,my, x4) + Perlin ground
+detail (x10), ocean floor 27.2, clamp01(h / 1539); sample(x,y) at
+data[x*dim+y] matching DFU's job indexing. World scale verbatim: 819.2
+units per pixel, height x1539x1.5, pixel (X,Y) at (xdif, 0, -ydif) * size.
+DEPARTURE pending Mac review (Port-Ledger A): DFU's noise source is
+Unity's engine-internal Mathf.PerlinNoise; `src/world/perlin.js` stands in
+with Ken Perlin's reference improved noise remapped to [0,1] - same role,
+different concrete samples, all pins pin OUR pipeline. Open-ocean pixels
+clamp to exactly 0.017674 everywhere (pinned). Scene: ?terrain=<x>,<y>
+(default 207,213) renders a 5x5 pixel neighborhood on an elevation ramp;
+ground TEXTURING (tilemap), locations-on-terrain, and streaming remain
+queued. Pins in test/terrain.test.js.
+
 ## Milestone 5 - RDB dungeons + action records (SHIPPED)
 
 `src/world/rdbLayout.js` ports RDBLayout.cs 1:1: model matrix is
@@ -134,7 +159,8 @@ via T(48, 0, 25.6) * Ry(-270deg).
 
 ## Queue (in order, one at a time)
 
-1. Terrain: WOODS.WLD heightmap reader + streaming world.
+1. Streaming world: terrain tilemap texturing (TerrainTexturing), location
+   placement + leveling on terrain, floating-origin streaming.
 
 ## Testing
 

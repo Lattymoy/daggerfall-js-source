@@ -20,7 +20,7 @@ Read `01-Overview/Port-Doctrine.md` before touching anything.
 ## Active arcs
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
-- `03-World/World-Arc.md` - ACTIVE. Milestone 5 shipped: RDB dungeons + action records (187 RDBs close against reader pins; ?dungeon=<name>).
+- `03-World/World-Arc.md` - ACTIVE. Milestone 6 shipped: WOODS.WLD terrain heightfields (?terrain=x,y). Queue: streaming world.
 
 ## Ground rules carried from project-final
 
