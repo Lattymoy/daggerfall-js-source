@@ -20,6 +20,11 @@ import { dfMeshToModel } from '../world/meshReader.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { fetchBytes, texName, parseSeason, createSkyController } from './shared.js';
+import {
+  WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
+  windowStyleForWeather, weatherRng, fogFactor,
+} from '../world/weather.js';
+import { SEASON } from '../world/climateSwaps.js';
 
 export async function bootExterior(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
@@ -134,6 +139,14 @@ export async function bootExterior(canvas, renderer, params, status) {
   const cityLights = []; // archive-210 lantern point lights (R3)
   const CITY_LIGHT_COLOR_F32 = new Float32Array(CITY_LIGHT_COLOR);
   // World clock (R5): ?tod=HH:MM (default noon), ?timescale=game-min/sec.
+  // Weather (R12): ?weather=sunny|cloudy|overcast|fog|rain|thunder|snow,
+  // ?wseed for the deterministic Rain1/Rain2 (Snow1/Snow2) sky pick.
+  const weather = WEATHER_TYPES.includes(params.get('weather'))
+    ? params.get('weather') : 'sunny';
+  const weatherFog = fogForWeather(weather);
+  const weatherSkyOffset = skyOffsetForWeather(
+    weather, weatherRng(Number(params.get('wseed')) || 1));
+  const weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
   const baseTod = parseTimeOfDay(params.get('tod')) ?? 12 * 60;
   const timeScale = Number(params.get('timescale') || 0);
   const bootedAt = performance.now();
@@ -289,10 +302,21 @@ export async function bootExterior(canvas, renderer, params, status) {
     // World clock (R5): sun direction/intensity and ambient follow the time
     // of day; the sun is off at night leaving the 0.25 ambient floor.
     const minute = minuteNow();
-    renderer.setLighting(exteriorAmbient(minute), sunScale(minute), new Float32Array(SUN_RIG_COLOR));
+    renderer.setLighting(
+      exteriorAmbient(minute), sunScale(minute) * weatherSun,
+      new Float32Array(SUN_RIG_COLOR));
     renderer.setWindowEmission(windowEmissionRGB(
-      params.has('window') ? params.get('window') : windowStyleForTime(minute)));
-    sky.use(dfLocation.climate.skyBase, minute);
+      params.has('window') ? params.get('window')
+        : (windowStyleForWeather(weather) ?? windowStyleForTime(minute))));
+    sky.use(dfLocation.climate.skyBase + weatherSkyOffset, minute);
+    // Weather fog, colored by the live sky horizon fill (fills DFU's
+    // fogColor TODO); heavy fog also swallows the sky.
+    renderer.setFog(
+      weatherFog.density === 0 && weatherFog.mode === 'linear' && weatherFog.end >= 2400
+        ? 'off' : weatherFog.mode,
+      weatherFog.density, weatherFog.start, weatherFog.end, sky.renderer.clearColor);
+    sky.renderer.fogColor = sky.renderer.clearColor;
+    sky.renderer.fogMix = weatherFog.excludeSky ? 0 : 1 - fogFactor(weatherFog, 800);
 
     // City lanterns: on 17:00-08:00 (IsCityLightsOn), each flickering
     // verbatim DaggerfallLight (14 ticks/s toward random range targets).

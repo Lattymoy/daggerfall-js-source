@@ -39,7 +39,20 @@ uniform vec3 uEmissionColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
 uniform vec3 uPointColor;
+uniform vec3 uFogColor;
+uniform int uFogMode; // 0 off, 1 linear, 2 exp
+uniform float uFogDensity;
+uniform vec2 uFogRange; // start, end
+uniform vec3 uCamPos;
 out vec4 outColor;
+float fogFactorAt(vec3 worldPos) {
+  if (uFogMode == 0) return 1.0;
+  float d = length(worldPos - uCamPos);
+  if (uFogMode == 1) {
+    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
+  }
+  return exp(-uFogDensity * d);
+}
 void main() {
   vec4 tex = texture(uTex, vUV);
   if (tex.a < 0.5) discard;
@@ -60,7 +73,7 @@ void main() {
   // Window emission: white mask from getWindowColors32, tinted by the
   // active window style (MaterialReader semantics: emission adds on top).
   vec3 emission = texture(uEmissionTex, vUV).rgb * uEmissionColor;
-  outColor = vec4(lit + emission, 1.0);
+  outColor = vec4(mix(uFogColor, lit + emission, fogFactorAt(vWorldPos)), 1.0);
 }`;
 
 const BB_VS = `#version 300 es
@@ -96,7 +109,20 @@ uniform vec3 uTint; // time-of-day: ambient + sunColor * sunScale * 0.5
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
 uniform vec3 uPointColor;
+uniform vec3 uFogColor;
+uniform int uFogMode;
+uniform float uFogDensity;
+uniform vec2 uFogRange;
+uniform vec3 uCamPos;
 out vec4 outColor;
+float fogFactorAt(vec3 worldPos) {
+  if (uFogMode == 0) return 1.0;
+  float d = length(worldPos - uCamPos);
+  if (uFogMode == 1) {
+    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
+  }
+  return exp(-uFogDensity * d);
+}
 void main() {
   vec4 tex = texture(uTex, vUV);
   if (tex.a < 0.5) discard;
@@ -110,7 +136,7 @@ void main() {
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointDiff += att * att;
   }
-  outColor = vec4(tex.rgb * (uTint + pointDiff * uPointColor), 1.0);
+  outColor = vec4(mix(uFogColor, tex.rgb * (uTint + pointDiff * uPointColor), fogFactorAt(vBBWorld)), 1.0);
 }`;
 
 // Dungeon water: one horizontal quad per watered RDB block, drawn after
@@ -123,25 +149,41 @@ uniform mat4 uProj;
 uniform mat4 uView;
 uniform vec4 uRect; // x0, z0, size, y
 out vec2 vWaterXZ;
+out vec3 vWaterWorld;
 void main() {
   vec3 world = vec3(uRect.x + aXZ.x * uRect.z, uRect.w, uRect.y + aXZ.y * uRect.z);
   vWaterXZ = world.xz;
+  vWaterWorld = world;
   gl_Position = uProj * uView * vec4(world, 1.0);
 }`;
 
 const WATER_FS = `#version 300 es
 precision highp float;
 in vec2 vWaterXZ;
+in vec3 vWaterWorld;
 uniform vec4 uWaterColor; // rgb tint (1,1,1 for plain classic), a = blend
 uniform sampler2D uWaterTex; // classic water tile (ground record 0)
 uniform float uWaterScroll; // slow classic flow, in tiles
+uniform vec3 uFogColor;
+uniform int uFogMode;
+uniform float uFogDensity;
+uniform vec2 uFogRange;
+uniform vec3 uCamPos;
 out vec4 outColor;
+float fogFactorAt(vec3 worldPos) {
+  if (uFogMode == 0) return 1.0;
+  float d = length(worldPos - uCamPos);
+  if (uFogMode == 1) {
+    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
+  }
+  return exp(-uFogDensity * d);
+}
 void main() {
   // World xz -> classic tile UVs: 6.4 units per 64px tile, REPEAT wrap,
   // scrolled diagonally.
   vec2 uv = vWaterXZ / 6.4 + vec2(uWaterScroll);
   vec3 tex = texture(uWaterTex, uv).rgb;
-  outColor = vec4(tex * uWaterColor.rgb, uWaterColor.a);
+  outColor = vec4(mix(uFogColor, tex * uWaterColor.rgb, fogFactorAt(vWaterWorld)), uWaterColor.a);
 }`;
 
 // Terrain tilemap pass (R9): verbatim Daggerfall/TilemapTextureArray
@@ -184,7 +226,20 @@ uniform vec3 uSunColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16];
 uniform vec3 uPointColor;
+uniform vec3 uFogColor;
+uniform int uFogMode;
+uniform float uFogDensity;
+uniform vec2 uFogRange;
+uniform vec3 uCamPos;
 out vec4 outColor;
+float fogFactorAt(vec3 worldPos) {
+  if (uFogMode == 0) return 1.0;
+  float d = length(worldPos - uCamPos);
+  if (uFogMode == 1) {
+    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
+  }
+  return exp(-uFogDensity * d);
+}
 // DFU's HLSL float2x2 initializers are row-major; GLSL mat2 is
 // column-major, so these are the TRANSPOSES of the shader source
 // (caught in R9 build: rotated tiles sampled the wrong direction).
@@ -216,7 +271,7 @@ void main() {
     pointDiff += att * att * max(dot(n, L / max(d, 1e-4)), 0.0);
   }
   lit += tex * pointDiff * uPointColor;
-  outColor = vec4(lit, 1.0);
+  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vWorldPos)), 1.0);
 }`;
 
 const ZERO_ORIGIN = [0, 0, 0];
@@ -248,6 +303,19 @@ export class Renderer {
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
     this._pointColor = new Float32Array([1, 1, 1]);
+    this._fogMode = 0;
+    this._fogDensity = 0;
+    this._fogRange = new Float32Array([0, 1]);
+    this._fogColor = new Float32Array([0, 0, 0]);
+    this._camPos = new Float32Array(3);
+    const fogLocs = (program) => ({
+      fogColor: gl.getUniformLocation(program, 'uFogColor'),
+      fogMode: gl.getUniformLocation(program, 'uFogMode'),
+      fogDensity: gl.getUniformLocation(program, 'uFogDensity'),
+      fogRange: gl.getUniformLocation(program, 'uFogRange'),
+      camPos: gl.getUniformLocation(program, 'uCamPos'),
+    });
+    this._solidFog = fogLocs(this.program);
     // Defaults reproduce the pre-R5 fixed lighting (0.45 + 0.55 * diff).
     this._ambient = new Float32Array([0.45, 0.45, 0.45]);
     this._sunScale = 0.55;
@@ -285,6 +353,27 @@ export class Renderer {
     this._terrainIndexCount = 0;
 
     this.waterProgram = this._buildProgram(WATER_VS, WATER_FS);
+    this._bbFog = {
+      fogColor: gl.getUniformLocation(this.bbProgram, 'uFogColor'),
+      fogMode: gl.getUniformLocation(this.bbProgram, 'uFogMode'),
+      fogDensity: gl.getUniformLocation(this.bbProgram, 'uFogDensity'),
+      fogRange: gl.getUniformLocation(this.bbProgram, 'uFogRange'),
+      camPos: gl.getUniformLocation(this.bbProgram, 'uCamPos'),
+    };
+    this._terrainFog = {
+      fogColor: gl.getUniformLocation(this.terrainProgram, 'uFogColor'),
+      fogMode: gl.getUniformLocation(this.terrainProgram, 'uFogMode'),
+      fogDensity: gl.getUniformLocation(this.terrainProgram, 'uFogDensity'),
+      fogRange: gl.getUniformLocation(this.terrainProgram, 'uFogRange'),
+      camPos: gl.getUniformLocation(this.terrainProgram, 'uCamPos'),
+    };
+    this._waterFog = {
+      fogColor: gl.getUniformLocation(this.waterProgram, 'uFogColor'),
+      fogMode: gl.getUniformLocation(this.waterProgram, 'uFogMode'),
+      fogDensity: gl.getUniformLocation(this.waterProgram, 'uFogDensity'),
+      fogRange: gl.getUniformLocation(this.waterProgram, 'uFogRange'),
+      camPos: gl.getUniformLocation(this.waterProgram, 'uCamPos'),
+    };
     this.waterUProj = gl.getUniformLocation(this.waterProgram, 'uProj');
     this.waterUView = gl.getUniformLocation(this.waterProgram, 'uView');
     this.waterURect = gl.getUniformLocation(this.waterProgram, 'uRect');
@@ -418,6 +507,12 @@ export class Renderer {
     gl.uniform1i(this.uPointCount, count);
     if (count > 0) gl.uniform4fv(this.uPointLights, this._pointLights);
     gl.uniform3fv(this.uPointColor, this._pointColor);
+    // Camera position from the view matrix (view = R^T * T(-eye)).
+    const v = view;
+    this._camPos[0] = -(v[0] * v[12] + v[1] * v[13] + v[2] * v[14]);
+    this._camPos[1] = -(v[4] * v[12] + v[5] * v[13] + v[6] * v[14]);
+    this._camPos[2] = -(v[8] * v[12] + v[9] * v[13] + v[10] * v[14]);
+    this._uploadFog(this._solidFog);
     gl.activeTexture(gl.TEXTURE0);
     this._proj = proj;
     this._view = view;
@@ -434,6 +529,24 @@ export class Renderer {
     this._sunScale = sunScale;
     if (sunColor) this._sunColor = sunColor;
     this._clockLit = true;
+  }
+
+  /** Distance fog for every world pass. mode 'off'|'linear'|'exp'. */
+  setFog(mode, density, start, end, color) {
+    this._fogMode = mode === 'linear' ? 1 : mode === 'exp' ? 2 : 0;
+    this._fogDensity = density;
+    this._fogRange[0] = start;
+    this._fogRange[1] = end;
+    if (color) this._fogColor = color;
+  }
+
+  _uploadFog(prog) {
+    const gl = this.gl;
+    gl.uniform3fv(prog.fogColor, this._fogColor);
+    gl.uniform1i(prog.fogMode, this._fogMode);
+    gl.uniform1f(prog.fogDensity, this._fogDensity);
+    gl.uniform2fv(prog.fogRange, this._fogRange);
+    gl.uniform3fv(prog.camPos, this._camPos);
   }
 
   /** Scene-space point lights as flat vec4s [x,y,z,range], max 16. */
@@ -610,6 +723,7 @@ export class Renderer {
     gl.uniformMatrix4fv(this.tUView, false, this._view);
     gl.uniformMatrix4fv(this.tUModel, false, modelMatrix);
     gl.uniform1f(this.tUTileSize, tileSize);
+    this._uploadFog(this._terrainFog);
     gl.uniform3fv(this.tULightDir, this._lightDir);
     gl.uniform3fv(this.tUAmbient, this._ambient);
     gl.uniform1f(this.tUSunScale, this._sunScale);
@@ -647,6 +761,7 @@ export class Renderer {
     gl.bindTexture(gl.TEXTURE_2D, waterTex);
     gl.uniform1i(this.waterUTex, 0);
     gl.uniform1f(this.waterUScroll, scrollTiles);
+    this._uploadFog(this._waterFog);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
@@ -671,6 +786,7 @@ export class Renderer {
     gl.uniform3fv(this.bbURight, camRight);
     gl.uniform3fv(this.bbUUp, camUp);
     gl.uniform1i(this.bbUTex, 0);
+    this._uploadFog(this._bbFog);
     // Billboards take the scene's time-of-day light (DFU's ambient-lit
     // billboards): ambient plus the Lambert-average half of the sun term.
     // Clockless scenes keep the pre-R5 full-bright flats.

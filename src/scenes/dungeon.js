@@ -207,6 +207,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // Verbatim dungeon lighting: PlayerAmbientLight.DungeonAmbientLight,
   // no sun; every light flickers (DaggerfallLight Animate).
   renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
+  // Verbatim DungeonFogSettings: exponential 0.005, fog color black.
+  renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
   const flicker = new CityLightAnimator(
     dungeonLightList.length, dungeonLightList.map((l) => l.range));
 

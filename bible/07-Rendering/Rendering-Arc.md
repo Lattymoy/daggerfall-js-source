@@ -350,6 +350,36 @@ blue-dominant mean (64, 104, 153) with real texel variance vs R7's
 flat fill. Scene fetches the climate ground archive and uploads
 record 0; drawWater(quads, color, tex, scrollTiles).
 
+## Milestone R12 - weather: fog, weather skies, sun dimming (SHIPPED)
+
+`src/world/weather.js`, verbatim WeatherManager: WeatherType {Sunny,
+Cloudy, Overcast, Fog, Rain, Thunder, Snow}; FogSettings table (Sunny/
+Overcast linear 0..2400, Rainy exp 0.003, Snowy exp 0.005, Heavy exp
+0.05 with the sky INCLUDED, Interior exp 0.001 and Dungeon exp 0.005
+both sky-included with BLACK fog - SetFog's interior branch); the
+SetWeather mapping exactly (Cloudy keeps sunny fog per the upstream
+skybox TODO; Fog weather takes the RAIN sky + heavy fog); WeatherStyle
+sky offsets Rain1 4 / Rain2 5 / Snow1 6 / Snow2 7 picked 50/50 on the
+approved umRandom (SkyIndex = SkyBase + offset - groups are 8 wide so
+NITE night mapping never crosses); SetSunlightScale (winter 0.65 first,
+Overcast/Fog 0.65, Rain/Snow 0.45, Storm 0.25); IsSnowFreeClimate
+{224, 225, 227, 229}. Renderer: distance fog in ALL world passes
+(solid, terrain, billboard, water) - per-fragment length(world - cam)
+with Unity's linear (end-d)/(end-start) and exponential exp(-density*d)
+factors, camera position extracted from the view matrix each frame
+(numeric round-trip verified); the sky pass gains a fogMix (heavy fog
+swallows the sky, mix = 1 - exp(-density * 800)). EQUIVALENCES: the R2
+Fog WINDOW style is wired to WeatherType.Fog (DFU defines it, never
+wires it); outdoor fog COLOR is the live sky horizon fill (upstream's
+literal fogColor TODO wishes for this); shadowStrength has no consumer.
+Scenes: exterior + world take ?weather= and ?wseed (deterministic sky
+variant); dungeon and interior apply their verbatim always-on fog.
+Proofs: heavy fog collapses the far band to the fog color (stddev 4.6
+vs 58.1 sunny; sky top and horizon geometry converge on (90, 92, 99));
+rain swaps the sky ((102, 105, 117) top vs sunny (243, 249, 248)).
+Precipitation particles + storm lightning are the next milestone.
+
 ## Queue
 
-Owned by `Rendering.md`. Next up: weather (owns the Fog window style).
+Owned by `Rendering.md`. Next up: precipitation particles + lightning
+(rain/snow/storm), then spectral/firewall emission.

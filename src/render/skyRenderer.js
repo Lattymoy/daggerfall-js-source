@@ -101,6 +101,8 @@ uniform float uPitch;
 uniform float uTanHalfFov;
 uniform float uAspect;
 uniform float uVSpan; // elevation covered by the strip, radians
+uniform float uFogMix; // 0 = clear sky, 1 = fully fogged (heavy fog)
+uniform vec3 uFogColor;
 out vec4 outColor;
 void main() {
   // View ray from the fragment, rotated by pitch (about X) then yaw (about Y)
@@ -117,7 +119,7 @@ void main() {
   float u = fract(azimuth / 6.28318530718);
   float v = elevation / uVSpan;
   vec3 color = v > 1.0 ? uClear : texture(uSky, vec2(u, clamp(v, 0.0, 1.0))).rgb;
-  outColor = vec4(color, 1.0);
+  outColor = vec4(mix(color, uFogColor, uFogMix), 1.0);
 }`;
 
 export class SkyRenderer {
@@ -147,6 +149,10 @@ export class SkyRenderer {
     this.uTanHalfFov = gl.getUniformLocation(prog, 'uTanHalfFov');
     this.uAspect = gl.getUniformLocation(prog, 'uAspect');
     this.uVSpan = gl.getUniformLocation(prog, 'uVSpan');
+    this.uFogMix = gl.getUniformLocation(prog, 'uFogMix');
+    this.uFogColor = gl.getUniformLocation(prog, 'uFogColor');
+    this.fogMix = 0;
+    this.fogColor = new Float32Array([0.5, 0.5, 0.5]);
 
     // Fullscreen triangle pair.
     this.vao = gl.createVertexArray();
@@ -202,6 +208,8 @@ export class SkyRenderer {
     gl.uniform1f(this.uTanHalfFov, Math.tan(fovY / 2));
     gl.uniform1f(this.uAspect, aspect);
     gl.uniform1f(this.uVSpan, this.vSpan);
+    gl.uniform1f(this.uFogMix, this.fogMix);
+    gl.uniform3fv(this.uFogColor, this.fogColor);
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);

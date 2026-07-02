@@ -15,7 +15,7 @@ import { WoodsFile } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
-import { applyClimate, getGroundArchive, getNatureArchive, isExteriorWindow } from '../world/climateSwaps.js';
+import { applyClimate, getGroundArchive, getNatureArchive, isExteriorWindow, SEASON } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, trs } from '../world/mat4.js';
 import { dfMeshToModel } from '../world/meshReader.js';
@@ -26,6 +26,10 @@ import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { fetchBytes, texName, parseSeason, createSkyController } from './shared.js';
+import {
+  WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
+  windowStyleForWeather, weatherRng, fogFactor,
+} from '../world/weather.js';
 
 // Milestone 9 scene: floating-origin streaming world. Terrain pixels
 // stream in nearest-first around the camera within TERRAIN_DISTANCE,
@@ -83,6 +87,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // World clock (R5) + sky controller: panorama follows the current pixel's
   // climate AND the time of day (async, frame-late at boundaries).
   const sky = createSkyController(renderer.gl, params);
+  // Weather (R12), same contract as the exterior scene.
+  const weather = WEATHER_TYPES.includes(params.get('weather'))
+    ? params.get('weather') : 'sunny';
+  const weatherFog = fogForWeather(weather);
+  const weatherSkyOffset = skyOffsetForWeather(
+    weather, weatherRng(Number(params.get('wseed')) || 1));
+  const weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
   const baseTod = parseTimeOfDay(params.get('tod')) ?? 12 * 60;
   const timeScale = Number(params.get('timescale') || 0);
   const bootedAt = performance.now();
@@ -372,11 +383,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
     // World clock (R5): sun, ambient, window style, sky frame by time.
     const minute = minuteNow();
-    renderer.setLighting(exteriorAmbient(minute), sunScale(minute), new Float32Array(SUN_RIG_COLOR));
+    renderer.setLighting(
+      exteriorAmbient(minute), sunScale(minute) * weatherSun,
+      new Float32Array(SUN_RIG_COLOR));
     renderer.setWindowEmission(windowEmissionRGB(
-      params.has('window') ? params.get('window') : windowStyleForTime(minute)));
+      params.has('window') ? params.get('window')
+        : (windowStyleForWeather(weather) ?? windowStyleForTime(minute))));
     const currentEntry = built.get(`${state.current.x},${state.current.y}`);
-    sky.use(currentEntry ? currentEntry.skyBase : 16, minute);
+    sky.use((currentEntry ? currentEntry.skyBase : 16) + weatherSkyOffset, minute);
+    renderer.setFog(
+      weatherFog.density === 0 && weatherFog.mode === 'linear' && weatherFog.end >= 2400
+        ? 'off' : weatherFog.mode,
+      weatherFog.density, weatherFog.start, weatherFog.end, sky.renderer.clearColor);
+    sky.renderer.fogColor = sky.renderer.clearColor;
+    sky.renderer.fogMix = weatherFog.excludeSky ? 0 : 1 - fogFactor(weatherFog, 800);
 
     // Lanterns on 17:00-08:00, flickering verbatim; pixel-local lights
     // placed under the current compensation, nearest 16 to the camera.

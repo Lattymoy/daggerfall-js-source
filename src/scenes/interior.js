@@ -148,6 +148,8 @@ export async function bootInterior(canvas, renderer, params, status) {
   const interiorLights = t210 ? collectInteriorLights(interior.flats, (record) =>
     scaledBillboardSize(t210.getSize(record), t210.getScale(record))) : [];
   renderer.setLighting(new Float32Array(INTERIOR_AMBIENT), 0);
+  // Verbatim InteriorFogSettings: exponential 0.001, fog color black.
+  renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
 
   // Camera at the Enter marker when present, else the first placement,
   // facing the interior's bounding center (the marker sits at the entry
