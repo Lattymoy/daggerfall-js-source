@@ -41,7 +41,9 @@ bump both together). CONTRACT: the scene query rides the SHOT_QUERY env
 var, NOT argv (`SHOT_QUERY='shot&world&tod=22:00' npm run shot out.png`) -
 argv[2] is only the output path. SHOT_TIMEOUT overrides the 30s ready
 wait (streaming world wants 90000); SHOT_EVAL runs a JS snippet in-page
-after ready. `?shot` in main.js fixes the vantage and raises
+after ready (promise-returning expressions are awaited - top-level
+`await` fails). Shot-mode probe hooks in the dungeon and world scenes:
+window.__move(dx, dy, dz) and window.__pose(x, y, z, yaw, pitch). `?shot` in main.js fixes the vantage and raises
 `window.__shotReady`. Manual proof, not a suite gate.
 
 Pre-push gate: `npm run check` (test + build).

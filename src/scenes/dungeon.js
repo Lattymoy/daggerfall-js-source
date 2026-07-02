@@ -16,7 +16,12 @@ import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
 
 // Water surface color: presentation choice (see renderer WATER_VS note).
-const WATER_COLOR = [0.10, 0.22, 0.32, 0.62];
+// R11: the surface is the classic water tile (climate ground archive
+// record 0 - the 0xFF tilemap sentinel's target, same picture classic
+// tiles across oceans), tinted only by alpha; slow diagonal scroll is
+// the classic flow, presentation-tuned.
+const WATER_COLOR = [1, 1, 1, 0.82];
+const WATER_SCROLL_TILES_PER_SEC = 0.05;
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { applyTextureTable } from '../world/dungeonTextures.js';
 import { lookAt, multiply, perspective, trs } from '../world/mat4.js';
@@ -71,6 +76,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // Original archives size the UVs; the texture table remaps which archive
   // supplies the pixels (SetDungeonTextures semantics). Fetch both sets.
   const climateBaseType = dfLocation.climate.climateType;
+  // Classic water tile: ground archive record 0 for this location's climate.
+  const waterArchive = dfLocation.climate.groundArchive;
   const remap = (archive) => applyTextureTable(archive, dungeon.textureTable, climateBaseType);
   const originalArchives = new Set();
   for (const dfMesh of dfMeshes.values()) {
@@ -82,6 +89,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   }
   const allArchives = new Set([...originalArchives, ...flatArchives]);
   for (const a of originalArchives) allArchives.add(remap(a));
+  allArchives.add(waterArchive); // classic water tile source (R11)
 
   status(`loading ${allArchives.size} texture archives`);
   const textureFiles = new Map();
@@ -122,6 +130,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const drawList = [];
   const flatGroups = new Map();
   const dungeonLightList = [];
+  uploadRecord(waterArchive, 0); // classic water tile (R11)
   const waterQuads = [];
   for (const b of dungeon.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
@@ -205,6 +214,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // Probe hooks (parity with the world scene): displace the camera and
     // frame-sync instead of sleeping.
     window.__move = (dx, dy, dz) => { cam.pos[0] += dx; cam.pos[1] += dy; cam.pos[2] += dz; };
+    window.__pose = (x, y, z, yaw, pitch) => { cam.pos = [x, y, z]; cam.yaw = yaw; cam.pitch = pitch; };
     window.__frame = 0;
   }
 
@@ -233,7 +243,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
-    renderer.drawWater(waterQuads, WATER_COLOR);
+    renderer.drawWater(waterQuads, WATER_COLOR,
+      renderer.textures.get(`${waterArchive}_0`),
+      (now / 1000) * WATER_SCROLL_TILES_PER_SEC);
 
     frames++;
     if (shotMode) window.__frame = frames;

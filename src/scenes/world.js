@@ -333,6 +333,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     window.__move = (dx, dy, dz) => {
       cam.pos[0] += dx; cam.pos[1] += dy; cam.pos[2] += dz;
     };
+    window.__pose = (x, y, z, yaw, pitch) => { cam.pos = [x, y, z]; cam.yaw = yaw; cam.pitch = pitch; };
     window.__streamIdle = () => queue.length === 0 && !building;
     window.__builtCount = () => built.size;
     window.__currentPixel = () => `${state.current.x},${state.current.y}`;

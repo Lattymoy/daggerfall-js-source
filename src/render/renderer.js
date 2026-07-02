@@ -122,16 +122,27 @@ layout(location=0) in vec2 aXZ; // unit quad 0..1
 uniform mat4 uProj;
 uniform mat4 uView;
 uniform vec4 uRect; // x0, z0, size, y
+out vec2 vWaterXZ;
 void main() {
   vec3 world = vec3(uRect.x + aXZ.x * uRect.z, uRect.w, uRect.y + aXZ.y * uRect.z);
+  vWaterXZ = world.xz;
   gl_Position = uProj * uView * vec4(world, 1.0);
 }`;
 
 const WATER_FS = `#version 300 es
 precision highp float;
-uniform vec4 uWaterColor;
+in vec2 vWaterXZ;
+uniform vec4 uWaterColor; // rgb tint (1,1,1 for plain classic), a = blend
+uniform sampler2D uWaterTex; // classic water tile (ground record 0)
+uniform float uWaterScroll; // slow classic flow, in tiles
 out vec4 outColor;
-void main() { outColor = uWaterColor; }`;
+void main() {
+  // World xz -> classic tile UVs: 6.4 units per 64px tile, REPEAT wrap,
+  // scrolled diagonally.
+  vec2 uv = vWaterXZ / 6.4 + vec2(uWaterScroll);
+  vec3 tex = texture(uWaterTex, uv).rgb;
+  outColor = vec4(tex * uWaterColor.rgb, uWaterColor.a);
+}`;
 
 // Terrain tilemap pass (R9): verbatim Daggerfall/TilemapTextureArray
 // decode - tileIndex = data >> 2, transform = data & 3 with the shader's
@@ -277,6 +288,8 @@ export class Renderer {
     this.waterUProj = gl.getUniformLocation(this.waterProgram, 'uProj');
     this.waterUView = gl.getUniformLocation(this.waterProgram, 'uView');
     this.waterURect = gl.getUniformLocation(this.waterProgram, 'uRect');
+    this.waterUTex = gl.getUniformLocation(this.waterProgram, 'uWaterTex');
+    this.waterUScroll = gl.getUniformLocation(this.waterProgram, 'uWaterScroll');
     this.waterUColor = gl.getUniformLocation(this.waterProgram, 'uWaterColor');
     {
       // Shared unit XZ quad for water planes.
@@ -623,13 +636,17 @@ export class Renderer {
    * @param {Array<{x:number,z:number,size:number,y:number}>} quads
    * @param {number[]} color - rgba
    */
-  drawWater(quads, color) {
+  drawWater(quads, color, waterTex, scrollTiles = 0) {
     if (!quads.length) return;
     const gl = this.gl;
     gl.useProgram(this.waterProgram);
     gl.uniformMatrix4fv(this.waterUProj, false, this._proj);
     gl.uniformMatrix4fv(this.waterUView, false, this._view);
     gl.uniform4fv(this.waterUColor, color);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, waterTex);
+    gl.uniform1i(this.waterUTex, 0);
+    gl.uniform1f(this.waterUScroll, scrollTiles);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
