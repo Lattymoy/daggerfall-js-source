@@ -7,5 +7,6 @@ conventions, queue). Deviations and quirks are ledgered in
 Shipped: RMB block assembly, full location layout, ground tilemaps, flats,
 building interiors + static doors, RDB dungeons + action records,
 WOODS.WLD terrain heightfields, terrain tile texturing + locations
-placed and leveled on terrain, nature flat scatter.
-Queued: floating-origin streaming.
+placed and leveled on terrain, nature flat scatter, floating-origin
+streaming (?world walks the whole province).
+The World-Arc build queue is COMPLETE.

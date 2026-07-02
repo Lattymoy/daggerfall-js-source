@@ -43,11 +43,12 @@ uniform mat4 uProj;
 uniform mat4 uView;
 uniform vec3 uRight;
 uniform vec3 uUp;
+uniform vec3 uOrigin;
 uniform vec2 uSize;
 out vec2 vUV;
 void main() {
   // Bottom-anchored: centre sits half a height above the placement base.
-  vec3 world = aCenter
+  vec3 world = aCenter + uOrigin
     + uRight * (aCorner.x * uSize.x)
     + uUp * ((aCorner.y + 0.5) * uSize.y);
   // Textures are bottom-up (v=0 = image bottom), so the quad top
@@ -67,6 +68,8 @@ void main() {
   if (tex.a < 0.5) discard;
   outColor = vec4(tex.rgb, 1.0);
 }`;
+
+const ZERO_ORIGIN = [0, 0, 0];
 
 export class Renderer {
   constructor(canvas) {
@@ -90,6 +93,7 @@ export class Renderer {
     this.bbURight = gl.getUniformLocation(this.bbProgram, 'uRight');
     this.bbUUp = gl.getUniformLocation(this.bbProgram, 'uUp');
     this.bbUSize = gl.getUniformLocation(this.bbProgram, 'uSize');
+    this.bbUOrigin = gl.getUniformLocation(this.bbProgram, 'uOrigin');
     this.bbUTex = gl.getUniformLocation(this.bbProgram, 'uTex');
     this._proj = null;
     this._view = null;
@@ -147,10 +151,12 @@ export class Renderer {
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
 
+    const buffers = [];
     const buf = (target, data) => {
       const b = gl.createBuffer();
       gl.bindBuffer(target, b);
       gl.bufferData(target, data, gl.STATIC_DRAW);
+      buffers.push(b);
       return b;
     };
     buf(gl.ARRAY_BUFFER, model.positions);
@@ -165,7 +171,7 @@ export class Renderer {
     buf(gl.ELEMENT_ARRAY_BUFFER, model.indices);
 
     gl.bindVertexArray(null);
-    return { vao, subMeshes: model.subMeshes };
+    return { vao, subMeshes: model.subMeshes, buffers };
   }
 
   beginFrame(proj, view, lightDir) {
@@ -238,7 +244,21 @@ export class Renderer {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
     gl.bindVertexArray(null);
 
-    return { vao, indexCount: count * 6, archive, record, size };
+    return { vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null };
+  }
+
+  /** Release a createMesh bundle's GPU resources. */
+  destroyMesh(mesh) {
+    const gl = this.gl;
+    for (const b of mesh.buffers) gl.deleteBuffer(b);
+    gl.deleteVertexArray(mesh.vao);
+  }
+
+  /** Release a billboard batch's GPU resources. */
+  destroyBatch(batch) {
+    const gl = this.gl;
+    for (const b of batch.buffers) gl.deleteBuffer(b);
+    gl.deleteVertexArray(batch.vao);
   }
 
   /** Draw billboard batches facing the camera. Call after solid geometry. */
@@ -257,6 +277,8 @@ export class Renderer {
       if (!tex) continue;
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.uniform2f(this.bbUSize, b.size.w, b.size.h);
+      const o = b.origin || ZERO_ORIGIN;
+      gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]);
       gl.bindVertexArray(b.vao);
       gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);
     }

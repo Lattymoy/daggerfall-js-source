@@ -30,7 +30,7 @@ billboard shader for six milestones (caught by Mac after M8).
 ## Active arcs
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
-- `03-World/World-Arc.md` - ACTIVE. Milestone 8 shipped: nature flats on terrain. Queue: floating-origin streaming.
+- `03-World/World-Arc.md` - COMPLETE. Milestone 9 shipped: floating-origin streaming world (?world). Build queue empty.
 
 ## Ground rules carried from project-final
 

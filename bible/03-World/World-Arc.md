@@ -4,6 +4,35 @@ Assemble Daggerfall's world from decoded data onto our WebGL2 stack.
 Data math is ported 1:1 from DFU (MeshReader.cs geometry paths, RMBLayout.cs);
 rendering is ours per Port-Doctrine.
 
+## Milestone 9 - floating-origin streaming world (SHIPPED)
+
+`src/world/streamingWorld.js` carries StreamingWorld + FloatingOrigin
+semantics as pure state (the scene owns assets). Verbatim: TerrainDistance
+3 (7x7 desired grid, IsInRange |delta| <= distance, beyond collected);
+world coordinates via SceneMapRatio 40 and the truncating
+WorldCoordToMapPixel / MapPixelToWorldCoords pair - DFU accumulates
+worldX/worldZ incrementally with lastPlayerPos compensated per recenter,
+our closed form (originPixelCorner + (scenePos - compensation) * 40) is
+the same mapping without drift, documented in-file; FloatingOrigin
+recenters on pixel change by (-dPixelX * 819.2, 0, +dPixelY * 819.2)
+applied to world AND player, vertical recenter past +/-500 with
+yChange = -y; compensation accumulates and placement is
+(pixel - mapOrigin) * (819.2, -819.2) + compensation. Load lists are
+nearest-first (player pixel, then rings); unloads re-report until the
+scene releases them. Teleports spanning multiple pixels resolve in one
+update (closed-form pixel derivation). Renderer grew per-batch world
+origins (uOrigin), retained buffer handles, and destroyMesh /
+destroyBatch for pixel recycling. ?world is now the streaming scene:
+pixels build asynchronously nearest-first (player pixel synchronous,
+InitPlayerTerrain-style), locations appear on their pixels via a
+boot-time pixel -> location index (one location per pixel, pinned),
+everything stored pixel-local and placed per frame under the current
+compensation. tools/screenshot.mjs gained SHOT_TIMEOUT and SHOT_EVAL
+(post-ready action + stream-idle wait) for flight shots. Floating-origin
+invariant pinned: after any number of crossings the current pixel's
+frame sits at the origin and native coordinates round-trip exactly.
+Pins in test/streaming.test.js.
+
 ## Milestone 8 - nature flats on terrain (SHIPPED)
 
 DEFECT FIX (post-ship, caught by Mac): every billboard rendered
@@ -255,7 +284,9 @@ via T(48, 0, 25.6) * Ry(-270deg).
 
 ## Queue (in order, one at a time)
 
-1. Streaming world: floating-origin terrain streaming around the player.
+EMPTY - the World-Arc build queue is complete. Remaining world-adjacent
+work lives with its owning arcs (Rendering: terrain materials, climate
+swaps, sky; Player: movement, collision, activation; Audio: ambient).
 
 ## Testing
 
