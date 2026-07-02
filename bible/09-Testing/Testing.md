@@ -1,6 +1,6 @@
 # Testing
 
-Runner: `node --test` (bare - a trailing `test/` path breaks discovery on Node 22). Suite: 58 tests across 10 files.
+Runner: `node --test` (bare - a trailing `test/` path breaks discovery on Node 22). Suite: 61 tests across 10 files.
 
 Two tiers per format reader:
 1. **Synthetic fixtures** - in-memory archives built inside the test. Always run, keep CI green with no game data.

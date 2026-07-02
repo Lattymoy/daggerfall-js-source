@@ -20,7 +20,7 @@ Read `01-Overview/Port-Doctrine.md` before touching anything.
 ## Active arcs
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
-- `03-World/World-Arc.md` - ACTIVE. Milestone 2 shipped: full locations rendered (Daggerfall city, 64 blocks).
+- `03-World/World-Arc.md` - ACTIVE. Milestone 3 shipped: locations with flats - lanterns, signs, trees (897 in Daggerfall city).
 
 ## Ground rules carried from project-final
 

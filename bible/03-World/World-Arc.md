@@ -4,6 +4,23 @@ Assemble Daggerfall's world from decoded data onto our WebGL2 stack.
 Data math is ported 1:1 from DFU (MeshReader.cs geometry paths, RMBLayout.cs);
 rendering is ours per Port-Doctrine.
 
+## Milestone 3 - flats and billboards (SHIPPED)
+
+Every RMB flat path from RMBLayout, verbatim: misc block flats (lights
+billboards included; point-light components later), exterior subrecord flats
+with the UNROTATED (subX, 0, -subZ) offset DFU uses, editor archive 199
+skipped, nature-range archives (500-511) swapped to the climate nature
+archive - including DFU's `billboardPosition.z = natureFlatsOffsetY` raw -2
+assignment, a suspected upstream y/z typo kept verbatim for parity (no
+visible artifact in Daggerfall city; revisit against DFU side-by-side).
+Ground scenery reads [x][15-y], records < 1 skipped. Billboard size =
+(size + trunc(size * scale / 256)) * GlobalScale, bottom-anchored
+(AlignToBase = +h/2). Renderer: cylindrical (Y-locked) billboards expanded
+in the vertex shader along camera right, batched per (archive, record).
+Daggerfall city: 897 flats in 80 batches - street lanterns, shop signs,
+trees, shrubs. `src/world/rmbFlats.js`, `src/render/renderer.js` billboard
+path. NPC faction metadata and animal sounds queued with their systems.
+
 ## Milestone 2 - full location render (SHIPPED)
 
 Complete exteriors assembled from MAPS location data: block grid resolved via
@@ -53,13 +70,11 @@ via T(48, 0, 25.6) * Ry(-270deg).
 
 ## Queue (in order, one at a time)
 
-1. Flats/billboards: RMB flat records + ground scenery as camera-facing quads
-   (SCALE_DIVISOR 256, blockFlatsOffsetY -6).
-2. Building interiors (subrecord Interior sections + door metadata from
+1. Building interiors (subrecord Interior sections + door metadata from
    MeshReader's ModelDoor extraction, archives 74/56/331/156/95 - required by
    the Player arc for entry).
-3. RDB dungeon layout (RDBLayout.cs) with action records.
-4. Terrain: WOODS.WLD heightmap reader + streaming world.
+2. RDB dungeon layout (RDBLayout.cs) with action records.
+3. Terrain: WOODS.WLD heightmap reader + streaming world.
 
 ## Testing
 

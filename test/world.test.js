@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { dfMeshToModel, GLOBAL_SCALE } from '../src/world/meshReader.js';
 import { layoutRmbBlock, buildGroundTilemap, GROUND_OFFSET, GROUND_TILE_SIZE } from '../src/world/rmbLayout.js';
 import { layoutLocation, RMB_SIDE } from '../src/world/locationLayout.js';
+import { collectBlockFlats, scaledBillboardSize } from '../src/world/rmbFlats.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
 import { trs, multiply, transformPoint, identity } from '../src/world/mat4.js';
 import { Arch3dFile } from '../src/formats/arch3dFile.js';
@@ -223,4 +224,86 @@ test('world: Daggerfall city location layout pinned', { skip: skipReal }, () => 
     assert.ok(b.dfBlock, b.blockName);
     assert.equal(b.layout.groundTiles.length, 16);
   }
+});
+
+test('world: scaledBillboardSize verbatim math', () => {
+  // No scale: size * GlobalScale.
+  assert.deepEqual(scaledBillboardSize({ width: 64, height: 128 }, { width: 0, height: 0 }), {
+    w: 1.6,
+    h: 3.2,
+  });
+  // Negative scale shrinks via trunc-toward-zero (Orc Sergeant 97x109 @ -70):
+  // change = trunc(97 * -70/256) = -26, trunc(109 * -70/256) = -29.
+  const orc = scaledBillboardSize({ width: 97, height: 109 }, { width: -70, height: -70 });
+  approx(orc.w, (97 - 26) * 0.025);
+  approx(orc.h, (109 - 29) * 0.025);
+});
+
+test('world: collectBlockFlats paths and quirks', () => {
+  const scenery = Array.from({ length: 16 }, () =>
+    Array.from({ length: 16 }, () => ({ textureRecord: -1 }))
+  );
+  scenery[2][12] = { textureRecord: 5 }; // -> tiles y = 3
+  scenery[4][15] = { textureRecord: 0 }; // marker, skipped
+  const block = {
+    rmbBlock: {
+      fldHeader: { groundData: { groundScenery: scenery } },
+      miscFlatObjectRecords: [
+        { textureArchive: 210, textureRecord: 29, xPos: 100, yPos: 50, zPos: 200 },
+      ],
+      subRecords: [
+        {
+          xPos: 1000,
+          zPos: 2000,
+          exterior: {
+            blockFlatObjectRecords: [
+              { textureArchive: 197, textureRecord: 3, xPos: 8, yPos: 0, zPos: 8 },
+              { textureArchive: 199, textureRecord: 1, xPos: 0, yPos: 0, zPos: 0 }, // editor, skipped
+              { textureArchive: 504, textureRecord: 2, xPos: 40, yPos: 0, zPos: 40 }, // nature swap
+            ],
+          },
+        },
+      ],
+    },
+  };
+  const flats = collectBlockFlats(block, 510);
+  assert.equal(flats.length, 4);
+
+  // Misc: (X, -Y - 6, Z + 4096) * 0.025.
+  assert.equal(flats[0].archive, 210);
+  approx(flats[0].x, 2.5);
+  approx(flats[0].y, -1.4);
+  approx(flats[0].z, 107.4);
+
+  // Exterior: + unrotated (subX, 0, -subZ) offset.
+  approx(flats[1].x, 8 * 0.025 + 25);
+  approx(flats[1].y, -0.15);
+  approx(flats[1].z, (8 + 4096) * 0.025 - 50);
+  assert.equal(flats[1].archive, 197);
+
+  // Nature range swaps to the climate archive; verbatim DFU assigns the raw
+  // natureFlatsOffsetY to z (suspected upstream y/z typo, kept for parity).
+  assert.equal(flats[2].archive, 510);
+  assert.equal(flats[2].z, -2);
+
+  // Scenery [x][15 - y] with per-tile 256 stride, y at scaled -2.
+  assert.deepEqual(flats[3], {
+    archive: 510,
+    record: 5,
+    x: 2 * 256 * 0.025,
+    y: -2 * 0.025,
+    z: (3 * 256 + 256) * 0.025,
+  });
+});
+
+test('world: MAGEAA00 flats pinned', { skip: skipReal }, () => {
+  const blocks = new BlocksFile();
+  blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA'))));
+  const mage = blocks.getBlockByName('MAGEAA00.RMB');
+  const flats = collectBlockFlats(mage, 504);
+  assert.equal(flats.length, 27);
+  assert.deepEqual(flats[0], { archive: 210, record: 29, x: 84.325, y: -0.05, z: 43.45 });
+  const byArchive = {};
+  for (const f of flats) byArchive[f.archive] = (byArchive[f.archive] || 0) + 1;
+  assert.deepEqual(byArchive, { 201: 2, 210: 3, 212: 10, 213: 1, 504: 11 });
 });

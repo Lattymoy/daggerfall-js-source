@@ -15,6 +15,7 @@ import { DFPalette } from './formats/dfPalette.js';
 import { MapsFile } from './formats/mapsFile.js';
 import { dfMeshToModel } from './world/meshReader.js';
 import { layoutLocation, RMB_SIDE } from './world/locationLayout.js';
+import { collectBlockFlats, scaledBillboardSize } from './world/rmbFlats.js';
 import { perspective, lookAt, trs, multiply } from './world/mat4.js';
 import { Renderer } from './render/renderer.js';
 import { buildGroundMesh } from './render/groundMesh.js';
@@ -107,8 +108,9 @@ async function boot() {
   }
 
   // Per-block scene list: world matrices with the block origin folded in,
-  // plus one ground mesh per block.
+  // plus one ground mesh per block, plus flats grouped into billboard batches.
   const drawList = [];
+  const flatGroups = new Map(); // "archive_record" -> [centers]
   for (const b of loc.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     for (const placed of b.layout.models) {
@@ -119,6 +121,37 @@ async function boot() {
     const groundModel = buildGroundMesh(b.layout.groundTiles, loc.groundArchive);
     for (const sm of groundModel.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
     drawList.push({ mesh: renderer.createMesh(groundModel), matrix: originMatrix });
+
+    for (const flat of collectBlockFlats(b.dfBlock, dfLocation.climate.natureArchive)) {
+      const key = `${flat.archive}_${flat.record}`;
+      if (!flatGroups.has(key)) flatGroups.set(key, []);
+      flatGroups.get(key).push([flat.x + b.originX, flat.y, flat.z + b.originZ]);
+    }
+  }
+
+  // Load any flat archives not already fetched, then build one batch per
+  // (archive, record) with its scaled billboard size.
+  status('loading flat archives');
+  const flatArchives = new Set(
+    [...flatGroups.keys()].map((k) => Number(k.split('_')[0]))
+  );
+  await Promise.all(
+    [...flatArchives].filter((a) => !textureFiles.has(a)).map(async (archive) => {
+      const t = new TextureFile();
+      t.load(await fetchBytes(texName(archive)), texName(archive), palette);
+      textureFiles.set(archive, t);
+    })
+  );
+  const billboardBatches = [];
+  let flatCount = 0;
+  for (const [key, centers] of flatGroups) {
+    const [archive, record] = key.split('_').map(Number);
+    const t = textureFiles.get(archive);
+    if (!t || record >= t.recordCount) continue;
+    uploadRecord(archive, record);
+    const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+    billboardBatches.push(renderer.createBillboardBatch(archive, record, size, centers));
+    flatCount += centers.length;
   }
 
   // Camera.
@@ -150,7 +183,7 @@ async function boot() {
   status(`${locationName} - ${loc.blocks.length} blocks, ${drawList.length} draws`);
   console.log(
     `scene: ${loc.blocks.length} blocks, ${drawList.length} placements, ` +
-    `${gpuMeshes.size} meshes, ${renderer.textures.size} textures, ground archive ${loc.groundArchive}`
+    `${gpuMeshes.size} meshes, ${renderer.textures.size} textures, ${flatCount} flats in ${billboardBatches.length} batches, ground archive ${loc.groundArchive}`
   );
 
   let frames = 0;
@@ -169,10 +202,10 @@ async function boot() {
 
     // Shot vantage scales with the location extent.
     const target = shotMode
-      ? [extentX * 0.42, 6, extentZ * 0.52]
+      ? [extentX * 0.46, 6, extentZ * 0.5]
       : [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
     const eye = shotMode
-      ? [extentX * 0.5, 9, extentZ * 0.78]
+      ? [extentX * 0.565, 11, extentZ * 0.72]
       : cam.pos;
     const proj = perspective(
       Math.PI / 3,
@@ -184,6 +217,17 @@ async function boot() {
 
     renderer.beginFrame(proj, view, lightDir);
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix);
+    // Classic Daggerfall billboards rotate about Y only: right from the view,
+    // up stays world-Y.
+    const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
+    if (shotMode) {
+      const dx = target[0] - eye[0];
+      const dz = target[2] - eye[2];
+      const l = Math.hypot(dx, dz) || 1;
+      camRight[0] = -dz / l;
+      camRight[2] = dx / l;
+    }
+    renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
 
     frames++;
     if (shotMode && frames === 5) window.__shotReady = true;
