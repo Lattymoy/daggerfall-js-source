@@ -51,6 +51,9 @@ import { layoutNature } from './world/terrainNature.js';
 import { StreamingWorldState } from './world/streamingWorld.js';
 import { applyClimate, getGroundArchive, getNatureArchive, isExteriorWindow, SEASON } from './world/climateSwaps.js';
 import { windowEmissionRGB } from './render/windowEmission.js';
+import { SkyFile } from './formats/skyFile.js';
+import { ImgFile } from './formats/imgFile.js';
+import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, nightSkyImageName } from './render/skyRenderer.js';
 import { buildTerrainMesh } from './render/terrainMesh.js';
 import { getWorldClimateSettings, longitudeLatitudeToMapPixel } from './formats/mapsFile.js';
 import { perspective, lookAt, trs, multiply } from './world/mat4.js';
@@ -72,6 +75,31 @@ function parseSeason(params) {
 
 function texName(archive) {
   return `TEXTURE.${String(archive).padStart(3, '0')}`;
+}
+
+// Sky backdrop for a scene: day panorama from the climate's SKY archive
+// (?skyframe=0..63, default DFU's noon 31), or the matching NITE image at
+// night. Returns a draw(yaw, pitch, aspect) closure.
+async function setupSky(gl, params, skyIndex) {
+  const sky = new SkyRenderer(gl);
+  const night = (params.get('window') || 'day') === 'night';
+  if (night) {
+    const name = nightSkyImageName(skyIndex);
+    const img = new ImgFile();
+    img.load(await fetchBytes(name), name);
+    const palName = img.paletteName;
+    const pal = new DFPalette();
+    pal.load(await fetchBytes(palName), palName);
+    img.palette = pal;
+    sky.setPanorama(buildNightSkyPanorama(img.getColor32(img.getDFBitmap(0, 0), -1)));
+  } else {
+    const frame = Math.max(0, Math.min(63, Number(params.get('skyframe') ?? 31)));
+    const skyFile = new SkyFile();
+    const name = SkyFile.indexToFileName(skyIndex);
+    skyFile.load(await fetchBytes(name), name);
+    sky.setPanorama(buildDaySkyPanorama(skyFile, frame));
+  }
+  return sky;
 }
 
 async function boot() {
@@ -186,6 +214,7 @@ async function boot() {
 
   // Per-block scene list: world matrices with the block origin folded in,
   // plus one ground mesh per block, plus flats grouped into billboard batches.
+  const sky = await setupSky(renderer.gl, params, dfLocation.climate.skyBase);
   const cityLights = []; // archive-210 lantern point lights (R3)
   const nightLights = (params.get('window') || 'day') === 'night';
   const CITY_LIGHT_COLOR_F32 = new Float32Array(CITY_LIGHT_COLOR);
@@ -310,6 +339,12 @@ async function boot() {
       CITY_LIGHT_COLOR_F32
     );
     renderer.beginFrame(proj, view, lightDir);
+    {
+      const dx = target[0] - eye[0], dy = target[1] - eye[1], dz = target[2] - eye[2];
+      const horiz = Math.hypot(dx, dz) || 1e-6;
+      sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), Math.PI / 3,
+        canvas.clientWidth / canvas.clientHeight);
+    }
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
     // Classic Daggerfall billboards rotate about Y only: right from the view,
     // up stays world-Y.
@@ -880,6 +915,26 @@ async function bootWorld(canvas, renderer, params, status) {
   const nightLights = (params.get('window') || 'day') === 'night';
   const CITY_LIGHT_COLOR_F32 = new Float32Array(CITY_LIGHT_COLOR);
 
+  // Sky backdrop follows the current pixel's climate; panoramas swap
+  // asynchronously on sky-index change (one frame late at boundaries).
+  const sky = new SkyRenderer(renderer.gl);
+  const skyLoads = new Map();
+  let activeSkyIndex = -1;
+  function requestSky(skyIndex) {
+    if (skyIndex === activeSkyIndex) return;
+    activeSkyIndex = skyIndex;
+    if (!skyLoads.has(skyIndex)) {
+      skyLoads.set(skyIndex, setupSky(renderer.gl, params, skyIndex));
+    }
+    skyLoads.get(skyIndex).then((loaded) => {
+      if (activeSkyIndex === skyIndex) {
+        sky.texture = loaded.texture;
+        sky.clearColor = loaded.clearColor;
+        sky.vSpan = loaded.vSpan;
+      }
+    });
+  }
+
   // --- Shared caches ---------------------------------------------------
   const textureFiles = new Map();
   const texturePromises = new Map();
@@ -1028,7 +1083,7 @@ async function bootWorld(canvas, renderer, params, status) {
     }
 
     built.set(key, {
-      px, py, terrain, models, batches, texRemap, lights: pixelLights, natureCount: nature.length,
+      px, py, terrain, models, batches, texRemap, lights: pixelLights, skyBase: climate.skyBase, natureCount: nature.length,
       location: dfLocation ? dfLocation.name : null,
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
@@ -1160,7 +1215,10 @@ async function bootWorld(canvas, renderer, params, status) {
     } else {
       renderer.setPointLights(new Float32Array(0));
     }
+    const currentEntry = built.get(`${r.current ? r.current.x : state.current.x},${r.current ? r.current.y : state.current.y}`);
+    if (currentEntry) requestSky(currentEntry.skyBase);
     renderer.beginFrame(proj, view, lightDir);
+    sky.draw(cam.yaw, cam.pitch, Math.PI / 3, canvas.clientWidth / canvas.clientHeight);
 
     const allBatches = [];
     for (const p of built.values()) {

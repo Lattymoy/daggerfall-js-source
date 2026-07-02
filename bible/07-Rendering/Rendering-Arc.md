@@ -91,6 +91,30 @@ Daggerfall city: 155 lights; before/after diff pools 28k pixels on walls
 and cobbles - subtle in daylight, correct until night ambient drops.
 `src/world/cityLights.js`, pins in test/world.test.js.
 
+## Milestone R4 - painted skies (SHIPPED)
+
+New format reader `src/formats/skyFile.js`, verbatim SkyFile.cs: 32
+per-frame palettes at 776-stride (+8 header) from offset 0, 64 raw
+512x220 indexed frames (record * 32 + frame) at 549120; record 0 EAST,
+record 1 WEST; per-frame-palette getColor32 with the repo's bottom-up
+convention. All 32 SKY files load; SKY16 frame sums pinned.
+Consumer logic follows DaggerfallSky.cs: frames 0-63 across the day,
+afternoon uses frame 63 - n MIRRORED ([mirror(west)|mirror(east)] - the
+mirror law is pinned as a test against real frames 6/57); the fill above
+the strip is west pixel 0; night swaps to the NITE0?I0.IMG of the sky
+group (0-7 -> 3, 8-15 -> 1, 16-23 -> 2, else 0) duplicated across both
+halves. Presentation is ours (documented equivalence): one fullscreen
+cylindrical pass - each 512-wide half spans 180 degrees (anglePerPixel
+PI/512, so the strip covers ~77.3 degrees of elevation), azimuth 0 (+X,
+map east) starts the east half - replacing DFU's screen-space scrolled
+quads with identical angular coverage. `src/render/skyRenderer.js`;
+program/state saved and restored around the pass. Wired into the
+exterior scene (sky index = climate skyBase) and the streaming world
+(per-pixel skyBase stored at build; panoramas swap async on climate
+boundaries, one frame late). ?skyframe=0..63 (default DFU's 31),
+?window=night for night skies. Verified: dawn 6 blood-red treeline,
+dusk 57 its exact mirror, noon over the streaming world.
+
 ## Queue
 
-Owned by `Rendering.md`. Next up: sky (SKY??.DAT).
+Owned by `Rendering.md`. Next up: day/night lighting cycle.

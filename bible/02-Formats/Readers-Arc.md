@@ -49,3 +49,7 @@ All 8 readers complete, translated 1:1 from DaggerfallConnect with real-data cor
 BSA containers, 8 palettes, 472 texture archives / 11211 frames, 260 IMG + 76 CIF/RCI files,
 10251 meshes, 1295 blocks, 15251 locations across 45 regions, 459 sounds.
 Suite: 52 tests, all green with and without ARENA2_PATH. Next per Port-Doctrine phase plan: World-Arc.
+
+Post-close addition: SKY??.DAT reader (`src/formats/skyFile.js`) shipped
+under Rendering-Arc R4 with its own corpus gate - see
+07-Rendering/Rendering-Arc.md.

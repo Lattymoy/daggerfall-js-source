@@ -108,7 +108,6 @@ World layout:
 | Dungeon water plane + point lights | RDBLayout.AddWater/AddLights prefab paths (levels + light data shipped) | Rendering arc |
 | Torch audio sources | RDBLayout.AddTorchAudioSource | Audio arc |
 | Climate texture swaps on architecture, seasons/snow | ClimateSwaps.cs | Rendering arc |
-| Sky (SKY??.DAT) | SkyFile.cs | Rendering arc |
 | NPC faction metadata / StaticNPC | RMBLayout exterior flats | Characters arc |
 | Townsfolk name banks (GetNameBankOfRegion) | NameHelper | Characters arc (REGION_RACES table already ported) |
 | Animal audio sources | GameObjectHelper | Audio arc |
