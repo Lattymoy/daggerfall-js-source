@@ -27,6 +27,11 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, 
 import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { fetchBytes, texName, parseSeason, createSkyController } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
+import { getStaticDoors } from '../world/staticDoors.js';
+import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding } from '../player/enterExit.js';
+import { pickActivatable } from '../player/activate.js';
+import { buildInteriorContext } from './interiorContext.js';
+import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE } from '../world/interiorLights.js';
 import { Collider } from '../player/collider.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
@@ -154,7 +159,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const model = dfMeshToModel(dfMesh, getTextureSize);
     for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
     const gpu = renderer.createMesh(model);
-    cpuModels.set(modelIdNum, { positions: model.positions, indices: model.indices });
+    cpuModels.set(modelIdNum, { positions: model.positions, indices: model.indices, subMeshes: model.subMeshes, doors: model.doors });
     gpuMeshes.set(modelIdNum, gpu);
     return gpu;
   }
@@ -188,6 +193,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     return -Infinity;
   };
   const collider = new Collider(heightAt);
+  // Building doors (P3): registered pixel-local at build, activated
+  // against the live translation; each carries what the transition
+  // needs (its block + building record + sibling exterior doors).
+  const buildingDoors = []; // {door, pixelKey, dfBlock, recordIndex, climateBase, season}
   const TERRAIN_INDICES = buildTerrainIndices();
 
   async function buildPixel(px, py) {
@@ -264,6 +273,16 @@ export async function bootWorld(canvas, renderer, params, status) {
           const cpu = cpuModels.get(placed.modelIdNum);
           collider.addMesh(key, cpu.positions, cpu.indices, local,
             () => state.pixelTranslation(px, py));
+          // Building models expose their static doors for E-transitions.
+          if (placed.recordIndex !== undefined && cpu.doors && cpu.doors.length) {
+            const staticDoors = getStaticDoors(cpu, 0, placed.recordIndex, local);
+            for (const door of staticDoors) {
+              buildingDoors.push({
+                door, pixelKey: key, dfBlock: b.dfBlock,
+                recordIndex: placed.recordIndex, climateBase, season,
+              });
+            }
+          }
         }
         // No RMB ground plane on terrain (addGroundPlane = false).
         for (const flat of collectBlockFlats(b.dfBlock, natureArchive)) {
@@ -400,7 +419,89 @@ export async function bootWorld(canvas, renderer, params, status) {
       get pos() { return [...player.pos]; },
       warp: (x, y, z) => { player.spawn(x, y, z); playerSpawned = true; },
     };
+    window.__doors = () => buildingDoors.slice(0, 40).map((e, i) => {
+      const d = shiftedDoor(e);
+      return { i, pos: doorWorldPosition(d), normal: doorWorldNormal(d), record: e.recordIndex };
+    });
+    window.__enter = () => tryEnter();
+    window.__exit = () => tryExit();
+    window.__exit = () => tryExit();
+    window.__mode = () => mode;
     window.__frame = 0;
+  }
+
+  // P3: interior transitions. mode swaps the whole frame pipeline;
+  // exitDoors are the entered building's exterior doors (pixel-local,
+  // shifted live for the landing math on the way out).
+  const INTERIOR_LIGHT_DIR = new Float32Array([0.45, 0.8, 0.35]);
+  {
+    const l = Math.hypot(INTERIOR_LIGHT_DIR[0], INTERIOR_LIGHT_DIR[1], INTERIOR_LIGHT_DIR[2]);
+    INTERIOR_LIGHT_DIR[0] /= l; INTERIOR_LIGHT_DIR[1] /= l; INTERIOR_LIGHT_DIR[2] /= l;
+  }
+  let mode = 'exterior';
+  let interiorCtx = null;
+  let exitReturn = null;
+  let prevUse = false;
+  let transitioning = false;
+
+  const shiftedDoor = (entry) => {
+    const [px, py] = entry.pixelKey.split(',').map(Number);
+    const t = state.pixelTranslation(px, py);
+    const m = entry.door.matrix;
+    const matrix = m.slice();
+    matrix[12] = m[12] + t[0];
+    matrix[13] = m[13] + t[1];
+    matrix[14] = m[14] + t[2];
+    return { ...entry.door, matrix };
+  };
+
+  async function tryEnter() {
+    const eye = player.eye;
+    const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+    const targets = buildingDoors.map((entry, i) => ({
+      key: i, aabb: doorWorldAabb(shiftedDoor(entry)),
+    }));
+    const key = pickActivatable(eye, dir, targets, collider);
+    if (key === null) return false;
+    const hit = buildingDoors[key];
+    transitioning = true;
+    try {
+      const ctx = await buildInteriorContext(
+        { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord },
+        hit.dfBlock, 0, hit.recordIndex, hit.climateBase, hit.season);
+      const siblings = buildingDoors.filter((e) =>
+        e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
+      const landing = interiorLanding(
+        doorWorldPosition(shiftedDoor(hit)), ctx.enterMarkers, ctx.doors);
+      if (!landing) throw new Error('no interior landing');
+      exitReturn = { siblings };
+      interiorCtx = ctx;
+      player.collider = ctx.collider;
+      player.spawn(landing[0], landing[1], landing[2]);
+      mode = 'interior';
+      console.log(`interior: ${ctx.drawList.length} draws, ${ctx.doors.length} doors, ${ctx.lights.length} lights`);
+    } finally {
+      transitioning = false;
+    }
+    return true;
+  }
+
+  function tryExit() {
+    const eye = player.eye;
+    const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+    const targets = interiorCtx.doors.map((d, i) => ({ key: i, aabb: doorWorldAabb(d) }));
+    const key = pickActivatable(eye, dir, targets, interiorCtx.collider);
+    if (key === null) return false;
+    const landing = exteriorLanding(
+      doorWorldPosition(interiorCtx.doors[key]),
+      exitReturn.siblings.map(shiftedDoor));
+    interiorCtx.destroy();
+    interiorCtx = null;
+    player.collider = collider;
+    player.spawn(landing[0], landing[1], landing[2]);
+    mode = 'exterior';
+    console.log('exterior: returned at door');
+    return true;
   }
 
   let last = performance.now();
@@ -409,6 +510,40 @@ export async function bootWorld(canvas, renderer, params, status) {
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
+
+    if (mode === 'interior') {
+      // Whole-pipeline swap: interior draws, lighting, fog, collider;
+      // the world sleeps untouched underneath (the early return also
+      // freezes streaming - the interior-local player position must
+      // never feed the recenter logic).
+      const jumpHeld = keys.has('Space');
+      player.update(dt, {
+        forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
+        strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
+        run: keys.has('ShiftLeft'),
+        jump: jumpHeld && !prevJump,
+      }, cam.yaw);
+      prevJump = jumpHeld;
+      cam.pos = player.eye;
+      const useHeld = keys.has('KeyE');
+      if (useHeld && !prevUse) tryExit();
+      prevUse = useHeld;
+
+      const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.05, 500);
+      const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
+      renderer.setLighting(new Float32Array(INTERIOR_AMBIENT), 0);
+      renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
+      renderer.setPointLights(
+        nearestLights(interiorCtx.lights, cam.pos, 16, INTERIOR_LIGHT_RANGE),
+        new Float32Array(INTERIOR_LIGHT_COLOR));
+      renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
+      for (const d of interiorCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
+      const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
+      renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+      requestAnimationFrame(frame);
+      return;
+    }
+
     if (walkMode) {
       if (!playerSpawned && built.has(startKey)) {
         // Drop in above the terrain once the start pixel's collider is up.
@@ -425,6 +560,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         }, cam.yaw);
         prevJump = jumpHeld;
         cam.pos = player.eye;
+        const useHeld = keys.has('KeyE');
+        if (useHeld && !prevUse && !transitioning) {
+          tryEnter().catch((e) => { transitioning = false; console.error(e); });
+        }
+        prevUse = useHeld;
       }
     } else {
       const speed = (keys.has('ShiftLeft') ? 400 : 40) * dt;

@@ -33,8 +33,10 @@ export function layoutRmbBlock(dfBlock) {
   const rmb = dfBlock.rmbBlock;
   const models = [];
 
-  // Exterior building models per subrecord.
-  for (const subRecord of rmb.subRecords) {
+  // Exterior building models per subrecord (recordIndex feeds the
+  // interior transition - PlayerEnterExit keys interiors on it).
+  for (let recordIndex = 0; recordIndex < rmb.subRecords.length; recordIndex++) {
+    const subRecord = rmb.subRecords[recordIndex];
     const subRecordMatrix = trs(
       subRecord.xPos * GLOBAL_SCALE,
       0,
@@ -57,6 +59,7 @@ export function layoutRmbBlock(dfBlock) {
         modelId: obj.modelId,
         modelIdNum: obj.modelIdNum,
         matrix: multiply(subRecordMatrix, modelMatrix),
+        recordIndex,
       });
     }
   }

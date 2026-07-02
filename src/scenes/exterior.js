@@ -121,7 +121,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   for (const [id, dfMesh] of dfMeshes) {
     const model = dfMeshToModel(dfMesh, getTextureSize);
     for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
-    cpuModels.set(id, { positions: model.positions, indices: model.indices });
+    cpuModels.set(id, { positions: model.positions, indices: model.indices, subMeshes: model.subMeshes, doors: model.doors });
     gpuMeshes.set(id, renderer.createMesh(model));
   }
   // Swapped archives can lack the record (27 corpus pairs, e.g. 122_5 ->

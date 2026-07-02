@@ -72,9 +72,41 @@ verbatim), state end, re-activate -> reverse; tween timing pinned
 deterministically in test/action.test.js (headless SwiftShader runs
 ~7 fps - see Testing.md).
 
-Queue (items 1-2 shipped):
+## Milestone P3 - building interior transitions (SHIPPED)
+
+Walk up to any building door in ?world, press E, and you are inside;
+E on an interior door puts you back on the street. Verbatim
+PlayerEnterExit landings (`src/player/enterExit.js`): entering checks
+the exterior door's world position, snaps to the closest interior
+ENTER marker, and lands at the closest INTERIOR static door + its
+normal * (radius + 0.4) = 0.75, with the marker + up * (height * 0.6)
+= 1.08 fallback; exiting lands at the closest exterior sibling door +
+normal * (radius * 3) = 1.05. Static-door geometry rides the mesh
+convention end to end - meshReader stores door plane verts scaled and
+Y-negated, so world position/normal are the placement matrix alone.
+`src/scenes/interiorContext.js` builds one interior against a HOST
+scene's caches (layout, climate swaps with the missing-record prune,
+flat batches, verbatim 210-flat lights, a fresh record-local Collider,
+enter markers + interior doors) and returns a destroyable context -
+the standalone interior scene folds onto it in a later pass.
+World scene: building placements register their static doors
+pixel-local (rmbLayout now carries the building recordIndex); E picks
+via the activation ray with live floating-origin translations; the
+frame pipeline swaps whole - interior ambient/fog/point lights and the
+interior collider - and the early return freezes streaming so the
+interior-local player position never feeds the recenter. Exit uses the
+HIT interior door against all sibling exterior doors. In-engine proof:
+enter lands at the interior door (6 draws / 4 doors / 3 lights pinned
+in the console), the return trip lands exactly 1.05 from a sibling
+door. test/enterexit.test.js pins the offsets, transforms, and
+landing selection.
+
+Queue (items 1-3 shipped):
 1. DONE - grounded movement + gravity + collision (P1).
-2. DONE - activation ray + dungeon action doors/chains (P2). Exterior
-   static-door TRANSITIONS moved to item 3 (scene architecture).
-3. Interior/exterior/dungeon scene transitions via staticDoors,
-   replacing URL params; ladders.
+2. DONE - activation ray + dungeon action doors/chains (P2).
+3. DONE - building interior transitions in ?world (P3).
+4. Exterior scene mirrors the P3 machine (needs a lazy mesh loader);
+   dungeon exitDoors transitions; ladders.
+5. Parent interiors in the building world frame - multi-door exit
+   selection picks by true world proximity and coordinates go
+   seamless; the standalone interior scene folds onto interiorContext.
