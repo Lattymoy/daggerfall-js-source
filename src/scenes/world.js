@@ -1,0 +1,413 @@
+// Milestone 7: ?world (&region=&loc=) renders a location ON its terrain -
+// the location pixel flattened to average height, city tiles stamped into
+// the terrain tilemap, marching-squares transitions elsewhere.
+// Milestone 9: ?world is a floating-origin STREAMING world - terrain
+// pixels build nearest-first around the camera within TerrainDistance 3,
+// locations appear on their pixels, and crossing a pixel boundary
+// recenters the world (streamingWorld.js).
+
+import { Arch3dFile } from '../formats/arch3dFile.js';
+import { BlocksFile } from '../formats/blocksFile.js';
+import { DFPalette } from '../formats/dfPalette.js';
+import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
+import { TextureFile } from '../formats/textureFile.js';
+import { WoodsFile } from '../formats/woodsFile.js';
+import { buildTerrainMesh } from '../render/terrainMesh.js';
+import { windowEmissionRGB } from '../render/windowEmission.js';
+import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
+import { applyClimate, getGroundArchive, getNatureArchive, isExteriorWindow } from '../world/climateSwaps.js';
+import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
+import { lookAt, multiply, perspective, trs } from '../world/mat4.js';
+import { dfMeshToModel } from '../world/meshReader.js';
+import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
+import { StreamingWorldState } from '../world/streamingWorld.js';
+import { layoutNature } from '../world/terrainNature.js';
+import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
+import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
+import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
+import { fetchBytes, texName, parseSeason, createSkyController } from './shared.js';
+
+// Milestone 9 scene: floating-origin streaming world. Terrain pixels
+// stream in nearest-first around the camera within TERRAIN_DISTANCE,
+// locations appear on their pixels, and crossing a pixel boundary
+// recenters the world (StreamingWorld + FloatingOrigin semantics in
+// streamingWorld.js). Everything is stored pixel-local; per-frame
+// placement is pixelTranslation(px, py) under the current compensation.
+export async function bootWorld(canvas, renderer, params, status) {
+  const regionName = params.get('region') || 'Daggerfall';
+  const locationName = params.get('loc') || 'Daggerfall';
+  const season = parseSeason(params);
+
+  status('loading data');
+  const [palBytes, blocksBytes, archBytes, mapsBytes, climateBytes, politicBytes, woodsBytes] =
+    await Promise.all([
+      fetchBytes('ART_PAL.COL'),
+      fetchBytes('BLOCKS.BSA'),
+      fetchBytes('ARCH3D.BSA'),
+      fetchBytes('MAPS.BSA'),
+      fetchBytes('CLIMATE.PAK'),
+      fetchBytes('POLITIC.PAK'),
+      fetchBytes('WOODS.WLD'),
+    ]);
+  const palette = new DFPalette();
+  palette.load(palBytes, 'ART_PAL.COL');
+  const blocks = new BlocksFile();
+  blocks.load(blocksBytes);
+  const arch = new Arch3dFile();
+  arch.load(archBytes);
+  const maps = new MapsFile();
+  maps.load(mapsBytes, climateBytes, politicBytes);
+  const woods = new WoodsFile();
+  if (!woods.load(woodsBytes)) throw new Error('WOODS.WLD failed to load');
+
+  // One location per map pixel game-wide (pinned corpus invariant).
+  status('indexing locations');
+  const locationIndex = new Map();
+  for (let r = 0; r < maps.regionCount; r++) {
+    const region = maps.getRegion(r);
+    if (!region) continue;
+    for (let l = 0; l < region.locationCount; l++) {
+      const loc = maps.getLocation(r, l);
+      if (!loc || !loc.exterior || !loc.exterior.exteriorData) continue;
+      const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
+      locationIndex.set(`${p.x},${p.y}`, loc);
+    }
+  }
+
+  const startLoc = maps.getLocationByName(regionName, locationName);
+  if (!startLoc) throw new Error(`location not found: ${regionName}/${locationName}`);
+  const startPixel = longitudeLatitudeToMapPixel(
+    startLoc.mapTableData.longitude, startLoc.mapTableData.latitude);
+
+  const CITY_LIGHT_COLOR_F32 = new Float32Array(CITY_LIGHT_COLOR);
+  // World clock (R5) + sky controller: panorama follows the current pixel's
+  // climate AND the time of day (async, frame-late at boundaries).
+  const sky = createSkyController(renderer.gl, params);
+  const baseTod = parseTimeOfDay(params.get('tod')) ?? 12 * 60;
+  const timeScale = Number(params.get('timescale') || 0);
+  const bootedAt = performance.now();
+  const minuteNow = () =>
+    (baseTod + ((performance.now() - bootedAt) / 1000) * timeScale) % 1440;
+  const lightsOnAt = (minute) =>
+    params.has('window') ? params.get('window') === 'night' : isCityLightsOn(minute);
+  const worldLightAnimator = new CityLightAnimator(4096, CITY_LIGHT_RANGE);
+
+  // --- Shared caches ---------------------------------------------------
+  const textureFiles = new Map();
+  const texturePromises = new Map();
+  async function getTexture(archive) {
+    if (textureFiles.has(archive)) return textureFiles.get(archive);
+    if (!texturePromises.has(archive)) {
+      texturePromises.set(archive, (async () => {
+        const t = new TextureFile();
+        t.load(await fetchBytes(texName(archive)), texName(archive), palette);
+        textureFiles.set(archive, t);
+        return t;
+      })());
+    }
+    return texturePromises.get(archive);
+  }
+  const getTextureSize = (archive, record) => {
+    const t = textureFiles.get(archive);
+    return { width: t.getWidth(record), height: t.getHeight(record) };
+  };
+  const uploadRecord = (archive, record) => {
+    const t = textureFiles.get(archive);
+    const bitmap = t.getDFBitmap(record, 0);
+    renderer.uploadTexture(archive, record, t.getColor32(bitmap, 0));
+    // Exterior windows also get their emission mask (R2, MaterialReader
+    // semantics: glass texels glow with the active window style).
+    if (isExteriorWindow(archive, record)) {
+      renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap));
+    }
+  };
+  const gpuMeshes = new Map(); // shared across pixels, never destroyed
+  async function getGpuMesh(modelIdNum) {
+    if (gpuMeshes.has(modelIdNum)) return gpuMeshes.get(modelIdNum);
+    const index = arch.getRecordIndex(modelIdNum);
+    if (index === -1) {
+      gpuMeshes.set(modelIdNum, null);
+      return null;
+    }
+    const dfMesh = arch.getMesh(index);
+    for (const sm of dfMesh.subMeshes) await getTexture(sm.textureArchive);
+    const model = dfMeshToModel(dfMesh, getTextureSize);
+    for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
+    const gpu = renderer.createMesh(model);
+    gpuMeshes.set(modelIdNum, gpu);
+    return gpu;
+  }
+
+  // --- Per-pixel build --------------------------------------------------
+  const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+  const tileSide = TERRAIN_SIZE / 128;
+  const built = new Map(); // key -> pixel entry
+
+  async function buildPixel(px, py) {
+    const key = `${px},${py}`;
+    const samples = generateSamples(woods, px, py);
+    const tilemap = new Uint8Array(128 * 128);
+    const dfLocation = locationIndex.get(key) || null;
+    let locationRect = null;
+    let avg = 0;
+    if (dfLocation) {
+      [avg] = calcAvgMaxHeight(samples);
+      locationRect = setLocationTiles(dfLocation, maps, blocks, tilemap);
+      blendLocationTerrain(samples, avg, locationRect);
+    }
+    assignTiles(generateTileData(samples, px, py), tilemap, true);
+    const climate = getWorldClimateSettings(maps.getClimateIndex(px, py));
+    const climateBase = climate.climateType;
+    const groundArchive = getGroundArchive(climateBase, season);
+    const natureArchive = getNatureArchive(climate.natureArchive, season);
+
+    await getTexture(groundArchive);
+    const terrainModel = buildTerrainMesh(tilemap, samples, groundArchive);
+    for (const sm of terrainModel.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
+    const terrain = renderer.createMesh(terrainModel);
+
+    // Flat groups: pixel-local base positions.
+    const groups = new Map();
+    const pixelLights = []; // archive-210 lanterns, pixel-local (R3)
+    const light210 = await getTexture(LIGHTS_ARCHIVE);
+    const lightSize = (record) =>
+      scaledBillboardSize(light210.getSize(record), light210.getScale(record));
+    const addFlat = (archive, record, x, y, z) => {
+      const k = `${archive}_${record}`;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push([x, y, z]);
+    };
+
+    // Per-pixel climate swap table: pixels from the swapped archive, UVs
+    // from the original (the SetDungeonTextures pattern; verbatim
+    // MaterialReader.ChangeClimate semantics).
+    const texRemap = new Map();
+    const models = []; // { gpu, local } - local precomposed pixel-local matrix
+    if (dfLocation) {
+      const loc = layoutLocation(dfLocation, maps, blocks);
+      const tilePos = getLocationTerrainTileOrigin(dfLocation);
+      const locLocal = [tilePos.x * tileSide, avg * worldHeight + 2.0 * 0.025, tilePos.y * tileSide];
+      for (const b of loc.blocks) {
+        const originMatrix = trs(
+          locLocal[0] + b.originX, locLocal[1], locLocal[2] + b.originZ, 0, 0, 0);
+        for (const placed of b.layout.models) {
+          const gpu = await getGpuMesh(placed.modelIdNum);
+          if (!gpu) continue;
+          for (const sm of gpu.subMeshes) {
+            const swapped = applyClimate(sm.textureArchive, sm.textureRecord, climateBase, season);
+            if (swapped === sm.textureArchive) continue;
+            const key = `${sm.textureArchive}_${sm.textureRecord}`;
+            if (texRemap.has(key)) continue;
+            const t = await getTexture(swapped);
+            if (sm.textureRecord >= t.recordCount) continue;
+            uploadRecord(swapped, sm.textureRecord);
+            texRemap.set(key, `${swapped}_${sm.textureRecord}`);
+          }
+          models.push({ gpu, local: multiply(originMatrix, placed.matrix) });
+        }
+        // No RMB ground plane on terrain (addGroundPlane = false).
+        for (const flat of collectBlockFlats(b.dfBlock, natureArchive)) {
+          addFlat(flat.archive, flat.record,
+            locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
+        }
+        for (const light of collectCityLights(b.dfBlock, lightSize)) {
+          pixelLights.push([
+            locLocal[0] + b.originX + light.x,
+            locLocal[1] + light.y,
+            locLocal[2] + b.originZ + light.z,
+          ]);
+        }
+      }
+    }
+
+    const nature = layoutNature(samples, tilemap, {
+      mapPixelX: px,
+      mapPixelY: py,
+      rawWorldHeight: woods.getHeightMapValue(px, py),
+      climateType: climate.climateType,
+      locationRect,
+    });
+    for (const f of nature) addFlat(natureArchive, f.record, f.x, f.y, f.z);
+
+    const batches = [];
+    for (const [k, centers] of groups) {
+      const [archive, record] = k.split('_').map(Number);
+      const t = await getTexture(archive);
+      if (record >= t.recordCount) continue;
+      uploadRecord(archive, record);
+      const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+      batches.push(renderer.createBillboardBatch(archive, record, size, centers));
+    }
+
+    built.set(key, {
+      px, py, terrain, models, batches, texRemap, lights: pixelLights, skyBase: climate.skyBase, natureCount: nature.length,
+      location: dfLocation ? dfLocation.name : null,
+      centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
+      avgY: dfLocation ? avg * worldHeight : 0,
+    });
+    return built.get(key);
+  }
+
+  function destroyPixel(px, py) {
+    const key = `${px},${py}`;
+    const p = built.get(key);
+    if (!p) return;
+    renderer.destroyMesh(p.terrain);
+    for (const b of p.batches) renderer.destroyBatch(b);
+    built.delete(key);
+  }
+
+  // --- Streaming state + player ------------------------------------------
+  const state = new StreamingWorldState();
+  const queue = state.init(startPixel.x, startPixel.y);
+  let building = false;
+
+  status(`building player pixel ${startPixel.x},${startPixel.y}`);
+  const first = queue.shift();
+  const playerPixel = await buildPixel(first.px, first.py);
+
+  // Camera: at the start location's origin, or the pixel centre.
+  const cam = { pos: [TERRAIN_SIZE / 2, playerPixel.centerHeight + 40, TERRAIN_SIZE / 2], yaw: Math.PI, pitch: -0.1 };
+  if (playerPixel.location) {
+    const tilePos = getLocationTerrainTileOrigin(startLoc);
+    const extentZ = startLoc.exterior.exteriorData.height * RMB_SIDE;
+    // Clamp inside the start pixel - the streaming state derives the
+    // current pixel from the camera, so spawning past the edge would
+    // recentre on frame one.
+    cam.pos = [
+      tilePos.x * tileSide + startLoc.exterior.exteriorData.width * RMB_SIDE / 2,
+      playerPixel.avgY + 30,
+      Math.min(tilePos.y * tileSide + extentZ + 120, TERRAIN_SIZE - 1),
+    ];
+  }
+
+  async function pump() {
+    if (building || queue.length === 0) return;
+    building = true;
+    const next = queue.shift();
+    try {
+      await buildPixel(next.px, next.py);
+    } catch (e) {
+      console.error(`pixel ${next.px},${next.py} failed:`, e);
+      state.release(next.px, next.py);
+    }
+    building = false;
+  }
+
+  const keys = new Set();
+  addEventListener('keydown', (e) => keys.add(e.code));
+  addEventListener('keyup', (e) => keys.delete(e.code));
+  canvas.addEventListener('pointerdown', () => canvas.requestPointerLock());
+  addEventListener('mousemove', (e) => {
+    if (document.pointerLockElement !== canvas) return;
+    cam.yaw -= e.movementX * 0.0025;
+    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
+  });
+  const lightDir = new Float32Array([0.45, 0.8, 0.35]);
+  {
+    const l = Math.hypot(lightDir[0], lightDir[1], lightDir[2]);
+    lightDir[0] /= l; lightDir[1] /= l; lightDir[2] /= l;
+  }
+
+  const shotMode = params.has('shot');
+  const initialCount = queue.length + 1;
+  console.log(`world: streaming from ${startPixel.x},${startPixel.y}, ${initialCount} initial pixels, ` +
+    `player pixel ${playerPixel.location || 'wilderness'}, ${playerPixel.natureCount} nature flats`);
+  status(`streaming world - ${locationName}`);
+
+  // Shot-mode hooks: __move displaces the camera; __streamIdle reports
+  // whether the build queue has drained.
+  if (shotMode) {
+    window.__move = (dx, dy, dz) => {
+      cam.pos[0] += dx; cam.pos[1] += dy; cam.pos[2] += dz;
+    };
+    window.__streamIdle = () => queue.length === 0 && !building;
+    window.__builtCount = () => built.size;
+    window.__currentPixel = () => `${state.current.x},${state.current.y}`;
+    window.__cam = () => cam.pos.slice();
+    window.__frame = 0;
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+    const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
+    const speed = (keys.has('ShiftLeft') ? 400 : 40) * dt;
+    if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
+    if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;
+    if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;
+    if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;
+
+    // Streaming step: recentre, enqueue new pixels, drop far ones.
+    const r = state.update(cam.pos);
+    if (r.offset) {
+      cam.pos[0] += r.offset[0]; cam.pos[1] += r.offset[1]; cam.pos[2] += r.offset[2];
+    }
+    if (r.pixelChanged) {
+      queue.push(...r.load);
+      for (const u of r.unload) {
+        destroyPixel(u.px, u.py);
+        state.release(u.px, u.py);
+      }
+      console.log(`stream: entered ${r.current.x},${r.current.y} (load ${r.load.length}, unload ${r.unload.length})`);
+    }
+    pump();
+
+    const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.2, 6000);
+    const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
+    // World clock (R5): sun, ambient, window style, sky frame by time.
+    const minute = minuteNow();
+    renderer.setLighting(exteriorAmbient(minute), sunScale(minute), new Float32Array(SUN_RIG_COLOR));
+    renderer.setWindowEmission(windowEmissionRGB(
+      params.has('window') ? params.get('window') : windowStyleForTime(minute)));
+    const currentEntry = built.get(`${state.current.x},${state.current.y}`);
+    sky.use(currentEntry ? currentEntry.skyBase : 16, minute);
+
+    // Lanterns on 17:00-08:00, flickering verbatim; pixel-local lights
+    // placed under the current compensation, nearest 16 to the camera.
+    if (lightsOnAt(minute)) {
+      worldLightAnimator.tick(dt);
+      const sceneLights = [];
+      for (const p of built.values()) {
+        if (!p.lights.length) continue;
+        const t = state.pixelTranslation(p.px, p.py);
+        for (const l of p.lights) {
+          sceneLights.push({ x: l[0] + t[0], y: l[1] + t[1], z: l[2] + t[2] });
+        }
+      }
+      renderer.setPointLights(
+        nearestLights(sceneLights, cam.pos, 16, worldLightAnimator.ranges),
+        CITY_LIGHT_COLOR_F32
+      );
+    } else {
+      renderer.setPointLights(new Float32Array(0));
+    }
+    renderer.beginFrame(proj, view, sunDirection(minute));
+    sky.draw(cam.yaw, cam.pitch, Math.PI / 3, canvas.clientWidth / canvas.clientHeight);
+
+    const allBatches = [];
+    for (const p of built.values()) {
+      const t = state.pixelTranslation(p.px, p.py);
+      const pixelMatrix = trs(t[0], t[1], t[2], 0, 0, 0);
+      renderer.drawMesh(p.terrain, pixelMatrix);
+      for (const m of p.models) renderer.drawMesh(m.gpu, multiply(pixelMatrix, m.local), p.texRemap);
+      for (const b of p.batches) {
+        b.origin = t;
+        allBatches.push(b);
+      }
+    }
+    const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
+    renderer.drawBillboards(allBatches, camRight, new Float32Array([0, 1, 0]));
+
+    if (shotMode) {
+      window.__frame++;
+      if (queue.length === 0 && !building && !window.__shotReady) {
+        window.__shotReady = true;
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}

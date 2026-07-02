@@ -38,6 +38,14 @@ streaming scene at seconds per frame, so sleeps sample stale state
 - `03-World/Player-Arc.md` - NOT STARTED. Movement, collision, activation; inputs (staticDoors, action records) already shipped.
 - `07-Rendering/Rendering-Arc.md` - ACTIVE. R5 shipped: day/night cycle (?tod=HH:MM, ?timescale). Next: weather or spectral emission.
 
+## Repo layout
+
+`src/main.js` is a thin scene router (37 lines). Scenes live in
+`src/scenes/` (exterior, interior, dungeon, terrain, world) with shared
+helpers in `src/scenes/shared.js`; each file carries its milestone header.
+Data readers in `src/formats/`, world assembly in `src/world/`, GL in
+`src/render/`. Extraction verified pixel-identical across all five scenes.
+
 ## Ground rules carried from project-final
 
 - Desktop-only. No touch controls, no mobile layout.
