@@ -391,9 +391,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         : (windowStyleForWeather(weather) ?? windowStyleForTime(minute))));
     const currentEntry = built.get(`${state.current.x},${state.current.y}`);
     sky.use((currentEntry ? currentEntry.skyBase : 16) + weatherSkyOffset, minute);
-    renderer.setFog(
-      weatherFog.density === 0 && weatherFog.mode === 'linear' && weatherFog.end >= 2400
-        ? 'off' : weatherFog.mode,
+    // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
+    // Sunny/Overcast ARE linear fog to 2400 - the classic distance haze.
+    renderer.setFog(weatherFog.mode,
       weatherFog.density, weatherFog.start, weatherFog.end, sky.renderer.clearColor);
     sky.renderer.fogColor = sky.renderer.clearColor;
     sky.renderer.fogMix = weatherFog.excludeSky ? 0 : 1 - fogFactor(weatherFog, 800);

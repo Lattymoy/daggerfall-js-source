@@ -378,6 +378,11 @@ Proofs: heavy fog collapses the far band to the fog color (stddev 4.6
 vs 58.1 sunny; sky top and horizon geometry converge on (90, 92, 99));
 rain swaps the sky ((102, 105, 117) top vs sunny (243, 249, 248)).
 Precipitation particles + storm lightning are the next milestone.
+AUDIT (post-R12): the scenes' initial "off" shortcut for Sunny/Overcast
+fog deviated from verbatim - DFU never disables fog (SetFog's Nystul
+comment); Sunny IS active linear 0..2400, the classic distance haze.
+Shortcut removed; band-diff vs the pre-R12 baseline shows a clean
+gradient (horizon mean delta 45 tapering to 10 nearest, sky untouched).
 
 ## Queue
 

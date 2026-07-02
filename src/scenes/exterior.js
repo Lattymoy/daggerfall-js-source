@@ -311,9 +311,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     sky.use(dfLocation.climate.skyBase + weatherSkyOffset, minute);
     // Weather fog, colored by the live sky horizon fill (fills DFU's
     // fogColor TODO); heavy fog also swallows the sky.
-    renderer.setFog(
-      weatherFog.density === 0 && weatherFog.mode === 'linear' && weatherFog.end >= 2400
-        ? 'off' : weatherFog.mode,
+    // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
+    // Sunny/Overcast ARE linear fog to 2400 - the classic distance haze.
+    renderer.setFog(weatherFog.mode,
       weatherFog.density, weatherFog.start, weatherFog.end, sky.renderer.clearColor);
     sky.renderer.fogColor = sky.renderer.clearColor;
     sky.renderer.fogMix = weatherFog.excludeSky ? 0 : 1 - fogFactor(weatherFog, 800);
