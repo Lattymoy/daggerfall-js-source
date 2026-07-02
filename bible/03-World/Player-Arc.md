@@ -105,8 +105,12 @@ Queue (items 1-3 shipped):
 1. DONE - grounded movement + gravity + collision (P1).
 2. DONE - activation ray + dungeon action doors/chains (P2).
 3. DONE - building interior transitions in ?world (P3).
-4. Exterior scene mirrors the P3 machine (needs a lazy mesh loader);
+4. Interior ACTION doors on the ActionSystem - interiorContext
+   currently draws blockDoorRecords static and SOLID, so rooms behind
+   closed interior doors are sealed until this lands (audit finding,
+   highest-priority queue item).
+5. Exterior scene mirrors the P3 machine (needs a lazy mesh loader);
    dungeon exitDoors transitions; ladders.
-5. Parent interiors in the building world frame - multi-door exit
+6. Parent interiors in the building world frame - multi-door exit
    selection picks by true world proximity and coordinates go
    seamless; the standalone interior scene folds onto interiorContext.
