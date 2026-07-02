@@ -202,9 +202,29 @@ dark, so the start vantage is legitimately near-ambient (nearest light
 the warm falloff. A live in-program uniform probe (gl.getUniform)
 confirmed the full upload path before the vantage was understood.
 
+## Milestone R7 - dungeon water planes (SHIPPED)
+
+Verbatim RDBLayout.AddWater semantics: one plane per dungeon block
+whose start-marker water level is not the 10000 sentinel, covering the
+RDB footprint (51.2 x 51.2) at the block origin, surface at
+y = -waterLevel * GlobalScale. The level itself was already shipped
+verbatim on layout.waterLevel (-8 * start-marker soundIndex - the same
+value DFU's FindMarkers copies from Billboard.Summary into
+block.WaterLevel before AddWater). Renderer grew a small blended pass:
+shared unit quad, per-quad rect uniform, alpha blend with depth test
+on / depth writes off, drawn after all opaque geometry. The surface
+color (0.10, 0.22, 0.32, 0.62) is a presentation choice - DFU uses a
+modern water prefab, classic used a palette-animated surface; a
+classic-texture upgrade is queued with the terrain atlas pass. Corpus
+pins: 32 of 187 RDB blocks watered, W0000000 at -496; Maorn's Guard
+(Alik'r Desert) pins 11 blocks with W0000011/-248, W0000015/-488,
+W0000022/-144 - the flooded-chamber shot verifies the blend (543k
+blue-blend pixels at the computed surface height). Console pin gains
+", N water".
+
 ## Queue
 
-Owned by `Rendering.md`. Next up: spectral/firewall emission colors
-(with spectral enemies), weather (owns the Fog window style), dungeon
-water plane, terrain atlas pass (+ retire ?terrain), interior 210
-point lights.
+Owned by `Rendering.md`. Next up: interior 210 point lights
+([Interior] prefab), terrain atlas pass (+ retire ?terrain, + classic
+water texture), weather (owns the Fog window style),
+spectral/firewall emission colors when spectral enemies land.

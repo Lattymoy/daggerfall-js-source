@@ -12,6 +12,11 @@ import { isExteriorWindow } from '../world/climateSwaps.js';
 import { collectDungeonLights, DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { CityLightAnimator } from '../world/worldClock.js';
+import { GLOBAL_SCALE } from '../world/meshReader.js';
+import { RDB_SIDE } from '../world/rdbLayout.js';
+
+// Water surface color: presentation choice (see renderer WATER_VS note).
+const WATER_COLOR = [0.10, 0.22, 0.32, 0.62];
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { applyTextureTable } from '../world/dungeonTextures.js';
 import { lookAt, multiply, perspective, trs } from '../world/mat4.js';
@@ -117,6 +122,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const drawList = [];
   const flatGroups = new Map();
   const dungeonLightList = [];
+  const waterQuads = [];
   for (const b of dungeon.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     for (const p of b.layout.placements) {
@@ -136,6 +142,15 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // [Dungeon] prefab flickers every light (Animate on).
     for (const l of collectDungeonLights(b.dfBlock)) {
       dungeonLightList.push({ x: l.x + b.originX, y: l.y, z: l.z + b.originZ, range: l.range });
+    }
+    // R7: one water plane per watered block, verbatim RDBLayout.AddWater -
+    // the block's start-marker water level (10000 = none), plane covering
+    // the RDB footprint at y = -waterLevel * GlobalScale.
+    if (b.layout.waterLevel !== 10000) {
+      waterQuads.push({
+        x: b.originX, z: b.originZ, size: RDB_SIDE,
+        y: -b.layout.waterLevel * GLOBAL_SCALE,
+      });
     }
   }
   const billboardBatches = [];
@@ -177,7 +192,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   status(`${dungeonName} - ${nBlocks} blocks, ${drawList.length} draws`);
   console.log(
     `dungeon: ${nBlocks} blocks, ${drawList.length} draws, table [${dungeon.textureTable}], ` +
-    `start ${JSON.stringify(dungeon.startMarker)}, ${dungeonLightList.length} lights`
+    `start ${JSON.stringify(dungeon.startMarker)}, ${dungeonLightList.length} lights, ${waterQuads.length} water`
   );
 
   // Verbatim dungeon lighting: PlayerAmbientLight.DungeonAmbientLight,
@@ -218,6 +233,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    renderer.drawWater(waterQuads, WATER_COLOR);
 
     frames++;
     if (shotMode) window.__frame = frames;

@@ -440,3 +440,32 @@ test('dungeon: per-light flicker ranges stay in [start - 1, start]', async () =>
     }
   }
 });
+
+test('dungeon: R7 water planes - corpus and location pins', { skip: skipReal }, async () => {
+  const { blocks, maps, getModel } = loadReal();
+  // Corpus: 32 of 187 RDB blocks carry a start-marker water level.
+  let watered = 0;
+  let total = 0;
+  for (let i = 0; i < blocks.count; i++) {
+    if (!blocks.getBlockName(i).endsWith('.RDB')) continue;
+    total++;
+    const layout = layoutRdbBlock(blocks.getBlock(i), i, false, getModel);
+    if (layout.waterLevel !== 10000) watered++;
+  }
+  assert.equal(total, 187);
+  assert.equal(watered, 32);
+  const w0 = layoutRdbBlock(
+    blocks.getBlock(blocks.getBlockIndex('W0000000.RDB')),
+    blocks.getBlockIndex('W0000000.RDB'), false, getModel);
+  assert.equal(w0.waterLevel, -496);
+  // Maorn's Guard: three watered blocks at pinned levels.
+  const loc = maps.getLocationByName("Alik'r Desert", "Maorn's Guard");
+  const d = layoutDungeon(loc, blocks, getModel);
+  assert.equal(d.blocks.length, 11);
+  const levels = d.blocks
+    .filter((b) => b.layout.waterLevel !== 10000)
+    .map((b) => [b.name, b.layout.waterLevel]);
+  assert.deepEqual(levels, [
+    ['W0000011.RDB', -248], ['W0000015.RDB', -488], ['W0000022.RDB', -144],
+  ]);
+});

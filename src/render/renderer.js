@@ -113,6 +113,26 @@ void main() {
   outColor = vec4(tex.rgb * (uTint + pointDiff * uPointColor), 1.0);
 }`;
 
+// Dungeon water: one horizontal quad per watered RDB block, drawn after
+// opaque geometry with alpha blending and no depth writes. The surface
+// color is a presentation choice (DFU uses a modern water prefab; classic
+// used a palette-animated surface) - a classic-texture upgrade is queued.
+const WATER_VS = `#version 300 es
+layout(location=0) in vec2 aXZ; // unit quad 0..1
+uniform mat4 uProj;
+uniform mat4 uView;
+uniform vec4 uRect; // x0, z0, size, y
+void main() {
+  vec3 world = vec3(uRect.x + aXZ.x * uRect.z, uRect.w, uRect.y + aXZ.y * uRect.z);
+  gl_Position = uProj * uView * vec4(world, 1.0);
+}`;
+
+const WATER_FS = `#version 300 es
+precision highp float;
+uniform vec4 uWaterColor;
+out vec4 outColor;
+void main() { outColor = uWaterColor; }`;
+
 const ZERO_ORIGIN = [0, 0, 0];
 
 export class Renderer {
@@ -160,6 +180,23 @@ export class Renderer {
     );
 
     this.bbProgram = this._buildProgram(BB_VS, BB_FS);
+    this.waterProgram = this._buildProgram(WATER_VS, WATER_FS);
+    this.waterUProj = gl.getUniformLocation(this.waterProgram, 'uProj');
+    this.waterUView = gl.getUniformLocation(this.waterProgram, 'uView');
+    this.waterURect = gl.getUniformLocation(this.waterProgram, 'uRect');
+    this.waterUColor = gl.getUniformLocation(this.waterProgram, 'uWaterColor');
+    {
+      // Shared unit XZ quad for water planes.
+      this.waterVao = gl.createVertexArray();
+      gl.bindVertexArray(this.waterVao);
+      const vb = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+      gl.bufferData(gl.ARRAY_BUFFER,
+        new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+      gl.bindVertexArray(null);
+    }
     this.bbUProj = gl.getUniformLocation(this.bbProgram, 'uProj');
     this.bbUView = gl.getUniformLocation(this.bbProgram, 'uView');
     this.bbURight = gl.getUniformLocation(this.bbProgram, 'uRight');
@@ -385,6 +422,34 @@ export class Renderer {
     const gl = this.gl;
     for (const b of batch.buffers) gl.deleteBuffer(b);
     gl.deleteVertexArray(batch.vao);
+  }
+
+  /**
+   * Draw dungeon water planes. Call after all opaque geometry: alpha
+   * blended, depth tested against the world but not written.
+   * @param {Array<{x:number,z:number,size:number,y:number}>} quads
+   * @param {number[]} color - rgba
+   */
+  drawWater(quads, color) {
+    if (!quads.length) return;
+    const gl = this.gl;
+    gl.useProgram(this.waterProgram);
+    gl.uniformMatrix4fv(this.waterUProj, false, this._proj);
+    gl.uniformMatrix4fv(this.waterUView, false, this._view);
+    gl.uniform4fv(this.waterUColor, color);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
+    gl.bindVertexArray(this.waterVao);
+    for (const q of quads) {
+      gl.uniform4f(this.waterURect, q.x, q.z, q.size, q.y);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+    gl.bindVertexArray(null);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.enable(gl.CULL_FACE);
   }
 
   /** Draw billboard batches facing the camera. Call after solid geometry. */
