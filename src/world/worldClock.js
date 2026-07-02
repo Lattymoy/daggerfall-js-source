@@ -144,15 +144,19 @@ export function parseTimeOfDay(value) {
  * [startRange - 1, startRange].
  */
 export class CityLightAnimator {
+  /** startRange: uniform number (city lanterns) or per-light array
+   * (dungeon radii - each light flickers about its own start range). */
   constructor(count, startRange, seed = 0x9d2c5680) {
-    this.startRange = startRange;
+    this._starts = new Float32Array(count);
+    if (typeof startRange === 'number') this._starts.fill(startRange);
+    else this._starts.set(startRange);
     this.variance = 1.0;
     this.speed = 0.4;
     this.framesPerSecond = 14;
     this._accumulator = 0;
     this._rng = new UMRandom(seed >>> 0 || 1);
-    this.ranges = new Float32Array(count).fill(startRange);
-    this._targets = new Float32Array(count).fill(startRange);
+    this.ranges = new Float32Array(this._starts);
+    this._targets = new Float32Array(this._starts);
     this._stepping = new Uint8Array(count);
   }
 
@@ -172,7 +176,7 @@ export class CityLightAnimator {
           }
         } else {
           this._targets[i] =
-            this.startRange - this.variance + this._rng.nextFloat() * this.variance;
+            this._starts[i] - this.variance + this._rng.nextFloat() * this.variance;
           this._stepping[i] = 1;
         }
       }

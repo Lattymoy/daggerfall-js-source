@@ -178,7 +178,33 @@ player-following point light (the rig prefab's second light, white
 0.6) scaled by the same daylight curve; our exterior ambient carries
 the PlayerAmbientLight term only.
 
+## Milestone R6 - dungeon lighting (SHIPPED)
+
+`src/world/dungeonLights.js` collects verbatim RDBLayout.AddLight
+lights: one per RDB object of resource type Light, at
+(X, -Y, Z) * GlobalScale, range = LightResource.Radius * GlobalScale *
+3. Properties from the DaggerfallLight [Dungeon] prefab (read via git
+show): point, intensity 0.8, white, Animate ON - every dungeon light
+flickers with the verbatim DaggerfallLight machine (CityLightAnimator
+generalized to per-light start ranges; targets stay in
+[start - 1, start] per light, pinned). Scene lighting is the verbatim
+PlayerAmbientLight DungeonAmbientLight (0.12) with no sun; the
+billboard program gains the same 16-light loop as solids
+(attenuation-only - billboards have no normals, documented
+equivalence). dungeonLayout block entries retain dfBlock for per-block
+consumers. Shot hooks __move/__frame added to the dungeon scene (probe
+parity with the world scene). Pins: S0000040 24 lights (first at 23.4,
+33, 16, range 4.875), Privateer's Hold 71 across 5 blocks, prefab
+constants. Console pin gains ", 71 lights". VERIFICATION NOTE: pools
+are local by data - dungeon radii are 5-15 scene units and the art is
+dark, so the start vantage is legitimately near-ambient (nearest light
+9.9 units, range 7.5); the pool shot beside the range-15 brazier shows
+the warm falloff. A live in-program uniform probe (gl.getUniform)
+confirmed the full upload path before the vantage was understood.
+
 ## Queue
 
 Owned by `Rendering.md`. Next up: spectral/firewall emission colors
-(with spectral enemies) or weather (owns the Fog window style).
+(with spectral enemies), weather (owns the Fog window style), dungeon
+water plane, terrain atlas pass (+ retire ?terrain), interior 210
+point lights.

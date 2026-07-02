@@ -12,13 +12,12 @@ Current (`src/render/`):
 - `groundMesh.js` - per-tile quads with UV rotate/flip; renderer-side
   equivalent of DFU's tilemap-shader atlas (ledgered departure).
 
-Milestone log: `07-Rendering/Rendering-Arc.md` (R1 climate swaps +
-seasons SHIPPED).
+Milestone log: `07-Rendering/Rendering-Arc.md` (R1 climate swaps,
+R2 window emission, R3 city lanterns, R4 painted skies, R5 day/night
+cycle, R6 dungeon lighting - all SHIPPED).
 
-Owned queue (from Port-Ledger C): window emission materials, point
-lights for archive 210 flats (exterior, interior AND dungeon light data
-shipped), the dungeon water plane (levels shipped), terrain material
-upgrades (the ?world scene draws real terrain tiles via draped per-tile
-quads in terrainMesh.js; an atlas/tilemap shader pass and retiring the
-?terrain elevation-ramp scene land here), sky (SKY??.DAT),
+Owned queue (from Port-Ledger C): the dungeon water plane (levels
+shipped), interior 210 point lights ([Interior] prefab), terrain
+material upgrades (atlas/tilemap shader pass; retiring the ?terrain
+elevation-ramp scene), weather (owns the Fog window style),
 spectral/firewall emission colors when spectral enemies land.

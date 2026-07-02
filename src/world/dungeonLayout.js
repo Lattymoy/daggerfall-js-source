@@ -79,6 +79,7 @@ export function layoutDungeon(dfLocation, blocksFile, getModel) {
       originZ,
       isStartingBlock: block.isStartingBlock,
       layout,
+      dfBlock, // retained for per-block consumers (R6 dungeon lights)
     });
   }
 

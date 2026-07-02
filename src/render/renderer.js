@@ -73,11 +73,13 @@ uniform vec3 uUp;
 uniform vec3 uOrigin;
 uniform vec2 uSize;
 out vec2 vUV;
+out vec3 vBBWorld;
 void main() {
   // Bottom-anchored: centre sits half a height above the placement base.
   vec3 world = aCenter + uOrigin
     + uRight * (aCorner.x * uSize.x)
     + uUp * ((aCorner.y + 0.5) * uSize.y);
+  vBBWorld = world;
   // Textures are bottom-up (v=0 = image bottom), so the quad top
   // (aCorner.y = +0.5) samples v = 1 - matching the mesh path's negated-V
   // convention. The previous 0.5 - aCorner.y flipped every billboard.
@@ -88,13 +90,27 @@ void main() {
 const BB_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
+in vec3 vBBWorld;
 uniform sampler2D uTex;
 uniform vec3 uTint; // time-of-day: ambient + sunColor * sunScale * 0.5
+uniform int uPointCount;
+uniform vec4 uPointLights[16]; // xyz scene-space, w range
+uniform vec3 uPointColor;
 out vec4 outColor;
 void main() {
   vec4 tex = texture(uTex, vUV);
   if (tex.a < 0.5) discard;
-  outColor = vec4(tex.rgb * uTint, 1.0);
+  // Point lights on flats: billboards have no normal, so the term is
+  // attenuation-only (squared linear falloff) - documented equivalence
+  // to Unity's vertex-lit billboards.
+  float pointDiff = 0.0;
+  for (int i = 0; i < 16; i++) {
+    if (i >= uPointCount) break;
+    float d = length(uPointLights[i].xyz - vBBWorld);
+    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
+    pointDiff += att * att;
+  }
+  outColor = vec4(tex.rgb * (uTint + pointDiff * uPointColor), 1.0);
 }`;
 
 const ZERO_ORIGIN = [0, 0, 0];
@@ -152,6 +168,9 @@ export class Renderer {
     this.bbUOrigin = gl.getUniformLocation(this.bbProgram, 'uOrigin');
     this.bbUTex = gl.getUniformLocation(this.bbProgram, 'uTex');
     this.bbUTint = gl.getUniformLocation(this.bbProgram, 'uTint');
+    this.bbUPointCount = gl.getUniformLocation(this.bbProgram, 'uPointCount');
+    this.bbUPointLights = gl.getUniformLocation(this.bbProgram, 'uPointLights');
+    this.bbUPointColor = gl.getUniformLocation(this.bbProgram, 'uPointColor');
     this._proj = null;
     this._view = null;
 
@@ -390,6 +409,10 @@ export class Renderer {
     } else {
       gl.uniform3f(this.bbUTint, 1, 1, 1);
     }
+    const bbCount = this._pointLights.length >> 2;
+    gl.uniform1i(this.bbUPointCount, bbCount);
+    if (bbCount > 0) gl.uniform4fv(this.bbUPointLights, this._pointLights);
+    gl.uniform3fv(this.bbUPointColor, this._pointColor);
     gl.activeTexture(gl.TEXTURE0);
     gl.disable(gl.CULL_FACE);
     for (const b of batches) {

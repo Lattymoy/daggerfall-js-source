@@ -39,7 +39,7 @@ reads the YAML from the object store (used to verify the R5 constants).
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9 shipped: floating-origin streaming world (?world). Build queue empty.
 - `03-World/Player-Arc.md` - NOT STARTED. Movement, collision, activation; inputs (staticDoors, action records) already shipped.
-- `07-Rendering/Rendering-Arc.md` - ACTIVE. R5 shipped: day/night cycle (?tod=HH:MM, ?timescale). Next: weather or spectral emission.
+- `07-Rendering/Rendering-Arc.md` - ACTIVE. R6 shipped: dungeon lighting (verbatim ambient 0.12 + flickering RDB point lights). Next: dungeon water plane or interior lights.
 
 ## Repo layout
 

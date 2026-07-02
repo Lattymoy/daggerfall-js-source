@@ -404,3 +404,39 @@ test('dungeon: RDB corpus - every block lays out clean, resource closure holds',
   assert.equal(castles, 5);
   assert.equal(w0, -496);
 });
+
+test('dungeon: R6 point lights - verbatim RDB Light collection', { skip: skipReal }, async () => {
+  const { collectDungeonLights, DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } =
+    await import('../src/world/dungeonLights.js');
+  const { blocks, maps, getModel } = loadReal();
+  // Single block pin.
+  const blk = blocks.getBlock(blocks.getBlockIndex('S0000040.RDB'));
+  const single = collectDungeonLights(blk);
+  assert.equal(single.length, 24);
+  approx(single[0].x, 23.4, 1e-6);
+  approx(single[0].y, 33, 1e-6);
+  approx(single[0].z, 16, 1e-6);
+  approx(single[0].range, 4.875, 1e-6);
+  // Whole pinned dungeon (Privateer's Hold): 71 lights across 5 blocks.
+  const loc = maps.getLocationByName('Daggerfall', "Privateer's Hold");
+  const d = layoutDungeon(loc, blocks, getModel);
+  let total = 0;
+  for (const b of d.blocks) total += collectDungeonLights(b.dfBlock).length;
+  assert.equal(total, 71);
+  // Prefab constants.
+  assert.deepEqual([...DUNGEON_AMBIENT], [0.12, 0.12, 0.12]);
+  assert.deepEqual([...DUNGEON_LIGHT_COLOR], [0.8, 0.8, 0.8]);
+});
+
+test('dungeon: per-light flicker ranges stay in [start - 1, start]', async () => {
+  const { CityLightAnimator } = await import('../src/world/worldClock.js');
+  const starts = [4.875, 7.5, 15, 5.625];
+  const a = new CityLightAnimator(starts.length, starts);
+  for (let t = 0; t < 300; t++) {
+    a.tick(1 / 60);
+    for (let i = 0; i < starts.length; i++) {
+      assert.ok(a.ranges[i] >= starts[i] - 1 - 0.4 - 1e-6, `low ${i}`);
+      assert.ok(a.ranges[i] <= starts[i] + 1e-6, `high ${i}`);
+    }
+  }
+});

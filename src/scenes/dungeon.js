@@ -9,6 +9,9 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
 import { TextureFile } from '../formats/textureFile.js';
 import { isExteriorWindow } from '../world/climateSwaps.js';
+import { collectDungeonLights, DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
+import { nearestLights } from '../world/cityLights.js';
+import { CityLightAnimator } from '../world/worldClock.js';
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { applyTextureTable } from '../world/dungeonTextures.js';
 import { lookAt, multiply, perspective, trs } from '../world/mat4.js';
@@ -113,6 +116,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
 
   const drawList = [];
   const flatGroups = new Map();
+  const dungeonLightList = [];
   for (const b of dungeon.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     for (const p of b.layout.placements) {
@@ -126,6 +130,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const key = `${f.archive}_${f.record}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([f.x + b.originX, f.y, f.z + b.originZ]);
+    }
+    // R6: one point light per RDB Light object, verbatim RDBLayout.AddLight
+    // (position (X, -Y, Z) * scale, range = radius * scale * 3). The
+    // [Dungeon] prefab flickers every light (Animate on).
+    for (const l of collectDungeonLights(b.dfBlock)) {
+      dungeonLightList.push({ x: l.x + b.originX, y: l.y, z: l.z + b.originZ, range: l.range });
     }
   }
   const billboardBatches = [];
@@ -167,8 +177,21 @@ export async function bootDungeon(canvas, renderer, params, status) {
   status(`${dungeonName} - ${nBlocks} blocks, ${drawList.length} draws`);
   console.log(
     `dungeon: ${nBlocks} blocks, ${drawList.length} draws, table [${dungeon.textureTable}], ` +
-    `start ${JSON.stringify(dungeon.startMarker)}`
+    `start ${JSON.stringify(dungeon.startMarker)}, ${dungeonLightList.length} lights`
   );
+
+  // Verbatim dungeon lighting: PlayerAmbientLight.DungeonAmbientLight,
+  // no sun; every light flickers (DaggerfallLight Animate).
+  renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
+  const flicker = new CityLightAnimator(
+    dungeonLightList.length, dungeonLightList.map((l) => l.range));
+
+  if (shotMode) {
+    // Probe hooks (parity with the world scene): displace the camera and
+    // frame-sync instead of sleeping.
+    window.__move = (dx, dy, dz) => { cam.pos[0] += dx; cam.pos[1] += dy; cam.pos[2] += dz; };
+    window.__frame = 0;
+  }
 
   let frames = 0;
   let last = performance.now();
@@ -187,12 +210,17 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.05, 800);
     const view = lookAt(cam.pos, target, [0, 1, 0]);
 
+    flicker.tick(dt);
+    renderer.setPointLights(
+      nearestLights(dungeonLightList, cam.pos, 16, flicker.ranges),
+      new Float32Array(DUNGEON_LIGHT_COLOR));
     renderer.beginFrame(proj, view, lightDir);
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
 
     frames++;
+    if (shotMode) window.__frame = frames;
     if (shotMode && frames === 5) window.__shotReady = true;
     requestAnimationFrame(frame);
   }
