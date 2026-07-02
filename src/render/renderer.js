@@ -694,6 +694,11 @@ export class Renderer {
    */
   drawMesh(mesh, modelMatrix, texRemap = null) {
     const gl = this.gl;
+    // Every draw entry point owns its program binding (drawTerrain /
+    // drawBillboards / drawWater already do) - R9 interleaved terrain
+    // draws before the model loop, which silently ran meshes on the
+    // terrain program and vanished every building (caught by Mac).
+    gl.useProgram(this.program);
     gl.uniformMatrix4fv(this.uModel, false, modelMatrix);
     gl.bindVertexArray(mesh.vao);
     for (const sm of mesh.subMeshes) {
