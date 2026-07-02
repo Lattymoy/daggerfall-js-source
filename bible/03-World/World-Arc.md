@@ -4,6 +4,39 @@ Assemble Daggerfall's world from decoded data onto our WebGL2 stack.
 Data math is ported 1:1 from DFU (MeshReader.cs geometry paths, RMBLayout.cs);
 rendering is ours per Port-Doctrine.
 
+## Milestone 5 - RDB dungeons + action records (SHIPPED)
+
+`src/world/rdbLayout.js` ports RDBLayout.cs 1:1: model matrix is
+T * Rz * Rx * Ry (NOT the RMB TRS order - ledgered); exit doors (70300)
+only in the starting block; action doors are DOR/DDR/NEW/CAV refs (red
+brick 72100 exempt) placed closed with the 16-entry starting-lock table;
+static doors accumulate per model; flats at (X, -Y, Z) * scale with editor
+199 as data-only markers (record 10 start - carrying water level
+-8 * soundIndex else 10000 and castleBlock = magnitude != 0 - record 8
+enter) and fixed-treasure 216 hidden; lights as point data
+(radius * scale). Action records port AddAction verbatim: enum-defined
+flag/trigger guards, translation vectors negating x/z, rotation vectors /
+RotationDivisor, PositiveX..NegativeZ flag cases (duration 50, magnitude
+axisRaw * 8), LID/WHE rotation overrides, the TRP raw-axis-13 hack, and
+the flat-action axis = magnitude quirk; links key on obj.position and
+resolve next/prev. `src/world/dungeonTextures.js` +
+`src/formats/dfRandom.js` port the classic texture table (LCG pinned
+against K&R rand; Privateer's Hold seed 50050 + Woodlands ->
+[23,22,19,22,20,368]); UVs keep original-archive sizes while pixels come
+from the remapped archive, verbatim SetDungeonTextures order.
+`src/world/dungeonLayout.js` ports DaggerfallDungeon: blocks at
+(X, 0, Z) * RDBSide (51.2), start/enter markers from the starting block,
+RemoveOverlappingDoors (exit-centre seed in dungeon-root space without the
+block origin - benign, start block sits at 0,0 - then 1.4-tolerance
+disable in block order). Corpus: all 187 RDBs lay out clean; placements
+20487 + action doors 2475 = 22962 models and flats 7720 + markers 4518 =
+12238 close EXACTLY against the Readers-Arc resource pins; 4268 lights,
+195 static doors, 5843 links, 32 wet blocks, 5 castle blocks. Scene:
+?dungeon=<name> (&region=), camera at the start marker. Routed onward:
+enemies (Characters), treasure/loot (Systems), water plane + point lights
+(Rendering), torch/animal audio (Audio), door/action behavior (Player).
+Pins in test/dungeon.test.js.
+
 ## Milestone 4 - building interiors + doors (SHIPPED)
 
 ModelDoor extraction runs inside meshReader's vertex pass, verbatim DFU
@@ -101,8 +134,7 @@ via T(48, 0, 25.6) * Ry(-270deg).
 
 ## Queue (in order, one at a time)
 
-1. RDB dungeon layout (RDBLayout.cs) with action records.
-2. Terrain: WOODS.WLD heightmap reader + streaming world.
+1. Terrain: WOODS.WLD heightmap reader + streaming world.
 
 ## Testing
 

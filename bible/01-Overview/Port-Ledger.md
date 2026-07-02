@@ -63,6 +63,13 @@ World layout:
   scope); archive 156 (Scourg exterior) only exempts the base-archive
   reduction and never becomes a door; ruin-enter 331 record 0 is plain
   stone, skipped.
+- RDB model matrix composes T * Rz * Rx * Ry - a different rotation order
+  than RMB's TRS (Ry * Rx * Rz). Red-brick doors (72100) carry the DOR tag
+  but are never action doors. Flat actions pass the flat's MAGNITUDE as
+  the raw axis. TRP objects with raw axis 13 rotate NegativeX at 400 (DFU
+  bumps classic's 392 so the player cannot stick). LID/WHE force fixed
+  rotations. RemoveOverlappingDoors seeds the exit-door centre WITHOUT the
+  block origin (benign: start blocks sit at grid 0,0).
 - Interiors: prop models (ObjectType 3) keep +Y UNNEGATED then anchor to
   the model's lowest vertex Y; IsBadInteriorModel repairs classic data by
   filtering misplaced model 31000 at 60 block/record combos across 27
@@ -78,8 +85,11 @@ World layout:
 | Interior people flats | DaggerfallInterior.AddPeople | Characters arc |
 | Interior furniture actions, house containers, loot, spawn points | DaggerfallInterior AddFurnitureAction/MakeHouseContainer/AddSpawnPoints | Systems arc |
 | Point lights for interior 210 flats | DaggerfallInterior.AddLight | Rendering arc (with the exterior 210 row) |
-| RDB dungeon layout + action records | RDBLayout.cs | World-Arc queue 1 |
-| Terrain heightmap + streaming | WoodsFile.cs, StreamingWorld | World-Arc queue 2 |
+| Terrain heightmap + streaming | WoodsFile.cs, StreamingWorld | World-Arc queue 1 |
+| Dungeon enemies (fixed + random) | RDBLayout.AddFixedEnemies/AddRandomEnemies | Characters arc |
+| Dungeon treasure piles + loot | RDBLayout AssignFixedTreasure/AddRandomTreasure | Systems arc |
+| Dungeon water plane + point lights | RDBLayout.AddWater/AddLights prefab paths (levels + light data shipped) | Rendering arc |
+| Torch audio sources | RDBLayout.AddTorchAudioSource | Audio arc |
 | Climate texture swaps on architecture, seasons/snow | ClimateSwaps.cs | Rendering arc |
 | Window emission maps | getWindowColors32 is ported; material path is not | Rendering arc |
 | Point lights for archive 210 flats | RMBLayout.AddLights prefab path | Rendering arc |

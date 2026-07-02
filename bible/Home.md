@@ -20,7 +20,7 @@ Read `01-Overview/Port-Doctrine.md` before touching anything.
 ## Active arcs
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
-- `03-World/World-Arc.md` - ACTIVE. Milestone 4 shipped: building interiors + static doors (6832 interiors lay out clean; ?interior=BLOCK:record).
+- `03-World/World-Arc.md` - ACTIVE. Milestone 5 shipped: RDB dungeons + action records (187 RDBs close against reader pins; ?dungeon=<name>).
 
 ## Ground rules carried from project-final
 
