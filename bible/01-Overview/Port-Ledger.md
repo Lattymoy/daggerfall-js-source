@@ -107,6 +107,11 @@ World layout:
 | Dungeon treasure piles + loot | RDBLayout AssignFixedTreasure/AddRandomTreasure | Systems arc |
 | Dungeon water plane + point lights | RDBLayout.AddWater/AddLights prefab paths (levels + light data shipped) | Rendering arc |
 | Torch audio sources | RDBLayout.AddTorchAudioSource | Audio arc |
+| Non-movement RDB action flags: CastSpell, Hurt21-25, Poison, DrainMagicka | DaggerfallAction delegates | Combat arc (magic/damage) |
+| Non-movement RDB action flags: ShowText, ShowTextWithInput, DoorText | DaggerfallAction delegates | UI arc (message boxes) + Systems (text records) |
+| Non-movement RDB action flags: Teleport, Activate, LockDoor, UnlockDoor | DaggerfallAction delegates | Player arc (teleporters) + Systems (locks; P2 skips the IsLocked path) |
+| Platform riding (velocity inheritance while standing on movers) | DFU parents the player transform | Player arc |
+| Swimming + levitation motor | LevitateMotor, GetSwimSpeed | Player arc |
 | NPC faction metadata / StaticNPC | RMBLayout exterior flats | Characters arc |
 | Townsfolk name banks (GetNameBankOfRegion) | NameHelper | Characters arc (REGION_RACES table already ported) |
 | Animal audio sources | GameObjectHelper | Audio arc |

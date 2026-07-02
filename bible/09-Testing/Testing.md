@@ -30,7 +30,7 @@ Node 22). Suite: 132 tests across 22 files.
 
 Two tiers per module:
 1. **Synthetic fixtures** - in-memory data built inside the test. Always run;
-   CI stays green with no game data (82 pass, 49 skip).
+   CI stays green with no game data (83 pass, 49 skip).
 2. **Real-data validation** - gated on `ARENA2_PATH`; skip cleanly when
    absent. Pin observed counts, names, ids, checksums, and structural
    closure invariants.
