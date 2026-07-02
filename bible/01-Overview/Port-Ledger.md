@@ -13,7 +13,6 @@ work queue routed to arcs.
 | Characters/paperdoll | Mac's voxel system | Port-Doctrine |
 | Music (HMI/XMI, MIDI.BSA) | Routed to Audio arc; DFU has no reader for it (Unity-side synthesis) | Mac, Readers-Arc close |
 | Spectral/firewall emission colors (BaseImageFile helpers) | Routed to Rendering arc with spectral enemies | Mac ("best option") |
-| Ground plane | Streaming terrain now runs DFU's verbatim tilemap shader (R9); the per-tile-quad departure remains ONLY for the exterior scene's RMB groundMesh, conversion queued | Renderer-side (code authority) |
 | Billboards | Vertex-shader expansion, Y-locked, batched per (archive, record) instead of Unity GameObjects/BillboardBatch | Renderer-side |
 | FaceUVTool arithmetic | JS doubles instead of C# float mix; (Int32) casts become Math.trunc | Documented in faceUVTool.js, validated against corpus |
 | Data access | Bytes in, objects out; no FileProxy/disk-usage modes | Runtime difference |

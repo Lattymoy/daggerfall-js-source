@@ -51,7 +51,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9 shipped: floating-origin streaming world (?world). Build queue empty.
 - `03-World/Player-Arc.md` - NOT STARTED. Movement, collision, activation; inputs (staticDoors, action records) already shipped.
-- `07-Rendering/Rendering-Arc.md` - ACTIVE. R9 shipped: terrain tilemap-shader pass (verbatim decode + conversion, ?terrain retired). Next: exterior groundMesh conversion or weather.
+- `07-Rendering/Rendering-Arc.md` - ACTIVE. R10 shipped: exterior ground on the tilemap shader (groundMesh retired, Ledger A ground row closed). Next: weather.
 
 ## Repo layout
 
