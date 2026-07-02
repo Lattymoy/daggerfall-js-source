@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 100 tests across 15 files.
+Node 22). Suite: 101 tests across 15 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -16,14 +16,14 @@ Node 22). Suite: 100 tests across 15 files.
 | interior.test.js | 7 | ModelDoor extraction, static doors, interior layout, 6832-interior corpus |
 | maps.test.js | 9 | 62 regions, converters, climate, city + Privateer's |
 | snd.test.js | 3 | 459 sounds, byte-exact header, zero-length record 5 |
-| streaming.test.js | 6 | world-coord conversions, nearest-first 7x7, crossing offsets + column swaps, two-pixel jumps, vertical recenter, 30-crossing floating-origin invariant |
+| streaming.test.js | 7 | world-coord conversions, nearest-first 7x7, crossing offsets + column swaps, two-pixel jumps, vertical recenter, 30-crossing floating-origin invariant, 2000-step invariant fuzz |
 | terrain.test.js | 14 | WOODS.WLD reader + corpus pins, perlin, cubic, sampler pins, umRandom (float + int), marching-squares lookup, blend flattening, Daggerfall-on-terrain integration, 15251-location corpus sweep, terrain key, nature scatter rules + integration |
 | world.test.js | 10 | mat4, meshReader, rmbLayout, location grid, flats, nature-quirk dead-path pin |
 | manifest.test.js | 1 | drift guard: this table and the total against the real suite |
 
 Two tiers per module:
 1. **Synthetic fixtures** - in-memory data built inside the test. Always run;
-   CI stays green with no game data (59 pass, 41 skip).
+   CI stays green with no game data (60 pass, 41 skip).
 2. **Real-data validation** - gated on `ARENA2_PATH`; skip cleanly when
    absent. Pin observed counts, names, ids, checksums, and structural
    closure invariants.

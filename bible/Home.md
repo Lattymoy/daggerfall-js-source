@@ -13,6 +13,10 @@ Verify doc diffs in `git diff` before committing, same as code.
 Sprite-orientation checks must compare close-up render crops against
 the raw record art - a distant screenshot passed a vertically flipped
 billboard shader for six milestones (caught by Mac after M8).
+Playwright probes of the live frame loop must frame-sync on the
+shot-mode __frame counter, never sleep - SwiftShader renders the
+streaming scene at seconds per frame, so sleeps sample stale state
+(M9 audit probe initially reported zero crossings for a real flight).
 
 ## Sections
 

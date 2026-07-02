@@ -30,7 +30,10 @@ const VERTICAL_THRESHOLD = 500;
 const SCENE_MAP_RATIO = 1 / GLOBAL_SCALE;
 const NATIVE_PIXEL = 32768; // MapsFile world units per map pixel
 
-/** Verbatim MapsFile.WorldCoordToMapPixel (truncating division). */
+/** Verbatim MapsFile.WorldCoordToMapPixel (truncating division). DFU
+ * casts the accumulated float to int first; trunc(trunc(w) / k) equals
+ * trunc(w / k) for positive integer k, so the single trunc here is the
+ * same mapping. */
 export function worldCoordToMapPixel(worldX, worldZ) {
   return {
     x: Math.trunc(worldX / NATIVE_PIXEL),
@@ -57,10 +60,12 @@ export class StreamingWorldState {
     return `${px},${py}`;
   }
 
-  /** Start streaming with the player's scene position on this pixel. */
+  /** Start streaming with the player's scene position on this pixel.
+   * Verbatim ResetStreamingWorld: x/z compensation zeroes, the vertical
+   * component SURVIVES re-inits. */
   init(mapPixelX, mapPixelY) {
     this.mapOrigin = { x: mapPixelX, y: mapPixelY };
-    this.compensation = [0, 0, 0];
+    this.compensation = [0, this.compensation[1], 0];
     this.current = { x: mapPixelX, y: mapPixelY };
     this.loaded.clear();
     return this._loadList();

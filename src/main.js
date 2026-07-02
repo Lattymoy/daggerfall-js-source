@@ -995,7 +995,7 @@ async function bootWorld(canvas, renderer, params, status) {
   }
 
   const shotMode = params.has('shot');
-  let initialCount = queue.length + 1;
+  const initialCount = queue.length + 1;
   console.log(`world: streaming from ${startPixel.x},${startPixel.y}, ${initialCount} initial pixels, ` +
     `player pixel ${playerPixel.location || 'wilderness'}, ${playerPixel.natureCount} nature flats`);
   status(`streaming world - ${locationName}`);
@@ -1007,6 +1007,10 @@ async function bootWorld(canvas, renderer, params, status) {
       cam.pos[0] += dx; cam.pos[1] += dy; cam.pos[2] += dz;
     };
     window.__streamIdle = () => queue.length === 0 && !building;
+    window.__builtCount = () => built.size;
+    window.__currentPixel = () => `${state.current.x},${state.current.y}`;
+    window.__cam = () => cam.pos.slice();
+    window.__frame = 0;
   }
 
   let last = performance.now();
@@ -1054,8 +1058,11 @@ async function bootWorld(canvas, renderer, params, status) {
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(allBatches, camRight, new Float32Array([0, 1, 0]));
 
-    if (shotMode && queue.length === 0 && !building && !window.__shotReady) {
-      window.__shotReady = true;
+    if (shotMode) {
+      window.__frame++;
+      if (queue.length === 0 && !building && !window.__shotReady) {
+        window.__shotReady = true;
+      }
     }
     requestAnimationFrame(frame);
   }

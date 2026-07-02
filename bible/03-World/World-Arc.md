@@ -32,6 +32,21 @@ compensation. tools/screenshot.mjs gained SHOT_TIMEOUT and SHOT_EVAL
 invariant pinned: after any number of crossings the current pixel's
 frame sits at the origin and native coordinates round-trip exactly.
 Pins in test/streaming.test.js.
+AUDIT NOTE (M9 audit): re-diffed against StreamingWorld.cs +
+FloatingOrigin.cs - two corrections landed: init now PRESERVES the
+vertical compensation across re-inits (verbatim ResetStreamingWorld
+zeroes only x/z), and the closed-form trunc(w / 32768) is documented as
+equal to DFU's cast-then-divide (both truncate toward zero). A
+2000-step fuzz (wander / multi-pixel teleports / vertical spikes) holds
+five invariants per step: post-recenter |y| <= 500, the current pixel
+frame at the origin, the camera inside the pixel frame, exact native
+round-trips, and the loaded set exactly the 7x7. A live Playwright
+flight probe (test-harness/stream-flight-probe.mjs) round-trips a
+4-crossing path: built count returns to exactly 49 (GPU destroy /
+release cycle verified live), zero page errors. Perf note: under
+SwiftShader the 49-pixel scene renders at seconds per frame (software
+raster; the desktop-GPU target is unaffected) - live-frame probes must
+frame-sync on the shot-mode __frame counter rather than sleep.
 
 ## Milestone 8 - nature flats on terrain (SHIPPED)
 

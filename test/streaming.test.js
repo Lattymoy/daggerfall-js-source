@@ -134,3 +134,45 @@ test('streaming: long flight keeps the origin floating and coords exact', () => 
   // Loaded set stays exactly the 7x7.
   assert.equal(s.loaded.size, 49);
 });
+
+test('streaming: 2000-step fuzz holds every invariant', async () => {
+  const { UMRandom } = await import('../src/formats/umRandom.js');
+  const rng = new UMRandom(0xdead1234);
+  const s = new StreamingWorldState();
+  s.init(207, 213);
+  const cam = [TERRAIN_SIZE / 2, 100, TERRAIN_SIZE / 2];
+  for (let step = 0; step < 2000; step++) {
+    const roll = rng.nextFloat();
+    if (roll < 0.75) {
+      // Wander with sub-pixel jitter, sometimes crossing.
+      cam[0] += rng.nextFloatRange(-900, 900);
+      cam[2] += rng.nextFloatRange(-900, 900);
+    } else if (roll < 0.9) {
+      // Teleport several pixels.
+      cam[0] += rng.nextIntRange(-4, 5) * TERRAIN_SIZE;
+      cam[2] += rng.nextIntRange(-4, 5) * TERRAIN_SIZE;
+    } else {
+      // Vertical spike.
+      cam[1] = rng.nextFloatRange(-900, 900);
+    }
+    const r = s.update(cam);
+    if (r.offset) for (let a = 0; a < 3; a++) cam[a] += r.offset[a];
+    for (const u of r.unload) s.release(u.px, u.py);
+
+    // Invariants after every step:
+    // 1) Vertical stays inside the threshold post-recenter.
+    assert.ok(cam[1] >= -500 && cam[1] <= 500, `y ${cam[1]}`);
+    // 2) The current pixel's frame floats at the origin (x/z).
+    const t = s.pixelTranslation(s.current.x, s.current.y);
+    assert.ok(Math.abs(t[0]) < 1e-6 && Math.abs(t[2]) < 1e-6, `frame ${t}`);
+    // 3) The camera sits inside the current pixel's local frame.
+    assert.ok(cam[0] - t[0] >= -1e-6 && cam[0] - t[0] < TERRAIN_SIZE + 1e-6, `x ${cam[0]}`);
+    assert.ok(cam[2] - t[2] >= -1e-6 && cam[2] - t[2] < TERRAIN_SIZE + 1e-6, `z ${cam[2]}`);
+    // 4) Native coordinates round-trip to the current pixel.
+    const w = s.worldCoords(cam);
+    assert.deepEqual(worldCoordToMapPixel(w.x, w.z), { x: s.current.x, y: s.current.y });
+    // 5) The loaded set is exactly the desired 7x7 after releases.
+    assert.equal(s.loaded.size, 49);
+    for (const p of s.loaded.values()) assert.ok(s.inRange(p.px, p.py));
+  }
+});
