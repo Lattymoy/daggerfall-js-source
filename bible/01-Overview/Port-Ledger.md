@@ -17,7 +17,7 @@ work queue routed to arcs.
 | Billboards | Vertex-shader expansion, Y-locked, batched per (archive, record) instead of Unity GameObjects/BillboardBatch | Renderer-side |
 | FaceUVTool arithmetic | JS doubles instead of C# float mix; (Int32) casts become Math.trunc | Documented in faceUVTool.js, validated against corpus |
 | Data access | Bytes in, objects out; no FileProxy/disk-usage modes | Runtime difference |
-| Terrain ground-detail noise | Ken Perlin reference improved noise (perlin.js) in place of Unity's engine-internal Mathf.PerlinNoise (not in DFU source); same role, different samples; all pins pin our pipeline | PENDING Mac review (flagged at M6 ship) |
+| Terrain ground-detail + tile-weight noise | Ken Perlin reference improved noise (perlin.js) in place of Unity's engine-internal Mathf.PerlinNoise (not in DFU source); same role, different samples; all pins pin our pipeline. The beach-line jitter is NOT part of this departure - Unity.Mathematics Random is open MIT source and umRandom.js is a byte-exact 1:1 translation | PENDING Mac review (flagged at M6 ship) |
 
 ## B. Verbatim quirks preserved (real-data reality)
 
@@ -68,6 +68,11 @@ World layout:
   scope); archive 156 (Scourg exterior) only exempts the base-archive
   reduction and never becomes a door; ruin-enter 331 record 0 is plain
   stone, skipped.
+- On-terrain locations take NO RMB ground plane: StreamingWorld creates
+  city blocks with addGroundPlane = false, so the stamped terrain tilemap
+  is the ground and marker tiles (record >= 56) fall through to generated
+  terrain tiles. Isolated-block scenes keep the ground plane (DFU default
+  true).
 - RDB flat positions are billboard CENTERS: AddFlat performs no
   AlignToBase, unlike the RMB exterior (AlignToBase) and interior
   (+size.y/2) paths which are base-anchored. Renderer-side base batches

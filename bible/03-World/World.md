@@ -6,5 +6,6 @@ conventions, queue). Deviations and quirks are ledgered in
 
 Shipped: RMB block assembly, full location layout, ground tilemaps, flats,
 building interiors + static doors, RDB dungeons + action records,
-WOODS.WLD terrain heightfields.
-Queued: streaming world (tilemap texturing, locations on terrain).
+WOODS.WLD terrain heightfields, terrain tile texturing + locations
+placed and leveled on terrain.
+Queued: floating-origin streaming, nature flats on wilderness pixels.

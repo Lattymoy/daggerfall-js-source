@@ -15,6 +15,11 @@
 // Daggerfall city environs) renders a 5x5 map-pixel heightfield
 // neighborhood from WOODS.WLD through the DefaultTerrainSampler port,
 // shaded by an elevation ramp (terrain texturing is the Rendering arc's).
+// Milestone 7: ?world (&region=&loc=) renders a location ON its terrain:
+// 3x3 tile-textured map pixels, the location pixel flattened to average
+// height (BlendLocationTerrain), city tiles stamped into the terrain
+// tilemap (SetLocationTiles), marching-squares transitions elsewhere, the
+// location geometry lifted 0.05 onto the leveled ground.
 //
 // Controls: click to lock pointer, WASD + mouse to fly, Shift for speed.
 // ?shot raises window.__shotReady at a fixed vantage for tools/screenshot.mjs.
@@ -35,6 +40,12 @@ import {
   generateSamples, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT,
   DEFAULT_TERRAIN_SCALE, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION,
 } from './world/terrainSampler.js';
+import {
+  generateTileData, assignTiles, setLocationTiles, calcAvgMaxHeight,
+  blendLocationTerrain, getLocationTerrainTileOrigin,
+} from './world/terrainTiles.js';
+import { buildTerrainMesh } from './render/terrainMesh.js';
+import { getWorldClimateSettings, longitudeLatitudeToMapPixel } from './formats/mapsFile.js';
 import { perspective, lookAt, trs, multiply } from './world/mat4.js';
 import { Renderer } from './render/renderer.js';
 import { buildGroundMesh } from './render/groundMesh.js';
@@ -59,6 +70,7 @@ async function boot() {
   if (params.has('interior')) return bootInterior(canvas, renderer, params, status);
   if (params.has('dungeon')) return bootDungeon(canvas, renderer, params, status);
   if (params.has('terrain')) return bootTerrain(canvas, renderer, params, status);
+  if (params.has('world')) return bootWorld(canvas, renderer, params, status);
   const regionName = params.get('region') || 'Daggerfall';
   const locationName = params.get('loc') || 'Daggerfall';
 
@@ -735,6 +747,227 @@ async function bootTerrain(canvas, renderer, params, status) {
 
     renderer.beginFrame(proj, view, lightDir);
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix);
+
+    frames++;
+    if (shotMode && frames === 5) window.__shotReady = true;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// Milestone 7 scene: a location on its terrain, 3x3 pixel neighborhood.
+async function bootWorld(canvas, renderer, params, status) {
+  const regionName = params.get('region') || 'Daggerfall';
+  const locationName = params.get('loc') || 'Daggerfall';
+
+  status('loading data');
+  const [palBytes, blocksBytes, archBytes, mapsBytes, climateBytes, politicBytes, woodsBytes] =
+    await Promise.all([
+      fetchBytes('ART_PAL.COL'),
+      fetchBytes('BLOCKS.BSA'),
+      fetchBytes('ARCH3D.BSA'),
+      fetchBytes('MAPS.BSA'),
+      fetchBytes('CLIMATE.PAK'),
+      fetchBytes('POLITIC.PAK'),
+      fetchBytes('WOODS.WLD'),
+    ]);
+  const palette = new DFPalette();
+  palette.load(palBytes, 'ART_PAL.COL');
+  const blocks = new BlocksFile();
+  blocks.load(blocksBytes);
+  const arch = new Arch3dFile();
+  arch.load(archBytes);
+  const maps = new MapsFile();
+  maps.load(mapsBytes, climateBytes, politicBytes);
+  const woods = new WoodsFile();
+  if (!woods.load(woodsBytes)) throw new Error('WOODS.WLD failed to load');
+
+  const dfLocation = maps.getLocationByName(regionName, locationName);
+  if (!dfLocation) throw new Error(`location not found: ${regionName}/${locationName}`);
+  const pixel = longitudeLatitudeToMapPixel(
+    dfLocation.mapTableData.longitude, dfLocation.mapTableData.latitude);
+  const cx = pixel.x, cy = pixel.y;
+
+  // Layout the location (blocks + flats, exactly the exterior scene path).
+  status(`laying out ${locationName} on pixel ${cx},${cy}`);
+  const loc = layoutLocation(dfLocation, maps, blocks);
+
+  // Terrain pixels: samples -> (location pixel: stamp tiles + blend
+  // heights) -> tile classification -> marching squares. Verbatim
+  // DaggerfallTerrain order - tiles classify POST-blend heights.
+  const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+  const radius = 1; // 3x3
+  const pixels = [];
+  let locationAvgHeight = 0;
+  for (let py = cy - radius; py <= cy + radius; py++) {
+    for (let px = cx - radius; px <= cx + radius; px++) {
+      const samples = generateSamples(woods, px, py);
+      const tilemap = new Uint8Array(128 * 128);
+      if (px === cx && py === cy) {
+        const [avg] = calcAvgMaxHeight(samples);
+        const locationRect = setLocationTiles(dfLocation, maps, blocks, tilemap);
+        blendLocationTerrain(samples, avg, locationRect);
+        locationAvgHeight = avg;
+      }
+      const tileData = generateTileData(samples, px, py);
+      assignTiles(tileData, tilemap, true);
+      const climate = getWorldClimateSettings(maps.getClimateIndex(px, py));
+      pixels.push({ px, py, samples, tilemap, groundArchive: climate.groundArchive });
+    }
+  }
+
+  // Textures: mesh archives + per-pixel ground archives + flat archives.
+  const dfMeshes = new Map();
+  const archives = new Set(pixels.map((p) => p.groundArchive));
+  for (const b of loc.blocks) {
+    for (const placed of b.layout.models) {
+      if (dfMeshes.has(placed.modelIdNum)) continue;
+      const index = arch.getRecordIndex(placed.modelIdNum);
+      if (index === -1) continue;
+      const dfMesh = arch.getMesh(index);
+      dfMeshes.set(placed.modelIdNum, dfMesh);
+      for (const sm of dfMesh.subMeshes) archives.add(sm.textureArchive);
+    }
+  }
+  const flatGroups = new Map();
+  for (const b of loc.blocks) {
+    for (const flat of collectBlockFlats(b.dfBlock, dfLocation.climate.natureArchive)) {
+      const key = `${flat.archive}_${flat.record}`;
+      if (!flatGroups.has(key)) flatGroups.set(key, []);
+      flatGroups.get(key).push([flat.x + b.originX, flat.y, flat.z + b.originZ]);
+    }
+  }
+  for (const key of flatGroups.keys()) archives.add(Number(key.split('_')[0]));
+
+  status(`loading ${archives.size} texture archives`);
+  const textureFiles = new Map();
+  await Promise.all(
+    [...archives].map(async (archive) => {
+      const t = new TextureFile();
+      t.load(await fetchBytes(texName(archive)), texName(archive), palette);
+      textureFiles.set(archive, t);
+    })
+  );
+  const getTextureSize = (archive, record) => {
+    const t = textureFiles.get(archive);
+    return { width: t.getWidth(record), height: t.getHeight(record) };
+  };
+  const uploadRecord = (archive, record) => {
+    const t = textureFiles.get(archive);
+    const color32 = t.getColor32(t.getDFBitmap(record, 0), 0);
+    renderer.uploadTexture(archive, record, color32);
+  };
+
+  const gpuMeshes = new Map();
+  for (const [id, dfMesh] of dfMeshes) {
+    const model = dfMeshToModel(dfMesh, getTextureSize);
+    for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
+    gpuMeshes.set(id, renderer.createMesh(model));
+  }
+
+  // Location origin on the leveled terrain: centred tile origin, lifted
+  // 2.0 * GlobalScale above the flattened average height (verbatim
+  // StreamingWorld block origin + location height).
+  const tilePos = getLocationTerrainTileOrigin(dfLocation);
+  const tileSide = TERRAIN_SIZE / 128;
+  const locationY = locationAvgHeight * worldHeight;
+  const locOrigin = [tilePos.x * tileSide, locationY + 2.0 * 0.025, tilePos.y * tileSide];
+
+  const drawList = [];
+  for (const p of pixels) {
+    const mesh = buildTerrainMesh(p.tilemap, p.samples, p.groundArchive);
+    for (const sm of mesh.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
+    drawList.push({
+      mesh: renderer.createMesh(mesh),
+      matrix: trs((p.px - cx) * TERRAIN_SIZE, 0, -(p.py - cy) * TERRAIN_SIZE, 0, 0, 0),
+    });
+  }
+  for (const b of loc.blocks) {
+    const originMatrix = trs(
+      locOrigin[0] + b.originX, locOrigin[1], locOrigin[2] + b.originZ, 0, 0, 0);
+    for (const placed of b.layout.models) {
+      const mesh = gpuMeshes.get(placed.modelIdNum);
+      if (!mesh) continue;
+      drawList.push({ mesh, matrix: multiply(originMatrix, placed.matrix) });
+    }
+    // No RMB ground plane on terrain: StreamingWorld creates city blocks
+    // with addGroundPlane = false - the stamped terrain tilemap IS the
+    // ground (marker cells >= 56 stay unstamped and take generated tiles).
+  }
+  const billboardBatches = [];
+  for (const [key, centers] of flatGroups) {
+    const [archive, record] = key.split('_').map(Number);
+    const t = textureFiles.get(archive);
+    if (!t || record >= t.recordCount) continue;
+    uploadRecord(archive, record);
+    const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+    const placed = centers.map(([x, y, z]) => [x + locOrigin[0], y + locOrigin[1], z + locOrigin[2]]);
+    billboardBatches.push(renderer.createBillboardBatch(archive, record, size, placed));
+  }
+
+  // Camera above the city looking across it.
+  const extentX = loc.width * RMB_SIDE;
+  const extentZ = loc.height * RMB_SIDE;
+  const cam = {
+    pos: [locOrigin[0] + extentX / 2, locationY + 30, locOrigin[2] + extentZ + 120],
+    yaw: Math.PI,
+    pitch: -0.12,
+  };
+  const keys = new Set();
+  addEventListener('keydown', (e) => keys.add(e.code));
+  addEventListener('keyup', (e) => keys.delete(e.code));
+  canvas.addEventListener('pointerdown', () => canvas.requestPointerLock());
+  addEventListener('mousemove', (e) => {
+    if (document.pointerLockElement !== canvas) return;
+    cam.yaw -= e.movementX * 0.0025;
+    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
+  });
+  const lightDir = new Float32Array([0.45, 0.8, 0.35]);
+  {
+    const l = Math.hypot(lightDir[0], lightDir[1], lightDir[2]);
+    lightDir[0] /= l; lightDir[1] /= l; lightDir[2] /= l;
+  }
+
+  const shotMode = params.has('shot');
+  status(`${locationName} on terrain - ${drawList.length} draws`);
+  console.log(
+    `world: pixel ${cx},${cy}, ${pixels.length} terrain pixels, ${loc.blocks.length} blocks, ` +
+    `${drawList.length} draws, avgH ${locationAvgHeight.toFixed(4)}, origin ${locOrigin.map((v) => v.toFixed(2))}`
+  );
+
+  let frames = 0;
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+    const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
+    const speed = (keys.has('ShiftLeft') ? 160 : 30) * dt;
+    if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
+    if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;
+    if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;
+    if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;
+
+    const target = shotMode
+      ? [locOrigin[0] + extentX * 0.5, locationY + 4, locOrigin[2] + extentZ * 0.45]
+      : [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
+    const eye = shotMode
+      ? [locOrigin[0] + extentX * 0.56, locationY + 24, locOrigin[2] + extentZ * 1.05]
+      : cam.pos;
+    const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.2, 5000);
+    const view = lookAt(eye, target, [0, 1, 0]);
+
+    renderer.beginFrame(proj, view, lightDir);
+    for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix);
+    const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
+    if (shotMode) {
+      const dx = target[0] - eye[0];
+      const dz = target[2] - eye[2];
+      const l = Math.hypot(dx, dz) || 1;
+      camRight[0] = -dz / l;
+      camRight[2] = dx / l;
+    }
+    renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
 
     frames++;
     if (shotMode && frames === 5) window.__shotReady = true;

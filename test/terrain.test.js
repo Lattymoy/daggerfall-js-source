@@ -166,3 +166,124 @@ test('terrain: sampler pins - Daggerfall environs and open ocean', { skip: skipR
     if (Math.abs(v - oceanNorm) > 1e-6) assert.fail(`ocean sample ${v} != ${oceanNorm}`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Milestone 7 - tiles, blending, locations on terrain.
+// ---------------------------------------------------------------------------
+
+test('terrain: umRandom matches Unity.Mathematics semantics', async () => {
+  const { UMRandom } = await import('../src/formats/umRandom.js');
+  // Deterministic pins of the WangHash(index + 62) + xorshift pipeline.
+  const r0 = UMRandom.createFromIndex(0);
+  approx(r0.nextFloat(), 0.31420565, 1e-8);
+  approx(r0.nextFloat(), 0.51750255, 1e-8);
+  approx(UMRandom.createFromIndex(16641).nextFloatRange(-1.5, 1.5), 0.77276731, 1e-8);
+  // nextFloat stays in [0, 1).
+  const r = UMRandom.createFromIndex(7);
+  for (let i = 0; i < 1000; i++) {
+    const f = r.nextFloat();
+    assert.ok(f >= 0 && f < 1);
+  }
+});
+
+test('terrain: marching-squares lookup and tile assignment', async () => {
+  const { createLookupTable, assignTiles } = await import('../src/world/terrainTiles.js');
+  const table = createLookupTable();
+  // Base tiles: uniform interiors land on plain records.
+  assert.equal(table[0], 0);                 // all-water
+  assert.equal(table[15], 1);                // all-dirt (range 0 end)
+  assert.equal(table[16 + 15], 1);           // dirt base of range 1
+  assert.equal(table[32], 2);                // all-grass ring
+  assert.equal(table[48 + 15], 3);           // all-stone
+  // Shape encodes rotate/flip: range 0 shape 1 = record 5 rotated.
+  assert.equal(table[1], 5 + 64);
+  assert.equal(table[2], 5 + 128);
+
+  // Uniform grass corner grid -> every cell record 2.
+  const tdDim = 129;
+  const tileData = new Uint8Array(tdDim * tdDim).fill(2);
+  const tilemap = new Uint8Array(128 * 128);
+  assignTiles(tileData, tilemap, true);
+  assert.ok(tilemap.every((b) => b === 2));
+  // Non-zero cells (stamped locations) are never overwritten.
+  tilemap.fill(0);
+  tilemap[5] = 0xff;
+  assignTiles(tileData, tilemap, true);
+  assert.equal(tilemap[5], 0xff);
+});
+
+test('terrain: blend flattening and location tile origin', async () => {
+  const { blendLocationTerrain, getLocationTerrainTileOrigin, bilinearInterpolator } =
+    await import('../src/world/terrainTiles.js');
+  // Bilinear corner form used for blend-space strength.
+  approx(bilinearInterpolator(0, 0, 0, 1, 0.5, 0.5), 0.25);
+
+  const hDim = 129;
+  const samples = new Float32Array(hDim * hDim).fill(0.5);
+  samples[64 * hDim + 64] = 0.9; // bump inside the rect
+  samples[0] = 0.9; // corner outside the rect, zero strength
+  blendLocationTerrain(samples, 0.5, { xMin: 11, xMax: 116, yMin: 11, yMax: 116 }, hDim);
+  approx(samples[64 * hDim + 64], 0.5); // flattened to target
+  approx(samples[0], 0.9); // corner untouched
+
+  // Centred origins: 8x8 -> (0, 0); 1x1 -> (56, 56); CUST 1x1 -> (72, 55).
+  const locOf = (w, h, name) => ({
+    exterior: { exteriorData: { width: w, height: h, blockNames: [name] } },
+  });
+  assert.deepEqual(getLocationTerrainTileOrigin(locOf(8, 8, 'WALLAA02.RMB')), { x: 0, y: 0 });
+  assert.deepEqual(getLocationTerrainTileOrigin(locOf(1, 1, 'GENRAA00.RMB')), { x: 56, y: 56 });
+  assert.deepEqual(getLocationTerrainTileOrigin(locOf(1, 1, 'CUSTAA01.RMB')), { x: 72, y: 55 });
+});
+
+test('terrain: Daggerfall city on terrain - integration pins', { skip: skipReal }, async () => {
+  const { BlocksFile } = await import('../src/formats/blocksFile.js');
+  const MF = await import('../src/formats/mapsFile.js');
+  const { setLocationTiles, calcAvgMaxHeight, blendLocationTerrain, generateTileData, assignTiles } =
+    await import('../src/world/terrainTiles.js');
+  const blocks = new BlocksFile();
+  blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA'))));
+  const maps = new MF.MapsFile();
+  maps.load(
+    new Uint8Array(readFileSync(join(ARENA2, 'MAPS.BSA'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'CLIMATE.PAK'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'POLITIC.PAK'))),
+  );
+  const woods = loadWoods();
+  const loc = maps.getLocationByName('Daggerfall', 'Daggerfall');
+  const pixel = MF.longitudeLatitudeToMapPixel(
+    loc.mapTableData.longitude, loc.mapTableData.latitude);
+  assert.deepEqual(pixel, { x: 207, y: 213 });
+
+  const samples = generateSamples(woods, 207, 213);
+  const [avg, max] = calcAvgMaxHeight(samples);
+  approx(avg, 0.166147, 1e-6);
+  approx(max, 0.171953, 1e-6);
+
+  const tilemap = new Uint8Array(128 * 128);
+  const rect = setLocationTiles(loc, maps, blocks, tilemap);
+  assert.deepEqual(rect, { xMin: 11, xMax: 116, yMin: 11, yMax: 116 });
+  let stamped = 0;
+  for (const t of tilemap) if (t) stamped++;
+  assert.equal(stamped, 9989);
+
+  blendLocationTerrain(samples, avg, rect);
+  approx(samples[64 * 129 + 64], 0.166147, 1e-6); // flattened
+  approx(samples[0], 0.161704, 1e-6); // corner untouched
+
+  const tileData = generateTileData(samples, 207, 213);
+  assignTiles(tileData, tilemap, true);
+  const hist = new Map();
+  for (const t of tilemap) {
+    const r = t === 0xff ? 0 : t & 63;
+    hist.set(r, (hist.get(r) || 0) + 1);
+  }
+  // Grass fill dominates outside the walls; roads (46) and city dirt hold.
+  assert.equal(hist.get(2), 8173);
+  assert.equal(hist.get(1), 3142);
+  assert.equal(hist.get(46), 1706);
+  assert.equal(hist.get(11), 899);
+
+  // Per-pixel climate: Woodlands ground archive 302.
+  assert.equal(maps.getClimateIndex(207, 213), 231);
+  assert.equal(MF.getWorldClimateSettings(maps.getClimateIndex(207, 213)).groundArchive, 302);
+});

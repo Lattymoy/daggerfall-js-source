@@ -4,6 +4,45 @@ Assemble Daggerfall's world from decoded data onto our WebGL2 stack.
 Data math is ported 1:1 from DFU (MeshReader.cs geometry paths, RMBLayout.cs);
 rendering is ours per Port-Doctrine.
 
+## Milestone 7 - locations on terrain (SHIPPED)
+
+`src/formats/umRandom.js` is a 1:1 translation of Unity.Mathematics
+Random (MIT, open source - NOT a departure): CreateFromIndex(i) seeds
+with WangHash(i + 62), the constructor burns one NextState, xorshift
+13/17/5 returns the PRE-update state, NextFloat is the
+asfloat(0x3f800000 | state >> 9) - 1 bit trick. Pinned.
+`src/world/terrainTiles.js` ports DefaultTerrainTexturing +
+TerrainHelper's location paths: generateTileData classifies the 129x129
+corner grid (water at/below ocean; beach dirt at/below beach +/- a
+byte-exact umRandom jitter in [-1.5, 1.5); else a lat/long perlin weight,
+seed 417028, 3 octaves 0.05/0.9/0.4 clamped [-1, 1] - < 0.5 dirt,
+> 0.95 stone, else grass; lat = mx*128 + x, long = 64000 - my*128 + y).
+assignTiles runs marching squares (shape from 4 corner LSBs | ring << 4
+into the 64-entry lookup; MakeLookup = record 0-55 + 64 rotate + 128
+flip, exactly the RMB tile bitfield layout; non-zero cells skipped).
+setLocationTiles stamps every RMB ground tile at the centred origin
+(getLocationTerrainTileOrigin - 8x8 -> (0,0), CUST 1x1 -> (72,55));
+GroundTiles read [x][15 - y] as everywhere; records >= 56 skipped; zero
+bitfields stored as the 0xFF sentinel; bounds + clearance (3 TownCity,
+else 2) become the locationRect. calcAvgMaxHeight + blendLocationTerrain
+flatten the rect to the pixel average and lerp the blend space by
+edge-scaled strengths (bilinear corners). `src/render/terrainMesh.js`
+drapes 128x128 tile quads over the heightfield (byte decode
+record = b & 63 / rotate 64 / flip 128, 0xFF -> record 0), the
+renderer-side equivalent of DFU's tilemap shader.
+Scene: ?world (&region=&loc=, default Daggerfall/Daggerfall) - job order
+verbatim (samples -> stamp + blend on the location pixel -> tile
+classification POST-blend -> march), 3x3 pixels, per-pixel climate via
+getClimateIndex + getWorldClimateSettings, location origin at
+(tilePos * 6.4, avg * worldHeight + 2.0 * GlobalScale, tilePos * 6.4).
+QUIRK (Ledger B): StreamingWorld creates city blocks with
+addGroundPlane = FALSE - the stamped terrain tilemap IS the ground;
+marker cells (>= 56) stay unstamped and take generated tiles.
+Integration pins for pixel (207,213): avg 0.166147 / max 0.171953, rect
+{11,116,11,116}, 9989 stamped, post-blend s(64,64) = avg with corners
+untouched, post-assign histogram 2:8173 / 1:3142 / 46:1706 / 11:899,
+climate 231 -> ground 302. Pins in test/terrain.test.js.
+
 ## Milestone 6 - terrain: WOODS.WLD + height sampling (SHIPPED)
 
 `src/formats/woodsFile.js` ports WoodsFile.cs 1:1: header gate
@@ -166,8 +205,8 @@ via T(48, 0, 25.6) * Ry(-270deg).
 
 ## Queue (in order, one at a time)
 
-1. Streaming world: terrain tilemap texturing (TerrainTexturing), location
-   placement + leveling on terrain, floating-origin streaming.
+1. Streaming world: floating-origin terrain streaming around the player,
+   plus TerrainNature nature flats on wilderness pixels.
 
 ## Testing
 
