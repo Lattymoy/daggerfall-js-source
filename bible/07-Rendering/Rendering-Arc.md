@@ -222,9 +222,26 @@ W0000022/-144 - the flooded-chamber shot verifies the blend (543k
 blue-blend pixels at the computed surface height). Console pin gains
 ", N water".
 
+## Milestone R8 - interior point lights (SHIPPED)
+
+`src/world/interiorLights.js` is verbatim DaggerfallInterior.AddLight:
+one light per archive-210 flat (AmbientLitInteriors default off), at
+the billboard CENTRE - interior AddFlat raises the transform half the
+scaled height above the flat position - plus the per-record vertical
+offset table (0 -0.1, 2/3 +0.1, 5 +0.15, 6/20 +0.6, 9 +0.4, 11 -0.4,
+13 -0.35, 17 +0.2, 22 -0.5, 24 -1.85, 25 -1.0, 27 -0.02; 14/15 +h/2;
+21 +h/2.4; "todo" records add nothing). Properties from the [Interior]
+prefab (git show): point, range 15, intensity 1, white, Animate OFF -
+interior lights do not flicker. Scene ambient is the verbatim
+InteriorAmbientLight 0.18 (night variant exported for the clock), no
+sun. MAGEAA00:0 pins: 17 lights; the first (record-6 skull torch) at
+flat y 12.9 + h 2.35 / 2 + 0.6 = 14.675, cross-checked end to end.
+Console pin gains ", 17 lights"; brightness redistributes (0.18 base +
+range-15 pools) at a near-identical mean to the old flat lighting -
+the guild hall is densely lit by data.
+
 ## Queue
 
-Owned by `Rendering.md`. Next up: interior 210 point lights
-([Interior] prefab), terrain atlas pass (+ retire ?terrain, + classic
-water texture), weather (owns the Fog window style),
-spectral/firewall emission colors when spectral enemies land.
+Owned by `Rendering.md`. Next up: terrain atlas pass (+ retire
+?terrain, + classic water texture), weather (owns the Fog window
+style), spectral/firewall emission colors when spectral enemies land.

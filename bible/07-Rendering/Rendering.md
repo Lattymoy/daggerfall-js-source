@@ -14,10 +14,9 @@ Current (`src/render/`):
 
 Milestone log: `07-Rendering/Rendering-Arc.md` (R1 climate swaps,
 R2 window emission, R3 city lanterns, R4 painted skies, R5 day/night
-cycle, R6 dungeon lighting, R7 dungeon water - all SHIPPED).
+cycle, R6 dungeon lighting, R7 dungeon water, R8 interior lights - all SHIPPED).
 
-Owned queue (from Port-Ledger C): interior 210 point lights
-([Interior] prefab), terrain material upgrades (atlas/tilemap shader
-pass; retiring the ?terrain elevation-ramp scene; classic dungeon
-water texture), weather (owns the Fog window style),
-spectral/firewall emission colors when spectral enemies land.
+Owned queue (from Port-Ledger C): terrain material upgrades
+(atlas/tilemap shader pass; retiring the ?terrain elevation-ramp
+scene; classic dungeon water texture), weather (owns the Fog window
+style), spectral/firewall emission colors when spectral enemies land.

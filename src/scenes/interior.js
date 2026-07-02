@@ -7,6 +7,8 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { TextureFile } from '../formats/textureFile.js';
 import { applyClimate, isExteriorWindow } from '../world/climateSwaps.js';
+import { collectInteriorLights, INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE } from '../world/interiorLights.js';
+import { nearestLights } from '../world/cityLights.js';
 import { INTERIOR_MARKER, layoutInterior } from '../world/interiorLayout.js';
 import { lookAt, perspective } from '../world/mat4.js';
 import { dfMeshToModel } from '../world/meshReader.js';
@@ -139,6 +141,14 @@ export async function bootInterior(canvas, renderer, params, status) {
     billboardBatches.push(renderer.createBillboardBatch(archive, record, size, centers));
   }
 
+  // R8: one point light per archive-210 flat, verbatim
+  // DaggerfallInterior.AddLight - billboard centre + per-record offset,
+  // [Interior] prefab range 15, no flicker. Verbatim interior ambient.
+  const t210 = textureFiles.get(210);
+  const interiorLights = t210 ? collectInteriorLights(interior.flats, (record) =>
+    scaledBillboardSize(t210.getSize(record), t210.getScale(record))) : [];
+  renderer.setLighting(new Float32Array(INTERIOR_AMBIENT), 0);
+
   // Camera at the Enter marker when present, else the first placement,
   // facing the interior's bounding center (the marker sits at the entry
   // door, so yaw 0 would stare into it).
@@ -178,7 +188,7 @@ export async function bootInterior(canvas, renderer, params, status) {
   console.log(
     `interior: ${interior.placements.length} models, ${interior.actionDoors.length} action doors, ` +
     `${interior.flats.length} flats, ${interior.markers.length} markers, ${interior.doors.length} static doors, ` +
-    `climate ${climateBase}, season ${season}, ${texRemap.size} swaps`
+    `climate ${climateBase}, season ${season}, ${texRemap.size} swaps, ${interiorLights.length} lights`
   );
 
   let frames = 0;
@@ -198,6 +208,9 @@ export async function bootInterior(canvas, renderer, params, status) {
     const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.05, 500);
     const view = lookAt(cam.pos, target, [0, 1, 0]);
 
+    renderer.setPointLights(
+      nearestLights(interiorLights, cam.pos, 16, INTERIOR_LIGHT_RANGE),
+      new Float32Array(INTERIOR_LIGHT_COLOR));
     renderer.beginFrame(proj, view, lightDir);
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);

@@ -265,3 +265,42 @@ test('interior: full corpus - every building interior lays out clean', { skip: s
   // the IsBadInteriorModel table has 60 combos across 27 blocks.
   assert.equal(filtered, 60);
 });
+
+test('interior: R8 point lights - offsets and MAGEAA00 pins', { skip: skipReal }, async () => {
+  const { collectInteriorLights, INTERIOR_AMBIENT, INTERIOR_LIGHT_RANGE } =
+    await import('../src/world/interiorLights.js');
+  // Offset law on synthetic flats: base + h/2 + per-record offset;
+  // 14/15 use +h/2 and 21 uses +h/2.4; unknown records add 0.
+  const size = () => ({ w: 1, h: 2 });
+  const mk = (record) => collectInteriorLights(
+    [{ archive: 210, record, x: 0, y: 10, z: 0 }], size)[0];
+  approx(mk(6).y, 10 + 1 + 0.6);
+  approx(mk(24).y, 10 + 1 - 1.85);
+  approx(mk(14).y, 10 + 1 + 1);
+  approx(mk(21).y, 10 + 1 + 2 / 2.4);
+  approx(mk(7).y, 10 + 1); // "todo" record: no offset
+  assert.equal(mk(6).range, INTERIOR_LIGHT_RANGE);
+  // Non-210 flats produce nothing.
+  assert.equal(collectInteriorLights(
+    [{ archive: 199, record: 1, x: 0, y: 0, z: 0 }], size).length, 0);
+  assert.deepEqual([...INTERIOR_AMBIENT], [0.18, 0.18, 0.18]);
+
+  // Real data: the mages guild hall carries 17 lights; the first is the
+  // record-6 skull torch at flat y + h/2 + 0.6.
+  const { blocks, getModel } = loadReal();
+  const { DFPalette } = await import('../src/formats/dfPalette.js');
+  const { TextureFile } = await import('../src/formats/textureFile.js');
+  const { scaledBillboardSize } = await import('../src/world/rmbFlats.js');
+  const pal = new DFPalette();
+  pal.load(new Uint8Array(readFileSync(join(ARENA2, 'ART_PAL.COL'))), 'ART_PAL.COL');
+  const t210 = new TextureFile();
+  t210.load(new Uint8Array(readFileSync(join(ARENA2, 'TEXTURE.210'))), 'TEXTURE.210', pal);
+  const idx = blocks.getBlockIndex('MAGEAA00.RMB');
+  const interior = layoutInterior(blocks.getBlock(idx), idx, 0, getModel);
+  const getSize = (r) => scaledBillboardSize(t210.getSize(r), t210.getScale(r));
+  const lights = collectInteriorLights(interior.flats, getSize);
+  assert.equal(lights.length, 17);
+  approx(lights[0].x, 8.4);
+  approx(lights[0].y, 14.675);
+  approx(lights[0].z, 4.4);
+});
