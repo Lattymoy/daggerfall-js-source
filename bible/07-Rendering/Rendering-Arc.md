@@ -257,8 +257,48 @@ matches the port 1:1. Corpus pin added: 37249 interior lights across
 all 6832 building interiors. A first-wiring slip (city default range
 18 instead of 15) was caught before ship and is pinned.
 
+## Milestone R9 - terrain tilemap-shader pass (SHIPPED)
+
+The streaming world's ground now renders the way DFU ships it: a
+129x129 height grid per map pixel plus a 128x128 tilemap byte texture,
+decoded per-fragment by the verbatim Daggerfall/TilemapTextureArray
+law - tileIndex = data >> 2, transform = data & 3, four rotation
+matrices + translations. `src/world/terrainSurface.js` carries the
+data side: convertTilemap is TerrainHelper.UpdateTileMapDataJob 1:1
+((byte)(tile * 4) + rotate + flip * 2, FF water sentinel back to
+record 0 - ConvertWaterTiles defaults true, all pinned); the grid
+mirrors the retired quad path's corner heights and central-difference
+normals exactly, on the same (x,z)->(x+1,z+1) diagonal, with one
+shared index buffer renderer-side. Ground archives upload once each
+as a 64x64x56 TEXTURE_2D_ARRAY (every ground archive is uniform 56
+records of 64x64, probed); the tilemap rides an R8UI texture and
+texelFetch. Lighting matches solids (ambient + sun N.L + the 16-light
+loop) minus window emission; NEAREST without mips per repo texel
+convention (DFU's mip bias is presentation-side). The ?terrain
+elevation-ramp scene is retired (router case removed, scene deleted).
+As-shipped DFU semantics kept: the flip bit renders as a 180-degree
+rotation and rotate+flip as 270 (the shader's transform table).
+CAUGHT IN BUILD: DFU's HLSL float2x2 initializers are row-major -
+GLSL mat2 is column-major, so the rotation tables are transposed in
+our shader (rotated tiles sampled the wrong direction until a
+screen-projection probe exposed it). VERIFICATION: a ground-truth
+probe rebuilds the player pixel's tilemap + the exact scene camera in
+Node, projects tile-relative points to screen, and reads the
+framebuffer - pure tiles matched the old path texel-for-texel at 40/40
+points; forced-transform tiles (a shot-mode tile-override hook)
+confirmed t1/t2/t3 at 15/15 points against the verbatim law, and an
+in-shader transform-bit visualization pass confirmed the decode. The
+residual pre/post diff (~270k px) is confined to the city footprint:
+the old per-tile-quad path lost/won depth against coplanar location
+geometry differently - the new path is spec-true and the old one is
+gone. FOLLOW-UP: the exterior scene's RMB groundMesh (city-block
+ground quads) still uses the per-tile-quad path - converting it to
+this shader is queued; the classic dungeon water texture rides the
+same texture-array family.
+
 ## Queue
 
-Owned by `Rendering.md`. Next up: terrain atlas pass (+ retire
-?terrain, + classic water texture), weather (owns the Fog window
-style), spectral/firewall emission colors when spectral enemies land.
+Owned by `Rendering.md`. Next up: exterior groundMesh conversion to
+the tilemap shader, classic dungeon water texture, weather (owns the
+Fog window style), spectral/firewall emission colors when spectral
+enemies land.

@@ -133,6 +133,81 @@ uniform vec4 uWaterColor;
 out vec4 outColor;
 void main() { outColor = uWaterColor; }`;
 
+// Terrain tilemap pass (R9): verbatim Daggerfall/TilemapTextureArray
+// decode - tileIndex = data >> 2, transform = data & 3 with the shader's
+// rotation/translation tables (flip rides as 180 degrees, as shipped).
+// Sampling is NEAREST without mips (repo texel convention; DFU's mip
+// bias is presentation-side). Lighting matches the solid program minus
+// window emission.
+const TERRAIN_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aNormal;
+uniform mat4 uProj;
+uniform mat4 uView;
+uniform mat4 uModel;
+out vec3 vNormal;
+out vec3 vWorldPos;
+out vec2 vLocalXZ;
+void main() {
+  vNormal = mat3(uModel) * aNormal;
+  vec4 world = uModel * vec4(aPos, 1.0);
+  vWorldPos = world.xyz;
+  vLocalXZ = aPos.xz;
+  gl_Position = uProj * uView * world;
+}`;
+
+const TERRAIN_FS = `#version 300 es
+precision highp float;
+precision highp usampler2D;
+precision highp sampler2DArray;
+in vec3 vNormal;
+in vec3 vWorldPos;
+in vec2 vLocalXZ;
+uniform sampler2DArray uTileArr;
+uniform usampler2D uTilemap;
+uniform float uTileSize; // world units per tile (6.4)
+uniform vec3 uLightDir;
+uniform vec3 uAmbient;
+uniform float uSunScale;
+uniform vec3 uSunColor;
+uniform int uPointCount;
+uniform vec4 uPointLights[16];
+uniform vec3 uPointColor;
+out vec4 outColor;
+// DFU's HLSL float2x2 initializers are row-major; GLSL mat2 is
+// column-major, so these are the TRANSPOSES of the shader source
+// (caught in R9 build: rotated tiles sampled the wrong direction).
+const mat2 ROT[4] = mat2[4](
+  mat2(1.0, 0.0, 0.0, 1.0),
+  mat2(0.0, -1.0, 1.0, 0.0),
+  mat2(-1.0, 0.0, 0.0, -1.0),
+  mat2(0.0, 1.0, -1.0, 0.0));
+const vec2 TRANS[4] = vec2[4](
+  vec2(0.0, 0.0), vec2(0.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 0.0));
+void main() {
+  vec2 unwrapped = vLocalXZ / uTileSize;
+  ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(127));
+  uint data = texelFetch(uTilemap, cell, 0).r;
+  int layer = int(data >> 2u);
+  int t = int(data & 3u);
+  vec2 tileUV = fract(unwrapped);
+  vec2 tuv = ROT[t] * tileUV + TRANS[t];
+  vec3 tex = texture(uTileArr, vec3(tuv, float(layer))).rgb;
+  vec3 n = normalize(vNormal);
+  float diff = max(dot(n, uLightDir), 0.0);
+  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff));
+  float pointDiff = 0.0;
+  for (int i = 0; i < 16; i++) {
+    if (i >= uPointCount) break;
+    vec3 L = uPointLights[i].xyz - vWorldPos;
+    float d = length(L);
+    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
+    pointDiff += att * att * max(dot(n, L / max(d, 1e-4)), 0.0);
+  }
+  lit += tex * pointDiff * uPointColor;
+  outColor = vec4(lit, 1.0);
+}`;
+
 const ZERO_ORIGIN = [0, 0, 0];
 
 export class Renderer {
@@ -180,6 +255,24 @@ export class Renderer {
     );
 
     this.bbProgram = this._buildProgram(BB_VS, BB_FS);
+    this.terrainProgram = this._buildProgram(TERRAIN_VS, TERRAIN_FS);
+    this.tUProj = gl.getUniformLocation(this.terrainProgram, 'uProj');
+    this.tUView = gl.getUniformLocation(this.terrainProgram, 'uView');
+    this.tUModel = gl.getUniformLocation(this.terrainProgram, 'uModel');
+    this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
+    this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
+    this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
+    this.tULightDir = gl.getUniformLocation(this.terrainProgram, 'uLightDir');
+    this.tUAmbient = gl.getUniformLocation(this.terrainProgram, 'uAmbient');
+    this.tUSunScale = gl.getUniformLocation(this.terrainProgram, 'uSunScale');
+    this.tUSunColor = gl.getUniformLocation(this.terrainProgram, 'uSunColor');
+    this.tUPointCount = gl.getUniformLocation(this.terrainProgram, 'uPointCount');
+    this.tUPointLights = gl.getUniformLocation(this.terrainProgram, 'uPointLights');
+    this.tUPointColor = gl.getUniformLocation(this.terrainProgram, 'uPointColor');
+    this.tileArrays = new Map(); // archive -> TEXTURE_2D_ARRAY
+    this._terrainIndexBuffer = null;
+    this._terrainIndexCount = 0;
+
     this.waterProgram = this._buildProgram(WATER_VS, WATER_FS);
     this.waterUProj = gl.getUniformLocation(this.waterProgram, 'uProj');
     this.waterUView = gl.getUniformLocation(this.waterProgram, 'uView');
@@ -301,6 +394,7 @@ export class Renderer {
     gl.uniformMatrix4fv(this.uProj, false, proj);
     gl.uniformMatrix4fv(this.uView, false, view);
     gl.uniform3fv(this.uLightDir, lightDir);
+    this._lightDir = lightDir;
     gl.uniform3fv(this.uAmbient, this._ambient);
     gl.uniform1f(this.uSunScale, this._sunScale);
     gl.uniform3fv(this.uSunColor, this._sunColor);
@@ -422,6 +516,103 @@ export class Renderer {
     const gl = this.gl;
     for (const b of batch.buffers) gl.deleteBuffer(b);
     gl.deleteVertexArray(batch.vao);
+  }
+
+  /** Lazily create the shared 129x129 terrain index buffer. */
+  _terrainIndices(indices) {
+    if (this._terrainIndexBuffer) return;
+    const gl = this.gl;
+    this._terrainIndexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._terrainIndexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    this._terrainIndexCount = indices.length;
+  }
+
+  /** Create one pixel's terrain surface (positions + normals grid). */
+  createTerrainSurface(positions, normals, indices) {
+    const gl = this.gl;
+    this._terrainIndices(indices);
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const buffers = [];
+    const buf = (data, loc) => {
+      const b = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, b);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, 12, 0);
+      buffers.push(b);
+      return b;
+    };
+    buf(positions, 0);
+    buf(normals, 1);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._terrainIndexBuffer);
+    gl.bindVertexArray(null);
+    return { vao, buffers, indexCount: this._terrainIndexCount };
+  }
+
+  /** Upload a 128x128 tilemap byte texture (R8UI, NEAREST). */
+  uploadTilemapTexture(bytes, dim) {
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8UI, dim, dim, 0, gl.RED_INTEGER, gl.UNSIGNED_BYTE, bytes);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+    return tex;
+  }
+
+  /** Upload/cache a ground archive as a 64x64 TEXTURE_2D_ARRAY. */
+  uploadTileArray(archive, layers) {
+    if (this.tileArrays.has(archive)) return this.tileArrays.get(archive);
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
+    const w = layers[0].width;
+    const h = layers[0].height;
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    for (let i = 0; i < layers.length; i++) {
+      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(layers[i].colors.buffer, layers[i].colors.byteOffset, w * h * 4));
+    }
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    this.tileArrays.set(archive, tex);
+    return tex;
+  }
+
+  /** Draw one terrain surface with its tilemap + tile array. */
+  drawTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) {
+    const gl = this.gl;
+    gl.useProgram(this.terrainProgram);
+    gl.uniformMatrix4fv(this.tUProj, false, this._proj);
+    gl.uniformMatrix4fv(this.tUView, false, this._view);
+    gl.uniformMatrix4fv(this.tUModel, false, modelMatrix);
+    gl.uniform1f(this.tUTileSize, tileSize);
+    gl.uniform3fv(this.tULightDir, this._lightDir);
+    gl.uniform3fv(this.tUAmbient, this._ambient);
+    gl.uniform1f(this.tUSunScale, this._sunScale);
+    gl.uniform3fv(this.tUSunColor, this._sunColor);
+    const count = this._pointLights.length / 4;
+    gl.uniform1i(this.tUPointCount, count);
+    if (count > 0) gl.uniform4fv(this.tUPointLights, this._pointLights);
+    gl.uniform3fv(this.tUPointColor, this._pointColor);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, arrayTex);
+    gl.uniform1i(this.tUTileArr, 0);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
+    gl.uniform1i(this.tUTilemap, 2);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindVertexArray(surface.vao);
+    gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
+    gl.bindVertexArray(null);
   }
 
   /**

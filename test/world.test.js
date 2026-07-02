@@ -370,3 +370,31 @@ test('world: MAGEAA00 city lights pinned - both verbatim paths', { skip: skipRea
   approx(lights[0].y, 0.2);
   approx(lights[0].z, 43.45);
 });
+
+test('world: R9 tilemap conversion - verbatim UpdateTileMapDataJob', async () => {
+  const { convertTilemap, buildTerrainGrid, buildTerrainIndices } =
+    await import('../src/world/terrainSurface.js');
+  // [flip, rotate, 6-bit record] -> [record << 2 | rotate | flip << 1],
+  // FF water sentinel back to record 0 (ConvertWaterTiles default).
+  const src = new Uint8Array([2, 66, 130, 194, 0xff, 0, 63, 55 | 64 | 128]);
+  assert.deepEqual([...convertTilemap(src)],
+    [8, 9, 10, 11, 0, 0, 252, 223]);
+  // Grid shape + corner-height law match the retired quad path: corner
+  // (x, z) samples data[x * hDim + z] * MAX_TERRAIN_HEIGHT * scale.
+  const { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, DEFAULT_TERRAIN_SCALE } =
+    await import('../src/world/terrainSampler.js');
+  const hDim = HEIGHTMAP_DIMENSION;
+  const samples = new Float32Array(hDim * hDim);
+  samples[5 * hDim + 7] = 0.25; // sample(x=5, z=7)
+  const grid = buildTerrainGrid(samples);
+  assert.equal(grid.positions.length, hDim * hDim * 3);
+  const vi = (7 * hDim + 5) * 3; // vertex (x=5, z=7), rows are z
+  approx(grid.positions[vi], 5 * 6.4);
+  approx(grid.positions[vi + 1], 0.25 * MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE);
+  approx(grid.positions[vi + 2], 7 * 6.4);
+  // Shared indices: two triangles per cell on the (x,z)->(x+1,z+1)
+  // diagonal, matching the retired tessellation.
+  const idx = buildTerrainIndices();
+  assert.equal(idx.length, (hDim - 1) * (hDim - 1) * 6);
+  assert.deepEqual([...idx.slice(0, 6)], [0, hDim, hDim + 1, 0, hDim + 1, 1]);
+});

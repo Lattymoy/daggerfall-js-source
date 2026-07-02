@@ -1,7 +1,7 @@
 // project-dagger entry point.
 // Desktop-only. Hand-rolled WebGL2, no framework. Same doctrine as project-final.
-// Scene router: ?interior, ?dungeon, ?terrain, ?world, or an exterior
-// location by default (?region=<name>&loc=<name>). Scene details live in
+// Scene router: ?interior, ?dungeon, ?world, or an exterior location
+// by default (?region=<name>&loc=<name>). Scene details live in
 // src/scenes/*.js headers.
 //
 // Controls: click to lock pointer, WASD + mouse to fly, Shift for speed.
@@ -12,7 +12,6 @@ import { windowEmissionRGB } from './render/windowEmission.js';
 import { bootExterior } from './scenes/exterior.js';
 import { bootInterior } from './scenes/interior.js';
 import { bootDungeon } from './scenes/dungeon.js';
-import { bootTerrain } from './scenes/terrain.js';
 import { bootWorld } from './scenes/world.js';
 
 async function boot() {
@@ -26,7 +25,6 @@ async function boot() {
   renderer.setWindowEmission(windowEmissionRGB(params.get('window') || 'day'));
   if (params.has('interior')) return bootInterior(canvas, renderer, params, status);
   if (params.has('dungeon')) return bootDungeon(canvas, renderer, params, status);
-  if (params.has('terrain')) return bootTerrain(canvas, renderer, params, status);
   if (params.has('world')) return bootWorld(canvas, renderer, params, status);
   return bootExterior(canvas, renderer, params, status);
 }

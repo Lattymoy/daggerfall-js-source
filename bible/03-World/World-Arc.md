@@ -157,7 +157,7 @@ DEPARTURE pending Mac review (Port-Ledger A): DFU's noise source is
 Unity's engine-internal Mathf.PerlinNoise; `src/world/perlin.js` stands in
 with Ken Perlin's reference improved noise remapped to [0,1] - same role,
 different concrete samples, all pins pin OUR pipeline. Open-ocean pixels
-clamp to exactly 0.017674 everywhere (pinned). Scene: ?terrain=<x>,<y>
+clamp to exactly 0.017674 everywhere (pinned). Scene: ?terrain=<x>,<y> (RETIRED in Rendering-Arc R9 - the streaming world owns terrain)
 (default 207,213) renders a 5x5 pixel neighborhood on an elevation ramp;
 ground TEXTURING (tilemap), locations-on-terrain, and streaming remain
 queued. Pins in test/terrain.test.js.

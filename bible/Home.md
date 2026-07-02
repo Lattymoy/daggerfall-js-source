@@ -20,6 +20,13 @@ streaming scene at seconds per frame, so sleeps sample stale state
 Unity asset values (prefab lights, AnimationCurve keys) are groundable
 without widening the sparse clone: git show HEAD:Assets/Prefabs/....prefab
 reads the YAML from the object store (used to verify the R5 constants).
+When a renderer change diffs against a baseline and theory stalls,
+build a screen-projection ground-truth probe: rebuild the scene's data
++ exact camera in Node, project known world points to screen, and read
+the framebuffer pixels - single far pixels are rounding-limited, so
+verify laws on NEAR tiles (a shot-mode override hook can force test
+bytes). The R9 HLSL-row-major/GLSL-column-major transpose was only
+provable this way.
 
 ## Sections
 
@@ -39,7 +46,7 @@ reads the YAML from the object store (used to verify the R5 constants).
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9 shipped: floating-origin streaming world (?world). Build queue empty.
 - `03-World/Player-Arc.md` - NOT STARTED. Movement, collision, activation; inputs (staticDoors, action records) already shipped.
-- `07-Rendering/Rendering-Arc.md` - ACTIVE. R8 shipped: interior point lights (verbatim AddLight offsets, ambient 0.18). Next: terrain atlas or weather.
+- `07-Rendering/Rendering-Arc.md` - ACTIVE. R9 shipped: terrain tilemap-shader pass (verbatim decode + conversion, ?terrain retired). Next: exterior groundMesh conversion or weather.
 
 ## Repo layout
 

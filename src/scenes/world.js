@@ -12,7 +12,7 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
 import { TextureFile } from '../formats/textureFile.js';
 import { WoodsFile } from '../formats/woodsFile.js';
-import { buildTerrainMesh } from '../render/terrainMesh.js';
+import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { applyClimate, getGroundArchive, getNatureArchive, isExteriorWindow } from '../world/climateSwaps.js';
@@ -142,6 +142,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
   const tileSide = TERRAIN_SIZE / 128;
   const built = new Map(); // key -> pixel entry
+  const TERRAIN_INDICES = buildTerrainIndices();
 
   async function buildPixel(px, py) {
     const key = `${px},${py}`;
@@ -161,10 +162,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     const groundArchive = getGroundArchive(climateBase, season);
     const natureArchive = getNatureArchive(climate.natureArchive, season);
 
-    await getTexture(groundArchive);
-    const terrainModel = buildTerrainMesh(tilemap, samples, groundArchive);
-    for (const sm of terrainModel.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
-    const terrain = renderer.createMesh(terrainModel);
+    // R9 tilemap pass: shared-index height grid + per-pixel tilemap
+    // texture + one cached texture array per ground archive.
+    const groundTex = await getTexture(groundArchive);
+    if (!renderer.tileArrays.has(groundArchive)) {
+      const layers = [];
+      for (let r = 0; r < groundTex.recordCount; r++) {
+        layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
+      }
+      renderer.uploadTileArray(groundArchive, layers);
+    }
+    const grid = buildTerrainGrid(samples);
+    const terrain = renderer.createTerrainSurface(grid.positions, grid.normals, TERRAIN_INDICES);
+    const tilemapTex = renderer.uploadTilemapTexture(convertTilemap(tilemap), TERRAIN_TILE_DIM);
 
     // Flat groups: pixel-local base positions.
     const groups = new Map();
@@ -240,7 +250,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
 
     built.set(key, {
-      px, py, terrain, models, batches, texRemap, lights: pixelLights, skyBase: climate.skyBase, natureCount: nature.length,
+      px, py, terrain, tilemapTex, groundArchive, models, batches, texRemap, lights: pixelLights, skyBase: climate.skyBase, natureCount: nature.length,
+
       location: dfLocation ? dfLocation.name : null,
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
@@ -253,6 +264,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const p = built.get(key);
     if (!p) return;
     renderer.destroyMesh(p.terrain);
+    renderer.gl.deleteTexture(p.tilemapTex);
     for (const b of p.batches) renderer.destroyBatch(b);
     built.delete(key);
   }
@@ -391,7 +403,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const p of built.values()) {
       const t = state.pixelTranslation(p.px, p.py);
       const pixelMatrix = trs(t[0], t[1], t[2], 0, 0, 0);
-      renderer.drawMesh(p.terrain, pixelMatrix);
+      renderer.drawTerrain(p.terrain, pixelMatrix,
+        renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
       for (const m of p.models) renderer.drawMesh(m.gpu, multiply(pixelMatrix, m.local), p.texRemap);
       for (const b of p.batches) {
         b.origin = t;

@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 121 tests across 19 files.
+Node 22). Suite: 122 tests across 19 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -22,7 +22,7 @@ Node 22). Suite: 121 tests across 19 files.
 | streaming.test.js | 7 | world-coord conversions, nearest-first 7x7, crossing offsets + column swaps, two-pixel jumps, vertical recenter, 30-crossing floating-origin invariant, 2000-step invariant fuzz |
 | terrain.test.js | 14 | WOODS.WLD reader + corpus pins, perlin, cubic, sampler pins, umRandom (float + int), marching-squares lookup, blend flattening, Daggerfall-on-terrain integration, 15251-location corpus sweep, terrain key, nature scatter rules + integration |
 | window.test.js | 2 | MaterialReader style constants, real glass-texel mask pins |
-| world.test.js | 12 | mat4, meshReader, rmbLayout, location grid, flats, nature-quirk pin, city lights |
+| world.test.js | 13 | mat4, meshReader, rmbLayout, location grid, flats, nature-quirk pin, city lights, R9 tilemap conversion + grid pins |
 | manifest.test.js | 1 | drift guard: this table and the total against the real suite |
 
 Two tiers per module:
