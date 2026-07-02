@@ -11,7 +11,7 @@ Reference source: Daggerfall Unity `DaggerfallConnect` namespace (C#), plus dfwo
 | 1 | BSA container | ARCH3D.BSA, BLOCKS.BSA, MAPS.BSA | **complete** (`src/formats/bsaFile.js`) |
 | 2 | Palettes | PAL files, colormaps | **complete** (`src/formats/dfPalette.js`) |
 | 3 | TEXTURE.??? | texture archives | **complete** (`src/formats/textureFile.js` + `baseImageFile.js`) |
-| 4 | IMG / CIF | UI art, paperdoll art (reference for voxel outfits) | not started |
+| 4 | IMG / CIF | UI art, paperdoll art (reference for voxel outfits) | **complete** (`src/formats/imgFile.js`, `cifRciFile.js`) |
 | 5 | ARCH3D | 3D model records | not started |
 | 6 | BLOCKS | RMB (exterior) + RDB (dungeon) blocks | not started |
 | 7 | MAPS | regions, locations | not started |
@@ -37,3 +37,4 @@ Reference source: Daggerfall Unity `DaggerfallConnect` namespace (C#), plus dfwo
 - DFU's `RewriteRecord` write-back and path-extension checks were not ported (read-only byte-buffer runtime). Noted in bsaFile.js header.
 - Palettes: 1:1 DFPalette.cs translation. All 8 shipped palettes load (PAL.PAL + 3 raw .PALs + 4 .COLs). MAP.PAL x4 six-bit expansion verified cross-file: OLDMAP.PAL raw (63,0,63) lands as MAP.PAL (252,0,252). PAL.PAL index 1 is the magenta transparency sentinel. `readEmbedded` ported for TextureFile's in-stream palettes (next reader).
 - TEXTURE: 1:1 TextureFile.cs + BaseImageFile.cs. Full-corpus gate: all 472 archives, 469 load (215/217/436 correctly rejected as DFU documents), 6713 records, 11211 frames, every frame decodes to width*height. Byte-sum checksums pinned per decode path (uncompressed stride-256, multi-frame transparent-run, RecordRle 0x1108, ImageRle 0x0108). Wild compression values 0x900/0x101/0x100 exist in real data and fall through to the uncompressed path exactly as DFU's switch default does. getColor32 keeps DFU's vertical flip; spectral/firewall emission helpers deferred to Rendering arc (Unity material code, approved as presentation).
+- IMG/CIF/RCI: 1:1 ImgFile.cs + CifRciFile.cs. IMG corpus 263 files, 260 load (FMAP0I00/01/16 correctly rejected), 72 headerless via exact-length table, all 6 palettized files detected with embedded x4 palette (TITL00I0 pinned). CIF/RCI corpus 76 files, 1172 records, 1610 frames, zero failures. FACES.CIF routes through the RCI path; WEAPON09.CIF (bow) has no wield record; TFAC00I0.RCI reads exactly 503 records, the count DFU hardcodes its array for. ImgFile reads raw bytes regardless of header compression field, verbatim DFU. Structural-only simplification: dynamic record arrays instead of DFU's fixed 64/503 pre-sizing.
