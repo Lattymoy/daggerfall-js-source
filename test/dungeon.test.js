@@ -444,16 +444,21 @@ test('dungeon: per-light flicker ranges stay in [start - 1, start]', async () =>
 test('dungeon: R7 water planes - corpus and location pins', { skip: skipReal }, async () => {
   const { blocks, maps, getModel } = loadReal();
   // Corpus: 32 of 187 RDB blocks carry a start-marker water level.
+  const { collectDungeonLights } = await import('../src/world/dungeonLights.js');
   let watered = 0;
   let total = 0;
+  let lightObjects = 0;
   for (let i = 0; i < blocks.count; i++) {
     if (!blocks.getBlockName(i).endsWith('.RDB')) continue;
     total++;
+    lightObjects += collectDungeonLights(blocks.getBlock(i)).length;
     const layout = layoutRdbBlock(blocks.getBlock(i), i, false, getModel);
     if (layout.waterLevel !== 10000) watered++;
   }
   assert.equal(total, 187);
   assert.equal(watered, 32);
+  // R6-R8 audit: RDB Light objects, corpus-wide.
+  assert.equal(lightObjects, 4268);
   const w0 = layoutRdbBlock(
     blocks.getBlock(blocks.getBlockIndex('W0000000.RDB')),
     blocks.getBlockIndex('W0000000.RDB'), false, getModel);

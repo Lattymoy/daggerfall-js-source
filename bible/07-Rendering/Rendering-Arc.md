@@ -201,6 +201,12 @@ dark, so the start vantage is legitimately near-ambient (nearest light
 9.9 units, range 7.5); the pool shot beside the range-15 brazier shows
 the warm falloff. A live in-program uniform probe (gl.getUniform)
 confirmed the full upload path before the vantage was understood.
+AUDIT NOTE (R6-R8 audit): AddLights is called unconditionally from
+CreateRDBBlockGameObject (no dungeon-type gating) - collection
+matches. Corpus pin added: 4268 RDB Light objects across the 187
+blocks. Side effect noted as verbatim-direction: the billboard
+16-light loop now lights night flats near exterior/world lanterns
+too, matching Unity's vertex-lit billboards.
 
 ## Milestone R7 - dungeon water planes (SHIPPED)
 
@@ -221,6 +227,12 @@ pins: 32 of 187 RDB blocks watered, W0000000 at -496; Maorn's Guard
 W0000022/-144 - the flooded-chamber shot verifies the blend (543k
 blue-blend pixels at the computed surface height). Console pin gains
 ", N water".
+AUDIT NOTE (R6-R8 audit): plane anchoring verified against the
+serialized scene values (DaggerfallUnityGame.unity: PlaneSize 10,
+PlaneOffset 5) - Unity's 10x10 centred plane nets centre = corner +
+25.6 with extent +/-25.6, i.e. exactly [origin, origin + 51.2]^2, our
+quad. The source's offset.z * (1 / prefabScale.x) x-for-z quirk is
+harmless at 10x10 and noted as-written.
 
 ## Milestone R8 - interior point lights (SHIPPED)
 
@@ -239,6 +251,11 @@ flat y 12.9 + h 2.35 / 2 + 0.6 = 14.675, cross-checked end to end.
 Console pin gains ", 17 lights"; brightness redistributes (0.18 base +
 range-15 pools) at a near-identical mean to the old flat lighting -
 the guild hall is densely lit by data.
+AUDIT NOTE (R6-R8 audit): the offset switch was machine-extracted from
+source - 30 cases (0-29), no default, exactly 17 valued offsets - and
+matches the port 1:1. Corpus pin added: 37249 interior lights across
+all 6832 building interiors. A first-wiring slip (city default range
+18 instead of 15) was caught before ship and is pinned.
 
 ## Queue
 

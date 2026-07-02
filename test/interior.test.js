@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { dfMeshToModel, GLOBAL_SCALE, DOOR_TYPE } from '../src/world/meshReader.js';
 import { getStaticDoors } from '../src/world/staticDoors.js';
 import { layoutInterior, isBadInteriorModel, INTERIOR_MARKER } from '../src/world/interiorLayout.js';
+import { collectInteriorLights } from '../src/world/interiorLights.js';
 import { Arch3dFile } from '../src/formats/arch3dFile.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
 
@@ -242,7 +243,7 @@ test('interior: MAGEAA00.RMB record 0 layout pins', { skip: skipReal }, () => {
 
 test('interior: full corpus - every building interior lays out clean', { skip: skipReal }, () => {
   const { blocks, getModel } = loadReal();
-  let interiors = 0, placements = 0, staticDoors = 0, flats = 0, filtered = 0;
+  let interiors = 0, placements = 0, staticDoors = 0, flats = 0, filtered = 0, lights = 0;
   for (let i = 0; i < blocks.count; i++) {
     if (blocks.getBlockName(i).indexOf('.RMB') === -1) continue;
     const blk = blocks.getBlock(i);
@@ -254,12 +255,15 @@ test('interior: full corpus - every building interior lays out clean', { skip: s
       placements += out.placements.length;
       staticDoors += out.doors.length;
       flats += out.flats.length;
+      lights += collectInteriorLights(out.flats, () => ({ w: 1, h: 1 })).length;
       filtered += sr.interior.block3dObjectRecords.length - out.placements.length;
     }
   }
   assert.equal(interiors, 6832);
   assert.equal(placements, 226208);
   assert.equal(staticDoors, 11449);
+  // R6-R8 audit: one light per archive-210 flat, corpus-wide.
+  assert.equal(lights, 37249);
   assert.equal(flats, 39940);
   // Exactly one misplaced model 31000 per flagged block/record combo -
   // the IsBadInteriorModel table has 60 combos across 27 blocks.
