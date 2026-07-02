@@ -51,9 +51,11 @@ World layout:
 - Exterior subrecord FLATS use the unrotated (subX, 0, -subZ) offset - DFU
   does not rotate flats with the building subrecord.
 - Climate-swapped nature flats get `billboardPosition.z = natureFlatsOffsetY`
-  (raw -2): suspected upstream y/z typo in RMBLayout.cs, kept verbatim for
-  parity. No visible artifact in Daggerfall city. Revisit in a DFU
-  side-by-side.
+  (raw -2): suspected upstream y/z typo in RMBLayout.cs, kept verbatim.
+  SETTLED: a corpus scan (pinned in world.test.js) shows zero exterior
+  subrecord flats in archives 500-511 across all 920 RMB blocks - the branch
+  is a dead code path on classic data and only fires for mod-injected
+  buildings. Verbatim is provably identical to any fix.
 - Ground tiles read [x][15 - y]; scenery skips records < 1; tile records
   >= 56 reset to grass 8; offsets propsOffsetY -4, blockFlatsOffsetY -6,
   natureFlatsOffsetY -2; classic data never sets model scale.

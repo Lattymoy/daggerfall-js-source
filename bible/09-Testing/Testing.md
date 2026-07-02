@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 61 tests across 10 files.
+Node 22). Suite: 63 tests across 11 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -14,11 +14,12 @@ Node 22). Suite: 61 tests across 10 files.
 | blocks.test.js | 4 | 1295-block corpus, resource closure, FixRdbData |
 | maps.test.js | 9 | 62 regions, converters, climate, city + Privateer's |
 | snd.test.js | 3 | 459 sounds, byte-exact header, zero-length record 5 |
-| world.test.js | 9 | mat4, meshReader, rmbLayout, location grid, flats |
+| world.test.js | 10 | mat4, meshReader, rmbLayout, location grid, flats, nature-quirk dead-path pin |
+| manifest.test.js | 1 | drift guard: this table and the total against the real suite |
 
 Two tiers per module:
 1. **Synthetic fixtures** - in-memory data built inside the test. Always run;
-   CI stays green with no game data (32 pass, 29 skip).
+   CI stays green with no game data (33 pass, 30 skip).
 2. **Real-data validation** - gated on `ARENA2_PATH`; skip cleanly when
    absent. Pin observed counts, names, ids, checksums, and structural
    closure invariants.
@@ -33,6 +34,6 @@ bump both together). `?shot` in main.js fixes the vantage and raises
 
 Pre-push gate: `npm run check` (test + build).
 
-Drift risk: the suite count above and in arc docs is hand-maintained.
-Candidate (needs Mac approval): a manifest test pinning the real count,
-project-final style.
+Drift guard: `test/manifest.test.js` pins the total line and every row of
+the table above against the real suite. Recalculate this doc in the same
+commit as any test change.

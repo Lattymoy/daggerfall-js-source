@@ -9,7 +9,7 @@ import { collectBlockFlats, scaledBillboardSize } from '../src/world/rmbFlats.js
 import { MapsFile } from '../src/formats/mapsFile.js';
 import { trs, multiply, transformPoint, identity } from '../src/world/mat4.js';
 import { Arch3dFile } from '../src/formats/arch3dFile.js';
-import { BlocksFile } from '../src/formats/blocksFile.js';
+import { BlocksFile, BLOCK_TYPES } from '../src/formats/blocksFile.js';
 import { TextureFile } from '../src/formats/textureFile.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
@@ -306,4 +306,26 @@ test('world: MAGEAA00 flats pinned', { skip: skipReal }, () => {
   const byArchive = {};
   for (const f of flats) byArchive[f.archive] = (byArchive[f.archive] || 0) + 1;
   assert.deepEqual(byArchive, { 201: 2, 210: 3, 212: 10, 213: 1, 504: 11 });
+});
+
+test('world: exterior nature-range flats do not exist in classic data', { skip: skipReal }, () => {
+  // Settles the Port-Ledger B entry: DFU's `billboardPosition.z =
+  // natureFlatsOffsetY` branch in AddExteriorBlockFlats (suspected y/z typo)
+  // is a dead code path on classic data - no exterior subrecord flat in any
+  // RMB block uses archives 500-511. Verbatim behavior is provably identical
+  // to any fix. The branch only matters for mod-injected buildings.
+  const blocks = new BlocksFile();
+  blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA'))));
+  let hits = 0;
+  for (let i = 0; i < blocks.count; i++) {
+    if (blocks.getBlockName(i) === 'FOO') continue;
+    if (blocks.getBlockType(i) !== BLOCK_TYPES.Rmb) continue;
+    const blk = blocks.getBlock(i);
+    for (const sr of blk.rmbBlock.subRecords) {
+      for (const f of sr.exterior.blockFlatObjectRecords) {
+        if (f.textureArchive >= 500 && f.textureArchive <= 511) hits++;
+      }
+    }
+  }
+  assert.equal(hits, 0);
 });
