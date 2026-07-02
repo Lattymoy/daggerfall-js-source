@@ -1,10 +1,11 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 129 tests across 21 files.
+Node 22). Suite: 132 tests across 22 files.
 
 | File | Tests | Covers |
 |---|---|---|
+| action.test.js | 3 | door lifecycle/verbatim constants, move tween + chain gate, activation picking |
 | player.test.js | 3 | verbatim speeds/constants, collider ground/slide/step, motor gravity/jump |
 | sky.test.js | 3 | SKY reader pins, panorama mirror law, night mapping |
 | smoke.test.js | 1 | runner sanity |
@@ -29,7 +30,7 @@ Node 22). Suite: 129 tests across 21 files.
 
 Two tiers per module:
 1. **Synthetic fixtures** - in-memory data built inside the test. Always run;
-   CI stays green with no game data (79 pass, 49 skip).
+   CI stays green with no game data (82 pass, 49 skip).
 2. **Real-data validation** - gated on `ARENA2_PATH`; skip cleanly when
    absent. Pin observed counts, names, ids, checksums, and structural
    closure invariants.
@@ -45,7 +46,10 @@ argv[2] is only the output path. SHOT_TIMEOUT overrides the 30s ready
 wait (streaming world wants 90000); SHOT_EVAL runs a JS snippet in-page
 after ready (promise-returning expressions are awaited - top-level
 `await` fails). Shot-mode probe hooks in the dungeon and world scenes:
-window.__move(dx, dy, dz) and window.__pose(x, y, z, yaw, pitch). `?shot` in main.js fixes the vantage and raises
+window.__move(dx, dy, dz), window.__pose(x, y, z, yaw, pitch),
+window.__player {pos, warp}, and in the dungeon __activate/__activateKey/
+__ray/__actions. SwiftShader renders heavy scenes at ~7 fps headless -
+time-based proofs must poll state, never trust wall-clock. `?shot` in main.js fixes the vantage and raises
 `window.__shotReady`. Manual proof, not a suite gate.
 
 Pre-push gate: `npm run check` (test + build).

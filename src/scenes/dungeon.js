@@ -26,6 +26,13 @@ import { layoutDungeon } from '../world/dungeonLayout.js';
 import { applyTextureTable } from '../world/dungeonTextures.js';
 import { lookAt, multiply, perspective, trs } from '../world/mat4.js';
 import { dfMeshToModel } from '../world/meshReader.js';
+import { PlayerMotor } from '../player/motor.js';
+import { Collider } from '../player/collider.js';
+import { ActionSystem } from '../world/actionSystem.js';
+import {
+  pickActivatable, worldAabb, RAY_DISTANCE, DOOR_ACTIVATION_DISTANCE,
+} from '../player/activate.js';
+import { ACTION_FLAGS } from '../world/rdbLayout.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { fetchBytes, texName } from './shared.js';
 
@@ -118,16 +125,31 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // GPU meshes: UVs from the original archive, submesh archives remapped
   // after conversion, verbatim DFU's material-swap order.
   const gpuMeshes = new Map();
+  const cpuModels = new Map(); // id -> {positions, indices} for collision
   for (const [id, dfMesh] of dfMeshes) {
     const model = dfMeshToModel(dfMesh, getTextureSize);
     for (const sm of model.subMeshes) {
       sm.textureArchive = remap(sm.textureArchive);
       uploadRecord(sm.textureArchive, sm.textureRecord);
     }
+    cpuModels.set(id, { positions: model.positions, indices: model.indices });
     gpuMeshes.set(id, renderer.createMesh(model));
   }
 
   const drawList = [];
+  // P2: static geometry collides under one bucket; action doors and
+  // Move-flagged action models live in the ActionSystem (own buckets,
+  // animated matrices, activation targets).
+  const collider = new Collider(() => -Infinity);
+  const actions = new ActionSystem(collider);
+  const dynamicDraws = []; // {gpu, object}
+  const MOVE_FLAGS = new Set([
+    ACTION_FLAGS.Translation, ACTION_FLAGS.Rotation,
+    ACTION_FLAGS.PositiveX, ACTION_FLAGS.NegativeX,
+    ACTION_FLAGS.PositiveY, ACTION_FLAGS.NegativeY,
+    ACTION_FLAGS.PositiveZ, ACTION_FLAGS.NegativeZ,
+  ]);
+  let colliderTris = 0;
   const flatGroups = new Map();
   const dungeonLightList = [];
   uploadRecord(waterArchive, 0); // classic water tile (R11)
@@ -135,11 +157,22 @@ export async function bootDungeon(canvas, renderer, params, status) {
   for (const b of dungeon.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     for (const p of b.layout.placements) {
-      drawList.push({ mesh: gpuMeshes.get(p.modelIdNum), matrix: multiply(originMatrix, p.matrix) });
+      const matrix = multiply(originMatrix, p.matrix);
+      const cpu = cpuModels.get(p.modelIdNum);
+      if (p.action && MOVE_FLAGS.has(p.action.actionFlag)) {
+        const o = actions.addAction(p.position, cpu, matrix, p.action);
+        dynamicDraws.push({ gpu: gpuMeshes.get(p.modelIdNum), object: o });
+        continue;
+      }
+      drawList.push({ mesh: gpuMeshes.get(p.modelIdNum), matrix });
+      collider.addMesh('world', cpu.positions, cpu.indices, matrix);
+      colliderTris += cpu.indices.length / 3;
     }
     for (const d of b.layout.actionDoors) {
       if (d.disabled) continue;
-      drawList.push({ mesh: gpuMeshes.get(d.modelIdNum), matrix: multiply(originMatrix, d.matrix) });
+      const matrix = multiply(originMatrix, d.matrix);
+      const o = actions.addDoor(cpuModels.get(d.modelIdNum), matrix);
+      dynamicDraws.push({ gpu: gpuMeshes.get(d.modelIdNum), object: o });
     }
     for (const f of b.layout.flats) {
       const key = `${f.archive}_${f.record}`;
@@ -181,6 +214,32 @@ export async function bootDungeon(canvas, renderer, params, status) {
     ? [dungeon.startMarker.x, dungeon.startMarker.y, dungeon.startMarker.z]
     : [0, 2, 0];
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
+  // P2: grounded walking is the default (?fly restores the fly cam);
+  // spawn drops onto the start-marker floor.
+  const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
+  const player = new PlayerMotor(collider);
+  player.spawn(spawn[0], spawn[1], spawn[2]);
+  let prevJump = false;
+  let prevUse = false;
+  console.log(`player: collider ${colliderTris} tris, ${actions.objects.size} activatables, walk=${walkMode}`);
+  const tryActivate = () => {
+    const dir = [
+      Math.sin(cam.yaw) * Math.cos(cam.pitch),
+      Math.sin(cam.pitch),
+      Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+    const eye = walkMode ? player.eye : cam.pos;
+    const targets = [];
+    for (const o of actions.objects.values()) {
+      targets.push({
+        key: o.key,
+        aabb: worldAabb(o.cpu.positions, o.matrix),
+        distance: DOOR_ACTIVATION_DISTANCE,
+      });
+    }
+    const key = pickActivatable(eye, dir, targets, collider);
+    if (key) actions.activate(key);
+    return key;
+  };
   const keys = new Set();
   addEventListener('keydown', (e) => keys.add(e.code));
   addEventListener('keyup', (e) => keys.delete(e.code));
@@ -217,6 +276,18 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // frame-sync instead of sleeping.
     window.__move = (dx, dy, dz) => { cam.pos[0] += dx; cam.pos[1] += dy; cam.pos[2] += dz; };
     window.__pose = (x, y, z, yaw, pitch) => { cam.pos = [x, y, z]; cam.yaw = yaw; cam.pitch = pitch; };
+    window.__player = {
+      get pos() { return [...player.pos]; },
+      warp: (x, y, z) => player.spawn(x, y, z),
+    };
+    window.__activate = () => tryActivate();
+    window.__activateKey = (k) => actions.activate(k);
+    window.__ray = () => {
+      const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+      return collider.raycast(walkMode ? player.eye : cam.pos, dir, 50);
+    };
+    window.__actions = () => JSON.stringify(
+      [...actions.objects.values()].map((o) => ({ key: o.key, state: o.state, t: Number(o.t.toFixed(3)), pos: [o.matrix[12], o.matrix[13], o.matrix[14]].map((v) => Number(v.toFixed(2))) })));
     window.__frame = 0;
   }
 
@@ -227,11 +298,27 @@ export async function bootDungeon(canvas, renderer, params, status) {
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
-    const speed = (keys.has('ShiftLeft') ? 24 : 5) * dt;
-    if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
-    if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;
-    if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;
-    if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;
+    actions.update(dt);
+    if (walkMode) {
+      const jumpHeld = keys.has('Space');
+      player.update(dt, {
+        forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
+        strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
+        run: keys.has('ShiftLeft'),
+        jump: jumpHeld && !prevJump,
+      }, cam.yaw);
+      prevJump = jumpHeld;
+      cam.pos = player.eye;
+      const useHeld = keys.has('KeyE');
+      if (useHeld && !prevUse) tryActivate();
+      prevUse = useHeld;
+    } else {
+      const speed = (keys.has('ShiftLeft') ? 24 : 5) * dt;
+      if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
+      if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;
+      if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;
+      if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;
+    }
 
     const target = [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
     const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.05, 800);
@@ -243,6 +330,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       new Float32Array(DUNGEON_LIGHT_COLOR));
     renderer.beginFrame(proj, view, lightDir);
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix);
+    for (const d of dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
     renderer.drawWater(waterQuads, WATER_COLOR,

@@ -117,6 +117,49 @@ export class Collider {
     this._buckets.delete(bucketKey);
   }
 
+  /**
+   * Nearest ray-triangle hit distance along dir (unit), or Infinity.
+   * Walks XZ grid cells with a 2D DDA per bucket (Moller-Trumbore per
+   * triangle, front and back faces).
+   */
+  raycast(origin, dir, maxDist) {
+    let best = Infinity;
+    for (const bucket of this._buckets.values()) {
+      const t = bucket.t();
+      const ox = origin[0] - t[0];
+      const oy = origin[1] - t[1];
+      const oz = origin[2] - t[2];
+      // 2D DDA across cells.
+      let cx = Math.floor(ox / CELL);
+      let cz = Math.floor(oz / CELL);
+      const stepX = dir[0] > 0 ? 1 : -1;
+      const stepZ = dir[2] > 0 ? 1 : -1;
+      const invX = dir[0] !== 0 ? 1 / dir[0] : Infinity;
+      const invZ = dir[2] !== 0 ? 1 / dir[2] : Infinity;
+      let tMaxX = dir[0] !== 0 ? ((cx + (stepX > 0 ? 1 : 0)) * CELL - ox) * invX : Infinity;
+      let tMaxZ = dir[2] !== 0 ? ((cz + (stepZ > 0 ? 1 : 0)) * CELL - oz) * invZ : Infinity;
+      const tDeltaX = Math.abs(CELL * invX);
+      const tDeltaZ = Math.abs(CELL * invZ);
+      const visited = new Set();
+      let walked = 0;
+      while (walked <= Math.min(maxDist, best)) {
+        const cell = bucket.grid.get(`${cx},${cz}`);
+        if (cell) {
+          for (const ti of cell) {
+            if (visited.has(ti)) continue;
+            visited.add(ti);
+            const tri = bucket.tris[ti];
+            const hit = rayTriangle(ox, oy, oz, dir, tri[0], tri[1], tri[2]);
+            if (hit !== null && hit < best && hit <= maxDist) best = hit;
+          }
+        }
+        if (tMaxX < tMaxZ) { walked = tMaxX; tMaxX += tDeltaX; cx += stepX; }
+        else { walked = tMaxZ; tMaxZ += tDeltaZ; cz += stepZ; }
+      }
+    }
+    return best;
+  }
+
   _resolveSphere(center, radius, out) {
     // Push a sphere out of every nearby triangle; returns strongest
     // ground-ness and whether any ceiling-ish contact happened.
@@ -153,6 +196,10 @@ export class Collider {
             center[1] += dy * push;
             center[2] += dz * push;
             const ny = dy / d;
+            if (globalThis.__logContacts) {
+              globalThis.__contacts = globalThis.__contacts || [];
+              globalThis.__contacts.push({ tri: tri.map((v) => v.map((n) => Number(n.toFixed(2)))), ny: Number(ny.toFixed(2)) });
+            }
             if (ny >= GROUND_NY) grounded = true;
             if (ny <= -0.5) ceiling = true;
             if (ny <= -GROUND_NY) pushedDown = true;
@@ -186,10 +233,29 @@ export class Collider {
 
   /**
    * Move the capsule (feet position, mutated) by the delta with slide,
-   * step-up, ground snap, and the heightAt floor.
+   * step-up, ground snap, and the heightAt floor. Large deltas substep
+   * so no component ever exceeds a fraction of the radius - a sphere
+   * displaced past a surface in one step never contacts it (tunneling;
+   * surfaced by starved-frame dt spikes in the headless harness).
    * @returns {{grounded:boolean, hitCeiling:boolean}}
    */
   move(feet, dx, dy, dz) {
+    const maxComp = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
+    const maxStep = CAPSULE_RADIUS * 0.75;
+    if (maxComp > maxStep) {
+      const n = Math.ceil(maxComp / maxStep);
+      const out = { grounded: false, hitCeiling: false, pushedDown: false };
+      for (let i = 0; i < n; i++) {
+        const r = this._moveStep(feet, dx / n, dy / n, dz / n);
+        out.grounded = r.grounded;
+        out.hitCeiling = out.hitCeiling || r.hitCeiling;
+      }
+      return out;
+    }
+    return this._moveStep(feet, dx, dy, dz);
+  }
+
+  _moveStep(feet, dx, dy, dz) {
     const out = { grounded: false, hitCeiling: false, pushedDown: false };
 
     // Horizontal, with a step-up retry: if blocked, try from stepOffset
@@ -243,3 +309,25 @@ export class Collider {
 
 const ZERO3 = [0, 0, 0];
 const TMP = [0, 0, 0];
+
+/** Moller-Trumbore, both faces; distance along unit dir or null. */
+function rayTriangle(ox, oy, oz, d, a, b, c) {
+  const e1x = b[0] - a[0]; const e1y = b[1] - a[1]; const e1z = b[2] - a[2];
+  const e2x = c[0] - a[0]; const e2y = c[1] - a[1]; const e2z = c[2] - a[2];
+  const px = d[1] * e2z - d[2] * e2y;
+  const py = d[2] * e2x - d[0] * e2z;
+  const pz = d[0] * e2y - d[1] * e2x;
+  const det = e1x * px + e1y * py + e1z * pz;
+  if (Math.abs(det) < 1e-9) return null;
+  const inv = 1 / det;
+  const tx = ox - a[0]; const ty = oy - a[1]; const tz = oz - a[2];
+  const u = (tx * px + ty * py + tz * pz) * inv;
+  if (u < 0 || u > 1) return null;
+  const qx = ty * e1z - tz * e1y;
+  const qy = tz * e1x - tx * e1z;
+  const qz = tx * e1y - ty * e1x;
+  const v = (d[0] * qx + d[1] * qy + d[2] * qz) * inv;
+  if (v < 0 || u + v > 1) return null;
+  const t = (e2x * qx + e2y * qy + e2z * qz) * inv;
+  return t > 1e-4 ? t : null;
+}

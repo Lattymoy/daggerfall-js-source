@@ -42,8 +42,39 @@ Inputs already shipped for this arc:
 - Streaming world camera (`?world`) - the fly camera to be replaced by a
   grounded controller.
 
-Queue (item 1 shipped as P1):
+## Milestone P2 - activation + dungeon action doors and chains (SHIPPED)
+
+`src/player/activate.js`: verbatim PlayerActivate reach - RayDistance
+3072 * GlobalScale (76.8, classic's farthest view distance), per-target
+activation distance 128 * GlobalScale (3.2, Default/Door verbatim).
+Picking is ours: world-AABB slab test per activatable, nearest in-reach
+wins, occlusion rejected via a new grid-DDA collider.raycast
+(Moller-Trumbore, both faces).
+`src/world/actionSystem.js`, verbatim DaggerfallAction /
+DaggerfallActionDoor: Move actions tween LINEARLY over duration / 20
+seconds - self-space rotation (degrees; trs takes degrees, caught by
+the unit pin when a double conversion slipped in) plus world
+translation; End reverses on the next activation; Receive gates on
+IsPlaying down the WHOLE chain while Play cascades to the linked object
+FIRST; doors swing (0, -90, 0) over 1.5 s, ToggleDoor is a no-op while
+moving. Collision lifecycle (ours): a door's bucket vanishes the moment
+opening starts and returns only at close-COMPLETE (DFU's MakeTrigger
+call sites); moving action objects rebuild their bucket every frame -
+standing collision is correct at every instant, platform RIDING
+(velocity inheritance) is a later milestone. Non-movement action flags
+(CastSpell, Hurt, Teleport, text, locks) route to their arcs via the
+flag table; the dungeon runtime executes the movement family.
+Dungeon scene: walking + E-activation (KeyE edge), 62 activatables in
+Privateer's Hold over an 8406-triangle collider; dynamic draws compose
+base x tween each frame. In-engine cycle proof: closed door rayed at
+2.15, activate -> passage clear DURING the swing (trigger-at-open-start
+verbatim), state end, re-activate -> reverse; tween timing pinned
+deterministically in test/action.test.js (headless SwiftShader runs
+~7 fps - see Testing.md).
+
+Queue (items 1-2 shipped):
 1. DONE - grounded movement + gravity + collision (P1).
-2. PlayerActivate ray: doors (interior/exterior transition via
-   staticDoors), ladders, dungeon action chains.
-3. Interior/exterior/dungeon scene transitions replacing URL params.
+2. DONE - activation ray + dungeon action doors/chains (P2). Exterior
+   static-door TRANSITIONS moved to item 3 (scene architecture).
+3. Interior/exterior/dungeon scene transitions via staticDoors,
+   replacing URL params; ladders.

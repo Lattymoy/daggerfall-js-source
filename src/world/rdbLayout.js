@@ -326,7 +326,7 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
       const staticDoors = getStaticDoors(model, blockIndex, 0, matrix);
       if (staticDoors) exitDoors.push(...staticDoors);
 
-      placements.push({ modelIdNum, matrix, action });
+      placements.push({ modelIdNum, matrix, action, position: obj.position });
       if (acts) addModelLink(obj, action);
     } else if (obj.type === RDB_RESOURCE_TYPES.Flat) {
       const fr = obj.resources.flatResource;
