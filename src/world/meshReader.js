@@ -7,11 +7,32 @@
 //   - uv = (U / textureWidth, -(V / textureHeight)) - negative V relies on
 //     REPEAT wrapping, exactly as DFU.
 //   - Each plane is a triangle fan from point 0 indexed [shared, vc+1, vc].
-// Door extraction (ModelDoor, archives 74/56/331/156/95) is gameplay metadata
-// consumed by the Player arc; it is not built here yet and is tracked in
-// bible/03-World/World-Arc.md.
+//   - ModelDoor extraction runs inside the vertex pass exactly as DFU's
+//     LoadVertices: door archives 74 (building), 56 (dungeon enter),
+//     331 (dungeon ruin enter, record 0 is plain stone and skipped),
+//     95 (dungeon exit); 156 (Scourg exterior) only exempts the base-archive
+//     reduction and never becomes a door itself. Archives > 100 reduce to
+//     archive - trunc(archive/100)*100 for the check (climate variants),
+//     except 331/156. Each plane of a door submesh is one door; Index resets
+//     per submesh (verbatim DFU doorCount scope). Verts are the plane's first
+//     three points in model space; Normal = normalize(cross(v0-v2, v0-v1)).
 
 export const GLOBAL_SCALE = 0.025; // Default scale
+
+// DFU DoorTypes enum, same order.
+export const DOOR_TYPE = {
+  NONE: 0,
+  BUILDING: 1,
+  DUNGEON_ENTRANCE: 2,
+  DUNGEON_EXIT: 3,
+};
+
+// LoadVertices door archive constants, verbatim.
+const BUILDING_DOORS = 74;
+const DUNGEON_ENTER_DOORS = 56;
+const DUNGEON_RUIN_ENTER_DOORS = 331;
+const SCOURG_EXTERIOR = 156;
+const DUNGEON_EXIT_DOORS = 95;
 
 /**
  * Convert a decomposed DFMesh into flat GPU-ready buffers.
@@ -21,7 +42,9 @@ export const GLOBAL_SCALE = 0.025; // Default scale
  *   materials; we pull them from TextureFile).
  * @returns {{positions:Float32Array,normals:Float32Array,uvs:Float32Array,
  *   indices:Uint32Array,subMeshes:Array<{textureArchive:number,textureRecord:number,
- *   startIndex:number,primitiveCount:number}>}}
+ *   startIndex:number,primitiveCount:number}>,
+ *   doors:Array<{index:number,type:number,
+ *     vert0:{x,y,z},vert1:{x,y,z},vert2:{x,y,z},normal:{x,y,z}}>}}
  */
 export function dfMeshToModel(dfMesh, getTextureSize) {
   const totalVertices = dfMesh.totalVertices;
@@ -32,10 +55,80 @@ export function dfMeshToModel(dfMesh, getTextureSize) {
   const subMeshes = new Array(dfMesh.subMeshes.length);
 
   // LoadVertices.
+  const doors = [];
   let vertexCount = 0;
   for (const sm of dfMesh.subMeshes) {
     const sz = getTextureSize(sm.textureArchive, sm.textureRecord);
+
+    // Base climate archive for the door check. All base door textures are
+    // > 100 with some exceptions (verbatim DFU).
+    const submeshTextureArchive = sm.textureArchive;
+    const baseTextureArchive =
+      submeshTextureArchive - Math.trunc(submeshTextureArchive / 100) * 100;
+    let doorArchive = submeshTextureArchive;
+    if (
+      doorArchive > 100 &&
+      doorArchive !== DUNGEON_RUIN_ENTER_DOORS &&
+      doorArchive !== SCOURG_EXTERIOR
+    ) {
+      doorArchive = baseTextureArchive;
+    }
+
+    let doorFound = false;
+    let doorType = DOOR_TYPE.NONE;
+    switch (doorArchive) {
+      case BUILDING_DOORS:
+        doorFound = true;
+        doorType = DOOR_TYPE.BUILDING;
+        break;
+      case DUNGEON_ENTER_DOORS:
+        doorFound = true;
+        doorType = DOOR_TYPE.DUNGEON_ENTRANCE;
+        break;
+      case DUNGEON_RUIN_ENTER_DOORS:
+        if (sm.textureRecord > 0) { // Dungeon ruins index 0 is just a stone texture
+          doorFound = true;
+          doorType = DOOR_TYPE.DUNGEON_ENTRANCE;
+        }
+        break;
+      case DUNGEON_EXIT_DOORS:
+        doorFound = true;
+        doorType = DOOR_TYPE.DUNGEON_EXIT;
+        break;
+    }
+
+    let doorCount = 0; // Resets per submesh, verbatim DFU scope.
     for (const plane of sm.planes) {
+      // If this is a door then each plane is a single door.
+      if (doorFound) {
+        const p0 = plane.points[0];
+        const p1 = plane.points[1];
+        const p2 = plane.points[2];
+        const vert0 = {
+          x: p0.x * GLOBAL_SCALE, y: -p0.y * GLOBAL_SCALE, z: p0.z * GLOBAL_SCALE,
+        };
+        const vert1 = {
+          x: p1.x * GLOBAL_SCALE, y: -p1.y * GLOBAL_SCALE, z: p1.z * GLOBAL_SCALE,
+        };
+        const vert2 = {
+          x: p2.x * GLOBAL_SCALE, y: -p2.y * GLOBAL_SCALE, z: p2.z * GLOBAL_SCALE,
+        };
+        // Normal facing away from door: normalize(cross(v0 - v2, v0 - v1)).
+        const ux = vert0.x - vert2.x, uy = vert0.y - vert2.y, uz = vert0.z - vert2.z;
+        const vx = vert0.x - vert1.x, vy = vert0.y - vert1.y, vz = vert0.z - vert1.z;
+        let nx = uy * vz - uz * vy;
+        let ny = uz * vx - ux * vz;
+        let nz = ux * vy - uy * vx;
+        const nl = Math.hypot(nx, ny, nz) || 1;
+        nx /= nl; ny /= nl; nz /= nl;
+        doors.push({
+          index: doorCount++,
+          type: doorType,
+          vert0, vert1, vert2,
+          normal: { x: nx, y: ny, z: nz },
+        });
+      }
+
       for (const p of plane.points) {
         const vi = vertexCount * 3;
         positions[vi] = p.x * GLOBAL_SCALE;
@@ -84,5 +177,5 @@ export function dfMeshToModel(dfMesh, getTextureSize) {
     subMeshCount++;
   }
 
-  return { positions, normals, uvs, indices, subMeshes };
+  return { positions, normals, uvs, indices, subMeshes, doors };
 }

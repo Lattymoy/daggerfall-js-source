@@ -59,15 +59,27 @@ World layout:
 - Ground tiles read [x][15 - y]; scenery skips records < 1; tile records
   >= 56 reset to grass 8; offsets propsOffsetY -4, blockFlatsOffsetY -6,
   natureFlatsOffsetY -2; classic data never sets model scale.
+- ModelDoor extraction: door Index resets per submesh (DFU's doorCount
+  scope); archive 156 (Scourg exterior) only exempts the base-archive
+  reduction and never becomes a door; ruin-enter 331 record 0 is plain
+  stone, skipped.
+- Interiors: prop models (ObjectType 3) keep +Y UNNEGATED then anchor to
+  the model's lowest vertex Y; IsBadInteriorModel repairs classic data by
+  filtering misplaced model 31000 at 60 block/record combos across 27
+  blocks (kept verbatim, like FixRdbData); action doors pin to the 9000
+  model range via DoorModelIndex % 5 (900x..980x duplicates have differing
+  origins); editor flats (199) are spawned as data but hidden from render.
 
 ## C. DFU features not yet ported (routed)
 
 | Feature | DFU source | Target |
 |---|---|---|
-| ModelDoor extraction (archives 74/56/331/156/95) | MeshReader.LoadVertices | World-Arc queue 1 (interiors), consumed by Player arc |
-| Building interiors | RMBLayout interior sections | World-Arc queue 1 |
-| RDB dungeon layout + action records | RDBLayout.cs | World-Arc queue 2 |
-| Terrain heightmap + streaming | WoodsFile.cs, StreamingWorld | World-Arc queue 3 |
+| Door + ladder activation (open/close, enter/exit via static doors) | DaggerfallActionDoor, DaggerfallLadder, PlayerActivate | Player arc (data shipped: staticDoors.js, openRotation) |
+| Interior people flats | DaggerfallInterior.AddPeople | Characters arc |
+| Interior furniture actions, house containers, loot, spawn points | DaggerfallInterior AddFurnitureAction/MakeHouseContainer/AddSpawnPoints | Systems arc |
+| Point lights for interior 210 flats | DaggerfallInterior.AddLight | Rendering arc (with the exterior 210 row) |
+| RDB dungeon layout + action records | RDBLayout.cs | World-Arc queue 1 |
+| Terrain heightmap + streaming | WoodsFile.cs, StreamingWorld | World-Arc queue 2 |
 | Climate texture swaps on architecture, seasons/snow | ClimateSwaps.cs | Rendering arc |
 | Window emission maps | getWindowColors32 is ported; material path is not | Rendering arc |
 | Point lights for archive 210 flats | RMBLayout.AddLights prefab path | Rendering arc |

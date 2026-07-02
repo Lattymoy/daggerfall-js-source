@@ -4,6 +4,37 @@ Assemble Daggerfall's world from decoded data onto our WebGL2 stack.
 Data math is ported 1:1 from DFU (MeshReader.cs geometry paths, RMBLayout.cs);
 rendering is ours per Port-Doctrine.
 
+## Milestone 4 - building interiors + doors (SHIPPED)
+
+ModelDoor extraction runs inside meshReader's vertex pass, verbatim DFU
+LoadVertices: door archives 74 (building), 56 (dungeon enter), 331 (ruin
+enter, record 0 is plain stone and skipped), 95 (dungeon exit); archives
+> 100 reduce to base (archive - trunc(archive/100)*100) for the check except
+331/156 (156 only exempts the reduction, never a door itself); each plane of
+a door submesh is one door, Index resets per submesh; Normal =
+normalize(cross(v0-v2, v0-v1)). Corpus pins: 1999 doors on 1398 of the 10251
+models (1712 building / 285 dungeon-enter / 2 exit).
+`src/world/staticDoors.js` ports GameObjectHelper.GetStaticDoors 1:1
+(size from the v0/v2 diagonal, thickness = max(width, depth), centre/normal
+kept in model space with the placement matrix riding along).
+
+`src/world/interiorLayout.js` ports DaggerfallInterior's geometry paths:
+AddModels (prop type 3 keeps +Y unnegated then anchors to the model's lowest
+vertex Y; IsBadInteriorModel's 27-block repair table filters misplaced model
+31000), AddFlats (editor archive 199 kept as markers, hidden from render
+exactly as DFU spawns-then-hides; INTERIOR_MARKER enum Rest 4 / Enter 8 /
+Treasure 19 / LadderBottom 21 / LadderTop 22), AddActionDoors (model
+9000 + DoorModelIndex % 5, placed closed, openRotation carried for the
+Player arc). Static door triggers accumulate from every placed model.
+Corpus: all 6832 building interiors across 920 RMBs lay out clean - 226208
+placements, 11449 static doors, 39940 rendered flats, exactly 60 model-31000
+instances filtered (one per flagged block/record combo). Scene:
+`?interior=<BLOCK>:<record>` (e.g. MAGEAA00.RMB:0), camera at the Enter
+marker facing the interior bounding center; `SHOT_QUERY` drives the shot
+tool at any scene. Routed onward: people flats (Characters), furniture
+actions / loot / spawn points (Systems), point lights (Rendering), ladder +
+door behavior (Player). Pins in test/interior.test.js.
+
 ## Milestone 3 - flats and billboards (SHIPPED)
 
 Every RMB flat path from RMBLayout, verbatim: misc block flats (lights
@@ -70,11 +101,8 @@ via T(48, 0, 25.6) * Ry(-270deg).
 
 ## Queue (in order, one at a time)
 
-1. Building interiors (subrecord Interior sections + door metadata from
-   MeshReader's ModelDoor extraction, archives 74/56/331/156/95 - required by
-   the Player arc for entry).
-2. RDB dungeon layout (RDBLayout.cs) with action records.
-3. Terrain: WOODS.WLD heightmap reader + streaming world.
+1. RDB dungeon layout (RDBLayout.cs) with action records.
+2. Terrain: WOODS.WLD heightmap reader + streaming world.
 
 ## Testing
 

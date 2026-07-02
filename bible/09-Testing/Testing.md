@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 63 tests across 11 files.
+Node 22). Suite: 70 tests across 12 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -12,6 +12,7 @@ Node 22). Suite: 63 tests across 11 files.
 | imgcif.test.js | 8 | IMG table, palettized files, CIF/RCI/weapons |
 | arch3d.test.js | 5 | 10251-mesh corpus, UV rules, patch table, model 456 |
 | blocks.test.js | 4 | 1295-block corpus, resource closure, FixRdbData |
+| interior.test.js | 7 | ModelDoor extraction, static doors, interior layout, 6832-interior corpus |
 | maps.test.js | 9 | 62 regions, converters, climate, city + Privateer's |
 | snd.test.js | 3 | 459 sounds, byte-exact header, zero-length record 5 |
 | world.test.js | 10 | mat4, meshReader, rmbLayout, location grid, flats, nature-quirk dead-path pin |
@@ -19,7 +20,7 @@ Node 22). Suite: 63 tests across 11 files.
 
 Two tiers per module:
 1. **Synthetic fixtures** - in-memory data built inside the test. Always run;
-   CI stays green with no game data (33 pass, 30 skip).
+   CI stays green with no game data (37 pass, 33 skip).
 2. **Real-data validation** - gated on `ARENA2_PATH`; skip cleanly when
    absent. Pin observed counts, names, ids, checksums, and structural
    closure invariants.

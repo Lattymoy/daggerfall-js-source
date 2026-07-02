@@ -9,3 +9,4 @@ arena2/
 *.bsa
 DAGGER.SND
 *.SND
+test-harness/
