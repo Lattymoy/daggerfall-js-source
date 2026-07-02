@@ -11,6 +11,8 @@ import { MapsFile } from '../formats/mapsFile.js';
 import { TextureFile } from '../formats/textureFile.js';
 import { convertTilemap } from '../world/terrainSurface.js';
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
+import { PlayerMotor } from '../player/motor.js';
+import { Collider } from '../player/collider.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { applyClimate, getGroundArchive, getNatureArchive, isExteriorWindow } from '../world/climateSwaps.js';
@@ -115,9 +117,11 @@ export async function bootExterior(canvas, renderer, params, status) {
   // GPU meshes shared across blocks. UVs come from the ORIGINAL archive;
   // the climate-swapped pixels bind through texRemap at draw.
   const gpuMeshes = new Map(); // modelIdNum -> renderer mesh
+  const cpuModels = new Map(); // id -> {positions, indices} for the collider
   for (const [id, dfMesh] of dfMeshes) {
     const model = dfMeshToModel(dfMesh, getTextureSize);
     for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
+    cpuModels.set(id, { positions: model.positions, indices: model.indices });
     gpuMeshes.set(id, renderer.createMesh(model));
   }
   // Swapped archives can lack the record (27 corpus pairs, e.g. 122_5 ->
@@ -165,13 +169,21 @@ export async function bootExterior(canvas, renderer, params, status) {
     return scaledBillboardSize(t.getSize(record), t.getScale(record));
   };
   const drawList = [];
+  // Player collision (P1): every placed model's triangles, world-space,
+  // over the flat ground floor.
+  const collider = new Collider(() => GROUND_OFFSET * 0.025);
+  let colliderTris = 0;
   const flatGroups = new Map(); // "archive_record" -> [centers]
   for (const b of loc.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     for (const placed of b.layout.models) {
       const mesh = gpuMeshes.get(placed.modelIdNum);
       if (!mesh) continue;
-      drawList.push({ mesh, matrix: multiply(originMatrix, placed.matrix) });
+      const matrix = multiply(originMatrix, placed.matrix);
+      drawList.push({ mesh, matrix });
+      const cpu = cpuModels.get(placed.modelIdNum);
+      collider.addMesh('world', cpu.positions, cpu.indices, matrix);
+      colliderTris += cpu.indices.length / 3;
     }
     // Ground tiles gather into one location-wide tilemap for the R9
     // tilemap-shader pass (raw RMB bytes; random markers >= 56 reset to
@@ -248,6 +260,18 @@ export async function bootExterior(canvas, renderer, params, status) {
 
   // Camera.
   const shotMode = params.has('shot');
+  // P1: grounded first-person is the default; ?fly restores the fly cam.
+  const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
+  const player = new PlayerMotor(collider);
+  player.spawn(loc.width * RMB_SIDE * 0.46, GROUND_OFFSET * 0.025 + 2, loc.height * RMB_SIDE * 0.5);
+  let prevJump = false;
+  console.log(`player: collider ${colliderTris} tris, walk=${walkMode}`);
+  if (shotMode) {
+    window.__player = {
+      get pos() { return [...player.pos]; },
+      warp: (x, y, z) => player.spawn(x, y, z),
+    };
+  }
   const extentX = loc.width * RMB_SIDE;
   const extentZ = loc.height * RMB_SIDE;
   const center = [extentX / 2, 4, extentZ / 2];
@@ -284,17 +308,30 @@ export async function bootExterior(canvas, renderer, params, status) {
 
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
-    const speed = (keys.has('ShiftLeft') ? 120 : 30) * dt;
-    if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
-    if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;
-    if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;
-    if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;
+    if (walkMode) {
+      // Grounded movement: verbatim speeds in the motor, Space edge-jumps.
+      const jumpHeld = keys.has('Space');
+      player.update(dt, {
+        forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
+        strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
+        run: keys.has('ShiftLeft'),
+        jump: jumpHeld && !prevJump,
+      }, cam.yaw);
+      prevJump = jumpHeld;
+      cam.pos = player.eye;
+    } else {
+      const speed = (keys.has('ShiftLeft') ? 120 : 30) * dt;
+      if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
+      if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;
+      if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;
+      if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;
+    }
 
     // Shot vantage scales with the location extent.
-    const target = shotMode
+    const target = shotMode && !walkMode
       ? [extentX * 0.46, 6, extentZ * 0.5]
       : [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
-    const eye = shotMode
+    const eye = shotMode && !walkMode
       ? [extentX * 0.565, 11, extentZ * 0.72]
       : cam.pos;
     const proj = perspective(

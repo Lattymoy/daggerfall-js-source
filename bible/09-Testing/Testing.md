@@ -1,10 +1,11 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 126 tests across 20 files.
+Node 22). Suite: 129 tests across 21 files.
 
 | File | Tests | Covers |
 |---|---|---|
+| player.test.js | 3 | verbatim speeds/constants, collider ground/slide/step, motor gravity/jump |
 | sky.test.js | 3 | SKY reader pins, panorama mirror law, night mapping |
 | smoke.test.js | 1 | runner sanity |
 | clock.test.js | 4 | hour gates, LightCurve pins, sun sweep, flicker determinism |
@@ -28,7 +29,7 @@ Node 22). Suite: 126 tests across 20 files.
 
 Two tiers per module:
 1. **Synthetic fixtures** - in-memory data built inside the test. Always run;
-   CI stays green with no game data (77 pass, 49 skip).
+   CI stays green with no game data (79 pass, 49 skip).
 2. **Real-data validation** - gated on `ARENA2_PATH`; skip cleanly when
    absent. Pin observed counts, names, ids, checksums, and structural
    closure invariants.

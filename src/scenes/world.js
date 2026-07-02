@@ -26,6 +26,8 @@ import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { fetchBytes, texName, parseSeason, createSkyController } from './shared.js';
+import { PlayerMotor } from '../player/motor.js';
+import { Collider } from '../player/collider.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -139,6 +141,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
   };
   const gpuMeshes = new Map(); // shared across pixels, never destroyed
+  const cpuModels = new Map(); // id -> {positions, indices} for the collider
   async function getGpuMesh(modelIdNum) {
     if (gpuMeshes.has(modelIdNum)) return gpuMeshes.get(modelIdNum);
     const index = arch.getRecordIndex(modelIdNum);
@@ -151,6 +154,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const model = dfMeshToModel(dfMesh, getTextureSize);
     for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
     const gpu = renderer.createMesh(model);
+    cpuModels.set(modelIdNum, { positions: model.positions, indices: model.indices });
     gpuMeshes.set(modelIdNum, gpu);
     return gpu;
   }
@@ -159,6 +163,31 @@ export async function bootWorld(canvas, renderer, params, status) {
   const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
   const tileSide = TERRAIN_SIZE / 128;
   const built = new Map(); // key -> pixel entry
+  // Player collision (P1): per-pixel triangle buckets in PIXEL-LOCAL
+  // space, resolved through the live floating-origin translation; the
+  // floor is the terrain heightmap, bilinear over the stored samples.
+  const heightCell = TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1);
+  const heightAt = (x, z) => {
+    for (const p of built.values()) {
+      const t = state.pixelTranslation(p.px, p.py);
+      const lx = x - t[0];
+      const lz = z - t[2];
+      if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) continue;
+      const fx = lx / heightCell;
+      const fz = lz / heightCell;
+      const ix = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fx));
+      const iz = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fz));
+      const sx = fx - ix;
+      const sz = fz - iz;
+      const at = (a, b) => p.samples[a * HEIGHTMAP_DIMENSION + b] * worldHeight;
+      const h =
+        at(ix, iz) * (1 - sx) * (1 - sz) + at(ix + 1, iz) * sx * (1 - sz) +
+        at(ix, iz + 1) * (1 - sx) * sz + at(ix + 1, iz + 1) * sx * sz;
+      return h + t[1];
+    }
+    return -Infinity;
+  };
+  const collider = new Collider(heightAt);
   const TERRAIN_INDICES = buildTerrainIndices();
 
   async function buildPixel(px, py) {
@@ -230,7 +259,11 @@ export async function bootWorld(canvas, renderer, params, status) {
             uploadRecord(swapped, sm.textureRecord);
             texRemap.set(key, `${swapped}_${sm.textureRecord}`);
           }
-          models.push({ gpu, local: multiply(originMatrix, placed.matrix) });
+          const local = multiply(originMatrix, placed.matrix);
+          models.push({ gpu, local });
+          const cpu = cpuModels.get(placed.modelIdNum);
+          collider.addMesh(key, cpu.positions, cpu.indices, local,
+            () => state.pixelTranslation(px, py));
         }
         // No RMB ground plane on terrain (addGroundPlane = false).
         for (const flat of collectBlockFlats(b.dfBlock, natureArchive)) {
@@ -267,7 +300,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
 
     built.set(key, {
-      px, py, terrain, tilemapTex, groundArchive, models, batches, texRemap, lights: pixelLights, skyBase: climate.skyBase, natureCount: nature.length,
+      px, py, terrain, tilemapTex, groundArchive, models, batches, texRemap, lights: pixelLights, skyBase: climate.skyBase, samples, natureCount: nature.length,
 
       location: dfLocation ? dfLocation.name : null,
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
@@ -283,6 +316,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.destroyMesh(p.terrain);
     renderer.gl.deleteTexture(p.tilemapTex);
     for (const b of p.batches) renderer.destroyBatch(b);
+    collider.removeBucket(key);
     built.delete(key);
   }
 
@@ -297,6 +331,13 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   // Camera: at the start location's origin, or the pixel centre.
   const cam = { pos: [TERRAIN_SIZE / 2, playerPixel.centerHeight + 40, TERRAIN_SIZE / 2], yaw: Math.PI, pitch: -0.1 };
+  // P1: grounded first-person is the default; ?fly restores the fly cam.
+  // The motor freezes until the start pixel's collider exists.
+  const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
+  const startKey = `${startPixel.x},${startPixel.y}`;
+  const player = new PlayerMotor(collider);
+  let playerSpawned = false;
+  let prevJump = false;
   if (playerPixel.location) {
     const tilePos = getLocationTerrainTileOrigin(startLoc);
     const extentZ = startLoc.exterior.exteriorData.height * RMB_SIDE;
@@ -355,6 +396,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     window.__builtCount = () => built.size;
     window.__currentPixel = () => `${state.current.x},${state.current.y}`;
     window.__cam = () => cam.pos.slice();
+    window.__player = {
+      get pos() { return [...player.pos]; },
+      warp: (x, y, z) => { player.spawn(x, y, z); playerSpawned = true; },
+    };
     window.__frame = 0;
   }
 
@@ -364,16 +409,36 @@ export async function bootWorld(canvas, renderer, params, status) {
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
-    const speed = (keys.has('ShiftLeft') ? 400 : 40) * dt;
-    if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
-    if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;
-    if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;
-    if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;
+    if (walkMode) {
+      if (!playerSpawned && built.has(startKey)) {
+        // Drop in above the terrain once the start pixel's collider is up.
+        player.spawn(cam.pos[0], heightAt(cam.pos[0], cam.pos[2]) + 2, cam.pos[2]);
+        playerSpawned = true;
+      }
+      if (playerSpawned) {
+        const jumpHeld = keys.has('Space');
+        player.update(dt, {
+          forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
+          strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
+          run: keys.has('ShiftLeft'),
+          jump: jumpHeld && !prevJump,
+        }, cam.yaw);
+        prevJump = jumpHeld;
+        cam.pos = player.eye;
+      }
+    } else {
+      const speed = (keys.has('ShiftLeft') ? 400 : 40) * dt;
+      if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
+      if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;
+      if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;
+      if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;
+    }
 
     // Streaming step: recentre, enqueue new pixels, drop far ones.
     const r = state.update(cam.pos);
     if (r.offset) {
       cam.pos[0] += r.offset[0]; cam.pos[1] += r.offset[1]; cam.pos[2] += r.offset[2];
+      player.pos[0] += r.offset[0]; player.pos[1] += r.offset[1]; player.pos[2] += r.offset[2];
     }
     if (r.pixelChanged) {
       queue.push(...r.load);
