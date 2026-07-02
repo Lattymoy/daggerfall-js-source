@@ -336,3 +336,117 @@ test('terrain: full location corpus - all 15251 stamp clean, rects stay interior
   // One location per map pixel, game-wide.
   assert.equal(sharedPixels, 0);
 });
+
+// ---------------------------------------------------------------------------
+// Milestone 8 - nature flats on terrain.
+// ---------------------------------------------------------------------------
+
+test('terrain: makeTerrainKey and nextIntRange semantics', async () => {
+  const { makeTerrainKey } = await import('../src/world/terrainNature.js');
+  const { UMRandom } = await import('../src/formats/umRandom.js');
+  // Verbatim ((short)y << 16) + (short)x, signed wrap included.
+  assert.equal(makeTerrainKey(207, 213), 13959375);
+  assert.equal(makeTerrainKey(-1, -1), -65537);
+  assert.equal(makeTerrainKey(0, 0), 0);
+  // Verbatim NextInt: (state * range) >> 32 + min, half-open.
+  assert.equal(UMRandom.createFromIndex(0).nextIntRange(1, 32), 10);
+  const r = UMRandom.createFromIndex(3);
+  for (let i = 0; i < 500; i++) {
+    const v = r.nextIntRange(1, 32);
+    assert.ok(v >= 1 && v < 32);
+  }
+});
+
+test('terrain: nature scatter rules - rect, beach, tile classes, slope sink', async () => {
+  const { layoutNature } = await import('../src/world/terrainNature.js');
+  const hDim = HEIGHTMAP_DIMENSION;
+  // Flat land well above the beach: normalized 0.1 -> 230.85 world raw.
+  const flat = new Float32Array(hDim * hDim).fill(0.1);
+  const grass = new Uint8Array(128 * 128).fill(2);
+  const base = {
+    mapPixelX: 10, mapPixelY: 10, rawWorldHeight: 128,
+    climateType: 99, locationRect: null,
+  };
+  const flats = layoutNature(flat, grass, base);
+  // Full chance on grass (elevationScale 1): ~90% of 16384 tiles.
+  assert.ok(flats.length > 13500 && flats.length < 16000, String(flats.length));
+  // Flat ground: no slope sink; y = sample * worldHeight exactly.
+  approx(flats[0].y, 0.1 * MAX_TERRAIN_HEIGHT * 1.5, 1e-3);
+
+  // Location rect excludes scatter inside (+4 clearance, max-exclusive).
+  const rected = layoutNature(flat, grass, {
+    ...base, locationRect: { xMin: 20, xMax: 40, yMin: 20, yMax: 40 },
+  });
+  assert.ok(rected.every((f) => {
+    const tx = f.x / 6.4, ty = f.z / 6.4;
+    return !(tx >= 16 && tx < 44 && ty >= 16 && ty < 44);
+  }));
+
+  // Below the beach line nothing scatters.
+  const low = new Float32Array(hDim * hDim).fill(0.02);
+  assert.equal(layoutNature(low, grass, base).length, 0);
+
+  // Water/marker tiles never scatter.
+  const water = new Uint8Array(128 * 128).fill(0);
+  assert.equal(layoutNature(flat, water, base).length, 0);
+
+  // Desert quarters the chances.
+  const desert = layoutNature(flat, grass, { ...base, climateType: 0 });
+  assert.ok(desert.length < flats.length * 0.35, `${desert.length} vs ${flats.length}`);
+
+  // Deterministic per pixel key.
+  const again = layoutNature(flat, grass, base);
+  assert.equal(again.length, flats.length);
+  assert.deepEqual(again[0], flats[0]);
+});
+
+test('terrain: nature on Daggerfall environs - integration pins', { skip: skipReal }, async () => {
+  const { BlocksFile } = await import('../src/formats/blocksFile.js');
+  const MF = await import('../src/formats/mapsFile.js');
+  const { setLocationTiles, calcAvgMaxHeight, blendLocationTerrain, generateTileData, assignTiles } =
+    await import('../src/world/terrainTiles.js');
+  const { layoutNature } = await import('../src/world/terrainNature.js');
+  const blocks = new BlocksFile();
+  blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA'))));
+  const maps = new MF.MapsFile();
+  maps.load(
+    new Uint8Array(readFileSync(join(ARENA2, 'MAPS.BSA'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'CLIMATE.PAK'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'POLITIC.PAK'))),
+  );
+  const woods = loadWoods();
+  const loc = maps.getLocationByName('Daggerfall', 'Daggerfall');
+
+  const run = (px, py, useLoc) => {
+    const samples = generateSamples(woods, px, py);
+    const tilemap = new Uint8Array(128 * 128);
+    let rect = null;
+    if (useLoc) {
+      const [avg] = calcAvgMaxHeight(samples);
+      rect = setLocationTiles(loc, maps, blocks, tilemap);
+      blendLocationTerrain(samples, avg, rect);
+    }
+    assignTiles(generateTileData(samples, px, py), tilemap, true);
+    const climate = MF.getWorldClimateSettings(maps.getClimateIndex(px, py));
+    return layoutNature(samples, tilemap, {
+      mapPixelX: px, mapPixelY: py,
+      rawWorldHeight: woods.getHeightMapValue(px, py),
+      climateType: climate.climateType,
+      locationRect: rect,
+    });
+  };
+
+  // City pixel: the expanded rect suppresses most of the pixel.
+  const city = run(207, 213, true);
+  assert.equal(city.length, 1237);
+  assert.equal(city[0].record, 16);
+  approx(city[0].x, 6.4, 1e-6);
+  approx(city[0].y, 372.938, 1e-3);
+  approx(city[0].z, 0, 1e-6);
+
+  // Wilderness neighbor: dense woodland scatter.
+  const wild = run(206, 213, false);
+  assert.equal(wild.length, 5331);
+  assert.equal(wild[0].record, 4);
+  approx(wild[0].y, 373.096, 1e-3);
+});

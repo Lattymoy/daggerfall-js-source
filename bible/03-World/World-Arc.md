@@ -4,6 +4,32 @@ Assemble Daggerfall's world from decoded data onto our WebGL2 stack.
 Data math is ported 1:1 from DFU (MeshReader.cs geometry paths, RMBLayout.cs);
 rendering is ours per Port-Doctrine.
 
+## Milestone 8 - nature flats on terrain (SHIPPED)
+
+`src/world/terrainNature.js` ports DefaultTerrainNature.LayoutNature:
+location rects (when present) expand by natureClearance 4 and exclude
+scatter (Rect.Contains min-inclusive / max-exclusive); elevationScale =
+clamp(rawWoodsByte / 128, 0.4, 1.0), Desert climates quarter every
+chance; per tile - skip above 50 degrees steepness, roll against
+dirt 0.2 / grass 0.9 / stone 0.05 (scaled), other records never scatter,
+skip below the beach line (corner height x maxTerrainHeight, unscaled);
+placed flats sit at (x * 6.4, height - steepness / 70, y * 6.4) with
+record in [1, 32) - batch billboards anchor centre-bottom, matching our
+base-anchored renderer batches. makeTerrainKey is the verbatim signed
+((short)y << 16) + (short)x. umRandom gains the verbatim NextInt
+((state * range) >> 32 + min). DEPARTURE (extends the Ledger A
+engine-internal-randomness row): DFU seeds UnityEngine.Random - closed
+engine code - so we seed our byte-exact Unity.Mathematics port with the
+same terrain key; deterministic per pixel, same statistics, different
+concrete positions. Presentation substitutions documented in-file:
+steepness from central-difference gradients of the scaled heightfield;
+SampleHeight reduces to the exact corner sample (DFU's sample point
+lands on integer sample coordinates by construction). ?world scatters
+nature per pixel on post-blend heights + final tilemap, batched
+world-framed per (natureArchive, record). Integration pins: city pixel
+(207,213) 1237 flats (rect-suppressed), wilderness (206,213) 5331 -
+44013 across the 3x3. Pins in test/terrain.test.js.
+
 ## Milestone 7 - locations on terrain (SHIPPED)
 
 `src/formats/umRandom.js` is a 1:1 translation of Unity.Mathematics
@@ -216,8 +242,7 @@ via T(48, 0, 25.6) * Ry(-270deg).
 
 ## Queue (in order, one at a time)
 
-1. Streaming world: floating-origin terrain streaming around the player,
-   plus TerrainNature nature flats on wilderness pixels.
+1. Streaming world: floating-origin terrain streaming around the player.
 
 ## Testing
 

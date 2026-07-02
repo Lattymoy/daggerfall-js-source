@@ -44,6 +44,7 @@ import {
   generateTileData, assignTiles, setLocationTiles, calcAvgMaxHeight,
   blendLocationTerrain, getLocationTerrainTileOrigin,
 } from './world/terrainTiles.js';
+import { layoutNature } from './world/terrainNature.js';
 import { buildTerrainMesh } from './render/terrainMesh.js';
 import { getWorldClimateSettings, longitudeLatitudeToMapPixel } from './formats/mapsFile.js';
 import { perspective, lookAt, trs, multiply } from './world/mat4.js';
@@ -803,16 +804,31 @@ async function bootWorld(canvas, renderer, params, status) {
     for (let px = cx - radius; px <= cx + radius; px++) {
       const samples = generateSamples(woods, px, py);
       const tilemap = new Uint8Array(128 * 128);
+      let locationRect = null;
       if (px === cx && py === cy) {
         const [avg] = calcAvgMaxHeight(samples);
-        const locationRect = setLocationTiles(dfLocation, maps, blocks, tilemap);
+        locationRect = setLocationTiles(dfLocation, maps, blocks, tilemap);
         blendLocationTerrain(samples, avg, locationRect);
         locationAvgHeight = avg;
       }
       const tileData = generateTileData(samples, px, py);
       assignTiles(tileData, tilemap, true);
       const climate = getWorldClimateSettings(maps.getClimateIndex(px, py));
-      pixels.push({ px, py, samples, tilemap, groundArchive: climate.groundArchive });
+      // Nature scatter on post-blend heights + final tilemap (verbatim
+      // StreamingWorld order: nature lays out after terrain promotion).
+      const nature = layoutNature(samples, tilemap, {
+        mapPixelX: px,
+        mapPixelY: py,
+        rawWorldHeight: woods.getHeightMapValue(px, py),
+        climateType: climate.climateType,
+        locationRect,
+      });
+      pixels.push({
+        px, py, samples, tilemap,
+        groundArchive: climate.groundArchive,
+        natureArchive: climate.natureArchive,
+        nature,
+      });
     }
   }
 
@@ -838,6 +854,20 @@ async function bootWorld(canvas, renderer, params, status) {
     }
   }
   for (const key of flatGroups.keys()) archives.add(Number(key.split('_')[0]));
+  // Nature flats: pixel-local base positions offset to world space. Kept
+  // separate from flatGroups - those are location-relative and get the
+  // locOrigin shift at batch build; these are already world-framed.
+  const natureGroups = new Map();
+  for (const p of pixels) {
+    const ox = (p.px - cx) * TERRAIN_SIZE;
+    const oz = -(p.py - cy) * TERRAIN_SIZE;
+    archives.add(p.natureArchive);
+    for (const f of p.nature) {
+      const key = `${p.natureArchive}_${f.record}`;
+      if (!natureGroups.has(key)) natureGroups.set(key, []);
+      natureGroups.get(key).push([f.x + ox, f.y, f.z + oz]);
+    }
+  }
 
   status(`loading ${archives.size} texture archives`);
   const textureFiles = new Map();
@@ -906,6 +936,16 @@ async function bootWorld(canvas, renderer, params, status) {
     const placed = centers.map(([x, y, z]) => [x + locOrigin[0], y + locOrigin[1], z + locOrigin[2]]);
     billboardBatches.push(renderer.createBillboardBatch(archive, record, size, placed));
   }
+  let natureCount = 0;
+  for (const [key, centers] of natureGroups) {
+    const [archive, record] = key.split('_').map(Number);
+    const t = textureFiles.get(archive);
+    if (!t || record >= t.recordCount) continue;
+    uploadRecord(archive, record);
+    const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+    billboardBatches.push(renderer.createBillboardBatch(archive, record, size, centers));
+    natureCount += centers.length;
+  }
 
   // Camera above the city looking across it.
   const extentX = loc.width * RMB_SIDE;
@@ -934,7 +974,7 @@ async function bootWorld(canvas, renderer, params, status) {
   status(`${locationName} on terrain - ${drawList.length} draws`);
   console.log(
     `world: pixel ${cx},${cy}, ${pixels.length} terrain pixels, ${loc.blocks.length} blocks, ` +
-    `${drawList.length} draws, avgH ${locationAvgHeight.toFixed(4)}, origin ${locOrigin.map((v) => v.toFixed(2))}`
+    `${drawList.length} draws, ${natureCount} nature flats, avgH ${locationAvgHeight.toFixed(4)}, origin ${locOrigin.map((v) => v.toFixed(2))}`
   );
 
   let frames = 0;

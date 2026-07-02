@@ -54,4 +54,10 @@ export class UMRandom {
   nextFloatRange(min, max) {
     return this.nextFloat() * (max - min) + min;
   }
+
+  /** Uniform int in [min, max), verbatim: (state * range) >> 32 + min. */
+  nextIntRange(min, max) {
+    const range = BigInt(max - min);
+    return Number((BigInt(this._nextState()) * range) >> 32n) + min;
+  }
 }

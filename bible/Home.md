@@ -27,7 +27,7 @@ Verify doc diffs in `git diff` before committing, same as code.
 ## Active arcs
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
-- `03-World/World-Arc.md` - ACTIVE. Milestone 7 shipped: locations on terrain (?world). Queue: floating-origin streaming + nature flats.
+- `03-World/World-Arc.md` - ACTIVE. Milestone 8 shipped: nature flats on terrain. Queue: floating-origin streaming.
 
 ## Ground rules carried from project-final
 
