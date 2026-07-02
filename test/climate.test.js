@@ -123,4 +123,46 @@ test('climate: corpus sweep - every swap resolves to a real archive', { skip: sk
   // Every combination of the full mesh corpus x 4 climates x 3 seasons.
   assert.equal(identity, 6538);
   assert.equal(swapped, 2282);
+
+  // Record-level pins (R1 audit): 27 swaps target archives that lack the
+  // record - scenes prune those remaps so the submesh keeps its original
+  // texture; 15 swaps land on records with different dimensions - DFU
+  // stretches identically (UVs normalized against the original archive),
+  // a shared classic-data quirk.
+  const { TextureFile } = await import('../src/formats/textureFile.js');
+  const { DFPalette } = await import('../src/formats/dfPalette.js');
+  const pal = new DFPalette();
+  pal.load(new Uint8Array(readFileSync(join(ARENA2, 'ART_PAL.COL'))), 'ART_PAL.COL');
+  const texCache = new Map();
+  const tex = (a) => {
+    if (!texCache.has(a)) {
+      const n = `TEXTURE.${String(a).padStart(3, '0')}`;
+      const t = new TextureFile();
+      t.load(new Uint8Array(readFileSync(join(ARENA2, n))), n, pal);
+      texCache.set(a, t);
+    }
+    return texCache.get(a);
+  };
+  let missingRecord = 0;
+  let dimMismatch = 0;
+  for (const p of pairs) {
+    const archive = Math.trunc(p / 1000);
+    const record = p % 1000;
+    for (const cb of [0, 100, 300, 400]) {
+      for (const s of [0, 1, 2]) {
+        const out = applyClimate(archive, record, cb, s);
+        if (out === archive) continue;
+        const t = tex(out);
+        if (record >= t.recordCount) {
+          missingRecord++;
+          continue;
+        }
+        const o = tex(archive);
+        if (t.getWidth(record) !== o.getWidth(record) ||
+            t.getHeight(record) !== o.getHeight(record)) dimMismatch++;
+      }
+    }
+  }
+  assert.equal(missingRecord, 27);
+  assert.equal(dimMismatch, 15);
 });

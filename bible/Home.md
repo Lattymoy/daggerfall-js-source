@@ -17,6 +17,9 @@ Playwright probes of the live frame loop must frame-sync on the
 shot-mode __frame counter, never sleep - SwiftShader renders the
 streaming scene at seconds per frame, so sleeps sample stale state
 (M9 audit probe initially reported zero crossings for a real flight).
+Unity asset values (prefab lights, AnimationCurve keys) are groundable
+without widening the sparse clone: git show HEAD:Assets/Prefabs/....prefab
+reads the YAML from the object store (used to verify the R5 constants).
 
 ## Sections
 

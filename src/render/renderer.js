@@ -130,6 +130,11 @@ export class Renderer {
     this._ambient = new Float32Array([0.45, 0.45, 0.45]);
     this._sunScale = 0.55;
     this._sunColor = new Float32Array([1, 1, 1]);
+    // Billboards stay full-bright until a scene installs the clock via
+    // setLighting - the solid defaults above reproduce the pre-R5 solid
+    // shading, but 0.45 + 0.55 * 0.5 would silently dim flats to 72.5%
+    // in the clockless scenes (caught in the R5 audit: dungeon vine).
+    this._clockLit = false;
     // 1x1 black bound for every non-window submesh (branchless shader).
     this._blackTex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this._blackTex);
@@ -265,6 +270,7 @@ export class Renderer {
     this._ambient = ambient;
     this._sunScale = sunScale;
     if (sunColor) this._sunColor = sunColor;
+    this._clockLit = true;
   }
 
   /** Scene-space point lights as flat vec4s [x,y,z,range], max 16. */
@@ -373,12 +379,17 @@ export class Renderer {
     gl.uniform1i(this.bbUTex, 0);
     // Billboards take the scene's time-of-day light (DFU's ambient-lit
     // billboards): ambient plus the Lambert-average half of the sun term.
-    gl.uniform3f(
-      this.bbUTint,
-      this._ambient[0] + this._sunColor[0] * this._sunScale * 0.5,
-      this._ambient[1] + this._sunColor[1] * this._sunScale * 0.5,
-      this._ambient[2] + this._sunColor[2] * this._sunScale * 0.5
-    );
+    // Clockless scenes keep the pre-R5 full-bright flats.
+    if (this._clockLit) {
+      gl.uniform3f(
+        this.bbUTint,
+        this._ambient[0] + this._sunColor[0] * this._sunScale * 0.5,
+        this._ambient[1] + this._sunColor[1] * this._sunScale * 0.5,
+        this._ambient[2] + this._sunColor[2] * this._sunScale * 0.5
+      );
+    } else {
+      gl.uniform3f(this.bbUTint, 1, 1, 1);
+    }
     gl.activeTexture(gl.TEXTURE0);
     gl.disable(gl.CULL_FACE);
     for (const b of batches) {

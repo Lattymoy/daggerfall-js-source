@@ -112,10 +112,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
     gpuMeshes.set(id, renderer.createMesh(model));
   }
-  for (const target of texRemap.values()) {
+  // Swapped archives can lack the record (27 corpus pairs, e.g. 122_5 ->
+  // 322 with 5 records): prune those remaps so the submesh keeps its
+  // original texture instead of vanishing at draw (R1 audit).
+  for (const [key, target] of texRemap) {
     const [archive, record] = target.split('_').map(Number);
     const t = textureFiles.get(archive);
-    if (t && record < t.recordCount) uploadRecord(archive, record);
+    if (!t || record >= t.recordCount) texRemap.delete(key);
+    else uploadRecord(archive, record);
   }
 
   // Per-block scene list: world matrices with the block origin folded in,

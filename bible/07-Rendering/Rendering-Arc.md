@@ -67,6 +67,22 @@ custom set once in the dispatcher (DFU GetMaterial defaults to Day).
 Daggerfall night shot: amber leaded windows across the whole city.
 NOTE tools/screenshot.mjs queries ride SHOT_QUERY env, not argv - a
 session tripped on the old contract; the usage header documents it.
+AUDIT NOTE (post-R5 audit): three closures. (1) DFU interiors
+climate-swap their models too (DaggerfallInterior.DoLayout ->
+dfMesh.SetClimate(climateBase, season, WindowStyle.Disabled)) - the
+?interior scene now applies the remap; a standalone block has no
+location so ClimateBases.Temperate is the verbatim field default,
+?climate=desert|mountain|temperate|swamp overrides, emission stays dark
+(Disabled). MAGEAA00 pin: 7 swaps. (2) 27 corpus swap combos target
+archives that LACK the record (e.g. 122_5 -> 322 with 5 records); the
+exterior scene set those remaps anyway and drawMesh silently dropped
+the submesh - both exterior and interior now prune such remaps so the
+submesh keeps its original texture (the streaming scene always
+guarded). (3) 15 swap combos land on records with DIFFERENT dimensions
+(124_3 -> 24, 168_6 -> x68 family); DFU stretches identically because
+mesh UVs are normalized against the original archive - shared
+classic-data quirk, Ledger B row. Record-level pins (27/15) baked into
+the corpus test.
 
 ## Milestone R3 - city lantern point lights (SHIPPED)
 
@@ -144,6 +160,23 @@ NITE); R3's ?window night gating is now the real clock (explicit
 and streaming. Proofs: 22:00 city (0.25 ambient, amber windows, lantern
 pools, NITE sky), 6:30 dawn (blood sky, low east sun, lanterns still
 lit - verbatim), streaming night skyline. Pins in test/clock.test.js.
+AUDIT NOTE (R5 audit): every constant re-verified against source,
+including the prefab-derived values - the SunlightRig LightCurve keys
+(slopes 2.8928573 / -2.8928576), rig light 0.6 / (0.8161765, 0.954361,
+1), and the [City] light (point, range 18, intensity 1, white) were
+confirmed by reading the prefab YAML straight from the sparse clone's
+object store (git show HEAD:Assets/Prefabs/...). DEFECT FIXED: the
+billboard time-of-day tint used the renderer's default lighting in
+scenes that never call setLighting, silently dimming clockless-scene
+flats to 72.5% (0.45 + 0.55 * 0.5) - the dungeon vine betrayed it
+against the M9 baseline. Billboards now stay full-bright until
+setLighting installs the clock (_clockLit). Residual dungeon diff vs
+the M9 baseline is 37 isolated single pixels at geometry silhouettes -
+rasterization ownership jitter from the shader recompile, accepted.
+UNPORTED (Ledger C row): SunlightManager's IndirectLight - a
+player-following point light (the rig prefab's second light, white
+0.6) scaled by the same daylight curve; our exterior ambient carries
+the PlayerAmbientLight term only.
 
 ## Queue
 

@@ -98,6 +98,8 @@ World layout:
 
 | Feature | DFU source | Target |
 |---|---|---|
+| Exterior indirect player light | SunlightManager.IndirectLight - a player-following point light (SunlightRig prefab's second light, white 0.6) scaled by the daylight curve alongside the key light | Rendering arc (exterior ambient currently carries the PlayerAmbientLight term only; found in the R5 audit) |
+| Climate swaps onto mismatched record dimensions | 15 corpus swap combos (124_3 -> 24, 168_6 -> 68/368/468 families) land on records whose dimensions differ from the original; DFU stretches them identically because mesh UVs are normalized against the original archive at load - kept verbatim, pinned in the climate corpus test | Kept |
 | Door + ladder activation, and exterior-building static-door emission at the location scene level | DaggerfallActionDoor, DaggerfallLadder, PlayerActivate, GameObjectHelper.GetStaticDoors on RMB buildings | Player arc (helpers shipped: staticDoors.js, openRotation; extraction runs on every model) |
 | Interior people flats | DaggerfallInterior.AddPeople | Characters arc |
 | Interior furniture actions, house containers, loot, spawn points | DaggerfallInterior AddFurnitureAction/MakeHouseContainer/AddSpawnPoints | Systems arc |

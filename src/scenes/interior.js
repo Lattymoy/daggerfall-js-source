@@ -6,17 +6,24 @@ import { Arch3dFile } from '../formats/arch3dFile.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { TextureFile } from '../formats/textureFile.js';
-import { isExteriorWindow } from '../world/climateSwaps.js';
+import { applyClimate, isExteriorWindow } from '../world/climateSwaps.js';
 import { INTERIOR_MARKER, layoutInterior } from '../world/interiorLayout.js';
 import { lookAt, perspective } from '../world/mat4.js';
 import { dfMeshToModel } from '../world/meshReader.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
-import { fetchBytes, texName } from './shared.js';
+import { fetchBytes, parseSeason, texName } from './shared.js';
 
 // Milestone 4 scene: one building interior, standalone at block-local origin.
 export async function bootInterior(canvas, renderer, params, status) {
   const [blockName, recordStr] = params.get('interior').split(':');
   const recordIndex = Number(recordStr || 0);
+  // DFU interiors climate-swap their models (SetClimate with
+  // WindowStyle.Disabled - emission stays dark here by default). A
+  // standalone block has no location, so ClimateBases.Temperate is the
+  // verbatim field default; ?climate= overrides, ?season= applies.
+  const CLIMATE_PARAM = { desert: 0, mountain: 100, temperate: 300, swamp: 400 };
+  const climateBase = CLIMATE_PARAM[(params.get('climate') || 'temperate').toLowerCase()] ?? 300;
+  const season = parseSeason(params);
 
   status('loading data');
   const [palBytes, blocksBytes, archBytes] = await Promise.all([
@@ -62,6 +69,18 @@ export async function bootInterior(canvas, renderer, params, status) {
   const interior = layoutInterior(dfBlock, blockIndex, recordIndex, getModelPre);
   for (const d of interior.actionDoors) getModelPre(d.modelIdNum);
   for (const f of interior.flats) pendingArchives.add(f.archive);
+  // Climate swap table over every model submesh (pruned after load if the
+  // swapped archive lacks the record - the submesh then keeps its
+  // original texture).
+  const texRemap = new Map();
+  for (const dfMesh of dfMeshes.values()) {
+    for (const sm of dfMesh.subMeshes) {
+      const swapped = applyClimate(sm.textureArchive, sm.textureRecord, climateBase, season);
+      if (swapped === sm.textureArchive) continue;
+      pendingArchives.add(swapped);
+      texRemap.set(`${sm.textureArchive}_${sm.textureRecord}`, `${swapped}_${sm.textureRecord}`);
+    }
+  }
 
   status(`loading ${pendingArchives.size} texture archives`);
   await Promise.all(
@@ -91,6 +110,12 @@ export async function bootInterior(canvas, renderer, params, status) {
     const model = dfMeshToModel(dfMesh, getTextureSize);
     for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
     gpuMeshes.set(id, renderer.createMesh(model));
+  }
+  for (const [key, target] of texRemap) {
+    const [archive, record] = target.split('_').map(Number);
+    const t = textureFiles.get(archive);
+    if (!t || record >= t.recordCount) texRemap.delete(key);
+    else uploadRecord(archive, record);
   }
 
   const drawList = [];
@@ -152,7 +177,8 @@ export async function bootInterior(canvas, renderer, params, status) {
   status(`${blockName}:${recordIndex} - ${drawList.length} draws`);
   console.log(
     `interior: ${interior.placements.length} models, ${interior.actionDoors.length} action doors, ` +
-    `${interior.flats.length} flats, ${interior.markers.length} markers, ${interior.doors.length} static doors`
+    `${interior.flats.length} flats, ${interior.markers.length} markers, ${interior.doors.length} static doors, ` +
+    `climate ${climateBase}, season ${season}, ${texRemap.size} swaps`
   );
 
   let frames = 0;
@@ -173,7 +199,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     const view = lookAt(cam.pos, target, [0, 1, 0]);
 
     renderer.beginFrame(proj, view, lightDir);
-    for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix);
+    for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
 
