@@ -107,7 +107,6 @@ World layout:
 | Dungeon treasure piles + loot | RDBLayout AssignFixedTreasure/AddRandomTreasure | Systems arc |
 | Dungeon water plane + point lights | RDBLayout.AddWater/AddLights prefab paths (levels + light data shipped) | Rendering arc |
 | Torch audio sources | RDBLayout.AddTorchAudioSource | Audio arc |
-| Precipitation particles + storm lightning | RainParticles, SnowParticles prefabs | Rendering arc (weather fog/skies shipped R12) |
 | NPC faction metadata / StaticNPC | RMBLayout exterior flats | Characters arc |
 | Townsfolk name banks (GetNameBankOfRegion) | NameHelper | Characters arc (REGION_RACES table already ported) |
 | Animal audio sources | GameObjectHelper | Audio arc |

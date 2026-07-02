@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 125 tests across 20 files.
+Node 22). Suite: 126 tests across 20 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -21,14 +21,14 @@ Node 22). Suite: 125 tests across 20 files.
 | climate.test.js | 5 | applyClimate verbatim rules, texture-info classification, exterior-window table, nature/ground archives, 8820-combo corpus sweep (735 pairs, 0 missing) |
 | streaming.test.js | 7 | world-coord conversions, nearest-first 7x7, crossing offsets + column swaps, two-pixel jumps, vertical recenter, 30-crossing floating-origin invariant, 2000-step invariant fuzz |
 | terrain.test.js | 14 | WOODS.WLD reader + corpus pins, perlin, cubic, sampler pins, umRandom (float + int), marching-squares lookup, blend flattening, Daggerfall-on-terrain integration, 15251-location corpus sweep, terrain key, nature scatter rules + integration |
-| weather.test.js | 3 | verbatim fog tables, SetWeather mapping, offsets, scales, fog math |
+| weather.test.js | 4 | verbatim fog tables, mapping, offsets, scales, fog math, lightning strobe |
 | window.test.js | 2 | MaterialReader style constants, real glass-texel mask pins |
 | world.test.js | 13 | mat4, meshReader, rmbLayout, location grid, flats, nature-quirk pin, city lights, R9 tilemap conversion + grid pins |
 | manifest.test.js | 1 | drift guard: this table and the total against the real suite |
 
 Two tiers per module:
 1. **Synthetic fixtures** - in-memory data built inside the test. Always run;
-   CI stays green with no game data (76 pass, 49 skip).
+   CI stays green with no game data (77 pass, 49 skip).
 2. **Real-data validation** - gated on `ARENA2_PATH`; skip cleanly when
    absent. Pin observed counts, names, ids, checksums, and structural
    closure invariants.

@@ -22,8 +22,10 @@ import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, pars
 import { fetchBytes, texName, parseSeason, createSkyController } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
-  windowStyleForWeather, weatherRng, fogFactor,
+  windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
+  LightningPlayer,
 } from '../world/weather.js';
+import { PrecipitationRenderer } from '../render/precipitation.js';
 import { SEASON } from '../world/climateSwaps.js';
 
 export async function bootExterior(canvas, renderer, params, status) {
@@ -147,6 +149,10 @@ export async function bootExterior(canvas, renderer, params, status) {
   const weatherSkyOffset = skyOffsetForWeather(
     weather, weatherRng(Number(params.get('wseed')) || 1));
   const weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
+  const precipMode = precipitationForWeather(weather);
+  const precip = precipMode ? new PrecipitationRenderer(renderer.gl) : null;
+  const lightning = weather === 'thunder'
+    ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
   const baseTod = parseTimeOfDay(params.get('tod')) ?? 12 * 60;
   const timeScale = Number(params.get('timescale') || 0);
   const bootedAt = performance.now();
@@ -302,8 +308,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     // World clock (R5): sun direction/intensity and ambient follow the time
     // of day; the sun is off at night leaving the 0.25 ambient floor.
     const minute = minuteNow();
+    // Storm lightning: verbatim frame-strobe multiplier on the sun (2x
+    // during a flash frame); ?flashtest pins it on for shots.
+    const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
     renderer.setLighting(
-      exteriorAmbient(minute), sunScale(minute) * weatherSun,
+      exteriorAmbient(minute), sunScale(minute) * weatherSun * flash,
       new Float32Array(SUN_RIG_COLOR));
     renderer.setWindowEmission(windowEmissionRGB(
       params.has('window') ? params.get('window')
@@ -349,6 +358,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       camRight[2] = dx / l;
     }
     renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    if (precip) {
+      precip.draw(precipMode, proj, view, new Float32Array(eye), camRight, now / 1000);
+    }
 
     frames++;
     if (shotMode && frames === 5) window.__shotReady = true;

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   WEATHER_TYPES, FOG_SETTINGS, fogForWeather, skyOffsetForWeather,
   weatherSunlightScale, windowStyleForWeather, precipitationForWeather,
-  isSnowFreeClimate, fogFactor, weatherRng,
+  isSnowFreeClimate, fogFactor, weatherRng, LightningPlayer,
 } from '../src/world/weather.js';
 
 const approx = (a, b, eps = 1e-9) =>
@@ -86,4 +86,35 @@ test('weather: fog factor math', () => {
   approx(fogFactor(FOG_SETTINGS.heavy, 20), Math.exp(-1));
   approx(fogFactor(FOG_SETTINGS.rainy, 1000), Math.exp(-3));
   approx(fogFactor(FOG_SETTINGS.dungeon, 0), 1);
+});
+
+test('weather: lightning player verbatim mechanics', () => {
+  const dt = 1 / 60;
+  const a = new LightningPlayer(11);
+  const b = new LightningPlayer(11);
+  const seqA = [];
+  for (let i = 0; i < 60 * 60; i++) seqA.push(a.tick(dt));
+  const seqB = [];
+  for (let i = 0; i < 60 * 60; i++) seqB.push(b.tick(dt));
+  assert.deepEqual(seqA, seqB); // deterministic per seed
+
+  // Only {1, 2} multipliers; flashes happen; between strikes it idles at 1.
+  assert.ok(seqA.every((v) => v === 1 || v === 2));
+  const flashes = seqA.filter((v) => v === 2).length;
+  assert.ok(flashes > 0, 'no flashes in a minute of storm');
+
+  // Strobe structure: a flash frame is always followed by an off frame
+  // (each budget slot = maybe-on then off, per the coroutine pairs).
+  for (let i = 0; i < seqA.length - 1; i++) {
+    if (seqA[i] === 2) assert.equal(seqA[i + 1], 1, `frame ${i}`);
+  }
+
+  // Clip class lands in the verbatim set once a strike fires.
+  assert.ok(['short', 'thunder', 'roll'].includes(a.lastClipClass));
+
+  // Different seed diverges.
+  const c = new LightningPlayer(99);
+  const seqC = [];
+  for (let i = 0; i < 60 * 60; i++) seqC.push(c.tick(dt));
+  assert.notDeepEqual(seqC, seqA);
 });

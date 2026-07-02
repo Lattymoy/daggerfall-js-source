@@ -109,6 +109,73 @@ export function fogFactor(settings, distance) {
   return Math.exp(-settings.density * distance);
 }
 
+/**
+ * Storm lightning, verbatim AmbientEffectsPlayer.PlayLightningEffects:
+ * a strike triggers every random.Next(4, 35) seconds; the clip class
+ * sets the flash budget (StormLightningShort 4-8, StormLightningThunder
+ * 5-10, StormThunderRoll 20-30 with the thunder delayed 1.7 s - sound
+ * lands with the Audio arc, the class is exposed for it); each budget
+ * slot is TWO frames: maybe-on (Random.value < 0.6 -> the sun light at
+ * intensity 2) then off. Frame-quantized exactly as the coroutine's
+ * WaitForEndOfFrame pairs. The commented-out SkyColorScale flash is
+ * deprecated upstream and skipped. Engine randomness -> umRandom
+ * (Port-Ledger A). At night the sun is disabled, so flashes are
+ * invisible - verbatim (DFU only touches LightForEffects).
+ */
+export class LightningPlayer {
+  constructor(seed = 1) {
+    this._rng = new UMRandom((seed >>> 0) || 1);
+    this._wait = this._nextWait();
+    this._slots = 0;
+    this._phase = 0; // 0 waiting, 1 in-sequence
+    this._slotFrame = 0;
+    this._on = false;
+    this.lastClipClass = null; // 'short' | 'thunder' | 'roll' for audio
+  }
+
+  _int(min, max) { // random.Next semantics: max exclusive
+    return min + Math.floor(this._rng.nextFloat() * (max - min));
+  }
+
+  _nextWait() {
+    return this._int(4, 35);
+  }
+
+  /** Advance one rendered frame; returns the sun intensity multiplier. */
+  tick(dtSeconds) {
+    if (this._phase === 0) {
+      this._wait -= dtSeconds;
+      if (this._wait > 0) return 1;
+      // Strike: pick the clip class and its flash budget.
+      const pick = this._rng.nextFloat();
+      let min;
+      let max;
+      if (pick < 1 / 3) {
+        this.lastClipClass = 'short'; min = 4; max = 8;
+      } else if (pick < 2 / 3) {
+        this.lastClipClass = 'thunder'; min = 5; max = 10;
+      } else {
+        this.lastClipClass = 'roll'; min = 20; max = 30;
+      }
+      this._slots = this._int(min, max);
+      this._phase = 1;
+      this._slotFrame = 0;
+    }
+    // In sequence: even frames maybe-on, odd frames off.
+    if (this._slotFrame % 2 === 0) {
+      this._on = this._rng.nextFloat() < 0.6;
+    } else {
+      this._on = false;
+    }
+    this._slotFrame++;
+    if (this._slotFrame >= this._slots * 2) {
+      this._phase = 0;
+      this._wait = this._nextWait();
+    }
+    return this._on ? 2 : 1;
+  }
+}
+
 /** 50/50 rng for the sky variant, seedable for deterministic shots. */
 export function weatherRng(seed = 1) {
   return new UMRandom((seed >>> 0) || 1);

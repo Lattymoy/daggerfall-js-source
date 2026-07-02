@@ -16,8 +16,8 @@ Milestone log: `07-Rendering/Rendering-Arc.md` (R1 climate swaps,
 R2 window emission, R3 city lanterns, R4 painted skies, R5 day/night
 cycle, R6 dungeon lighting, R7 dungeon water, R8 interior lights, R9 terrain tilemap shader - all SHIPPED).
 
-Owned queue (from Port-Ledger C): precipitation particles + storm
-lightning, spectral/firewall emission colors when spectral enemies
-land. R12 shipped weather fog/skies/sun-dimming and wired the Fog
-window style. R10 retired groundMesh.js - all ground
+Owned queue (from Port-Ledger C): spectral/firewall emission colors
+when spectral enemies land (Characters dependency) - the arc's build
+queue is otherwise EMPTY. R13 shipped precipitation + verbatim storm
+lightning. R10 retired groundMesh.js - all ground
 (exterior + terrain) runs the verbatim tilemap shader.

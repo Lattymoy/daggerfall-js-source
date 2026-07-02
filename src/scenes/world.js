@@ -28,8 +28,10 @@ import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, pars
 import { fetchBytes, texName, parseSeason, createSkyController } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
-  windowStyleForWeather, weatherRng, fogFactor,
+  windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
+  LightningPlayer,
 } from '../world/weather.js';
+import { PrecipitationRenderer } from '../render/precipitation.js';
 
 // Milestone 9 scene: floating-origin streaming world. Terrain pixels
 // stream in nearest-first around the camera within TERRAIN_DISTANCE,
@@ -94,6 +96,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const weatherSkyOffset = skyOffsetForWeather(
     weather, weatherRng(Number(params.get('wseed')) || 1));
   const weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
+  const precipMode = precipitationForWeather(weather);
+  const precip = precipMode ? new PrecipitationRenderer(renderer.gl) : null;
+  const lightning = weather === 'thunder'
+    ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
   const baseTod = parseTimeOfDay(params.get('tod')) ?? 12 * 60;
   const timeScale = Number(params.get('timescale') || 0);
   const bootedAt = performance.now();
@@ -383,8 +389,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
     // World clock (R5): sun, ambient, window style, sky frame by time.
     const minute = minuteNow();
+    const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
     renderer.setLighting(
-      exteriorAmbient(minute), sunScale(minute) * weatherSun,
+      exteriorAmbient(minute), sunScale(minute) * weatherSun * flash,
       new Float32Array(SUN_RIG_COLOR));
     renderer.setWindowEmission(windowEmissionRGB(
       params.has('window') ? params.get('window')
@@ -434,6 +441,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(allBatches, camRight, new Float32Array([0, 1, 0]));
+    if (precip) {
+      precip.draw(precipMode, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
+    }
 
     if (shotMode) {
       window.__frame++;

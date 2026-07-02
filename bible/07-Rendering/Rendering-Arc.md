@@ -384,7 +384,32 @@ comment); Sunny IS active linear 0..2400, the classic distance haze.
 Shortcut removed; band-diff vs the pre-R12 baseline shows a clean
 gradient (horizon mean delta 45 tapering to 10 nearest, sky untouched).
 
+## Milestone R13 - precipitation + storm lightning (SHIPPED)
+
+Rain streaks and drifting snow: `src/render/precipitation.js`, a
+shader-animated particle volume that wraps around the camera (mod-space
+positions advance in the vertex shader - zero per-frame CPU), rain
+quads stretched along the slanted fall direction, snow camera-facing
+with per-particle sine drift, edge-faded to hide the wrap, blended and
+depth-tested with no writes, drawn last, deliberately unfogged.
+Presentation values are ours; the 1000-particle cap is the one number
+anchored on the Rain_Particles prefab (maxNumParticles). Storm shares
+the rain look. LIGHTNING is verbatim AmbientEffectsPlayer
+.PlayLightningEffects in `weather.js` (LightningPlayer): strikes every
+random.Next(4, 35) s, flash budget by clip class (Short 4-8, Thunder
+5-10, ThunderRoll 20-30; the class is exposed for the Audio arc's
+delayed thunder), each budget slot = one maybe-on frame (Random.value
+< 0.6 -> SUN intensity x2) then one off frame - the coroutine's
+WaitForEndOfFrame pairs, frame-quantized; the SkyColorScale flash is
+deprecated upstream and skipped; at night the sun is off so flashes
+are invisible, verbatim. Engine randomness on umRandom (Ledger A).
+?flashtest pins the multiplier for shots. Proofs: rain adds 2984
+streak pixels over the R12 rain baseline; snow shows 1449 bright-white
+flakes; flashtest brightens the storm scene mean by 3.23. Strobe
+determinism, the flash-then-off invariant, and clip classes are pinned
+in test/weather.test.js.
+
 ## Queue
 
-Owned by `Rendering.md`. Next up: precipitation particles + lightning
-(rain/snow/storm), then spectral/firewall emission.
+Owned by `Rendering.md`. Next up: spectral/firewall emission colors
+(lands with spectral enemies - Characters arc dependency).
