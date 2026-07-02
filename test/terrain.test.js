@@ -287,3 +287,52 @@ test('terrain: Daggerfall city on terrain - integration pins', { skip: skipReal 
   assert.equal(maps.getClimateIndex(207, 213), 231);
   assert.equal(MF.getWorldClimateSettings(maps.getClimateIndex(207, 213)).groundArchive, 302);
 });
+
+test('terrain: full location corpus - all 15251 stamp clean, rects stay interior', { skip: skipReal }, async () => {
+  const { BlocksFile } = await import('../src/formats/blocksFile.js');
+  const MF = await import('../src/formats/mapsFile.js');
+  const { setLocationTiles } = await import('../src/world/terrainTiles.js');
+  const blocks = new BlocksFile();
+  blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA'))));
+  const maps = new MF.MapsFile();
+  maps.load(
+    new Uint8Array(readFileSync(join(ARENA2, 'MAPS.BSA'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'CLIMATE.PAK'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'POLITIC.PAK'))),
+  );
+  let locations = 0, stampedTotal = 0;
+  let minRect = Infinity, maxRect = -Infinity;
+  const pixelSeen = new Set();
+  let sharedPixels = 0;
+  for (let r = 0; r < maps.regionCount; r++) {
+    const region = maps.getRegion(r);
+    if (!region) continue;
+    for (let l = 0; l < region.locationCount; l++) {
+      const loc = maps.getLocation(r, l);
+      if (!loc || !loc.exterior || !loc.exterior.exteriorData) continue;
+      const tilemap = new Uint8Array(128 * 128);
+      const rect = setLocationTiles(loc, maps, blocks, tilemap);
+      for (const t of tilemap) if (t) stampedTotal++;
+      const m = Math.min(rect.xMin, rect.yMin);
+      const M = Math.max(rect.xMax, rect.yMax);
+      if (m < minRect) minRect = m;
+      if (M > maxRect) maxRect = M;
+      const px = MF.longitudeLatitudeToMapPixel(
+        loc.mapTableData.longitude, loc.mapTableData.latitude);
+      const key = px.x * 1000 + px.y;
+      if (pixelSeen.has(key)) sharedPixels++;
+      pixelSeen.add(key);
+      locations++;
+    }
+  }
+  assert.equal(locations, 15251);
+  assert.equal(stampedTotal, 9565908);
+  // Corpus invariant: every clearance rect stays interior to the pixel -
+  // blend divisors (1/xMin, 1/(1-xMax), ...) are finite game-wide, so the
+  // blend never produces NaN heights (verified with a full stamp + blend
+  // sweep during the M7 audit: 0 NaN across all 15251).
+  assert.equal(minRect, 11);
+  assert.equal(maxRect, 116);
+  // One location per map pixel, game-wide.
+  assert.equal(sharedPixels, 0);
+});

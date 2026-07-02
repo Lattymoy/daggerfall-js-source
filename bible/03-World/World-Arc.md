@@ -42,6 +42,17 @@ Integration pins for pixel (207,213): avg 0.166147 / max 0.171953, rect
 {11,116,11,116}, 9989 stamped, post-blend s(64,64) = avg with corners
 untouched, post-assign histogram 2:8173 / 1:3142 / 46:1706 / 11:899,
 climate 231 -> ground 302. Pins in test/terrain.test.js.
+AUDIT NOTE (M7 audit): the 64-entry marching-squares lookup was
+machine-verified against a source-parsed reconstruction - identical
+64/64. All 15251 exterior locations in the game stamp + blend clean
+(0 failures, 0 NaN heights); corpus invariants pinned: every clearance
+rect stays interior to the pixel ([11, 116] game-wide, so the blend's
+edge divisors are always finite) and no map pixel carries more than one
+location. Stamped tile total 9565908. Two documented equivalences:
+calcAvgMaxHeight seeds max with 0 instead of float.MinValue (samples are
+clamp01 >= 0), and the location Y uses the average height directly where
+DFU samples the terrain at 0.55 * hDim inside the flattened rect (equal
+by construction).
 
 ## Milestone 6 - terrain: WOODS.WLD + height sampling (SHIPPED)
 

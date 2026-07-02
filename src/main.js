@@ -866,8 +866,10 @@ async function bootWorld(canvas, renderer, params, status) {
   }
 
   // Location origin on the leveled terrain: centred tile origin, lifted
-  // 2.0 * GlobalScale above the flattened average height (verbatim
-  // StreamingWorld block origin + location height).
+  // 2.0 * GlobalScale above the flattened average height. DFU samples the
+  // terrain at 0.55 * hDim (always inside the flattened rect - corpus
+  // rects span [11, 116] = [0.086, 0.906] normalized), which equals the
+  // average exactly; we use the average directly.
   const tilePos = getLocationTerrainTileOrigin(dfLocation);
   const tileSide = TERRAIN_SIZE / 128;
   const locationY = locationAvgHeight * worldHeight;

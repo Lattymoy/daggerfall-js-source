@@ -4,6 +4,13 @@ A 1:1 JavaScript port of Daggerfall, built the way we build: hand-rolled WebGL2,
 
 Read `01-Overview/Port-Doctrine.md` before touching anything.
 
+## Process
+
+Doc edits are part of the change: every scripted bible edit must ASSERT
+the needle matched (a silent `.replace` no-op shipped a stale
+Rendering.md queue in the M6 audit and was only caught in the M7 audit).
+Verify doc diffs in `git diff` before committing, same as code.
+
 ## Sections
 
 - `01-Overview/` - vision, port doctrine, phase plan, Port-Ledger (departures/quirks/unported)

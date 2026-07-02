@@ -266,7 +266,8 @@ export function bilinearInterpolator(valx0y0, valx0y1, valx1y0, valx1y1, u, v) {
     u * ((1 - v) * valx1y0 + v * valx1y1);
 }
 
-/** CalcAvgMaxHeightJob: [avg, max] over normalized samples. */
+/** CalcAvgMaxHeightJob: [avg, max] over normalized samples. DFU seeds max
+ * with float.MinValue; 0 is equivalent since samples are clamp01 >= 0. */
 export function calcAvgMaxHeight(heightmapData) {
   let avg = 0;
   let max = 0;

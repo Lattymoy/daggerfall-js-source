@@ -13,5 +13,9 @@ Current (`src/render/`):
   equivalent of DFU's tilemap-shader atlas (ledgered departure).
 
 Owned queue (from Port-Ledger C): climate texture swaps + seasons, window
-emission materials, point lights for archive 210, sky (SKY??.DAT), spectral/
-firewall emission colors when spectral enemies land.
+emission materials, point lights for archive 210 flats (exterior, interior
+AND dungeon light data shipped), the dungeon water plane (levels shipped),
+terrain material upgrades (the ?world scene draws real terrain tiles via
+draped per-tile quads in terrainMesh.js; an atlas/tilemap shader pass and
+retiring the ?terrain elevation-ramp scene land here), sky (SKY??.DAT),
+spectral/firewall emission colors when spectral enemies land.
