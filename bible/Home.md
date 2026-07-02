@@ -20,7 +20,7 @@ Read `01-Overview/Port-Doctrine.md` before touching anything.
 ## Active arcs
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
-- `03-World/World-Arc.md` - ACTIVE. Milestone 1 shipped: real RMB block rendered from original data.
+- `03-World/World-Arc.md` - ACTIVE. Milestone 2 shipped: full locations rendered (Daggerfall city, 64 blocks).
 
 ## Ground rules carried from project-final
 

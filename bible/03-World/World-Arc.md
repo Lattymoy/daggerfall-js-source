@@ -4,6 +4,18 @@ Assemble Daggerfall's world from decoded data onto our WebGL2 stack.
 Data math is ported 1:1 from DFU (MeshReader.cs geometry paths, RMBLayout.cs);
 rendering is ours per Port-Doctrine.
 
+## Milestone 2 - full location render (SHIPPED)
+
+Complete exteriors assembled from MAPS location data: block grid resolved via
+checkName(getRmbBlockName(x, y)), block (x, y) placed at (x * RMBSide, 0,
+y * RMBSide) with RMBSide 102.4, no row inversion - verbatim
+DaggerfallLocation.LayoutLocation. Ground archive driven by the location
+climate (Daggerfall city -> Woodlands 302). Scene selectable with
+?region=&loc=. Daggerfall city: 64 blocks, 1109 placements, 202 unique
+meshes, 181 textures, meshes and textures shared across blocks, per-block
+ground meshes, origin folded into each placement matrix.
+`src/world/locationLayout.js`, pins in test/world.test.js.
+
 ## Milestone 1 - single RMB block render (SHIPPED)
 
 MAGEAA00.RMB assembled and rendered from original data: BLOCKS placement ->
@@ -41,16 +53,13 @@ via T(48, 0, 25.6) * Ry(-270deg).
 
 ## Queue (in order, one at a time)
 
-1. Location loader: assemble a full exterior (width x height blocks) with the
-   per-location climate driving the ground archive (currently pinned to 302
-   Woodlands for the single-block milestone).
-2. Flats/billboards: RMB flat records + ground scenery as camera-facing quads
+1. Flats/billboards: RMB flat records + ground scenery as camera-facing quads
    (SCALE_DIVISOR 256, blockFlatsOffsetY -6).
-3. Building interiors (subrecord Interior sections + door metadata from
+2. Building interiors (subrecord Interior sections + door metadata from
    MeshReader's ModelDoor extraction, archives 74/56/331/156/95 - required by
    the Player arc for entry).
-4. RDB dungeon layout (RDBLayout.cs) with action records.
-5. Terrain: WOODS.WLD heightmap reader + streaming world.
+3. RDB dungeon layout (RDBLayout.cs) with action records.
+4. Terrain: WOODS.WLD heightmap reader + streaming world.
 
 ## Testing
 

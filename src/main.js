@@ -1,27 +1,23 @@
 // project-dagger entry point.
 // Desktop-only. Hand-rolled WebGL2, no framework. Same doctrine as project-final.
-// World-Arc milestone 1: assemble and render a real RMB block (MAGEAA00.RMB,
-// the Mages Guild block pinned throughout the test suite) from original data:
-// BLOCKS placement -> ARCH3D geometry -> TEXTURE archives via ART_PAL.
+// World-Arc milestone 2: assemble and render a full exterior location from
+// original data. Default scene is Daggerfall city (8x8 blocks, 316 buildings),
+// selectable with ?region=<name>&loc=<name>. Ground archive comes from the
+// location's climate (CLIMATE.PAK -> GetWorldClimateSettings).
 //
 // Controls: click to lock pointer, WASD + mouse to fly, Shift for speed.
-// ?shot puts the camera at a fixed vantage and raises window.__shotReady for
-// the headless screenshot harness (tools/screenshot.mjs).
+// ?shot raises window.__shotReady at a fixed vantage for tools/screenshot.mjs.
 
 import { BlocksFile } from './formats/blocksFile.js';
 import { Arch3dFile } from './formats/arch3dFile.js';
 import { TextureFile } from './formats/textureFile.js';
 import { DFPalette } from './formats/dfPalette.js';
+import { MapsFile } from './formats/mapsFile.js';
 import { dfMeshToModel } from './world/meshReader.js';
-import { layoutRmbBlock } from './world/rmbLayout.js';
-import { perspective, lookAt } from './world/mat4.js';
+import { layoutLocation, RMB_SIDE } from './world/locationLayout.js';
+import { perspective, lookAt, trs, multiply } from './world/mat4.js';
 import { Renderer } from './render/renderer.js';
 import { buildGroundMesh } from './render/groundMesh.js';
-
-const BLOCK_NAME = 'MAGEAA00.RMB';
-// Woodlands ground set (Daggerfall region climate). The per-location climate
-// lookup wires in with the location loader, the next World-Arc feature.
-const GROUND_ARCHIVE = 302;
 
 async function fetchBytes(name) {
   const res = await fetch(`./arena2/${name}`);
@@ -36,39 +32,51 @@ function texName(archive) {
 async function boot() {
   const canvas = document.getElementById('c');
   const renderer = new Renderer(canvas);
+  const params = new URLSearchParams(location.search);
+  const regionName = params.get('region') || 'Daggerfall';
+  const locationName = params.get('loc') || 'Daggerfall';
   const status = (msg) => {
     document.title = `project-dagger - ${msg}`;
   };
 
   status('loading data');
-  const [palBytes, blocksBytes, archBytes] = await Promise.all([
-    fetchBytes('ART_PAL.COL'),
-    fetchBytes('BLOCKS.BSA'),
-    fetchBytes('ARCH3D.BSA'),
-  ]);
+  const [palBytes, blocksBytes, archBytes, mapsBytes, climateBytes, politicBytes] =
+    await Promise.all([
+      fetchBytes('ART_PAL.COL'),
+      fetchBytes('BLOCKS.BSA'),
+      fetchBytes('ARCH3D.BSA'),
+      fetchBytes('MAPS.BSA'),
+      fetchBytes('CLIMATE.PAK'),
+      fetchBytes('POLITIC.PAK'),
+    ]);
 
   const palette = new DFPalette();
   palette.load(palBytes, 'ART_PAL.COL');
-
   const blocks = new BlocksFile();
   blocks.load(blocksBytes);
   const arch = new Arch3dFile();
   arch.load(archBytes);
+  const maps = new MapsFile();
+  maps.load(mapsBytes, climateBytes, politicBytes);
 
-  // Assemble the block.
-  const block = blocks.getBlockByName(BLOCK_NAME);
-  const layout = layoutRmbBlock(block);
+  // Assemble the location.
+  const dfLocation = maps.getLocationByName(regionName, locationName);
+  if (!dfLocation) throw new Error(`location not found: ${regionName}/${locationName}`);
+  status(`laying out ${locationName}`);
+  const loc = layoutLocation(dfLocation, maps, blocks);
 
-  // Decompose every referenced mesh, collecting texture archives.
+  // Decompose every referenced mesh once, collecting texture archives.
   const dfMeshes = new Map(); // modelIdNum -> dfMesh
-  const archives = new Set([GROUND_ARCHIVE]);
-  for (const placed of layout.models) {
-    if (dfMeshes.has(placed.modelIdNum)) continue;
-    const index = arch.getRecordIndex(placed.modelIdNum);
-    if (index === -1) continue;
-    const dfMesh = arch.getMesh(index);
-    dfMeshes.set(placed.modelIdNum, dfMesh);
-    for (const sm of dfMesh.subMeshes) archives.add(sm.textureArchive);
+  const archives = new Set([loc.groundArchive]);
+  for (const b of loc.blocks) {
+    for (const placed of b.layout.models) {
+      if (dfMeshes.has(placed.modelIdNum)) continue;
+      const index = arch.getRecordIndex(placed.modelIdNum);
+      if (index === -1) continue;
+      const dfMesh = arch.getMesh(index);
+      dfMeshes.set(placed.modelIdNum, dfMesh);
+      for (const sm of dfMesh.subMeshes) archives.add(sm.textureArchive);
+    }
   }
 
   status(`loading ${archives.size} texture archives`);
@@ -84,32 +92,44 @@ async function boot() {
     const t = textureFiles.get(archive);
     return { width: t.getWidth(record), height: t.getHeight(record) };
   };
-
-  // Convert meshes and upload every referenced texture record.
-  const gpuMeshes = new Map(); // modelIdNum -> renderer mesh
   const uploadRecord = (archive, record) => {
     const t = textureFiles.get(archive);
     const color32 = t.getColor32(t.getDFBitmap(record, 0), 0);
     renderer.uploadTexture(archive, record, color32);
   };
+
+  // GPU meshes shared across blocks.
+  const gpuMeshes = new Map(); // modelIdNum -> renderer mesh
   for (const [id, dfMesh] of dfMeshes) {
     const model = dfMeshToModel(dfMesh, getTextureSize);
     for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
     gpuMeshes.set(id, renderer.createMesh(model));
   }
 
-  // Ground.
-  const groundModel = buildGroundMesh(layout.groundTiles, GROUND_ARCHIVE);
-  for (const sm of groundModel.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
-  const groundMesh = renderer.createMesh(groundModel);
-  const identityMatrix = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  // Per-block scene list: world matrices with the block origin folded in,
+  // plus one ground mesh per block.
+  const drawList = [];
+  for (const b of loc.blocks) {
+    const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
+    for (const placed of b.layout.models) {
+      const mesh = gpuMeshes.get(placed.modelIdNum);
+      if (!mesh) continue;
+      drawList.push({ mesh, matrix: multiply(originMatrix, placed.matrix) });
+    }
+    const groundModel = buildGroundMesh(b.layout.groundTiles, loc.groundArchive);
+    for (const sm of groundModel.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
+    drawList.push({ mesh: renderer.createMesh(groundModel), matrix: originMatrix });
+  }
 
   // Camera.
-  const shotMode = new URLSearchParams(location.search).has('shot');
+  const shotMode = params.has('shot');
+  const extentX = loc.width * RMB_SIDE;
+  const extentZ = loc.height * RMB_SIDE;
+  const center = [extentX / 2, 4, extentZ / 2];
   const cam = {
-    pos: shotMode ? [138, 46, 148] : [51.2, 12, 130],
-    yaw: shotMode ? Math.PI * 0.78 : Math.PI,
-    pitch: shotMode ? -0.34 : -0.1,
+    pos: [center[0], 14, extentZ + 40],
+    yaw: Math.PI,
+    pitch: -0.08,
   };
   const keys = new Set();
   addEventListener('keydown', (e) => keys.add(e.code));
@@ -127,36 +147,43 @@ async function boot() {
     lightDir[0] /= l; lightDir[1] /= l; lightDir[2] /= l;
   }
 
-  status(`${BLOCK_NAME} - ${layout.models.length} models`);
-  console.log(`scene: ${layout.models.length} placements, ${gpuMeshes.size} meshes, ${renderer.textures.size} textures`);
+  status(`${locationName} - ${loc.blocks.length} blocks, ${drawList.length} draws`);
+  console.log(
+    `scene: ${loc.blocks.length} blocks, ${drawList.length} placements, ` +
+    `${gpuMeshes.size} meshes, ${renderer.textures.size} textures, ground archive ${loc.groundArchive}`
+  );
+
   let frames = 0;
   let last = performance.now();
   function frame(now) {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
 
-    // Fly movement.
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
-    const speed = (keys.has('ShiftLeft') ? 60 : 20) * dt;
+    const speed = (keys.has('ShiftLeft') ? 120 : 30) * dt;
     if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
     if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;
     if (keys.has('KeyA')) for (let a = 0; a < 3; a++) cam.pos[a] -= right[a] * speed;
     if (keys.has('KeyD')) for (let a = 0; a < 3; a++) cam.pos[a] += right[a] * speed;
 
+    // Shot vantage scales with the location extent.
     const target = shotMode
-      ? [51.2, 4, 51.2]
+      ? [extentX * 0.42, 6, extentZ * 0.52]
       : [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
-    const eye = shotMode ? [132, 52, 142] : cam.pos;
-    const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.1, 2000);
+    const eye = shotMode
+      ? [extentX * 0.5, 9, extentZ * 0.78]
+      : cam.pos;
+    const proj = perspective(
+      Math.PI / 3,
+      canvas.clientWidth / canvas.clientHeight,
+      0.1,
+      Math.max(2000, extentX * 4)
+    );
     const view = lookAt(eye, target, [0, 1, 0]);
 
     renderer.beginFrame(proj, view, lightDir);
-    renderer.drawMesh(groundMesh, identityMatrix);
-    for (const placed of layout.models) {
-      const mesh = gpuMeshes.get(placed.modelIdNum);
-      if (mesh) renderer.drawMesh(mesh, placed.matrix);
-    }
+    for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix);
 
     frames++;
     if (shotMode && frames === 5) window.__shotReady = true;

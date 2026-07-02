@@ -4,6 +4,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { dfMeshToModel, GLOBAL_SCALE } from '../src/world/meshReader.js';
 import { layoutRmbBlock, buildGroundTilemap, GROUND_OFFSET, GROUND_TILE_SIZE } from '../src/world/rmbLayout.js';
+import { layoutLocation, RMB_SIDE } from '../src/world/locationLayout.js';
+import { MapsFile } from '../src/formats/mapsFile.js';
 import { trs, multiply, transformPoint, identity } from '../src/world/mat4.js';
 import { Arch3dFile } from '../src/formats/arch3dFile.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
@@ -187,4 +189,38 @@ test('world: MAGEAA00.RMB layout pinned', { skip: skipReal }, () => {
   assert.deepEqual(layout.groundTiles[15][0], { record: 12, rotated: false, flipped: false });
   assert.equal(layout.groundTiles.length, 16);
   assert.equal(layout.groundTiles[0].length, 16);
+});
+
+test('world: Daggerfall city location layout pinned', { skip: skipReal }, () => {
+  const maps = new MapsFile();
+  maps.load(
+    new Uint8Array(readFileSync(join(ARENA2, 'MAPS.BSA'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'CLIMATE.PAK'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'POLITIC.PAK')))
+  );
+  const blocks = new BlocksFile();
+  blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA'))));
+  const dfLocation = maps.getLocationByName('Daggerfall', 'Daggerfall');
+  const loc = layoutLocation(dfLocation, maps, blocks);
+
+  // 8x8 grid, every block resolved, Woodlands ground.
+  assert.equal(loc.width, 8);
+  assert.equal(loc.height, 8);
+  assert.equal(loc.blocks.length, 64);
+  assert.equal(loc.groundArchive, 302);
+  assert.equal(RMB_SIDE, 102.4);
+
+  // Grid placement: block (x, y) at (x * RMBSide, 0, y * RMBSide).
+  const b0 = loc.blocks[0];
+  assert.equal(b0.blockName, 'WALLAA02.RMB');
+  assert.deepEqual([b0.originX, b0.originZ], [0, 0]);
+  const b9 = loc.blocks.find((b) => b.x === 1 && b.y === 1);
+  approx(b9.originX, 102.4);
+  approx(b9.originZ, 102.4);
+
+  // Every block assembled with ground and at least the wall geometry.
+  for (const b of loc.blocks) {
+    assert.ok(b.dfBlock, b.blockName);
+    assert.equal(b.layout.groundTiles.length, 16);
+  }
 });
