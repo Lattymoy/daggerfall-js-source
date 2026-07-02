@@ -67,12 +67,13 @@ export function collectCityLights(dfBlock, getScaledSize) {
  * [x, y, z, range] ready for the renderer.
  */
 export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE) {
+  const perLight = typeof range !== 'number' ? range : null;
   const sorted = lights
-    .map((l) => {
+    .map((l, index) => {
       const dx = l.x - pos[0];
       const dy = l.y - pos[1];
       const dz = l.z - pos[2];
-      return { l, d: dx * dx + dy * dy + dz * dz };
+      return { l, index, d: dx * dx + dy * dy + dz * dz };
     })
     .sort((a, b) => a.d - b.d)
     .slice(0, max);
@@ -81,7 +82,7 @@ export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE) {
     out[i * 4] = sorted[i].l.x;
     out[i * 4 + 1] = sorted[i].l.y;
     out[i * 4 + 2] = sorted[i].l.z;
-    out[i * 4 + 3] = range;
+    out[i * 4 + 3] = perLight ? perLight[sorted[i].index] : range;
   }
   return out;
 }

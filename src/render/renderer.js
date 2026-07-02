@@ -32,6 +32,9 @@ in vec3 vWorldPos;
 uniform sampler2D uTex;
 uniform sampler2D uEmissionTex;
 uniform vec3 uLightDir;
+uniform vec3 uAmbient;
+uniform float uSunScale;
+uniform vec3 uSunColor;
 uniform vec3 uEmissionColor;
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
@@ -42,7 +45,7 @@ void main() {
   if (tex.a < 0.5) discard;
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
-  vec3 lit = tex.rgb * (0.45 + 0.55 * diff);
+  vec3 lit = tex.rgb * (uAmbient + uSunColor * (uSunScale * diff));
   // Point lights (city lanterns): N.L with a squared linear falloff to the
   // range - documented equivalence to the Unity point light this replaces.
   float pointDiff = 0.0;
@@ -86,11 +89,12 @@ const BB_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
 uniform sampler2D uTex;
+uniform vec3 uTint; // time-of-day: ambient + sunColor * sunScale * 0.5
 out vec4 outColor;
 void main() {
   vec4 tex = texture(uTex, vUV);
   if (tex.a < 0.5) discard;
-  outColor = vec4(tex.rgb, 1.0);
+  outColor = vec4(tex.rgb * uTint, 1.0);
 }`;
 
 const ZERO_ORIGIN = [0, 0, 0];
@@ -107,6 +111,9 @@ export class Renderer {
     this.uView = gl.getUniformLocation(this.program, 'uView');
     this.uModel = gl.getUniformLocation(this.program, 'uModel');
     this.uLightDir = gl.getUniformLocation(this.program, 'uLightDir');
+    this.uAmbient = gl.getUniformLocation(this.program, 'uAmbient');
+    this.uSunScale = gl.getUniformLocation(this.program, 'uSunScale');
+    this.uSunColor = gl.getUniformLocation(this.program, 'uSunColor');
     this.uTex = gl.getUniformLocation(this.program, 'uTex');
     this.uEmissionTex = gl.getUniformLocation(this.program, 'uEmissionTex');
     this.uEmissionColor = gl.getUniformLocation(this.program, 'uEmissionColor');
@@ -119,6 +126,10 @@ export class Renderer {
     this._windowEmission = new Float32Array([0, 0, 0]);
     this._pointLights = new Float32Array(0); // vec4 per light [x,y,z,range]
     this._pointColor = new Float32Array([1, 1, 1]);
+    // Defaults reproduce the pre-R5 fixed lighting (0.45 + 0.55 * diff).
+    this._ambient = new Float32Array([0.45, 0.45, 0.45]);
+    this._sunScale = 0.55;
+    this._sunColor = new Float32Array([1, 1, 1]);
     // 1x1 black bound for every non-window submesh (branchless shader).
     this._blackTex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this._blackTex);
@@ -135,6 +146,7 @@ export class Renderer {
     this.bbUSize = gl.getUniformLocation(this.bbProgram, 'uSize');
     this.bbUOrigin = gl.getUniformLocation(this.bbProgram, 'uOrigin');
     this.bbUTex = gl.getUniformLocation(this.bbProgram, 'uTex');
+    this.bbUTint = gl.getUniformLocation(this.bbProgram, 'uTint');
     this._proj = null;
     this._view = null;
 
@@ -228,6 +240,9 @@ export class Renderer {
     gl.uniformMatrix4fv(this.uProj, false, proj);
     gl.uniformMatrix4fv(this.uView, false, view);
     gl.uniform3fv(this.uLightDir, lightDir);
+    gl.uniform3fv(this.uAmbient, this._ambient);
+    gl.uniform1f(this.uSunScale, this._sunScale);
+    gl.uniform3fv(this.uSunColor, this._sunColor);
     gl.uniform1i(this.uTex, 0);
     gl.uniform1i(this.uEmissionTex, 1);
     gl.uniform3fv(this.uEmissionColor, this._windowEmission);
@@ -243,6 +258,13 @@ export class Renderer {
   /** Active window style emission (windowEmissionRGB output). */
   setWindowEmission(rgb) {
     this._windowEmission = rgb;
+  }
+
+  /** Time-of-day lighting: ambient color, sun scale, sun color. */
+  setLighting(ambient, sunScale, sunColor) {
+    this._ambient = ambient;
+    this._sunScale = sunScale;
+    if (sunColor) this._sunColor = sunColor;
   }
 
   /** Scene-space point lights as flat vec4s [x,y,z,range], max 16. */
@@ -349,6 +371,14 @@ export class Renderer {
     gl.uniform3fv(this.bbURight, camRight);
     gl.uniform3fv(this.bbUUp, camUp);
     gl.uniform1i(this.bbUTex, 0);
+    // Billboards take the scene's time-of-day light (DFU's ambient-lit
+    // billboards): ambient plus the Lambert-average half of the sun term.
+    gl.uniform3f(
+      this.bbUTint,
+      this._ambient[0] + this._sunColor[0] * this._sunScale * 0.5,
+      this._ambient[1] + this._sunColor[1] * this._sunScale * 0.5,
+      this._ambient[2] + this._sunColor[2] * this._sunScale * 0.5
+    );
     gl.activeTexture(gl.TEXTURE0);
     gl.disable(gl.CULL_FACE);
     for (const b of batches) {

@@ -35,7 +35,7 @@ import { WoodsFile } from './formats/woodsFile.js';
 import { dfMeshToModel } from './world/meshReader.js';
 import { layoutLocation, RMB_SIDE } from './world/locationLayout.js';
 import { collectBlockFlats, scaledBillboardSize } from './world/rmbFlats.js';
-import { collectCityLights, nearestLights, CITY_LIGHT_COLOR, LIGHTS_ARCHIVE } from './world/cityLights.js';
+import { collectCityLights, nearestLights, CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE } from './world/cityLights.js';
 import { layoutInterior, INTERIOR_MARKER } from './world/interiorLayout.js';
 import { layoutDungeon } from './world/dungeonLayout.js';
 import { applyTextureTable } from './world/dungeonTextures.js';
@@ -54,6 +54,10 @@ import { windowEmissionRGB } from './render/windowEmission.js';
 import { SkyFile } from './formats/skyFile.js';
 import { ImgFile } from './formats/imgFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, nightSkyImageName } from './render/skyRenderer.js';
+import {
+  parseTimeOfDay, isCityLightsOn, sunDirection, sunScale, exteriorAmbient,
+  windowStyleForTime, skyFrameForTime, CityLightAnimator, SUN_RIG_COLOR,
+} from './world/worldClock.js';
 import { buildTerrainMesh } from './render/terrainMesh.js';
 import { getWorldClimateSettings, longitudeLatitudeToMapPixel } from './formats/mapsFile.js';
 import { perspective, lookAt, trs, multiply } from './world/mat4.js';
@@ -77,29 +81,61 @@ function texName(archive) {
   return `TEXTURE.${String(archive).padStart(3, '0')}`;
 }
 
-// Sky backdrop for a scene: day panorama from the climate's SKY archive
-// (?skyframe=0..63, default DFU's noon 31), or the matching NITE image at
-// night. Returns a draw(yaw, pitch, aspect) closure.
-async function setupSky(gl, params, skyIndex) {
+// Time-aware sky controller: swaps the panorama when the (skyIndex, frame or
+// night) key changes. Explicit ?skyframe / ?window override the clock
+// (R2/R4 demo compatibility); otherwise the world clock decides.
+function createSkyController(gl, params) {
   const sky = new SkyRenderer(gl);
-  const night = (params.get('window') || 'day') === 'night';
-  if (night) {
-    const name = nightSkyImageName(skyIndex);
-    const img = new ImgFile();
-    img.load(await fetchBytes(name), name);
-    const palName = img.paletteName;
-    const pal = new DFPalette();
-    pal.load(await fetchBytes(palName), palName);
-    img.palette = pal;
-    sky.setPanorama(buildNightSkyPanorama(img.getColor32(img.getDFBitmap(0, 0), -1)));
-  } else {
-    const frame = Math.max(0, Math.min(63, Number(params.get('skyframe') ?? 31)));
-    const skyFile = new SkyFile();
-    const name = SkyFile.indexToFileName(skyIndex);
-    skyFile.load(await fetchBytes(name), name);
-    sky.setPanorama(buildDaySkyPanorama(skyFile, frame));
+  const panoramas = new Map(); // "index:frame" | "index:night" -> panorama
+  const skyFiles = new Map();
+  let activeKey = '';
+  let pending = null;
+
+  async function buildPanorama(skyIndex, frame) {
+    if (frame === null) {
+      const name = nightSkyImageName(skyIndex);
+      const img = new ImgFile();
+      img.load(await fetchBytes(name), name);
+      const pal = new DFPalette();
+      pal.load(await fetchBytes(img.paletteName), img.paletteName);
+      img.palette = pal;
+      return buildNightSkyPanorama(img.getColor32(img.getDFBitmap(0, 0), -1));
+    }
+    if (!skyFiles.has(skyIndex)) {
+      const name = SkyFile.indexToFileName(skyIndex);
+      const f = new SkyFile();
+      f.load(await fetchBytes(name), name);
+      skyFiles.set(skyIndex, f);
+    }
+    return buildDaySkyPanorama(skyFiles.get(skyIndex), frame);
   }
-  return sky;
+
+  return {
+    renderer: sky,
+    /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late. */
+    use(skyIndex, minuteOfDay) {
+      let frame = params.has('window')
+        ? (params.get('window') === 'night' ? null : Number(params.get('skyframe') ?? 31))
+        : skyFrameForTime(minuteOfDay);
+      if (params.has('skyframe')) frame = Number(params.get('skyframe'));
+      const key = `${skyIndex}:${frame === null ? 'night' : frame}`;
+      if (key === activeKey || key === pending) return;
+      pending = key;
+      const cached = panoramas.get(key);
+      const apply = (pano) => {
+        if (pending !== key) return;
+        panoramas.set(key, pano);
+        sky.setPanorama(pano);
+        activeKey = key;
+        pending = null;
+      };
+      if (cached) apply(cached);
+      else buildPanorama(skyIndex, frame).then(apply);
+    },
+    draw(yaw, pitch, fovY, aspect) {
+      sky.draw(yaw, pitch, fovY, aspect);
+    },
+  };
 }
 
 async function boot() {
@@ -214,10 +250,17 @@ async function boot() {
 
   // Per-block scene list: world matrices with the block origin folded in,
   // plus one ground mesh per block, plus flats grouped into billboard batches.
-  const sky = await setupSky(renderer.gl, params, dfLocation.climate.skyBase);
+  const sky = createSkyController(renderer.gl, params);
   const cityLights = []; // archive-210 lantern point lights (R3)
-  const nightLights = (params.get('window') || 'day') === 'night';
   const CITY_LIGHT_COLOR_F32 = new Float32Array(CITY_LIGHT_COLOR);
+  // World clock (R5): ?tod=HH:MM (default noon), ?timescale=game-min/sec.
+  const baseTod = parseTimeOfDay(params.get('tod')) ?? 12 * 60;
+  const timeScale = Number(params.get('timescale') || 0);
+  const bootedAt = performance.now();
+  const minuteNow = () =>
+    (baseTod + ((performance.now() - bootedAt) / 1000) * timeScale) % 1440;
+  const lightsOnAt = (minute) =>
+    params.has('window') ? params.get('window') === 'night' : isCityLightsOn(minute);
   const lightSize = (record) => {
     const t = textureFiles.get(LIGHTS_ARCHIVE);
     return scaledBillboardSize(t.getSize(record), t.getScale(record));
@@ -290,11 +333,8 @@ async function boot() {
     cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
   });
 
-  const lightDir = new Float32Array([0.45, 0.8, 0.35]);
-  {
-    const l = Math.hypot(lightDir[0], lightDir[1], lightDir[2]);
-    lightDir[0] /= l; lightDir[1] /= l; lightDir[2] /= l;
-  }
+  const lightAnimator = new CityLightAnimator(cityLights.length, CITY_LIGHT_RANGE);
+  const nightAmbientFloor = new Float32Array([0.25, 0.25, 0.25]);
 
   status(`${locationName} - ${loc.blocks.length} blocks, ${drawList.length} draws`);
   console.log(
@@ -332,13 +372,25 @@ async function boot() {
     );
     const view = lookAt(eye, target, [0, 1, 0]);
 
-    // City lanterns light the scene at night (DFU's night-only city lights;
-    // gated on the window style as the documented equivalence).
+    // World clock (R5): sun direction/intensity and ambient follow the time
+    // of day; the sun is off at night leaving the 0.25 ambient floor.
+    const minute = minuteNow();
+    renderer.setLighting(exteriorAmbient(minute), sunScale(minute), new Float32Array(SUN_RIG_COLOR));
+    renderer.setWindowEmission(windowEmissionRGB(
+      params.has('window') ? params.get('window') : windowStyleForTime(minute)));
+    sky.use(dfLocation.climate.skyBase, minute);
+
+    // City lanterns: on 17:00-08:00 (IsCityLightsOn), each flickering
+    // verbatim DaggerfallLight (14 ticks/s toward random range targets).
+    const lightsOn = lightsOnAt(minute);
+    if (lightsOn) lightAnimator.tick(dt);
     renderer.setPointLights(
-      nightLights ? nearestLights(cityLights, eye) : new Float32Array(0),
+      lightsOn
+        ? nearestLights(cityLights, eye, 16, lightAnimator.ranges)
+        : new Float32Array(0),
       CITY_LIGHT_COLOR_F32
     );
-    renderer.beginFrame(proj, view, lightDir);
+    renderer.beginFrame(proj, view, sunDirection(minute));
     {
       const dx = target[0] - eye[0], dy = target[1] - eye[1], dz = target[2] - eye[2];
       const horiz = Math.hypot(dx, dz) || 1e-6;
@@ -912,28 +964,18 @@ async function bootWorld(canvas, renderer, params, status) {
   const startPixel = longitudeLatitudeToMapPixel(
     startLoc.mapTableData.longitude, startLoc.mapTableData.latitude);
 
-  const nightLights = (params.get('window') || 'day') === 'night';
   const CITY_LIGHT_COLOR_F32 = new Float32Array(CITY_LIGHT_COLOR);
-
-  // Sky backdrop follows the current pixel's climate; panoramas swap
-  // asynchronously on sky-index change (one frame late at boundaries).
-  const sky = new SkyRenderer(renderer.gl);
-  const skyLoads = new Map();
-  let activeSkyIndex = -1;
-  function requestSky(skyIndex) {
-    if (skyIndex === activeSkyIndex) return;
-    activeSkyIndex = skyIndex;
-    if (!skyLoads.has(skyIndex)) {
-      skyLoads.set(skyIndex, setupSky(renderer.gl, params, skyIndex));
-    }
-    skyLoads.get(skyIndex).then((loaded) => {
-      if (activeSkyIndex === skyIndex) {
-        sky.texture = loaded.texture;
-        sky.clearColor = loaded.clearColor;
-        sky.vSpan = loaded.vSpan;
-      }
-    });
-  }
+  // World clock (R5) + sky controller: panorama follows the current pixel's
+  // climate AND the time of day (async, frame-late at boundaries).
+  const sky = createSkyController(renderer.gl, params);
+  const baseTod = parseTimeOfDay(params.get('tod')) ?? 12 * 60;
+  const timeScale = Number(params.get('timescale') || 0);
+  const bootedAt = performance.now();
+  const minuteNow = () =>
+    (baseTod + ((performance.now() - bootedAt) / 1000) * timeScale) % 1440;
+  const lightsOnAt = (minute) =>
+    params.has('window') ? params.get('window') === 'night' : isCityLightsOn(minute);
+  const worldLightAnimator = new CityLightAnimator(4096, CITY_LIGHT_RANGE);
 
   // --- Shared caches ---------------------------------------------------
   const textureFiles = new Map();
@@ -1200,9 +1242,18 @@ async function bootWorld(canvas, renderer, params, status) {
 
     const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.2, 6000);
     const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
-    // Night lanterns: pixel-local lights placed under the current
-    // compensation, nearest 16 to the camera (uniforms upload in beginFrame).
-    if (nightLights) {
+    // World clock (R5): sun, ambient, window style, sky frame by time.
+    const minute = minuteNow();
+    renderer.setLighting(exteriorAmbient(minute), sunScale(minute), new Float32Array(SUN_RIG_COLOR));
+    renderer.setWindowEmission(windowEmissionRGB(
+      params.has('window') ? params.get('window') : windowStyleForTime(minute)));
+    const currentEntry = built.get(`${state.current.x},${state.current.y}`);
+    sky.use(currentEntry ? currentEntry.skyBase : 16, minute);
+
+    // Lanterns on 17:00-08:00, flickering verbatim; pixel-local lights
+    // placed under the current compensation, nearest 16 to the camera.
+    if (lightsOnAt(minute)) {
+      worldLightAnimator.tick(dt);
       const sceneLights = [];
       for (const p of built.values()) {
         if (!p.lights.length) continue;
@@ -1211,13 +1262,14 @@ async function bootWorld(canvas, renderer, params, status) {
           sceneLights.push({ x: l[0] + t[0], y: l[1] + t[1], z: l[2] + t[2] });
         }
       }
-      renderer.setPointLights(nearestLights(sceneLights, cam.pos), CITY_LIGHT_COLOR_F32);
+      renderer.setPointLights(
+        nearestLights(sceneLights, cam.pos, 16, worldLightAnimator.ranges),
+        CITY_LIGHT_COLOR_F32
+      );
     } else {
       renderer.setPointLights(new Float32Array(0));
     }
-    const currentEntry = built.get(`${r.current ? r.current.x : state.current.x},${r.current ? r.current.y : state.current.y}`);
-    if (currentEntry) requestSky(currentEntry.skyBase);
-    renderer.beginFrame(proj, view, lightDir);
+    renderer.beginFrame(proj, view, sunDirection(minute));
     sky.draw(cam.yaw, cam.pitch, Math.PI / 3, canvas.clientWidth / canvas.clientHeight);
 
     const allBatches = [];

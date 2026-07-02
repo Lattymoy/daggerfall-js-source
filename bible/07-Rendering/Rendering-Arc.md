@@ -115,6 +115,37 @@ boundaries, one frame late). ?skyframe=0..63 (default DFU's 31),
 ?window=night for night skies. Verified: dawn 6 blood-red treeline,
 dusk 57 its exact mirror, noon over the streaming world.
 
+## Milestone R5 - day/night lighting cycle (SHIPPED)
+
+`src/world/worldClock.js` drives everything staged in R2-R4 from one
+clock. Verbatim: DaggerfallDateTime hours (Dawn 6, Dusk 18, LightsOn 17,
+LightsOff 8; IsNight, IsCityLightsOn - lanterns burn past dawn until
+8:00); SunlightManager sun (t = (minute - 360) / 720, euler (180t, -90)
+gives toward-sun (cos, sin, 0)(PI t) - dawn from +X map east matching
+the R4 sky seam; sun HARD OFF at night); the SunlightRig LightCurve
+ported as its exact Hermite keys ((0,0), (0.08,0.36, slope 2.8928573),
+(0.5,0.9), (0.92,0.36, -2.8928576), (1,0)) with Unity's clamped
+Evaluate; rig intensity 0.6 and color (0.816, 0.954, 1);
+PlayerAmbientLight exterior ambient = lerp(0.25 * NightAmbientLightScale
+(settings default 1), 0.9, curve); window style Night when IsNight (the
+ChangeClimate call-site rule); DaggerfallLight flicker per light (14
+ticks/s, target = rand(range - 1, range), step 0.4) on the approved
+umRandom substitute (Ledger A). Renderer: solid lighting parametrized
+(uAmbient + uSunColor * uSunScale * N.L; defaults reproduce the pre-R5
+constants so interior/dungeon/terrain scenes are untouched);
+setLighting(ambient, sunScale, sunColor); nearestLights takes per-light
+flicker ranges; billboards gain a time-of-day tint (ambient + half the
+sun term - DFU's ambient-lit billboards, documented equivalence).
+EQUIVALENCES: DFU's SkyCurve asset was not extracted - sky frames
+advance linearly across daylight (skyFrameForTime, t * 63, night ->
+NITE); R3's ?window night gating is now the real clock (explicit
+?window / ?skyframe still override for demos). Scenes: ?tod=HH:MM
+(default noon), ?timescale=game-min/sec animates. Wired into exterior
+and streaming. Proofs: 22:00 city (0.25 ambient, amber windows, lantern
+pools, NITE sky), 6:30 dawn (blood sky, low east sun, lanterns still
+lit - verbatim), streaming night skyline. Pins in test/clock.test.js.
+
 ## Queue
 
-Owned by `Rendering.md`. Next up: day/night lighting cycle.
+Owned by `Rendering.md`. Next up: spectral/firewall emission colors
+(with spectral enemies) or weather (owns the Fog window style).

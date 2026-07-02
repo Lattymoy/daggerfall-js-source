@@ -1,12 +1,13 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 113 tests across 18 files.
+Node 22). Suite: 117 tests across 19 files.
 
 | File | Tests | Covers |
 |---|---|---|
 | sky.test.js | 3 | SKY reader pins, panorama mirror law, night mapping |
 | smoke.test.js | 1 | runner sanity |
+| clock.test.js | 4 | hour gates, LightCurve pins, sun sweep, flicker determinism |
 | bsa.test.js | 6 | BSA containers, closure invariant, FOO quirk |
 | palette.test.js | 10 | 8 palettes, MAP.PAL x4, embedded reads |
 | texture.test.js | 6 | 472-archive corpus, per-codec checksums |
