@@ -313,9 +313,43 @@ survives). Dead terrainMesh.js (zero consumers post-R9) deleted. All
 four draw entry points own their program binding and restore
 cull/blend/depth state - the drawMesh assumption class is closed.
 
+## Milestone R10 - exterior ground on the tilemap shader (SHIPPED)
+
+The standalone exterior scene's ground now renders through R9's
+verbatim tilemap-shader pass: raw RMB tile bytes gathered into ONE
+location-wide tilemap (16 tiles per block side, square over max(w, h)
+blocks - 128x128 for Daggerfall city, exactly the shader's clamp),
+random markers >= 56 reset to grass 8 and zero bytes stored as the
+0xFF sentinel exactly as buildGroundTilemap / setLocationTiles; one
+flat 2-triangle surface at GroundOffset spanning the true extent
+(padding never sampled), ONE drawTerrain call replacing 64 per-block
+ground meshes (city placements 1109 -> 1045, textures 293 -> 255).
+src/render/groundMesh.js DELETED and the Ledger A per-tile-quads
+departure row retired: the port now matches DFU's ground path
+outright. A/B against the retired quads surfaced a real defect in
+them - rotated tiles turned 90 degrees the WRONG WAY (the shader's
+transform table is the R9-audited verbatim one); the 1.8% pixel diff
+is the old bug leaving. Exterior ground is now consistent with the
+same city rendered in the ?world scene.
+
+## Milestone R11 - classic dungeon water texture (SHIPPED)
+
+R7's flat-color planes now sample the CLASSIC water picture: ground
+archive record 0 of the dungeon location's climate - the same texture
+the 0xFF tilemap sentinel resolves to on oceans (Alik'r dungeons get
+desert 2/0, Daggerfall-region ones temperate 302/0). Water pass gains
+the sampler: world xz -> UVs at the classic 6.4-units-per-tile scale
+(the 51.2 plane is exactly 8 tiles), REPEAT wrap, slow diagonal scroll
+(0.05 tiles/s - the classic flow, presentation-tuned), alpha 0.82 over
+the R7 blend state; the pass stays unlit (full-bright surface). DFU
+has NO classic path here (AddWater is a modern prefab), so the texture
+SOURCE is the documented choice, grounded in the sentinel mapping.
+Proof: Maorn's Guard pool 0 hovered via the new window.__pose probe
+hook (dungeon + world scenes; SHOT_EVAL note in Testing.md) -
+blue-dominant mean (64, 104, 153) with real texel variance vs R7's
+flat fill. Scene fetches the climate ground archive and uploads
+record 0; drawWater(quads, color, tex, scrollTiles).
+
 ## Queue
 
-Owned by `Rendering.md`. Next up: exterior groundMesh conversion to
-the tilemap shader, classic dungeon water texture, weather (owns the
-Fog window style), spectral/firewall emission colors when spectral
-enemies land.
+Owned by `Rendering.md`. Next up: weather (owns the Fog window style).
