@@ -288,12 +288,18 @@ export class Renderer {
   }
 
   /** Draw one placed mesh: bind per-submesh texture, indexed draw per range. */
-  drawMesh(mesh, modelMatrix) {
+  /**
+   * @param {Map<string,string>|null} texRemap - optional
+   *   "archive_record" -> "archive_record" texture substitution (climate
+   *   swaps; UVs stay original-archive, the SetDungeonTextures pattern).
+   */
+  drawMesh(mesh, modelMatrix, texRemap = null) {
     const gl = this.gl;
     gl.uniformMatrix4fv(this.uModel, false, modelMatrix);
     gl.bindVertexArray(mesh.vao);
     for (const sm of mesh.subMeshes) {
-      const tex = this.textures.get(`${sm.textureArchive}_${sm.textureRecord}`);
+      const key = `${sm.textureArchive}_${sm.textureRecord}`;
+      const tex = this.textures.get(texRemap && texRemap.has(key) ? texRemap.get(key) : key);
       if (!tex) continue;
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.drawElements(gl.TRIANGLES, sm.primitiveCount * 3, gl.UNSIGNED_INT, sm.startIndex * 4);

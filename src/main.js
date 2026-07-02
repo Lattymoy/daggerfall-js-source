@@ -48,6 +48,7 @@ import {
 } from './world/terrainTiles.js';
 import { layoutNature } from './world/terrainNature.js';
 import { StreamingWorldState } from './world/streamingWorld.js';
+import { applyClimate, getGroundArchive, getNatureArchive, SEASON } from './world/climateSwaps.js';
 import { buildTerrainMesh } from './render/terrainMesh.js';
 import { getWorldClimateSettings, longitudeLatitudeToMapPixel } from './formats/mapsFile.js';
 import { perspective, lookAt, trs, multiply } from './world/mat4.js';
@@ -58,6 +59,13 @@ async function fetchBytes(name) {
   const res = await fetch(`./arena2/${name}`);
   if (!res.ok) throw new Error(`${name}: ${res.status}`);
   return new Uint8Array(await res.arrayBuffer());
+}
+
+function parseSeason(params) {
+  const s = (params.get('season') || 'summer').toLowerCase();
+  if (s === 'winter') return SEASON.Winter;
+  if (s === 'rain') return SEASON.Rain;
+  return SEASON.Summer;
 }
 
 function texName(archive) {
@@ -104,9 +112,18 @@ async function boot() {
   status(`laying out ${locationName}`);
   const loc = layoutLocation(dfLocation, maps, blocks);
 
+  // Climate + season: swap every submesh archive exactly as DFU's
+  // MaterialReader.ChangeClimate does - pixels from the swapped archive,
+  // UVs from the original (the SetDungeonTextures pattern).
+  const season = parseSeason(params);
+  const climateBase = dfLocation.climate.climateType;
+  const groundArchive = getGroundArchive(climateBase, season);
+  const natureArchive = getNatureArchive(dfLocation.climate.natureArchive, season);
+  const texRemap = new Map();
+
   // Decompose every referenced mesh once, collecting texture archives.
   const dfMeshes = new Map(); // modelIdNum -> dfMesh
-  const archives = new Set([loc.groundArchive]);
+  const archives = new Set([groundArchive]);
   for (const b of loc.blocks) {
     for (const placed of b.layout.models) {
       if (dfMeshes.has(placed.modelIdNum)) continue;
@@ -114,7 +131,14 @@ async function boot() {
       if (index === -1) continue;
       const dfMesh = arch.getMesh(index);
       dfMeshes.set(placed.modelIdNum, dfMesh);
-      for (const sm of dfMesh.subMeshes) archives.add(sm.textureArchive);
+      for (const sm of dfMesh.subMeshes) {
+        archives.add(sm.textureArchive);
+        const swapped = applyClimate(sm.textureArchive, sm.textureRecord, climateBase, season);
+        if (swapped !== sm.textureArchive) {
+          archives.add(swapped);
+          texRemap.set(`${sm.textureArchive}_${sm.textureRecord}`, `${swapped}_${sm.textureRecord}`);
+        }
+      }
     }
   }
 
@@ -137,12 +161,18 @@ async function boot() {
     renderer.uploadTexture(archive, record, color32);
   };
 
-  // GPU meshes shared across blocks.
+  // GPU meshes shared across blocks. UVs come from the ORIGINAL archive;
+  // the climate-swapped pixels bind through texRemap at draw.
   const gpuMeshes = new Map(); // modelIdNum -> renderer mesh
   for (const [id, dfMesh] of dfMeshes) {
     const model = dfMeshToModel(dfMesh, getTextureSize);
     for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
     gpuMeshes.set(id, renderer.createMesh(model));
+  }
+  for (const target of texRemap.values()) {
+    const [archive, record] = target.split('_').map(Number);
+    const t = textureFiles.get(archive);
+    if (t && record < t.recordCount) uploadRecord(archive, record);
   }
 
   // Per-block scene list: world matrices with the block origin folded in,
@@ -156,11 +186,11 @@ async function boot() {
       if (!mesh) continue;
       drawList.push({ mesh, matrix: multiply(originMatrix, placed.matrix) });
     }
-    const groundModel = buildGroundMesh(b.layout.groundTiles, loc.groundArchive);
+    const groundModel = buildGroundMesh(b.layout.groundTiles, groundArchive);
     for (const sm of groundModel.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
     drawList.push({ mesh: renderer.createMesh(groundModel), matrix: originMatrix });
 
-    for (const flat of collectBlockFlats(b.dfBlock, dfLocation.climate.natureArchive)) {
+    for (const flat of collectBlockFlats(b.dfBlock, natureArchive)) {
       const key = `${flat.archive}_${flat.record}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([flat.x + b.originX, flat.y, flat.z + b.originZ]);
@@ -221,7 +251,8 @@ async function boot() {
   status(`${locationName} - ${loc.blocks.length} blocks, ${drawList.length} draws`);
   console.log(
     `scene: ${loc.blocks.length} blocks, ${drawList.length} placements, ` +
-    `${gpuMeshes.size} meshes, ${renderer.textures.size} textures, ${flatCount} flats in ${billboardBatches.length} batches, ground archive ${loc.groundArchive}`
+    `${gpuMeshes.size} meshes, ${renderer.textures.size} textures, ${flatCount} flats in ${billboardBatches.length} batches, ` +
+    `ground ${groundArchive}, climate ${climateBase}, season ${season}, ${texRemap.size} swaps`
   );
 
   let frames = 0;
@@ -254,7 +285,7 @@ async function boot() {
     const view = lookAt(eye, target, [0, 1, 0]);
 
     renderer.beginFrame(proj, view, lightDir);
-    for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix);
+    for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
     // Classic Daggerfall billboards rotate about Y only: right from the view,
     // up stays world-Y.
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
@@ -768,6 +799,7 @@ async function bootTerrain(canvas, renderer, params, status) {
 async function bootWorld(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
   const locationName = params.get('loc') || 'Daggerfall';
+  const season = parseSeason(params);
 
   status('loading data');
   const [palBytes, blocksBytes, archBytes, mapsBytes, climateBytes, politicBytes, woodsBytes] =
@@ -870,9 +902,12 @@ async function bootWorld(canvas, renderer, params, status) {
     }
     assignTiles(generateTileData(samples, px, py), tilemap, true);
     const climate = getWorldClimateSettings(maps.getClimateIndex(px, py));
+    const climateBase = climate.climateType;
+    const groundArchive = getGroundArchive(climateBase, season);
+    const natureArchive = getNatureArchive(climate.natureArchive, season);
 
-    await getTexture(climate.groundArchive);
-    const terrainModel = buildTerrainMesh(tilemap, samples, climate.groundArchive);
+    await getTexture(groundArchive);
+    const terrainModel = buildTerrainMesh(tilemap, samples, groundArchive);
     for (const sm of terrainModel.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
     const terrain = renderer.createMesh(terrainModel);
 
@@ -884,6 +919,10 @@ async function bootWorld(canvas, renderer, params, status) {
       groups.get(k).push([x, y, z]);
     };
 
+    // Per-pixel climate swap table: pixels from the swapped archive, UVs
+    // from the original (the SetDungeonTextures pattern; verbatim
+    // MaterialReader.ChangeClimate semantics).
+    const texRemap = new Map();
     const models = []; // { gpu, local } - local precomposed pixel-local matrix
     if (dfLocation) {
       const loc = layoutLocation(dfLocation, maps, blocks);
@@ -895,10 +934,20 @@ async function bootWorld(canvas, renderer, params, status) {
         for (const placed of b.layout.models) {
           const gpu = await getGpuMesh(placed.modelIdNum);
           if (!gpu) continue;
+          for (const sm of gpu.subMeshes) {
+            const swapped = applyClimate(sm.textureArchive, sm.textureRecord, climateBase, season);
+            if (swapped === sm.textureArchive) continue;
+            const key = `${sm.textureArchive}_${sm.textureRecord}`;
+            if (texRemap.has(key)) continue;
+            const t = await getTexture(swapped);
+            if (sm.textureRecord >= t.recordCount) continue;
+            uploadRecord(swapped, sm.textureRecord);
+            texRemap.set(key, `${swapped}_${sm.textureRecord}`);
+          }
           models.push({ gpu, local: multiply(originMatrix, placed.matrix) });
         }
         // No RMB ground plane on terrain (addGroundPlane = false).
-        for (const flat of collectBlockFlats(b.dfBlock, dfLocation.climate.natureArchive)) {
+        for (const flat of collectBlockFlats(b.dfBlock, natureArchive)) {
           addFlat(flat.archive, flat.record,
             locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
         }
@@ -912,7 +961,7 @@ async function bootWorld(canvas, renderer, params, status) {
       climateType: climate.climateType,
       locationRect,
     });
-    for (const f of nature) addFlat(climate.natureArchive, f.record, f.x, f.y, f.z);
+    for (const f of nature) addFlat(natureArchive, f.record, f.x, f.y, f.z);
 
     const batches = [];
     for (const [k, centers] of groups) {
@@ -925,7 +974,7 @@ async function bootWorld(canvas, renderer, params, status) {
     }
 
     built.set(key, {
-      px, py, terrain, models, batches, natureCount: nature.length,
+      px, py, terrain, models, batches, texRemap, natureCount: nature.length,
       location: dfLocation ? dfLocation.name : null,
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
@@ -1049,7 +1098,7 @@ async function bootWorld(canvas, renderer, params, status) {
       const t = state.pixelTranslation(p.px, p.py);
       const pixelMatrix = trs(t[0], t[1], t[2], 0, 0, 0);
       renderer.drawMesh(p.terrain, pixelMatrix);
-      for (const m of p.models) renderer.drawMesh(m.gpu, multiply(pixelMatrix, m.local));
+      for (const m of p.models) renderer.drawMesh(m.gpu, multiply(pixelMatrix, m.local), p.texRemap);
       for (const b of p.batches) {
         b.origin = t;
         allBatches.push(b);
