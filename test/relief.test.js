@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { reliefFromSprite, projectRelief } from '../src/characters/spriteRelief.js';
+import { reliefFromSprite, projectRelief, distanceField, DEPTH_RATIO } from '../src/characters/spriteRelief.js';
 import { ImgFile } from '../src/formats/imgFile.js';
 import { TextureFile } from '../src/formats/textureFile.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
@@ -22,12 +22,23 @@ test('relief: synthetic identity witness + watertight z + normals', () => {
   const faces = reliefFromSprite(data.length ? { width: W, height: H, data } : null, opts);
   assert.equal(faces.length, 5);
   assert.deepEqual([...projectRelief(faces, W, H, opts)], [...data]);
-  // Shared-edge z: face(px=2) right z == face(px=3) left z.
+  // Shared-corner z: face(px=2) bottom-right == face(px=3) bottom-left.
   const f2 = faces.find((f) => f.px === 2), f3 = faces.find((f) => f.px === 3);
   assert.ok(Math.abs(f2.p[5] - f3.p[2]) < 1e-12);
-  // Run centre bulges deepest; edges shallow.
-  const f1 = faces.find((f) => f.px === 1);
-  assert.ok(f2.p[5] > f1.p[2]);
+  // Corner z IS the field arithmetic: depth * sqrt(mean of the 4
+  // touching pixels' field values). Pin f2's bottom-left corner: it
+  // touches (1,1) and (2,1) at field 1, (1,2) and (2,2) transparent.
+  assert.ok(Math.abs(f2.p[2] - DEPTH_RATIO * Math.sqrt((1 + 1 + 0 + 0) / 4)) < 1e-9);
+  // A taller blob grades: the centre corner of a 3x3 sits deeper than
+  // a silhouette-edge corner.
+  const W2 = 5, H2 = 5;
+  const d2 = new Uint8Array(W2 * H2);
+  for (let y = 1; y <= 3; y++) for (let x = 1; x <= 3; x++) d2[y * W2 + x] = 0x70;
+  const blob = reliefFromSprite({ width: W2, height: H2, data: d2 });
+  const centre = blob.find((f) => f.px === 2 && f.py === 2);
+  const edge = blob.find((f) => f.px === 1 && f.py === 1);
+  assert.ok(Math.min(...[2, 5, 8, 11].map((k) => centre.p[k]))
+    > Math.min(...[2, 5, 8, 11].map((k) => edge.p[k])));
   // Normals unit + front-facing.
   for (const f of faces) {
     assert.ok(Math.abs(Math.hypot(...f.n) - 1) < 1e-9);
@@ -70,4 +81,21 @@ test('relief: body + cuirass share the canvas by classic offsets', { skip: skipR
   const [bx0, bx1] = xs(body);
   const [px0, px1] = xs(piece);
   assert.ok(px0 >= bx0 - 2 && px1 <= bx1 + 2, `piece x [${px0},${px1}] inside body x [${bx0},${bx1}]`);
+});
+
+
+test('relief: back shell shares the silhouette and meets at zero', () => {
+  const W = 5, H = 4;
+  const data = new Uint8Array(W * H);
+  for (let y = 1; y <= 2; y++) for (let x = 1; x <= 3; x++) data[y * W + x] = 0x60 + x;
+  const field = distanceField({ width: W, height: H, data });
+  const front = reliefFromSprite({ width: W, height: H, data }, { field });
+  const back = reliefFromSprite({ width: W, height: H, data }, { field, back: true });
+  assert.equal(front.length, back.length);
+  for (let i = 0; i < front.length; i++) {
+    // Same x/y footprint; z mirrored through the silhouette plane.
+    for (const k of [0, 1, 3, 4, 6, 7, 9, 10]) assert.equal(front[i].p[k], back[i].p[k]);
+    for (const k of [2, 5, 8, 11]) assert.ok(Math.abs(front[i].p[k] + back[i].p[k]) < 1e-9);
+    assert.ok(back[i].n[2] < 0);
+  }
 });

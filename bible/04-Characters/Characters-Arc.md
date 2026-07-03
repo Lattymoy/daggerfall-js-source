@@ -137,6 +137,23 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6g - distance-field inflation + the back-shell mechanism (SHIPPED)
+
+The touch-up, at the root: per-row run ellipses bulged independently
+(row ridging, paper-thin 1px runs). Depth now comes from ONE 2D
+distance field over the whole image (two-pass 3-4 chamfer to the
+nearest transparent pixel; z = sign * depth * sqrt(field), corner z =
+mean of the 4 touching pixels' field values - shared corners stay
+watertight, and the x/y construction is untouched so the identity
+witness holds as-is). DEPTH_RATIO 0.9 on the sqrt profile. Normals
+come from the quad diagonals (real surface slope). reliefFromSprite
+grew the back mechanism for C6h: back:true negates z + flips normals;
+field: lets front and back share the FRONT mask's field so both meet
+at zero on the same silhouette (watertight seam by construction);
+colorBmp: palette indices from a DIFFERENT image over the same mask -
+the invented back detail rides the front's geometry. Test pins the
+corner arithmetic exactly and the back shell's mirrored z.
+
 ### C6f - THE REDESIGN: the body IS the classic body (SHIPPED)
 
 Mac's correction, taken at the root: C6c-e were increments on the
