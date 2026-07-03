@@ -14,14 +14,12 @@ import { collectDungeonLights, DUNGEON_AMBIENT } from '../world/dungeonLights.js
 import { CityLightAnimator } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
-import { RDB_SIDE } from '../world/rdbLayout.js';
+import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
 import { trs, multiply } from '../world/mat4.js';
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
 
-export { DUNGEON_AMBIENT };
 
-const MOVE_FLAGS = new Set([1, 2, 3, 4, 5, 6, 7, 8]); // Translation..NegativeY
 
 /**
  * @param deps {{renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord}}
@@ -80,7 +78,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!gpu) continue;
       await ensureRemap(p.modelIdNum);
       const cpu = cpuModels.get(p.modelIdNum);
-      if (p.action && MOVE_FLAGS.has(p.action.actionFlag)) {
+      if (p.action && MOVE_ACTION_FLAGS.has(p.action.actionFlag)) {
         const o = actions.addAction(p.position, cpu, matrix, p.action);
         dynamicDraws.push({ gpu, object: o });
         continue;

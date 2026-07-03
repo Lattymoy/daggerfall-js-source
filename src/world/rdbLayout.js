@@ -69,6 +69,15 @@ export const ACTION_FLAGS = Object.freeze({
   Dialogue: 0x1d, Activate: 0x1e, SetGlobalVar: 0x1f, Unknown32: 0x20,
 });
 
+/** The movement family DaggerfallAction routes to Move (P2/P5). */
+export const MOVE_ACTION_FLAGS = new Set([
+  ACTION_FLAGS.Translation,
+  ACTION_FLAGS.PositiveX, ACTION_FLAGS.NegativeX,
+  ACTION_FLAGS.PositiveY, ACTION_FLAGS.NegativeY,
+  ACTION_FLAGS.PositiveZ, ACTION_FLAGS.NegativeZ,
+  ACTION_FLAGS.Rotation,
+]);
+
 // DFBlock.RdbTriggerFlags, defined members only.
 export const TRIGGER_FLAGS = Object.freeze({
   None: 0x00, Collision01: 0x01, Direct: 0x02, Collision03: 0x03,

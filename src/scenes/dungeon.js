@@ -13,7 +13,7 @@ import { collectDungeonLights, DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../w
 import { nearestLights } from '../world/cityLights.js';
 import { CityLightAnimator } from '../world/worldClock.js';
 import { GLOBAL_SCALE } from '../world/meshReader.js';
-import { RDB_SIDE } from '../world/rdbLayout.js';
+import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
 
 // Water surface color: presentation choice (see renderer WATER_VS note).
 // R11: the surface is the classic water tile (climate ground archive
@@ -143,12 +143,6 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const collider = new Collider(() => -Infinity);
   const actions = new ActionSystem(collider);
   const dynamicDraws = []; // {gpu, object}
-  const MOVE_FLAGS = new Set([
-    ACTION_FLAGS.Translation, ACTION_FLAGS.Rotation,
-    ACTION_FLAGS.PositiveX, ACTION_FLAGS.NegativeX,
-    ACTION_FLAGS.PositiveY, ACTION_FLAGS.NegativeY,
-    ACTION_FLAGS.PositiveZ, ACTION_FLAGS.NegativeZ,
-  ]);
   let colliderTris = 0;
   const flatGroups = new Map();
   const dungeonLightList = [];
@@ -159,7 +153,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     for (const p of b.layout.placements) {
       const matrix = multiply(originMatrix, p.matrix);
       const cpu = cpuModels.get(p.modelIdNum);
-      if (p.action && MOVE_FLAGS.has(p.action.actionFlag)) {
+      if (p.action && MOVE_ACTION_FLAGS.has(p.action.actionFlag)) {
         const o = actions.addAction(p.position, cpu, matrix, p.action);
         dynamicDraws.push({ gpu: gpuMeshes.get(p.modelIdNum), object: o });
         continue;
