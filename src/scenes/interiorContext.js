@@ -4,8 +4,10 @@
 // standalone interior scene's (M4/R8/R12 semantics) expressed against
 // host deps, so the world and exterior scenes enter buildings without
 // their own copies:
-//   - layoutInterior placements + action doors at block-local origin
-//     (the host renders them relative to a chosen interior origin),
+//   - layoutInterior placements + action doors, parented through an
+//     optional origin (P8: the entered building's WORLD matrix -
+//     verbatim TransitionInterior's ownerPosition + buildingMatrix -
+//     so hosts get world-frame coordinates; standalone omits it),
 //   - climate swaps per submesh with the missing-record prune,
 //   - flats batched per (archive, record), archive-210 interior point
 //     lights (verbatim DaggerfallInterior.AddLight, range 15, no
@@ -15,6 +17,7 @@
 //   - enter markers and interior static doors for the landing math.
 
 import { layoutInterior, INTERIOR_MARKER } from '../world/interiorLayout.js';
+import { multiply, transformPoint } from '../world/mat4.js';
 import { collectInteriorLights } from '../world/interiorLights.js';
 import { applyClimate } from '../world/climateSwaps.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
@@ -30,8 +33,15 @@ import { ActionSystem } from '../world/actionSystem.js';
  * @returns {{drawList, billboardBatches, lights, texRemap, markers,
  *   enterMarkers, doors, collider, destroy()}}
  */
-export async function buildInteriorContext(deps, dfBlock, blockIndex, recordIndex, climateBase, season) {
+export async function buildInteriorContext(deps, dfBlock, blockIndex, recordIndex, climateBase, season, origin = null) {
   const { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord } = deps;
+  // P8: verbatim PlayerEnterExit.TransitionInterior parenting - the
+  // interior sits at ownerPosition + buildingMatrix (the entered
+  // building model's WORLD matrix), so every coordinate the context
+  // returns is world-frame and the closest-marker/door landing math
+  // runs in ONE frame. Standalone callers omit origin (identity).
+  const parent = (m) => origin ? multiply(origin, m) : m;
+  const parentPt = (x, y, z) => origin ? transformPoint(origin, x, y, z) : [x, y, z];
 
   // Layout with real texture sizes: getGpuMesh warms the caches, then
   // the layout's getModel reads the CPU model back.
@@ -73,10 +83,11 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const ladders = []; // {cpu, matrix} - verbatim id 41409
   const collider = new Collider(() => -Infinity);
   for (const p of interior.placements) {
-    drawList.push({ mesh: await getGpuMesh(p.modelIdNum), matrix: p.matrix });
+    const matrix = parent(p.matrix);
+    drawList.push({ mesh: await getGpuMesh(p.modelIdNum), matrix });
     const cpu = cpuModels.get(p.modelIdNum);
-    collider.addMesh('interior', cpu.positions, cpu.indices, p.matrix);
-    if (p.modelIdNum === LADDER_MODEL_ID) ladders.push({ cpu, matrix: p.matrix });
+    collider.addMesh('interior', cpu.positions, cpu.indices, matrix);
+    if (p.modelIdNum === LADDER_MODEL_ID) ladders.push({ cpu, matrix });
   }
   // Interior swing doors run on the ActionSystem (P4): the verbatim
   // -90 / 1.5 s toggle with trigger-at-open-start - inner rooms open.
@@ -84,7 +95,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const dynamicDraws = [];
   for (const d of interior.actionDoors) {
     const cpu = cpuModels.get(d.modelIdNum);
-    const o = actions.addDoor(cpu, d.matrix);
+    const o = actions.addDoor(cpu, parent(d.matrix));
     dynamicDraws.push({ gpu: await getGpuMesh(d.modelIdNum), object: o });
   }
 
@@ -93,7 +104,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   for (const flat of interior.flats) {
     const key = `${flat.archive}_${flat.record}`;
     if (!flatGroups.has(key)) flatGroups.set(key, []);
-    flatGroups.get(key).push([flat.x, flat.y, flat.z]);
+    flatGroups.get(key).push(parentPt(flat.x, flat.y, flat.z));
   }
   for (const [key, centers] of flatGroups) {
     const [archive, record] = key.split('_').map(Number);
@@ -105,10 +116,20 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   }
 
   const t210 = await getTexture(210);
-  const lights = t210 ? collectInteriorLights(interior.flats, (record) =>
-    scaledBillboardSize(t210.getSize(record), t210.getScale(record))) : [];
+  const lights = (t210 ? collectInteriorLights(interior.flats, (record) =>
+    scaledBillboardSize(t210.getSize(record), t210.getScale(record))) : [])
+    .map((l) => {
+      const [x, y, z] = parentPt(l.x, l.y, l.z);
+      return { ...l, x, y, z };
+    });
 
-  const enterMarkers = interior.markers
+  // Markers (all types - ladders climb against these too) into the
+  // parent frame; enterMarkers derive from the transformed set.
+  const markers = interior.markers.map((m) => {
+    const [x, y, z] = parentPt(m.x, m.y, m.z);
+    return { ...m, x, y, z };
+  });
+  const enterMarkers = markers
     .filter((m) => m.type === INTERIOR_MARKER.ENTER)
     .map((m) => [m.x, m.y, m.z]);
 
@@ -119,11 +140,11 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     billboardBatches,
     lights,
     texRemap,
-    markers: interior.markers,
+    markers,
     flatCount: interior.flats.length,
     ladders,
     enterMarkers,
-    doors: interior.doors,
+    doors: interior.doors.map((d) => ({ ...d, matrix: parent(d.matrix) })),
     collider,
     destroy() {
       for (const b of billboardBatches) renderer.destroyBatch(b);

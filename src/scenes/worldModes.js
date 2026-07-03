@@ -68,9 +68,14 @@ export function createWorldModes(host) {
     if (hit.door.doorType !== DOOR_TYPE.BUILDING || hit.recordIndex === undefined) return false;
     transitioning = true;
     try {
+      // P8: parent the interior at the entered building's world matrix
+      // (verbatim ownerPosition + buildingMatrix) - context coordinates
+      // come back world-frame, landings run in one frame, and the walk
+      // through the door is coordinate-seamless.
       const ctx = await buildInteriorContext(
         { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord },
-        hit.dfBlock, 0, hit.recordIndex, hit.climateBase, hit.season);
+        hit.dfBlock, 0, hit.recordIndex, hit.climateBase, hit.season,
+        hit.door.matrix);
       const siblings = entries.filter((e) =>
         e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
       const landing = interiorLanding(
@@ -143,9 +148,11 @@ export function createWorldModes(host) {
       interiorCtx.actions.activate(key);
       return true;
     }
+    // Verbatim BuildingTransitionExteriorLogic: the closest exterior
+    // door to the PLAYER (frames unified at P8), landing at
+    // normal * radius*3.
     const landing = exteriorLanding(
-      doorWorldPosition(interiorCtx.doors[Number(key.split(':')[1])]),
-      exitReturn.siblings.map((e) => e.door));
+      player.pos, exitReturn.siblings.map((e) => e.door));
     interiorCtx.destroy();
     interiorCtx = null;
     player.collider = baseCollider();

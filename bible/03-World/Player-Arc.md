@@ -1,4 +1,4 @@
-# Player-Arc (ACTIVE)
+# Player-Arc (COMPLETE)
 
 First-person play inside the assembled world: walk, collide, activate.
 
@@ -174,6 +174,26 @@ interiorLights.js; interior shot stays byte-identical), and two
 Ledger C rows still routing features R6-R8 shipped (interior 210
 point lights; dungeon water + lights) - pruned.
 
+## Milestone P8 - interiors parented in the building world frame (SHIPPED)
+
+Verbatim PlayerEnterExit.TransitionInterior: the interior is positioned
+at ownerPosition + buildingMatrix - in our terms the entered building
+model's WORLD matrix, which is exactly what every door registry entry
+already carries. buildInteriorContext takes an optional origin and
+parents EVERYTHING through it (placement/action-door/ladder/static-door
+matrices, marker/flat/light positions, the collider); standalone
+callers omit it (identity - the MAGEAA00 shot stays byte-identical).
+With one coordinate frame, the landing math becomes what DFU's
+comments promise: interiorLanding checks the exterior door's world
+position against world markers/doors, and the exit is verbatim
+BuildingTransitionExteriorLogic - FindClosestDoor(player.position)
+among the siblings, landing at normal * radius*3. In-engine proof on
+BOTH hosts (?world and the exterior scene), WALLAA02.RMB:0 (4 sibling
+doors): exit beside sibling B lands at B + 1.05 with error 0.000
+(door A 8.27 away - true world proximity), and entering is
+coordinate-SEAMLESS (2.41 world units traversed through the plane, no
+cross-frame teleport). Queue 8 closed - the arc queue is empty.
+
 ## Milestone P7b - exterior scene hosts the transition machine (SHIPPED)
 
 The exterior location scene mirrors ?world: E on a building door
@@ -221,9 +241,8 @@ Queue (items 1-6 shipped):
 6. DONE - interior ladders (P6).
 7. DONE - exterior hosts the machine over the prewarmed pipeline
    (P7b); standalone dungeon/interior fold onto their contexts (P7c).
-8. Parent interiors in the building world frame - multi-door exit
-   selection picks by true world proximity and coordinates go
-   seamless.
+8. DONE - interiors parented at the building world matrix; landings
+   in one frame (P8).
 9. DONE (P7) - the mode machines extracted to scenes/worldModes.js
    and the lazy texture/mesh caches to scenes/dataPipeline.js;
    world.js is 531 lines against the 900 ceiling (P7 audit).
