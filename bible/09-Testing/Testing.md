@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 139 tests across 24 files.
+Node 22). Suite: 143 tests across 25 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -20,6 +20,7 @@ Node 22). Suite: 139 tests across 24 files.
 | enterexit.test.js | 5 | verbatim landing offsets, door transforms, landing selection, dungeon exit, ladder climb |
 | interior.test.js | 8 | ModelDoor extraction, static doors, interior layout, 6832-interior corpus, R8 light offsets + MAGEAA00 pins |
 | people.test.js | 2 | AddPeople position/data verbatim, 14174-people corpus (6724/6832 interiors, archives 176-184) |
+| names.test.js | 4 | Region->bank verbatim, deterministic name composition on DFRandom, Redguard female stream parity, 76-NPC exterior corpus (SENT7 lamp quirk) |
 | maps.test.js | 9 | 62 regions, converters, climate, city + Privateer's |
 | snd.test.js | 3 | 459 sounds, byte-exact header, zero-length record 5 |
 | climate.test.js | 5 | applyClimate verbatim rules, texture-info classification, exterior-window table, nature/ground archives, 8820-combo corpus sweep (735 pairs, 0 missing) |

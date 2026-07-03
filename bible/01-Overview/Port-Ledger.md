@@ -20,6 +20,10 @@ work queue routed to arcs.
 
 ## B. Verbatim quirks preserved (real-data reality)
 
+Characters:
+- SENT7.RMB carries one archive-210 lamp flat with factionID -4080 (Int16): DFU's faction != 0 rule makes the lamp a StaticNPC; reproduced verbatim (C2 corpus pin).
+- NameGen.txt ships with two lenient-JSON constructs inside Monster3 (a missing comma, a trailing comma); FullSerializer treats commas as optional, so the committed normalized nameGen.json equals what DFU loads.
+
 Readers:
 - BSA: junk record 669 "FOO" in BLOCKS.BSA; structural closure invariant.
 - Palettes: MAP.PAL filename triggers x4 six-bit expansion.
@@ -110,8 +114,7 @@ World layout:
 | Non-movement RDB action flags: Teleport, Activate, LockDoor, UnlockDoor | DaggerfallAction delegates | Player arc (teleporters) + Systems (locks; P2 skips the IsLocked path) |
 | Platform riding (velocity inheritance while standing on movers) | DFU parents the player transform | Player arc |
 | Swimming + levitation motor | LevitateMotor, GetSwimSpeed | Player arc |
-| NPC faction metadata / StaticNPC | RMBLayout exterior flats | Characters arc |
-| Townsfolk name banks (GetNameBankOfRegion) | NameHelper | Characters arc (REGION_RACES table already ported) |
+| Quest monster names (MonsterName) | NameHelper.GetRandomMonsterName - rolls the bank on UnityEngine.Random, quest-facing | Systems arc (name banks + data shipped C2) |
 | Animal audio sources | GameObjectHelper | Audio arc |
 | Music playback (HMI/XMI) | Unity synthesis, no reader | Audio arc |
 | Smaller-dungeons generation | MapsFile + QuestMachine | Systems arc |

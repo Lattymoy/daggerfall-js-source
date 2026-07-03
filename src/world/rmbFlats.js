@@ -69,6 +69,9 @@ export function collectBlockFlats(dfBlock, natureArchive) {
       x: obj.xPos * GLOBAL_SCALE,
       y: (-obj.yPos + BLOCK_FLATS_OFFSET_Y) * GLOBAL_SCALE,
       z: (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
+      // C2: StaticNPC inputs ride every flat (a non-zero factionID IS
+      // an exterior NPC - RMBLayout verbatim); scenery carries zeros.
+      factionID: obj.factionID, flags: obj.flags, recordPosition: obj.position,
     });
   }
 
@@ -91,7 +94,7 @@ export function collectBlockFlats(dfBlock, natureArchive) {
         z = NATURE_FLATS_OFFSET_Y;
       }
 
-      flats.push({ archive, record: obj.textureRecord, x, y, z });
+      flats.push({ archive, record: obj.textureRecord, x, y, z, factionID: obj.factionID, flags: obj.flags, recordPosition: obj.position });
     }
   }
 

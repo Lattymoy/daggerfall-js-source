@@ -35,6 +35,22 @@ batches, point lights).
 
 ## Milestones
 
+### C2 - exterior NPCs + name banks (SHIPPED)
+
+Exterior: RMBLayout's verbatim rule - a flat record with NON-ZERO
+factionID is an exterior NPC (editor flats skipped first, DFU order).
+collectBlockFlats passes factionID/flags/recordPosition through on
+every flat; `collectExteriorNpcs` filters the registry. Corpus pinned:
+76 NPCs across 16 RMB blocks, archives [179,181,210] - the 210 is
+SENT7.RMB's faction-tagged lamp, a classic quirk (Ledger B). Names:
+NameHelper verbatim over DFRandom - FirstName 0+1/2+3, Surname 4+5,
+Nord 0+1+"sen", Redguard 0+1+2+(75% male set 3 / female set 4, the C#
+short-circuit preserved so females never consume the roll - the
+stream-parity test pins it). Bank data is DFU's NameGen.txt committed
+as nameGen.json, lenient-JSON normalized (Ledger B).
+getNameBankOfRegion casts REGION_RACES verbatim. MonsterName routed to
+Systems (UnityEngine.Random stream, quest-facing).
+
 ### C1 - interior people (SHIPPED)
 
 `src/characters/interiorPeople.js`: AddPeople's data layer verbatim -
