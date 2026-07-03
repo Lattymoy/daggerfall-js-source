@@ -137,6 +137,15 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C5a - paperdoll data spine (SHIPPED)
+
+`paperdoll.js`: the 27-slot EquipSlots table verbatim (ItemEnums), and
+DFU's ItemTemplates.txt committed whole as itemTemplates.json - 288
+classic templates, each wearable carrying its OWN paperdoll layer
+(drawOrderOrEffect -> item.drawOrder, straight assignment) and variant
+count; paperdollOrder mirrors BlitItems (ascending drawOrder). Next:
+C5b dye/material tint tables, C5c GetEquipSlot assignment rules.
+
 ### C4b + C4c - character render path + ?voxelfolk (SHIPPED)
 
 C4b: dagger's renderer grows the character path - CHAR_VS/CHAR_FS are
