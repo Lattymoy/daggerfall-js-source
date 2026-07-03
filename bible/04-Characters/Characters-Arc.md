@@ -137,6 +137,26 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6j - THE ARCHITECTURE (Mac): rig geometry + sprite shading (SHIPPED)
+
+Mac reset the direction after the relief thrash: "go back to the old
+voxel rig and shade it to be 1 to 1 with the sprite, and then we
+develop our own textures utilizing the data." Executed exactly: the
+VOXLIGHT RIG is the geometry again (real 3D body, real back and
+sides; paperdoll stance on DAGGER_SPEC - C6d/e were not wasted), and
+BODY00I0 is the SHADING: every rig face samples the sprite by front
+projection (centroid -> feet-anchored, centreline-aligned pixel;
+off-silhouette faces clamp to the row's nearest opaque pixel so ramps
+stay continuous). The front reads 1:1 with the sprite; faces the
+sprite cannot see take the projected-through sample FOR NOW - the
+next step develops OUR OWN textures from the classic data (the C6i
+ramp machinery: unification, geometric relight, procedural detail -
+now applied to the rig's real back/side faces instead of invented
+shells). The relief construction (C6f-i) retires from the body path;
+spriteRelief.js + its proofs remain as the texture-step toolkit.
+Pieces re-seat on the rig with the texture step; &piece is inert
+until then.
+
 ### C6i-v2 - distinguishability model (SHIPPED)
 
 Mac: "back reads as the front" - v1's structural causes, each fixed:

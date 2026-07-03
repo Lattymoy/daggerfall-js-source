@@ -26,13 +26,9 @@ import { LADDER_MODEL_ID } from '../player/enterExit.js';
 import { collectInteriorPeople } from '../characters/interiorPeople.js';
 import { packCharacterFaces } from '../render/characterMesh.js';
 import { trs } from '../world/mat4.js';
-import { resolvePiece } from '../characters/pieceFromSprite.js';
-import { reliefFromSprite, distanceField } from '../characters/spriteRelief.js';
-import bodyBack from '../characters/backs/body00i0.json' with { type: 'json' };
-import cuirassBack from '../characters/backs/cuirass-251-4.json' with { type: 'json' };
-import { getTemplate } from '../characters/paperdoll.js';
-import { resolvePaperdollRecord, armorArchive, armorVariant, MATERIAL_FAMILY } from '../characters/paperdollArt.js';
-import { DYE_COLORS, DYE_TARGETS, applyDyeToIndex } from '../characters/dyes.js';
+import { buildBody, BARE_PLUGS } from '../characters/rewrite/body.js';
+import { facesBounds } from '../render/characterMesh.js';
+import { DAGGER_SPEC } from '../characters/daggerBodySpec.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { fetchBytes } from './shared.js';
 import { ActionSystem } from '../world/actionSystem.js';
@@ -127,69 +123,53 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const billboardBatches = [];
   const flatGroups = new Map();
   if (opts.voxelfolk && people.length) {
-    // C6 REDESIGN: the body IS the classic paperdoll body - BODY00I0's
-    // pixels as a front relief in canvas space, and the piece is the
-    // SAME construction at ITS classic offset (+1.5px stand-off).
-    // Seating is arithmetic on the art's own offsets; one uniform
-    // matrix scales canvas pixels to world (1.8 over the body height).
+    // C6j (Mac's architecture): the OLD VOXEL RIG is the geometry -
+    // real 3D body, real back and sides, paperdoll stance on
+    // DAGGER_SPEC - and the classic sprite is the SHADING: every rig
+    // face samples BODY00I0 by front projection (face centroid ->
+    // sprite pixel; feet-anchored, centreline-aligned), so the front
+    // reads 1:1 with the sprite. Faces the sprite cannot see take the
+    // projected-through sample for now; developing OUR OWN textures
+    // from the classic data (ramp machinery from C6i) is the next
+    // step. Pieces re-seat on the rig with that step - &piece is
+    // inert here until then.
     const bodyImg = new ImgFile();
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
     const bodyBmp = bodyImg.getDFBitmap();
-    const bodyOff = bodyImg.imageOffset;
-    const canvas = { canvasH: 200 };
-    // Invented backs (C6h): generated grids ride the FRONT's mask +
-    // field, so the silhouette is identical and the seam meets at
-    // zero. Grids are authored in rear-view space (rearViewSpace) - flip
-    // x at load; mirrorFillFraction records how much fell back to the
-    // mirrored front (holes the model missed).
-    const unmirror = (back, W, H) => {
-      const out = new Uint8Array(W * H);
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        out[y * W + x] = back.data[y * W + (W - 1 - x)];
+    const W = bodyBmp.width, H = bodyBmp.height;
+    const faces = buildBody(
+      { loco: 'stand', hold: 'idle', phase: 0, weapon: 'none', paperdoll: {} },
+      BARE_PLUGS, DAGGER_SPEC);
+    const b = facesBounds(faces);
+    const u = (b.maxY - b.minY) / H; // rig units per sprite pixel
+    const sample = (x, y) => {
+      let col = Math.round((W - 1) / 2 + x / u);
+      let row = Math.round((b.maxY - y) / u);
+      col = Math.max(0, Math.min(W - 1, col));
+      row = Math.max(0, Math.min(H - 1, row));
+      let idx = bodyBmp.data[row * W + col];
+      if (!idx) {
+        // Rig wider than the sprite here: clamp to the row's nearest
+        // opaque pixel so ramps stay continuous.
+        for (let d = 1; d < W && !idx; d++) {
+          if (col - d >= 0 && bodyBmp.data[row * W + col - d]) idx = bodyBmp.data[row * W + col - d];
+          else if (col + d < W && bodyBmp.data[row * W + col + d]) idx = bodyBmp.data[row * W + col + d];
+        }
       }
-      return out;
+      return idx;
     };
-    const toRgb = (faces) => faces.map((f) => {
-      const c = palette.get(f.idx);
+    const rgb = faces.map((f) => {
+      let cx = 0, cy = 0; const np = f.p.length / 3;
+      for (let i = 0; i < np; i++) { cx += f.p[i * 3]; cy += f.p[i * 3 + 1]; }
+      const idx = sample(cx / np, cy / np);
+      const c = idx ? palette.get(idx) : { r: 40, g: 36, b: 34 };
       return { p: f.p, n: f.n, c: [c.r, c.g, c.b] };
     });
-    const bodyField = distanceField(bodyBmp);
-    const bodyOpts = { offsetX: bodyOff.x, offsetY: bodyOff.y, ...canvas, field: bodyField };
-    const bodyFaces = reliefFromSprite(bodyBmp, bodyOpts);
-    const bodyBackFaces = reliefFromSprite(bodyBmp, {
-      ...bodyOpts, back: true,
-      colorBmp: { data: unmirror(bodyBack, bodyBmp.width, bodyBmp.height) },
-    });
-    const drawsForPerson = [
-      renderer.createCharacterMesh(packCharacterFaces(toRgb(bodyFaces))),
-      renderer.createCharacterMesh(packCharacterFaces(toRgb(bodyBackFaces))),
-    ];
-    if (opts.piece) {
-      const tpl = getTemplate(opts.piece);
-      const t = await getTexture(armorArchive('male', 'Breton'));
-      const rec = resolvePaperdollRecord(tpl, armorVariant(opts.piece, MATERIAL_FAMILY.Plate, 1));
-      const pieceOff = t.getOffset(rec);
-      const pieceBmp = t.getDFBitmap(rec, 0);
-      const pieceField = distanceField(pieceBmp);
-      const pieceOpts = { offsetX: pieceOff.x, offsetY: pieceOff.y, zBias: 1.5, ...canvas, field: pieceField };
-      const pieceFaces = reliefFromSprite(pieceBmp, pieceOpts);
-      const pieceBackFaces = reliefFromSprite(pieceBmp, {
-        ...pieceOpts, back: true,
-        colorBmp: { data: unmirror(cuirassBack, pieceBmp.width, pieceBmp.height) },
-      });
-      const dye = (faces) => resolvePiece(faces, DYE_COLORS.Steel, DYE_TARGETS.WeaponsAndArmor, palette, applyDyeToIndex);
-      drawsForPerson.push(renderer.createCharacterMesh(packCharacterFaces(dye(pieceFaces))));
-      drawsForPerson.push(renderer.createCharacterMesh(packCharacterFaces(dye(pieceBackFaces))));
-    }
-    // Canvas -> world: uniform scale, body feet on the billboard base,
-    // body centre-x at the person.
+    const mesh = renderer.createCharacterMesh(packCharacterFaces(rgb));
     const CLASSIC_HEIGHT = 1.8;
-    const sc = CLASSIC_HEIGHT / bodyBmp.height;
-    const feetY = 200 - (bodyOff.y + bodyBmp.height);
-    const centerX = bodyOff.x + bodyBmp.width / 2;
+    const sc = CLASSIC_HEIGHT / (b.maxY - b.minY);
     for (const pn of people) {
-      const matrix = trs(pn.x - centerX * sc, pn.y - feetY * sc, pn.z, 0, 0, 0, sc, sc, sc);
-      for (const mesh of drawsForPerson) charDraws.push({ mesh, matrix });
+      charDraws.push({ mesh, matrix: trs(pn.x, pn.y - b.minY * sc, pn.z, 0, 0, 0, sc, sc, sc) });
     }
   } else {
     for (const pn of people) {
