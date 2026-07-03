@@ -8,6 +8,17 @@ doctrine's design win - see Port-Doctrine 2). Inputs COMPLETE: Readers
 RDB layout), Player (activation reach for talk), Rendering (billboard
 batches, point lights).
 
+## Direction pivot (Mac, 2026-07-03)
+
+Townsfolk STAY classic billboards - they already read right, and
+band-recolored mannequins proved that unauthored voxel bodies
+undersell the game. The rig craft goes where the 1:1 payoff is: the
+PLAYER paperdoll. ?voxelfolk survives only as the render-path test
+harness for drawCharacter until C7 exists (not a product direction;
+C4c's milestone note stands as history). Every C6 piece is AUTHORED
+at Voxlight enemy craft against the real paperdoll art - no
+band-recolor shortcuts ship, ever.
+
 ## Slice plan
 
 - **C1 (SHIPPED) - interior people (AddPeople verbatim)**: BlockPeopleRecords ->
@@ -158,8 +169,8 @@ behind ?voxelfolk (C4c) - DECIDE-C1 goes live there.
 
 ## DECIDEs (Mac)
 
-- **DECIDE-C1** - rig art direction pass timing: after C4c's first
-  archetype, or batch all archetypes then review.
+- **DECIDE-C1 (RESCOPED at the pivot)** - equipment-piece art review
+  cadence: per piece as authored, or batch a slot set then review.
 - **DECIDE-C2 (RESOLVED)** - inventory paperdoll presentation: live
   rotating 3D viewport (not a baked sprite). Mac, 2026-07-03.
 
