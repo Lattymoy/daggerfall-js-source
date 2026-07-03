@@ -137,6 +137,33 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6k - THE RESCULPT (IN PROGRESS): the model itself, not around it
+
+Mac, after three corrections landed everywhere except the model:
+"Its the entire voxel model proportions and design." Owned - C6j's
+shading and DAGGER_SPEC's four landmarks left ~85% of the body's
+geometry (torso widths, shoulders, neck, head, arms, hands, feet)
+Voxlight-shaped, with the rest written off as "deferred" - the
+forbidden word. The resculpt derives EVERY dimension from BODY00I0.
+tools/body-measure.mjs is the foundation (shipped this rung): full
+pose-corrected measurement - torso width per row about the DRIFTING
+centreline (merged-arm rows subtract the split side's arm thickness;
+crotch = the torso SPLIT: two similar-width runs over the prior span,
+prior centre between them - the gap-straddle rule died on row 71's
+hand+legs), head crown + width-jump bottom (no separable neck on
+BODY00 - hair-merged, recorded not invented), shoulder span, arm
+thickness + wrist row, thigh/knee/calf/ankle from the leg-width
+series truncated at the last width minimum (foot flare creeps under
+any centre-jump threshold). Numbers: head 0.24 wide topping 1.92
+(bottom 1.86 - SMALL and HIGH vs the rig's literal head), shoulders
+0.351 half-span at 1.49, torso 0.172/0.159/0.219, arms 0.141 to
+wrist 0.99, legs thigh 0.239 / knee 0.159@0.709 / calf 0.199.
+NEXT (the work, not a deferral): SPEC v2 upstream - the FULL body
+enters the seam (head, neck, shoulders, arms, hands, feet, per-row
+torso profile), the body construction reads all of it, and the
+acceptance gate is MEASURED: front-orthographic silhouette IoU of
+the rebuilt model against the sprite mask.
+
 ### C6j - THE ARCHITECTURE (Mac): rig geometry + sprite shading (SHIPPED)
 
 Mac reset the direction after the relief thrash: "go back to the old
