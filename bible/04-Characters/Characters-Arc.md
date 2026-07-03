@@ -137,6 +137,20 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C5c - equip-slot assignment rules (SHIPPED)
+
+`equipRules.js` (extraction-generated: 94 per-template slot rules
+across Armor/Jewellery/Mens/Womens with full enum coverage, 18 weapon
+hands, the 4 shield indices) + `equipTable.js` verbatim:
+GetFirstSlot's first-open-else-first pairing, the group router,
+weapons by hands with the 2H right-hand replacement rule, shields
+LeftOnly, gems to the Crystal pair. Bows carry DFU's
+BowLeftHandWithSwitching setting - its default (false) IS the
+classic Both, which we port (the setting itself is a DFU enhancement,
+not classic). Corpus test proves every clothing/armor/jewellery
+template resolves to a real slot. C5 COMPLETE - the paperdoll system
+is fully data-live. Next: C6, the first authored piece.
+
 ### C5b - dye + material tint tables (SHIPPED)
 
 `dyes.js`: the classic tint mechanism verbatim from ImageProcessing -
