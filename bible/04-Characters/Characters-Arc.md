@@ -10,7 +10,7 @@ batches, point lights).
 
 ## Slice plan
 
-- **C1 - interior people (AddPeople verbatim)**: BlockPeopleRecords ->
+- **C1 (SHIPPED) - interior people (AddPeople verbatim)**: BlockPeopleRecords ->
   billboards at (XPos, -YPos, ZPos) * GlobalScale, base at the raw
   position (DFU pivots at centre then shifts +size.y/2 - our batches
   take base positions, so the raw position IS the base). Every person
@@ -20,10 +20,10 @@ batches, point lights).
   AddPeople tail) are RECORDED as data and routed to Systems; C1
   spawns everyone. Corpus test over all interiors; in-engine proof in
   a populated tavern.
-- **C2 - exterior NPCs + name banks**: RMB exterior people flats with
+- **C2 (SHIPPED) - exterior NPCs + name banks**: RMB exterior people flats with
   faction metadata (StaticNPC), GetNameBankOfRegion verbatim over the
   ported REGION_RACES table.
-- **C3 - dungeon enemies (data)**: RDBLayout AddFixedEnemies /
+- **C3 (SHIPPED) - dungeon enemies (data)**: RDBLayout AddFixedEnemies /
   AddRandomEnemies verbatim (fixed ids, the random encounter tables +
   classic seed math), spawned as classic enemy billboards, no AI.
 - **C4 - voxel rig foundation**: the humanoid rig on our renderer,
@@ -34,6 +34,17 @@ batches, point lights).
 - **C6 - paperdoll -> outfit equipment mapping**.
 
 ## Milestones
+
+C1-C3 audit: gates green (148/26), extraction validated - ENEMY_BASICS
+re-derived from comment-stripped source is IDENTICAL (62 records), and
+interior people/flat basing confirmed verbatim (DFU bases BOTH at the
+raw position via the +size.y/2 shift; our batches take bases). Three
+fixes at root in dungeonEnemies.js: a dead `rand` import, a dead
+GLOBAL_SCALE import + re-export (the P4-P6 audit's re-export class),
+and the table-fill guard reshaped to DFU's exact form - the fill
+indexes EncounterTables[dungeonType] UNGUARDED (out of range throws
+before any flat, same as C#) with the dead-in-practice per-flat range
+check mirrored in the random branch. Privateer's pin unchanged.
 
 ### C3 - dungeon enemies, data + classic billboards (SHIPPED)
 

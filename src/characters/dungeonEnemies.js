@@ -22,10 +22,9 @@
 // P1 stats precedent); monsterPower = clamp01(level / 20) at the
 // DaggerfallDungeon call site rides the same default.
 
-import { srand, rand, randomRangeInclusive } from '../formats/dfRandom.js';
+import { srand, randomRangeInclusive } from '../formats/dfRandom.js';
 import { ENCOUNTER_TABLES } from './encounterTables.js';
 import { MOBILE_TYPES } from './mobileTypes.js';
-import { GLOBAL_SCALE } from '../world/meshReader.js';
 
 const FIXED_RECORD = 16;
 const RANDOM_RECORD = 15;
@@ -87,8 +86,10 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, p
   srand(locationId);
   const nonWater = new Array(256);
   const water = new Array(256);
-  const typeTable = ENCOUNTER_TABLES[dungeonType] ?? null;
-  for (let i = 0; i < 256; i++) nonWater[i] = typeTable ? chooseRandomEnemyType(typeTable, playerLevel) : null;
+  // Verbatim fill: DFU indexes EncounterTables[dungeonType] with no
+  // guard here (out of range throws before any flat, same as C#); the
+  // per-flat range check below mirrors AddRandomRDBEnemyClassic.
+  for (let i = 0; i < 256; i++) nonWater[i] = chooseRandomEnemyType(ENCOUNTER_TABLES[dungeonType], playerLevel);
   for (let i = 0; i < 256; i++) water[i] = chooseRandomEnemyType(ENCOUNTER_TABLES[UNDERWATER_TABLE], playerLevel);
   const slotRng = makeSlotRng(locationId);
 
@@ -123,7 +124,7 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, p
         if (typeValue === 99) continue;
         emit(marker, block, typeValue, true);
       } else if (marker.record === RANDOM_RECORD) {
-        if (!typeTable) continue; // verbatim: unknown dungeon type logs + skips
+        if (dungeonType >= ENCOUNTER_TABLES.length) continue; // verbatim per-flat guard
         const usingWater = block.waterLevel < marker.rawY;
         let slot = marker.flags;
         if (slot === 0) slot = slotRng(1, 7);
@@ -134,4 +135,3 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, p
   return out;
 }
 
-export { GLOBAL_SCALE };
