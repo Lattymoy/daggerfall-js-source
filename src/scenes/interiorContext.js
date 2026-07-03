@@ -139,8 +139,9 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const canvas = { canvasH: 200 };
     // Invented backs (C6h): generated grids ride the FRONT's mask +
     // field, so the silhouette is identical and the seam meets at
-    // zero. Grids are authored in rear-view (mirrored) space - flip x
-    // at load per the mirroredOfFront contract.
+    // zero. Grids are authored in rear-view space (rearViewSpace) - flip
+    // x at load; mirrorFillFraction records how much fell back to the
+    // mirrored front (holes the model missed).
     const unmirror = (back, W, H) => {
       const out = new Uint8Array(W * H);
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {

@@ -136,8 +136,16 @@ async function generate(name) {
     if (idx === 0) idx = frontIdx; // fallback: the mirrored front pixel
     grid[y * W + x] = idx;
   }
+  let mirrorFill = 0, opaque = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const f = bmp.data[y * W + (W - 1 - x)];
+    if (f === 0) continue;
+    opaque++;
+    if (grid[y * W + x] === f) mirrorFill++;
+  }
   writeFileSync(resolve(OUT_JSON, T.json),
-    JSON.stringify({ width: W, height: H, mirroredOfFront: true, data: grid }));
+    JSON.stringify({ width: W, height: H, rearViewSpace: true,
+      mirrorFillFraction: +(mirrorFill / opaque).toFixed(3), data: grid }));
   // Draft PNG of the quantized back at 4x for review.
   const draft = new PNG({ width: W * 4, height: H * 4 });
   for (let y = 0; y < H * 4; y++) for (let x = 0; x < W * 4; x++) {

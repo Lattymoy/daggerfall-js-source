@@ -137,6 +137,30 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6h - invented backs (SHIPPED)
+
+Mac's mandate: the back receives its OWN detail - invented, not
+mirrored. tools/gen-back.mjs: Retro Diffusion img2img conditioned on
+the mirrored front (pose + silhouette hold), CLIPPED to the front's
+opaque mask (front/back z-fields share the front mask's distance
+field, so identical silhouettes make the seam watertight by
+construction), holes fill from the mirrored front, colors quantize to
+ART_PAL with armor FORCED into 0x70-0x7F so every metal still
+resolves on the invented backplate. Committed grids
+(src/characters/backs/): body 82.5% newly generated pixels, cuirass
+87.3% new at 100% band compliance. Provenance is honest in the data:
+rearViewSpace + mirrorFillFraction (the tool's unconditional
+mirroredOfFront flag was a defect - fixed). Harness draws front +
+back shells per person under the same matrix.
+
+RECONCILIATION NOTE: commit 2ba6413 is a mislabeled sweep - a
+parallel session in the same container had already shipped C6g
+(1003f16) and staged this C6h work; a tree-wide `git add -A` from the
+other session committed the WIP under a duplicate C6g message,
+including a throwaway probe (removed here). Lesson reinforced: commit
+EXPLICIT paths, reconcile to main before building, and grep the tree
+before assuming state.
+
 ### C6g - distance-field inflation + the back-shell mechanism (SHIPPED)
 
 The touch-up, at the root: per-row run ellipses bulged independently
