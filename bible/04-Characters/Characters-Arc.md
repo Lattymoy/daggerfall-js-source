@@ -26,12 +26,35 @@ batches, point lights).
 - **C3 (SHIPPED) - dungeon enemies (data)**: RDBLayout AddFixedEnemies /
   AddRandomEnemies verbatim (fixed ids, the random encounter tables +
   classic seed math), spawned as classic enemy billboards, no AI.
-- **C4 - voxel rig foundation**: the humanoid rig on our renderer,
-  outfit-piece workflow from project-final (design -> solo-tune ->
-  lock); one townsfolk archetype replaced behind a flag.
-- **C5 - enemy rigs + spectral emission**: rigged enemies; the
-  Rendering arc's blocked spectral-emission row unblocks here.
-- **C6 - paperdoll -> outfit equipment mapping**.
+- **C4 - voxel rig foundation**: C4a vendored (SHIPPED, below).
+  C4b: dagger's renderer grows a vertex-color character path (faces ->
+  fan-triangulated interleaved buffer, lit by dagger's pipeline - no
+  Voxlight pixel-lock ref hack). C4c: the bare humanoid replaces one
+  townsfolk billboard behind ?voxelfolk, classic billboard height at
+  the same base. DECIDE-C1 goes live at C4c.
+- **C5 - the paperdoll SYSTEM, verbatim (data)**: the 1:1 core. Equip
+  slots (~27), the strict layer/occlusion order (cloak interior behind
+  body, exterior in front, armor over clothes...), wearable item
+  templates with race/gender variants, and the dye/material tint
+  tables. Ported + corpus-tested exactly like C1-C3 - this data DRIVES
+  every visual slice after it.
+- **C6 - outfit pieces on the rig (upstream-first)**: extend the
+  Rewrite rig's socket set to cover the paperdoll slots (head, chest,
+  pauldrons, forearms, hands, legs, feet, cloak - cape exists) IN
+  project-final first, re-vendor + re-capture the parity fixture. One
+  voxel builder per item TYPE; template x variant combos resolve
+  through the verbatim dye/palette tables (the classic tint mechanism,
+  which is what keeps hundreds of combos tractable). Authored through
+  a paperdoll-lab page (rig + piece + sliders -> lock), the Voxlight
+  lab workflow.
+- **C7 - the live paperdoll (DECIDE-C2 resolved: live rotating
+  viewport)**: the equipped rig rendered low-res in a UI viewport,
+  mouse-drag rotate - the inventory paperdoll IS the character. The
+  same equipped rig walks the world on NPCs (the design win the 2D
+  paperdoll never had).
+- **C8 - enemy rigs + spectral emission**: rigged enemies replace the
+  C3 billboards; the Rendering arc's blocked spectral-emission row
+  unblocks here.
 
 ## Milestones
 
@@ -117,7 +140,9 @@ behind ?voxelfolk (C4c) - DECIDE-C1 goes live there.
 
 ## DECIDEs (Mac)
 
-- **DECIDE-C1** - rig art direction pass timing: after C4's first
+- **DECIDE-C1** - rig art direction pass timing: after C4c's first
   archetype, or batch all archetypes then review.
+- **DECIDE-C2 (RESOLVED)** - inventory paperdoll presentation: live
+  rotating 3D viewport (not a baked sprite). Mac, 2026-07-03.
 
 See: 01-Overview/Port-Ledger.md section C rows routed here.
