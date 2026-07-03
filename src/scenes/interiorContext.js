@@ -27,7 +27,9 @@ import { collectInteriorPeople } from '../characters/interiorPeople.js';
 import { packCharacterFaces } from '../render/characterMesh.js';
 import { trs } from '../world/mat4.js';
 import { resolvePiece } from '../characters/pieceFromSprite.js';
-import { reliefFromSprite } from '../characters/spriteRelief.js';
+import { reliefFromSprite, distanceField } from '../characters/spriteRelief.js';
+import bodyBack from '../characters/backs/body00i0.json' with { type: 'json' };
+import cuirassBack from '../characters/backs/cuirass-251-4.json' with { type: 'json' };
 import { getTemplate } from '../characters/paperdoll.js';
 import { resolvePaperdollRecord, armorArchive, armorVariant, MATERIAL_FAMILY } from '../characters/paperdollArt.js';
 import { DYE_COLORS, DYE_TARGETS, applyDyeToIndex } from '../characters/dyes.js';
@@ -135,21 +137,48 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const bodyBmp = bodyImg.getDFBitmap();
     const bodyOff = bodyImg.imageOffset;
     const canvas = { canvasH: 200 };
-    const bodyFaces = reliefFromSprite(bodyBmp, { offsetX: bodyOff.x, offsetY: bodyOff.y, ...canvas });
-    const bodyRgb = bodyFaces.map((f) => {
+    // Invented backs (C6h): generated grids ride the FRONT's mask +
+    // field, so the silhouette is identical and the seam meets at
+    // zero. Grids are authored in rear-view (mirrored) space - flip x
+    // at load per the mirroredOfFront contract.
+    const unmirror = (back, W, H) => {
+      const out = new Uint8Array(W * H);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        out[y * W + x] = back.data[y * W + (W - 1 - x)];
+      }
+      return out;
+    };
+    const toRgb = (faces) => faces.map((f) => {
       const c = palette.get(f.idx);
       return { p: f.p, n: f.n, c: [c.r, c.g, c.b] };
     });
-    const drawsForPerson = [renderer.createCharacterMesh(packCharacterFaces(bodyRgb))];
+    const bodyField = distanceField(bodyBmp);
+    const bodyOpts = { offsetX: bodyOff.x, offsetY: bodyOff.y, ...canvas, field: bodyField };
+    const bodyFaces = reliefFromSprite(bodyBmp, bodyOpts);
+    const bodyBackFaces = reliefFromSprite(bodyBmp, {
+      ...bodyOpts, back: true,
+      colorBmp: { data: unmirror(bodyBack, bodyBmp.width, bodyBmp.height) },
+    });
+    const drawsForPerson = [
+      renderer.createCharacterMesh(packCharacterFaces(toRgb(bodyFaces))),
+      renderer.createCharacterMesh(packCharacterFaces(toRgb(bodyBackFaces))),
+    ];
     if (opts.piece) {
       const tpl = getTemplate(opts.piece);
       const t = await getTexture(armorArchive('male', 'Breton'));
       const rec = resolvePaperdollRecord(tpl, armorVariant(opts.piece, MATERIAL_FAMILY.Plate, 1));
       const pieceOff = t.getOffset(rec);
-      const pieceFaces = reliefFromSprite(t.getDFBitmap(rec, 0),
-        { offsetX: pieceOff.x, offsetY: pieceOff.y, zBias: 1.5, ...canvas });
-      const rgb = resolvePiece(pieceFaces, DYE_COLORS.Steel, DYE_TARGETS.WeaponsAndArmor, palette, applyDyeToIndex);
-      drawsForPerson.push(renderer.createCharacterMesh(packCharacterFaces(rgb)));
+      const pieceBmp = t.getDFBitmap(rec, 0);
+      const pieceField = distanceField(pieceBmp);
+      const pieceOpts = { offsetX: pieceOff.x, offsetY: pieceOff.y, zBias: 1.5, ...canvas, field: pieceField };
+      const pieceFaces = reliefFromSprite(pieceBmp, pieceOpts);
+      const pieceBackFaces = reliefFromSprite(pieceBmp, {
+        ...pieceOpts, back: true,
+        colorBmp: { data: unmirror(cuirassBack, pieceBmp.width, pieceBmp.height) },
+      });
+      const dye = (faces) => resolvePiece(faces, DYE_COLORS.Steel, DYE_TARGETS.WeaponsAndArmor, palette, applyDyeToIndex);
+      drawsForPerson.push(renderer.createCharacterMesh(packCharacterFaces(dye(pieceFaces))));
+      drawsForPerson.push(renderer.createCharacterMesh(packCharacterFaces(dye(pieceBackFaces))));
     }
     // Canvas -> world: uniform scale, body feet on the billboard base,
     // body centre-x at the person.
