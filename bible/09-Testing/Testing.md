@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 148 tests across 26 files.
+Node 22). Suite: 150 tests across 27 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -22,6 +22,7 @@ Node 22). Suite: 148 tests across 26 files.
 | people.test.js | 2 | AddPeople position/data verbatim, 14174-people corpus (6724/6832 interiors, archives 176-184) |
 | names.test.js | 4 | Region->bank verbatim, deterministic name composition on DFRandom, Redguard female stream parity, 76-NPC exterior corpus (SENT7 lamp quirk) |
 | enemies.test.js | 5 | 45x20 encounter tables, classic pick replay, fixed/passive/gender/water rules, Privateer's Hold pin (42 enemies / 25 fixed) |
+| rig.test.js | 2 | Vendored Rewrite rig byte-parity vs canonical (16 bare-humanoid hashes), 710-face shape |
 | maps.test.js | 9 | 62 regions, converters, climate, city + Privateer's |
 | snd.test.js | 3 | 459 sounds, byte-exact header, zero-length record 5 |
 | climate.test.js | 5 | applyClimate verbatim rules, texture-info classification, exterior-window table, nature/ground archives, 8820-combo corpus sweep (735 pairs, 0 missing) |

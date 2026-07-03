@@ -1,0 +1,19 @@
+{
+ "stand/idle": "10dbbce2c5f826ff",
+ "stand/aimed": "aee180e15d9e1ff3",
+ "walk/idle": "8192bf043f4f7b6a",
+ "walk/aimed": "eaf3cdb08a65495f",
+ "run/idle": "3582b5f7eb2d1ffd",
+ "run/aimed": "e507b269c64eef2e",
+ "crouch/idle": "5a2a8151ecade456",
+ "crouch/aimed": "5a2a8151ecade456",
+ "strafe/idle": "8158eafdfa7e03f9",
+ "strafe/aimed": "7d5171c8304f6b24",
+ "sp/jump": "eaf3cdb08a65495f",
+ "sp/death": "eaf3cdb08a65495f",
+ "sp/aimpitch": "cca55928d389558f",
+ "sp/movedir": "96cbb3cca5b105a4",
+ "sp/stride": "9c6c88ddb5e57811",
+ "sp/landdip": "618430a10722c75e",
+ "__bareFaceCount": 710
+}

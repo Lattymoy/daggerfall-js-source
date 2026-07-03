@@ -103,6 +103,18 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C4a - Rewrite rig vendored (SHIPPED)
+
+project-final's Rewrite Engine core + rig (math/geometry/palette,
+limb/body/muzzleFlash - 6 modules, flat-pathed under
+src/characters/rewrite/) with a vendor-time parity gate: 16
+bare-humanoid cases (loco x hold + plug-free specials) hashed exactly
+like Voxlight's 78-case fixture, captured from the canonical
+rewrite/rig - the vendored copy is byte-identical (710 bare faces).
+render/ stays Voxlight-side; dagger's renderer grows its own
+vertex-color character path next (C4b), then one townsfolk archetype
+behind ?voxelfolk (C4c) - DECIDE-C1 goes live there.
+
 ## DECIDEs (Mac)
 
 - **DECIDE-C1** - rig art direction pass timing: after C4's first
