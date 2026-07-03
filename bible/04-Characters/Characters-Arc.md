@@ -137,6 +137,28 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6i - in-house backs (SHIPPED; supersedes C6h)
+
+Mac rejected the RD art ("doesn't read right") and set PROJECT POLICY:
+no AI generation - backs derive in-house. tools/derive-back.mjs
+replaces the RD tool wholesale; everything comes from data we own:
+MATERIAL from the mirrored front's palette RAMP per pixel (ART_PAL
+decomposed into shading ramps by luminance/hue continuity), SHADING
+recomputed from OUR back-shell geometry (distance-field gradient
+normals under one fixed key, quantized back into the same ramp - so
+front-baked forms like the face and breastplate design vanish
+structurally), DETAIL procedural off landmarks in the front's own
+pixels: hair fill (the front's own hair ramp) above the neck pinch,
+spine line + scapula highlights across the torso runs (torso run =
+the run holding the centreline; crotch = first 2-run row whose gap
+straddles it - the mirror shifts margins, so margin tests were wrong
+twice: arm-gap side flip, then a centre off-by-one at midX 35 vs 34),
+and for armor a centre ridge + lame lines at the rows where the
+FRONT's real design changes level ([2,9,14,24]). Deterministic,
+classic-palette, dye-band safe by construction (relighting never
+leaves the source ramp): final cuirass 100.0% in 0x70-0x7F.
+Provenance in the data: derivation 'inhouse-v1' + params.
+
 ### C6h - invented backs (SHIPPED)
 
 Mac's mandate: the back receives its OWN detail - invented, not
