@@ -50,7 +50,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9 shipped: floating-origin streaming world (?world). Build queue empty.
-- `03-World/Player-Arc.md` - ACTIVE. P3 shipped: walk into building interiors and back in ?world (verbatim landings 0.75/1.05). P6 shipped: interior ladders (verbatim climb, FixStanding 0.65 frame). Next: scene consolidation.
+- `03-World/Player-Arc.md` - ACTIVE. P7 shipped: scene consolidation - the P3-P6 mode machine extracted to worldModes.js over a shared dataPipeline; the exterior scene hosts the same transitions; standalone dungeon/interior scenes fold onto their contexts. Next: parent interiors in the building world frame (queue 8).
 - `07-Rendering/Rendering-Arc.md` - R13 shipped: precipitation + verbatim storm lightning. Queue empty except spectral emission (blocked on Characters). Next arc decision: Player.
 
 ## Repo layout

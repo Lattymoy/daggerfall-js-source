@@ -165,6 +165,26 @@ marker 3.23 -> E from beside the hatch -> bottom marker 0, exact.
 Registry probe __doors uncapped; __markers / __ladders /
 __pickInterior probes added.
 
+## Milestone P7b - exterior scene hosts the transition machine (SHIPPED)
+
+The exterior location scene mirrors ?world: E on a building door
+enters its interior, E on a DUNGEON_ENTRANCE door drops into the
+location's crawl, exits land verbatim - the same worldModes machine
+behind the same host contract. The lazy mesh loader queue 7 called
+for is the shared dataPipeline, PREWARMED for the location's models
+so boot behavior is unchanged while transitions lazy-load everything
+beyond the location's own set; the climate-swap table builds from
+gpu.subMeshes exactly as the world's per-pixel pass. Static doors
+register at block assembly in the world's registry shape - matrices
+already world-space, so entries feed the machine unshifted (group
+'loc'). Boot pin and the noon shot are BYTE-IDENTICAL to pre-P7b
+(255 textures / 202 meshes / 52 swaps exact; pixel diff 0). In-engine
+proof: WALLAA02:0 interior enter/exit and the CUSTAA05 dungeon
+entrance round-trip (1011 draws - the same context the world route
+builds). Completing the fold surfaced one stale edge: the
+flat-archive pass still constructed TextureFile directly after its
+imports were removed - now routed through pipeline.getTexture.
+
 ## Milestone P7c - standalone scenes fold onto their contexts (SHIPPED)
 
 dungeon.js (340 -> 203) and interior.js (226 -> 133) no longer carry
@@ -190,9 +210,8 @@ Queue (items 1-6 shipped):
 4. DONE - interior swing doors on the ActionSystem (P4).
 5. DONE - world <-> dungeon transitions (P5).
 6. DONE - interior ladders (P6).
-7. Exterior scene mirrors the transition machine (needs a lazy mesh
-   loader); the standalone dungeon and interior scene fold is DONE
-   (P7c below).
+7. DONE - exterior hosts the machine over the prewarmed pipeline
+   (P7b); standalone dungeon/interior fold onto their contexts (P7c).
 8. Parent interiors in the building world frame - multi-door exit
    selection picks by true world proximity and coordinates go
    seamless.

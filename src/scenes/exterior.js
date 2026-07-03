@@ -8,20 +8,21 @@ import { Arch3dFile } from '../formats/arch3dFile.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
-import { TextureFile } from '../formats/textureFile.js';
 import { convertTilemap } from '../world/terrainSurface.js';
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor } from '../player/motor.js';
 import { Collider } from '../player/collider.js';
+import { getStaticDoors } from '../world/staticDoors.js';
+import { createDataPipeline } from './dataPipeline.js';
+import { createWorldModes } from './worldModes.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
-import { applyClimate, getGroundArchive, getNatureArchive, isExteriorWindow } from '../world/climateSwaps.js';
+import { applyClimate, getGroundArchive, getNatureArchive } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, trs } from '../world/mat4.js';
-import { dfMeshToModel } from '../world/meshReader.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
-import { fetchBytes, texName, parseSeason, createSkyController } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -69,70 +70,42 @@ export async function bootExterior(canvas, renderer, params, status) {
   const natureArchive = getNatureArchive(dfLocation.climate.natureArchive, season);
   const texRemap = new Map();
 
-  // Decompose every referenced mesh once, collecting texture archives.
-  const dfMeshes = new Map(); // modelIdNum -> dfMesh
+  // Shared lazy pipeline (P7): the same caches the world scene uses,
+  // PREWARMED for the location below so boot behavior is unchanged -
+  // and able to lazy-load the models/archives interiors and dungeons
+  // reference beyond the location's own set.
+  const pipeline = createDataPipeline({ renderer, arch, palette });
+  const { textureFiles, getTexture, uploadRecord, getGpuMesh, gpuMeshes, cpuModels } = pipeline;
+
+  // Collect the location's model ids + referenced texture archives.
+  const modelIds = new Set();
   const archives = new Set([groundArchive, LIGHTS_ARCHIVE]);
   for (const b of loc.blocks) {
-    for (const placed of b.layout.models) {
-      if (dfMeshes.has(placed.modelIdNum)) continue;
-      const index = arch.getRecordIndex(placed.modelIdNum);
-      if (index === -1) continue;
-      const dfMesh = arch.getMesh(index);
-      dfMeshes.set(placed.modelIdNum, dfMesh);
-      for (const sm of dfMesh.subMeshes) {
-        archives.add(sm.textureArchive);
-        const swapped = applyClimate(sm.textureArchive, sm.textureRecord, climateBase, season);
-        if (swapped !== sm.textureArchive) {
-          archives.add(swapped);
-          texRemap.set(`${sm.textureArchive}_${sm.textureRecord}`, `${swapped}_${sm.textureRecord}`);
-        }
-      }
+    for (const placed of b.layout.models) modelIds.add(placed.modelIdNum);
+  }
+  status(`loading ${modelIds.size} models`);
+  await Promise.all([...modelIds].map((id) => getGpuMesh(id)));
+  // Climate swap table over every submesh, exactly as the world's
+  // per-pixel pass: pixels from the swapped archive, UVs from the
+  // original (verbatim MaterialReader.ChangeClimate; missing-record
+  // remaps pruned - 27 corpus pairs, R1 audit).
+  for (const id of modelIds) {
+    const gpu = gpuMeshes.get(id);
+    if (!gpu) continue;
+    for (const sm of gpu.subMeshes) {
+      archives.add(sm.textureArchive);
+      const swapped = applyClimate(sm.textureArchive, sm.textureRecord, climateBase, season);
+      if (swapped === sm.textureArchive) continue;
+      const key = `${sm.textureArchive}_${sm.textureRecord}`;
+      if (texRemap.has(key)) continue;
+      const t = await getTexture(swapped);
+      if (sm.textureRecord >= t.recordCount) continue;
+      uploadRecord(swapped, sm.textureRecord);
+      texRemap.set(key, `${swapped}_${sm.textureRecord}`);
     }
   }
-
   status(`loading ${archives.size} texture archives`);
-  const textureFiles = new Map();
-  await Promise.all(
-    [...archives].map(async (archive) => {
-      const t = new TextureFile();
-      t.load(await fetchBytes(texName(archive)), texName(archive), palette);
-      textureFiles.set(archive, t);
-    })
-  );
-  const getTextureSize = (archive, record) => {
-    const t = textureFiles.get(archive);
-    return { width: t.getWidth(record), height: t.getHeight(record) };
-  };
-  const uploadRecord = (archive, record) => {
-    const t = textureFiles.get(archive);
-    const bitmap = t.getDFBitmap(record, 0);
-    renderer.uploadTexture(archive, record, t.getColor32(bitmap, 0));
-    // Exterior windows also get their emission mask (R2, MaterialReader
-    // semantics: glass texels glow with the active window style).
-    if (isExteriorWindow(archive, record)) {
-      renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap));
-    }
-  };
-
-  // GPU meshes shared across blocks. UVs come from the ORIGINAL archive;
-  // the climate-swapped pixels bind through texRemap at draw.
-  const gpuMeshes = new Map(); // modelIdNum -> renderer mesh
-  const cpuModels = new Map(); // id -> {positions, indices} for the collider
-  for (const [id, dfMesh] of dfMeshes) {
-    const model = dfMeshToModel(dfMesh, getTextureSize);
-    for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
-    cpuModels.set(id, { positions: model.positions, indices: model.indices, subMeshes: model.subMeshes, doors: model.doors });
-    gpuMeshes.set(id, renderer.createMesh(model));
-  }
-  // Swapped archives can lack the record (27 corpus pairs, e.g. 122_5 ->
-  // 322 with 5 records): prune those remaps so the submesh keeps its
-  // original texture instead of vanishing at draw (R1 audit).
-  for (const [key, target] of texRemap) {
-    const [archive, record] = target.split('_').map(Number);
-    const t = textureFiles.get(archive);
-    if (!t || record >= t.recordCount) texRemap.delete(key);
-    else uploadRecord(archive, record);
-  }
+  await Promise.all([...archives].map((a) => getTexture(a)));
 
   // Per-block scene list: world matrices with the block origin folded in,
   // plus one ground mesh per block, plus flats grouped into billboard batches.
@@ -173,6 +146,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // over the flat ground floor.
   const collider = new Collider(() => GROUND_OFFSET * 0.025);
   let colliderTris = 0;
+  const buildingDoors = []; // {door, dfBlock, recordIndex, climateBase, season, dfLocation, group}
   const flatGroups = new Map(); // "archive_record" -> [centers]
   for (const b of loc.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
@@ -184,6 +158,17 @@ export async function bootExterior(canvas, renderer, params, status) {
       const cpu = cpuModels.get(placed.modelIdNum);
       collider.addMesh('world', cpu.positions, cpu.indices, matrix);
       colliderTris += cpu.indices.length / 3;
+      // Building models expose their static doors for E-transitions
+      // (P7: the world's registry shape; matrices are already
+      // world-space, so entries feed the machine unshifted).
+      if (cpu.doors && cpu.doors.length) {
+        for (const door of getStaticDoors(cpu, 0, placed.recordIndex, matrix)) {
+          buildingDoors.push({
+            door, dfBlock: b.dfBlock, recordIndex: placed.recordIndex,
+            climateBase, season, dfLocation, group: 'loc',
+          });
+        }
+      }
     }
     // Ground tiles gather into one location-wide tilemap for the R9
     // tilemap-shader pass (raw RMB bytes; random markers >= 56 reset to
@@ -239,13 +224,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const flatArchives = new Set(
     [...flatGroups.keys()].map((k) => Number(k.split('_')[0]))
   );
-  await Promise.all(
-    [...flatArchives].filter((a) => !textureFiles.has(a)).map(async (archive) => {
-      const t = new TextureFile();
-      t.load(await fetchBytes(texName(archive)), texName(archive), palette);
-      textureFiles.set(archive, t);
-    })
-  );
+  await Promise.all([...flatArchives].map((a) => getTexture(a)));
   const billboardBatches = [];
   let flatCount = 0;
   for (const [key, centers] of flatGroups) {
@@ -264,7 +243,9 @@ export async function bootExterior(canvas, renderer, params, status) {
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const player = new PlayerMotor(collider);
   player.spawn(loc.width * RMB_SIDE * 0.46, GROUND_OFFSET * 0.025 + 2, loc.height * RMB_SIDE * 0.5);
-  let prevJump = false;
+  // Edge-detect latch shared with the mode machine: a held key must not
+  // re-trigger across a mode switch.
+  const latch = { jump: false, use: false };
   console.log(`player: collider ${colliderTris} tris, walk=${walkMode}`);
   if (shotMode) {
     window.__player = {
@@ -290,6 +271,20 @@ export async function bootExterior(canvas, renderer, params, status) {
     cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
   });
 
+  // P7: the exterior scene hosts the same mode machine as ?world -
+  // E on a building door enters its interior, E on a DUNGEON_ENTRANCE
+  // door drops into the location's crawl, exits land verbatim.
+  const modes = createWorldModes({
+    canvas, renderer, player, cam, keys, latch, blocks,
+    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, arch },
+    doorTargets: () => buildingDoors,
+    baseCollider: () => collider,
+  });
+  if (shotMode) {
+    window.__pose = (x, y, z, yaw, pitch) => { cam.pos = [x, y, z]; cam.yaw = yaw; cam.pitch = pitch; };
+    modes.installShotProbes();
+  }
+
   const lightAnimator = new CityLightAnimator(cityLights.length, CITY_LIGHT_RANGE);
   const nightAmbientFloor = new Float32Array([0.25, 0.25, 0.25]);
 
@@ -306,6 +301,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
 
+    // Modal frame (worldModes.js): interior/dungeon consume the frame
+    // entirely - none of the exterior sky/weather/light path runs.
+    if (modes.frame(dt, now)) {
+      requestAnimationFrame(frame);
+      return;
+    }
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
     if (walkMode) {
@@ -315,10 +316,15 @@ export async function bootExterior(canvas, renderer, params, status) {
         forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
         strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
         run: keys.has('ShiftLeft'),
-        jump: jumpHeld && !prevJump,
+        jump: jumpHeld && !latch.jump,
       }, cam.yaw);
-      prevJump = jumpHeld;
+      latch.jump = jumpHeld;
       cam.pos = player.eye;
+      const useHeld = keys.has('KeyE');
+      if (useHeld && !latch.use && !modes.transitioning) {
+        modes.tryEnter().catch((e) => console.error(e));
+      }
+      latch.use = useHeld;
     } else {
       const speed = (keys.has('ShiftLeft') ? 120 : 30) * dt;
       if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
