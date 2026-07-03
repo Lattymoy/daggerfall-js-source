@@ -137,6 +137,19 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6L - Mac shades it (SHIPPED): the hand-paint pipeline
+
+Mac's idea, and the true in-house answer: HE is the artist. Two
+paintable sheets in classic sprite space at 1x (69x145, the doctrine
+resolution): src/characters/paint/body-front.png (starter = the
+classic sprite itself) and body-back.png (starter = mirrored front as
+an underlay guide; authored in rear-view space). The harness samples
+them per face by normal - painted pixel wins, transparent falls
+through to the classic projection, pixels outside the silhouette are
+ignored (silhouette is the law: the IoU + excess gates hold
+regardless of paint). Loop: edit the 1x PNG, push, refresh.
+tools/export-paint-sheets.mjs regenerates starters + 4x previews.
+
 ### C6k iteration 4 (SHIPPED): inside the lines - excess costs double
 
 Mac: "shading way too much outside of the lines." The excess anatomy

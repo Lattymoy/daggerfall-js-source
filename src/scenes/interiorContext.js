@@ -159,9 +159,36 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       }
       return idx;
     };
+    // C6L: Mac's hand-painted sheets (classic sprite space, 1x).
+    // front/back chosen by the face normal; back sheet is authored in
+    // rear-view space (mirrored). A transparent painted pixel falls
+    // through to the classic projection.
+    const loadSheet = async (name) => {
+      try {
+        const r = await fetch(`/src/characters/paint/${name}`);
+        if (!r.ok) return null;
+        const bm = await createImageBitmap(await r.blob());
+        const cv = new OffscreenCanvas(bm.width, bm.height);
+        const c2 = cv.getContext('2d');
+        c2.drawImage(bm, 0, 0);
+        return c2.getImageData(0, 0, bm.width, bm.height);
+      } catch { return null; }
+    };
+    const [sheetF, sheetB] = await Promise.all([loadSheet('body-front.png'), loadSheet('body-back.png')]);
+    const paint = (sheet, col, row, mirror) => {
+      if (!sheet) return null;
+      const x = mirror ? W - 1 - col : col;
+      if (x < 0 || x >= sheet.width || row < 0 || row >= sheet.height) return null;
+      const o = (row * sheet.width + x) * 4;
+      return sheet.data[o + 3] > 0 ? [sheet.data[o], sheet.data[o + 1], sheet.data[o + 2]] : null;
+    };
     const rgb = faces.map((f) => {
       let cx = 0, cy = 0; const np = f.p.length / 3;
       for (let i = 0; i < np; i++) { cx += f.p[i * 3]; cy += f.p[i * 3 + 1]; }
+      const col = Math.max(0, Math.min(W - 1, Math.round((W - 1) / 2 + (cx / np) / u)));
+      const row = Math.max(0, Math.min(H - 1, Math.round((b.maxY - cy / np) / u)));
+      const painted = f.n[2] >= 0 ? paint(sheetF, col, row, false) : paint(sheetB, col, row, true);
+      if (painted) return { p: f.p, n: f.n, c: painted };
       const idx = sample(cx / np, cy / np);
       const c = idx ? palette.get(idx) : { r: 40, g: 36, b: 34 };
       return { p: f.p, n: f.n, c: [c.r, c.g, c.b] };
