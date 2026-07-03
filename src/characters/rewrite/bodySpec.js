@@ -1,8 +1,7 @@
 // Vendored from project-final's Rewrite Engine (rewrite/rig/bodySpec.js) at C4a -
 // same-owner code, flat-pathed; byte-parity against the canonical copy
-// is pinned by test/rig.test.js over fixtures/bare-body-parity.json
-// (captured from rewrite/rig at vendor time). Do not hand-diverge:
-// upstream first, then re-vendor + re-capture.
+// is pinned by test/rig.test.js over fixtures/bare-body-parity.json.
+// Do not hand-diverge: upstream first, then re-vendor + re-capture.
 // ── body spec (proportion seam) ──────────────────────────────────────
 // Trunk prisms, limb anchors, and bone spans as DATA - the solver and
 // assembly are shared; a consumer supplies its own proportions (e.g. a
@@ -19,7 +18,15 @@ export const VOXLIGHT_SPEC = {
   deltoid: { x0: 0.17, y0: 1.545, x1: 0.24, y1: 1.45, rU0: 0.0738, rV0: 0.09, rU1: 0.0801, rV1: 0.0945 },
   hipX: 0.14,
   pelvisY: 0.98,
-  leg: { thigh: 0.51, calf: 0.415 },
+  leg: { thigh: 0.51, calf: 0.415, thighR: 1, calfR: 1 },
+  // v2 (full-body seam): every remaining proportion, optional - a
+  // consumer omitting a field gets the engine literal (parity holds).
+  head: { scale: 1.24, lift: -0.065 },
+  arm: { shoulderX: 0.235, shoulderY: 1.5, upper: 0.385, fore: 0.335, r: 1 },
+  handScale: 1,
+  foot: { ankleH: 0.06, footL: 0.18 },
+  // torsoRows: [{ y, rx, rz }, ...] - when present, the trunk lofts
+  // through these measured rows instead of the three fixed prisms.
 };
 
 /** Torso half-extents at height y (piecewise through the trunk prisms). */
@@ -35,3 +42,12 @@ export function torsoProfile(spec, y) {
   return seg(pv.y0, pv.y1, pv.rx0, pv.rz0, pv.rx1, pv.rz1);
 }
 
+
+/** Loft consecutive prisms through measured torso rows (y ascending;
+ * rest-shape symmetric - the paperdoll stance supplies the lean). */
+export function loftTorso(out, tprism, X, Z, rows, col) {
+  for (let i = 0; i + 1 < rows.length; i++) {
+    tprism(out, [0, rows[i].y, 0], [0, rows[i + 1].y, 0], X, Z,
+      rows[i].rx, rows[i].rz, rows[i + 1].rx, rows[i + 1].rz, 12, col);
+  }
+}

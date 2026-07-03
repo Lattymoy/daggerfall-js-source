@@ -1,8 +1,7 @@
 // Vendored from project-final's Rewrite Engine (rewrite/rig/body.js) at C4a -
 // same-owner code, flat-pathed; byte-parity against the canonical copy
-// is pinned by test/rig.test.js over fixtures/bare-body-parity.json
-// (captured from rewrite/rig at vendor time). Do not hand-diverge:
-// upstream first, then re-vendor + re-capture.
+// is pinned by test/rig.test.js over fixtures/bare-body-parity.json.
+// Do not hand-diverge: upstream first, then re-vendor + re-capture.
 // Third-person body for the game. Posed + animated rig extracted from the body-anim lab:
 // full-body locomotion (pelvis bob/sway/twist + chest lean; legs IK from the moving hips to
 // planted feet; gun + arms parented to the chest), plus crouch, slide, mantle, jump, firing.
@@ -28,30 +27,15 @@ let relicActive = false; // when set, gunAndArms renders the Sever dual-wield in
 let ravagerGuns = false; // when set, renderHusk also mounts the Ravager's dual gun-blades on the solved wrists (B.ravagerGun = shape)
 
 // ── tuned state library: loco + grip + holds(idle/aimed) ──
-const WALK_GRIP = { rhX: 0.0225, rhY: -0.0575, rhZ: -0.075, rhPitch: -14, rhYaw: -16, rhRoll: 0, rCurl: 0, rHandSize: 0.25, rfCurl: 0.4, rfSpread: 0.5, rfLen: 0.6, rtCurl: 1.6, rtSpread: 0.6, lhX: -0.0125, lhY: -0.03, lhZ: -0.01, lhPitch: 4, lhYaw: -22, lhRoll: -90, lCurl: 1.5, lHandSize: 0.25, lfCurl: 2, lfSpread: 0.6, lfLen: 0.56, ltCurl: 1.75, ltSpread: 0.6 };
 const RUN_GRIP = { ...WALK_GRIP, lhX: -0.0875, lhY: 0.0075, lhZ: -0.02, lhPitch: -12, lhYaw: -4 };
 const IDLE_HOLD = { scale: 0.16, gunX: 0.13, gunY: 1.23, gunZ: 0.345, gunPitch: 44, gunYaw: -38, gunRoll: 0, rPoleX: 0.6, rPoleY: -1.15, rPoleZ: -0.3, lPoleX: -1.5, lPoleY: -1.5, lPoleZ: -1.5 };
-const WALK_AIMED = { scale: 0.16, gunX: 0.165, gunY: 1.48, gunZ: 0.42, gunPitch: -3, gunYaw: 0, gunRoll: 0, rPoleX: 0.6, rPoleY: -1, rPoleZ: -0.3, lPoleX: -0.5, lPoleY: -1, lPoleZ: -0.1 };
-const RUN_AIMED = { scale: 0.16, gunX: -0.015, gunY: 1.42, gunZ: 0.345, gunPitch: 16, gunYaw: -45, gunRoll: -1, rPoleX: 0.6, rPoleY: -1, rPoleZ: -0.3, lPoleX: -0.5, lPoleY: -1, lPoleZ: -0.1 };
 const SLIDE_AIMED = { scale: 0.16, gunX: 0.155, gunY: 1.5, gunZ: 0.42, gunPitch: 5, gunYaw: 0, gunRoll: 0, rPoleX: 0.6, rPoleY: -1, rPoleZ: -0.3, lPoleX: -0.5, lPoleY: -1, lPoleZ: -0.1 }; // gun up + leveled to fire mid-slide
 const SLIDE_IDLE = { scale: 0.16, gunX: 0.145, gunY: 1.3, gunZ: 0.395, gunPitch: -5, gunYaw: -38, gunRoll: 0, rPoleX: 0.7, rPoleY: -1.15, rPoleZ: -0.3, lPoleX: -1.5, lPoleY: -1.5, lPoleZ: -1.5 }; // gun braced low + leveled across body
-const ZERO_LOCO = { strideAmp: 0, liftAmp: 0, cadence: 0, bobAmp: 0, swayAmp: 0, pelvisYaw: 0, pelvisRoll: 0, pelvisPitch: 0, chestLean: 0, counterFrac: 1, lateralFlex: 0, weaponBob: 0, gaitPhase: 0 };
-const WALK_LOCO = { strideAmp: 0.44, liftAmp: 0.2, cadence: 6, bobAmp: 0.024, swayAmp: 0.002, pelvisYaw: 15, pelvisRoll: 0, pelvisPitch: 0, chestLean: 2.5, counterFrac: 1.1, lateralFlex: -0.5, weaponBob: 0.018, gaitPhase: 0 };
 const WALK_LOCO_RIFLE = { ...WALK_LOCO, strideAmp: 0.5, liftAmp: 0.18, cadence: 6.6, bobAmp: 0.046 }; // rifle walk: longer stride + more bob than the pistol
-const RUN_LOCO = { strideAmp: 0.5, liftAmp: 0.3, cadence: 9.6, bobAmp: 0.072, swayAmp: 0.002, pelvisYaw: -2, pelvisRoll: -1.5, pelvisPitch: 2, chestLean: 23, counterFrac: 0.75, lateralFlex: 0.5, weaponBob: 0.05, gaitPhase: 80 };
-const SLIDE_POSE = { crouch: 0.53, leadSide: 1, leadFwd: 0.74, leadY: 0.04, leadPitch: 3, trailBack: 0.19, trailY: 0.07, trailPitch: -65 }; // slide leg targets (inert for non-slide states)
 // ── pistol: one two-handed grip + low-ready idle + punched-out aimed, shared across every locomotion state (the body motion sells each state) ──
-const PISTOL_GRIP = { rhX: 0.03, rhY: 0.03, rhZ: -0.0975, rhPitch: 13, rhYaw: 0, rhRoll: 203, rCurl: 1.25, rHandSize: 0.23, rfCurl: 0.65, rfSpread: 0.85, rfLen: 0.6, rtCurl: 0.6, rtSpread: 0.45, lhX: -0.0375, lhY: 0.0375, lhZ: -0.0675, lhPitch: 0, lhYaw: 189, lhRoll: 0, lCurl: 0.95, lHandSize: 0.23, lfCurl: 1.25, lfSpread: 0.85, lfLen: 0.66, ltCurl: 1.5, ltSpread: 0.45 };
 const PISTOL_IDLE = { scale: 0.18, gunX: 0.04, gunY: 1.09, gunZ: 0.52, gunPitch: 29, gunYaw: 0, gunRoll: 0, rPoleX: 0.5, rPoleY: -1, rPoleZ: -0.45, lPoleX: -0.5, lPoleY: -1, lPoleZ: -0.45 };
-const PISTOL_AIMED = { scale: 0.18, gunX: 0.05, gunY: 1.6, gunZ: 0.7, gunPitch: 0, gunYaw: 0, gunRoll: 0, rPoleX: 1.45, rPoleY: -1.5, rPoleZ: -1.5, lPoleX: -0.45, lPoleY: -0.6, lPoleZ: 0.7 };
-const RUN_LOCO_PISTOL = { strideAmp: 0.5, liftAmp: 0.3, cadence: 9.6, bobAmp: 0.062, swayAmp: 0.01, pelvisYaw: 4.5, pelvisRoll: 0, pelvisPitch: -3.5, chestLean: 14, counterFrac: 0.7, lateralFlex: 1, weaponBob: 0.05, gaitPhase: 0 }; // pistol-run dial (own object; diverged from rifle RUN_LOCO)
-const STRAFE_LOCO = { strideAmp: 0.34, liftAmp: 0.15, cadence: 5.5, bobAmp: 0.022, swayAmp: 0.025, pelvisYaw: 4, pelvisRoll: 5, pelvisPitch: 0, chestLean: 2, counterFrac: 0.3, lateralFlex: 0, weaponBob: 0.018, gaitPhase: 0 }; // sidestep: body faces forward (low twist/counter), hips list + sway, gait strides along moveDir (omnidirectional)
 const STRAFE_LOCO_RIFLE = { ...STRAFE_LOCO, cadence: 5.6, swayAmp: 0.026, pelvisYaw: 5 }; // rifle strafe: marginally quicker cadence + more hip yaw
-const SLIDE_LOCO = { ...ZERO_LOCO, pelvisYaw: 2.5, pelvisRoll: 1, pelvisPitch: -4.5, chestLean: 9, ...SLIDE_POSE };
-const CROUCH_STANCE = { leadSide: 1, leadX: 0.16, leadFwd: 0.15, leadY: 0.06, leadPitch: -3, trailX: 0.13, trailBack: 0.11, trailY: 0.06, trailPitch: -10, crouchWeight: 0.02 }; // staggered crouch ready-stance: lead foot fwd + flat, trail foot back on the ball, weight listed onto the back leg (asymmetric, slide-style)
-const CROUCH_LOCO = { ...ZERO_LOCO, crouch: 0.3, ...CROUCH_STANCE }; // stationary crouch: pelvis drop + asymmetric planted stance (posed in the normal branch)
 const CROUCH_LOCO_RIFLE = { ...CROUCH_LOCO, bobAmp: 0.06, swayAmp: 0.026, pelvisYaw: 2 }; // rifle crouch settles slightly (pistol crouch stays inert)
-const CROUCHWALK_LOCO = { ...WALK_LOCO, crouch: 0.3, strideAmp: 0.3, liftAmp: 0.09, cadence: 5, bobAmp: 0.02, chestLean: 4, pelvisYaw: 9 }; // moving crouch: a low, short strided gait carried under the pelvis drop
 const CROUCHWALK_LOCO_RIFLE = { ...CROUCHWALK_LOCO, strideAmp: 0.32, bobAmp: 0.03 };
 const PISTOL = { grip: { ...PISTOL_GRIP }, holds: { idle: { ...PISTOL_IDLE }, aimed: { ...PISTOL_AIMED } } }; // grip+holds shared by every state; loco is separate (per weapon)
 export const STATES = {
@@ -140,7 +124,8 @@ const MANTLE = { dur: 1.5, rise: 1.45, fwd: 0.5, lean: 22, ledgeX: 0.3, ledgeY: 
 // look); tune each in the lab + paste WEAPON_FLASH back. Geometry params are multiples of the muzzle scale s.
 export { FLASH_DEF, WEAPON_FLASH, muzzleFlashFaces } from './muzzleFlash.js'; // base FX ride along
 import { FLASH_DEF, WEAPON_FLASH, muzzleFlashFaces } from './muzzleFlash.js';
-import { VOXLIGHT_SPEC } from './bodySpec.js';
+import { VOXLIGHT_SPEC, loftTorso } from './bodySpec.js';
+import { CROUCH_STANCE, WALK_GRIP, PISTOL_GRIP, WALK_AIMED, RUN_AIMED, PISTOL_AIMED, SLIDE_POSE, ZERO_LOCO, WALK_LOCO, RUN_LOCO, RUN_LOCO_PISTOL, STRAFE_LOCO, SLIDE_LOCO, CROUCH_LOCO, CROUCHWALK_LOCO } from './poseTables.js';
 export { VOXLIGHT_SPEC, torsoProfile } from './bodySpec.js';
 function buildFlash(out, tip, k, weapon) { out.push(...muzzleFlashFaces(tip, k, WEAPON_FLASH[FLASH_TYPE_KEY[weapon]] || FLASH_DEF)); } // third-person gun-local flash, keyed by weapon type
 
@@ -157,15 +142,20 @@ function trunkLower(out) {
 }
 function trunkUpperChest(out, ramp) {
   const { SK } = ramp;
-  { const v = SPEC.chest; tprism(out, [0, v.y0, 0], [0, v.y1, 0], X, Z, v.rx0, v.rz0, v.rx1, v.rz1, 12, CLOTH); } // chest extends below the waist pivot (1.0) to overlap the hips, so the opposing pelvis/chest twist when moving doesn't tear a gap at the waist (the outline would otherwise read it as a seam at the chunky character resolution)
-  { const c = SPEC.chest, u = SPEC.upperChest; tprism(out, [0, c.y1, 0], [0, u.y1, 0], X, Z, c.rx1, c.rz1, u.rx1, u.rz1, 12, CLOTH); }
+  if (SPEC.torsoRows) {
+    loftTorso(out, tprism, X, Z, SPEC.torsoRows, CLOTH);
+  } else {
+    { const v = SPEC.chest; tprism(out, [0, v.y0, 0], [0, v.y1, 0], X, Z, v.rx0, v.rz0, v.rx1, v.rz1, 12, CLOTH); } // chest extends below the waist pivot (1.0) to overlap the hips, so the opposing pelvis/chest twist when moving doesn't tear a gap at the waist (the outline would otherwise read it as a seam at the chunky character resolution)
+    { const c = SPEC.chest, u = SPEC.upperChest; tprism(out, [0, c.y1, 0], [0, u.y1, 0], X, Z, c.rx1, c.rz1, u.rx1, u.rz1, 12, CLOTH); }
+  }
   { const v = SPEC.neck; tprism(out, [0, v.y0, v.z0], [0, v.y1, v.z1], X, Z, v.rx0, v.rz0, v.rx1, v.rz1, 12, SK); } // neck flares into the shoulders at the base so the head stays connected at the chunky character resolution (the outline would otherwise eat a 1px neck into a seam)
 }
 // the head/face, in chest-local space. Split out of trunkUpper so the husk can ride it on its own
 // pivot (head tilt + twitch); the neck base above keeps it visually connected when tilted.
 function headPieces(out, ramp) {
   const { SK, SKL, SKM } = ramp;
-  const s = 1.24, lf = -0.065, base = 1.62, hp = (p) => [p[0] * s, base + (p[1] - base) * s + lf, p[2] * s], hr = (r) => r * s;
+  const hd = SPEC.head || {};
+  const s = hd.scale ?? 1.24, lf = hd.lift ?? -0.065, base = 1.62, hp = (p) => [p[0] * s, base + (p[1] - base) * s + lf, p[2] * s], hr = (r) => r * s;
   tprism(out, hp([0, 1.62, 0.006]), hp([0, 1.70, 0.01]), X, Z, hr(0.06), hr(0.072), hr(0.086), hr(0.10), 12, SK);
   tprism(out, hp([0, 1.70, 0.01]), hp([0, 1.785, 0.005]), X, Z, hr(0.086), hr(0.10), hr(0.093), hr(0.107), 12, SK);
   tprism(out, hp([0, 1.785, 0.005]), hp([0, 1.86, 0]), X, Z, hr(0.093), hr(0.107), hr(0.082), hr(0.094), 12, SK);
@@ -175,15 +165,18 @@ function headPieces(out, ramp) {
   for (const sx of [1, -1]) rseg(out, hp([sx * 0.088, 1.75, 0.0]), hp([sx * 0.107, 1.744, 0.006]), Z, hr(0.016), hr(0.026), hr(0.013), hr(0.02), 6, SK);
 }
 function trunkUpper(out, ramp) { trunkUpperChest(out, ramp); headPieces(out, ramp); } // combined (unchanged for soldier paths)
-function armToGrip(out, side, gripWrist, axis, fwd, wrapSign, curl, mirror, pole, size, fg, ramp) {
+function armToGrip(out, side, gripWrist, axis, fwd, wrapSign, curl, mirror, pole, size0, fg, ramp) {
+  const size = size0 * (SPEC.handScale ?? 1);
   const { SK, SKL, SKM, SKD } = ramp;
-  const S = [side * 0.235, 1.5, 0];
-  const [elbow, wrist] = solveTwoBone(S, gripWrist, 0.385, 0.335, pole);
+  const AR = SPEC.arm || {};
+  const ar = AR.r ?? 1;
+  const S = [side * (AR.shoulderX ?? 0.235), AR.shoulderY ?? 1.5, 0];
+  const [elbow, wrist] = solveTwoBone(S, gripWrist, AR.upper ?? 0.385, AR.fore ?? 0.335, pole);
   const armDir = norm(sub(elbow, S)); // deltoid seated on the joint, draped down the upper arm (reads as the top of the arm, not a detached pad)
-  rseg(out, mad(S, [0, 1, 0], -0.02), mad(S, armDir, 0.16), Z, 0.036, 0.05, 0.0475, 0.04, 8, SK);
-  rseg(out, S, elbow, Z, 0.076, 0.0707, 0.068, 0.0639, 8, SK);
-  rseg(out, mad(elbow, [0, 1, 0], -0.04), mad(elbow, [0, 1, 0], 0.04), Z, 0.07, 0.07, 0.07, 0.07, 9, SK);
-  forearm(out, elbow, wrist, 0.073, 0.038, SK, SKD);
+  rseg(out, mad(S, [0, 1, 0], -0.02), mad(S, armDir, 0.16), Z, 0.036 * ar, 0.05 * ar, 0.0475 * ar, 0.04 * ar, 8, SK);
+  rseg(out, S, elbow, Z, 0.076 * ar, 0.0707 * ar, 0.068 * ar, 0.0639 * ar, 8, SK);
+  rseg(out, mad(elbow, [0, 1, 0], -0.04), mad(elbow, [0, 1, 0], 0.04), Z, 0.07 * ar, 0.07 * ar, 0.07 * ar, 0.07 * ar, 9, SK);
+  forearm(out, elbow, wrist, 0.073 * ar, 0.038 * ar, SK, SKD);
   hand(out, { axis, fwd, wrist, wrapSign, mirror, size, curl, curlMul: fg.curlMul, fingerSpread: fg.spread, fingerLen: fg.len, thumbCurl: fg.tcurl, thumbSpread: fg.tspread, color: SK, colorL: SKL, colorM: SKM, colorD: SKD });
   return { shoulder: S, elbow, wrist }; // chest-local joints, for armor
 }
@@ -310,16 +303,17 @@ function gaitFoot(side, phase) { // omnidirectional: the stride runs along the l
   return { F: [side * SPEC.hipX + dx * along, ankleH + lift, centerFwd + dz * along], fp };
 }
 function bodyLeg(out, side, hipW, F, fp, ramp, legLen = 1) {
-  const { SK, SKL, SKM, SKD } = ramp, sr = 0.078;
+  const { SK, SKL, SKM, SKD } = ramp;
+  const tr = SPEC.leg.thighR ?? 1, cr = SPEC.leg.calfR ?? 1, sr = 0.078 * cr;
   const [knee, ankle] = solveTwoBone(hipW, F, SPEC.leg.thigh * legLen, SPEC.leg.calf * legLen, [0, 0, 1]);
   const thighDir = norm(sub(knee, hipW)), calfDir = norm(sub(ankle, knee));
-  rseg(out, mad(hipW, thighDir, -0.06), mad(hipW, thighDir, 0.215), X, 0.09, 0.0828, 0.115, 0.10925, 10, CLOTH);
-  rseg(out, hipW, knee, X, 0.08, 0.0848, sr * 1.06, sr * 0.92, 8, SK);
+  rseg(out, mad(hipW, thighDir, -0.06), mad(hipW, thighDir, 0.215), X, 0.09 * tr, 0.0828 * tr, 0.115 * tr, 0.10925 * tr, 10, CLOTH);
+  rseg(out, hipW, knee, X, 0.08 * tr, 0.0848 * tr, sr * 1.06, sr * 0.92, 8, SK);
   rseg(out, knee, ankle, X, sr * 1.02, sr * 0.96, sr * 0.82, sr * 0.78, 8, SK);
   rseg(out, mad(knee, [0, 1, 0], -0.05), mad(knee, [0, 1, 0], 0.05), Z, 0.074, 0.074, 0.074, 0.074, 9, SKL);
   rseg(out, mad(knee, calfDir, 0.13), mad(knee, calfDir, 0.2), X, sr, sr * 0.94, sr * 0.97, sr * 0.9, 8, SKD);
   rseg(out, mad(ankle, calfDir, -0.1), mad(ankle, calfDir, -0.03), X, sr * 0.85, sr * 0.8, sr * 0.82, sr * 0.76, 8, SKD);
-  buildFoot(out, ankle, fp, { ankleH: 0.06, footL: 0.18, SK, SKL, SKM, SKD });
+  buildFoot(out, ankle, fp, { ankleH: SPEC.foot?.ankleH ?? 0.06, footL: SPEC.foot?.footL ?? 0.18, SK, SKL, SKM, SKD });
   return { side, hip: hipW, knee, ankle, fp }; // world-space joints (+foot pitch), for armor (side ignored there) + husk crystals/attire
 }
 function mantleArm(out, side, shoulder, target, ramp) {
