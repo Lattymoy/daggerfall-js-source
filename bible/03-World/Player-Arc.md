@@ -174,6 +174,18 @@ interiorLights.js; interior shot stays byte-identical), and two
 Ledger C rows still routing features R6-R8 shipped (interior 210
 point lights; dungeon water + lights) - pruned.
 
+P8 audit: the exit's closest-door check now compares DFU's
+transform.position VERBATIM - the controller STANDING at floor +
+height * 0.65 (+1.17, the same FixStanding constant P6 established),
+not the feet; the WALLAA02 four-door proof reproduces exactly (sibling
+error 0.000 / far door 8.27). The composition gap in the P8 proof is
+closed: an in-mode interior frame at world coordinates was captured
+and eyeballed (MAGEAA08:0, 54 draws / 11 lights - geometry, flats,
+and point lights all present; billboard batches confirmed safe at
+world coords via the renderer's ZERO_ORIGIN default over world-baked
+centers). Import scan and block-local drift sweep clean; no stray
+probes in the tree.
+
 ## Milestone P8 - interiors parented in the building world frame (SHIPPED)
 
 Verbatim PlayerEnterExit.TransitionInterior: the interior is positioned

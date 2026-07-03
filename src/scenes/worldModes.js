@@ -150,9 +150,12 @@ export function createWorldModes(host) {
     }
     // Verbatim BuildingTransitionExteriorLogic: the closest exterior
     // door to the PLAYER (frames unified at P8), landing at
-    // normal * radius*3.
+    // normal * radius*3. DFU compares transform.position - the
+    // CONTROLLER standing at floor + height * 0.65 (the same
+    // FixStanding constant P6 dug out for ClimbLadder), not the feet.
     const landing = exteriorLanding(
-      player.pos, exitReturn.siblings.map((e) => e.door));
+      [player.pos[0], player.pos[1] + 1.8 * 0.65, player.pos[2]],
+      exitReturn.siblings.map((e) => e.door));
     interiorCtx.destroy();
     interiorCtx = null;
     player.collider = baseCollider();
