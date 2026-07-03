@@ -137,6 +137,24 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6a - paperdoll art addressing + the reference extractor (SHIPPED)
+
+`paperdollArt.js`: variant record resolution verbatim (record = base +
+variant, cloaks +1 past their interior image - real template indices
+154/155/191/192), and the FULL armor addressing chain that the first
+extractor pass missed: gender picks the archive family (F 245 / M 249),
+race adds the body-morphology offset (Argonian 0 / Elf 1 / Human 2 /
+Khajiit 3 - human male = 251), and the MATERIAL FAMILY selects the
+variant row via the SetVariant clamp tables (Cuirass leather 0 / chain
+4 / plate 1-3; Greaves, Pauldrons, Gauntlets, Boots each their own).
+Leather + chain rows are Unchanged-dyed; plate rows author in the
+0x70 band and take the C5b metal tables. tools/paperdoll-ref.mjs dumps
+material-correct sheets (rows x metals, 3x). The FLAWED first pass -
+flat variants x metals dyeing brown leather art with tables that
+touch nothing - was caught by the band-coverage pin before anything
+shipped or was presented; the pin now asserts BOTH directions (plate
+> 0.5 in-band, leather < 0.1). pngjs promoted to a real devDep.
+
 C4-C5 audit: import scan clean across every slice file; 288 template
 indices unique; Wand (140) is the one unruled jewellery template -
 DFU's default None, verbatim. The requested joint verification went
