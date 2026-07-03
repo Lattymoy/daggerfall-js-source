@@ -49,11 +49,53 @@ const mid = (r) => (r[0] + r[1]) / 2;
 // This tool currently emits the RUN PROFILE + the overlay for study;
 // spec derivation resumes on the pose decision (see Characters-Arc:
 // pose-matched paperdoll stance vs pose-invariant landmark spec).
-let out = '';
-for (let y = 0; y < H; y++) {
-  out += y + ': ' + rows[y].map((r) => r[0] + '-' + r[1]).join(' ') + '\n';
+// Pose-invariant landmarks (fork step 1). Vertical rows + stance +
+// limb thickness survive the contrapposto; torso WIDTHS do not (arms
+// overlap the trunk) - those wait for the pose-matched stance (step 2).
+let top = 0;
+while (!rows[top].length) top++;
+let feet = H - 1;
+while (!rows[feet].length) feet--;
+// Crotch: first 2-run row whose runs BOTH sit inside the torso band
+// (arm-gap rows have a far-left arm run; legs split near centre).
+let crotch = -1;
+for (let y = top; y < H; y++) {
+  const r = rows[y];
+  if (r.length === 2 && r[0][0] > 14 && r[1][1] < W - 8
+    && Math.abs(width(r[0]) - width(r[1])) < 12) { crotch = y; break; }
 }
-console.log(out);
+// First arm separation from the top = the armpit line.
+let armpit = -1;
+for (let y = top; y < crotch; y++) if (rows[y].length >= 2) { armpit = y; break; }
+// Shoulder: widest span above the armpit.
+let shoulder = top, shoulderW = 0;
+for (let y = top; y <= armpit; y++) {
+  if (!rows[y].length) continue;
+  const span = rows[y][rows[y].length - 1][1] - rows[y][0][0] + 1;
+  if (span > shoulderW) { shoulderW = span; shoulder = y; }
+}
+// Legs: thickness + stance from a row a few below the crotch.
+const legRow = Math.min(H - 1, crotch + 4);
+const [L, R] = rows[legRow];
+const thighPx = (width(L) + width(R)) / 2;
+const hipXpx = Math.abs(mid(R) - mid(L)) / 2;
+
+const RIG_H = 1.922;
+const u = RIG_H / (feet - top + 1);
+const yRig = (row) => +((feet - row + 0.5) * u).toFixed(4);
+const landmarks = {
+  imageRows: { top, shoulder, armpit, crotch, feet, W, H },
+  rig: {
+    pelvisY: yRig(crotch),
+    armpitY: yRig(armpit),
+    shoulderY: yRig(shoulder),
+    hipX: +(hipXpx * u).toFixed(4),
+    thighR: +((thighPx / 2) * u).toFixed(4),
+    legLen: yRig(crotch),
+    unit: +u.toFixed(5),
+  },
+};
+console.log(JSON.stringify(landmarks, null, 1));
 
 if (overlayOut) {
   const png = new PNG({ width: W * 4, height: H * 4 });

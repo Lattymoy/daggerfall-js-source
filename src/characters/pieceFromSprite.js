@@ -24,26 +24,35 @@ export function shellFromSprite(bmp, opts = {}) {
   const radiusZ = opts.radiusZ ?? 0.22;
   const height = opts.height ?? 0.9;
   const arc = opts.arc ?? Math.PI * 0.9;
+  // Profile mode (C6 restructure): the shell inherits the BODY's own
+  // per-row half-extents - opts.profile(y) -> {rx, rz} (torsoProfile +
+  // stand-off) with opts.yTop/yBottom placing sprite rows in absolute
+  // rig space. Fixed-radius mode stays for callers without a body.
+  const profile = opts.profile ?? null;
+  const yTop = opts.yTop ?? height / 2;
+  const yBottom = opts.yBottom ?? -height / 2;
+  const span = yTop - yBottom;
 
   const faces = [];
-  const cellH = height / H;
+  const cellH = span / H;
   const theta = (x) => -arc / 2 + (arc * x) / (W - 1);
   for (let py = 0; py < H; py++) {
     for (let px = 0; px < W; px++) {
       const idx = data[py * W + px];
       if (idx === 0) continue;
-      // Column centre + half-step angles bound the cell on the ellipse.
       const t0 = theta(px - 0.5);
       const t1 = theta(px + 0.5);
-      const y1 = height / 2 - py * cellH;       // sprite row 0 = top
+      const y1 = yTop - py * cellH;             // sprite row 0 = top
       const y0 = y1 - cellH;
-      const P = (t, y) => [radiusX * Math.sin(t), y, radiusZ * Math.cos(t)];
+      const yc = (y0 + y1) / 2;
+      const r = profile ? profile(yc) : { rx: radiusX, rz: radiusZ };
+      const P = (t, y) => [r.rx * Math.sin(t), y, r.rz * Math.cos(t)];
       const a = P(t0, y0);
       const b = P(t1, y0);
       const c = P(t1, y1);
       const d = P(t0, y1);
       const tm = (t0 + t1) / 2;
-      const n = norm3(radiusZ * Math.sin(tm), 0, radiusX * Math.cos(tm));
+      const n = norm3(r.rz * Math.sin(tm), 0, r.rx * Math.cos(tm));
       faces.push({
         p: [a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2]],
         n, idx, px, py,
@@ -73,18 +82,21 @@ export function resolvePiece(faces, dye, target, palette, applyDyeToIndex) {
  * mapping round-trips - stored px/py are deliberately unused here.
  */
 export function projectFront(faces, W, H, opts = {}) {
-  const height = opts.height ?? 0.9;
   const arc = opts.arc ?? Math.PI * 0.9;
-  const cellH = height / H;
+  const profile = opts.profile ?? null;
+  const yTop = opts.yTop ?? (opts.height ?? 0.9) / 2;
+  const yBottom = opts.yBottom ?? -(opts.height ?? 0.9) / 2;
+  const cellH = (yTop - yBottom) / H;
   const grid = new Uint8Array(W * H);
   for (const f of faces) {
     // Face midpoint from the quad corners.
     let mx = 0, my = 0, mz = 0;
     for (let i = 0; i < 4; i++) { mx += f.p[i * 3]; my += f.p[i * 3 + 1]; mz += f.p[i * 3 + 2]; }
     mx /= 4; my /= 4; mz /= 4;
-    const t = Math.atan2(mx / (opts.radiusX ?? 0.34), mz / (opts.radiusZ ?? 0.22));
+    const r = profile ? profile(my) : { rx: opts.radiusX ?? 0.34, rz: opts.radiusZ ?? 0.22 };
+    const t = Math.atan2(mx / r.rx, mz / r.rz);
     const px = Math.round(((t + arc / 2) * (W - 1)) / arc);
-    const py = Math.round((height / 2 - my) / cellH - 0.5);
+    const py = Math.round((yTop - my) / cellH - 0.5);
     if (px >= 0 && px < W && py >= 0 && py < H) grid[py * W + px] = f.idx;
   }
   return grid;

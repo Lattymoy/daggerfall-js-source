@@ -137,6 +137,24 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6d - DAGGER_SPEC v1 + profile-inheriting shells (SHIPPED)
+
+Fork step 1 landed: tools/paperdoll-spec.mjs detects the pose-
+invariant landmarks (crotch = first 2-run row INSIDE the torso band -
+arm-gap rows start far left; armpit = first arm separation; both
+genders share the template rows, hashes differ). Adopted into the
+GENERATED daggerBodySpec.js: pelvisY 0.961, chest.y1 1.478 (classic
+armpit rides high), hipX 0.1392, classic leg length 0.961 split by the
+engine thigh/calf ratio. NOT adopted, documented: torso widths (posed
+arms overlap - step 2) and shoulder/neck verticals (classic shoulders
+~1.75 with an 11px head COLLIDE with the rig's literal head prisms at
+1.62 - the spec-v2 driver: head enters the seam). The shell now
+INHERITS the body: shellFromSprite/projectFront gained profile mode
+(per-row torsoProfile(DAGGER_SPEC) + one 0.03 stand-off, sprite rows
+in absolute rig space) - the fixed-radius constants and centre shift
+are gone from the piece path; the geometric witness round-trips in
+profile mode. Harness body builds on DAGGER_SPEC.
+
 DAGGER_SPEC finding (checkpoint): the BODY images are the classic
 CONTRAPPOSTO POSE - weight on one leg, asymmetric arms, one foot
 forward (run profile: right arm-gap rows 33-45, left arm 51-69, legs

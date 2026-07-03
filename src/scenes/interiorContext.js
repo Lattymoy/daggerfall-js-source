@@ -31,6 +31,8 @@ import { shellFromSprite, resolvePiece } from '../characters/pieceFromSprite.js'
 import { getTemplate } from '../characters/paperdoll.js';
 import { resolvePaperdollRecord, armorArchive, armorVariant, MATERIAL_FAMILY } from '../characters/paperdollArt.js';
 import { DYE_COLORS, DYE_TARGETS, applyDyeToIndex } from '../characters/dyes.js';
+import { DAGGER_SPEC } from '../characters/daggerBodySpec.js';
+import { torsoProfile } from '../characters/rewrite/bodySpec.js';
 import { ActionSystem } from '../world/actionSystem.js';
 
 /**
@@ -123,7 +125,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const billboardBatches = [];
   const flatGroups = new Map();
   if (opts.voxelfolk && people.length) {
-    const faces = buildBody({ loco: 'stand', hold: 'idle', phase: 0 }, BARE_PLUGS);
+    const faces = buildBody({ loco: 'stand', hold: 'idle', phase: 0 }, BARE_PLUGS, DAGGER_SPEC);
     const mesh = renderer.createCharacterMesh(packCharacterFaces(faces));
     const b = facesBounds(faces);
     const CLASSIC_HEIGHT = 1.8;
@@ -145,9 +147,17 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       const t = await getTexture(archive);
       const rec = resolvePaperdollRecord(tpl, armorVariant(opts.piece, MATERIAL_FAMILY.Plate, 1));
       const bmp = t.getDFBitmap(rec, 0);
-      const shell = shellFromSprite(bmp, { radiusX: 0.28, radiusZ: 0.22, height: 0.52, arc: Math.PI * 0.9 });
-      const CENTER_Y = (1.4 + 0.92) / 2; // authored chest span centre
-      for (const f of shell) for (let i = 1; i < 12; i += 3) f.p[i] += CENTER_Y;
+      // C6 restructure: the shell inherits the BODY's per-row profile
+      // (torsoProfile over DAGGER_SPEC) + one 0.03 stand-off - no
+      // fixed radii, no centre shift; sprite rows land in absolute
+      // rig space across the chest span.
+      const STANDOFF = 0.03;
+      const shell = shellFromSprite(bmp, {
+        profile: (y) => { const r = torsoProfile(DAGGER_SPEC, y); return { rx: r.rx + STANDOFF, rz: r.rz + STANDOFF }; },
+        yTop: DAGGER_SPEC.chest.y1 + 0.02,
+        yBottom: DAGGER_SPEC.pelvis.y0,
+        arc: Math.PI * 0.9,
+      });
       const rgb = resolvePiece(shell, DYE_COLORS.Steel, DYE_TARGETS.WeaponsAndArmor, palette, applyDyeToIndex);
       pieceMesh = renderer.createCharacterMesh(packCharacterFaces(rgb));
     }

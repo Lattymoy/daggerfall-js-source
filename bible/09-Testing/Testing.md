@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 173 tests across 34 files.
+Node 22). Suite: 175 tests across 34 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -25,7 +25,7 @@ Node 22). Suite: 173 tests across 34 files.
 | rig.test.js | 2 | Vendored Rewrite rig byte-parity vs canonical (16 bare-humanoid hashes), 710-face shape |
 | rigmath.test.js | 5 | Two-bone IK invariants: exact bone lengths, reach/clamp, pole side, degenerate-target guard |
 | paperdollart.test.js | 3 | Variant/cloak record resolution, material addressing (bases+morphology+clamps), plate-vs-leather band pins on 251 |
-| piece.test.js | 2 | Sprite-shell geometry round-trip (synthetic + real plate cuirass: face-per-pixel, geometric projection == sprite, per-face dye resolve) |
+| piece.test.js | 4 | Sprite-shell geometry round-trip (synthetic + real cuirass round-trips, profile-mode round-trip over DAGGER_SPEC, landmark pins) |
 | charmesh.test.js | 2 | Face packing (fan order, color/normal interleave), bare-humanoid pack + bounds |
 | paperdoll.test.js | 3 | 27-slot EquipSlots verbatim, 288-template DB (index resolution, Short Shirt pin), BlitItems order |
 | dyes.test.js | 3 | Clothing dye range shifts (Blue identity, Red 0xEF), 11 metal tables extraction-pinned, band-only swap |
