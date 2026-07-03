@@ -137,6 +137,18 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+DAGGER_SPEC finding (checkpoint): the BODY images are the classic
+CONTRAPPOSTO POSE - weight on one leg, asymmetric arms, one foot
+forward (run profile: right arm-gap rows 33-45, left arm 51-69, legs
+from ~70, single forward foot 138+). Every item sprite is painted to
+seat on THAT POSE, so a symmetric spec from naive silhouette widths
+would repeat the pose-measurement bug at extraction scale.
+tools/paperdoll-spec.mjs checkpoints as the run-profile + overlay
+instrument. The fork (next): (1) pose-invariant landmark spec (heights
++ limb thickness - valid regardless), then (2) a pose-matched
+'paperdoll' stance upstream so pieces seat row-for-row - the full
+1:1-no-exceptions answer. Both, in that order.
+
 ### C6 RESTRUCTURE - the rig redesigned around the outfits (Mac)
 
 The seating-bug class dies at the root: instead of fitting shells onto
