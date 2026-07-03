@@ -129,11 +129,15 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const CLASSIC_HEIGHT = 1.8;
     const sc = CLASSIC_HEIGHT / (b.maxY - b.minY);
     // C6c: &piece=<template> hangs the 1:1 sprite-shell piece on the
-    // rig. Fit constants MEASURED from the bare rig's torso band
-    // (chest half-extents 0.302 x 0.454, span 0.941-1.518) + a 0.03
-    // armor stand-off; the shell shifts to the torso centre in rig
-    // space so the BODY matrix draws both. Steel resolve for the
-    // review shot; the dye is a parameter, not a bake.
+    // rig. Fit constants come from the rig's AUTHORED chest prism
+    // (body.js line ~158: y 0.92-1.4, half-extents tapering to
+    // 0.25 x 0.1903 at the top) + a 0.03 armor stand-off - the first
+    // pass reverse-measured a POSE and caught the idle forearm
+    // crossing the chest (0.454 'depth', 2.2x authored) plus the
+    // deltoid caps; authored geometry is the ground truth. The shell
+    // shifts to the chest centre in rig space so the BODY matrix
+    // draws both. Steel resolve for the review shot; dye is a
+    // parameter, not a bake.
     let pieceMesh = null;
     if (opts.piece) {
       const tpl = getTemplate(opts.piece);
@@ -141,8 +145,8 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       const t = await getTexture(archive);
       const rec = resolvePaperdollRecord(tpl, armorVariant(opts.piece, MATERIAL_FAMILY.Plate, 1));
       const bmp = t.getDFBitmap(rec, 0);
-      const shell = shellFromSprite(bmp, { radiusX: 0.332, radiusZ: 0.484, height: 0.62, arc: Math.PI * 0.9 });
-      const CENTER_Y = (1.518 + 0.941) / 2 + 0.02;
+      const shell = shellFromSprite(bmp, { radiusX: 0.28, radiusZ: 0.22, height: 0.52, arc: Math.PI * 0.9 });
+      const CENTER_Y = (1.4 + 0.92) / 2; // authored chest span centre
       for (const f of shell) for (let i = 1; i < 12; i += 3) f.p[i] += CENTER_Y;
       const rgb = resolvePiece(shell, DYE_COLORS.Steel, DYE_TARGETS.WeaponsAndArmor, palette, applyDyeToIndex);
       pieceMesh = renderer.createCharacterMesh(packCharacterFaces(rgb));

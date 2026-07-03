@@ -141,14 +141,17 @@ captured frame.
 
 `&piece=<template>` (default 102) on the ?voxelfolk harness hangs the
 1:1 sprite-shell on the rig: the plate cuirass (human male 251, plate
-row 1) built at MEASURED fit - the bare rig's torso band is chest
-half-extents 0.302 x 0.454 over span 0.941-1.518, shell at +0.03
-stand-off (radius 0.332 x 0.484, height 0.62), shifted to the torso
-centre in rig space so the BODY matrix draws both. Steel resolve for
-the review shot; dye is a parameter. dataPipeline now exposes the
-palette (committed, needed for per-face resolve). In-engine proof:
-TVRNAL06 patron wearing the classic cuirass, pin unchanged
-(`2 people`). This render is the DECIDE-C1 review shot.
+row 1). FIT LESSON (Mac: "doesn't properly seat"): the first pass
+reverse-measured a POSE - the idle forearm crossing the chest
+inflated depth to 0.454 (2.2x) and the deltoid caps inflated width;
+poses are not bodies. Fit now comes from the rig's AUTHORED chest
+prism (y 0.92-1.4, tapering to 0.25 x 0.1903 halves) + 0.03
+stand-off: shell radius 0.28 x 0.22, height 0.52, centred at 1.16,
+shifted in rig space so the BODY matrix draws both. Known pose
+interaction: the idle crossing forearm clips the shell front -
+C7's viewport pose is neutral and does not cross. Steel resolve for
+the review shot; dye is a parameter. dataPipeline exposes the
+palette. In-engine proof: TVRNAL06 patron, pin unchanged.
 
 ### C6b - the 1:1 piece method (SHIPPED)
 
