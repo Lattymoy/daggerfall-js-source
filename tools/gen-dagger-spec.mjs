@@ -32,9 +32,17 @@ if (kneeClamped) kneeFrac = 0.53;
 
 const headScale = +(R.headW / 0.214).toFixed(4);
 const headLift = +(R.headTopY - 1.62 - 0.28 * headScale).toFixed(4);
-const armReach = R.shoulderY - 0.01 - R.wristY;
-const armSum = +(armReach * 1.04).toFixed(4); // hanging arms carry a slight bend
-const upper = +(armSum * (0.385 / 0.72)).toFixed(4);
+// Arm skeleton from the measured BARS (the split-band arm runs):
+// joint under the deltoid, elbow at the merge boundary between the
+// upper band (right arm visible) and forearm band (left arm visible),
+// wrist at the left bar's bottom. Classic's forearm is LONGER than
+// its upper arm - the elbow rides high.
+const AB = M.armBars;
+const shoulderJx = +(((Math.abs(AB.left.cxTop) + Math.abs(AB.right.cxTop)) / 2 - 0.02)).toFixed(4);
+const shoulderJy = +(R.armpitY - 0.02).toFixed(4);
+const elbowY = +(((AB.right.yBot + AB.left.yTop) / 2)).toFixed(4);
+const upper = +((shoulderJy - elbowY)).toFixed(4);
+const fore = +Math.hypot(Math.abs(AB.left.cxBot) - shoulderJx, elbowY - AB.left.yBot).toFixed(4);
 
 const spec = {
   pelvis: {
@@ -62,10 +70,10 @@ const spec = {
   },
   head: { scale: headScale, lift: headLift },
   arm: {
-    shoulderX: +(R.shoulderHalfSpan - 0.0945 - 0.02).toFixed(4), shoulderY: +(R.shoulderY - 0.01).toFixed(4),
-    upper, fore: +(armSum - upper).toFixed(4), r: +((R.armW / 2) / 0.076).toFixed(4),
+    shoulderX: shoulderJx, shoulderY: shoulderJy,
+    upper, fore, r: +((AB.right.halfW) / 0.076).toFixed(4), rFore: +((AB.left.halfW) / 0.073).toFixed(4),
   },
-  handScale: 1,
+  handScale: 2.2, // fit against the silhouette gate: the classic fist is 14px on a 10px forearm (chunky pixel-art hands); peak of the sweep 1.3-2.3
   foot: { ankleH: 0.05, footL: 0.16 },
   torsoRows: rows,
   // Exact single-run rows: hair + traps + deltoid mass fused, per the

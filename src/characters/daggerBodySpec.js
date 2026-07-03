@@ -64,13 +64,14 @@ export const DAGGER_SPEC = {
   'lift': -0.0168
  },
  'arm': {
-  'shoulderX': 0.2368,
-  'shoulderY': 1.4812,
-  'upper': 0.2745,
-  'fore': 0.2389,
-  'r': 0.9296
+  'shoulderX': 0.3014,
+  'shoulderY': 1.458,
+  'upper': 0.1789,
+  'fore': 0.2978,
+  'r': 1.0461,
+  'rFore': 0.9082
  },
- 'handScale': 1,
+ 'handScale': 2.2,
  'foot': {
   'ankleH': 0.05,
   'footL': 0.16

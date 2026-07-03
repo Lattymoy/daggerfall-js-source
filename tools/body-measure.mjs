@@ -171,6 +171,34 @@ const calfW = Math.max(...legs.weight.slice(kneeIdx).map((l) => l.w));
 // Wrist: the last split-arm row.
 const wristRow = armW.length ? Math.max(...armW.map((a) => a.y)) : armpit;
 
+// Arm BARS: per split band, the arm run's centre line + median width
+// (the mean over all rows dilutes with thin wrist rows - the bar is
+// what the silhouette shows). Sides keyed by image side of centre.
+const bars = { left: [], right: [] };
+for (const a of armW) {
+  // find the arm run at this row again for its centre
+  const r = rows[a.y];
+  for (const run of r) {
+    if (width(run) === a.w && (run[0] < 15 || run[1] > W - 15)) {
+      (mid(run) < W / 2 ? bars.left : bars.right).push({ y: a.y, cx: mid(run), w: a.w });
+    }
+  }
+}
+const barStats = (b) => {
+  if (b.length < 4) return null;
+  b.sort((p, q) => p.y - q.y);
+  const ws = b.map((r) => r.w).sort((p, q) => p - q);
+  const medianW = ws[(ws.length / 2) | 0];
+  const top = b[0], bot = b[b.length - 1];
+  return {
+    yTop: yRig(top.y), yBot: yRig(bot.y),
+    cxTop: +(((top.cx - headCx)) * u).toFixed(4),
+    cxBot: +(((bot.cx - headCx)) * u).toFixed(4),
+    halfW: +((medianW / 2) * u).toFixed(4),
+  };
+};
+const armBars = { left: barStats(bars.left), right: barStats(bars.right) };
+
 // Head/hair/shoulder mass: rows above the armpit are SINGLE-RUN -
 // the silhouette there is exact (hair + traps + deltoids fused).
 const hairRows = [];
@@ -194,5 +222,6 @@ const out = {
   },
   torsoProfile: torso,
   hairRows,
+  armBars,
 };
 console.log(JSON.stringify(out, null, 1));

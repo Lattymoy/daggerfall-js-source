@@ -137,6 +137,30 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6k iteration 3 (SHIPPED): the arms are ASYMMETRIC - fit as data
+
+Mac: arms/hands are the weakest link - really focus. The data ended
+the corner-lock mystery: the classic paperdoll arms are CONTRAPPOSTO-
+ASYMMETRIC - the image-left arm hangs slack on a flaring bar (centre
+-0.30 -> -0.36, wrist at row 70) while the image-right elbows out at
++0.34 and tucks the forearm against the hip - so no mirrored target
+can express them, and the old 0.7927 "optimum" literally HID the thin
+arms inside the torso silhouette (great metric, armless figure).
+Landed: (1) per-arm paperdoll overrides armL/armR {x,y,z,curl,poleX}
+at the TRUE armsDown site - which exposed and reverted my earlier
+armPoleX plumb that had pattern-matched the blade-guard combat call
+(wrong site; the no-op fitter axis was the tell); (2) armBars
+measurement (per split band: centre line + MEDIAN width - the mean
+diluted with wrist rows); (3) the arm skeleton regenerated from the
+bars: joint 0.3014/1.458, elbow rides HIGH at 1.28 so classic's
+forearm (0.298) is LONGER than its upper arm (0.179) - inverse of
+Voxlight - with per-segment radii (r 1.046 upper, rFore 0.908, a new
+upstream seam); (4) handScale fit 2.2 - the classic fist is 14px on a
+10px forearm. Result 0.7919 with arms VISIBLE on their bars: lower
+torso 0.70 -> 0.82 (miss 259 -> 35), upper torso 0.87. Fist overhang
+below row 70 shows as leg-zone excess (0.76) - the fitter's optimum,
+named. Truth over metric: the armless 0.7927 is dead.
+
 ### C6k iteration 2 (SHIPPED): hair mass, arm/foot knobs, IoU 0.79
 
 Mac: pose off, neck/head unaccounted, upper torso wrong - iterate to

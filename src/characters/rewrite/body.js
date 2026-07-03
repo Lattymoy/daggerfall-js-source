@@ -177,7 +177,7 @@ function armToGrip(out, side, gripWrist, axis, fwd, wrapSign, curl, mirror, pole
   rseg(out, mad(S, [0, 1, 0], -0.02), mad(S, armDir, 0.16), Z, 0.036 * ar, 0.05 * ar, 0.0475 * ar, 0.04 * ar, 8, SK);
   rseg(out, S, elbow, Z, 0.076 * ar, 0.0707 * ar, 0.068 * ar, 0.0639 * ar, 8, SK);
   rseg(out, mad(elbow, [0, 1, 0], -0.04), mad(elbow, [0, 1, 0], 0.04), Z, 0.07 * ar, 0.07 * ar, 0.07 * ar, 0.07 * ar, 9, SK);
-  forearm(out, elbow, wrist, 0.073 * ar, 0.038 * ar, SK, SKD);
+  forearm(out, elbow, wrist, 0.073 * (AR.rFore ?? ar), 0.038 * (AR.rFore ?? ar), SK, SKD); // classic forearm is thinner than its upper arm
   hand(out, { axis, fwd, wrist, wrapSign, mirror, size, curl, curlMul: fg.curlMul, fingerSpread: fg.spread, fingerLen: fg.len, thumbCurl: fg.tcurl, thumbSpread: fg.tspread, color: SK, colorL: SKL, colorM: SKM, colorD: SKD });
   return { shoulder: S, elbow, wrist }; // chest-local joints, for armor
 }
@@ -198,7 +198,7 @@ function relicArms(out, wbX, wbY, ramp) {
     const readyA = [side * 0.45, 0.74, 0.32], guardA = [side * 0.2, -0.55, 0.78];
     const a = norm([lp(guardA[0], readyA[0], raise), lp(guardA[1], readyA[1], raise) + pop, lp(guardA[2], readyA[2], raise)]);
     const w = norm(cross(a, [0, 0, 1])), f = cross(a, w);
-    const j = armToGrip(out, side, W, a, [0, 0, 1], side, 0.92, side > 0, [side * (B.paperdoll?.armPoleX ?? 0.85), -0.55, 0.35], B.rHandSize, fg, ramp); // armPoleX: the elbow-bow knob (parallel session)
+    const j = armToGrip(out, side, W, a, [0, 0, 1], side, 0.92, side > 0, [side * 0.85, -0.55, 0.35], B.rHandSize, fg, ramp);
     const Rd = (p) => [w[0] * p[0] + f[0] * p[1] + a[0] * p[2], w[1] * p[0] + f[1] * p[1] + a[1] * p[2], w[2] * p[0] + f[2] * p[1] + a[2] * p[2]];
     let dagF = xformFaces(dag, Rd, mad(W, a, 0.03));
     if (matr < 1) dagF = PLUGS.death.crystalDeathFaces(dagF, 1 - matr); // reversed shatter -> assembled blade
@@ -279,8 +279,9 @@ function armsDown(out, ramp) {
       wy += (rg.recoilRise != null ? rg.recoilRise : 0.05) * rr; // muzzle climbs
       wz -= (rg.recoilKick != null ? rg.recoilKick : 0.09) * rr; // hand kicks back toward the shoulder
     }
-    const wrist = [side * ax + jx, wy, wz];
-    const r = armToGrip(out, side, wrist, [side, 0, 0.1], [0, -1, 0.05], side > 0 ? 1 : -1, cu, side > 0, [side * 0.3, -0.4, -0.55], 0.25, { curlMul: 0.5, spread: 0.5, len: 0.6, tcurl: 0.5, tspread: 0.45 }, ramp);
+    const po = B.paperdoll ? (side > 0 ? B.paperdoll.armR : B.paperdoll.armL) || {} : {}; // per-arm overrides: the classic paperdoll arms are ASYMMETRIC (contrapposto)
+    const wrist = [side * (po.x ?? ax) + jx, po.y ?? wy, po.z ?? wz];
+    const r = armToGrip(out, side, wrist, [side, 0, 0.1], [0, -1, 0.05], side > 0 ? 1 : -1, po.curl ?? cu, side > 0, [side * (po.poleX ?? 0.3), -0.4, -0.55], 0.25, { curlMul: 0.5, spread: 0.5, len: 0.6, tcurl: 0.5, tspread: 0.45 }, ramp);
     j.push({ side, ...r });
   }
   return j;
