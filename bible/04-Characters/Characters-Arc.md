@@ -137,7 +137,18 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
-### C6L - Mac shades it (SHIPPED): the hand-paint pipeline
+### C6L - Mac shades it (SHIPPED): the hand-paint pipeline + tuner
+
+The tuner: `?world&play&voxelfolk&paint` mounts an in-browser sheet
+editor next to the live figure - ART_PAL swatches (index 0 = erase-
+to-classic), eyedrop, undo (24), export/load PNG, localStorage
+autosave (survives reloads; 'clear saved' resets to starters), 6x
+pixel canvas with front/back tabs. Strokes outside the silhouette are
+ignored; every stroke-end rebuilds the character mesh in place
+(destroyMesh on the old one) so the figure updates live - walk behind
+it to check the back. Probed: plot lands, mask guards, autosave
+persists. The paint flag plumbs world -> modes host -> interior opts.
+
 
 Mac's idea, and the true in-house answer: HE is the artist. Two
 paintable sheets in classic sprite space at 1x (69x145, the doctrine

@@ -390,6 +390,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
     voxelfolk: params.has('voxelfolk'),
+    paint: params.has('paint'),
     piece: params.has('piece') ? Number(params.get('piece') || 102) || 102 : 0,
     pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette },
     doorTargets: () => buildingDoors.map((e) => ({

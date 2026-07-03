@@ -174,7 +174,23 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
         return c2.getImageData(0, 0, bm.width, bm.height);
       } catch { return null; }
     };
-    const [sheetF, sheetB] = await Promise.all([loadSheet('body-front.png'), loadSheet('body-back.png')]);
+    const restore = (name) => new Promise((res) => {
+      const d = opts.paint ? localStorage.getItem(`paint-${name}`) : null;
+      if (!d) return res(null);
+      const im = new Image();
+      im.onload = () => {
+        const cvv = new OffscreenCanvas(im.width, im.height);
+        const c2 = cvv.getContext('2d');
+        c2.drawImage(im, 0, 0);
+        res(c2.getImageData(0, 0, im.width, im.height));
+      };
+      im.onerror = () => res(null);
+      im.src = d;
+    });
+    const [sheetF, sheetB] = await Promise.all([
+      restore('front').then((r) => r || loadSheet('body-front.png')),
+      restore('back').then((r) => r || loadSheet('body-back.png')),
+    ]);
     const paint = (sheet, col, row, mirror) => {
       if (!sheet) return null;
       const x = mirror ? W - 1 - col : col;
@@ -182,7 +198,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       const o = (row * sheet.width + x) * 4;
       return sheet.data[o + 3] > 0 ? [sheet.data[o], sheet.data[o + 1], sheet.data[o + 2]] : null;
     };
-    const rgb = faces.map((f) => {
+    const buildRgb = () => faces.map((f) => {
       let cx = 0, cy = 0; const np = f.p.length / 3;
       for (let i = 0; i < np; i++) { cx += f.p[i * 3]; cy += f.p[i * 3 + 1]; }
       const col = Math.max(0, Math.min(W - 1, Math.round((W - 1) / 2 + (cx / np) / u)));
@@ -193,11 +209,31 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       const c = idx ? palette.get(idx) : { r: 40, g: 36, b: 34 };
       return { p: f.p, n: f.n, c: [c.r, c.g, c.b] };
     });
-    const mesh = renderer.createCharacterMesh(packCharacterFaces(rgb));
+    let mesh = renderer.createCharacterMesh(packCharacterFaces(buildRgb()));
     const CLASSIC_HEIGHT = 1.8;
     const sc = CLASSIC_HEIGHT / (b.maxY - b.minY);
+    const bodyEntries = [];
     for (const pn of people) {
-      charDraws.push({ mesh, matrix: trs(pn.x, pn.y - b.minY * sc, pn.z, 0, 0, 0, sc, sc, sc) });
+      const entry = { mesh, matrix: trs(pn.x, pn.y - b.minY * sc, pn.z, 0, 0, 0, sc, sc, sc) };
+      bodyEntries.push(entry);
+      charDraws.push(entry);
+    }
+    if (opts.paint && sheetF && sheetB) {
+      // Silhouette masks: front = the sprite mask; back = mirrored.
+      const masks = { front: new Uint8Array(W * H), back: new Uint8Array(W * H) };
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        masks.front[y * W + x] = bodyBmp.data[y * W + x] ? 1 : 0;
+        masks.back[y * W + x] = bodyBmp.data[y * W + (W - 1 - x)] ? 1 : 0;
+      }
+      const rebuild = () => {
+        const next = renderer.createCharacterMesh(packCharacterFaces(buildRgb()));
+        const dead = mesh;
+        mesh = next;
+        for (const e of bodyEntries) e.mesh = next;
+        renderer.destroyMesh(dead);
+      };
+      const { mountPaintOverlay } = await import('./paintOverlay.js');
+      mountPaintOverlay({ sheets: { front: sheetF, back: sheetB }, masks, W, H, rebuild }, palette);
     }
   } else {
     for (const pn of people) {
