@@ -24,15 +24,15 @@ import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
 import { LADDER_MODEL_ID } from '../player/enterExit.js';
 import { collectInteriorPeople } from '../characters/interiorPeople.js';
-import { buildBody, BARE_PLUGS } from '../characters/rewrite/body.js';
-import { packCharacterFaces, facesBounds } from '../render/characterMesh.js';
+import { packCharacterFaces } from '../render/characterMesh.js';
 import { trs } from '../world/mat4.js';
-import { shellFromSprite, resolvePiece } from '../characters/pieceFromSprite.js';
+import { resolvePiece } from '../characters/pieceFromSprite.js';
+import { reliefFromSprite } from '../characters/spriteRelief.js';
 import { getTemplate } from '../characters/paperdoll.js';
 import { resolvePaperdollRecord, armorArchive, armorVariant, MATERIAL_FAMILY } from '../characters/paperdollArt.js';
 import { DYE_COLORS, DYE_TARGETS, applyDyeToIndex } from '../characters/dyes.js';
-import { DAGGER_SPEC } from '../characters/daggerBodySpec.js';
-import { torsoProfile } from '../characters/rewrite/bodySpec.js';
+import { ImgFile } from '../formats/imgFile.js';
+import { fetchBytes } from './shared.js';
 import { ActionSystem } from '../world/actionSystem.js';
 
 /**
@@ -125,48 +125,41 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const billboardBatches = [];
   const flatGroups = new Map();
   if (opts.voxelfolk && people.length) {
-    // Paperdoll stance: weapon 'none' hangs the arms (kills the C6c
-    // forearm clip); s.paperdoll plants the classic contrapposto.
-    const faces = buildBody({ loco: 'stand', hold: 'idle', phase: 0, weapon: 'none', paperdoll: {} }, BARE_PLUGS, DAGGER_SPEC);
-    const mesh = renderer.createCharacterMesh(packCharacterFaces(faces));
-    const b = facesBounds(faces);
-    const CLASSIC_HEIGHT = 1.8;
-    const sc = CLASSIC_HEIGHT / (b.maxY - b.minY);
-    // C6c: &piece=<template> hangs the 1:1 sprite-shell piece on the
-    // rig. Fit constants come from the rig's AUTHORED chest prism
-    // (body.js line ~158: y 0.92-1.4, half-extents tapering to
-    // 0.25 x 0.1903 at the top) + a 0.03 armor stand-off - the first
-    // pass reverse-measured a POSE and caught the idle forearm
-    // crossing the chest (0.454 'depth', 2.2x authored) plus the
-    // deltoid caps; authored geometry is the ground truth. The shell
-    // shifts to the chest centre in rig space so the BODY matrix
-    // draws both. Steel resolve for the review shot; dye is a
-    // parameter, not a bake.
-    let pieceMesh = null;
+    // C6 REDESIGN: the body IS the classic paperdoll body - BODY00I0's
+    // pixels as a front relief in canvas space, and the piece is the
+    // SAME construction at ITS classic offset (+1.5px stand-off).
+    // Seating is arithmetic on the art's own offsets; one uniform
+    // matrix scales canvas pixels to world (1.8 over the body height).
+    const bodyImg = new ImgFile();
+    bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
+    const bodyBmp = bodyImg.getDFBitmap();
+    const bodyOff = bodyImg.imageOffset;
+    const canvas = { canvasH: 200 };
+    const bodyFaces = reliefFromSprite(bodyBmp, { offsetX: bodyOff.x, offsetY: bodyOff.y, ...canvas });
+    const bodyRgb = bodyFaces.map((f) => {
+      const c = palette.get(f.idx);
+      return { p: f.p, n: f.n, c: [c.r, c.g, c.b] };
+    });
+    const drawsForPerson = [renderer.createCharacterMesh(packCharacterFaces(bodyRgb))];
     if (opts.piece) {
       const tpl = getTemplate(opts.piece);
-      const archive = armorArchive('male', 'Breton');
-      const t = await getTexture(archive);
+      const t = await getTexture(armorArchive('male', 'Breton'));
       const rec = resolvePaperdollRecord(tpl, armorVariant(opts.piece, MATERIAL_FAMILY.Plate, 1));
-      const bmp = t.getDFBitmap(rec, 0);
-      // C6 restructure: the shell inherits the BODY's per-row profile
-      // (torsoProfile over DAGGER_SPEC) + one 0.03 stand-off - no
-      // fixed radii, no centre shift; sprite rows land in absolute
-      // rig space across the chest span.
-      const STANDOFF = 0.03;
-      const shell = shellFromSprite(bmp, {
-        profile: (y) => { const r = torsoProfile(DAGGER_SPEC, y); return { rx: r.rx + STANDOFF, rz: r.rz + STANDOFF }; },
-        yTop: DAGGER_SPEC.chest.y1 + 0.02,
-        yBottom: DAGGER_SPEC.pelvis.y0,
-        arc: Math.PI * 0.9,
-      });
-      const rgb = resolvePiece(shell, DYE_COLORS.Steel, DYE_TARGETS.WeaponsAndArmor, palette, applyDyeToIndex);
-      pieceMesh = renderer.createCharacterMesh(packCharacterFaces(rgb));
+      const pieceOff = t.getOffset(rec);
+      const pieceFaces = reliefFromSprite(t.getDFBitmap(rec, 0),
+        { offsetX: pieceOff.x, offsetY: pieceOff.y, zBias: 1.5, ...canvas });
+      const rgb = resolvePiece(pieceFaces, DYE_COLORS.Steel, DYE_TARGETS.WeaponsAndArmor, palette, applyDyeToIndex);
+      drawsForPerson.push(renderer.createCharacterMesh(packCharacterFaces(rgb)));
     }
+    // Canvas -> world: uniform scale, body feet on the billboard base,
+    // body centre-x at the person.
+    const CLASSIC_HEIGHT = 1.8;
+    const sc = CLASSIC_HEIGHT / bodyBmp.height;
+    const feetY = 200 - (bodyOff.y + bodyBmp.height);
+    const centerX = bodyOff.x + bodyBmp.width / 2;
     for (const pn of people) {
-      const matrix = trs(pn.x, pn.y - b.minY * sc, pn.z, 0, 0, 0, sc, sc, sc);
-      charDraws.push({ mesh, matrix });
-      if (pieceMesh) charDraws.push({ mesh: pieceMesh, matrix });
+      const matrix = trs(pn.x - centerX * sc, pn.y - feetY * sc, pn.z, 0, 0, 0, sc, sc, sc);
+      for (const mesh of drawsForPerson) charDraws.push({ mesh, matrix });
     }
   } else {
     for (const pn of people) {

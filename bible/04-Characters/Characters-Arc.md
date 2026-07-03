@@ -137,6 +137,27 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6f - THE REDESIGN: the body IS the classic body (SHIPPED)
+
+Mac's correction, taken at the root: C6c-e were increments on the
+Voxlight soldier (spec numbers, a pose knob) - not the redesign. The
+redesign: the SAME 1:1 method that builds pieces builds the BODY.
+`spriteRelief.js` - every classic paperdoll image becomes a front
+relief in the SHARED 320x200 canvas space it was authored for (DFU
+blits body and items each at their own screen offset into one target):
+exact-x construction (each opaque pixel's quad IS its canvas pixel, so
+the front witness is arithmetic identity), per-run half-ellipse depth
+(corners shared -> watertight; DEPTH_RATIO is the one documented
+front-view assumption), raw palette indices. Proofs: the whole
+BODY00I0 round-trips (face count == opaque pixels, projection ==
+sprite) and the offsets pin (body 222,41 / cuirass 237,44 - the piece
+lands inside the body span with ZERO fitting; seating is arithmetic on
+the classic art's own offsets). The harness now draws the relief body
++ relief piece under ONE uniform canvas->world matrix; the Voxlight
+rig exits dagger's paperdoll path (it remains vendored for enemy work,
+C8). Render captured; frame verification pending on my side - Mac has
+the shot.
+
 ### C6e - the paperdoll contrapposto stance (SHIPPED)
 
 Fork step 2 landed upstream (project-final 64a706a): s.paperdoll
