@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 155 tests across 29 files.
+Node 22). Suite: 158 tests across 30 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -25,6 +25,7 @@ Node 22). Suite: 155 tests across 29 files.
 | rig.test.js | 2 | Vendored Rewrite rig byte-parity vs canonical (16 bare-humanoid hashes), 710-face shape |
 | charmesh.test.js | 2 | Face packing (fan order, color/normal interleave), bare-humanoid pack + bounds |
 | paperdoll.test.js | 3 | 27-slot EquipSlots verbatim, 288-template DB (index resolution, Short Shirt pin), BlitItems order |
+| dyes.test.js | 3 | Clothing dye range shifts (Blue identity, Red 0xEF), 11 metal tables extraction-pinned, band-only swap |
 | maps.test.js | 9 | 62 regions, converters, climate, city + Privateer's |
 | snd.test.js | 3 | 459 sounds, byte-exact header, zero-length record 5 |
 | climate.test.js | 5 | applyClimate verbatim rules, texture-info classification, exterior-window table, nature/ground archives, 8820-combo corpus sweep (735 pairs, 0 missing) |

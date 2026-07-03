@@ -137,6 +137,18 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C5b - dye + material tint tables (SHIPPED)
+
+`dyes.js`: the classic tint mechanism verbatim from ImageProcessing -
+ChangeDye's 16-index band swap (clothing sprites author in 0x60-0x6F,
+weapons/armor in 0x70-0x7F), the ten clothing dyes as pure range
+shifts (Blue identity at 0x60, Red at 0xEF), and the eleven metal
+tables EXTRACTION-GENERATED from GetMetalColorTable. DYE_COLORS
+carries the compatibility aliases at 18 (Chain/Unchanged/Silver).
+C6 pieces author their colors as band indices and resolve through
+applyDyeToIndex + ART_PAL - the variant system IS the classic one.
+Next: C5c GetEquipSlot assignment rules.
+
 ### C5a - paperdoll data spine (SHIPPED)
 
 `paperdoll.js`: the 27-slot EquipSlots table verbatim (ItemEnums), and
