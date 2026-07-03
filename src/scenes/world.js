@@ -10,33 +10,25 @@ import { Arch3dFile } from '../formats/arch3dFile.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
-import { TextureFile } from '../formats/textureFile.js';
 import { WoodsFile } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
-import { applyClimate, getGroundArchive, getNatureArchive, isExteriorWindow, SEASON } from '../world/climateSwaps.js';
+import { applyClimate, getGroundArchive, getNatureArchive, SEASON } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, trs } from '../world/mat4.js';
-import { dfMeshToModel } from '../world/meshReader.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { StreamingWorldState } from '../world/streamingWorld.js';
 import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
-import { fetchBytes, texName, parseSeason, createSkyController } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { getStaticDoors } from '../world/staticDoors.js';
-import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder } from '../player/enterExit.js';
-import { INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { pickActivatable } from '../player/activate.js';
-import { buildInteriorContext } from './interiorContext.js';
-import { buildDungeonContext } from './dungeonContext.js';
-import { DOOR_TYPE } from '../world/meshReader.js';
-import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
-import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE } from '../world/interiorLights.js';
 import { Collider } from '../player/collider.js';
+import { createDataPipeline } from './dataPipeline.js';
+import { createWorldModes } from './worldModes.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -120,53 +112,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     params.has('window') ? params.get('window') === 'night' : isCityLightsOn(minute);
   const worldLightAnimator = new CityLightAnimator(4096, CITY_LIGHT_RANGE);
 
-  // --- Shared caches ---------------------------------------------------
-  const textureFiles = new Map();
-  const texturePromises = new Map();
-  async function getTexture(archive) {
-    if (textureFiles.has(archive)) return textureFiles.get(archive);
-    if (!texturePromises.has(archive)) {
-      texturePromises.set(archive, (async () => {
-        const t = new TextureFile();
-        t.load(await fetchBytes(texName(archive)), texName(archive), palette);
-        textureFiles.set(archive, t);
-        return t;
-      })());
-    }
-    return texturePromises.get(archive);
-  }
-  const getTextureSize = (archive, record) => {
-    const t = textureFiles.get(archive);
-    return { width: t.getWidth(record), height: t.getHeight(record) };
-  };
-  const uploadRecord = (archive, record) => {
-    const t = textureFiles.get(archive);
-    const bitmap = t.getDFBitmap(record, 0);
-    renderer.uploadTexture(archive, record, t.getColor32(bitmap, 0));
-    // Exterior windows also get their emission mask (R2, MaterialReader
-    // semantics: glass texels glow with the active window style).
-    if (isExteriorWindow(archive, record)) {
-      renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap));
-    }
-  };
-  const gpuMeshes = new Map(); // shared across pixels, never destroyed
-  const cpuModels = new Map(); // id -> {positions, indices} for the collider
-  async function getGpuMesh(modelIdNum) {
-    if (gpuMeshes.has(modelIdNum)) return gpuMeshes.get(modelIdNum);
-    const index = arch.getRecordIndex(modelIdNum);
-    if (index === -1) {
-      gpuMeshes.set(modelIdNum, null);
-      return null;
-    }
-    const dfMesh = arch.getMesh(index);
-    for (const sm of dfMesh.subMeshes) await getTexture(sm.textureArchive);
-    const model = dfMeshToModel(dfMesh, getTextureSize);
-    for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
-    const gpu = renderer.createMesh(model);
-    cpuModels.set(modelIdNum, { positions: model.positions, indices: model.indices, subMeshes: model.subMeshes, doors: model.doors });
-    gpuMeshes.set(modelIdNum, gpu);
-    return gpu;
-  }
+  // --- Shared caches (dataPipeline.js, extracted at P7) -----------------
+  const pipeline = createDataPipeline({ renderer, arch, palette });
+  const { getTexture, uploadRecord, getGpuMesh, cpuModels } = pipeline;
 
   // --- Per-pixel build --------------------------------------------------
   const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
@@ -360,7 +308,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   const startKey = `${startPixel.x},${startPixel.y}`;
   const player = new PlayerMotor(collider);
   let playerSpawned = false;
-  let prevJump = false;
+  // Edge-detect latch shared with the mode machine: a held key must not
+  // re-trigger across a mode switch.
+  const latch = { jump: false, use: false };
   if (playerPixel.location) {
     const tilePos = getLocationTerrainTileOrigin(startLoc);
     const extentZ = startLoc.exterior.exteriorData.height * RMB_SIDE;
@@ -423,57 +373,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       get pos() { return [...player.pos]; },
       warp: (x, y, z) => { player.spawn(x, y, z); playerSpawned = true; },
     };
-    window.__doors = () => buildingDoors.map((e, i) => {
-      const d = shiftedDoor(e);
-      return { i, pos: doorWorldPosition(d), normal: doorWorldNormal(d), record: e.recordIndex, block: e.dfBlock.name, type: e.door.doorType };
-    });
-    window.__enter = () => tryEnter();
-    window.__exit = () => tryExit();
-    window.__dungeon = () => dungeonCtx ? JSON.stringify({
-      exits: dungeonCtx.exitDoors.map((d) => ({ pos: doorWorldPosition(d).map((v) => +v.toFixed(2)), normal: doorWorldNormal(d).map((v) => +v.toFixed(3)) })),
-      actions: dungeonCtx.actions.objects.size,
-    }) : null;
-    window.__dungeonExit = () => tryExitDungeon();
-    window.__pickInterior = () => {
-      if (!interiorCtx) return null;
-      const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-      const rows = [];
-      interiorCtx.ladders.forEach((l, i) => {
-        const aabb = interiorDoorAabb(l);
-        rows.push({ key: `ladder:${i}`, aabb: aabb.min.map((v) => +v.toFixed(2)).concat(aabb.max.map((v) => +v.toFixed(2))), hit: rayAabbProbe(player.eye, dir, aabb) });
-      });
-      return JSON.stringify({ eye: player.eye.map((v) => +v.toFixed(2)), dir: dir.map((v) => +v.toFixed(2)), occluder: +interiorCtx.collider.raycast(player.eye, dir, 50).toFixed(2), rows });
-    };
-    window.__markers = () => interiorCtx ? JSON.stringify(interiorCtx.markers.filter((m) => m.type === 21 || m.type === 22).map((m) => ({ t: m.type, x: +m.x.toFixed(2), y: +m.y.toFixed(2), z: +m.z.toFixed(2) }))) : null;
-    window.__ladders = () => interiorCtx ? JSON.stringify(interiorCtx.ladders.map((l) => ({ x: +l.matrix[12].toFixed(2), y: +l.matrix[13].toFixed(2), z: +l.matrix[14].toFixed(2) }))) : null;
-    window.__interiorActions = () => interiorCtx ? JSON.stringify(
-      [...interiorCtx.actions.objects.values()].map((o) => ({ key: o.key, state: o.state, pos: [o.matrix[12], o.matrix[13], o.matrix[14]].map((v) => +v.toFixed(2)), fwd: [o.matrix[8], o.matrix[9], o.matrix[10]].map((v) => +v.toFixed(3)) }))) : null;
-    window.__interiorActivate = (k) => interiorCtx.actions.activate(k);
-    window.__interiorRay = () => {
-      const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-      return interiorCtx.collider.raycast(player.eye, dir, 50);
-    };
-    window.__mode = () => mode;
     window.__frame = 0;
   }
 
-  // P3: interior transitions. mode swaps the whole frame pipeline;
-  // exitDoors are the entered building's exterior doors (pixel-local,
-  // shifted live for the landing math on the way out).
-  const INTERIOR_LIGHT_DIR = new Float32Array([0.45, 0.8, 0.35]);
-  {
-    const l = Math.hypot(INTERIOR_LIGHT_DIR[0], INTERIOR_LIGHT_DIR[1], INTERIOR_LIGHT_DIR[2]);
-    INTERIOR_LIGHT_DIR[0] /= l; INTERIOR_LIGHT_DIR[1] /= l; INTERIOR_LIGHT_DIR[2] /= l;
-  }
-  // Dungeon water surface (R11 values, mirroring the dungeon scene).
-  const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
-  const DUNGEON_WATER_SCROLL = 0.05;
-  let mode = 'exterior';
-  let interiorCtx = null;
-  let exitReturn = null;
-  let prevUse = false;
-  let transitioning = false;
-
+  // P3-P6 mode machine (worldModes.js, extracted at P7): the frame
+  // pipeline swaps to a built interior/dungeon context and back.
+  // Doors are stored pixel-local and shifted through the LIVE
+  // floating-origin translation for the machine's world-space math
+  // (translations freeze while a mode is active - the modal frame
+  // returns before the streaming step).
   const shiftedDoor = (entry) => {
     const [px, py] = entry.pixelKey.split(',').map(Number);
     const t = state.pixelTranslation(px, py);
@@ -484,189 +392,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     matrix[14] = m[14] + t[2];
     return { ...entry.door, matrix };
   };
-
-  async function tryEnter() {
-    const eye = player.eye;
-    const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-    const targets = buildingDoors.map((entry, i) => ({
-      key: i, aabb: doorWorldAabb(shiftedDoor(entry)),
-    }));
-    const key = pickActivatable(eye, dir, targets, collider);
-    if (key === null) return false;
-    const hit = buildingDoors[key];
-    // Route by verbatim door type: buildings to interiors, dungeon
-    // entrances into the RDB crawl.
-    if (hit.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) return tryEnterDungeon(hit);
-    if (hit.door.doorType !== DOOR_TYPE.BUILDING || hit.recordIndex === undefined) return false;
-    transitioning = true;
-    try {
-      const ctx = await buildInteriorContext(
-        { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord },
-        hit.dfBlock, 0, hit.recordIndex, hit.climateBase, hit.season);
-      const siblings = buildingDoors.filter((e) =>
-        e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
-      const landing = interiorLanding(
-        doorWorldPosition(shiftedDoor(hit)), ctx.enterMarkers, ctx.doors);
-      if (!landing) throw new Error('no interior landing');
-      exitReturn = { siblings };
-      interiorCtx = ctx;
-      player.collider = ctx.collider;
-      player.spawn(landing[0], landing[1], landing[2]);
-      mode = 'interior';
-      console.log(`interior: ${ctx.drawList.length} draws, ${ctx.doors.length} doors, ${ctx.lights.length} lights`);
-    } finally {
-      transitioning = false;
-    }
-    return true;
-  }
-
-  function rayAabbProbe(eye, dir, aabb) {
-    let tMin = 0;
-    let tMax = Infinity;
-    for (let a = 0; a < 3; a++) {
-      if (Math.abs(dir[a]) < 1e-9) {
-        if (eye[a] < aabb.min[a] || eye[a] > aabb.max[a]) return null;
-        continue;
-      }
-      const inv = 1 / dir[a];
-      let t0 = (aabb.min[a] - eye[a]) * inv;
-      let t1 = (aabb.max[a] - eye[a]) * inv;
-      if (t0 > t1) { const sw = t0; t0 = t1; t1 = sw; }
-      if (t0 > tMin) tMin = t0;
-      if (t1 < tMax) tMax = t1;
-      if (tMin > tMax) return null;
-    }
-    return +tMin.toFixed(2);
-  }
-
-  function interiorDoorAabb(o) {
-    let minX = Infinity; let minY = Infinity; let minZ = Infinity;
-    let maxX = -Infinity; let maxY = -Infinity; let maxZ = -Infinity;
-    const pos = o.cpu.positions;
-    const m = o.matrix;
-    for (let i = 0; i < pos.length; i += 3) {
-      const wx = m[0] * pos[i] + m[4] * pos[i + 1] + m[8] * pos[i + 2] + m[12];
-      const wy = m[1] * pos[i] + m[5] * pos[i + 1] + m[9] * pos[i + 2] + m[13];
-      const wz = m[2] * pos[i] + m[6] * pos[i + 1] + m[10] * pos[i + 2] + m[14];
-      if (wx < minX) minX = wx; if (wx > maxX) maxX = wx;
-      if (wy < minY) minY = wy; if (wy > maxY) maxY = wy;
-      if (wz < minZ) minZ = wz; if (wz > maxZ) maxZ = wz;
-    }
-    return { min: [minX, minY, minZ], max: [maxX, maxY, maxZ] };
-  }
-
-  function tryExit() {
-    const eye = player.eye;
-    const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-    // Exit doors and interior swing doors share the E ray; swing doors
-    // use their LIVE matrices via the ActionSystem objects.
-    const targets = interiorCtx.doors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
-    for (const o of interiorCtx.actions.objects.values()) {
-      targets.push({ key: o.key, aabb: interiorDoorAabb(o) });
-    }
-    interiorCtx.ladders.forEach((l, i) => {
-      targets.push({ key: `ladder:${i}`, aabb: interiorDoorAabb(l) });
-    });
-    const key = pickActivatable(eye, dir, targets, interiorCtx.collider);
-    if (key === null) return false;
-    if (key.startsWith('ladder:')) {
-      // Verbatim ClimbLadder: closest markers, below-top -> top,
-      // above-bottom -> bottom.
-      // ClimbLadder compares the CONTROLLER position, which after
-      // FixStanding sits at floor + height * 0.65 = 1.17 (PlayerMotor
-      // repositions to hit + up * (controller.height * 0.65f)) - NOT
-      // the geometric half-height. The teleport target re-floors via
-      // gravity exactly as FixStanding would.
-      const standing = [player.pos[0], player.pos[1] + 1.8 * 0.65, player.pos[2]];
-      const to = climbLadder(standing, interiorCtx.markers, INTERIOR_MARKER);
-      if (to) {
-        // Teleport just ABOVE the marker and let gravity floor it -
-        // FixStanding's re-floor, without tunneling thin boards.
-        player.spawn(to[0], to[1] + 0.1, to[2]);
-        cam.pos = player.eye;
-      }
-      return true;
-    }
-    if (!key.startsWith('exit:')) {
-      interiorCtx.actions.activate(key);
-      return true;
-    }
-    const landing = exteriorLanding(
-      doorWorldPosition(interiorCtx.doors[Number(key.split(':')[1])]),
-      exitReturn.siblings.map(shiftedDoor));
-    interiorCtx.destroy();
-    interiorCtx = null;
-    player.collider = collider;
-    player.spawn(landing[0], landing[1], landing[2]);
-    mode = 'exterior';
-    console.log('exterior: returned at door');
-    return true;
-  }
-
-  let dungeonCtx = null;
-  let dungeonReturn = null; // entrance-door candidates of the pixel
-
-  async function tryEnterDungeon(hit) {
-    const dfLocation = locationIndex.get(hit.pixelKey);
-    if (!dfLocation || !dfLocation.hasDungeon) return false;
-    transitioning = true;
-    try {
-      const ctx = await buildDungeonContext(
-        { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord },
-        dfLocation, blocks, dfLocation.climate.climateType);
-      // Verbatim MovePlayerToMarker: start marker + up * (height * 0.6).
-      const m = ctx.startMarker;
-      dungeonCtx = ctx;
-      // Classic water tile: the location climate's ground archive,
-      // record 0 (R11) - uploaded here since the exterior ground path
-      // never routes single records through uploadRecord.
-      const waterArchive = getGroundArchive(hit.climateBase, hit.season);
-      await getTexture(waterArchive);
-      uploadRecord(waterArchive, 0);
-      dungeonReturn = {
-        waterArchive,
-        candidates: buildingDoors.filter((e) =>
-          e.pixelKey === hit.pixelKey && e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE),
-      };
-      mode = 'dungeon';
-      player.collider = ctx.collider;
-      player.spawn(m.x, m.y + 1.08, m.z);
-      cam.pos = player.eye;
-      console.log(`dungeon: ${ctx.drawList.length} draws, ${ctx.exitDoors.length} exit doors, ` +
-        `${ctx.lights.length} lights, ${ctx.waterQuads.length} water, ${ctx.colliderTris} tris`);
-    } finally {
-      transitioning = false;
-    }
-    return true;
-  }
-
-  function tryExitDungeon() {
-    const eye = player.eye;
-    const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-    const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
-    for (const o of dungeonCtx.actions.objects.values()) {
-      targets.push({ key: o.key, aabb: interiorDoorAabb(o) });
-    }
-    const key = pickActivatable(eye, dir, targets, dungeonCtx.collider);
-    if (key === null) return false;
-    if (!key.startsWith('exit:')) {
-      dungeonCtx.actions.activate(key);
-      return true;
-    }
-    // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
-    const landing = dungeonEntranceLanding(dungeonReturn.candidates.map(shiftedDoor));
-    dungeonCtx.destroy();
-    dungeonCtx = null;
-    mode = 'exterior';
-    player.collider = collider;
-    if (landing) {
-      player.spawn(landing.pos[0], landing.pos[1], landing.pos[2]);
-      cam.yaw = Math.atan2(landing.normal[0], landing.normal[2]);
-    }
-    cam.pos = player.eye;
-    console.log('exterior: returned at dungeon entrance');
-    return true;
-  }
+  const modes = createWorldModes({
+    canvas, renderer, player, cam, keys, latch, blocks,
+    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, arch },
+    doorTargets: () => buildingDoors.map((e) => ({
+      ...e, door: shiftedDoor(e),
+      dfLocation: locationIndex.get(e.pixelKey), group: e.pixelKey,
+    })),
+    baseCollider: () => collider,
+  });
+  if (shotMode) modes.installShotProbes();
 
   let last = performance.now();
   function frame(now) {
@@ -675,74 +410,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
 
-    if (mode === 'dungeon') {
-      const jumpHeld = keys.has('Space');
-      player.update(dt, {
-        forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
-        strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
-        run: keys.has('ShiftLeft'),
-        jump: jumpHeld && !prevJump,
-      }, cam.yaw);
-      prevJump = jumpHeld;
-      cam.pos = player.eye;
-      const useHeld = keys.has('KeyE');
-      if (useHeld && !prevUse) tryExitDungeon();
-      prevUse = useHeld;
-
-      dungeonCtx.actions.update(dt);
-      dungeonCtx.flicker.tick(dt);
-      const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.05, 500);
-      const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
-      renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
-      renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
-      renderer.setPointLights(
-        nearestLights(dungeonCtx.lights, cam.pos, 16, dungeonCtx.flicker.ranges),
-        new Float32Array(DUNGEON_LIGHT_COLOR));
-      renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
-      for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
-      for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
-      const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
-      renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
-      if (dungeonCtx.waterQuads.length) {
-        renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
-          renderer.textures.get(`${dungeonReturn.waterArchive}_0`),
-          (now / 1000) * DUNGEON_WATER_SCROLL);
-      }
-      requestAnimationFrame(frame);
-      return;
-    }
-
-    if (mode === 'interior') {
-      // Whole-pipeline swap: interior draws, lighting, fog, collider;
-      // the world sleeps untouched underneath (the early return also
-      // freezes streaming - the interior-local player position must
-      // never feed the recenter logic).
-      const jumpHeld = keys.has('Space');
-      player.update(dt, {
-        forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
-        strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
-        run: keys.has('ShiftLeft'),
-        jump: jumpHeld && !prevJump,
-      }, cam.yaw);
-      prevJump = jumpHeld;
-      cam.pos = player.eye;
-      const useHeld = keys.has('KeyE');
-      if (useHeld && !prevUse) tryExit();
-      prevUse = useHeld;
-
-      const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.05, 500);
-      const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
-      renderer.setLighting(new Float32Array(INTERIOR_AMBIENT), 0);
-      renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
-      renderer.setPointLights(
-        nearestLights(interiorCtx.lights, cam.pos, 16, INTERIOR_LIGHT_RANGE),
-        new Float32Array(INTERIOR_LIGHT_COLOR));
-      interiorCtx.actions.update(dt);
-      renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
-      for (const d of interiorCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
-      for (const d of interiorCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, interiorCtx.texRemap);
-      const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
-      renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    // Modal frame (worldModes.js): interior/dungeon consume the frame
+    // entirely - the early return also freezes streaming (the
+    // context-local player position must never feed the recenter logic).
+    if (modes.frame(dt, now)) {
       requestAnimationFrame(frame);
       return;
     }
@@ -759,15 +430,15 @@ export async function bootWorld(canvas, renderer, params, status) {
           forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
           strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
           run: keys.has('ShiftLeft'),
-          jump: jumpHeld && !prevJump,
+          jump: jumpHeld && !latch.jump,
         }, cam.yaw);
-        prevJump = jumpHeld;
+        latch.jump = jumpHeld;
         cam.pos = player.eye;
         const useHeld = keys.has('KeyE');
-        if (useHeld && !prevUse && !transitioning) {
-          tryEnter().catch((e) => { transitioning = false; console.error(e); });
+        if (useHeld && !latch.use && !modes.transitioning) {
+          modes.tryEnter().catch((e) => console.error(e));
         }
-        prevUse = useHeld;
+        latch.use = useHeld;
       }
     } else {
       const speed = (keys.has('ShiftLeft') ? 400 : 40) * dt;

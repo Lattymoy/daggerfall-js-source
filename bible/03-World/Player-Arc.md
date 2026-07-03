@@ -178,6 +178,6 @@ Queue (items 1-6 shipped):
 8. Parent interiors in the building world frame - multi-door exit
    selection picks by true world proximity and coordinates go
    seamless.
-9. world.js ceiling: 900 lines (audit; now 865). The interior/dungeon
-   mode machines (~250 lines) extract to a worldModes module when the
-   ceiling trips or at the next consolidation pass, whichever first.
+9. DONE (P7) - the mode machines extracted to scenes/worldModes.js
+   and the lazy texture/mesh caches to scenes/dataPipeline.js;
+   world.js is 536 lines against the 900 ceiling.
