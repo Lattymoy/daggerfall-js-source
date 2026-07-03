@@ -19,6 +19,7 @@ import { collectInteriorLights } from '../world/interiorLights.js';
 import { applyClimate } from '../world/climateSwaps.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
+import { LADDER_MODEL_ID } from '../player/enterExit.js';
 import { ActionSystem } from '../world/actionSystem.js';
 
 /**
@@ -69,11 +70,13 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   }
 
   const drawList = [];
+  const ladders = []; // {cpu, matrix} - verbatim id 41409
   const collider = new Collider(() => -Infinity);
   for (const p of interior.placements) {
     drawList.push({ mesh: await getGpuMesh(p.modelIdNum), matrix: p.matrix });
     const cpu = cpuModels.get(p.modelIdNum);
     collider.addMesh('interior', cpu.positions, cpu.indices, p.matrix);
+    if (p.modelIdNum === LADDER_MODEL_ID) ladders.push({ cpu, matrix: p.matrix });
   }
   // Interior swing doors run on the ActionSystem (P4): the verbatim
   // -90 / 1.5 s toggle with trigger-at-open-start - inner rooms open.
@@ -117,6 +120,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     lights,
     texRemap,
     markers: interior.markers,
+    ladders,
     enterMarkers,
     doors: interior.doors,
     collider,

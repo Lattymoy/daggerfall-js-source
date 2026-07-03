@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   ENTER_DOOR_OFFSET, EXIT_DOOR_OFFSET, MARKER_UP_OFFSET, DUNGEON_EXIT_OFFSET,
   doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding,
-  dungeonEntranceLanding,
+  dungeonEntranceLanding, climbLadder,
 } from '../src/player/enterExit.js';
 import { trs } from '../src/world/mat4.js';
 
@@ -74,4 +74,19 @@ test('enterExit: dungeon exit landing - offset and lowest-door pick', () => {
   approx(landing.pos[1], 1);
   approx(landing.normal[0], 1);
   assert.equal(dungeonEntranceLanding([]), null);
+});
+
+test('enterExit: ladder climb - verbatim marker rules', () => {
+  const M = { LADDER_BOTTOM: 21, LADDER_TOP: 22 };
+  const markers = [
+    { type: 21, x: 0, y: 0.5, z: 0 },
+    { type: 22, x: 0, y: 4.2, z: 0 },
+    { type: 22, x: 30, y: 9, z: 0 }, // a farther top must lose
+  ];
+  // Below the top -> teleports TO the top.
+  assert.deepEqual(climbLadder([0.4, 1.0, 0], markers, M), [0, 4.2, 0]);
+  // Above the bottom (standing at the top) -> teleports to the bottom.
+  assert.deepEqual(climbLadder([0.2, 4.2, 0], markers, M), [0, 0.5, 0]);
+  // No markers -> null.
+  assert.equal(climbLadder([0, 1, 0], [], M), null);
 });

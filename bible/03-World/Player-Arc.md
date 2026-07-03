@@ -141,15 +141,40 @@ door / 71 lights / 8406 tris / 62 action objects (standalone-scene
 parity), and the return trip lands with XZ error 0.000 against
 entrance + normal * 0.45.
 
-Queue (items 1-5 shipped):
+## Milestone P6 - interior ladders (SHIPPED)
+
+Verbatim DaggerfallLadder.ClimbLadder (interior-only upstream, model
+41409): closest LadderTop / LadderBottom markers (types 22 / 21);
+below the top teleports TO the top, else above the bottom teleports to
+the bottom - `climbLadder` in enterExit.js, unit-pinned. TWO frame
+constants were dug out by numeric measurement of a real tavern loft:
+the comparison runs against DFU's STANDING position, floor + height *
+0.65 = 1.17 (PlayerMotor.FixStanding repositions to hit + up * 0.65h,
+NOT the geometric half-height - at BOOKAL02:3 the loft check reads
+2.13 + 1.17 = 3.30 vs marker 3.23, which is the whole ballgame), and
+the teleport lands just ABOVE the marker so gravity re-floors it
+(FixStanding's contract; landing 0.9 under the marker tunneled through
+the loft boards). PICKER FIX benefiting every activatable: an occluder
+hit that lies INSIDE the target's own AABB (+0.15 skin) no longer
+vetoes the pick - thin/diagonal meshes like ladders sit well inside
+their box, so their own surface legitimately lands nearer than the
+AABB entry. interiorContext exposes ladder placements; the interior E
+ray targets doors, swing doors, and ladders together. In-engine proof
+(BOOKAL02:3): ground 0 -> E -> standing ON the ladder head at the top
+marker 3.23 -> E from beside the hatch -> bottom marker 0, exact.
+Registry probe __doors uncapped; __markers / __ladders /
+__pickInterior probes added.
+
+Queue (items 1-6 shipped):
 1. DONE - grounded movement + gravity + collision (P1).
 2. DONE - activation ray + dungeon action doors/chains (P2).
 3. DONE - building interior transitions in ?world (P3).
 4. DONE - interior swing doors on the ActionSystem (P4).
 5. DONE - world <-> dungeon transitions (P5).
-6. Ladders; exterior scene mirrors the transition machine (needs a
-   lazy mesh loader); the standalone dungeon scene folds onto
-   dungeonContext.
-7. Parent interiors in the building world frame - multi-door exit
+6. DONE - interior ladders (P6).
+7. Exterior scene mirrors the transition machine (needs a lazy mesh
+   loader); the standalone dungeon and interior scenes fold onto
+   their contexts.
+8. Parent interiors in the building world frame - multi-door exit
    selection picks by true world proximity and coordinates go
-   seamless; the standalone interior scene folds onto interiorContext.
+   seamless.

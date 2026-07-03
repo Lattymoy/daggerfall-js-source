@@ -133,6 +133,36 @@ export function dungeonEntranceLanding(entranceDoors) {
   };
 }
 
+export const LADDER_MODEL_ID = 41409;
+
+/**
+ * Verbatim DaggerfallLadder.ClimbLadder (interior-only upstream):
+ * closest LadderTop / LadderBottom markers to the player; below the
+ * top teleports TO the top, else above the bottom teleports to the
+ * bottom. Markers arrive as {type, x, y, z} (interiorLayout).
+ * @returns {[x,y,z]|null}
+ */
+export function climbLadder(playerPos, markers, markerTypes) {
+  const closestOf = (type) => {
+    let best = null;
+    let bestD = Infinity;
+    for (const m of markers) {
+      if (m.type !== type) continue;
+      const dx = m.x - playerPos[0];
+      const dy = m.y - playerPos[1];
+      const dz = m.z - playerPos[2];
+      const d = dx * dx + dy * dy + dz * dz;
+      if (d < bestD) { bestD = d; best = m; }
+    }
+    return best;
+  };
+  const top = closestOf(markerTypes.LADDER_TOP);
+  const bottom = closestOf(markerTypes.LADDER_BOTTOM);
+  if (top && playerPos[1] < top.y) return [top.x, top.y, top.z];
+  if (bottom && playerPos[1] > bottom.y) return [bottom.x, bottom.y, bottom.z];
+  return null;
+}
+
 /** Verbatim TransitionExterior landing: closest building door + n * 1.05. */
 export function exteriorLanding(playerPos, buildingDoors) {
   const doors = buildingDoors.map((d) => ({

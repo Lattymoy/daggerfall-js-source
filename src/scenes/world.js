@@ -28,7 +28,8 @@ import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, pars
 import { fetchBytes, texName, parseSeason, createSkyController } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { getStaticDoors } from '../world/staticDoors.js';
-import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding } from '../player/enterExit.js';
+import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder } from '../player/enterExit.js';
+import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable } from '../player/activate.js';
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -422,7 +423,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       get pos() { return [...player.pos]; },
       warp: (x, y, z) => { player.spawn(x, y, z); playerSpawned = true; },
     };
-    window.__doors = () => buildingDoors.slice(0, 40).map((e, i) => {
+    window.__doors = () => buildingDoors.map((e, i) => {
       const d = shiftedDoor(e);
       return { i, pos: doorWorldPosition(d), normal: doorWorldNormal(d), record: e.recordIndex, block: e.dfBlock.name, type: e.door.doorType };
     });
@@ -433,6 +434,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       actions: dungeonCtx.actions.objects.size,
     }) : null;
     window.__dungeonExit = () => tryExitDungeon();
+    window.__pickInterior = () => {
+      if (!interiorCtx) return null;
+      const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+      const rows = [];
+      interiorCtx.ladders.forEach((l, i) => {
+        const aabb = interiorDoorAabb(l);
+        rows.push({ key: `ladder:${i}`, aabb: aabb.min.map((v) => +v.toFixed(2)).concat(aabb.max.map((v) => +v.toFixed(2))), hit: rayAabbProbe(player.eye, dir, aabb) });
+      });
+      return JSON.stringify({ eye: player.eye.map((v) => +v.toFixed(2)), dir: dir.map((v) => +v.toFixed(2)), occluder: +interiorCtx.collider.raycast(player.eye, dir, 50).toFixed(2), rows });
+    };
+    window.__markers = () => interiorCtx ? JSON.stringify(interiorCtx.markers.filter((m) => m.type === 21 || m.type === 22).map((m) => ({ t: m.type, x: +m.x.toFixed(2), y: +m.y.toFixed(2), z: +m.z.toFixed(2) }))) : null;
+    window.__ladders = () => interiorCtx ? JSON.stringify(interiorCtx.ladders.map((l) => ({ x: +l.matrix[12].toFixed(2), y: +l.matrix[13].toFixed(2), z: +l.matrix[14].toFixed(2) }))) : null;
     window.__interiorActions = () => interiorCtx ? JSON.stringify(
       [...interiorCtx.actions.objects.values()].map((o) => ({ key: o.key, state: o.state, pos: [o.matrix[12], o.matrix[13], o.matrix[14]].map((v) => +v.toFixed(2)), fwd: [o.matrix[8], o.matrix[9], o.matrix[10]].map((v) => +v.toFixed(3)) }))) : null;
     window.__interiorActivate = (k) => interiorCtx.actions.activate(k);
@@ -507,6 +520,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     return true;
   }
 
+  function rayAabbProbe(eye, dir, aabb) {
+    let tMin = 0;
+    let tMax = Infinity;
+    for (let a = 0; a < 3; a++) {
+      if (Math.abs(dir[a]) < 1e-9) {
+        if (eye[a] < aabb.min[a] || eye[a] > aabb.max[a]) return null;
+        continue;
+      }
+      const inv = 1 / dir[a];
+      let t0 = (aabb.min[a] - eye[a]) * inv;
+      let t1 = (aabb.max[a] - eye[a]) * inv;
+      if (t0 > t1) { const sw = t0; t0 = t1; t1 = sw; }
+      if (t0 > tMin) tMin = t0;
+      if (t1 < tMax) tMax = t1;
+      if (tMin > tMax) return null;
+    }
+    return +tMin.toFixed(2);
+  }
+
   function interiorDoorAabb(o) {
     let minX = Infinity; let minY = Infinity; let minZ = Infinity;
     let maxX = -Infinity; let maxY = -Infinity; let maxZ = -Infinity;
@@ -532,8 +564,29 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const o of interiorCtx.actions.objects.values()) {
       targets.push({ key: o.key, aabb: interiorDoorAabb(o) });
     }
+    interiorCtx.ladders.forEach((l, i) => {
+      targets.push({ key: `ladder:${i}`, aabb: interiorDoorAabb(l) });
+    });
     const key = pickActivatable(eye, dir, targets, interiorCtx.collider);
     if (key === null) return false;
+    if (key.startsWith('ladder:')) {
+      // Verbatim ClimbLadder: closest markers, below-top -> top,
+      // above-bottom -> bottom.
+      // ClimbLadder compares the CONTROLLER position, which after
+      // FixStanding sits at floor + height * 0.65 = 1.17 (PlayerMotor
+      // repositions to hit + up * (controller.height * 0.65f)) - NOT
+      // the geometric half-height. The teleport target re-floors via
+      // gravity exactly as FixStanding would.
+      const standing = [player.pos[0], player.pos[1] + 1.8 * 0.65, player.pos[2]];
+      const to = climbLadder(standing, interiorCtx.markers, INTERIOR_MARKER);
+      if (to) {
+        // Teleport just ABOVE the marker and let gravity floor it -
+        // FixStanding's re-floor, without tunneling thin boards.
+        player.spawn(to[0], to[1] + 0.1, to[2]);
+        cam.pos = player.eye;
+      }
+      return true;
+    }
     if (!key.startsWith('exit:')) {
       interiorCtx.actions.activate(key);
       return true;

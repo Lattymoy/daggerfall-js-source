@@ -58,17 +58,31 @@ export function rayAabb(origin, dir, aabb) {
 export function pickActivatable(eye, dir, targets, collider) {
   let bestKey = null;
   let bestDist = Infinity;
+  let bestAabb = null;
   for (const target of targets) {
     const d = rayAabb(eye, dir, target.aabb);
     if (d === null || d >= bestDist) continue;
     if (d > (target.distance ?? DEFAULT_ACTIVATION_DISTANCE)) continue;
     bestKey = target.key;
     bestDist = d;
+    bestAabb = target.aabb;
   }
   if (bestKey === null) return null;
-  // Occlusion: solid world strictly in front of the target blocks it
-  // (the target's own triangles sit at ~bestDist, hence the margin).
+  // Occlusion: solid world strictly in front of the target blocks it -
+  // UNLESS the blocking hit lies inside the target's own box (thin or
+  // diagonal meshes sit well inside their AABB, so their own surface
+  // legitimately lands nearer than the AABB entry).
   const wall = collider.raycast(eye, dir, bestDist - 0.05);
-  if (wall < bestDist - 0.05) return null;
+  if (wall < bestDist - 0.05) {
+    const hx = eye[0] + dir[0] * wall;
+    const hy = eye[1] + dir[1] * wall;
+    const hz = eye[2] + dir[2] * wall;
+    const b = bestAabb;
+    const skin = 0.15;
+    const inside = hx >= b.min[0] - skin && hx <= b.max[0] + skin
+      && hy >= b.min[1] - skin && hy <= b.max[1] + skin
+      && hz >= b.min[2] - skin && hz <= b.max[2] + skin;
+    if (!inside) return null;
+  }
   return bestKey;
 }
