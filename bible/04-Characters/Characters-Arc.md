@@ -137,6 +137,21 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+C4-C5 audit: import scan clean across every slice file; 288 template
+indices unique; Wand (140) is the one unruled jewellery template -
+DFU's default None, verbatim. The requested joint verification went
+past hash parity to MATH invariants (rigmath.test.js: bone lengths
+exact by construction, reach + both clamps, pole half-plane, finite
+degenerates) and caught one real defect: a target exactly AT the root
+left solveTwoBone's direction vector zero, collapsing both bone
+lengths. Fixed UPSTREAM-FIRST in project-final (reach defaults down,
+fold clamp takes it; Voxlight's 78-case parity hashes identical since
+no fixture case is degenerate; their gates green), then re-vendored -
+dagger's 16-hash parity unchanged. Rig redesign verdict: the solver is
+sound and now hardened; body PROPORTIONS stay untouched by design -
+retuning is a C6 art decision against the classic paperdoll reference,
+made upstream behind the parity gate, not an audit unilateral.
+
 ### C5c - equip-slot assignment rules (SHIPPED)
 
 `equipRules.js` (extraction-generated: 94 per-template slot rules

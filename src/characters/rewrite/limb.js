@@ -1,4 +1,4 @@
-// Vendored from project-final's Rewrite Engine (rewrite/rig/limb.js) at C4a -
+// Vendored from project-final's Rewrite Engine (rewrite/rig/body.js) at C4a -
 // same-owner code, flat-pathed; byte-parity against the canonical copy
 // is pinned by test/rig.test.js over fixtures/bare-body-parity.json
 // (captured from rewrite/rig at vendor time). Do not hand-diverge:
@@ -16,7 +16,8 @@ import { sub, add, mul, mad, cross, len, mix, norm } from './math.js';
 // bends to). The end is clamped to the chain's reach. Returns [joint, end].
 function solveTwoBone(R, F, l1, l2, pole = [0, 0, 1]) {
   let dx = F[0] - R[0], dy = F[1] - R[1], dz = F[2] - R[2];
-  const dl = Math.hypot(dx, dy, dz) || 1e-4;
+  let dl = Math.hypot(dx, dy, dz);
+  if (dl < 1e-6) { dx = 0; dy = -1; dz = 0; dl = 1; } // degenerate target AT the root: a zero direction would collapse both bone lengths - default the reach DOWN (limbs hang) and let the fold clamp take it
   let d = dl;
   const dMax = l1 + l2 - 0.005, dMin = Math.abs(l1 - l2) + 0.005;
   if (d > dMax) d = dMax; else if (d < dMin) d = dMin;
