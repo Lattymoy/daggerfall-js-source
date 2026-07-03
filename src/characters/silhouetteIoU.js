@@ -58,5 +58,7 @@ export function silhouetteIoU(faces, bmp) {
     if (s & m) inter++;
     if (s | m) union++;
   }
-  return { iou: inter / union, inter, union };
+  let modelArea = 0;
+  for (let i = 0; i < W * H; i++) if (grid[i]) modelArea++;
+  return { iou: inter / union, inter, union, modelArea };
 }

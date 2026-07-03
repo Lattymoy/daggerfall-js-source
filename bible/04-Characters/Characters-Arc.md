@@ -137,6 +137,25 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6k iteration 4 (SHIPPED): inside the lines - excess costs double
+
+Mac: "shading way too much outside of the lines." The excess anatomy
+(per-band, per-side breakdown added to the diagnostics): beyond-RIGHT
+197 px at rows 60-105 (the right fist spilling past the outline +
+the free thigh ~0.04 too far out), beyond-LEFT at the bottom rows
+(weight foot/calf outside the leaning sprite edge), ~300 px of
+gap-bridging (round tubes crossing the sprite's 1-3px internal
+separations - a structural floor). The directive became the
+OBJECTIVE: the fitter now scores inter/(inter + miss + 2*excess) -
+excess costs double - with wrists raised so fists END at the sprite's
+row 70 and tighter freeOut. Result: raw IoU 0.7919 -> 0.8078 (staying
+inside the lines won on the pure metric too), excess 819 -> 714,
+upper torso 0.912, lower torso 0.827, beyond-right halved. Gates:
+IoU floor 0.77 -> 0.79 AND a new excess ceiling (spill <= 15% of
+sprite area) - the rule is now a test. Remaining: weight-leg lean
+(sprite legs converge; model's straight leg spills left at the
+bottom), the gap-bridging floor, feet projection truth.
+
 ### C6k iteration 3 (SHIPPED): the arms are ASYMMETRIC - fit as data
 
 Mac: arms/hands are the weakest link - really focus. The data ended

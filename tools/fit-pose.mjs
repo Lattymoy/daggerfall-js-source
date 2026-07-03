@@ -21,26 +21,33 @@ const img = new ImgFile();
 img.load(readFileSync(`${A}/BODY00I0.IMG`), 'BODY00I0.IMG', pal);
 const bmp = img.getDFBitmap();
 
-const evalPose = (pose) => silhouetteIoU(
+// Objective (Mac): staying INSIDE the lines beats coverage - excess
+// (model beyond the sprite outline) costs DOUBLE a miss.
+const score = (r) => {
+  const miss = r.union - r.inter - (r.modelArea - r.inter);
+  const excess = r.modelArea - r.inter;
+  return r.inter / (r.inter + miss + 2 * excess);
+};
+const evalPose = (pose) => score(silhouetteIoU(
   buildBody({ loco: 'stand', hold: 'idle', phase: 0, weapon: 'none', paperdoll: pose }, BARE_PLUGS, DAGGER_SPEC),
-  bmp).iou;
+  bmp));
 
 const AXES = {
   weightSide: [-1, 1],
   weightIn: [0.5, 0.65, 0.8],
-  freeOut: [0.1, 0.14, 0.18],
+  freeOut: [0.02, 0.05, 0.08, 0.11],
   freeFwd: [0, 0.06],
-  hipShift: [0.045, 0.07, 0.09],
-  footYaw: [0, 0.4, 0.7, 1.0, 1.3],
+  hipShift: [0.03, 0.05, 0.07, 0.09],
+  footYaw: [0, 0.4, 0.7, 1.0],
   // Per-arm (the classic arms are ASYMMETRIC): L = image-left slack
   // arm (bar at |x| 0.33-0.37, wrist low), R = elbow out, forearm
   // tucked to the hip.
-  aLx: [0.3, 0.34, 0.38, 0.42],
-  aLy: [0.92, 0.99, 1.06],
+  aLx: [0.28, 0.32, 0.36],
+  aLy: [0.99, 1.05, 1.11],
   aLcurl: [0.1, 0.25, 0.4],
   aLpole: [0.3, 0.7, 1.1],
-  aRx: [0.2, 0.24, 0.28, 0.32],
-  aRy: [0.98, 1.05, 1.12],
+  aRx: [0.16, 0.2, 0.24],
+  aRy: [1.02, 1.08, 1.14],
   aRcurl: [0.25, 0.4, 0.55],
   aRpole: [0.3, 0.7, 1.1, 1.5],
 };
@@ -53,7 +60,7 @@ const toPaperdoll = (p) => ({
 const evalP = (p) => evalPose(toPaperdoll(p));
 // Seeds from the sprite's own arm bars.
 let pose = { weightSide: -1, weightIn: 0.8, freeOut: 0.14, freeFwd: 0, hipShift: 0.07, footYaw: 0.4,
-  aLx: 0.38, aLy: 0.99, aLcurl: 0.25, aLpole: 0.7, aRx: 0.24, aRy: 1.05, aRcurl: 0.4, aRpole: 0.7 };
+  aLx: 0.32, aLy: 1.05, aLcurl: 0.25, aLpole: 0.7, aRx: 0.2, aRy: 1.08, aRcurl: 0.4, aRpole: 0.7 };
 let best = evalP(pose);
 console.log('start IoU', best.toFixed(4));
 // Joint 2D sweeps per arm first (x*y interact; descent corner-locks).
@@ -80,15 +87,15 @@ for (let pass = 0; pass < 3; pass++) {
 // swept here and written back into the generator by hand with the
 // winning value).
 import('../src/characters/daggerBodySpec.js');
-let bestHand = 1;
+let bestHand = DAGGER_SPEC.handScale ?? 1;
 {
   const base = DAGGER_SPEC;
   for (const hs of [2.0, 2.2, 2.4]) {
     const spec = { ...base, handScale: hs };
-    const iou = silhouetteIoU(
+    const iou = score(silhouetteIoU(
       buildBody({ loco: 'stand', hold: 'idle', phase: 0, weapon: 'none', paperdoll: toPaperdoll(pose) }, BARE_PLUGS, spec),
-      bmp).iou;
-    console.log('handScale', hs, '-> IoU', iou.toFixed(4));
+      bmp));
+    console.log('handScale', hs, '-> score', iou.toFixed(4));
     if (iou > best) { best = iou; bestHand = hs; }
   }
 }
