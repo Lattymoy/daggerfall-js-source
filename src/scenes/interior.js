@@ -89,7 +89,7 @@ export async function bootInterior(canvas, renderer, params, status) {
   console.log(
     `interior: ${ctx.drawList.length} models, ${ctx.dynamicDraws.length} action doors, ` +
     `${ctx.flatCount} flats, ${ctx.markers.length} markers, ${ctx.doors.length} static doors, ` +
-    `climate ${climateBase}, season ${season}, ${ctx.texRemap.size} swaps, ${ctx.lights.length} lights`
+    `climate ${climateBase}, season ${season}, ${ctx.texRemap.size} swaps, ${ctx.lights.length} lights, ${ctx.people.length} people`
   );
 
   let frames = 0;

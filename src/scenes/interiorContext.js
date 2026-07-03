@@ -23,6 +23,7 @@ import { applyClimate } from '../world/climateSwaps.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
 import { LADDER_MODEL_ID } from '../player/enterExit.js';
+import { collectInteriorPeople } from '../characters/interiorPeople.js';
 import { ActionSystem } from '../world/actionSystem.js';
 
 /**
@@ -99,8 +100,21 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     dynamicDraws.push({ gpu: await getGpuMesh(d.modelIdNum), object: o });
   }
 
+  // People (C1): AddPeople's data layer - base positions batch through
+  // the same billboard path as flats; the StaticNPC inputs ride on the
+  // returned people list (parent-frame, like everything else here).
+  const people = collectInteriorPeople(recordData).map((pn) => {
+    const [x, y, z] = parentPt(pn.x, pn.y, pn.z);
+    return { ...pn, x, y, z };
+  });
+
   const billboardBatches = [];
   const flatGroups = new Map();
+  for (const pn of people) {
+    const key = `${pn.textureArchive}_${pn.textureRecord}`;
+    if (!flatGroups.has(key)) flatGroups.set(key, []);
+    flatGroups.get(key).push([pn.x, pn.y, pn.z]);
+  }
   for (const flat of interior.flats) {
     const key = `${flat.archive}_${flat.record}`;
     if (!flatGroups.has(key)) flatGroups.set(key, []);
@@ -141,6 +155,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     lights,
     texRemap,
     markers,
+    people,
     flatCount: interior.flats.length,
     ladders,
     enterMarkers,

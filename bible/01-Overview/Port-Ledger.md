@@ -99,7 +99,7 @@ World layout:
 |---|---|---|
 | Exterior indirect player light | SunlightManager.IndirectLight - a player-following point light (SunlightRig prefab's second light, white 0.6) scaled by the daylight curve alongside the key light | Rendering arc (exterior ambient currently carries the PlayerAmbientLight term only; found in the R5 audit) |
 | Climate swaps onto mismatched record dimensions | 15 corpus swap combos (124_3 -> 24, 168_6 -> 68/368/468 families) land on records whose dimensions differ from the original; DFU stretches them identically because mesh UVs are normalized against the original archive at load - kept verbatim, pinned in the climate corpus test | Kept |
-| Interior people flats | DaggerfallInterior.AddPeople | Characters arc |
+| Interior people visibility gates (house ownership, shop hours, building-open rules, GuildHall anytime access, TG/DB House2 membership) | DaggerfallInterior.AddPeople tail | Systems arc (people + their flags/factionID shipped C1) |
 | Interior furniture actions, house containers, loot, spawn points | DaggerfallInterior AddFurnitureAction/MakeHouseContainer/AddSpawnPoints | Systems arc |
 | Dungeon enemies (fixed + random) | RDBLayout.AddFixedEnemies/AddRandomEnemies | Characters arc |
 | Dungeon treasure piles + loot | RDBLayout AssignFixedTreasure/AddRandomTreasure | Systems arc |
