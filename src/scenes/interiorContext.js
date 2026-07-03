@@ -27,6 +27,10 @@ import { collectInteriorPeople } from '../characters/interiorPeople.js';
 import { buildBody, BARE_PLUGS } from '../characters/rewrite/body.js';
 import { packCharacterFaces, facesBounds } from '../render/characterMesh.js';
 import { trs } from '../world/mat4.js';
+import { shellFromSprite, resolvePiece } from '../characters/pieceFromSprite.js';
+import { getTemplate } from '../characters/paperdoll.js';
+import { resolvePaperdollRecord, armorArchive, armorVariant, MATERIAL_FAMILY } from '../characters/paperdollArt.js';
+import { DYE_COLORS, DYE_TARGETS, applyDyeToIndex } from '../characters/dyes.js';
 import { ActionSystem } from '../world/actionSystem.js';
 
 /**
@@ -38,7 +42,7 @@ import { ActionSystem } from '../world/actionSystem.js';
  *   enterMarkers, doors, collider, destroy()}}
  */
 export async function buildInteriorContext(deps, dfBlock, blockIndex, recordIndex, climateBase, season, origin = null, opts = {}) {
-  const { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord } = deps;
+  const { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord, palette } = deps;
   // P8: verbatim PlayerEnterExit.TransitionInterior parenting - the
   // interior sits at ownerPosition + buildingMatrix (the entered
   // building model's WORLD matrix), so every coordinate the context
@@ -124,11 +128,29 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const b = facesBounds(faces);
     const CLASSIC_HEIGHT = 1.8;
     const sc = CLASSIC_HEIGHT / (b.maxY - b.minY);
+    // C6c: &piece=<template> hangs the 1:1 sprite-shell piece on the
+    // rig. Fit constants MEASURED from the bare rig's torso band
+    // (chest half-extents 0.302 x 0.454, span 0.941-1.518) + a 0.03
+    // armor stand-off; the shell shifts to the torso centre in rig
+    // space so the BODY matrix draws both. Steel resolve for the
+    // review shot; the dye is a parameter, not a bake.
+    let pieceMesh = null;
+    if (opts.piece) {
+      const tpl = getTemplate(opts.piece);
+      const archive = armorArchive('male', 'Breton');
+      const t = await getTexture(archive);
+      const rec = resolvePaperdollRecord(tpl, armorVariant(opts.piece, MATERIAL_FAMILY.Plate, 1));
+      const bmp = t.getDFBitmap(rec, 0);
+      const shell = shellFromSprite(bmp, { radiusX: 0.332, radiusZ: 0.484, height: 0.62, arc: Math.PI * 0.9 });
+      const CENTER_Y = (1.518 + 0.941) / 2 + 0.02;
+      for (const f of shell) for (let i = 1; i < 12; i += 3) f.p[i] += CENTER_Y;
+      const rgb = resolvePiece(shell, DYE_COLORS.Steel, DYE_TARGETS.WeaponsAndArmor, palette, applyDyeToIndex);
+      pieceMesh = renderer.createCharacterMesh(packCharacterFaces(rgb));
+    }
     for (const pn of people) {
-      charDraws.push({
-        mesh,
-        matrix: trs(pn.x, pn.y - b.minY * sc, pn.z, 0, 0, 0, sc, sc, sc),
-      });
+      const matrix = trs(pn.x, pn.y - b.minY * sc, pn.z, 0, 0, 0, sc, sc, sc);
+      charDraws.push({ mesh, matrix });
+      if (pieceMesh) charDraws.push({ mesh: pieceMesh, matrix });
     }
   } else {
     for (const pn of people) {

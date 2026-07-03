@@ -38,8 +38,8 @@ const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
 const DUNGEON_WATER_SCROLL = 0.05;
 
 export function createWorldModes(host) {
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false } = host;
-  const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch } = pipeline;
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0 } = host;
+  const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
 
   let mode = 'exterior';
   let interiorCtx = null;
@@ -73,9 +73,9 @@ export function createWorldModes(host) {
       // come back world-frame, landings run in one frame, and the walk
       // through the door is coordinate-seamless.
       const ctx = await buildInteriorContext(
-        { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord },
+        { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord, palette },
         hit.dfBlock, 0, hit.recordIndex, hit.climateBase, hit.season,
-        hit.door.matrix, { voxelfolk });
+        hit.door.matrix, { voxelfolk, piece });
       const siblings = entries.filter((e) =>
         e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
       const landing = interiorLanding(

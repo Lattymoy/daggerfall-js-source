@@ -137,6 +137,19 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6c - the piece on the rig, in-engine (SHIPPED)
+
+`&piece=<template>` (default 102) on the ?voxelfolk harness hangs the
+1:1 sprite-shell on the rig: the plate cuirass (human male 251, plate
+row 1) built at MEASURED fit - the bare rig's torso band is chest
+half-extents 0.302 x 0.454 over span 0.941-1.518, shell at +0.03
+stand-off (radius 0.332 x 0.484, height 0.62), shifted to the torso
+centre in rig space so the BODY matrix draws both. Steel resolve for
+the review shot; dye is a parameter. dataPipeline now exposes the
+palette (committed, needed for per-face resolve). In-engine proof:
+TVRNAL06 patron wearing the classic cuirass, pin unchanged
+(`2 people`). This render is the DECIDE-C1 review shot.
+
 ### C6b - the 1:1 piece method (SHIPPED)
 
 Mac's mandate: 1 to 1, no exceptions - so the sprite's pixels ARE the

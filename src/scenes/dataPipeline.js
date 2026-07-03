@@ -57,5 +57,5 @@ export function createDataPipeline({ renderer, arch, palette }) {
     gpuMeshes.set(modelIdNum, gpu);
     return gpu;
   }
-  return { textureFiles, getTexture, getTextureSize, uploadRecord, getGpuMesh, gpuMeshes, cpuModels };
+  return { textureFiles, getTexture, getTextureSize, uploadRecord, getGpuMesh, gpuMeshes, cpuModels, palette };
 }
