@@ -137,6 +137,26 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6i-v2 - distinguishability model (SHIPPED)
+
+Mac: "back reads as the front" - v1's structural causes, each fixed:
+(1) the material map WAS the front's ramp map, so cross-ramp painted
+accents (0x2D nipple/shadow pixels on the 0x40 skin) survived relight
+-> skin-hue ramps now UNIFY to the region's dominant ramp before
+relight (front forms cannot survive); (2) the hair fill read as a
+blank skin blob (classic's own truth: body skin AND hair share the
+0x40 browns) -> textured two-tone dither over the front's observed
+hair levels, extended through the neck pinch + a darkest hairline
+edge; (3) features were sub-pixel -> spine is a real groove
+(highlight + 2px shadow, easing to the waist), scapulae are two-tone
+plates scaled to torso width, lower-back dip band; (4) global
+BACK_BIAS 0.14 (the back turns from the key); (5) the cuirass lames
+ECHOED the front's design rows - deleted; a backplate now carries
+leather X-straps + buckles anchored on the two shoulder runs (the
+gorget top splits around the neck gap - the first anchor pass grabbed
+the left run twice) converging to the waist. Material-honest: straps
+stay leather under every metal dye; back metal fraction 84.8%.
+
 ### C6i - in-house backs (SHIPPED; supersedes C6h)
 
 Mac rejected the RD art ("doesn't read right") and set PROJECT POLICY:

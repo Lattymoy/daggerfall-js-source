@@ -54,6 +54,12 @@ const RAMP = new Array(256).fill(null);
     }
   }
 }
+const BACK_BIAS = 0.14;        // the back turns from the key: darker overall
+const hash2 = (x, y) => {      // deterministic dither for hair texture
+  let h = (x * 374761393 + y * 668265263) | 0;
+  h = (h ^ (h >> 13)) * 1274126177;
+  return ((h ^ (h >> 16)) >>> 0) / 4294967295;
+};
 const relit = (srcIdx, shade) => { // shade 0 = brightest .. 1 = darkest
   const r = RAMP[srcIdx];
   if (!r || r.len < 2) return srcIdx;
@@ -108,65 +114,108 @@ const TARGETS = {
     load: () => { const img = new ImgFile(); img.load(readFileSync(`${A}/BODY00I0.IMG`), 'BODY00I0.IMG', pal); return img.getDFBitmap(); },
     features: (grid, mir, W, H, field) => {
       const rows = rowRuns(mir, W, H);
-      // Head region: rows above the first arm separation, up to a neck
-      // pinch - fill with the front's own hair ramp (dominant ramp of
-      // the top 6 rows), shaded by geometry.
       let armpit = 0;
       for (let y = 0; y < H; y++) if (rows[y].length >= 2) { armpit = y; break; }
+      // Hair ramp + its LEVEL DISTRIBUTION from the front's own hair
+      // pixels (top 6 rows): the back of the head must read as HAIR,
+      // not a blank skin-toned blob - textured dither over the darker
+      // half of the observed level range.
       const count = new Map();
+      let lvSum = 0, lvN = 0;
       for (let y = 0; y < Math.min(6, H); y++) for (let x = 0; x < W; x++) {
         const i = mir[y * W + x];
-        if (i && RAMP[i]) count.set(RAMP[i].start, (count.get(RAMP[i].start) || 0) + 1);
+        if (i && RAMP[i]) {
+          count.set(RAMP[i].start, (count.get(RAMP[i].start) || 0) + 1);
+          lvSum += (i - RAMP[i].start) / Math.max(1, RAMP[i].len - 1); lvN++;
+        }
       }
       const hairStart = [...count.entries()].sort((a, b) => b[1] - a[1])[0][0];
       const hairRamp = { start: hairStart, len: RAMP[hairStart].len };
-      // Neck = min single-run width in the 14 rows above the armpit.
+      const hairBase = Math.min(0.85, (lvSum / Math.max(1, lvN)) + 0.15);
       let neck = armpit - 1, neckW = Infinity;
       for (let y = Math.max(0, armpit - 14); y < armpit; y++) {
         if (rows[y].length !== 1) continue;
         const w = rows[y][0][1] - rows[y][0][0] + 1;
         if (w <= neckW) { neckW = w; neck = y; }
       }
-      for (let y = 0; y < neck; y++) for (let x = 0; x < W; x++) {
+      // Hair covers the whole head DOWN THROUGH the neck pinch + 2 (a
+      // back shows more hair), dithered two-tone; a darkest hairline
+      // edge row terminates it.
+      const hairEnd = Math.min(H - 1, neck + 2);
+      for (let y = 0; y <= hairEnd; y++) for (let x = 0; x < W; x++) {
         if (!mir[y * W + x]) continue;
         const sh = backShade(field, W, H, x, y);
-        grid[y * W + x] = hairRamp.start + Math.min(hairRamp.len - 1, Math.round(sh * (hairRamp.len - 1)));
+        const tex = hash2(x, y) > 0.5 ? 0.12 : -0.08;
+        const lv = y === hairEnd ? 1 : Math.min(1, Math.max(0, hairBase + tex + sh * 0.3));
+        grid[y * W + x] = hairRamp.start + Math.min(hairRamp.len - 1, Math.round(lv * (hairRamp.len - 1)));
       }
-      // Spine: darken the torso-run centreline from below the neck to
-      // the crotch (first row whose two runs BOTH sit inside the torso
-      // band = legs); scapulae: lighten two ellipses.
-      const midX = (W - 1) / 2; // 0-indexed silhouette centreline
+      // Skin unification below the hair: cross-ramp painted accents
+      // (nipples/navel/face leftovers) are FRONT features - remap any
+      // skin-hue ramp to the region's dominant skin ramp, then those
+      // forms cannot survive.
+      const skinCount = new Map();
+      for (let y = hairEnd + 1; y < H; y++) for (let x = 0; x < W; x++) {
+        const i = mir[y * W + x];
+        if (i && RAMP[i]) skinCount.set(RAMP[i].start, (skinCount.get(RAMP[i].start) || 0) + 1);
+      }
+      const domSkin = [...skinCount.entries()].sort((a, b) => b[1] - a[1])[0][0];
+      const domHue = hue(domSkin + ((RAMP[domSkin].len / 2) | 0));
+      for (let y = hairEnd + 1; y < H; y++) for (let x = 0; x < W; x++) {
+        const src = mir[y * W + x];
+        if (!src || !RAMP[src] || RAMP[src].start === domSkin) continue;
+        const h = hue(src);
+        if (hueDist(h, domHue) < 30) {
+          const sh = Math.min(1, backShade(field, W, H, x, y) + BACK_BIAS);
+          grid[y * W + x] = domSkin + Math.min(RAMP[domSkin].len - 1, Math.round(sh * (RAMP[domSkin].len - 1)));
+        }
+      }
+      const midX = (W - 1) / 2;
       let crotch = H - 1;
       for (let y = armpit; y < H; y++) {
         const r = rows[y];
-        // Legs are the only 2-run rows whose inter-run gap straddles
-        // the centreline (arm gaps sit off to one side).
         if (r.length === 2 && r[0][1] < midX && r[1][0] > midX) { crotch = y; break; }
       }
       const lastTorso = crotch - 1;
       const spineTop = armpit + 2;
+      const level = (i) => (i && RAMP[i]) ? (i - RAMP[i].start) / Math.max(1, RAMP[i].len - 1) : 0;
+      // Spine v2: a real groove - 1px highlight beside a 2px shadow,
+      // strongest between the scapulae, easing toward the waist.
       for (let y = spineTop; y <= lastTorso; y++) {
         const run = torsoRun(rows[y], midX);
         if (!run) continue;
         const cx = Math.round((run[0] + run[1]) / 2);
-        for (const sx of [cx]) {
-          const i = grid[y * W + sx];
-          if (i && RAMP[i]) grid[y * W + sx] = relit(i, Math.min(1, (i - RAMP[i].start) / (RAMP[i].len - 1) + 0.34));
+        const ease = 0.5 + 0.5 * (1 - (y - spineTop) / Math.max(1, lastTorso - spineTop));
+        for (const [dx, d] of [[-1, -0.22 * ease], [0, 0.5 * ease], [1, 0.32 * ease]]) {
+          const i = grid[y * W + cx + dx];
+          if (i && RAMP[i]) grid[y * W + cx + dx] = relit(i, Math.min(1, Math.max(0, level(i) + d)));
         }
       }
-      const scapY = spineTop + Math.round((lastTorso - spineTop) * 0.18);
+      // Scapulae v2: larger two-tone plates (top-lit, under-shadowed).
+      const scapY = spineTop + Math.round((lastTorso - spineTop) * 0.16);
       const torso = torsoRun(rows[scapY], midX);
       const tw = torso[1] - torso[0] + 1;
       for (const side of [-1, 1]) {
-        const cx = Math.round((torso[0] + torso[1]) / 2 + side * tw * 0.26);
-        for (let dy = -2; dy <= 3; dy++) for (let dx = -2; dx <= 2; dx++) {
-          if ((dx * dx) / 6 + (dy * dy) / 12 > 1) continue;
+        const cx = Math.round((torso[0] + torso[1]) / 2 + side * tw * 0.27);
+        const rx = Math.max(2, Math.round(tw * 0.16)), ry = rx * 2;
+        for (let dy = -ry; dy <= ry; dy++) for (let dx = -rx; dx <= rx; dx++) {
+          if ((dx * dx) / (rx * rx) + (dy * dy) / (ry * ry) > 1) continue;
           const x = cx + dx, y = scapY + dy;
           const i = grid[y * W + x];
-          if (i && RAMP[i]) grid[y * W + x] = relit(i, Math.max(0, (i - RAMP[i].start) / (RAMP[i].len - 1) - 0.2));
+          if (!i || !RAMP[i]) continue;
+          const d = dy < 0 ? -0.3 : 0.22; // lit plate above, shadow under
+          grid[y * W + x] = relit(i, Math.min(1, Math.max(0, level(i) + d)));
         }
       }
-      return { hairStart, neck, armpit, spineTop, lastTorso };
+      // Lower-back dip: a shaded band just above the crotch.
+      for (let y = lastTorso - 3; y <= lastTorso; y++) {
+        const run = torsoRun(rows[y], midX);
+        if (!run) continue;
+        for (let x = run[0] + 1; x < run[1]; x++) {
+          const i = grid[y * W + x];
+          if (i && RAMP[i]) grid[y * W + x] = relit(i, Math.min(1, level(i) + 0.15));
+        }
+      }
+      return { hairStart, hairEnd, neck, armpit, spineTop, lastTorso, domSkin };
     },
   },
   cuirass: {
@@ -174,36 +223,71 @@ const TARGETS = {
     load: () => { const t = new TextureFile(); t.load(readFileSync(`${A}/TEXTURE.251`), 'TEXTURE.251', pal); return t.getDFBitmap(4, 0); },
     features: (grid, mir, W, H, field) => {
       const rows = rowRuns(mir, W, H);
-      // Lame lines: rows where the FRONT's mean level jumps - the real
-      // design's plate edges, reproduced on the backplate.
       const level = (i) => (i && RAMP[i]) ? (i - RAMP[i].start) / Math.max(1, RAMP[i].len - 1) : 0;
-      const rowMean = [];
-      for (let y = 0; y < H; y++) {
-        let s = 0, n = 0;
-        for (let x = 0; x < W; x++) { const i = mir[y * W + x]; if (i) { s += level(i); n++; } }
-        rowMean.push(n ? s / n : 0);
-      }
-      const lames = [];
-      for (let y = 2; y < H - 1; y++) {
-        if (Math.abs(rowMean[y] - rowMean[y - 1]) > 0.07 && (!lames.length || y - lames[lames.length - 1] > 3)) lames.push(y);
-      }
-      for (const y of lames) {
-        for (let x = 0; x < W; x++) {
-          const i = grid[y * W + x];
-          if (i && RAMP[i]) grid[y * W + x] = relit(i, Math.min(1, level(i) + 0.4));
+      const midX = (W - 1) / 2;
+      // A backplate does NOT echo the front's design (v1 defect - it
+      // read as the front). Plain relit plate + leather cross-straps
+      // with buckles: the real construction of a cuirass rear, and an
+      // immediate silhouette-independent back tell. Straps stay
+      // leather under every metal dye (material-honest).
+      const LEATHER = 0x40; // classic leather band
+      const lramp = RAMP[LEATHER + 4] || { start: LEATHER, len: 16 };
+      let top = 0;
+      while (top < H && !rows[top].length) top++;
+      let bottom = H - 1;
+      while (bottom > 0 && !rows[bottom].length) bottom--;
+      const strap = (x0, y0, x1, y1, w) => {
+        const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) * 2;
+        for (let i = 0; i <= steps; i++) {
+          const t = i / steps;
+          const cx = Math.round(x0 + (x1 - x0) * t);
+          const cy = Math.round(y0 + (y1 - y0) * t);
+          for (let dx = -w; dx <= w; dx++) {
+            const x = cx + dx, y = cy;
+            if (x < 0 || x >= W || y < 0 || y >= H || !mir[y * W + x]) continue;
+            const sh = Math.min(1, backShade(field, W, H, x, y) + BACK_BIAS);
+            const edge = Math.abs(dx) === w ? 0.25 : 0;
+            grid[y * W + x] = lramp.start + Math.min(lramp.len - 1, Math.round(Math.min(1, sh * 0.6 + 0.25 + edge) * (lramp.len - 1)));
+          }
         }
+      };
+      const span = bottom - top;
+      const ly = top + Math.round(span * 0.12), by = top + Math.round(span * 0.78);
+      const shoulderRuns = rows[top + Math.round(span * 0.15)];
+      const run1 = torsoRun(rows[top + Math.round(span * 0.75)], midX);
+      // The gorget top splits into two shoulder runs around the neck
+      // gap - anchor one strap on each; a single wide run anchors at
+      // its edges.
+      let lx, rx;
+      if (shoulderRuns.length >= 2) {
+        const L = shoulderRuns[0], R = shoulderRuns[shoulderRuns.length - 1];
+        lx = Math.round((L[0] + L[1]) / 2);
+        rx = Math.round((R[0] + R[1]) / 2);
+      } else {
+        const r0 = shoulderRuns[0];
+        lx = r0[0] + 2; rx = r0[1] - 2;
       }
-      // Centre ridge: 1px highlight + adjacent shadow down the torso run.
-      for (let y = 0; y < H; y++) {
+      strap(lx, ly, Math.round((run1[0] + run1[1]) / 2) + 4, by, 1);
+      strap(rx, ly, Math.round((run1[0] + run1[1]) / 2) - 4, by, 1);
+      // Buckles: darkest-metal 2x2 where the straps meet the plate edge.
+      const buckle = (x, y) => {
+        for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+          const i = mir[(y + dy) * W + x + dx];
+          if (i) grid[(y + dy) * W + x + dx] = 0x7e;
+        }
+      };
+      buckle(lx - 1, ly); buckle(rx - 1, ly);
+      // Centre ridge (kept from v1).
+      for (let y = top; y <= bottom; y++) {
         if (!rows[y].length) continue;
-        const run = rows[y][0];
+        const run = torsoRun(rows[y], midX);
         const cx = Math.round((run[0] + run[1]) / 2);
         const hi = grid[y * W + cx];
-        if (hi && RAMP[hi]) grid[y * W + cx] = relit(hi, Math.max(0, level(hi) - 0.25));
+        if (hi && RAMP[hi] && RAMP[hi].start === 0x70) grid[y * W + cx] = relit(hi, Math.max(0, level(hi) - 0.25));
         const sh = grid[y * W + cx + 1];
-        if (sh && RAMP[sh]) grid[y * W + cx + 1] = relit(sh, Math.min(1, level(sh) + 0.2));
+        if (sh && RAMP[sh] && RAMP[sh].start === 0x70) grid[y * W + cx + 1] = relit(sh, Math.min(1, level(sh) + 0.2));
       }
-      return { lames };
+      return { straps: [[lx, ly], [rx, ly]], top, bottom };
     },
   },
 };
@@ -222,7 +306,7 @@ function derive(name) {
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const src = mir[y * W + x];
     if (!src) continue;
-    grid[y * W + x] = relit(src, backShade(field, W, H, x, y));
+    grid[y * W + x] = relit(src, Math.min(1, backShade(field, W, H, x, y) + BACK_BIAS));
   }
   const params = T.features(grid, mir, W, H, field);
   writeFileSync(resolve(OUT_JSON, T.json),
