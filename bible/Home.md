@@ -50,7 +50,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9 shipped: floating-origin streaming world (?world). Build queue empty.
-- `04-Characters/Characters-Arc.md` - ACTIVE. C2 shipped: exterior NPCs (faction rule verbatim, 76-NPC corpus) + townsfolk name banks (NameHelper over DFRandom, NameGen data committed). C3 shipped: dungeon enemies - classic tables + selection verbatim, standing billboards (Privateer's 42-enemy pin; city crawl 128). Next: C4 voxel rig foundation.
+- `04-Characters/Characters-Arc.md` - ACTIVE. C2 shipped: exterior NPCs (faction rule verbatim, 76-NPC corpus) + townsfolk name banks (NameHelper over DFRandom, NameGen data committed). C3 shipped: dungeon enemies - classic tables + selection verbatim, standing billboards (Privateer's 42-enemy pin; city crawl 128). C4 shipped: Rewrite rig vendored (byte-parity gate) + dagger's vertex-color character path + ?voxelfolk voxel townsfolk in-world. DECIDE-C1 live. Next: C5 paperdoll system data.
 - `03-World/Player-Arc.md` - COMPLETE. Walk, collide, activate, transition: movement/collision (P1), activation + action chains (P2), interior/dungeon transitions (P3/P5), swing doors (P4), ladders (P6), scene consolidation onto worldModes + dataPipeline (P7), and interiors parented in the building world frame with one-frame landings (P8). Next arc decision pending.
 - `07-Rendering/Rendering-Arc.md` - R13 shipped: precipitation + verbatim storm lightning. Queue empty except spectral emission (blocked on Characters). Next arc decision: Player.
 

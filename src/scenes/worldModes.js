@@ -38,7 +38,7 @@ const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
 const DUNGEON_WATER_SCROLL = 0.05;
 
 export function createWorldModes(host) {
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider } = host;
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false } = host;
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch } = pipeline;
 
   let mode = 'exterior';
@@ -75,7 +75,7 @@ export function createWorldModes(host) {
       const ctx = await buildInteriorContext(
         { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord },
         hit.dfBlock, 0, hit.recordIndex, hit.climateBase, hit.season,
-        hit.door.matrix);
+        hit.door.matrix, { voxelfolk });
       const siblings = entries.filter((e) =>
         e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
       const landing = interiorLanding(
@@ -284,6 +284,7 @@ export function createWorldModes(host) {
     for (const d of interiorCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
     for (const d of interiorCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, interiorCtx.texRemap);
     renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
     return true;
   }
 
@@ -312,6 +313,7 @@ export function createWorldModes(host) {
     window.__markers = () => interiorCtx ? JSON.stringify(interiorCtx.markers.filter((m) => m.type === 21 || m.type === 22).map((m) => ({ t: m.type, x: +m.x.toFixed(2), y: +m.y.toFixed(2), z: +m.z.toFixed(2) }))) : null;
     window.__ladders = () => interiorCtx ? JSON.stringify(interiorCtx.ladders.map((l) => ({ x: +l.matrix[12].toFixed(2), y: +l.matrix[13].toFixed(2), z: +l.matrix[14].toFixed(2) }))) : null;
     window.__people = () => interiorCtx ? interiorCtx.people.length : null;
+    window.__peopleList = () => interiorCtx ? JSON.stringify(interiorCtx.people.map((pn) => ({ a: pn.textureArchive, r: pn.textureRecord, x: +pn.x.toFixed(1), y: +pn.y.toFixed(1), z: +pn.z.toFixed(1) }))) : null;
     window.__enemies = () => dungeonCtx ? JSON.stringify(dungeonCtx.enemies.slice(0, 8).map((e) => ({ t: e.mobileType, x: +e.x.toFixed(1), y: +e.y.toFixed(1), z: +e.z.toFixed(1), fixed: e.fixed }))) : null;
     window.__interiorActions = () => interiorCtx ? JSON.stringify(
       [...interiorCtx.actions.objects.values()].map((o) => ({ key: o.key, state: o.state, pos: [o.matrix[12], o.matrix[13], o.matrix[14]].map((v) => +v.toFixed(2)), fwd: [o.matrix[8], o.matrix[9], o.matrix[10]].map((v) => +v.toFixed(3)) }))) : null;

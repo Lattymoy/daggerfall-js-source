@@ -126,6 +126,24 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C4b + C4c - character render path + ?voxelfolk (SHIPPED)
+
+C4b: dagger's renderer grows the character path - CHAR_VS/CHAR_FS are
+the mesh program's lighting + fog verbatim over a vertex color (no
+texture, no emission, no cutout), fed by the pure packer in
+render/characterMesh.js (rig faces fan-triangulated into interleaved
+pos/color/normal, REAL normals - dagger lights in-shader, no Voxlight
+cel bake or pixel-lock ref slot). drawCharacter owns its program
+binding (the R9 rule) AND the cull state: rig winding is inconsistent
+by upstream design, so GL back-face culling is disabled per draw and
+restored. C4c: ?voxelfolk swaps interior people billboards for ONE
+packed bare humanoid drawn per person - uniform scale to 1.8, feet on
+the billboard base (ty = y - minY * s), static facing until the
+animation slice; flag off is C1 untouched. __peopleList joins the
+probes. In-engine: TVRNAL06 patrons stand as the 710-face body under
+interior ambient + point lights, framed on camera; pin unchanged
+(`2 people`). DECIDE-C1 is now LIVE.
+
 ### C4a - Rewrite rig vendored (SHIPPED)
 
 project-final's Rewrite Engine core + rig (math/geometry/palette,

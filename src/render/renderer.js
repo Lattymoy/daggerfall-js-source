@@ -76,6 +76,69 @@ void main() {
   outColor = vec4(mix(uFogColor, lit + emission, fogFactorAt(vWorldPos)), 1.0);
 }`;
 
+const CHAR_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec3 aColor;
+layout(location=2) in vec3 aNormal;
+uniform mat4 uProj;
+uniform mat4 uView;
+uniform mat4 uModel;
+out vec3 vColor;
+out vec3 vNormal;
+out vec3 vWorldPos;
+void main() {
+  vColor = aColor;
+  vNormal = mat3(uModel) * aNormal;
+  vec4 world = uModel * vec4(aPos, 1.0);
+  vWorldPos = world.xyz;
+  gl_Position = uProj * uView * world;
+}`;
+
+// Character fragment: the mesh path's lighting + fog verbatim, sampling
+// the rig's vertex color instead of a texture (C4b - no emission, no
+// alpha cutout: rig faces are opaque solids).
+const CHAR_FS = `#version 300 es
+precision highp float;
+in vec3 vColor;
+in vec3 vNormal;
+in vec3 vWorldPos;
+uniform vec3 uLightDir;
+uniform vec3 uAmbient;
+uniform float uSunScale;
+uniform vec3 uSunColor;
+uniform int uPointCount;
+uniform vec4 uPointLights[16];
+uniform vec3 uPointColor;
+uniform vec3 uFogColor;
+uniform int uFogMode;
+uniform float uFogDensity;
+uniform vec2 uFogRange;
+uniform vec3 uCamPos;
+out vec4 outColor;
+float fogFactorAt(vec3 worldPos) {
+  if (uFogMode == 0) return 1.0;
+  float d = length(worldPos - uCamPos);
+  if (uFogMode == 1) {
+    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
+  }
+  return exp(-uFogDensity * d);
+}
+void main() {
+  vec3 n = normalize(vNormal);
+  float diff = max(dot(n, uLightDir), 0.0);
+  vec3 lit = vColor * (uAmbient + uSunColor * (uSunScale * diff));
+  float pointDiff = 0.0;
+  for (int i = 0; i < 16; i++) {
+    if (i >= uPointCount) break;
+    vec3 L = uPointLights[i].xyz - vWorldPos;
+    float d = length(L);
+    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
+    pointDiff += att * att * max(dot(n, L / max(d, 1e-4)), 0.0);
+  }
+  lit += vColor * pointDiff * uPointColor;
+  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vWorldPos)), 1.0);
+}`;
+
 const BB_VS = `#version 300 es
 layout(location=0) in vec3 aCenter;
 layout(location=1) in vec2 aCorner;
@@ -316,6 +379,23 @@ export class Renderer {
       camPos: gl.getUniformLocation(program, 'uCamPos'),
     });
     this._solidFog = fogLocs(this.program);
+    // Character program (C4b): rig vertex-color path, same scene
+    // lighting/fog model as the mesh program.
+    this.charProgram = this._buildProgram(CHAR_VS, CHAR_FS);
+    const cp = this.charProgram;
+    this._char = {
+      proj: gl.getUniformLocation(cp, 'uProj'),
+      view: gl.getUniformLocation(cp, 'uView'),
+      model: gl.getUniformLocation(cp, 'uModel'),
+      lightDir: gl.getUniformLocation(cp, 'uLightDir'),
+      ambient: gl.getUniformLocation(cp, 'uAmbient'),
+      sunScale: gl.getUniformLocation(cp, 'uSunScale'),
+      sunColor: gl.getUniformLocation(cp, 'uSunColor'),
+      pointCount: gl.getUniformLocation(cp, 'uPointCount'),
+      pointLights: gl.getUniformLocation(cp, 'uPointLights'),
+      pointColor: gl.getUniformLocation(cp, 'uPointColor'),
+    };
+    this._charFog = fogLocs(cp);
     // Defaults reproduce the pre-R5 fixed lighting (0.45 + 0.55 * diff).
     this._ambient = new Float32Array([0.45, 0.45, 0.45]);
     this._sunScale = 0.55;
@@ -431,6 +511,56 @@ export class Renderer {
       throw new Error(gl.getProgramInfoLog(prog));
     }
     return prog;
+  }
+
+  /** VAO from packCharacterFaces output (interleaved 9 floats/vertex). */
+  createCharacterMesh(packed) {
+    const gl = this.gl;
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const vbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, packed, gl.STATIC_DRAW);
+    const stride = 9 * 4;
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, stride, 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, stride, 12);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 3, gl.FLOAT, false, stride, 24);
+    gl.bindVertexArray(null);
+    return { vao, count: packed.length / 9, buffers: [vbo] };
+  }
+
+  /**
+   * Draw a character mesh (C4b). Owns its program binding (the R9
+   * rule) AND the cull state: rig faces carry authored normals but
+   * inconsistent triangle winding (built for a non-culling painter),
+   * so back-face culling is disabled for the draw and restored after.
+   * Frame uniforms re-upload from the beginFrame caches, mirroring
+   * the water/billboard paths.
+   */
+  drawCharacter(mesh, modelMatrix) {
+    const gl = this.gl;
+    const c = this._char;
+    gl.useProgram(this.charProgram);
+    gl.uniformMatrix4fv(c.proj, false, this._proj);
+    gl.uniformMatrix4fv(c.view, false, this._view);
+    gl.uniformMatrix4fv(c.model, false, modelMatrix);
+    gl.uniform3fv(c.lightDir, this._lightDir);
+    gl.uniform3fv(c.ambient, this._ambient);
+    gl.uniform1f(c.sunScale, this._sunScale);
+    gl.uniform3fv(c.sunColor, this._sunColor);
+    const count = this._pointLights.length / 4;
+    gl.uniform1i(c.pointCount, count);
+    if (count > 0) gl.uniform4fv(c.pointLights, this._pointLights);
+    gl.uniform3fv(c.pointColor, this._pointColor);
+    this._uploadFog(this._charFog);
+    gl.disable(gl.CULL_FACE);
+    gl.bindVertexArray(mesh.vao);
+    gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+    gl.bindVertexArray(null);
+    gl.enable(gl.CULL_FACE);
   }
 
   /** Upload a getColor32 result as a REPEAT/NEAREST texture, keyed and cached. */

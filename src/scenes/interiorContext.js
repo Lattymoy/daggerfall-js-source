@@ -24,6 +24,9 @@ import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
 import { LADDER_MODEL_ID } from '../player/enterExit.js';
 import { collectInteriorPeople } from '../characters/interiorPeople.js';
+import { buildBody, BARE_PLUGS } from '../characters/rewrite/body.js';
+import { packCharacterFaces, facesBounds } from '../render/characterMesh.js';
+import { trs } from '../world/mat4.js';
 import { ActionSystem } from '../world/actionSystem.js';
 
 /**
@@ -34,7 +37,7 @@ import { ActionSystem } from '../world/actionSystem.js';
  * @returns {{drawList, billboardBatches, lights, texRemap, markers,
  *   enterMarkers, doors, collider, destroy()}}
  */
-export async function buildInteriorContext(deps, dfBlock, blockIndex, recordIndex, climateBase, season, origin = null) {
+export async function buildInteriorContext(deps, dfBlock, blockIndex, recordIndex, climateBase, season, origin = null, opts = {}) {
   const { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord } = deps;
   // P8: verbatim PlayerEnterExit.TransitionInterior parenting - the
   // interior sits at ownerPosition + buildingMatrix (the entered
@@ -108,12 +111,31 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     return { ...pn, x, y, z };
   });
 
+  // C4c (?voxelfolk): people stand as the bare Rewrite humanoid - one
+  // packed mesh, per-person matrices (uniform scale to CLASSIC_HEIGHT,
+  // feet on the billboard base). Facing is static until the animation
+  // slice. Flag off = the C1 classic billboards, untouched.
+  const charDraws = [];
   const billboardBatches = [];
   const flatGroups = new Map();
-  for (const pn of people) {
-    const key = `${pn.textureArchive}_${pn.textureRecord}`;
-    if (!flatGroups.has(key)) flatGroups.set(key, []);
-    flatGroups.get(key).push([pn.x, pn.y, pn.z]);
+  if (opts.voxelfolk && people.length) {
+    const faces = buildBody({ loco: 'stand', hold: 'idle', phase: 0 }, BARE_PLUGS);
+    const mesh = renderer.createCharacterMesh(packCharacterFaces(faces));
+    const b = facesBounds(faces);
+    const CLASSIC_HEIGHT = 1.8;
+    const sc = CLASSIC_HEIGHT / (b.maxY - b.minY);
+    for (const pn of people) {
+      charDraws.push({
+        mesh,
+        matrix: trs(pn.x, pn.y - b.minY * sc, pn.z, 0, 0, 0, sc, sc, sc),
+      });
+    }
+  } else {
+    for (const pn of people) {
+      const key = `${pn.textureArchive}_${pn.textureRecord}`;
+      if (!flatGroups.has(key)) flatGroups.set(key, []);
+      flatGroups.get(key).push([pn.x, pn.y, pn.z]);
+    }
   }
   for (const flat of interior.flats) {
     const key = `${flat.archive}_${flat.record}`;
@@ -156,6 +178,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     texRemap,
     markers,
     people,
+    charDraws,
     flatCount: interior.flats.length,
     ladders,
     enterMarkers,
