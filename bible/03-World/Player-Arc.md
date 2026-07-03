@@ -165,6 +165,24 @@ marker 3.23 -> E from beside the hatch -> bottom marker 0, exact.
 Registry probe __doors uncapped; __markers / __ladders /
 __pickInterior probes added.
 
+## Milestone P7c - standalone scenes fold onto their contexts (SHIPPED)
+
+dungeon.js (340 -> 203) and interior.js (226 -> 133) no longer carry
+their own build paths: each loads data, spins the shared dataPipeline,
+and calls its context builder - the EXACT build the world/exterior
+hosts use for transitions. The dungeon's texture table therefore runs
+as a draw-time texRemap here too (the convention on record since P5);
+walking + E-activation and every shot probe survive unchanged, and the
+scenes keep their own frame loops (fly speeds, far planes, water
+draw). Contexts additively expose the pin counts the standalone logs
+need (flatCount; blockCount + textureTable). Parity: the interior shot
+(MAGEAA00.RMB:0) is byte-identical to pre-fold (pixel diff 0, pin
+78/18/18/38/1/7 swaps/17 lights exact); the dungeon pin reproduces the
+P5 record exactly - 5 blocks, 303 draws, table [23,22,19,22,20,368],
+start (28.375, 38.975, 12.4), 71 lights, 8406 collider tris, 62
+activatables. One boot defect caught by the shot gate: interior deps
+passed the pipeline WITHOUT the renderer (contexts destructure both).
+
 Queue (items 1-6 shipped):
 1. DONE - grounded movement + gravity + collision (P1).
 2. DONE - activation ray + dungeon action doors/chains (P2).
@@ -173,8 +191,8 @@ Queue (items 1-6 shipped):
 5. DONE - world <-> dungeon transitions (P5).
 6. DONE - interior ladders (P6).
 7. Exterior scene mirrors the transition machine (needs a lazy mesh
-   loader); the standalone dungeon and interior scenes fold onto
-   their contexts.
+   loader); the standalone dungeon and interior scene fold is DONE
+   (P7c below).
 8. Parent interiors in the building world frame - multi-door exit
    selection picks by true world proximity and coordinates go
    seamless.

@@ -120,6 +120,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     lights,
     texRemap,
     markers: interior.markers,
+    flatCount: interior.flats.length,
     ladders,
     enterMarkers,
     doors: interior.doors,

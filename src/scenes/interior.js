@@ -1,19 +1,20 @@
 // Milestone 4: ?interior=<BLOCKNAME>:<record> renders one building interior
 // standalone (e.g. ?interior=MAGEAA00.RMB:0), camera spawned at the Enter
 // marker when present.
+// P7c: the scene folds onto buildInteriorContext - the exact build the
+// world/exterior hosts use for transitions (M4/R8/R12/P4 semantics live
+// there); this file is data loading, the fly camera, and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { TextureFile } from '../formats/textureFile.js';
-import { applyClimate, isExteriorWindow } from '../world/climateSwaps.js';
-import { collectInteriorLights, INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE } from '../world/interiorLights.js';
+import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
-import { INTERIOR_MARKER, layoutInterior } from '../world/interiorLayout.js';
+import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { lookAt, perspective } from '../world/mat4.js';
-import { dfMeshToModel } from '../world/meshReader.js';
-import { scaledBillboardSize } from '../world/rmbFlats.js';
-import { fetchBytes, parseSeason, texName } from './shared.js';
+import { fetchBytes, parseSeason } from './shared.js';
+import { createDataPipeline } from './dataPipeline.js';
+import { buildInteriorContext } from './interiorContext.js';
 
 // Milestone 4 scene: one building interior, standalone at block-local origin.
 export async function bootInterior(canvas, renderer, params, status) {
@@ -44,127 +45,30 @@ export async function bootInterior(canvas, renderer, params, status) {
   if (blockIndex === -1) throw new Error(`block not found: ${blockName}`);
   const dfBlock = blocks.getBlock(blockIndex);
 
-  // Decompose lazily during layout; getModel resolves id -> converted model.
   status(`laying out ${blockName}:${recordIndex}`);
-  const textureFiles = new Map();
-  const pendingArchives = new Set();
-  const dfMeshes = new Map();
-  const getModelRaw = (modelIdNum) => {
-    if (!dfMeshes.has(modelIdNum)) {
-      const index = arch.getRecordIndex(modelIdNum);
-      if (index === -1) throw new Error(`model not found: ${modelIdNum}`);
-      const dfMesh = arch.getMesh(index);
-      dfMeshes.set(modelIdNum, dfMesh);
-      for (const sm of dfMesh.subMeshes) pendingArchives.add(sm.textureArchive);
-    }
-    return dfMeshes.get(modelIdNum);
-  };
-  // First pass with unit texture sizes to collect archives + door/prop data;
-  // UVs are finalized after archives load.
-  const preModels = new Map();
-  const getModelPre = (id) => {
-    if (!preModels.has(id)) {
-      preModels.set(id, dfMeshToModel(getModelRaw(id), () => ({ width: 1, height: 1 })));
-    }
-    return preModels.get(id);
-  };
-  const interior = layoutInterior(dfBlock, blockIndex, recordIndex, getModelPre);
-  for (const d of interior.actionDoors) getModelPre(d.modelIdNum);
-  for (const f of interior.flats) pendingArchives.add(f.archive);
-  // Climate swap table over every model submesh (pruned after load if the
-  // swapped archive lacks the record - the submesh then keeps its
-  // original texture).
-  const texRemap = new Map();
-  for (const dfMesh of dfMeshes.values()) {
-    for (const sm of dfMesh.subMeshes) {
-      const swapped = applyClimate(sm.textureArchive, sm.textureRecord, climateBase, season);
-      if (swapped === sm.textureArchive) continue;
-      pendingArchives.add(swapped);
-      texRemap.set(`${sm.textureArchive}_${sm.textureRecord}`, `${swapped}_${sm.textureRecord}`);
-    }
-  }
+  const pipeline = createDataPipeline({ renderer, arch, palette });
+  const ctx = await buildInteriorContext(
+    { ...pipeline, renderer }, dfBlock, blockIndex, recordIndex, climateBase, season);
 
-  status(`loading ${pendingArchives.size} texture archives`);
-  await Promise.all(
-    [...pendingArchives].map(async (archive) => {
-      const t = new TextureFile();
-      t.load(await fetchBytes(texName(archive)), texName(archive), palette);
-      textureFiles.set(archive, t);
-    })
-  );
-  const getTextureSize = (archive, record) => {
-    const t = textureFiles.get(archive);
-    return { width: t.getWidth(record), height: t.getHeight(record) };
-  };
-  const uploadRecord = (archive, record) => {
-    const t = textureFiles.get(archive);
-    const bitmap = t.getDFBitmap(record, 0);
-    renderer.uploadTexture(archive, record, t.getColor32(bitmap, 0));
-    // Exterior windows also get their emission mask (R2, MaterialReader
-    // semantics: glass texels glow with the active window style).
-    if (isExteriorWindow(archive, record)) {
-      renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap));
-    }
-  };
-
-  const gpuMeshes = new Map();
-  for (const [id, dfMesh] of dfMeshes) {
-    const model = dfMeshToModel(dfMesh, getTextureSize);
-    for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord);
-    gpuMeshes.set(id, renderer.createMesh(model));
-  }
-  for (const [key, target] of texRemap) {
-    const [archive, record] = target.split('_').map(Number);
-    const t = textureFiles.get(archive);
-    if (!t || record >= t.recordCount) texRemap.delete(key);
-    else uploadRecord(archive, record);
-  }
-
-  const drawList = [];
-  for (const p of [...interior.placements, ...interior.actionDoors]) {
-    drawList.push({ mesh: gpuMeshes.get(p.modelIdNum), matrix: p.matrix });
-  }
-
-  const billboardBatches = [];
-  const flatGroups = new Map();
-  for (const flat of interior.flats) {
-    const key = `${flat.archive}_${flat.record}`;
-    if (!flatGroups.has(key)) flatGroups.set(key, []);
-    flatGroups.get(key).push([flat.x, flat.y, flat.z]);
-  }
-  for (const [key, centers] of flatGroups) {
-    const [archive, record] = key.split('_').map(Number);
-    const t = textureFiles.get(archive);
-    if (!t || record >= t.recordCount) continue;
-    uploadRecord(archive, record);
-    const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
-    billboardBatches.push(renderer.createBillboardBatch(archive, record, size, centers));
-  }
-
-  // R8: one point light per archive-210 flat, verbatim
-  // DaggerfallInterior.AddLight - billboard centre + per-record offset,
-  // [Interior] prefab range 15, no flicker. Verbatim interior ambient.
-  const t210 = textureFiles.get(210);
-  const interiorLights = t210 ? collectInteriorLights(interior.flats, (record) =>
-    scaledBillboardSize(t210.getSize(record), t210.getScale(record))) : [];
+  // R8: verbatim interior ambient; verbatim InteriorFogSettings
+  // (exponential 0.001, fog color black).
   renderer.setLighting(new Float32Array(INTERIOR_AMBIENT), 0);
-  // Verbatim InteriorFogSettings: exponential 0.001, fog color black.
   renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
 
   // Camera at the Enter marker when present, else the first placement,
   // facing the interior's bounding center (the marker sits at the entry
   // door, so yaw 0 would stare into it).
   const bb = { minX: Infinity, minZ: Infinity, maxX: -Infinity, maxZ: -Infinity };
-  for (const p of interior.placements) {
+  for (const p of ctx.drawList) {
     bb.minX = Math.min(bb.minX, p.matrix[12]); bb.maxX = Math.max(bb.maxX, p.matrix[12]);
     bb.minZ = Math.min(bb.minZ, p.matrix[14]); bb.maxZ = Math.max(bb.maxZ, p.matrix[14]);
   }
   const centerX = (bb.minX + bb.maxX) / 2;
   const centerZ = (bb.minZ + bb.maxZ) / 2;
-  const enter = interior.markers.find((m) => m.type === INTERIOR_MARKER.ENTER);
+  const enter = ctx.markers.find((m) => m.type === INTERIOR_MARKER.ENTER);
   const spawn = enter
     ? [enter.x, enter.y + 1, enter.z]
-    : [interior.placements[0].matrix[12], 1.5, interior.placements[0].matrix[14]];
+    : [ctx.drawList[0].matrix[12], 1.5, ctx.drawList[0].matrix[14]];
   const cam = {
     pos: spawn,
     yaw: Math.atan2(centerX - spawn[0], centerZ - spawn[2]),
@@ -186,11 +90,11 @@ export async function bootInterior(canvas, renderer, params, status) {
   }
 
   const shotMode = params.has('shot');
-  status(`${blockName}:${recordIndex} - ${drawList.length} draws`);
+  status(`${blockName}:${recordIndex} - ${ctx.drawList.length} draws`);
   console.log(
-    `interior: ${interior.placements.length} models, ${interior.actionDoors.length} action doors, ` +
-    `${interior.flats.length} flats, ${interior.markers.length} markers, ${interior.doors.length} static doors, ` +
-    `climate ${climateBase}, season ${season}, ${texRemap.size} swaps, ${interiorLights.length} lights`
+    `interior: ${ctx.drawList.length} models, ${ctx.dynamicDraws.length} action doors, ` +
+    `${ctx.flatCount} flats, ${ctx.markers.length} markers, ${ctx.doors.length} static doors, ` +
+    `climate ${climateBase}, season ${season}, ${ctx.texRemap.size} swaps, ${ctx.lights.length} lights`
   );
 
   let frames = 0;
@@ -211,12 +115,15 @@ export async function bootInterior(canvas, renderer, params, status) {
     const view = lookAt(cam.pos, target, [0, 1, 0]);
 
     renderer.setPointLights(
-      nearestLights(interiorLights, cam.pos, 16, INTERIOR_LIGHT_RANGE),
+      nearestLights(ctx.lights, cam.pos, 16, INTERIOR_LIGHT_RANGE),
       new Float32Array(INTERIOR_LIGHT_COLOR));
     renderer.beginFrame(proj, view, lightDir);
-    for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
+    for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);
+    // Swing doors (P4) draw at rest through their ActionSystem matrices;
+    // the standalone scene has no activation path, so they stay closed.
+    for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
-    renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    renderer.drawBillboards(ctx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
 
     frames++;
     if (shotMode && frames === 5) window.__shotReady = true;

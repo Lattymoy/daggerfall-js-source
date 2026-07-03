@@ -141,6 +141,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     flicker,
     waterQuads,
     startMarker: dungeon.startMarker,
+    blockCount: dungeon.blocks.length,
+    textureTable: dungeon.textureTable,
     exitDoors,
     colliderTris,
     destroy() {
