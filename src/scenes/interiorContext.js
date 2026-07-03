@@ -125,7 +125,9 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const billboardBatches = [];
   const flatGroups = new Map();
   if (opts.voxelfolk && people.length) {
-    const faces = buildBody({ loco: 'stand', hold: 'idle', phase: 0 }, BARE_PLUGS, DAGGER_SPEC);
+    // Paperdoll stance: weapon 'none' hangs the arms (kills the C6c
+    // forearm clip); s.paperdoll plants the classic contrapposto.
+    const faces = buildBody({ loco: 'stand', hold: 'idle', phase: 0, weapon: 'none', paperdoll: {} }, BARE_PLUGS, DAGGER_SPEC);
     const mesh = renderer.createCharacterMesh(packCharacterFaces(faces));
     const b = facesBounds(faces);
     const CLASSIC_HEIGHT = 1.8;

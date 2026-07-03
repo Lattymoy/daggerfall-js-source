@@ -137,6 +137,19 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6e - the paperdoll contrapposto stance (SHIPPED)
+
+Fork step 2 landed upstream (project-final 64a706a): s.paperdoll
+{ weightSide, weightIn, freeOut, freeFwd, hipShift } lists the pelvis
+over the weight leg and plants the free foot out + forward - the
+classic BODY pose the item art seats on; state-gated, 78-case parity
+untouched. Arms hang via the EXISTING weapon:'none' armsDown path (a
+discovery, not new code - and it kills the C6c forearm-clip artifact).
+Re-vendored; the harness body now builds { weapon:'none',
+paperdoll:{} } on DAGGER_SPEC with the profile-inheriting shell.
+Remaining on the fork: tune the stance cfg against the BODY overlay,
+then the posed-width extraction (step 2's payoff) + spec v2 (head).
+
 ### C6d - DAGGER_SPEC v1 + profile-inheriting shells (SHIPPED)
 
 Fork step 1 landed: tools/paperdoll-spec.mjs detects the pose-

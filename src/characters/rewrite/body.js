@@ -753,7 +753,8 @@ function figure(phase, eq, t) {
   const huskBreathe = idleAmt * 0.016 * Math.sin(B.t * 1.5);
   const huskWShift = idleAmt * (Math.sin(B.t * 0.8) * 0.6 + Math.sin(B.t * 0.33 + 1.3) * 0.4);
   const wX = swayX - (isCrouch ? crouchLead * (B.crouchWeight || 0) : 0) + huskWShift * 0.03; // stationary crouch lists onto the back leg; husk weight-shift slides the hips
-  const P = mkFrame(pYaw, pPitch, pRoll + huskWShift * 0.05, [0, SPEC.pelvisY, 0], [wX, bobY - (dropped ? B.crouch : 0) - landDip * 0.18 + (isBulwark ? BULWARK_LEG_LIFT : 0) + huskBreathe * 0.3, 0]); // husk: hips list onto the weighted leg + lift a touch on the breath
+  const pdShift = B.paperdoll ? (B.paperdoll.hipShift ?? 0.045) * (B.paperdoll.weightSide ?? 1) : 0; // contrapposto: hips list over the weight leg
+  const P = mkFrame(pYaw, pPitch, pRoll + huskWShift * 0.05, [0, SPEC.pelvisY, 0], [wX + pdShift, bobY - (dropped ? B.crouch : 0) - landDip * 0.18 + (isBulwark ? BULWARK_LEG_LIFT : 0) + huskBreathe * 0.3, 0]); // husk: hips list onto the weighted leg + lift a touch on the breath
   const leanPitch = (B.chestLean / DEG) * B.moveDir[1] * spd; // fwd/back lean follows the move direction (chestLean is the magnitude) - a backpedal leans back, not into a baked forward lean
   const leanRoll = 0.05 * B.moveDir[0] * spd;                 // list into a lateral move (kept subtle)
   const creature = isHusk || isBulwark || isFlicker; // husk + bulwark + flicker all convulse/hunch/breathe (feet planted, spine snaps)
@@ -779,6 +780,12 @@ function figure(phase, eq, t) {
       const lead = side === crouchLead;
       g = { F: [side * (lead ? B.leadX : B.trailX), lead ? B.leadY : B.trailY, lead ? B.leadFwd : -B.trailBack], fp: (lead ? B.leadPitch : B.trailPitch) / DEG };
     } else g = gaitFoot(side, phase); // walk / run / strafe all stride along moveDir now (omnidirectional)
+    if (B.paperdoll) { // static contrapposto (paperdoll viewport): weight foot tucks under the listed pelvis, free foot plants out + forward - matches the classic BODY pose the item art seats on
+      const pd = B.paperdoll, ws = pd.weightSide ?? 1;
+      g = side === ws
+        ? { F: [side * SPEC.hipX * (pd.weightIn ?? 0.5) + pdShift, 0.06, 0.02], fp: 0 }
+        : { F: [side * (SPEC.hipX + (pd.freeOut ?? 0.06)), 0.06, pd.freeFwd ?? 0.15], fp: 0 };
+    }
     const F = isBulwark ? [g.F[0] + side * 0.06, g.F[1], g.F[2]] : g.F; // bulwark plants a touch wider
     legJoints.push(bodyLeg(out, side, hipW, F, g.fp, ramp, isBulwark ? 1.5 : 1)); // longer legs for the bulwark
   }
@@ -849,6 +856,7 @@ function buildBody(s, plugs, spec) {
     if (rc > 0) { const rco = s.bulwarkRecoilCfg || PLUGS.bulwark.BULWARK_RECOIL; B.gunZ -= rco.back * rc; B.gunY += rco.rise * rc; B.gunPitch -= rco.climb * rc; } // gun drives back + up + climbs
     bulwarkChargeAmt = ch; bulwarkFireAmt = rc; bulwarkMfxCfg = s.bulwarkMfx || null; // feed the muzzle FX (charge gather + fire burst); gunAndArms reads these
   }
+  B.paperdoll = s.paperdoll || null; // static contrapposto stance cfg (paperdoll viewport): { weightSide, weightIn, freeOut, freeFwd, hipShift } - feet + pelvis only; arms come from weapon:'none'
   B.headTilt = s.headTilt || 0; B.headTurn = s.headTurn || 0; B.headCock = s.headCock || 0; B.huskBend = s.bend || 0; // husk head tilt/twitch + forward fold
   B.atkFwd = s.atkFwd || 0; B.atkSink = s.atkSink || 0; B.atkStance = s.atkStance || 0; // husk maul: pelvis lunge-forward + sink (knees bend) + staggered foot stance
   B.atkTwist = s.atkTwist || 0; B.atkRoll = s.atkRoll || 0; // husk maul: chest twist (yaw) + tilt (roll) into the diagonal rake
