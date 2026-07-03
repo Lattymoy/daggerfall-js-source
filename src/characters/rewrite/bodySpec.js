@@ -1,3 +1,7 @@
+// Vendored from project-final's Rewrite Engine (rewrite/rig/bodySpec.js) at C4a -
+// same-owner code, flat-pathed; byte-parity against the canonical copy
+// is pinned by test/rig.test.js over fixtures/bare-body-parity.json.
+// Do not hand-diverge: upstream first, then re-vendor + re-capture.
 // ── body spec (proportion seam) ──────────────────────────────────────
 // Trunk prisms, limb anchors, and bone spans as DATA - the solver and
 // assembly are shared; a consumer supplies its own proportions (e.g. a
@@ -23,6 +27,9 @@ export const VOXLIGHT_SPEC = {
   foot: { ankleH: 0.06, footL: 0.18 },
   // torsoRows: [{ y, rx, rz }, ...] - when present, the trunk lofts
   // through these measured rows instead of the three fixed prisms.
+  // hairRows: [{ y, rx, rz }, ...] - when present, a head/hair/traps
+  // mass lofts over the shoulders (centred slightly back so the face
+  // prisms emerge in front); replaces the neck prism.
 };
 
 /** Torso half-extents at height y (piecewise through the trunk prisms). */
@@ -56,7 +63,7 @@ export function torsoProfile(spec, y) {
  * rest-shape symmetric - the paperdoll stance supplies the lean). */
 export function loftTorso(out, tprism, X, Z, rows, col) {
   for (let i = 0; i + 1 < rows.length; i++) {
-    tprism(out, [0, rows[i].y, 0], [0, rows[i + 1].y, 0], X, Z,
+    tprism(out, [0, rows[i].y, rows[i].cz ?? 0], [0, rows[i + 1].y, rows[i + 1].cz ?? 0], X, Z,
       rows[i].rx, rows[i].rz, rows[i + 1].rx, rows[i + 1].rz, 12, col);
   }
 }

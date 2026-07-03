@@ -148,7 +148,8 @@ function trunkUpperChest(out, ramp) {
     { const v = SPEC.chest; tprism(out, [0, v.y0, 0], [0, v.y1, 0], X, Z, v.rx0, v.rz0, v.rx1, v.rz1, 12, CLOTH); } // chest extends below the waist pivot (1.0) to overlap the hips, so the opposing pelvis/chest twist when moving doesn't tear a gap at the waist (the outline would otherwise read it as a seam at the chunky character resolution)
     { const c = SPEC.chest, u = SPEC.upperChest; tprism(out, [0, c.y1, 0], [0, u.y1, 0], X, Z, c.rx1, c.rz1, u.rx1, u.rz1, 12, CLOTH); }
   }
-  { const v = SPEC.neck; tprism(out, [0, v.y0, v.z0], [0, v.y1, v.z1], X, Z, v.rx0, v.rz0, v.rx1, v.rz1, 12, SK); } // neck flares into the shoulders at the base so the head stays connected at the chunky character resolution (the outline would otherwise eat a 1px neck into a seam)
+  if (SPEC.hairRows) { loftTorso(out, tprism, X, Z, SPEC.hairRows.map((r) => ({ ...r, cz: -0.03 })), SK); } // measured head/hair/traps mass (rows are exact single-run sprite widths); sits back so the face emerges - replaces the neck prism
+  else { const v = SPEC.neck; tprism(out, [0, v.y0, v.z0], [0, v.y1, v.z1], X, Z, v.rx0, v.rz0, v.rx1, v.rz1, 12, SK); } // neck flares into the shoulders at the base so the head stays connected at the chunky character resolution (the outline would otherwise eat a 1px neck into a seam)
 }
 // the head/face, in chest-local space. Split out of trunkUpper so the husk can ride it on its own
 // pivot (head tilt + twitch); the neck base above keeps it visually connected when tilted.
@@ -185,13 +186,23 @@ function armToGrip(out, side, gripWrist, axis, fwd, wrapSign, curl, mirror, pole
 function relicArms(out, wbX, wbY, ramp) {
   const J = [], dag = PLUGS.relic.severDaggerFaces(0.42);
   const fg = { curlMul: B.rfCurl, spread: B.rfSpread, len: B.rfLen, tcurl: B.rtCurl, tspread: B.rtSpread };
+  // activation flourish: mu 0..1 across the cinematic (-1 = settled). raise sweeps a low crossed guard up to
+  // the flared ready stance (~74% through, then holds); pop is a small back-half crest; matr assembles the
+  // daggers from shatter chunks over the first half (fully formed by mu 0.5). lerp = guard -> ready by raise.
+  const mu = B.manifestU, tt = Math.min(1, mu), lp = (g, r, k) => g + (r - g) * k;
+  const raise = mu < 0 ? 1 : (function (t) { return t * t * (3 - 2 * t); })(Math.min(1, mu * 1.35));
+  const pop = mu < 0 ? 0 : Math.sin(Math.PI * tt) * (mu > 0.5 ? 0.14 : 0);
+  const matr = mu < 0 ? 1 : Math.min(1, mu * 2);
   for (const side of [1, -1]) {
-    const W = [side * 0.56 + wbX, 1.16 + wbY, 0.24]; // chest-local ready stance, flared wide - the blades must crest OUTSIDE the shoulder silhouette or a rear camera hides them behind the torso (the gun never has this problem: it is long enough to poke past the outline)
-    const a = norm([side * 0.45, 0.74, 0.32]); // blade direction: up-and-OUT past the shoulders (readable from every angle), forward lean
-    const w = norm(cross(a, [0, 0, 1])), f = cross(a, w); // hand frame off the blade axis (f = a x w keeps the (w,f,a) basis RIGHT-handed - cross(w,a) mirrors it and every dagger face gets backface-culled)
-    const j = armToGrip(out, side, W, a, [0, 0, 1], side, 0.92, side > 0, [side * 0.85, -0.55, 0.35], B.rHandSize, fg, ramp);
-    const Rd = (p) => [w[0] * p[0] + f[0] * p[1] + a[0] * p[2], w[1] * p[0] + f[1] * p[1] + a[1] * p[2], w[2] * p[0] + f[2] * p[1] + a[2] * p[2]]; // dagger local z -> the blade axis
-    out.push(...xformFaces(dag, Rd, mad(W, a, 0.03)));
+    const W = [lp(side * 0.14, side * 0.56, raise) + wbX, lp(0.62, 1.16, raise) + wbY + pop * 0.5, lp(0.42, 0.24, raise)];
+    const readyA = [side * 0.45, 0.74, 0.32], guardA = [side * 0.2, -0.55, 0.78];
+    const a = norm([lp(guardA[0], readyA[0], raise), lp(guardA[1], readyA[1], raise) + pop, lp(guardA[2], readyA[2], raise)]);
+    const w = norm(cross(a, [0, 0, 1])), f = cross(a, w);
+    const j = armToGrip(out, side, W, a, [0, 0, 1], side, 0.92, side > 0, [side * (B.paperdoll?.armPoleX ?? 0.85), -0.55, 0.35], B.rHandSize, fg, ramp); // armPoleX: the elbow-bow knob (parallel session)
+    const Rd = (p) => [w[0] * p[0] + f[0] * p[1] + a[0] * p[2], w[1] * p[0] + f[1] * p[1] + a[1] * p[2], w[2] * p[0] + f[2] * p[1] + a[2] * p[2]];
+    let dagF = xformFaces(dag, Rd, mad(W, a, 0.03));
+    if (matr < 1) dagF = PLUGS.death.crystalDeathFaces(dagF, 1 - matr); // reversed shatter -> assembled blade
+    out.push(...dagF);
     J.push({ side, ...j });
   }
   return J;
@@ -313,7 +324,7 @@ function bodyLeg(out, side, hipW, F, fp, ramp, legLen = 1) {
   rseg(out, mad(knee, [0, 1, 0], -0.05), mad(knee, [0, 1, 0], 0.05), Z, 0.074, 0.074, 0.074, 0.074, 9, SKL);
   rseg(out, mad(knee, calfDir, 0.13), mad(knee, calfDir, 0.2), X, sr, sr * 0.94, sr * 0.97, sr * 0.9, 8, SKD);
   rseg(out, mad(ankle, calfDir, -0.1), mad(ankle, calfDir, -0.03), X, sr * 0.85, sr * 0.8, sr * 0.82, sr * 0.76, 8, SKD);
-  buildFoot(out, ankle, fp, { ankleH: SPEC.foot?.ankleH ?? 0.06, footL: SPEC.foot?.footL ?? 0.18, SK, SKL, SKM, SKD });
+  buildFoot(out, ankle, fp, { ankleH: SPEC.foot?.ankleH ?? 0.06, footL: SPEC.foot?.footL ?? 0.18, yaw: (B.paperdoll?.footYaw ?? 0) * side, SK, SKL, SKM, SKD }); // paperdoll splay, fit downstream
   return { side, hip: hipW, knee, ankle, fp }; // world-space joints (+foot pitch), for armor (side ignored there) + husk crystals/attire
 }
 function mantleArm(out, side, shoulder, target, ramp) {
@@ -862,6 +873,7 @@ function buildBody(s, plugs, spec) {
   huskSeed = s.seed || 0;
   huskNoCrys = !!s.huskNoCrystals;
   relicActive = !!s.relic; // the player's active relic: dual daggers replace the chest gun
+  B.manifestU = s.manifestU != null ? s.manifestU : -1; // Sever activation cinematic 0..1 (-1 idle): drives the dagger materialize + the raise flourish
   ravagerGuns = !!s.ravager; // the Ravager renders as a Husk + dual gun-blades
   B.ravagerGun = s.ravagerGun ? { ...PLUGS.ravager.RGUN, ...s.ravagerGun } : PLUGS.ravager.RGUN; // gun-blade shape (tuner overrides)
   B.ravagerShroud = s.ravagerShroud; // shroud/mantle cfg overrides; undefined = default, false = off (tuner toggle)

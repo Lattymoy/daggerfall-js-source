@@ -137,6 +137,33 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6k iteration 2 (SHIPPED): hair mass, arm/foot knobs, IoU 0.79
+
+Mac: pose off, neck/head unaccounted, upper torso wrong - iterate to
+1:1, don't rush. The zone diagnostic (tools/silhouette-diff.mjs:
+per-zone inter/MISSING/EXCESS + red/blue diff PNG) corrected my
+guess: upper torso was already 0.87 - the losses were head+hair
+(0.42, 426 px missing) and the shoulder band (0.45, 433 px): rows
+0-32 are ONE fused hair/traps/deltoid mass the rig never modelled,
+and those rows are single-run = EXACT sprite widths. hairRows seam
+upstream (loftTorso gains per-row cz; the mass sits back 0.03 so the
+face emerges; replaces the neck prism) + measured emission -> head
+0.93 / shoulders 0.86 in one move, 0.6649 -> 0.7834. Pose refit +
+2D armX*armY sweep (single-axis descent corner-locks) -> 0.7924.
+armPoleX (elbow bow) and a wider arm anchor both tried and REVERTED
+on the numbers (anchor trade: lower torso +0.04, upper -0.04, net
+wash - data wins). footYaw upstream (yaw about the ankle after
+pitch; yaw===0 short-circuits to the exact pre-yaw arithmetic - the
+parity fixture caught a 1-ulp drift from ax+(p0-ax)) -> feet 0.49,
+total 0.7927, floor ratcheted 0.64 -> 0.77. Residuals NAMED with
+causes: lower-torso 259 px (the sprite arm is a near-vertical bar at
+|x| 0.33-0.37 the bowed rig arm cannot occupy without losing the
+upper junction - next: joint spec-level anchor+wrist fit), legs 255
+px excess (spacing/radii - measured values stand, spacing next),
+feet 295 px (the classic sprite draws the forward foot LOWER -
+oblique projection; front-ortho cannot express it - a projection
+truth, not a defect).
+
 ### C6k - THE RESCULPT (SHIPPED): the model itself
 
 Mac, after three corrections landed everywhere except the model:

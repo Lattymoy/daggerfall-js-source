@@ -171,6 +171,14 @@ const calfW = Math.max(...legs.weight.slice(kneeIdx).map((l) => l.w));
 // Wrist: the last split-arm row.
 const wristRow = armW.length ? Math.max(...armW.map((a) => a.y)) : armpit;
 
+// Head/hair/shoulder mass: rows above the armpit are SINGLE-RUN -
+// the silhouette there is exact (hair + traps + deltoids fused).
+const hairRows = [];
+for (let y = top; y < armpit; y++) {
+  if (rows[y].length !== 1) continue;
+  hairRows.push({ y: yRig(y), halfW: +((width(rows[y][0]) / 2) * u).toFixed(4) });
+}
+
 const out = {
   source: `BODY${race}I${gender}.IMG`, W, H, unit: +u.toFixed(5),
   rows: { top, headBottom, shoulder, armpit, crotch, feet, wristRow },
@@ -185,5 +193,6 @@ const out = {
     ankleY: legs.weight.length ? yRig(legs.weight[legs.weight.length - 1].y) : null,
   },
   torsoProfile: torso,
+  hairRows,
 };
 console.log(JSON.stringify(out, null, 1));

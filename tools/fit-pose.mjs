@@ -32,13 +32,25 @@ const AXES = {
   freeFwd: [0.0, 0.04, 0.1, 0.16],
   hipShift: [0.045, 0.07, 0.09, 0.11],
   armX: [0.12, 0.18, 0.24, 0.3],
-  armY: [0.9, 1.0, 1.1, 1.2, 1.3],
+  armY: [0.8, 0.9, 1.0, 1.1, 1.2],
   armZ: [0.0, 0.06, 0.12],
-  armCurl: [0.1, 0.25, 0.4, 0.55],
+  armCurl: [0.25, 0.4, 0.55, 0.7],
+  armPoleX: [0.5, 0.85, 1.2, 1.7, 2.3],
+  footYaw: [0, 0.4, 0.7, 1.0, 1.3],
 };
-let pose = { weightSide: -1, weightIn: 0.65, freeOut: 0.14, freeFwd: 0.04, hipShift: 0.07, armX: 0.18, armY: 1.1, armZ: 0, armCurl: 0.3 };
+let pose = { weightSide: -1, weightIn: 0.8, freeOut: 0.14, freeFwd: 0, hipShift: 0.07, armX: 0.18, armY: 1.2, armZ: 0, armCurl: 0.55, armPoleX: 0.85, footYaw: 0 };
 let best = evalPose(pose);
 console.log('start IoU', best.toFixed(4));
+// Joint 2D sweep first: (armX, armY) interact (out-and-low forearms),
+// single-axis descent corner-locks on them.
+for (const ax of [0.15, 0.2, 0.25, 0.3, 0.35, 0.4]) {
+  for (const ay of [0.85, 0.95, 1.05, 1.15, 1.25]) {
+    const trial = { ...pose, armX: ax, armY: ay };
+    const iou = evalPose(trial);
+    if (iou > best) { best = iou; pose = trial; }
+  }
+}
+console.log('after armXY sweep: IoU', best.toFixed(4), 'armX', pose.armX, 'armY', pose.armY);
 for (let pass = 0; pass < 3; pass++) {
   for (const [k, vals] of Object.entries(AXES)) {
     for (const v of vals) {

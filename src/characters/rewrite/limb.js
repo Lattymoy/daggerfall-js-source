@@ -1,8 +1,7 @@
-// Vendored from project-final's Rewrite Engine (rewrite/rig/body.js) at C4a -
+// Vendored from project-final's Rewrite Engine (rewrite/rig/limb.js) at C4a -
 // same-owner code, flat-pathed; byte-parity against the canonical copy
-// is pinned by test/rig.test.js over fixtures/bare-body-parity.json
-// (captured from rewrite/rig at vendor time). Do not hand-diverge:
-// upstream first, then re-vendor + re-capture.
+// is pinned by test/rig.test.js over fixtures/bare-body-parity.json.
+// Do not hand-diverge: upstream first, then re-vendor + re-capture.
 // Shared limb rig. Holds the analytic 3D two-bone IK that every limb runs:
 // the first-person legs today, and the third-person body's arms and legs later.
 // One solver means a knee, an elbow, or a netcode-driven other-player's limb all
@@ -46,10 +45,18 @@ function skinRamp(tone = 1.09) {
 // heel, instep, sole + forefoot, four small toes + big toe, two ankle bones. dims
 // carries the leg's ankle height + foot length + skin ramp so it matches the leg.
 function buildFoot(out, A, pitch, dims) {
-  const { ankleH, footL, SK, SKL, SKM, SKD } = dims;
+  const { ankleH, footL, yaw = 0, SK, SKL, SKM, SKD } = dims;
   const ax = A[0], ay = A[1], az = A[2];
   const c = Math.cos(pitch), s = Math.sin(pitch);
-  const rot = (p) => [p[0], ay + (p[1] - ay) * c + (p[2] - az) * s, az - (p[1] - ay) * s + (p[2] - az) * c]; // ankle pitch
+  const cy = Math.cos(yaw), sy = Math.sin(yaw);
+  // yaw === 0 keeps the exact pre-yaw arithmetic: ax + (p[0]-ax) can
+  // drift an ulp from p[0], and the parity fixture is byte-exact.
+  const rot = yaw === 0
+    ? (p) => [p[0], ay + (p[1] - ay) * c + (p[2] - az) * s, az - (p[1] - ay) * s + (p[2] - az) * c] // ankle pitch
+    : (p) => {
+      const y1 = ay + (p[1] - ay) * c + (p[2] - az) * s, z1 = az - (p[1] - ay) * s + (p[2] - az) * c; // ankle pitch
+      return [ax + (p[0] - ax) * cy + (z1 - az) * sy, y1, az - (p[0] - ax) * sy + (z1 - az) * cy];    // then yaw about the ankle (paperdoll feet splay)
+    };
   const soleY = ay - ankleH;
   const heelZ = az - 0.085, ballZ = az + footL * 0.6, toeZ = az + footL;
   const inn = ax >= 0 ? -1 : 1; // medial (big-toe) side points toward the centerline

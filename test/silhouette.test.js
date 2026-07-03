@@ -32,6 +32,6 @@ test('silhouette: front IoU vs the classic body mask', { skip: skipReal }, () =>
     BARE_PLUGS, DAGGER_SPEC);
   const { iou, inter, union } = silhouetteIoU(faces, bmp);
   console.log(`silhouette IoU = ${iou.toFixed(4)} (intersection ${inter}, union ${union})`);
-  // Floor = fit 0.6649 minus margin; ratchets UP only.
-  assert.ok(iou >= 0.64, `IoU ${iou.toFixed(4)} below the floor`);
+  // Floor = fit 0.7927 minus margin; ratchets UP only.
+  assert.ok(iou >= 0.77, `IoU ${iou.toFixed(4)} below the floor`);
 });
