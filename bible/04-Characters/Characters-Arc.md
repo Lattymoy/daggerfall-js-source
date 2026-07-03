@@ -137,6 +137,24 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6 RESTRUCTURE - the rig redesigned around the outfits (Mac)
+
+The seating-bug class dies at the root: instead of fitting shells onto
+Voxlight proportions, the rig's proportions become DATA and dagger's
+spec derives from the CLASSIC BODY ITSELF - PAPERDOL.CIF, the canonical
+body every item sprite was authored to seat on. Landed upstream-first
+as rewrite/rig/bodySpec.js (c893a54): trunk prisms, deltoid caps, hip
+anchors + pelvis frames (20 sites), stance width, and leg bone spans as
+a spec object on buildBody(s, plugs, spec); VOXLIGHT_SPEC is the old
+literals verbatim (their 78-case parity byte-identical, gates 582
+green); torsoProfile(spec, y) exposes per-row half-extents so pieces
+inherit the body's own profile + one stand-off - no per-piece fit
+constants ever again. Head stays literal in v1 (not outfit-seated).
+Re-vendored; dagger's 16-hash parity unchanged. NEXT: extract
+DAGGER_SPEC from PAPERDOL.CIF per gender/morphology (the same archive
+families as the pieces), then one locomotion sanity pass on the new
+proportions.
+
 ### C6c - the piece on the rig, in-engine (SHIPPED)
 
 `&piece=<template>` (default 102) on the ?voxelfolk harness hangs the

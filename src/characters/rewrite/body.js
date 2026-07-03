@@ -140,6 +140,8 @@ const MANTLE = { dur: 1.5, rise: 1.45, fwd: 0.5, lean: 22, ledgeX: 0.3, ledgeY: 
 // look); tune each in the lab + paste WEAPON_FLASH back. Geometry params are multiples of the muzzle scale s.
 export { FLASH_DEF, WEAPON_FLASH, muzzleFlashFaces } from './muzzleFlash.js'; // base FX ride along
 import { FLASH_DEF, WEAPON_FLASH, muzzleFlashFaces } from './muzzleFlash.js';
+import { VOXLIGHT_SPEC } from './bodySpec.js';
+export { VOXLIGHT_SPEC, torsoProfile } from './bodySpec.js';
 function buildFlash(out, tip, k, weapon) { out.push(...muzzleFlashFaces(tip, k, WEAPON_FLASH[FLASH_TYPE_KEY[weapon]] || FLASH_DEF)); } // third-person gun-local flash, keyed by weapon type
 
 // ── rig ──
@@ -150,14 +152,14 @@ function mkFrame(yaw, pitch, roll, piv, trans) {
 }
 const compose = (A, Bf) => ({ pt: (p) => A.pt(Bf.pt(p)), faces: (fs) => A.faces(Bf.faces(fs)) });
 function trunkLower(out) {
-  tprism(out, [0, 0.84, 0], [0, 1.0, 0], X, Z, 0.195, 0.1176, 0.23, 0.1323, 12, CLOTH);
+  { const v = SPEC.pelvis; tprism(out, [0, v.y0, 0], [0, v.y1, 0], X, Z, v.rx0, v.rz0, v.rx1, v.rz1, 12, CLOTH); }
   tprism(out, [0, 0.9, 0.01], [0, 0.765, 0.035], X, Z, 0.13, 0.16, 0.05, 0.085, 10, CLOTH);
 }
 function trunkUpperChest(out, ramp) {
   const { SK } = ramp;
-  tprism(out, [0, 0.92, 0], [0, 1.4, 0], X, Z, 0.2125, 0.125, 0.25, 0.1903, 12, CLOTH); // chest extends below the waist pivot (1.0) to overlap the hips, so the opposing pelvis/chest twist when moving doesn't tear a gap at the waist (the outline would otherwise read it as a seam at the chunky character resolution)
-  tprism(out, [0, 1.4, 0], [0, 1.52, 0], X, Z, 0.25, 0.1903, 0.33, 0.174, 12, CLOTH);
-  tprism(out, [0, 1.45, 0.011], [0, 1.63, 0.014], X, Z, 0.115, 0.098, 0.072, 0.072, 12, SK); // neck flares into the shoulders at the base so the head stays connected at the chunky character resolution (the outline would otherwise eat a 1px neck into a seam)
+  { const v = SPEC.chest; tprism(out, [0, v.y0, 0], [0, v.y1, 0], X, Z, v.rx0, v.rz0, v.rx1, v.rz1, 12, CLOTH); } // chest extends below the waist pivot (1.0) to overlap the hips, so the opposing pelvis/chest twist when moving doesn't tear a gap at the waist (the outline would otherwise read it as a seam at the chunky character resolution)
+  { const c = SPEC.chest, u = SPEC.upperChest; tprism(out, [0, c.y1, 0], [0, u.y1, 0], X, Z, c.rx1, c.rz1, u.rx1, u.rz1, 12, CLOTH); }
+  { const v = SPEC.neck; tprism(out, [0, v.y0, v.z0], [0, v.y1, v.z1], X, Z, v.rx0, v.rz0, v.rx1, v.rz1, 12, SK); } // neck flares into the shoulders at the base so the head stays connected at the chunky character resolution (the outline would otherwise eat a 1px neck into a seam)
 }
 // the head/face, in chest-local space. Split out of trunkUpper so the husk can ride it on its own
 // pivot (head tilt + twitch); the neck base above keeps it visually connected when tilted.
@@ -305,11 +307,11 @@ function gaitFoot(side, phase) { // omnidirectional: the stride runs along the l
     }
   }
   const centerFwd = moving ? 0.04 : 0.02;
-  return { F: [side * 0.14 + dx * along, ankleH + lift, centerFwd + dz * along], fp };
+  return { F: [side * SPEC.hipX + dx * along, ankleH + lift, centerFwd + dz * along], fp };
 }
 function bodyLeg(out, side, hipW, F, fp, ramp, legLen = 1) {
   const { SK, SKL, SKM, SKD } = ramp, sr = 0.078;
-  const [knee, ankle] = solveTwoBone(hipW, F, 0.51 * legLen, 0.415 * legLen, [0, 0, 1]);
+  const [knee, ankle] = solveTwoBone(hipW, F, SPEC.leg.thigh * legLen, SPEC.leg.calf * legLen, [0, 0, 1]);
   const thighDir = norm(sub(knee, hipW)), calfDir = norm(sub(ankle, knee));
   rseg(out, mad(hipW, thighDir, -0.06), mad(hipW, thighDir, 0.215), X, 0.09, 0.0828, 0.115, 0.10925, 10, CLOTH);
   rseg(out, hipW, knee, X, 0.08, 0.0848, sr * 1.06, sr * 0.92, 8, SK);
@@ -512,7 +514,7 @@ function figure(phase, eq, t) {
     const rise = MANTLE.rise * eUp, fwd = MANTLE.fwd * eFwd;
     const lean = (MANTLE.lean / DEG) * Math.sin(Math.PI * Math.min(1, u / 0.86)); // lean into the pull, straighten on top
     const rel = smooth(Math.max(0, (u - 0.5) / 0.5)); // hands let go of the ledge as the body stands
-    const P = mkFrame(0, 0, 0, [0, 0.98, 0], [0, 0, 0]); // vault (rise + fwd) is the game's pos/jumpY; rise/fwd below only offsets the feet under the fixed pelvis
+    const P = mkFrame(0, 0, 0, [0, SPEC.pelvisY, 0], [0, 0, 0]); // vault (rise + fwd) is the game's pos/jumpY; rise/fwd below only offsets the feet under the fixed pelvis
     const C = compose(P, mkFrame(0, lean, 0, [0, 1.0, 0], [0, 0, 0]));
     const out = [];
     { const fs = []; trunkLower(fs); out.push(...P.faces(fs)); }
@@ -523,11 +525,11 @@ function figure(phase, eq, t) {
       const ledge = [side * MANTLE.ledgeX, MANTLE.ledgeY, MANTLE.ledgeZ];
       const neutral = [sh[0] + side * 0.12, sh[1] - 0.62, sh[2] + 0.18]; // arm comes to rest at the side
       const target = [ledge[0] + (neutral[0] - ledge[0]) * rel, ledge[1] + (neutral[1] - ledge[1]) * rel, ledge[2] + (neutral[2] - ledge[2]) * rel];
-      { const capFs = []; rseg(capFs, [side * 0.17, 1.545, 0], [side * 0.24, 1.45, 0], Z, 0.0738, 0.09, 0.0801, 0.0945, 8, ramp.SK); out.push(...C.faces(capFs)); } // deltoid cap rides the chest
+      { const capFs = []; const dv = SPEC.deltoid; rseg(capFs, [side * dv.x0, dv.y0, 0], [side * dv.x1, dv.y1, 0], Z, dv.rU0, dv.rV0, dv.rU1, dv.rV1, 8, ramp.SK); out.push(...C.faces(capFs)); } // deltoid cap rides the chest
       armJoints.push({ side, ...mantleArm(out, side, sh, target, ramp) });
     }
     const legJoints = [];
-    for (const side of [1, -1]) { const mf = mantleFoot(side, u); legJoints.push(bodyLeg(out, side, P.pt([side * 0.14, 0.98, 0]), [mf[0], mf[1] - rise, mf[2] - fwd], 0, ramp)); } // feet offset down/back by the suppressed rise: dangle below, then plant level with the (game-vaulted) pelvis
+    for (const side of [1, -1]) { const mf = mantleFoot(side, u); legJoints.push(bodyLeg(out, side, P.pt([side * SPEC.hipX, SPEC.pelvisY, 0]), [mf[0], mf[1] - rise, mf[2] - fwd], 0, ramp)); } // feet offset down/back by the suppressed rise: dangle below, then plant level with the (game-vaulted) pelvis
     renderArmor(out, P, C, armJoints, legJoints, eq, t, 0, 0.2, true); // arm joints are world-space here (the arms reach the ledge)
     return out;
   }
@@ -539,7 +541,7 @@ function figure(phase, eq, t) {
     const pitR = kf(u, PIT), pit = (pitR <= 0 ? pitR * S.arch : pitR * S.fold) / DEG;     // launch arch-back vs land fold-forward
     const arm = kf(u, ARM) * S.arm;
     const airSgn = Math.max(-1, Math.min(1, (0.5 - u) * 2)); // +1 launch -> 0 apex -> -1 fall: drives the cape/scarf billow
-    const P = mkFrame(0, pit * 0.35, 0, [0, 0.98, 0], [0, pely, 0]);  // pelvis tilts + stretches up off the launch / drops to absorb the landing
+    const P = mkFrame(0, pit * 0.35, 0, [0, SPEC.pelvisY, 0], [0, pely, 0]);  // pelvis tilts + stretches up off the launch / drops to absorb the landing
     const C = compose(P, mkFrame(0, pit, 0, [0, 1.0, 0], [0, 0, 0])); // spine arches back launching, folds forward to absorb
     const out = [];
     { const fs = []; trunkLower(fs); out.push(...P.faces(fs)); }
@@ -554,7 +556,7 @@ function figure(phase, eq, t) {
       const lead = side === LEAD;
       const uS = Math.max(0, Math.min(1, u + (lead ? PH : -PH)));      // lead leg runs a hair ahead through the arc
       const tuckS = kf(uS, TUCK) * S.tuck * (lead ? 1.06 : 0.85);    // lead knee drives higher; trail tucks looser
-      const hipW = P.pt([side * 0.14, 0.98, 0]);
+      const hipW = P.pt([side * SPEC.hipX, SPEC.pelvisY, 0]);
       const footX = side * (0.14 + SPLAY * tuckS);                    // knees splay apart through the tuck
       const footY = 0.06 + 0.68 * tuckS;
       const footZ = 0.04 + kf(uS, J_FWD) * S.reach + (lead ? 1 : -1) * STAGZ * absorb; // staggered plant: lead foot forward, trail back
@@ -569,7 +571,7 @@ function figure(phase, eq, t) {
   if (eq && eq.husk && action === 'leap') {
     const ramp = skinRamp(0.89), u = leapU, g = B.leapCfg || PLUGS.husk.HUSK_LEAP;
     const lp = PLUGS.husk.huskLeap(u, PLUGS.husk.HUSK_ARMS, g);
-    const P = mkFrame(0, lp.pitch * 0.32, 0, [0, 0.98, 0], [0, lp.pelY, lp.fwd]); // pelvis: rise/drop + travel, tips into the dive
+    const P = mkFrame(0, lp.pitch * 0.32, 0, [0, SPEC.pelvisY, 0], [0, lp.pelY, lp.fwd]); // pelvis: rise/drop + travel, tips into the dive
     const C = compose(P, mkFrame(0, lp.pitch + lp.fold, 0, [0, 1.0, 0], [0, 0, 0])); // chest dives forward + folds
     const out = [];
     { const fs = []; trunkLower(fs); out.push(...P.faces(fs)); }
@@ -581,7 +583,7 @@ function figure(phase, eq, t) {
     const SPLAY = 0.06, STAG = 0.05, tuckAmt = Math.max(0, lp.footY - 0.06);
     for (const side of [1, -1]) {
       const lead = side === 1;
-      const hipW = P.pt([side * 0.14, 0.98, 0]);
+      const hipW = P.pt([side * SPEC.hipX, SPEC.pelvisY, 0]);
       const footX = side * (0.14 + SPLAY * Math.min(1, tuckAmt * 2.6));
       const footY = 0.06 + tuckAmt * (lead ? 1.05 : 0.88);
       const footZ = lp.fwd + lp.footFwd + (lead ? 1 : -1) * STAG * tuckAmt;
@@ -597,7 +599,7 @@ function figure(phase, eq, t) {
   //    tip/lurch (jPitch/jZ) is the caller's post-xform, exactly as for the gait. ──
   if (eq && eq.husk && action === 'attack') {
     const ramp = skinRamp(0.89);
-    const P = mkFrame(0, 0, 0, [0, 0.98, 0], [0, -(B.atkSink || 0), B.atkFwd || 0]); // pelvis lunges forward + sinks (knees bend via IK)
+    const P = mkFrame(0, 0, 0, [0, SPEC.pelvisY, 0], [0, -(B.atkSink || 0), B.atkFwd || 0]); // pelvis lunges forward + sinks (knees bend via IK)
     const C = compose(P, mkFrame(B.atkTwist || 0, (B.huskBend || 0) + aimPitch * AIM_PITCH_FRAC, B.atkRoll || 0, [0, 1.0, 0], [0, 0, 0])); // chest folds hard over the feet + twists into the diagonal rake (yaw) + tilts (roll)
     const H = mkFrame(B.headTurn || 0, B.headTilt || 0, B.headCock || 0, [0, 1.55, 0], [0, 0, 0]); // head whips on its own neck
     const out = [];
@@ -609,7 +611,7 @@ function figure(phase, eq, t) {
     const stance = B.atkStance || 0;
     for (const side of [1, -1]) { // staggered lunge stance: lead foot plants forward, trail drives from behind
       const lead = side === 1;
-      const hipW = P.pt([side * 0.14, 0.98, 0]);
+      const hipW = P.pt([side * SPEC.hipX, SPEC.pelvisY, 0]);
       const footZ = lead ? stance : -stance * 0.8;
       legJoints.push(bodyLeg(out, side, hipW, [side * 0.14, 0.06, footZ], (lead ? -0.15 : -0.32), ramp)); // trail foot rolls onto the ball (push-off)
     }
@@ -623,7 +625,7 @@ function figure(phase, eq, t) {
   //    machinery as the husk maul, flicker treatment. ──
   if (eq && eq.flicker && action === 'strike') {
     const ramp = skinRamp(0.89);
-    const P = mkFrame(B.atkPelYaw || 0, 0, 0, [0, 0.98, 0], [0, -(B.atkSink || 0), B.atkFwd || 0]); // pelvis PIVOTS (yaw) + lunges + sinks -> hips drive the chain, knees bend via IK
+    const P = mkFrame(B.atkPelYaw || 0, 0, 0, [0, SPEC.pelvisY, 0], [0, -(B.atkSink || 0), B.atkFwd || 0]); // pelvis PIVOTS (yaw) + lunges + sinks -> hips drive the chain, knees bend via IK
     const C = compose(P, mkFrame(B.atkTwist || 0, (B.huskBend || 0) + aimPitch * AIM_PITCH_FRAC, B.atkRoll || 0, [0, 1.0, 0], [0, 0, 0])); // chest twists RELATIVE to the pelvis (the spine coils + whips) + folds + tilts
     const H = mkFrame(B.headTurn || 0, B.headTilt || 0, B.headCock || 0, [0, 1.55, 0], [0, 0, 0]); // the crystal head-cluster whips on its own driven turn (lagged after the chest)
     const out = [];
@@ -634,7 +636,7 @@ function figure(phase, eq, t) {
     const stance = B.atkStance || 0;
     for (const side of [1, -1]) { // staggered lunge stance: lead foot plants forward, trail drives off the ball
       const lead = side === 1;
-      const hipW = P.pt([side * 0.14, 0.98, 0]);
+      const hipW = P.pt([side * SPEC.hipX, SPEC.pelvisY, 0]);
       const footZ = lead ? stance : -stance * 0.8;
       legJoints.push(bodyLeg(out, side, hipW, [side * 0.14, 0.06, footZ], (lead ? -0.15 : -0.32), ramp)); // trail foot rolls onto the ball (push-off)
     }
@@ -647,7 +649,7 @@ function figure(phase, eq, t) {
   //    caller (crystalDeathFaces + crystalDeathRig); this branch only poses + skins the body. ──
   if (eq && eq.husk && action === 'death') {
     const ramp = skinRamp(0.89), u = deathU, dp = PLUGS.death.deathPose(u);
-    const P = mkFrame(0, dp.pelPitch, 0, [0, 0.98, 0], [0, 0, 0]);
+    const P = mkFrame(0, dp.pelPitch, 0, [0, SPEC.pelvisY, 0], [0, 0, 0]);
     const C = compose(P, mkFrame(0, dp.chestPitch, 0, [0, 1.0, 0], [0, 0, 0])); // torso arches back off the hit
     const Hd = mkFrame(dp.headTurn, dp.headTilt, dp.headCock, [0, 1.55, 0], [0, 0, 0]); // head snaps + lolls
     const out = [];
@@ -658,7 +660,7 @@ function figure(phase, eq, t) {
     { const fs = []; armJoints = armsDown(fs, ramp); out.push(...C.faces(fs)); }
     for (const side of [1, -1]) { // legs buckle + splay + trail, asymmetrically
       const lead = side === 1;
-      const hipW = P.pt([side * 0.14, 0.98, 0]);
+      const hipW = P.pt([side * SPEC.hipX, SPEC.pelvisY, 0]);
       const footX = side * (0.14 + dp.footSplay);
       const footY = 0.06 + (dp.footY - 0.06) * (lead ? 1.12 : 0.82);
       const footZ = (lead ? 1 : -1) * dp.footStag;
@@ -669,7 +671,7 @@ function figure(phase, eq, t) {
   }
   if (eq && eq.bulwark && action === 'death') { // bulwark crystal-death: same flail pose on the major's body; the caller layers crystalDeathFaces (crystallize -> shatter) + crystalDeathRig (launch)
     const ramp = skinRamp(0.89), u = deathU, dp = PLUGS.death.deathPose(u), exposed = crystalGun; // exposed death keeps gripping the rifle; shielded death flings the arms + drops the shield
-    const P = mkFrame(0, dp.pelPitch, 0, [0, 0.98, 0], [0, BULWARK_LEG_LIFT, 0]); // raised like the live bulwark
+    const P = mkFrame(0, dp.pelPitch, 0, [0, SPEC.pelvisY, 0], [0, BULWARK_LEG_LIFT, 0]); // raised like the live bulwark
     const C = compose(P, mkFrame(0, dp.chestPitch, 0, [0, 1.0, 0], [0, 0, 0]));
     const Hd = mkFrame(dp.headTurn, dp.headTilt, dp.headCock, [0, 1.55, 0], [0, 0, 0]);
     const out = [];
@@ -680,7 +682,7 @@ function figure(phase, eq, t) {
     else { B.armX = dp.armX; B.armY = dp.armY; B.armZ = dp.armZ; B.armCurl = dp.armCurl; B.armTwitch = 0; const fs = []; armJoints = armsDown(fs, ramp); out.push(...C.faces(fs)); } // arms flung overhead
     for (const side of [1, -1]) {
       const lead = side === 1;
-      const hipW = P.pt([side * 0.14, 0.98, 0]);
+      const hipW = P.pt([side * SPEC.hipX, SPEC.pelvisY, 0]);
       const footX = side * (0.14 + dp.footSplay);
       const footY = 0.06 + (dp.footY - 0.06) * (lead ? 1.12 : 0.82);
       const footZ = (lead ? 1 : -1) * dp.footStag;
@@ -691,7 +693,7 @@ function figure(phase, eq, t) {
   }
   if (eq && eq.flicker && action === 'death') { // flicker/idol crystal-death: the same flail pose on the displaced rig (covers the idol too = eq.flicker + B.idol). renderFlicker draws the blade-arms / fused emitter + (flickerBurst) the exploding purple shatter; the caller adds crystalDeathRig's backward launch + tumble
     const ramp = skinRamp(0.89), u = deathU, dp = PLUGS.death.deathPose(u);
-    const P = mkFrame(0, dp.pelPitch, 0, [0, 0.98, 0], [0, 0, 0]);
+    const P = mkFrame(0, dp.pelPitch, 0, [0, SPEC.pelvisY, 0], [0, 0, 0]);
     const C = compose(P, mkFrame(0, dp.chestPitch, 0, [0, 1.0, 0], [0, 0, 0])); // torso arches back off the hit
     const Hd = mkFrame(dp.headTurn, dp.headTilt, dp.headCock, [0, 1.55, 0], [0, 0, 0]); // the scattered cluster / idol crown rides this
     const out = [];
@@ -702,7 +704,7 @@ function figure(phase, eq, t) {
     { const fs = []; armJoints = armsDown(fs, ramp); } // the flicker draws NO flesh arms - armsDown only solves the shoulder joints for renderFlicker to mount the blades / emitter
     for (const side of [1, -1]) { // legs buckle + splay + trail, asymmetrically (same as the husk)
       const lead = side === 1;
-      const hipW = P.pt([side * 0.14, 0.98, 0]);
+      const hipW = P.pt([side * SPEC.hipX, SPEC.pelvisY, 0]);
       const footX = side * (0.14 + dp.footSplay);
       const footY = 0.06 + (dp.footY - 0.06) * (lead ? 1.12 : 0.82);
       const footZ = (lead ? 1 : -1) * dp.footStag;
@@ -714,7 +716,7 @@ function figure(phase, eq, t) {
   if (locoState === 'slide') {
     const ramp = skinRamp(0.89);
     const pYaw = B.pelvisYaw / DEG;
-    const P = mkFrame(pYaw, B.pelvisPitch / DEG, B.pelvisRoll / DEG, [0, 0.98, 0], [0, -B.crouch, 0]);
+    const P = mkFrame(pYaw, B.pelvisPitch / DEG, B.pelvisRoll / DEG, [0, SPEC.pelvisY, 0], [0, -B.crouch, 0]);
     const C = compose(P, mkFrame(-pYaw * B.counterFrac, B.chestLean / DEG + (holdState === 'aimed' ? aimPitch * AIM_PITCH_FRAC : 0), B.lateralFlex / DEG, [0, 1.0, 0], [0, 0, 0]));
     const H = mkFrame(0, (holdState === 'aimed' ? 0 : aimPitch * AIM_PITCH_FRAC), 0, [0, 1.55, 0], [0, 0, 0]); // hipfire: head tracks the look (chest level); on ADS the chest aim-lean carries it
     const out = [];
@@ -725,7 +727,7 @@ function figure(phase, eq, t) {
     { const fs = []; armJoints = gunAndArms(fs, 0, 0, ramp); out.push(...C.faces(fs)); }
     const leadSign = B.leadSide >= 0 ? 1 : -1;
     for (const side of [1, -1]) {
-      const hipW = P.pt([side * 0.14, 0.98, 0]);
+      const hipW = P.pt([side * SPEC.hipX, SPEC.pelvisY, 0]);
       const lead = side === leadSign;
       const F = lead ? [side * 0.14, B.leadY, B.leadFwd] : [side * 0.14, B.trailY, -B.trailBack];
       legJoints.push(bodyLeg(out, side, hipW, F, (lead ? B.leadPitch : B.trailPitch) / DEG, ramp));
@@ -751,7 +753,7 @@ function figure(phase, eq, t) {
   const huskBreathe = idleAmt * 0.016 * Math.sin(B.t * 1.5);
   const huskWShift = idleAmt * (Math.sin(B.t * 0.8) * 0.6 + Math.sin(B.t * 0.33 + 1.3) * 0.4);
   const wX = swayX - (isCrouch ? crouchLead * (B.crouchWeight || 0) : 0) + huskWShift * 0.03; // stationary crouch lists onto the back leg; husk weight-shift slides the hips
-  const P = mkFrame(pYaw, pPitch, pRoll + huskWShift * 0.05, [0, 0.98, 0], [wX, bobY - (dropped ? B.crouch : 0) - landDip * 0.18 + (isBulwark ? BULWARK_LEG_LIFT : 0) + huskBreathe * 0.3, 0]); // husk: hips list onto the weighted leg + lift a touch on the breath
+  const P = mkFrame(pYaw, pPitch, pRoll + huskWShift * 0.05, [0, SPEC.pelvisY, 0], [wX, bobY - (dropped ? B.crouch : 0) - landDip * 0.18 + (isBulwark ? BULWARK_LEG_LIFT : 0) + huskBreathe * 0.3, 0]); // husk: hips list onto the weighted leg + lift a touch on the breath
   const leanPitch = (B.chestLean / DEG) * B.moveDir[1] * spd; // fwd/back lean follows the move direction (chestLean is the magnitude) - a backpedal leans back, not into a baked forward lean
   const leanRoll = 0.05 * B.moveDir[0] * spd;                 // list into a lateral move (kept subtle)
   const creature = isHusk || isBulwark || isFlicker; // husk + bulwark + flicker all convulse/hunch/breathe (feet planted, spine snaps)
@@ -771,7 +773,7 @@ function figure(phase, eq, t) {
   let armJoints = null; const legJoints = [];
   { const fs = []; armJoints = (isBulwark && weapon === 'none') ? bulwarkShieldArms(fs, ramp, phi, B.fireU || 0) : weapon === 'none' ? armsDown(fs, ramp) : gunAndArms(fs, wbX, wbY, ramp); if (!isFlicker) out.push(...C.faces(fs)); } // shielded bulwark holds one-handed; other melee hang their arms; the flicker draws NO flesh arms (its arms are crystal blades, built in renderFlicker - armsDown still gives the shoulder joints)
   for (const side of [1, -1]) {
-    const hipW = P.pt([side * 0.14, 0.98, 0]);
+    const hipW = P.pt([side * SPEC.hipX, SPEC.pelvisY, 0]);
     let g;
     if (isCrouch) { // asymmetric staggered stance (slide-style), not a symmetric squat
       const lead = side === crouchLead;
@@ -806,9 +808,11 @@ export const BARE_PLUGS = {
   armor: { SHADERS: { ranger: null }, reskin: () => {}, OUTFITS: { outfit1: {} } },
   ravager: { RGUN: {} },
 };
+let SPEC = VOXLIGHT_SPEC;
 let PLUGS = null; // Toolkit-Arc S4b-ii: the content seam - the consumer's plugs, set per call (same module-let pattern as locoState/weapon)
-function buildBody(s, plugs) {
+function buildBody(s, plugs, spec) {
   PLUGS = plugs || BARE_PLUGS;
+  SPEC = spec || VOXLIGHT_SPEC;
   locoState = s.loco; weapon = s.weapon;
   if (weapon === 'lmg' || weapon === 'launcher' || weapon === 'sniper') lastHeavy = weapon; // remember the equipped Heavy for the back-holster
   holdState = locoState === 'crouch' ? 'aimed' : s.hold; // crouch is aim-only (matches the lab)
