@@ -137,6 +137,22 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
+### C6b - the 1:1 piece method (SHIPPED)
+
+Mac's mandate: 1 to 1, no exceptions - so the sprite's pixels ARE the
+piece. `pieceFromSprite.js`: every opaque paperdoll pixel becomes one
+face on a shell wrapped around the torso ellipse (column -> front-arc
+angle, row -> height), carrying its RAW PALETTE INDEX so materials
+resolve per-face through the C5b band swap + ART_PAL exactly as
+classic does. Nothing invented: no back faces, no redrawn detail, no
+palette guesses. The witness is GEOMETRIC, not bookkeeping -
+projectFront recovers each face's source pixel from its midpoint
+angle/height and rebuilds the index grid; on the real plate cuirass
+(251, plate row 1) the round-trip reproduces the sprite EXACTLY with
+face count == opaque pixel count, and Steel/Iron resolve to their
+table colors per face. Next: C6c renders the piece on the rig
+in-engine - the DECIDE-C1 review shot.
+
 ### C6a - paperdoll art addressing + the reference extractor (SHIPPED)
 
 `paperdollArt.js`: variant record resolution verbatim (record = base +
