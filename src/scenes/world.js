@@ -346,11 +346,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     cam.yaw -= e.movementX * 0.0025;
     cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
   });
-  const lightDir = new Float32Array([0.45, 0.8, 0.35]);
-  {
-    const l = Math.hypot(lightDir[0], lightDir[1], lightDir[2]);
-    lightDir[0] /= l; lightDir[1] /= l; lightDir[2] /= l;
-  }
 
   const shotMode = params.has('shot');
   const initialCount = queue.length + 1;

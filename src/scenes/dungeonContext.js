@@ -10,7 +10,7 @@
 
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { applyTextureTable } from '../world/dungeonTextures.js';
-import { collectDungeonLights, DUNGEON_AMBIENT } from '../world/dungeonLights.js';
+import { collectDungeonLights } from '../world/dungeonLights.js';
 import { CityLightAnimator } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';

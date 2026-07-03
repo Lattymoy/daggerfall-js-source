@@ -29,15 +29,10 @@ import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
 import { getGroundArchive } from '../world/climateSwaps.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
-import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE } from '../world/interiorLights.js';
+import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
 
-const INTERIOR_LIGHT_DIR = new Float32Array([0.45, 0.8, 0.35]);
-{
-  const l = Math.hypot(INTERIOR_LIGHT_DIR[0], INTERIOR_LIGHT_DIR[1], INTERIOR_LIGHT_DIR[2]);
-  INTERIOR_LIGHT_DIR[0] /= l; INTERIOR_LIGHT_DIR[1] /= l; INTERIOR_LIGHT_DIR[2] /= l;
-}
 // Dungeon water surface (R11 values, mirroring the dungeon scene).
 const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
 const DUNGEON_WATER_SCROLL = 0.05;

@@ -13,6 +13,7 @@ import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
+import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
 import { PlayerMotor } from '../player/motor.js';
@@ -110,11 +111,6 @@ export async function bootDungeon(canvas, renderer, params, status) {
     cam.yaw -= e.movementX * 0.0025;
     cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
   });
-  const lightDir = new Float32Array([0.45, 0.8, 0.35]);
-  {
-    const l = Math.hypot(lightDir[0], lightDir[1], lightDir[2]);
-    lightDir[0] /= l; lightDir[1] /= l; lightDir[2] /= l;
-  }
 
   status(`${dungeonName} - ${ctx.blockCount} blocks, ${ctx.drawList.length} draws`);
   console.log(
@@ -185,7 +181,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     renderer.setPointLights(
       nearestLights(ctx.lights, cam.pos, 16, ctx.flicker.ranges),
       new Float32Array(DUNGEON_LIGHT_COLOR));
-    renderer.beginFrame(proj, view, lightDir);
+    renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);

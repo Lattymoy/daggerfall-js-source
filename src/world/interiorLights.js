@@ -11,6 +11,17 @@
 // InteriorAmbientLight (0.18); the night variant (0.20, 0.18, 0.20) is
 // exposed for the clock.
 
+// Directional light for interior and dungeon frames (presentation
+// choice; classic has no sun indoors - a fixed oblique direction keeps
+// face shading legible). Normalized once here; single-sourced at the
+// P7 audit (was inlined in worldModes + both standalone scenes).
+export const INTERIOR_LIGHT_DIR = (() => {
+  const d = new Float32Array([0.45, 0.8, 0.35]);
+  const l = Math.hypot(d[0], d[1], d[2]);
+  d[0] /= l; d[1] /= l; d[2] /= l;
+  return d;
+})();
+
 export const INTERIOR_AMBIENT = Object.freeze([0.18, 0.18, 0.18]);
 export const INTERIOR_NIGHT_AMBIENT = Object.freeze([0.20, 0.18, 0.20]);
 export const INTERIOR_LIGHT_RANGE = 15;

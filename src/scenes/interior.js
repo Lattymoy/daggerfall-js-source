@@ -8,7 +8,7 @@
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE } from '../world/interiorLights.js';
+import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { lookAt, perspective } from '../world/mat4.js';
@@ -83,11 +83,6 @@ export async function bootInterior(canvas, renderer, params, status) {
     cam.yaw -= e.movementX * 0.0025;
     cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
   });
-  const lightDir = new Float32Array([0.45, 0.8, 0.35]);
-  {
-    const l = Math.hypot(lightDir[0], lightDir[1], lightDir[2]);
-    lightDir[0] /= l; lightDir[1] /= l; lightDir[2] /= l;
-  }
 
   const shotMode = params.has('shot');
   status(`${blockName}:${recordIndex} - ${ctx.drawList.length} draws`);
@@ -117,7 +112,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     renderer.setPointLights(
       nearestLights(ctx.lights, cam.pos, 16, INTERIOR_LIGHT_RANGE),
       new Float32Array(INTERIOR_LIGHT_COLOR));
-    renderer.beginFrame(proj, view, lightDir);
+    renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);
     // Swing doors (P4) draw at rest through their ActionSystem matrices;
     // the standalone scene has no activation path, so they stay closed.

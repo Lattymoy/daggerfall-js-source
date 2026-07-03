@@ -165,6 +165,15 @@ marker 3.23 -> E from beside the hatch -> bottom marker 0, exact.
 Registry probe __doors uncapped; __markers / __ladders /
 __pickInterior probes added.
 
+P7 audit: gates green (137/23) and every parity pin re-verified. Four
+findings, all fixed at root - a dead lightDir block left in world.js
+by the P7a cut (531 lines now), a dead DUNGEON_AMBIENT import in
+dungeonContext (hosts own lighting), the interior/dungeon directional
+inlined in THREE places (single-sourced as INTERIOR_LIGHT_DIR in
+interiorLights.js; interior shot stays byte-identical), and two
+Ledger C rows still routing features R6-R8 shipped (interior 210
+point lights; dungeon water + lights) - pruned.
+
 ## Milestone P7b - exterior scene hosts the transition machine (SHIPPED)
 
 The exterior location scene mirrors ?world: E on a building door
@@ -217,4 +226,4 @@ Queue (items 1-6 shipped):
    seamless.
 9. DONE (P7) - the mode machines extracted to scenes/worldModes.js
    and the lazy texture/mesh caches to scenes/dataPipeline.js;
-   world.js is 536 lines against the 900 ceiling.
+   world.js is 531 lines against the 900 ceiling (P7 audit).
