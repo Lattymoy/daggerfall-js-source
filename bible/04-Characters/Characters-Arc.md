@@ -137,7 +137,7 @@ member) ride as data; evaluation routes to Systems. Corpus pinned:
 pin `64 draws, 3 doors, 11 lights, 2 people`, patrons visible in the
 captured frame.
 
-### C6k - THE RESCULPT (IN PROGRESS): the model itself, not around it
+### C6k - THE RESCULPT (SHIPPED): the model itself
 
 Mac, after three corrections landed everywhere except the model:
 "Its the entire voxel model proportions and design." Owned - C6j's
@@ -158,11 +158,22 @@ any centre-jump threshold). Numbers: head 0.24 wide topping 1.92
 (bottom 1.86 - SMALL and HIGH vs the rig's literal head), shoulders
 0.351 half-span at 1.49, torso 0.172/0.159/0.219, arms 0.141 to
 wrist 0.99, legs thigh 0.239 / knee 0.159@0.709 / calf 0.199.
-NEXT (the work, not a deferral): SPEC v2 upstream - the FULL body
-enters the seam (head, neck, shoulders, arms, hands, feet, per-row
-torso profile), the body construction reads all of it, and the
-acceptance gate is MEASURED: front-orthographic silhouette IoU of
-the rebuilt model against the sprite mask.
+SHIPPED across the block: SPEC v2 upstream (3ede53e + torsoProfile-
+reads-rows + the paperdoll arm-override plumb; pose tables carved to
+poseTables.js on the ceiling breach) - the FULL body is optional-
+field data with parity untouched. gen-dagger-spec.mjs emits DAGGER_
+SPEC v2: 40-row measured torso loft (depth = rx * 0.7, the one
+front-view assumption), head scale/lift SOLVED from the crown (1.115
+/ -0.0168 - the head moved and shrank; the 'collision' was never
+structural), measured arm/leg radius ratios, knee sanity-clamped
+(window-edge minimum rejected). THE GATE: silhouette.test.js - front
+IoU vs the sprite mask. First honest number 0.5172 FAILED the floor
+and exposed the mirrored stance guess; fit-pose.mjs coordinate-
+descends the paperdoll pose against the metric itself -> 0.6649
+(weightSide -1, the fit is generated into paperdollPose.js). Floor
+0.64, ratchets up only. Remaining gap is named, not deferred: hair
+mass (the rig models none), stylized hands, elbow flare - each a
+measurable IoU delta when addressed.
 
 ### C6j - THE ARCHITECTURE (Mac): rig geometry + sprite shading (SHIPPED)
 

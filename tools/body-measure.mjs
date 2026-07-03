@@ -163,6 +163,8 @@ const kneeOf = (leg) => {
 };
 const kneeW = kneeOf(legs.weight), kneeF = kneeOf(legs.free);
 const thighW = Math.max(...legs.weight.slice(0, Math.ceil(legs.weight.length / 3)).map((l) => l.w));
+const hipXpx = legs.weight.length > 2 && legs.free.length > 2
+  ? Math.abs(legs.free[2].cx - legs.weight[2].cx) / 2 : 0;
 const kneeIdx = kneeW ? legs.weight.findIndex((l) => l.y === kneeW.y) : Math.floor(legs.weight.length / 2);
 const calfW = Math.max(...legs.weight.slice(kneeIdx).map((l) => l.w));
 
@@ -177,7 +179,7 @@ const out = {
     headTopY: yRig(top), headBottomY: yRig(headBottom), headW: +(headW * u).toFixed(4), neckSeparable,
     shoulderY: yRig(shoulder), shoulderHalfSpan: +((shoulderSpan / 2) * u).toFixed(4),
     armpitY: yRig(armpit), pelvisY: yRig(crotch),
-    armW: +(meanArmW * u).toFixed(4), wristY: yRig(wristRow),
+    armW: +(meanArmW * u).toFixed(4), wristY: yRig(wristRow), hipX: +(hipXpx * u).toFixed(4),
     thighW: +(thighW * u).toFixed(4), kneeW: kneeW ? +(kneeW.w * u).toFixed(4) : null,
     kneeY: kneeW ? yRig(kneeW.y) : null, calfW: +(calfW * u).toFixed(4),
     ankleY: legs.weight.length ? yRig(legs.weight[legs.weight.length - 1].y) : null,

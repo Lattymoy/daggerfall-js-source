@@ -29,6 +29,7 @@ import { trs } from '../world/mat4.js';
 import { buildBody, BARE_PLUGS } from '../characters/rewrite/body.js';
 import { facesBounds } from '../render/characterMesh.js';
 import { DAGGER_SPEC } from '../characters/daggerBodySpec.js';
+import { PAPERDOLL_POSE } from '../characters/paperdollPose.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { fetchBytes } from './shared.js';
 import { ActionSystem } from '../world/actionSystem.js';
@@ -138,7 +139,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const bodyBmp = bodyImg.getDFBitmap();
     const W = bodyBmp.width, H = bodyBmp.height;
     const faces = buildBody(
-      { loco: 'stand', hold: 'idle', phase: 0, weapon: 'none', paperdoll: {} },
+      { loco: 'stand', hold: 'idle', phase: 0, weapon: 'none', paperdoll: PAPERDOLL_POSE },
       BARE_PLUGS, DAGGER_SPEC);
     const b = facesBounds(faces);
     const u = (b.maxY - b.minY) / H; // rig units per sprite pixel

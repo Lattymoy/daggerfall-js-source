@@ -1,7 +1,3 @@
-// Vendored from project-final's Rewrite Engine (rewrite/rig/bodySpec.js) at C4a -
-// same-owner code, flat-pathed; byte-parity against the canonical copy
-// is pinned by test/rig.test.js over fixtures/bare-body-parity.json.
-// Do not hand-diverge: upstream first, then re-vendor + re-capture.
 // ── body spec (proportion seam) ──────────────────────────────────────
 // Trunk prisms, limb anchors, and bone spans as DATA - the solver and
 // assembly are shared; a consumer supplies its own proportions (e.g. a
@@ -32,6 +28,19 @@ export const VOXLIGHT_SPEC = {
 /** Torso half-extents at height y (piecewise through the trunk prisms). */
 export function torsoProfile(spec, y) {
   const lerp = (a, b, t) => a + (b - a) * t;
+  // Measured-loft consumers get the SAME numbers the trunk builds
+  // from - piecewise through torsoRows when present.
+  if (spec.torsoRows) {
+    const R = spec.torsoRows;
+    if (y <= R[0].y) return { rx: R[0].rx, rz: R[0].rz };
+    for (let i = 0; i + 1 < R.length; i++) {
+      if (y <= R[i + 1].y) {
+        const t = (y - R[i].y) / (R[i + 1].y - R[i].y);
+        return { rx: lerp(R[i].rx, R[i + 1].rx, t), rz: lerp(R[i].rz, R[i + 1].rz, t) };
+      }
+    }
+    return { rx: R[R.length - 1].rx, rz: R[R.length - 1].rz };
+  }
   const seg = (y0, y1, rx0, rz0, rx1, rz1) => {
     const t = (y - y0) / (y1 - y0);
     return { rx: lerp(rx0, rx1, t), rz: lerp(rz0, rz1, t) };

@@ -850,7 +850,8 @@ function buildBody(s, plugs, spec) {
     if (rc > 0) { const rco = s.bulwarkRecoilCfg || PLUGS.bulwark.BULWARK_RECOIL; B.gunZ -= rco.back * rc; B.gunY += rco.rise * rc; B.gunPitch -= rco.climb * rc; } // gun drives back + up + climbs
     bulwarkChargeAmt = ch; bulwarkFireAmt = rc; bulwarkMfxCfg = s.bulwarkMfx || null; // feed the muzzle FX (charge gather + fire burst); gunAndArms reads these
   }
-  B.paperdoll = s.paperdoll || null; // static contrapposto stance cfg (paperdoll viewport): { weightSide, weightIn, freeOut, freeFwd, hipShift } - feet + pelvis only; arms come from weapon:'none'
+  B.paperdoll = s.paperdoll || null; // static contrapposto stance cfg (paperdoll viewport): { weightSide, weightIn, freeOut, freeFwd, hipShift } - feet + pelvis; optional { armX, armY, armZ, armCurl } override the hanging-arm wrist targets (fit against the classic silhouette downstream)
+  if (B.paperdoll) for (const k of ['armX', 'armY', 'armZ', 'armCurl']) if (B.paperdoll[k] != null) B[k] = B.paperdoll[k]; // fitted hanging-arm overrides ride the stance cfg
   B.headTilt = s.headTilt || 0; B.headTurn = s.headTurn || 0; B.headCock = s.headCock || 0; B.huskBend = s.bend || 0; // husk head tilt/twitch + forward fold
   B.atkFwd = s.atkFwd || 0; B.atkSink = s.atkSink || 0; B.atkStance = s.atkStance || 0; // husk maul: pelvis lunge-forward + sink (knees bend) + staggered foot stance
   B.atkTwist = s.atkTwist || 0; B.atkRoll = s.atkRoll || 0; // husk maul: chest twist (yaw) + tilt (roll) into the diagonal rake

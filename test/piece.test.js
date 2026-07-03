@@ -83,9 +83,11 @@ test('piece: profile mode round-trips through the body profile', () => {
   for (const f of faces) assert.ok(f.p[1] >= DAGGER_SPEC.pelvis.y0 - 1e-9 && f.p[1] <= DAGGER_SPEC.chest.y1 + 0.02 + 1e-9);
 });
 
-test('piece: DAGGER_SPEC landmark pins', () => {
-  assert.equal(DAGGER_SPEC.pelvisY, 0.961);
+test('piece: DAGGER_SPEC v2 pins (full resculpt)', () => {
+  assert.equal(DAGGER_SPEC.pelvisY, 0.9743);
   assert.equal(DAGGER_SPEC.chest.y1, 1.478);
-  assert.equal(DAGGER_SPEC.hipX, 0.1392);
-  assert.equal(+(DAGGER_SPEC.leg.thigh + DAGGER_SPEC.leg.calf).toFixed(3), 0.961);
+  assert.equal(DAGGER_SPEC.torsoRows.length, 40);
+  assert.equal(DAGGER_SPEC.head.scale, 1.115);
+  // Bones reach the plant: thigh + calf == pelvisY - 0.06.
+  assert.equal(+(DAGGER_SPEC.leg.thigh + DAGGER_SPEC.leg.calf).toFixed(4), +(DAGGER_SPEC.pelvisY - 0.06).toFixed(4));
 });
