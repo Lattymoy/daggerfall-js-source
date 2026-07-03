@@ -18,6 +18,8 @@ import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
 import { trs, multiply } from '../world/mat4.js';
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
+import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
+import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 
 
 
@@ -115,6 +117,29 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
+  // Enemies (C3): the classic selection over this dungeon's markers -
+  // fixed (record 16) + random (record 15, LocationId-seeded tables).
+  // Classic billboards join the flat batches (RDB raw-pivot rule);
+  // gender picks the archive; record 0 is the standing frame (no AI -
+  // Characters C5 rigs replace these).
+  const enemies = collectDungeonEnemies(
+    dungeon.blocks.map((b) => ({
+      markers: b.layout.markers, waterLevel: b.layout.waterLevel,
+      originX: b.originX, originZ: b.originZ,
+    })),
+    {
+      locationId: dfLocation.dungeon.recordElement.header.locationId,
+      dungeonType: dfLocation.mapTableData.dungeonType,
+    });
+  for (const e of enemies) {
+    const basics = ENEMY_BASICS[e.mobileType];
+    if (!basics) continue;
+    const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
+    const key = `${archive}_0`;
+    if (!flatGroups.has(key)) flatGroups.set(key, []);
+    flatGroups.get(key).push([e.x, e.y, e.z]);
+  }
+
   const billboardBatches = [];
   for (const [key, centers] of flatGroups) {
     const [archive, record] = key.split('_').map(Number);
@@ -142,6 +167,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     waterQuads,
     startMarker: dungeon.startMarker,
     blockCount: dungeon.blocks.length,
+    enemies,
     textureTable: dungeon.textureTable,
     exitDoors,
     colliderTris,

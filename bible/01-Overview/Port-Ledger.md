@@ -6,6 +6,7 @@ Adding to category A requires Mac approval; B records data reality; C is the
 work queue routed to arcs.
 
 ## A. Approved departures from DFU
+- Slot-0 random-enemy reroll: DFU seeds UnityEngine.Random with DateTime.Now.Ticks (their TODO comment); we seed a xorshift32 with the dungeon LocationId so layouts are deterministic and testable.
 
 | What | Ours | Approved via |
 |---|---|---|
@@ -105,7 +106,7 @@ World layout:
 | Climate swaps onto mismatched record dimensions | 15 corpus swap combos (124_3 -> 24, 168_6 -> 68/368/468 families) land on records whose dimensions differ from the original; DFU stretches them identically because mesh UVs are normalized against the original archive at load - kept verbatim, pinned in the climate corpus test | Kept |
 | Interior people visibility gates (house ownership, shop hours, building-open rules, GuildHall anytime access, TG/DB House2 membership) | DaggerfallInterior.AddPeople tail | Systems arc (people + their flags/factionID shipped C1) |
 | Interior furniture actions, house containers, loot, spawn points | DaggerfallInterior AddFurnitureAction/MakeHouseContainer/AddSpawnPoints | Systems arc |
-| Dungeon enemies (fixed + random) | RDBLayout.AddFixedEnemies/AddRandomEnemies | Characters arc |
+| Enemy AI + mobile animation (billboard orientation states, motion, combat) | EnemyMotor, MobileUnit | Characters arc C5 (spawn data + classic standing billboards shipped C3) |
 | Dungeon treasure piles + loot | RDBLayout AssignFixedTreasure/AddRandomTreasure | Systems arc |
 | Torch audio sources | RDBLayout.AddTorchAudioSource | Audio arc |
 | Transition + activation sounds: door open/close (ActionDoor OpenSound/CloseSound), action PlaySound, ladder climb, enter/exit stingers | DaggerfallActionDoor, DaggerfallAction, DaggerfallAudioSource | Audio arc (the P2/P4-P6 systems expose the trigger points) |

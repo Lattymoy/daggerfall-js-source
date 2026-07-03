@@ -35,6 +35,31 @@ batches, point lights).
 
 ## Milestones
 
+### C3 - dungeon enemies, data + classic billboards (SHIPPED)
+
+The classic selection path verbatim in `dungeonEnemies.js`: fixed
+enemies from editor record 16 (factionOrMobileId & 0xff, the garbage-
+MSB rule, typeValue 99 skipped) and random enemies from record 15 -
+DFRandom.srand(LocationId), 256 non-water picks from
+EncounterTables[dungeonType] + 256 water picks from table 19 through
+ChooseRandomEnemyType's level banding, water routing on
+waterLevel < raw classic Y, slot = flags with the slot-0 reroll, the
+Slaughterfish/Dreugh/Lamia water veto, Passive on action byte 99, and
+gender flags for types > 43. Three generated data modules (extraction-
+scripted, never hand-copied): MOBILE_TYPES, ENCOUNTER_TABLES (45x20;
+the source's dead commented Cemetery block stripped - Ledger B), and
+ENEMY_BASICS (per-type texture archives + behaviour). RDB markers now
+carry the flat resource (rawY/flags/factionOrMobileId/soundIndex/
+action byte). dungeonContext spawns classic billboards (gender picks
+the archive, record 0 standing frame, RDB raw-pivot rule) and returns
+`enemies`; both dungeon pins gain the count; `__enemies` joins the
+probes. DFU seeds the slot-0 Unity stream with DateTime ticks (an
+upstream TODO) - we seed a xorshift with the LocationId for
+determinism (Ledger A). Pins: Privateer's Hold 42 enemies / 25 fixed /
+types [0,1,3,4,7,15,136,138,141]; in-engine the Daggerfall city crawl
+reads `128 enemies` and the first (type 130, fixed) is framed on
+camera. No AI - C5 rigs replace the billboards.
+
 ### C2 - exterior NPCs + name banks (SHIPPED)
 
 Exterior: RMBLayout's verbatim rule - a flat record with NON-ZERO

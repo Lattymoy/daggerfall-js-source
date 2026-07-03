@@ -115,7 +115,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   status(`${dungeonName} - ${ctx.blockCount} blocks, ${ctx.drawList.length} draws`);
   console.log(
     `dungeon: ${ctx.blockCount} blocks, ${ctx.drawList.length} draws, table [${ctx.textureTable}], ` +
-    `start ${JSON.stringify(ctx.startMarker)}, ${ctx.lights.length} lights, ${ctx.waterQuads.length} water`
+    `start ${JSON.stringify(ctx.startMarker)}, ${ctx.lights.length} lights, ${ctx.waterQuads.length} water, ${ctx.enemies.length} enemies`
   );
 
   // Verbatim dungeon lighting: PlayerAmbientLight.DungeonAmbientLight,

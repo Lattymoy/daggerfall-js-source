@@ -346,7 +346,15 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
       const action = acts ? flatAction(obj) : null;
 
       if (fr.textureArchive === EDITOR_FLATS_ARCHIVE) {
-        const marker = { record: fr.textureRecord, x, y, z, position: obj.position, action };
+        // C3: enemy markers (15/16) need the flat resource on the marker -
+        // raw classic Y for the water rules, flags (slot/gender),
+        // factionOrMobileId (fixed type), soundIndex (spawn distance),
+        // and the raw action byte (Passive = 99).
+        const marker = {
+          record: fr.textureRecord, x, y, z, position: obj.position, action,
+          rawY: obj.yPos, flags: fr.flags, factionOrMobileId: fr.factionOrMobileId,
+          soundIndex: fr.soundIndex, actionByte: fr.action,
+        };
         markers.push(marker);
         if (fr.textureRecord === 10) {
           startMarkers.push(marker);
