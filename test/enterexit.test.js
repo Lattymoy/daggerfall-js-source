@@ -1,8 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  ENTER_DOOR_OFFSET, EXIT_DOOR_OFFSET, MARKER_UP_OFFSET,
+  ENTER_DOOR_OFFSET, EXIT_DOOR_OFFSET, MARKER_UP_OFFSET, DUNGEON_EXIT_OFFSET,
   doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding,
+  dungeonEntranceLanding,
 } from '../src/player/enterExit.js';
 import { trs } from '../src/world/mat4.js';
 
@@ -61,4 +62,16 @@ test('enterExit: landings - marker snap, door offset, closest pick', () => {
   const out = exteriorLanding([9.6, 0, 0.2], [doorA, doorB]);
   approx(out[0], 10 + EXIT_DOOR_OFFSET);
   approx(out[2], 0);
+});
+
+test('enterExit: dungeon exit landing - offset and lowest-door pick', () => {
+  approx(DUNGEON_EXIT_OFFSET, 0.35 + 0.1);
+  const I = trs(0, 0, 0, 0, 0, 0);
+  const high = { matrix: trs(0, 5, 0, 0, 0, 0), centre: { x: 0, y: 0, z: 0 }, normal: { x: 0, y: 0, z: 1 } };
+  const low = { matrix: I, centre: { x: 10, y: 1, z: 0 }, normal: { x: 1, y: 0, z: 0 } };
+  const landing = dungeonEntranceLanding([high, low]);
+  approx(landing.pos[0], 10 + DUNGEON_EXIT_OFFSET);
+  approx(landing.pos[1], 1);
+  approx(landing.normal[0], 1);
+  assert.equal(dungeonEntranceLanding([]), null);
 });

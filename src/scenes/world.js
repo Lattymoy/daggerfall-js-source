@@ -28,9 +28,12 @@ import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, pars
 import { fetchBytes, texName, parseSeason, createSkyController } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { getStaticDoors } from '../world/staticDoors.js';
-import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding } from '../player/enterExit.js';
+import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding } from '../player/enterExit.js';
 import { pickActivatable } from '../player/activate.js';
 import { buildInteriorContext } from './interiorContext.js';
+import { buildDungeonContext } from './dungeonContext.js';
+import { DOOR_TYPE } from '../world/meshReader.js';
+import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
 import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE } from '../world/interiorLights.js';
 import { Collider } from '../player/collider.js';
 import {
@@ -274,7 +277,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           collider.addMesh(key, cpu.positions, cpu.indices, local,
             () => state.pixelTranslation(px, py));
           // Building models expose their static doors for E-transitions.
-          if (placed.recordIndex !== undefined && cpu.doors && cpu.doors.length) {
+          if (cpu.doors && cpu.doors.length) {
             const staticDoors = getStaticDoors(cpu, 0, placed.recordIndex, local);
             for (const door of staticDoors) {
               buildingDoors.push({
@@ -421,10 +424,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     window.__doors = () => buildingDoors.slice(0, 40).map((e, i) => {
       const d = shiftedDoor(e);
-      return { i, pos: doorWorldPosition(d), normal: doorWorldNormal(d), record: e.recordIndex, block: e.dfBlock.name };
+      return { i, pos: doorWorldPosition(d), normal: doorWorldNormal(d), record: e.recordIndex, block: e.dfBlock.name, type: e.door.doorType };
     });
     window.__enter = () => tryEnter();
     window.__exit = () => tryExit();
+    window.__dungeon = () => dungeonCtx ? JSON.stringify({
+      exits: dungeonCtx.exitDoors.map((d) => ({ pos: doorWorldPosition(d).map((v) => +v.toFixed(2)), normal: doorWorldNormal(d).map((v) => +v.toFixed(3)) })),
+      actions: dungeonCtx.actions.objects.size,
+    }) : null;
+    window.__dungeonExit = () => tryExitDungeon();
     window.__interiorActions = () => interiorCtx ? JSON.stringify(
       [...interiorCtx.actions.objects.values()].map((o) => ({ key: o.key, state: o.state, pos: [o.matrix[12], o.matrix[13], o.matrix[14]].map((v) => +v.toFixed(2)), fwd: [o.matrix[8], o.matrix[9], o.matrix[10]].map((v) => +v.toFixed(3)) }))) : null;
     window.__interiorActivate = (k) => interiorCtx.actions.activate(k);
@@ -444,6 +452,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     const l = Math.hypot(INTERIOR_LIGHT_DIR[0], INTERIOR_LIGHT_DIR[1], INTERIOR_LIGHT_DIR[2]);
     INTERIOR_LIGHT_DIR[0] /= l; INTERIOR_LIGHT_DIR[1] /= l; INTERIOR_LIGHT_DIR[2] /= l;
   }
+  // Dungeon water surface (R11 values, mirroring the dungeon scene).
+  const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
+  const DUNGEON_WATER_SCROLL = 0.05;
   let mode = 'exterior';
   let interiorCtx = null;
   let exitReturn = null;
@@ -470,6 +481,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const key = pickActivatable(eye, dir, targets, collider);
     if (key === null) return false;
     const hit = buildingDoors[key];
+    // Route by verbatim door type: buildings to interiors, dungeon
+    // entrances into the RDB crawl.
+    if (hit.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) return tryEnterDungeon(hit);
+    if (hit.door.doorType !== DOOR_TYPE.BUILDING || hit.recordIndex === undefined) return false;
     transitioning = true;
     try {
       const ctx = await buildInteriorContext(
@@ -535,12 +550,114 @@ export async function bootWorld(canvas, renderer, params, status) {
     return true;
   }
 
+  let dungeonCtx = null;
+  let dungeonReturn = null; // entrance-door candidates of the pixel
+
+  async function tryEnterDungeon(hit) {
+    const dfLocation = locationIndex.get(hit.pixelKey);
+    if (!dfLocation || !dfLocation.hasDungeon) return false;
+    transitioning = true;
+    try {
+      const ctx = await buildDungeonContext(
+        { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord },
+        dfLocation, blocks, dfLocation.climate.climateType);
+      // Verbatim MovePlayerToMarker: start marker + up * (height * 0.6).
+      const m = ctx.startMarker;
+      dungeonCtx = ctx;
+      // Classic water tile: the location climate's ground archive,
+      // record 0 (R11) - uploaded here since the exterior ground path
+      // never routes single records through uploadRecord.
+      const waterArchive = getGroundArchive(hit.climateBase, hit.season);
+      await getTexture(waterArchive);
+      uploadRecord(waterArchive, 0);
+      dungeonReturn = {
+        waterArchive,
+        candidates: buildingDoors.filter((e) =>
+          e.pixelKey === hit.pixelKey && e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE),
+      };
+      mode = 'dungeon';
+      player.collider = ctx.collider;
+      player.spawn(m.x, m.y + 1.08, m.z);
+      cam.pos = player.eye;
+      console.log(`dungeon: ${ctx.drawList.length} draws, ${ctx.exitDoors.length} exit doors, ` +
+        `${ctx.lights.length} lights, ${ctx.waterQuads.length} water, ${ctx.colliderTris} tris`);
+    } finally {
+      transitioning = false;
+    }
+    return true;
+  }
+
+  function tryExitDungeon() {
+    const eye = player.eye;
+    const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+    const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
+    for (const o of dungeonCtx.actions.objects.values()) {
+      targets.push({ key: o.key, aabb: interiorDoorAabb(o) });
+    }
+    const key = pickActivatable(eye, dir, targets, dungeonCtx.collider);
+    if (key === null) return false;
+    if (!key.startsWith('exit:')) {
+      dungeonCtx.actions.activate(key);
+      return true;
+    }
+    // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
+    const landing = dungeonEntranceLanding(dungeonReturn.candidates.map(shiftedDoor));
+    dungeonCtx.destroy();
+    dungeonCtx = null;
+    mode = 'exterior';
+    player.collider = collider;
+    if (landing) {
+      player.spawn(landing.pos[0], landing.pos[1], landing.pos[2]);
+      cam.yaw = Math.atan2(landing.normal[0], landing.normal[2]);
+    }
+    cam.pos = player.eye;
+    console.log('exterior: returned at dungeon entrance');
+    return true;
+  }
+
   let last = performance.now();
   function frame(now) {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
+
+    if (mode === 'dungeon') {
+      const jumpHeld = keys.has('Space');
+      player.update(dt, {
+        forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
+        strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
+        run: keys.has('ShiftLeft'),
+        jump: jumpHeld && !prevJump,
+      }, cam.yaw);
+      prevJump = jumpHeld;
+      cam.pos = player.eye;
+      const useHeld = keys.has('KeyE');
+      if (useHeld && !prevUse) tryExitDungeon();
+      prevUse = useHeld;
+
+      dungeonCtx.actions.update(dt);
+      dungeonCtx.flicker.tick(dt);
+      const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.05, 500);
+      const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
+      renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
+      renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
+      renderer.setPointLights(
+        nearestLights(dungeonCtx.lights, cam.pos, 16, dungeonCtx.flicker.ranges),
+        new Float32Array(DUNGEON_LIGHT_COLOR));
+      renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
+      for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
+      for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
+      const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
+      renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+      if (dungeonCtx.waterQuads.length) {
+        renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
+          renderer.textures.get(`${dungeonReturn.waterArchive}_0`),
+          (now / 1000) * DUNGEON_WATER_SCROLL);
+      }
+      requestAnimationFrame(frame);
+      return;
+    }
 
     if (mode === 'interior') {
       // Whole-pipeline swap: interior draws, lighting, fog, collider;

@@ -115,13 +115,41 @@ closed, the swing completes to end, and the same ray reads 4.53 -
 through the doorway into the next room. Duplicate __exit hook from
 the P3 reconciliation removed.
 
-Queue (items 1-4 shipped):
+## Milestone P5 - world <-> dungeon transitions (SHIPPED)
+
+E on a DUNGEON_ENTRANCE-type static door drops you into the location's
+RDB crawl; E on the dungeon's exit door puts you back outside the
+entrance. Verbatim: entering lands at the start marker + up * (height
+* 0.6) = 1.08 (MovePlayerToMarker); exiting lands at the LOWEST
+dungeon-entrance door + normal * (radius + 0.1) = 0.45 with the camera
+facing the door normal (PositionPlayerToDungeonExit +
+SetHorizontalFacing) - `dungeonEntranceLanding` in enterExit.js, pinned
+in tests. `src/scenes/dungeonContext.js` builds the whole dungeon
+against the host's caches: layout with the classic per-dungeon texture
+table applied as a DRAW-TIME texRemap (the shared mesh cache serves
+exteriors and stays untouched; UVs keep original-archive sizes, pixels
+come from the table - the dungeon convention already on record),
+movement actions + swing doors on the ActionSystem, RDB lights with
+the flicker animator, water quads with the climate ground tile
+(uploaded at enter - the exterior tilemap path never routes single
+records), flats at raw-pivot centering, a fresh collider, the start
+marker and exit doors. World routing keys on the verbatim door type;
+the door registry now covers ALL models with doors (dungeon entrances
+live on misc models without a building record). In-engine proof at
+Privateer's Hold entered FROM the streaming world: 303 draws / 1 exit
+door / 71 lights / 8406 tris / 62 action objects (standalone-scene
+parity), and the return trip lands with XZ error 0.000 against
+entrance + normal * 0.45.
+
+Queue (items 1-5 shipped):
 1. DONE - grounded movement + gravity + collision (P1).
 2. DONE - activation ray + dungeon action doors/chains (P2).
 3. DONE - building interior transitions in ?world (P3).
 4. DONE - interior swing doors on the ActionSystem (P4).
-5. Exterior scene mirrors the P3 machine (needs a lazy mesh loader);
-   dungeon exitDoors transitions; ladders.
-6. Parent interiors in the building world frame - multi-door exit
+5. DONE - world <-> dungeon transitions (P5).
+6. Ladders; exterior scene mirrors the transition machine (needs a
+   lazy mesh loader); the standalone dungeon scene folds onto
+   dungeonContext.
+7. Parent interiors in the building world frame - multi-door exit
    selection picks by true world proximity and coordinates go
    seamless; the standalone interior scene folds onto interiorContext.

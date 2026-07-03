@@ -18,6 +18,7 @@ import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../player/motor.js';
 export const ENTER_DOOR_OFFSET = CAPSULE_RADIUS + 0.4; // 0.75
 export const EXIT_DOOR_OFFSET = CAPSULE_RADIUS * 3; // 1.05
 export const MARKER_UP_OFFSET = CAPSULE_HEIGHT * 0.6; // 1.08
+export const DUNGEON_EXIT_OFFSET = CAPSULE_RADIUS + 0.1; // 0.45
 
 /** World position of a static door's centre under its matrix. */
 export function doorWorldPosition(door) {
@@ -104,6 +105,32 @@ export function interiorLanding(exteriorDoorPos, enterMarkers, interiorDoors) {
     return [marker.pos[0], marker.pos[1] + MARKER_UP_OFFSET, marker.pos[2]];
   }
   return null;
+}
+
+/**
+ * Verbatim PositionPlayerToDungeonExit: the LOWEST dungeon-entrance
+ * door + normal * (radius + 0.1); the caller faces the normal.
+ * @returns {{pos:[x,y,z], normal:[x,y,z]}|null}
+ */
+export function dungeonEntranceLanding(entranceDoors) {
+  let best = null;
+  let bestY = Infinity;
+  for (const door of entranceDoors) {
+    const p = doorWorldPosition(door);
+    if (p[1] < bestY) {
+      bestY = p[1];
+      best = { pos: p, normal: doorWorldNormal(door) };
+    }
+  }
+  if (!best) return null;
+  return {
+    pos: [
+      best.pos[0] + best.normal[0] * DUNGEON_EXIT_OFFSET,
+      best.pos[1] + best.normal[1] * DUNGEON_EXIT_OFFSET,
+      best.pos[2] + best.normal[2] * DUNGEON_EXIT_OFFSET,
+    ],
+    normal: best.normal,
+  };
 }
 
 /** Verbatim TransitionExterior landing: closest building door + n * 1.05. */
