@@ -106,14 +106,26 @@ const ARM_X = 0.235;
 loft(armProf, SKIN, () => -ARM_X, () => 0);
 loft(armProf, SKIN, () => ARM_X, () => 0);
 // HAND: small block at the wrist
-function hand(cx) {
+function hand(sign) {
+  const cx = sign * ARM_X;
+  // MITTEN: flat palm + fused fingers, hanging down. Flat = rx > rz.
   loft([
-    { y: 0.99, rx: 0.038, rz: 0.040 },
-    { y: 0.93, rx: 0.050, rz: 0.028 }, // palm (flatter)
-    { y: 0.86, rx: 0.045, rz: 0.026 }, // fingers
+    { y: 0.985, rx: 0.036, rz: 0.038 }, // wrist
+    { y: 0.950, rx: 0.052, rz: 0.030 }, // palm (wide, flat)
+    { y: 0.905, rx: 0.054, rz: 0.030 }, // knuckles
+    { y: 0.860, rx: 0.048, rz: 0.026 }, // fingers
+    { y: 0.820, rx: 0.036, rz: 0.020 }, // fingertips (rounded)
   ], SKIN, () => cx, () => 0);
+  // THUMB: short nub off the INNER side (toward the body), upper palm,
+  // angled slightly forward.
+  const tside = -sign; // inner
+  loft([
+    { y: 0.955, rx: 0.016, rz: 0.020, cz: 0.010 },
+    { y: 0.935, rx: 0.020, rz: 0.024, cz: 0.018 },
+    { y: 0.912, rx: 0.014, rz: 0.018, cz: 0.014 },
+  ], SKIN, () => cx + tside * 0.052, (r) => r.cz);
 }
-hand(-ARM_X); hand(ARM_X);
+hand(-1); hand(1);
 
 // LEGS: full measured taper down to a THIN ankle (my earlier clip at
 // y0.14 kept the calf width -> fat ankle circles). Plus upper-thigh
@@ -204,10 +216,36 @@ const RAMPS = {"skin":[[61,54,38],[66,54,41],[69,63,42],[79,63,43],[83,71,44],[9
 const Lx = 0.5, Ly = 0.55, Lz = 0.67, Ln = Math.hypot(Lx, Ly, Lz);
 const lerp = (a, b, t) => [Math.round(a[0]+(b[0]-a[0])*t), Math.round(a[1]+(b[1]-a[1])*t), Math.round(a[2]+(b[2]-a[2])*t)];
 const shade = (ramp, it) => ramp[Math.max(0, Math.min(ramp.length-1, Math.round(it*(ramp.length-1))))]; // SNAP to a ramp step: hard palette bands (blocky shader look), no lerp
-for (const fc of faces) {
-  const it = Math.max(0.08, (fc.n[0]*Lx + fc.n[1]*Ly + fc.n[2]*Lz) / Ln * 0.9 + 0.15);
+// AMBIENT OCCLUSION (geometry-derived): a face is occluded when other
+// faces sit IN FRONT of it (its normal hemisphere) within a short
+// radius - flat surfaces see none, crevice walls (armpit, crotch,
+// neck, behind knee/elbow, under pec/delt) face a close opposing wall
+// and darken. No hardcoded positions.
+const cen = faces.map((f) => {
+  let x = 0, y = 0, z = 0;
+  for (let i = 0; i < 4; i++) { x += f.p[i*3]; y += f.p[i*3+1]; z += f.p[i*3+2]; }
+  return [x/4, y/4, z/4];
+});
+const AO_R = 0.11, AO_K = 0.55; // radius, strength
+const ao = new Array(faces.length).fill(1);
+for (let i = 0; i < faces.length; i++) {
+  const c = cen[i], n = faces[i].n; let occ = 0;
+  for (let j = 0; j < faces.length; j++) {
+    if (j === i) continue;
+    const dx = cen[j][0]-c[0], dy = cen[j][1]-c[1], dz = cen[j][2]-c[2];
+    const d = Math.hypot(dx, dy, dz);
+    if (d < 1e-4 || d > AO_R) continue;
+    const facing = (dx*n[0] + dy*n[1] + dz*n[2]) / d; // >0 = other is in front
+    if (facing > 0.25) occ += (1 - d/AO_R) * facing;
+  }
+  ao[i] = Math.max(0.45, 1 - Math.min(1, occ * AO_K * 0.12));
+}
+for (let i = 0; i < faces.length; i++) {
+  const fc = faces[i];
+  let it = Math.max(0.08, (fc.n[0]*Lx + fc.n[1]*Ly + fc.n[2]*Lz) / Ln * 0.9 + 0.15);
+  it *= ao[i]; // crevices darken
   const ramp = fc.c === BOOT ? RAMPS.boot : RAMPS.skin;
-  fc.c = shade(ramp, Math.min(1, it));
+  fc.c = shade(ramp, Math.min(1, Math.max(0.04, it)));
 }
 
 // Payload (quantized, same format as the viewer expects).
