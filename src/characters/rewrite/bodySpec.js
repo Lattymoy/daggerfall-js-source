@@ -63,7 +63,7 @@ export function torsoProfile(spec, y) {
  * rest-shape symmetric - the paperdoll stance supplies the lean). */
 export function loftTorso(out, tprism, X, Z, rows, col) {
   for (let i = 0; i + 1 < rows.length; i++) {
-    tprism(out, [0, rows[i].y, rows[i].cz ?? 0], [0, rows[i + 1].y, rows[i + 1].cz ?? 0], X, Z,
+    tprism(out, [rows[i].cx ?? 0, rows[i].y, rows[i].cz ?? 0], [rows[i + 1].cx ?? 0, rows[i + 1].y, rows[i + 1].cz ?? 0], X, Z,
       rows[i].rx, rows[i].rz, rows[i + 1].rx, rows[i + 1].rz, 12, col);
   }
 }

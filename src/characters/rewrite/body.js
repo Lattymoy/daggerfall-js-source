@@ -316,6 +316,13 @@ function gaitFoot(side, phase) { // omnidirectional: the stride runs along the l
 }
 function bodyLeg(out, side, hipW, F, fp, ramp, legLen = 1) {
   const { SK, SKL, SKM, SKD } = ramp;
+  if (B.paperdoll && SPEC.legRows) { // ROW TRACE: the classic legs loft through their measured per-row runs (geometry + stance in one; IK cannot produce the free leg's outward flare)
+    const rows = side < 0 ? SPEC.legRows.neg : SPEC.legRows.pos;
+    loftTorso(out, tprism, X, Z, rows, SK);
+    const a = rows[rows.length - 1], h = rows[0], m = rows[(rows.length / 2) | 0];
+    buildFoot(out, [a.cx, a.y, 0], fp, { ankleH: SPEC.foot?.ankleH ?? 0.06, footL: SPEC.foot?.footL ?? 0.18, yaw: (B.paperdoll?.footYaw ?? 0) * side, SK, SKL, SKM, SKD });
+    return { side, hip: [h.cx, h.y, 0], knee: [m.cx, m.y, 0], ankle: [a.cx, a.y, 0], fp };
+  }
   const tr = SPEC.leg.thighR ?? 1, cr = SPEC.leg.calfR ?? 1, sr = 0.078 * cr;
   const [knee, ankle] = solveTwoBone(hipW, F, SPEC.leg.thigh * legLen, SPEC.leg.calf * legLen, [0, 0, 1]);
   const thighDir = norm(sub(knee, hipW)), calfDir = norm(sub(ankle, knee));

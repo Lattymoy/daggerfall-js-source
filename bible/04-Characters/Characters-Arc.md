@@ -161,6 +161,29 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6k iteration 5 (SHIPPED): the ROW TRACE - Mac's question was the design
+
+Mac: "why are you having a hard time just simply tracing inside the
+body?" The pattern was already in the numbers: every zone built as a
+per-row trace (hair 0.93, torso 0.86-0.91) scored high; every
+parametric zone (IK legs, sculpted feet) scored low. So the legs now
+TRACE: body-measure emits legRows (per-row centre + half-width, crotch
+to the REAL bottom of the leg pixels - the first cut reused the
+knee/calf stats series truncated at the ankle, which left the figure
+FLOATING at minY 0.187, shrank the u mapping 11% and smeared every
+zone fat: a one-dump diagnosis, model runs vs sprite runs per row),
+upstream loftTorso gained per-row cx, and bodyLeg under a paperdoll
+build lofts each leg through its rows - geometry + stance in one; IK
+could never produce the free leg's outward ankle flare (0.149 ->
+0.321). The lean became DATA everywhere: torso + hair rows now carry
+their measured centres (one x-origin for the whole trace; the split-
+origin first attempt skewed registration globally). Result: raw IoU
+0.8078 -> 0.8371, legs 0.821, feet 0.467 -> 0.665 (boot shafts
+carried, figure grounded), shoulders 0.885. Gates: floor 0.79 ->
+0.82, excess ceiling 15% -> 13%. Remaining: the arm-torso junction
+band (arms stay IK - bars only cover the split rows, no per-row data
+in the merged bands), fist overhang, feet oblique truth.
+
 ### C6k iteration 4 (SHIPPED): inside the lines - excess costs double
 
 Mac: "shading way too much outside of the lines." The excess anatomy

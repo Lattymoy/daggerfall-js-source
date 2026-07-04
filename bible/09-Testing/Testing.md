@@ -27,7 +27,7 @@ Node 22). Suite: 180 tests across 36 files.
 | paperdollart.test.js | 3 | Variant/cloak record resolution, material addressing (bases+morphology+clamps), plate-vs-leather band pins on 251 |
 | piece.test.js | 4 | Sprite-shell geometry round-trip (synthetic + real cuirass round-trips, profile-mode round-trip over DAGGER_SPEC, landmark pins) |
 | relief.test.js | 4 | Relief identity witness + field arithmetic pins (synthetic + whole classic body), offsets pin (222,41 / 237,44), back shell mirrors z on the shared silhouette |
-| silhouette.test.js | 1 | THE RESCULPT GATE: front IoU vs the sprite mask (fit 0.8078, floor 0.79) + excess ceiling 15% of sprite area (inside-the-lines rule) |
+| silhouette.test.js | 1 | THE RESCULPT GATE: front IoU vs the sprite mask (fit 0.8371, floor 0.82) + excess ceiling 13% of sprite area (inside-the-lines rule) |
 | charmesh.test.js | 2 | Face packing (fan order, color/normal interleave), bare-humanoid pack + bounds |
 | paperdoll.test.js | 3 | 27-slot EquipSlots verbatim, 288-template DB (index resolution, Short Shirt pin), BlitItems order |
 | dyes.test.js | 3 | Clothing dye range shifts (Blue identity, Red 0xEF), 11 metal tables extraction-pinned, band-only swap |

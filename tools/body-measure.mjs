@@ -142,6 +142,10 @@ for (let y = crotch; y <= feet; y++) {
   legs.weight.push({ y, w: width(r[0]), cx: mid(r[0]) });
   legs.free.push({ y, w: width(r[1]), cx: mid(r[1]) });
 }
+// Full series snapshot for the ROW TRACE (the trace runs to the real
+// bottom of the leg pixels; only the knee/calf STATS want the ankle
+// truncation - the foot flare is real geometry the trace must carry).
+const fullLegs = { weight: legs.weight.slice(), free: legs.free.slice() };
 // The foot flares gradually - the ANKLE is the last width minimum in
 // the bottom 40%; truncate both series there.
 const truncAtAnkle = (leg) => {
@@ -163,6 +167,19 @@ const kneeOf = (leg) => {
 };
 const kneeW = kneeOf(legs.weight), kneeF = kneeOf(legs.free);
 const thighW = Math.max(...legs.weight.slice(0, Math.ceil(legs.weight.length / 3)).map((l) => l.w));
+// Leg ROW TRACE: per-row centre + half-width for each leg, crotch to
+// ankle, in rig units about the head centreline - the paperdoll legs
+// build as lofts through these (geometry + stance in one; the trace
+// IS the pose).
+const legRows = {};
+for (const [name, leg] of [['weight', fullLegs.weight], ['free', fullLegs.free]]) {
+  legRows[name] = leg.map((r) => ({
+    y: yRig(r.y),
+    cx: +((r.cx - headCx) * u).toFixed(4),
+    rx: +((r.w / 2) * u).toFixed(4),
+  }));
+}
+
 const hipXpx = legs.weight.length > 2 && legs.free.length > 2
   ? Math.abs(legs.free[2].cx - legs.weight[2].cx) / 2 : 0;
 const kneeIdx = kneeW ? legs.weight.findIndex((l) => l.y === kneeW.y) : Math.floor(legs.weight.length / 2);
@@ -204,7 +221,7 @@ const armBars = { left: barStats(bars.left), right: barStats(bars.right) };
 const hairRows = [];
 for (let y = top; y < armpit; y++) {
   if (rows[y].length !== 1) continue;
-  hairRows.push({ y: yRig(y), halfW: +((width(rows[y][0]) / 2) * u).toFixed(4) });
+  hairRows.push({ y: yRig(y), halfW: +((width(rows[y][0]) / 2) * u).toFixed(4), cx: +((mid(rows[y][0]) - headCx) * u).toFixed(4) });
 }
 
 const out = {
@@ -223,5 +240,6 @@ const out = {
   torsoProfile: torso,
   hairRows,
   armBars,
+  legRows,
 };
 console.log(JSON.stringify(out, null, 1));
