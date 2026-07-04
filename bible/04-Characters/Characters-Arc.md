@@ -161,6 +161,22 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6t (SHIPPED): the back is not a mirrored front
+
+Mac: the backside needs to be completely different, not a mirror. It
+was byte-for-byte the mirrored front (verified: 5237px identical) -
+which is exactly why it read as a copied front. Project policy bars
+inventing the back's detail (no AI assets), so the fix is structural:
+the back's starter is now a FLAT mid-tone silhouette (the front's
+median opaque luminance, single palette index, mask mirrored so
+strokes stay inside) - no front detail baked in, back relief empties
+to 0 until the sheet is authored. The mobile artifact's BACK tab and
+RESET reseed to the same flat surface. The back is now a genuine
+blank authoring surface; when Mac paints it, the paint pipeline (C6s)
+turns that paint into the back's own relief - front detail no longer
+leaks around. Five core lists byte-identical; front relief unchanged
+(94); pin 1.0000.
+
 ### C6s (SHIPPED): upper-chest polish + the entire backside
 
 Upper-upper chest: coverage existed but 1px-radius flecks read as
