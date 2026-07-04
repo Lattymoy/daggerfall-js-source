@@ -35,6 +35,14 @@ for (let y = 0; y < H; y++) {
   rows.push(runs);
 }
 const width = (r) => r[1] - r[0] + 1;
+function torsoRun(runs, cx) {
+  let best = runs[0], bd = Infinity;
+  for (const r of runs) {
+    const d = cx >= r[0] && cx <= r[1] ? 0 : Math.min(Math.abs(cx - r[0]), Math.abs(cx - r[1]));
+    if (d < bd) { bd = d; best = r; }
+  }
+  return best;
+}
 const mid = (r) => (r[0] + r[1]) / 2;
 
 let top = 0; while (!rows[top].length) top++;
@@ -100,35 +108,76 @@ for (let y = top; y <= headBottom; y++) {
 headCx /= Math.max(1, headN);
 const neckSeparable = false; // hair-merged on BODY00 - recorded, not invented
 
-// Torso profile + arm thickness, tracked centreline.
+// ONE PARTITION: each row armpit..crotch-1 splits into
+// [left arm][torso][right arm] at EXACT shared edges - split rows give
+// the edge from the runs themselves; merged rows interpolate the torso
+// edge from that side's split-row samples. torsoProfile and armRows
+// both emit from this partition, so the lofts TILE with no seam and
+// no overlap (adjacent pixel intervals share the boundary).
 let cx = mid(rows[shoulder].length ? rows[shoulder][rows[shoulder].length > 1 ? 1 : 0] : rows[shoulder][0]);
-const torsoRaw = [];   // { y, w, merged: 0|1|2 arms merged, center }
-const armW = [];       // { y, w } from split arm runs
+const midX = (W - 1) / 2;
+const edgeSamples = { left: [], right: [] };
+const rowParts = [];
 for (let y = armpit; y < crotch; y++) {
   const r = rows[y];
   if (!r.length) continue;
-  let torso = r[0], bd = Infinity;
+  const t = torsoRun(r, cx);
+  cx = mid(t);
+  const part = { y, t, arm: {} };
   for (const run of r) {
-    const d = cx >= run[0] && cx <= run[1] ? 0 : Math.min(Math.abs(cx - run[0]), Math.abs(cx - run[1]));
-    if (d < bd) { bd = d; torso = run; }
+    if (run === t) continue;
+    if (mid(run) < mid(t)) { part.arm.left = run; edgeSamples.left.push({ y, x: t[0] }); }
+    else { part.arm.right = run; edgeSamples.right.push({ y, x: t[1] }); }
   }
-  cx = mid(torso);
-  const merged = 3 - r.length; // 3 runs = 0 merged, 2 = 1, 1 = 2
-  torsoRaw.push({ y, w: width(torso), merged, center: cx });
-  for (const run of r) if (run !== torso) armW.push({ y, w: width(run) });
+  rowParts.push(part);
 }
-const armAt = (y) => {
-  let best = null, bd = Infinity;
-  for (const a of armW) { const d = Math.abs(a.y - y); if (d < bd) { bd = d; best = a; } }
-  return best ? best.w : 0;
+const edgeAt = (samples, y) => {
+  if (!samples.length) return null;
+  let lo = null, hi = null;
+  for (const s0 of samples) {
+    if (s0.y <= y && (!lo || s0.y > lo.y)) lo = s0;
+    if (s0.y >= y && (!hi || s0.y < hi.y)) hi = s0;
+  }
+  if (!lo) return hi.x;
+  if (!hi) return lo.x;
+  if (hi.y === lo.y) return lo.x;
+  return lo.x + (hi.x - lo.x) * (y - lo.y) / (hi.y - lo.y);
 };
-const meanArmW = armW.reduce((s, a) => s + a.w, 0) / Math.max(1, armW.length);
-const torso = torsoRaw.map((t) => ({
-  yRig: yRig(t.y),
-  halfW: +(((t.w - t.merged * (armAt(t.y) + 1)) / 2) * u).toFixed(4),
-  centerRig: +(((t.center - headCx)) * u).toFixed(4), // lean vs head centre
-  merged: t.merged,
-}));
+const torso = [];
+const armRows = { left: [], right: [] };
+let mergedCounts = [0, 0, 0];
+for (const part of rowParts) {
+  const { y, t, arm } = part;
+  let le, re, merged = 0;
+  if (arm.left) le = t[0];
+  else { const e = edgeAt(edgeSamples.left, y); le = e == null ? t[0] : Math.round(e); merged++; }
+  if (arm.right) re = t[1];
+  else { const e = edgeAt(edgeSamples.right, y); re = e == null ? t[1] : Math.round(e); merged++; }
+  mergedCounts[merged]++;
+  torso.push({
+    yRig: yRig(y),
+    halfW: +(((re - le + 1) / 2) * u).toFixed(4),
+    centerRig: +((((le + re) / 2) - headCx) * u).toFixed(4),
+    merged,
+  });
+  // Arms tile against the torso edges: split rows use the arm run's
+  // own outer edge; merged rows run from the combined run's outer edge
+  // to the shared torso edge.
+  const sides = [
+    ['left', arm.left ? arm.left[0] : t[0], le - 1],
+    ['right', re + 1, arm.right ? arm.right[1] : t[1]],
+  ];
+  for (const [name, a, b] of sides) {
+    const lo = Math.min(a, b), hi2 = Math.max(a, b);
+    const w = hi2 - lo + 1;
+    if (w < 1 || (name === 'left' && lo > le - 1) || (name === 'right' && hi2 < re + 1)) continue;
+    armRows[name].push({
+      y: yRig(y),
+      cx: +((((lo + hi2) / 2) - headCx) * u).toFixed(4),
+      rx: +((w / 2) * u).toFixed(4),
+    });
+  }
+}
 
 // Legs: crotch down to the ANKLE (run width collapse < 5px or the
 // two-run structure ending) - foot rows are excluded from thigh/knee/
@@ -186,35 +235,25 @@ const kneeIdx = kneeW ? legs.weight.findIndex((l) => l.y === kneeW.y) : Math.flo
 const calfW = Math.max(...legs.weight.slice(kneeIdx).map((l) => l.w));
 
 // Wrist: the last split-arm row.
-const wristRow = armW.length ? Math.max(...armW.map((a) => a.y)) : armpit;
+const splitRows = rowParts.filter((p) => p.arm.left || p.arm.right).map((p) => p.y);
+const wristRow = splitRows.length ? Math.max(...splitRows) : armpit;
 
-// Arm BARS: per split band, the arm run's centre line + median width
-// (the mean over all rows dilutes with thin wrist rows - the bar is
-// what the silhouette shows). Sides keyed by image side of centre.
-const bars = { left: [], right: [] };
-for (const a of armW) {
-  // find the arm run at this row again for its centre
-  const r = rows[a.y];
-  for (const run of r) {
-    if (width(run) === a.w && (run[0] < 15 || run[1] > W - 15)) {
-      (mid(run) < W / 2 ? bars.left : bars.right).push({ y: a.y, cx: mid(run), w: a.w });
-    }
-  }
-}
-const barStats = (b) => {
+// Arm BARS from the partition's split rows (median width + top/bottom
+// centres per side) - the arm-skeleton generator's input.
+const barStats = (name) => {
+  const b = rowParts.filter((p) => p.arm[name]).map((p) => ({ y: p.y, cx: mid(p.arm[name]), w: width(p.arm[name]) }));
   if (b.length < 4) return null;
   b.sort((p, q) => p.y - q.y);
   const ws = b.map((r) => r.w).sort((p, q) => p - q);
-  const medianW = ws[(ws.length / 2) | 0];
   const top = b[0], bot = b[b.length - 1];
   return {
     yTop: yRig(top.y), yBot: yRig(bot.y),
     cxTop: +(((top.cx - headCx)) * u).toFixed(4),
     cxBot: +(((bot.cx - headCx)) * u).toFixed(4),
-    halfW: +((medianW / 2) * u).toFixed(4),
+    halfW: +((ws[(ws.length / 2) | 0] / 2) * u).toFixed(4),
   };
 };
-const armBars = { left: barStats(bars.left), right: barStats(bars.right) };
+const armBars = { left: barStats('left'), right: barStats('right') };
 
 // Head/hair/shoulder mass: rows above the armpit are SINGLE-RUN -
 // the silhouette there is exact (hair + traps + deltoids fused).
@@ -232,7 +271,7 @@ const out = {
     headTopY: yRig(top), headBottomY: yRig(headBottom), headW: +(headW * u).toFixed(4), neckSeparable,
     shoulderY: yRig(shoulder), shoulderHalfSpan: +((shoulderSpan / 2) * u).toFixed(4),
     armpitY: yRig(armpit), pelvisY: yRig(crotch),
-    armW: +(meanArmW * u).toFixed(4), wristY: yRig(wristRow), hipX: +(hipXpx * u).toFixed(4),
+    armW: armBars.right ? +(armBars.right.halfW * 2).toFixed(4) : 0, wristY: yRig(wristRow), hipX: +(hipXpx * u).toFixed(4),
     thighW: +(thighW * u).toFixed(4), kneeW: kneeW ? +(kneeW.w * u).toFixed(4) : null,
     kneeY: kneeW ? yRig(kneeW.y) : null, calfW: +(calfW * u).toFixed(4),
     ankleY: legs.weight.length ? yRig(legs.weight[legs.weight.length - 1].y) : null,
@@ -241,5 +280,6 @@ const out = {
   hairRows,
   armBars,
   legRows,
+  armRows,
 };
 console.log(JSON.stringify(out, null, 1));

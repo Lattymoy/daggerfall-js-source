@@ -84,6 +84,14 @@ const spec = {
     neg: M.legRows.weight.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.85).toFixed(4) })),
     pos: M.legRows.free.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.85).toFixed(4) })),
   },
+  // Arm ROW TRACE: per-row lofts, neg = image-left slack arm, pos =
+  // image-right tucked arm. Arms are round: rz = rx * 0.9. The trace
+  // carries the fists (wider bottom rows) - handScale retires under
+  // paperdoll builds.
+  armRows: {
+    neg: M.armRows.left.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.9).toFixed(4) })),
+    pos: M.armRows.right.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.9).toFixed(4) })),
+  },
   // Exact single-run rows: hair + traps + deltoid mass fused, per the
   // sprite. Depth ratio shallower than the trunk (hair hugs the head).
   hairRows: M.hairRows.map((r) => ({ y: r.y, cx: r.cx, rx: r.halfW, rz: +(r.halfW * 0.6).toFixed(4) })),

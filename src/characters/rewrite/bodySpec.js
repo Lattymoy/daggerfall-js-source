@@ -67,3 +67,10 @@ export function loftTorso(out, tprism, X, Z, rows, col) {
       rows[i].rx, rows[i].rz, rows[i + 1].rx, rows[i + 1].rz, 12, col);
   }
 }
+
+/** Loft a left/right pair of measured row traces (arms, and any other
+ * paired parts): { neg, pos } keyed by x sign. */
+export function loftPair(out, tprism, X, Z, pair, col) {
+  loftTorso(out, tprism, X, Z, pair.neg, col);
+  loftTorso(out, tprism, X, Z, pair.pos, col);
+}

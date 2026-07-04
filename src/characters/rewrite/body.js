@@ -124,7 +124,7 @@ const MANTLE = { dur: 1.5, rise: 1.45, fwd: 0.5, lean: 22, ledgeX: 0.3, ledgeY: 
 // look); tune each in the lab + paste WEAPON_FLASH back. Geometry params are multiples of the muzzle scale s.
 export { FLASH_DEF, WEAPON_FLASH, muzzleFlashFaces } from './muzzleFlash.js'; // base FX ride along
 import { FLASH_DEF, WEAPON_FLASH, muzzleFlashFaces } from './muzzleFlash.js';
-import { VOXLIGHT_SPEC, loftTorso } from './bodySpec.js';
+import { VOXLIGHT_SPEC, loftTorso, loftPair } from './bodySpec.js';
 import { CROUCH_STANCE, WALK_GRIP, PISTOL_GRIP, WALK_AIMED, RUN_AIMED, PISTOL_AIMED, SLIDE_POSE, ZERO_LOCO, WALK_LOCO, RUN_LOCO, RUN_LOCO_PISTOL, STRAFE_LOCO, SLIDE_LOCO, CROUCH_LOCO, CROUCHWALK_LOCO } from './poseTables.js';
 export { VOXLIGHT_SPEC, torsoProfile } from './bodySpec.js';
 function buildFlash(out, tip, k, weapon) { out.push(...muzzleFlashFaces(tip, k, WEAPON_FLASH[FLASH_TYPE_KEY[weapon]] || FLASH_DEF)); } // third-person gun-local flash, keyed by weapon type
@@ -266,6 +266,7 @@ function bulwarkShieldArms(out, ramp, ph, fire) {
 
 function armsDown(out, ramp) {
   const j = [], tw = B.armTwitch || 0, tt = B.t || 0;
+  if (B.paperdoll && SPEC.armRows) { loftPair(out, tprism, X, Z, SPEC.armRows, ramp.SK); return j; } // ROW TRACE: arms loft through measured per-row runs; hand geometry retires (the trace carries the fists)
   const ax = B.armX != null ? B.armX : 0.18, ay = B.armY != null ? B.armY : 0.9, az = B.armZ != null ? B.armZ : 0.06, cu = B.armCurl != null ? B.armCurl : 0.3;
   for (const side of [1, -1]) {
     // possessed twitch: constant micro-tremor + occasional sharp per-arm spasm spikes

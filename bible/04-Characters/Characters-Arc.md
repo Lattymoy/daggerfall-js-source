@@ -161,6 +161,28 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6k iteration 6 (SHIPPED): arms trace; ONE partitioner tiles it all
+
+The arms were the last parametric limbs. armRows: per-row trace both
+arms armpit->wrist - split rows give both edges exactly; merged rows
+take the combined run's OUTER edge (exact arm data) with the inner
+edge at the torso boundary. First cut leaked a 1-2px seam down every
+merged row (arm inner at torsoEdge+-1 vs the torso's old subtract-
+estimator edge: two conventions, lower-torso miss 19 -> 136). Root
+fix: ONE PARTITIONER - each row splits into [left arm][torso][right
+arm] at exact shared pixel edges, and torsoProfile AND armRows both
+emit from it, tiling by construction (the subtract-estimator died;
+armBars/wrist/armW re-derive from the same partition). Upstream:
+armsDown lofts SPEC.armRows under paperdoll (hand geometry retires -
+the trace carries the fist rows); the branch tipped the ceiling and
+carved to bodySpec.loftPair, forward-fixing a grep-masked guard
+breach. Fitter pruned to the live knobs (arm axes + handScale stage
+inert). Result: 0.8371 -> 0.8673 - upper torso miss 102 -> 7 (0.915),
+shoulders 0.911, lower torso 0.877, legs 0.862; every TRACED zone
+0.86-0.93. Gates: floor 0.84, excess 12%. Last un-traced part: the
+feet (0.626) - extend the leg trace through the foot rows next, which
+also carries the classic oblique drawing itself.
+
 ### C6k iteration 5 (SHIPPED): the ROW TRACE - Mac's question was the design
 
 Mac: "why are you having a hard time just simply tracing inside the
