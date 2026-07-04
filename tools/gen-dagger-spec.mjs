@@ -19,8 +19,10 @@ const prof = [...M.torsoProfile].sort((a, b) => a.yRig - b.yRig);
 const hipsHalf = prof[0].halfW;
 const armpitHalf = prof[prof.length - 1].halfW;
 // The trace carries its own centres - the contrapposto lean is DATA.
+// No synthetic below-crotch row: the torso trace ends at the real
+// crotch row (a synthetic hips row extended the trunk into the traced
+// leg gap and blotched the groin).
 const rows = [
-  { y: +(R.pelvisY - 0.06).toFixed(4), cx: prof[0].centerRig, rx: hipsHalf, rz: +(hipsHalf * TORSO_DEPTH).toFixed(4) },
   ...prof.map((t) => ({ y: t.yRig, cx: t.centerRig, rx: t.halfW, rz: +(t.halfW * TORSO_DEPTH).toFixed(4) })),
   { y: R.shoulderY, cx: prof[prof.length - 1].centerRig, rx: +(armpitHalf * 0.95).toFixed(4), rz: +(armpitHalf * 0.95 * TORSO_DEPTH).toFixed(4) },
 ];

@@ -38,15 +38,14 @@ const AXES = {
   freeOut: [0.02, 0.05, 0.08, 0.11],
   freeFwd: [0, 0.06],
   hipShift: [0.03, 0.05, 0.07, 0.09],
-  footYaw: [0, 0.4, 0.7, 1.0],
 };
 const toPaperdoll = (p) => ({
   weightSide: p.weightSide, weightIn: p.weightIn, freeOut: p.freeOut,
-  freeFwd: p.freeFwd, hipShift: p.hipShift, footYaw: p.footYaw,
+  freeFwd: p.freeFwd, hipShift: p.hipShift,
 });
 const evalP = (p) => evalPose(toPaperdoll(p));
 // Seeds from the sprite's own arm bars.
-let pose = { weightSide: -1, weightIn: 0.8, freeOut: 0.14, freeFwd: 0, hipShift: 0.07, footYaw: 0.4 };
+let pose = { weightSide: -1, weightIn: 0.8, freeOut: 0.14, freeFwd: 0, hipShift: 0.07 };
 let best = evalP(pose);
 console.log('start IoU', best.toFixed(4));
 for (let pass = 0; pass < 3; pass++) {

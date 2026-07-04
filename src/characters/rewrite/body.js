@@ -137,6 +137,7 @@ function mkFrame(yaw, pitch, roll, piv, trans) {
 }
 const compose = (A, Bf) => ({ pt: (p) => A.pt(Bf.pt(p)), faces: (fs) => A.faces(Bf.faces(fs)) });
 function trunkLower(out) {
+  if (SPEC.torsoRows) return; // full trace: the measured torso rows ARE the pelvis; the literal groin wedge would blotch the traced crotch gap
   { const v = SPEC.pelvis; tprism(out, [0, v.y0, 0], [0, v.y1, 0], X, Z, v.rx0, v.rz0, v.rx1, v.rz1, 12, CLOTH); }
   tprism(out, [0, 0.9, 0.01], [0, 0.765, 0.035], X, Z, 0.13, 0.16, 0.05, 0.085, 10, CLOTH);
 }
@@ -319,9 +320,8 @@ function bodyLeg(out, side, hipW, F, fp, ramp, legLen = 1) {
   const { SK, SKL, SKM, SKD } = ramp;
   if (B.paperdoll && SPEC.legRows) { // ROW TRACE: the classic legs loft through their measured per-row runs (geometry + stance in one; IK cannot produce the free leg's outward flare)
     const rows = side < 0 ? SPEC.legRows.neg : SPEC.legRows.pos;
-    loftTorso(out, tprism, X, Z, rows, SK);
+    loftTorso(out, tprism, X, Z, rows, SK); // the trace runs through the FOOT rows - buildFoot retires (the classic boot, oblique and all, is in the data)
     const a = rows[rows.length - 1], h = rows[0], m = rows[(rows.length / 2) | 0];
-    buildFoot(out, [a.cx, a.y, 0], fp, { ankleH: SPEC.foot?.ankleH ?? 0.06, footL: SPEC.foot?.footL ?? 0.18, yaw: (B.paperdoll?.footYaw ?? 0) * side, SK, SKL, SKM, SKD });
     return { side, hip: [h.cx, h.y, 0], knee: [m.cx, m.y, 0], ankle: [a.cx, a.y, 0], fp };
   }
   const tr = SPEC.leg.thighR ?? 1, cr = SPEC.leg.calfR ?? 1, sr = 0.078 * cr;
@@ -539,7 +539,7 @@ function figure(phase, eq, t) {
       const ledge = [side * MANTLE.ledgeX, MANTLE.ledgeY, MANTLE.ledgeZ];
       const neutral = [sh[0] + side * 0.12, sh[1] - 0.62, sh[2] + 0.18]; // arm comes to rest at the side
       const target = [ledge[0] + (neutral[0] - ledge[0]) * rel, ledge[1] + (neutral[1] - ledge[1]) * rel, ledge[2] + (neutral[2] - ledge[2]) * rel];
-      { const capFs = []; const dv = SPEC.deltoid; rseg(capFs, [side * dv.x0, dv.y0, 0], [side * dv.x1, dv.y1, 0], Z, dv.rU0, dv.rV0, dv.rU1, dv.rV1, 8, ramp.SK); out.push(...C.faces(capFs)); } // deltoid cap rides the chest
+      if (!(SPEC.hairRows && SPEC.armRows)) { const capFs = []; const dv = SPEC.deltoid; rseg(capFs, [side * dv.x0, dv.y0, 0], [side * dv.x1, dv.y1, 0], Z, dv.rU0, dv.rV0, dv.rU1, dv.rV1, 8, ramp.SK); out.push(...C.faces(capFs)); } // deltoid cap rides the chest - retires under a full trace (the hair/traps + arm rows carry the shoulder silhouette; the cap doubles it and blotches the arm gap)
       armJoints.push({ side, ...mantleArm(out, side, sh, target, ramp) });
     }
     const legJoints = [];

@@ -161,6 +161,25 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6k iteration 7 (SHIPPED): full-trace retirement - 0.8962
+
+Mac's blotch report, both roots found: the groin blotches were
+LITERAL VOXLIGHT LEFTOVERS still building under the trace - the
+hardcoded groin wedge (y 0.765-0.9), the pelvis prism, my generator's
+synthetic below-crotch hips row, and the deltoid caps doubling the
+traced shoulders into the arm gap. The foot blotches were the
+sculpted buildFoot poking past the boot pixels. Fixes, all
+retirements not patches: trunkLower exits under torsoRows, the
+deltoid cap exits under hairRows+armRows, the synthetic row is gone,
+and the leg trace now runs THROUGH the foot rows (per-leg span
+tracking to each leg's true bottom - the free boot reaches row 144,
+the weight sole ends at 137 exactly as drawn: the trace carries the
+classic oblique itself) so buildFoot and footYaw retire. Result:
+0.8673 -> 0.8962; legs 0.950, feet 0.626 -> 0.896 (24 miss / 21
+excess), groin excess 174 -> 53. Gates: floor 0.87, excess ceiling
+8%. The paperdoll figure is now trace end to end: every silhouette
+pixel derives from the sprite's own rows.
+
 ### C6k iteration 6 (SHIPPED): arms trace; ONE partitioner tiles it all
 
 The arms were the last parametric limbs. armRows: per-row trace both

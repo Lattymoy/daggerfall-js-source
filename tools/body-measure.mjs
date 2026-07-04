@@ -183,13 +183,25 @@ for (const part of rowParts) {
 // two-run structure ending) - foot rows are excluded from thigh/knee/
 // calf measurement.
 const legs = { weight: [], free: [] };
-for (let y = crotch; y <= feet; y++) {
-  // The two WIDEST runs are the legs (hands/props are narrow slivers).
-  const r = [...rows[y]].sort((a, b) => width(b) - width(a)).slice(0, 2)
-    .sort((a, b) => a[0] - b[0]);
-  if (r.length < 2 || width(r[0]) < 5 || width(r[1]) < 5) break;
-  legs.weight.push({ y, w: width(r[0]), cx: mid(r[0]) });
-  legs.free.push({ y, w: width(r[1]), cx: mid(r[1]) });
+{
+  const first = [...rows[crotch]].sort((a, b) => width(b) - width(a)).slice(0, 2).sort((a, b) => a[0] - b[0]);
+  const span = { weight: first[0], free: first[1] };
+  for (let y = crotch; y <= feet; y++) {
+    let alive = false;
+    for (const name of ['weight', 'free']) {
+      if (!span[name]) continue;
+      let best = null, bo = 0;
+      for (const run of rows[y]) {
+        const o = Math.min(run[1], span[name][1]) - Math.max(run[0], span[name][0]) + 1;
+        if (o > bo) { bo = o; best = run; }
+      }
+      if (!best || width(best) < 3) { span[name] = null; continue; }
+      span[name] = best;
+      legs[name].push({ y, w: width(best), cx: mid(best) });
+      alive = true;
+    }
+    if (!alive) break;
+  }
 }
 // Full series snapshot for the ROW TRACE (the trace runs to the real
 // bottom of the leg pixels; only the knee/calf STATS want the ankle
