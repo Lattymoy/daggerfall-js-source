@@ -9,8 +9,10 @@
   html, body { height: 100%; background: #14141a; overflow: hidden; touch-action: none; font-family: -apple-system, system-ui, sans-serif; }
   #c { display: block; width: 100vw; height: 100vh; }
   #hud { position: fixed; top: env(safe-area-inset-top, 8px); left: 0; right: 0; text-align: center; color: #8a8a99; font-size: 12px; pointer-events: none; padding-top: 8px; }
-  #bar { position: fixed; bottom: env(safe-area-inset-bottom, 0); left: 0; right: 0; display: flex; gap: 8px; justify-content: center; padding: 12px; }
-  button { background: #23232e; color: #cfcfda; border: 1px solid #34343f; border-radius: 999px; padding: 10px 16px; font-size: 13px; -webkit-tap-highlight-color: transparent; }
+  #bar { position: fixed; bottom: env(safe-area-inset-bottom, 0); left: 0; right: 0; display: flex; gap: 8px; padding: 12px; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  #bar::-webkit-scrollbar { display: none; }
+  #bar button { flex: 0 0 auto; }
+  button { background: #23232e; color: #cfcfda; border: 1px solid #34343f; border-radius: 999px; padding: 12px 18px; font-size: 14px; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
   button:active { background: #2e2e3a; }
   button.on { background: #3a3a48; color: #fff; }
 </style>
@@ -26,11 +28,11 @@
   <button id="walk">walk</button>
   <button id="pauldrons" class="on">pauldrons</button>
   <button id="helm" class="on">helm</button>
-  <button id="hair" class="on">hair</button>
+  <button id="race">race: Human</button>
 </div>
-<div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 54px); left:0; right:0; display:flex; flex-direction:column; gap:6px; align-items:center; color:#8a8a99; font-size:12px;">
-  <div style="display:flex; gap:8px; align-items:center;"><span id="pxlab" style="width:120px; text-align:right;">pixelize: off</span><input id="px" type="range" min="1" max="16" step="1" value="1" style="width:min(46vw,300px);"></div>
-  <div style="display:flex; gap:8px; align-items:center;"><span id="cdlab" style="width:120px; text-align:right;">color: full</span><input id="cd" type="range" min="1" max="9" step="1" value="9" style="width:min(46vw,300px);"></div>
+<div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 72px); left:0; right:0; display:flex; flex-direction:column; gap:8px; align-items:center; color:#8a8a99; font-size:12px; pointer-events:none;">
+  <div style="display:flex; gap:8px; align-items:center;"><span id="pxlab" style="width:120px; text-align:right;">pixelize: off</span><input id="px" type="range" min="1" max="16" step="1" value="1" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="cdlab" style="width:120px; text-align:right;">color: full</span><input id="cd" type="range" min="1" max="9" step="1" value="9" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -123,7 +125,13 @@ function buildPiece(cp) {
 // Animated targets: body + every piece mesh (same FK moves armour with the body).
 const animTargets = [{ pos, base: basePos, vgrp, geo }];
 const pieceMesh = {};
-for (const name of ['pauldrons','helm','hair']) if (D[name]) pieceMesh[name] = buildPiece(D[name]);
+for (const name of ['pauldrons','helm']) if (D[name]) pieceMesh[name] = buildPiece(D[name]);
+const RACES = ['Human','Elf','Khajiit','Argonian']; let raceIx = 0;
+const raceMesh = {};
+for (const r of RACES) { const key = 'hair'+r; if (D[key]) { raceMesh[r] = buildPiece(D[key]); raceMesh[r].visible = false; } }
+const helmOn = () => !!(pieceMesh.helm && pieceMesh.helm.visible);
+const syncHair = () => { const m = raceMesh[RACES[raceIx]]; if (m) m.visible = !helmOn(); }; // hair hidden under a helm
+syncHair();
 scene.add(pivot);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x40404a, 0.9));
@@ -231,7 +239,8 @@ document.getElementById('wire').onclick = (e) => { mat.wireframe = !mat.wirefram
 let bgi = 0; const bgs = [0x14141a, 0x000000, 0x808088, 0xf0f0f0];
 postMat.uniforms.bg.value = new THREE.Color(bgs[0]);
 
-for (const name of ['pauldrons','helm','hair']) { const btn = document.getElementById(name); if (btn) btn.onclick = (e) => { const m = pieceMesh[name]; if (m) { m.visible = !m.visible; e.target.classList.toggle('on', m.visible); } }; }
+for (const name of ['pauldrons','helm']) { const btn = document.getElementById(name); if (btn) btn.onclick = (e) => { const m = pieceMesh[name]; if (m) { m.visible = !m.visible; e.target.classList.toggle('on', m.visible); if (name === 'helm') syncHair(); } }; }
+document.getElementById('race').onclick = (e) => { raceMesh[RACES[raceIx]].visible = false; raceIx = (raceIx+1)%RACES.length; syncHair(); e.target.textContent = 'race: '+RACES[raceIx]; };
 document.getElementById('walk').onclick = (e) => { walking = !walking; e.target.classList.toggle('on', walking); };
 document.getElementById('bg').onclick = () => { bgi = (bgi + 1) % bgs.length; scene.background = new THREE.Color(bgs[bgi]); postMat.uniforms.bg.value = new THREE.Color(bgs[bgi]); };
 </script>
