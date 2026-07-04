@@ -108,17 +108,19 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null) 
     // pointed ears cupped forward. (feline eyes/whiskers are texture.)
     // Muzzle: SHORT + WIDE + rounded, emerging from the face (back face
     // embedded in the head so there's no gap). Cat, not Squidward.
-    const bZ = 0.088, fZ = 0.150, hw = 0.062, fhw = 0.044, top = 1.872, bot = 1.798;
+    const bZ = 0.086, fZ = 0.178, hw = 0.064, fhw = 0.040, top = 1.858, bot = 1.786;
     const bTL=[-hw,top,bZ], bTR=[hw,top,bZ], bBL=[-hw,bot,bZ], bBR=[hw,bot,bZ];
-    const fTL=[-fhw,top-0.008,fZ], fTR=[fhw,top-0.008,fZ], fBL=[-fhw*0.82,bot+0.010,fZ], fBR=[fhw*0.82,bot+0.010,fZ];
+    // front face sits lower (snout tips down) and clearly forward.
+    const fy = top - 0.014;
+    const fTL=[-fhw,fy,fZ], fTR=[fhw,fy,fZ], fBL=[-fhw*0.82,bot+0.004,fZ], fBR=[fhw*0.82,bot+0.004,fZ];
     quad(fTL,fTR,fBR,fBL);         // rounded front
     quad(bTL,fTL,fBL,bBL);         // left cheek
     quad(bTR,bBR,fBR,fTR);         // right cheek
-    quad(bTL,bTR,fTR,fTL);         // bridge (top)
-    quad(bBL,fBL,fBR,bBR);         // jaw (bottom)
-    // nose pad: a small dark wedge on the upper-front of the muzzle.
-    const nhw = 0.018, nz = fZ;
-    quad([-nhw,top-0.002,nz-0.004],[nhw,top-0.002,nz-0.004],[nhw*0.6,top-0.020,nz+0.010],[-nhw*0.6,top-0.020,nz+0.010]);
+    quad(bTL,bTR,fTR,fTL);         // bridge (top, slopes down to snout)
+    quad(bBL,fBL,fBR,bBR);         // jaw underside
+    // nose pad: a dark wedge on the front-top of the snout.
+    const nhw = 0.020, nz = fZ - 0.002;
+    quad([-nhw,fy+0.004,nz],[nhw,fy+0.004,nz],[nhw*0.6,fy-0.016,nz+0.006],[-nhw*0.6,fy-0.016,nz+0.006]);
     // High-set pointed ears: broad triangular, cupped forward. Bases sit
     // ON the upper skull (maxX ~0.075 there) and dip INTO it, so they're
     // welded to the head - not floating beside it.
@@ -128,7 +130,7 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null) 
       const fb   = [sx*0.014, 1.978, 0.040];   // front-inner base
       const bb   = [sx*0.080, 1.970, -0.056];  // back-outer base (at skull edge)
       const midb = [sx*0.044, 1.962, -0.010];  // base centre, dipped IN (cup)
-      const tip  = [sx*0.052, 2.070, -0.030];  // point, ~0.06 above crown
+      const tip  = [sx*0.050, 2.108, -0.028];  // point, clearly above the crown
       quad(fb, tip, midb, midb);          // front-inner face
       quad(midb, tip, bb, bb);            // front-outer face
       quad(bb, tip, fb, fb);              // back face (wraps around)
