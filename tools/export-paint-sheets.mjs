@@ -40,24 +40,12 @@ const front = (x, y) => {
   const c = pal.get(i);
   return [c.r, c.g, c.b, 255];
 };
-// The back is NOT a mirrored front (Mac): the starter is a FLAT
-// mid-tone silhouette - the back's own detail is hand-authored via
-// the paint sheet, and back relief stays empty until then. Mid-tone =
-// the front's median opaque luminance mapped back to its palette
-// index, so painted-over strokes sit in the same value range.
-let midIdx = 0;
-{
-  const ls = [];
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = data[y * W + x]; if (i) ls.push({ i, l: (() => { const c = pal.get(i); return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b; })() }); }
-  ls.sort((a, b) => a.l - b.l);
-  midIdx = ls[(ls.length / 2) | 0].i;
-}
-const back = (x, y) => {
-  const i = data[y * W + (W - 1 - x)]; // mirror only the SILHOUETTE mask
-  if (!i) return [0, 0, 0, 0];
-  const c = pal.get(midIdx);
-  return [c.r, c.g, c.b, 255];
-};
+// The back SAMPLES THE SPRITE (the classic projection - exactly how
+// the front gets its clarity): a back face shares x,y with its front
+// counterpart, so it reads the same sprite pixel. The starter is
+// therefore fully TRANSPARENT - every back face falls through to the
+// sprite projection. Painting it (optional) overrides per pixel.
+const back = () => [0, 0, 0, 0];
 write('body-front.png', front);
 write('body-back.png', back);
 write('body-front-4x.png', front, 4);

@@ -161,6 +161,21 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6z (SHIPPED): the back samples the sprite - like the front
+
+Mac: look at how the front achieves clarity and replicate it for the
+back. The front's clarity is ONE thing - it samples the real sprite
+pixel at each face (the classic projection), no computed shading. The
+back never reached that path: the derived body-back.png was fully
+opaque, so back faces always used the fabricated shading (the whole
+C6t-C6y thrash). Fix: the back sheet starter is now TRANSPARENT, so
+every back face falls through to the same sample() the front uses - a
+back face shares x,y with its front counterpart, so it reads the same
+sprite pixel: identical clarity, not a mirror. gen-back-sheet.mjs
+(derived shading) deleted; backRelief empties (the fabricated mounds
+gone). Front + cores byte-identical, pin 1.0000. Optional hand-paint
+still overrides per pixel.
+
 ### C6y (SHIPPED): crotch seam - ambient occlusion in the crevice
 
 Mac: the seam where the legs meet. Both inner thighs were lit bright
