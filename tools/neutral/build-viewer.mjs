@@ -1,11 +1,32 @@
-// Builds the standalone orbit viewer: runs the neutral body builder,
-// injects the shaded face payload into the viewer template.
+// Builds the standalone orbit viewer from the shared neutral body
+// module (src/characters/neutralBody.js) - same geometry/shading the
+// engine uses. Ramps are read from the sprite here (Node side) and
+// passed in; the browser passes ramps from the loaded ART_PAL.
 // Usage: ARENA2_PATH=... node tools/neutral/build-viewer.mjs out.html
 import { readFileSync, writeFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { ImgFile } from '../../src/formats/imgFile.js';
+import { DFPalette } from '../../src/formats/dfPalette.js';
+import { buildNeutralBody } from '../../src/characters/neutralBody.js';
+
+const A = process.env.ARENA2_PATH;
+const pal = new DFPalette(); pal.load(readFileSync(A + '/ART_PAL.COL'), 'ART_PAL.COL');
+const img = new ImgFile(); img.load(readFileSync(A + '/BODY00I0.IMG'), 'BODY00I0.IMG', pal);
+const { width: W, data } = img.getDFBitmap();
+const lum = (i) => { const c = pal.get(i); return 0.299*c.r + 0.587*c.g + 0.114*c.b; };
+const rampOf = (r0, r1, keep) => { const m = new Map(); for (let y=r0;y<=r1;y++) for (let x=0;x<W;x++){ const i=data[y*W+x]; if(i&&(!keep||keep(x,y))) m.set(i,lum(i)); } return [...m.entries()].sort((a,b)=>a[1]-b[1]).map(e=>{const c=pal.get(e[0]);return [c.r,c.g,c.b];}); };
+const ramps = { skin: rampOf(40, 60, (x)=>Math.abs(x-34)<14), boot: rampOf(132, 144) };
+
+const faces = buildNeutralBody(ramps);
+let minY = 1e9, maxY = -1e9;
+for (const f of faces) for (let i=0;i<4;i++){ const y=f.p[i*3+1]; if(y<minY)minY=y; if(y>maxY)maxY=y; }
+const P=[], N=[], C=[];
+for (const f of faces) {
+  for (let i=0;i<4;i++) P.push(Math.round(f.p[i*3]*1000), Math.round(f.p[i*3+1]*1000), Math.round(f.p[i*3+2]*1000));
+  N.push(Math.round(f.n[0]*127), Math.round(f.n[1]*127), Math.round(f.n[2]*127));
+  C.push(f.c[0], f.c[1], f.c[2]);
+}
+const payload = JSON.stringify({ n: faces.length, cy:(minY+maxY)/2, h:maxY-minY, P, N, C });
 const dir = new URL('.', import.meta.url).pathname;
-execFileSync('node', [dir + 'neutral-body.mjs', '/tmp/np.json'], { env: process.env, stdio: 'inherit' });
-const payload = readFileSync('/tmp/np.json', 'utf8');
 const tpl = readFileSync(dir + 'viewer-template.html', 'utf8');
 writeFileSync(process.argv[2] || 'dagger-viewer.html', tpl.replace('__PAYLOAD__', payload));
-console.log('viewer written ->', process.argv[2] || 'dagger-viewer.html');
+console.log('viewer written (', faces.length, 'faces ) ->', process.argv[2] || 'dagger-viewer.html');
