@@ -143,6 +143,43 @@ const edgeAt = (samples, y) => {
   if (hi.y === lo.y) return lo.x;
   return lo.x + (hi.x - lo.x) * (y - lo.y) / (hi.y - lo.y);
 };
+// The drawn CROTCH LINE: the artist divides the thighs inside the
+// merged pelvis rows. Walk up from the first 2-run row's gap centre
+// while the dark line holds contrast (<= 0.92 of local median, one
+// gap row tolerated, re-admitted if the line resumes). Band rows
+// leave the trunk and join the LEGS as two thigh-top intervals split
+// at the seam - the union tiles, the 1:1 pin is safe by construction.
+const crotchBand = new Map();
+{
+  const lum = (i) => { const c = pal.get(i); return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b; };
+  const r2 = [...rows[crotch]].filter((r) => width(r) > 4);
+  if (r2.length >= 2) {
+    let seam = ((r2[0][1] + r2[1][0]) / 2) | 0;
+    let misses = 0;
+    let pend = [];
+    for (let y = crotch - 1; y >= armpit; y--) {
+      const cand = [];
+      for (let x = seam - 2; x <= seam + 2; x++) if (data[y * W + x]) cand.push({ x, l: lum(data[y * W + x]) });
+      if (!cand.length) break;
+      let best = null, bl = Infinity;
+      for (const { x, l } of cand) { const sc = l + 18 * Math.abs(x - seam); if (sc < bl) { bl = sc; best = { x, l }; } }
+      const wide = [];
+      for (let x = seam - 8; x <= seam + 8; x++) if (data[y * W + x]) wide.push(lum(data[y * W + x]));
+      const med = wide.sort((a, b) => a - b)[(wide.length / 2) | 0];
+      seam = best.x;
+      if (best.l > med * 0.92) {
+        if (++misses > 1) break;
+        pend.push([y, best.x]);
+        continue;
+      }
+      misses = 0;
+      for (const [py, px2] of pend) crotchBand.set(py, px2);
+      pend = [];
+      crotchBand.set(y, best.x);
+    }
+  }
+}
+const crotchLegs = { weight: [], free: [] }; // image-left = weight leg
 const torso = [];
 const armRows = { left: [], right: [] };
 let mergedCounts = [0, 0, 0];
@@ -154,7 +191,11 @@ for (const part of rowParts) {
   if (arm.right) re = t[1];
   else { const e = edgeAt(edgeSamples.right, y); re = e == null ? t[1] : Math.round(e); merged++; }
   mergedCounts[merged]++;
-  torso.push({
+  if (crotchBand.has(y)) { // the trunk ends where the drawn thighs begin - these rows join the LEGS; arms on the same rows emit normally below
+    const sc = crotchBand.get(y);
+    crotchLegs.weight.push({ y: yRig(y), cx: +((((le + sc) / 2) - headCx) * u).toFixed(4), rx: +(((sc - le + 1) / 2) * u).toFixed(4) });
+    crotchLegs.free.push({ y: yRig(y), cx: +((((sc + 1 + re) / 2) - headCx) * u).toFixed(4), rx: +(((re - sc) / 2) * u).toFixed(4) });
+  } else torso.push({
     yRig: yRig(y),
     halfW: +(((re - le + 1) / 2) * u).toFixed(4),
     centerRig: +((((le + re) / 2) - headCx) * u).toFixed(4),
@@ -237,11 +278,11 @@ const thighW = Math.max(...legs.weight.slice(0, Math.ceil(legs.weight.length / 3
 // IS the pose).
 const legRows = {};
 for (const [name, leg] of [['weight', fullLegs.weight], ['free', fullLegs.free]]) {
-  legRows[name] = leg.map((r) => ({
+  legRows[name] = crotchLegs[name].concat(leg.map((r) => ({
     y: yRig(r.y),
     cx: +((r.cx - headCx) * u).toFixed(4),
     rx: +((r.w / 2) * u).toFixed(4),
-  }));
+  })));
 }
 
 const hipXpx = legs.weight.length > 2 && legs.free.length > 2

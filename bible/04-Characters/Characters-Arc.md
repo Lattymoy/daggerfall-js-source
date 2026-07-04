@@ -161,6 +161,24 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6n (SHIPPED): the groin - the trunk ends where the thighs begin
+
+The square Mac kept seeing was the TRUNK'S BLUNT TERMINATION: the
+last torso slabs ran full hip width at full depth (rz 0.18) to a hard
+stop at the crotch row, shelving over the thigh tops (rz ~0.11). The
+reference disagrees twice: (1) the artist DRAWS the thigh division
+inside the merged pelvis rows - the dark crotch line holds contrast
+rows 67-70 (walked up from the row-71 gap centre, ratio <= 0.92, one
+gap tolerated and re-admitted) - so those rows leave the trunk and
+join the LEGS as two thigh-top intervals split at the seam (arms on
+the same rows emit normally; the first cut's early-continue dropped
+them and the 1:1 pin caught 39 missing pixels immediately); (2) a
+pelvis keeps no chest depth - the trunk's rz now tapers into the leg
+depth over the hip band (0.7 -> 0.45 below y 1.16; bottom rz 0.109 vs
+thigh 0.107, flush). Front view unchanged by construction: pin
+1.0000, hair/arm/overlay byte-identical (asserted), torsoRows pin
+unchanged at 20 (slab merging absorbed the 4 rows).
+
 ### C6m v3 (SHIPPED): the wedge the artist actually drew
 
 Mac: why is there a square in front of the crotch, and match the hand

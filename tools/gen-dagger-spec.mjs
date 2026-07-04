@@ -46,7 +46,14 @@ const armpitHalf = prof[prof.length - 1].halfW;
 // crotch row (a synthetic hips row extended the trunk into the traced
 // leg gap and blotched the groin).
 const rows = capRows([
-  ...prof.map((t) => ({ y: t.yRig, cx: t.centerRig, rx: t.halfW, rz: +(t.halfW * TORSO_DEPTH).toFixed(4) })),
+  // Pelvis depth taper: the trunk's depth blends into the LEG depth
+  // over the hip band (y 1.16 -> the trunk's bottom) so the pelvis
+  // does not shelf over the thigh tops - the front view is unchanged
+  // (rz is the front-free dimension).
+  ...prof.map((t) => {
+    const k = t.yRig >= 1.16 ? TORSO_DEPTH : TORSO_DEPTH + (0.45 - TORSO_DEPTH) * Math.min(1, (1.16 - t.yRig) / 0.13);
+    return { y: t.yRig, cx: t.centerRig, rx: t.halfW, rz: +(t.halfW * k).toFixed(4) };
+  }),
   { y: R.shoulderY, cx: prof[prof.length - 1].centerRig, rx: +(armpitHalf * 0.95).toFixed(4), rz: +(armpitHalf * 0.95 * TORSO_DEPTH).toFixed(4) },
 ]);
 
