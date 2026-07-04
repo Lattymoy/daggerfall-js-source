@@ -161,6 +161,22 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6m v3 (SHIPPED): the wedge the artist actually drew
+
+Mac: why is there a square in front of the crotch, and match the hand
+to the true reference. The seam-contrast dump answered both: a real
+separator line exists ONLY rows 47-54 (seam/median luminance 0.64-
+0.90); from row 55 down the ratio is ~1.0 - the artist drew no
+articulated hand below that. The square was the walker's phantom tail:
+min-luminance always finds SOMETHING, so it emitted slabs to row 70,
+and only that below-torso overhang was visible (the rest sat buried at
+fixed cz 0.09 inside the hip's rz ~0.16). Fixes: the walk terminates
+when the separator's contrast vanishes (ratio > 0.92, one tolerated
+gap row), and cz derives per row from the trunk's own depth (tz -
+rz*0.5 - the wedge rides the hip surface half-proud). The overlay is
+now the 7-row forearm wedge the reference actually contains. Core
+emission byte-identical (asserted); pin 1.0000.
+
 ### C6m v2 (SHIPPED): the tucked hand as a pure OVERLAY
 
 The first C6m regressed the torso twice (carved notch from the rear;

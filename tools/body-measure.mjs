@@ -310,21 +310,33 @@ const armOverlay = [];
   if (lastSplit >= 0) {
     let seam = rowParts[lastSplit].arm.right[0];
     const anchor0 = seam;
+    let misses = 0;
     for (let i = lastSplit + 1; i < rowParts.length; i++) {
       const { y, t, arm } = rowParts[i];
       if (arm.right) break;
+      const cand = [];
+      for (let x = Math.max(t[0] + 1, anchor0 - 5); x <= Math.min(t[1] - 1, anchor0 + 5); x++) cand.push({ x, l: lum(data[y * W + x]) });
+      if (!cand.length) break;
       let best = null, bl = Infinity;
-      for (let x = seam - 2; x <= seam + 2; x++) {
-        if (x <= t[0] || x >= t[1] || Math.abs(x - anchor0) > 5) continue;
-        const sc = lum(data[y * W + x]) + 18 * Math.abs(x - seam);
-        if (sc < bl) { bl = sc; best = x; }
+      for (const { x, l } of cand) {
+        const sc = l + 18 * Math.abs(x - seam);
+        if (sc < bl) { bl = sc; best = { x, l }; }
       }
-      if (best == null) break;
-      seam = best;
+      const med = cand.map((c) => c.l).sort((p, q) => p - q)[(cand.length / 2) | 0];
+      // The separator must EXIST: when the seam is no darker than the
+      // local shading, the artist stopped drawing the hand - stop
+      // emitting (one tolerated gap row; a second ends the wedge).
+      if (best.l > med * 0.92) {
+        if (++misses > 1) break;
+        seam = best.x;
+        continue;
+      }
+      misses = 0;
+      seam = best.x;
       armOverlay.push({
         y: yRig(y),
-        cx: +((((best + t[1]) / 2) - headCx) * u).toFixed(4),
-        rx: +(((t[1] - best + 1) / 2) * u).toFixed(4),
+        cx: +((((best.x + t[1]) / 2) - headCx) * u).toFixed(4),
+        rx: +(((t[1] - best.x + 1) / 2) * u).toFixed(4),
       });
     }
   }

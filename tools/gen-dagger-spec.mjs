@@ -129,7 +129,14 @@ const spec = {
   // Tucked-hand OVERLAY: additive geometry only (a subset of the
   // sprite run - the union and the torso emission are untouched).
   // Rides in front of the hip; cz is the flush/proud knob.
-  armOverlay: capRows(M.armOverlay.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.9).toFixed(4), cz: 0.09 })).sort((a, b) => a.y - b.y)),
+  armOverlay: capRows(M.armOverlay.map((r) => {
+    // Ride the torso surface: cz from the trunk's own depth at this
+    // height (front of the wedge sits half-proud of the hip).
+    let tz = 0.12;
+    for (const t of prof) if (Math.abs(t.yRig - r.y) < 0.02) tz = t.halfW * TORSO_DEPTH;
+    const rz = +(r.rx * 0.9).toFixed(4);
+    return { y: r.y, cx: r.cx, rx: r.rx, rz, cz: +Math.max(0, tz - rz * 0.5).toFixed(4) };
+  }).sort((a, b) => a.y - b.y)),
   // Exact single-run rows: hair + traps + deltoid mass fused, per the
   // sprite. Depth ratio shallower than the trunk (hair hugs the head).
   hairRows: capRows(M.hairRows.map((r) => ({ y: r.y, cx: r.cx, rx: r.halfW, rz: +(r.halfW * 0.6).toFixed(4) })).sort((a, b) => a.y - b.y)),
