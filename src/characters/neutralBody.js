@@ -262,10 +262,12 @@ export function buildNeutralBody(ramps, opts = {}) {
     displace(z.groups, z.yLo, z.yHi, z.th ?? 0.008, cxFor, 1, 'cloth');
   }
 
-  if (opts.cuirass) displace(['body'], 1.12, 1.62, 0.022);
-  if (opts.greaves) { displace(["legL","legR"], 0.56, 1.00, 0.020, legCx, 0.28); displace(['body'], 0.90, 1.14, 0.020); }
-  if (opts.boots) displace(['legL','legR'], 0.00, 0.42, 0.016, legCx);
-  if (opts.gauntlets) displace(['armL','armR'], 0.83, 1.22, 0.016, armCx);
+  // armour zones (from armorSet via armorZones) - over the clothing.
+  // Each zone carries its family material (steel/mail/leather).
+  for (const z of (opts.armorZones || [])) {
+    const cxFor = z.leg ? legCx : z.arm ? armCx : null;
+    displace(z.groups, z.yLo, z.yHi, z.th ?? 0.02, cxFor, z.zScale ?? 1, z.mat || 'steel');
+  }
 
   // HEIGHT: vertical compress for a shorter, stockier (Daggerfall)
   // build. Applied before AO so crevice distances stay consistent.
@@ -295,8 +297,7 @@ export function buildNeutralBody(ramps, opts = {}) {
     const fc = faces[i];
     let it = Math.max(0.08, (fc.n[0]*Lx + fc.n[1]*Ly + fc.n[2]*Lz) / Ln * 0.9 + 0.15);
     it *= ao[i]; // crevices darken
-    const ramp = fc._mat === 'steel' ? (opts.steel || ramps.steel || ramps.skin)
-      : fc._mat === 'cloth' ? (opts.cloth || ramps.cloth || ramps.skin)
+    const ramp = fc._mat ? (opts.mats?.[fc._mat] || ramps[fc._mat] || opts.cloth || ramps.skin)
       : (fc.c === BOOT ? ramps.boot : ramps.skin);
     fc.c = shade(ramp, Math.min(1, Math.max(0.04, it)));
   }

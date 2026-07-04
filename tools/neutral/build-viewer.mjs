@@ -9,8 +9,9 @@ import { DFPalette } from '../../src/formats/dfPalette.js';
 import { buildNeutralBody } from '../../src/characters/neutralBody.js';
 import { buildCuirass, STEEL_RAMP } from '../../src/characters/pieces/cuirass.js';
 import { buildGreaves } from '../../src/characters/pieces/greaves.js';
-import { CLOTH_RAMP } from '../../src/characters/pieces/pieceLoft.js';
+import { CLOTH_RAMP, MAIL_RAMP, LEATHER_RAMP } from '../../src/characters/pieces/pieceLoft.js';
 import { clothingZones } from '../../src/characters/clothing.js';
+import { armorZones } from '../../src/characters/armorSet.js';
 
 const A = process.env.ARENA2_PATH;
 const pal = new DFPalette(); pal.load(readFileSync(A + '/ART_PAL.COL'), 'ART_PAL.COL');
@@ -20,8 +21,10 @@ const lum = (i) => { const c = pal.get(i); return 0.299*c.r + 0.587*c.g + 0.114*
 const rampOf = (r0, r1, keep) => { const m = new Map(); for (let y=r0;y<=r1;y++) for (let x=0;x<W;x++){ const i=data[y*W+x]; if(i&&(!keep||keep(x,y))) m.set(i,lum(i)); } return [...m.entries()].sort((a,b)=>a[1]-b[1]).map(e=>{const c=pal.get(e[0]);return [c.r,c.g,c.b];}); };
 const ramps = { skin: rampOf(40, 60, (x)=>Math.abs(x-34)<14), boot: rampOf(132, 144) };
 
-const outfit = [...clothingZones(167), ...clothingZones(151), ...clothingZones(149)]; // Long Shirt + Casual Pants + Boots
-const faces = buildNeutralBody(ramps, { clothZones: outfit, cloth: CLOTH_RAMP });
+const outfit = [...clothingZones(167), ...clothingZones(151)]; // Long Shirt + Casual Pants (under)
+const armor = [...armorZones(102), ...armorZones(104), ...armorZones(103), ...armorZones(108)]; // full plate over it
+const mats = { steel: STEEL_RAMP, mail: MAIL_RAMP, leather: LEATHER_RAMP };
+const faces = buildNeutralBody(ramps, { clothZones: outfit, armorZones: armor, cloth: CLOTH_RAMP, mats });
 let minY = 1e9, maxY = -1e9;
 for (const f of faces) for (let i=0;i<4;i++){ const y=f.p[i*3+1]; if(y<minY)minY=y; if(y>maxY)maxY=y; }
 const GI = { body:0, head:1, armL:2, armR:3, legL:4, legR:5 };

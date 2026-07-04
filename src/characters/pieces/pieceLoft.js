@@ -48,3 +48,6 @@ export function compress(faces) { for (const f of faces) for (let i = 0; i < 4; 
 export const STEEL_RAMP = [[38, 40, 46], [64, 68, 78], [102, 108, 120], [146, 152, 166], [184, 192, 206], [214, 222, 236]];
 // Linen/tan cloth (procedural; item dye colours come from data later).
 export const CLOTH_RAMP = [[58, 48, 38], [86, 72, 54], [118, 100, 74], [150, 128, 96], [180, 158, 122], [206, 186, 150]];
+// Chain mail (darker, cooler than plate) and leather (brown).
+export const MAIL_RAMP = [[32, 34, 40], [52, 56, 64], [80, 86, 96], [112, 120, 132], [146, 154, 168], [180, 188, 202]];
+export const LEATHER_RAMP = [[40, 28, 20], [62, 44, 30], [88, 62, 42], [116, 84, 56], [146, 110, 76], [176, 140, 100]];
