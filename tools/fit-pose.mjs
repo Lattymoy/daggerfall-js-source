@@ -30,7 +30,7 @@ const score = (r) => {
 };
 const evalPose = (pose) => score(silhouetteIoU(
   buildBody({ loco: 'stand', hold: 'idle', phase: 0, weapon: 'none', paperdoll: pose }, BARE_PLUGS, DAGGER_SPEC),
-  bmp));
+  bmp, DAGGER_SPEC.traceMap));
 
 const AXES = {
   weightSide: [-1, 1],

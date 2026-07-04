@@ -161,6 +161,25 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6k iteration 8 (SHIPPED): 0.9012 - seams, diamonds, rims
+
+Mac's annotated diff named three artifacts; each had a mechanical
+root: (1) blue diamonds in the arm gaps = the loft BRIDGING split<->
+merged transition rows where the traced interval jumps sideways -
+upstream loftTorso now refuses to bridge disjoint intervals (|dcx| >
+rxA+rxB); (2) red horizontal seam lines (crotch, mid-arm) = lofts
+span row-centre to row-centre so edge rows covered half a pixel -
+every emitted trace now carries HALF-ROW END CAPS and adjacent parts
+tile vertically; (3) thick outer rims = sub-pixel registration phase
+from centroid ESTIMATION - the trace knows its exact column mapping,
+so the spec now emits traceMap {u, colOffset, rowTop} and the metric,
+fitter, and diff all register BY CONSTRUCTION (silhouetteIoU gained
+an exact-map mode; estimation remains the fallback for non-trace
+consumers). 0.8962 -> 0.9012; legs 0.931, shoulders 0.910, upper
+torso 0.899, feet 0.892; excess 6.3% of sprite area. Floor 0.88.
+Residual: lower-torso band 113 excess (near-adjacent transition
+bridges under the disjoint threshold) + 12-gon aliasing.
+
 ### C6k iteration 7 (SHIPPED): full-trace retirement - 0.8962
 
 Mac's blotch report, both roots found: the groin blotches were

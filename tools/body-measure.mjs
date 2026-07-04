@@ -276,7 +276,7 @@ for (let y = top; y < armpit; y++) {
 }
 
 const out = {
-  source: `BODY${race}I${gender}.IMG`, W, H, unit: +u.toFixed(5),
+  source: `BODY${race}I${gender}.IMG`, W, H, unit: +u.toFixed(5), headCxCol: +headCx.toFixed(3),
   rows: { top, headBottom, shoulder, armpit, crotch, feet, wristRow },
   rig: {
     height: RIG_H,

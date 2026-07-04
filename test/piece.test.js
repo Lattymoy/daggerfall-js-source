@@ -86,7 +86,7 @@ test('piece: profile mode round-trips through the body profile', () => {
 test('piece: DAGGER_SPEC v2 pins (full resculpt)', () => {
   assert.equal(DAGGER_SPEC.pelvisY, 0.9743);
   assert.equal(DAGGER_SPEC.chest.y1, 1.478);
-  assert.equal(DAGGER_SPEC.torsoRows.length, 39); // the synthetic below-crotch row is gone (iteration 7)
+  assert.equal(DAGGER_SPEC.torsoRows.length, 41); // 39 + half-row end caps (iteration 8)
   assert.equal(DAGGER_SPEC.head.scale, 1.115);
   // Bones reach the plant: thigh + calf == pelvisY - 0.06.
   assert.equal(+(DAGGER_SPEC.leg.thigh + DAGGER_SPEC.leg.calf).toFixed(4), +(DAGGER_SPEC.pelvisY - 0.06).toFixed(4));

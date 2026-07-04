@@ -63,8 +63,13 @@ export function torsoProfile(spec, y) {
  * rest-shape symmetric - the paperdoll stance supplies the lean). */
 export function loftTorso(out, tprism, X, Z, rows, col) {
   for (let i = 0; i + 1 < rows.length; i++) {
-    tprism(out, [rows[i].cx ?? 0, rows[i].y, rows[i].cz ?? 0], [rows[i + 1].cx ?? 0, rows[i + 1].y, rows[i + 1].cz ?? 0], X, Z,
-      rows[i].rx, rows[i].rz, rows[i + 1].rx, rows[i + 1].rz, 12, col);
+    const a = rows[i], b = rows[i + 1];
+    // Disjoint intervals do not bridge: at a split<->merged transition
+    // the traced interval jumps sideways, and a bridging prism would
+    // poke across the real gap between parts.
+    if (Math.abs((b.cx ?? 0) - (a.cx ?? 0)) > a.rx + b.rx) continue;
+    tprism(out, [a.cx ?? 0, a.y, a.cz ?? 0], [b.cx ?? 0, b.y, b.cz ?? 0], X, Z,
+      a.rx, a.rz, b.rx, b.rz, 12, col);
   }
 }
 

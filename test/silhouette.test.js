@@ -30,10 +30,10 @@ test('silhouette: front IoU vs the classic body mask', { skip: skipReal }, () =>
   const faces = buildBody(
     { loco: 'stand', hold: 'idle', phase: 0, weapon: 'none', paperdoll: PAPERDOLL_POSE },
     BARE_PLUGS, DAGGER_SPEC);
-  const { iou, inter, union, modelArea } = silhouetteIoU(faces, bmp);
+  const { iou, inter, union, modelArea } = silhouetteIoU(faces, bmp, DAGGER_SPEC.traceMap);
   console.log(`silhouette IoU = ${iou.toFixed(4)} (intersection ${inter}, union ${union})`);
-  // Floor = fit 0.8962 minus margin; ratchets UP only.
-  assert.ok(iou >= 0.87, `IoU ${iou.toFixed(4)} below the floor`);
+  // Floor = fit 0.9012 minus margin; ratchets UP only.
+  assert.ok(iou >= 0.88, `IoU ${iou.toFixed(4)} below the floor`);
   // Inside the lines (Mac): model spill beyond the sprite outline is
   // capped - excess pixels vs sprite area.
   let spriteN = 0;

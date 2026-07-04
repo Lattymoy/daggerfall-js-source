@@ -2,30 +2,32 @@
 // Centroid-x + feet-anchored registration: measures SHAPE.
 import { facesBounds } from '../render/characterMesh.js';
 
-export function silhouetteIoU(faces, bmp) {
+export function silhouetteIoU(faces, bmp, traceMap = null) {
   const { width: W, height: H, data } = bmp;
+  if (traceMap) {
+    // Exact mapping: the model IS a trace of this sprite - register by
+    // construction, not centroid estimation (sub-pixel phase rims die).
+    return rasterize(faces, W, H, data,
+      (x) => x / traceMap.u + traceMap.colOffset,
+      (y) => (H - 0.5) - y / traceMap.u - traceMap.rowTop);
+  }
   const b = facesBounds(faces);
   const u = (b.maxY - b.minY) / H;
-
-  // Sprite mask centroid-x for registration.
   let scx = 0, sn = 0;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     if (data[y * W + x]) { scx += x + 0.5; sn++; }
   }
   scx /= sn;
-  // Model centroid-x (face centroids).
   let mcx = 0, mn = 0;
   for (const f of faces) {
     const np = f.p.length / 3;
     for (let i = 0; i < np; i++) { mcx += f.p[i * 3]; mn++; }
   }
   mcx /= mn;
+  return rasterize(faces, W, H, data, (x) => (x - mcx) / u + scx, (y) => (b.maxY - y) / u);
+}
 
-  const toCol = (x) => (x - mcx) / u + scx;
-  const toRow = (y) => (b.maxY - y) / u;
-
-  // Rasterize: split each quad into two triangles, point-in-triangle
-  // over the bbox at sprite resolution.
+function rasterize(faces, W, H, data, toCol, toRow) {
   const grid = new Uint8Array(W * H);
   const tri = (ax, ay, bx, by, cx, cy) => {
     const minX = Math.max(0, Math.floor(Math.min(ax, bx, cx)));

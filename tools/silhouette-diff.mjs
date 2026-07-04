@@ -6,7 +6,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
 import { buildBody, BARE_PLUGS } from '../src/characters/rewrite/body.js';
-import { facesBounds } from '../src/render/characterMesh.js';
 import { DAGGER_SPEC } from '../src/characters/daggerBodySpec.js';
 import { PAPERDOLL_POSE } from '../src/characters/paperdollPose.js';
 import { ImgFile } from '../src/formats/imgFile.js';
@@ -24,16 +23,9 @@ const { width: W, height: H, data } = bmp;
 const faces = buildBody(
   { loco: 'stand', hold: 'idle', phase: 0, weapon: 'none', paperdoll: PAPERDOLL_POSE },
   BARE_PLUGS, DAGGER_SPEC);
-const b = facesBounds(faces);
-const u = (b.maxY - b.minY) / H;
-let scx = 0, sn = 0;
-for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (data[y * W + x]) { scx += x + 0.5; sn++; }
-scx /= sn;
-let mcx = 0, mn = 0;
-for (const f of faces) { const np = f.p.length / 3; for (let i = 0; i < np; i++) { mcx += f.p[i * 3]; mn++; } }
-mcx /= mn;
-const toCol = (x) => (x - mcx) / u + scx;
-const toRow = (y) => (b.maxY - y) / u;
+const TM = DAGGER_SPEC.traceMap;
+const toCol = (x) => x / TM.u + TM.colOffset;
+const toRow = (y) => (H - 0.5) - y / TM.u - TM.rowTop;
 const grid = new Uint8Array(W * H);
 const tri = (ax, ay, bx, by, cx, cy) => {
   const minX = Math.max(0, Math.floor(Math.min(ax, bx, cx)));
