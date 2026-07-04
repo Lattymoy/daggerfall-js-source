@@ -161,6 +161,22 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6u (SHIPPED): the back, shaded like the front (derived)
+
+Mac: shade the back with the same skin-coloured shading as the front.
+Done, fully DERIVED - nothing invented (policy holds). tools/gen-back-
+sheet.mjs: per back pixel, mirror to front space, find the owning part
+from the measured traces (hair band / torso rows / arm rows / leg
+rows), take the loft cross-section normal at that column, light it
+with the sprite's own convention (view-relative upper-right key), and
+quantize through the FRONT'S OWN palette ramps measured per region
+(skin from the mid torso, hair from the crown, boot from the feet:
+14/17/16 indices). The lateral normal flips for the rear view. The
+C6s pipeline then turns that shaded sheet into back relief (43 rows /
+3 strands - the derived pec/lat/calf volumes, NOT the mirrored front
+islands). Six core lists incl. front relief byte-identical; pin
+1.0000. body-back.png is now a shaded starter Mac can still repaint.
+
 ### C6t (SHIPPED): the back is not a mirrored front
 
 Mac: the backside needs to be completely different, not a mirror. It
