@@ -408,6 +408,7 @@ const overlayCols = new Map();
 // Each island becomes a thin additive plate: lift ~ brightness over
 // the row median. A subset of the run - the silhouette is untouched.
 const torsoRelief = [];
+const rawIslands = [];
 {
   const lum = (i) => { const c = pal.get(i); return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b; };
   for (const part of rowParts) {
@@ -430,12 +431,7 @@ const torsoRelief = [];
           let m = 0;
           for (let k = cLo; k <= cHi; k++) m += lum(data[y * W + k]);
           m /= cHi - cLo + 1;
-          torsoRelief.push({
-            y: yRig(y),
-            cx: +((((cLo + cHi) / 2) - headCx) * u).toFixed(4),
-            rx: +(((cHi - cLo + 1) / 2) * u).toFixed(4),
-            lift: +Math.min(0.2, (m - med) / 255).toFixed(4),
-          });
+          rawIslands.push({ row: y, lo: cLo, hi: cHi, lift: Math.min(0.2, (m - med) / 255) });
         }
         cLo = -1;
       }
@@ -472,15 +468,52 @@ const torsoRelief = [];
           let m = 0;
           for (let k = cLo; k <= cHi; k++) m += lum(data[y * W + k]);
           m /= cHi - cLo + 1;
-          torsoRelief.push({
-            y: yRig(y),
-            cx: +((((cLo + cHi) / 2) - headCx) * u).toFixed(4),
-            rx: +(((cHi - cLo + 1) / 2) * u).toFixed(4),
-            lift: +Math.min(0.2, (m - med) / 255).toFixed(4),
-          });
+          rawIslands.push({ row: y, lo: cLo, hi: cHi, lift: Math.min(0.2, (m - med) / 255) });
         }
         cLo = -1;
       }
+    }
+  }
+}
+
+// STRANDS: chain islands across rows by pixel-interval overlap - the
+// drawn forms (a pec, a strand of hair) are vertical shapes, not
+// per-row speckle. Within a strand the loft bridges continuously and
+// the lift takes a 3-row average; single-row strands are dropped
+// (denoise). Strand starts carry brk.
+{
+  rawIslands.sort((a, b) => a.row - b.row);
+  const strands = [];
+  const open = []; // { rows: [...], lastRow, lo, hi }
+  for (const isl of rawIslands) {
+    let best = null, bo = 0;
+    for (const st of open) {
+      if (st.lastRow !== isl.row - 1 || st.claimed === isl.row) continue;
+      const o = Math.min(st.hi, isl.hi) - Math.max(st.lo, isl.lo) + 1;
+      if (o > bo) { bo = o; best = st; }
+    }
+    if (best) {
+      best.rows.push(isl);
+      best.lastRow = isl.row; best.lo = isl.lo; best.hi = isl.hi; best.claimed = isl.row;
+    } else {
+      const st = { rows: [isl], lastRow: isl.row, lo: isl.lo, hi: isl.hi, claimed: isl.row };
+      open.push(st);
+      strands.push(st);
+    }
+  }
+  for (const st of strands) {
+    if (st.rows.length < 2) continue; // speckle
+    const L = st.rows.map((r) => r.lift);
+    for (let i = 0; i < st.rows.length; i++) {
+      const isl = st.rows[i];
+      const sm = (L[Math.max(0, i - 1)] + L[i] + L[Math.min(L.length - 1, i + 1)]) / 3;
+      torsoRelief.push({
+        y: yRig(isl.row),
+        cx: +((((isl.lo + isl.hi) / 2) - headCx) * u).toFixed(4),
+        rx: +(((isl.hi - isl.lo + 1) / 2) * u).toFixed(4),
+        lift: +sm.toFixed(4),
+        nb: i === 0,
+      });
     }
   }
 }

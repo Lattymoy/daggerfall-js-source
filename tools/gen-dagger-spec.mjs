@@ -152,10 +152,14 @@ const spec = {
   // the front surface - the drawn pec/ab/navel highlights become form.
   // lift scales brightness-over-median; a subset of the run, so the
   // silhouette is untouched by construction.
-  torsoRelief: M.torsoRelief.flatMap((r) => {
-    const base = { cx: r.cx, rx: r.rx, rz: 0.012, cz: +(frontAt(r.y) - 0.006 + r.lift * 0.3).toFixed(4) };
-    return [{ ...base, y: +(r.y - HALF).toFixed(4), brk: true }, { ...base, y: +(r.y + HALF).toFixed(4) }];
-  }),
+  // Strands loft CONTINUOUSLY (the drawn forms are vertical shapes -
+  // one bump per pec, one ridge per hair strand); brk only at strand
+  // starts. Lift is pre-smoothed (3-row) upstream in the measurement.
+  torsoRelief: M.torsoRelief.map((r) => ({
+    y: r.y, cx: r.cx, rx: r.rx, rz: 0.012,
+    cz: +(frontAt(r.y) - 0.006 + r.lift * 0.3).toFixed(4),
+    ...(r.nb ? { brk: true } : {}),
+  })),
   // Exact single-run rows: hair + traps + deltoid mass fused, per the
   // sprite. Depth ratio shallower than the trunk (hair hugs the head).
   hairRows: capRows(M.hairRows.map((r) => ({ y: r.y, cx: r.cx, rx: r.halfW, rz: +(r.halfW * 0.6).toFixed(4) })).sort((a, b) => a.y - b.y)),

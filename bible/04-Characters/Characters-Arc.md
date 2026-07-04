@@ -161,6 +161,17 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6r (SHIPPED): relief strands - the forms connect
+
+Mac: rough. It was - 240 disconnected one-row plates, hard edges,
+row-to-row lift jitter. The relief islands now chain across rows by
+pixel-interval overlap into STRANDS (the same tracker pattern as the
+legs and the hand: drawn forms are vertical shapes); within a strand
+the loft bridges continuously (brk only at strand starts), lift takes
+a 3-row average, and single-row speckles are dropped. 112 rows in 16
+strands - one bump per pec, one ridge per hair strand, connected ab
+and collar forms. Five core lists byte-identical; pin 1.0000.
+
 ### C6q (SHIPPED): upper-torso relief - traps, collar, hair strands
 
 The shoulder/trap/collar band (above the armpit) rode the hairRows
