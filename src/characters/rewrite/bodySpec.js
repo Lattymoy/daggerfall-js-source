@@ -67,7 +67,7 @@ export function loftTorso(out, tprism, X, Z, rows, col) {
     // Disjoint intervals do not bridge: at a split<->merged transition
     // the traced interval jumps sideways, and a bridging prism would
     // poke across the real gap between parts.
-    if (Math.abs((b.cx ?? 0) - (a.cx ?? 0)) > a.rx + b.rx) continue;
+    if (b.brk || Math.abs((b.cx ?? 0) - (a.cx ?? 0)) > a.rx + b.rx) continue; // brk: the emitter marks transitions that must not bridge
     tprism(out, [a.cx ?? 0, a.y, a.cz ?? 0], [b.cx ?? 0, b.y, b.cz ?? 0], X, Z,
       a.rx, a.rz, b.rx, b.rz, 12, col);
   }

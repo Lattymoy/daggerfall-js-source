@@ -21,6 +21,14 @@ const capRows = (rows) => rows.length < 2 ? rows : [
   ...rows,
   { ...rows[rows.length - 1], y: +(rows[rows.length - 1].y + HALF).toFixed(4) },
 ];
+const markBreaks = (rows) => {
+  for (let i = 0; i + 1 < rows.length; i++) {
+    const a = rows[i], b = rows[i + 1];
+    const overlap = (a.rx + b.rx) - Math.abs((b.cx ?? 0) - (a.cx ?? 0));
+    if (overlap < M.unit) b.brk = true; // intervals share <1px: do not bridge
+  }
+  return rows;
+};
 const prof = [...M.torsoProfile].sort((a, b) => a.yRig - b.yRig);
 const hipsHalf = prof[0].halfW;
 const armpitHalf = prof[prof.length - 1].halfW;
@@ -87,22 +95,27 @@ const spec = {
   // Exact raster mapping: the traces were measured IN sprite columns -
   // rig x = (col - headCx) * unit, rig y = (feetRow - row + 0.5) * unit.
   // The metric registers by THIS, not by centroid estimation.
-  traceMap: { u: M.unit, colOffset: M.headCxCol, rowTop: M.rows.top },
+  // +0.5 col / -0.5 row: measured centres are (a+b)/2 but pixel block
+  // [a..b] centres at (a+b+1)/2, and row centres must land ON the
+  // sampler's k+0.5 points - without these the whole model sits half a
+  // pixel up-left and center-sampling rims every edge (blue left, red
+  // right - Mac's screenshot exactly).
+  traceMap: { u: M.unit, colOffset: +(M.headCxCol + 0.5).toFixed(3), rowTop: M.rows.top - 0.5 },
   torsoRows: rows,
   // Leg ROW TRACE: per-row lofts keyed by side sign (neg = rig -x =
   // image left = the sprite's weight leg). Depth rounder than the
   // trunk (legs are near-cylindrical). The trace carries the stance.
   legRows: {
-    neg: capRows(M.legRows.weight.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.85).toFixed(4) })).sort((a, b) => a.y - b.y)),
-    pos: capRows(M.legRows.free.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.85).toFixed(4) })).sort((a, b) => a.y - b.y)),
+    neg: markBreaks(capRows(M.legRows.weight.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.85).toFixed(4) })).sort((a, b) => a.y - b.y))),
+    pos: markBreaks(capRows(M.legRows.free.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.85).toFixed(4) })).sort((a, b) => a.y - b.y))),
   },
   // Arm ROW TRACE: per-row lofts, neg = image-left slack arm, pos =
   // image-right tucked arm. Arms are round: rz = rx * 0.9. The trace
   // carries the fists (wider bottom rows) - handScale retires under
   // paperdoll builds.
   armRows: {
-    neg: capRows(M.armRows.left.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.9).toFixed(4) })).sort((a, b) => a.y - b.y)),
-    pos: capRows(M.armRows.right.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.9).toFixed(4) })).sort((a, b) => a.y - b.y)),
+    neg: markBreaks(capRows(M.armRows.left.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.9).toFixed(4) })).sort((a, b) => a.y - b.y))),
+    pos: markBreaks(capRows(M.armRows.right.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.9).toFixed(4) })).sort((a, b) => a.y - b.y))),
   },
   // Exact single-run rows: hair + traps + deltoid mass fused, per the
   // sprite. Depth ratio shallower than the trunk (hair hugs the head).

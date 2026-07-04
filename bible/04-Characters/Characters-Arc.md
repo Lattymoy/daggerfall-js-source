@@ -161,6 +161,26 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6k iteration 9 (SHIPPED): 0.9736 - the half-pixel and the stance
+
+Mac: "still not fixed" - correct, and the roots were two: (1) THE
+HALF-PIXEL BUG: every measured interval centre used (a+b)/2, but the
+pixel block [a..b] centres at (a+b+1)/2 - the whole model sat half a
+pixel up-left of the sprite, and centre-sampling rimmed every edge
+(blue left, red right, exactly the annotated screenshot); fixed
+GLOBALLY in the traceMap (+0.5 col, -0.5 row - centres now land on
+the sampler's k+0.5 points, boundary ties impossible). Generator also
+marks brk on transition rows (interval overlap < 1px) and upstream
+loftTorso honors it - the diamond bridges die by policy, not
+threshold luck. (2) THE STANCE: with legs/feet going pixel-exact
+(0.997/1.000) the entire upper-body residual followed one cause - the
+paperdoll stance transform still shifted trunk/hair/arms (the fit
+grid had no zero; even {} takes defaults). Under a full trace the
+lean IS the data: the pose fit converges to ALL-ZERO. Result: 0.9012
+-> 0.9736; head+hair 1.000, feet 1.000, legs 0.997, ZERO missing
+pixels above the legs. Gates: floor 0.95, excess 3.5%. Remaining 138
+excess px in the torso band (rows 21-70) - the last named target.
+
 ### C6k iteration 8 (SHIPPED): 0.9012 - seams, diamonds, rims
 
 Mac's annotated diff named three artifacts; each had a mechanical

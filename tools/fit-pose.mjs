@@ -34,10 +34,10 @@ const evalPose = (pose) => score(silhouetteIoU(
 
 const AXES = {
   weightSide: [-1, 1],
-  weightIn: [0.5, 0.65, 0.8],
-  freeOut: [0.02, 0.05, 0.08, 0.11],
+  weightIn: [0, 0.5, 0.8],
+  freeOut: [0, 0.1, 0.18],
   freeFwd: [0, 0.06],
-  hipShift: [0.03, 0.05, 0.07, 0.09],
+  hipShift: [0, 0.03, 0.06],
 };
 const toPaperdoll = (p) => ({
   weightSide: p.weightSide, weightIn: p.weightIn, freeOut: p.freeOut,
@@ -45,7 +45,7 @@ const toPaperdoll = (p) => ({
 });
 const evalP = (p) => evalPose(toPaperdoll(p));
 // Seeds from the sprite's own arm bars.
-let pose = { weightSide: -1, weightIn: 0.8, freeOut: 0.14, freeFwd: 0, hipShift: 0.07 };
+let pose = { weightSide: -1, weightIn: 0, freeOut: 0, freeFwd: 0, hipShift: 0 };
 let best = evalP(pose);
 console.log('start IoU', best.toFixed(4));
 for (let pass = 0; pass < 3; pass++) {

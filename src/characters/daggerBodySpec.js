@@ -78,8 +78,8 @@ export const DAGGER_SPEC = {
  },
  'traceMap': {
   'u': 0.01326,
-  'colOffset': 33.8,
-  'rowTop': 0
+  'colOffset': 34.3,
+  'rowTop': -0.5
  },
  'torsoRows': [
   {
