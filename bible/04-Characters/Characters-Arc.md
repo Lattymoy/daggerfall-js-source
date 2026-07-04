@@ -161,6 +161,21 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6o (SHIPPED): the right hand, read from the light
+
+Mac: detail the right hand for 1:1. The pixel map answered where the
+hand actually IS: not the dark outer wedge but the BRIGHT skin
+cluster (ramp 69-71 against the hip's 73-78, idx-35 thumb highlights)
+- the raised form catches the light. The overlay tracker now follows
+the contiguous bright run per row (seed = the last split row's arm
+run, window = previous interval +-2, bright = luminance >= FLANK
+median + 8 - the first cut referenced the window's own median, which
+is mostly hand, and starved at row 49; the reference must be the
+flanking hip skin). 21 rows: thin forearm below the elbow (rx 0.027)
+angling in, the fist's peak (rx 0.099 at y 1.147), fingers tapering
+to rx 0.033 - the drawn diagonal, verbatim. cz still rides the torso
+surface per row. Core emission byte-identical (asserted); pin 1.0000.
+
 ### C6n (SHIPPED): the groin - the trunk ends where the thighs begin
 
 The square Mac kept seeing was the TRUNK'S BLUNT TERMINATION: the

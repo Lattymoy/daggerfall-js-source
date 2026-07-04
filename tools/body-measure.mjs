@@ -343,41 +343,55 @@ for (const name of ['left', 'right']) {
 // luminance column near the previous seam (stay-put prior +18/px,
 // +-5 clamp to the split-band exit edge). Emit [seam..runOuter] rows;
 // a subset of the sprite run cannot change the silhouette union.
+// RIGHT FOREARM + HAND: the reference draws it as the BRIGHT skin
+// cluster (the raised form catches light: ramp indices 69-71 against
+// the hip's darker 73-78, with idx-35 highlights on the thumb),
+// descending from the elbow and resting on the hip. Track the
+// contiguous bright run per row: seed = the last split row's arm run;
+// window = previous interval +-2; bright = luminance >= local median
+// + 8; min width 2; one gap row tolerated. The cluster's own end IS
+// the hand's drawn bottom.
 const armOverlay = [];
 {
   const lum = (i) => { const c = pal.get(i); return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b; };
   let lastSplit = -1;
   rowParts.forEach((part, i) => { if (part.arm.right) lastSplit = i; });
   if (lastSplit >= 0) {
-    let seam = rowParts[lastSplit].arm.right[0];
-    const anchor0 = seam;
+    let lo = rowParts[lastSplit].arm.right[0], hi = rowParts[lastSplit].arm.right[1];
     let misses = 0;
     for (let i = lastSplit + 1; i < rowParts.length; i++) {
       const { y, t, arm } = rowParts[i];
       if (arm.right) break;
-      const cand = [];
-      for (let x = Math.max(t[0] + 1, anchor0 - 5); x <= Math.min(t[1] - 1, anchor0 + 5); x++) cand.push({ x, l: lum(data[y * W + x]) });
-      if (!cand.length) break;
-      let best = null, bl = Infinity;
-      for (const { x, l } of cand) {
-        const sc = l + 18 * Math.abs(x - seam);
-        if (sc < bl) { bl = sc; best = { x, l }; }
+      const w0 = Math.max(t[0] + 1, lo - 2), w1 = Math.min(t[1], hi + 2);
+      // Brightness reference = the FLANKING hip skin (outside the
+      // tracked window), not the window itself - a window centred on
+      // the hand is mostly hand and its own median starves the test.
+      const flank = [];
+      for (let x = t[0] + 1; x < w0; x++) if (data[y * W + x]) flank.push(lum(data[y * W + x]));
+      for (let x = w1 + 1; x < t[1]; x++) if (data[y * W + x]) flank.push(lum(data[y * W + x]));
+      if (!flank.length) for (let x = t[0] + 1; x < t[1]; x++) if (data[y * W + x]) flank.push(lum(data[y * W + x]));
+      if (!flank.length) break;
+      const med = flank.sort((p, q) => p - q)[(flank.length / 2) | 0];
+      // longest contiguous bright run in the window
+      let bLo = -1, bHi = -1, cLo = -1;
+      for (let x = w0; x <= w1 + 1; x++) {
+        const bright = x <= w1 && data[y * W + x] && lum(data[y * W + x]) >= med + 8;
+        if (bright && cLo < 0) cLo = x;
+        if (!bright && cLo >= 0) {
+          if (x - cLo > bHi - bLo) { bLo = cLo; bHi = x - 1; }
+          cLo = -1;
+        }
       }
-      const med = cand.map((c) => c.l).sort((p, q) => p - q)[(cand.length / 2) | 0];
-      // The separator must EXIST: when the seam is no darker than the
-      // local shading, the artist stopped drawing the hand - stop
-      // emitting (one tolerated gap row; a second ends the wedge).
-      if (best.l > med * 0.92) {
+      if (bLo < 0 || bHi - bLo + 1 < 2) {
         if (++misses > 1) break;
-        seam = best.x;
         continue;
       }
       misses = 0;
-      seam = best.x;
+      lo = bLo; hi = bHi;
       armOverlay.push({
         y: yRig(y),
-        cx: +((((best.x + t[1]) / 2) - headCx) * u).toFixed(4),
-        rx: +(((t[1] - best.x + 1) / 2) * u).toFixed(4),
+        cx: +((((lo + hi) / 2) - headCx) * u).toFixed(4),
+        rx: +(((hi - lo + 1) / 2) * u).toFixed(4),
       });
     }
   }
