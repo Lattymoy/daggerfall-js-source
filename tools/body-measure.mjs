@@ -163,9 +163,12 @@ for (const part of rowParts) {
   // Arms tile against the torso edges: split rows use the arm run's
   // own outer edge; merged rows run from the combined run's outer edge
   // to the shared torso edge.
+  // SPLIT rows: the arm run's OWN edges (the gap between arm and
+  // torso is real there). MERGED rows: outer edge .. shared torso
+  // edge (tiles the torso, no gap exists).
   const sides = [
-    ['left', arm.left ? arm.left[0] : t[0], le - 1],
-    ['right', re + 1, arm.right ? arm.right[1] : t[1]],
+    arm.left ? ['left', arm.left[0], arm.left[1]] : ['left', t[0], le - 1],
+    arm.right ? ['right', arm.right[0], arm.right[1]] : ['right', re + 1, t[1]],
   ];
   for (const [name, a, b] of sides) {
     const lo = Math.min(a, b), hi2 = Math.max(a, b);
@@ -266,6 +269,32 @@ const barStats = (name) => {
   };
 };
 const armBars = { left: barStats('left'), right: barStats('right') };
+
+// Hand tails: the fist can run past wristRow (its last row sits at
+// the crotch). Extend each arm through runs contiguous with its last
+// interval until none overlap.
+for (const name of ['left', 'right']) {
+  const list = armRows[name];
+  if (!list.length) continue;
+  let last = rowParts[rowParts.length - 1];
+  let prev = null;
+  // recover the last emitted pixel interval for this side
+  for (let y = wristRow + 1; y <= feet; y++) {
+    const lastRow = list[list.length - 1];
+    const lc = (lastRow.cx / u) + headCx, lr = lastRow.rx / u;
+    const lo = lc - lr + 0.5, hi = lc + lr - 0.5;
+    let hitRun = null;
+    for (const run of rows[y]) {
+      if (run[1] >= lo - 1 && run[0] <= hi + 1 && width(run) <= lr * 2 + 3) { hitRun = run; break; }
+    }
+    if (!hitRun) break;
+    list.push({
+      y: yRig(y),
+      cx: +(((hitRun[0] + hitRun[1]) / 2 - headCx) * u).toFixed(4),
+      rx: +((width(hitRun) / 2) * u).toFixed(4),
+    });
+  }
+}
 
 // Head/hair/shoulder mass: rows above the armpit are SINGLE-RUN -
 // the silhouette there is exact (hair + traps + deltoids fused).

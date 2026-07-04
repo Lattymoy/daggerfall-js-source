@@ -161,6 +161,26 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6k iteration 10 (SHIPPED): IoU 1.0000 - the 1:1 match
+
+Mac circled the blue armpit fills twice; the whodunit was earned:
+per-face inversion (which faces own excess pixel col 51.5 / row 37.5)
+recovered a prism with rx 0.1175 = a 17.7px arm - and the partition
+itself was the bug: the arm interval was [torsoEdge..outer]
+UNCONDITIONALLY, right for merged rows (tiles the torso) but wrong
+for SPLIT rows, where it swallowed the real arm-torso gap (left arm
+[4..17] instead of [4..10] - Mac's circled columns exactly). Split
+rows now use the arm run's own edges. Two supporting changes landed
+en route: per-row SLABS (each pixel row painted only by its own
+interval; identical-interval runs merge; brk at every change) which
+is the true pixel semantics, and hand TAILS (the fist's last row sat
+below wristRow at the crotch - row 71 cols 5-8, the final 4 missing
+pixels). RESULT: IoU 1.0000 - every zone 1.000, zero missing, zero
+excess. The gate is now THE 1:1 PIN: inter == union == modelArea
+asserted exactly; any drift is a defect. The paperdoll model's front
+silhouette IS the classic sprite, pixel for pixel, derived entirely
+from the sprite's own rows.
+
 ### C6k iteration 9 (SHIPPED): 0.9736 - the half-pixel and the stance
 
 Mac: "still not fixed" - correct, and the roots were two: (1) THE

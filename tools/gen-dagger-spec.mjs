@@ -16,19 +16,28 @@ const TORSO_DEPTH = 0.7;   // rz = rx * DEPTH (front-view sprite carries no dept
 const PELVIS_DEPTH = 0.575; // Voxlight pelvis rz/rx, kept
 
 const HALF = M.unit / 2;
-const capRows = (rows) => rows.length < 2 ? rows : [
-  { ...rows[0], y: +(rows[0].y - HALF).toFixed(4) },
-  ...rows,
-  { ...rows[rows.length - 1], y: +(rows[rows.length - 1].y + HALF).toFixed(4) },
-];
-const markBreaks = (rows) => {
-  for (let i = 0; i + 1 < rows.length; i++) {
-    const a = rows[i], b = rows[i + 1];
-    const overlap = (a.rx + b.rx) - Math.abs((b.cx ?? 0) - (a.cx ?? 0));
-    if (overlap < M.unit) b.brk = true; // intervals share <1px: do not bridge
+// PER-ROW SLABS: each pixel row is painted ONLY by its own interval -
+// a centre-to-centre prism rasterizes both boundary rows and bleeds
+// its neighbour's wider interval through the diagonal (the gap fills
+// Mac circled). A slab = two entries at the row's top/bottom edges;
+// consecutive slabs with identical intervals merge, differing ones
+// carry brk so the loft never bridges the change. This IS the pixel
+// semantics: sprites are slabs.
+const capRows = (rows) => {
+  const out = [];
+  for (const r of rows) {
+    const prev = out[out.length - 1];
+    if (prev && prev.cx === r.cx && prev.rx === r.rx) {
+      prev.y = +(r.y + HALF).toFixed(4); // extend the running slab
+      continue;
+    }
+    out.push({ ...r, y: +(r.y - HALF).toFixed(4), brk: !!out.length });
+    out.push({ ...r, y: +(r.y + HALF).toFixed(4) });
   }
-  return rows;
+  return out;
 };
+const markBreaks = (rows) => rows; // superseded: slabs carry brk at every interval change
+
 const prof = [...M.torsoProfile].sort((a, b) => a.yRig - b.yRig);
 const hipsHalf = prof[0].halfW;
 const armpitHalf = prof[prof.length - 1].halfW;
