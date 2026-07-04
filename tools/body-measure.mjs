@@ -427,7 +427,7 @@ const rawIslands = [];
       if (bright && cLo < 0) cLo = x;
       if (!bright && cLo >= 0) {
         const cHi = x - 1;
-        if (cHi - cLo + 1 >= 2 && cLo >= le + 2 && cHi <= re - 2) {
+        if (cHi - cLo + 1 >= 3 && cLo >= le + 2 && cHi <= re - 2) {
           let m = 0;
           for (let k = cLo; k <= cHi; k++) m += lum(data[y * W + k]);
           m /= cHi - cLo + 1;
@@ -464,7 +464,7 @@ const rawIslands = [];
       if (!bright && cLo >= 0) {
         const cHi = x - 1;
         const onFace = y <= faceRowMax && cHi >= faceL && cLo <= faceR;
-        if (!onFace && cHi - cLo + 1 >= 2 && cLo >= le + 2 && cHi <= re - 2) {
+        if (!onFace && cHi - cLo + 1 >= 3 && cLo >= le + 2 && cHi <= re - 2) {
           let m = 0;
           for (let k = cLo; k <= cHi; k++) m += lum(data[y * W + k]);
           m /= cHi - cLo + 1;
@@ -518,6 +518,87 @@ const rawIslands = [];
   }
 }
 
+// BACK RELIEF source: the paint sheet (rear-view space).
+let backIslands = [];
+try {
+  const { PNG } = await import('pngjs');
+  const png = PNG.sync.read(readFileSync(new URL('../src/characters/paint/body-back.png', import.meta.url)));
+  const bl = (x, y) => {
+    const o = (y * png.width + x) * 4;
+    return png.data[o + 3] > 0 ? 0.299 * png.data[o] + 0.587 * png.data[o + 1] + 0.114 * png.data[o + 2] : -1;
+  };
+  for (let y = 0; y < Math.min(png.height, H); y++) {
+    // the sheet row's own opaque run(s); relief per run
+    let runs2 = [], st = -1;
+    for (let x = 0; x <= png.width; x++) {
+      const on = x < png.width && bl(x, y) >= 0;
+      if (on && st < 0) st = x;
+      if (!on && st >= 0) { runs2.push([st, x - 1]); st = -1; }
+    }
+    for (const [le, re] of runs2) {
+      if (re - le + 1 < 6) continue;
+      const ls = [];
+      for (let x = le; x <= re; x++) ls.push(bl(x, y));
+      const med = [...ls].sort((p, q) => p - q)[(ls.length / 2) | 0];
+      let cLo = -1;
+      for (let x = le; x <= re + 1; x++) {
+        const bright = x <= re && bl(x, y) >= med + 8;
+        if (bright && cLo < 0) cLo = x;
+        if (!bright && cLo >= 0) {
+          const cHi = x - 1;
+          if (cHi - cLo + 1 >= 3 && cLo >= le + 2 && cHi <= re - 2) {
+            let m = 0;
+            for (let k = cLo; k <= cHi; k++) m += bl(k, y);
+            m /= cHi - cLo + 1;
+            // rear-view sheet -> mirrored rig cols; clamp to the real run
+            let a = W - 1 - cHi, b = W - 1 - cLo;
+            const real = rows[y] || [];
+            let run2 = null;
+            for (const rr of real) if (Math.min(rr[1], b) - Math.max(rr[0], a) >= 0) { run2 = rr; break; }
+            if (!run2) continue;
+            a = Math.max(a, run2[0]); b = Math.min(b, run2[1]);
+            if (b - a + 1 < 3) continue;
+            backIslands.push({ row: y, lo: a, hi: b, lift: Math.min(0.2, (m - med) / 255) });
+          }
+          cLo = -1;
+        }
+      }
+    }
+  }
+} catch (e) { backIslands = []; }
+// strand the back islands with the same chainer
+const backRelief = [];
+{
+  backIslands.sort((a, b) => a.row - b.row);
+  const strands = [];
+  const open = [];
+  for (const isl of backIslands) {
+    let best = null, bo = 0;
+    for (const st of open) {
+      if (st.lastRow !== isl.row - 1 || st.claimed === isl.row) continue;
+      const o = Math.min(st.hi, isl.hi) - Math.max(st.lo, isl.lo) + 1;
+      if (o > bo) { bo = o; best = st; }
+    }
+    if (best) { best.rows.push(isl); best.lastRow = isl.row; best.lo = isl.lo; best.hi = isl.hi; best.claimed = isl.row; }
+    else { const st = { rows: [isl], lastRow: isl.row, lo: isl.lo, hi: isl.hi, claimed: isl.row }; open.push(st); strands.push(st); }
+  }
+  for (const st of strands) {
+    if (st.rows.length < 2) continue;
+    const L = st.rows.map((r) => r.lift);
+    for (let i = 0; i < st.rows.length; i++) {
+      const isl = st.rows[i];
+      const sm = (L[Math.max(0, i - 1)] + L[i] + L[Math.min(L.length - 1, i + 1)]) / 3;
+      backRelief.push({
+        y: yRig(isl.row),
+        cx: +((((isl.lo + isl.hi) / 2) - headCx) * u).toFixed(4),
+        rx: +(((isl.hi - isl.lo + 1) / 2) * u).toFixed(4),
+        lift: +sm.toFixed(4),
+        nb: i === 0,
+      });
+    }
+  }
+}
+
 // Head/hair/shoulder mass: rows above the armpit are SINGLE-RUN -
 // the silhouette there is exact (hair + traps + deltoids fused).
 const hairRows = [];
@@ -546,5 +627,6 @@ const out = {
   armRows,
   armOverlay,
   torsoRelief,
+  backRelief,
 };
 console.log(JSON.stringify(out, null, 1));

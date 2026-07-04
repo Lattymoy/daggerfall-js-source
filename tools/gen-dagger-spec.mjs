@@ -160,6 +160,14 @@ const spec = {
     cz: +(frontAt(r.y) - 0.006 + r.lift * 0.3).toFixed(4),
     ...(r.nb ? { brk: true } : {}),
   })),
+  // BACK RELIEF: same strands, negative cz - rides the BACK surface.
+  // Sourced from the paint sheet (rear-view authored): repaint
+  // body-back.png and the back's form follows.
+  backRelief: M.backRelief.map((r) => ({
+    y: r.y, cx: r.cx, rx: r.rx, rz: 0.012,
+    cz: +(-(frontAt(r.y) - 0.006 + r.lift * 0.3)).toFixed(4),
+    ...(r.nb ? { brk: true } : {}),
+  })),
   // Exact single-run rows: hair + traps + deltoid mass fused, per the
   // sprite. Depth ratio shallower than the trunk (hair hugs the head).
   hairRows: capRows(M.hairRows.map((r) => ({ y: r.y, cx: r.cx, rx: r.halfW, rz: +(r.halfW * 0.6).toFixed(4) })).sort((a, b) => a.y - b.y)),

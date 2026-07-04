@@ -161,6 +161,23 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6s (SHIPPED): upper-chest polish + the entire backside
+
+Upper-upper chest: coverage existed but 1px-radius flecks read as
+noise - island minimum width raised to 3px (front relief 112 -> 94
+rows, same 16 strands, cleaner). THE BACKSIDE: the classic has no
+back sprite, but the back HAS an authoring surface - the paint sheet.
+body-back.png's luminance now drives back relief through the
+identical interior-island + strand pipeline (rear-view sheet cols
+mirror into rig space, every island CLAMPED to the row's real
+silhouette run - the lean is asymmetric and unclamped mirrors could
+exit the union), emitted at NEGATIVE cz riding the back surface. 223
+rows in 37 strands from the starter sheet; when Mac paints the real
+back, the form follows the paint automatically - the tuner and the
+mobile artifact now author geometry, not just colour. Upstream:
+guarded SPEC.backRelief loft (+1 line, 918/920). Five core lists
+byte-identical; pin 1.0000; both suites green.
+
 ### C6r (SHIPPED): relief strands - the forms connect
 
 Mac: rough. It was - 240 disconnected one-row plates, hard edges,

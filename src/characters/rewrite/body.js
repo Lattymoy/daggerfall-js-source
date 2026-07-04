@@ -146,6 +146,7 @@ function trunkUpperChest(out, ramp) {
   if (SPEC.torsoRows) {
     loftTorso(out, tprism, X, Z, SPEC.torsoRows, CLOTH);
     if (SPEC.torsoRelief) loftTorso(out, tprism, X, Z, SPEC.torsoRelief, CLOTH); // additive interior relief plates (drawn highlights as form; subset of the run)
+    if (SPEC.backRelief) loftTorso(out, tprism, X, Z, SPEC.backRelief, CLOTH); // back-surface relief (sourced from the back paint sheet)
   } else {
     { const v = SPEC.chest; tprism(out, [0, v.y0, 0], [0, v.y1, 0], X, Z, v.rx0, v.rz0, v.rx1, v.rz1, 12, CLOTH); } // chest extends below the waist pivot (1.0) to overlap the hips, so the opposing pelvis/chest twist when moving doesn't tear a gap at the waist (the outline would otherwise read it as a seam at the chunky character resolution)
     { const c = SPEC.chest, u = SPEC.upperChest; tprism(out, [0, c.y1, 0], [0, u.y1, 0], X, Z, c.rx1, c.rz1, u.rx1, u.rz1, 12, CLOTH); }
