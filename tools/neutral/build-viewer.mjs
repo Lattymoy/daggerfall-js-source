@@ -18,7 +18,7 @@ const lum = (i) => { const c = pal.get(i); return 0.299*c.r + 0.587*c.g + 0.114*
 const rampOf = (r0, r1, keep) => { const m = new Map(); for (let y=r0;y<=r1;y++) for (let x=0;x<W;x++){ const i=data[y*W+x]; if(i&&(!keep||keep(x,y))) m.set(i,lum(i)); } return [...m.entries()].sort((a,b)=>a[1]-b[1]).map(e=>{const c=pal.get(e[0]);return [c.r,c.g,c.b];}); };
 const ramps = { skin: rampOf(40, 60, (x)=>Math.abs(x-34)<14), boot: rampOf(132, 144) };
 
-const faces = buildNeutralBody(ramps, { cuirass: true, greaves: true, steel: STEEL_RAMP });
+const faces = buildNeutralBody(ramps, { cuirass: true, greaves: true, boots: true, gauntlets: true, steel: STEEL_RAMP });
 let minY = 1e9, maxY = -1e9;
 for (const f of faces) for (let i=0;i<4;i++){ const y=f.p[i*3+1]; if(y<minY)minY=y; if(y>maxY)maxY=y; }
 const GI = { body:0, head:1, armL:2, armR:3, legL:4, legR:5 };
