@@ -27,7 +27,7 @@ const capRows = (rows) => {
   const out = [];
   for (const r of rows) {
     const prev = out[out.length - 1];
-    if (prev && prev.cx === r.cx && prev.rx === r.rx && prev.cz === r.cz) {
+    if (prev && prev.cx === r.cx && prev.rx === r.rx) {
       prev.y = +(r.y + HALF).toFixed(4); // extend the running slab
       continue;
     }
@@ -123,8 +123,8 @@ const spec = {
   // carries the fists (wider bottom rows) - handScale retires under
   // paperdoll builds.
   armRows: {
-    neg: markBreaks(capRows(M.armRows.left.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.9).toFixed(4), cz: r.merged ? 0.09 : 0 })).sort((a, b) => a.y - b.y))),
-    pos: markBreaks(capRows(M.armRows.right.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.9).toFixed(4), cz: r.merged ? 0.09 : 0 })).sort((a, b) => a.y - b.y))),
+    neg: markBreaks(capRows(M.armRows.left.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.9).toFixed(4) })).sort((a, b) => a.y - b.y))),
+    pos: markBreaks(capRows(M.armRows.right.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.9).toFixed(4) })).sort((a, b) => a.y - b.y))),
   },
   // Exact single-run rows: hair + traps + deltoid mass fused, per the
   // sprite. Depth ratio shallower than the trunk (hair hugs the head).

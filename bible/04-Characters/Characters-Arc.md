@@ -161,25 +161,6 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
-### C6m (SHIPPED): the interior seam - tracing the tucked arm
-
-Mac: the hand resting against the hip isn't part of the silhouette -
-how do we trace it? The sprite's INTERIOR answers: pixel artists
-separate the tucked arm from the torso with a dark shading line, and
-we have the palette indices. The seam tracer follows the minimum-
-luminance column per merged row with a strong stay-put prior (+18/px)
-and a +-5 hug-the-anchor clamp (greedy-darkest drifts into the torso
-shadow belt without it - first attempt claimed half the lower torso
-and the runaway width let the hand-tail loop eat a leg). Traced
-BIDIRECTIONALLY from the nearest split row's exact edge, because the
-left arm's merged band sits ABOVE its first split row. Two-pass
-partition: intervals first (split rows exact, merged rows seamed,
-no-seam fallback tiles the torso to the run edge), then emission.
-Merged arm rows carry cz +0.09 so the arm and fist ride proud of the
-hip in 3D (tunable on Mac's read). THE 1:1 PIN HOLDS at 1.0000 by
-construction - the torso tiles against the arm, the union never
-changes. torsoRows pin 20 -> 44 (per-row tiling merges fewer slabs).
-
 ### C6k iteration 10 (SHIPPED): IoU 1.0000 - the 1:1 match
 
 Mac circled the blue armpit fills twice; the whodunit was earned:

@@ -131,11 +131,6 @@ for (let y = armpit; y < crotch; y++) {
   }
   rowParts.push(part);
 }
-// Interior seam: the artists separate the tucked arm from the torso
-// with a darker shading line. Per merged row, the seam = the min-
-// luminance column near the previous row's inner edge (continuity
-// window +-2), seeded by the last SPLIT row's exact edge.
-const lum = (i) => { const c = pal.get(i); return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b; };
 const edgeAt = (samples, y) => {
   if (!samples.length) return null;
   let lo = null, hi = null;
@@ -150,58 +145,14 @@ const edgeAt = (samples, y) => {
 };
 const torso = [];
 const armRows = { left: [], right: [] };
-const px = data;
 let mergedCounts = [0, 0, 0];
-// PASS 1: per-row arm intervals. Split rows: the run's own edges.
-// Merged rows: the interior SEAM (the artist's dark separator line),
-// traced BIDIRECTIONALLY from the nearest split row's exact edge with
-// a stay-put prior and a hug-the-anchor clamp - the left arm's merged
-// band sits ABOVE its first split row, so upward tracing is required.
-for (const name of ['left', 'right']) {
-  const idxSplit = [];
-  rowParts.forEach((part, i) => { if (part.arm[name]) idxSplit.push(i); });
-  if (!idxSplit.length) continue;
-  for (const i of idxSplit) {
-    const r = rowParts[i].arm[name];
-    rowParts[i].armInt = rowParts[i].armInt || {};
-    rowParts[i].armInt[name] = [r[0], r[1], false];
-  }
-  const traceFrom = (i0, dir) => {
-    let prev = rowParts[i0].arm[name];
-    let seam = name === 'left' ? prev[1] : prev[0];
-    const anchor = seam;
-    for (let i = i0 + dir; i >= 0 && i < rowParts.length; i += dir) {
-      const part = rowParts[i];
-      if (part.arm[name]) return; // reached another seed; its own trace covers onward
-      const { y, t } = part;
-      let best = null, bl = Infinity;
-      for (let x = seam - 2; x <= seam + 2; x++) {
-        if (x <= t[0] || x >= t[1] || Math.abs(x - anchor) > 5) continue;
-        const score = (0.299 * pal.get(px[y * W + x]).r + 0.587 * pal.get(px[y * W + x]).g + 0.114 * pal.get(px[y * W + x]).b) + 18 * Math.abs(x - seam);
-        if (score < bl) { bl = score; best = x; }
-      }
-      if (best == null) return;
-      seam = best;
-      part.armInt = part.armInt || {};
-      part.armInt[name] = name === 'left' ? [t[0], seam, true] : [seam, t[1], true];
-    }
-  };
-  traceFrom(idxSplit[0], -1);              // upward from the first seed
-  traceFrom(idxSplit[idxSplit.length - 1], 1); // downward from the last
-}
-// PASS 2: emit - the torso tiles against the traced arm intervals.
 for (const part of rowParts) {
-  const { y, t } = part;
+  const { y, t, arm } = part;
   let le, re, merged = 0;
-  const L = part.armInt?.left, R2 = part.armInt?.right;
-  if (part.arm.left) le = t[0];
+  if (arm.left) le = t[0];
   else { const e = edgeAt(edgeSamples.left, y); le = e == null ? t[0] : Math.round(e); merged++; }
-  if (part.arm.right) re = t[1];
+  if (arm.right) re = t[1];
   else { const e = edgeAt(edgeSamples.right, y); re = e == null ? t[1] : Math.round(e); merged++; }
-  if (L && L[1] >= le) le = L[1] + 1;
-  else if (!part.arm.left) le = t[0]; // merged, no seam found: the torso owns to the run edge (the union must tile)
-  if (R2 && R2[0] <= re) re = R2[0] - 1;
-  else if (!part.arm.right) re = t[1];
   mergedCounts[merged]++;
   torso.push({
     yRig: yRig(y),
@@ -209,13 +160,24 @@ for (const part of rowParts) {
     centerRig: +((((le + re) / 2) - headCx) * u).toFixed(4),
     merged,
   });
-  for (const [name, I] of [['left', L], ['right', R2]]) {
-    if (!I) continue;
+  // Arms tile against the torso edges: split rows use the arm run's
+  // own outer edge; merged rows run from the combined run's outer edge
+  // to the shared torso edge.
+  // SPLIT rows: the arm run's OWN edges (the gap between arm and
+  // torso is real there). MERGED rows: outer edge .. shared torso
+  // edge (tiles the torso, no gap exists).
+  const sides = [
+    arm.left ? ['left', arm.left[0], arm.left[1]] : ['left', t[0], le - 1],
+    arm.right ? ['right', arm.right[0], arm.right[1]] : ['right', re + 1, t[1]],
+  ];
+  for (const [name, a, b] of sides) {
+    const lo = Math.min(a, b), hi2 = Math.max(a, b);
+    const w = hi2 - lo + 1;
+    if (w < 1 || (name === 'left' && lo > le - 1) || (name === 'right' && hi2 < re + 1)) continue;
     armRows[name].push({
       y: yRig(y),
-      cx: +((((I[0] + I[1]) / 2) - headCx) * u).toFixed(4),
-      rx: +(((I[1] - I[0] + 1) / 2) * u).toFixed(4),
-      merged: I[2],
+      cx: +((((lo + hi2) / 2) - headCx) * u).toFixed(4),
+      rx: +((w / 2) * u).toFixed(4),
     });
   }
 }
