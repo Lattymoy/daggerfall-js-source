@@ -106,21 +106,29 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null) 
   } else if (race === 'Khajiit') {
     // FELINE head: a pronounced muzzle with a nose, and high-set upright
     // pointed ears cupped forward. (feline eyes/whiskers are texture.)
-    // Muzzle: SHORT + WIDE + rounded, emerging from the face (back face
-    // embedded in the head so there's no gap). Cat, not Squidward.
-    const bZ = 0.086, fZ = 0.178, hw = 0.064, fhw = 0.040, top = 1.858, bot = 1.786;
-    const bTL=[-hw,top,bZ], bTR=[hw,top,bZ], bBL=[-hw,bot,bZ], bBR=[hw,bot,bZ];
-    // front face sits lower (snout tips down) and clearly forward.
-    const fy = top - 0.014;
-    const fTL=[-fhw,fy,fZ], fTR=[fhw,fy,fZ], fBL=[-fhw*0.82,bot+0.004,fZ], fBR=[fhw*0.82,bot+0.004,fZ];
-    quad(fTL,fTR,fBR,fBL);         // rounded front
-    quad(bTL,fTL,fBL,bBL);         // left cheek
-    quad(bTR,bBR,fBR,fTR);         // right cheek
-    quad(bTL,bTR,fTR,fTL);         // bridge (top, slopes down to snout)
-    quad(bBL,fBL,fBR,bBR);         // jaw underside
-    // nose pad: a dark wedge on the front-top of the snout.
-    const nhw = 0.020, nz = fZ - 0.002;
-    quad([-nhw,fy+0.004,nz],[nhw,fy+0.004,nz],[nhw*0.6,fy-0.016,nz+0.006],[-nhw*0.6,fy-0.016,nz+0.006]);
+    // Muzzle: a ROUNDED mound (loft, not a box) - wide whisker-pad base
+    // embedded in the face, tapering forward+down to a small nose. Each
+    // ring is an ellipse (wider than tall) so it reads as a cat snout.
+    const fZ = 0.176;
+    const mring = (y, z, rx, ry, embedFix) => {
+      const r = []; const N = 10;
+      for (let k = 0; k < N; k++) { const a = k/N*2*Math.PI; r.push([Math.cos(a)*rx, y + Math.sin(a)*ry, z]); }
+      return r;
+    };
+    const mrows = [
+      mring(1.828, 0.096, 0.060, 0.040),  // base (embedded, wide whisker pads)
+      mring(1.824, 0.132, 0.052, 0.036),
+      mring(1.818, 0.160, 0.040, 0.028),
+      mring(1.812, 0.174, 0.026, 0.020),  // nose shelf
+      mring(1.806, 0.182, 0.012, 0.010),  // tip
+    ];
+    for (let i = 0; i + 1 < mrows.length; i++) for (let k = 0; k < 10; k++) { const j = (k+1)%10; quad(mrows[i][k], mrows[i][j], mrows[i+1][j], mrows[i+1][k]); }
+    // cap the tip
+    const tipC = [0, 1.806, 0.184]; for (let k = 0; k < 10; k++) { const j=(k+1)%10; quad(tipC, mrows[4][j], mrows[4][k], mrows[4][k]); }
+    // nose: a small dark heart/triangle on the upper front of the snout.
+    const ny = 1.828, nz = 0.176, nw = 0.016;
+    const nL=[-nw,ny,nz], nR=[nw,ny,nz], nB=[0,ny-0.020,nz+0.008];
+    quad(nL, nR, nB, nB);
     // High-set pointed ears: broad triangular, cupped forward. Bases sit
     // ON the upper skull (maxX ~0.075 there) and dip INTO it, so they're
     // welded to the head - not floating beside it.
@@ -137,13 +145,15 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null) 
       quad(fb, midb, bb, bb);             // base floor (cup, embedded)
     };
     kear(-1); kear(1);
-    // cheek fur tufts: small angular tufts, rooted at the cheek surface
-    // (maxX ~0.100 at that height) and swept out+down.
-    const tuft = (sx) => {
-      const rx = sx*0.092, y = 1.815, z = 0.078;  // root on the cheek
-      quad([rx,y+0.024,z],[rx+sx*0.052,y+0.004,z-0.028],[rx+sx*0.046,y-0.030,z-0.018],[rx,y-0.022,z]);
+    // whiskers: thin tapered strands from the muzzle sides, swept out and
+    // slightly back+down (not square tufts). Three per side.
+    const whisker = (sx, i) => {
+      const y0 = 1.822 - i*0.016, th = 0.0022;
+      const root = [sx*0.052, y0, fZ - 0.030];
+      const tip  = [sx*(0.150 + i*0.024), y0 - 0.006 - i*0.010, fZ - 0.070 - i*0.026];
+      quad([root[0], root[1]+th, root[2]], [tip[0], tip[1], tip[2]], [tip[0], tip[1], tip[2]], [root[0], root[1]-th, root[2]]);
     };
-    tuft(-1); tuft(1);
+    for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) whisker(sx, i);
   } else if (race === 'Argonian') {
     // reptilian head: curved swept-back HORNS, a tall spinal CREST, a
     // brow-SCALE ridge, snout NOSE-SPIKES and a fanned neck FRILL.
@@ -176,12 +186,13 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null) 
     // neck frill: a fan of membrane spikes sweeping out+back from behind
     // the jaw on each side (frilled-lizard silhouette).
     const frill = (sx) => {
-      const root = [sx*0.086, 1.815, -0.030];
-      for (let i = 0; i < 4; i++) {
-        const t0 = i/4, t1 = (i+1)/4, sp = 0.130;
-        const outer = (t) => [sx*(0.120 + t*sp), 1.845 - t*0.075, -0.055 - t*0.120];
-        quad(root, outer(t0), outer(t1), root);
-      }
+      // inner edge sits ON the head (within maxX at each height); outer
+      // edge fans out a modest amount - a connected membrane, not flaps.
+      const inner = [[sx*0.094, 1.842, -0.030], [sx*0.090, 1.772, -0.070], [sx*0.078, 1.708, -0.098]];
+      const outer = [[sx*0.150, 1.858, -0.090], [sx*0.162, 1.772, -0.140], [sx*0.150, 1.708, -0.176]];
+      for (let i = 0; i + 1 < inner.length; i++) quad(inner[i], outer[i], outer[i+1], inner[i+1]);
+      // a couple of spine tips along the outer edge
+      for (let i = 0; i < 2; i++) { const a = outer[i], b = outer[i+1], m = [(a[0]+b[0])/2, (a[1]+b[1])/2, (a[2]+b[2])/2]; quad(a, [m[0]*1.12, m[1], m[2]-0.03], b, b); }
     };
     frill(-1); frill(1);
   }
