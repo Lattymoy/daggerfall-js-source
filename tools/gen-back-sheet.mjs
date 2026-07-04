@@ -74,7 +74,6 @@ function partAt(col, row) {
 // View-relative key light, same convention as the front (upper right).
 const L = (() => { const v = [0.5, 0.55, 0.67]; const n = Math.hypot(...v); return v.map((k) => k / n); })();
 const png = new PNG({ width: W, height: H });
-let histo = new Map();
 for (let row = 0; row < H; row++) for (let bx = 0; bx < W; bx++) {
   const fcol = W - 1 - bx; // back sheet is rear-view: mirror to front space
   const o = (row * W + bx) * 4;
@@ -86,11 +85,16 @@ for (let row = 0; row < H; row++) for (let bx = 0; bx < W; bx++) {
   const nx = -dx; // mirrored view flips lateral normal
   const nz = Math.sqrt(Math.max(0, 1 - nx * nx));
   const it = Math.max(0.06, nx * L[0] + 0.12 * L[1] + nz * L[2]);
-  const idx = p.ramp[Math.max(0, Math.min(p.ramp.length - 1, Math.round((1 - it) * (p.ramp.length - 1))))];
-  const c = pal.get(idx);
+  // Continuous ramp: LERP between adjacent ramp colours instead of
+  // snapping to one index - snapping banded the back into ~14 flat
+  // blocks (the blocky relief), the front reads continuous sprite
+  // luminance and stays smooth. Endpoints stay palette-exact.
+  const f = (1 - it) * (p.ramp.length - 1);
+  const k = Math.max(0, Math.min(p.ramp.length - 2, Math.floor(f)));
+  const frac = Math.max(0, Math.min(1, f - k));
+  const c0 = pal.get(p.ramp[k]), c1 = pal.get(p.ramp[k + 1]);
+  const c = { r: Math.round(c0.r + (c1.r - c0.r) * frac), g: Math.round(c0.g + (c1.g - c0.g) * frac), b: Math.round(c0.b + (c1.b - c0.b) * frac) };
   png.data[o] = c.r; png.data[o + 1] = c.g; png.data[o + 2] = c.b; png.data[o + 3] = 255;
-  histo.set(idx, (histo.get(idx) || 0) + 1);
 }
 writeFileSync('src/characters/paint/body-back.png', PNG.sync.write(png));
 console.log('back sheet shaded | ramp sizes skin/hair/boot:', skinRamp.length, hairRamp.length, bootRamp.length);
-console.log('index histogram:', [...histo.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([i, n]) => `${i}:${n}`).join(' '));

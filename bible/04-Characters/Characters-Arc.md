@@ -161,6 +161,23 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6w (SHIPPED): back shading continuous - the blocky bands
+
+Mac: the upper/lower back are too blocky; the front does it well, copy
+it. The front reads the sprite's CONTINUOUS luminance; the derived
+back sheet snapped each pixel to one of ~14 palette ramp indices - 14
+flat colour bands = the blocky back. Fix: gen-back-sheet now LERPs
+between adjacent ramp colours by the continuous lighting intensity
+instead of snapping (endpoints stay palette-exact). Back sheet colour
+went 14 -> 341 distinct values, a smooth gradient like the front.
+Front + all cores byte-identical, pin 1.0000. NOTE: back RELIEF
+geometry is still 3 wide mounds - the derived shading is a smooth
+ellipse gradient (one bright side), which has no discrete muscle for
+the island detector to find; unlike the front's hand-drawn muscle,
+there is no back sprite to extract fine form from (policy bars
+inventing it). The colour blockiness is fixed; genuine back muscle
+needs a painted back sheet.
+
 ### C6v (SHIPPED): relief mounds - the lumps were floating cards
 
 Mac's angled screenshot: lumps on the chest and belly. Root cause:
