@@ -443,6 +443,48 @@ const torsoRelief = [];
   }
 }
 
+// UPPER-TORSO RELIEF: the shoulder/trap/collar band (headBottom ..
+// armpit-1) rides the hairRows loft with no interior form - same
+// interior-island rule over the single run's own edges; the head rows
+// stay out (face highlights are not plates).
+{
+  const lum = (i) => { const c = pal.get(i); return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b; };
+  // The FACE box (measured: crown width about the head centreline,
+  // the head's own row span) is excluded - headPieces owns the face;
+  // hair-strand and trap highlights outside it emit normally.
+  const faceRowMax = top + Math.round(0.24 / u);
+  const faceL = headCx - (headW / 2 + 1), faceR = headCx + (headW / 2 + 1);
+  for (let y = headBottom; y < armpit; y++) {
+    if (rows[y].length !== 1) continue;
+    const [le, re] = rows[y][0];
+    const ls = [];
+    for (let x = le; x <= re; x++) if (data[y * W + x]) ls.push(lum(data[y * W + x]));
+    if (ls.length < 6) continue;
+    const med = ls.sort((p, q) => p - q)[(ls.length / 2) | 0];
+    let cLo = -1;
+    for (let x = le; x <= re + 1; x++) {
+      const bright = x <= re && data[y * W + x] && lum(data[y * W + x]) >= med + 8;
+      if (bright && cLo < 0) cLo = x;
+      if (!bright && cLo >= 0) {
+        const cHi = x - 1;
+        const onFace = y <= faceRowMax && cHi >= faceL && cLo <= faceR;
+        if (!onFace && cHi - cLo + 1 >= 2 && cLo >= le + 2 && cHi <= re - 2) {
+          let m = 0;
+          for (let k = cLo; k <= cHi; k++) m += lum(data[y * W + k]);
+          m /= cHi - cLo + 1;
+          torsoRelief.push({
+            y: yRig(y),
+            cx: +((((cLo + cHi) / 2) - headCx) * u).toFixed(4),
+            rx: +(((cHi - cLo + 1) / 2) * u).toFixed(4),
+            lift: +Math.min(0.2, (m - med) / 255).toFixed(4),
+          });
+        }
+        cLo = -1;
+      }
+    }
+  }
+}
+
 // Head/hair/shoulder mass: rows above the armpit are SINGLE-RUN -
 // the silhouette there is exact (hair + traps + deltoids fused).
 const hairRows = [];

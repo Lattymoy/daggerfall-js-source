@@ -161,6 +161,23 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6q (SHIPPED): upper-torso relief - traps, collar, hair strands
+
+The shoulder/trap/collar band (above the armpit) rode the hairRows
+loft with no interior form. Same interior-island emitter over the
+single run's own edges - with two data facts honoured: (1) there is
+NO span step between hair and shoulders (the drape is continuous;
+span creeps 38 -> 54), so the exclusion is the measured FACE BOX
+(crown width about the head centreline, the head's own row span:
+top + 0.24/u rows) - headPieces owns the face, plates never land on
+it (first cut put highlights on the cheeks; caught by inspection
+before regen); (2) frontAt learned the hair-loft surface (halfW *
+0.6) for rows above the armpit so the plates ride the drape, not the
+0.105 fallback. 56 upper plates (hair strands at the flanks, trap and
+collar highlights). Only core change: the hand cz +0.004 from
+frontAt's first-match tie-break on slab pairs - other four lists
+byte-identical. Pin 1.0000; 240 relief slabs total.
+
 ### C6p (SHIPPED): torso + groin relief - the drawn highlights as form
 
 Mac: parity with the groin and torso detail. The trunk map showed the

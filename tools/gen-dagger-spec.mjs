@@ -44,7 +44,8 @@ const prof = [...M.torsoProfile].sort((a, b) => a.yRig - b.yRig);
 const depthK = (y) => y >= 1.16 ? TORSO_DEPTH : TORSO_DEPTH + (0.45 - TORSO_DEPTH) * Math.min(1, (1.16 - y) / 0.13);
 const frontAt = (y) => {
   let tz = 0.105; // below the trunk: thigh-front level
-  for (const t of prof) if (Math.abs(t.yRig - y) < 0.02) tz = t.halfW * depthK(y);
+  for (const t of prof) if (Math.abs(t.yRig - y) < 0.02) return t.halfW * depthK(y);
+  for (const r of M.hairRows) if (Math.abs(r.y - y) < 0.01) return r.halfW * 0.6; // the hair/traps loft surface above the armpit
   return tz;
 };
 const hipsHalf = prof[0].halfW;
