@@ -6,18 +6,35 @@ export const SEG_DEFAULT = 24;
 
 // super-ellipse ring; p<1 = squarish (plated), p=1 = round.
 const sq = (u, p) => Math.sign(u) * Math.pow(Math.abs(u), p);
-const ring = (cx, y, cz, rx, rz, i, seg, p) => { const a = (i / seg) * Math.PI * 2; return [cx + rx * sq(Math.cos(a), p), y, cz + rz * sq(Math.sin(a), p)]; };
+const ring = (cx, y, cz, rx, rz, i, seg, p, a0 = 0, aSpan = Math.PI * 2) => { const a = a0 + (i / seg) * aSpan; return [cx + rx * sq(Math.cos(a), p), y, cz + rz * sq(Math.sin(a), p)]; };
 
 // Loft `rows` into `faces`, centred at (cx, cz-per-row), normals forced
 // OUTWARD from the ring centre. rows: {y, rx, rz, p?, cz?}.
-export function loftPiece(faces, rows, { cx = 0, seg = SEG_DEFAULT, group } = {}) {
+export function loftPiece(faces, rows, { cx = 0, seg = SEG_DEFAULT, group, capTop = true, capBottom = true, arc = null } = {}) {
+  const a0 = arc ? arc[0] : 0, aSpan = arc ? (arc[1] - arc[0]) : Math.PI * 2;
+  if (arc) { capTop = false; capBottom = false; }
   const R = rows.slice().sort((a, b) => a.y - b.y);
+  // cap an end ring with a triangle fan to its centre so the tube isn't
+  // see-through. `up` = +1 for the top ring, -1 for the bottom.
+  const cap = (row, up) => {
+    const cz = row.cz ?? 0, p = row.p ?? 1;
+    const c = [cx, row.y, cz];
+    for (let i = 0; i < seg; i++) {
+      const a = ring(cx, row.y, cz, row.rx, row.rz, i, seg, p, a0, aSpan);
+      const b = ring(cx, row.y, cz, row.rx, row.rz, i + 1, seg, p, a0, aSpan);
+      // wind so the normal faces along the axis (up/down)
+      const tri = up > 0 ? [c, b, a] : [c, a, b];
+      faces.push({ p: [...tri[0], ...tri[1], ...tri[2], ...tri[2]], n: [0, up, 0], g: group });
+    }
+  };
+  if (capBottom) cap(R[0], -1);
+  if (capTop) cap(R[R.length - 1], +1);
   for (let k = 0; k + 1 < R.length; k++) {
     const a = R[k], b = R[k + 1]; if (Math.abs(a.y - b.y) < 1e-6) continue;
     const pa = a.p ?? 1, pb = b.p ?? 1, az = a.cz ?? 0, bz = b.cz ?? 0;
     for (let i = 0; i < seg; i++) {
-      const p0 = ring(cx, a.y, az, a.rx, a.rz, i, seg, pa), p1 = ring(cx, a.y, az, a.rx, a.rz, i + 1, seg, pa);
-      const p2 = ring(cx, b.y, bz, b.rx, b.rz, i + 1, seg, pb), p3 = ring(cx, b.y, bz, b.rx, b.rz, i, seg, pb);
+      const p0 = ring(cx, a.y, az, a.rx, a.rz, i, seg, pa, a0, aSpan), p1 = ring(cx, a.y, az, a.rx, a.rz, i + 1, seg, pa, a0, aSpan);
+      const p2 = ring(cx, b.y, bz, b.rx, b.rz, i + 1, seg, pb, a0, aSpan), p3 = ring(cx, b.y, bz, b.rx, b.rz, i, seg, pb, a0, aSpan);
       const ux = p1[0]-p0[0], uy = p1[1]-p0[1], uz = p1[2]-p0[2];
       const vx = p3[0]-p0[0], vy = p3[1]-p0[1], vz = p3[2]-p0[2];
       let nx = uy*vz-uz*vy, ny = uz*vx-ux*vz, nz = ux*vy-uy*vx;

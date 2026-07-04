@@ -73,8 +73,9 @@ export function buildNeutralBody(ramps, opts = {}) {
     { y: 1.55, rx: 0.082, rz: 0.076, p: 0.55 }, // mid deltoid
     { y: 1.50, rx: 0.066, rz: 0.068, p: 0.6 },  // defined edge into the arm
   ];
-  loft(DELT, SKIN, () => -0.240, () => 0);
-  loft(DELT, SKIN, () => 0.240, () => 0);
+  grp = 'armL'; loft(DELT, SKIN, () => -0.240, () => 0);
+  grp = 'armR'; loft(DELT, SKIN, () => 0.240, () => 0);
+  grp = 'body';
   // NECK: narrow column from the shoulders up into the head base.
   loft([
     { y: 1.63, rx: 0.078, rz: 0.078, p: 0.8 },
