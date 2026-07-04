@@ -19,13 +19,15 @@ const ramps = { skin: rampOf(40, 60, (x)=>Math.abs(x-34)<14), boot: rampOf(132, 
 const faces = buildNeutralBody(ramps);
 let minY = 1e9, maxY = -1e9;
 for (const f of faces) for (let i=0;i<4;i++){ const y=f.p[i*3+1]; if(y<minY)minY=y; if(y>maxY)maxY=y; }
-const P=[], N=[], C=[];
+const GI = { body:0, head:1, armL:2, armR:3, legL:4, legR:5 };
+const P=[], N=[], C=[], G=[];
 for (const f of faces) {
   for (let i=0;i<4;i++) P.push(Math.round(f.p[i*3]*1000), Math.round(f.p[i*3+1]*1000), Math.round(f.p[i*3+2]*1000));
   N.push(Math.round(f.n[0]*127), Math.round(f.n[1]*127), Math.round(f.n[2]*127));
   C.push(f.c[0], f.c[1], f.c[2]);
+  G.push(GI[f.g] ?? 0);
 }
-const payload = JSON.stringify({ n: faces.length, cy:(minY+maxY)/2, h:maxY-minY, P, N, C });
+const payload = JSON.stringify({ n: faces.length, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G });
 const dir = new URL('.', import.meta.url).pathname;
 const tpl = readFileSync(dir + 'viewer-template.html', 'utf8');
 writeFileSync(process.argv[2] || 'dagger-viewer.html', tpl.replace('__PAYLOAD__', payload));

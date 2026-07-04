@@ -10,6 +10,7 @@ export function buildNeutralBody(ramps) {
   const SEG = 28;
   const SKIN = [196, 154, 116], BOOT = [92, 74, 58], HAIR = [64, 54, 44];
   const faces = [];
+  let grp = 'body'; // limb tag for animation (body/head/armL/armR/legL/legR)
   const sq = (u, p) => Math.sign(u) * Math.pow(Math.abs(u), p);
   const ring = (cx, y, cz, rx, rz, i, p = 1) => { const a = (i / SEG) * Math.PI * 2; return [cx + rx * sq(Math.cos(a), p), y, cz + rz * sq(Math.sin(a), p)]; };
   function loft(rows, col, cxOf, czOf) {
@@ -30,7 +31,7 @@ export function buildNeutralBody(ramps) {
         // outward: flip if pointing toward the tube centre
         const mx = (p0[0] + p2[0]) / 2 - ax, mz = (p0[2] + p2[2]) / 2 - az;
         if (nx * mx + nz * mz < 0) { nx = -nx; ny = -ny; nz = -nz; }
-        faces.push({ p: [...p0, ...p1, ...p2, ...p3], n: [nx, ny, nz], c: col });
+        faces.push({ p: [...p0, ...p1, ...p2, ...p3], n: [nx, ny, nz], c: col, g: grp });
       }
     }
   }
@@ -83,6 +84,7 @@ export function buildNeutralBody(ramps) {
   // HEAD: a proper head (the sprite hair-blob was rx 0.35, wider than
   // the shoulders - a mushroom). Rounded, sized like a head, sits on
   // the neck. cz back a touch so the face plane faces forward.
+  grp = 'head';
   // Egg-shaped: DEEPER than wide (face-to-skull longer than ear-to-ear),
   // tapered jaw/chin at the bottom, widest at the temples, rounded
   // crown. Skull sits back a touch (neck is forward), face plane fwd.
@@ -95,6 +97,7 @@ export function buildNeutralBody(ramps) {
     { y: 1.98, rx: 0.082, rz: 0.108, cz: -0.018 }, // crown curve
     { y: 2.03, rx: 0.045, rz: 0.058, cz: -0.012 }, // crown top
   ], SKIN, () => 0, (r) => r.cz);
+  grp = 'body';
 
   // ARMS: straight down at the sides. Measured arm radius profile, cx
   // pinned just outside the torso, cz centred. Symmetric L/R.
@@ -110,8 +113,9 @@ export function buildNeutralBody(ramps) {
     { y: 0.99, rx: 0.036, rz: 0.038 }, // wrist
   ];
   const ARM_X = 0.235;
-  loft(armProf, SKIN, () => -ARM_X, () => 0);
-  loft(armProf, SKIN, () => ARM_X, () => 0);
+  grp = 'armL'; loft(armProf, SKIN, () => -ARM_X, () => 0);
+  grp = 'armR'; loft(armProf, SKIN, () => ARM_X, () => 0);
+  grp = 'body';
   // HAND: small block at the wrist
   function hand(sign) {
     const cx = sign * ARM_X;
@@ -132,7 +136,7 @@ export function buildNeutralBody(ramps) {
       { y: 0.912, rx: 0.014, rz: 0.018, cz: 0.014 },
     ], SKIN, () => cx + tside * 0.052, (r) => r.cz);
   }
-  hand(-1); hand(1);
+  grp = 'armL'; hand(-1); grp = 'armR'; hand(1); grp = 'body';
 
   // LEGS: full measured taper down to a THIN ankle (my earlier clip at
   // y0.14 kept the calf width -> fat ankle circles). Plus upper-thigh
@@ -165,7 +169,7 @@ export function buildNeutralBody(ramps) {
     loft(legProf, SKIN, () => sign * LEG_X, () => 0);
     loft(CONNECT, SKIN, (r) => sign * (LEG_X - r.dx), () => 0); // dx pulls the top toward centre
   }
-  leg(-1); leg(1);
+  grp = 'legL'; leg(-1); grp = 'legR'; leg(1); grp = 'body';
 
   // FEET: forward, from the TRUE thin ankle (rx ~0.066).
   // Slim ankle: taper the bottom rows in (the measured 0.066 still read
@@ -182,7 +186,7 @@ export function buildNeutralBody(ramps) {
     const vx = d[0]-a[0], vy = d[1]-a[1], vz = d[2]-a[2];
     let nx = uy*vz-uz*vy, ny = uz*vx-ux*vz, nz = ux*vy-uy*vx;
     const L = Math.hypot(nx,ny,nz)||1; nx/=L; ny/=L; nz/=L;
-    faces.push({ p: [...a, ...b, ...c, ...d], n: [nx,ny,nz], c: col });
+    faces.push({ p: [...a, ...b, ...c, ...d], n: [nx,ny,nz], c: col, g: grp });
   };
   function foot(cx) {
     const SOLE = 0.005;      // sole height off the ground
@@ -213,7 +217,7 @@ export function buildNeutralBody(ramps) {
       { y: 0.085, rx: 0.046, rz: 0.05, cz: 0 },
     ], BOOT, () => cx, () => 0);
   }
-  foot(-LEG_X); foot(LEG_X);
+  grp = 'legL'; foot(-LEG_X); grp = 'legR'; foot(LEG_X); grp = 'body';
 
   // SHADING: bake ART_PAL palette ramps per face by lighting intensity
   // (upper-right key, like the game) - the retro banded skin/boot look,
