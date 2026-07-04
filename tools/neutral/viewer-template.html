@@ -94,7 +94,7 @@ function animate(dt) {
   // two-bone leg: hip swings the whole leg; knee flexes the lower part
   // (below kneeY) - knee bends most through the swing (foot lifts).
   const legFK = (g, phase) => {
-    const hip = WALK.strideAmp * Math.sin(wt + phase);
+    const hip = -WALK.strideAmp * Math.sin(wt + phase); // forward stride
     const knee = WALK.kneeAmp * Math.max(0, Math.sin(wt + phase + 1.2)); // flex during swing, one-way
     for (let i=0;i<vgrp.length;i++) if (vgrp[i]===g) {
       let y = basePos[i*3+1], z = basePos[i*3+2];
@@ -105,11 +105,11 @@ function animate(dt) {
   };
   // two-bone arm: shoulder counter-swings; elbow bends slightly.
   const armFK = (g, phase) => {
-    const sh = WALK.strideAmp * WALK.counterFrac * Math.sin(wt + phase);
+    const sh = -WALK.strideAmp * WALK.counterFrac * Math.sin(wt + phase);
     const el = WALK.elbowAmp * (0.5 + 0.5*Math.sin(wt + phase - 0.6));
     for (let i=0;i<vgrp.length;i++) if (vgrp[i]===g) {
       let y = basePos[i*3+1], z = basePos[i*3+2];
-      if (y < elbowY) { [y,z] = rotX(y, z, elbowY, el); }
+      if (y < elbowY) { [y,z] = rotX(y, z, elbowY, -el); } // elbow flexes FORWARD (not back like a knee)
       [y,z] = rotX(y, z, shoulderY, sh);
       pos[i*3] = basePos[i*3]; pos[i*3+1] = y + bob; pos[i*3+2] = z;
     }

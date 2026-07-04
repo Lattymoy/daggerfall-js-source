@@ -32,6 +32,8 @@ import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js'
 import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
+let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
+let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
 // Dungeon water surface (R11 values, mirroring the dungeon scene).
 const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
@@ -284,12 +286,14 @@ export function createWorldModes(host) {
     for (const d of interiorCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
     for (const d of interiorCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, interiorCtx.texRemap);
     renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    if (interiorCtx.animateChars) interiorCtx.animateChars((performance.now() - _charT0) / 1000, _charAnimMode);
     for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
     return true;
   }
 
   // Shot-mode hooks for everything modal (parity with the pre-P7 world
   // probes; __doors reads the host's live door registry).
+  window.__anim = (m) => { _charAnimMode = ['idle','walk','off'].includes(m) ? m : _charAnimMode; return _charAnimMode; };
   function installShotProbes() {
     window.__doors = () => doorTargets().map((e, i) => (
       { i, pos: doorWorldPosition(e.door), normal: doorWorldNormal(e.door), record: e.recordIndex, block: e.dfBlock.name, type: e.door.doorType }));

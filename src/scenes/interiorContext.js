@@ -119,6 +119,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // feet on the billboard base). Facing is static until the animation
   // slice. Flag off = the C1 classic billboards, untouched.
   const charDraws = [];
+  let animateChars = null; // set when the voxel body builds
   const billboardBatches = [];
   const flatGroups = new Map();
   if (opts.voxelfolk && people.length) {
@@ -145,7 +146,42 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     // Colours are baked into the neutral faces (AO + palette shading);
     // pass them straight through - no sprite projection or paint sheets.
     const buildRgb = () => faces.map((f) => ({ p: f.p, n: f.n, c: f.c }));
-    const mesh = renderer.createCharacterMesh(packCharacterFaces(buildRgb()));
+    const basePacked = packCharacterFaces(buildRgb());
+    const mesh = renderer.createCharacterMesh(basePacked);
+    // Per-vertex limb group (fan-triangulated, matching packCharacterFaces:
+    // np verts -> (np-2) tris x 3), for in-engine skeletal animation.
+    const GI = { body: 0, head: 1, armL: 2, armR: 3, legL: 4, legR: 5 };
+    const vGroup = [];
+    for (const f of faces) { const g = GI[f.g] ?? 0; const np = f.p.length / 3; for (let i = 1; i < np - 1; i++) { vGroup.push(g, g, g); } }
+    // Joint pivots from group Y-bounds (model space).
+    const gr = {}; for (const f of faces) { const k = f.g; for (let i = 0; i < 4; i++) { const y = f.p[i*3+1]; (gr[k] ??= [1e9,-1e9]); if (y<gr[k][0]) gr[k][0]=y; if (y>gr[k][1]) gr[k][1]=y; } }
+    const hipY = gr.legL[1], ankY = gr.legL[0], shY = gr.armL[1], wrY = gr.armL[0];
+    const kneeY = hipY - 0.52*(hipY-ankY), elbowY = shY - 0.50*(shY-wrY);
+    const anim = new Float32Array(basePacked.length);
+    const rotX = (y, z, pY, a) => { const c=Math.cos(a), sn=Math.sin(a), dy=y-pY; return [pY + c*dy - sn*z, sn*dy + c*z]; };
+    // mode: 'idle' (default, subtle), 'walk', 'off'.
+    animateChars = (t, mode = 'idle') => {
+      if (mode === 'off') { renderer.updateCharacterMesh(mesh, basePacked); return; }
+      anim.set(basePacked);
+      const W = mode === 'walk'
+        ? { stride: 0.44, cad: 6, bob: 0.024, counter: 1.1, knee: 0.9, elbow: 0.35 }
+        : { stride: 0.05, cad: 1.7, bob: 0.006, counter: 1.0, knee: 0.12, elbow: 0.12 };
+      const wt = t * W.cad, bob = W.bob * Math.sin(wt * 2);
+      const limb = (gid, phase, jointY, kneeAmp, isLeg) => {
+        const hip = -W.stride * (isLeg ? 1 : W.counter) * Math.sin(wt + phase); // forward stride
+        const bend = kneeAmp * (isLeg ? Math.max(0, Math.sin(wt + phase + 1.2)) : -(0.5 + 0.5*Math.sin(wt + phase - 0.6))); // elbow flexes forward (negative), knee back
+        for (let v = 0; v < vGroup.length; v++) if (vGroup[v] === gid) {
+          const o = v*9; let y = basePacked[o+1], z = basePacked[o+2];
+          if (y < jointY) [y, z] = rotX(y, z, jointY, bend);
+          [y, z] = rotX(y, z, (isLeg ? hipY : shY), hip);
+          anim[o+1] = y + bob; anim[o+2] = z;
+        }
+      };
+      limb(4, 0, kneeY, W.knee, true);  limb(5, Math.PI, kneeY, W.knee, true);   // legs
+      limb(2, Math.PI, elbowY, W.elbow, false); limb(3, 0, elbowY, W.elbow, false); // arms
+      for (let v = 0; v < vGroup.length; v++) if (vGroup[v] === 0 || vGroup[v] === 1) anim[v*9+1] = basePacked[v*9+1] + bob; // body+head bob
+      renderer.updateCharacterMesh(mesh, anim);
+    };
     const CLASSIC_HEIGHT = 1.8;
     const sc = CLASSIC_HEIGHT / (b.maxY - b.minY);
     const bodyEntries = [];
@@ -203,6 +239,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     markers,
     people,
     charDraws,
+    animateChars,
     flatCount: interior.flats.length,
     ladders,
     enterMarkers,

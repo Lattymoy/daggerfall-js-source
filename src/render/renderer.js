@@ -529,7 +529,15 @@ export class Renderer {
     gl.enableVertexAttribArray(2);
     gl.vertexAttribPointer(2, 3, gl.FLOAT, false, stride, 24);
     gl.bindVertexArray(null);
-    return { vao, count: packed.length / 9, buffers: [vbo] };
+    return { vao, count: packed.length / 9, buffers: [vbo], vbo };
+  }
+
+  /** Re-upload a character mesh's vertex stream in place (per-frame
+   *  animation). `packed` must match the original layout/length. */
+  updateCharacterMesh(mesh, packed) {
+    const gl = this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, packed);
   }
 
   /**
