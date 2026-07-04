@@ -155,19 +155,27 @@ const spec = {
   // Strands loft CONTINUOUSLY (the drawn forms are vertical shapes -
   // one bump per pec, one ridge per hair strand); brk only at strand
   // starts. Lift is pre-smoothed (3-row) upstream in the measurement.
-  torsoRelief: M.torsoRelief.map((r) => ({
-    y: r.y, cx: r.cx, rx: r.rx, rz: 0.012,
-    cz: +(frontAt(r.y) - 0.006 + r.lift * 0.3).toFixed(4),
-    ...(r.nb ? { brk: true } : {}),
-  })),
+  torsoRelief: M.torsoRelief.map((r) => {
+    const bump = r.lift * 0.3, burial = 0.03; // mound rises from the surface: back face buried, no floating card
+    return {
+      y: r.y, cx: r.cx, rx: r.rx,
+      rz: +((bump + burial) / 2).toFixed(4),
+      cz: +(frontAt(r.y) + (bump - burial) / 2).toFixed(4),
+      ...(r.nb ? { brk: true } : {}),
+    };
+  }),
   // BACK RELIEF: same strands, negative cz - rides the BACK surface.
   // Sourced from the paint sheet (rear-view authored): repaint
   // body-back.png and the back's form follows.
-  backRelief: M.backRelief.map((r) => ({
-    y: r.y, cx: r.cx, rx: r.rx, rz: 0.012,
-    cz: +(-(frontAt(r.y) - 0.006 + r.lift * 0.3)).toFixed(4),
-    ...(r.nb ? { brk: true } : {}),
-  })),
+  backRelief: M.backRelief.map((r) => {
+    const bump = r.lift * 0.3, burial = 0.03;
+    return {
+      y: r.y, cx: r.cx, rx: r.rx,
+      rz: +((bump + burial) / 2).toFixed(4),
+      cz: +(-(frontAt(r.y) + (bump - burial) / 2)).toFixed(4), // mound on the BACK surface
+      ...(r.nb ? { brk: true } : {}),
+    };
+  }),
   // Exact single-run rows: hair + traps + deltoid mass fused, per the
   // sprite. Depth ratio shallower than the trunk (hair hugs the head).
   hairRows: capRows(M.hairRows.map((r) => ({ y: r.y, cx: r.cx, rx: r.halfW, rz: +(r.halfW * 0.6).toFixed(4) })).sort((a, b) => a.y - b.y)),

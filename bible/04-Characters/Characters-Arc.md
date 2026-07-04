@@ -161,6 +161,20 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6v (SHIPPED): relief mounds - the lumps were floating cards
+
+Mac's angled screenshot: lumps on the chest and belly. Root cause:
+each relief plate was rz 0.012 centred at cz = frontAt + lift*0.3,
+which put its BACK face up to 0.012 proud of the torso surface - a
+detached card floating in front, invisible head-on but a lit shelf on
+any angled view. Fix: each plate is now a MOUND - back face buried
+0.03 into the surface, front face proud by the bump (lift*0.3), rz and
+cz derived so it rises continuously from the skin instead of hovering.
+Depth-only change (x,y untouched) so the front pin stays 1.0000 by
+construction; five core lists byte-identical. Front and back relief
+both moundified. Remaining from the shot: the armpit gap is the
+sprite's own arm/torso notch (separate arm-depth item, not relief).
+
 ### C6u (SHIPPED): the back, shaded like the front (derived)
 
 Mac: shade the back with the same skin-coloured shading as the front.
