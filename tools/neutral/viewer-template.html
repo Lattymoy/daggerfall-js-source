@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Paperdoll Viewer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #14141a; overflow: hidden; touch-action: none; font-family: -apple-system, system-ui, sans-serif; }
+  #c { display: block; width: 100vw; height: 100vh; }
+  #hud { position: fixed; top: env(safe-area-inset-top, 8px); left: 0; right: 0; text-align: center; color: #8a8a99; font-size: 12px; pointer-events: none; padding-top: 8px; }
+  #bar { position: fixed; bottom: env(safe-area-inset-bottom, 0); left: 0; right: 0; display: flex; gap: 8px; justify-content: center; padding: 12px; }
+  button { background: #23232e; color: #cfcfda; border: 1px solid #34343f; border-radius: 999px; padding: 10px 16px; font-size: 13px; -webkit-tap-highlight-color: transparent; }
+  button:active { background: #2e2e3a; }
+  button.on { background: #3a3a48; color: #fff; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">NEUTRAL POSE prototype &middot; drag to rotate &middot; pinch to zoom</div>
+<div id="bar">
+  <button id="spin" class="on">auto-spin</button>
+  <button id="reset">reset view</button>
+  <button id="wire">wireframe</button>
+  <button id="bg">bg</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const D = __PAYLOAD__;
+const S = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas: S, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x14141a);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
+
+// Build geometry from the quantized face payload (quads -> 2 tris).
+const nf = D.n;
+const pos = new Float32Array(nf * 6 * 3);
+const col = new Float32Array(nf * 6 * 3);
+const nrm = new Float32Array(nf * 6 * 3);
+const TRI = [0, 1, 2, 0, 2, 3];
+let o = 0;
+for (let f = 0; f < nf; f++) {
+  const pb = f * 12, cb = f * 3, nb = f * 3;
+  const r = D.C[cb] / 255, g = D.C[cb + 1] / 255, b = D.C[cb + 2] / 255;
+  const nx = D.N[nb] / 127, ny = D.N[nb + 1] / 127, nz = D.N[nb + 2] / 127;
+  for (const vi of TRI) {
+    pos[o] = D.P[pb + vi * 3] / 1000;
+    pos[o + 1] = D.P[pb + vi * 3 + 1] / 1000;
+    pos[o + 2] = D.P[pb + vi * 3 + 2] / 1000;
+    col[o] = r; col[o + 1] = g; col[o + 2] = b;
+    nrm[o] = nx; nrm[o + 1] = ny; nrm[o + 2] = nz;
+    o += 3;
+  }
+}
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+geo.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
+const mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }); // shading is baked into vertex colours
+const mesh = new THREE.Mesh(geo, mat);
+const pivot = new THREE.Group();
+pivot.add(mesh);
+mesh.position.y = -D.cy; // centre the model on the pivot
+scene.add(pivot);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x40404a, 0.9));
+const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(1, 1.4, 1.2); scene.add(key);
+const fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-1, 0.5, -0.8); scene.add(fill);
+
+// Orbit state.
+let yaw = 0.5, pitch = 0.15, dist = D.h * 2.1, autospin = true;
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+function frame() {
+  if (autospin) yaw += 0.005;
+  pitch = Math.max(-1.2, Math.min(1.2, pitch));
+  dist = Math.max(D.h * 0.9, Math.min(D.h * 6, dist));
+  camera.position.set(
+    Math.sin(yaw) * Math.cos(pitch) * dist,
+    Math.sin(pitch) * dist,
+    Math.cos(yaw) * Math.cos(pitch) * dist
+  );
+  camera.lookAt(0, 0, 0);
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+frame();
+
+// Pointer / touch orbit + pinch zoom.
+let px = 0, py = 0, drag = false, pinchD = 0;
+const pts = new Map();
+S.addEventListener('pointerdown', (e) => { pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 1) { drag = true; px = e.clientX; py = e.clientY; autospin = false; document.getElementById('spin').classList.remove('on'); } });
+S.addEventListener('pointermove', (e) => {
+  if (!pts.has(e.pointerId)) return;
+  pts.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pts.size >= 2) {
+    const [a, b] = [...pts.values()];
+    const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    if (pinchD) dist *= pinchD / d;
+    pinchD = d; drag = false; return;
+  }
+  if (drag) {
+    yaw -= (e.clientX - px) * 0.01;
+    pitch += (e.clientY - py) * 0.01;
+    px = e.clientX; py = e.clientY;
+  }
+});
+function up(e) { pts.delete(e.pointerId); if (pts.size < 2) pinchD = 0; if (pts.size === 0) drag = false; }
+S.addEventListener('pointerup', up); S.addEventListener('pointercancel', up);
+S.addEventListener('wheel', (e) => { dist *= 1 + Math.sign(e.deltaY) * 0.1; e.preventDefault(); }, { passive: false });
+
+document.getElementById('spin').onclick = (e) => { autospin = !autospin; e.target.classList.toggle('on', autospin); };
+document.getElementById('reset').onclick = () => { yaw = 0.5; pitch = 0.15; dist = D.h * 2.1; };
+document.getElementById('wire').onclick = (e) => { mat.wireframe = !mat.wireframe; e.target.classList.toggle('on', mat.wireframe); };
+let bgi = 0; const bgs = [0x14141a, 0x000000, 0x808088, 0xf0f0f0];
+document.getElementById('bg').onclick = () => { bgi = (bgi + 1) % bgs.length; scene.background = new THREE.Color(bgs[bgi]); };
+</script>
+</body>
+</html>
