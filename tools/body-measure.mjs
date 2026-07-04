@@ -183,7 +183,7 @@ for (const name of ['left', 'right']) {
       if (best == null) return;
       seam = best;
       part.armInt = part.armInt || {};
-      part.armInt[name] = name === 'left' ? [t[0], seam, true] : [seam, t[1], true];
+      part.armInt[name] = name === 'left' ? [t[0], seam, true, dir > 0] : [seam, t[1], true, dir > 0];
     }
   };
   traceFrom(idxSplit[0], -1);              // upward from the first seed
@@ -198,10 +198,8 @@ for (const part of rowParts) {
   else { const e = edgeAt(edgeSamples.left, y); le = e == null ? t[0] : Math.round(e); merged++; }
   if (part.arm.right) re = t[1];
   else { const e = edgeAt(edgeSamples.right, y); re = e == null ? t[1] : Math.round(e); merged++; }
-  if (L && L[1] >= le) le = L[1] + 1;
-  else if (!part.arm.left) le = t[0]; // merged, no seam found: the torso owns to the run edge (the union must tile)
-  if (R2 && R2[0] <= re) re = R2[0] - 1;
-  else if (!part.arm.right) re = t[1];
+  if (!part.arm.left) le = t[0];  // merged rows: the torso keeps the FULL run - the traced arm
+  if (!part.arm.right) re = t[1]; // OVERLAPS it in x and separates in z (a carve notches the hip from the rear)
   mergedCounts[merged]++;
   torso.push({
     yRig: yRig(y),
@@ -216,6 +214,7 @@ for (const part of rowParts) {
       cx: +((((I[0] + I[1]) / 2) - headCx) * u).toFixed(4),
       rx: +(((I[1] - I[0] + 1) / 2) * u).toFixed(4),
       merged: I[2],
+      below: !!I[3],
     });
   }
 }

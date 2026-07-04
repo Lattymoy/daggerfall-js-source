@@ -86,7 +86,7 @@ test('piece: profile mode round-trips through the body profile', () => {
 test('piece: DAGGER_SPEC v2 pins (full resculpt)', () => {
   assert.equal(DAGGER_SPEC.pelvisY, 0.9743);
   assert.equal(DAGGER_SPEC.chest.y1, 1.478);
-  assert.equal(DAGGER_SPEC.torsoRows.length, 44); // slab rows; the seam-tiled torso varies per row so fewer slabs merge (C6m)
+  assert.equal(DAGGER_SPEC.torsoRows.length, 48); // slab rows; merged rows keep the full run (no carve - C6m fix), split rows exact
   assert.equal(DAGGER_SPEC.head.scale, 1.115);
   // Bones reach the plant: thigh + calf == pelvisY - 0.06.
   assert.equal(+(DAGGER_SPEC.leg.thigh + DAGGER_SPEC.leg.calf).toFixed(4), +(DAGGER_SPEC.pelvisY - 0.06).toFixed(4));
