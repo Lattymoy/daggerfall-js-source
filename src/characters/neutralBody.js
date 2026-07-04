@@ -236,19 +236,28 @@ export function buildNeutralBody(ramps, opts = {}) {
   // rig's own surface where a piece sits and recolour it. No gaps, and
   // it animates with the body for free. Cuirass = the torso ('body')
   // faces in the chest->waist band pushed radially out + tagged steel.
-  if (opts.cuirass) {
-    const TH = 0.022;
+  const displace = (groups, yLo, yHi, th, cxFor, zScale = 1) => {
     for (const f of faces) {
-      if (f.g !== 'body') continue;
+      if (!groups.includes(f.g)) continue;
       let cy = 0; for (let i = 0; i < 4; i++) cy += f.p[i*3+1]; cy /= 4;
-      if (cy < 1.12 || cy > 1.62) continue;
+      if (cy < yLo || cy > yHi) continue;
+      const cx = cxFor ? cxFor(f.g) : 0;
       for (let i = 0; i < 4; i++) {
-        const x = f.p[i*3], z = f.p[i*3+2], r = Math.hypot(x, z) || 1;
-        f.p[i*3] = x + (x/r)*TH; f.p[i*3+2] = z + (z/r)*TH;
+        const x = f.p[i*3] - cx, z = f.p[i*3+2], r = Math.hypot(x, z) || 1;
+        f.p[i*3] = cx + x + (x/r)*th; f.p[i*3+2] = z + (z/r)*th*zScale;
       }
       f._armor = 'steel';
     }
-  }
+  };
+  const legCx = (g) => g === 'legL' ? -LEG_X : g === 'legR' ? LEG_X : 0;
+  const armCx = (g) => g === 'armL' ? -ARM_X : g === 'armR' ? ARM_X : 0;
+  // cuirass = torso chest->waist; greaves = legs + hip fauld; boots =
+  // feet/ankle; gauntlets = forearm+hand. Each thickens the rig's own
+  // surface and recolours steel (no separate mesh, animates for free).
+  if (opts.cuirass) displace(['body'], 1.12, 1.62, 0.022);
+  if (opts.greaves) { displace(['legL','legR'], 0.16, 1.00, 0.020, legCx, 0.5); displace(['body'], 0.90, 1.14, 0.020); }
+  if (opts.boots) displace(['legL','legR'], 0.00, 0.17, 0.016, legCx);
+  if (opts.gauntlets) displace(['armL','armR'], 0.83, 1.06, 0.016, armCx);
 
   // HEIGHT: vertical compress for a shorter, stockier (Daggerfall)
   // build. Applied before AO so crevice distances stay consistent.
