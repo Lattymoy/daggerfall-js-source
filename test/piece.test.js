@@ -3,8 +3,6 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { shellFromSprite, projectFront, resolvePiece } from '../src/characters/pieceFromSprite.js';
-import { DAGGER_SPEC } from '../src/characters/daggerBodySpec.js';
-import { torsoProfile } from '../src/characters/rewrite/bodySpec.js';
 import { getTemplate } from '../src/characters/paperdoll.js';
 import { resolvePaperdollRecord, armorVariant, MATERIAL_FAMILY } from '../src/characters/paperdollArt.js';
 import { DYE_COLORS, DYE_TARGETS, METAL_TABLES, applyDyeToIndex } from '../src/characters/dyes.js';
@@ -62,32 +60,4 @@ test('piece: 1:1 witness on the real plate cuirass', { skip: skipReal }, () => {
   const cIron = pal.get(METAL_TABLES.Iron[f0.idx - 0x70]);
   assert.deepEqual(steel[i0].c, [cSteel.r, cSteel.g, cSteel.b]);
   assert.deepEqual(iron[i0].c, [cIron.r, cIron.g, cIron.b]);
-});
-
-
-test('piece: profile mode round-trips through the body profile', () => {
-  const W = 4, H = 6;
-  const data = new Uint8Array(W * H);
-  data[0 * W + 1] = 0x71; data[3 * W + 2] = 0x74; data[5 * W + 0] = 0x7c;
-  const opts = {
-    profile: (y) => { const r = torsoProfile(DAGGER_SPEC, y); return { rx: r.rx + 0.03, rz: r.rz + 0.03 }; },
-    yTop: DAGGER_SPEC.chest.y1 + 0.02,
-    yBottom: DAGGER_SPEC.pelvis.y0,
-    arc: Math.PI * 0.9,
-  };
-  const faces = shellFromSprite({ width: W, height: H, data }, opts);
-  assert.equal(faces.length, 3);
-  const grid = projectFront(faces, W, H, opts);
-  assert.deepEqual([...grid], [...data]);
-  // Rows land in absolute rig space, radii vary with height.
-  for (const f of faces) assert.ok(f.p[1] >= DAGGER_SPEC.pelvis.y0 - 1e-9 && f.p[1] <= DAGGER_SPEC.chest.y1 + 0.02 + 1e-9);
-});
-
-test('piece: DAGGER_SPEC v2 pins (full resculpt)', () => {
-  assert.equal(DAGGER_SPEC.pelvisY, 0.9743);
-  assert.equal(DAGGER_SPEC.chest.y1, 1.478);
-  assert.equal(DAGGER_SPEC.torsoRows.length, 20); // slab rows, identical-interval runs merged (iteration 10)
-  assert.equal(DAGGER_SPEC.head.scale, 1.115);
-  // Bones reach the plant: thigh + calf == pelvisY - 0.06.
-  assert.equal(+(DAGGER_SPEC.leg.thigh + DAGGER_SPEC.leg.calf).toFixed(4), +(DAGGER_SPEC.pelvisY - 0.06).toFixed(4));
 });

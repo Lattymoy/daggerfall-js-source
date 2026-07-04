@@ -25,11 +25,11 @@ The paperdoll is redesigned from scratch, NOT constrained to the
 reference sprite (Mac: "we aren't constrained to the reference
 sprite"). The whole trace/pin lineage below (C6-C7b: row traces
 through BODY00I0, the IoU 1.0000 silhouette pin, the derived back
-sheet, PD_SEG) is RETIRED for the live model - kept as history and
-still on disk (DAGGER_SPEC, silhouetteIoU, paperdollPose, gen-dagger-
-spec, fit-pose, silhouette-diff, paperdoll-spec, the paint sheets,
-silhouette.test.js) but UNUSED by render. Candidate for deletion (see
-Testing.md audit note).
+sheet) is RETIRED and REMOVED: daggerBodySpec, silhouetteIoU,
+paperdollPose, gen-dagger-spec, fit-pose, silhouette-diff,
+paperdoll-spec, the paint sheets, and silhouette.test.js are deleted;
+the two DAGGER_SPEC cases in piece.test.js went with them (pieces
+re-seat on the neutral rig later). The sections below are HISTORY.
 
 The live model is a designed standing figure - `buildNeutralBody()` in
 `src/characters/neutralBody.js` (pure, browser-safe; takes ART_PAL

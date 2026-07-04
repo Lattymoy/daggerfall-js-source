@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 180 tests across 36 files.
+Node 22). Suite: 179 tests across 36 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -25,9 +25,9 @@ Node 22). Suite: 180 tests across 36 files.
 | rig.test.js | 2 | Vendored Rewrite rig byte-parity vs canonical (16 bare-humanoid hashes), 710-face shape |
 | rigmath.test.js | 5 | Two-bone IK invariants: exact bone lengths, reach/clamp, pole side, degenerate-target guard |
 | paperdollart.test.js | 3 | Variant/cloak record resolution, material addressing (bases+morphology+clamps), plate-vs-leather band pins on 251 |
-| piece.test.js | 4 | Sprite-shell geometry round-trip (synthetic + real cuirass round-trips, profile-mode round-trip over DAGGER_SPEC, landmark pins) |
+| piece.test.js | 2 | Sprite-shell geometry round-trip (synthetic + real plate-cuirass 1:1 witness + dye resolve). DAGGER_SPEC profile/pin cases removed with the trace rig. |
+| neutral.test.js | 2 | Neutral paperdoll (buildNeutralBody): well-formed mesh (quad/normal/rgb shape, unit normals, on-ramp colours, feet-grounded ~7.5-head height), deterministic + snapped (blocky) shading |
 | relief.test.js | 4 | Relief identity witness + field arithmetic pins (synthetic + whole classic body), offsets pin (222,41 / 237,44), back shell mirrors z on the shared silhouette |
-| silhouette.test.js | 1 | RETIRED-RIG GUARD: the 1:1 pin (IoU 1.0000) on the sprite-trace paperdoll (DAGGER_SPEC). The trace rig is no longer rendered (neutral redesign, C8) - this still passes but guards dead code. Remove with the trace rig. |
 | charmesh.test.js | 2 | Face packing (fan order, color/normal interleave), bare-humanoid pack + bounds |
 | paperdoll.test.js | 3 | 27-slot EquipSlots verbatim, 288-template DB (index resolution, Short Shirt pin), BlitItems order |
 | dyes.test.js | 3 | Clothing dye range shifts (Blue identity, Red 0xEF), 11 metal tables extraction-pinned, band-only swap |
@@ -73,15 +73,3 @@ the table above against the real suite. Recalculate this doc in the same
 commit as any test change.
 
 
-## Audit note (2026-07-04): retired trace rig
-
-The paperdoll was redesigned (Characters-Arc "Direction pivot 2").
-These tests/tools still pass but now guard code UNUSED by render -
-delete together when the trace rig is removed:
-- silhouette.test.js (the 1:1 pin), the DAGGER_SPEC profile-mode cases
-  in piece.test.js/relief.test.js, and any silhouetteIoU usage.
-- tools: gen-dagger-spec.mjs, fit-pose.mjs, silhouette-diff.mjs,
-  paperdoll-spec.mjs; assets: src/characters/paint/*.png.
-The live model is `src/characters/neutralBody.js` (buildNeutralBody);
-its geometry has no unit test yet - the viewer (tools/neutral) is the
-current check. A face-count / bounds smoke test is the obvious add.

@@ -127,7 +127,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     // forward legs/feet, designed anatomy). Colour is baked per face
     // (AO + snapped-ARM_PAL-ramp shading, the blocky look), ramps
     // taken from the loaded sprite so the palette matches. The old
-    // sprite-trace rig (DAGGER_SPEC + 1:1 silhouette pin) is retired.
+    // old sprite-trace rig + 1:1 silhouette pin are retired/removed.
     // Pieces will re-seat on this rig later - &piece is inert here.
     const bodyImg = new ImgFile();
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
