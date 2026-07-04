@@ -255,8 +255,8 @@ export function buildNeutralBody(ramps, opts = {}) {
   // feet/ankle; gauntlets = forearm+hand. Each thickens the rig's own
   // surface and recolours steel (no separate mesh, animates for free).
   if (opts.cuirass) displace(['body'], 1.12, 1.62, 0.022);
-  if (opts.greaves) { displace(["legL","legR"], 0.34, 1.00, 0.020, legCx, 0.28); displace(['body'], 0.90, 1.14, 0.020); }
-  if (opts.boots) displace(['legL','legR'], 0.00, 0.26, 0.016, legCx);
+  if (opts.greaves) { displace(["legL","legR"], 0.56, 1.00, 0.020, legCx, 0.28); displace(['body'], 0.90, 1.14, 0.020); }
+  if (opts.boots) displace(['legL','legR'], 0.00, 0.42, 0.016, legCx);
   if (opts.gauntlets) displace(['armL','armR'], 0.83, 1.22, 0.016, armCx);
 
   // HEIGHT: vertical compress for a shorter, stockier (Daggerfall)
