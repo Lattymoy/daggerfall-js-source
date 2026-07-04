@@ -24,6 +24,8 @@
   <button id="wire">wireframe</button>
   <button id="bg">bg</button>
   <button id="walk">walk</button>
+  <button id="pauldrons" class="on">pauldrons</button>
+  <button id="helm" class="on">helm</button>
 </div>
 <div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 54px); left:0; right:0; display:flex; flex-direction:column; gap:6px; align-items:center; color:#8a8a99; font-size:12px;">
   <div style="display:flex; gap:8px; align-items:center;"><span id="pxlab" style="width:120px; text-align:right;">pixelize: off</span><input id="px" type="range" min="1" max="16" step="1" value="1" style="width:min(46vw,300px);"></div>
@@ -120,6 +122,7 @@ function buildPiece(cp) {
 // Animated targets: body + every piece mesh (same FK moves armour with the body).
 const animTargets = [{ pos, base: basePos, vgrp, geo }];
 const pieceMesh = {};
+for (const name of ['pauldrons','helm']) if (D[name]) pieceMesh[name] = buildPiece(D[name]);
 scene.add(pivot);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x40404a, 0.9));
@@ -227,6 +230,7 @@ document.getElementById('wire').onclick = (e) => { mat.wireframe = !mat.wirefram
 let bgi = 0; const bgs = [0x14141a, 0x000000, 0x808088, 0xf0f0f0];
 postMat.uniforms.bg.value = new THREE.Color(bgs[0]);
 
+for (const name of ['pauldrons','helm']) { const btn = document.getElementById(name); if (btn) btn.onclick = (e) => { const m = pieceMesh[name]; if (m) { m.visible = !m.visible; e.target.classList.toggle('on', m.visible); } }; }
 document.getElementById('walk').onclick = (e) => { walking = !walking; e.target.classList.toggle('on', walking); };
 document.getElementById('bg').onclick = () => { bgi = (bgi + 1) % bgs.length; scene.background = new THREE.Color(bgs[bgi]); postMat.uniforms.bg.value = new THREE.Color(bgs[bgi]); };
 </script>
