@@ -61,7 +61,7 @@ export function torsoProfile(spec, y) {
 
 /** Loft consecutive prisms through measured torso rows (y ascending;
  * rest-shape symmetric - the paperdoll stance supplies the lean). */
-export function loftTorso(out, tprism, X, Z, rows, col) {
+export function loftTorso(out, tprism, X, Z, rows, col, seg = 12) {
   for (let i = 0; i + 1 < rows.length; i++) {
     const a = rows[i], b = rows[i + 1];
     // Disjoint intervals do not bridge: at a split<->merged transition
@@ -69,14 +69,14 @@ export function loftTorso(out, tprism, X, Z, rows, col) {
     // poke across the real gap between parts.
     if (b.brk || Math.abs((b.cx ?? 0) - (a.cx ?? 0)) > a.rx + b.rx) continue; // brk: the emitter marks transitions that must not bridge
     tprism(out, [a.cx ?? 0, a.y, a.cz ?? 0], [b.cx ?? 0, b.y, b.cz ?? 0], X, Z,
-      a.rx, a.rz, b.rx, b.rz, 12, col);
+      a.rx, a.rz, b.rx, b.rz, seg, col); // seg: loft resolution (12 default; the paperdoll passes higher so the tube reads as a smooth arc from angles, not a faceted prism)
   }
 }
 
 /** Loft a left/right pair of measured row traces (arms, and any other
  * paired parts): { neg, pos } keyed by x sign. */
-export function loftPair(out, tprism, X, Z, pair, col, overlay) {
-  loftTorso(out, tprism, X, Z, pair.neg, col);
-  loftTorso(out, tprism, X, Z, pair.pos, col);
-  if (overlay) loftTorso(out, tprism, X, Z, overlay, col); // additive extra trace (e.g. the tucked-hand overlay - a subset of the sprite run)
+export function loftPair(out, tprism, X, Z, pair, col, overlay, seg = 12) {
+  loftTorso(out, tprism, X, Z, pair.neg, col, seg);
+  loftTorso(out, tprism, X, Z, pair.pos, col, seg);
+  if (overlay) loftTorso(out, tprism, X, Z, overlay, col, seg); // additive extra trace (e.g. the tucked-hand overlay - a subset of the sprite run)
 }

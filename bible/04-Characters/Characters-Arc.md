@@ -161,6 +161,19 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C7b (SHIPPED): underarm arc - the tube was a 12-gon
+
+Mac: under the arms should be a smooth arc like the front. The
+instrumentation settled it: the sprite's underarm boundary IS a smooth
+curve (torso edge curls col 19->16) and the front matches it 1:1 head-
+on - but the loft was a 12-SIDED prism, so from a quarter view the
+underarm showed a flat facet panel, not a curve. Root fix: loftTorso/
+loftPair take a segments param (default 12, Voxlight unchanged); the
+paperdoll passes PD_SEG=24 at every loft site (torso, hair, arms,
+legs, relief). Doubled resolution = smooth arcs from angles. The
+silhouette pin is unaffected at any seg (front IoU 1.0000 verified at
+24). Not the depth blend (C7a), not shading - the faceting.
+
 ### C7a (SHIPPED): armpit crease - arm depth blends to the torso
 
 Mac: the armpit (both arms), on the back. Not a hole (the torso wall

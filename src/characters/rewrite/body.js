@@ -125,6 +125,7 @@ const MANTLE = { dur: 1.5, rise: 1.45, fwd: 0.5, lean: 22, ledgeX: 0.3, ledgeY: 
 export { FLASH_DEF, WEAPON_FLASH, muzzleFlashFaces } from './muzzleFlash.js'; // base FX ride along
 import { FLASH_DEF, WEAPON_FLASH, muzzleFlashFaces } from './muzzleFlash.js';
 import { VOXLIGHT_SPEC, loftTorso, loftPair } from './bodySpec.js';
+const PD_SEG = 24; // paperdoll loft resolution: doubles the default 12 so tubes read as smooth arcs from angles (the underarm etc.), not faceted prisms; Voxlight geometry keeps 12
 import { CROUCH_STANCE, WALK_GRIP, PISTOL_GRIP, WALK_AIMED, RUN_AIMED, PISTOL_AIMED, SLIDE_POSE, ZERO_LOCO, WALK_LOCO, RUN_LOCO, RUN_LOCO_PISTOL, STRAFE_LOCO, SLIDE_LOCO, CROUCH_LOCO, CROUCHWALK_LOCO } from './poseTables.js';
 export { VOXLIGHT_SPEC, torsoProfile } from './bodySpec.js';
 function buildFlash(out, tip, k, weapon) { out.push(...muzzleFlashFaces(tip, k, WEAPON_FLASH[FLASH_TYPE_KEY[weapon]] || FLASH_DEF)); } // third-person gun-local flash, keyed by weapon type
@@ -144,14 +145,14 @@ function trunkLower(out) {
 function trunkUpperChest(out, ramp) {
   const { SK } = ramp;
   if (SPEC.torsoRows) {
-    loftTorso(out, tprism, X, Z, SPEC.torsoRows, CLOTH);
-    if (SPEC.torsoRelief) loftTorso(out, tprism, X, Z, SPEC.torsoRelief, CLOTH); // additive interior relief plates (drawn highlights as form; subset of the run)
-    if (SPEC.backRelief) loftTorso(out, tprism, X, Z, SPEC.backRelief, CLOTH); // back-surface relief (sourced from the back paint sheet)
+    loftTorso(out, tprism, X, Z, SPEC.torsoRows, CLOTH, PD_SEG);
+    if (SPEC.torsoRelief) loftTorso(out, tprism, X, Z, SPEC.torsoRelief, CLOTH, PD_SEG); // additive interior relief plates (drawn highlights as form; subset of the run)
+    if (SPEC.backRelief) loftTorso(out, tprism, X, Z, SPEC.backRelief, CLOTH, PD_SEG); // back-surface relief (sourced from the back paint sheet)
   } else {
     { const v = SPEC.chest; tprism(out, [0, v.y0, 0], [0, v.y1, 0], X, Z, v.rx0, v.rz0, v.rx1, v.rz1, 12, CLOTH); } // chest extends below the waist pivot (1.0) to overlap the hips, so the opposing pelvis/chest twist when moving doesn't tear a gap at the waist (the outline would otherwise read it as a seam at the chunky character resolution)
     { const c = SPEC.chest, u = SPEC.upperChest; tprism(out, [0, c.y1, 0], [0, u.y1, 0], X, Z, c.rx1, c.rz1, u.rx1, u.rz1, 12, CLOTH); }
   }
-  if (SPEC.hairRows) { loftTorso(out, tprism, X, Z, SPEC.hairRows.map((r) => ({ ...r, cz: -0.03 })), SK); } // measured head/hair/traps mass (rows are exact single-run sprite widths); sits back so the face emerges - replaces the neck prism
+  if (SPEC.hairRows) { loftTorso(out, tprism, X, Z, SPEC.hairRows.map((r) => ({ ...r, cz: -0.03 })), SK, PD_SEG); } // measured head/hair/traps mass (rows are exact single-run sprite widths); sits back so the face emerges - replaces the neck prism
   else { const v = SPEC.neck; tprism(out, [0, v.y0, v.z0], [0, v.y1, v.z1], X, Z, v.rx0, v.rz0, v.rx1, v.rz1, 12, SK); } // neck flares into the shoulders at the base so the head stays connected at the chunky character resolution (the outline would otherwise eat a 1px neck into a seam)
 }
 // the head/face, in chest-local space. Split out of trunkUpper so the husk can ride it on its own
@@ -269,7 +270,7 @@ function bulwarkShieldArms(out, ramp, ph, fire) {
 
 function armsDown(out, ramp) {
   const j = [], tw = B.armTwitch || 0, tt = B.t || 0;
-  if (B.paperdoll && SPEC.armRows) { loftPair(out, tprism, X, Z, SPEC.armRows, ramp.SK, SPEC.armOverlay); return j; } // ROW TRACE: arms loft through measured per-row runs (+ optional additive tucked-hand overlay); hand geometry retires
+  if (B.paperdoll && SPEC.armRows) { loftPair(out, tprism, X, Z, SPEC.armRows, ramp.SK, SPEC.armOverlay, PD_SEG); return j; } // ROW TRACE: arms loft through measured per-row runs (+ optional additive tucked-hand overlay); hand geometry retires
   const ax = B.armX != null ? B.armX : 0.18, ay = B.armY != null ? B.armY : 0.9, az = B.armZ != null ? B.armZ : 0.06, cu = B.armCurl != null ? B.armCurl : 0.3;
   for (const side of [1, -1]) {
     // possessed twitch: constant micro-tremor + occasional sharp per-arm spasm spikes
@@ -322,7 +323,7 @@ function bodyLeg(out, side, hipW, F, fp, ramp, legLen = 1) {
   const { SK, SKL, SKM, SKD } = ramp;
   if (B.paperdoll && SPEC.legRows) { // ROW TRACE: the classic legs loft through their measured per-row runs (geometry + stance in one; IK cannot produce the free leg's outward flare)
     const rows = side < 0 ? SPEC.legRows.neg : SPEC.legRows.pos;
-    loftTorso(out, tprism, X, Z, rows, SK); // the trace runs through the FOOT rows - buildFoot retires (the classic boot, oblique and all, is in the data)
+    loftTorso(out, tprism, X, Z, rows, SK, PD_SEG); // the trace runs through the FOOT rows - buildFoot retires (the classic boot, oblique and all, is in the data)
     const a = rows[rows.length - 1], h = rows[0], m = rows[(rows.length / 2) | 0];
     return { side, hip: [h.cx, h.y, 0], knee: [m.cx, m.y, 0], ankle: [a.cx, a.y, 0], fp };
   }
