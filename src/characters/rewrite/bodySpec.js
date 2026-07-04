@@ -75,7 +75,8 @@ export function loftTorso(out, tprism, X, Z, rows, col) {
 
 /** Loft a left/right pair of measured row traces (arms, and any other
  * paired parts): { neg, pos } keyed by x sign. */
-export function loftPair(out, tprism, X, Z, pair, col) {
+export function loftPair(out, tprism, X, Z, pair, col, overlay) {
   loftTorso(out, tprism, X, Z, pair.neg, col);
   loftTorso(out, tprism, X, Z, pair.pos, col);
+  if (overlay) loftTorso(out, tprism, X, Z, overlay, col); // additive extra trace (e.g. the tucked-hand overlay - a subset of the sprite run)
 }

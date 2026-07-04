@@ -161,6 +161,22 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6m v2 (SHIPPED): the tucked hand as a pure OVERLAY
+
+The first C6m regressed the torso twice (carved notch from the rear;
+then full-run merged slabs jittering the whole torso region) - both
+reverted at Mac's call. The redesign holds one hard constraint: THE
+PROVEN TORSO/ARM EMISSION IS NEVER TOUCHED - asserted byte-identical
+against a captured baseline before and after. The tucked forearm/hand
+is a separate additive rows list (armOverlay): the interior seam
+walked down from the right arm's last split row (min-luminance,
+stay-put prior, +-5 anchor clamp), emitting [seam..runOuter] slabs at
+cz +0.09. A subset of the sprite run cannot change the silhouette
+union - the 1:1 pin holds trivially. Upstream: loftPair gains an
+optional third trace (the first cut breached the body.js ceiling by
+one line and was carved into bodySpec, where spec interpretation
+lives). cz 0.09 is the flush/proud knob on Mac's read.
+
 ### C6k iteration 10 (SHIPPED): IoU 1.0000 - the 1:1 match
 
 Mac circled the blue armpit fills twice; the whodunit was earned:

@@ -267,7 +267,7 @@ function bulwarkShieldArms(out, ramp, ph, fire) {
 
 function armsDown(out, ramp) {
   const j = [], tw = B.armTwitch || 0, tt = B.t || 0;
-  if (B.paperdoll && SPEC.armRows) { loftPair(out, tprism, X, Z, SPEC.armRows, ramp.SK); return j; } // ROW TRACE: arms loft through measured per-row runs; hand geometry retires (the trace carries the fists)
+  if (B.paperdoll && SPEC.armRows) { loftPair(out, tprism, X, Z, SPEC.armRows, ramp.SK, SPEC.armOverlay); return j; } // ROW TRACE: arms loft through measured per-row runs (+ optional additive tucked-hand overlay); hand geometry retires
   const ax = B.armX != null ? B.armX : 0.18, ay = B.armY != null ? B.armY : 0.9, az = B.armZ != null ? B.armZ : 0.06, cu = B.armCurl != null ? B.armCurl : 0.3;
   for (const side of [1, -1]) {
     // possessed twitch: constant micro-tremor + occasional sharp per-arm spasm spikes

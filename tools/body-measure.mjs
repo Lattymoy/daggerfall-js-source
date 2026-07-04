@@ -296,6 +296,40 @@ for (const name of ['left', 'right']) {
   }
 }
 
+// TUCKED-HAND OVERLAY (additive only - the proven torso/arm emission
+// above is untouched). Walk the interior seam down from the right
+// arm's last split row across the merged band: per row, the min-
+// luminance column near the previous seam (stay-put prior +18/px,
+// +-5 clamp to the split-band exit edge). Emit [seam..runOuter] rows;
+// a subset of the sprite run cannot change the silhouette union.
+const armOverlay = [];
+{
+  const lum = (i) => { const c = pal.get(i); return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b; };
+  let lastSplit = -1;
+  rowParts.forEach((part, i) => { if (part.arm.right) lastSplit = i; });
+  if (lastSplit >= 0) {
+    let seam = rowParts[lastSplit].arm.right[0];
+    const anchor0 = seam;
+    for (let i = lastSplit + 1; i < rowParts.length; i++) {
+      const { y, t, arm } = rowParts[i];
+      if (arm.right) break;
+      let best = null, bl = Infinity;
+      for (let x = seam - 2; x <= seam + 2; x++) {
+        if (x <= t[0] || x >= t[1] || Math.abs(x - anchor0) > 5) continue;
+        const sc = lum(data[y * W + x]) + 18 * Math.abs(x - seam);
+        if (sc < bl) { bl = sc; best = x; }
+      }
+      if (best == null) break;
+      seam = best;
+      armOverlay.push({
+        y: yRig(y),
+        cx: +((((best + t[1]) / 2) - headCx) * u).toFixed(4),
+        rx: +(((t[1] - best + 1) / 2) * u).toFixed(4),
+      });
+    }
+  }
+}
+
 // Head/hair/shoulder mass: rows above the armpit are SINGLE-RUN -
 // the silhouette there is exact (hair + traps + deltoids fused).
 const hairRows = [];
@@ -322,5 +356,6 @@ const out = {
   armBars,
   legRows,
   armRows,
+  armOverlay,
 };
 console.log(JSON.stringify(out, null, 1));
