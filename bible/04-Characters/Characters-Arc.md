@@ -161,22 +161,6 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
-### C6m fix (SHIPPED): the carve regression
-
-Mac reported regression from C6m; the audit found two defects I
-introduced by moving fast: (1) THE CARVE - pass 2 shrank the torso
-slabs against the seam, but the forward-offset arm only covers that
-notch from the FRONT; from the rear and side the hip had a channel
-bitten out. Merged rows now keep the FULL run - the traced arm
-OVERLAPS the torso in x and separates in z; the union is identical so
-the 1:1 pin holds. (2) THE LATERAL SHOVE - the left UPPER arm (merged
-rows ABOVE its split band, traced upward) got the same cz +0.09 as
-the tucked forearm, but it hangs at the torso's side, not across the
-hip. The below flag (downward-traced rows only) now gates the forward
-offset. Voxlight audit: all four trace fields absent from
-VOXLIGHT_SPEC at runtime, 596 green - soldiers untouched (the earlier
-regex scare hit comment lines). Pin 1.0000; torsoRows 44 -> 48.
-
 ### C6m (SHIPPED): the interior seam - tracing the tucked arm
 
 Mac: the hand resting against the hip isn't part of the silhouette -
