@@ -7,7 +7,7 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; background: #14141a; overflow: hidden; touch-action: none; font-family: -apple-system, system-ui, sans-serif; }
-  #c { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; image-rendering: crisp-edges; }
+  #c { display: block; width: 100vw; height: 100vh; }
   #hud { position: fixed; top: env(safe-area-inset-top, 8px); left: 0; right: 0; text-align: center; color: #8a8a99; font-size: 12px; pointer-events: none; padding-top: 8px; }
   #bar { position: fixed; bottom: env(safe-area-inset-bottom, 0); left: 0; right: 0; display: flex; gap: 8px; justify-content: center; padding: 12px; }
   button { background: #23232e; color: #cfcfda; border: 1px solid #34343f; border-radius: 999px; padding: 10px 16px; font-size: 13px; -webkit-tap-highlight-color: transparent; }
@@ -25,19 +25,41 @@
   <button id="bg">bg</button>
   <button id="walk">walk</button>
 </div>
-<div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 58px); left:0; right:0; display:flex; gap:10px; justify-content:center; align-items:center; color:#8a8a99; font-size:12px;">
-  <span>pixelize</span>
-  <input id="px" type="range" min="1" max="10" step="1" value="1" style="width:min(52vw,320px);">
+<div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 54px); left:0; right:0; display:flex; flex-direction:column; gap:6px; align-items:center; color:#8a8a99; font-size:12px;">
+  <div style="display:flex; gap:8px; align-items:center;"><span id="pxlab" style="width:120px; text-align:right;">pixelize: off</span><input id="px" type="range" min="1" max="16" step="1" value="1" style="width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="cdlab" style="width:120px; text-align:right;">color: full</span><input id="cd" type="range" min="1" max="9" step="1" value="9" style="width:min(46vw,300px);"></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const D = __PAYLOAD__;
 const S = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas: S, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas: S, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x14141a);
 const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
+// ── pixelize post-pipeline: render the scene to a low-res target, then
+// a fullscreen quad upscales it (nearest) and quantizes colour depth
+// with a 4x4 ordered-dither so bands don't posterize flat.
+let pixel = 1, levels = 0; // levels 0 = full colour
+const rt = new THREE.WebGLRenderTarget(2, 2, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
+const postScene = new THREE.Scene();
+const postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+const postMat = new THREE.ShaderMaterial({
+  uniforms: { tex: { value: rt.texture }, res: { value: new THREE.Vector2(2, 2) }, levels: { value: 0 }, bg: { value: new THREE.Color(0x14141a) } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+  fragmentShader: [
+    'varying vec2 vUv; uniform sampler2D tex; uniform vec2 res; uniform float levels; uniform vec3 bg;',
+    'float dither(vec2 p){ int x=int(mod(p.x,4.0)), y=int(mod(p.y,4.0)); int i=x+y*4;',
+    '  float m[16]; m[0]=0.;m[1]=8.;m[2]=2.;m[3]=10.;m[4]=12.;m[5]=4.;m[6]=14.;m[7]=6.;',
+    '  m[8]=3.;m[9]=11.;m[10]=1.;m[11]=9.;m[12]=15.;m[13]=7.;m[14]=13.;m[15]=5.;',
+    '  float v=0.; for(int k=0;k<16;k++){ if(k==i) v=m[k]; } return v/16.0 - 0.5; }',
+    'void main(){ vec4 t = texture2D(tex, vUv); vec3 c = t.rgb;',
+    '  if(levels >= 1.0){ vec2 px = vUv*res; c += dither(px)/levels; c = floor(c*levels + 0.5)/levels; }',
+    '  gl_FragColor = vec4(mix(bg, clamp(c,0.0,1.0), t.a), 1.0); }' // rig only; bg stays smooth
+  ].join('\n'),
+});
+{ const q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMat); postScene.add(q); }
 
 // Build geometry from the quantized face payload (quads -> 2 tris).
 const nf = D.n;
@@ -123,14 +145,17 @@ function animate(dt) {
 
 // Orbit state.
 let yaw = 0.5, pitch = 0.15, dist = D.h * 2.1, autospin = true;
-let pixel = 1; // buffer downscale factor (CSS upscales it -> chunky)
 function resize() {
   const w = innerWidth, h = innerHeight;
-  renderer.setSize(Math.max(1, Math.round(w / pixel)), Math.max(1, Math.round(h / pixel)), false);
+  renderer.setSize(w, h, false);
+  const rw = Math.max(1, Math.round(w / pixel)), rh = Math.max(1, Math.round(h / pixel));
+  rt.setSize(rw, rh); postMat.uniforms.res.value.set(rw, rh);
   camera.aspect = w / h; camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
-document.getElementById('px').addEventListener('input', (e) => { pixel = +e.target.value; resize(); });
+const pxLab = document.getElementById('pxlab'), cdLab = document.getElementById('cdlab');
+document.getElementById('px').addEventListener('input', (e) => { pixel = +e.target.value; pxLab.textContent = pixel <= 1 ? 'pixelize: off' : 'pixelize: ' + pixel + 'x'; resize(); });
+document.getElementById('cd').addEventListener('input', (e) => { const v = +e.target.value; levels = v >= 9 ? 0 : Math.round(2 + (v-1) * 3); postMat.uniforms.levels.value = levels; cdLab.textContent = levels === 0 ? 'color: full' : 'color: ' + levels + ' lvl'; });
 
 let _last = performance.now();
 function frame() {
@@ -145,7 +170,13 @@ function frame() {
     Math.cos(yaw) * Math.cos(pitch) * dist
   );
   camera.lookAt(0, 0, 0);
-  renderer.render(scene, camera);
+  if (pixel <= 1 && levels === 0) { renderer.setRenderTarget(null); renderer.render(scene, camera); }
+  else {
+    const bgKeep = scene.background; scene.background = null; // model only, transparent
+    renderer.setClearAlpha(0); renderer.setRenderTarget(rt); renderer.clear(); renderer.render(scene, camera);
+    scene.background = bgKeep; renderer.setClearAlpha(1);
+    renderer.setRenderTarget(null); renderer.render(postScene, postCam);
+  }
   requestAnimationFrame(frame);
 }
 frame();
@@ -177,8 +208,9 @@ document.getElementById('spin').onclick = (e) => { autospin = !autospin; e.targe
 document.getElementById('reset').onclick = () => { yaw = 0.5; pitch = 0.15; dist = D.h * 2.1; };
 document.getElementById('wire').onclick = (e) => { mat.wireframe = !mat.wireframe; e.target.classList.toggle('on', mat.wireframe); };
 let bgi = 0; const bgs = [0x14141a, 0x000000, 0x808088, 0xf0f0f0];
+postMat.uniforms.bg.value = new THREE.Color(bgs[0]);
 document.getElementById('walk').onclick = (e) => { walking = !walking; e.target.classList.toggle('on', walking); };
-document.getElementById('bg').onclick = () => { bgi = (bgi + 1) % bgs.length; scene.background = new THREE.Color(bgs[bgi]); };
+document.getElementById('bg').onclick = () => { bgi = (bgi + 1) % bgs.length; scene.background = new THREE.Color(bgs[bgi]); postMat.uniforms.bg.value = new THREE.Color(bgs[bgi]); };
 </script>
 </body>
 </html>
