@@ -7,6 +7,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { ImgFile } from '../../src/formats/imgFile.js';
 import { DFPalette } from '../../src/formats/dfPalette.js';
 import { buildNeutralBody } from '../../src/characters/neutralBody.js';
+import { buildCuirass, STEEL_RAMP } from '../../src/characters/pieces/cuirass.js';
 
 const A = process.env.ARENA2_PATH;
 const pal = new DFPalette(); pal.load(readFileSync(A + '/ART_PAL.COL'), 'ART_PAL.COL');
@@ -27,7 +28,15 @@ for (const f of faces) {
   C.push(f.c[0], f.c[1], f.c[2]);
   G.push(GI[f.g] ?? 0);
 }
-const payload = JSON.stringify({ n: faces.length, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G });
+// cuirass piece (separate mesh in the viewer, toggleable).
+const cf = buildCuirass(STEEL_RAMP);
+const cP=[], cN=[], cC=[];
+for (const f of cf) {
+  for (let i=0;i<4;i++) cP.push(Math.round(f.p[i*3]*1000), Math.round(f.p[i*3+1]*1000), Math.round(f.p[i*3+2]*1000));
+  cN.push(Math.round(f.n[0]*127), Math.round(f.n[1]*127), Math.round(f.n[2]*127));
+  cC.push(f.c[0], f.c[1], f.c[2]);
+}
+const payload = JSON.stringify({ n: faces.length, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, cuirass: { P: cP, N: cN, C: cC } });
 const dir = new URL('.', import.meta.url).pathname;
 const tpl = readFileSync(dir + 'viewer-template.html', 'utf8');
 writeFileSync(process.argv[2] || 'dagger-viewer.html', tpl.replace('__PAYLOAD__', payload));
