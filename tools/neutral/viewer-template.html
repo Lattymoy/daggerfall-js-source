@@ -24,7 +24,7 @@
   <button id="wire">wireframe</button>
   <button id="bg">bg</button>
   <button id="walk">walk</button>
-  <button id="cuirass" class="on">cuirass</button>
+  <button id="greaves" class="on">greaves</button>
 </div>
 <div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 54px); left:0; right:0; display:flex; flex-direction:column; gap:6px; align-items:center; color:#8a8a99; font-size:12px;">
   <div style="display:flex; gap:8px; align-items:center;"><span id="pxlab" style="width:120px; text-align:right;">pixelize: off</span><input id="px" type="range" min="1" max="16" step="1" value="1" style="width:min(46vw,300px);"></div>
@@ -96,30 +96,32 @@ const pivot = new THREE.Group();
 pivot.add(mesh);
 mesh.position.y = -D.cy; // centre the model on the pivot
 
-// ── PIECE: cuirass (separate toggleable mesh, same pivot) ──
-let cuirassMesh = null;
-if (D.cuirass) {
-  const cp = D.cuirass, ncf = cp.C.length / 3;
-  const cpos = new Float32Array(ncf * 6 * 3), ccol = new Float32Array(ncf * 6 * 3), cnrm = new Float32Array(ncf * 6 * 3);
-  let co = 0;
+// ── ARMOR PIECES (separate toggleable meshes, same pivot) ──
+function buildPiece(cp) {
+  const ncf = cp.C.length / 3;
+  const pp = new Float32Array(ncf*6*3), pc = new Float32Array(ncf*6*3), pn = new Float32Array(ncf*6*3), pg = new Uint8Array(ncf*6);
+  let o = 0, gi = 0;
   for (let f = 0; f < ncf; f++) {
     const r = cp.C[f*3]/255, g = cp.C[f*3+1]/255, b = cp.C[f*3+2]/255;
     const nx = cp.N[f*3]/127, ny = cp.N[f*3+1]/127, nz = cp.N[f*3+2]/127;
+    const grp = cp.G ? cp.G[f] : 0;
     const v = (k) => [cp.P[f*12+k*3]/1000, cp.P[f*12+k*3+1]/1000, cp.P[f*12+k*3+2]/1000];
     for (const [a,bb,c] of [[0,1,2],[0,2,3]]) for (const k of [a,bb,c]) {
-      const P = v(k); cpos[co]=P[0]; cpos[co+1]=P[1]; cpos[co+2]=P[2];
-      ccol[co]=r; ccol[co+1]=g; ccol[co+2]=b; cnrm[co]=nx; cnrm[co+1]=ny; cnrm[co+2]=nz; co += 3;
+      const P = v(k); pp[o]=P[0]; pp[o+1]=P[1]; pp[o+2]=P[2]; pc[o]=r; pc[o+1]=g; pc[o+2]=b; pn[o]=nx; pn[o+1]=ny; pn[o+2]=nz; o += 3; pg[gi++]=grp;
     }
   }
-  const cgeo = new THREE.BufferGeometry();
-  cgeo.setAttribute('position', new THREE.BufferAttribute(cpos, 3));
-  cgeo.setAttribute('color', new THREE.BufferAttribute(ccol, 3));
-  cgeo.setAttribute('normal', new THREE.BufferAttribute(cnrm, 3));
-  cuirassMesh = new THREE.Mesh(cgeo, mat);
-  cuirassMesh.position.y = -D.cy;
-  cuirassMesh.visible = true;
-  pivot.add(cuirassMesh);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pp, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(pc, 3));
+  geo.setAttribute('normal', new THREE.BufferAttribute(pn, 3));
+  const m = new THREE.Mesh(geo, mat); m.position.y = -D.cy; m.visible = true; pivot.add(m);
+  animTargets.push({ pos: pp, base: pp.slice(), vgrp: pg, geo }); // moves with the body
+  return m;
 }
+// Animated targets: body + every piece mesh (same FK moves armour with the body).
+const animTargets = [{ pos, base: basePos, vgrp, geo }];
+const pieceMesh = {};
+for (const name of ['greaves']) if (D[name]) pieceMesh[name] = buildPiece(D[name]);
 scene.add(pivot);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x40404a, 0.9));
@@ -135,38 +137,29 @@ const elbowY = shoulderY - 0.50*(shoulderY-wristL);
 let walking = false, wt = 0;
 // rotate one vert about X around pivotY by ang; returns [y,z].
 function rotX(y, z, pivotY, ang) { const c=Math.cos(ang), sn=Math.sin(ang); const dy=y-pivotY; return [pivotY + c*dy - sn*z, sn*dy + c*z]; }
+function animateTarget(T, wt, bob) {
+  const P = T.pos, B = T.base, VG = T.vgrp;
+  const applyLimb = (g, phase, isLeg) => {
+    const swing = (isLeg ? -WALK.strideAmp : -WALK.strideAmp * WALK.counterFrac) * Math.sin(wt + phase);
+    const bendAmt = isLeg ? WALK.kneeAmp * Math.max(0, Math.sin(wt + phase + 1.2)) : WALK.elbowAmp * (0.5 + 0.5*Math.sin(wt + phase - 0.6));
+    const jointY = isLeg ? kneeY : elbowY, rootY = isLeg ? hipY : shoulderY, bendSign = isLeg ? 1 : -1;
+    for (let i=0;i<VG.length;i++) if (VG[i]===g) {
+      let y = B[i*3+1], z = B[i*3+2];
+      if (y < jointY) [y,z] = rotX(y, z, jointY, bendSign*bendAmt);
+      [y,z] = rotX(y, z, rootY, swing);
+      P[i*3] = B[i*3]; P[i*3+1] = y + bob; P[i*3+2] = z;
+    }
+  };
+  applyLimb(4, 0, true); applyLimb(5, Math.PI, true);   // legs
+  applyLimb(2, Math.PI, false); applyLimb(3, 0, false); // arms
+  for (let i=0;i<VG.length;i++) if (VG[i]===0 || VG[i]===1) { P[i*3]=B[i*3]; P[i*3+1]=B[i*3+1]+bob; P[i*3+2]=B[i*3+2]; }
+  T.geo.attributes.position.needsUpdate = true;
+}
 function animate(dt) {
-  if (!walking) { if (pos.some((v,i)=>v!==basePos[i])) { pos.set(basePos); geo.attributes.position.needsUpdate = true; } return; }
+  if (!walking) { for (const T of animTargets) if (T.pos.some((v,i)=>v!==T.base[i])) { T.pos.set(T.base); T.geo.attributes.position.needsUpdate = true; } return; }
   wt += dt * WALK.cadence;
-  const s = Math.sin(wt), bob = WALK.bobAmp * Math.sin(wt*2);
-  // two-bone leg: hip swings the whole leg; knee flexes the lower part
-  // (below kneeY) - knee bends most through the swing (foot lifts).
-  const legFK = (g, phase) => {
-    const hip = -WALK.strideAmp * Math.sin(wt + phase); // forward stride
-    const knee = WALK.kneeAmp * Math.max(0, Math.sin(wt + phase + 1.2)); // flex during swing, one-way
-    for (let i=0;i<vgrp.length;i++) if (vgrp[i]===g) {
-      let y = basePos[i*3+1], z = basePos[i*3+2];
-      if (y < kneeY) { [y,z] = rotX(y, z, kneeY, knee); }   // lower leg about knee
-      [y,z] = rotX(y, z, hipY, hip);                        // whole leg about hip
-      pos[i*3] = basePos[i*3]; pos[i*3+1] = y + bob; pos[i*3+2] = z;
-    }
-  };
-  // two-bone arm: shoulder counter-swings; elbow bends slightly.
-  const armFK = (g, phase) => {
-    const sh = -WALK.strideAmp * WALK.counterFrac * Math.sin(wt + phase);
-    const el = WALK.elbowAmp * (0.5 + 0.5*Math.sin(wt + phase - 0.6));
-    for (let i=0;i<vgrp.length;i++) if (vgrp[i]===g) {
-      let y = basePos[i*3+1], z = basePos[i*3+2];
-      if (y < elbowY) { [y,z] = rotX(y, z, elbowY, -el); } // elbow flexes FORWARD (not back like a knee)
-      [y,z] = rotX(y, z, shoulderY, sh);
-      pos[i*3] = basePos[i*3]; pos[i*3+1] = y + bob; pos[i*3+2] = z;
-    }
-  };
-  const bodyOnly = (g) => { for (let i=0;i<vgrp.length;i++) if (vgrp[i]===g) { pos[i*3]=basePos[i*3]; pos[i*3+1]=basePos[i*3+1]+bob; pos[i*3+2]=basePos[i*3+2]; } };
-  legFK(4, 0); legFK(5, Math.PI);                 // legs opposite
-  armFK(2, Math.PI); armFK(3, 0);                 // arms counter same-side leg
-  bodyOnly(0); bodyOnly(1);
-  geo.attributes.position.needsUpdate = true;
+  const bob = WALK.bobAmp * Math.sin(wt*2);
+  for (const T of animTargets) animateTarget(T, wt, bob);
 }
 
 // Orbit state.
@@ -235,7 +228,7 @@ document.getElementById('reset').onclick = () => { yaw = 0.5; pitch = 0.15; dist
 document.getElementById('wire').onclick = (e) => { mat.wireframe = !mat.wireframe; e.target.classList.toggle('on', mat.wireframe); };
 let bgi = 0; const bgs = [0x14141a, 0x000000, 0x808088, 0xf0f0f0];
 postMat.uniforms.bg.value = new THREE.Color(bgs[0]);
-document.getElementById('cuirass').onclick = (e) => { if (cuirassMesh) { cuirassMesh.visible = !cuirassMesh.visible; e.target.classList.toggle('on', cuirassMesh.visible); } };
+for (const name of ['greaves']) { const btn = document.getElementById(name); if (btn) btn.onclick = (e) => { const m = pieceMesh[name]; if (m) { m.visible = !m.visible; e.target.classList.toggle('on', m.visible); } }; }
 document.getElementById('walk').onclick = (e) => { walking = !walking; e.target.classList.toggle('on', walking); };
 document.getElementById('bg').onclick = () => { bgi = (bgi + 1) % bgs.length; scene.background = new THREE.Color(bgs[bgi]); postMat.uniforms.bg.value = new THREE.Color(bgs[bgi]); };
 </script>

@@ -6,7 +6,7 @@
 // viewer tool passes them from the sprite). Geometry is authored as
 // loft profiles - see tools/neutral for the viewer.
 
-export function buildNeutralBody(ramps) {
+export function buildNeutralBody(ramps, opts = {}) {
   const SEG = 28;
   const SKIN = [196, 154, 116], BOOT = [92, 74, 58], HAIR = [64, 54, 44];
   const faces = [];
@@ -232,6 +232,24 @@ export function buildNeutralBody(ramps) {
   // neck, behind knee/elbow, under pec/delt) face a close opposing wall
   // and darken. No hardcoded positions.
 
+  // ARMOR-AS-BODY (prototype): instead of a separate mesh, thicken the
+  // rig's own surface where a piece sits and recolour it. No gaps, and
+  // it animates with the body for free. Cuirass = the torso ('body')
+  // faces in the chest->waist band pushed radially out + tagged steel.
+  if (opts.cuirass) {
+    const TH = 0.022;
+    for (const f of faces) {
+      if (f.g !== 'body') continue;
+      let cy = 0; for (let i = 0; i < 4; i++) cy += f.p[i*3+1]; cy /= 4;
+      if (cy < 1.12 || cy > 1.62) continue;
+      for (let i = 0; i < 4; i++) {
+        const x = f.p[i*3], z = f.p[i*3+2], r = Math.hypot(x, z) || 1;
+        f.p[i*3] = x + (x/r)*TH; f.p[i*3+2] = z + (z/r)*TH;
+      }
+      f._armor = 'steel';
+    }
+  }
+
   // HEIGHT: vertical compress for a shorter, stockier (Daggerfall)
   // build. Applied before AO so crevice distances stay consistent.
   const HSCALE = 0.9;
@@ -260,7 +278,7 @@ export function buildNeutralBody(ramps) {
     const fc = faces[i];
     let it = Math.max(0.08, (fc.n[0]*Lx + fc.n[1]*Ly + fc.n[2]*Lz) / Ln * 0.9 + 0.15);
     it *= ao[i]; // crevices darken
-    const ramp = fc.c === BOOT ? ramps.boot : ramps.skin;
+    const ramp = fc._armor === 'steel' ? (opts.steel || ramps.steel || ramps.skin) : (fc.c === BOOT ? ramps.boot : ramps.skin);
     fc.c = shade(ramp, Math.min(1, Math.max(0.04, it)));
   }
 
