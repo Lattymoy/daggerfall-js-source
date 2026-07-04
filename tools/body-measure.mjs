@@ -191,6 +191,7 @@ for (const part of rowParts) {
   if (arm.right) re = t[1];
   else { const e = edgeAt(edgeSamples.right, y); re = e == null ? t[1] : Math.round(e); merged++; }
   mergedCounts[merged]++;
+  part.trunkInt = [le, re];
   if (crotchBand.has(y)) { // the trunk ends where the drawn thighs begin - these rows join the LEGS; arms on the same rows emit normally below
     const sc = crotchBand.get(y);
     crotchLegs.weight.push({ y: yRig(y), cx: +((((le + sc) / 2) - headCx) * u).toFixed(4), rx: +(((sc - le + 1) / 2) * u).toFixed(4) });
@@ -352,6 +353,7 @@ for (const name of ['left', 'right']) {
 // + 8; min width 2; one gap row tolerated. The cluster's own end IS
 // the hand's drawn bottom.
 const armOverlay = [];
+const overlayCols = new Map();
 {
   const lum = (i) => { const c = pal.get(i); return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b; };
   let lastSplit = -1;
@@ -388,11 +390,55 @@ const armOverlay = [];
       }
       misses = 0;
       lo = bLo; hi = bHi;
+      overlayCols.set(y, [lo, hi]);
       armOverlay.push({
         y: yRig(y),
         cx: +((((lo + hi) / 2) - headCx) * u).toFixed(4),
         rx: +(((hi - lo + 1) / 2) * u).toFixed(4),
       });
+    }
+  }
+}
+
+// TORSO/GROIN RELIEF: on the lit sprite, INTERIOR bright islands are
+// raised form (pec tops, abs, navel highlights). The light comes from
+// the upper right, so flank columns carry rim light - only runs whose
+// BOTH ends sit >= 2px inside the trunk interval qualify (rim light
+// self-excludes); the hand's traced columns are excluded explicitly.
+// Each island becomes a thin additive plate: lift ~ brightness over
+// the row median. A subset of the run - the silhouette is untouched.
+const torsoRelief = [];
+{
+  const lum = (i) => { const c = pal.get(i); return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b; };
+  for (const part of rowParts) {
+    if (!part.trunkInt) continue;
+    const { y } = part;
+    const [le, re] = part.trunkInt;
+    const hand = overlayCols.get(y);
+    const ok = (x) => data[y * W + x] && !(hand && x >= hand[0] && x <= hand[1]);
+    const ls = [];
+    for (let x = le; x <= re; x++) if (ok(x)) ls.push(lum(data[y * W + x]));
+    if (ls.length < 6) continue;
+    const med = ls.sort((p, q) => p - q)[(ls.length / 2) | 0];
+    let cLo = -1;
+    for (let x = le; x <= re + 1; x++) {
+      const bright = x <= re && ok(x) && lum(data[y * W + x]) >= med + 8;
+      if (bright && cLo < 0) cLo = x;
+      if (!bright && cLo >= 0) {
+        const cHi = x - 1;
+        if (cHi - cLo + 1 >= 2 && cLo >= le + 2 && cHi <= re - 2) {
+          let m = 0;
+          for (let k = cLo; k <= cHi; k++) m += lum(data[y * W + k]);
+          m /= cHi - cLo + 1;
+          torsoRelief.push({
+            y: yRig(y),
+            cx: +((((cLo + cHi) / 2) - headCx) * u).toFixed(4),
+            rx: +(((cHi - cLo + 1) / 2) * u).toFixed(4),
+            lift: +Math.min(0.2, (m - med) / 255).toFixed(4),
+          });
+        }
+        cLo = -1;
+      }
     }
   }
 }
@@ -424,5 +470,6 @@ const out = {
   legRows,
   armRows,
   armOverlay,
+  torsoRelief,
 };
 console.log(JSON.stringify(out, null, 1));

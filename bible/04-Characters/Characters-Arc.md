@@ -161,6 +161,24 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6p (SHIPPED): torso + groin relief - the drawn highlights as form
+
+Mac: parity with the groin and torso detail. The trunk map showed the
+interior structure AND the trap: the sprite is lit from the upper
+right, so the right flank's bright columns are RIM LIGHT, not raised
+form - naive bright->proud would warp the torso sideways. The rule:
+only INTERIOR bright islands qualify (both ends >= 2px inside the
+trunk interval; rim light self-excludes, the hand's traced columns
+are excluded explicitly). 60 islands found - the paired pec
+highlights at cx -/+0.12 rows 1.39-1.48, the ab/rib clusters, navel-
+adjacent and groin highlights - each a thin additive plate (rz 0.012)
+riding the front surface at lift ~ brightness over the row median.
+One frontAt(y) now serves the trunk rows, the hand overlay, and the
+relief (the hand's finger rows had floated 0.058 proud on untapered
+chest depth - the only core-list change, a correction; trunk/arms/
+hair/legs asserted byte-identical). Upstream: guarded SPEC.torsoRelief
+loft after the trunk trace. Pin 1.0000; both suites green.
+
 ### C6o (SHIPPED): the right hand, read from the light
 
 Mac: detail the right hand for 1:1. The pixel map answered where the

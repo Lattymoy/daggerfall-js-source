@@ -39,6 +39,14 @@ const capRows = (rows) => {
 const markBreaks = (rows) => rows; // superseded: slabs carry brk at every interval change
 
 const prof = [...M.torsoProfile].sort((a, b) => a.yRig - b.yRig);
+// Pelvis depth taper (shared by the trunk rows and the relief plates):
+// the trunk's depth blends into the leg depth over the hip band.
+const depthK = (y) => y >= 1.16 ? TORSO_DEPTH : TORSO_DEPTH + (0.45 - TORSO_DEPTH) * Math.min(1, (1.16 - y) / 0.13);
+const frontAt = (y) => {
+  let tz = 0.105; // below the trunk: thigh-front level
+  for (const t of prof) if (Math.abs(t.yRig - y) < 0.02) tz = t.halfW * depthK(y);
+  return tz;
+};
 const hipsHalf = prof[0].halfW;
 const armpitHalf = prof[prof.length - 1].halfW;
 // The trace carries its own centres - the contrapposto lean is DATA.
@@ -50,10 +58,7 @@ const rows = capRows([
   // over the hip band (y 1.16 -> the trunk's bottom) so the pelvis
   // does not shelf over the thigh tops - the front view is unchanged
   // (rz is the front-free dimension).
-  ...prof.map((t) => {
-    const k = t.yRig >= 1.16 ? TORSO_DEPTH : TORSO_DEPTH + (0.45 - TORSO_DEPTH) * Math.min(1, (1.16 - t.yRig) / 0.13);
-    return { y: t.yRig, cx: t.centerRig, rx: t.halfW, rz: +(t.halfW * k).toFixed(4) };
-  }),
+  ...prof.map((t) => ({ y: t.yRig, cx: t.centerRig, rx: t.halfW, rz: +(t.halfW * depthK(t.yRig)).toFixed(4) })),
   { y: R.shoulderY, cx: prof[prof.length - 1].centerRig, rx: +(armpitHalf * 0.95).toFixed(4), rz: +(armpitHalf * 0.95 * TORSO_DEPTH).toFixed(4) },
 ]);
 
@@ -139,11 +144,17 @@ const spec = {
   armOverlay: capRows(M.armOverlay.map((r) => {
     // Ride the torso surface: cz from the trunk's own depth at this
     // height (front of the wedge sits half-proud of the hip).
-    let tz = 0.12;
-    for (const t of prof) if (Math.abs(t.yRig - r.y) < 0.02) tz = t.halfW * TORSO_DEPTH;
     const rz = +(r.rx * 0.9).toFixed(4);
-    return { y: r.y, cx: r.cx, rx: r.rx, rz, cz: +Math.max(0, tz - rz * 0.5).toFixed(4) };
+    return { y: r.y, cx: r.cx, rx: r.rx, rz, cz: +Math.max(0, frontAt(r.y) - rz * 0.5).toFixed(4) };
   }).sort((a, b) => a.y - b.y)),
+  // TORSO/GROIN RELIEF: interior bright islands as thin plates riding
+  // the front surface - the drawn pec/ab/navel highlights become form.
+  // lift scales brightness-over-median; a subset of the run, so the
+  // silhouette is untouched by construction.
+  torsoRelief: M.torsoRelief.flatMap((r) => {
+    const base = { cx: r.cx, rx: r.rx, rz: 0.012, cz: +(frontAt(r.y) - 0.006 + r.lift * 0.3).toFixed(4) };
+    return [{ ...base, y: +(r.y - HALF).toFixed(4), brk: true }, { ...base, y: +(r.y + HALF).toFixed(4) }];
+  }),
   // Exact single-run rows: hair + traps + deltoid mass fused, per the
   // sprite. Depth ratio shallower than the trunk (hair hugs the head).
   hairRows: capRows(M.hairRows.map((r) => ({ y: r.y, cx: r.cx, rx: r.halfW, rz: +(r.halfW * 0.6).toFixed(4) })).sort((a, b) => a.y - b.y)),
