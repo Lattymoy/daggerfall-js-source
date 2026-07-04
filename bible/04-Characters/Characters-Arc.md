@@ -19,6 +19,48 @@ C4c's milestone note stands as history). Every C6 piece is AUTHORED
 at Voxlight enemy craft against the real paperdoll art - no
 band-recolor shortcuts ship, ever.
 
+## Direction pivot 2 (Mac, 2026-07-04): NEUTRAL REDESIGN
+
+The paperdoll is redesigned from scratch, NOT constrained to the
+reference sprite (Mac: "we aren't constrained to the reference
+sprite"). The whole trace/pin lineage below (C6-C7b: row traces
+through BODY00I0, the IoU 1.0000 silhouette pin, the derived back
+sheet, PD_SEG) is RETIRED for the live model - kept as history and
+still on disk (DAGGER_SPEC, silhouetteIoU, paperdollPose, gen-dagger-
+spec, fit-pose, silhouette-diff, paperdoll-spec, the paint sheets,
+silhouette.test.js) but UNUSED by render. Candidate for deletion (see
+Testing.md audit note).
+
+The live model is a designed standing figure - `buildNeutralBody()` in
+`src/characters/neutralBody.js` (pure, browser-safe; takes ART_PAL
+ramps, returns faces with baked colour):
+- **Pose:** arms at the sides, legs parallel and forward, feet
+  forward. Proper 7.5-head proportions (total ~2.0 rig units).
+- **Geometry:** loft profiles (super-ellipse cross-sections, power
+  `p` flattens toward squarish). Torso V-taper broad-shoulder ->
+  narrow waist, waist-width hips fused to the thighs. Trapezius yoke +
+  angular deltoid caps (planar, low `p` - NOT round balls). Egg head
+  (deeper than wide, chin taper). Arms with deltoid/bicep/forearm/
+  wrist taper + mitten hands (flat palm, fused fingers, thumb nub).
+  Legs thigh-thickest -> thin ankle, defined knee (kneecap bulge +
+  joint pinch) and elbow (crease + olecranon). Explicit FLAT-SOLED box
+  feet (ring-loft makes a ball; feet are extruded heel->toe).
+- **Shading (baked per face):** intensity from the face normal (upper-
+  right key) SNAPPED to an ART_PAL ramp step = the blocky look Mac
+  wants (skin/boot ramps from the sprite). Geometry AO darkens
+  crevices (armpit/crotch/neck/inner joints) by in-front neighbour
+  density - flat panels untouched. No lerp, no rim light (both tried,
+  rejected). No pecs/abs (tried, "silly").
+- **Live:** interiorContext builds buildNeutralBody(ramps) directly;
+  baked colours pass straight through (no sprite projection, no paint
+  sheets). ?world&play&voxelfolk renders it in the tavern.
+- **Viewer:** `tools/neutral/` - standalone Three.js orbit viewer off
+  the SAME module (`build-viewer.mjs`, ramps from the sprite). The
+  in-chat iteration tool.
+
+Open: pieces (armor) re-seat on the new rig; hands/face detail (face
+declined); engine-shader vs baked-shading interaction to confirm.
+
 ## Slice plan
 
 - **C1 (SHIPPED) - interior people (AddPeople verbatim)**: BlockPeopleRecords ->
