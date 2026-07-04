@@ -89,7 +89,7 @@ for (let row = 0; row < H; row++) for (let bx = 0; bx < W; bx++) {
   // snapping to one index - snapping banded the back into ~14 flat
   // blocks (the blocky relief), the front reads continuous sprite
   // luminance and stays smooth. Endpoints stay palette-exact.
-  const f = (1 - it) * (p.ramp.length - 1);
+  const f = it * (p.ramp.length - 1); // lit (high it) -> bright end of the ramp (ramp is sorted dark->bright); the prior (1-it) inverted the shading, rendering the lit side dark
   const k = Math.max(0, Math.min(p.ramp.length - 2, Math.floor(f)));
   const frac = Math.max(0, Math.min(1, f - k));
   const c0 = pal.get(p.ramp[k]), c1 = pal.get(p.ramp[k + 1]);

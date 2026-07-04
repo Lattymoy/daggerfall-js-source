@@ -161,6 +161,18 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6x (SHIPPED): back shading was INVERTED
+
+Mac: the lower back still needs proper shading. Instrumenting the
+derived sheet exposed it: the lighting intensity `it` was a correct
+smooth gradient (0.06 dark -> 0.90 lit), but the ramp index used
+`(1 - it) * (len-1)` while the ramp is sorted dark->bright - so high
+light picked the DARK end. The lit surface rendered dark and the
+shadow side rendered bright; the lower back read as a flat dark
+expanse with a stray bright edge strip. Fix: index by `it` (lit ->
+bright end). The lower back is now a proper shadow->lit gradient
+across its width. Front + cores byte-identical, pin 1.0000.
+
 ### C6w (SHIPPED): back shading continuous - the blocky bands
 
 Mac: the upper/lower back are too blocky; the front does it well, copy
