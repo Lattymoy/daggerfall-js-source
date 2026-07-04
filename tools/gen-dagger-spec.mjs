@@ -42,6 +42,17 @@ const prof = [...M.torsoProfile].sort((a, b) => a.yRig - b.yRig);
 // Pelvis depth taper (shared by the trunk rows and the relief plates):
 // the trunk's depth blends into the leg depth over the hip band.
 const depthK = (y) => y >= 1.16 ? TORSO_DEPTH : TORSO_DEPTH + (0.45 - TORSO_DEPTH) * Math.min(1, (1.16 - y) / 0.13);
+const armDepthBlend = (rows) => {
+  const top = Math.max(...rows.map((r) => r.y));
+  return rows.map((r) => {
+    const armRz = r.rx * 0.9;
+    const d = top - r.y; // distance below the arm top
+    const blend = d < 0.14 ? 1 - d / 0.14 : 0; // 1 at the top, 0 by 0.14 below
+    const torsoRz = frontAt(r.y);
+    const rz = armRz + (torsoRz - armRz) * blend;
+    return { y: r.y, cx: r.cx, rx: r.rx, rz: +rz.toFixed(4) };
+  });
+};
 const frontAt = (y) => {
   let tz = 0.105; // below the trunk: thigh-front level
   for (const t of prof) if (Math.abs(t.yRig - y) < 0.02) return t.halfW * depthK(y);
@@ -135,9 +146,15 @@ const spec = {
   // image-right tucked arm. Arms are round: rz = rx * 0.9. The trace
   // carries the fists (wider bottom rows) - handScale retires under
   // paperdoll builds.
+  // Arm depth blends into the TORSO depth at the shoulder/armpit: the
+  // arm loft (rz ~ rx*0.9) meets the deeper torso at a hard z-step,
+  // which reads as a dark crease at the junction. Within ~0.14 rig
+  // units of each arm's TOP, rz lerps from the torso depth at that
+  // height down to the arm's own depth - the shoulder is genuinely
+  // deep, so no step, no crease. Depth-only: x,y (the pin) untouched.
   armRows: {
-    neg: markBreaks(capRows(M.armRows.left.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.9).toFixed(4) })).sort((a, b) => a.y - b.y))),
-    pos: markBreaks(capRows(M.armRows.right.map((r) => ({ y: r.y, cx: r.cx, rx: r.rx, rz: +(r.rx * 0.9).toFixed(4) })).sort((a, b) => a.y - b.y))),
+    neg: markBreaks(capRows(armDepthBlend(M.armRows.left).sort((a, b) => a.y - b.y))),
+    pos: markBreaks(capRows(armDepthBlend(M.armRows.right).sort((a, b) => a.y - b.y))),
   },
   // Tucked-hand OVERLAY: additive geometry only (a subset of the
   // sprite run - the union and the torso emission are untouched).

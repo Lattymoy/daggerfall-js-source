@@ -161,6 +161,18 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C7a (SHIPPED): armpit crease - arm depth blends to the torso
+
+Mac: the armpit (both arms), on the back. Not a hole (the torso wall
+spans the full z-range where the arm abuts) - a z-STEP: the arm loft
+(rz ~ rx*0.9 ~ 0.07) met the deep torso/shoulder (~0.14) at a hard
+0.08 ledge, reading as a dark crease at the junction on angled views,
+front and back. Fix: within 0.14 rig units of each arm's top, rz lerps
+from the torso/shoulder depth at that height down to the arm's own
+depth (top 0.138 -> wrist 0.024) - the shoulder is genuinely deep, so
+the junction is seamless. Depth-only (x,y untouched): pin 1.0000, all
+other lists byte-identical.
+
 ### C6z (SHIPPED): the back samples the sprite - like the front
 
 Mac: look at how the front achieves clarity and replicate it for the
