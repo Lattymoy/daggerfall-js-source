@@ -48,8 +48,8 @@ export function buildNeutralBody(ramps) {
     { y: 1.33, rx: 0.182, rz: 0.092, p: TP }, // lower ribs
     { y: 1.19, rx: 0.160, rz: 0.082, p: TP }, // waist (narrowest)
     { y: 1.09, rx: 0.162, rz: 0.084, p: TP }, // upper hip (holds waist width)
-    { y: 1.02, rx: 0.165, rz: 0.086, p: TP }, // pelvis
-    { y: 0.94, rx: 0.168, rz: 0.088, p: TP }, // pelvis floor
+    { y: 1.04, rx: 0.168, rz: 0.088, p: TP }, // pelvis
+    { y: 0.99, rx: 0.170, rz: 0.090, p: TP }, // pelvis floor (caps the thigh tops)
   ];
   loft(torso, SKIN);
 
@@ -160,10 +160,9 @@ export function buildNeutralBody(ramps) {
   // connector: from the measured thigh top (y1.034) up into the pelvis,
   // widening and pulling toward centre so it fuses with the hip.
   const CONNECT = [
-    { y: 0.95, rx: legProf[legProf.length - 1].rx, rz: legProf[legProf.length - 1].rz, dx: 0 },
-    { y: 1.02, rx: 0.125, rz: 0.115, dx: 0.006 },
-    { y: 1.10, rx: 0.115, rz: 0.105, dx: 0.012 },
-    { y: 1.18, rx: 0.100, rz: 0.095, dx: 0.022 }, // rises into the pelvis, fusing at ~waist width
+    { y: 0.90, rx: legProf[legProf.length - 1].rx, rz: legProf[legProf.length - 1].rz, dx: 0 },
+    { y: 0.96, rx: 0.120, rz: 0.112, dx: 0.006 },
+    { y: 1.00, rx: 0.108, rz: 0.100, dx: 0.012 }, // meets the pelvis floor - does NOT rise past it
   ];
   function leg(sign) {
     loft(legProf, SKIN, () => sign * LEG_X, () => 0);
@@ -232,6 +231,11 @@ export function buildNeutralBody(ramps) {
   // radius - flat surfaces see none, crevice walls (armpit, crotch,
   // neck, behind knee/elbow, under pec/delt) face a close opposing wall
   // and darken. No hardcoded positions.
+
+  // HEIGHT: vertical compress for a shorter, stockier (Daggerfall)
+  // build. Applied before AO so crevice distances stay consistent.
+  const HSCALE = 0.9;
+  for (const f of faces) for (let i = 0; i < 4; i++) f.p[i*3+1] *= HSCALE;
 
   const cen = faces.map((f) => {
     let x = 0, y = 0, z = 0;

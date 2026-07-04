@@ -26,7 +26,7 @@ test('neutral: builds a well-formed figure', () => {
   }
   // feet on the ground, ~7.5-head height, upright.
   assert.ok(minY >= -1e-6 && minY < 0.03, `feet near ground, min y ${minY}`);
-  assert.ok(maxY > 1.9 && maxY < 2.15, `crown near 2.0, got ${maxY}`);
+  assert.ok(maxY > 1.7 && maxY < 1.95, `crown near 1.82 (height-compressed), got ${maxY}`);
 });
 
 test('neutral: shading is deterministic and blocky', () => {
