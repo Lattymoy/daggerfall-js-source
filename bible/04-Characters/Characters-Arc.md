@@ -161,6 +161,17 @@ ignored (silhouette is the law: the IoU + excess gates hold
 regardless of paint). Loop: edit the 1x PNG, push, refresh.
 tools/export-paint-sheets.mjs regenerates starters + 4x previews.
 
+### C6y (SHIPPED): crotch seam - ambient occlusion in the crevice
+
+Mac: the seam where the legs meet. Both inner thighs were lit bright
+right to the crotch gap - the derived shading is pure directional
+light on the loft normal, with no occlusion, so the concave crevice
+(like the armpit) stayed lit. Added crotch AO: per row, the gap centre
+between the two leg runs is measured from the sprite, and inner-thigh
+pixels darken by proximity (0.45x at the seam, ramping to 1x by 7px
+out). Derived from the measured gap, not painted. The crotch now reads
+as a shadowed crevice. Front + cores byte-identical, pin 1.0000.
+
 ### C6x (SHIPPED): back shading was INVERTED
 
 Mac: the lower back still needs proper shading. Instrumenting the

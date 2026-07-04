@@ -73,6 +73,16 @@ function partAt(col, row) {
 
 // View-relative key light, same convention as the front (upper right).
 const L = (() => { const v = [0.5, 0.55, 0.67]; const n = Math.hypot(...v); return v.map((k) => k / n); })();
+// Crotch gap centre per row: the space between the two leg runs (the
+// concave crevice the directional model can't shadow). Only where the
+// row splits into two wide runs (legs).
+const gapCentre = new Array(H).fill(null);
+for (let y = 0; y < H; y++) {
+  const runs = []; let st = -1;
+  for (let x = 0; x <= W; x++) { const on = x < W && data[y * W + x]; if (on && st < 0) st = x; if (!on && st >= 0) { runs.push([st, x - 1]); st = -1; } }
+  const wide = runs.filter((r) => r[1] - r[0] > 4);
+  if (wide.length >= 2) gapCentre[y] = (wide[0][1] + wide[1][0]) / 2;
+}
 const png = new PNG({ width: W, height: H });
 for (let row = 0; row < H; row++) for (let bx = 0; bx < W; bx++) {
   const fcol = W - 1 - bx; // back sheet is rear-view: mirror to front space
@@ -84,7 +94,17 @@ for (let row = 0; row < H; row++) for (let bx = 0; bx < W; bx++) {
   const dx = Math.max(-1, Math.min(1, (rx0 - p.cx) / Math.max(1e-4, p.rx)));
   const nx = -dx; // mirrored view flips lateral normal
   const nz = Math.sqrt(Math.max(0, 1 - nx * nx));
-  const it = Math.max(0.06, nx * L[0] + 0.12 * L[1] + nz * L[2]);
+  let it = Math.max(0.06, nx * L[0] + 0.12 * L[1] + nz * L[2]);
+  // Crotch ambient occlusion: the inner thighs face the concave gap and
+  // sit in shadow - directional lighting alone leaves them lit. Darken
+  // by proximity to the gap centre (within ~7px), strongest at the
+  // seam. Derived from the measured leg gap, not painted.
+  const gc = gapCentre[row];
+  if (gc != null) {
+    const dGap = Math.abs((fcol + 0.5) - gc);
+    if (dGap < 7) it *= 0.45 + 0.55 * (dGap / 7); // 0.45x at the seam -> 1x by 7px out
+    it = Math.max(0.06, it);
+  }
   // Continuous ramp: LERP between adjacent ramp colours instead of
   // snapping to one index - snapping banded the back into ~14 flat
   // blocks (the blocky relief), the front reads continuous sprite
