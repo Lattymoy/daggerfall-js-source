@@ -26,11 +26,8 @@ import { LADDER_MODEL_ID } from '../player/enterExit.js';
 import { collectInteriorPeople } from '../characters/interiorPeople.js';
 import { packCharacterFaces } from '../render/characterMesh.js';
 import { trs } from '../world/mat4.js';
-import { buildBody, BARE_PLUGS } from '../characters/rewrite/body.js';
 import { buildNeutralBody } from '../characters/neutralBody.js';
 import { facesBounds } from '../render/characterMesh.js';
-import { DAGGER_SPEC } from '../characters/daggerBodySpec.js';
-import { PAPERDOLL_POSE } from '../characters/paperdollPose.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { fetchBytes } from './shared.js';
 import { ActionSystem } from '../world/actionSystem.js';
@@ -125,16 +122,13 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const billboardBatches = [];
   const flatGroups = new Map();
   if (opts.voxelfolk && people.length) {
-    // C6j (Mac's architecture): the OLD VOXEL RIG is the geometry -
-    // real 3D body, real back and sides, paperdoll stance on
-    // DAGGER_SPEC - and the classic sprite is the SHADING: every rig
-    // face samples BODY00I0 by front projection (face centroid ->
-    // sprite pixel; feet-anchored, centreline-aligned), so the front
-    // reads 1:1 with the sprite. Faces the sprite cannot see take the
-    // projected-through sample for now; developing OUR OWN textures
-    // from the classic data (ramp machinery from C6i) is the next
-    // step. Pieces re-seat on the rig with that step - &piece is
-    // inert here until then.
+    // Neutral paperdoll (C8): a redesigned standing figure from
+    // buildNeutralBody() - NOT sprite-constrained (arms at the sides,
+    // forward legs/feet, designed anatomy). Colour is baked per face
+    // (AO + snapped-ARM_PAL-ramp shading, the blocky look), ramps
+    // taken from the loaded sprite so the palette matches. The old
+    // sprite-trace rig (DAGGER_SPEC + 1:1 silhouette pin) is retired.
+    // Pieces will re-seat on this rig later - &piece is inert here.
     const bodyImg = new ImgFile();
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
     const bodyBmp = bodyImg.getDFBitmap();
@@ -148,66 +142,10 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const ramps = { skin: rampOf(40, 60, (x)=>Math.abs(x-((W-1)/2))<14), boot: rampOf(132, 144) };
     const faces = buildNeutralBody(ramps);
     const b = facesBounds(faces);
-    const u = (b.maxY - b.minY) / H; // rig units per sprite pixel
-    const sample = (x, y) => {
-      let col = Math.round((W - 1) / 2 + x / u);
-      let row = Math.round((b.maxY - y) / u);
-      col = Math.max(0, Math.min(W - 1, col));
-      row = Math.max(0, Math.min(H - 1, row));
-      let idx = bodyBmp.data[row * W + col];
-      if (!idx) {
-        // Rig wider than the sprite here: clamp to the row's nearest
-        // opaque pixel so ramps stay continuous.
-        for (let d = 1; d < W && !idx; d++) {
-          if (col - d >= 0 && bodyBmp.data[row * W + col - d]) idx = bodyBmp.data[row * W + col - d];
-          else if (col + d < W && bodyBmp.data[row * W + col + d]) idx = bodyBmp.data[row * W + col + d];
-        }
-      }
-      return idx;
-    };
-    // C6L: Mac's hand-painted sheets (classic sprite space, 1x).
-    // front/back chosen by the face normal; back sheet is authored in
-    // rear-view space (mirrored). A transparent painted pixel falls
-    // through to the classic projection.
-    const loadSheet = async (name) => {
-      try {
-        const r = await fetch(`/src/characters/paint/${name}`);
-        if (!r.ok) return null;
-        const bm = await createImageBitmap(await r.blob());
-        const cv = new OffscreenCanvas(bm.width, bm.height);
-        const c2 = cv.getContext('2d');
-        c2.drawImage(bm, 0, 0);
-        return c2.getImageData(0, 0, bm.width, bm.height);
-      } catch { return null; }
-    };
-    const restore = (name) => new Promise((res) => {
-      const d = opts.paint ? localStorage.getItem(`paint-${name}`) : null;
-      if (!d) return res(null);
-      const im = new Image();
-      im.onload = () => {
-        const cvv = new OffscreenCanvas(im.width, im.height);
-        const c2 = cvv.getContext('2d');
-        c2.drawImage(im, 0, 0);
-        res(c2.getImageData(0, 0, im.width, im.height));
-      };
-      im.onerror = () => res(null);
-      im.src = d;
-    });
-    const [sheetF, sheetB] = await Promise.all([
-      restore('front').then((r) => r || loadSheet('body-front.png')),
-      restore('back').then((r) => r || loadSheet('body-back.png')),
-    ]);
-    const paint = (sheet, col, row, mirror) => {
-      if (!sheet) return null;
-      const x = mirror ? W - 1 - col : col;
-      if (x < 0 || x >= sheet.width || row < 0 || row >= sheet.height) return null;
-      const o = (row * sheet.width + x) * 4;
-      return sheet.data[o + 3] > 0 ? [sheet.data[o], sheet.data[o + 1], sheet.data[o + 2]] : null;
-    };
     // Colours are baked into the neutral faces (AO + palette shading);
     // pass them straight through - no sprite projection or paint sheets.
     const buildRgb = () => faces.map((f) => ({ p: f.p, n: f.n, c: f.c }));
-    let mesh = renderer.createCharacterMesh(packCharacterFaces(buildRgb()));
+    const mesh = renderer.createCharacterMesh(packCharacterFaces(buildRgb()));
     const CLASSIC_HEIGHT = 1.8;
     const sc = CLASSIC_HEIGHT / (b.maxY - b.minY);
     const bodyEntries = [];
@@ -215,23 +153,6 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       const entry = { mesh, matrix: trs(pn.x, pn.y - b.minY * sc, pn.z, 0, 0, 0, sc, sc, sc) };
       bodyEntries.push(entry);
       charDraws.push(entry);
-    }
-    if (opts.paint && sheetF && sheetB) {
-      // Silhouette masks: front = the sprite mask; back = mirrored.
-      const masks = { front: new Uint8Array(W * H), back: new Uint8Array(W * H) };
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        masks.front[y * W + x] = bodyBmp.data[y * W + x] ? 1 : 0;
-        masks.back[y * W + x] = bodyBmp.data[y * W + (W - 1 - x)] ? 1 : 0;
-      }
-      const rebuild = () => {
-        const next = renderer.createCharacterMesh(packCharacterFaces(buildRgb()));
-        const dead = mesh;
-        mesh = next;
-        for (const e of bodyEntries) e.mesh = next;
-        renderer.destroyMesh(dead);
-      };
-      const { mountPaintOverlay } = await import('./paintOverlay.js');
-      mountPaintOverlay({ sheets: { front: sheetF, back: sheetB }, masks, W, H, rebuild }, palette);
     }
   } else {
     for (const pn of people) {
