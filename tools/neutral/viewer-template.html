@@ -7,7 +7,7 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; background: #14141a; overflow: hidden; touch-action: none; font-family: -apple-system, system-ui, sans-serif; }
-  #c { display: block; width: 100vw; height: 100vh; }
+  #c { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; image-rendering: crisp-edges; }
   #hud { position: fixed; top: env(safe-area-inset-top, 8px); left: 0; right: 0; text-align: center; color: #8a8a99; font-size: 12px; pointer-events: none; padding-top: 8px; }
   #bar { position: fixed; bottom: env(safe-area-inset-bottom, 0); left: 0; right: 0; display: flex; gap: 8px; justify-content: center; padding: 12px; }
   button { background: #23232e; color: #cfcfda; border: 1px solid #34343f; border-radius: 999px; padding: 10px 16px; font-size: 13px; -webkit-tap-highlight-color: transparent; }
@@ -23,6 +23,10 @@
   <button id="reset">reset view</button>
   <button id="wire">wireframe</button>
   <button id="bg">bg</button>
+</div>
+<div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 58px); left:0; right:0; display:flex; gap:10px; justify-content:center; align-items:center; color:#8a8a99; font-size:12px;">
+  <span>pixelize</span>
+  <input id="px" type="range" min="1" max="10" step="1" value="1" style="width:min(52vw,320px);">
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -71,12 +75,14 @@ const fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-1, 0
 
 // Orbit state.
 let yaw = 0.5, pitch = 0.15, dist = D.h * 2.1, autospin = true;
+let pixel = 1; // buffer downscale factor (CSS upscales it -> chunky)
 function resize() {
   const w = innerWidth, h = innerHeight;
-  renderer.setSize(w, h, false);
+  renderer.setSize(Math.max(1, Math.round(w / pixel)), Math.max(1, Math.round(h / pixel)), false);
   camera.aspect = w / h; camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
+document.getElementById('px').addEventListener('input', (e) => { pixel = +e.target.value; resize(); });
 
 function frame() {
   if (autospin) yaw += 0.005;
