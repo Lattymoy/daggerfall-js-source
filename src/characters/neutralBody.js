@@ -254,11 +254,13 @@ export function buildNeutralBody(ramps, opts = {}) {
   // cuirass = torso chest->waist; greaves = legs + hip fauld; boots =
   // feet/ankle; gauntlets = forearm+hand. Each thickens the rig's own
   // surface and recolours steel (no separate mesh, animates for free).
-  // clothing (base layer, thin): shirt = torso + short sleeves, pants
-  // = legs + pelvis, shoes = feet. Cloth material. Sits under armour.
-  if (opts.shirt) { displace(['body'], 1.12, 1.62, 0.008, null, 1, 'cloth'); displace(['armL','armR'], 1.30, 1.62, 0.008, armCx, 1, 'cloth'); }
-  if (opts.pants) { displace(['legL','legR'], 0.40, 1.00, 0.008, legCx, 1, 'cloth'); displace(['body'], 0.90, 1.14, 0.008, null, 1, 'cloth'); }
-  if (opts.shoes) displace(['legL','legR'], 0.00, 0.16, 0.008, legCx, 1, 'cloth');
+  // clothing (base layer, thin): zone list from the item DB via
+  // clothingZones() - each garment resolves to displace zones. Cloth
+  // material, sits UNDER the armour. Legs/arms carry their own centre.
+  for (const z of (opts.clothZones || [])) {
+    const cxFor = z.leg ? legCx : z.arm ? armCx : null;
+    displace(z.groups, z.yLo, z.yHi, z.th ?? 0.008, cxFor, 1, 'cloth');
+  }
 
   if (opts.cuirass) displace(['body'], 1.12, 1.62, 0.022);
   if (opts.greaves) { displace(["legL","legR"], 0.56, 1.00, 0.020, legCx, 0.28); displace(['body'], 0.90, 1.14, 0.020); }
