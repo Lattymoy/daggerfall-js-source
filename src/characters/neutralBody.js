@@ -236,7 +236,7 @@ export function buildNeutralBody(ramps, opts = {}) {
   // rig's own surface where a piece sits and recolour it. No gaps, and
   // it animates with the body for free. Cuirass = the torso ('body')
   // faces in the chest->waist band pushed radially out + tagged steel.
-  const displace = (groups, yLo, yHi, th, cxFor, zScale = 1) => {
+  const displace = (groups, yLo, yHi, th, cxFor, zScale = 1, mat = 'steel') => {
     for (const f of faces) {
       if (!groups.includes(f.g)) continue;
       let cy = 0; for (let i = 0; i < 4; i++) cy += f.p[i*3+1]; cy /= 4;
@@ -246,7 +246,7 @@ export function buildNeutralBody(ramps, opts = {}) {
         const x = f.p[i*3] - cx, z = f.p[i*3+2], r = Math.hypot(x, z) || 1;
         f.p[i*3] = cx + x + (x/r)*th; f.p[i*3+2] = z + (z/r)*th*zScale;
       }
-      f._armor = 'steel';
+      f._mat = mat;
     }
   };
   const legCx = (g) => g === 'legL' ? -LEG_X : g === 'legR' ? LEG_X : 0;
@@ -254,6 +254,12 @@ export function buildNeutralBody(ramps, opts = {}) {
   // cuirass = torso chest->waist; greaves = legs + hip fauld; boots =
   // feet/ankle; gauntlets = forearm+hand. Each thickens the rig's own
   // surface and recolours steel (no separate mesh, animates for free).
+  // clothing (base layer, thin): shirt = torso + short sleeves, pants
+  // = legs + pelvis, shoes = feet. Cloth material. Sits under armour.
+  if (opts.shirt) { displace(['body'], 1.12, 1.62, 0.008, null, 1, 'cloth'); displace(['armL','armR'], 1.30, 1.62, 0.008, armCx, 1, 'cloth'); }
+  if (opts.pants) { displace(['legL','legR'], 0.40, 1.00, 0.008, legCx, 1, 'cloth'); displace(['body'], 0.90, 1.14, 0.008, null, 1, 'cloth'); }
+  if (opts.shoes) displace(['legL','legR'], 0.00, 0.16, 0.008, legCx, 1, 'cloth');
+
   if (opts.cuirass) displace(['body'], 1.12, 1.62, 0.022);
   if (opts.greaves) { displace(["legL","legR"], 0.56, 1.00, 0.020, legCx, 0.28); displace(['body'], 0.90, 1.14, 0.020); }
   if (opts.boots) displace(['legL','legR'], 0.00, 0.42, 0.016, legCx);
@@ -287,7 +293,9 @@ export function buildNeutralBody(ramps, opts = {}) {
     const fc = faces[i];
     let it = Math.max(0.08, (fc.n[0]*Lx + fc.n[1]*Ly + fc.n[2]*Lz) / Ln * 0.9 + 0.15);
     it *= ao[i]; // crevices darken
-    const ramp = fc._armor === 'steel' ? (opts.steel || ramps.steel || ramps.skin) : (fc.c === BOOT ? ramps.boot : ramps.skin);
+    const ramp = fc._mat === 'steel' ? (opts.steel || ramps.steel || ramps.skin)
+      : fc._mat === 'cloth' ? (opts.cloth || ramps.cloth || ramps.skin)
+      : (fc.c === BOOT ? ramps.boot : ramps.skin);
     fc.c = shade(ramp, Math.min(1, Math.max(0.04, it)));
   }
 

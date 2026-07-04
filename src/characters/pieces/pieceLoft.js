@@ -46,3 +46,5 @@ export const HSCALE = 0.9;
 export function compress(faces) { for (const f of faces) for (let i = 0; i < 4; i++) f.p[i*3+1] *= HSCALE; return faces; }
 
 export const STEEL_RAMP = [[38, 40, 46], [64, 68, 78], [102, 108, 120], [146, 152, 166], [184, 192, 206], [214, 222, 236]];
+// Linen/tan cloth (procedural; item dye colours come from data later).
+export const CLOTH_RAMP = [[58, 48, 38], [86, 72, 54], [118, 100, 74], [150, 128, 96], [180, 158, 122], [206, 186, 150]];
