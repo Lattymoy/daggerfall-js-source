@@ -27,6 +27,7 @@ import { collectInteriorPeople } from '../characters/interiorPeople.js';
 import { packCharacterFaces } from '../render/characterMesh.js';
 import { trs } from '../world/mat4.js';
 import { buildBody, BARE_PLUGS } from '../characters/rewrite/body.js';
+import { buildNeutralBody } from '../characters/neutralBody.js';
 import { facesBounds } from '../render/characterMesh.js';
 import { DAGGER_SPEC } from '../characters/daggerBodySpec.js';
 import { PAPERDOLL_POSE } from '../characters/paperdollPose.js';
@@ -138,9 +139,14 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
     const bodyBmp = bodyImg.getDFBitmap();
     const W = bodyBmp.width, H = bodyBmp.height;
-    const faces = buildBody(
-      { loco: 'stand', hold: 'idle', phase: 0, weapon: 'none', paperdoll: PAPERDOLL_POSE },
-      BARE_PLUGS, DAGGER_SPEC);
+    // NEUTRAL paperdoll (redesign): geometry + AO + snapped-ramp
+    // palette shading, baked per face. Ramps come from the loaded
+    // ART_PAL sprite (skin from the mid torso, boot from the feet) so
+    // the palette matches the game.
+    const lumOf = (i) => { const c = palette.get(i); return 0.299*c.r + 0.587*c.g + 0.114*c.b; };
+    const rampOf = (r0, r1, keep) => { const m = new Map(); for (let y=r0;y<=r1;y++) for (let x=0;x<W;x++){ const i=bodyBmp.data[y*W+x]; if(i&&(!keep||keep(x,y))) m.set(i,lumOf(i)); } return [...m.entries()].sort((a,b)=>a[1]-b[1]).map(e=>{const c=palette.get(e[0]);return [c.r,c.g,c.b];}); };
+    const ramps = { skin: rampOf(40, 60, (x)=>Math.abs(x-((W-1)/2))<14), boot: rampOf(132, 144) };
+    const faces = buildNeutralBody(ramps);
     const b = facesBounds(faces);
     const u = (b.maxY - b.minY) / H; // rig units per sprite pixel
     const sample = (x, y) => {
@@ -198,17 +204,9 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       const o = (row * sheet.width + x) * 4;
       return sheet.data[o + 3] > 0 ? [sheet.data[o], sheet.data[o + 1], sheet.data[o + 2]] : null;
     };
-    const buildRgb = () => faces.map((f) => {
-      let cx = 0, cy = 0; const np = f.p.length / 3;
-      for (let i = 0; i < np; i++) { cx += f.p[i * 3]; cy += f.p[i * 3 + 1]; }
-      const col = Math.max(0, Math.min(W - 1, Math.round((W - 1) / 2 + (cx / np) / u)));
-      const row = Math.max(0, Math.min(H - 1, Math.round((b.maxY - cy / np) / u)));
-      const painted = f.n[2] >= 0 ? paint(sheetF, col, row, false) : paint(sheetB, col, row, true);
-      if (painted) return { p: f.p, n: f.n, c: painted };
-      const idx = sample(cx / np, cy / np);
-      const c = idx ? palette.get(idx) : { r: 40, g: 36, b: 34 };
-      return { p: f.p, n: f.n, c: [c.r, c.g, c.b] };
-    });
+    // Colours are baked into the neutral faces (AO + palette shading);
+    // pass them straight through - no sprite projection or paint sheets.
+    const buildRgb = () => faces.map((f) => ({ p: f.p, n: f.n, c: f.c }));
     let mesh = renderer.createCharacterMesh(packCharacterFaces(buildRgb()));
     const CLASSIC_HEIGHT = 1.8;
     const sc = CLASSIC_HEIGHT / (b.maxY - b.minY);
