@@ -73,3 +73,37 @@ export function buildBodyScales(bodyFaces, skin) {
   }
   return shadeScales(faces, skin);
 }
+
+// short fur tuft at P: a thin blade angled outward then swept DOWN (fur
+// lies down the body) and a touch back. One tri, tagged g.
+function furTuft(out, P, n, len, g) {
+  let up = Math.abs(n[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0];
+  let t1 = [n[1]*up[2]-n[2]*up[1], n[2]*up[0]-n[0]*up[2], n[0]*up[1]-n[1]*up[0]];
+  const l1 = Math.hypot(...t1) || 1; t1 = [t1[0]/l1, t1[1]/l1, t1[2]/l1];
+  const base = [P[0]+n[0]*0.003, P[1]+n[1]*0.003, P[2]+n[2]*0.003];
+  const w = len * 0.22;
+  const a = [base[0]+t1[0]*w, base[1]+t1[1]*w, base[2]+t1[2]*w];
+  const b = [base[0]-t1[0]*w, base[1]-t1[1]*w, base[2]-t1[2]*w];
+  // tip: out along normal, then down + slightly back
+  const tip = [base[0]+n[0]*len*0.5, base[1]+n[1]*len*0.5 - len*0.85, base[2]+n[2]*len*0.5 - len*0.15];
+  const ux=a[0]-base[0],uy=a[1]-base[1],uz=a[2]-base[2], vx=tip[0]-base[0],vy=tip[1]-base[1],vz=tip[2]-base[2];
+  let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx; const L=Math.hypot(nx,ny,nz)||1;
+  out.push({ p:[...a,...b,...tip,...tip], n:[nx/L,ny/L,nz/L], g });
+}
+
+// Khajiit fur pass: dense short tufts over the whole body, tagged per
+// group so they move with the rig. No scutes.
+export function buildBodyFur(bodyFaces, skin) {
+  const faces = [];
+  for (const f of bodyFaces) {
+    if (f.g === 'head') continue;              // head furred separately
+    const n = f.n;
+    if (n[2] < -0.45) continue;                // skip deep back
+    let cx=0, cy=0, cz=0; for (let i=0;i<4;i++){ cx+=f.p[i*3]; cy+=f.p[i*3+1]; cz+=f.p[i*3+2]; }
+    cx/=4; cy/=4; cz/=4;
+    if (cy > 1.62) continue;                    // neck/head boundary
+    const len = (f.g === 'body') ? 0.030 : 0.024;
+    furTuft(faces, [cx, cy, cz], n, len, f.g);
+  }
+  return shadeScales(faces, skin);
+}
