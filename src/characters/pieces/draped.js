@@ -123,7 +123,7 @@ function flareRows(topY, hemY, tRx, tRz, hRx, hRz, steps = 9) {
   return rows;
 }
 function capeRows(hemY, wide, steps = 12) {
-  const rows = [], neckY = 1.585, W = wide ? 1.16 : 1.0;
+  const rows = [], neckY = 1.500, W = wide ? 1.16 : 1.0;
   for (let k = 0; k <= steps; k++) { const t = k/steps, y = neckY - t*(neckY-hemY), grow = Math.pow(t, 0.85); const [rx, rz] = clip(y, (0.088 + grow*0.230)*W, (0.100 + grow*0.185)*W); rows.push({ y, rx, rz }); }
   return rows;
 }

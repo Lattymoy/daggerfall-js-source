@@ -61,11 +61,12 @@ export function stepCloth(cloth, dt, opts, core) {
   const damp = opts.damp ?? 0.985, SO = opts.standoff ?? 0.030, iters = opts.iters ?? 6;
   const pinDX = opts.pinDX||0, pinDY = opts.pinDY||0, pinDZ = opts.pinDZ||0;
   const dt2 = dt*dt;
+  const maxStep = opts.maxStep ?? 0.035;   // clamp per-step move -> no verlet spikes
   for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
     const px=pos[o], py=pos[o+1], pz=pos[o+2];
-    pos[o]   = px + (px-prev[o])  *damp + gx*dt2;
-    pos[o+1] = py + (py-prev[o+1])*damp + gy*dt2;
-    pos[o+2] = pz + (pz-prev[o+2])*damp + gz*dt2;
+    let mvx = (px-prev[o])*damp + gx*dt2, mvy = (py-prev[o+1])*damp + gy*dt2, mvz = (pz-prev[o+2])*damp + gz*dt2;
+    const mv = Math.hypot(mvx, mvy, mvz); if (mv > maxStep) { const f = maxStep/mv; mvx*=f; mvy*=f; mvz*=f; }
+    pos[o]=px+mvx; pos[o+1]=py+mvy; pos[o+2]=pz+mvz;
     prev[o]=px; prev[o+1]=py; prev[o+2]=pz;
   }
   for (let i = 0; i < V; i++) if (pinned[i]) { const o=i*3; pos[o]=base[o]+pinDX; pos[o+1]=base[o+1]+pinDY; pos[o+2]=base[o+2]+pinDZ; prev[o]=pos[o]; prev[o+1]=pos[o+1]; prev[o+2]=pos[o+2]; }
@@ -77,8 +78,9 @@ export function stepCloth(cloth, dt, opts, core) {
       if (!pinned[i]) { pos[oi]+=dx; pos[oi+1]+=dy; pos[oi+2]+=dz; }
       if (!pinned[j]) { pos[oj]-=dx; pos[oj+1]-=dy; pos[oj+2]-=dz; }
     }
-    const caps = opts.capsules, trunkLo = opts.trunkLo ?? 0.80, trunkHi = opts.trunkHi ?? 1.56;
+    const caps = opts.capsules, trunkLo = opts.trunkLo ?? 0.80, trunkHi = opts.trunkHi ?? 1.56, groundY = opts.groundY ?? 0.02;
     for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
+      if (pos[o+1] < groundY) pos[o+1] = groundY;   // stand on the floor, don't sink through the feet
       // limbs FIRST (bent legs + swinging arms)...
       if (caps) for (let ci = 0; ci < caps.length; ci++) { const hit = pushCapsule(pos[o], pos[o+1], pos[o+2], caps[ci], SO); if (hit) { pos[o]=hit[0]; pos[o+1]=hit[1]; pos[o+2]=hit[2]; } }
       // ...then the torso ellipse LAST (the body core wins - cloth ends outside it)

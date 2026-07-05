@@ -198,7 +198,7 @@ function currentCapsules(phase, bob) {
 function stepDrapeCloth(phase, motion, bob) {
   const cur = DRAPES[drapeIx]; const cs = clothSims[cur]; if (!cs) return;
   const caps = motion > 0.5 ? currentCapsules(phase, bob) : null; // articulated collider while walking
-  const opts = { gy: -7, gx: motion * 0.6 * Math.sin(phase), gz: -motion * 2.0, pinDY: bob, iters: 6, damp: 0.985, capsules: caps };
+  const opts = { gy: -7, gx: motion * 0.5 * Math.sin(phase), gz: -motion * 1.8, pinDY: bob, iters: 10, damp: 0.985, maxStep: 0.035, groundY: 0.02, capsules: caps };
   stepCloth(cs.cloth, 1/60, opts, coreFn);
   stepCloth(cs.cloth, 1/60, opts, coreFn); // 2 substeps for stability
   cs.posArr.set(cs.cloth.pos); cs.geo.attributes.position.needsUpdate = true;
