@@ -291,7 +291,7 @@ function animate(dt) {
 let yaw = 0.5, pitch = 0.15, dist = D.h * 2.1, autospin = true;
 function resize() {
   const w = innerWidth, h = innerHeight;
-  renderer.setSize(w, h, false);
+  renderer.setSize(w, h, true);   // updateStyle: canvas display size == buffer, or mobile 100vh != innerHeight stretches the aspect
   const rw = Math.max(1, Math.round(w / pixel)), rh = Math.max(1, Math.round(h / pixel));
   rt.setSize(rw, rh); postMat.uniforms.res.value.set(rw, rh);
   camera.aspect = w / h; camera.updateProjectionMatrix();
