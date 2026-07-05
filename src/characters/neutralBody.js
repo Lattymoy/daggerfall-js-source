@@ -135,9 +135,9 @@ export function buildNeutralBody(ramps, opts = {}) {
       { y: 0.860, rx: 0.048, rz: 0.026 }, // fingers
       { y: 0.820, rx: 0.036, rz: 0.020 }, // fingertips (rounded)
     ], SKIN, () => cx, () => 0);
-    // THUMB: short nub off the INNER side (toward the body), upper palm,
-    // angled slightly forward.
-    const tside = -sign; // inner
+    // THUMB: short nub off the OUTER side (away from the body), upper
+    // palm, angled slightly forward.
+    const tside = sign; // outer
     loft([
       { y: 0.955, rx: 0.016, rz: 0.020, cz: 0.010 },
       { y: 0.935, rx: 0.020, rz: 0.024, cz: 0.018 },
