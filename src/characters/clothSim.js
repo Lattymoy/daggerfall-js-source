@@ -57,6 +57,7 @@ function pushCapsule(px, py, pz, C, SO) {
 }
 export function stepCloth(cloth, dt, opts, core) {
   const { pos, prev, base, pinned, con, V } = cloth;
+  const start = pos.slice();
   const gx = opts.gx||0, gy = opts.gy ?? -7.0, gz = opts.gz||0;
   const damp = opts.damp ?? 0.985, SO = opts.standoff ?? 0.030, iters = opts.iters ?? 6;
   const pinDX = opts.pinDX||0, pinDY = opts.pinDY||0, pinDZ = opts.pinDZ||0;
@@ -81,17 +82,20 @@ export function stepCloth(cloth, dt, opts, core) {
       if (!pinned[j]) { pos[oj]-=dx; pos[oj+1]-=dy; pos[oj+2]-=dz; }
     }
   }
-  // one collision resolve pass
-  const caps = opts.capsules, trunkLo = opts.trunkLo ?? 0.80, trunkHi = opts.trunkHi ?? 1.56, groundY = opts.groundY ?? 0.02;
+  // anti-pop: clamp the verlet+constraint move (the pop source) BEFORE
+  // collision - collision then runs unclamped so it always fully ejects.
+  const cap = opts.maxStep ?? 0.05;
+  for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
+    let mx=pos[o]-start[o], my=pos[o+1]-start[o+1], mz=pos[o+2]-start[o+2]; const mm=Math.hypot(mx,my,mz);
+    if (mm > cap) { const f=cap/mm; pos[o]=start[o]+mx*f; pos[o+1]=start[o+1]+my*f; pos[o+2]=start[o+2]+mz*f; } }
+  // one collision resolve pass (unclamped)
+  const caps = opts.capsules, groundY = opts.groundY ?? 0.02;
   for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
     if (pos[o+1] < groundY) pos[o+1] = groundY;
     if (caps) for (let ci = 0; ci < caps.length; ci++) { const hit = pushCapsule(pos[o], pos[o+1], pos[o+2], caps[ci], SO); if (hit) { pos[o]=hit[0]; pos[o+1]=hit[1]; pos[o+2]=hit[2]; } }
-    const py = pos[o+1];
-    if (!caps || (py >= trunkLo && py <= trunkHi)) {
-      const ext = core(py), A = ext[0]+SO, C = ext[1]+SO;
+    { const ext = core(pos[o+1]), A = ext[0]+SO, C = ext[1]+SO;   // body silhouette, full height
       let px=pos[o], pz=pos[o+2]; let e = (px*px)/(A*A) + (pz*pz)/(C*C);
-      if (e < 1) { if (e < 1e-9) { px = A; pz = 0; e = 1; } const f = 1/Math.sqrt(e); pos[o]=px*f; pos[o+2]=pz*f; }
-    }
+      if (e < 1) { if (e < 1e-9) { px = A; pz = 0; e = 1; } const f = 1/Math.sqrt(e); pos[o]=px*f; pos[o+2]=pz*f; } }
   }
 }
 

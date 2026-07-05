@@ -43,7 +43,7 @@ test('no clipping: every free particle stays outside the body collider', () => {
 });
 
 // Articulated limb collider for a gait phase (mirrors the viewer).
-const GEOM = { legX: 0.082, hipY: 0.90, kneeY: 0.52, ankleY: 0.10, legR: [0.12, 0.085, 0.065] };
+const GEOM = { legX: 0.082, hipY: 0.90, kneeY: 0.52, ankleY: 0.10, legR: [0.08, 0.075, 0.065] };
 function capsFor(phase) {
   const sA = 0.44, kA = 0.9;
   return articulatedCapsules(GEOM, {
