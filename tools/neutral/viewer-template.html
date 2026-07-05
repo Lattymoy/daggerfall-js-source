@@ -229,7 +229,7 @@ function stepDrapeCloth(phase, motion, bob, L) {
 const bodyFurCoat = D.bodyFurCoat ? buildPiece(D.bodyFurCoat) : null;
 const bodyFurBelly = D.bodyFurBelly ? buildPiece(D.bodyFurBelly) : null;
 const swordMesh = D.sword ? buildPiece(D.sword) : null;
-if (swordMesh) swordMesh.visible = false;
+if (swordMesh) { swordMesh.visible = false; animTargets[animTargets.length - 1].held = true; } // rigid in the grip
 if (bodyScalesMesh) bodyScalesMesh.visible = false;
 if (bodyFurCoat) bodyFurCoat.visible = false;
 if (bodyFurBelly) bodyFurBelly.visible = false;
@@ -286,11 +286,12 @@ const armRootX = { 2: grpMeanX(2), 3: grpMeanX(3) };
 const armTune = { pitch: 0, spread: 0, elbow: 0, hand: 0 };
 function poseArms(T) {
   const P = T.pos, B = T.base, VG = T.vgrp;
+  const held = !!T.held;   // a gripped rigid object: EVERY vert is "in the hand" - no per-height joint cuts splitting it
   for (let i=0;i<VG.length;i++) { const g = VG[i], o = i*3;
     if (g === 2 || g === 3) {
       let x = B[o], y = B[o+1], z = B[o+2]; const rootX = armRootX[g], mir = g === 2 ? -1 : 1;
-      if (armTune.hand   && y < wristY) [x,z] = rotY(x, z, rootX, 0, armTune.hand);         // hand roll (twist)
-      if (armTune.elbow  && y < elbowY) [y,z] = rotX(y, z, elbowY, -armTune.elbow);      // elbow flex FORWARD
+      if (armTune.hand   && (held || y < wristY)) [x,z] = rotY(x, z, rootX, 0, armTune.hand);   // hand roll (twist)
+      if (armTune.elbow  && (held || y < elbowY)) [y,z] = rotX(y, z, elbowY, -armTune.elbow);   // elbow flex FORWARD
       if (armTune.pitch)  [y,z] = rotX(y, z, shoulderY, armTune.pitch);                  // shoulder fore/aft
       if (armTune.spread) [x,y] = rotZ(x, y, rootX, shoulderY, mir * armTune.spread);    // abduction (mirrored)
       P[o]=x; P[o+1]=y; P[o+2]=z;

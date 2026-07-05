@@ -80,15 +80,21 @@ half-up. 4.5kg x Daedric hits 22.5 quarter-kgs exactly (DFU 5.5kg, JS
 5.75) - weightForMaterial ports banker's rounding. weapons.test.js
 witnesses every constant against the DFU source.
 
-- **Longsword (SHIPPED)** - `pieces/sword.js`: pommel/grip/cruciform
-  guard/tapered blade lofts at the right-fist column, every face
-  tagged `armR` so the ARM TRANSFORM carries it - point-down carry at
-  rest, and the melee1H fold lands it blade-up-forward past the
-  shoulder (probed: tip y 0.255 rest -> 1.25..1.72 +z 0.28 posed). No
-  weapon-specific animation code. Viewer: `sword:` button cycles off ->
-  Iron..Daedric (recolor via stored piece intensities - shadePiece now
-  bakes `_i`); stats line shows the verbatim item record (dmg, mat
-  mod, hit, kg, value, condition). `__setSword(i)` hook.
+- **Longsword (SHIPPED)** - `pieces/sword.js`: pommel/grip/broad
+  cruciform guard/tapered blade lofts at the LEFT-fist column (Mac:
+  left hand, and big - 0.70-unit blade, hangs to the shin), every face
+  tagged `armL` so the ARM TRANSFORM carries it - point-down carry at
+  rest, and the melee1H fold lands it point-forward off the guard arm
+  (probed: tip y 0.061 rest -> z 0.30..1.17 posed). No weapon-specific
+  animation code. HELD RULE: a gripped rigid object takes the FULL
+  hand transform - the tuner's per-height wrist cut split the sword
+  (blade rolled, pommel didn't); sword's animTarget carries
+  `held: true` and poseArms skips the height cuts for held targets
+  (probed rigid: extents identical under a maxed hand roll). Viewer:
+  `sword:` button cycles off -> Iron..Daedric (recolor via stored
+  piece intensities - shadePiece now bakes `_i`); stats line shows the
+  verbatim item record (dmg, mat mod, hit, kg, value, condition).
+  `__setSword(i)` hook.
 - Next candidates (not approved): the other 1H blades on the same
   loft (Dagger/Tanto/Shortsword/Wakazashi/Broadsword/Saber/Katana),
   blunt/axe families, 2H + the 2H hold, sheath/hip carry.

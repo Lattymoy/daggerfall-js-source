@@ -51,23 +51,23 @@ test('weapons: verbatim DFU data pins', () => {
   assert.equal(fem.playerTextureArchive, d.playerTextureArchive - 1);
 });
 
-test('sword piece: well-formed armR-tagged mesh in the right fist', () => {
+test('sword piece: well-formed armL-tagged mesh in the left fist', () => {
   const faces = buildSword(STEEL_RAMP);
   assert.ok(faces.length > 40, 'too few faces');
   let minY = 1e9, maxY = -1e9;
   for (const f of faces) {
-    assert.equal(f.g, 'armR');
+    assert.equal(f.g, 'armL');
     assert.equal(f.p.length, 12);
     assert.ok(f.c && f.c.length === 3);
     const nl = Math.hypot(f.n[0], f.n[1], f.n[2]);
     assert.ok(Math.abs(nl - 1) < 1e-6, 'non-unit normal');
     for (let i = 0; i < 4; i++) {
       const x = f.p[i * 3], y = f.p[i * 3 + 1];
-      assert.ok(Math.abs(x - 0.235) < 0.08, `off the fist column: x=${x}`);
+      assert.ok(Math.abs(x - -0.235) < 0.095, `off the fist column: x=${x}`);
       if (y < minY) minY = y; if (y > maxY) maxY = y;
     }
   }
-  // post-HSCALE: pommel ~0.93, tip ~0.25 - hangs beside the leg at rest.
-  assert.ok(maxY > 0.90 && maxY < 0.96, `pommel y ${maxY}`);
-  assert.ok(minY > 0.22 && minY < 0.28, `tip y ${minY}`);
+  // post-HSCALE: pommel ~0.94, big blade tip ~0.06 - hangs to the shin.
+  assert.ok(maxY > 0.90 && maxY < 0.97, `pommel y ${maxY}`);
+  assert.ok(minY > 0.04 && minY < 0.09, `tip y ${minY}`);
 });
