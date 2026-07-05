@@ -30,6 +30,7 @@
   <button id="helm" class="on">helm</button>
   <button id="race">race: Human</button>
   <button id="tone">tone: Pale</button>
+  <button id="hairstyle">hair: short</button>
 </div>
 <div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 72px); left:0; right:0; display:flex; flex-direction:column; gap:8px; align-items:center; color:#8a8a99; font-size:12px; pointer-events:none;">
   <div style="display:flex; gap:8px; align-items:center;"><span id="pxlab" style="width:120px; text-align:right;">pixelize: off</span><input id="px" type="range" min="1" max="16" step="1" value="1" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
@@ -138,8 +139,14 @@ const animTargets = [{ pos, base: basePos, vgrp, geo }];
 const pieceMesh = {};
 for (const name of ['pauldrons','helm']) if (D[name]) pieceMesh[name] = buildPiece(D[name]);
 const RACES = ['Human','Elf','Khajiit','Argonian']; let raceIx = 0;
-const raceMesh = {};
-for (const r of RACES) { const key = 'hair'+r; if (D[key]) { raceMesh[r] = buildPiece(D[key]); raceMesh[r].visible = false; } }
+const raceHair = {};
+for (const R of RACES) {
+  const packs = (D.hair && D.hair[R]) ? D.hair[R] : {};
+  const styles = Object.keys(packs);
+  raceHair[R] = { styles, meshes: {}, ix: 0 };
+  for (const st of styles) { const m = buildPiece(packs[st]); m.visible = false; raceHair[R].meshes[st] = m; }
+}
+const curHair = () => { const h = raceHair[RACES[raceIx]]; return h && h.styles.length ? h.meshes[h.styles[h.ix]] : null; };
 const tailMesh = D.tail ? buildPiece(D.tail) : null;
 const tailCatMesh = D.tailCat ? buildPiece(D.tailCat) : null;
 const bodyScalesMesh = D.bodyScales ? buildPiece(D.bodyScales) : null;
@@ -161,17 +168,17 @@ function applyTone() {
     if (bodyFurCoat) bodyFurCoat.userData.recolor(e.coat);
     if (bodyFurBelly) bodyFurBelly.userData.recolor(e.belly);
     if (tailCatMesh) tailCatMesh.userData.recolor(e.coat);
-    if (raceMesh.Khajiit) raceMesh.Khajiit.userData.recolor(e.coat);
+    { const h = curHair(); if (h) h.userData.recolor(e.coat); }
   } else if (R === 'Argonian') {
     setBodyRamp(e.ramp);
     if (bodyScalesMesh) bodyScalesMesh.userData.recolor(e.ramp);
     if (tailMesh) tailMesh.userData.recolor(e.ramp);
-    if (raceMesh.Argonian) raceMesh.Argonian.userData.recolor(e.ramp);
+    { const h = curHair(); if (h) h.userData.recolor(e.ramp); }
   } else {
     setBodyRamp(e.ramp); // Human / Elf skin tone
   }
 }
-const syncHair = () => { const R = RACES[raceIx]; applyTone(); const m = raceMesh[RACES[raceIx]]; if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); if (bodyScalesMesh) bodyScalesMesh.visible = (RACES[raceIx] === 'Argonian'); if (bodyFurCoat) bodyFurCoat.visible = (RACES[raceIx] === 'Khajiit'); if (bodyFurBelly) bodyFurBelly.visible = (RACES[raceIx] === 'Khajiit'); }; // per-race body detail
+const syncHair = () => { const R = RACES[raceIx]; applyTone(); for (const rr of RACES) { const h = raceHair[rr]; if (h) for (const st of h.styles) h.meshes[st].visible = false; } const m = curHair(); if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); if (bodyScalesMesh) bodyScalesMesh.visible = (RACES[raceIx] === 'Argonian'); if (bodyFurCoat) bodyFurCoat.visible = (RACES[raceIx] === 'Khajiit'); if (bodyFurBelly) bodyFurBelly.visible = (RACES[raceIx] === 'Khajiit'); }; // per-race body detail
 syncHair();
 scene.add(pivot);
 
@@ -281,8 +288,11 @@ let bgi = 0; const bgs = [0x14141a, 0x000000, 0x808088, 0xf0f0f0];
 postMat.uniforms.bg.value = new THREE.Color(bgs[0]);
 
 for (const name of ['pauldrons','helm']) { const btn = document.getElementById(name); if (btn) btn.onclick = (e) => { const m = pieceMesh[name]; if (m) { m.visible = !m.visible; e.target.classList.toggle('on', m.visible); if (name === 'helm') syncHair(); } }; }
-document.getElementById('race').onclick = (e) => { raceMesh[RACES[raceIx]].visible = false; raceIx = (raceIx+1)%RACES.length; syncHair(); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACES[raceIx]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name; };
+document.getElementById('race').onclick = (e) => { raceMesh[RACES[raceIx]].visible = false; raceIx = (raceIx+1)%RACES.length; syncHair(); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACES[raceIx]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name; refreshHairLabel(); };
 document.getElementById('tone').onclick = (e) => { const R=RACES[raceIx], pal=(D.PALETTES||{})[PKEY[R]]; if(!pal)return; toneIx[R]=(toneIx[R]+1)%pal.length; applyTone(); e.target.textContent='tone: '+pal[toneIx[R]%pal.length].name; };
+function refreshHairLabel(){ const h=raceHair[RACES[raceIx]]; const b=document.getElementById('hairstyle'); if(b) b.textContent = (h&&h.styles.length>1)?('hair: '+h.styles[h.ix]):'hair: -'; }
+document.getElementById('hairstyle').onclick = () => { const h=raceHair[RACES[raceIx]]; if(!h||h.styles.length<2) return; h.ix=(h.ix+1)%h.styles.length; syncHair(); refreshHairLabel(); };
+refreshHairLabel();
 document.getElementById('walk').onclick = (e) => { walking = !walking; e.target.classList.toggle('on', walking); };
 document.getElementById('bg').onclick = () => { bgi = (bgi + 1) % bgs.length; scene.background = new THREE.Color(bgs[bgi]); postMat.uniforms.bg.value = new THREE.Color(bgs[bgi]); };
 </script>

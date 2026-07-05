@@ -19,27 +19,57 @@ function shadeHair(faces, ramp) {
 }
 
 // race: 'Human' | 'Elf' | 'Khajiit' | 'Argonian' (morphology groups).
-export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null) {
+export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null, style = 'short') {
   const faces = [];
   const P = 0.8;
   const hasHair = race !== 'Argonian'; // reptilian: crest instead of hair
-  if (hasHair) {
-  // Top cap: full over the crown down to the hairline band.
-  loftPiece(faces, [
-    { y: 2.055, rx: 0.058, rz: 0.064, p: P, cz: -0.012 }, // crown
-    { y: 2.000, rx: 0.114, rz: 0.128, p: P, cz: -0.018 }, // upper
-    { y: 1.945, rx: 0.146, rz: 0.158, p: P, cz: -0.018 }, // widest
-    { y: 1.910, rx: 0.148, rz: 0.160, p: P, cz: -0.014 }, // hairline band
-  ], { group: 'head', seg: 26, capBottom: false });
-  // Back + sides drop: continue down the nape/sides, front (face) open.
-  const drop = [
-    { y: 1.910, rx: 0.148, rz: 0.160, p: P, cz: -0.014 },
-    { y: 1.820, rx: 0.146, rz: 0.156, p: P, cz: -0.020 },
-    { y: 1.740, rx: 0.132, rz: 0.146, p: P, cz: -0.026 }, // nape
-  ];
-  // cover from PI/2+GAP round to PI/2-GAP (skip the front face arc)
-  const GAP = 1.0;
-  loftPiece(faces, drop, { group: 'head', seg: 22, arc: [Math.PI/2 + GAP, Math.PI/2 - GAP + Math.PI*2] });
+  if (hasHair && style !== 'bald') {
+    const cap = (yLo, dropTo, backThick) => {
+      // crown cap down to the hairline band
+      loftPiece(faces, [
+        { y: 2.055, rx: 0.058, rz: 0.064, p: P, cz: -0.012 },
+        { y: 2.000, rx: 0.114, rz: 0.128, p: P, cz: -0.018 },
+        { y: 1.945, rx: 0.146, rz: 0.158, p: P, cz: -0.018 },
+        { y: 1.910, rx: 0.148, rz: 0.160, p: P, cz: -0.014 },
+      ], { group: 'head', seg: 26, capBottom: false });
+      // back + sides drop to `dropTo`
+      const rows = [
+        { y: 1.910, rx: 0.148, rz: 0.160, p: P, cz: -0.014 },
+        { y: 1.820, rx: 0.146 + backThick, rz: 0.156 + backThick, p: P, cz: -0.020 },
+      ];
+      const steps = Math.max(1, Math.round((1.820 - dropTo) / 0.09));
+      for (let k = 1; k <= steps; k++) { const t = k/steps, y = 1.820 - t*(1.820-dropTo);
+        rows.push({ y, rx: (0.146 + backThick)*(1-0.28*t), rz: (0.156 + backThick)*(1-0.20*t), p: P, cz: -0.020 - t*0.02 }); }
+      const GAP = 1.0;
+      loftPiece(faces, rows, { group: 'head', seg: 22, arc: [Math.PI/2 + GAP, Math.PI/2 - GAP + Math.PI*2] });
+    };
+    const strand = (spine, r0) => { // a rounded tube (ponytail/braid), tangent frames
+      const T = spine.map((pp,i)=>{const a=spine[Math.max(0,i-1)],b=spine[Math.min(spine.length-1,i+1)];let t=[b.x-a.x,b.y-a.y,b.z-a.z];const l=Math.hypot(...t)||1;return[t[0]/l,t[1]/l,t[2]/l];});
+      const side=[1,0,0];
+      const rings=spine.map((pp,i)=>{const t=T[i];let d=[t[1]*side[2]-t[2]*side[1],t[2]*side[0]-t[0]*side[2],t[0]*side[1]-t[1]*side[0]];const dl=Math.hypot(...d)||1;d=[d[0]/dl,d[1]/dl,d[2]/dl];const N=8,ring=[];for(let k=0;k<N;k++){const a=k/N*2*Math.PI,c=Math.cos(a)*pp.r,sn=Math.sin(a)*pp.r;ring.push([pp.x+c*side[0]+sn*d[0],pp.y+c*side[1]+sn*d[1],pp.z+c*side[2]+sn*d[2]]);}return ring;});
+      for(let i=0;i+1<rings.length;i++)for(let k=0;k<8;k++){const j=(k+1)%8;quad(rings[i][k],rings[i][j],rings[i+1][j],rings[i+1][k]);}
+    };
+    const quad = (a,b,c,d) => { const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const L=Math.hypot(nx,ny,nz)||1;faces.push({p:[...a,...b,...c,...d],n:[nx/L,ny/L,nz/L],g:'head'}); };
+
+    if (style === 'short')    cap(1.910, 1.740, 0.0);
+    else if (style === 'buzz') cap(1.910, 1.800, -0.02);
+    else if (style === 'medium') cap(1.910, 1.640, 0.006);
+    else if (style === 'long') cap(1.910, 1.470, 0.012);
+    else if (style === 'ponytail') { cap(1.910, 1.760, 0.0); strand([
+        {x:0,y:1.860,z:-0.150,r:0.030},{x:0,y:1.800,z:-0.210,r:0.032},{x:0,y:1.700,z:-0.250,r:0.030},
+        {x:0,y:1.580,z:-0.256,r:0.026},{x:0,y:1.470,z:-0.236,r:0.020},{x:0,y:1.390,z:-0.200,r:0.010}], 0.03); }
+    else if (style === 'topknot') { cap(1.910, 1.780, 0.0); strand([
+        {x:0,y:2.055,z:-0.010,r:0.030},{x:0,y:2.110,z:-0.010,r:0.044},{x:0,y:2.150,z:-0.012,r:0.036},{x:0,y:2.168,z:-0.014,r:0.014}], 0.03); }
+    else if (style === 'mohawk') {
+      // central sagittal crest, no full cap: a tall fin front->back
+      const cr = [[1.905,0.150],[1.995,0.090],[2.055,0.000],[2.045,-0.090],[1.965,-0.165]]; // [y,z] base along the scalp
+      for (let i=0;i+1<cr.length;i++){ const [y0,z0]=cr[i],[y1,z1]=cr[i+1]; const h0=0.075,h1=0.075,w=0.020;
+        quad([-w,y0,z0],[w,y0,z0],[w,y0+h0,z0],[-w,y0+h0,z0]);
+        quad([-w,y0,z0],[-w,y0+h0,z0],[-w,y1+h1,z1],[-w,y1,z1]);
+        quad([w,y0,z0],[w,y1,z1],[w,y1+h1,z1],[w,y0+h0,z0]);
+        quad([-w,y0+h0,z0],[w,y0+h0,z0],[w,y1+h1,z1],[-w,y1+h1,z1]); }
+    }
+    else cap(1.910, 1.740, 0.0); // fallback
   }
 
   shadeHair(faces, ramp);
