@@ -288,7 +288,7 @@ let bgi = 0; const bgs = [0x14141a, 0x000000, 0x808088, 0xf0f0f0];
 postMat.uniforms.bg.value = new THREE.Color(bgs[0]);
 
 for (const name of ['pauldrons','helm']) { const btn = document.getElementById(name); if (btn) btn.onclick = (e) => { const m = pieceMesh[name]; if (m) { m.visible = !m.visible; e.target.classList.toggle('on', m.visible); if (name === 'helm') syncHair(); } }; }
-document.getElementById('race').onclick = (e) => { raceMesh[RACES[raceIx]].visible = false; raceIx = (raceIx+1)%RACES.length; syncHair(); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACES[raceIx]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name; refreshHairLabel(); };
+document.getElementById('race').onclick = (e) => { raceIx = (raceIx+1)%RACES.length; syncHair(); e.target.textContent = 'race: '+RACES[raceIx]; const pal=(D.PALETTES||{})[PKEY[RACES[raceIx]]]; if(pal) document.getElementById('tone').textContent='tone: '+pal[toneIx[RACES[raceIx]]%pal.length].name; refreshHairLabel(); };
 document.getElementById('tone').onclick = (e) => { const R=RACES[raceIx], pal=(D.PALETTES||{})[PKEY[R]]; if(!pal)return; toneIx[R]=(toneIx[R]+1)%pal.length; applyTone(); e.target.textContent='tone: '+pal[toneIx[R]%pal.length].name; };
 function refreshHairLabel(){ const h=raceHair[RACES[raceIx]]; const b=document.getElementById('hairstyle'); if(b) b.textContent = (h&&h.styles.length>1)?('hair: '+h.styles[h.ix]):'hair: -'; }
 document.getElementById('hairstyle').onclick = () => { const h=raceHair[RACES[raceIx]]; if(!h||h.styles.length<2) return; h.ix=(h.ix+1)%h.styles.length; syncHair(); refreshHairLabel(); };
