@@ -66,57 +66,66 @@ export function sampleClip(clip, t) {
 // against fist-travel probes (dx sign + magnitude checked live).
 
 export const ATTACKS_1H = {
-  // Vertical chop: coil overhead behind the shoulder, slam down the
-  // centreline, body folds after it.
+  // WRIST-DRIVEN (v2): the grip-pitched blade's TIP sits near the
+  // shoulder/elbow rotX lines (tip radius 0.57 vs pommel 0.73 about
+  // the shoulder - arm swings whirl the POMMEL around a hovering tip,
+  // Mac: "it's all relative to the tip"). About the WRIST the ratio
+  // inverts (tip 0.735 vs pommel 0.196 for pitch; 0.471 vs 0.163 for
+  // yaw), so every strike carries its energy in handPitch/handYaw and
+  // the arm channels only carry the swing. Lateral signs are authored
+  // POST-MIRROR (g=2 flips them), tuned against TIP-travel probes.
+
+  // Vertical chop: blade cocked back over the shoulder, wrist slams
+  // the tip down the centreline, body folding after it.
   StrikeDown: { dur: 0.55, tracks: {
-    'armL.sw':     [[0, 0], [0.30, -2.30], [0.52, 0.30], [1, 0]],
-    'armL.bd':     [[0, 0], [0.30, 0.55], [0.52, 0.05], [1, 0]],
-    'armL.spread': [[0, 0], [0.30, 0.18], [0.52, 0.02], [1, 0]],
-    'armL.handPitch': [[0, 0], [0.30, -0.35], [0.52, 0.25], [1, 0]],
-    'twist':       [[0, 0], [0.30, 0.16], [0.52, -0.10], [1, 0]],
+    'armL.sw':     [[0, 0], [0.30, -0.90], [0.52, 0.10], [1, 0]],
+    'armL.bd':     [[0, 0], [0.30, 0.35], [0.52, 0.05], [1, 0]],
+    'armL.handPitch': [[0, 0], [0.30, -1.35], [0.52, 0.95], [1, 0]],
+    'twist':       [[0, 0], [0.30, 0.14], [0.52, -0.10], [1, 0]],
     'lean':        [[0, 0], [0.30, -0.10], [0.52, 0.26], [1, 0]],
     'headPitch':   [[0, 0], [0.30, -0.18], [0.52, 0.10], [1, 0]],
   } },
-  // Horizontal slash to the character's RIGHT: wind across the body,
-  // sweep the fist right on a flat arc, hips committing.
+  // Horizontal slashes: the wrist yaw throws the tip flat across;
+  // spread + twist carry the arm and hips with it.
   StrikeRight: { dur: 0.45, tracks: {
-    'armL.sw':     [[0, 0], [0.30, -0.55], [0.54, -0.40], [1, 0]],
-    'armL.spread': [[0, 0], [0.30, 1.20], [0.54, -0.95], [1, 0]],
-    'armL.handYaw': [[0, 0], [0.30, 0.45], [0.54, -0.35], [1, 0]],
-    'twist':       [[0, 0], [0.30, 0.42], [0.54, -0.34], [1, 0]],
+    'armL.sw':     [[0, 0], [0.30, -0.35], [0.54, -0.25], [1, 0]],
+    'armL.spread': [[0, 0], [0.30, 0.15], [0.54, -0.10], [1, 0]],
+    'armL.handYaw': [[0, 0], [0.30, -1.15], [0.54, 1.30], [1, 0]],
+    'twist':       [[0, 0], [0.30, -0.30], [0.54, 0.38], [1, 0]],
     'lean':        [[0, 0], [0.54, 0.10], [1, 0]],
   } },
-  // Horizontal slash to the LEFT (backhand): mirrored, tighter.
   StrikeLeft: { dur: 0.45, tracks: {
-    'armL.sw':     [[0, 0], [0.30, -0.55], [0.54, -0.40], [1, 0]],
-    'armL.spread': [[0, 0], [0.30, -0.95], [0.54, 1.20], [1, 0]],
-    'armL.handYaw': [[0, 0], [0.30, -0.35], [0.54, 0.45], [1, 0]],
-    'twist':       [[0, 0], [0.30, -0.34], [0.54, 0.42], [1, 0]],
+    'armL.sw':     [[0, 0], [0.30, -0.35], [0.54, -0.25], [1, 0]],
+    'armL.spread': [[0, 0], [0.30, -0.10], [0.54, 0.15], [1, 0]],
+    'armL.handYaw': [[0, 0], [0.30, 1.30], [0.54, -1.15], [1, 0]],
+    'twist':       [[0, 0], [0.30, 0.38], [0.54, -0.30], [1, 0]],
     'lean':        [[0, 0], [0.54, 0.10], [1, 0]],
   } },
-  // Diagonal hacks: chop + slash blends.
+  // Diagonal hacks: wrist pitch (chop share) + wrist yaw (slash share).
   StrikeDownRight: { dur: 0.50, tracks: {
-    'armL.sw':     [[0, 0], [0.30, -1.85], [0.53, 0.10], [1, 0]],
-    'armL.bd':     [[0, 0], [0.30, 0.40], [0.53, 0.02], [1, 0]],
-    'armL.spread': [[0, 0], [0.30, 0.55], [0.53, -1.00], [1, 0]],
-    'twist':       [[0, 0], [0.30, 0.30], [0.53, -0.26], [1, 0]],
+    'armL.sw':     [[0, 0], [0.30, -1.05], [0.53, 0.05], [1, 0]],
+    'armL.bd':     [[0, 0], [0.30, 0.30], [0.53, 0.02], [1, 0]],
+    'armL.handPitch': [[0, 0], [0.30, -0.90], [0.53, 0.70], [1, 0]],
+    'armL.handYaw': [[0, 0], [0.30, -0.75], [0.53, 0.85], [1, 0]],
+    'twist':       [[0, 0], [0.30, -0.22], [0.53, 0.28], [1, 0]],
     'lean':        [[0, 0], [0.53, 0.20], [1, 0]],
     'headPitch':   [[0, 0], [0.30, -0.12], [1, 0]],
   } },
   StrikeDownLeft: { dur: 0.50, tracks: {
-    'armL.sw':     [[0, 0], [0.30, -1.85], [0.53, 0.10], [1, 0]],
-    'armL.bd':     [[0, 0], [0.30, 0.40], [0.53, 0.02], [1, 0]],
-    'armL.spread': [[0, 0], [0.30, -0.55], [0.53, 1.00], [1, 0]],
-    'twist':       [[0, 0], [0.30, -0.26], [0.53, 0.30], [1, 0]],
+    'armL.sw':     [[0, 0], [0.30, -1.05], [0.53, 0.05], [1, 0]],
+    'armL.bd':     [[0, 0], [0.30, 0.30], [0.53, 0.02], [1, 0]],
+    'armL.handPitch': [[0, 0], [0.30, -0.90], [0.53, 0.70], [1, 0]],
+    'armL.handYaw': [[0, 0], [0.30, 0.85], [0.53, -0.75], [1, 0]],
+    'twist':       [[0, 0], [0.30, 0.22], [0.53, -0.28], [1, 0]],
     'lean':        [[0, 0], [0.53, 0.20], [1, 0]],
     'headPitch':   [[0, 0], [0.30, -0.12], [1, 0]],
   } },
-  // Thrust (Up/UpLeft/UpRight): coil the elbow, pommel to the hip,
-  // then punch the point straight out, blade levelled, body lunging.
+  // Thrust: coil, then the point punches straight out, blade levelled
+  // by the wrist, body lunging.
   StrikeUp: { dur: 0.42, tracks: {
     'armL.sw':     [[0, 0], [0.32, 0.28], [0.55, -1.05], [1, 0]],
     'armL.bd':     [[0, 0], [0.32, 1.05], [0.55, -0.06], [1, 0]],
-    'armL.handPitch': [[0, 0], [0.32, -0.15], [0.55, 0.72], [1, 0]],
+    'armL.handPitch': [[0, 0], [0.32, -0.20], [0.55, 0.85], [1, 0]],
     'twist':       [[0, 0], [0.32, 0.18], [0.55, -0.12], [1, 0]],
     'lean':        [[0, 0], [0.32, -0.04], [0.55, 0.22], [1, 0]],
   } },

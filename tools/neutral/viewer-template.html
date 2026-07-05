@@ -53,6 +53,9 @@
   <div style="display:flex; gap:8px; align-items:center;"><span id="ah_lab" style="width:120px; text-align:right;">hand roll: 0</span><input id="ah" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
   <div style="display:flex; gap:8px; align-items:center;"><span id="ahp_lab" style="width:120px; text-align:right;">hand pitch: 0</span><input id="ahp" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
   <div style="display:flex; gap:8px; align-items:center;"><span id="ahy_lab" style="width:120px; text-align:right;">hand yaw: 0</span><input id="ahy" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="sp_lab" style="width:120px; text-align:right;">swd pitch: 0&deg;</span><input id="sp" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="sf_lab" style="width:120px; text-align:right;">swd fwd: 0</span><input id="sf" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="su_lab" style="width:120px; text-align:right;">swd up: 0</span><input id="su" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -240,7 +243,37 @@ function stepDrapeCloth(phase, motion, bob, L) {
 const bodyFurCoat = D.bodyFurCoat ? buildPiece(D.bodyFurCoat) : null;
 const bodyFurBelly = D.bodyFurBelly ? buildPiece(D.bodyFurBelly) : null;
 const swordMesh = D.sword ? buildPiece(D.sword) : null;
-if (swordMesh) { swordMesh.visible = false; animTargets[animTargets.length - 1].held = true; } // rigid in the grip
+let swordT = null, swordFit0 = null;
+const swordFit = { pitch: 0, dy: 0, dz: 0 };
+if (swordMesh) {
+  swordMesh.visible = false;
+  swordT = animTargets[animTargets.length - 1];
+  swordT.held = true; // rigid in the grip
+  swordFit0 = { base: swordT.base.slice(), nrm: swordMesh.geometry.getAttribute('normal').array.slice() };
+}
+// Adjust the sword's seat IN the hand (Mac): pitch about the GRIP
+// POINT (y 0.81 post-HSCALE, z 0 - invariant under the mesh's grip
+// bake) + fore/aft + up/down offsets. Rewrites the animTarget BASE
+// and the normals; every pose/gait/attack transform then carries the
+// adjusted seat for free.
+function applySwordFit() {
+  if (!swordT) return;
+  const B = swordT.base, B0 = swordFit0.base;
+  const N = swordMesh.geometry.getAttribute('normal').array, N0 = swordFit0.nrm;
+  const gY = 0.81, c = Math.cos(swordFit.pitch), s = Math.sin(swordFit.pitch);
+  for (let i = 0; i < B.length; i += 3) {
+    const dy = B0[i+1] - gY, z = B0[i+2];
+    B[i] = B0[i];
+    B[i+1] = gY + c*dy - s*z + swordFit.dy;
+    B[i+2] = s*dy + c*z + swordFit.dz;
+  }
+  for (let i = 0; i < N.length; i += 3) {
+    const ny = N0[i+1], nz = N0[i+2];
+    N[i] = N0[i]; N[i+1] = c*ny - s*nz; N[i+2] = s*ny + c*nz;
+  }
+  swordMesh.geometry.getAttribute('normal').needsUpdate = true;
+}
+window.__swordFit = (pitch, dy, dz) => { swordFit.pitch = pitch; swordFit.dy = dy; swordFit.dz = dz; applySwordFit(); };
 if (bodyScalesMesh) bodyScalesMesh.visible = false;
 if (bodyFurCoat) bodyFurCoat.visible = false;
 if (bodyFurBelly) bodyFurBelly.visible = false;
@@ -427,6 +460,12 @@ const pxLab = document.getElementById('pxlab'), cdLab = document.getElementById(
 const wireArm=(id,key,scale)=>{const el=document.getElementById(id),lab=document.getElementById(id+'_lab'),name=lab.textContent.split(':')[0];el.addEventListener('input',e=>{armTune[key]=(+e.target.value)/100*scale;lab.textContent=name+': '+e.target.value;});};
 wireArm('ap','pitch',0.9); wireArm('as','spread',0.7); wireArm('ae','elbow',1.6); wireArm('ah','hand',Math.PI);   // hand roll: full +/-180deg
 wireArm('ahp','handPitch',1.3); wireArm('ahy','handYaw',1.0);   // full hand rotation: pitch + yaw join the roll
+// sword seat sliders: pitch +/-45deg about the grip, offsets +/-0.12
+const wireSword = (id, key, scale, fmt) => { const el = document.getElementById(id), lab = document.getElementById(id + '_lab'), name = lab.textContent.split(':')[0];
+  el.addEventListener('input', (e) => { swordFit[key] = (+e.target.value) / 100 * scale; applySwordFit(); lab.innerHTML = name + ': ' + fmt(swordFit[key]); }); };
+wireSword('sp', 'pitch', Math.PI / 4, (v) => Math.round(v * 180 / Math.PI) + '&deg;');
+wireSword('sf', 'dz', 0.12, (v) => v.toFixed(3));
+wireSword('su', 'dy', 0.12, (v) => v.toFixed(3));
 document.getElementById('px').addEventListener('input', (e) => { pixel = +e.target.value; pxLab.textContent = pixel <= 1 ? 'pixelize: off' : 'pixelize: ' + pixel + 'x'; resize(); });
 document.getElementById('cd').addEventListener('input', (e) => { const v = +e.target.value; levels = v >= 9 ? 0 : Math.round(2 + (v-1) * 3); postMat.uniforms.levels.value = levels; cdLab.textContent = levels === 0 ? 'color: full' : 'color: ' + levels + ' lvl'; });
 

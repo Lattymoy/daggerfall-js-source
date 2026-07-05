@@ -175,12 +175,28 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   (probed: ankle z swing 0.89 through a running thrust). AUTHORING
   TRAP pinned: armL spread/yaw/twist land MIRRORED in world (the g=2
   sign flip) - both slashes and both diagonals shipped inverted on
-  first authoring; lateral tracks are tuned post-mirror against
-  fist-travel probes. Final travel (dx/dz, windup->strike):
-  Down -0.22/-0.46, DownLeft -0.28/-0.31, DownRight +0.18/-0.59,
-  Left -0.72/+0.20, Right +0.71/-0.32, Up(thrust) -0.09/+0.31; tip
-  sweeps 2.2-4.5. Viewer: `dir:` cycles the classic directions,
+  first authoring. WRIST-DRIVEN v2 (Mac: "the tip doesn't swing -
+  it's all relative to the tip"): the grip-pitched tip sits NEAR the
+  shoulder/elbow rotX lines (tip radius 0.57 vs pommel 0.73 about the
+  shoulder), so arm-driven strikes whirl the POMMEL around a hovering
+  tip. About the WRIST the ratio inverts (pitch 0.735 vs 0.196, yaw
+  0.471 vs 0.163) - every strike now carries its energy in handPitch/
+  handYaw; arms only carry. YAW SIGN serves the TIP: the tip sits
+  ABOVE the wrist pivot, the fist below - rotZ throws them opposite
+  ways (first tip-tuning inverted all four laterals). Slashes are
+  yaw-led with twist committing THROUGH the strike and spread reduced
+  to windup flavor (three coupled channels were cancelling at the
+  tip: 0.2 travel until restructured). Final TIP travel (dx,dy,dz)
+  windup->strike + tip/pommel arc ratio: Down -0.06,-0.42,+0.75 r1.60;
+  DownLeft -0.77 r1.33; DownRight +0.68 r1.64; Left -1.32 r3.35;
+  Right +1.30 r3.98; thrust +1.12 fwd r2.13. Viewer: `dir:` cycles,
   `strike` fires; `__attack(dirOrStrike)` hook.
+- **Sword seat sliders (Mac)**: tuners bar gains swd pitch (+/-45deg
+  about the GRIP POINT, y 0.81/z 0 - invariant under the mesh bake),
+  swd fwd, swd up (+/-0.12). Rewrites the sword animTarget BASE +
+  normals, so every pose/gait/attack carries the adjusted seat;
+  labels show real units for baking a chosen fit. `__swordFit` hook.
+  Probed: grip stays seated, tip moves 0.31 under 20deg+0.06.
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,

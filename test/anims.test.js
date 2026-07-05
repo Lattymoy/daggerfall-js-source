@@ -34,7 +34,7 @@ test('anims: sampler is a continuous delta (zero at entry, null past dur)', () =
   for (const k of ['twist', 'lean']) if (k in start) assert.equal(start[k], 0);
   for (const limb of ['armL', 'armR']) if (start[limb]) for (const v of Object.values(start[limb])) assert.equal(v, 0);
   const mid = sampleClip(clip, 0.30 * clip.dur);
-  assert.ok(Math.abs(mid.armL.spread - 1.20) < 1e-9, `keyframe hit: ${mid.armL.spread}`);
+  assert.ok(Math.abs(mid.armL.handYaw - -1.15) < 1e-9, `keyframe hit: ${mid.armL.handYaw}`);
   assert.ok(Number.isFinite(mid.twist));
   assert.equal(sampleClip(clip, clip.dur), null);
   assert.equal(sampleClip(clip, clip.dur * 2), null);
