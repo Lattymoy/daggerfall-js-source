@@ -4,7 +4,7 @@
 // that flare/drape outside the silhouette. Tagged 'body' so they move
 // with the torso. Anchored to the measured body profile: waist ~y0.98
 // (rx~0.17, rz~0.115), shoulders ~y1.52 (back z~-0.09).
-import { loftPiece, shadePiece } from './pieceLoft.js';
+import { shadePiece } from './pieceLoft.js';
 
 const B = 'body', P = 0.85;
 
@@ -27,56 +27,9 @@ function quadInto(faces, a, b, c, d, g = B) {
   faces.push({ p:[...a,...b,...c,...d], n:[nx/L,ny/L,nz/L], g });
 }
 
-// A flared cloth cone from `topY` (snug) to `hemY` (wide) - the core of
-// skirts / robes / dress skirts / mummy wraps. Open top + hem.
-function flare(faces, topY, hemY, topRx, topRz, hemRx, hemRz, seg = 26) {
-  const rows = [], steps = 7;
-  for (let k = 0; k <= steps; k++) {
-    const t = k / steps, y = topY - t * (topY - hemY), e = t * t; // ease -> falls straight then flares
-    const [rx, rz] = clip(y, topRx + e * (hemRx - topRx), topRz + e * (hemRz - topRz));
-    rows.push({ y, rx, rz, p: P });
-  }
-  loftPiece(faces, rows, { group: B, seg, capTop: false, capBottom: false });
-}
 
-// Cape: clasped at the NECKLINE (a tight collar ring at the throat), then
-// flows down over the shoulders + back to a wide flowing hem. Open at the
-// front (a narrow throat gap). Clip-clamped so it rides outside the body.
-function cloak(faces, hemY = 0.45, wide = false) {
-  const rows = [], steps = 10, neckY = 1.585, W = wide ? 1.16 : 1.0;
-  for (let k = 0; k <= steps; k++) {
-    const t = k / steps, y = neckY - t * (neckY - hemY);
-    // near the neck it hugs (small), then widens toward the hem
-    const grow = Math.pow(t, 0.85);
-    const [rx, rz] = clip(y, (0.088 + grow * 0.230) * W, (0.100 + grow * 0.185) * W);
-    rows.push({ y, rx, rz, p: P });
-  }
-  // open at the front (+z, a=PI/2): cape covers the back + sides
-  const GAP = 1.25;
-  loftPiece(faces, rows, { group: B, seg: 26, capTop: false, capBottom: false, arc: [Math.PI/2 + GAP, Math.PI/2 - GAP + Math.PI*2] });
-}
 
-// Surcoat: flat front + back tabard panels hanging from the shoulders to
-// mid-thigh, open at the sides.
-function surcoat(faces, hemY = 0.62) {
-  const topY = 1.520, hw = 0.135, zF = 0.130, zB = -0.130;
-  const panel = (z, sgn) => {
-    const tl=[-hw, topY, z], tr=[hw, topY, z], bl=[-hw*1.15, hemY, z*1.05], br=[hw*1.15, hemY, z*1.05];
-    if (sgn > 0) quadInto(faces, tl, tr, br, bl); else quadInto(faces, tr, tl, bl, br);
-  };
-  panel(zF, 1); panel(zB, -1);
-  // shoulder yoke connecting the two over the top
-  quadInto(faces, [-hw, topY, zB], [hw, topY, zB], [hw, topY, zF], [-hw, topY, zF]);
-}
 
-// Toga: a diagonal drape over the LEFT shoulder across to the right hip,
-// plus a short skirt drape below.
-function toga(faces) {
-  const a=[-0.150,1.560,-0.020], b=[0.020,1.545,0.140], c=[0.175,1.010,0.060], d=[0.010,0.995,-0.150];
-  quadInto(faces, a, b, c, d);
-  quadInto(faces, b, a, d, c); // back the panel
-  flare(faces, 1.010, 0.360, 0.180, 0.120, 0.300, 0.210, 22); // skirt under
-}
 
 // Sash: a thin diagonal band shoulder-to-hip.
 function sash(faces) {
@@ -88,32 +41,12 @@ function sash(faces) {
   quadInto(faces, [a[0]-o[0],a[1]-o[1],a[2]-o[2]], [a[0]+o[0],a[1]+o[1],a[2]+o[2]], [b[0]+o[0],b[1]+o[1],b[2]+o[2]], [b[0]-o[0],b[1]-o[1],b[2]-o[2]]);
 }
 
-// Wrap / shawl: an arc over the shoulders and upper back.
-function wrap(faces) {
-  const rows = [ { y: 1.560, rx: 0.150, rz: 0.120, p: P }, { y: 1.470, rx: 0.180, rz: 0.150, p: P }, { y: 1.360, rx: 0.190, rz: 0.150, p: P } ];
-  const GAP = 0.75;
-  loftPiece(faces, rows, { group: B, seg: 20, capTop: false, capBottom: false, arc: [Math.PI/2 + GAP, Math.PI/2 - GAP + Math.PI*2] });
-}
 
 // Garment name -> builder. Robes/kimono are tall near-columnar flares;
 // dresses start at the chest; skirts at the waist; mummy = full wrap.
+// Sash is a thin rigid band (barely drapes) - the only non-grid garment.
 const BUILD = {
-  'Short Skirt':      (f) => flare(f, 0.980, 0.560, 0.175, 0.115, 0.270, 0.190),
-  'Long Skirt':       (f) => flare(f, 0.980, 0.130, 0.175, 0.115, 0.320, 0.220),
-  'Casual Dress':     (f) => flare(f, 1.320, 0.180, 0.150, 0.110, 0.320, 0.220),
-  'Strapless Dress':  (f) => flare(f, 1.300, 0.200, 0.150, 0.110, 0.310, 0.215),
-  'Plain Robes':      (f) => flare(f, 1.545, 0.120, 0.160, 0.120, 0.300, 0.210),
-  'Priest Robes':     (f) => flare(f, 1.545, 0.110, 0.165, 0.125, 0.315, 0.220),
-  'Priestess Robes':  (f) => flare(f, 1.545, 0.110, 0.165, 0.125, 0.315, 0.220),
-  'Kimono':           (f) => flare(f, 1.520, 0.220, 0.175, 0.135, 0.290, 0.220),
-  'Mummy Wrappings':  (f) => flare(f, 1.560, 0.060, 0.155, 0.120, 0.190, 0.150),
-  'Casual Cloak':     (f) => cloak(f, 0.480, false),
-  'Formal Cloak':     (f) => cloak(f, 0.360, true),
-  'Dwynnen Surcoat':  (f) => surcoat(f, 0.640),
-  'Anticlere Surcoat':(f) => surcoat(f, 0.600),
-  'Toga':             (f) => toga(f),
-  'Sash':             (f) => sash(f),
-  'Wrap':             (f) => wrap(f),
+  'Sash': (f) => sash(f),
 };
 
 // ---- Simulatable GRIDS: rows of ring points -> a pinned cloth mesh ----
@@ -142,6 +75,13 @@ const GRIDSPEC = {
   'Mummy Wrappings': { rows: flareRows(1.560, 0.060, 0.155, 0.120, 0.190, 0.150), wrap: true, seg: 22 },
   'Casual Cloak':    { rows: capeRows(0.450, false), wrap: false, seg: 26, arc: CAPE_ARC },
   'Formal Cloak':    { rows: capeRows(0.360, true),  wrap: false, seg: 26, arc: CAPE_ARC },
+  // one-shoulder diagonal wrap: an arc covering ~270deg, open on one side
+  'Toga':            { rows: flareRows(1.520, 0.330, 0.150, 0.115, 0.255, 0.190), wrap: false, seg: 24, arc: [Math.PI*0.12, Math.PI*0.12 + Math.PI*1.5] },
+  // sleeveless over-tunics to mid-thigh
+  'Dwynnen Surcoat': { rows: flareRows(1.500, 0.600, 0.150, 0.125, 0.205, 0.170), wrap: true, seg: 24 },
+  'Anticlere Surcoat': { rows: flareRows(1.500, 0.560, 0.150, 0.125, 0.208, 0.172), wrap: true, seg: 24 },
+  // shoulder shawl: a short arc over the shoulders + upper back
+  'Wrap':            { rows: [{ y: 1.560, rx: 0.150, rz: 0.120 }, { y: 1.475, rx: 0.180, rz: 0.150 }, { y: 1.395, rx: 0.190, rz: 0.152 }, { y: 1.315, rx: 0.188, rz: 0.150 }], wrap: false, seg: 22, arc: [Math.PI/2 + 0.75, Math.PI/2 - 0.75 + Math.PI*2] },
 };
 
 /** Cloth grid for a garment: pinned top row (row 0), ring rows down to
