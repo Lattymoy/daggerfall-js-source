@@ -8,6 +8,19 @@ import { loftPiece, shadePiece } from './pieceLoft.js';
 
 const B = 'body', P = 0.85;
 
+// Body-core half-extents (torso+legs, NO arms), measured from the rig.
+// Drapes are clamped OUTSIDE this + a cloth standoff so they never clip.
+const CORE = [[1.55,0.072,0.084],[1.50,0.205,0.090],[1.45,0.215,0.088],[1.40,0.215,0.096],[1.30,0.208,0.098],[1.20,0.182,0.092],[1.05,0.160,0.082],[0.95,0.168,0.088],[0.90,0.178,0.100],[0.85,0.202,0.120],[0.80,0.202,0.120],[0.75,0.194,0.114],[0.65,0.178,0.100],[0.55,0.168,0.090],[0.50,0.154,0.080],[0.45,0.158,0.088],[0.40,0.152,0.072],[0.30,0.166,0.088],[0.20,0.142,0.063],[0.10,0.137,0.050]];
+const STANDOFF = 0.038;
+function core(y) {
+  if (y >= CORE[0][0]) return [CORE[0][1], CORE[0][2]];
+  if (y <= CORE[CORE.length-1][0]) { const l = CORE[CORE.length-1]; return [l[1], l[2]]; }
+  for (let i = 0; i+1 < CORE.length; i++) { const a = CORE[i], b = CORE[i+1]; if (y <= a[0] && y >= b[0]) { const t = (y-a[0])/(b[0]-a[0]); return [a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t]; } }
+  return [0.2, 0.1];
+}
+// clamp a ring's rx/rz to sit outside the body core at height y
+function clip(y, rx, rz) { const [cx, cz] = core(y); return [Math.max(rx, cx + STANDOFF), Math.max(rz, cz + STANDOFF)]; }
+
 function quadInto(faces, a, b, c, d, g = B) {
   const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2], vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];
   let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx; const L=Math.hypot(nx,ny,nz)||1;
@@ -20,22 +33,27 @@ function flare(faces, topY, hemY, topRx, topRz, hemRx, hemRz, seg = 26) {
   const rows = [], steps = 7;
   for (let k = 0; k <= steps; k++) {
     const t = k / steps, y = topY - t * (topY - hemY), e = t * t; // ease -> falls straight then flares
-    rows.push({ y, rx: topRx + e * (hemRx - topRx), rz: topRz + e * (hemRz - topRz), p: P });
+    const [rx, rz] = clip(y, topRx + e * (hemRx - topRx), topRz + e * (hemRz - topRz));
+    rows.push({ y, rx, rz, p: P });
   }
   loftPiece(faces, rows, { group: B, seg, capTop: false, capBottom: false });
 }
 
-// Cloak: an arc panel hanging from the shoulders down the back, flaring
-// out, open at the front. Plus a small collar ring at the neck.
-function cloak(faces, hemY = 0.42, wide = false) {
-  const rows = [], steps = 8, topY = 1.545, W = wide ? 1.15 : 1.0;
+// Cape: clasped at the NECKLINE (a tight collar ring at the throat), then
+// flows down over the shoulders + back to a wide flowing hem. Open at the
+// front (a narrow throat gap). Clip-clamped so it rides outside the body.
+function cloak(faces, hemY = 0.45, wide = false) {
+  const rows = [], steps = 10, neckY = 1.585, W = wide ? 1.16 : 1.0;
   for (let k = 0; k <= steps; k++) {
-    const t = k / steps, y = topY - t * (topY - hemY), e = t;
-    rows.push({ y, rx: (0.150 + e * 0.150) * W, rz: (0.110 + e * 0.150) * W, p: P });
+    const t = k / steps, y = neckY - t * (neckY - hemY);
+    // near the neck it hugs (small), then widens toward the hem
+    const grow = Math.pow(t, 0.85);
+    const [rx, rz] = clip(y, (0.088 + grow * 0.230) * W, (0.100 + grow * 0.185) * W);
+    rows.push({ y, rx, rz, p: P });
   }
-  // back + sides arc (skip the front ~110 deg): front is +z (a=PI/2)
-  const GAP = 1.05;
-  loftPiece(faces, rows, { group: B, seg: 22, capTop: false, capBottom: false, arc: [Math.PI/2 + GAP, Math.PI/2 - GAP + Math.PI*2] });
+  // open at the front (+z, a=PI/2): cape covers the back + sides
+  const GAP = 1.25;
+  loftPiece(faces, rows, { group: B, seg: 26, capTop: false, capBottom: false, arc: [Math.PI/2 + GAP, Math.PI/2 - GAP + Math.PI*2] });
 }
 
 // Surcoat: flat front + back tabard panels hanging from the shoulders to
