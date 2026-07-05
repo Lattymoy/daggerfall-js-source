@@ -71,14 +71,17 @@ const GRIDSPEC = {
 // detailed, asymmetric drapes (scarves, sashes) the ring grids can't.
 function stripGrid(center, halfW, cols, pinRows) {
   const R = center.length, pos = new Float32Array(R * cols * 3);
-  for (let r = 0; r < R; r++) {
-    const a = center[Math.max(0, r-1)], b = center[Math.min(R-1, r+1)], p = center[r];
-    let tx=b[0]-a[0], ty=b[1]-a[1], tz=b[2]-a[2]; const tl=Math.hypot(tx,ty,tz)||1; tx/=tl; ty/=tl; tz/=tl;
-    let rx=p[0], rz=p[2]; let rl=Math.hypot(rx,rz); if (rl < 0.02) { rx=0; rz=1; rl=1; } rx/=rl; rz/=rl;   // radial (out from the body axis)
-    let px=ty*rz - tz*0, py=tz*rx - tx*rz, pz=tx*0 - ty*rx; const pl=Math.hypot(px,py,pz)||1; px/=pl; py/=pl; pz/=pl;  // width dir = tangent x radial
-    const hw = Array.isArray(halfW) ? halfW[r] : halfW;
+  const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]], cross=(a,b)=>[a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]], dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  const norm=(a)=>{const l=Math.hypot(a[0],a[1],a[2])||1;return [a[0]/l,a[1]/l,a[2]/l];};
+  const T = [];
+  for (let r = 0; r < R; r++) T.push(norm(sub(center[Math.min(R-1,r+1)], center[Math.max(0,r-1)])));
+  // stable start frame; then PARALLEL-TRANSPORT it so the ribbon never flips
+  let p0 = cross(T[0], [0,0,1]); if (Math.hypot(p0[0],p0[1],p0[2]) < 0.1) p0 = cross(T[0], [1,0,0]);
+  const P = [norm(p0)];
+  for (let r = 1; r < R; r++) { const prev = P[r-1], d = dot(prev, T[r]); P.push(norm([prev[0]-d*T[r][0], prev[1]-d*T[r][1], prev[2]-d*T[r][2]])); }
+  for (let r = 0; r < R; r++) { const p = center[r], w = P[r], hw = Array.isArray(halfW) ? halfW[r] : halfW;
     for (let c = 0; c < cols; c++) { const u = (c/(cols-1) - 0.5) * 2 * hw, i = (r*cols+c)*3;
-      pos[i] = p[0] + px*u; pos[i+1] = p[1] + py*u; pos[i+2] = p[2] + pz*u; }
+      pos[i] = p[0] + w[0]*u; pos[i+1] = p[1] + w[1]*u; pos[i+2] = p[2] + w[2]*u; }
   }
   const faces = [];
   for (let r = 0; r+1 < R; r++) for (let c = 0; c+1 < cols; c++) faces.push([r*cols+c, r*cols+c+1, (r+1)*cols+c+1, (r+1)*cols+c]);
