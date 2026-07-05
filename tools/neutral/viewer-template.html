@@ -44,13 +44,19 @@ const D = __PAYLOAD__;
 const coreFn = makeCoreFn(D.bodyCore || [[1.5,0.2,0.1],[0,0.14,0.05]]);
 const CLOTH_RAMP = D.cloth || [[60,50,40],[210,190,155]];
 // per-frame snapped shading for simulated cloth (matches the baked look)
-function shadeClothGeo(geo, ramp) {
+function shadeClothGeo(geo, mat) {
   const nrm = geo.attributes.normal.array, col = geo.attributes.color.array;
+  const ramp = mat.ramp, sheen = mat.sheen||0, rim = mat.rim||0, N = ramp.length-1;
   const Lx=0.5, Ly=0.55, Lz=0.67, Ln=Math.hypot(Lx,Ly,Lz);
+  let Hx=Lx/Ln, Hy=Ly/Ln, Hz=Lz/Ln+1; const Hl=Math.hypot(Hx,Hy,Hz); Hx/=Hl; Hy/=Hl; Hz/=Hl; // half-vector (light + view~+z)
   for (let i = 0; i < col.length; i += 3) {
-    let it = (nrm[i]*Lx + nrm[i+1]*Ly + nrm[i+2]*Lz)/Ln * 0.9 + 0.2; it = Math.max(0.08, Math.min(1, it));
-    const c = ramp[Math.max(0, Math.min(ramp.length-1, Math.round(it*(ramp.length-1))))];
-    col[i]=c[0]/255; col[i+1]=c[1]/255; col[i+2]=c[2]/255;
+    const nx=nrm[i], ny=nrm[i+1], nz=nrm[i+2];
+    let it = (nx*Lx + ny*Ly + nz*Lz)/Ln * 0.9 + 0.2; it = Math.max(0.08, Math.min(1, it));
+    const c = ramp[Math.max(0, Math.min(N, Math.round(it*N)))];
+    let r=c[0], g=c[1], b=c[2];
+    if (sheen) { let sp = nx*Hx + ny*Hy + nz*Hz; if (sp > 0) { sp = Math.pow(sp, 30)*sheen*255; r+=sp; g+=sp; b+=sp; } } // specular -> silk sheen
+    if (rim)   { let rr = 1 - Math.max(0, nz); rr = rr*rr*rim*170; r+=rr*0.55; g+=rr*0.7; b+=rr; }                     // cool rim light
+    col[i]=Math.min(255,r)/255; col[i+1]=Math.min(255,g)/255; col[i+2]=Math.min(255,b)/255;
   }
   geo.attributes.color.needsUpdate = true;
 }
@@ -175,10 +181,11 @@ for (const nm in (D.drapeGrids||{})) {
   const posArr = new Float32Array(cloth.pos);
   geo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(cloth.V*3), 3));
-  geo.setIndex(tris); geo.computeVertexNormals(); shadeClothGeo(geo, CLOTH_RAMP);
+  const mat = (D.drapeMaterials||{})[nm] || { ramp: CLOTH_RAMP, sheen: 0, rim: 0 };
+  geo.setIndex(tris); geo.computeVertexNormals(); shadeClothGeo(geo, mat);
   const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
   m.position.y = -D.cy; m.visible = false; pivot.add(m);
-  drapedMeshes[nm] = m; clothSims[nm] = { cloth, geo, posArr };
+  drapedMeshes[nm] = m; clothSims[nm] = { cloth, geo, posArr, mat };
 }
 // Static drapes (surcoat/toga/sash/wrap): simple panels, bob with the body.
 for (const nm in (D.draped||{})) { const m = buildPiece(D.draped[nm]); m.visible = false; drapedMeshes[nm] = m; }
@@ -207,7 +214,7 @@ function stepDrapeCloth(phase, motion, bob) {
   stepCloth(cs.cloth, 1/60, opts, coreFn);
   stepCloth(cs.cloth, 1/60, opts, coreFn); // 2 substeps for stability
   cs.posArr.set(cs.cloth.pos); cs.geo.attributes.position.needsUpdate = true;
-  cs.geo.computeVertexNormals(); shadeClothGeo(cs.geo, CLOTH_RAMP);
+  cs.geo.computeVertexNormals(); shadeClothGeo(cs.geo, cs.mat);
 }
 const bodyFurCoat = D.bodyFurCoat ? buildPiece(D.bodyFurCoat) : null;
 const bodyFurBelly = D.bodyFurBelly ? buildPiece(D.bodyFurBelly) : null;
