@@ -130,9 +130,11 @@ const RACES = ['Human','Elf','Khajiit','Argonian']; let raceIx = 0;
 const raceMesh = {};
 for (const r of RACES) { const key = 'hair'+r; if (D[key]) { raceMesh[r] = buildPiece(D[key]); raceMesh[r].visible = false; } }
 const tailMesh = D.tail ? buildPiece(D.tail) : null;
+const tailCatMesh = D.tailCat ? buildPiece(D.tailCat) : null;
 if (tailMesh) tailMesh.visible = false;
+if (tailCatMesh) tailCatMesh.visible = false;
 const helmOn = () => !!(pieceMesh.helm && pieceMesh.helm.visible);
-const syncHair = () => { const m = raceMesh[RACES[raceIx]]; if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); }; // hair hidden under a helm; tail only for Argonian
+const syncHair = () => { const m = raceMesh[RACES[raceIx]]; if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); }; // hair hidden under a helm; tails per race
 syncHair();
 scene.add(pivot);
 

@@ -11,7 +11,7 @@ function shadeTail(faces, ramp) {
   return faces;
 }
 
-export function buildTail(skin) {
+export function buildTail(skin, kind = 'argonian') {
   const faces = [];
   const quad = (a, b, c, d, g = 'body') => {
     const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2], vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];
@@ -22,7 +22,23 @@ export function buildTail(skin) {
 
   // Spine: roots at the pelvis back (y~0.90, z-0.11), sweeps back + down,
   // bellies out, then curls back up to a fine tip. (compressed space)
-  const spine = [
+  const spine = (kind === 'khajiit' ? [
+    { y: 0.930, z:  0.010, r: 0.040 }, // root - buried INSIDE the pelvis
+    { y: 0.968, z: -0.068, r: 0.038 }, // emerging, lifting (cats carry it up)
+    { y: 1.004, z: -0.140, r: 0.037 },
+    { y: 1.024, z: -0.220, r: 0.036 }, // crest of the arch
+    { y: 1.010, z: -0.302, r: 0.035 }, // starting down
+    { y: 0.958, z: -0.376, r: 0.034 },
+    { y: 0.882, z: -0.436, r: 0.033 },
+    { y: 0.796, z: -0.478, r: 0.031 },
+    { y: 0.706, z: -0.498, r: 0.030 }, // gentle S
+    { y: 0.620, z: -0.494, r: 0.029 },
+    { y: 0.544, z: -0.468, r: 0.030 }, // curling forward
+    { y: 0.486, z: -0.428, r: 0.033 }, // bushy tip swells
+    { y: 0.452, z: -0.380, r: 0.034 }, // bushiest
+    { y: 0.436, z: -0.332, r: 0.024 },
+    { y: 0.430, z: -0.292, r: 0.008 }, // tip
+  ] : [
     { y: 0.930, z:  0.010, r: 0.104 }, // root - buried INSIDE the pelvis (front of the ring is well inside)
     { y: 0.958, z: -0.078, r: 0.100 }, // emerging through the lower back, arching up
     { y: 0.968, z: -0.166, r: 0.093 }, // crest of the arch
@@ -36,7 +52,7 @@ export function buildTail(skin) {
     { y: 0.516, z: -0.812, r: 0.019 },
     { y: 0.502, z: -0.892, r: 0.011 },
     { y: 0.496, z: -0.960, r: 0.004 }, // tip, trailing behind
-  ].map((p) => ({ x: 0, ...p }));
+  ]).map((p) => ({ x: 0, ...p }));
 
   // Tangent per node.
   const T = spine.map((p, i) => {
@@ -69,6 +85,7 @@ export function buildTail(skin) {
   const tipC = [last.x, last.y, last.z];
   for (let k = 0; k < N; k++) { const j = (k+1)%N; tri(tipC, rings[rings.length-1][j], rings[rings.length-1][k]); }
 
+  if (kind === 'argonian') {
   // Dorsal spine-fin: a triangular sail-spine at each segment along the
   // TOP (dorsal dir), tallest near the base, shrinking to the tip.
   for (let i = 1; i + 1 < spine.length; i++) {
@@ -123,6 +140,30 @@ export function buildTail(skin) {
       const side2 = [p.x + p.r*nx2, p.y + p.r*ny2, p.z + p.r*nz2];
       const fwd = [base[0] + t[0]*p.r*0.5, base[1] + t[1]*p.r*0.5, base[2] + t[2]*p.r*0.5];
       tri(base, side2, apex); tri(side2, fwd, apex); tri(fwd, base, apex);
+    }
+  }
+  } // end argonian decorations
+
+  if (kind === 'khajiit') {
+    // FUR: short soft tufts all around the tube, angled back along the
+    // tail, denser than scales -> a fuzzy silhouette. Bushier near the tip.
+    for (let i = 1; i + 1 < spine.length; i++) {
+      const p = spine[i], { s: sd, d } = frame[i], t = T[i];
+      const bushy = i > spine.length - 5 ? 1.7 : 1.0; // fluff the tip
+      const M = 7;
+      for (let m = 0; m < M; m++) {
+        const a = (m / M) * 2 * Math.PI + (i % 2) * 0.4, c = Math.cos(a), sn = Math.sin(a);
+        const nx = c*sd[0] + sn*d[0], ny = c*sd[1] + sn*d[1], nz = c*sd[2] + sn*d[2];
+        const base = [p.x + p.r*nx, p.y + p.r*ny, p.z + p.r*nz];
+        const len = p.r * 0.85 * bushy;
+        // tuft points outward and sweeps back along the tail
+        const tip = [base[0] + nx*len - t[0]*len*0.7, base[1] + ny*len - t[1]*len*0.7, base[2] + nz*len - t[2]*len*0.7];
+        const w = p.r * 0.16;
+        const a2 = a + 0.5, c2 = Math.cos(a2), s2 = Math.sin(a2);
+        const sx2 = c2*sd[0] + s2*d[0], sy2 = c2*sd[1] + s2*d[1], sz2 = c2*sd[2] + s2*d[2];
+        const b2 = [p.x + p.r*sx2, p.y + p.r*sy2, p.z + p.r*sz2];
+        tri(base, b2, tip);
+      }
     }
   }
 
