@@ -56,7 +56,7 @@ function capsuleDist(px, py, pz, C) {
   const l2 = abx*abx+aby*aby+abz*abz || 1e-9;
   let t = ((px-p0[0])*abx + (py-p0[1])*aby + (pz-p0[2])*abz)/l2; t = Math.max(0, Math.min(1, t));
   const cx=p0[0]+abx*t, cy=p0[1]+aby*t, cz=p0[2]+abz*t, r = C.r0 + (C.r1-C.r0)*t;
-  return Math.hypot(px-cx, py-cy, pz-cz) - r;   // >0 outside
+  return Math.hypot(px-cx, py-cy, pz-cz) - r;   // TRUE 3D distance to the capsule surface; >0 outside
 }
 
 test('no clipping during WALKING: cloth stays out of the bent legs (arms hang outside)', () => {
@@ -69,7 +69,7 @@ test('no clipping during WALKING: cloth stays out of the bent legs (arms hang ou
     for (let i = 0; i < c.V; i++) {
       if (c.pinned[i]) continue;
       const px = c.pos[i*3], py = c.pos[i*3+1], pz = c.pos[i*3+2];
-      for (const C of caps) assert.ok(capsuleDist(px, py, pz, C) > -0.010, `${name}: particle inside a leg capsule`);
+      for (const C of caps) assert.ok(capsuleDist(px, py, pz, C) > -0.004, `${name}: particle clipped into a leg (3D)`);
       if (py >= 0.80 && py <= 1.56) { const [hx, hz] = core(py); const A = hx+0.03, C2 = hz+0.03; const e = (px*px)/(A*A)+(pz*pz)/(C2*C2); assert.ok(e > 0.9, `${name}: particle inside the torso`); }
     }
   }

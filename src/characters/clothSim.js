@@ -39,21 +39,26 @@ export function buildCloth(grid, pinRows = 1) {
 
 // One fixed-timestep step. opts: { gy, gx, gz, damp, standoff, iters,
 // pinDX, pinDY, pinDZ } - pin* shift the pinned top row (follow the body).
-// Resolve a limb capsule by pushing the vertex HORIZONTALLY out of the
-// leg at its own height (keep y). A swinging leg bulges the garment out
-// but can never ratchet cloth up the leg. Uses the tapered radius; the
-// axis point is interpolated by height so a swung (tilted) leg pushes
-// the correct side.
+// Resolve a limb capsule with TRUE 3D distance (correct for a tilted /
+// swinging leg), but respond HORIZONTALLY so cloth can never ratchet up
+// the leg. Detection uses the real closest point on the segment in 3D;
+// the vertex keeps its height and its xz is moved so the 3D distance to
+// that point equals the (tapered) radius - h = sqrt(R^2 - dy^2).
 function pushCapsule(px, py, pz, C, SO) {
-  const p0 = C.p0, p1 = C.p1, dyv = p1[1] - p0[1];
-  const t = Math.max(0, Math.min(1, Math.abs(dyv) > 1e-6 ? (py - p0[1]) / dyv : 0));
-  const cx = p0[0] + (p1[0]-p0[0])*t, cz = p0[2] + (p1[2]-p0[2])*t;
+  const p0 = C.p0, p1 = C.p1;
+  const abx = p1[0]-p0[0], aby = p1[1]-p0[1], abz = p1[2]-p0[2];
+  const l2 = abx*abx + aby*aby + abz*abz || 1e-9;
+  let t = ((px-p0[0])*abx + (py-p0[1])*aby + (pz-p0[2])*abz) / l2; t = Math.max(0, Math.min(1, t));
+  const cx = p0[0]+abx*t, cy = p0[1]+aby*t, cz = p0[2]+abz*t;
   const R = (C.r0 + (C.r1 - C.r0)*t) + SO;
-  let dx = px - cx, dz = pz - cz; const d = Math.hypot(dx, dz);
-  if (d >= R) return null;
-  if (d < 1e-6) { dx = 1; dz = 0; }
-  const f = R / Math.hypot(dx, dz);
-  return [cx + dx*f, py, cz + dz*f];   // y unchanged
+  const dx = px-cx, dy = py-cy, dz = pz-cz;
+  if (dx*dx + dy*dy + dz*dz >= R*R) return null;          // true 3D: already clear
+  let hx = px-cx, hz = pz-cz; let hd = Math.hypot(hx, hz);
+  if (hd < 1e-6) { hx = 1; hz = 0; hd = 1; }
+  const h2 = R*R - dy*dy;                                  // horizontal radius at this height
+  const hTarget = h2 > 1e-8 ? Math.sqrt(h2) : R;           // beyond the cap: push to full R
+  const f = hTarget / hd;
+  return [cx + hx*f, py, cz + hz*f];                       // y unchanged (no climbing)
 }
 export function stepCloth(cloth, dt, opts, core) {
   const { pos, prev, base, pinned, con, V } = cloth;
@@ -88,14 +93,17 @@ export function stepCloth(cloth, dt, opts, core) {
   for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
     let mx=pos[o]-start[o], my=pos[o+1]-start[o+1], mz=pos[o+2]-start[o+2]; const mm=Math.hypot(mx,my,mz);
     if (mm > cap) { const f=cap/mm; pos[o]=start[o]+mx*f; pos[o+1]=start[o+1]+my*f; pos[o+2]=start[o+2]+mz*f; } }
-  // one collision resolve pass (unclamped)
-  const caps = opts.capsules, groundY = opts.groundY ?? 0.02;
-  for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
-    if (pos[o+1] < groundY) pos[o+1] = groundY;
-    if (caps) for (let ci = 0; ci < caps.length; ci++) { const hit = pushCapsule(pos[o], pos[o+1], pos[o+2], caps[ci], SO); if (hit) { pos[o]=hit[0]; pos[o+1]=hit[1]; pos[o+2]=hit[2]; } }
-    { const ext = core(pos[o+1]), A = ext[0]+SO, C = ext[1]+SO;   // body silhouette, full height
-      let px=pos[o], pz=pos[o+2]; let e = (px*px)/(A*A) + (pz*pz)/(C*C);
-      if (e < 1) { if (e < 1e-9) { px = A; pz = 0; e = 1; } const f = 1/Math.sqrt(e); pos[o]=px*f; pos[o+2]=pz*f; } }
+  // Collision resolve, ITERATED (collision-only - no constraints between,
+  // so it converges the 3D response on tilted limbs without ratcheting).
+  const caps = opts.capsules, groundY = opts.groundY ?? 0.02, cpasses = opts.collisionPasses ?? 6;
+  for (let cp = 0; cp < cpasses; cp++) {
+    for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
+      if (pos[o+1] < groundY) pos[o+1] = groundY;
+      if (caps) for (let ci = 0; ci < caps.length; ci++) { const hit = pushCapsule(pos[o], pos[o+1], pos[o+2], caps[ci], SO); if (hit) { pos[o]=hit[0]; pos[o+1]=hit[1]; pos[o+2]=hit[2]; } }
+      { const ext = core(pos[o+1]), A = ext[0]+SO, C = ext[1]+SO;
+        let px=pos[o], pz=pos[o+2]; let e = (px*px)/(A*A) + (pz*pz)/(C*C);
+        if (e < 1) { if (e < 1e-9) { px = A; pz = 0; e = 1; } const f = 1/Math.sqrt(e); pos[o]=px*f; pos[o+2]=pz*f; } }
+    }
   }
 }
 
