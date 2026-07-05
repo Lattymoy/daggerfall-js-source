@@ -93,6 +93,26 @@ export function stepCloth(cloth, dt, opts, core) {
   for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
     let mx=pos[o]-start[o], my=pos[o+1]-start[o+1], mz=pos[o+2]-start[o+2]; const mm=Math.hypot(mx,my,mz);
     if (mm > cap) { const f=cap/mm; pos[o]=start[o]+mx*f; pos[o+1]=start[o+1]+my*f; pos[o+2]=start[o+2]+mz*f; } }
+  const B = opts.bones;
+  if (B) {
+    const legX = B.legX, hipY = B.hipY, kneeY = B.kneeY, ankleY = B.ankleY, strength = B.strength ?? 0.9, bobv = B.bob ?? 0;
+    const rot = (y, z, pY, a) => { const c=Math.cos(a), s=Math.sin(a), dy=y-pY; return [pY + c*dy - s*z, s*dy + c*z]; };
+    // rigid-skin a vertex's OWN (ry,rz) to a leg: bend about the knee then
+    // swing about the hip (exactly the rig's leg transform). This keeps a
+    // constant offset from the leg surface, so it cannot clip.
+    const xform = (leg, ry, rz) => { let y = ry, z = rz; if (ry < kneeY) { const r = rot(y, z, kneeY, leg.bd); y = r[0]; z = r[1]; } return rot(y, z, hipY, leg.sw); };
+    const span = (hipY - ankleY) || 1;
+    for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3; const ry = base[o+1]; if (ry >= hipY) continue;
+      const w = Math.min(1, (hipY - ry) / span) * strength;
+      const rx = base[o], rz = base[o+2];
+      const sL = Math.max(0, Math.min(1, (legX - rx) / (2*legX))), sR = 1 - sL;
+      const tL = xform(B.legL, ry, rz), tR = xform(B.legR, ry, rz);
+      const tx = rx, ty = sL*tL[0] + sR*tR[0] + bobv, tz = sL*tL[1] + sR*tR[1];   // bone target (x kept -> no buckle)
+      pos[o]   += w*(tx - pos[o]); pos[o+1] += w*(ty - pos[o+1]); pos[o+2] += w*(tz - pos[o+2]);
+      prev[o] = pos[o]; prev[o+1] = pos[o+1]; prev[o+2] = pos[o+2];
+    }
+  }
+
   // Collision resolve, ITERATED (collision-only - no constraints between,
   // so it converges the 3D response on tilted limbs without ratcheting).
   const caps = opts.capsules, groundY = opts.groundY ?? 0.02, cpasses = opts.collisionPasses ?? 6;
@@ -112,22 +132,7 @@ export function stepCloth(cloth, dt, opts, core) {
   // ankle. Front/back-centre vertices blend both legs 50/50 so they stay
   // put while the sides track their leg. This is what stops the long
   // leg-drapes buckling-or-clipping - the fabric moves WITH the legs.
-  const B = opts.bones;
-  if (B) {
-    const legX = B.legX, hipY = B.hipY, kneeY = B.kneeY, ankleY = B.ankleY, strength = B.strength ?? 0.7;
-    const rot = (y, z, pY, a) => { const c=Math.cos(a), s=Math.sin(a), dy=y-pY; return [pY + c*dy - s*z, s*dy + c*z]; };
-    const legOff = (leg, ry) => { let y = ry, z = 0; if (ry < kneeY) { const r = rot(ry, 0, kneeY, leg.bd); y = r[0]; z = r[1]; } const r2 = rot(y, z, hipY, leg.sw); return [r2[0] - ry, r2[1]]; };
-    const span = (hipY - ankleY) || 1;
-    for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3; const ry = base[o+1]; if (ry >= hipY) continue;
-      const w = Math.min(1, (hipY - ry) / span) * strength;
-      const rx = base[o]; const sL = Math.max(0, Math.min(1, (legX - rx) / (2*legX))), sR = 1 - sL;
-      const oL = legOff(B.legL, ry), oR = legOff(B.legR, ry);
-      const dy = sL*oL[0] + sR*oR[0], dz = sL*oL[1] + sR*oR[1];
-      const tx = rx, ty = ry + dy, tz = base[o+2] + dz;   // bone target
-      pos[o]   += w*(tx - pos[o]); pos[o+1] += w*(ty - pos[o+1]); pos[o+2] += w*(tz - pos[o+2]);
-      prev[o] = pos[o]; prev[o+1] = pos[o+1]; prev[o+2] = pos[o+2];   // no velocity from the blend
-    }
-  }
+
 }
 
 // Build the articulated limb collider (2 legs + 2 arms, each a 2-segment
