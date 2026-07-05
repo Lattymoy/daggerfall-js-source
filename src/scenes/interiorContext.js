@@ -26,7 +26,7 @@ import { LADDER_MODEL_ID } from '../player/enterExit.js';
 import { collectInteriorPeople } from '../characters/interiorPeople.js';
 import { packCharacterFaces } from '../render/characterMesh.js';
 import { trs } from '../world/mat4.js';
-import { buildNeutralBody } from '../characters/neutralBody.js';
+import { buildRaceCharacter, raceOfArchive } from '../characters/raceCharacter.js';
 import { facesBounds } from '../render/characterMesh.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { fetchBytes } from './shared.js';
@@ -141,55 +141,55 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const lumOf = (i) => { const c = palette.get(i); return 0.299*c.r + 0.587*c.g + 0.114*c.b; };
     const rampOf = (r0, r1, keep) => { const m = new Map(); for (let y=r0;y<=r1;y++) for (let x=0;x<W;x++){ const i=bodyBmp.data[y*W+x]; if(i&&(!keep||keep(x,y))) m.set(i,lumOf(i)); } return [...m.entries()].sort((a,b)=>a[1]-b[1]).map(e=>{const c=palette.get(e[0]);return [c.r,c.g,c.b];}); };
     const ramps = { skin: rampOf(40, 60, (x)=>Math.abs(x-((W-1)/2))<14), boot: rampOf(132, 144) };
-    const faces = buildNeutralBody(ramps);
-    const b = facesBounds(faces);
-    // Colours are baked into the neutral faces (AO + palette shading);
-    // pass them straight through - no sprite projection or paint sheets.
-    const buildRgb = () => faces.map((f) => ({ p: f.p, n: f.n, c: f.c }));
-    const basePacked = packCharacterFaces(buildRgb());
-    const mesh = renderer.createCharacterMesh(basePacked);
-    // Per-vertex limb group (fan-triangulated, matching packCharacterFaces:
-    // np verts -> (np-2) tris x 3), for in-engine skeletal animation.
     const GI = { body: 0, head: 1, armL: 2, armR: 3, legL: 4, legR: 5 };
-    const vGroup = [];
-    for (const f of faces) { const g = GI[f.g] ?? 0; const np = f.p.length / 3; for (let i = 1; i < np - 1; i++) { vGroup.push(g, g, g); } }
-    // Joint pivots from group Y-bounds (model space).
-    const gr = {}; for (const f of faces) { const k = f.g; for (let i = 0; i < 4; i++) { const y = f.p[i*3+1]; (gr[k] ??= [1e9,-1e9]); if (y<gr[k][0]) gr[k][0]=y; if (y>gr[k][1]) gr[k][1]=y; } }
-    const hipY = gr.legL[1], ankY = gr.legL[0], shY = gr.armL[1], wrY = gr.armL[0];
-    const kneeY = hipY - 0.52*(hipY-ankY), elbowY = shY - 0.50*(shY-wrY);
-    const anim = new Float32Array(basePacked.length);
-    const rotX = (y, z, pY, a) => { const c=Math.cos(a), sn=Math.sin(a), dy=y-pY; return [pY + c*dy - sn*z, sn*dy + c*z]; };
-    // mode: 'idle' (default, subtle), 'walk', 'off'.
-    animateChars = (t, mode = 'idle') => {
-      if (mode === 'off') { renderer.updateCharacterMesh(mesh, basePacked); return; }
-      anim.set(basePacked);
-      const W = mode === 'walk'
-        ? { stride: 0.44, cad: 6, bob: 0.024, counter: 1.1, knee: 0.9, elbow: 0.35 }
-        : { stride: 0.05, cad: 1.7, bob: 0.006, counter: 1.0, knee: 0.12, elbow: 0.12 };
-      const wt = t * W.cad, bob = W.bob * Math.sin(wt * 2);
-      const limb = (gid, phase, jointY, kneeAmp, isLeg) => {
-        const hip = -W.stride * (isLeg ? 1 : W.counter) * Math.sin(wt + phase); // forward stride
-        const bend = kneeAmp * (isLeg ? Math.max(0, Math.sin(wt + phase + 1.2)) : -(0.5 + 0.5*Math.sin(wt + phase - 0.6))); // elbow flexes forward (negative), knee back
-        for (let v = 0; v < vGroup.length; v++) if (vGroup[v] === gid) {
-          const o = v*9; let y = basePacked[o+1], z = basePacked[o+2];
-          if (y < jointY) [y, z] = rotX(y, z, jointY, bend);
-          [y, z] = rotX(y, z, (isLeg ? hipY : shY), hip);
-          anim[o+1] = y + bob; anim[o+2] = z;
-        }
-      };
-      limb(4, 0, kneeY, W.knee, true);  limb(5, Math.PI, kneeY, W.knee, true);   // legs
-      limb(2, Math.PI, elbowY, W.elbow, false); limb(3, 0, elbowY, W.elbow, false); // arms
-      for (let v = 0; v < vGroup.length; v++) if (vGroup[v] === 0 || vGroup[v] === 1) anim[v*9+1] = basePacked[v*9+1] + bob; // body+head bob
-      renderer.updateCharacterMesh(mesh, anim);
-    };
     const CLASSIC_HEIGHT = 1.8;
-    const sc = CLASSIC_HEIGHT / (b.maxY - b.minY);
-    const bodyEntries = [];
+    const rotX = (y, z, pY, a) => { const c=Math.cos(a), sn=Math.sin(a), dy=y-pY; return [pY + c*dy - sn*z, sn*dy + c*z]; };
+    // Build a full race character into one animated mesh (body + head +
+    // tail + body detail, race-coloured). Returns the mesh, an animate
+    // fn, and the model->world scale/offset.
+    const buildCharMesh = (faces) => {
+      const b = facesBounds(faces);
+      const basePacked = packCharacterFaces(faces.map((f) => ({ p: f.p, n: f.n, c: f.c })));
+      const mesh = renderer.createCharacterMesh(basePacked);
+      const vGroup = [];
+      for (const f of faces) { const g = GI[f.g] ?? 0; const np = f.p.length / 3; for (let i = 1; i < np - 1; i++) vGroup.push(g, g, g); }
+      const gr = {}; for (const f of faces) { const k = f.g; for (let i = 0; i < 4; i++) { const y = f.p[i*3+1]; (gr[k] ??= [1e9,-1e9]); if (y<gr[k][0]) gr[k][0]=y; if (y>gr[k][1]) gr[k][1]=y; } }
+      const hipY = gr.legL[1], ankY = gr.legL[0], shY = gr.armL[1], wrY = gr.armL[0];
+      const kneeY = hipY - 0.52*(hipY-ankY), elbowY = shY - 0.50*(shY-wrY);
+      const anim = new Float32Array(basePacked.length);
+      const sc = CLASSIC_HEIGHT / (b.maxY - b.minY);
+      const animate = (t, mode = 'idle') => {
+        if (mode === 'off') { renderer.updateCharacterMesh(mesh, basePacked); return; }
+        anim.set(basePacked);
+        const Wp = mode === 'walk'
+          ? { stride: 0.44, cad: 6, bob: 0.024, counter: 1.1, knee: 0.9, elbow: 0.35 }
+          : { stride: 0.05, cad: 1.7, bob: 0.006, counter: 1.0, knee: 0.12, elbow: 0.12 };
+        const wt = t * Wp.cad, bob = Wp.bob * Math.sin(wt * 2);
+        const limb = (gid, phase, jointY, kneeAmp, isLeg) => {
+          const hip = -Wp.stride * (isLeg ? 1 : Wp.counter) * Math.sin(wt + phase);
+          const bend = kneeAmp * (isLeg ? Math.max(0, Math.sin(wt + phase + 1.2)) : -(0.5 + 0.5*Math.sin(wt + phase - 0.6)));
+          for (let v = 0; v < vGroup.length; v++) if (vGroup[v] === gid) {
+            const o = v*9; let y = basePacked[o+1], z = basePacked[o+2];
+            if (y < jointY) [y, z] = rotX(y, z, jointY, bend);
+            [y, z] = rotX(y, z, (isLeg ? hipY : shY), hip);
+            anim[o+1] = y + bob; anim[o+2] = z;
+          }
+        };
+        limb(4, 0, kneeY, Wp.knee, true);  limb(5, Math.PI, kneeY, Wp.knee, true);
+        limb(2, Math.PI, elbowY, Wp.elbow, false); limb(3, 0, elbowY, Wp.elbow, false);
+        for (let v = 0; v < vGroup.length; v++) if (vGroup[v] === 0 || vGroup[v] === 1) anim[v*9+1] = basePacked[v*9+1] + bob;
+        renderer.updateCharacterMesh(mesh, anim);
+      };
+      return { mesh, animate, minY: b.minY, sc };
+    };
+    // One mesh per race, cached; people instanced onto their race's mesh.
+    const raceMeshes = new Map();
+    const meshFor = (race) => { let cm = raceMeshes.get(race); if (!cm) { cm = buildCharMesh(buildRaceCharacter(race, ramps)); raceMeshes.set(race, cm); } return cm; };
     for (const pn of people) {
-      const entry = { mesh, matrix: trs(pn.x, pn.y - b.minY * sc, pn.z, 0, 0, 0, sc, sc, sc) };
-      bodyEntries.push(entry);
-      charDraws.push(entry);
+      const cm = meshFor(raceOfArchive(pn.textureArchive));
+      charDraws.push({ mesh: cm.mesh, matrix: trs(pn.x, pn.y - cm.minY * cm.sc, pn.z, 0, 0, 0, cm.sc, cm.sc, cm.sc) });
     }
+    animateChars = (t, mode = 'idle') => { for (const cm of raceMeshes.values()) cm.animate(t, mode); };
   } else {
     for (const pn of people) {
       const key = `${pn.textureArchive}_${pn.textureRecord}`;
