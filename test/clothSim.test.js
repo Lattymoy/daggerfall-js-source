@@ -74,3 +74,24 @@ test('no clipping during WALKING: cloth stays out of the bent legs (arms hang ou
     }
   }
 });
+
+test('bone-driven drape: follows the legs without clipping or exploding', () => {
+  const geom = { legX: 0.082, hipY: 0.90, kneeY: 0.52, ankleY: 0.10, legR: [0.115, 0.10, 0.075] };
+  const ang = (ph) => ({
+    legL: { sw: -0.44*Math.sin(ph),         bd: 0.9*Math.max(0, Math.sin(ph+1.2)) },
+    legR: { sw: -0.44*Math.sin(ph+Math.PI), bd: 0.9*Math.max(0, Math.sin(ph+Math.PI+1.2)) },
+  });
+  for (const name of ['Long Skirt', 'Plain Robes']) {
+    const c = buildCloth(drapedGrid(name));
+    let ph = 0;
+    for (let s = 0; s < 600; s++) { ph += 0.11; const a = ang(ph); const bob = 0.02*Math.sin(ph*2);
+      stepCloth(c, 1/60, { gy: -7, gx: 0.3*Math.sin(ph), gz: -0.9, pinDY: bob, bones: { ...geom, ...a, strength: 0.8 } }, core); }
+    const caps = capsFor(ph);   // reuse the leg-capsule geometry as a clip probe
+    for (let i = 0; i < c.V; i++) {
+      if (c.pinned[i]) continue;
+      const px = c.pos[i*3], py = c.pos[i*3+1], pz = c.pos[i*3+2];
+      assert.ok(Number.isFinite(px) && Math.abs(px) < 5, `${name}: bone-driven vertex exploded`);
+      for (const C of caps) assert.ok(capsuleDist(px, py, pz, C) > -0.030, `${name}: bone-driven cloth clipped a leg`);
+    }
+  }
+});

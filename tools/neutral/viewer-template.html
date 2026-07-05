@@ -187,18 +187,17 @@ const setDrape = () => { for (const nm in drapedMeshes) drapedMeshes[nm].visible
 // step the visible simulated cloth from the animation state
 // Articulated collider (bent legs + swinging arms) for the current gait,
 // using the rig's real joint heights + measured limb radii.
-function currentCapsules(phase, bob) {
-  const g = { legX: 0.082, hipY: hipY+bob, kneeY: kneeY+bob, ankleY: ankL+bob, legR: [0.115, 0.10, 0.075] };
-  const sA = WALK.strideAmp, kA = WALK.kneeAmp;
-  return articulatedCapsules(g, {
-    legL: { sw: -sA*Math.sin(phase),         bd: kA*Math.max(0, Math.sin(phase+1.2)) },
-    legR: { sw: -sA*Math.sin(phase+Math.PI), bd: kA*Math.max(0, Math.sin(phase+Math.PI+1.2)) },
-  });
+function currentBones(phase, motion, bob) {
+  // legs straight at rest; gait swing/bend while walking. The bone-drive
+  // makes the lower drape follow the legs (no buckle, no clip).
+  const walking = motion > 0.5, sA = WALK.strideAmp, kA = WALK.kneeAmp;
+  const L = walking ? { sw: -sA*Math.sin(phase),         bd: kA*Math.max(0, Math.sin(phase+1.2)) }         : { sw: 0, bd: 0 };
+  const R = walking ? { sw: -sA*Math.sin(phase+Math.PI), bd: kA*Math.max(0, Math.sin(phase+Math.PI+1.2)) } : { sw: 0, bd: 0 };
+  return { legX: 0.082, hipY: hipY+bob, kneeY: kneeY+bob, ankleY: ankL+bob, legL: L, legR: R, strength: 0.8 };
 }
 function stepDrapeCloth(phase, motion, bob) {
   const cur = DRAPES[drapeIx]; const cs = clothSims[cur]; if (!cs) return;
-  const caps = motion > 0.5 ? currentCapsules(phase, bob) : null; // articulated collider while walking
-  const opts = { gy: -7, gx: motion * 0.3 * Math.sin(phase), gz: -motion * 0.9, pinDY: bob, iters: 10, damp: 0.90, maxStep: 0.04, groundY: 0.02, capsules: caps };
+  const opts = { gy: -7, gx: motion * 0.3 * Math.sin(phase), gz: -motion * 0.9, pinDY: bob, iters: 10, damp: 0.90, maxStep: 0.04, groundY: 0.02, capsules: null, bones: currentBones(phase, motion, bob) };
   stepCloth(cs.cloth, 1/60, opts, coreFn);
   stepCloth(cs.cloth, 1/60, opts, coreFn); // 2 substeps for stability
   cs.posArr.set(cs.cloth.pos); cs.geo.attributes.position.needsUpdate = true;
