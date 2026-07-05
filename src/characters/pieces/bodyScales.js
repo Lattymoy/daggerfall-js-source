@@ -5,6 +5,11 @@
 // legL/legR) - it moves with the rig and never floats. Built in FINAL
 // (compressed) body space; shown for Argonian.
 
+// Catlike fur tones - a warm tabby coat + a lighter cream underbelly
+// (cats are counter-shaded: dark back/top, pale belly/chest/inner legs).
+export const KHAJIIT_FUR   = [[34, 26, 18], [58, 44, 30], [88, 66, 44], [120, 92, 62], [154, 122, 86], [188, 156, 116]];
+export const KHAJIIT_BELLY = [[70, 60, 46], [104, 90, 70], [138, 122, 96], [170, 154, 124], [200, 186, 156], [226, 214, 188]];
+
 function shadeScales(faces, ramp) {
   const Lx = 0.5, Ly = 0.55, Lz = 0.67, Ln = Math.hypot(Lx, Ly, Lz);
   const snap = (t) => ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(t * (ramp.length - 1))))];
@@ -93,8 +98,8 @@ function furTuft(out, P, n, len, g) {
 
 // Khajiit fur pass: dense short tufts over the whole body, tagged per
 // group so they move with the rig. No scutes.
-export function buildBodyFur(bodyFaces, skin) {
-  const faces = [];
+export function buildBodyFur(bodyFaces, coat = KHAJIIT_FUR, belly = KHAJIIT_BELLY) {
+  const coatF = [], bellyF = [];
   for (const f of bodyFaces) {
     if (f.g === 'head') continue;              // head furred separately
     const n = f.n;
@@ -103,7 +108,11 @@ export function buildBodyFur(bodyFaces, skin) {
     cx/=4; cy/=4; cz/=4;
     if (cy > 1.62) continue;                    // neck/head boundary
     const len = (f.g === 'body') ? 0.030 : 0.024;
-    furTuft(faces, [cx, cy, cz], n, len, f.g);
+    // counter-shading: underside (normal points down) + front-lower chest
+    // + inner limbs read as the pale belly tone; everything else the coat.
+    const ventral = n[1] < -0.05 || (n[2] > 0.30 && cy < 1.30) || (Math.abs(cx) < 0.10 && cy < 1.15);
+    furTuft(ventral ? bellyF : coatF, [cx, cy, cz], n, len, f.g);
   }
-  return shadeScales(faces, skin);
+  shadeScales(coatF, coat); shadeScales(bellyF, belly);
+  return coatF.concat(bellyF);
 }
