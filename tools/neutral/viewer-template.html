@@ -90,6 +90,12 @@ for (let f = 0; f < nf; f++) {
 const vgrp = new Uint8Array(nf * 6);
 for (let f = 0; f < nf; f++) for (let k = 0; k < 6; k++) vgrp[f*6+k] = D.G ? D.G[f] : 0;
 const basePos = pos.slice();
+function setBodyColors(Carr) {
+  if (!Carr) Carr = D.C;
+  let o = 0;
+  for (let f = 0; f < nf; f++) { const cb = f*3, r = Carr[cb]/255, g = Carr[cb+1]/255, b = Carr[cb+2]/255; for (let k = 0; k < 6; k++) { col[o]=r; col[o+1]=g; col[o+2]=b; o += 3; } }
+  geo.getAttribute('color').needsUpdate = true;
+}
 const geo = new THREE.BufferGeometry();
 geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
 geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
@@ -138,7 +144,7 @@ if (bodyFurMesh) bodyFurMesh.visible = false;
 if (tailMesh) tailMesh.visible = false;
 if (tailCatMesh) tailCatMesh.visible = false;
 const helmOn = () => !!(pieceMesh.helm && pieceMesh.helm.visible);
-const syncHair = () => { const m = raceMesh[RACES[raceIx]]; if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); if (bodyScalesMesh) bodyScalesMesh.visible = (RACES[raceIx] === 'Argonian'); if (bodyFurMesh) bodyFurMesh.visible = (RACES[raceIx] === 'Khajiit'); }; // per-race body detail
+const syncHair = () => { const R = RACES[raceIx]; setBodyColors(R === 'Khajiit' ? D.Ck : R === 'Argonian' ? D.Ca : D.C); const m = raceMesh[RACES[raceIx]]; if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); if (bodyScalesMesh) bodyScalesMesh.visible = (RACES[raceIx] === 'Argonian'); if (bodyFurMesh) bodyFurMesh.visible = (RACES[raceIx] === 'Khajiit'); }; // per-race body detail
 syncHair();
 scene.add(pivot);
 

@@ -9,6 +9,8 @@
 // (cats are counter-shaded: dark back/top, pale belly/chest/inner legs).
 export const KHAJIIT_FUR   = [[34, 26, 18], [58, 44, 30], [88, 66, 44], [120, 92, 62], [154, 122, 86], [188, 156, 116]];
 export const KHAJIIT_BELLY = [[70, 60, 46], [104, 90, 70], [138, 122, 96], [170, 154, 124], [200, 186, 156], [226, 214, 188]];
+// Argonian hide - mottled swamp green, dark to light.
+export const ARGONIAN_HIDE  = [[16, 26, 16], [28, 44, 26], [44, 64, 38], [64, 90, 52], [90, 118, 70], [118, 148, 92]];
 
 function shadeScales(faces, ramp) {
   const Lx = 0.5, Ly = 0.55, Lz = 0.67, Ln = Math.hypot(Lx, Ly, Lz);
