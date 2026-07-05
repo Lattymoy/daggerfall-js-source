@@ -17,6 +17,7 @@ import { buildPauldrons } from '../../src/characters/pieces/pauldrons.js';
 import { buildHelm } from '../../src/characters/pieces/helm.js';
 import { buildHair, HAIR_RAMPS } from '../../src/characters/pieces/hair.js';
 import { buildTail } from '../../src/characters/pieces/tail.js';
+import { buildBodyScales } from '../../src/characters/pieces/bodyScales.js';
 
 const A = process.env.ARENA2_PATH;
 const pal = new DFPalette(); pal.load(readFileSync(A + '/ART_PAL.COL'), 'ART_PAL.COL');
@@ -47,7 +48,7 @@ for (const f of faces) {
 }
 // armor pieces (separate meshes in the viewer, toggleable).
 const packPiece = (pf) => { const pP=[], pN=[], pC=[], pG=[]; for (const f of pf) { for (let i=0;i<4;i++) pP.push(Math.round(f.p[i*3]*1000), Math.round(f.p[i*3+1]*1000), Math.round(f.p[i*3+2]*1000)); pN.push(Math.round(f.n[0]*127), Math.round(f.n[1]*127), Math.round(f.n[2]*127)); pC.push(f.c[0], f.c[1], f.c[2]); pG.push(GI[f.g] ?? 0); } return { P: pP, N: pN, C: pC, G: pG }; };
-const payload = JSON.stringify({ n: faces.length, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hairHuman: packPiece(buildHair(HAIR_RAMPS.brown,'Human',ramps.skin)), hairElf: packPiece(buildHair(HAIR_RAMPS.black,'Elf',ramps.skin)), hairKhajiit: packPiece(buildHair(HAIR_RAMPS.brown,'Khajiit',ramps.skin)), hairArgonian: packPiece(buildHair(HAIR_RAMPS.brown,'Argonian',ramps.skin)), tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(ramps.skin,'khajiit')) });
+const payload = JSON.stringify({ n: faces.length, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hairHuman: packPiece(buildHair(HAIR_RAMPS.brown,'Human',ramps.skin)), hairElf: packPiece(buildHair(HAIR_RAMPS.black,'Elf',ramps.skin)), hairKhajiit: packPiece(buildHair(HAIR_RAMPS.brown,'Khajiit',ramps.skin)), hairArgonian: packPiece(buildHair(HAIR_RAMPS.brown,'Argonian',ramps.skin)), tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(ramps.skin,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)) });
 const dir = new URL('.', import.meta.url).pathname;
 const tpl = readFileSync(dir + 'viewer-template.html', 'utf8');
 writeFileSync(process.argv[2] || 'dagger-viewer.html', tpl.replace('__PAYLOAD__', payload));

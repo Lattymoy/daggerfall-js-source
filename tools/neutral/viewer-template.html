@@ -131,10 +131,12 @@ const raceMesh = {};
 for (const r of RACES) { const key = 'hair'+r; if (D[key]) { raceMesh[r] = buildPiece(D[key]); raceMesh[r].visible = false; } }
 const tailMesh = D.tail ? buildPiece(D.tail) : null;
 const tailCatMesh = D.tailCat ? buildPiece(D.tailCat) : null;
+const bodyScalesMesh = D.bodyScales ? buildPiece(D.bodyScales) : null;
+if (bodyScalesMesh) bodyScalesMesh.visible = false;
 if (tailMesh) tailMesh.visible = false;
 if (tailCatMesh) tailCatMesh.visible = false;
 const helmOn = () => !!(pieceMesh.helm && pieceMesh.helm.visible);
-const syncHair = () => { const m = raceMesh[RACES[raceIx]]; if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); }; // hair hidden under a helm; tails per race
+const syncHair = () => { const m = raceMesh[RACES[raceIx]]; if (m) m.visible = !helmOn(); if (tailMesh) tailMesh.visible = (RACES[raceIx] === 'Argonian'); if (tailCatMesh) tailCatMesh.visible = (RACES[raceIx] === 'Khajiit'); if (bodyScalesMesh) bodyScalesMesh.visible = (RACES[raceIx] === 'Argonian'); }; // hair hidden under a helm; tails per race; argonian body scales
 syncHair();
 scene.add(pivot);
 
