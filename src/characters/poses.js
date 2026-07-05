@@ -11,13 +11,14 @@
 // hand over to the gait when walking.
 
 export const POSES = {
-  // 1H melee ready: weapon arm folded up so the fist sits beside the
-  // chest (blade would point up-forward), off arm forward as a low
-  // guard, feet in a small ready stagger (left lead, trail knee soft).
+  // 1H melee ready, LEFT-handed (the sword lives in the left fist):
+  // weapon arm folded up so the blade stands upright past the shoulder,
+  // off arm forward as a low guard, feet in a small ready stagger
+  // (right lead, trail knee soft).
   melee1H: {
-    armR: { sw: -0.38, bd: 1.95 },
-    armL: { sw: -0.35, bd: 1.25 },
-    legL: { sw: -0.13, bd: 0.10 },
-    legR: { sw: 0.11, bd: 0.18 },
+    armL: { sw: -0.70, bd: 2.40 },
+    armR: { sw: -0.35, bd: 1.10 },
+    legL: { sw: 0.11, bd: 0.18 },
+    legR: { sw: -0.13, bd: 0.10 },
   },
 };

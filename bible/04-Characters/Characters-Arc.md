@@ -84,8 +84,8 @@ witnesses every constant against the DFU source.
   cruciform guard/tapered blade lofts at the LEFT-fist column (Mac:
   left hand, and big - 0.70-unit blade, hangs to the shin), every face
   tagged `armL` so the ARM TRANSFORM carries it - point-down carry at
-  rest, and the melee1H fold lands it point-forward off the guard arm
-  (probed: tip y 0.061 rest -> z 0.30..1.17 posed). No weapon-specific
+  rest, and the melee1H fold stands it UPRIGHT past the head (probed:
+  tip y 0.061 rest -> tilt 1.2deg / tip y 2.24 posed). No weapon-specific
   animation code. HELD RULE: a gripped rigid object takes the FULL
   hand transform - the tuner's per-height wrist cut split the sword
   (blade rolled, pommel didn't); sword's animTarget carries
@@ -114,10 +114,16 @@ table; `window.__setPose(i)` / `window.__setView(yaw,pitch,dist)`
 hooks give deterministic Playwright shots. poses.test.js guards the
 table shape + joint ranges.
 
-- **melee1H (SHIPPED)**: 1H melee ready. Weapon arm folded up
-  (sw -0.38, bd 1.95) - fist beside the chest, elbow off the torso,
-  blade line up-forward; off arm a bent low guard (-0.35, 1.25);
-  small ready stagger (left lead, trail knee soft).
+- **melee1H (SHIPPED, v2 upright + left-handed)**: 1H melee ready for
+  the LEFT-fist sword. Weapon arm raised (sw -0.70, bd 2.40 - the fold
+  sums to ~pi, standing the blade VERTICAL: probed 1.2deg tilt, tip
+  y 2.24 past the head); off arm a bent low guard (-0.35, 1.10);
+  ready stagger right-lead. Mac: "the sword should be upright."
+- Viewer arm/hand tuner (idle sliders, other session + extended):
+  shoulder pitch/spread, elbow, and FULL hand rotation - roll +/-180deg
+  about the measured hand centre, pitch (rotX about the wrist), yaw
+  (mirrored rotZ). Held targets take hand/elbow rotations whole (the
+  held rule - see C-Weapons).
 - Next candidates (not approved): 2H hold, attack swings, hit
   reaction. Weapon meshes in the gripped hand shipped - see C-Weapons.
 
