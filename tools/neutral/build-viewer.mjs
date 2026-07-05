@@ -19,7 +19,7 @@ import { buildHair, HAIR_RAMPS } from '../../src/characters/pieces/hair.js';
 import { buildTail } from '../../src/characters/pieces/tail.js';
 import { buildBodyScales, buildBodyFur, KHAJIIT_FUR, KHAJIIT_BELLY, ARGONIAN_HIDE } from '../../src/characters/pieces/bodyScales.js';
 import { PALETTES } from '../../src/characters/palettes.js';
-import { drapedPiece, DRAPED_NAMES } from '../../src/characters/pieces/draped.js';
+import { drapedPiece, drapedGrid, DRAPED_NAMES, BODY_CORE } from '../../src/characters/pieces/draped.js';
 
 const A = process.env.ARENA2_PATH;
 const pal = new DFPalette(); pal.load(readFileSync(A + '/ART_PAL.COL'), 'ART_PAL.COL');
@@ -62,9 +62,13 @@ const colorsOf = (fs) => { const c=[]; for (const f of fs) c.push(f.c[0], f.c[1]
 const Ck = colorsOf(buildNeutralBody({ skin: KHAJIIT_FUR, boot: ramps.boot }, { face }));
 const Ca = colorsOf(buildNeutralBody({ skin: ARGONIAN_HIDE, boot: ramps.boot }, { face }));
 const CLOTH_D = [[58,48,38],[86,72,54],[118,100,74],[150,128,96],[180,158,122],[206,186,150]];
-const drapedPacks = {}; for (const nm of DRAPED_NAMES) drapedPacks[nm] = packPiece(drapedPiece(nm, CLOTH_D));
-const payload = JSON.stringify({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: drapedPacks, drapedNames: DRAPED_NAMES, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
+const drapeGridsOut = {}, drapedPacks = {};
+for (const nm of DRAPED_NAMES) { const g = drapedGrid(nm);
+  if (g) drapeGridsOut[nm] = { rows: g.rows, cols: g.cols, wrap: g.wrap, pos: Array.from(g.pos), faces: g.faces };
+  else drapedPacks[nm] = packPiece(drapedPiece(nm, CLOTH_D)); }
+const payload = JSON.stringify({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: drapedPacks, drapeGrids: drapeGridsOut, bodyCore: BODY_CORE, cloth: CLOTH_D, drapedNames: DRAPED_NAMES, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 const dir = new URL('.', import.meta.url).pathname;
-const tpl = readFileSync(dir + 'viewer-template.html', 'utf8');
+let clothSrc = readFileSync(dir + '../../src/characters/clothSim.js', 'utf8').replace(/^export /gm, '');
+const tpl = readFileSync(dir + 'viewer-template.html', 'utf8').replace('/*__CLOTHSIM__*/', clothSrc);
 writeFileSync(process.argv[2] || 'dagger-viewer.html', tpl.replace('__PAYLOAD__', payload));
 console.log('viewer written (', faces.length, 'faces ) ->', process.argv[2] || 'dagger-viewer.html');

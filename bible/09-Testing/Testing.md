@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 179 tests across 36 files.
+Node 22). Suite: 181 tests across 37 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -27,6 +27,7 @@ Node 22). Suite: 179 tests across 36 files.
 | paperdollart.test.js | 3 | Variant/cloak record resolution, material addressing (bases+morphology+clamps), plate-vs-leather band pins on 251 |
 | piece.test.js | 2 | Sprite-shell geometry round-trip (synthetic + real plate-cuirass 1:1 witness + dye resolve). DAGGER_SPEC profile/pin cases removed with the trace rig. |
 | neutral.test.js | 2 | Neutral paperdoll (buildNeutralBody): well-formed mesh (quad/normal/rgb shape, unit normals, on-ramp colours, feet-grounded ~7.5-head height), deterministic + snapped (blocky) shading |
+| clothSim.test.js | 2 | Draped-garment cloth sim (verlet): stable (no NaN/explosion over 400 steps) for skirt/robe/cape; no clipping - every free particle stays outside the measured body collider after 500 steps under gravity + wind |
 | relief.test.js | 4 | Relief identity witness + field arithmetic pins (synthetic + whole classic body), offsets pin (222,41 / 237,44), back shell mirrors z on the shared silhouette |
 | charmesh.test.js | 2 | Face packing (fan order, color/normal interleave), bare-humanoid pack + bounds |
 | paperdoll.test.js | 3 | 27-slot EquipSlots verbatim, 288-template DB (index resolution, Short Shirt pin), BlitItems order |

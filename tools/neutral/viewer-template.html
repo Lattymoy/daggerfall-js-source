@@ -40,6 +40,20 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const D = __PAYLOAD__;
+/*__CLOTHSIM__*/
+const coreFn = makeCoreFn(D.bodyCore || [[1.5,0.2,0.1],[0,0.14,0.05]]);
+const CLOTH_RAMP = D.cloth || [[60,50,40],[210,190,155]];
+// per-frame snapped shading for simulated cloth (matches the baked look)
+function shadeClothGeo(geo, ramp) {
+  const nrm = geo.attributes.normal.array, col = geo.attributes.color.array;
+  const Lx=0.5, Ly=0.55, Lz=0.67, Ln=Math.hypot(Lx,Ly,Lz);
+  for (let i = 0; i < col.length; i += 3) {
+    let it = (nrm[i]*Lx + nrm[i+1]*Ly + nrm[i+2]*Lz)/Ln * 0.9 + 0.2; it = Math.max(0.08, Math.min(1, it));
+    const c = ramp[Math.max(0, Math.min(ramp.length-1, Math.round(it*(ramp.length-1))))];
+    col[i]=c[0]/255; col[i+1]=c[1]/255; col[i+2]=c[2]/255;
+  }
+  geo.attributes.color.needsUpdate = true;
+}
 const S = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas: S, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -113,8 +127,7 @@ mesh.position.y = -D.cy; // centre the model on the pivot
 // snap a 0-255 intensity onto a ramp (dark->light).
 function snapRamp(ramp, i255) { const t = Math.max(0, Math.min(1, i255/255)); const idx = Math.max(0, Math.min(ramp.length-1, Math.round(t*(ramp.length-1)))); return ramp[idx]; }
 // ── ARMOR PIECES (separate toggleable meshes, same pivot) ──
-const clothTargets = [];
-function buildPiece(cp, opts = {}) {
+function buildPiece(cp) {
   const ncf = cp.C.length / 3;
   const pp = new Float32Array(ncf*6*3), pc = new Float32Array(ncf*6*3), pn = new Float32Array(ncf*6*3), pg = new Uint8Array(ncf*6);
   let o = 0, gi = 0;
@@ -132,15 +145,7 @@ function buildPiece(cp, opts = {}) {
   geo.setAttribute('color', new THREE.BufferAttribute(pc, 3));
   geo.setAttribute('normal', new THREE.BufferAttribute(pn, 3));
   const m = new THREE.Mesh(geo, mat); m.position.y = -D.cy; m.visible = true; pivot.add(m);
-  if (opts.cloth) {
-    let yMin = Infinity, yMax = -Infinity;
-    for (let i = 0; i < pp.length; i += 3) { const y = pp[i+1]; if (y<yMin) yMin=y; if (y>yMax) yMax=y; }
-    const flowW = new Float32Array(pp.length/3);
-    for (let i = 0; i < flowW.length; i++) { const y = pp[i*3+1]; flowW[i] = yMax>yMin ? (yMax-y)/(yMax-yMin) : 0; }
-    clothTargets.push({ pos: pp, base: pp.slice(), geo, flowW });
-  } else {
-    animTargets.push({ pos: pp, base: pp.slice(), vgrp: pg, geo }); // moves with the body
-  }
+  animTargets.push({ pos: pp, base: pp.slice(), vgrp: pg, geo }); // moves with the body
   m.userData.recolor = (ramp) => { if (!cp.I) return; let oo = 0; for (let f = 0; f < ncf; f++) { const c = snapRamp(ramp, cp.I[f]); const r=c[0]/255,g=c[1]/255,b=c[2]/255; for (let k=0;k<6;k++){ pc[oo]=r; pc[oo+1]=g; pc[oo+2]=b; oo+=3; } } geo.getAttribute('color').needsUpdate = true; };
   return m;
 }
@@ -160,10 +165,34 @@ const curHair = () => { const h = raceHair[RACES[raceIx]]; return h && h.styles.
 const tailMesh = D.tail ? buildPiece(D.tail) : null;
 const tailCatMesh = D.tailCat ? buildPiece(D.tailCat) : null;
 const bodyScalesMesh = D.bodyScales ? buildPiece(D.bodyScales) : null;
-const drapedMeshes = {}; const DRAPES = ['None', ...(D.drapedNames||[])];
-for (const nm of (D.drapedNames||[])) { const m = buildPiece(D.draped[nm], { cloth: true }); m.visible = false; drapedMeshes[nm] = m; }
+const drapedMeshes = {}, clothSims = {}; const DRAPES = ['None', ...(D.drapedNames||[])];
+// Simulated (grid) drapes: real verlet cloth, pinned at the top row.
+for (const nm in (D.drapeGrids||{})) {
+  const g = D.drapeGrids[nm]; g.pos = Float32Array.from(g.pos);
+  const cloth = buildCloth(g);
+  const tris = []; for (const f of g.faces) { tris.push(f[0],f[1],f[2], f[0],f[2],f[3]); }
+  const geo = new THREE.BufferGeometry();
+  const posArr = new Float32Array(cloth.pos);
+  geo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(cloth.V*3), 3));
+  geo.setIndex(tris); geo.computeVertexNormals(); shadeClothGeo(geo, CLOTH_RAMP);
+  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+  m.position.y = -D.cy; m.visible = false; pivot.add(m);
+  drapedMeshes[nm] = m; clothSims[nm] = { cloth, geo, posArr };
+}
+// Static drapes (surcoat/toga/sash/wrap): simple panels, bob with the body.
+for (const nm in (D.draped||{})) { const m = buildPiece(D.draped[nm]); m.visible = false; drapedMeshes[nm] = m; }
 let drapeIx = 0;
 const setDrape = () => { for (const nm in drapedMeshes) drapedMeshes[nm].visible = false; const cur = DRAPES[drapeIx]; if (cur !== 'None' && drapedMeshes[cur]) drapedMeshes[cur].visible = true; };
+// step the visible simulated cloth from the animation state
+function stepDrapeCloth(phase, motion, bob) {
+  const cur = DRAPES[drapeIx]; const cs = clothSims[cur]; if (!cs) return;
+  const wind = { gx: motion * 0.6 * Math.sin(phase), gz: -motion * 2.0, gy: -7 }; // forward travel -> wind blows cloth BACK (-z)
+  stepCloth(cs.cloth, 1/60, { gy: wind.gy, gx: wind.gx, gz: wind.gz, pinDY: bob, iters: 6, damp: 0.985 }, coreFn);
+  stepCloth(cs.cloth, 1/60, { gy: wind.gy, gx: wind.gx, gz: wind.gz, pinDY: bob, iters: 6, damp: 0.985 }, coreFn); // 2 substeps for stability
+  cs.posArr.set(cs.cloth.pos); cs.geo.attributes.position.needsUpdate = true;
+  cs.geo.computeVertexNormals(); shadeClothGeo(cs.geo, CLOTH_RAMP);
+}
 const bodyFurCoat = D.bodyFurCoat ? buildPiece(D.bodyFurCoat) : null;
 const bodyFurBelly = D.bodyFurBelly ? buildPiece(D.bodyFurBelly) : null;
 if (bodyScalesMesh) bodyScalesMesh.visible = false;
@@ -233,32 +262,17 @@ function animateTarget(T, wt, bob) {
 // different phase/factor. The fabric LAGS the body - each vertex trails
 // by an amount proportional to how far it hangs (flowW) so a wave ripples
 // down the cloth - swings fore/aft with the step, and billows back.
-function clothFlow(T, phase, motion, bob) {
-  const P = T.pos, B = T.base, F = T.flowW;
-  const amp = 0.014 + 0.050 * motion;      // sway magnitude
-  const backLean = 0.100 * motion;         // steady billow away from travel
-  for (let i = 0; i < F.length; i++) {
-    const w = F[i], ww = w*w, bx = B[i*3], by = B[i*3+1], bz = B[i*3+2];
-    const lag = w * 2.4;                    // inertia: hem trails the body
-    const g  = Math.sin(phase - lag);       // fore/aft gait swing (trailing)
-    const g2 = Math.sin(phase*0.5 - lag*0.7 + bx*2.0); // gentle side sway
-    P[i*3]   = bx + amp*0.7*ww*g2;
-    P[i*3+1] = by + bob - amp*0.30*ww*(1 - Math.cos(phase - lag));
-    P[i*3+2] = bz + amp*ww*g + backLean*ww;
-  }
-  T.geo.attributes.position.needsUpdate = true;
-}
 let ambientT = 0;
 function animate(dt) {
   if (walking) {
     wt += dt * WALK.cadence;
     const bob = WALK.bobAmp * Math.sin(wt*2);
     for (const T of animTargets) animateTarget(T, wt, bob);
-    for (const T of clothTargets) clothFlow(T, wt, 1, bob);          // gait-driven
+    stepDrapeCloth(wt, 1, bob);              // full gait -> cloth reacts + trails
   } else {
-    ambientT += dt * 1.6;
+    ambientT += dt * 1.4;
     for (const T of animTargets) if (T.pos.some((v,i)=>v!==T.base[i])) { T.pos.set(T.base); T.geo.attributes.position.needsUpdate = true; }
-    for (const T of clothTargets) clothFlow(T, ambientT, 0.16, 0);   // ambient sway
+    stepDrapeCloth(ambientT, 0.10, 0);       // gentle idle settle/sway
   }
 }
 
