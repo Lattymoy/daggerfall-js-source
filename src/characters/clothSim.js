@@ -18,11 +18,11 @@ export function makeCoreFn(CORE) {
 }
 
 // grid: { rows, cols, wrap, pos:Float32Array(rows*cols*3), faces }
-export function buildCloth(grid) {
+export function buildCloth(grid, pinRows = 1) {
   const V = grid.rows * grid.cols;
   const pos = Float32Array.from(grid.pos), prev = Float32Array.from(grid.pos), base = Float32Array.from(grid.pos);
   const pinned = new Uint8Array(V);
-  for (let c = 0; c < grid.cols; c++) pinned[c] = 1;      // row 0 pinned to the body
+  for (let r = 0; r < Math.min(pinRows, grid.rows); r++) for (let c = 0; c < grid.cols; c++) pinned[r*grid.cols + c] = 1; // top rows pinned to the body
   const idx = (r, c) => r * grid.cols + c;
   const con = [];
   const add = (i, j, stiff) => { const o=i*3, p=j*3; con.push([i, j, Math.hypot(pos[o]-pos[p], pos[o+1]-pos[p+1], pos[o+2]-pos[p+2]), stiff]); };

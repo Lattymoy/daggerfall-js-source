@@ -169,7 +169,7 @@ const drapedMeshes = {}, clothSims = {}; const DRAPES = ['None', ...(D.drapedNam
 // Simulated (grid) drapes: real verlet cloth, pinned at the top row.
 for (const nm in (D.drapeGrids||{})) {
   const g = D.drapeGrids[nm]; g.pos = Float32Array.from(g.pos);
-  const cloth = buildCloth(g);
+  const cloth = buildCloth(g, nm.indexOf('Cloak') >= 0 ? 2 : 1);
   const tris = []; for (const f of g.faces) { tris.push(f[0],f[1],f[2], f[0],f[2],f[3]); }
   const geo = new THREE.BufferGeometry();
   const posArr = new Float32Array(cloth.pos);
@@ -188,7 +188,7 @@ const setDrape = () => { for (const nm in drapedMeshes) drapedMeshes[nm].visible
 // Articulated collider (bent legs + swinging arms) for the current gait,
 // using the rig's real joint heights + measured limb radii.
 function currentCapsules(phase, bob) {
-  const g = { legX: 0.082, hipY: hipY+bob, kneeY: kneeY+bob, ankleY: ankL+bob, legR: [0.08, 0.075, 0.065] };
+  const g = { legX: 0.082, hipY: hipY+bob, kneeY: kneeY+bob, ankleY: ankL+bob, legR: [0.115, 0.10, 0.075] };
   const sA = WALK.strideAmp, kA = WALK.kneeAmp;
   return articulatedCapsules(g, {
     legL: { sw: -sA*Math.sin(phase),         bd: kA*Math.max(0, Math.sin(phase+1.2)) },
