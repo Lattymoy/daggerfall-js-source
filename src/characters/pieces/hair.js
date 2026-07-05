@@ -22,7 +22,7 @@ function shadeHair(faces, ramp) {
 export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null, style = 'short') {
   const faces = [];
   const P = 0.8;
-  const hasHair = race !== 'Argonian'; // reptilian: crest instead of hair
+  const hasHair = race === 'Human' || race === 'Elf'; // Khajiit=fur, Argonian=scales/crest
   if (hasHair && style !== 'bald') {
     const cap = (yLo, dropTo, backThick) => {
       // crown cap down to the hairline band
