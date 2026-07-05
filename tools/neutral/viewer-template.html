@@ -188,7 +188,7 @@ const setDrape = () => { for (const nm in drapedMeshes) drapedMeshes[nm].visible
 // Articulated collider (bent legs + swinging arms) for the current gait,
 // using the rig's real joint heights + measured limb radii.
 function currentCapsules(phase, bob) {
-  const g = { legX: 0.082, hipY: hipY+bob, kneeY: kneeY+bob, ankleY: ankL+bob, legR: [0.12, 0.085, 0.065] };
+  const g = { legX: 0.082, hipY: hipY+bob, kneeY: kneeY+bob, ankleY: ankL+bob, legR: [0.11, 0.085, 0.065] };
   const sA = WALK.strideAmp, kA = WALK.kneeAmp;
   return articulatedCapsules(g, {
     legL: { sw: -sA*Math.sin(phase),         bd: kA*Math.max(0, Math.sin(phase+1.2)) },
@@ -198,7 +198,7 @@ function currentCapsules(phase, bob) {
 function stepDrapeCloth(phase, motion, bob) {
   const cur = DRAPES[drapeIx]; const cs = clothSims[cur]; if (!cs) return;
   const caps = motion > 0.5 ? currentCapsules(phase, bob) : null; // articulated collider while walking
-  const opts = { gy: -7, gx: motion * 0.5 * Math.sin(phase), gz: -motion * 1.8, pinDY: bob, iters: 10, damp: 0.985, maxStep: 0.035, groundY: 0.02, capsules: caps };
+  const opts = { gy: -7, gx: motion * 0.3 * Math.sin(phase), gz: -motion * 0.9, pinDY: bob, iters: 8, damp: 0.985, maxStep: 0.05, groundY: 0.02, capsules: caps };
   stepCloth(cs.cloth, 1/60, opts, coreFn);
   stepCloth(cs.cloth, 1/60, opts, coreFn); // 2 substeps for stability
   cs.posArr.set(cs.cloth.pos); cs.geo.attributes.position.needsUpdate = true;

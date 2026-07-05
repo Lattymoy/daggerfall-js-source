@@ -39,21 +39,21 @@ export function buildCloth(grid) {
 
 // One fixed-timestep step. opts: { gy, gx, gz, damp, standoff, iters,
 // pinDX, pinDY, pinDZ } - pin* shift the pinned top row (follow the body).
-// Resolve a limb capsule (segment p0->p1, radii r0->r1): push the vertex
-// to the nearest point on the capsule surface. Local, so cloth wraps the
-// limb (a skirt drapes over the legs) with no radial spikes.
+// Resolve a limb capsule by pushing the vertex HORIZONTALLY out of the
+// leg at its own height (keep y). A swinging leg bulges the garment out
+// but can never ratchet cloth up the leg. Uses the tapered radius; the
+// axis point is interpolated by height so a swung (tilted) leg pushes
+// the correct side.
 function pushCapsule(px, py, pz, C, SO) {
-  const p0 = C.p0, p1 = C.p1;
-  const abx=p1[0]-p0[0], aby=p1[1]-p0[1], abz=p1[2]-p0[2];
-  const l2 = abx*abx + aby*aby + abz*abz || 1e-9;
-  let t = ((px-p0[0])*abx + (py-p0[1])*aby + (pz-p0[2])*abz) / l2; t = Math.max(0, Math.min(1, t));
-  const cx=p0[0]+abx*t, cy=p0[1]+aby*t, cz=p0[2]+abz*t;
+  const p0 = C.p0, p1 = C.p1, dyv = p1[1] - p0[1];
+  const t = Math.max(0, Math.min(1, Math.abs(dyv) > 1e-6 ? (py - p0[1]) / dyv : 0));
+  const cx = p0[0] + (p1[0]-p0[0])*t, cz = p0[2] + (p1[2]-p0[2])*t;
   const R = (C.r0 + (C.r1 - C.r0)*t) + SO;
-  let dx=px-cx, dy=py-cy, dz=pz-cz; const d = Math.hypot(dx, dy, dz);
+  let dx = px - cx, dz = pz - cz; const d = Math.hypot(dx, dz);
   if (d >= R) return null;
-  if (d < 1e-6) { dx = 0; dy = 0; dz = 1; }
-  const f = R / Math.hypot(dx, dy, dz);
-  return [cx + dx*f, cy + dy*f, cz + dz*f];
+  if (d < 1e-6) { dx = 1; dz = 0; }
+  const f = R / Math.hypot(dx, dz);
+  return [cx + dx*f, py, cz + dz*f];   // y unchanged
 }
 export function stepCloth(cloth, dt, opts, core) {
   const { pos, prev, base, pinned, con, V } = cloth;
@@ -70,6 +70,8 @@ export function stepCloth(cloth, dt, opts, core) {
     prev[o]=px; prev[o+1]=py; prev[o+2]=pz;
   }
   for (let i = 0; i < V; i++) if (pinned[i]) { const o=i*3; pos[o]=base[o]+pinDX; pos[o+1]=base[o+1]+pinDY; pos[o+2]=base[o+2]+pinDZ; prev[o]=pos[o]; prev[o+1]=pos[o+1]; prev[o+2]=pos[o+2]; }
+  // satisfy distance constraints (no collision here - collision runs once
+  // after, so it can't ratchet the cloth up the body)
   for (let k = 0; k < iters; k++) {
     for (let ci = 0; ci < con.length; ci++) { const c=con[ci], i=c[0], j=c[1], rest=c[2], stiff=c[3], oi=i*3, oj=j*3;
       let dx=pos[oj]-pos[oi], dy=pos[oj+1]-pos[oi+1], dz=pos[oj+2]-pos[oi+2];
@@ -78,18 +80,17 @@ export function stepCloth(cloth, dt, opts, core) {
       if (!pinned[i]) { pos[oi]+=dx; pos[oi+1]+=dy; pos[oi+2]+=dz; }
       if (!pinned[j]) { pos[oj]-=dx; pos[oj+1]-=dy; pos[oj+2]-=dz; }
     }
-    const caps = opts.capsules, trunkLo = opts.trunkLo ?? 0.80, trunkHi = opts.trunkHi ?? 1.56, groundY = opts.groundY ?? 0.02;
-    for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
-      if (pos[o+1] < groundY) pos[o+1] = groundY;   // stand on the floor, don't sink through the feet
-      // limbs FIRST (bent legs + swinging arms)...
-      if (caps) for (let ci = 0; ci < caps.length; ci++) { const hit = pushCapsule(pos[o], pos[o+1], pos[o+2], caps[ci], SO); if (hit) { pos[o]=hit[0]; pos[o+1]=hit[1]; pos[o+2]=hit[2]; } }
-      // ...then the torso ellipse LAST (the body core wins - cloth ends outside it)
-      const py = pos[o+1];
-      if (!caps || (py >= trunkLo && py <= trunkHi)) {
-        const ext = core(py), A = ext[0]+SO, C = ext[1]+SO;
-        let px=pos[o], pz=pos[o+2]; let e = (px*px)/(A*A) + (pz*pz)/(C*C);
-        if (e < 1) { if (e < 1e-9) { px = A; pz = 0; e = 1; } const f = 1/Math.sqrt(e); pos[o]=px*f; pos[o+2]=pz*f; }
-      }
+  }
+  // one collision resolve pass
+  const caps = opts.capsules, trunkLo = opts.trunkLo ?? 0.80, trunkHi = opts.trunkHi ?? 1.56, groundY = opts.groundY ?? 0.02;
+  for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
+    if (pos[o+1] < groundY) pos[o+1] = groundY;
+    if (caps) for (let ci = 0; ci < caps.length; ci++) { const hit = pushCapsule(pos[o], pos[o+1], pos[o+2], caps[ci], SO); if (hit) { pos[o]=hit[0]; pos[o+1]=hit[1]; pos[o+2]=hit[2]; } }
+    const py = pos[o+1];
+    if (!caps || (py >= trunkLo && py <= trunkHi)) {
+      const ext = core(py), A = ext[0]+SO, C = ext[1]+SO;
+      let px=pos[o], pz=pos[o+2]; let e = (px*px)/(A*A) + (pz*pz)/(C*C);
+      if (e < 1) { if (e < 1e-9) { px = A; pz = 0; e = 1; } const f = 1/Math.sqrt(e); pos[o]=px*f; pos[o+2]=pz*f; }
     }
   }
 }
