@@ -35,6 +35,7 @@ export const POSES = {
     lean: 0.03,
     gaitArm: 0.55,
     gaitElbow: 0.35,
+    runElbow: 0.55,   // extra elbow bend while moving (Mac: elbows bend when running)
     armL: { sw: -0.04, bd: 0.08, spread: 0.06, handRoll: 0, handPitch: 0, handYaw: 0 },
     armR: { sw: -0.05, bd: 0.12, spread: 0.04, handRoll: 0, handPitch: 0, handYaw: 0 },
     legL: { sw: 0.08, bd: 0.08 },

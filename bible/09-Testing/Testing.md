@@ -1,11 +1,12 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 186 tests across 39 files.
+Node 22). Suite: 188 tests across 40 files.
 
 | File | Tests | Covers |
 |---|---|---|
 | action.test.js | 3 | door lifecycle/verbatim constants, move tween + chain gate, activation picking |
+| anims.test.js | 2 | Directional attacks: verbatim DFU direction->strike mapping pins; delta-clip well-formedness (start/end 0, sorted keys); sampler continuity + keyframe hit + null past dur |
 | player.test.js | 3 | verbatim speeds/constants, collider ground/slide/step, motor gravity/jump |
 | sky.test.js | 3 | SKY reader pins, panorama mirror law, night mapping |
 | smoke.test.js | 1 | runner sanity |

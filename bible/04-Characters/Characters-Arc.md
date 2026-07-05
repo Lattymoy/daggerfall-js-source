@@ -159,8 +159,34 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   hands -40 (mirrored, about the same axis, normals rotated with the
   verts) so slider 0 shows it and it holds through poses and gaits.
   Verified rigid to 1e-7 over 60 random full-range six-slider combos.
-- Next candidates (not approved): 2H hold, attack swings, hit
-  reaction. Weapon meshes in the gripped hand shipped - see C-Weapons.
+- **Directional attacks (SHIPPED)** - `src/characters/anims.js` +
+  viewer playback. Directions are 1:1 DFU: MouseDirections enum order
+  and FPSWeapon.OnAttackDirection's switch ported verbatim
+  (Down/DownLeft/DownRight/Left/Right -> their strikes; Up + UpLeft +
+  UpRight ALL -> StrikeUp, the thrust) - anims.test pins both. Clips
+  are keyframed DELTAS over the active pose (every track starts/ends
+  at 0 -> entry/exit continuous by construction; probed endErr 0 on
+  all six), smoothstepped, phased windup -> fast strike -> recover.
+  Two new body channels: `twist` (rotY about the spine - torso, head,
+  arms AND the held sword commit into slashes) and `headPitch` (rotX
+  about NECK_PIVOT_Y, exported from neutralBody). Playback merges the
+  sampled delta over melee1H, suppressing the gait pump + runElbow
+  mid-strike; LEGS stay with the gait, so attacks fire mid-run
+  (probed: ankle z swing 0.89 through a running thrust). AUTHORING
+  TRAP pinned: armL spread/yaw/twist land MIRRORED in world (the g=2
+  sign flip) - both slashes and both diagonals shipped inverted on
+  first authoring; lateral tracks are tuned post-mirror against
+  fist-travel probes. Final travel (dx/dz, windup->strike):
+  Down -0.22/-0.46, DownLeft -0.28/-0.31, DownRight +0.18/-0.59,
+  Left -0.72/+0.20, Right +0.71/-0.32, Up(thrust) -0.09/+0.31; tip
+  sweeps 2.2-4.5. Viewer: `dir:` cycles the classic directions,
+  `strike` fires; `__attack(dirOrStrike)` hook.
+- **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
+  looks UP against the 24deg charge lean instead of at the ground;
+  melee1H gains `runElbow 0.55` - both elbows bend while moving,
+  layered under the gait pump.
+- Next candidates (not approved): 2H hold, hit reaction, attack
+  impact/trails, walk-gait attacks tuning.
 
 ## C-Drapes (SHIPPED): draped garments as simulated cloth
 

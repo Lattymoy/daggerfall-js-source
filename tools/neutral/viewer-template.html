@@ -33,6 +33,8 @@
   <button id="walk">walk</button>
   <button id="pose">pose: none</button>
   <button id="sword">sword: off</button>
+  <button id="atkdir">dir: Down</button>
+  <button id="strike">strike</button>
   <button id="pauldrons" class="on">pauldrons</button>
   <button id="helm" class="on">helm</button>
   <button id="race">race: Human</button>
@@ -57,6 +59,7 @@
 <script>
 const D = __PAYLOAD__;
 /*__CLOTHSIM__*/
+/*__ANIMS__*/
 const coreFn = makeCoreFn(D.bodyCore || [[1.5,0.2,0.1],[0,0.14,0.05]]);
 const CLOTH_RAMP = D.cloth || [[60,50,40],[210,190,155]];
 // per-frame snapped shading for simulated cloth (matches the baked look)
@@ -277,7 +280,7 @@ const fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-1, 0
 // the torso hard, lifts the knees high, holds the elbows bent ~80deg, and
 // bounces (big bob) at nearly double cadence.
 const WALK = { strideAmp: 0.44, cadence: 6.0, counterFrac: 1.1, bobAmp: 0.024, kneeAmp: 0.9, kneeBase: 0.0,  elbowAmp: 0.35, elbowBase: 0.18, lean: 0.05, kneeR: 4, elbowR: 2 };
-const RUN  = { strideAmp: 0.60, cadence: 9.6, counterFrac: 0.95, bobAmp: 0.075, kneeAmp: 1.5, kneeBase: 0.18, elbowAmp: 0.55, elbowBase: 1.42, lean: 0.42, kneeR: 4, elbowR: 2 };
+const RUN  = { strideAmp: 0.60, cadence: 9.6, counterFrac: 0.95, bobAmp: 0.075, kneeAmp: 1.5, kneeBase: 0.18, elbowAmp: 0.55, elbowBase: 1.42, lean: 0.42, headPitch: -0.30, kneeR: 4, elbowR: 2 };
 function grpRange(g) { let mn=Infinity, mx=-Infinity; for (let i=0;i<vgrp.length;i++) if (vgrp[i]===g) { const y=basePos[i*3+1]; if(y<mn)mn=y; if(y>mx)mx=y; } return [mn,mx]; }
 const [ankL,hipY] = grpRange(4), [wristL,shoulderY] = grpRange(2);
 const kneeY = hipY - 0.52*(hipY-ankL);        // knee ~52% down the leg
@@ -314,6 +317,8 @@ function animateTarget(T, wt, L, bob, pose, moving) {
   const P = T.pos, B = T.base, VG = T.vgrp;
   const leanPivot = hipY + 0.10;                     // lean the upper body about the low spine
   const lean = (L.lean || 0) + (pose && pose.lean || 0);   // pose crouch adds to the gait's own lean
+  const twist = (pose && pose.twist) || 0;                 // attack body commitment (rotY about the spine)
+  const headPitch = (L.headPitch || 0) + (pose && pose.headPitch || 0); // run look-up + attack follow
   const held = !!T.held;                                   // gripped rigid object: whole hand chain
   const applyLimb = (g, phase, isLeg, limbKey) => {
     const pp = pose && pose[limbKey];
@@ -321,9 +326,9 @@ function animateTarget(T, wt, L, bob, pose, moving) {
     const gaitSwing = -L.strideAmp * (isLeg ? 1 : L.counterFrac) * Math.sin(wt + phase);
     const gaitBend  = isLeg ? L.kneeBase  + L.kneeAmp  * Math.max(0, Math.sin(wt + phase + 1.2))
                             : L.elbowBase + L.elbowAmp * (0.5 + 0.5*Math.sin(wt + phase - 0.6));
-    if (pp && !isLeg) {   // posed arms: pose is the BASE; moving adds a damped gait pump on top (alive, grip kept)
+    if (pp && !isLeg) {   // posed arms: pose is the BASE; moving adds runElbow + a damped gait pump (alive, grip kept)
       swing = pp.sw + (moving ? (pose.gaitArm ?? 0) * gaitSwing : 0);
-      bend  = pp.bd + (moving ? (pose.gaitElbow ?? 0) * (gaitBend - L.elbowBase - 0.5 * L.elbowAmp) : 0);
+      bend  = pp.bd + (moving ? (pose.runElbow ?? 0) + (pose.gaitElbow ?? 0) * (gaitBend - L.elbowBase - 0.5 * L.elbowAmp) : 0);
     } else if (pp && !moving) { swing = pp.sw; bend = pp.bd; }   // posed legs: stance at rest
     else if (moving) { swing = gaitSwing; bend = gaitBend; }     // gait
     else { swing = 0; bend = 0; }
@@ -343,16 +348,19 @@ function animateTarget(T, wt, L, bob, pose, moving) {
       if (held || by < jointY) [y,z] = rotX(y, z, jointY, bendSign*bend);   // knee / elbow
       [y,z] = rotX(y, z, rootY, swing);                            // hip / shoulder swing
       if (!isLeg && sprA) [x,y] = rotZ(x, y, armRootX[g], shoulderY, sprA); // abduction
+      if (!isLeg && twist) [x,z] = rotY(x, z, 0, 0, twist);        // body commitment (arms + held follow the spine)
       if (!isLeg) [y,z] = rotX(y, z, leanPivot, lean);             // arms lean with the torso
       P[i*3] = x; P[i*3+1] = y + bob; P[i*3+2] = z;
     }
   };
   applyLimb(4, 0, true, 'legL'); applyLimb(5, Math.PI, true, 'legR');   // legs
   applyLimb(2, Math.PI, false, 'armL'); applyLimb(3, 0, false, 'armR'); // arms
-  for (let i=0;i<VG.length;i++) if (VG[i]===0 || VG[i]===1) {      // torso + head: lean + bob
-    let y = B[i*3+1], z = B[i*3+2];
+  for (let i=0;i<VG.length;i++) if (VG[i]===0 || VG[i]===1) {      // torso + head: twist + lean + bob (head adds pitch)
+    let x = B[i*3], y = B[i*3+1], z = B[i*3+2];
+    if (VG[i] === 1 && headPitch) [y,z] = rotX(y, z, D.neckY, headPitch); // look up/down about the neck
+    if (twist) [x,z] = rotY(x, z, 0, 0, twist);
     [y,z] = rotX(y, z, leanPivot, lean);
-    P[i*3] = B[i*3]; P[i*3+1] = y + bob; P[i*3+2] = z;
+    P[i*3] = x; P[i*3+1] = y + bob; P[i*3+2] = z;
   }
   T.geo.attributes.position.needsUpdate = true;
 }
@@ -367,16 +375,34 @@ const POSE_NAMES = ['none', ...Object.keys(D.poses || {})];
 let poseIx = 0;
 const curPose = () => (poseIx ? D.poses[POSE_NAMES[poseIx]] : null);
 const POSE_L = { strideAmp: 0, counterFrac: 0, kneeBase: 0, kneeAmp: 0, elbowBase: 0, elbowAmp: 0, lean: 0 }; // zero loco for the posed idle
+// ---- attack playback: a running clip layers DELTAS over the active
+// pose (arms fully owned by the clip - gait pump + runElbow suppressed
+// mid-strike), twist/lean/headPitch add on. Legs stay with the gait.
+let atk = null;   // { clip, t }
+const ZERO_ARM = { sw: 0, bd: 0, spread: 0, handRoll: 0, handPitch: 0, handYaw: 0 };
+function effectivePose() {
+  const base = curPose();
+  if (!atk) return base;
+  const d = sampleClip(atk.clip, atk.t);
+  if (!d) { atk = null; return base; }
+  const b = base || { lean: 0, armL: ZERO_ARM, armR: ZERO_ARM };
+  const arm = (k) => { const o = { ...(b[k] || ZERO_ARM) }; const dd = d[k]; if (dd) for (const c in dd) o[c] = (o[c] || 0) + dd[c]; return o; };
+  return { ...b, gaitArm: 0, gaitElbow: 0, runElbow: 0,
+    lean: (b.lean || 0) + (d.lean || 0), twist: (b.twist || 0) + (d.twist || 0), headPitch: (b.headPitch || 0) + (d.headPitch || 0),
+    armL: arm('armL'), armR: arm('armR') };
+}
 function animate(dt) {
+  if (atk) atk.t += dt;
   const L = GAITS[gaitIx];
+  const pose = effectivePose();
   if (L) {
     wt += dt * L.cadence;
     const bob = L.bobAmp * Math.sin(wt*2);
-    for (const T of animTargets) animateTarget(T, wt, L, bob, curPose(), true);
+    for (const T of animTargets) animateTarget(T, wt, L, bob, pose, true);
     stepDrapeCloth(wt, 1, bob, L);           // gait -> cloth reacts + trails
-  } else if (poseIx) {
+  } else if (poseIx || atk) {
     ambientT += dt * 1.4;
-    for (const T of animTargets) animateTarget(T, 0, POSE_L, 0, curPose(), false);
+    for (const T of animTargets) animateTarget(T, 0, POSE_L, 0, pose, false);
     stepDrapeCloth(ambientT, 0.10, 0, WALK);
   } else {
     ambientT += dt * 1.4;
@@ -490,6 +516,18 @@ const setSword = (i) => {
 };
 document.getElementById('sword').onclick = () => setSword(swordIx + 2 > SWORD_MATS.length ? -1 : swordIx + 1);
 window.__setSword = setSword;
+// Attacks: cycle the classic directions; strike fires the mapped clip
+// (Up/UpLeft/UpRight all thrust, per the verbatim DFU mapping).
+const ATK_DIRS = ['Down', 'DownLeft', 'DownRight', 'Left', 'Right', 'Up'];
+let atkDirIx = 0;
+document.getElementById('atkdir').onclick = (e) => { atkDirIx = (atkDirIx + 1) % ATK_DIRS.length; e.target.textContent = 'dir: ' + ATK_DIRS[atkDirIx]; };
+const fireAttack = (dirOrStrike) => {
+  const name = D.dirToStrike[dirOrStrike] || dirOrStrike;
+  const clip = D.attacks[name];
+  if (clip) atk = { clip, t: 0 };
+};
+document.getElementById('strike').onclick = () => fireAttack(ATK_DIRS[atkDirIx]);
+window.__attack = fireAttack;
 document.getElementById('bg').onclick = () => { bgi = (bgi + 1) % bgs.length; scene.background = new THREE.Color(bgs[bgi]); postMat.uniforms.bg.value = new THREE.Color(bgs[bgi]); };
 document.getElementById('drape').onclick = (e) => { drapeIx = (drapeIx+1) % DRAPES.length; setDrape(); e.target.textContent = 'drape: ' + DRAPES[drapeIx]; };
 </script>

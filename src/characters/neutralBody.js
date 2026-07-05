@@ -26,6 +26,11 @@ export const ARM_X = 0.235;
 // (left +, right -), rolled about the forearm axis.
 export const HAND_REST_ROLL = 0.4 * Math.PI;
 
+// Neck pivot (pre-HSCALE): between the shoulder line (1.66) and the
+// neck rows - headPitch (run look-up, attack follow) rotates the head
+// group about this.
+export const NECK_PIVOT_Y = 1.655;
+
 export function buildNeutralBody(ramps, opts = {}) {
   const SEG = 28;
   const SKIN = [196, 154, 116], BOOT = [92, 74, 58], HAIR = [64, 54, 44];
