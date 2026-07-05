@@ -39,7 +39,17 @@ export function buildCloth(grid) {
 
 // One fixed-timestep step. opts: { gy, gx, gz, damp, standoff, iters,
 // pinDX, pinDY, pinDZ } - pin* shift the pinned top row (follow the body).
-export function stepCloth(cloth, dt, opts, core) {
+// Closest horizontal push-out of a point from a leg capsule (segment p0->p1,
+// radius r): keeps the vertex's height, slides it around the leg.
+function pushLeg(px, py, pz, leg, SO) {
+  const p0 = leg.p0, p1 = leg.p1;
+  const t = Math.max(0, Math.min(1, (py - p0[1]) / ((p1[1] - p0[1]) || 1e-6)));
+  const cx = p0[0] + (p1[0]-p0[0])*t, cz = p0[2] + (p1[2]-p0[2])*t;
+  let dx = px - cx, dz = pz - cz; const d = Math.hypot(dx, dz), R = leg.r + SO;
+  if (d < R) { if (d < 1e-6) { dx = R; dz = 0; } const f = R / Math.hypot(dx, dz); return [cx + dx*f, cz + dz*f]; }
+  return null;
+}
+export function stepCloth(cloth, dt, opts, core, legs) {
   const { pos, prev, base, pinned, con, V } = cloth;
   const gx = opts.gx||0, gy = opts.gy ?? -7.0, gz = opts.gz||0;
   const damp = opts.damp ?? 0.985, SO = opts.standoff ?? 0.030, iters = opts.iters ?? 6;
@@ -61,10 +71,15 @@ export function stepCloth(cloth, dt, opts, core) {
       if (!pinned[i]) { pos[oi]+=dx; pos[oi+1]+=dy; pos[oi+2]+=dz; }
       if (!pinned[j]) { pos[oj]-=dx; pos[oj+1]-=dy; pos[oj+2]-=dz; }
     }
-    for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
-      const ext = core(pos[o+1]), A = ext[0]+SO, C = ext[1]+SO;
-      let px=pos[o], pz=pos[o+2]; let e = (px*px)/(A*A) + (pz*pz)/(C*C);
-      if (e < 1) { if (e < 1e-9) { px = A; pz = 0; e = 1; } const f = 1/Math.sqrt(e); pos[o]=px*f; pos[o+2]=pz*f; }
+    const hipSplit = opts.hipSplit ?? 0.82;
+    for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3; const py = pos[o+1];
+      if (legs && py < hipSplit) {
+        for (let L = 0; L < legs.length; L++) { const hit = pushLeg(pos[o], py, pos[o+2], legs[L], SO); if (hit) { pos[o]=hit[0]; pos[o+2]=hit[1]; } }
+      } else {
+        const ext = core(py), A = ext[0]+SO, C = ext[1]+SO;
+        let px=pos[o], pz=pos[o+2]; let e = (px*px)/(A*A) + (pz*pz)/(C*C);
+        if (e < 1) { if (e < 1e-9) { px = A; pz = 0; e = 1; } const f = 1/Math.sqrt(e); pos[o]=px*f; pos[o+2]=pz*f; }
+      }
     }
   }
 }
