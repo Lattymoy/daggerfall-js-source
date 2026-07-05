@@ -1,9 +1,11 @@
-// Draped garments - standoff cloth that HANGS off the body (skirts,
-// robes, cloaks, dresses, surcoats, togas, sashes, wraps, mummy wraps).
-// Unlike body-hugging clothing (displacement), these are separate meshes
-// that flare/drape outside the silhouette. Tagged 'body' so they move
-// with the torso. Anchored to the measured body profile: waist ~y0.98
-// (rx~0.17, rz~0.115), shoulders ~y1.52 (back z~-0.09).
+// Draped garments - standoff cloth that hangs OFF the body (skirts, robes,
+// cloaks, dresses, surcoats, togas, sashes, wraps, mummy wraps). Unlike
+// body-hugging clothing (vertex displacement), each is a separate GRID
+// that the verlet cloth sim (clothSim.js) simulates + collides against the
+// body. This module owns the geometry: the measured body collider
+// (BODY_CORE), the per-garment grids (drapedGrid), and materials
+// (DRAPE_MATERIAL). Two grid kinds: ring lofts (GRIDSPEC - skirts, robes,
+// capes, tunics) and centreline strips (stripGrid - the sash).
 import { shadePiece } from './pieceLoft.js';
 
 const B = 'body', P = 0.85;
@@ -22,16 +24,9 @@ export function coreHalfExtents(y) {
 function clip(y, rx, rz) { const [cx, cz] = coreHalfExtents(y); return [Math.max(rx, cx + STANDOFF), Math.max(rz, cz + STANDOFF)]; }
 
 
-
-
-
-
-
-// Garment name -> builder. Robes/kimono are tall near-columnar flares;
-// dresses start at the chest; skirts at the waist; mummy = full wrap.
-
-
-// ---- Simulatable GRIDS: rows of ring points -> a pinned cloth mesh ----
+// ---- Ring-loft grids: rings of points swept down the body -> a pinned
+// cloth mesh. Row count scales with garment length (~constant spacing).
+// flareRows: waist/chest/shoulder -> hem cones. capeRows/shawlRows: arcs. --
 function flareRows(topY, hemY, tRx, tRz, hRx, hRz) {
   const rows = [];
   const steps = Math.max(6, Math.min(24, Math.round((topY - hemY) / 0.055)));  // ~constant ring spacing
@@ -100,7 +95,6 @@ function stripGrid(center, halfW, cols, pinRows) {
   return { rows: R, cols, wrap: false, pos, faces, pin };
 }
 
-
 // Sash: a wide band from the right shoulder diagonally across the chest to a
 // knot at the left hip, then a tapering tail hanging free below the knot.
 function sashGrid() {
@@ -114,9 +108,9 @@ function sashGrid() {
   return stripGrid(c, hw, 5, [0, 6, 7, 8]);   // pin shoulder + the knot rows
 }
 
-/** Cloth grid for a garment: pinned top row (row 0), ring rows down to
- *  the hem. { rows, cols, wrap, pos (rows*cols*3), faces (quad indices) }.
- *  null for garments with no flowing grid (surcoat/toga/sash/wrap). */
+/** Cloth grid for a garment name: { rows, cols, wrap, pos (rows*cols*3),
+ *  faces (quad indices), pin? }. Ring loft (GRIDSPEC) or centreline strip
+ *  (sash). null only for an unknown name. */
 export function drapedGrid(name) {
   if (name === 'Sash') return sashGrid();
   const spec = GRIDSPEC[name];

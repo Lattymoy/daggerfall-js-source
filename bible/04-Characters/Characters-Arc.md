@@ -61,6 +61,92 @@ ramps, returns faces with baked colour):
 Open: pieces (armor) re-seat on the new rig; hands/face detail (face
 declined); engine-shader vs baked-shading interaction to confirm.
 
+## C-Drapes (SHIPPED): draped garments as simulated cloth
+
+The 16 loose/draped item names (skirts, robes, dresses, kimono, mummy
+wraps, cloaks, surcoats, toga, wrap, sash) do NOT displace body vertices
+like body-hugging clothing (`clothing.js`). Each is a separate MESH the
+verlet cloth sim animates and collides against the body. Geometry lives
+in `src/characters/pieces/draped.js`; the pure sim in
+`src/characters/clothSim.js` (no THREE - tested headless, and inlined
+into the viewer via the `/*__CLOTHSIM__*/` marker for rendering).
+
+**Geometry (`draped.js`).** `BODY_CORE` = measured torso+legs half-extents
+per height (NO arms), `coreHalfExtents(y)` interpolates it; every ring is
+`clip()`ed outside it + a 0.038 standoff so nothing starts inside the
+body. Two grid kinds, both `{rows, cols, wrap, pos, faces, pin?}`:
+- **Ring lofts** (`GRIDSPEC` via `drapedGrid`): rings of points swept down
+  the body. `flareRows` (waist/chest/shoulder->hem cones), `capeRows`
+  (back cape arc), `shawlRows` (wrap). Row count SCALES with garment
+  length (~constant 0.055 spacing, clamp 6-24) - a fixed count made long
+  garments coarse and facet/fold; this was the "folding" root cause.
+- **Centreline strips** (`stripGrid`): a ribbon swept along a path with a
+  per-row width + explicit pin mask, for asymmetric drapes the ring grid
+  can't do (the sash: band -> hip knot -> tail). The width frame is
+  PARALLEL-TRANSPORTED along the path, or it flips at sharp curves and the
+  ribbon twists through itself.
+
+**Sim (`clothSim.js`).** `buildCloth(grid, pinRows)` -> particles +
+distance constraints (structural + weak bend) + a pin mask (grid.pin, or
+the top `pinRows`). `stepCloth(cloth, dt, opts, core)` order, which the
+long debugging arc converged on and every step matters:
+1. verlet integrate (gravity, per-step `maxStep` clamp -> no spikes),
+2. pin the pinned rows (shift by pinDX/DY/DZ to follow the body bob),
+3. distance constraints (`iters`) - NO collision interleaved,
+4. anti-pop clamp of the verlet+constraint move,
+5. **bone-drive** (`opts.bones`) - leg-drapes only,
+6. **collision** LAST (`opts.capsules` + body ellipse + ground), so cloth
+   always ends outside the body.
+
+**Collision.** Body = the `core` ellipse at ALL heights (leg-together
+envelope below the hip stops cloth falling between the legs) + articulated
+LEG capsules (`articulatedCapsules`: 2 legs x thigh+shin, bent knee +
+swing, exact rig transform, radii measured from the mesh). Arms are NOT
+collided (they hang outside; garments aren't sleeves). `pushCapsule` uses
+TRUE-3D distance (a flat height-slice reads "clear" for a tilted swinging
+leg while it visibly clips) but responds HORIZONTALLY, keeping y, so cloth
+can't ratchet up the leg. Collision is iterated collision-ONLY (converges
+on tilted limbs without the ratchet that interleaving with constraints
+caused - that ratchet was the hem-climbs-to-the-waist bug).
+
+**Bone-drive** (the lower-leg-fold root fix). Free cloth over the fast
+shin is lose-lose: wide hem buckles, narrow hem clips. So below the hip
+each leg-drape vertex is rigid-skinned toward a leg-BONE target - its own
+(y,z) run through the rig transform (bend about knee, swing about hip)
+while rest-x is kept (no circumferential buckle); weight ramps 0 at the
+hip -> ~0.85 at the ankle; front/back-centre blends both legs 50/50 so it
+stays put while sides track their leg. Runs BEFORE collision (which then
+guarantees no clip). Applied to leg garments only; SHOULDER drapes
+(cloaks, wrap, sash) skip it and use free cloth + collision.
+
+**Materials.** `DRAPE_MATERIAL` = per-garment { ramp, sheen, rim }. The
+viewer's `shadeClothGeo` snaps the normal-shade to the ramp, adds a
+specular sheen term (silk: kimono, sash) and a cool rim - so each garment
+reads as its own fabric, not one shared grey.
+
+**Viewer.** `build-viewer.mjs` emits the grids + `bodyCore` +
+`drapeMaterials` and inlines the sim; `viewer-template.html` builds a mesh
+per grid, steps the visible one each frame (`drapeColliders` builds the
+gait's capsules + bones from the rig's real joint Ys), recomputes normals,
+reshades with the garment's material. `drape:` toolbar button cycles them.
+
+**Test:** `test/clothSim.test.js` - stability, no-clip static, no-clip
+walking (true-3D vs the articulated capsules), and the bone-driven path,
+all over hundreds of gait steps.
+
+**Non-obvious learnings.** (a) The "lower-leg fold" that resisted every
+cloth-tuning lever was TWO things: coarse rings on long garments (fixed
+row count) AND a viewer ASPECT bug - canvas CSS `height:100vh` with
+`renderer.setSize(w,h,false)` stretched the buffer vertically on mobile
+(100vh != innerHeight); `setSize(w,h,true)` fixed it. (b) Collision MUST
+run after constraints (once), not interleaved, or the hem ratchets up. (c)
+Limb push must keep y (horizontal) or cloth climbs the leg. (d) The body
+ellipse must apply below the hip too, or centre-front cloth falls between
+the legs and oscillates. Diagnose cloth with NUMERIC headless metrics
+(penetration, hem drift, per-column curvature, per-frame jump); the ASCII
+rasterizer can't judge fold quality and images don't reach the sandbox.
+
+
 ## Slice plan
 
 - **C1 (SHIPPED) - interior people (AddPeople verbatim)**: BlockPeopleRecords ->
@@ -1004,8 +1090,9 @@ tagged armL/armR, raised onto the shoulder) and helm (107, a simple
 medieval dome + cheek guards after the Corinthian attempts were
 rejected). Clothing `src/characters/clothing.js` `clothingZones(index)`
 resolves every body-hugging garment 1:1 with the item DB by name; draped
-garments (skirts/robes/cloaks/togas/dresses) return [] (DEFERRED, Mac
-has another home for them). Layer order: clothing (thin) under armour.
+garments (skirts/robes/cloaks/togas/dresses/wraps/sashes) are separate
+SIMULATED cloth meshes (see C-Drapes), not zones. Layer order: clothing
+(thin) under armour.
 
 **Race heads** `src/characters/pieces/hair.js` `buildHair(ramp, race,
 skin, style)`. Hairstyles (Human 8: short/buzz/medium/long/ponytail/

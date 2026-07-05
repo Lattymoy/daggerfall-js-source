@@ -38,8 +38,6 @@ export function buildCloth(grid, pinRows = 1) {
   return { V, rows: grid.rows, cols: grid.cols, wrap: grid.wrap, pos, prev, base, pinned, con, faces: grid.faces };
 }
 
-// One fixed-timestep step. opts: { gy, gx, gz, damp, standoff, iters,
-// pinDX, pinDY, pinDZ } - pin* shift the pinned top row (follow the body).
 // Resolve a limb capsule with TRUE 3D distance (correct for a tilted /
 // swinging leg), but respond HORIZONTALLY so cloth can never ratchet up
 // the leg. Detection uses the real closest point on the segment in 3D;
@@ -61,6 +59,12 @@ function pushCapsule(px, py, pz, C, SO) {
   const f = hTarget / hd;
   return [cx + hx*f, py, cz + hz*f];                       // y unchanged (no climbing)
 }
+// One fixed-timestep step, in order: verlet integrate (gravity gx/gy/gz,
+// per-step clamp maxStep) -> pin top rows (shifted by pinDX/DY/DZ to follow
+// the body) -> distance constraints (iters) -> anti-pop clamp -> BONE-DRIVE
+// (opts.bones, leg-drapes follow the legs) -> COLLISION (opts.capsules +
+// body ellipse `core` + groundY, collisionPasses, standoff SO), which runs
+// last so cloth always ends outside the body. `core` = makeCoreFn(BODY_CORE).
 export function stepCloth(cloth, dt, opts, core) {
   const { pos, prev, base, pinned, con, V } = cloth;
   const start = pos.slice();
@@ -127,21 +131,14 @@ export function stepCloth(cloth, dt, opts, core) {
     }
   }
 
-  // BONE-DRIVE: below the hip, blend each vertex toward a leg-bone target.
-  // Rest x is kept (no circumferential buckling); y/z follow the swinging
-  // leg (no clipping). Weight ramps 0 at the hip -> `strength` at the
-  // ankle. Front/back-centre vertices blend both legs 50/50 so they stay
-  // put while the sides track their leg. This is what stops the long
-  // leg-drapes buckling-or-clipping - the fabric moves WITH the legs.
-
 }
 
-// Build the articulated limb collider (2 legs + 2 arms, each a 2-segment
-// tapered capsule) for a pose. Applies the SAME transform the rig uses:
-// the shin bends about the knee, the forearm about the elbow, then the
-// whole limb swings about its root. g = geometry (joint Ys, x offsets,
-// radii [thigh,knee,ankle] / [upper,elbow,wrist]); ang = per-limb
-// { sw (swing), bd (bend) }. Returns an array of capsules for stepCloth.
+// Build the leg collider (2 legs, each a 2-segment tapered capsule: thigh
+// + shin) for a pose, using the SAME transform the rig uses - the shin
+// bends about the knee, then the leg swings about the hip. Arms are NOT
+// collided: they hang outside these garments (skirts/robes aren't sleeves).
+// g = { legX, hipY, kneeY, ankleY, legR:[thigh,knee,ankle] }; ang = per-leg
+// { sw (swing), bd (bend) }. Returns capsules for stepCloth's opts.capsules.
 export function articulatedCapsules(g, ang) {
   const rot = (y, z, pY, a) => { const c=Math.cos(a), s=Math.sin(a), dy=y-pY; return [pY + c*dy - s*z, s*dy + c*z]; };
   const caps = [];
