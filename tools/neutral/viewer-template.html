@@ -194,18 +194,19 @@ const setDrape = () => { for (const nm in drapedMeshes) drapedMeshes[nm].visible
 // step the visible simulated cloth from the animation state
 // Articulated collider (bent legs + swinging arms) for the current gait,
 // using the rig's real joint heights + measured limb radii.
-function drapeColliders(phase, motion, bob) {
-  const walking = motion > 0.5, sA = WALK.strideAmp, kA = WALK.kneeAmp;
-  const legL = walking ? { sw: -sA*Math.sin(phase),         bd: kA*Math.max(0, Math.sin(phase+1.2)) }         : { sw: 0, bd: 0 };
-  const legR = walking ? { sw: -sA*Math.sin(phase+Math.PI), bd: kA*Math.max(0, Math.sin(phase+Math.PI+1.2)) } : { sw: 0, bd: 0 };
+function drapeColliders(phase, motion, bob, L) {
+  L = L || WALK;
+  const walking = motion > 0.5, sA = L.strideAmp, kA = L.kneeAmp, kb = L.kneeBase;
+  const legL = walking ? { sw: -sA*Math.sin(phase),         bd: kb + kA*Math.max(0, Math.sin(phase+1.2)) }         : { sw: 0, bd: 0 };
+  const legR = walking ? { sw: -sA*Math.sin(phase+Math.PI), bd: kb + kA*Math.max(0, Math.sin(phase+Math.PI+1.2)) } : { sw: 0, bd: 0 };
   // capsules follow bob (leg mesh does too); bone-drive gets rest joints + bob separately
   const caps = articulatedCapsules({ legX: 0.082, hipY: hipY+bob, kneeY: kneeY+bob, ankleY: ankL+bob, legR: [0.115, 0.10, 0.075] }, { legL, legR });
   const bones = { legX: 0.082, hipY, kneeY, ankleY: ankL, legL, legR, bob, strength: 0.85 };
   return { caps, bones };
 }
-function stepDrapeCloth(phase, motion, bob) {
+function stepDrapeCloth(phase, motion, bob, L) {
   const cur = DRAPES[drapeIx]; const cs = clothSims[cur]; if (!cs) return;
-  const col = drapeColliders(phase, motion, bob);
+  const col = drapeColliders(phase, motion, bob, L);
   const isCloak = cur.indexOf('Cloak') >= 0;   // cloaks hang from the shoulders, not the legs - free cloth, no bone-drive
   const shoulderDrape = isCloak || cur === 'Wrap' || cur === 'Sash';   // hang from the upper body, not the legs
   // bone-drive makes the lower drape follow the legs; capsule collision (last) guarantees no clip
@@ -253,30 +254,41 @@ const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(1, 1.4, 
 const fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-1, 0.5, -0.8); scene.add(fill);
 
 // ── WALK CYCLE (engine WALK_LOCO from rewrite/rig/poseTables.js) ──
-const WALK = { strideAmp: 0.44, liftAmp: 0.2, cadence: 6, bobAmp: 0.024, counterFrac: 1.1, kneeAmp: 0.9, elbowAmp: 0.35 };
+// Locomotion dials (informed by poseTables RUN_LOCO/WALK_LOCO). Run leans
+// the torso hard, lifts the knees high, holds the elbows bent ~80deg, and
+// bounces (big bob) at nearly double cadence.
+const WALK = { strideAmp: 0.44, cadence: 6.0, counterFrac: 1.1, bobAmp: 0.024, kneeAmp: 0.9, kneeBase: 0.0,  elbowAmp: 0.35, elbowBase: 0.18, lean: 0.05, kneeR: 4, elbowR: 2 };
+const RUN  = { strideAmp: 0.60, cadence: 9.6, counterFrac: 0.95, bobAmp: 0.075, kneeAmp: 1.5, kneeBase: 0.18, elbowAmp: 0.55, elbowBase: 1.42, lean: 0.42, kneeR: 4, elbowR: 2 };
 function grpRange(g) { let mn=Infinity, mx=-Infinity; for (let i=0;i<vgrp.length;i++) if (vgrp[i]===g) { const y=basePos[i*3+1]; if(y<mn)mn=y; if(y>mx)mx=y; } return [mn,mx]; }
 const [ankL,hipY] = grpRange(4), [wristL,shoulderY] = grpRange(2);
 const kneeY = hipY - 0.52*(hipY-ankL);        // knee ~52% down the leg
 const elbowY = shoulderY - 0.50*(shoulderY-wristL);
-let walking = false, wt = 0;
+let gaitIx = 0, wt = 0;   // 0 idle, 1 walk, 2 run
 // rotate one vert about X around pivotY by ang; returns [y,z].
 function rotX(y, z, pivotY, ang) { const c=Math.cos(ang), sn=Math.sin(ang); const dy=y-pivotY; return [pivotY + c*dy - sn*z, sn*dy + c*z]; }
-function animateTarget(T, wt, bob) {
+function animateTarget(T, wt, L, bob) {
   const P = T.pos, B = T.base, VG = T.vgrp;
+  const leanPivot = hipY + 0.10;                     // lean the upper body about the low spine
   const applyLimb = (g, phase, isLeg) => {
-    const swing = (isLeg ? -WALK.strideAmp : -WALK.strideAmp * WALK.counterFrac) * Math.sin(wt + phase);
-    const bendAmt = isLeg ? WALK.kneeAmp * Math.max(0, Math.sin(wt + phase + 1.2)) : WALK.elbowAmp * (0.5 + 0.5*Math.sin(wt + phase - 0.6));
+    const swing = (isLeg ? -L.strideAmp : -L.strideAmp * L.counterFrac) * Math.sin(wt + phase);
+    const bend  = isLeg ? L.kneeBase  + L.kneeAmp  * Math.max(0, Math.sin(wt + phase + 1.2))
+                        : L.elbowBase + L.elbowAmp * (0.5 + 0.5*Math.sin(wt + phase - 0.6));
     const jointY = isLeg ? kneeY : elbowY, rootY = isLeg ? hipY : shoulderY, bendSign = isLeg ? 1 : -1;
     for (let i=0;i<VG.length;i++) if (VG[i]===g) {
       let y = B[i*3+1], z = B[i*3+2];
-      if (y < jointY) [y,z] = rotX(y, z, jointY, bendSign*bendAmt);
-      [y,z] = rotX(y, z, rootY, swing);
+      if (y < jointY) [y,z] = rotX(y, z, jointY, bendSign*bend);   // knee / elbow
+      [y,z] = rotX(y, z, rootY, swing);                            // hip / shoulder swing
+      if (!isLeg) [y,z] = rotX(y, z, leanPivot, L.lean);           // arms lean with the torso
       P[i*3] = B[i*3]; P[i*3+1] = y + bob; P[i*3+2] = z;
     }
   };
   applyLimb(4, 0, true); applyLimb(5, Math.PI, true);   // legs
   applyLimb(2, Math.PI, false); applyLimb(3, 0, false); // arms
-  for (let i=0;i<VG.length;i++) if (VG[i]===0 || VG[i]===1) { P[i*3]=B[i*3]; P[i*3+1]=B[i*3+1]+bob; P[i*3+2]=B[i*3+2]; }
+  for (let i=0;i<VG.length;i++) if (VG[i]===0 || VG[i]===1) {      // torso + head: lean + bob
+    let y = B[i*3+1], z = B[i*3+2];
+    [y,z] = rotX(y, z, leanPivot, L.lean);
+    P[i*3] = B[i*3]; P[i*3+1] = y + bob; P[i*3+2] = z;
+  }
   T.geo.attributes.position.needsUpdate = true;
 }
 // Secondary cloth motion, DRIVEN BY the animation state. Inputs are the
@@ -285,17 +297,18 @@ function animateTarget(T, wt, bob) {
 // different phase/factor. The fabric LAGS the body - each vertex trails
 // by an amount proportional to how far it hangs (flowW) so a wave ripples
 // down the cloth - swings fore/aft with the step, and billows back.
-let ambientT = 0;
+let ambientT = 0; const GAITS = [null, WALK, RUN];
 function animate(dt) {
-  if (walking) {
-    wt += dt * WALK.cadence;
-    const bob = WALK.bobAmp * Math.sin(wt*2);
-    for (const T of animTargets) animateTarget(T, wt, bob);
-    stepDrapeCloth(wt, 1, bob);              // full gait -> cloth reacts + trails
+  const L = GAITS[gaitIx];
+  if (L) {
+    wt += dt * L.cadence;
+    const bob = L.bobAmp * Math.sin(wt*2);
+    for (const T of animTargets) animateTarget(T, wt, L, bob);
+    stepDrapeCloth(wt, 1, bob, L);           // gait -> cloth reacts + trails
   } else {
     ambientT += dt * 1.4;
     for (const T of animTargets) if (T.pos.some((v,i)=>v!==T.base[i])) { T.pos.set(T.base); T.geo.attributes.position.needsUpdate = true; }
-    stepDrapeCloth(ambientT, 0.10, 0);       // gentle idle settle/sway
+    stepDrapeCloth(ambientT, 0.10, 0, WALK);  // gentle idle settle/sway
   }
 }
 
@@ -372,7 +385,7 @@ document.getElementById('tone').onclick = (e) => { const R=RACES[raceIx], pal=(D
 function refreshHairLabel(){ const h=raceHair[RACES[raceIx]]; const b=document.getElementById('hairstyle'); if(b) b.textContent = (h&&h.styles.length>1)?('hair: '+h.styles[h.ix]):'hair: -'; }
 document.getElementById('hairstyle').onclick = () => { const h=raceHair[RACES[raceIx]]; if(!h||h.styles.length<2) return; h.ix=(h.ix+1)%h.styles.length; syncHair(); refreshHairLabel(); };
 refreshHairLabel();
-document.getElementById('walk').onclick = (e) => { walking = !walking; e.target.classList.toggle('on', walking); };
+document.getElementById('walk').onclick = (e) => { gaitIx = (gaitIx+1)%3; e.target.textContent = ['idle','walk','run'][gaitIx]; e.target.classList.toggle('on', gaitIx>0); };
 document.getElementById('bg').onclick = () => { bgi = (bgi + 1) % bgs.length; scene.background = new THREE.Color(bgs[bgi]); postMat.uniforms.bg.value = new THREE.Color(bgs[bgi]); };
 document.getElementById('drape').onclick = (e) => { drapeIx = (drapeIx+1) % DRAPES.length; setDrape(); e.target.textContent = 'drape: ' + DRAPES[drapeIx]; };
 </script>
