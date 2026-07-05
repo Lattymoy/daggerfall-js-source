@@ -116,17 +116,17 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null) 
       return r;
     };
     const mrows = [
-      mring(1.826, 0.092, 0.078, 0.042),  // base - WIDE whisker pads bulging sideways
-      mring(1.820, 0.128, 0.064, 0.036),
-      mring(1.814, 0.158, 0.046, 0.028),
-      mring(1.808, 0.174, 0.028, 0.020),  // nose shelf
-      mring(1.802, 0.182, 0.013, 0.010),  // tip
+      mring(1.826, 0.096, 0.078, 0.044),  // base - WIDE whisker pads (barely protruding)
+      mring(1.820, 0.114, 0.066, 0.038),
+      mring(1.814, 0.126, 0.050, 0.030),
+      mring(1.808, 0.134, 0.030, 0.021),  // nose shelf
+      mring(1.803, 0.138, 0.014, 0.011),  // tip
     ];
     for (let i = 0; i + 1 < mrows.length; i++) for (let k = 0; k < 10; k++) { const j = (k+1)%10; quad(mrows[i][k], mrows[i][j], mrows[i+1][j], mrows[i+1][k]); }
     // cap the tip
     const tipC = [0, 1.806, 0.184]; for (let k = 0; k < 10; k++) { const j=(k+1)%10; quad(tipC, mrows[4][j], mrows[4][k], mrows[4][k]); }
     // nose: a small dark heart/triangle on the upper front of the snout.
-    const ny = 1.828, nz = 0.176, nw = 0.016;
+    const ny = 1.826, nz = 0.134, nw = 0.016;
     const nL=[-nw,ny,nz], nR=[nw,ny,nz], nB=[0,ny-0.020,nz+0.008];
     quad(nL, nR, nB, nB);
     // High-set pointed ears: broad triangular, cupped forward. Bases sit
@@ -196,11 +196,11 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null) 
     }
     // ---- SNOUT: a reptilian snout projecting from the lower face ----
     const snring = (y,z,rx2,ry2)=>{ const r=[]; for(let k=0;k<8;k++){const ang=k/8*2*Math.PI; r.push([Math.cos(ang)*rx2, y+Math.sin(ang)*ry2, z]);} return r; };
-    const sn = [ snring(1.816,0.104,0.066,0.048), snring(1.808,0.140,0.054,0.038), snring(1.800,0.172,0.042,0.028), snring(1.794,0.192,0.028,0.018), snring(1.790,0.202,0.014,0.010) ];
+    const sn = [ snring(1.816,0.104,0.066,0.048), snring(1.808,0.124,0.054,0.038), snring(1.800,0.138,0.042,0.028), snring(1.794,0.148,0.028,0.018), snring(1.790,0.152,0.014,0.010) ];
     for(let i=0;i+1<sn.length;i++) for(let k=0;k<8;k++){const j=(k+1)%8; quad(sn[i][k],sn[i][j],sn[i+1][j],sn[i+1][k]);}
-    { const tc=[0,1.790,0.204]; for(let k=0;k<8;k++){const j=(k+1)%8; quad(tc,sn[4][j],sn[4][k],sn[4][k]);} }
+    { const tc=[0,1.790,0.154]; for(let k=0;k<8;k++){const j=(k+1)%8; quad(tc,sn[4][j],sn[4][k],sn[4][k]);} }
     // nostrils: two small dark dents near the snout tip
-    for (const sxn of [-1,1]) { const nx2=sxn*0.016; quad([nx2-0.006,1.812,0.194],[nx2+0.006,1.812,0.194],[nx2+0.004,1.800,0.198],[nx2-0.004,1.800,0.198]); }
+    for (const sxn of [-1,1]) { const nx2=sxn*0.016; quad([nx2-0.006,1.812,0.146],[nx2+0.006,1.812,0.146],[nx2+0.004,1.800,0.150],[nx2-0.004,1.800,0.150]); }
     // horns: from the top-sides, curving up then back to a point.
     const horn = (sx) => tube([
       { x: sx*0.066, y: 1.892, z:  0.000, r: 0.036 }, // base on the temple (skull maxX~0.10 here)
