@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildCloth, stepCloth, makeCoreFn } from '../src/characters/clothSim.js';
+import { buildCloth, stepCloth, makeCoreFn, articulatedCapsules } from '../src/characters/clothSim.js';
 import { drapedGrid, BODY_CORE } from '../src/characters/pieces/draped.js';
 
 const core = makeCoreFn(BODY_CORE);
@@ -42,32 +42,37 @@ test('no clipping: every free particle stays outside the body collider', () => {
   }
 });
 
-// leg capsules for a gait phase (matches the viewer's leg model)
-function legsAt(phase, strideAmp, bob) {
-  const hipY = 0.86 + bob, ankleY = 0.06, legLen = hipY - ankleY, legX = 0.085, r = 0.10;
-  const mk = (sgn, ph) => { const sang = -strideAmp*Math.sin(phase+ph); return { p0:[sgn*legX, hipY, 0], p1:[sgn*legX, hipY - Math.cos(sang)*legLen, Math.sin(sang)*legLen], r }; };
-  return [mk(-1, 0), mk(1, Math.PI)];
+// Articulated limb collider for a gait phase (mirrors the viewer).
+const GEOM = { legX: 0.082, armX: 0.235, hipY: 0.90, kneeY: 0.52, ankleY: 0.10, shY: 1.50, elbowY: 1.15, wrY: 0.80, legR: [0.12, 0.085, 0.065], armR: [0.075, 0.055, 0.05] };
+function capsFor(phase) {
+  const sA = 0.44, cf = 1.1, kA = 0.9, eA = 0.35;
+  return articulatedCapsules(GEOM, {
+    legL: { sw: -sA*Math.sin(phase),          bd: kA*Math.max(0, Math.sin(phase+1.2)) },
+    legR: { sw: -sA*Math.sin(phase+Math.PI),  bd: kA*Math.max(0, Math.sin(phase+Math.PI+1.2)) },
+    armL: { sw: -sA*cf*Math.sin(phase+Math.PI), bd: eA*(0.5+0.5*Math.sin(phase+Math.PI-0.6)) },
+    armR: { sw: -sA*cf*Math.sin(phase),         bd: eA*(0.5+0.5*Math.sin(phase-0.6)) },
+  });
+}
+function capsuleDist(px, py, pz, C) {
+  const p0 = C.p0, p1 = C.p1, abx=p1[0]-p0[0], aby=p1[1]-p0[1], abz=p1[2]-p0[2];
+  const l2 = abx*abx+aby*aby+abz*abz || 1e-9;
+  let t = ((px-p0[0])*abx + (py-p0[1])*aby + (pz-p0[2])*abz)/l2; t = Math.max(0, Math.min(1, t));
+  const cx=p0[0]+abx*t, cy=p0[1]+aby*t, cz=p0[2]+abz*t, r = C.r0 + (C.r1-C.r0)*t;
+  return Math.hypot(px-cx, py-cy, pz-cz) - r;   // >0 outside
 }
 
-test('no clipping during WALKING: cloth stays out of the swinging legs', () => {
-  for (const name of ['Long Skirt', 'Plain Robes']) {
+test('no clipping during WALKING: cloth stays out of bent legs + swinging arms', () => {
+  for (const name of ['Long Skirt', 'Plain Robes', 'Casual Cloak']) {
     const c = buildCloth(drapedGrid(name));
     let phase = 0;
-    for (let s = 0; s < 600; s++) { phase += 0.12; const bob = 0.02*Math.sin(phase*2);
-      stepCloth(c, 1/60, { gy: -7, gz: -1.6, pinDY: bob }, core, legsAt(phase, 0.44, bob)); }
-    const legs = legsAt(phase, 0.44, 0);
+    for (let s = 0; s < 700; s++) { phase += 0.11; const bob = 0.02*Math.sin(phase*2);
+      stepCloth(c, 1/60, { gy: -7, gz: -1.6, pinDY: bob, capsules: capsFor(phase) }, core); }
+    const caps = capsFor(phase);
     for (let i = 0; i < c.V; i++) {
       if (c.pinned[i]) continue;
-      const y = c.pos[i*3+1], px = c.pos[i*3], pz = c.pos[i*3+2];
-      if (y < 0.82) {
-        for (const L of legs) { const t = Math.max(0, Math.min(1, (y-L.p0[1])/((L.p1[1]-L.p0[1])||1e-6)));
-          const cx = L.p0[0]+(L.p1[0]-L.p0[0])*t, cz = L.p0[2]+(L.p1[2]-L.p0[2])*t;
-          const d = Math.hypot(px-cx, pz-cz);
-          assert.ok(d > L.r - 0.006, `${name}: particle inside a swinging leg (d=${d.toFixed(3)}, r=${L.r})`); }
-      } else {
-        const [hx, hz] = core(y); const A = hx+0.03, C = hz+0.03; const e = (px*px)/(A*A)+(pz*pz)/(C*C);
-        assert.ok(e > 0.9, `${name}: particle inside the torso`);
-      }
+      const px = c.pos[i*3], py = c.pos[i*3+1], pz = c.pos[i*3+2];
+      for (const C of caps) assert.ok(capsuleDist(px, py, pz, C) > -0.010, `${name}: particle inside a limb capsule`);
+      if (py >= 0.80 && py <= 1.56) { const [hx, hz] = core(py); const A = hx+0.03, C2 = hz+0.03; const e = (px*px)/(A*A)+(pz*pz)/(C2*C2); assert.ok(e > 0.9, `${name}: particle inside the torso`); }
     }
   }
 });

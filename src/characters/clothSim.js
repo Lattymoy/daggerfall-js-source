@@ -39,17 +39,27 @@ export function buildCloth(grid) {
 
 // One fixed-timestep step. opts: { gy, gx, gz, damp, standoff, iters,
 // pinDX, pinDY, pinDZ } - pin* shift the pinned top row (follow the body).
-// Closest horizontal push-out of a point from a leg capsule (segment p0->p1,
-// radius r): keeps the vertex's height, slides it around the leg.
-function pushLeg(px, py, pz, leg, SO) {
-  const p0 = leg.p0, p1 = leg.p1;
-  const t = Math.max(0, Math.min(1, (py - p0[1]) / ((p1[1] - p0[1]) || 1e-6)));
-  const cx = p0[0] + (p1[0]-p0[0])*t, cz = p0[2] + (p1[2]-p0[2])*t;
-  let dx = px - cx, dz = pz - cz; const d = Math.hypot(dx, dz), R = leg.r + SO;
-  if (d < R) { if (d < 1e-6) { dx = R; dz = 0; } const f = R / Math.hypot(dx, dz); return [cx + dx*f, cz + dz*f]; }
+// Resolve a limb capsule (segment p0->p1, radii r0->r1) by pushing the
+// vertex radially OUTWARD from the body's vertical axis until it clears
+// the limb's outer extent. Outward-only: a limb moving under a garment
+// bulges it out, and it never drags cloth inward into the torso - so
+// limb and torso colliders never fight, and the solve converges.
+function pushCapsule(px, py, pz, C, SO) {
+  const p0 = C.p0, p1 = C.p1;
+  const abx=p1[0]-p0[0], aby=p1[1]-p0[1], abz=p1[2]-p0[2];
+  const l2 = abx*abx + aby*aby + abz*abz || 1e-9;
+  let t = ((px-p0[0])*abx + (py-p0[1])*aby + (pz-p0[2])*abz) / l2; t = Math.max(0, Math.min(1, t));
+  const cx=p0[0]+abx*t, cy=p0[1]+aby*t, cz=p0[2]+abz*t;
+  const R = (C.r0 + (C.r1 - C.r0)*t) + SO;
+  const d = Math.hypot(px-cx, py-cy, pz-cz);
+  if (d >= R) return null;                                   // already outside the limb
+  let rx = px, rz = pz, rr = Math.hypot(rx, rz);             // radial dir from the body axis
+  if (rr < 1e-5) { rx = cx || 1; rz = cz; rr = Math.hypot(rx, rz) || 1; }
+  const target = Math.hypot(cx, cz) + R;                     // just past the limb's outer edge
+  if (target > rr) return [rx/rr*target, py, rz/rr*target];
   return null;
 }
-export function stepCloth(cloth, dt, opts, core, legs) {
+export function stepCloth(cloth, dt, opts, core) {
   const { pos, prev, base, pinned, con, V } = cloth;
   const gx = opts.gx||0, gy = opts.gy ?? -7.0, gz = opts.gz||0;
   const damp = opts.damp ?? 0.985, SO = opts.standoff ?? 0.030, iters = opts.iters ?? 6;
@@ -71,15 +81,45 @@ export function stepCloth(cloth, dt, opts, core, legs) {
       if (!pinned[i]) { pos[oi]+=dx; pos[oi+1]+=dy; pos[oi+2]+=dz; }
       if (!pinned[j]) { pos[oj]-=dx; pos[oj+1]-=dy; pos[oj+2]-=dz; }
     }
-    const hipSplit = opts.hipSplit ?? 0.82;
-    for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3; const py = pos[o+1];
-      if (legs && py < hipSplit) {
-        for (let L = 0; L < legs.length; L++) { const hit = pushLeg(pos[o], py, pos[o+2], legs[L], SO); if (hit) { pos[o]=hit[0]; pos[o+2]=hit[1]; } }
-      } else {
+    const caps = opts.capsules, trunkLo = opts.trunkLo ?? 0.80, trunkHi = opts.trunkHi ?? 1.56;
+    for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
+      // limbs FIRST (bent legs + swinging arms)...
+      if (caps) for (let ci = 0; ci < caps.length; ci++) { const hit = pushCapsule(pos[o], pos[o+1], pos[o+2], caps[ci], SO); if (hit) { pos[o]=hit[0]; pos[o+1]=hit[1]; pos[o+2]=hit[2]; } }
+      // ...then the torso ellipse LAST (the body core wins - cloth ends outside it)
+      const py = pos[o+1];
+      if (!caps || (py >= trunkLo && py <= trunkHi)) {
         const ext = core(py), A = ext[0]+SO, C = ext[1]+SO;
         let px=pos[o], pz=pos[o+2]; let e = (px*px)/(A*A) + (pz*pz)/(C*C);
         if (e < 1) { if (e < 1e-9) { px = A; pz = 0; e = 1; } const f = 1/Math.sqrt(e); pos[o]=px*f; pos[o+2]=pz*f; }
       }
     }
   }
+}
+
+// Build the articulated limb collider (2 legs + 2 arms, each a 2-segment
+// tapered capsule) for a pose. Applies the SAME transform the rig uses:
+// the shin bends about the knee, the forearm about the elbow, then the
+// whole limb swings about its root. g = geometry (joint Ys, x offsets,
+// radii [thigh,knee,ankle] / [upper,elbow,wrist]); ang = per-limb
+// { sw (swing), bd (bend) }. Returns an array of capsules for stepCloth.
+export function articulatedCapsules(g, ang) {
+  const rot = (y, z, pY, a) => { const c=Math.cos(a), s=Math.sin(a), dy=y-pY; return [pY + c*dy - s*z, s*dy + c*z]; };
+  const caps = [];
+  const leg = (x, sw, bd) => {
+    const [ay, az]  = rot(g.ankleY, 0, g.kneeY, bd);   // shin bends about the knee
+    const [ky, kz]  = rot(g.kneeY, 0, g.hipY, sw);     // then the leg swings about the hip
+    const [ay2, az2] = rot(ay, az, g.hipY, sw);
+    caps.push({ p0: [x, g.hipY, 0], p1: [x, ky, kz], r0: g.legR[0], r1: g.legR[1] });
+    caps.push({ p0: [x, ky, kz], p1: [x, ay2, az2], r0: g.legR[1], r1: g.legR[2] });
+  };
+  const arm = (x, sw, bd) => {
+    const [wy, wz]  = rot(g.wrY, 0, g.elbowY, -bd);    // forearm flexes forward about the elbow
+    const [ey, ez]  = rot(g.elbowY, 0, g.shY, sw);     // then the arm swings about the shoulder
+    const [wy2, wz2] = rot(wy, wz, g.shY, sw);
+    caps.push({ p0: [x, g.shY, 0], p1: [x, ey, ez], r0: g.armR[0], r1: g.armR[1] });
+    caps.push({ p0: [x, ey, ez], p1: [x, wy2, wz2], r0: g.armR[1], r1: g.armR[2] });
+  };
+  leg(-g.legX, ang.legL.sw, ang.legL.bd); leg(g.legX, ang.legR.sw, ang.legR.bd);
+  arm(-g.armX, ang.armL.sw, ang.armL.bd); arm(g.armX, ang.armR.sw, ang.armR.bd);
+  return caps;
 }

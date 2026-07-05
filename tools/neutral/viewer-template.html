@@ -185,20 +185,27 @@ for (const nm in (D.draped||{})) { const m = buildPiece(D.draped[nm]); m.visible
 let drapeIx = 0;
 const setDrape = () => { for (const nm in drapedMeshes) drapedMeshes[nm].visible = false; const cur = DRAPES[drapeIx]; if (cur !== 'None' && drapedMeshes[cur]) drapedMeshes[cur].visible = true; };
 // step the visible simulated cloth from the animation state
-function currentLegs(phase, bob) {
-  // two capsules swinging about the hip with the gait (mirrors the leg
-  // animation) - the cloth collides against these so it can't clip.
-  const legLen = hipY - ankL, legX = 0.085, r = 0.10, hy = hipY + bob;
-  const mk = (sgn, ph) => { const a = -WALK.strideAmp * Math.sin(phase + ph);
-    return { p0: [sgn*legX, hy, 0], p1: [sgn*legX, hy - Math.cos(a)*legLen, Math.sin(a)*legLen], r }; };
-  return [mk(-1, 0), mk(1, Math.PI)];
+// Articulated collider (bent legs + swinging arms) for the current gait,
+// using the rig's real joint heights + measured limb radii.
+function currentCapsules(phase, bob) {
+  const g = { legX: 0.082, armX: 0.235,
+    hipY: hipY+bob, kneeY: kneeY+bob, ankleY: ankL+bob,
+    shY: shoulderY+bob, elbowY: elbowY+bob, wrY: wristL+bob,
+    legR: [0.12, 0.085, 0.065], armR: [0.075, 0.055, 0.05] };
+  const sA = WALK.strideAmp, cf = WALK.counterFrac, kA = WALK.kneeAmp, eA = WALK.elbowAmp;
+  return articulatedCapsules(g, {
+    legL: { sw: -sA*Math.sin(phase),           bd: kA*Math.max(0, Math.sin(phase+1.2)) },
+    legR: { sw: -sA*Math.sin(phase+Math.PI),   bd: kA*Math.max(0, Math.sin(phase+Math.PI+1.2)) },
+    armL: { sw: -sA*cf*Math.sin(phase+Math.PI), bd: eA*(0.5+0.5*Math.sin(phase+Math.PI-0.6)) },
+    armR: { sw: -sA*cf*Math.sin(phase),          bd: eA*(0.5+0.5*Math.sin(phase-0.6)) },
+  });
 }
 function stepDrapeCloth(phase, motion, bob) {
   const cur = DRAPES[drapeIx]; const cs = clothSims[cur]; if (!cs) return;
-  const opts = { gy: -7, gx: motion * 0.6 * Math.sin(phase), gz: -motion * 2.0, pinDY: bob, iters: 6, damp: 0.985 };
-  const legs = motion > 0.5 ? currentLegs(phase, bob) : null; // moving collider only while walking
-  stepCloth(cs.cloth, 1/60, opts, coreFn, legs);
-  stepCloth(cs.cloth, 1/60, opts, coreFn, legs); // 2 substeps for stability
+  const caps = motion > 0.5 ? currentCapsules(phase, bob) : null; // articulated collider while walking
+  const opts = { gy: -7, gx: motion * 0.6 * Math.sin(phase), gz: -motion * 2.0, pinDY: bob, iters: 6, damp: 0.985, capsules: caps };
+  stepCloth(cs.cloth, 1/60, opts, coreFn);
+  stepCloth(cs.cloth, 1/60, opts, coreFn); // 2 substeps for stability
   cs.posArr.set(cs.cloth.pos); cs.geo.attributes.position.needsUpdate = true;
   cs.geo.computeVertexNormals(); shadeClothGeo(cs.geo, CLOTH_RAMP);
 }
