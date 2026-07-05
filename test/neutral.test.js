@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildNeutralBody } from '../src/characters/neutralBody.js';
+import { buildNeutralBody, WRIST_JUNCTION_Y } from '../src/characters/neutralBody.js';
 
 // Two-step ramps (dark -> bright) so shading has a range to snap into.
 const ramps = {
@@ -10,6 +10,23 @@ const ramps = {
 
 test('neutral: builds a well-formed figure', () => {
   const faces = buildNeutralBody(ramps);
+  // WRIST_JUNCTION_Y must SPLIT the arm groups cleanly: no armL/armR
+  // vertex may sit within epsilon of it (post-HSCALE), and both sides
+  // must be populated - hand below, forearm above. Guards the exported
+  // joint against body-row edits (a cut inside the mitten shears it).
+  {
+    const wY = WRIST_JUNCTION_Y * 0.9;
+    let below = 0, above = 0;
+    for (const f of faces) {
+      if (f.g !== 'armL' && f.g !== 'armR') continue;
+      for (let i = 0; i < 4; i++) {
+        const y = f.p[i * 3 + 1];
+        assert.ok(Math.abs(y - wY) > 1e-3, `arm vert on the junction: y=${y}`);
+        if (y < wY) below++; else above++;
+      }
+    }
+    assert.ok(below > 100 && above > 100, `junction not splitting: ${below}/${above}`);
+  }
   assert.ok(faces.length > 1500, `expected a dense mesh, got ${faces.length}`);
   let minY = Infinity, maxY = -Infinity;
   const skinSet = new Set(ramps.skin.map((c) => c.join(',')));

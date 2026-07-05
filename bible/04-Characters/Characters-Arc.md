@@ -121,9 +121,20 @@ table shape + joint ranges.
   ready stagger right-lead. Mac: "the sword should be upright."
 - Viewer arm/hand tuner (idle sliders, other session + extended):
   shoulder pitch/spread, elbow, and FULL hand rotation - roll +/-180deg
-  about the measured hand centre, pitch (rotX about the wrist), yaw
-  (mirrored rotZ). Held targets take hand/elbow rotations whole (the
-  held rule - see C-Weapons).
+  about the measured hand centre (MIRRORED L/R), pitch (rotX about the
+  wrist), yaw (mirrored rotZ). Held targets take hand/elbow whole (the
+  held rule - see C-Weapons). THREE ROOT CAUSES fixed here, all
+  probe-traced: (1) the wrist cut was "14% up the arm" = y 0.841,
+  INSIDE the mitten - palm static, knuckles rotating, thumb torn; the
+  hand/forearm junction is a rig fact, now exported
+  (neutralBody WRIST_JUNCTION_Y 0.9875 preH, payload-fed, test-pinned
+  to cleanly split the arm groups). (2) roll was unmirrored - both
+  hands twisted the same world direction. (3) MUTATED-Y GATES: joint
+  gates read y AFTER pitch moved it - a thumb-top vert pitched across
+  the junction and the yaw skipped it, shearing the hand 0.0153 under
+  combos (hand-traced to 6 decimals against the live value). Joint
+  membership is REST anatomy: every gate reads base y. Verified rigid
+  to 1e-7 over 60 random full-range six-slider combos.
 - Next candidates (not approved): 2H hold, attack swings, hit
   reaction. Weapon meshes in the gripped hand shipped - see C-Weapons.
 

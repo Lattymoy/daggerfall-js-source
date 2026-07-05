@@ -6,6 +6,13 @@
 // viewer tool passes them from the sprite). Geometry is authored as
 // loft profiles - see tools/neutral for the viewer.
 
+// The hand/forearm JUNCTION (pre-HSCALE): the hand's top row sits at
+// y 0.985 and the arm loft's wrist row at y 0.99 - the wrist joint is
+// the midline between them. Any per-height wrist cut MUST use this,
+// not a fraction of the arm span: a cut inside 0.738..0.985 bisects
+// the mitten (palm static, knuckles rotating, thumb torn).
+export const WRIST_JUNCTION_Y = 0.9875;
+
 export function buildNeutralBody(ramps, opts = {}) {
   const SEG = 28;
   const SKIN = [196, 154, 116], BOOT = [92, 74, 58], HAIR = [64, 54, 44];
