@@ -129,9 +129,10 @@ export function stepCloth(cloth, dt, opts, core) {
     for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
       if (pos[o+1] < groundY) pos[o+1] = groundY;
       if (caps) for (let ci = 0; ci < caps.length; ci++) { const hit = pushCapsule(pos[o], pos[o+1], pos[o+2], caps[ci], SO); if (hit) { pos[o]=hit[0]; pos[o+1]=hit[1]; pos[o+2]=hit[2]; } }
-      { const ext = core(pos[o+1]), A = ext[0]+SO, C = ext[1]+SO;
-        let px=pos[o], pz=pos[o+2]; let e = (px*px)/(A*A) + (pz*pz)/(C*C);
-        if (e < 1) { if (e < 1e-9) { px = A; pz = 0; e = 1; } const f = 1/Math.sqrt(e); pos[o]=px*f; pos[o+2]=pz*f; } }
+      { const py = pos[o+1], ext = core(py), A = ext[0]+SO, C = ext[1]+SO;
+        const zc = lean ? ls * Math.max(0, py - leanPy) : 0;   // torso leans -> body centre shifts forward above the pivot
+        let px=pos[o], pz=pos[o+2]-zc; let e = (px*px)/(A*A) + (pz*pz)/(C*C);
+        if (e < 1) { if (e < 1e-9) { px = A; pz = 0; e = 1; } const f = 1/Math.sqrt(e); pos[o]=px*f; pos[o+2]=pz*f + zc; } }
     }
   }
 

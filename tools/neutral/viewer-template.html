@@ -283,6 +283,8 @@ function rotY(x, z, px, pz, ang) { const c=Math.cos(ang), s=Math.sin(ang), dx=x-
 // arm/hand posing tuner (radians): applied to the rest stance at idle.
 function grpMeanX(g) { let sx=0, n=0; for (let i=0;i<vgrp.length;i++) if (vgrp[i]===g) { sx+=basePos[i*3]; n++; } return n ? sx/n : 0; }
 const armRootX = { 2: grpMeanX(2), 3: grpMeanX(3) };
+function grpHandC(g) { let sx=0, sz=0, n=0; for (let i=0;i<vgrp.length;i++) if (vgrp[i]===g && basePos[i*3+1] < wristY) { sx+=basePos[i*3]; sz+=basePos[i*3+2]; n++; } return n ? { x:sx/n, z:sz/n } : { x:armRootX[g], z:0 }; }
+const handC = { 2: grpHandC(2), 3: grpHandC(3) };
 const armTune = { pitch: 0, spread: 0, elbow: 0, hand: 0 };
 function poseArms(T) {
   const P = T.pos, B = T.base, VG = T.vgrp;
@@ -290,7 +292,7 @@ function poseArms(T) {
   for (let i=0;i<VG.length;i++) { const g = VG[i], o = i*3;
     if (g === 2 || g === 3) {
       let x = B[o], y = B[o+1], z = B[o+2]; const rootX = armRootX[g], mir = g === 2 ? -1 : 1;
-      if (armTune.hand   && (held || y < wristY)) [x,z] = rotY(x, z, rootX, 0, armTune.hand);   // hand roll (twist)
+      if (armTune.hand   && (held || y < wristY)) [x,z] = rotY(x, z, handC[g].x, handC[g].z, armTune.hand); // hand roll about its own centre
       if (armTune.elbow  && (held || y < elbowY)) [y,z] = rotX(y, z, elbowY, -armTune.elbow);   // elbow flex FORWARD
       if (armTune.pitch)  [y,z] = rotX(y, z, shoulderY, armTune.pitch);                  // shoulder fore/aft
       if (armTune.spread) [x,y] = rotZ(x, y, rootX, shoulderY, mir * armTune.spread);    // abduction (mirrored)
@@ -370,7 +372,7 @@ function resize() {
 addEventListener('resize', resize); resize();
 const pxLab = document.getElementById('pxlab'), cdLab = document.getElementById('cdlab');
 const wireArm=(id,key,scale)=>{const el=document.getElementById(id),lab=document.getElementById(id+'_lab'),name=lab.textContent.split(':')[0];el.addEventListener('input',e=>{armTune[key]=(+e.target.value)/100*scale;lab.textContent=name+': '+e.target.value;});};
-wireArm('ap','pitch',0.9); wireArm('as','spread',0.7); wireArm('ae','elbow',1.6); wireArm('ah','hand',0.9);
+wireArm('ap','pitch',0.9); wireArm('as','spread',0.7); wireArm('ae','elbow',1.6); wireArm('ah','hand',Math.PI);   // hand: full +/-180deg
 document.getElementById('px').addEventListener('input', (e) => { pixel = +e.target.value; pxLab.textContent = pixel <= 1 ? 'pixelize: off' : 'pixelize: ' + pixel + 'x'; resize(); });
 document.getElementById('cd').addEventListener('input', (e) => { const v = +e.target.value; levels = v >= 9 ? 0 : Math.round(2 + (v-1) * 3); postMat.uniforms.levels.value = levels; cdLab.textContent = levels === 0 ? 'color: full' : 'color: ' + levels + ' lvl'; });
 
