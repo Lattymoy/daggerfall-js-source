@@ -227,34 +227,38 @@ function animateTarget(T, wt, bob) {
   for (let i=0;i<VG.length;i++) if (VG[i]===0 || VG[i]===1) { P[i*3]=B[i*3]; P[i*3+1]=B[i*3+1]+bob; P[i*3+2]=B[i*3+2]; }
   T.geo.attributes.position.needsUpdate = true;
 }
-// Secondary cloth motion: a vertex sways more the further it hangs below
-// the anchor (flowW), rippling down the fabric; billows BACK on the
-// forward stride. Runs idle (gentle) and walking (stronger).
-function clothFlow(T, tt, walkPhase, amp, speed, backAmp, bob) {
+// Secondary cloth motion, DRIVEN BY the animation state. Inputs are the
+// motion phase (the gait cycle when walking, an ambient clock at rest)
+// and a motion factor 0..1; a future state (run, sit, ...) just feeds a
+// different phase/factor. The fabric LAGS the body - each vertex trails
+// by an amount proportional to how far it hangs (flowW) so a wave ripples
+// down the cloth - swings fore/aft with the step, and billows back.
+function clothFlow(T, phase, motion, bob) {
   const P = T.pos, B = T.base, F = T.flowW;
+  const amp = 0.014 + 0.050 * motion;      // sway magnitude
+  const backLean = 0.100 * motion;         // steady billow away from travel
   for (let i = 0; i < F.length; i++) {
     const w = F[i], ww = w*w, bx = B[i*3], by = B[i*3+1], bz = B[i*3+2];
-    const ph = tt*speed + by*5.0 + bx*1.6;
-    const sway  = amp * ww * Math.sin(ph);
-    const swayZ = amp*0.6 * ww * Math.sin(tt*speed*0.82 + by*4.4 + 1.3);
-    const back  = backAmp * ww * Math.max(0, Math.sin(walkPhase));
-    P[i*3]   = bx + sway;
-    P[i*3+1] = by + bob - amp*0.20*ww*(1 - Math.cos(ph));
-    P[i*3+2] = bz + swayZ + back;
+    const lag = w * 2.4;                    // inertia: hem trails the body
+    const g  = Math.sin(phase - lag);       // fore/aft gait swing (trailing)
+    const g2 = Math.sin(phase*0.5 - lag*0.7 + bx*2.0); // gentle side sway
+    P[i*3]   = bx + amp*0.7*ww*g2;
+    P[i*3+1] = by + bob - amp*0.30*ww*(1 - Math.cos(phase - lag));
+    P[i*3+2] = bz + amp*ww*g + backLean*ww;
   }
   T.geo.attributes.position.needsUpdate = true;
 }
-let clothT = 0;
+let ambientT = 0;
 function animate(dt) {
-  clothT += dt;
   if (walking) {
     wt += dt * WALK.cadence;
     const bob = WALK.bobAmp * Math.sin(wt*2);
     for (const T of animTargets) animateTarget(T, wt, bob);
-    for (const T of clothTargets) clothFlow(T, clothT, wt, 0.060, 6, 0.055, bob);
+    for (const T of clothTargets) clothFlow(T, wt, 1, bob);          // gait-driven
   } else {
+    ambientT += dt * 1.6;
     for (const T of animTargets) if (T.pos.some((v,i)=>v!==T.base[i])) { T.pos.set(T.base); T.geo.attributes.position.needsUpdate = true; }
-    for (const T of clothTargets) clothFlow(T, clothT, clothT, 0.020, 1.8, 0, 0);
+    for (const T of clothTargets) clothFlow(T, ambientT, 0.16, 0);   // ambient sway
   }
 }
 
