@@ -61,6 +61,28 @@ ramps, returns faces with baked colour):
 Open: pieces (armor) re-seat on the new rig; hands/face detail (face
 declined); engine-shader vs baked-shading interaction to confirm.
 
+## C-Anim (ACTIVE): poses + animation on the neutral rig
+
+Static poses as data over the walk cycle's sagittal transform.
+`src/characters/poses.js` - a pose sets per-limb `{ sw, bd }` (radians):
+`sw` rotates the limb about its root (hip/shoulder), `bd` bends about
+the mid joint (knee/elbow), applied exactly like the viewer's
+animateTarget. Signs: sw NEGATIVE = forward for arms and legs; bd
+POSITIVE = anatomical bend (knee back, elbow forward). Blend rule:
+posed ARMS hold their angles through the gait, walk or run (the
+figure keeps its grip while moving); posed LEGS give the stance at
+rest and hand over to the gait. Viewer: `pose:` button cycles the
+table; `window.__setPose(i)` / `window.__setView(yaw,pitch,dist)`
+hooks give deterministic Playwright shots. poses.test.js guards the
+table shape + joint ranges.
+
+- **melee1H (SHIPPED)**: 1H melee ready. Weapon arm folded up
+  (sw -0.38, bd 1.95) - fist beside the chest, elbow off the torso,
+  blade line up-forward; off arm a bent low guard (-0.35, 1.25);
+  small ready stagger (left lead, trail knee soft).
+- Next candidates (not approved): 2H hold, attack swings, hit
+  reaction, weapon meshes in the gripped hand.
+
 ## C-Drapes (SHIPPED): draped garments as simulated cloth
 
 The 16 loose/draped item names (skirts, robes, dresses, kimono, mummy

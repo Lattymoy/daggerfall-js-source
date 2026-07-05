@@ -26,6 +26,7 @@
   <button id="wire">wireframe</button>
   <button id="bg">bg</button>
   <button id="walk">walk</button>
+  <button id="pose">pose: none</button>
   <button id="pauldrons" class="on">pauldrons</button>
   <button id="helm" class="on">helm</button>
   <button id="race">race: Human</button>
@@ -266,13 +267,18 @@ const elbowY = shoulderY - 0.50*(shoulderY-wristL);
 let gaitIx = 0, wt = 0;   // 0 idle, 1 walk, 2 run
 // rotate one vert about X around pivotY by ang; returns [y,z].
 function rotX(y, z, pivotY, ang) { const c=Math.cos(ang), sn=Math.sin(ang); const dy=y-pivotY; return [pivotY + c*dy - sn*z, sn*dy + c*z]; }
-function animateTarget(T, wt, L, bob) {
+function animateTarget(T, wt, L, bob, pose, moving) {
   const P = T.pos, B = T.base, VG = T.vgrp;
   const leanPivot = hipY + 0.10;                     // lean the upper body about the low spine
-  const applyLimb = (g, phase, isLeg) => {
-    const swing = (isLeg ? -L.strideAmp : -L.strideAmp * L.counterFrac) * Math.sin(wt + phase);
-    const bend  = isLeg ? L.kneeBase  + L.kneeAmp  * Math.max(0, Math.sin(wt + phase + 1.2))
-                        : L.elbowBase + L.elbowAmp * (0.5 + 0.5*Math.sin(wt + phase - 0.6));
+  const applyLimb = (g, phase, isLeg, limbKey) => {
+    const pp = pose && pose[limbKey];
+    let swing, bend;
+    if (pp && (!isLeg || !moving)) { swing = pp.sw; bend = pp.bd; }   // pose: arms hold through the gait, legs at rest
+    else {
+      swing = (isLeg ? -L.strideAmp : -L.strideAmp * L.counterFrac) * Math.sin(wt + phase);
+      bend  = isLeg ? L.kneeBase  + L.kneeAmp  * Math.max(0, Math.sin(wt + phase + 1.2))
+                    : L.elbowBase + L.elbowAmp * (0.5 + 0.5*Math.sin(wt + phase - 0.6));
+    }
     const jointY = isLeg ? kneeY : elbowY, rootY = isLeg ? hipY : shoulderY, bendSign = isLeg ? 1 : -1;
     for (let i=0;i<VG.length;i++) if (VG[i]===g) {
       let y = B[i*3+1], z = B[i*3+2];
@@ -282,8 +288,8 @@ function animateTarget(T, wt, L, bob) {
       P[i*3] = B[i*3]; P[i*3+1] = y + bob; P[i*3+2] = z;
     }
   };
-  applyLimb(4, 0, true); applyLimb(5, Math.PI, true);   // legs
-  applyLimb(2, Math.PI, false); applyLimb(3, 0, false); // arms
+  applyLimb(4, 0, true, 'legL'); applyLimb(5, Math.PI, true, 'legR');   // legs
+  applyLimb(2, Math.PI, false, 'armL'); applyLimb(3, 0, false, 'armR'); // arms
   for (let i=0;i<VG.length;i++) if (VG[i]===0 || VG[i]===1) {      // torso + head: lean + bob
     let y = B[i*3+1], z = B[i*3+2];
     [y,z] = rotX(y, z, leanPivot, L.lean);
@@ -298,13 +304,21 @@ function animateTarget(T, wt, L, bob) {
 // by an amount proportional to how far it hangs (flowW) so a wave ripples
 // down the cloth - swings fore/aft with the step, and billows back.
 let ambientT = 0; const GAITS = [null, WALK, RUN];
+const POSE_NAMES = ['none', ...Object.keys(D.poses || {})];
+let poseIx = 0;
+const curPose = () => (poseIx ? D.poses[POSE_NAMES[poseIx]] : null);
+const POSE_L = { strideAmp: 0, counterFrac: 0, kneeBase: 0, kneeAmp: 0, elbowBase: 0, elbowAmp: 0, lean: 0 }; // zero loco for the posed idle
 function animate(dt) {
   const L = GAITS[gaitIx];
   if (L) {
     wt += dt * L.cadence;
     const bob = L.bobAmp * Math.sin(wt*2);
-    for (const T of animTargets) animateTarget(T, wt, L, bob);
+    for (const T of animTargets) animateTarget(T, wt, L, bob, curPose(), true);
     stepDrapeCloth(wt, 1, bob, L);           // gait -> cloth reacts + trails
+  } else if (poseIx) {
+    ambientT += dt * 1.4;
+    for (const T of animTargets) animateTarget(T, 0, POSE_L, 0, curPose(), false);
+    stepDrapeCloth(ambientT, 0.10, 0, WALK);
   } else {
     ambientT += dt * 1.4;
     for (const T of animTargets) if (T.pos.some((v,i)=>v!==T.base[i])) { T.pos.set(T.base); T.geo.attributes.position.needsUpdate = true; }
@@ -386,6 +400,12 @@ function refreshHairLabel(){ const h=raceHair[RACES[raceIx]]; const b=document.g
 document.getElementById('hairstyle').onclick = () => { const h=raceHair[RACES[raceIx]]; if(!h||h.styles.length<2) return; h.ix=(h.ix+1)%h.styles.length; syncHair(); refreshHairLabel(); };
 refreshHairLabel();
 document.getElementById('walk').onclick = (e) => { gaitIx = (gaitIx+1)%3; e.target.textContent = ['idle','walk','run'][gaitIx]; e.target.classList.toggle('on', gaitIx>0); };
+const poseBtn = document.getElementById('pose');
+const setPose = (i) => { poseIx = ((i % POSE_NAMES.length) + POSE_NAMES.length) % POSE_NAMES.length; poseBtn.textContent = 'pose: ' + POSE_NAMES[poseIx]; poseBtn.classList.toggle('on', poseIx > 0); };
+poseBtn.onclick = () => setPose(poseIx + 1);
+// script hooks (Playwright iteration): fixed camera + pose by index
+window.__setPose = setPose;
+window.__setView = (y, p, d) => { autospin = false; yaw = y; pitch = p; if (d) dist = d; };
 document.getElementById('bg').onclick = () => { bgi = (bgi + 1) % bgs.length; scene.background = new THREE.Color(bgs[bgi]); postMat.uniforms.bg.value = new THREE.Color(bgs[bgi]); };
 document.getElementById('drape').onclick = (e) => { drapeIx = (drapeIx+1) % DRAPES.length; setDrape(); e.target.textContent = 'drape: ' + DRAPES[drapeIx]; };
 </script>
