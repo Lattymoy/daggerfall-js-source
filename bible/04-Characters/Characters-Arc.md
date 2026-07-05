@@ -84,8 +84,8 @@ witnesses every constant against the DFU source.
   cruciform guard/tapered blade lofts at the LEFT-fist column (Mac:
   left hand, and big - 0.70-unit blade, hangs to the shin), every face
   tagged `armL` so the ARM TRANSFORM carries it - point-down carry at
-  rest, and the melee1H fold stands it UPRIGHT past the head (probed:
-  tip y 0.061 rest -> tilt 1.2deg / tip y 2.24 posed). No weapon-specific
+  rest, and the melee1H v3 stance stands it upright at 4.2deg, edges
+  fore-aft, riding the run at 16-40deg (see C-Anim). No weapon-specific
   animation code. HELD RULE: a gripped rigid object takes the FULL
   hand transform - the tuner's per-height wrist cut split the sword
   (blade rolled, pommel didn't); sword's animTarget carries
@@ -101,24 +101,33 @@ witnesses every constant against the DFU source.
 
 ## C-Anim (ACTIVE): poses + animation on the neutral rig
 
-Static poses as data over the walk cycle's sagittal transform.
-`src/characters/poses.js` - a pose sets per-limb `{ sw, bd }` (radians):
-`sw` rotates the limb about its root (hip/shoulder), `bd` bends about
-the mid joint (knee/elbow), applied exactly like the viewer's
-animateTarget. Signs: sw NEGATIVE = forward for arms and legs; bd
-POSITIVE = anatomical bend (knee back, elbow forward). Blend rule:
-posed ARMS hold their angles through the gait, walk or run (the
-figure keeps its grip while moving); posed LEGS give the stance at
-rest and hand over to the gait. Viewer: `pose:` button cycles the
-table; `window.__setPose(i)` / `window.__setView(yaw,pitch,dist)`
-hooks give deterministic Playwright shots. poses.test.js guards the
-table shape + joint ranges.
+Static poses as data (v2: the FULL joint set) over the loco transform.
+`src/characters/poses.js` - arms take `{ sw, bd, spread, handRoll,
+handPitch, handYaw }`, legs `{ sw, bd }`, plus pose-level `lean` and
+gait-blend dials. Pivots/order/mirroring match the tuner exactly:
+hand roll about the FOREARM AXIS (stacks on the baked rest roll),
+pitch about the wrist junction, yaw about (armX, wrist) mirrored,
+then bend, root swing, spread (mirrored rotZ), torso lean (pose lean
+ADDS to the gait's). Joint gates read REST y; held objects take the
+whole hand chain. GAIT BLEND (redesign): posed LEGS give the stance
+at rest and hand to the gait; posed ARMS stay ALIVE while moving -
+the pose is the BASE and `gaitArm`/`gaitElbow` fractions of the loco
+arm motion ride on top, so the fighter pumps around the grip instead
+of freezing. Viewer: `pose:` button; `__setPose(i)` / `__setView`
+hooks. poses.test.js guards the full table shape + joint ranges.
 
-- **melee1H (SHIPPED, v2 upright + left-handed)**: 1H melee ready for
-  the LEFT-fist sword. Weapon arm raised (sw -0.70, bd 2.40 - the fold
-  sums to ~pi, standing the blade VERTICAL: probed 1.2deg tilt, tip
-  y 2.24 past the head); off arm a bent low guard (-0.35, 1.10);
-  ready stagger right-lead. Mac: "the sword should be upright."
+- **melee1H (SHIPPED, v3 REDESIGN - Mac: design + stance right, runs
+  animated)**: bladed left-handed fighting stance. Weapon arm raised
+  AND spread off the ribs (sw -0.62, bd 2.42, spread 0.28), blade
+  upright at 4.2deg with the EDGES rolled fore-aft (handRoll 1.57
+  over the baked rest roll); handYaw 0.28 counter-cancels the
+  spread's lateral blade tip (empirically signed - the minus sign
+  doubled it to 31deg). Guard arm up across, palm turned out
+  (-0.55/1.35/0.22, handPitch -0.50). Combat crouch: right-lead
+  stagger (lead z 0.15 / trail -0.23), both knees bent, lean 0.10.
+  RUN: guard-fist pumps (z swing 0.117), weapon fist bobs damped
+  (0.021 - the tucked grip pivots little, by design), blade rides
+  the charge at 16-40deg. All probed live.
 - Viewer arm/hand tuner (idle sliders, other session + extended):
   all sliders live in a collapsible TUNERS BAR - a bottom tab ascends/
   descends the stack (collapsed by default, Mac); rows scroll past

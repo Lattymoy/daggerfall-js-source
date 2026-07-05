@@ -313,29 +313,45 @@ function poseArms(T) {
 function animateTarget(T, wt, L, bob, pose, moving) {
   const P = T.pos, B = T.base, VG = T.vgrp;
   const leanPivot = hipY + 0.10;                     // lean the upper body about the low spine
+  const lean = (L.lean || 0) + (pose && pose.lean || 0);   // pose crouch adds to the gait's own lean
+  const held = !!T.held;                                   // gripped rigid object: whole hand chain
   const applyLimb = (g, phase, isLeg, limbKey) => {
     const pp = pose && pose[limbKey];
     let swing, bend;
-    if (pp && (!isLeg || !moving)) { swing = pp.sw; bend = pp.bd; }   // pose: arms hold through the gait, legs at rest
-    else {
-      swing = (isLeg ? -L.strideAmp : -L.strideAmp * L.counterFrac) * Math.sin(wt + phase);
-      bend  = isLeg ? L.kneeBase  + L.kneeAmp  * Math.max(0, Math.sin(wt + phase + 1.2))
-                    : L.elbowBase + L.elbowAmp * (0.5 + 0.5*Math.sin(wt + phase - 0.6));
-    }
+    const gaitSwing = -L.strideAmp * (isLeg ? 1 : L.counterFrac) * Math.sin(wt + phase);
+    const gaitBend  = isLeg ? L.kneeBase  + L.kneeAmp  * Math.max(0, Math.sin(wt + phase + 1.2))
+                            : L.elbowBase + L.elbowAmp * (0.5 + 0.5*Math.sin(wt + phase - 0.6));
+    if (pp && !isLeg) {   // posed arms: pose is the BASE; moving adds a damped gait pump on top (alive, grip kept)
+      swing = pp.sw + (moving ? (pose.gaitArm ?? 0) * gaitSwing : 0);
+      bend  = pp.bd + (moving ? (pose.gaitElbow ?? 0) * (gaitBend - L.elbowBase - 0.5 * L.elbowAmp) : 0);
+    } else if (pp && !moving) { swing = pp.sw; bend = pp.bd; }   // posed legs: stance at rest
+    else if (moving) { swing = gaitSwing; bend = gaitBend; }     // gait
+    else { swing = 0; bend = 0; }
     const jointY = isLeg ? kneeY : elbowY, rootY = isLeg ? hipY : shoulderY, bendSign = isLeg ? 1 : -1;
+    const rollA = pp && !isLeg ? (g === 2 ? -1 : 1) * (pp.handRoll || 0) : 0;
+    const pitchA = pp && !isLeg ? (pp.handPitch || 0) : 0;
+    const yawA = pp && !isLeg ? (g === 2 ? -1 : 1) * (pp.handYaw || 0) : 0;
+    const sprA = pp && !isLeg ? (g === 2 ? -1 : 1) * (pp.spread || 0) : 0;
+    const wpx = g === 2 ? -D.armX : D.armX;
     for (let i=0;i<VG.length;i++) if (VG[i]===g) {
-      let y = B[i*3+1], z = B[i*3+2];
-      if (y < jointY) [y,z] = rotX(y, z, jointY, bendSign*bend);   // knee / elbow
+      let x = B[i*3], y = B[i*3+1], z = B[i*3+2]; const by = y;   // joint gates read REST y
+      if (!isLeg && (held || by < wristY)) {                      // hand chain (pose joints), forearm-axis pivots
+        if (rollA)  [x,z] = rotY(x, z, wpx, 0, rollA);
+        if (pitchA) [y,z] = rotX(y, z, wristY, pitchA);
+        if (yawA)   [x,y] = rotZ(x, y, wpx, wristY, yawA);
+      }
+      if (held || by < jointY) [y,z] = rotX(y, z, jointY, bendSign*bend);   // knee / elbow
       [y,z] = rotX(y, z, rootY, swing);                            // hip / shoulder swing
-      if (!isLeg) [y,z] = rotX(y, z, leanPivot, L.lean);           // arms lean with the torso
-      P[i*3] = B[i*3]; P[i*3+1] = y + bob; P[i*3+2] = z;
+      if (!isLeg && sprA) [x,y] = rotZ(x, y, armRootX[g], shoulderY, sprA); // abduction
+      if (!isLeg) [y,z] = rotX(y, z, leanPivot, lean);             // arms lean with the torso
+      P[i*3] = x; P[i*3+1] = y + bob; P[i*3+2] = z;
     }
   };
   applyLimb(4, 0, true, 'legL'); applyLimb(5, Math.PI, true, 'legR');   // legs
   applyLimb(2, Math.PI, false, 'armL'); applyLimb(3, 0, false, 'armR'); // arms
   for (let i=0;i<VG.length;i++) if (VG[i]===0 || VG[i]===1) {      // torso + head: lean + bob
     let y = B[i*3+1], z = B[i*3+2];
-    [y,z] = rotX(y, z, leanPivot, L.lean);
+    [y,z] = rotX(y, z, leanPivot, lean);
     P[i*3] = B[i*3]; P[i*3+1] = y + bob; P[i*3+2] = z;
   }
   T.geo.attributes.position.needsUpdate = true;
