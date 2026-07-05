@@ -120,7 +120,9 @@ table shape + joint ranges.
   y 2.24 past the head); off arm a bent low guard (-0.35, 1.10);
   ready stagger right-lead. Mac: "the sword should be upright."
 - Viewer arm/hand tuner (idle sliders, other session + extended):
-  shoulder pitch/spread, elbow, and FULL hand rotation - roll +/-180deg
+  all sliders live in a collapsible TUNERS BAR - a bottom tab ascends/
+  descends the stack (collapsed by default, Mac); rows scroll past
+  55vh. Axes: shoulder pitch/spread, elbow, and FULL hand rotation - roll +/-180deg
   about the measured hand centre (MIRRORED L/R), pitch (rotX about the
   wrist), yaw (mirrored rotZ). Held targets take hand/elbow whole (the
   held rule - see C-Weapons). THREE ROOT CAUSES fixed here, all

@@ -15,6 +15,9 @@
   #bar button { flex: 0 0 auto; }
   button { background: #23232e; color: #cfcfda; border: 1px solid #34343f; border-radius: 999px; padding: 12px 18px; font-size: 14px; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
   button:active { background: #2e2e3a; }
+  #tunertab { pointer-events: auto; padding: 8px 16px; font-size: 12px; }
+  #tunerbody { display: flex; flex-direction: column; gap: 8px; align-items: center; width: 100%; max-height: 0; overflow: hidden; transition: max-height .25s ease; }
+  #pxrow.open #tunerbody { max-height: 55vh; overflow-y: auto; pointer-events: auto; touch-action: pan-y; }
   button.on { background: #3a3a48; color: #fff; }
 </style>
 </head>
@@ -38,6 +41,8 @@
   <button id="drape">drape: None</button>
 </div>
 <div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 72px); left:0; right:0; display:flex; flex-direction:column; gap:8px; align-items:center; color:#8a8a99; font-size:12px; pointer-events:none;">
+  <button id="tunertab">tuners &#9650;</button>
+  <div id="tunerbody">
   <div style="display:flex; gap:8px; align-items:center;"><span id="pxlab" style="width:120px; text-align:right;">pixelize: off</span><input id="px" type="range" min="1" max="16" step="1" value="1" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
   <div style="display:flex; gap:8px; align-items:center;"><span id="cdlab" style="width:120px; text-align:right;">color: full</span><input id="cd" type="range" min="1" max="9" step="1" value="9" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
   <div style="display:flex; gap:8px; align-items:center;"><span id="ap_lab" style="width:120px; text-align:right;">arm pitch: 0</span><input id="ap" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
@@ -46,6 +51,7 @@
   <div style="display:flex; gap:8px; align-items:center;"><span id="ah_lab" style="width:120px; text-align:right;">hand roll: 0</span><input id="ah" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
   <div style="display:flex; gap:8px; align-items:center;"><span id="ahp_lab" style="width:120px; text-align:right;">hand pitch: 0</span><input id="ahp" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
   <div style="display:flex; gap:8px; align-items:center;"><span id="ahy_lab" style="width:120px; text-align:right;">hand yaw: 0</span><input id="ahy" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -374,6 +380,8 @@ function resize() {
   camera.aspect = w / h; camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
+const pxrowEl = document.getElementById('pxrow'), tunerTab = document.getElementById('tunertab');
+tunerTab.onclick = () => { const open = pxrowEl.classList.toggle('open'); tunerTab.innerHTML = 'tuners ' + (open ? '&#9660;' : '&#9650;'); };
 const pxLab = document.getElementById('pxlab'), cdLab = document.getElementById('cdlab');
 const wireArm=(id,key,scale)=>{const el=document.getElementById(id),lab=document.getElementById(id+'_lab'),name=lab.textContent.split(':')[0];el.addEventListener('input',e=>{armTune[key]=(+e.target.value)/100*scale;lab.textContent=name+': '+e.target.value;});};
 wireArm('ap','pitch',0.9); wireArm('as','spread',0.7); wireArm('ae','elbow',1.6); wireArm('ah','hand',Math.PI);   // hand roll: full +/-180deg
