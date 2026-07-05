@@ -39,11 +39,9 @@ export function buildCloth(grid) {
 
 // One fixed-timestep step. opts: { gy, gx, gz, damp, standoff, iters,
 // pinDX, pinDY, pinDZ } - pin* shift the pinned top row (follow the body).
-// Resolve a limb capsule (segment p0->p1, radii r0->r1) by pushing the
-// vertex radially OUTWARD from the body's vertical axis until it clears
-// the limb's outer extent. Outward-only: a limb moving under a garment
-// bulges it out, and it never drags cloth inward into the torso - so
-// limb and torso colliders never fight, and the solve converges.
+// Resolve a limb capsule (segment p0->p1, radii r0->r1): push the vertex
+// to the nearest point on the capsule surface. Local, so cloth wraps the
+// limb (a skirt drapes over the legs) with no radial spikes.
 function pushCapsule(px, py, pz, C, SO) {
   const p0 = C.p0, p1 = C.p1;
   const abx=p1[0]-p0[0], aby=p1[1]-p0[1], abz=p1[2]-p0[2];
@@ -51,13 +49,11 @@ function pushCapsule(px, py, pz, C, SO) {
   let t = ((px-p0[0])*abx + (py-p0[1])*aby + (pz-p0[2])*abz) / l2; t = Math.max(0, Math.min(1, t));
   const cx=p0[0]+abx*t, cy=p0[1]+aby*t, cz=p0[2]+abz*t;
   const R = (C.r0 + (C.r1 - C.r0)*t) + SO;
-  const d = Math.hypot(px-cx, py-cy, pz-cz);
-  if (d >= R) return null;                                   // already outside the limb
-  let rx = px, rz = pz, rr = Math.hypot(rx, rz);             // radial dir from the body axis
-  if (rr < 1e-5) { rx = cx || 1; rz = cz; rr = Math.hypot(rx, rz) || 1; }
-  const target = Math.hypot(cx, cz) + R;                     // just past the limb's outer edge
-  if (target > rr) return [rx/rr*target, py, rz/rr*target];
-  return null;
+  let dx=px-cx, dy=py-cy, dz=pz-cz; const d = Math.hypot(dx, dy, dz);
+  if (d >= R) return null;
+  if (d < 1e-6) { dx = 0; dy = 0; dz = 1; }
+  const f = R / Math.hypot(dx, dy, dz);
+  return [cx + dx*f, cy + dy*f, cz + dz*f];
 }
 export function stepCloth(cloth, dt, opts, core) {
   const { pos, prev, base, pinned, con, V } = cloth;
@@ -112,14 +108,8 @@ export function articulatedCapsules(g, ang) {
     caps.push({ p0: [x, g.hipY, 0], p1: [x, ky, kz], r0: g.legR[0], r1: g.legR[1] });
     caps.push({ p0: [x, ky, kz], p1: [x, ay2, az2], r0: g.legR[1], r1: g.legR[2] });
   };
-  const arm = (x, sw, bd) => {
-    const [wy, wz]  = rot(g.wrY, 0, g.elbowY, -bd);    // forearm flexes forward about the elbow
-    const [ey, ez]  = rot(g.elbowY, 0, g.shY, sw);     // then the arm swings about the shoulder
-    const [wy2, wz2] = rot(wy, wz, g.shY, sw);
-    caps.push({ p0: [x, g.shY, 0], p1: [x, ey, ez], r0: g.armR[0], r1: g.armR[1] });
-    caps.push({ p0: [x, ey, ez], p1: [x, wy2, wz2], r0: g.armR[1], r1: g.armR[2] });
-  };
+  // Legs only: arms hang OUTSIDE these garments, so the cloth must not
+  // wrap them (skirts/robes/capes are not sleeves).
   leg(-g.legX, ang.legL.sw, ang.legL.bd); leg(g.legX, ang.legR.sw, ang.legR.bd);
-  arm(-g.armX, ang.armL.sw, ang.armL.bd); arm(g.armX, ang.armR.sw, ang.armR.bd);
   return caps;
 }

@@ -43,14 +43,12 @@ test('no clipping: every free particle stays outside the body collider', () => {
 });
 
 // Articulated limb collider for a gait phase (mirrors the viewer).
-const GEOM = { legX: 0.082, armX: 0.235, hipY: 0.90, kneeY: 0.52, ankleY: 0.10, shY: 1.50, elbowY: 1.15, wrY: 0.80, legR: [0.12, 0.085, 0.065], armR: [0.075, 0.055, 0.05] };
+const GEOM = { legX: 0.082, hipY: 0.90, kneeY: 0.52, ankleY: 0.10, legR: [0.12, 0.085, 0.065] };
 function capsFor(phase) {
-  const sA = 0.44, cf = 1.1, kA = 0.9, eA = 0.35;
+  const sA = 0.44, kA = 0.9;
   return articulatedCapsules(GEOM, {
-    legL: { sw: -sA*Math.sin(phase),          bd: kA*Math.max(0, Math.sin(phase+1.2)) },
-    legR: { sw: -sA*Math.sin(phase+Math.PI),  bd: kA*Math.max(0, Math.sin(phase+Math.PI+1.2)) },
-    armL: { sw: -sA*cf*Math.sin(phase+Math.PI), bd: eA*(0.5+0.5*Math.sin(phase+Math.PI-0.6)) },
-    armR: { sw: -sA*cf*Math.sin(phase),         bd: eA*(0.5+0.5*Math.sin(phase-0.6)) },
+    legL: { sw: -sA*Math.sin(phase),         bd: kA*Math.max(0, Math.sin(phase+1.2)) },
+    legR: { sw: -sA*Math.sin(phase+Math.PI), bd: kA*Math.max(0, Math.sin(phase+Math.PI+1.2)) },
   });
 }
 function capsuleDist(px, py, pz, C) {
@@ -61,7 +59,7 @@ function capsuleDist(px, py, pz, C) {
   return Math.hypot(px-cx, py-cy, pz-cz) - r;   // >0 outside
 }
 
-test('no clipping during WALKING: cloth stays out of bent legs + swinging arms', () => {
+test('no clipping during WALKING: cloth stays out of the bent legs (arms hang outside)', () => {
   for (const name of ['Long Skirt', 'Plain Robes', 'Casual Cloak']) {
     const c = buildCloth(drapedGrid(name));
     let phase = 0;
@@ -71,7 +69,7 @@ test('no clipping during WALKING: cloth stays out of bent legs + swinging arms',
     for (let i = 0; i < c.V; i++) {
       if (c.pinned[i]) continue;
       const px = c.pos[i*3], py = c.pos[i*3+1], pz = c.pos[i*3+2];
-      for (const C of caps) assert.ok(capsuleDist(px, py, pz, C) > -0.010, `${name}: particle inside a limb capsule`);
+      for (const C of caps) assert.ok(capsuleDist(px, py, pz, C) > -0.010, `${name}: particle inside a leg capsule`);
       if (py >= 0.80 && py <= 1.56) { const [hx, hz] = core(py); const A = hx+0.03, C2 = hz+0.03; const e = (px*px)/(A*A)+(pz*pz)/(C2*C2); assert.ok(e > 0.9, `${name}: particle inside the torso`); }
     }
   }

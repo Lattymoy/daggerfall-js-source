@@ -188,16 +188,11 @@ const setDrape = () => { for (const nm in drapedMeshes) drapedMeshes[nm].visible
 // Articulated collider (bent legs + swinging arms) for the current gait,
 // using the rig's real joint heights + measured limb radii.
 function currentCapsules(phase, bob) {
-  const g = { legX: 0.082, armX: 0.235,
-    hipY: hipY+bob, kneeY: kneeY+bob, ankleY: ankL+bob,
-    shY: shoulderY+bob, elbowY: elbowY+bob, wrY: wristL+bob,
-    legR: [0.12, 0.085, 0.065], armR: [0.075, 0.055, 0.05] };
-  const sA = WALK.strideAmp, cf = WALK.counterFrac, kA = WALK.kneeAmp, eA = WALK.elbowAmp;
+  const g = { legX: 0.082, hipY: hipY+bob, kneeY: kneeY+bob, ankleY: ankL+bob, legR: [0.12, 0.085, 0.065] };
+  const sA = WALK.strideAmp, kA = WALK.kneeAmp;
   return articulatedCapsules(g, {
-    legL: { sw: -sA*Math.sin(phase),           bd: kA*Math.max(0, Math.sin(phase+1.2)) },
-    legR: { sw: -sA*Math.sin(phase+Math.PI),   bd: kA*Math.max(0, Math.sin(phase+Math.PI+1.2)) },
-    armL: { sw: -sA*cf*Math.sin(phase+Math.PI), bd: eA*(0.5+0.5*Math.sin(phase+Math.PI-0.6)) },
-    armR: { sw: -sA*cf*Math.sin(phase),          bd: eA*(0.5+0.5*Math.sin(phase-0.6)) },
+    legL: { sw: -sA*Math.sin(phase),         bd: kA*Math.max(0, Math.sin(phase+1.2)) },
+    legR: { sw: -sA*Math.sin(phase+Math.PI), bd: kA*Math.max(0, Math.sin(phase+Math.PI+1.2)) },
   });
 }
 function stepDrapeCloth(phase, motion, bob) {
