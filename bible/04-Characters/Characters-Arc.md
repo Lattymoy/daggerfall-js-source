@@ -135,8 +135,16 @@ table shape + joint ranges.
   gates read y AFTER pitch moved it - a thumb-top vert pitched across
   the junction and the yaw skipped it, shearing the hand 0.0153 under
   combos (hand-traced to 6 decimals against the live value). Joint
-  membership is REST anatomy: every gate reads base y. Verified rigid
-  to 1e-7 over 60 random full-range six-slider combos.
+  membership is REST anatomy: every gate reads base y. (4) The roll
+  pivoted on the hand CENTROID - the outer thumb pulls it ~0.011 off
+  the forearm axis, so rolling translated the wrist ring ~0.013 off
+  the arm (Mac: "offsets slightly"). Hand roll/yaw now pivot on the
+  FOREARM AXIS (+/-ARM_X, exported from neutralBody, payload-fed);
+  swept the full roll range - wrist ring stays on-axis to 5e-9.
+  Mac's tuned rest is BAKED: neutralBody HAND_REST_ROLL rolls the
+  hands -40 (mirrored, about the same axis, normals rotated with the
+  verts) so slider 0 shows it and it holds through poses and gaits.
+  Verified rigid to 1e-7 over 60 random full-range six-slider combos.
 - Next candidates (not approved): 2H hold, attack swings, hit
   reaction. Weapon meshes in the gripped hand shipped - see C-Weapons.
 

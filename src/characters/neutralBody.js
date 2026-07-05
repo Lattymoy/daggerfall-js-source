@@ -13,6 +13,19 @@
 // the mitten (palm static, knuckles rotating, thumb torn).
 export const WRIST_JUNCTION_Y = 0.9875;
 
+// The arm/fist column (half-extent). Hand rotations (rest bake + the
+// viewer tuner) MUST pivot on this forearm axis at z 0 - the hand's
+// own centroid sits off-axis (the outer thumb pulls it ~0.011 wide),
+// and rolling about the centroid translates the wrist ring off the
+// forearm (~0.013 disconnect at Mac's -40).
+export const ARM_X = 0.235;
+
+// REST HAND ROLL (Mac: "hand roll -40" in the viewer tuner) - baked
+// into the rig so it holds through poses and gaits, not just the idle
+// tuner. Same semantics the slider applied: -40/100 * pi, mirrored
+// (left +, right -), rolled about the forearm axis.
+export const HAND_REST_ROLL = 0.4 * Math.PI;
+
 export function buildNeutralBody(ramps, opts = {}) {
   const SEG = 28;
   const SKIN = [196, 154, 116], BOOT = [92, 74, 58], HAIR = [64, 54, 44];
@@ -120,7 +133,6 @@ export function buildNeutralBody(ramps, opts = {}) {
     { y: 1.06, rx: 0.044, rz: 0.046 }, // lower forearm
     { y: 0.99, rx: 0.036, rz: 0.038 }, // wrist
   ];
-  const ARM_X = 0.235;
   grp = 'armL'; loft(armProf, SKIN, () => -ARM_X, () => 0);
   grp = 'armR'; loft(armProf, SKIN, () => ARM_X, () => 0);
   grp = 'body';
@@ -281,6 +293,31 @@ export function buildNeutralBody(ramps, opts = {}) {
   // build. Applied before AO so crevice distances stay consistent.
   const HSCALE = 0.9;
   for (const f of faces) for (let i = 0; i < 4; i++) f.p[i*3+1] *= HSCALE;
+
+  // REST HAND ROLL bake: rotate every hand face (below the wrist
+  // junction, arm groups) about ITS forearm axis (+/-ARM_X, z 0) by
+  // the mirrored HAND_REST_ROLL - same rotY the viewer tuner applies,
+  // so slider 0 now shows Mac's tuned -40. Normals rotate with the
+  // verts (baked shading + AO read them). No face spans the junction
+  // (hand tops at 0.985, forearm starts at 0.99), so faces rotate
+  // whole - no shear.
+  {
+    const wY = WRIST_JUNCTION_Y * HSCALE;
+    for (const f of faces) {
+      if (f.g !== 'armL' && f.g !== 'armR') continue;
+      let cy = 0; for (let i = 0; i < 4; i++) cy += f.p[i*3+1]; cy /= 4;
+      if (cy >= wY) continue;
+      const px = f.g === 'armL' ? -ARM_X : ARM_X;
+      const a = (f.g === 'armL' ? 1 : -1) * HAND_REST_ROLL;
+      const c = Math.cos(a), s = Math.sin(a);
+      for (let i = 0; i < 4; i++) {
+        const dx = f.p[i*3] - px, dz = f.p[i*3+2];
+        f.p[i*3] = px + c*dx + s*dz; f.p[i*3+2] = -s*dx + c*dz;
+      }
+      const nx = f.n[0], nz = f.n[2];
+      f.n[0] = c*nx + s*nz; f.n[2] = -s*nx + c*nz;
+    }
+  }
 
   const cen = faces.map((f) => {
     let x = 0, y = 0, z = 0;

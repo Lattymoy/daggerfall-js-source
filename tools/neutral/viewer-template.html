@@ -291,8 +291,6 @@ function rotY(x, z, px, pz, ang) { const c=Math.cos(ang), s=Math.sin(ang), dx=x-
 // arm/hand posing tuner (radians): applied to the rest stance at idle.
 function grpMeanX(g) { let sx=0, n=0; for (let i=0;i<vgrp.length;i++) if (vgrp[i]===g) { sx+=basePos[i*3]; n++; } return n ? sx/n : 0; }
 const armRootX = { 2: grpMeanX(2), 3: grpMeanX(3) };
-function grpHandC(g) { let sx=0, sz=0, n=0; for (let i=0;i<vgrp.length;i++) if (vgrp[i]===g && basePos[i*3+1] < wristY) { sx+=basePos[i*3]; sz+=basePos[i*3+2]; n++; } return n ? { x:sx/n, z:sz/n } : { x:armRootX[g], z:0 }; }
-const handC = { 2: grpHandC(2), 3: grpHandC(3) };
 const armTune = { pitch: 0, spread: 0, elbow: 0, hand: 0, handPitch: 0, handYaw: 0 };
 function poseArms(T) {
   const P = T.pos, B = T.base, VG = T.vgrp;
@@ -300,9 +298,10 @@ function poseArms(T) {
   for (let i=0;i<VG.length;i++) { const g = VG[i], o = i*3;
     if (g === 2 || g === 3) {
       let x = B[o], y = B[o+1], z = B[o+2]; const by = y, rootX = armRootX[g], mir = g === 2 ? -1 : 1; // by: joint gates use REST y - the pitch mutates y and a moved vert must not change joints mid-chain
-      if (armTune.hand      && (held || by < wristY)) [x,z] = rotY(x, z, handC[g].x, handC[g].z, mir * armTune.hand); // hand roll about its own centre (mirrored)
+      const wpx = g === 2 ? -D.armX : D.armX;   // hand pivots live on the FOREARM AXIS - a centroid pivot (outer thumb pulls it ~0.011 wide) translates the wrist ring off the arm
+      if (armTune.hand      && (held || by < wristY)) [x,z] = rotY(x, z, wpx, 0, mir * armTune.hand); // hand roll about the forearm axis (mirrored)
       if (armTune.handPitch && (held || by < wristY)) [y,z] = rotX(y, z, wristY, armTune.handPitch);            // hand pitch (flex/extend about the wrist)
-      if (armTune.handYaw   && (held || by < wristY)) [x,y] = rotZ(x, y, handC[g].x, wristY, mir * armTune.handYaw); // hand yaw (side wave, mirrored)
+      if (armTune.handYaw   && (held || by < wristY)) [x,y] = rotZ(x, y, wpx, wristY, mir * armTune.handYaw); // hand yaw (side wave, mirrored)
       if (armTune.elbow  && (held || by < elbowY)) [y,z] = rotX(y, z, elbowY, -armTune.elbow);   // elbow flex FORWARD
       if (armTune.pitch)  [y,z] = rotX(y, z, shoulderY, armTune.pitch);                  // shoulder fore/aft
       if (armTune.spread) [x,y] = rotZ(x, y, rootX, shoulderY, mir * armTune.spread);    // abduction (mirrored)

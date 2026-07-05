@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { ImgFile } from '../../src/formats/imgFile.js';
 import { DFPalette } from '../../src/formats/dfPalette.js';
 import { CifRciFile } from '../../src/formats/cifRciFile.js';
-import { buildNeutralBody, WRIST_JUNCTION_Y } from '../../src/characters/neutralBody.js';
+import { buildNeutralBody, WRIST_JUNCTION_Y, ARM_X } from '../../src/characters/neutralBody.js';
 import { buildCuirass, STEEL_RAMP } from '../../src/characters/pieces/cuirass.js';
 import { buildGreaves } from '../../src/characters/pieces/greaves.js';
 import { CLOTH_RAMP, MAIL_RAMP, LEATHER_RAMP } from '../../src/characters/pieces/pieceLoft.js';
@@ -69,7 +69,7 @@ const drapeGridsOut = {}, drapedPacks = {};
 for (const nm of DRAPED_NAMES) { const g = drapedGrid(nm);
   if (g) drapeGridsOut[nm] = { rows: g.rows, cols: g.cols, wrap: g.wrap, pos: Array.from(g.pos), faces: g.faces };
   else drapedPacks[nm] = packPiece(drapedPiece(nm, CLOTH_D)); }
-const payload = JSON.stringify({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: drapedPacks, drapeGrids: drapeGridsOut, drapeMaterials: DRAPE_MATERIAL, bodyCore: BODY_CORE, poses: POSES, wristY: WRIST_JUNCTION_Y * 0.9,
+const payload = JSON.stringify({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: drapedPacks, drapeGrids: drapeGridsOut, drapeMaterials: DRAPE_MATERIAL, bodyCore: BODY_CORE, poses: POSES, wristY: WRIST_JUNCTION_Y * 0.9, armX: ARM_X,
   sword: packPiece(buildSword(weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i)))),
   swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
   swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
