@@ -61,6 +61,38 @@ ramps, returns faces with baked colour):
 Open: pieces (armor) re-seat on the new rig; hands/face detail (face
 declined); engine-shader vs baked-shading interaction to confirm.
 
+## C-Weapons (ACTIVE): true item data + the first weapon in hand
+
+The data layer is verbatim DFU (`src/characters/weapons.js`): Weapons
+enum (113-131) and WeaponMaterialTypes (Iron 0 -> Daedric 9) from
+ItemEnums; the three ItemBuilder multiplier arrays and
+SetItemPropertiesByMaterial math (value x3 x valueMult, the quarter-kg
+weight rule, condition x condMult / 4); GetWeaponMaterialModifier
+(Iron -1 ... Daedric +6) and CalculateWeaponToHit (mod x10);
+GetWeaponDyeColor into the dyes.js DyeColors; FormulaHelper's full
+CalculateWeaponMin/MaxDamage table. `buildWeapon(template, material)`
+is ApplyWeaponMaterial as a pure builder (incl. the female
+playerTextureArchive-1 rule). `weaponMaterialRamp` resolves the metal
+colour table (METAL_TABLES, extraction-generated) through ART_PAL -
+the classic tint mechanism, one geometry x ten materials.
+ROOT-CAUSE PIN: Unity Mathf.Round is half-to-EVEN; JS Math.round is
+half-up. 4.5kg x Daedric hits 22.5 quarter-kgs exactly (DFU 5.5kg, JS
+5.75) - weightForMaterial ports banker's rounding. weapons.test.js
+witnesses every constant against the DFU source.
+
+- **Longsword (SHIPPED)** - `pieces/sword.js`: pommel/grip/cruciform
+  guard/tapered blade lofts at the right-fist column, every face
+  tagged `armR` so the ARM TRANSFORM carries it - point-down carry at
+  rest, and the melee1H fold lands it blade-up-forward past the
+  shoulder (probed: tip y 0.255 rest -> 1.25..1.72 +z 0.28 posed). No
+  weapon-specific animation code. Viewer: `sword:` button cycles off ->
+  Iron..Daedric (recolor via stored piece intensities - shadePiece now
+  bakes `_i`); stats line shows the verbatim item record (dmg, mat
+  mod, hit, kg, value, condition). `__setSword(i)` hook.
+- Next candidates (not approved): the other 1H blades on the same
+  loft (Dagger/Tanto/Shortsword/Wakazashi/Broadsword/Saber/Katana),
+  blunt/axe families, 2H + the 2H hold, sheath/hip carry.
+
 ## C-Anim (ACTIVE): poses + animation on the neutral rig
 
 Static poses as data over the walk cycle's sagittal transform.
@@ -81,7 +113,7 @@ table shape + joint ranges.
   blade line up-forward; off arm a bent low guard (-0.35, 1.25);
   small ready stagger (left lead, trail knee soft).
 - Next candidates (not approved): 2H hold, attack swings, hit
-  reaction, weapon meshes in the gripped hand.
+  reaction. Weapon meshes in the gripped hand shipped - see C-Weapons.
 
 ## C-Drapes (SHIPPED): draped garments as simulated cloth
 

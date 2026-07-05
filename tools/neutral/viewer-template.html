@@ -9,6 +9,7 @@
   html, body { height: 100%; background: #14141a; overflow: hidden; touch-action: none; font-family: -apple-system, system-ui, sans-serif; }
   #c { display: block; width: 100vw; height: 100vh; }
   #hud { position: fixed; top: env(safe-area-inset-top, 8px); left: 0; right: 0; text-align: center; color: #8a8a99; font-size: 12px; pointer-events: none; padding-top: 8px; }
+  #swordinfo { position: fixed; top: calc(env(safe-area-inset-top, 8px) + 26px); left: 0; right: 0; text-align: center; color: #b8b8c8; font-size: 12px; pointer-events: none; }
   #bar { position: fixed; bottom: env(safe-area-inset-bottom, 0); left: 0; right: 0; display: flex; gap: 8px; padding: 12px; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   #bar::-webkit-scrollbar { display: none; }
   #bar button { flex: 0 0 auto; }
@@ -20,6 +21,7 @@
 <body>
 <canvas id="c"></canvas>
 <div id="hud">NEUTRAL POSE prototype &middot; drag to rotate &middot; pinch to zoom</div>
+<div id="swordinfo"></div>
 <div id="bar">
   <button id="spin" class="on">auto-spin</button>
   <button id="reset">reset view</button>
@@ -27,6 +29,7 @@
   <button id="bg">bg</button>
   <button id="walk">walk</button>
   <button id="pose">pose: none</button>
+  <button id="sword">sword: off</button>
   <button id="pauldrons" class="on">pauldrons</button>
   <button id="helm" class="on">helm</button>
   <button id="race">race: Human</button>
@@ -220,6 +223,8 @@ function stepDrapeCloth(phase, motion, bob, L) {
 }
 const bodyFurCoat = D.bodyFurCoat ? buildPiece(D.bodyFurCoat) : null;
 const bodyFurBelly = D.bodyFurBelly ? buildPiece(D.bodyFurBelly) : null;
+const swordMesh = D.sword ? buildPiece(D.sword) : null;
+if (swordMesh) swordMesh.visible = false;
 if (bodyScalesMesh) bodyScalesMesh.visible = false;
 if (bodyFurCoat) bodyFurCoat.visible = false;
 if (bodyFurBelly) bodyFurBelly.visible = false;
@@ -406,6 +411,26 @@ poseBtn.onclick = () => setPose(poseIx + 1);
 // script hooks (Playwright iteration): fixed camera + pose by index
 window.__setPose = setPose;
 window.__setView = (y, p, d) => { autospin = false; yaw = y; pitch = p; if (d) dist = d; };
+// Sword: off -> Iron -> ... -> Daedric -> off. Recolors via the classic
+// metal table ramp; the stats line is the verbatim item record.
+const SWORD_MATS = Object.keys(D.swordRamps || {});
+let swordIx = -1;
+const swordInfo = document.getElementById('swordinfo');
+const setSword = (i) => {
+  swordIx = i;
+  const on = swordIx >= 0, name = on ? SWORD_MATS[swordIx] : null;
+  if (swordMesh) swordMesh.visible = on;
+  document.getElementById('sword').textContent = 'sword: ' + (on ? name : 'off');
+  document.getElementById('sword').classList.toggle('on', on);
+  if (on) {
+    swordMesh.userData.recolor(D.swordRamps[name]);
+    const it = D.swordItems[name];
+    const mod = it.materialModifier >= 0 ? '+' + it.materialModifier : String(it.materialModifier);
+    swordInfo.textContent = `${name} ${it.name} \u00b7 dmg ${it.minDamage}\u2013${it.maxDamage} \u00b7 mat ${mod} \u00b7 hit ${it.toHitModifier >= 0 ? '+' : ''}${it.toHitModifier} \u00b7 ${it.weightInKg.toFixed(2)}kg \u00b7 ${it.value}g \u00b7 cond ${it.maxCondition}`;
+  } else swordInfo.textContent = '';
+};
+document.getElementById('sword').onclick = () => setSword(swordIx + 2 > SWORD_MATS.length ? -1 : swordIx + 1);
+window.__setSword = setSword;
 document.getElementById('bg').onclick = () => { bgi = (bgi + 1) % bgs.length; scene.background = new THREE.Color(bgs[bgi]); postMat.uniforms.bg.value = new THREE.Color(bgs[bgi]); };
 document.getElementById('drape').onclick = (e) => { drapeIx = (drapeIx+1) % DRAPES.length; setDrape(); e.target.textContent = 'drape: ' + DRAPES[drapeIx]; };
 </script>

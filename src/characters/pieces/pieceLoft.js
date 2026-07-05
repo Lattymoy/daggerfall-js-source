@@ -53,7 +53,8 @@ export function shadePiece(faces, ramp) {
   const snap = (t) => ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(t * (ramp.length - 1))))];
   for (const f of faces) {
     const it = Math.max(0.05, (f.n[0]*Lx + f.n[1]*Ly + f.n[2]*Lz) / Ln * 0.9 + 0.15);
-    f.c = snap(Math.min(1, it));
+    f._i = Math.min(1, it);
+    f.c = snap(f._i);
   }
   return faces;
 }
