@@ -117,13 +117,15 @@ const BUILD = {
 };
 
 // ---- Simulatable GRIDS: rows of ring points -> a pinned cloth mesh ----
-function flareRows(topY, hemY, tRx, tRz, hRx, hRz, steps = 9) {
+function flareRows(topY, hemY, tRx, tRz, hRx, hRz) {
   const rows = [];
+  const steps = Math.max(6, Math.min(24, Math.round((topY - hemY) / 0.055)));  // ~constant ring spacing
   for (let k = 0; k <= steps; k++) { const t = k/steps, y = topY - t*(topY-hemY), e = t*t; const [rx, rz] = clip(y, tRx + e*(hRx-tRx), tRz + e*(hRz-tRz)); rows.push({ y, rx, rz }); }
   return rows;
 }
-function capeRows(hemY, wide, steps = 12) {
+function capeRows(hemY, wide) {
   const rows = [], neckY = 1.500, W = wide ? 1.16 : 1.0;
+  const steps = Math.max(6, Math.min(24, Math.round((neckY - hemY) / 0.055)));
   for (let k = 0; k <= steps; k++) { const t = k/steps, y = neckY - t*(neckY-hemY), grow = Math.pow(t, 0.85); const [rx, rz] = clip(y, (0.088 + grow*0.230)*W, (0.100 + grow*0.185)*W); rows.push({ y, rx, rz }); }
   return rows;
 }
