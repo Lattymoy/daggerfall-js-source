@@ -199,8 +199,10 @@ function drapeColliders(phase, motion, bob) {
 function stepDrapeCloth(phase, motion, bob) {
   const cur = DRAPES[drapeIx]; const cs = clothSims[cur]; if (!cs) return;
   const col = drapeColliders(phase, motion, bob);
+  const isCloak = cur.indexOf('Cloak') >= 0;   // cloaks hang from the shoulders, not the legs - free cloth, no bone-drive
   // bone-drive makes the lower drape follow the legs; capsule collision (last) guarantees no clip
-  const opts = { gy: -7, gx: motion * 0.3 * Math.sin(phase), gz: -motion * 0.9, pinDY: bob, iters: 10, damp: 0.90, maxStep: 0.04, groundY: 0.02, capsules: col.caps, bones: col.bones };
+  const opts = { gy: -7, gx: motion * 0.3 * Math.sin(phase), gz: -motion * 0.9, pinDY: bob, iters: 10, damp: 0.90, maxStep: 0.04, groundY: 0.02,
+    capsules: isCloak ? (motion > 0.5 ? col.caps : null) : col.caps, bones: isCloak ? null : col.bones };
   stepCloth(cs.cloth, 1/60, opts, coreFn);
   stepCloth(cs.cloth, 1/60, opts, coreFn); // 2 substeps for stability
   cs.posArr.set(cs.cloth.pos); cs.geo.attributes.position.needsUpdate = true;
