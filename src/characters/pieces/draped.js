@@ -21,33 +21,15 @@ export function coreHalfExtents(y) {
 // clamp a ring's rx/rz to sit outside the body core at height y
 function clip(y, rx, rz) { const [cx, cz] = coreHalfExtents(y); return [Math.max(rx, cx + STANDOFF), Math.max(rz, cz + STANDOFF)]; }
 
-function quadInto(faces, a, b, c, d, g = B) {
-  const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2], vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];
-  let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx; const L=Math.hypot(nx,ny,nz)||1;
-  faces.push({ p:[...a,...b,...c,...d], n:[nx/L,ny/L,nz/L], g });
-}
 
 
 
 
-
-// Sash: a thin diagonal band shoulder-to-hip.
-function sash(faces) {
-  const w = 0.028;
-  const a=[-0.140,1.520,0.030], b=[0.150,1.010,0.060];
-  const dir=[b[0]-a[0],b[1]-a[1],b[2]-a[2]]; const n=[0,0,1];
-  const off=[dir[1]*n[2]-dir[2]*n[1], dir[2]*n[0]-dir[0]*n[2], dir[0]*n[1]-dir[1]*n[0]];
-  const L=Math.hypot(...off)||1; const o=[off[0]/L*w,off[1]/L*w,off[2]/L*w];
-  quadInto(faces, [a[0]-o[0],a[1]-o[1],a[2]-o[2]], [a[0]+o[0],a[1]+o[1],a[2]+o[2]], [b[0]+o[0],b[1]+o[1],b[2]+o[2]], [b[0]-o[0],b[1]-o[1],b[2]-o[2]]);
-}
 
 
 // Garment name -> builder. Robes/kimono are tall near-columnar flares;
 // dresses start at the chest; skirts at the waist; mummy = full wrap.
-// Sash is a thin rigid band (barely drapes) - the only non-grid garment.
-const BUILD = {
-  'Sash': (f) => sash(f),
-};
+
 
 // ---- Simulatable GRIDS: rows of ring points -> a pinned cloth mesh ----
 function flareRows(topY, hemY, tRx, tRz, hRx, hRz) {
@@ -80,14 +62,61 @@ const GRIDSPEC = {
   // sleeveless over-tunics to mid-thigh
   'Dwynnen Surcoat': { rows: flareRows(1.500, 0.600, 0.150, 0.125, 0.205, 0.170), wrap: true, seg: 24 },
   'Anticlere Surcoat': { rows: flareRows(1.500, 0.560, 0.150, 0.125, 0.208, 0.172), wrap: true, seg: 24 },
-  // shoulder shawl: a short arc over the shoulders + upper back
-  'Wrap':            { rows: [{ y: 1.560, rx: 0.150, rz: 0.120 }, { y: 1.475, rx: 0.180, rz: 0.150 }, { y: 1.395, rx: 0.190, rz: 0.152 }, { y: 1.315, rx: 0.188, rz: 0.150 }], wrap: false, seg: 22, arc: [Math.PI/2 + 0.75, Math.PI/2 - 0.75 + Math.PI*2] },
 };
+
+// ---- Strip garments: a ribbon of cloth along a centreline path -----
+// Builds a (rows x cols) grid by sweeping a width across each path point,
+// perpendicular to the path and tangent to the body surface. Supports an
+// explicit pin mask (which rows are fixed to the body). These give the
+// detailed, asymmetric drapes (scarves, sashes) the ring grids can't.
+function stripGrid(center, halfW, cols, pinRows) {
+  const R = center.length, pos = new Float32Array(R * cols * 3);
+  for (let r = 0; r < R; r++) {
+    const a = center[Math.max(0, r-1)], b = center[Math.min(R-1, r+1)], p = center[r];
+    let tx=b[0]-a[0], ty=b[1]-a[1], tz=b[2]-a[2]; const tl=Math.hypot(tx,ty,tz)||1; tx/=tl; ty/=tl; tz/=tl;
+    let rx=p[0], rz=p[2]; let rl=Math.hypot(rx,rz); if (rl < 0.02) { rx=0; rz=1; rl=1; } rx/=rl; rz/=rl;   // radial (out from the body axis)
+    let px=ty*rz - tz*0, py=tz*rx - tx*rz, pz=tx*0 - ty*rx; const pl=Math.hypot(px,py,pz)||1; px/=pl; py/=pl; pz/=pl;  // width dir = tangent x radial
+    const hw = Array.isArray(halfW) ? halfW[r] : halfW;
+    for (let c = 0; c < cols; c++) { const u = (c/(cols-1) - 0.5) * 2 * hw, i = (r*cols+c)*3;
+      pos[i] = p[0] + px*u; pos[i+1] = p[1] + py*u; pos[i+2] = p[2] + pz*u; }
+  }
+  const faces = [];
+  for (let r = 0; r+1 < R; r++) for (let c = 0; c+1 < cols; c++) faces.push([r*cols+c, r*cols+c+1, (r+1)*cols+c+1, (r+1)*cols+c]);
+  const pin = new Uint8Array(R * cols);
+  for (const r of pinRows) for (let c = 0; c < cols; c++) pin[r*cols + c] = 1;
+  return { rows: R, cols, wrap: false, pos, faces, pin };
+}
+
+// Wrap: a scarf draped over the back of the neck + both shoulders, with the
+// two ends hanging down the front as tails. Pinned across the shoulders/nape.
+function wrapGrid() {
+  const c = [
+    [-0.11, 0.86, 0.145], [-0.13, 1.02, 0.140], [-0.155, 1.20, 0.120], [-0.170, 1.40, 0.075], // L front tail -> L shoulder
+    [-0.135, 1.520, -0.03], [-0.055, 1.545, -0.100], [0.055, 1.545, -0.100], [0.135, 1.520, -0.03], // over shoulders + nape (pinned)
+    [0.170, 1.40, 0.075], [0.155, 1.20, 0.120], [0.13, 1.02, 0.140], [0.11, 0.86, 0.145], // R shoulder -> R front tail
+  ];
+  const hw = [0.052,0.058,0.066,0.072, 0.086,0.092,0.092,0.086, 0.072,0.066,0.058,0.052];
+  return stripGrid(c, hw, 5, [4,5,6,7]);
+}
+
+// Sash: a wide band from the right shoulder diagonally across the chest to a
+// knot at the left hip, then a tapering tail hanging free below the knot.
+function sashGrid() {
+  const c = [
+    [0.155, 1.500, 0.095], [0.100, 1.380, 0.115], [0.030, 1.250, 0.120], [-0.045, 1.120, 0.115], // R shoulder -> chest
+    [-0.110, 0.980, 0.100], [-0.150, 0.865, 0.130], // L waist -> hip knot (pinned ends: 0 and 5)
+    [-0.170, 0.720, 0.110], [-0.170, 0.580, 0.085], [-0.155, 0.440, 0.060], // tail (free)
+  ];
+  const hw = [0.050,0.052,0.054,0.052, 0.050,0.064, 0.046,0.038,0.030];
+  return stripGrid(c, hw, 4, [0, 5]);
+}
 
 /** Cloth grid for a garment: pinned top row (row 0), ring rows down to
  *  the hem. { rows, cols, wrap, pos (rows*cols*3), faces (quad indices) }.
  *  null for garments with no flowing grid (surcoat/toga/sash/wrap). */
 export function drapedGrid(name) {
+  if (name === 'Wrap') return wrapGrid();
+  if (name === 'Sash') return sashGrid();
   const spec = GRIDSPEC[name];
   if (!spec) return null;
   const { rows, wrap, seg, arc } = spec, R = rows.length, cols = wrap ? seg : seg + 1;
@@ -108,15 +137,10 @@ function facesFromGrid(g) {
   return f;
 }
 
-export const DRAPED_NAMES = [...Object.keys(GRIDSPEC), ...Object.keys(BUILD).filter((n) => !GRIDSPEC[n])];
+export const DRAPED_NAMES = [...Object.keys(GRIDSPEC), 'Wrap', 'Sash'];
 
 /** Standoff faces for a draped garment name, shaded with `ramp`. [] if not draped. */
 export function drapedPiece(name, ramp) {
   const g = drapedGrid(name);
-  if (g) return shadePiece(facesFromGrid(g), ramp);
-  const b = BUILD[name];
-  if (!b) return [];
-  const faces = [];
-  b(faces);
-  return shadePiece(faces, ramp);
+  return g ? shadePiece(facesFromGrid(g), ramp) : [];
 }
