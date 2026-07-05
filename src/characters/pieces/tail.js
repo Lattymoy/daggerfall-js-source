@@ -7,7 +7,7 @@
 function shadeTail(faces, ramp) {
   const Lx = 0.5, Ly = 0.55, Lz = 0.67, Ln = Math.hypot(Lx, Ly, Lz);
   const snap = (t) => ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(t * (ramp.length - 1))))];
-  for (const f of faces) { const it = Math.max(0.08, (f.n[0]*Lx + f.n[1]*Ly + f.n[2]*Lz) / Ln * 0.9 + 0.18); f.c = snap(Math.min(1, it)); }
+  for (const f of faces) { const it = Math.min(1, Math.max(0.08, (f.n[0]*Lx + f.n[1]*Ly + f.n[2]*Lz) / Ln * 0.9 + 0.18)); f._i = it; f.c = snap(it); }
   return faces;
 }
 

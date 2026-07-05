@@ -15,7 +15,7 @@ export const ARGONIAN_HIDE  = [[16, 26, 16], [28, 44, 26], [44, 64, 38], [64, 90
 function shadeScales(faces, ramp) {
   const Lx = 0.5, Ly = 0.55, Lz = 0.67, Ln = Math.hypot(Lx, Ly, Lz);
   const snap = (t) => ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(t * (ramp.length - 1))))];
-  for (const f of faces) { const it = Math.max(0.08, (f.n[0]*Lx + f.n[1]*Ly + f.n[2]*Lz) / Ln * 0.9 + 0.18); f.c = snap(Math.min(1, it)); }
+  for (const f of faces) { const it = Math.min(1, Math.max(0.08, (f.n[0]*Lx + f.n[1]*Ly + f.n[2]*Lz) / Ln * 0.9 + 0.18)); f._i = it; f.c = snap(it); }
   return faces;
 }
 
@@ -100,7 +100,7 @@ function furTuft(out, P, n, len, g) {
 
 // Khajiit fur pass: dense short tufts over the whole body, tagged per
 // group so they move with the rig. No scutes.
-export function buildBodyFur(bodyFaces, coat = KHAJIIT_FUR, belly = KHAJIIT_BELLY) {
+export function buildBodyFur(bodyFaces, coat = KHAJIIT_FUR, belly = KHAJIIT_BELLY, region = 'all') {
   const coatF = [], bellyF = [];
   for (const f of bodyFaces) {
     if (f.g === 'head') continue;              // head furred separately
@@ -113,6 +113,8 @@ export function buildBodyFur(bodyFaces, coat = KHAJIIT_FUR, belly = KHAJIIT_BELL
     // counter-shading: underside (normal points down) + front-lower chest
     // + inner limbs read as the pale belly tone; everything else the coat.
     const ventral = n[1] < -0.05 || (n[2] > 0.30 && cy < 1.30) || (Math.abs(cx) < 0.10 && cy < 1.15);
+    if (region === 'coat' && ventral) continue;
+    if (region === 'belly' && !ventral) continue;
     furTuft(ventral ? bellyF : coatF, [cx, cy, cz], n, len, f.g);
   }
   shadeScales(coatF, coat); shadeScales(bellyF, belly);

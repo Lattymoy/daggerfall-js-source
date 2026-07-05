@@ -300,7 +300,7 @@ export function buildNeutralBody(ramps, opts = {}) {
     it *= ao[i]; // crevices darken
     const ramp = fc._mat ? (opts.mats?.[fc._mat] || ramps[fc._mat] || opts.cloth || ramps.skin)
       : (fc.c === BOOT ? ramps.boot : ramps.skin);
-    fc.c = shade(ramp, Math.min(1, Math.max(0.04, it)));
+    const iv = Math.min(1, Math.max(0.04, it)); fc._i = iv; fc.c = shade(ramp, iv);
   }
 
   // Payload (quantized, same format as the viewer expects).

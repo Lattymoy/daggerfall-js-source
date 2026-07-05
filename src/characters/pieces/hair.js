@@ -14,7 +14,7 @@ export const HAIR_RAMPS = {
 function shadeHair(faces, ramp) {
   const Lx = 0.5, Ly = 0.55, Lz = 0.67, Ln = Math.hypot(Lx, Ly, Lz);
   const snap = (t) => ramp[Math.max(0, Math.min(ramp.length - 1, Math.round(t * (ramp.length - 1))))];
-  for (const f of faces) { const it = Math.max(0.1, (f.n[0]*Lx + f.n[1]*Ly + f.n[2]*Lz) / Ln * 0.9 + 0.2); f.c = snap(Math.min(1, it)); }
+  for (const f of faces) { const it = Math.min(1, Math.max(0.1, (f.n[0]*Lx + f.n[1]*Ly + f.n[2]*Lz) / Ln * 0.9 + 0.2)); f._i = it; f.c = snap(it); }
   return faces;
 }
 
@@ -242,7 +242,7 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null) 
     const Lx=0.5,Ly=0.55,Lz=0.67,Ln=Math.hypot(Lx,Ly,Lz);
     const sr = skin || ramp;
     const snap=(t)=>sr[Math.max(0,Math.min(sr.length-1,Math.round(t*(sr.length-1))))];
-    for (const f of flesh) { const it=Math.max(0.1,(f.n[0]*Lx+f.n[1]*Ly+f.n[2]*Lz)/Ln*0.9+0.2); f.c=snap(Math.min(1,it)); }
+    for (const f of flesh) { const it=Math.min(1,Math.max(0.1,(f.n[0]*Lx+f.n[1]*Ly+f.n[2]*Lz)/Ln*0.9+0.2)); f._i=it; f.c=snap(it); }
     faces.push(...flesh);
   }
 
