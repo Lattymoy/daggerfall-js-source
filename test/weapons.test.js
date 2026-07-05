@@ -51,10 +51,10 @@ test('weapons: verbatim DFU data pins', () => {
   assert.equal(fem.playerTextureArchive, d.playerTextureArchive - 1);
 });
 
-test('sword piece: well-formed armL-tagged mesh in the left fist', () => {
+test('sword piece: grip-baked, armL, blade up-forward off a hanging arm', () => {
   const faces = buildSword(STEEL_RAMP);
   assert.ok(faces.length > 40, 'too few faces');
-  let minY = 1e9, maxY = -1e9;
+  const pts = [];
   for (const f of faces) {
     assert.equal(f.g, 'armL');
     assert.equal(f.p.length, 12);
@@ -62,12 +62,23 @@ test('sword piece: well-formed armL-tagged mesh in the left fist', () => {
     const nl = Math.hypot(f.n[0], f.n[1], f.n[2]);
     assert.ok(Math.abs(nl - 1) < 1e-6, 'non-unit normal');
     for (let i = 0; i < 4; i++) {
-      const x = f.p[i * 3], y = f.p[i * 3 + 1];
-      assert.ok(Math.abs(x - -0.235) < 0.095, `off the fist column: x=${x}`);
-      if (y < minY) minY = y; if (y > maxY) maxY = y;
+      assert.ok(Math.abs(f.p[i * 3] - -0.235) < 0.10, `off the fist column: x=${f.p[i * 3]}`);
+      pts.push([f.p[i * 3], f.p[i * 3 + 1], f.p[i * 3 + 2]]);
     }
   }
-  // post-HSCALE: pommel ~0.94, big blade tip ~0.06 - hangs to the shin.
-  assert.ok(maxY > 0.90 && maxY < 0.97, `pommel y ${maxY}`);
-  assert.ok(minY > 0.04 && minY < 0.09, `tip y ${minY}`);
+  // blade axis = farthest-apart pair; the GRIP bake (Mac's reference)
+  // must stand it up-forward ~47deg from vertical with the tip high
+  // (+z) and the pommel low behind the fist (-z).
+  let A = null, C = null, best = -1;
+  for (let i = 0; i < pts.length; i += 7) for (let j = i + 7; j < pts.length; j += 7) {
+    const d = (pts[i][0]-pts[j][0])**2 + (pts[i][1]-pts[j][1])**2 + (pts[i][2]-pts[j][2])**2;
+    if (d > best) { best = d; A = pts[i]; C = pts[j]; }
+  }
+  const [tip, pom] = A[1] + A[2] > C[1] + C[2] ? [A, C] : [C, A];
+  const tilt = Math.atan2(Math.hypot(tip[0]-pom[0], tip[2]-pom[2]), tip[1]-pom[1]) * 180 / Math.PI;
+  assert.ok(tilt > 43 && tilt < 51, `blade tilt from vertical ${tilt}`);
+  assert.ok(tip[2] > 0.45 && tip[1] > 1.25, `tip not up-forward: ${tip}`);
+  assert.ok(pom[2] < -0.04 && pom[1] < 0.80, `pommel not low-behind: ${pom}`);
+  const len = Math.sqrt(best);
+  assert.ok(len > 0.88 && len < 0.96, `blade span ${len}`);
 });

@@ -24,24 +24,20 @@
 // so the fighter pumps around the grip instead of freezing.
 
 export const POSES = {
-  // 1H melee ready, LEFT-handed, redesigned (Mac). Bladed fighting
-  // stance: weapon arm raised AND spread off the ribs, blade upright
-  // (~9deg) with the EDGES rolled fore-aft toward the opponent
-  // (handRoll 1.57 ~= mirrored -90deg over the baked rest roll); guard
-  // arm up across the body, palm turned out (handPitch); combat
-  // crouch - deep right-lead stagger, both knees bent, slight forward
-  // lean. handYaw 0.28 counter-cancels the spread's lateral blade tip
-  // (empirically signed: -0.28 doubled it to 31deg; +0.28 -> 4.2deg).
-  // Runs alive: guard pumps, weapon arm bobs damped, grip kept
-  // (probed: guard-fist z swing 0.117, weapon 0.021, blade 16-40deg
-  // through the charge).
+  // 1H melee ready, LEFT-handed, v4 - matched to Mac's grip reference
+  // (2026-07-05): the LOW READY. Weapon arm HANGS with a soft elbow
+  // (the baked sword grip does the work - blade rides up-forward
+  // ~47deg on its own; the mesh's wide axis lives in the swing plane
+  // so the flat already faces sideways - no roll). Off arm relaxed. Easy right-lead
+  // stagger, soft knees, near-upright torso. The low arm swings with
+  // the gait (gaitArm 0.55) so the blade genuinely sweeps at a run.
   melee1H: {
-    lean: 0.10,
-    gaitArm: 0.30,
-    gaitElbow: 0.22,
-    armL: { sw: -0.62, bd: 2.42, spread: 0.28, handRoll: 1.57, handPitch: -0.10, handYaw: 0.28 },
-    armR: { sw: -0.55, bd: 1.35, spread: 0.22, handRoll: 0, handPitch: -0.50, handYaw: 0 },
-    legL: { sw: 0.16, bd: 0.30 },
-    legR: { sw: -0.30, bd: 0.26 },
+    lean: 0.03,
+    gaitArm: 0.55,
+    gaitElbow: 0.35,
+    armL: { sw: -0.04, bd: 0.08, spread: 0.06, handRoll: 0, handPitch: 0, handYaw: 0 },
+    armR: { sw: -0.05, bd: 0.12, spread: 0.04, handRoll: 0, handPitch: 0, handYaw: 0 },
+    legL: { sw: 0.08, bd: 0.08 },
+    legR: { sw: -0.14, bd: 0.10 },
   },
 };

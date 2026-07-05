@@ -82,10 +82,17 @@ witnesses every constant against the DFU source.
 
 - **Longsword (SHIPPED)** - `pieces/sword.js`: pommel/grip/broad
   cruciform guard/tapered blade lofts at the LEFT-fist column (Mac:
-  left hand, and big - 0.70-unit blade, hangs to the shin), every face
-  tagged `armL` so the ARM TRANSFORM carries it - point-down carry at
-  rest, and the melee1H v3 stance stands it upright at 4.2deg, edges
-  fore-aft, riding the run at 16-40deg (see C-Anim). No weapon-specific
+  left hand, and big - 0.70-unit blade), every face tagged `armL` so
+  the ARM TRANSFORM carries it. THE GRIP (Mac's reference photo,
+  2026-07-05): a sword is NOT collinear with the forearm - the handle
+  crosses the palm. Baked as GRIP_PITCH (-2.40 rad about the grip
+  point, verts + normals), so a hanging arm carries the blade
+  UP-FORWARD at 46.7deg with the pommel low behind the fist; the
+  blade's WIDE axis lives in the swing plane (z) so the flat faces
+  sideways like the reference (the old handRoll 1.57 became a yaw
+  once the blade left vertical - deleted from the pose). melee1H v4
+  reads 41deg at idle, 43-87deg through the run (see C-Anim). No
+  weapon-specific
   animation code. HELD RULE: a gripped rigid object takes the FULL
   hand transform - the tuner's per-height wrist cut split the sword
   (blade rolled, pommel didn't); sword's animTarget carries
@@ -116,18 +123,16 @@ arm motion ride on top, so the fighter pumps around the grip instead
 of freezing. Viewer: `pose:` button; `__setPose(i)` / `__setView`
 hooks. poses.test.js guards the full table shape + joint ranges.
 
-- **melee1H (SHIPPED, v3 REDESIGN - Mac: design + stance right, runs
-  animated)**: bladed left-handed fighting stance. Weapon arm raised
-  AND spread off the ribs (sw -0.62, bd 2.42, spread 0.28), blade
-  upright at 4.2deg with the EDGES rolled fore-aft (handRoll 1.57
-  over the baked rest roll); handYaw 0.28 counter-cancels the
-  spread's lateral blade tip (empirically signed - the minus sign
-  doubled it to 31deg). Guard arm up across, palm turned out
-  (-0.55/1.35/0.22, handPitch -0.50). Combat crouch: right-lead
-  stagger (lead z 0.15 / trail -0.23), both knees bent, lean 0.10.
-  RUN: guard-fist pumps (z swing 0.117), weapon fist bobs damped
-  (0.021 - the tucked grip pivots little, by design), blade rides
-  the charge at 16-40deg. All probed live.
+- **melee1H (SHIPPED, v4 - Mac's grip reference, 2026-07-05)**: the
+  LOW READY, matched to the photo. Weapon arm HANGS with a soft elbow
+  (sw -0.04, bd 0.08, spread 0.06; NO hand joints - the baked sword
+  grip does the work), fist at hip height (y 0.78), blade up-forward
+  at 41.2deg; off arm relaxed (-0.05/0.12); easy right-lead stagger,
+  soft knees, lean 0.03. RUN: gaitArm 0.55 swings the low arm so the
+  blade genuinely sweeps 43-87deg through the stride - alive, not
+  frozen. Steepening trap pinned: elbow/shoulder flex rotates a tip
+  that sits ABOVE the elbow up-and-back (~-15deg at v4's first
+  values); the reference arm is near-neutral, tuned to it.
 - Viewer arm/hand tuner (idle sliders, other session + extended):
   all sliders live in a collapsible TUNERS BAR - a bottom tab ascends/
   descends the stack (collapsed by default, Mac); rows scroll past
