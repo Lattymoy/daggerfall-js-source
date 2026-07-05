@@ -116,11 +116,11 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null) 
       return r;
     };
     const mrows = [
-      mring(1.828, 0.096, 0.060, 0.040),  // base (embedded, wide whisker pads)
-      mring(1.824, 0.132, 0.052, 0.036),
-      mring(1.818, 0.160, 0.040, 0.028),
-      mring(1.812, 0.174, 0.026, 0.020),  // nose shelf
-      mring(1.806, 0.182, 0.012, 0.010),  // tip
+      mring(1.826, 0.092, 0.078, 0.042),  // base - WIDE whisker pads bulging sideways
+      mring(1.820, 0.128, 0.064, 0.036),
+      mring(1.814, 0.158, 0.046, 0.028),
+      mring(1.808, 0.174, 0.028, 0.020),  // nose shelf
+      mring(1.802, 0.182, 0.013, 0.010),  // tip
     ];
     for (let i = 0; i + 1 < mrows.length; i++) for (let k = 0; k < 10; k++) { const j = (k+1)%10; quad(mrows[i][k], mrows[i][j], mrows[i+1][j], mrows[i+1][k]); }
     // cap the tip
@@ -133,18 +133,29 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null) 
     // ON the upper skull (maxX ~0.075 there) and dip INTO it, so they're
     // welded to the head - not floating beside it.
     const kear = (sx) => {
-      // broad triangular cat ear: wide base on the skull, tip a modest
-      // rise above the crown, cupped (centre dipped in).
-      const fb   = [sx*0.014, 1.978, 0.040];   // front-inner base
-      const bb   = [sx*0.080, 1.970, -0.056];  // back-outer base (at skull edge)
-      const midb = [sx*0.044, 1.962, -0.010];  // base centre, dipped IN (cup)
-      const tip  = [sx*0.050, 2.108, -0.028];  // point, clearly above the crown
-      quad(fb, tip, midb, midb);          // front-inner face
-      quad(midb, tip, bb, bb);            // front-outer face
-      quad(bb, tip, fb, fb);              // back face (wraps around)
+      // large cat ear set WIDE on the skull corner, splayed outward: the
+      // tip sits further out than the base (like the reference).
+      const fb   = [sx*0.042, 1.972, 0.034];   // front base, on the corner
+      const bb   = [sx*0.086, 1.958, -0.058];  // back base, at the skull edge
+      const midb = [sx*0.060, 1.950, -0.012];  // base centre, dipped IN (cup)
+      const tip  = [sx*0.108, 2.088, -0.030];  // point splayed OUT and up
+      quad(fb, tip, midb, midb);          // front face
+      quad(midb, tip, bb, bb);            // outer face
+      quad(bb, tip, fb, fb);              // back face (wraps)
       quad(fb, midb, bb, bb);             // base floor (cup, embedded)
     };
     kear(-1); kear(1);
+    // heavy brow ridge over the eyes.
+    { const by = 1.898, bz = 0.126, bw = 0.086;
+      quad([-bw,by,bz],[bw,by,bz],[bw*0.86,by-0.020,bz+0.020],[-bw*0.86,by-0.020,bz+0.020]);
+      quad([-bw*0.86,by-0.020,bz+0.020],[bw*0.86,by-0.020,bz+0.020],[bw*0.7,by-0.030,bz-0.02],[-bw*0.7,by-0.030,bz-0.02]); }
+    // cheek + neck ruff: fur flaring out and down, framing the face.
+    const ruff = (sx, i) => {
+      const y0 = 1.770 - i*0.028, rx = sx*(0.086 - i*0.004), z0 = 0.052 - i*0.014;
+      const tip = [sx*(0.128 + i*0.006), y0 - 0.034, z0 - 0.030];
+      quad([rx, y0 + 0.018, z0], tip, [rx, y0 - 0.018, z0 - 0.006], [rx, y0 - 0.018, z0 - 0.006]);
+    };
+    for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) ruff(sx, i);
     // whiskers: thin tapered strands from the muzzle sides, swept out and
     // slightly back+down (not square tufts). Three per side.
     const whisker = (sx, i) => {
@@ -155,15 +166,48 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null) 
     };
     for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) whisker(sx, i);
   } else if (race === 'Argonian') {
-    // reptilian head: curved swept-back HORNS, a tall spinal CREST, a
-    // brow-SCALE ridge, snout NOSE-SPIKES and a fanned neck FRILL.
+    // reptilian head: overlapping SCALE PLATES over the whole head, a
+    // reptilian SNOUT, clustered HORNS, a tall CREST, spiky BROW, and a
+    // neck FRILL.
+    // ---- SCALE PLATES: raised overlapping tiles across the head ----
+    const prof = [[1.820,0.045,0.046],[1.780,0.082,0.090],[1.720,0.100,0.115],[1.660,0.108,0.125],[1.620,0.102,0.125],[1.560,0.082,0.110]];
+    const interp = (cy) => { for (let i=0;i+1<prof.length;i++){ const a=prof[i],b=prof[i+1]; if (cy<=a[0]&&cy>=b[0]){ const t=(cy-a[0])/(b[0]-a[0]); return [a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t]; } } return cy>prof[0][0]?[prof[0][1],prof[0][2]]:[prof[5][1],prof[5][2]]; };
+    // one scale: a small raised pyramid (4 tris to an apex lifted off the
+    // surface) -> a discrete bump. Placed with GAPS so they don't merge.
+    const scale = (x, cy, z, nx, nz, r) => {
+      const py = cy/0.9;
+      const tx = nz, tz = -nx;                 // sideways tangent (xz)
+      const B = (dt, dv) => [x + tx*dt, py + dv, z + tz*dt]; // base ring point
+      const apex = [x + nx*0.016, py, z + nz*0.016];         // lifted centre
+      const a1=B(-r,-r), a2=B(r,-r), a3=B(r,r), a4=B(-r,r);
+      quad(a1, a2, apex, apex); quad(a2, a3, apex, apex); quad(a3, a4, apex, apex); quad(a4, a1, apex, apex);
+    };
+    let rowi = 0;
+    for (let cy=1.590; cy<=1.795; cy+=0.032, rowi++) {
+      const [rx,fz]=interp(cy);
+      const off = (rowi%2)*0.5;
+      for (let step=-3+off; step<=3; step+=1.0) {
+        const a = step*0.40;
+        if (Math.abs(a) > 1.30) continue;
+        const sxx=Math.sin(a), x=rx*sxx*0.97, z=fz*Math.cos(a)*0.98;
+        const nl=Math.hypot(sxx,Math.cos(a))||1;
+        scale(x, cy, z, sxx/nl, Math.cos(a)/nl, 0.013);
+      }
+    }
+    // ---- SNOUT: a reptilian snout projecting from the lower face ----
+    const snring = (y,z,rx2,ry2)=>{ const r=[]; for(let k=0;k<8;k++){const ang=k/8*2*Math.PI; r.push([Math.cos(ang)*rx2, y+Math.sin(ang)*ry2, z]);} return r; };
+    const sn = [ snring(1.816,0.104,0.066,0.048), snring(1.808,0.140,0.054,0.038), snring(1.800,0.172,0.042,0.028), snring(1.794,0.192,0.028,0.018), snring(1.790,0.202,0.014,0.010) ];
+    for(let i=0;i+1<sn.length;i++) for(let k=0;k<8;k++){const j=(k+1)%8; quad(sn[i][k],sn[i][j],sn[i+1][j],sn[i+1][k]);}
+    { const tc=[0,1.790,0.204]; for(let k=0;k<8;k++){const j=(k+1)%8; quad(tc,sn[4][j],sn[4][k],sn[4][k]);} }
+    // nostrils: two small dark dents near the snout tip
+    for (const sxn of [-1,1]) { const nx2=sxn*0.016; quad([nx2-0.006,1.812,0.194],[nx2+0.006,1.812,0.194],[nx2+0.004,1.800,0.198],[nx2-0.004,1.800,0.198]); }
     // horns: from the top-sides, curving up then back to a point.
     const horn = (sx) => tube([
-      { x: sx*0.070, y: 1.940, z: -0.005, r: 0.034 }, // rooted INTO the skull
-      { x: sx*0.116, y: 2.005, z: -0.055, r: 0.026 },
-      { x: sx*0.128, y: 2.030, z: -0.115, r: 0.019 },
-      { x: sx*0.126, y: 2.032, z: -0.180, r: 0.011 },
-      { x: sx*0.116, y: 2.018, z: -0.235, r: 0.004 }, // tip
+      { x: sx*0.066, y: 1.892, z:  0.000, r: 0.036 }, // base on the temple (skull maxX~0.10 here)
+      { x: sx*0.088, y: 1.922, z: -0.058, r: 0.029 }, // rising slightly, curving back
+      { x: sx*0.092, y: 1.930, z: -0.124, r: 0.021 }, // hugging the skull side, back
+      { x: sx*0.080, y: 1.918, z: -0.186, r: 0.012 }, // sweeping past the back of the head
+      { x: sx*0.062, y: 1.894, z: -0.238, r: 0.005 }, // tip
     ]);
     horn(-1); horn(1);
     // tall spinal crest: 7 back-swept spines, bigger than before.
@@ -188,11 +232,9 @@ export function buildHair(ramp = HAIR_RAMPS.brown, race = 'Human', skin = null) 
     const frill = (sx) => {
       // inner edge sits ON the head (within maxX at each height); outer
       // edge fans out a modest amount - a connected membrane, not flaps.
-      const inner = [[sx*0.094, 1.842, -0.030], [sx*0.090, 1.772, -0.070], [sx*0.078, 1.708, -0.098]];
-      const outer = [[sx*0.150, 1.858, -0.090], [sx*0.162, 1.772, -0.140], [sx*0.150, 1.708, -0.176]];
+      const inner = [[sx*0.092, 1.836, -0.044], [sx*0.086, 1.768, -0.082], [sx*0.074, 1.704, -0.104]];
+      const outer = [[sx*0.118, 1.844, -0.108], [sx*0.126, 1.768, -0.140], [sx*0.114, 1.704, -0.166]];
       for (let i = 0; i + 1 < inner.length; i++) quad(inner[i], outer[i], outer[i+1], inner[i+1]);
-      // a couple of spine tips along the outer edge
-      for (let i = 0; i < 2; i++) { const a = outer[i], b = outer[i+1], m = [(a[0]+b[0])/2, (a[1]+b[1])/2, (a[2]+b[2])/2]; quad(a, [m[0]*1.12, m[1], m[2]-0.03], b, b); }
     };
     frill(-1); frill(1);
   }
