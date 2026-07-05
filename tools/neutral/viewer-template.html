@@ -31,6 +31,7 @@
   <button id="race">race: Human</button>
   <button id="tone">tone: Pale</button>
   <button id="hairstyle">hair: short</button>
+  <button id="drape">drape: None</button>
 </div>
 <div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 72px); left:0; right:0; display:flex; flex-direction:column; gap:8px; align-items:center; color:#8a8a99; font-size:12px; pointer-events:none;">
   <div style="display:flex; gap:8px; align-items:center;"><span id="pxlab" style="width:120px; text-align:right;">pixelize: off</span><input id="px" type="range" min="1" max="16" step="1" value="1" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
@@ -150,6 +151,10 @@ const curHair = () => { const h = raceHair[RACES[raceIx]]; return h && h.styles.
 const tailMesh = D.tail ? buildPiece(D.tail) : null;
 const tailCatMesh = D.tailCat ? buildPiece(D.tailCat) : null;
 const bodyScalesMesh = D.bodyScales ? buildPiece(D.bodyScales) : null;
+const drapedMeshes = {}; const DRAPES = ['None', ...(D.drapedNames||[])];
+for (const nm of (D.drapedNames||[])) { const m = buildPiece(D.draped[nm]); m.visible = false; drapedMeshes[nm] = m; }
+let drapeIx = 0;
+const setDrape = () => { for (const nm in drapedMeshes) drapedMeshes[nm].visible = false; const cur = DRAPES[drapeIx]; if (cur !== 'None' && drapedMeshes[cur]) drapedMeshes[cur].visible = true; };
 const bodyFurCoat = D.bodyFurCoat ? buildPiece(D.bodyFurCoat) : null;
 const bodyFurBelly = D.bodyFurBelly ? buildPiece(D.bodyFurBelly) : null;
 if (bodyScalesMesh) bodyScalesMesh.visible = false;
@@ -295,6 +300,7 @@ document.getElementById('hairstyle').onclick = () => { const h=raceHair[RACES[ra
 refreshHairLabel();
 document.getElementById('walk').onclick = (e) => { walking = !walking; e.target.classList.toggle('on', walking); };
 document.getElementById('bg').onclick = () => { bgi = (bgi + 1) % bgs.length; scene.background = new THREE.Color(bgs[bgi]); postMat.uniforms.bg.value = new THREE.Color(bgs[bgi]); };
+document.getElementById('drape').onclick = (e) => { drapeIx = (drapeIx+1) % DRAPES.length; setDrape(); e.target.textContent = 'drape: ' + DRAPES[drapeIx]; };
 </script>
 </body>
 </html>
