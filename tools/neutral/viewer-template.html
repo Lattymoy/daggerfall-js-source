@@ -218,7 +218,8 @@ function stepDrapeCloth(phase, motion, bob, L) {
   const isCloak = cur.indexOf('Cloak') >= 0;   // cloaks hang from the shoulders, not the legs - free cloth, no bone-drive
   const shoulderDrape = isCloak || cur === 'Wrap' || cur === 'Sash';   // hang from the upper body, not the legs
   // bone-drive makes the lower drape follow the legs; capsule collision (last) guarantees no clip
-  const opts = { gy: -7, gx: motion * 0.3 * Math.sin(phase), gz: -motion * 0.9, pinDY: bob, iters: 10, damp: 0.90, maxStep: 0.04, groundY: 0.02,
+  const lean = (motion > 0.5 && L) ? L.lean : 0;
+  const opts = { gy: -7, gx: motion * 0.3 * Math.sin(phase), gz: -motion * 0.9, pinDY: bob, lean, leanPivot: hipY + 0.10, iters: 10, damp: 0.90, maxStep: 0.04, groundY: 0.02,
     capsules: shoulderDrape ? (motion > 0.5 ? col.caps : null) : col.caps, bones: shoulderDrape ? null : col.bones };
   stepCloth(cs.cloth, 1/60, opts, coreFn);
   stepCloth(cs.cloth, 1/60, opts, coreFn); // 2 substeps for stability
@@ -278,6 +279,7 @@ let gaitIx = 0, wt = 0;   // 0 idle, 1 walk, 2 run
 // rotate one vert about X around pivotY by ang; returns [y,z].
 function rotX(y, z, pivotY, ang) { const c=Math.cos(ang), sn=Math.sin(ang); const dy=y-pivotY; return [pivotY + c*dy - sn*z, sn*dy + c*z]; }
 function rotZ(x, y, px, py, ang) { const c=Math.cos(ang), s=Math.sin(ang), dx=x-px, dy=y-py; return [px + c*dx - s*dy, py + s*dx + c*dy]; }
+function rotY(x, z, px, pz, ang) { const c=Math.cos(ang), s=Math.sin(ang), dx=x-px, dz=z-pz; return [px + c*dx + s*dz, pz - s*dx + c*dz]; }
 // arm/hand posing tuner (radians): applied to the rest stance at idle.
 function grpMeanX(g) { let sx=0, n=0; for (let i=0;i<vgrp.length;i++) if (vgrp[i]===g) { sx+=basePos[i*3]; n++; } return n ? sx/n : 0; }
 const armRootX = { 2: grpMeanX(2), 3: grpMeanX(3) };
@@ -287,8 +289,8 @@ function poseArms(T) {
   for (let i=0;i<VG.length;i++) { const g = VG[i], o = i*3;
     if (g === 2 || g === 3) {
       let x = B[o], y = B[o+1], z = B[o+2]; const rootX = armRootX[g], mir = g === 2 ? -1 : 1;
-      if (armTune.hand   && y < wristY) [y,z] = rotX(y, z, wristY, armTune.hand);        // wrist/hand pitch
-      if (armTune.elbow  && y < elbowY) [y,z] = rotX(y, z, elbowY, armTune.elbow);       // elbow bend
+      if (armTune.hand   && y < wristY) [x,z] = rotY(x, z, rootX, 0, armTune.hand);         // hand roll (twist)
+      if (armTune.elbow  && y < elbowY) [y,z] = rotX(y, z, elbowY, -armTune.elbow);      // elbow flex FORWARD
       if (armTune.pitch)  [y,z] = rotX(y, z, shoulderY, armTune.pitch);                  // shoulder fore/aft
       if (armTune.spread) [x,y] = rotZ(x, y, rootX, shoulderY, mir * armTune.spread);    // abduction (mirrored)
       P[o]=x; P[o+1]=y; P[o+2]=z;

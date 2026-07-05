@@ -80,7 +80,11 @@ export function stepCloth(cloth, dt, opts, core) {
     pos[o]=px+mvx; pos[o+1]=py+mvy; pos[o+2]=pz+mvz;
     prev[o]=px; prev[o+1]=py; prev[o+2]=pz;
   }
-  for (let i = 0; i < V; i++) if (pinned[i]) { const o=i*3; pos[o]=base[o]+pinDX; pos[o+1]=base[o+1]+pinDY; pos[o+2]=base[o+2]+pinDZ; prev[o]=pos[o]; prev[o+1]=pos[o+1]; prev[o+2]=pos[o+2]; }
+  const lean = opts.lean || 0, leanPy = opts.leanPivot ?? 1.0, lc = Math.cos(lean), ls = Math.sin(lean);
+  for (let i = 0; i < V; i++) if (pinned[i]) { const o=i*3;
+    let by = base[o+1], bz = base[o+2];
+    if (lean) { const dy = by - leanPy; by = leanPy + lc*dy - ls*bz; bz = ls*dy + lc*bz; }   // pins follow the torso lean
+    pos[o]=base[o]+pinDX; pos[o+1]=by+pinDY; pos[o+2]=bz+pinDZ; prev[o]=pos[o]; prev[o+1]=pos[o+1]; prev[o+2]=pos[o+2]; }
   // satisfy distance constraints (no collision here - collision runs once
   // after, so it can't ratchet the cloth up the body)
   for (let k = 0; k < iters; k++) {
