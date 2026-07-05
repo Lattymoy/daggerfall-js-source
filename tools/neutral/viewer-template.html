@@ -40,6 +40,10 @@
 <div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 72px); left:0; right:0; display:flex; flex-direction:column; gap:8px; align-items:center; color:#8a8a99; font-size:12px; pointer-events:none;">
   <div style="display:flex; gap:8px; align-items:center;"><span id="pxlab" style="width:120px; text-align:right;">pixelize: off</span><input id="px" type="range" min="1" max="16" step="1" value="1" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
   <div style="display:flex; gap:8px; align-items:center;"><span id="cdlab" style="width:120px; text-align:right;">color: full</span><input id="cd" type="range" min="1" max="9" step="1" value="9" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="ap_lab" style="width:120px; text-align:right;">arm pitch: 0</span><input id="ap" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="as_lab" style="width:120px; text-align:right;">arm spread: 0</span><input id="as" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="ae_lab" style="width:120px; text-align:right;">elbow: 0</span><input id="ae" type="range" min="0" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="ah_lab" style="width:120px; text-align:right;">hand: 0</span><input id="ah" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -272,6 +276,25 @@ const elbowY = shoulderY - 0.50*(shoulderY-wristL);
 let gaitIx = 0, wt = 0;   // 0 idle, 1 walk, 2 run
 // rotate one vert about X around pivotY by ang; returns [y,z].
 function rotX(y, z, pivotY, ang) { const c=Math.cos(ang), sn=Math.sin(ang); const dy=y-pivotY; return [pivotY + c*dy - sn*z, sn*dy + c*z]; }
+function rotZ(x, y, px, py, ang) { const c=Math.cos(ang), s=Math.sin(ang), dx=x-px, dy=y-py; return [px + c*dx - s*dy, py + s*dx + c*dy]; }
+// arm/hand posing tuner (radians): applied to the rest stance at idle.
+function grpMeanX(g) { let sx=0, n=0; for (let i=0;i<vgrp.length;i++) if (vgrp[i]===g) { sx+=basePos[i*3]; n++; } return n ? sx/n : 0; }
+const armRootX = { 2: grpMeanX(2), 3: grpMeanX(3) };
+const armTune = { pitch: 0, spread: 0, elbow: 0, hand: 0 };
+function poseArms(T) {
+  const P = T.pos, B = T.base, VG = T.vgrp, wristY = wristL;
+  for (let i=0;i<VG.length;i++) { const g = VG[i], o = i*3;
+    if (g === 2 || g === 3) {
+      let x = B[o], y = B[o+1], z = B[o+2]; const rootX = armRootX[g], mir = g === 2 ? -1 : 1;
+      if (armTune.hand   && y < wristY) [y,z] = rotX(y, z, wristY, armTune.hand);        // wrist/hand pitch
+      if (armTune.elbow  && y < elbowY) [y,z] = rotX(y, z, elbowY, armTune.elbow);       // elbow bend
+      if (armTune.pitch)  [y,z] = rotX(y, z, shoulderY, armTune.pitch);                  // shoulder fore/aft
+      if (armTune.spread) [x,y] = rotZ(x, y, rootX, shoulderY, mir * armTune.spread);    // abduction (mirrored)
+      P[o]=x; P[o+1]=y; P[o+2]=z;
+    } else { P[o]=B[o]; P[o+1]=B[o+1]; P[o+2]=B[o+2]; }
+  }
+  T.geo.attributes.position.needsUpdate = true;
+}
 function animateTarget(T, wt, L, bob, pose, moving) {
   const P = T.pos, B = T.base, VG = T.vgrp;
   const leanPivot = hipY + 0.10;                     // lean the upper body about the low spine
@@ -326,7 +349,7 @@ function animate(dt) {
     stepDrapeCloth(ambientT, 0.10, 0, WALK);
   } else {
     ambientT += dt * 1.4;
-    for (const T of animTargets) if (T.pos.some((v,i)=>v!==T.base[i])) { T.pos.set(T.base); T.geo.attributes.position.needsUpdate = true; }
+    for (const T of animTargets) poseArms(T);   // idle: hold the tuned arm/hand pose
     stepDrapeCloth(ambientT, 0.10, 0, WALK);  // gentle idle settle/sway
   }
 }
@@ -342,6 +365,8 @@ function resize() {
 }
 addEventListener('resize', resize); resize();
 const pxLab = document.getElementById('pxlab'), cdLab = document.getElementById('cdlab');
+const wireArm=(id,key,scale)=>{const el=document.getElementById(id),lab=document.getElementById(id+'_lab'),name=lab.textContent.split(':')[0];el.addEventListener('input',e=>{armTune[key]=(+e.target.value)/100*scale;lab.textContent=name+': '+e.target.value;});};
+wireArm('ap','pitch',0.9); wireArm('as','spread',0.7); wireArm('ae','elbow',1.6); wireArm('ah','hand',0.9);
 document.getElementById('px').addEventListener('input', (e) => { pixel = +e.target.value; pxLab.textContent = pixel <= 1 ? 'pixelize: off' : 'pixelize: ' + pixel + 'x'; resize(); });
 document.getElementById('cd').addEventListener('input', (e) => { const v = +e.target.value; levels = v >= 9 ? 0 : Math.round(2 + (v-1) * 3); postMat.uniforms.levels.value = levels; cdLab.textContent = levels === 0 ? 'color: full' : 'color: ' + levels + ' lvl'; });
 
