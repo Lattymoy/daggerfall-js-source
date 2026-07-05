@@ -45,6 +45,15 @@ function capeRows(hemY, wide) {
   return rows;
 }
 const CAPE_ARC = [Math.PI/2 + 1.25, Math.PI/2 - 1.25 + Math.PI*2];
+// Shawl: a wide wrap sitting over the shoulders, draping the back + sides
+// + around the front (small front gap), to mid-torso. One cohesive piece.
+function shawlRows() {
+  const rows = [], topY = 1.560, hemY = 1.040, steps = 10;
+  for (let k = 0; k <= steps; k++) { const t = k/steps, y = topY - t*(topY-hemY), grow = Math.pow(t, 0.65);
+    const [rx, rz] = clip(y, 0.190 + grow*0.070, 0.140 + grow*0.085); rows.push({ y, rx, rz }); }
+  return rows;
+}
+const SHAWL_ARC = [Math.PI/2 + 0.55, Math.PI/2 - 0.55 + Math.PI*2];
 const GRIDSPEC = {
   'Short Skirt':     { rows: flareRows(0.980, 0.560, 0.175, 0.115, 0.270, 0.190), wrap: true, seg: 24 },
   'Long Skirt':      { rows: flareRows(0.980, 0.130, 0.175, 0.115, 0.320, 0.220), wrap: true, seg: 24 },
@@ -57,6 +66,7 @@ const GRIDSPEC = {
   'Mummy Wrappings': { rows: flareRows(1.560, 0.060, 0.155, 0.120, 0.190, 0.150), wrap: true, seg: 22 },
   'Casual Cloak':    { rows: capeRows(0.450, false), wrap: false, seg: 26, arc: CAPE_ARC },
   'Formal Cloak':    { rows: capeRows(0.360, true),  wrap: false, seg: 26, arc: CAPE_ARC },
+  'Wrap':            { rows: shawlRows(), wrap: false, seg: 28, arc: SHAWL_ARC },
   // one-shoulder diagonal wrap: an arc covering ~270deg, open on one side
   'Toga':            { rows: flareRows(1.520, 0.330, 0.150, 0.115, 0.255, 0.190), wrap: false, seg: 24, arc: [Math.PI*0.12, Math.PI*0.12 + Math.PI*1.5] },
   // sleeveless over-tunics to mid-thigh
@@ -90,35 +100,24 @@ function stripGrid(center, halfW, cols, pinRows) {
   return { rows: R, cols, wrap: false, pos, faces, pin };
 }
 
-// Wrap: a scarf draped over the back of the neck + both shoulders, with the
-// two ends hanging down the front as tails. Pinned across the shoulders/nape.
-function wrapGrid() {
-  const c = [
-    [-0.11, 0.86, 0.145], [-0.13, 1.02, 0.140], [-0.155, 1.20, 0.120], [-0.170, 1.40, 0.075], // L front tail -> L shoulder
-    [-0.135, 1.520, -0.03], [-0.055, 1.545, -0.100], [0.055, 1.545, -0.100], [0.135, 1.520, -0.03], // over shoulders + nape (pinned)
-    [0.170, 1.40, 0.075], [0.155, 1.20, 0.120], [0.13, 1.02, 0.140], [0.11, 0.86, 0.145], // R shoulder -> R front tail
-  ];
-  const hw = [0.052,0.058,0.066,0.072, 0.086,0.092,0.092,0.086, 0.072,0.066,0.058,0.052];
-  return stripGrid(c, hw, 5, [4,5,6,7]);
-}
 
 // Sash: a wide band from the right shoulder diagonally across the chest to a
 // knot at the left hip, then a tapering tail hanging free below the knot.
 function sashGrid() {
   const c = [
-    [0.155, 1.500, 0.095], [0.100, 1.380, 0.115], [0.030, 1.250, 0.120], [-0.045, 1.120, 0.115], // R shoulder -> chest
-    [-0.110, 0.980, 0.100], [-0.150, 0.865, 0.130], // L waist -> hip knot (pinned ends: 0 and 5)
-    [-0.170, 0.720, 0.110], [-0.170, 0.580, 0.085], [-0.155, 0.440, 0.060], // tail (free)
+    [0.150, 1.505, 0.095], [0.108, 1.395, 0.116], [0.048, 1.280, 0.124], [-0.020, 1.165, 0.122], // R shoulder -> chest
+    [-0.082, 1.050, 0.112], [-0.128, 0.955, 0.108],                                               // down to the waist
+    [-0.158, 0.878, 0.168], [-0.150, 0.850, 0.176], [-0.172, 0.828, 0.166],                        // KNOT: bulges forward, pinched
+    [-0.188, 0.712, 0.120], [-0.194, 0.590, 0.092], [-0.188, 0.470, 0.068], [-0.176, 0.352, 0.050], // tail, free
   ];
-  const hw = [0.050,0.052,0.054,0.052, 0.050,0.064, 0.046,0.038,0.030];
-  return stripGrid(c, hw, 4, [0, 5]);
+  const hw = [0.052,0.055,0.058,0.056, 0.054,0.056, 0.082,0.090,0.078, 0.050,0.044,0.040,0.052];   // knot fat, tail tapers then frays
+  return stripGrid(c, hw, 5, [0, 6, 7, 8]);   // pin shoulder + the knot rows
 }
 
 /** Cloth grid for a garment: pinned top row (row 0), ring rows down to
  *  the hem. { rows, cols, wrap, pos (rows*cols*3), faces (quad indices) }.
  *  null for garments with no flowing grid (surcoat/toga/sash/wrap). */
 export function drapedGrid(name) {
-  if (name === 'Wrap') return wrapGrid();
   if (name === 'Sash') return sashGrid();
   const spec = GRIDSPEC[name];
   if (!spec) return null;
@@ -140,7 +139,7 @@ function facesFromGrid(g) {
   return f;
 }
 
-export const DRAPED_NAMES = [...Object.keys(GRIDSPEC), 'Wrap', 'Sash'];
+export const DRAPED_NAMES = [...Object.keys(GRIDSPEC), 'Sash'];
 
 /** Standoff faces for a draped garment name, shaded with `ramp`. [] if not draped. */
 export function drapedPiece(name, ramp) {
