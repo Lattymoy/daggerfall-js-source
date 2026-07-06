@@ -11,6 +11,7 @@ export function rotZ(x, y, px, py, ang) { const c=Math.cos(ang), s=Math.sin(ang)
 export function rotY(x, z, px, pz, ang) { const c=Math.cos(ang), s=Math.sin(ang), dx=x-px, dz=z-pz; return [px + c*dx + s*dz, pz - s*dx + c*dz]; }
 
 export const POSE_L = { strideAmp: 0, counterFrac: 0, kneeBase: 0, kneeAmp: 0, elbowBase: 0, elbowAmp: 0, lean: 0 }; // zero loco for the posed idle
+export const IDLE = { strideAmp: 0.05, cadence: 1.7, counterFrac: 1.0, bobAmp: 0.006, kneeAmp: 0.12, kneeBase: 0.0, elbowAmp: 0.12, elbowBase: 0.0, lean: 0 }; // standing sway (canonicalized from interiorContext's pre-animate.js inline loco)
 export const WALK = { strideAmp: 0.44, cadence: 6.0, counterFrac: 1.1, bobAmp: 0.024, kneeAmp: 0.9, kneeBase: 0.0,  elbowAmp: 0.35, elbowBase: 0.18, lean: 0.05, kneeR: 4, elbowR: 2 };
 export const RUN  = { strideAmp: 0.60, cadence: 9.6, counterFrac: 0.95, bobAmp: 0.075, kneeAmp: 1.5, kneeBase: 0.18, elbowAmp: 0.55, elbowBase: 1.42, lean: 0.42, headPitch: -0.30, kneeR: 4, elbowR: 2 };
 

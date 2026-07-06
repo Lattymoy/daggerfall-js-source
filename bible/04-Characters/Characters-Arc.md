@@ -218,8 +218,19 @@ projection at high pitch). ?rigNear parks the rig 24u ahead of the
 shot vantage for measurement (the shot camera is near-horizontal at
 altitude - its ground ray hits the horizon). PROVEN: texel 8.69 ~ 9
 by integer construction; temporal variance 75.0 in-quad vs 0.0
-world (animated composite live). NEXT: world camera modes, interior
-loco migration onto engineRig.
+world (animated composite live). SLICE 5 SHIPPED: interior loco
+migrated onto the canonical runtime. createCharacterRig(renderer,
+faces) generalizes the rig over ANY tagged face list (createEngineRig
+is now the neutral-body wrapper, signature unchanged); rigs gain
+drive(wt, L, pose, moving) - the absolute-phase entry for hosts with
+their own clock (update(dt) keeps the rig-owned clock over it). IDLE
+canonicalized into animate.js from the interior's values; the inline
+ramps/buildCharMesh/loco in interiorContext are DELETED
+(deriveClassicRamps single-sourced live, as pinned). Regression
+battery vs the deleted inline math on the same race mesh: idle and
+off EXACT (0.0000 worst vert); walk 0.054, fully attributed - the
+canonical WALK carries elbowBase 0.18 + lean 0.05 the stale copy
+never had (zeroing both -> 0.0000). NEXT: world camera modes.
 
 **Verification doctrine pins.** Stations over nearest-verts; numeric
 batteries over eyeballs; PIXEL-COUNTING screenshots for render-level

@@ -34,8 +34,10 @@ export function deriveClassicRamps(palette, bodyBmp) {
   return { skin: rampOf(40, 60, (x) => Math.abs(x - ((W-1)/2)) < 14), boot: rampOf(132, 144) };
 }
 
-export function createEngineRig(renderer, ramps) {
-  const faces = buildNeutralBody(ramps);
+/** The canonical rig over ANY face list with group tags (neutral body,
+ *  race characters). createEngineRig wraps it for the neutral body;
+ *  interiorContext instances it per race - one runtime everywhere. */
+export function createCharacterRig(renderer, faces) {
   const packed = packCharacterFaces(faces.map((f) => ({ p: f.p, n: f.n, c: f.c })));
   const mesh = renderer.createCharacterMesh(packed);
   const count = packed.length / 9;
@@ -75,15 +77,17 @@ export function createEngineRig(renderer, ramps) {
     mesh, T, ctx, scale, footY: minY, liveFootY: minY, liveBounds: null,
     setGait(g) { gait = g | 0; },
     setPose(p) { pose = p || null; },
-    /** Advance the canonical runtime and re-upload moved vertices. */
+    /** Advance the canonical runtime on the rig's own clock. */
     update(dt) {
       const L = GAITS[gait];
-      if (L) {
-        wt += dt * L.cadence;
-        animateTarget(ctx, T, wt, L, L.bobAmp * Math.sin(wt * 2), pose, true);
-      } else {
-        animateTarget(ctx, T, 0, POSE_L, 0, pose, false);
-      }
+      if (L) wt += dt * L.cadence;
+      this.drive(L ? wt : 0, L || POSE_L, pose, !!L);
+    },
+    /** Run the runtime at an absolute phase and re-upload moved
+     *  vertices - hosts with their own clock (interior loco) call
+     *  this directly. */
+    drive(wt2, L, pose2, moving) {
+      animateTarget(ctx, T, wt2, L, (L.bobAmp || 0) * Math.sin(wt2 * 2), pose2, moving);
       let lo = Infinity, hi = -Infinity, lx = Infinity, hx = -Infinity, lz = Infinity, hz = -Infinity;
       for (let v = 0; v < count; v++) {
         const x = T.pos[v*3], y = T.pos[v*3+1], z = T.pos[v*3+2];
@@ -98,4 +102,9 @@ export function createEngineRig(renderer, ramps) {
       T.dirty = false;
     },
   };
+}
+
+/** The neutral-body rig (?rig): unchanged signature over the shared core. */
+export function createEngineRig(renderer, ramps) {
+  return createCharacterRig(renderer, buildNeutralBody(ramps));
 }

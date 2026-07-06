@@ -24,10 +24,10 @@ import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
 import { LADDER_MODEL_ID } from '../player/enterExit.js';
 import { collectInteriorPeople } from '../characters/interiorPeople.js';
-import { packCharacterFaces } from '../render/characterMesh.js';
 import { trs } from '../world/mat4.js';
 import { buildRaceCharacter, raceOfArchive } from '../characters/raceCharacter.js';
-import { facesBounds } from '../render/characterMesh.js';
+import { createCharacterRig, deriveClassicRamps } from '../characters/engineRig.js';
+import { IDLE, WALK, POSE_L } from '../characters/animate.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { fetchBytes } from './shared.js';
 import { ActionSystem } from '../world/actionSystem.js';
@@ -133,63 +133,28 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const bodyImg = new ImgFile();
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
     const bodyBmp = bodyImg.getDFBitmap();
-    const W = bodyBmp.width, H = bodyBmp.height;
     // NEUTRAL paperdoll (redesign): geometry + AO + snapped-ramp
     // palette shading, baked per face. Ramps come from the loaded
     // ART_PAL sprite (skin from the mid torso, boot from the feet) so
     // the palette matches the game.
-    const lumOf = (i) => { const c = palette.get(i); return 0.299*c.r + 0.587*c.g + 0.114*c.b; };
-    const rampOf = (r0, r1, keep) => { const m = new Map(); for (let y=r0;y<=r1;y++) for (let x=0;x<W;x++){ const i=bodyBmp.data[y*W+x]; if(i&&(!keep||keep(x,y))) m.set(i,lumOf(i)); } return [...m.entries()].sort((a,b)=>a[1]-b[1]).map(e=>{const c=palette.get(e[0]);return [c.r,c.g,c.b];}); };
-    const ramps = { skin: rampOf(40, 60, (x)=>Math.abs(x-((W-1)/2))<14), boot: rampOf(132, 144) };
-    const GI = { body: 0, head: 1, armL: 2, armR: 3, legL: 4, legR: 5 };
-    const CLASSIC_HEIGHT = 1.8;
-    const rotX = (y, z, pY, a) => { const c=Math.cos(a), sn=Math.sin(a), dy=y-pY; return [pY + c*dy - sn*z, sn*dy + c*z]; };
-    // Build a full race character into one animated mesh (body + head +
-    // tail + body detail, race-coloured). Returns the mesh, an animate
-    // fn, and the model->world scale/offset.
-    const buildCharMesh = (faces) => {
-      const b = facesBounds(faces);
-      const basePacked = packCharacterFaces(faces.map((f) => ({ p: f.p, n: f.n, c: f.c })));
-      const mesh = renderer.createCharacterMesh(basePacked);
-      const vGroup = [];
-      for (const f of faces) { const g = GI[f.g] ?? 0; const np = f.p.length / 3; for (let i = 1; i < np - 1; i++) vGroup.push(g, g, g); }
-      const gr = {}; for (const f of faces) { const k = f.g; for (let i = 0; i < 4; i++) { const y = f.p[i*3+1]; (gr[k] ??= [1e9,-1e9]); if (y<gr[k][0]) gr[k][0]=y; if (y>gr[k][1]) gr[k][1]=y; } }
-      const hipY = gr.legL[1], ankY = gr.legL[0], shY = gr.armL[1], wrY = gr.armL[0];
-      const kneeY = hipY - 0.52*(hipY-ankY), elbowY = shY - 0.50*(shY-wrY);
-      const anim = new Float32Array(basePacked.length);
-      const sc = CLASSIC_HEIGHT / (b.maxY - b.minY);
-      const animate = (t, mode = 'idle') => {
-        if (mode === 'off') { renderer.updateCharacterMesh(mesh, basePacked); return; }
-        anim.set(basePacked);
-        const Wp = mode === 'walk'
-          ? { stride: 0.44, cad: 6, bob: 0.024, counter: 1.1, knee: 0.9, elbow: 0.35 }
-          : { stride: 0.05, cad: 1.7, bob: 0.006, counter: 1.0, knee: 0.12, elbow: 0.12 };
-        const wt = t * Wp.cad, bob = Wp.bob * Math.sin(wt * 2);
-        const limb = (gid, phase, jointY, kneeAmp, isLeg) => {
-          const hip = -Wp.stride * (isLeg ? 1 : Wp.counter) * Math.sin(wt + phase);
-          const bend = kneeAmp * (isLeg ? Math.max(0, Math.sin(wt + phase + 1.2)) : -(0.5 + 0.5*Math.sin(wt + phase - 0.6)));
-          for (let v = 0; v < vGroup.length; v++) if (vGroup[v] === gid) {
-            const o = v*9; let y = basePacked[o+1], z = basePacked[o+2];
-            if (y < jointY) [y, z] = rotX(y, z, jointY, bend);
-            [y, z] = rotX(y, z, (isLeg ? hipY : shY), hip);
-            anim[o+1] = y + bob; anim[o+2] = z;
-          }
-        };
-        limb(4, 0, kneeY, Wp.knee, true);  limb(5, Math.PI, kneeY, Wp.knee, true);
-        limb(2, Math.PI, elbowY, Wp.elbow, false); limb(3, 0, elbowY, Wp.elbow, false);
-        for (let v = 0; v < vGroup.length; v++) if (vGroup[v] === 0 || vGroup[v] === 1) anim[v*9+1] = basePacked[v*9+1] + bob;
-        renderer.updateCharacterMesh(mesh, anim);
-      };
-      return { mesh, animate, minY: b.minY, sc };
-    };
-    // One mesh per race, cached; people instanced onto their race's mesh.
+    const ramps = deriveClassicRamps(palette, bodyBmp);
+    // One rig per race, cached; people instanced onto their race's
+    // mesh. The rig IS the engine rig (createCharacterRig over the
+    // race face list) - the pre-animate.js inline loco copy this file
+    // carried is deleted; idle sway is the canonical IDLE gait.
     const raceMeshes = new Map();
-    const meshFor = (race) => { let cm = raceMeshes.get(race); if (!cm) { cm = buildCharMesh(buildRaceCharacter(race, ramps)); raceMeshes.set(race, cm); } return cm; };
+    const rigFor = (race) => { let rg = raceMeshes.get(race); if (!rg) { rg = createCharacterRig(renderer, buildRaceCharacter(race, ramps)); raceMeshes.set(race, rg); } return rg; };
     for (const pn of people) {
-      const cm = meshFor(raceOfArchive(pn.textureArchive));
-      charDraws.push({ mesh: cm.mesh, matrix: trs(pn.x, pn.y - cm.minY * cm.sc, pn.z, 0, 0, 0, cm.sc, cm.sc, cm.sc) });
+      const rg = rigFor(raceOfArchive(pn.textureArchive));
+      charDraws.push({ mesh: rg.mesh, matrix: trs(pn.x, pn.y - rg.footY * rg.scale, pn.z, 0, 0, 0, rg.scale, rg.scale, rg.scale) });
     }
-    animateChars = (t, mode = 'idle') => { for (const cm of raceMeshes.values()) cm.animate(t, mode); };
+    animateChars = (t, mode = 'idle') => {
+      const L = mode === 'walk' ? WALK : IDLE;
+      for (const rg of raceMeshes.values()) {
+        if (mode === 'off') rg.drive(0, POSE_L, null, false);
+        else rg.drive(t * L.cadence, L, null, true);
+      }
+    };
   } else {
     for (const pn of people) {
       const key = `${pn.textureArchive}_${pn.textureRecord}`;
