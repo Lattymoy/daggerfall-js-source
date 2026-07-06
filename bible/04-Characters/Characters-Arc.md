@@ -254,6 +254,34 @@ third-person camera-terrain/building clip. Next arc decision: Mac
 (candidates: enemy rigs on the shared states; spectral emission
 unblock for Rendering).
 
+## C8 - ENEMY RIGS (ACTIVE arc, opened 2026-07-06, Mac: option 1)
+
+Rigged enemies replace the C3 billboards; Rendering's blocked
+spectral-emission row unblocks here. The vendored rewrite/ Voxlight
+rig is the authoring bench for monster morphologies. Slices:
+
+- **E1 (spine): SHIPPED.** Class enemies (mobileType > 43 - human
+  morphology, gender-flagged) spawn as canonical rigs
+  (createCharacterRig over buildRaceCharacter, tone/hair varied per
+  type) at their C3 markers behind `?foes`, floor-snapped
+  (floorLanding through the dungeon collider), IDLE gait,
+  deterministic facing (no engine PRNG - Ledger A rule). The
+  CHAR_PIXEL sprite pass EXTRACTED from exterior.js verbatim into
+  characterSprite.js - player and foes render through ONE
+  implementation (context-owned drawFoes; both dungeon hosts wired;
+  exterior's shot probe reads the pass diagnostics). Billboards stay
+  the default path; monsters 0-42 stay billboards until E4.
+  charsprite.test pins projection-exact sizing at CHAR_PIXEL against
+  hand-computed values. OPEN: live verification (?dungeon&foes /
+  ?foes through an entrance) pending ARENA2 in the environment;
+  per-enemy mesh-update perf unmeasured (E4 queue).
+- **E2:** enemy senses + approach on DFU EnemyMotor semantics; the
+  shared weaponStates machine drives enemy attacks.
+- **E3:** hit resolution vs the player (FormulaHelper
+  CalculateAttackDamage) + the shipped hit reactions on both sides.
+- **E4+:** authored monster morphologies (rewrite/ bench), spectral
+  emission unblock, perf pass (per-enemy mesh updates).
+
 **Verification doctrine pins.** Stations over nearest-verts; numeric
 batteries over eyeballs; PIXEL-COUNTING screenshots for render-level
 claims (vertex-band filters false-negative); solver grids snapshot

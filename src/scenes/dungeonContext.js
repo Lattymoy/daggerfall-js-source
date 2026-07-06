@@ -29,8 +29,8 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';
  * @param blocks BlocksFile
  * @param climateBaseType ClimateBases value for the table remap
  */
-export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseType) {
-  const { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord } = deps;
+export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseType, opts = {}) {
+  const { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, palette } = deps;
 
   // Layout needs synchronous models (doors/exit extraction); a unit-size
   // pre-pass mirrors the standalone scene.
@@ -131,9 +131,37 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       locationId: dfLocation.dungeon.recordElement.header.locationId,
       dungeonType: dfLocation.mapTableData.dungeonType,
     });
+  // C8 E1 (?foes): CLASS enemies (mobileType > 43, human morphology)
+  // spawn as canonical rigs instead of their C3 billboards - one rig
+  // per enemy (individual animation state), floor-snapped through the
+  // dungeon collider (the FixStanding counterpart), IDLE gait, fixed
+  // deterministic facing. Monsters (0-42) stay billboards until their
+  // morphologies are authored (E4, rewrite/ bench). Flag off = C3
+  // verbatim, untouched.
+  const foes = [];
+  let bodyRamps = null;
+  if (opts.foes && palette) {
+    const { ImgFile } = await import('../formats/imgFile.js');
+    const { fetchBytes } = await import('./shared.js');
+    const bodyImg = new ImgFile();
+    bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
+    const { deriveClassicRamps } = await import('../characters/engineRig.js');
+    bodyRamps = deriveClassicRamps(palette, bodyImg.getDFBitmap());
+  }
   for (const e of enemies) {
     const basics = ENEMY_BASICS[e.mobileType];
     if (!basics) continue;
+    if (bodyRamps && e.mobileType > 43) {
+      const { createCharacterRig } = await import('../characters/engineRig.js');
+      const { buildRaceCharacter } = await import('../characters/raceCharacter.js');
+      const { floorLanding } = await import('../player/enterExit.js');
+      const rig = createCharacterRig(renderer, buildRaceCharacter('Human', bodyRamps, { tone: e.mobileType % 4, hairTone: e.mobileType % 3 }));
+      rig.setGait(3);   // standing sway (IDLE)
+      const pos = floorLanding(collider, [e.x, e.y + 0.2, e.z]);
+      const yaw = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing, no engine PRNG (Ledger A rule)
+      foes.push({ rig, pos, yaw, mobileType: e.mobileType, gender: e.gender });
+      continue;
+    }
     const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
     const key = `${archive}_0`;
     if (!flatGroups.has(key)) flatGroups.set(key, []);
@@ -155,6 +183,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   const flicker = new CityLightAnimator(lights.length, lights.map((l) => l.range));
 
+  // C8 E1: per-frame foes pass - advance each rig on the canonical
+  // runtime and composite through the SHARED pixelize pass. Owned by
+  // the context so both hosts (modal dungeon frame, standalone scene)
+  // call one implementation.
+  let _drawSprite = null;
+  async function _loadSprite() {
+    if (!_drawSprite) _drawSprite = (await import('../render/characterSprite.js')).drawCharacterSprite;
+  }
+  if (foes.length) await _loadSprite();
+  function drawFoes(dt, canvas, proj, view, eye) {
+    for (const f of foes) {
+      f.rig.update(dt);
+      const s = f.rig.scale;
+      const mat = trs(f.pos[0], f.pos[1] - f.rig.liveFootY * s, f.pos[2], 0, f.yaw, 0, s, s, s);   // live support point, same grounding rule as the player rig
+      _drawSprite(renderer, canvas, f.rig, mat, proj, view, eye);
+    }
+  }
+
   return {
     drawList,
     dynamicDraws,
@@ -168,6 +214,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     startMarker: dungeon.startMarker,
     blockCount: dungeon.blocks.length,
     enemies,
+    foes,
+    drawFoes,
     textureTable: dungeon.textureTable,
     exitDoors,
     colliderTris,

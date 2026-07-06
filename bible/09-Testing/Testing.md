@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 192 tests across 41 files.
+Node 22). Suite: 193 tests across 42 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -33,6 +33,7 @@ Node 22). Suite: 192 tests across 41 files.
 | neutral.test.js | 2 | Neutral paperdoll (buildNeutralBody): well-formed mesh (quad/normal/rgb shape, unit normals, on-ramp colours, feet-grounded ~7.5-head height), deterministic + snapped (blocky) shading |
 | clothSim.test.js | 4 | Draped-garment cloth sim (verlet): stable (no NaN/explosion over 400 steps) for skirt/robe/cape; no clipping - every free particle stays outside the measured body collider after 500 steps under gravity + wind |
 | relief.test.js | 4 | Relief identity witness + field arithmetic pins (synthetic + whole classic body), offsets pin (222,41 / 237,44), back shell mirrors z on the shared silhouette |
+| charsprite.test.js | 1 | shared pixelize pass: projection-exact ph/pw at CHAR_PIXEL, hand-computed center/half-extents |
 | charmesh.test.js | 2 | Face packing (fan order, color/normal interleave), bare-humanoid pack + bounds |
 | paperdoll.test.js | 3 | 27-slot EquipSlots verbatim, 288-template DB (index resolution, Short Shirt pin), BlitItems order |
 | dyes.test.js | 3 | Clothing dye range shifts (Blue identity, Red 0xEF), 11 metal tables extraction-pinned, band-only swap |

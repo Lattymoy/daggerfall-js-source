@@ -20,7 +20,7 @@ import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, 
 import { applyClimate, getGroundArchive, getNatureArchive } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, ortho, perspective, transformPoint, trs } from '../world/mat4.js';
-import { CHAR_PIXEL } from '../render/renderer.js';
+import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { fetchBytes, parseSeason, createSkyController } from './shared.js';
@@ -302,7 +302,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   // door drops into the location's crawl, exits land verbatim.
   const modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
-    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, arch },
+    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette },
+    foes: params.has('foes'),
     doorTargets: () => buildingDoors,
     baseCollider: () => collider,
   });
@@ -459,31 +460,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       }
       const gy = py;
       rigMat = trs(px, gy - rig.liveFootY * s, rigPos[2], 0, yawDeg, 0, s, s, s);   // live support point: feet kiss the ground every frame
-      // THE CHARACTER PIXELIZE PASS (slice 4, CHAR_PIXEL standard): render the rig into a low-res
-      // sprite (screen height / CHAR_PIXEL) under a fitted ortho camera from the
-      // main view's azimuth, then composite as a camera-facing quad -
-      // depth-tested like classic billboards. The world stays untouched.
-      const b = rig.liveBounds;
-      const worldH = (b.maxY - b.minY) * s;
-      const halfH = worldH / 2;
-      const halfW = Math.hypot(b.maxX - b.minX, b.maxZ - b.minZ) * s / 2;   // azimuth-safe upper bound - holds under rig yaw for free
-      const center = transformPoint(rigMat, (b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2, (b.minZ + b.maxZ) / 2);   // through rigMat, so yaw rotation is exact (identical arithmetic to the old inline T*S when yaw=0)
-      const dx = center[0] - eye[0], dy = center[1] - eye[1], dz = center[2] - eye[2];
-      const dist = Math.max(0.5, Math.hypot(dx, dy, dz));
-      // sprite size from the TRUE projection (exact CHAR_PIXEL-x by construction,
-      // not an analytic fov estimate): project the center and the head
-      const pvS = multiply(proj, view);
-      const prjY = (x, y, z) => { const w = pvS[3]*x + pvS[7]*y + pvS[11]*z + pvS[15]; return (pvS[1]*x + pvS[5]*y + pvS[9]*z + pvS[13]) / w; };
-      const screenPxH = Math.abs(prjY(center[0], center[1] + halfH, center[2]) - prjY(center[0], center[1] - halfH, center[2])) * canvas.clientHeight / 2;
-      const ph = Math.min(256, Math.max(2, Math.round(screenPxH / CHAR_PIXEL)));
-      const pw = Math.min(256, Math.max(2, Math.round(ph * halfW / halfH)));
-      const camDir = [dx / dist, dy / dist, dz / dist];
-      const rl = Math.hypot(camDir[0], camDir[2]) || 1;
-      const right = [-camDir[2] / rl, 0, camDir[0] / rl];   // horizontal billboard right (classic Y-only rotation)
-      const miniEye = [center[0] - camDir[0] * 4, center[1] - camDir[1] * 4, center[2] - camDir[2] * 4];
-      const sTex = renderer.renderCharacterSprite(rig.mesh, rigMat, ortho(halfW, halfH, 0.1, 8), lookAt(miniEye, center, [0, 1, 0]), pw, ph);
-      renderer.drawCharacterSpriteQuad(sTex, center, halfW, halfH, right);
+      // THE CHARACTER PIXELIZE PASS: shared implementation (C8 E1
+      // extraction of slice 4 - characterSprite.js), identical math.
+      const diag = drawCharacterSprite(renderer, canvas, rig, rigMat, proj, view, eye);
       if (params.has('shot')) {
+        const { center, halfH, pw, ph } = diag;
         const pv = multiply(proj, view);
         const prj = (x, y, z) => { const w = pv[3]*x + pv[7]*y + pv[11]*z + pv[15]; return [ (pv[0]*x + pv[4]*y + pv[8]*z + pv[12]) / w, (pv[1]*x + pv[5]*y + pv[9]*z + pv[13]) / w ]; };
         const cN = prj(center[0], center[1], center[2]);

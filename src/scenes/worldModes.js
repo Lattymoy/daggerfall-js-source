@@ -40,7 +40,7 @@ const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
 const DUNGEON_WATER_SCROLL = 0.05;
 
 export function createWorldModes(host) {
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false } = host;
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false } = host;   // host.foes: C8 E1 rigged class enemies in dungeons
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
 
   let mode = 'exterior';
@@ -175,8 +175,8 @@ export function createWorldModes(host) {
     transitioning = true;
     try {
       const ctx = await buildDungeonContext(
-        { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord },
-        dfLocation, blocks, dfLocation.climate.climateType);
+        { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, palette },
+        dfLocation, blocks, dfLocation.climate.climateType, { foes: host.foes });
       // Verbatim MovePlayerToMarker: start marker + up * (height * 0.6).
       const m = ctx.startMarker;
       dungeonCtx = ctx;
@@ -275,6 +275,7 @@ export function createWorldModes(host) {
       for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
       renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+      if (dungeonCtx.foes.length) dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos);   // C8 E1: rigged class enemies through the shared pixelize pass
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
           renderer.textures.get(`${dungeonReturn.waterArchive}_0`),
