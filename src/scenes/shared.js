@@ -8,10 +8,12 @@ import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, nightSkyImageN
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
 
+import { getBytes } from './dataSource.js';
+
+/** The data seam every scene uses - delegates to the ARENA2 data
+ *  source (memory -> IndexedDB -> network); signature unchanged. */
 export async function fetchBytes(name) {
-  const res = await fetch(`./arena2/${name}`);
-  if (!res.ok) throw new Error(`${name}: ${res.status}`);
-  return new Uint8Array(await res.arrayBuffer());
+  return getBytes(name);
 }
 
 export function parseSeason(params) {

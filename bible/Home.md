@@ -59,9 +59,12 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 Production is GitHub Pages via `.github/workflows/deploy.yml` (push to
 main or manual dispatch), gated on `npm run check` - a red suite never
 ships. Builds contain NO game data (Port-Doctrine: ARENA2 is
-non-redistributable); the deployed app expects user-supplied data at
-runtime, so `./arena2/*` fetches 404 on the public site until a data
-provisioning path ships.
+non-redistributable). The runtime data path is
+`src/scenes/dataSource.js`: getBytes resolves memory -> IndexedDB ->
+network `./arena2/*` (the dev middleware unchanged); on the deployed
+site a boot overlay asks for the local ARENA2 folder ONCE (directory
+input or drag-drop) and persists it in IndexedDB. Every reader routes
+through the fetchBytes seam, signature unchanged.
 
 ## Repo layout
 

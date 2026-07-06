@@ -14,6 +14,8 @@ import { bootInterior } from './scenes/interior.js';
 import { bootDungeon } from './scenes/dungeon.js';
 import { bootWorld } from './scenes/world.js';
 
+import { ensureArena2 } from './scenes/dataSource.js';
+
 async function boot() {
   const canvas = document.getElementById('c');
   const renderer = new Renderer(canvas);
@@ -21,6 +23,10 @@ async function boot() {
   const status = (msg) => {
     document.title = `project-dagger - ${msg}`;
   };
+  // Data gate: readers load user-supplied ARENA2 at runtime
+  // (Port-Doctrine) - dev serves it via middleware, production asks
+  // for the folder once and persists it in IndexedDB.
+  await ensureArena2();
   // Window emission style for every scene. DFU's GetMaterial default is Day.
   renderer.setWindowEmission(windowEmissionRGB(params.get('window') || 'day'));
   if (params.has('interior')) return bootInterior(canvas, renderer, params, status);

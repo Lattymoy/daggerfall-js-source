@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 188 tests across 40 files.
+Node 22). Suite: 189 tests across 41 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -11,6 +11,7 @@ Node 22). Suite: 188 tests across 40 files.
 | sky.test.js | 3 | SKY reader pins, panorama mirror law, night mapping |
 | smoke.test.js | 1 | runner sanity |
 | clock.test.js | 4 | hour gates, LightCurve pins, sun sweep, flicker determinism |
+| datasource.test.js | 1 | ARENA2 key rule: uppercase basename across path styles (unix/windows/bare) |
 | bsa.test.js | 6 | BSA containers, closure invariant, FOO quirk |
 | palette.test.js | 10 | 8 palettes, MAP.PAL x4, embedded reads |
 | texture.test.js | 6 | 472-archive corpus, per-codec checksums |
