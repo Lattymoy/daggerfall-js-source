@@ -7,9 +7,11 @@
 //     GL/canvas upload. The vertical flip in getColor32 is kept verbatim
 //     (DFU flips because Unity textures are bottom-up); renderer decides
 //     how to consume it.
-//   - GetSpectralEmissionColors32 / GetFireWallColors32 not ported: they are
-//     Unity material-side effects (Color.RGBToHSV, Lerp), owned by our
-//     Rendering arc when spectral enemies land.
+//   - GetSpectralEmissionColors32 + SetSpectral ported (Rendering's
+//     spectral row, classic-visuals direction): the gray remap, the
+//     eye patch, and the V^1.9 emission lerp are verbatim below.
+//     GetFireWallColors32 stays unported (no firewall consumer yet;
+//     it is a two-line Color32.Lerp when one lands).
 //   - File-path plumbing dropped; loaders take byte buffers.
 
 import { DFPalette } from './dfPalette.js';
@@ -133,6 +135,59 @@ export class BaseImageFile {
     }
 
     return { colors, width: dstWidth, height: dstHeight };
+  }
+
+  /**
+   * Spectral constants + remap (TextureReader.cs verbatim): index 14
+   * is reserved for emissive eyes -> patched to 247; other colours
+   * reindex to the grey gradient (96 - index) so bones read brighter
+   * than shroud. 180 = the spectral transparency (~70% visible).
+   */
+  static get SPECTRAL_EYES_RESERVED() { return 14; }
+  static get SPECTRAL_EYES_PATCHED() { return 247; }
+  static get SPECTRAL_GRAY_START() { return 96; }
+  static get SPECTRAL_ALPHA() { return 180; }
+
+  setSpectral(srcBitmap) {
+    const d = srcBitmap.data;
+    for (let i = 0; i < d.length; i++) {
+      const index = d[i];
+      if (index === BaseImageFile.SPECTRAL_EYES_RESERVED) d[i] = BaseImageFile.SPECTRAL_EYES_PATCHED;
+      else if (index > 0) d[i] = (BaseImageFile.SPECTRAL_GRAY_START - index) & 0xff;
+    }
+  }
+
+  /**
+   * Verbatim GetSpectralEmissionColors32: eye texels emit eyeEmission
+   * (red at the call site); everything else lerps otherEmission ->
+   * the albedo by V^1.9 (Unity RGBToHSV's V = max component) so
+   * lighter features pop. Same flip/border walk as getColor32.
+   */
+  getSpectralEmissionColors32(srcBitmap, albedo, border, eyesEmissionIndex, eyeEmission, otherEmission) {
+    const srcWidth = srcBitmap.width, srcHeight = srcBitmap.height;
+    const dstWidth = srcWidth + border * 2, dstHeight = srcHeight + border * 2;
+    const out = new Uint8ClampedArray(dstWidth * dstHeight * 4);
+    const A = albedo.colors;
+    for (let y = 0; y < srcHeight; y++) {
+      const srcRow = y * srcWidth;
+      const dstRow = (dstHeight - 1 - border - y) * dstWidth;
+      for (let x = 0; x < srcWidth; x++) {
+        const index = srcBitmap.data[srcRow + x];
+        const dst = (dstRow + border + x) * 4;
+        if (index === eyesEmissionIndex) {
+          out[dst] = eyeEmission[0]; out[dst + 1] = eyeEmission[1]; out[dst + 2] = eyeEmission[2]; out[dst + 3] = 255;
+        } else {
+          const r = A[dst], g = A[dst + 1], b = A[dst + 2];
+          const V = Math.max(r, g, b) / 255;                       // Color.RGBToHSV's V
+          const t = Math.min(1, Math.max(0, Math.pow(V, 1.9)));    // Mathf.Pow + Clamp01
+          out[dst] = Math.round(otherEmission[0] + (r - otherEmission[0]) * t);
+          out[dst + 1] = Math.round(otherEmission[1] + (g - otherEmission[1]) * t);
+          out[dst + 2] = Math.round(otherEmission[2] + (b - otherEmission[2]) * t);
+          out[dst + 3] = 255;
+        }
+      }
+    }
+    return { colors: out, width: dstWidth, height: dstHeight };
   }
 
   /**

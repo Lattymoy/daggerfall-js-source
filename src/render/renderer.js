@@ -168,6 +168,8 @@ precision highp float;
 in vec2 vUV;
 in vec3 vBBWorld;
 uniform sampler2D uTex;
+uniform sampler2D uEmissionTex;
+uniform int uSpectral;
 uniform vec3 uTint; // time-of-day: ambient + sunColor * sunScale * 0.5
 uniform int uPointCount;
 uniform vec4 uPointLights[16]; // xyz scene-space, w range
@@ -188,7 +190,9 @@ float fogFactorAt(vec3 worldPos) {
 }
 void main() {
   vec4 tex = texture(uTex, vUV);
-  if (tex.a < 0.5) discard;
+  // Spectral flats keep their 180-alpha translucency (blended pass);
+  // opaque flats keep the classic 0.5 cutout.
+  if (tex.a < (uSpectral == 1 ? 0.1 : 0.5)) discard;
   // Point lights on flats: billboards have no normal, so the term is
   // attenuation-only (squared linear falloff) - documented equivalence
   // to Unity's vertex-lit billboards.
@@ -199,7 +203,9 @@ void main() {
     float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
     pointDiff += att * att;
   }
-  outColor = vec4(mix(uFogColor, tex.rgb * (uTint + pointDiff * uPointColor), fogFactorAt(vBBWorld)), 1.0);
+  vec3 emission = texture(uEmissionTex, vUV).rgb;   // spectral eyes/body glow (black tex otherwise)
+  vec3 lit = tex.rgb * (uTint + pointDiff * uPointColor) + emission;
+  outColor = vec4(mix(uFogColor, lit, fogFactorAt(vBBWorld)), uSpectral == 1 ? tex.a : 1.0);
 }`;
 
 // Dungeon water: one horizontal quad per watered RDB block, drawn after
@@ -343,6 +349,9 @@ const ZERO_ORIGIN = [0, 0, 0];
  *  character-side render at this pixel size; the WORLD is excluded.
  *  9 -> 7 per Mac (2026-07-06). Single source - the engine character
  *  pass and the viewer default both read this value. */
+import { TextureFile } from '../formats/textureFile.js';
+const isSpectralArchive = TextureFile.isSpectralArchive;   // single source (the formats layer owns the archive list)
+
 export const CHAR_PIXEL = 7;
 
 /** The shared character-sprite render target's fixed edge (the pass
@@ -489,6 +498,8 @@ export class Renderer {
     this.bbUSize = gl.getUniformLocation(this.bbProgram, 'uSize');
     this.bbUOrigin = gl.getUniformLocation(this.bbProgram, 'uOrigin');
     this.bbUTex = gl.getUniformLocation(this.bbProgram, 'uTex');
+    this.bbUEmissionTex = gl.getUniformLocation(this.bbProgram, 'uEmissionTex');
+    this.bbUSpectral = gl.getUniformLocation(this.bbProgram, 'uSpectral');
     this.bbUTint = gl.getUniformLocation(this.bbProgram, 'uTint');
     this.bbUPointCount = gl.getUniformLocation(this.bbProgram, 'uPointCount');
     this.bbUPointLights = gl.getUniformLocation(this.bbProgram, 'uPointLights');
@@ -1141,18 +1152,41 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1i(this.bbUPointCount, bbCount);
     if (bbCount > 0) gl.uniform4fv(this.bbUPointLights, this._pointLights);
     gl.uniform3fv(this.bbUPointColor, this._pointColor);
-    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(this.bbUEmissionTex, 1);
     gl.disable(gl.CULL_FACE);
-    for (const b of batches) {
-      const tex = this.textures.get(`${b.archive}_${b.record}`);
-      if (!tex) continue;
+    // Two phases: opaque flats first (classic cutout), then SPECTRAL
+    // batches blended with depth-writes off - ghosts keep their 180
+    // alpha (~70% visible) and their emission map (red eyes + the
+    // V^1.9 body glow). Rendering's last queue row, classic-visuals
+    // direction (Mac).
+    const drawOne = (b) => {
+      const key = `${b.archive}_${b.record}`;
+      const tex = this.textures.get(key);
+      if (!tex) return;
+      gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, this.emissionTextures.get(key) || this._blackTex);
       gl.uniform2f(this.bbUSize, b.size.w, b.size.h);
       const o = b.origin || ZERO_ORIGIN;
       gl.uniform3f(this.bbUOrigin, o[0], o[1], o[2]);
       gl.bindVertexArray(b.vao);
       gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);
+    };
+    gl.uniform1i(this.bbUSpectral, 0);
+    for (const b of batches) if (!isSpectralArchive(b.archive)) drawOne(b);
+    let anySpectral = false;
+    for (const b of batches) if (isSpectralArchive(b.archive)) { anySpectral = true; break; }
+    if (anySpectral) {
+      gl.uniform1i(this.bbUSpectral, 1);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.depthMask(false);
+      for (const b of batches) if (isSpectralArchive(b.archive)) drawOne(b);
+      gl.depthMask(true);
+      gl.disable(gl.BLEND);
     }
+    gl.activeTexture(gl.TEXTURE0);
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);
     gl.useProgram(this.program);

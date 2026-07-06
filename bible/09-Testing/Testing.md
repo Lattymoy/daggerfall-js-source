@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 218 tests across 50 files.
+Node 22). Suite: 220 tests across 51 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -49,6 +49,7 @@ Node 22). Suite: 218 tests across 50 files.
 | maps.test.js | 9 | 62 regions, converters, climate, city + Privateer's |
 | snd.test.js | 3 | 459 sounds, byte-exact header, zero-length record 5 |
 | climate.test.js | 5 | applyClimate verbatim rules, texture-info classification, exterior-window table, nature/ground archives, 8820-combo corpus sweep (735 pairs, 0 missing) |
+| spectral.test.js | 2 | SetSpectral constants + gray remap (eyes 14->247, 96-index), the V^1.9 emission lerp (red eyes, body toward black) on a hand-built albedo |
 | streaming.test.js | 7 | world-coord conversions, nearest-first 7x7, crossing offsets + column swaps, two-pixel jumps, vertical recenter, 30-crossing floating-origin invariant, 2000-step invariant fuzz |
 | terrain.test.js | 14 | WOODS.WLD reader + corpus pins, perlin, cubic, sampler pins, umRandom (float + int), marching-squares lookup, blend flattening, Daggerfall-on-terrain integration, 15251-location corpus sweep, terrain key, nature scatter rules + integration |
 | weather.test.js | 4 | verbatim fog tables, mapping, offsets, scales, fog math, lightning strobe |

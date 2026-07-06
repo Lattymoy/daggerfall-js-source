@@ -32,6 +32,20 @@ export function createDataPipeline({ renderer, arch, palette }) {
   const uploadRecord = (archive, record) => {
     const t = textureFiles.get(archive);
     const bitmap = t.getDFBitmap(record, 0);
+    // Spectral archives (ghost/wraith/Lysandus) take the verbatim
+    // TextureReader path: SetSpectral gray remap + eye patch, albedo
+    // at 180 alpha (~70% visible), and the V^1.9 emission map with
+    // red eyes. Classic-visuals direction (Mac): the billboards ARE
+    // the spectral enemies - this closes Rendering's last queue row.
+    if (TextureFile.isSpectralArchive(archive)) {
+      const spec = { ...bitmap, data: bitmap.data.slice() };   // never mutate the cached bitmap
+      t.setSpectral(spec);
+      const albedo = t.getColor32(spec, 0, 0, TextureFile.SPECTRAL_EYES_PATCHED, TextureFile.SPECTRAL_ALPHA);
+      renderer.uploadTexture(archive, record, albedo);
+      renderer.uploadEmissionTexture(archive, record,
+        t.getSpectralEmissionColors32(spec, albedo, 0, TextureFile.SPECTRAL_EYES_PATCHED, [255, 0, 0], [0, 0, 0]));
+      return;
+    }
     renderer.uploadTexture(archive, record, t.getColor32(bitmap, 0));
     // Exterior windows also get their emission mask (R2, MaterialReader
     // semantics: glass texels glow with the active window style).

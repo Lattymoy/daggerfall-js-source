@@ -22,8 +22,12 @@ sampling) - the per-size reallocating cache is gone (it thrashed
 FBO/texture/renderbuffer per character per frame under C8's foes).
 Presentation-side, ours (Port-Doctrine); no ledger entry needed.
 
-Owned queue (from Port-Ledger C): spectral/firewall emission colors
-when spectral enemies land (Characters dependency) - the arc's build
-queue is otherwise EMPTY. R13 shipped precipitation + verbatim storm
+Owned queue: EMPTY. The spectral row SHIPPED 2026-07-06 under the
+classic-visuals direction (Mac): spectral enemies land as billboards,
+so the two owed BaseImageFile helpers ported verbatim and the
+billboard pass gained emission + a blended spectral phase (180 alpha,
+red eyes, V^1.9 body glow) - full record in Characters-Arc E4.
+GetFireWallColors32 stays unported until a firewall consumer exists
+(a two-line lerp). Live visual sign-off open (Mac). R13 shipped precipitation + verbatim storm
 lightning. R10 retired groundMesh.js - all ground
 (exterior + terrain) runs the verbatim tilemap shader.

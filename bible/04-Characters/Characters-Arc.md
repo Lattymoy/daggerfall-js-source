@@ -19,6 +19,18 @@ C4c's milestone note stands as history). Every C6 piece is AUTHORED
 at Voxlight enemy craft against the real paperdoll art - no
 band-recolor shortcuts ship, ever.
 
+## Direction pivot 3 (Mac, 2026-07-06): CLASSIC VISUALS
+
+"I think for now we stay with the classic visuals" - E4c (authored
+monster morphologies on the rewrite/ bench) is DEFERRED; monsters
+remain classic billboards, which the doctrine already names the
+baseline visual. The rewrite/ bench stays vendored for when the
+direction reopens. Consequence: Rendering's spectral row unblocks ON
+BILLBOARDS - shipped same day (see the E4 records + Rendering.md);
+with it C8's engine queue is DONE and the arc parks pending
+direction (E4c) with the flagged Systems-arc interims tracked in the
+Home ledger.
+
 ## Direction pivot 2 (Mac, 2026-07-04): NEUTRAL REDESIGN
 
 The paperdoll is redesigned from scratch, NOT constrained to the
@@ -419,6 +431,21 @@ rig is the authoring bench for monster morphologies. Slices:
   port of classic's rule). The class-armor interim is GONE; the
   poisoned-weapon chance pends the poison system (Systems). 3
   deterministic tests incl the full material walk to Daedric.
+- **Spectral emission: SHIPPED (classic-visuals direction).** The two
+  owed BaseImageFile helpers ported verbatim (TextureReader.cs):
+  SetSpectral (eyes 14 -> 247, other indices -> the 96-index gray
+  gradient) and GetSpectralEmissionColors32 (red eyes; body lerps
+  black -> albedo by V^1.9, Unity RGBToHSV's V = max component,
+  Clamp01). The pipeline's uploadRecord routes spectral archives
+  (273/278/473 - the textureFile list is the single source) through
+  the verbatim path on a CLONED bitmap (the cache is never mutated):
+  albedo at the 180 spectral alpha + the emission map. The billboard
+  shader gains uEmissionTex (black otherwise) added pre-fog like the
+  mesh convention, and a two-phase draw: opaque flats keep the 0.5
+  cutout; spectral batches blend SRC_ALPHA with depth-writes off at
+  a 0.1 cutout - ghosts render ~70% visible with glowing red eyes.
+  GetFireWallColors32 stays unported (two-line lerp, no consumer).
+  OPEN: live visual sign-off (Mac; no ARENA2 here).
 
 **Audit 2026-07-06 (Mac, engine included):** the shared pixelize pass
 survives N foes now - the renderer's character-sprite RT was keyed on
