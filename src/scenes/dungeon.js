@@ -186,7 +186,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(ctx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
-    if (ctx.foes.length) ctx.drawFoes(dt, canvas, proj, view, cam.pos);   // C8 E1: rigged class enemies through the shared pixelize pass
+    if (ctx.foes.length) ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos);   // C8 E1+E2: rigged class enemies, classic senses + pursuit
     renderer.drawWater(ctx.waterQuads, WATER_COLOR,
       renderer.textures.get(`${waterArchive}_0`),
       (now / 1000) * WATER_SCROLL_TILES_PER_SEC);

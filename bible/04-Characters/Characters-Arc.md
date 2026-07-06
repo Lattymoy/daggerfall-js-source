@@ -275,8 +275,22 @@ rig is the authoring bench for monster morphologies. Slices:
   hand-computed values. OPEN: live verification (?dungeon&foes /
   ?foes through an entrance) pending ARENA2 in the environment;
   per-enemy mesh-update perf unmeasured (E4 queue).
-- **E2:** enemy senses + approach on DFU EnemyMotor semantics; the
-  shared weaponStates machine drives enemy attacks.
+- **E2a (senses + approach): SHIPPED.** enemyMotor.js is a verbatim
+  port of the CLASSIC path (EnhancedCombatAI=false) from DFU
+  EnemyMotor/EnemySenses/EnemyAttack: sight 4096*GlobalScale, FOV 180,
+  hearing 25, melee stop 2.25 (vs AI 1.5), 11.25deg in-place turns on
+  the 0.0625s classic update behind the 5.625deg move yaw-gate,
+  moveSpeed = (LiveSpeed + dfWalkBase)*GlobalScale ("same formula as
+  when the player walks"), classic always moves in for attack. Senses
+  recompute per classic update (DFU recomputes per Update; the 5-unit
+  system timer only switches TARGETS - single-target here, constants
+  exported for E3). Grounded via the SAME capsule contract the player
+  walks on; gait WALK pursuing / IDLE at rest; LOS through the level
+  collider (open swing doors transparent for free - the actionSystem
+  bucket rule). Departures documented in the module header (eye = feet
+  + 5/6h; stealth pending E3). Flagged E3 plumbing: per-enemy
+  LiveSpeed from career stats (stub 50 at the spawn site). 4 tests.
+- **E2b:** the shared weaponStates machine drives enemy attacks.
 - **E3:** hit resolution vs the player (FormulaHelper
   CalculateAttackDamage) + the shipped hit reactions on both sides.
 - **E4+:** authored monster morphologies (rewrite/ bench), spectral

@@ -275,7 +275,7 @@ export function createWorldModes(host) {
       for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
       renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
-      if (dungeonCtx.foes.length) dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos);   // C8 E1: rigged class enemies through the shared pixelize pass
+      if (dungeonCtx.foes.length) dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos);   // C8 E1+E2: rigged class enemies, classic senses + pursuit
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
           renderer.textures.get(`${dungeonReturn.waterArchive}_0`),

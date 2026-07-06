@@ -158,8 +158,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const rig = createCharacterRig(renderer, buildRaceCharacter('Human', bodyRamps, { tone: e.mobileType % 4, hairTone: e.mobileType % 3 }));
       rig.setGait(3);   // standing sway (IDLE)
       const pos = floorLanding(collider, [e.x, e.y + 0.2, e.z]);
-      const yaw = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing, no engine PRNG (Ledger A rule)
-      foes.push({ rig, pos, yaw, mobileType: e.mobileType, gender: e.gender });
+      const yawDeg = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing, no engine PRNG (Ledger A rule)
+      const { EnemyAI } = await import('../characters/enemyMotor.js');
+      // liveSpeed 50: class-enemy career stats plumb in E3 (flagged in the arc)
+      const ai = new EnemyAI(collider, pos, yawDeg * Math.PI / 180, { liveSpeed: 50 });
+      foes.push({ rig, ai, mobileType: e.mobileType, gender: e.gender });
       continue;
     }
     const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
@@ -192,11 +195,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_drawSprite) _drawSprite = (await import('../render/characterSprite.js')).drawCharacterSprite;
   }
   if (foes.length) await _loadSprite();
-  function drawFoes(dt, canvas, proj, view, eye) {
+  function drawFoes(dt, canvas, proj, view, eye, playerFeet) {
     for (const f of foes) {
+      f.ai.update(dt, playerFeet || eye);   // E2: classic senses + pursuit; eye fallback keeps probes alive without a player
+      f.rig.setGait(f.ai.moving ? 1 : 3);   // WALK while pursuing, IDLE sway at rest
       f.rig.update(dt);
-      const s = f.rig.scale;
-      const mat = trs(f.pos[0], f.pos[1] - f.rig.liveFootY * s, f.pos[2], 0, f.yaw, 0, s, s, s);   // live support point, same grounding rule as the player rig
+      const s = f.rig.scale, p = f.ai.feet;
+      const mat = trs(p[0], p[1] - f.rig.liveFootY * s, p[2], 0, f.ai.yaw * 180 / Math.PI, 0, s, s, s);   // live support point, same grounding rule as the player rig
       _drawSprite(renderer, canvas, f.rig, mat, proj, view, eye);
     }
   }
