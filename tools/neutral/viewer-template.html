@@ -379,7 +379,6 @@ let ambientT = 0; const GAITS = [null, WALK, RUN];
 const POSE_NAMES = ['none', ...Object.keys(D.poses || {})];
 let poseIx = 0;
 const curPose = () => (poseIx ? D.poses[POSE_NAMES[poseIx]] : null);
-const POSE_L = { strideAmp: 0, counterFrac: 0, kneeBase: 0, kneeAmp: 0, elbowBase: 0, elbowAmp: 0, lean: 0 }; // zero loco for the posed idle
 // ---- attack playback: a running clip layers DELTAS over the active
 // pose (arms fully owned by the clip - gait pump + runElbow suppressed
 // mid-strike), twist/lean/headPitch add on. Legs stay with the gait.

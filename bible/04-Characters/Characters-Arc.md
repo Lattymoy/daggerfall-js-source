@@ -190,10 +190,21 @@ extracted to src/characters/animate.js, renderer-agnostic
 createAnimContext binds joint constants from geometry - identical
 math). The viewer inlines the module behind a one-line THREE
 adapter; every call site/probe signature unchanged; exact-number
-regression (claymore StrikeDown offMax 0.097). NEXT SLICES, in
-order: (2) rig mesh packs into the engine renderer's buffer format,
-(3) spawn + ground the character in the streamed exterior, (4)
-world camera modes (the FP eye already rides the posed head).
+regression (claymore StrikeDown offMax 0.097). SLICE 2 SHIPPED: engineRig.js - the canonical runtime in the
+engine. RECON CORRECTION: the renderer is hand-rolled WebGL2
+(src/render/renderer.js) and createCharacterMesh/update/
+drawCharacter ALREADY EXISTED (C4b, consumed by interiorContext's
+static chars) - grep-first. engineRig: buildNeutralBody +
+deriveClassicRamps (single source; interiorContext's INLINE loco
+copy predates animate.js - migration is a named later slice),
+per-packed-vertex targets, createAnimContext with the payload's
+exact constants, update() splices T.pos over cached normal/color ->
+updateCharacterMesh. POSE_L canonicalized into animate.js. ?rig
+spawns it near the player in the exterior, walking (12816 verts,
+joints 0.90/0.43/1.11 = viewer-identical, scale 0.99). NEXT: (3)
+ground via the terrain sampler + real placement, (4) the 9x
+character-pass render split + world camera, (5) interior loco
+migration onto engineRig.
 
 **Verification doctrine pins.** Stations over nearest-verts; numeric
 batteries over eyeballs; PIXEL-COUNTING screenshots for render-level

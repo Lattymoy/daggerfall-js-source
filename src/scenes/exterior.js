@@ -242,6 +242,23 @@ export async function bootExterior(canvas, renderer, params, status) {
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const player = new PlayerMotor(collider);
+  // ENGINE RIG (slice 2, ?rig): the canonical animated character in
+  // the world - same body, same animate.js runtime as the viewer.
+  // Spawned near the player at terrain height (proper grounding =
+  // slice 3); walks in place at the 9x character-pass standard once
+  // the render split lands (slice 4).
+  let rig = null, rigMat = null;
+  if (params.has('rig')) {
+    const [{ createEngineRig, deriveClassicRamps }, { ImgFile }] = await Promise.all([
+      import('../characters/engineRig.js'),
+      import('../formats/imgFile.js'),
+    ]);
+    const bodyImg = new ImgFile();
+    bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
+    rig = createEngineRig(renderer, deriveClassicRamps(palette, bodyImg.getDFBitmap()));
+    rig.setGait(1);
+    window.__rig = rig;
+  }
   player.spawn(loc.width * RMB_SIDE * 0.46, GROUND_OFFSET * 0.025 + 2, loc.height * RMB_SIDE * 0.5);
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.
@@ -390,6 +407,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.drawTerrain(groundSurface, identityMatrix,
       renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
+    if (rig) {
+      rig.update(dt);
+      const s = rig.scale, p = player.pos;
+      rigMat = new Float32Array([s,0,0,0, 0,s,0,0, 0,0,s,0, p[0]+2, p[1]-1.6-rig.footY*s, p[2]+3, 1]);   // near-player spawn; slice 3 grounds via the terrain sampler
+      renderer.drawCharacter(rig.mesh, rigMat);
+    }
     // Classic Daggerfall billboards rotate about Y only: right from the view,
     // up stays world-Y.
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
