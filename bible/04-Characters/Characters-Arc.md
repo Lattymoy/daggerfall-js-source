@@ -175,6 +175,20 @@ four). FREE-CLIP path: reactions run wall-clock outside the weapon
 machine (its idle u-mapping would null them) and may interrupt a
 swing visually. hurt button cycles; __hurt(name) hook.
 
+**Engine-world integration (ACTIVE arc, opened 2026-07-06).** The
+world side: bootExterior(canvas, renderer, ...) with pointer-lock,
+streamingWorld, terrain, dungeons - a RAW-GL renderer (mat4/
+meshReader), not THREE. SLICE 1 SHIPPED: the animation runtime
+extracted to src/characters/animate.js, renderer-agnostic
+(animateTarget(ctx,...) writes T.pos + T.dirty; the HOST flushes;
+createAnimContext binds joint constants from geometry - identical
+math). The viewer inlines the module behind a one-line THREE
+adapter; every call site/probe signature unchanged; exact-number
+regression (claymore StrikeDown offMax 0.097). NEXT SLICES, in
+order: (2) rig mesh packs into the engine renderer's buffer format,
+(3) spawn + ground the character in the streamed exterior, (4)
+world camera modes (the FP eye already rides the posed head).
+
 **Verification doctrine pins.** Stations over nearest-verts; numeric
 batteries over eyeballs; PIXEL-COUNTING screenshots for render-level
 claims (vertex-band filters false-negative); solver grids snapshot

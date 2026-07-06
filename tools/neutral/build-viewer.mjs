@@ -101,6 +101,7 @@ const dir = new URL('.', import.meta.url).pathname;
 let clothSrc = readFileSync(dir + '../../src/characters/clothSim.js', 'utf8').replace(/^export /gm, '');
 let animsSrc = readFileSync(dir + '../../src/characters/anims.js', 'utf8').replace(/^export /gm, '');
 let statesSrc = readFileSync(dir + '../../src/characters/weaponStates.js', 'utf8').replace(/^export /gm, '');
-const tpl = readFileSync(dir + 'viewer-template.html', 'utf8').replace('/*__CLOTHSIM__*/', clothSrc).replace('/*__ANIMS__*/', animsSrc).replace('/*__WEAPONSTATES__*/', statesSrc);
+let animateSrc = readFileSync(dir + '../../src/characters/animate.js', 'utf8').replace(/^export /gm, '').replace('function animateTarget(', 'function animateTargetCore(');
+const tpl = readFileSync(dir + 'viewer-template.html', 'utf8').replace('/*__CLOTHSIM__*/', clothSrc).replace('/*__ANIMS__*/', animsSrc).replace('/*__WEAPONSTATES__*/', statesSrc).replace('/*__ANIMATE__*/', animateSrc);
 writeFileSync(process.argv[2] || 'dagger-viewer.html', tpl.replace('__PAYLOAD__', payload));
 console.log('viewer written (', faces.length, 'faces ) ->', process.argv[2] || 'dagger-viewer.html');
