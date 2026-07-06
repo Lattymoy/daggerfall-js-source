@@ -334,6 +334,16 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   bow arm holds to 0.058). SOLVER HYGIENE pinned: refine grids must
   snapshot their centre (a mutating-best walk railed spread at
   -0.885 and hid the reach).
+- **Nocked ARROW (SHIPPED)** - template 131 pinned (0-0 dmg, 0.25kg
+  at every tier: the quarter-kg chain collapses via half-even
+  round(1.25)=1). Ships as BOW GEOMETRY inside the drawn assembly -
+  the tail lives at the nock and the shaft IS the aim line, so
+  alignment, the gait lock and Release come by construction (posed:
+  0.0deg off the nock-to-grip line, head 0.48 down the axis past the
+  stave, resting on the riser). LOFT LIMIT pinned: loftPiece is
+  Y-only - an axis:'z' option silently degenerated to a zero-length
+  stack; the arrow is authored along Y and locally rotated onto the
+  aim axis about the grip line before the shared grip bake.
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,

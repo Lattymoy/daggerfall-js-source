@@ -67,6 +67,11 @@ test('weapons: verbatim DFU data pins', () => {
   assert.equal(sb.minDamage, 4); assert.equal(sb.maxDamage, 16);
   assert.equal(lb.minDamage, 4); assert.equal(lb.maxDamage, 18);
   assert.equal(sb.weightInKg, 1.25); assert.equal(lb.weightInKg, 2);
+  // Arrow (131): ammunition - no damage of its own, 0.25kg at any tier
+  // (the quarter-kg chain collapses: half-even round(1.25) = 1).
+  const ar = buildWeapon(WEAPONS.Arrow, WEAPON_MATERIALS.Daedric);
+  assert.equal(ar.minDamage, 0); assert.equal(ar.maxDamage, 0);
+  assert.equal(ar.weightInKg, 0.25);
   assert.equal(c.value, 30 * 3 * 512);
   assert.equal(c.maxCondition, Math.trunc((1400 * 32) / 4));
 });
@@ -135,6 +140,10 @@ test('sword piece: grip-baked, armL, point-forward carry (+45 seat)', () => {
     const bn = station(bp, [-0.235, 1.078, 0], 0.03);
     assert.ok(bg && Math.hypot(bg[0]+0.235, bg[2]) < 0.02, `bow grip station ${bg}`);
     assert.ok(bn && Math.hypot(bn[0]+0.235, bn[1]-1.078, bn[2]) < 0.01, `bow nock station ${bn}`);
+    // nocked ARROW: head 0.29 down the aim axis (rest y 0.585), tail
+    // at the nock - part of the drawn assembly.
+    const ah = station(bp, [-0.235, 0.585, 0], 0.02);
+    assert.ok(ah && Math.hypot(ah[0]+0.235, ah[2]) < 0.01 && Math.abs(ah[1]-0.59) < 0.02, `arrow head ${ah}`);
     assert.ok(Math.abs(bzHi - half) < 0.03 && Math.abs(bzLo + half) < 0.03, `bow carry span ${bzLo}..${bzHi} vs ${half}`);
   }
 });

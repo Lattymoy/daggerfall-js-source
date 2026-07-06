@@ -65,12 +65,44 @@ function buildBow(ramp, half) {
     { y: GRIP_Y + 0.02, rx: 0.0035, rz: 0.0035, cz: NOCK_CZ - 0.012 },
     { y: hi - 0.012, rx: 0.0035, rz: 0.0035, cz: -0.05 },
   ], { ...G, seg: 6, capTop: false, capBottom: false });
-  // NOCK STATION: pre-bake (0.90, -0.30) -> post-bake below the grip
+  // NOCK STATION: pre-bake (0.90, +0.30) -> post-bake above the grip
   // at rest, at the CHEEK LINE when the arm extends to aim.
   loftPiece(faces, [
     { y: GRIP_Y - 0.012, rx: 0.007, rz: 0.007, cz: NOCK_CZ },
     { y: GRIP_Y + 0.012, rx: 0.007, rz: 0.007, cz: NOCK_CZ },
   ], { ...G, seg: 8, capTop: true, capBottom: true });
+  // THE ARROW (template 131): nocked - part of the drawn assembly, so
+  // it inherits the aim alignment, the gait lock and the Release clip
+  // by construction (a second held object would need its own seat
+  // solve). Tail at the nock, shaft along the AIM LINE (the pre-bake
+  // cz axis at grip height), resting on the riser, head 0.25 past the
+  // stave. Fletching = a short widened band at the tail.
+  // loftPiece is Y-only: author the arrow along Y, then rotate it
+  // locally onto the cz (aim) axis about the grip line before the
+  // shared bake carries everything. Y +0.29 (tail) .. -0.24 (head)
+  // maps to cz +0.29 .. -0.24.
+  const arrow = [];
+  loftPiece(arrow, [
+    { y: GRIP_Y - 0.24, rx: 0.002, rz: 0.002 },       // point
+    { y: GRIP_Y - 0.20, rx: 0.013, rz: 0.013 },       // head base
+    { y: GRIP_Y - 0.19, rx: 0.0045, rz: 0.0045 },     // shaft
+    { y: GRIP_Y + 0.19, rx: 0.0045, rz: 0.0045 },
+    { y: GRIP_Y + 0.20, rx: 0.012, rz: 0.012 },       // fletching
+    { y: GRIP_Y + 0.27, rx: 0.012, rz: 0.012 },
+    { y: GRIP_Y + 0.29, rx: 0.004, rz: 0.004 },       // tail at the nock
+  ], { ...G, seg: 6 });
+  const AROT = Math.PI / 2;   // +y -> +cz (sign probed at the module)
+  const ac = Math.cos(AROT), as = Math.sin(AROT);
+  for (const f of arrow) {
+    for (let i = 0; i < 4; i++) {
+      const dy = f.p[i*3+1] - GRIP_Y, z = f.p[i*3+2];
+      f.p[i*3+1] = GRIP_Y + ac*dy - as*z;
+      f.p[i*3+2] = as*dy + ac*z;
+    }
+    const ny = f.n[1], nz = f.n[2];
+    f.n[1] = ac*ny - as*nz; f.n[2] = as*ny + ac*nz;
+    faces.push(f);
+  }
   return compress(shadePiece(bakeGrip(faces), ramp));
 }
 
