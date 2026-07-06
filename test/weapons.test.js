@@ -51,7 +51,7 @@ test('weapons: verbatim DFU data pins', () => {
   assert.equal(fem.playerTextureArchive, d.playerTextureArchive - 1);
 });
 
-test('sword piece: grip-baked, armL, blade up-forward off a hanging arm', () => {
+test('sword piece: grip-baked, armL, point-forward carry (+45 seat)', () => {
   const faces = buildSword(STEEL_RAMP);
   assert.ok(faces.length > 40, 'too few faces');
   const pts = [];
@@ -76,9 +76,10 @@ test('sword piece: grip-baked, armL, blade up-forward off a hanging arm', () => 
   }
   const [tip, pom] = A[1] + A[2] > C[1] + C[2] ? [A, C] : [C, A];
   const tilt = Math.atan2(Math.hypot(tip[0]-pom[0], tip[2]-pom[2]), tip[1]-pom[1]) * 180 / Math.PI;
-  assert.ok(tilt > 43 && tilt < 51, `blade tilt from vertical ${tilt}`);
-  assert.ok(tip[2] > 0.45 && tip[1] > 1.25, `tip not up-forward: ${tip}`);
-  assert.ok(pom[2] < -0.04 && pom[1] < 0.80, `pommel not low-behind: ${pom}`);
+  // Mac's baked +45 seat: near-horizontal point-forward carry.
+  assert.ok(tilt > 84 && tilt < 94, `blade tilt from vertical ${tilt}`);
+  assert.ok(tip[2] > 0.70 && tip[1] > 0.78 && tip[1] < 0.92, `tip not point-forward: ${tip}`);
+  assert.ok(pom[2] < -0.08 && pom[1] > 0.76 && pom[1] < 0.92, `pommel not behind the fist: ${pom}`);
   const len = Math.sqrt(best);
-  assert.ok(len > 0.88 && len < 0.96, `blade span ${len}`);
+  assert.ok(len > 0.90 && len < 1.02, `blade span ${len}`);
 });

@@ -196,7 +196,16 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   swd fwd, swd up (+/-0.12). Rewrites the sword animTarget BASE +
   normals, so every pose/gait/attack carries the adjusted seat;
   labels show real units for baking a chosen fit. `__swordFit` hook.
-  Probed: grip stays seated, tip moves 0.31 under 20deg+0.06.
+- **Seat BAKED at Mac's +45 (2026-07-05)**: GRIP_PITCH = -2.40 + pi/4
+  -> a near-horizontal POINT-FORWARD carry (88.8deg off vertical, tip
+  y 0.84 z +0.83, pommel behind the fist). The tip crossed BELOW the
+  wrist pivot, which flipped the strike levers: TWIST (spine, tip
+  radius 0.83) is now the lateral engine and the yaw contribution is
+  minor - all six clips re-probed on the new seat, signs HELD.
+  Thrust handPitch trimmed (point stays level, +0.84 fwd / -0.30
+  dip), diagonal twist widened (+/-0.25..0.46 lateral over -1.45
+  down). Chop slams the tip -1.45 at r2.45; slashes +/-0.63 r2.2-2.6.
+  weapons.test re-pinned on the +45 seat.
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,

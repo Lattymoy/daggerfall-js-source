@@ -23,7 +23,7 @@ const ARM_X = -0.235; // left-fist column (mirrors neutralBody)
 // plane; every arm/pose/gait transform then carries the correct grip
 // for free.
 const GRIP_Y = 0.90;          // grip point inside the fist (pre-HSCALE)
-const GRIP_PITCH = -2.40;     // from straight-down to up-forward (rad)
+const GRIP_PITCH = -2.40 + Math.PI / 4;   // Mac: swd pitch +45deg baked (2026-07-05) - near-horizontal point-forward carry
 
 function bakeGrip(faces) {
   const c = Math.cos(GRIP_PITCH), s = Math.sin(GRIP_PITCH);
