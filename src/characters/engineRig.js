@@ -72,7 +72,7 @@ export function createEngineRig(renderer, ramps) {
   let wt = 0, gait = 0, pose = null;
 
   return {
-    mesh, T, ctx, scale, footY: minY, liveFootY: minY,
+    mesh, T, ctx, scale, footY: minY, liveFootY: minY, liveBounds: null,
     setGait(g) { gait = g | 0; },
     setPose(p) { pose = p || null; },
     /** Advance the canonical runtime and re-upload moved vertices. */
@@ -84,8 +84,15 @@ export function createEngineRig(renderer, ramps) {
       } else {
         animateTarget(ctx, T, 0, POSE_L, 0, pose, false);
       }
-      let lo = Infinity;
-      for (let v = 0; v < count; v++) { anim[v*9] = T.pos[v*3]; const y = T.pos[v*3+1]; anim[v*9+1] = y; anim[v*9+2] = T.pos[v*3+2]; if (y < lo) lo = y; }
+      let lo = Infinity, hi = -Infinity, lx = Infinity, hx = -Infinity, lz = Infinity, hz = -Infinity;
+      for (let v = 0; v < count; v++) {
+        const x = T.pos[v*3], y = T.pos[v*3+1], z = T.pos[v*3+2];
+        anim[v*9] = x; anim[v*9+1] = y; anim[v*9+2] = z;
+        if (y < lo) lo = y; if (y > hi) hi = y;
+        if (x < lx) lx = x; if (x > hx) hx = x;
+        if (z < lz) lz = z; if (z > hz) hz = z;
+      }
+      this.liveBounds = { minX: lx, maxX: hx, minY: lo, maxY: hi, minZ: lz, maxZ: hz };   // live envelope for the sprite-pass fit
       this.liveFootY = lo;   // the LIVE support point: grounding an animated character means the current lowest vertex kisses the floor (the stride arc dips below rest minY)
       renderer.updateCharacterMesh(mesh, anim);
       T.dirty = false;

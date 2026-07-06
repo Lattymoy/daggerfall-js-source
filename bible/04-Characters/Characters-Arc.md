@@ -207,9 +207,19 @@ own ground contract, so real terrain inherits free. GROUNDING RULE
 (pinned): an animated character grounds by its LIVE support point
 (current lowest vertex, tracked in the update splice loop) - the
 stride arc dips 0.038 below rest minY, so rest-footY placement
-clips the floor. Gap 0.000 across the full cycle. NEXT: (4) the 9x
-character-pass render split + world camera, (5) interior loco
-migration onto engineRig.
+clips the floor. Gap 0.000 across the full cycle. SLICE 4 SHIPPED: THE 9x CHARACTER PASS. Characters render into a
+low-res offscreen target (projected screen height / 9, NEAREST,
+lazy FBO - the renderer's first) under a fitted ortho camera at the
+main view's azimuth, composited as a camera-facing alpha-cut FOGGED
+quad, depth-tested like classic billboards: a live sprite, chunky
+by construction; the world pass untouched. Sizing is
+PROJECTION-EXACT (analytic fov estimates disagree with the true
+projection at high pitch). ?rigNear parks the rig 24u ahead of the
+shot vantage for measurement (the shot camera is near-horizontal at
+altitude - its ground ray hits the horizon). PROVEN: texel 8.69 ~ 9
+by integer construction; temporal variance 75.0 in-quad vs 0.0
+world (animated composite live). NEXT: world camera modes, interior
+loco migration onto engineRig.
 
 **Verification doctrine pins.** Stations over nearest-verts; numeric
 batteries over eyeballs; PIXEL-COUNTING screenshots for render-level

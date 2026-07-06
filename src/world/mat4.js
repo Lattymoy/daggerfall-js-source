@@ -102,3 +102,13 @@ export function lookAt(eye, center, up) {
     1,
   ]);
 }
+
+export function ortho(halfW, halfH, near, far) {
+  const out = new Float32Array(16);
+  out[0] = 1 / halfW;
+  out[5] = 1 / halfH;
+  out[10] = -2 / (far - near);
+  out[14] = -(far + near) / (far - near);
+  out[15] = 1;
+  return out;
+}

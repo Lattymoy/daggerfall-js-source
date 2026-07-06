@@ -19,7 +19,7 @@ import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { applyClimate, getGroundArchive, getNatureArchive } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
-import { lookAt, multiply, perspective, trs } from '../world/mat4.js';
+import { lookAt, multiply, ortho, perspective, trs } from '../world/mat4.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { fetchBytes, parseSeason, createSkyController } from './shared.js';
@@ -410,11 +410,50 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (rig) {
       rig.update(dt);
       const s = rig.scale;
-      if (!rigPos) { const p = player.pos; rigPos = [p[0] + 2, 0, p[2] + 3]; }   // FIXED world placement, captured once at first frame
+      if (!rigPos) {
+        if (params.has('rigNear')) {   // probe affordance: park at the view ray's GROUND intersection so the 9x texel grid is screen-measurable and centered
+          const f = [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]];
+          const fl = Math.hypot(f[0], f[1], f[2]) || 1;
+          const d = [f[0] / fl, f[1] / fl, f[2] / fl];
+          const t = 24;   // fixed: deep enough that a grounded figure fits the frustum below a high near-horizontal vantage
+          rigPos = [eye[0] + d[0] * t, 0, eye[2] + d[2] * t];
+        } else { const p = player.pos; rigPos = [p[0] + 2, 0, p[2] + 3]; }   // FIXED world placement, captured once at first frame
+      }
       const gy = collider.heightAt(rigPos[0], rigPos[2]);   // grounded through the SAME contract the player stands on - real terrain inherits for free (slice 3)
       rigMat = new Float32Array([s,0,0,0, 0,s,0,0, 0,0,s,0, rigPos[0], gy - rig.liveFootY * s, rigPos[2], 1]);   // live support point: feet kiss the ground every frame
-      renderer.drawCharacter(rig.mesh, rigMat);
-      if (params.has('shot')) window.__rigGround = { ty: rigMat[13], gy, footY: rig.liveFootY, s };
+      // THE 9x CHARACTER PASS (slice 4): render the rig into a low-res
+      // sprite (screen height / 9) under a fitted ortho camera from the
+      // main view's azimuth, then composite as a camera-facing quad -
+      // depth-tested like classic billboards. The world stays untouched.
+      const b = rig.liveBounds;
+      const worldH = (b.maxY - b.minY) * s;
+      const halfH = worldH / 2;
+      const halfW = Math.hypot(b.maxX - b.minX, b.maxZ - b.minZ) * s / 2;
+      const center = [rigPos[0] + (b.minX + b.maxX) / 2 * s, gy - rig.liveFootY * s + (b.minY + b.maxY) / 2 * s, rigPos[2] + (b.minZ + b.maxZ) / 2 * s];
+      const dx = center[0] - eye[0], dy = center[1] - eye[1], dz = center[2] - eye[2];
+      const dist = Math.max(0.5, Math.hypot(dx, dy, dz));
+      // sprite size from the TRUE projection (exact 9x by construction,
+      // not an analytic fov estimate): project the center and the head
+      const pvS = multiply(proj, view);
+      const prjY = (x, y, z) => { const w = pvS[3]*x + pvS[7]*y + pvS[11]*z + pvS[15]; return (pvS[1]*x + pvS[5]*y + pvS[9]*z + pvS[13]) / w; };
+      const screenPxH = Math.abs(prjY(center[0], center[1] + halfH, center[2]) - prjY(center[0], center[1] - halfH, center[2])) * canvas.clientHeight / 2;
+      const ph = Math.min(256, Math.max(2, Math.round(screenPxH / 9)));
+      const pw = Math.min(256, Math.max(2, Math.round(ph * halfW / halfH)));
+      const camDir = [dx / dist, dy / dist, dz / dist];
+      const rl = Math.hypot(camDir[0], camDir[2]) || 1;
+      const right = [-camDir[2] / rl, 0, camDir[0] / rl];   // horizontal billboard right (classic Y-only rotation)
+      const miniEye = [center[0] - camDir[0] * 4, center[1] - camDir[1] * 4, center[2] - camDir[2] * 4];
+      const sTex = renderer.renderCharacterSprite(rig.mesh, rigMat, ortho(halfW, halfH, 0.1, 8), lookAt(miniEye, center, [0, 1, 0]), pw, ph);
+      renderer.drawCharacterSpriteQuad(sTex, center, halfW, halfH, right);
+      if (params.has('shot')) {
+        const pv = multiply(proj, view);
+        const prj = (x, y, z) => { const w = pv[3]*x + pv[7]*y + pv[11]*z + pv[15]; return [ (pv[0]*x + pv[4]*y + pv[8]*z + pv[12]) / w, (pv[1]*x + pv[5]*y + pv[9]*z + pv[13]) / w ]; };
+        const cN = prj(center[0], center[1], center[2]);
+        const tN = prj(center[0], center[1] + halfH, center[2]);
+        const W2 = canvas.clientWidth / 2, H2 = canvas.clientHeight / 2;
+        window.__rigGround = { ty: rigMat[13], gy, footY: rig.liveFootY, s, pw, ph,
+          scrX: cN[0] * W2 + W2, scrY: H2 - cN[1] * H2, scrHalfHpx: Math.abs((tN[1] - cN[1]) * H2) };
+      }
     }
     // Classic Daggerfall billboards rotate about Y only: right from the view,
     // up stays world-Y.

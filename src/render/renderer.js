@@ -571,6 +571,140 @@ export class Renderer {
     gl.enable(gl.CULL_FACE);
   }
 
+  /**
+   * THE 9x CHARACTER PASS (slice 4). Characters render into a
+   * low-res offscreen target (screen size / 9, NEAREST) and composite
+   * into the world as a camera-facing textured quad - a live sprite,
+   * chunky by construction, depth-tested like every classic
+   * billboard. The world pass is untouched (the 9x standard excludes
+   * it). Lazy FBO, reallocated only when the pixel size steps.
+   */
+  _charSpriteRT(pw, ph) {
+    const gl = this.gl;
+    let cs = this._csRT;
+    if (!cs || cs.w !== pw || cs.h !== ph) {
+      if (cs) { gl.deleteFramebuffer(cs.fbo); gl.deleteTexture(cs.tex); gl.deleteRenderbuffer(cs.rb); }
+      const tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, pw, ph, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      const rb = gl.createRenderbuffer();
+      gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
+      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, pw, ph);
+      const fbo = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+      gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      cs = this._csRT = { fbo, tex, rb, w: pw, h: ph };
+    }
+    return cs;
+  }
+
+  /** Render a character mesh into the sprite target under a fitted
+   *  ortho camera (frame lighting; the frame camera caches are
+   *  swapped and restored - drawCharacter reads them). */
+  renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph) {
+    const gl = this.gl;
+    const cs = this._charSpriteRT(pw, ph);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
+    gl.viewport(0, 0, pw, ph);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    const sp = this._proj, sv = this._view;
+    this._proj = proj; this._view = view;
+    this.drawCharacter(mesh, modelMatrix);
+    this._proj = sp; this._view = sv;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    return cs.tex;
+  }
+
+  /** Composite the sprite into the world: camera-facing quad at the
+   *  character's position, alpha-cut, fogged, depth-tested. */
+  drawCharacterSpriteQuad(tex, center, halfW, halfH, right) {
+    const gl = this.gl;
+    if (!this.charQuadProgram) {
+      const vs = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec2 aUV;
+uniform mat4 uProj, uView;
+out vec2 vUV; out vec3 vWorld;
+void main() { vUV = aUV; vWorld = aPos; gl_Position = uProj * uView * vec4(aPos, 1.0); }`;
+      const fs = `#version 300 es
+precision highp float;
+in vec2 vUV; in vec3 vWorld;
+uniform sampler2D uTex;
+uniform vec3 uFogColor;
+uniform int uFogMode;
+uniform float uFogDensity;
+uniform vec2 uFogRange;
+uniform vec3 uCamPos;
+out vec4 outColor;
+float fogFactorAt(vec3 worldPos) {
+  if (uFogMode == 0) return 1.0;
+  float d = length(worldPos - uCamPos);
+  if (uFogMode == 1) {
+    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
+  }
+  return exp(-uFogDensity * d);
+}
+void main() {
+  vec4 t = texture(uTex, vUV);
+  if (t.a < 0.5) discard;
+  outColor = vec4(mix(uFogColor, t.rgb, fogFactorAt(vWorld)), 1.0);
+}`;
+      this.charQuadProgram = this._buildProgram(vs, fs);
+      const P = this.charQuadProgram;
+      this._charQuad = {
+        proj: gl.getUniformLocation(P, 'uProj'),
+        view: gl.getUniformLocation(P, 'uView'),
+        tex: gl.getUniformLocation(P, 'uTex'),
+        fogColor: gl.getUniformLocation(P, 'uFogColor'),
+        fogMode: gl.getUniformLocation(P, 'uFogMode'),
+        fogDensity: gl.getUniformLocation(P, 'uFogDensity'),
+        fogRange: gl.getUniformLocation(P, 'uFogRange'),
+        camPos: gl.getUniformLocation(P, 'uCamPos'),
+      };
+      const vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      const vbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, 4 * 5 * 4, gl.DYNAMIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
+      gl.enableVertexAttribArray(1);
+      gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+      gl.bindVertexArray(null);
+      this._charQuadVAO = vao; this._charQuadVBO = vbo;
+    }
+    const [cx, cy, cz] = center, [rx, , rz] = right;
+    const v = new Float32Array([
+      cx - rx*halfW, cy - halfH, cz - rz*halfW, 0, 0,
+      cx - rx*halfW, cy + halfH, cz - rz*halfW, 0, 1,
+      cx + rx*halfW, cy + halfH, cz + rz*halfW, 1, 1,
+      cx + rx*halfW, cy - halfH, cz + rz*halfW, 1, 0,
+    ]);
+    gl.useProgram(this.charQuadProgram);
+    const c = this._charQuad;
+    gl.uniformMatrix4fv(c.proj, false, this._proj);
+    gl.uniformMatrix4fv(c.view, false, this._view);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.uniform1i(c.tex, 0);
+    this._uploadFog(this._charQuad);
+    gl.bindVertexArray(this._charQuadVAO);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._charQuadVBO);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
+    gl.disable(gl.CULL_FACE);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    gl.enable(gl.CULL_FACE);
+    gl.bindVertexArray(null);
+  }
+
   /** Upload a getColor32 result as a REPEAT/NEAREST texture, keyed and cached. */
   uploadTexture(archive, record, color32) {
     const key = `${archive}_${record}`;
