@@ -387,6 +387,7 @@ function animateTarget(T, wt, L, bob, pose, moving) {
     const pitchA = pp && !isLeg ? (pp.handPitch || 0) : 0;
     const yawA = pp && !isLeg ? (g === 2 ? -1 : 1) * (pp.handYaw || 0) : 0;
     const sprA = pp && !isLeg ? (g === 2 ? -1 : 1) * (pp.spread || 0) : 0;
+    const rollH = pp && !isLeg ? (g === 2 ? -1 : 1) * (pp.roll || 0) : 0;   // humeral rotation
     const wpx = g === 2 ? -D.armX : D.armX;
     for (let i=0;i<VG.length;i++) if (VG[i]===g) {
       let x = B[i*3], y = B[i*3+1], z = B[i*3+2]; const by = y;   // joint gates read REST y
@@ -396,6 +397,7 @@ function animateTarget(T, wt, L, bob, pose, moving) {
         if (yawA)   [x,y] = rotZ(x, y, wpx, wristY, yawA);
       }
       if (held || by < jointY) [y,z] = rotX(y, z, jointY, bendSign*bend);   // knee / elbow
+      if (rollH && (held || by < jointY)) [x,z] = rotY(x, z, wpx, 0, rollH); // HUMERAL roll: the bent forearm folds about the upper-arm axis
       [y,z] = rotX(y, z, rootY, swing);                            // hip / shoulder swing
       if (!isLeg && sprA) [x,y] = rotZ(x, y, armRootX[g], shoulderY, sprA); // abduction
       if (!isLeg && twist) [x,z] = rotY(x, z, 0, 0, twist);        // body commitment (arms + held follow the spine)

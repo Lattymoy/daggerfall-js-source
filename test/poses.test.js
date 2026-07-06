@@ -14,7 +14,7 @@ test('poses: every pose is well-formed within joint ranges', () => {
     assert.ok(Number.isFinite(a.sw) && Number.isFinite(a.bd), `${limb} non-finite`);
     assert.ok(Math.abs(a.sw) < Math.PI / 2, `${limb}.sw out of range: ${a.sw}`);
     assert.ok(a.bd >= 0 && a.bd < Math.PI, `${limb}.bd out of range: ${a.bd}`);
-    for (const k of ['spread', 'handRoll', 'handPitch', 'handYaw'])
+    for (const k of ['spread', 'roll', 'handRoll', 'handPitch', 'handYaw'])
       if (k in a) assert.ok(Number.isFinite(a[k]) && Math.abs(a[k]) <= Math.PI, `${limb}.${k} out of range`);
   }
   for (const k of ['lean', 'gaitArm', 'gaitElbow', 'runElbow'])

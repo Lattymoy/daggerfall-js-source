@@ -351,6 +351,22 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   (handRoll = the aim axis at extension), frame recoil (rootZ
   -0.035, bow-arm kick 0.08), settle home (end 0.011; run-hold
   constant).
+- **HUMERAL ROLL - the missing arm DOF (Mac: "supporting arm
+  contorted, bent inward")**: the chain (bend about world-X, swing,
+  frontal spread) fully determines elbow/forearm ORIENTATION from
+  fist position - with no humeral rotation, the nock solve could only
+  cross the body via a railed -1.5 spread (elbow dragged across/up:
+  the chicken-wing). Pose v3 arm channel `roll`: the bent forearm +
+  hand + held rotate about the UPPER-ARM axis (rotY about the arm
+  column at the elbow, mirrored, rest-frame, applied between bend and
+  swing) - elbows can fold ACROSS. rangedAim armR re-solved with FORM
+  CONSTRAINTS IN THE SOLVER (elbow right-of-body x >= 0.08 and below
+  the shoulder line as hard penalties - the second lesson after the
+  inverted stance: anatomy is an input): {sw -0.69, bd 1.035, spread
+  -0.875, roll -1.315} -> nock 0.012 at ZERO penalty, elbow (0.15,
+  1.29), upper arm out-back, forearm folded naturally. Release on the
+  new base: snap 10.9 peaking at the release key, home 0.012,
+  run-hold constant.
 - **Nocked ARROW (SHIPPED)** - template 131 pinned (0-0 dmg, 0.25kg
   at every tier: the quarter-kg chain collapses via half-even
   round(1.25)=1). Ships as BOW GEOMETRY inside the drawn assembly -

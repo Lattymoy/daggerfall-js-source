@@ -1,7 +1,7 @@
 // Static poses for the neutral rig - FULL joint set (v2), matching the
 // viewer tuner's proven transforms exactly (pivots, order, mirroring):
 //
-//   arms: { sw, bd, spread, handRoll, handPitch, handYaw }
+//   arms: { sw, bd, spread, roll, handRoll, handPitch, handYaw }
 //   legs: { sw, bd }
 //   pose: { lean, gaitArm, gaitElbow, ...limbs }
 //
@@ -12,6 +12,11 @@
 //   2. handPitch - rotX about the wrist junction (flex/extend).
 //   3. handYaw   - rotZ about (+/-ARM_X, wrist), mirrored (side wave).
 //   4. bd        - knee/elbow bend about the mid joint (elbow forward).
+//   4b. roll     - HUMERAL rotation (arms): the bent forearm + hand
+//                  swing about the upper-arm axis (rotY about the arm
+//                  column at the elbow), mirrored. The missing DOF
+//                  that lets an elbow fold ACROSS instead of only
+//                  forward - without it a cross-body reach contorts.
 //   5. sw        - swing about the root (hip/shoulder); NEGATIVE = forward.
 //   6. spread    - rotZ abduction about the arm root, mirrored (arms only).
 //   7. lean      - torso lean (adds to the gait's own lean when moving).
@@ -74,7 +79,7 @@ export const POSES = {
     gaitElbow: 0,
     runElbow: 0,
     armL: { sw: -1.50, bd: 0, spread: -0.285, handRoll: 0, handPitch: 0, handYaw: 0 },
-    armR: { sw: -0.165, bd: 1.115, spread: -1.515, handRoll: 0, handPitch: 0, handYaw: 0 },   // draw arm up-across, elbow high
+    armR: { sw: -0.69, bd: 1.035, spread: -0.875, roll: -1.315, handRoll: 0, handPitch: 0, handYaw: 0 },   // draw arm: upper arm out-back, forearm FOLDED ACROSS by the humeral roll (elbow x +0.15 below the shoulder) - the railed -1.5 cross-spread contorted (Mac); the roll DOF dissolves it at nock 0.012
     legL: { sw: 0.10, bd: 0.10 },
     legR: { sw: -0.16, bd: 0.10 },
   },
