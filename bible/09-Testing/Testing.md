@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 215 tests across 49 files.
+Node 22). Suite: 218 tests across 50 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -24,6 +24,7 @@ Node 22). Suite: 215 tests across 49 files.
 | formulas.test.js | 5 | FormulaHelper verbatim: Dice100/DamageModifier/H2H (sheet rule)/weapon min-max tables/material mods/body parts, career attack-modifier bits + enemy-type bonus, to-hit chain (dodging/4 bug preserved, roll ordering, 3..97 clamp), damage paths (str-after-skeletal ordering, silver x2, material gate), the classic 0.25/MeleeDistance/35.156deg hit gate |
 | enemyattack.test.js | 3 | verbatim reset-timer arithmetic (Range/level/reflex terms, /980, 0-floor), the floored-speed >>3 roll gate, strike gating (range+sight+22.5deg yaw) + hit event at HIT_FRAME_MELEE |
 | enemyentity.test.js | 3 | ClassFile verbatim 74-byte parse (incl the (a<<16)|(c<<8)|b shuffle) on a crafted record, class entity rules (level, HP roll bounds, skills clamp, career Speed, city-watch +3..6), monster rules (predefined level, inclusive HP range, armor*5) |
+| enemyequipment.test.js | 3 | verbatim material walk ([64,128,...] modifier table, level clamps), armor materials (70/90 split, plate+weapon-material), variant-0 loadout + the init-100/subtract/class-60-clamp armor pass, variant-2 + monster keep-better + city-watch itemLevel-1 + weapon-vs-weaponless averages |
 | enemymotor.test.js | 4 | verbatim classic AI constants (sight/hearing/FOV/melee/turn/update-rate/system-divisor/walk-base), 11.25deg turn clamp, LOS wall + FOV gates, pursue-and-stop at MeleeDistance on the classic cadence |
 | enterexit.test.js | 6 | verbatim landing offsets, door transforms, landing selection, dungeon exit, ladder climb, FixStanding floor snap |
 | interior.test.js | 8 | ModelDoor extraction, static doors, interior layout, 6832-interior corpus, R8 light offsets + MAGEAA00 pins |

@@ -399,6 +399,26 @@ rig is the authoring bench for monster morphologies. Slices:
   GONE (Open flags ledger shrinks by three at the next audit regen);
   monster HP stays the basics range and armor*5, per SetEnemyCareer.
   Crafted-BSA test pins the read, the cache, and the -1 path.
+- **E4b (equipment): SHIPPED.** combat/enemyEquipment.js ports the
+  full chain verbatim: AssignEnemyStartingEquipment (variant-0
+  Broadsword..Longsword + 50% shield-or-offhand; variant-1/2
+  Claymore..Battle Axe at 75/90% armor chances; city watch rolls at
+  itemLevel 1), FormulaHelper.RandomMaterial (the [64,128,10,21,13,
+  8,5,3,2,5] modifier walk with the +-level scaling and 0..256
+  clamp) + RandomArmorMaterial (70/90 split, plate = 0x0200 + weapon
+  material), the material armor values (leather 3 .. daedric 21,
+  shields material-blind 1..4 on their protected-part sets), and
+  SetEnemyEquipment's armor-value pass (init 100 = no armor, each
+  piece SUBTRACTS value*5 on its body part, class clamp >60 -> 60,
+  monsters keep the BETTER of equipment vs definition - the DFU
+  rule). The variant table is EntityEnums-verified (review catch:
+  OrcShaman is 21, my guess said 20). Entities now carry
+  armorValues[7] + a right-hand weapon; CalculateArmorToHit reads
+  the STRUCK part when equipped; enemy attacks route through
+  chooseEnemyWeapon (weaponless when its average is higher, the DFU
+  port of classic's rule). The class-armor interim is GONE; the
+  poisoned-weapon chance pends the poison system (Systems). 3
+  deterministic tests incl the full material walk to Daedric.
 
 **Audit 2026-07-06 (Mac, engine included):** the shared pixelize pass
 survives N foes now - the renderer's character-sprite RT was keyed on

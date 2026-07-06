@@ -156,6 +156,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const bodyImg = new ImgFile();
     bodyImg.load(await shared.fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
     const formulas = await import('../combat/formulas.js');
+    const equip = await import('../combat/enemyEquipment.js');
     const { PlayerWeapon } = await import('../combat/playerWeapon.js');
     const { REACTIONS, sampleClip } = await import('../characters/anims.js');
     const { drawFirstPersonViewmodel } = await import('../render/characterSprite.js');
@@ -163,6 +164,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foeDeps = {
       PlayerWeapon, REACTIONS, sampleClip,
       isBackFacing, drawFirstPersonViewmodel, EYE_HEIGHT,
+      chooseEnemyWeapon: formulas.chooseEnemyWeapon,
+      assignEnemyEquipment: equip.assignEnemyEquipment,
+      equipmentVariantFor: equip.equipmentVariantFor,
       calculateAttackDamage: formulas.calculateAttackDamage,
       meleeHitConnects: formulas.meleeHitConnects,
       MELEE_HIT_YAW_DEG: formulas.MELEE_HIT_YAW_DEG,
@@ -188,6 +192,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const cf = new D.ClassFile();
       cf.load(await D.fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`));
       const entity = D.makeEnemyEntity(e.mobileType, basics, cf.career, D.playerEntity.level);
+      // E4b: SetEnemyEquipment verbatim - loadout + the per-part
+      // armor-value pass (init 100, subtract, class clamp 60);
+      // the right-hand weapon feeds the attack path.
+      const variant = D.equipmentVariantFor(entity.careerIndex, entity.isClass);
+      if (variant !== null) {
+        const eq = D.assignEnemyEquipment(entity, variant, D.playerEntity.level);
+        entity.armorValues = eq.armorValues;
+        entity.weapon = eq.rightHand;
+      }
       const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, { liveSpeed: entity.liveSpeed });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
       foes.push({ rig, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
@@ -309,7 +322,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const pf = playerFeet;
         const hdx = pf[0] - f.ai.feet[0], hdz = pf[2] - f.ai.feet[2];
         if (foeDeps.meleeHitConnects(f.ai._dist, f.ai.inSight, foeDeps.withinYaw(f.ai.yaw, hdx, hdz, foeDeps.MELEE_HIT_YAW_DEG))) {
-          const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, { targetGroup: null });
+          // E4b: weapon vs weaponless per the DFU rule (EnemyAttack
+          // also drops the weapon if the target is metal-immune to it
+          // - the player has no minMetalToHit, so that gate is inert)
+          const wpn = foeDeps.chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
+          const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, { targetGroup: null, weapon: wpn });
           if (dmg > 0) {
             foeDeps.playerEntity.health = Math.max(0, foeDeps.playerEntity.health - dmg);
             window.__player = foeDeps.playerEntity;

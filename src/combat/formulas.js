@@ -82,7 +82,7 @@ export function skillsToHit(a, t, roll01 = Math.random()) {
 // ---- CalculateSuccessfulHit (clamp 3..97) ----
 export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckBodyPart, rolls = Math.random) {
   let chance = chanceToHitMod;
-  chance += target.armor ?? 0;                               // CalculateArmorToHit: every slot = the scalar (per-part with equipment, E4)
+  chance += target.armorValues ? target.armorValues[struckBodyPart] ?? 0 : (target.armor ?? 0);   // CalculateArmorToHit: per-part when equipped (E4b), the SetEnemyCareer scalar otherwise
   // adrenaline rush: career ability bitfield decode pending (Systems) - 0
   chance += statsToHit(attacker, target);
   chance += skillsToHit(attacker, target, rolls());
@@ -132,6 +132,17 @@ export function backstabDamage(damage, backstabbingLevel, roll01 = Math.random()
  * (flat skills here). Swing/proficiency/racial player mods: E3c with
  * the in-world weapon.
  */
+/** CalculateAttackDamage's enemy weapon-vs-weaponless choice: classic
+ *  weapon-wielders use weapon damage, but DFU lets them keep the
+ *  weaponless attack when its AVERAGE is higher (source comment: some
+ *  enemies' weapons undershoot similar-tier monsters). */
+export function chooseEnemyWeapon(weapon, basics) {
+  if (!weapon) return null;
+  const weaponAvg = Math.trunc((weapon.minDamage + weapon.maxDamage) / 2);
+  const noWeaponAvg = Math.trunc(((basics?.minDamage ?? 0) + (basics?.maxDamage ?? 0)) / 2);
+  return noWeaponAvg > weaponAvg ? null : weapon;
+}
+
 export function calculateAttackDamage(attacker, target, { weapon = null, targetGroup = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random } = {}) {
   if (!attacker || !target) return 0;
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) return 0;   // material too low
