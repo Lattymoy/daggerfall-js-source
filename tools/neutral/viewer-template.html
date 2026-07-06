@@ -583,12 +583,9 @@ const ATK_DIRS = ['Down', 'DownLeft', 'DownRight', 'Left', 'Right', 'Up'];
 let atkDirIx = 0;
 document.getElementById('atkdir').onclick = (e) => { atkDirIx = (atkDirIx + 1) % ATK_DIRS.length; e.target.textContent = 'dir: ' + ATK_DIRS[atkDirIx]; };
 const fireAttack = (dirOrStrike) => {
-  if (POSE_NAMES[poseIx] === 'melee2H') {   // the six clips are 1H - on the coupled grip they tear the off hand 0.32 off the hilt
-    swordInfo.textContent = '2H attacks not authored yet (1H clips would break the grip)';
-    return;
-  }
   const name = D.dirToStrike[dirOrStrike] || dirOrStrike;
-  const clip = D.attacks[name];
+  const table = POSE_NAMES[poseIx] === 'melee2H' ? D.attacks2H : D.attacks;   // pose routes the strike set (2H clips carry SOLVED armR tracks that hold the grip)
+  const clip = table[name];
   if (clip) atk = { clip, t: 0 };
 };
 document.getElementById('strike').onclick = () => fireAttack(ATK_DIRS[atkDirIx]);

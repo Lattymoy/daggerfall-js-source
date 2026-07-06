@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MOUSE_DIRECTIONS, DIRECTION_TO_STRIKE, STRIKES, ATTACKS_1H, sampleClip } from '../src/characters/anims.js';
+import { MOUSE_DIRECTIONS, DIRECTION_TO_STRIKE, STRIKES, ATTACKS_1H, ATTACKS_2H, sampleClip } from '../src/characters/anims.js';
 
 // Witness against DFU: WeaponManager.MouseDirections order and
 // FPSWeapon.OnAttackDirection's switch (Up/UpLeft/UpRight -> StrikeUp).
@@ -12,7 +12,8 @@ test('anims: verbatim DFU direction mapping + well-formed clips', () => {
     Up: 'StrikeUp', UpLeft: 'StrikeUp', UpRight: 'StrikeUp',
   });
   assert.deepEqual([...STRIKES].sort(), Object.keys(ATTACKS_1H).sort());
-  for (const [name, clip] of Object.entries(ATTACKS_1H)) {
+  assert.deepEqual([...STRIKES].sort(), Object.keys(ATTACKS_2H).sort());
+  for (const [name, clip] of [...Object.entries(ATTACKS_1H), ...Object.entries(ATTACKS_2H)]) {
     assert.ok(clip.dur > 0.2 && clip.dur < 1.0, `${name} dur`);
     for (const [path, keys] of Object.entries(clip.tracks)) {
       assert.ok(keys.length >= 2, `${name}.${path} too few keys`);
@@ -45,6 +46,11 @@ test('anims: sampler is a continuous delta (zero at entry, null past dur)', () =
   // root motion is real: the thrust's lunge peaks past 0.20 forward
   const lunge = sampleClip(ATTACKS_1H.StrikeUp, 0.46 * ATTACKS_1H.StrikeUp.dur).rootZ;
   assert.ok(lunge > 0.20, `thrust lunge: ${lunge}`);
+  // 2H: the ram lunges harder, and the SOLVED armR track is live
+  // mid-clip (station-coupled off hand, not a frozen arm).
+  const ram = sampleClip(ATTACKS_2H.StrikeUp, 0.49 * ATTACKS_2H.StrikeUp.dur);
+  assert.ok(ram.rootZ > 0.24, `ram lunge: ${ram.rootZ}`);
+  assert.ok(Number.isFinite(ram.armR.sw) && Math.abs(ram.armR.sw) > 0.05, `solved armR mid-clip: ${ram.armR.sw}`);
   assert.ok(Number.isFinite(held.twist));
   assert.equal(sampleClip(clip, clip.dur), null);
   assert.equal(sampleClip(clip, clip.dur * 2), null);

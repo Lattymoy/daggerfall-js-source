@@ -290,9 +290,27 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   hilt line, mitten straddling it (tips/wrist 0.072/0.077), 84deg
   wrap. Both fists hold their stations 0.048/0.050 CONSTANT through a
   full run. The "animate" half: firing the six 1H clips in melee2H
-  tore the off hand 0.32 off the hilt - strikes are GATED while
-  melee2H is active (viewer hint) until 2H attacks are authored
-  (candidate, not approved).
+  tore the off hand 0.32 off the hilt - superseded: see 2H attacks.
+- **2H attacks (SHIPPED)** - `ATTACKS_2H`, six greatsword strikes,
+  fireAttack routes by pose (melee2H -> the 2H table). COUPLING RULE:
+  both fists hold their hilt stations every frame. armL + body
+  channels authored freely; the armR tracks are PRE-SOLVED offline
+  against the moving off-hand station (17+ samples per clip,
+  continuity-seeded shrinking grids, bd clamped >= -0.33 - the first
+  solve reached targets by hyperextending the elbow - keys over 0.09
+  rescued by a global grid, fast segments midpoint-densified) and
+  baked as dense 'lin' tracks. AUTHORING CONSTRAINT pinned: 2H coils
+  must keep the hilt IN FRONT - the off hand cannot reach behind the
+  shoulder (deep cleave coils bottomed the solver at 0.49; trimmed,
+  the rootY rise + lean sell the windup instead). Clips: overhead
+  cleave 0.66 (steps in 0.19, tip 79 u/s snap 7.4), great cuts 0.50
+  (rootX + twist are the blade), diagonal cleaves 0.56 (frame drops
+  0.13), ram thrust 0.42 (lunge 0.27, the set's biggest). Verified
+  at 120Hz per clip: off-fist-to-station 0.061-0.105 max against the
+  0.050 geometric baseline (fist radius 0.074; the 0.105 is a 3-key
+  reach-ceiling beat on the mirrored diagonal), left grip 0.048
+  INVARIANT, ends exactly on stations, headClr 0.15-0.46 vs a
+  root-following head, floor 0.09+ (cleave tuned up from -0.15).
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,

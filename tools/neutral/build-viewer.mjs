@@ -8,7 +8,7 @@ import { ImgFile } from '../../src/formats/imgFile.js';
 import { DFPalette } from '../../src/formats/dfPalette.js';
 import { CifRciFile } from '../../src/formats/cifRciFile.js';
 import { buildNeutralBody, WRIST_JUNCTION_Y, ARM_X, NECK_PIVOT_Y } from '../../src/characters/neutralBody.js';
-import { ATTACKS_1H, DIRECTION_TO_STRIKE, STRIKES } from '../../src/characters/anims.js';
+import { ATTACKS_1H, ATTACKS_2H, DIRECTION_TO_STRIKE, STRIKES } from '../../src/characters/anims.js';
 import { buildCuirass, STEEL_RAMP } from '../../src/characters/pieces/cuirass.js';
 import { buildGreaves } from '../../src/characters/pieces/greaves.js';
 import { CLOTH_RAMP, MAIL_RAMP, LEATHER_RAMP } from '../../src/characters/pieces/pieceLoft.js';
@@ -71,7 +71,7 @@ const drapeGridsOut = {}, drapedPacks = {};
 for (const nm of DRAPED_NAMES) { const g = drapedGrid(nm);
   if (g) drapeGridsOut[nm] = { rows: g.rows, cols: g.cols, wrap: g.wrap, pos: Array.from(g.pos), faces: g.faces };
   else drapedPacks[nm] = packPiece(drapedPiece(nm, CLOTH_D)); }
-const payload = JSON.stringify({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: drapedPacks, drapeGrids: drapeGridsOut, drapeMaterials: DRAPE_MATERIAL, bodyCore: BODY_CORE, poses: POSES, wristY: WRIST_JUNCTION_Y * 0.9, armX: ARM_X, neckY: NECK_PIVOT_Y * 0.9, attacks: ATTACKS_1H, strikes: STRIKES, dirToStrike: DIRECTION_TO_STRIKE,
+const payload = JSON.stringify({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: drapedPacks, drapeGrids: drapeGridsOut, drapeMaterials: DRAPE_MATERIAL, bodyCore: BODY_CORE, poses: POSES, wristY: WRIST_JUNCTION_Y * 0.9, armX: ARM_X, neckY: NECK_PIVOT_Y * 0.9, attacks: ATTACKS_1H, attacks2H: ATTACKS_2H, strikes: STRIKES, dirToStrike: DIRECTION_TO_STRIKE,
   sword: packPiece(buildSword(weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i)))),
   claymore: packPiece(buildClaymore(weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i)))),
   claymoreItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Claymore, v)])),
