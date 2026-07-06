@@ -46,8 +46,10 @@ export const POSES = {
   // chain; the RIGHT arm is posed so its fist lands on the hilt one
   // fist pommel-ward of the left. Values SOLVED by the two-stage grip
   // sweep: left fist to the centreline hilt seat (-0.09,0.88,0.33),
-  // right fist onto the hilt point 0.16 pommel-ward (dist 0.057 -
-  // inside the mitten radius). Blade 46deg up-forward, headClr 0.46. LOCKED GRIP through the gait: gaitArm/gaitElbow/
+  // right fist onto the OFF-HAND STATION ring (dist 0.050; the first
+  // solve aimed at a phantom axis - see the grip-station note in
+  // C-Weapons). Blade up-forward, left fist 0.012 off the true hilt
+  // line, 84deg wrap. LOCKED GRIP through the gait: gaitArm/gaitElbow/
   // runElbow are 0 - the coupled hands must not pump apart; life
   // comes from lean, bob and the root. Square-ish right-lead stance.
   melee2H: {
@@ -56,7 +58,7 @@ export const POSES = {
     gaitElbow: 0,
     runElbow: 0,
     armL: { sw: -0.23, bd: 0.60, spread: -0.25, handRoll: 0, handPitch: 0, handYaw: 0 },
-    armR: { sw: -0.10, bd: 0.16, spread: -0.42, handRoll: 0, handPitch: 0, handYaw: 0 },
+    armR: { sw: -0.10, bd: 0.33, spread: -0.42, handRoll: 0, handPitch: 0, handYaw: 0 },
     legL: { sw: 0.12, bd: 0.18 },
     legR: { sw: -0.18, bd: 0.14 },
   },

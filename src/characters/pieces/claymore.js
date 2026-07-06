@@ -42,8 +42,14 @@ export function buildClaymore(ramp) {
   // TWO-HAND GRIP: dominant fist sits at the grip point (0.82..0.985
   // through the mitten); the hilt runs pommel-ward 0.72..1.058 so the
   // off hand has a full fist of handle above it.
+  // 0.90 = the GRIP STATION (bake pivot; dominant fist), 0.74 = the
+  // OFF-HAND STATION - real on-axis rings so the true hilt anchor and
+  // axis read as ring centroids (the phantom-axis bug: end-only tubes
+  // put "nearest vert to the grip" 0.1+ off axis).
   loftPiece(faces, [
     { y: 0.720, rx: 0.016, rz: 0.017 },
+    { y: 0.740, rx: 0.0175, rz: 0.0185 },
+    { y: 0.900, rx: 0.0175, rz: 0.0185 },
     { y: 1.058, rx: 0.016, rz: 0.017 },
   ], { ...G, capTop: false, capBottom: false });
   // BROAD CRUCIFORM GUARD: quillons in the flat plane (wide z).

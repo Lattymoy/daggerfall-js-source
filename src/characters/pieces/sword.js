@@ -50,8 +50,13 @@ export function buildSword(ramp) {
   ], G);
   // GRIP: through the fist (hidden inside the mitten), a leather-thin
   // column; visible only in the gap between fingertips and guard.
+  // 0.90 = the GRIP STATION: real on-axis vertices at the bake pivot
+  // (a leather collar) so the true hilt anchor reads as the ring
+  // centroid - end-only tubes put "nearest vert to the grip" 0.1 off
+  // axis (the phantom-axis bug).
   loftPiece(faces, [
     { y: 0.790, rx: 0.015, rz: 0.016 },
+    { y: 0.900, rx: 0.0165, rz: 0.0175 },
     { y: 0.998, rx: 0.015, rz: 0.016 },
   ], { ...G, capTop: false, capBottom: false });
   // CROSSGUARD: broad cruciform bar, wide across x, squarish section.

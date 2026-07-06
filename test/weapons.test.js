@@ -104,4 +104,15 @@ test('sword piece: grip-baked, armL, point-forward carry (+45 seat)', () => {
   const clen = Math.sqrt(cbest);
   assert.ok(clen > 1.30 && clen < 1.42, `claymore span ${clen}`);  // seat-baked length lives mostly in Z (Y-only HSCALE barely touches it)
   assert.ok(tipZ > 0.95, `claymore tip not point-forward: ${tipZ}`);
+  // GRIP STATIONS: real on-axis rings whose centroids ARE the hilt
+  // anchor + the off-hand point (the phantom-axis guard - end-only
+  // grip tubes put "nearest vert" 0.1+ off axis).
+  const station = (pts, A, r) => { const g = pts.filter((q) => Math.hypot(q[0]-A[0], q[1]-A[1], q[2]-A[2]) < r);
+    if (g.length < 20) return null; let x=0,y=0,z=0; for (const q of g){x+=q[0];y+=q[1];z+=q[2];} return [x/g.length,y/g.length,z/g.length]; };
+  const sg = station(pts, [-0.235, 0.81, 0], 0.035);
+  assert.ok(sg && Math.hypot(sg[0]+0.235, sg[1]-0.81, sg[2]) < 0.003, `longsword grip station ${sg}`);
+  const cg = station(cp, [-0.235, 0.81, 0], 0.035);
+  const co = station(cp, [-0.235, 0.8038, -0.1578], 0.035);
+  assert.ok(cg && Math.hypot(cg[0]+0.235, cg[1]-0.81, cg[2]) < 0.003, `claymore grip station ${cg}`);
+  assert.ok(co && Math.hypot(co[0]+0.235, co[1]-0.8038, co[2]+0.1578) < 0.02, `claymore off-hand station ${co}`);
 });
