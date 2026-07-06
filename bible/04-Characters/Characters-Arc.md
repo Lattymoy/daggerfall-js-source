@@ -205,6 +205,22 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   (36-37), 3.7 thrust (32, on the lunge); guard counter 0.24-0.46.
   Durations per character: chop 0.60, hacks 0.46, cuts 0.42, thrust
   0.38. Viewer: `dir:` cycles, `strike` fires; `__attack` hook.
+- **Quality pass (Mac: "you can do better")**: added PENETRATION
+  GUARDS the numbers never checked - min sword y (floor) and head-
+  sphere clearance (0,1.62,0.02 r0.15) swept per clip at 120Hz. They
+  caught a real defect: the DIAGONAL COIL swung the blade THROUGH the
+  skull (DownLeft -0.11 inside; the chop grazed at 0.06). Two guessed
+  fixes failed (lateral spread, MORE coil pitch made it worse) - the
+  argmin probe located the offender (the TIP at the loaded beat,
+  crossing (0.05,1.64)) and a 45-combo windup SWEEP picked the values:
+  clearance is driven by SHALLOWER coils; the snap supplies the speed,
+  not the windup depth. Final: headClr 0.13-0.62 all six, floor 0.10+,
+  peaks 58-60 chops/hacks (snap 5.3-5.4), cuts 36-37 (6.7-6.8),
+  thrust 32. HITSTOP added: a 0.03u frozen beat at every impact key
+  (contact reads as contact). Filmstrip renderer exists for review
+  frames (deterministic atk.t stepping); this session's env could not
+  visually verify images, so the pass ran on geometry guards - Mac's
+  eyes judge the viewer.
 - **Sword seat sliders (Mac)**: tuners bar gains swd pitch (+/-45deg
   about the GRIP POINT, y 0.81/z 0 - invariant under the mesh bake),
   swd fwd, swd up (+/-0.12). Rewrites the sword animTarget BASE +
