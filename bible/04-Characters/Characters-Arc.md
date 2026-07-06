@@ -133,6 +133,21 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   frozen. Steepening trap pinned: elbow/shoulder flex rotates a tip
   that sits ABOVE the elbow up-and-back (~-15deg at v4's first
   values); the reference arm is near-neutral, tuned to it.
+- **melee2H (SHIPPED)**: the two-hand ready (Claymore). The weapon
+  rides the LEFT chain; the RIGHT arm is POSED onto the hilt, not
+  parented. Values SOLVED by a two-stage sweep: (1) left fist to the
+  designed centreline hilt seat (lands -0.09,0.88,0.33), (2) right
+  fist to the hilt point 0.16 pommel-ward - dist 0.057, inside the
+  mitten radius (first single-stage sweep bottomed at 0.44: the old
+  armL spread pushed the hilt AWAY from centre, unreachable). Blade
+  46deg up-forward, headClr 0.46. LOCKED GRIP through the gait:
+  gaitArm/gaitElbow/runElbow all 0 - shared transforms (lean, bob,
+  root, twist) preserve the coupling exactly; probed 0.057 constant
+  across a full run. Life comes from lean/bob/root. Right-lead
+  square stance. NOTE: pose order in POSES stays melee1H-first (the
+  button/index contract); the 1H strike clips are NOT valid on the
+  2H grip (the off hand would leave the hilt) - 2H attacks are a
+  candidate, not approved.
 - Viewer arm/hand tuner (idle sliders, other session + extended):
   all sliders live in a collapsible TUNERS BAR - a bottom tab ascends/
   descends the stack (collapsed by default, Mac); rows scroll past
@@ -253,6 +268,15 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   dip), diagonal twist widened (+/-0.25..0.46 lateral over -1.45
   down). Chop slams the tip -1.45 at r2.45; slashes +/-0.63 r2.2-2.6.
   weapons.test re-pinned on the +45 seat.
+- **Claymore (SHIPPED)** - `pieces/claymore.js`, template 122 (2H,
+  dmg 2-18, verbatim item math pinned incl. the 9.5kg Daedric
+  half-even round). Greatsword on the SAME grip system: armL chain +
+  the baked +45 seat, 0.95-unit blade, broad quillons, a LONG
+  two-hand hilt (0.34 - two fists and a gap pommel-ward) and a wheel
+  pommel. Seat sliders, materials and the stats line apply unchanged
+  (viewer `wpn:` button swaps Longsword/Claymore). Span note: the
+  seat bake rotates length into Z, so the Y-only HSCALE barely
+  shortens it (1.36).
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,

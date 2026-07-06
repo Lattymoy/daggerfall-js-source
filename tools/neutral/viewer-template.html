@@ -32,6 +32,7 @@
   <button id="bg">bg</button>
   <button id="walk">walk</button>
   <button id="pose">pose: none</button>
+  <button id="wpn">wpn: Longsword</button>
   <button id="sword">sword: off</button>
   <button id="atkdir">dir: Down</button>
   <button id="strike">strike</button>
@@ -245,24 +246,34 @@ function stepDrapeCloth(phase, motion, bob, L) {
 }
 const bodyFurCoat = D.bodyFurCoat ? buildPiece(D.bodyFurCoat) : null;
 const bodyFurBelly = D.bodyFurBelly ? buildPiece(D.bodyFurBelly) : null;
-const swordMesh = D.sword ? buildPiece(D.sword) : null;
-let swordT = null, swordFit0 = null;
-const swordFit = { pitch: 0, dy: 0, dz: 0 };
-if (swordMesh) {
-  swordMesh.visible = false;
-  swordT = animTargets[animTargets.length - 1];
-  swordT.held = true; // rigid in the grip
-  swordFit0 = { base: swordT.base.slice(), nrm: swordMesh.geometry.getAttribute('normal').array.slice() };
+// weapon registry: every entry rides the armL chain (held) and shares
+// the material ramps, the seat sliders and the stats line.
+const WEAPON_DEFS = [
+  { name: 'Longsword', pack: D.sword, items: D.swordItems },
+  { name: 'Claymore', pack: D.claymore, items: D.claymoreItems },
+];
+for (const w of WEAPON_DEFS) {
+  w.mesh = w.pack ? buildPiece(w.pack) : null;
+  if (!w.mesh) continue;
+  w.mesh.visible = false;
+  w.T = animTargets[animTargets.length - 1];
+  w.T.held = true; // rigid in the grip
+  w.fit0 = { base: w.T.base.slice(), nrm: w.mesh.geometry.getAttribute('normal').array.slice() };
 }
+let wpnIx = 0;
+const activeWpn = () => WEAPON_DEFS[wpnIx];
+const swordMesh = WEAPON_DEFS[0].mesh;   // legacy alias
+let swordT = WEAPON_DEFS[0].T, swordFit0 = WEAPON_DEFS[0].fit0;
+const swordFit = { pitch: 0, dy: 0, dz: 0 };
 // Adjust the sword's seat IN the hand (Mac): pitch about the GRIP
 // POINT (y 0.81 post-HSCALE, z 0 - invariant under the mesh's grip
 // bake) + fore/aft + up/down offsets. Rewrites the animTarget BASE
 // and the normals; every pose/gait/attack transform then carries the
 // adjusted seat for free.
 function applySwordFit() {
-  if (!swordT) return;
-  const B = swordT.base, B0 = swordFit0.base;
-  const N = swordMesh.geometry.getAttribute('normal').array, N0 = swordFit0.nrm;
+  const w = activeWpn(); if (!w.T) return;
+  const B = w.T.base, B0 = w.fit0.base;
+  const N = w.mesh.geometry.getAttribute('normal').array, N0 = w.fit0.nrm;
   const gY = 0.81, c = Math.cos(swordFit.pitch), s = Math.sin(swordFit.pitch);
   for (let i = 0; i < B.length; i += 3) {
     const dy = B0[i+1] - gY, z = B0[i+2];
@@ -549,18 +560,23 @@ const swordInfo = document.getElementById('swordinfo');
 const setSword = (i) => {
   swordIx = i;
   const on = swordIx >= 0, name = on ? SWORD_MATS[swordIx] : null;
-  if (swordMesh) swordMesh.visible = on;
+  for (const w of WEAPON_DEFS) if (w.mesh) w.mesh.visible = false;
+  const aw = activeWpn();
+  if (aw.mesh) aw.mesh.visible = on;
   document.getElementById('sword').textContent = 'sword: ' + (on ? name : 'off');
   document.getElementById('sword').classList.toggle('on', on);
   if (on) {
-    swordMesh.userData.recolor(D.swordRamps[name]);
-    const it = D.swordItems[name];
+    const aw2 = activeWpn();
+    aw2.mesh.userData.recolor(D.swordRamps[name]);
+    const it = aw2.items[name];
     const mod = it.materialModifier >= 0 ? '+' + it.materialModifier : String(it.materialModifier);
     swordInfo.textContent = `${name} ${it.name} \u00b7 dmg ${it.minDamage}\u2013${it.maxDamage} \u00b7 mat ${mod} \u00b7 hit ${it.toHitModifier >= 0 ? '+' : ''}${it.toHitModifier} \u00b7 ${it.weightInKg.toFixed(2)}kg \u00b7 ${it.value}g \u00b7 cond ${it.maxCondition}`;
   } else swordInfo.textContent = '';
 };
 document.getElementById('sword').onclick = () => setSword(swordIx + 2 > SWORD_MATS.length ? -1 : swordIx + 1);
 window.__setSword = setSword;
+document.getElementById('wpn').onclick = (e) => { wpnIx = (wpnIx + 1) % WEAPON_DEFS.length; e.target.textContent = 'wpn: ' + activeWpn().name; applySwordFit(); setSword(swordIx); };
+window.__setWeapon = (i) => { wpnIx = i % WEAPON_DEFS.length; document.getElementById('wpn').textContent = 'wpn: ' + activeWpn().name; setSword(swordIx); };
 // Attacks: cycle the classic directions; strike fires the mapped clip
 // (Up/UpLeft/UpRight all thrust, per the verbatim DFU mapping).
 const ATK_DIRS = ['Down', 'DownLeft', 'DownRight', 'Left', 'Right', 'Up'];

@@ -7,6 +7,7 @@ import {
 } from '../src/characters/weapons.js';
 import { DYE_COLORS } from '../src/characters/dyes.js';
 import { buildSword } from '../src/characters/pieces/sword.js';
+import { buildClaymore } from '../src/characters/pieces/claymore.js';
 import { STEEL_RAMP } from '../src/characters/pieces/pieceLoft.js';
 
 // Witness against the DFU source (ItemEnums, ItemBuilder,
@@ -49,6 +50,15 @@ test('weapons: verbatim DFU data pins', () => {
   assert.equal(d.dyeColor, DYE_COLORS.Daedric);
   const fem = buildWeapon(WEAPONS.Longsword, WEAPON_MATERIALS.Iron, { female: true });
   assert.equal(fem.playerTextureArchive, d.playerTextureArchive - 1);
+  // Claymore (template 122: baseWeight 7.5, hitPoints 1400, basePrice
+  // 30, TWO-handed): dmg 2-18; Daedric weight = trunc(7.5*4)=30 *5 =
+  // 150 /4 = 37.5 -> half-to-EVEN -> 38 -> 9.5kg.
+  const c = buildWeapon(WEAPONS.Claymore, WEAPON_MATERIALS.Daedric);
+  assert.equal(c.isOneHanded, false);
+  assert.equal(c.minDamage, 2); assert.equal(c.maxDamage, 18);
+  assert.equal(c.weightInKg, 9.5);
+  assert.equal(c.value, 30 * 3 * 512);
+  assert.equal(c.maxCondition, Math.trunc((1400 * 32) / 4));
 });
 
 test('sword piece: grip-baked, armL, point-forward carry (+45 seat)', () => {
@@ -82,4 +92,16 @@ test('sword piece: grip-baked, armL, point-forward carry (+45 seat)', () => {
   assert.ok(pom[2] < -0.08 && pom[1] > 0.76 && pom[1] < 0.92, `pommel not behind the fist: ${pom}`);
   const len = Math.sqrt(best);
   assert.ok(len > 0.90 && len < 1.02, `blade span ${len}`);
+  // Claymore on the same seat: armL, point-forward, greatsword span.
+  const cf = buildClaymore(STEEL_RAMP);
+  let tipZ = -1e9, cbest = -1;
+  const cp = [];
+  for (const f of cf) { assert.equal(f.g, 'armL'); for (let i = 0; i < 4; i++) { cp.push([f.p[i*3], f.p[i*3+1], f.p[i*3+2]]); if (f.p[i*3+2] > tipZ) tipZ = f.p[i*3+2]; } }
+  for (let i = 0; i < cp.length; i += 9) for (let j = i + 9; j < cp.length; j += 9) {
+    const d = (cp[i][0]-cp[j][0])**2 + (cp[i][1]-cp[j][1])**2 + (cp[i][2]-cp[j][2])**2;
+    if (d > cbest) cbest = d;
+  }
+  const clen = Math.sqrt(cbest);
+  assert.ok(clen > 1.30 && clen < 1.42, `claymore span ${clen}`);  // seat-baked length lives mostly in Z (Y-only HSCALE barely touches it)
+  assert.ok(tipZ > 0.95, `claymore tip not point-forward: ${tipZ}`);
 });

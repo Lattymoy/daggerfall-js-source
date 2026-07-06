@@ -41,4 +41,23 @@ export const POSES = {
     legL: { sw: 0.08, bd: 0.08 },
     legR: { sw: -0.14, bd: 0.10 },
   },
+  // 2H melee ready (Claymore): BOTH hands on the hilt in front of the
+  // body, blade up-forward. The weapon rides the LEFT (dominant)
+  // chain; the RIGHT arm is posed so its fist lands on the hilt one
+  // fist pommel-ward of the left. Values SOLVED by the two-stage grip
+  // sweep: left fist to the centreline hilt seat (-0.09,0.88,0.33),
+  // right fist onto the hilt point 0.16 pommel-ward (dist 0.057 -
+  // inside the mitten radius). Blade 46deg up-forward, headClr 0.46. LOCKED GRIP through the gait: gaitArm/gaitElbow/
+  // runElbow are 0 - the coupled hands must not pump apart; life
+  // comes from lean, bob and the root. Square-ish right-lead stance.
+  melee2H: {
+    lean: 0.06,
+    gaitArm: 0,
+    gaitElbow: 0,
+    runElbow: 0,
+    armL: { sw: -0.23, bd: 0.60, spread: -0.25, handRoll: 0, handPitch: 0, handYaw: 0 },
+    armR: { sw: -0.10, bd: 0.16, spread: -0.42, handRoll: 0, handPitch: 0, handYaw: 0 },
+    legL: { sw: 0.12, bd: 0.18 },
+    legR: { sw: -0.18, bd: 0.14 },
+  },
 };
