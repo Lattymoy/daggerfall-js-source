@@ -1,5 +1,30 @@
 # Player-Arc (COMPLETE)
 
+## Post-arc fixes (Mac playtest, 2026-07-06)
+
+Two root causes from the first production playtest:
+
+1. **A/D inverted (all scenes + motor).** lookAt's camera-right is
+   up x back = (-cos yaw, 0, sin yaw); the motor's strafe basis and
+   all four fly-cam right vectors used the NEGATION (+cos, -sin), so
+   D moved screen-left since P1. Fixed at the basis (motor.js +
+   dungeon/exterior/interior/world fly branches); billboard camRight
+   untouched (render convention, coupled to the shader, pixel-
+   verified). Test pins strafe fully along camera-right at 4 yaws.
+2. **Wall-laddering / ceiling escape ("teleport inside").** The
+   collider's step-up retry accepted jitter-gained raised positions
+   (`retrySq > movedSq`) every frame against a flat wall - pressing
+   into any facade climbed it (headless repro: walk into a 3-high
+   wall, maxY reached 3.0; jump+press escaped through a 2.2 ceiling
+   into the shell) - the doorjamb form of the same ladder is the
+   "walking through doors bugs out" report. Fix: the raised path must
+   be GENUINELY clear (`retrySq >= wantedSq * 0.25`, the same blocked
+   threshold the plain move failed) - a real step clears the raised
+   sweep outright, a wall blocks it at +0.5 exactly as at 0. Step
+   test unchanged; wall-ladder regression test added (900 frames of
+   run+jump pressure, height capped at stepOffset).
+
+
 First-person play inside the assembled world: walk, collide, activate.
 
 ## Milestone P1 - grounded movement + collision (SHIPPED)

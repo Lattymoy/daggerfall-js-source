@@ -97,3 +97,44 @@ test('player: motor integrates gravity, jump, and heightAt floor', () => {
   for (let i = 0; i < 60; i++) m.update(dt, { forward: 1, strafe: 0, run: false, jump: false }, 0);
   approx(m.pos[2] - z0, walkSpeed(50), 0.05);
 });
+
+test('player: strafe basis is the true camera-right (D = screen-right)', () => {
+  // lookAt (mat4.js): back z = eye - center, right x = up x z. With
+  // fwd = (sin yaw, 0, cos yaw), camera-right = (-cos yaw, 0, sin yaw).
+  // strafe +1 (D) must move ALONG that vector - the old (+cos, -sin)
+  // basis moved screen-left and A/D felt swapped in play.
+  const m = new PlayerMotor(new Collider(() => 0));
+  for (const yaw of [0, 0.7, Math.PI / 2, 2.4]) {
+    m.spawn(0, 0, 0);
+    for (let i = 0; i < 30; i++) m.update(1 / 60, { forward: 0, strafe: 1, run: false, jump: false }, yaw);
+    const right = [-Math.cos(yaw), 0, Math.sin(yaw)];
+    const l = Math.hypot(m.pos[0], m.pos[2]);
+    assert.ok(l > 0.5, `moved: ${l}`);
+    const dot = (m.pos[0] * right[0] + m.pos[2] * right[2]) / l;
+    approx(dot, 1, 1e-4); // fully along camera-right
+  }
+});
+
+test('player: walls cannot be laddered by the step-up retry', () => {
+  // Repro of the wall-climb/ceiling-escape bug: pressing into a flat
+  // wall (with and without jump spam) accepted jitter-gained step-up
+  // retries every frame and climbed any facade, popping through
+  // ceilings into building shells. The raised path must be genuinely
+  // clear; a wall blocks it at +stepOffset exactly as at 0.
+  const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const c = new Collider(() => -100);
+  const quadIdx = new Uint32Array([0, 1, 2, 0, 2, 3]);
+  c.addMesh('floor', new Float32Array([-10, 0, -10, 10, 0, -10, 10, 0, 10, -10, 0, 10]), quadIdx, I);
+  c.addMesh('ceil', new Float32Array([-10, 2.2, -10, -10, 2.2, 10, 10, 2.2, 10, 10, 2.2, -10]), quadIdx, I);
+  c.addMesh('wall', new Float32Array([2, 0, -10, 2, 0, 10, 2, 3, 10, 2, 3, -10]), new Uint32Array([0, 2, 1, 0, 3, 2]), I);
+  const m = new PlayerMotor(c);
+  m.spawn(0, 0, 0);
+  let maxY = 0;
+  for (let i = 0; i < 900; i++) {
+    m.update(1 / 60, { forward: 1, strafe: 0, run: true, jump: (i % 45) === 0 }, Math.PI / 2);
+    maxY = Math.max(maxY, m.pos[1]);
+    assert.ok(m.pos[0] <= 2, `through the wall: ${m.pos[0]}`);
+    assert.ok(m.pos[1] <= 2.2 - 1.8 + STEP_OFFSET + 0.01, `laddered: ${m.pos[1]}`);
+  }
+  assert.ok(maxY <= STEP_OFFSET + 0.01, `climbed the wall: ${maxY}`);
+});

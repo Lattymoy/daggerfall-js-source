@@ -333,7 +333,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       return;
     }
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-    const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
+    const right = [-Math.cos(cam.yaw), 0, Math.sin(cam.yaw)];   // camera-right = up x back (lookAt handedness): D must move SCREEN-right - the +cos/-sin vector was screen-LEFT (A/D felt swapped)
     if (walkMode) {
       // Grounded movement: verbatim speeds in the motor, Space edge-jumps.
       const jumpHeld = keys.has('Space');

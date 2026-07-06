@@ -80,8 +80,11 @@ export class PlayerMotor {
 
     const sin = Math.sin(yaw);
     const cos = Math.cos(yaw);
-    let dx = (sin * input.forward + cos * input.strafe) * speed * dt;
-    let dz = (cos * input.forward - sin * input.strafe) * speed * dt;
+    // fwd = (sin, 0, cos); camera-right = up x back per lookAt =
+    // (-cos, 0, sin). The old (+cos, -sin) strafe basis was the
+    // NEGATED right - D moved screen-left (A/D felt swapped).
+    let dx = (sin * input.forward - cos * input.strafe) * speed * dt;
+    let dz = (cos * input.forward + sin * input.strafe) * speed * dt;
 
     if (this.grounded && input.jump) {
       this.velY = JUMP_SPEED;

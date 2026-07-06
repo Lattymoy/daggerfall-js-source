@@ -98,7 +98,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-    const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
+    const right = [-Math.cos(cam.yaw), 0, Math.sin(cam.yaw)];   // camera-right = up x back (lookAt handedness): D must move SCREEN-right - the +cos/-sin vector was screen-LEFT (A/D felt swapped)
     const speed = (keys.has('ShiftLeft') ? 12 : 3) * dt;
     if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
     if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;

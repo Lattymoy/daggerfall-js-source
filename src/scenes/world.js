@@ -406,7 +406,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-    const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
+    const right = [-Math.cos(cam.yaw), 0, Math.sin(cam.yaw)];   // camera-right = up x back (lookAt handedness): D must move SCREEN-right - the +cos/-sin vector was screen-LEFT (A/D felt swapped)
 
     // Modal frame (worldModes.js): interior/dungeon consume the frame
     // entirely - the early return also freezes streaming (the

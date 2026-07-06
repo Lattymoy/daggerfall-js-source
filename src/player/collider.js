@@ -272,7 +272,15 @@ export class Collider {
       const retryOut = { grounded: false, hitCeiling: false, pushedDown: false };
       this._resolveCapsule(retry, retryOut);
       const retrySq = (retry[0] - beforeX) ** 2 + (retry[2] - beforeZ) ** 2;
-      if (retrySq > movedSq && !retryOut.pushedDown) {
+      // The raised path must be GENUINELY clear (the same blocked
+      // threshold the plain move failed), not merely jitter-better.
+      // The old `retrySq > movedSq` accepted jitter-gained retries at
+      // +stepOffset EVERY frame against a flat wall and laddered the
+      // player up any facade (repro: walk into a wall -> maxY reached
+      // the full wall height; jump+press escaped through the ceiling
+      // into the building shell). A real step clears the raised sweep
+      // outright; a wall blocks it at +0.5 exactly as at 0.
+      if (retrySq >= wantedSq * 0.25 && !retryOut.pushedDown) {
         feet[0] = retry[0];
         feet[1] = retry[1];
         feet[2] = retry[2];
