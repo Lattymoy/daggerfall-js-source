@@ -247,7 +247,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // Spawned near the player at terrain height (proper grounding =
   // slice 3); walks in place at the 9x character-pass standard once
   // the render split lands (slice 4).
-  let rig = null, rigMat = null;
+  let rig = null, rigMat = null, rigPos = null;
   if (params.has('rig')) {
     const [{ createEngineRig, deriveClassicRamps }, { ImgFile }] = await Promise.all([
       import('../characters/engineRig.js'),
@@ -409,9 +409,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
     if (rig) {
       rig.update(dt);
-      const s = rig.scale, p = player.pos;
-      rigMat = new Float32Array([s,0,0,0, 0,s,0,0, 0,0,s,0, p[0]+2, p[1]-1.6-rig.footY*s, p[2]+3, 1]);   // near-player spawn; slice 3 grounds via the terrain sampler
+      const s = rig.scale;
+      if (!rigPos) { const p = player.pos; rigPos = [p[0] + 2, 0, p[2] + 3]; }   // FIXED world placement, captured once at first frame
+      const gy = collider.heightAt(rigPos[0], rigPos[2]);   // grounded through the SAME contract the player stands on - real terrain inherits for free (slice 3)
+      rigMat = new Float32Array([s,0,0,0, 0,s,0,0, 0,0,s,0, rigPos[0], gy - rig.liveFootY * s, rigPos[2], 1]);   // live support point: feet kiss the ground every frame
       renderer.drawCharacter(rig.mesh, rigMat);
+      if (params.has('shot')) window.__rigGround = { ty: rigMat[13], gy, footY: rig.liveFootY, s };
     }
     // Classic Daggerfall billboards rotate about Y only: right from the view,
     // up stays world-Y.

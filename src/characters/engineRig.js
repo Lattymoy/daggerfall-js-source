@@ -72,7 +72,7 @@ export function createEngineRig(renderer, ramps) {
   let wt = 0, gait = 0, pose = null;
 
   return {
-    mesh, T, ctx, scale, footY: minY,
+    mesh, T, ctx, scale, footY: minY, liveFootY: minY,
     setGait(g) { gait = g | 0; },
     setPose(p) { pose = p || null; },
     /** Advance the canonical runtime and re-upload moved vertices. */
@@ -84,7 +84,9 @@ export function createEngineRig(renderer, ramps) {
       } else {
         animateTarget(ctx, T, 0, POSE_L, 0, pose, false);
       }
-      for (let v = 0; v < count; v++) { anim[v*9] = T.pos[v*3]; anim[v*9+1] = T.pos[v*3+1]; anim[v*9+2] = T.pos[v*3+2]; }
+      let lo = Infinity;
+      for (let v = 0; v < count; v++) { anim[v*9] = T.pos[v*3]; const y = T.pos[v*3+1]; anim[v*9+1] = y; anim[v*9+2] = T.pos[v*3+2]; if (y < lo) lo = y; }
+      this.liveFootY = lo;   // the LIVE support point: grounding an animated character means the current lowest vertex kisses the floor (the stride arc dips below rest minY)
       renderer.updateCharacterMesh(mesh, anim);
       T.dirty = false;
     },

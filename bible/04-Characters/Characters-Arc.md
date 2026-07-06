@@ -201,8 +201,13 @@ per-packed-vertex targets, createAnimContext with the payload's
 exact constants, update() splices T.pos over cached normal/color ->
 updateCharacterMesh. POSE_L canonicalized into animate.js. ?rig
 spawns it near the player in the exterior, walking (12816 verts,
-joints 0.90/0.43/1.11 = viewer-identical, scale 0.99). NEXT: (3)
-ground via the terrain sampler + real placement, (4) the 9x
+joints 0.90/0.43/1.11 = viewer-identical, scale 0.99). SLICE 3 SHIPPED: grounded. Fixed world placement (captured once);
+height queried live through collider.heightAt(x,z) - the player's
+own ground contract, so real terrain inherits free. GROUNDING RULE
+(pinned): an animated character grounds by its LIVE support point
+(current lowest vertex, tracked in the update splice loop) - the
+stride arc dips 0.038 below rest minY, so rest-footY placement
+clips the floor. Gap 0.000 across the full cycle. NEXT: (4) the 9x
 character-pass render split + world camera, (5) interior loco
 migration onto engineRig.
 
