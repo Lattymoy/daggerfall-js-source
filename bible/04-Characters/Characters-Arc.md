@@ -305,8 +305,29 @@ rig is the authoring bench for monster morphologies. Slices:
   machine's frame clock (rig.setPose over the gait). 'hit' events
   surface on each foe for E3 damage. PENDING E3: playerLevel/reflexes
   stubs (10/2 - both zero their terms), per-enemy LiveSpeed. 3 tests.
-- **E3:** hit resolution vs the player (FormulaHelper
-  CalculateAttackDamage) + the shipped hit reactions on both sides.
+- **E3a (entity layer): SHIPPED.** The pending stubs are gone at the
+  root: enemyBasics.js RE-EXTRACTED from EnemyBasics.cs with the
+  combat/entity fields (tools/extract-enemy-basics.mjs; C3's three
+  fields byte-identical for all 62 keys, ASSERTED at generation -
+  incl the ID-39 Horse stub whose C# struct defaults C3 had baked
+  in). classFile.js is a verbatim CLASS*.CFG reader (74-byte record
+  incl the source's (a<<16)|(c<<8)|b weapon/armor byte shuffle;
+  attributes in DFCareer.StructureData order). enemyEntity.js is
+  SetEnemyCareer + RollEnemyClassMaxHealth verbatim: class enemies
+  get careerIndex = ID-128 -> CLASS{nn}.CFG, level = player level
+  (city watch +Range(3,7)), HP = 10 + level rolls of
+  Range(1, hpPerLevel+1), every skill = min(100, level*5+30),
+  LiveSpeed = the career's Speed attribute - now feeding EnemyAI and
+  EnemyAttack for real. playerEntity.js is the truthful
+  pre-character-creation state (level 1, reflexes Average). REVIEW
+  CATCH: the first wiring referenced fetchBytes from a sibling
+  block's scope (syntax-clean, runtime-fatal) - all foe deps hoisted
+  into one Promise.all. FLAGGED: monster careers
+  (GetMonsterCareerTemplate) + class equipment/armor
+  (SetEnemyEquipment) + loot -> E3b/E4. 3 tests.
+- **E3b:** hit resolution (FormulaHelper CalculateAttackDamage)
+  consuming the machine 'hit' events both ways + the shipped hit
+  reactions; enemy death.
 - **E4+:** authored monster morphologies (rewrite/ bench), spectral
   emission unblock, perf pass (per-enemy mesh updates).
 

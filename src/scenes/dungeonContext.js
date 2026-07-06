@@ -139,31 +139,47 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // morphologies are authored (E4, rewrite/ bench). Flag off = C3
   // verbatim, untouched.
   const foes = [];
-  let bodyRamps = null;
+  let foeDeps = null;
   if (opts.foes && palette) {
-    const { ImgFile } = await import('../formats/imgFile.js');
-    const { fetchBytes } = await import('./shared.js');
+    // One import + one BODY00I0 fetch for the whole context; every
+    // per-enemy dependency lives here (a fetchBytes reference inside
+    // the loop once pointed at a name only in THIS block's scope -
+    // caught in review, hoisted).
+    const [{ ImgFile }, shared, engineRig, { buildRaceCharacter }, { floorLanding },
+      { EnemyAI }, { EnemyAttack }, { makeEnemyEntity }, { ClassFile }, { playerEntity }] = await Promise.all([
+      import('../formats/imgFile.js'), import('./shared.js'), import('../characters/engineRig.js'),
+      import('../characters/raceCharacter.js'), import('../player/enterExit.js'),
+      import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
+      import('../characters/enemyEntity.js'), import('../formats/classFile.js'),
+      import('../characters/playerEntity.js'),
+    ]);
     const bodyImg = new ImgFile();
-    bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
-    const { deriveClassicRamps } = await import('../characters/engineRig.js');
-    bodyRamps = deriveClassicRamps(palette, bodyImg.getDFBitmap());
+    bodyImg.load(await shared.fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
+    foeDeps = {
+      fetchBytes: shared.fetchBytes,
+      createCharacterRig: engineRig.createCharacterRig,
+      bodyRamps: engineRig.deriveClassicRamps(palette, bodyImg.getDFBitmap()),
+      buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, ClassFile, playerEntity,
+    };
   }
   for (const e of enemies) {
     const basics = ENEMY_BASICS[e.mobileType];
     if (!basics) continue;
-    if (bodyRamps && e.mobileType > 43) {
-      const { createCharacterRig } = await import('../characters/engineRig.js');
-      const { buildRaceCharacter } = await import('../characters/raceCharacter.js');
-      const { floorLanding } = await import('../player/enterExit.js');
-      const rig = createCharacterRig(renderer, buildRaceCharacter('Human', bodyRamps, { tone: e.mobileType % 4, hairTone: e.mobileType % 3 }));
+    if (foeDeps && e.mobileType > 43) {
+      const D = foeDeps;
+      const rig = D.createCharacterRig(renderer, D.buildRaceCharacter('Human', D.bodyRamps, { tone: e.mobileType % 4, hairTone: e.mobileType % 3 }));
       rig.setGait(3);   // standing sway (IDLE)
-      const pos = floorLanding(collider, [e.x, e.y + 0.2, e.z]);
+      const pos = D.floorLanding(collider, [e.x, e.y + 0.2, e.z]);
       const yawDeg = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing, no engine PRNG (Ledger A rule)
-      const { EnemyAI } = await import('../characters/enemyMotor.js');
-      const { EnemyAttack } = await import('../characters/enemyAttack.js');
-      // liveSpeed 50: class-enemy career stats plumb in E3 (flagged in the arc)
-      const ai = new EnemyAI(collider, pos, yawDeg * Math.PI / 180, { liveSpeed: 50 });
-      foes.push({ rig, ai, attack: new EnemyAttack({ liveSpeed: 50 }), mobileType: e.mobileType, gender: e.gender });
+      // E3a: the real entity - career from CLASS{ID-128}.CFG, level =
+      // player level, HP/skills/LiveSpeed verbatim (SetEnemyCareer)
+      const careerIndex = e.mobileType - 128;
+      const cf = new D.ClassFile();
+      cf.load(await D.fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`));
+      const entity = D.makeEnemyEntity(e.mobileType, basics, cf.career, D.playerEntity.level);
+      const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, { liveSpeed: entity.liveSpeed });
+      const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
+      foes.push({ rig, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
       continue;
     }
     const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
