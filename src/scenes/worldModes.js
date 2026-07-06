@@ -158,6 +158,7 @@ export function createWorldModes(host) {
     const landing = exteriorLanding(
       [player.pos[0], player.pos[1] + 1.8 * 0.65, player.pos[2]],
       exitReturn.siblings.map((e) => e.door));
+    if (!landing) { console.error('exit: no exterior landing (empty sibling doors)'); return false; }   // tryEnter guards its landing; this path was unguarded - a null here killed the frame loop
     interiorCtx.destroy();
     interiorCtx = null;
     player.collider = baseCollider();

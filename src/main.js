@@ -39,3 +39,18 @@ boot().catch((e) => {
   document.body.textContent = `boot failed: ${e.message}`;
   console.error(e);
 });
+
+// Crash observability: an uncaught exception in the frame loop kills
+// requestAnimationFrame silently - on the deployed site that reads as
+// "the game crashed" with no signal. Surface the stack on screen so
+// playtest reports pinpoint the throw.
+function crashOverlay(msg) {
+  if (document.getElementById('crash')) return;
+  const el = document.createElement('pre');
+  el.id = 'crash';
+  el.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;max-height:45%;overflow:auto;background:#300;color:#f88;font:12px monospace;padding:8px;border:1px solid #f66;z-index:20;white-space:pre-wrap';
+  el.textContent = `CRASH\n${msg}`;
+  document.body.appendChild(el);
+}
+addEventListener('error', (e) => crashOverlay(e.error?.stack || e.message));
+addEventListener('unhandledrejection', (e) => crashOverlay(e.reason?.stack || String(e.reason)));

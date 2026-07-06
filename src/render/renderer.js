@@ -339,6 +339,12 @@ void main() {
 
 const ZERO_ORIGIN = [0, 0, 0];
 
+/** THE CHARACTER PIXELIZE STANDARD (Mac): characters and everything
+ *  character-side render at this pixel size; the WORLD is excluded.
+ *  9 -> 7 per Mac (2026-07-06). Single source - the engine character
+ *  pass and the viewer default both read this value. */
+export const CHAR_PIXEL = 7;
+
 export class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -572,12 +578,12 @@ export class Renderer {
   }
 
   /**
-   * THE 9x CHARACTER PASS (slice 4). Characters render into a
-   * low-res offscreen target (screen size / 9, NEAREST) and composite
-   * into the world as a camera-facing textured quad - a live sprite,
-   * chunky by construction, depth-tested like every classic
-   * billboard. The world pass is untouched (the 9x standard excludes
-   * it). Lazy FBO, reallocated only when the pixel size steps.
+   * THE CHARACTER PIXELIZE PASS (slice 4). Characters render into a
+   * low-res offscreen target (screen size / CHAR_PIXEL, NEAREST) and
+   * composite into the world as a camera-facing textured quad - a
+   * live sprite, chunky by construction, depth-tested like every
+   * classic billboard. The world pass is untouched (the standard
+   * excludes it). Lazy FBO, reallocated only when the pixel size steps.
    */
   _charSpriteRT(pw, ph) {
     const gl = this.gl;

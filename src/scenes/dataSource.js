@@ -79,7 +79,7 @@ export async function getBytes(name) {
     if (stored) { const u8 = new Uint8Array(stored); mem.set(key, u8); return u8; }
   } catch { /* no IDB (private mode etc.) - fall through to network */ }
   const res = await fetch(`./arena2/${name}`);
-  if (!res.ok) throw new Error(`${name}: ${res.status}`);
+  if (!res.ok) throw new Error(`${name}: ${res.status} - not in the stored ARENA2 selection and no server copy; re-pick a complete ARENA2 folder`);
   const u8 = new Uint8Array(await res.arrayBuffer());
   mem.set(key, u8);
   return u8;

@@ -175,11 +175,15 @@ four). FREE-CLIP path: reactions run wall-clock outside the weapon
 machine (its idle u-mapping would null them) and may interrupt a
 swing visually. hurt button cycles; __hurt(name) hook.
 
-**RENDER STANDARD (Mac 2026-07-06): 9x pixelize** for the character
-and everything character-side; the WORLD is excluded. Viewer
-defaults to 9 (verified: every scanline transition on a 9px
-multiple). The engine slices render the CHARACTER PASS at 9x and
-leave the world pass untouched.
+**RENDER STANDARD (Mac 2026-07-06; revised 9 -> 7 by Mac): CHAR_PIXEL
+= 7 pixelize** for the character and everything character-side; the
+WORLD is excluded. Single source: `CHAR_PIXEL` exported from
+renderer.js - the engine character pass divides by it and the viewer
+defaults to it. (History: shipped at 9; the 9px scanline verification
+and slice-4 texel numbers in the log are of the 9 era.) The engine
+slices render the CHARACTER PASS at CHAR_PIXEL and leave the world
+pass untouched. Live re-verification of the 7x texel grid: open
+(needs ARENA2 in the environment).
 
 **Engine-world integration (ACTIVE arc, opened 2026-07-06).** The
 world side: bootExterior(canvas, renderer, ...) with pointer-lock,
