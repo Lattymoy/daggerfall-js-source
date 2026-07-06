@@ -426,6 +426,24 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   (1770 hits) and the thrust folds past vertical (tip NDC +/-111).
   Dedicated FP swing clips = the next arc (classic DF's FP attacks
   are dedicated animations).
+- **DFU-VERBATIM attack patterns + hold states (SHIPPED)** -
+  `weaponStates.js`, ported from WeaponManager/FPSWeapon/
+  FormulaHelper: tick = 3*(115-SPD)/980 (SPD 50: 0.199s/frame,
+  0.995s strike), bow cooldown (10*(100-SPD)+800)/980, classic 16Hz
+  bow ticks, 5-frame strikes, HIT at melee frame 2 (arrives ON the
+  2nd tick - DFU waits then steps) / bow frame 5 / sound 4, the
+  gesture radial table (SIX tracked directions - diagonal-up folds
+  into Up; UpLeft/UpRight exist only for the click-attack random
+  roll), threshold 0.05, EquipDelayTimes, fatigue 11, the INTERRUPT
+  RULE (one-shots irreplaceable except the bow release), and the
+  full bow arc: press = draw to frame 3 + HOLD, 10s cap auto
+  un-draws, release = loose, SPD cooldown blocks redraw. THE MACHINE
+  OWNS TIME; the rig clips are the visual (clip u = machine
+  progress). SPD slider; strike = press/release on bows. Bow frame
+  span (4 draw / 6 release) reconstructed from the verbatim
+  checkpoints, flagged. Sprite Alignment/Offset = N/A on a 3D rig.
+  Machine-time verified live: 1.004s@50, 0.266@100, mid-swing
+  rejected, anchor hold u 0.50, cooldown 1.33s.
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,

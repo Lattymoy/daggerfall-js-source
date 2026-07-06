@@ -36,6 +36,7 @@
   <button id="sword">sword: off</button>
   <button id="atkdir">dir: Down</button>
   <button id="strike">strike</button>
+  <span id="spdv">SPD 50</span><input id="spd" type="range" min="10" max="100" value="50" style="width:70px">
   <button id="pauldrons" class="on">pauldrons</button>
   <button id="helm" class="on">helm</button>
   <button id="race">race: Human</button>
@@ -64,6 +65,7 @@
 const D = __PAYLOAD__;
 /*__CLOTHSIM__*/
 /*__ANIMS__*/
+/*__WEAPONSTATES__*/
 const coreFn = makeCoreFn(D.bodyCore || [[1.5,0.2,0.1],[0,0.14,0.05]]);
 const CLOTH_RAMP = D.cloth || [[60,50,40],[210,190,155]];
 // per-frame snapped shading for simulated cloth (matches the baked look)
@@ -428,6 +430,22 @@ const POSE_L = { strideAmp: 0, counterFrac: 0, kneeBase: 0, kneeAmp: 0, elbowBas
 // pose (arms fully owned by the clip - gait pump + runElbow suppressed
 // mid-strike), twist/lean/headPitch add on. Legs stay with the gait.
 let atk = null;   // { clip, t }
+// DFU-VERBATIM TIMING: the weapon machine owns WHEN (frames, ticks,
+// hit moments, bow draw-hold, cooldown); the rig clips are the
+// VISUAL. Clip time = machine progress mapped onto clip duration.
+let wm = null;            // active weapon machine
+let liveSpeed = 50;       // player SPD (classic default); drives the tick formula
+const BOW_ANCHOR_U = 0.50;   // the Release clip's held-anchor key
+const machineFrames = () => (wm.isBow ? BOW_NUM_FRAMES : MELEE_NUM_FRAMES)[wm.state] ?? 5;
+const machineClipU = () => {
+  if (!wm || wm.state === 'Idle') return null;
+  const tick = wm.isBow ? CLASSIC_UPDATE_INTERVAL : getMeleeWeaponAnimTime(liveSpeed);
+  if (wm.isBow) {
+    if (wm.state === 'StrikeUp') return Math.min(BOW_ANCHOR_U, ((Math.min(wm.frame, 3)) + Math.min(wm.acc / tick, 1)) / 3 * BOW_ANCHOR_U);
+    return Math.min(0.9999, BOW_ANCHOR_U + ((wm.frame - 3) + wm.acc / tick) / 3 * (1 - BOW_ANCHOR_U));
+  }
+  return Math.min(0.9999, (wm.frame + wm.acc / tick) / machineFrames());
+};
 const ZERO_ARM = { sw: 0, bd: 0, spread: 0, handRoll: 0, handPitch: 0, handYaw: 0 };
 function effectivePose() {
   const base = curPose();
@@ -443,7 +461,17 @@ function effectivePose() {
     legL: limb('legL', { sw: 0, bd: 0 }), legR: limb('legR', { sw: 0, bd: 0 }) };
 }
 function animate(dt) {
-  if (atk) atk.t += dt;
+  if (wm && atk) {
+    const evs = machineStep(wm, dt, liveSpeed);
+    for (const e of evs) {
+      if (e === 'hit') swordInfo.textContent = 'HIT (frame ' + (wm.isBow ? HIT_FRAME_BOW : HIT_FRAME_MELEE) + ')';
+      if (e === 'bowSound') swordInfo.textContent = 'loose (sound frame ' + BOW_SOUND_FRAME + ')';
+      if (e === 'undraw') swordInfo.textContent = 'held past ' + MAX_BOW_HELD_DRAWN_SECONDS + 's: un-drawn';
+      if (e === 'done') swordInfo.textContent = wm.isBow ? ('cooldown ' + getBowCooldownTime(liveSpeed).toFixed(2) + 's') : '';
+    }
+    const u = machineClipU();
+    if (u === null) atk = null; else atk.t = u * atk.clip.dur;
+  } else if (atk) atk.t += dt;
   const L = GAITS[gaitIx];
   const pose = effectivePose();
   if (L) {
@@ -605,14 +633,28 @@ const fireAttack = (dirOrStrike) => {
     swordInfo.textContent = 'FP attacks not authored yet (dedicated clips, next arc)';
     return;
   }
-  if (POSE_NAMES[poseIx] === 'rangedAim') { atk = { clip: D.attacksRanged.Release, t: 0 }; return; }   // bows: every direction looses the same shot (classic)
+  const isBow = POSE_NAMES[poseIx] === 'rangedAim';
+  if (!wm || wm.isBow !== isBow) wm = createWeaponMachine(isBow);
+  if (isBow) {   // press = nock+draw (BowDrawback); release comes from the button-up path
+    if (machineAttack(wm, 'StrikeUp')) { atk = { clip: D.attacksRanged.Release, t: 0 }; swordInfo.textContent = 'drawing...'; }
+    else if (wm.now < wm.cooldownUntil) swordInfo.textContent = 'bow cooldown';
+    return;
+  }
   const name = D.dirToStrike[dirOrStrike] || dirOrStrike;
   const table = POSE_NAMES[poseIx] === 'melee2H' ? D.attacks2H : D.attacks;   // pose routes the strike set (2H clips carry SOLVED armR tracks that hold the grip)
   const clip = table[name];
-  if (clip) atk = { clip, t: 0 };
+  if (clip && machineAttack(wm, name)) atk = { clip, t: 0 };   // the interrupt rule lives in the machine (mid-swing rejected, verbatim)
 };
+const bowRelease = () => { if (wm && wm.isBow && wm.state === 'StrikeUp') { machineAttack(wm, 'StrikeDown'); swordInfo.textContent = 'loose!'; } };
+window.__bowRelease = bowRelease;
+window.__bowCancel = () => { if (wm && machineCancelBowDraw(wm)) { atk = null; swordInfo.textContent = 'un-drawn'; } };
+window.__setSpeed = (v) => { liveSpeed = v; document.getElementById('spdv').textContent = 'SPD ' + v; };
 document.getElementById('strike').onclick = () => fireAttack(ATK_DIRS[atkDirIx]);
 window.__attack = fireAttack;
+document.getElementById('spd').oninput = (e) => window.__setSpeed(+e.target.value);
+{ const sb = document.getElementById('strike');
+  sb.addEventListener('pointerdown', () => { if (POSE_NAMES[poseIx] === 'rangedAim') fireAttack('Up'); });
+  sb.addEventListener('pointerup', () => { if (POSE_NAMES[poseIx] === 'rangedAim') bowRelease(); }); }
 document.getElementById('bg').onclick = () => { bgi = (bgi + 1) % bgs.length; scene.background = new THREE.Color(bgs[bgi]); postMat.uniforms.bg.value = new THREE.Color(bgs[bgi]); };
 document.getElementById('drape').onclick = (e) => { drapeIx = (drapeIx+1) % DRAPES.length; setDrape(); e.target.textContent = 'drape: ' + DRAPES[drapeIx]; };
 </script>
