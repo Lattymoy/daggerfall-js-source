@@ -92,7 +92,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x14141a);
 const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
 let fpMode = false;
-const setFP = (on) => { fpMode = on; camera.fov = on ? 62 : 35; camera.updateProjectionMatrix(); document.getElementById('fpv').textContent = 'view: ' + (on ? 'first person' : 'orbit'); };
+const setFP = (on) => { fpMode = on; camera.fov = on ? 62 : 35; camera.near = on ? 0.10 : 0.01; camera.updateProjectionMatrix(); document.getElementById('fpv').textContent = 'view: ' + (on ? 'first person' : 'orbit'); };   // FP near 0.10: chest/arm surfaces inside it CLIP instead of rasterizing as a screen fill (lean-heavy clips pitch the torso toward the eye)
 // ── pixelize post-pipeline: render the scene to a low-res target, then
 // a fullscreen quad upscales it (nearest) and quantizes colour depth
 // with a 4x4 ordered-dither so bands don't posterize flat.
@@ -530,7 +530,7 @@ function frame() {
     const Bo = animTargets[0];
     let hx = 0, hy = 0, hz = 0, hn = 0;
     for (let i = 0; i < Bo.vgrp.length; i++) if (Bo.vgrp[i] === 0 && Bo.base[i*3+1] > 1.55) { hx += Bo.pos[i*3]; hy += Bo.pos[i*3+1]; hz += Bo.pos[i*3+2]; hn++; }
-    const ex = hx/hn, ey = hy/hn - D.cy + 0.04, ez = hz/hn + 0.14;
+    const ex = hx/hn, ey = hy/hn - D.cy + 0.04, ez = hz/hn + 0.18;
     camera.position.set(ex, ey, ez);
     camera.lookAt(ex, ey - 0.05, ez + 1);
   } else {

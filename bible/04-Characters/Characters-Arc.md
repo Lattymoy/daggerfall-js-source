@@ -444,6 +444,16 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   checkpoints, flagged. Sprite Alignment/Offset = N/A on a 3D rig.
   Machine-time verified live: 1.004s@50, 0.266@100, mid-swing
   rejected, anchor hold u 0.50, cooldown 1.33s.
+- **FP screen-fill fix (Mac: skin fills the screen in attacks)**:
+  lean-heavy clips pitch the CHEST just ahead of the eye; surfaces at
+  0.01-0.10 rasterize as a full-frame fill (StrikeUp pixel-sampled at
+  0.83 coverage). PROBE LESSON: vertex-band checks false-negatived on
+  an over-tight frustum cone - PIXEL COUNTING found it (screenshots
+  are numerically verifiable via skin-band fractions even where
+  images aren't eyeballable). Fix at the mechanism: FP near 0.01 ->
+  0.10 (the near plane IS the tool for too-close geometry) + eye
+  margin 0.18. Worst coverage now 0.01 across all six strikes at
+  40ms density; the viewmodel renders intact.
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,
