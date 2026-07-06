@@ -276,7 +276,23 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   pommel. Seat sliders, materials and the stats line apply unchanged
   (viewer `wpn:` button swaps Longsword/Claymore). Span note: the
   seat bake rotates length into Z, so the Y-only HSCALE barely
-  shortens it (1.36).
+  shortens it (1.36). PHANTOM-AXIS ROOT CAUSE (Mac: "the left hand
+  doesn't grip and animate properly"): grip tubes had verts ONLY at
+  their end rings, so every "nearest vert to the grip point" probe -
+  including the melee2H two-stage solve's hilt target - anchored to a
+  ring end 0.1+ OFF the handle axis; the whole grip was validated
+  against a line that wasn't the hilt. Fix at the mesh: GRIP STATION
+  rings (real on-axis collars) at the bake pivot on both weapons + an
+  OFF-HAND STATION on the claymore (pre-bake y 0.74); ring CENTROIDS
+  are the true anchor/axis, test-pinned to 0.003. melee2H re-solved
+  against the true station (armR bd 0.16 -> 0.33, dist 0.050); the
+  left hand measures a genuine grip - fist centre 0.012 off the true
+  hilt line, mitten straddling it (tips/wrist 0.072/0.077), 84deg
+  wrap. Both fists hold their stations 0.048/0.050 CONSTANT through a
+  full run. The "animate" half: firing the six 1H clips in melee2H
+  tore the off hand 0.32 off the hilt - strikes are GATED while
+  melee2H is active (viewer hint) until 2H attacks are authored
+  (candidate, not approved).
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,
