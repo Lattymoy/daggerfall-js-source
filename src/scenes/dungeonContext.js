@@ -15,6 +15,8 @@ import { CityLightAnimator } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
+import { EFFECT_ACTION_FLAGS } from '../world/actionSystem.js';
+import { playerEntity } from '../characters/playerEntity.js';
 import { trs, multiply } from '../world/mat4.js';
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
@@ -50,7 +52,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const drawList = [];
   const dynamicDraws = [];
   const collider = new Collider(() => -Infinity);
-  const actions = new ActionSystem(collider);
+  // Effect actions (Hurt traps) damage the shared player entity;
+  // health floors at 0 (death screen: UI arc). Traps work with or
+  // without ?foes - the entity import is static.
+  const actions = new ActionSystem(collider, {
+    damagePlayer: (dmg) => {
+      if (dmg <= 0) return;
+      playerEntity.health = Math.max(0, playerEntity.health - dmg);
+      if (typeof window !== 'undefined') window.__player = playerEntity;
+    },
+    playerLevel: () => playerEntity.level,
+  });
   const texRemap = new Map();
   const flatGroups = new Map();
   const lights = [];
@@ -84,6 +96,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const o = actions.addAction(p.position, cpu, matrix, p.action);
         dynamicDraws.push({ gpu, object: o });
         continue;
+      }
+      if (p.action && EFFECT_ACTION_FLAGS.has(p.action.actionFlag)) {
+        // Hurt/Poison/DrainMagicka: chain-participating logic object;
+        // the model itself stays static (draw + collider below).
+        actions.addEffect(p.position, p.action);
       }
       drawList.push({ mesh: gpu, matrix });
       collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix);

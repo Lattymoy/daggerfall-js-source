@@ -22,15 +22,77 @@
 // milestone, standing collision is correct at every instant).
 
 import { trs, multiply } from './mat4.js';
+import { ACTION_FLAGS } from './rdbLayout.js';
+
+// The RDB effect-action family (DaggerfallAction delegates that hurt
+// rather than move). Combat-arc row from Port-Ledger C:
+//   Hurt21 (0x15): fires every 20th activation, damage =
+//     Range(max(1, Magnitude), max(1, Index)) * max(level, 1) - the
+//     Unity int Range EXCLUSIVE upper is preserved; DFU increments
+//     activationCount BEFORE the delegate, so the first fire is at
+//     the 20th activation.
+//   Hurt22-25 (0x16-0x19): every activation, damage =
+//     (IsFlat ? Magnitude : ActionAxisRawValue) * max(level, 1).
+//   Poison (0x1a): a VERBATIM NO-OP - DFU's own delegate body is
+//     empty (a Debug.Log stub); preserved as-is.
+//   DrainMagicka (0x1c): INTERIM no-op - the magicka stat pends the
+//     Systems arc (DFU drains player.CurrentMagicka).
+export const EFFECT_ACTION_FLAGS = new Set([
+  ACTION_FLAGS.Hurt21, ACTION_FLAGS.Hurt22, ACTION_FLAGS.Hurt23,
+  ACTION_FLAGS.Hurt24, ACTION_FLAGS.Hurt25, ACTION_FLAGS.Poison,
+  ACTION_FLAGS.DrainMagicka,
+]);
 
 export const DOOR_OPEN_ANGLE = -90;
 export const DOOR_OPEN_DURATION = 1.5;
 
 export class ActionSystem {
-  constructor(collider) {
+  constructor(collider, { damagePlayer = null, playerLevel = () => 1, rolls = Math.random } = {}) {
     this.collider = collider;
     this.objects = new Map(); // key -> runtime object
     this._doorCount = 0;
+    this._damagePlayer = damagePlayer;
+    this._playerLevel = playerLevel;
+    this._rolls = rolls;
+  }
+
+  /** Register an effect action (Hurt/Poison/DrainMagicka): chain
+   *  participant, no tween - the model stays in the static draw and
+   *  the shared collider (the caller keeps those). */
+  addEffect(positionKey, action) {
+    const key = `act:${positionKey}`;
+    const o = {
+      key,
+      kind: 'effect',
+      actionFlag: action.actionFlag,
+      magnitude: action.magnitude,
+      index: action.index,
+      axisRaw: action.axisRaw,
+      isFlat: action.isFlat,
+      activationCount: 0,
+      nextKey: action.nextObject,
+      state: 'start',
+    };
+    this.objects.set(key, o);
+    return o;
+  }
+
+  _runEffect(o) {
+    o.activationCount++;   // DFU increments BEFORE the delegate
+    const lvl = Math.max(1, this._playerLevel());
+    const F = ACTION_FLAGS;
+    if (o.actionFlag === F.Hurt21) {
+      if (o.activationCount % 20 !== 0) return;
+      const a = Math.max(1, o.magnitude), b = Math.max(1, o.index);
+      const span = Math.max(0, b - a);                      // int Range: exclusive upper; max<=min -> min
+      const dmg = (a + Math.floor(this._rolls() * span)) * lvl;
+      if (this._damagePlayer) this._damagePlayer(dmg);
+    } else if (o.actionFlag >= F.Hurt22 && o.actionFlag <= F.Hurt25) {
+      const dmg = (o.isFlat ? o.magnitude : o.axisRaw) * lvl;
+      if (this._damagePlayer) this._damagePlayer(dmg);
+    }
+    // Poison: verbatim DFU no-op stub. DrainMagicka: INTERIM no-op,
+    // magicka pends Systems (flagged).
   }
 
   /** Register an action door (own bucket, closed-solid lifecycle). */
@@ -95,6 +157,7 @@ export class ActionSystem {
     // ActivateNext cascades BEFORE this object's own tween.
     const next = this.objects.get(`act:${o.nextKey}`);
     if (next) this.receive(next);
+    if (o.kind === 'effect') { this._runEffect(o); return; }
     if (o.duration <= 0) {
       // Instant flip, still honoring the state cycle.
       o.state = o.state === 'start' || o.state === 'reverse' ? 'end' : 'start';

@@ -50,31 +50,31 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9 shipped: floating-origin streaming world (?world). Build queue empty.
-- `04-Characters/Characters-Arc.md` - ACTIVE (C8 enemy rigs). E1 spine, E2 senses/pursuit/attacks, E3a entity layer (careers from CLASS*.CFG), E3b enemy->player hit resolution, E3c player melee vs foes (reactions + corpse-flat death) ALL SHIPPED - the combat loop is closed both directions behind ?foes. NEXT: E3d (FP viewmodel in-world, backstab facing), then E4 (monster careers, equipment, authored morphologies, spectral unblock). Interims are in the Open flags ledger above. See the arc's slice records.
+- `04-Characters/Characters-Arc.md` - PARKED (direction pivot 3: classic visuals). C8 shipped E1-E4b end to end: rigged class foes with verbatim senses/pursuit/attacks, the entity layer (CLASS*.CFG + MONSTER.BSA careers), hit resolution both directions, player melee + FP viewmodel + backstab, equipment with per-part armor, spectral emission on billboards. E4c (authored morphologies) DEFERRED by Mac; remaining interims are Systems-arc work (see the ledger above).
 - `03-World/Player-Arc.md` - COMPLETE. Walk, collide, activate, transition: movement/collision (P1), activation + action chains (P2), interior/dungeon transitions (P3/P5), swing doors (P4), ladders (P6), scene consolidation onto worldModes + dataPipeline (P7), and interiors parented in the building world frame with one-frame landings (P8). Next arc decision pending.
 - `07-Rendering/Rendering-Arc.md` - R13 shipped: precipitation + verbatim storm lightning. Queue empty except spectral emission (blocked on Characters). Next arc decision: Player.
 
-## Open flags (audit-generated 2026-07-06, from the code)
+## Open flags (audit-generated 2026-07-06b, from the code)
 
-Every documented interim/pending in src, greped at audit time - the
-code comment at each site is the authority; regenerate this list on
-the next audit rather than hand-editing:
+Every documented interim/pending in src, greped at generation time -
+the code comment at each site is the authority; regenerate on audit:
 
 - `src/characters/enemyAttack.js:21` - PENDING E3 (entity layer): playerLevel (stub 10 - zeroes its term),
 - `src/characters/enemyEntity.js:14` - FLAGGED, until GetMonsterCareerTemplate ports).
-- `src/characters/enemyEntity.js:52` - liveSpeed = 50;   // FLAGGED: monster careers (GetMonsterCareerTemplate) port in E4
-- `src/characters/enemyEntity.js:67` - GetMonsterCareerTemplate (E4) - 50s FLAGGED until then
+- `src/characters/enemyEntity.js:91` - GetMonsterCareerTemplate (E4) - 50s FLAGGED until then
 - `src/characters/enemyMotor.js:23` - PENDING E3 (entity layer): per-enemy LiveSpeed from career stats -
 - `src/characters/playerEntity.js:12` - maxHealth: 50,    // INTERIM until chargen rolls career HP
 - `src/characters/playerEntity.js:15` - skills: 30,       // INTERIM flat skills until chargen
 - `src/characters/playerEntity.js:3` - Average, attributes at the 50 baseline. INTERIM (loudly): flat
+- `src/combat/enemyEquipment.js:128` - poisoned-weapon chance pends the poison system (Systems arc)
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): adrenaline rush
 - `src/combat/playerWeapon.js:13` - INTERIM (loud): the equipped weapon is an Iron Dagger until the
 - `src/combat/playerWeapon.js:17` - entity has no career/race yet); backstab pends facing bookkeeping
-- `src/combat/playerWeapon.js:43` - INTERIM starting weapon (items arc replaces): Iron Dagger. */
-- `src/combat/playerWeapon.js:44` - export const INTERIM_WEAPON = Object.freeze({
-- `src/combat/playerWeapon.js:62` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
-- `src/scenes/dungeonContext.js:297` - in DFU). HUD pends the UI arc: health surfaces on __player.
+- `src/combat/playerWeapon.js:45` - INTERIM starting weapon (items arc replaces): Iron Dagger. */
+- `src/combat/playerWeapon.js:46` - export const INTERIM_WEAPON = Object.freeze({
+- `src/combat/playerWeapon.js:64` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
+- `src/scenes/dungeonContext.js:268` - Backstabbing skill (flat interim). TallySkill pends Systems.
+- `src/scenes/dungeonContext.js:320` - in DFU). HUD pends the UI arc: health surfaces on __player.
 
 ## Audits
 

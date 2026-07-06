@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 220 tests across 51 files.
+Node 22). Suite: 223 tests across 52 files.
 
 | File | Tests | Covers |
 |---|---|---|
