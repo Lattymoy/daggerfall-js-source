@@ -83,13 +83,22 @@ export function sampleClip(clip, t) {
 // loose and settles home to the nock. The bow arm holds.
 
 export const ATTACKS_RANGED = {
-  Release: { dur: 0.55, tracks: {
-    'armR.sw':     [[0, 0], [0.34, 0.10], [0.44, 0.12, 'snap'], [0.52, 0.30, 'hold'], [0.56, 0.30, 'out'], [0.74, 0.10], [1, 0]],
-    'armR.bd':     [[0, 0], [0.34, 0.16], [0.44, 0.18, 'snap'], [0.52, -0.10, 'out'], [0.76, -0.03], [1, 0]],
-    'armR.spread': [[0, 0], [0.34, 0.06], [0.52, -0.04, 'snap'], [1, 0]],
-    'lean':        [[0, 0], [0.44, -0.02], [0.52, 0.05, 'snap'], [0.62, 0.06, 'out'], [1, 0]],
-    'rootZ':       [[0, 0], [0.52, 0.03, 'snap'], [0.80, 0.01], [1, 0]],
-    'headPitch':   [[0, 0], [0.44, -0.04], [0.56, 0.02, 'snap'], [1, 0]],
+  // THE LOOSE (v2): last-inch pull with the whole back (twist
+  // deepens), a held ANCHOR beat, then the snap - the string hand
+  // flies back-open past the ear with a hard stop, the bow JUMPS and
+  // ROLLS in the loose grip (handRoll about the forearm = about the
+  // aim axis), the frame recoils, and everything settles home to the
+  // nock. Head stays on the target throughout.
+  Release: { dur: 0.70, tracks: {
+    'armR.sw':     [[0, 0], [0.36, 0.12], [0.46, 0.14, 'snap'], [0.54, 0.42, 'hold'], [0.58, 0.42, 'out'], [0.72, 0.55], [0.88, 0.20], [1, 0]],
+    'armR.bd':     [[0, 0], [0.36, 0.18], [0.46, 0.20, 'snap'], [0.54, -0.35, 'out'], [0.80, -0.08], [1, 0]],
+    'armR.spread': [[0, 0], [0.36, 0.10], [0.46, 0.11, 'snap'], [0.54, -0.20, 'out'], [0.82, -0.05], [1, 0]],
+    'twist':       [[0, 0], [0.36, 0.08], [0.46, 0.09, 'snap'], [0.54, -0.06, 'out'], [0.80, -0.02], [1, 0]],
+    'armL.handRoll': [[0, 0], [0.50, 0, 'snap'], [0.56, 0.85, 'hold'], [0.60, 0.85, 'out'], [0.84, 0.22], [1, 0]],
+    'armL.sw':     [[0, 0], [0.50, 0, 'snap'], [0.56, -0.10, 'out'], [0.80, -0.03], [1, 0]],
+    'lean':        [[0, 0], [0.40, -0.03], [0.50, -0.03, 'snap'], [0.58, 0.05, 'out'], [0.82, 0.01], [1, 0]],
+    'rootZ':       [[0, 0], [0.50, 0, 'snap'], [0.58, -0.035, 'out'], [0.84, -0.01], [1, 0]],
+    'headPitch':   [[0, 0], [0.40, -0.03], [0.70, -0.01], [1, 0]],
   } },
 };
 

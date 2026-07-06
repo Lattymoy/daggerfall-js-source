@@ -69,12 +69,12 @@ export const POSES = {
   // game's job. Locked through the gait like 2H.
   rangedAim: {
     lean: 0.05,
-    twist: -0.65,   // BLADED archer stance - the draw-side shoulder swings toward the nock; without it the draw hand bottoms 0.26 short
+    twist: 0.65,    // BLADED archer, CORRECT form: bow shoulder forward, draw shoulder back. FORM IS A CONSTRAINT, NOT AN OUTCOME - a reach-optimizing twist sweep once inverted the stance (draw shoulder led by 0.24; Mac: "the left arm looks so off"); with the seat frame-fixed, positive twist reaches the nock at 0.011.
     gaitArm: 0,
     gaitElbow: 0,
     runElbow: 0,
-    armL: { sw: -1.42, bd: 0.10, spread: -0.02, handRoll: 0, handPitch: 0, handYaw: 0 },
-    armR: { sw: -0.18, bd: 1.07, spread: -1.45, handRoll: 0, handPitch: 0, handYaw: 0 },
+    armL: { sw: -1.50, bd: 0, spread: -0.285, handRoll: 0, handPitch: 0, handYaw: 0 },
+    armR: { sw: -0.165, bd: 1.115, spread: -1.515, handRoll: 0, handPitch: 0, handYaw: 0 },   // draw arm up-across, elbow high
     legL: { sw: 0.10, bd: 0.10 },
     legR: { sw: -0.16, bd: 0.10 },
   },

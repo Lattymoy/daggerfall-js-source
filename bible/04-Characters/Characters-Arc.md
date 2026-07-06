@@ -334,6 +334,23 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   bow arm holds to 0.058). SOLVER HYGIENE pinned: refine grids must
   snapshot their centre (a mutating-best walk railed spread at
   -0.885 and hid the reach).
+- **Archer FORM fix + Release v2 (Mac: "the left arm looks so off")**:
+  the stance was INVERTED - the twist sweep optimized nock reach and
+  chose NEGATIVE twist (draw shoulder led by 0.24, chest closed
+  across the aim, the bow arm wrapping an inverted torso). The
+  negative preference came from comparing against the broken
+  world-fixed seat; positive was never re-tested after the seat fix.
+  FORM IS A CONSTRAINT, NOT AN OUTCOME: twist locked +0.65 (bow
+  shoulder forward +0.20 / draw back -0.09, battery-asserted); with
+  the wide spread grid the nock is reachable at 0.011 (armR
+  -0.165/1.115/-1.515: draw arm up-across, elbow high) - no
+  draw-depth change needed. Release v2 (0.70): back-driven last-inch
+  pull, held ANCHOR beat, snap loose - string hand flies back-open
+  past the ear (peak 20 u/s AT the release key, snap 13.6, the set's
+  sharpest), the bow JUMPS and ROLLS 50deg in the loose grip
+  (handRoll = the aim axis at extension), frame recoil (rootZ
+  -0.035, bow-arm kick 0.08), settle home (end 0.011; run-hold
+  constant).
 - **Nocked ARROW (SHIPPED)** - template 131 pinned (0-0 dmg, 0.25kg
   at every tier: the quarter-kg chain collapses via half-even
   round(1.25)=1). Ships as BOW GEOMETRY inside the drawn assembly -
