@@ -251,6 +251,8 @@ const bodyFurBelly = D.bodyFurBelly ? buildPiece(D.bodyFurBelly) : null;
 const WEAPON_DEFS = [
   { name: 'Longsword', pack: D.sword, items: D.swordItems },
   { name: 'Claymore', pack: D.claymore, items: D.claymoreItems },
+  { name: 'Long Bow', pack: D.longbow, items: D.longbowItems },
+  { name: 'Short Bow', pack: D.shortbow, items: D.shortbowItems },
 ];
 for (const w of WEAPON_DEFS) {
   w.mesh = w.pack ? buildPiece(w.pack) : null;
@@ -583,6 +585,7 @@ const ATK_DIRS = ['Down', 'DownLeft', 'DownRight', 'Left', 'Right', 'Up'];
 let atkDirIx = 0;
 document.getElementById('atkdir').onclick = (e) => { atkDirIx = (atkDirIx + 1) % ATK_DIRS.length; e.target.textContent = 'dir: ' + ATK_DIRS[atkDirIx]; };
 const fireAttack = (dirOrStrike) => {
+  if (POSE_NAMES[poseIx] === 'rangedAim') { atk = { clip: D.attacksRanged.Release, t: 0 }; return; }   // bows: every direction looses the same shot (classic)
   const name = D.dirToStrike[dirOrStrike] || dirOrStrike;
   const table = POSE_NAMES[poseIx] === 'melee2H' ? D.attacks2H : D.attacks;   // pose routes the strike set (2H clips carry SOLVED armR tracks that hold the grip)
   const clip = table[name];

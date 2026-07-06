@@ -8,6 +8,7 @@ import {
 import { DYE_COLORS } from '../src/characters/dyes.js';
 import { buildSword } from '../src/characters/pieces/sword.js';
 import { buildClaymore } from '../src/characters/pieces/claymore.js';
+import { buildLongBow, buildShortBow } from '../src/characters/pieces/bow.js';
 import { STEEL_RAMP } from '../src/characters/pieces/pieceLoft.js';
 
 // Witness against the DFU source (ItemEnums, ItemBuilder,
@@ -57,6 +58,15 @@ test('weapons: verbatim DFU data pins', () => {
   assert.equal(c.isOneHanded, false);
   assert.equal(c.minDamage, 2); assert.equal(c.maxDamage, 18);
   assert.equal(c.weightInKg, 9.5);
+  // Bows (129/130, 2H): dmg 4-16 / 4-18; Daedric weights via the full
+  // chain trunc(base*4) * 5 -> /4 -> half-even round -> /4:
+  // 1kg -> 1.25kg, 1.5kg -> 2kg.
+  const sb = buildWeapon(WEAPONS.Short_Bow, WEAPON_MATERIALS.Daedric);
+  const lb = buildWeapon(WEAPONS.Long_Bow, WEAPON_MATERIALS.Daedric);
+  assert.equal(sb.isOneHanded, false); assert.equal(lb.isOneHanded, false);
+  assert.equal(sb.minDamage, 4); assert.equal(sb.maxDamage, 16);
+  assert.equal(lb.minDamage, 4); assert.equal(lb.maxDamage, 18);
+  assert.equal(sb.weightInKg, 1.25); assert.equal(lb.weightInKg, 2);
   assert.equal(c.value, 30 * 3 * 512);
   assert.equal(c.maxCondition, Math.trunc((1400 * 32) / 4));
 });
@@ -115,4 +125,16 @@ test('sword piece: grip-baked, armL, point-forward carry (+45 seat)', () => {
   const co = station(cp, [-0.235, 0.8038, -0.1578], 0.035);
   assert.ok(cg && Math.hypot(cg[0]+0.235, cg[1]-0.81, cg[2]) < 0.003, `claymore grip station ${cg}`);
   assert.ok(co && Math.hypot(co[0]+0.235, co[1]-0.8038, co[2]+0.1578) < 0.02, `claymore off-hand station ${co}`);
+  // Bows: armL, grip + drawn-string NOCK stations, stave fore-aft
+  // carry, string drawn toward the archer side.
+  for (const [bf, half] of [[buildLongBow, 0.62], [buildShortBow, 0.44]]) {
+    const bp = [];
+    let bzLo = 1e9, bzHi = -1e9;
+    for (const f of bf(STEEL_RAMP)) { assert.equal(f.g, 'armL'); for (let i = 0; i < 4; i++) { const q = [f.p[i*3], f.p[i*3+1], f.p[i*3+2]]; bp.push(q); if (q[2] < bzLo) bzLo = q[2]; if (q[2] > bzHi) bzHi = q[2]; } }
+    const bg = station(bp, [-0.235, 0.839, 0], 0.03);   // the grip ring rides the riser's 0.032 curve: bake puts it at y 0.839
+    const bn = station(bp, [-0.235, 1.078, 0], 0.03);
+    assert.ok(bg && Math.hypot(bg[0]+0.235, bg[2]) < 0.02, `bow grip station ${bg}`);
+    assert.ok(bn && Math.hypot(bn[0]+0.235, bn[1]-1.078, bn[2]) < 0.01, `bow nock station ${bn}`);
+    assert.ok(Math.abs(bzHi - half) < 0.03 && Math.abs(bzLo + half) < 0.03, `bow carry span ${bzLo}..${bzHi} vs ${half}`);
+  }
 });

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MOUSE_DIRECTIONS, DIRECTION_TO_STRIKE, STRIKES, ATTACKS_1H, ATTACKS_2H, sampleClip } from '../src/characters/anims.js';
+import { MOUSE_DIRECTIONS, DIRECTION_TO_STRIKE, STRIKES, ATTACKS_1H, ATTACKS_2H, ATTACKS_RANGED, sampleClip } from '../src/characters/anims.js';
 
 // Witness against DFU: WeaponManager.MouseDirections order and
 // FPSWeapon.OnAttackDirection's switch (Up/UpLeft/UpRight -> StrikeUp).
@@ -13,7 +13,8 @@ test('anims: verbatim DFU direction mapping + well-formed clips', () => {
   });
   assert.deepEqual([...STRIKES].sort(), Object.keys(ATTACKS_1H).sort());
   assert.deepEqual([...STRIKES].sort(), Object.keys(ATTACKS_2H).sort());
-  for (const [name, clip] of [...Object.entries(ATTACKS_1H), ...Object.entries(ATTACKS_2H)]) {
+  assert.deepEqual(Object.keys(ATTACKS_RANGED), ['Release']);   // bows: one direction-agnostic loose
+  for (const [name, clip] of [...Object.entries(ATTACKS_1H), ...Object.entries(ATTACKS_2H), ...Object.entries(ATTACKS_RANGED)]) {
     assert.ok(clip.dur > 0.2 && clip.dur < 1.0, `${name} dur`);
     for (const [path, keys] of Object.entries(clip.tracks)) {
       assert.ok(keys.length >= 2, `${name}.${path} too few keys`);

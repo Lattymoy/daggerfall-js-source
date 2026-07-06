@@ -311,6 +311,29 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   reach-ceiling beat on the mirrored diagonal), left grip 0.048
   INVARIANT, ends exactly on stations, headClr 0.15-0.46 vs a
   root-following head, floor 0.09+ (cleave tuned up from -0.15).
+- **Ranged: bows + rangedAim + Release (SHIPPED)** - `pieces/bow.js`
+  (Short/Long Bow, 129/130; verbatim item pins - the weight chain
+  ends in a SECOND /4: Daedric Short 1.25kg, Long 2kg). Recurve stave
+  via per-row cz; PERPENDICULAR grip bake (-pi/2): fore-aft carry at
+  a hanging arm, near-VERTICAL (13deg) at the extended aim. STRING is
+  modeled DRAWN (two segments to a NOCK STATION 0.25 toward the
+  archer) - the aim pose IS the drawn bow; an undrawn string put the
+  nock out by the bow, unreachable. BAKE-SIGN pinned: authoring + cz
+  = the archer side (rest-above-grip maps behind the fist at aim; the
+  first nock landed 0.95 FORWARD). rangedAim: bow arm on the
+  frame-rotated straight-arm seat (0.03; the seat must live on the
+  reachable manifold and rotate WITH the stance - a world-fixed seat
+  fought the frame), draw fist solved onto the nock to 0.002, BLADED
+  twist -0.65 (square-on the draw arm bottoms 0.26 short; the
+  miss-vector read +0.20y and spread -1.45 carries the fist
+  up-across; NOTE twist is a rigid rotation - it cannot change
+  relative reach, the win came from the seat + spread). Locked
+  through the gait: nock 0.002 constant across a run. Release clip
+  (one, direction-agnostic like the classic bow): pull to anchor
+  0.22, beat, loose flick, settle home (fist path 0.44, end 0.002,
+  bow arm holds to 0.058). SOLVER HYGIENE pinned: refine grids must
+  snapshot their centre (a mutating-best walk railed spread at
+  -0.885 and hid the reach).
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,

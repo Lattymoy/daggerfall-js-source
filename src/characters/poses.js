@@ -62,4 +62,20 @@ export const POSES = {
     legL: { sw: 0.12, bd: 0.18 },
     legR: { sw: -0.18, bd: 0.14 },
   },
+  // RANGED AIM (bows): bow arm extended (the perpendicular grip bake
+  // stands the stave near-vertical at the extended arm, 13deg), draw
+  // fist ON the drawn string's NOCK STATION (solved to 0.002). The
+  // aim line follows the bladed frame, not world +z - facing is the
+  // game's job. Locked through the gait like 2H.
+  rangedAim: {
+    lean: 0.05,
+    twist: -0.65,   // BLADED archer stance - the draw-side shoulder swings toward the nock; without it the draw hand bottoms 0.26 short
+    gaitArm: 0,
+    gaitElbow: 0,
+    runElbow: 0,
+    armL: { sw: -1.42, bd: 0.10, spread: -0.02, handRoll: 0, handPitch: 0, handYaw: 0 },
+    armR: { sw: -0.18, bd: 1.07, spread: -1.45, handRoll: 0, handPitch: 0, handYaw: 0 },
+    legL: { sw: 0.10, bd: 0.10 },
+    legR: { sw: -0.16, bd: 0.10 },
+  },
 };

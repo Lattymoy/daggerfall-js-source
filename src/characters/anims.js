@@ -76,6 +76,23 @@ export function sampleClip(clip, t) {
 // against fist-travel probes (dx sign + magnitude checked live).
 
 
+// ---- RANGED (bows, rangedAim). One clip, direction-agnostic (the
+// classic bow fires the same regardless of drag direction). The pose
+// IS the drawn aim; the clip is the LOOSE: a last-inch pull to
+// anchor, a held beat, then the string hand flicks back off the
+// loose and settles home to the nock. The bow arm holds.
+
+export const ATTACKS_RANGED = {
+  Release: { dur: 0.55, tracks: {
+    'armR.sw':     [[0, 0], [0.34, 0.10], [0.44, 0.12, 'snap'], [0.52, 0.30, 'hold'], [0.56, 0.30, 'out'], [0.74, 0.10], [1, 0]],
+    'armR.bd':     [[0, 0], [0.34, 0.16], [0.44, 0.18, 'snap'], [0.52, -0.10, 'out'], [0.76, -0.03], [1, 0]],
+    'armR.spread': [[0, 0], [0.34, 0.06], [0.52, -0.04, 'snap'], [1, 0]],
+    'lean':        [[0, 0], [0.44, -0.02], [0.52, 0.05, 'snap'], [0.62, 0.06, 'out'], [1, 0]],
+    'rootZ':       [[0, 0], [0.52, 0.03, 'snap'], [0.80, 0.01], [1, 0]],
+    'headPitch':   [[0, 0], [0.44, -0.04], [0.56, 0.02, 'snap'], [1, 0]],
+  } },
+};
+
 // ---- 2H strikes (Claymore, melee2H). COUPLING RULE: both fists must
 // hold their hilt STATIONS every frame. armL + body channels are
 // authored freely (they move the hilt); the armR tracks below are
