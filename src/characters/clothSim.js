@@ -71,6 +71,7 @@ export function stepCloth(cloth, dt, opts, core) {
   const gx = opts.gx||0, gy = opts.gy ?? -7.0, gz = opts.gz||0;
   const damp = opts.damp ?? 0.985, SO = opts.standoff ?? 0.030, iters = opts.iters ?? 6;
   const pinDX = opts.pinDX||0, pinDY = opts.pinDY||0, pinDZ = opts.pinDZ||0;
+  const rootX = opts.rootX||0, rootY = opts.rootY||0, rootZ = opts.rootZ||0;   // whole-body translation (root motion) - pins + core ride it
   const dt2 = dt*dt;
   const maxStep = opts.maxStep ?? 0.035;   // clamp per-step move -> no verlet spikes
   for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
@@ -84,7 +85,7 @@ export function stepCloth(cloth, dt, opts, core) {
   for (let i = 0; i < V; i++) if (pinned[i]) { const o=i*3;
     let by = base[o+1], bz = base[o+2];
     if (lean) { const dy = by - leanPy; by = leanPy + lc*dy - ls*bz; bz = ls*dy + lc*bz; }   // pins follow the torso lean
-    pos[o]=base[o]+pinDX; pos[o+1]=by+pinDY; pos[o+2]=bz+pinDZ; prev[o]=pos[o]; prev[o+1]=pos[o+1]; prev[o+2]=pos[o+2]; }
+    pos[o]=base[o]+pinDX+rootX; pos[o+1]=by+pinDY+rootY; pos[o+2]=bz+pinDZ+rootZ; prev[o]=pos[o]; prev[o+1]=pos[o+1]; prev[o+2]=pos[o+2]; }
   // satisfy distance constraints (no collision here - collision runs once
   // after, so it can't ratchet the cloth up the body)
   for (let k = 0; k < iters; k++) {
@@ -129,10 +130,10 @@ export function stepCloth(cloth, dt, opts, core) {
     for (let i = 0; i < V; i++) { if (pinned[i]) continue; const o=i*3;
       if (pos[o+1] < groundY) pos[o+1] = groundY;
       if (caps) for (let ci = 0; ci < caps.length; ci++) { const hit = pushCapsule(pos[o], pos[o+1], pos[o+2], caps[ci], SO); if (hit) { pos[o]=hit[0]; pos[o+1]=hit[1]; pos[o+2]=hit[2]; } }
-      { const py = pos[o+1], ext = core(py), A = ext[0]+SO, C = ext[1]+SO;
-        const zc = lean ? ls * Math.max(0, py - leanPy) : 0;   // torso leans -> body centre shifts forward above the pivot
-        let px=pos[o], pz=pos[o+2]-zc; let e = (px*px)/(A*A) + (pz*pz)/(C*C);
-        if (e < 1) { if (e < 1e-9) { px = A; pz = 0; e = 1; } const f = 1/Math.sqrt(e); pos[o]=px*f; pos[o+2]=pz*f + zc; } }
+      { const py = pos[o+1] - rootY, ext = core(py), A = ext[0]+SO, C = ext[1]+SO;
+        const zc = (lean ? ls * Math.max(0, py - leanPy) : 0) + rootZ;   // torso leans -> centre shifts forward; root motion carries it
+        let px=pos[o]-rootX, pz=pos[o+2]-zc; let e = (px*px)/(A*A) + (pz*pz)/(C*C);
+        if (e < 1) { if (e < 1e-9) { px = A; pz = 0; e = 1; } const f = 1/Math.sqrt(e); pos[o]=px*f+rootX; pos[o+2]=pz*f + zc; } }
     }
   }
 

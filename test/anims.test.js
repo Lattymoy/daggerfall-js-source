@@ -34,14 +34,17 @@ test('anims: sampler is a continuous delta (zero at entry, null past dur)', () =
   const start = sampleClip(clip, 0);
   for (const k of ['twist', 'lean']) if (k in start) assert.equal(start[k], 0);
   for (const limb of ['armL', 'armR']) if (start[limb]) for (const v of Object.values(start[limb])) assert.equal(v, 0);
-  const held = sampleClip(clip, 0.30 * clip.dur);   // inside the loaded HOLD (0.26..0.34)
+  const held = sampleClip(clip, 0.28 * clip.dur);   // inside the loaded beat (0.24..0.32)
   assert.ok(Math.abs(held.armL.handYaw - -0.565) < 0.01, `hold value: ${held.armL.handYaw}`);
-  // 'snap' (u^3) back-loads the segment: just past the hold the value
+  // 'snap' (u^3) back-loads the segment: just past the beat the value
   // has barely moved; near the impact key it has nearly arrived.
-  const early = sampleClip(clip, 0.38 * clip.dur).armL.handYaw;
-  const late = sampleClip(clip, 0.49 * clip.dur).armL.handYaw;
+  const early = sampleClip(clip, 0.36 * clip.dur).armL.handYaw;
+  const late = sampleClip(clip, 0.475 * clip.dur).armL.handYaw;
   assert.ok(Math.abs(early - -0.58) < 0.05, `snap should idle early: ${early}`);
   assert.ok(late > 0.30, `snap should arrive late: ${late}`);
+  // root motion is real: the thrust's lunge peaks past 0.20 forward
+  const lunge = sampleClip(ATTACKS_1H.StrikeUp, 0.46 * ATTACKS_1H.StrikeUp.dur).rootZ;
+  assert.ok(lunge > 0.20, `thrust lunge: ${lunge}`);
   assert.ok(Number.isFinite(held.twist));
   assert.equal(sampleClip(clip, clip.dur), null);
   assert.equal(sampleClip(clip, clip.dur * 2), null);

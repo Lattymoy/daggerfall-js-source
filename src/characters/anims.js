@@ -76,100 +76,111 @@ export function sampleClip(clip, t) {
 // against fist-travel probes (dx sign + magnitude checked live).
 
 export const ATTACKS_1H = {
-  // OVERHAUL (v3): every strike is built as a KINETIC CHAIN with
-  // real timing, not a symmetric ease. Structure per clip:
-  //   load (slow, 'smooth') -> loaded HOLD (a beat at full coil) ->
-  //   LAUNCH ('snap': u^3, explosive arrival at impact) ->
-  //   FOLLOW-THROUGH ('out': the blade passes the target line and
-  //   hard-stops) -> settle -> home (all tracks end at 0).
-  // SEQUENCING: the hips (twist) load and fire ~0.04 EARLIER than the
-  // arm, the wrist/blade ~0.04 LATER - energy travels hips -> shoulder
-  // -> blade like a whip. The GUARD ARM counters every swing; LEGS
-  // shift weight (rest-state only - the gait owns them while moving).
-  // Seat context: the +45 carry is near-horizontal, tip below the
-  // wrist pivot - twist is the lateral engine, handPitch the vertical.
+  // ACTION REDESIGN (v4, Mac: "stiff, not action oriented"): the
+  // missing piece was ROOT MOTION - every clip fired from a statue
+  // bolted to the floor. Clips now carry `rootX/rootY/rootZ` tracks:
+  // whole-body translation (torso, head, arms, legs, the held sword,
+  // and the cloth pins all ride it). Every strike MOVES: the chop
+  // STEPS IN and drives down through the target, the thrust rocks
+  // back then LUNGES, the cuts throw weight ACROSS the stance, the
+  // hacks DROP the body through the swing. Rhythm now differs per
+  // clip (fast cuts, theatrical chop, instant thrust) instead of one
+  // shared windup/impact grid. Kinetic-chain stagger, snap/out
+  // easing, hitstops, guard counters and the SKULL-CLEAR shallow
+  // coils (sweep-picked) all carry over.
 
-  // EXECUTIONER CHOP: rise and coil overhead with a visible beat,
-  // then the wrist slams the tip down the centreline, body folding
-  // after it, weight sinking into the lead knee.
-  StrikeDown: { dur: 0.60, tracks: {
-    'twist':          [[0, 0], [0.20, 0.14], [0.28, 0.16, 'snap'], [0.44, -0.16, 'out'], [0.54, -0.10], [0.78, -0.03], [1, 0]],
-    'armL.sw':        [[0, 0], [0.24, -0.72], [0.32, -0.76, 'snap'], [0.48, 0.18, 'out'], [0.58, 0.32], [0.80, 0.10], [1, 0]],
-    'armL.bd':        [[0, 0], [0.24, 0.50], [0.32, 0.52, 'snap'], [0.48, 0.04], [0.70, 0.02], [1, 0]],
-    'armL.handPitch': [[0, 0], [0.28, -0.60], [0.36, -0.65, 'snap'], [0.52, 1.00, 'hold'], [0.55, 1.00, 'out'], [0.64, 1.28], [0.82, 0.55], [1, 0]],
-    'armR.sw':        [[0, 0], [0.28, -0.60, 'snap'], [0.52, -0.10], [0.75, -0.04], [1, 0]],
-    'armR.bd':        [[0, 0], [0.28, 0.65, 'snap'], [0.52, 0.12], [1, 0]],
-    'legR.bd':        [[0, 0], [0.36, 0.04, 'snap'], [0.54, 0.30], [0.80, 0.12], [1, 0]],
-    'legL.sw':        [[0, 0, 'snap'], [0.54, 0.10], [1, 0]],
-    'lean':           [[0, 0], [0.26, -0.12], [0.34, -0.13, 'snap'], [0.52, 0.30, 'out'], [0.62, 0.35], [0.84, 0.14], [1, 0]],
-    'headPitch':      [[0, 0], [0.28, -0.22, 'snap'], [0.52, 0.12], [1, 0]],
+  // STEPPING CHOP (0.58): gather back + rise, a beat, then step in
+  // and drive DOWN through it - lead foot lands with the blade.
+  StrikeDown: { dur: 0.58, tracks: {
+    'rootY':          [[0, 0], [0.30, 0.05], [0.36, 0.05, 'snap'], [0.50, -0.06, 'hold'], [0.53, -0.06, 'out'], [0.78, -0.02], [1, 0]],
+    'rootZ':          [[0, 0], [0.30, -0.03], [0.36, -0.03, 'snap'], [0.50, 0.15, 'out'], [0.58, 0.17], [0.82, 0.06], [1, 0]],
+    'twist':          [[0, 0], [0.22, 0.14], [0.30, 0.16, 'snap'], [0.46, -0.16, 'out'], [0.56, -0.10], [0.80, -0.03], [1, 0]],
+    'armL.sw':        [[0, 0], [0.26, -0.72], [0.34, -0.76, 'snap'], [0.50, 0.18, 'out'], [0.60, 0.32], [0.82, 0.10], [1, 0]],
+    'armL.bd':        [[0, 0], [0.26, 0.50], [0.34, 0.52, 'snap'], [0.50, 0.04, 'out'], [0.72, 0.02], [1, 0]],
+    'armL.handPitch': [[0, 0], [0.30, -0.60], [0.38, -0.65, 'snap'], [0.52, 1.00, 'hold'], [0.55, 1.00, 'out'], [0.66, 1.28], [0.84, 0.55], [1, 0]],
+    'armR.sw':        [[0, 0], [0.30, -0.60], [0.52, -0.10, 'snap'], [0.78, -0.04], [1, 0]],
+    'armR.bd':        [[0, 0], [0.30, 0.65], [0.52, 0.12, 'snap'], [1, 0]],
+    'legR.sw':        [[0, 0], [0.30, -0.10], [0.36, -0.10, 'snap'], [0.50, -0.34, 'out'], [0.80, -0.10], [1, 0]],
+    'legR.bd':        [[0, 0], [0.50, 0.28, 'out'], [0.82, 0.10], [1, 0]],
+    'legL.sw':        [[0, 0], [0.36, 0.02, 'snap'], [0.50, 0.16, 'out'], [0.80, 0.05], [1, 0]],
+    'lean':           [[0, 0], [0.28, -0.12], [0.36, -0.13, 'snap'], [0.52, 0.30, 'hold'], [0.55, 0.30, 'out'], [0.66, 0.36], [0.86, 0.14], [1, 0]],
+    'headPitch':      [[0, 0], [0.30, -0.22], [0.52, 0.12, 'snap'], [1, 0]],
   } },
 
-  // FLAT CUT RIGHT: hips wind left with a beat, then fire right;
-  // the blade lags and whips through, passing the line before the
-  // hard stop. Guard arm swings opposite for balance.
-  StrikeRight: { dur: 0.42, tracks: {
-    'twist':          [[0, 0], [0.18, -0.34], [0.26, -0.38, 'snap'], [0.42, 0.48, 'out'], [0.52, 0.58], [0.76, 0.18], [1, 0]],
-    'armL.sw':        [[0, 0], [0.22, -0.38], [0.30, -0.40, 'snap'], [0.46, -0.18], [0.70, -0.06], [1, 0]],
-    'armL.spread':    [[0, 0], [0.22, 0.18, 'snap'], [0.46, -0.12], [1, 0]],
-    'armL.handYaw':   [[0, 0], [0.26, -0.55], [0.34, -0.58, 'snap'], [0.50, 0.62, 'hold'], [0.53, 0.62, 'out'], [0.62, 0.74], [0.80, 0.22], [1, 0]],
-    'armR.sw':        [[0, 0], [0.26, -0.35, 'snap'], [0.48, 0.20], [0.75, 0.06], [1, 0]],
-    'armR.spread':    [[0, 0], [0.26, 0.30, 'snap'], [0.48, -0.08], [1, 0]],
-    'legL.sw':        [[0, 0, 'snap'], [0.44, -0.10], [0.75, -0.03], [1, 0]],
-    'lean':           [[0, 0, 'snap'], [0.44, 0.12, 'out'], [0.60, 0.14], [1, 0]],
+  // CROSSING CUT RIGHT (0.40): fast - weight loads LEFT, then the
+  // whole body crosses RIGHT with the blade, pivoting on the lead.
+  StrikeRight: { dur: 0.40, tracks: {
+    'rootX':          [[0, 0], [0.20, -0.08], [0.26, -0.08, 'snap'], [0.44, 0.10, 'hold'], [0.47, 0.10, 'out'], [0.58, 0.12], [0.82, 0.04], [1, 0]],
+    'rootZ':          [[0, 0], [0.26, 0.00, 'snap'], [0.44, 0.05, 'out'], [0.80, 0.02], [1, 0]],
+    'twist':          [[0, 0], [0.16, -0.34], [0.24, -0.38, 'snap'], [0.42, 0.48, 'hold'], [0.45, 0.48, 'out'], [0.56, 0.58], [0.78, 0.18], [1, 0]],
+    'armL.sw':        [[0, 0], [0.20, -0.38], [0.28, -0.40, 'snap'], [0.44, -0.18, 'out'], [0.72, -0.06], [1, 0]],
+    'armL.spread':    [[0, 0], [0.20, 0.18], [0.44, -0.12, 'snap'], [1, 0]],
+    'armL.handYaw':   [[0, 0], [0.24, -0.55], [0.32, -0.58, 'snap'], [0.48, 0.62, 'hold'], [0.51, 0.62, 'out'], [0.62, 0.74], [0.82, 0.22], [1, 0]],
+    'armR.sw':        [[0, 0], [0.24, -0.35], [0.46, 0.20, 'snap'], [0.76, 0.06], [1, 0]],
+    'armR.spread':    [[0, 0], [0.24, 0.30], [0.46, -0.08, 'snap'], [1, 0]],
+    'legL.sw':        [[0, 0], [0.42, -0.12, 'snap'], [0.76, -0.03], [1, 0]],
+    'lean':           [[0, 0], [0.42, 0.12, 'snap'], [0.58, 0.14, 'out'], [1, 0]],
   } },
-  // FLAT CUT LEFT (backhand): mirrored, slightly tighter windup.
-  StrikeLeft: { dur: 0.42, tracks: {
-    'twist':          [[0, 0], [0.18, 0.34], [0.26, 0.38, 'snap'], [0.42, -0.48, 'out'], [0.52, -0.58], [0.76, -0.18], [1, 0]],
-    'armL.sw':        [[0, 0], [0.22, -0.38], [0.30, -0.40, 'snap'], [0.46, -0.18], [0.70, -0.06], [1, 0]],
-    'armL.spread':    [[0, 0], [0.22, -0.18, 'snap'], [0.46, 0.12], [1, 0]],
-    'armL.handYaw':   [[0, 0], [0.26, 0.55], [0.34, 0.58, 'snap'], [0.50, -0.62, 'hold'], [0.53, -0.62, 'out'], [0.62, -0.74], [0.80, -0.22], [1, 0]],
-    'armR.sw':        [[0, 0], [0.26, -0.35, 'snap'], [0.48, 0.20], [0.75, 0.06], [1, 0]],
-    'armR.spread':    [[0, 0], [0.26, -0.30, 'snap'], [0.48, 0.08], [1, 0]],
-    'legL.sw':        [[0, 0, 'snap'], [0.44, 0.10], [0.75, 0.03], [1, 0]],
-    'lean':           [[0, 0, 'snap'], [0.44, 0.12, 'out'], [0.60, 0.14], [1, 0]],
+  StrikeLeft: { dur: 0.40, tracks: {
+    'rootX':          [[0, 0], [0.20, 0.08], [0.26, 0.08, 'snap'], [0.44, -0.10, 'hold'], [0.47, -0.10, 'out'], [0.58, -0.12], [0.82, -0.04], [1, 0]],
+    'rootZ':          [[0, 0], [0.26, 0.00, 'snap'], [0.44, 0.05, 'out'], [0.80, 0.02], [1, 0]],
+    'twist':          [[0, 0], [0.16, 0.34], [0.24, 0.38, 'snap'], [0.42, -0.48, 'hold'], [0.45, -0.48, 'out'], [0.56, -0.58], [0.78, -0.18], [1, 0]],
+    'armL.sw':        [[0, 0], [0.20, -0.38], [0.28, -0.40, 'snap'], [0.44, -0.18, 'out'], [0.72, -0.06], [1, 0]],
+    'armL.spread':    [[0, 0], [0.20, -0.18], [0.44, 0.12, 'snap'], [1, 0]],
+    'armL.handYaw':   [[0, 0], [0.24, 0.55], [0.32, 0.58, 'snap'], [0.48, -0.62, 'hold'], [0.51, -0.62, 'out'], [0.62, -0.74], [0.82, -0.22], [1, 0]],
+    'armR.sw':        [[0, 0], [0.24, -0.35], [0.46, 0.20, 'snap'], [0.76, 0.06], [1, 0]],
+    'armR.spread':    [[0, 0], [0.24, -0.30], [0.46, 0.08, 'snap'], [1, 0]],
+    'legL.sw':        [[0, 0], [0.42, 0.12, 'snap'], [0.76, 0.03], [1, 0]],
+    'lean':           [[0, 0], [0.42, 0.12, 'snap'], [0.58, 0.14, 'out'], [1, 0]],
   } },
 
-  // DIAGONAL HACKS: shorter, brutal - half chop, half cut, weight
-  // dropping through the swing.
+  // DROPPING HACKS (0.46): the body FALLS through the diagonal - dip
+  // and drive, weight crashing onto the bent lead knee.
   StrikeDownRight: { dur: 0.46, tracks: {
-    'twist':          [[0, 0], [0.18, -0.16], [0.26, -0.18, 'snap'], [0.42, 0.42, 'out'], [0.52, 0.50], [0.78, 0.14], [1, 0]],
+    'rootY':          [[0, 0], [0.26, 0.03], [0.32, 0.03, 'snap'], [0.48, -0.11, 'hold'], [0.51, -0.11, 'out'], [0.80, -0.03], [1, 0]],
+    'rootZ':          [[0, 0], [0.32, -0.02, 'snap'], [0.48, 0.10, 'out'], [0.58, 0.12], [0.84, 0.04], [1, 0]],
+    'rootX':          [[0, 0], [0.32, -0.04, 'snap'], [0.48, 0.06, 'out'], [1, 0]],
+    'twist':          [[0, 0], [0.18, -0.16], [0.26, -0.18, 'snap'], [0.44, 0.42, 'out'], [0.54, 0.50], [0.80, 0.14], [1, 0]],
     'armL.sw':        [[0, 0], [0.22, -0.70], [0.30, -0.74, 'snap'], [0.46, 0.06, 'out'], [0.56, 0.16], [1, 0]],
-    'armL.bd':        [[0, 0], [0.22, 0.32, 'snap'], [0.46, 0.02], [1, 0]],
+    'armL.bd':        [[0, 0], [0.22, 0.32], [0.46, 0.02, 'snap'], [1, 0]],
     'armL.handPitch': [[0, 0], [0.26, -0.50], [0.34, -0.55, 'snap'], [0.50, 0.72, 'hold'], [0.53, 0.72, 'out'], [0.62, 0.90], [0.82, 0.30], [1, 0]],
-    'armL.handYaw':   [[0, 0], [0.26, -0.60, 'snap'], [0.50, 0.70], [0.80, 0.20], [1, 0]],
-    'armR.sw':        [[0, 0], [0.26, -0.40, 'snap'], [0.50, 0.12], [1, 0]],
-    'legR.bd':        [[0, 0, 'snap'], [0.50, 0.26], [0.80, 0.10], [1, 0]],
-    'lean':           [[0, 0], [0.26, -0.08, 'snap'], [0.50, 0.24, 'out'], [0.62, 0.28], [1, 0]],
-    'headPitch':      [[0, 0], [0.26, -0.14, 'snap'], [0.50, 0.08], [1, 0]],
+    'armL.handYaw':   [[0, 0], [0.26, -0.60], [0.50, 0.70, 'snap'], [0.80, 0.20], [1, 0]],
+    'armR.sw':        [[0, 0], [0.26, -0.40], [0.50, 0.12, 'snap'], [1, 0]],
+    'legR.bd':        [[0, 0], [0.50, 0.26, 'out'], [0.82, 0.10], [1, 0]],
+    'lean':           [[0, 0], [0.26, -0.08], [0.50, 0.24, 'hold'], [0.53, 0.24, 'out'], [0.64, 0.28], [1, 0]],
+    'headPitch':      [[0, 0], [0.26, -0.14], [0.50, 0.08, 'snap'], [1, 0]],
   } },
   StrikeDownLeft: { dur: 0.46, tracks: {
-    'twist':          [[0, 0], [0.18, 0.16], [0.26, 0.18, 'snap'], [0.42, -0.42, 'out'], [0.52, -0.50], [0.78, -0.14], [1, 0]],
+    'rootY':          [[0, 0], [0.26, 0.03], [0.32, 0.03, 'snap'], [0.48, -0.11, 'hold'], [0.51, -0.11, 'out'], [0.80, -0.03], [1, 0]],
+    'rootZ':          [[0, 0], [0.32, -0.02, 'snap'], [0.48, 0.10, 'out'], [0.58, 0.12], [0.84, 0.04], [1, 0]],
+    'rootX':          [[0, 0], [0.32, 0.04, 'snap'], [0.48, -0.06, 'out'], [1, 0]],
+    'twist':          [[0, 0], [0.18, 0.16], [0.26, 0.18, 'snap'], [0.44, -0.42, 'out'], [0.54, -0.50], [0.80, -0.14], [1, 0]],
     'armL.sw':        [[0, 0], [0.22, -0.70], [0.30, -0.74, 'snap'], [0.46, 0.06, 'out'], [0.56, 0.16], [1, 0]],
-    'armL.bd':        [[0, 0], [0.22, 0.32, 'snap'], [0.46, 0.02], [1, 0]],
+    'armL.bd':        [[0, 0], [0.22, 0.32], [0.46, 0.02, 'snap'], [1, 0]],
     'armL.handPitch': [[0, 0], [0.26, -0.50], [0.34, -0.55, 'snap'], [0.50, 0.72, 'hold'], [0.53, 0.72, 'out'], [0.62, 0.90], [0.82, 0.30], [1, 0]],
-    'armL.handYaw':   [[0, 0], [0.26, 0.60, 'snap'], [0.50, -0.70], [0.80, -0.20], [1, 0]],
-    'armR.sw':        [[0, 0], [0.26, -0.40, 'snap'], [0.50, 0.12], [1, 0]],
-    'legR.bd':        [[0, 0, 'snap'], [0.50, 0.26], [0.80, 0.10], [1, 0]],
-    'lean':           [[0, 0], [0.26, -0.08, 'snap'], [0.50, 0.24, 'out'], [0.62, 0.28], [1, 0]],
-    'headPitch':      [[0, 0], [0.26, -0.14, 'snap'], [0.50, 0.08], [1, 0]],
+    'armL.handYaw':   [[0, 0], [0.26, 0.42], [0.50, -0.70, 'snap'], [0.80, -0.20], [1, 0]],
+    'armR.sw':        [[0, 0], [0.26, -0.40], [0.50, 0.12, 'snap'], [1, 0]],
+    'legR.bd':        [[0, 0], [0.50, 0.26, 'out'], [0.82, 0.10], [1, 0]],
+    'lean':           [[0, 0], [0.26, -0.08], [0.50, 0.24, 'hold'], [0.53, 0.24, 'out'], [0.64, 0.28], [1, 0]],
+    'headPitch':      [[0, 0], [0.26, -0.14], [0.50, 0.08, 'snap'], [1, 0]],
   } },
 
-  // PISTON THRUST: coil the elbow with the pommel at the hip - a
-  // clear loaded beat - then the point punches out on a lunge, rear
-  // leg driving, guard hand pulling back hard for balance, overshoot
-  // past full extension before the stop.
-  StrikeUp: { dur: 0.38, tracks: {
-    'armL.sw':        [[0, 0], [0.24, 0.32], [0.32, 0.34, 'snap'], [0.48, -1.10, 'hold'], [0.51, -1.10, 'out'], [0.58, -1.28], [0.78, -0.40], [1, 0]],
-    'armL.bd':        [[0, 0], [0.24, 1.15], [0.32, 1.18, 'snap'], [0.48, -0.04], [0.70, 0.02], [1, 0]],
-    'armL.handPitch': [[0, 0], [0.24, -0.38, 'snap'], [0.48, 0.34, 'out'], [0.58, 0.40], [1, 0]],
-    'twist':          [[0, 0], [0.22, 0.20], [0.30, 0.22, 'snap'], [0.46, -0.14], [1, 0]],
-    'armR.sw':        [[0, 0], [0.24, -0.20, 'snap'], [0.48, 0.60], [0.72, 0.20], [1, 0]],
-    'armR.bd':        [[0, 0], [0.24, 0.30, 'snap'], [0.48, 0.45], [1, 0]],
-    'legR.sw':        [[0, 0], [0.30, 0.06, 'snap'], [0.48, -0.38], [0.80, -0.12], [1, 0]],
-    'legR.bd':        [[0, 0, 'snap'], [0.48, 0.10], [1, 0]],
-    'legL.bd':        [[0, 0, 'snap'], [0.48, 0.32], [0.80, 0.10], [1, 0]],
-    'lean':           [[0, 0], [0.26, -0.05, 'snap'], [0.48, 0.30, 'out'], [0.58, 0.36], [0.82, 0.12], [1, 0]],
-    'headPitch':      [[0, 0, 'snap'], [0.48, -0.06], [1, 0]],
+  // LUNGING THRUST (0.36): rock back onto the trail foot, then the
+  // WHOLE BODY launches - the biggest root drive of the set, point
+  // punching out level, guard hand hauling back.
+  StrikeUp: { dur: 0.36, tracks: {
+    'rootZ':          [[0, 0], [0.24, -0.06], [0.30, -0.06, 'snap'], [0.46, 0.22, 'hold'], [0.50, 0.22, 'out'], [0.58, 0.24], [0.84, 0.08], [1, 0]],
+    'rootY':          [[0, 0], [0.30, 0.00, 'snap'], [0.46, -0.06, 'out'], [0.84, -0.02], [1, 0]],
+    'armL.sw':        [[0, 0], [0.24, 0.32], [0.30, 0.34, 'snap'], [0.46, -1.10, 'hold'], [0.49, -1.10, 'out'], [0.58, -1.28], [0.80, -0.40], [1, 0]],
+    'armL.bd':        [[0, 0], [0.24, 1.15], [0.30, 1.18, 'snap'], [0.46, -0.04, 'out'], [0.72, 0.02], [1, 0]],
+    'armL.handPitch': [[0, 0], [0.24, -0.38], [0.46, 0.34, 'snap'], [0.56, 0.40, 'out'], [1, 0]],
+    'twist':          [[0, 0], [0.22, 0.20], [0.28, 0.22, 'snap'], [0.44, -0.14, 'out'], [1, 0]],
+    'armR.sw':        [[0, 0], [0.24, -0.20], [0.46, 0.60, 'snap'], [0.74, 0.20], [1, 0]],
+    'armR.bd':        [[0, 0], [0.24, 0.30], [0.46, 0.45, 'snap'], [1, 0]],
+    'legR.sw':        [[0, 0], [0.28, 0.06], [0.46, -0.38, 'snap'], [0.82, -0.12], [1, 0]],
+    'legR.bd':        [[0, 0], [0.46, 0.10, 'snap'], [1, 0]],
+    'legL.bd':        [[0, 0], [0.46, 0.32, 'snap'], [0.82, 0.10], [1, 0]],
+    'lean':           [[0, 0], [0.26, -0.05], [0.46, 0.30, 'hold'], [0.49, 0.30, 'out'], [0.58, 0.36], [0.84, 0.12], [1, 0]],
+    'headPitch':      [[0, 0], [0.46, -0.06, 'snap'], [1, 0]],
   } },
 };

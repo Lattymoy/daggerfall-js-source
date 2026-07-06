@@ -233,7 +233,10 @@ function stepDrapeCloth(phase, motion, bob, L) {
   const shoulderDrape = isCloak || cur === 'Wrap' || cur === 'Sash';   // hang from the upper body, not the legs
   // bone-drive makes the lower drape follow the legs; capsule collision (last) guarantees no clip
   const lean = (motion > 0.5 && L) ? L.lean : 0;
-  const opts = { gy: -7, gx: motion * 0.3 * Math.sin(phase), gz: -motion * 0.9, pinDY: bob, lean, leanPivot: hipY + 0.10, iters: 10, damp: 0.90, maxStep: 0.04, groundY: 0.02,
+  const rp = effectivePose() || {};
+  const leanAll = lean + (rp.lean || 0);   // pins follow the FULL torso lean (gait + pose + attack), not just the gait's
+  const opts = { gy: -7, gx: motion * 0.3 * Math.sin(phase), gz: -motion * 0.9, pinDY: bob, lean: leanAll, leanPivot: hipY + 0.10, iters: 10, damp: 0.90, maxStep: 0.04, groundY: 0.02,
+    rootX: rp.rootX || 0, rootY: rp.rootY || 0, rootZ: rp.rootZ || 0,
     capsules: shoulderDrape ? (motion > 0.5 ? col.caps : null) : col.caps, bones: shoulderDrape ? null : col.bones };
   stepCloth(cs.cloth, 1/60, opts, coreFn);
   stepCloth(cs.cloth, 1/60, opts, coreFn); // 2 substeps for stability
@@ -352,6 +355,7 @@ function animateTarget(T, wt, L, bob, pose, moving) {
   const lean = (L.lean || 0) + (pose && pose.lean || 0);   // pose crouch adds to the gait's own lean
   const twist = (pose && pose.twist) || 0;                 // attack body commitment (rotY about the spine)
   const headPitch = (L.headPitch || 0) + (pose && pose.headPitch || 0); // run look-up + attack follow
+  const rX = (pose && pose.rootX) || 0, rY = (pose && pose.rootY) || 0, rZ = (pose && pose.rootZ) || 0; // ROOT MOTION: whole-body translation
   const held = !!T.held;                                   // gripped rigid object: whole hand chain
   const applyLimb = (g, phase, isLeg, limbKey) => {
     const pp = pose && pose[limbKey];
@@ -383,7 +387,7 @@ function animateTarget(T, wt, L, bob, pose, moving) {
       if (!isLeg && sprA) [x,y] = rotZ(x, y, armRootX[g], shoulderY, sprA); // abduction
       if (!isLeg && twist) [x,z] = rotY(x, z, 0, 0, twist);        // body commitment (arms + held follow the spine)
       if (!isLeg) [y,z] = rotX(y, z, leanPivot, lean);             // arms lean with the torso
-      P[i*3] = x; P[i*3+1] = y + bob; P[i*3+2] = z;
+      P[i*3] = x + rX; P[i*3+1] = y + bob + rY; P[i*3+2] = z + rZ;
     }
   };
   applyLimb(4, 0, true, 'legL'); applyLimb(5, Math.PI, true, 'legR');   // legs
@@ -393,7 +397,7 @@ function animateTarget(T, wt, L, bob, pose, moving) {
     if (VG[i] === 1 && headPitch) [y,z] = rotX(y, z, D.neckY, headPitch); // look up/down about the neck
     if (twist) [x,z] = rotY(x, z, 0, 0, twist);
     [y,z] = rotX(y, z, leanPivot, lean);
-    P[i*3] = x; P[i*3+1] = y + bob; P[i*3+2] = z;
+    P[i*3] = x + rX; P[i*3+1] = y + bob + rY; P[i*3+2] = z + rZ;
   }
   T.geo.attributes.position.needsUpdate = true;
 }
@@ -422,6 +426,7 @@ function effectivePose() {
   const limb = (k, zero) => { const has = b[k] || d[k]; if (!has) return b[k]; const o = { ...(b[k] || zero) }; const dd = d[k]; if (dd) for (const c in dd) o[c] = (o[c] || 0) + dd[c]; return o; };
   return { ...b, gaitArm: 0, gaitElbow: 0, runElbow: 0,
     lean: (b.lean || 0) + (d.lean || 0), twist: (b.twist || 0) + (d.twist || 0), headPitch: (b.headPitch || 0) + (d.headPitch || 0),
+    rootX: (b.rootX || 0) + (d.rootX || 0), rootY: (b.rootY || 0) + (d.rootY || 0), rootZ: (b.rootZ || 0) + (d.rootZ || 0),
     armL: limb('armL', ZERO_ARM), armR: limb('armR', ZERO_ARM),
     legL: limb('legL', { sw: 0, bd: 0 }), legR: limb('legR', { sw: 0, bd: 0 }) };
 }
