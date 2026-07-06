@@ -325,9 +325,31 @@ rig is the authoring bench for monster morphologies. Slices:
   into one Promise.all. FLAGGED: monster careers
   (GetMonsterCareerTemplate) + class equipment/armor
   (SetEnemyEquipment) + loot -> E3b/E4. 3 tests.
-- **E3b:** hit resolution (FormulaHelper CalculateAttackDamage)
-  consuming the machine 'hit' events both ways + the shipped hit
-  reactions; enemy death.
+- **E3b (hit resolution, enemy -> player): SHIPPED.** combat/
+  formulas.js is the verbatim FormulaHelper core: Dice100,
+  DamageModifier (Mathf.Floor, NOT trunc - matters for str < 50),
+  hand-to-hand min/max (the character-sheet rule over the Chronicles
+  table), the weapon min/max switch tables, material modifiers
+  ([-1,0,0,1,2,3,3,4,5,6] - half the in-game display, per source),
+  struck-body-part table, the career attack-modifier bit table
+  (0x01/0x10 undead ... 0x08/0x80 animals) + always-on enemy-type
+  bonus (DFU's port of classic's broken gate), stats-to-hit (TRUNC -
+  C# int div), skills-to-hit with classic's dodging/4 bug and the
+  crit +skill/10 roll, CalculateSuccessfulHit (source roll ordering,
+  3..97 clamp), hand-to-hand + weapon damage (source operation order:
+  skeletal edged/silver rules BEFORE strength/material), backstab,
+  and the EnemyAttack.MeleeDamage hit gate 'matched to classic'
+  (0.25 point-blank / MeleeDistance + 35.156deg - MELEE_DISTANCE
+  single-sourced from enemyMotor, caught in review). Entities carry
+  career stats (STR/AGI/LUC) + attackModifierFlags; playerEntity
+  gains INTERIM maxHealth 50 / flat skills 30 (loud flags, chargen
+  replaces). Enemy hit frames now damage the player through the full
+  chain; health floors at 0 on __player (death screen + HUD: UI arc;
+  foe reactions + death land with player attacks in E3c). Roll slots
+  injectable - 5 deterministic tests.
+- **E3c:** the player's weapon into the world scenes (FP viewmodel +
+  gesture input + reach) resolving against foes; foe hit reactions +
+  death (corpse flats from the extracted corpseTexture).
 - **E4+:** authored monster morphologies (rewrite/ bench), spectral
   emission unblock, perf pass (per-enemy mesh updates).
 

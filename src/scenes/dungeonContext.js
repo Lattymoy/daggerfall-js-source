@@ -146,7 +146,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
     const [{ ImgFile }, shared, engineRig, { buildRaceCharacter }, { floorLanding },
-      { EnemyAI }, { EnemyAttack }, { makeEnemyEntity }, { ClassFile }, { playerEntity }] = await Promise.all([
+      { EnemyAI, withinYaw }, { EnemyAttack }, { makeEnemyEntity }, { ClassFile }, { playerEntity }] = await Promise.all([
       import('../formats/imgFile.js'), import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'), import('../player/enterExit.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
@@ -155,7 +155,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     ]);
     const bodyImg = new ImgFile();
     bodyImg.load(await shared.fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
+    const formulas = await import('../combat/formulas.js');
     foeDeps = {
+      calculateAttackDamage: formulas.calculateAttackDamage,
+      meleeHitConnects: formulas.meleeHitConnects,
+      MELEE_HIT_YAW_DEG: formulas.MELEE_HIT_YAW_DEG,
+      withinYaw,
       fetchBytes: shared.fetchBytes,
       createCharacterRig: engineRig.createCharacterRig,
       bodyRamps: engineRig.deriveClassicRamps(palette, bodyImg.getDFBitmap()),
@@ -215,7 +220,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function drawFoes(dt, canvas, proj, view, eye, playerFeet) {
     for (const f of foes) {
       f.ai.update(dt, playerFeet || eye);   // E2: classic senses + pursuit; eye fallback keeps probes alive without a player
-      f.events = f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine ('hit' events consumed by E3 damage)
+      f.events = f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine
+      // E3b: the machine's hit frame resolves against the player -
+      // EnemyAttack.MeleeDamage verbatim: gate 0.25 / MeleeDistance +
+      // 35.156deg, then CalculateAttackDamage (class hand-to-hand;
+      // equipment E4). Player-as-target group is null (vampirism only
+      // in DFU). HUD pends the UI arc: health surfaces on __player.
+      if (playerFeet && f.events.includes('hit')) {
+        const pf = playerFeet;
+        const hdx = pf[0] - f.ai.feet[0], hdz = pf[2] - f.ai.feet[2];
+        if (foeDeps.meleeHitConnects(f.ai._dist, f.ai.inSight, foeDeps.withinYaw(f.ai.yaw, hdx, hdz, foeDeps.MELEE_HIT_YAW_DEG))) {
+          const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, { targetGroup: null });
+          if (dmg > 0) {
+            foeDeps.playerEntity.health = Math.max(0, foeDeps.playerEntity.health - dmg);
+            window.__player = foeDeps.playerEntity;
+          }
+        }
+      }
       f.rig.setGait(f.ai.moving ? 1 : 3);   // WALK while pursuing, IDLE sway at rest
       f.rig.setPose(f.attack.pose());       // strike clips over the gait; null clears
       f.rig.update(dt);

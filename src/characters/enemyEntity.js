@@ -55,14 +55,23 @@ export function makeEnemyEntity(mobileType, basics, career, playerLevel, rollFn 
   return {
     mobileType,
     isClass,
+    isPlayer: false,
+    careerIndex: isClass ? mobileType - 128 : mobileType,
     level,
     maxHealth,
     health: maxHealth,
     liveSpeed,
     armor,
     skills: skillsLevel(level),           // every skill, per SetEnemyCareer
+    // stats from the career attributes (class); monster careers pend
+    // GetMonsterCareerTemplate (E4) - 50s FLAGGED until then
+    stats: isClass
+      ? { strength: career.strength, agility: career.agility, luck: career.luck }
+      : { strength: 50, agility: 50, luck: 50 },
+    attackModifierFlags: isClass ? career.attackModifierFlags : null,   // monster careers E4
     minMetalToHit: basics.minMetalToHit,
     team: basics.team ?? 'None',
+    affinity: basics.affinity,
     name: isClass ? career.name : undefined,
   };
 }
