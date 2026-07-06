@@ -17,6 +17,17 @@ import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS } from '../world/actionSystem.js';
 import { playerEntity } from '../characters/playerEntity.js';
+import { addItem } from '../systems/inventory.js';
+import { generateItems as generateLootItems, LOOT_MATRICES } from '../systems/loot.js';
+import { floorLanding } from '../player/enterExit.js';
+
+// RDBLayout.AddRandomTreasure verbatim data: the icon roll table +
+// archive 216 (DaggerfallLootDataTables), and LootTables.GenerateLoot's
+// dungeon-type -> key table.
+const RANDOM_TREASURE_ARCHIVE = 216;
+const RANDOM_TREASURE_ICONS = [0, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 37, 43, 44, 45, 46, 47];
+const RANDOM_TREASURE_MARKER_RECORD = 19;   // editor flat 199.19
+const DUNGEON_LOOT_KEYS = ['K', 'N', 'N', 'N', 'K', 'M', 'M', 'Q', 'K', 'U', 'D', 'N', 'L', 'F', 'S', 'N', 'M', 'L', 'N'];
 import { trs, multiply } from '../world/mat4.js';
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
@@ -235,6 +246,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     flatGroups.get(key).push([e.x, e.y, e.z]);
   }
 
+  // S2: treasure piles - random markers (199.19) roll an icon +
+  // generate by the dungeon-type key; fixed 216 flats keep their
+  // record. Per-pile single batches so pickup can remove one pile.
+  const lootPiles = [];
+  {
+    const lootKey = DUNGEON_LOOT_KEYS[dfLocation.mapTableData.dungeonType] ?? '-';
+    for (const b of blocks) {
+      for (const m of b.layout.markers) {
+        const isRandom = !m.archive && m.record === RANDOM_TREASURE_MARKER_RECORD;
+        const isFixed = m.archive === RANDOM_TREASURE_ARCHIVE;
+        if (!isRandom && !isFixed) continue;
+        const record = isFixed ? m.record : RANDOM_TREASURE_ICONS[Math.floor(Math.random() * RANDOM_TREASURE_ICONS.length)];
+        const items = generateLootItems(lootKey, { level: playerEntity.level, gender: 'male' });
+        lootPiles.push({ pos: [m.x + b.originX, m.y, m.z + b.originZ], record, items, batch: null });
+      }
+    }
+  }
+
   const billboardBatches = [];
   for (const [key, centers] of flatGroups) {
     const [archive, record] = key.split('_').map(Number);
@@ -259,6 +288,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_drawSprite) _drawSprite = (await import('../render/characterSprite.js')).drawCharacterSprite;
   }
   if (foes.length) await _loadSprite();
+  // S2: one billboard batch per treasure pile (removable on pickup);
+  // grounded like corpses (AlignBillboardToGround semantics).
+  for (const pile of lootPiles) {
+    const t = await getTexture(RANDOM_TREASURE_ARCHIVE);
+    if (!t || pile.record >= t.recordCount) continue;
+    uploadRecord(RANDOM_TREASURE_ARCHIVE, pile.record);
+    const size = scaledBillboardSize(t.getSize(pile.record), t.getScale(pile.record));
+    const g = floorLanding(collider, [pile.pos[0], pile.pos[1] + 0.2, pile.pos[2]]);
+    pile.pos = g;
+    pile.half = [size.w / 2, size.h / 2];
+    pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, pile.record, size, [[g[0], g[1] + size.h / 2, g[2]]]);
+    billboardBatches.push(pile.batch);
+  }
+
   // C8 E3c: the player's weapon rides the SHARED machine; the host
   // feeds gesture deltas (attackInput) and the hit frame resolves
   // here against the foes - reach/view/LOS verbatim, damage through
@@ -399,6 +442,47 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foes,
     drawFoes,
     playerAttackInput,
+    // S2 pickup: piles + dead foes' corpses as activation targets;
+    // takeLoot transfers into the player entity and removes the flat.
+    lootTargets() {
+      const targets = [];
+      lootPiles.forEach((p, i) => {
+        if (!p.batch) return;
+        const [hx, hy] = p.half;
+        targets.push({ key: `loot:${i}`, aabb: { min: [p.pos[0] - hx, p.pos[1], p.pos[2] - hx], max: [p.pos[0] + hx, p.pos[1] + hy * 2, p.pos[2] + hx] } });
+      });
+      foes.forEach((f, i) => {
+        if (!f.dead || !f.entity?.items?.length) return;
+        const p = f.ai.feet;
+        targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] } });
+      });
+      return targets;
+    },
+    takeLoot(key) {
+      const [kind, iStr] = key.split(':');
+      const i = Number(iStr);
+      let source = null;
+      if (kind === 'loot') {
+        const p = lootPiles[i];
+        if (!p || !p.batch) return 0;
+        source = p.items;
+        const bi = billboardBatches.indexOf(p.batch);
+        if (bi >= 0) billboardBatches.splice(bi, 1);
+        renderer.destroyBillboardBatch(p.batch);
+        p.batch = null;
+      } else if (kind === 'corpse') {
+        const f = foes[i];
+        if (!f?.dead) return 0;
+        source = f.entity.items;
+      }
+      if (!source) return 0;
+      let n = 0;
+      playerEntity.items = playerEntity.items || [];
+      for (const item of source) { addItem(playerEntity.items, item); n++; }
+      source.length = 0;
+      if (typeof window !== 'undefined') window.__player = playerEntity;
+      return n;
+    },
     textureTable: dungeon.textureTable,
     exitDoors,
     colliderTris,

@@ -14,4 +14,5 @@ export const playerEntity = {
   armor: 0,
   skills: 30,       // INTERIM flat skills until chargen
   stats: { strength: 50, agility: 50, luck: 50 },
+  items: [],        // the inventory (S2); gold rides as a Currency stack
 };

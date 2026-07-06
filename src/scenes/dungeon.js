@@ -98,7 +98,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
         distance: DOOR_ACTIVATION_DISTANCE,
       });
     }
+    targets.push(...ctx.lootTargets());   // S2: piles + lootable corpses
     const key = pickActivatable(eye, dir, targets, ctx.collider);
+    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:'))) { ctx.takeLoot(key); return; }
     if (key) ctx.actions.activate(key);
     return key;
   };

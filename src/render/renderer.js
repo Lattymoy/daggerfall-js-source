@@ -978,6 +978,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return { vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null };
   }
 
+  /** Free one billboard batch's GL objects (S2 pickup removes piles;
+   *  the optional-chained call it replaced would have leaked). */
+  destroyBillboardBatch(batch) {
+    const gl = this.gl;
+    if (!batch) return;
+    if (batch.vao) gl.deleteVertexArray(batch.vao);
+    for (const b of batch.buffers || []) gl.deleteBuffer(b);
+    batch.vao = null;
+    batch.buffers = [];
+  }
+
   /** Release a createMesh bundle's GPU resources. */
   destroyMesh(mesh) {
     const gl = this.gl;

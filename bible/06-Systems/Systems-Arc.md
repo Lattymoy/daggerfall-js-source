@@ -33,10 +33,34 @@ Enemy entities generate items at spawn per SetEnemyCareer order;
 corpses carry them. OPEN: corpse pickup (Player activation seam),
 dungeon treasure piles + interior containers consume this next.
 
+## S2 (inventory + pickup + dungeon treasure): SHIPPED
+
+src/systems/inventory.js: the verbatim stackable rule ("only
+ingredients, potions, gold pieces, oil and arrows... equipped,
+enchanted and quest items never" - potions/oil covered the day their
+groups exist), AddItem merge-vs-append (group + template + material
+identity), weapon weight x material/4 through the single-sourced
+multiplier table (armor material weight FLAGGED to S2b), transferAll.
+playerEntity carries items[].
+
+Dungeon treasure (the Ledger C row): random markers (editor 199.19)
+roll an icon from the verbatim 20-entry table on archive 216 and
+generate by LootTables.GenerateLoot's dungeon-type -> key table (19
+types, K/N/M/Q/U/D/L/F/S); fixed 216 flats keep their record with the
+same generation. Piles ground via floorLanding, render as PER-PILE
+billboard batches, and pickup removes the pile through the renderer's
+new destroyBillboardBatch (review catch: an optional-chained call to
+a method that didn't exist would have silently leaked the GL
+objects). Activation: lootTargets() exposes piles + lootable corpses;
+takeLoot transfers into the player through AddItem; routed in BOTH
+dungeon hosts ahead of the exit/action paths. Transfer feedback
+message + inventory UI pend the UI arc; interior containers pend
+S2b; the DFU icon-roll Random slot stays a uniform roll per the
+approved stance.
+
 ## Queue
-- S2: inventory core (stacks, equip table generalized from E4b,
-  weight) + corpse pickup + dungeon treasure piles (Ledger row) +
-  interior containers.
+- S2b: interior containers (MakeHouseContainer) + armor material
+  weight + shop shelves groundwork.
 - S3: character creation (the real PlayerEntity - clears the
   maxHealth/skills/stats interims; TallySkill, proficiency/racial
   mods unlock).

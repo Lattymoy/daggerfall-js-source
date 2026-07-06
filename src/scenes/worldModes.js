@@ -211,8 +211,13 @@ export function createWorldModes(host) {
     for (const o of dungeonCtx.actions.objects.values()) {
       targets.push({ key: o.key, aabb: objAabb(o) });
     }
+    targets.push(...dungeonCtx.lootTargets());   // S2: piles + lootable corpses
     const key = pickActivatable(eye, dir, targets, dungeonCtx.collider);
     if (key === null) return false;
+    if (key.startsWith('loot:') || key.startsWith('corpse:')) {
+      dungeonCtx.takeLoot(key);   // transfer message: UI arc
+      return true;
+    }
     if (!key.startsWith('exit:')) {
       dungeonCtx.actions.activate(key);
       return true;
