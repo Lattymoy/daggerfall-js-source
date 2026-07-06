@@ -347,7 +347,7 @@ export const CHAR_PIXEL = 7;
 
 /** The shared character-sprite render target's fixed edge (the pass
  *  clamps pw/ph to this; sprites render into a viewport sub-rect). */
-export const CHAR_SPRITE_RT_SIZE = 256;
+export const CHAR_SPRITE_RT_SIZE = 512;   // raised for the FP viewmodel frame (E3d): screenW/CHAR_PIXEL at 1440p ~ 366
 
 export class Renderer {
   constructor(canvas) {
@@ -722,6 +722,52 @@ void main() {
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
     gl.enable(gl.CULL_FACE);
     gl.bindVertexArray(null);
+  }
+
+  /** Fullscreen overlay of a sprite-RT sub-rect: no depth, no fog,
+   *  alpha-cut - the FP viewmodel composite (E3d). Classic draws the
+   *  weapon over everything. */
+  drawScreenOverlayQuad(tex, u1, v1) {
+    const gl = this.gl;
+    if (!this.overlayProgram) {
+      const vs = `#version 300 es
+layout(location=0) in vec2 aPos;
+uniform vec2 uUV1;
+out vec2 vUV;
+void main() { vUV = (aPos * 0.5 + 0.5) * uUV1; gl_Position = vec4(aPos, 0.0, 1.0); }`;
+      const fs = `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uTex;
+out vec4 outColor;
+void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = vec4(t.rgb, 1.0); }`;
+      this.overlayProgram = this._buildProgram(vs, fs);
+      this._overlay = {
+        tex: gl.getUniformLocation(this.overlayProgram, 'uTex'),
+        uv1: gl.getUniformLocation(this.overlayProgram, 'uUV1'),
+      };
+      const vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      const vbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      gl.bindVertexArray(null);
+      this._overlayVAO = vao;
+    }
+    gl.useProgram(this.overlayProgram);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.uniform1i(this._overlay.tex, 0);
+    gl.uniform2f(this._overlay.uv1, u1, v1);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.CULL_FACE);
+    gl.bindVertexArray(this._overlayVAO);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    gl.bindVertexArray(null);
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
   }
 
   /** Upload a getColor32 result as a REPEAT/NEAREST texture, keyed and cached. */

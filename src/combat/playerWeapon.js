@@ -21,7 +21,9 @@ import {
   createWeaponMachine, machineAttack, machineStep, gestureDirection,
   ATTACK_THRESHOLD, MAX_GESTURE_SECONDS,
 } from '../characters/weaponStates.js';
-import { DIRECTION_TO_STRIKE } from '../characters/anims.js';
+import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
+import { combinePose } from '../characters/animate.js';
+import { POSES } from '../characters/poses.js';
 import {
   calculateAttackDamage, enemyGroupOf, WEAPON_MIN_DAMAGE, WEAPON_MAX_DAMAGE,
 } from './formulas.js';
@@ -89,6 +91,18 @@ export class PlayerWeapon {
     return machineStep(this.machine, dt, this.liveSpeed);
   }
 
+  /** The FP viewmodel pose this frame: the fpMelee1H base with the
+   *  dedicated FP sweep composited on the machine's frame clock. */
+  pose() {
+    const base = POSES.fpMelee1H;
+    const m = this.machine;
+    if (m.state === 'Idle') return base;
+    const clip = ATTACKS_FP[m.state];
+    if (!clip) return base;
+    const frames = 5;   // MELEE_NUM_FRAMES - all melee strikes
+    return combinePose(base, sampleClip(clip, Math.min(0.9999, m.frame / (frames - 1))));
+  }
+
   /**
    * Resolve the hit frame against foes. Verbatim single-target rule
    * with swing + material paths through calculateAttackDamage.
@@ -98,7 +112,7 @@ export class PlayerWeapon {
    * @param playerCombat the player entity
    * @returns [{foe, damage}]
    */
-  resolveHit(foes, playerCombat, canSee, rolls = Math.random) {
+  resolveHit(foes, playerCombat, canSee, rolls = Math.random, backstabOf = () => 0) {
     const swing = SWING_MODS[this.machine.state] ?? { damage: 0, toHit: 0 };
     const results = [];
     for (const foe of foes) {
@@ -107,12 +121,15 @@ export class PlayerWeapon {
       if (!playerMeleeCanHit(dist, inView, losClear)) continue;
       // swing mods ride the source's channels: toHit onto
       // chanceToHitMod, damage INTO the damage call (before the
-      // skeletal rules and the <1 floor) - not post-hoc
+      // skeletal rules and the <1 floor) - not post-hoc. Backstab
+      // (E3d) rides its own verbatim channels: chance onto
+      // chanceToHitMod, x3 roll AFTER the damage calc.
       const damage = calculateAttackDamage(playerCombat, foe.entity, {
         weapon: this.weapon,
         targetGroup: enemyGroupOf(foe.entity.affinity),
         damageMod: swing.damage,
         toHitMod: swing.toHit,
+        backstabChance: backstabOf(foe),
         rolls,
       });
       results.push({ foe, damage });

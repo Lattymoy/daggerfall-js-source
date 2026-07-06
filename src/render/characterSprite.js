@@ -8,7 +8,7 @@
 // world pass is untouched (the standard excludes it). Sizing is
 // PROJECTION-EXACT (project center and head, divide) - analytic fov
 // estimates disagree with the true projection at high pitch.
-import { multiply, ortho, lookAt, transformPoint } from '../world/mat4.js';
+import { multiply, ortho, lookAt, perspective, transformPoint } from '../world/mat4.js';
 import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from './renderer.js';
 
 /**
@@ -35,4 +35,30 @@ export function drawCharacterSprite(renderer, canvas, rig, rigMat, proj, view, e
   const sTex = renderer.renderCharacterSprite(rig.mesh, rigMat, ortho(halfW, halfH, 0.1, 8), lookAt(miniEye, center, [0, 1, 0]), pw, ph);
   renderer.drawCharacterSpriteQuad(sTex, center, halfW, halfH, right, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);   // sample the sub-rect (fixed RT, audit fix)
   return { center, halfW, halfH, pw, ph };
+}
+
+/**
+ * THE FP VIEWMODEL PASS (E3d): the player's own rig, rendered from
+ * the player's eye through the SAME pixelize standard, composited as
+ * a fullscreen overlay (classic draws the weapon over everything).
+ * The FP clips were authored with the camera riding the head ("lean
+ * pitches the EYE"; deltas start/end 0 so the frame is exact at both
+ * ends). pw/ph = screen / CHAR_PIXEL, clamped PROPORTIONALLY to the
+ * fixed RT (both shrink together so the overlay never squashes;
+ * pixel size grows slightly past ~3.5k-wide displays).
+ */
+export function drawFirstPersonViewmodel(renderer, canvas, rig, feet, yaw, pitch, eyeHeight) {
+  const wantW = canvas.clientWidth / CHAR_PIXEL, wantH = canvas.clientHeight / CHAR_PIXEL;
+  const scale = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
+  const pw = Math.max(2, Math.round(wantW * scale));
+  const ph = Math.max(2, Math.round(wantH * scale));
+  const s = rig.scale;
+  const rigMat = trs(feet[0], feet[1] - rig.liveFootY * s, feet[2], 0, yaw * 180 / Math.PI, 0, s, s, s);
+  const eye = [feet[0], feet[1] + eyeHeight, feet[2]];
+  const cp = Math.cos(pitch);
+  const fwd = [Math.sin(yaw) * cp, Math.sin(pitch), Math.cos(yaw) * cp];
+  const proj = perspective(Math.PI / 3, pw / ph, 0.05, 12);
+  const view = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
+  const tex = renderer.renderCharacterSprite(rig.mesh, rigMat, proj, view, pw, ph);
+  renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);
 }

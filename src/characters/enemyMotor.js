@@ -80,6 +80,26 @@ export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeig
 }
 
 
+/** Verbatim DaggerfallMobileUnit back-facing: 8 orientations at 45deg
+ *  from the angle between the foe's forward and the horizontal
+ *  direction TO the viewer; records mirror 5..7 -> 3..1 and
+ *  AnimStateRecord % 5 > 2 (records 3, 4) is the back arc. The sign
+ *  of the source's cross-product convention only swaps mirrored
+ *  diagonals, which land on the SAME records - back-facing is
+ *  sign-symmetric, so the |angle| form is exact. Unity's
+ *  Mathf.RoundToInt rounds half-to-EVEN (112.5deg -> orientation 2,
+ *  NOT back; 157.5 -> 4, back) - preserved. */
+export function isBackFacing(foeYaw, foeFeet, viewerPos) {
+  const dx = viewerPos[0] - foeFeet[0], dz = viewerPos[2] - foeFeet[2];
+  const a = Math.atan2(dx, dz) - foeYaw;
+  const deg = Math.abs(((a * 180 / Math.PI + 540) % 360) - 180);   // 0..180 off forward
+  const r = deg / 45;
+  const base = Math.floor(r), frac = r - base;
+  const orientation = frac > 0.5 ? base + 1 : frac < 0.5 ? base : (base % 2 === 0 ? base : base + 1);
+  const record = orientation > 4 ? 8 - orientation : orientation;
+  return record % 5 > 2;
+}
+
 /**
  * Per-foe classic AI: senses on the system timer, decisions on the
  * classic update, movement applied continuously at the decided state.

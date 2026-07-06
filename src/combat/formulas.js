@@ -132,13 +132,13 @@ export function backstabDamage(damage, backstabbingLevel, roll01 = Math.random()
  * (flat skills here). Swing/proficiency/racial player mods: E3c with
  * the in-world weapon.
  */
-export function calculateAttackDamage(attacker, target, { weapon = null, targetGroup = null, damageMod = 0, toHitMod = 0, rolls = Math.random } = {}) {
+export function calculateAttackDamage(attacker, target, { weapon = null, targetGroup = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random } = {}) {
   if (!attacker || !target) return 0;
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) return 0;   // material too low
   // source: chanceToHitMod = skill, then player swing/proficiency/
   // racial toHit mods add on; damageModifiers ride INTO the damage
   // calls (before the skeletal rules and the <1 floor)
-  const chanceToHitMod = attacker.skills + toHitMod;
+  const chanceToHitMod = attacker.skills + toHitMod + backstabChance;   // source: backstabChance rides chanceToHitMod (line 611-612)
   const struck = calculateStruckBodyPart(rolls());
   let damage = 0;
   if (!weapon) {
@@ -150,6 +150,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, targetG
       damage = weaponAttackDamage(attacker, target, damageMod, weapon, rolls);
     }
   }
+  damage = backstabDamage(damage, backstabChance, rolls());   // applied AFTER the damage calc, verbatim (lines 627/688)
   return Math.max(0, damage);
 }
 

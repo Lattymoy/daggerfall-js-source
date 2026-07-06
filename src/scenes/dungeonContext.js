@@ -146,7 +146,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
     const [{ ImgFile }, shared, engineRig, { buildRaceCharacter }, { floorLanding },
-      { EnemyAI, withinYaw }, { EnemyAttack }, { makeEnemyEntity }, { ClassFile }, { playerEntity }] = await Promise.all([
+      { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity }, { ClassFile }, { playerEntity }] = await Promise.all([
       import('../formats/imgFile.js'), import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'), import('../player/enterExit.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
@@ -158,8 +158,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const formulas = await import('../combat/formulas.js');
     const { PlayerWeapon } = await import('../combat/playerWeapon.js');
     const { REACTIONS, sampleClip } = await import('../characters/anims.js');
+    const { drawFirstPersonViewmodel } = await import('../render/characterSprite.js');
+    const { EYE_HEIGHT } = await import('../player/motor.js');
     foeDeps = {
       PlayerWeapon, REACTIONS, sampleClip,
+      isBackFacing, drawFirstPersonViewmodel, EYE_HEIGHT,
       calculateAttackDamage: formulas.calculateAttackDamage,
       meleeHitConnects: formulas.meleeHitConnects,
       MELEE_HIT_YAW_DEG: formulas.MELEE_HIT_YAW_DEG,
@@ -226,6 +229,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the full chain, reactions on the shipped clips, death -> the
   // extracted corpse flat replaces the rig.
   const playerWeapon = foes.length ? new foeDeps.PlayerWeapon({}) : null;
+  // E3d: the player's own body as the FP viewmodel - same authored
+  // rig, fpMelee1H base + the dedicated FP sweeps on the machine.
+  const viewmodelRig = playerWeapon ? foeDeps.createCharacterRig(renderer, foeDeps.buildRaceCharacter('Human', foeDeps.bodyRamps)) : null;
   let _atkDx = 0, _atkDy = 0, _atkHeld = false;   // event deltas, consumed once per frame
   const corpses = [];
   async function spawnCorpse(f) {
@@ -244,6 +250,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     _atkDx += dx; _atkDy += dy; _atkHeld = held;
   }
   function resolvePlayerHit(eye, inViewFn, playerFeet) {
+    // E3d: backstab facing per foe, verbatim IsBackFacing (records
+    // 3/4 of the 8-orientation wheel); the chance = the player's
+    // Backstabbing skill (flat interim). TallySkill pends Systems.
+    for (const f of foes) if (!f.dead) f._backFacing = foeDeps.isBackFacing(f.ai.yaw, f.ai.feet, playerFeet);
     const live = foes.filter((f) => !f.dead);
     const canSee = (f) => {
       const c = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];   // foe center (mid-capsule)
@@ -254,7 +264,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return { dist, inView: inViewFn(c), losClear: !Number.isFinite(hit) || hit >= dist - 1e-3 };
     };
     const { playerEntity } = foeDeps;
-    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee)) {
+    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => f._backFacing ? playerEntity.skills : 0)) {
       if (damage <= 0) continue;
       foe.entity.health -= damage;
       if (foe.entity.health <= 0) {
@@ -319,6 +329,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const s = f.rig.scale, p = f.ai.feet;
       const mat = trs(p[0], p[1] - f.rig.liveFootY * s, p[2], 0, f.ai.yaw * 180 / Math.PI, 0, s, s, s);   // live support point, same grounding rule as the player rig
       _drawSprite(renderer, canvas, f.rig, mat, proj, view, eye);
+    }
+    if (viewmodelRig && playerFeet) {
+      // LAST: the FP overlay composites over the whole frame
+      // (classic draws the weapon over everything). Camera yaw/pitch
+      // derive from the view matrix's back row.
+      const fw = [-view[2], -view[6], -view[10]];
+      const vYaw = Math.atan2(fw[0], fw[2]);
+      const vPitch = Math.asin(Math.max(-1, Math.min(1, fw[1])));
+      viewmodelRig.setPose(playerWeapon.pose());
+      viewmodelRig.update(dt);
+      foeDeps.drawFirstPersonViewmodel(renderer, canvas, viewmodelRig, playerFeet, vYaw, vPitch, foeDeps.EYE_HEIGHT);
     }
   }
 

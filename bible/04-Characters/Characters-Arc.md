@@ -367,8 +367,29 @@ rig is the authoring bench for monster morphologies. Slices:
   equipped weapon is an Iron Dagger until the items arc; proficiency
   /racial mods pend chargen; backstab pends foe-facing bookkeeping;
   player attack ANIM (FP viewmodel in-world) is E3d. 3 tests.
-- **E3d:** the FP viewmodel rendered in-world (view-locked rig pass)
-  + backstab facing; monster careers + equipment begin E4.
+- **E3d (FP viewmodel + backstab): SHIPPED.** The player's own
+  authored rig renders as the FP viewmodel: fpMelee1H base +
+  the dedicated FP sweeps composited on the machine's frame clock
+  (combinePose is now CANONICAL in animate.js, ported verbatim from
+  the viewer's effectivePose - the viewer's inlined copy retires at
+  the next template regen). The pass renders from the player's eye
+  through the SAME pixelize standard into the shared RT (raised to
+  512 for the FP frame; pw/ph clamp PROPORTIONALLY so the overlay
+  never squashes) and composites as a depth-off fullscreen overlay
+  (classic draws the weapon over everything) - drawn LAST in
+  drawFoes (review catch: it first drew before the foes, who painted
+  over it). BACKSTAB: isBackFacing is the verbatim
+  DaggerfallMobileUnit 8-orientation wheel (records 3/4 = the back
+  arc; sign-symmetric so the |angle| form is exact; Unity's
+  half-to-EVEN rounding preserved at the 112.5/157.5 boundaries -
+  review catch: the first cut had a double-negative sign chain and
+  JS rounding). The chance = the player's Backstabbing skill (flat
+  interim) riding chanceToHitMod; x3 on the post-calc roll - both on
+  the source's channels via calculateAttackDamage's backstabChance
+  param. TallySkill pends Systems. resolveHit review catch: a fifth
+  arg was passed before the signature existed. 3 tests. C8's E-queue
+  is now E4: monster careers, equipment, authored morphologies,
+  spectral unblock.
 
 **Audit 2026-07-06 (Mac, engine included):** the shared pixelize pass
 survives N foes now - the renderer's character-sprite RT was keyed on
