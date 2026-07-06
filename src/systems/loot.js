@@ -61,7 +61,16 @@ export const ITEM_GROUPS = Object.freeze({
   MensClothing: [141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181],
   WomensClothing: [182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216],
 });
-export const BOOK_TEMPLATE = 277;   // Book0..3 all template 277; variant Range(0, 4)
+export const BOOK_TEMPLATE = 277;
+
+// DaggerfallLootDataTables + LootTables.GenerateLoot verbatim data
+// (moved here from the dungeon scene in the 2026-07-06b audit - a
+// scene file is no home for source tables):
+export const RANDOM_TREASURE_ARCHIVE = 216;                    // randomTreasureArchive
+export const RANDOM_TREASURE_MARKER_RECORD = 19;               // RDBLayout randomTreasureFlatIndex (editor 199.19)
+export const RANDOM_TREASURE_ICONS = Object.freeze([0, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 37, 43, 44, 45, 46, 47]);
+/** GenerateLoot's dungeon-type -> key rows (19 types, in order). */
+export const DUNGEON_LOOT_KEYS = Object.freeze(['K', 'N', 'N', 'N', 'K', 'M', 'M', 'Q', 'K', 'U', 'D', 'N', 'L', 'F', 'S', 'N', 'M', 'L', 'N']);   // Book0..3 all template 277; variant Range(0, 4)
 
 const WEAPON_NAMES = Object.keys(WEAPONS_ENUM);   // 18 melee/bow names; index 18 = Arrow
 const ARMOR_PIECES = Object.values(ARMOR_ENUM);   // 11 pieces incl shields

@@ -16,18 +16,13 @@ import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS } from '../world/actionSystem.js';
-import { playerEntity } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
-import { generateItems as generateLootItems, LOOT_MATRICES } from '../systems/loot.js';
+import {
+  generateItems as generateLootItems, RANDOM_TREASURE_ARCHIVE,
+  RANDOM_TREASURE_ICONS, RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS,
+} from '../systems/loot.js';
 import { floorLanding } from '../player/enterExit.js';
-
-// RDBLayout.AddRandomTreasure verbatim data: the icon roll table +
-// archive 216 (DaggerfallLootDataTables), and LootTables.GenerateLoot's
-// dungeon-type -> key table.
-const RANDOM_TREASURE_ARCHIVE = 216;
-const RANDOM_TREASURE_ICONS = [0, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 37, 43, 44, 45, 46, 47];
-const RANDOM_TREASURE_MARKER_RECORD = 19;   // editor flat 199.19
-const DUNGEON_LOOT_KEYS = ['K', 'N', 'N', 'N', 'K', 'M', 'M', 'Q', 'K', 'U', 'D', 'N', 'L', 'F', 'S', 'N', 'M', 'L', 'N'];
 import { trs, multiply } from '../world/mat4.js';
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
@@ -70,7 +65,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     damagePlayer: (dmg) => {
       if (dmg <= 0) return;
       playerEntity.health = Math.max(0, playerEntity.health - dmg);
-      if (typeof window !== 'undefined') window.__player = playerEntity;
+            surfacePlayer();
     },
     playerLevel: () => playerEntity.level,
   });
@@ -173,13 +168,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // per-enemy dependency lives here (a fetchBytes reference inside
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
-    const [{ ImgFile }, shared, engineRig, { buildRaceCharacter }, { floorLanding },
-      { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity }, { ClassFile }, { playerEntity }] = await Promise.all([
+    const [{ ImgFile }, shared, engineRig, { buildRaceCharacter },
+      { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity }, { ClassFile }] = await Promise.all([
       import('../formats/imgFile.js'), import('./shared.js'), import('../characters/engineRig.js'),
-      import('../characters/raceCharacter.js'), import('../player/enterExit.js'),
+      import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
       import('../characters/enemyEntity.js'), import('../formats/classFile.js'),
-      import('../characters/playerEntity.js'),
     ]);
     const bodyImg = new ImgFile();
     bodyImg.load(await shared.fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
@@ -204,7 +198,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       fetchBytes: shared.fetchBytes,
       createCharacterRig: engineRig.createCharacterRig,
       bodyRamps: engineRig.deriveClassicRamps(palette, bodyImg.getDFBitmap()),
-      buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, ClassFile, playerEntity,
+      buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, ClassFile, playerEntity,   // floorLanding + playerEntity from the STATIC imports (audit: the dynamic pair was redundant)
     };
   }
   for (const e of enemies) {
@@ -395,7 +389,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, { targetGroup: null, weapon: wpn });
           if (dmg > 0) {
             foeDeps.playerEntity.health = Math.max(0, foeDeps.playerEntity.health - dmg);
-            window.__player = foeDeps.playerEntity;
+          surfacePlayer();
           }
         }
       }
@@ -480,7 +474,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       playerEntity.items = playerEntity.items || [];
       for (const item of source) { addItem(playerEntity.items, item); n++; }
       source.length = 0;
-      if (typeof window !== 'undefined') window.__player = playerEntity;
+            surfacePlayer();
       return n;
     },
     textureTable: dungeon.textureTable,

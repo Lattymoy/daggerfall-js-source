@@ -16,3 +16,9 @@ export const playerEntity = {
   stats: { strength: 50, agility: 50, luck: 50 },
   items: [],        // the inventory (S2); gold rides as a Currency stack
 };
+
+/** Debug/probe surface: one place writes window.__player (audit
+ *  2026-07-06b collapsed seven scattered assignments). */
+export function surfacePlayer() {
+  if (typeof window !== 'undefined') window.__playerEntity = playerEntity;
+}

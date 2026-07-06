@@ -39,7 +39,6 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `02-Formats/` - binary format readers (BSA, TEXTURE, IMG/CIF, ARCH3D, BLOCKS, MAPS, SND, SKY)
 - `03-World/` - block assembly, terrain, location layout, streaming
 - `04-Characters/` - voxel rigs, paperdoll-as-outfits, NPCs
-- `06-Systems/Systems-Arc.md` - ACTIVE (opened 2026-07-06). S1 items/loot foundation SHIPPED: the 21-key LootChanceMatrix + GenerateRandomLoot verbatim; enemies carry loot at spawn, corpses hold it. Queue: S2 inventory/pickup/treasure, S3 chargen, S4 magic.
 - `05-Combat/` - FormulaHelper port, weapons, hit resolution
 - `06-Systems/` - quests, items, magic, guilds, calendar, save format
 - `07-Rendering/` - WebGL2 renderer, palettes, lighting, sky
@@ -50,15 +49,17 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 ## Active arcs
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
-- `03-World/World-Arc.md` - COMPLETE. Milestone 9 shipped: floating-origin streaming world (?world). Build queue empty.
-- `04-Characters/Characters-Arc.md` - PARKED (direction pivot 3: classic visuals). C8 shipped E1-E4b end to end: rigged class foes with verbatim senses/pursuit/attacks, the entity layer (CLASS*.CFG + MONSTER.BSA careers), hit resolution both directions, player melee + FP viewmodel + backstab, equipment with per-part armor, spectral emission on billboards. E4c (authored morphologies) DEFERRED by Mac; remaining interims are Systems-arc work (see the ledger above).
-- `03-World/Player-Arc.md` - COMPLETE. Walk, collide, activate, transition: movement/collision (P1), activation + action chains (P2), interior/dungeon transitions (P3/P5), swing doors (P4), ladders (P6), scene consolidation onto worldModes + dataPipeline (P7), and interiors parented in the building world frame with one-frame landings (P8). Next arc decision pending.
-- `07-Rendering/Rendering-Arc.md` - R13 shipped: precipitation + verbatim storm lightning. Queue empty except spectral emission (blocked on Characters). Next arc decision: Player.
+- `03-World/World-Arc.md` - COMPLETE. Milestone 9: floating-origin streaming world (?world). Queue empty; routed rows (teleporters, platform riding, swim/levitate) wait in Ledger C.
+- `03-World/Player-Arc.md` - COMPLETE (P1-P8). Successor decided long since: C8, then Systems (this list is the truth of record).
+- `04-Characters/Characters-Arc.md` - PARKED (pivot 3: classic visuals). C8 shipped E1-E4b end to end + spectral; E4c deferred by Mac; remaining interims are Systems work (ledger below).
+- `05-Combat/Combat.md` - CORE COMPLETE via C8 (FormulaHelper, weapons, enemy AI - the phase plan's own scope) + the Hurt-trap Ledger row. Remaining queue in the doc: CastSpell (Systems-blocked), bows/projectiles, collision-trigger seam.
+- `06-Systems/Systems-Arc.md` - ACTIVE. S1 loot (22-key matrix + GenerateRandomLoot verbatim), S2 inventory/pickup/dungeon treasure, S2b containers + exact quantized weights ALL SHIPPED. Next: S3 chargen (clears the big interim cluster), S4 magic.
+- `07-Rendering/Rendering.md` - COMPLETE. Queue EMPTY since spectral shipped (2026-07-06); the exterior indirect-light Ledger row waits for a Rendering reopen.
+- `08-Audio/` + `10-UI/` - not started; routed rows collected in Ledger C.
 
-## Open flags (audit-generated 2026-07-06b, from the code)
+## Open flags (audit-generated 2026-07-06c, from the code)
 
-Every documented interim/pending in src, greped at generation time -
-the code comment at each site is the authority; regenerate on audit:
+Regenerate on audit; the code comment at each site is the authority:
 
 - `src/characters/enemyAttack.js:21` - PENDING E3 (entity layer): playerLevel (stub 10 - zeroes its term),
 - `src/characters/enemyEntity.js:14` - FLAGGED, until GetMonsterCareerTemplate ports).
@@ -74,10 +75,36 @@ the code comment at each site is the authority; regenerate on audit:
 - `src/combat/playerWeapon.js:45` - INTERIM starting weapon (items arc replaces): Iron Dagger. */
 - `src/combat/playerWeapon.js:46` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:64` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
-- `src/scenes/dungeonContext.js:268` - Backstabbing skill (flat interim). TallySkill pends Systems.
-- `src/scenes/dungeonContext.js:320` - in DFU). HUD pends the UI arc: health surfaces on __player.
+- `src/scenes/dungeonContext.js:221` - pends Player activation, flagged in the arc).
+- `src/scenes/dungeonContext.js:328` - Backstabbing skill (flat interim). TallySkill pends Systems.
+- `src/scenes/dungeonContext.js:380` - in DFU). HUD pends the UI arc: health surfaces on __player.
+- `src/scenes/worldModes.js:159` - quests fill these later; open-feedback pends the UI arc).
+- `src/systems/inventory.js:12` - weight pends S2b (FLAGGED - leather/chain/plate multipliers).
+- `src/systems/loot.js:120` - MI (magic items): SKIPPED, INTERIM - pends the magic arc; loot
+- `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls are SKIPPED until the magic
+- `src/world/actionSystem.js:38` - DrainMagicka (0x1c): INTERIM no-op - the magicka stat pends the
+- `src/world/actionSystem.js:94` - Poison: verbatim DFU no-op stub. DrainMagicka: INTERIM no-op,
+- `src/world/actionSystem.js:95` - magicka pends Systems (flagged).
 
 ## Audits
+
+**2026-07-06c (Mac): deep audit, all changes since 06b.** Suite 230/54
+green, build clean, manifest math verified BOTH directions (doc rows
+== real files, doc total == real tests). Fixed at root: (1) the
+verbatim treasure DATA (archive 216, icon table, marker record 19,
+the 19-row dungeon-key table) lived in a SCENE file - moved to
+systems/loot.js, its DFU-shaped home; rdbLayout's 216 now imports the
+single source (cycle-checked through the full suite). (2)
+dungeonContext double-sourced floorLanding + playerEntity (static
+imports AND the foeDeps dynamic pair) - dynamics dropped; an unused
+LOOT_MATRICES import dropped. (3) window.__player was written from
+SEVEN sites AND collided with the probe scenes' motor-snapshot
+global of the same name - the entity surface is now surfacePlayer()
+writing __playerEntity (one site, no collision). (4) Home.md's S1
+status line had landed inside the DIRECTORY list; the Active-arcs
+section lacked Combat and Systems lines and carried stale Player/
+Rendering tails - section rewritten to truth. Ledger regenerated.
+
 
 **2026-07-06 (Mac): comprehensive audit, engine included.** Suite
 211/47 green, build clean, manifest cross-checked. Findings fixed at

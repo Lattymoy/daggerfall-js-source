@@ -25,7 +25,7 @@ import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, ext
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb } from '../player/activate.js';
 import { transferAll } from '../systems/inventory.js';
-import { playerEntity } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
@@ -160,7 +160,7 @@ export function createWorldModes(host) {
         const c = interiorCtx.containers[Number(key.split(':')[1])];
         if (c) {
           transferAll(c.items, playerEntity.items);
-          if (typeof window !== 'undefined') window.__player = playerEntity;
+            surfacePlayer();
         }
         return true;
       }
