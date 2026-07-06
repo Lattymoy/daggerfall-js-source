@@ -33,6 +33,7 @@
   <button id="walk">walk</button>
   <button id="pose">pose: none</button>
   <select id="wpn"></select>\n  <button id="fpv">view: orbit</button>
+  <button id="hurt">hurt</button>
   <button id="sword">sword: off</button>
   <button id="atkdir">dir: Down</button>
   <button id="strike">strike</button>
@@ -489,8 +490,9 @@ function animate(dt) {
       if (e === 'undraw') swordInfo.textContent = 'held past ' + MAX_BOW_HELD_DRAWN_SECONDS + 's: un-drawn';
       if (e === 'done') swordInfo.textContent = wm.isBow ? ('cooldown ' + getBowCooldownTime(liveSpeed).toFixed(2) + 's') : '';
     }
-    if (atk) { const u = machineClipU(); if (u === null) atk = null; else atk.t = u * atk.clip.dur; }
-  } else if (atk) atk.t += dt;
+    if (atk && !atk.free) { const u = machineClipU(); if (u === null) atk = null; else atk.t = u * atk.clip.dur; }
+    if (atk && atk.free) { atk.t += dt; if (atk.t >= atk.clip.dur) atk = null; }
+  } else if (atk) { atk.t += dt; if (atk.t >= atk.clip.dur) atk = null; }
   if (arrowFlight) {   // straight flight at the DFU missile speed
     arrowFlight.d += ARROW_MOVEMENT_SPEED * dt;
     const { dir, d, snap } = arrowFlight;
@@ -657,6 +659,7 @@ poseBtn.onclick = () => setPose(poseIx + 1);
 window.__setPose = setPose;
 window.__setView = (y, p, d) => { autospin = false; yaw = y; pitch = p; if (d) dist = d; };
 document.getElementById('fpv').onclick = () => setFP(!fpMode);
+document.getElementById('hurt').onclick = () => { fireHurt(); hurtIx = (hurtIx + 1) % HURT_DIRS.length; };
 window.__setFP = (on) => setFP(!!on);
 // Sword: off -> Iron -> ... -> Daedric -> off. Recolors via the classic
 // metal table ramp; the stats line is the verbatim item record.
@@ -706,6 +709,10 @@ const fireAttack = (dirOrStrike) => {
 };
 const bowRelease = () => { if (wm && wm.isBow && wm.state === 'StrikeUp') { machineAttack(wm, 'StrikeDown'); swordInfo.textContent = 'loose!'; } };
 window.__bowRelease = bowRelease;
+const HURT_DIRS = ['HurtFront', 'HurtLeft', 'HurtBack', 'HurtRight'];
+let hurtIx = 0;
+const fireHurt = (name) => { const clip = D.reactions[name || HURT_DIRS[hurtIx]]; if (clip) { atk = { clip, t: 0, free: true }; swordInfo.textContent = (name || HURT_DIRS[hurtIx]); } };
+window.__hurt = fireHurt;
 window.__bowCancel = () => { if (wm && machineCancelBowDraw(wm)) { atk = null; swordInfo.textContent = 'un-drawn'; } };
 window.__setSpeed = (v) => { liveSpeed = v; document.getElementById('spdv').textContent = 'SPD ' + v; };
 document.getElementById('strike').onclick = () => { if (POSE_NAMES[poseIx] === 'rangedAim') return; fireAttack(ATK_DIRS[atkDirIx]); };   // bows are owned by the pointer pair (press=draw, release=loose); click would double-path

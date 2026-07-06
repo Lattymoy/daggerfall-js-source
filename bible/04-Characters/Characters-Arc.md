@@ -166,6 +166,15 @@ weapon-switch mid-flight keeps the arrow; FP drag fires the FP
 table. Static pass clean. Next candidates (unnamed): hit reactions,
 enemy rigs on the shared states, engine-world integration.
 
+**Hit reactions (2026-07-06).** Four directional staggers
+(HurtFront/Back/Left/Right) knocking the pelvis AWAY from the hit.
+COUPLING LAW test-pinned: reactions use ONLY shared channels - body
+and held move together, so every station coupling survives by
+construction (2H off-hand exactly at the 0.050 baseline through all
+four). FREE-CLIP path: reactions run wall-clock outside the weapon
+machine (its idle u-mapping would null them) and may interrupt a
+swing visually. hurt button cycles; __hurt(name) hook.
+
 **Verification doctrine pins.** Stations over nearest-verts; numeric
 batteries over eyeballs; PIXEL-COUNTING screenshots for render-level
 claims (vertex-band filters false-negative); solver grids snapshot

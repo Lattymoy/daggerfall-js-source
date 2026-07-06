@@ -76,6 +76,43 @@ export function sampleClip(clip, t) {
 // against fist-travel probes (dx sign + magnitude checked live).
 
 
+// ---- HIT REACTIONS. A hit from a direction staggers the body AWAY
+// from it. COUPLING LAW: reactions use ONLY shared channels (twist,
+// lean, roots, head, legs) - body and held weapon move together, so
+// every grip/station coupling survives by construction; arm deltas
+// would tear grips in the coupled states. Reactions are FREE clips:
+// wall-clock, outside the weapon machine (a stagger is not an attack
+// frame), and they may interrupt a swing visually.
+
+export const REACTIONS = {
+  HurtFront: { dur: 0.36, tracks: {
+    'headPitch': [[0, 0], [0.18, -0.32, 'snap'], [0.30, -0.36, 'out'], [1, 0]],
+    'lean':      [[0, 0], [0.18, -0.15, 'snap'], [0.34, -0.17, 'out'], [1, 0]],
+    'rootZ':     [[0, 0], [0.20, -0.07, 'snap'], [0.40, -0.08, 'out'], [1, 0]],
+    'legR.sw':   [[0, 0], [0.22, 0.16, 'snap'], [1, 0]],
+    'legR.bd':   [[0, 0], [0.22, 0.12, 'snap'], [1, 0]],
+  } },
+  HurtBack: { dur: 0.36, tracks: {
+    'headPitch': [[0, 0], [0.18, 0.28, 'snap'], [0.30, 0.32, 'out'], [1, 0]],
+    'lean':      [[0, 0], [0.18, 0.17, 'snap'], [0.34, 0.19, 'out'], [1, 0]],
+    'rootZ':     [[0, 0], [0.20, 0.06, 'snap'], [0.40, 0.07, 'out'], [1, 0]],
+    'legL.sw':   [[0, 0], [0.22, -0.14, 'snap'], [1, 0]],
+    'legL.bd':   [[0, 0], [0.22, 0.12, 'snap'], [1, 0]],
+  } },
+  HurtLeft: { dur: 0.36, tracks: {
+    'twist':     [[0, 0], [0.18, 0.22, 'snap'], [0.32, 0.25, 'out'], [1, 0]],
+    'rootX':     [[0, 0], [0.20, 0.08, 'snap'], [0.40, 0.09, 'out'], [1, 0]],
+    'lean':      [[0, 0], [0.20, 0.06, 'snap'], [1, 0]],
+    'headPitch': [[0, 0], [0.18, -0.10, 'snap'], [1, 0]],
+  } },
+  HurtRight: { dur: 0.36, tracks: {
+    'twist':     [[0, 0], [0.18, -0.22, 'snap'], [0.32, -0.25, 'out'], [1, 0]],
+    'rootX':     [[0, 0], [0.20, -0.08, 'snap'], [0.40, -0.09, 'out'], [1, 0]],
+    'lean':      [[0, 0], [0.20, 0.06, 'snap'], [1, 0]],
+    'headPitch': [[0, 0], [0.18, -0.10, 'snap'], [1, 0]],
+  } },
+};
+
 // ---- FIRST-PERSON strikes (fpMelee1H). Dedicated clips like the
 // classic FP sprites - the 1H set is authored over the LOW ready and
 // breaks on the raised viewmodel base. Design law for FP: the WRIST

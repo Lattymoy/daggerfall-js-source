@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MOUSE_DIRECTIONS, DIRECTION_TO_STRIKE, STRIKES, ATTACKS_1H, ATTACKS_2H, ATTACKS_RANGED, ATTACKS_FP, sampleClip } from '../src/characters/anims.js';
+import { MOUSE_DIRECTIONS, DIRECTION_TO_STRIKE, STRIKES, ATTACKS_1H, ATTACKS_2H, ATTACKS_RANGED, ATTACKS_FP, REACTIONS, sampleClip } from '../src/characters/anims.js';
 import { WEAPON_STATES, getMeleeWeaponAnimTime, getBowCooldownTime, gestureDirection, canChangeState, createWeaponMachine, machineAttack, machineStep, MELEE_NUM_FRAMES, HIT_FRAME_MELEE, HIT_FRAME_BOW, BOW_SOUND_FRAME, MAX_BOW_HELD_DRAWN_SECONDS, ATTACK_THRESHOLD, EQUIP_DELAY_TIMES, CLASSIC_FRAME_UPDATE, ARROW_MOVEMENT_SPEED, ARROW_ARM_LENGTH } from '../src/characters/weaponStates.js';
 
 // Witness against DFU: WeaponManager.MouseDirections order and
@@ -16,7 +16,7 @@ test('anims: verbatim DFU direction mapping + well-formed clips', () => {
   assert.deepEqual([...STRIKES].sort(), Object.keys(ATTACKS_2H).sort());
   assert.deepEqual(Object.keys(ATTACKS_RANGED), ['Release']);   // bows: one direction-agnostic loose
   assert.deepEqual([...STRIKES].sort(), Object.keys(ATTACKS_FP).sort());   // FP carries the full directional set
-  for (const [name, clip] of [...Object.entries(ATTACKS_1H), ...Object.entries(ATTACKS_2H), ...Object.entries(ATTACKS_RANGED), ...Object.entries(ATTACKS_FP)]) {
+  for (const [name, clip] of [...Object.entries(ATTACKS_1H), ...Object.entries(ATTACKS_2H), ...Object.entries(ATTACKS_RANGED), ...Object.entries(ATTACKS_FP), ...Object.entries(REACTIONS)]) {
     assert.ok(clip.dur > 0.2 && clip.dur < 1.0, `${name} dur`);
     for (const [path, keys] of Object.entries(clip.tracks)) {
       assert.ok(keys.length >= 2, `${name}.${path} too few keys`);
@@ -87,6 +87,12 @@ test('anims: sampler is a continuous delta (zero at entry, null past dur)', () =
   assert.equal(machineAttack(bmc, 'StrikeUp'), false);                      // cooldown blocks
   for (let k = 0; k < 40; k++) machineStep(bmc, 0.05, 50);                  // the clock runs while Idle - the cooldown EXPIRES
   assert.equal(machineAttack(bmc, 'StrikeUp'), true);
+  // REACTIONS: shared-channel staggers knock AWAY from the hit
+  assert.ok(sampleClip(REACTIONS.HurtFront, 0.2 * REACTIONS.HurtFront.dur).rootZ < -0.02);
+  assert.ok(sampleClip(REACTIONS.HurtBack, 0.2 * REACTIONS.HurtBack.dur).rootZ > 0.02);
+  assert.ok(sampleClip(REACTIONS.HurtLeft, 0.2 * REACTIONS.HurtLeft.dur).rootX > 0.02);
+  assert.ok(sampleClip(REACTIONS.HurtRight, 0.2 * REACTIONS.HurtRight.dur).rootX < -0.02);
+  for (const clip of Object.values(REACTIONS)) for (const ch of Object.keys(clip.tracks)) assert.ok(!ch.startsWith('arm'), 'reactions are shared-channel only');
   // DaggerfallMissile verbatim
   assert.equal(ARROW_MOVEMENT_SPEED, 25.0);
   assert.equal(ARROW_ARM_LENGTH, 0.9);
