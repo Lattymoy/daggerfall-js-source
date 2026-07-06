@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 229 tests across 54 files.
+Node 22). Suite: 230 tests across 54 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -25,7 +25,7 @@ Node 22). Suite: 229 tests across 54 files.
 | effectactions.test.js | 3 | Hurt21 every-20th gate + verbatim exclusive Range * level (min<=max guard), Hurt22-25 flat/axis every activation + Poison as DFU's own empty delegate, chain cascade lever->spike (ActivateNext-first order, activationCount) |
 | enemyattack.test.js | 3 | verbatim reset-timer arithmetic (Range/level/reflex terms, /980, 0-floor), the floored-speed >>3 roll gate, strike gating (range+sight+22.5deg yaw) + hit event at HIT_FRAME_MELEE |
 | enemyentity.test.js | 3 | ClassFile verbatim 74-byte parse (incl the (a<<16)|(c<<8)|b shuffle) on a crafted record, class entity rules (level, HP roll bounds, skills clamp, career Speed, city-watch +3..6), monster rules (predefined level, inclusive HP range, armor*5) |
-| inventory.test.js | 3 | the verbatim stackable rule (ingredients/gold/arrows; equipped/enchanted never), AddItem merge-vs-append incl material split, weapon weight x material/4 (daedric/iron ratio) + transferAll emptying the source into merged stacks |
+| inventory.test.js | 4 | the verbatim stackable rule (equipped/enchanted never), AddItem merge-vs-append incl material split, CalculateWeightForMaterial verbatim (quarter-kg quantized, banker half-to-even: iron and daedric daggers BOTH 0.5kg) + leather formula + transferAll, the house-container predicate (418xx group, the 13-index list, shop-shelf 5 excluded, record = id%100) |
 | loot.test.js | 3 | 22 matrix rows exact (key C pinned) + brace-bounded group lists (no cross-enum bleed), gold x level + the WP halving loop at exact roll consumption + the '-'-key empty path, level-split ingredients (C1 scales/C3 flat), arrows stack/material, book template+variant, gender clothing, unknown-key -> '-' |
 | enemyequipment.test.js | 3 | verbatim material walk ([64,128,...] modifier table, level clamps), armor materials (70/90 split, plate+weapon-material), variant-0 loadout + the init-100/subtract/class-60-clamp armor pass, variant-2 + monster keep-better + city-watch itemLevel-1 + weapon-vs-weaponless averages |
 | enemymotor.test.js | 4 | verbatim classic AI constants (sight/hearing/FOV/melee/turn/update-rate/system-divisor/walk-base), 11.25deg turn clamp, LOS wall + FOV gates, pursue-and-stop at MeleeDistance on the classic cadence |

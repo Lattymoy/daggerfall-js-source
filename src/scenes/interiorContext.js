@@ -22,6 +22,7 @@ import { collectInteriorLights } from '../world/interiorLights.js';
 import { applyClimate } from '../world/climateSwaps.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
+import { isHouseContainerModel, containerTextureRecord } from '../systems/containers.js';
 import { LADDER_MODEL_ID } from '../player/enterExit.js';
 import { collectInteriorPeople } from '../characters/interiorPeople.js';
 import { trs } from '../world/mat4.js';
@@ -88,6 +89,10 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
 
   const drawList = [];
   const ladders = []; // {cpu, matrix} - verbatim id 41409
+  // S2b: house containers - the verbatim predicate lives in
+  // systems/containers.js (pure, tested); private furniture starts
+  // EMPTY, opened through the shared pickup.
+  const containers = [];
   const collider = new Collider(() => -Infinity);
   for (const p of interior.placements) {
     const matrix = parent(p.matrix);
@@ -95,6 +100,9 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const cpu = cpuModels.get(p.modelIdNum);
     collider.addMesh('interior', cpu.positions, cpu.indices, matrix);
     if (p.modelIdNum === LADDER_MODEL_ID) ladders.push({ cpu, matrix });
+    if (isHouseContainerModel(p.modelIdNum)) {
+      containers.push({ cpu, matrix, items: [], record: containerTextureRecord(p.modelIdNum) });
+    }
   }
   // Interior swing doors run on the ActionSystem (P4): the verbatim
   // -90 / 1.5 s toggle with trigger-at-open-start - inner rooms open.
@@ -207,6 +215,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     animateChars,
     flatCount: interior.flats.length,
     ladders,
+    containers,
     enterMarkers,
     doors: interior.doors.map((d) => ({ ...d, matrix: parent(d.matrix) })),
     collider,

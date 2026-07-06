@@ -24,6 +24,8 @@
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding } from '../player/enterExit.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb } from '../player/activate.js';
+import { transferAll } from '../systems/inventory.js';
+import { playerEntity } from '../characters/playerEntity.js';
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
@@ -121,6 +123,9 @@ export function createWorldModes(host) {
     // Exit doors and interior swing doors share the E ray; swing doors
     // use their LIVE matrices via the ActionSystem objects.
     const targets = interiorCtx.doors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
+    interiorCtx.containers.forEach((c, i) => {
+      targets.push({ key: `container:${i}`, aabb: worldAabb(c.cpu.positions, c.matrix) });   // S2b
+    });
     for (const o of interiorCtx.actions.objects.values()) {
       targets.push({ key: o.key, aabb: objAabb(o) });
     }
@@ -148,6 +153,17 @@ export function createWorldModes(host) {
       return true;
     }
     if (!key.startsWith('exit:')) {
+      if (key.startsWith('container:')) {
+        // S2b: open the house container - synchronous transfer through
+        // the shared inventory (private furniture starts EMPTY; shops/
+        // quests fill these later; open-feedback pends the UI arc).
+        const c = interiorCtx.containers[Number(key.split(':')[1])];
+        if (c) {
+          transferAll(c.items, playerEntity.items);
+          if (typeof window !== 'undefined') window.__player = playerEntity;
+        }
+        return true;
+      }
       interiorCtx.actions.activate(key);
       return true;
     }

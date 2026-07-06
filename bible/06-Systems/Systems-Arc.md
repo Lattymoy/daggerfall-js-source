@@ -58,9 +58,24 @@ message + inventory UI pend the UI arc; interior containers pend
 S2b; the DFU icon-roll Random slot stays a uniform roll per the
 approved stance.
 
+## S2b (containers + exact weights): SHIPPED
+
+Armor/weapon weight is now CalculateWeightForMaterial VERBATIM -
+quarter-kg quantized with Unity's half-to-even Round (an iron and a
+daedric dagger BOTH weigh 0.5 kg: Round(2.5) banks to 2; the earlier
+'x multiplier / 4' shorthand diverged and its ratio test pinned the
+shorthand - both replaced with truth pins). Leather rides the
+Erisceres Round(INT(w*4)/2)/4; chain's x2 is a VALUE rule, weight
+unchanged. House containers: the verbatim predicate (modelId/100 ==
+418 or modelId-41000 in the 13-index list; TextureRecord = id % 100)
+lives PURE in systems/containers.js; interiors collect matching
+furniture as private, EMPTY containers, activation opens them through
+the shared inventory synchronously (review catch: the first handler
+nested dynamic imports and completed a tick after returning). Shop
+shelves (27-index list), owned-house, and bookshelves pend their
+slices; open-feedback pends the UI arc.
+
 ## Queue
-- S2b: interior containers (MakeHouseContainer) + armor material
-  weight + shop shelves groundwork.
 - S3: character creation (the real PlayerEntity - clears the
   maxHealth/skills/stats interims; TallySkill, proficiency/racial
   mods unlock).
