@@ -45,11 +45,11 @@ function buildBow(ramp, half) {
   const N = 8;
   for (let k = 0; k <= N; k++) {
     const t = k / N, y = lo + (hi - lo) * t;
-    const taper = 0.007 + 0.011 * Math.sin(Math.PI * t);
+    const taper = 0.009 + 0.016 * Math.sin(Math.PI * t);
     rows.push({ y, rx: taper, rz: taper + 0.004, cz: limb(t) });
   }
   // grip station: a fatter wrap ring exactly at the bake pivot
-  rows.push({ y: GRIP_Y, rx: 0.020, rz: 0.024, cz: limb(0.5) });
+  rows.push({ y: GRIP_Y, rx: 0.028, rz: 0.032, cz: limb(0.5) });
   loftPiece(faces, rows, G);
   // STRING: DRAWN - two thin segments tip -> NOCK -> tip, the nock
   // pulled 0.25 toward the archer. The aim pose IS the drawn

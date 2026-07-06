@@ -36,22 +36,22 @@ function bakeGrip(faces) {
 function buildHafted(ramp, spec) {
   const faces = [];
   const G = { group: 'armL', cx: ARM_X, seg: 8 };
-  const sR = spec.shaftR ?? 0.012;
+  const sR = spec.shaftR ?? 0.020;   // girth pass (Mac 2026-07-06)
   let gripLo;
   if (spec.twoHand) {
     gripLo = 0.720;
     loftPiece(faces, [
-      { y: 0.720, rx: 0.016, rz: 0.017 },
-      { y: 0.740, rx: 0.0175, rz: 0.0185 },
-      { y: 0.900, rx: 0.0175, rz: 0.0185 },
-      { y: 1.058, rx: 0.016, rz: 0.017 },
+      { y: 0.720, rx: 0.026, rz: 0.027 },
+      { y: 0.740, rx: 0.028, rz: 0.029 },
+      { y: 0.900, rx: 0.028, rz: 0.029 },
+      { y: 1.058, rx: 0.026, rz: 0.027 },
     ], { ...G, capTop: false, capBottom: false });
   } else {
     gripLo = 0.790;
     loftPiece(faces, [
-      { y: 0.790, rx: 0.012, rz: 0.013 },
-      { y: 0.900, rx: 0.0135, rz: 0.0145 },
-      { y: 0.998, rx: 0.012, rz: 0.013 },
+      { y: 0.790, rx: 0.019, rz: 0.020 },
+      { y: 0.900, rx: 0.021, rz: 0.022 },
+      { y: 0.998, rx: 0.019, rz: 0.020 },
     ], { ...G, capTop: false, capBottom: false });
   }
   // butt cap above the grip
@@ -69,18 +69,18 @@ function buildHafted(ramp, spec) {
   // heads
   if (spec.head === 'mace') {
     loftPiece(faces, [
-      { y: headY + 0.02, rx: 0.014, rz: 0.014 },
-      { y: headY - 0.01, rx: 0.042, rz: 0.042 },
-      { y: headY - 0.07, rx: 0.046, rz: 0.046 },
-      { y: headY - 0.10, rx: 0.018, rz: 0.018 },
+      { y: headY + 0.02, rx: 0.022, rz: 0.022 },
+      { y: headY - 0.02, rx: 0.070, rz: 0.070 },
+      { y: headY - 0.12, rx: 0.078, rz: 0.078 },
+      { y: headY - 0.17, rx: 0.026, rz: 0.026 },
     ], G);
   } else if (spec.head === 'axe' || spec.head === 'waraxe') {
-    const sides = spec.head === 'waraxe' ? [0.062, -0.062] : [0.058];
+    const sides = spec.head === 'waraxe' ? [0.082, -0.082] : [0.075];
     for (const off of sides) {
       loftPiece(faces, [
-        { y: headY + 0.05, rx: 0.010, rz: 0.052, p: 0.5, cz: off * 0.45 },
-        { y: headY - 0.02, rx: 0.012, rz: 0.088, p: 0.5, cz: off },
-        { y: headY - 0.09, rx: 0.010, rz: 0.052, p: 0.5, cz: off * 0.45 },
+        { y: headY + 0.08, rx: 0.013, rz: 0.082, p: 0.5, cz: off * 0.45 },
+        { y: headY - 0.03, rx: 0.016, rz: 0.140, p: 0.5, cz: off },
+        { y: headY - 0.14, rx: 0.013, rz: 0.082, p: 0.5, cz: off * 0.45 },
       ], G);
     }
     loftPiece(faces, [   // poll/spike cap
@@ -89,20 +89,20 @@ function buildHafted(ramp, spec) {
     ], G);
   } else if (spec.head === 'hammer') {
     loftPiece(faces, [
-      { y: headY + 0.03, rx: 0.036, rz: 0.036, cz: 0.020 },
-      { y: headY - 0.05, rx: 0.040, rz: 0.040, cz: 0.024 },
-      { y: headY - 0.08, rx: 0.020, rz: 0.020, cz: 0.012 },
+      { y: headY + 0.04, rx: 0.060, rz: 0.060, cz: 0.026 },
+      { y: headY - 0.08, rx: 0.068, rz: 0.068, cz: 0.032 },
+      { y: headY - 0.13, rx: 0.030, rz: 0.030, cz: 0.016 },
     ], G);
   } else if (spec.head === 'ball') {
     // rigid chain + ball continuing down the haft line
     loftPiece(faces, [
-      { y: headY + 0.02, rx: 0.006, rz: 0.006 },
-      { y: headY - 0.10, rx: 0.006, rz: 0.006 },
+      { y: headY + 0.02, rx: 0.009, rz: 0.009 },
+      { y: headY - 0.10, rx: 0.009, rz: 0.009 },
     ], { ...G, capTop: false, capBottom: false });
     loftPiece(faces, [
-      { y: headY - 0.10, rx: 0.010, rz: 0.010 },
-      { y: headY - 0.135, rx: 0.032, rz: 0.032 },
-      { y: headY - 0.17, rx: 0.012, rz: 0.012 },
+      { y: headY - 0.10, rx: 0.016, rz: 0.016 },
+      { y: headY - 0.16, rx: 0.055, rz: 0.055 },
+      { y: headY - 0.22, rx: 0.018, rz: 0.018 },
     ], G);
   } else {
     loftPiece(faces, [   // staff foot

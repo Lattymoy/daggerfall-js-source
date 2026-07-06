@@ -55,9 +55,9 @@ export function buildSword(ramp) {
   // centroid - end-only tubes put "nearest vert to the grip" 0.1 off
   // axis (the phantom-axis bug).
   loftPiece(faces, [
-    { y: 0.790, rx: 0.015, rz: 0.016 },
-    { y: 0.900, rx: 0.0165, rz: 0.0175 },
-    { y: 0.998, rx: 0.015, rz: 0.016 },
+    { y: 0.790, rx: 0.021, rz: 0.022 },
+    { y: 0.900, rx: 0.023, rz: 0.024 },
+    { y: 0.998, rx: 0.021, rz: 0.022 },
   ], { ...G, capTop: false, capBottom: false });
   // CROSSGUARD: broad cruciform bar, wide across x, squarish section.
   loftPiece(faces, [

@@ -405,6 +405,13 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   melee1H + the six 1H strikes; every 2H shares melee2H + the six
   solved 2H strikes; bows share rangedAim + Release - three combat
   states, nineteen weapons, zero per-weapon animation work.
+- **Scale pass (Mac: handles need girth, heads much larger)**: 1H
+  grips 0.012 -> 0.019-0.023, 2H grip blocks 0.028 uniform, shafts
+  0.020, bow riser plumped, pommels +40%. Heads: mace flange 0.078,
+  axe plates 0.140 wide (offsets 0.075/0.082), hammer block 0.068,
+  flail ball 0.055. Stations are ON-AXIS rings - radius cannot move a
+  centroid: grips still exact, off-hand seats 0.049-0.053, contract
+  intact, zero pin changes.
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,

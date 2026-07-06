@@ -47,10 +47,10 @@ export function buildClaymore(ramp) {
   // axis read as ring centroids (the phantom-axis bug: end-only tubes
   // put "nearest vert to the grip" 0.1+ off axis).
   loftPiece(faces, [
-    { y: 0.720, rx: 0.016, rz: 0.017 },
-    { y: 0.740, rx: 0.0175, rz: 0.0185 },
-    { y: 0.900, rx: 0.0175, rz: 0.0185 },
-    { y: 1.058, rx: 0.016, rz: 0.017 },
+    { y: 0.720, rx: 0.026, rz: 0.027 },
+    { y: 0.740, rx: 0.028, rz: 0.029 },
+    { y: 0.900, rx: 0.028, rz: 0.029 },
+    { y: 1.058, rx: 0.026, rz: 0.027 },
   ], { ...G, capTop: false, capBottom: false });
   // BROAD CRUCIFORM GUARD: quillons in the flat plane (wide z).
   loftPiece(faces, [

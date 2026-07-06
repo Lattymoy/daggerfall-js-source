@@ -35,21 +35,21 @@ function bakeGrip(faces) {
 function buildBlade(ramp, spec) {
   const faces = [];
   const G = { group: 'armL', cx: ARM_X, seg: 8 };
-  const gripR = spec.gripR ?? 0.011;
+  const gripR = spec.gripR ?? 0.018;   // girth pass (Mac 2026-07-06): hilts read toothpick-thin against the 0.074 fist
   let gripLo;
   if (spec.twoHand) {
     // claymore-standard two-hand grip block: stations at 0.90 (grip)
     // + 0.74 (OFF-HAND - the 2H pose/attack contract)
     gripLo = 0.720;
     loftPiece(faces, [
-      { y: 0.720, rx: 0.016, rz: 0.017 },
-      { y: 0.740, rx: 0.0175, rz: 0.0185 },
-      { y: 0.900, rx: 0.0175, rz: 0.0185 },
-      { y: 1.058, rx: 0.016, rz: 0.017 },
+      { y: 0.720, rx: 0.026, rz: 0.027 },
+      { y: 0.740, rx: 0.028, rz: 0.029 },
+      { y: 0.900, rx: 0.028, rz: 0.029 },
+      { y: 1.058, rx: 0.026, rz: 0.027 },
     ], { ...G, capTop: false, capBottom: false });
     loftPiece(faces, [   // pommel bulge above the grip
       { y: 1.058, rx: 0.014, rz: 0.014 },
-      { y: 1.082, rx: 0.028, rz: 0.028 },
+      { y: 1.082, rx: 0.038, rz: 0.038 },
       { y: 1.108, rx: 0.020, rz: 0.020 },
     ], G);
   } else {
@@ -61,7 +61,7 @@ function buildBlade(ramp, spec) {
     ], { ...G, capTop: false, capBottom: false });
     loftPiece(faces, [   // pommel bulge above the grip (house layout)
       { y: 0.998, rx: 0.010, rz: 0.010 },
-      { y: 1.018, rx: spec.pommelR ?? 0.020, rz: spec.pommelR ?? 0.020 },
+      { y: 1.018, rx: spec.pommelR ?? 0.028, rz: spec.pommelR ?? 0.028 },
       { y: 1.042, rx: 0.014, rz: 0.014 },
     ], G);
   }
@@ -92,13 +92,13 @@ function buildBlade(ramp, spec) {
 }
 
 export const BLADE_SPECS = {
-  Dagger:     { blade: 0.30, wRoot: 0.030, thick: 0.008, guardW: 0.036, guardT: 0.010, pommelR: 0.016, gripLo: 0.810, gripR: 0.010 },
-  Tanto:      { blade: 0.34, wRoot: 0.026, thick: 0.008, guardW: 0.024, guardT: 0.020, pommelR: 0.013, gripLo: 0.800, gripR: 0.010 },
+  Dagger:     { blade: 0.30, wRoot: 0.030, thick: 0.008, guardW: 0.036, guardT: 0.010, pommelR: 0.023, gripLo: 0.810, gripR: 0.016 },
+  Tanto:      { blade: 0.34, wRoot: 0.026, thick: 0.008, guardW: 0.024, guardT: 0.020, pommelR: 0.019, gripLo: 0.800, gripR: 0.016 },
   Shortsword: { blade: 0.46, wRoot: 0.040, thick: 0.009, guardW: 0.052, guardT: 0.011 },
-  Wakazashi:  { blade: 0.52, wRoot: 0.030, thick: 0.008, curve: 0.022, guardW: 0.030, guardT: 0.030, pommelR: 0.014 },
+  Wakazashi:  { blade: 0.52, wRoot: 0.030, thick: 0.008, curve: 0.022, guardW: 0.030, guardT: 0.030, pommelR: 0.020 },
   Broadsword: { blade: 0.62, wRoot: 0.058, thick: 0.010, guardW: 0.066, guardT: 0.012 },
   Saber:      { blade: 0.74, wRoot: 0.034, thick: 0.008, curve: 0.050, guardW: 0.048, guardT: 0.013 },
-  Katana:     { blade: 0.80, wRoot: 0.030, thick: 0.008, curve: 0.035, guardW: 0.032, guardT: 0.032, pommelR: 0.013, gripLo: 0.760 },
+  Katana:     { blade: 0.80, wRoot: 0.030, thick: 0.008, curve: 0.035, guardW: 0.032, guardT: 0.032, pommelR: 0.019, gripLo: 0.760 },
   Dai_Katana: { blade: 1.05, wRoot: 0.034, thick: 0.009, curve: 0.050, guardW: 0.040, guardT: 0.040, twoHand: true },
 };
 
