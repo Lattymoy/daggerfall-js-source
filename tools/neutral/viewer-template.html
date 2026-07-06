@@ -625,7 +625,7 @@ document.getElementById('hairstyle').onclick = () => { const h=raceHair[RACES[ra
 refreshHairLabel();
 document.getElementById('walk').onclick = (e) => { gaitIx = (gaitIx+1)%3; e.target.textContent = ['idle','walk','run'][gaitIx]; e.target.classList.toggle('on', gaitIx>0); };
 const poseBtn = document.getElementById('pose');
-const setPose = (i) => { poseIx = ((i % POSE_NAMES.length) + POSE_NAMES.length) % POSE_NAMES.length; poseBtn.textContent = 'pose: ' + POSE_NAMES[poseIx]; poseBtn.classList.toggle('on', poseIx > 0); };
+const setPose = (i) => { poseIx = ((i % POSE_NAMES.length) + POSE_NAMES.length) % POSE_NAMES.length; poseBtn.textContent = 'pose: ' + POSE_NAMES[poseIx]; poseBtn.classList.toggle('on', poseIx > 0); atk = null; wm = null; swordInfo.textContent = ''; };   // a pose change is a STATE change: clear the clip + the weapon machine (a drawn bow must not persist over a melee stance)
 poseBtn.onclick = () => setPose(poseIx + 1);
 // script hooks (Playwright iteration): fixed camera + pose by index
 window.__setPose = setPose;
@@ -685,7 +685,7 @@ const bowRelease = () => { if (wm && wm.isBow && wm.state === 'StrikeUp') { mach
 window.__bowRelease = bowRelease;
 window.__bowCancel = () => { if (wm && machineCancelBowDraw(wm)) { atk = null; swordInfo.textContent = 'un-drawn'; } };
 window.__setSpeed = (v) => { liveSpeed = v; document.getElementById('spdv').textContent = 'SPD ' + v; };
-document.getElementById('strike').onclick = () => fireAttack(ATK_DIRS[atkDirIx]);
+document.getElementById('strike').onclick = () => { if (POSE_NAMES[poseIx] === 'rangedAim') return; fireAttack(ATK_DIRS[atkDirIx]); };   // bows are owned by the pointer pair (press=draw, release=loose); click would double-path
 window.__attack = fireAttack;
 document.getElementById('spd').oninput = (e) => window.__setSpeed(+e.target.value);
 { const sb = document.getElementById('strike');

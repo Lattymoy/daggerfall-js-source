@@ -61,7 +61,89 @@ ramps, returns faces with baked colour):
 Open: pieces (armor) re-seat on the new rig; hands/face detail (face
 declined); engine-shader vs baked-shading interaction to confirm.
 
-## C-Weapons (ACTIVE): true item data + the first weapon in hand
+## Combat layer: CURRENT STATE (integrated + audited 2026-07-06)
+
+The player combat system is COMPLETE and Daggerfall-1:1. The
+chronological root-cause logs live in C-Weapons / C-Anim below;
+this section is the architecture as it stands.
+
+**The grip-station system.** Every weapon is authored pre-HSCALE on
+the left-fist column, every face 'armL', with REAL on-axis station
+rings whose centroids ARE the anchors (the phantom-axis rule:
+end-only tubes put nearest-vert probes 0.1+ off axis). Grip station
+at the bake pivot (post: -0.235, 0.81, 0), test-pinned to 0.003.
+Seat bakes: blades/hafted carry Mac's +45 point-forward
+(GRIP_PITCH -2.40+pi/4, house layout: pommel HIGH, business end
+DESCENDS); bows carry -pi/2 (fore-aft at rest, vertical at aim).
+
+**THE 2H CONTRACT.** Any two-hand weapon that places its off-hand
+station at the claymore-standard point (-0.235, 0.8038, -0.1578)
+inherits the solved melee2H pose AND the six station-coupled attack
+clips BY CONSTRUCTION. Verified across classes: Claymore 0.050,
+Dai-Katana 0.049, Warhammer 0.053 seat; strike coupling 0.061-0.105
+vs the 0.050 geometric floor (fist radius 0.074).
+
+**The roster: all 19 templates (113-131).** 8 blades (blades.js, one
+parameterized builder; curves via per-row cz), 6 hafted (hafted.js;
+flanged mace, single/double-bit axes, hammer, quarterstaff, flail
+with a RIGID chain-and-ball - fidelity class of the drawn string),
+2 bows + the nocked ARROW built into the drawn assembly (tail at the
+nock, shaft IS the aim line - alignment/gait-lock/Release free by
+construction). Verbatim item math incl. the weight chain's second /4.
+Registry is data: payload weaponPacks [{name, hands, pack, items}].
+
+**Poses (v3 format).** melee1H (low ready; 7 blades + 2 hafted 1H
+share it), melee2H (coupled two-hand, gait pumps OFF), rangedAim
+(bladed archer: twist +0.65 form-locked, draw fist ON the nock 0.012,
+humeral roll -1.315 folds the forearm across - the roll DOF exists
+because the chain otherwise fully determines elbow orientation from
+fist position), fpMelee1H (view-space-solved viewmodel). FORM IS A
+CONSTRAINT, NOT AN OUTCOME - anatomy penalties live INSIDE solvers.
+
+**Attacks.** Three clip tables (anims.js): six 1H kinetic-chain
+strikes with root motion; six 2H greatsword strikes with OFFLINE
+PRE-SOLVED armR tracks (continuity-seeded grids, bd clamped >= -0.33,
+rescue + midpoint densify; coils must keep the hilt IN FRONT); one
+bow Release (back-driven pull, anchor beat, snap loose 10.9, 50deg
+bow roll). The clips are the VISUAL ONLY:
+
+**weaponStates.js OWNS TIME (DFU-verbatim).** tick = 3*(115-SPD)/980;
+bow cooldown (10*(100-SPD)+800)/980; classic 16Hz bow ticks; 5-frame
+strikes; HIT at melee frame 2 / bow 5 / sound 4; gesture radial table
+(six tracked directions, diagonal-up folds to Up); threshold 0.05;
+EquipDelayTimes; fatigue 11; the interrupt rule (one-shots
+irreplaceable except the bow release); the bow arc press-draw-HOLD
+(frame 3) / 10s auto-undraw / release-loose / cooldown. Machine
+progress maps onto clip duration. Bow frame span (4 draw / 6 release)
+reconstructed from verbatim checkpoints, flagged.
+
+**Input.** Drag-to-swing through the verbatim pipeline (FP left-drag,
+orbit right-drag; left-drag stays the camera); direction buttons kept;
+bows press=draw/hold, release=loose on button and canvas alike; SPD
+slider drives the formula live.
+
+**First person.** Eye rides the POSED head (+0.04, +0.18; FOV 62;
+near 0.10 - too-close chest/arm surfaces CLIP instead of filling the
+frame, pixel-verified 0.83 -> 0.01 worst). fpMelee1H frames the
+weapon bottom-right (the left-dominant rig projects to DF's classic
+side for free). FP swing clips = the ONE open gate (dedicated
+first-person attack animations, like classic; 1H deltas break on the
+raised base).
+
+**Integration audit (2026-07-06).** Pose switch is a STATE change:
+clears the clip + machine (a drawn bow no longer persists over a
+melee stance); bows are single-pathed to the pointer pair. Battery:
+24 machine strikes at SPD 10/100 across 1H+2H clean (no NaN, worst
+vert 1.83), quick-tap loose + cooldown block, weapon-switch mid-swing
+completes, orbit camera isolated from gestures.
+
+**Verification doctrine pins.** Stations over nearest-verts; numeric
+batteries over eyeballs; PIXEL-COUNTING screenshots for render-level
+claims (vertex-band filters false-negative); solver grids snapshot
+their centre; probe pose stepping is manual (never trust headless
+rAF); POSES order is the button contract (append last).
+
+## C-Weapons (log; shipped - see Current State): true item data + the first weapon in hand
 
 The data layer is verbatim DFU (`src/characters/weapons.js`): Weapons
 enum (113-131) and WeaponMaterialTypes (Iron 0 -> Daedric 9) from
@@ -106,7 +188,7 @@ witnesses every constant against the DFU source.
   loft (Dagger/Tanto/Shortsword/Wakazashi/Broadsword/Saber/Katana),
   blunt/axe families, 2H + the 2H hold, sheath/hip carry.
 
-## C-Anim (ACTIVE): poses + animation on the neutral rig
+## C-Anim (log; shipped - see Current State): poses + animation on the neutral rig
 
 Static poses as data (v2: the FULL joint set) over the loco transform.
 `src/characters/poses.js` - arms take `{ sw, bd, spread, handRoll,
