@@ -390,6 +390,15 @@ rig is the authoring bench for monster morphologies. Slices:
   arg was passed before the signature existed. 3 tests. C8's E-queue
   is now E4: monster careers, equipment, authored morphologies,
   spectral unblock.
+- **E4a (monster careers): SHIPPED.** loadMonsterCareer ports
+  GetMonsterCareerTemplate -> MonsterFile.LoadMonster verbatim:
+  ENEMY{nnn}.CFG records inside MONSTER.BSA, parsed by the SAME
+  74-byte ClassFile reader, one BSA parse per session with a
+  per-index cache. makeEnemyEntity's monster branch consumes the
+  career for real - LiveSpeed/stats/attackModifierFlags interims are
+  GONE (Open flags ledger shrinks by three at the next audit regen);
+  monster HP stays the basics range and armor*5, per SetEnemyCareer.
+  Crafted-BSA test pins the read, the cache, and the -1 path.
 
 **Audit 2026-07-06 (Mac, engine included):** the shared pixelize pass
 survives N foes now - the renderer's character-sprite RT was keyed on

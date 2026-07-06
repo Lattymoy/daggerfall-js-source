@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 214 tests across 48 files.
+Node 22). Suite: 215 tests across 49 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -19,6 +19,7 @@ Node 22). Suite: 214 tests across 48 files.
 | arch3d.test.js | 5 | 10251-mesh corpus, UV rules, patch table, model 456 |
 | blocks.test.js | 4 | 1295-block corpus, resource closure, FixRdbData |
 | dungeon.test.js | 13 | dfRandom LCG, texture tables, RDB matrix order, action records, overlap removal, Privateer's Hold, 187-RDB closure, full 4232-dungeon sweep, R6 light collection pins, per-light flicker bounds, R7 water corpus (32/187) + Maorn pins |
+| monstercareer.test.js | 1 | ENEMY{nnn}.CFG careers from a crafted MONSTER.BSA through the shared BsaFile+ClassFile readers: fields real on the entity, session cache proven (throwing re-fetch), missing-index null path |
 | playerweapon.test.js | 3 | verbatim reach 2.25+0.25 + view/LOS hit rule + the swing-mod table, drag-gesture -> mapped strike on the shared machine (threshold + release reset), hit-frame kill through the full chain (deterministic rolls) + reach/dead gating |
 | formulas.test.js | 5 | FormulaHelper verbatim: Dice100/DamageModifier/H2H (sheet rule)/weapon min-max tables/material mods/body parts, career attack-modifier bits + enemy-type bonus, to-hit chain (dodging/4 bug preserved, roll ordering, 3..97 clamp), damage paths (str-after-skeletal ordering, silver x2, material gate), the classic 0.25/MeleeDistance/35.156deg hit gate |
 | enemyattack.test.js | 3 | verbatim reset-timer arithmetic (Range/level/reflex terms, /980, 0-floor), the floored-speed >>3 roll gate, strike gating (range+sight+22.5deg yaw) + hit event at HIT_FRAME_MELEE |

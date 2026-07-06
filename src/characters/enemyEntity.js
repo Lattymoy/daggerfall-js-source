@@ -17,6 +17,30 @@
 
 export const KNIGHT_CITYWATCH_ID = 146;
 
+/** Monster careers (E4a): ENEMY{nnn}.CFG records inside MONSTER.BSA,
+ *  the SAME 74-byte ClassFile format (verbatim
+ *  DaggerfallEntity.GetMonsterCareerTemplate -> MonsterFile.LoadMonster:
+ *  name = ENEMY{monster:000}.CFG, record parsed by ClassFile). One BSA
+ *  parse per session, careers cached by index. */
+let _monsterBsa = null;
+const _monsterCareers = new Map();
+export async function loadMonsterCareer(careerIndex, fetchBytes) {
+  const hit = _monsterCareers.get(careerIndex);
+  if (hit) return hit;
+  if (!_monsterBsa) {
+    const { BsaFile } = await import('../formats/bsaFile.js');
+    _monsterBsa = new BsaFile(await fetchBytes('MONSTER.BSA'));
+  }
+  const name = `ENEMY${String(careerIndex).padStart(3, '0')}.CFG`;
+  const idx = _monsterBsa.getRecordIndex(name);
+  if (idx === -1) return null;
+  const { ClassFile } = await import('../formats/classFile.js');
+  const cf = new ClassFile();
+  cf.load(_monsterBsa.getRecordBytes(idx));
+  _monsterCareers.set(careerIndex, cf.career);
+  return cf.career;
+}
+
 export function rollEnemyClassMaxHealth(level, hitPointsPerLevel, rollFn = Math.random) {
   const baseHealth = 10;
   let maxHealth = baseHealth;
@@ -49,7 +73,7 @@ export function makeEnemyEntity(mobileType, basics, career, playerLevel, rollFn 
   } else {
     level = basics.level;
     maxHealth = basics.minHealth + Math.floor(rollFn() * (basics.maxHealth + 1 - basics.minHealth));   // Range(min, max+1)
-    liveSpeed = 50;   // FLAGGED: monster careers (GetMonsterCareerTemplate) port in E4
+    liveSpeed = career ? career.speed : 50;   // the ENEMY{nnn}.CFG career's Speed (E4a); 50 only when a caller skips the load
     armor = (basics.armorValue ?? 0) * 5;
   }
   return {
@@ -65,10 +89,10 @@ export function makeEnemyEntity(mobileType, basics, career, playerLevel, rollFn 
     skills: skillsLevel(level),           // every skill, per SetEnemyCareer
     // stats from the career attributes (class); monster careers pend
     // GetMonsterCareerTemplate (E4) - 50s FLAGGED until then
-    stats: isClass
+    stats: career
       ? { strength: career.strength, agility: career.agility, luck: career.luck }
       : { strength: 50, agility: 50, luck: 50 },
-    attackModifierFlags: isClass ? career.attackModifierFlags : null,   // monster careers E4
+    attackModifierFlags: career ? career.attackModifierFlags : null,
     minMetalToHit: basics.minMetalToHit,
     team: basics.team ?? 'None',
     affinity: basics.affinity,
