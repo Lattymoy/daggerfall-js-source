@@ -221,6 +221,23 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   frames (deterministic atk.t stepping); this session's env could not
   visually verify images, so the pass ran on geometry guards - Mac's
   eyes judge the viewer.
+- **ACTION REDESIGN v4 (Mac: "stiff, not action oriented - stop band
+  aiding")**: the architectural flaw was NO ROOT MOTION - every
+  strike fired from a statue bolted to the floor. Clips now carry
+  `rootX/rootY/rootZ` (whole-body translation): animateTarget adds
+  the root to EVERY vertex (torso, head, arms, legs, held sword);
+  effectivePose merges it; clothSim gains rootX/Y/Z opts so the PINS
+  and the CORE COLLIDER ride the moving body; and the drape wrapper
+  now forwards the FULL lean (gait + pose + attack - it only sent the
+  gait's, which left the cloak 0.21 behind a lunging torso; 0.055
+  after). Every strike MOVES: the chop STEPS IN (0.16 fwd, 0.06 dip -
+  trimmed from 0.09 when the blade came 0.03 off the floor), the
+  thrust rocks back then LUNGES 0.23, the hacks DROP 0.11 and drive
+  0.11, the cuts throw weight 0.12 ACROSS; legs step WITH the root.
+  Per-clip rhythm (cuts 0.40, hacks 0.46, chop 0.58, thrust 0.36).
+  Drive stacks with the whip: chop tip peak 85 u/s snap 7.4. Head
+  clearance re-verified vs a root-following head sphere (0.13-0.61);
+  anims.test pins the thrust lunge > 0.20.
 - **Sword seat sliders (Mac)**: tuners bar gains swd pitch (+/-45deg
   about the GRIP POINT, y 0.81/z 0 - invariant under the mesh bake),
   swd fwd, swd up (+/-0.12). Rewrites the sword animTarget BASE +
