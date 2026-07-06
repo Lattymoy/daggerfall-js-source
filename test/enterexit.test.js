@@ -4,8 +4,10 @@ import {
   ENTER_DOOR_OFFSET, EXIT_DOOR_OFFSET, MARKER_UP_OFFSET, DUNGEON_EXIT_OFFSET,
   doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding,
   dungeonEntranceLanding, climbLadder,
+  floorLanding,
 } from '../src/player/enterExit.js';
 import { trs } from '../src/world/mat4.js';
+import { Collider } from '../src/player/collider.js';
 
 const approx = (a, b, eps = 1e-4) =>
   assert.ok(Math.abs(a - b) < eps, `${a} !~ ${b}`);
@@ -89,4 +91,18 @@ test('enterExit: ladder climb - verbatim marker rules', () => {
   assert.deepEqual(climbLadder([0.2, 4.2, 0], markers, M), [0, 0.5, 0]);
   // No markers -> null.
   assert.equal(climbLadder([0, 1, 0], [], M), null);
+});
+
+test('floorLanding: FixStanding snap - a raised landing floors instantly', () => {
+  // Raw landings sit at door-centre height / marker + 1.08; DFU ends
+  // every transition with FixStanding's raycast snap. Gravity-flooring
+  // instead was the visible "drop in" on building entry.
+  const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const c = new Collider(() => -Infinity);
+  c.addMesh('floor', new Float32Array([-5, 0.7, -5, 5, 0.7, -5, 5, 0.7, 5, -5, 0.7, 5]), new Uint32Array([0, 1, 2, 0, 2, 3]), I);
+  const floored = floorLanding(c, [1, 1.9, 1]);      // 1.2 above the floor
+  approx(floored[1], 0.7, 1e-3);
+  assert.equal(floored[0], 1); assert.equal(floored[2], 1);
+  const noHit = floorLanding(c, [20, 1.9, 20]);      // off the floor quad: unchanged, gravity fallback
+  assert.deepEqual(noHit, [20, 1.9, 20]);
 });

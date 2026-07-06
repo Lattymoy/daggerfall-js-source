@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 191 tests across 41 files.
+Node 22). Suite: 192 tests across 41 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -19,7 +19,7 @@ Node 22). Suite: 191 tests across 41 files.
 | arch3d.test.js | 5 | 10251-mesh corpus, UV rules, patch table, model 456 |
 | blocks.test.js | 4 | 1295-block corpus, resource closure, FixRdbData |
 | dungeon.test.js | 13 | dfRandom LCG, texture tables, RDB matrix order, action records, overlap removal, Privateer's Hold, 187-RDB closure, full 4232-dungeon sweep, R6 light collection pins, per-light flicker bounds, R7 water corpus (32/187) + Maorn pins |
-| enterexit.test.js | 5 | verbatim landing offsets, door transforms, landing selection, dungeon exit, ladder climb |
+| enterexit.test.js | 6 | verbatim landing offsets, door transforms, landing selection, dungeon exit, ladder climb, FixStanding floor snap |
 | interior.test.js | 8 | ModelDoor extraction, static doors, interior layout, 6832-interior corpus, R8 light offsets + MAGEAA00 pins |
 | people.test.js | 2 | AddPeople position/data verbatim, 14174-people corpus (6724/6832 interiors, archives 176-184) |
 | poses.test.js | 1 | Static pose table (POSES): melee1H well-formed, sagittal angles within joint ranges |

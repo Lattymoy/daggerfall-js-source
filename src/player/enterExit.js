@@ -177,3 +177,20 @@ export function exteriorLanding(playerPos, buildingDoors) {
     door.pos[2] + door.normal[2] * EXIT_DOOR_OFFSET,
   ];
 }
+
+/**
+ * Verbatim FixStanding counterpart: DFU ends every transition
+ * (TransitionInterior, MovePlayerToDungeonStart) with an instant
+ * raycast snap to the floor - the port spawned at the raw landing
+ * (door-centre height / marker + 1.08) and let GRAVITY floor it,
+ * a visible ~1u drop on every building entry. Cast down from just
+ * above the landing; on a hit, feet snap to the surface. No hit
+ * (landing already at/below floor or nothing beneath) returns the
+ * landing unchanged - gravity remains the fallback.
+ */
+export function floorLanding(collider, pos, maxDist = 10) {
+  const origin = [pos[0], pos[1] + 0.2, pos[2]];
+  const d = collider.raycast(origin, [0, -1, 0], maxDist + 0.2);
+  if (!Number.isFinite(d)) return pos;
+  return [pos[0], origin[1] - d, pos[2]];
+}

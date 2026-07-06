@@ -2,6 +2,25 @@
 
 ## Post-arc fixes (Mac playtest, 2026-07-06)
 
+3. **Exit crash (production stack via the crash overlay).** frame()'s
+   E-handling ran tryExit, which destroys interiorCtx and flips the
+   mode - then the SAME frame fell into the interior render and read
+   `.lights` of null, killing the loop ("game crashed on leaving
+   exterior"). Dungeon exits shared the flaw. The __exit shot probes
+   call tryExit OUTSIDE the frame loop, so P3/P8 verification never
+   exercised the in-frame path. Fix: a successful exit ends the modal
+   frame (`if (mode === 'exterior') return true`); the host resumes
+   next frame. Minified-stack workflow pinned: rebuild the deployed
+   commit locally, slice the bundle at line:col.
+4. **Drop-in on entry.** DFU ends every transition with FixStanding's
+   instant raycast floor snap; the port spawned at the raw landing
+   (door-centre height / marker + 1.08) and let gravity floor it - a
+   visible ~1u drop. floorLanding() (enterExit.js) is the verbatim
+   counterpart: cast down from landing + 0.2, snap feet to the hit,
+   landing unchanged on no hit (gravity fallback). Applied to
+   interior entry AND the dungeon spawn; ladder teleports keep their
+   verified gravity-floor (thin-board tunneling note stands).
+
 Two root causes from the first production playtest:
 
 1. **A/D inverted (all scenes + motor).** lookAt's camera-right is

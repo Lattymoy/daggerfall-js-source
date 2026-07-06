@@ -21,7 +21,7 @@
 //      stay valid for the exit landing math.
 //   baseCollider() - the collider to restore on exit.
 
-import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder } from '../player/enterExit.js';
+import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding } from '../player/enterExit.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb } from '../player/activate.js';
 import { buildInteriorContext } from './interiorContext.js';
@@ -86,7 +86,8 @@ export function createWorldModes(host) {
       exitReturn = { siblings };
       interiorCtx = ctx;
       player.collider = ctx.collider;
-      player.spawn(landing[0], landing[1], landing[2]);
+      const floored = floorLanding(ctx.collider, landing);   // verbatim FixStanding: instant snap, no gravity drop-in
+      player.spawn(floored[0], floored[1], floored[2]);
       mode = 'interior';
       console.log(`interior: ${ctx.drawList.length} draws, ${ctx.doors.length} doors, ${ctx.lights.length} lights, ${ctx.people.length} people`);
     } finally {
@@ -192,7 +193,8 @@ export function createWorldModes(host) {
       };
       mode = 'dungeon';
       player.collider = ctx.collider;
-      player.spawn(m.x, m.y + 1.08, m.z);
+      const spawn = floorLanding(ctx.collider, [m.x, m.y + 1.08, m.z]);   // verbatim MovePlayerToMarker + FixStanding: marker + up*0.6h, then instant floor snap
+      player.spawn(spawn[0], spawn[1], spawn[2]);
       cam.pos = player.eye;
       console.log(`dungeon: ${ctx.drawList.length} draws, ${ctx.exitDoors.length} exit doors, ` +
         `${ctx.lights.length} lights, ${ctx.waterQuads.length} water, ${ctx.colliderTris} tris, ${ctx.enemies.length} enemies`);
@@ -248,6 +250,14 @@ export function createWorldModes(host) {
     const useHeld = keys.has('KeyE');
     if (useHeld && !latch.use) (mode === 'dungeon' ? tryExitDungeon : tryExit)();
     latch.use = useHeld;
+    // A successful exit destroyed the modal context and flipped the
+    // mode - the render below must NOT run against it. This frame is
+    // the transition's; the host resumes next frame. (Root cause of
+    // the production crash: tryExit nulled interiorCtx, then this
+    // same frame fell into the interior render and read .lights of
+    // null. The __exit shot probes call tryExit OUTSIDE the frame
+    // loop, so P3/P8 verification never exercised the in-frame path.)
+    if (mode === 'exterior') return true;
 
     const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.05, 500);
     const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
