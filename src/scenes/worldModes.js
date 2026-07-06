@@ -275,7 +275,7 @@ export function createWorldModes(host) {
       for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
       renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
-      if (dungeonCtx.foes.length) dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos);   // C8 E1+E2: rigged class enemies, classic senses + pursuit
+      if (dungeonCtx.foes.length) dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos);   // C8 E1-E3: rigged foes - senses, pursuit, attacks, player melee
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
           renderer.textures.get(`${dungeonReturn.waterArchive}_0`),
@@ -340,6 +340,22 @@ export function createWorldModes(host) {
     };
     window.__mode = () => mode;
   }
+
+  // C8 E3c: RMB drag-to-swing forwarded to the active dungeon context
+  // (the shared machine consumes deltas once per frame). contextmenu
+  // suppressed so the right button is a weapon control, as classic.
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  addEventListener('mousemove', (e) => {
+    if (mode === 'dungeon' && dungeonCtx && document.pointerLockElement === canvas && (e.buttons & 2)) {
+      dungeonCtx.playerAttackInput(e.movementX, e.movementY, true);
+    }
+  });
+  addEventListener('mouseup', (e) => {
+    if (e.button === 2 && mode === 'dungeon' && dungeonCtx) dungeonCtx.playerAttackInput(0, 0, false);
+  });
+  addEventListener('mousedown', (e) => {
+    if (e.button === 2 && mode === 'dungeon' && dungeonCtx) dungeonCtx.playerAttackInput(0, 0, true);
+  });
 
   return {
     get mode() { return mode; },

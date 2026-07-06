@@ -347,9 +347,28 @@ rig is the authoring bench for monster morphologies. Slices:
   chain; health floors at 0 on __player (death screen + HUD: UI arc;
   foe reactions + death land with player attacks in E3c). Roll slots
   injectable - 5 deterministic tests.
-- **E3c:** the player's weapon into the world scenes (FP viewmodel +
-  gesture input + reach) resolving against foes; foe hit reactions +
-  death (corpse flats from the extracted corpseTexture).
+- **E3c (player melee vs foes): SHIPPED.** combat/playerWeapon.js
+  ports the WeaponManager player-side verbatim: reach 2.25 + 0.25
+  (defaultWeaponReach + SphereCastRadius), the base hit rule (center
+  within reach, in camera view, LOS through the level collider - the
+  in-view check projects through the live proj*view), the
+  CalculateSwingModifiers table (StrikeUp -4/+10 ... StrikeDown
+  +4/-10), drag-to-swing on the ported gesture rules feeding the
+  SHARED machine (deltas buffered per frame, MAX_GESTURE reset).
+  REVIEW CATCH: swing mods first landed post-hoc - moved onto the
+  source channels (toHit onto chanceToHitMod; damage INTO the damage
+  call, before the skeletal rules and the <1 floor) via
+  calculateAttackDamage's damageMod/toHitMod params. Hits stagger
+  foes on the SHIPPED reaction clips (HurtFront/Back by facing,
+  overriding the strike pose); death swaps the rig for the extracted
+  corpseTexture flat (base-centered, drawn + destroyed with the
+  billboard batches). RMB is the weapon control in both dungeon
+  hosts (contextmenu suppressed), classic-style. INTERIM (loud): the
+  equipped weapon is an Iron Dagger until the items arc; proficiency
+  /racial mods pend chargen; backstab pends foe-facing bookkeeping;
+  player attack ANIM (FP viewmodel in-world) is E3d. 3 tests.
+- **E3d:** the FP viewmodel rendered in-world (view-locked rig pass)
+  + backstab facing; monster careers + equipment begin E4.
 - **E4+:** authored monster morphologies (rewrite/ bench), spectral
   emission unblock, perf pass (per-enemy mesh updates).
 

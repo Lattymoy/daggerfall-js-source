@@ -156,7 +156,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const bodyImg = new ImgFile();
     bodyImg.load(await shared.fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
     const formulas = await import('../combat/formulas.js');
+    const { PlayerWeapon } = await import('../combat/playerWeapon.js');
+    const { REACTIONS, sampleClip } = await import('../characters/anims.js');
     foeDeps = {
+      PlayerWeapon, REACTIONS, sampleClip,
       calculateAttackDamage: formulas.calculateAttackDamage,
       meleeHitConnects: formulas.meleeHitConnects,
       MELEE_HIT_YAW_DEG: formulas.MELEE_HIT_YAW_DEG,
@@ -217,8 +220,74 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_drawSprite) _drawSprite = (await import('../render/characterSprite.js')).drawCharacterSprite;
   }
   if (foes.length) await _loadSprite();
+  // C8 E3c: the player's weapon rides the SHARED machine; the host
+  // feeds gesture deltas (attackInput) and the hit frame resolves
+  // here against the foes - reach/view/LOS verbatim, damage through
+  // the full chain, reactions on the shipped clips, death -> the
+  // extracted corpse flat replaces the rig.
+  const playerWeapon = foes.length ? new foeDeps.PlayerWeapon({}) : null;
+  let _atkDx = 0, _atkDy = 0, _atkHeld = false;   // event deltas, consumed once per frame
+  const corpses = [];
+  async function spawnCorpse(f) {
+    const ct = ENEMY_BASICS[f.mobileType]?.corpseTexture;
+    const p = f.ai.feet;
+    if (!ct) return;
+    const t = await getTexture(ct.archive);
+    if (!t || ct.record >= t.recordCount) return;
+    uploadRecord(ct.archive, ct.record);
+    const size = scaledBillboardSize(t.getSize(ct.record), t.getScale(ct.record));
+    const batch = renderer.createBillboardBatch(ct.archive, ct.record, size, [[p[0], p[1] + size.h / 2, p[2]]]);
+    corpses.push(batch);
+    billboardBatches.push(batch);   // hosts draw + destroy() frees
+  }
+  function playerAttackInput(dx, dy, held) {   // host mouse events buffer here
+    _atkDx += dx; _atkDy += dy; _atkHeld = held;
+  }
+  function resolvePlayerHit(eye, inViewFn, playerFeet) {
+    const live = foes.filter((f) => !f.dead);
+    const canSee = (f) => {
+      const c = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];   // foe center (mid-capsule)
+      const dx = c[0] - eye[0], dy = c[1] - eye[1], dz = c[2] - eye[2];
+      const dist = Math.hypot(dx, dy, dz);
+      const l = dist || 1;
+      const hit = collider.raycast(eye, [dx / l, dy / l, dz / l], dist);
+      return { dist, inView: inViewFn(c), losClear: !Number.isFinite(hit) || hit >= dist - 1e-3 };
+    };
+    const { playerEntity } = foeDeps;
+    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee)) {
+      if (damage <= 0) continue;
+      foe.entity.health -= damage;
+      if (foe.entity.health <= 0) {
+        foe.dead = true;
+        spawnCorpse(foe);
+      } else {
+        // stagger AWAY from the hit: player is in front -> HurtFront
+        const hdx = playerFeet[0] - foe.ai.feet[0], hdz = playerFeet[2] - foe.ai.feet[2];
+        const front = foeDeps.withinYaw(foe.ai.yaw, hdx, hdz, 90);
+        foe.reaction = { clip: foeDeps.REACTIONS[front ? 'HurtFront' : 'HurtBack'], t: 0 };
+      }
+    }
+  }
   function drawFoes(dt, canvas, proj, view, eye, playerFeet) {
+    if (playerWeapon) {
+      playerWeapon.gesture(_atkDx, _atkDy, _atkHeld, dt, Math.max(canvas.clientWidth, canvas.clientHeight));
+      _atkDx = 0; _atkDy = 0;
+      // WeaponManager.IsPositionInCameraView: project through the
+      // live proj*view, inside NDC with positive w
+      const pv = multiply(proj, view);
+      const inView = ([x, y, z]) => {
+        const w = pv[3] * x + pv[7] * y + pv[11] * z + pv[15];
+        if (w <= 0) return false;
+        const nx = (pv[0] * x + pv[4] * y + pv[8] * z + pv[12]) / w;
+        const ny = (pv[1] * x + pv[5] * y + pv[9] * z + pv[13]) / w;
+        return nx >= -1 && nx <= 1 && ny >= -1 && ny <= 1;
+      };
+      for (const ev of playerWeapon.update(dt)) {
+        if (ev === 'hit' && playerFeet) resolvePlayerHit(eye, inView, playerFeet);
+      }
+    }
     for (const f of foes) {
+      if (f.dead) continue;
       f.ai.update(dt, playerFeet || eye);   // E2: classic senses + pursuit; eye fallback keeps probes alive without a player
       f.events = f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine
       // E3b: the machine's hit frame resolves against the player -
@@ -238,7 +307,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         }
       }
       f.rig.setGait(f.ai.moving ? 1 : 3);   // WALK while pursuing, IDLE sway at rest
-      f.rig.setPose(f.attack.pose());       // strike clips over the gait; null clears
+      let pose = f.attack.pose();
+      if (f.reaction) {                     // a hit stagger overrides the strike
+        f.reaction.t += dt;
+        const R = f.reaction.clip;
+        if (f.reaction.t >= R.dur) f.reaction = null;
+        else pose = foeDeps.sampleClip(R, f.reaction.t / R.dur);
+      }
+      f.rig.setPose(pose);
       f.rig.update(dt);
       const s = f.rig.scale, p = f.ai.feet;
       const mat = trs(p[0], p[1] - f.rig.liveFootY * s, p[2], 0, f.ai.yaw * 180 / Math.PI, 0, s, s, s);   // live support point, same grounding rule as the player rig
@@ -261,6 +337,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     enemies,
     foes,
     drawFoes,
+    playerAttackInput,
     textureTable: dungeon.textureTable,
     exitDoors,
     colliderTris,

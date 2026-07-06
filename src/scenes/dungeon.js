@@ -106,7 +106,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
   addEventListener('keydown', (e) => keys.add(e.code));
   addEventListener('keyup', (e) => keys.delete(e.code));
   canvas.addEventListener('pointerdown', () => canvas.requestPointerLock());
+  // C8 E3c: RMB drag-to-swing (classic weapon control; menu suppressed)
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  addEventListener('mousedown', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, true); });
+  addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   addEventListener('mousemove', (e) => {
+    if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }
     if (document.pointerLockElement !== canvas) return;
     cam.yaw -= e.movementX * 0.0025;
     cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
