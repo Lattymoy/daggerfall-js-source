@@ -377,6 +377,20 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   Y-only - an axis:'z' option silently degenerated to a zero-length
   stack; the arrow is authored along Y and locally rotated onto the
   aim axis about the grip line before the shared grip bake.
+- **Blade family (SHIPPED)** - `pieces/blades.js`, one parameterized
+  builder: Dagger, Tanto, Shortsword, Wakazashi, Broadsword, Saber,
+  Katana (1H; inherit melee1H + ATTACKS_1H free) + Dai-Katana (2H).
+  HOUSE LAYOUT pinned: pommel HIGH, blade DESCENDS below the grip -
+  the seat bake maps down to point-forward (an upward-authored blade
+  points BACKWARD; the first cut had every tip at z 0.21). Curves
+  (wakazashi/saber/katana/dai) bow via per-row cz. THE 2H CONTRACT:
+  any 2H weapon that places its off-hand station at the
+  claymore-standard point (-0.235, 0.8038, -0.1578) inherits the
+  solved melee2H pose AND the station-coupled attack tracks by
+  construction - Dai-Katana verifies at off 0.003 build / StrikeDown
+  offMax 0.097 live, claymore-identical. Registry is data now:
+  payload `weaponPacks` [{name, hands, pack, items}]; the viewer wpn
+  control is a SELECT. Item + station + tip pins per blade.
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,

@@ -9,6 +9,7 @@ import { DYE_COLORS } from '../src/characters/dyes.js';
 import { buildSword } from '../src/characters/pieces/sword.js';
 import { buildClaymore } from '../src/characters/pieces/claymore.js';
 import { buildLongBow, buildShortBow } from '../src/characters/pieces/bow.js';
+import { buildBladeWeapon, BLADE_SPECS } from '../src/characters/pieces/blades.js';
 import { STEEL_RAMP } from '../src/characters/pieces/pieceLoft.js';
 
 // Witness against the DFU source (ItemEnums, ItemBuilder,
@@ -72,6 +73,13 @@ test('weapons: verbatim DFU data pins', () => {
   const ar = buildWeapon(WEAPONS.Arrow, WEAPON_MATERIALS.Daedric);
   assert.equal(ar.minDamage, 0); assert.equal(ar.maxDamage, 0);
   assert.equal(ar.weightInKg, 0.25);
+  // Blade-family item pins (Steel, verbatim table): one per shape class.
+  const steelOf = (id) => buildWeapon(id, WEAPON_MATERIALS.Steel);
+  const dg = steelOf(WEAPONS.Dagger), kt = steelOf(WEAPONS.Katana), dk = steelOf(WEAPONS.Dai_Katana), sa = steelOf(WEAPONS.Saber);
+  assert.deepEqual([dg.minDamage, dg.maxDamage, dg.weightInKg, dg.isOneHanded], [1, 6, 0.5, true]);
+  assert.deepEqual([kt.minDamage, kt.maxDamage, kt.weightInKg, kt.isOneHanded], [3, 16, 3, true]);
+  assert.deepEqual([dk.minDamage, dk.maxDamage, dk.weightInKg, dk.isOneHanded], [3, 21, 4.5, false]);
+  assert.deepEqual([sa.minDamage, sa.maxDamage, sa.weightInKg, sa.isOneHanded], [3, 12, 4.75, true]);
   assert.equal(c.value, 30 * 3 * 512);
   assert.equal(c.maxCondition, Math.trunc((1400 * 32) / 4));
 });
@@ -145,5 +153,22 @@ test('sword piece: grip-baked, armL, point-forward carry (+45 seat)', () => {
     const ah = station(bp, [-0.235, 0.585, 0], 0.02);
     assert.ok(ah && Math.hypot(ah[0]+0.235, ah[2]) < 0.01 && Math.abs(ah[1]-0.59) < 0.02, `arrow head ${ah}`);
     assert.ok(Math.abs(bzHi - half) < 0.03 && Math.abs(bzLo + half) < 0.03, `bow carry span ${bzLo}..${bzHi} vs ${half}`);
+  }
+  // BLADE FAMILY: every blade rides armL with an exact grip station;
+  // the Dai-Katana carries the claymore-standard OFF-HAND station
+  // (the 2H contract - the solved pose + attack tracks transfer);
+  // tips scale point-forward with blade length.
+  const TIP_MIN = { Dagger: 0.40, Tanto: 0.45, Shortsword: 0.58, Wakazashi: 0.64, Broadsword: 0.74, Saber: 0.86, Katana: 0.95, Dai_Katana: 1.22 };
+  for (const nm of Object.keys(BLADE_SPECS)) {
+    const bp = [];
+    let tz = -1e9;
+    for (const f of buildBladeWeapon(STEEL_RAMP, nm)) { assert.equal(f.g, 'armL', nm); for (let i = 0; i < 4; i++) { const q = [f.p[i*3], f.p[i*3+1], f.p[i*3+2]]; bp.push(q); if (q[2] > tz) tz = q[2]; } }
+    const bg = station(bp, [-0.235, 0.81, 0], 0.035);
+    assert.ok(bg && Math.hypot(bg[0]+0.235, bg[1]-0.81, bg[2]) < 0.003, `${nm} grip station ${bg}`);
+    assert.ok(tz > TIP_MIN[nm], `${nm} tip ${tz}`);
+    if (BLADE_SPECS[nm].twoHand) {
+      const bo = station(bp, [-0.235, 0.8038, -0.1578], 0.035);
+      assert.ok(bo && Math.hypot(bo[0]+0.235, bo[1]-0.8038, bo[2]+0.1578) < 0.02, `${nm} off-hand station ${bo}`);
+    }
   }
 });

@@ -32,7 +32,7 @@
   <button id="bg">bg</button>
   <button id="walk">walk</button>
   <button id="pose">pose: none</button>
-  <button id="wpn">wpn: Longsword</button>
+  <select id="wpn"></select>
   <button id="sword">sword: off</button>
   <button id="atkdir">dir: Down</button>
   <button id="strike">strike</button>
@@ -248,12 +248,7 @@ const bodyFurCoat = D.bodyFurCoat ? buildPiece(D.bodyFurCoat) : null;
 const bodyFurBelly = D.bodyFurBelly ? buildPiece(D.bodyFurBelly) : null;
 // weapon registry: every entry rides the armL chain (held) and shares
 // the material ramps, the seat sliders and the stats line.
-const WEAPON_DEFS = [
-  { name: 'Longsword', pack: D.sword, items: D.swordItems },
-  { name: 'Claymore', pack: D.claymore, items: D.claymoreItems },
-  { name: 'Long Bow', pack: D.longbow, items: D.longbowItems },
-  { name: 'Short Bow', pack: D.shortbow, items: D.shortbowItems },
-];
+const WEAPON_DEFS = D.weaponPacks;   // registry-driven: every Daggerfall weapon
 for (const w of WEAPON_DEFS) {
   w.mesh = w.pack ? buildPiece(w.pack) : null;
   if (!w.mesh) continue;
@@ -579,8 +574,10 @@ const setSword = (i) => {
 };
 document.getElementById('sword').onclick = () => setSword(swordIx + 2 > SWORD_MATS.length ? -1 : swordIx + 1);
 window.__setSword = setSword;
-document.getElementById('wpn').onclick = (e) => { wpnIx = (wpnIx + 1) % WEAPON_DEFS.length; e.target.textContent = 'wpn: ' + activeWpn().name; applySwordFit(); setSword(swordIx); };
-window.__setWeapon = (i) => { wpnIx = i % WEAPON_DEFS.length; document.getElementById('wpn').textContent = 'wpn: ' + activeWpn().name; setSword(swordIx); };
+{ const sel = document.getElementById('wpn');
+  for (let i = 0; i < WEAPON_DEFS.length; i++) { const o = document.createElement('option'); o.value = i; o.textContent = WEAPON_DEFS[i].name; sel.appendChild(o); }
+  sel.onchange = (e) => { wpnIx = +e.target.value; applySwordFit(); setSword(swordIx); }; }
+window.__setWeapon = (i) => { wpnIx = i % WEAPON_DEFS.length; document.getElementById('wpn').value = wpnIx; setSword(swordIx); };
 // Attacks: cycle the classic directions; strike fires the mapped clip
 // (Up/UpLeft/UpRight all thrust, per the verbatim DFU mapping).
 const ATK_DIRS = ['Down', 'DownLeft', 'DownRight', 'Left', 'Right', 'Up'];

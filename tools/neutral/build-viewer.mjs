@@ -26,6 +26,7 @@ import { buildSword } from '../../src/characters/pieces/sword.js';
 import { WEAPON_MATERIALS, weaponMaterialRamp, buildWeapon, WEAPONS } from '../../src/characters/weapons.js';
 import { buildClaymore } from '../../src/characters/pieces/claymore.js';
 import { buildLongBow, buildShortBow } from '../../src/characters/pieces/bow.js';
+import { buildBladeWeapon, BLADE_SPECS } from '../../src/characters/pieces/blades.js';
 
 const A = process.env.ARENA2_PATH;
 const pal = new DFPalette(); pal.load(readFileSync(A + '/ART_PAL.COL'), 'ART_PAL.COL');
@@ -73,13 +74,22 @@ for (const nm of DRAPED_NAMES) { const g = drapedGrid(nm);
   if (g) drapeGridsOut[nm] = { rows: g.rows, cols: g.cols, wrap: g.wrap, pos: Array.from(g.pos), faces: g.faces };
   else drapedPacks[nm] = packPiece(drapedPiece(nm, CLOTH_D)); }
 const payload = JSON.stringify({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: drapedPacks, drapeGrids: drapeGridsOut, drapeMaterials: DRAPE_MATERIAL, bodyCore: BODY_CORE, poses: POSES, wristY: WRIST_JUNCTION_Y * 0.9, armX: ARM_X, neckY: NECK_PIVOT_Y * 0.9, attacks: ATTACKS_1H, attacks2H: ATTACKS_2H, attacksRanged: ATTACKS_RANGED, strikes: STRIKES, dirToStrike: DIRECTION_TO_STRIKE,
-  sword: packPiece(buildSword(weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i)))),
-  claymore: packPiece(buildClaymore(weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i)))),
-  claymoreItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Claymore, v)])),
-  longbow: packPiece(buildLongBow(weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i)))),
-  longbowItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Long_Bow, v)])),
-  shortbow: packPiece(buildShortBow(weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i)))),
-  shortbowItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Short_Bow, v)])),
+  // WEAPON REGISTRY: [{name, hands, pack, items}] - the viewer's
+  // weapon list is data. Steel display mesh; per-material items.
+  weaponPacks: (() => {
+    const steel = weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i));
+    const items = (id) => Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(id, v)]));
+    const list = [
+      { name: 'Longsword', hands: '1h', pack: packPiece(buildSword(steel)), items: items(WEAPONS.Longsword) },
+      { name: 'Claymore', hands: '2h', pack: packPiece(buildClaymore(steel)), items: items(WEAPONS.Claymore) },
+      { name: 'Long Bow', hands: 'bow', pack: packPiece(buildLongBow(steel)), items: items(WEAPONS.Long_Bow) },
+      { name: 'Short Bow', hands: 'bow', pack: packPiece(buildShortBow(steel)), items: items(WEAPONS.Short_Bow) },
+    ];
+    for (const nm of Object.keys(BLADE_SPECS)) {
+      list.push({ name: nm.replace('_', '-'), hands: BLADE_SPECS[nm].twoHand ? '2h' : '1h', pack: packPiece(buildBladeWeapon(steel, nm)), items: items(WEAPONS[nm]) });
+    }
+    return list;
+  })(),
   swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
   swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 const dir = new URL('.', import.meta.url).pathname;
