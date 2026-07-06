@@ -76,6 +76,54 @@ export function sampleClip(clip, t) {
 // against fist-travel probes (dx sign + magnitude checked live).
 
 
+// ---- FIRST-PERSON strikes (fpMelee1H). Dedicated clips like the
+// classic FP sprites - the 1H set is authored over the LOW ready and
+// breaks on the raised viewmodel base. Design law for FP: the WRIST
+// drives the sweep (the arm is already raised into frame), body
+// channels stay small (the camera rides the head - lean pitches the
+// EYE), and every sweep crosses the frame in its strike's direction.
+// Deltas start/end 0 so the viewmodel frame is exact at both ends.
+
+export const ATTACKS_FP = {
+  StrikeDown: { dur: 0.50, tracks: {
+    'armL.handPitch': [[0, 0], [0.30, -0.55], [0.38, -0.60, 'snap'], [0.56, 0.75, 'hold'], [0.60, 0.75, 'out'], [0.72, 0.85], [1, 0]],
+    'armL.handYaw':   [[0, 0], [0.30, 0.15], [0.56, -0.10, 'snap'], [1, 0]],
+    'armL.sw':        [[0, 0], [0.30, 0.10], [0.38, 0.11, 'snap'], [0.56, -0.14, 'out'], [1, 0]],
+    'lean':           [[0, 0], [0.38, -0.04, 'snap'], [0.56, 0.10, 'out'], [0.82, 0.03], [1, 0]],
+    'rootY':          [[0, 0], [0.56, -0.05, 'snap'], [0.84, -0.01], [1, 0]],
+  } },
+  StrikeLeft: { dur: 0.50, tracks: {
+    'armL.handYaw':   [[0, 0], [0.28, 0.55], [0.36, 0.60, 'snap'], [0.54, -0.70, 'hold'], [0.58, -0.70, 'out'], [0.70, -0.80], [1, 0]],
+    'armL.handPitch': [[0, 0], [0.28, -0.15], [0.36, -0.17, 'snap'], [0.54, 0.62, 'hold'], [0.58, 0.62, 'out'], [1, 0]],   // the tip must DROP through mid-frame as the yaw crosses - yaw alone waves along the top edge
+    'twist':          [[0, 0], [0.54, -0.08, 'snap'], [0.80, -0.02], [1, 0]],
+    'rootX':          [[0, 0], [0.36, 0.03, 'snap'], [0.54, -0.05, 'out'], [1, 0]],
+  } },
+  StrikeRight: { dur: 0.50, tracks: {
+    'armL.handYaw':   [[0, 0], [0.28, -0.55], [0.36, -0.60, 'snap'], [0.54, 0.70, 'hold'], [0.58, 0.70, 'out'], [0.70, 0.80], [1, 0]],
+    'armL.handPitch': [[0, 0], [0.28, -0.15], [0.36, -0.17, 'snap'], [0.54, 0.62, 'hold'], [0.58, 0.62, 'out'], [1, 0]],
+    'twist':          [[0, 0], [0.54, 0.08, 'snap'], [0.80, 0.02], [1, 0]],
+    'rootX':          [[0, 0], [0.36, -0.03, 'snap'], [0.54, 0.05, 'out'], [1, 0]],
+  } },
+  StrikeDownLeft: { dur: 0.50, tracks: {
+    'armL.handPitch': [[0, 0], [0.30, -0.40], [0.38, -0.44, 'snap'], [0.56, 0.55, 'hold'], [0.60, 0.55, 'out'], [1, 0]],
+    'armL.handYaw':   [[0, 0], [0.30, 0.40], [0.56, -0.50, 'snap'], [0.78, -0.14], [1, 0]],
+    'lean':           [[0, 0], [0.56, 0.07, 'snap'], [1, 0]],
+    'rootY':          [[0, 0], [0.56, -0.04, 'snap'], [1, 0]],
+  } },
+  StrikeDownRight: { dur: 0.50, tracks: {
+    'armL.handPitch': [[0, 0], [0.30, -0.40], [0.38, -0.44, 'snap'], [0.56, 0.55, 'hold'], [0.60, 0.55, 'out'], [1, 0]],
+    'armL.handYaw':   [[0, 0], [0.30, -0.40], [0.56, 0.50, 'snap'], [0.78, 0.14], [1, 0]],
+    'lean':           [[0, 0], [0.56, 0.07, 'snap'], [1, 0]],
+    'rootY':          [[0, 0], [0.56, -0.04, 'snap'], [1, 0]],
+  } },
+  StrikeUp: { dur: 0.50, tracks: {
+    'armL.handPitch': [[0, 0], [0.28, -0.20], [0.34, -0.22, 'snap'], [0.52, 0.85, 'hold'], [0.56, 0.85, 'out'], [0.68, 0.92], [1, 0]],   // POSITIVE pitch lowers the tip on this base (empirical): rear up briefly, then LEVEL the point into the frame centre with the lunge
+    'armL.bd':        [[0, 0], [0.28, 0.18], [0.34, 0.19, 'snap'], [0.52, -0.10, 'out'], [1, 0]],
+    'rootZ':          [[0, 0], [0.34, -0.03, 'snap'], [0.52, 0.12, 'hold'], [0.56, 0.12, 'out'], [0.84, 0.03], [1, 0]],
+    'lean':           [[0, 0], [0.52, 0.08, 'snap'], [0.80, 0.02], [1, 0]],
+  } },
+};
+
 // ---- RANGED (bows, rangedAim). One clip, direction-agnostic (the
 // classic bow fires the same regardless of drag direction). The pose
 // IS the drawn aim; the clip is the LOOSE: a last-inch pull to

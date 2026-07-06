@@ -691,10 +691,7 @@ const ATK_DIRS = ['Down', 'DownLeft', 'DownRight', 'Left', 'Right', 'Up'];
 let atkDirIx = 0;
 document.getElementById('atkdir').onclick = (e) => { atkDirIx = (atkDirIx + 1) % ATK_DIRS.length; e.target.textContent = 'dir: ' + ATK_DIRS[atkDirIx]; };
 const fireAttack = (dirOrStrike) => {
-  if (POSE_NAMES[poseIx] === 'fpMelee1H') {   // the six 1H clips are deltas over the LOW ready - on the raised FP base they cross the near plane / fold past vertical
-    swordInfo.textContent = 'FP attacks not authored yet (dedicated clips, next arc)';
-    return;
-  }
+
   const isBow = POSE_NAMES[poseIx] === 'rangedAim';
   if (!wm || wm.isBow !== isBow) wm = createWeaponMachine(isBow);
   if (isBow) {   // press = nock+draw (BowDrawback); release comes from the button-up path
@@ -703,7 +700,7 @@ const fireAttack = (dirOrStrike) => {
     return;
   }
   const name = D.dirToStrike[dirOrStrike] || dirOrStrike;
-  const table = POSE_NAMES[poseIx] === 'melee2H' ? D.attacks2H : D.attacks;   // pose routes the strike set (2H clips carry SOLVED armR tracks that hold the grip)
+  const table = POSE_NAMES[poseIx] === 'melee2H' ? D.attacks2H : (POSE_NAMES[poseIx] === 'fpMelee1H' ? D.attacksFP : D.attacks);   // pose routes the strike set (2H carries solved armR; FP carries the dedicated viewmodel sweeps)
   const clip = table[name];
   if (clip && machineAttack(wm, name)) atk = { clip, t: 0 };   // the interrupt rule lives in the machine (mid-swing rejected, verbatim)
 };

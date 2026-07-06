@@ -126,9 +126,16 @@ slider drives the formula live.
 near 0.10 - too-close chest/arm surfaces CLIP instead of filling the
 frame, pixel-verified 0.83 -> 0.01 worst). fpMelee1H frames the
 weapon bottom-right (the left-dominant rig projects to DF's classic
-side for free). FP swing clips = the ONE open gate (dedicated
-first-person attack animations, like classic; 1H deltas break on the
-raised base).
+side for free). ATTACKS_FP (SHIPPED, gate closed): six dedicated
+viewmodel strikes - the WRIST drives, body stays small (the camera
+rides the head), deltas end at zero. NDC signatures: chop crosses
+top-to-bottom through centre (0.05), cuts cross 1.65 frame widths
+AND drop through mid-view (pitch drive - yaw alone waves along the
+top edge), the thrust levels the point to 0.15 of centre with a
+0.16 eye lunge (pitch SIGN pinned: positive lowers the tip on this
+base). Pixel near-fill worst 0.06. fpMelee1H routes ATTACKS_FP
+through the machine; drag-to-swing works in FP end to end. ZERO
+open gates - the combat layer is complete.
 
 **Integration audit (2026-07-06).** Pose switch is a STATE change:
 clears the clip + machine (a drawn bow no longer persists over a
