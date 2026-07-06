@@ -186,11 +186,25 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   ways (first tip-tuning inverted all four laterals). Slashes are
   yaw-led with twist committing THROUGH the strike and spread reduced
   to windup flavor (three coupled channels were cancelling at the
-  tip: 0.2 travel until restructured). Final TIP travel (dx,dy,dz)
-  windup->strike + tip/pommel arc ratio: Down -0.06,-0.42,+0.75 r1.60;
-  DownLeft -0.77 r1.33; DownRight +0.68 r1.64; Left -1.32 r3.35;
-  Right +1.30 r3.98; thrust +1.12 fwd r2.13. Viewer: `dir:` cycles,
-  `strike` fires; `__attack(dirOrStrike)` hook.
+  tip). OVERHAUL v3 (Mac): clips rebuilt as KINETIC CHAINS with per-
+  segment easing - sampler keys are now [t, v, ease?] where the LEFT
+  key names its segment: 'smooth' (default), 'snap' (u^3: slow load,
+  explosive arrival - every launch), 'out' ((1-(1-u)^3): hard-stop
+  follow-throughs/settles), 'lin', 'hold'. TAG TRAP pinned: tags
+  shape the segment to their RIGHT; first authoring put 'snap' on
+  impact keys and 'hold' on coil keys, turning launches into step-
+  jumps - every tag shifted one key left. Structure per strike: slow
+  load -> loaded beat -> snap launch -> follow-through PAST the line
+  with a hard stop -> settle -> home (all tracks end 0). Sequencing:
+  hips (twist) load/fire ~0.04 before the arm, the wrist ~0.04 after
+  (whip). GUARD ARM counters every swing; LEGS shift weight at rest
+  (clip deltas merge over the stance; the gait owns them while
+  moving) - chop sinks the lead knee, the thrust LUNGES (rear ankle
+  0.27). Probed at 120Hz: tip peak speeds AT the impact keys, snap
+  ratio (peak/mean) 5.6-5.7 chops/hacks (72-73 u/s), 6.8 slashes
+  (36-37), 3.7 thrust (32, on the lunge); guard counter 0.24-0.46.
+  Durations per character: chop 0.60, hacks 0.46, cuts 0.42, thrust
+  0.38. Viewer: `dir:` cycles, `strike` fires; `__attack` hook.
 - **Sword seat sliders (Mac)**: tuners bar gains swd pitch (+/-45deg
   about the GRIP POINT, y 0.81/z 0 - invariant under the mesh bake),
   swd fwd, swd up (+/-0.12). Rewrites the sword animTarget BASE +

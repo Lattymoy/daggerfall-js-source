@@ -419,10 +419,11 @@ function effectivePose() {
   const d = sampleClip(atk.clip, atk.t);
   if (!d) { atk = null; return base; }
   const b = base || { lean: 0, armL: ZERO_ARM, armR: ZERO_ARM };
-  const arm = (k) => { const o = { ...(b[k] || ZERO_ARM) }; const dd = d[k]; if (dd) for (const c in dd) o[c] = (o[c] || 0) + dd[c]; return o; };
+  const limb = (k, zero) => { const has = b[k] || d[k]; if (!has) return b[k]; const o = { ...(b[k] || zero) }; const dd = d[k]; if (dd) for (const c in dd) o[c] = (o[c] || 0) + dd[c]; return o; };
   return { ...b, gaitArm: 0, gaitElbow: 0, runElbow: 0,
     lean: (b.lean || 0) + (d.lean || 0), twist: (b.twist || 0) + (d.twist || 0), headPitch: (b.headPitch || 0) + (d.headPitch || 0),
-    armL: arm('armL'), armR: arm('armR') };
+    armL: limb('armL', ZERO_ARM), armR: limb('armR', ZERO_ARM),
+    legL: limb('legL', { sw: 0, bd: 0 }), legR: limb('legR', { sw: 0, bd: 0 }) };
 }
 function animate(dt) {
   if (atk) atk.t += dt;

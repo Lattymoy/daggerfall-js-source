@@ -19,9 +19,10 @@ test('anims: verbatim DFU direction mapping + well-formed clips', () => {
       assert.equal(keys[0][1], 0, `${name}.${path} must start at 0 (delta clip)`);
       assert.equal(keys[keys.length - 1][1], 0, `${name}.${path} must end at 0`);
       let prev = -1;
-      for (const [t, v] of keys) {
+      for (const [t, v, e] of keys) {
         assert.ok(t >= 0 && t <= 1 && t > prev, `${name}.${path} keys unsorted`);
         assert.ok(Number.isFinite(v) && Math.abs(v) < Math.PI, `${name}.${path} value ${v}`);
+        if (e !== undefined) assert.ok(['smooth', 'snap', 'out', 'lin', 'hold'].includes(e), `${name}.${path} ease ${e}`);
         prev = t;
       }
     }
@@ -33,9 +34,15 @@ test('anims: sampler is a continuous delta (zero at entry, null past dur)', () =
   const start = sampleClip(clip, 0);
   for (const k of ['twist', 'lean']) if (k in start) assert.equal(start[k], 0);
   for (const limb of ['armL', 'armR']) if (start[limb]) for (const v of Object.values(start[limb])) assert.equal(v, 0);
-  const mid = sampleClip(clip, 0.30 * clip.dur);
-  assert.ok(Math.abs(mid.armL.handYaw - -1.15) < 1e-9, `keyframe hit: ${mid.armL.handYaw}`);
-  assert.ok(Number.isFinite(mid.twist));
+  const held = sampleClip(clip, 0.30 * clip.dur);   // inside the loaded HOLD (0.26..0.34)
+  assert.ok(Math.abs(held.armL.handYaw - -0.565) < 0.01, `hold value: ${held.armL.handYaw}`);
+  // 'snap' (u^3) back-loads the segment: just past the hold the value
+  // has barely moved; near the impact key it has nearly arrived.
+  const early = sampleClip(clip, 0.38 * clip.dur).armL.handYaw;
+  const late = sampleClip(clip, 0.49 * clip.dur).armL.handYaw;
+  assert.ok(Math.abs(early - -0.58) < 0.05, `snap should idle early: ${early}`);
+  assert.ok(late > 0.30, `snap should arrive late: ${late}`);
+  assert.ok(Number.isFinite(held.twist));
   assert.equal(sampleClip(clip, clip.dur), null);
   assert.equal(sampleClip(clip, clip.dur * 2), null);
 });
