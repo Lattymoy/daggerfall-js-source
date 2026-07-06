@@ -19,7 +19,7 @@ import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { applyClimate, getGroundArchive, getNatureArchive } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
-import { lookAt, multiply, ortho, perspective, trs } from '../world/mat4.js';
+import { lookAt, multiply, ortho, perspective, transformPoint, trs } from '../world/mat4.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { fetchBytes, parseSeason, createSkyController } from './shared.js';
@@ -248,7 +248,14 @@ export async function bootExterior(canvas, renderer, params, status) {
   // slice 3); walks in place at the 9x character-pass standard once
   // the render split lands (slice 4).
   let rig = null, rigMat = null, rigPos = null;
-  if (params.has('rig')) {
+  // WORLD CAMERA MODES (slice 6): first person (default) / third
+  // person. In third person the rig RIDES the player - position from
+  // the motor's feet, facing from cam.yaw, gait from live input - and
+  // the camera pulls back along the view ray. V toggles at runtime
+  // (lazy rig build); ?tp starts in third person. ?rig keeps its
+  // fixed-park probe semantics when not riding.
+  let tpMode = params.has('tp');
+  const buildRig = async () => {
     const [{ createEngineRig, deriveClassicRamps }, { ImgFile }] = await Promise.all([
       import('../characters/engineRig.js'),
       import('../formats/imgFile.js'),
@@ -258,11 +265,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     rig = createEngineRig(renderer, deriveClassicRamps(palette, bodyImg.getDFBitmap()));
     rig.setGait(1);
     window.__rig = rig;
-  }
+  };
+  if (params.has('rig') || tpMode) await buildRig();
   player.spawn(loc.width * RMB_SIDE * 0.46, GROUND_OFFSET * 0.025 + 2, loc.height * RMB_SIDE * 0.5);
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.
-  const latch = { jump: false, use: false };
+  const latch = { jump: false, use: false, view: false };
   console.log(`player: collider ${colliderTris} tris, walk=${walkMode}`);
   if (shotMode) {
     window.__player = {
@@ -342,6 +350,14 @@ export async function bootExterior(canvas, renderer, params, status) {
         modes.tryEnter().catch((e) => console.error(e));
       }
       latch.use = useHeld;
+      // V toggles first/third person (edge-latched like jump/use);
+      // the rig builds lazily on first entry into third person.
+      const viewHeld = keys.has('KeyV');
+      if (viewHeld && !latch.view) {
+        tpMode = !tpMode;
+        if (tpMode && !rig) buildRig().catch((e) => console.error(e));
+      }
+      latch.view = viewHeld;
     } else {
       const speed = (keys.has('ShiftLeft') ? 120 : 30) * dt;
       if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
@@ -351,12 +367,16 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
 
     // Shot vantage scales with the location extent.
+    const riding = tpMode && walkMode && !!rig;
+    const TP_DIST = 3.2;   // third-person pull-back along the view ray (camera-terrain clip: open, noted in the arc)
     const target = shotMode && !walkMode
       ? [extentX * 0.46, 6, extentZ * 0.5]
       : [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
     const eye = shotMode && !walkMode
       ? [extentX * 0.565, 11, extentZ * 0.72]
-      : cam.pos;
+      : riding
+        ? [cam.pos[0] - fwd[0] * TP_DIST, cam.pos[1] - fwd[1] * TP_DIST, cam.pos[2] - fwd[2] * TP_DIST]
+        : cam.pos;
     const proj = perspective(
       Math.PI / 3,
       canvas.clientWidth / canvas.clientHeight,
@@ -407,20 +427,37 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.drawTerrain(groundSurface, identityMatrix,
       renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);
     for (const d of drawList) renderer.drawMesh(d.mesh, d.matrix, texRemap);
-    if (rig) {
+    if (rig && (riding || params.has('rig'))) {
+      if (riding) {
+        // Gait from live input over the SAME keys the motor reads;
+        // airborne keeps the last grounded gait's look via stand.
+        const mvF = (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0);
+        const mvS = (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0);
+        rig.setGait((mvF || mvS) ? (keys.has('ShiftLeft') ? 2 : 1) : 3);
+      } else rig.setGait(1);   // parked probe rig: the slice-2 walking-in-place semantics
       rig.update(dt);
       const s = rig.scale;
-      if (!rigPos) {
-        if (params.has('rigNear')) {   // probe affordance: park at the view ray's GROUND intersection so the 9x texel grid is screen-measurable and centered
-          const f = [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]];
-          const fl = Math.hypot(f[0], f[1], f[2]) || 1;
-          const d = [f[0] / fl, f[1] / fl, f[2] / fl];
-          const t = 24;   // fixed: deep enough that a grounded figure fits the frustum below a high near-horizontal vantage
-          rigPos = [eye[0] + d[0] * t, 0, eye[2] + d[2] * t];
-        } else { const p = player.pos; rigPos = [p[0] + 2, 0, p[2] + 3]; }   // FIXED world placement, captured once at first frame
+      let px, py, yawDeg;
+      if (riding) {
+        // Ride the motor: FEET position verbatim (jumps carry the rig),
+        // facing = camera yaw (model +z is the body's front).
+        px = player.pos[0]; py = player.pos[1]; yawDeg = cam.yaw * 180 / Math.PI;
+        rigPos = [px, 0, player.pos[2]];
+      } else {
+        if (!rigPos) {
+          if (params.has('rigNear')) {   // probe affordance: park at the view ray's GROUND intersection so the 9x texel grid is screen-measurable and centered
+            const f = [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]];
+            const fl = Math.hypot(f[0], f[1], f[2]) || 1;
+            const d = [f[0] / fl, f[1] / fl, f[2] / fl];
+            const t = 24;   // fixed: deep enough that a grounded figure fits the frustum below a high near-horizontal vantage
+            rigPos = [eye[0] + d[0] * t, 0, eye[2] + d[2] * t];
+          } else { const p = player.pos; rigPos = [p[0] + 2, 0, p[2] + 3]; }   // FIXED world placement, captured once at first frame
+        }
+        px = rigPos[0]; yawDeg = 0;
+        py = collider.heightAt(rigPos[0], rigPos[2]);   // grounded through the SAME contract the player stands on - real terrain inherits for free (slice 3)
       }
-      const gy = collider.heightAt(rigPos[0], rigPos[2]);   // grounded through the SAME contract the player stands on - real terrain inherits for free (slice 3)
-      rigMat = new Float32Array([s,0,0,0, 0,s,0,0, 0,0,s,0, rigPos[0], gy - rig.liveFootY * s, rigPos[2], 1]);   // live support point: feet kiss the ground every frame
+      const gy = py;
+      rigMat = trs(px, gy - rig.liveFootY * s, rigPos[2], 0, yawDeg, 0, s, s, s);   // live support point: feet kiss the ground every frame
       // THE 9x CHARACTER PASS (slice 4): render the rig into a low-res
       // sprite (screen height / 9) under a fitted ortho camera from the
       // main view's azimuth, then composite as a camera-facing quad -
@@ -428,8 +465,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       const b = rig.liveBounds;
       const worldH = (b.maxY - b.minY) * s;
       const halfH = worldH / 2;
-      const halfW = Math.hypot(b.maxX - b.minX, b.maxZ - b.minZ) * s / 2;
-      const center = [rigPos[0] + (b.minX + b.maxX) / 2 * s, gy - rig.liveFootY * s + (b.minY + b.maxY) / 2 * s, rigPos[2] + (b.minZ + b.maxZ) / 2 * s];
+      const halfW = Math.hypot(b.maxX - b.minX, b.maxZ - b.minZ) * s / 2;   // azimuth-safe upper bound - holds under rig yaw for free
+      const center = transformPoint(rigMat, (b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2, (b.minZ + b.maxZ) / 2);   // through rigMat, so yaw rotation is exact (identical arithmetic to the old inline T*S when yaw=0)
       const dx = center[0] - eye[0], dy = center[1] - eye[1], dz = center[2] - eye[2];
       const dist = Math.max(0.5, Math.hypot(dx, dy, dz));
       // sprite size from the TRUE projection (exact 9x by construction,

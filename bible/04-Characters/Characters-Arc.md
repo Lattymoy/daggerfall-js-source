@@ -230,7 +230,25 @@ ramps/buildCharMesh/loco in interiorContext are DELETED
 battery vs the deleted inline math on the same race mesh: idle and
 off EXACT (0.0000 worst vert); walk 0.054, fully attributed - the
 canonical WALK carries elbowBase 0.18 + lean 0.05 the stale copy
-never had (zeroing both -> 0.0000). NEXT: world camera modes.
+never had (zeroing both -> 0.0000). SLICE 6 SHIPPED: WORLD CAMERA
+MODES. First person (default, rig hidden - classic DF shows no body)
+/ third person: the rig RIDES the player - FEET position verbatim
+from the motor (jumps carry it), facing = cam.yaw (model +z is the
+front; trs yaw maps +z -> [sin,0,cos] = fwd, probe-exact), gait from
+live input over the SAME keys the motor reads (walk/run; stand =
+gait 3, the new IDLE slot in the rig's gait table) - and the eye
+pulls back 3.2 along the view ray. V edge-toggles at runtime (lazy
+rig build); ?tp starts in third person; ?rig keeps its fixed-park
+probe semantics when not riding. rigMat unified onto trs (yaw-0
+bit-identical to the old inline T*S) and the sprite-pass center goes
+through transformPoint(rigMat, ...) so yaw is exact by construction
+(halfW's hypot bound is azimuth-safe under rotation for free).
+Node battery: matrix parity 0, facing delta 0.000000 across 4 yaws,
+gait-3-vs-drive(IDLE) 0.000000. OPEN: live in-scene verification
+(this container has no ARENA2 - user-supplied per doctrine) and
+third-person camera-terrain/building clip. Next arc decision: Mac
+(candidates: enemy rigs on the shared states; spectral emission
+unblock for Rendering).
 
 **Verification doctrine pins.** Stations over nearest-verts; numeric
 batteries over eyeballs; PIXEL-COUNTING screenshots for render-level

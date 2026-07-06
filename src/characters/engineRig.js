@@ -12,11 +12,11 @@
 // paperdoll does (skin from the mid torso of BODY00I0, boots from
 // the feet), so the engine character matches the game palette.
 import { buildNeutralBody, WRIST_JUNCTION_Y, ARM_X, NECK_PIVOT_Y } from './neutralBody.js';
-import { createAnimContext, animateTarget, WALK, RUN, POSE_L } from './animate.js';
+import { createAnimContext, animateTarget, IDLE, WALK, RUN, POSE_L } from './animate.js';
 import { packCharacterFaces } from '../render/characterMesh.js';
 
 const CLASSIC_HEIGHT = 1.8;
-const GAITS = [null, WALK, RUN];
+const GAITS = [null, WALK, RUN, IDLE];   // gait 3: standing sway (rig at rest in the world)
 
 /** Classic-palette ramps for the neutral body (single source; the
  *  interior copy migrates here). */
