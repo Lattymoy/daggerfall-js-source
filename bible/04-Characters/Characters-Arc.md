@@ -290,7 +290,21 @@ rig is the authoring bench for monster morphologies. Slices:
   bucket rule). Departures documented in the module header (eye = feet
   + 5/6h; stealth pending E3). Flagged E3 plumbing: per-enemy
   LiveSpeed from career stats (stub 50 at the spawn site). 4 tests.
-- **E2b:** the shared weaponStates machine drives enemy attacks.
+- **E2b (attacks): SHIPPED.** enemyAttack.js ports EnemyAttack.cs
+  verbatim onto the SHARED weaponStates machine: MeleeTimer countdown
+  (0-floor), speed floor 8, the classic per-update roll
+  DFRandom.rand() % speed >= (speed >> 3) + 6 (DFU keeps classic's
+  reversed comparison; so do we), MeleeAnimation gates (in sight,
+  22.5deg yaw, distance <= MeleeDistance + rate-of-approach),
+  ResetMeleeTimer arithmetic exact (Range(1500,3001), -50/level over
+  10, +450/reflex step, 0-floor, /980). Unity-Random slots stay
+  uniform rolls (DFU's own choice); DFRandom used exactly where DFU
+  uses it. The strike is a uniform roll over STRIKES (classic mobiles
+  have one PrimaryAttack; the WeaponManager click-attack precedent),
+  played on the rig via the authored ATTACKS_1H clips sampled on the
+  machine's frame clock (rig.setPose over the gait). 'hit' events
+  surface on each foe for E3 damage. PENDING E3: playerLevel/reflexes
+  stubs (10/2 - both zero their terms), per-enemy LiveSpeed. 3 tests.
 - **E3:** hit resolution vs the player (FormulaHelper
   CalculateAttackDamage) + the shipped hit reactions on both sides.
 - **E4+:** authored monster morphologies (rewrite/ bench), spectral

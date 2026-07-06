@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 197 tests across 43 files.
+Node 22). Suite: 200 tests across 44 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -19,6 +19,7 @@ Node 22). Suite: 197 tests across 43 files.
 | arch3d.test.js | 5 | 10251-mesh corpus, UV rules, patch table, model 456 |
 | blocks.test.js | 4 | 1295-block corpus, resource closure, FixRdbData |
 | dungeon.test.js | 13 | dfRandom LCG, texture tables, RDB matrix order, action records, overlap removal, Privateer's Hold, 187-RDB closure, full 4232-dungeon sweep, R6 light collection pins, per-light flicker bounds, R7 water corpus (32/187) + Maorn pins |
+| enemyattack.test.js | 3 | verbatim reset-timer arithmetic (Range/level/reflex terms, /980, 0-floor), the floored-speed >>3 roll gate, strike gating (range+sight+22.5deg yaw) + hit event at HIT_FRAME_MELEE |
 | enemymotor.test.js | 4 | verbatim classic AI constants (sight/hearing/FOV/melee/turn/update-rate/system-divisor/walk-base), 11.25deg turn clamp, LOS wall + FOV gates, pursue-and-stop at MeleeDistance on the classic cadence |
 | enterexit.test.js | 6 | verbatim landing offsets, door transforms, landing selection, dungeon exit, ladder climb, FixStanding floor snap |
 | interior.test.js | 8 | ModelDoor extraction, static doors, interior layout, 6832-interior corpus, R8 light offsets + MAGEAA00 pins |
