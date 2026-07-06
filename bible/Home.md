@@ -39,6 +39,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `02-Formats/` - binary format readers (BSA, TEXTURE, IMG/CIF, ARCH3D, BLOCKS, MAPS, SND, SKY)
 - `03-World/` - block assembly, terrain, location layout, streaming
 - `04-Characters/` - voxel rigs, paperdoll-as-outfits, NPCs
+- `06-Systems/Systems-Arc.md` - ACTIVE (opened 2026-07-06). S1 items/loot foundation SHIPPED: the 21-key LootChanceMatrix + GenerateRandomLoot verbatim; enemies carry loot at spawn, corpses hold it. Queue: S2 inventory/pickup/treasure, S3 chargen, S4 magic.
 - `05-Combat/` - FormulaHelper port, weapons, hit resolution
 - `06-Systems/` - quests, items, magic, guilds, calendar, save format
 - `07-Rendering/` - WebGL2 renderer, palettes, lighting, sky

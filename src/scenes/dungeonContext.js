@@ -174,6 +174,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     bodyImg.load(await shared.fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
     const formulas = await import('../combat/formulas.js');
     const equip = await import('../combat/enemyEquipment.js');
+    const { generateItems } = await import('../systems/loot.js');
     const { PlayerWeapon } = await import('../combat/playerWeapon.js');
     const { REACTIONS, sampleClip } = await import('../characters/anims.js');
     const { drawFirstPersonViewmodel } = await import('../render/characterSprite.js');
@@ -182,6 +183,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       PlayerWeapon, REACTIONS, sampleClip,
       isBackFacing, drawFirstPersonViewmodel, EYE_HEIGHT,
       chooseEnemyWeapon: formulas.chooseEnemyWeapon,
+      generateItems,
       assignEnemyEquipment: equip.assignEnemyEquipment,
       equipmentVariantFor: equip.equipmentVariantFor,
       calculateAttackDamage: formulas.calculateAttackDamage,
@@ -209,6 +211,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const cf = new D.ClassFile();
       cf.load(await D.fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`));
       const entity = D.makeEnemyEntity(e.mobileType, basics, cf.career, D.playerEntity.level);
+      // S1: GenerateItems(LootTableKey) per SetEnemyCareer order -
+      // the loot rides the entity; corpses carry it on death (pickup
+      // pends Player activation, flagged in the arc).
+      entity.items = D.generateItems(basics.lootTableKey ?? '-', { level: D.playerEntity.level, gender: e.gender });
       // E4b: SetEnemyEquipment verbatim - loadout + the per-part
       // armor-value pass (init 100, subtract, class clamp 60);
       // the right-hand weapon feeds the attack path.
