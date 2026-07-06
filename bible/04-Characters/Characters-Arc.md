@@ -155,6 +155,17 @@ BUG fixed en route: stepping only ran while a clip was live, so
 cooldowns never expired and bows locked after one shot - the clock
 runs every frame now (Idle steps are just time).
 
+**Deep audit 2 (2026-07-06, post-FP-clips).** Two integration flaws
+fixed at root: a FLYING arrow is world state (visibility was tied to
+the equipped weapon - switching mid-flight vanished it mid-air; now
+flight-first), and combatPose() still excluded fpMelee1H from drag
+gestures (a stale gate predating ATTACKS_FP; lifted). Cross-feature
+battery green: 2H strike WHILE running holds the off-hand at 0.10
+under loco + the machine simultaneously; FP loose flies;
+weapon-switch mid-flight keeps the arrow; FP drag fires the FP
+table. Static pass clean. Next candidates (unnamed): hit reactions,
+enemy rigs on the shared states, engine-world integration.
+
 **Verification doctrine pins.** Stations over nearest-verts; numeric
 batteries over eyeballs; PIXEL-COUNTING screenshots for render-level
 claims (vertex-band filters false-negative); solver grids snapshot

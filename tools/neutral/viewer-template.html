@@ -275,7 +275,7 @@ arrowT.held = true;
 let arrowFlight = null;   // { dir, d, snap }
 let arrowHidden = false;  // between despawn and the next draw
 const ARROW_RANGE = 28;
-const arrowVisible = () => { arrowMesh.visible = activeWpn().hands === 'bow' && !arrowFlight && !arrowHidden; };
+const arrowVisible = () => { arrowMesh.visible = !!arrowFlight || (activeWpn().hands === 'bow' && !arrowHidden); };   // a FLYING arrow is world state - weapon switches must not vanish it mid-air
 let swordT = WEAPON_DEFS[0].T, swordFit0 = WEAPON_DEFS[0].fit0;
 const swordFit = { pitch: 0, dy: 0, dz: 0 };
 // Adjust the sword's seat IN the hand (Mac): pitch about the GRIP
@@ -590,7 +590,7 @@ const pts = new Map();
 // RIGHT-drag in orbit (left-drag keeps the orbit camera). Bows:
 // press = nock+draw, release = loose.
 let gest = null;   // { x, y, t0 }
-const combatPose = () => poseIx > 0 && POSE_NAMES[poseIx] !== 'fpMelee1H';
+const combatPose = () => poseIx > 0;   // fpMelee1H swings now (ATTACKS_FP shipped) - the old exclusion predated the FP clips
 const gestureStart = () => {
   if (!combatPose()) return false;
   if (POSE_NAMES[poseIx] === 'rangedAim') { fireAttack('Up'); return true; }   // draw
