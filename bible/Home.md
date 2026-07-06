@@ -54,6 +54,15 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `03-World/Player-Arc.md` - COMPLETE. Walk, collide, activate, transition: movement/collision (P1), activation + action chains (P2), interior/dungeon transitions (P3/P5), swing doors (P4), ladders (P6), scene consolidation onto worldModes + dataPipeline (P7), and interiors parented in the building world frame with one-frame landings (P8). Next arc decision pending.
 - `07-Rendering/Rendering-Arc.md` - R13 shipped: precipitation + verbatim storm lightning. Queue empty except spectral emission (blocked on Characters). Next arc decision: Player.
 
+## Deploy
+
+Production is GitHub Pages via `.github/workflows/deploy.yml` (push to
+main or manual dispatch), gated on `npm run check` - a red suite never
+ships. Builds contain NO game data (Port-Doctrine: ARENA2 is
+non-redistributable); the deployed app expects user-supplied data at
+runtime, so `./arena2/*` fetches 404 on the public site until a data
+provisioning path ships.
+
 ## Repo layout
 
 `src/main.js` is a thin scene router (37 lines). Scenes live in
