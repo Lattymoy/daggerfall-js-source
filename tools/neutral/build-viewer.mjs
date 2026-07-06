@@ -27,6 +27,7 @@ import { WEAPON_MATERIALS, weaponMaterialRamp, buildWeapon, WEAPONS } from '../.
 import { buildClaymore } from '../../src/characters/pieces/claymore.js';
 import { buildLongBow, buildShortBow } from '../../src/characters/pieces/bow.js';
 import { buildBladeWeapon, BLADE_SPECS } from '../../src/characters/pieces/blades.js';
+import { buildHaftedWeapon, HAFTED_SPECS } from '../../src/characters/pieces/hafted.js';
 
 const A = process.env.ARENA2_PATH;
 const pal = new DFPalette(); pal.load(readFileSync(A + '/ART_PAL.COL'), 'ART_PAL.COL');
@@ -87,6 +88,9 @@ const payload = JSON.stringify({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: 
     ];
     for (const nm of Object.keys(BLADE_SPECS)) {
       list.push({ name: nm.replace('_', '-'), hands: BLADE_SPECS[nm].twoHand ? '2h' : '1h', pack: packPiece(buildBladeWeapon(steel, nm)), items: items(WEAPONS[nm]) });
+    }
+    for (const nm of Object.keys(HAFTED_SPECS)) {
+      list.push({ name: nm.replace('_', ' '), hands: HAFTED_SPECS[nm].twoHand ? '2h' : '1h', pack: packPiece(buildHaftedWeapon(steel, nm)), items: items(WEAPONS[nm]) });
     }
     return list;
   })(),

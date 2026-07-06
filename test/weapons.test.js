@@ -10,6 +10,7 @@ import { buildSword } from '../src/characters/pieces/sword.js';
 import { buildClaymore } from '../src/characters/pieces/claymore.js';
 import { buildLongBow, buildShortBow } from '../src/characters/pieces/bow.js';
 import { buildBladeWeapon, BLADE_SPECS } from '../src/characters/pieces/blades.js';
+import { buildHaftedWeapon, HAFTED_SPECS } from '../src/characters/pieces/hafted.js';
 import { STEEL_RAMP } from '../src/characters/pieces/pieceLoft.js';
 
 // Witness against the DFU source (ItemEnums, ItemBuilder,
@@ -80,6 +81,12 @@ test('weapons: verbatim DFU data pins', () => {
   assert.deepEqual([kt.minDamage, kt.maxDamage, kt.weightInKg, kt.isOneHanded], [3, 16, 3, true]);
   assert.deepEqual([dk.minDamage, dk.maxDamage, dk.weightInKg, dk.isOneHanded], [3, 21, 4.5, false]);
   assert.deepEqual([sa.minDamage, sa.maxDamage, sa.weightInKg, sa.isOneHanded], [3, 12, 4.75, true]);
+  // Hafted-family item pins (Steel, verbatim table).
+  const HAFT_PINS = { Mace: [1, 12, 5.5, true], Battle_Axe: [2, 12, 7.5, true], Staff: [1, 8, 2.5, false], Flail: [2, 14, 8.75, false], Warhammer: [3, 18, 8.75, false], War_Axe: [2, 16, 9.5, false] };
+  for (const [nm, exp] of Object.entries(HAFT_PINS)) {
+    const w = steelOf(WEAPONS[nm]);
+    assert.deepEqual([w.minDamage, w.maxDamage, w.weightInKg, w.isOneHanded], exp, nm);
+  }
   assert.equal(c.value, 30 * 3 * 512);
   assert.equal(c.maxCondition, Math.trunc((1400 * 32) / 4));
 });
@@ -170,5 +177,21 @@ test('sword piece: grip-baked, armL, point-forward carry (+45 seat)', () => {
       const bo = station(bp, [-0.235, 0.8038, -0.1578], 0.035);
       assert.ok(bo && Math.hypot(bo[0]+0.235, bo[1]-0.8038, bo[2]+0.1578) < 0.02, `${nm} off-hand station ${bo}`);
     }
+  }
+  // HAFTED FAMILY: grip system + head forward; 2H carry the contract
+  // off-hand station; the staff spans both ways.
+  const HEAD_MIN = { Mace: 0.60, Battle_Axe: 0.70, Staff: 0.86, Flail: 0.66, Warhammer: 0.82, War_Axe: 0.85 };
+  for (const nm of Object.keys(HAFTED_SPECS)) {
+    const hp = [];
+    let hz = -1e9, bz = 1e9;
+    for (const f of buildHaftedWeapon(STEEL_RAMP, nm)) { assert.equal(f.g, 'armL', nm); for (let i = 0; i < 4; i++) { const q = [f.p[i*3], f.p[i*3+1], f.p[i*3+2]]; hp.push(q); if (q[2] > hz) hz = q[2]; if (q[2] < bz) bz = q[2]; } }
+    const hg = station(hp, [-0.235, 0.81, 0], 0.035);
+    assert.ok(hg && Math.hypot(hg[0]+0.235, hg[1]-0.81, hg[2]) < 0.003, `${nm} grip station ${hg}`);
+    assert.ok(hz > HEAD_MIN[nm], `${nm} head ${hz}`);
+    if (HAFTED_SPECS[nm].twoHand) {
+      const ho = station(hp, [-0.235, 0.8038, -0.1578], 0.035);
+      assert.ok(ho && Math.hypot(ho[0]+0.235, ho[1]-0.8038, ho[2]+0.1578) < 0.02, `${nm} off-hand station ${ho}`);
+    }
+    if (nm === 'Staff') assert.ok(bz < -0.42, `staff butt ${bz}`);
   }
 });

@@ -391,6 +391,20 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   offMax 0.097 live, claymore-identical. Registry is data now:
   payload `weaponPacks` [{name, hands, pack, items}]; the viewer wpn
   control is a SELECT. Item + station + tip pins per blade.
+- **Hafted family (SHIPPED) - THE ROSTER IS COMPLETE**:
+  `pieces/hafted.js` (shaft/head specs, house layout): flanged Mace,
+  single-bit Battle Axe + double-bit War Axe (flat plates hanging
+  forward of the shaft), forward-massed Warhammer block, quarterstaff
+  spanning both ways, Flail with a RIGID chain-and-ball (fidelity
+  note: same class as the drawn bow string). 1H inherit melee1H +
+  ATTACKS_1H; 2H carry the claymore-standard grip block and the 2H
+  CONTRACT holds live (Warhammer off-hand 0.053, ram offMax 0.063).
+  All 19 Daggerfall weapon templates (113-131) now have meshes on the
+  grip-station system: 8 blades, 6 hafted, 2 bows + the nocked arrow,
+  registry-driven (18 viewer entries). Every 1H weapon shares
+  melee1H + the six 1H strikes; every 2H shares melee2H + the six
+  solved 2H strikes; bows share rangedAim + Release - three combat
+  states, nineteen weapons, zero per-weapon animation work.
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,
