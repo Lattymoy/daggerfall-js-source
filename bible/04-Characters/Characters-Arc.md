@@ -412,6 +412,20 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   flail ball 0.055. Stations are ON-AXIS rings - radius cannot move a
   centroid: grips still exact, off-hand seats 0.049-0.053, contract
   intact, zero pin changes.
+- **First person: FP camera + fpMelee1H (SHIPPED)**: the viewer's fp
+  mode anchors the eye to the POSED head (0.04 up, 0.14 forward of
+  the centroid so the shell sits behind the near plane; FOV 62) -
+  gait bob 0.047, lean and attack ROOT MOTION read through the
+  camera. fpMelee1H solved IN VIEW SPACE (NDC objective): fist (0.40,
+  -0.52) bottom-right, blade raked tall (0.08, 0.76), zero near-plane
+  hits, gait pumps OFF (the camera bobs, the viewmodel holds).
+  PROJECTION NOTE: looking +z the LEFT fist lands view-RIGHT - the
+  left-dominant rig matches DF's bottom-right viewmodel for free.
+  FP STRIKES GATED (viewer hint): the 1H clips are deltas over the
+  LOW ready; on the raised base the cleave crosses the near plane
+  (1770 hits) and the thrust folds past vertical (tip NDC +/-111).
+  Dedicated FP swing clips = the next arc (classic DF's FP attacks
+  are dedicated animations).
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,

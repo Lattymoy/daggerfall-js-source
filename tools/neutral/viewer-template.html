@@ -32,7 +32,7 @@
   <button id="bg">bg</button>
   <button id="walk">walk</button>
   <button id="pose">pose: none</button>
-  <select id="wpn"></select>
+  <select id="wpn"></select>\n  <button id="fpv">view: orbit</button>
   <button id="sword">sword: off</button>
   <button id="atkdir">dir: Down</button>
   <button id="strike">strike</button>
@@ -89,6 +89,8 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x14141a);
 const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
+let fpMode = false;
+const setFP = (on) => { fpMode = on; camera.fov = on ? 62 : 35; camera.updateProjectionMatrix(); document.getElementById('fpv').textContent = 'view: ' + (on ? 'first person' : 'orbit'); };
 // ── pixelize post-pipeline: render the scene to a low-res target, then
 // a fullscreen quad upscales it (nearest) and quantizes colour depth
 // with a 4x4 ordered-dither so bands don't posterize flat.
@@ -492,12 +494,25 @@ function frame() {
   if (autospin) yaw += 0.005;
   pitch = Math.max(-1.2, Math.min(1.2, pitch));
   dist = Math.max(D.h * 0.9, Math.min(D.h * 6, dist));
-  camera.position.set(
-    Math.sin(yaw) * Math.cos(pitch) * dist,
-    Math.sin(pitch) * dist,
-    Math.cos(yaw) * Math.cos(pitch) * dist
-  );
-  camera.lookAt(0, 0, 0);
+  if (fpMode) {
+    // FIRST PERSON: the eye rides the POSED head (gait bob, lean and
+    // attack root motion all read through the camera). Anchored just
+    // forward of the face so the head shell sits behind the near
+    // plane.
+    const Bo = animTargets[0];
+    let hx = 0, hy = 0, hz = 0, hn = 0;
+    for (let i = 0; i < Bo.vgrp.length; i++) if (Bo.vgrp[i] === 0 && Bo.base[i*3+1] > 1.55) { hx += Bo.pos[i*3]; hy += Bo.pos[i*3+1]; hz += Bo.pos[i*3+2]; hn++; }
+    const ex = hx/hn, ey = hy/hn - D.cy + 0.04, ez = hz/hn + 0.14;
+    camera.position.set(ex, ey, ez);
+    camera.lookAt(ex, ey - 0.05, ez + 1);
+  } else {
+    camera.position.set(
+      Math.sin(yaw) * Math.cos(pitch) * dist,
+      Math.sin(pitch) * dist,
+      Math.cos(yaw) * Math.cos(pitch) * dist
+    );
+    camera.lookAt(0, 0, 0);
+  }
   if (pixel <= 1 && levels === 0) { renderer.setRenderTarget(null); renderer.render(scene, camera); }
   else {
     const bgKeep = scene.background; scene.background = null; // model only, transparent
@@ -551,6 +566,8 @@ poseBtn.onclick = () => setPose(poseIx + 1);
 // script hooks (Playwright iteration): fixed camera + pose by index
 window.__setPose = setPose;
 window.__setView = (y, p, d) => { autospin = false; yaw = y; pitch = p; if (d) dist = d; };
+document.getElementById('fpv').onclick = () => setFP(!fpMode);
+window.__setFP = (on) => setFP(!!on);
 // Sword: off -> Iron -> ... -> Daedric -> off. Recolors via the classic
 // metal table ramp; the stats line is the verbatim item record.
 const SWORD_MATS = Object.keys(D.swordRamps || {});
@@ -584,6 +601,10 @@ const ATK_DIRS = ['Down', 'DownLeft', 'DownRight', 'Left', 'Right', 'Up'];
 let atkDirIx = 0;
 document.getElementById('atkdir').onclick = (e) => { atkDirIx = (atkDirIx + 1) % ATK_DIRS.length; e.target.textContent = 'dir: ' + ATK_DIRS[atkDirIx]; };
 const fireAttack = (dirOrStrike) => {
+  if (POSE_NAMES[poseIx] === 'fpMelee1H') {   // the six 1H clips are deltas over the LOW ready - on the raised FP base they cross the near plane / fold past vertical
+    swordInfo.textContent = 'FP attacks not authored yet (dedicated clips, next arc)';
+    return;
+  }
   if (POSE_NAMES[poseIx] === 'rangedAim') { atk = { clip: D.attacksRanged.Release, t: 0 }; return; }   // bows: every direction looses the same shot (classic)
   const name = D.dirToStrike[dirOrStrike] || dirOrStrike;
   const table = POSE_NAMES[poseIx] === 'melee2H' ? D.attacks2H : D.attacks;   // pose routes the strike set (2H clips carry SOLVED armR tracks that hold the grip)

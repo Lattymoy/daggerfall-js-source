@@ -83,4 +83,21 @@ export const POSES = {
     legL: { sw: 0.10, bd: 0.10 },
     legR: { sw: -0.16, bd: 0.10 },
   },
+  // FIRST-PERSON 1H ready: the viewmodel state - weapon raised into
+  // the eye's frame (classic DF ready), gait pumps OFF so the
+  // viewmodel holds steady; the camera carries the bob instead.
+  // NOTE: left-handed viewmodel (the rig is left-dominant); a
+  // render-time mirror can flip the frame if wanted. Solved in VIEW
+  // SPACE (fist low-left NDC, blade raked up across, near-plane
+  // clear).
+  fpMelee1H: {
+    lean: 0.02,
+    gaitArm: 0,
+    gaitElbow: 0,
+    runElbow: 0,
+    armL: { sw: -1.56, bd: 0.14, spread: 0.11, handRoll: 0, handPitch: 0.91, handYaw: -0.11, },   // VIEW-SPACE solved: fist NDC (0.40,-0.52) bottom-right, tip (0.08,0.76) raked tall, near-plane clean, whole blade in frame
+    armR: { sw: -0.15, bd: 0.35, spread: -0.10, handRoll: 0, handPitch: 0, handYaw: 0 },
+    legL: { sw: 0.08, bd: 0.08 },
+    legR: { sw: -0.12, bd: 0.08 },
+  },
 };
