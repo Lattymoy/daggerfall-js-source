@@ -27,6 +27,9 @@ export const BOW_SWITCH_DIVISOR = 1.7;
 export const RESET_JOYSTICK_SWING_RADIUS = 0.4;
 export const ATTACK_THRESHOLD = 0.05;              // gesture travel / longest screen dim
 export const SWING_WEAPON_FATIGUE_LOSS = 11;       // per DF Chronicles, verified in classic
+// DaggerfallMissile.cs verbatim
+export const ARROW_MOVEMENT_SPEED = 25.0;   // MovementSpeed - world units/second
+export const ARROW_ARM_LENGTH = 0.9;        // ArmLength - cast-origin distance
 export const EQUIP_DELAY_TIMES = [500, 700, 1200, 900, 900, 1800, 1600, 1700, 1700, 3000, 3400, 2000, 2200, 2000, 2200, 2000, 4000, 5000];
 
 // WeaponBasics.cs verbatim: melee strikes are 5 frames, idle 1, all

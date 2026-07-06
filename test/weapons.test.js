@@ -8,7 +8,7 @@ import {
 import { DYE_COLORS } from '../src/characters/dyes.js';
 import { buildSword } from '../src/characters/pieces/sword.js';
 import { buildClaymore } from '../src/characters/pieces/claymore.js';
-import { buildLongBow, buildShortBow } from '../src/characters/pieces/bow.js';
+import { buildLongBow, buildShortBow, buildNockedArrow } from '../src/characters/pieces/bow.js';
 import { buildBladeWeapon, BLADE_SPECS } from '../src/characters/pieces/blades.js';
 import { buildHaftedWeapon, HAFTED_SPECS } from '../src/characters/pieces/hafted.js';
 import { STEEL_RAMP } from '../src/characters/pieces/pieceLoft.js';
@@ -155,11 +155,18 @@ test('sword piece: grip-baked, armL, point-forward carry (+45 seat)', () => {
     const bn = station(bp, [-0.235, 1.078, 0], 0.03);
     assert.ok(bg && Math.hypot(bg[0]+0.235, bg[2]) < 0.02, `bow grip station ${bg}`);
     assert.ok(bn && Math.hypot(bn[0]+0.235, bn[1]-1.078, bn[2]) < 0.01, `bow nock station ${bn}`);
-    // nocked ARROW: head 0.29 down the aim axis (rest y 0.585), tail
-    // at the nock - part of the drawn assembly.
-    const ah = station(bp, [-0.235, 0.585, 0], 0.02);
-    assert.ok(ah && Math.hypot(ah[0]+0.235, ah[2]) < 0.01 && Math.abs(ah[1]-0.59) < 0.02, `arrow head ${ah}`);
+    // (the nocked arrow is its OWN piece now - see the arrow block)
     assert.ok(Math.abs(bzHi - half) < 0.03 && Math.abs(bzLo + half) < 0.03, `bow carry span ${bzLo}..${bzHi} vs ${half}`);
+  }
+  // THE NOCKED ARROW: its own held piece (the projectile arc) - armL,
+  // head 0.29 down the aim axis, tail at the nock line.
+  {
+    const ap = [];
+    for (const f of buildNockedArrow(STEEL_RAMP)) { assert.equal(f.g, 'armL'); for (let i = 0; i < 4; i++) ap.push([f.p[i*3], f.p[i*3+1], f.p[i*3+2]]); }
+    const ah = station(ap, [-0.235, 0.594, 0], 0.03);
+    const at = station(ap, [-0.235, 1.064, 0], 0.035);
+    assert.ok(ah && Math.hypot(ah[0]+0.235, ah[2]) < 0.01 && Math.abs(ah[1]-0.59) < 0.02, `arrow head ${ah}`);
+    assert.ok(at && Math.hypot(at[0]+0.235, at[2]) < 0.01 && Math.abs(at[1]-1.07) < 0.02, `arrow tail ${at}`);
   }
   // BLADE FAMILY: every blade rides armL with an exact grip station;
   // the Dai-Katana carries the claymore-standard OFF-HAND station

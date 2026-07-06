@@ -71,12 +71,18 @@ function buildBow(ramp, half) {
     { y: GRIP_Y - 0.012, rx: 0.007, rz: 0.007, cz: NOCK_CZ },
     { y: GRIP_Y + 0.012, rx: 0.007, rz: 0.007, cz: NOCK_CZ },
   ], { ...G, seg: 8, capTop: true, capBottom: true });
-  // THE ARROW (template 131): nocked - part of the drawn assembly, so
-  // it inherits the aim alignment, the gait lock and the Release clip
-  // by construction (a second held object would need its own seat
-  // solve). Tail at the nock, shaft along the AIM LINE (the pre-bake
-  // cz axis at grip height), resting on the riser, head 0.25 past the
-  // stave. Fletching = a short widened band at the tail.
+  return compress(shadePiece(bakeGrip(faces), ramp));
+}
+
+// THE NOCKED ARROW (template 131) - its OWN piece/target since the
+// projectile arc: nocked, it rides the armL chain exactly like the
+// bow (alignment by construction); at the verbatim bow hit frame it
+// LOOSES - detaches into straight flight along its own axis at the
+// DFU missile speed. One arrow serves both bows.
+export function buildNockedArrow(ramp) {
+  const faces = [];
+  const G = { group: 'armL', cx: ARM_X, seg: 6 };
+  const NOCK_CZ = 0.30;
   // loftPiece is Y-only: author the arrow along Y, then rotate it
   // locally onto the cz (aim) axis about the grip line before the
   // shared bake carries everything. Y +0.29 (tail) .. -0.24 (head)

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MOUSE_DIRECTIONS, DIRECTION_TO_STRIKE, STRIKES, ATTACKS_1H, ATTACKS_2H, ATTACKS_RANGED, sampleClip } from '../src/characters/anims.js';
-import { WEAPON_STATES, getMeleeWeaponAnimTime, getBowCooldownTime, gestureDirection, canChangeState, createWeaponMachine, machineAttack, machineStep, MELEE_NUM_FRAMES, HIT_FRAME_MELEE, HIT_FRAME_BOW, BOW_SOUND_FRAME, MAX_BOW_HELD_DRAWN_SECONDS, ATTACK_THRESHOLD, EQUIP_DELAY_TIMES, CLASSIC_FRAME_UPDATE } from '../src/characters/weaponStates.js';
+import { WEAPON_STATES, getMeleeWeaponAnimTime, getBowCooldownTime, gestureDirection, canChangeState, createWeaponMachine, machineAttack, machineStep, MELEE_NUM_FRAMES, HIT_FRAME_MELEE, HIT_FRAME_BOW, BOW_SOUND_FRAME, MAX_BOW_HELD_DRAWN_SECONDS, ATTACK_THRESHOLD, EQUIP_DELAY_TIMES, CLASSIC_FRAME_UPDATE, ARROW_MOVEMENT_SPEED, ARROW_ARM_LENGTH } from '../src/characters/weaponStates.js';
 
 // Witness against DFU: WeaponManager.MouseDirections order and
 // FPSWeapon.OnAttackDirection's switch (Up/UpLeft/UpRight -> StrikeUp).
@@ -84,6 +84,11 @@ test('anims: sampler is a continuous delta (zero at entry, null past dur)', () =
   for (let k = 0; k < 12 && bmc.state !== 'Idle'; k++) bev.push(...machineStep(bmc, 0.0625, 50));
   assert.deepEqual(bev, ['bowSound', 'hit', 'done']);
   assert.equal(machineAttack(bmc, 'StrikeUp'), false);                      // cooldown blocks
+  for (let k = 0; k < 40; k++) machineStep(bmc, 0.05, 50);                  // the clock runs while Idle - the cooldown EXPIRES
+  assert.equal(machineAttack(bmc, 'StrikeUp'), true);
+  // DaggerfallMissile verbatim
+  assert.equal(ARROW_MOVEMENT_SPEED, 25.0);
+  assert.equal(ARROW_ARM_LENGTH, 0.9);
   assert.ok(Number.isFinite(held.twist));
   assert.equal(sampleClip(clip, clip.dur), null);
   assert.equal(sampleClip(clip, clip.dur * 2), null);

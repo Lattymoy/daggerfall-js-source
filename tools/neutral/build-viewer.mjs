@@ -25,7 +25,7 @@ import { POSES } from '../../src/characters/poses.js';
 import { buildSword } from '../../src/characters/pieces/sword.js';
 import { WEAPON_MATERIALS, weaponMaterialRamp, buildWeapon, WEAPONS } from '../../src/characters/weapons.js';
 import { buildClaymore } from '../../src/characters/pieces/claymore.js';
-import { buildLongBow, buildShortBow } from '../../src/characters/pieces/bow.js';
+import { buildLongBow, buildShortBow, buildNockedArrow } from '../../src/characters/pieces/bow.js';
 import { buildBladeWeapon, BLADE_SPECS } from '../../src/characters/pieces/blades.js';
 import { buildHaftedWeapon, HAFTED_SPECS } from '../../src/characters/pieces/hafted.js';
 
@@ -77,6 +77,7 @@ for (const nm of DRAPED_NAMES) { const g = drapedGrid(nm);
 const payload = JSON.stringify({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: drapedPacks, drapeGrids: drapeGridsOut, drapeMaterials: DRAPE_MATERIAL, bodyCore: BODY_CORE, poses: POSES, wristY: WRIST_JUNCTION_Y * 0.9, armX: ARM_X, neckY: NECK_PIVOT_Y * 0.9, attacks: ATTACKS_1H, attacks2H: ATTACKS_2H, attacksRanged: ATTACKS_RANGED, strikes: STRIKES, dirToStrike: DIRECTION_TO_STRIKE,
   // WEAPON REGISTRY: [{name, hands, pack, items}] - the viewer's
   // weapon list is data. Steel display mesh; per-material items.
+  arrow: packPiece(buildNockedArrow(weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i)))),
   weaponPacks: (() => {
     const steel = weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i));
     const items = (id) => Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(id, v)]));

@@ -137,6 +137,17 @@ melee stance); bows are single-pathed to the pointer pair. Battery:
 vert 1.83), quick-tap loose + cooldown block, weapon-switch mid-swing
 completes, orbit camera isolated from gestures.
 
+**Arrow projectile (2026-07-06).** The nocked arrow is its OWN held
+target (split from the bow mesh; nocked = identical chain ride,
+tail-to-nock 0.014). At the verbatim bow HIT frame it LOOSES into
+straight flight along its own axis at DaggerfallMissile
+MovementSpeed 25.0 verbatim (ArmLength 0.9 carried); chain loops
+skip a flying arrow; despawn at 28, re-nock on the next draw,
+visibility choked through the weapon/pose/draw paths. MACHINE-CLOCK
+BUG fixed en route: stepping only ran while a clip was live, so
+cooldowns never expired and bows locked after one shot - the clock
+runs every frame now (Idle steps are just time).
+
 **Verification doctrine pins.** Stations over nearest-verts; numeric
 batteries over eyeballs; PIXEL-COUNTING screenshots for render-level
 claims (vertex-band filters false-negative); solver grids snapshot

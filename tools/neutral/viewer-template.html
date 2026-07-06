@@ -264,6 +264,18 @@ for (const w of WEAPON_DEFS) {
 let wpnIx = 0;
 const activeWpn = () => WEAPON_DEFS[wpnIx];
 const swordMesh = WEAPON_DEFS[0].mesh;   // legacy alias
+// THE ARROW: its own held target - nocked it rides the chain like
+// the bow; on the verbatim bow HIT frame it looses into straight
+// flight at ARROW_MOVEMENT_SPEED along its own axis, then despawns
+// and re-nocks on the next draw.
+const arrowMesh = buildPiece(D.arrow);
+arrowMesh.visible = false;
+const arrowT = animTargets[animTargets.length - 1];
+arrowT.held = true;
+let arrowFlight = null;   // { dir, d, snap }
+let arrowHidden = false;  // between despawn and the next draw
+const ARROW_RANGE = 28;
+const arrowVisible = () => { arrowMesh.visible = activeWpn().hands === 'bow' && !arrowFlight && !arrowHidden; };
 let swordT = WEAPON_DEFS[0].T, swordFit0 = WEAPON_DEFS[0].fit0;
 const swordFit = { pitch: 0, dy: 0, dz: 0 };
 // Adjust the sword's seat IN the hand (Mac): pitch about the GRIP
@@ -461,27 +473,41 @@ function effectivePose() {
     legL: limb('legL', { sw: 0, bd: 0 }), legR: limb('legR', { sw: 0, bd: 0 }) };
 }
 function animate(dt) {
-  if (wm && atk) {
+  if (wm) {   // the machine clock runs EVERY frame - cooldowns must expire while idle (it froze after 'done' and locked bows after one shot)
     const evs = machineStep(wm, dt, liveSpeed);
     for (const e of evs) {
-      if (e === 'hit') swordInfo.textContent = 'HIT (frame ' + (wm.isBow ? HIT_FRAME_BOW : HIT_FRAME_MELEE) + ')';
+      if (e === 'hit') { swordInfo.textContent = 'HIT (frame ' + (wm.isBow ? HIT_FRAME_BOW : HIT_FRAME_MELEE) + ')';
+        if (wm.isBow && arrowMesh.visible) {   // LOOSE: the arrow leaves the string (DFU spawns the missile at the hit frame)
+          let hx=0,hy=0,hz=0,hn=0,tx=0,ty=0,tz=0,tn=0;
+          for (let i=0;i<arrowT.vgrp.length;i++){ const by=arrowT.base[i*3+1];
+            if (Math.hypot(arrowT.base[i*3]+0.235,by-0.594,arrowT.base[i*3+2])<0.03){hx+=arrowT.pos[i*3];hy+=arrowT.pos[i*3+1];hz+=arrowT.pos[i*3+2];hn++;}
+            if (by>1.02){tx+=arrowT.pos[i*3];ty+=arrowT.pos[i*3+1];tz+=arrowT.pos[i*3+2];tn++;} }
+          const dir=[hx/hn-tx/tn, hy/hn-ty/tn, hz/hn-tz/tn]; const L=Math.hypot(...dir);
+          arrowFlight = { dir: [dir[0]/L, dir[1]/L, dir[2]/L], d: 0, snap: arrowT.pos.slice() };
+        } }
       if (e === 'bowSound') swordInfo.textContent = 'loose (sound frame ' + BOW_SOUND_FRAME + ')';
       if (e === 'undraw') swordInfo.textContent = 'held past ' + MAX_BOW_HELD_DRAWN_SECONDS + 's: un-drawn';
       if (e === 'done') swordInfo.textContent = wm.isBow ? ('cooldown ' + getBowCooldownTime(liveSpeed).toFixed(2) + 's') : '';
     }
-    const u = machineClipU();
-    if (u === null) atk = null; else atk.t = u * atk.clip.dur;
+    if (atk) { const u = machineClipU(); if (u === null) atk = null; else atk.t = u * atk.clip.dur; }
   } else if (atk) atk.t += dt;
+  if (arrowFlight) {   // straight flight at the DFU missile speed
+    arrowFlight.d += ARROW_MOVEMENT_SPEED * dt;
+    const { dir, d, snap } = arrowFlight;
+    for (let i = 0; i < arrowT.pos.length; i += 3) { arrowT.pos[i] = snap[i] + dir[0]*d; arrowT.pos[i+1] = snap[i+1] + dir[1]*d; arrowT.pos[i+2] = snap[i+2] + dir[2]*d; }
+    arrowT.dirty = true;
+    if (d > ARROW_RANGE) { arrowFlight = null; arrowHidden = true; arrowVisible(); }
+  }
   const L = GAITS[gaitIx];
   const pose = effectivePose();
   if (L) {
     wt += dt * L.cadence;
     const bob = L.bobAmp * Math.sin(wt*2);
-    for (const T of animTargets) animateTarget(T, wt, L, bob, pose, true);
+    for (const T of animTargets) { if (T === arrowT && arrowFlight) continue; animateTarget(T, wt, L, bob, pose, true); }   // a flying arrow owns its verts
     stepDrapeCloth(wt, 1, bob, L);           // gait -> cloth reacts + trails
   } else if (poseIx || atk) {
     ambientT += dt * 1.4;
-    for (const T of animTargets) animateTarget(T, 0, POSE_L, 0, pose, false);
+    for (const T of animTargets) { if (T === arrowT && arrowFlight) continue; animateTarget(T, 0, POSE_L, 0, pose, false); }
     stepDrapeCloth(ambientT, 0.10, 0, WALK);
   } else {
     ambientT += dt * 1.4;
@@ -625,7 +651,7 @@ document.getElementById('hairstyle').onclick = () => { const h=raceHair[RACES[ra
 refreshHairLabel();
 document.getElementById('walk').onclick = (e) => { gaitIx = (gaitIx+1)%3; e.target.textContent = ['idle','walk','run'][gaitIx]; e.target.classList.toggle('on', gaitIx>0); };
 const poseBtn = document.getElementById('pose');
-const setPose = (i) => { poseIx = ((i % POSE_NAMES.length) + POSE_NAMES.length) % POSE_NAMES.length; poseBtn.textContent = 'pose: ' + POSE_NAMES[poseIx]; poseBtn.classList.toggle('on', poseIx > 0); atk = null; wm = null; swordInfo.textContent = ''; };   // a pose change is a STATE change: clear the clip + the weapon machine (a drawn bow must not persist over a melee stance)
+const setPose = (i) => { poseIx = ((i % POSE_NAMES.length) + POSE_NAMES.length) % POSE_NAMES.length; poseBtn.textContent = 'pose: ' + POSE_NAMES[poseIx]; poseBtn.classList.toggle('on', poseIx > 0); atk = null; wm = null; arrowFlight = null; arrowHidden = false; arrowVisible(); swordInfo.textContent = ''; };   // a pose change is a STATE change: clear the clip + the weapon machine (a drawn bow must not persist over a melee stance)
 poseBtn.onclick = () => setPose(poseIx + 1);
 // script hooks (Playwright iteration): fixed camera + pose by index
 window.__setPose = setPose;
@@ -657,8 +683,8 @@ document.getElementById('sword').onclick = () => setSword(swordIx + 2 > SWORD_MA
 window.__setSword = setSword;
 { const sel = document.getElementById('wpn');
   for (let i = 0; i < WEAPON_DEFS.length; i++) { const o = document.createElement('option'); o.value = i; o.textContent = WEAPON_DEFS[i].name; sel.appendChild(o); }
-  sel.onchange = (e) => { wpnIx = +e.target.value; applySwordFit(); setSword(swordIx); }; }
-window.__setWeapon = (i) => { wpnIx = i % WEAPON_DEFS.length; document.getElementById('wpn').value = wpnIx; setSword(swordIx); };
+  sel.onchange = (e) => { wpnIx = +e.target.value; applySwordFit(); setSword(swordIx); arrowVisible(); }; }
+window.__setWeapon = (i) => { wpnIx = i % WEAPON_DEFS.length; document.getElementById('wpn').value = wpnIx; setSword(swordIx); arrowVisible(); };
 // Attacks: cycle the classic directions; strike fires the mapped clip
 // (Up/UpLeft/UpRight all thrust, per the verbatim DFU mapping).
 const ATK_DIRS = ['Down', 'DownLeft', 'DownRight', 'Left', 'Right', 'Up'];
@@ -672,7 +698,7 @@ const fireAttack = (dirOrStrike) => {
   const isBow = POSE_NAMES[poseIx] === 'rangedAim';
   if (!wm || wm.isBow !== isBow) wm = createWeaponMachine(isBow);
   if (isBow) {   // press = nock+draw (BowDrawback); release comes from the button-up path
-    if (machineAttack(wm, 'StrikeUp')) { atk = { clip: D.attacksRanged.Release, t: 0 }; swordInfo.textContent = 'drawing...'; }
+    if (machineAttack(wm, 'StrikeUp')) { atk = { clip: D.attacksRanged.Release, t: 0 }; swordInfo.textContent = 'drawing...'; arrowFlight = null; arrowHidden = false; arrowVisible(); }
     else if (wm.now < wm.cooldownUntil) swordInfo.textContent = 'bow cooldown';
     return;
   }
