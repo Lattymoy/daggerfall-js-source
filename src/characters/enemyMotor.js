@@ -25,6 +25,9 @@
 // flagged at the call site); stealth checks in detection.
 
 import { GLOBAL_SCALE } from '../world/meshReader.js';
+import { CLASSIC_UPDATE_INTERVAL } from './weaponStates.js';   // single source (GameManager.cs:42)
+import { CAPSULE_HEIGHT } from '../player/motor.js';           // single source
+export { CLASSIC_UPDATE_INTERVAL };
 import { GRAVITY } from '../player/motor.js';   // the shared fall rule
 
 export const SIGHT_RADIUS = 4096 * GLOBAL_SCALE;
@@ -33,7 +36,6 @@ export const FIELD_OF_VIEW = 180;                    // deg
 export const MELEE_DISTANCE = 2.25;
 export const CLASSIC_MELEE_DISTANCE_VS_AI = 1.5;
 export const CLASSIC_TURN_DEG = 11.25;               // per classic update
-export const CLASSIC_UPDATE_INTERVAL = 0.0625;       // s
 export const SYSTEM_TIMER_UPDATES_DIVISOR = 0.0549254;
 export const SENSES_INTERVAL_UNITS = 5;              // classicTargetUpdateTimer > 5
 export const MOVE_YAW_GATE_DEG = 5.625;
@@ -64,7 +66,7 @@ export function turnTowards(yaw, dx, dz, maxDeg = CLASSIC_TURN_DEG) {
  * Verbatim CanSeeTarget: range gate, FOV gate against facing, then an
  * eye-to-eye LOS ray against the level collider.
  */
-export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeight = 1.8) {
+export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeight = CAPSULE_HEIGHT) {
   const dx = targetFeet[0] - feet[0], dz = targetFeet[2] - feet[2];
   const dist = Math.hypot(dx, targetFeet[1] - feet[1], dz);
   if (dist >= SIGHT_RADIUS) return false;
@@ -83,7 +85,7 @@ export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeig
  * classic update, movement applied continuously at the decided state.
  */
 export class EnemyAI {
-  constructor(collider, feet, yawRad, { liveSpeed = 50, height = 1.8 } = {}) {
+  constructor(collider, feet, yawRad, { liveSpeed = 50, height = CAPSULE_HEIGHT } = {}) {
     this.collider = collider;
     this.feet = [feet[0], feet[1], feet[2]];
     this.yaw = yawRad;

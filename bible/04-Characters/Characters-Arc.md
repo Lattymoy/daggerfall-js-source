@@ -369,6 +369,17 @@ rig is the authoring bench for monster morphologies. Slices:
   player attack ANIM (FP viewmodel in-world) is E3d. 3 tests.
 - **E3d:** the FP viewmodel rendered in-world (view-locked rig pass)
   + backstab facing; monster careers + equipment begin E4.
+
+**Audit 2026-07-06 (Mac, engine included):** the shared pixelize pass
+survives N foes now - the renderer's character-sprite RT was keyed on
+exact (pw, ph) and REALLOCATED per character per frame once sizes
+diverged; fixed to ONE CHAR_SPRITE_RT_SIZE (256) target with viewport
+sub-rect rendering and UV-extent sampling (full-clear keeps
+out-of-rect transparent; NEAREST boundary bleed discards).
+Single-source catches: CLASSIC_UPDATE_INTERVAL (weaponStates is the
+source, enemyMotor re-exports), enemy capsule height (CAPSULE_HEIGHT
+from the motor), a dead `ortho` import in exterior. The Open flags
+ledger (Home.md) pins all 15 documented interims from the code.
 - **E4+:** authored monster morphologies (rewrite/ bench), spectral
   emission unblock, perf pass (per-enemy mesh updates).
 

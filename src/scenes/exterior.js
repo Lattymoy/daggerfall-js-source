@@ -19,7 +19,7 @@ import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { applyClimate, getGroundArchive, getNatureArchive } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
-import { lookAt, multiply, ortho, perspective, transformPoint, trs } from '../world/mat4.js';
+import { lookAt, multiply, perspective, transformPoint, trs } from '../world/mat4.js';
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';

@@ -9,7 +9,7 @@
 // PROJECTION-EXACT (project center and head, divide) - analytic fov
 // estimates disagree with the true projection at high pitch.
 import { multiply, ortho, lookAt, transformPoint } from '../world/mat4.js';
-import { CHAR_PIXEL } from './renderer.js';
+import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from './renderer.js';
 
 /**
  * @returns diagnostics {center, halfW, halfH, pw, ph} for probes
@@ -26,13 +26,13 @@ export function drawCharacterSprite(renderer, canvas, rig, rigMat, proj, view, e
   const pvS = multiply(proj, view);
   const prjY = (x, y, z) => { const w = pvS[3]*x + pvS[7]*y + pvS[11]*z + pvS[15]; return (pvS[1]*x + pvS[5]*y + pvS[9]*z + pvS[13]) / w; };
   const screenPxH = Math.abs(prjY(center[0], center[1] + halfH, center[2]) - prjY(center[0], center[1] - halfH, center[2])) * canvas.clientHeight / 2;
-  const ph = Math.min(256, Math.max(2, Math.round(screenPxH / CHAR_PIXEL)));
-  const pw = Math.min(256, Math.max(2, Math.round(ph * halfW / halfH)));
+  const ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(screenPxH / CHAR_PIXEL)));
+  const pw = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(ph * halfW / halfH)));
   const camDir = [dx / dist, dy / dist, dz / dist];
   const rl = Math.hypot(camDir[0], camDir[2]) || 1;
   const right = [-camDir[2] / rl, 0, camDir[0] / rl];   // horizontal billboard right (classic Y-only rotation)
   const miniEye = [center[0] - camDir[0] * 4, center[1] - camDir[1] * 4, center[2] - camDir[2] * 4];
   const sTex = renderer.renderCharacterSprite(rig.mesh, rigMat, ortho(halfW, halfH, 0.1, 8), lookAt(miniEye, center, [0, 1, 0]), pw, ph);
-  renderer.drawCharacterSpriteQuad(sTex, center, halfW, halfH, right);
+  renderer.drawCharacterSpriteQuad(sTex, center, halfW, halfH, right, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);   // sample the sub-rect (fixed RT, audit fix)
   return { center, halfW, halfH, pw, ph };
 }

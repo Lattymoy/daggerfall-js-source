@@ -345,6 +345,10 @@ const ZERO_ORIGIN = [0, 0, 0];
  *  pass and the viewer default both read this value. */
 export const CHAR_PIXEL = 7;
 
+/** The shared character-sprite render target's fixed edge (the pass
+ *  clamps pw/ph to this; sprites render into a viewport sub-rect). */
+export const CHAR_SPRITE_RT_SIZE = 256;
+
 export class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -585,27 +589,35 @@ export class Renderer {
    * classic billboard. The world pass is untouched (the standard
    * excludes it). Lazy FBO, reallocated only when the pixel size steps.
    */
-  _charSpriteRT(pw, ph) {
+  _charSpriteRT() {
+    // AUDIT FIX (engine pass): one FIXED CHAR_SPRITE_RT_SIZE^2 target,
+    // allocated once. The old cache keyed on exact (pw, ph) and
+    // reallocated FBO+texture+renderbuffer EVERY frame per character
+    // once foes at differing distances shared it (N reallocations/
+    // frame). Sprites now render into a viewport sub-rect and the
+    // quad samples the scaled UV extent; the full-target clear keeps
+    // out-of-rect texels transparent, so NEAREST boundary sampling
+    // just discards.
     const gl = this.gl;
     let cs = this._csRT;
-    if (!cs || cs.w !== pw || cs.h !== ph) {
-      if (cs) { gl.deleteFramebuffer(cs.fbo); gl.deleteTexture(cs.tex); gl.deleteRenderbuffer(cs.rb); }
+    if (!cs) {
+      const S = CHAR_SPRITE_RT_SIZE;
       const tex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, pw, ph, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, S, S, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       const rb = gl.createRenderbuffer();
       gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
-      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, pw, ph);
+      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, CHAR_SPRITE_RT_SIZE, CHAR_SPRITE_RT_SIZE);
       const fbo = gl.createFramebuffer();
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
       gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      cs = this._csRT = { fbo, tex, rb, w: pw, h: ph };
+      cs = this._csRT = { fbo, tex, rb };
     }
     return cs;
   }
@@ -615,11 +627,12 @@ export class Renderer {
    *  swapped and restored - drawCharacter reads them). */
   renderCharacterSprite(mesh, modelMatrix, proj, view, pw, ph) {
     const gl = this.gl;
-    const cs = this._charSpriteRT(pw, ph);
+    const cs = this._charSpriteRT();
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
-    gl.viewport(0, 0, pw, ph);
+    gl.viewport(0, 0, CHAR_SPRITE_RT_SIZE, CHAR_SPRITE_RT_SIZE);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.viewport(0, 0, pw, ph);
     const sp = this._proj, sv = this._view;
     this._proj = proj; this._view = view;
     this.drawCharacter(mesh, modelMatrix);
@@ -631,7 +644,7 @@ export class Renderer {
 
   /** Composite the sprite into the world: camera-facing quad at the
    *  character's position, alpha-cut, fogged, depth-tested. */
-  drawCharacterSpriteQuad(tex, center, halfW, halfH, right) {
+  drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1) {
     const gl = this.gl;
     if (!this.charQuadProgram) {
       const vs = `#version 300 es
@@ -690,9 +703,9 @@ void main() {
     const [cx, cy, cz] = center, [rx, , rz] = right;
     const v = new Float32Array([
       cx - rx*halfW, cy - halfH, cz - rz*halfW, 0, 0,
-      cx - rx*halfW, cy + halfH, cz - rz*halfW, 0, 1,
-      cx + rx*halfW, cy + halfH, cz + rz*halfW, 1, 1,
-      cx + rx*halfW, cy - halfH, cz + rz*halfW, 1, 0,
+      cx - rx*halfW, cy + halfH, cz - rz*halfW, 0, v1,
+      cx + rx*halfW, cy + halfH, cz + rz*halfW, u1, v1,
+      cx + rx*halfW, cy - halfH, cz + rz*halfW, u1, 0,
     ]);
     gl.useProgram(this.charQuadProgram);
     const c = this._charQuad;

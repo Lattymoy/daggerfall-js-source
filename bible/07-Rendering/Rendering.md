@@ -16,6 +16,12 @@ Milestone log: `07-Rendering/Rendering-Arc.md` (R1 climate swaps,
 R2 window emission, R3 city lanterns, R4 painted skies, R5 day/night
 cycle, R6 dungeon lighting, R7 dungeon water, R8 interior lights, R9 terrain tilemap shader - all SHIPPED).
 
+AUDIT 2026-07-06: the character-sprite pass renders into ONE fixed
+CHAR_SPRITE_RT_SIZE (256) target (viewport sub-rect + UV-extent
+sampling) - the per-size reallocating cache is gone (it thrashed
+FBO/texture/renderbuffer per character per frame under C8's foes).
+Presentation-side, ours (Port-Doctrine); no ledger entry needed.
+
 Owned queue (from Port-Ledger C): spectral/firewall emission colors
 when spectral enemies land (Characters dependency) - the arc's build
 queue is otherwise EMPTY. R13 shipped precipitation + verbatim storm
