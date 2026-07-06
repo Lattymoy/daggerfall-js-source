@@ -555,10 +555,46 @@ frame();
 // Pointer / touch orbit + pinch zoom.
 let px = 0, py = 0, drag = false, pinchD = 0;
 const pts = new Map();
-S.addEventListener('pointerdown', (e) => { pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 1) { drag = true; px = e.clientX; py = e.clientY; autospin = false; document.getElementById('spin').classList.remove('on'); } });
+// CLASSIC DRAG-TO-SWING (DFU TrackMouseAttack, verbatim mechanics):
+// hold and drag to attack. Gesture accumulates pointer deltas; when
+// travel >= ATTACK_THRESHOLD * longest canvas dimension (within
+// MAX_GESTURE_SECONDS) the radial table picks the strike and the
+// machine fires it (mid-swing spam is rejected by the verbatim
+// interrupt rule). Active on LEFT-drag in first person and on
+// RIGHT-drag in orbit (left-drag keeps the orbit camera). Bows:
+// press = nock+draw, release = loose.
+let gest = null;   // { x, y, t0 }
+const combatPose = () => poseIx > 0 && POSE_NAMES[poseIx] !== 'fpMelee1H';
+const gestureStart = () => {
+  if (!combatPose()) return false;
+  if (POSE_NAMES[poseIx] === 'rangedAim') { fireAttack('Up'); return true; }   // draw
+  gest = { x: 0, y: 0, t0: performance.now() };
+  return true;
+};
+const gestureMove = (dx, dy) => {
+  if (!gest) return;
+  if (performance.now() - gest.t0 > MAX_GESTURE_SECONDS * 1000) { gest.x = 0; gest.y = 0; gest.t0 = performance.now(); }   // stale gesture resets (verbatim)
+  gest.x += dx; gest.y += dy;
+  const longest = Math.max(S.clientWidth, S.clientHeight);
+  if (Math.hypot(gest.x, gest.y) / longest >= ATTACK_THRESHOLD) {
+    const ang = Math.atan2(-gest.y, gest.x) * 180 / Math.PI;   // screen y-down -> math degrees (0=Right, 90=Up)
+    fireAttack(gestureDirection(ang));
+    gest = { x: 0, y: 0, t0: performance.now() };
+  }
+};
+const gestureEnd = () => { gest = null; if (POSE_NAMES[poseIx] === 'rangedAim') bowRelease(); };
+S.addEventListener('contextmenu', (e) => e.preventDefault());
+S.addEventListener('pointerdown', (e) => {
+  const swing = (e.button === 2) || (fpMode && e.button === 0);
+  if (swing && gestureStart()) { pts.set(e.pointerId, [e.clientX, e.clientY]); px = e.clientX; py = e.clientY; e.target.dataset.swing = e.pointerId; return; }
+  pts.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pts.size === 1) { drag = true; px = e.clientX; py = e.clientY; autospin = false; document.getElementById('spin').classList.remove('on'); }
+});
 S.addEventListener('pointermove', (e) => {
   if (!pts.has(e.pointerId)) return;
+  const swinging = e.target.dataset.swing == e.pointerId;
   pts.set(e.pointerId, [e.clientX, e.clientY]);
+  if (swinging) { gestureMove(e.clientX - px, e.clientY - py); px = e.clientX; py = e.clientY; return; }
   if (pts.size >= 2) {
     const [a, b] = [...pts.values()];
     const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
@@ -571,7 +607,7 @@ S.addEventListener('pointermove', (e) => {
     px = e.clientX; py = e.clientY;
   }
 });
-function up(e) { pts.delete(e.pointerId); if (pts.size < 2) pinchD = 0; if (pts.size === 0) drag = false; }
+function up(e) { if (e.target.dataset.swing == e.pointerId) { delete e.target.dataset.swing; gestureEnd(); } pts.delete(e.pointerId); if (pts.size < 2) pinchD = 0; if (pts.size === 0) drag = false; }
 S.addEventListener('pointerup', up); S.addEventListener('pointercancel', up);
 S.addEventListener('wheel', (e) => { dist *= 1 + Math.sign(e.deltaY) * 0.1; e.preventDefault(); }, { passive: false });
 

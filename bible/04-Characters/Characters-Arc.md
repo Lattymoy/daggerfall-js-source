@@ -454,6 +454,14 @@ hooks. poses.test.js guards the full table shape + joint ranges.
   0.10 (the near plane IS the tool for too-close geometry) + eye
   margin 0.18. Worst coverage now 0.01 across all six strikes at
   40ms density; the viewmodel renders intact.
+- **Drag-to-swing (Mac: click and drag)**: the classic mouse attack,
+  through the verbatim pipeline - pointer deltas accumulate like
+  TrackMouseAttack (threshold 0.05 * longest dim, 1s stale reset),
+  the radial table picks the strike, the machine's interrupt rule
+  absorbs spam. LEFT-drag swings in FP; RIGHT-drag swings in orbit
+  (left stays camera); bows press-to-draw-and-hold, release to
+  loose. Buttons kept. Battery: radials correct, sub-threshold
+  silent, orbit isolated, bow hold/loose/cooldown on the pointer.
 - **Run life (Mac)**: RUN loco gains `headPitch -0.30` - the head
   looks UP against the 24deg charge lean instead of at the ground;
   melee1H gains `runElbow 0.55` - both elbows bend while moving,
