@@ -17,7 +17,7 @@ function craftCfg({ name = 'Mage', hpPerLevel = 8, speed = 60 } = {}) {
   for (let i = 0; i < 12; i++) b[16 + i] = 40 + i;       // 3+3+6 skills
   for (let i = 0; i < name.length; i++) b[28 + i] = name.charCodeAt(i);
   v.setUint16(52, hpPerLevel, true);
-  v.setUint32(54, 300, true);
+  v.setUint32(54, 0x18000, true);                        // 16.16 fixed: 1.5
   const attrs = [55, 66, 45, 50, 40, 35, speed, 30];     // STR INT WIL AGI END PER SPD LUC
   for (let i = 0; i < 8; i++) v.setUint16(58 + i * 2, attrs[i], true);
   return b;
@@ -35,7 +35,8 @@ test('classFile: verbatim 74-byte parse incl the (a<<16)|(c<<8)|b shuffle', () =
   assert.deepEqual(c.minorSkills, [46, 47, 48, 49, 50, 51]);
   assert.equal(c.name, 'Mage');
   assert.equal(c.hitPointsPerLevel, 8);
-  assert.equal(c.advancementMultiplier, 300);
+  assert.equal(c.advancementMultiplierRaw, 0x18000);
+  assert.equal(c.advancementMultiplier, 1.5);            // fixed-point converted + 2dp (the raw-u32 latent bug, caught in S3b)
   assert.equal(c.strength, 55);
   assert.equal(c.speed, 60);
   assert.equal(c.luck, 30);

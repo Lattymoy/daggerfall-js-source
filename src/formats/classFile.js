@@ -49,7 +49,14 @@ export class ClassFile {
     c.name = name.split('\0')[0];
     o += 8;   // Unknown2
     c.hitPointsPerLevel = u16();
-    c.advancementMultiplier = u32();
+    // 16.16 fixed-point, then DFU rounds to two decimals via string
+    // format (DFCareer.StructureData:585-588) - stored CONVERTED;
+    // the raw u32 kept alongside for byte-parity checks.
+    c.advancementMultiplierRaw = u32();
+    {
+      const v = (c.advancementMultiplierRaw >>> 16) + (c.advancementMultiplierRaw & 0xffff) / 65536;
+      c.advancementMultiplier = Math.round(v * 100) / 100;
+    }
     c.strength = u16();
     c.intelligence = u16();
     c.willpower = u16();

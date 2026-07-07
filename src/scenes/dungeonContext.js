@@ -19,6 +19,7 @@ import { EFFECT_ACTION_FLAGS } from '../world/actionSystem.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
 import { createCharacter, tallySkill, skillValue, SKILLS, WEAPON_SKILL, CLASS_CAREERS } from '../systems/chargen.js';
+import { raiseSkills } from '../systems/advancement.js';
 import {
   generateItems as generateLootItems, RANDOM_TREASURE_ARCHIVE,
   RANDOM_TREASURE_ICONS, RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS,
@@ -369,7 +370,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
     }
   }
+  // S3b: the classic clock for skill-raise checks - dt * TimeScale
+  // (DFU default 12) in minutes; RaiseSkills gates itself at 360.
+  let classicMinutes = 0;
   function drawFoes(dt, canvas, proj, view, eye, playerFeet) {
+    classicMinutes += (dt * 12) / 60;
+    raiseSkills(playerEntity, classicMinutes);
     if (playerWeapon) {
       playerWeapon.gesture(_atkDx, _atkDy, _atkHeld, dt, Math.max(canvas.clientWidth, canvas.clientHeight));
       _atkDx = 0; _atkDy = 0;

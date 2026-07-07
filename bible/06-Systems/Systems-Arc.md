@@ -98,6 +98,28 @@ INTERIM default Warrior (16, loud); the pool-spend policy
 (lowest-first, loud) holds the slot until the chargen UI. The
 maxHealth-50 / flat-skills-30 / stats-50s interims are GONE.
 
+## S3b (skill advancement + leveling): SHIPPED
+
+systems/advancement.js completes the TallySkill story verbatim:
+usesNeeded = floor(skillValue x skillMult x careerAdvMult x
+1.04^level x 2/5) + 1 over the 35-entry GetAdvancementMultiplier
+table; the reflexes modifier is the source's exact bit math
+(0x10000 - ((reflexes-2) << 13), applied as (uses x mod) >> 16); the
+360-classic-minute gate; raises reset uses, cap at 100 and at 95
+while a primary is mastered; levelUpSkillSum = primaries + majors -
+lowest major + highest minor, anchored at chargen; CheckForLevelUp =
+floor((current - starting + 28)/15). HEADLESS INTERIM (loud): the
+level-up applies immediately (HP roll + the 4..6 BonusPool by the
+lowest-first policy) - DFU routes through the char sheet (UI arc).
+TWO SOURCE-FIDELITY CATCHES: (1) the CFG AdvancementMultiplier is
+16.16 FIXED-POINT rounded to two decimals (DFCareer:585) - the
+reader stored the raw u32, a latent bug now converted at the reader
+with the raw kept for parity; (2) TallySkill's 20000 clamp is
+load-bearing - it is what keeps the (uses x reflexesMod) >> 16 shift
+inside int32 in C# AND JS; the clamp is now verbatim in tallySkill
+(the test's own overflow found it). The classic clock (dt x
+TimeScale 12) ticks in the dungeon frame; raiseSkills gates itself.
+
 ## Queue
 - S3: character creation (the real PlayerEntity - clears the
   maxHealth/skills/stats interims; TallySkill, proficiency/racial

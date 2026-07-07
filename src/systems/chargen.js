@@ -142,14 +142,28 @@ export function createCharacter(playerEntity, career, careerIndex, { rolls = Mat
     health: maxHealth,
     stats,
     skills,
-    skillUses: new Array(SKILL_COUNT).fill(0),   // TallySkill counters (advancement math: follow-on slice)
+    skillUses: new Array(SKILL_COUNT).fill(0),   // TallySkill counters (S3b consumes them)
+    lastSkillCheckTime: 0,
     chargenDone: true,
   });
+  // S3b: the level-up sums anchor at creation (SetCurrentLevelUpSkillSum
+  // over the starting skills = the starting sum, verbatim).
+  let sum = 0, lowMaj = Infinity, hiMin = -Infinity;
+  for (const id of career.primarySkills) sum += skills[id];
+  for (const id of career.majorSkills) { sum += skills[id]; if (skills[id] < lowMaj) lowMaj = skills[id]; }
+  for (const id of career.minorSkills) if (skills[id] > hiMin) hiMin = skills[id];
+  playerEntity.startingLevelUpSkillSum = sum - lowMaj + hiMin;
+  playerEntity.currentLevelUpSkillSum = playerEntity.startingLevelUpSkillSum;
   return playerEntity;
 }
 
-/** TallySkill (the E3c flag clears): count a use toward advancement. */
+/** TallySkill (the E3c flag clears): count a use toward advancement.
+ *  The 20000 clamp is VERBATIM (PlayerEntity.TallySkill) - and it is
+ *  what keeps the source's (uses * reflexesMod) >> 16 inside int32:
+ *  20000 * 0x14000 fits; an unclamped tally would overflow the shift
+ *  in C# and JS alike (caught by S3b's own test). */
 export function tallySkill(entity, skillId, amount = 1) {
   if (!entity.skillUses) return;
   entity.skillUses[skillId] += amount;
+  if (entity.skillUses[skillId] > 20000) entity.skillUses[skillId] = 20000;
 }
