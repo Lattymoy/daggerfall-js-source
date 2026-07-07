@@ -88,6 +88,24 @@ closes). Classic INFO background art FLAGGED pending art-name
 verification. Review catch: the first font-less branch was
 convoluted nonsense and was rewritten sane before commit.
 
+## U4 (inventory + spellbook + death): SHIPPED
+
+ONE PLAYER-DAMAGE DOOR first: hurtPlayer consolidates the four
+scattered health-decrement sites (trap sink, enemy melee, enemy
+arrows, trap-spell missiles) - floors at 0, surfaces, and opens the
+DEATH SCREEN at 0 (Enter restarts by reload; save/load pends
+Systems). INVENTORY (classic F6): the player's items with stacks +
+the quantized weights and total; Enter on a Weapons item EQUIPS it
+through a scene callback - ?weapon is retired as the only path
+(loot a bow, use it); arrows refuse equip; drop/use pend.
+SPELLBOOK (DFU-default Backspace): the KNOWN list - the entity's own
+spells when present, else the INTERIM loud fallback of the file's
+ranged damage spells (classic starting-spell sets replace it when
+their data lands); Enter readies - ?spell retired as the only path.
+Both ride the U3 overlay seam; keys route in both hosts BELOW the
+overlay branch so Backspace still edits the chargen name. Windows
+close on ESC. Backgrounds FLAGGED as U2/U3.
+
 ## Queue
-- U4: inventory + spellbook windows (retires ?weapon/?spell).
-- Death screen, pickup/message feedback, the input map.
+- Pickup/message feedback, the input map, classic window art.
+- Starting-spell sets (retires the spellbook interim).

@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 260 tests across 64 files.
+Node 22). Suite: 262 tests across 65 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -36,6 +36,7 @@ Node 22). Suite: 260 tests across 64 files.
 | fnt.test.js | 2 | verbatim FNT layout on crafted bytes (header, 240-entry table, the L/R half SWAP with MSB-first expansion - x0 from the odd byte, x15 from the even, bounds null), the white atlas (256x240, pixel spot-checks) + measure (space rule, 1px classic spacing) + row-1 cell UVs |
 | hud.test.js | 3 | compass scroll verbatim (trunc(258 x heading), wrap both directions, the 64 window never exceeds the 322 strip), bottom-anchored bar fill (v-window + clamps + max-0 guard) + integer scale flooring at 1, indexed->RGBA with the classic index-0 transparency |
 | inventory.test.js | 4 | the verbatim stackable rule (equipped/enchanted never), AddItem merge-vs-append incl material split, CalculateWeightForMaterial verbatim (quarter-kg quantized, banker half-to-even: iron and daedric daggers BOTH 0.5kg) + leather formula + transferAll, the house-container predicate (418xx group, the 13-index list, shop-shelf 5 excluded, record = id%100) |
+| inventoryui.test.js | 2 | the inventory window (cursor wrap, weapon equip via callback, arrows refused, gold not equippable, close), the spellbook (the interim known-list from the file excluding caster-only/non-damage, an entity's own book preferred, ready callback, null-map empty) |
 | loot.test.js | 3 | 22 matrix rows exact (key C pinned) + brace-bounded group lists (no cross-enum bleed), gold x level + the WP halving loop at exact roll consumption + the '-'-key empty path, level-split ingredients (C1 scales/C3 flat), arrows stack/material, book template+variant, gender clothing, unknown-key -> '-' |
 | enemyequipment.test.js | 3 | verbatim material walk ([64,128,...] modifier table, level clamps), armor materials (70/90 split, plate+weapon-material), variant-0 loadout + the init-100/subtract/class-60-clamp armor pass, variant-2 + monster keep-better + city-watch itemLevel-1 + weapon-vs-weaponless averages |
 | enemymotor.test.js | 4 | verbatim classic AI constants (sight/hearing/FOV/melee/turn/update-rate/system-divisor/walk-base), 11.25deg turn clamp, LOS wall + FOV gates, pursue-and-stop at MeleeDistance on the classic cadence |

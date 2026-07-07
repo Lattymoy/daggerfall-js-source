@@ -27,6 +27,7 @@ import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, applyCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet } from '../ui/charsheet.js';
+import { InventoryWindow, SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
 import { tallySkill, skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
 import { raiseSkills, applyLevelUp } from '../systems/advancement.js';
 import { spendPoolLowest } from '../systems/chargen.js';
@@ -83,11 +84,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // health floors at 0 (death screen: UI arc). Traps work with or
   // without ?foes - the entity import is static.
   const actions = new ActionSystem(collider, {
-    damagePlayer: (dmg) => {
-      if (dmg <= 0) return;
-      playerEntity.health = Math.max(0, playerEntity.health - dmg);
-            surfacePlayer();
-    },
+    damagePlayer: hurtPlayer,
     castSpell: (index, origin) => { _pendingCasts.push({ index, origin }); },   // consumed once spells load
     drainMagicka: (n) => {
       playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n);
@@ -283,6 +280,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // loud - the chargen UI replaces the default and the pool policy).
   let chargenFlow = null;
   let activeOverlay = null;
+  // U4: the ONE player-damage door - every source (traps, melee,
+  // arrows, spell missiles) lands here; death opens the overlay.
+  function hurtPlayer(dmg) {
+    if (dmg <= 0) return;
+    playerEntity.health = Math.max(0, playerEntity.health - dmg);
+    surfacePlayer();
+    if (playerEntity.health === 0 && !(activeOverlay instanceof DeathScreen)) {
+      activeOverlay = new DeathScreen();
+    }
+  }
   if (!playerEntity.chargenDone) {
     if (Number.isInteger(opts.playerClass)) {
       // ?class=N: the headless skip path (rolls + the loud policy)
@@ -573,7 +580,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           if (Math.hypot(dx2, dy2, dz2) <= MISSILE_COLLIDER_RADIUS + 0.45) {
             const shooter = m.shooterFoe;
             const dmg = foeDeps && shooter ? foeDeps.calculateAttackDamage(shooter.entity, playerEntity, { targetGroup: null, weapon: m.weapon }) : 0;
-            if (dmg > 0) { playerEntity.health = Math.max(0, playerEntity.health - dmg); }
+            hurtPlayer(dmg);
             addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
             surfacePlayer();
             retireMissile(m);
@@ -598,10 +605,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const dx = target[0] - m.pos[0], dy = target[1] - m.pos[1], dz = target[2] - m.pos[2];
       if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {   // missile radius + player capsule radius
         const dmg = resolveSpellVsTarget(m.spell, playerEntity.level, playerEntity);
-        if (dmg > 0) {
-          playerEntity.health = Math.max(0, playerEntity.health - dmg);
-          surfacePlayer();
-        }
+        hurtPlayer(dmg);
         retireMissile(m);
       }
     }
@@ -719,10 +723,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // - the player has no minMetalToHit, so that gate is inert)
           const wpn = foeDeps.chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
           const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, { targetGroup: null, weapon: wpn });
-          if (dmg > 0) {
-            foeDeps.playerEntity.health = Math.max(0, foeDeps.playerEntity.health - dmg);
-          surfacePlayer();
-          }
+          hurtPlayer(dmg);
         }
       }
       f.rig.setGait(f.ai.moving ? 1 : 3);   // WALK while pursuing, IDLE sway at rest
@@ -816,6 +817,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleCharSheet() {
       if (activeOverlay) return;
       activeOverlay = new CharSheet(playerEntity);
+    },
+    toggleInventory() {
+      if (activeOverlay) return;
+      activeOverlay = new InventoryWindow(playerEntity, {
+        equip: (item) => { if (playerWeapon) playerWeapon.weapon = item; },   // retires ?weapon
+      });
+    },
+    toggleSpellbook() {
+      if (activeOverlay) return;
+      activeOverlay = new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
+        ready: (sp) => { readiedSpell = sp; },   // retires ?spell
+      });
     },
     // S2 pickup: piles + dead foes' corpses as activation targets;
     // takeLoot transfers into the player entity and removes the flat.

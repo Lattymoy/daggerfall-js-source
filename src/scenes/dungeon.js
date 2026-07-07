@@ -119,6 +119,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
   }
   addEventListener('keydown', (e) => {
     if (ctx.uiOverlayActive) { const a = chargenAction(e); if (a) { e.preventDefault(); ctx.overlayInput(a); } return; }
+    if (e.key === 'F6') { e.preventDefault(); ctx.toggleInventory(); return; }   // classic inventory
+    if (e.key === 'Backspace') { e.preventDefault(); ctx.toggleSpellbook(); return; }   // DFU default spellbook
     if (e.key === 'F5') { e.preventDefault(); ctx.toggleCharSheet(); return; }
     if (e.code !== 'KeyC') return;
     const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];

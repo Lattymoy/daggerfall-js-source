@@ -390,6 +390,8 @@ export function createWorldModes(host) {
       if (a) { e.preventDefault(); dungeonCtx.overlayInput(a); }
       return;
     }
+    if (e.key === 'F6' && mode === 'dungeon' && dungeonCtx) { e.preventDefault(); dungeonCtx.toggleInventory(); return; }   // classic inventory
+    if (e.key === 'Backspace' && mode === 'dungeon' && dungeonCtx) { e.preventDefault(); dungeonCtx.toggleSpellbook(); return; }   // DFU default spellbook
     if (e.key === 'F5' && mode === 'dungeon' && dungeonCtx) { e.preventDefault(); dungeonCtx.toggleCharSheet(); return; }   // U3: the classic sheet key
     if (e.code === 'KeyC' && mode === 'dungeon' && dungeonCtx) {
       // S5: cast the readied spell along the look direction (the
