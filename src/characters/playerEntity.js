@@ -1,10 +1,10 @@
-// Minimal player entity (E3a, extended E3b). The truthful
-// pre-character-creation state: classic starts at level 1, reflexes
-// Average, attributes at the 50 baseline. INTERIM (loudly): flat
-// skills 30 and maxHealth 50 hold the slot until character creation
-// (Systems arc) rolls the real career - every combat consumer takes
-// this object as input, so the swap is plumbing only. armor 0 until
-// equipment (E4). LiveSpeed already lives in PlayerMotor stats.
+// The shared player entity (E3a/E3b; chargen S3 mutates it in
+// place). These initial values are the PRE-CHARGEN state only:
+// createCharacter (systems/chargen) rolls the real career the first
+// time a chargen-running context boots (dungeons today; the chargen
+// UI later fronts it everywhere). INTERIM until then, loudly: flat
+// skills 30 and maxHealth 50. armor 0 until player equipment.
+// LiveSpeed lives in PlayerMotor stats.
 export const playerEntity = {
   isPlayer: true,
   level: 1,

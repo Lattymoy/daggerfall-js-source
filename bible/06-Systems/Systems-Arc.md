@@ -121,9 +121,6 @@ inside int32 in C# AND JS; the clamp is now verbatim in tallySkill
 TimeScale 12) ticks in the dungeon frame; raiseSkills gates itself.
 
 ## Queue
-- S3: character creation (the real PlayerEntity - clears the
-  maxHealth/skills/stats interims; TallySkill, proficiency/racial
-  mods unlock).
 - S4: magic foundation (spell records, CastSpell action flag,
   DrainMagicka real, MI loot unlocks).
 - Later: quests, guilds, shops, dialog, calendar deep-wiring,

@@ -6,7 +6,8 @@ import {
   SKILL_ADVANCEMENT_MULTIPLIER, skillUsesForAdvancement, calculatePlayerLevel,
   levelUpSkillSum, raiseSkills, alreadyMasteredASkill,
 } from '../src/systems/advancement.js';
-import { SKILLS, SKILL_COUNT, createCharacter } from '../src/systems/chargen.js';
+import { SKILLS } from '../src/systems/skills.js';
+import { createCharacter } from '../src/systems/chargen.js';
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 const career = {

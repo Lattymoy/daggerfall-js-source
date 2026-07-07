@@ -13,7 +13,7 @@
 // scalar SetEnemyCareer fills every slot with, so [part] == armor.
 
 import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source (EnemyAttack.cs:30)
-import { skillValue, SKILLS, WEAPON_SKILL } from '../systems/chargen.js';   // S3: real skills (enemies stay flat, verbatim)
+import { skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
 
 // ---- Dice100.cs verbatim ----
 export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 100) < chance;   // Random.Range(0,100) < chance

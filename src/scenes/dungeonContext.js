@@ -18,7 +18,8 @@ import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS } from '../world/actionSystem.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
-import { createCharacter, tallySkill, skillValue, SKILLS, WEAPON_SKILL, CLASS_CAREERS } from '../systems/chargen.js';
+import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
+import { tallySkill, skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
 import { raiseSkills } from '../systems/advancement.js';
 import {
   generateItems as generateLootItems, RANDOM_TREASURE_ARCHIVE,

@@ -2,10 +2,10 @@
 // the interim pool policy, weapon-skill mapping, dual-shape reads.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { SKILLS, SKILL_COUNT, WEAPON_SKILL, skillValue, tallySkill } from '../src/systems/skills.js';
 import {
-  SKILLS, SKILL_COUNT, WEAPON_SKILL, skillValue, rollStats, rollSkills,
-  hitPointsModifier, rollMaxHealthLevel1, hitPointsPerLevelUp,
-  spendPoolLowest, createCharacter, tallySkill, CLASS_CAREERS,
+  rollStats, rollSkills, hitPointsModifier, rollMaxHealthLevel1,
+  hitPointsPerLevelUp, spendPoolLowest, createCharacter, CLASS_CAREERS,
 } from '../src/systems/chargen.js';
 import { calculateAttackDamage } from '../src/combat/formulas.js';
 

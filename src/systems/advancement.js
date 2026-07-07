@@ -20,7 +20,8 @@
 //   (Range(4, 6+1)) spends by the same lowest-first policy the
 //   chargen UI will replace.
 
-import { SKILLS, hitPointsPerLevelUp, spendPoolLowest } from './chargen.js';
+import { SKILLS } from './skills.js';
+import { hitPointsPerLevelUp, spendPoolLowest } from './chargen.js';
 
 // DaggerfallSkills.GetAdvancementMultiplier, all 35, verbatim.
 export const SKILL_ADVANCEMENT_MULTIPLIER = Object.freeze([
