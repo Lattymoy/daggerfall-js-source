@@ -24,7 +24,7 @@ import { drawText, makeFont } from '../ui/text.js';
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
-import { createCharacter, applyCharacter, CLASS_CAREERS } from '../systems/chargen.js';
+import { createCharacter, applyCharacter, startingSpells, CLASS_CAREERS } from '../systems/chargen.js';
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet } from '../ui/charsheet.js';
 import { InventoryWindow, SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
@@ -278,6 +278,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // career before anything consumes the player. Career = ?class= (an
   // index into the 18 careers) or the INTERIM default Warrior (16,
   // loud - the chargen UI replaces the default and the pool policy).
+  // S4b: trap spells - SPELLS.STD by index; CastSpell actions queue
+  // missiles that fly at the player (speed 25, radius 0.45, life 8s,
+  // element billboards 375-379). Resolution: the classic
+  // damage-health family through the verbatim saving throw; other
+  // effects FLAGGED to the effect-library slice.
+  const _pendingCasts = [];
+  const missiles = [];
+  let spellsByIndex = null;
+  try {
+    spellsByIndex = new Map(readSpellsStd(await fetchBytes('SPELLS.STD')).map((sp) => [sp.index, sp]));
+    // S4c: MAGIC.DEF registers the magic-item templates - a
+    // module-level registry, correct for the single active context
+    // (each dungeon build re-sets it); the loot MI category is live
+    // from here (absent -> stays flagged-skip).
+    setMagicItemTemplates(readMagicDef(await fetchBytes('MAGIC.DEF')));
+  } catch { /* data absent: casts + MI no-op, loudly flagged */ }
+
   let chargenFlow = null;
   let activeOverlay = null;
   // U4: the ONE player-damage door - every source (traps, melee,
@@ -296,7 +313,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const cf = new ClassFile();
       cf.load(await fetchBytes(`CLASS${String(opts.playerClass).padStart(2, '0')}.CFG`));
       createCharacter(playerEntity, cf.career, opts.playerClass);
-      console.log(`[chargen] ${CLASS_CAREERS[opts.playerClass]}: HP ${playerEntity.maxHealth}`);
+      playerEntity.spells = startingSpells(opts.playerClass, spellsByIndex);
+      console.log(`[chargen] ${CLASS_CAREERS[opts.playerClass]}: HP ${playerEntity.maxHealth}, spells ${playerEntity.spells.length}`);
     } else {
       // U2b: the real flow - all 18 careers load; the host routes
       // input and draws the overlay until done, then applies the
@@ -312,22 +330,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
-  // S4b: trap spells - SPELLS.STD by index; CastSpell actions queue
-  // missiles that fly at the player (speed 25, radius 0.45, life 8s,
-  // element billboards 375-379). Resolution: the classic
-  // damage-health family through the verbatim saving throw; other
-  // effects FLAGGED to the effect-library slice.
-  const _pendingCasts = [];
-  const missiles = [];
-  let spellsByIndex = null;
-  try {
-    spellsByIndex = new Map(readSpellsStd(await fetchBytes('SPELLS.STD')).map((sp) => [sp.index, sp]));
-    // S4c: MAGIC.DEF registers the magic-item templates - a
-    // module-level registry, correct for the single active context
-    // (each dungeon build re-sets it); the loot MI category is live
-    // from here (absent -> stays flagged-skip).
-    setMagicItemTemplates(readMagicDef(await fetchBytes('MAGIC.DEF')));
-  } catch { /* data absent: casts + MI no-op, loudly flagged */ }
 
   // U1: the classic HUD (vitals bottom-left, compass bottom-right) -
   // surfaces the Systems stats every frame; art-gated like all data.
@@ -791,6 +793,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (activeOverlay === chargenFlow) {
           const r = chargenFlow.result();
           applyCharacter(playerEntity, r.career, r.careerIndex, r);
+          playerEntity.spells = startingSpells(r.careerIndex, spellsByIndex);   // S6: the spellbook interim retires
+          if (playerEntity.spells.length && !readiedSpell) readiedSpell = playerEntity.spells[0];
           chargenFlow = null;
         }
         surfacePlayer();

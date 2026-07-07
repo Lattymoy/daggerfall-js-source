@@ -108,4 +108,5 @@ close on ESC. Backgrounds FLAGGED as U2/U3.
 
 ## Queue
 - Pickup/message feedback, the input map, classic window art.
-- Starting-spell sets (retires the spellbook interim).
+- Starting-spell sets: SHIPPED via Systems S6 (the spellbook lists
+  the character's real known spells).

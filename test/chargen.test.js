@@ -79,3 +79,17 @@ test('chargen: skillValue dual shape + formulas consume real skills', () => {
   assert.equal(WEAPON_SKILL.Warhammer, SKILLS.BluntWeapon);
   assert.equal(CLASS_CAREERS[16], 'Warrior');
 });
+
+test('chargen: the verbatim starting-spell sets (S6)', async () => {
+  const { STARTING_SPELL_SETS, startingSpells } = await import('../src/systems/chargen.js');
+  assert.deepEqual(STARTING_SPELL_SETS[0], [1, 37, 2, 97, 8]);   // Mage
+  assert.deepEqual(STARTING_SPELL_SETS[3], [1, 37, 2, 97, 8]);   // Sorcerer shares the Mage set
+  assert.deepEqual(STARTING_SPELL_SETS[6], [37]);                // Bard
+  assert.equal(STARTING_SPELL_SETS[7], undefined);               // index > 6: no spells
+  const byIndex = new Map([[8, { index: 8, name: 'Shock' }], [44, { index: 44, name: 'Chameleon' }], [37, { index: 37, name: 'Slowfalling' }]]);
+  const sw = startingSpells(1, byIndex);                         // Spellsword [8, 44, 37]
+  assert.deepEqual(sw.map((s) => s.name), ['Shock', 'Chameleon', 'Slowfalling']);
+  assert.deepEqual(startingSpells(16, byIndex), []);             // Warrior: none
+  assert.equal(startingSpells(0, byIndex).length, 2);            // 1,2,97 missing skip loudly; 37+8 resolve
+  assert.deepEqual(startingSpells(0, null), []);
+});

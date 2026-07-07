@@ -69,6 +69,36 @@ export function rollSkills(career, rolls = Math.random) {
   return { skills, groupPools: { primary: BONUS_POOL_PER_SKILL_GROUP, major: BONUS_POOL_PER_SKILL_GROUP, minor: BONUS_POOL_PER_SKILL_GROUP } };
 }
 
+// ---- Starting spells (S6), verbatim ----
+// StartGameBehaviour.SetStartingSpells: classes with index > 6 have
+// no starting spells; 0..6 use the StartingSpells asset's sets
+// (SpellIDs into SPELLS.STD). The custom-class Spellsword rule
+// (any primary/major magic skill -> set 1) pends custom classes.
+export const STARTING_SPELL_SETS = Object.freeze({
+  0: [1, 37, 2, 97, 8],    // Mage: Fenrik's Door Jam, Slowfalling, Buoyancy, Balyna's Balm, Shock
+  1: [8, 44, 37],          // Spellsword: Shock, Chameleon, Slowfalling
+  2: [8, 2, 37],           // Battlemage
+  3: [1, 37, 2, 97, 8],    // Sorcerer (the Mage set)
+  4: [97, 2, 1, 37],       // Healer
+  5: [44, 2],              // Nightblade
+  6: [37],                 // Bard
+});
+
+/** The spells a new character KNOWS: set members resolved against
+ *  the loaded SPELLS.STD map; missing records skip loudly (the
+ *  source's own error path). */
+export function startingSpells(careerIndex, spellsByIndex) {
+  const set = STARTING_SPELL_SETS[careerIndex];
+  if (!set || !spellsByIndex) return [];
+  const out = [];
+  for (const id of set) {
+    const sp = spellsByIndex.get(id);
+    if (sp) out.push(sp);
+    else console.warn(`[chargen] starting spell ${id} missing from SPELLS.STD`);
+  }
+  return out;
+}
+
 // ---- Magicka (S4a), verbatim ----
 // DFCareer.GetSpellPointMultiplier: (bitfield & 0x1C00) >> 8 ->
 // {0: x3.00, 4: x2.00, 8: x1.75, 12: x1.50, 16: x1.00, 20: x0.50};

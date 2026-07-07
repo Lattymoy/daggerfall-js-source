@@ -212,6 +212,20 @@ CATCHES: my first host edit left the keydown listener unclosed
 (node --check caught it); cam.forward() was an API I invented -
 both hosts derive the look vector the way they already do.
 
+## S6 (starting spells): SHIPPED
+
+The spellbook interim retires: STARTING_SPELL_SETS carries the
+verbatim StartingSpells asset (classes 0..6 only, per
+SetStartingSpells' own gate - Mage/Sorcerer share a set, Bard gets
+Slowfalling alone; >6 have none); startingSpells() resolves the
+SpellIDs against the loaded SPELLS.STD map, skipping missing records
+LOUDLY (the source's own error path). BOTH chargen paths grant (the
+U2b flow and the ?class headless skip); the first known spell
+auto-readies after the flow. ORDER FIX at root: the ?class grant ran
+29 lines before SPELLS.STD loaded - the whole S4b data-load block
+moved ABOVE its consumers (data before use, truthful ordering). The
+custom-class Spellsword rule pends custom classes.
+
 ## Queue
 - Magic remainder: the effect library (non-damage spell effects,
   casting by the player, magic rounds), enchantment economy/value.
