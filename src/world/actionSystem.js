@@ -40,19 +40,20 @@ import { ACTION_FLAGS } from './rdbLayout.js';
 export const EFFECT_ACTION_FLAGS = new Set([
   ACTION_FLAGS.Hurt21, ACTION_FLAGS.Hurt22, ACTION_FLAGS.Hurt23,
   ACTION_FLAGS.Hurt24, ACTION_FLAGS.Hurt25, ACTION_FLAGS.Poison,
-  ACTION_FLAGS.DrainMagicka,
+  ACTION_FLAGS.DrainMagicka, ACTION_FLAGS.CastSpell,
 ]);
 
 export const DOOR_OPEN_ANGLE = -90;
 export const DOOR_OPEN_DURATION = 1.5;
 
 export class ActionSystem {
-  constructor(collider, { damagePlayer = null, drainMagicka = null, playerLevel = () => 1, rolls = Math.random } = {}) {
+  constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, playerLevel = () => 1, rolls = Math.random } = {}) {
     this.collider = collider;
     this.objects = new Map(); // key -> runtime object
     this._doorCount = 0;
     this._damagePlayer = damagePlayer;
     this._drainMagicka = drainMagicka;
+    this._castSpell = castSpell;
     this._playerLevel = playerLevel;
     this._rolls = rolls;
   }
@@ -60,9 +61,10 @@ export class ActionSystem {
   /** Register an effect action (Hurt/Poison/DrainMagicka): chain
    *  participant, no tween - the model stays in the static draw and
    *  the shared collider (the caller keeps those). */
-  addEffect(positionKey, action) {
+  addEffect(positionKey, action, origin = null) {
     const key = `act:${positionKey}`;
     const o = {
+      origin,
       key,
       kind: 'effect',
       actionFlag: action.actionFlag,
@@ -91,6 +93,14 @@ export class ActionSystem {
     } else if (o.actionFlag >= F.Hurt22 && o.actionFlag <= F.Hurt25) {
       const dmg = (o.isFlat ? o.magnitude : o.axisRaw) * lvl;
       if (this._damagePlayer) this._damagePlayer(dmg);
+    }
+    else if (o.actionFlag === F.CastSpell) {
+      // S4b verbatim: cooldown -= 45.454546 per Play; at <= 0 the
+      // spell (record by Index) fires AT the player from the object.
+      o.cooldown = (o.cooldown ?? 0) - 45.454546;
+      if (o.cooldown <= 0 && this._castSpell) {
+        this._castSpell(o.index, o.origin);
+      }
     }
     else if (o.actionFlag === F.DrainMagicka) {
       // S4a: REAL now that chargen rolls magicka - verbatim

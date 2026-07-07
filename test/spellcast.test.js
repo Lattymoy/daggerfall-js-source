@@ -1,0 +1,63 @@
+// S4b: saving throw, magnitude, damage-family resolution, the
+// CastSpell action cooldown - all verbatim, deterministic.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  savingThrow, careerTolerance, rollMagnitude, resolveSpellVsPlayer,
+  isDamageHealthEffect, missileArchive, EFFECT_FLAGS,
+  CASTSPELL_COOLDOWN_TICK, MISSILE_SPEED,
+} from '../src/systems/spellcast.js';
+import { ActionSystem } from '../src/world/actionSystem.js';
+import { ACTION_FLAGS } from '../src/world/rdbLayout.js';
+
+const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
+
+test('spellcast: saving throw verbatim (tolerances, clamp, proration)', () => {
+  const T = { stats: { willpower: 50 }, career: {} };   // MagicResist 5, base 50 -> 55
+  // roll 56 (> 55): full damage
+  assert.equal(savingThrow(0, EFFECT_FLAGS.Fire, T, 0, seq(0.55)), 100);
+  // roll 55 == saving: prorated 100 - 5*(55-55) = 100
+  assert.equal(savingThrow(0, EFFECT_FLAGS.Fire, T, 0, seq(0.54)), 100);
+  // roll 40: within 20 -> 100 - 5*15 = 25
+  assert.equal(savingThrow(0, EFFECT_FLAGS.Fire, T, 0, seq(0.39)), 25);
+  // roll 30: beyond 20 under -> 0
+  assert.equal(savingThrow(0, EFFECT_FLAGS.Fire, T, 0, seq(0.29)), 0);
+  // fire-immune career: +50 -> >= 100 pre-MagicResist -> perfect immunity 0
+  const imm = { stats: { willpower: 50 }, career: { immunityFlags: EFFECT_FLAGS.Fire } };
+  assert.equal(careerTolerance(imm.career, EFFECT_FLAGS.Fire), 'Immune');
+  assert.equal(savingThrow(0, EFFECT_FLAGS.Fire, imm, 0, seq(0.99)), 0);
+  // critical weakness: 50-50 = 0 -> +5 willpower -> clamp floor 5
+  const weak = { stats: { willpower: 0 }, career: { criticalWeaknessFlags: EFFECT_FLAGS.Fire } };
+  assert.equal(savingThrow(0, EFFECT_FLAGS.Fire, weak, 0, seq(0.05)), 100);   // roll 6 > 5
+  // resistance precedence beats immunity in the same byte set
+  const both = { resistanceFlags: EFFECT_FLAGS.Fire, immunityFlags: EFFECT_FLAGS.Fire };
+  assert.equal(careerTolerance(both, EFFECT_FLAGS.Fire), 'Resistant');
+});
+
+test('spellcast: magnitude + damage-family resolution', () => {
+  const e = { type: 4, subType: 0, magnitudeBaseLow: 5, magnitudeBaseHigh: 15, magnitudeLevelBase: 2, magnitudeLevelHigh: 4, magnitudePerLevel: 3 };
+  // caster level 7: floor(7/3)=2; base roll 0 -> 5; plus roll 0 -> 2 -> 5 + 2*2 = 9
+  assert.equal(rollMagnitude(e, 7, seq(0)), 9);
+  assert.equal(rollMagnitude(e, 7, seq(0.999)), 15 + 4 * 2);
+  assert.equal(rollMagnitude({ ...e, magnitudePerLevel: 0 }, 5, seq(0)), 5 + 2 * 5);   // per 0 guarded to 1
+  assert.ok(isDamageHealthEffect({ type: 4, subType: 0 }));
+  assert.ok(isDamageHealthEffect({ type: 1, subType: 0 }));
+  assert.ok(!isDamageHealthEffect({ type: 4, subType: 1 }));
+  assert.equal(missileArchive(0), 375);
+  assert.equal(missileArchive(4), 379);
+  // full resolve: dmg effect magnitude 9, saving roll 0.99 (full) -> 9; second effect non-damage skipped
+  const spell = { element: 0, effects: [e, { type: 11, subType: 0 }, { type: -1, subType: -1 }] };
+  const T = { stats: { willpower: 50 }, career: {} };
+  assert.equal(resolveSpellVsPlayer(spell, 7, T, seq(0, 0, 0.99)), 9);
+});
+
+test('spellcast: the CastSpell action cooldown gate fires through the sink', () => {
+  const fired = [];
+  const sys = new ActionSystem({ addMesh() {}, removeMesh() {}, removeBucket() {} }, {
+    castSpell: (index, origin) => fired.push([index, origin]),
+  });
+  const o = sys.addEffect(5, { actionFlag: ACTION_FLAGS.CastSpell, index: 12, magnitude: 0, axisRaw: 0, isFlat: false, nextObject: -1 }, [1, 2, 3]);
+  sys.receive(o);
+  assert.deepEqual(fired, [[12, [1, 2, 3]]]);            // one tick of 45.45 crosses 0 from 0
+  assert.ok(CASTSPELL_COOLDOWN_TICK > 45 && MISSILE_SPEED === 25);
+});

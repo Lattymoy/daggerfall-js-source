@@ -139,6 +139,34 @@ through the dungeon sink. Remaining for S4: spell EFFECTS (casting,
 CastSpell action, targeting, the effect implementations) and magic
 ITEMS (MI loot unlock) - S4b+.
 
+## S4b (magic foundation II - trap spells): SHIPPED
+
+The Combat-queue CastSpell row unblocks. systems/spellcast.js:
+FormulaHelper.SavingThrow verbatim (career tolerance precedence
+Resistant > Immune > LowTolerance > CriticalWeakness over the CFG
+flag bytes; DFU's own mixed-tolerance departure preserved; immunity
+>= 100 -> 0; MagicResist = floor(WIL/10); the 5..95 clamp; DF
+Chronicles proration within 20 of a failed roll), the
+EntityEffect.GetMagnitude roll (base + plus x floor(casterLevel /
+perLevel), per-0 guarded), missile constants (speed 25, radius 0.45,
+life 8s, the sequential 375-379 element archives), and the resolved
+CLASSIC DAMAGE FAMILY - Damage Health (4,0) + Continuous (1,0)
+applied instant; every other effect FLAGGED to the effect-library
+slice. Racial saving flags + biography mods pend their slices.
+ACTION: CastSpell joins the effect flags with the verbatim
+45.454546 cooldown tick, firing (spell Index, object origin) through
+a proper constructor sink. SCENE: SPELLS.STD loads once per context
+(absent -> loud no-op); missiles fly at the player's mid-capsule
+(direction locked at fire, +40*GlobalScale origin lift), collide
+with the level via raycast, retire at lifespan, and hit at
+missile+capsule radius -> resolveSpellVsPlayer -> health. REVIEW
+CATCHES: the first flight loop rebuilt the billboard batch EVERY
+FRAME (the exact thrash class the engine audit killed - now one
+batch riding the origin uniform, zero churn); drawFoes was
+foes-gated in BOTH hosts so trap spells were dead in empty dungeons
+- hosts now call unconditionally (internally gated); a stray
+textureFiles reference removed with the churn path.
+
 ## Queue
 - S4: magic foundation (spell records, CastSpell action flag,
   DrainMagicka real, MI loot unlocks).

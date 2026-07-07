@@ -21,8 +21,9 @@ enemy-rigs arc; full records live in 04-Characters/Characters-Arc.md):
   player entity with or without ?foes.
 
 **Remaining (queue):**
-- CastSpell action flag + magic damage: blocked on the Systems magic
-  arc.
+- CastSpell action flag: SHIPPED via Systems S4b (trap-spell missiles
+  + the classic damage family through the verbatim saving throw; the
+  wider effect library remains Systems work).
 - Bows in-world (the machine + clips exist; arrows/missiles need the
   projectile pass) - queued.
 - Trigger-on-collision for WalkInto/WalkOn traps: pends a collider

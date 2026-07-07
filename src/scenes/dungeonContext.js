@@ -21,6 +21,11 @@ import { addItem } from '../systems/inventory.js';
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { tallySkill, skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
 import { raiseSkills } from '../systems/advancement.js';
+import { readSpellsStd } from '../formats/spellsStd.js';
+import {
+  resolveSpellVsPlayer, missileArchive, MISSILE_SPEED,
+  MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S,
+} from '../systems/spellcast.js';
 import {
   generateItems as generateLootItems, RANDOM_TREASURE_ARCHIVE,
   RANDOM_TREASURE_ICONS, RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS,
@@ -70,6 +75,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       playerEntity.health = Math.max(0, playerEntity.health - dmg);
             surfacePlayer();
     },
+    castSpell: (index, origin) => { _pendingCasts.push({ index, origin }); },   // consumed once spells load
     drainMagicka: (n) => {
       playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n);
       surfacePlayer();
@@ -111,9 +117,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         continue;
       }
       if (p.action && EFFECT_ACTION_FLAGS.has(p.action.actionFlag)) {
-        // Hurt/Poison/DrainMagicka: chain-participating logic object;
-        // the model itself stays static (draw + collider below).
-        actions.addEffect(p.position, p.action);
+        // Hurt/Poison/DrainMagicka/CastSpell: chain-participating
+        // logic object; the model stays static (draw + collider
+        // below). Origin = the placement translation (CastSpell
+        // fires missiles from here, +40*GlobalScale up, verbatim).
+        actions.addEffect(p.position, p.action, [matrix[12], matrix[13], matrix[14]]);
       }
       drawList.push({ mesh: gpu, matrix });
       collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix);
@@ -261,6 +269,25 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     console.log(`[chargen] ${CLASS_CAREERS[careerIndex]}: HP ${playerEntity.maxHealth}, STR ${playerEntity.stats.strength}`);
   }
 
+  // S4b: trap spells - SPELLS.STD by index; CastSpell actions queue
+  // missiles that fly at the player (speed 25, radius 0.45, life 8s,
+  // element billboards 375-379). Resolution: the classic
+  // damage-health family through the verbatim saving throw; other
+  // effects FLAGGED to the effect-library slice.
+  const _pendingCasts = [];
+  const missiles = [];
+  let spellsByIndex = null;
+  try {
+    const spellBytes = await (await import('./shared.js')).fetchBytes('SPELLS.STD');
+    spellsByIndex = new Map(readSpellsStd(spellBytes).map((sp) => [sp.index, sp]));
+  } catch { /* SPELLS.STD absent: casts no-op, loudly below */ }
+  function fireCast(index, origin) {
+    const spell = spellsByIndex?.get(index);
+    if (!spell || !origin) { if (!spellsByIndex) console.warn('[spellcast] SPELLS.STD unavailable; CastSpell no-op'); return; }
+    const from = [origin[0], origin[1] + 40 * GLOBAL_SCALE, origin[2]];
+    missiles.push({ spell, pos: from, dir: null, age: 0, batch: null });
+  }
+
   // S2: treasure piles - random markers (199.19) roll an icon +
   // generate by the dungeon-type key; fixed 216 flats keep their
   // record. Per-pile single batches so pickup can remove one pile.
@@ -378,9 +405,65 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // S3b: the classic clock for skill-raise checks - dt * TimeScale
   // (DFU default 12) in minutes; RaiseSkills gates itself at 360.
   let classicMinutes = 0;
+  async function ensureMissileBatch(m) {
+    if (m.batch !== null) return;
+    m.batch = false;   // in-flight guard
+    const archive = missileArchive(m.spell.element);
+    const t = await getTexture(archive);
+    if (!t) return;
+    uploadRecord(archive, 0);
+    const size = scaledBillboardSize(t.getSize(0), t.getScale(0));
+    m.half = size.h / 2;
+    m.firePos = [...m.pos];
+    m.batch = renderer.createBillboardBatch(archive, 0, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
+    billboardBatches.push(m.batch);
+  }
+  function retireMissile(m) {
+    if (m.batch) {
+      const bi = billboardBatches.indexOf(m.batch);
+      if (bi >= 0) billboardBatches.splice(bi, 1);
+      renderer.destroyBillboardBatch(m.batch);
+    }
+    m.dead = true;
+  }
+  function updateMissiles(dt, playerFeet) {
+    while (_pendingCasts.length) { const c = _pendingCasts.shift(); fireCast(c.index, c.origin); }
+    if (!missiles.length || !playerFeet) return;
+    const target = [playerFeet[0], playerFeet[1] + 0.9, playerFeet[2]];   // mid-capsule, as enemy melee aims
+    for (const m of missiles) {
+      if (m.dead) continue;
+      ensureMissileBatch(m);
+      if (!m.dir) {   // verbatim: normalized (player - object), locked at fire time
+        const d = [target[0] - m.pos[0], target[1] - m.pos[1], target[2] - m.pos[2]];
+        const l = Math.hypot(...d) || 1;
+        m.dir = [d[0] / l, d[1] / l, d[2] / l];
+      }
+      m.age += dt;
+      if (m.age > MISSILE_LIFESPAN_S) { retireMissile(m); continue; }
+      const step = MISSILE_SPEED * dt;
+      const hitWall = collider.raycast(m.pos, m.dir, step + MISSILE_COLLIDER_RADIUS);
+      if (Number.isFinite(hitWall) && hitWall <= step + MISSILE_COLLIDER_RADIUS) { retireMissile(m); continue; }
+      m.pos[0] += m.dir[0] * step; m.pos[1] += m.dir[1] * step; m.pos[2] += m.dir[2] * step;
+      // The batch was built ONCE at the fire position; flight rides
+      // the batch's origin uniform (zero GL churn - the same thrash
+      // class the engine audit killed stays killed).
+      if (m.batch) m.batch.origin = [m.pos[0] - m.firePos[0], m.pos[1] - m.firePos[1], m.pos[2] - m.firePos[2]];
+      const dx = target[0] - m.pos[0], dy = target[1] - m.pos[1], dz = target[2] - m.pos[2];
+      if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {   // missile radius + player capsule radius
+        const dmg = resolveSpellVsPlayer(m.spell, playerEntity.level, playerEntity);
+        if (dmg > 0) {
+          playerEntity.health = Math.max(0, playerEntity.health - dmg);
+          surfacePlayer();
+        }
+        retireMissile(m);
+      }
+    }
+  }
+
   function drawFoes(dt, canvas, proj, view, eye, playerFeet) {
     classicMinutes += (dt * 12) / 60;
     raiseSkills(playerEntity, classicMinutes);
+    updateMissiles(dt, playerFeet);
     if (playerWeapon) {
       playerWeapon.gesture(_atkDx, _atkDy, _atkHeld, dt, Math.max(canvas.clientWidth, canvas.clientHeight));
       _atkDx = 0; _atkDy = 0;

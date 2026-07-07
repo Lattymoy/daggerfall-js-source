@@ -296,7 +296,7 @@ export function createWorldModes(host) {
       for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
       renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
-      if (dungeonCtx.foes.length) dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos);   // C8 E1-E3: rigged foes - senses, pursuit, attacks, player melee
+      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos);   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
           renderer.textures.get(`${dungeonReturn.waterArchive}_0`),
