@@ -119,6 +119,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const cpu = cpuModels.get(p.modelIdNum);
       if (p.action && MOVE_ACTION_FLAGS.has(p.action.actionFlag)) {
         const o = actions.addAction(p.position, cpu, matrix, p.action);
+        // Audit 06f: movers carry their AT-REST bounds so step-on
+        // platforms (classic Collision01 elevators) collision-trigger;
+        // the pass only tests movers while parked at 'start', where
+        // the static AABB is truthful.
+        o.aabb = worldAabb(cpu.positions, matrix);
+        o.restOnlyTrigger = true;
         dynamicDraws.push({ gpu, object: o });
         continue;
       }
@@ -254,7 +260,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
       // Combat bows: an equipped bow makes the foe an archer - the
       // attack starts from SIGHT and the strike looses an arrow.
-      attack.rangedAttack = SKILLS && entity.weapon && WEAPON_SKILL[entity.weapon.name] === SKILLS.Archery;
+      attack.rangedAttack = !!entity.weapon && WEAPON_SKILL[entity.weapon.name] === SKILLS.Archery;
       foes.push({ rig, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
       continue;
     }
@@ -595,6 +601,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const R = 0.45, H = 1.8;   // the player capsule
     for (const o of actions.objects.values()) {
       if (!o.aabb) continue;
+      if (o.restOnlyTrigger && o.state !== 'start') continue;   // a mover in flight: bounds stale, and classic triggers on the step, not the ride
       o._colTimer = (o._colTimer ?? COLLISION_TIMEOUT_S) + dt;
       if (o._colTimer < COLLISION_TIMEOUT_S) continue;
       const a = o.aabb;

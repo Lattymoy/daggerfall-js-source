@@ -42,7 +42,9 @@ enemy-rigs arc; full records live in 04-Characters/Characters-Arc.md):
   placement AABB and a per-frame pass fires WalkOn/WalkInto with the
   component's exact semantics - 0.12s per-object timeout, only while
   the player actively moves HORIZONTALLY (classic ignores up/down/
-  jump), contact beneath -> WalkOn. The Combat build queue is EMPTY;
+  jump), contact beneath -> WalkOn; movers carry their AT-REST bounds and
+  trigger only while parked (audit 06f closed the step-on-platform
+  gap). The Combat build queue is EMPTY;
   remaining Combat-adjacent work lives in Systems (effect library)
   and UI.
 - Systems-shared interims tracked in the Home ledger: TallySkill,

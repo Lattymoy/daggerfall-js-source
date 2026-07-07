@@ -53,11 +53,11 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `03-World/Player-Arc.md` - COMPLETE (P1-P8). Successor decided long since: C8, then Systems (this list is the truth of record).
 - `04-Characters/Characters-Arc.md` - PARKED (pivot 3: classic visuals). C8 shipped E1-E4b end to end + spectral; E4c deferred by Mac; remaining interims are Systems work (ledger below).
 - `05-Combat/Combat.md` - COMPLETE. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, and the collision-trigger seam all shipped. Build queue EMPTY; Systems-shared interims tracked in the ledger.
-- `06-Systems/Systems-Arc.md` - ACTIVE. S1 loot, S2/S2b inventory + pickup + treasure + containers, S3/S3b chargen + advancement, S4a-c MAGIC FOUNDATION COMPLETE (SPELLS.STD + magicka, trap-spell missiles through the verbatim saving throw, MAGIC.DEF items - MI loot live) ALL SHIPPED. Next: the effect library, then economy/quests.
+- `06-Systems/Systems-Arc.md` - ACTIVE. S1 loot, S2/S2b inventory + treasure + containers, S3/S3b chargen + advancement, S4a-c magic foundation, S5 PLAYER CASTING (magicka spends, missiles seek foes, one damageFoe door) ALL SHIPPED. Next: the effect library, then economy/quests.
 - `07-Rendering/Rendering.md` - COMPLETE. Queue EMPTY since spectral shipped (2026-07-06); the exterior indirect-light Ledger row waits for a Rendering reopen.
 - `08-Audio/` + `10-UI/` - not started; routed rows collected in Ledger C.
 
-## Open flags (audit-generated 2026-07-06e, from the code)
+## Open flags (audit-generated 2026-07-06f, from the code)
 
 Regenerate on audit; the code comment at each site is the authority:
 
@@ -75,11 +75,16 @@ Regenerate on audit; the code comment at each site is the authority:
 - `src/combat/playerWeapon.js:45` - INTERIM starting weapon (items arc replaces): Iron Dagger. */
 - `src/combat/playerWeapon.js:46` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:64` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
-- `src/scenes/dungeonContext.js:239` - pends Player activation, flagged in the arc).
-- `src/scenes/dungeonContext.js:263` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:277` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:381` - Backstabbing skill (flat interim). TallySkill pends Systems.
-- `src/scenes/dungeonContext.js:496` - in DFU). HUD pends the UI arc: health surfaces on __player.
+- `src/scenes/dungeon.js:117` - ctx.playerCastInput(cam.pos, dir);   // S5 cast (input map pends UI)
+- `src/scenes/dungeonContext.js:248` - pends Player activation, flagged in the arc).
+- `src/scenes/dungeonContext.js:275` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:289` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:311` - FLAGGED: DFU recomputes per-effect via the cost tables (that
+- `src/scenes/dungeonContext.js:313` - FLAGGED to the effect library (caster-only buffs, touch, areas).
+- `src/scenes/dungeonContext.js:349` - if (sp.rangeType !== 2 && sp.rangeType !== 4) return false;   // FLAGGED: non-missile ranges ...
+- `src/scenes/dungeonContext.js:420` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:447` - Backstabbing skill (flat interim). TallySkill pends Systems.
+- `src/scenes/dungeonContext.js:659` - in DFU). HUD pends the UI arc: health surfaces on __player.
 - `src/scenes/worldModes.js:159` - quests fill these later; open-feedback pends the UI arc).
 - `src/systems/advancement.js:107` - HEADLESS INTERIM: apply now (char sheet pends the UI arc)
 - `src/systems/advancement.js:112` - spendPoolLowest(entity.stats, Object.keys(entity.stats), pool);   // INTERIM policy
@@ -95,12 +100,27 @@ Regenerate on audit; the code comment at each site is the authority:
 - `src/systems/inventory.js:12` - weight pends S2b (FLAGGED - leather/chain/plate multipliers).
 - `src/systems/loot.js:169` - FLAGGED to the economy slice (shops).
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls are SKIPPED until the magic
-- `src/systems/spellcast.js:104` - if (!isDamageHealthEffect(e)) continue;   // FLAGGED: non-damage effects pend the library
+- `src/systems/spellcast.js:100` - savingThrow% / 100 (trunc), summed. Other effects skip (FLAGGED -
+- `src/systems/spellcast.js:109` - if (!isDamageHealthEffect(e)) continue;   // FLAGGED: non-damage effects pend the library
 - `src/systems/spellcast.js:90` - rounds system pends the effect-library slice). */
-- `src/systems/spellcast.js:97` - (FLAGGED - the effect library lands them).
 - `src/world/actionSystem.js:38` - DrainMagicka (0x1c): INTERIM no-op - the magicka stat pends the
 
 ## Audits
+
+**2026-07-06f (Mac): deep audit + bible update, S5/bows/triggers
+sweep.** Suite 249/60 green, build clean, manifest MATCH both
+directions, git clean pre-audit. One GENUINE GAP in the Combat
+COMPLETE claim found and closed: MOVERS carried no AABB, so classic
+step-on platforms (Collision01 elevators) could not
+collision-trigger - movers now carry their AT-REST bounds and the
+trigger pass tests them only while parked at 'start' (the static
+bounds are truthful exactly when the step matters; mid-flight rides
+do not re-trigger, matching classic). A dead always-truthy guard
+(SKILLS &&) cleaned. KNOWN DEBT recorded: dungeonContext has grown
+to ~770 lines absorbing foes + missiles + arrows + casting +
+triggers - a future combat-scene extraction is queued as debt, NOT
+churned blind under audit. Ledger regenerated (06f).
+
 
 **2026-07-06e (Mac): deep audit + bible update, S4 sweep.** Suite
 245/59 green, build clean, manifest MATCH both directions, git clean
