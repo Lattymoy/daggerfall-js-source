@@ -58,6 +58,8 @@ export const ITEM_GROUPS = Object.freeze({
   MiscellaneousIngredients1: [55, 56, 57, 58, 59, 60, 62, 63, 64],
   MiscellaneousIngredients2: [76, 77],
   ReligiousItems: [258, 259, 260, 261, 262, 263, 264, 265, 267, 268, 269, 270, 271],
+  Gems: [0, 1, 2, 3, 4, 5, 6, 7],
+  Jewellery: [133, 134, 135, 136, 137, 138, 139, 140],
   MensClothing: [141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181],
   WomensClothing: [182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216],
 });
@@ -117,8 +119,11 @@ export function generateRandomLoot(matrix, who, rolls = Math.random) {
   ingredient(matrix.P2 * level, 'PlantIngredients2');
   ingredient(matrix.M1, 'MiscellaneousIngredients1');
   ingredient(matrix.M2, 'MiscellaneousIngredients2');
-  // MI (magic items): SKIPPED, INTERIM - pends the magic arc; loot
-  // under-generates by this category until then (flagged).
+  // MI (S4c): real when MAGIC.DEF templates are registered (context
+  // build); absent -> the category still skips, loudly interim.
+  if (_magicItemTemplates) {
+    halving(matrix.MI, () => createRegularMagicItem(_magicItemTemplates, level, who.gender, rolls));
+  }
   halving(matrix.CL, () => ({
     group: who.gender === 'female' ? 'WomensClothing' : 'MensClothing',
     templateIndex: pick(ITEM_GROUPS[who.gender === 'female' ? 'WomensClothing' : 'MensClothing'], rolls),
@@ -126,6 +131,50 @@ export function generateRandomLoot(matrix, who, rolls = Math.random) {
   halving(matrix.BK, () => ({ group: 'Books', templateIndex: BOOK_TEMPLATE, variant: Math.floor(rolls() * 4) }));
   halving(matrix.RL, () => ({ group: 'ReligiousItems', templateIndex: pick(ITEM_GROUPS.ReligiousItems, rolls) }));
   return items;
+}
+
+// ---- Magic items (S4c): ItemBuilder.CreateRegularMagicItem verbatim ----
+// The MAGIC.DEF registry: set once per context after the file loads.
+let _magicItemTemplates = null;
+export function setMagicItemTemplates(templates) { _magicItemTemplates = templates; }
+
+// "The possible groups are determined by the 33rd byte" - group 0
+// picks from {Armor 2, Weapons 3, MensClothing 6, ReligiousItems 10,
+// WomensClothing 12, Gems 14, Jewellery 25}; group 1 from
+// {2, 3, 6, 12, 25}; group 2 is always Weapons. ItemGroups numerics
+// per ItemEnums.cs.
+const MAGIC_GROUPS_0 = Object.freeze([2, 3, 6, 10, 12, 14, 25]);
+const MAGIC_GROUPS_1 = Object.freeze([2, 3, 6, 12, 25]);
+
+export function createRegularMagicItem(templates, playerLevel, gender, rolls = Math.random) {
+  const regular = templates.filter((t) => t.type === 0);   // RegularMagicItem
+  const magicItem = regular[Math.floor(rolls() * regular.length)];
+  let groupId;
+  if (magicItem.group === 0) groupId = MAGIC_GROUPS_0[Math.floor(rolls() * 7)];
+  else if (magicItem.group === 1) groupId = MAGIC_GROUPS_1[Math.floor(rolls() * 5)];
+  else groupId = 3;   // group 2 -> Weapons
+  let base;
+  if (groupId === 3) {
+    base = createRandomWeapon(playerLevel, rolls);
+    while (base.name === 'Arrow') base = createRandomWeapon(playerLevel, rolls);   // "No arrows as enchanted items"
+  } else if (groupId === 2) base = createRandomArmor(playerLevel, rolls);
+  else if (groupId === 6 || groupId === 12) {
+    const g = gender === 'female' ? 'WomensClothing' : 'MensClothing';
+    base = { group: g, templateIndex: pick(ITEM_GROUPS[g], rolls) };
+  } else if (groupId === 10) base = { group: 'ReligiousItems', templateIndex: pick(ITEM_GROUPS.ReligiousItems, rolls) };
+  else if (groupId === 14) base = { group: 'Gems', templateIndex: pick(ITEM_GROUPS.Gems, rolls) };
+  else base = { group: 'Jewellery', templateIndex: pick(ITEM_GROUPS.Jewellery, rolls) };
+  // The regular name is replaced by the magic name; enchantments ride
+  // raw; condition = uses. Item VALUE from enchantment costs is
+  // FLAGGED to the economy slice (shops).
+  return {
+    ...base,
+    name: magicItem.name,
+    magic: true,
+    enchantments: magicItem.enchantments.filter((e) => e.type !== -1),
+    maxCondition: magicItem.uses,
+    currentCondition: magicItem.uses,
+  };
 }
 
 /** DaggerfallLoot.GenerateItems: key -> matrix -> loot. Unknown keys

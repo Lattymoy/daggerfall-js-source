@@ -278,9 +278,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const missiles = [];
   let spellsByIndex = null;
   try {
-    const spellBytes = await (await import('./shared.js')).fetchBytes('SPELLS.STD');
+    const shared = await import('./shared.js');
+    const spellBytes = await shared.fetchBytes('SPELLS.STD');
     spellsByIndex = new Map(readSpellsStd(spellBytes).map((sp) => [sp.index, sp]));
-  } catch { /* SPELLS.STD absent: casts no-op, loudly below */ }
+    // S4c: MAGIC.DEF registers the magic-item templates; the loot
+    // MI category is live from here (absent -> stays flagged-skip).
+    const { readMagicDef } = await import('../formats/magicDef.js');
+    const { setMagicItemTemplates } = await import('../systems/loot.js');
+    setMagicItemTemplates(readMagicDef(await shared.fetchBytes('MAGIC.DEF')));
+  } catch { /* data absent: casts + MI no-op, loudly flagged */ }
   function fireCast(index, origin) {
     const spell = spellsByIndex?.get(index);
     if (!spell || !origin) { if (!spellsByIndex) console.warn('[spellcast] SPELLS.STD unavailable; CastSpell no-op'); return; }

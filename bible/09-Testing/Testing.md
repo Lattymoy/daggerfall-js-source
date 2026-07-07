@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 242 tests across 58 files.
+Node 22). Suite: 245 tests across 59 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -23,6 +23,7 @@ Node 22). Suite: 242 tests across 58 files.
 | playerweapon.test.js | 3 | verbatim reach 2.25+0.25 + view/LOS hit rule + the swing-mod table, drag-gesture -> mapped strike on the shared machine (threshold + release reset), hit-frame kill through the full chain (deterministic rolls) + reach/dead gating |
 | formulas.test.js | 5 | FormulaHelper verbatim: Dice100/DamageModifier/H2H (sheet rule)/weapon min-max tables/material mods/body parts, career attack-modifier bits + enemy-type bonus, to-hit chain (dodging/4 bug preserved, roll ordering, 3..97 clamp), damage paths (str-after-skeletal ordering, silver x2, material gate), the classic 0.25/MeleeDistance/35.156deg hit gate |
 | spellcast.test.js | 3 | verbatim saving throw (tolerance precedence Resistant>Immune, immunity->0, DF-Chronicles proration edges at exact rolls, 5..95 clamp + MagicResist), magnitude roll (base+plus x floor(level/per), per-0 guard) + damage-family gate + full resolve skipping non-damage, the CastSpell 45.454546 cooldown firing through the sink with origin |
+| magicitems.test.js | 3 | MAGIC.DEF verbatim 62-byte records (index = stream position, -1 unfilled enchantment slots, artifact types read), CreateRegularMagicItem routing (regular-only filter, group-byte tables, the arrow re-roll, magic name swap + condition = uses, -1 slots filtered), the MI loot halving loop firing with the registry set and skipping without |
 | magicka.test.js | 3 | SPELLS.STD verbatim 89-byte walk on crafted records (subType ALWAYS read - the dead 0xFF sbyte branch documented; invalid all -1 record gated), the 0x1C00>>8 multiplier decode table + SpellPoints floor, DrainMagicka max(1, flat?mag:axis) + 0-floor through the action system |
 | advancement.test.js | 3 | the 35-entry advancement-multiplier table + uses-needed/level formulas, the raise flow (360-min gate, reflexes bit math 0x10000-((r-2)<<13) incl VeryHigh 1.25x, uses reset, the 95+/mastery cap), the level-up sum shape (primaries + majors - min + max minor) + headless leveling applying HP and the 4..6 pool |
 | chargen.test.js | 3 | verbatim stat rolls (base + 0..10 inclusive, pool 6..14), skill tiers (28/18/13 + 0..3, defaults 3..6), HP (25 + hpPerLevel; per-level floor 1 + endurance mod), the interim lowest-first pool policy + full create (totals pinned), skillValue dual shape driving formulas (weapon skill hits where HandToHand misses on the same roll) |

@@ -167,8 +167,29 @@ foes-gated in BOTH hosts so trap spells were dead in empty dungeons
 - hosts now call unconditionally (internally gated); a stray
 textureFiles reference removed with the churn path.
 
+## S4c (magic foundation III - magic items): SHIPPED
+
+formats/magicDef.js is the verbatim MAGIC.DEF reader: i32 count,
+62-byte records (index = the record's STREAM POSITION per the
+source's own identity key; 32-byte name; type 0 Regular / 1-2
+Artifact; group; groupIndex; 10 x {type s8, param s8} enchantments
+with -1 unfilled; uses i16; value i32; material u8). loot.js:
+setMagicItemTemplates registry (set once at context build after
+MAGIC.DEF loads alongside SPELLS.STD; absent -> the MI category
+stays flagged-skip) + CreateRegularMagicItem VERBATIM - filter to
+type 0, uniform pick, the group byte routes through the exact
+tables (0 -> {Armor 2, Weapons 3, Mens 6, Religious 10, Womens 12,
+Gems 14, Jewellery 25}; 1 -> {2,3,6,12,25}; 2 -> Weapons), the
+"No arrows as enchanted items" re-roll, the magic name replacing the
+base item's, enchantments carried raw (-1 slots filtered), condition
+= uses. Gems [0..7] and Jewellery [133..140] joined ITEM_GROUPS
+(both verified against the real template table - classic templates
+OPEN with the gems). Item VALUE from enchantment costs is FLAGGED to
+the economy slice (shops). The MI halving loop is LIVE - loot no
+longer under-generates.
+
 ## Queue
-- S4: magic foundation (spell records, CastSpell action flag,
-  DrainMagicka real, MI loot unlocks).
+- Magic remainder: the effect library (non-damage spell effects,
+  casting by the player, magic rounds), enchantment economy/value.
 - Later: quests, guilds, shops, dialog, calendar deep-wiring,
   save format.
