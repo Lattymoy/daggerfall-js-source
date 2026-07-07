@@ -121,6 +121,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   });
   addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   addEventListener('mousemove', (e) => {
+    ctx.reportMouse?.(e.movementX, e.movementY, document.pointerLockElement === canvas);   // raw input truth for F8
     if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }
     if (document.pointerLockElement !== canvas) return;
     cam.yaw -= e.movementX * 0.0025;
@@ -180,6 +181,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       prevJump = jumpHeld;
       cam.pos = player.eye;
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
+      ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
       const useHeld = keys.has('KeyE');
       if (useHeld && !prevUse) tryActivate();
       prevUse = useHeld;

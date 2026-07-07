@@ -310,6 +310,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let lastPlayerFeet = null;   // S11: the save position
   let debugHud = false;   // F8 diagnostics
   let _motorState = '';
+  let _mouseState = 'no events';
+  let _inputState = '';
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
   function healPlayer(n) {
@@ -902,6 +904,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         `overlay ${activeOverlay ? activeOverlay.constructor.name : 'none'}  chargenDone ${!!playerEntity.chargenDone}`,
         `lock ${typeof document !== 'undefined' && document.pointerLockElement ? 'yes' : 'NO'}  class ${playerEntity.careerIndex ?? '?'} ${playerEntity.career?.name ?? ''}`,
         `hp ${playerEntity.health}/${playerEntity.maxHealth}  mp ${playerEntity.magicka}/${playerEntity.maxMagicka}`,
+        `mouse ${_mouseState}`,
+        `input ${_inputState}`,
       ];
       lines.forEach((t, i) => drawText(renderer, hudFont, t, 4 * s2, (4 + i * 9) * s2, s2, [0.4, 1, 0.5, 1]));
     }
@@ -945,6 +949,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // actions) is FLAGGED - the player snapshot only.
     toggleDebugHud() { debugHud = !debugHud; },
     reportMotor(grounded, velY, yaw) { _motorState = `g:${grounded ? 1 : 0} vy:${velY.toFixed(1)} yaw:${yaw.toFixed(2)}`; },
+    reportMouse(dx, dy, locked) { _mouseState = `dx:${dx} dy:${dy} lock:${locked ? 'Y' : 'N'}`; },
+    reportInput(keys, pitch) { _inputState = `keys:${keys} pitch:${pitch.toFixed(2)}`; },
     quickSave() {
       const snap = snapshotPlayer(playerEntity, {
         position: lastPlayerFeet, classicMinutes,
