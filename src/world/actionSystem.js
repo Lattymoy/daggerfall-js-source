@@ -47,11 +47,12 @@ export const DOOR_OPEN_ANGLE = -90;
 export const DOOR_OPEN_DURATION = 1.5;
 
 export class ActionSystem {
-  constructor(collider, { damagePlayer = null, playerLevel = () => 1, rolls = Math.random } = {}) {
+  constructor(collider, { damagePlayer = null, drainMagicka = null, playerLevel = () => 1, rolls = Math.random } = {}) {
     this.collider = collider;
     this.objects = new Map(); // key -> runtime object
     this._doorCount = 0;
     this._damagePlayer = damagePlayer;
+    this._drainMagicka = drainMagicka;
     this._playerLevel = playerLevel;
     this._rolls = rolls;
   }
@@ -91,8 +92,14 @@ export class ActionSystem {
       const dmg = (o.isFlat ? o.magnitude : o.axisRaw) * lvl;
       if (this._damagePlayer) this._damagePlayer(dmg);
     }
-    // Poison: verbatim DFU no-op stub. DrainMagicka: INTERIM no-op,
-    // magicka pends Systems (flagged).
+    else if (o.actionFlag === F.DrainMagicka) {
+      // S4a: REAL now that chargen rolls magicka - verbatim
+      // DaggerfallAction.DrainMagicka: max(1, IsFlat ? Magnitude :
+      // AxisRaw) off current magicka, floored at 0.
+      const drain = Math.max(1, o.isFlat ? o.magnitude : o.axisRaw);
+      if (this._drainMagicka) this._drainMagicka(drain);
+    }
+    // Poison: verbatim DFU no-op stub (preserved).
   }
 
   /** Register an action door (own bucket, closed-solid lifecycle). */

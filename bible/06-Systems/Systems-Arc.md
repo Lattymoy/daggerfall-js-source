@@ -120,6 +120,25 @@ inside int32 in C# AND JS; the clamp is now verbatim in tallySkill
 (the test's own overflow found it). The classic clock (dt x
 TimeScale 12) ticks in the dungeon frame; raiseSkills gates itself.
 
+## S4a (magic foundation I - spells file + magicka): SHIPPED
+
+formats/spellsStd.js is the verbatim SPELLS.STD reader: 89-byte
+(0x59) records, 3 effects of {type, subType} where subType is ALWAYS
+read - the source's `if (type == 0xFF) continue` can never be true
+(C# promotes sbyte -1 to int -1, not 255) and the record arithmetic
+(6+1+1+2+4+9+9+15+25+1+1+15 = 89) proves the layout; the dead branch
+is documented, not reproduced. Element/range/cost, the three
+duration/chance/magnitude triples, 25-byte name, icon, index; records
+with all effect types -1 are gated out per ReadSpellsFile. MAGICKA:
+the career bitfield decode ((flags & 0x1C00) >> 8 -> x3.00/2.00/
+1.75/1.50/1.00/0.50) + FormulaHelper.SpellPoints = floor(INT x mult)
+roll at chargen (maxMagicka/magicka on the entity). DRAINMAGICKA is
+REAL (the last effect-action interim clears): verbatim max(1,
+IsFlat ? Magnitude : AxisRaw) off current magicka, 0-floored, wired
+through the dungeon sink. Remaining for S4: spell EFFECTS (casting,
+CastSpell action, targeting, the effect implementations) and magic
+ITEMS (MI loot unlock) - S4b+.
+
 ## Queue
 - S4: magic foundation (spell records, CastSpell action flag,
   DrainMagicka real, MI loot unlocks).

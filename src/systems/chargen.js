@@ -68,6 +68,16 @@ export function rollSkills(career, rolls = Math.random) {
   return { skills, groupPools: { primary: BONUS_POOL_PER_SKILL_GROUP, major: BONUS_POOL_PER_SKILL_GROUP, minor: BONUS_POOL_PER_SKILL_GROUP } };
 }
 
+// ---- Magicka (S4a), verbatim ----
+// DFCareer.GetSpellPointMultiplier: (bitfield & 0x1C00) >> 8 ->
+// {0: x3.00, 4: x2.00, 8: x1.75, 12: x1.50, 16: x1.00, 20: x0.50};
+// FormulaHelper.SpellPoints = floor(INT x multiplier).
+export const SPELL_POINT_MULTIPLIERS = Object.freeze({ 0: 3.0, 4: 2.0, 8: 1.75, 12: 1.5, 16: 1.0, 20: 0.5 });
+export function spellPointMultiplier(abilityFlagsAndSpellPointsBitfield) {
+  return SPELL_POINT_MULTIPLIERS[(abilityFlagsAndSpellPointsBitfield & 0x1C00) >> 8] ?? 1.0;
+}
+export const spellPoints = (intelligence, multiplier) => Math.floor(intelligence * multiplier);
+
 // ---- FormulaHelper HP, verbatim ----
 export const hitPointsModifier = (endurance) => Math.floor(endurance / 10) - 5;
 export const rollMaxHealthLevel1 = (career) => 25 + career.hitPointsPerLevel;
@@ -105,7 +115,10 @@ export function createCharacter(playerEntity, career, careerIndex, { rolls = Mat
   spendPoolLowest(skills, career.majorSkills, groupPools.major);
   spendPoolLowest(skills, career.minorSkills, groupPools.minor);
   const maxHealth = rollMaxHealthLevel1(career);
+  const maxMagicka = spellPoints(stats.intelligence, spellPointMultiplier(career.abilityFlagsAndSpellPointsBitfield ?? 0x1000));   // absent bitfield -> x1.00
   Object.assign(playerEntity, {
+    maxMagicka,
+    magicka: maxMagicka,
     name,
     career,
     careerIndex,

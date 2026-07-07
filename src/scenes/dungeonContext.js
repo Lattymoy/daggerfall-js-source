@@ -70,6 +70,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       playerEntity.health = Math.max(0, playerEntity.health - dmg);
             surfacePlayer();
     },
+    drainMagicka: (n) => {
+      playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n);
+      surfacePlayer();
+    },
     playerLevel: () => playerEntity.level,
   });
   const texRemap = new Map();
