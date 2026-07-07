@@ -138,3 +138,4 @@ test('player: walls cannot be laddered by the step-up retry', () => {
   }
   assert.ok(maxY <= STEP_OFFSET + 0.01, `climbed the wall: ${maxY}`);
 });
+

@@ -81,8 +81,11 @@ export class PlayerMotor {
     const sin = Math.sin(yaw);
     const cos = Math.cos(yaw);
     // fwd = (sin, 0, cos); camera-right = up x back per lookAt =
-    // (-cos, 0, sin). The old (+cos, -sin) strafe basis was the
-    // NEGATED right - D moved screen-left (A/D felt swapped).
+    // (-cos, 0, sin). Verified to NDC through view x projection: world
+    // +x lands at NDC x < 0 (screen-LEFT), so screen-RIGHT is -cos =
+    // this camera-right vector. D (strafe +1) rides it. (A prior
+    // "fix" flipped this using view-space x WITHOUT the projection,
+    // which perspective negates - it would have swapped A/D. Reverted.)
     let dx = (sin * input.forward - cos * input.strafe) * speed * dt;
     let dz = (cos * input.forward + sin * input.strafe) * speed * dt;
 
