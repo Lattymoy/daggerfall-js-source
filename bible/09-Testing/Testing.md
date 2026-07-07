@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 266 tests across 67 files.
+Node 22). Suite: 268 tests across 68 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -14,6 +14,7 @@ Node 22). Suite: 266 tests across 67 files.
 | datasource.test.js | 1 | ARENA2 key rule: uppercase basename across path styles (unix/windows/bare) |
 | bsa.test.js | 6 | BSA containers, closure invariant, FOO quirk |
 | palette.test.js | 10 | 8 palettes, MAP.PAL x4, embedded reads |
+| textrsc.test.js | 2 | the verbatim record table on crafted bytes (headerLength/6 - 1 count, id->offset walk, raw bytes INCLUSIVE of the 0xFE terminator, missing ids null), plainText flattening (NewLine, SubrecordSeparator variants, the two one-operand prefixes consuming without leaking printable operands, justify/control drops) |
 | texture.test.js | 6 | 472-archive corpus, per-codec checksums |
 | imgcif.test.js | 8 | IMG table, palettized files, CIF/RCI/weapons |
 | arch3d.test.js | 5 | 10251-mesh corpus, UV rules, patch table, model 456 |

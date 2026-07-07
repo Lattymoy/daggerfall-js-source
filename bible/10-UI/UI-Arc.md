@@ -118,7 +118,22 @@ weapon equip, spell readied. The literals are honest stand-ins:
 TEXT.RSC is FLAGGED - the real records swap in when that reader
 lands. The scattered 'feedback pends UI' flags retire.
 
+## TEXT.RSC (the reader): SHIPPED
+
+formats/textRsc.js ports TextFile.cs verbatim: header
+TextRecordHeaderLength u16, RecordCount = headerLength/6 - 1, record
+headers {id u16, offset u32}, records raw to AND INCLUDING the 0xFE
+terminator (GetBytesById's own shape). The Formatting enum's defined
+members carried; plainText() flattens faithfully for message
+consumers - chars pass, NewLine, SubrecordSeparator splits VARIANTS,
+FontPrefix/PositionPrefix each consume their ONE operand byte (so
+printable operands never leak into text - pinned), every other
+control drops. Full token semantics (positioning, fonts, pages) pend
+the book/scroll renderers. CONSUMERS WIRE PER-ID: each U5 literal
+swaps only when its classic record ID is verified against DFU usage
+- no guessed IDs; the literals stand until then.
+
 ## Queue
-- The input map, classic window art, TEXT.RSC reader.
+- The input map, classic window art, per-ID TEXT.RSC verification.
 - Starting-spell sets: SHIPPED via Systems S6 (the spellbook lists
   the character's real known spells).

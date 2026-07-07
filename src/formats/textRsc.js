@@ -1,0 +1,73 @@
+// TEXT.RSC reader (UI arc, TEXT.RSC slice). Verbatim port of DFU
+// TextFile.cs (MIT, Daggerfall Workshop):
+//   header: TextRecordHeaderLength u16
+//   RecordCount = headerLength / 6 - 1
+//   record headers: { TextRecordId u16, Offset u32 } x count
+//   a record: raw bytes from its offset up to AND including the
+//   0xFE EndOfRecord terminator
+// Formatting bytes (the source enum, defined members): text chars
+// 0x20..0x7F; NewLine 0x00; SubrecordSeparator 0xFF; EndOfRecord
+// 0xFE; EndOfPage 0xF6; InputCursorPositioner 0xF8; FontPrefix 0xF9
+// (ONE operand byte); PositionPrefix 0xFB (ONE operand byte);
+// JustifyLeft 0xFC; JustifyCenter 0xFD.
+// plainText() flattens a record faithfully for message consumers:
+// chars pass, NewLine -> '\n', SubrecordSeparator splits VARIANTS,
+// the two prefixes consume their operand (so operands never leak
+// into text), every other control byte drops. Full token semantics
+// (positioning, fonts, pages) pend the book/scroll renderers.
+
+export const RSC = Object.freeze({
+  NewLine: 0x00, EndOfPage: 0xf6, InputCursorPositioner: 0xf8,
+  FontPrefix: 0xf9, PositionPrefix: 0xfb, JustifyLeft: 0xfc,
+  JustifyCenter: 0xfd, EndOfRecord: 0xfe, SubrecordSeparator: 0xff,
+  FirstCharacter: 0x20, LastCharacter: 0x7f,
+});
+
+export class TextRsc {
+  load(bytes) {
+    const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const headerLength = v.getUint16(0, true);
+    const count = Math.floor(headerLength / 6) - 1;
+    this._bytes = bytes;
+    this._byId = new Map();
+    let o = 2;
+    for (let i = 0; i < count; i++) {
+      const id = v.getUint16(o, true);
+      const offset = v.getUint32(o + 2, true);
+      o += 6;
+      this._byId.set(id, offset);
+    }
+    return this;
+  }
+
+  get recordCount() { return this._byId.size; }
+  hasRecord(id) { return this._byId.has(id); }
+
+  /** Raw record bytes INCLUDING the 0xFE terminator (GetBytesById). */
+  bytesById(id) {
+    const offset = this._byId.get(id);
+    if (offset === undefined) return null;
+    let end = offset;
+    while (end < this._bytes.length && this._bytes[end] !== RSC.EndOfRecord) end++;
+    return this._bytes.subarray(offset, Math.min(end + 1, this._bytes.length));
+  }
+
+  /** Variants (SubrecordSeparator-split) of a record as plain text. */
+  plainText(id) {
+    const raw = this.bytesById(id);
+    if (!raw) return null;
+    const variants = [];
+    let cur = '';
+    for (let i = 0; i < raw.length; i++) {
+      const b = raw[i];
+      if (b === RSC.EndOfRecord) break;
+      if (b === RSC.SubrecordSeparator) { variants.push(cur); cur = ''; continue; }
+      if (b === RSC.NewLine) { cur += '\n'; continue; }
+      if (b === RSC.FontPrefix || b === RSC.PositionPrefix) { i++; continue; }   // one operand each, never leaks
+      if (b >= RSC.FirstCharacter && b <= RSC.LastCharacter) { cur += String.fromCharCode(b); continue; }
+      // every other control byte (justify, page, cursor) drops here
+    }
+    variants.push(cur);
+    return variants;
+  }
+}
