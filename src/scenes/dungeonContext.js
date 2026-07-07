@@ -20,7 +20,7 @@ import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
-import { drawText, makeFont } from '../ui/text.js';
+import { drawText, makeFont, measureText } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
 import { OneShotLatch } from '../ui/input.js';
 import { FntFile } from '../formats/fntFile.js';
@@ -309,6 +309,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let pendingClickCast = false;
   let lastPlayerFeet = null;   // S11: the save position
   let debugHud = false;   // F8 diagnostics
+  let _motorState = '';
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
   function healPlayer(n) {
@@ -881,16 +882,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     drawHud(renderer, canvas, hudArt, playerEntity, heading01);
     hudText.tick(dt);
     if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.height));
+    if (hudFont && !activeOverlay && typeof document !== 'undefined' && !document.pointerLockElement) {
+      // The lock-lost gap (Mac's F8 readout: 'lock NO' was the whole
+      // dead-look mystery): the browser drops pointer lock on every
+      // Escape and re-engages only on a click - and the game said
+      // NOTHING. Now it says.
+      const s3 = hudScaleFor(canvas.height);
+      const msg = 'CLICK TO LOOK';
+      drawText(renderer, hudFont, msg, (canvas.width - measureText(hudFont.fnt, msg) * s3) / 2, canvas.height / 2 - 30 * s3, s3, [1, 0.9, 0.4, 1]);
+    }
     if (debugHud && hudFont) {
       // F8 diagnostics: every live-play unknown, on screen.
       const s2 = hudScaleFor(canvas.height);
       const feet = lastPlayerFeet ? lastPlayerFeet.map((v) => v.toFixed(2)).join(',') : 'null';
       const lines = [
         `build ${BUILD_TAG}`,
-        `feet ${feet}`,
+        `feet ${feet}  ${_motorState}`,
         `marker ${this.startMarker ? [this.startMarker.x, this.startMarker.y, this.startMarker.z].map((v) => v.toFixed(2)).join(',') : 'none'}`,
         `overlay ${activeOverlay ? activeOverlay.constructor.name : 'none'}  chargenDone ${!!playerEntity.chargenDone}`,
         `lock ${typeof document !== 'undefined' && document.pointerLockElement ? 'yes' : 'NO'}  class ${playerEntity.careerIndex ?? '?'} ${playerEntity.career?.name ?? ''}`,
+        `hp ${playerEntity.health}/${playerEntity.maxHealth}  mp ${playerEntity.magicka}/${playerEntity.maxMagicka}`,
       ];
       lines.forEach((t, i) => drawText(renderer, hudFont, t, 4 * s2, (4 + i * 9) * s2, s2, [0.4, 1, 0.5, 1]));
     }
@@ -933,6 +944,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // S11: quicksave/quickload (F9/F12). WORLD state (foes, piles,
     // actions) is FLAGGED - the player snapshot only.
     toggleDebugHud() { debugHud = !debugHud; },
+    reportMotor(grounded, velY, yaw) { _motorState = `g:${grounded ? 1 : 0} vy:${velY.toFixed(1)} yaw:${yaw.toFixed(2)}`; },
     quickSave() {
       const snap = snapshotPlayer(playerEntity, {
         position: lastPlayerFeet, classicMinutes,

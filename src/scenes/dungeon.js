@@ -179,6 +179,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       }, cam.yaw);
       prevJump = jumpHeld;
       cam.pos = player.eye;
+      ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       const useHeld = keys.has('KeyE');
       if (useHeld && !prevUse) tryActivate();
       prevUse = useHeld;
