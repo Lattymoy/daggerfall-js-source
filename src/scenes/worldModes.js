@@ -34,6 +34,7 @@ import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js'
 import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
+import { routeKey } from '../ui/input.js';
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -380,25 +381,10 @@ export function createWorldModes(host) {
     if (e.button === 2 && mode === 'dungeon' && dungeonCtx) dungeonCtx.playerAttackInput(0, 0, true);
   });
 
-  function chargenAction(e) {
-    if (e.key.length === 1 && /[a-zA-Z '-]/.test(e.key)) return 'char:' + e.key;
-    return ({ ArrowUp: 'up', ArrowDown: 'down', Enter: 'confirm', Backspace: 'backspace',
-      Escape: 'back', '+': 'plus', '=': 'plus', '-': 'minus', r: 'reroll', R: 'reroll' })[e.key] ?? null;
-  }
   addEventListener('keydown', (e) => {
-    if (mode === 'dungeon' && dungeonCtx?.uiOverlayActive) {
-      const a = chargenAction(e);
-      if (a) { e.preventDefault(); dungeonCtx.overlayInput(a); }
-      return;
-    }
-    if (e.key === 'F6' && mode === 'dungeon' && dungeonCtx) { e.preventDefault(); dungeonCtx.toggleInventory(); return; }   // classic inventory
-    if (e.key === 'Backspace' && mode === 'dungeon' && dungeonCtx) { e.preventDefault(); dungeonCtx.toggleSpellbook(); return; }   // DFU default spellbook
-    if (e.key === 'F5' && mode === 'dungeon' && dungeonCtx) { e.preventDefault(); dungeonCtx.toggleCharSheet(); return; }   // U3: the classic sheet key
-    if (e.code === 'KeyC' && mode === 'dungeon' && dungeonCtx) {
-      // S5: cast the readied spell along the look direction (the
-      // input map + spellbook pend the UI arc).
-      dungeonCtx.playerCastInput(cam.pos, eyeDir());
-    }
+    // The input map (ui/input.js) owns all bindings.
+    if (mode !== 'dungeon' || !dungeonCtx) return;
+    if (routeKey(e, dungeonCtx, () => ({ eye: cam.pos, dir: eyeDir() }))) e.preventDefault();
   });
 
   return {

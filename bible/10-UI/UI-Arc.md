@@ -133,7 +133,20 @@ the book/scroll renderers. CONSUMERS WIRE PER-ID: each U5 literal
 swaps only when its classic record ID is verified against DFU usage
 - no guessed IDs; the literals stand until then.
 
+## The input map: SHIPPED
+
+ui/input.js owns every binding: overlayAction (the chargen/window
+key table - previously DUPLICATED verbatim in both hosts) and
+gameAction (F5 sheet, F6 inventory, Backspace spellbook - the
+classic/DFU defaults; C cast is OURS, flagged in the one place it
+now lives, click-to-cast queued). routeKey routes one keydown with
+overlay precedence (Backspace edits a chargen name, never opens the
+spellbook mid-flow - pinned) and returns consumed so hosts
+preventDefault exactly when something fired. BOTH hosts collapsed
+their if-chains + duplicate routers onto it; the scattered 'input
+map pends' flags retire.
+
 ## Queue
-- The input map, classic window art, per-ID TEXT.RSC verification.
+- Classic window art, per-ID TEXT.RSC verification, click-to-cast.
 - Starting-spell sets: SHIPPED via Systems S6 (the spellbook lists
   the character's real known spells).

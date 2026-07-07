@@ -21,6 +21,7 @@ import {
   pickActivatable, worldAabb, DOOR_ACTIVATION_DISTANCE,
 } from '../player/activate.js';
 import { fetchBytes } from './shared.js';
+import { routeKey } from '../ui/input.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
 
@@ -112,19 +113,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('mousedown', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, true); });
 
-  function chargenAction(e) {
-    if (e.key.length === 1 && /[a-zA-Z '-]/.test(e.key)) return 'char:' + e.key;
-    return ({ ArrowUp: 'up', ArrowDown: 'down', Enter: 'confirm', Backspace: 'backspace',
-      Escape: 'back', '+': 'plus', '=': 'plus', '-': 'minus', r: 'reroll', R: 'reroll' })[e.key] ?? null;
-  }
   addEventListener('keydown', (e) => {
-    if (ctx.uiOverlayActive) { const a = chargenAction(e); if (a) { e.preventDefault(); ctx.overlayInput(a); } return; }
-    if (e.key === 'F6') { e.preventDefault(); ctx.toggleInventory(); return; }   // classic inventory
-    if (e.key === 'Backspace') { e.preventDefault(); ctx.toggleSpellbook(); return; }   // DFU default spellbook
-    if (e.key === 'F5') { e.preventDefault(); ctx.toggleCharSheet(); return; }
-    if (e.code !== 'KeyC') return;
-    const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-    ctx.playerCastInput(cam.pos, dir);   // S5 cast (input map pends UI)
+    // The input map (ui/input.js) owns all bindings.
+    const dir = () => ({ eye: cam.pos, dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)] });
+    if (routeKey(e, ctx, dir)) e.preventDefault();
   });
   addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   addEventListener('mousemove', (e) => {
