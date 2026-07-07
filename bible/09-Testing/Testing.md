@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 257 tests across 63 files.
+Node 22). Suite: 260 tests across 64 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -28,6 +28,7 @@ Node 22). Suite: 257 tests across 63 files.
 | advancement.test.js | 3 | the 35-entry advancement-multiplier table + uses-needed/level formulas, the raise flow (360-min gate, reflexes bit math 0x10000-((r-2)<<13) incl VeryHigh 1.25x, uses reset, the 95+/mastery cap), the level-up sum shape (primaries + majors - min + max minor) + headless leveling applying HP and the 4..6 pool |
 | arrows.test.js | 2 | the ranged-attack gate (bow foes strike from sight via events at full speed, melee foes stay distance-gated with the timer untouched), Short/Long Bow -> Archery mapping + recoverable landed arrows stacking on the target |
 | chargen.test.js | 3 | verbatim stat rolls (base + 0..10 inclusive, pool 6..14), skill tiers (28/18/13 + 0..3, defaults 3..6), HP (25 + hpPerLevel; per-level floor 1 + endurance mod), the interim lowest-first pool policy + full create (totals pinned), skillValue dual shape driving formulas (weapon skill hits where HandToHand misses on the same roll) |
+| charsheet.test.js | 3 | raiseSkills with a sink sets ready+pending WITHOUT applying (headless path unchanged), applyLevelUp (HP roll + endurance mod pinned, hand distribution, flags cleared, idempotent), the level-up screen sharing the verbatim clamps (pre-level floor, pool-0 block, confirm gate) with the hand-built stats landing |
 | chargenui.test.js | 3 | the four verbatim pool clamps (stat max 100/pool 0/floor-at-rolled with points returning; skill pool-only up/floor-at-rolled), the flow end to end (name/gender/class/stats/skills, pool-0 confirm gates, stat-total conservation pinned, group pools landing on their skills), reroll replacing the working set |
 | effectactions.test.js | 4 | Hurt21 every-20th gate + verbatim exclusive Range * level (min<=max guard), Hurt22-25 flat/axis every activation + Poison as DFU's own empty delegate, chain cascade lever->spike (ActivateNext-first order, activationCount), the verbatim Receive trigger gate (Collision03 blocks Direct/passes WalkInto, chains always valid, MultiTrigger's exact trio, undefined flags never fire) |
 | enemyattack.test.js | 3 | verbatim reset-timer arithmetic (Range/level/reflex terms, /980, 0-floor), the floored-speed >>3 roll gate, strike gating (range+sight+22.5deg yaw) + hit event at HIT_FRAME_MELEE |

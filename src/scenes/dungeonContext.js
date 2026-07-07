@@ -26,8 +26,10 @@ import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, applyCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { ChargenFlow } from '../ui/chargen.js';
+import { LevelUpScreen, CharSheet } from '../ui/charsheet.js';
 import { tallySkill, skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
-import { raiseSkills } from '../systems/advancement.js';
+import { raiseSkills, applyLevelUp } from '../systems/advancement.js';
+import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
@@ -280,6 +282,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // index into the 18 careers) or the INTERIM default Warrior (16,
   // loud - the chargen UI replaces the default and the pool policy).
   let chargenFlow = null;
+  let activeOverlay = null;
   if (!playerEntity.chargenDone) {
     if (Number.isInteger(opts.playerClass)) {
       // ?class=N: the headless skip path (rolls + the loud policy)
@@ -298,6 +301,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         careers.push({ name: cf.career.name || CLASS_CAREERS[i], career: cf.career });
       }
       chargenFlow = new ChargenFlow(careers);
+      activeOverlay = chargenFlow;
     }
   }
 
@@ -654,7 +658,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   function drawFoes(dt, canvas, proj, view, eye, playerFeet) {
     classicMinutes += (dt * 12) / 60;
-    raiseSkills(playerEntity, classicMinutes);
+    raiseSkills(playerEntity, classicMinutes, Math.random, () => {
+      // U3: the level-up screen replaces the headless auto-apply
+      if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
+    });
     collisionTriggers(dt, playerFeet);
     updateMissiles(dt, playerFeet);
     if (playerWeapon) {
@@ -773,21 +780,42 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     drawFoes,
     playerAttackInput,
     playerCastInput,   // S5: C key in the hosts
-    // U2b: the chargen overlay - hosts pause gameplay while active.
-    get chargenActive() { return !!chargenFlow && !chargenFlow.done; },
-    chargenInput(action) {
-      if (!chargenFlow) return;
-      chargenFlow.input(action);
-      if (chargenFlow.done) {
-        const r = chargenFlow.result();
-        applyCharacter(playerEntity, r.career, r.careerIndex, r);
+    // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
+    // pause gameplay while any overlay is active.
+    get uiOverlayActive() { return !!activeOverlay; },
+    overlayInput(action) {
+      if (!activeOverlay) return;
+      activeOverlay.input(action);
+      if (activeOverlay.done) {
+        if (activeOverlay === chargenFlow) {
+          const r = chargenFlow.result();
+          applyCharacter(playerEntity, r.career, r.careerIndex, r);
+          chargenFlow = null;
+        }
         surfacePlayer();
-        chargenFlow = null;
+        activeOverlay = null;
       }
     },
-    drawChargen(canvas) {
-      if (chargenFlow && hudFont) chargenFlow.draw(renderer, canvas, hudFont, hudScaleFor(canvas.height));
-      else if (chargenFlow && !hudFont) { chargenInputFallback(); }
+    drawOverlay(canvas) {
+      if (!activeOverlay) return;
+      if (!hudFont) {
+        // Font-less: overlays cannot render. Chargen falls back to
+        // the headless roll; a pending level-up applies headlessly;
+        // anything else just closes. All loud.
+        if (activeOverlay === chargenFlow) { chargenInputFallback(); }
+        else if (activeOverlay instanceof LevelUpScreen) {
+          console.warn('[levelup] FONT art unavailable; applying headlessly');
+          applyLevelUp(playerEntity, (st, pool) => spendPoolLowest(st, Object.keys(st), pool));
+          surfacePlayer();
+        }
+        activeOverlay = null;
+        return;
+      }
+      activeOverlay.draw(renderer, canvas, hudFont, hudScaleFor(canvas.height));
+    },
+    toggleCharSheet() {
+      if (activeOverlay) return;
+      activeOverlay = new CharSheet(playerEntity);
     },
     // S2 pickup: piles + dead foes' corpses as activation targets;
     // takeLoot transfers into the player entity and removes the flat.

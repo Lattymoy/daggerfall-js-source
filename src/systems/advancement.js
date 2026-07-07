@@ -82,7 +82,7 @@ export function alreadyMasteredASkill(entity) {
  * skill ids. The headless level-up applies immediately (INTERIM,
  * loud - DFU routes through the char sheet).
  */
-export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random) {
+export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onLevelUp = null) {
   if (!entity.chargenDone) return [];
   if ((classicTimeMinutes - (entity.lastSkillCheckTime ?? 0)) <= SKILL_RAISE_CHECK_INTERVAL) return [];
   entity.lastSkillCheckTime = classicTimeMinutes;
@@ -104,14 +104,30 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random) {
     entity.currentLevelUpSkillSum = levelUpSkillSum(entity);
     const calculated = calculatePlayerLevel(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum);
     if (calculated > entity.level) {
-      // HEADLESS INTERIM: apply now (char sheet pends the UI arc)
-      entity.level = calculated;
-      entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);
-      entity.health = Math.min(entity.health + 0, entity.maxHealth);
-      const pool = LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
-      spendPoolLowest(entity.stats, Object.keys(entity.stats), pool);   // INTERIM policy
-      entity.readyToLevelUp = false;
+      // DFU sets readyToLevelUp and the char sheet applies (U3).
+      entity.readyToLevelUp = true;
+      entity.pendingLevel = calculated;
+      if (!onLevelUp) {
+        applyLevelUp(entity, (stats, pool) => spendPoolLowest(stats, Object.keys(stats), pool), rolls);   // headless path (tests, ?class runs without the UI arc active)
+      } else {
+        onLevelUp(entity);
+      }
     }
   }
   return raised;
+}
+
+/** Apply the pending level: HP roll + the 4..6 bonus pool handed to
+ *  `distribute(stats, pool)` - the U3 screen distributes by hand;
+ *  the headless path uses lowest-first. */
+export function applyLevelUp(entity, distribute, rolls = Math.random) {
+  if (!entity.readyToLevelUp || !entity.pendingLevel) return false;
+  entity.level = entity.pendingLevel;
+  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);
+  entity.health = Math.min(entity.health, entity.maxHealth);
+  const pool = LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
+  distribute(entity.stats, pool);
+  entity.readyToLevelUp = false;
+  entity.pendingLevel = null;
+  return true;
 }

@@ -68,7 +68,26 @@ stays playable without ARENA2 UI art. Screens are clean classic-text
 panels; the classic background ART is FLAGGED pending art-name
 verification against real ARENA2 (Mac signs off visuals).
 
+## U3 (level-up screen + char sheet): SHIPPED
+
+The headless auto-apply is RETIRED on the UI path: raiseSkills gains
+an onLevelUp sink - with it, ready/pending set and NOTHING applies
+until the screen confirms; without it (tests, headless runs) the old
+immediate apply stands. applyLevelUp is the single application
+(HP roll + the 4..6 pool handed to a distribute hook) - the U3
+screen distributes BY HAND through the SAME verbatim clamps chargen
+exports (max 100, pool 0, floor at the pre-level value), confirm
+gated on pool 0, idempotent after. The char sheet (classic F5) is
+the read-only page: name/class/level, HP/MP, the eight stats, skills
+by career group - live values. ONE GENERIC OVERLAY SEAM replaced the
+chargen-specific host wiring (uiOverlayActive / overlayInput /
+drawOverlay serving chargen, level-up, and the sheet - a root
+refactor, not a third copy); font-less environments fall back
+LOUDLY (chargen -> headless roll, level-up -> headless apply, sheet
+closes). Classic INFO background art FLAGGED pending art-name
+verification. Review catch: the first font-less branch was
+convoluted nonsense and was rewritten sane before commit.
+
 ## Queue
-- U3: character sheet (retires the headless level-up).
 - U4: inventory + spellbook windows (retires ?weapon/?spell).
 - Death screen, pickup/message feedback, the input map.
