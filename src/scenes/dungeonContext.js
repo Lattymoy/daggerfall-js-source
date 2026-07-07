@@ -19,6 +19,8 @@ import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S } from '../world/actionSystem.
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
+import { loadHud, drawHud } from '../ui/hud.js';
+import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { tallySkill, skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
@@ -196,9 +198,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // per-enemy dependency lives here (a fetchBytes reference inside
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
-    const [{ ImgFile }, shared, engineRig, { buildRaceCharacter },
+    const [shared, engineRig, { buildRaceCharacter },
       { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity }] = await Promise.all([
-      import('../formats/imgFile.js'), import('./shared.js'), import('../characters/engineRig.js'),
+      import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
       import('../characters/enemyEntity.js'),
@@ -298,6 +300,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // from here (absent -> stays flagged-skip).
     setMagicItemTemplates(readMagicDef(await fetchBytes('MAGIC.DEF')));
   } catch { /* data absent: casts + MI no-op, loudly flagged */ }
+
+  // U1: the classic HUD (vitals bottom-left, compass bottom-right) -
+  // surfaces the Systems stats every frame; art-gated like all data.
+  const hudArt = await loadHud({ fetchBytes, ImgFile, palette, renderer });
   function fireCast(index, origin) {
     const spell = spellsByIndex?.get(index);
     if (!spell || !origin) { if (!spellsByIndex) console.warn('[spellcast] SPELLS.STD unavailable; CastSpell no-op'); return; }
@@ -707,6 +713,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       viewmodelRig.update(dt);
       foeDeps.drawFirstPersonViewmodel(renderer, canvas, viewmodelRig, playerFeet, vYaw, vPitch, foeDeps.EYE_HEIGHT);
     }
+    // U1: HUD last (over the viewmodel), heading from the view
+    // forward this file already derives (0 = +z, wrapped 0..1).
+    const hfw = [-view[2], -view[10]];
+    const heading01 = ((Math.atan2(hfw[0], hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1;
+    drawHud(renderer, canvas, hudArt, playerEntity, heading01);
   }
 
   return {

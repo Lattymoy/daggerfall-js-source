@@ -738,7 +738,73 @@ void main() {
   /** Fullscreen overlay of a sprite-RT sub-rect: no depth, no fog,
    *  alpha-cut - the FP viewmodel composite (E3d). Classic draws the
    *  weapon over everything. */
-  drawScreenOverlayQuad(tex, u1, v1) {
+  /** Positioned screen-space quad in PIXELS (origin top-left), with a
+   *  source UV rect - textured (uv0/uv1) or solid color (tex null).
+   *  The UI arc's primitive (U1): compass window + vitals bars. */
+  drawScreenQuad(tex, dst, src = { u0: 0, v0: 0, u1: 1, v1: 1 }, color = [1, 1, 1, 1]) {
+    const gl = this.gl;
+    if (!this.screenQuadProgram) {
+      const vs = `#version 300 es
+layout(location=0) in vec2 aPos;
+uniform vec4 uDst;      // x, y, w, h in pixels (top-left origin)
+uniform vec2 uCanvas;
+uniform vec4 uSrc;      // u0, v0, u1, v1
+out vec2 vUV;
+void main() {
+  vec2 p = aPos * 0.5 + 0.5;                     // 0..1
+  vUV = mix(uSrc.xy, uSrc.zw, vec2(p.x, p.y));
+  vec2 px = uDst.xy + p * uDst.zw;
+  vec2 ndc = vec2(px.x / uCanvas.x * 2.0 - 1.0, 1.0 - px.y / uCanvas.y * 2.0);
+  gl_Position = vec4(ndc, 0.0, 1.0);
+}`;
+      const fs = `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uTex;
+uniform int uUseTex;
+uniform vec4 uColor;
+out vec4 outColor;
+void main() {
+  if (uUseTex == 1) { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = vec4(t.rgb, 1.0) * uColor; }
+  else outColor = uColor;
+}`;
+      this.screenQuadProgram = this._buildProgram(vs, fs);
+      this._screenQuad = {
+        dst: gl.getUniformLocation(this.screenQuadProgram, 'uDst'),
+        canvas: gl.getUniformLocation(this.screenQuadProgram, 'uCanvas'),
+        src: gl.getUniformLocation(this.screenQuadProgram, 'uSrc'),
+        tex: gl.getUniformLocation(this.screenQuadProgram, 'uTex'),
+        useTex: gl.getUniformLocation(this.screenQuadProgram, 'uUseTex'),
+        color: gl.getUniformLocation(this.screenQuadProgram, 'uColor'),
+      };
+      const vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      const vbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      const ibo = gl.createBuffer();
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 0, 2, 3]), gl.STATIC_DRAW);
+      gl.bindVertexArray(null);
+      this._screenQuadVao = vao;
+    }
+    gl.useProgram(this.screenQuadProgram);
+    gl.bindVertexArray(this._screenQuadVao);
+    gl.disable(gl.DEPTH_TEST);
+    gl.uniform4f(this._screenQuad.dst, dst.x, dst.y, dst.w, dst.h);
+    gl.uniform2f(this._screenQuad.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.uniform4f(this._screenQuad.src, src.u0, src.v0, src.u1, src.v1);
+    gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
+    gl.uniform1i(this._screenQuad.useTex, tex ? 1 : 0);
+    if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuad.tex, 0); }
+    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.bindVertexArray(null);
+  }
+
+    drawScreenOverlayQuad(tex, u1, v1) {
     const gl = this.gl;
     if (!this.overlayProgram) {
       const vs = `#version 300 es
