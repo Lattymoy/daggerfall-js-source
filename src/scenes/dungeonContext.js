@@ -36,9 +36,10 @@ import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes } from './shared.js';
 import {
-  resolveSpellVsTarget, missileArchive, MISSILE_SPEED,
+  missileArchive, MISSILE_SPEED,
   MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, isDamageHealthEffect,
 } from '../systems/spellcast.js';
+import { applySpell, tickActiveEffects } from '../systems/effects.js';
 import {
   generateItems as generateLootItems, setMagicItemTemplates,
   RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS,
@@ -299,6 +300,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let activeOverlay = null;
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
+  function healPlayer(n) {
+    if (n <= 0) return;
+    playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n);
+    surfacePlayer();
+  }
   function hurtPlayer(dmg) {
     if (dmg <= 0) return;
     playerEntity.health = Math.max(0, playerEntity.health - dmg);
@@ -395,7 +401,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!sp) return false;
     const cost = sp.cost;
     if ((playerEntity.magicka ?? 0) < cost) return false;   // classic refuses without the points
-    if (sp.rangeType !== 2 && sp.rangeType !== 4) return false;   // FLAGGED: non-missile ranges pend the library
+    if (sp.rangeType === 0) {
+      // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
+      // missile; the cost spends here.
+      playerEntity.magicka -= cost;
+      applySpell(sp, playerEntity.level, playerEntity, { hurt: hurtPlayer, heal: healPlayer });
+      surfacePlayer();
+      return true;
+    }
+    if (sp.rangeType !== 2 && sp.rangeType !== 4) return false;   // FLAGGED: ByTouch + areas pend the library
     playerEntity.magicka -= cost;
     surfacePlayer();
     missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true });
@@ -596,8 +610,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           if (f.dead) continue;
           const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + 0.9 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];
           if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
-            const dmg = resolveSpellVsTarget(m.spell, playerEntity.level, f.entity);
-            if (dmg > 0) damageFoe(f, dmg);
+            applySpell(m.spell, playerEntity.level, f.entity, {
+              hurt: (n) => damageFoe(f, n),
+              heal: (n) => { f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + n); },
+            });
             retireMissile(m);
             break;
           }
@@ -606,8 +622,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       const dx = target[0] - m.pos[0], dy = target[1] - m.pos[1], dz = target[2] - m.pos[2];
       if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {   // missile radius + player capsule radius
-        const dmg = resolveSpellVsTarget(m.spell, playerEntity.level, playerEntity);
-        hurtPlayer(dmg);
+        applySpell(m.spell, playerEntity.level, playerEntity, { hurt: hurtPlayer, heal: healPlayer });
         retireMissile(m);
       }
     }
@@ -663,7 +678,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
 
   function drawFoes(dt, canvas, proj, view, eye, playerFeet) {
+    const _prevMinute = Math.floor(classicMinutes);
     classicMinutes += (dt * 12) / 60;
+    for (let r = _prevMinute; r < Math.floor(classicMinutes); r++) {
+      // S7: one magic round per classic minute (the broker's cadence)
+      tickActiveEffects(playerEntity, { hurt: hurtPlayer, heal: healPlayer });
+      for (const f of foes) if (!f.dead) tickActiveEffects(f.entity, { hurt: (n) => damageFoe(f, n), heal: () => {} });
+    }
     raiseSkills(playerEntity, classicMinutes, Math.random, () => {
       // U3: the level-up screen replaces the headless auto-apply
       if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);

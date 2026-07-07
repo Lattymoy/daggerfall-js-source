@@ -94,22 +94,5 @@ export const isDamageHealthEffect = (e) =>
 /** ClassicTargetIndexToTargetType, verbatim (rangeType byte). */
 export const TARGET_TYPES = Object.freeze(['CasterOnly', 'ByTouch', 'SingleTargetAtRange', 'AreaAroundCaster', 'AreaAtRange']);
 
-/**
- * Resolve a spell against ANY entity (player or foe - both carry
- * career flag bytes + stats): per damage-family effect, magnitude x
- * savingThrow% / 100 (trunc), summed. Other effects skip (FLAGGED -
- * the effect library lands them). Caster level = entity level,
- * verbatim CalculateCasterLevel.
- */
-export function resolveSpellVsTarget(spell, casterLevel, target, rolls = Math.random) {
-  let damage = 0;
-  const flag = ELEMENT_EFFECT_FLAG[spell.element] ?? EFFECT_FLAGS.Magic;
-  for (const e of spell.effects) {
-    if (e.type <= -1) continue;
-    if (!isDamageHealthEffect(e)) continue;   // FLAGGED: non-damage effects pend the library
-    const magnitude = rollMagnitude(e, casterLevel, rolls);
-    const percent = savingThrow(spell.element, flag, target, 0, rolls);
-    damage += Math.trunc(magnitude * percent / 100);
-  }
-  return damage;
-}
+// resolveSpellVsTarget moved to systems/effects.applySpell (S7) -
+// one door for instant AND continuous families.

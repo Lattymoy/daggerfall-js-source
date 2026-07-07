@@ -226,6 +226,25 @@ auto-readies after the flow. ORDER FIX at root: the ?class grant ran
 moved ABOVE its consumers (data before use, truthful ordering). The
 custom-class Spellsword rule pends custom classes.
 
+## S7 (effect library I - the spine): SHIPPED
+
+systems/effects.js: one magic ROUND = one CLASSIC MINUTE (the
+broker's own catch-up cadence; our S3b clock feeds it - the scene
+ticks every whole minute crossed for the player AND every live foe);
+duration = DurationBase + DurationPlus x floor(level/per), straight
+arithmetic per the source (no roll, per-0 guarded). applySpell is
+THE ONE DOOR - resolveSpellVsTarget retired at root, every caller
+and test migrated: HealHealth (10,8) instant heal through a heal
+sink (the caller owns the max clamp - healPlayer joins hurtPlayer);
+DamageHealth (4,0) instant as before; ContinuousDamageHealth (1,0)
+UPGRADED from the S4b instant interim to a real active effect - the
+save rolls ONCE at application and its percent scales EVERY round's
+fresh magnitude roll (GetMagnitude computes per MagicRound,
+verbatim); expiry at 0; failed saves never join. CASTER-ONLY
+(rangeType 0) casts apply to SELF - Balyna's Balm heals the Healer
+who starts with it; ByTouch and the areas stay FLAGGED. Other effect
+families skip counted (the library grows one family at a time).
+
 ## Queue
 - Magic remainder: the effect library (non-damage spell effects,
   casting by the player, magic rounds), enchantment economy/value.
