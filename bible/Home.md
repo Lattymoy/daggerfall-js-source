@@ -55,7 +55,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `05-Combat/Combat.md` - COMPLETE. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, and the collision-trigger seam all shipped. Build queue EMPTY; Systems-shared interims tracked in the ledger.
 - `06-Systems/Systems-Arc.md` - ACTIVE. S1 loot, S2/S2b inventory + treasure + containers, S3/S3b chargen + advancement, S4a-c magic foundation, S5 PLAYER CASTING (magicka spends, missiles seek foes, one damageFoe door) ALL SHIPPED. Next: the effect library, then economy/quests.
 - `07-Rendering/Rendering.md` - COMPLETE. Queue EMPTY since spectral shipped (2026-07-06); the exterior indirect-light Ledger row waits for a Rendering reopen.
-- `10-UI/UI-Arc.md` - ACTIVE (opened 2026-07-06). U1 classic HUD SHIPPED: vitals (bottom-anchored classic bar art) + the verbatim compass scroll, on the renderer's new drawScreenQuad primitive. Queue: chargen UI, char sheet, inventory/spellbook - each retires an interim policy.
+- `10-UI/UI-Arc.md` - ACTIVE. U1 classic HUD + U2a classic text (FNT reader, one-atlas drawing) + U2b THE CHARGEN FLOW (name/gender/class/stats/skills with the verbatim pool rules - the Warrior-16 default is GONE) SHIPPED. Queue: char sheet, inventory/spellbook, death screen.
 - `08-Audio/` - not started; routed rows collected in Ledger C.
 
 ## Open flags (audit-generated 2026-07-06f, from the code)

@@ -13,6 +13,8 @@ export const SKILLS = Object.freeze({
   CriticalStrike: 34,
 });
 export const SKILL_COUNT = 35;
+/** Display names, index-ordered (the enum inverted once). */
+export const SKILL_NAMES = Object.freeze(Object.entries(SKILLS).reduce((a, [k, v]) => { a[v] = k; return a; }, new Array(SKILL_COUNT)));
 
 /** DaggerfallUnityItem.GetWeaponSkillUsed -> skill id, by name. */
 export const WEAPON_SKILL = Object.freeze({

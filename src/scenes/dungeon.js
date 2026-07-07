@@ -111,7 +111,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // C8 E3c: RMB drag-to-swing (classic weapon control; menu suppressed)
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('mousedown', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, true); });
+
+  function chargenAction(e) {
+    if (e.key.length === 1 && /[a-zA-Z '-]/.test(e.key)) return 'char:' + e.key;
+    return ({ ArrowUp: 'up', ArrowDown: 'down', Enter: 'confirm', Backspace: 'backspace',
+      Escape: 'back', '+': 'plus', '=': 'plus', '-': 'minus', r: 'reroll', R: 'reroll' })[e.key] ?? null;
+  }
   addEventListener('keydown', (e) => {
+    if (ctx.chargenActive) { const a = chargenAction(e); if (a) { e.preventDefault(); ctx.chargenInput(a); } return; }
     if (e.code !== 'KeyC') return;
     const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     ctx.playerCastInput(cam.pos, dir);   // S5 cast (input map pends UI)
@@ -198,6 +205,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(ctx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    if (ctx.chargenActive) { ctx.drawChargen(canvas); requestAnimationFrame(frame); return; }   // U2b: hold gameplay, keep the loop
     ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos);   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
     renderer.drawWater(ctx.waterQuads, WATER_COLOR,
       renderer.textures.get(`${waterArchive}_0`),

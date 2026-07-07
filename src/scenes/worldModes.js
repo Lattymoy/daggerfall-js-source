@@ -296,6 +296,7 @@ export function createWorldModes(host) {
       for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
       renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+      if (dungeonCtx.chargenActive) { dungeonCtx.drawChargen(canvas); return; }   // U2b: creation gates the dungeon
       dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos);   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
@@ -377,7 +378,18 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     if (e.button === 2 && mode === 'dungeon' && dungeonCtx) dungeonCtx.playerAttackInput(0, 0, true);
   });
+
+  function chargenAction(e) {
+    if (e.key.length === 1 && /[a-zA-Z '-]/.test(e.key)) return 'char:' + e.key;
+    return ({ ArrowUp: 'up', ArrowDown: 'down', Enter: 'confirm', Backspace: 'backspace',
+      Escape: 'back', '+': 'plus', '=': 'plus', '-': 'minus', r: 'reroll', R: 'reroll' })[e.key] ?? null;
+  }
   addEventListener('keydown', (e) => {
+    if (mode === 'dungeon' && dungeonCtx?.chargenActive) {
+      const a = chargenAction(e);
+      if (a) { e.preventDefault(); dungeonCtx.chargenInput(a); }
+      return;
+    }
     if (e.code === 'KeyC' && mode === 'dungeon' && dungeonCtx) {
       // S5: cast the readied spell along the look direction (the
       // input map + spellbook pend the UI arc).

@@ -45,9 +45,30 @@ load was written as dynamic imports IN THE SLICE AFTER the 06e class
 was caught in-slice - rooted static before commit; the pattern's
 pull is real and the audits keep earning their keep.
 
+## U2b (the chargen flow): SHIPPED
+
+ui/chargen.js: name -> gender -> class (all 18 careers loaded from
+their CLASS*.CFG, names from the files) -> stats -> skills -> done,
+with the pool rules VERBATIM from the rollout components: stats +
+blocked at MaxStatValue 100 or pool 0, - blocked at the ROLLED value
+(points return); skills + blocked only at the group pool, - blocked
+at the rolled value; both screens REROLL (the components' own);
+confirm gates on pool == 0 (all three groups for skills). The
+Warrior-16 default is GONE - no ?class and no chargenDone runs the
+flow; ?class=N remains the headless skip (rolls + the loud
+lowest-first policy, which now serves ONLY that path and the tests).
+systems/chargen.js split at root: applyCharacter takes FINISHED
+values (the flow's hand distribution or the headless roll) and owns
+the health/magicka/sum derivations ONCE; gender lands on the entity
+(clothing loot consumes it). Hosts pause gameplay while the overlay
+is active (standalone keeps its RAF alive - a plain return would
+have killed the loop, caught in review) and route a small key map;
+no font art falls back to the headless roll LOUDLY so the game
+stays playable without ARENA2 UI art. Screens are clean classic-text
+panels; the classic background ART is FLAGGED pending art-name
+verification against real ARENA2 (Mac signs off visuals).
+
 ## Queue
-- U2: chargen UI (retires the Warrior-16 default + the lowest-first
-  pool policy).
 - U3: character sheet (retires the headless level-up).
 - U4: inventory + spellbook windows (retires ?weapon/?spell).
 - Death screen, pickup/message feedback, the input map.

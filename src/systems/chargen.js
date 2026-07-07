@@ -39,7 +39,8 @@ export const STAT_MIN_BONUS_ROLL = 0;
 export const STAT_MAX_BONUS_ROLL = 10;
 export const STAT_MIN_BONUS_POOL = 6;
 export const STAT_MAX_BONUS_POOL = 14;
-const STAT_KEYS = ['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck'];
+export const STAT_KEYS_ORDER = Object.freeze(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck']);
+const STAT_KEYS = STAT_KEYS_ORDER;
 
 export function rollStats(career, rolls = Math.random) {
   const range = (lo, hi) => lo + Math.floor(rolls() * (hi + 1 - lo));   // inclusive, per the source comment
@@ -109,17 +110,25 @@ export function spendPoolLowest(values, keysOrIds, pool) {
  */
 export function createCharacter(playerEntity, career, careerIndex, { rolls = Math.random, name = career.name } = {}) {
   const { stats, bonusPool } = rollStats(career, rolls);
-  spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy
+  spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b flow replaces this path)
   const { skills, groupPools } = rollSkills(career, rolls);
-  spendPoolLowest(skills, career.primarySkills, groupPools.primary);   // INTERIM policy
+  spendPoolLowest(skills, career.primarySkills, groupPools.primary);
   spendPoolLowest(skills, career.majorSkills, groupPools.major);
   spendPoolLowest(skills, career.minorSkills, groupPools.minor);
+  return applyCharacter(playerEntity, career, careerIndex, { name, stats, skills, rolls });
+}
+
+/** Apply FINISHED chargen values (the U2b flow's hand-distributed
+ *  stats/skills, or the headless roll above) onto the shared entity -
+ *  the health/magicka/sum derivations live here ONCE. */
+export function applyCharacter(playerEntity, career, careerIndex, { name = career.name, gender, stats, skills, rolls = Math.random } = {}) {
   const maxHealth = rollMaxHealthLevel1(career);
   const maxMagicka = spellPoints(stats.intelligence, spellPointMultiplier(career.abilityFlagsAndSpellPointsBitfield ?? 0x1000));   // absent bitfield -> x1.00
   Object.assign(playerEntity, {
     maxMagicka,
     magicka: maxMagicka,
     name,
+    gender: gender ?? playerEntity.gender ?? 'male',
     career,
     careerIndex,
     level: 1,

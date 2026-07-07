@@ -24,7 +24,8 @@ import { drawText, makeFont } from '../ui/text.js';
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
-import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
+import { createCharacter, applyCharacter, CLASS_CAREERS } from '../systems/chargen.js';
+import { ChargenFlow } from '../ui/chargen.js';
 import { tallySkill, skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
 import { raiseSkills } from '../systems/advancement.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
@@ -278,12 +279,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // career before anything consumes the player. Career = ?class= (an
   // index into the 18 careers) or the INTERIM default Warrior (16,
   // loud - the chargen UI replaces the default and the pool policy).
+  let chargenFlow = null;
   if (!playerEntity.chargenDone) {
-    const careerIndex = Number.isInteger(opts.playerClass) ? opts.playerClass : 16;
-    const cf = new ClassFile();
-    cf.load(await fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`));
-    createCharacter(playerEntity, cf.career, careerIndex);
-    console.log(`[chargen] ${CLASS_CAREERS[careerIndex]}: HP ${playerEntity.maxHealth}, STR ${playerEntity.stats.strength}`);
+    if (Number.isInteger(opts.playerClass)) {
+      // ?class=N: the headless skip path (rolls + the loud policy)
+      const cf = new ClassFile();
+      cf.load(await fetchBytes(`CLASS${String(opts.playerClass).padStart(2, '0')}.CFG`));
+      createCharacter(playerEntity, cf.career, opts.playerClass);
+      console.log(`[chargen] ${CLASS_CAREERS[opts.playerClass]}: HP ${playerEntity.maxHealth}`);
+    } else {
+      // U2b: the real flow - all 18 careers load; the host routes
+      // input and draws the overlay until done, then applies the
+      // HAND-distributed result. The Warrior-16 default is GONE.
+      const careers = [];
+      for (let i = 0; i < CLASS_CAREERS.length; i++) {
+        const cf = new ClassFile();
+        cf.load(await fetchBytes(`CLASS${String(i).padStart(2, '0')}.CFG`));
+        careers.push({ name: cf.career.name || CLASS_CAREERS[i], career: cf.career });
+      }
+      chargenFlow = new ChargenFlow(careers);
+    }
   }
 
   // S4b: trap spells - SPELLS.STD by index; CastSpell actions queue
@@ -305,6 +320,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   // U1: the classic HUD (vitals bottom-left, compass bottom-right) -
   // surfaces the Systems stats every frame; art-gated like all data.
+  function chargenInputFallback() {
+    // no font art: the flow cannot render - fall back to the headless
+    // roll (loud) so the game remains playable without ARENA2 UI art.
+    console.warn('[chargen] FONT art unavailable; falling back to the headless roll');
+    const r = { career: chargenFlow.career, careerIndex: chargenFlow.classIndex };
+    createCharacter(playerEntity, r.career, r.careerIndex);
+    surfacePlayer();
+    chargenFlow = null;
+  }
   const hudArt = await loadHud({ fetchBytes, ImgFile, palette, renderer });
   let hudFont = null;
   try {
@@ -749,6 +773,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     drawFoes,
     playerAttackInput,
     playerCastInput,   // S5: C key in the hosts
+    // U2b: the chargen overlay - hosts pause gameplay while active.
+    get chargenActive() { return !!chargenFlow && !chargenFlow.done; },
+    chargenInput(action) {
+      if (!chargenFlow) return;
+      chargenFlow.input(action);
+      if (chargenFlow.done) {
+        const r = chargenFlow.result();
+        applyCharacter(playerEntity, r.career, r.careerIndex, r);
+        surfacePlayer();
+        chargenFlow = null;
+      }
+    },
+    drawChargen(canvas) {
+      if (chargenFlow && hudFont) chargenFlow.draw(renderer, canvas, hudFont, hudScaleFor(canvas.height));
+      else if (chargenFlow && !hudFont) { chargenInputFallback(); }
+    },
     // S2 pickup: piles + dead foes' corpses as activation targets;
     // takeLoot transfers into the player entity and removes the flat.
     lootTargets() {
