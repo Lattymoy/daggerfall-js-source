@@ -54,10 +54,11 @@ export class InventoryWindow {
 
 export class SpellbookWindow {
   /** spells: [{ index, name, cost, ... }]; ready(spell) from the scene. */
-  constructor(spells, entity, { ready = null } = {}) {
+  constructor(spells, entity, { ready = null, castCost = null } = {}) {
     this.spells = spells;
     this.entity = entity;
     this.ready = ready;
+    this.castCost = castCost;   // S10: live skill-scaled cost
     this.cursor = 0;
     this.done = false;
   }
@@ -75,7 +76,7 @@ export class SpellbookWindow {
     drawText(renderer, font, t, (canvas.width - measureText(font.fnt, t) * s) / 2, 16 * s, s, GOLD);
     if (!this.spells.length) drawText(renderer, font, '(no spells known)', 30 * s, 40 * s, s, DIM);
     this.spells.forEach((sp, i) => drawText(renderer, font,
-      `${i === this.cursor ? '> ' : '  '}${sp.name}  (${sp.cost})`,
+      `${i === this.cursor ? '> ' : '  '}${sp.name}  (${this.castCost ? this.castCost(sp) : sp.cost})`,
       20 * s, (36 + i * 10) * s, s, i === this.cursor ? HOT : WHITE));
     drawText(renderer, font, 'ENTER ready   ESC close', 20 * s, canvas.height - 20 * s, s, DIM);
   }

@@ -278,6 +278,26 @@ targeting (pickTouchTarget, sweepFoes) lives in spellcast.js and is
 pinned; the FLAGGED ranges note retires - all five TARGET_TYPES are
 live.
 
+## S10 (spell casting costs): SHIPPED
+
+The record-cost interim RETIRES: systems/spellcost.js carries
+CalculateTotalEffectCosts verbatim - per-effect component gold =
+trunc(offset + A*starting + B*trunc(increase/per)) with magnitude
+AVERAGED ((baseMin+baseMax)/2, (plusMin+plusMax)/2); per-effect
+spellpoints = gold x (110 - the caster's skill IN THAT EFFECT'S
+MAGIC SKILL) / 400; unknown families cost the zero-component fudge
+MakeEffectCosts(60,100,160); target multipliers on the SUMS
+(CasterOnly/ByTouch x1.0, Single x1.5, AroundCaster x2.0, AtRange
+x2.5, float-mul int-cast); spellpoint floor 5. The six shipped
+effects carry their classes' own factors (DamageHealth 20/28 mag,
+Continuous 28/8 dur + 40/28 mag, Heal 20/28 mag, Slowfall 20/100
+dur, WaterWalking 20/8 dur, ChameleonNormal 20/80 dur) under their
+magic skills (Destruction/Restoration/Alteration/Thaumaturgy/
+Illusion). CONSUMERS: the cast gate, the HUD readied line, and the
+spellbook all show/spend the LIVE skill-scaled cost - a Destruction
+novice pays more for the same Shock than a master, who bottoms at
+the floor.
+
 ## Queue
 - Magic remainder: the effect library (non-damage spell effects,
   casting by the player, magic rounds), enchantment economy/value.

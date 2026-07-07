@@ -42,6 +42,7 @@ import {
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
 import { applySpell, tickActiveEffects, hasActiveEffect } from '../systems/effects.js';
+import { calculateCastCost } from '../systems/spellcost.js';
 import {
   generateItems as generateLootItems, setMagicItemTemplates,
   RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS,
@@ -415,7 +416,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function playerCastInput(eye, dir) {
     const sp = readiedSpell;
     if (!sp) return false;
-    const cost = sp.cost;
+    const cost = calculateCastCost(sp, playerEntity).sp;   // S10: the per-effect skill-scaled cost (the record-cost interim retires)
     if ((playerEntity.magicka ?? 0) < cost) return false;   // classic refuses without the points
     if (sp.rangeType === 0) {
       // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
@@ -829,7 +830,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // U2a's first consumer: the readied spell + cost, classic text
       // above the vitals (the spellbook window replaces this in U4).
       const s = hudScaleFor(canvas.height);
-      drawText(renderer, hudFont, `${readiedSpell.name} (${readiedSpell.cost})`, 10 * s, canvas.height - 60 * s, s, [0.9, 0.9, 0.75, 1]);
+      drawText(renderer, hudFont, `${readiedSpell.name} (${calculateCastCost(readiedSpell, playerEntity).sp})`, 10 * s, canvas.height - 60 * s, s, [0.9, 0.9, 0.75, 1]);
     }
   }
 
@@ -900,6 +901,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (activeOverlay) return;
       activeOverlay = new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
         ready: (sp) => { readiedSpell = sp; hudText.add(`${sp.name} readied.`); },
+        castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
       });
     },
     // S2 pickup: piles + dead foes' corpses as activation targets;
