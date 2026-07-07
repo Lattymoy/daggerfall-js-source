@@ -203,6 +203,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const foes = [];
   let foeDeps = null;
   if (opts.foes && palette) {
+   try {
     // One import + one BODY00I0 fetch for the whole context; every
     // per-enemy dependency lives here (a fetchBytes reference inside
     // the loop once pointed at a name only in THIS block's scope -
@@ -238,11 +239,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       bodyRamps: engineRig.deriveClassicRamps(palette, bodyImg.getDFBitmap()),
       buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
     };
+   } catch (err) {
+     // The foe SUBSYSTEM failing to initialize (a dynamic import, the
+     // BODY00I0 fetch, the ramp derive) must not black-screen the
+     // level: degrade to a foe-less dungeon, loudly. foeDeps stays
+     // null; the class branch is skipped, monsters still billboard.
+     console.error('[foes] subsystem init failed; dungeon builds without class enemies:', err?.message ?? err);
+     foeDeps = null;
+   }
   }
   for (const e of enemies) {
     const basics = ENEMY_BASICS[e.mobileType];
     if (!basics) continue;
     if (foeDeps && e.mobileType > 43) {
+     try {
       const D = foeDeps;
       const rig = D.createCharacterRig(renderer, D.buildRaceCharacter('Human', D.bodyRamps, { tone: e.mobileType % 4, hairTone: e.mobileType % 3 }));
       rig.setGait(3);   // standing sway (IDLE)
@@ -273,6 +283,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // attack starts from SIGHT and the strike looses an arrow.
       attack.rangedAttack = !!entity.weapon && WEAPON_SKILL[entity.weapon.name] === SKILLS.Archery;
       foes.push({ rig, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
+     } catch (err) {
+       // One foe failing to build (a missing CLASS*.CFG, a rig or
+       // equipment error on a specific mobile type) MUST NOT abort
+       // buildDungeonContext and black-screen the whole dungeon -
+       // the class-foe block was unguarded on the critical build
+       // path, and with ?foes a single bad enemy took the level
+       // down with no signal. Skip the foe, keep the dungeon.
+       console.error(`[foe] mobileType ${e.mobileType} failed to build; skipping this enemy:`, err?.message ?? err);
+     }
       continue;
     }
     const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
