@@ -11,7 +11,7 @@ export const FLASH_DEF = { core: [255, 255, 255], mid: [120, 226, 255], edge: [5
 export const WEAPON_FLASH = { // keyed by activeWeaponId() (first person) / FLASH_TYPE_KEY (third person)
   warden: { ...FLASH_DEF }, tempest: { ...FLASH_DEF }, talon: { ...FLASH_DEF }, rampart: { ...FLASH_DEF }, verdict: { ...FLASH_DEF }, sunder: { ...FLASH_DEF },
 };
-const FLASH_TYPE_KEY = { rifle: 'warden', pistol: 'talon', lmg: 'rampart', sar: 'verdict', launcher: 'sunder' }; // third person knows only the weapon TYPE (no variant) -> Warden stands in for the rifle cone
+export const FLASH_TYPE_KEY = { rifle: 'warden', pistol: 'talon', lmg: 'rampart', sar: 'verdict', launcher: 'sunder' }; // third person knows only the weapon TYPE (no variant) -> Warden stands in for the rifle cone
 
 // energy firing cone at the muzzle, scaled by intensity. cfg = a WEAPON_FLASH entry (colours + cone geometry).
 export function muzzleFlashFaces(tip, k, cfg = FLASH_DEF) {

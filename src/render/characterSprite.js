@@ -8,7 +8,7 @@
 // world pass is untouched (the standard excludes it). Sizing is
 // PROJECTION-EXACT (project center and head, divide) - analytic fov
 // estimates disagree with the true projection at high pitch.
-import { multiply, ortho, lookAt, perspective, transformPoint } from '../world/mat4.js';
+import { multiply, ortho, lookAt, perspective, transformPoint, trs } from '../world/mat4.js';
 import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from './renderer.js';
 
 /**

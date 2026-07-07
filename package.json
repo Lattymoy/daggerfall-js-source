@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test",
-    "check": "npm test && npm run build",
+    "check": "npx eslint src/ && npm test && npm run build",
     "shot": "node tools/screenshot.mjs"
   },
   "devDependencies": {

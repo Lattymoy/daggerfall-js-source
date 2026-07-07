@@ -108,6 +108,27 @@ Regenerate on audit; the code comment at each site is the authority:
 
 ## Audits
 
+**2026-07-07 (Mac): the crash-class audit - no-undef joins the
+gate.** Mac's second live crash (Y1@407:239805) mapped through the
+deterministic bundle to characterSprite.js:56 calling trs() WITHOUT
+importing it - unbound since C8 E3d; vite emits unknown identifiers
+as presumed globals, so node --check, the build, and the headless
+suite all pass while the first real viewmodel frame throws
+ReferenceError. THE CLASS IS NOW CLOSED: eslint (flat config,
+browser globals) with no-undef runs FIRST in npm run check. The
+sweep found and rooted every member: trs (the crash - imported),
+FLASH_TYPE_KEY in the rewrite/ bench (a real unexported constant -
+exported + imported), and quadInto in pieces/draped.js (a phantom
+helper UNBOUND FOR THE FILE'S WHOLE LIFE - the cloth tests exercise
+drapedGrid, never the faces path; now defined in the pieceLoft face
+convention). ONE MISREAD, owned: interleaved grep output made
+draped.js look like a dead orphan with unresolvable imports and I
+git-rm'd a LIVE tested module - the suite caught it in the same
+gate run and it was restored + root-fixed instead. createImageBitmap
+joined the config globals; the two 'unexpected token with' parse
+errors were import attributes, fixed by ecmaVersion latest.
+
+
 **2026-07-06f (Mac): deep audit + bible update, S5/bows/triggers
 sweep.** Suite 249/60 green, build clean, manifest MATCH both
 directions, git clean pre-audit. One GENUINE GAP in the Combat

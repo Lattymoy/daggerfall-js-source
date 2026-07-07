@@ -123,7 +123,7 @@ const MANTLE = { dur: 1.5, rise: 1.45, fwd: 0.5, lean: 22, ledgeX: 0.3, ledgeY: 
 // forward-flaring blue cone), tunable per weapon in tools/flash-lab.html. All seeded identical (the shipped
 // look); tune each in the lab + paste WEAPON_FLASH back. Geometry params are multiples of the muzzle scale s.
 export { FLASH_DEF, WEAPON_FLASH, muzzleFlashFaces } from './muzzleFlash.js'; // base FX ride along
-import { FLASH_DEF, WEAPON_FLASH, muzzleFlashFaces } from './muzzleFlash.js';
+import { FLASH_DEF, WEAPON_FLASH, muzzleFlashFaces, FLASH_TYPE_KEY } from './muzzleFlash.js';
 import { VOXLIGHT_SPEC, loftTorso, loftPair } from './bodySpec.js';
 const PD_SEG = 24; // paperdoll loft resolution: doubles the default 12 so tubes read as smooth arcs from angles (the underarm etc.), not faceted prisms; Voxlight geometry keeps 12
 import { CROUCH_STANCE, WALK_GRIP, PISTOL_GRIP, WALK_AIMED, RUN_AIMED, PISTOL_AIMED, SLIDE_POSE, ZERO_LOCO, WALK_LOCO, RUN_LOCO, RUN_LOCO_PISTOL, STRAFE_LOCO, SLIDE_LOCO, CROUCH_LOCO, CROUCHWALK_LOCO } from './poseTables.js';

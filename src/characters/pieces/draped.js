@@ -127,6 +127,18 @@ export function drapedGrid(name) {
   }
   return { rows: R, cols, wrap, pos, faces };
 }
+// One grid quad -> a pieceLoft-convention face ({p: 12 floats, n, g})
+// with the face normal from the quad's edges. This was an UNBOUND
+// quadInto for the file's whole life - the tests exercise
+// drapedGrid/cloth, never this path, and the gate had no no-undef
+// leg until the trs crash added one.
+function quadInto(f, p0, p1, p2, p3) {
+  const ux = p1[0]-p0[0], uy = p1[1]-p0[1], uz = p1[2]-p0[2];
+  const vx = p3[0]-p0[0], vy = p3[1]-p0[1], vz = p3[2]-p0[2];
+  let nx = uy*vz-uz*vy, ny = uz*vx-ux*vz, nz = ux*vy-uy*vx;
+  const L = Math.hypot(nx, ny, nz) || 1;
+  f.push({ p: [...p0, ...p1, ...p2, ...p3], n: [nx/L, ny/L, nz/L], g: DRAPE_MATERIAL });
+}
 function facesFromGrid(g) {
   const f = []; const P = (k) => [g.pos[k*3], g.pos[k*3+1], g.pos[k*3+2]];
   for (const [a, b, c, d] of g.faces) quadInto(f, P(a), P(b), P(c), P(d));
