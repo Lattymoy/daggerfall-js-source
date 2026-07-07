@@ -19,7 +19,9 @@ import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S } from '../world/actionSystem.
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
-import { loadHud, drawHud } from '../ui/hud.js';
+import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
+import { drawText, makeFont } from '../ui/text.js';
+import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
@@ -304,6 +306,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // U1: the classic HUD (vitals bottom-left, compass bottom-right) -
   // surfaces the Systems stats every frame; art-gated like all data.
   const hudArt = await loadHud({ fetchBytes, ImgFile, palette, renderer });
+  let hudFont = null;
+  try {
+    hudFont = makeFont(renderer, new FntFile().load(await fetchBytes('FONT0003.FNT')), 'FONT0003');
+  } catch { console.warn('[hud] FONT0003.FNT unavailable; HUD text disabled'); }
   function fireCast(index, origin) {
     const spell = spellsByIndex?.get(index);
     if (!spell || !origin) { if (!spellsByIndex) console.warn('[spellcast] SPELLS.STD unavailable; CastSpell no-op'); return; }
@@ -718,6 +724,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const hfw = [-view[2], -view[10]];
     const heading01 = ((Math.atan2(hfw[0], hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1;
     drawHud(renderer, canvas, hudArt, playerEntity, heading01);
+    if (hudFont && readiedSpell) {
+      // U2a's first consumer: the readied spell + cost, classic text
+      // above the vitals (the spellbook window replaces this in U4).
+      const s = hudScaleFor(canvas.height);
+      drawText(renderer, hudFont, `${readiedSpell.name} (${readiedSpell.cost})`, 10 * s, canvas.height - 60 * s, s, [0.9, 0.9, 0.75, 1]);
+    }
   }
 
   return {

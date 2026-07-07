@@ -27,6 +27,24 @@ absent IMGs disable the HUD loudly. Review catch IN-SLICE: the new
 static ImgFile import double-sourced against foeDeps' dynamic - the
 06e recidivist class, caught before commit this time.
 
+## U2a (classic text - the FNT reader + drawing): SHIPPED
+
+formats/fntFile.js is the verbatim FNT reader: header {fixedWidth,
+fixedHeight u16}, 240 glyph entries {dataOffset, width u16}, 32-byte
+glyphs of 16 rows x 2 bytes - with the source's L/R HALF SWAP (the
+left 8 pixels come from the ODD byte, the right 8 from the EVEN, each
+expanding MSB-first) pinned on crafted bytes. ui/text.js builds ONE
+white 256x240 atlas per font through the existing uploadTexture and
+draws through drawScreenQuad with per-call tint - one atlas serves
+every classic text color; DaggerfallFont's rules carried (glyph =
+code - 33, sub-33 codes advance a fixedWidth space, classic 1px
+spacing, integer scale). Live consumer NOW (infra never ships dead):
+the HUD shows the readied spell name + cost in FONT0003 above the
+vitals - the U4 spellbook window replaces it. Review catch: the font
+load was written as dynamic imports IN THE SLICE AFTER the 06e class
+was caught in-slice - rooted static before commit; the pattern's
+pull is real and the audits keep earning their keep.
+
 ## Queue
 - U2: chargen UI (retires the Warrior-16 default + the lowest-first
   pool policy).
