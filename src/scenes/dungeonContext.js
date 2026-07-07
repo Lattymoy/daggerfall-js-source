@@ -45,6 +45,7 @@ import {
 import { applySpell, tickActiveEffects, hasActiveEffect } from '../systems/effects.js';
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
+import { BUILD_TAG } from '../buildTag.js';
 import {
   generateItems as generateLootItems, setMagicItemTemplates,
   RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS,
@@ -307,6 +308,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const clickCast = new OneShotLatch();   // classic click-to-cast: armed by readying
   let pendingClickCast = false;
   let lastPlayerFeet = null;   // S11: the save position
+  let debugHud = false;   // F8 diagnostics
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
   function healPlayer(n) {
@@ -879,6 +881,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     drawHud(renderer, canvas, hudArt, playerEntity, heading01);
     hudText.tick(dt);
     if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.height));
+    if (debugHud && hudFont) {
+      // F8 diagnostics: every live-play unknown, on screen.
+      const s2 = hudScaleFor(canvas.height);
+      const feet = lastPlayerFeet ? lastPlayerFeet.map((v) => v.toFixed(2)).join(',') : 'null';
+      const lines = [
+        `build ${BUILD_TAG}`,
+        `feet ${feet}`,
+        `marker ${this.startMarker ? [this.startMarker.x, this.startMarker.y, this.startMarker.z].map((v) => v.toFixed(2)).join(',') : 'none'}`,
+        `overlay ${activeOverlay ? activeOverlay.constructor.name : 'none'}  chargenDone ${!!playerEntity.chargenDone}`,
+        `lock ${typeof document !== 'undefined' && document.pointerLockElement ? 'yes' : 'NO'}  class ${playerEntity.careerIndex ?? '?'} ${playerEntity.career?.name ?? ''}`,
+      ];
+      lines.forEach((t, i) => drawText(renderer, hudFont, t, 4 * s2, (4 + i * 9) * s2, s2, [0.4, 1, 0.5, 1]));
+    }
     if (hudFont && readiedSpell) {
       // U2a's first consumer: the readied spell + cost, classic text
       // above the vitals (the spellbook window replaces this in U4).
@@ -917,6 +932,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     get playerFallScale() { return hasActiveEffect(playerEntity, 'slowfall') ? 0.15 : 1; },   // S8: hosts feed their motor
     // S11: quicksave/quickload (F9/F12). WORLD state (foes, piles,
     // actions) is FLAGGED - the player snapshot only.
+    toggleDebugHud() { debugHud = !debugHud; },
     quickSave() {
       const snap = snapshotPlayer(playerEntity, {
         position: lastPlayerFeet, classicMinutes,

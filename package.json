@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "node --test",
     "check": "npx eslint src/ && npm test && npm run build",
+    "prebuild": "node scripts/buildTag.mjs",
     "shot": "node tools/screenshot.mjs"
   },
   "devDependencies": {

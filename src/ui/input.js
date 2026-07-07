@@ -29,6 +29,7 @@ export function gameAction(e) {
   if (e.code === 'KeyC') return 'castSpell';       // ours (classic click-to-cast also live)
   if (e.key === 'F9') return 'quickSave';          // DFU default
   if (e.key === 'F12') return 'quickLoad';         // DFU default
+  if (e.key === 'F8') return 'debugHud';           // diagnostics
   return null;
 }
 
@@ -50,6 +51,7 @@ export function routeKey(e, ctx, castDir, setPlayerPos = null) {
     case 'castSpell': { const d = castDir(); ctx.playerCastInput(d.eye, d.dir); return true; }
     case 'quickSave': ctx.quickSave?.(); return true;
     case 'quickLoad': ctx.quickLoad?.(setPlayerPos); return true;
+    case 'debugHud': ctx.toggleDebugHud?.(); return true;
     default: return false;
   }
 }
