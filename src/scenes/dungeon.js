@@ -62,7 +62,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   status(`laying out ${dungeonName}`);
   const pipeline = createDataPipeline({ renderer, arch, palette });
   const ctx = await buildDungeonContext(
-    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { foes: params.has('foes') });
+    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { foes: params.has('foes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined });
 
   // Classic water tile: ground archive record 0 for this location's
   // climate (the exterior ground path never routes single records).

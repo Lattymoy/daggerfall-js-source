@@ -75,6 +75,29 @@ nested dynamic imports and completed a tick after returning). Shop
 shelves (27-index list), owned-house, and bookshelves pend their
 slices; open-feedback pends the UI arc.
 
+## S3 (character creation): SHIPPED
+
+src/systems/chargen.js ports the chargen core verbatim: StatsRollout
+(career base attribute + Range(0,11) each; bonus pool Range(6,15)),
+SkillsRollout (35 defaults Range(3,7); primary 28 / major 18 / minor
+13, each + Range(0,4); +6 distributable per group), RollMaxHealth
+level 1 = 25 + hpPerLevel, per-level-up Range(hp/2, hp inclusive) +
+the endurance modifier floor(END/10)-5, floored at 1 (classic's
+frame-counter DFRandom reseed is arbitrary; uniform slot, approved
+stance). The SKILLS enum (35), CLASS_CAREERS (18), and the verbatim
+weapon -> skill mapping live here; skillValue() reads BOTH entity
+shapes - enemies keep the SetEnemyCareer flat number byte-identical
+(the whole suite passed untouched through the formula switch), the
+player carries the rolled 35-array. Formulas now consume REAL
+skills: the attack's chanceToHitMod is the weapon's skill (or
+HandToHand), Dodging/CriticalStrike/Backstabbing are their own
+lookups. TallySkill lands (skillUses counters; the E3c flag clears)
+- advancement thresholds are the follow-on. Boot: dungeonContext
+rolls the character once from CLASS{nn}.CFG - ?class=0..17 or the
+INTERIM default Warrior (16, loud); the pool-spend policy
+(lowest-first, loud) holds the slot until the chargen UI. The
+maxHealth-50 / flat-skills-30 / stats-50s interims are GONE.
+
 ## Queue
 - S3: character creation (the real PlayerEntity - clears the
   maxHealth/skills/stats interims; TallySkill, proficiency/racial

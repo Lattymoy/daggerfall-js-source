@@ -13,6 +13,7 @@
 // scalar SetEnemyCareer fills every slot with, so [part] == armor.
 
 import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source (EnemyAttack.cs:30)
+import { skillValue, SKILLS, WEAPON_SKILL } from '../systems/chargen.js';   // S3: real skills (enemies stay flat, verbatim)
 
 // ---- Dice100.cs verbatim ----
 export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 100) < chance;   // Random.Range(0,100) < chance
@@ -74,8 +75,9 @@ export const statsToHit = (a, t) =>
 
 // ---- CalculateSkillsToHit (classic's /4 dodging; crit roll adds crit/10) ----
 export function skillsToHit(a, t, roll01 = Math.random()) {
-  let mod = -Math.floor(t.skills / 4);                       // Dodging (flat skills per SetEnemyCareer)
-  if (dice100(a.skills, roll01)) mod += Math.floor(a.skills / 10);   // CriticalStrike
+  let mod = -Math.floor(skillValue(t, SKILLS.Dodging) / 4);            // classic's /4 bug preserved
+  const crit = skillValue(a, SKILLS.CriticalStrike);
+  if (dice100(crit, roll01)) mod += Math.floor(crit / 10);
   return mod;
 }
 
@@ -93,8 +95,9 @@ export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckB
 
 // ---- CalculateHandToHandAttackDamage ----
 export function handToHandAttackDamage(attacker, targetGroup, damageMod, isPlayer, rolls = Math.random) {
-  const min = handToHandMinDamage(attacker.skills);          // HandToHand = the flat skill
-  const max = handToHandMaxDamage(attacker.skills);
+  const h2h = skillValue(attacker, SKILLS.HandToHand);
+  const min = handToHandMinDamage(h2h);
+  const max = handToHandMaxDamage(h2h);
   let damage = min + Math.floor(rolls() * (max + 1 - min));  // Range(min, max+1)
   damage += damageMod;
   if (isPlayer) damage += damageModifier(attacker.stats.strength);   // "not applied in classic" for AI - DFU preserves that
@@ -149,7 +152,11 @@ export function calculateAttackDamage(attacker, target, { weapon = null, targetG
   // source: chanceToHitMod = skill, then player swing/proficiency/
   // racial toHit mods add on; damageModifiers ride INTO the damage
   // calls (before the skeletal rules and the <1 floor)
-  const chanceToHitMod = attacker.skills + toHitMod + backstabChance;   // source: backstabChance rides chanceToHitMod (line 611-612)
+  // chanceToHitMod = the LIVE skill for the attack in hand (weapon's
+  // skill or HandToHand), + player mods. Enemies read the same value
+  // for every skill (flat, SetEnemyCareer verbatim).
+  const attackSkill = weapon ? (WEAPON_SKILL[weapon.name] ?? SKILLS.HandToHand) : SKILLS.HandToHand;
+  const chanceToHitMod = skillValue(attacker, attackSkill) + toHitMod + backstabChance;
   const struck = calculateStruckBodyPart(rolls());
   let damage = 0;
   if (!weapon) {

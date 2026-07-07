@@ -18,6 +18,7 @@ import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS } from '../world/actionSystem.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
+import { createCharacter, tallySkill, skillValue, SKILLS, WEAPON_SKILL, CLASS_CAREERS } from '../systems/chargen.js';
 import {
   generateItems as generateLootItems, RANDOM_TREASURE_ARCHIVE,
   RANDOM_TREASURE_ICONS, RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS,
@@ -240,6 +241,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     flatGroups.get(key).push([e.x, e.y, e.z]);
   }
 
+  // S3: the REAL player entity - chargen rolls from a CLASS*.CFG
+  // career before anything consumes the player. Career = ?class= (an
+  // index into the 18 careers) or the INTERIM default Warrior (16,
+  // loud - the chargen UI replaces the default and the pool policy).
+  if (!playerEntity.chargenDone) {
+    const careerIndex = Number.isInteger(opts.playerClass) ? opts.playerClass : 16;
+    const { ClassFile } = await import('../formats/classFile.js');
+    const { fetchBytes } = await import('./shared.js');
+    const cf = new ClassFile();
+    cf.load(await fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`));
+    createCharacter(playerEntity, cf.career, careerIndex);
+    console.log(`[chargen] ${CLASS_CAREERS[careerIndex]}: HP ${playerEntity.maxHealth}, STR ${playerEntity.stats.strength}`);
+  }
+
   // S2: treasure piles - random markers (199.19) roll an icon +
   // generate by the dungeon-type key; fixed 216 flats keep their
   // record. Per-pile single batches so pickup can remove one pile.
@@ -337,7 +352,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return { dist, inView: inViewFn(c), losClear: !Number.isFinite(hit) || hit >= dist - 1e-3 };
     };
     const { playerEntity } = foeDeps;
-    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => f._backFacing ? playerEntity.skills : 0)) {
+    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => f._backFacing ? skillValue(playerEntity, SKILLS.Backstabbing) : 0)) {
+      // TallySkill (E3c flag clears): the attack skill counts a use
+      // per resolved swing, per WeaponManager.MeleeDamage.
+      tallySkill(playerEntity, WEAPON_SKILL[playerWeapon.weapon.name] ?? SKILLS.HandToHand);
       if (damage <= 0) continue;
       foe.entity.health -= damage;
       if (foe.entity.health <= 0) {

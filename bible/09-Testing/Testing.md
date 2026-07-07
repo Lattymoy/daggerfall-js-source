@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 230 tests across 54 files.
+Node 22). Suite: 233 tests across 55 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -22,6 +22,7 @@ Node 22). Suite: 230 tests across 54 files.
 | monstercareer.test.js | 1 | ENEMY{nnn}.CFG careers from a crafted MONSTER.BSA through the shared BsaFile+ClassFile readers: fields real on the entity, session cache proven (throwing re-fetch), missing-index null path |
 | playerweapon.test.js | 3 | verbatim reach 2.25+0.25 + view/LOS hit rule + the swing-mod table, drag-gesture -> mapped strike on the shared machine (threshold + release reset), hit-frame kill through the full chain (deterministic rolls) + reach/dead gating |
 | formulas.test.js | 5 | FormulaHelper verbatim: Dice100/DamageModifier/H2H (sheet rule)/weapon min-max tables/material mods/body parts, career attack-modifier bits + enemy-type bonus, to-hit chain (dodging/4 bug preserved, roll ordering, 3..97 clamp), damage paths (str-after-skeletal ordering, silver x2, material gate), the classic 0.25/MeleeDistance/35.156deg hit gate |
+| chargen.test.js | 3 | verbatim stat rolls (base + 0..10 inclusive, pool 6..14), skill tiers (28/18/13 + 0..3, defaults 3..6), HP (25 + hpPerLevel; per-level floor 1 + endurance mod), the interim lowest-first pool policy + full create (totals pinned), skillValue dual shape driving formulas (weapon skill hits where HandToHand misses on the same roll) |
 | effectactions.test.js | 3 | Hurt21 every-20th gate + verbatim exclusive Range * level (min<=max guard), Hurt22-25 flat/axis every activation + Poison as DFU's own empty delegate, chain cascade lever->spike (ActivateNext-first order, activationCount) |
 | enemyattack.test.js | 3 | verbatim reset-timer arithmetic (Range/level/reflex terms, /980, 0-floor), the floored-speed >>3 roll gate, strike gating (range+sight+22.5deg yaw) + hit event at HIT_FRAME_MELEE |
 | enemyentity.test.js | 3 | ClassFile verbatim 74-byte parse (incl the (a<<16)|(c<<8)|b shuffle) on a crafted record, class entity rules (level, HP roll bounds, skills clamp, career Speed, city-watch +3..6), monster rules (predefined level, inclusive HP range, armor*5) |
