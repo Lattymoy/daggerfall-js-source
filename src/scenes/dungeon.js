@@ -71,10 +71,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
   await pipeline.getTexture(waterArchive);
   pipeline.uploadRecord(waterArchive, 0);
 
-  // Camera at the start marker (the classic dungeon spawn).
-  const spawn = ctx.startMarker
-    ? [ctx.startMarker.x, ctx.startMarker.y, ctx.startMarker.z]
-    : [0, 2, 0];
+  // The classic dungeon spawn - ONE source (ctx.startSpawn: verbatim
+  // MovePlayerToMarker + FixStanding). The old raw-marker spawn put
+  // the EYE at the marker - feet under the floor, wedged.
+  const spawn = ctx.startSpawn();
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
   const shotMode = params.has('shot');
   // P2: grounded walking is the default (?fly restores the fly cam);

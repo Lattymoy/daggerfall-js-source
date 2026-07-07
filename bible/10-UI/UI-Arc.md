@@ -161,6 +161,19 @@ DecreaseMagicka when no target sits in touch range - the S9 'spends
 on a whiff' rule was WRONG and dies: touch whiffs now refuse
 without spending, verbatim.
 
+## Live-play fix (2026-07-07): the standalone spawn
+
+Mac's first live run spawned wedged - the standalone host put the
+CAMERA (the eye) at the RAW start marker, leaving the feet ~1.5
+units under the floor inside the under-geometry shaft; 'only look
+up and down' was the shaft's walls, one bug wearing two symptoms.
+worldModes carried the verbatim spawn (MovePlayerToMarker + up *
+0.6h + the FixStanding floor snap) inline; the standalone predates
+it and never got the lift. ROOT: ctx.startSpawn() now owns the
+verbatim placement ONCE (the context has the marker and the
+collider) - both hosts consume it, the inline copy and a dead
+binding died.
+
 ## Queue
 - Classic window art, per-ID TEXT.RSC verification.
 - Starting-spell sets: SHIPPED via Systems S6 (the spellbook lists

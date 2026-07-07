@@ -194,8 +194,6 @@ export function createWorldModes(host) {
       const ctx = await buildDungeonContext(
         { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, palette },
         dfLocation, blocks, dfLocation.climate.climateType, { foes: host.foes, playerClass: host.playerClass, playerSpell: host.playerSpell, playerWeapon: host.playerWeapon });
-      // Verbatim MovePlayerToMarker: start marker + up * (height * 0.6).
-      const m = ctx.startMarker;
       dungeonCtx = ctx;
       // Classic water tile: the location climate's ground archive,
       // record 0 (R11) - uploaded here since the exterior ground path
@@ -210,7 +208,7 @@ export function createWorldModes(host) {
       };
       mode = 'dungeon';
       player.collider = ctx.collider;
-      const spawn = floorLanding(ctx.collider, [m.x, m.y + 1.08, m.z]);   // verbatim MovePlayerToMarker + FixStanding: marker + up*0.6h, then instant floor snap
+      const spawn = ctx.startSpawn();   // ONE source: verbatim MovePlayerToMarker + FixStanding in the context
       player.spawn(spawn[0], spawn[1], spawn[2]);
       cam.pos = player.eye;
       console.log(`dungeon: ${ctx.drawList.length} draws, ${ctx.exitDoors.length} exit doors, ` +

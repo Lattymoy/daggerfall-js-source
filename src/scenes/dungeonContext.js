@@ -904,6 +904,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     drawFoes,
     playerAttackInput,
     playerCastInput,   // S5: C key in the hosts
+    /** Verbatim MovePlayerToMarker + FixStanding: the start marker
+     *  + up * (height 1.8 * 0.6), then the instant floor snap. ONE
+     *  source - both hosts spawn through this (the standalone's raw
+     *  marker spawn put the EYE at the marker, feet under the floor:
+     *  Mac spawned wedged in the under-geometry shaft). */
+    startSpawn() {
+      const m = this.startMarker;
+      if (!m) return [0, 2, 0];
+      return floorLanding(collider, [m.x, m.y + 1.08, m.z]);   // the static import - foe-less runs spawn correctly too
+    },
     get playerFallScale() { return hasActiveEffect(playerEntity, 'slowfall') ? 0.15 : 1; },   // S8: hosts feed their motor
     // S11: quicksave/quickload (F9/F12). WORLD state (foes, piles,
     // actions) is FLAGGED - the player snapshot only.
