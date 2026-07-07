@@ -342,7 +342,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (walkMode) {
       // Grounded movement: verbatim speeds in the motor, Space edge-jumps.
       const jumpHeld = keys.has('Space');
-      player.update(dt, {
+      const _overlayHeld = modes?.dungeonCtx?.uiOverlayActive ?? false;   // chargen/windows hold the motor - typing must not walk the player
+      if (!_overlayHeld) player.update(dt, {
         forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
         strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
         run: keys.has('ShiftLeft'),

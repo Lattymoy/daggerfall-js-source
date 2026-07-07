@@ -82,6 +82,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const player = new PlayerMotor(ctx.collider);
   player.spawn(spawn[0], spawn[1], spawn[2]);
+  console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
   let prevJump = false;
   let prevUse = false;
   console.log(`player: collider ${ctx.colliderTris} tris, ${ctx.actions.objects.size} activatables, walk=${walkMode}`);
@@ -165,8 +166,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [-Math.cos(cam.yaw), 0, Math.sin(cam.yaw)];   // camera-right = up x back (lookAt handedness): D must move SCREEN-right - the +cos/-sin vector was screen-LEFT (A/D felt swapped)
-    ctx.actions.update(dt);
-    if (walkMode) {
+    const held = ctx.uiOverlayActive;   // overlays HOLD the world: no movers, no motor - typing a name must not walk the player off the start ledge
+    if (!held) ctx.actions.update(dt);
+    if (walkMode && !held) {
       const jumpHeld = keys.has('Space');
       player.fallScale = ctx.playerFallScale;   // S8 slowfall
       player.update(dt, {
@@ -180,7 +182,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const useHeld = keys.has('KeyE');
       if (useHeld && !prevUse) tryActivate();
       prevUse = useHeld;
-    } else {
+    } else if (!held) {
       const speed = (keys.has('ShiftLeft') ? 24 : 5) * dt;
       if (keys.has('KeyW')) for (let a = 0; a < 3; a++) cam.pos[a] += fwd[a] * speed;
       if (keys.has('KeyS')) for (let a = 0; a < 3; a++) cam.pos[a] -= fwd[a] * speed;

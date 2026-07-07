@@ -428,7 +428,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       if (playerSpawned) {
         const jumpHeld = keys.has('Space');
-        player.update(dt, {
+        const _overlayHeld = modes?.dungeonCtx?.uiOverlayActive ?? false;   // chargen/windows hold the motor - typing must not walk the player
+        if (!_overlayHeld) player.update(dt, {
           forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
           strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
           run: keys.has('ShiftLeft'),

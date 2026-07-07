@@ -174,6 +174,21 @@ verbatim placement ONCE (the context has the marker and the
 collider) - both hosts consume it, the inline copy and a dead
 binding died.
 
+## Live-play fix II (2026-07-07): overlays now HOLD the world
+
+Mac reproduced the wedge post-spawn-fix - because the spawn was
+never the (only) culprit: BOTH hosts ran LIVE MOVEMENT under the
+chargen overlay. The keys Set feeds the motor while typing - a name
+containing w/a/s/d walks the player, and by skills-confirm the
+character has drifted off the start ledge into a pit ('spawned in a
+hole', yaw showing shaft walls). The overlay gate only ever skipped
+foes/water. ROOT: overlays hold the world everywhere - the
+standalone gates actions.update + both movement branches on
+uiOverlayActive; the world/exterior shells gate their motor on
+modes.dungeonCtx.uiOverlayActive. Plus a [spawn] diagnostic line
+(marker -> feet, 'startSpawn build' tag) so console pastes
+self-identify the running bundle.
+
 ## Queue
 - Classic window art, per-ID TEXT.RSC verification.
 - Starting-spell sets: SHIPPED via Systems S6 (the spellbook lists
