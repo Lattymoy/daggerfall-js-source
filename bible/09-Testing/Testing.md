@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 265 tests across 66 files.
+Node 22). Suite: 266 tests across 67 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -35,6 +35,7 @@ Node 22). Suite: 265 tests across 66 files.
 | enemyattack.test.js | 3 | verbatim reset-timer arithmetic (Range/level/reflex terms, /980, 0-floor), the floored-speed >>3 roll gate, strike gating (range+sight+22.5deg yaw) + hit event at HIT_FRAME_MELEE |
 | enemyentity.test.js | 3 | ClassFile verbatim 74-byte parse (incl the (a<<16)|(c<<8)|b shuffle) on a crafted record, class entity rules (level, HP roll bounds, skills clamp, career Speed, city-watch +3..6), monster rules (predefined level, inclusive HP range, armor*5) |
 | fnt.test.js | 2 | verbatim FNT layout on crafted bytes (header, 240-entry table, the L/R half SWAP with MSB-first expansion - x0 from the odd byte, x15 from the even, bounds null), the white atlas (256x240, pixel spot-checks) + measure (space rule, 1px classic spacing) + row-1 cell UVs |
+| hudtext.test.js | 1 | the popup queue (4-line cap dropping oldest, per-line 2s life with independent lifetimes across a late add, expiry, empty ticks safe) |
 | hud.test.js | 3 | compass scroll verbatim (trunc(258 x heading), wrap both directions, the 64 window never exceeds the 322 strip), bottom-anchored bar fill (v-window + clamps + max-0 guard) + integer scale flooring at 1, indexed->RGBA with the classic index-0 transparency |
 | inventory.test.js | 4 | the verbatim stackable rule (equipped/enchanted never), AddItem merge-vs-append incl material split, CalculateWeightForMaterial verbatim (quarter-kg quantized, banker half-to-even: iron and daedric daggers BOTH 0.5kg) + leather formula + transferAll, the house-container predicate (418xx group, the 13-index list, shop-shelf 5 excluded, record = id%100) |
 | inventoryui.test.js | 2 | the inventory window (cursor wrap, weapon equip via callback, arrows refused, gold not equippable, close), the spellbook (the interim known-list from the file excluding caster-only/non-damage, an entity's own book preferred, ready callback, null-map empty) |

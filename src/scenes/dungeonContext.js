@@ -21,6 +21,7 @@ import { addItem } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
 import { drawText, makeFont } from '../ui/text.js';
+import { HudText } from '../ui/hudText.js';
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
@@ -28,7 +29,7 @@ import { createCharacter, applyCharacter, startingSpells, CLASS_CAREERS } from '
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet } from '../ui/charsheet.js';
 import { InventoryWindow, SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
-import { tallySkill, skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
+import { tallySkill, skillValue, SKILLS, WEAPON_SKILL, SKILL_NAMES } from '../systems/skills.js';
 import { raiseSkills, applyLevelUp } from '../systems/advancement.js';
 import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
@@ -298,6 +299,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   let chargenFlow = null;
   let activeOverlay = null;
+  const hudText = new HudText();   // U5: classic popup messages
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
   function healPlayer(n) {
@@ -405,7 +407,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
       // missile; the cost spends here.
       playerEntity.magicka -= cost;
-      applySpell(sp, playerEntity.level, playerEntity, { hurt: hurtPlayer, heal: healPlayer });
+      const r = applySpell(sp, playerEntity.level, playerEntity, { hurt: hurtPlayer, heal: healPlayer });
+      if (r.healed > 0) hudText.add(`You are healed ${r.healed} points.`);
       surfacePlayer();
       return true;
     }
@@ -685,10 +688,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       tickActiveEffects(playerEntity, { hurt: hurtPlayer, heal: healPlayer });
       for (const f of foes) if (!f.dead) tickActiveEffects(f.entity, { hurt: (n) => damageFoe(f, n), heal: () => {} });
     }
-    raiseSkills(playerEntity, classicMinutes, Math.random, () => {
+    const raised = raiseSkills(playerEntity, classicMinutes, Math.random, () => {
       // U3: the level-up screen replaces the headless auto-apply
+      hudText.add('You have gained a level!');
       if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
     });
+    for (const id of raised) hudText.add(`Your ${SKILL_NAMES[id]} skill has improved.`);   // classic phrasing; TEXT.RSC pends
     collisionTriggers(dt, playerFeet);
     updateMissiles(dt, playerFeet);
     if (playerWeapon) {
@@ -779,6 +784,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const hfw = [-view[2], -view[10]];
     const heading01 = ((Math.atan2(hfw[0], hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1;
     drawHud(renderer, canvas, hudArt, playerEntity, heading01);
+    hudText.tick(dt);
+    if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.height));
     if (hudFont && readiedSpell) {
       // U2a's first consumer: the readied spell + cost, classic text
       // above the vitals (the spellbook window replaces this in U4).
@@ -846,13 +853,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleInventory() {
       if (activeOverlay) return;
       activeOverlay = new InventoryWindow(playerEntity, {
-        equip: (item) => { if (playerWeapon) playerWeapon.weapon = item; },   // retires ?weapon
+        equip: (item) => { if (playerWeapon) { playerWeapon.weapon = item; hudText.add(`${item.name} equipped.`); } },
       });
     },
     toggleSpellbook() {
       if (activeOverlay) return;
       activeOverlay = new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
-        ready: (sp) => { readiedSpell = sp; },   // retires ?spell
+        ready: (sp) => { readiedSpell = sp; hudText.add(`${sp.name} readied.`); },
       });
     },
     // S2 pickup: piles + dead foes' corpses as activation targets;
@@ -893,7 +900,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       playerEntity.items = playerEntity.items || [];
       for (const item of source) { addItem(playerEntity.items, item); n++; }
       source.length = 0;
-            surfacePlayer();
+      surfacePlayer();
+      if (n > 0) hudText.add(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);   // TEXT.RSC pends
       return n;
     },
     textureTable: dungeon.textureTable,

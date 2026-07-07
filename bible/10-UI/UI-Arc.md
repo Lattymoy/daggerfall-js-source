@@ -106,7 +106,19 @@ Both ride the U3 overlay seam; keys route in both hosts BELOW the
 overlay branch so Backspace still edits the chargen name. Windows
 close on ESC. Backgrounds FLAGGED as U2/U3.
 
+## U5 (HUD popup text): SHIPPED
+
+ui/hudText.js is the classic bottom-center message queue
+(AddHUDText shape): newest-last, 4-line cap, ~2s per line with a
+0.4s fade, drawn just above the vitals in classic text. SEVEN
+consumers wired in the scene: pickup ('You take N items.'), skill
+raises ('Your X skill has improved.' - the classic phrasing),
+level-up ready, self-cast healing ('You are healed N points.'),
+weapon equip, spell readied. The literals are honest stand-ins:
+TEXT.RSC is FLAGGED - the real records swap in when that reader
+lands. The scattered 'feedback pends UI' flags retire.
+
 ## Queue
-- Pickup/message feedback, the input map, classic window art.
+- The input map, classic window art, TEXT.RSC reader.
 - Starting-spell sets: SHIPPED via Systems S6 (the spellbook lists
   the character's real known spells).
