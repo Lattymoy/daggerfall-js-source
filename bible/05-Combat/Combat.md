@@ -24,8 +24,16 @@ enemy-rigs arc; full records live in 04-Characters/Characters-Arc.md):
 - CastSpell action flag: SHIPPED via Systems S4b (trap-spell missiles
   + the classic damage family through the verbatim saving throw; the
   wider effect library remains Systems work).
-- Bows in-world (the machine + clips exist; arrows/missiles need the
-  projectile pass) - queued.
+- Bows in-world: SHIPPED. Arrows ride the S5 missile system as
+  weapon-carrying missiles (element None) rendered as the oriented
+  99800 model through dynamicDraws; the player's bow (?weapon=bow,
+  Short Bow template 129 - the equip UI pends) looses on the strike
+  frame along the view-matrix forward and tallies Archery; enemy
+  archers (equipped-bow foes) attack from SIGHT (the melee-distance
+  gate is melee's) and loose at the player; hits resolve through
+  calculateAttackDamage with the bow BOTH directions, and a landed
+  arrow adds ONE recoverable Arrow to the TARGET'S items (BowDamage's
+  classic charm). Crouch pass-over pends.
 - Trigger-on-collision for WalkInto/WalkOn traps: pends a collider
   touch-event seam (chains + direct activation work today).
 - Systems-shared interims tracked in the Home ledger: TallySkill,

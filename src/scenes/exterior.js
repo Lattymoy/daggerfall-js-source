@@ -306,6 +306,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     foes: params.has('foes'),
     playerClass: params.has('class') ? Number(params.get('class')) : undefined,
     playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined,
+    playerWeapon: params.get('weapon') ?? undefined,
     doorTargets: () => buildingDoors,
     baseCollider: () => collider,
   });

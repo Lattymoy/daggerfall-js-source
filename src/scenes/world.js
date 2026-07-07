@@ -393,6 +393,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     foes: params.has('foes'),
     playerClass: params.has('class') ? Number(params.get('class')) : undefined,
     playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined,
+    playerWeapon: params.get('weapon') ?? undefined,
     paint: params.has('paint'),
     piece: params.has('piece') ? Number(params.get('piece') || 102) || 102 : 0,
     pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette },

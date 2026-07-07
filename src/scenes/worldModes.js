@@ -192,7 +192,7 @@ export function createWorldModes(host) {
     try {
       const ctx = await buildDungeonContext(
         { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, palette },
-        dfLocation, blocks, dfLocation.climate.climateType, { foes: host.foes, playerClass: host.playerClass, playerSpell: host.playerSpell });
+        dfLocation, blocks, dfLocation.climate.climateType, { foes: host.foes, playerClass: host.playerClass, playerSpell: host.playerSpell, playerWeapon: host.playerWeapon });
       // Verbatim MovePlayerToMarker: start marker + up * (height * 0.6).
       const m = ctx.startMarker;
       dungeonCtx = ctx;

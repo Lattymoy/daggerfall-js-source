@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 246 tests across 59 files.
+Node 22). Suite: 248 tests across 60 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -26,6 +26,7 @@ Node 22). Suite: 246 tests across 59 files.
 | magicitems.test.js | 3 | MAGIC.DEF verbatim 62-byte records (index = stream position, -1 unfilled enchantment slots, artifact types read), CreateRegularMagicItem routing (regular-only filter, group-byte tables, the arrow re-roll, magic name swap + condition = uses, -1 slots filtered), the MI loot halving loop firing with the registry set and skipping without |
 | magicka.test.js | 3 | SPELLS.STD verbatim 89-byte walk on crafted records (subType ALWAYS read - the dead 0xFF sbyte branch documented; invalid all -1 record gated), the 0x1C00>>8 multiplier decode table + SpellPoints floor, DrainMagicka max(1, flat?mag:axis) + 0-floor through the action system |
 | advancement.test.js | 3 | the 35-entry advancement-multiplier table + uses-needed/level formulas, the raise flow (360-min gate, reflexes bit math 0x10000-((r-2)<<13) incl VeryHigh 1.25x, uses reset, the 95+/mastery cap), the level-up sum shape (primaries + majors - min + max minor) + headless leveling applying HP and the 4..6 pool |
+| arrows.test.js | 2 | the ranged-attack gate (bow foes strike from sight via events at full speed, melee foes stay distance-gated with the timer untouched), Short/Long Bow -> Archery mapping + recoverable landed arrows stacking on the target |
 | chargen.test.js | 3 | verbatim stat rolls (base + 0..10 inclusive, pool 6..14), skill tiers (28/18/13 + 0..3, defaults 3..6), HP (25 + hpPerLevel; per-level floor 1 + endurance mod), the interim lowest-first pool policy + full create (totals pinned), skillValue dual shape driving formulas (weapon skill hits where HandToHand misses on the same roll) |
 | effectactions.test.js | 3 | Hurt21 every-20th gate + verbatim exclusive Range * level (min<=max guard), Hurt22-25 flat/axis every activation + Poison as DFU's own empty delegate, chain cascade lever->spike (ActivateNext-first order, activationCount) |
 | enemyattack.test.js | 3 | verbatim reset-timer arithmetic (Range/level/reflex terms, /980, 0-floor), the floored-speed >>3 roll gate, strike gating (range+sight+22.5deg yaw) + hit event at HIT_FRAME_MELEE |

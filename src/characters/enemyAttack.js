@@ -52,6 +52,7 @@ export function attackRollPasses(liveSpeed, randFn = rand) {
 
 /** Per-foe attack driver over the shared machine. */
 export class EnemyAttack {
+  /** rangedAttack: set by the scene when the equipped weapon is a bow. */
   constructor({ liveSpeed = 50, playerLevel = 10, reflexes = 2 } = {}) {
     this.machine = createWeaponMachine(false);
     this.liveSpeed = liveSpeed;
@@ -82,7 +83,9 @@ export class EnemyAttack {
       if (!attackRollPasses(this.liveSpeed)) continue;
       const dx = playerFeet[0] - ai.feet[0], dz = playerFeet[2] - ai.feet[2];
       if (!ai.inSight || !withinYaw(ai.yaw, dx, dz, ATTACK_YAW_DEG)) continue;
-      if (dist > MELEE_DISTANCE + approach) continue;
+      // Ranged (bow-equipped) foes attack from SIGHT - the melee
+      // distance gate is the melee path's (EnemyAttack bow branch).
+      if (!this.rangedAttack && dist > MELEE_DISTANCE + approach) continue;
       const strike = STRIKES[Math.floor(Math.random() * STRIKES.length)];
       if (machineAttack(this.machine, strike)) {
         this.meleeTimer = resetMeleeTimer(this.playerLevel, this.reflexes);

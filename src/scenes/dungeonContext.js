@@ -18,6 +18,7 @@ import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS } from '../world/actionSystem.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
+import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { tallySkill, skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
 import { raiseSkills } from '../systems/advancement.js';
@@ -249,6 +250,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, { liveSpeed: entity.liveSpeed });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
+      // Combat bows: an equipped bow makes the foe an archer - the
+      // attack starts from SIGHT and the strike looses an arrow.
+      attack.rangedAttack = SKILLS && entity.weapon && WEAPON_SKILL[entity.weapon.name] === SKILLS.Archery;
       foes.push({ rig, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
       continue;
     }
@@ -307,6 +311,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if ((sp.rangeType === 2 || sp.rangeType === 4) && sp.effects.some(isDamageHealthEffect)) { readiedSpell = sp; break; }
       }
     }
+  }
+  // Combat bows (via S5 missiles): arrows are missiles carrying a
+  // WEAPON instead of a spell - element None, model 99800 oriented
+  // along flight (DFU ShootBow / WeaponManager verbatim shape). On a
+  // landed enemy arrow, ONE recoverable Arrow joins the TARGET'S
+  // items (BowDamage's classic charm). Crouch pass-over pends.
+  function fireArrow(from, dir, weapon, fromPlayer, shooterFoe = null) {
+    missiles.push({ arrow: true, weapon, fromPlayer, shooterFoe, pos: [...from], dir: [...dir], age: 0, batch: null, draw: null });
+  }
+  async function ensureArrowModel(m) {
+    if (m.draw !== null) return;
+    m.draw = false;
+    const gpu = await getGpuMesh(99800);
+    if (!gpu) return;
+    m.draw = { gpu, object: { matrix: null } };
+    dynamicDraws.push(m.draw);
+  }
+  function arrowMatrix(m) {
+    const yaw = Math.atan2(m.dir[0], m.dir[2]) * 180 / Math.PI;
+    const pitch = Math.asin(-Math.max(-1, Math.min(1, m.dir[1]))) * 180 / Math.PI;
+    return trs(m.pos[0], m.pos[1], m.pos[2], pitch, yaw, 0);
   }
   function playerCastInput(eye, dir) {
     const sp = readiedSpell;
@@ -382,6 +407,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the full chain, reactions on the shipped clips, death -> the
   // extracted corpse flat replaces the rig.
   const playerWeapon = foes.length ? new foeDeps.PlayerWeapon({}) : null;
+  if (playerWeapon && opts.playerWeapon === 'bow') {
+    // Combat bows: ?weapon=bow readies a plain Short Bow (template
+    // 129; the inventory/equip UI pends - the INTERIM dagger note
+    // stands for melee).
+    playerWeapon.weapon = { name: 'Short Bow', ...createWeapon(129, 0) };
+  }
   // E3d: the player's own body as the FP viewmodel - same authored
   // rig, fpMelee1H base + the dedicated FP sweeps on the machine.
   const viewmodelRig = playerWeapon ? foeDeps.createCharacterRig(renderer, foeDeps.buildRaceCharacter('Human', foeDeps.bodyRamps)) : null;
@@ -441,6 +472,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     billboardBatches.push(m.batch);
   }
   function retireMissile(m) {
+    if (m.draw && m.draw.object) {
+      const di = dynamicDraws.indexOf(m.draw);
+      if (di >= 0) dynamicDraws.splice(di, 1);
+    }
     if (m.batch) {
       const bi = billboardBatches.indexOf(m.batch);
       if (bi >= 0) billboardBatches.splice(bi, 1);
@@ -454,7 +489,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const target = [playerFeet[0], playerFeet[1] + 0.9, playerFeet[2]];   // mid-capsule, as enemy melee aims
     for (const m of missiles) {
       if (m.dead) continue;
-      ensureMissileBatch(m);
+      if (!m.arrow) ensureMissileBatch(m);   // arrows render as the 99800 model, not an element billboard
       if (!m.dir) {   // verbatim: normalized (player - object), locked at fire time
         const d = [target[0] - m.pos[0], target[1] - m.pos[1], target[2] - m.pos[2]];
         const l = Math.hypot(...d) || 1;
@@ -469,7 +504,35 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // The batch was built ONCE at the fire position; flight rides
       // the batch's origin uniform (zero GL churn - the same thrash
       // class the engine audit killed stays killed).
-      if (m.batch) m.batch.origin = [m.pos[0] - m.firePos[0], m.pos[1] - m.firePos[1], m.pos[2] - m.firePos[2]];
+      if (!m.arrow && m.batch) m.batch.origin = [m.pos[0] - m.firePos[0], m.pos[1] - m.firePos[1], m.pos[2] - m.firePos[2]];
+      if (m.arrow) {
+        ensureArrowModel(m);
+        if (m.draw && m.draw.object) m.draw.object.matrix = arrowMatrix(m);
+        if (m.fromPlayer) {
+          for (const f of foes) {
+            if (f.dead) continue;
+            const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + 0.9 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];
+            if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+              const dmg = foeDeps ? foeDeps.calculateAttackDamage(playerEntity, f.entity, { weapon: m.weapon }) : 0;
+              if (dmg > 0) damageFoe(f, dmg);
+              addItem(f.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage verbatim: the arrow is recoverable from the target
+              retireMissile(m);
+              break;
+            }
+          }
+        } else if (playerFeet) {
+          const dx2 = target[0] - m.pos[0], dy2 = target[1] - m.pos[1], dz2 = target[2] - m.pos[2];
+          if (Math.hypot(dx2, dy2, dz2) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+            const shooter = m.shooterFoe;
+            const dmg = foeDeps && shooter ? foeDeps.calculateAttackDamage(shooter.entity, playerEntity, { targetGroup: null, weapon: m.weapon }) : 0;
+            if (dmg > 0) { playerEntity.health = Math.max(0, playerEntity.health - dmg); }
+            addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
+            surfacePlayer();
+            retireMissile(m);
+          }
+        }
+        continue;
+      }
       if (m.fromPlayer) {
         // S5: player missiles seek foes (mid-capsule contact).
         for (const f of foes) {
@@ -531,7 +594,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         return nx >= -1 && nx <= 1 && ny >= -1 && ny <= 1;
       };
       for (const ev of playerWeapon.update(dt)) {
-        if (ev === 'hit' && playerFeet) resolvePlayerHit(eye, inView, playerFeet);
+        if (ev !== 'hit' || !playerFeet) continue;
+        if (WEAPON_SKILL[playerWeapon.weapon.name] === SKILLS.Archery) {
+          // Combat bows: the strike frame LOOSES an arrow along the
+          // look instead of the melee arc (WeaponManager verbatim
+          // shape); the weapon skill tallies the same.
+          const lookDir = [-view[2], -view[6], -view[10]];   // the view-matrix forward this file already uses for the viewmodel
+          fireArrow(eye, lookDir, playerWeapon.weapon, true);
+          tallySkill(playerEntity, SKILLS.Archery);
+          continue;
+        }
+        resolvePlayerHit(eye, inView, playerFeet);
       }
     }
     for (const f of foes) {
@@ -544,6 +617,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // equipment E4). Player-as-target group is null (vampirism only
       // in DFU). HUD pends the UI arc: health surfaces on __player.
       if (playerFeet && f.events.includes('hit')) {
+        if (f.attack.rangedAttack) {
+          // Enemy archer: the strike frame LOOSES an arrow at the
+          // player (ShootBow verbatim shape) - flight + BowDamage
+          // resolve in updateMissiles.
+          const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
+          const d = [playerFeet[0] - from[0], playerFeet[1] + 0.9 - from[1], playerFeet[2] - from[2]];
+          const l = Math.hypot(...d) || 1;
+          fireArrow(from, [d[0] / l, d[1] / l, d[2] / l], f.entity.weapon, false, f);
+          continue;
+        }
         const pf = playerFeet;
         const hdx = pf[0] - f.ai.feet[0], hdz = pf[2] - f.ai.feet[2];
         if (foeDeps.meleeHitConnects(f.ai._dist, f.ai.inSight, foeDeps.withinYaw(f.ai.yaw, hdx, hdz, foeDeps.MELEE_HIT_YAW_DEG))) {
