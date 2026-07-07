@@ -68,11 +68,11 @@ test('action: move tween, reverse cycle, and chain cascade', () => {
   // (translation +y 2, duration 40 ticks = 2 s).
   const platform = a.addAction(7, CUBE, I, {
     duration: 40, rotation: { x: 0, y: 0, z: 0 },
-    translation: { x: 0, y: 2, z: 0 }, nextObject: -1,
+    translation: { x: 0, y: 2, z: 0 }, nextObject: -1, triggerFlag: 0x02,
   });
   const lever = a.addAction(3, CUBE, I, {
     duration: 20, rotation: { x: -40, y: 0, z: 0 },
-    translation: { x: 0, y: 0, z: 0 }, nextObject: 7,
+    translation: { x: 0, y: 0, z: 0 }, nextObject: 7, triggerFlag: 0x02,
   });
 
   // Activating the lever cascades to the platform FIRST, then plays.

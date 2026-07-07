@@ -22,7 +22,7 @@
 // milestone, standing collision is correct at every instant).
 
 import { trs, multiply } from './mat4.js';
-import { ACTION_FLAGS } from './rdbLayout.js';
+import { ACTION_FLAGS, TRIGGER_FLAGS } from './rdbLayout.js';
 
 // The RDB effect-action family (DaggerfallAction delegates that hurt
 // rather than move). Combat-arc row from Port-Ledger C:
@@ -42,6 +42,22 @@ export const EFFECT_ACTION_FLAGS = new Set([
   ACTION_FLAGS.Hurt24, ACTION_FLAGS.Hurt25, ACTION_FLAGS.Poison,
   ACTION_FLAGS.DrainMagicka, ACTION_FLAGS.CastSpell,
 ]);
+
+// DaggerfallAction.Receive's verbatim trigger gate: which trigger
+// TYPES each RDB TriggerFlag accepts. ActionObject (chain cascade)
+// is ALWAYS valid; undefined flags never fire (the source's default).
+export const TRIGGER_GATE = Object.freeze({
+  [TRIGGER_FLAGS.None]: [],                                    // ActionObject only
+  [TRIGGER_FLAGS.Collision01]: ['WalkOn'],
+  [TRIGGER_FLAGS.Direct]: ['Direct'],
+  [TRIGGER_FLAGS.Collision03]: ['WalkInto'],
+  [TRIGGER_FLAGS.Attack]: ['Attack'],
+  [TRIGGER_FLAGS.Direct6]: ['Direct'],
+  [TRIGGER_FLAGS.MultiTrigger]: ['Direct', 'Attack', 'WalkInto'],
+  [TRIGGER_FLAGS.Collision09]: ['Direct', 'WalkInto'],
+  [TRIGGER_FLAGS.Door]: ['Door'],
+});
+export const COLLISION_TIMEOUT_S = 0.12;   // DaggerfallActionCollision.Timeout
 
 export const DOOR_OPEN_ANGLE = -90;
 export const DOOR_OPEN_DURATION = 1.5;
@@ -74,6 +90,7 @@ export class ActionSystem {
       isFlat: action.isFlat,
       activationCount: 0,
       nextKey: action.nextObject,
+      triggerFlag: action.triggerFlag ?? TRIGGER_FLAGS.None,
       state: 'start',
     };
     this.objects.set(key, o);
@@ -150,6 +167,7 @@ export class ActionSystem {
       state: 'start',
       t: 0,
       nextKey: action.nextObject,
+      triggerFlag: action.triggerFlag ?? TRIGGER_FLAGS.None,
       matrix: baseMatrix,
     };
     this.objects.set(key, o);
@@ -164,8 +182,14 @@ export class ActionSystem {
     return next ? this._isPlaying(next, depth + 1) : false;
   }
 
-  /** DaggerfallAction.Receive: gate on the chain, then Play. */
-  receive(o) {
+  /** DaggerfallAction.Receive: the verbatim trigger gate, then Play.
+   *  ActionObject (the chain cascade) is always valid; every other
+   *  trigger type must be accepted by the object's TriggerFlag. */
+  receive(o, triggerType = 'ActionObject') {
+    if (triggerType !== 'ActionObject') {
+      const allowed = TRIGGER_GATE[o.triggerFlag ?? TRIGGER_FLAGS.None];
+      if (!allowed || !allowed.includes(triggerType)) return;
+    }
     if (this._isPlaying(o)) return;
     this._play(o);
   }
@@ -206,7 +230,7 @@ export class ActionSystem {
       }
       return true;
     }
-    this.receive(o);
+    this.receive(o, 'Direct');   // player activation = the Direct trigger type (the gate table applies)
     return true;
   }
 

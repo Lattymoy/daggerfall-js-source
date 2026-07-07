@@ -56,3 +56,26 @@ test('effect actions: chains cascade INTO effects (lever -> spike)', () => {
   assert.deepEqual(taken, [10]);
   assert.equal(spike.activationCount, 1);
 });
+
+test('effect actions: the verbatim trigger gate (Receive types vs TriggerFlag)', async () => {
+  const { TRIGGER_GATE } = await import('../src/world/actionSystem.js');
+  const { TRIGGER_FLAGS } = await import('../src/world/rdbLayout.js');
+  let taken = [];
+  const sys = new ActionSystem(collider, { damagePlayer: (d) => taken.push(d), playerLevel: () => 1 });
+  const walkOnly = sys.addEffect(11, mkAction(ACTION_FLAGS.Hurt22, { isFlat: true, magnitude: 3, triggerFlag: TRIGGER_FLAGS.Collision03 }));
+  sys.receive(walkOnly, 'Direct');           // gated: Collision03 accepts WalkInto only
+  assert.equal(taken.length, 0);
+  sys.receive(walkOnly, 'WalkInto');
+  assert.deepEqual(taken, [3]);
+  sys.receive(walkOnly);                     // ActionObject (chains) always valid
+  assert.deepEqual(taken, [3, 3]);
+  const multi = sys.addEffect(12, mkAction(ACTION_FLAGS.Hurt22, { isFlat: true, magnitude: 5, triggerFlag: TRIGGER_FLAGS.MultiTrigger }));
+  sys.receive(multi, 'WalkInto'); sys.receive(multi, 'Direct'); sys.receive(multi, 'Attack');
+  assert.deepEqual(taken, [3, 3, 5, 5, 5]);
+  sys.receive(multi, 'WalkOn');              // MultiTrigger does NOT accept WalkOn
+  assert.equal(taken.length, 5);
+  const undef = sys.addEffect(13, mkAction(ACTION_FLAGS.Hurt22, { isFlat: true, magnitude: 7, triggerFlag: 0x99 }));
+  sys.receive(undef, 'Direct');              // undefined flags never fire (the source default)
+  assert.equal(taken.length, 5);
+  assert.deepEqual(TRIGGER_GATE[TRIGGER_FLAGS.Collision01], ['WalkOn']);
+});

@@ -34,7 +34,16 @@ enemy-rigs arc; full records live in 04-Characters/Characters-Arc.md):
   calculateAttackDamage with the bow BOTH directions, and a landed
   arrow adds ONE recoverable Arrow to the TARGET'S items (BowDamage's
   classic charm). Crouch pass-over pends.
-- Trigger-on-collision for WalkInto/WalkOn traps: pends a collider
-  touch-event seam (chains + direct activation work today).
+- Trigger-on-collision: SHIPPED. DaggerfallAction.Receive's verbatim
+  trigger gate lands in the action system (TRIGGER_GATE: each RDB
+  TriggerFlag's accepted types; chains always valid; undefined flags
+  never fire; player activation is now the typed Direct trigger -
+  fixture movers gained real lever flags); effect objects carry their
+  placement AABB and a per-frame pass fires WalkOn/WalkInto with the
+  component's exact semantics - 0.12s per-object timeout, only while
+  the player actively moves HORIZONTALLY (classic ignores up/down/
+  jump), contact beneath -> WalkOn. The Combat build queue is EMPTY;
+  remaining Combat-adjacent work lives in Systems (effect library)
+  and UI.
 - Systems-shared interims tracked in the Home ledger: TallySkill,
   proficiency/racial mods, poisoned weapons, stealth checks.

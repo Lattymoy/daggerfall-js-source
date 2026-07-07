@@ -15,9 +15,10 @@ import { CityLightAnimator } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
-import { EFFECT_ACTION_FLAGS } from '../world/actionSystem.js';
+import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S } from '../world/actionSystem.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
+import { worldAabb } from '../player/activate.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { tallySkill, skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
@@ -126,7 +127,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // logic object; the model stays static (draw + collider
         // below). Origin = the placement translation (CastSpell
         // fires missiles from here, +40*GlobalScale up, verbatim).
-        actions.addEffect(p.position, p.action, [matrix[12], matrix[13], matrix[14]]);
+        const eo = actions.addEffect(p.position, p.action, [matrix[12], matrix[13], matrix[14]]);
+        eo.aabb = worldAabb(cpu.positions, matrix);   // collision triggers test against this
       }
       drawList.push({ mesh: gpu, matrix });
       collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix);
@@ -576,9 +578,41 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
+  // Combat collision triggers (the last Combat-queue row):
+  // DaggerfallActionCollision verbatim shape - per-object 0.12s
+  // timeout, fires only while the player ACTIVELY MOVES horizontally
+  // (up/down/jump don't trigger in classic), contact beneath the
+  // player -> WalkOn else WalkInto (the Collision01 standing-raycast
+  // refinement folds into the beneath test at our capsule scale).
+  let _prevTriggerFeet = null;
+  function collisionTriggers(dt, playerFeet) {
+    if (!playerFeet) return;
+    const moved = _prevTriggerFeet
+      ? Math.hypot(playerFeet[0] - _prevTriggerFeet[0], playerFeet[2] - _prevTriggerFeet[2]) > 1e-4
+      : false;
+    _prevTriggerFeet = [...playerFeet];
+    if (!moved) return;
+    const R = 0.45, H = 1.8;   // the player capsule
+    for (const o of actions.objects.values()) {
+      if (!o.aabb) continue;
+      o._colTimer = (o._colTimer ?? COLLISION_TIMEOUT_S) + dt;
+      if (o._colTimer < COLLISION_TIMEOUT_S) continue;
+      const a = o.aabb;
+      const overlapXZ = playerFeet[0] + R > a.min[0] && playerFeet[0] - R < a.max[0]
+        && playerFeet[2] + R > a.min[2] && playerFeet[2] - R < a.max[2];
+      if (!overlapXZ) continue;
+      const overlapY = playerFeet[1] + H > a.min[1] && playerFeet[1] < a.max[1] + 0.15;
+      if (!overlapY) continue;
+      const standingOn = playerFeet[1] >= a.max[1] - 0.15;
+      actions.receive(o, standingOn ? 'WalkOn' : 'WalkInto');
+      o._colTimer = 0;
+    }
+  }
+
   function drawFoes(dt, canvas, proj, view, eye, playerFeet) {
     classicMinutes += (dt * 12) / 60;
     raiseSkills(playerEntity, classicMinutes);
+    collisionTriggers(dt, playerFeet);
     updateMissiles(dt, playerFeet);
     if (playerWeapon) {
       playerWeapon.gesture(_atkDx, _atkDy, _atkHeld, dt, Math.max(canvas.clientWidth, canvas.clientHeight));

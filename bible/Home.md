@@ -52,7 +52,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9: floating-origin streaming world (?world). Queue empty; routed rows (teleporters, platform riding, swim/levitate) wait in Ledger C.
 - `03-World/Player-Arc.md` - COMPLETE (P1-P8). Successor decided long since: C8, then Systems (this list is the truth of record).
 - `04-Characters/Characters-Arc.md` - PARKED (pivot 3: classic visuals). C8 shipped E1-E4b end to end + spectral; E4c deferred by Mac; remaining interims are Systems work (ledger below).
-- `05-Combat/Combat.md` - CORE COMPLETE via C8 + the Hurt-trap row + CastSpell (shipped via Systems S4b). Remaining queue: bows/projectiles, the collision-trigger seam.
+- `05-Combat/Combat.md` - COMPLETE. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, and the collision-trigger seam all shipped. Build queue EMPTY; Systems-shared interims tracked in the ledger.
 - `06-Systems/Systems-Arc.md` - ACTIVE. S1 loot, S2/S2b inventory + pickup + treasure + containers, S3/S3b chargen + advancement, S4a-c MAGIC FOUNDATION COMPLETE (SPELLS.STD + magicka, trap-spell missiles through the verbatim saving throw, MAGIC.DEF items - MI loot live) ALL SHIPPED. Next: the effect library, then economy/quests.
 - `07-Rendering/Rendering.md` - COMPLETE. Queue EMPTY since spectral shipped (2026-07-06); the exterior indirect-light Ledger row waits for a Rendering reopen.
 - `08-Audio/` + `10-UI/` - not started; routed rows collected in Ledger C.
