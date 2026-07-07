@@ -41,3 +41,23 @@ test('effects: continuous (1,0) joins actives, ticks per round, expires; save sc
   applySpell({ element: 0, effects: [cont] }, 1, imm, {}, seq(0.99));
   assert.ok(!imm.activeEffects?.length);
 });
+
+test('effects: S8 buff families - kinds, incumbent renew, the query', async () => {
+  const { buffKind, hasActiveEffect } = await import('../src/systems/effects.js');
+  assert.equal(buffKind({ type: 25, subType: 255 }), 'slowfall');
+  assert.equal(buffKind({ type: 31, subType: 255 }), 'waterWalking');
+  assert.equal(buffKind({ type: 23, subType: 0 }), 'chameleonNormal');
+  assert.equal(buffKind({ type: 4, subType: 0 }), null);
+  const slow = { type: 25, subType: 255, durationBase: 3, durationMod: 1, durationPerLevel: 1 };
+  const t = T();
+  applySpell({ element: 4, effects: [slow] }, 2, t, {}, seq(0));
+  assert.ok(hasActiveEffect(t, 'slowfall'));
+  assert.equal(t.activeEffects[0].roundsRemaining, 5);       // 3 + 1*2
+  tickActiveEffects(t, {});
+  assert.equal(t.activeEffects[0].roundsRemaining, 4);
+  applySpell({ element: 4, effects: [slow] }, 2, t, {}, seq(0));
+  assert.equal(t.activeEffects.length, 1);                    // incumbent, not stacked
+  assert.equal(t.activeEffects[0].roundsRemaining, 5);        // renewed
+  for (let i = 0; i < 5; i++) tickActiveEffects(t, {});
+  assert.ok(!hasActiveEffect(t, 'slowfall'));                 // expired
+});

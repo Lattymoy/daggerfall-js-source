@@ -176,6 +176,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     ctx.actions.update(dt);
     if (walkMode) {
       const jumpHeld = keys.has('Space');
+      player.fallScale = ctx.playerFallScale;   // S8 slowfall
       player.update(dt, {
         forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
         strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),

@@ -245,6 +245,23 @@ verbatim); expiry at 0; failed saves never join. CASTER-ONLY
 who starts with it; ByTouch and the areas stay FLAGGED. Other effect
 families skip counted (the library grows one family at a time).
 
+## S8 (effect library II - the starting-set buffs): SHIPPED
+
+BUFF_KINDS carries the classic keys verbatim - Slowfall (25,255),
+WaterWalking (31,255), ChameleonNormal (23,0) - so the starting
+spellbooks WORK: incumbent self-effects tracked by kind on
+activeEffects, a re-cast RENEWS to the fresh duration (not stacked,
+pinned), expiry clears the hasActiveEffect query. CONSUMERS THREADED
+(no globals - the first cut's function-property hook was killed for
+the same smell audits keep burying): slowfall scales the player
+motor's gravity (fallScale 0.15, fed per frame by BOTH hosts from a
+context getter - the scene has no motor binding, review-caught as a
+phantom reference); chameleonNormal HALVES foe sight radius,
+threaded canSeeTarget -> senses.update -> the scene's per-frame
+scale. waterWalking tracks but its consumer is FLAGGED (swimming
+pends). Buffs land without saves (self-casts; hostile-cast buffs are
+nonsensical).
+
 ## Queue
 - Magic remainder: the effect library (non-damage spell effects,
   casting by the player, magic rounds), enchantment economy/value.

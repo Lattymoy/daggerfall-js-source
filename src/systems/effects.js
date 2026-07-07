@@ -19,6 +19,21 @@ import { savingThrow, rollMagnitude, EFFECT_FLAGS } from './spellcast.js';
 
 const ELEMENT_EFFECT_FLAG = Object.freeze([EFFECT_FLAGS.Fire, EFFECT_FLAGS.Frost, EFFECT_FLAGS.Poison, EFFECT_FLAGS.Shock, EFFECT_FLAGS.Magic]);
 
+// S8: the starting-set buffs, classic keys verbatim - incumbent
+// self-effects tracked by kind; a re-cast RENEWS to the fresh
+// duration (classic re-casting refreshes). Consumers: slowfall
+// scales the player's fall; chameleonNormal halves foe sight range
+// (concealment); waterWalking tracks but its consumer FLAGGED
+// (swimming pends).
+export const BUFF_KINDS = Object.freeze({
+  '25,255': 'slowfall',
+  '31,255': 'waterWalking',
+  '23,0': 'chameleonNormal',
+});
+export const buffKind = (e) => BUFF_KINDS[`${e.type},${e.subType}`] ?? null;
+export const hasActiveEffect = (entity, kind) =>
+  !!entity.activeEffects?.some((a) => a.kind === kind && a.roundsRemaining > 0);
+
 export const isHealHealth = (e) => e.type === 10 && e.subType === 8;
 export const isDamageHealth = (e) => e.type === 4 && e.subType === 0;
 export const isContinuousDamage = (e) => e.type === 1 && e.subType === 0;
@@ -61,6 +76,18 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         target.activeEffects = target.activeEffects || [];
         target.activeEffects.push({ kind: 'continuousDamage', effect: e, casterLevel, savePct: pct, roundsRemaining: rounds });
         out.continuous++;
+      }
+      continue;
+    }
+    const kind = buffKind(e);
+    if (kind) {
+      const rounds = rollDuration(e, casterLevel);
+      if (rounds > 0) {
+        target.activeEffects = target.activeEffects || [];
+        const inc = target.activeEffects.find((a) => a.kind === kind);
+        if (inc) inc.roundsRemaining = rounds;              // incumbent renews
+        else target.activeEffects.push({ kind, roundsRemaining: rounds });
+        out.buffs = (out.buffs ?? 0) + 1;
       }
       continue;
     }

@@ -90,7 +90,7 @@ export class PlayerMotor {
       this.velY = JUMP_SPEED;
       this.grounded = false;
     }
-    if (!this.grounded) this.velY -= GRAVITY * dt;
+    if (!this.grounded) this.velY -= GRAVITY * dt * (this.fallScale ?? 1);   // S8: slowfall sets fallScale
     else this.velY = Math.min(this.velY, 0);
     const dy = this.velY * dt;
 

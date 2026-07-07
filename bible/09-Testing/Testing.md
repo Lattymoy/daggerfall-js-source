@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 268 tests across 68 files.
+Node 22). Suite: 269 tests across 68 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -31,7 +31,7 @@ Node 22). Suite: 268 tests across 68 files.
 | chargen.test.js | 4 | verbatim stat rolls (base + 0..10 inclusive, pool 6..14), skill tiers (28/18/13 + 0..3, defaults 3..6), HP (25 + hpPerLevel; per-level floor 1 + endurance mod), the interim lowest-first pool policy + full create (totals pinned), skillValue dual shape driving formulas (weapon skill hits where HandToHand misses on the same roll), the verbatim starting-spell sets (Mage/Sorcerer shared, Bard single, >6 none, resolution skipping missing records loudly) |
 | charsheet.test.js | 3 | raiseSkills with a sink sets ready+pending WITHOUT applying (headless path unchanged), applyLevelUp (HP roll + endurance mod pinned, hand distribution, flags cleared, idempotent), the level-up screen sharing the verbatim clamps (pre-level floor, pool-0 block, confirm gate) with the hand-built stats landing |
 | chargenui.test.js | 3 | the four verbatim pool clamps (stat max 100/pool 0/floor-at-rolled with points returning; skill pool-only up/floor-at-rolled), the flow end to end (name/gender/class/stats/skills, pool-0 confirm gates, stat-total conservation pinned, group pools landing on their skills), reroll replacing the working set |
-| effects.test.js | 2 | HealHealth (10,8) instant + the verbatim duration arithmetic (base + mod x floor(level/per), per-0 guard), continuous (1,0) joining actives with the ONCE-rolled save percent scaling EVERY per-round magnitude roll, tick + expiry at 0, immune saves never joining, empty lists safe |
+| effects.test.js | 3 | HealHealth (10,8) instant + the verbatim duration arithmetic (base + mod x floor(level/per), per-0 guard), continuous (1,0) joining actives with the ONCE-rolled save percent scaling EVERY per-round magnitude roll, tick + expiry at 0, immune saves never joining, empty lists safe, the S8 buff kinds (slowfall/waterWalking/chameleonNormal keys, incumbent RENEW not stack, duration arithmetic, expiry clearing the query) |
 | effectactions.test.js | 4 | Hurt21 every-20th gate + verbatim exclusive Range * level (min<=max guard), Hurt22-25 flat/axis every activation + Poison as DFU's own empty delegate, chain cascade lever->spike (ActivateNext-first order, activationCount), the verbatim Receive trigger gate (Collision03 blocks Direct/passes WalkInto, chains always valid, MultiTrigger's exact trio, undefined flags never fire) |
 | enemyattack.test.js | 3 | verbatim reset-timer arithmetic (Range/level/reflex terms, /980, 0-floor), the floored-speed >>3 roll gate, strike gating (range+sight+22.5deg yaw) + hit event at HIT_FRAME_MELEE |
 | enemyentity.test.js | 3 | ClassFile verbatim 74-byte parse (incl the (a<<16)|(c<<8)|b shuffle) on a crafted record, class entity rules (level, HP roll bounds, skills clamp, career Speed, city-watch +3..6), monster rules (predefined level, inclusive HP range, armor*5) |

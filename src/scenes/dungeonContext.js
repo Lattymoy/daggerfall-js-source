@@ -40,7 +40,7 @@ import {
   missileArchive, MISSILE_SPEED,
   MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, isDamageHealthEffect,
 } from '../systems/spellcast.js';
-import { applySpell, tickActiveEffects } from '../systems/effects.js';
+import { applySpell, tickActiveEffects, hasActiveEffect } from '../systems/effects.js';
 import {
   generateItems as generateLootItems, setMagicItemTemplates,
   RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS,
@@ -681,6 +681,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
 
   function drawFoes(dt, canvas, proj, view, eye, playerFeet) {
+    const _sightScale = hasActiveEffect(playerEntity, 'chameleonNormal') ? 0.5 : 1;   // S8 concealment
     const _prevMinute = Math.floor(classicMinutes);
     classicMinutes += (dt * 12) / 60;
     for (let r = _prevMinute; r < Math.floor(classicMinutes); r++) {
@@ -725,7 +726,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     for (const f of foes) {
       if (f.dead) continue;
-      f.ai.update(dt, playerFeet || eye);   // E2: classic senses + pursuit; eye fallback keeps probes alive without a player
+      f.ai.update(dt, playerFeet || eye, _sightScale);   // E2 senses + pursuit; S8: chameleon halves sight
       f.events = f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine
       // E3b: the machine's hit frame resolves against the player -
       // EnemyAttack.MeleeDamage verbatim: gate 0.25 / MeleeDistance +
@@ -811,6 +812,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     drawFoes,
     playerAttackInput,
     playerCastInput,   // S5: C key in the hosts
+    get playerFallScale() { return hasActiveEffect(playerEntity, 'slowfall') ? 0.15 : 1; },   // S8: hosts feed their motor
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
     // pause gameplay while any overlay is active.
     get uiOverlayActive() { return !!activeOverlay; },

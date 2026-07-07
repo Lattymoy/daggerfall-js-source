@@ -260,6 +260,7 @@ export function createWorldModes(host) {
     if (mode === 'exterior') return false;
     const fwd = eyeDir();
     const jumpHeld = keys.has('Space');
+    if (mode === 'dungeon' && dungeonCtx) player.fallScale = dungeonCtx.playerFallScale;   // S8 slowfall
     player.update(dt, {
       forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
       strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),

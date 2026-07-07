@@ -69,13 +69,14 @@ export function turnTowards(yaw, dx, dz, maxDeg = CLASSIC_TURN_DEG) {
 export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeight = CAPSULE_HEIGHT) {
   const dx = targetFeet[0] - feet[0], dz = targetFeet[2] - feet[2];
   const dist = Math.hypot(dx, targetFeet[1] - feet[1], dz);
-  if (dist >= SIGHT_RADIUS) return false;
+  const radius = SIGHT_RADIUS * (canSeeTarget.sightScale ?? 1);   // S8: chameleon halves this (module-level hook, set per frame by the scene)
+  if (dist >= radius) return false;
   if (!withinYaw(yaw, dx, dz, FIELD_OF_VIEW / 2)) return false;
   const eye = [feet[0], feet[1] + height * EYE_FRAC, feet[2]];
   const tEye = [targetFeet[0], targetFeet[1] + targetHeight * EYE_FRAC, targetFeet[2]];
   const ex = tEye[0] - eye[0], ey = tEye[1] - eye[1], ez = tEye[2] - eye[2];
   const el = Math.hypot(ex, ey, ez) || 1;
-  const hit = collider.raycast(eye, [ex / el, ey / el, ez / el], Math.min(SIGHT_RADIUS, el));
+  const hit = collider.raycast(eye, [ex / el, ey / el, ez / el], Math.min(radius, el));
   return !Number.isFinite(hit) || hit >= el - 1e-3;
 }
 
