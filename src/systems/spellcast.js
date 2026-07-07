@@ -91,12 +91,17 @@ export function rollMagnitude(effect, casterLevel, rolls = Math.random) {
 export const isDamageHealthEffect = (e) =>
   (e.type === 4 && e.subType === 0) || (e.type === 1 && e.subType === 0);
 
+/** ClassicTargetIndexToTargetType, verbatim (rangeType byte). */
+export const TARGET_TYPES = Object.freeze(['CasterOnly', 'ByTouch', 'SingleTargetAtRange', 'AreaAroundCaster', 'AreaAtRange']);
+
 /**
- * Resolve a trap spell against the player: per damage-family effect,
- * magnitude x savingThrow% / 100 (trunc), summed. Other effects skip
- * (FLAGGED - the effect library lands them).
+ * Resolve a spell against ANY entity (player or foe - both carry
+ * career flag bytes + stats): per damage-family effect, magnitude x
+ * savingThrow% / 100 (trunc), summed. Other effects skip (FLAGGED -
+ * the effect library lands them). Caster level = entity level,
+ * verbatim CalculateCasterLevel.
  */
-export function resolveSpellVsPlayer(spell, casterLevel, target, rolls = Math.random) {
+export function resolveSpellVsTarget(spell, casterLevel, target, rolls = Math.random) {
   let damage = 0;
   const flag = ELEMENT_EFFECT_FLAG[spell.element] ?? EFFECT_FLAGS.Magic;
   for (const e of spell.effects) {

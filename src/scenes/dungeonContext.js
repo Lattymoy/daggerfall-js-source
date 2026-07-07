@@ -26,8 +26,8 @@ import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes } from './shared.js';
 import {
-  resolveSpellVsPlayer, missileArchive, MISSILE_SPEED,
-  MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S,
+  resolveSpellVsTarget, missileArchive, MISSILE_SPEED,
+  MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, isDamageHealthEffect,
 } from '../systems/spellcast.js';
 import {
   generateItems as generateLootItems, setMagicItemTemplates,
@@ -293,6 +293,33 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     missiles.push({ spell, pos: from, dir: null, age: 0, batch: null });
   }
 
+  // S5: player casting - the readied spell is ?spell=N or the FIRST
+  // ranged damage spell in the file (deterministic, no magic index;
+  // the spellbook UI pends). Cost = the record's classic cost field,
+  // FLAGGED: DFU recomputes per-effect via the cost tables (that
+  // slice replaces this). Range types beyond 2/4 (missile) are
+  // FLAGGED to the effect library (caster-only buffs, touch, areas).
+  let readiedSpell = null;
+  if (spellsByIndex) {
+    if (Number.isInteger(opts.playerSpell)) readiedSpell = spellsByIndex.get(opts.playerSpell) ?? null;
+    if (!readiedSpell) {
+      for (const sp of spellsByIndex.values()) {
+        if ((sp.rangeType === 2 || sp.rangeType === 4) && sp.effects.some(isDamageHealthEffect)) { readiedSpell = sp; break; }
+      }
+    }
+  }
+  function playerCastInput(eye, dir) {
+    const sp = readiedSpell;
+    if (!sp) return false;
+    const cost = sp.cost;
+    if ((playerEntity.magicka ?? 0) < cost) return false;   // classic refuses without the points
+    if (sp.rangeType !== 2 && sp.rangeType !== 4) return false;   // FLAGGED: non-missile ranges pend the library
+    playerEntity.magicka -= cost;
+    surfacePlayer();
+    missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true });
+    return true;
+  }
+
   // S2: treasure piles - random markers (199.19) roll an icon +
   // generate by the dungeon-type key; fixed 216 flats keep their
   // record. Per-pile single batches so pickup can remove one pile.
@@ -395,16 +422,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // per resolved swing, per WeaponManager.MeleeDamage.
       tallySkill(playerEntity, WEAPON_SKILL[playerWeapon.weapon.name] ?? SKILLS.HandToHand);
       if (damage <= 0) continue;
-      foe.entity.health -= damage;
-      if (foe.entity.health <= 0) {
-        foe.dead = true;
-        spawnCorpse(foe);
-      } else {
-        // stagger AWAY from the hit: player is in front -> HurtFront
-        const hdx = playerFeet[0] - foe.ai.feet[0], hdz = playerFeet[2] - foe.ai.feet[2];
-        const front = foeDeps.withinYaw(foe.ai.yaw, hdx, hdz, 90);
-        foe.reaction = { clip: foeDeps.REACTIONS[front ? 'HurtFront' : 'HurtBack'], t: 0 };
-      }
+      damageFoe(foe, damage, playerFeet);   // stagger AWAY from the hit: player in front -> HurtFront
     }
   }
   // S3b: the classic clock for skill-raise checks - dt * TimeScale
@@ -452,15 +470,46 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // the batch's origin uniform (zero GL churn - the same thrash
       // class the engine audit killed stays killed).
       if (m.batch) m.batch.origin = [m.pos[0] - m.firePos[0], m.pos[1] - m.firePos[1], m.pos[2] - m.firePos[2]];
+      if (m.fromPlayer) {
+        // S5: player missiles seek foes (mid-capsule contact).
+        for (const f of foes) {
+          if (f.dead) continue;
+          const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + 0.9 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];
+          if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+            const dmg = resolveSpellVsTarget(m.spell, playerEntity.level, f.entity);
+            if (dmg > 0) damageFoe(f, dmg);
+            retireMissile(m);
+            break;
+          }
+        }
+        continue;
+      }
       const dx = target[0] - m.pos[0], dy = target[1] - m.pos[1], dz = target[2] - m.pos[2];
       if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {   // missile radius + player capsule radius
-        const dmg = resolveSpellVsPlayer(m.spell, playerEntity.level, playerEntity);
+        const dmg = resolveSpellVsTarget(m.spell, playerEntity.level, playerEntity);
         if (dmg > 0) {
           playerEntity.health = Math.max(0, playerEntity.health - dmg);
           surfacePlayer();
         }
         retireMissile(m);
       }
+    }
+  }
+
+  // Shared foe-damage path: melee and spells kill through the same
+  // door (corpse + reaction). Factored in S5 so missiles do not grow
+  // a second death path.
+  function damageFoe(foe, damage, playerFeet = null) {
+    foe.entity.health -= damage;
+    if (foe.entity.health <= 0) {
+      foe.dead = true;
+      spawnCorpse(foe);
+      return;
+    }
+    if (playerFeet && foeDeps) {
+      const hdx = playerFeet[0] - foe.ai.feet[0], hdz = playerFeet[2] - foe.ai.feet[2];
+      const front = foeDeps.withinYaw(foe.ai.yaw, hdx, hdz, 90);
+      foe.reaction = { clip: foeDeps.REACTIONS[front ? 'HurtFront' : 'HurtBack'], t: 0 };
     }
   }
 
@@ -552,6 +601,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foes,
     drawFoes,
     playerAttackInput,
+    playerCastInput,   // S5: C key in the hosts
     // S2 pickup: piles + dead foes' corpses as activation targets;
     // takeLoot transfers into the player entity and removes the flat.
     lootTargets() {

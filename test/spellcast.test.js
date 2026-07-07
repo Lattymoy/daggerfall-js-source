@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  savingThrow, careerTolerance, rollMagnitude, resolveSpellVsPlayer,
+  savingThrow, careerTolerance, rollMagnitude, resolveSpellVsTarget,
   isDamageHealthEffect, missileArchive, EFFECT_FLAGS,
   CASTSPELL_COOLDOWN_TICK, MISSILE_SPEED,
 } from '../src/systems/spellcast.js';
@@ -48,7 +48,7 @@ test('spellcast: magnitude + damage-family resolution', () => {
   // full resolve: dmg effect magnitude 9, saving roll 0.99 (full) -> 9; second effect non-damage skipped
   const spell = { element: 0, effects: [e, { type: 11, subType: 0 }, { type: -1, subType: -1 }] };
   const T = { stats: { willpower: 50 }, career: {} };
-  assert.equal(resolveSpellVsPlayer(spell, 7, T, seq(0, 0, 0.99)), 9);
+  assert.equal(resolveSpellVsTarget(spell, 7, T, seq(0, 0, 0.99)), 9);
 });
 
 test('spellcast: the CastSpell action cooldown gate fires through the sink', () => {
@@ -60,4 +60,15 @@ test('spellcast: the CastSpell action cooldown gate fires through the sink', () 
   sys.receive(o);
   assert.deepEqual(fired, [[12, [1, 2, 3]]]);            // one tick of 45.45 crosses 0 from 0
   assert.ok(CASTSPELL_COOLDOWN_TICK > 45 && MISSILE_SPEED === 25);
+});
+
+test('spellcast: TARGET_TYPES verbatim + resolve vs a foe-shaped entity', async () => {
+  const { TARGET_TYPES, resolveSpellVsTarget: r, EFFECT_FLAGS: EF } = await import('../src/systems/spellcast.js');
+  assert.deepEqual([...TARGET_TYPES], ['CasterOnly', 'ByTouch', 'SingleTargetAtRange', 'AreaAroundCaster', 'AreaAtRange']);
+  // a fire-immune FOE entity (CFG career bytes) shrugs the fireball
+  const foe = { stats: { willpower: 50 }, career: { immunityFlags: EF.Fire } };
+  const e = { type: 4, subType: 0, magnitudeBaseLow: 10, magnitudeBaseHigh: 10, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1 };
+  assert.equal(r({ element: 0, effects: [e] }, 5, foe, seq(0, 0, 0.99)), 0);
+  const soft = { stats: { willpower: 0 }, career: {} };
+  assert.ok(r({ element: 0, effects: [e] }, 5, soft, seq(0, 0, 0.99)) > 0);
 });

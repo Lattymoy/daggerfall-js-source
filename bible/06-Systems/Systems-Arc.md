@@ -188,6 +188,30 @@ OPEN with the gems). Item VALUE from enchantment costs is FLAGGED to
 the economy slice (shops). The MI halving loop is LIVE - loot no
 longer under-generates.
 
+## S5 (effect library I - player casting): SHIPPED
+
+The player spends magicka. spellcast.js: TARGET_TYPES verbatim
+(ClassicTargetIndexToTargetType: CasterOnly/ByTouch/
+SingleTargetAtRange/AreaAroundCaster/AreaAtRange) and the resolver
+GENERALIZED to resolveSpellVsTarget - one function for player and
+foes alike (both carry career flag bytes + stats; caster level =
+entity level per CalculateCasterLevel; no alias kept). SCENE: the
+readied spell is ?spell=N or the FIRST ranged damage spell in
+SPELLS.STD (deterministic, no magic index; the spellbook UI pends);
+playerCastInput gates on magicka >= the record's classic cost field
+(FLAGGED: the DFU per-effect cost tables replace this in the cost
+slice), spends, and fires a player missile from the eye along the
+look; player missiles seek FOES (mid-capsule contact) and resolve
+through the same saving throw - a fire-immune career shrugs a
+fireball, test-pinned. Melee and spells now kill through ONE
+damageFoe door (corpse + reaction factored - missiles did not grow
+a second death path). Range types 0/1/3 FLAGGED to the library
+(buffs, touch, areas). INPUT: C casts in both hosts (the input map
+pends the UI arc); ?spell plumbed through all four hosts. REVIEW
+CATCHES: my first host edit left the keydown listener unclosed
+(node --check caught it); cam.forward() was an API I invented -
+both hosts derive the look vector the way they already do.
+
 ## Queue
 - Magic remainder: the effect library (non-damage spell effects,
   casting by the player, magic rounds), enchantment economy/value.

@@ -62,7 +62,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   status(`laying out ${dungeonName}`);
   const pipeline = createDataPipeline({ renderer, arch, palette });
   const ctx = await buildDungeonContext(
-    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { foes: params.has('foes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined });
+    { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { foes: params.has('foes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined });
 
   // Classic water tile: ground archive record 0 for this location's
   // climate (the exterior ground path never routes single records).
@@ -111,6 +111,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // C8 E3c: RMB drag-to-swing (classic weapon control; menu suppressed)
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('mousedown', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, true); });
+  addEventListener('keydown', (e) => {
+    if (e.code !== 'KeyC') return;
+    const dir = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+    ctx.playerCastInput(cam.pos, dir);   // S5 cast (input map pends UI)
+  });
   addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }

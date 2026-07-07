@@ -192,7 +192,7 @@ export function createWorldModes(host) {
     try {
       const ctx = await buildDungeonContext(
         { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, palette },
-        dfLocation, blocks, dfLocation.climate.climateType, { foes: host.foes, playerClass: host.playerClass });
+        dfLocation, blocks, dfLocation.climate.climateType, { foes: host.foes, playerClass: host.playerClass, playerSpell: host.playerSpell });
       // Verbatim MovePlayerToMarker: start marker + up * (height * 0.6).
       const m = ctx.startMarker;
       dungeonCtx = ctx;
@@ -376,6 +376,13 @@ export function createWorldModes(host) {
   });
   addEventListener('mousedown', (e) => {
     if (e.button === 2 && mode === 'dungeon' && dungeonCtx) dungeonCtx.playerAttackInput(0, 0, true);
+  });
+  addEventListener('keydown', (e) => {
+    if (e.code === 'KeyC' && mode === 'dungeon' && dungeonCtx) {
+      // S5: cast the readied spell along the look direction (the
+      // input map + spellbook pend the UI arc).
+      dungeonCtx.playerCastInput(cam.pos, eyeDir());
+    }
   });
 
   return {

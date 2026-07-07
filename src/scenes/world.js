@@ -392,6 +392,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     voxelfolk: params.has('voxelfolk'),
     foes: params.has('foes'),
     playerClass: params.has('class') ? Number(params.get('class')) : undefined,
+    playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined,
     paint: params.has('paint'),
     piece: params.has('piece') ? Number(params.get('piece') || 102) || 102 : 0,
     pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette },
