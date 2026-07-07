@@ -58,6 +58,23 @@ message + inventory UI pend the UI arc; interior containers pend
 S2b; the DFU icon-roll Random slot stays a uniform roll per the
 approved stance.
 
+## S2 correction (2026-07-07, live-console root fix)
+
+The S2 treasure loop iterated the RAW `blocks` PARAMETER - the
+BlocksFile reader - instead of `dungeon.blocks`, the placed-block
+array every sibling consumer uses. With real ARENA2 the boot threw
+`TypeError: t is not iterable` inside buildDungeonContext and
+BLACK-SCREENED the deploy; headless tests pin the pure loot math
+and never walk this scene loop, the build is shape-blind, and the
+field names (originX/originZ/layout.markers) matched the RIGHT
+structure - the binding was wrong, not the shape, which is exactly
+why nothing caught it. Rooted by mapping Mac's minified stack (Gs =
+buildDungeonContext, `t` = the third param) back through the
+deterministic bundle to the one `for..of` over that param.
+Headless boot re-verified clean post-fix. LESSON, recorded: scene
+loops over build parameters are invisible to the whole gate -
+live-console + bundle mapping is the diagnostic that works.
+
 ## S2b (containers + exact weights): SHIPPED
 
 Armor/weapon weight is now CalculateWeightForMaterial VERBATIM -

@@ -469,7 +469,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const lootPiles = [];
   {
     const lootKey = DUNGEON_LOOT_KEYS[dfLocation.mapTableData.dungeonType] ?? '-';
-    for (const b of blocks) {
+    for (const b of dungeon.blocks) {   // the PLACED blocks (layout + origins) - NOT the BlocksFile reader parameter (the S2 black-screen bug: 't is not iterable' at boot with real data)
       for (const m of b.layout.markers) {
         const isRandom = !m.archive && m.record === RANDOM_TREASURE_MARKER_RECORD;
         const isFixed = m.archive === RANDOM_TREASURE_ARCHIVE;
