@@ -262,6 +262,22 @@ scale. waterWalking tracks but its consumer is FLAGGED (swimming
 pends). Buffs land without saves (self-casts; hostile-cast buffs are
 nonsensical).
 
+## S9 (cast ranges II - touch, around-caster, explosions): SHIPPED
+
+The last two cast ranges land and rangeType 4 becomes what it is:
+ByTouch (1) picks the NEAREST LIVE foe whose mid-capsule sits within
+melee reach (2.25 + 0.25, the WeaponManager shape) with a real LOS
+raycast - the cast SPENDS on a whiff (classic wastes it);
+AreaAroundCaster (3) sweeps every live foe within the verbatim
+Missile.ExplosionRadius 4.0 of the caster; and rangeType-4 impacts
+now EXPLODE - an indiscriminate OverlapSphere at the impact point
+hitting every live foe in the radius AND the player when close
+enough (trap fireballs splash; your own fireball can burn you at
+your feet). SingleTargetAtRange (2) keeps direct-only. The pure
+targeting (pickTouchTarget, sweepFoes) lives in spellcast.js and is
+pinned; the FLAGGED ranges note retires - all five TARGET_TYPES are
+live.
+
 ## Queue
 - Magic remainder: the effect library (non-damage spell effects,
   casting by the player, magic rounds), enchantment economy/value.

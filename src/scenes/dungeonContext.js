@@ -37,8 +37,9 @@ import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes } from './shared.js';
 import {
-  missileArchive, MISSILE_SPEED,
-  MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, isDamageHealthEffect,
+  missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
+  MISSILE_LIFESPAN_S, isDamageHealthEffect,
+  EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
 import { applySpell, tickActiveEffects, hasActiveEffect } from '../systems/effects.js';
 import {
@@ -398,6 +399,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const pitch = Math.asin(-Math.max(-1, Math.min(1, m.dir[1]))) * 180 / Math.PI;
     return trs(m.pos[0], m.pos[1], m.pos[2], pitch, yaw, 0);
   }
+  // Cast ranges II: the rangeType-4 EXPLOSION - indiscriminate sweep
+  // (OverlapSphere at impact): every live foe within the radius, and
+  // the player when close enough.
+  function explodeAt(pos, spell, casterLevel, playerFeet) {
+    for (const t of sweepFoes(pos, EXPLOSION_RADIUS, foes)) {
+      applySpell(spell, casterLevel, t.entity, { hurt: (n) => damageFoe(t, n), heal: () => {} });
+    }
+    if (playerFeet) {
+      const d = Math.hypot(playerFeet[0] - pos[0], playerFeet[1] + 0.9 - pos[1], playerFeet[2] - pos[2]);
+      if (d <= EXPLOSION_RADIUS) applySpell(spell, casterLevel, playerEntity, { hurt: hurtPlayer, heal: healPlayer });
+    }
+  }
+
   function playerCastInput(eye, dir) {
     const sp = readiedSpell;
     if (!sp) return false;
@@ -412,7 +426,29 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       surfacePlayer();
       return true;
     }
-    if (sp.rangeType !== 2 && sp.rangeType !== 4) return false;   // FLAGGED: ByTouch + areas pend the library
+    if (sp.rangeType === 1) {
+      // Cast ranges II: ByTouch - the nearest foe in melee reach; the
+      // cast SPENDS even on a whiff (classic wastes it).
+      playerEntity.magicka -= cost;
+      surfacePlayer();
+      const t = pickTouchTarget(eye, foes, 2.25 + 0.25, (c, d) => {
+        const l = d || 1, dx = (c[0] - eye[0]) / l, dy = (c[1] - eye[1]) / l, dz = (c[2] - eye[2]) / l;
+        const hit = collider.raycast(eye, [dx, dy, dz], d);
+        return !Number.isFinite(hit) || hit >= d - 1e-3;
+      });
+      if (t) applySpell(sp, playerEntity.level, t.entity, { hurt: (n) => damageFoe(t, n), heal: (n) => { t.entity.health = Math.min(t.entity.maxHealth ?? Infinity, t.entity.health + n); } });
+      return true;
+    }
+    if (sp.rangeType === 3) {
+      // AreaAroundCaster: every live foe within the explosion radius.
+      playerEntity.magicka -= cost;
+      surfacePlayer();
+      for (const t of sweepFoes(eye, EXPLOSION_RADIUS, foes)) {
+        applySpell(sp, playerEntity.level, t.entity, { hurt: (n) => damageFoe(t, n), heal: () => {} });
+      }
+      return true;
+    }
+    if (sp.rangeType !== 2 && sp.rangeType !== 4) return false;
     playerEntity.magicka -= cost;
     surfacePlayer();
     missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true });
@@ -613,7 +649,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           if (f.dead) continue;
           const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + 0.9 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];
           if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
-            applySpell(m.spell, playerEntity.level, f.entity, {
+            if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet);
+            else applySpell(m.spell, playerEntity.level, f.entity, {
               hurt: (n) => damageFoe(f, n),
               heal: (n) => { f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + n); },
             });
@@ -625,7 +662,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       const dx = target[0] - m.pos[0], dy = target[1] - m.pos[1], dz = target[2] - m.pos[2];
       if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {   // missile radius + player capsule radius
-        applySpell(m.spell, playerEntity.level, playerEntity, { hurt: hurtPlayer, heal: healPlayer });
+        if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet);
+        else applySpell(m.spell, playerEntity.level, playerEntity, { hurt: hurtPlayer, heal: healPlayer });
         retireMissile(m);
       }
     }

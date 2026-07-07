@@ -53,7 +53,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `03-World/Player-Arc.md` - COMPLETE (P1-P8). Successor decided long since: C8, then Systems (this list is the truth of record).
 - `04-Characters/Characters-Arc.md` - PARKED (pivot 3: classic visuals). C8 shipped E1-E4b end to end + spectral; E4c deferred by Mac; remaining interims are Systems work (ledger below).
 - `05-Combat/Combat.md` - COMPLETE. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, and the collision-trigger seam all shipped. Build queue EMPTY; Systems-shared interims tracked in the ledger.
-- `06-Systems/Systems-Arc.md` - ACTIVE. S1-S5 + S6 starting spells + S7 effect spine + S8 STARTING-SET BUFFS (slowfall, concealment, water-walking tracked - the spellbooks work) SHIPPED. Next: cost tables or ByTouch/areas, then economy/quests.
+- `06-Systems/Systems-Arc.md` - ACTIVE. S1-S8 + S9 CAST RANGES II (touch, around-caster, real rangeType-4 explosions - all five target types live) SHIPPED. Next: the cost tables, then economy/quests/save.
 - `07-Rendering/Rendering.md` - COMPLETE. Queue EMPTY since spectral shipped (2026-07-06); the exterior indirect-light Ledger row waits for a Rendering reopen.
 - `10-UI/UI-Arc.md` - ACTIVE. U1 HUD, U2a text, U2b chargen, U3 level-up + sheet, U4 inventory/spellbook/death, U5 messages, TEXT.RSC READER (verbatim table + faithful flattening; consumers wire per-verified-ID) SHIPPED. Queue: input map, window art, per-ID verification.
 - `08-Audio/` - not started; routed rows collected in Ledger C.

@@ -80,3 +80,16 @@ test('spellcast: TARGET_TYPES verbatim + resolve vs a foe-shaped entity', async 
   r({ element: 0, effects: [e] }, 5, soft, { hurt: (n) => { a += n; } }, seq(0.99, 0, 0));
   assert.ok(a > 0);
 });
+
+test('spellcast: cast ranges II - touch pick + area sweep (pure)', async () => {
+  const { pickTouchTarget, sweepFoes, EXPLOSION_RADIUS } = await import('../src/systems/spellcast.js');
+  assert.equal(EXPLOSION_RADIUS, 4.0);
+  const mk = (x, z, dead = false) => ({ dead, ai: { feet: [x, 0, z] } });
+  const eye = [0, 0.9, 0];                      // mid-capsule height: foes' centers sit at y 0.9 too
+  const near = mk(0, 2), far = mk(0, 6), corpse = mk(0, 1, true), nearer = mk(0, 1.5);
+  assert.equal(pickTouchTarget(eye, [far], 2.5), null);                       // out of reach
+  assert.equal(pickTouchTarget(eye, [near, nearer, corpse], 2.5), nearer);    // nearest live wins, corpses skip
+  assert.equal(pickTouchTarget(eye, [near], 2.5, () => false), null);         // LOS gate holds
+  const hits = sweepFoes([0, 0.9, 0], EXPLOSION_RADIUS, [near, far, corpse, nearer]);
+  assert.deepEqual(hits, [near, nearer]);                                     // 2 and 1.5 in; 6 out; dead out
+});

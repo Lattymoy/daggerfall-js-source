@@ -94,5 +94,34 @@ export const isDamageHealthEffect = (e) =>
 /** ClassicTargetIndexToTargetType, verbatim (rangeType byte). */
 export const TARGET_TYPES = Object.freeze(['CasterOnly', 'ByTouch', 'SingleTargetAtRange', 'AreaAroundCaster', 'AreaAtRange']);
 
+/** Missile.ExplosionRadius, verbatim (world units == Unity meters
+ *  throughout the port). */
+export const EXPLOSION_RADIUS = 4.0;
+
+/** ByTouch target pick: the nearest live foe whose mid-capsule sits
+ *  within melee reach of the eye (the WeaponManager touch shape -
+ *  the caller supplies reach + a LOS test). */
+export function pickTouchTarget(eye, foes, reach, losClear = () => true) {
+  let best = null, bestDist = Infinity;
+  for (const f of foes) {
+    if (f.dead) continue;
+    const c = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];
+    const d = Math.hypot(c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]);
+    if (d <= reach && d < bestDist && losClear(c, d)) { best = f; bestDist = d; }
+  }
+  return best;
+}
+
+/** Area sweep: live foes within radius of a point (OverlapSphere). */
+export function sweepFoes(pos, radius, foes) {
+  const out = [];
+  for (const f of foes) {
+    if (f.dead) continue;
+    const c = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];
+    if (Math.hypot(c[0] - pos[0], c[1] - pos[1], c[2] - pos[2]) <= radius) out.push(f);
+  }
+  return out;
+}
+
 // resolveSpellVsTarget moved to systems/effects.applySpell (S7) -
 // one door for instant AND continuous families.
