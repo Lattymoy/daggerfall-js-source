@@ -116,7 +116,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   addEventListener('keydown', (e) => {
     // The input map (ui/input.js) owns all bindings.
     const dir = () => ({ eye: cam.pos, dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)] });
-    if (routeKey(e, ctx, dir)) e.preventDefault();
+    if (routeKey(e, ctx, dir, (p) => { player.pos[0] = p[0]; player.pos[1] = p[1]; player.pos[2] = p[2]; })) e.preventDefault();
   });
   addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   addEventListener('mousemove', (e) => {

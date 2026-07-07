@@ -44,6 +44,7 @@ import {
 } from '../systems/spellcast.js';
 import { applySpell, tickActiveEffects, hasActiveEffect } from '../systems/effects.js';
 import { calculateCastCost } from '../systems/spellcost.js';
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
 import {
   generateItems as generateLootItems, setMagicItemTemplates,
   RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS,
@@ -305,6 +306,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const hudText = new HudText();   // U5: classic popup messages
   const clickCast = new OneShotLatch();   // classic click-to-cast: armed by readying
   let pendingClickCast = false;
+  let lastPlayerFeet = null;   // S11: the save position
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
   function healPlayer(n) {
@@ -726,6 +728,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
 
   function drawFoes(dt, canvas, proj, view, eye, playerFeet) {
+    if (playerFeet) lastPlayerFeet = [...playerFeet];
     if (pendingClickCast) {
       pendingClickCast = false;
       playerCastInput(eye, [-view[2], -view[6], -view[10]]);   // classic: the readied spell fires on the click
@@ -862,6 +865,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     playerAttackInput,
     playerCastInput,   // S5: C key in the hosts
     get playerFallScale() { return hasActiveEffect(playerEntity, 'slowfall') ? 0.15 : 1; },   // S8: hosts feed their motor
+    // S11: quicksave/quickload (F9/F12). WORLD state (foes, piles,
+    // actions) is FLAGGED - the player snapshot only.
+    quickSave() {
+      const snap = snapshotPlayer(playerEntity, {
+        position: lastPlayerFeet, classicMinutes,
+        readiedSpellIndex: readiedSpell?.index ?? null,
+      });
+      if (writeQuicksave(snap)) hudText.add('Game saved.');
+    },
+    quickLoad(setPlayerPos) {
+      const snap = readQuicksave();
+      if (!snap) { hudText.add('No saved game.'); return; }
+      const extras = restorePlayer(playerEntity, snap, spellsByIndex);
+      if (!extras) { hudText.add('Save version mismatch.'); return; }
+      classicMinutes = extras.classicMinutes ?? classicMinutes;
+      readiedSpell = extras.readiedSpellIndex != null ? spellsByIndex?.get(extras.readiedSpellIndex) ?? null : null;
+      if (extras.position && setPlayerPos) setPlayerPos(extras.position);
+      surfacePlayer();
+      if (activeOverlay instanceof DeathScreen) activeOverlay = null;   // rising from a save beats the reload
+      hudText.add('Game loaded.');
+    },
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
     // pause gameplay while any overlay is active.
     get uiOverlayActive() { return !!activeOverlay; },

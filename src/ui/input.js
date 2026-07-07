@@ -26,16 +26,21 @@ export function gameAction(e) {
   if (e.key === 'F5') return 'charSheet';          // classic
   if (e.key === 'F6') return 'inventory';          // classic
   if (e.key === 'Backspace') return 'spellbook';   // DFU default
-  if (e.code === 'KeyC') return 'castSpell';       // ours (click-to-cast pends)
+  if (e.code === 'KeyC') return 'castSpell';       // ours (classic click-to-cast also live)
+  if (e.key === 'F9') return 'quickSave';          // DFU default
+  if (e.key === 'F12') return 'quickLoad';         // DFU default
   return null;
 }
 
 /** Route one keydown against a dungeon context. Returns true when
  *  consumed (the host preventDefaults and stops). */
-export function routeKey(e, ctx, castDir) {
+export function routeKey(e, ctx, castDir, setPlayerPos = null) {
   if (ctx.uiOverlayActive) {
     const a = overlayAction(e);
     if (a) { ctx.overlayInput(a); return true; }
+    // Quickload works from ANY overlay (the death screen's F12 hint
+    // must be true); everything else stays gated.
+    if (gameAction(e) === 'quickLoad') { ctx.quickLoad?.(setPlayerPos); return true; }
     return false;
   }
   switch (gameAction(e)) {
@@ -43,6 +48,8 @@ export function routeKey(e, ctx, castDir) {
     case 'inventory': ctx.toggleInventory(); return true;
     case 'spellbook': ctx.toggleSpellbook(); return true;
     case 'castSpell': { const d = castDir(); ctx.playerCastInput(d.eye, d.dir); return true; }
+    case 'quickSave': ctx.quickSave?.(); return true;
+    case 'quickLoad': ctx.quickLoad?.(setPlayerPos); return true;
     default: return false;
   }
 }

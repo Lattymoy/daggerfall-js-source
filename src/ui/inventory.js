@@ -104,6 +104,6 @@ export class DeathScreen {
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.15, 0.01, 0.01, 0.94]);
     const t = 'YOU HAVE DIED';
     drawText(renderer, font, t, (canvas.width - measureText(font.fnt, t) * s) / 2, canvas.height / 2 - 10 * s, s, [0.9, 0.2, 0.15, 1]);
-    drawText(renderer, font, 'ENTER to rise again', (canvas.width - measureText(font.fnt, 'ENTER to rise again') * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
+    drawText(renderer, font, 'ENTER restart   F12 load', (canvas.width - measureText(font.fnt, 'ENTER restart   F12 load') * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
   }
 }

@@ -298,6 +298,24 @@ spellbook all show/spend the LIVE skill-scaled cost - a Destruction
 novice pays more for the same Shock than a master, who bottoms at
 the floor.
 
+## S11 (save/load - the player snapshot): SHIPPED
+
+DFU's own save system is a JSON serialization of live state - the
+faithful port shape. systems/save.js: snapshotPlayer captures the
+entity (fields, stats, skills + uses, career data, items, known
+spells BY INDEX re-resolved against SPELLS.STD on load, active
+effects) plus the scene extras (position, the classic clock, the
+readied spell); restorePlayer round-trips it all with DEEP copies
+(pinned immune to source mutation) behind a VERSIONED envelope that
+refuses mismatches loudly; localStorage backend with corrupt-JSON
+null. F9 quicksave / F12 quickload (the DFU defaults) ride the input
+map; QUICKLOAD PIERCES OVERLAYS (the death screen's 'F12 load' hint
+must be true - pinned; F9 stays gated) and rising from a save clears
+the death screen, retiring the reload-only path. Hosts pass a
+position applier through routeKey (they own the player). WORLD
+state (foes, loot piles, action states, doors) is FLAGGED - dungeons
+re-derive from location; the world snapshot pends its slice.
+
 ## Queue
 - Magic remainder: the effect library (non-damage spell effects,
   casting by the player, magic rounds), enchantment economy/value.

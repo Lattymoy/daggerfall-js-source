@@ -384,7 +384,7 @@ export function createWorldModes(host) {
   addEventListener('keydown', (e) => {
     // The input map (ui/input.js) owns all bindings.
     if (mode !== 'dungeon' || !dungeonCtx) return;
-    if (routeKey(e, dungeonCtx, () => ({ eye: cam.pos, dir: eyeDir() }))) e.preventDefault();
+    if (routeKey(e, dungeonCtx, () => ({ eye: cam.pos, dir: eyeDir() }), (p) => { player.pos[0] = p[0]; player.pos[1] = p[1]; player.pos[2] = p[2]; })) e.preventDefault();
   });
 
   return {
