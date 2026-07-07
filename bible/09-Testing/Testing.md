@@ -8,7 +8,7 @@ Node 22). Suite: 277 tests across 71 files.
 | action.test.js | 3 | door lifecycle/verbatim constants, move tween + chain gate, activation picking |
 | anims.test.js | 2 | Directional attacks: verbatim DFU direction->strike mapping pins; delta-clip well-formedness (start/end 0, sorted keys); sampler continuity + keyframe hit + null past dur |
 | player.test.js | 5 | verbatim speeds/constants, collider ground/slide/step, motor gravity/jump, strafe = true camera-right, wall-ladder regression (step-up needs a clear raised path) |
-| save.test.js | 2 | the snapshot/restore round-trip (entity fields, deep-copied stats/items/actives, spells re-resolved by index, extras carried, the version gate refusing, storage round-trip + corrupt-JSON null), F12 piercing overlays while F9 stays gated |
+| save.test.js | 2 | the snapshot/restore round-trip (entity fields, deep-copied stats/items/actives, spells re-resolved by index, extras + the S12 world/locationKey riding the envelope, the version gate refusing, storage round-trip + corrupt-JSON null), F12 piercing overlays while F9 stays gated |
 | sky.test.js | 3 | SKY reader pins, panorama mirror law, night mapping |
 | smoke.test.js | 1 | runner sanity |
 | clock.test.js | 4 | hour gates, LightCurve pins, sun sweep, flicker determinism |

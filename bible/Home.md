@@ -53,7 +53,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `03-World/Player-Arc.md` - COMPLETE (P1-P8). Successor decided long since: C8, then Systems (this list is the truth of record).
 - `04-Characters/Characters-Arc.md` - PARKED (pivot 3: classic visuals). C8 shipped E1-E4b end to end + spectral; E4c deferred by Mac; remaining interims are Systems work (ledger below).
 - `05-Combat/Combat.md` - COMPLETE. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, and the collision-trigger seam all shipped. Build queue EMPTY; Systems-shared interims tracked in the ledger.
-- `06-Systems/Systems-Arc.md` - ACTIVE. S1-S10 + S11 SAVE/LOAD (the DFU-shape player snapshot, F9/F12, quickload piercing the death screen; world state flagged) SHIPPED. Next: economy/shops, quests, or the world snapshot.
+- `06-Systems/Systems-Arc.md` - ACTIVE. S1-S11 + S12 THE WORLD SNAPSHOT (foes/piles/actions ride the save, location-gated; corpses respawn) SHIPPED. Next: economy/shops or quests.
 - `07-Rendering/Rendering.md` - COMPLETE. Queue EMPTY since spectral shipped (2026-07-06); the exterior indirect-light Ledger row waits for a Rendering reopen.
 - `10-UI/UI-Arc.md` - ACTIVE. U1-U5, TEXT.RSC reader, input map, CLICK-TO-CAST (the classic armed-click shape + the S9 touch-spend rule corrected to the source) SHIPPED. Queue: window art, per-ID verification.
 - `08-Audio/` - not started; routed rows collected in Ledger C.

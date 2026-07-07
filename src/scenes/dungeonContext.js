@@ -678,6 +678,46 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
+  // S12: the dungeon world snapshot. Foes persist by SPAWN ORDER
+  // (marker order is deterministic per location rebuild); piles by
+  // index; action objects by their stable keys. Movers recompute
+  // their matrix from {state, t} on the next tick, so those two plus
+  // activationCount ARE the mover.
+  const _locationKey = `dungeon:${dfLocation?.dungeon?.recordElement?.header?.locationId ?? 'probe'}`;
+  function collectWorld() {
+    return {
+      foes: foes.map((f) => ({
+        health: f.entity.health, dead: !!f.dead,
+        feet: [...f.ai.feet], yaw: f.ai.yaw,
+        items: (f.entity.items ?? []).map((it) => ({ ...it })),
+      })),
+      piles: lootPiles.map((p) => ({ items: p.items.map((it) => ({ ...it })) })),
+      actions: [...actions.objects.values()].map((o) => ({
+        key: o.key, state: o.state, t: o.t ?? 0,
+        activationCount: o.activationCount ?? 0,
+      })),
+    };
+  }
+  function applyWorld(w) {
+    w.foes?.forEach((sf, i) => {
+      const f = foes[i];
+      if (!f) return;
+      f.entity.health = sf.health;
+      f.entity.items = sf.items.map((it) => ({ ...it }));
+      f.ai.feet[0] = sf.feet[0]; f.ai.feet[1] = sf.feet[1]; f.ai.feet[2] = sf.feet[2];
+      f.ai.yaw = sf.yaw;
+      if (sf.dead && !f.dead) { f.dead = true; spawnCorpse(f); }
+    });
+    w.piles?.forEach((sp, i) => { if (lootPiles[i]) lootPiles[i].items = sp.items.map((it) => ({ ...it })); });
+    w.actions?.forEach((sa) => {
+      const o = actions.objects.get(sa.key);
+      if (!o) return;
+      o.state = sa.state;
+      o.t = sa.t;
+      o.activationCount = sa.activationCount;
+    });
+  }
+
   // Shared foe-damage path: melee and spells kill through the same
   // door (corpse + reaction). Factored in S5 so missiles do not grow
   // a second death path.
@@ -871,6 +911,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const snap = snapshotPlayer(playerEntity, {
         position: lastPlayerFeet, classicMinutes,
         readiedSpellIndex: readiedSpell?.index ?? null,
+        locationKey: _locationKey,
+        world: collectWorld(),
       });
       if (writeQuicksave(snap)) hudText.add('Game saved.');
     },
@@ -881,7 +923,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!extras) { hudText.add('Save version mismatch.'); return; }
       classicMinutes = extras.classicMinutes ?? classicMinutes;
       readiedSpell = extras.readiedSpellIndex != null ? spellsByIndex?.get(extras.readiedSpellIndex) ?? null : null;
-      if (extras.position && setPlayerPos) setPlayerPos(extras.position);
+      if (extras.world && extras.locationKey === _locationKey) applyWorld(extras.world);
+      else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends
+      if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);
       surfacePlayer();
       if (activeOverlay instanceof DeathScreen) activeOverlay = null;   // rising from a save beats the reload
       hudText.add('Game loaded.');

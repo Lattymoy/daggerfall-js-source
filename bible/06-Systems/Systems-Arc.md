@@ -316,6 +316,21 @@ position applier through routeKey (they own the player). WORLD
 state (foes, loot piles, action states, doors) is FLAGGED - dungeons
 re-derive from location; the world snapshot pends its slice.
 
+## S12 (the world snapshot): SHIPPED
+
+The S11 flag closes for dungeons: quicksave now carries a WORLD
+section - foes by SPAWN ORDER (marker order is deterministic per
+location rebuild: health, dead, position, yaw, carried items), loot
+piles by index (remaining items), action objects by their stable
+keys ({state, t, activationCount} - movers recompute their matrix
+from state+t on the next tick, so those two ARE the mover). The
+envelope gains world + locationKey (additive, v1 stands); restore
+applies the world ONLY when the snapshot's locationKey matches the
+live dungeon (dungeon:<locationId>) - a different dungeon loads the
+player and says so (cross-location travel-on-load pends). Restored
+dead foes spawn their corpses. Doors ride the action list (their
+state/t IS the door).
+
 ## Queue
 - Magic remainder: the effect library (non-damage spell effects,
   casting by the player, magic rounds), enchantment economy/value.

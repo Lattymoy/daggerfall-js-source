@@ -19,11 +19,12 @@ const mkEntity = () => ({
 
 test('save: round-trip restores everything; extras carried; deep copies', () => {
   const src = mkEntity();
-  const snap = snapshotPlayer(src, { position: [1, 2, 3], classicMinutes: 77.5, readiedSpellIndex: 97 });
+  const world = { foes: [{ health: 5, dead: true, feet: [9, 0, 9], yaw: 1.5, items: [] }], piles: [], actions: [{ key: 'act:3', state: 'end', t: 1, activationCount: 2 }] };
+  const snap = snapshotPlayer(src, { position: [1, 2, 3], classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42' });
   const dst = {};
   const byIndex = new Map([[97, { index: 97, name: 'Balyna\'s Balm' }]]);
   const extras = restorePlayer(dst, snap, byIndex);
-  assert.deepEqual(extras, { position: [1, 2, 3], classicMinutes: 77.5, readiedSpellIndex: 97 });
+  assert.deepEqual(extras, { position: [1, 2, 3], classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42' });   // S12: the world rides the envelope
   assert.equal(dst.name, 'Mac');
   assert.equal(dst.stats.luck, 60);
   assert.equal(dst.items[0].name, 'Short Bow');

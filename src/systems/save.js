@@ -19,8 +19,8 @@ const ENTITY_FIELDS = [
 ];
 
 /** A plain-object snapshot of the player + scene extras. */
-export function snapshotPlayer(entity, { position = null, classicMinutes = 0, readiedSpellIndex = null } = {}) {
-  const snap = { v: SAVE_VERSION, position, classicMinutes, readiedSpellIndex };
+export function snapshotPlayer(entity, { position = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null } = {}) {
+  const snap = { v: SAVE_VERSION, position, classicMinutes, readiedSpellIndex, world, locationKey };
   for (const k of ENTITY_FIELDS) snap[k] = entity[k];
   snap.stats = { ...entity.stats };
   snap.skills = [...(entity.skills ?? [])];
@@ -50,7 +50,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.spells = spellsByIndex
     ? snap.spells.map((i) => spellsByIndex.get(i)).filter(Boolean)
     : [];
-  return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex };
+  return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null };
 }
 
 /** localStorage backend (absent in headless - callers gate). */
