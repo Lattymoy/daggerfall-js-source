@@ -22,13 +22,17 @@ import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { tallySkill, skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
 import { raiseSkills } from '../systems/advancement.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
+import { readMagicDef } from '../formats/magicDef.js';
+import { ClassFile } from '../formats/classFile.js';
+import { fetchBytes } from './shared.js';
 import {
   resolveSpellVsPlayer, missileArchive, MISSILE_SPEED,
   MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S,
 } from '../systems/spellcast.js';
 import {
-  generateItems as generateLootItems, RANDOM_TREASURE_ARCHIVE,
-  RANDOM_TREASURE_ICONS, RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS,
+  generateItems as generateLootItems, setMagicItemTemplates,
+  RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS,
+  RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS,
 } from '../systems/loot.js';
 import { floorLanding } from '../player/enterExit.js';
 import { trs, multiply } from '../world/mat4.js';
@@ -184,17 +188,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
     const [{ ImgFile }, shared, engineRig, { buildRaceCharacter },
-      { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity }, { ClassFile }] = await Promise.all([
+      { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity }] = await Promise.all([
       import('../formats/imgFile.js'), import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
-      import('../characters/enemyEntity.js'), import('../formats/classFile.js'),
+      import('../characters/enemyEntity.js'),
     ]);
     const bodyImg = new ImgFile();
-    bodyImg.load(await shared.fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
+    bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
     const formulas = await import('../combat/formulas.js');
     const equip = await import('../combat/enemyEquipment.js');
-    const { generateItems } = await import('../systems/loot.js');
     const { PlayerWeapon } = await import('../combat/playerWeapon.js');
     const { REACTIONS, sampleClip } = await import('../characters/anims.js');
     const { drawFirstPersonViewmodel } = await import('../render/characterSprite.js');
@@ -203,17 +206,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       PlayerWeapon, REACTIONS, sampleClip,
       isBackFacing, drawFirstPersonViewmodel, EYE_HEIGHT,
       chooseEnemyWeapon: formulas.chooseEnemyWeapon,
-      generateItems,
+      generateItems: generateLootItems,   // the static import (audit 06e: the dynamic pair was double-sourcing)
       assignEnemyEquipment: equip.assignEnemyEquipment,
       equipmentVariantFor: equip.equipmentVariantFor,
       calculateAttackDamage: formulas.calculateAttackDamage,
       meleeHitConnects: formulas.meleeHitConnects,
       MELEE_HIT_YAW_DEG: formulas.MELEE_HIT_YAW_DEG,
       withinYaw,
-      fetchBytes: shared.fetchBytes,
+      fetchBytes,
       createCharacterRig: engineRig.createCharacterRig,
       bodyRamps: engineRig.deriveClassicRamps(palette, bodyImg.getDFBitmap()),
-      buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, ClassFile, playerEntity,   // floorLanding + playerEntity from the STATIC imports (audit: the dynamic pair was redundant)
+      buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
     };
   }
   for (const e of enemies) {
@@ -261,8 +264,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // loud - the chargen UI replaces the default and the pool policy).
   if (!playerEntity.chargenDone) {
     const careerIndex = Number.isInteger(opts.playerClass) ? opts.playerClass : 16;
-    const { ClassFile } = await import('../formats/classFile.js');
-    const { fetchBytes } = await import('./shared.js');
     const cf = new ClassFile();
     cf.load(await fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`));
     createCharacter(playerEntity, cf.career, careerIndex);
@@ -278,14 +279,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const missiles = [];
   let spellsByIndex = null;
   try {
-    const shared = await import('./shared.js');
-    const spellBytes = await shared.fetchBytes('SPELLS.STD');
-    spellsByIndex = new Map(readSpellsStd(spellBytes).map((sp) => [sp.index, sp]));
-    // S4c: MAGIC.DEF registers the magic-item templates; the loot
-    // MI category is live from here (absent -> stays flagged-skip).
-    const { readMagicDef } = await import('../formats/magicDef.js');
-    const { setMagicItemTemplates } = await import('../systems/loot.js');
-    setMagicItemTemplates(readMagicDef(await shared.fetchBytes('MAGIC.DEF')));
+    spellsByIndex = new Map(readSpellsStd(await fetchBytes('SPELLS.STD')).map((sp) => [sp.index, sp]));
+    // S4c: MAGIC.DEF registers the magic-item templates - a
+    // module-level registry, correct for the single active context
+    // (each dungeon build re-sets it); the loot MI category is live
+    // from here (absent -> stays flagged-skip).
+    setMagicItemTemplates(readMagicDef(await fetchBytes('MAGIC.DEF')));
   } catch { /* data absent: casts + MI no-op, loudly flagged */ }
   function fireCast(index, origin) {
     const spell = spellsByIndex?.get(index);
@@ -419,7 +418,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!t) return;
     uploadRecord(archive, 0);
     const size = scaledBillboardSize(t.getSize(0), t.getScale(0));
-    m.half = size.h / 2;
     m.firePos = [...m.pos];
     m.batch = renderer.createBillboardBatch(archive, 0, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
     billboardBatches.push(m.batch);

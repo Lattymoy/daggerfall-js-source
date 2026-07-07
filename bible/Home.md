@@ -52,12 +52,12 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9: floating-origin streaming world (?world). Queue empty; routed rows (teleporters, platform riding, swim/levitate) wait in Ledger C.
 - `03-World/Player-Arc.md` - COMPLETE (P1-P8). Successor decided long since: C8, then Systems (this list is the truth of record).
 - `04-Characters/Characters-Arc.md` - PARKED (pivot 3: classic visuals). C8 shipped E1-E4b end to end + spectral; E4c deferred by Mac; remaining interims are Systems work (ledger below).
-- `05-Combat/Combat.md` - CORE COMPLETE via C8 (FormulaHelper, weapons, enemy AI - the phase plan's own scope) + the Hurt-trap Ledger row. Remaining queue in the doc: CastSpell (Systems-blocked), bows/projectiles, collision-trigger seam.
-- `06-Systems/Systems-Arc.md` - ACTIVE. S1 loot, S2 inventory/pickup/treasure, S2b containers + exact weights, S3 chargen (the real player; skills model in systems/skills.js), S3b advancement + leveling ALL SHIPPED. Next: S4 magic foundation.
+- `05-Combat/Combat.md` - CORE COMPLETE via C8 + the Hurt-trap row + CastSpell (shipped via Systems S4b). Remaining queue: bows/projectiles, the collision-trigger seam.
+- `06-Systems/Systems-Arc.md` - ACTIVE. S1 loot, S2/S2b inventory + pickup + treasure + containers, S3/S3b chargen + advancement, S4a-c MAGIC FOUNDATION COMPLETE (SPELLS.STD + magicka, trap-spell missiles through the verbatim saving throw, MAGIC.DEF items - MI loot live) ALL SHIPPED. Next: the effect library, then economy/quests.
 - `07-Rendering/Rendering.md` - COMPLETE. Queue EMPTY since spectral shipped (2026-07-06); the exterior indirect-light Ledger row waits for a Rendering reopen.
 - `08-Audio/` + `10-UI/` - not started; routed rows collected in Ledger C.
 
-## Open flags (audit-generated 2026-07-06d, from the code)
+## Open flags (audit-generated 2026-07-06e, from the code)
 
 Regenerate on audit; the code comment at each site is the authority:
 
@@ -75,30 +75,47 @@ Regenerate on audit; the code comment at each site is the authority:
 - `src/combat/playerWeapon.js:45` - INTERIM starting weapon (items arc replaces): Iron Dagger. */
 - `src/combat/playerWeapon.js:46` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:64` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
-- `src/scenes/dungeonContext.js:224` - pends Player activation, flagged in the arc).
-- `src/scenes/dungeonContext.js:248` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:345` - Backstabbing skill (flat interim). TallySkill pends Systems.
-- `src/scenes/dungeonContext.js:405` - in DFU). HUD pends the UI arc: health surfaces on __player.
+- `src/scenes/dungeonContext.js:239` - pends Player activation, flagged in the arc).
+- `src/scenes/dungeonContext.js:263` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:277` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:381` - Backstabbing skill (flat interim). TallySkill pends Systems.
+- `src/scenes/dungeonContext.js:496` - in DFU). HUD pends the UI arc: health surfaces on __player.
 - `src/scenes/worldModes.js:159` - quests fill these later; open-feedback pends the UI arc).
 - `src/systems/advancement.js:107` - HEADLESS INTERIM: apply now (char sheet pends the UI arc)
 - `src/systems/advancement.js:112` - spendPoolLowest(entity.stats, Object.keys(entity.stats), pool);   // INTERIM policy
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:20` - (Range(4, 6+1)) spends by the same lowest-first policy the
 - `src/systems/advancement.js:82` - skill ids. The headless level-up applies immediately (INTERIM,
-- `src/systems/chargen.js:102` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy
-- `src/systems/chargen.js:104` - spendPoolLowest(skills, career.primarySkills, groupPools.primary);   // INTERIM policy
+- `src/systems/chargen.js:112` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy
+- `src/systems/chargen.js:114` - spendPoolLowest(skills, career.primarySkills, groupPools.primary);   // INTERIM policy
 - `src/systems/chargen.js:21` - INTERIM (loud): the UI distributes the bonus pools by hand; the
 - `src/systems/chargen.js:22` - headless policy spends each pool one point at a time into the
 - `src/systems/chargen.js:6` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
-- `src/systems/chargen.js:83` - INTERIM headless pool policy (loud; the chargen UI replaces it):
+- `src/systems/chargen.js:93` - INTERIM headless pool policy (loud; the chargen UI replaces it):
 - `src/systems/inventory.js:12` - weight pends S2b (FLAGGED - leather/chain/plate multipliers).
-- `src/systems/loot.js:120` - MI (magic items): SKIPPED, INTERIM - pends the magic arc; loot
+- `src/systems/loot.js:169` - FLAGGED to the economy slice (shops).
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls are SKIPPED until the magic
+- `src/systems/spellcast.js:104` - if (!isDamageHealthEffect(e)) continue;   // FLAGGED: non-damage effects pend the library
+- `src/systems/spellcast.js:90` - rounds system pends the effect-library slice). */
+- `src/systems/spellcast.js:97` - (FLAGGED - the effect library lands them).
 - `src/world/actionSystem.js:38` - DrainMagicka (0x1c): INTERIM no-op - the magicka stat pends the
-- `src/world/actionSystem.js:94` - Poison: verbatim DFU no-op stub. DrainMagicka: INTERIM no-op,
-- `src/world/actionSystem.js:95` - magicka pends Systems (flagged).
 
 ## Audits
+
+**2026-07-06e (Mac): deep audit + bible update, S4 sweep.** Suite
+245/59 green, build clean, manifest MATCH both directions, git clean
+pre-audit. Fixed at root - one class, five sites: the S3/S4 slices
+had re-introduced DYNAMIC imports of statically-imported modules in
+dungeonContext (shared.fetchBytes, ClassFile, loot.js twice,
+magicDef alongside its own static) plus foeDeps still bagging
+ClassFile/generateItems/fetchBytes dynamically - exactly the
+double-sourcing class audits 06c/06d killed; every site now rides
+the statics (7 dynamics remain, all genuinely lazy foe-path deps).
+A dead missile field (m.half) dropped. The loot magic-item registry
+documented as single-active-context by design. Home's Systems and
+Combat lines refreshed (S4 complete; CastSpell shipped). Ledger
+regenerated (06e).
+
 
 **2026-07-06d (Mac): deep audit + bible update, S3/S3b sweep.** Suite
 236/56 green, build clean, manifest MATCH both directions, git clean.
