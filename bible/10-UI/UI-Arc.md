@@ -146,7 +146,22 @@ preventDefault exactly when something fired. BOTH hosts collapsed
 their if-chains + duplicate routers onto it; the scattered 'input
 map pends' flags retire.
 
+## Click-to-cast: SHIPPED (+ an S9 fidelity fix)
+
+The classic shape lands: READYING a spell from the spellbook ARMS
+the next attack-click - the RMB press CASTS along the look instead
+of starting a swing (a OneShotLatch in ui/input.js, pinned:
+unarmed nothing, fires once, double-arm single fire; the pending
+cast resolves in the frame where eye + view exist). After the cast
+the latch is spent and clicks swing again; the readied spell
+persists as our lastSpell equivalent - C recasts it directly (the
+RecastSpell convenience). FIDELITY FIX FOUND IN THE SOURCE while
+verifying: CastReadySpell aborts a ByTouch cast BEFORE
+DecreaseMagicka when no target sits in touch range - the S9 'spends
+on a whiff' rule was WRONG and dies: touch whiffs now refuse
+without spending, verbatim.
+
 ## Queue
-- Classic window art, per-ID TEXT.RSC verification, click-to-cast.
+- Classic window art, per-ID TEXT.RSC verification.
 - Starting-spell sets: SHIPPED via Systems S6 (the spellbook lists
   the character's real known spells).

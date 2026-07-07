@@ -33,3 +33,15 @@ test('input: routeKey - overlay precedence, toggles, cast dir, unconsumed', () =
   assert.ok(!routeKey({ key: 'F9' }, ctx, () => ({})));
   assert.deepEqual(calls, ['inv', 'cast:1,2', 'ov:backspace']);
 });
+
+test('input: the one-shot click-cast latch', async () => {
+  const { OneShotLatch } = await import('../src/ui/input.js');
+  const l = new OneShotLatch();
+  assert.ok(!l.consume());          // unarmed: nothing
+  l.arm();
+  assert.ok(l.consume());           // fires once
+  assert.ok(!l.consume());          // one-shot: the next click swings
+  l.arm(); l.arm();
+  assert.ok(l.consume());
+  assert.ok(!l.consume());          // double-arm still single fire
+});

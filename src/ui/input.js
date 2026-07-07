@@ -5,6 +5,13 @@
 // casts by click after readying; the click-to-cast refinement is a
 // queue row) - flagged here, the single place it lives now.
 
+/** A one-shot latch: arm once, consume once (click-to-cast). */
+export class OneShotLatch {
+  constructor() { this.armed = false; }
+  arm() { this.armed = true; }
+  consume() { const a = this.armed; this.armed = false; return a; }
+}
+
 /** Overlay-mode actions (chargen, level-up, sheet, windows). */
 export function overlayAction(e) {
   if (e.key.length === 1 && /[a-zA-Z '-]/.test(e.key)) return 'char:' + e.key;

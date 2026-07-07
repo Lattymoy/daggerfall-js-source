@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 274 tests across 70 files.
+Node 22). Suite: 275 tests across 70 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -40,7 +40,7 @@ Node 22). Suite: 274 tests across 70 files.
 | hudtext.test.js | 1 | the popup queue (4-line cap dropping oldest, per-line 2s life with independent lifetimes across a late add, expiry, empty ticks safe) |
 | hud.test.js | 3 | compass scroll verbatim (trunc(258 x heading), wrap both directions, the 64 window never exceeds the 322 strip), bottom-anchored bar fill (v-window + clamps + max-0 guard) + integer scale flooring at 1, indexed->RGBA with the classic index-0 transparency |
 | inventory.test.js | 4 | the verbatim stackable rule (equipped/enchanted never), AddItem merge-vs-append incl material split, CalculateWeightForMaterial verbatim (quarter-kg quantized, banker half-to-even: iron and daedric daggers BOTH 0.5kg) + leather formula + transferAll, the house-container predicate (418xx group, the 13-index list, shop-shelf 5 excluded, record = id%100) |
-| inputmap.test.js | 2 | the binding tables (overlay chars/controls/null, F5/F6/Backspace/KeyC/none), routeKey precedence (overlay wins so Backspace edits not opens, toggles fire, the cast dir threads, unconsumed falls through) |
+| inputmap.test.js | 3 | the binding tables (overlay chars/controls/null, F5/F6/Backspace/KeyC/none), routeKey precedence (overlay wins so Backspace edits not opens, toggles fire, the cast dir threads, unconsumed falls through), the one-shot click-cast latch (unarmed nothing, fires once, double-arm single fire) |
 | inventoryui.test.js | 2 | the inventory window (cursor wrap, weapon equip via callback, arrows refused, gold not equippable, close), the spellbook (the interim known-list from the file excluding caster-only/non-damage, an entity's own book preferred, ready callback, null-map empty) |
 | loot.test.js | 3 | 22 matrix rows exact (key C pinned) + brace-bounded group lists (no cross-enum bleed), gold x level + the WP halving loop at exact roll consumption + the '-'-key empty path, level-split ingredients (C1 scales/C3 flat), arrows stack/material, book template+variant, gender clothing, unknown-key -> '-' |
 | enemyequipment.test.js | 3 | verbatim material walk ([64,128,...] modifier table, level clamps), armor materials (70/90 split, plate+weapon-material), variant-0 loadout + the init-100/subtract/class-60-clamp armor pass, variant-2 + monster keep-better + city-watch itemLevel-1 + weapon-vs-weaponless averages |

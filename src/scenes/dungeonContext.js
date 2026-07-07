@@ -22,6 +22,7 @@ import { worldAabb } from '../player/activate.js';
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
 import { drawText, makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
+import { OneShotLatch } from '../ui/input.js';
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
@@ -302,6 +303,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let chargenFlow = null;
   let activeOverlay = null;
   const hudText = new HudText();   // U5: classic popup messages
+  const clickCast = new OneShotLatch();   // classic click-to-cast: armed by readying
+  let pendingClickCast = false;
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
   function healPlayer(n) {
@@ -428,16 +431,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return true;
     }
     if (sp.rangeType === 1) {
-      // Cast ranges II: ByTouch - the nearest foe in melee reach; the
-      // cast SPENDS even on a whiff (classic wastes it).
-      playerEntity.magicka -= cost;
-      surfacePlayer();
+      // ByTouch: CastReadySpell aborts BEFORE spending when no target
+      // sits in touch range (verbatim - the S9 'spends on a whiff'
+      // rule was wrong and dies here).
       const t = pickTouchTarget(eye, foes, 2.25 + 0.25, (c, d) => {
         const l = d || 1, dx = (c[0] - eye[0]) / l, dy = (c[1] - eye[1]) / l, dz = (c[2] - eye[2]) / l;
         const hit = collider.raycast(eye, [dx, dy, dz], d);
         return !Number.isFinite(hit) || hit >= d - 1e-3;
       });
-      if (t) applySpell(sp, playerEntity.level, t.entity, { hurt: (n) => damageFoe(t, n), heal: (n) => { t.entity.health = Math.min(t.entity.maxHealth ?? Infinity, t.entity.health + n); } });
+      if (!t) return false;
+      playerEntity.magicka -= cost;
+      surfacePlayer();
+      applySpell(sp, playerEntity.level, t.entity, { hurt: (n) => damageFoe(t, n), heal: (n) => { t.entity.health = Math.min(t.entity.maxHealth ?? Infinity, t.entity.health + n); } });
       return true;
     }
     if (sp.rangeType === 3) {
@@ -542,6 +547,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     billboardBatches.push(batch);   // hosts draw + destroy() frees
   }
   function playerAttackInput(dx, dy, held) {   // host mouse events buffer here
+    if (held && clickCast.consume()) { pendingClickCast = true; return; }   // the armed click casts, no swing
     _atkDx += dx; _atkDy += dy; _atkHeld = held;
   }
   function resolvePlayerHit(eye, inViewFn, playerFeet) {
@@ -720,6 +726,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
 
   function drawFoes(dt, canvas, proj, view, eye, playerFeet) {
+    if (pendingClickCast) {
+      pendingClickCast = false;
+      playerCastInput(eye, [-view[2], -view[6], -view[10]]);   // classic: the readied spell fires on the click
+    }
     const _sightScale = hasActiveEffect(playerEntity, 'chameleonNormal') ? 0.5 : 1;   // S8 concealment
     const _prevMinute = Math.floor(classicMinutes);
     classicMinutes += (dt * 12) / 60;
@@ -900,7 +910,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleSpellbook() {
       if (activeOverlay) return;
       activeOverlay = new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
-        ready: (sp) => { readiedSpell = sp; hudText.add(`${sp.name} readied.`); },
+        ready: (sp) => { readiedSpell = sp; clickCast.arm(); hudText.add(`${sp.name} readied.`); },   // classic: the next attack-click CASTS
         castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
       });
     },

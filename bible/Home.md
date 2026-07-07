@@ -55,7 +55,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `05-Combat/Combat.md` - COMPLETE. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, and the collision-trigger seam all shipped. Build queue EMPTY; Systems-shared interims tracked in the ledger.
 - `06-Systems/Systems-Arc.md` - ACTIVE. S1-S9 + S10 CASTING COSTS (per-effect skill-scaled, verbatim tables - the record-cost interim retired) SHIPPED. Next: economy/shops or quests/save.
 - `07-Rendering/Rendering.md` - COMPLETE. Queue EMPTY since spectral shipped (2026-07-06); the exterior indirect-light Ledger row waits for a Rendering reopen.
-- `10-UI/UI-Arc.md` - ACTIVE. U1-U5 + TEXT.RSC reader + THE INPUT MAP (one bindings module, both hosts collapsed, overlay precedence pinned) SHIPPED. Queue: window art, per-ID verification, click-to-cast.
+- `10-UI/UI-Arc.md` - ACTIVE. U1-U5, TEXT.RSC reader, input map, CLICK-TO-CAST (the classic armed-click shape + the S9 touch-spend rule corrected to the source) SHIPPED. Queue: window art, per-ID verification.
 - `08-Audio/` - not started; routed rows collected in Ledger C.
 
 ## Open flags (audit-generated 2026-07-06f, from the code)
