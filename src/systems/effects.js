@@ -37,6 +37,14 @@ export const hasActiveEffect = (entity, kind) =>
 export const isHealHealth = (e) => e.type === 10 && e.subType === 8;
 export const isDamageHealth = (e) => e.type === 4 && e.subType === 0;
 export const isContinuousDamage = (e) => e.type === 1 && e.subType === 0;
+// SpellPoints (magicka) family, verbatim classic keys: HealSpellPoints
+// = Restore Power (10, 9); DamageSpellPoints (4, 2); Continuous (1, 2).
+// The magicka analog of the Health effects - same instant/active
+// shapes, IncreaseMagicka/DecreaseMagicka the sinks (restoreMagicka /
+// drainMagicka), MagnitudeCosts (20,28) already in the S10 table.
+export const isHealSpellPoints = (e) => e.type === 10 && e.subType === 9;
+export const isDamageSpellPoints = (e) => e.type === 4 && e.subType === 2;
+export const isContinuousDamageSpellPoints = (e) => e.type === 1 && e.subType === 2;
 
 /** Duration in rounds, verbatim (straight arithmetic, no roll). */
 export function rollDuration(effect, casterLevel) {
@@ -79,6 +87,33 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       }
       continue;
     }
+    if (isHealSpellPoints(e)) {
+      // HealSpellPoints.MagicRound: IncreaseMagicka(magnitude), self,
+      // instant (the caller owns the maxMagicka clamp).
+      const n = rollMagnitude(e, casterLevel, rolls);
+      out.magickaHealed = (out.magickaHealed ?? 0) + n;
+      if (sinks.restoreMagicka) sinks.restoreMagicka(n);
+      continue;
+    }
+    if (isDamageSpellPoints(e)) {
+      // DamageSpellPoints.MagicRound: DamageMagickaFromSource(magnitude),
+      // single-target-other, instant, saving-throw scaled like damage.
+      const pct = savingThrow(spell.element, flag, target, 0, rolls);
+      const n = Math.trunc(rollMagnitude(e, casterLevel, rolls) * pct / 100);
+      out.magickaDrained = (out.magickaDrained ?? 0) + n;
+      if (n > 0 && sinks.drainMagicka) sinks.drainMagicka(n);
+      continue;
+    }
+    if (isContinuousDamageSpellPoints(e)) {
+      const pct = savingThrow(spell.element, flag, target, 0, rolls);
+      const rounds = rollDuration(e, casterLevel);
+      if (pct > 0 && rounds > 0) {
+        target.activeEffects = target.activeEffects || [];
+        target.activeEffects.push({ kind: 'continuousDamageSpellPoints', effect: e, casterLevel, savePct: pct, roundsRemaining: rounds });
+        out.continuous++;
+      }
+      continue;
+    }
     const kind = buffKind(e);
     if (kind) {
       const rounds = rollDuration(e, casterLevel);
@@ -105,6 +140,9 @@ export function tickActiveEffects(entity, sinks, rolls = Math.random) {
     if (a.kind === 'continuousDamage') {
       const n = Math.trunc(rollMagnitude(a.effect, a.casterLevel, rolls) * a.savePct / 100);
       if (n > 0 && sinks.hurt) sinks.hurt(n);
+    } else if (a.kind === 'continuousDamageSpellPoints') {
+      const n = Math.trunc(rollMagnitude(a.effect, a.casterLevel, rolls) * a.savePct / 100);
+      if (n > 0 && sinks.drainMagicka) sinks.drainMagicka(n);
     }
     a.roundsRemaining--;
   }

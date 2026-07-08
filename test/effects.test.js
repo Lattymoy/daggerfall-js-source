@@ -2,7 +2,7 @@
 // arithmetic, expiry, save-once scaling.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applySpell, tickActiveEffects, rollDuration, isHealHealth } from '../src/systems/effects.js';
+import { applySpell, tickActiveEffects, rollDuration, isHealHealth, isHealSpellPoints, isDamageSpellPoints, isContinuousDamageSpellPoints } from '../src/systems/effects.js';
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 const T = () => ({ stats: { willpower: 50 }, career: {}, health: 30, maxHealth: 40 });
@@ -60,4 +60,37 @@ test('effects: S8 buff families - kinds, incumbent renew, the query', async () =
   assert.equal(t.activeEffects[0].roundsRemaining, 5);        // renewed
   for (let i = 0; i < 5; i++) tickActiveEffects(t, {});
   assert.ok(!hasActiveEffect(t, 'slowfall'));                 // expired
+});
+
+test('effects: HealSpellPoints (10,9) instant magicka gain', () => {
+  const heal = { type: 10, subType: 9, magnitudeBaseLow: 5, magnitudeBaseHigh: 9, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1 };
+  assert.ok(isHealSpellPoints(heal));
+  let restored = 0;
+  const r = applySpell({ element: 4, effects: [heal] }, 3, T(), { restoreMagicka: (n) => { restored += n; } }, seq(0));
+  assert.equal(restored, 5);                        // roll 0 -> baseLow, IncreaseMagicka(5)
+  assert.equal(r.magickaHealed, 5);
+});
+
+test('effects: DamageSpellPoints (4,2) instant, saving-throw scaled', () => {
+  const dmg = { type: 4, subType: 2, magnitudeBaseLow: 10, magnitudeBaseHigh: 10, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 0 };
+  assert.ok(isDamageSpellPoints(dmg));
+  let drained = 0;
+  // element 0 (Fire) vs a target with no resistance -> full magnitude
+  const r = applySpell({ element: 0, effects: [dmg] }, 1, T(), { drainMagicka: (n) => { drained += n; } }, seq(0.99));
+  assert.equal(drained, 10);
+  assert.equal(r.magickaDrained, 10);
+});
+
+test('effects: ContinuousDamageSpellPoints (1,2) joins activeEffects and drains per round', () => {
+  const cont = { type: 1, subType: 2, magnitudeBaseLow: 3, magnitudeBaseHigh: 3, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 0, durationBase: 2, durationMod: 0, durationPerLevel: 0 };
+  assert.ok(isContinuousDamageSpellPoints(cont));
+  const t = T();
+  const r = applySpell({ element: 0, effects: [cont] }, 1, t, {}, seq(0.99));
+  assert.equal(r.continuous, 1);
+  assert.equal(t.activeEffects.length, 1);
+  assert.equal(t.activeEffects[0].kind, 'continuousDamageSpellPoints');
+  let drained = 0;
+  tickActiveEffects(t, { drainMagicka: (n) => { drained += n; } }, seq(0.99));
+  assert.equal(drained, 3);                          // one round's magnitude
+  assert.equal(t.activeEffects[0].roundsRemaining, 1);
 });

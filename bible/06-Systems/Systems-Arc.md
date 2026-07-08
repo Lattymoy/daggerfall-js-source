@@ -348,8 +348,43 @@ player and says so (cross-location travel-on-load pends). Restored
 dead foes spawn their corpses. Doors ride the action list (their
 state/t IS the door).
 
+## S13 (effect library III - the SpellPoints/magicka family): SHIPPED
+
+The magicka analog of the Health effects (S7), ported verbatim from
+DFU's MagicAndEffects/Effects. Three effects on the same instant/
+active shapes the Health family uses:
+- **HealSpellPoints** (classic type 10, subType 9 - "Restore Power";
+  DFU Restoration/HealSpellPoints): self, instant, SupportMagnitude.
+  MagicRound calls IncreaseMagicka(magnitude) - our restoreMagicka
+  sink, clamped to maxMagicka by the caller. out.magickaHealed.
+- **DamageSpellPoints** (ClassicKey MakeClassicKey(4, 2); DFU
+  Destruction/DamageSpellPoints): single-target-other, instant,
+  MagicSkill Destruction, MagnitudeCosts(20, 28) - already in the S10
+  cost table. MagicRound calls DamageMagickaFromSource(magnitude);
+  ours scales by the saving throw exactly like DamageHealth and sinks
+  through drainMagicka (floors at 0). out.magickaDrained.
+- **ContinuousDamageSpellPoints** (ClassicKey MakeClassicKey(1, 2);
+  DFU Destruction/ContinuousDamageSpellPoints): joins target
+  .activeEffects as kind 'continuousDamageSpellPoints' with the
+  once-rolled save percent, and the round ticker drains magicka each
+  round (mirrors continuousDamage on health).
+
+PLUMBING: magicka already existed (chargen sets maxMagicka/magicka via
+spellPoints(INT, multiplier); casting spends it). This slice adds the
+sinks: restoreMagicka/drainMagicka on the player (clamp to maxMagicka
+/ floor 0, surface for HUD+F8) and per-foe magicka sink factories
+(foeDrainMagicka/foeRestoreMagicka) bound to the foe entity, wired
+into ALL nine applySpell/tickActiveEffects call sites (player-cast,
+explosion, foe-cast-at-player, foe-cast-at-foe, missile hits, and both
+round tickers). Foe magicka mutates correctly though foe AI does not
+yet gate on it (flagged - AI magicka-gating is a later behaviour).
+
+3 tests: instant magicka gain, saving-throw-scaled drain, continuous
+drain joining actives + per-round tick. Suite 285/72.
+
 ## Queue
-- Magic remainder: the effect library (non-damage spell effects,
-  casting by the player, magic rounds), enchantment economy/value.
+- Magic remainder: MORE effect families (attribute Fortify/Damage/
+  Drain, Cure/Regenerate, the Fatigue family once a fatigue stat
+  exists), enchantment economy/value.
 - Later: quests, guilds, shops, dialog, calendar deep-wiring,
   save format.

@@ -346,6 +346,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       activeOverlay = new DeathScreen();
     }
   }
+  // S13 magicka sinks (parallel to heal/hurt): the SpellPoints effect
+  // family drives these. IncreaseMagicka clamps to maxMagicka;
+  // DecreaseMagicka floors at 0. Both surface for the HUD/F8 readout.
+  function restoreMagicka(n) {
+    if (n <= 0) return;
+    playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? 0, (playerEntity.magicka ?? 0) + n);
+    surfacePlayer();
+  }
+  function drainMagicka(n) {
+    if (n <= 0) return;
+    playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n);
+    surfacePlayer();
+  }
+  const foeDrainMagicka = (ent) => (n) => { if (n > 0) ent.magicka = Math.max(0, (ent.magicka ?? 0) - n); };
+  const foeRestoreMagicka = (ent) => (n) => { if (n > 0) ent.magicka = Math.min(ent.maxMagicka ?? Infinity, (ent.magicka ?? 0) + n); };
   if (!playerEntity.chargenDone) {
     if (Number.isInteger(opts.playerClass)) {
       // ?class=N: the headless skip path (rolls + the loud policy)
@@ -434,11 +449,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the player when close enough.
   function explodeAt(pos, spell, casterLevel, playerFeet) {
     for (const t of sweepFoes(pos, EXPLOSION_RADIUS, foes)) {
-      applySpell(spell, casterLevel, t.entity, { hurt: (n) => damageFoe(t, n), heal: () => {} });
+      applySpell(spell, casterLevel, t.entity, { hurt: (n) => damageFoe(t, n), heal: () => {}, drainMagicka: foeDrainMagicka(t.entity), restoreMagicka: foeRestoreMagicka(t.entity) });
     }
     if (playerFeet) {
       const d = Math.hypot(playerFeet[0] - pos[0], playerFeet[1] + 0.9 - pos[1], playerFeet[2] - pos[2]);
-      if (d <= EXPLOSION_RADIUS) applySpell(spell, casterLevel, playerEntity, { hurt: hurtPlayer, heal: healPlayer });
+      if (d <= EXPLOSION_RADIUS) applySpell(spell, casterLevel, playerEntity, { hurt: hurtPlayer, heal: healPlayer, restoreMagicka, drainMagicka });
     }
   }
 
@@ -451,7 +466,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
       // missile; the cost spends here.
       playerEntity.magicka -= cost;
-      const r = applySpell(sp, playerEntity.level, playerEntity, { hurt: hurtPlayer, heal: healPlayer });
+      const r = applySpell(sp, playerEntity.level, playerEntity, { hurt: hurtPlayer, heal: healPlayer, restoreMagicka, drainMagicka });
       if (r.healed > 0) hudText.add(`You are healed ${r.healed} points.`);
       surfacePlayer();
       return true;
@@ -468,7 +483,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!t) return false;
       playerEntity.magicka -= cost;
       surfacePlayer();
-      applySpell(sp, playerEntity.level, t.entity, { hurt: (n) => damageFoe(t, n), heal: (n) => { t.entity.health = Math.min(t.entity.maxHealth ?? Infinity, t.entity.health + n); } });
+      applySpell(sp, playerEntity.level, t.entity, { hurt: (n) => damageFoe(t, n), heal: (n) => { t.entity.health = Math.min(t.entity.maxHealth ?? Infinity, t.entity.health + n); }, drainMagicka: foeDrainMagicka(t.entity), restoreMagicka: foeRestoreMagicka(t.entity) });
       return true;
     }
     if (sp.rangeType === 3) {
@@ -476,7 +491,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       playerEntity.magicka -= cost;
       surfacePlayer();
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, foes)) {
-        applySpell(sp, playerEntity.level, t.entity, { hurt: (n) => damageFoe(t, n), heal: () => {} });
+        applySpell(sp, playerEntity.level, t.entity, { hurt: (n) => damageFoe(t, n), heal: () => {}, drainMagicka: foeDrainMagicka(t.entity), restoreMagicka: foeRestoreMagicka(t.entity) });
       }
       return true;
     }
@@ -686,6 +701,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             else applySpell(m.spell, playerEntity.level, f.entity, {
               hurt: (n) => damageFoe(f, n),
               heal: (n) => { f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + n); },
+              drainMagicka: foeDrainMagicka(f.entity),
+              restoreMagicka: foeRestoreMagicka(f.entity),
             });
             retireMissile(m);
             break;
@@ -696,7 +713,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const dx = target[0] - m.pos[0], dy = target[1] - m.pos[1], dz = target[2] - m.pos[2];
       if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {   // missile radius + player capsule radius
         if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet);
-        else applySpell(m.spell, playerEntity.level, playerEntity, { hurt: hurtPlayer, heal: healPlayer });
+        else applySpell(m.spell, playerEntity.level, playerEntity, { hurt: hurtPlayer, heal: healPlayer, restoreMagicka, drainMagicka });
         retireMissile(m);
       }
     }
@@ -802,8 +819,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     classicMinutes += (dt * 12) / 60;
     for (let r = _prevMinute; r < Math.floor(classicMinutes); r++) {
       // S7: one magic round per classic minute (the broker's cadence)
-      tickActiveEffects(playerEntity, { hurt: hurtPlayer, heal: healPlayer });
-      for (const f of foes) if (!f.dead) tickActiveEffects(f.entity, { hurt: (n) => damageFoe(f, n), heal: () => {} });
+      tickActiveEffects(playerEntity, { hurt: hurtPlayer, heal: healPlayer, restoreMagicka, drainMagicka });
+      for (const f of foes) if (!f.dead) tickActiveEffects(f.entity, { hurt: (n) => damageFoe(f, n), heal: () => {}, drainMagicka: foeDrainMagicka(f.entity), restoreMagicka: foeRestoreMagicka(f.entity) });
     }
     const raised = raiseSkills(playerEntity, classicMinutes, Math.random, () => {
       // U3: the level-up screen replaces the headless auto-apply
