@@ -6,6 +6,7 @@
 // there); this file is data loading, the fly camera, and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
+import { requestLook } from '../player/pointerLock.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
@@ -77,7 +78,7 @@ export async function bootInterior(canvas, renderer, params, status) {
   const keys = new Set();
   addEventListener('keydown', (e) => keys.add(e.code));
   addEventListener('keyup', (e) => keys.delete(e.code));
-  canvas.addEventListener('pointerdown', () => canvas.requestPointerLock());
+  canvas.addEventListener('pointerdown', () => requestLook(canvas));
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
     cam.yaw -= e.movementX * 0.0025;

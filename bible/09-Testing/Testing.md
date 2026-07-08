@@ -1,12 +1,13 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 277 tests across 71 files.
+Node 22). Suite: 280 tests across 72 files.
 
 | File | Tests | Covers |
 |---|---|---|
 | action.test.js | 3 | door lifecycle/verbatim constants, move tween + chain gate, activation picking |
 | anims.test.js | 2 | Directional attacks: verbatim DFU direction->strike mapping pins; delta-clip well-formedness (start/end 0, sorted keys); sampler continuity + keyframe hit + null past dur |
+| pointerlock.test.js | 3 | requestLook never throws - swallows a rejecting requestPointerLock promise (the sh/< crash + lock:N frozen-yaw bug), tolerates the void-returning API, survives a synchronous throw |
 | player.test.js | 5 | verbatim speeds/constants, collider ground/slide/step, motor gravity/jump, strafe = true camera-right, wall-ladder regression (step-up needs a clear raised path) |
 | save.test.js | 2 | the snapshot/restore round-trip (entity fields, deep-copied stats/items/actives, spells re-resolved by index, extras + the S12 world/locationKey riding the envelope, the version gate refusing, storage round-trip + corrupt-JSON null), F12 piercing overlays while F9 stays gated |
 | sky.test.js | 3 | SKY reader pins, panorama mirror law, night mapping |

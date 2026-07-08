@@ -5,6 +5,7 @@
 // location's climate (CLIMATE.PAK -> GetWorldClimateSettings).
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
+import { requestLook } from '../player/pointerLock.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
@@ -290,7 +291,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const keys = new Set();
   addEventListener('keydown', (e) => keys.add(e.code));
   addEventListener('keyup', (e) => keys.delete(e.code));
-  canvas.addEventListener('pointerdown', () => canvas.requestPointerLock());
+  canvas.addEventListener('pointerdown', () => requestLook(canvas));
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
     cam.yaw -= e.movementX * 0.0025;
