@@ -7,6 +7,7 @@ import {
   SLOPE_LIMIT_DEG, PlayerMotor,
 } from '../src/player/motor.js';
 import { Collider } from '../src/player/collider.js';
+import { floorLanding } from '../src/player/enterExit.js';
 
 const approx = (a, b, eps = 1e-4) =>
   assert.ok(Math.abs(a - b) < eps, `${a} !~ ${b}`);
@@ -139,3 +140,24 @@ test('player: walls cannot be laddered by the step-up retry', () => {
   assert.ok(maxY <= STEP_OFFSET + 0.01, `climbed the wall: ${maxY}`);
 });
 
+
+test('motor: standing still on a flat floor stays grounded every frame (regression: g:0 knife-edge)', () => {
+  // Mac's F8 caught grounded:0 while standing perfectly still - feet
+  // placed dead on the floor by floorLanding put the lower sphere at
+  // exactly floor+radius, right on the old `d2 >= radius*radius`
+  // reject boundary, so ground flickered off frame-to-frame. The
+  // SKIN-widened contact detection must hold it grounded without
+  // sinking the body.
+  const c = new Collider(() => -100);
+  const FY = 38.40;
+  c.addMesh('f', new Float32Array([-50, FY, -50, 50, FY, -50, 50, FY, 50, -50, FY, 50]),
+    new Uint16Array([0, 1, 2, 0, 2, 3]), [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const landed = floorLanding(c, [0, 38.98 + 1.08, 0]);
+  const m = new PlayerMotor(c);
+  m.spawn(landed[0], landed[1], landed[2]);
+  for (let i = 0; i < 120; i++) {
+    m.update(1 / 60, { forward: 0, strafe: 0, run: false, jump: false }, 0);
+    assert.ok(m.grounded, `lost grounding at rest, frame ${i}`);
+    assert.ok(Math.abs(m.pos[1] - FY) < 1e-3, `sank through the floor: ${m.pos[1]}`);
+  }
+});

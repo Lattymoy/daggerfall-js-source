@@ -189,12 +189,23 @@ export class Collider {
             const dy = ly - TMP[1];
             const dz = lz - TMP[2];
             const d2 = dx * dx + dy * dy + dz * dz;
-            if (d2 >= radius * radius || d2 === 0) continue;
+            // Ground/contact is detected out to radius + SKIN, but the
+            // sphere is only PUSHED OUT to the true radius. A floor at
+            // exactly d == radius (feet placed dead on the surface by
+            // floorLanding, then velY clamped to 0 so dy == 0 at rest)
+            // sat on the knife-edge of the old `d2 >= radius*radius`
+            // reject and FLICKERED grounded off frame-to-frame - Mac's
+            // F8 caught g:0 while standing perfectly still. The skin
+            // makes a resting contact stable without sinking the body.
+            const contactR = radius + SKIN;
+            if (d2 >= contactR * contactR || d2 === 0) continue;
             const d = Math.sqrt(d2);
-            const push = (radius - d) / d;
-            center[0] += dx * push;
-            center[1] += dy * push;
-            center[2] += dz * push;
+            if (d < radius) {
+              const push = (radius - d) / d;   // only push out of true penetration
+              center[0] += dx * push;
+              center[1] += dy * push;
+              center[2] += dz * push;
+            }
             const ny = dy / d;
             if (globalThis.__logContacts) {
               globalThis.__contacts = globalThis.__contacts || [];
