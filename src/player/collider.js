@@ -211,9 +211,20 @@ export class Collider {
               globalThis.__contacts = globalThis.__contacts || [];
               globalThis.__contacts.push({ tri: tri.map((v) => v.map((n) => Number(n.toFixed(2)))), ny: Number(ny.toFixed(2)) });
             }
+            // GROUNDING may extend into the SKIN shell (radius..radius+SKIN)
+            // so a resting floor a hair away still holds the player up -
+            // that was the g:0 fix. But CEILING and PUSHED-DOWN are
+            // movement-gate flags (the step-up and ground-snap reject a
+            // retry/probe when pushedDown is set): a NON-TOUCHING triangle
+            // in the shell must NOT raise them, or it phantom-blocks the
+            // step-up on stairs and the player walks into the riser and
+            // drops through. So ceiling/pushedDown fire ONLY on real
+            // contact (d < radius), never from the shell. (Regression
+            // from the g:0 SKIN change - Mac's stairs fell through.)
+            const touching = d < radius;
             if (ny >= GROUND_NY) grounded = true;
-            if (ny <= -0.5) ceiling = true;
-            if (ny <= -GROUND_NY) pushedDown = true;
+            if (touching && ny <= -0.5) ceiling = true;
+            if (touching && ny <= -GROUND_NY) pushedDown = true;
           }
         }
       }
