@@ -302,3 +302,137 @@ Queue (items 1-6 shipped):
 9. DONE (P7) - the mode machines extracted to scenes/worldModes.js
    and the lazy texture/mesh caches to scenes/dataPipeline.js;
    world.js is 531 lines against the 900 ceiling (P7 audit).
+
+---
+
+## P9 (live-play hardening): SHIPPED
+
+The deployed build finally got PLAYED (against real ARENA2 on Mac's
+machine, which the container cannot reach). A run of live bugs
+surfaced that the unit gate is structurally blind to - scene loops
+over build parameters, unbound identifiers vite emits as globals,
+browser pointer-lock semantics, and the collision behaviour of real
+dungeon geometry. All are fixed and rooted; the durable record:
+
+### Boot / build crashes (were silent black screens)
+- **S2 blocks binding** (b50101f): the treasure loop iterated the
+  raw BlocksFile READER parameter, not `dungeon.blocks`. Field names
+  matched the wrong shape so every gate passed; it black-screened
+  only WITH data. Fixed to `dungeon.blocks`. (Recorded in full in
+  Systems-Arc S2.)
+- **Phantom identifiers** (3c9120f): `trs` was called unimported in
+  characterSprite.js since C8 E3d - vite emitted it as a presumed
+  global, so node --check / build / tests all passed while the FIRST
+  real viewmodel frame threw. CLASS CLOSED: eslint flat config with
+  `no-undef` now runs FIRST in `npm run check`. Swept + rooted trs,
+  FLASH_TYPE_KEY (unexported), and quadInto (phantom for the file's
+  life). One live-tested module (draped.js) was misread as an orphan
+  and git-rm'd; the suite caught it same run and it was restored.
+- **Unguarded foe build** (1fefb89): the entire `?foes` block in
+  buildDungeonContext (dynamic imports, BODY00I0 fetch, the per-foe
+  CLASS-enemy loop) was unguarded on the awaited build path, so one
+  bad enemy (missing CLASS*.CFG, a rig/equipment error) rejected the
+  WHOLE build and the dungeon never rendered - and it armed ONLY
+  with `?foes`. Now the per-foe build is wrapped (one enemy fails ->
+  logged + skipped) and the foe-subsystem init is wrapped (degrade
+  to a playable foe-less dungeon), both loud.
+
+### Spawn placement (were "stuck in a hole")
+- **Eye-at-marker** (466690d): the standalone `?dungeon` host set
+  cam.pos to the RAW start marker (a floor point), so the eye was at
+  the floor and the feet ~1.5 below it, wedged. `ctx.startSpawn()`
+  now owns the verbatim MovePlayerToMarker placement (marker + up *
+  height*0.6 = +1.08, then floorLanding) ONCE; both hosts consume
+  it, the worldModes inline copy died.
+- **Movement under the overlay** (823605b): both hosts ran live
+  movement while the chargen overlay captured typing, so a name with
+  w/a/s/d walked the player off the start ledge during creation.
+  Overlays now HOLD the world everywhere (the standalone gates
+  actions.update + both movement branches on uiOverlayActive; the
+  world/exterior shells gate on modes.dungeonCtx.uiOverlayActive).
+- **Wrong marker** (1266f6a): startSpawn used StartMarker (RDB flat
+  record 10) unconditionally, but DFU StartDungeonInterior with
+  preferEnterMarker=true uses the EnterMarker (record 8, the
+  entrance vestibule). Now prefers enterMarker with startMarker
+  fallback, verbatim.
+- **Single-ray floorLanding** (ed26d1f): floorLanding cast ONE
+  downward ray from the marker's exact x,z; over a floor seam / grate
+  / tile-edge it MISSED and returned the raw airborne position, so
+  the player free-fell and wedged on a lower ledge. Now samples the
+  capsule FOOTPRINT (centre + a ring at ~half radius) and takes the
+  highest floor any sample hits - matched to PlayerEnterExit
+  SetStanding (PEE.cs 1240-54, snap to a down-ray hit). A genuine
+  void still returns raw for gravity.
+
+### Look / input
+- **Bare requestPointerLock** (64f0268): `canvas.requestPointerLock()`
+  was called bare in all four hosts. Modern Chrome returns a Promise
+  that REJECTS (unfocused, pending, or the post-Escape cooldown); the
+  unhandled rejection surfaced as a crash overlay (`sh/<` =
+  bootDungeon) AND left look disengaged (lock:N, mouse events
+  arriving, yaw frozen) - one cause, both symptoms. A single
+  src/player/pointerLock.js `requestLook` helper swallows the
+  rejection, tolerates the void API, survives a sync throw, and binds
+  one pointerlockerror log; all four hosts route through it. Pinned
+  (3 tests) never to throw. The CLICK TO LOOK centre-screen hint
+  (e5f5278) covers a dropped lock so the player is never stranded.
+
+### Collision
+- **g:0 knife-edge** (66fc16d): feet placed dead on the floor put the
+  lower sphere centre at exactly floor+radius, on the boundary of the
+  `d2 >= radius*radius` reject, so grounding flickered off at rest.
+  Contact detection now reaches radius+SKIN (0.37) while the push-out
+  still fires only within radius - a resting floor a hair away holds
+  the player up, the body never sinks. Regression pinned.
+- **SKIN-shell phantom flags** (b9fb8d6): the g:0 change let
+  ceiling/pushedDown be set for NON-TOUCHING triangles in the
+  radius..radius+SKIN shell. Those are movement-gate flags (step-up
+  and ground-snap reject when pushedDown is set), so a tread/riser
+  edge merely NEAR the capsule phantom-blocked the step-up on stairs
+  and the player fell through going up. GROUNDING may use the shell
+  (the g:0 fix preserved); ceiling/pushedDown now fire ONLY on real
+  contact (d < radius). Rule: a tolerance shell must never feed a
+  logic gate that assumes real contact - separate "am I resting on
+  something" from "am I blocked/pushed".
+
+### The FP viewmodel (the "hole" itself)
+- **Camera inside the body** (f7492f5, d7843d2): the ACTUAL cause of
+  the persistent "stuck in a hole". The FP viewmodel renders the
+  player's OWN full-body rig; the mini-camera sat at eye height 1.7,
+  INSIDE the 1.8-tall body, and tracked world pitch - so pitching up
+  looked into the torso from beneath and the full-screen overlay
+  filled with the body's black underside (Mac identified it: "maybe
+  the voxel character is what I am stuck inside of"). Now the camera
+  does NOT apply world pitch (per the anims.js FP law "the camera
+  rides the head - lean pitches the EYE") and the rig is pushed back
+  along the view dir so the head/torso clear the lens and only the
+  raised forearm/weapon of the fpMelee1H pose reaches into the lower
+  frame. Framing constants (back 0.45, downcast -0.12) are reasoned
+  from the geometry but tuned without ARENA2 - open to nudging.
+
+### Diagnostics shipped (kept in the code)
+- **F8 debug HUD** (4fe1ec1, e5f5278, fe215d5): an on-screen readout
+  (classic font, top-left) toggled by F8 - build tag, feet, enter +
+  start markers, overlay/chargenDone, pointer-lock state, career,
+  hp/mp, motor (grounded/velY/yaw), raw mouse (dx/dy/lock), and raw
+  input (active keys, live pitch). This is the instrument that
+  finally cracked the real bugs; it stays.
+- **Per-commit build tag**: scripts/buildTag.mjs stamps
+  `git rev-parse --short HEAD` into src/buildTag.js on prebuild, so a
+  screenshot self-identifies its bundle and stale-cache ambiguity
+  dies.
+- **`[spawn]` console line**: marker -> feet on every dungeon boot.
+
+### Process lesson (recorded permanently)
+~14 fixes shipped across this session with ZERO playtesting, unit-
+green repeatedly called "verified" while the game black-screened or
+trapped the camera. Several "root fixes" were real bugs but NOT the
+reported one; the FP-viewmodel cause was visible in the very first
+"hole" screenshot (a black shape filling the view, world rendering
+fine at the edges) and was missed for a dozen commits because the
+black shape was never questioned. TWO STANDING RULES: (1) unit-green
+is not playable-green - the gate needs a real-boot smoke path, and a
+change to live-executed code is unverified until it is played; (2)
+read what is actually on the screen before theorizing about what is
+behind it. Mac diagnosed the decisive bug from one look; the F8
+instrument exists so that evidence, not theory, drives the next fix.

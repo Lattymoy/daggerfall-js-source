@@ -50,7 +50,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9: floating-origin streaming world (?world). Queue empty; routed rows (teleporters, platform riding, swim/levitate) wait in Ledger C.
-- `03-World/Player-Arc.md` - COMPLETE (P1-P8). Successor decided long since: C8, then Systems (this list is the truth of record).
+- `03-World/Player-Arc.md` - COMPLETE (P1-P8) + P9 LIVE-PLAY HARDENING (spawn placement, pointer lock, grounding, the stair regression, the FP-viewmodel fix; F8 debug HUD shipped). Successor: C8, then Systems.
 - `04-Characters/Characters-Arc.md` - PARKED (pivot 3: classic visuals). C8 shipped E1-E4b end to end + spectral; E4c deferred by Mac; remaining interims are Systems work (ledger below).
 - `05-Combat/Combat.md` - COMPLETE. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, and the collision-trigger seam all shipped. Build queue EMPTY; Systems-shared interims tracked in the ledger.
 - `06-Systems/Systems-Arc.md` - ACTIVE. S1-S11 + S12 THE WORLD SNAPSHOT (foes/piles/actions ride the save, location-gated; corpses respawn) SHIPPED. Next: economy/shops or quests.
@@ -60,7 +60,17 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 
 ## Open flags (audit-generated 2026-07-06f, from the code)
 
-Regenerate on audit; the code comment at each site is the authority:
+STALE as of the 07-07 live-play arc: many entries below shipped since
+(chargen UI, spellbook, S10 cost tables, the Warrior-16 default is
+gone, the input-map flag closed). Due a full regeneration; until then
+the code comment at each site is the authority, and NEW open items are
+listed here explicitly:
+- `src/render/characterSprite.js:73-76` - FP viewmodel framing
+  constants (back 0.45, downcast -0.12, camY via eyeHeight) are
+  reasoned from the rig geometry but UNVERIFIED without ARENA2 - open
+  to nudging once played (P9).
+
+Prior ledger (regenerate on audit):
 
 - `src/characters/enemyAttack.js:21` - PENDING E3 (entity layer): playerLevel (stub 10 - zeroes its term),
 - `src/characters/enemyEntity.js:14` - FLAGGED, until GetMonsterCareerTemplate ports).
@@ -108,26 +118,30 @@ Regenerate on audit; the code comment at each site is the authority:
 
 ## Audits
 
-**2026-07-07 (Mac's instinct: did prior fixes break things?): YES - the g:0 SKIN change phantom-blocked the step-up, dropping the player through stairs.** Mac suspected the blind-chase spawn/collider fixes introduced a regression once real play surfaced the FP-viewmodel truth. He was right. Auditing the physics-touching commits: 466690d (startSpawn) and 823605b (overlay-hold) and 1266f6a (enter marker) and ed26d1f (footprint floorLanding) are all SPAWN/gating only - none touches move(). But 66fc16d (the g:0 knife-edge fix) widened the sphere CONTACT test to radius+SKIN (0.37) while pushing out only within radius - the intended part. The BUG it introduced: grounded/ceiling/pushedDown were ALL set for any contact in the radius..radius+SKIN shell, including NON-TOUCHING triangles that get no push. ceiling and pushedDown are MOVEMENT-GATE flags - the step-up retry and ground-snap both reject when pushedDown is set - so a tread underside or riser edge merely NEAR the capsule (in the shell, not touching) raised a phantom pushedDown, the step-up was rejected, the player walked into the riser instead of over it, and accumulated push-through + gravity dropped them through the stairs. ROOT: grounding still extends into the shell (the g:0 fix preserved - a resting floor a hair away holds you up), but ceiling/pushedDown now fire ONLY on real contact (d < radius), so non-touching shell geometry can't corrupt the movement gates. All 282 tests hold including the g:0 grounding pin and every wall-climb/ceiling/tunneling pin. LESSON: a fix that adds a detection shell must not let that shell feed logic gates that assume real contact - separate "am I resting on something" (tolerant) from "am I blocked/pushed" (must be real).
+Newest first. Older per-fix audits are consolidated into their arc
+records; Home keeps the one-line pointer and the standing lessons.
 
+**2026-07-07 - the live-play hardening arc (P9).** The deployed build
+was played against real ARENA2 for the first time and a run of bugs
+surfaced that the unit gate is structurally blind to. All fixed and
+rooted; the full blow-by-blow (boot/build crashes, spawn placement,
+pointer lock, the g:0 grounding knife-edge, the SKIN-shell stair
+regression, and the FP-viewmodel "hole") lives in
+`03-World/Player-Arc.md` under P9, with the S2 blocks-binding
+correction in `06-Systems/Systems-Arc.md` S2. Two standing rules came
+out of it and hold for all future work:
+  1. **Unit-green is not playable-green.** The suite passing does not
+     mean the game runs; several "root fixes" this session were real
+     bugs but not the reported one, and the true cause (the FP camera
+     rendering inside the player's own body) was visible in the first
+     screenshot yet missed for a dozen commits. A change to
+     live-executed code is unverified until it is actually played.
+  2. **Read what is on the screen before theorizing about what is
+     behind it.** Mac diagnosed the decisive bug from one look; the F8
+     debug HUD (build tag, feet, markers, lock, motor, raw input) now
+     exists so evidence, not theory, drives the next fix.
 
-**2026-07-07 (Mac's insight): the "hole" was the FP VIEWMODEL - the camera was INSIDE the player's own body rig.** Mac finally named it: "maybe the voxel character is what I am stuck inside of." Correct, and it reframed the whole thing. The F8 proved he was fine - g:1, penetration 0 (headless-checked: the capsule at his feet was NOT in geometry), spawned at the enter marker, chargen done. The black circle filling the screen was never a dungeon hole - it was drawFirstPersonViewmodel rendering his OWN full-body rig with the mini-camera at eye height 1.7, which sits INSIDE the 1.8-tall body: the lens was embedded in the torso, so the mesh filled the frame from every angle, and his real camera PITCH aimed the FP camera around inside the body (pitch 0.97 = looking up into the chest/underside = the black circle). ROOT: the FP viewmodel now renders the rig in FIXED rig-local space in front of a FIXED mini-camera standing back (camBack 1.6) at chest level (camY 1.15) looking slightly down - the body occupies the lower frame like a real FP weapon, the camera is OUTSIDE the mesh, and it no longer tracks the player's world pitch (the dead feet/yaw/pitch/eyeHeight params remain in the signature but are ignored). The full-screen self-occlusion is structurally impossible now. Exact framing numbers are unverified from here (no ARENA2) but the embedding - the actual cause - is fixed. THE REAL LESSON OF THIS ENTIRE SESSION: the bug was visible in the very first "stuck in a hole" screenshot - a black shape filling the view with the world rendering fine at the edges - and I spent a dozen commits on spawn/marker/lock/grounding/collider theories because I never questioned WHAT the black shape was. Mac saw it in one look. Read what is actually on the screen before theorizing about what's behind it.
-
-
-**2026-07-07 (Mac): the REAL stuck-in-a-hole - floorLanding's single ray missed over a seam and the player free-fell into a wedge.** Read from Mac's ACTUAL F8 numbers (which he'd given three times): feet 26.10/38.40/13.41 vs marker 28.38/38.98/12.40, g:0 - feet 2.28 off in x, 0.58 BELOW the marker, not grounded. That is not wedged-beside-the-marker; the player FELL and slid. Root: floorLanding cast ONE downward ray from the marker's exact x,z; a marker floating over a floor seam / grate / tile-edge makes that center ray MISS, and the old code returned the raw (airborne) position - so the player spawned at marker+1.08 in the air, free-fell, and wedged on a lower ledge off-marker (our collider genuinely traps a capsule - proven). Matched to DFU PlayerEnterExit.SetStanding (PEE.cs 1240-1254): it snaps to a downward ray hit and positions relative to hit.point. FIX: floorLanding now samples the capsule FOOTPRINT - center plus a ring at ~half radius - and takes the highest floor any sample hits, so a marker over a seam still lands on the tile the feet rest on (the CharacterController footprint sweep, not a fragile point probe); a genuine void still returns raw for gravity. Verified against Mac's exact seam geometry + normal-floor + void cases; regression test added; 281 prior tests held. This is the ACTUAL cause of every 'stuck in a hole' report - the marker (start vs enter), spawn-height, overlay-movement, pointer-lock, and grounding fixes were all real but NONE were this. LESSON restated: I asked for the F8 readout a fourth time when Mac had given it three times - the numbers had the answer (feet-below-marker + off-axis = a fall, not a wedge-in-place); READ the data on hand before asking for more.
-
-
-**2026-07-07 (Mac): WRONG SPAWN MARKER - we used StartMarker where DFU uses EnterMarker.** Mac: camera stuck in a hole, F8 feet numbers MOVING but the view never escapes. Reproduced the mechanic headlessly - in tight geometry the capsule oscillates a hair each frame but net travel stays ~0 (a collision wedge: numbers move, body stuck). The CAUSE of being in that tight spot: startSpawn used this.startMarker (RDB editor flat texture RECORD 10) unconditionally, but PlayerEnterExit.StartDungeonInterior runs with preferEnterMarker=true on dungeon entry (PEE.cs 984-987: EnterMarker wins, StartMarker is the fallback). The enter marker is RECORD 8 - the entrance vestibule, open space; the start marker (record 10) is a different point that in Privateer's Hold sits in tight geometry, so the collider shoved the spawn off-marker into a wall and wedged it (Mac's feet 26.10 vs marker 28.38 - 2.3 units of collision displacement). ROOT: startSpawn now prefers this.enterMarker with startMarker fallback, verbatim the preferEnterMarker order; both markers are exposed on the context and shown on F8 (enter + start) so the correct spawn is verifiable live. Record 8/enter vs 10/start confirmed in rdbLayout against the flat texture records. This is the actual 'stuck in a hole' cause - distinct from and beneath the spawn-height, movement-under-overlay, pointer-lock, and grounding fixes, which were all real but not THIS.
-
-
-**2026-07-07 (Mac): the rest-grounding knife-edge - g:0 while standing still.** Mac's F8 (build 1fefb89) showed grounded:0 with velY:0 and feet motionless - not falling, not stuck in geometry, just standing on the floor reading airborne. Reproduced headlessly at his exact spawn (marker y 38.98, floorLanding -> feet 38.40 on the floor): the capsule's lower sphere center sits at feet+radius = exactly floor+radius, landing ON the boundary of the contact test `d2 >= radius*radius` (reject when d == radius). At rest velY clamps to 0 so dy == 0, and whether the floor registered depended on float jitter frame-to-frame - grounding FLICKERED. ROOT: contact/ground detection now reaches radius+SKIN (0.37) while the push-out still only corrects true penetration (d < radius) - a resting floor is stably grounded and the body never sinks. Verified: 120 still frames grounded every frame, feet pinned at 38.4000, walking unaffected (5.06u forward), and all prior collider pins (wall-climb, ceiling escape, step-up, tunneling) held. Regression test added at his exact geometry. This pairs with the pointer-lock crash fix as the two REAL bugs Mac's F8 surfaced once the foe-build crash stopped masking them.
-
-
-**2026-07-07 (Mac): the unguarded foe-build crash - one bad enemy black-screened the level.** Mac reported the SPAWN NOT RENDERING with a crash, on ?dungeon&foes. Tracing the build path (not the frame - the meshes drew once then nothing) found the real structural fragility: the ?foes block in buildDungeonContext - a dozen dynamic imports, the BODY00I0.IMG fetch, and the per-foe CLASS-enemy loop (createCharacterRig, CLASS{XX}.CFG fetch, assignEnemyEquipment) - was ENTIRELY UNGUARDED on the critical build path. buildDungeonContext is awaited by main.js, so ANY throw in that block (a missing CLASS file, a rig or equipment error on one mobile type, a failed import) rejected the whole build and the dungeon NEVER RENDERED - silent black screen, frame loop never started, no console signal beyond the raw throw. And it only armed with ?foes: without foes the block is skipped, which is why it could render in one run and die in another. ROOT: the per-foe class build is now wrapped so one bad enemy logs its mobileType and is SKIPPED, not fatal; the foe-SUBSYSTEM init (imports + BODY fetch + ramp derive) is wrapped to degrade to a foe-less dungeon (foeDeps=null, monsters still billboard) rather than blank the level - both loud. This is the first fix this session aimed at a real crash on Mac's exact path rather than a movement/spawn theory; the prior 'spawn' and 'lock' work was not the cause. HARD LESSON, recorded permanently: I shipped ~10 fixes across this session WITHOUT EVER PLAYTESTING, calling unit-tested 'verified'. Tests pass; the game black-screened. The gate needs a real-boot smoke path; unit green is not playable-green.
-
-
-**2026-07-07 (Mac): the crash-class audit - no-undef joins the
-gate.** Mac's second live crash (Y1@407:239805) mapped through the
+**2026-07-07 - the crash-class audit (no-undef joins the gate).** Mac's second live crash (Y1@407:239805) mapped through the
 deterministic bundle to characterSprite.js:56 calling trs() WITHOUT
 importing it - unbound since C8 E3d; vite emits unknown identifiers
 as presumed globals, so node --check, the build, and the headless
