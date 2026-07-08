@@ -266,6 +266,37 @@ export class Collider {
     return this._moveStep(feet, dx, dy, dz);
   }
 
+  /**
+   * Is a capsule at these feet penetrating geometry? Runs the resolve
+   * on a COPY and reports how far it got pushed - a large push means
+   * the position is inside/against a wall (wedged).
+   */
+  penetrationAt(feet) {
+    const probe = [feet[0], feet[1], feet[2]];
+    const out = { grounded: false, hitCeiling: false, pushedDown: false };
+    this._resolveCapsule(probe, out);
+    return Math.hypot(probe[0] - feet[0], probe[1] - feet[1], probe[2] - feet[2]);
+  }
+
+  /**
+   * Unstick: from feet, step UP until the capsule is in clear space
+   * (penetration below a threshold) AND there is floor within a short
+   * drop below. Returns clear feet, or the original if nothing found.
+   * This is the escape hatch for a spawn that lands inside geometry.
+   */
+  findClearFloor(feet, maxUp = 6, step = 0.25) {
+    for (let up = 0; up <= maxUp; up += step) {
+      const test = [feet[0], feet[1] + up, feet[2]];
+      if (this.penetrationAt(test) < 0.03) {
+        // clear here - now drop to the floor beneath this clear point
+        const d = this.raycast([test[0], test[1] + 0.2, test[2]], [0, -1, 0], up + 2);
+        if (Number.isFinite(d)) return [test[0], test[1] + 0.2 - d, test[2]];
+        return test;
+      }
+    }
+    return feet;
+  }
+
   _moveStep(feet, dx, dy, dz) {
     const out = { grounded: false, hitCeiling: false, pushedDown: false };
 

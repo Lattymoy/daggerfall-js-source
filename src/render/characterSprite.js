@@ -53,12 +53,25 @@ export function drawFirstPersonViewmodel(renderer, canvas, rig, feet, yaw, pitch
   const pw = Math.max(2, Math.round(wantW * scale));
   const ph = Math.max(2, Math.round(wantH * scale));
   const s = rig.scale;
-  const rigMat = trs(feet[0], feet[1] - rig.liveFootY * s, feet[2], 0, yaw * 180 / Math.PI, 0, s, s, s);
-  const eye = [feet[0], feet[1] + eyeHeight, feet[2]];
-  const cp = Math.cos(pitch);
-  const fwd = [Math.sin(yaw) * cp, Math.sin(pitch), Math.cos(yaw) * cp];
+  // The FP viewmodel is the player's OWN BODY rig. The real camera sits
+  // at eye height 1.7, which is INSIDE the 1.8-tall body - so rendering
+  // the body at the player's feet with the mini-camera at eye height
+  // put the camera INSIDE the torso and the mesh filled the screen from
+  // every angle: Mac's "stuck in a hole" was the inside of his own
+  // character. This frames it as a real FP weapon instead: the body is
+  // placed in a FIXED local rig-space in front of a FIXED mini-camera
+  // that looks slightly down, so only the upper body / arms / weapon
+  // occupy the lower frame. It does NOT track the player's pitch (the
+  // real camera pitch aiming into the body was the trap); yaw is baked
+  // into the rig so it always faces the viewer. Placement is in the
+  // rig's OWN space (origin), decoupled from world feet entirely.
+  const rigMat = trs(0, -rig.liveFootY * s, 0, 0, 180, 0, s, s, s);   // face the camera, foot at origin
+  const camY = 1.15;                     // below the head, at chest/arms level
+  const camBack = 1.6;                   // stand back so the whole near body isn't clipping the lens
+  const eye = [0, camY, -camBack];       // looking toward +z at the rig
+  const look = [0, 0.55, 0];             // aim at the lower torso/hands
   const proj = perspective(Math.PI / 3, pw / ph, 0.05, 12);
-  const view = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
+  const view = lookAt(eye, look, [0, 1, 0]);
   const tex = renderer.renderCharacterSprite(rig.mesh, rigMat, proj, view, pw, ph);
   renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);
 }
