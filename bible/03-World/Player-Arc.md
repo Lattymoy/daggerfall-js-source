@@ -442,6 +442,37 @@ A sweep of the scene/input paths found no other unguarded throwing
 browser API (indexedDB.open uses the async onerror pattern correctly;
 pointer lock was already fixed). Systems are live-path-safe.
 
+### Systems hardening pass (post-arc audit)
+Applying the live-path lesson to the shipped systems S1-S12 BEFORE
+extending. Findings, honestly categorized:
+- **9 of 10 systems are pure computation** (loot, inventory,
+  containers, chargen, advancement, skills, effects, spellcast,
+  spellcost) - no fetch, no DOM, no construction - so they CANNOT
+  crash the build the way the foe path did. generateItems in
+  particular was checked at its build-loop call site (the S2 treasure
+  loop): unknown loot key falls back to '-', and the roll walks only
+  frozen ITEM_GROUPS, so it does not throw on real data. The crash
+  risk is specific to I/O-or-construction, not computation.
+- **save.js was the one I/O system, and had the gap**:
+  writeQuicksave's `setItem` was UNGUARDED. localStorage.setItem
+  throws on real browsers (QuotaExceededError when full, SecurityError
+  under private-browsing) - the same unguarded-browser-API class as
+  the bare requestPointerLock crash, and it would propagate through
+  the F9 handler and kill the frame. readQuicksave already modeled
+  the right try/catch; writeQuicksave now matches, returns false on
+  failure, and the F9 handler reports "Save failed (storage full or
+  disabled)" instead of silently doing nothing. Pinned (a throwing
+  storage stub must not throw and must return false).
+- **Browser-API sweep of the game path**: pointer lock (fixed) and
+  save (fixed) were the only two unguarded throwing APIs. indexedDB
+  in dataSource uses the correct onerror/onsuccess async pattern;
+  paintOverlay's localStorage is a dev tool off the game path.
+The systems are otherwise structurally sound for live play; what
+remains is EMPIRICAL - the behaviours (loot feel, casting, save/load
+round-trips in a real dungeon) need actual playtesting, which only
+Mac can do (no ARENA2 in the container). The F8 HUD is the instrument
+for that.
+
 ### Process lesson (recorded permanently)
 ~14 fixes shipped across this session with ZERO playtesting, unit-
 green repeatedly called "verified" while the game black-screened or
