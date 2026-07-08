@@ -53,11 +53,22 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null };
 }
 
-/** localStorage backend (absent in headless - callers gate). */
+/** localStorage backend (absent in headless - callers gate).
+ *  setItem THROWS on real browsers - QuotaExceededError when storage
+ *  is full, or a SecurityError under private-browsing modes that
+ *  disable storage. An unguarded throw here propagates through the F9
+ *  handler and kills the frame (the same unguarded-browser-API class
+ *  as the bare requestPointerLock crash). Return false on failure so
+ *  the caller reports "save failed" instead of crashing. */
 export function writeQuicksave(snap, storage = globalThis.localStorage) {
   if (!storage) return false;
-  storage.setItem(QUICKSAVE_KEY, JSON.stringify(snap));
-  return true;
+  try {
+    storage.setItem(QUICKSAVE_KEY, JSON.stringify(snap));
+    return true;
+  } catch (err) {
+    console.warn('[save] quicksave write failed:', err?.name ?? err);
+    return false;
+  }
 }
 export function readQuicksave(storage = globalThis.localStorage) {
   if (!storage) return null;

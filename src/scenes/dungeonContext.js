@@ -987,6 +987,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         world: collectWorld(),
       });
       if (writeQuicksave(snap)) hudText.add('Game saved.');
+      else hudText.add('Save failed (storage full or disabled).');   // never silent - the write can fail on real browsers
     },
     quickLoad(setPlayerPos) {
       const snap = readQuicksave();

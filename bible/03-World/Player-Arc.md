@@ -423,6 +423,25 @@ dungeon geometry. All are fixed and rooted; the durable record:
   dies.
 - **`[spawn]` console line**: marker -> feet on every dungeon boot.
 
+### Systems live-path hardening (post-arc audit)
+Applying the session's lesson to the shipped systems S1-S12 before
+extending. Audit finding: 9 of 10 systems are PURE COMPUTATION over
+frozen tables (loot, inventory, containers, chargen, advancement,
+skills, effects, spellcast, spellcost) - they cannot crash the
+awaited build the way the foe path did (which failed on fetches +
+rig construction). The treasure loop's generateItems call, though on
+the build path, is safe: unknown loot keys fall back to '-' and the
+roll never dereferences undefined. The one I/O system, save.js, had
+the real gap: writeQuicksave's localStorage.setItem was UNGUARDED and
+throws on real browsers (QuotaExceededError when full, SecurityError
+in private mode) - the same unguarded-browser-API class as the bare
+requestPointerLock crash, and it would kill the frame on F9. Now
+guarded (returns false), the F9 handler reports "save failed" instead
+of going silent or crashing, and the throwing-storage case is pinned.
+A sweep of the scene/input paths found no other unguarded throwing
+browser API (indexedDB.open uses the async onerror pattern correctly;
+pointer lock was already fixed). Systems are live-path-safe.
+
 ### Process lesson (recorded permanently)
 ~14 fixes shipped across this session with ZERO playtesting, unit-
 green repeatedly called "verified" while the game black-screened or

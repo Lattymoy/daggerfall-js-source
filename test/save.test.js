@@ -40,6 +40,12 @@ test('save: round-trip restores everything; extras carried; deep copies', () => 
   assert.ok(writeQuicksave(snap, fake));
   assert.equal(readQuicksave(fake).name, 'Mac');
   assert.equal(readQuicksave({ getItem: () => '{corrupt', setItem: () => {} }), null);
+  // writeQuicksave must NOT throw when setItem throws (QuotaExceeded /
+  // private-mode SecurityError) - it returns false so the caller
+  // reports "save failed" instead of crashing the frame.
+  const throwing = { setItem: () => { throw new Error('QuotaExceededError'); }, getItem: () => null };
+  assert.equal(writeQuicksave(snap, throwing), false);
+  assert.doesNotThrow(() => writeQuicksave(snap, throwing));
 });
 
 test('save: F12 pierces overlays (the death hint is true)', () => {
