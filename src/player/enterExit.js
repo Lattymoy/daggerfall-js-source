@@ -189,8 +189,25 @@ export function exteriorLanding(playerPos, buildingDoors) {
  * landing unchanged - gravity remains the fallback.
  */
 export function floorLanding(collider, pos, maxDist = 10) {
-  const origin = [pos[0], pos[1] + 0.2, pos[2]];
-  const d = collider.raycast(origin, [0, -1, 0], maxDist + 0.2);
-  if (!Number.isFinite(d)) return pos;
-  return [pos[0], origin[1] - d, pos[2]];
+  // Verbatim PlayerEnterExit.SetStanding shape: a downward ray finds
+  // the floor and the body is placed relative to hit.point. DFU casts
+  // ONE ray from transform.position - but a marker floating over a
+  // seam/grate/tile-edge makes a single center ray MISS, and the old
+  // code then returned the raw (airborne) position -> the player
+  // free-fell and wedged on a lower ledge off-marker (Mac: feet
+  // 26.10/38.40 vs marker 28.38/38.98, g:0, stuck in the hole).
+  // Fix: sample the capsule FOOTPRINT (center + a ring at ~half the
+  // radius), take the HIGHEST floor any sample hits (the tile the
+  // feet actually rest on), so a marker over a seam still lands. This
+  // is the CharacterController's footprint sweep, not a point probe.
+  const R = 0.18;                                  // ~half capsule radius
+  const offs = [[0, 0], [R, 0], [-R, 0], [0, R], [0, -R]];
+  let bestFloorY = -Infinity;
+  for (const [ox, oz] of offs) {
+    const origin = [pos[0] + ox, pos[1] + 0.2, pos[2] + oz];
+    const d = collider.raycast(origin, [0, -1, 0], maxDist + 0.2);
+    if (Number.isFinite(d)) bestFloorY = Math.max(bestFloorY, origin[1] - d);
+  }
+  if (bestFloorY === -Infinity) return pos;        // truly nothing below: leave to gravity
+  return [pos[0], bestFloorY, pos[2]];
 }

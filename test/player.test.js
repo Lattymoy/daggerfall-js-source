@@ -161,3 +161,23 @@ test('motor: standing still on a flat floor stays grounded every frame (regressi
     assert.ok(Math.abs(m.pos[1] - FY) < 1e-3, `sank through the floor: ${m.pos[1]}`);
   }
 });
+
+test('floorLanding: samples the footprint so a marker over a seam still lands (regression: freefall-into-wedge)', () => {
+  // Mac spawned stuck in a hole: feet 26.10/38.40 vs marker 28.38/38.98,
+  // g:0. Root - floorLanding cast ONE ray from the marker's exact x,z;
+  // over a floor seam/grate/tile-edge it MISSED, returned the raw
+  // airborne position, and the player free-fell and wedged on a lower
+  // ledge off-marker. The footprint ring must find the floor the feet
+  // rest on even when the center point is over a gap.
+  const c = new Collider(() => -Infinity);
+  const add = (v) => c.addMesh('w', new Float32Array(v), new Uint16Array([0, 1, 2, 0, 2, 3]), [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  // floor with a narrow gap directly under x=28.38
+  add([20, 38.40, 8, 28.30, 38.40, 8, 28.30, 38.40, 18, 20, 38.40, 18]);
+  add([28.46, 38.40, 8, 34, 38.40, 8, 34, 38.40, 18, 28.46, 38.40, 18]);
+  const landed = floorLanding(c, [28.38, 38.98 + 1.08, 12.40]);
+  assert.ok(Math.abs(landed[1] - 38.40) < 1e-3, `should land on the floor via footprint, got ${landed[1]}`);
+  // and a genuine void still returns raw for gravity to handle
+  const c2 = new Collider(() => -Infinity);
+  const raw = floorLanding(c2, [0, 5, 0]);
+  assert.equal(raw[1], 5);
+});
