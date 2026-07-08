@@ -919,7 +919,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const lines = [
         `build ${BUILD_TAG}`,
         `feet ${feet}  ${_motorState}`,
-        `marker ${this.startMarker ? [this.startMarker.x, this.startMarker.y, this.startMarker.z].map((v) => v.toFixed(2)).join(',') : 'none'}`,
+        `enter ${this.enterMarker ? [this.enterMarker.x, this.enterMarker.y, this.enterMarker.z].map((v) => v.toFixed(2)).join(',') : 'none'}  start ${this.startMarker ? [this.startMarker.x, this.startMarker.y, this.startMarker.z].map((v) => v.toFixed(2)).join(',') : 'none'}`,
         `overlay ${activeOverlay ? activeOverlay.constructor.name : 'none'}  chargenDone ${!!playerEntity.chargenDone}`,
         `lock ${typeof document !== 'undefined' && document.pointerLockElement ? 'yes' : 'NO'}  class ${playerEntity.careerIndex ?? '?'} ${playerEntity.career?.name ?? ''}`,
         `hp ${playerEntity.health}/${playerEntity.maxHealth}  mp ${playerEntity.magicka}/${playerEntity.maxMagicka}`,
@@ -947,6 +947,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     flicker,
     waterQuads,
     startMarker: dungeon.startMarker,
+    enterMarker: dungeon.enterMarker,
     blockCount: dungeon.blocks.length,
     enemies,
     foes,
@@ -959,9 +960,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  marker spawn put the EYE at the marker, feet under the floor:
      *  Mac spawned wedged in the under-geometry shaft). */
     startSpawn() {
-      const m = this.startMarker;
+      // Verbatim PlayerEnterExit.StartDungeonInterior with
+      // preferEnterMarker=true (the default on dungeon entry): the
+      // ENTER marker wins, StartMarker is the fallback. We were using
+      // StartMarker unconditionally - a DIFFERENT point that in
+      // Privateer's Hold sits in tight geometry, so the collider
+      // shoved the capsule off-marker into a wall and it wedged
+      // (Mac: feet 26.10 vs marker 28.38, 'stuck in a hole' while
+      // the numbers jitter but net travel stays ~0).
+      const m = this.enterMarker ?? this.startMarker;
       if (!m) return [0, 2, 0];
-      return floorLanding(collider, [m.x, m.y + 1.08, m.z]);   // the static import - foe-less runs spawn correctly too
+      return floorLanding(collider, [m.x, m.y + 1.08, m.z]);
     },
     get playerFallScale() { return hasActiveEffect(playerEntity, 'slowfall') ? 0.15 : 1; },   // S8: hosts feed their motor
     // S11: quicksave/quickload (F9/F12). WORLD state (foes, piles,
