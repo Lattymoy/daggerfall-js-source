@@ -21,6 +21,7 @@
 //   chargen UI will replace.
 
 import { SKILLS } from './skills.js';
+import { liveStat } from './statMods.js';   // S14: fortify-aware endurance
 import { hitPointsPerLevelUp, spendPoolLowest } from './chargen.js';
 
 // DaggerfallSkills.GetAdvancementMultiplier, all 35, verbatim.
@@ -123,7 +124,7 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
 export function applyLevelUp(entity, distribute, rolls = Math.random) {
   if (!entity.readyToLevelUp || !entity.pendingLevel) return false;
   entity.level = entity.pendingLevel;
-  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);
+  entity.maxHealth += hitPointsPerLevelUp(entity.career, liveStat(entity, 'endurance'), rolls);
   entity.health = Math.min(entity.health, entity.maxHealth);
   const pool = LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
   distribute(entity.stats, pool);

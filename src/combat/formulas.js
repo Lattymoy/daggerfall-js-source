@@ -13,6 +13,7 @@
 // scalar SetEnemyCareer fills every slot with, so [part] == armor.
 
 import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source (EnemyAttack.cs:30)
+import { liveStat } from '../systems/statMods.js';   // S14: fortify-aware stat reads
 import { skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
 
 // ---- Dice100.cs verbatim ----
@@ -71,7 +72,7 @@ export function bonusOrPenaltyByEnemyType(attacker, targetGroup) {
 
 // ---- CalculateStatsToHit ----
 export const statsToHit = (a, t) =>
-  Math.trunc((a.stats.luck - t.stats.luck) / 10) + Math.trunc((a.stats.agility - t.stats.agility) / 10);
+  Math.trunc((liveStat(a, 'luck') - liveStat(t, 'luck')) / 10) + Math.trunc((liveStat(a, 'agility') - liveStat(t, 'agility')) / 10);
 
 // ---- CalculateSkillsToHit (classic's /4 dodging; crit roll adds crit/10) ----
 export function skillsToHit(a, t, roll01 = Math.random()) {
@@ -114,7 +115,7 @@ export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = 
     if ((weapon.flags & 0x10) === 0) damage = Math.trunc(damage / 2);   // edged-weapon rule
     if (weapon.material === 2) damage *= 2;                             // Silver
   }
-  damage += damageModifier(attacker.stats.strength);
+  damage += damageModifier(liveStat(attacker, 'strength'));
   damage += WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0;   // half of the in-game display, per the source comment
   if (damage < 1) damage = 0;
   damage += bonusOrPenaltyByEnemyType(attacker, target.group ?? null);

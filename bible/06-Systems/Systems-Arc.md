@@ -382,9 +382,48 @@ yet gate on it (flagged - AI magicka-gating is a later behaviour).
 3 tests: instant magicka gain, saving-throw-scaled drain, continuous
 drain joining actives + per-round tick. Suite 285/72.
 
+## S14 (effect library IV - the attribute stat-mod layer + Fortify): SHIPPED
+
+The FortifyAttribute family, and the stat-mod INFRASTRUCTURE it needs -
+the foundational piece for every attribute effect (Fortify now, Drain/
+Transfer next). Ported verbatim from DFU:
+- **The stat-mod layer** (src/systems/statMods.js, STANDALONE - no
+  imports, to avoid a formulas <- spellcast <- effects cycle): DFU
+  keeps a per-attribute statMods array separate from base stats
+  (ChangeStatMod: statMods[stat] += magnitude), and the value a
+  consumer reads is base + the active mods. Ours mirrors that with
+  liveStat(entity, statName) = base + sum of active fortify mods on
+  that stat. STAT_KEYS_ORDER is DFCareer.Stats order (0 Strength .. 7
+  Luck), matching chargen exactly, so the classic subType IS the stat
+  index.
+- **FortifyAttribute** (classic type 9, subType = stat index 0..7 -
+  all eight in ONE handler; keys verified 9,0 Str through 9,7 Luck):
+  an IncumbentEffect that pushes a temporary additive stat mod onto
+  activeEffects for the rolled duration. A re-cast of the SAME stat
+  RENEWS the duration (AddState); a different stat stacks as its own
+  entry. The round ticker's universal countdown expires it and
+  liveStat returns to base - no per-round action.
+- **CONSUMERS FRONTED**: the combat formulas (statsToHit reads
+  liveStat for luck+agility; the damage bonus reads liveStat strength)
+  and advancement (HP-per-level reads liveStat endurance) now read the
+  LIVE stat, never the raw base - so a fortify actually raises hit
+  chance / damage / HP gain, and expiry restores it. Verified
+  byte-identical for unmodded entities (all 285 prior tests held,
+  including every combat + advancement pin).
+
+2 tests: the fortify lifecycle (apply -> liveStat reflects the mod ->
+incumbent renews not stacks -> expiry restores base) and a fortified
+agility raising statsToHit through the real formula. Suite 287/72.
+
+NEXT in this family: DrainAttribute (persistent, accumulating - DFU
+IncreaseMagnitude on re-cast, PlayerAggro) and Transfer (drain caster,
+fortify target). HealAttribute (cures attribute DAMAGE from drains)
+follows once Drain lands.
+
 ## Queue
-- Magic remainder: MORE effect families (attribute Fortify/Damage/
-  Drain, Cure/Regenerate, the Fatigue family once a fatigue stat
-  exists), enchantment economy/value.
+- Magic remainder: DrainAttribute + TransferAttribute + HealAttribute
+  (the rest of the stat-mod family on the S14 layer), Cure effects
+  (disease/poison/paralysis), Regenerate, the Fatigue family once a
+  fatigue stat exists; enchantment economy/value.
 - Later: quests, guilds, shops, dialog, calendar deep-wiring,
   save format.

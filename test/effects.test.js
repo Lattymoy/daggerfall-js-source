@@ -3,6 +3,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { applySpell, tickActiveEffects, rollDuration, isHealHealth, isHealSpellPoints, isDamageSpellPoints, isContinuousDamageSpellPoints } from '../src/systems/effects.js';
+import { isFortifyAttribute } from '../src/systems/effects.js';
+import { liveStat } from '../src/systems/statMods.js';
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 const T = () => ({ stats: { willpower: 50 }, career: {}, health: 30, maxHealth: 40 });
@@ -93,4 +95,37 @@ test('effects: ContinuousDamageSpellPoints (1,2) joins activeEffects and drains 
   tickActiveEffects(t, { drainMagicka: (n) => { drained += n; } }, seq(0.99));
   assert.equal(drained, 3);                          // one round's magnitude
   assert.equal(t.activeEffects[0].roundsRemaining, 1);
+});
+
+test('effects: FortifyAttribute (type 9) applies a live stat mod, renews, expires', () => {
+  // subType 0 = Strength. Fortify +magnitude for a duration.
+  const fort = { type: 9, subType: 0, magnitudeBaseLow: 10, magnitudeBaseHigh: 10, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 0, durationBase: 3, durationMod: 0, durationPerLevel: 0 };
+  assert.ok(isFortifyAttribute(fort));
+  const t = { stats: { strength: 50 }, career: {}, health: 30, maxHealth: 40 };
+  const r = applySpell({ element: 4, effects: [fort] }, 1, t, {}, seq(0.99));
+  assert.equal(r.fortified, 1);
+  assert.equal(t.activeEffects.length, 1);
+  assert.equal(t.activeEffects[0].kind, 'fortifyAttribute');
+  assert.equal(liveStat(t, 'strength'), 60);            // base 50 + fortify 10
+  assert.equal(liveStat(t, 'agility'), 0);              // untouched stat -> base (absent -> 0)
+  // re-cast the SAME stat: incumbent renews duration, does NOT stack a second entry
+  t.activeEffects[0].roundsRemaining = 1;
+  applySpell({ element: 4, effects: [fort] }, 1, t, {}, seq(0.99));
+  assert.equal(t.activeEffects.length, 1);
+  assert.equal(t.activeEffects[0].roundsRemaining, 3);  // renewed
+  assert.equal(liveStat(t, 'strength'), 60);
+  // tick to expiry: liveStat returns to base
+  for (let i = 0; i < 3; i++) tickActiveEffects(t, {}, seq(0.99));
+  assert.equal(t.activeEffects.length, 0);
+  assert.equal(liveStat(t, 'strength'), 50);
+});
+
+test('effects: a fortified stat raises combat output (liveStat fronts the formulas)', async () => {
+  const { statsToHit } = await import('../src/combat/formulas.js');
+  const base = { stats: { luck: 50, agility: 50 } };
+  const foe = { stats: { luck: 50, agility: 50 } };
+  assert.equal(statsToHit(base, foe), 0);               // equal stats -> 0
+  // fortify the attacker's agility +20 -> statsToHit gains floor(20/10)=2
+  base.activeEffects = [{ kind: 'fortifyAttribute', stat: 'agility', magnitude: 20, roundsRemaining: 5 }];
+  assert.equal(statsToHit(base, foe), 2);
 });

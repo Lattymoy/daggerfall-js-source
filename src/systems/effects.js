@@ -16,6 +16,7 @@
 // FLAGGED skipped (the library grows here).
 
 import { savingThrow, rollMagnitude, EFFECT_FLAGS } from './spellcast.js';
+import { STAT_KEYS_ORDER } from './statMods.js';
 
 const ELEMENT_EFFECT_FLAG = Object.freeze([EFFECT_FLAGS.Fire, EFFECT_FLAGS.Frost, EFFECT_FLAGS.Poison, EFFECT_FLAGS.Shock, EFFECT_FLAGS.Magic]);
 
@@ -42,6 +43,11 @@ export const isContinuousDamage = (e) => e.type === 1 && e.subType === 0;
 // The magicka analog of the Health effects - same instant/active
 // shapes, IncreaseMagicka/DecreaseMagicka the sinks (restoreMagicka /
 // drainMagicka), MagnitudeCosts (20,28) already in the S10 table.
+// Fortify{Attribute} (classic type 9, subType = the stat index 0..7).
+// The stat-mod layer (STAT_KEYS_ORDER, liveStat) lives standalone in
+// statMods.js to avoid a formulas<-spellcast<-effects import cycle.
+export const isFortifyAttribute = (e) => e.type === 9 && e.subType >= 0 && e.subType <= 7;
+
 export const isHealSpellPoints = (e) => e.type === 10 && e.subType === 9;
 export const isDamageSpellPoints = (e) => e.type === 4 && e.subType === 2;
 export const isContinuousDamageSpellPoints = (e) => e.type === 1 && e.subType === 2;
@@ -84,6 +90,23 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         target.activeEffects = target.activeEffects || [];
         target.activeEffects.push({ kind: 'continuousDamage', effect: e, casterLevel, savePct: pct, roundsRemaining: rounds });
         out.continuous++;
+      }
+      continue;
+    }
+    if (isFortifyAttribute(e)) {
+      // Fortify{Attribute} (type 9, subType = stat index): a temporary
+      // additive stat mod held for the duration. IncumbentEffect - a
+      // re-cast of the SAME stat renews the rounds (AddState); a
+      // different stat stacks as its own entry.
+      const rounds = rollDuration(e, casterLevel);
+      if (rounds > 0) {
+        const stat = STAT_KEYS_ORDER[e.subType];
+        const magnitude = rollMagnitude(e, casterLevel, rolls);
+        target.activeEffects = target.activeEffects || [];
+        const inc = target.activeEffects.find((a) => a.kind === 'fortifyAttribute' && a.stat === stat);
+        if (inc) { inc.roundsRemaining = rounds; }            // incumbent renews duration
+        else target.activeEffects.push({ kind: 'fortifyAttribute', stat, magnitude, roundsRemaining: rounds });
+        out.fortified = (out.fortified ?? 0) + 1;
       }
       continue;
     }
