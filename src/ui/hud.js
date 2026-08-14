@@ -30,7 +30,13 @@ export function barFill(current, max) {
   return { ratio, v0: 1 - ratio, v1: 1 };
 }
 
-export const hudScale = (canvasHeight) => Math.max(1, Math.floor(canvasHeight / 200));
+/** Classic-UI integer scale: FIT the 320x200 virtual screen inside
+ *  the canvas (min axis), never overflow it. Height-only scaling blew
+ *  classic layouts past the edges on portrait phones (2026-08-14 -
+ *  Mac's report); on landscape desktop min() picks the same value the
+ *  old formula did. */
+export const hudScale = (canvasWidth, canvasHeight) =>
+  Math.max(1, Math.floor(Math.min(canvasWidth / 320, canvasHeight / 200)));
 
 /**
  * Load the five classic HUD images. Returns null (loudly, once) when
@@ -73,7 +79,7 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
  *  heading01 = camera yaw / 2pi with 0 facing +z. */
 export function drawHud(renderer, canvas, art, vitals, heading01) {
   if (!art) return;
-  const s = hudScale(canvas.height);
+  const s = hudScale(canvas.width, canvas.height);
   const bottom = canvas.height - HUD_BORDER * s;
   // Vitals, left to right: health, fatigue, magicka (classic order),
   // 2px gaps at scale.

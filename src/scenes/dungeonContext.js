@@ -919,19 +919,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const heading01 = ((Math.atan2(hfw[0], hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1;
     drawHud(renderer, canvas, hudArt, playerEntity, heading01);
     hudText.tick(dt);
-    if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.height));
+    if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
     if (hudFont && !activeOverlay && typeof document !== 'undefined' && !document.pointerLockElement) {
       // The lock-lost gap (Mac's F8 readout: 'lock NO' was the whole
       // dead-look mystery): the browser drops pointer lock on every
       // Escape and re-engages only on a click - and the game said
       // NOTHING. Now it says.
-      const s3 = hudScaleFor(canvas.height);
+      const s3 = hudScaleFor(canvas.width, canvas.height);
       const msg = 'CLICK TO LOOK';
       drawText(renderer, hudFont, msg, (canvas.width - measureText(hudFont.fnt, msg) * s3) / 2, canvas.height / 2 - 30 * s3, s3, [1, 0.9, 0.4, 1]);
     }
     if (debugHud && hudFont) {
       // F8 diagnostics: every live-play unknown, on screen.
-      const s2 = hudScaleFor(canvas.height);
+      const s2 = hudScaleFor(canvas.width, canvas.height);
       const feet = lastPlayerFeet ? lastPlayerFeet.map((v) => v.toFixed(2)).join(',') : 'null';
       const lines = [
         `build ${BUILD_TAG}`,
@@ -948,7 +948,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (hudFont && readiedSpell) {
       // U2a's first consumer: the readied spell + cost, classic text
       // above the vitals (the spellbook window replaces this in U4).
-      const s = hudScaleFor(canvas.height);
+      const s = hudScaleFor(canvas.width, canvas.height);
       drawText(renderer, hudFont, `${readiedSpell.name} (${calculateCastCost(readiedSpell, playerEntity).sp})`, 10 * s, canvas.height - 60 * s, s, [0.9, 0.9, 0.75, 1]);
     }
   }
@@ -1053,7 +1053,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         activeOverlay = null;
         return;
       }
-      activeOverlay.draw(renderer, canvas, hudFont, hudScaleFor(canvas.height));
+      // Letterbox seam (2026-08-14): overlays lay out on a virtual
+      // 320x200*s screen, centered on the real canvas. Full-canvas
+      // dim first (the overlay's own backdrop then panels the box);
+      // the offset MUST reset even if an overlay draw throws.
+      const s = hudScaleFor(canvas.width, canvas.height);
+      const vw = 320 * s, vh = 200 * s;
+      renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.02, 0.02, 0.02, 0.6]);
+      renderer.setScreenOffset((canvas.width - vw) / 2, (canvas.height - vh) / 2);
+      try {
+        activeOverlay.draw(renderer, { width: vw, height: vh }, hudFont, s);
+      } finally {
+        renderer.setScreenOffset(0, 0);
+      }
     },
     toggleCharSheet() {
       if (activeOverlay) return;

@@ -22,9 +22,11 @@ test('hud: bar fill bottom-anchored + scale floors at 1', () => {
   assert.deepEqual(barFill(0, 100), { ratio: 0, v0: 1, v1: 1 });
   assert.deepEqual(barFill(150, 100), { ratio: 1, v0: 0, v1: 1 });      // clamped
   assert.deepEqual(barFill(5, 0), { ratio: 0, v0: 1, v1: 1 });          // max 0 guarded
-  assert.equal(hudScale(200), 1);
-  assert.equal(hudScale(1080), 5);
-  assert.equal(hudScale(120), 1);                                        // floors at 1
+  // FIT scale (min axis of the 320x200 virtual screen), floors at 1
+  assert.equal(hudScale(320, 200), 1);
+  assert.equal(hudScale(1920, 1080), 5);      // desktop: min(6, 5.4) -> 5, same as height-only gave
+  assert.equal(hudScale(1080, 2280), 3);      // portrait phone: WIDTH constrains - min(3.375, 11.4) -> 3 (height-only gave 11 and blew the layout)
+  assert.equal(hudScale(160, 120), 1);        // floors at 1
 });
 
 test('hud: indexed->RGBA with index-0 transparency', () => {

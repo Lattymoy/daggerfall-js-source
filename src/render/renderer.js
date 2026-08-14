@@ -738,6 +738,12 @@ void main() {
   /** Fullscreen overlay of a sprite-RT sub-rect: no depth, no fog,
    *  alpha-cut - the FP viewmodel composite (E3d). Classic draws the
    *  weapon over everything. */
+  /** Screen-space translation applied to every drawScreenQuad dst -
+   *  the overlay letterbox seam (2026-08-14): classic windows lay out
+   *  on a virtual 320x200*s screen and this centers that screen on
+   *  the real canvas. Set, draw, reset - never leave it on. */
+  setScreenOffset(x, y) { this._screenOffset = [x, y]; }
+
   /** Positioned screen-space quad in PIXELS (origin top-left), with a
    *  source UV rect - textured (uv0/uv1) or solid color (tex null).
    *  The UI arc's primitive (U1): compass window + vitals bars. */
@@ -793,7 +799,8 @@ void main() {
     gl.useProgram(this.screenQuadProgram);
     gl.bindVertexArray(this._screenQuadVao);
     gl.disable(gl.DEPTH_TEST);
-    gl.uniform4f(this._screenQuad.dst, dst.x, dst.y, dst.w, dst.h);
+    const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
+    gl.uniform4f(this._screenQuad.dst, dst.x + ox, dst.y + oy, dst.w, dst.h);
     gl.uniform2f(this._screenQuad.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.uniform4f(this._screenQuad.src, src.u0, src.v0, src.u1, src.v1);
     gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
