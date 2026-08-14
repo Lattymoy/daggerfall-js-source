@@ -2,7 +2,8 @@
 // Hand-rolled WebGL2, no framework. Same doctrine as project-final.
 // Desktop-first; touch devices get the ui/touch.js layer (stick +
 // drag-look + buttons) speaking the same input language.
-// Scene router: ?interior, ?dungeon, ?world, or an exterior location
+// Scene router: bare = the classic start (Privateer's Hold + chargen);
+// ?interior, ?dungeon=<name>, ?world, ?exterior (or ?region/?loc)
 // by default (?region=<name>&loc=<name>). Scene details live in
 // src/scenes/*.js headers.
 //
@@ -34,7 +35,11 @@ async function boot() {
   if (params.has('interior')) return bootInterior(canvas, renderer, params, status);
   if (params.has('dungeon')) return bootDungeon(canvas, renderer, params, status);
   if (params.has('world')) return bootWorld(canvas, renderer, params, status);
-  return bootExterior(canvas, renderer, params, status);
+  if (params.has('exterior') || params.has('region') || params.has('loc')) return bootExterior(canvas, renderer, params, status);
+  // The bare URL is the CLASSIC START (2026-08-14, Mac-directed):
+  // Privateer's Hold with the chargen flow - the game, not a test
+  // scene. Dev scenes stay one param away (?exterior/?world/etc).
+  return bootDungeon(canvas, renderer, params, status);
 }
 
 boot().catch((e) => {

@@ -31,7 +31,7 @@ export function isTouchDevice() {
     ('ontouchstart' in window || (navigator.maxTouchPoints ?? 0) > 0);
 }
 
-const KEY_NAMES = { KeyW: 'w', KeyA: 'a', KeyS: 's', KeyD: 'd', KeyE: 'e', KeyC: 'c', Space: ' ', ShiftLeft: 'Shift', F5: 'F5', F6: 'F6', Backspace: 'Backspace', Escape: 'Escape', Enter: 'Enter', ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', ArrowLeft: 'ArrowLeft', ArrowRight: 'ArrowRight', Minus: '-', Equal: '=' };
+const KEY_NAMES = { KeyW: 'w', KeyA: 'a', KeyS: 's', KeyD: 'd', KeyE: 'e', KeyC: 'c', Space: ' ', ShiftLeft: 'Shift', F5: 'F5', F6: 'F6', F9: 'F9', F12: 'F12', Backspace: 'Backspace', Escape: 'Escape', Enter: 'Enter', ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', ArrowLeft: 'ArrowLeft', ArrowRight: 'ArrowRight', Minus: '-', Equal: '=' };
 function synth(type, code) {
   window.dispatchEvent(new KeyboardEvent(type, { code, key: KEY_NAMES[code] ?? code, bubbles: true }));
 }
@@ -87,6 +87,10 @@ export function attachTouch(canvas, hooks = {}) {
   button('F6', 'left:72px', 'top:16px', 48, () => tap('F6'));
   button('\u2630', 'left:128px', 'top:16px', 48, () => tap('Backspace'));   // spellbook
   button('C', 'left:184px', 'top:16px', 48, () => tap('KeyC'));             // cast
+  // Save/load (2026-08-14): phones had NO path to F9/F12 - a reload
+  // meant chargen from scratch. Same synthetic-key seam as the rest.
+  button('SV', 'left:240px', 'top:16px', 48, () => tap('F9'));              // quicksave
+  button('LD', 'left:296px', 'top:16px', 48, () => tap('F12'));             // quickload
 
   // Overlay-nav row (classic windows navigate on arrows/Enter/Esc)
   const nav = document.createElement('div');
