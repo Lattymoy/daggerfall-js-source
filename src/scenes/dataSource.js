@@ -17,6 +17,22 @@ const DB_NAME = 'project-dagger';
 const STORE = 'arena2';
 const mem = new Map(); // NAME -> Uint8Array
 
+// Ingest DIET (2026-08-14, the mobile storage fix): ARENA2 is 517MB
+// but the engine reads ~155MB - TEXTURE archives, the BSAs, palettes,
+// PAKs, CFGs, fonts, WOODS.WLD, MAGIC.DEF, SPELLS.STD, IMG/CIF art,
+// RSC text, RCI, SND. The other 362MB (VIDs 83, SKY/PACKED DATs 247,
+// FLCs, quest QBN/QRC) is unread by the port - ingesting it tripled
+// storage + memory pressure and quota-killed phones. When a future
+// slice needs a dropped kind: bump MANIFEST_V - stale stored sets
+// auto-wipe to the picker.
+const LEAN = typeof window !== 'undefined' &&
+  ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0);
+export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
+  /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND)$/.test(name) ||
+  (!lean && /^SKY\d+\.DAT$/.test(name));   // skies: 247MB - full sets on desktop, gradient fallback on the lean diet
+const MANIFEST_KEY = '__MANIFEST__';
+const MANIFEST_V = 2;   // v1 = the broken-era sets (pre-diet) - auto-wiped
+
 /** Uppercase basename: the canonical ARENA2 key. Exported for tests. */
 export function normalizeName(name) {
   const s = String(name);
@@ -80,6 +96,46 @@ async function getDb() {
   return db;
 }
 
+async function idbPut(db, key, val) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(val, key);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+async function idbGetManifest(db) {
+  try {
+    const m = await idbGet(db, MANIFEST_KEY);
+    return m ? JSON.parse(new TextDecoder().decode(m)) : null;
+  } catch { return null; }
+}
+
+/** Finish an ingest: batched store, MANIFEST LAST (its presence IS
+ *  the completeness proof - a mid-ingest death leaves no manifest and
+ *  the next visit auto-wipes to the picker instead of bricking).
+ *  Returns null on success, else a user-facing failure message
+ *  (quota/full device is the mobile reality) - the partial store is
+ *  wiped before returning so no poison remains. */
+async function finishIngest(entries, msg) {
+  try {
+    const d = await getDb();
+    await idbPutAll(d, entries, (done, n) => { msg.textContent = `storing ${done}/${n}...`; });
+    await idbPut(d, MANIFEST_KEY, new TextEncoder().encode(JSON.stringify({ v: MANIFEST_V, diet: LEAN ? 'lean' : 'full', count: entries.length })));
+    return null;
+  } catch (err) {
+    try { await clearStoredData(); } catch { /* wipe best-effort */ }
+    // no-IDB (private mode): a memory-only session still works if the
+    // buffers survived (nothing was nulled when the FIRST write threw)
+    let kept = 0;
+    for (const e of entries) if (e) { mem.set(e[0], new Uint8Array(e[1])); kept++; }
+    if (kept === entries.length) return null;
+    mem.clear();
+    return `storage failed (${err?.name || err}) - your device may be low on space. Freed the partial data; clear some space and pick again.`;
+  }
+}
+
 /** Recovery: wipe the stored set (a mid-ingest tab death leaves a
  *  PARTIAL store - idbCount > 0 skips the picker, then boot dies on
  *  the first missing file with no way back). */
@@ -117,6 +173,7 @@ async function readPicked(files) {
   for (const f of files) {
     const key = normalizeName(f.name);
     if (!/^[A-Za-z0-9._-]+$/.test(key)) continue;
+    if (!KEEP(key)) continue;   // the engine's diet only
     entries.push([key, await f.arrayBuffer()]);
   }
   return entries;
@@ -133,7 +190,7 @@ const PROBE = 'ART_PAL.COL'; // small, universally present, first thing most sce
 // well under the 4GB shapes). If the archive carries an arena2/
 // folder, only those entries ingest (the full gamefiles zip ships
 // siblings we must not swallow).
-export async function readZip(file) {   // exported for the harness
+export async function readZip(file, onProgress) {   // exported for the harness
   const buf = new Uint8Array(await file.arrayBuffer());
   const dv = new DataView(buf.buffer);
   // EOCD: scan the tail for PK\x05\x06 (comment can pad up to 64KB)
@@ -160,9 +217,12 @@ export async function readZip(file) {   // exported for the harness
   const hasArena2 = dirs.some((d) => /(^|\/)arena2\//i.test(d.name));
   const picked = hasArena2 ? dirs.filter((d) => /(^|\/)arena2\//i.test(d.name)) : dirs;
   const entries = [];
+  let seen = 0;
   for (const d of picked) {
     const key = normalizeName(d.name);
+    if (onProgress && ++seen % 50 === 0) onProgress(seen, picked.length);
     if (!/^[A-Za-z0-9._-]+$/.test(key)) continue;
+    if (!KEEP(key)) continue;   // skip BEFORE inflating - the 362MB of unread data never touches memory
     // Local header: its own name/extra lengths position the data
     const lnl = dv.getUint16(d.localOff + 26, true);
     const lel = dv.getUint16(d.localOff + 28, true);
@@ -184,7 +244,12 @@ export async function readZip(file) {   // exported for the harness
  *  folder-pick overlay only when neither IndexedDB nor the network
  *  path has data (i.e. the deployed site on first visit). */
 export async function ensureArena2() {
-  try { if (await idbCount(await getDb()) > 0) return; } catch { /* no IDB */ }
+  try {
+    const d = await getDb();
+    const m = await idbGetManifest(d);
+    if (m && m.v === MANIFEST_V) return;   // complete, current-diet set
+    if (await idbCount(d) > 0) await clearStoredData();   // partial or stale-diet: poison, wipe to the picker
+  } catch { /* no IDB */ }
   try { const r = await fetch(`./arena2/${PROBE}`); if (r.ok) return; } catch { /* offline dev server */ }
 
   await new Promise((resolve) => {
@@ -208,16 +273,8 @@ export async function ensureArena2() {
       msg.textContent = `reading ${files.length} files...`;
       const entries = await readPicked(files);
       if (!entries.length) { msg.textContent = 'no usable files in that selection'; return; }
-      try {
-        await idbPutAll(await getDb(), entries, (d, n) => { msg.textContent = `storing ${d}/${n}...`; });
-        // stored: getBytes lazy-loads per file - keeping the WHOLE
-        // set resident in mem was ~250MB before the scene even
-        // loaded, the mobile black-screen killer (2026-08-14)
-      } catch {
-        // no IDB (private mode): memory-only session is the only path
-        // (a mid-batch throw leaves stored slots nulled - skip them)
-        for (const e of entries) if (e) mem.set(e[0], new Uint8Array(e[1]));
-      }
+      const fail = await finishIngest(entries, msg);
+      if (fail) { msg.textContent = fail; return; }   // stay on the picker
       ui.remove();
       resolve();
     };
@@ -227,13 +284,10 @@ export async function ensureArena2() {
       if (!f) return;
       msg.textContent = `unpacking ${f.name}...`;
       try {
-        const entries = await readZip(f);
+        const entries = await readZip(f, (done, n) => { msg.textContent = `unpacking ${done}/${n}...`; });
         if (!entries.length) { msg.textContent = 'no ARENA2 files in that zip'; return; }
-        try {
-          await idbPutAll(await getDb(), entries, (d, n) => { msg.textContent = `storing ${d}/${n}...`; });
-        } catch {
-          for (const e of entries) if (e) mem.set(e[0], new Uint8Array(e[1]));
-        }
+        const fail = await finishIngest(entries, msg);
+        if (fail) { msg.textContent = fail; return; }   // stay on the picker
         ui.remove();
         resolve();
       } catch (err) {

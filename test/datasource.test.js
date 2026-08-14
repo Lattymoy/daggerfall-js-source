@@ -12,12 +12,14 @@ test('normalizeName: uppercase basename across path styles', () => {
   assert.equal(normalizeName('MAPS.BSA'), 'MAPS.BSA');
 });
 
-// readZip: the mobile ingest path. A crafted zip exercises every
+// readZip: the mobile ingest path (+ the 2026-08-14 engine-diet
+// filter: unread kinds - VID/DAT/FLC/quests - never inflate).
+// A crafted zip exercises every
 // branch: method 0 (store), method 8 (deflate-raw), the arena2/
 // prefix filter dropping siblings, directory entries skipped, and
 // byte-exact round-trips both ways.
 import { deflateRawSync } from 'node:zlib';
-import { readZip } from '../src/scenes/dataSource.js';
+import { readZip, KEEP } from '../src/scenes/dataSource.js';
 
 function craftZip(files) {   // files: [{ name, data (Buffer), store? }]
   const locals = [], centrals = [];
@@ -64,10 +66,17 @@ test('readZip: store + deflate round-trip, arena2/ filter, dirs skipped', async 
     { name: 'arena2/art_pal.col', data: pal, store: true },
     { name: 'arena2/MAPS.BSA', data: bsa },
     { name: 'DAGGER/SETUP.EXE', data: Buffer.from('junk') },   // sibling: filtered
+    { name: 'arena2/ANIM0000.VID', data: Buffer.from('vid') },  // diet: VIDs never ingest
+    { name: 'arena2/SKY00.DAT', data: Buffer.from('sky') },     // skies ride the FULL diet (Node = no window = full)
   ]);
   const entries = await readZip(asFile(zip));
   const keys = entries.map(([k]) => k).sort();
-  assert.deepEqual(keys, ['ART_PAL.COL', 'MAPS.BSA']);          // filter + no dirs
+  assert.deepEqual(keys, ['ART_PAL.COL', 'MAPS.BSA', 'SKY00.DAT']);   // arena2 filter + dirs + diet (VID dropped, sky kept on full)
+  // The device-aware diet, both branches MEASURED:
+  assert.equal(KEEP('SKY00.DAT', true), false);    // lean (touch): skies excluded - gradient fallback
+  assert.equal(KEEP('SKY00.DAT', false), true);    // full (desktop): skies stored
+  assert.equal(KEEP('ANIM0000.VID', false), false); // VIDs never, either diet
+  assert.equal(KEEP('TEXTURE.177', true), true);
   const byKey = Object.fromEntries(entries);
   assert.equal(Buffer.compare(Buffer.from(byKey['ART_PAL.COL']), pal), 0);   // store path byte-exact
   assert.equal(Buffer.compare(Buffer.from(byKey['MAPS.BSA']), bsa), 0);      // deflate path byte-exact

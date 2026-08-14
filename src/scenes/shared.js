@@ -4,7 +4,7 @@
 import { DFPalette } from '../formats/dfPalette.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { SkyFile } from '../formats/skyFile.js';
-import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
+import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
 
@@ -49,11 +49,20 @@ export function createSkyController(gl, params) {
     }
     if (!skyFiles.has(skyIndex)) {
       const name = SkyFile.indexToFileName(skyIndex);
-      const f = new SkyFile();
-      f.load(await fetchBytes(name), name);
-      skyFiles.set(skyIndex, f);
+      try {
+        const f = new SkyFile();
+        f.load(await fetchBytes(name), name);
+        skyFiles.set(skyIndex, f);
+      } catch {
+        // The mobile lean diet excludes the 247MB sky set - a missing
+        // SKY??.DAT degrades to the gradient, never to a crash
+        // (2026-08-14; full desktop sets never hit this).
+        console.warn(`${name} unavailable - gradient sky fallback`);
+        skyFiles.set(skyIndex, null);
+      }
     }
-    return buildDaySkyPanorama(skyFiles.get(skyIndex), frame);
+    const sf = skyFiles.get(skyIndex);
+    return sf ? buildDaySkyPanorama(sf, frame) : buildFallbackSkyPanorama();
   }
 
   return {

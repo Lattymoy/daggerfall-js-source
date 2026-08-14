@@ -83,6 +83,28 @@ export function buildNightSkyPanorama(color32) {
   return { colors: out, width: w * 2, height: h, clearColor };
 }
 
+/** Fallback panorama when SKY??.DAT is unavailable (the mobile lean
+ *  data diet excludes the 247MB sky set - 2026-08-14). A classic-ish
+ *  vertical gradient, horizon-light to zenith-blue; not parity, and
+ *  never used when the real sky data is present. */
+export function buildFallbackSkyPanorama() {
+  const w = 512, h = 220;
+  const out = new Uint8ClampedArray(w * h * 4);
+  const top = [86, 116, 170], bot = [196, 205, 224];
+  for (let y = 0; y < h; y++) {
+    const t = y / (h - 1);   // bottom-up buffer: y=0 is the horizon
+    const r = bot[0] + (top[0] - bot[0]) * t;
+    const g = bot[1] + (top[1] - bot[1]) * t;
+    const b = bot[2] + (top[2] - bot[2]) * t;
+    for (let x = 0; x < w; x++) {
+      const d = (y * w + x) * 4;
+      out[d] = r; out[d + 1] = g; out[d + 2] = b; out[d + 3] = 255;
+    }
+  }
+  return { colors: out, width: w, height: h, clearColor: [top[0] / 255, top[1] / 255, top[2] / 255] };
+}
+
+
 const SKY_VS = `#version 300 es
 layout(location=0) in vec2 aPos;
 out vec2 vNdc;
