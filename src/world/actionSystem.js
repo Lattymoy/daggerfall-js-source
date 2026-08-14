@@ -225,8 +225,10 @@ export class ActionSystem {
       if (o.state === 'start') {
         o.state = 'forward';
         this.collider.removeBucket(o.key);
+        this.onDoorState?.(o, true);    // A1: the audio seam (open)
       } else {
         o.state = 'reverse';
+        this.onDoorState?.(o, false);   // A1: the audio seam (close)
       }
       return true;
     }

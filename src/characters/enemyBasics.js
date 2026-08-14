@@ -26,7 +26,10 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 2,
   'mapChance': 0,
-  'team': 'Vermin'
+  'team': 'Vermin',
+  'moveSound': 115,
+  'barkSound': 116,
+  'attackSound': 117
  },
  '1': {
   'maleTexture': 256,
@@ -48,7 +51,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 1,
   'team': 'Magic',
   'lootTableKey': 'D',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 118,
+  'barkSound': 119,
+  'attackSound': 120
  },
  '2': {
   'maleTexture': 257,
@@ -74,7 +80,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 0,
   'team': 'Spriggans',
   'lootTableKey': 'B',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 121,
+  'barkSound': 122,
+  'attackSound': 123
  },
  '3': {
   'maleTexture': 258,
@@ -94,7 +103,10 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 80,
   'mapChance': 0,
-  'team': 'Vermin'
+  'team': 'Vermin',
+  'moveSound': 124,
+  'barkSound': 125,
+  'attackSound': 126
  },
  '4': {
   'maleTexture': 259,
@@ -118,7 +130,10 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 1000,
   'mapChance': 0,
-  'team': 'Bears'
+  'team': 'Bears',
+  'moveSound': 127,
+  'barkSound': 128,
+  'attackSound': 129
  },
  '5': {
   'maleTexture': 260,
@@ -142,7 +157,10 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 1000,
   'mapChance': 0,
-  'team': 'Tigers'
+  'team': 'Tigers',
+  'moveSound': 130,
+  'barkSound': 131,
+  'attackSound': 132
  },
  '6': {
   'maleTexture': 261,
@@ -162,7 +180,10 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 5,
   'weight': 400,
   'mapChance': 0,
-  'team': 'Spiders'
+  'team': 'Spiders',
+  'moveSound': 133,
+  'barkSound': 134,
+  'attackSound': 135
  },
  '7': {
   'maleTexture': 262,
@@ -185,7 +206,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 50,
   'team': 'Orcs',
   'lootTableKey': 'A',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 136,
+  'barkSound': 137,
+  'attackSound': 138
  },
  '8': {
   'maleTexture': 263,
@@ -208,7 +232,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 50,
   'team': 'Centaurs',
   'lootTableKey': 'C',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 139,
+  'barkSound': 140,
+  'attackSound': 141
  },
  '9': {
   'maleTexture': 264,
@@ -233,7 +260,10 @@ export const ENEMY_BASICS = Object.freeze({
   'weight': 480,
   'mapChance': 0,
   'team': 'Werecreatures',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 142,
+  'barkSound': 143,
+  'attackSound': 144
  },
  '10': {
   'maleTexture': 265,
@@ -255,7 +285,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 1,
   'team': 'Nymphs',
   'lootTableKey': 'C',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 145,
+  'barkSound': 146,
+  'attackSound': 147
  },
  '11': {
   'maleTexture': 266,
@@ -277,7 +310,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 0,
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
-  'team': 'Aquatic'
+  'team': 'Aquatic',
+  'moveSound': 148,
+  'barkSound': 149,
+  'attackSound': 150
  },
  '12': {
   'maleTexture': 267,
@@ -300,7 +336,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 50,
   'team': 'Orcs',
   'lootTableKey': 'A',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 151,
+  'barkSound': 152,
+  'attackSound': 153
  },
  '13': {
   'maleTexture': 268,
@@ -322,7 +361,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 0,
   'team': 'Harpies',
   'lootTableKey': 'D',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 154,
+  'barkSound': 155,
+  'attackSound': 156
  },
  '14': {
   'maleTexture': 269,
@@ -347,7 +389,10 @@ export const ENEMY_BASICS = Object.freeze({
   'weight': 560,
   'mapChance': 0,
   'team': 'Werecreatures',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 157,
+  'barkSound': 158,
+  'attackSound': 159
  },
  '15': {
   'maleTexture': 270,
@@ -369,7 +414,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 1,
   'team': 'Undead',
   'lootTableKey': 'H',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 160,
+  'barkSound': 161,
+  'attackSound': 162
  },
  '16': {
   'maleTexture': 271,
@@ -391,7 +439,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 1,
   'team': 'Giants',
   'lootTableKey': 'F',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 163,
+  'barkSound': 164,
+  'attackSound': 165
  },
  '17': {
   'maleTexture': 272,
@@ -414,7 +465,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 50,
   'team': 'Undead',
   'lootTableKey': 'G',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 166,
+  'barkSound': 167,
+  'attackSound': 168
  },
  '18': {
   'maleTexture': 273,
@@ -436,7 +490,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 1,
   'team': 'Undead',
   'lootTableKey': 'I',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 169,
+  'barkSound': 170,
+  'attackSound': 171
  },
  '19': {
   'maleTexture': 274,
@@ -458,7 +515,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 1,
   'team': 'Undead',
   'lootTableKey': 'E',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 172,
+  'barkSound': 173,
+  'attackSound': 174
  },
  '20': {
   'maleTexture': 275,
@@ -478,7 +538,10 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 0,
   'weight': 600,
   'mapChance': 0,
-  'team': 'Scorpions'
+  'team': 'Scorpions',
+  'moveSound': 175,
+  'barkSound': 176,
+  'attackSound': 177
  },
  '21': {
   'maleTexture': 276,
@@ -502,7 +565,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 20,
   'team': 'Orcs',
   'lootTableKey': 'U',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 178,
+  'barkSound': 179,
+  'attackSound': 138
  },
  '22': {
   'maleTexture': 277,
@@ -523,7 +589,10 @@ export const ENEMY_BASICS = Object.freeze({
   'weight': 300,
   'mapChance': 0,
   'team': 'Magic',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 181,
+  'barkSound': 182,
+  'attackSound': 180
  },
  '23': {
   'maleTexture': 278,
@@ -545,7 +614,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 1,
   'team': 'Undead',
   'lootTableKey': 'I',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 183,
+  'barkSound': 184,
+  'attackSound': 185
  },
  '24': {
   'maleTexture': 279,
@@ -569,7 +641,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'Orcs',
   'lootTableKey': 'T',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 186,
+  'barkSound': 187,
+  'attackSound': 188
  },
  '25': {
   'maleTexture': 280,
@@ -592,7 +667,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 50,
   'team': 'Daedra',
   'lootTableKey': 'J',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 189,
+  'barkSound': 190,
+  'attackSound': 191
  },
  '26': {
   'maleTexture': 281,
@@ -615,7 +693,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 50,
   'team': 'Daedra',
   'lootTableKey': 'J',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 192,
+  'barkSound': 193,
+  'attackSound': 194
  },
  '27': {
   'maleTexture': 282,
@@ -639,7 +720,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'Daedra',
   'lootTableKey': 'E',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 195,
+  'barkSound': 196,
+  'attackSound': 197
  },
  '28': {
   'maleTexture': 283,
@@ -661,7 +745,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 3,
   'team': 'Undead',
   'lootTableKey': 'Q',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 198,
+  'barkSound': 199,
+  'attackSound': 200
  },
  '29': {
   'maleTexture': 284,
@@ -683,7 +770,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 1,
   'team': 'Daedra',
   'lootTableKey': 'Q',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 201,
+  'barkSound': 202,
+  'attackSound': 203
  },
  '30': {
   'maleTexture': 285,
@@ -705,7 +795,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 3,
   'team': 'Undead',
   'lootTableKey': 'Q',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 204,
+  'barkSound': 205,
+  'attackSound': 206
  },
  '31': {
   'maleTexture': 286,
@@ -729,7 +822,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'Daedra',
   'lootTableKey': 'S',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 207,
+  'barkSound': 208,
+  'attackSound': 209
  },
  '32': {
   'maleTexture': 287,
@@ -751,7 +847,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 4,
   'team': 'Undead',
   'lootTableKey': 'S',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 210,
+  'barkSound': 211,
+  'attackSound': 212
  },
  '33': {
   'maleTexture': 288,
@@ -773,7 +872,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 4,
   'team': 'Undead',
   'lootTableKey': 'S',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 213,
+  'barkSound': 214,
+  'attackSound': 215
  },
  '34': {
   'maleTexture': 289,
@@ -793,7 +895,10 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 10000,
   'mapChance': 0,
-  'team': 'Dragonlings'
+  'team': 'Dragonlings',
+  'moveSound': 216,
+  'barkSound': 217,
+  'attackSound': 218
  },
  '35': {
   'maleTexture': 290,
@@ -814,7 +919,10 @@ export const ENEMY_BASICS = Object.freeze({
   'weight': 1000,
   'mapChance': 0,
   'team': 'Magic',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 219,
+  'barkSound': 220,
+  'attackSound': 221
  },
  '36': {
   'maleTexture': 291,
@@ -835,7 +943,10 @@ export const ENEMY_BASICS = Object.freeze({
   'weight': 1000,
   'mapChance': 0,
   'team': 'Magic',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 222,
+  'barkSound': 223,
+  'attackSound': 224
  },
  '37': {
   'maleTexture': 292,
@@ -856,7 +967,10 @@ export const ENEMY_BASICS = Object.freeze({
   'weight': 1000,
   'mapChance': 0,
   'team': 'Magic',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 225,
+  'barkSound': 226,
+  'attackSound': 227
  },
  '38': {
   'maleTexture': 293,
@@ -878,7 +992,10 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 0,
   'chanceForAttack2': 50,
   'team': 'Magic',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 228,
+  'barkSound': 229,
+  'attackSound': 230
  },
  '39': {
   'maleTexture': 0,
@@ -905,7 +1022,10 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 10000,
   'mapChance': 0,
-  'team': 'Dragonlings'
+  'team': 'Dragonlings',
+  'moveSound': 216,
+  'barkSound': 217,
+  'attackSound': 218
  },
  '41': {
   'maleTexture': 296,
@@ -929,7 +1049,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'Aquatic',
   'lootTableKey': 'R',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 237,
+  'barkSound': 238,
+  'attackSound': 239
  },
  '42': {
   'maleTexture': 297,
@@ -953,7 +1076,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'Aquatic',
   'lootTableKey': 'R',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 240,
+  'barkSound': 241,
+  'attackSound': 242
  },
  '128': {
   'maleTexture': 486,
@@ -971,7 +1097,10 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'KnightsAndMages',
   'lootTableKey': 'U',
   'canOpenDoors': true,
-  'castsMagic': true
+  'castsMagic': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '129': {
   'maleTexture': 476,
@@ -989,7 +1118,10 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'KnightsAndMages',
   'lootTableKey': 'P',
   'canOpenDoors': true,
-  'castsMagic': true
+  'castsMagic': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '130': {
   'maleTexture': 490,
@@ -1007,7 +1139,10 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'KnightsAndMages',
   'lootTableKey': 'U',
   'canOpenDoors': true,
-  'castsMagic': true
+  'castsMagic': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '131': {
   'maleTexture': 478,
@@ -1023,7 +1158,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 50,
   'team': 'KnightsAndMages',
   'lootTableKey': 'U',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '132': {
   'maleTexture': 486,
@@ -1041,7 +1179,10 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'KnightsAndMages',
   'lootTableKey': 'U',
   'canOpenDoors': true,
-  'castsMagic': true
+  'castsMagic': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '133': {
   'maleTexture': 490,
@@ -1059,7 +1200,10 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Criminals',
   'lootTableKey': 'U',
   'canOpenDoors': true,
-  'castsMagic': true
+  'castsMagic': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '134': {
   'maleTexture': 484,
@@ -1076,7 +1220,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'KnightsAndMages',
   'lootTableKey': 'O',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '135': {
   'maleTexture': 484,
@@ -1093,7 +1240,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'Criminals',
   'lootTableKey': 'O',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '136': {
   'maleTexture': 480,
@@ -1110,7 +1260,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'Criminals',
   'lootTableKey': 'O',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '137': {
   'maleTexture': 484,
@@ -1127,7 +1280,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'KnightsAndMages',
   'lootTableKey': 'O',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '138': {
   'maleTexture': 484,
@@ -1144,7 +1300,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'Criminals',
   'lootTableKey': 'O',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '139': {
   'maleTexture': 480,
@@ -1161,7 +1320,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'Criminals',
   'lootTableKey': 'O',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '140': {
   'maleTexture': 488,
@@ -1178,7 +1340,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'KnightsAndMages',
   'lootTableKey': 'T',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '141': {
   'maleTexture': 482,
@@ -1194,7 +1359,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 50,
   'team': 'KnightsAndMages',
   'lootTableKey': 'C',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '142': {
   'maleTexture': 482,
@@ -1210,7 +1378,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 50,
   'team': 'KnightsAndMages',
   'lootTableKey': 'C',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '143': {
   'maleTexture': 488,
@@ -1227,7 +1398,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'Criminals',
   'lootTableKey': 'T',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '144': {
   'maleTexture': 488,
@@ -1244,7 +1418,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'KnightsAndMages',
   'lootTableKey': 'T',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '145': {
   'maleTexture': 488,
@@ -1261,7 +1438,10 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'team': 'KnightsAndMages',
   'lootTableKey': 'T',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 244,
+  'attackSound': 245
  },
  '146': {
   'maleTexture': 399,
@@ -1275,6 +1455,9 @@ export const ENEMY_BASICS = Object.freeze({
   'minMetalToHit': 0,
   'mapChance': 0,
   'team': 'CityWatch',
-  'canOpenDoors': true
+  'canOpenDoors': true,
+  'moveSound': 243,
+  'barkSound': 456,
+  'attackSound': 245
  }
 });

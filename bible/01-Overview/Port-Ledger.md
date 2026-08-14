@@ -19,6 +19,8 @@ work queue routed to arcs.
 | Data access | Bytes in, objects out; no FileProxy/disk-usage modes | Runtime difference |
 | Engine-internal randomness (terrain noise + nature scatter) | Ken Perlin reference improved noise (perlin.js) in place of Unity's Mathf.PerlinNoise, and umRandom seeded by the verbatim terrain key in place of UnityEngine.Random for nature scatter - neither engine PRNG is in DFU source; same role and statistics, different concrete samples; all pins pin our pipeline. The beach-line jitter and NextInt/NextFloat primitives are NOT departures - Unity.Mathematics Random is open MIT source and umRandom.js is a byte-exact 1:1 translation | APPROVED by Mac (option A, post-M9 audit): the substitutes are canonical for this port; bit parity with Unity engine PRNGs is out of scope |
 
+| WebAudio playback engine (A1) | Unity AudioSource/3D audio -> WebAudio (PannerNode linear falloff, gesture-gated context, lazy 8-bit PCM decode). The DATA path stays 1:1: SoundClips indices, GetSwingSound pitch table, PlayHitSound roll families, EnemySounds attract shape (radius 16, delay 3..9, 80/20 bark/move, humans silent, attack 50%), door clips. |
+
 ## B. Verbatim quirks preserved (real-data reality)
 
 Characters:
@@ -109,7 +111,7 @@ World layout:
 | Enemy AI + mobile animation (billboard orientation states, motion, combat) | EnemyMotor, MobileUnit | Characters arc C5 (spawn data + classic standing billboards shipped C3) |
 | Dungeon treasure piles + loot | RDBLayout AssignFixedTreasure/AddRandomTreasure | Systems arc |
 | Torch audio sources | RDBLayout.AddTorchAudioSource | Audio arc |
-| Transition + activation sounds: door open/close (ActionDoor OpenSound/CloseSound), action PlaySound, ladder climb, enter/exit stingers | DaggerfallActionDoor, DaggerfallAction, DaggerfallAudioSource | Audio arc (the P2/P4-P6 systems expose the trigger points) |
+| Transition + activation sounds: action PlaySound index, ladder climb, enter/exit stingers (door open/close SHIPPED in A1 - dungeon clips on the activate seam) | DaggerfallActionDoor, DaggerfallAction, DaggerfallAudioSource | Audio arc (the P2/P4-P6 systems expose the trigger points) |
 | Non-movement RDB action flags: CastSpell, Hurt21-25, Poison, DrainMagicka | DaggerfallAction delegates | Combat arc (magic/damage) |
 | Non-movement RDB action flags: ShowText, ShowTextWithInput, DoorText | DaggerfallAction delegates | UI arc (message boxes) + Systems (text records) |
 | Non-movement RDB action flags: Teleport, Activate, LockDoor, UnlockDoor | DaggerfallAction delegates | Player arc (teleporters) + Systems (locks; P2 skips the IsLocked path) |

@@ -45,6 +45,8 @@ import {
 import { applySpell, tickActiveEffects, hasActiveEffect } from '../systems/effects.js';
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
+import { audio } from '../systems/audio.js';
+import { SOUND, swingSoundFor, hitSoundFor } from '../systems/soundClips.js';
 import { BUILD_TAG } from '../buildTag.js';
 import {
   generateItems as generateLootItems, setMagicItemTemplates,
@@ -99,6 +101,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     playerLevel: () => playerEntity.level,
   });
+  // A1: sound. DAGGER.SND loads through the data seam; the context
+  // starts on the first gesture (mobile discipline). Dungeon doors
+  // ride the DFU dungeon clips (DaggerfallActionDoor's RDB shape).
+  audio.init(fetchBytes);
+  audio.attachGestureResume();
+  actions.onDoorState = (o, opening) => {
+    const m = o.matrix;
+    audio.play3d(opening ? SOUND.DungeonDoorOpen : SOUND.DungeonDoorClose, [m[12], m[13], m[14]]);
+  };
   const texRemap = new Map();
   const flatGroups = new Map();
   const lights = [];
@@ -610,13 +621,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // TallySkill (E3c flag clears): the attack skill counts a use
       // per resolved swing, per WeaponManager.MeleeDamage.
       tallySkill(playerEntity, WEAPON_SKILL[playerWeapon.weapon.name] ?? SKILLS.HandToHand);
-      if (damage <= 0) continue;
+      if (damage <= 0) {
+        // WeaponManager: a resolved swing that deals nothing plays
+        // Hit2 barehanded / Parry6 armed (strikingWeapon test).
+        const armed = (WEAPON_SKILL[playerWeapon.weapon?.name] ?? SKILLS.HandToHand) !== SKILLS.HandToHand;
+        audio.playOneShot(armed ? SOUND.Parry6 : SOUND.Hit2);
+        continue;
+      }
+      // EnemySounds.PlayHitSound at the struck foe, weapon-aware
+      audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, 1.1);
       damageFoe(foe, damage, playerFeet);   // stagger AWAY from the hit: player in front -> HurtFront
     }
   }
   // S3b: the classic clock for skill-raise checks - dt * TimeScale
   // (DFU default 12) in minutes; RaiseSkills gates itself at 360.
   let classicMinutes = 0;
+  let _prevWeaponState = null;   // A1: swing-sound edge detect
   async function ensureMissileBatch(m) {
     if (m.batch !== null) return;
     m.batch = false;   // in-flight guard
@@ -843,6 +863,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const ny = (pv[1] * x + pv[5] * y + pv[9] * z + pv[13]) / w;
         return nx >= -1 && nx <= 1 && ny >= -1 && ny <= 1;
       };
+      audio.setListener(eye, [-view[2], -view[6], -view[10]]);   // A1: the camera is the ears
+      const _wpnState = playerWeapon.machine.state;
+      if (_wpnState !== _prevWeaponState) {
+        // FPSWeapon plays SwingWeaponSound at swing start: the
+        // machine ENTERING a Strike* state is that moment here.
+        if (_wpnState && _wpnState.startsWith('Strike')) audio.playOneShot(swingSoundFor(playerWeapon.weapon), 1.1);
+        _prevWeaponState = _wpnState;
+      }
       for (const ev of playerWeapon.update(dt)) {
         if (ev !== 'hit' || !playerFeet) continue;
         if (WEAPON_SKILL[playerWeapon.weapon.name] === SKILLS.Archery) {
@@ -860,6 +888,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const f of foes) {
       if (f.dead) continue;
       f.ai.update(dt, playerFeet || eye, _sightScale);   // E2 senses + pursuit; S8: chameleon halves sight
+      // A1 EnemySounds verbatim: the wait counter ALWAYS steps; the
+      // sound fires only inside AttractRadius 16. Delay re-rolls
+      // Range(3, 9+1); 20% move / 80% bark; humans stay silent.
+      if (!f.entity.isClass) {
+        const bx = ENEMY_BASICS[f.mobileType];
+        if (bx?.barkSound != null) {
+          f._attractWait ??= 3 + Math.floor(Math.random() * 7);
+          f._attractT = (f._attractT ?? 0) + dt;
+          const pp = playerFeet || eye;
+          const adx = pp[0] - f.ai.feet[0], ady = pp[1] - f.ai.feet[1], adz = pp[2] - f.ai.feet[2];
+          if (f._attractT > f._attractWait && (adx * adx + ady * ady + adz * adz) < 16 * 16) {
+            audio.play3d(Math.random() > 0.8 ? bx.moveSound : bx.barkSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]]);
+            f._attractWait = 3 + Math.floor(Math.random() * 7);
+            f._attractT = 0;
+          }
+        }
+      }
       f.events = f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine
       // E3b: the machine's hit frame resolves against the player -
       // EnemyAttack.MeleeDamage verbatim: gate 0.25 / MeleeDistance +
@@ -884,7 +929,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // also drops the weapon if the target is metal-immune to it
           // - the player has no minMetalToHit, so that gate is inert)
           const wpn = foeDeps.chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
+          // PlayAttackSound: half the time, humans stay silent
+          const bx = ENEMY_BASICS[f.mobileType];
+          if (!f.entity.isClass && bx?.attackSound != null && Math.random() <= 0.5) {
+            audio.play3d(bx.attackSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]]);
+          }
           const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, { targetGroup: null, weapon: wpn });
+          if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), 1.1);   // the player takes the hit (PlayerFootsteps families)
           hurtPlayer(dmg);
         }
       }

@@ -8,6 +8,11 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 const src = readFileSync(process.argv[2], 'utf8');
+// SoundClips.cs rides next to EnemyBasics.cs's tree (Assets/Scripts/SoundClips.cs)
+import { dirname, join } from 'node:path';
+const scPath = process.argv[3] || join(dirname(process.argv[2]), '..', 'SoundClips.cs');
+const SOUNDCLIPS = Object.fromEntries(
+  [...readFileSync(scPath, 'utf8').matchAll(/^\s*(\w+) = (\d+),/gm)].map((m) => [m[1], Number(m[2])]));
 const tableStart = src.indexOf('static MobileEnemy[] Enemies = new MobileEnemy[]');
 const tableEnd = src.indexOf('};', src.indexOf('// Custom enemies', tableStart) === -1 ? tableStart : src.indexOf('// Custom enemies', tableStart));
 const table = src.slice(tableStart, tableEnd);
@@ -45,6 +50,12 @@ for (const b of blocks) {
   if (loot) e.lootTableKey = loot[1];
   if (/CanOpenDoors = true/.test(b)) e.canOpenDoors = true;
   if (/CastsMagic = true/.test(b)) e.castsMagic = true;
+  // A1: the sound columns (MoveSound/BarkSound/AttackSound) -
+  // (int)SoundClips.X resolved to DAGGER.SND indices via SoundClips.cs
+  for (const k of ['MoveSound', 'BarkSound', 'AttackSound']) {
+    const f = b.match(new RegExp(k + String.raw` = \(int\)SoundClips\.(\w+)`));
+    if (f && SOUNDCLIPS[f[1]] !== undefined) e[k[0].toLowerCase() + k.slice(1)] = SOUNDCLIPS[f[1]];
+  }
   out[String(id)] = e;
 }
 
