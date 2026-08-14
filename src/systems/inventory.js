@@ -64,6 +64,14 @@ const roundHalfEven = (x) => {
   return f % 2 === 0 ? f : f + 1;
 };
 
+/** Leather armor weight AS CODED in DFU (audit F13): the Erisceres
+ *  COMMENT says Round, but the code int-divides - (int)(w*4)/2 -
+ *  making Mathf.Round a no-op, so verbatim = truncate. Converges
+ *  with half-even on every classic template (only Gauntlets scale
+ *  odd, and 5/2 banks to 2 both ways); the shapes split at
+ *  scaled = 3 mod 4 (2.75 kg -> 1.25, where Round would give 1.5). */
+export const leatherWeight = (weightKg) => Math.trunc(Math.trunc(weightKg * 4) / 2) / 4;
+
 /** ItemBuilder.CalculateWeightForMaterial VERBATIM: quarter-kg
  *  quantized - Round(trunc(w*4) * multiplier / 4) / 4 with Unity's
  *  half-to-even Round. (The weapons.js comment 'baseWeight * value/4'
@@ -77,8 +85,9 @@ export function weightForMaterial(weightKg, weaponMaterial) {
 
 /** Weight in kg: template baseWeight (x stack); weapons + plate armor
  *  through the verbatim material function; leather through the
- *  Erisceres formula Round(INT(w*4)/2)/4; chain unchanged (its x2 is
- *  a VALUE rule, not weight). */
+ *  Erisceres formula AS CODED - trunc(INT(w*4)/2)/4, the int division
+ *  making Round a no-op (F13); chain unchanged (its x2 is a VALUE
+ *  rule, not weight). */
 export function itemWeight(item) {
   const t = templates[item.templateIndex];
   let base = t ? t.baseWeight : 0;
@@ -86,7 +95,7 @@ export function itemWeight(item) {
     base = weightForMaterial(base, item.material);
   }
   if (item.group === 'Armor' && item.material != null) {
-    if (item.material === 0x0000) base = roundHalfEven(Math.trunc(base * 4) / 2) / 4;         // Leather
+    if (item.material === 0x0000) base = leatherWeight(base);
     else if (item.material >= 0x0200) base = weightForMaterial(base, item.material - 0x0200); // plate
   }
   return base * (item.stackCount ?? 1);

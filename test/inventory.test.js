@@ -1,7 +1,7 @@
 // Systems S2: stacking + weight + pickup transfer, verbatim rules.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isStackable, stacksWith, addItem, transferAll, itemWeight, totalWeight, weightForMaterial } from '../src/systems/inventory.js';
+import { isStackable, stacksWith, addItem, transferAll, itemWeight, totalWeight, weightForMaterial, leatherWeight } from '../src/systems/inventory.js';
 
 test('inventory: the stackable rule verbatim', () => {
   assert.ok(isStackable({ group: 'Currency', name: 'Gold pieces' }));
@@ -40,7 +40,10 @@ test('inventory: CalculateWeightForMaterial verbatim (quarter-kg + banker roundi
   // (x3) 24*3/4=18 -> 4.5; daedric (x5) 30 -> 7.5
   assert.equal(weightForMaterial(6, 4), 4.5);
   assert.equal(weightForMaterial(6, 9), 7.5);
-  // leather: Round(INT(w*4)/2)/4 - 6 kg -> trunc 24 /2 = 12 -> 3
+  // leather: trunc(INT(w*4)/2)/4 (F13 - the int division, Round dead)
+  assert.equal(leatherWeight(6), 3);        // 24/2 = 12 -> 3
+  assert.equal(leatherWeight(1.25), 0.5);   // Gauntlets: 5/2 = 2 (converges with half-even)
+  assert.equal(leatherWeight(2.75), 1.25);  // MEASURED divergent shape: 11/2 = 5 (Round would give 1.5)
   assert.equal(itemWeight({ group: 'Armor', templateIndex: 999, material: 0x0000 }) , 0);   // unknown template -> 0 base
 
   const gold = { group: 'Currency', name: 'Gold pieces', templateIndex: 0, stackCount: 3 };
