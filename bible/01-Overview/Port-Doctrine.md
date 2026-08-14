@@ -16,7 +16,7 @@ Translation rule: read the DFU C# source, translate logic verbatim into JS, keep
 
 1. Renderer: hand-rolled WebGL2 replaces Unity rendering. No engine, no framework.
 2. Characters: our voxel system replaces billboard NPCs/enemies and the flat 2D paperdoll. Paperdoll equipment maps onto the outfit-piece workflow proven in project-final (piece-by-piece design -> solo-tune -> lock). This is a design win, not a compromise - it upgrades the weakest original layer.
-3. Runtime: browser, Vite, Node ESM. Desktop-only.
+3. Runtime: browser, Vite, Node ESM. Desktop-first; a mobile touch layer (virtual stick + look/attack drag + button row speaking the desktop input language) ships for on-device testing - approved by Mac, 2026-08-13.
 
 ## Non-negotiables
 

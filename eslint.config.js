@@ -17,6 +17,8 @@ export default [
         setTimeout: 'readonly', clearTimeout: 'readonly', alert: 'readonly',
         Image: 'readonly', OffscreenCanvas: 'readonly', FileReader: 'readonly',
         WebGL2RenderingContext: 'readonly', AudioContext: 'readonly', createImageBitmap: 'readonly',
+        TextDecoder: 'readonly', DecompressionStream: 'readonly', Response: 'readonly', Blob: 'readonly',
+        KeyboardEvent: 'readonly', Touch: 'readonly', TouchEvent: 'readonly', innerWidth: 'readonly',
       },
     },
     rules: { 'no-undef': 'error' },

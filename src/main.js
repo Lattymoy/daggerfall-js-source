@@ -1,5 +1,7 @@
 // project-dagger entry point.
-// Desktop-only. Hand-rolled WebGL2, no framework. Same doctrine as project-final.
+// Hand-rolled WebGL2, no framework. Same doctrine as project-final.
+// Desktop-first; touch devices get the ui/touch.js layer (stick +
+// drag-look + buttons) speaking the same input language.
 // Scene router: ?interior, ?dungeon, ?world, or an exterior location
 // by default (?region=<name>&loc=<name>). Scene details live in
 // src/scenes/*.js headers.

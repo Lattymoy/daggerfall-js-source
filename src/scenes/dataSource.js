@@ -99,6 +99,62 @@ async function readPicked(files) {
 
 const PROBE = 'ART_PAL.COL'; // small, universally present, first thing most scenes touch
 
+// ---- ZIP ingest (mobile path, 2026-08-13) ----
+// iOS Safari has no directory picker, so phones supply the data as a
+// ZIP (the official DaggerfallGameFiles.zip or a self-zipped arena2).
+// Minimal reader, no dependency: EOCD scan -> central directory ->
+// per-entry local header -> DecompressionStream('deflate-raw') for
+// method 8, passthrough for method 0. No zip64 (the game files are
+// well under the 4GB shapes). If the archive carries an arena2/
+// folder, only those entries ingest (the full gamefiles zip ships
+// siblings we must not swallow).
+export async function readZip(file) {   // exported for the harness
+  const buf = new Uint8Array(await file.arrayBuffer());
+  const dv = new DataView(buf.buffer);
+  // EOCD: scan the tail for PK\x05\x06 (comment can pad up to 64KB)
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 22 - 65535); i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('not a ZIP (no end-of-central-directory)');
+  const count = dv.getUint16(eocd + 10, true);
+  let off = dv.getUint32(eocd + 16, true);
+  const dirs = [];
+  for (let i = 0; i < count; i++) {
+    if (dv.getUint32(off, true) !== 0x02014b50) throw new Error('bad central directory');
+    const method = dv.getUint16(off + 10, true);
+    const compSize = dv.getUint32(off + 20, true);
+    const nameLen = dv.getUint16(off + 28, true);
+    const extraLen = dv.getUint16(off + 30, true);
+    const commentLen = dv.getUint16(off + 32, true);
+    const localOff = dv.getUint32(off + 42, true);
+    const name = new TextDecoder().decode(buf.subarray(off + 46, off + 46 + nameLen));
+    if (!name.endsWith('/')) dirs.push({ name, method, compSize, localOff });
+    off += 46 + nameLen + extraLen + commentLen;
+  }
+  const hasArena2 = dirs.some((d) => /(^|\/)arena2\//i.test(d.name));
+  const picked = hasArena2 ? dirs.filter((d) => /(^|\/)arena2\//i.test(d.name)) : dirs;
+  const entries = [];
+  for (const d of picked) {
+    const key = normalizeName(d.name);
+    if (!/^[A-Za-z0-9._-]+$/.test(key)) continue;
+    // Local header: its own name/extra lengths position the data
+    const lnl = dv.getUint16(d.localOff + 26, true);
+    const lel = dv.getUint16(d.localOff + 28, true);
+    const data = buf.subarray(d.localOff + 30 + lnl + lel, d.localOff + 30 + lnl + lel + d.compSize);
+    if (d.method === 0) {
+      entries.push([key, data.slice().buffer]);
+    } else if (d.method === 8) {
+      const ds = new DecompressionStream('deflate-raw');
+      const out = await new Response(new Blob([data]).stream().pipeThrough(ds)).arrayBuffer();
+      entries.push([key, out]);
+    }
+    // other methods: skip (classic zips are 0/8 only)
+  }
+  return entries;
+}
+
+
 /** Boot gate: resolves when a data source can serve. Shows the
  *  folder-pick overlay only when neither IndexedDB nor the network
  *  path has data (i.e. the deployed site on first visit). */
@@ -116,6 +172,9 @@ export async function ensureArena2() {
         <p>Select your <b>ARENA2</b> folder (or drop it here) - it's stored
         locally in your browser, picked once.</p>
         <input type="file" id="pick" webkitdirectory multiple style="margin:8px">
+        <p style="margin:4px 0">on a phone: pick a <b>.zip</b> instead
+        (DaggerfallGameFiles.zip or a zipped arena2 folder)</p>
+        <input type="file" id="pickzip" accept=".zip,application/zip" style="margin:8px">
         <p id="msg" style="color:#8a8"></p>
       </div>`;
     document.body.appendChild(ui);
@@ -132,6 +191,23 @@ export async function ensureArena2() {
       resolve();
     };
     ui.querySelector('#pick').addEventListener('change', (e) => ingest([...e.target.files]));
+    ui.querySelector('#pickzip').addEventListener('change', async (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      msg.textContent = `unpacking ${f.name}...`;
+      try {
+        const entries = await readZip(f);
+        if (!entries.length) { msg.textContent = 'no ARENA2 files in that zip'; return; }
+        try {
+          await idbPutAll(await getDb(), entries, (d, n) => { msg.textContent = `storing ${d}/${n}...`; });
+        } catch { /* no IDB: memory-only session */ }
+        for (const [k, buf] of entries) mem.set(k, new Uint8Array(buf));
+        ui.remove();
+        resolve();
+      } catch (err) {
+        msg.textContent = `zip failed: ${err.message}`;
+      }
+    });
     ui.addEventListener('dragover', (e) => e.preventDefault());
     ui.addEventListener('drop', async (e) => {
       e.preventDefault();

@@ -57,6 +57,23 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `07-Rendering/Rendering.md` - COMPLETE. Queue EMPTY since spectral shipped (2026-07-06); the exterior indirect-light Ledger row waits for a Rendering reopen.
 - `10-UI/UI-Arc.md` - ACTIVE. U1-U5, TEXT.RSC reader, input map, CLICK-TO-CAST (the classic armed-click shape + the S9 touch-spend rule corrected to the source) SHIPPED. Queue: window art, per-ID verification.
 - `08-Audio/` - not started; routed rows collected in Ledger C.
+- **Mobile test build (2026-08-13, Mac-directed)**: deployed-site play
+  on phones. `src/ui/touch.js` - a virtual stick synthesizing REAL
+  W/A/S/D/Shift KeyboardEvents (the scenes' keys Sets and the input
+  map see ordinary keys), right-half drag-look via a per-scene hook
+  (touch can never hold pointer lock), an attack button mirroring the
+  RMB-drag seam 1:1, and a button row (E/jump/F5/F6/spellbook/cast +
+  a toggleable overlay-nav row with prompt()-based name entry).
+  Data on phones: the picker overlay accepts a ZIP
+  (DaggerfallGameFiles.zip or a zipped arena2) - a dependency-free
+  reader (EOCD -> central dir -> DecompressionStream deflate-raw)
+  with the arena2/ prefix filter; both real archives witnessed
+  byte-exact. Viewport meta + touch-action CSS landed in index.html.
+  Playwright touch probe (hasTouch context): UI activation, stick
+  8-way + run throw, release clearing, look-drag clean. RESIDUAL
+  (honest): the look hook's yaw effect is seam-verified only (walk
+  mode exposes no yaw getter); the body is the literal mouse
+  expression. Desktop untouched - the layer no-ops without touch.
 
 ## Open flags (audit-generated 2026-08-13, from the code)
 

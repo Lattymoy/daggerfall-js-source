@@ -10,6 +10,7 @@
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook } from '../player/pointerLock.js';
+import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
@@ -121,6 +122,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
     if (routeKey(e, ctx, dir, (p) => { player.pos[0] = p[0]; player.pos[1] = p[1]; player.pos[2] = p[2]; })) e.preventDefault();
   });
   addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
+  attachTouch(canvas, {   // mobile: stick synthesizes WASD; look/attack ride the same seams as mouse
+    look: (dx, dy) => {
+      cam.yaw -= dx * 0.0025;
+      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * 0.0025));
+    },
+    attack: (dx, dy, held) => ctx.playerAttackInput(dx, dy, held),
+  });
   addEventListener('mousemove', (e) => {
     ctx.reportMouse?.(e.movementX, e.movementY, document.pointerLockElement === canvas);   // raw input truth for F8
     if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }

@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 288 tests across 72 files.
+Node 22). Suite: 289 tests across 72 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -13,7 +13,7 @@ Node 22). Suite: 288 tests across 72 files.
 | sky.test.js | 3 | SKY reader pins, panorama mirror law, night mapping |
 | smoke.test.js | 1 | runner sanity |
 | clock.test.js | 4 | hour gates, LightCurve pins, sun sweep, flicker determinism |
-| datasource.test.js | 1 | ARENA2 key rule: uppercase basename across path styles (unix/windows/bare) |
+| datasource.test.js | 2 | ARENA2 key rule: uppercase basename across path styles (unix/windows/bare); readZip mobile ingest on a crafted archive - store + deflate-raw byte-exact round-trips, the arena2/ prefix filter dropping siblings, directory entries skipped, flat archives ingesting whole (real-zip witness: both DaggerfallGameFiles.zip and a self-zipped arena2 round-tripped ART_PAL.COL byte-identical in the arc probe) |
 | bsa.test.js | 6 | BSA containers, closure invariant, FOO quirk |
 | palette.test.js | 10 | 8 palettes, MAP.PAL x4, embedded reads |
 | textrsc.test.js | 2 | the verbatim record table on crafted bytes (headerLength/6 - 1 count, id->offset walk, raw bytes INCLUSIVE of the 0xFE terminator, missing ids null), plainText flattening (NewLine, SubrecordSeparator variants, the two one-operand prefixes consuming without leaking printable operands, justify/control drops) |
