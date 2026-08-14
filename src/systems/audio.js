@@ -93,8 +93,11 @@ export class AudioEngine {
   }
 
   /** Positional one-shot: a PannerNode standing in for Unity's 3D
-   *  AudioSource. Distances ride the world's own units. */
-  play3d(index, pos, volume = 1) {
+   *  AudioSource. The default profile is the DaggerfallAudioSource
+   *  shape (min 1 / max 500, logarithmic - WebAudio 'inverse' is the
+   *  analog); per-source callers override maxDistance, e.g. enemy
+   *  sources clamp at AttractRadius 16 (2026-08-14 audit AU2). */
+  play3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 500 } = {}) {
     if (!this._ready()) return;
     const buf = this._buffer(index);
     if (!buf) return;
@@ -102,9 +105,9 @@ export class AudioEngine {
     src.buffer = buf;
     const pan = this.ctx.createPanner();
     pan.panningModel = 'equalpower';
-    pan.distanceModel = 'linear';
-    pan.refDistance = 2;
-    pan.maxDistance = 40;
+    pan.distanceModel = 'inverse';
+    pan.refDistance = refDistance;
+    pan.maxDistance = maxDistance;
     pan.positionX.value = pos[0]; pan.positionY.value = pos[1]; pan.positionZ.value = pos[2];
     const gain = this.ctx.createGain();
     gain.gain.value = volume;

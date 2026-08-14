@@ -131,6 +131,30 @@ viewmodel framing constants) remains open to nudging from live play.
 Newest first. Older per-fix audits are consolidated into their arc
 records; Home keeps the one-line pointer and the standing lessons.
 
+**2026-08-14 - the post-ship audit (mobile/deploy/UI/A1).** Full
+sweep of the week's shipped surface, closed green on real ARENA2
+(293/293 - the corpus gates had been skipping since the enemyBasics
+regeneration; this run re-proved them). Byte discipline: the A1 regen
+diff verified semantically equal minus exactly the three sound
+columns (62 entries). A1 vs source: SoundClips-as-record-index
+confirmed (SoundReader casts the index straight through, divisor
+1/128 matches), dungeon door clips 25/24 confirmed from the
+serialized prefab, swing/hit tables and volumes re-checked. One real
+find, fixed: AU2 - the 3D profile was one 40-unit linear panner for
+everything where DFU is per-source (DaggerfallAudioSource min 1 /
+max 500 logarithmic; enemy sources clamp at AttractRadius 16) - the
+engine now defaults to the inverse/500 shape with per-call overrides
+and every enemy-side call passes 16. The data diet's whole fetch
+surface (literal + variable-name sites: HUD art, palette indirection
+incl. MAP.PAL/NIGHTSKY.COL, NITE images, TEXTURE templates) passes
+KEEP on both diets; SKY-on-lean is the designed gradient. The
+letterbox offset has exactly one caller pair (set + finally-reset).
+Three stale Ledger C rows pruned with shipped evidence (enemy AI,
+dungeon loot, Hurt/CastSpell traps - Poison stays routed). Lesson:
+after any generated-file change, the ARENA2 suite must run BEFORE the
+commit ships, not at the next audit - bare-suite green hid zero
+defects this time by luck, not design.
+
 **2026-08-13 - the DFU parity audit (F1-F17).** Full sweep of every
 1:1-claimed surface against the DFU C# (sparse clone), baselined and
 closed green on real ARENA2 (288/288). Twelve behavioral parity

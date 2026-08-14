@@ -108,11 +108,11 @@ World layout:
 | Climate swaps onto mismatched record dimensions | 15 corpus swap combos (124_3 -> 24, 168_6 -> 68/368/468 families) land on records whose dimensions differ from the original; DFU stretches them identically because mesh UVs are normalized against the original archive at load - kept verbatim, pinned in the climate corpus test | Kept |
 | Interior people visibility gates (house ownership, shop hours, building-open rules, GuildHall anytime access, TG/DB House2 membership) | DaggerfallInterior.AddPeople tail | Systems arc (people + their flags/factionID shipped C1) |
 | Interior furniture actions, house containers, loot, spawn points | DaggerfallInterior AddFurnitureAction/MakeHouseContainer/AddSpawnPoints | Systems arc |
-| Enemy AI + mobile animation (billboard orientation states, motion, combat) | EnemyMotor, MobileUnit | Characters arc C5 (spawn data + classic standing billboards shipped C3) |
-| Dungeon treasure piles + loot | RDBLayout AssignFixedTreasure/AddRandomTreasure | Systems arc |
+| ~~Enemy AI + mobile animation~~ SHIPPED (C8: enemyMotor/enemyAttack/rigs end to end; row pruned by the 2026-08-14 audit) | EnemyMotor, MobileUnit | Characters arc C5 (spawn data + classic standing billboards shipped C3) |
+| ~~Dungeon treasure piles + loot~~ SHIPPED (S-series loot tables + corpse/pile takeLoot; row pruned by the 2026-08-14 audit) | RDBLayout AssignFixedTreasure/AddRandomTreasure | Systems arc |
 | Torch audio sources | RDBLayout.AddTorchAudioSource | Audio arc |
 | Transition + activation sounds: action PlaySound index, ladder climb, enter/exit stingers (door open/close SHIPPED in A1 - dungeon clips on the activate seam) | DaggerfallActionDoor, DaggerfallAction, DaggerfallAudioSource | Audio arc (the P2/P4-P6 systems expose the trigger points) |
-| Non-movement RDB action flags: CastSpell, Hurt21-25, Poison, DrainMagicka | DaggerfallAction delegates | Combat arc (magic/damage) |
+| ~~Non-movement RDB action flags: CastSpell, Hurt21-25, DrainMagicka~~ SHIPPED (S4b + the trap seam; Poison still pends the disease/poison slice) | DaggerfallAction delegates | Combat arc (magic/damage) |
 | Non-movement RDB action flags: ShowText, ShowTextWithInput, DoorText | DaggerfallAction delegates | UI arc (message boxes) + Systems (text records) |
 | Non-movement RDB action flags: Teleport, Activate, LockDoor, UnlockDoor | DaggerfallAction delegates | Player arc (teleporters) + Systems (locks; P2 skips the IsLocked path) |
 | Platform riding (velocity inheritance while standing on movers) | DFU parents the player transform | Player arc |

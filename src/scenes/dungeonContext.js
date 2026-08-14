@@ -629,7 +629,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         continue;
       }
       // EnemySounds.PlayHitSound at the struck foe, weapon-aware
-      audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, 1.1);
+      audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, 1.1, { maxDistance: 16 });   // rides the foe's source shape
       damageFoe(foe, damage, playerFeet);   // stagger AWAY from the hit: player in front -> HurtFront
     }
   }
@@ -899,7 +899,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           const pp = playerFeet || eye;
           const adx = pp[0] - f.ai.feet[0], ady = pp[1] - f.ai.feet[1], adz = pp[2] - f.ai.feet[2];
           if (f._attractT > f._attractWait && (adx * adx + ady * ady + adz * adz) < 16 * 16) {
-            audio.play3d(Math.random() > 0.8 ? bx.moveSound : bx.barkSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]]);
+            audio.play3d(Math.random() > 0.8 ? bx.moveSound : bx.barkSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]], 1, { maxDistance: 16 });
             f._attractWait = 3 + Math.floor(Math.random() * 7);
             f._attractT = 0;
           }
@@ -932,7 +932,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // PlayAttackSound: half the time, humans stay silent
           const bx = ENEMY_BASICS[f.mobileType];
           if (!f.entity.isClass && bx?.attackSound != null && Math.random() <= 0.5) {
-            audio.play3d(bx.attackSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]]);
+            audio.play3d(bx.attackSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]], 1, { maxDistance: 16 });
           }
           const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, { targetGroup: null, weapon: wpn });
           if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), 1.1);   // the player takes the hit (PlayerFootsteps families)
