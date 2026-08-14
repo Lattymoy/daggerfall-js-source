@@ -10,6 +10,7 @@
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook } from '../player/pointerLock.js';
+import { playerEntity } from '../characters/playerEntity.js';   // shot-mode __hp probe
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
@@ -166,6 +167,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
     };
     window.__actions = () => JSON.stringify(
       [...ctx.actions.objects.values()].map((o) => ({ key: o.key, state: o.state, t: Number(o.t.toFixed(3)), pos: [o.matrix[12], o.matrix[13], o.matrix[14]].map((v) => Number(v.toFixed(2))) })));
+    // Combat probes (2026-08-13 audit): the live-play smoke reads
+    // vitals + the foe roster to verify the frame-loop combat path.
+    window.__hp = () => JSON.stringify({ health: playerEntity.health, maxHealth: playerEntity.maxHealth });
+    window.__foes = () => JSON.stringify(ctx.foes.map((f, i) => ({
+      i, type: f.mobileType, dead: !!f.dead, health: f.entity?.health,
+      pos: f.ai ? f.ai.feet.map((v) => Number(v.toFixed(2))) : null,
+    })));
     window.__frame = 0;
   }
 
