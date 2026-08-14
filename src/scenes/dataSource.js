@@ -49,24 +49,49 @@ function idbCount(db) {
   });
 }
 
-function idbPutAll(db, entries, onProgress) {
+function idbPutBatch(db, batch) {
   return new Promise((res, rej) => {
     const tx = db.transaction(STORE, 'readwrite');
     const store = tx.objectStore(STORE);
-    let done = 0;
-    for (const [key, buf] of entries) {
-      const req = store.put(buf, key);
-      req.onsuccess = () => onProgress && onProgress(++done, entries.length);
-    }
+    for (const [key, buf] of batch) store.put(buf, key);
     tx.oncomplete = () => res();
     tx.onerror = () => rej(tx.error);
   });
+}
+
+/** Store in BATCHES (mobile-safe, 2026-08-14): one transaction over
+ *  the whole ~250MB set held every buffer live at once - on phones
+ *  that peak (zip + inflated entries + IDB copies) got the tab's
+ *  WebGL context killed and the game went black after ingest. Small
+ *  batches let stored buffers release as we go. */
+async function idbPutAll(db, entries, onProgress) {
+  const BATCH = 24;
+  for (let i = 0; i < entries.length; i += BATCH) {
+    const batch = entries.slice(i, i + BATCH);
+    await idbPutBatch(db, batch);
+    for (let j = i; j < Math.min(i + BATCH, entries.length); j++) entries[j] = null;   // release
+    if (onProgress) onProgress(Math.min(i + BATCH, entries.length), entries.length);
+  }
 }
 
 let db = null;
 async function getDb() {
   if (!db) db = await openDb();
   return db;
+}
+
+/** Recovery: wipe the stored set (a mid-ingest tab death leaves a
+ *  PARTIAL store - idbCount > 0 skips the picker, then boot dies on
+ *  the first missing file with no way back). */
+export async function clearStoredData() {
+  mem.clear();
+  const d = await getDb();
+  await new Promise((res, rej) => {
+    const tx = d.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).clear();
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
 }
 
 /** The single data seam every reader goes through (via fetchBytes). */
@@ -185,8 +210,14 @@ export async function ensureArena2() {
       if (!entries.length) { msg.textContent = 'no usable files in that selection'; return; }
       try {
         await idbPutAll(await getDb(), entries, (d, n) => { msg.textContent = `storing ${d}/${n}...`; });
-      } catch { /* no IDB: memory-only session */ }
-      for (const [k, buf] of entries) mem.set(k, new Uint8Array(buf));
+        // stored: getBytes lazy-loads per file - keeping the WHOLE
+        // set resident in mem was ~250MB before the scene even
+        // loaded, the mobile black-screen killer (2026-08-14)
+      } catch {
+        // no IDB (private mode): memory-only session is the only path
+        // (a mid-batch throw leaves stored slots nulled - skip them)
+        for (const e of entries) if (e) mem.set(e[0], new Uint8Array(e[1]));
+      }
       ui.remove();
       resolve();
     };
@@ -200,8 +231,9 @@ export async function ensureArena2() {
         if (!entries.length) { msg.textContent = 'no ARENA2 files in that zip'; return; }
         try {
           await idbPutAll(await getDb(), entries, (d, n) => { msg.textContent = `storing ${d}/${n}...`; });
-        } catch { /* no IDB: memory-only session */ }
-        for (const [k, buf] of entries) mem.set(k, new Uint8Array(buf));
+        } catch {
+          for (const e of entries) if (e) mem.set(e[0], new Uint8Array(e[1]));
+        }
         ui.remove();
         resolve();
       } catch (err) {

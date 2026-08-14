@@ -40,6 +40,19 @@ async function boot() {
 boot().catch((e) => {
   document.body.textContent = `boot failed: ${e.message}`;
   console.error(e);
+  // A data-seam failure (missing file in the stored set - the
+  // partial-ingest brick) gets a recovery path: wipe + re-pick.
+  if (/re-pick|not in the stored/i.test(e.message)) {
+    const b = document.createElement('button');
+    b.textContent = 'clear stored data and pick again';
+    b.style.cssText = 'display:block;margin:16px;padding:12px;font:14px monospace';
+    b.onclick = async () => {
+      const { clearStoredData } = await import('./scenes/dataSource.js');
+      try { await clearStoredData(); } catch { /* wipe best-effort */ }
+      location.reload();
+    };
+    document.body.appendChild(b);
+  }
 });
 
 // Crash observability: an uncaught exception in the frame loop kills
@@ -55,4 +68,16 @@ function crashOverlay(msg) {
   document.body.appendChild(el);
 }
 addEventListener('error', (e) => crashOverlay(e.error?.stack || e.message));
+addEventListener('unhandledrejection', (e) => crashOverlay(`unhandled rejection\n${e.reason?.stack || e.reason}`));
+
+// A lost WebGL context is the classic MOBILE black screen: the page
+// lives, the canvas goes permanently black, nothing throws. Surface
+// it with a reload path (2026-08-14 - Mac's phone report; ingest
+// memory pressure was the trigger, fixed in dataSource, but ANY
+// cause must read as signal, never as silent black).
+document.getElementById('c')?.addEventListener('webglcontextlost', (e) => {
+  e.preventDefault();
+  crashOverlay('graphics context lost (usually memory pressure on phones)\n\ntap here to reload');
+  document.getElementById('crash')?.addEventListener('click', () => location.reload());
+});
 addEventListener('unhandledrejection', (e) => crashOverlay(e.reason?.stack || String(e.reason)));
