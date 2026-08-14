@@ -9,9 +9,9 @@
 //     RollEnemyClassMaxHealth: base 10 + level rolls of
 //     Range(1, hitPointsPerLevel + 1).
 //   BOTH: every skill = min(100, level * 5 + 30); LiveSpeed = the
-//     career's Speed attribute (monsters' careers pending the monster
-//     career table - E4; monsters here use Speed 50 human-average,
-//     FLAGGED, until GetMonsterCareerTemplate ports).
+//     career's Speed attribute. E4a SHIPPED: monster careers load
+//     from ENEMY{nnn}.CFG via loadMonsterCareer; the 50s stat block
+//     is only the no-career fallback when a caller skips the load.
 // Unity Random.Range slots are uniform rolls, as in DFU itself.
 // Equipment (SetEnemyEquipment) and loot generation: E3b/E4.
 
@@ -87,11 +87,18 @@ export function makeEnemyEntity(mobileType, basics, career, playerLevel, rollFn 
     liveSpeed,
     armor,
     skills: skillsLevel(level),           // every skill, per SetEnemyCareer
-    // stats from the career attributes (class); monster careers pend
-    // GetMonsterCareerTemplate (E4) - 50s FLAGGED until then
+    basics,                               // MobileEnemy reference (multi-attack damage spans - audit F2)
+    // stats.SetPermanentFromCareer: ALL EIGHT attributes ride the
+    // career (audit F14 - savingThrow needs willpower, level-up needs
+    // endurance). 50s only when a caller skips the career load.
     stats: career
-      ? { strength: career.strength, agility: career.agility, luck: career.luck }
-      : { strength: 50, agility: 50, luck: 50 },
+      ? {
+          strength: career.strength, intelligence: career.intelligence,
+          willpower: career.willpower, agility: career.agility,
+          endurance: career.endurance, personality: career.personality,
+          speed: career.speed, luck: career.luck,
+        }
+      : { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 },
     attackModifierFlags: career ? career.attackModifierFlags : null,
     minMetalToHit: basics.minMetalToHit,
     team: basics.team ?? 'None',

@@ -72,4 +72,12 @@ test('enemyEntity: monster rules verbatim (predefined level, HP range, armor*5)'
   assert.equal(e1.maxHealth, 16);       // inclusive max
   assert.equal(e0.armor, 6 * 5);
   assert.equal(e0.minMetalToHit, -1);
+  // F14: ALL EIGHT stats ride the career (SetPermanentFromCareer);
+  // careerless calls fall to 50s. F2: the basics ride the entity.
+  assert.equal(e0.stats.willpower, 50);
+  assert.equal(e0.stats.endurance, 50);
+  assert.equal(e0.basics, rat);
+  const fakeCareer = { strength: 60, intelligence: 61, willpower: 62, agility: 63, endurance: 64, personality: 65, speed: 66, luck: 67 };
+  const e2 = makeEnemyEntity(0, rat, fakeCareer, 1, () => 0);
+  assert.deepEqual(e2.stats, { strength: 60, intelligence: 61, willpower: 62, agility: 63, endurance: 64, personality: 65, speed: 66, luck: 67 });
 });

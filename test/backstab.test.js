@@ -28,12 +28,14 @@ test('isBackFacing: the 8-orientation wheel, records 3/4 = back, banker boundary
 
 test('backstab: chance rides chanceToHitMod, x3 rides the post-calc roll', () => {
   const A = { isPlayer: true, level: 1, skills: 30, stats: { strength: 50, agility: 50, luck: 50 } };
-  const T = { isPlayer: false, careerIndex: 0, armor: 0, skills: 0, minMetalToHit: -1, stats: { strength: 50, agility: 50, luck: 50 } };
+  const T = { isPlayer: false, isClass: false, careerIndex: 0, armor: 0, skills: 0, minMetalToHit: -1, stats: { strength: 50, agility: 50, luck: 50 } };
   const dagger = { minDamage: 1, maxDamage: 6, material: 0, flags: 0x10 };
   // rolls: [struck, crit(fail .99), hitRoll, damageRoll, backstabRoll]
-  // no backstab: chance = 30 + 0 = 30 -> roll .30 = 30 misses
-  assert.equal(calculateAttackDamage(A, T, { weapon: dagger, rolls: seq(0, 0.99, 0.30, 0, 0.99) }), 0);
-  // backstab 30: chance 60 -> .30 hits; damage roll 0 -> 1 -1(iron) +0 str = 0... use max roll:
+  // MEASURED chain (F1/F3): skill 30 + weaponToHit(iron -1 x10 = -10)
+  // + adjustments(+40 monster - 50 = -10) = 10
+  assert.equal(calculateAttackDamage(A, T, { weapon: dagger, rolls: seq(0, 0.99, 0.09, 0.999, 0.99) }), 5);   // 9 < 10 hits: 6 -1 iron
+  assert.equal(calculateAttackDamage(A, T, { weapon: dagger, rolls: seq(0, 0.99, 0.10, 0, 0.99) }), 0);       // 10 misses
+  // backstab 30 joins chanceToHitMod: 10 + 30 = 40 -> .30 hits
   const d = calculateAttackDamage(A, T, { weapon: dagger, backstabChance: 30, rolls: seq(0, 0.99, 0.30, 0.999, 0.10) });
   // dagger max 6, +0 str, -1 iron = 5; backstab roll .10 < 30 -> x3 = 15
   assert.equal(d, 15);

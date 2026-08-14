@@ -13,6 +13,7 @@
 // scalar SetEnemyCareer fills every slot with, so [part] == armor.
 
 import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source (EnemyAttack.cs:30)
+import { rand } from '../formats/dfRandom.js';   // the monster multi-attack reflex gate (F2)
 import { liveStat } from '../systems/statMods.js';   // S14: fortify-aware stat reads
 import { skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
 
@@ -52,9 +53,9 @@ export const ENEMY_GROUPS = Object.freeze({ Undead: 0, Daedra: 1, Humanoid: 2, A
 const GROUP_BITS = Object.freeze([[0x01, 0x10], [0x02, 0x20], [0x04, 0x40], [0x08, 0x80]]);   // [bonus, phobia] per group
 export function careerAttackModifier(attackModifierFlags, group) {
   const [bonus, phobia] = GROUP_BITS[group];
-  if ((attackModifierFlags & bonus) === bonus) return 1;
-  if ((attackModifierFlags & phobia) === phobia) return -1;
-  return 0;
+  // DFU applies BOTH bits additively (+level for bonus, -level for
+  // phobia; a career carrying both nets 0) - audit F16.
+  return ((attackModifierFlags & bonus) === bonus ? 1 : 0) - ((attackModifierFlags & phobia) === phobia ? 1 : 0);
 }
 
 /** Affinity string -> enemy group (class enemies are Humanoid). DFU's
@@ -82,14 +83,31 @@ export function skillsToHit(a, t, roll01 = Math.random()) {
   return mod;
 }
 
+// ---- CalculateAdjustmentsToHit (2026-08-13 parity audit F1) ----
+// Verbatim: biography avoid-hit (pending chargen biography - 0),
+// +40 when the TARGET is an enemy MONSTER, then a flat -50 always
+// ("DF Chronicles says -60 ... it actually seems to be -50").
+export function adjustmentsToHit(target) {
+  let mod = 0;
+  // biography adjustments: chargen biography pending - 0
+  if (!target.isPlayer && target.isClass === false) mod += 40;   // EntityTypes.EnemyMonster
+  mod -= 50;
+  return mod;
+}
+
 // ---- CalculateSuccessfulHit (clamp 3..97) ----
 export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckBodyPart, rolls = Math.random) {
   let chance = chanceToHitMod;
-  chance += target.armorValues ? target.armorValues[struckBodyPart] ?? 0 : (target.armor ?? 0);   // CalculateArmorToHit: per-part when equipped (E4b), the SetEnemyCareer scalar otherwise
+  // CalculateArmorToHit: per-part when equipped (E4b), the
+  // SetEnemyCareer scalar otherwise. Increased/DecreasedArmorValueModifier
+  // channels pend their effects (none exist yet) - 0 (audit F5).
+  chance += target.armorValues ? target.armorValues[struckBodyPart] ?? 0 : (target.armor ?? 0);
   // adrenaline rush: career ability bitfield decode pending (Systems) - 0
+  // attacker.ChanceToHitModifier (enchantments): pends the enchantment
+  // system - 0 (audit F4).
   chance += statsToHit(attacker, target);
   chance += skillsToHit(attacker, target, rolls());
-  // biography adjustments: chargen pending - 0
+  chance += adjustmentsToHit(target);   // the +40 monster mod and flat -50 (F1)
   chance = Math.max(3, Math.min(97, chance));
   return dice100(chance, rolls());
 }
@@ -147,7 +165,7 @@ export function chooseEnemyWeapon(weapon, basics) {
   return noWeaponAvg > weaponAvg ? null : weapon;
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, targetGroup = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random } = {}) {
+export function calculateAttackDamage(attacker, target, { weapon = null, targetGroup = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand } = {}) {
   if (!attacker || !target) return 0;
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) return 0;   // material too low
   // source: chanceToHitMod = skill, then player swing/proficiency/
@@ -157,11 +175,39 @@ export function calculateAttackDamage(attacker, target, { weapon = null, targetG
   // skill or HandToHand), + player mods. Enemies read the same value
   // for every skill (flat, SetEnemyCareer verbatim).
   const attackSkill = weapon ? (WEAPON_SKILL[weapon.name] ?? SKILLS.HandToHand) : SKILLS.HandToHand;
-  const chanceToHitMod = skillValue(attacker, attackSkill) + toHitMod + backstabChance;
+  let chanceToHitMod = skillValue(attacker, attackSkill) + toHitMod + backstabChance;
+  // CalculateWeaponToHit: material modifier x 10 rides the WEAPON
+  // branch only, verbatim (audit F3).
+  if (weapon) chanceToHitMod += (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;
   const struck = calculateStruckBodyPart(rolls());
   let damage = 0;
   if (!weapon) {
-    if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls)) {
+    // Monster weaponless attacks (audit F2): DFU's multi-attack loop
+    // over MobileEnemy.MinDamage/2/3 - NOT the H2H skill formula
+    // (that branch is player + class enemies only). Per attack: the
+    // reflex gate DFRandom.rand() % 100 < 50 - 10*(reflexes-2), then
+    // the shared hit roll; damage Range(min, max+1); the enemy-type
+    // bonus lands PER HIT. OnMonsterHit special effects (disease/
+    // poison/drain) pend the Systems slice - routed in Ledger C.
+    if (!attacker.isPlayer && attacker.isClass === false && attacker.basics) {
+      const b = attacker.basics;
+      const spans = [
+        [b.minDamage ?? 0, b.maxDamage ?? 0],
+        [b.minDamage2 ?? 0, b.maxDamage2 ?? 0],
+        [b.minDamage3 ?? 0, b.maxDamage3 ?? 0],
+      ];
+      const reflexesChance = 50 - 10 * ((target.reflexes ?? 2) - 2);
+      for (const [min, max] of spans) {
+        let hitDamage = 0;
+        if (dfRand() % 100 < reflexesChance && min > 0 &&
+            calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls)) {
+          hitDamage = min + Math.floor(rolls() * (max + 1 - min));   // Range(min, max+1)
+          // OnMonsterHit(attacker, target, hitDamage): FLAGGED pending
+          damage += hitDamage;
+        }
+        if (hitDamage > 0) damage += bonusOrPenaltyByEnemyType(attacker, targetGroup);
+      }
+    } else if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls)) {
       damage = handToHandAttackDamage(attacker, targetGroup, damageMod, !!attacker.isPlayer, rolls);
     }
   } else {

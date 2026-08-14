@@ -66,14 +66,16 @@ test('chargen: skillValue dual shape + formulas consume real skills', () => {
   assert.equal(skillValue({ skills: 35 }, SKILLS.Dodging), 35);       // flat enemy path
   const arr = new Array(SKILL_COUNT).fill(5); arr[SKILLS.LongBlade] = 40; arr[SKILLS.HandToHand] = 20;
   const player = { isPlayer: true, level: 1, skills: arr, armor: 0, stats: { strength: 50, agility: 50, luck: 50 } };
-  const foe = { isPlayer: false, careerIndex: 0, armor: 0, skills: 0, minMetalToHit: -1, stats: { strength: 50, agility: 50, luck: 50 } };
+  const foe = { isPlayer: false, isClass: false, careerIndex: 0, armor: 0, skills: 0, minMetalToHit: -1, stats: { strength: 50, agility: 50, luck: 50 } };
   const sword = { name: 'Longsword', minDamage: 2, maxDamage: 16, material: 0, flags: 0x10 };
-  // weapon attack uses LongBlade 40: chance 40 -> roll .39 hits
-  // rolls: [struck, crit(.99 fail), hit .39, damage 0]
-  const d = calculateAttackDamage(player, foe, { weapon: sword, rolls: seq(0, 0.99, 0.39, 0) });
+  // MEASURED (F1/F3): weapon = LongBlade 40 - 10 (iron x10) - 10
+  // (+40 monster - 50) = 20; unarmed = HandToHand 20 - 10 = 10.
+  // The SAME roll .15 hits with the sword, misses barehanded -
+  // the weapon's own skill drives the outcome.
+  // rolls: [struck, crit(.99 fail), hit .15, damage 0]
+  const d = calculateAttackDamage(player, foe, { weapon: sword, rolls: seq(0, 0.99, 0.15, 0) });
   assert.ok(d >= 1, `weapon skill drives the hit (${d})`);
-  // unarmed uses HandToHand 20: same roll .39 vs 20 MISSES
-  const h = calculateAttackDamage(player, foe, { rolls: seq(0, 0.99, 0.39, 0) });
+  const h = calculateAttackDamage(player, foe, { rolls: seq(0, 0.99, 0.15, 0) });
   assert.equal(h, 0);
   assert.equal(WEAPON_SKILL['Dai-Katana'], SKILLS.LongBlade);
   assert.equal(WEAPON_SKILL.Warhammer, SKILLS.BluntWeapon);

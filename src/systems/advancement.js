@@ -21,7 +21,6 @@
 //   chargen UI will replace.
 
 import { SKILLS } from './skills.js';
-import { liveStat } from './statMods.js';   // S14: fortify-aware endurance
 import { hitPointsPerLevelUp, spendPoolLowest } from './chargen.js';
 
 // DaggerfallSkills.GetAdvancementMultiplier, all 35, verbatim.
@@ -88,7 +87,6 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
   if ((classicTimeMinutes - (entity.lastSkillCheckTime ?? 0)) <= SKILL_RAISE_CHECK_INTERVAL) return [];
   entity.lastSkillCheckTime = classicTimeMinutes;
   const raised = [];
-  const mastered = alreadyMasteredASkill(entity);
   for (let i = 0; i < entity.skillUses.length; i++) {
     const needed = skillUsesForAdvancement(
       entity.skills[i], SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career.advancementMultiplier, entity.level);
@@ -96,7 +94,9 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
     const calcUses = (entity.skillUses[i] * reflexesMod) >> 16;
     if (calcUses < needed) continue;
     entity.skillUses[i] = 0;
-    if (entity.skills[i] < 100 && (entity.skills[i] < 95 || !mastered)) {
+    // AlreadyMasteredASkill re-evaluated PER RAISE (audit F7): a
+    // primary hitting 100 mid-pass blocks later 95+ raises, verbatim.
+    if (entity.skills[i] < 100 && (entity.skills[i] < 95 || !alreadyMasteredASkill(entity))) {
       entity.skills[i] += 1;
       raised.push(i);
     }
@@ -124,7 +124,7 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
 export function applyLevelUp(entity, distribute, rolls = Math.random) {
   if (!entity.readyToLevelUp || !entity.pendingLevel) return false;
   entity.level = entity.pendingLevel;
-  entity.maxHealth += hitPointsPerLevelUp(entity.career, liveStat(entity, 'endurance'), rolls);
+  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT endurance, verbatim (audit F8 - DFU reads Stats.PermanentEndurance here, not the live value)
   entity.health = Math.min(entity.health, entity.maxHealth);
   const pool = LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
   distribute(entity.stats, pool);

@@ -18,8 +18,9 @@
 // play the authored 1H strike clips, so the strike is a uniform roll
 // over STRIKES (the WeaponManager click-attack precedent), sampled
 // through the shared machine's frame clock.
-// PENDING E3 (entity layer): playerLevel (stub 10 - zeroes its term),
-// reflexes (stub 2, average - zeroes its term), per-enemy LiveSpeed.
+// E3 SHIPPED: callers wire the real playerLevel/reflexes/LiveSpeed
+// (dungeonContext builds each EnemyAttack from the live entities);
+// the constructor defaults (10 / 2 / 50) are neutral fallbacks only.
 
 import { rand } from '../formats/dfRandom.js';
 import {

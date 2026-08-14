@@ -19,29 +19,39 @@ test('effects: HealHealth (10,8) instant; duration arithmetic verbatim', () => {
   // duration: base 3 + mod 2 x floor(7/3) = 7; per-0 guards to 1
   assert.equal(rollDuration({ durationBase: 3, durationMod: 2, durationPerLevel: 3 }, 7), 7);
   assert.equal(rollDuration({ durationBase: 1, durationMod: 4, durationPerLevel: 0 }, 5), 21);
+  // F11: the per-level multiplier CLAMPS AT 1 (DFU SetDuration) -
+  // a level-1 caster with per-level 4 still gets base + mod x 1
+  assert.equal(rollDuration({ durationBase: 3, durationMod: 2, durationPerLevel: 4 }, 1), 5);
 });
 
-test('effects: continuous (1,0) joins actives, ticks per round, expires; save scales every round', () => {
+test('effects: continuous (1,0) - initial round at cast, saves roll FRESH per round, DFU expiry', () => {
   const cont = { type: 1, subType: 0, magnitudeBaseLow: 10, magnitudeBaseHigh: 10, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1,
     durationBase: 2, durationMod: 0, durationPerLevel: 1 };
   const t = T();
-  // save roll 0.39 vs saving 55 -> prorated 25%
-  const r = applySpell({ element: 0, effects: [cont] }, 1, t, {}, seq(0.39));
+  let hurt = 0;
+  const sinks = { hurt: (n) => { hurt += n; } };
+  // F17: the INITIAL magic round fires AT CAST - save roll .39 ->
+  // throw 55, prorated 25%; trunc(10 * 25/100) = 2; round 1 consumed
+  const r = applySpell({ element: 0, effects: [cont] }, 1, t, sinks, seq(0.39));
   assert.equal(r.continuous, 1);
   assert.equal(t.activeEffects.length, 1);
-  assert.equal(t.activeEffects[0].savePct, 25);
-  let hurt = 0;
-  tickActiveEffects(t, { hurt: (n) => { hurt += n; } }, seq(0));
-  assert.equal(hurt, 2);                           // trunc(10 * 25 / 100)
+  assert.equal(hurt, 2);
   assert.equal(t.activeEffects[0].roundsRemaining, 1);
-  tickActiveEffects(t, { hurt: (n) => { hurt += n; } }, seq(0));
-  assert.equal(hurt, 4);
-  assert.equal(t.activeEffects.length, 0);         // expired at 0
+  assert.equal(t.activeEffects[0].savePct, undefined);   // F10: no held percent
+  // round 2: the save rolls FRESH - .44 -> roll 45 -> 100-5*(55-45) = 50%
+  tickActiveEffects(t, sinks, seq(0.44));
+  assert.equal(hurt, 7);                                 // +trunc(10 * 50/100)
+  assert.equal(t.activeEffects[0].roundsRemaining, 0);   // survives THIS pass at 0 (DFU End() is next pass)
+  tickActiveEffects(t, { hurt: () => { throw new Error('expired entry acted'); } });
+  assert.equal(t.activeEffects.length, 0);               // End() removed it without acting
   tickActiveEffects(t, { hurt: () => { throw new Error('dead list ticked'); } });
-  // a FAILED save (immune) never joins
+  // an IMMUNE target still receives the effect (DFU assigns the
+  // bundle; every round's save returns 0) - it just never damages
   const imm = { stats: { willpower: 50 }, career: { immunityFlags: 8 } };
-  applySpell({ element: 0, effects: [cont] }, 1, imm, {}, seq(0.99));
-  assert.ok(!imm.activeEffects?.length);
+  let immHurt = 0;
+  applySpell({ element: 0, effects: [cont] }, 1, imm, { hurt: (n) => { immHurt += n; } }, seq(0.99));
+  assert.equal(imm.activeEffects.length, 1);
+  assert.equal(immHurt, 0);
 });
 
 test('effects: S8 buff families - kinds, incumbent renew, the query', async () => {
@@ -54,14 +64,18 @@ test('effects: S8 buff families - kinds, incumbent renew, the query', async () =
   const t = T();
   applySpell({ element: 4, effects: [slow] }, 2, t, {}, seq(0));
   assert.ok(hasActiveEffect(t, 'slowfall'));
-  assert.equal(t.activeEffects[0].roundsRemaining, 5);       // 3 + 1*2
+  assert.equal(t.activeEffects[0].roundsRemaining, 4);       // 3 + 1*2, round 1 consumed at cast (F17)
   tickActiveEffects(t, {});
-  assert.equal(t.activeEffects[0].roundsRemaining, 4);
+  assert.equal(t.activeEffects[0].roundsRemaining, 3);
+  // F12: a re-cast STACKS its rounds onto the incumbent (no initial
+  // round for the joining instance): 3 + 5 = 8, still one entry
   applySpell({ element: 4, effects: [slow] }, 2, t, {}, seq(0));
-  assert.equal(t.activeEffects.length, 1);                    // incumbent, not stacked
-  assert.equal(t.activeEffects[0].roundsRemaining, 5);        // renewed
-  for (let i = 0; i < 5; i++) tickActiveEffects(t, {});
-  assert.ok(!hasActiveEffect(t, 'slowfall'));                 // expired
+  assert.equal(t.activeEffects.length, 1);
+  assert.equal(t.activeEffects[0].roundsRemaining, 8);
+  for (let i = 0; i < 8; i++) tickActiveEffects(t, {});
+  assert.ok(hasActiveEffect(t, 'slowfall'));                 // at 0: Ends NEXT pass (DFU shape)
+  tickActiveEffects(t, {});
+  assert.ok(!hasActiveEffect(t, 'slowfall'));                // expired
 });
 
 test('effects: HealSpellPoints (10,9) instant magicka gain', () => {
@@ -87,17 +101,21 @@ test('effects: ContinuousDamageSpellPoints (1,2) joins activeEffects and drains 
   const cont = { type: 1, subType: 2, magnitudeBaseLow: 3, magnitudeBaseHigh: 3, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 0, durationBase: 2, durationMod: 0, durationPerLevel: 0 };
   assert.ok(isContinuousDamageSpellPoints(cont));
   const t = T();
-  const r = applySpell({ element: 0, effects: [cont] }, 1, t, {}, seq(0.99));
+  let drained = 0;
+  const sinks = { drainMagicka: (n) => { drained += n; } };
+  // .99 save roll -> 100% lands; the initial round drains AT CAST (F17)
+  const r = applySpell({ element: 0, effects: [cont] }, 1, t, sinks, seq(0.99));
   assert.equal(r.continuous, 1);
   assert.equal(t.activeEffects.length, 1);
   assert.equal(t.activeEffects[0].kind, 'continuousDamageSpellPoints');
-  let drained = 0;
-  tickActiveEffects(t, { drainMagicka: (n) => { drained += n; } }, seq(0.99));
-  assert.equal(drained, 3);                          // one round's magnitude
+  assert.equal(drained, 3);
   assert.equal(t.activeEffects[0].roundsRemaining, 1);
+  tickActiveEffects(t, sinks, seq(0.99));            // round 2, fresh save (F10)
+  assert.equal(drained, 6);
+  assert.equal(t.activeEffects[0].roundsRemaining, 0);
 });
 
-test('effects: FortifyAttribute (type 9) applies a live stat mod, renews, expires', () => {
+test('effects: FortifyAttribute (type 9) - live mod, like-kind stacks, unlike coexists, DFU expiry', () => {
   // subType 0 = Strength. Fortify +magnitude for a duration.
   const fort = { type: 9, subType: 0, magnitudeBaseLow: 10, magnitudeBaseHigh: 10, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 0, durationBase: 3, durationMod: 0, durationPerLevel: 0 };
   assert.ok(isFortifyAttribute(fort));
@@ -106,16 +124,28 @@ test('effects: FortifyAttribute (type 9) applies a live stat mod, renews, expire
   assert.equal(r.fortified, 1);
   assert.equal(t.activeEffects.length, 1);
   assert.equal(t.activeEffects[0].kind, 'fortifyAttribute');
+  assert.equal(t.activeEffects[0].roundsRemaining, 2);  // 3, round 1 consumed at cast (F17)
   assert.equal(liveStat(t, 'strength'), 60);            // base 50 + fortify 10
   assert.equal(liveStat(t, 'agility'), 0);              // untouched stat -> base (absent -> 0)
-  // re-cast the SAME stat: incumbent renews duration, does NOT stack a second entry
-  t.activeEffects[0].roundsRemaining = 1;
+  // F12: a like-kind re-cast (same stat + SAME settings) STACKS its
+  // rounds onto the incumbent and keeps the incumbent's magnitude
   applySpell({ element: 4, effects: [fort] }, 1, t, {}, seq(0.99));
   assert.equal(t.activeEffects.length, 1);
-  assert.equal(t.activeEffects[0].roundsRemaining, 3);  // renewed
+  assert.equal(t.activeEffects[0].roundsRemaining, 5);  // 2 + 3
   assert.equal(liveStat(t, 'strength'), 60);
-  // tick to expiry: liveStat returns to base
-  for (let i = 0; i < 3; i++) tickActiveEffects(t, {}, seq(0.99));
+  // a DIFFERENT-settings fortify of the same stat is NOT like-kind:
+  // it coexists as its own instance and the mods SUM (DFU parallel)
+  const fort2 = { ...fort, magnitudeBaseLow: 5, magnitudeBaseHigh: 5, durationBase: 2 };
+  applySpell({ element: 4, effects: [fort2] }, 1, t, {}, seq(0.99));
+  assert.equal(t.activeEffects.length, 2);
+  assert.equal(liveStat(t, 'strength'), 65);            // 50 + 10 + 5
+  // tick to expiry: fort2 (1 round left) Ends after the next pass
+  tickActiveEffects(t, {}, seq(0.99));                  // fort: 4, fort2: 0 (kept this pass)
+  assert.equal(liveStat(t, 'strength'), 65);            // the mod survives the pass it expires in
+  tickActiveEffects(t, {}, seq(0.99));                  // fort2 Ends; fort: 3
+  assert.equal(t.activeEffects.length, 1);
+  assert.equal(liveStat(t, 'strength'), 60);
+  for (let i = 0; i < 4; i++) tickActiveEffects(t, {}, seq(0.99));
   assert.equal(t.activeEffects.length, 0);
   assert.equal(liveStat(t, 'strength'), 50);
 });

@@ -119,6 +119,10 @@ World layout:
 | Animal audio sources | GameObjectHelper | Audio arc |
 | Music playback (HMI/XMI) | Unity synthesis, no reader | Audio arc |
 | Smaller-dungeons generation | MapsFile + QuestMachine | Systems arc |
+| Enemy spellcasting (audit F15) | EnemyEntity.SetEnemySpells (MaxMagicka = 10*level + 100, the six magic skills forced to 80, per-monster spell lists in EnemyBasics - castsMagic already rides our data) + the casting AI | Systems arc (magic) |
+| OnMonsterHit special attack effects (audit F2 interim) | FormulaHelper.OnMonsterHit - disease/poison/drain/vampirism riders per landed monster hit; the multi-attack loop itself SHIPPED with the site flagged | Systems arc (disease/poison) |
+| Enchantment to-hit channel (audit F4) | DaggerfallEntity.ChanceToHitModifier inside CalculateSuccessfulHit - 0 until enchanted-item effects exist; site flagged in formulas.js | Systems arc (enchantments) |
+| Armor-value effect modifiers (audit F5) | Increased/DecreasedArmorValueModifier inside CalculateArmorToHit - 0 until their effects exist; site flagged in formulas.js | Systems arc (effect library) |
 | PatchRegionIndex legacy-save fix | MapsFile | Systems arc (saves) |
 | WorldDataReplacement / BuildingReplacement mod hooks | AssetInjection | Not planned (mod system) |
 | TangentSolver / lightmap UVs | MeshReader | Not planned (Unity-specific) |

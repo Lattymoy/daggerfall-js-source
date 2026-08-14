@@ -20,9 +20,8 @@
 // - open swing doors are transparent for free because opening removes
 // their collider bucket (the C3/actionSystem rule). SightModifier /
 // HearingModifier are 0 for every entry in current DFU master.
-// PENDING E3 (entity layer): per-enemy LiveSpeed from career stats -
-// until then callers pass liveSpeed explicitly (class-enemy stub 50,
-// flagged at the call site); stealth checks in detection.
+// E3 SHIPPED: callers pass each entity's real LiveSpeed (career
+// Speed). Still PENDING here: stealth checks in detection.
 
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { CLASSIC_UPDATE_INTERVAL } from './weaponStates.js';   // single source (GameManager.cs:42)

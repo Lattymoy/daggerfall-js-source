@@ -9,6 +9,7 @@
 // biography mods pend biography.
 
 import { dice100 } from '../combat/formulas.js';
+import { liveStat } from './statMods.js';   // F9: MagicResist reads the LIVE willpower
 
 // ---- DaggerfallMissile constants, verbatim ----
 export const MISSILE_SPEED = 25.0;
@@ -62,8 +63,8 @@ export function savingThrow(element, effectFlags, target, modifier = 0, rolls = 
   if (tolerance.Resistant) saving += 25;
   saving += modifier;
   if (saving >= 100) return 0;
-  // MagicResist = floor(willpower / 10)
-  saving += Math.floor((target.stats?.willpower ?? 50) / 10);
+  // MagicResist = floor(LIVE willpower / 10) - fortify-aware (audit F9)
+  saving += Math.floor(liveStat(target, 'willpower') / 10);
   saving = Math.max(5, Math.min(95, saving));
   let percent = 100;
   const roll = 1 + Math.floor(rolls() * 100);   // Dice100.Roll
