@@ -1,13 +1,17 @@
 // Deploy verification BY CONTENT (standing lesson: a failed deploy
 // leaves the site on the previous build - HTTP 200 proves nothing).
-// Builds locally, extracts the bundle filename from dist/index.html,
-// and polls the live site until its index references the SAME hashed
-// bundle (or times out). Usage: node tools/verify-deploy.mjs [url]
+// The pipeline is the CI workflow (.github/workflows/deploy.yml,
+// Pages build_type: workflow - push to main deploys). This tool
+// closes the loop: build the commit locally (buildTag = commit sha,
+// so hashes are commit-deterministic), then run this to poll the
+// live index until it serves that exact bundle.
+// Usage: npm run build && node tools/verify-deploy.mjs [url]
 import { readFile } from 'node:fs/promises';
-import { execSync } from 'node:child_process';
 
+// Verifies the artifact ALREADY in dist/ - never rebuilds (buildTag
+// varies per build, so a rebuild here would chase a hash the deploy
+// never pushed - the exact bug this replaced). Build first.
 const url = process.argv[2] || 'https://lattymoy.github.io/project-dagger/';
-execSync('npm run build', { stdio: 'inherit' });
 const local = await readFile('dist/index.html', 'utf8');
 const bundle = local.match(/assets\/index-[\w-]+\.js/)?.[0];
 if (!bundle) { console.error('no bundle ref in local dist/index.html'); process.exit(1); }
