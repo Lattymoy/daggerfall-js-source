@@ -166,7 +166,8 @@ export class Collider {
     let grounded = false;
     let ceiling = false;
     let pushedDown = false;
-    for (const bucket of this._buckets.values()) {
+    let groundKey = null;
+    for (const [bkey, bucket] of this._buckets) {
       const t = bucket.t();
       const gx = Math.floor((center[0] - t[0]) / CELL);
       const gz = Math.floor((center[2] - t[2]) / CELL);
@@ -222,7 +223,13 @@ export class Collider {
             // contact (d < radius), never from the shell. (Regression
             // from the g:0 SKIN change - Mac's stairs fell through.)
             const touching = d < radius;
-            if (ny >= GROUND_NY) grounded = true;
+            if (ny >= GROUND_NY) {
+              grounded = true;
+              // Platform riding (Ledger C row, 2026-08-14): the KEY of
+              // the grounding bucket - a non-static bucket (mover)
+              // wins over the static floor within the skin shell.
+              if (groundKey == null || bkey !== 'dungeon') groundKey = bkey;
+            }
             if (touching && ny <= -0.5) ceiling = true;
             if (touching && ny <= -GROUND_NY) pushedDown = true;
           }
@@ -232,6 +239,7 @@ export class Collider {
     out.grounded = out.grounded || grounded;
     out.hitCeiling = out.hitCeiling || ceiling;
     out.pushedDown = out.pushedDown || pushedDown;
+    if (groundKey != null && (out.groundKey == null || groundKey !== 'dungeon')) out.groundKey = groundKey;
   }
 
   _resolveCapsule(feet, out) {
@@ -266,10 +274,11 @@ export class Collider {
     const maxStep = CAPSULE_RADIUS * 0.75;
     if (maxComp > maxStep) {
       const n = Math.ceil(maxComp / maxStep);
-      const out = { grounded: false, hitCeiling: false, pushedDown: false };
+      const out = { grounded: false, hitCeiling: false, pushedDown: false, groundKey: null };
       for (let i = 0; i < n; i++) {
         const r = this._moveStep(feet, dx / n, dy / n, dz / n);
         out.grounded = r.grounded;
+        out.groundKey = r.groundKey ?? null;
         out.hitCeiling = out.hitCeiling || r.hitCeiling;
       }
       return out;

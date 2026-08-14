@@ -98,6 +98,7 @@ export class PlayerMotor {
     const dy = this.velY * dt;
 
     const r = this.collider.move(this.pos, dx, dy, dz);
+    this.groundKey = r.grounded ? (r.groundKey ?? null) : null;   // platform riding: what holds us up
     this.grounded = r.grounded;
     if (r.grounded && this.velY < 0) this.velY = 0;
     if (r.hitCeiling && this.velY > 0) this.velY = 0;

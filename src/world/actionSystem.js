@@ -251,10 +251,16 @@ export class ActionSystem {
 
   update(dt) {
     for (const o of this.objects.values()) {
-      if (o.state !== 'forward' && o.state !== 'reverse') continue;
+      if (o.state !== 'forward' && o.state !== 'reverse') { o.frameDelta = null; continue; }
       const dir = o.state === 'forward' ? 1 : -1;
       o.t = Math.max(0, Math.min(1, o.t + (dir * dt) / o.duration));
+      const px = o.matrix[12], py = o.matrix[13], pz = o.matrix[14];
       this._applyMatrix(o);
+      // Platform riding (2026-08-14): the frame's translation delta -
+      // the scene moves a standing player by exactly this (DFU
+      // MoveWithMovingPlatform's global-point delta, translation-only
+      // movers; doors rotate and never ride).
+      o.frameDelta = o.kind === 'action' ? [o.matrix[12] - px, o.matrix[13] - py, o.matrix[14] - pz] : null;
       const done = o.state === 'forward' ? o.t >= 1 : o.t <= 0;
       if (o.kind === 'action') {
         // Standing collision follows the mover every frame.

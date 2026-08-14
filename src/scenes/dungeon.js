@@ -129,6 +129,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * 0.0025));
     },
     attack: (dx, dy, held) => ctx.playerAttackInput(dx, dy, held),
+    attackTap: () => ctx.playerClickAttack(),
   });
   addEventListener('mousemove', (e) => {
     ctx.reportMouse?.(e.movementX, e.movementY, document.pointerLockElement === canvas);   // raw input truth for F8
@@ -187,6 +188,18 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const held = ctx.uiOverlayActive;   // overlays HOLD the world: no movers, no motor - typing a name must not walk the player off the start ledge
     if (!held) ctx.actions.update(dt);
     if (walkMode && !held) {
+      // Platform riding (Ledger C row -> SHIPPED 2026-08-14): standing
+      // on a mover applies its frame delta through the resolver
+      // BEFORE the player's own move - the DFU global-point-delta
+      // shape. Without this the elevator penetrated the capsule and
+      // the nearest-face ejection could throw the player through
+      // thin walls (Mac's out-of-bounds report).
+      const gk = player.groundKey;
+      if (gk && gk !== 'dungeon') {
+        const rideO = ctx.actions.objects.get(gk);
+        const d = rideO?.frameDelta;
+        if (d && (d[0] || d[1] || d[2])) player.collider.move(player.pos, d[0], d[1], d[2]);
+      }
       const jumpHeld = keys.has('Space');
       player.fallScale = ctx.playerFallScale;   // S8 slowfall
       player.update(dt, {

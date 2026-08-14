@@ -86,6 +86,18 @@ export class PlayerWeapon {
     return null;
   }
 
+  /** ClickToAttack verbatim (WeaponManager): a click fires an attack
+   *  in a RANDOM direction from Range(UpRight, DownRight + 1) over
+   *  the MouseDirections order - UpRight, Left, Right, DownLeft,
+   *  Down, DownRight. The touch attack button rides this (a tap has
+   *  no drag travel, so the gesture seam alone could never swing -
+   *  Mac's 2026-08-14 live report). */
+  clickAttack(rolls = Math.random) {
+    const DIRS = ['UpRight', 'Left', 'Right', 'DownLeft', 'Down', 'DownRight'];
+    const strike = DIRECTION_TO_STRIKE[DIRS[Math.floor(rolls() * DIRS.length)]];
+    return machineAttack(this.machine, strike) ? strike : null;
+  }
+
   /** @returns machine events; the caller resolves 'hit' via resolveHit. */
   update(dt) {
     return machineStep(this.machine, dt, this.liveSpeed);

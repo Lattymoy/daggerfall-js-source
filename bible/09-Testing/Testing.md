@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 293 tests across 73 files.
+Node 22). Suite: 295 tests across 74 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -13,6 +13,7 @@ Node 22). Suite: 293 tests across 73 files.
 | sky.test.js | 3 | SKY reader pins, panorama mirror law, night mapping |
 | smoke.test.js | 1 | runner sanity |
 | clock.test.js | 4 | hour gates, LightCurve pins, sun sweep, flicker determinism |
+| riding.test.js | 2 | Platform riding (groundKey identity - the mover wins over the static floor within skin; the frame delta carries the capsule with ZERO lateral ejection; stepping off returns 'dungeon') + ClickToAttack (the DFU Range(UpRight, DownRight+1) six-direction table at roll boundaries, busy-machine refusal) |
 | audio.test.js | 4 | A1 pure parts: pcm8->float32 verbatim, SoundClips indices vs SoundClips.cs, GetSwingSound pitch table + PlayHitSound roll families (boundaries MEASURED), the restored enemy sound columns (rat/imp rows, 61-entry count) |
 | datasource.test.js | 2 | ARENA2 key rule: uppercase basename across path styles (unix/windows/bare); readZip mobile ingest on a crafted archive - store + deflate-raw byte-exact round-trips, the arena2/ prefix filter dropping siblings, directory entries skipped, flat archives ingesting whole (real-zip witness: both DaggerfallGameFiles.zip and a self-zipped arena2 round-tripped ART_PAL.COL byte-identical in the arc probe) |
 | bsa.test.js | 6 | BSA containers, closure invariant, FOO quirk |

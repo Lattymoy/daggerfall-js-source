@@ -1021,6 +1021,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foes,
     drawFoes,
     playerAttackInput,
+    playerClickAttack: () => { playerWeapon?.clickAttack(); },
     playerCastInput,   // S5: C key in the hosts
     /** Verbatim MovePlayerToMarker + FixStanding: the start marker
      *  + up * (height 1.8 * 0.6), then the instant floor snap. ONE

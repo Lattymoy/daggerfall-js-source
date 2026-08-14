@@ -75,11 +75,12 @@ export function attachTouch(canvas, hooks = {}) {
     return b;
   }
 
-  let attackHeld = false;
   if (hooks.attack) {
+    // ClickToAttack (2026-08-14): a tap IS the attack - DFU's click
+    // mode picks the random direction; the drag seam needs travel a
+    // fixed button can never provide.
     button('\u2694', 'right:16px', 'bottom:88px', 64,
-      () => { attackHeld = true; hooks.attack(0, 0, true); },
-      () => { attackHeld = false; hooks.attack(0, 0, false); });
+      () => { if (hooks.attackTap) hooks.attackTap(); });
   }
   button('E', 'right:96px', 'bottom:16px', 52, () => down('KeyE'), () => up('KeyE'));
   button('\u2191\u2191', 'right:16px', 'bottom:16px', 64, () => down('Space'), () => up('Space'));   // jump
@@ -163,8 +164,9 @@ export function attachTouch(canvas, hooks = {}) {
         const dx = (t.clientX - lookLast[0]) * TOUCH_LOOK_GAIN;
         const dy = (t.clientY - lookLast[1]) * TOUCH_LOOK_GAIN;
         lookLast = [t.clientX, t.clientY];
-        if (attackHeld && hooks.attack) hooks.attack(dx, dy, true);
-        else hooks.look && hooks.look(dx, dy);
+        // (click mode 2026-08-14: look-drags no longer feed the
+        // attack seam - the tap IS the attack)
+        if (hooks.look) hooks.look(dx, dy);
       }
     }
   }, { passive: false });
