@@ -102,6 +102,9 @@ export class PlayerMotor {
     this.waterSurfaceY = null;   // the current block's water surface (world y), null when dry
     this.jumped = false;         // set for the frame a jump actually starts (fatigue/tally consumer)
     this.crouching = false;      // P12: toggled via input.crouch (edge); standing needs headroom
+    // P13: PlayerMotor.IsMovingLessThanHalfSpeed - the stealth
+    // sneak condition, recomputed each update from the frame's input.
+    this.movingLessThanHalfSpeed = true;
   }
 
   get eye() {
@@ -129,6 +132,21 @@ export class PlayerMotor {
    * @param {number} pitch camera pitch (the swim/levitate path moves
    *   along the LOOK, TransformDirection-style)
    */
+  /** PlayerMotor.IsMovingLessThanHalfSpeed, verbatim shape:
+   *  standing still is always true; crouched compares HALF THE WALK
+   *  speed against the applied speed; otherwise half the BASE speed
+   *  (GetBaseSpeed - the crouch/walk selection without run). With no
+   *  sneak input yet (pends), plain walking never qualifies - the
+   *  gate is standing still, exactly as classic feels without Sneak. */
+  _trackHalfSpeed(input, appliedSpeed) {
+    const standing = !input.forward && !input.strafe && !input.up && !input.down;
+    if (standing) { this.movingLessThanHalfSpeed = true; return; }
+    // Crouched compares GetWalkSpeed/2; the else compares
+    // GetBaseSpeed/2, and GetBaseSpeed NOT crouched is the same
+    // dragged walk - both DFU branches collapse to walk/2 here.
+    this.movingLessThanHalfSpeed = walkSpeed(this.stats.speed) / 2 >= appliedSpeed;
+  }
+
   update(dt, input, yaw, pitch = 0) {
     this.jumped = false;
     // P12 crouch toggle (edge input; the scene owns the key edge).
@@ -174,6 +192,7 @@ export class PlayerMotor {
       } else {
         speed = swimSpeed(walkSpeed(this.stats.speed), this.stats.swimming ?? 0);
       }
+      this._trackHalfSpeed(input, speed);
       const r = this.collider.move(this.pos, mx * speed * dt, my * speed * dt, mz * speed * dt, this.height);
       this.groundKey = r.grounded ? (r.groundKey ?? null) : null;
       this.grounded = r.grounded;
@@ -189,6 +208,7 @@ export class PlayerMotor {
       : input.run
         ? runSpeed(this.stats.speed, this.stats.running)
         : walkSpeed(this.stats.speed);
+    this._trackHalfSpeed(input, speed);
 
     // fwd = (sin, 0, cos); camera-right = up x back per lookAt =
     // (-cos, 0, sin). Verified to NDC through view x projection: world

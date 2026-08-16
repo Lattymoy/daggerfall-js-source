@@ -390,7 +390,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           if (pt != null) entity.weapon.poisonType = pt;
         }
       }
-      const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, { liveSpeed: entity.liveSpeed });
+      const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, {
+        liveSpeed: entity.liveSpeed,
+        seesThroughInvisibility: basics.seesThroughInvisibility ?? false,   // P13: the illusion-gate exemption
+      });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
       // Combat bows: an equipped bow makes the foe an archer - the
       // attack starts from SIGHT and the strike looses an arrow.
@@ -505,7 +508,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _motorState = '';
   let _mouseState = 'no events';
   let _inputState = '';
-  const _activity = { running: false, swimming: false };   // P11: the fatigue drain's live state
+  const _activity = { running: false, swimming: false, movingLessThanHalfSpeed: true };   // P11 fatigue state; P13 sneak state
+  const _sharedStealth = { minute: -1 };   // P13: PlayerEntity.TimeOfLastStealthCheck - one Stealth tally per classic minute across ALL foes
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
   function healPlayer(n) {
@@ -1155,7 +1159,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       pendingClickCast = false;
       playerCastInput(eye, [-view[2], -view[6], -view[10]]);   // classic: the readied spell fires on the click
     }
-    const _sightScale = hasActiveEffect(playerEntity, 'chameleonNormal') ? 0.5 : 1;   // S8 concealment
+    // P13: the shared stealth senses context (EnemySenses' player-
+    // side reads). The S8 half-sight interim retires - chameleon is
+    // the verbatim illusion gate (playerBlending -> 8% see-through
+    // per classic update); invisibility/shade effects pend (false).
+    // sharedStealthMinute = PlayerEntity.TimeOfLastStealthCheck: the
+    // Stealth tally fires once per classic minute ACROSS all foes.
+    const _senses = {
+      gameMinutes: Math.floor(classicMinutes),
+      playerStealth: skillValue(playerEntity, SKILLS.Stealth),
+      movingLessThanHalfSpeed: _activity.movingLessThanHalfSpeed ?? true,
+      playerBlending: hasActiveEffect(playerEntity, 'chameleonNormal'),
+      playerInvisible: false,
+      playerShade: false,
+      sharedStealth: _sharedStealth,
+      tallyStealth: () => tallySkill(playerEntity, SKILLS.Stealth),
+    };
     const _prevMinute = Math.floor(classicMinutes);
     classicMinutes += (dt * 12) / 60;
     for (let r = _prevMinute; r < Math.floor(classicMinutes); r++) {
@@ -1268,7 +1287,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // (no decisions, no damage frame). EnemySounds is NOT gated
       // in DFU, so the bark pass below still runs.
       const _fParalyzed = hasActiveEffect(f.entity, 'paralyze');
-      if (!_fParalyzed) f.ai.update(dt, playerFeet || eye, _sightScale);   // E2 senses + pursuit; S8: chameleon halves sight
+      if (!_fParalyzed) f.ai.update(dt, playerFeet || eye, _senses);   // E2 senses + pursuit; P13: the stealth context
       // A1 EnemySounds verbatim: the wait counter ALWAYS steps; the
       // sound fires only inside AttractRadius 16. Delay re-rolls
       // Range(3, 9+1); 20% move / 80% bark; humans stay silent.
@@ -1467,10 +1486,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // tally once per jump), and the state the per-minute fatigue
     // drain reads. Athleticism multiplier pends the career advantage
     // flags (1.0, flagged).
-    reportActivity({ running = false, swimming = false, jumped = false } = {}) {
+    reportActivity({ running = false, swimming = false, jumped = false, movingLessThanHalfSpeed = true } = {}) {
       if (swimming && !_activity.swimming) audio.playOneShot(SOUND.SplashLarge);   // PlayLargeSplash on entry
       _activity.running = running;
       _activity.swimming = swimming;
+      _activity.movingLessThanHalfSpeed = movingLessThanHalfSpeed;   // P13: IsMovingLessThanHalfSpeed (the motor computes it)
       if (jumped) {
         drainFatigue(FATIGUE_LOSS.Jumping);
         tallySkill(playerEntity, SKILLS.Jumping);

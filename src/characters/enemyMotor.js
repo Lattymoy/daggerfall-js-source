@@ -21,7 +21,16 @@
 // their collider bucket (the C3/actionSystem rule). SightModifier /
 // HearingModifier are 0 for every entry in current DFU master.
 // E3 SHIPPED: callers pass each entity's real LiveSpeed (career
-// Speed). Still PENDING here: stealth checks in detection.
+// Speed). P13 SHIPPED: the stealth checks in detection - the
+// classic flow is sight, hearing GATED ON PRIOR DETECTION ("classic
+// stealth mechanics would be interfered with by hearing"), the
+// illusion gate per classic update, then the once-per-classic-minute
+// StealthCheck (odd minutes skipped while the player moves less than
+// half speed; a fast-moving player who has been encountered is
+// auto-detected; the Stealth skill tallies once per minute across
+// ALL foes via the shared senses context). The S8 half-sight
+// chameleon interim is REPLACED by the verbatim illusion gate
+// (IsBlending -> an 8%-per-classic-update see-through roll).
 
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { CLASSIC_UPDATE_INTERVAL } from './weaponStates.js';   // single source (GameManager.cs:42)
@@ -42,6 +51,73 @@ export const DF_WALK_BASE = 150;
 export const EYE_FRAC = 5 / 6;
 
 export const enemyMoveSpeed = (liveSpeed) => (liveSpeed + DF_WALK_BASE) * GLOBAL_SCALE;
+
+// ---- P13: stealth (EnemySenses.StealthCheck + FormulaHelper) ----
+/** FormulaHelper.CalculateStealthChance, verbatim: 2 x ((classic
+ *  distance units x live Stealth) >> 10) - C# int math. */
+export function stealthChance(distance, liveStealth) {
+  return 2 * ((Math.trunc(distance / GLOBAL_SCALE) * liveStealth) >> 10);
+}
+export const STEALTH_MAX_DISTANCE = 1024 * GLOBAL_SCALE;   // 25.6
+
+// The classic spawn/despawn bands (EnemySenses' distance arrays,
+// index = ClassicSpawnDistanceType - NEVER assigned in EnemyBasics,
+// so every enemy uses row 0). Player-inside (dungeons): a foe not
+// yet "spawned" joins inside the SPAWN band, an already-spawned foe
+// leaves outside the wider DESPAWN band - hysteresis, verbatim.
+export const CLASSIC_SPAWN_XZ = 1024 * GLOBAL_SCALE;
+export const CLASSIC_SPAWN_Y_UPPER = 128 * GLOBAL_SCALE;
+export const CLASSIC_SPAWN_Y_LOWER = 0;
+export const CLASSIC_DESPAWN_XZ = 1024 * GLOBAL_SCALE;
+export const CLASSIC_DESPAWN_Y = 384 * GLOBAL_SCALE;
+
+/** The wouldBeSpawnedInClassic recompute (per classic update, inside
+ *  buildings/dungeons - our foes are dungeon-resident). yDiff =
+ *  foeY - playerY (SIGNED: the lower band uses the sign). */
+export function wouldBeSpawnedInClassic(distanceToPlayer, yDiff, already) {
+  if (distanceToPlayer >= 1094 * GLOBAL_SCALE) return false;
+  const yAbs = Math.abs(yDiff);
+  const xz = Math.sqrt(Math.max(0, distanceToPlayer * distanceToPlayer - yAbs * yAbs));
+  const upperXZ = already ? CLASSIC_DESPAWN_XZ : CLASSIC_SPAWN_XZ;
+  const upperY = already ? CLASSIC_DESPAWN_Y : CLASSIC_SPAWN_Y_UPPER;
+  const lowerY = already ? 0 : CLASSIC_SPAWN_Y_LOWER;
+  if (xz > upperXZ) return false;
+  if (lowerY === 0) {
+    if (yAbs > upperY) return false;
+  } else if (yDiff < lowerY || yDiff > upperY) {
+    return false;
+  }
+  return true;
+}
+
+/** EnemySenses.BlockedByIllusionEffect, verbatim (rolled per CLASSIC
+ *  UPDATE): sees-through enemies are never blocked; an invisible
+ *  target always blocks (the Invisibility effect pends - inert);
+ *  blending (chameleon) tries an 8% see-through, a shade 4% (the
+ *  Shade effect pends); FailedRoll keeps the block. */
+export function blockedByIllusionEffect(seesThrough, { invisible = false, blending = false, shade = false } = {}, rolls = Math.random) {
+  if (seesThrough) return false;
+  if (invisible) return true;
+  if (!blending && !shade) return false;
+  // The roll happens ONLY in this branch (DFU rolls no dice for an
+  // unconcealed target - sequences must match).
+  const chance = blending ? 8 : 4;
+  return Math.floor(rolls() * 100) >= chance;   // Dice100.FailedRoll
+}
+
+/** EnemySenses.CanHearTarget: inside the 25 radius (+HearingModifier
+ *  0 for every current entry), blocked when STATIC geometry sits
+ *  between. Departure (documented): our collider's ray includes
+ *  closed action doors (they are collider buckets), which DFU's
+ *  static-only mask lets sound pass - a closed door muffles here. */
+export function canHearTarget(collider, feet, height, targetFeet, dist) {
+  if (dist >= HEARING_RADIUS) return false;
+  const eye = [feet[0], feet[1] + height * EYE_FRAC, feet[2]];
+  const ex = targetFeet[0] - eye[0], ey = targetFeet[1] + 0.9 - eye[1], ez = targetFeet[2] - eye[2];
+  const el = Math.hypot(ex, ey, ez) || 1;
+  const hit = collider.raycast(eye, [ex / el, ey / el, ez / el], el);
+  return !Number.isFinite(hit) || hit >= el - 1e-3;
+}
 
 const DEG = Math.PI / 180;
 const norm = (a) => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
@@ -68,7 +144,7 @@ export function turnTowards(yaw, dx, dz, maxDeg = CLASSIC_TURN_DEG) {
 export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeight = CAPSULE_HEIGHT) {
   const dx = targetFeet[0] - feet[0], dz = targetFeet[2] - feet[2];
   const dist = Math.hypot(dx, targetFeet[1] - feet[1], dz);
-  const radius = SIGHT_RADIUS * (canSeeTarget.sightScale ?? 1);   // S8: chameleon halves this (module-level hook, set per frame by the scene)
+  const radius = SIGHT_RADIUS;   // P13: the S8 half-sight chameleon interim retired - concealment is the illusion gate now
   if (dist >= radius) return false;
   if (!withinYaw(yaw, dx, dz, FIELD_OF_VIEW / 2)) return false;
   const eye = [feet[0], feet[1] + height * EYE_FRAC, feet[2]];
@@ -105,26 +181,85 @@ export function isBackFacing(foeYaw, foeFeet, viewerPos) {
  * classic update, movement applied continuously at the decided state.
  */
 export class EnemyAI {
-  constructor(collider, feet, yawRad, { liveSpeed = 50, height = CAPSULE_HEIGHT } = {}) {
+  constructor(collider, feet, yawRad, { liveSpeed = 50, height = CAPSULE_HEIGHT, seesThroughInvisibility = false } = {}) {
     this.collider = collider;
     this.feet = [feet[0], feet[1], feet[2]];
     this.yaw = yawRad;
     this.height = height;
     this.speed = enemyMoveSpeed(liveSpeed);
+    this.seesThroughInvisibility = seesThroughInvisibility;
     this.velY = 0;
     this.detected = false;
     this.inSight = false;
     this.moving = false;
     this._classicTimer = 0;
     this._dist = Infinity;
+    // P13 stealth state (EnemySenses fields)
+    this.hasEncounteredPlayer = false;
+    this.wouldBeSpawned = false;
+    this._blocked = false;               // blockedByIllusionEffect, rolled per classic tick
+    this._lastStealthMinute = -1;        // timeOfLastStealthCheck (per foe)
   }
 
-  _senses(playerFeet) {
+  /** EnemySenses' classic detection flow, per classic update. senses
+   *  (optional, P13) = { gameMinutes, playerStealth,
+   *  movingLessThanHalfSpeed, playerBlending, playerInvisible,
+   *  playerShade, sharedStealth: { minute }, tallyStealth(), rolls }.
+   *  Without it (headless/test callers) the pre-P13 sight+proximity
+   *  shape applies. */
+  _senses(playerFeet, senses = null) {
     const dx = playerFeet[0] - this.feet[0], dz = playerFeet[2] - this.feet[2];
     this._dist = Math.hypot(dx, playerFeet[1] - this.feet[1], dz);
     this.inSight = canSeeTarget(this.collider, this.feet, this.yaw, this.height, playerFeet);
-    const heard = this._dist < HEARING_RADIUS;
-    this.detected = this.inSight || heard;
+    if (!senses) {
+      this.detected = this.inSight || this._dist < HEARING_RADIUS;
+      return;
+    }
+    const rolls = senses.rolls ?? Math.random;
+    // per classic update: the spawn-band recompute + the illusion roll
+    this.wouldBeSpawned = wouldBeSpawnedInClassic(this._dist, this.feet[1] - playerFeet[1], this.wouldBeSpawned);
+    this._blocked = blockedByIllusionEffect(this.seesThroughInvisibility, {
+      invisible: senses.playerInvisible ?? false,
+      blending: senses.playerBlending ?? false,
+      shade: senses.playerShade ?? false,
+    }, rolls);
+    // hearing only once the target is already detected and unseen -
+    // "classic stealth mechanics would be interfered with by hearing"
+    const inEarshot = (this.detected && !this.inSight)
+      ? canHearTarget(this.collider, this.feet, this.height, playerFeet, this._dist)
+      : false;
+    if (!this._blocked && (this.inSight || inEarshot)) this.detected = true;
+    else if (!this._blocked && this._stealthCheck(senses)) this.detected = true;
+    else this.detected = false;
+    if (this.detected && !this.hasEncounteredPlayer) this.hasEncounteredPlayer = true;
+  }
+
+  /** EnemySenses.StealthCheck, verbatim: the castle-non-hostile gate
+   *  is inert here (no castle detection; foes are hostile-on-sight);
+   *  un-spawnable-in-classic foes never stealth-detect; one check per
+   *  classic MINUTE (between minutes the standing detection holds);
+   *  a slow-moving player skips ODD minutes; a fast-moving player who
+   *  has been encountered is detected outright; the Stealth skill
+   *  tallies once per minute ACROSS foes (the shared minute rides the
+   *  scene's senses context, like PlayerEntity.TimeOfLastStealthCheck). */
+  _stealthCheck(senses) {
+    if (!this.wouldBeSpawned) return false;
+    if (this._dist > STEALTH_MAX_DISTANCE) return false;
+    const gameMinutes = senses.gameMinutes ?? 0;
+    if (gameMinutes === this._lastStealthMinute) return this.detected;
+    if (senses.movingLessThanHalfSpeed) {
+      if ((gameMinutes & 1) === 1) return this.detected;
+    } else if (this.hasEncounteredPlayer) {
+      return true;
+    }
+    if (senses.sharedStealth && senses.sharedStealth.minute !== gameMinutes) {
+      senses.tallyStealth?.();
+      senses.sharedStealth.minute = gameMinutes;
+    }
+    this._lastStealthMinute = gameMinutes;
+    const chance = stealthChance(this._dist, senses.playerStealth ?? 0);
+    const rolls = senses.rolls ?? Math.random;
+    return Math.floor(rolls() * 100) >= chance;   // Dice100.FailedRoll(stealthChance) -> detected on a FAILED stealth roll
   }
 
   _classicTick(playerFeet) {
@@ -144,16 +279,16 @@ export class EnemyAI {
     this.moving = true;
   }
 
-  update(dt, playerFeet) {
+  update(dt, playerFeet, senses = null) {
     // DFU recomputes distance/sight every Update; only classic TARGET
     // SWITCHING rides the 5-unit system timer (single-target here, so
     // that timer has nothing to switch - constants stay exported for
     // E3 multi-target). Senses + decisions both run at the classic
-    // update rate.
+    // update rate. senses = the P13 stealth context (see _senses).
     this._classicTimer += dt;
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
-      this._senses(playerFeet);
+      this._senses(playerFeet, senses);
       this._classicTick(playerFeet);
     }
     // continuous movement at the decided state, grounded via the SAME

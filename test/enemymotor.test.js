@@ -12,6 +12,7 @@ import { GLOBAL_SCALE } from '../src/world/meshReader.js';
 import { Collider } from '../src/player/collider.js';
 
 const approx = (a, b, eps = 1e-4) => assert.ok(Math.abs(a - b) < eps, `${a} !~ ${b}`);
+const seqRolls = (v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 const quadIdx = new Uint32Array([0, 1, 2, 0, 2, 3]);
 
@@ -61,4 +62,115 @@ test('enemyMotor: pursues on the classic cadence and stops at MeleeDistance', ()
   const far = [0, 0, SIGHT_RADIUS + 50];
   for (let i = 0; i < 60; i++) ai2.update(1 / 60, far);
   approx(ai2.feet[0], 0); approx(ai2.feet[2], 0);
+});
+
+test('stealth: the chance formula + the spawn bands + the illusion gate (pure pins)', async () => {
+  const { stealthChance, STEALTH_MAX_DISTANCE, wouldBeSpawnedInClassic, blockedByIllusionEffect,
+    CLASSIC_SPAWN_XZ, CLASSIC_SPAWN_Y_UPPER, CLASSIC_DESPAWN_Y } = await import('../src/characters/enemyMotor.js');
+  // 2 * ((classicDist * stealth) >> 10): 512 units x 50 -> 2*25 = 50;
+  // 1024 units x 30 -> 60; the >>10 truncates like C#
+  assert.equal(stealthChance(512 * GLOBAL_SCALE, 50), 50);
+  assert.equal(stealthChance(1024 * GLOBAL_SCALE, 30), 60);
+  assert.equal(stealthChance(100 * GLOBAL_SCALE, 7), 0);   // 700 >> 10 = 0
+  approx(STEALTH_MAX_DISTANCE, 25.6);
+  // The spawn band (not yet spawned): xz within 1024 units AND |y|
+  // within 128 units; the despawn band widens y to 384 (hysteresis)
+  approx(CLASSIC_SPAWN_XZ, 25.6); approx(CLASSIC_SPAWN_Y_UPPER, 3.2); approx(CLASSIC_DESPAWN_Y, 9.6);
+  assert.ok(wouldBeSpawnedInClassic(20, 0, false));
+  assert.ok(!wouldBeSpawnedInClassic(26, 0, false));        // xz outside the spawn band
+  assert.ok(!wouldBeSpawnedInClassic(10, 5, false));        // y outside 3.2 when not yet spawned
+  assert.ok(wouldBeSpawnedInClassic(10, 5, true));          // ...but INSIDE the 9.6 despawn band once spawned
+  assert.ok(!wouldBeSpawnedInClassic(1094 * GLOBAL_SCALE + 1, 0, true));   // the hard 1094 cap
+  // Illusion gate: sees-through exempts; invisible always blocks;
+  // blending sees through under 8% (roll 7 passes, 8 fails); shade 4%
+  assert.ok(!blockedByIllusionEffect(true, { invisible: true }));
+  assert.ok(blockedByIllusionEffect(false, { invisible: true }));
+  assert.ok(!blockedByIllusionEffect(false, {}));
+  assert.ok(!blockedByIllusionEffect(false, { blending: true }, () => 0.07));
+  assert.ok(blockedByIllusionEffect(false, { blending: true }, () => 0.08));
+  assert.ok(blockedByIllusionEffect(false, { shade: true }, () => 0.04));
+});
+
+test('stealth: hearing gates on PRIOR detection - a quiet player behind a foe stays hidden', async () => {
+  const { EnemyAI } = await import('../src/characters/enemyMotor.js');
+  const c = new Collider(() => -100);
+  // Foe at origin facing +z; the player 10 behind it (outside the 90
+  // half-FOV). Pre-P13 the 25-unit proximity "hearing" auto-detected.
+  const ai = new EnemyAI(c, [0, 0, 0], 0, { liveSpeed: 50 });
+  const senses = {
+    gameMinutes: 2, playerStealth: 100, movingLessThanHalfSpeed: true,
+    sharedStealth: { minute: -1 }, rolls: () => 0.5,   // illusion roll unused (no blending); stealth roll 50 < 78 SUCCEEDS
+  };
+  ai.update(CLASSIC_UPDATE_INTERVAL, [0, 0, -10], senses);
+  assert.ok(!ai.inSight);
+  assert.ok(!ai.detected, 'proximity must not auto-detect an unseen, unheard player');
+  // The stealth roll FAILS on a fresh minute -> detected (chance
+  // 2*((400*100)>>10) = 78; roll 99 >= 78)
+  const ai2 = new EnemyAI(c, [0, 0, 0], 0, { liveSpeed: 50 });
+  ai2.update(CLASSIC_UPDATE_INTERVAL, [0, 0, -10], { ...senses, sharedStealth: { minute: -1 }, rolls: () => 0.99 });
+  assert.ok(ai2.detected);
+  assert.ok(ai2.hasEncounteredPlayer);
+  // Once detected, hearing (dist < 25, LOS clear) HOLDS detection on
+  // the cached minute even though the stealth check just returns the
+  // standing value
+  ai2.update(CLASSIC_UPDATE_INTERVAL, [0, 0, -10], { ...senses, sharedStealth: { minute: -1 }, rolls: () => 0.0 });
+  assert.ok(ai2.detected, 'earshot holds the detection');
+});
+
+test('stealth: minute cache, odd-minute sneak skip, fast-move auto-detect, the shared tally', async () => {
+  const { EnemyAI } = await import('../src/characters/enemyMotor.js');
+  const c = new Collider(() => -100);
+  const behind = [0, 0, -10];
+  let tallies = 0;
+  const shared = { minute: -1 };
+  const base = { playerStealth: 100, sharedStealth: shared, tallyStealth: () => tallies++ };
+  // Odd minute + sneaking: NO roll happens (a throwing roll proves it)
+  const ai = new EnemyAI(c, [0, 0, 0], 0, {});
+  ai.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 1, movingLessThanHalfSpeed: true, rolls: () => { throw new Error('rolled on an odd sneak minute'); } });
+  assert.ok(!ai.detected);
+  assert.equal(tallies, 0);
+  // Even minute: the roll runs and the tally fires ONCE across foes
+  const r = seqRolls([0.5, 0.5, 0.5, 0.5]);
+  ai.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: r });
+  const ai2 = new EnemyAI(c, [0, 0, 0], 0, {});
+  ai2.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: r });
+  assert.equal(tallies, 1, 'one Stealth tally per classic minute across ALL foes');
+  // The same minute again on the same foe: cached (no further rolls)
+  ai.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: () => { throw new Error('re-rolled a cached minute'); } });
+  // Fast movement after an encounter: detected outright, no roll
+  const ai3 = new EnemyAI(c, [0, 0, 0], 0, {});
+  ai3.hasEncounteredPlayer = true;
+  ai3.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 4, movingLessThanHalfSpeed: false, rolls: () => { throw new Error('rolled on a fast-move auto-detect'); } });
+  assert.ok(ai3.detected);
+});
+
+test('stealth: the chameleon illusion gate blocks SIGHT (the dead S8 half-sight interim retires)', async () => {
+  const { EnemyAI } = await import('../src/characters/enemyMotor.js');
+  const c = new Collider(() => -100);
+  const inFront = [0, 0, 10];   // inside the FOV, LOS clear
+  // Blending player, see-through roll fails (>= 8%): blocked - not
+  // detected even standing in plain sight (stealth also held: high
+  // stealth + a succeeding roll)
+  const ai = new EnemyAI(c, [0, 0, 0], 0, {});
+  ai.update(CLASSIC_UPDATE_INTERVAL, inFront, {
+    gameMinutes: 2, playerStealth: 100, movingLessThanHalfSpeed: true,
+    playerBlending: true, sharedStealth: { minute: -1 },
+    rolls: seqRolls([0.5, 0.5]),   // illusion 50 >= 8 -> blocked; stealth 50 < 78 -> hidden
+  });
+  assert.ok(ai.inSight, 'the chameleon player IS in sight range');
+  assert.ok(!ai.detected, 'the illusion gate blocks the sighting');
+  // See-through roll under 8%: the foe pierces the chameleon
+  ai.update(CLASSIC_UPDATE_INTERVAL, inFront, {
+    gameMinutes: 2, playerBlending: true, sharedStealth: { minute: -1 },
+    playerStealth: 100, movingLessThanHalfSpeed: true,
+    rolls: seqRolls([0.07, 0.5]),
+  });
+  assert.ok(ai.detected);
+  // A sees-through foe ignores blending entirely
+  const ai2 = new EnemyAI(c, [0, 0, 0], 0, { seesThroughInvisibility: true });
+  ai2.update(CLASSIC_UPDATE_INTERVAL, inFront, {
+    gameMinutes: 2, playerBlending: true, playerInvisible: true, sharedStealth: { minute: -1 },
+    playerStealth: 100, movingLessThanHalfSpeed: true, rolls: seqRolls([0.5, 0.5]),
+  });
+  assert.ok(ai2.detected);
 });

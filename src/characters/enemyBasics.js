@@ -52,6 +52,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Magic',
   'lootTableKey': 'D',
   'canOpenDoors': true,
+  'seesThroughInvisibility': true,
   'moveSound': 118,
   'barkSound': 119,
   'attackSound': 120
@@ -415,6 +416,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Undead',
   'lootTableKey': 'H',
   'canOpenDoors': true,
+  'seesThroughInvisibility': true,
   'moveSound': 160,
   'barkSound': 161,
   'attackSound': 162
@@ -491,6 +493,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Undead',
   'lootTableKey': 'I',
   'canOpenDoors': true,
+  'seesThroughInvisibility': true,
   'moveSound': 169,
   'barkSound': 170,
   'attackSound': 171
@@ -516,6 +519,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Undead',
   'lootTableKey': 'E',
   'canOpenDoors': true,
+  'seesThroughInvisibility': true,
   'moveSound': 172,
   'barkSound': 173,
   'attackSound': 174
@@ -615,6 +619,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Undead',
   'lootTableKey': 'I',
   'canOpenDoors': true,
+  'seesThroughInvisibility': true,
   'moveSound': 183,
   'barkSound': 184,
   'attackSound': 185
@@ -668,6 +673,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Daedra',
   'lootTableKey': 'J',
   'canOpenDoors': true,
+  'seesThroughInvisibility': true,
   'moveSound': 189,
   'barkSound': 190,
   'attackSound': 191
@@ -694,6 +700,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Daedra',
   'lootTableKey': 'J',
   'canOpenDoors': true,
+  'seesThroughInvisibility': true,
   'moveSound': 192,
   'barkSound': 193,
   'attackSound': 194
@@ -721,6 +728,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Daedra',
   'lootTableKey': 'E',
   'canOpenDoors': true,
+  'seesThroughInvisibility': true,
   'moveSound': 195,
   'barkSound': 196,
   'attackSound': 197
@@ -746,6 +754,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Undead',
   'lootTableKey': 'Q',
   'canOpenDoors': true,
+  'seesThroughInvisibility': true,
   'moveSound': 198,
   'barkSound': 199,
   'attackSound': 200
@@ -771,6 +780,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Daedra',
   'lootTableKey': 'Q',
   'canOpenDoors': true,
+  'seesThroughInvisibility': true,
   'moveSound': 201,
   'barkSound': 202,
   'attackSound': 203
@@ -796,6 +806,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Undead',
   'lootTableKey': 'Q',
   'canOpenDoors': true,
+  'seesThroughInvisibility': true,
   'moveSound': 204,
   'barkSound': 205,
   'attackSound': 206
@@ -823,6 +834,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Daedra',
   'lootTableKey': 'S',
   'canOpenDoors': true,
+  'seesThroughInvisibility': true,
   'moveSound': 207,
   'barkSound': 208,
   'attackSound': 209
@@ -848,6 +860,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Undead',
   'lootTableKey': 'S',
   'canOpenDoors': true,
+  'seesThroughInvisibility': true,
   'moveSound': 210,
   'barkSound': 211,
   'attackSound': 212

@@ -50,6 +50,7 @@ for (const b of blocks) {
   if (loot) e.lootTableKey = loot[1];
   if (/CanOpenDoors = true/.test(b)) e.canOpenDoors = true;
   if (/CastsMagic = true/.test(b)) e.castsMagic = true;
+  if (/SeesThroughInvisibility = true/.test(b)) e.seesThroughInvisibility = true;   // P13: the illusion-gate exemption
   // A1: the sound columns (MoveSound/BarkSound/AttackSound) -
   // (int)SoundClips.X resolved to DAGGER.SND indices via SoundClips.cs
   for (const k of ['MoveSound', 'BarkSound', 'AttackSound']) {
