@@ -24,7 +24,7 @@ import { StreamingWorldState } from '../world/streamingWorld.js';
 import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
-import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
+import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { fetchBytes, parseSeason, createSkyController } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { getStaticDoors } from '../world/staticDoors.js';
@@ -483,6 +483,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.setLighting(
       exteriorAmbient(minute), sunScale(minute) * weatherSun * flash,
       new Float32Array(SUN_RIG_COLOR));
+    // R12: the player-following indirect light rides the camera in
+    // the streaming world (walk mode keeps cam at the player's eye).
+    {
+      const iScale = indirectLightScale(minute) * weatherSun;
+      renderer.setIndirectLight(cam.pos, INDIRECT_LIGHT_RANGE, new Float32Array([
+        INDIRECT_LIGHT_COLOR[0] * iScale, INDIRECT_LIGHT_COLOR[1] * iScale, INDIRECT_LIGHT_COLOR[2] * iScale,
+      ]));
+    }
     renderer.setWindowEmission(windowEmissionRGB(
       params.has('window') ? params.get('window')
         : (windowStyleForWeather(weather) ?? windowStyleForTime(minute))));

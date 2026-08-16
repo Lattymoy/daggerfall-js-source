@@ -24,7 +24,7 @@ import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, transformPoint, trs } from '../world/mat4.js';
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
-import { CityLightAnimator, SUN_RIG_COLOR, exteriorAmbient, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
+import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { fetchBytes, parseSeason, createSkyController } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
@@ -408,6 +408,16 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.setLighting(
       exteriorAmbient(minute), sunScale(minute) * weatherSun * flash,
       new Float32Array(SUN_RIG_COLOR));
+    // R12: the player-following indirect point light (SunlightRig) -
+    // intensity x the daylight curve, weather-dimmed with the rig,
+    // off at night; positioned at the player (the eye here - the
+    // 0.8 controller-center offset is <1% of the 150 range).
+    {
+      const iScale = indirectLightScale(minute) * weatherSun;
+      renderer.setIndirectLight(eye, INDIRECT_LIGHT_RANGE, new Float32Array([
+        INDIRECT_LIGHT_COLOR[0] * iScale, INDIRECT_LIGHT_COLOR[1] * iScale, INDIRECT_LIGHT_COLOR[2] * iScale,
+      ]));
+    }
     renderer.setWindowEmission(windowEmissionRGB(
       params.has('window') ? params.get('window')
         : (windowStyleForWeather(weather) ?? windowStyleForTime(minute))));

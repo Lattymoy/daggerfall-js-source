@@ -413,3 +413,37 @@ in test/weather.test.js.
 
 Owned by `Rendering.md`. Next up: spectral/firewall emission colors
 (lands with spectral enemies - Characters arc dependency).
+
+## Milestone R12 - the exterior indirect player light (SHIPPED 2026-08-16)
+
+The Ledger C row from the R5 audit, closing the Rendering reopen.
+Verbatim from SunlightManager + the SERIALIZED SunlightRig prefab
+(git show Assets/Prefabs/World/SunlightRig.prefab - the Home rule):
+IndirectLight is a POINT light, intensity 1.0, range 150, color
+0.7058824 gray, parented to the rig and positioned at the player
+every Update. (The Ledger's "white 0.6" note was the rig's
+directional FILLS - the prefab is authority, recorded in worldClock.)
+
+- SunlightManager behavior: intensity = saved x the SAME
+  daylight-curve scale as the key light; the whole rig disables at
+  night; weather dimming rides along (our weatherSun).
+- Engine seam: uIndirect (player pos + range) + uIndirectColor
+  uniforms across all four lit programs (mesh, terrain, character,
+  billboard - attenuation-only on billboards like the lantern term),
+  the same squared-linear falloff as the city lights (the documented
+  Unity-point-light equivalence). Zeroed defaults make the term
+  contribute exactly nothing in the unlit scenes (dungeon/interior
+  keep their ambient model).
+- Scenes: exterior + streaming world set it per frame at the eye
+  (the 0.8 controller-center offset is <1% of the 150 range,
+  documented).
+- PROOF (the P9/R9 doctrine - framebuffer evidence, not theory):
+  baseline-vs-R12 noon exterior shots through the provisioned
+  Chromium; the near-ground band brightened 135.4 -> 153.3, the sky
+  band stayed BYTE-IDENTICAL across separate boots (no pass lost -
+  the R9 full-frame composition check), and the diff confined itself
+  to the lit half of the frame.
+
+Suite 312/75 green (no new unit surface - the proof is the shot
+comparison; the scale/constants ride worldClock where clock.test's
+LightCurve pins already gate the curve).
