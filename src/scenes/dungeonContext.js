@@ -50,7 +50,9 @@ import { applySpell, tickActiveEffects, hasActiveEffect, maxFatigue } from '../s
 import { FATIGUE_LOSS, maxBreath } from '../systems/statMods.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { updatePoisons, inflictPoison, rollEnemyWeaponPoison } from '../systems/poisons.js';
-import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';
+import { exhaustionOutcome, EXHAUSTED_IN_WATER, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
+import { REST_TEXT } from '../systems/restSession.js';
+import { RestWindow } from '../ui/restWindow.js';
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
 import { dice100 } from '../combat/formulas.js';
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
@@ -511,6 +513,40 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _inputState = '';
   const _activity = { running: false, swimming: false, movingLessThanHalfSpeed: true };   // P11 fatigue state; P13 sneak state
   const _sharedStealth = { minute: -1 };   // P13: PlayerEntity.TimeOfLastStealthCheck - one Stealth tally per classic minute across ALL foes
+  let _grounded = true;   // U7: the rest gate reads the motor's live grounded flag
+  // U7: the rest session's scene seams. tickVitals = one rested hour
+  // (the S20 rates + the Medical tally, clamped); enemiesNearby is
+  // the RESTING AreEnemiesNearby variant - an aware foe at any
+  // spawn-band range, an unaware one only within the 12-unit resting
+  // distance; fullyHealed follows IsPlayerFullyHealed (magicka full
+  // OR a NoRegenSpellPoints career).
+  const _restFullyHealed = () =>
+    playerEntity.health === playerEntity.maxHealth &&
+    (playerEntity.fatigue ?? 0) === maxFatigue(playerEntity) &&
+    ((playerEntity.magicka ?? 0) === (playerEntity.maxMagicka ?? 0) || hasSpecialAbility(playerEntity.career, SPECIAL_ABILITY.NoRegenSpellPoints));
+  const _restDeps = {
+    advanceMinutes: (n) => { classicMinutes += n; },   // the round loop catches the magic rounds up
+    tickVitals: () => {
+      playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + healthRecoveryRate(playerEntity, { day: false, inside: true }));
+      playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + fatigueRecoveryRate(maxFatigue(playerEntity)));
+      playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + spellPointRecoveryRate(playerEntity));
+      tallySkill(playerEntity, SKILLS.Medical);
+      surfacePlayer();
+      return _restFullyHealed();
+    },
+    fullyHealed: _restFullyHealed,
+    enemiesNearby: () => foes.some((f) => {
+      if (f.dead) return false;
+      const seen = f.ai.detected && f.ai.inSight;
+      return seen || (f.ai.wouldBeSpawned && f.ai._dist <= 12);
+    }),
+    dead: () => playerEntity.health <= 0,
+    vitals: () => ({
+      health: playerEntity.health, maxHealth: playerEntity.maxHealth,
+      fatigue: Math.round((playerEntity.fatigue ?? 0) / 64), magicka: playerEntity.magicka ?? 0,
+    }),
+    endLines: (id) => rscLines(id),
+  };
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
   function healPlayer(n) {
@@ -1194,6 +1230,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   sceneAmbience.setPreset('dungeon');
   function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false) {
     if (playerFeet) lastPlayerFeet = [...playerFeet];
+    if (activeOverlay?.isRestWindow) activeOverlay.tickRest(dt);   // U7: the rest clock (the world runs on below - foes can break it)
     if (playerFeet) {
       breathTick(dt, playerFeet);
       const _surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
@@ -1517,7 +1554,25 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // S11: quicksave/quickload (F9/F12). WORLD state (foes, piles,
     // actions) is FLAGGED - the player snapshot only.
     toggleDebugHud() { debugHud = !debugHud; },
-    reportMotor(grounded, velY, yaw) { _motorState = `g:${grounded ? 1 : 0} vy:${velY.toFixed(1)} yaw:${yaw.toFixed(2)}`; },
+    reportMotor(grounded, velY, yaw) { _grounded = grounded; _motorState = `g:${grounded ? 1 : 0} vy:${velY.toFixed(1)} yaw:${yaw.toFixed(2)}`; },
+    // U7: the rest key. Pre-rest gates (the classic order): enemies
+    // nearby -> TEXT.RSC 354; swimming or airborne -> 355 "You
+    // cannot rest now."; else the rest window opens. A second press
+    // routes through the overlay as 'back' (ends a running rest).
+    toggleRest() {
+      if (activeOverlay) return;
+      if (foes.some((f) => !f.dead && ((f.ai.detected && f.ai.inSight) || f.ai.wouldBeSpawned))) {
+        const lines = rscLines(REST_TEXT.enemiesNearby);
+        if (lines) activeOverlay = new ActionTextBox(lines);
+        return;
+      }
+      if (_activity.swimming || !_grounded) {
+        const lines = rscLines(REST_TEXT.cannotRestNow);
+        if (lines) activeOverlay = new ActionTextBox(lines);
+        return;
+      }
+      activeOverlay = new RestWindow(_restDeps);
+    },
     // P11: the current block's water surface (world y) - the swim
     // toggle rule reads it (PlayerEnterExit blockWaterLevel).
     waterSurfaceYAt,

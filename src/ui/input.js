@@ -28,6 +28,7 @@ export function gameAction(e) {
   if (e.key === 'F6') return 'inventory';          // classic
   if (e.key === 'Backspace') return 'spellbook';   // DFU default
   if (e.code === 'KeyC') return 'castSpell';       // ours (classic click-to-cast also live)
+  if (e.code === 'KeyR') return 'rest';            // DFU default (U7)
   if (e.key === 'F9') return 'quickSave';          // DFU default
   if (e.key === 'F12') return 'quickLoad';         // DFU default
   if (e.key === 'F8') return 'debugHud';           // diagnostics
@@ -50,6 +51,7 @@ export function routeKey(e, ctx, castDir, setPlayerPos = null) {
     case 'inventory': ctx.toggleInventory(); return true;
     case 'spellbook': ctx.toggleSpellbook(); return true;
     case 'castSpell': { const d = castDir(); ctx.playerCastInput(d.eye, d.dir); return true; }
+    case 'rest': ctx.toggleRest?.(); return true;
     case 'quickSave': ctx.quickSave?.(); return true;
     case 'quickLoad': ctx.quickLoad?.(setPlayerPos); return true;
     case 'debugHud': ctx.toggleDebugHud?.(); return true;
