@@ -295,8 +295,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     pitch: -0.08,
   };
   const keys = new Set();
-  addEventListener('keydown', (e) => keys.add(e.code));
-  addEventListener('keyup', (e) => keys.delete(e.code));
+  // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
+  // or the browser menu steals focus (Firefox activates it on keyUP).
+  addEventListener('keydown', (e) => { keys.add(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
+  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
   canvas.addEventListener('pointerdown', () => requestLook(canvas));
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
@@ -362,6 +364,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
         strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
         run: keys.has('ShiftLeft'),
+        sneak: keys.has('AltLeft'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
         crouch: crouchHeld && !latch.crouch,
       }, cam.yaw);

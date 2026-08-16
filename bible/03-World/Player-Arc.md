@@ -763,3 +763,24 @@ test/motorStairs.test.js restores the reverted 7-pin harness and
 grows it to 9 (crouch/boost/air-freeze + fall/slowfall traces).
 Suite 380/85, ARENA2 corpus green pre-commit, dungeon + exterior
 shot probes green.
+
+## P15 (2026-08-16): the Sneak input binding SHIPPED
+
+The P13 residual closes: PlayerSpeedChanger's sneak, verbatim.
+AltLeft held (DFU's default LeftAlt; preventDefault on BOTH key edges
+in every host or the browser menu steals focus - Firefox activates
+it on keyup). The laws (CaptureInputSpeedAdjustment +
+ApplyInputSpeedAdjustment): the run/sneak STATES re-latch only while
+GROUNDED ("you can't switch running on/off while in mid air" - a
+sneaking jump stays sneaking through a mid-air release); running
+beats sneaking; sneak speed = the walk/crouch base / 2 - 1/39.5
+(the motor's existing sneakSpeed law, now consumed). Swim ignores
+both, verbatim - LevitateMotor feeds GetSwimSpeed the RAW base.
+The payoff: IsMovingLessThanHalfSpeed goes TRUE while sneak-moving
+(the subtracted classic unit is exactly what lands it under the
+half line), so the P13 stealth checks now apply to a MOVING player.
+Toggle-mode sneak (ToggleSneak) and autorun pend with the input-
+options arc. All four motor hosts wired (standing rule).
+
++1 trace in motorStairs.test.js (10). Suite 384/85, ARENA2 corpus
+green pre-commit.

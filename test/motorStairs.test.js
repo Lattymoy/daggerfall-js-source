@@ -18,7 +18,7 @@ import assert from 'node:assert/strict';
 import {
   PlayerMotor, JUMP_SPEED, GRAVITY, STEP_OFFSET, GROUNDED_JUMP_GATE_S,
   CROUCH_JUMP_DELTA, JUMP_FWD_BOOST, FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE,
-  SLOWFALL_SPEED, walkSpeed,
+  SLOWFALL_SPEED, walkSpeed, sneakSpeed,
 } from '../src/player/motor.js';
 import { jumpSpeedMultiplier } from '../src/systems/skills.js';
 import { Collider } from '../src/player/collider.js';
@@ -271,4 +271,39 @@ test('motor: a fall reports its landing distance; slowfall re-anchors and falls 
     if (m2.grounded) landed2 = m2.landedFallDistance;
   }
   assert.ok(landed2 >= 0 && landed2 < 0.1, `slowfall landing bills ~0 (got ${landed2.toFixed(3)})`);
+});
+
+test('motor: sneak (P15) - the speed law, grounded-only latch, running wins, the stealth payoff', () => {
+  const col = floored();
+  const m = new PlayerMotor(col);
+  m.spawn(0, 0, 0);
+  for (let f = 0; f < 30; f++) m.update(1 / 60, still(), 0);
+  // Sneak-walk: applied speed = walk/2 - 1/39.5, and the P13
+  // IsMovingLessThanHalfSpeed goes TRUE while MOVING - the subtracted
+  // classic unit is exactly what lands it under the half line.
+  const sneakIn = { forward: 1, strafe: 0, run: false, sneak: true, jump: false, up: false, down: false };
+  const z0 = m.pos[2];
+  m.update(1 / 60, sneakIn, 0);
+  assert.ok(m.isSneaking, 'the held sneak latches while grounded');
+  const applied = (m.pos[2] - z0) * 60;
+  const want = sneakSpeed(walkSpeed(50));
+  assert.ok(Math.abs(applied - want) < 1e-6, `sneak speed ${applied.toFixed(4)} = walk/2 - 1/39.5 (${want.toFixed(4)})`);
+  assert.equal(m.movingLessThanHalfSpeed, true, 'a MOVING sneak qualifies for stealth');
+  // Plain walking does NOT qualify; running BEATS a held sneak.
+  m.update(1 / 60, { ...sneakIn, sneak: false }, 0);
+  assert.equal(m.movingLessThanHalfSpeed, false, 'plain walking is not less-than-half');
+  m.update(1 / 60, { ...sneakIn, run: true }, 0);
+  assert.ok(m.isRunning && !m.isSneaking, 'running wins over the held sneak');
+  // The grounded-only latch: jump sneaking, release mid-air - the
+  // takeoff state holds until the landing frame re-latches.
+  const m2 = new PlayerMotor(col);
+  m2.spawn(0, 0, 0);
+  for (let f = 0; f < 30; f++) m2.update(1 / 60, still(), 0);
+  m2.update(1 / 60, { ...sneakIn, jump: true }, 0);
+  assert.ok(m2.jumped && m2.isSneaking, 'the sneaking jump takes off sneaking');
+  m2.update(1 / 60, { ...sneakIn, sneak: false }, 0);
+  assert.ok(m2.isSneaking, 'mid-air release does not un-latch ("you can\'t switch while in mid air")');
+  for (let f = 0; f < 120 && !m2.grounded; f++) m2.update(1 / 60, { ...sneakIn, sneak: false }, 0);
+  m2.update(1 / 60, { ...sneakIn, sneak: false }, 0);
+  assert.ok(!m2.isSneaking, 'the landing frame re-latches from live input');
 });

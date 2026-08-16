@@ -291,6 +291,7 @@ export function createWorldModes(host) {
       forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
       strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
       run: keys.has('ShiftLeft'),
+      sneak: keys.has('AltLeft'),   // P15: DFU's default Sneak binding (LeftAlt), held
       jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
       up: jumpHeld || keys.has('PageUp'),
       down: keys.has('PageDown'),
