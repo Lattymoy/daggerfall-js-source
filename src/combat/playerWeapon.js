@@ -112,7 +112,10 @@ export class PlayerWeapon {
     const clip = ATTACKS_FP[m.state];
     if (!clip) return base;
     const frames = 5;   // MELEE_NUM_FRAMES - all melee strikes
-    return combinePose(base, sampleClip(clip, Math.min(0.9999, m.frame / (frames - 1))));
+    // sampleClip takes SECONDS (u = t/dur; anims tests pin it): map the
+    // frame phase through clip.dur or the back half of every strike dies
+    // at the base pose (units bug, audit 2026-08-16).
+    return combinePose(base, sampleClip(clip, Math.min(0.9999, m.frame / (frames - 1)) * clip.dur));
   }
 
   /**

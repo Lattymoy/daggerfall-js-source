@@ -24,8 +24,11 @@
 //     record 8 enter markers; 15/16 are enemy markers (SetActive(false) in
 //     DFU). Fixed-treasure flats (archive 216) are renderer-disabled in DFU
 //     and land in markers too. Everything else renders.
-//   - Lights are point data: position and radius * GlobalScale (DFU's
-//     range * 3 is prefab-side, Rendering arc's call).
+//   - Lights are NOT built here: dungeonLights.collectDungeonLights is
+//     the single source (verbatim AddLight incl. the in-code range * 3;
+//     the old "prefab-side" claim here was wrong, and the second copy
+//     this pass emitted without the * 3 was unconsumed - the
+//     double-sourcing class, audit 2026-08-16).
 //   - Actions: models act when actionResource.flags != 0; flats when
 //     flatResource.action > 0. Action/trigger flags only bind when the raw
 //     value is a defined enum member (Enum.IsDefined), else None.
@@ -67,7 +70,7 @@ export const ACTION_FLAGS = Object.freeze({
   CloseDoor: 0x14, Hurt21: 0x15, Hurt22: 0x16, Hurt23: 0x17, Hurt24: 0x18,
   Hurt25: 0x19, Poison: 0x1a, Unknown27: 0x1b, DrainMagicka: 0x1c,
   Dialogue: 0x1d, Activate: 0x1e, SetGlobalVar: 0x1f, Unknown32: 0x20,
-  DoorText: 0x63,
+  Unknown50: 0x32, DoorText: 0x63,   // audit 2026-08-16: DFBlock defines both; missing here broke Enum.IsDefined parity (raw 0x32/0x63 fell to None)
 });
 
 /** The movement family DaggerfallAction routes to Move (P2/P5). */
@@ -282,7 +285,7 @@ function* rdbObjects(rdb) {
  * @param {(modelIdNum:number) => object} getModel - resolves a model id to
  *   dfMeshToModel output.
  * @returns {{placements:Array,actionDoors:Array,flats:Array,markers:Array,
- *   startMarkers:Array,enterMarkers:Array,lights:Array,exitDoors:Array,
+ *   startMarkers:Array,enterMarkers:Array,exitDoors:Array,
  *   actionLinks:Map,waterLevel:number,castleBlock:boolean}}
  */
 export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
@@ -293,7 +296,6 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
   const markers = [];
   const startMarkers = [];
   const enterMarkers = [];
-  const lights = [];
   const exitDoors = [];
   const actionLinks = new Map(); // position -> { nextKey, prevKey, action }
   const objectPositions = new Map(); // position -> { x, y, z, yawDeg } - P10 teleport destinations (any object, actionless included)
@@ -329,6 +331,7 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
           position: obj.position,   // P10: doors join the chain graph (Lock/Unlock/Open/Close ride the door's own action)
           startingLockValue: LOCK_VALUES[mr.triggerFlagStartingLock >> 4],
           action,
+          position: obj.position,   // the chain key (LinkActionNodes resolves doors by position)
         });
         objectPositions.set(obj.position, positionEntryFromMatrix(matrix, obj));
         if (acts) addModelLink(obj, action);
@@ -384,13 +387,6 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
         }
       }
       objectPositions.set(obj.position, { x, y, z, yawDeg: 0 });   // flats carry no rotation (a flat teleport destination faces the marker's identity)
-    } else if (obj.type === RDB_RESOURCE_TYPES.Light) {
-      lights.push({
-        x: obj.xPos * GLOBAL_SCALE,
-        y: -obj.yPos * GLOBAL_SCALE,
-        z: obj.zPos * GLOBAL_SCALE,
-        radius: obj.resources.lightResource.radius * GLOBAL_SCALE,
-      });
     }
   }
 
@@ -414,7 +410,7 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
 
   return {
     placements, actionDoors, flats, markers, startMarkers, enterMarkers,
-    lights, exitDoors, actionLinks, objectPositions, waterLevel, castleBlock,
+    exitDoors, actionLinks, objectPositions, waterLevel, castleBlock,
   };
 }
 

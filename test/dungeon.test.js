@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { srand, rand } from '../src/formats/dfRandom.js';
 import { randomTextureTableClassic, applyTextureTable, DEFAULT_TEXTURE_TABLE } from '../src/world/dungeonTextures.js';
 import { layoutRdbBlock, getModelMatrix, isActionDoor, ACTION_FLAGS, TRIGGER_FLAGS, RDB_SIDE } from '../src/world/rdbLayout.js';
+import { collectDungeonLights } from '../src/world/dungeonLights.js';
 import { layoutDungeon } from '../src/world/dungeonLayout.js';
 import { dfMeshToModel, GLOBAL_SCALE, DOOR_TYPE } from '../src/world/meshReader.js';
 import { transformPoint } from '../src/world/mat4.js';
@@ -212,8 +213,12 @@ test('dungeon: flat action axis = magnitude quirk and marker split', () => {
   assert.equal(L.enterMarkers.length, 1);
   assert.equal(L.waterLevel, -8 * 62);
   assert.equal(L.castleBlock, true);
-  assert.equal(L.lights.length, 1);
-  approx(L.lights[0].radius, 75 * GLOBAL_SCALE);
+  // Lights ride collectDungeonLights (the single source, verbatim
+  // AddLight incl. the in-code range * 3 - audit 2026-08-16 removed
+  // the unconsumed no-*3 copy this pass used to emit).
+  const lights = collectDungeonLights(rdbBlockFixture(objs, refs));
+  assert.equal(lights.length, 1);
+  approx(lights[0].range, 75 * GLOBAL_SCALE * 3);
 
   const fa = L.flats[0].action;
   assert.equal(fa.isFlat, true);
@@ -311,7 +316,7 @@ test('dungeon: Privateer\'s Hold layout pins', { skip: skipReal }, () => {
   ]);
   assert.deepEqual(d.blocks.map((b) => b.layout.placements.length), [188, 15, 32, 38, 34]);
   assert.deepEqual(d.blocks.map((b) => b.layout.actionDoors.length), [21, 6, 10, 11, 10]);
-  assert.deepEqual(d.blocks.map((b) => b.layout.lights.length), [39, 5, 7, 11, 9]);
+  assert.deepEqual(d.blocks.map((b) => collectDungeonLights(b.dfBlock).length), [39, 5, 7, 11, 9]);
   assert.deepEqual(d.blocks.map((b) => b.layout.actionLinks.size), [45, 3, 5, 5, 4]);
 
   // Exit door only in the starting block; none disabled here.
@@ -381,7 +386,7 @@ test('dungeon: RDB corpus - every block lays out clean, resource closure holds',
     tot.ad += L.actionDoors.length;
     tot.f += L.flats.length;
     tot.mk += L.markers.length;
-    tot.li += L.lights.length;
+    tot.li += collectDungeonLights(blocks.getBlock(i)).length;
     tot.ed += L.exitDoors.length;
     tot.lk += L.actionLinks.size;
     if (L.waterLevel !== 10000) wet++;

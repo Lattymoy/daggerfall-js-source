@@ -18,9 +18,8 @@
 //   - Reaction: Hostile unless the raw action byte == 99 (Passive).
 //   - Gender: types > 43 read flags bits (Female 1, Male 2).
 //   - Placement: (X, -Y, Z) * GlobalScale.
-// playerLevel defaults to 1 until Characters supplies the entity (the
-// P1 stats precedent); monsterPower = clamp01(level / 20) at the
-// DaggerfallDungeon call site rides the same default.
+// playerLevel comes from the live player entity at the call site
+// (wired audit 2026-08-16; the classic path ignores monsterPower).
 
 import { srand, randomRangeInclusive } from '../formats/dfRandom.js';
 import { ENCOUNTER_TABLES } from './encounterTables.js';
@@ -100,8 +99,11 @@ export function collectDungeonEnemies(blockLayouts, { locationId, dungeonType, p
       && (block.waterLevel === 10000 || block.waterLevel - 20 > marker.rawY)) {
       return;
     }
+    // AddEnemy's useGenderFlag is TRUE only for FIXED enemies (audit
+    // 2026-08-16): on random markers the flags byte IS the slot, so
+    // reading gender bits out of it was wrong data reuse.
     let gender = 'unspecified';
-    if (mobileType > 43) {
+    if (fixed && mobileType > 43) {
       if ((marker.flags & GENDER_FEMALE_FLAG) === GENDER_FEMALE_FLAG) gender = 'female';
       if ((marker.flags & GENDER_MALE_FLAG) === GENDER_MALE_FLAG) gender = 'male';
     }

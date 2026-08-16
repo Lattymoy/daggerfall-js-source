@@ -14,13 +14,14 @@ import { collectDungeonLights } from '../world/dungeonLights.js';
 import { CityLightAnimator } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
-import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
-import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, lookAtLockText } from '../world/actionSystem.js';
+import { RDB_SIDE } from '../world/rdbLayout.js';
+import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, classifyPlacementAction, lookAtLockText } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
-import { worldAabb } from '../player/activate.js';
+import { worldAabb, rayAabb } from '../player/activate.js';
+import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
 import { drawText, makeFont, measureText } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
@@ -142,11 +143,36 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   };
 
+  // One registration path for acting FLATS (audit 2026-08-16: flat and
+  // marker actions were never registered - classic flat levers/trigger
+  // zones were dead). The box brackets the billboard the way DFU's
+  // AddAction BoxCollider brackets the flat; effects keep their verbatim
+  // origin; a move-flag flat has no mesh to tween here, so it relays -
+  // the chain lives, the motion is INTERIM (loud) until flats can tween.
+  const registerFlatAction = async (ns, position, action, x, y, z, archive, record) => {
+    let aabb = null;
+    const t = await getTexture(archive);
+    if (t && record < t.recordCount) {
+      const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+      aabb = {
+        min: [x - size.w / 2, y - size.h / 2, z - size.w / 2],
+        max: [x + size.w / 2, y + size.h / 2, z + size.w / 2],
+      };
+    }
+    if (EFFECT_ACTION_FLAGS.has(action.actionFlag)) {
+      const eo = actions.addEffect(ns, position, action, [x, y, z]);
+      if (aabb) eo.aabb = aabb;
+    } else {
+      actions.addRelay(ns, position, action, aabb, [x, y, z]);
+    }
+  };
+
   // P10: teleport destinations resolve through a per-block-instance
   // position index (destinations are usually actionless editor flats
   // that live in no other runtime structure). Keys are `${ns}:${pos}`
   // where ns = the block INSTANCE index - positions are block-local
-  // byte offsets and 3108/4232 dungeons repeat blocks.
+  // byte offsets and 3108/4232 dungeons repeat blocks (the same ns
+  // that namespaces every chain key).
   const positionIndex = new Map();
   const torches = [];         // A2: { pos, handle } - looping Burning sources gated by range
   const ambientAnimals = [];  // A2: { pos, sound } - random-cadence barks
@@ -161,25 +187,44 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!gpu) continue;
       await ensureRemap(p.modelIdNum);
       const cpu = cpuModels.get(p.modelIdNum);
-      if (p.action && MOVE_ACTION_FLAGS.has(p.action.actionFlag)) {
-        const o = actions.addAction(bi, p.position, cpu, matrix, p.action);
-        // Audit 06f: movers carry their AT-REST bounds so step-on
-        // platforms (classic Collision01 elevators) collision-trigger;
-        // the pass only tests movers while parked at 'start', where
-        // the static AABB is truthful.
-        o.aabb = worldAabb(cpu.positions, matrix);
-        o.restOnlyTrigger = true;
-        dynamicDraws.push({ gpu, object: o });
-        continue;
-      }
-      if (p.action && EFFECT_ACTION_FLAGS.has(p.action.actionFlag)) {
-        // Hurt/Poison/DrainMagicka/CastSpell/Teleport: chain-
-        // participating logic object; the model stays static (draw +
-        // collider below). Origin = the placement translation
-        // (CastSpell fires missiles from here, +40*GlobalScale up,
-        // verbatim).
-        const eo = actions.addEffect(bi, p.position, p.action, [matrix[12], matrix[13], matrix[14]]);
-        eo.aabb = worldAabb(cpu.positions, matrix);   // collision triggers test against this
+      if (p.action) {
+        // Verbatim AddActionModelHelper classification (audit
+        // 2026-08-16: only move/effect registered before - every
+        // chain through a Teleport/Activate/verb/text object died,
+        // and lever-driven stone doors never swung).
+        const cls = classifyPlacementAction(p.action.actionFlag, false);
+        if (cls === 'move') {
+          const o = actions.addAction(bi, p.position, cpu, matrix, p.action);
+          // Audit 06f: movers carry their AT-REST bounds so step-on
+          // platforms (classic Collision01 elevators) collision-trigger;
+          // the pass only tests movers while parked at 'start', where
+          // the static AABB is truthful.
+          o.aabb = worldAabb(cpu.positions, matrix);
+          o.restOnlyTrigger = true;
+          dynamicDraws.push({ gpu, object: o });
+          continue;
+        }
+        if (cls === 'specialDoor') {
+          // DaggerfallActionDoorSpecial: OpenDoor (or CloseDoor on a
+          // non-door) turns a plain model into a hinged special door -
+          // own bucket, swings on the chain or the player's hand.
+          const o = actions.addSpecialDoor(bi, p.position, cpu, matrix, p.action);
+          dynamicDraws.push({ gpu, object: o });
+          continue;
+        }
+        if (cls === 'effect') {
+          // Hurt/Poison/DrainMagicka/CastSpell: chain-participating
+          // logic object; the model stays static (draw + collider
+          // below). Origin = the placement translation (CastSpell
+          // fires missiles from here, +40*GlobalScale up, verbatim).
+          const eo = actions.addEffect(bi, p.position, p.action, [matrix[12], matrix[13], matrix[14]]);
+          eo.aabb = worldAabb(cpu.positions, matrix);   // collision triggers test against this
+        } else {
+          // Relay: the delegate is routed (Teleport/text) or a
+          // verbatim no-op; the CHAIN through it must live, and its
+          // collider makes it a Direct/Attack/collision target.
+          actions.addRelay(bi, p.position, p.action, worldAabb(cpu.positions, matrix), [matrix[12], matrix[13], matrix[14]]);
+        }
       }
       drawList.push({ mesh: gpu, matrix });
       collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix);
@@ -190,10 +235,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const matrix = multiply(originMatrix, d.matrix);
       const gpu = await getGpuMesh(d.modelIdNum);
       await ensureRemap(d.modelIdNum);
-      // P10: the starting lock (RDB LOCK_VALUES) + the door's own
-      // action record join the runtime (Lock/Unlock/Open/Close/
-      // Teleport chains land on doors).
-      const o = actions.addDoor(cpuModels.get(d.modelIdNum), matrix, { ns: bi, position: d.position, action: d.action, lock: d.startingLockValue });
+      // Chain key + own action record + the starting lock (audit
+      // 2026-08-16 + P10: chained doors were unreachable and locks
+      // had no state to gate on; the P10 player-toggle lock gate now
+      // reads currentLockValue).
+      const o = actions.addDoor(cpuModels.get(d.modelIdNum), matrix, {
+        ns: bi, positionKey: d.position, action: d.action, startingLockValue: d.startingLockValue,
+      });
       dynamicDraws.push({ gpu, object: o });
     }
     for (const f of b.layout.flats) {
@@ -208,19 +256,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       } else if (f.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[f.record] != null) {
         ambientAnimals.push({ pos: [f.x + b.originX, f.y, f.z + b.originZ], sound: ANIMAL_SOUND_BY_RECORD[f.record] });
       }
-      if (f.action && EFFECT_ACTION_FLAGS.has(f.action.actionFlag)) {
-        // P10: actioned FLATS join the graph too - 25 of the corpus's
-        // 84 teleporters ride flats (the pre-P10 runtime dropped
-        // every flat action on the floor).
-        actions.addEffect(bi, f.position, f.action, [f.x + b.originX, f.y, f.z + b.originZ]);
-      }
+      if (f.action) await registerFlatAction(bi, f.position, f.action, f.x + b.originX, f.y, f.z + b.originZ, f.archive, f.record);
     }
     for (const m of b.layout.markers) {
-      // P10: editor markers (199) carry actions too (3 corpus
-      // teleporters); treasure markers (archive set) stay data-only.
-      if (!m.archive && m.action && EFFECT_ACTION_FLAGS.has(m.action.actionFlag)) {
-        actions.addEffect(bi, m.position, m.action, [m.x + b.originX, m.y, m.z + b.originZ]);
-      }
+      // Acting markers join the runtime too (DFU AddActionFlatHelper
+      // runs for EVERY flat with action > 0, editor flats included).
+      // Records 15/16 are SetActive(false) in DFU - Receive early-outs
+      // on inactive objects, so their actions are inert; preserved by
+      // skipping them (audit 2026-08-16).
+      if (!m.action || m.record === 15 || m.record === 16) continue;
+      await registerFlatAction(bi, m.position, m.action, m.x + b.originX, m.y, m.z + b.originZ, m.archive ?? 199, m.record);
     }
     for (const l of collectDungeonLights(b.dfBlock)) {
       lights.push({ x: l.x + b.originX, y: l.y, z: l.z + b.originZ, range: l.range });
@@ -250,6 +295,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     {
       locationId: dfLocation.dungeon.recordElement.header.locationId,
       dungeonType: dfLocation.mapTableData.dungeonType,
+      playerLevel: playerEntity.level,   // ChooseRandomEnemyType bands on the LIVE level (wired audit 2026-08-16; was stuck at the default 1)
     });
   // C8 E1 (?foes): CLASS enemies (mobileType > 43, human morphology)
   // spawn as canonical rigs instead of their C3 billboards - one rig
@@ -406,7 +452,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // text on a refused locked door (LookAtInteriorLock, chance-tiered
   // over the LIVE lockpicking skill).
   actions.resolvePosition = (ns, key) => positionIndex.get(`${ns}:${key}`) ?? null;
-  actions.onLockedDoor = (o) => hudText.add(lookAtLockText(o.lock, playerEntity.level, skillValue(playerEntity, SKILLS.Lockpicking)));
+  actions.onLockedDoor = (o) => hudText.add(lookAtLockText(o.currentLockValue, playerEntity.level, skillValue(playerEntity, SKILLS.Lockpicking)));
   // A2: DaggerfallAction.Play's sound - the RDB soundIndex fires from
   // the object on every Play (the default min1/max500 3D profile;
   // movers speak from their live matrix, effect objects from origin).
@@ -751,7 +797,29 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (held && clickCast.consume()) { pendingClickCast = true; return; }   // the armed click casts, no swing
     _atkDx += dx; _atkDy += dy; _atkHeld = held;
   }
-  function resolvePlayerHit(eye, inViewFn, playerFeet) {
+  function resolvePlayerHit(eye, inViewFn, playerFeet, lookDir) {
+    // Verbatim WeaponEnvDamage FIRST (audit 2026-08-16: nothing ever
+    // sent the Attack trigger and doors could not be bashed): the
+    // swing ray forward within weapon reach, world geometry occludes.
+    // An action object hit gets Receive(Attack) - the gate table
+    // filters - and the swing CONTINUES (env returns false in DFU);
+    // a door hit is BASHED and CONSUMES the swing.
+    if (lookDir) {
+      let best = null, bestD = Infinity;
+      for (const o of actions.objects.values()) {
+        const box = o.aabb ?? (o.cpu ? worldAabb(o.cpu.positions, o.matrix) : null);
+        if (!box) continue;
+        const d = rayAabb(eye, lookDir, box);
+        if (d === null || d > WEAPON_REACH || d >= bestD) continue;
+        const wall = collider.raycast(eye, lookDir, d - 0.05);
+        if (Number.isFinite(wall) && wall < d - 0.05) continue;   // occluded
+        best = o; bestD = d;
+      }
+      if (best) {
+        if (best.kind === 'door') { actions.attemptBash(best, Math.random()); return; }
+        actions.receive(best, 'Attack');
+      }
+    }
     // E3d: backstab facing per foe, verbatim IsBackFacing (records
     // 3/4 of the 8-orientation wheel); the chance = the player's
     // Backstabbing skill (flat interim). TallySkill pends Systems.
@@ -905,7 +973,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       actions: [...actions.objects.values()].map((o) => ({
         key: o.key, state: o.state, t: o.t ?? 0,
         activationCount: o.activationCount ?? 0,
-        ...(o.kind === 'door' ? { lock: o.lock } : {}),   // P10: door locks persist
+        ...(o.kind === 'door' ? { lock: o.currentLockValue } : {}),   // P10: door locks persist
       })),
     };
   }
@@ -926,7 +994,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       o.state = sa.state;
       o.t = sa.t;
       o.activationCount = sa.activationCount;
-      if (o.kind === 'door' && sa.lock != null) o.lock = sa.lock;   // P10
+      if (o.kind === 'door' && sa.lock != null) o.currentLockValue = sa.lock;   // P10
       actions.syncRestored(o);   // P10: matrix + collider bucket settle (an open door no longer restores solid-and-closed)
     });
   }
@@ -954,14 +1022,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // (up/down/jump don't trigger in classic), contact beneath the
   // player -> WalkOn else WalkInto (the Collision01 standing-raycast
   // refinement folds into the beneath test at our capsule scale).
-  let _prevTriggerFeet = null;
-  function collisionTriggers(dt, playerFeet) {
+  function collisionTriggers(dt, playerFeet, moveHeld) {
     if (!playerFeet) return;
-    const moved = _prevTriggerFeet
-      ? Math.hypot(playerFeet[0] - _prevTriggerFeet[0], playerFeet[2] - _prevTriggerFeet[2]) > 1e-4
-      : false;
-    _prevTriggerFeet = [...playerFeet];
-    if (!moved) return;
+    // Verbatim DaggerfallActionCollision: fires only while a MOVE
+    // action is HELD (up/down/jump excluded) - not on position delta.
+    // The delta gate (audit 2026-08-16) missed the classic case of a
+    // player pushing INTO a blocking WalkInto object: the collider
+    // cancels the motion, the delta is zero, and the trigger never
+    // fired. Input-held is the source's rule and covers it.
+    if (!moveHeld) return;
     const R = 0.45, H = 1.8;   // the player capsule
     for (const o of actions.objects.values()) {
       if (!o.aabb) continue;
@@ -980,7 +1049,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
-  function drawFoes(dt, canvas, proj, view, eye, playerFeet) {
+  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false) {
     if (playerFeet) lastPlayerFeet = [...playerFeet];
     if (pendingClickCast) {
       pendingClickCast = false;
@@ -1015,7 +1084,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
     });
     for (const id of raised) hudText.add(`Your ${SKILL_NAMES[id]} skill has improved.`);   // classic phrasing; TEXT.RSC pends
-    collisionTriggers(dt, playerFeet);
+    collisionTriggers(dt, playerFeet, moveHeld);
     updateMissiles(dt, playerFeet);
     if (playerWeapon) {
       playerWeapon.gesture(_atkDx, _atkDy, _atkHeld, dt, Math.max(canvas.clientWidth, canvas.clientHeight));
@@ -1071,7 +1140,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           tallySkill(playerEntity, SKILLS.Archery);
           continue;
         }
-        resolvePlayerHit(eye, inView, playerFeet);
+        resolvePlayerHit(eye, inView, playerFeet, [-view[2], -view[6], -view[10]]);
       }
     }
     for (const f of foes) {
@@ -1143,7 +1212,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         f.reaction.t += dt;
         const R = f.reaction.clip;
         if (f.reaction.t >= R.dur) f.reaction = null;
-        else pose = foeDeps.sampleClip(R, f.reaction.t / R.dur);
+        else pose = foeDeps.sampleClip(R, f.reaction.t);   // seconds, not phase (units bug, audit 2026-08-16: staggers cut at a third)
       }
       f.rig.setPose(pose);
       f.rig.update(dt);
@@ -1157,10 +1226,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // derive from the view matrix's back row.
       const fw = [-view[2], -view[6], -view[10]];
       const vYaw = Math.atan2(fw[0], fw[2]);
-      const vPitch = Math.asin(Math.max(-1, Math.min(1, fw[1])));
       viewmodelRig.setPose(playerWeapon.pose());
       viewmodelRig.update(dt);
-      foeDeps.drawFirstPersonViewmodel(renderer, canvas, viewmodelRig, playerFeet, vYaw, vPitch, foeDeps.EYE_HEIGHT);
+      foeDeps.drawFirstPersonViewmodel(renderer, canvas, viewmodelRig, playerFeet, vYaw, foeDeps.EYE_HEIGHT);
     }
     // U1: HUD last (over the viewmodel), heading from the view
     // forward this file already derives (0 = +z, wrapped 0..1).

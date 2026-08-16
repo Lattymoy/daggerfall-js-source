@@ -52,7 +52,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9: floating-origin streaming world (?world). Queue empty; routed rows (teleporters, platform riding, swim/levitate) wait in Ledger C.
 - `03-World/Player-Arc.md` - ACTIVE again. P1-P9 + P10 TELEPORTERS + DOOR LOCKS (the delegates verbatim, RDB starting locks + look-at-lock tiers, flat/marker actions joining the graph, the repeated-block action-key collision fixed) + P11 SWIM/LEVITATE (2026-08-16: the LevitateMotor path with GetSwimSpeed and the surface clamp, the swim toggle + splash, Levitate (14,255) end to end, the per-minute/per-jump fatigue drains, the .7071 diagonal-limit parity fix) SHIPPED. Next: breath/drowning, crouch.
 - `04-Characters/Characters-Arc.md` - PARKED (pivot 3: classic visuals). C8 shipped E1-E4b end to end + spectral; E4c deferred by Mac; remaining interims are Systems work (ledger below).
-- `05-Combat/Combat.md` - COMPLETE. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, and the collision-trigger seam all shipped. Build queue EMPTY; Systems-shared interims tracked in the ledger.
+- `05-Combat/Combat.md` - COMPLETE. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, the collision-trigger seam (input-held gate, 08-16), the Attack trigger + door bashing (WeaponEnvDamage, 08-16) all shipped. Build queue EMPTY; Systems-shared interims tracked in the ledger.
 - `08-Audio/Audio.md` - ACTIVE. A1 + A2 (2026-08-16: action PlaySound on every Play, torch Burning loops at 5m linear/0.7 via the new loop3d engine seam, animal random barks on the classic rand()<=100 cadence at 19.2m - dungeon-scoped) SHIPPED. Next: exterior/interior scene audio, transition stingers, music strategy.
 - `06-Systems/Systems-Arc.md` - ACTIVE. S1-S15 + S16 ENEMY SPELLCASTING (2026-08-16: F15 closed - the thirteen verbatim spell lists + EnemyClassSpells buckets, MaxMagicka 10xlevel+100, magic skills 80, the classic touch/ranged AI with the 1/40 roll and the already-on-target veto, instant casts through the shared missile seam) SHIPPED. Next: cures (with disease/poison), OnMonsterHit riders, or economy.
 - `07-Rendering/Rendering.md` - COMPLETE again. R12 THE EXTERIOR INDIRECT PLAYER LIGHT (2026-08-16: the SunlightRig point light from the serialized prefab - 1.0/range 150/0.706 gray - daylight-scaled at the player across all four lit programs, shot-proven near-ground brightening with a byte-identical sky). Queue EMPTY.
@@ -76,46 +76,48 @@ binding; interleaving a new pass exposed drawMesh's assumption.
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-16, S15 ship)
+## Open flags (regenerated 2026-08-16, the two-lane merge)
 
-Regenerated from the code at the S15 ship (the 08-13 audit list's
-hud.js fatigue rows retired - the fatigue stat shipped; line numbers
-refreshed). Every row below is a live INTERIM/FLAGGED/PENDING site in
-src; the code comment at each site is the authority.
-`src/render/characterSprite.js:73-76` (FP viewmodel framing constants)
-remains open to nudging from live play.
+Regenerated from the merged code (the parallel-session reconciliation:
+this lane's S15-S17/P10-P11/A2/R12/U6 + main's 08-16 dungeon/FP
+audit). Every row below is a live INTERIM/FLAGGED/PENDING site in src;
+the code comment at each site is the authority.
+`src/render/characterSprite.js` FP framing constants stay open to
+Mac's eye in live play (probe-locked on main).
 
 - `src/characters/enemyMotor.js:24` - Speed). Still PENDING here: stealth checks in detection.
 - `src/characters/playerEntity.js:5` - UI later fronts it everywhere). INTERIM until then, loudly: flat
 - `src/characters/playerEntity.js:12` - maxHealth: 50,    // INTERIM until chargen rolls career HP
 - `src/characters/playerEntity.js:15` - skills: 30,       // INTERIM flat skills until chargen
-- `src/characters/playerEntity.js:17` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above)
+- `src/characters/playerEntity.js:17` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyChar...
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): adrenaline rush
 - `src/combat/formulas.js:205` - OnMonsterHit(attacker, target, hitDamage): FLAGGED pending
 - `src/combat/playerWeapon.js:13` - INTERIM (loud): the equipped weapon is an Iron Dagger until the
 - `src/combat/playerWeapon.js:45` - /** INTERIM starting weapon (items arc replaces): Iron Dagger. */
 - `src/combat/playerWeapon.js:46` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:64` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
-- `src/scenes/dungeonContext.js:316` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:322` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:373` - drained strength lowers the ceiling). INTERIM (loud): the exhaustion consumer pends
-- `src/scenes/dungeonContext.js:448` - FLAGGED: DFU recomputes per-effect via the cost tables (that
-- `src/scenes/dungeonContext.js:450` - FLAGGED to the effect library (caster-only buffs, touch, areas).
-- `src/scenes/dungeonContext.js:603` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/dungeonContext.js:1064` - actions) is FLAGGED - the player snapshot only.
+- `src/scenes/dungeonContext.js:151` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:409` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:415` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:429` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:524` - drained strength lowers the ceiling). INTERIM (loud): the
+- `src/scenes/dungeonContext.js:599` - FLAGGED: DFU recomputes per-effect via the cost tables (that
+- `src/scenes/dungeonContext.js:601` - FLAGGED to the effect library (caster-only buffs, touch, areas).
+- `src/scenes/dungeonContext.js:775` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:1312` - actions) is FLAGGED - the player snapshot only.
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/chargen.js:6` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
 - `src/systems/chargen.js:21` - INTERIM (loud): the UI distributes the bonus pools by hand; the
 - `src/systems/chargen.js:124` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
-- `src/systems/chargen.js:143` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b f...
+- `src/systems/chargen.js:143` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy ...
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here; the cure family (3, 0..2)
-- `src/systems/effects.js:40` - (concealment); waterWalking tracks but its consumer FLAGGED
-- `src/systems/effects.js:381` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:382` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/inventory.js:12` - weight pends S2b (FLAGGED - leather/chain/plate multipliers).
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls are SKIPPED until the magic
 - `src/systems/loot.js:169` - FLAGGED to the economy slice (shops).
 - `src/systems/save.js:7` - (foes, loot piles, action states, doors) is FLAGGED - dungeons
+- `src/ui/actionText.js:7` - (backgrounds FLAGGED pending art-name verification, the shared UI
 - `src/ui/chargen.js:11` - background ART is FLAGGED pending art-name verification against
 - `src/ui/chargen.js:148` - ---- drawing: clean classic-text panels (art FLAGGED, see head) ----
 - `src/ui/charsheet.js:8` - classic INFO background ART is FLAGGED pending art-name
@@ -123,11 +125,45 @@ remains open to nudging from live play.
 - `src/ui/inventory.js:2` - windows in classic text (backgrounds FLAGGED pending art-name
 - `src/ui/inventory.js:9` - Enter readies one (retires ?spell). INTERIM loud: with no
 - `src/ui/inventory.js:85` - /** The known list: entity.spells when it exists; the INTERIM fallback
-- `src/world/actionSystem.js:38` - DrainMagicka (0x1c): INTERIM no-op - the magicka stat pends the
 
 ## Audits
 
-Newest first. Older per-fix audits are consolidated into their arc
+Newest first.
+
+**2026-08-16 - the dungeon-parity + FP-viewmodel audit (Mac-directed).**
+Full diff of the dungeon chain (layout, actions, doors, enemies,
+lights, textures, water, triggers) against the DFU C# (sparse clone)
+plus a pixel audit of the FP voxel pass. Verified clean, no change:
+model matrices (T*Rz*Rx*Ry), texture tables (CLIMATE_INDICES
+byte-exact), overlap removal incl. DFU's missing-block-origin quirk,
+water Y, spawn, Hurt math, the trigger gate table, encounter tables,
+light constants. ELEVEN real findings, all rooted and shipped:
+(1) the FP viewmodel rendered ZERO pixels in every state and frame -
+the P9 hole-fix constants overshot the whole rig out of the frustum;
+probe-locked replacement (back 0.25, cast -0.20) via the new standing
+tools/fpProbe.mjs, before/after gallery in public/visual-changes/.
+(2) sampleClip takes SECONDS and all three pose paths passed a PHASE -
+FP strikes lost their back half, enemy swings died at 40-66%, staggers
+cut at a third. (3) pressing use CRASHED on any registered trap (effect
+objects carry no cpu) - activationTargets is the single builder now.
+(4) CastSpell never reset its 1000 cooldown - traps machine-gunned.
+(5) chains died at every non-move/non-effect link: relays, chained
+doors, the four door VERBS, special doors, and flat/marker actions all
+now registered verbatim (locks carry VALUES; the IsLocked gate ships
+with lockpicking as one Ledger unit). (6) nothing ever sent the Attack
+trigger and doors could not be BASHED - the WeaponEnvDamage pass now
+runs on the swing frame. (7) random enemies read GENDER bits out of
+their slot byte (useGenderFlag is fixed-only). (8) playerLevel was
+never wired into the encounter banding - stuck at 1 despite live
+advancement. (9) collision triggers gated on position delta and missed
+pushing into blocking WalkInto objects - input-held now, verbatim.
+(10) ACTION_FLAGS lacked Unknown50/DoorText (Enum.IsDefined parity).
+(11) layoutRdbBlock emitted a second, unconsumed lights array without
+the *3 under a wrong "prefab-side" comment - collectDungeonLights is
+the single source. Standing lesson, the third time now: **a pin
+certifies what it pins** - the clip tests pinned seconds while every
+caller passed phase, and the sweep that proved the viewmodel invisible
+took one probe that nothing had ever pointed at the shipped surface. Older per-fix audits are consolidated into their arc
 records; Home keeps the one-line pointer and the standing lessons.
 
 **2026-08-14 - the post-ship audit (mobile/deploy/UI/A1).** Full

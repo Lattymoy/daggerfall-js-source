@@ -21,7 +21,7 @@ import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
 import { PlayerMotor } from '../player/motor.js';
 import {
-  pickActivatable, worldAabb, DOOR_ACTIVATION_DISTANCE,
+  pickActivatable, activationTargets,
 } from '../player/activate.js';
 import { fetchBytes } from './shared.js';
 import { routeKey } from '../ui/input.js';
@@ -106,14 +106,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       Math.sin(cam.pitch),
       Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const eye = walkMode ? player.eye : cam.pos;
-    const targets = [];
-    for (const o of ctx.actions.objects.values()) {
-      targets.push({
-        key: o.key,
-        aabb: worldAabb(o.cpu.positions, o.matrix),
-        distance: DOOR_ACTIVATION_DISTANCE,
-      });
-    }
+    const targets = activationTargets(ctx.actions.objects);   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...ctx.lootTargets());   // S2: piles + lootable corpses
     const key = pickActivatable(eye, dir, targets, ctx.collider);
     if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:'))) { ctx.takeLoot(key); return; }
@@ -263,7 +256,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(ctx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
     if (ctx.uiOverlayActive) { ctx.drawOverlay(canvas); requestAnimationFrame(frame); return; }   // U2b/U3: hold gameplay, keep the loop
-    ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos);   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
+    ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD'));   // moveHeld: the collision-trigger input gate (verbatim)   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
     renderer.drawWater(ctx.waterQuads, WATER_COLOR,
       renderer.textures.get(`${waterArchive}_0`),
       (now / 1000) * WATER_SCROLL_TILES_PER_SEC);

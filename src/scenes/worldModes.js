@@ -23,7 +23,7 @@
 
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding } from '../player/enterExit.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { pickActivatable, worldAabb } from '../player/activate.js';
+import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
 import { transferAll } from '../systems/inventory.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { buildInteriorContext } from './interiorContext.js';
@@ -223,9 +223,7 @@ export function createWorldModes(host) {
     const eye = player.eye;
     const dir = eyeDir();
     const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
-    for (const o of dungeonCtx.actions.objects.values()) {
-      targets.push({ key: o.key, aabb: objAabb(o) });
-    }
+    targets.push(...activationTargets(dungeonCtx.actions.objects));   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...dungeonCtx.lootTargets());   // S2: piles + lootable corpses
     const key = pickActivatable(eye, dir, targets, dungeonCtx.collider);
     if (key === null) return false;
@@ -297,7 +295,7 @@ export function createWorldModes(host) {
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
       renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
       if (dungeonCtx.uiOverlayActive) { dungeonCtx.drawOverlay(canvas); return; }   // U2b/U3: overlays gate the dungeon
-      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos);   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
+      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD'));   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
           renderer.textures.get(`${dungeonReturn.waterArchive}_0`),

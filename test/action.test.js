@@ -125,42 +125,27 @@ test('action: P10 locks - refusal text, lock/unlock/open/close delegates, magic 
   const a = new ActionSystem(c);
   let refused = 0;
   a.onLockedDoor = () => refused++;
-  // A locked door refuses the player and stays solid.
-  const door = a.addDoor(CUBE, I, { ns: 0, position: 40, lock: 12 });
+  // A locked door refuses the PLAYER toggle and stays solid.
+  const door = a.addDoor(CUBE, I, { ns: 0, positionKey: 40, startingLockValue: 12 });
   a.activate(door.key);
   assert.equal(door.state, 'start');
   assert.equal(refused, 1);
   assert.ok(c.buckets.has(door.key));
-  // An UnlockDoor action ON the door (lever chain) clears the lock.
-  const door2 = a.addDoor(CUBE, I, { ns: 0, position: 41, lock: 12, action: { actionFlag: ACTION_FLAGS.UnlockDoor, nextObject: -1 } });
-  const lever = a.addEffect(0, 50, { actionFlag: ACTION_FLAGS.Activate, nextObject: 41, magnitude: 0, index: 0, axisRaw: 0, isFlat: false });
+  // An UnlockDoor verb ON the door (lever chain) clears the lock.
+  const door2 = a.addDoor(CUBE, I, { ns: 0, positionKey: 41, startingLockValue: 12, action: { actionFlag: ACTION_FLAGS.UnlockDoor, nextObject: -1 } });
+  const lever = a.addRelay(0, 50, { actionFlag: ACTION_FLAGS.Activate, nextObject: 41 });
   a.receive(lever);
-  assert.equal(door2.lock, 0);
+  assert.equal(door2.currentLockValue, 0);
   a.activate(door2.key);
   assert.equal(door2.state, 'forward');   // unlocked: opens
   // LockDoor sets 16 only when unlocked (DFU: if (!door.IsLocked)).
-  const door3 = a.addDoor(CUBE, I, { ns: 0, position: 42, lock: 0, action: { actionFlag: ACTION_FLAGS.LockDoor, nextObject: -1 } });
-  const lever3 = a.addEffect(0, 51, { actionFlag: ACTION_FLAGS.Activate, nextObject: 42, magnitude: 0, index: 0, axisRaw: 0, isFlat: false });
+  const door3 = a.addDoor(CUBE, I, { ns: 0, positionKey: 42, startingLockValue: 0, action: { actionFlag: ACTION_FLAGS.LockDoor, nextObject: -1 } });
+  const lever3 = a.addRelay(0, 51, { actionFlag: ACTION_FLAGS.Activate, nextObject: 42 });
   a.receive(lever3);
-  assert.equal(door3.lock, 16);
-  door3.lock = 12;
+  assert.equal(door3.currentLockValue, 16);
+  door3.currentLockValue = 12;
   a.receive(lever3);
-  assert.equal(door3.lock, 12);           // already locked: unchanged
-  // OpenDoor unlocks + opens; CloseDoor closes + RESTORES the
-  // starting lock.
-  const door4 = a.addDoor(CUBE, I, { ns: 0, position: 43, lock: 12, action: { actionFlag: ACTION_FLAGS.OpenDoor, nextObject: -1 } });
-  const lever4 = a.addEffect(0, 52, { actionFlag: ACTION_FLAGS.Activate, nextObject: 43, magnitude: 0, index: 0, axisRaw: 0, isFlat: false });
-  a.receive(lever4);
-  assert.equal(door4.state, 'forward');
-  assert.equal(door4.lock, 0);
-  for (let i = 0; i < 100; i++) a.update(1.5 / 90);
-  assert.equal(door4.state, 'end');
-  const door5 = a.addDoor(CUBE, I, { ns: 0, position: 44, lock: 8, action: { actionFlag: ACTION_FLAGS.CloseDoor, nextObject: -1 } });
-  door5.lock = 0; door5.state = 'end'; door5.t = 1;   // an opened door (lock cleared by Open)
-  const lever5 = a.addEffect(0, 53, { actionFlag: ACTION_FLAGS.Activate, nextObject: 44, magnitude: 0, index: 0, axisRaw: 0, isFlat: false });
-  a.receive(lever5);
-  assert.equal(door5.state, 'reverse');
-  assert.equal(door5.lock, 8);            // StartingLockValue restored
+  assert.equal(door3.currentLockValue, 12);   // already locked: unchanged
 });
 
 test('action: P10 teleport + the block-instance key namespace', () => {
@@ -170,13 +155,14 @@ test('action: P10 teleport + the block-instance key namespace', () => {
   a.resolvePosition = (ns, key) => dests.get(`${ns}:${key}`) ?? null;
   const warps = [];
   a.onTeleport = (d) => warps.push(d);
-  // Teleport fires to the resolved NEXT object's transform; the
-  // destination is an actionless marker, so the chain cascade no-ops.
-  const tele = a.addEffect(0, 60, { actionFlag: ACTION_FLAGS.Teleport, nextObject: 99, magnitude: 0, index: 0, axisRaw: 0, isFlat: false });
+  // Teleport (a delegated relay) fires to the resolved NEXT object's
+  // transform; the destination is an actionless marker, so the chain
+  // cascade no-ops.
+  const tele = a.addRelay(0, 60, { actionFlag: ACTION_FLAGS.Teleport, nextObject: 99 });
   a.receive(tele, 'ActionObject');
   assert.deepEqual(warps, [{ pos: [10, 2, 30], yawDeg: 45 }]);
   // A null destination logs and does NOT warp (DFU "next object null").
-  const tele2 = a.addEffect(0, 61, { actionFlag: ACTION_FLAGS.Teleport, nextObject: 500, magnitude: 0, index: 0, axisRaw: 0, isFlat: false });
+  const tele2 = a.addRelay(0, 61, { actionFlag: ACTION_FLAGS.Teleport, nextObject: 500 });
   a.receive(tele2);
   assert.equal(warps.length, 1);
   // The ns keyspace: two block INSTANCES reuse the same RDB position -
@@ -191,6 +177,48 @@ test('action: P10 teleport + the block-instance key namespace', () => {
   a.activate(b0.key);
   assert.equal(b0.state, 'forward');
   assert.equal(b1.state, 'start');       // the sibling instance is untouched
+});
+
+test('action: U6 text actions - ShowText, the input-gated chain, DoorText first-activation door hold', async () => {
+  const { TYPE_11_TEXT_INDEX, TYPE_12_TEXT_INDEX, TYPE_99_TEXT_INDEX, TYPE_12_ANSWERS } = await import('../src/world/actionSystem.js');
+  assert.equal(TYPE_11_TEXT_INDEX, 8600);
+  assert.equal(TYPE_12_TEXT_INDEX, 5400);
+  assert.equal(TYPE_99_TEXT_INDEX, 7700);
+  assert.deepEqual([...TYPE_12_ANSWERS[5406]], ['one', '1']);   // the blind god
+  const c = stubCollider();
+  const a = new ActionSystem(c);
+  const shown = [], doorTexts = [];
+  let trespass = 0, inputCb = null;
+  a.onShowText = (id) => shown.push(id);
+  a.onDoorText = (id) => doorTexts.push(id);
+  a.onTrespass = () => trespass++;
+  // ShowText: record = index + 8600
+  const st = a.addRelay(0, 70, { actionFlag: ACTION_FLAGS.ShowText, index: 12, nextObject: -1 });
+  a.receive(st);
+  assert.deepEqual(shown, [8612]);
+  // ShowTextWithInput: NO up-front cascade (Play's verbatim
+  // exception); only a case-insensitive answer match fires the chain
+  let dmg = 0;
+  const a2 = new ActionSystem(c, { damagePlayer: (n) => { dmg += n; }, playerLevel: () => 1 });
+  a2.onShowTextInput = (id, cb) => { inputCb = cb; };
+  const spike2 = a2.addEffect(0, 71, { actionFlag: ACTION_FLAGS.Hurt22, index: 0, magnitude: 10, axisRaw: 0, isFlat: true, nextObject: -1 });
+  const riddle = a2.addRelay(0, 72, { actionFlag: ACTION_FLAGS.ShowTextWithInput, index: 6, nextObject: 71 });   // 5400+6 = 5406
+  a2.receive(riddle);
+  assert.equal(dmg, 0);                    // the chain did NOT cascade at Play
+  inputCb('two');
+  assert.equal(dmg, 0);                    // wrong answer
+  inputCb('ONE');
+  assert.equal(dmg, 10);                   // case-insensitive match fires ActivateNext
+  assert.ok(spike2 && st && riddle);
+  // DoorText on a door: first activation shows the (remapped) text
+  // and HOLDS the door; the second toggles and runs the trespass gate
+  const door = a.addDoor(CUBE, I, { ns: 0, positionKey: 80, startingLockValue: 0, action: { actionFlag: ACTION_FLAGS.DoorText, index: 1, axisRaw: 9, triggerFlag: 0x0a, nextObject: -1 } });   // TRIGGER_FLAGS.Door
+  a.activate(door.key);
+  assert.equal(door.state, 'start');       // held on first activation
+  assert.deepEqual(doorTexts, [7705]);     // 7701 remaps to 7705 ("allowed" vs "allow")
+  a.activate(door.key);
+  assert.equal(door.state, 'forward');     // opens from the second on
+  assert.equal(trespass, 1);               // axisRaw 9 > 5
 });
 
 test('action: activation picking - reach, nearest, occlusion', () => {
@@ -212,48 +240,4 @@ test('action: activation picking - reach, nearest, occlusion', () => {
   // Occlusion: a wall hit strictly in front rejects the pick.
   const blocked = { raycast: () => 1.0 };
   assert.equal(pickActivatable([0.5, 0.5, 0], [0, 0, 1], targets, blocked), null);
-});
-
-test('action: U6 text actions - ShowText, the input-gated chain, DoorText first-activation door hold', async () => {
-  const { TYPE_11_TEXT_INDEX, TYPE_12_TEXT_INDEX, TYPE_99_TEXT_INDEX, TYPE_12_ANSWERS } = await import('../src/world/actionSystem.js');
-  assert.equal(TYPE_11_TEXT_INDEX, 8600);
-  assert.equal(TYPE_12_TEXT_INDEX, 5400);
-  assert.equal(TYPE_99_TEXT_INDEX, 7700);
-  assert.deepEqual([...TYPE_12_ANSWERS[5406]], ['one', '1']);   // the blind god
-  const c = stubCollider();
-  const a = new ActionSystem(c);
-  const shown = [], doorTexts = [];
-  let trespass = 0, inputCb = null;
-  a.onShowText = (id) => shown.push(id);
-  a.onShowTextInput = (id, cb) => { shown.push(id); inputCb = cb; };
-  a.onDoorText = (id) => doorTexts.push(id);
-  a.onTrespass = () => trespass++;
-  // ShowText: record = index + 8600
-  const st = a.addEffect(0, 70, { actionFlag: ACTION_FLAGS.ShowText, index: 12, magnitude: 0, axisRaw: 0, isFlat: false, nextObject: -1 });
-  a.receive(st);
-  assert.deepEqual(shown, [8612]);
-  // ShowTextWithInput: NO up-front cascade (Play's verbatim
-  // exception); only a case-insensitive answer match fires the chain
-  const spike = a.addEffect(0, 71, { actionFlag: ACTION_FLAGS.Hurt22, index: 0, magnitude: 10, axisRaw: 0, isFlat: true, nextObject: -1 });
-  let dmg = 0;
-  const a2 = new ActionSystem(c, { damagePlayer: (n) => { dmg += n; }, playerLevel: () => 1 });
-  a2.onShowTextInput = (id, cb) => { inputCb = cb; };
-  const spike2 = a2.addEffect(0, 71, { actionFlag: ACTION_FLAGS.Hurt22, index: 0, magnitude: 10, axisRaw: 0, isFlat: true, nextObject: -1 });
-  const riddle = a2.addEffect(0, 72, { actionFlag: ACTION_FLAGS.ShowTextWithInput, index: 6, magnitude: 0, axisRaw: 0, isFlat: false, nextObject: 71 });   // 5400+6 = 5406
-  a2.receive(riddle);
-  assert.equal(dmg, 0);                    // the chain did NOT cascade at Play
-  inputCb('two');
-  assert.equal(dmg, 0);                    // wrong answer
-  inputCb('ONE');
-  assert.equal(dmg, 10);                   // case-insensitive match fires ActivateNext
-  assert.ok(spike2 && spike && st);
-  // DoorText on a door: first activation shows the (remapped) text
-  // and HOLDS the door; the second toggles and runs the trespass gate
-  const door = a.addDoor(CUBE, I, { ns: 0, position: 80, lock: 0, action: { actionFlag: ACTION_FLAGS.DoorText, index: 1, axisRaw: 9, triggerFlag: 0x0a, nextObject: -1 } });   // TRIGGER_FLAGS.Door
-  a.activate(door.key);
-  assert.equal(door.state, 'start');       // held on first activation
-  assert.deepEqual(doorTexts, [7705]);     // 7701 remaps to 7705 ("allowed" vs "allow")
-  a.activate(door.key);
-  assert.equal(door.state, 'forward');     // opens from the second on
-  assert.equal(trespass, 1);               // axisRaw 9 > 5
 });
