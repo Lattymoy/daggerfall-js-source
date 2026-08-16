@@ -38,7 +38,9 @@ const component = (c, starting, increase, per) =>
 
 /** One effect's { gold, sp } at the caster's skill. */
 export function effectCost(e, casterSkillOf) {
-  const entry = EFFECT_COST_TABLE[`${e.type},${e.subType}`];
+  // subType normalized to BYTE (DFU MakeClassicKey casts the sbyte;
+  // real records read 0xFF as -1 - parity fix 2026-08-16d)
+  const entry = EFFECT_COST_TABLE[`${e.type},${e.subType & 0xff}`];
   const skill = casterSkillOf(entry?.skill ?? 22);
   let gold = 0;
   if (!entry) {

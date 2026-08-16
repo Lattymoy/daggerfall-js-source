@@ -45,7 +45,16 @@ export const BUFF_KINDS = Object.freeze({
   '23,0': 'chameleonNormal',
   '14,255': 'levitate',
 });
-export const buffKind = (e) => BUFF_KINDS[`${e.type},${e.subType}`] ?? null;
+/** Classic subType as DFU keys it: the record's sbyte cast to BYTE
+ *  (ClassicSpellRecordDataToEffectBundleSettings does
+ *  MakeClassicKey((byte)type, (byte)subType)). SPELLS.STD 0xFF reads
+ *  -1 through the verbatim sbyte decode, so every 255-keyed check
+ *  must normalize (parity fix 2026-08-16d: the 255-keyed families -
+ *  Levitate/Slowfall/WaterWalking/Regenerate - never fired from REAL
+ *  records; unit fixtures hand-wrote 255 and stayed green - "a pin
+ *  certifies what it pins", again). */
+export const classicSub = (e) => e.subType & 0xff;
+export const buffKind = (e) => BUFF_KINDS[`${e.type},${classicSub(e)}`] ?? null;
 export const hasActiveEffect = (entity, kind) =>
   !!entity.activeEffects?.some((a) => a.kind === kind);   // presence = active; expired entries End on the NEXT tick pass (DFU shape)
 
@@ -85,7 +94,7 @@ export const isTransferFatigue = (e) => e.type === 11 && e.subType === 9;
 export const isHealFatigue = (e) => e.type === 10 && e.subType === 9;
 export const isDamageFatigue = (e) => e.type === 4 && e.subType === 1;
 export const isContinuousDamageFatigue = (e) => e.type === 1 && e.subType === 1;
-export const isRegenerate = (e) => e.type === 18 && e.subType === 255;
+export const isRegenerate = (e) => e.type === 18 && classicSub(e) === 255;
 
 /** Duration in rounds, verbatim (straight arithmetic, no roll).
  *  The per-level multiplier CLAMPS AT 1 (audit F11 - DFU SetDuration:

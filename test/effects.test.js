@@ -85,6 +85,15 @@ test('effects: S8 buff families - kinds, incumbent renew, the query', async () =
   assert.equal(buffKind({ type: 31, subType: 255 }), 'waterWalking');
   assert.equal(buffKind({ type: 23, subType: 0 }), 'chameleonNormal');
   assert.equal(buffKind({ type: 4, subType: 0 }), null);
+  // Parity fix 2026-08-16d: REAL records read subType 0xFF as -1
+  // (verbatim sbyte decode) and DFU keys on the BYTE cast - the door
+  // must accept both spellings (SPELLS.STD Levitate index 4 reads
+  // { type: 14, subType: -1 } through our reader)
+  assert.equal(buffKind({ type: 14, subType: -1 }), 'levitate');
+  assert.equal(buffKind({ type: 25, subType: -1 }), 'slowfall');
+  const { isRegenerate: isRegen } = await import('../src/systems/effects.js');
+  assert.ok(isRegen({ type: 18, subType: -1 }));
+  assert.ok(isRegen({ type: 18, subType: 255 }));
   const slow = { type: 25, subType: 255, durationBase: 3, durationMod: 1, durationPerLevel: 1 };
   const t = T();
   applySpell({ element: 4, rangeType: 0, effects: [slow] }, 2, t, {}, seq(0));

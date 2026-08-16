@@ -21,6 +21,11 @@ test('spellcost: component math, averaged magnitude, skill scaling per effect', 
   // unknown family: the zero-component fudge (60,100,160) -> 160+60+100=320
   const unk = { type: 99, subType: 99 };
   assert.equal(effectCost(unk, () => 50).gold, 320);
+  // Parity fix 2026-08-16d: real records read subType 0xFF as -1 -
+  // the table lookup normalizes to the BYTE key (a real Slowfall
+  // record must hit '25,255', not the fudge)
+  const slowReal = { ...slow, subType: -1 };
+  assert.equal(effectCost(slowReal, (id) => skills[id]).gold, 160);
 });
 
 test('spellcost: target multipliers on the sums + the floor 5', () => {
