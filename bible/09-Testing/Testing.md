@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 326 tests across 78 files.
+Node 22). Suite: 327 tests across 78 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -23,7 +23,7 @@ Node 22). Suite: 326 tests across 78 files.
 | imgcif.test.js | 8 | IMG table, palettized files, CIF/RCI/weapons |
 | arch3d.test.js | 5 | 10251-mesh corpus, UV rules, patch table, model 456 |
 | blocks.test.js | 4 | 1295-block corpus, resource closure, FixRdbData |
-| dungeon.test.js | 13 | dfRandom LCG, texture tables, RDB matrix order, action records, overlap removal, Privateer's Hold, 187-RDB closure, full 4232-dungeon sweep, R6 light collection pins, per-light flicker bounds, R7 water corpus (32/187) + Maorn pins |
+| dungeon.test.js | 14 | dfRandom LCG, texture tables, RDB matrix order, action records, overlap removal, Privateer's Hold, 187-RDB closure, full 4232-dungeon sweep, R6 light collection pins, per-light flicker bounds, R7 water corpus (32/187) + Maorn pins, the P10 teleporter-resolution corpus gate (84 teleports, 82 resolve, N/W0000003 verbatim-dead like DFU's null NextObject) |
 | monstercareer.test.js | 1 | ENEMY{nnn}.CFG careers from a crafted MONSTER.BSA through the shared BsaFile+ClassFile readers: fields real on the entity, session cache proven (throwing re-fetch), missing-index null path |
 | actionchain.test.js | 9 | the Play cascade through EVERY flag (relays: Teleport/Activate/text/quest/Unknowns), chained doors keyed act:<position> running their OWN verb (OpenDoor unlock+open, CloseDoor close+relock-to-starting, Lock 16-if-unlocked, Unlock 0), special doors (verbatim DaggerfallActionDoorSpecial swing, C# `OpenDoor || CloseDoor && !door` precedence pinned), ExecuteActionOnToggle on the player toggle through the Door trigger gate (Direct-gated records stay silent), None-flag chained doors cascade without swinging, AttemptBash verbatim (open bash-closes, lock >= 20 magically held, d100 under 20 - lock bursts + clears) |
 | activate.test.js | 1 | activationTargets single source: effect objects target on their precomputed aabb (crash regression - scenes read o.cpu on cpu-less traps), relays excluded, cpu path transformed through the matrix, door reach default |

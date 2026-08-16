@@ -460,6 +460,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const p = o.origin ?? (o.matrix ? [o.matrix[12], o.matrix[13], o.matrix[14]] : null);
     if (p) audio.play3d(o.index, p);
   };
+  // AttemptBash's PlayerDoorBash (clip 7) from the door - the A1 seam
+  // family (2026-08-16 audit: the hook existed unwired since the bash
+  // slice routed it to Audio; A2's engine closes it).
+  actions.onDoorBash = (o) => audio.play3d(SOUND.PlayerDoorBash, [o.matrix[12], o.matrix[13], o.matrix[14]]);
   // U6: the text-action seams. ShowText/ShowTextWithInput open modal
   // boxes on the overlay seam (the world holds); DoorText rides the
   // HUD popup (AddHUDText 2.0s); the trespass check maps to our foes,

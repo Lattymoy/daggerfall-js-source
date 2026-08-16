@@ -583,3 +583,16 @@ LevitateMotor / PlayerSpeedChanger / PlayerEnterExit / PlayerEntity:
 
 1 net test (player.test.js 7 -> 8). Suite 312/75, ARENA2 corpus
 312/312 green pre-commit.
+
+### P10/P11 audit note (2026-08-16c): host parity
+
+The post-merge audit found both slices wired into the STANDALONE
+?dungeon scene only - the world-scene dungeon mode (worldModes.frame
+owns the modal motor) never installed the teleport warp, the swim
+toggle, the levitate/waterWalking consumers, the float keys, or the
+fatigue activity feed. A world-mode teleporter no-opped and a
+world-mode dungeon sank the player under water at walk speed. Both
+hosts now wire the same seams at the same values. STANDING RULE: a
+scene-side seam ships in EVERY host that owns a motor (the S8
+slowfall wiring was the precedent and the tell - it was already
+per-host).

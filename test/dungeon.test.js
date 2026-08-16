@@ -479,3 +479,34 @@ test('dungeon: R7 water planes - corpus and location pins', { skip: skipReal }, 
     ['W0000011.RDB', -248], ['W0000015.RDB', -488], ['W0000022.RDB', -144],
   ]);
 });
+
+test('dungeon: RDB corpus - teleporter destinations resolve (P10; 2 verbatim-dead)', { skip: skipReal }, () => {
+  // Every corpus teleporter's linked destination must exist in the
+  // layout's objectPositions index (the P10 resolver). Two teleports
+  // (N0000003/W0000003 @23676) target an ACTIONLESS model - DFU's
+  // actionLinkDict only holds acting objects + editor flats, so DFU's
+  // LinkActionNodes leaves their NextObject null and the delegate
+  // logs "can't teleport"; ours does exactly the same (2026-08-16
+  // audit finding, kept bug-for-bug).
+  const { blocks, getModel } = loadReal();
+  let checked = 0, resolved = 0;
+  const dead = [];
+  for (let i = 0; i < blocks.count; i++) {
+    const blk = blocks.getBlock(i);
+    if (!blk || !blk.rdbBlock) continue;
+    const L = layoutRdbBlock(blk, blk.index, true, getModel);
+    const tele = [];
+    for (const p of L.placements) if (p.action?.actionFlag === ACTION_FLAGS.Teleport) tele.push(p.action);
+    for (const d of L.actionDoors) if (d.action?.actionFlag === ACTION_FLAGS.Teleport) tele.push(d.action);
+    for (const f of L.flats) if (f.action?.actionFlag === ACTION_FLAGS.Teleport) tele.push(f.action);
+    for (const m of L.markers) if (m.action?.actionFlag === ACTION_FLAGS.Teleport) tele.push(m.action);
+    for (const a of tele) {
+      checked++;
+      if (a.nextObject >= 0 && L.objectPositions.has(a.nextObject)) resolved++;
+      else dead.push(blk.name);
+    }
+  }
+  assert.equal(checked, 84);
+  assert.equal(resolved, 82);
+  assert.deepEqual(dead.sort(), ['N0000003.RDB', 'W0000003.RDB']);
+});

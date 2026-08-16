@@ -76,14 +76,13 @@ binding; interleaving a new pass exposed drawMesh's assumption.
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-16, the two-lane merge)
+## Open flags (regenerated 2026-08-16c, the post-merge audit)
 
-Regenerated from the merged code (the parallel-session reconciliation:
-this lane's S15-S17/P10-P11/A2/R12/U6 + main's 08-16 dungeon/FP
-audit). Every row below is a live INTERIM/FLAGGED/PENDING site in src;
-the code comment at each site is the authority.
-`src/render/characterSprite.js` FP framing constants stay open to
-Mac's eye in live play (probe-locked on main).
+Regenerated from the code at the post-merge audit close (line numbers
+refreshed after the host-parity fixes). Every row below is a live
+INTERIM/FLAGGED/PENDING site in src; the code comment at each site is
+the authority. `src/render/characterSprite.js` FP framing constants
+stay open to Mac's eye in live play (probe-locked).
 
 - `src/characters/enemyMotor.js:24` - Speed). Still PENDING here: stealth checks in detection.
 - `src/characters/playerEntity.js:5` - UI later fronts it everywhere). INTERIM until then, loudly: flat
@@ -100,11 +99,11 @@ Mac's eye in live play (probe-locked on main).
 - `src/scenes/dungeonContext.js:409` - index into the 18 careers) or the INTERIM default Warrior (16,
 - `src/scenes/dungeonContext.js:415` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:429` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:524` - drained strength lowers the ceiling). INTERIM (loud): the
-- `src/scenes/dungeonContext.js:599` - FLAGGED: DFU recomputes per-effect via the cost tables (that
-- `src/scenes/dungeonContext.js:601` - FLAGGED to the effect library (caster-only buffs, touch, areas).
-- `src/scenes/dungeonContext.js:775` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/dungeonContext.js:1312` - actions) is FLAGGED - the player snapshot only.
+- `src/scenes/dungeonContext.js:528` - drained strength lowers the ceiling). INTERIM (loud): the
+- `src/scenes/dungeonContext.js:603` - FLAGGED: DFU recomputes per-effect via the cost tables (that
+- `src/scenes/dungeonContext.js:605` - FLAGGED to the effect library (caster-only buffs, touch, areas).
+- `src/scenes/dungeonContext.js:779` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:1316` - actions) is FLAGGED - the player snapshot only.
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/chargen.js:6` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
@@ -129,6 +128,33 @@ Mac's eye in live play (probe-locked on main).
 ## Audits
 
 Newest first.
+
+**2026-08-16c - the post-merge audit (parity pass + host-parity
+sweep).** Full pass over the two-lane merge (`4f19fb5`), closed green
+on real ARENA2 (327/327). The merge reconciliation itself held: both
+lanes' features verified present in the unified action runtime (spot
+re-check: EntityEffectManager.HealAttribute's walk re-read whole and
+matches S15's port exactly). THREE REAL FINDINGS, fixed at root:
+(1) HOST PARITY - the world-scene dungeon mode (worldModes) never
+wired P10's teleport warp or P11's swim/levitate/fatigue feed; only
+the standalone ?dungeon scene did. A world-mode teleporter logged and
+no-opped, and a world-mode dungeon SANK the player under water at
+walk speed. Both hosts now install the same seams (the S8 slowfall
+precedent - per-host wiring is a standing audit checkpoint for every
+future scene-side seam). (2) The AttemptBash sound seam (onDoorBash)
+existed unwired since the bash slice routed it to Audio; A2's engine
+was already in place, so it now plays PlayerDoorBash (7) from the
+door. (3) A dead export (DELEGATED_RELAY_FLAGS - declared, never
+consumed) and a stale sink doc (restoreMagicka listed in applySpell's
+contract after the S15 key fix removed its caller) cleaned. PARITY
+EVIDENCE, new corpus gate: all 84 corpus teleporters probed
+end-to-end - 82 resolve their destination through the P10 position
+index; N0000003/W0000003 @23676 target an ACTIONLESS model, which
+DFU's actionLinkDict (acting objects + editor flats only) also never
+links - its Teleport delegate logs "can't teleport" exactly as ours
+does. Kept bug-for-bug and pinned in dungeon.test.js. Open-flags list
+regenerated (40 rows); Ledger and arc lines verified against the
+merged code.
 
 **2026-08-16 - the dungeon-parity + FP-viewmodel audit (Mac-directed).**
 Full diff of the dungeon chain (layout, actions, doors, enemies,

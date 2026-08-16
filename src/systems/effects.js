@@ -193,7 +193,7 @@ function pushPermanent(target, entry) {
  * Apply a spell to a target entity through the sinks:
  *   hurt(n)           - damage (the caller owns floors/death)
  *   heal(n)           - IncreaseHealth (the caller owns the max clamp)
- *   drainMagicka(n) / restoreMagicka(n)
+ *   drainMagicka(n)   (restoreMagicka returns with potions/absorption - no classic spell key reaches it)
  *   drainFatigue(n) / restoreFatigue(n)  - RAW fatigue points (the x64
  *                       is applied here; the caller owns the 0/max
  *                       clamps and the exhaustion consumer)

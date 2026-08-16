@@ -61,3 +61,10 @@ DaggerfallAction:
 
 2 tests (audio.test.js 4 -> 6). Suite 310/75, ARENA2 corpus 310/310
 green pre-commit.
+
+### A2 audit note (2026-08-16c): the bash sound lands
+
+AttemptBash's onDoorBash seam (routed by the bash slice before A2's
+engine existed) is now wired: PlayerDoorBash (7) plays from the door
+through the standard 3D profile on every bash attempt, open or
+closed, exactly where DFU's DaggerfallAudioSource sits.
