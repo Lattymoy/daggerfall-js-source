@@ -86,6 +86,17 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const player = new PlayerMotor(ctx.collider);
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
+  // P10 Teleport actions: player transform = the destination object's
+  // (DFU DaggerfallAction.Teleport). spawn() zeroes velY and drops
+  // the grounded flag, so the motor re-grounds on the destination
+  // floor next step (the FreezeMotor 0.5s carry-suppression is a
+  // no-op in our motor - velocity is per-frame input, not held).
+  ctx.actions.onTeleport = ({ pos, yawDeg }) => {
+    player.spawn(pos[0], pos[1], pos[2]);
+    cam.pos = [...player.eye];
+    cam.yaw = yawDeg * Math.PI / 180;
+    console.log(`[action] teleport -> [${pos.map((v) => v.toFixed(2)).join(', ')}] yaw ${yawDeg.toFixed(1)}`);
+  };
   let prevJump = false;
   let prevUse = false;
   console.log(`player: collider ${ctx.colliderTris} tris, ${ctx.actions.objects.size} activatables, walk=${walkMode}`);

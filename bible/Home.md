@@ -50,7 +50,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9: floating-origin streaming world (?world). Queue empty; routed rows (teleporters, platform riding, swim/levitate) wait in Ledger C.
-- `03-World/Player-Arc.md` - COMPLETE (P1-P8) + P9 LIVE-PLAY HARDENING (spawn placement, pointer lock, grounding, the stair regression, the FP-viewmodel fix; F8 debug HUD shipped). Successor: C8, then Systems.
+- `03-World/Player-Arc.md` - ACTIVE again. P1-P9 + P10 TELEPORTERS + DOOR LOCKS (2026-08-16: the Teleport/Lock/Unlock/Open/Close/Activate delegates verbatim, RDB starting locks + the look-at-lock text tiers, flat/marker actions joining the graph, and the repeated-block action-key collision found and fixed - 3108/4232 dungeons repeat blocks) SHIPPED. Next: swim/levitate motor.
 - `04-Characters/Characters-Arc.md` - PARKED (pivot 3: classic visuals). C8 shipped E1-E4b end to end + spectral; E4c deferred by Mac; remaining interims are Systems work (ledger below).
 - `05-Combat/Combat.md` - COMPLETE. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, and the collision-trigger seam all shipped. Build queue EMPTY; Systems-shared interims tracked in the ledger.
 - `08-Audio/Audio.md` - ACTIVE. A1 SHIPPED (2026-08-14): WebAudio playback over the SND reader - doors, swings, hits, enemy attract/attack, all constants verbatim (see the arc record). Next: action PlaySound indices, torch/animal ambient sources, music strategy.

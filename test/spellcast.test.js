@@ -62,7 +62,7 @@ test('spellcast: the CastSpell action cooldown gate fires through the sink', () 
   const sys = new ActionSystem({ addMesh() {}, removeMesh() {}, removeBucket() {} }, {
     castSpell: (index, origin) => fired.push([index, origin]),
   });
-  const o = sys.addEffect(5, { actionFlag: ACTION_FLAGS.CastSpell, index: 12, magnitude: 0, axisRaw: 0, isFlat: false, nextObject: -1 }, [1, 2, 3]);
+  const o = sys.addEffect(0, 5, { actionFlag: ACTION_FLAGS.CastSpell, index: 12, magnitude: 0, axisRaw: 0, isFlat: false, nextObject: -1 }, [1, 2, 3]);
   sys.receive(o);
   assert.deepEqual(fired, [[12, [1, 2, 3]]]);            // one tick of 45.45 crosses 0 from 0
   assert.ok(CASTSPELL_COOLDOWN_TICK > 45 && MISSILE_SPEED === 25);

@@ -15,7 +15,7 @@ import { CityLightAnimator } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
-import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S } from '../world/actionSystem.js';
+import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, lookAtLockText } from '../world/actionSystem.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
@@ -132,8 +132,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   };
 
-  for (const b of dungeon.blocks) {
+  // P10: teleport destinations resolve through a per-block-instance
+  // position index (destinations are usually actionless editor flats
+  // that live in no other runtime structure). Keys are `${ns}:${pos}`
+  // where ns = the block INSTANCE index - positions are block-local
+  // byte offsets and 3108/4232 dungeons repeat blocks.
+  const positionIndex = new Map();
+  for (const [bi, b] of dungeon.blocks.entries()) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
+    for (const [pos, e] of b.layout.objectPositions) {
+      positionIndex.set(`${bi}:${pos}`, { pos: [e.x + b.originX, e.y, e.z + b.originZ], yawDeg: e.yawDeg });
+    }
     for (const p of b.layout.placements) {
       const matrix = multiply(originMatrix, p.matrix);
       const gpu = await getGpuMesh(p.modelIdNum);
@@ -141,7 +150,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       await ensureRemap(p.modelIdNum);
       const cpu = cpuModels.get(p.modelIdNum);
       if (p.action && MOVE_ACTION_FLAGS.has(p.action.actionFlag)) {
-        const o = actions.addAction(p.position, cpu, matrix, p.action);
+        const o = actions.addAction(bi, p.position, cpu, matrix, p.action);
         // Audit 06f: movers carry their AT-REST bounds so step-on
         // platforms (classic Collision01 elevators) collision-trigger;
         // the pass only tests movers while parked at 'start', where
@@ -152,11 +161,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         continue;
       }
       if (p.action && EFFECT_ACTION_FLAGS.has(p.action.actionFlag)) {
-        // Hurt/Poison/DrainMagicka/CastSpell: chain-participating
-        // logic object; the model stays static (draw + collider
-        // below). Origin = the placement translation (CastSpell
-        // fires missiles from here, +40*GlobalScale up, verbatim).
-        const eo = actions.addEffect(p.position, p.action, [matrix[12], matrix[13], matrix[14]]);
+        // Hurt/Poison/DrainMagicka/CastSpell/Teleport: chain-
+        // participating logic object; the model stays static (draw +
+        // collider below). Origin = the placement translation
+        // (CastSpell fires missiles from here, +40*GlobalScale up,
+        // verbatim).
+        const eo = actions.addEffect(bi, p.position, p.action, [matrix[12], matrix[13], matrix[14]]);
         eo.aabb = worldAabb(cpu.positions, matrix);   // collision triggers test against this
       }
       drawList.push({ mesh: gpu, matrix });
@@ -168,13 +178,29 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const matrix = multiply(originMatrix, d.matrix);
       const gpu = await getGpuMesh(d.modelIdNum);
       await ensureRemap(d.modelIdNum);
-      const o = actions.addDoor(cpuModels.get(d.modelIdNum), matrix);
+      // P10: the starting lock (RDB LOCK_VALUES) + the door's own
+      // action record join the runtime (Lock/Unlock/Open/Close/
+      // Teleport chains land on doors).
+      const o = actions.addDoor(cpuModels.get(d.modelIdNum), matrix, { ns: bi, position: d.position, action: d.action, lock: d.startingLockValue });
       dynamicDraws.push({ gpu, object: o });
     }
     for (const f of b.layout.flats) {
       const key = `${f.archive}_${f.record}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([f.x + b.originX, f.y, f.z + b.originZ]);
+      if (f.action && EFFECT_ACTION_FLAGS.has(f.action.actionFlag)) {
+        // P10: actioned FLATS join the graph too - 25 of the corpus's
+        // 84 teleporters ride flats (the pre-P10 runtime dropped
+        // every flat action on the floor).
+        actions.addEffect(bi, f.position, f.action, [f.x + b.originX, f.y, f.z + b.originZ]);
+      }
+    }
+    for (const m of b.layout.markers) {
+      // P10: editor markers (199) carry actions too (3 corpus
+      // teleporters); treasure markers (archive set) stay data-only.
+      if (!m.archive && m.action && EFFECT_ACTION_FLAGS.has(m.action.actionFlag)) {
+        actions.addEffect(bi, m.position, m.action, [m.x + b.originX, m.y, m.z + b.originZ]);
+      }
     }
     for (const l of collectDungeonLights(b.dfBlock)) {
       lights.push({ x: l.x + b.originX, y: l.y, z: l.z + b.originZ, range: l.range });
@@ -348,6 +374,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let chargenFlow = null;
   let activeOverlay = null;
   const hudText = new HudText();   // U5: classic popup messages
+  // P10 action seams: teleport destination resolution (the scene
+  // installs onTeleport to warp its motor) + the classic look-at-lock
+  // text on a refused locked door (LookAtInteriorLock, chance-tiered
+  // over the LIVE lockpicking skill).
+  actions.resolvePosition = (ns, key) => positionIndex.get(`${ns}:${key}`) ?? null;
+  actions.onLockedDoor = (o) => hudText.add(lookAtLockText(o.lock, playerEntity.level, skillValue(playerEntity, SKILLS.Lockpicking)));
   const clickCast = new OneShotLatch();   // classic click-to-cast: armed by readying
   let pendingClickCast = false;
   let lastPlayerFeet = null;   // S11: the save position
@@ -812,6 +844,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       actions: [...actions.objects.values()].map((o) => ({
         key: o.key, state: o.state, t: o.t ?? 0,
         activationCount: o.activationCount ?? 0,
+        ...(o.kind === 'door' ? { lock: o.lock } : {}),   // P10: door locks persist
       })),
     };
   }
@@ -832,6 +865,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       o.state = sa.state;
       o.t = sa.t;
       o.activationCount = sa.activationCount;
+      if (o.kind === 'door' && sa.lock != null) o.lock = sa.lock;   // P10
+      actions.syncRestored(o);   // P10: matrix + collider bucket settle (an open door no longer restores solid-and-closed)
     });
   }
 

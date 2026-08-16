@@ -486,3 +486,59 @@ change to live-executed code is unverified until it is played; (2)
 read what is actually on the screen before theorizing about what is
 behind it. Mac diagnosed the decisive bug from one look; the F8
 instrument exists so that evidence, not theory, drives the next fix.
+
+## P10 (teleporters + door locks - the routed action rows): SHIPPED
+
+The Ledger C "Teleport, Activate, LockDoor, UnlockDoor" row, verbatim
+from DFU DaggerfallAction delegates + DaggerfallActionDoor +
+PlayerActivate.LookAtInteriorLock + RDBLayout's lock table:
+
+- **Door locks**: the RDB starting lock (the 16-entry LOCK_VALUES
+  table indexed by TriggerFlag_StartingLock >> 4, already decoded in
+  rdbLayout) now reaches the runtime door. CurrentLockValue > 0 =
+  locked, >= 20 = magically held. A locked closed door REFUSES the
+  player's toggle and shows the verbatim LookAtInteriorLock text
+  (all five tiers: magicLock at >= 20; chance = clamp(5*(level -
+  lockValue) + LIVE lockpicking, 5, 95) picks lockpickChance1/2/3 or
+  the 10-entry array). Opening clears the lock (Open() tail). Locks
+  persist in the S12 world snapshot. RESIDUAL (honest): lockpicking
+  (steal-mode activation) and bashing (attack trigger, chance
+  20 - lockValue) pend the interaction-mode UI; routed in Ledger C.
+- **The delegates**: Teleport (0x0e) - player position/rotation = the
+  NEXT object's transform (destinations resolve through a per-block
+  position index because they are usually ACTIONLESS editor flats;
+  the chain cascade no-ops into them, exactly DFU's null
+  GetComponent). The scene warp reuses PlayerMotor.spawn (velY
+  zeroed, re-grounds on the destination floor; DFU's FreezeMotor
+  0.5s carry-suppression is inert here - velocity is per-frame
+  input). LockDoor (0x10) - 16 when not already locked ("don't know
+  what setting Daggerfall uses here"). UnlockDoor (0x11) - 0.
+  OpenDoor (0x12) - unlock + open. CloseDoor (0x14) - close +
+  RESTORE StartingLockValue. Activate (0x1e) - the verbatim DFU
+  no-op. All six ride the door's OWN action record (DFU
+  GetDoor(thisAction.gameObject)); a door without an action stays
+  unreachable by chains, verbatim.
+- **Actioned FLATS join the action graph**: 25 of the corpus's 84
+  teleporters (and other effect actions on archives 199/202/206/210/
+  211/213/346) ride flats - the pre-P10 runtime registered MODEL
+  actions only and dropped every flat action on the floor. Editor
+  markers (199) with actions register too; treasure markers stay
+  data-only.
+- **BUG FOUND AND FIXED - the repeated-block key collision**: action
+  keys were block-LOCAL byte offsets (`act:{position}`); 3108 of
+  4232 dungeons repeat at least one RDB block, so repeated blocks'
+  objects overwrote each other in the runtime map - the earlier
+  copy stopped ticking and its collider bucket collided. Every key
+  is now namespaced by block INSTANCE (`act:{ns}:{position}`), and
+  chains resolve inside their own block. (Old world snapshots' act:*
+  rows no longer match and reset to built state; door:N keys are
+  unchanged.)
+- **BUG FOUND AND FIXED - open doors restored solid**: the S12 world
+  restore set door state without settling the matrix or collider
+  bucket, so a door saved OPEN restored drawn-closed and solid.
+  applyWorld now runs syncRestored (matrix recompute + bucket
+  reconcile) for doors and movers.
+
+2 net tests (action.test.js 3 -> 5: the lock model + text tiers +
+delegates, teleport + the namespace pin). Suite 308/75, ARENA2 corpus
+308/308 green pre-commit.

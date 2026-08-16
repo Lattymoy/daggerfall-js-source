@@ -295,6 +295,7 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
   const lights = [];
   const exitDoors = [];
   const actionLinks = new Map(); // position -> { nextKey, prevKey, action }
+  const objectPositions = new Map(); // position -> { x, y, z, yawDeg } - P10 teleport destinations (any object, actionless included)
 
   const addModelLink = (obj, action) => {
     if (!actionLinks.has(obj.position)) {
@@ -324,9 +325,11 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
         actionDoors.push({
           modelIdNum,
           matrix,
+          position: obj.position,   // P10: doors join the chain graph (Lock/Unlock/Open/Close ride the door's own action)
           startingLockValue: LOCK_VALUES[mr.triggerFlagStartingLock >> 4],
           action,
         });
+        objectPositions.set(obj.position, positionEntryFromMatrix(matrix, obj));
         if (acts) addModelLink(obj, action);
         continue;
       }
@@ -336,6 +339,7 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
       if (staticDoors) exitDoors.push(...staticDoors);
 
       placements.push({ modelIdNum, matrix, action, position: obj.position });
+      objectPositions.set(obj.position, positionEntryFromMatrix(matrix, obj));
       if (acts) addModelLink(obj, action);
     } else if (obj.type === RDB_RESOURCE_TYPES.Flat) {
       const fr = obj.resources.flatResource;
@@ -373,11 +377,12 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
           actionLinks.set(obj.position, { nextKey: fr.nextObjectOffset, prevKey: -1, action });
         }
       } else {
-        flats.push({ archive: fr.textureArchive, record: fr.textureRecord, x, y, z, action });
+        flats.push({ archive: fr.textureArchive, record: fr.textureRecord, x, y, z, action, position: obj.position });
         if (acts && !actionLinks.has(obj.position)) {
           actionLinks.set(obj.position, { nextKey: fr.nextObjectOffset, prevKey: -1, action });
         }
       }
+      objectPositions.set(obj.position, { x, y, z, yawDeg: 0 });   // flats carry no rotation (a flat teleport destination faces the marker's identity)
     } else if (obj.type === RDB_RESOURCE_TYPES.Light) {
       lights.push({
         x: obj.xPos * GLOBAL_SCALE,
@@ -408,7 +413,17 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
 
   return {
     placements, actionDoors, flats, markers, startMarkers, enterMarkers,
-    lights, exitDoors, actionLinks, waterLevel, castleBlock,
+    lights, exitDoors, actionLinks, objectPositions, waterLevel, castleBlock,
+  };
+}
+
+/** Teleport-destination transform for a model object: the placement
+ *  translation + the Y rotation DFU's transform carries (degreesY =
+ *  -yRotation / RotationDivisor - the player lands facing it). */
+function positionEntryFromMatrix(matrix, obj) {
+  return {
+    x: matrix[12], y: matrix[13], z: matrix[14],
+    yawDeg: -obj.resources.modelResource.yRotation / ROTATION_DIVISOR,
   };
 }
 

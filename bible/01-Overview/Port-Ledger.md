@@ -114,7 +114,8 @@ World layout:
 | Transition + activation sounds: action PlaySound index, ladder climb, enter/exit stingers (door open/close SHIPPED in A1 - dungeon clips on the activate seam) | DaggerfallActionDoor, DaggerfallAction, DaggerfallAudioSource | Audio arc (the P2/P4-P6 systems expose the trigger points) |
 | ~~Non-movement RDB action flags: CastSpell, Hurt21-25, DrainMagicka~~ SHIPPED (S4b + the trap seam; Poison still pends the disease/poison slice) | DaggerfallAction delegates | Combat arc (magic/damage) |
 | Non-movement RDB action flags: ShowText, ShowTextWithInput, DoorText | DaggerfallAction delegates | UI arc (message boxes) + Systems (text records) |
-| Non-movement RDB action flags: Teleport, Activate, LockDoor, UnlockDoor | DaggerfallAction delegates | Player arc (teleporters) + Systems (locks; P2 skips the IsLocked path) |
+| ~~Non-movement RDB action flags: Teleport, Activate, LockDoor, UnlockDoor~~ SHIPPED (P10: + OpenDoor/CloseDoor, door starting locks, the look-at-lock text tiers, flat/marker actions joining the graph, the repeated-block key-collision fix) | DaggerfallAction delegates | Player arc |
+| Door lockpicking (steal-mode activation, the failed-skill-level latch) + bashing (attack trigger, chance 20 - lockValue, castle aggro) | DaggerfallActionDoor.AttemptLockpicking/AttemptBash | UI arc (interaction modes) + Combat (bash trigger) |
 | ~~Platform riding~~ SHIPPED 2026-08-14 (groundKey contact identity + mover frame deltas through the resolver - the DFU MoveWithMovingPlatform shape; rooted Mac's out-of-bounds ejection report) | DFU parents the player transform | Player arc |
 | Swimming + levitation motor | LevitateMotor, GetSwimSpeed | Player arc |
 | Quest monster names (MonsterName) | NameHelper.GetRandomMonsterName - rolls the bank on UnityEngine.Random, quest-facing | Systems arc (name banks + data shipped C2) |
