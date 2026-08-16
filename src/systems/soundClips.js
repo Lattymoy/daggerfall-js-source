@@ -15,6 +15,8 @@ export const SOUND = {
   AnimalCow: 103,
   SwingLowPitch: 105,
   SwingHighPitch: 106,
+  FallDamage: 91,     // P14: PlayerFootsteps on ApplyPlayerFallDamage
+  FallHard: 92,       // P14: PlayerFootsteps on HardFallAlert
   Hit1: 108,          // Hit1..Hit5 = 108..112; DFU rolls Hit1 + Range
   Hit2: 109,
   SplashLarge: 342,

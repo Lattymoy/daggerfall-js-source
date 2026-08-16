@@ -12,7 +12,10 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
 import { convertTilemap } from '../world/terrainSurface.js';
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
-import { PlayerMotor } from '../player/motor.js';
+import { PlayerMotor, FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
+import { jumpSpeedMultiplier } from '../systems/skills.js';
+import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
+import { SOUND } from '../systems/soundClips.js';
 import { Collider } from '../player/collider.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { createDataPipeline } from './dataPipeline.js';
@@ -246,7 +249,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(collider);
+  const player = new PlayerMotor(collider, undefined, { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14)
   // ENGINE RIG (slice 2, ?rig): the canonical animated character in
   // the world - same body, same animate.js runtime as the viewer.
   // Spawned near the player at terrain height (proper grounding =
@@ -359,11 +362,19 @@ export async function bootExterior(canvas, renderer, params, status) {
         forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
         strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
         run: keys.has('ShiftLeft'),
-        jump: jumpHeld && !latch.jump,
+        jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
         crouch: crouchHeld && !latch.crouch,
       }, cam.yaw);
-      latch.jump = jumpHeld;
       latch.crouch = crouchHeld;
+      // P14 fall damage (host parity; the outdoor-water exemption is
+      // FLAGGED here exactly as in world.js - no tile lookup yet).
+      if (player.landedFallDistance > FALL_DAMAGE_THRESHOLD) {
+        playerEntity.health = Math.max(0, playerEntity.health - Math.trunc(FALL_HP_PER_METRE * (player.landedFallDistance - FALL_DAMAGE_THRESHOLD)));
+        surfacePlayer();
+        audio.playOneShot(SOUND.FallDamage);
+      } else if (player.landedFallDistance > FALL_DAMAGE_THRESHOLD / 2) {
+        audio.playOneShot(SOUND.FallHard);   // BadFallDetected
+      }
       cam.pos = player.eye;
       const useHeld = keys.has('KeyE');
       if (useHeld && !latch.use && !modes.transitioning) {
