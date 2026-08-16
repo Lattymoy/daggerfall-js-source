@@ -49,6 +49,7 @@ import { applySpell, tickActiveEffects, hasActiveEffect, maxFatigue } from '../s
 import { FATIGUE_LOSS, maxBreath } from '../systems/statMods.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { updatePoisons, inflictPoison, rollEnemyWeaponPoison } from '../systems/poisons.js';
+import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
 import { dice100 } from '../combat/formulas.js';
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
@@ -539,12 +540,43 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // S15 fatigue sinks: RAW fatigue points (the effect door applies the
   // x64). SetFatigue clamps 0..MaxFatigue (max derived LIVE - a
   // drained strength lowers the ceiling). INTERIM (loud): the
-  // exhaustion consumer (classic collapse at fatigue 0) pends its
-  // slice; fatigue floors at 0 with no further consequence here.
+  // S20: SetFatigue's exhaustion event - hitting 0 with health left
+  // raises OnExhausted (once; the popup guard mirrors DFU's
+  // displayingExhaustedPopup so rapid drains - the Somnalius case -
+  // never stack collapses).
+  let _exhaustedShowing = false;
   function drainFatigue(n) {
     if (n <= 0) return;
     playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - n);
     surfacePlayer();
+    if (playerEntity.fatigue <= 0 && playerEntity.health > 0 && !_exhaustedShowing) onExhausted();
+  }
+  /** PlayerEntity's OnExhausted handler: no enemies nearby (a foe
+   *  actively seeing the player, or one inside the classic spawn
+   *  band - the P13 senses fields) and dry feet = one rest hour (the
+   *  clock advances 60 classic minutes, each pool recovers one
+   *  hour's rate, Medical tallies); near enemies or swimming = the
+   *  collapse KILLS. The text box is click-anywhere-to-close and
+   *  holds the motor like every overlay. */
+  function onExhausted() {
+    const enemiesNearby = foes.some((f) => !f.dead && ((f.ai.detected && f.ai.inSight) || f.ai.wouldBeSpawned));
+    const out = exhaustionOutcome({
+      enemiesNearby, swimming: _activity.swimming, entity: playerEntity,
+      day: false, inside: true,   // a dungeon rest: inside, no daylight (the InLight case pends exteriors with the rest UI)
+    });
+    const lines = out.inWater ? [EXHAUSTED_IN_WATER] : rscLines(out.textId);
+    if (!activeOverlay && lines) { activeOverlay = new ActionTextBox(lines); _exhaustedShowing = true; }
+    if (out.kind === 'rest') {
+      classicMinutes += 60;   // RaiseTime(1 hour) - the round loop catches up the magic rounds
+      playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + out.health);
+      playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + out.fatigue);
+      playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + out.magicka);
+      tallySkill(playerEntity, SKILLS.Medical);
+      surfacePlayer();
+    } else {
+      playerEntity.health = 0;   // SetHealth(0): the fatal collapse
+      surfacePlayer();
+    }
   }
   function restoreFatigue(n) {
     if (n <= 0) return;
@@ -1195,21 +1227,25 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         updatePoisons(f.entity, r + 1, foeSinks(f), Math.random);
         tickActiveEffects(f.entity, foeSinks(f));
       }
-      // P11: per-game-minute fatigue loss (PlayerEntity verbatim):
-      // default 11; running 88; swimming 44 on a FAILED roll vs the
-      // LIVE Swimming skill (success stays default) + the Swimming
-      // tally every swimming minute. Athleticism multiplier pends the
-      // career advantage flags (1.0, flagged); the Argonian exemption
-      // pends race selection.
-      {
-        let loss = FATIGUE_LOSS.Default;
-        if (_activity.running) loss = FATIGUE_LOSS.Running;
-        else if (_activity.swimming) {
-          if (!dice100(skillValue(playerEntity, SKILLS.Swimming))) loss = FATIGUE_LOSS.Swimming;   // Dice100.FailedRoll
-          tallySkill(playerEntity, SKILLS.Swimming);
-        }
-        drainFatigue(loss);
+    }
+    // P11: per-game-minute fatigue loss (PlayerEntity verbatim):
+    // default 11; running 88; swimming 44 on a FAILED roll vs the
+    // LIVE Swimming skill (success stays default) + the Swimming
+    // tally. S20 parity fix: DFU applies the loss ONCE per
+    // minute-CHANGE (`lastGameMinutes != gameMinutes` guards a single
+    // DecreaseFatigue - no loop over elapsed minutes), so a
+    // multi-minute jump (the collapse hour, rest) costs one minute's
+    // fatigue - the pre-S20 shape drained every caught-up round.
+    // Athleticism multiplier pends the career advantage flags (1.0,
+    // flagged); the Argonian exemption pends race selection.
+    if (Math.floor(classicMinutes) !== _prevMinute) {
+      let loss = FATIGUE_LOSS.Default;
+      if (_activity.running) loss = FATIGUE_LOSS.Running;
+      else if (_activity.swimming) {
+        if (!dice100(skillValue(playerEntity, SKILLS.Swimming))) loss = FATIGUE_LOSS.Swimming;   // Dice100.FailedRoll
+        tallySkill(playerEntity, SKILLS.Swimming);
       }
+      drainFatigue(loss);
     }
     const raised = raiseSkills(playerEntity, classicMinutes, Math.random, () => {
       // U3: the level-up screen replaces the headless auto-apply
@@ -1541,7 +1577,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
     },
     drawOverlay(canvas) {
-      if (!activeOverlay) return;
+      if (!activeOverlay) { _exhaustedShowing = false; return; }   // S20: the popup guard clears with the box (OnClose)
       if (!hudFont) {
         // Font-less: overlays cannot render. Chargen falls back to
         // the headless roll; a pending level-up applies headlessly;
