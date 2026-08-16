@@ -127,6 +127,6 @@ World layout:
 | OnMonsterHit special attack effects (audit F2 interim) | FormulaHelper.OnMonsterHit - disease/poison/drain/vampirism riders per landed monster hit; the multi-attack loop itself SHIPPED with the site flagged | Systems arc (disease/poison) |
 | Enchantment to-hit channel (audit F4) | DaggerfallEntity.ChanceToHitModifier inside CalculateSuccessfulHit - 0 until enchanted-item effects exist; site flagged in formulas.js | Systems arc (enchantments) |
 | Armor-value effect modifiers (audit F5) | Increased/DecreasedArmorValueModifier inside CalculateArmorToHit - 0 until their effects exist; site flagged in formulas.js | Systems arc (effect library) |
-| PatchRegionIndex legacy-save fix | MapsFile | Systems arc (saves) |
+| PatchRegionIndex legacy-save fix | MapsFile - a workaround for OLDER DFU SAVES missing regionIndex in quest SiteDetails (goto-from-log searching Alik'r); consumes the DFU quest-save format, which this port never loads. Dead code until the quest machine defines our quest-save shape - ships WITH the quest machine if its save shape ever needs it (2026-08-16 assessment) | Systems arc (quest machine) |
 | WorldDataReplacement / BuildingReplacement mod hooks | AssetInjection | Not planned (mod system) |
 | TangentSolver / lightmap UVs | MeshReader | Not planned (Unity-specific) |
