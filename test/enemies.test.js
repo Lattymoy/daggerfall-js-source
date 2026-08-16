@@ -70,12 +70,29 @@ test('enemies: fixed decode, 99 skip, passive, gender, water veto', () => {
   ])], { locationId: 1, dungeonType: 0 });
   assert.equal(out[0].reaction, 'passive');
   assert.equal(out[0].gender, 'female');
+  // useGenderFlag is FIXED-only (audit 2026-08-16): a random human's
+  // flags byte is the SLOT - a slot of 1 must not read as 'female'.
+  const rnd = collectDungeonEnemies([block([
+    { ...base, record: 15, factionOrMobileId: 0, flags: 1 },
+  ])], { locationId: 777, dungeonType: 17, playerLevel: 20 });   // Mixed Human table at 20: class picks (> 43) exist
+  for (const e of rnd) assert.equal(e.gender, 'unspecified', 'random enemies never read gender bits');
   // Water veto: Slaughterfish with no water is dropped; with water kept.
   const fishFixed = { ...base, record: 16, factionOrMobileId: MOBILE_TYPES.Slaughterfish, rawY: 500 };
   out = collectDungeonEnemies([block([fishFixed], 10000)], { locationId: 1, dungeonType: 0 });
   assert.equal(out.length, 0);
   out = collectDungeonEnemies([block([fishFixed], 400)], { locationId: 1, dungeonType: 0 });
   assert.equal(out.length, 1);
+});
+
+test('enemies: playerLevel drives the classic banding (wired, not stuck at 1)', () => {
+  const block = (markers) => ({ markers, waterLevel: 10000, originX: 0, originZ: 0 });
+  const marks = [];
+  for (let i = 1; i <= 6; i++) marks.push({ x: 0, y: 0, z: 0, rawY: 0, soundIndex: 0, actionByte: 0, factionOrMobileId: 0, record: 15, flags: i });
+  const lo = collectDungeonEnemies([block(marks)], { locationId: 4242, dungeonType: 0, playerLevel: 1 });
+  const hi = collectDungeonEnemies([block(marks)], { locationId: 4242, dungeonType: 0, playerLevel: 18 });
+  assert.equal(lo.length, hi.length);
+  assert.notDeepEqual(lo.map((e) => e.mobileType), hi.map((e) => e.mobileType),
+    'the same markers + stream must band differently at level 18 vs 1');
 });
 
 test('enemies: random slot semantics + water table routing', () => {

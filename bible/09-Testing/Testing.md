@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 307 tests across 77 files.
+Node 22). Suite: 308 tests across 77 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -58,7 +58,7 @@ Node 22). Suite: 307 tests across 77 files.
 | poses.test.js | 1 | Static pose table (POSES): melee1H well-formed, sagittal angles within joint ranges |
 | weapons.test.js | 2 | Verbatim DFU weapon data pins (enums, damage table, material mods/dyes, ApplyWeaponMaterial math incl. half-to-even weight round); Longsword piece well-formed on the armR fist |
 | names.test.js | 4 | Region->bank verbatim, deterministic name composition on DFRandom, Redguard female stream parity, 76-NPC exterior corpus (SENT7 lamp quirk) |
-| enemies.test.js | 5 | 45x20 encounter tables, classic pick replay, fixed/passive/gender/water rules, Privateer's Hold pin (42 enemies / 25 fixed) |
+| enemies.test.js | 6 | 45x20 encounter tables, classic pick replay, fixed/passive/gender/water rules (gender FIXED-only: random flags = slot), the LIVE playerLevel banding (level 18 vs 1 differ on the same stream), Privateer's Hold pin (42 enemies / 25 fixed) |
 | rig.test.js | 2 | Vendored Rewrite rig byte-parity vs canonical (16 bare-humanoid hashes), 710-face shape |
 | rigmath.test.js | 5 | Two-bone IK invariants: exact bone lengths, reach/clamp, pole side, degenerate-target guard |
 | paperdollart.test.js | 3 | Variant/cloak record resolution, material addressing (bases+morphology+clamps), plate-vs-leather band pins on 251 |
