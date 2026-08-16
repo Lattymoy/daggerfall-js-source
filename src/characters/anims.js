@@ -121,6 +121,9 @@ export const REACTIONS = {
 // EYE), and every sweep crosses the frame in its strike's direction.
 // Deltas start/end 0 so the viewmodel frame is exact at both ends.
 
+// ON ICE (2026-08-17, Mac): the FP voxel sweeps are parked with the
+// viewmodel (see characterSprite.js); PlayerWeapon.pose() and the
+// units pins stay green for the thaw.
 export const ATTACKS_FP = {
   StrikeDown: { dur: 0.50, tracks: {
     'armL.handPitch': [[0, 0], [0.30, -0.55], [0.38, -0.60, 'snap'], [0.56, 0.75, 'hold'], [0.60, 0.75, 'out'], [0.72, 0.85], [1, 0]],

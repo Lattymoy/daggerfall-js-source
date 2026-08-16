@@ -22,6 +22,7 @@ import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
+import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
 import { drawText, makeFont, measureText } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
@@ -329,11 +330,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const equip = await import('../combat/enemyEquipment.js');
     const { PlayerWeapon } = await import('../combat/playerWeapon.js');
     const { REACTIONS, sampleClip } = await import('../characters/anims.js');
-    const { drawFirstPersonViewmodel } = await import('../render/characterSprite.js');
-    const { EYE_HEIGHT } = await import('../player/motor.js');
+
     foeDeps = {
       PlayerWeapon, REACTIONS, sampleClip,
-      isBackFacing, drawFirstPersonViewmodel, EYE_HEIGHT,
+      isBackFacing,
       chooseEnemyWeapon: formulas.chooseEnemyWeapon,
       generateItems: generateLootItems,   // the static import (audit 06e: the dynamic pair was double-sourcing)
       assignEnemyEquipment: equip.assignEnemyEquipment,
@@ -851,9 +851,25 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // stands for melee).
     playerWeapon.weapon = { name: 'Short Bow', ...createWeapon(129, 0) };
   }
-  // E3d: the player's own body as the FP viewmodel - same authored
-  // rig, fpMelee1H base + the dedicated FP sweeps on the machine.
-  const viewmodelRig = playerWeapon ? foeDeps.createCharacterRig(renderer, foeDeps.buildRaceCharacter('Human', foeDeps.bodyRamps)) : null;
+  // The TRUE classic FP weapon (design pivot 2026-08-17): WEAPON*.CIF
+  // frames with the metal dye, drawn 320x200 screen-space per
+  // FPSWeapon - the voxel viewmodel rig is ON ICE (see the record in
+  // Combat.md; the iced surface keeps its exports + pins).
+  const fpwCache = new Map();   // `${type}:${material}` -> art (null while loading)
+  function fpsWeaponArtFor(item) {
+    if (!palette) return null;
+    const type = weaponTypeForItem(item);
+    if (type === WEAPON_TYPES.None) return null;
+    const material = item?.material ?? 0;
+    const key = `${type}:${material}`;
+    if (!fpwCache.has(key)) {
+      fpwCache.set(key, null);
+      loadFpsWeaponArt(fetchBytes, palette, renderer, type, material)
+        .then((art) => fpwCache.set(key, art))
+        .catch((e) => console.warn('[fpsWeapon] art load failed', key, e));
+    }
+    return fpwCache.get(key);
+  }
   let _atkDx = 0, _atkDy = 0, _atkHeld = false;   // event deltas, consumed once per frame
   const corpses = [];
   async function spawnCorpse(f) {
@@ -1414,17 +1430,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const mat = trs(p[0], p[1] - f.rig.liveFootY * s, p[2], 0, f.ai.yaw * 180 / Math.PI, 0, s, s, s);   // live support point, same grounding rule as the player rig
       _drawSprite(renderer, canvas, f.rig, mat, proj, view, eye);
     }
-    if (viewmodelRig && playerFeet && !_pParalyzed) {   // S19: ShowWeapons(false) while paralyzed
-      // LAST: the FP overlay composites over the whole frame
-      // (classic draws the weapon over everything). Camera yaw/pitch
-      // derive from the view matrix's back row.
-      const fw = [-view[2], -view[6], -view[10]];
-      const vYaw = Math.atan2(fw[0], fw[2]);
-      viewmodelRig.setPose(playerWeapon.pose());
-      viewmodelRig.update(dt);
-      // P12: the LIVE eye offset (crouch lowers the camera - the
-      // weapon parents to it, DFU camera hierarchy)
-      foeDeps.drawFirstPersonViewmodel(renderer, canvas, viewmodelRig, playerFeet, vYaw, eye[1] - playerFeet[1]);
+    if (playerWeapon && playerFeet && !_pParalyzed) {   // S19: ShowWeapons(false) while paralyzed (kept through the CIF pivot)
+      // LAST before the HUD: the classic weapon overlay composites
+      // over the whole frame (DaggerfallUI draws it under the HUD).
+      const art = fpsWeaponArtFor(playerWeapon.weapon);
+      if (art) drawFpsWeapon(renderer, canvas, art, playerWeapon.machine.state, playerWeapon.machine.frame);
     }
     // U1: HUD last (over the viewmodel), heading from the view
     // forward this file already derives (0 = +z, wrapped 0..1).

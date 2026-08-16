@@ -47,6 +47,10 @@ export function drawCharacterSprite(renderer, canvas, rig, rigMat, proj, view, e
  * fixed RT (both shrink together so the overlay never squashes;
  * pixel size grows slightly past ~3.5k-wide displays).
  */
+// ON ICE (2026-08-17, Mac): the voxel FP viewmodel is parked in
+// favor of the TRUE classic method (combat/fpsWeapon.js, WEAPON*.CIF
+// per FPSWeapon). No consumer; kept whole with its probe
+// (tools/fpProbe.mjs) and pins for a reversible thaw.
 export function drawFirstPersonViewmodel(renderer, canvas, rig, feet, yaw, eyeHeight) {
   const wantW = canvas.clientWidth / CHAR_PIXEL, wantH = canvas.clientHeight / CHAR_PIXEL;
   const scale = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);

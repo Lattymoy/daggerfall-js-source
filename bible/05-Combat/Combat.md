@@ -49,3 +49,28 @@ enemy-rigs arc; full records live in 04-Characters/Characters-Arc.md):
   and UI.
 - Systems-shared interims tracked in the Home ledger: TallySkill,
   proficiency/racial mods, poisoned weapons, stealth checks.
+
+## The FP weapon: the TRUE classic method (design pivot 2026-08-17, Mac-directed)
+
+The voxel FP viewmodel (C8 E3d + the 2026-08-16 framing fix) is ON
+ICE, not deleted: Mac's call is the Daggerfall method 1:1 with the
+true art. combat/fpsWeapon.js is the live path - WEAPON*.CIF frames
+(WEAPO1xx enchanted variants included) through the shared CifRciFile
+reader, ItemHelper's template-index -> WeaponType mapping, the metal
+dye over palette band 0x70-0x7F (dyes.js tables), and FPSWeapon's
+320x200 screen-space alignment verbatim. The DFU-verbatim swing
+STATE MACHINE (weaponStates.js), the hit resolution, drag-to-swing,
+the touch attack button, and the audio seams are all untouched - only
+the render swapped. S19's ShowWeapons(false)-while-paralyzed gate
+carried through the pivot.
+
+THE ICED SURFACE stays whole for a reversible thaw: characterSprite's
+drawFirstPersonViewmodel, anims' ATTACKS_FP sweeps, PlayerWeapon's
+pose() with its units pins, and tools/fpProbe.mjs - each annotated ON
+ICE at the site. tools/fpsWeaponProbe.mjs is the live path's standing
+probe (real ARENA2 CIFs headless; zero coverage in any state is the
+failure class the voxel path shipped for six weeks). Gallery:
+public/visual-changes/combat-fp/classic-weapon/. Departures at the
+module head: no FlipHorizontal (right-hand only until a settings
+surface), weaponOffsetHeight 0 (no large HUD yet). Follow-up rollout:
+the exterior/interior hosts (the voxel path was dungeon-only too).
