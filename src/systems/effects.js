@@ -27,6 +27,7 @@
 
 import { savingThrow, rollMagnitude, EFFECT_FLAGS } from './spellcast.js';
 import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue } from './statMods.js';
+import { dice100 } from '../combat/formulas.js';
 
 export { FATIGUE_MULTIPLIER, maxFatigue };
 
@@ -95,6 +96,20 @@ export const isHealFatigue = (e) => e.type === 10 && e.subType === 9;
 export const isDamageFatigue = (e) => e.type === 4 && e.subType === 1;
 export const isContinuousDamageFatigue = (e) => e.type === 1 && e.subType === 1;
 export const isRegenerate = (e) => e.type === 18 && classicSub(e) === 255;
+// S19: Paralyze (0, 255) - duration + CHANCE, no magnitude. The
+// entity is paralyzed while a 'paralyze' entry is live
+// (ConstantEffect sets IsParalyzed every frame; presence = paralyzed
+// here). Scene consumers: player motor input/jump zeroed, weapons
+// hidden, foe motor+attack frozen (FrictionMotor/AcrobatMotor/
+// WeaponManager/EnemyMotor/EnemyAttack gates). Casting is NOT gated
+// (DFU has no IsParalyzed check in the casting path).
+export const isParalyze = (e) => e.type === 0 && classicSub(e) === 255;
+
+/** BaseEntityEffect.ChanceValue, verbatim: base + plus x
+ *  floor(casterLevel / perLevel) - NO min-1 clamp (unlike duration);
+ *  the per-0 guard is ours. */
+export const chanceValue = (e, casterLevel) =>
+  e.chanceBase + e.chanceMod * Math.floor(casterLevel / Math.max(1, e.chancePerLevel));
 
 /** Duration in rounds, verbatim (straight arithmetic, no roll).
  *  The per-level multiplier CLAMPS AT 1 (audit F11 - DFU SetDuration:
@@ -388,6 +403,28 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       }
       continue;
     }
+    if (isParalyze(e)) {
+      // Paralyze (0, 255): AssignBundle's exact gate order. The
+      // chance rolls ALWAYS (SetChanceSuccess runs in Start); an
+      // incumbent re-cast stacks its rounds INSIDE Start (AddState)
+      // BEFORE the chance and saving-throw gates - so a re-cast
+      // always stacks, chance/save notwithstanding (verbatim quirk).
+      // A NEW instance needs the chance, then (no-magnitude effects,
+      // non-CasterOnly) the entity saves against the ENTIRE effect
+      // on a FULL save. Flags = Paralysis | the spell's element.
+      const rounds = rollDuration(e, casterLevel);
+      const chanceOk = dice100(chanceValue(e, casterLevel), rolls());
+      if (rounds > 0) {
+        const inc = target.activeEffects?.find((a) => a.kind === 'paralyze');
+        if (inc) inc.roundsRemaining += rounds;
+        else if (chanceOk &&
+                 (!saveScaled || savingThrow(spell.element, EFFECT_FLAGS.Paralysis | flag, target, 0, rolls) !== 0)) {
+          pushActive(target, { kind: 'paralyze', roundsRemaining: rounds }, sinks, rolls);
+          out.paralyzed = (out.paralyzed ?? 0) + 1;   // "You are paralyzed." rides this (player hosts, once per instance)
+        }
+      }
+      continue;
+    }
     const kind = buffKind(e);
     if (kind) {
       const rounds = rollDuration(e, casterLevel);
@@ -417,6 +454,7 @@ export function effectActiveIdentity(e) {
   if (isDrainAttribute(e)) return { kind: 'drainAttribute', stat: STAT_KEYS_ORDER[e.subType] };
   if (isTransferAttribute(e)) return { kind: 'transferAttribute', stat: STAT_KEYS_ORDER[e.subType] };
   if (isRegenerate(e)) return { kind: 'regenerate' };
+  if (isParalyze(e)) return { kind: 'paralyze' };
   const b = buffKind(e);
   return b ? { kind: b } : null;
 }

@@ -278,8 +278,12 @@ export function createWorldModes(host) {
       player.levitating = dungeonCtx.playerLevitating();
       player.waterWalking = dungeonCtx.playerWaterWalking();
     }
-    const moving = keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD');
-    player.update(dt, {
+    // S19 paralysis host parity (the standing host rule): movement
+    // input zeroed, jump cancelled - the player still falls; look
+    // stays live (FrictionMotor/AcrobatMotor verbatim gates).
+    const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : false;
+    const moving = !paralyzed && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
+    player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false } : {
       forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
       strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
       run: keys.has('ShiftLeft'),

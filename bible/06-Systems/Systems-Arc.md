@@ -609,9 +609,53 @@ OnMonsterHit/InflictDisease/FatigueDamage:
 12 tests (diseases.test.js). Suite 339/79, ARENA2 corpus 339/339
 green pre-commit.
 
+## S19a (Paralyze + the spider rider): SHIPPED
+
+Verbatim from DFU Paralyze.cs + EntityEffectManager.AssignBundle +
+the IsParalyzed consumer gates. Also bagged en route: the classic
+subType BYTE-CAST parity fix (its own commit - real records read
+0xFF as -1 and the 255-keyed doors never fired; see effects.js
+classicSub).
+
+- **Effect** (effects.js): isParalyze (0, 255) - duration + CHANCE,
+  no magnitude; presence of a { kind: 'paralyze' } entry IS the
+  paralysis (ConstantEffect's IsParalyzed, queried via
+  hasActiveEffect). ChanceValue = base + plus x floor(level/per), NO
+  min-1 clamp (unlike duration). AssignBundle's exact gate order
+  ported: the chance rolls ALWAYS (SetChanceSuccess in Start); an
+  incumbent re-cast stacks its rounds INSIDE Start (AddState) BEFORE
+  the chance and saving-throw gates - so a re-cast always stacks,
+  chance/save notwithstanding (verbatim quirk, pinned); a NEW
+  instance needs the chance, then non-CasterOnly no-magnitude
+  effects save against the ENTIRE effect on a FULL save (flags =
+  Paralysis | element). "You are paralyzed." (youAreParalyzed) fires
+  once per new instance on player hosts via applySpellToPlayer.
+  Spellcost gains the (0,255) row (duration 28/100 + chance 28/100,
+  Alteration).
+- **The rider closed** (diseases.js): spider/giant scorpion
+  free-cast classic spell 66 ("Spider Touch", ByTouch) at a
+  not-yet-paralyzed target - FindIncumbentEffect<Paralyze> == null
+  gate inline, SetReadySpell noSpellPointCost=true through the
+  scene's castParalyze closure (castEnemySpell grew the free-cast
+  arg; the touch cast rides the S16 point-blank missile shape).
+- **Consumers** (the verbatim gate set): player - FrictionMotor
+  cancels ALL movement input (falling/platforms continue),
+  AcrobatMotor cancels jump, LevitateMotor cancels levitate movement
+  (input zeroed in BOTH hosts - dungeon.js and worldModes.js, the
+  standing host rule), WeaponManager hides weapons + holds the
+  machine; casting is NOT gated (DFU has no IsParalyzed check in the
+  casting path); look stays live. Foes - EnemyMotor (CanAct false +
+  FreezeAnims: senses/pursuit stop, the rig holds its frame) and
+  EnemyAttack (no decisions, no damage frame); EnemySounds barks
+  stay ungated, verbatim. FreeAction's IsImmuneToParalysis pends its
+  effect; god mode pends.
+
+3 net tests (effects 15, diseases 13, spellcost pins). Suite 341/79,
+ARENA2 corpus 341/341 green pre-commit.
+
 ## Queue
-- Magic remainder: S19 - poisons, the Cure family (3, 0..2),
-  Paralyze (classic spell 66 closes the spider/scorpion rider);
+- Magic remainder: S19b poisons (PoisonEffect's 12 variants +
+  minute ticks + weapon poison), S19c the Cure family (3, 0..2);
   enchantment economy/value.
 - Fatigue consumers: exhaustion collapse at 0, running/swimming
   drain, rest recovery (CalculateFatigueRecoveryRate).

@@ -331,3 +331,50 @@ test('effects: a fortified stat raises combat output (liveStat fronts the formul
   base.activeEffects = [{ kind: 'drainAttribute', stat: 'agility', magnitude: 20, permanent: true }];
   assert.equal(statsToHit(base, foe), -2);
 });
+
+test('effects: S19 Paralyze (0,255) - chance, the full-save gate, the AddState-first quirk', async () => {
+  const { isParalyze, chanceValue, effectActiveIdentity, hasActiveEffect } = await import('../src/systems/effects.js');
+  // The classic key accepts both subType spellings (0xFF reads -1)
+  assert.ok(isParalyze({ type: 0, subType: -1 }));
+  assert.ok(isParalyze({ type: 0, subType: 255 }));
+  assert.ok(!isParalyze({ type: 0, subType: 0 }));
+  assert.equal(effectActiveIdentity({ type: 0, subType: 255 }).kind, 'paralyze');
+  // ChanceValue: base + plus * floor(level/per) - Spider Touch's real
+  // record (5, 15, 1) at level 3 = 50
+  const par = { type: 0, subType: -1, durationBase: 1, durationMod: 1, durationPerLevel: 1, chanceBase: 5, chanceMod: 15, chancePerLevel: 1 };
+  assert.equal(chanceValue(par, 3), 50);
+  // CasterOnly: chance roll 49 < 50 succeeds, NO save (self-cast) -
+  // duration 1 + 1*3 = 4, initial round consumed at cast (F17)
+  const t = T();
+  const r = applySpell({ element: 4, rangeType: 0, effects: [par] }, 3, t, {}, seq(0.49));
+  assert.equal(r.paralyzed, 1);
+  assert.ok(hasActiveEffect(t, 'paralyze'));
+  assert.equal(t.activeEffects[0].roundsRemaining, 3);
+  // Chance fail consumes ONE roll and never reaches the save
+  let rolls = 0;
+  const t2 = T();
+  const r2 = applySpell({ element: 4, rangeType: 2, effects: [par] }, 3, t2, {}, () => { rolls++; return 0.99; });
+  assert.equal(r2.paralyzed ?? 0, 0);
+  assert.equal(rolls, 1);
+  assert.ok(!hasActiveEffect(t2, 'paralyze'));
+  // Ranged + chance ok + FULL save (throw 55, roll 1 outside the
+  // 20-band -> 0): the entity saves against the ENTIRE effect
+  const t3 = T();
+  applySpell({ element: 4, rangeType: 2, effects: [par] }, 3, t3, {}, seq(0.49, 0));
+  assert.ok(!hasActiveEffect(t3, 'paralyze'));
+  // Ranged + chance ok + failed save (roll 100 > 55) lands
+  applySpell({ element: 4, rangeType: 2, effects: [par] }, 3, t3, {}, seq(0.49, 0.99));
+  assert.ok(hasActiveEffect(t3, 'paralyze'));
+  assert.equal(t3.activeEffects[0].roundsRemaining, 3);
+  // The AddState-first quirk: AddState stacks rounds INSIDE Start,
+  // BEFORE AssignBundle's chance and save gates - a re-cast with a
+  // FAILED chance still stacks (and rolls no save)
+  rolls = 0;
+  const r3 = applySpell({ element: 4, rangeType: 2, effects: [par] }, 3, t3, {}, () => { rolls++; return 0.99; });
+  assert.equal(rolls, 1);   // the chance roll alone
+  assert.equal(t3.activeEffects[0].roundsRemaining, 7);   // 3 + 4, no initial round for the joiner
+  assert.equal(r3.paralyzed ?? 0, 0);   // no NEW instance -> no fresh alert
+  // Expiry restores the query
+  for (let i = 0; i < 8; i++) tickActiveEffects(t3, {});
+  assert.ok(!hasActiveEffect(t3, 'paralyze'));
+});

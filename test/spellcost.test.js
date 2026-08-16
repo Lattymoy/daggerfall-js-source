@@ -26,6 +26,10 @@ test('spellcost: component math, averaged magnitude, skill scaling per effect', 
   // record must hit '25,255', not the fudge)
   const slowReal = { ...slow, subType: -1 };
   assert.equal(effectCost(slowReal, (id) => skills[id]).gold, 160);
+  // S19 Paralyze (0,255): duration (28,100) + chance (28,100) on
+  // Spider Touch's real record - 28*1+100*1 + 28*5+100*15 = 1768
+  const par = { type: 0, subType: -1, durationBase: 1, durationMod: 1, durationPerLevel: 1, chanceBase: 5, chanceMod: 15, chancePerLevel: 1 };
+  assert.equal(effectCost(par, (id) => skills[id]).gold, 128 + 1640);
 });
 
 test('spellcost: target multipliers on the sums + the floor 5', () => {

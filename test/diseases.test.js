@@ -264,3 +264,23 @@ test('diseases: permanent marker constants + the ids stay pinned', () => {
   assert.equal(DISEASES.WizardFever, 16);
   assert.equal(DISEASES.None, -1);
 });
+
+test('diseases: S19 spider/scorpion rider - free-cast Spider Touch, incumbent-paralysis veto', async () => {
+  const { SPIDER_TOUCH_SPELL_INDEX } = await import('../src/systems/diseases.js');
+  assert.equal(SPIDER_TOUCH_SPELL_INDEX, 66);
+  // An unparalyzed target: the rider fires the scene's castParalyze
+  // closure (SetReadySpell noSpellPointCost=true), consuming no rolls
+  let casts = 0;
+  const p = P();
+  onMonsterHit({ careerIndex: MOBILE_TYPES.Spider }, p, 3, {
+    rolls: () => { throw new Error('no roll'); }, castParalyze: () => casts++,
+  });
+  assert.equal(casts, 1);
+  // GiantScorpion shares the case row
+  onMonsterHit({ careerIndex: MOBILE_TYPES.GiantScorpion }, p, 3, { castParalyze: () => casts++ });
+  assert.equal(casts, 2);
+  // FindIncumbentEffect<Paralyze> != null vetoes the cast
+  p.activeEffects = [{ kind: 'paralyze', roundsRemaining: 3 }];
+  onMonsterHit({ careerIndex: MOBILE_TYPES.Spider }, p, 3, { castParalyze: () => casts++ });
+  assert.equal(casts, 2);
+});

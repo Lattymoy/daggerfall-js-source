@@ -30,11 +30,11 @@
 // OnMonsterHit is the monster special-attack rider table, called
 // per-hit from CalculateAttackDamage's weaponless multi-attack loop
 // (FormulaHelper.cs:662) BEFORE the hit damage lands. Spider/
-// GiantScorpion queue classic spell 66 (Paralyze) - FLAGGED pending
-// the Paralyze effect (S19); Werewolf/Wereboar (lycanthropy) and the
-// Vampire specialInfectionChance branch (vampirism) are ROUTED to the
-// vampirism/lycanthropy line - their rolls are consumed verbatim so
-// sequences match.
+// GiantScorpion free-cast classic spell 66 (Spider Touch - Paralyze,
+// S19) at a not-yet-paralyzed target; Werewolf/Wereboar (lycanthropy)
+// and the Vampire specialInfectionChance branch (vampirism) are
+// ROUTED to the vampirism/lycanthropy line - their rolls are consumed
+// verbatim so sequences match.
 
 import { savingThrow, EFFECT_FLAGS } from './spellcast.js';
 import { FATIGUE_MULTIPLIER } from './statMods.js';
@@ -107,6 +107,10 @@ export const DISEASE_LIST_C = Object.freeze([
 /** FormulaHelper.specialInfectionChance (percent on a 0..100 float
  *  roll - vampirism/lycanthropy transmission). */
 export const SPECIAL_INFECTION_CHANCE = 0.6;
+
+/** The classic SPELLS.STD index spiders/scorpions cast on hit
+ *  (GetClassicSpellRecord(66) - "Spider Touch", Paralyze ByTouch). */
+export const SPIDER_TOUCH_SPELL_INDEX = 66;
 
 /**
  * DiseaseEffect.Start + the AddState rule: create the live disease
@@ -222,10 +226,10 @@ export function fatigueDamage(target, damage, sinks) {
 /**
  * FormulaHelper.OnMonsterHit, verbatim rider table - called per hit
  * (hitDamage > 0) from the monster multi-attack loop. deps: rolls,
- * currentDay, sinks (the TARGET's), onContract(diseaseType, entry).
- * Spider/GiantScorpion: classic spell 66 (Paralyze) - FLAGGED pending
- * the Paralyze effect (S19). Werewolf/Wereboar/Vampire special
- * infections: ROUTED (vampirism/lycanthropy line) - rolls consumed.
+ * currentDay, sinks (the TARGET's), onContract(diseaseType, entry),
+ * castParalyze (the scene's free-cast of classic spell 66 from the
+ * attacker - S19). Werewolf/Wereboar/Vampire special infections:
+ * ROUTED (vampirism/lycanthropy line) - rolls consumed.
  */
 export function onMonsterHit(attacker, target, damage, deps = {}) {
   const { rolls = Math.random, currentDay = 0, sinks = null, onContract = null } = deps;
@@ -241,8 +245,12 @@ export function onMonsterHit(attacker, target, damage, deps = {}) {
       break;
     case MOBILE_TYPES.Spider:
     case MOBILE_TYPES.GiantScorpion:
-      // FLAGGED: queue classic spell 66 (Paralyze) on the attacker
-      // unless the target is already paralyzed - pends Paralyze (S19)
+      // S19: the attacker casts classic spell 66 (Spider Touch -
+      // Paralyze) unless the target is already paralyzed
+      // (FindIncumbentEffect<Paralyze> == null gate). SetReadySpell
+      // noSpellPointCost=true - the scene's castParalyze closure is
+      // a free cast through the enemy spell seam.
+      if (!target.activeEffects?.some((a) => a.kind === 'paralyze') && deps.castParalyze) deps.castParalyze();
       break;
     case MOBILE_TYPES.Werewolf:
     case MOBILE_TYPES.Wereboar:

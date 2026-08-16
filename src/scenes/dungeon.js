@@ -217,8 +217,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
       player.swimming = surf != null && player.pos[1] + 0.9 + 50 * 0.025 - 0.95 < surf;
       player.levitating = ctx.playerLevitating();
       player.waterWalking = ctx.playerWaterWalking();
-      const moving = keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD');
-      player.update(dt, {
+      // S19 paralysis: FrictionMotor cancels ALL movement input (the
+      // player still falls / rides platforms), AcrobatMotor cancels
+      // the jump, LevitateMotor cancels levitate movement. Look
+      // stays live (no DFU gate on mouselook).
+      const paralyzed = ctx.playerParalyzed?.() ?? false;
+      const moving = !paralyzed && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
+      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false } : {
         forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
         strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
         run: keys.has('ShiftLeft'),
