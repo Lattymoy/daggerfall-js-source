@@ -3,9 +3,11 @@
 // AcrobatMotor / PlayerAdvanced controller (MIT, Daggerfall Workshop):
 //   - classicToUnitySpeedUnitRatio 39.5 (Allofich's measurement),
 //     dfWalkBase 150, dfCrouchBase 50.
-//   - Walk = (LiveSpeed + 150) / 39.5; Run = walk * (1.35 +
-//     RunningSkill / 200); Crouch = (LiveSpeed + 50) / 39.5;
-//     Sneak = speed / 2 - 1 / 39.5.
+//   - Walk = (LiveSpeed + 150 - drag) / 39.5 where drag = 0.5 x
+//     (100 - max(30, LiveSpeed)) (audit 2026-08-16e F1 - the drag
+//     term was missing); Run = UNDRAGGED base x (1.35 + Running/200)
+//     with the crouch base while crouched; Crouch = (LiveSpeed + 50)
+//     / 39.5; Sneak = speed / 2 - 1 / 39.5 (input pends).
 //   - jumpSpeed 4.5, gravity 20 (AcrobatMotor defaults).
 //   - P11 swimming/levitation (LevitateMotor): camera-directed
 //     movement with no gravity; levitate at the 4.0 constant; swim =
@@ -40,12 +42,23 @@ export const EYE_HEIGHT = 1.7;
 export const CROUCH_HEIGHT = 0.9;
 export const CROUCH_EYE_HEIGHT = 0.8;
 
+/** PlayerSpeedChanger.GetWalkSpeed, verbatim (audit 2026-08-16e F1):
+ *  drag = 0.5 x (100 - max(30, LiveSpeed)) rides the WALK base only -
+ *  the pre-audit port dropped the term and walked ~14% fast at SPD
+ *  50 ((50+150)/39.5 vs DFU's (50+150-25)/39.5). */
 export function walkSpeed(liveSpeed) {
-  return (liveSpeed + DF_WALK_BASE) / CLASSIC_TO_UNITY_RATIO;
+  const drag = 0.5 * (100 - (liveSpeed >= 30 ? liveSpeed : 30));
+  return (liveSpeed + DF_WALK_BASE - drag) / CLASSIC_TO_UNITY_RATIO;
 }
 
-export function runSpeed(liveSpeed, runningSkill) {
-  return walkSpeed(liveSpeed) * (1.35 + runningSkill / 200);
+/** GetRunSpeed, verbatim: the run base is UNDRAGGED - (LiveSpeed +
+ *  150) / 39.5, or the CROUCH base while crouched (and not swimming)
+ *  - x (1.35 + Running / 200). Decoupled from walkSpeed in the F1
+ *  audit fix (the old walk-x-mult shape only matched DFU because
+ *  walk lacked its drag). */
+export function runSpeed(liveSpeed, runningSkill, crouching = false) {
+  const base = (liveSpeed + (crouching ? DF_CROUCH_BASE : DF_WALK_BASE)) / CLASSIC_TO_UNITY_RATIO;
+  return base * (1.35 + runningSkill / 200);
 }
 
 export function crouchSpeed(liveSpeed) {
@@ -167,10 +180,12 @@ export class PlayerMotor {
       return;
     }
 
-    // GetBaseSpeed: the crouch penalty replaces walk/run outright
-    // (and never applies while swimming - that branch is above).
+    // GetBaseSpeed + ApplyInputSpeedAdjustment (audit F1): walking
+    // crouched = the crouch base; RUNNING crouched = GetRunSpeed's
+    // crouch branch (crouch base x the run multiplier - DFU lets you
+    // run while crouched); neither applies while swimming (above).
     const speed = this.crouching
-      ? crouchSpeed(this.stats.speed)
+      ? (input.run ? runSpeed(this.stats.speed, this.stats.running, true) : crouchSpeed(this.stats.speed))
       : input.run
         ? runSpeed(this.stats.speed, this.stats.running)
         : walkSpeed(this.stats.speed);

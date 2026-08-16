@@ -285,7 +285,8 @@ export function createWorldModes(host) {
     const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : false;
     const crouchHeld = keys.has('KeyX');
     const moving = !paralyzed && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
-    player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false } : {
+    // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
+    player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
       forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
       strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
       run: keys.has('ShiftLeft'),

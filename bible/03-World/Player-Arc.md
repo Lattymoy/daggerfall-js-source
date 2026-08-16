@@ -630,7 +630,7 @@ PlayerHeightChanger/PlayerSpeedChanger + HUDBreathBar:
   with the eye at 0.8 (the same 0.1-below-top law as the documented
   1.7 standing eye); toggled on the KeyX edge in BOTH hosts (DFU's
   default Crouch C is this port's castSpell - documented departure);
-  crouchSpeed replaces walk/run outright (GetBaseSpeed - and never
+  crouchSpeed replaces the walk (GetBaseSpeed - and never
   applies while swimming, that branch precedes it); the collider
   grew a per-call capsule height (foes share the instance - a
   mutable field would have resized THEM); standing back up runs the

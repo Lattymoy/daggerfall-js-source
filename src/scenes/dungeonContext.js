@@ -609,7 +609,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const spell = spellsByIndex?.get(index);
     if (!spell || !origin) { if (!spellsByIndex) console.warn('[spellcast] SPELLS.STD unavailable; CastSpell no-op'); return; }
     const from = [origin[0], origin[1] + 40 * GLOBAL_SCALE, origin[2]];
-    missiles.push({ spell, pos: from, dir: null, age: 0, batch: null });
+    // Audit 2026-08-16e F2: trap bundles are CASTERLESS - DFU's
+    // CalculateCasterLevel(null) = 1 for magnitude, duration AND
+    // chance (the pre-audit shape fell back to the player's level).
+    missiles.push({ spell, casterLevel: 1, pos: from, dir: null, age: 0, batch: null });
   }
 
   // S5: player casting - the readied spell is ?spell=N or the FIRST

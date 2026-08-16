@@ -75,10 +75,10 @@ binding; interleaving a new pass exposed drawMesh's assumption.
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-16d, the A3 slice)
+## Open flags (regenerated 2026-08-16d, the 16e audit)
 
-Regenerated at the A3 close (scene ambience carries no new flags;
-castle detection/cemeteries/music pend in the arc's residual list).
+Regenerated at the 2026-08-16e pre-merge audit close (line numbers
+refreshed after the F1-F4 fixes; no flags opened or closed).
 Every row below is a live
 INTERIM/FLAGGED/PENDING site in src; the code comment at each site is
 the authority. `src/render/characterSprite.js` FP framing constants
@@ -99,10 +99,10 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/scenes/dungeonContext.js:424` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:438` - "database FLAGGED" narrows to the skill/loot message ids).
 - `src/scenes/dungeonContext.js:537` - drained strength lowers the ceiling). INTERIM (loud): the
-- `src/scenes/dungeonContext.js:618` - FLAGGED: DFU recomputes per-effect via the cost tables (that
-- `src/scenes/dungeonContext.js:620` - FLAGGED to the effect library (caster-only buffs, touch, areas).
-- `src/scenes/dungeonContext.js:811` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/dungeonContext.js:1450` - actions) is FLAGGED - the player snapshot only.
+- `src/scenes/dungeonContext.js:621` - FLAGGED: DFU recomputes per-effect via the cost tables (that
+- `src/scenes/dungeonContext.js:623` - FLAGGED to the effect library (caster-only buffs, touch, areas).
+- `src/scenes/dungeonContext.js:814` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:1453` - actions) is FLAGGED - the player snapshot only.
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/chargen.js:6` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
@@ -127,6 +127,53 @@ stay open to Mac's eye in live play (probe-locked).
 ## Audits
 
 Newest first.
+
+**2026-08-16e - the pre-merge audit of the S18/S19/P12/A3 stretch
+(a8de400..HEAD).** Re-diffed every slice shipped on this lane since
+the 16c audit against DFU source, swept the cross-cutting invariants
+(host parity, roll orders, Dice100 semantics, save round-trips,
+casterless levels), closed green on real ARENA2 (357/357) with BOTH
+shot probes (dungeon ?foes + exterior) rendering. FOUR REAL
+FINDINGS, fixed at root: (F1, the big one) the WALK-SPEED DRAG TERM
+- DFU's GetWalkSpeed is (SPD + 150 - drag)/39.5 with drag = 0.5 x
+(100 - max(30, SPD)); our P1-era walkSpeed dropped the term and the
+player walked ~14% fast at SPD 50 ever since. The fix forced two
+verbatim companions: the RUN base is UNDRAGGED (the old
+walk-x-multiplier run only matched DFU because walk lacked its
+drag - decoupled), and GetRunSpeed has a CROUCH branch (crouch base
+x run multiplier - running while crouched is real in DFU; P12 had
+crouch swallow run). Swimming inherits the fix through its walk
+base, verbatim (LevitateMotor's GetSwimSpeed(GetBaseSpeed()) - no
+run adjustment while swimming, confirmed). (F2) trap CastSpell
+missiles ran at the PLAYER's level - DFU casterless bundles run
+CalculateCasterLevel(null) = 1 for magnitude, duration AND chance;
+they now carry casterLevel 1. (F3) the S19a paralysis input gate
+also swallowed the crouch toggle - DFU's DecideHeightAction has no
+paralysis check (FrictionMotor zeroes movement only); crouch stays
+live while paralyzed in both dungeon hosts. (F4) host parity,
+again: the two EXTERIOR walk motors (world.js walk mode,
+exterior.js walk mode) never received P12's crouch input - the
+standing per-host rule caught its third violation; both wired.
+VERIFIED CLEAN (the negative results that matter): Dice100
+semantics (Range(0,100) < chance) match our dice100 everywhere the
+S18/S19 chance rolls ride it; the poison variant switch re-read
+row by row (Range EXCLUSIVE-hi args, call order); the AssignBundle
+gate order + AddState-first quirk pinned as shipped; the disease
+FAT/SPL raw-units rule confirmed against DecreaseFatigue's default
+multiplier; A3's clip ids/waits re-checked against the enum and the
+serialized scene; exterior ambience sits BELOW worldModes' early
+return (never plays indoors); the new save fields
+(currentBreath, statMods maps, poison/paralyze entries) all
+round-trip pinned. ACCEPTED STRUCTURAL NOTE (documented, not a
+bug): our per-round pass runs diseases -> poisons -> other effects
+as three walks where DFU interleaves by bundle assignment order;
+per-round aggregates are identical, only intra-round side-effect
+ordering differs, and no consumer observes it. The stale
+"08-Audio not started" Home line and the P12 "crouch replaces
+walk/run outright" prose corrected. Lesson, same as 16c but now
+three-for-three: A SEAM SHIPS IN EVERY HOST THAT OWNS A MOTOR -
+world.js and exterior.js walk modes are motors too, not just the
+dungeon pair.
 
 **2026-08-16c - the post-merge audit (parity pass + host-parity
 sweep).** Full pass over the two-lane merge (`4f19fb5`), closed green

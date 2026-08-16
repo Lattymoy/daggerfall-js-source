@@ -227,7 +227,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const paralyzed = ctx.playerParalyzed?.() ?? false;
       const crouchHeld = keys.has('KeyX');
       const moving = !paralyzed && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
-      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false } : {
+      // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
+      // gates movement/jump only (DecideHeightAction has no check).
+      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !prevCrouch } : {
         forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
         strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
         run: keys.has('ShiftLeft'),
