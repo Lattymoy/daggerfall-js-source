@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 298 tests across 76 files.
+Node 22). Suite: 306 tests across 77 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -25,6 +25,7 @@ Node 22). Suite: 298 tests across 76 files.
 | blocks.test.js | 4 | 1295-block corpus, resource closure, FixRdbData |
 | dungeon.test.js | 13 | dfRandom LCG, texture tables, RDB matrix order, action records, overlap removal, Privateer's Hold, 187-RDB closure, full 4232-dungeon sweep, R6 light collection pins, per-light flicker bounds, R7 water corpus (32/187) + Maorn pins |
 | monstercareer.test.js | 1 | ENEMY{nnn}.CFG careers from a crafted MONSTER.BSA through the shared BsaFile+ClassFile readers: fields real on the entity, session cache proven (throwing re-fetch), missing-index null path |
+| actionchain.test.js | 8 | the Play cascade through EVERY flag (relays: Teleport/Activate/text/quest/Unknowns), chained doors keyed act:<position> running their OWN verb (OpenDoor unlock+open, CloseDoor close+relock-to-starting, Lock 16-if-unlocked, Unlock 0), special doors (verbatim DaggerfallActionDoorSpecial swing, C# `OpenDoor || CloseDoor && !door` precedence pinned), ExecuteActionOnToggle on the player toggle through the Door trigger gate (Direct-gated records stay silent), None-flag chained doors cascade without swinging |
 | activate.test.js | 1 | activationTargets single source: effect objects target on their precomputed aabb (crash regression - scenes read o.cpu on cpu-less traps), relays excluded, cpu path transformed through the matrix, door reach default |
 | playerweapon.test.js | 3 | verbatim reach 2.25+0.25 + view/LOS hit rule + the swing-mod table, drag-gesture -> mapped strike on the shared machine (threshold + release reset), hit-frame kill through the full chain (deterministic rolls) + reach/dead gating |
 | weaponPose.test.js | 2 | sampleClip UNITS regression (audit 2026-08-16): FP pose frames 2-3 sample the clip (phase * dur mapping pinned against a direct seconds sample), every enemy 1H clip samples at frame 3 (short durs died under phase-as-seconds) |

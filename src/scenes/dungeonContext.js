@@ -14,8 +14,8 @@ import { collectDungeonLights } from '../world/dungeonLights.js';
 import { CityLightAnimator } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
-import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
-import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S } from '../world/actionSystem.js';
+import { RDB_SIDE } from '../world/rdbLayout.js';
+import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, classifyPlacementAction } from '../world/actionSystem.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
@@ -131,6 +131,30 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   };
 
+  // One registration path for acting FLATS (audit 2026-08-16: flat and
+  // marker actions were never registered - classic flat levers/trigger
+  // zones were dead). The box brackets the billboard the way DFU's
+  // AddAction BoxCollider brackets the flat; effects keep their verbatim
+  // origin; a move-flag flat has no mesh to tween here, so it relays -
+  // the chain lives, the motion is INTERIM (loud) until flats can tween.
+  const registerFlatAction = async (position, action, x, y, z, archive, record) => {
+    let aabb = null;
+    const t = await getTexture(archive);
+    if (t && record < t.recordCount) {
+      const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+      aabb = {
+        min: [x - size.w / 2, y - size.h / 2, z - size.w / 2],
+        max: [x + size.w / 2, y + size.h / 2, z + size.w / 2],
+      };
+    }
+    if (EFFECT_ACTION_FLAGS.has(action.actionFlag)) {
+      const eo = actions.addEffect(position, action, [x, y, z]);
+      if (aabb) eo.aabb = aabb;
+    } else {
+      actions.addRelay(position, action, aabb);
+    }
+  };
+
   for (const b of dungeon.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     for (const p of b.layout.placements) {
@@ -139,24 +163,44 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!gpu) continue;
       await ensureRemap(p.modelIdNum);
       const cpu = cpuModels.get(p.modelIdNum);
-      if (p.action && MOVE_ACTION_FLAGS.has(p.action.actionFlag)) {
-        const o = actions.addAction(p.position, cpu, matrix, p.action);
-        // Audit 06f: movers carry their AT-REST bounds so step-on
-        // platforms (classic Collision01 elevators) collision-trigger;
-        // the pass only tests movers while parked at 'start', where
-        // the static AABB is truthful.
-        o.aabb = worldAabb(cpu.positions, matrix);
-        o.restOnlyTrigger = true;
-        dynamicDraws.push({ gpu, object: o });
-        continue;
-      }
-      if (p.action && EFFECT_ACTION_FLAGS.has(p.action.actionFlag)) {
-        // Hurt/Poison/DrainMagicka/CastSpell: chain-participating
-        // logic object; the model stays static (draw + collider
-        // below). Origin = the placement translation (CastSpell
-        // fires missiles from here, +40*GlobalScale up, verbatim).
-        const eo = actions.addEffect(p.position, p.action, [matrix[12], matrix[13], matrix[14]]);
-        eo.aabb = worldAabb(cpu.positions, matrix);   // collision triggers test against this
+      if (p.action) {
+        // Verbatim AddActionModelHelper classification (audit
+        // 2026-08-16: only move/effect registered before - every
+        // chain through a Teleport/Activate/verb/text object died,
+        // and lever-driven stone doors never swung).
+        const cls = classifyPlacementAction(p.action.actionFlag, false);
+        if (cls === 'move') {
+          const o = actions.addAction(p.position, cpu, matrix, p.action);
+          // Audit 06f: movers carry their AT-REST bounds so step-on
+          // platforms (classic Collision01 elevators) collision-trigger;
+          // the pass only tests movers while parked at 'start', where
+          // the static AABB is truthful.
+          o.aabb = worldAabb(cpu.positions, matrix);
+          o.restOnlyTrigger = true;
+          dynamicDraws.push({ gpu, object: o });
+          continue;
+        }
+        if (cls === 'specialDoor') {
+          // DaggerfallActionDoorSpecial: OpenDoor (or CloseDoor on a
+          // non-door) turns a plain model into a hinged special door -
+          // own bucket, swings on the chain or the player's hand.
+          const o = actions.addSpecialDoor(p.position, cpu, matrix, p.action);
+          dynamicDraws.push({ gpu, object: o });
+          continue;
+        }
+        if (cls === 'effect') {
+          // Hurt/Poison/DrainMagicka/CastSpell: chain-participating
+          // logic object; the model stays static (draw + collider
+          // below). Origin = the placement translation (CastSpell
+          // fires missiles from here, +40*GlobalScale up, verbatim).
+          const eo = actions.addEffect(p.position, p.action, [matrix[12], matrix[13], matrix[14]]);
+          eo.aabb = worldAabb(cpu.positions, matrix);   // collision triggers test against this
+        } else {
+          // Relay: the delegate is routed (Teleport/text/quest) or a
+          // verbatim no-op; the CHAIN through it must live, and its
+          // collider makes it a Direct/Attack/collision target.
+          actions.addRelay(p.position, p.action, worldAabb(cpu.positions, matrix));
+        }
       }
       drawList.push({ mesh: gpu, matrix });
       collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix);
@@ -167,13 +211,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const matrix = multiply(originMatrix, d.matrix);
       const gpu = await getGpuMesh(d.modelIdNum);
       await ensureRemap(d.modelIdNum);
-      const o = actions.addDoor(cpuModels.get(d.modelIdNum), matrix);
+      // Chain key + own action record + the starting lock (audit
+      // 2026-08-16: all three were dropped - chained doors were
+      // unreachable and locks had no state to gate on).
+      const o = actions.addDoor(cpuModels.get(d.modelIdNum), matrix, {
+        positionKey: d.position, action: d.action, startingLockValue: d.startingLockValue,
+      });
       dynamicDraws.push({ gpu, object: o });
     }
     for (const f of b.layout.flats) {
       const key = `${f.archive}_${f.record}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([f.x + b.originX, f.y, f.z + b.originZ]);
+      if (f.action) await registerFlatAction(f.position, f.action, f.x + b.originX, f.y, f.z + b.originZ, f.archive, f.record);
+    }
+    for (const m of b.layout.markers) {
+      // Acting markers join the runtime too (DFU AddActionFlatHelper
+      // runs for EVERY flat with action > 0, editor flats included).
+      // Records 15/16 are SetActive(false) in DFU - Receive early-outs
+      // on inactive objects, so their actions are inert; preserved by
+      // skipping them (audit 2026-08-16).
+      if (!m.action || m.record === 15 || m.record === 16) continue;
+      await registerFlatAction(m.position, m.action, m.x + b.originX, m.y, m.z + b.originZ, m.archive ?? 199, m.record);
     }
     for (const l of collectDungeonLights(b.dfBlock)) {
       lights.push({ x: l.x + b.originX, y: l.y, z: l.z + b.originZ, range: l.range });

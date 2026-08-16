@@ -22,7 +22,7 @@
 // milestone, standing collision is correct at every instant).
 
 import { trs, multiply } from './mat4.js';
-import { ACTION_FLAGS, TRIGGER_FLAGS } from './rdbLayout.js';
+import { ACTION_FLAGS, TRIGGER_FLAGS, MOVE_ACTION_FLAGS } from './rdbLayout.js';
 import { CASTSPELL_COOLDOWN_TICK } from '../systems/spellcast.js';   // single source (DaggerfallAction 45.454546)
 
 // The RDB effect-action family (DaggerfallAction delegates that hurt
@@ -43,6 +43,32 @@ export const EFFECT_ACTION_FLAGS = new Set([
   ACTION_FLAGS.Hurt24, ACTION_FLAGS.Hurt25, ACTION_FLAGS.Poison,
   ACTION_FLAGS.DrainMagicka, ACTION_FLAGS.CastSpell,
 ]);
+
+// The door-verb family (DaggerfallAction delegates that act on the
+// door the action record is ATTACHED to - thisAction.gameObject):
+//   LockDoor (0x10): CurrentLockValue = 16 if not already locked.
+//   UnlockDoor (0x11): CurrentLockValue = 0.
+//   OpenDoor (0x12): unlock + open if closed.
+//   CloseDoor (0x14): close if open, then re-lock to StartingLockValue.
+// The IsLocked gate on the PLAYER toggle stays routed (Ledger: locks
+// ship as one unit with bash + lockpicking); the lock VALUES are live
+// here so the verbs are verbatim the day the gate lands.
+export const DOOR_VERB_FLAGS = new Set([
+  ACTION_FLAGS.LockDoor, ACTION_FLAGS.UnlockDoor,
+  ACTION_FLAGS.OpenDoor, ACTION_FLAGS.CloseDoor,
+]);
+
+/** Verbatim RDBLayout AddActionModelHelper classification for a placed
+ *  model with an action record. C# precedence kept exactly:
+ *  `OpenDoor || (CloseDoor && !IsActionDoor)` - OpenDoor makes a
+ *  special door out of anything; CloseDoor only out of non-doors. */
+export function classifyPlacementAction(actionFlag, isActionDoor = false) {
+  if (MOVE_ACTION_FLAGS.has(actionFlag)) return 'move';
+  if (EFFECT_ACTION_FLAGS.has(actionFlag)) return 'effect';
+  if (actionFlag === ACTION_FLAGS.OpenDoor
+    || (actionFlag === ACTION_FLAGS.CloseDoor && !isActionDoor)) return 'specialDoor';
+  return 'relay';
+}
 
 // DaggerfallAction.Receive's verbatim trigger gate: which trigger
 // TYPES each RDB TriggerFlag accepts. ActionObject (chain cascade)
@@ -134,9 +160,38 @@ export class ActionSystem {
     // Poison: verbatim DFU no-op stub (preserved).
   }
 
-  /** Register an action door (own bucket, closed-solid lifecycle). */
-  addDoor(cpu, baseMatrix) {
-    const key = `door:${this._doorCount++}`;
+  /** Register a chain RELAY: an acting object whose delegate is routed
+   *  elsewhere (Teleport, Activate, ShowText, SetGlobalVar, the
+   *  Unknowns...) or is a verbatim no-op. DFU's Play() cascades
+   *  ActivateNext for EVERY flag before the delegate runs, so these
+   *  must live in the chain or every link through them dies (audit
+   *  2026-08-16). aabb (when given) makes it a Direct/Attack/collision
+   *  target like DFU's collider-carrying models. */
+  addRelay(positionKey, action, aabb = null) {
+    const key = `act:${positionKey}`;
+    const o = {
+      key,
+      kind: 'relay',
+      actionFlag: action.actionFlag ?? ACTION_FLAGS.None,
+      index: action.index,
+      state: 'start',
+      nextKey: action.nextObject,
+      triggerFlag: action.triggerFlag ?? TRIGGER_FLAGS.None,
+      aabb,
+    };
+    this.objects.set(key, o);
+    return o;
+  }
+
+  /** Register an action door (own bucket, closed-solid lifecycle).
+   *  opts (audit 2026-08-16): positionKey keys the door into the chain
+   *  (act:<pos>) so LinkActionNodes-resolved nextObject reaches it;
+   *  action is the door's OWN record (fires on player toggle through
+   *  the Door trigger gate, verbatim ExecuteActionOnToggle);
+   *  startingLockValue seeds currentLockValue. */
+  addDoor(cpu, baseMatrix, opts = {}) {
+    const key = opts.positionKey != null ? `act:${opts.positionKey}` : `door:${this._doorCount++}`;
+    const a = opts.action ?? null;
     const o = {
       key,
       kind: 'door',
@@ -147,11 +202,31 @@ export class ActionSystem {
       translation: { x: 0, y: 0, z: 0 },
       state: 'start', // start | forward | end | reverse
       t: 0,
-      nextKey: -1,
+      actionFlag: a ? (a.actionFlag ?? ACTION_FLAGS.None) : ACTION_FLAGS.None,
+      index: a ? a.index : 0,
+      magnitude: a ? a.magnitude : 0,
+      axisRaw: a ? a.axisRaw : 0,
+      isFlat: false,
+      activationCount: 0,
+      nextKey: a ? a.nextObject : -1,
+      triggerFlag: a ? (a.triggerFlag ?? TRIGGER_FLAGS.None) : TRIGGER_FLAGS.None,
+      startingLockValue: opts.startingLockValue ?? 0,
+      currentLockValue: opts.startingLockValue ?? 0,
       matrix: baseMatrix,
     };
     this.objects.set(key, o);
     this.collider.addMesh(key, cpu.positions, cpu.indices, baseMatrix);
+    return o;
+  }
+
+  /** Register a SPECIAL door (verbatim DaggerfallActionDoorSpecial):
+   *  a plain placed model whose action flag is OpenDoor (or CloseDoor
+   *  on a non-door) swings like a hinged door - same -90/1.5s and the
+   *  same collider lifecycle - and its own record chains/fires like
+   *  any action. No lock (the special door has none in DFU). */
+  addSpecialDoor(positionKey, cpu, baseMatrix, action) {
+    const o = this.addDoor(cpu, baseMatrix, { positionKey, action });
+    o.special = true;
     return o;
   }
 
@@ -200,10 +275,21 @@ export class ActionSystem {
   }
 
   _play(o) {
-    // ActivateNext cascades BEFORE this object's own tween.
+    // ActivateNext cascades BEFORE this object's own delegate, for
+    // EVERY flag (verbatim Play; relays exist for exactly this).
     const next = this.objects.get(`act:${o.nextKey}`);
     if (next) this.receive(next);
     if (o.kind === 'effect') { this._runEffect(o); return; }
+    if (o.kind === 'relay') return;   // delegate routed or a verbatim no-op; the cascade above IS the behavior
+    if (o.kind === 'door') {
+      // A door reached through the chain runs ITS OWN delegate on
+      // itself (DFU: GetComponent on thisAction.gameObject). Door-verb
+      // flags act; None cascades only (a chained None-flag door does
+      // NOT open in DFU); effects run; anything else relays.
+      if (DOOR_VERB_FLAGS.has(o.actionFlag)) { this._doorVerb(o); return; }
+      if (EFFECT_ACTION_FLAGS.has(o.actionFlag)) { this._runEffect(o); return; }
+      return;
+    }
     if (o.duration <= 0) {
       // Instant flip, still honoring the state cycle.
       o.state = o.state === 'start' || o.state === 'reverse' ? 'end' : 'start';
@@ -219,22 +305,68 @@ export class ActionSystem {
     else if (o.state === 'end') o.state = 'reverse';
   }
 
-  /** Player activation entry: doors toggle, actions receive. */
+  /** ToggleDoor: no-op while moving; trigger (bucket gone) at
+   *  open-start, solid again only at close-complete. Opening clears
+   *  the lock (verbatim Open tail: CurrentLockValue = 0). Returns
+   *  true when the toggle started. */
+  toggleDoor(o) {
+    if (o.state === 'forward' || o.state === 'reverse') return false;
+    if (o.state === 'start') {
+      o.state = 'forward';
+      o.currentLockValue = 0;
+      this.collider.removeBucket(o.key);
+      this.onDoorState?.(o, true);    // A1: the audio seam (open)
+    } else {
+      o.state = 'reverse';
+      this.onDoorState?.(o, false);   // A1: the audio seam (close)
+    }
+    return true;
+  }
+
+  // The door-verb delegates, verbatim DaggerfallAction (each acts on
+  // the door the record is attached to). ToggleDoor's moving guard
+  // stands in for DFU's mid-tween iTween re-fire (a re-fire while
+  // moving re-tweens in DFU; here it waits - the settled states match).
+  _doorVerb(o) {
+    const F = ACTION_FLAGS;
+    if (o.actionFlag === F.OpenDoor) {
+      if (o.state === 'end') return;            // already open
+      o.currentLockValue = 0;                   // unlock + open
+      this.toggleDoor(o);
+    } else if (o.actionFlag === F.CloseDoor) {
+      if (o.state !== 'end') return;            // only closes an OPEN door
+      this.toggleDoor(o);
+      o.currentLockValue = o.startingLockValue; // re-lock to the starting value
+    } else if (o.actionFlag === F.LockDoor) {
+      if (o.currentLockValue <= 0) o.currentLockValue = 16; // "don't know what setting Daggerfall uses here"
+    } else if (o.actionFlag === F.UnlockDoor) {
+      o.currentLockValue = 0;
+    }
+  }
+
+  /** Verbatim ExecuteActionOnToggle: a door that is ALSO an action
+   *  object fires its record on the PLAYER toggle, through the Door
+   *  trigger gate (gate first - it guards the cascade too). The
+   *  door-verb-on-self is skipped: the player toggle IS the verb (DFU
+   *  reaches the same settled state through a re-entrant ToggleDoor
+   *  that its moving guard mostly no-ops; the observable outcomes -
+   *  chain fired once, door toggled once - are identical). */
+  _execOwnAction(o) {
+    if (o.actionFlag === ACTION_FLAGS.None && o.nextKey === -1) return;
+    const allowed = TRIGGER_GATE[o.triggerFlag ?? TRIGGER_FLAGS.None];
+    if (!allowed || !allowed.includes('Door')) return;
+    const next = this.objects.get(`act:${o.nextKey}`);
+    if (next) this.receive(next);
+    if (EFFECT_ACTION_FLAGS.has(o.actionFlag)) this._runEffect(o);
+  }
+
+  /** Player activation entry: doors toggle (+ fire their own record,
+   *  Door-gated), actions receive. */
   activate(key) {
     const o = this.objects.get(key);
     if (!o) return false;
     if (o.kind === 'door') {
-      // ToggleDoor: no-op while moving; trigger (bucket gone) at
-      // open-start, solid again only at close-complete.
-      if (o.state === 'forward' || o.state === 'reverse') return true;
-      if (o.state === 'start') {
-        o.state = 'forward';
-        this.collider.removeBucket(o.key);
-        this.onDoorState?.(o, true);    // A1: the audio seam (open)
-      } else {
-        o.state = 'reverse';
-        this.onDoorState?.(o, false);   // A1: the audio seam (close)
-      }
+      if (this.toggleDoor(o)) this._execOwnAction(o);
       return true;
     }
     this.receive(o, 'Direct');   // player activation = the Direct trigger type (the gate table applies)

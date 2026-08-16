@@ -327,6 +327,7 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
           matrix,
           startingLockValue: LOCK_VALUES[mr.triggerFlagStartingLock >> 4],
           action,
+          position: obj.position,   // the chain key (LinkActionNodes resolves doors by position)
         });
         if (acts) addModelLink(obj, action);
         continue;
@@ -374,7 +375,7 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
           actionLinks.set(obj.position, { nextKey: fr.nextObjectOffset, prevKey: -1, action });
         }
       } else {
-        flats.push({ archive: fr.textureArchive, record: fr.textureRecord, x, y, z, action });
+        flats.push({ archive: fr.textureArchive, record: fr.textureRecord, x, y, z, action, position: obj.position });
         if (acts && !actionLinks.has(obj.position)) {
           actionLinks.set(obj.position, { nextKey: fr.nextObjectOffset, prevKey: -1, action });
         }
