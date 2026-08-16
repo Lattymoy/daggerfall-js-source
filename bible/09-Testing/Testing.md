@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 297 tests across 75 files.
+Node 22). Suite: 298 tests across 76 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -25,6 +25,7 @@ Node 22). Suite: 297 tests across 75 files.
 | blocks.test.js | 4 | 1295-block corpus, resource closure, FixRdbData |
 | dungeon.test.js | 13 | dfRandom LCG, texture tables, RDB matrix order, action records, overlap removal, Privateer's Hold, 187-RDB closure, full 4232-dungeon sweep, R6 light collection pins, per-light flicker bounds, R7 water corpus (32/187) + Maorn pins |
 | monstercareer.test.js | 1 | ENEMY{nnn}.CFG careers from a crafted MONSTER.BSA through the shared BsaFile+ClassFile readers: fields real on the entity, session cache proven (throwing re-fetch), missing-index null path |
+| activate.test.js | 1 | activationTargets single source: effect objects target on their precomputed aabb (crash regression - scenes read o.cpu on cpu-less traps), relays excluded, cpu path transformed through the matrix, door reach default |
 | playerweapon.test.js | 3 | verbatim reach 2.25+0.25 + view/LOS hit rule + the swing-mod table, drag-gesture -> mapped strike on the shared machine (threshold + release reset), hit-frame kill through the full chain (deterministic rolls) + reach/dead gating |
 | weaponPose.test.js | 2 | sampleClip UNITS regression (audit 2026-08-16): FP pose frames 2-3 sample the clip (phase * dur mapping pinned against a direct seconds sample), every enemy 1H clip samples at frame 3 (short durs died under phase-as-seconds) |
 | formulas.test.js | 6 | FormulaHelper verbatim: Dice100/DamageModifier/H2H (sheet rule)/weapon min-max tables/material mods/body parts, career attack-modifier bits (bonus + phobia ADDITIVE) + enemy-type bonus, to-hit chain (dodging/4 bug preserved, the flat -50 + the +40 monster adjustment, weapon material x10 on the weapon branch, roll ordering, 3..97 clamp), damage paths (str-after-skeletal ordering, silver x2, material gate), the monster multi-attack loop (basics damage spans 1-3, the DFRandom reflex gate 50-10*(reflexes-2), per-hit enemy-type bonus, class enemies staying on the H2H path), the classic 0.25/MeleeDistance/35.156deg hit gate |

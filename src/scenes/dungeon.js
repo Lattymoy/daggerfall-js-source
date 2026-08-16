@@ -21,7 +21,7 @@ import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
 import { PlayerMotor } from '../player/motor.js';
 import {
-  pickActivatable, worldAabb, DOOR_ACTIVATION_DISTANCE,
+  pickActivatable, activationTargets,
 } from '../player/activate.js';
 import { fetchBytes } from './shared.js';
 import { routeKey } from '../ui/input.js';
@@ -95,14 +95,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       Math.sin(cam.pitch),
       Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const eye = walkMode ? player.eye : cam.pos;
-    const targets = [];
-    for (const o of ctx.actions.objects.values()) {
-      targets.push({
-        key: o.key,
-        aabb: worldAabb(o.cpu.positions, o.matrix),
-        distance: DOOR_ACTIVATION_DISTANCE,
-      });
-    }
+    const targets = activationTargets(ctx.actions.objects);   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...ctx.lootTargets());   // S2: piles + lootable corpses
     const key = pickActivatable(eye, dir, targets, ctx.collider);
     if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:'))) { ctx.takeLoot(key); return; }

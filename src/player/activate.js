@@ -51,6 +51,25 @@ export function rayAabb(origin, dir, aabb) {
 }
 
 /**
+ * Build activation targets from an ActionSystem's live objects - ONE
+ * source for both scenes (audit 2026-08-16: the scenes built targets
+ * inline with worldAabb(o.cpu.positions, o.matrix) and CRASHED on
+ * effect objects, which carry a precomputed aabb and no cpu/matrix;
+ * relay objects carry neither and are chain-only, never targets).
+ * @param {Map<string, object>} objects - ActionSystem.objects
+ * @param {number} distance - activation reach for every target.
+ */
+export function activationTargets(objects, distance = DOOR_ACTIVATION_DISTANCE) {
+  const targets = [];
+  for (const o of objects.values()) {
+    const aabb = o.aabb ?? (o.cpu ? worldAabb(o.cpu.positions, o.matrix) : null);
+    if (!aabb) continue;
+    targets.push({ key: o.key, aabb, distance });
+  }
+  return targets;
+}
+
+/**
  * Pick the nearest activatable the eye ray hits within reach and sight.
  * @param {Array<{key:string, aabb:{min,max}, distance?:number}>} targets
  * @returns {string|null} target key

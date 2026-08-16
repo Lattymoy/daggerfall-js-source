@@ -23,7 +23,7 @@
 
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding } from '../player/enterExit.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
-import { pickActivatable, worldAabb } from '../player/activate.js';
+import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
 import { transferAll } from '../systems/inventory.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { buildInteriorContext } from './interiorContext.js';
@@ -223,9 +223,7 @@ export function createWorldModes(host) {
     const eye = player.eye;
     const dir = eyeDir();
     const targets = dungeonCtx.exitDoors.map((d, i) => ({ key: `exit:${i}`, aabb: doorWorldAabb(d) }));
-    for (const o of dungeonCtx.actions.objects.values()) {
-      targets.push({ key: o.key, aabb: objAabb(o) });
-    }
+    targets.push(...activationTargets(dungeonCtx.actions.objects));   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...dungeonCtx.lootTargets());   // S2: piles + lootable corpses
     const key = pickActivatable(eye, dir, targets, dungeonCtx.collider);
     if (key === null) return false;
