@@ -189,7 +189,38 @@ modes.dungeonCtx.uiOverlayActive. Plus a [spawn] diagnostic line
 (marker -> feet, 'startSpawn build' tag) so console pastes
 self-identify the running bundle.
 
+## U6 (the action text boxes - ShowText / ShowTextWithInput / DoorText): SHIPPED (2026-08-16)
+
+The Ledger C row (with its Systems half - the TEXT.RSC database goes
+LIVE in the dungeon context). Verbatim from DaggerfallAction's text
+delegates:
+
+- **ShowText (0x0b)**: TEXT.RSC record Index + 8600 in a
+  click-anywhere-to-close box on the overlay seam (the world holds).
+- **ShowTextWithInput (0x0c)**: record Index + 5400 with the 20-char
+  ' > ' entry (DaggerfallInputMessageBox shape; digits joined the
+  overlay char map - the blind-god answer is "1"). The verbatim
+  actionTypeTwelveLookup answers (5404/5406/5423/5424/5464) gate the
+  chain: Play SKIPS the up-front cascade for this flag and only a
+  case-insensitive match fires ActivateNext - the classic riddle
+  doors work end to end.
+- **DoorText (0x63, joins ACTION_FLAGS)**: first activation shows
+  record Index + 7700 as HUD text (2.0s) and HOLDS the door (the
+  Open() special gate, verbatim including the Receive trigger-gate
+  interplay for Direct/MultiTrigger-flagged doors); the patch table
+  rides along (7701..7704 -> 7705, the known-missing ids skip);
+  later activations run the classic trespass check (axisRaw > 5 ->
+  MakeEnemiesHostile - logged loudly here: our live foes are already
+  hostile-on-sight, passive teams pend the faction model).
+- Presentation: clean classic-text panels (ui/actionText.js), art
+  FLAGGED with the other windows. A missing TEXT.RSC record logs
+  loudly where DFU throws (the crash-class doctrine).
+
+1 net test (action.test.js 5 -> 6). Suite 313/75, ARENA2 corpus
+313/313 green pre-commit.
+
 ## Queue
-- Classic window art, per-ID TEXT.RSC verification.
+- Classic window art, per-ID TEXT.RSC verification (the database is
+  now LIVE via U6; the id sweep remains).
 - Starting-spell sets: SHIPPED via Systems S6 (the spellbook lists
   the character's real known spells).

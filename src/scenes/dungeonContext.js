@@ -16,6 +16,8 @@ import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE, MOVE_ACTION_FLAGS } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, lookAtLockText } from '../world/actionSystem.js';
+import { TextRsc } from '../formats/textRsc.js';
+import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
@@ -376,6 +378,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // from here (absent -> stays flagged-skip).
     setMagicItemTemplates(readMagicDef(await fetchBytes('MAGIC.DEF')));
   } catch { /* data absent: casts + MI no-op, loudly flagged */ }
+  // U6: the TEXT.RSC database goes LIVE for the action text boxes
+  // (the reader shipped with the U-series; the hudText note's
+  // "database FLAGGED" narrows to the skill/loot message ids).
+  let textRsc = null;
+  try {
+    textRsc = new TextRsc().load(await fetchBytes('TEXT.RSC'));
+  } catch { console.warn('[text] TEXT.RSC unavailable; action text boxes no-op'); }
   // S16: enemy spell lists ride SPELLS.STD (loaded just above, after
   // the foe build) - SetEnemyCareer's assignment tail per live foe:
   // class enemies with CastsMagic take EnemyClassSpells[min(6,
@@ -405,6 +414,31 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const p = o.origin ?? (o.matrix ? [o.matrix[12], o.matrix[13], o.matrix[14]] : null);
     if (p) audio.play3d(o.index, p);
   };
+  // U6: the text-action seams. ShowText/ShowTextWithInput open modal
+  // boxes on the overlay seam (the world holds); DoorText rides the
+  // HUD popup (AddHUDText 2.0s); the trespass check maps to our foes,
+  // which are already hostile-on-sight (MakeEnemiesHostile's passive
+  // teams pend the faction model - logged loudly).
+  const rscLines = (id) => {
+    const v = textRsc?.plainText(id);
+    return v?.length ? v[0].split('\n').filter((l) => l.length) : null;
+  };
+  actions.onShowText = (id) => {
+    const lines = rscLines(id);
+    if (!lines) return console.warn(`[action] ShowText ${id}: TEXT.RSC record unavailable`);
+    if (!activeOverlay) activeOverlay = new ActionTextBox(lines);
+  };
+  actions.onShowTextInput = (id, submit) => {
+    const lines = rscLines(id);
+    if (!lines) return console.warn(`[action] ShowTextWithInput ${id}: TEXT.RSC record unavailable`);
+    if (!activeOverlay) activeOverlay = new ActionInputBox(lines, submit);
+  };
+  actions.onDoorText = (id) => {
+    const lines = rscLines(id);
+    if (!lines) return console.error(`[action] bad DoorTextID requested: ${id}`);   // DFU throws; we log loudly
+    for (const l of lines) hudText.add(l);
+  };
+  actions.onTrespass = () => console.warn('[action] trespass check fired (MakeEnemiesHostile) - foes are hostile-on-sight; passive teams pend the faction model');
   const clickCast = new OneShotLatch();   // classic click-to-cast: armed by readying
   let pendingClickCast = false;
   let lastPlayerFeet = null;   // S11: the save position

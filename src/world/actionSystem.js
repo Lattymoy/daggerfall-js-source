@@ -55,7 +55,29 @@ export const EFFECT_ACTION_FLAGS = new Set([
   ACTION_FLAGS.DrainMagicka, ACTION_FLAGS.CastSpell,
   ACTION_FLAGS.Teleport, ACTION_FLAGS.LockDoor, ACTION_FLAGS.UnlockDoor,
   ACTION_FLAGS.OpenDoor, ACTION_FLAGS.CloseDoor, ACTION_FLAGS.Activate,
+  ACTION_FLAGS.ShowText, ACTION_FLAGS.ShowTextWithInput, ACTION_FLAGS.DoorText,
 ]);
+
+// ---- U6: the text actions, verbatim constants ----
+export const TYPE_11_TEXT_INDEX = 8600;   // ShowText: TEXT.RSC record = Index + 8600
+export const TYPE_12_TEXT_INDEX = 5400;   // ShowTextWithInput: Index + 5400
+export const TYPE_99_TEXT_INDEX = 7700;   // DoorText: Index + 7700
+
+/** DaggerfallAction.actionTypeTwelveLookup, verbatim - the classic
+ *  riddle answers per text id (case-insensitive match). */
+export const TYPE_12_ANSWERS = Object.freeze({
+  5404: ['bow', 'bow arrow', 'crossbow', 'bows', 'crossbows'],           // sheogorath
+  5406: ['one', '1'],                                                    // blind god
+  5423: ['benefactor', 'the benefactor'],                                // benefactor
+  5424: ['shut up', 'shutup', 'shaddup'],                                // shaddup!
+  5464: ['yes', 'oK', 'i agree', 'y', 'agreed', 'done', 'fine', 'okay', 'sure', 'yep'],   // daggerfall guard
+});
+
+/** The DoorText id patch table, verbatim (comments preserved in the
+ *  source): 0 -> enabled/skip; 7701..7704 -> 7705 ("allowed" vs
+ *  "allow"); the known-missing ids -> enabled/skip. */
+const DOOR_TEXT_REMAP = Object.freeze({ 7701: 7705, 7702: 7705, 7703: 7705, 7704: 7705 });
+const DOOR_TEXT_SKIP = new Set([7700, 7706, 7711, 7712, 7715, 7717, 7719]);
 
 // DaggerfallActionDoor lock model, verbatim: CurrentLockValue > 0 =
 // locked; >= 20 = magically held (never picked or bashed). LockDoor's
@@ -209,6 +231,46 @@ export class ActionSystem {
       return;
     }
     if (o.actionFlag === F.Activate) return;   // verbatim DFU no-op
+    if (o.actionFlag === F.ShowText) {
+      // Pop-up text: TEXT.RSC record Index + 8600, click anywhere to
+      // close (the scene owns the box).
+      this.onShowText?.(TYPE_11_TEXT_INDEX + o.index);
+      return;
+    }
+    if (o.actionFlag === F.ShowTextWithInput) {
+      // Pop-up with input: record Index + 5400; a case-insensitive
+      // answer match fires ActivateNext (UserInputHandler) - the
+      // ONLY path to this action's chain (Play skips the up-front
+      // cascade for this flag).
+      const textId = TYPE_12_TEXT_INDEX + o.index;
+      const answers = TYPE_12_ANSWERS[textId];
+      if (!answers) console.error(`[action] invalid key ${textId} for action type 12, couldn't get answer(s)`);
+      this.onShowTextInput?.(textId, (userInput) => {
+        if (!answers) return;
+        const given = String(userInput ?? '').toLowerCase();
+        if (answers.some((a) => a.toLowerCase() === given)) {
+          const next = this._next(o);
+          if (next) this.receive(next);
+        }
+      });
+      return;
+    }
+    if (o.actionFlag === F.DoorText) {
+      // DoorText: first activation shows record Index + 7700 as HUD
+      // text (2.0s); later activations run the classic trespass
+      // check (axis raw > 5 -> MakeEnemiesHostile). The patch table
+      // (0/known-missing ids -> skip; 7701..7704 -> 7705) rides
+      // actionEnabled, which the door's Open gate also reads.
+      let textId = TYPE_99_TEXT_INDEX + o.index;
+      if (DOOR_TEXT_REMAP[textId]) textId = DOOR_TEXT_REMAP[textId];
+      if (DOOR_TEXT_SKIP.has(TYPE_99_TEXT_INDEX + o.index)) o.actionEnabled = true;
+      if (o.activationCount === 1 && textId !== TYPE_99_TEXT_INDEX && !o.actionEnabled) {
+        this.onDoorText?.(textId);
+      } else if (o.axisRaw > 5) {
+        this.onTrespass?.();   // "classic seems to only check whether this value is greater than 5"
+      }
+      return;
+    }
     if (o.actionFlag === F.Hurt21) {
       if (o.activationCount % 20 !== 0) return;
       const a = Math.max(1, o.magnitude), b = Math.max(1, o.index);
@@ -321,9 +383,13 @@ export class ActionSystem {
   }
 
   _play(o) {
-    // ActivateNext cascades BEFORE this object's own tween.
-    const next = this._next(o);
-    if (next) this.receive(next);
+    // ActivateNext cascades BEFORE this object's own tween - EXCEPT
+    // ShowTextWithInput, whose chain fires only on a correct answer
+    // (Play's verbatim exception).
+    if (o.actionFlag !== ACTION_FLAGS.ShowTextWithInput) {
+      const next = this._next(o);
+      if (next) this.receive(next);
+    }
     // A2: DaggerfallAction.Play - "if (PlaySound && Index > 0)
     // audioSource.Play()": the RDB soundIndex fires on every Play,
     // movers and effect actions alike (the scene owns the engine).
@@ -381,12 +447,26 @@ export class ActionSystem {
     const o = this.objects.get(key);
     if (!o) return false;
     if (o.kind === 'door') {
-      // ExecuteActionOnToggle: a door carrying its own action fires
-      // the chain on player activation (Door trigger type gates it);
-      // then the toggle honors the lock.
       const node = this._links.get(`${o.ns}:${o.doorPosition}`);
-      if (node && node !== o && node.doorRef === o) this.receive(node, 'Door');
+      const doorNode = node && node !== o && node.doorRef === o ? node : null;
+      // Open()'s DoorText special case, verbatim: the FIRST player
+      // activation runs the action (shows the text) and does NOT
+      // open unless the patch table pre-enabled it. (The Receive
+      // trigger gate applies inside - Direct/MultiTrigger-flagged
+      // DoorText doors block there exactly as DFU's do.)
+      if (o.state === 'start' && doorNode
+          && doorNode.actionFlag === ACTION_FLAGS.DoorText && doorNode.index > 0
+          && (doorNode.triggerFlag === TRIGGER_FLAGS.Door || doorNode.triggerFlag === TRIGGER_FLAGS.Direct || doorNode.triggerFlag === TRIGGER_FLAGS.MultiTrigger)
+          && doorNode.activationCount === 0) {
+        this.receive(doorNode, 'Door');
+        if (!doorNode.actionEnabled) return true;
+      }
+      // The lock gate + toggle; when a toggle actually starts, the
+      // door's own action fires (ExecuteActionOnToggle on open AND
+      // close, Door-trigger gated).
+      const wasState = o.state;
       this._toggleDoor(o, true);
+      if (doorNode && o.state !== wasState) this.receive(doorNode, 'Door');
       return true;
     }
     this.receive(o, 'Direct');   // player activation = the Direct trigger type (the gate table applies)

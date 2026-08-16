@@ -12,9 +12,10 @@ export class OneShotLatch {
   consume() { const a = this.armed; this.armed = false; return a; }
 }
 
-/** Overlay-mode actions (chargen, level-up, sheet, windows). */
+/** Overlay-mode actions (chargen, level-up, sheet, windows). Digits
+ *  joined for the U6 input box (the blind-god answer is "1"). */
 export function overlayAction(e) {
-  if (e.key.length === 1 && /[a-zA-Z '-]/.test(e.key)) return 'char:' + e.key;
+  if (e.key.length === 1 && /[a-zA-Z0-9 '-]/.test(e.key)) return 'char:' + e.key;
   return ({
     ArrowUp: 'up', ArrowDown: 'down', Enter: 'confirm', Backspace: 'backspace',
     Escape: 'back', '+': 'plus', '=': 'plus', '-': 'minus', r: 'reroll', R: 'reroll',

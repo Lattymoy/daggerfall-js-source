@@ -213,3 +213,47 @@ test('action: activation picking - reach, nearest, occlusion', () => {
   const blocked = { raycast: () => 1.0 };
   assert.equal(pickActivatable([0.5, 0.5, 0], [0, 0, 1], targets, blocked), null);
 });
+
+test('action: U6 text actions - ShowText, the input-gated chain, DoorText first-activation door hold', async () => {
+  const { TYPE_11_TEXT_INDEX, TYPE_12_TEXT_INDEX, TYPE_99_TEXT_INDEX, TYPE_12_ANSWERS } = await import('../src/world/actionSystem.js');
+  assert.equal(TYPE_11_TEXT_INDEX, 8600);
+  assert.equal(TYPE_12_TEXT_INDEX, 5400);
+  assert.equal(TYPE_99_TEXT_INDEX, 7700);
+  assert.deepEqual([...TYPE_12_ANSWERS[5406]], ['one', '1']);   // the blind god
+  const c = stubCollider();
+  const a = new ActionSystem(c);
+  const shown = [], doorTexts = [];
+  let trespass = 0, inputCb = null;
+  a.onShowText = (id) => shown.push(id);
+  a.onShowTextInput = (id, cb) => { shown.push(id); inputCb = cb; };
+  a.onDoorText = (id) => doorTexts.push(id);
+  a.onTrespass = () => trespass++;
+  // ShowText: record = index + 8600
+  const st = a.addEffect(0, 70, { actionFlag: ACTION_FLAGS.ShowText, index: 12, magnitude: 0, axisRaw: 0, isFlat: false, nextObject: -1 });
+  a.receive(st);
+  assert.deepEqual(shown, [8612]);
+  // ShowTextWithInput: NO up-front cascade (Play's verbatim
+  // exception); only a case-insensitive answer match fires the chain
+  const spike = a.addEffect(0, 71, { actionFlag: ACTION_FLAGS.Hurt22, index: 0, magnitude: 10, axisRaw: 0, isFlat: true, nextObject: -1 });
+  let dmg = 0;
+  const a2 = new ActionSystem(c, { damagePlayer: (n) => { dmg += n; }, playerLevel: () => 1 });
+  a2.onShowTextInput = (id, cb) => { inputCb = cb; };
+  const spike2 = a2.addEffect(0, 71, { actionFlag: ACTION_FLAGS.Hurt22, index: 0, magnitude: 10, axisRaw: 0, isFlat: true, nextObject: -1 });
+  const riddle = a2.addEffect(0, 72, { actionFlag: ACTION_FLAGS.ShowTextWithInput, index: 6, magnitude: 0, axisRaw: 0, isFlat: false, nextObject: 71 });   // 5400+6 = 5406
+  a2.receive(riddle);
+  assert.equal(dmg, 0);                    // the chain did NOT cascade at Play
+  inputCb('two');
+  assert.equal(dmg, 0);                    // wrong answer
+  inputCb('ONE');
+  assert.equal(dmg, 10);                   // case-insensitive match fires ActivateNext
+  assert.ok(spike2 && spike && st);
+  // DoorText on a door: first activation shows the (remapped) text
+  // and HOLDS the door; the second toggles and runs the trespass gate
+  const door = a.addDoor(CUBE, I, { ns: 0, position: 80, lock: 0, action: { actionFlag: ACTION_FLAGS.DoorText, index: 1, axisRaw: 9, triggerFlag: 0x0a, nextObject: -1 } });   // TRIGGER_FLAGS.Door
+  a.activate(door.key);
+  assert.equal(door.state, 'start');       // held on first activation
+  assert.deepEqual(doorTexts, [7705]);     // 7701 remaps to 7705 ("allowed" vs "allow")
+  a.activate(door.key);
+  assert.equal(door.state, 'forward');     // opens from the second on
+  assert.equal(trespass, 1);               // axisRaw 9 > 5
+});

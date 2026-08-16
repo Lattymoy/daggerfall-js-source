@@ -1,11 +1,11 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 312 tests across 75 files.
+Node 22). Suite: 313 tests across 75 files.
 
 | File | Tests | Covers |
 |---|---|---|
-| action.test.js | 5 | door lifecycle/verbatim constants, move tween + chain gate, activation picking; P10 locks (lock value 16 / magic threshold 20, the clamp(5..95) lockpicking chance, all five LookAtInteriorLock text tiers, locked-door refusal firing onLockedDoor while solid, Lock/Unlock/Open/Close delegates through door-riding action nodes incl. only-when-unlocked and StartingLockValue restore) and P10 teleport (resolved next-object warp, null destination refuses, actionless-destination cascade no-op) + the block-instance key namespace (two instances of one RDB position both register and play independently - the 3108-dungeon repeated-block collision fix) |
+| action.test.js | 6 | door lifecycle/verbatim constants, move tween + chain gate, activation picking; U6 text actions (the 8600/5400/7700 bases + the verbatim type-12 answers, ShowText firing, ShowTextWithInput skipping the up-front cascade with only a case-insensitive answer match firing ActivateNext, DoorText remapping 7701->7705 + holding the door on first activation + the axisRaw>5 trespass gate); P10 locks (lock value 16 / magic threshold 20, the clamp(5..95) lockpicking chance, all five LookAtInteriorLock text tiers, locked-door refusal firing onLockedDoor while solid, Lock/Unlock/Open/Close delegates through door-riding action nodes incl. only-when-unlocked and StartingLockValue restore) and P10 teleport (resolved next-object warp, null destination refuses, actionless-destination cascade no-op) + the block-instance key namespace (two instances of one RDB position both register and play independently - the 3108-dungeon repeated-block collision fix) |
 | anims.test.js | 2 | Directional attacks: verbatim DFU direction->strike mapping pins; delta-clip well-formedness (start/end 0, sorted keys); sampler continuity + keyframe hit + null past dur |
 | pointerlock.test.js | 3 | requestLook never throws - swallows a rejecting requestPointerLock promise (the sh/< crash + lock:N frozen-yaw bug), tolerates the void-returning API, survives a synchronous throw |
 | player.test.js | 8 | verbatim speeds/constants, collider ground/slide/step, motor gravity/jump, strafe = true camera-right, wall-ladder regression (step-up needs a clear raised path); P11 swim/levitate (GetSwimSpeed base*(skill/200)+base/4, levitate 4.0 look-directed with prior fall velocity dying, swim zeroing the look's vertical + float-up + the can't-surface clamp, waterWalking normal speed, the .7071 diagonal limit landing on the grounded path, the per-frame jumped flag) |
