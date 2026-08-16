@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 310 tests across 75 files.
+Node 22). Suite: 311 tests across 75 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -55,7 +55,7 @@ Node 22). Suite: 310 tests across 75 files.
 | people.test.js | 2 | AddPeople position/data verbatim, 14174-people corpus (6724/6832 interiors, archives 176-184) |
 | poses.test.js | 1 | Static pose table (POSES): melee1H well-formed, sagittal angles within joint ranges |
 | weapons.test.js | 2 | Verbatim DFU weapon data pins (enums, damage table, material mods/dyes, ApplyWeaponMaterial math incl. half-to-even weight round); Longsword piece well-formed on the armR fist |
-| names.test.js | 4 | Region->bank verbatim, deterministic name composition on DFRandom, Redguard female stream parity, 76-NPC exterior corpus (SENT7 lamp quirk) |
+| names.test.js | 5 | Region->bank verbatim, deterministic name composition on DFRandom, Redguard female stream parity, 76-NPC exterior corpus (SENT7 lamp quirk); S17 MonsterName (the engine-PRNG bank pick vs the forced bankType on one DFRandom stream, Monster2-female D set, both Monster3 branches, seed determinism) |
 | enemies.test.js | 5 | 45x20 encounter tables, classic pick replay, fixed/passive/gender/water rules, Privateer's Hold pin (42 enemies / 25 fixed) |
 | rig.test.js | 2 | Vendored Rewrite rig byte-parity vs canonical (16 bare-humanoid hashes), 710-face shape |
 | rigmath.test.js | 5 | Two-bone IK invariants: exact bone lengths, reach/clamp, pole side, degenerate-target guard |

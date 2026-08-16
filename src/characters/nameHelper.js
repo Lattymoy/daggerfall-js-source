@@ -16,9 +16,10 @@
 //     draws the 75% roll.
 //   - FullName: first + " " + surname when the surname is non-empty
 //     (Redguard/Nord-female surname paths return '').
-// MonsterName is NOT ported here: DFU rolls the bank on UnityEngine.
-// Random (a different stream) and it is quest-facing - routed with the
-// quest name plumbing (Systems arc).
+//   - MonsterName (S17): the BANK pick (Monster1 or Monster2 "for
+//     now") rides UnityEngine.Random in DFU - a uniform roll here
+//     (the Ledger A engine-PRNG rule); every PART draw stays on
+//     DFRandom.rand(), verbatim order.
 
 import { rand } from '../formats/dfRandom.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
@@ -95,4 +96,37 @@ export function fullName(type, gender) {
   const first = firstName(type, gender);
   const last = surname(type);
   return last ? `${first} ${last}` : first;
+}
+
+/** NameHelper.MonsterName / GetRandomMonsterName, verbatim (S17 -
+ *  quest-facing). bankRoll picks Monster1 (8) or Monster2 (9)
+ *  uniformly (DFU: UnityEngine.Random.Range(8, 10)); pass a bankType
+ *  to force one (the Monster3 branch is ported whole even though the
+ *  pick never returns it, exactly as GetRandomMonsterName carries
+ *  it). All part draws ride DFRandom.rand(). */
+export function monsterName(gender = GENDERS.Male, bankRoll = Math.random, bankType = null) {
+  const type = bankType ?? (8 + Math.floor(bankRoll() * 2));
+  const bank = bankOf(type);
+  const partsA = bank.sets[0].parts;
+  const partsB = bank.sets[1].parts;
+  const partsC = bank.sets[2].parts;
+  const partsD = bank.sets.length >= 4 ? bank.sets[3].parts : null;
+  let a = '', b = '', c = '', d = '';
+  if (type !== BANK_TYPES.Monster3) {   // Monster1 or Monster2
+    a = draw(partsA);
+    if (rand() % 50 < 25) b = draw(partsB);
+    c = draw(partsC);
+    // Additional set for Monster2 female
+    if (partsD && gender === GENDERS.Female) d = draw(partsD);
+  } else {   // Monster3
+    if (gender === GENDERS.Female || rand() % 100 >= 25) {
+      a = draw(partsA);
+    } else {
+      a = draw(partsD) + ' ';
+      b = draw(partsA);
+    }
+    c = draw(partsB);
+    d = draw(partsC);
+  }
+  return a + b + c + d;
 }

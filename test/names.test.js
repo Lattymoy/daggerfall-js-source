@@ -93,3 +93,31 @@ test('exterior npcs: full corpus sweep', { skip: skipReal }, () => {
   assert.deepEqual([...archives].sort((a, b) => a - b), [179, 181, 210]);
   console.log(`exterior npc corpus: ${npcs} npcs across ${blocksWithNpcs} RMB blocks, archives [${[...archives].sort((a, b) => a - b)}]`);
 });
+
+test('names: S17 MonsterName - bank pick, part order, Monster3 branches, determinism', async () => {
+  const { monsterName } = await import('../src/characters/nameHelper.js');
+  // The bank pick is the ONLY engine-PRNG roll (Ledger A): 0 -> Monster1 (8), .9 -> Monster2 (9)
+  srand(777);
+  const m1 = monsterName(GENDERS.Male, () => 0);
+  srand(777);
+  const m1Forced = monsterName(GENDERS.Male, () => { throw new Error('bankType must skip the roll'); }, BANK_TYPES.Monster1);
+  assert.equal(m1Forced, m1);                       // same DFRandom stream, same name
+  assert.ok(m1.length > 0);
+  // Monster2 female draws the additional D set (4 sets in the bank)
+  srand(41);
+  const f2 = monsterName(GENDERS.Female, () => 0.9);
+  assert.ok(f2.length > 0);
+  // Monster3 (ported whole though the pick never returns it): the
+  // male 25% branch prefixes a D-part + space; female never rolls it
+  srand(1);
+  const f3 = monsterName(GENDERS.Female, null, BANK_TYPES.Monster3);
+  assert.ok(f3.length > 0 && !f3.startsWith(' '));
+  srand(2);
+  const m3 = monsterName(GENDERS.Male, null, BANK_TYPES.Monster3);
+  assert.ok(m3.length > 0);
+  // Full determinism: same seed + same bank -> same name
+  srand(9001);
+  const a = monsterName(GENDERS.Male, () => 0);
+  srand(9001);
+  assert.equal(monsterName(GENDERS.Male, () => 0), a);
+});

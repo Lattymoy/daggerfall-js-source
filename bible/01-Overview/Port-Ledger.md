@@ -118,7 +118,7 @@ World layout:
 | Door lockpicking (steal-mode activation, the failed-skill-level latch) + bashing (attack trigger, chance 20 - lockValue, castle aggro) | DaggerfallActionDoor.AttemptLockpicking/AttemptBash | UI arc (interaction modes) + Combat (bash trigger) |
 | ~~Platform riding~~ SHIPPED 2026-08-14 (groundKey contact identity + mover frame deltas through the resolver - the DFU MoveWithMovingPlatform shape; rooted Mac's out-of-bounds ejection report) | DFU parents the player transform | Player arc |
 | Swimming + levitation motor | LevitateMotor, GetSwimSpeed | Player arc |
-| Quest monster names (MonsterName) | NameHelper.GetRandomMonsterName - rolls the bank on UnityEngine.Random, quest-facing | Systems arc (name banks + data shipped C2) |
+| ~~Quest monster names (MonsterName)~~ SHIPPED (S17: monsterName in nameHelper - the bank pick uniform per Ledger A, part draws on DFRandom verbatim, Monster3 ported whole; the quest machine consumes it when it lands) | NameHelper.GetRandomMonsterName | Systems arc |
 | ~~Animal audio sources~~ SHIPPED (A2, dungeon scene; RMB exterior/interior animals join with their scenes' audio wiring) | GameObjectHelper | Audio arc |
 | Music playback (HMI/XMI) | Unity synthesis, no reader | Audio arc |
 | Smaller-dungeons generation | MapsFile + QuestMachine | Systems arc |
