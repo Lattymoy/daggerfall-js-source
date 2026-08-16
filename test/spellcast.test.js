@@ -64,6 +64,13 @@ test('spellcast: the CastSpell action cooldown gate fires through the sink', () 
   sys.receive(o);
   assert.deepEqual(fired, [[12, [1, 2, 3]]]);            // one tick of 45.45 crosses 0 from 0
   assert.ok(CASTSPELL_COOLDOWN_TICK > 45 && MISSILE_SPEED === 25);
+  // Verbatim RESET (audit 2026-08-16): the fire sets cooldown back to
+  // 1000, so the next fires land on activations 23 and 45 (22 ticks of
+  // 45.454546 cross zero: 1000 - 22*45.454546 = -1.2e-5) - NOT on every
+  // activation, which the missing reset produced.
+  for (let i = 2; i <= 45; i++) sys.receive(o);
+  assert.equal(fired.length, 3);
+  assert.equal(o.activationCount, 45);
 });
 
 test('spellcast: TARGET_TYPES verbatim + resolve vs a foe-shaped entity', async () => {

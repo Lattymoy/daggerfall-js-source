@@ -23,6 +23,7 @@
 
 import { trs, multiply } from './mat4.js';
 import { ACTION_FLAGS, TRIGGER_FLAGS } from './rdbLayout.js';
+import { CASTSPELL_COOLDOWN_TICK } from '../systems/spellcast.js';   // single source (DaggerfallAction 45.454546)
 
 // The RDB effect-action family (DaggerfallAction delegates that hurt
 // rather than move). Combat-arc row from Port-Ledger C:
@@ -113,10 +114,14 @@ export class ActionSystem {
     }
     else if (o.actionFlag === F.CastSpell) {
       // S4b verbatim: cooldown -= 45.454546 per Play; at <= 0 the
-      // spell (record by Index) fires AT the player from the object.
-      o.cooldown = (o.cooldown ?? 0) - 45.454546;
-      if (o.cooldown <= 0 && this._castSpell) {
-        this._castSpell(o.index, o.origin);
+      // spell (record by Index) fires AT the player from the object,
+      // then the cooldown RESETS to 1000 (parity fix, audit
+      // 2026-08-16: the reset was missing, so after the first fire
+      // every activation fired - DFU fires every 22nd).
+      o.cooldown = (o.cooldown ?? 0) - CASTSPELL_COOLDOWN_TICK;
+      if (o.cooldown <= 0) {
+        if (this._castSpell) this._castSpell(o.index, o.origin);
+        o.cooldown = 1000;
       }
     }
     else if (o.actionFlag === F.DrainMagicka) {

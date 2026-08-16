@@ -67,6 +67,7 @@ export const ACTION_FLAGS = Object.freeze({
   CloseDoor: 0x14, Hurt21: 0x15, Hurt22: 0x16, Hurt23: 0x17, Hurt24: 0x18,
   Hurt25: 0x19, Poison: 0x1a, Unknown27: 0x1b, DrainMagicka: 0x1c,
   Dialogue: 0x1d, Activate: 0x1e, SetGlobalVar: 0x1f, Unknown32: 0x20,
+  Unknown50: 0x32, DoorText: 0x63,   // audit 2026-08-16: DFBlock defines both; missing here broke Enum.IsDefined parity (raw 0x32/0x63 fell to None)
 });
 
 /** The movement family DaggerfallAction routes to Move (P2/P5). */
