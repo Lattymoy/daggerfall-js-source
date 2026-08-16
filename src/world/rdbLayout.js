@@ -24,8 +24,11 @@
 //     record 8 enter markers; 15/16 are enemy markers (SetActive(false) in
 //     DFU). Fixed-treasure flats (archive 216) are renderer-disabled in DFU
 //     and land in markers too. Everything else renders.
-//   - Lights are point data: position and radius * GlobalScale (DFU's
-//     range * 3 is prefab-side, Rendering arc's call).
+//   - Lights are NOT built here: dungeonLights.collectDungeonLights is
+//     the single source (verbatim AddLight incl. the in-code range * 3;
+//     the old "prefab-side" claim here was wrong, and the second copy
+//     this pass emitted without the * 3 was unconsumed - the
+//     double-sourcing class, audit 2026-08-16).
 //   - Actions: models act when actionResource.flags != 0; flats when
 //     flatResource.action > 0. Action/trigger flags only bind when the raw
 //     value is a defined enum member (Enum.IsDefined), else None.
@@ -282,7 +285,7 @@ function* rdbObjects(rdb) {
  * @param {(modelIdNum:number) => object} getModel - resolves a model id to
  *   dfMeshToModel output.
  * @returns {{placements:Array,actionDoors:Array,flats:Array,markers:Array,
- *   startMarkers:Array,enterMarkers:Array,lights:Array,exitDoors:Array,
+ *   startMarkers:Array,enterMarkers:Array,exitDoors:Array,
  *   actionLinks:Map,waterLevel:number,castleBlock:boolean}}
  */
 export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
@@ -293,7 +296,6 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
   const markers = [];
   const startMarkers = [];
   const enterMarkers = [];
-  const lights = [];
   const exitDoors = [];
   const actionLinks = new Map(); // position -> { nextKey, prevKey, action }
 
@@ -380,13 +382,6 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
           actionLinks.set(obj.position, { nextKey: fr.nextObjectOffset, prevKey: -1, action });
         }
       }
-    } else if (obj.type === RDB_RESOURCE_TYPES.Light) {
-      lights.push({
-        x: obj.xPos * GLOBAL_SCALE,
-        y: -obj.yPos * GLOBAL_SCALE,
-        z: obj.zPos * GLOBAL_SCALE,
-        radius: obj.resources.lightResource.radius * GLOBAL_SCALE,
-      });
     }
   }
 
@@ -410,7 +405,7 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
 
   return {
     placements, actionDoors, flats, markers, startMarkers, enterMarkers,
-    lights, exitDoors, actionLinks, waterLevel, castleBlock,
+    exitDoors, actionLinks, waterLevel, castleBlock,
   };
 }
 

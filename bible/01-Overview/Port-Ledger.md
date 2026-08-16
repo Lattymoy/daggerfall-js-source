@@ -113,8 +113,10 @@ World layout:
 | Torch audio sources | RDBLayout.AddTorchAudioSource | Audio arc |
 | Transition + activation sounds: action PlaySound index, ladder climb, enter/exit stingers (door open/close SHIPPED in A1 - dungeon clips on the activate seam) | DaggerfallActionDoor, DaggerfallAction, DaggerfallAudioSource | Audio arc (the P2/P4-P6 systems expose the trigger points) |
 | ~~Non-movement RDB action flags: CastSpell, Hurt21-25, DrainMagicka~~ SHIPPED (S4b + the trap seam; Poison still pends the disease/poison slice) | DaggerfallAction delegates | Combat arc (magic/damage) |
-| Non-movement RDB action flags: ShowText, ShowTextWithInput, DoorText | DaggerfallAction delegates | UI arc (message boxes) + Systems (text records) |
-| Non-movement RDB action flags: Teleport, Activate, LockDoor, UnlockDoor | DaggerfallAction delegates | Player arc (teleporters) + Systems (locks; P2 skips the IsLocked path) |
+| Non-movement RDB action flags: ShowText, ShowTextWithInput, DoorText | DaggerfallAction delegates | UI arc (message boxes) + Systems (text records); their objects RELAY since the 2026-08-16 audit (chains pass through; the delegate bodies pend here) |
+| ~~Non-movement RDB action flags: LockDoor, UnlockDoor, OpenDoor, CloseDoor~~ SHIPPED (2026-08-16 audit: verbatim self-targeted verbs + special doors + door bashing + lock VALUES on every door) | DaggerfallAction delegates + DaggerfallActionDoorSpecial + AttemptBash | Combat/Player |
+| The door IsLocked gate + lockpicking | DaggerfallActionDoor.Open's lock check, AttemptLockpicking, LookAtInteriorLock - ships as ONE unit so a locked door is never a dead end (bash exists; picking + the lock-level message do not) | Systems arc (locks) |
+| Non-movement RDB action flags: Teleport, Activate | DaggerfallAction delegates | Player arc (teleporters); Activate is delegate-empty in DFU and its RELAY is the whole behavior - live since the 2026-08-16 audit, Teleport relays too with the jump itself pending |
 | ~~Platform riding~~ SHIPPED 2026-08-14 (groundKey contact identity + mover frame deltas through the resolver - the DFU MoveWithMovingPlatform shape; rooted Mac's out-of-bounds ejection report) | DFU parents the player transform | Player arc |
 | Swimming + levitation motor | LevitateMotor, GetSwimSpeed | Player arc |
 | Quest monster names (MonsterName) | NameHelper.GetRandomMonsterName - rolls the bank on UnityEngine.Random, quest-facing | Systems arc (name banks + data shipped C2) |
