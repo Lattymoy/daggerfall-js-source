@@ -33,6 +33,12 @@ export const CAPSULE_RADIUS = 0.35;
 export const STEP_OFFSET = 0.5;
 export const SLOPE_LIMIT_DEG = 70;
 export const EYE_HEIGHT = 1.7;
+// P12 crouch (PlayerHeightChanger): controllerCrouchHeight 0.9.
+// DFU parks the camera 0.09 below the capsule top; our standing eye
+// sits 0.1 below (the documented 1.7 presentation choice) - the
+// crouched eye keeps that same law: 0.9 - 0.1 = 0.8 above the feet.
+export const CROUCH_HEIGHT = 0.9;
+export const CROUCH_EYE_HEIGHT = 0.8;
 
 export function walkSpeed(liveSpeed) {
   return (liveSpeed + DF_WALK_BASE) / CLASSIC_TO_UNITY_RATIO;
@@ -82,10 +88,15 @@ export class PlayerMotor {
     this.waterWalking = false;
     this.waterSurfaceY = null;   // the current block's water surface (world y), null when dry
     this.jumped = false;         // set for the frame a jump actually starts (fatigue/tally consumer)
+    this.crouching = false;      // P12: toggled via input.crouch (edge); standing needs headroom
   }
 
   get eye() {
-    return [this.pos[0], this.pos[1] + EYE_HEIGHT, this.pos[2]];
+    return [this.pos[0], this.pos[1] + (this.crouching ? CROUCH_EYE_HEIGHT : EYE_HEIGHT), this.pos[2]];
+  }
+
+  get height() {
+    return this.crouching ? CROUCH_HEIGHT : CAPSULE_HEIGHT;
   }
 
   spawn(x, y, z) {
@@ -107,6 +118,17 @@ export class PlayerMotor {
    */
   update(dt, input, yaw, pitch = 0) {
     this.jumped = false;
+    // P12 crouch toggle (edge input; the scene owns the key edge).
+    // Standing back up needs headroom: the STANDING capsule must fit
+    // at the current feet (PlayerHeightChanger's CanStand probe) -
+    // blocked under a low ceiling, the player stays crouched.
+    if (input.crouch) {
+      if (this.crouching) {
+        if (this.collider.penetrationAt(this.pos, CAPSULE_HEIGHT) < 0.03) this.crouching = false;
+      } else {
+        this.crouching = true;
+      }
+    }
     const sin = Math.sin(yaw);
     const cos = Math.cos(yaw);
     // limitDiagonalSpeed, verbatim: .7071 when both axes are live.
@@ -139,15 +161,19 @@ export class PlayerMotor {
       } else {
         speed = swimSpeed(walkSpeed(this.stats.speed), this.stats.swimming ?? 0);
       }
-      const r = this.collider.move(this.pos, mx * speed * dt, my * speed * dt, mz * speed * dt);
+      const r = this.collider.move(this.pos, mx * speed * dt, my * speed * dt, mz * speed * dt, this.height);
       this.groundKey = r.grounded ? (r.groundKey ?? null) : null;
       this.grounded = r.grounded;
       return;
     }
 
-    const speed = input.run
-      ? runSpeed(this.stats.speed, this.stats.running)
-      : walkSpeed(this.stats.speed);
+    // GetBaseSpeed: the crouch penalty replaces walk/run outright
+    // (and never applies while swimming - that branch is above).
+    const speed = this.crouching
+      ? crouchSpeed(this.stats.speed)
+      : input.run
+        ? runSpeed(this.stats.speed, this.stats.running)
+        : walkSpeed(this.stats.speed);
 
     // fwd = (sin, 0, cos); camera-right = up x back per lookAt =
     // (-cos, 0, sin). Verified to NDC through view x projection: world
@@ -167,7 +193,7 @@ export class PlayerMotor {
     else this.velY = Math.min(this.velY, 0);
     const dy = this.velY * dt;
 
-    const r = this.collider.move(this.pos, dx, dy, dz);
+    const r = this.collider.move(this.pos, dx, dy, dz, this.height);
     this.groundKey = r.grounded ? (r.groundKey ?? null) : null;   // platform riding: what holds us up
     this.grounded = r.grounded;
     if (r.grounded && this.velY < 0) this.velY = 0;

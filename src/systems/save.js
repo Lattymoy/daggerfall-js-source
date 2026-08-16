@@ -14,6 +14,7 @@ export const QUICKSAVE_KEY = 'dagger.quicksave';
 const ENTITY_FIELDS = [
   'name', 'gender', 'careerIndex', 'level', 'reflexes',
   'health', 'maxHealth', 'magicka', 'maxMagicka', 'fatigue',
+  'currentBreath',   // P12 (SerializablePlayer carries it; missing = 0/surfaced on old saves)
   'startingLevelUpSkillSum', 'currentLevelUpSkillSum',
   'readyToLevelUp', 'pendingLevel', 'chargenDone',
 ];

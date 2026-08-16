@@ -44,6 +44,7 @@ export const BUFF_KINDS = Object.freeze({
   '31,255': 'waterWalking',
   '23,0': 'chameleonNormal',
   '14,255': 'levitate',
+  '30,255': 'waterBreathing',   // P12: gates the drowning tick (IsWaterBreathing)
 });
 /** Classic subType as DFU keys it: the record's sbyte cast to BYTE
  *  (ClassicSpellRecordDataToEffectBundleSettings does

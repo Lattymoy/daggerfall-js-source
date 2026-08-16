@@ -50,7 +50,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9: floating-origin streaming world (?world). Queue empty; routed rows (teleporters, platform riding, swim/levitate) wait in Ledger C.
-- `03-World/Player-Arc.md` - ACTIVE again. P1-P9 + P10 TELEPORTERS + DOOR LOCKS (the delegates verbatim, RDB starting locks + look-at-lock tiers, flat/marker actions joining the graph, the repeated-block action-key collision fixed) + P11 SWIM/LEVITATE (2026-08-16: the LevitateMotor path with GetSwimSpeed and the surface clamp, the swim toggle + splash, Levitate (14,255) end to end, the per-minute/per-jump fatigue drains, the .7071 diagonal-limit parity fix) SHIPPED. Next: breath/drowning, crouch.
+- `03-World/Player-Arc.md` - ACTIVE again. P1-P9 + P10 TELEPORTERS + DOOR LOCKS (the delegates verbatim, RDB starting locks + look-at-lock tiers, flat/marker actions joining the graph, the repeated-block action-key collision fixed) + P11 SWIM/LEVITATE (2026-08-16: the LevitateMotor path with GetSwimSpeed and the surface clamp, the swim toggle + splash, Levitate (14,255) end to end, the per-minute/per-jump fatigue drains, the .7071 diagonal-limit parity fix) + P12 BREATH/CROUCH (2026-08-16: MaxBreath = END/2 with the classic-update drain every 19th tick and SetHealth(0) drowning at the 76*GS head-under threshold, WaterBreathing (30,255) gating it, the verbatim HUDBreathBar; crouch 0.9/0.8 on the KeyX edge in both hosts with crouchSpeed, a per-call collider capsule height, and the CanStand ceiling probe) SHIPPED. Next: stealth (with the enemy detection row), or riding.
 - `04-Characters/Characters-Arc.md` - PARKED (pivot 3: classic visuals). C8 shipped E1-E4b end to end + spectral; E4c deferred by Mac; remaining interims are Systems work (ledger below).
 - `05-Combat/Combat.md` - COMPLETE. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, the collision-trigger seam (input-held gate, 08-16), the Attack trigger + door bashing (WeaponEnvDamage, 08-16) all shipped. Build queue EMPTY; Systems-shared interims tracked in the ledger.
 - `08-Audio/Audio.md` - ACTIVE. A1 + A2 (2026-08-16: action PlaySound on every Play, torch Burning loops at 5m linear/0.7 via the new loop3d engine seam, animal random barks on the classic rand()<=100 cadence at 19.2m - dungeon-scoped) SHIPPED. Next: exterior/interior scene audio, transition stingers, music strategy.
@@ -76,11 +76,11 @@ binding; interleaving a new pass exposed drawMesh's assumption.
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-16d, the S19c slice)
+## Open flags (regenerated 2026-08-16d, the P12 slice)
 
-Regenerated at the S19c close (the S19 group carries no open flags;
-the S15 cure-family pend left the effects.js header). Every row
-below is a live
+Regenerated at the P12 close (breath/crouch carry no new flags -
+crouch stealth rides the standing enemyMotor stealth PENDING row).
+Every row below is a live
 INTERIM/FLAGGED/PENDING site in src; the code comment at each site is
 the authority. `src/render/characterSprite.js` FP framing constants
 stay open to Mac's eye in live play (probe-locked).
@@ -103,7 +103,7 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/scenes/dungeonContext.js:617` - FLAGGED: DFU recomputes per-effect via the cost tables (that
 - `src/scenes/dungeonContext.js:619` - FLAGGED to the effect library (caster-only buffs, touch, areas).
 - `src/scenes/dungeonContext.js:810` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/dungeonContext.js:1389` - actions) is FLAGGED - the player snapshot only.
+- `src/scenes/dungeonContext.js:1436` - actions) is FLAGGED - the player snapshot only.
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/chargen.js:6` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
@@ -111,7 +111,7 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/systems/chargen.js:124` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
 - `src/systems/chargen.js:143` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy ...
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
-- `src/systems/effects.js:475` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:476` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/inventory.js:12` - weight pends S2b (FLAGGED - leather/chain/plate multipliers).
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls are SKIPPED until the magic
 - `src/systems/loot.js:169` - FLAGGED to the economy slice (shops).

@@ -54,6 +54,13 @@ export function maxFatigue(entity) {
   return (liveStat(entity, 'strength') + liveStat(entity, 'endurance')) * FATIGUE_MULTIPLIER;
 }
 
+/** DaggerfallEntity.MaxBreath, verbatim: LiveEndurance / 2 (C# int
+ *  division). Current breath is a stored field (entity.currentBreath,
+ *  P12); 0 whenever the head is above water. */
+export function maxBreath(entity) {
+  return Math.trunc(liveStat(entity, 'endurance') / 2);
+}
+
 /** PlayerEntity per-minute/per-jump fatigue losses, verbatim (RAW
  *  fatigue units - the x64 belongs to spell magnitudes only). The
  *  swimming loss applies on a FAILED Dice100 roll vs the live

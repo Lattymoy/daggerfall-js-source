@@ -46,7 +46,7 @@ import {
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
 import { applySpell, tickActiveEffects, hasActiveEffect, maxFatigue } from '../systems/effects.js';
-import { FATIGUE_LOSS } from '../systems/statMods.js';
+import { FATIGUE_LOSS, maxBreath } from '../systems/statMods.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { updatePoisons, inflictPoison, rollEnemyWeaponPoison } from '../systems/poisons.js';
 import { dice100 } from '../combat/formulas.js';
@@ -1087,8 +1087,53 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
+  // P11: the current block's water surface (world y) - the swim
+  // toggle rule reads it (PlayerEnterExit blockWaterLevel); P12's
+  // drowning tick reads it too.
+  function waterSurfaceYAt(x, z) {
+    for (const b of dungeon.blocks) {
+      if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
+        return b.layout.waterLevel === 10000 ? null : -b.layout.waterLevel * GLOBAL_SCALE;
+      }
+    }
+    return null;
+  }
+  // P12: breath/drowning (PlayerEntity.FixedUpdate on the classic
+  // update cadence). Submerged = the controller CENTER (feet + 0.9)
+  // + 76*GlobalScale - 0.95 below the block water surface (the head-
+  // under threshold; the swim toggle uses 50). While submerged
+  // without WaterBreathing: a fresh dive fills currentBreath
+  // (DeepBreath = MaxBreath - guild bonuses pend guilds), every 19th
+  // classic update drains 1 (the Argonian coin-flip refund pends
+  // race selection), and 0 breath is SetHealth(0) - drowned.
+  // Surfacing zeroes the counter.
+  let _breathTimer = 0, _breathTally = 0;
+  function breathTick(dt, playerFeet) {
+    _breathTimer += dt;
+    while (_breathTimer >= CLASSIC_UPDATE_INTERVAL) {
+      _breathTimer -= CLASSIC_UPDATE_INTERVAL;
+      const surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
+      const submerged = surf != null && playerFeet[1] + 0.9 + 76 * 0.025 - 0.95 < surf;
+      if (submerged && !hasActiveEffect(playerEntity, 'waterBreathing')) {
+        if (!playerEntity.currentBreath) playerEntity.currentBreath = maxBreath(playerEntity);
+        if (_breathTally > 18) {
+          --playerEntity.currentBreath;
+          _breathTally = 0;
+        } else {
+          ++_breathTally;
+        }
+        if (playerEntity.currentBreath <= 0) {
+          playerEntity.currentBreath = 0;
+          hurtPlayer(playerEntity.health);   // SetHealth(0): drowned
+        }
+      } else {
+        playerEntity.currentBreath = 0;
+      }
+    }
+  }
   function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false) {
     if (playerFeet) lastPlayerFeet = [...playerFeet];
+    if (playerFeet) breathTick(dt, playerFeet);
     if (pendingClickCast) {
       pendingClickCast = false;
       playerCastInput(eye, [-view[2], -view[6], -view[10]]);   // classic: the readied spell fires on the click
@@ -1305,7 +1350,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const vYaw = Math.atan2(fw[0], fw[2]);
       viewmodelRig.setPose(playerWeapon.pose());
       viewmodelRig.update(dt);
-      foeDeps.drawFirstPersonViewmodel(renderer, canvas, viewmodelRig, playerFeet, vYaw, foeDeps.EYE_HEIGHT);
+      // P12: the LIVE eye offset (crouch lowers the camera - the
+      // weapon parents to it, DFU camera hierarchy)
+      foeDeps.drawFirstPersonViewmodel(renderer, canvas, viewmodelRig, playerFeet, vYaw, eye[1] - playerFeet[1]);
     }
     // U1: HUD last (over the viewmodel), heading from the view
     // forward this file already derives (0 = +z, wrapped 0..1).
@@ -1391,14 +1438,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     reportMotor(grounded, velY, yaw) { _motorState = `g:${grounded ? 1 : 0} vy:${velY.toFixed(1)} yaw:${yaw.toFixed(2)}`; },
     // P11: the current block's water surface (world y) - the swim
     // toggle rule reads it (PlayerEnterExit blockWaterLevel).
-    waterSurfaceYAt(x, z) {
-      for (const b of dungeon.blocks) {
-        if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
-          return b.layout.waterLevel === 10000 ? null : -b.layout.waterLevel * GLOBAL_SCALE;
-        }
-      }
-      return null;
-    },
+    waterSurfaceYAt,
     // P11: the motor-mode effect consumers (Levitate 14,255; the S8
     // waterWalking flag lands its swimmer).
     playerLevitating: () => hasActiveEffect(playerEntity, 'levitate'),

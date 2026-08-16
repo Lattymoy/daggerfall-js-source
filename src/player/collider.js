@@ -242,19 +242,22 @@ export class Collider {
     if (groundKey != null && (out.groundKey == null || groundKey !== 'dungeon')) out.groundKey = groundKey;
   }
 
-  _resolveCapsule(feet, out) {
-    // Two spheres: lower centered radius above the feet, upper below the top.
+  _resolveCapsule(feet, out, height = CAPSULE_HEIGHT) {
+    // Two spheres: lower centered radius above the feet, upper below
+    // the top. height varies with the player's stance (P12 crouch:
+    // the PlayerHeightChanger controller heights) - passed per call
+    // because foes share this collider instance.
     const low = [feet[0], feet[1] + CAPSULE_RADIUS, feet[2]];
-    const high = [feet[0], feet[1] + CAPSULE_HEIGHT - CAPSULE_RADIUS, feet[2]];
+    const high = [feet[0], feet[1] + height - CAPSULE_RADIUS, feet[2]];
     for (let iter = 0; iter < 3; iter++) {
       this._resolveSphere(low, CAPSULE_RADIUS, out);
       high[0] = low[0];
       high[2] = low[2];
-      high[1] = low[1] + (CAPSULE_HEIGHT - 2 * CAPSULE_RADIUS);
+      high[1] = low[1] + (height - 2 * CAPSULE_RADIUS);
       this._resolveSphere(high, CAPSULE_RADIUS, out);
       low[0] = high[0];
       low[2] = high[2];
-      low[1] = high[1] - (CAPSULE_HEIGHT - 2 * CAPSULE_RADIUS);
+      low[1] = high[1] - (height - 2 * CAPSULE_RADIUS);
     }
     feet[0] = low[0];
     feet[1] = low[1] - CAPSULE_RADIUS;
@@ -269,21 +272,21 @@ export class Collider {
    * surfaced by starved-frame dt spikes in the headless harness).
    * @returns {{grounded:boolean, hitCeiling:boolean}}
    */
-  move(feet, dx, dy, dz) {
+  move(feet, dx, dy, dz, height = CAPSULE_HEIGHT) {
     const maxComp = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
     const maxStep = CAPSULE_RADIUS * 0.75;
     if (maxComp > maxStep) {
       const n = Math.ceil(maxComp / maxStep);
       const out = { grounded: false, hitCeiling: false, pushedDown: false, groundKey: null };
       for (let i = 0; i < n; i++) {
-        const r = this._moveStep(feet, dx / n, dy / n, dz / n);
+        const r = this._moveStep(feet, dx / n, dy / n, dz / n, height);
         out.grounded = r.grounded;
         out.groundKey = r.groundKey ?? null;
         out.hitCeiling = out.hitCeiling || r.hitCeiling;
       }
       return out;
     }
-    return this._moveStep(feet, dx, dy, dz);
+    return this._moveStep(feet, dx, dy, dz, height);
   }
 
   /**
@@ -291,10 +294,10 @@ export class Collider {
    * on a COPY and reports how far it got pushed - a large push means
    * the position is inside/against a wall (wedged).
    */
-  penetrationAt(feet) {
+  penetrationAt(feet, height = CAPSULE_HEIGHT) {
     const probe = [feet[0], feet[1], feet[2]];
     const out = { grounded: false, hitCeiling: false, pushedDown: false };
-    this._resolveCapsule(probe, out);
+    this._resolveCapsule(probe, out, height);
     return Math.hypot(probe[0] - feet[0], probe[1] - feet[1], probe[2] - feet[2]);
   }
 
@@ -317,7 +320,7 @@ export class Collider {
     return feet;
   }
 
-  _moveStep(feet, dx, dy, dz) {
+  _moveStep(feet, dx, dy, dz, height = CAPSULE_HEIGHT) {
     const out = { grounded: false, hitCeiling: false, pushedDown: false };
 
     // Horizontal, with a step-up retry: if blocked, try from stepOffset
@@ -326,13 +329,13 @@ export class Collider {
     const beforeZ = feet[2];
     feet[0] += dx;
     feet[2] += dz;
-    this._resolveCapsule(feet, out);
+    this._resolveCapsule(feet, out, height);
     const movedSq = (feet[0] - beforeX) ** 2 + (feet[2] - beforeZ) ** 2;
     const wantedSq = dx * dx + dz * dz;
     if (wantedSq > 1e-8 && movedSq < wantedSq * 0.25) {
       const retry = [beforeX + dx, feet[1] + STEP_OFFSET, beforeZ + dz];
       const retryOut = { grounded: false, hitCeiling: false, pushedDown: false };
-      this._resolveCapsule(retry, retryOut);
+      this._resolveCapsule(retry, retryOut, height);
       const retrySq = (retry[0] - beforeX) ** 2 + (retry[2] - beforeZ) ** 2;
       // The raised path must be GENUINELY clear (the same blocked
       // threshold the plain move failed), not merely jitter-better.
@@ -351,13 +354,13 @@ export class Collider {
 
     // Vertical.
     feet[1] += dy;
-    this._resolveCapsule(feet, out);
+    this._resolveCapsule(feet, out, height);
 
     // Ground snap when moving down: pulls onto steps/slopes.
     if (dy <= 0 && !out.grounded) {
       const probe = [feet[0], feet[1] - STEP_OFFSET, feet[2]];
       const probeOut = { grounded: false, hitCeiling: false, pushedDown: false };
-      this._resolveCapsule(probe, probeOut);
+      this._resolveCapsule(probe, probeOut, height);
       // A down-pushed probe tunneled under geometry (a step top's
       // underside) - snapping to it drags the player through the mesh.
       if (probeOut.grounded && !probeOut.pushedDown

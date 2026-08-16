@@ -281,7 +281,9 @@ export function createWorldModes(host) {
     // S19 paralysis host parity (the standing host rule): movement
     // input zeroed, jump cancelled - the player still falls; look
     // stays live (FrictionMotor/AcrobatMotor verbatim gates).
+    // P12 crouch: KeyX edge toggle (host parity with ?dungeon).
     const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : false;
+    const crouchHeld = keys.has('KeyX');
     const moving = !paralyzed && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
     player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false } : {
       forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
@@ -290,7 +292,9 @@ export function createWorldModes(host) {
       jump: jumpHeld && !latch.jump,
       up: jumpHeld || keys.has('PageUp'),
       down: keys.has('PageDown'),
+      crouch: crouchHeld && !latch.crouch,
     }, cam.yaw, cam.pitch);
+    latch.crouch = crouchHeld;
     if (mode === 'dungeon' && dungeonCtx) {
       // P11: the splash/jump/swim-minute fatigue feed (same seam as
       // the standalone scene).

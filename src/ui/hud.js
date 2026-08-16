@@ -15,12 +15,28 @@
 //   Scale: classic pixels x floor(canvasHeight / 200) (the 320x200
 //   reference), min 1 - integer scaling keeps the art crisp.
 
-import { maxFatigue } from '../systems/statMods.js';
+import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
 
 export const COMPASS_BOX_OUTLINE = 2;
 export const COMPASS_BOX_INTERIOR = 64;
 export const COMPASS_NON_WRAPPED = 258;
 export const HUD_BORDER = 10;   // HUDVitals borderSize
+
+// P12: HUDBreathBar verbatim - a SOLID VerticalProgress, width 6
+// classic px, height = LiveEndurance px, filled bottom-anchored by
+// breath/MaxBreath. Yellow (247,239,41); short-on-breath dark red
+// (148,12,0) when (LiveEndurance >> 3) + 4 > currentBreath. Layout:
+// x offset 306 on the 320 screen = 14 from the RIGHT edge (right-
+// anchored here, like the compass, so wide canvases keep the classic
+// proportion); the bar's BOTTOM sits 92 + border above the canvas
+// bottom (the -92 offset from the bottom-aligned parent panel).
+// Drawn only while holding breath (Amount 0 draws nothing in DFU).
+export const BREATH_BAR_WIDTH = 6;
+export const BREATH_BAR_RIGHT = 320 - 306;   // 14
+export const BREATH_BAR_BOTTOM = 92;
+export const BREATH_COLOR_NORMAL = [247, 239, 41];
+export const BREATH_COLOR_SHORT = [148, 12, 0];
+export const breathShortThreshold = (liveEndurance) => (liveEndurance >> 3) + 4;
 
 /** scroll = int(nonWrappedPart * heading01), verbatim. */
 export const compassScroll = (heading01) =>
@@ -71,7 +87,19 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
       load('MAIN03I0.IMG'), load('MAIN04I0.IMG'), load('MAIN05I0.IMG'),
       load('COMPASS.IMG'), load('COMPBOX.IMG'),
     ]);
-    return { health, fatigue, magicka, compass, compassBox };
+    // P12: the breath bar is SOLID color (VerticalProgress), no art -
+    // two generated 1x1 textures.
+    const solid = ([r, g, b], name) => {
+      const colors = new Uint32Array(1);
+      const u8 = new Uint8Array(colors.buffer);
+      u8[0] = r; u8[1] = g; u8[2] = b; u8[3] = 255;
+      return { tex: renderer.uploadTexture('img', name, { width: 1, height: 1, colors }), w: 1, h: 1 };
+    };
+    return {
+      health, fatigue, magicka, compass, compassBox,
+      breathNormal: solid(BREATH_COLOR_NORMAL, 'hud-breath-normal'),
+      breathShort: solid(BREATH_COLOR_SHORT, 'hud-breath-short'),
+    };
   } catch {
     console.warn('[hud] classic HUD art unavailable; HUD disabled');
     return null;
@@ -97,6 +125,19 @@ export function drawHud(renderer, canvas, art, vitals, heading01) {
     const w = img.w * s, hFull = img.h * s, h = hFull * ratio;
     if (h > 0) renderer.drawScreenQuad(img.tex, { x, y: bottom - h, w, h }, { u0: 0, v0, u1: 1, v1 });
     x += w + 2 * s;
+  }
+  // P12: the breath bar (HUDBreathBar verbatim geometry) - only
+  // while holding breath.
+  const breath = vitals.currentBreath ?? 0;
+  if (breath > 0 && art.breathNormal) {
+    const liveEnd = liveStat(vitals, 'endurance');
+    const mb = maxBreath(vitals) || 1;
+    const bh = liveEnd * s;
+    const fill = Math.max(0, Math.min(1, breath / mb)) * bh;
+    const bx2 = canvas.width - BREATH_BAR_RIGHT * s - BREATH_BAR_WIDTH * s;
+    const bBottom = canvas.height - (BREATH_BAR_BOTTOM + HUD_BORDER) * s;
+    const img = breathShortThreshold(liveEnd) > breath ? art.breathShort : art.breathNormal;
+    if (fill > 0) renderer.drawScreenQuad(img.tex, { x: bx2, y: bBottom - fill, w: BREATH_BAR_WIDTH * s, h: fill });
   }
   // Compass, bottom-right: strip window first, frame over it.
   const box = art.compassBox;
