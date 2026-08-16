@@ -47,6 +47,7 @@ export function createWorldModes(host) {
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
 
   let mode = 'exterior';
+  let zPrev = false;   // ReadyWeapon (Z) edge state
   let interiorCtx = null;
   let exitReturn = null;
   let dungeonCtx = null;
@@ -305,6 +306,9 @@ export function createWorldModes(host) {
     }
     cam.pos = player.eye;
     const useHeld = keys.has('KeyE');
+    const zNow = keys.has('KeyZ');   // ReadyWeapon: sheathe toggle (audit 2026-08-17)
+    if (zNow && !zPrev) dungeonCtx.toggleSheath?.();
+    zPrev = zNow;
     if (useHeld && !latch.use) (mode === 'dungeon' ? tryExitDungeon : tryExit)();
     latch.use = useHeld;
     // A successful exit destroyed the modal context and flipped the

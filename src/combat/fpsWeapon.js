@@ -23,7 +23,7 @@
 
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { WEAPONS, WEAPON_MATERIALS, weaponDyeColor } from '../characters/weapons.js';
-import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS } from '../characters/dyes.js';
+import { applyDyeToIndex, DYE_TARGETS } from '../characters/dyes.js';
 
 // WeaponTypes (DaggerfallUnityEnums), the animation-set ids.
 export const WEAPON_TYPES = Object.freeze({
@@ -192,7 +192,14 @@ export function frameToColor32(bmp, palette, dye) {
   for (let i = 0; i < bmp.data.length; i++) {
     let idx = bmp.data[i];
     if (idx === 0) continue;   // classic CIF index 0 = transparent
-    if (dye !== DYE_COLORS.Unchanged) idx = applyDyeToIndex(idx, dye, DYE_TARGETS.WeaponsAndArmor);
+    // No Unchanged short-circuit here (parity audit 2026-08-17): DFU's
+    // DyeColors aliases Silver = SilverOrElven = Chain = Unchanged =
+    // 18, and ChangeDye's switch routes 18 into the SILVER metal
+    // table - the guard this bake used to carry skipped the dye for
+    // every silver weapon. The CALLER guards Steel/None the way
+    // FPSWeapon.GetWeaponTexture2D does; anything that reaches here
+    // dyes.
+    if (dye != null) idx = applyDyeToIndex(idx, dye, DYE_TARGETS.WeaponsAndArmor);
     const c = palette.get(idx);
     const o = i * 4;
     u8[o] = c.r; u8[o + 1] = c.g; u8[o + 2] = c.b; u8[o + 3] = 255;
@@ -211,7 +218,11 @@ export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, 
   if (!fileName) return null;
   const cif = new CifRciFile();
   cif.load(await getBytes(fileName), fileName, palette);
-  const dye = weaponDyeColor(material);
+  // FPSWeapon.GetWeaponTexture2D verbatim: "not for steel as that is
+  // default colour in files" (None has no material here). Everything
+  // else dyes - including Silver through the aliased 18 (see
+  // frameToColor32).
+  const dye = material === WEAPON_MATERIALS.Steel ? null : weaponDyeColor(material);
   const records = [];
   for (let r = 0; r < cif.recordCount; r++) {
     const size = cif.getSize(r);

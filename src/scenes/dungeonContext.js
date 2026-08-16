@@ -19,7 +19,7 @@ import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, classifyPlacementAction, look
 import { TextRsc } from '../formats/textRsc.js';
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { addItem } from '../systems/inventory.js';
+import { addItem, removeOne } from '../systems/inventory.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -893,6 +893,35 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // FPSWeapon - the voxel viewmodel rig is ON ICE (see the record in
   // Combat.md; the iced surface keeps its exports + pins).
   const fpwCache = new Map();   // `${type}:${material}` -> art (null while loading)
+  /** WeaponManager.Update's ShowWeapons legs, verbatim order (audit
+   *  2026-08-17): spell ready/casting hides, sheathed hides, the bow
+   *  cooldown hides (FPSWeapon also zeroes ShowWeapon at the bow
+   *  one-shot end until the cooldown elapses). Paralysis rides the
+   *  S19 gate at the draw site. Routed legs, no system yet: equip
+   *  countdown, climbing, transport modes. */
+  function weaponShown() {
+    if (!playerWeapon || playerWeapon.sheathed) return false;
+    if (clickCast.armed || pendingClickCast) return false;   // HasReadySpell / IsPlayingAnim
+    const m = playerWeapon.machine;
+    if (m.isBow && m.now < m.cooldownUntil) return false;    // bow cooldown hide
+    return true;
+  }
+  /** ToggleSheath through the weapon + the draw sound (SOUND.DrawWeapon
+   *  78, FPSWeapon.PlayActivateSound). */
+  function toggleSheath() {
+    if (!playerWeapon) return;
+    if (playerWeapon.toggleSheath()) audio.playOneShot(SOUND.DrawWeapon);
+  }
+  /** FPSWeapon.UpdateWeapon's bow guard, verbatim: an UNsheathed bow
+   *  with zero Arrows auto-sheathes with the classic line. Runs each
+   *  frame from the draw path. */
+  function bowArrowGuard() {
+    if (!playerWeapon || playerWeapon.sheathed) return;
+    if (weaponTypeForItem(playerWeapon.weapon) !== WEAPON_TYPES.Bow) return;
+    if (playerEntity.items.some((it) => it.templateIndex === 131 && (it.stackCount ?? 1) > 0)) return;
+    playerWeapon.sheathed = true;
+    hudText.add('You have no arrows.');
+  }
   function fpsWeaponArtFor(item) {
     if (!palette) return null;
     const type = weaponTypeForItem(item);
@@ -922,6 +951,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     billboardBatches.push(batch);   // hosts draw + destroy() frees
   }
   function playerAttackInput(dx, dy, held) {   // host mouse events buffer here
+    if (playerWeapon?.sheathed) return;   // WeaponManager verbatim: no attack processing while sheathed (audit 2026-08-17)
     if (held && clickCast.consume()) { pendingClickCast = true; return; }   // the armed click casts, no swing
     _atkDx += dx; _atkDy += dy; _atkHeld = held;
   }
@@ -1363,6 +1393,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // look instead of the melee arc (WeaponManager verbatim
           // shape); the weapon skill tallies the same.
           const lookDir = [-view[2], -view[6], -view[10]];   // the view-matrix forward this file already uses for the viewmodel
+          if (!removeOne(playerEntity.items, 131)) continue;   // one Arrow per loose, verbatim (the arrow guard normally pre-sheathes at zero)
           fireArrow(eye, lookDir, playerWeapon.weapon, true);
           tallySkill(playerEntity, SKILLS.Archery);
           continue;
@@ -1468,7 +1499,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const mat = trs(p[0], p[1] - f.rig.liveFootY * s, p[2], 0, f.ai.yaw * 180 / Math.PI, 0, s, s, s);   // live support point, same grounding rule as the player rig
       _drawSprite(renderer, canvas, f.rig, mat, proj, view, eye);
     }
-    if (playerWeapon && playerFeet && !_pParalyzed) {   // S19: ShowWeapons(false) while paralyzed (kept through the CIF pivot)
+    bowArrowGuard();
+    if (playerFeet && !_pParalyzed && weaponShown()) {   // S19 paralysis + the WeaponManager ShowWeapons legs (audit 2026-08-17)
       // LAST before the HUD: the classic weapon overlay composites
       // over the whole frame (DaggerfallUI draws it under the HUD).
       const art = fpsWeaponArtFor(playerWeapon.weapon);
@@ -1531,6 +1563,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foes,
     drawFoes,
     playerAttackInput,
+    toggleSheath,
     playerClickAttack: () => { playerWeapon?.clickAttack(); },
     playerCastInput,   // S5: C key in the hosts
     /** Verbatim MovePlayerToMarker + FixStanding: the start marker

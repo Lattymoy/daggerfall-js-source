@@ -83,6 +83,7 @@ export function attachTouch(canvas, hooks = {}) {
       () => { if (hooks.attackTap) hooks.attackTap(); });
   }
   button('E', 'right:96px', 'bottom:16px', 52, () => down('KeyE'), () => up('KeyE'));
+  button('Z', 'right:96px', 'bottom:88px', 52, () => down('KeyZ'), () => up('KeyZ'));   // ReadyWeapon: sheathe toggle (audit 2026-08-17; held-style so the per-frame edge sees it)
   button('\u2191\u2191', 'right:16px', 'bottom:16px', 64, () => down('Space'), () => up('Space'));   // jump
   button('F5', 'left:16px', 'top:16px', 48, () => tap('F5'));
   button('F6', 'left:72px', 'top:16px', 48, () => tap('F6'));
