@@ -360,6 +360,30 @@ export class ActionSystem {
     if (EFFECT_ACTION_FLAGS.has(o.actionFlag)) this._runEffect(o);
   }
 
+  /** Verbatim DaggerfallActionDoor.AttemptBash: an OPEN door bash-
+   *  closes; a closed door that is not magically held (lock < 20)
+   *  rolls d100 under (20 - CurrentLockValue) to burst open, clearing
+   *  the lock. Player bashes fire the door's own record exactly like
+   *  ToggleDoor(true) does (AttemptBash calls it). The bash sound and
+   *  the castle MakeEnemiesHostile bit are routed (Audio / crime).
+   *  rollProvider defaults to the system's rolls stream. */
+  attemptBash(o, roll01 = this._rolls()) {
+    if (o.kind !== 'door') return false;
+    this.onDoorBash?.(o);   // A1 seam (PlayerDoorBash)
+    if (o.state === 'end') {
+      if (this.toggleDoor(o)) this._execOwnAction(o);
+      return true;
+    }
+    if (o.currentLockValue >= 20) return false;   // magically held: cannot bash
+    const chance = 20 - o.currentLockValue;
+    if (Math.floor(roll01 * 100) < chance) {      // Dice100.SuccessRoll
+      o.currentLockValue = 0;
+      if (this.toggleDoor(o)) this._execOwnAction(o);
+      return true;
+    }
+    return false;
+  }
+
   /** Player activation entry: doors toggle (+ fire their own record,
    *  Door-gated), actions receive. */
   activate(key) {

@@ -18,7 +18,8 @@ import { RDB_SIDE } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, classifyPlacementAction } from '../world/actionSystem.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
-import { worldAabb } from '../player/activate.js';
+import { worldAabb, rayAabb } from '../player/activate.js';
+import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
 import { drawText, makeFont, measureText } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
@@ -661,7 +662,29 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (held && clickCast.consume()) { pendingClickCast = true; return; }   // the armed click casts, no swing
     _atkDx += dx; _atkDy += dy; _atkHeld = held;
   }
-  function resolvePlayerHit(eye, inViewFn, playerFeet) {
+  function resolvePlayerHit(eye, inViewFn, playerFeet, lookDir) {
+    // Verbatim WeaponEnvDamage FIRST (audit 2026-08-16: nothing ever
+    // sent the Attack trigger and doors could not be bashed): the
+    // swing ray forward within weapon reach, world geometry occludes.
+    // An action object hit gets Receive(Attack) - the gate table
+    // filters - and the swing CONTINUES (env returns false in DFU);
+    // a door hit is BASHED and CONSUMES the swing.
+    if (lookDir) {
+      let best = null, bestD = Infinity;
+      for (const o of actions.objects.values()) {
+        const box = o.aabb ?? (o.cpu ? worldAabb(o.cpu.positions, o.matrix) : null);
+        if (!box) continue;
+        const d = rayAabb(eye, lookDir, box);
+        if (d === null || d > WEAPON_REACH || d >= bestD) continue;
+        const wall = collider.raycast(eye, lookDir, d - 0.05);
+        if (Number.isFinite(wall) && wall < d - 0.05) continue;   // occluded
+        best = o; bestD = d;
+      }
+      if (best) {
+        if (best.kind === 'door') { actions.attemptBash(best, Math.random()); return; }
+        actions.receive(best, 'Attack');
+      }
+    }
     // E3d: backstab facing per foe, verbatim IsBackFacing (records
     // 3/4 of the 8-orientation wheel); the chance = the player's
     // Backstabbing skill (flat interim). TallySkill pends Systems.
@@ -941,7 +964,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           tallySkill(playerEntity, SKILLS.Archery);
           continue;
         }
-        resolvePlayerHit(eye, inView, playerFeet);
+        resolvePlayerHit(eye, inView, playerFeet, [-view[2], -view[6], -view[10]]);
       }
     }
     for (const f of foes) {

@@ -145,3 +145,25 @@ test('actionchain: classifyPlacementAction pins the DFU precedence', () => {
   }
   assert.equal(DOOR_VERB_FLAGS.size, 4);
 });
+
+test('actionchain: AttemptBash verbatim - open closes, lock 20 holds, chance = 20 - lock', () => {
+  const c = stubCollider();
+  const a = new ActionSystem(c);
+  const door = a.addDoor(CUBE, I, { positionKey: 30, action: act({ triggerFlag: TRIGGER_FLAGS.Door }), startingLockValue: 0x0e });
+  // Magically held (>= 20): the bash never opens, whatever the roll.
+  door.currentLockValue = 20;
+  assert.equal(a.attemptBash(door, 0.0), false);
+  assert.equal(door.state, 'start');
+  // Lock 14: chance 6 - roll 0.06 -> floor 6 < 6 FALSE (miss at the edge).
+  door.currentLockValue = 0x0e;
+  assert.equal(a.attemptBash(door, 0.06), false);
+  assert.equal(door.currentLockValue, 0x0e, 'a failed bash leaves the lock');
+  // Roll 0.05 -> floor 5 < 6: burst open, lock cleared.
+  assert.equal(a.attemptBash(door, 0.05), true);
+  assert.equal(door.state, 'forward');
+  assert.equal(door.currentLockValue, 0);
+  for (let i = 0; i < 100; i++) a.update(1.5 / 90);
+  // Bashing an OPEN door closes it (and fires the Door-gated record).
+  assert.equal(a.attemptBash(door, 0.99), true);
+  assert.equal(door.state, 'reverse');
+});
