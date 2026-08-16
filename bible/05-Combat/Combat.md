@@ -155,3 +155,30 @@ Daggerfall city green.
 
 4 tests (weaponrig.test.js). Suite 388/86, ARENA2 green pre-commit,
 dungeon + exterior(&play) + world shot probes green.
+
+## C10 (2026-08-16): the dungeonContext rig fold - SHIPPED
+
+The C9 residual closes (the parallel FP lane has ended; this session
+is the only one): dungeonContext's inline weapon surface collapses
+onto combat/weaponRig.js - ONE home for the art cache, the
+ShowWeapons legs (spellArmed = the click-cast HasReadySpell leg,
+threaded), ToggleSheath + DrawWeapon 78, the zero-arrow bow guard
+(say -> hudText), the gesture buffer, the swing-sound edge, and the
+WeaponEnvDamage ray (the inline env block in resolvePlayerHit is now
+the shared envAttack). The rig's canvas dep became late-resolvable
+(() => element) - the dungeon context only holds a canvas per
+drawFoes call. The dungeon-only pieces stay put: foe hit resolution,
+the bow fireArrow loose, click-cast consumption, the equip seam.
+
+Behavior deltas, all parity-positive:
+- The weapon EXISTS in foe-less dungeons now (the old playerWeapon
+  was foes-gated; DFU's WeaponManager always runs) - and the
+  listener/torch/animal ambient pass, which sat INSIDE the old
+  `if (playerWeapon)`, is un-gated: foe-less dungeons had silently
+  lost 3D audio + ambient barks since A2.
+- The touch tap (playerClickAttack) gains the sheathed gate the
+  inline version bypassed (WeaponManager: no attack processing
+  while sheathed). Pinned in weaponrig.test.js.
+
+Suite 389/86 (the clickAttack gate pin). ARENA2 green pre-commit,
+dungeon + world shot probes green.
