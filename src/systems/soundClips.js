@@ -3,6 +3,7 @@
 // with the consumers (the full 400+ enum stays in the source).
 export const SOUND = {
   PlayerDoorBash: 7,
+  DrawWeapon: 78,     // ToggleSheath's unsheathe sound (FPSWeapon.DrawWeaponSound default)
   DungeonDoorClose: 24,
   DungeonDoorOpen: 25,
   NormalDoorClose: 93,

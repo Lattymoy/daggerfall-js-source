@@ -34,6 +34,8 @@ const arts = {
   longblade: await loadFpsWeaponArt(getBytes, palette, renderer, WEAPON_TYPES.LongBlade, WEAPON_MATERIALS.Elven),
   bow: await loadFpsWeaponArt(getBytes, palette, renderer, WEAPON_TYPES.Bow, WEAPON_MATERIALS.Iron),
   melee: await loadFpsWeaponArt(getBytes, palette, renderer, WEAPON_TYPES.Melee, WEAPON_MATERIALS.Iron),
+  silverdagger: await loadFpsWeaponArt(getBytes, palette, renderer, WEAPON_TYPES.Dagger, WEAPON_MATERIALS.Silver),
+  steelblade: await loadFpsWeaponArt(getBytes, palette, renderer, WEAPON_TYPES.LongBlade, WEAPON_MATERIALS.Steel),
 };
 
 window.__probe = (which, state, frame) => {
@@ -86,6 +88,8 @@ for (const [which, state, frame, name] of [
   ['dagger', 'StrikeRight', 2, 'dagger-strikeright-mid'],
   ['longblade', 'StrikeLeft', 2, 'longblade-strikeleft-mid'],
   ['bow', 'StrikeDown', 4, 'bow-draw'],
+  ['silverdagger', 'Idle', 0, 'silver-dagger-idle'],   // dye-parity evidence: 18 dyes SILVER (audit 2026-08-17)
+  ['steelblade', 'Idle', 0, 'steel-blade-idle'],       // dye-parity evidence: Steel keeps the files' native colors
 ]) {
   const r = await page.evaluate(([w, s, f]) => window.__probe(w, s, f), [which, state, frame]);
   const wants = [['bottom-anchored', (x) => x.bbox.y1 > 0.98]];

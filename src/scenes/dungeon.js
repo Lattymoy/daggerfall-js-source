@@ -101,6 +101,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   let prevCrouch = false;   // P12: the crouch-toggle key edge
   let prevUse = false;
   console.log(`player: collider ${ctx.colliderTris} tris, ${ctx.actions.objects.size} activatables, walk=${walkMode}`);
+  let zPrev = false;   // ReadyWeapon (Z) edge state
   const tryActivate = () => {
     const dir = [
       Math.sin(cam.yaw) * Math.cos(cam.pitch),
@@ -245,6 +246,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
       const useHeld = keys.has('KeyE');
+      const zNow = keys.has('KeyZ');   // ReadyWeapon: sheathe toggle (audit 2026-08-17)
+      if (zNow && !zPrev) ctx.toggleSheath?.();
+      zPrev = zNow;
       if (useHeld && !prevUse) tryActivate();
       prevUse = useHeld;
     } else if (!held) {

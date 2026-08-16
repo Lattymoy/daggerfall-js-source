@@ -1,7 +1,7 @@
 // Systems S2: stacking + weight + pickup transfer, verbatim rules.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isStackable, stacksWith, addItem, transferAll, itemWeight, totalWeight, weightForMaterial, leatherWeight } from '../src/systems/inventory.js';
+import { isStackable, stacksWith, addItem, removeOne, transferAll, itemWeight, totalWeight, weightForMaterial, leatherWeight } from '../src/systems/inventory.js';
 
 test('inventory: the stackable rule verbatim', () => {
   assert.ok(isStackable({ group: 'Currency', name: 'Gold pieces' }));
@@ -66,4 +66,18 @@ test('containers: the verbatim house-container predicate (S2b)', async () => {
   assert.ok(!isHouseContainerModel(41005));  // 5 is a SHOP shelf, not a house container
   assert.ok(!isHouseContainerModel(41409));  // the ladder
   assert.equal(containerTextureRecord(41837), 37);
+});
+
+test('inventory: removeOne - stack decrement, singleton splice, absent false (audit 2026-08-17)', () => {
+  const list = [
+    { templateIndex: 131, name: 'Arrow', stackCount: 3 },
+    { templateIndex: 113, name: 'Dagger' },
+  ];
+  assert.equal(removeOne(list, 131), true);
+  assert.equal(list[0].stackCount, 2, 'a stack decrements');
+  assert.equal(removeOne(list, 113), true);
+  assert.equal(list.length, 1, 'a singleton splices out');
+  assert.equal(removeOne(list, 113), false, 'absent removes nothing');
+  removeOne(list, 131); removeOne(list, 131);
+  assert.equal(list.length, 0, 'the stack exhausts to empty');
 });

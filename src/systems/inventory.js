@@ -49,6 +49,19 @@ export function addItem(list, item) {
   return item;
 }
 
+/** Remove ONE item by templateIndex: decrements a stack, splices a
+ *  single. Returns true when one was removed (parity audit 2026-08-17:
+ *  the player's bow never consumed an Arrow - WeaponManager removes
+ *  one per loose). */
+export function removeOne(list, templateIndex) {
+  const i = list.findIndex((it) => it.templateIndex === templateIndex);
+  if (i < 0) return false;
+  const it = list[i];
+  if ((it.stackCount ?? 1) > 1) it.stackCount--;
+  else list.splice(i, 1);
+  return true;
+}
+
 export function transferAll(fromList, toList) {
   let n = 0;
   for (const item of fromList) { addItem(toList, item); n++; }

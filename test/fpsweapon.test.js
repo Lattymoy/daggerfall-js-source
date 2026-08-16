@@ -11,6 +11,9 @@ import { WEAPONS } from '../src/characters/weapons.js';
 import { DYE_COLORS } from '../src/characters/dyes.js';
 import { CifRciFile } from '../src/formats/cifRciFile.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
+import { applyDyeToIndex, DYE_TARGETS } from '../src/characters/dyes.js';
+import { weaponDyeColor, WEAPON_MATERIALS } from '../src/characters/weapons.js';
+import { PlayerWeapon } from '../src/combat/playerWeapon.js';
 
 // The TRUE classic FP weapons (pivot 2026-08-17): FPSWeapon /
 // WeaponBasics / ConvertItemToAPIWeaponType verbatim, the CIF frames
@@ -118,4 +121,35 @@ test('fpsweapon: every mapped CIF satisfies its anim table on real data', { skip
         `${fileName} r${rec} fits the 320x200 design surface`);
     }
   }
+});
+
+test('fpsweapon: dye parity - Steel skips, Silver DYES through the aliased 18 (audit 2026-08-17)', () => {
+  // DFU's DyeColors aliases Silver = SilverOrElven = Chain = Unchanged
+  // = 18, and ChangeDye routes 18 into the SILVER metal table - so an
+  // "Unchanged" short-circuit in the frame bake (which this module
+  // used to carry) skipped the dye for every silver weapon. The
+  // caller-guard is FPSWeapon's: Steel (and None) keep the files'
+  // native colors; everything else dyes.
+  assert.equal(weaponDyeColor(WEAPON_MATERIALS.Silver), 18);
+  const silvered = applyDyeToIndex(0x75, weaponDyeColor(WEAPON_MATERIALS.Silver), DYE_TARGETS.WeaponsAndArmor);
+  assert.notEqual(silvered, 0x75, 'a swatch-band index must remap under the Silver table');
+  // frameToColor32: null dye = raw palette; Silver dye = changed pixels.
+  const pal = { get: (i) => ({ r: i, g: 0, b: 0 }) };
+  const bmp = { width: 2, height: 1, data: new Uint8Array([0x75, 0]) };
+  const raw = new Uint8Array(frameToColor32(bmp, pal, null).colors.buffer);
+  const dyed = new Uint8Array(frameToColor32(bmp, pal, weaponDyeColor(WEAPON_MATERIALS.Silver)).colors.buffer);
+  assert.equal(raw[0], 0x75, 'null dye keeps the raw index through the palette');
+  assert.equal(dyed[0], silvered, 'Silver dyes the band index');
+  assert.equal(raw[7], 0, 'index 0 stays transparent either way');
+});
+
+test('fpsweapon: ToggleSheath verbatim - starts sheathed, the draw sound rule (audit 2026-08-17)', () => {
+  const armed = new PlayerWeapon({});   // the interim Iron Dagger
+  assert.equal(armed.sheathed, true, 'classic starts sheathed');
+  assert.equal(armed.toggleSheath(), true, 'unsheathing a real weapon plays SOUND.DrawWeapon');
+  assert.equal(armed.sheathed, false);
+  assert.equal(armed.toggleSheath(), false, 'sheathing is silent');
+  const fists = new PlayerWeapon({ weapon: null });
+  assert.equal(fists.toggleSheath(), false, 'bare hands (Melee) never play the draw sound');
+  assert.equal(fists.sheathed, false, 'but the toggle still flips');
 });

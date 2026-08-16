@@ -74,3 +74,43 @@ public/visual-changes/combat-fp/classic-weapon/. Departures at the
 module head: no FlipHorizontal (right-hand only until a settings
 surface), weaponOffsetHeight 0 (no large HUD yet). Follow-up rollout:
 the exterior/interior hosts (the voxel path was dungeon-only too).
+
+## 2026-08-17 - the classic-FP-weapon parity audit (Mac-directed)
+
+Full diff of combat/fpsWeapon.js + its consumers against FPSWeapon.cs,
+WeaponBasics.cs, ItemHelper.ConvertItemToAPIWeaponType,
+ImageProcessing.ChangeDye, and WeaponManager.Update. VERIFIED
+byte-identical, no change: all seven animation tables (records,
+frames, speeds 10/20, alignments, offsets 0.15/0.04/0.02/0.2, the
+MagicBattleAxe record shuffle, the bow 7/7/7/7/7/4), the anims +
+filename routing (WEAPO1xx variants, WEAPON10/11), the three alignment
+functions + the 320x200 bottom anchor, the frame clock (3*(115-SPD)/
+980 melee, the 0.0625 bow tick, draw-to-hold, the StrikeUp->StrikeDown
+release chain, the bow-only frame-reset rule), hit frames 2/5, the
+index-0 transparency, the bow record-0 force, NEAREST filtering (DFU's
+1.01 non-point fudge correctly absent). Tint is a mod seam defaulting
+white. FlipHorizontal + weaponOffsetHeight stay documented departures.
+
+SIX findings, all rooted and pinned:
+1. SILVER weapons rendered undyed: DFU's DyeColors aliases Silver =
+   Chain = SilverOrElven = Unchanged = 18 and ChangeDye routes 18 into
+   the SILVER metal table; the bake's Unchanged short-circuit skipped
+   it. The caller now guards Steel/None exactly as
+   FPSWeapon.GetWeaponTexture2D does; everything else dyes.
+2. The STARTING Iron Dagger drew no weapon art: INTERIM_WEAPON lacked
+   templateIndex, so weaponTypeForItem fell to None (a test pin caught
+   it live).
+3. SHEATHING did not exist: classic starts sheathed; Z (ReadyWeapon)
+   toggles, edge-detected in both hosts + a touch button; attacks are
+   refused while sheathed; SOUND.DrawWeapon (78) plays only on
+   unsheathing a real weapon (ToggleSheath verbatim).
+4. The ShowWeapons legs were missing: the bow-cooldown hide and the
+   spell-armed hide (clickCast / pendingClickCast) now fold with S19's
+   paralysis gate into one predicate in WeaponManager.Update's order.
+   Routed legs, no system yet: equip countdown, climbing, transport.
+5. ARROWS were never consumed: one Arrow per player loose
+   (inventory.removeOne), and an unsheathed bow at zero arrows
+   auto-sheathes with the classic "You have no arrows." line
+   (FPSWeapon.UpdateWeapon's guard, verbatim).
+6. The standing probe gained silver/steel dye-parity evidence shots
+   (gallery: public/visual-changes/combat-fp/classic-weapon/).

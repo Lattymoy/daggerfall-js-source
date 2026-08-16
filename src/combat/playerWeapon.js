@@ -23,6 +23,8 @@ import {
 } from '../characters/weaponStates.js';
 import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
 import { combinePose } from '../characters/animate.js';
+import { weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
+import { WEAPONS } from '../characters/weapons.js';
 import { POSES } from '../characters/poses.js';
 import {
   calculateAttackDamage, enemyGroupOf, WEAPON_MIN_DAMAGE, WEAPON_MAX_DAMAGE,
@@ -45,6 +47,7 @@ export const SWING_MODS = Object.freeze({
 /** INTERIM starting weapon (items arc replaces): Iron Dagger. */
 export const INTERIM_WEAPON = Object.freeze({
   name: 'Dagger',
+  templateIndex: WEAPONS.Dagger,   // audit 2026-08-17: without this, weaponTypeForItem -> None and the STARTING dagger drew no weapon art at all
   material: 0,        // Iron
   flags: 0x10,        // edged
   minDamage: WEAPON_MIN_DAMAGE.Dagger,
@@ -61,10 +64,22 @@ export function playerMeleeCanHit(dist, inView, losClear) {
 
 /** Per-player weapon driver over the shared machine + gesture input. */
 export class PlayerWeapon {
+  /** WeaponManager.ToggleSheath verbatim: flip; the DRAW sound plays
+   *  only on UNsheathing a real weapon (not Melee/None). Returns true
+   *  when the caller should play SOUND.DrawWeapon. Classic starts
+   *  SHEATHED (parity audit 2026-08-17 - sheathing did not exist). */
+  toggleSheath() {
+    this.sheathed = !this.sheathed;
+    if (this.sheathed) return false;
+    const t = weaponTypeForItem(this.weapon);
+    return t !== WEAPON_TYPES.Melee && t !== WEAPON_TYPES.None;
+  }
+
   constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
     this.machine = createWeaponMachine(false);
     this.liveSpeed = liveSpeed;
     this.weapon = weapon;
+    this.sheathed = true;   // classic starts sheathed; Z readies (WeaponManager.Sheathed)
     this._gx = 0; this._gy = 0; this._gt = 0; this._tracking = false;
   }
 
