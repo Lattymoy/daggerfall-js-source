@@ -257,6 +257,14 @@ test('player: P12 crouch - toggle, heights, speed, the blocked-stand ceiling', a
   m.update(0.05, noInput, 0);
   assert.ok(!m.crouching);
   approx(m.eye[1], m.pos[1] + EYE_HEIGHT);
+  // P13 IsMovingLessThanHalfSpeed: standing true; walking compares
+  // walk/2 vs the applied speed (false); crouch-walking compares
+  // walk/2 vs crouchSpeed (false at SPD 50 - sneak input pends)
+  assert.ok(m.movingLessThanHalfSpeed);
+  m.update(0.05, { forward: 1, strafe: 0, run: false, jump: false }, 0);
+  assert.ok(!m.movingLessThanHalfSpeed);
+  m.update(0.05, noInput, 0);
+  assert.ok(m.movingLessThanHalfSpeed);
   // Toggle down: eye drops, capsule 0.9; walking crouched moves at
   // crouchSpeed, RUNNING crouched at the crouch base x run mult
   // (GetRunSpeed's crouch branch - audit F1)

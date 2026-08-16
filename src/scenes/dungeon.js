@@ -241,7 +241,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       prevJump = jumpHeld;
       prevCrouch = crouchHeld;
       cam.pos = player.eye;
-      ctx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped });
+      ctx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed });   // P13: the stealth sneak state
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
       const useHeld = keys.has('KeyE');

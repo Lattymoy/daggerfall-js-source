@@ -50,7 +50,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9: floating-origin streaming world (?world). Queue empty; routed rows (teleporters, platform riding, swim/levitate) wait in Ledger C.
-- `03-World/Player-Arc.md` - ACTIVE again. P1-P9 + P10 TELEPORTERS + DOOR LOCKS (the delegates verbatim, RDB starting locks + look-at-lock tiers, flat/marker actions joining the graph, the repeated-block action-key collision fixed) + P11 SWIM/LEVITATE (2026-08-16: the LevitateMotor path with GetSwimSpeed and the surface clamp, the swim toggle + splash, Levitate (14,255) end to end, the per-minute/per-jump fatigue drains, the .7071 diagonal-limit parity fix) + P12 BREATH/CROUCH (2026-08-16: MaxBreath = END/2 with the classic-update drain every 19th tick and SetHealth(0) drowning at the 76*GS head-under threshold, WaterBreathing (30,255) gating it, the verbatim HUDBreathBar; crouch 0.9/0.8 on the KeyX edge in both hosts with crouchSpeed, a per-call collider capsule height, and the CanStand ceiling probe) SHIPPED. Next: stealth (with the enemy detection row), or riding.
+- `03-World/Player-Arc.md` - ACTIVE again. P1-P9 + P10 TELEPORTERS + DOOR LOCKS (the delegates verbatim, RDB starting locks + look-at-lock tiers, flat/marker actions joining the graph, the repeated-block action-key collision fixed) + P11 SWIM/LEVITATE (2026-08-16: the LevitateMotor path with GetSwimSpeed and the surface clamp, the swim toggle + splash, Levitate (14,255) end to end, the per-minute/per-jump fatigue drains, the .7071 diagonal-limit parity fix) + P12 BREATH/CROUCH (2026-08-16: MaxBreath = END/2 with the classic-update drain every 19th tick and SetHealth(0) drowning at the 76*GS head-under threshold, WaterBreathing (30,255) gating it, the verbatim HUDBreathBar; crouch 0.9/0.8 on the KeyX edge in both hosts with crouchSpeed, a per-call collider capsule height, and the CanStand ceiling probe) + P13 STEALTH (2026-08-16: the oldest src flag closes - the classic detection flow with hearing gated on prior detection, the once-per-minute StealthCheck with spawn-band gating/odd-minute sneak skip/fast-move auto-detect/the shared Stealth tally, and the verbatim illusion gate with the 13 sees-through monsters - retiring the S8 half-sight interim, which had been DEAD post-merge) SHIPPED. Next: the Sneak input binding, riding, or Invisibility/Shade with the library.
 - `04-Characters/Characters-Arc.md` - PARKED (pivot 3: classic visuals). C8 shipped E1-E4b end to end + spectral; E4c deferred by Mac; remaining interims are Systems work (ledger below).
 - `05-Combat/Combat.md` - COMPLETE. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, the collision-trigger seam (input-held gate, 08-16), the Attack trigger + door bashing (WeaponEnvDamage, 08-16) all shipped. Build queue EMPTY; Systems-shared interims tracked in the ledger.
 - `08-Audio/Audio.md` - ACTIVE. A1 + A2 (2026-08-16: action PlaySound on every Play, torch Burning loops at 5m linear/0.7 via the new loop3d engine seam, animal random barks on the classic rand()<=100 cadence at 19.2m - dungeon-scoped) + A3 SCENE AMBIENCE (2026-08-16: AmbientEffectsPlayer verbatim - the 14 dungeon one-shots somewhere-around on the scene's serialized 5/28 waits + classic-cadence water/bubbles, the weather/time presets in BOTH exterior scenes on 5/25 with rain/crickets loops and horizon storms, one shared ambient channel; building interiors silent, verbatim) SHIPPED. Next: RMB exterior animals/torches, transition stingers, music strategy (Mac's call).
@@ -75,16 +75,14 @@ binding; interleaving a new pass exposed drawMesh's assumption.
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-16d, the 16e audit)
+## Open flags (regenerated 2026-08-16d, the P13 slice)
 
-Regenerated at the 2026-08-16e pre-merge audit close (line numbers
-refreshed after the F1-F4 fixes; no flags opened or closed).
-Every row below is a live
+Regenerated at the P13 close: the enemyMotor stealth PENDING row -
+the oldest flag in src - SHIPPED out. Every row below is a live
 INTERIM/FLAGGED/PENDING site in src; the code comment at each site is
 the authority. `src/render/characterSprite.js` FP framing constants
 stay open to Mac's eye in live play (probe-locked).
 
-- `src/characters/enemyMotor.js:24` - Speed). Still PENDING here: stealth checks in detection.
 - `src/characters/playerEntity.js:5` - UI later fronts it everywhere). INTERIM until then, loudly: flat
 - `src/characters/playerEntity.js:12` - maxHealth: 50,    // INTERIM until chargen rolls career HP
 - `src/characters/playerEntity.js:15` - skills: 30,       // INTERIM flat skills until chargen
@@ -95,14 +93,14 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/combat/playerWeapon.js:46` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:64` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
 - `src/scenes/dungeonContext.js:154` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:418` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:424` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:438` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:537` - drained strength lowers the ceiling). INTERIM (loud): the
-- `src/scenes/dungeonContext.js:621` - FLAGGED: DFU recomputes per-effect via the cost tables (that
-- `src/scenes/dungeonContext.js:623` - FLAGGED to the effect library (caster-only buffs, touch, areas).
-- `src/scenes/dungeonContext.js:814` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/dungeonContext.js:1453` - actions) is FLAGGED - the player snapshot only.
+- `src/scenes/dungeonContext.js:421` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:427` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:441` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:541` - drained strength lowers the ceiling). INTERIM (loud): the
+- `src/scenes/dungeonContext.js:625` - FLAGGED: DFU recomputes per-effect via the cost tables (that
+- `src/scenes/dungeonContext.js:627` - FLAGGED to the effect library (caster-only buffs, touch, areas).
+- `src/scenes/dungeonContext.js:818` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:1472` - actions) is FLAGGED - the player snapshot only.
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/chargen.js:6` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,

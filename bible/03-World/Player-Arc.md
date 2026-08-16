@@ -643,3 +643,55 @@ PlayerHeightChanger/PlayerSpeedChanger + HUDBreathBar:
 
 2 tests (player.test.js 10). Suite 351/80, ARENA2 corpus 351/351
 green pre-commit.
+
+## P13 (stealth in enemy detection): SHIPPED
+
+The oldest open flag in src (enemyMotor "Still PENDING: stealth
+checks in detection") closes. Verbatim from EnemySenses.cs +
+FormulaHelper.CalculateStealthChance + PlayerMotor.
+IsMovingLessThanHalfSpeed:
+
+- **The detection flow** (EnemyAI._senses, per classic update):
+  sight, then hearing GATED ON PRIOR DETECTION ("classic stealth
+  mechanics would be interfered with by hearing" - the pre-P13
+  25-unit proximity auto-detect is gone: a quiet unseen player
+  stays hidden), then the illusion gate, then StealthCheck, else
+  undetected. hasEncounteredPlayer latches on first detection.
+- **StealthCheck**: only for foes that wouldBeSpawnedInClassic
+  (the per-classic-update band recompute: 1094-unit hard cap; the
+  spawn band XZ 1024 / y 128 units vs the wider despawn band y 384
+  - hysteresis; ClassicSpawnDistanceType is NEVER assigned in
+  EnemyBasics so every enemy rides row 0) and inside 1024 units.
+  One check per classic MINUTE (between minutes the standing
+  detection holds); a player moving less than half speed skips ODD
+  minutes; a faster player who has been encountered is detected
+  outright (no roll); the Stealth skill TALLIES once per minute
+  across ALL foes (the scene's sharedStealth minute =
+  PlayerEntity.TimeOfLastStealthCheck). chance = 2 x ((classic
+  distance x live Stealth) >> 10); Dice100.FailedRoll detects.
+  The castle-non-hostile gate is inert (no castle detection, foes
+  hostile-on-sight) - documented.
+- **The illusion gate** (BlockedByIllusionEffect, per classic
+  update): 13 enemies see through everything (extractor-regenerated
+  seesThroughInvisibility - Imp/Skeletal Warrior/Ghost/Mummy/Wraith/
+  both Daedra/Daedroth/both vampires/Seducer/Daedra Lord/Lich, NOT
+  Ancient Lich, verbatim); an invisible target always blocks
+  (Invisibility pends - inert); blending (chameleonNormal) gives an
+  8% see-through, a shade 4% (Shade pends); NO roll for unconcealed
+  targets (sequences match). This RETIRES the S8 half-sight interim
+  - which the audit trail shows was DEAD post-merge anyway
+  (canSeeTarget.sightScale was never assigned; the third update arg
+  was ignored): chameleon concealment now works, verbatim.
+- **The motor side**: IsMovingLessThanHalfSpeed (standing true;
+  otherwise half the walk speed vs the applied speed - both DFU
+  branches collapse to walk/2; with no Sneak input yet the live
+  gate is standing still, exactly classic-without-Sneak), reported
+  through reportActivity by BOTH dungeon hosts (standing rule).
+- **RESIDUAL (honest)**: the Sneak input binding pends (until then
+  only a still player is "moving less than half speed"); hearing's
+  ray sees closed action doors as blockers (DFU's static-only mask
+  lets sound pass them) - documented departure; Invisibility/Shade
+  effects pend the library; the castle gate pends castle detection.
+
+4 tests (enemymotor 8) + the motor pin (player.test.js). Suite
+361/81, ARENA2 corpus 361/361 green pre-commit.

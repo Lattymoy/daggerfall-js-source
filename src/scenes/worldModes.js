@@ -299,7 +299,7 @@ export function createWorldModes(host) {
     if (mode === 'dungeon' && dungeonCtx) {
       // P11: the splash/jump/swim-minute fatigue feed (same seam as
       // the standalone scene).
-      dungeonCtx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped });
+      dungeonCtx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed });   // P13: the stealth sneak state
     }
     latch.jump = jumpHeld;
     cam.pos = player.eye;
