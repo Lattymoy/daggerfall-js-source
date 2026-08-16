@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 295 tests across 74 files.
+Node 22). Suite: 297 tests across 75 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -26,6 +26,7 @@ Node 22). Suite: 295 tests across 74 files.
 | dungeon.test.js | 13 | dfRandom LCG, texture tables, RDB matrix order, action records, overlap removal, Privateer's Hold, 187-RDB closure, full 4232-dungeon sweep, R6 light collection pins, per-light flicker bounds, R7 water corpus (32/187) + Maorn pins |
 | monstercareer.test.js | 1 | ENEMY{nnn}.CFG careers from a crafted MONSTER.BSA through the shared BsaFile+ClassFile readers: fields real on the entity, session cache proven (throwing re-fetch), missing-index null path |
 | playerweapon.test.js | 3 | verbatim reach 2.25+0.25 + view/LOS hit rule + the swing-mod table, drag-gesture -> mapped strike on the shared machine (threshold + release reset), hit-frame kill through the full chain (deterministic rolls) + reach/dead gating |
+| weaponPose.test.js | 2 | sampleClip UNITS regression (audit 2026-08-16): FP pose frames 2-3 sample the clip (phase * dur mapping pinned against a direct seconds sample), every enemy 1H clip samples at frame 3 (short durs died under phase-as-seconds) |
 | formulas.test.js | 6 | FormulaHelper verbatim: Dice100/DamageModifier/H2H (sheet rule)/weapon min-max tables/material mods/body parts, career attack-modifier bits (bonus + phobia ADDITIVE) + enemy-type bonus, to-hit chain (dodging/4 bug preserved, the flat -50 + the +40 monster adjustment, weapon material x10 on the weapon branch, roll ordering, 3..97 clamp), damage paths (str-after-skeletal ordering, silver x2, material gate), the monster multi-attack loop (basics damage spans 1-3, the DFRandom reflex gate 50-10*(reflexes-2), per-hit enemy-type bonus, class enemies staying on the H2H path), the classic 0.25/MeleeDistance/35.156deg hit gate |
 | spellcost.test.js | 2 | the verbatim component math (offset + A*starting + B*trunc(inc/per), averaged magnitude, per-effect skill scaling gold*(110-skill)/400, the zero-component fudge 60/100/160), target multipliers on the SUMS (x1.5/x2.5 pinned, the table's x2.0) + the castCostFloor 5 at mastery |
 | spellcast.test.js | 5 | verbatim saving throw (tolerance precedence Resistant>Immune, immunity->0, DF-Chronicles proration edges at exact rolls, 5..95 clamp + MagicResist), magnitude roll (base+plus x floor(level/per), per-0 guard) + damage-family gate + full resolve skipping non-damage, the CastSpell 45.454546 cooldown firing through the sink with origin, TARGET_TYPES verbatim + applySpell (the one door) vs a fire-immune foe (nothing lands) and a soft target, skipped-family count, the ranges-II pure targeting (touch reach + nearest-live + LOS gate + corpse skip, the 4.0 sweep in/out/dead) |

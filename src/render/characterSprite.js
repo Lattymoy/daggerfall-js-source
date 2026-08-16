@@ -47,7 +47,7 @@ export function drawCharacterSprite(renderer, canvas, rig, rigMat, proj, view, e
  * fixed RT (both shrink together so the overlay never squashes;
  * pixel size grows slightly past ~3.5k-wide displays).
  */
-export function drawFirstPersonViewmodel(renderer, canvas, rig, feet, yaw, pitch, eyeHeight) {
+export function drawFirstPersonViewmodel(renderer, canvas, rig, feet, yaw, eyeHeight) {
   const wantW = canvas.clientWidth / CHAR_PIXEL, wantH = canvas.clientHeight / CHAR_PIXEL;
   const scale = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
   const pw = Math.max(2, Math.round(wantW * scale));
@@ -68,12 +68,19 @@ export function drawFirstPersonViewmodel(renderer, canvas, rig, feet, yaw, pitch
   //      behind the near plane) - only the raised forearm/weapon of the
   //      fpMelee1H pose reaches forward into the lower frame.
   const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
-  const back = 0.45;                       // push the body back so head/torso clear the lens
+  // Framing constants are PROBE-LOCKED (tools/fpProbe.mjs, 2026-08-16
+  // audit). The P9 hole-fix values (back 0.45, cast -0.12) overshot: the
+  // whole rig, raised forearm included, sat below/left of the frustum and
+  // the viewmodel rendered ZERO pixels in every state and frame. At back
+  // 0.25 / cast -0.20 the fist enters the frame from the bottom-right
+  // corner at idle (~4.8% cover, classic 1H ready) and every strike
+  // sweeps across; the body still sits behind the near plane.
+  const back = 0.25;                       // push the body back so head/torso clear the lens
   const rigX = feet[0] - sinY * back;
   const rigZ = feet[2] - cosY * back;
   const rigMat = trs(rigX, feet[1] - rig.liveFootY * s, rigZ, 0, yaw * 180 / Math.PI, 0, s, s, s);
   const eye = [feet[0], feet[1] + eyeHeight, feet[2]];
-  const fwd = [sinY, -0.12, cosY];         // yaw + a slight fixed downward cast to the hands (NOT world pitch)
+  const fwd = [sinY, -0.20, cosY];         // yaw + a fixed downward cast to the hands (NOT world pitch)
   const proj = perspective(Math.PI / 3, pw / ph, 0.05, 12);
   const view = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
   const tex = renderer.renderCharacterSprite(rig.mesh, rigMat, proj, view, pw, ph);

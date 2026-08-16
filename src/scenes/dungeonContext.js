@@ -945,7 +945,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         f.reaction.t += dt;
         const R = f.reaction.clip;
         if (f.reaction.t >= R.dur) f.reaction = null;
-        else pose = foeDeps.sampleClip(R, f.reaction.t / R.dur);
+        else pose = foeDeps.sampleClip(R, f.reaction.t);   // seconds, not phase (units bug, audit 2026-08-16: staggers cut at a third)
       }
       f.rig.setPose(pose);
       f.rig.update(dt);
@@ -959,10 +959,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // derive from the view matrix's back row.
       const fw = [-view[2], -view[6], -view[10]];
       const vYaw = Math.atan2(fw[0], fw[2]);
-      const vPitch = Math.asin(Math.max(-1, Math.min(1, fw[1])));
       viewmodelRig.setPose(playerWeapon.pose());
       viewmodelRig.update(dt);
-      foeDeps.drawFirstPersonViewmodel(renderer, canvas, viewmodelRig, playerFeet, vYaw, vPitch, foeDeps.EYE_HEIGHT);
+      foeDeps.drawFirstPersonViewmodel(renderer, canvas, viewmodelRig, playerFeet, vYaw, foeDeps.EYE_HEIGHT);
     }
     // U1: HUD last (over the viewmodel), heading from the view
     // forward this file already derives (0 = +z, wrapped 0..1).

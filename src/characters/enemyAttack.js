@@ -102,6 +102,9 @@ export class EnemyAttack {
     const frames = MELEE_NUM_FRAMES[m.state] ?? 5;
     const clip = ATTACKS_1H[m.state];
     if (!clip) return null;
-    return sampleClip(clip, Math.min(1, m.frame / (frames - 1)));
+    // sampleClip takes SECONDS - phase maps through clip.dur, capped just
+    // under the end so the final frame still samples (units bug, audit
+    // 2026-08-16: swings died at 40-66% and snapped to base).
+    return sampleClip(clip, Math.min(0.9999, m.frame / (frames - 1)) * clip.dur);
   }
 }
