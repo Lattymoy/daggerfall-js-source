@@ -47,9 +47,10 @@ test('spellcast: magnitude + damage-family resolution', () => {
   assert.equal(missileArchive(0), 375);
   assert.equal(missileArchive(4), 379);
   // full apply, GetMagnitude order (S15): magnitude rolls 0,0 -> 9,
-  // THEN the save (0.99 -> lands full). The cure family (3,0) is
+  // THEN the save (0.99 -> lands full). Create Item (2,255) is
   // still outside the library -> skipped (loud); type -1 just drops.
-  const spell = { element: 0, rangeType: 2, effects: [e, { type: 3, subType: 0 }, { type: -1, subType: -1 }] };
+  // (The S19c cures took (3,0) INTO the library - the old fixture.)
+  const spell = { element: 0, rangeType: 2, effects: [e, { type: 2, subType: 255 }, { type: -1, subType: -1 }] };
   const T = { stats: { willpower: 50 }, career: {} };
   let hurt = 0;
   const r = applySpell(spell, 7, T, { hurt: (n) => { hurt += n; } }, seq(0, 0, 0.99));

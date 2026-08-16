@@ -22,8 +22,7 @@
 // STACK rounds onto it (audit F12 - AddState "Stack my rounds onto
 // incumbent") and fire no initial round (the joining instance is
 // never added to liveEffects). Effects outside these keys stay
-// FLAGGED skipped (the library grows here; the cure family (3, 0..2)
-// pends disease/poison/paralysis).
+// FLAGGED skipped (the library grows here).
 
 import { savingThrow, rollMagnitude, EFFECT_FLAGS } from './spellcast.js';
 import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue } from './statMods.js';
@@ -110,6 +109,18 @@ export const isParalyze = (e) => e.type === 0 && classicSub(e) === 255;
  *  the per-0 guard is ours. */
 export const chanceValue = (e, casterLevel) =>
   e.chanceBase + e.chanceMod * Math.floor(casterLevel / Math.max(1, e.chancePerLevel));
+
+// S19c: the Cure family (type 3) - chance-only INSTANT effects.
+//   Cure-Disease      (3, 0) -> manager.CureAllDiseases
+//   Cure-Poison       (3, 1) -> manager.CureAllPoisons
+//   Cure-Paralyzation (3, 2) -> EndIncumbentEffect<Paralyze>
+// CureAll* is RemoveBundle IMMEDIATELY - the entries and their
+// statMods lift at once (no next-tick lag); ending the paralyze
+// incumbent lifts the paralysis NOW (End() clears IsParalyzed).
+export const isCureDisease = (e) => e.type === 3 && e.subType === 0;
+export const isCurePoison = (e) => e.type === 3 && e.subType === 1;
+export const isCureParalyzation = (e) => e.type === 3 && e.subType === 2;
+const CURE_KINDS = Object.freeze(['disease', 'poison', 'paralyze']);   // subType-indexed
 
 /** Duration in rounds, verbatim (straight arithmetic, no roll).
  *  The per-level multiplier CLAMPS AT 1 (audit F11 - DFU SetDuration:
@@ -411,21 +422,43 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // chance rolls ALWAYS (SetChanceSuccess runs in Start); an
       // incumbent re-cast stacks its rounds INSIDE Start (AddState)
       // BEFORE the chance and saving-throw gates - so a re-cast
-      // always stacks, chance/save notwithstanding (verbatim quirk).
-      // A NEW instance needs the chance, then (no-magnitude effects,
+      // always stacks, chance/save notwithstanding (verbatim quirk;
+      // the chance-fail MESSAGE still fires, gate order). A NEW
+      // instance needs the chance, then (no-magnitude effects,
       // non-CasterOnly) the entity saves against the ENTIRE effect
       // on a FULL save. Flags = Paralysis | the spell's element.
       const rounds = rollDuration(e, casterLevel);
       const chanceOk = dice100(chanceValue(e, casterLevel), rolls());
+      if (!chanceOk) out.chanceFailed = (out.chanceFailed ?? 0) + 1;   // "Spell effect failed."/"Save versus spell made."
       if (rounds > 0) {
         const inc = target.activeEffects?.find((a) => a.kind === 'paralyze');
         if (inc) inc.roundsRemaining += rounds;
-        else if (chanceOk &&
-                 (!saveScaled || savingThrow(spell.element, EFFECT_FLAGS.Paralysis | flag, target, 0, rolls) !== 0)) {
-          pushActive(target, { kind: 'paralyze', roundsRemaining: rounds }, sinks, rolls);
-          out.paralyzed = (out.paralyzed ?? 0) + 1;   // "You are paralyzed." rides this (player hosts, once per instance)
+        else if (chanceOk) {
+          if (!saveScaled || savingThrow(spell.element, EFFECT_FLAGS.Paralysis | flag, target, 0, rolls) !== 0) {
+            pushActive(target, { kind: 'paralyze', roundsRemaining: rounds }, sinks, rolls);
+            out.paralyzed = (out.paralyzed ?? 0) + 1;   // "You are paralyzed." rides this (player hosts, once per instance)
+          } else {
+            out.saved = (out.saved ?? 0) + 1;           // "Save versus spell made."
+          }
         }
       }
+      continue;
+    }
+    if (isCureDisease(e) || isCurePoison(e) || isCureParalyzation(e)) {
+      // The Cure family (3, 0..2): chance-only instants through the
+      // same AssignBundle gates - the chance rolls always, a fail
+      // skips with the failure message; non-CasterOnly no-magnitude
+      // effects save against the ENTIRE effect on a FULL save; then
+      // the initial MagicRound cures (immediate bundle removal).
+      const chanceOk = dice100(chanceValue(e, casterLevel), rolls());
+      if (!chanceOk) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
+      if (saveScaled && savingThrow(spell.element, flag, target, 0, rolls) === 0) {
+        out.saved = (out.saved ?? 0) + 1;
+        continue;
+      }
+      const kind = CURE_KINDS[e.subType];
+      if (target.activeEffects) target.activeEffects = target.activeEffects.filter((a) => a.kind !== kind);
+      out.cured = (out.cured ?? 0) + 1;
       continue;
     }
     const kind = buffKind(e);

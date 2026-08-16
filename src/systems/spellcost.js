@@ -27,6 +27,9 @@ export const EFFECT_COST_TABLE = Object.freeze({
   '1,0':    { skill: 22, duration: { A: 28, B: 8, offset: 0 }, magnitude: { A: 40, B: 28, offset: 0 } },   // ContinuousDamageHealth
   '10,8':   { skill: 23, magnitude: { A: 20, B: 28, offset: 0 } },                                  // HealHealth (Restoration)
   '0,255':  { skill: 25, duration: { A: 28, B: 100, offset: 0 }, chance: { A: 28, B: 100, offset: 0 } },   // Paralyze (Alteration) - S19
+  '3,0':    { skill: 23, chance: { A: 8, B: 100, offset: 0 } },                                     // Cure Disease (Restoration) - S19c
+  '3,1':    { skill: 23, chance: { A: 8, B: 100, offset: 0 } },                                     // Cure Poison (Restoration) - S19c
+  '3,2':    { skill: 23, chance: { A: 20, B: 140, offset: 0 } },                                    // Cure Paralyzation (Restoration) - S19c
   '25,255': { skill: 25, duration: { A: 20, B: 100, offset: 0 } },                                  // Slowfall (Alteration)
   '31,255': { skill: 26, duration: { A: 20, B: 8, offset: 0 } },                                    // WaterWalking (Thaumaturgy)
   '23,0':   { skill: 24, duration: { A: 20, B: 80, offset: 0 } },                                   // ChameleonNormal (Illusion)

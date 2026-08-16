@@ -701,9 +701,35 @@ ItemHelper's poisoned-weapon roll:
 7 tests (poisons.test.js). Suite 348/80, ARENA2 corpus 348/348
 green pre-commit.
 
+## S19c (the Cure family): SHIPPED
+
+Verbatim from CureDisease/CurePoison/CureParalyzation.cs +
+EntityEffectManager. Cure-Disease (3,0), Cure-Poison (3,1),
+Cure-Paralyzation (3,2): chance-only INSTANT effects through the
+same AssignBundle gate order as Paralyze - the chance rolls always;
+a fail skips with the failure message ("Spell effect failed." for
+CasterOnly on the player, "Save versus spell made." otherwise -
+applySpellToPlayer surfaces both, plus the full-save refusal);
+non-CasterOnly no-magnitude effects save against the ENTIRE effect
+on a FULL save; then the initial MagicRound cures. CureAllDiseases/
+CureAllPoisons are RemoveBundle IMMEDIATELY - the entries and their
+statMods lift at once (a cure restores drained-by-disease stats NOW,
+while true Drain{Attribute} entries survive untouched);
+CureParalyzation is EndIncumbentEffect<Paralyze> - the paralysis
+lifts instantly. Spellcost rows: (3,0)/(3,1) chance 8/100, (3,2)
+chance 20/140, Restoration. The old spellcast fixture that used
+(3,0) as an unported key moved to Create Item (2,255).
+
+This closes the S19 group (Paralyze + poisons + cures) - the S15
+"cure family pends" flag is gone from the effects.js header.
+
+1 net test (effects 16) + cost pins. Suite 349/80, ARENA2 corpus
+349/349 green pre-commit.
+
 ## Queue
-- Magic remainder: S19c the Cure family (3, 0..2); enchantment
-  economy/value.
+- Magic remainder: enchantment economy/value; FreeAction /
+  Create Item / the rest of the classic library (grows one family
+  at a time).
 - Fatigue consumers: exhaustion collapse at 0, running/swimming
   drain, rest recovery (CalculateFatigueRecoveryRate).
 - Later: quests, guilds, shops, dialog, calendar deep-wiring,

@@ -678,6 +678,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function applySpellToPlayer(spell, casterLevel, caster = null) {
     const r = applySpell(spell, casterLevel, playerEntity, playerSinks, Math.random, caster);
     if (r.paralyzed) hudText.add('You are paralyzed.');
+    // S19c: AssignBundle's failure messages, player hosts only -
+    // CasterOnly chance fails say "Spell effect failed.", external
+    // contact fails and full saves say "Save versus spell made."
+    if (r.chanceFailed) hudText.add(spell.rangeType === 0 ? 'Spell effect failed.' : 'Save versus spell made.');
+    if (r.saved) hudText.add('Save versus spell made.');
     return r;
   }
   // Cast ranges II: the rangeType-4 EXPLOSION - indiscriminate sweep

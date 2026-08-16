@@ -378,3 +378,48 @@ test('effects: S19 Paralyze (0,255) - chance, the full-save gate, the AddState-f
   for (let i = 0; i < 8; i++) tickActiveEffects(t3, {});
   assert.ok(!hasActiveEffect(t3, 'paralyze'));
 });
+
+test('effects: S19c the Cure family (3,0..2) - chance-gated immediate bundle removal', async () => {
+  const { isCureDisease, isCurePoison, isCureParalyzation, hasActiveEffect } = await import('../src/systems/effects.js');
+  const { startDisease } = await import('../src/systems/diseases.js');
+  const { startPoison, POISONS } = await import('../src/systems/poisons.js');
+  assert.ok(isCureDisease({ type: 3, subType: 0 }));
+  assert.ok(isCurePoison({ type: 3, subType: 1 }));
+  assert.ok(isCureParalyzation({ type: 3, subType: 2 }));
+  const cure = (sub) => ({ type: 3, subType: sub, chanceBase: 100, chanceMod: 0, chancePerLevel: 1 });
+  // A diseased+drained player: Cure Disease removes ONLY the disease
+  // entries IMMEDIATELY (RemoveBundle - the statMods lift now, no
+  // next-tick lag); the drain survives
+  const p = { isPlayer: true, level: 5, career: {}, stats: { strength: 50, willpower: 50 } };
+  const d = startDisease(p, 1, 0);   // Plague
+  d.statMods.strength = -9;
+  p.activeEffects.push({ kind: 'drainAttribute', stat: 'strength', magnitude: 3, permanent: true });
+  assert.equal(liveStat(p, 'strength'), 38);
+  const r = applySpell({ element: 4, rangeType: 0, effects: [cure(0)] }, 5, p, {}, seq(0));
+  assert.equal(r.cured, 1);
+  assert.equal(liveStat(p, 'strength'), 47);   // the disease's -9 lifted NOW; the drain stays
+  assert.equal(p.activeEffects.length, 1);
+  // Chance fail (base 5, roll .99): nothing cured, the failure counted
+  const q = { isPlayer: true, level: 5, career: {}, stats: { willpower: 50 } };
+  startDisease(q, 3, 0);
+  const rf = applySpell({ element: 4, rangeType: 0, effects: [{ type: 3, subType: 0, chanceBase: 5, chanceMod: 0, chancePerLevel: 1 }] }, 5, q, {}, seq(0.99));
+  assert.equal(rf.cured ?? 0, 0);
+  assert.equal(rf.chanceFailed, 1);
+  assert.equal(q.activeEffects.length, 1);
+  // A RANGED cure on a full save is refused entirely (no-magnitude
+  // effects save against the whole effect)
+  const rs = applySpell({ element: 4, rangeType: 2, effects: [cure(0)] }, 5, q, {}, seq(0.4, 0));
+  assert.equal(rs.saved, 1);
+  assert.equal(q.activeEffects.length, 1);
+  // Cure Poison strips poison entries only; Cure Paralyzation lifts
+  // the paralysis IMMEDIATELY (EndIncumbentEffect<Paralyze>)
+  const w = { isPlayer: true, level: 5, career: {}, stats: { willpower: 50 } };
+  startPoison(w, POISONS.Thyrwort, 0, seq(0, 0));
+  w.activeEffects.push({ kind: 'paralyze', roundsRemaining: 9 });
+  applySpell({ element: 4, rangeType: 0, effects: [cure(1)] }, 5, w, {}, seq(0));
+  assert.equal(w.activeEffects.length, 1);   // the poison is gone
+  assert.ok(hasActiveEffect(w, 'paralyze'));
+  applySpell({ element: 4, rangeType: 0, effects: [cure(2)] }, 5, w, {}, seq(0));
+  assert.ok(!hasActiveEffect(w, 'paralyze'));
+  assert.equal(w.activeEffects.length, 0);
+});
