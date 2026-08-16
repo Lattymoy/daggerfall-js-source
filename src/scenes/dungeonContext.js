@@ -11,7 +11,7 @@
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { applyTextureTable } from '../world/dungeonTextures.js';
 import { collectDungeonLights } from '../world/dungeonLights.js';
-import { CityLightAnimator } from '../world/worldClock.js';
+import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
@@ -46,7 +46,10 @@ import {
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
 import { applySpell, tickActiveEffects, hasActiveEffect, maxFatigue } from '../systems/effects.js';
-import { FATIGUE_LOSS } from '../systems/statMods.js';
+import { FATIGUE_LOSS, maxBreath } from '../systems/statMods.js';
+import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
+import { updatePoisons, inflictPoison, rollEnemyWeaponPoison } from '../systems/poisons.js';
+import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
 import { dice100 } from '../combat/formulas.js';
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
@@ -380,6 +383,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const eq = D.assignEnemyEquipment(entity, variant, D.playerEntity.level);
         entity.armorValues = eq.armorValues;
         entity.weapon = eq.rightHand;
+        // S19b: ItemHelper's poisoned-weapon roll rides the spawn -
+        // class enemies + Orc/Centaur/OrcSergeant, 5% (Assassin 60%)
+        if (entity.weapon) {
+          const pt = rollEnemyWeaponPoison(e.mobileType, D.playerEntity.level);
+          if (pt != null) entity.weapon.poisonType = pt;
+        }
       }
       const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, { liveSpeed: entity.liveSpeed });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
@@ -460,6 +469,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const p = o.origin ?? (o.matrix ? [o.matrix[12], o.matrix[13], o.matrix[14]] : null);
     if (p) audio.play3d(o.index, p);
   };
+  // AttemptBash's PlayerDoorBash (clip 7) from the door - the A1 seam
+  // family (2026-08-16 audit: the hook existed unwired since the bash
+  // slice routed it to Audio; A2's engine closes it).
+  actions.onDoorBash = (o) => audio.play3d(SOUND.PlayerDoorBash, [o.matrix[12], o.matrix[13], o.matrix[14]]);
   // U6: the text-action seams. ShowText/ShowTextWithInput open modal
   // boxes on the overlay seam (the world holds); DoorText rides the
   // HUD popup (AddHUDText 2.0s); the trespass check maps to our foes,
@@ -537,11 +550,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const foeDrainMagicka = (ent) => (n) => { if (n > 0) ent.magicka = Math.max(0, (ent.magicka ?? 0) - n); };
   // The per-entity sink bundles the effect door consumes (S15 - one
   // definition; every applySpell/tick call site rides these).
-  const playerSinks = { hurt: hurtPlayer, heal: healPlayer, drainMagicka, drainFatigue, restoreFatigue };
+  function restoreMagicka(n) {   // S19b: IncreaseMagicka (Aegrotat) - clamped at max
+    if (n <= 0) return;
+    playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + n);
+    surfacePlayer();
+  }
+  const playerSinks = { hurt: hurtPlayer, heal: healPlayer, drainMagicka, drainFatigue, restoreFatigue, restoreMagicka };
   const foeSinks = (f) => ({
     hurt: (n) => damageFoe(f, n),
     heal: (n) => { f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + n); },
     drainMagicka: foeDrainMagicka(f.entity),
+    restoreMagicka: (n) => { if (n > 0) f.entity.magicka = Math.min(f.entity.maxMagicka ?? Infinity, (f.entity.magicka ?? 0) + n); },
     drainFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.max(0, (f.entity.fatigue ?? 0) - n); },
     restoreFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.min(maxFatigue(f.entity), (f.entity.fatigue ?? 0) + n); },
   });
@@ -590,7 +609,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const spell = spellsByIndex?.get(index);
     if (!spell || !origin) { if (!spellsByIndex) console.warn('[spellcast] SPELLS.STD unavailable; CastSpell no-op'); return; }
     const from = [origin[0], origin[1] + 40 * GLOBAL_SCALE, origin[2]];
-    missiles.push({ spell, pos: from, dir: null, age: 0, batch: null });
+    // Audit 2026-08-16e F2: trap bundles are CASTERLESS - DFU's
+    // CalculateCasterLevel(null) = 1 for magnitude, duration AND
+    // chance (the pre-audit shape fell back to the player's level).
+    missiles.push({ spell, casterLevel: 1, pos: from, dir: null, age: 0, batch: null });
   }
 
   // S5: player casting - the readied spell is ?spell=N or the FIRST
@@ -626,9 +648,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // trap-missile shape). RESIDUAL (honest): enemy missiles resolve
   // against the player only - foe-vs-foe friendly fire pends the
   // missile seam's target sweep.
-  function castEnemySpell(f, spell) {
-    const cost = calculateCastCost(spell, f.entity).sp;
-    f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - cost);
+  function castEnemySpell(f, spell, noSpellPointCost = false) {
+    // S19: SetReadySpell(spell, true) - the spider-touch rider casts
+    // free; ordinary decisions spend the S10 cost (floored at 0).
+    if (!noSpellPointCost) {
+      const cost = calculateCastCost(spell, f.entity).sp;
+      f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - cost);
+    }
     const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
     audio.play3d(SPELL_CAST_SOUND[spell.element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 });
     if (spell.rangeType === 0) {
@@ -650,6 +676,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const pitch = Math.asin(-Math.max(-1, Math.min(1, m.dir[1]))) * 180 / Math.PI;
     return trs(m.pos[0], m.pos[1], m.pos[2], pitch, yaw, 0);
   }
+  /** Every spell landing ON THE PLAYER rides this: the S19 Paralyze
+   *  awakeAlert ("You are paralyzed.", once per new instance) fires
+   *  for player hosts only, exactly like DFU's StartParalyzation. */
+  function applySpellToPlayer(spell, casterLevel, caster = null) {
+    const r = applySpell(spell, casterLevel, playerEntity, playerSinks, Math.random, caster);
+    if (r.paralyzed) hudText.add('You are paralyzed.');
+    // S19c: AssignBundle's failure messages, player hosts only -
+    // CasterOnly chance fails say "Spell effect failed.", external
+    // contact fails and full saves say "Save versus spell made."
+    if (r.chanceFailed) hudText.add(spell.rangeType === 0 ? 'Spell effect failed.' : 'Save versus spell made.');
+    if (r.saved) hudText.add('Save versus spell made.');
+    return r;
+  }
   // Cast ranges II: the rangeType-4 EXPLOSION - indiscriminate sweep
   // (OverlapSphere at impact): every live foe within the radius, and
   // the player when close enough.
@@ -659,7 +698,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     if (playerFeet) {
       const d = Math.hypot(playerFeet[0] - pos[0], playerFeet[1] + 0.9 - pos[1], playerFeet[2] - pos[2]);
-      if (d <= EXPLOSION_RADIUS) applySpell(spell, casterLevel, playerEntity, playerSinks, Math.random, caster);
+      if (d <= EXPLOSION_RADIUS) applySpellToPlayer(spell, casterLevel, caster);
     }
   }
 
@@ -672,7 +711,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
       // missile; the cost spends here.
       playerEntity.magicka -= cost;
-      const r = applySpell(sp, playerEntity.level, playerEntity, playerSinks, Math.random, playerCaster());
+      const r = applySpellToPlayer(sp, playerEntity.level, playerCaster());
       if (r.healed > 0) hudText.add(`You are healed ${r.healed} points.`);
       surfacePlayer();
       return true;
@@ -920,7 +959,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           const dx2 = target[0] - m.pos[0], dy2 = target[1] - m.pos[1], dz2 = target[2] - m.pos[2];
           if (Math.hypot(dx2, dy2, dz2) <= MISSILE_COLLIDER_RADIUS + 0.45) {
             const shooter = m.shooterFoe;
-            const dmg = foeDeps && shooter ? foeDeps.calculateAttackDamage(shooter.entity, playerEntity, { targetGroup: null, weapon: m.weapon }) : 0;
+            const dmg = foeDeps && shooter ? foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {
+              targetGroup: null, weapon: m.weapon,
+              onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(classicMinutes) }),   // S19b: poisoned arrows
+            }) : 0;
             hurtPlayer(dmg);
             addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
             surfacePlayer();
@@ -950,7 +992,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // action casters are null) on the S4b player-level shape.
         const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
         if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, mCaster);
-        else applySpell(m.spell, m.casterLevel ?? playerEntity.level, playerEntity, playerSinks, Math.random, mCaster);
+        else applySpellToPlayer(m.spell, m.casterLevel ?? playerEntity.level, mCaster);
         retireMissile(m);
       }
     }
@@ -1049,8 +1091,66 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
+  // P11: the current block's water surface (world y) - the swim
+  // toggle rule reads it (PlayerEnterExit blockWaterLevel); P12's
+  // drowning tick reads it too.
+  function waterSurfaceYAt(x, z) {
+    for (const b of dungeon.blocks) {
+      if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
+        return b.layout.waterLevel === 10000 ? null : -b.layout.waterLevel * GLOBAL_SCALE;
+      }
+    }
+    return null;
+  }
+  // P12: breath/drowning (PlayerEntity.FixedUpdate on the classic
+  // update cadence). Submerged = the controller CENTER (feet + 0.9)
+  // + 76*GlobalScale - 0.95 below the block water surface (the head-
+  // under threshold; the swim toggle uses 50). While submerged
+  // without WaterBreathing: a fresh dive fills currentBreath
+  // (DeepBreath = MaxBreath - guild bonuses pend guilds), every 19th
+  // classic update drains 1 (the Argonian coin-flip refund pends
+  // race selection), and 0 breath is SetHealth(0) - drowned.
+  // Surfacing zeroes the counter.
+  let _breathTimer = 0, _breathTally = 0;
+  function breathTick(dt, playerFeet) {
+    _breathTimer += dt;
+    while (_breathTimer >= CLASSIC_UPDATE_INTERVAL) {
+      _breathTimer -= CLASSIC_UPDATE_INTERVAL;
+      const surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
+      const submerged = surf != null && playerFeet[1] + 0.9 + 76 * 0.025 - 0.95 < surf;
+      if (submerged && !hasActiveEffect(playerEntity, 'waterBreathing')) {
+        if (!playerEntity.currentBreath) playerEntity.currentBreath = maxBreath(playerEntity);
+        if (_breathTally > 18) {
+          --playerEntity.currentBreath;
+          _breathTally = 0;
+        } else {
+          ++_breathTally;
+        }
+        if (playerEntity.currentBreath <= 0) {
+          playerEntity.currentBreath = 0;
+          hurtPlayer(playerEntity.health);   // SetHealth(0): drowned
+        }
+      } else {
+        playerEntity.currentBreath = 0;
+      }
+    }
+  }
+  // A3: the dungeon scene ambience (the scene's Dungeon object runs
+  // 5/28) - the 14 one-shots "somewhere around" + the classic-cadence
+  // water sounds. Castle-block detection (doNotPlayInCastle) pends.
+  const sceneAmbience = new AmbientEffects(DUNGEON_AMBIENT_WAITS);
+  sceneAmbience.setPreset('dungeon');
   function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false) {
     if (playerFeet) lastPlayerFeet = [...playerFeet];
+    if (playerFeet) {
+      breathTick(dt, playerFeet);
+      const _surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
+      sceneAmbience.update(dt, {
+        playerPos: [playerFeet[0], playerFeet[1] + 0.9, playerFeet[2]],   // the controller center (DFU transform.position)
+        waterSurfaceY: _surf,
+        submerged: _surf != null && playerFeet[1] + 0.9 + 76 * 0.025 - 0.95 < _surf,
+      });
+    }
     if (pendingClickCast) {
       pendingClickCast = false;
       playerCastInput(eye, [-view[2], -view[6], -view[10]]);   // classic: the readied spell fires on the click
@@ -1059,9 +1159,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const _prevMinute = Math.floor(classicMinutes);
     classicMinutes += (dt * 12) / 60;
     for (let r = _prevMinute; r < Math.floor(classicMinutes); r++) {
-      // S7: one magic round per classic minute (the broker's cadence)
+      // S7: one magic round per classic minute (the broker's cadence).
+      // S18: diseases update FIRST so an ending disease's final day
+      // lands and the same round's tick removes the expired entry
+      // (DFU removes at the end of the same DoMagicRound). The classic
+      // day = elapsed classic minutes / 1440 (r + 1 = the minute this
+      // round completes); day 0 of an infection is incubation.
+      updateDiseases(playerEntity, Math.floor((r + 1) / MINUTES_PER_DAY), playerSinks, Math.random,
+        (msg) => hudText.add(msg));
+      // S19b: the poison minute tick (r + 1 = the classic minute this
+      // round completes); foes tick too - poisons are not player-only
+      updatePoisons(playerEntity, r + 1, playerSinks, Math.random, (msg) => hudText.add(msg));
       tickActiveEffects(playerEntity, playerSinks);
-      for (const f of foes) if (!f.dead) tickActiveEffects(f.entity, foeSinks(f));
+      for (const f of foes) {
+        if (f.dead) continue;
+        updatePoisons(f.entity, r + 1, foeSinks(f), Math.random);
+        tickActiveEffects(f.entity, foeSinks(f));
+      }
       // P11: per-game-minute fatigue loss (PlayerEntity verbatim):
       // default 11; running 88; swimming 44 on a FAILED roll vs the
       // LIVE Swimming skill (success stays default) + the Swimming
@@ -1086,8 +1200,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const id of raised) hudText.add(`Your ${SKILL_NAMES[id]} skill has improved.`);   // classic phrasing; TEXT.RSC pends
     collisionTriggers(dt, playerFeet, moveHeld);
     updateMissiles(dt, playerFeet);
+    // S19: WeaponManager's paralysis gate - weapons hide and the
+    // machine holds while paralyzed (casting is NOT gated, verbatim:
+    // DFU has no IsParalyzed check in the casting path).
+    const _pParalyzed = hasActiveEffect(playerEntity, 'paralyze');
     if (playerWeapon) {
-      playerWeapon.gesture(_atkDx, _atkDy, _atkHeld, dt, Math.max(canvas.clientWidth, canvas.clientHeight));
+      if (!_pParalyzed) playerWeapon.gesture(_atkDx, _atkDy, _atkHeld, dt, Math.max(canvas.clientWidth, canvas.clientHeight));
       _atkDx = 0; _atkDy = 0;
       // WeaponManager.IsPositionInCameraView: project through the
       // live proj*view, inside NDC with positive w
@@ -1129,7 +1247,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (_wpnState && _wpnState.startsWith('Strike')) audio.playOneShot(swingSoundFor(playerWeapon.weapon), 1.1);
         _prevWeaponState = _wpnState;
       }
-      for (const ev of playerWeapon.update(dt)) {
+      for (const ev of _pParalyzed ? [] : playerWeapon.update(dt)) {
         if (ev !== 'hit' || !playerFeet) continue;
         if (WEAPON_SKILL[playerWeapon.weapon.name] === SKILLS.Archery) {
           // Combat bows: the strike frame LOOSES an arrow along the
@@ -1145,7 +1263,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     for (const f of foes) {
       if (f.dead) continue;
-      f.ai.update(dt, playerFeet || eye, _sightScale);   // E2 senses + pursuit; S8: chameleon halves sight
+      // S19: a paralyzed foe freezes - EnemyMotor (CanAct = false,
+      // FreezeAnims) stops senses/pursuit and EnemyAttack returns
+      // (no decisions, no damage frame). EnemySounds is NOT gated
+      // in DFU, so the bark pass below still runs.
+      const _fParalyzed = hasActiveEffect(f.entity, 'paralyze');
+      if (!_fParalyzed) f.ai.update(dt, playerFeet || eye, _sightScale);   // E2 senses + pursuit; S8: chameleon halves sight
       // A1 EnemySounds verbatim: the wait counter ALWAYS steps; the
       // sound fires only inside AttractRadius 16. Delay re-rolls
       // Range(3, 9+1); 20% move / 80% bark; humans stay silent.
@@ -1163,13 +1286,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           }
         }
       }
-      f.events = f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine
+      f.events = _fParalyzed ? [] : f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine (S19: paralysis returns early)
       // S16: the casting decision rides beside the attack machine
       // (DoRangedAttack's spell branch + DoTouchSpell); the decision
       // casts INSTANTLY. RESIDUAL (honest): DFU casters also hold at
       // range and strafe (Enhanced AI) or stand off - our motor keeps
       // the C8 pursuit; the foe casts while closing.
-      if (playerFeet && f.caster) {
+      if (playerFeet && f.caster && !_fParalyzed) {
         const dec = f.caster.update(dt, f.ai, f.attack, playerFeet, playerEntity);
         if (dec) castEnemySpell(f, dec.spell);
       }
@@ -1201,26 +1324,42 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           if (!f.entity.isClass && bx?.attackSound != null && Math.random() <= 0.5) {
             audio.play3d(bx.attackSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]], 1, { maxDistance: 16 });
           }
-          const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, { targetGroup: null, weapon: wpn });
+          // S18: the special-attack rider seam - monster weaponless
+          // hits run OnMonsterHit per hit (disease/paralysis/fatigue)
+          const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {
+            targetGroup: null, weapon: wpn,
+            onMonsterHit: (att, tgt, hit) => onMonsterHit(att, tgt, hit, {
+              currentDay: Math.floor(classicMinutes / MINUTES_PER_DAY), sinks: playerSinks,
+              castParalyze: () => {   // S19: spider/scorpion free-cast Spider Touch (66)
+                const sp = spellsByIndex?.get(SPIDER_TOUCH_SPELL_INDEX);
+                if (sp) castEnemySpell(f, sp, true);
+              },
+            }),
+            // S19b: a damaging poisoned-weapon hit infects (and the
+            // formulas clear the weapon's poison)
+            onInflictPoison: (att, tgt, pt) => inflictPoison(foeDeps.playerEntity, pt, false, { currentMinute: Math.floor(classicMinutes) }),
+          });
           if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), 1.1);   // the player takes the hit (PlayerFootsteps families)
           hurtPlayer(dmg);
         }
       }
-      f.rig.setGait(f.ai.moving ? 1 : 3);   // WALK while pursuing, IDLE sway at rest
-      let pose = f.attack.pose();
-      if (f.reaction) {                     // a hit stagger overrides the strike
-        f.reaction.t += dt;
-        const R = f.reaction.clip;
-        if (f.reaction.t >= R.dur) f.reaction = null;
-        else pose = foeDeps.sampleClip(R, f.reaction.t);   // seconds, not phase (units bug, audit 2026-08-16: staggers cut at a third)
+      if (!_fParalyzed) {   // S19 FreezeAnims: the rig holds its live frame
+        f.rig.setGait(f.ai.moving ? 1 : 3);   // WALK while pursuing, IDLE sway at rest
+        let pose = f.attack.pose();
+        if (f.reaction) {                     // a hit stagger overrides the strike
+          f.reaction.t += dt;
+          const R = f.reaction.clip;
+          if (f.reaction.t >= R.dur) f.reaction = null;
+          else pose = foeDeps.sampleClip(R, f.reaction.t);   // seconds, not phase (units bug, audit 2026-08-16: staggers cut at a third)
+        }
+        f.rig.setPose(pose);
+        f.rig.update(dt);
       }
-      f.rig.setPose(pose);
-      f.rig.update(dt);
       const s = f.rig.scale, p = f.ai.feet;
       const mat = trs(p[0], p[1] - f.rig.liveFootY * s, p[2], 0, f.ai.yaw * 180 / Math.PI, 0, s, s, s);   // live support point, same grounding rule as the player rig
       _drawSprite(renderer, canvas, f.rig, mat, proj, view, eye);
     }
-    if (viewmodelRig && playerFeet) {
+    if (viewmodelRig && playerFeet && !_pParalyzed) {   // S19: ShowWeapons(false) while paralyzed
       // LAST: the FP overlay composites over the whole frame
       // (classic draws the weapon over everything). Camera yaw/pitch
       // derive from the view matrix's back row.
@@ -1228,7 +1367,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const vYaw = Math.atan2(fw[0], fw[2]);
       viewmodelRig.setPose(playerWeapon.pose());
       viewmodelRig.update(dt);
-      foeDeps.drawFirstPersonViewmodel(renderer, canvas, viewmodelRig, playerFeet, vYaw, foeDeps.EYE_HEIGHT);
+      // P12: the LIVE eye offset (crouch lowers the camera - the
+      // weapon parents to it, DFU camera hierarchy)
+      foeDeps.drawFirstPersonViewmodel(renderer, canvas, viewmodelRig, playerFeet, vYaw, eye[1] - playerFeet[1]);
     }
     // U1: HUD last (over the viewmodel), heading from the view
     // forward this file already derives (0 = +z, wrapped 0..1).
@@ -1314,18 +1455,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     reportMotor(grounded, velY, yaw) { _motorState = `g:${grounded ? 1 : 0} vy:${velY.toFixed(1)} yaw:${yaw.toFixed(2)}`; },
     // P11: the current block's water surface (world y) - the swim
     // toggle rule reads it (PlayerEnterExit blockWaterLevel).
-    waterSurfaceYAt(x, z) {
-      for (const b of dungeon.blocks) {
-        if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
-          return b.layout.waterLevel === 10000 ? null : -b.layout.waterLevel * GLOBAL_SCALE;
-        }
-      }
-      return null;
-    },
+    waterSurfaceYAt,
     // P11: the motor-mode effect consumers (Levitate 14,255; the S8
     // waterWalking flag lands its swimmer).
     playerLevitating: () => hasActiveEffect(playerEntity, 'levitate'),
     playerWaterWalking: () => hasActiveEffect(playerEntity, 'waterWalking'),
+    playerParalyzed: () => hasActiveEffect(playerEntity, 'paralyze'),   // S19: the FrictionMotor/AcrobatMotor input gates
+
     // P11: per-frame activity feed - the splash on the swim edge, the
     // jump fatigue/tally (PlayerEntity: 11 x multiplier + Jumping
     // tally once per jump), and the state the per-minute fatigue

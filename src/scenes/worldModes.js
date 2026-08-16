@@ -195,6 +195,14 @@ export function createWorldModes(host) {
         { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, palette },
         dfLocation, blocks, dfLocation.climate.climateType, { foes: host.foes, playerClass: host.playerClass, playerSpell: host.playerSpell, playerWeapon: host.playerWeapon });
       dungeonCtx = ctx;
+      // P10 host parity (2026-08-16 audit: only the standalone scene
+      // installed the warp - a world-mode teleporter logged and
+      // no-opped): Teleport actions move the modal player.
+      ctx.actions.onTeleport = ({ pos, yawDeg }) => {
+        player.spawn(pos[0], pos[1], pos[2]);
+        cam.pos = [...player.eye];
+        cam.yaw = yawDeg * Math.PI / 180;
+      };
       // Classic water tile: the location climate's ground archive,
       // record 0 (R11) - uploaded here since the exterior ground path
       // never routes single records through uploadRecord.
@@ -257,13 +265,42 @@ export function createWorldModes(host) {
     if (mode === 'exterior') return false;
     const fwd = eyeDir();
     const jumpHeld = keys.has('Space');
-    if (mode === 'dungeon' && dungeonCtx) player.fallScale = dungeonCtx.playerFallScale;   // S8 slowfall
-    player.update(dt, {
+    if (mode === 'dungeon' && dungeonCtx) {
+      player.fallScale = dungeonCtx.playerFallScale;   // S8 slowfall
+      // P11 host parity (2026-08-16 audit: the standalone ?dungeon
+      // scene wired swim/levitate but THIS host never did - a
+      // world-mode dungeon sank the player under water at walk
+      // speed): the swim toggle (center + 50*GS - 0.95 below the
+      // block water surface), the Levitate/waterWalking consumers.
+      const surf = dungeonCtx.waterSurfaceYAt(player.pos[0], player.pos[2]);
+      player.waterSurfaceY = surf;
+      player.swimming = surf != null && player.pos[1] + 0.9 + 50 * 0.025 - 0.95 < surf;
+      player.levitating = dungeonCtx.playerLevitating();
+      player.waterWalking = dungeonCtx.playerWaterWalking();
+    }
+    // S19 paralysis host parity (the standing host rule): movement
+    // input zeroed, jump cancelled - the player still falls; look
+    // stays live (FrictionMotor/AcrobatMotor verbatim gates).
+    // P12 crouch: KeyX edge toggle (host parity with ?dungeon).
+    const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : false;
+    const crouchHeld = keys.has('KeyX');
+    const moving = !paralyzed && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
+    // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
+    player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
       forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
       strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
       run: keys.has('ShiftLeft'),
       jump: jumpHeld && !latch.jump,
-    }, cam.yaw);
+      up: jumpHeld || keys.has('PageUp'),
+      down: keys.has('PageDown'),
+      crouch: crouchHeld && !latch.crouch,
+    }, cam.yaw, cam.pitch);
+    latch.crouch = crouchHeld;
+    if (mode === 'dungeon' && dungeonCtx) {
+      // P11: the splash/jump/swim-minute fatigue feed (same seam as
+      // the standalone scene).
+      dungeonCtx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped });
+    }
     latch.jump = jumpHeld;
     cam.pos = player.eye;
     const useHeld = keys.has('KeyE');

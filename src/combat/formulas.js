@@ -165,7 +165,7 @@ export function chooseEnemyWeapon(weapon, basics) {
   return noWeaponAvg > weaponAvg ? null : weapon;
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, targetGroup = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand } = {}) {
+export function calculateAttackDamage(attacker, target, { weapon = null, targetGroup = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null } = {}) {
   if (!attacker || !target) return 0;
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) return 0;   // material too low
   // source: chanceToHitMod = skill, then player swing/proficiency/
@@ -187,8 +187,9 @@ export function calculateAttackDamage(attacker, target, { weapon = null, targetG
     // (that branch is player + class enemies only). Per attack: the
     // reflex gate DFRandom.rand() % 100 < 50 - 10*(reflexes-2), then
     // the shared hit roll; damage Range(min, max+1); the enemy-type
-    // bonus lands PER HIT. OnMonsterHit special effects (disease/
-    // poison/drain) pend the Systems slice - routed in Ledger C.
+    // bonus lands PER HIT. onMonsterHit = the special-attack rider
+    // seam (S18 diseases.js) - fired per hit BEFORE the damage sums,
+    // exactly at FormulaHelper.cs:662.
     if (!attacker.isPlayer && attacker.isClass === false && attacker.basics) {
       const b = attacker.basics;
       const spans = [
@@ -202,7 +203,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, targetG
         if (dfRand() % 100 < reflexesChance && min > 0 &&
             calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls)) {
           hitDamage = min + Math.floor(rolls() * (max + 1 - min));   // Range(min, max+1)
-          // OnMonsterHit(attacker, target, hitDamage): FLAGGED pending
+          if (hitDamage > 0 && onMonsterHit) onMonsterHit(attacker, target, hitDamage);
           damage += hitDamage;
         }
         if (hitDamage > 0) damage += bonusOrPenaltyByEnemyType(attacker, targetGroup);
@@ -216,6 +217,14 @@ export function calculateAttackDamage(attacker, target, { weapon = null, targetG
     }
   }
   damage = backstabDamage(damage, backstabChance, rolls());   // applied AFTER the damage calc, verbatim (lines 627/688)
+  // Poisoned weapons (S19b): a damaging weapon hit inflicts the
+  // poison ONCE and clears it from the weapon (the source's
+  // weapon.poisonType = Poisons.None, inside the weapon branch after
+  // backstab). onInflictPoison = the scene's InflictPoison seam.
+  if (weapon && damage > 0 && (weapon.poisonType ?? -1) !== -1) {
+    if (onInflictPoison) onInflictPoison(attacker, target, weapon.poisonType);
+    weapon.poisonType = -1;
+  }
   return Math.max(0, damage);
 }
 

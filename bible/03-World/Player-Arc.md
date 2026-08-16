@@ -583,3 +583,63 @@ LevitateMotor / PlayerSpeedChanger / PlayerEnterExit / PlayerEntity:
 
 1 net test (player.test.js 7 -> 8). Suite 312/75, ARENA2 corpus
 312/312 green pre-commit.
+
+### P10/P11 audit note (2026-08-16c): host parity
+
+The post-merge audit found both slices wired into the STANDALONE
+?dungeon scene only - the world-scene dungeon mode (worldModes.frame
+owns the modal motor) never installed the teleport warp, the swim
+toggle, the levitate/waterWalking consumers, the float keys, or the
+fatigue activity feed. A world-mode teleporter no-opped and a
+world-mode dungeon sank the player under water at walk speed. Both
+hosts now wire the same seams at the same values. STANDING RULE: a
+scene-side seam ships in EVERY host that owns a motor (the S8
+slowfall wiring was the precedent and the tell - it was already
+per-host).
+
+## P12 (breath/drowning + crouch): SHIPPED
+
+Verbatim from PlayerEntity.FixedUpdate + PlayerEnterExit +
+PlayerHeightChanger/PlayerSpeedChanger + HUDBreathBar:
+
+- **Breath** (statMods.maxBreath + the dungeonContext breathTick):
+  MaxBreath = LiveEndurance / 2 (int division, fortify-aware);
+  currentBreath is a stored entity field riding the save envelope
+  (SerializablePlayer carries it; missing = surfaced on old saves).
+  Submerged = the controller CENTER (feet + 0.9) + 76*GlobalScale -
+  0.95 below the block water surface (the head-under threshold; the
+  P11 swim toggle uses 50). On the CLASSIC UPDATE cadence while
+  submerged without WaterBreathing: a fresh dive fills currentBreath
+  (DeepBreath = MaxBreath - guild bonuses pend guilds), every 19th
+  classic update drains 1 (breathUpdateTally > 18; the Argonian
+  coin-flip refund pends race selection), and breath 0 is
+  SetHealth(0) - drowned. Surfacing zeroes the counter. The tick
+  lives in dungeonContext.drawFoes, so BOTH hosts get it (the
+  standing host rule - worldModes delegates here).
+- **WaterBreathing** (30, 255) joined BUFF_KINDS (it gates the
+  drowning tick - IsWaterBreathing) + its spellcost row (20/8
+  duration, Alteration).
+- **The breath bar** (hud.js, HUDBreathBar verbatim): a SOLID
+  VerticalProgress 6 classic px wide, height = LiveEndurance px,
+  bottom-anchored fill breath/MaxBreath; yellow (247,239,41),
+  short-on-breath dark red (148,12,0) under (LiveEndurance >> 3) + 4;
+  right-anchored at classic 306 (14 from the right edge), its bottom
+  92 + border above the canvas bottom; drawn only while holding
+  breath.
+- **Crouch** (motor.js + collider.js): controllerCrouchHeight 0.9
+  with the eye at 0.8 (the same 0.1-below-top law as the documented
+  1.7 standing eye); toggled on the KeyX edge in BOTH hosts (DFU's
+  default Crouch C is this port's castSpell - documented departure);
+  crouchSpeed replaces the walk (GetBaseSpeed - and never
+  applies while swimming, that branch precedes it); the collider
+  grew a per-call capsule height (foes share the instance - a
+  mutable field would have resized THEM); standing back up runs the
+  CanStand probe (the STANDING capsule must fit - blocked under a
+  low ceiling the player stays crouched); the FP viewmodel rides the
+  LIVE eye offset so the weapon lowers with the camera. RESIDUAL
+  (honest): crouch-based stealth pends the enemyMotor stealth row
+  (foes still target the standing height); jump-while-crouched stays
+  allowed (DFU's AcrobatMotor has no crouch gate).
+
+2 tests (player.test.js 10). Suite 351/80, ARENA2 corpus 351/351
+green pre-commit.

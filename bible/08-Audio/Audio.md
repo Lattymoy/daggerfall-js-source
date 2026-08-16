@@ -61,3 +61,55 @@ DaggerfallAction:
 
 2 tests (audio.test.js 4 -> 6). Suite 310/75, ARENA2 corpus 310/310
 green pre-commit.
+
+### A2 audit note (2026-08-16c): the bash sound lands
+
+AttemptBash's onDoorBash seam (routed by the bash slice before A2's
+engine existed) is now wired: PlayerDoorBash (7) plays from the door
+through the standard 3D profile on every bash attempt, open or
+closed, exactly where DFU's DaggerfallAudioSource sits.
+
+## A3 (scene ambience - AmbientEffectsPlayer): SHIPPED
+
+Verbatim from AmbientEffectsPlayer.cs + WeatherManager.
+SetAmbientEffects, with the wait windows from the scene's SERIALIZED
+components (they override the script defaults 4/35): the Dungeon
+object 5/28, the exterior WeatherAmbientEffects 5/25.
+
+- **The player** (src/systems/ambientEffects.js): a preset picks the
+  set - dungeon (the 14 one-shots 63..76: drips/wind moans/door
+  creaks/grind/strumming/wind blows/monster roar/gold pieces/bird/
+  door close) played "somewhere around" (onUnitSphere x
+  sqrt(Range(10^2, 20^2)), min 13/max 104; distribution-equivalent
+  sphere sampling, no consumer replays it); storm (lightning short/
+  thunder/roll 348-350) on the horizon ring (a random yaw at +20deg,
+  min 3000) OVER the rain loop; rain (AmbientRaining 389 loop only);
+  sunnyDay (BirdCall1/2 437-438); clearNight (AmbientCrickets 6 loop
+  only). One-shots share ONE ambient channel (isPlaying skips - the
+  busy clock rides the clip duration returned by the engine); the
+  wait re-rolls System.Random.Next(min, max) EXCLUSIVE-max seconds;
+  preset switches stop loops (the wanted one restarts next update).
+- **Water** (dungeon deps, the classic-update cadence): with a block
+  water level, rand() < 50 plays WaterGentle (439) AT the surface
+  beside the player (x/z +- Range(-3,3), min 8/max 64); submerged
+  (the P12 head-under flag), rand() < 100 adds AmbientWaterBubbles
+  (114) flat - both through the shared channel, verbatim.
+- **Wiring**: dungeonContext drives the dungeon preset per frame
+  (both hosts - worldModes delegates); world.js + exterior.js drive
+  presetForExterior(weather, isNight(minute)) - the verbatim
+  WeatherManager mapping (rain -> Rain, thunder -> Storm, everything
+  else folds to SunnyDay/ClearNight) - and now own audio.setListener.
+  Building interiors carry NO ambient player in DFU - interior.js
+  stays silent, verbatim. The engine grew loop() (2D looping source)
+  and play3d/playOneShot now return the clip duration.
+- **RESIDUAL (honest)**: doNotPlayInCastle pends castle-block
+  detection (deps.inCastle stays false); the cemetery howl/bird
+  layer (IsCemeteryNearby) pends locations - routed; the RMB
+  exterior animal/torch sources still pend (Ledger C row unchanged);
+  lightning FLASH sync (PlayLightningEffect) is off in the scene
+  serialization, verbatim skip; music still pends Mac's strategy
+  decision.
+
+6 tests (ambient.test.js). Suite 357/81, ARENA2 corpus 357/357
+green pre-commit; the exterior shot probe runs clean with the
+ambience live.

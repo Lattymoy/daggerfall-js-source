@@ -3,9 +3,11 @@
 // AcrobatMotor / PlayerAdvanced controller (MIT, Daggerfall Workshop):
 //   - classicToUnitySpeedUnitRatio 39.5 (Allofich's measurement),
 //     dfWalkBase 150, dfCrouchBase 50.
-//   - Walk = (LiveSpeed + 150) / 39.5; Run = walk * (1.35 +
-//     RunningSkill / 200); Crouch = (LiveSpeed + 50) / 39.5;
-//     Sneak = speed / 2 - 1 / 39.5.
+//   - Walk = (LiveSpeed + 150 - drag) / 39.5 where drag = 0.5 x
+//     (100 - max(30, LiveSpeed)) (audit 2026-08-16e F1 - the drag
+//     term was missing); Run = UNDRAGGED base x (1.35 + Running/200)
+//     with the crouch base while crouched; Crouch = (LiveSpeed + 50)
+//     / 39.5; Sneak = speed / 2 - 1 / 39.5 (input pends).
 //   - jumpSpeed 4.5, gravity 20 (AcrobatMotor defaults).
 //   - P11 swimming/levitation (LevitateMotor): camera-directed
 //     movement with no gravity; levitate at the 4.0 constant; swim =
@@ -33,13 +35,30 @@ export const CAPSULE_RADIUS = 0.35;
 export const STEP_OFFSET = 0.5;
 export const SLOPE_LIMIT_DEG = 70;
 export const EYE_HEIGHT = 1.7;
+// P12 crouch (PlayerHeightChanger): controllerCrouchHeight 0.9.
+// DFU parks the camera 0.09 below the capsule top; our standing eye
+// sits 0.1 below (the documented 1.7 presentation choice) - the
+// crouched eye keeps that same law: 0.9 - 0.1 = 0.8 above the feet.
+export const CROUCH_HEIGHT = 0.9;
+export const CROUCH_EYE_HEIGHT = 0.8;
 
+/** PlayerSpeedChanger.GetWalkSpeed, verbatim (audit 2026-08-16e F1):
+ *  drag = 0.5 x (100 - max(30, LiveSpeed)) rides the WALK base only -
+ *  the pre-audit port dropped the term and walked ~14% fast at SPD
+ *  50 ((50+150)/39.5 vs DFU's (50+150-25)/39.5). */
 export function walkSpeed(liveSpeed) {
-  return (liveSpeed + DF_WALK_BASE) / CLASSIC_TO_UNITY_RATIO;
+  const drag = 0.5 * (100 - (liveSpeed >= 30 ? liveSpeed : 30));
+  return (liveSpeed + DF_WALK_BASE - drag) / CLASSIC_TO_UNITY_RATIO;
 }
 
-export function runSpeed(liveSpeed, runningSkill) {
-  return walkSpeed(liveSpeed) * (1.35 + runningSkill / 200);
+/** GetRunSpeed, verbatim: the run base is UNDRAGGED - (LiveSpeed +
+ *  150) / 39.5, or the CROUCH base while crouched (and not swimming)
+ *  - x (1.35 + Running / 200). Decoupled from walkSpeed in the F1
+ *  audit fix (the old walk-x-mult shape only matched DFU because
+ *  walk lacked its drag). */
+export function runSpeed(liveSpeed, runningSkill, crouching = false) {
+  const base = (liveSpeed + (crouching ? DF_CROUCH_BASE : DF_WALK_BASE)) / CLASSIC_TO_UNITY_RATIO;
+  return base * (1.35 + runningSkill / 200);
 }
 
 export function crouchSpeed(liveSpeed) {
@@ -82,10 +101,15 @@ export class PlayerMotor {
     this.waterWalking = false;
     this.waterSurfaceY = null;   // the current block's water surface (world y), null when dry
     this.jumped = false;         // set for the frame a jump actually starts (fatigue/tally consumer)
+    this.crouching = false;      // P12: toggled via input.crouch (edge); standing needs headroom
   }
 
   get eye() {
-    return [this.pos[0], this.pos[1] + EYE_HEIGHT, this.pos[2]];
+    return [this.pos[0], this.pos[1] + (this.crouching ? CROUCH_EYE_HEIGHT : EYE_HEIGHT), this.pos[2]];
+  }
+
+  get height() {
+    return this.crouching ? CROUCH_HEIGHT : CAPSULE_HEIGHT;
   }
 
   spawn(x, y, z) {
@@ -107,6 +131,17 @@ export class PlayerMotor {
    */
   update(dt, input, yaw, pitch = 0) {
     this.jumped = false;
+    // P12 crouch toggle (edge input; the scene owns the key edge).
+    // Standing back up needs headroom: the STANDING capsule must fit
+    // at the current feet (PlayerHeightChanger's CanStand probe) -
+    // blocked under a low ceiling, the player stays crouched.
+    if (input.crouch) {
+      if (this.crouching) {
+        if (this.collider.penetrationAt(this.pos, CAPSULE_HEIGHT) < 0.03) this.crouching = false;
+      } else {
+        this.crouching = true;
+      }
+    }
     const sin = Math.sin(yaw);
     const cos = Math.cos(yaw);
     // limitDiagonalSpeed, verbatim: .7071 when both axes are live.
@@ -139,15 +174,21 @@ export class PlayerMotor {
       } else {
         speed = swimSpeed(walkSpeed(this.stats.speed), this.stats.swimming ?? 0);
       }
-      const r = this.collider.move(this.pos, mx * speed * dt, my * speed * dt, mz * speed * dt);
+      const r = this.collider.move(this.pos, mx * speed * dt, my * speed * dt, mz * speed * dt, this.height);
       this.groundKey = r.grounded ? (r.groundKey ?? null) : null;
       this.grounded = r.grounded;
       return;
     }
 
-    const speed = input.run
-      ? runSpeed(this.stats.speed, this.stats.running)
-      : walkSpeed(this.stats.speed);
+    // GetBaseSpeed + ApplyInputSpeedAdjustment (audit F1): walking
+    // crouched = the crouch base; RUNNING crouched = GetRunSpeed's
+    // crouch branch (crouch base x the run multiplier - DFU lets you
+    // run while crouched); neither applies while swimming (above).
+    const speed = this.crouching
+      ? (input.run ? runSpeed(this.stats.speed, this.stats.running, true) : crouchSpeed(this.stats.speed))
+      : input.run
+        ? runSpeed(this.stats.speed, this.stats.running)
+        : walkSpeed(this.stats.speed);
 
     // fwd = (sin, 0, cos); camera-right = up x back per lookAt =
     // (-cos, 0, sin). Verified to NDC through view x projection: world
@@ -167,7 +208,7 @@ export class PlayerMotor {
     else this.velY = Math.min(this.velY, 0);
     const dy = this.velY * dt;
 
-    const r = this.collider.move(this.pos, dx, dy, dz);
+    const r = this.collider.move(this.pos, dx, dy, dz, this.height);
     this.groundKey = r.grounded ? (r.groundKey ?? null) : null;   // platform riding: what holds us up
     this.grounded = r.grounded;
     if (r.grounded && this.velY < 0) this.velY = 0;

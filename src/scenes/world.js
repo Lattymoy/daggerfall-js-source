@@ -24,7 +24,9 @@ import { StreamingWorldState } from '../world/streamingWorld.js';
 import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
-import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
+import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
+import { audio } from '../systems/audio.js';
+import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { fetchBytes, parseSeason, createSkyController } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { getStaticDoors } from '../world/staticDoors.js';
@@ -413,6 +415,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   if (shotMode) modes.installShotProbes();
 
+  const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
   let last = performance.now();
   function frame(now) {
     const dt = Math.min(0.1, (now - last) / 1000);
@@ -436,14 +439,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       if (playerSpawned) {
         const jumpHeld = keys.has('Space');
+        const crouchHeld = keys.has('KeyX');   // P12 host parity (audit F4)
         const _overlayHeld = modes?.dungeonCtx?.uiOverlayActive ?? false;   // chargen/windows hold the motor - typing must not walk the player
         if (!_overlayHeld) player.update(dt, {
           forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
           strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
           run: keys.has('ShiftLeft'),
           jump: jumpHeld && !latch.jump,
+          crouch: crouchHeld && !latch.crouch,
         }, cam.yaw);
         latch.jump = jumpHeld;
+        latch.crouch = crouchHeld;
         cam.pos = player.eye;
         const useHeld = keys.has('KeyE');
         if (useHeld && !latch.use && !modes.transitioning) {
@@ -479,6 +485,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
     // World clock (R5): sun, ambient, window style, sky frame by time.
     const minute = minuteNow();
+    // A3: the exterior ambience (WeatherAmbientEffects 5/25) - the
+    // weather/time preset per WeatherManager.SetAmbientEffects.
+    audio.setListener(cam.pos, fwd);
+    ambience.setPreset(presetForExterior(weather, isNight(minute)));
+    ambience.update(dt, { playerPos: cam.pos });
     const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
     renderer.setLighting(
       exteriorAmbient(minute), sunScale(minute) * weatherSun * flash,

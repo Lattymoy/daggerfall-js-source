@@ -98,6 +98,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     console.log(`[action] teleport -> [${pos.map((v) => v.toFixed(2)).join(', ')}] yaw ${yawDeg.toFixed(1)}`);
   };
   let prevJump = false;
+  let prevCrouch = false;   // P12: the crouch-toggle key edge
   let prevUse = false;
   console.log(`player: collider ${ctx.colliderTris} tris, ${ctx.actions.objects.size} activatables, walk=${walkMode}`);
   const tryActivate = () => {
@@ -217,16 +218,28 @@ export async function bootDungeon(canvas, renderer, params, status) {
       player.swimming = surf != null && player.pos[1] + 0.9 + 50 * 0.025 - 0.95 < surf;
       player.levitating = ctx.playerLevitating();
       player.waterWalking = ctx.playerWaterWalking();
-      const moving = keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD');
-      player.update(dt, {
+      // S19 paralysis: FrictionMotor cancels ALL movement input (the
+      // player still falls / rides platforms), AcrobatMotor cancels
+      // the jump, LevitateMotor cancels levitate movement. Look
+      // stays live (no DFU gate on mouselook).
+      // P12 crouch: toggled on the KeyX edge (DFU's default Crouch C
+      // is this port's castSpell - documented departure).
+      const paralyzed = ctx.playerParalyzed?.() ?? false;
+      const crouchHeld = keys.has('KeyX');
+      const moving = !paralyzed && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
+      // Audit F3: the crouch toggle stays LIVE while paralyzed - DFU
+      // gates movement/jump only (DecideHeightAction has no check).
+      player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !prevCrouch } : {
         forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
         strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
         run: keys.has('ShiftLeft'),
         jump: jumpHeld && !prevJump,
         up: jumpHeld || keys.has('PageUp'),
         down: keys.has('PageDown'),
+        crouch: crouchHeld && !prevCrouch,
       }, cam.yaw, cam.pitch);
       prevJump = jumpHeld;
+      prevCrouch = crouchHeld;
       cam.pos = player.eye;
       ctx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped });
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);

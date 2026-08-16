@@ -14,9 +14,21 @@ export const QUICKSAVE_KEY = 'dagger.quicksave';
 const ENTITY_FIELDS = [
   'name', 'gender', 'careerIndex', 'level', 'reflexes',
   'health', 'maxHealth', 'magicka', 'maxMagicka', 'fatigue',
+  'currentBreath',   // P12 (SerializablePlayer carries it; missing = 0/surfaced on old saves)
   'startingLevelUpSkillSum', 'currentLevelUpSkillSum',
   'readyToLevelUp', 'pendingLevel', 'chargenDone',
 ];
+
+/** Deep-copy one activeEffects entry: permanent drain entries carry
+ *  no effect record (S15); disease entries carry the accumulating
+ *  per-stat statMods map (S18) - both nested objects must detach or
+ *  the snapshot mutates with the live entity. */
+const copyEffectEntry = (a) => {
+  const c = { ...a };
+  if (a.effect) c.effect = { ...a.effect };
+  if (a.statMods) c.statMods = { ...a.statMods };
+  return c;
+};
 
 /** A plain-object snapshot of the player + scene extras. */
 export function snapshotPlayer(entity, { position = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null } = {}) {
@@ -28,7 +40,7 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   snap.career = entity.career ? { ...entity.career } : null;   // plain CFG data
   snap.items = (entity.items ?? []).map((it) => ({ ...it }));
   snap.spells = (entity.spells ?? []).map((sp) => sp.index);   // resolve against SPELLS.STD on load
-  snap.activeEffects = (entity.activeEffects ?? []).map((a) => (a.effect ? { ...a, effect: { ...a.effect } } : { ...a }));   // permanent drain entries carry no effect record (S15)
+  snap.activeEffects = (entity.activeEffects ?? []).map(copyEffectEntry);
   return snap;
 }
 
@@ -50,7 +62,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.skillUses = [...snap.skillUses];
   entity.career = snap.career ? { ...snap.career } : entity.career;
   entity.items = snap.items.map((it) => ({ ...it }));
-  entity.activeEffects = snap.activeEffects.map((a) => (a.effect ? { ...a, effect: { ...a.effect } } : { ...a }));
+  entity.activeEffects = snap.activeEffects.map(copyEffectEntry);
   entity.spells = spellsByIndex
     ? snap.spells.map((i) => spellsByIndex.get(i)).filter(Boolean)
     : [];

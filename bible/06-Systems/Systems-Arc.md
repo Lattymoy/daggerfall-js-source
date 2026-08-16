@@ -551,9 +551,185 @@ EnemyEntity.cs + EnemyMotor.cs (classic AI) + EntityEffectManager:
 5 tests (enemyspells.test.js). Suite 306/75, ARENA2 corpus 306/306
 green pre-commit.
 
+## S18 (diseases + OnMonsterHit riders): SHIPPED
+
+The Ledger C row from the 08-13 audit (F2's flagged interim closed).
+Verbatim from DFU DiseaseEffect.cs + FormulaHelper.cs
+OnMonsterHit/InflictDisease/FatigueDamage:
+
+- **Data** (src/systems/diseases.js): the 17-row DiseaseData table
+  byte-exact (8 stat multiplier columns + HEA/FAT/SPL + the daily
+  damage span + days-of-symptoms span; only Caliron's Curse, Blood
+  Rot and Wizard Fever are finite at 3-18 days - everything else is
+  0xff permanent-until-cured), the Diseases enum 0-16, the 0xff/0xfe
+  permanent/completed markers, the A/B/C transmission lists.
+- **Lifecycle**: a disease is a PERMANENT activeEffects entry
+  ({ kind: 'disease' }) owning its own clock - UpdateDisease runs
+  every magic round but acts per elapsed CLASSIC DAY (classic
+  minutes / 1440; the infection day is incubation). Each elapsed day
+  rolls Range(minDamage, maxDamage+1) ONCE and applies the row as a
+  multiplier matrix: stat columns accumulate a negative statMods map
+  (liveStat consumes it; maxFatigue follows), HEA hurts, FAT/SPL
+  drain - FAT in RAW units (DFU calls DecreaseFatigue WITHOUT
+  assignMultiplier - a disease day costs points, not x64,
+  bug-for-bug). daysPast > 1 catches up day by day (rest/travel).
+  A finite disease's final day lands damage, then EndDisease
+  completes it; the mods lift when the tick removes the entry (DFU
+  shape). "You feel somewhat bad." rides an onAlert seam to the HUD
+  every symptomatic round-with-days. Heal{Attribute}'s manager walk
+  (effects.healAttributeDamage) now heals disease statMods too,
+  clamped at 0 - WITHOUT ending the disease (base
+  HealAttributeDamage; only drains override to expire), so a healed
+  stat falls again next day, verbatim.
+- **Infection** (InflictDisease): player-only, the classic level-1
+  immunity (no rolls consumed), a FULL saving-throw save (== 0,
+  Disease flag) resists outright, then a uniform list pick assigned
+  BypassSavingThrows; Start refuses non-players and level < 2, and
+  AddState means the same disease can never be caught twice.
+- **OnMonsterHit** (the rider table, wired per LANDED hit at the
+  FormulaHelper.cs:662 site - calculateAttackDamage grew an
+  onMonsterHit seam fired inside the monster multi-attack loop
+  BEFORE the hit damage sums; dungeonContext passes the closure with
+  the classic day + playerSinks, covering both hosts since worldModes
+  delegates combat here): rat 5% listB, giant bat 2% listB, zombie 2%
+  listC, mummy 5% listC, vampire/ancient Range(0,100f) <= 0.6 ->
+  vampirism ROUTED else <= 2.0 -> plague, nymph/lamia FatigueDamage
+  (2 pts fatigue x64 per health damage - the DF Chronicles rule DFU
+  chose), werewolf/wereboar specialInfectionChance -> lycanthropy
+  ROUTED (rolls consumed verbatim so sequences match).
+- **Persistence**: snapshot/restore deep-copies the statMods map
+  (save.js copyEffectEntry) - the S15 conditional-spread shape
+  generalized.
+- **NOT shipped, still FLAGGED loudly**: spider/giant scorpion cast
+  classic spell 66 (Paralyze) on hit - pends the Paralyze effect
+  (S19 with poisons + the Cure family); the health-status box that
+  surfaces contractedMessageRecord (TEXT.RSC 100 + type) pends its
+  UI slice; vampirism/lycanthropy remain routed lines.
+
+12 tests (diseases.test.js). Suite 339/79, ARENA2 corpus 339/339
+green pre-commit.
+
+## S19a (Paralyze + the spider rider): SHIPPED
+
+Verbatim from DFU Paralyze.cs + EntityEffectManager.AssignBundle +
+the IsParalyzed consumer gates. Also bagged en route: the classic
+subType BYTE-CAST parity fix (its own commit - real records read
+0xFF as -1 and the 255-keyed doors never fired; see effects.js
+classicSub).
+
+- **Effect** (effects.js): isParalyze (0, 255) - duration + CHANCE,
+  no magnitude; presence of a { kind: 'paralyze' } entry IS the
+  paralysis (ConstantEffect's IsParalyzed, queried via
+  hasActiveEffect). ChanceValue = base + plus x floor(level/per), NO
+  min-1 clamp (unlike duration). AssignBundle's exact gate order
+  ported: the chance rolls ALWAYS (SetChanceSuccess in Start); an
+  incumbent re-cast stacks its rounds INSIDE Start (AddState) BEFORE
+  the chance and saving-throw gates - so a re-cast always stacks,
+  chance/save notwithstanding (verbatim quirk, pinned); a NEW
+  instance needs the chance, then non-CasterOnly no-magnitude
+  effects save against the ENTIRE effect on a FULL save (flags =
+  Paralysis | element). "You are paralyzed." (youAreParalyzed) fires
+  once per new instance on player hosts via applySpellToPlayer.
+  Spellcost gains the (0,255) row (duration 28/100 + chance 28/100,
+  Alteration).
+- **The rider closed** (diseases.js): spider/giant scorpion
+  free-cast classic spell 66 ("Spider Touch", ByTouch) at a
+  not-yet-paralyzed target - FindIncumbentEffect<Paralyze> == null
+  gate inline, SetReadySpell noSpellPointCost=true through the
+  scene's castParalyze closure (castEnemySpell grew the free-cast
+  arg; the touch cast rides the S16 point-blank missile shape).
+- **Consumers** (the verbatim gate set): player - FrictionMotor
+  cancels ALL movement input (falling/platforms continue),
+  AcrobatMotor cancels jump, LevitateMotor cancels levitate movement
+  (input zeroed in BOTH hosts - dungeon.js and worldModes.js, the
+  standing host rule), WeaponManager hides weapons + holds the
+  machine; casting is NOT gated (DFU has no IsParalyzed check in the
+  casting path); look stays live. Foes - EnemyMotor (CanAct false +
+  FreezeAnims: senses/pursuit stop, the rig holds its frame) and
+  EnemyAttack (no decisions, no damage frame); EnemySounds barks
+  stay ungated, verbatim. FreeAction's IsImmuneToParalysis pends its
+  effect; god mode pends.
+
+3 net tests (effects 15, diseases 13, spellcost pins). Suite 341/79,
+ARENA2 corpus 341/341 green pre-commit.
+
+## S19b (poisons): SHIPPED
+
+Verbatim from PoisonEffect.cs + FormulaHelper.InflictPoison +
+ItemHelper's poisoned-weapon roll:
+
+- **Data** (src/systems/poisons.js): the Poisons enum (128-139; 0-7
+  weapon poisons, 8-11 drugs - Indulcet/Sursum/Quaesto Vil/
+  Aegrotat), the four Start timing tables byte-exact
+  (MinMinutesToPoison/Max/MinRounds/MaxRounds - Arsenic burns 20-1000
+  minutes, Moonseed strikes instantly).
+- **Lifecycle**: a poison is a PERMANENT activeEffects entry over
+  CLASSIC MINUTES (the disease's clock is days): Start rolls both
+  Range(min, max+1) spans (an incumbent same-poison AddState no-op
+  still consumes the discarded instance's rolls, sequences match);
+  UpdatePoison catches up one IncrementPoisonEffects per elapsed
+  minute; Waiting counts down and ticks its FIRST active minute at
+  0; each active minute runs the per-variant switch IN CALL ORDER -
+  health/magicka raw, fatigue x64 (DecreaseFatigue/IncreaseFatigue
+  assignMultiplier true), signed statMods (drugs push POSITIVE mods:
+  Indulcet +luck, Sursum +strength) - alerts the player host, and
+  counts down to Complete. Complete keeps the entry and its negative
+  mods ALIVE: each round strips a drug's positive mods ONCE (the
+  crash), then expires only when every attribute mod healed to >= 0
+  ("outcome identical to just curing directly"). liveStat/
+  healAttributeDamage grew the 'poison' signed-map branch (heal
+  never cures directly).
+- **Infection** (InflictPoison): career Poison tolerance Immune
+  vetoes (DFU's check, ported over classic's ignore-AI-immunity);
+  racial immunity pends race selection; bypassResistance OR a
+  non-zero save (Poison flag) infects targets above level 1 (rats
+  stay immune). ANY entity can be poisoned - foes tick their
+  poisons in the classic-minute loop alongside the player.
+- **Weapon poisons**: the ItemHelper spawn roll (player level > 1,
+  class enemies + Orc/Centaur/OrcSergeant, 5% - Assassin 60%,
+  Range(128, 136)) rides enemy equipment assignment;
+  CalculateAttackDamage's weapon branch inflicts ONCE on a damaging
+  hit and clears the blade (the onInflictPoison seam, after
+  backstab, verbatim placement) - wired at both enemy-vs-player
+  sites (melee + arrows). RESIDUAL (honest): the player-vs-foe seam
+  pends a player-obtainable poisoned weapon (loot/apothecary never
+  set poisonType yet); the RDB Poison ACTION (0x1a) is a VERBATIM
+  NO-OP - DFU's own delegate body is empty, already ported as such.
+- **Sinks**: restoreMagicka joined playerSinks/foeSinks (Aegrotat's
+  IncreaseMagicka, max-clamped).
+
+7 tests (poisons.test.js). Suite 348/80, ARENA2 corpus 348/348
+green pre-commit.
+
+## S19c (the Cure family): SHIPPED
+
+Verbatim from CureDisease/CurePoison/CureParalyzation.cs +
+EntityEffectManager. Cure-Disease (3,0), Cure-Poison (3,1),
+Cure-Paralyzation (3,2): chance-only INSTANT effects through the
+same AssignBundle gate order as Paralyze - the chance rolls always;
+a fail skips with the failure message ("Spell effect failed." for
+CasterOnly on the player, "Save versus spell made." otherwise -
+applySpellToPlayer surfaces both, plus the full-save refusal);
+non-CasterOnly no-magnitude effects save against the ENTIRE effect
+on a FULL save; then the initial MagicRound cures. CureAllDiseases/
+CureAllPoisons are RemoveBundle IMMEDIATELY - the entries and their
+statMods lift at once (a cure restores drained-by-disease stats NOW,
+while true Drain{Attribute} entries survive untouched);
+CureParalyzation is EndIncumbentEffect<Paralyze> - the paralysis
+lifts instantly. Spellcost rows: (3,0)/(3,1) chance 8/100, (3,2)
+chance 20/140, Restoration. The old spellcast fixture that used
+(3,0) as an unported key moved to Create Item (2,255).
+
+This closes the S19 group (Paralyze + poisons + cures) - the S15
+"cure family pends" flag is gone from the effects.js header.
+
+1 net test (effects 16) + cost pins. Suite 349/80, ARENA2 corpus
+349/349 green pre-commit.
+
 ## Queue
-- Magic remainder: Cure effects (disease/poison/paralysis - with
-  their systems), enchantment economy/value.
+- Magic remainder: enchantment economy/value; FreeAction /
+  Create Item / the rest of the classic library (grows one family
+  at a time).
 - Fatigue consumers: exhaustion collapse at 0, running/swimming
   drain, rest recovery (CalculateFatigueRecoveryRate).
 - Later: quests, guilds, shops, dialog, calendar deep-wiring,

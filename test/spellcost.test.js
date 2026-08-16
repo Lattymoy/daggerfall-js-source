@@ -21,6 +21,21 @@ test('spellcost: component math, averaged magnitude, skill scaling per effect', 
   // unknown family: the zero-component fudge (60,100,160) -> 160+60+100=320
   const unk = { type: 99, subType: 99 };
   assert.equal(effectCost(unk, () => 50).gold, 320);
+  // Parity fix 2026-08-16d: real records read subType 0xFF as -1 -
+  // the table lookup normalizes to the BYTE key (a real Slowfall
+  // record must hit '25,255', not the fudge)
+  const slowReal = { ...slow, subType: -1 };
+  assert.equal(effectCost(slowReal, (id) => skills[id]).gold, 160);
+  // S19 Paralyze (0,255): duration (28,100) + chance (28,100) on
+  // Spider Touch's real record - 28*1+100*1 + 28*5+100*15 = 1768
+  const par = { type: 0, subType: -1, durationBase: 1, durationMod: 1, durationPerLevel: 1, chanceBase: 5, chanceMod: 15, chancePerLevel: 1 };
+  assert.equal(effectCost(par, (id) => skills[id]).gold, 128 + 1640);
+  // S19c cures (Restoration): Cure Disease/Poison chance (8,100),
+  // Cure Paralyzation (20,140)
+  const cureD = { type: 3, subType: 0, chanceBase: 5, chanceMod: 10, chancePerLevel: 2 };
+  assert.equal(effectCost(cureD, () => 50).gold, 8 * 5 + 100 * 5);
+  const cureP = { type: 3, subType: 2, chanceBase: 5, chanceMod: 10, chancePerLevel: 2 };
+  assert.equal(effectCost(cureP, () => 50).gold, 20 * 5 + 140 * 5);
 });
 
 test('spellcost: target multipliers on the sums + the floor 5', () => {

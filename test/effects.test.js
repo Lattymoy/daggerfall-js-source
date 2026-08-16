@@ -85,6 +85,15 @@ test('effects: S8 buff families - kinds, incumbent renew, the query', async () =
   assert.equal(buffKind({ type: 31, subType: 255 }), 'waterWalking');
   assert.equal(buffKind({ type: 23, subType: 0 }), 'chameleonNormal');
   assert.equal(buffKind({ type: 4, subType: 0 }), null);
+  // Parity fix 2026-08-16d: REAL records read subType 0xFF as -1
+  // (verbatim sbyte decode) and DFU keys on the BYTE cast - the door
+  // must accept both spellings (SPELLS.STD Levitate index 4 reads
+  // { type: 14, subType: -1 } through our reader)
+  assert.equal(buffKind({ type: 14, subType: -1 }), 'levitate');
+  assert.equal(buffKind({ type: 25, subType: -1 }), 'slowfall');
+  const { isRegenerate: isRegen } = await import('../src/systems/effects.js');
+  assert.ok(isRegen({ type: 18, subType: -1 }));
+  assert.ok(isRegen({ type: 18, subType: 255 }));
   const slow = { type: 25, subType: 255, durationBase: 3, durationMod: 1, durationPerLevel: 1 };
   const t = T();
   applySpell({ element: 4, rangeType: 0, effects: [slow] }, 2, t, {}, seq(0));
@@ -321,4 +330,96 @@ test('effects: a fortified stat raises combat output (liveStat fronts the formul
   // a DRAINED agility lowers it the same way (S15)
   base.activeEffects = [{ kind: 'drainAttribute', stat: 'agility', magnitude: 20, permanent: true }];
   assert.equal(statsToHit(base, foe), -2);
+});
+
+test('effects: S19 Paralyze (0,255) - chance, the full-save gate, the AddState-first quirk', async () => {
+  const { isParalyze, chanceValue, effectActiveIdentity, hasActiveEffect } = await import('../src/systems/effects.js');
+  // The classic key accepts both subType spellings (0xFF reads -1)
+  assert.ok(isParalyze({ type: 0, subType: -1 }));
+  assert.ok(isParalyze({ type: 0, subType: 255 }));
+  assert.ok(!isParalyze({ type: 0, subType: 0 }));
+  assert.equal(effectActiveIdentity({ type: 0, subType: 255 }).kind, 'paralyze');
+  // ChanceValue: base + plus * floor(level/per) - Spider Touch's real
+  // record (5, 15, 1) at level 3 = 50
+  const par = { type: 0, subType: -1, durationBase: 1, durationMod: 1, durationPerLevel: 1, chanceBase: 5, chanceMod: 15, chancePerLevel: 1 };
+  assert.equal(chanceValue(par, 3), 50);
+  // CasterOnly: chance roll 49 < 50 succeeds, NO save (self-cast) -
+  // duration 1 + 1*3 = 4, initial round consumed at cast (F17)
+  const t = T();
+  const r = applySpell({ element: 4, rangeType: 0, effects: [par] }, 3, t, {}, seq(0.49));
+  assert.equal(r.paralyzed, 1);
+  assert.ok(hasActiveEffect(t, 'paralyze'));
+  assert.equal(t.activeEffects[0].roundsRemaining, 3);
+  // Chance fail consumes ONE roll and never reaches the save
+  let rolls = 0;
+  const t2 = T();
+  const r2 = applySpell({ element: 4, rangeType: 2, effects: [par] }, 3, t2, {}, () => { rolls++; return 0.99; });
+  assert.equal(r2.paralyzed ?? 0, 0);
+  assert.equal(rolls, 1);
+  assert.ok(!hasActiveEffect(t2, 'paralyze'));
+  // Ranged + chance ok + FULL save (throw 55, roll 1 outside the
+  // 20-band -> 0): the entity saves against the ENTIRE effect
+  const t3 = T();
+  applySpell({ element: 4, rangeType: 2, effects: [par] }, 3, t3, {}, seq(0.49, 0));
+  assert.ok(!hasActiveEffect(t3, 'paralyze'));
+  // Ranged + chance ok + failed save (roll 100 > 55) lands
+  applySpell({ element: 4, rangeType: 2, effects: [par] }, 3, t3, {}, seq(0.49, 0.99));
+  assert.ok(hasActiveEffect(t3, 'paralyze'));
+  assert.equal(t3.activeEffects[0].roundsRemaining, 3);
+  // The AddState-first quirk: AddState stacks rounds INSIDE Start,
+  // BEFORE AssignBundle's chance and save gates - a re-cast with a
+  // FAILED chance still stacks (and rolls no save)
+  rolls = 0;
+  const r3 = applySpell({ element: 4, rangeType: 2, effects: [par] }, 3, t3, {}, () => { rolls++; return 0.99; });
+  assert.equal(rolls, 1);   // the chance roll alone
+  assert.equal(t3.activeEffects[0].roundsRemaining, 7);   // 3 + 4, no initial round for the joiner
+  assert.equal(r3.paralyzed ?? 0, 0);   // no NEW instance -> no fresh alert
+  // Expiry restores the query
+  for (let i = 0; i < 8; i++) tickActiveEffects(t3, {});
+  assert.ok(!hasActiveEffect(t3, 'paralyze'));
+});
+
+test('effects: S19c the Cure family (3,0..2) - chance-gated immediate bundle removal', async () => {
+  const { isCureDisease, isCurePoison, isCureParalyzation, hasActiveEffect } = await import('../src/systems/effects.js');
+  const { startDisease } = await import('../src/systems/diseases.js');
+  const { startPoison, POISONS } = await import('../src/systems/poisons.js');
+  assert.ok(isCureDisease({ type: 3, subType: 0 }));
+  assert.ok(isCurePoison({ type: 3, subType: 1 }));
+  assert.ok(isCureParalyzation({ type: 3, subType: 2 }));
+  const cure = (sub) => ({ type: 3, subType: sub, chanceBase: 100, chanceMod: 0, chancePerLevel: 1 });
+  // A diseased+drained player: Cure Disease removes ONLY the disease
+  // entries IMMEDIATELY (RemoveBundle - the statMods lift now, no
+  // next-tick lag); the drain survives
+  const p = { isPlayer: true, level: 5, career: {}, stats: { strength: 50, willpower: 50 } };
+  const d = startDisease(p, 1, 0);   // Plague
+  d.statMods.strength = -9;
+  p.activeEffects.push({ kind: 'drainAttribute', stat: 'strength', magnitude: 3, permanent: true });
+  assert.equal(liveStat(p, 'strength'), 38);
+  const r = applySpell({ element: 4, rangeType: 0, effects: [cure(0)] }, 5, p, {}, seq(0));
+  assert.equal(r.cured, 1);
+  assert.equal(liveStat(p, 'strength'), 47);   // the disease's -9 lifted NOW; the drain stays
+  assert.equal(p.activeEffects.length, 1);
+  // Chance fail (base 5, roll .99): nothing cured, the failure counted
+  const q = { isPlayer: true, level: 5, career: {}, stats: { willpower: 50 } };
+  startDisease(q, 3, 0);
+  const rf = applySpell({ element: 4, rangeType: 0, effects: [{ type: 3, subType: 0, chanceBase: 5, chanceMod: 0, chancePerLevel: 1 }] }, 5, q, {}, seq(0.99));
+  assert.equal(rf.cured ?? 0, 0);
+  assert.equal(rf.chanceFailed, 1);
+  assert.equal(q.activeEffects.length, 1);
+  // A RANGED cure on a full save is refused entirely (no-magnitude
+  // effects save against the whole effect)
+  const rs = applySpell({ element: 4, rangeType: 2, effects: [cure(0)] }, 5, q, {}, seq(0.4, 0));
+  assert.equal(rs.saved, 1);
+  assert.equal(q.activeEffects.length, 1);
+  // Cure Poison strips poison entries only; Cure Paralyzation lifts
+  // the paralysis IMMEDIATELY (EndIncumbentEffect<Paralyze>)
+  const w = { isPlayer: true, level: 5, career: {}, stats: { willpower: 50 } };
+  startPoison(w, POISONS.Thyrwort, 0, seq(0, 0));
+  w.activeEffects.push({ kind: 'paralyze', roundsRemaining: 9 });
+  applySpell({ element: 4, rangeType: 0, effects: [cure(1)] }, 5, w, {}, seq(0));
+  assert.equal(w.activeEffects.length, 1);   // the poison is gone
+  assert.ok(hasActiveEffect(w, 'paralyze'));
+  applySpell({ element: 4, rangeType: 0, effects: [cure(2)] }, 5, w, {}, seq(0));
+  assert.ok(!hasActiveEffect(w, 'paralyze'));
+  assert.equal(w.activeEffects.length, 0);
 });

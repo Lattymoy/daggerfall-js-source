@@ -64,15 +64,10 @@ export const DOOR_VERB_FLAGS = new Set([
   ACTION_FLAGS.OpenDoor, ACTION_FLAGS.CloseDoor,
 ]);
 
-// The delegated-relay family (P10/U6): acting objects whose delegate
-// runs through a scene seam - Teleport warps the player to the NEXT
-// object's transform; the text actions pop TEXT.RSC records. All
-// other relay flags (Activate, SetGlobalVar, Dialogue, Unknowns...)
-// stay verbatim no-ops whose cascade IS the behavior.
-export const DELEGATED_RELAY_FLAGS = new Set([
-  ACTION_FLAGS.Teleport, ACTION_FLAGS.ShowText,
-  ACTION_FLAGS.ShowTextWithInput, ACTION_FLAGS.DoorText,
-]);
+// Delegated relays (P10/U6): Teleport and the text actions run
+// through scene seams inside _runRelay; every other relay flag
+// (Activate, SetGlobalVar, Dialogue, the Unknowns...) stays a
+// verbatim no-op whose cascade IS the behavior.
 
 /** Verbatim RDBLayout AddActionModelHelper classification for a placed
  *  model with an action record. C# precedence kept exactly:
@@ -556,8 +551,9 @@ export class ActionSystem {
    *  closes; a closed door that is not magically held (lock < 20)
    *  rolls d100 under (20 - CurrentLockValue) to burst open, clearing
    *  the lock. Player bashes fire the door's own record exactly like
-   *  ToggleDoor(true) does (AttemptBash calls it). The bash sound and
-   *  the castle MakeEnemiesHostile bit are routed (Audio / crime).
+   *  ToggleDoor(true) does (AttemptBash calls it). The bash sound
+   *  rides the onDoorBash seam (wired in the 2026-08-16c audit); the
+   *  castle MakeEnemiesHostile bit stays routed (crime).
    *  rollProvider defaults to the system's rolls stream. */
   attemptBash(o, roll01 = this._rolls()) {
     if (o.kind !== 'door') return false;

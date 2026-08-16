@@ -23,13 +23,19 @@ test('player: verbatim speed formulas and constants', () => {
   approx(STEP_OFFSET, 0.5);
   assert.equal(SLOPE_LIMIT_DEG, 70);
 
-  // Walk = (SPD + 150) / 39.5; SPD 50 -> 5.0633.
-  approx(walkSpeed(50), 200 / 39.5);
-  // Run = walk * (1.35 + Running/200); Running 30 -> x1.5.
+  // Walk = (SPD + 150 - drag) / 39.5, drag = 0.5*(100 - max(30, SPD))
+  // (audit 2026-08-16e F1 - the drag term was missing): SPD 50 ->
+  // 175/39.5 = 4.4304. The drag's SPD-30 floor pins at SPD 20.
+  approx(walkSpeed(50), 175 / 39.5);
+  approx(walkSpeed(20), (20 + 150 - 35) / 39.5);
+  approx(walkSpeed(100), 250 / 39.5);   // drag 0 at SPD 100
+  // Run = the UNDRAGGED base x (1.35 + Running/200); crouched runs
+  // ride the crouch base (GetRunSpeed's branch).
   approx(runSpeed(50, 30), (200 / 39.5) * 1.5);
   approx(runSpeed(50, 100), (200 / 39.5) * 1.85);
+  approx(runSpeed(50, 30, true), (100 / 39.5) * 1.5);
   approx(crouchSpeed(50), 100 / 39.5);
-  approx(sneakSpeed(walkSpeed(50)), (200 / 39.5) / 2 - 1 / 39.5);
+  approx(sneakSpeed(walkSpeed(50)), (175 / 39.5) / 2 - 1 / 39.5);
 });
 
 test('player: collider grounds, slides, and steps', () => {
@@ -231,4 +237,74 @@ test('player: P11 swim/levitate motor - formulas, look-directed motion, surface 
   assert.equal(p.jumped, true);
   p.update(0.016, { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false }, 0, 0);
   assert.equal(p.jumped, false);
+});
+
+test('player: P12 crouch - toggle, heights, speed, the blocked-stand ceiling', async () => {
+  const { CROUCH_HEIGHT, CROUCH_EYE_HEIGHT, EYE_HEIGHT } = await import('../src/player/motor.js');
+  approx(CROUCH_HEIGHT, 0.9);          // PlayerHeightChanger.controllerCrouchHeight
+  approx(CROUCH_EYE_HEIGHT, 0.8);      // the 0.1-below-top eye law at crouch height
+  const c = new Collider(() => -100);
+  const floorPos = new Float32Array([-10, 0, -10, 10, 0, -10, 10, 0, 10, -10, 0, 10]);
+  const quadIdx = new Uint32Array([0, 1, 2, 0, 2, 3]);
+  const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  c.addMesh('floor', floorPos, quadIdx, I);
+  // A low ceiling at y = 1.2 over x 3..8 - crawlable, not standable.
+  const lowCeil = new Float32Array([3, 1.2, -3, 8, 1.2, -3, 8, 1.2, 3, 3, 1.2, 3]);
+  c.addMesh('ceil', lowCeil, new Uint32Array([0, 2, 1, 0, 3, 2]), I);
+  const m = new PlayerMotor(c, { speed: 50, running: 30 });
+  m.spawn(0, 0, 0);
+  const noInput = { forward: 0, strafe: 0, run: false, jump: false };
+  m.update(0.05, noInput, 0);
+  assert.ok(!m.crouching);
+  approx(m.eye[1], m.pos[1] + EYE_HEIGHT);
+  // Toggle down: eye drops, capsule 0.9; walking crouched moves at
+  // crouchSpeed, RUNNING crouched at the crouch base x run mult
+  // (GetRunSpeed's crouch branch - audit F1)
+  m.update(0.05, { ...noInput, crouch: true }, 0);
+  assert.ok(m.crouching);
+  approx(m.height, 0.9);
+  approx(m.eye[1], m.pos[1] + CROUCH_EYE_HEIGHT);
+  const x0 = m.pos[0];
+  m.update(0.1, { forward: 1, strafe: 0, run: false, jump: false }, Math.PI / 2);
+  approx(m.pos[0] - x0, crouchSpeed(50) * 0.1, 0.02);
+  const x1 = m.pos[0];
+  m.update(0.1, { forward: 1, strafe: 0, run: true, jump: false }, Math.PI / 2);
+  approx(m.pos[0] - x1, runSpeed(50, 30, true) * 0.1, 0.03);
+  // Crawl under the low ceiling (standing would not fit)
+  for (let i = 0; i < 200 && m.pos[0] < 5; i++) m.update(0.05, { forward: 1, strafe: 0, run: false, jump: false }, Math.PI / 2);
+  assert.ok(m.pos[0] >= 5, `crawled to ${m.pos[0]}`);
+  // Standing up under the ceiling refuses (CanStand probe blocked)
+  m.update(0.05, { ...noInput, crouch: true }, 0);
+  assert.ok(m.crouching, 'stood up under a 1.2 ceiling');
+  // Crawl back out into the open - now standing works
+  for (let i = 0; i < 400 && m.pos[0] > 1.5; i++) m.update(0.05, { forward: -1, strafe: 0, run: true, jump: false }, Math.PI / 2);
+  assert.ok(m.pos[0] <= 1.5, `crawled back to ${m.pos[0]}`);
+  m.update(0.05, { ...noInput, crouch: true }, 0);
+  assert.ok(!m.crouching);
+  approx(m.eye[1], m.pos[1] + EYE_HEIGHT);
+});
+
+test('player: P12 breath - MaxBreath law, the short threshold, WaterBreathing key, the save field', async () => {
+  const { maxBreath } = await import('../src/systems/statMods.js');
+  const { breathShortThreshold, BREATH_COLOR_NORMAL, BREATH_COLOR_SHORT, BREATH_BAR_WIDTH } = await import('../src/ui/hud.js');
+  const { buffKind } = await import('../src/systems/effects.js');
+  const { snapshotPlayer, restorePlayer } = await import('../src/systems/save.js');
+  // MaxBreath = LiveEndurance / 2 (int division), fortify-aware
+  assert.equal(maxBreath({ stats: { endurance: 51 } }), 25);
+  assert.equal(maxBreath({ stats: { endurance: 50 }, activeEffects: [{ kind: 'fortifyAttribute', stat: 'endurance', magnitude: 10 }] }), 30);
+  // HUDBreathBar: short-on-breath under (END >> 3) + 4; colors + width pinned
+  assert.equal(breathShortThreshold(50), 10);
+  assert.equal(breathShortThreshold(80), 14);
+  assert.deepEqual(BREATH_COLOR_NORMAL, [247, 239, 41]);
+  assert.deepEqual(BREATH_COLOR_SHORT, [148, 12, 0]);
+  assert.equal(BREATH_BAR_WIDTH, 6);
+  // WaterBreathing (30,255) joins the buff kinds (both subType spellings)
+  assert.equal(buffKind({ type: 30, subType: 255 }), 'waterBreathing');
+  assert.equal(buffKind({ type: 30, subType: -1 }), 'waterBreathing');
+  // currentBreath rides the save envelope (missing = surfaced on old saves)
+  const p = { stats: { endurance: 50 }, currentBreath: 7, skills: [], skillUses: [], items: [], spells: [] };
+  const snap = snapshotPlayer(p, {});
+  const fresh = { stats: {} };
+  restorePlayer(fresh, snap);
+  assert.equal(fresh.currentBreath, 7);
 });

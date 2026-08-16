@@ -26,7 +26,12 @@ export const EFFECT_COST_TABLE = Object.freeze({
   '4,0':    { skill: 22, magnitude: { A: 20, B: 28, offset: 0 } },                                  // DamageHealth (Destruction)
   '1,0':    { skill: 22, duration: { A: 28, B: 8, offset: 0 }, magnitude: { A: 40, B: 28, offset: 0 } },   // ContinuousDamageHealth
   '10,8':   { skill: 23, magnitude: { A: 20, B: 28, offset: 0 } },                                  // HealHealth (Restoration)
+  '0,255':  { skill: 25, duration: { A: 28, B: 100, offset: 0 }, chance: { A: 28, B: 100, offset: 0 } },   // Paralyze (Alteration) - S19
+  '3,0':    { skill: 23, chance: { A: 8, B: 100, offset: 0 } },                                     // Cure Disease (Restoration) - S19c
+  '3,1':    { skill: 23, chance: { A: 8, B: 100, offset: 0 } },                                     // Cure Poison (Restoration) - S19c
+  '3,2':    { skill: 23, chance: { A: 20, B: 140, offset: 0 } },                                    // Cure Paralyzation (Restoration) - S19c
   '25,255': { skill: 25, duration: { A: 20, B: 100, offset: 0 } },                                  // Slowfall (Alteration)
+  '30,255': { skill: 25, duration: { A: 20, B: 8, offset: 0 } },                                    // WaterBreathing (Alteration) - P12
   '31,255': { skill: 26, duration: { A: 20, B: 8, offset: 0 } },                                    // WaterWalking (Thaumaturgy)
   '23,0':   { skill: 24, duration: { A: 20, B: 80, offset: 0 } },                                   // ChameleonNormal (Illusion)
 });
@@ -38,7 +43,9 @@ const component = (c, starting, increase, per) =>
 
 /** One effect's { gold, sp } at the caster's skill. */
 export function effectCost(e, casterSkillOf) {
-  const entry = EFFECT_COST_TABLE[`${e.type},${e.subType}`];
+  // subType normalized to BYTE (DFU MakeClassicKey casts the sbyte;
+  // real records read 0xFF as -1 - parity fix 2026-08-16d)
+  const entry = EFFECT_COST_TABLE[`${e.type},${e.subType & 0xff}`];
   const skill = casterSkillOf(entry?.skill ?? 22);
   let gold = 0;
   if (!entry) {
