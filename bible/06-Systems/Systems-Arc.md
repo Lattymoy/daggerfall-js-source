@@ -730,7 +730,46 @@ This closes the S19 group (Paralyze + poisons + cures) - the S15
 - Magic remainder: enchantment economy/value; FreeAction /
   Create Item / the rest of the classic library (grows one family
   at a time).
-- Fatigue consumers: exhaustion collapse at 0, running/swimming
-  drain, rest recovery (CalculateFatigueRecoveryRate).
+- ~~Fatigue consumers~~ SHIPPED (P11 drains, S20 collapse + the
+  per-hour rates); the rest UI itself pends (shares the S20 rates).
 - Later: quests, guilds, shops, dialog, calendar deep-wiring,
   save format.
+
+## S20 (exhaustion collapse + rest recovery rates): SHIPPED
+
+The fatigue consumers - the S15/S18/S19 drains now have
+consequences. Verbatim from FormulaHelper's rest rates +
+DaggerfallEntity.SetFatigue + PlayerEntity's OnExhausted handler:
+
+- **The rates** (src/systems/rest.js, per hour of rest): health =
+  max(floor(HealingRateModifier(liveEND) + (liveMedical + add) x
+  maxHealth / 1000), 1) with add 60 -> 100 for RapidHealing Always /
+  InLight (day AND outside) / InDarkness (otherwise);
+  HealingRateModifier = floor(END/10) - 5 (DFU deliberately skips
+  classic's negative-modifier bug; so do we); fatigue =
+  max(floor(maxFatigue/8), 1) in stored x64 units; spell points =
+  max(floor(maxMagicka/8), 1), zeroed by the NoRegenSpellPoints
+  career ability (the SpecialAbilityFlags low-byte decode joins as
+  hasSpecialAbility - the adrenaline-rush F-flag's family). The rest
+  UI pends and shares these when it arrives.
+- **The exhaustion event**: SetFatigue raising OnExhausted at 0 with
+  health left - the drainFatigue sink fires the collapse once (the
+  popup guard mirrors displayingExhaustedPopup: rapid drains, the
+  Somnalius case, never stack boxes; it clears with the overlay).
+  Outcome: NO enemies nearby (a foe actively seeing the player or
+  inside the classic spawn band - the P13 senses fields feed
+  AreEnemiesNearby's exact test) and dry feet -> the clock advances
+  one hour (60 classic minutes; the round loop catches up the magic
+  rounds, as DFU's broker does under RaiseTime), each pool recovers
+  one hour's rate, Medical tallies, TEXT.RSC 1071 shows
+  click-to-close; enemies nearby (1072) or swimming (the watery-
+  grave line) -> SetHealth(0), the fatal collapse.
+- **Parity fix en route**: DFU applies the per-minute fatigue loss
+  ONCE per minute-CHANGE (a single DecreaseFatigue behind
+  lastGameMinutes != gameMinutes - no loop over elapsed minutes);
+  the P11 shape drained every caught-up round, overcharging
+  multi-minute jumps. The loss now sits outside the round loop -
+  ordinary play is identical, the collapse hour costs one minute's
+  11.
+
+2 tests (rest.test.js). Suite 363/82, ARENA2 corpus pre-commit.
