@@ -29,7 +29,9 @@ export function liveStat(entity, statName) {
   const list = entity.activeEffects;
   if (list) {
     for (const a of list) {
-      if (a.kind === 'disease') { mod += a.statMods?.[statName] ?? 0; continue; }
+      // disease/poison entries carry a signed per-stat statMods map
+      // (poison drugs push POSITIVE mods - S19b)
+      if (a.kind === 'disease' || a.kind === 'poison') { mod += a.statMods?.[statName] ?? 0; continue; }
       if (a.stat !== statName) continue;
       if (a.kind === 'fortifyAttribute') mod += a.magnitude;
       else if (a.kind === 'drainAttribute' || a.kind === 'transferAttribute') mod -= a.magnitude;

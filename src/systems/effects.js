@@ -153,7 +153,10 @@ export function healAttributeDamage(entity, stat, amount) {
   if (amount < 0) return;
   let remaining = amount;
   for (const a of entity.activeEffects ?? []) {
-    if (a.kind === 'disease') {
+    if (a.kind === 'disease' || a.kind === 'poison') {
+      // signed statMods map (S18/S19b): heal the negative side only -
+      // neither a disease nor a poison ENDS on heal (a healed-out
+      // completed poison expires on its own CompletePoison round)
       const mod = a.statMods?.[stat] ?? 0;
       if (mod >= 0) continue;   // not damaged by this effect
       const healed = Math.min(remaining, -mod);

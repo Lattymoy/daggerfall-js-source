@@ -48,6 +48,7 @@ import {
 import { applySpell, tickActiveEffects, hasActiveEffect, maxFatigue } from '../systems/effects.js';
 import { FATIGUE_LOSS } from '../systems/statMods.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
+import { updatePoisons, inflictPoison, rollEnemyWeaponPoison } from '../systems/poisons.js';
 import { dice100 } from '../combat/formulas.js';
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
@@ -381,6 +382,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const eq = D.assignEnemyEquipment(entity, variant, D.playerEntity.level);
         entity.armorValues = eq.armorValues;
         entity.weapon = eq.rightHand;
+        // S19b: ItemHelper's poisoned-weapon roll rides the spawn -
+        // class enemies + Orc/Centaur/OrcSergeant, 5% (Assassin 60%)
+        if (entity.weapon) {
+          const pt = rollEnemyWeaponPoison(e.mobileType, D.playerEntity.level);
+          if (pt != null) entity.weapon.poisonType = pt;
+        }
       }
       const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, { liveSpeed: entity.liveSpeed });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
@@ -542,11 +549,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const foeDrainMagicka = (ent) => (n) => { if (n > 0) ent.magicka = Math.max(0, (ent.magicka ?? 0) - n); };
   // The per-entity sink bundles the effect door consumes (S15 - one
   // definition; every applySpell/tick call site rides these).
-  const playerSinks = { hurt: hurtPlayer, heal: healPlayer, drainMagicka, drainFatigue, restoreFatigue };
+  function restoreMagicka(n) {   // S19b: IncreaseMagicka (Aegrotat) - clamped at max
+    if (n <= 0) return;
+    playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + n);
+    surfacePlayer();
+  }
+  const playerSinks = { hurt: hurtPlayer, heal: healPlayer, drainMagicka, drainFatigue, restoreFatigue, restoreMagicka };
   const foeSinks = (f) => ({
     hurt: (n) => damageFoe(f, n),
     heal: (n) => { f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + n); },
     drainMagicka: foeDrainMagicka(f.entity),
+    restoreMagicka: (n) => { if (n > 0) f.entity.magicka = Math.min(f.entity.maxMagicka ?? Infinity, (f.entity.magicka ?? 0) + n); },
     drainFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.max(0, (f.entity.fatigue ?? 0) - n); },
     restoreFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.min(maxFatigue(f.entity), (f.entity.fatigue ?? 0) + n); },
   });
@@ -937,7 +950,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           const dx2 = target[0] - m.pos[0], dy2 = target[1] - m.pos[1], dz2 = target[2] - m.pos[2];
           if (Math.hypot(dx2, dy2, dz2) <= MISSILE_COLLIDER_RADIUS + 0.45) {
             const shooter = m.shooterFoe;
-            const dmg = foeDeps && shooter ? foeDeps.calculateAttackDamage(shooter.entity, playerEntity, { targetGroup: null, weapon: m.weapon }) : 0;
+            const dmg = foeDeps && shooter ? foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {
+              targetGroup: null, weapon: m.weapon,
+              onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(classicMinutes) }),   // S19b: poisoned arrows
+            }) : 0;
             hurtPlayer(dmg);
             addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
             surfacePlayer();
@@ -1084,8 +1100,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // round completes); day 0 of an infection is incubation.
       updateDiseases(playerEntity, Math.floor((r + 1) / MINUTES_PER_DAY), playerSinks, Math.random,
         (msg) => hudText.add(msg));
+      // S19b: the poison minute tick (r + 1 = the classic minute this
+      // round completes); foes tick too - poisons are not player-only
+      updatePoisons(playerEntity, r + 1, playerSinks, Math.random, (msg) => hudText.add(msg));
       tickActiveEffects(playerEntity, playerSinks);
-      for (const f of foes) if (!f.dead) tickActiveEffects(f.entity, foeSinks(f));
+      for (const f of foes) {
+        if (f.dead) continue;
+        updatePoisons(f.entity, r + 1, foeSinks(f), Math.random);
+        tickActiveEffects(f.entity, foeSinks(f));
+      }
       // P11: per-game-minute fatigue loss (PlayerEntity verbatim):
       // default 11; running 88; swimming 44 on a FAILED roll vs the
       // LIVE Swimming skill (success stays default) + the Swimming
@@ -1245,6 +1268,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 if (sp) castEnemySpell(f, sp, true);
               },
             }),
+            // S19b: a damaging poisoned-weapon hit infects (and the
+            // formulas clear the weapon's poison)
+            onInflictPoison: (att, tgt, pt) => inflictPoison(foeDeps.playerEntity, pt, false, { currentMinute: Math.floor(classicMinutes) }),
           });
           if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), 1.1);   // the player takes the hit (PlayerFootsteps families)
           hurtPlayer(dmg);

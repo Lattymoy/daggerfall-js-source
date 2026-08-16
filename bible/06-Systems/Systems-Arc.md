@@ -653,10 +653,57 @@ classicSub).
 3 net tests (effects 15, diseases 13, spellcost pins). Suite 341/79,
 ARENA2 corpus 341/341 green pre-commit.
 
+## S19b (poisons): SHIPPED
+
+Verbatim from PoisonEffect.cs + FormulaHelper.InflictPoison +
+ItemHelper's poisoned-weapon roll:
+
+- **Data** (src/systems/poisons.js): the Poisons enum (128-139; 0-7
+  weapon poisons, 8-11 drugs - Indulcet/Sursum/Quaesto Vil/
+  Aegrotat), the four Start timing tables byte-exact
+  (MinMinutesToPoison/Max/MinRounds/MaxRounds - Arsenic burns 20-1000
+  minutes, Moonseed strikes instantly).
+- **Lifecycle**: a poison is a PERMANENT activeEffects entry over
+  CLASSIC MINUTES (the disease's clock is days): Start rolls both
+  Range(min, max+1) spans (an incumbent same-poison AddState no-op
+  still consumes the discarded instance's rolls, sequences match);
+  UpdatePoison catches up one IncrementPoisonEffects per elapsed
+  minute; Waiting counts down and ticks its FIRST active minute at
+  0; each active minute runs the per-variant switch IN CALL ORDER -
+  health/magicka raw, fatigue x64 (DecreaseFatigue/IncreaseFatigue
+  assignMultiplier true), signed statMods (drugs push POSITIVE mods:
+  Indulcet +luck, Sursum +strength) - alerts the player host, and
+  counts down to Complete. Complete keeps the entry and its negative
+  mods ALIVE: each round strips a drug's positive mods ONCE (the
+  crash), then expires only when every attribute mod healed to >= 0
+  ("outcome identical to just curing directly"). liveStat/
+  healAttributeDamage grew the 'poison' signed-map branch (heal
+  never cures directly).
+- **Infection** (InflictPoison): career Poison tolerance Immune
+  vetoes (DFU's check, ported over classic's ignore-AI-immunity);
+  racial immunity pends race selection; bypassResistance OR a
+  non-zero save (Poison flag) infects targets above level 1 (rats
+  stay immune). ANY entity can be poisoned - foes tick their
+  poisons in the classic-minute loop alongside the player.
+- **Weapon poisons**: the ItemHelper spawn roll (player level > 1,
+  class enemies + Orc/Centaur/OrcSergeant, 5% - Assassin 60%,
+  Range(128, 136)) rides enemy equipment assignment;
+  CalculateAttackDamage's weapon branch inflicts ONCE on a damaging
+  hit and clears the blade (the onInflictPoison seam, after
+  backstab, verbatim placement) - wired at both enemy-vs-player
+  sites (melee + arrows). RESIDUAL (honest): the player-vs-foe seam
+  pends a player-obtainable poisoned weapon (loot/apothecary never
+  set poisonType yet); the RDB Poison ACTION (0x1a) is a VERBATIM
+  NO-OP - DFU's own delegate body is empty, already ported as such.
+- **Sinks**: restoreMagicka joined playerSinks/foeSinks (Aegrotat's
+  IncreaseMagicka, max-clamped).
+
+7 tests (poisons.test.js). Suite 348/80, ARENA2 corpus 348/348
+green pre-commit.
+
 ## Queue
-- Magic remainder: S19b poisons (PoisonEffect's 12 variants +
-  minute ticks + weapon poison), S19c the Cure family (3, 0..2);
-  enchantment economy/value.
+- Magic remainder: S19c the Cure family (3, 0..2); enchantment
+  economy/value.
 - Fatigue consumers: exhaustion collapse at 0, running/swimming
   drain, rest recovery (CalculateFatigueRecoveryRate).
 - Later: quests, guilds, shops, dialog, calendar deep-wiring,

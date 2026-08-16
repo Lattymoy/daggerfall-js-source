@@ -165,7 +165,7 @@ export function chooseEnemyWeapon(weapon, basics) {
   return noWeaponAvg > weaponAvg ? null : weapon;
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, targetGroup = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null } = {}) {
+export function calculateAttackDamage(attacker, target, { weapon = null, targetGroup = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null } = {}) {
   if (!attacker || !target) return 0;
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) return 0;   // material too low
   // source: chanceToHitMod = skill, then player swing/proficiency/
@@ -217,6 +217,14 @@ export function calculateAttackDamage(attacker, target, { weapon = null, targetG
     }
   }
   damage = backstabDamage(damage, backstabChance, rolls());   // applied AFTER the damage calc, verbatim (lines 627/688)
+  // Poisoned weapons (S19b): a damaging weapon hit inflicts the
+  // poison ONCE and clears it from the weapon (the source's
+  // weapon.poisonType = Poisons.None, inside the weapon branch after
+  // backstab). onInflictPoison = the scene's InflictPoison seam.
+  if (weapon && damage > 0 && (weapon.poisonType ?? -1) !== -1) {
+    if (onInflictPoison) onInflictPoison(attacker, target, weapon.poisonType);
+    weapon.poisonType = -1;
+  }
   return Math.max(0, damage);
 }
 
