@@ -86,17 +86,16 @@ the code comment at each site is the authority.
 Mac's eye in live play (probe-locked on main).
 
 - `src/characters/enemyMotor.js:24` - Speed). Still PENDING here: stealth checks in detection.
+- `src/characters/playerEntity.js:5` - UI later fronts it everywhere). INTERIM until then, loudly: flat
 - `src/characters/playerEntity.js:12` - maxHealth: 50,    // INTERIM until chargen rolls career HP
 - `src/characters/playerEntity.js:15` - skills: 30,       // INTERIM flat skills until chargen
-- `src/characters/playerEntity.js:17` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stat...
-- `src/characters/playerEntity.js:5` - UI later fronts it everywhere). INTERIM until then, loudly: flat
+- `src/characters/playerEntity.js:17` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyChar...
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): adrenaline rush
 - `src/combat/formulas.js:205` - OnMonsterHit(attacker, target, hitDamage): FLAGGED pending
 - `src/combat/playerWeapon.js:13` - INTERIM (loud): the equipped weapon is an Iron Dagger until the
-- `src/combat/playerWeapon.js:45` - INTERIM starting weapon (items arc replaces): Iron Dagger. */
+- `src/combat/playerWeapon.js:45` - /** INTERIM starting weapon (items arc replaces): Iron Dagger. */
 - `src/combat/playerWeapon.js:46` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:64` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
-- `src/scenes/dungeonContext.js:1312` - actions) is FLAGGED - the player snapshot only.
 - `src/scenes/dungeonContext.js:151` - the chain lives, the motion is INTERIM (loud) until flats can tween.
 - `src/scenes/dungeonContext.js:409` - index into the 18 careers) or the INTERIM default Warrior (16,
 - `src/scenes/dungeonContext.js:415` - effects FLAGGED to the effect-library slice.
@@ -105,27 +104,27 @@ Mac's eye in live play (probe-locked on main).
 - `src/scenes/dungeonContext.js:599` - FLAGGED: DFU recomputes per-effect via the cost tables (that
 - `src/scenes/dungeonContext.js:601` - FLAGGED to the effect library (caster-only buffs, touch, areas).
 - `src/scenes/dungeonContext.js:775` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:1312` - actions) is FLAGGED - the player snapshot only.
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
-- `src/systems/advancement.js:82` - skill ids. The headless level-up applies immediately (INTERIM,
-- `src/systems/chargen.js:124` - INTERIM headless pool policy (loud; the chargen UI replaces it):
-- `src/systems/chargen.js:143` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                       ...
-- `src/systems/chargen.js:21` - INTERIM (loud): the UI distributes the bonus pools by hand; the
+- `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/chargen.js:6` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
+- `src/systems/chargen.js:21` - INTERIM (loud): the UI distributes the bonus pools by hand; the
+- `src/systems/chargen.js:124` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
+- `src/systems/chargen.js:143` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy ...
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here; the cure family (3, 0..2)
 - `src/systems/effects.js:382` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/inventory.js:12` - weight pends S2b (FLAGGED - leather/chain/plate multipliers).
-- `src/systems/loot.js:169` - FLAGGED to the economy slice (shops).
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls are SKIPPED until the magic
+- `src/systems/loot.js:169` - FLAGGED to the economy slice (shops).
 - `src/systems/save.js:7` - (foes, loot piles, action states, doors) is FLAGGED - dungeons
-- `src/systems/skills.js:57` - +0.1) and the Jump spell (+0.6) are INTERIM 0 here, loudly - the
 - `src/ui/actionText.js:7` - (backgrounds FLAGGED pending art-name verification, the shared UI
 - `src/ui/chargen.js:11` - background ART is FLAGGED pending art-name verification against
 - `src/ui/chargen.js:148` - ---- drawing: clean classic-text panels (art FLAGGED, see head) ----
 - `src/ui/charsheet.js:8` - classic INFO background ART is FLAGGED pending art-name
 - `src/ui/hudText.js:5` - improved."); the TEXT.RSC database itself is FLAGGED - these
 - `src/ui/inventory.js:2` - windows in classic text (backgrounds FLAGGED pending art-name
-- `src/ui/inventory.js:85` - The known list: entity.spells when it exists; the INTERIM fallback
 - `src/ui/inventory.js:9` - Enter readies one (retires ?spell). INTERIM loud: with no
+- `src/ui/inventory.js:85` - /** The known list: entity.spells when it exists; the INTERIM fallback
 
 ## Audits
 

@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 333 tests across 79 files.
+Node 22). Suite: 326 tests across 78 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -27,7 +27,6 @@ Node 22). Suite: 333 tests across 79 files.
 | monstercareer.test.js | 1 | ENEMY{nnn}.CFG careers from a crafted MONSTER.BSA through the shared BsaFile+ClassFile readers: fields real on the entity, session cache proven (throwing re-fetch), missing-index null path |
 | actionchain.test.js | 9 | the Play cascade through EVERY flag (relays: Teleport/Activate/text/quest/Unknowns), chained doors keyed act:<position> running their OWN verb (OpenDoor unlock+open, CloseDoor close+relock-to-starting, Lock 16-if-unlocked, Unlock 0), special doors (verbatim DaggerfallActionDoorSpecial swing, C# `OpenDoor || CloseDoor && !door` precedence pinned), ExecuteActionOnToggle on the player toggle through the Door trigger gate (Direct-gated records stay silent), None-flag chained doors cascade without swinging, AttemptBash verbatim (open bash-closes, lock >= 20 magically held, d100 under 20 - lock bursts + clears) |
 | activate.test.js | 1 | activationTargets single source: effect objects target on their precomputed aabb (crash regression - scenes read o.cpu on cpu-less traps), relays excluded, cpu path transformed through the matrix, door reach default |
-| motorStairs.test.js | 7 | Unity CharacterController parity (prefab stepOffset 0.5 / slopeLimit 70) by numeric trace: the 0.3-riser staircase summit, riser 0.45 climbs + the 60/78-deg slope-limit pins, the wall-ladder regression stays dead, a stairwell ceiling CAPS the lift (the blind +0.5 needed 2.3 headroom - the live block), a can't-fit tread never gets a grounded stand, the AcrobatMotor jump multiplier (skill 30 -> apex 0.67 not the one-frame 0.069), the 0.1 s grounded bunny-hop gate |
 | playerweapon.test.js | 3 | verbatim reach 2.25+0.25 + view/LOS hit rule + the swing-mod table, drag-gesture -> mapped strike on the shared machine (threshold + release reset), hit-frame kill through the full chain (deterministic rolls) + reach/dead gating |
 | weaponPose.test.js | 2 | sampleClip UNITS regression (audit 2026-08-16): FP pose frames 2-3 sample the clip (phase * dur mapping pinned against a direct seconds sample), every enemy 1H clip samples at frame 3 (short durs died under phase-as-seconds) |
 | formulas.test.js | 6 | FormulaHelper verbatim: Dice100/DamageModifier/H2H (sheet rule)/weapon min-max tables/material mods/body parts, career attack-modifier bits (bonus + phobia ADDITIVE) + enemy-type bonus, to-hit chain (dodging/4 bug preserved, the flat -50 + the +40 monster adjustment, weapon material x10 on the weapon branch, roll ordering, 3..97 clamp), damage paths (str-after-skeletal ordering, silver x2, material gate), the monster multi-attack loop (basics damage spans 1-3, the DFRandom reflex gate 50-10*(reflexes-2), per-hit enemy-type bonus, class enemies staying on the H2H path), the classic 0.25/MeleeDistance/35.156deg hit gate |

@@ -394,13 +394,6 @@ dungeon geometry. All are fixed and rooted; the durable record:
   contact (d < radius). Rule: a tolerance shell must never feed a
   logic gate that assumes real contact - separate "am I resting on
   something" from "am I blocked/pushed".
-  CORRECTION (2026-08-16, P12): this fix removed the PHANTOM block but
-  the step machinery underneath was still not the controller's - the
-  blind full-stepOffset lift needed 2.3 of headroom (every stairwell
-  under 2.3 still blocked or jammed), horizontal-phase grounding
-  leaked through the OR-accumulated flags and killed every jump at
-  one frame, and the jump had neither the skill multiplier nor the
-  grounded-time gate. P12 is the honest close of this surface.
 
 ### The FP viewmodel (the "hole" itself)
 - **Camera inside the body** (f7492f5, d7843d2): the ACTUAL cause of
@@ -590,48 +583,3 @@ LevitateMotor / PlayerSpeedChanger / PlayerEnterExit / PlayerEntity:
 
 1 net test (player.test.js 7 -> 8). Suite 312/75, ARENA2 corpus
 312/312 green pre-commit.
-
-## P12 (stairs + jump: CharacterController parity, Mac-directed): SHIPPED
-
-Live report: "can't really jump high or walk up stairs." Numeric
-traces (test/motorStairs.test.js, kept as the standing harness)
-found four roots; the DFU spec is AcrobatMotor (defaultJumpSpeed 4.5,
-defaultGravity 20, jumpSpeedMultiplier = 1 + JumpingSkill * 0.5/100,
-the 0.1 s grounded bunny-hop gate) + the PlayerAdvanced prefab
-controller (height 1.8, radius 0.35, slopeLimit 70, stepOffset 0.5).
-
-- **Jump died at one frame** (apex 0.069 = one tick of 4.5/60): the
-  horizontal-phase capsule resolve grounded the capsule at its
-  PRE-JUMP height and the OR-accumulated flags carried that into the
-  frame's result, so the motor's velY clamp zeroed the jump on frame
-  two. Grounded/ceiling truth now comes from the FINAL vertical state
-  only. Rule: phase-local flags; a rising capsule is never grounded.
-- **Stairwells under 2.3 blocked or jammed**: the step-up was a blind
-  +stepOffset teleport, so the head needed 2.3 of clearance for ANY
-  step. Now an ASCENDING lift ladder (0.125..0.5) takes the smallest
-  clear rung, with a MONOTONE ceiling sweep - a ceiling hit at a rung
-  forbids every higher one, because independent rungs teleported the
-  head sphere clean past thin ceiling planes (the capsule stood ON TOP
-  of a stairwell ceiling in the trace).
-- **A body is never depenetrated UP into a ceiling**: slope-legal
-  riser-edge pushes crept the capsule upward under ceilings until a
-  grounded stand put the head 0.7 inside the plane; a resolve that
-  makes real head contact clamps net rise to its entry height.
-- **Jump parity**: velY = JUMP_SPEED * jumpSpeedMultiplier(entity)
-  (systems/skills owns the verbatim formula; athleticism + the jump
-  spell are INTERIM 0 at the site, loudly) behind the 0.1 s
-  grounded-time gate. All three scenes wire the live player entity.
-
-The blocked-riser question is pinned by the SPEC, not intuition: a
-0.6 box can still be crested through a ~45-degree top-edge contact
-that sits INSIDE slopeLimit 70 (Unity's controller does the same),
-so the block pins are the 60/78-degree ramps, not an invented
-"riser > stepOffset must block." Two follow-ups stayed honest rather
-than iterated blind: a fine-descent snap variant was REVERTED after
-two failed iterations (it rejected resting placements near risers and
-fell through the world - the original probe snap stands, its old
-+-0.4 full-lift sawtooth already shrunk by the 0.125 rungs), and the
-harness itself produced three false alarms (players summiting and
-walking off the course's far edge) before the assertions sampled the
-TRACE instead of the endpoint. Unit-green is not playable-green:
-Mac's eye on real stairwells is the final verification.
