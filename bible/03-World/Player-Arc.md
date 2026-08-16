@@ -542,3 +542,44 @@ PlayerActivate.LookAtInteriorLock + RDBLayout's lock table:
 2 net tests (action.test.js 3 -> 5: the lock model + text tiers +
 delegates, teleport + the namespace pin). Suite 308/75, ARENA2 corpus
 308/308 green pre-commit.
+
+## P11 (swimming + levitation motor + the fatigue drains): SHIPPED
+
+The Ledger C "Swimming + levitation motor" row, verbatim from DFU
+LevitateMotor / PlayerSpeedChanger / PlayerEnterExit / PlayerEntity:
+
+- **The motor modes** (PlayerMotor grows the LevitateMotor path):
+  swimming/levitating move along the LOOK (camera-transformed input,
+  pitch included) with NO gravity (prior fall velocity dies).
+  Levitate speed = the 4.0 constant; swim speed = base x
+  (LiveSwimming / 200) + base / 4 (GetSwimSpeed); swimming zeroes the
+  look's vertical - the float keys drive it (Space/PageUp up,
+  PageDown down; DFU's Crouch=C alternative collides with our
+  castSpell binding, crouch itself pends) - and rising clamps where
+  the controller center + 50*GlobalScale - 0.93 reaches the water
+  surface ("he would immediately be pulled back in"). The S8
+  waterWalking flag lands its consumer: normal walk/run speed in
+  water.
+- **The swim toggle** (PlayerEnterExit verbatim): swimming when the
+  center + 50*GlobalScale - 0.95 sits below the block's water surface
+  (blockWaterLevel via a per-block lookup on the placed layout);
+  entering plays the large splash (342).
+- **Levitate (14,255)** joins BUFF_KINDS - a classic Levitate spell
+  now works END TO END (cast -> incumbent buff rounds -> the motor
+  path), the first full loop through effect + consumer since
+  slowfall.
+- **Fatigue drains** (PlayerEntity per game minute, S15's queue row):
+  default 11; running 88; swimming 44 on a FAILED Dice100 roll vs the
+  LIVE Swimming skill (success stays default) with the Swimming tally
+  every swimming minute; jumping 11 + the Jumping tally once per jump
+  (the motor's per-frame jumped flag). RAW fatigue units - the x64 is
+  spell-magnitude-only. Athleticism (x0.9/x0.8) pends the career
+  advantage flags; the Argonian swim exemption pends race selection;
+  breath/drowning (isPlayerSubmerged at +76*GlobalScale) routed to
+  Ledger C.
+- **PARITY FIX**: PlayerMotor.limitDiagonalSpeed (.7071 when both
+  axes are live) had never been ported - the grounded motor moved
+  sqrt(2) fast on diagonals. Applied on both paths.
+
+1 net test (player.test.js 7 -> 8). Suite 312/75, ARENA2 corpus
+312/312 green pre-commit.

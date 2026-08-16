@@ -43,6 +43,8 @@ import {
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
 import { applySpell, tickActiveEffects, hasActiveEffect, maxFatigue } from '../systems/effects.js';
+import { FATIGUE_LOSS } from '../systems/statMods.js';
+import { dice100 } from '../combat/formulas.js';
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
@@ -410,6 +412,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _motorState = '';
   let _mouseState = 'no events';
   let _inputState = '';
+  const _activity = { running: false, swimming: false };   // P11: the fatigue drain's live state
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
   function healPlayer(n) {
@@ -956,6 +959,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // S7: one magic round per classic minute (the broker's cadence)
       tickActiveEffects(playerEntity, playerSinks);
       for (const f of foes) if (!f.dead) tickActiveEffects(f.entity, foeSinks(f));
+      // P11: per-game-minute fatigue loss (PlayerEntity verbatim):
+      // default 11; running 88; swimming 44 on a FAILED roll vs the
+      // LIVE Swimming skill (success stays default) + the Swimming
+      // tally every swimming minute. Athleticism multiplier pends the
+      // career advantage flags (1.0, flagged); the Argonian exemption
+      // pends race selection.
+      {
+        let loss = FATIGUE_LOSS.Default;
+        if (_activity.running) loss = FATIGUE_LOSS.Running;
+        else if (_activity.swimming) {
+          if (!dice100(skillValue(playerEntity, SKILLS.Swimming))) loss = FATIGUE_LOSS.Swimming;   // Dice100.FailedRoll
+          tallySkill(playerEntity, SKILLS.Swimming);
+        }
+        drainFatigue(loss);
+      }
     }
     const raised = raiseSkills(playerEntity, classicMinutes, Math.random, () => {
       // U3: the level-up screen replaces the headless auto-apply
@@ -1192,6 +1210,34 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // actions) is FLAGGED - the player snapshot only.
     toggleDebugHud() { debugHud = !debugHud; },
     reportMotor(grounded, velY, yaw) { _motorState = `g:${grounded ? 1 : 0} vy:${velY.toFixed(1)} yaw:${yaw.toFixed(2)}`; },
+    // P11: the current block's water surface (world y) - the swim
+    // toggle rule reads it (PlayerEnterExit blockWaterLevel).
+    waterSurfaceYAt(x, z) {
+      for (const b of dungeon.blocks) {
+        if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
+          return b.layout.waterLevel === 10000 ? null : -b.layout.waterLevel * GLOBAL_SCALE;
+        }
+      }
+      return null;
+    },
+    // P11: the motor-mode effect consumers (Levitate 14,255; the S8
+    // waterWalking flag lands its swimmer).
+    playerLevitating: () => hasActiveEffect(playerEntity, 'levitate'),
+    playerWaterWalking: () => hasActiveEffect(playerEntity, 'waterWalking'),
+    // P11: per-frame activity feed - the splash on the swim edge, the
+    // jump fatigue/tally (PlayerEntity: 11 x multiplier + Jumping
+    // tally once per jump), and the state the per-minute fatigue
+    // drain reads. Athleticism multiplier pends the career advantage
+    // flags (1.0, flagged).
+    reportActivity({ running = false, swimming = false, jumped = false } = {}) {
+      if (swimming && !_activity.swimming) audio.playOneShot(SOUND.SplashLarge);   // PlayLargeSplash on entry
+      _activity.running = running;
+      _activity.swimming = swimming;
+      if (jumped) {
+        drainFatigue(FATIGUE_LOSS.Jumping);
+        tallySkill(playerEntity, SKILLS.Jumping);
+      }
+    },
     reportMouse(dx, dy, locked) { _mouseState = `dx:${dx} dy:${dy} lock:${locked ? 'Y' : 'N'}`; },
     reportInput(keys, pitch) { _inputState = `keys:${keys} pitch:${pitch.toFixed(2)}`; },
     quickSave() {

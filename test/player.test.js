@@ -181,3 +181,54 @@ test('floorLanding: samples the footprint so a marker over a seam still lands (r
   const raw = floorLanding(c2, [0, 5, 0]);
   assert.equal(raw[1], 5);
 });
+
+test('player: P11 swim/levitate motor - formulas, look-directed motion, surface clamp, diagonal limit', async () => {
+  const { swimSpeed, LEVITATE_MOVE_SPEED, DIAGONAL_FACTOR } = await import('../src/player/motor.js');
+  assert.equal(LEVITATE_MOVE_SPEED, 4.0);
+  assert.equal(DIAGONAL_FACTOR, 0.7071);
+  // GetSwimSpeed: base * (skill/200) + base/4 - skill 30 on walk(50)
+  approx(swimSpeed(walkSpeed(50), 30), walkSpeed(50) * (30 / 200) + walkSpeed(50) / 4);
+  // A recording collider: no geometry, just the requested deltas.
+  const moves = [];
+  const rec = { move(pos, dx, dy, dz) { pos[0] += dx; pos[1] += dy; pos[2] += dz; moves.push([dx, dy, dz]); return { grounded: false }; } };
+  const p = new PlayerMotor(rec);
+  p.spawn(0, 0, 0);
+  // LEVITATING: look-directed (pitch tilts the path), speed 4.0, no gravity
+  p.levitating = true;
+  p.velY = -3;   // any prior fall velocity dies
+  p.update(1, { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false }, 0, -Math.PI / 2);
+  assert.equal(p.velY, 0);
+  approx(moves[0][1], -LEVITATE_MOVE_SPEED, 1e-3);   // straight down the look
+  // SWIMMING: the look's vertical is ZEROED; speed = swimSpeed(walk)
+  p.levitating = false;
+  p.swimming = true;
+  p.waterSurfaceY = 100;   // far above - no clamp
+  p.update(1, { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false }, 0, -Math.PI / 3);
+  const swim = moves[1];
+  assert.equal(swim[1], 0);                          // no diving via the look
+  approx(Math.hypot(swim[0], swim[2]), swimSpeed(walkSpeed(50), 30) * Math.cos(-Math.PI / 3), 1e-3);
+  // float up rises; the surface clamp stops it at the top
+  p.update(1, { forward: 0, strafe: 0, run: false, jump: false, up: true, down: false }, 0, 0);
+  assert.ok(moves[2][1] > 0);
+  p.pos[1] = 99.5;                                   // center + 1.25 - 0.93 >= 100
+  p.update(1, { forward: 0, strafe: 0, run: false, jump: false, up: true, down: false }, 0, 0);
+  assert.equal(moves[3][1], 0);
+  // waterWalking: normal walk speed in water (the S8 consumer)
+  p.pos[1] = 0;
+  p.waterWalking = true;
+  p.update(1, { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false }, 0, 0);
+  approx(Math.hypot(moves[4][0], moves[4][2]), walkSpeed(50), 1e-3);
+  p.waterWalking = false;
+  // the .7071 diagonal limit applies to the grounded path too (P11 fix)
+  p.swimming = false;
+  p.grounded = true;
+  p.update(1, { forward: 1, strafe: 1, run: false, jump: false, up: false, down: false }, 0, 0);
+  const g = moves[5];
+  approx(Math.hypot(g[0], g[2]), Math.hypot(1, 1) * DIAGONAL_FACTOR * walkSpeed(50), 1e-3);
+  // the jump flag fires exactly on the frame a jump starts
+  p.grounded = true;
+  p.update(0.016, { forward: 0, strafe: 0, run: false, jump: true, up: false, down: false }, 0, 0);
+  assert.equal(p.jumped, true);
+  p.update(0.016, { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false }, 0, 0);
+  assert.equal(p.jumped, false);
+});

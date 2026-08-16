@@ -213,14 +213,29 @@ export async function bootDungeon(canvas, renderer, params, status) {
       }
       const jumpHeld = keys.has('Space');
       player.fallScale = ctx.playerFallScale;   // S8 slowfall
+      // P11: the swim toggle (PlayerEnterExit verbatim - the CENTER
+      // (feet + 0.9) + 50*GlobalScale - 0.95 below the block water
+      // surface swims) + the Levitate/waterWalking effect consumers.
+      // Float keys: Jump/FloatUp = Space/PageUp; FloatDown = PageDown
+      // (DFU's default binding; DFU's Crouch alternative is C, which
+      // this port binds to castSpell - crouch itself pends).
+      const surf = ctx.waterSurfaceYAt(player.pos[0], player.pos[2]);
+      player.waterSurfaceY = surf;
+      player.swimming = surf != null && player.pos[1] + 0.9 + 50 * 0.025 - 0.95 < surf;
+      player.levitating = ctx.playerLevitating();
+      player.waterWalking = ctx.playerWaterWalking();
+      const moving = keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD');
       player.update(dt, {
         forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
         strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
         run: keys.has('ShiftLeft'),
         jump: jumpHeld && !prevJump,
-      }, cam.yaw);
+        up: jumpHeld || keys.has('PageUp'),
+        down: keys.has('PageDown'),
+      }, cam.yaw, cam.pitch);
       prevJump = jumpHeld;
       cam.pos = player.eye;
+      ctx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped });
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
       const useHeld = keys.has('KeyE');

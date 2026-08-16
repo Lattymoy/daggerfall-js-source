@@ -32,17 +32,18 @@ export { FATIGUE_MULTIPLIER, maxFatigue };
 
 const ELEMENT_EFFECT_FLAG = Object.freeze([EFFECT_FLAGS.Fire, EFFECT_FLAGS.Frost, EFFECT_FLAGS.Poison, EFFECT_FLAGS.Shock, EFFECT_FLAGS.Magic]);
 
-// S8: the starting-set buffs, classic keys verbatim - incumbent
+// S8/P11: the duration buffs, classic keys verbatim - incumbent
 // self-effects tracked by kind (IsLikeKind is settings-blind for all
-// three); a re-cast STACKS its rounds onto the incumbent (F12).
-// Consumers: slowfall
-// scales the player's fall; chameleonNormal halves foe sight range
-// (concealment); waterWalking tracks but its consumer FLAGGED
-// (swimming pends).
+// four); a re-cast STACKS its rounds onto the incumbent (F12).
+// Consumers: slowfall scales the player's fall; chameleonNormal
+// halves foe sight range (concealment); waterWalking restores normal
+// speed while swimming (P11); levitate (14,255) drives the
+// LevitateMotor path (P11).
 export const BUFF_KINDS = Object.freeze({
   '25,255': 'slowfall',
   '31,255': 'waterWalking',
   '23,0': 'chameleonNormal',
+  '14,255': 'levitate',
 });
 export const buffKind = (e) => BUFF_KINDS[`${e.type},${e.subType}`] ?? null;
 export const hasActiveEffect = (entity, kind) =>

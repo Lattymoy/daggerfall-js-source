@@ -49,3 +49,11 @@ export const FATIGUE_MULTIPLIER = 64;
 export function maxFatigue(entity) {
   return (liveStat(entity, 'strength') + liveStat(entity, 'endurance')) * FATIGUE_MULTIPLIER;
 }
+
+/** PlayerEntity per-minute/per-jump fatigue losses, verbatim (RAW
+ *  fatigue units - the x64 belongs to spell magnitudes only). The
+ *  swimming loss applies on a FAILED Dice100 roll vs the live
+ *  Swimming skill; success costs the default. */
+export const FATIGUE_LOSS = Object.freeze({
+  Default: 11, Climbing: 22, Running: 88, Swimming: 44, Jumping: 11,
+});

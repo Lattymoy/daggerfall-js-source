@@ -1,14 +1,14 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 311 tests across 75 files.
+Node 22). Suite: 312 tests across 75 files.
 
 | File | Tests | Covers |
 |---|---|---|
 | action.test.js | 5 | door lifecycle/verbatim constants, move tween + chain gate, activation picking; P10 locks (lock value 16 / magic threshold 20, the clamp(5..95) lockpicking chance, all five LookAtInteriorLock text tiers, locked-door refusal firing onLockedDoor while solid, Lock/Unlock/Open/Close delegates through door-riding action nodes incl. only-when-unlocked and StartingLockValue restore) and P10 teleport (resolved next-object warp, null destination refuses, actionless-destination cascade no-op) + the block-instance key namespace (two instances of one RDB position both register and play independently - the 3108-dungeon repeated-block collision fix) |
 | anims.test.js | 2 | Directional attacks: verbatim DFU direction->strike mapping pins; delta-clip well-formedness (start/end 0, sorted keys); sampler continuity + keyframe hit + null past dur |
 | pointerlock.test.js | 3 | requestLook never throws - swallows a rejecting requestPointerLock promise (the sh/< crash + lock:N frozen-yaw bug), tolerates the void-returning API, survives a synchronous throw |
-| player.test.js | 7 | verbatim speeds/constants, collider ground/slide/step, motor gravity/jump, strafe = true camera-right, wall-ladder regression (step-up needs a clear raised path) |
+| player.test.js | 8 | verbatim speeds/constants, collider ground/slide/step, motor gravity/jump, strafe = true camera-right, wall-ladder regression (step-up needs a clear raised path); P11 swim/levitate (GetSwimSpeed base*(skill/200)+base/4, levitate 4.0 look-directed with prior fall velocity dying, swim zeroing the look's vertical + float-up + the can't-surface clamp, waterWalking normal speed, the .7071 diagonal limit landing on the grounded path, the per-frame jumped flag) |
 | save.test.js | 2 | the snapshot/restore round-trip (entity fields, deep-copied stats/items/actives, spells re-resolved by index, extras + the S12 world/locationKey riding the envelope, the version gate refusing, storage round-trip + corrupt-JSON null), F12 piercing overlays while F9 stays gated |
 | sky.test.js | 3 | SKY reader pins, panorama mirror law, night mapping |
 | smoke.test.js | 1 | runner sanity |
