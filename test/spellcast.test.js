@@ -46,11 +46,13 @@ test('spellcast: magnitude + damage-family resolution', () => {
   assert.ok(!isDamageHealthEffect({ type: 4, subType: 1 }));
   assert.equal(missileArchive(0), 375);
   assert.equal(missileArchive(4), 379);
-  // full apply: save roll first (0.99 full), then magnitude rolls 0 -> 9; non-damage skipped
-  const spell = { element: 0, effects: [e, { type: 11, subType: 0 }, { type: -1, subType: -1 }] };
+  // full apply, GetMagnitude order (S15): magnitude rolls 0,0 -> 9,
+  // THEN the save (0.99 -> lands full). The cure family (3,0) is
+  // still outside the library -> skipped (loud); type -1 just drops.
+  const spell = { element: 0, rangeType: 2, effects: [e, { type: 3, subType: 0 }, { type: -1, subType: -1 }] };
   const T = { stats: { willpower: 50 }, career: {} };
   let hurt = 0;
-  const r = applySpell(spell, 7, T, { hurt: (n) => { hurt += n; } }, seq(0.99, 0, 0));
+  const r = applySpell(spell, 7, T, { hurt: (n) => { hurt += n; } }, seq(0, 0, 0.99));
   assert.equal(hurt, 9);
   assert.equal(r.skipped, 1);
 });
@@ -74,10 +76,10 @@ test('spellcast: TARGET_TYPES verbatim + resolve vs a foe-shaped entity', async 
   const foe = { stats: { willpower: 50 }, career: { immunityFlags: EF.Fire } };
   const e = { type: 4, subType: 0, magnitudeBaseLow: 10, magnitudeBaseHigh: 10, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1 };
   let a = 0;
-  r({ element: 0, effects: [e] }, 5, foe, { hurt: (n) => { a += n; } }, seq(0.99, 0, 0));
+  r({ element: 0, rangeType: 2, effects: [e] }, 5, foe, { hurt: (n) => { a += n; } }, seq(0, 0, 0.99));
   assert.equal(a, 0);                                    // fire-immune: nothing lands
   const soft = { stats: { willpower: 0 }, career: {} };
-  r({ element: 0, effects: [e] }, 5, soft, { hurt: (n) => { a += n; } }, seq(0.99, 0, 0));
+  r({ element: 0, rangeType: 2, effects: [e] }, 5, soft, { hurt: (n) => { a += n; } }, seq(0, 0, 0.99));
   assert.ok(a > 0);
 });
 

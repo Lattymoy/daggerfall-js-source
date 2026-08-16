@@ -5,14 +5,17 @@
 //   Vitals: the classic bar art fills - MAIN03I0.IMG health,
 //   MAIN04I0.IMG fatigue, MAIN05I0.IMG magicka - each cropped from
 //   the BOTTOM by current/max (bottom-anchored, the
-//   VerticalProgress shape). Fatigue draws FULL, FLAGGED - the
-//   fatigue stat pends its slice.
+//   VerticalProgress shape). All three ride live entity stats
+//   (fatigue joined in S15: current entity.fatigue over the derived
+//   (Str+End) x 64 ceiling).
 //   Compass: COMPBOX.IMG frame; a 64px window into COMPASS.IMG
 //   scrolled by heading/360 x 258 (nonWrappedPart - the strip's tail
 //   duplicates its head so no runtime wrap is needed), inset 2px
 //   (boxOutlineSize), strip drawn first, frame over it.
 //   Scale: classic pixels x floor(canvasHeight / 200) (the 320x200
 //   reference), min 1 - integer scaling keeps the art crisp.
+
+import { maxFatigue } from '../systems/statMods.js';
 
 export const COMPASS_BOX_OUTLINE = 2;
 export const COMPASS_BOX_INTERIOR = 64;
@@ -86,7 +89,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01) {
   let x = HUD_BORDER * s;
   const bars = [
     [art.health, vitals.health, vitals.maxHealth],
-    [art.fatigue, 1, 1],                                    // FLAGGED: fatigue stat pends
+    [art.fatigue, vitals.fatigue ?? 0, maxFatigue(vitals) || 1],   // S15: the live fatigue stat ((Str+End) x 64 ceiling)
     [art.magicka, vitals.magicka ?? 0, vitals.maxMagicka ?? 1],
   ];
   for (const [img, cur, max] of bars) {

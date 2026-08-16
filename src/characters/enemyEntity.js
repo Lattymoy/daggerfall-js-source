@@ -63,6 +63,14 @@ export function skillsLevel(level) {
  */
 export function makeEnemyEntity(mobileType, basics, career, playerLevel, rollFn = Math.random) {
   const isClass = mobileType >= 128;
+  const stats = career
+    ? {
+        strength: career.strength, intelligence: career.intelligence,
+        willpower: career.willpower, agility: career.agility,
+        endurance: career.endurance, personality: career.personality,
+        speed: career.speed, luck: career.luck,
+      }
+    : { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 };
   let level, maxHealth, liveSpeed, armor;
   if (isClass) {
     level = playerLevel;
@@ -91,14 +99,9 @@ export function makeEnemyEntity(mobileType, basics, career, playerLevel, rollFn 
     // stats.SetPermanentFromCareer: ALL EIGHT attributes ride the
     // career (audit F14 - savingThrow needs willpower, level-up needs
     // endurance). 50s only when a caller skips the career load.
-    stats: career
-      ? {
-          strength: career.strength, intelligence: career.intelligence,
-          willpower: career.willpower, agility: career.agility,
-          endurance: career.endurance, personality: career.personality,
-          speed: career.speed, luck: career.luck,
-        }
-      : { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 },
+    stats,
+    // SetEntityDefaults: currentFatigue = MaxFatigue = (Str+End) x 64 (S15)
+    fatigue: (stats.strength + stats.endurance) * 64,
     attackModifierFlags: career ? career.attackModifierFlags : null,
     minMetalToHit: basics.minMetalToHit,
     team: basics.team ?? 'None',

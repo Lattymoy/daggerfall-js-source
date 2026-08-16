@@ -13,7 +13,7 @@ export const QUICKSAVE_KEY = 'dagger.quicksave';
 
 const ENTITY_FIELDS = [
   'name', 'gender', 'careerIndex', 'level', 'reflexes',
-  'health', 'maxHealth', 'magicka', 'maxMagicka',
+  'health', 'maxHealth', 'magicka', 'maxMagicka', 'fatigue',
   'startingLevelUpSkillSum', 'currentLevelUpSkillSum',
   'readyToLevelUp', 'pendingLevel', 'chargenDone',
 ];
@@ -28,7 +28,7 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   snap.career = entity.career ? { ...entity.career } : null;   // plain CFG data
   snap.items = (entity.items ?? []).map((it) => ({ ...it }));
   snap.spells = (entity.spells ?? []).map((sp) => sp.index);   // resolve against SPELLS.STD on load
-  snap.activeEffects = (entity.activeEffects ?? []).map((a) => ({ ...a, effect: { ...a.effect } }));
+  snap.activeEffects = (entity.activeEffects ?? []).map((a) => (a.effect ? { ...a, effect: { ...a.effect } } : { ...a }));   // permanent drain entries carry no effect record (S15)
   return snap;
 }
 
@@ -42,11 +42,15 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   }
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
   entity.stats = { ...snap.stats };
+  // Pre-S15 saves carry no fatigue: default to rested (MaxFatigue =
+  // (Str + End) x 64) - the additive-field shape DFU's serializer
+  // gives missing members, so the envelope version holds at 1.
+  if (entity.fatigue == null) entity.fatigue = ((snap.stats?.strength ?? 0) + (snap.stats?.endurance ?? 0)) * 64;
   entity.skills = [...snap.skills];
   entity.skillUses = [...snap.skillUses];
   entity.career = snap.career ? { ...snap.career } : entity.career;
   entity.items = snap.items.map((it) => ({ ...it }));
-  entity.activeEffects = snap.activeEffects.map((a) => ({ ...a, effect: { ...a.effect } }));
+  entity.activeEffects = snap.activeEffects.map((a) => (a.effect ? { ...a, effect: { ...a.effect } } : { ...a }));
   entity.spells = spellsByIndex
     ? snap.spells.map((i) => spellsByIndex.get(i)).filter(Boolean)
     : [];

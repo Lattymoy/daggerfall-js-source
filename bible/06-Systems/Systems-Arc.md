@@ -420,10 +420,87 @@ IncreaseMagnitude on re-cast, PlayerAggro) and Transfer (drain caster,
 fortify target). HealAttribute (cures attribute DAMAGE from drains)
 follows once Drain lands.
 
+## S15 (effect library V - drains, transfers, fatigue, regenerate + the save-gate fix): SHIPPED
+
+The rest of the classic attribute/vitals effect surface on the S14
+layer, plus TWO parity fixes found against the DFU source while
+porting. Verbatim from DrainEffect/TransferEffect/HealEffect/
+HealFatigue/DamageFatigue/ContinuousDamageFatigue/Regenerate +
+EntityEffectManager.HealAttribute + DaggerfallEntity fatigue:
+
+- **PARITY FIX - the (10,9) key**: S13 had mapped classic (10,9) to
+  HealSpellPoints. In DFU that ClassicKey belongs to HEAL FATIGUE;
+  Heal-SpellPoints is a potion-only effect with NO classic key (no
+  classic spell restores magicka). (10,9) now heals fatigue x64 and
+  the restoreMagicka door left with it (a magicka-restore sink returns
+  when potions/absorption ship). The seven S13 pins that certified the
+  wrong key were rewritten - a pin certifies what it pins, again.
+- **PARITY FIX - the GetMagnitude save gate**: DFU applies
+  ModifyEffectAmount (the saving throw) to a magnitude ONLY when
+  ParentBundle.targetType != CasterOnly, and rolls magnitude BEFORE
+  the save. The pre-S15 shape saved damage always (even self-cast) and
+  heals never, in save-then-magnitude order. Every family now rides
+  one effectMagnitude() helper with the verbatim gate + order;
+  continuous entries carry saveScaled so per-round rolls stay gated.
+- **The fatigue stat** (DaggerfallEntity verbatim): FatigueMultiplier
+  = 64; MaxFatigue = (LiveStrength + LiveEndurance) x 64, derived LIVE
+  (statMods.maxFatigue - a fortified/drained strength moves the
+  ceiling); currentFatigue = entity.fatigue, initialized to max at
+  chargen (applyCharacter) and enemy creation (makeEnemyEntity), the
+  pre-chargen INTERIM literal on playerEntity. Joins the save envelope
+  (ENTITY_FIELDS; pre-S15 saves default to rested on restore - the
+  additive-member shape DFU's serializer gives missing fields, version
+  holds at 1). The classic HUD fatigue bar now draws current/max (the
+  FLAGGED-full site retires). INTERIM loud in dungeonContext: the
+  exhaustion consumer (classic collapse at 0) pends; running/resting
+  drain/recovery pend their systems.
+- **Drain{Attribute}** (7, 0..7): permanent-until-healed negative stat
+  mod. Incumbent by STAT (settings-blind); Become/AddState each roll a
+  fresh magnitude ONTO the incumbent total; IncreaseMagnitude clamps
+  so the stat never falls below 1 relative to its PERMANENT value (no
+  invisible healing debt); liveStat subtracts. Ticks neither count
+  down nor act (forcedRoundsRemaining = 1 forever); the only exit is
+  healed-to-zero (ended -> removed next pass).
+- **Heal{Attribute}** (10, 0..7): instant manager.HealAttribute walk -
+  heals drain/transfer damage in list order until the amount spends,
+  clamps at the base (never fortifies), Ends a drain it zeroes.
+- **Transfer family** (11): Transfer{Attribute} (0..7) = the drain
+  shape on the target (its OWN incumbent family - a Drain is never
+  like-kind for a Transfer) + the caster's drained stat healed by the
+  PRE-CLAMP roll (lastMagnitudeIncreaseAmount). TransferHealth (11,8)
+  hurts target/heals caster instantly; TransferFatigue (11,9) x64 both
+  directions. All three REQUIRE a caster in DFU (MagicRound returns
+  early) - applySpell grew an optional caster = { entity, sinks }
+  argument; without one TransferHealth/Fatigue no-op entirely and the
+  attribute steal drains without the heal-back, verbatim.
+- **Fatigue damage family**: DamageFatigue (4,1) instant,
+  ContinuousDamageFatigue (1,1) per-round (settings-blind incumbent),
+  both x64 through the drainFatigue sink (assignMultiplier: true).
+- **Regenerate** (18, 255): IncreaseHealth(GetMagnitude) every round
+  for the duration, magnitude rolled fresh per round; IsLikeKind =
+  Regenerate AND CompareSettings, so same-settings re-casts stack
+  rounds and different-settings instances coexist.
+- **Scene seam**: dungeonContext consolidated its seven inline sink
+  objects into playerSinks/foeSinks(f) (fatigue sinks joined; the
+  explosion path's heal no-op for foes was a shortcut - foes now heal
+  from area heals as DFU bundles do), and every player-cast path
+  passes the caster pair so transfers work. Trap casts pass no caster
+  (DFU action casters are null). PlayerAggro on drain/transfer/damage
+  is scene-side and rides the existing foe damage/awareness path;
+  RESIDUAL (honest): a pure drain (no damage) does not yet aggro a
+  passive foe.
+- **NOT shipped, still skipped loudly**: the Cure family (3, 0..2) -
+  disease/poison/paralysis do not exist yet; routed in Ledger C with
+  their systems.
+
+6 net tests (effects 8 -> 14; two spellcast pins re-derived for the
+verbatim magnitude-then-save order). Suite 301/74, ARENA2 corpus
+green 301/301 BEFORE commit (the 08-14 lesson).
+
 ## Queue
-- Magic remainder: DrainAttribute + TransferAttribute + HealAttribute
-  (the rest of the stat-mod family on the S14 layer), Cure effects
-  (disease/poison/paralysis), Regenerate, the Fatigue family once a
-  fatigue stat exists; enchantment economy/value.
+- Magic remainder: Cure effects (disease/poison/paralysis - with
+  their systems), enchantment economy/value.
+- Fatigue consumers: exhaustion collapse at 0, running/swimming
+  drain, rest recovery (CalculateFatigueRecoveryRate).
 - Later: quests, guilds, shops, dialog, calendar deep-wiring,
   save format.

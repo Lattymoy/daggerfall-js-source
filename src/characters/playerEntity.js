@@ -14,6 +14,7 @@ export const playerEntity = {
   armor: 0,
   skills: 30,       // INTERIM flat skills until chargen
   stats: { strength: 50, agility: 50, luck: 50 },
+  fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-derives from the rolled stats (S15)
   items: [],        // the inventory (S2); gold rides as a Currency stack
 };
 
