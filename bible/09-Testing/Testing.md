@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 371 tests across 84 files.
+Node 22). Suite: 380 tests across 85 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -10,6 +10,7 @@ Node 22). Suite: 371 tests across 84 files.
 | anims.test.js | 2 | Directional attacks: verbatim DFU direction->strike mapping pins; delta-clip well-formedness (start/end 0, sorted keys); sampler continuity + keyframe hit + null past dur |
 | pointerlock.test.js | 3 | requestLook never throws - swallows a rejecting requestPointerLock promise (the sh/< crash + lock:N frozen-yaw bug), tolerates the void-returning API, survives a synchronous throw |
 | player.test.js | 10 | verbatim speeds/constants (audit 16e F1: the walk DRAG term 0.5*(100-max(30,SPD)) with its SPD-30 floor and SPD-100 zero pinned, the UNDRAGGED run base, the crouch-base run), collider ground/slide/step, motor gravity/jump, strafe = true camera-right, wall-ladder regression (step-up needs a clear raised path); P11 swim/levitate (GetSwimSpeed base*(skill/200)+base/4, levitate 4.0 look-directed with prior fall velocity dying, swim zeroing the look's vertical + float-up + the can't-surface clamp, waterWalking normal speed, the .7071 diagonal limit landing on the grounded path, the per-frame jumped flag); P12 crouch (controllerCrouchHeight 0.9 + the 0.8 eye, toggle edge, crouchSpeed for crouched walks and the crouch-base run for crouched RUNS (GetRunSpeed's branch, audit 16e F1), crawling under a 1.2 ceiling the standing capsule cannot enter, the CanStand probe refusing to stand under it and allowing it back in the open) and P12 breath (MaxBreath = LiveEndurance/2 int-div fortify-aware, the (END>>3)+4 short threshold + HUDBreathBar colors/width pinned, WaterBreathing (30,255) in the buff kinds both subType spellings, currentBreath riding the save envelope) |
+| motorStairs.test.js | 9 | P14 movement parity, NUMERIC traces (restores the reverted b9e9aa6 harness): a classic 0.3-riser staircase summits grounded, riser 0.45 climbs while a 78-deg ramp blocks and a 60-deg climbs (slopeLimit 70 is THE block criterion - a lone tall box crests via its ~45-deg edge contact, as Unity), a flat wall never ladders (the P9 facade pin), a 2.2 stairwell ceiling CAPS the lift ladder (stands tread 2, never wedges the head into the plane) while a 2.05 ceiling (no legal stand) refuses cleanly, jump apex = (4.5 x (1 + Jumping x 0.5/100))^2 / 2g (skill 30 -> +15%, not the one-frame 0.069 kill), the 0.1 s grounded-time gate blocks the first-frame re-jump, crouched jump x0.8 + moving-jump forward boost 0.05 with airborne momentum FROZEN through reversed input (airControl false), and a landed fall reports its distance (8-drop) while slowfall falls at -105*dt with the fall start re-anchored (lands billing ~0) |
 | save.test.js | 2 | the snapshot/restore round-trip (entity fields, deep-copied stats/items/actives, spells re-resolved by index, extras + the S12 world/locationKey riding the envelope, the version gate refusing, storage round-trip + corrupt-JSON null), F12 piercing overlays while F9 stays gated |
 | sky.test.js | 3 | SKY reader pins, panorama mirror law, night mapping |
 | smoke.test.js | 1 | runner sanity |

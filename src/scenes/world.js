@@ -28,7 +28,10 @@ import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { fetchBytes, parseSeason, createSkyController } from './shared.js';
-import { PlayerMotor } from '../player/motor.js';
+import { PlayerMotor, FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
+import { jumpSpeedMultiplier } from '../systems/skills.js';
+import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
+import { SOUND } from '../systems/soundClips.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
@@ -310,7 +313,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // The motor freezes until the start pixel's collider exists.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
-  const player = new PlayerMotor(collider);
+  const player = new PlayerMotor(collider, undefined, { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14)
   let playerSpawned = false;
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.
@@ -445,11 +448,24 @@ export async function bootWorld(canvas, renderer, params, status) {
           forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
           strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
           run: keys.has('ShiftLeft'),
-          jump: jumpHeld && !latch.jump,
+          jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
           crouch: crouchHeld && !latch.crouch,
         }, cam.yaw);
-        latch.jump = jumpHeld;
         latch.crouch = crouchHeld;
+        // P14 fall damage (host parity - CheckFallingDamage +
+        // PlayerHealth verbatim; sounds 91/92). The outdoor-water
+        // exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+        // has no tile-under-player lookup yet, so a water landing
+        // bills like ground until the tile probe ships. Death at 0
+        // rides the shared entity; the exterior death screen pends
+        // with the world-mode UI arc.
+        if (player.landedFallDistance > FALL_DAMAGE_THRESHOLD) {
+          playerEntity.health = Math.max(0, playerEntity.health - Math.trunc(FALL_HP_PER_METRE * (player.landedFallDistance - FALL_DAMAGE_THRESHOLD)));
+          surfacePlayer();
+          audio.playOneShot(SOUND.FallDamage);
+        } else if (player.landedFallDistance > FALL_DAMAGE_THRESHOLD / 2) {
+          audio.playOneShot(SOUND.FallHard);   // BadFallDetected
+        }
         cam.pos = player.eye;
         const useHeld = keys.has('KeyE');
         if (useHeld && !latch.use && !modes.transitioning) {

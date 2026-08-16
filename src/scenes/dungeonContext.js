@@ -35,6 +35,7 @@ import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet } from '../ui/charsheet.js';
 import { InventoryWindow, SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
 import { tallySkill, skillValue, SKILLS, WEAPON_SKILL, SKILL_NAMES } from '../systems/skills.js';
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
 import { raiseSkills, applyLevelUp } from '../systems/advancement.js';
 import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
@@ -1550,7 +1551,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!m) return [0, 2, 0];
       return floorLanding(collider, [m.x, m.y + 1.08, m.z]);
     },
-    get playerFallScale() { return hasActiveEffect(playerEntity, 'slowfall') ? 0.15 : 1; },   // S8: hosts feed their motor
+    get playerSlowFalling() { return hasActiveEffect(playerEntity, 'slowfall'); },   // S8: hosts feed their motor (P14: the -105 * dt constant-speed law lives in the motor)
     // S11: quicksave/quickload (F9/F12). WORLD state (foes, piles,
     // actions) is FLAGGED - the player snapshot only.
     toggleDebugHud() { debugHud = !debugHud; },
@@ -1587,7 +1588,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // tally once per jump), and the state the per-minute fatigue
     // drain reads. Athleticism multiplier pends the career advantage
     // flags (1.0, flagged).
-    reportActivity({ running = false, swimming = false, jumped = false, movingLessThanHalfSpeed = true } = {}) {
+    reportActivity({ running = false, swimming = false, jumped = false, movingLessThanHalfSpeed = true, fell = 0 } = {}) {
       if (swimming && !_activity.swimming) audio.playOneShot(SOUND.SplashLarge);   // PlayLargeSplash on entry
       _activity.running = running;
       _activity.swimming = swimming;
@@ -1595,6 +1596,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (jumped) {
         drainFatigue(FATIGUE_LOSS.Jumping);
         tallySkill(playerEntity, SKILLS.Jumping);
+      }
+      // P14 fall landing (CheckFallingDamage + PlayerHealth verbatim):
+      // damage = trunc(5 * (distance - 5)) past the threshold with the
+      // fall-damage sound; a 2.5..5 drop is the hard-fall alert only.
+      // No water exemption HERE - DFU's is outdoor-tile-only
+      // (StreamingWorld.PlayerTileMapIndex == 0), so a dungeon-water
+      // landing that grounds bills like ground, bug-for-bug. The
+      // ShowPlayerDamage screen flash pends the HUD arc (flagged).
+      if (fell > FALL_DAMAGE_THRESHOLD) {
+        hurtPlayer(Math.trunc(FALL_HP_PER_METRE * (fell - FALL_DAMAGE_THRESHOLD)));
+        audio.playOneShot(SOUND.FallDamage);
+      } else if (fell > FALL_DAMAGE_THRESHOLD / 2) {
+        audio.playOneShot(SOUND.FallHard);
       }
     },
     reportMouse(dx, dy, locked) { _mouseState = `dx:${dx} dy:${dy} lock:${locked ? 'Y' : 'N'}`; },

@@ -50,3 +50,12 @@ export function tallySkill(entity, skillId, amount = 1) {
   entity.skillUses[skillId] += amount;
   if (entity.skillUses[skillId] > 20000) entity.skillUses[skillId] = 20000;
 }
+
+/** Verbatim AcrobatMotor jumpSpeedMultiplier: 1 + JumpingSkill * 0.5
+ *  / 100 (skill adds up to +50% force). Athleticism (+0.1, improved
+ *  +0.1) and the Jump spell (+0.6) are INTERIM 0 here, loudly - the
+ *  career advantage decode and the jump effect family pend their
+ *  slices. P14. */
+export function jumpSpeedMultiplier(entity) {
+  return 1 + (skillValue(entity, SKILLS.Jumping) * 0.5) / 100;
+}

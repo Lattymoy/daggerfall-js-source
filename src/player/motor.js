@@ -29,6 +29,21 @@ export const CLASSIC_TO_UNITY_RATIO = 39.5;
 export const DF_WALK_BASE = 150;
 export const DF_CROUCH_BASE = 50;
 export const JUMP_SPEED = 4.5;
+// P14 jump/fall parity (AcrobatMotor + PlayerMotor.GroundedTime,
+// verbatim): the jump fires only after 0.1 s of grounded time (the
+// bunny-hop gate), a crouched jump scales by crouchingJumpDelta 0.8,
+// a MOVING jump gains forward * jumpSpeed * 0.05 of momentum (DFU's
+// own classic-momentum hack), slowfall is a CONSTANT -105 * dt fall
+// speed with the fall-start reset each tick (no accumulation, no
+// fall damage below the loss point), and a fall reports its distance
+// on landing (CheckFallingDamage: damage past 5, a hard-fall alert
+// past 2.5 - the HOST applies HP/sounds; PlayerHealth does in DFU).
+export const GROUNDED_JUMP_GATE_S = 0.1;
+export const CROUCH_JUMP_DELTA = 0.8;
+export const JUMP_FWD_BOOST = 0.05;
+export const SLOWFALL_SPEED = 105;          // AcrobatMotor slowFallSpeed (x dt = the constant fall velocity)
+export const FALL_DAMAGE_THRESHOLD = 5.0;   // AcrobatMotor fallingDamageThreshold (= PlayerHealth's threshold)
+export const FALL_HP_PER_METRE = 5;         // PlayerHealth.ApplyPlayerFallDamage HPPerMetre
 export const GRAVITY = 20.0;
 export const CAPSULE_HEIGHT = 1.8;
 export const CAPSULE_RADIUS = 0.35;
@@ -87,12 +102,26 @@ export function swimSpeed(baseSpeed, swimmingSkill) {
  * and integrates AcrobatMotor-style vertical motion.
  */
 export class PlayerMotor {
-  constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }) {
+  constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }, { jumpBoost = null } = {}) {
     this.collider = collider;
     this.stats = stats;
+    this.jumpBoost = jumpBoost;    // () => AcrobatMotor jumpSpeedMultiplier (systems/skills owns the formula)
     this.pos = new Float32Array(3); // FEET position
     this.velY = 0;
     this.grounded = false;
+    this.groundedTime = 0;         // PlayerMotor.GroundedTime (the 0.1 s jump gate reads it)
+    this.jumping = false;          // AcrobatMotor.Jumping: set at jump, cleared on the next grounded frame
+    this.falling = false;          // AcrobatMotor.Falling (CheckInitFall / CheckFallingDamage)
+    this.fallStart = 0;            // fallStartLevel
+    this.landedFallDistance = 0;   // set for the frame a fall LANDS (the host applies damage/sounds)
+    this.slowFalling = false;      // IsSlowFalling (the S8 buff; hosts feed it per frame)
+    // airControl = false (AcrobatMotor default): airborne horizontal
+    // momentum is FROZEN at liftoff - DFU only recomputes x/z from
+    // input in the GROUNDED branch (FrictionMotor.GroundedMovement),
+    // so a jump carries its takeoff velocity and mid-air steering
+    // does nothing (enhanced-jump/rappel air control pends its slice).
+    this._airVelX = 0;
+    this._airVelZ = 0;
     // P11 modes (the scene owns the toggles): swimming rides the
     // block water level; levitating rides the Levitate effect;
     // waterWalking (S8) restores normal speed in water.
@@ -121,6 +150,15 @@ export class PlayerMotor {
     this.pos[2] = z;
     this.velY = 0;
     this.grounded = false;
+    // Teleports/loads clear all motion state (DFU: CancelMovement +
+    // ClearFallingDamage on teleport actions, enter/exit, and load) -
+    // a downward warp must not bill the drop as a fall.
+    this.groundedTime = 0;
+    this.jumping = false;
+    this.falling = false;
+    this.fallStart = y;
+    this._airVelX = 0;
+    this._airVelZ = 0;
   }
 
   /**
@@ -149,6 +187,10 @@ export class PlayerMotor {
 
   update(dt, input, yaw, pitch = 0) {
     this.jumped = false;
+    this.landedFallDistance = 0;
+    // PlayerMotor.FixedUpdate: time the grounded state FIRST, every
+    // frame (the swim/levitate early-return comes after in DFU too).
+    this.groundedTime = this.grounded ? this.groundedTime + dt : 0;
     // P12 crouch toggle (edge input; the scene owns the key edge).
     // Standing back up needs headroom: the STANDING capsule must fit
     // at the current feet (PlayerHeightChanger's CanStand probe) -
@@ -199,6 +241,24 @@ export class PlayerMotor {
       return;
     }
 
+    // AcrobatMotor fall bookkeeping, in PlayerMotor.FixedUpdate's own
+    // order: the grounded branch clears Jumping and LANDS a live fall
+    // (CheckFallingDamage - the distance is reported to the host,
+    // which applies the HP/sound laws); the airborne branch is
+    // CheckInitFall (fall start = here; a non-jump fall begins its y
+    // movement at 0). P14.
+    if (this.grounded) {
+      this.jumping = false;
+      if (this.falling) {
+        this.falling = false;
+        this.landedFallDistance = this.fallStart - this.pos[1];
+      }
+    } else if (!this.falling) {
+      this.falling = true;
+      this.fallStart = this.pos[1];
+      if (!this.jumping) this.velY = 0;
+    }
+
     // GetBaseSpeed + ApplyInputSpeedAdjustment (audit F1): walking
     // crouched = the crouch base; RUNNING crouched = GetRunSpeed's
     // crouch branch (crouch base x the run multiplier - DFU lets you
@@ -216,22 +276,57 @@ export class PlayerMotor {
     // this camera-right vector. D (strafe +1) rides it. (A prior
     // "fix" flipped this using view-space x WITHOUT the projection,
     // which perspective negates - it would have swapped A/D. Reverted.)
-    let dx = (sin * input.forward - cos * input.strafe) * factor * speed * dt;
-    let dz = (cos * input.forward + sin * input.strafe) * factor * speed * dt;
+    // GROUNDED recomputes velocity from input; AIRBORNE keeps the
+    // liftoff momentum verbatim (airControl false - see constructor).
+    let vx, vz;
+    if (this.grounded) {
+      vx = (sin * input.forward - cos * input.strafe) * factor * speed;
+      vz = (cos * input.forward + sin * input.strafe) * factor * speed;
+    } else {
+      vx = this._airVelX;
+      vz = this._airVelZ;
+    }
 
-    if (this.grounded && input.jump) {
-      this.velY = JUMP_SPEED;
+    // HandleJumpInput, verbatim gates: 0.1 s of grounded time (the
+    // bunny-hop gate - a HELD jump re-fires each landing past it, as
+    // classic), slowfall cancels outright; the boost multiplier is
+    // the scene's jumpSpeedMultiplier (Jumping skill; athleticism +
+    // jump spell pend); crouched jumps scale by crouchingJumpDelta;
+    // a MOVING jump adds forward * jumpSpeed * 0.05 of momentum.
+    if (this.grounded && input.jump && this.groundedTime >= GROUNDED_JUMP_GATE_S && !this.slowFalling) {
+      this.velY = JUMP_SPEED * (this.jumpBoost ? this.jumpBoost() : 1);
+      if (this.crouching) this.velY *= CROUCH_JUMP_DELTA;
+      if (input.forward !== 0 || input.strafe !== 0) {
+        vx += sin * JUMP_SPEED * JUMP_FWD_BOOST;
+        vz += cos * JUMP_SPEED * JUMP_FWD_BOOST;
+      }
       this.grounded = false;
+      this.groundedTime = 0;
+      this.jumping = true;
       this.jumped = true;   // P11: the fatigue/tally consumer reads this frame flag
     }
-    if (!this.grounded) this.velY -= GRAVITY * dt * (this.fallScale ?? 1);   // S8: slowfall sets fallScale
-    else this.velY = Math.min(this.velY, 0);
+    this._airVelX = vx;
+    this._airVelZ = vz;
+
+    // ApplyGravity: slowfall is a CONSTANT -105 * dt fall speed with
+    // fallStart re-anchored every tick (expiry mid-fall only bills
+    // the rest of the drop); otherwise integrate normally.
+    if (!this.grounded) {
+      if (this.slowFalling && this.falling) {
+        this.fallStart = this.pos[1];
+        this.velY = -SLOWFALL_SPEED * dt;
+      } else {
+        this.velY -= GRAVITY * dt;
+      }
+    } else this.velY = Math.min(this.velY, 0);
     const dy = this.velY * dt;
 
-    const r = this.collider.move(this.pos, dx, dy, dz, this.height);
+    const r = this.collider.move(this.pos, vx * dt, dy, vz * dt, this.height);
     this.groundKey = r.grounded ? (r.groundKey ?? null) : null;   // platform riding: what holds us up
     this.grounded = r.grounded;
     if (r.grounded && this.velY < 0) this.velY = 0;
-    if (r.hitCeiling && this.velY > 0) this.velY = 0;
+    // HitHead, verbatim: rising into a ceiling REVERSES the vertical
+    // (DFU bounces the jump downward, not a zero-stop).
+    if (r.hitCeiling && this.velY > 0) this.velY = -this.velY;
   }
 }

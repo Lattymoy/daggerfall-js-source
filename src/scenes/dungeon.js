@@ -20,6 +20,7 @@ import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
 import { PlayerMotor } from '../player/motor.js';
+import { jumpSpeedMultiplier } from '../systems/skills.js';
 import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
@@ -83,7 +84,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // P2: grounded walking is the default (?fly restores the fly cam);
   // spawn drops onto the start-marker floor.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(ctx.collider);
+  const player = new PlayerMotor(ctx.collider, undefined, { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14)
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
   // P10 Teleport actions: player transform = the destination object's
@@ -97,8 +98,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     cam.yaw = yawDeg * Math.PI / 180;
     console.log(`[action] teleport -> [${pos.map((v) => v.toFixed(2)).join(', ')}] yaw ${yawDeg.toFixed(1)}`);
   };
-  let prevJump = false;
-  let prevCrouch = false;   // P12: the crouch-toggle key edge
+  let prevCrouch = false;   // P12: the crouch-toggle key edge (jump is HELD - P14)
   let prevUse = false;
   console.log(`player: collider ${ctx.colliderTris} tris, ${ctx.actions.objects.size} activatables, walk=${walkMode}`);
   const tryActivate = () => {
@@ -125,7 +125,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   addEventListener('keydown', (e) => {
     // The input map (ui/input.js) owns all bindings.
     const dir = () => ({ eye: cam.pos, dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)] });
-    if (routeKey(e, ctx, dir, (p) => { player.pos[0] = p[0]; player.pos[1] = p[1]; player.pos[2] = p[2]; })) e.preventDefault();
+    if (routeKey(e, ctx, dir, (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)
   });
   addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; look/attack ride the same seams as mouse
@@ -206,7 +206,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
         if (d && (d[0] || d[1] || d[2])) player.collider.move(player.pos, d[0], d[1], d[2]);
       }
       const jumpHeld = keys.has('Space');
-      player.fallScale = ctx.playerFallScale;   // S8 slowfall
+      player.slowFalling = ctx.playerSlowFalling;   // S8 slowfall (P14: the verbatim constant-speed law lives in the motor)
       // P11: the swim toggle (PlayerEnterExit verbatim - the CENTER
       // (feet + 0.9) + 50*GlobalScale - 0.95 below the block water
       // surface swims) + the Levitate/waterWalking effect consumers.
@@ -233,15 +233,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
         forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
         strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
         run: keys.has('ShiftLeft'),
-        jump: jumpHeld && !prevJump,
+        jump: jumpHeld,   // P14: HELD, verbatim (AcrobatMotor re-fires past the 0.1 s grounded gate - intended bunny-hopping)
         up: jumpHeld || keys.has('PageUp'),
         down: keys.has('PageDown'),
         crouch: crouchHeld && !prevCrouch,
       }, cam.yaw, cam.pitch);
-      prevJump = jumpHeld;
       prevCrouch = crouchHeld;
       cam.pos = player.eye;
-      ctx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed });   // P13: the stealth sneak state
+      ctx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
       const useHeld = keys.has('KeyE');

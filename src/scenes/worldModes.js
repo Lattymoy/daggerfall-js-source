@@ -266,7 +266,7 @@ export function createWorldModes(host) {
     const fwd = eyeDir();
     const jumpHeld = keys.has('Space');
     if (mode === 'dungeon' && dungeonCtx) {
-      player.fallScale = dungeonCtx.playerFallScale;   // S8 slowfall
+      player.slowFalling = dungeonCtx.playerSlowFalling;   // S8 slowfall (P14: the verbatim constant-speed law lives in the motor)
       // P11 host parity (2026-08-16 audit: the standalone ?dungeon
       // scene wired swim/levitate but THIS host never did - a
       // world-mode dungeon sank the player under water at walk
@@ -290,7 +290,7 @@ export function createWorldModes(host) {
       forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
       strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
       run: keys.has('ShiftLeft'),
-      jump: jumpHeld && !latch.jump,
+      jump: jumpHeld,   // P14: HELD, verbatim (the 0.1 s grounded gate owns re-fire)
       up: jumpHeld || keys.has('PageUp'),
       down: keys.has('PageDown'),
       crouch: crouchHeld && !latch.crouch,
@@ -298,10 +298,11 @@ export function createWorldModes(host) {
     latch.crouch = crouchHeld;
     if (mode === 'dungeon' && dungeonCtx) {
       // P11: the splash/jump/swim-minute fatigue feed (same seam as
-      // the standalone scene).
-      dungeonCtx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed });   // P13: the stealth sneak state
+      // the standalone scene). P14 adds the fall landing (interior
+      // mode has no context seam for it yet - single-story shells
+      // cannot fall 2.5+; the seam joins interiorCtx with its arc).
+      dungeonCtx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
     }
-    latch.jump = jumpHeld;
     cam.pos = player.eye;
     const useHeld = keys.has('KeyE');
     if (useHeld && !latch.use) (mode === 'dungeon' ? tryExitDungeon : tryExit)();

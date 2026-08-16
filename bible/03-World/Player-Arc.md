@@ -695,3 +695,71 @@ IsMovingLessThanHalfSpeed:
 
 4 tests (enemymotor 8) + the motor pin (player.test.js). Suite
 361/81, ARENA2 corpus 361/361 green pre-commit.
+
+## P14 (2026-08-16): movement parity audit - jump + inclines SHIPPED
+
+Live report (Mac): "jump isn't working correctly and I can't use
+inclines" - the SAME defects Mac's b9e9aa6 stairs/jump experiment
+fixed and 01c5504 reverted fourteen minutes later to clear the
+parallel-lane merge (the fixes never re-landed; the timeline is in
+the commit graph). This slice re-derives all of it on the current
+tree (which threads the P12 per-call capsule height through every
+resolve) and closes the jump-law gaps the audit found against
+AcrobatMotor/PlayerMotor/FrictionMotor/PlayerHealth read end to end:
+
+- **Jump died at one frame** (apex 0.069 = one tick of 4.5/60): the
+  horizontal-phase resolve grounded the capsule at its pre-jump
+  height and the OR-accumulated flags carried into the frame result,
+  so the motor's velY clamp zeroed the jump. Grounded/ceiling truth
+  now comes from the FINAL vertical state only.
+- **Stairs/inclines blocked or jammed**: the step-up was a blind
+  +stepOffset teleport needing 2.3 of headroom. Now an ascending
+  lift ladder (0.125/0.25/0.375/0.5) takes the smallest clear rung
+  with a MONOTONE ceiling sweep, and a resolve never depenetrates
+  the body UP into a ceiling (net rise clamps to entry on real head
+  contact). slopeLimit 70 is the spec's block criterion (60-deg
+  climbs, 78-deg blocks - pinned).
+- **The verbatim jump laws** (AcrobatMotor.HandleJumpInput):
+  velY = 4.5 x jumpSpeedMultiplier (1 + Jumping x 0.5 / 100 -
+  systems/skills owns it; athleticism +0.1/+0.1 and the Jump spell
+  +0.6 are INTERIM 0, loud), gated on PlayerMotor.GroundedTime >=
+  0.1 s (the bunny-hop gate; jump input is now HELD in all four
+  hosts - DFU re-fires past the gate, intended), crouched jumps x0.8
+  (crouchingJumpDelta), a MOVING jump adds forward x jumpSpeed x
+  0.05 momentum (DFU's classic-momentum hack), slowfall cancels the
+  jump outright.
+- **airControl = false**: airborne horizontal momentum FREEZES at
+  liftoff - DFU recomputes x/z from input only in the grounded
+  branch. Mid-air steering does nothing (enhanced-jump/rappel air
+  control pends its slice). HitHead REVERSES a rising velY (not a
+  zero-stop).
+- **Falling damage** (CheckFallingDamage + PlayerHealth + the
+  PlayerFootsteps sounds): falls track from CheckInitFall (a
+  non-jump fall begins its y movement at 0); landing past 5 units
+  bills trunc(5 x (d - 5)) HP through the one hurtPlayer door with
+  SoundClips 91, a 2.5..5 drop plays the 92 hard-fall alert. All
+  four motor hosts consume it (standing rule): the dungeon hosts via
+  reportActivity, the exterior walk hosts inline on the shared
+  entity. Slowfall = the verbatim CONSTANT -105 x dt fall speed with
+  fallStart re-anchored each tick (retires the S8 0.15-gravity-scale
+  interim; no damage below the expiry point).
+- **Teleport/load parity**: spawn() clears all motion state (DFU
+  CancelMovement + ClearFallingDamage on teleports and loads); the
+  quickload position hook now routes through spawn() in the
+  standalone dungeon host.
+- **RESIDUAL (honest)**: the outdoor-water landing exemption
+  (StreamingWorld.PlayerTileMapIndex == 0) is FLAGGED in both
+  exterior walk hosts - no tile-under-player lookup yet; the
+  interior mode has no fall-damage seam (single-story shells cannot
+  fall 2.5+; joins interiorCtx with its arc); the ShowPlayerDamage
+  screen flash pends the HUD arc; the DFU deep-water quirk is
+  PRESERVED bug-for-bug (falling into deep water keeps the fall
+  live - swimming never grounds - so wading OUT can bill the whole
+  drop; nothing in DFU clears it); anti-bump gravity
+  (PlayerMoveScanner StepHitDistance) is engine-side N/A - our
+  ground snap owns descent adhesion.
+
+test/motorStairs.test.js restores the reverted 7-pin harness and
+grows it to 9 (crouch/boost/air-freeze + fall/slowfall traces).
+Suite 380/85, ARENA2 corpus green pre-commit, dungeon + exterior
+shot probes green.
