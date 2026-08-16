@@ -116,8 +116,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
     return key;
   };
   const keys = new Set();
-  addEventListener('keydown', (e) => keys.add(e.code));
-  addEventListener('keyup', (e) => keys.delete(e.code));
+  // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
+  // or the browser menu steals focus (Firefox activates it on keyUP).
+  addEventListener('keydown', (e) => { keys.add(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
+  addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
   canvas.addEventListener('pointerdown', () => requestLook(canvas));   // safe: a refused lock never crashes (was bare requestPointerLock - the sh/< crash + lock:N frozen yaw)
   // C8 E3c: RMB drag-to-swing (classic weapon control; menu suppressed)
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -234,6 +236,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
         forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
         strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
         run: keys.has('ShiftLeft'),
+        sneak: keys.has('AltLeft'),   // P15: DFU's default Sneak binding (LeftAlt), held
         jump: jumpHeld,   // P14: HELD, verbatim (AcrobatMotor re-fires past the 0.1 s grounded gate - intended bunny-hopping)
         up: jumpHeld || keys.has('PageUp'),
         down: keys.has('PageDown'),

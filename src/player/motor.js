@@ -7,7 +7,11 @@
 //     (100 - max(30, LiveSpeed)) (audit 2026-08-16e F1 - the drag
 //     term was missing); Run = UNDRAGGED base x (1.35 + Running/200)
 //     with the crouch base while crouched; Crouch = (LiveSpeed + 50)
-//     / 39.5; Sneak = speed / 2 - 1 / 39.5 (input pends).
+//     / 39.5; Sneak = speed / 2 - 1 / 39.5 on the walk/crouch base
+//     (P15 - held input; running beats sneaking, and both states
+//     re-latch only while GROUNDED, verbatim "you can't switch
+//     running on/off while in mid air"; swim ignores both, the
+//     LevitateMotor path uses the raw base).
 //   - jumpSpeed 4.5, gravity 20 (AcrobatMotor defaults).
 //   - P11 swimming/levitation (LevitateMotor): camera-directed
 //     movement with no gravity; levitate at the 4.0 constant; swim =
@@ -131,6 +135,11 @@ export class PlayerMotor {
     this.waterSurfaceY = null;   // the current block's water surface (world y), null when dry
     this.jumped = false;         // set for the frame a jump actually starts (fatigue/tally consumer)
     this.crouching = false;      // P12: toggled via input.crouch (edge); standing needs headroom
+    // P15 (PlayerSpeedChanger): the run/sneak STATES - latched from
+    // held input only while grounded; airborne keeps the takeoff
+    // state (the swim quirk rides it too: waterWalking's Speed read).
+    this.isRunning = false;
+    this.isSneaking = false;
     // P13: PlayerMotor.IsMovingLessThanHalfSpeed - the stealth
     // sneak condition, recomputed each update from the frame's input.
     this.movingLessThanHalfSpeed = true;
@@ -173,9 +182,10 @@ export class PlayerMotor {
   /** PlayerMotor.IsMovingLessThanHalfSpeed, verbatim shape:
    *  standing still is always true; crouched compares HALF THE WALK
    *  speed against the applied speed; otherwise half the BASE speed
-   *  (GetBaseSpeed - the crouch/walk selection without run). With no
-   *  sneak input yet (pends), plain walking never qualifies - the
-   *  gate is standing still, exactly as classic feels without Sneak. */
+   *  (GetBaseSpeed - the crouch/walk selection without run). Sneaking
+   *  (P15: base/2 - one classic unit) lands UNDER the half line -
+   *  that final subtracted unit is exactly what makes a moving sneak
+   *  qualify for the P13 stealth checks. */
   _trackHalfSpeed(input, appliedSpeed) {
     const standing = !input.forward && !input.strafe && !input.up && !input.down;
     if (standing) { this.movingLessThanHalfSpeed = true; return; }
@@ -259,15 +269,26 @@ export class PlayerMotor {
       if (!this.jumping) this.velY = 0;
     }
 
+    // ApplyInputSpeedAdjustment (P15): the run/sneak states re-latch
+    // only while GROUNDED - "you can't switch running on/off while in
+    // mid air" - and running beats sneaking.
+    if (this.grounded) {
+      this.isRunning = !!input.run;
+      this.isSneaking = !this.isRunning && !!input.sneak;
+    }
     // GetBaseSpeed + ApplyInputSpeedAdjustment (audit F1): walking
     // crouched = the crouch base; RUNNING crouched = GetRunSpeed's
     // crouch branch (crouch base x the run multiplier - DFU lets you
-    // run while crouched); neither applies while swimming (above).
-    const speed = this.crouching
-      ? (input.run ? runSpeed(this.stats.speed, this.stats.running, true) : crouchSpeed(this.stats.speed))
-      : input.run
-        ? runSpeed(this.stats.speed, this.stats.running)
-        : walkSpeed(this.stats.speed);
+    // run while crouched); SNEAKING halves the walk/crouch base then
+    // subtracts one classic speed unit (P15); none apply while
+    // swimming (above).
+    let speed;
+    if (this.isRunning) {
+      speed = runSpeed(this.stats.speed, this.stats.running, this.crouching);
+    } else {
+      speed = this.crouching ? crouchSpeed(this.stats.speed) : walkSpeed(this.stats.speed);
+      if (this.isSneaking) speed = sneakSpeed(speed);
+    }
     this._trackHalfSpeed(input, speed);
 
     // fwd = (sin, 0, cos); camera-right = up x back per lookAt =
