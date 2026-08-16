@@ -13,6 +13,8 @@ import { MapsFile } from '../formats/mapsFile.js';
 import { convertTilemap } from '../world/terrainSurface.js';
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor } from '../player/motor.js';
+import { jumpSpeedMultiplier } from '../systems/skills.js';
+import { playerEntity } from '../characters/playerEntity.js';
 import { Collider } from '../player/collider.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { createDataPipeline } from './dataPipeline.js';
@@ -244,7 +246,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(collider);
+  const player = new PlayerMotor(collider, undefined, { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (2026-08-16)
   // ENGINE RIG (slice 2, ?rig): the canonical animated character in
   // the world - same body, same animate.js runtime as the viewer.
   // Spawned near the player at terrain height (proper grounding =

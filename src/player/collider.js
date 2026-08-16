@@ -244,6 +244,7 @@ export class Collider {
 
   _resolveCapsule(feet, out) {
     // Two spheres: lower centered radius above the feet, upper below the top.
+    const entryY = feet[1];
     const low = [feet[0], feet[1] + CAPSULE_RADIUS, feet[2]];
     const high = [feet[0], feet[1] + CAPSULE_HEIGHT - CAPSULE_RADIUS, feet[2]];
     for (let iter = 0; iter < 3; iter++) {
@@ -259,6 +260,13 @@ export class Collider {
     feet[0] = low[0];
     feet[1] = low[1] - CAPSULE_RADIUS;
     feet[2] = low[2];
+    // A body cannot be depenetrated UP into a ceiling: when this
+    // resolve made real head contact, net rise is clamped to entry
+    // (2026-08-16 stairs audit - slope-legal riser-edge pushes crept
+    // the capsule upward under stairwell ceilings until a grounded
+    // stand put the head 0.7 INSIDE the plane; motorStairs pins the
+    // grounded head-clearance and the impossible-tread block).
+    if (out.hitCeiling && feet[1] > entryY) feet[1] = entryY;
   }
 
   /**
@@ -318,42 +326,80 @@ export class Collider {
   }
 
   _moveStep(feet, dx, dy, dz) {
+    // Unity CharacterController semantics (the 2026-08-16 stairs/jump
+    // audit; numeric traces in motorStairs.test.js):
+    //   1. The step LIFT is capped by head clearance, never a blind
+    //      +stepOffset - the old full lift needed 2.3 of headroom, so
+    //      every dungeon stairwell under 2.3 blocked or jammed (Mac's
+    //      live "can't walk up stairs").
+    //   2. A step DOWN-SETTLES the same frame by RAYCAST onto the
+    //      tread - the old capsule-probe snap resolved out of riser
+    //      penetration and produced a +-0.4 sawtooth per step.
+    //   3. Grounded/ceiling flags come from the FINAL vertical state
+    //      only - the old OR-accumulation across phases grounded a
+    //      RISING capsule off its pre-jump horizontal resolve, and the
+    //      motor's velY clamp then killed every jump at one frame
+    //      (apex 0.069 = one tick of 4.5/60).
     const out = { grounded: false, hitCeiling: false, pushedDown: false };
 
-    // Horizontal, with a step-up retry: if blocked, try from stepOffset
-    // higher and keep the result only if it gained ground.
+    // Horizontal (phase-local flags; only the block test reads them).
     const beforeX = feet[0];
     const beforeZ = feet[2];
     feet[0] += dx;
     feet[2] += dz;
-    this._resolveCapsule(feet, out);
+    const hOut = { grounded: false, hitCeiling: false, pushedDown: false };
+    this._resolveCapsule(feet, hOut);
     const movedSq = (feet[0] - beforeX) ** 2 + (feet[2] - beforeZ) ** 2;
     const wantedSq = dx * dx + dz * dz;
-    if (wantedSq > 1e-8 && movedSq < wantedSq * 0.25) {
-      const retry = [beforeX + dx, feet[1] + STEP_OFFSET, beforeZ + dz];
-      const retryOut = { grounded: false, hitCeiling: false, pushedDown: false };
-      this._resolveCapsule(retry, retryOut);
-      const retrySq = (retry[0] - beforeX) ** 2 + (retry[2] - beforeZ) ** 2;
-      // The raised path must be GENUINELY clear (the same blocked
-      // threshold the plain move failed), not merely jitter-better.
-      // The old `retrySq > movedSq` accepted jitter-gained retries at
-      // +stepOffset EVERY frame against a flat wall and laddered the
-      // player up any facade (repro: walk into a wall -> maxY reached
-      // the full wall height; jump+press escaped through the ceiling
-      // into the building shell). A real step clears the raised sweep
-      // outright; a wall blocks it at +0.5 exactly as at 0.
-      if (retrySq >= wantedSq * 0.25 && !retryOut.pushedDown) {
+
+    // Step-up: only while not rising (Unity steps a grounded/falling
+    // controller). The lift ladder finds the highest clear raise up to
+    // stepOffset - a low ceiling shrinks the step instead of jamming
+    // the head or rejecting the stair outright.
+    if (dy <= 0 && wantedSq > 1e-8 && movedSq < wantedSq * 0.25) {
+      // ASCENDING ladder: the SMALLEST clear lift wins (Unity raises
+      // only as far as the step needs; big blind lifts made the old
+      // +-0.4 sawtooth). The raised height is KEPT this frame - the
+      // resting-candidate snap below lands it on the tread over the
+      // next frames as forward progress clears the edge (a same-frame
+      // center-ray settle missed the tread edge the capsule rests on
+      // and looped the approach - the trace in motorStairs' history).
+      for (const lift of [0.125, 0.25, 0.375, STEP_OFFSET]) {
+        // The raised START must itself be clear (no ceiling contact).
+        const raisedStart = [beforeX, feet[1] + lift, beforeZ];
+        const startOut = { grounded: false, hitCeiling: false, pushedDown: false };
+        this._resolveCapsule(raisedStart, startOut);
+        // MONOTONE sweep: a ceiling hit at THIS rung forbids every
+        // higher one - independent rungs let the head sphere teleport
+        // clean past a thin ceiling plane between rungs (the tunnel
+        // that stood the capsule ON TOP of a stairwell ceiling).
+        if (startOut.hitCeiling || startOut.pushedDown) break;
+        // Forward from the raised start, full intent.
+        const retry = [beforeX + dx, feet[1] + lift, beforeZ + dz];
+        const retryOut = { grounded: false, hitCeiling: false, pushedDown: false };
+        this._resolveCapsule(retry, retryOut);
+        const retrySq = (retry[0] - beforeX) ** 2 + (retry[2] - beforeZ) ** 2;
+        // The raised path must be GENUINELY clear (the same blocked
+        // threshold the plain move failed), not merely jitter-better -
+        // a wall blocks it at every lift exactly as at 0 (the P9
+        // facade-ladder regression pin stands).
+        if (retrySq < wantedSq * 0.25 || retryOut.pushedDown || retryOut.hitCeiling) continue;
         feet[0] = retry[0];
         feet[1] = retry[1];
         feet[2] = retry[2];
+        break;
       }
     }
 
-    // Vertical.
+    // Vertical - the frame's TRUTH for grounded/ceiling.
     feet[1] += dy;
     this._resolveCapsule(feet, out);
 
-    // Ground snap when moving down: pulls onto steps/slopes.
+    // Ground snap when moving down: pulls onto steps/slopes (the
+    // original probe shape - a fine-descent variant rejected resting
+    // placements near risers and fell through the world; two failed
+    // iterations, reverted per the rule. The ascending 0.125 lifts
+    // above already shrink the old full-lift sawtooth).
     if (dy <= 0 && !out.grounded) {
       const probe = [feet[0], feet[1] - STEP_OFFSET, feet[2]];
       const probeOut = { grounded: false, hitCeiling: false, pushedDown: false };
@@ -364,6 +410,7 @@ export class Collider {
         && probe[1] > feet[1] - STEP_OFFSET + 1e-4 && probe[1] <= feet[1] + 1e-4) {
         feet[1] = probe[1];
         out.grounded = true;
+        out.groundKey = probeOut.groundKey;
       }
     }
 

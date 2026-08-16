@@ -27,6 +27,8 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, 
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { fetchBytes, parseSeason, createSkyController } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
+import { jumpSpeedMultiplier } from '../systems/skills.js';
+import { playerEntity } from '../characters/playerEntity.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
@@ -308,7 +310,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // The motor freezes until the start pixel's collider exists.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
-  const player = new PlayerMotor(collider);
+  const player = new PlayerMotor(collider, undefined, { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (2026-08-16)
   let playerSpawned = false;
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.

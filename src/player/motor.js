@@ -27,6 +27,7 @@ export const CLASSIC_TO_UNITY_RATIO = 39.5;
 export const DF_WALK_BASE = 150;
 export const DF_CROUCH_BASE = 50;
 export const JUMP_SPEED = 4.5;
+export const GROUNDED_JUMP_GATE_S = 0.1;   // AcrobatMotor: "grounded for long enough" before a jump
 export const GRAVITY = 20.0;
 export const CAPSULE_HEIGHT = 1.8;
 export const CAPSULE_RADIUS = 0.35;
@@ -68,9 +69,11 @@ export function swimSpeed(baseSpeed, swimmingSkill) {
  * and integrates AcrobatMotor-style vertical motion.
  */
 export class PlayerMotor {
-  constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }) {
+  constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }, { jumpBoost = null } = {}) {
     this.collider = collider;
     this.stats = stats;
+    this.jumpBoost = jumpBoost;   // () => AcrobatMotor jumpSpeedMultiplier (systems/skills.jumpSpeedMultiplier)
+    this.groundedTime = 0;
     this.pos = new Float32Array(3); // FEET position
     this.velY = 0;
     this.grounded = false;
@@ -158,9 +161,17 @@ export class PlayerMotor {
     let dx = (sin * input.forward - cos * input.strafe) * factor * speed * dt;
     let dz = (cos * input.forward + sin * input.strafe) * factor * speed * dt;
 
-    if (this.grounded && input.jump) {
-      this.velY = JUMP_SPEED;
+    // Verbatim AcrobatMotor.HandleJumpInput (2026-08-16 stairs/jump
+    // audit): the jump fires only after 0.1 s of grounded time (the
+    // bunny-hop gate) and scales by jumpSpeed * multiplier - the
+    // multiplier (1 + JumpingSkill * 0.5 / 100, + athleticism/jump
+    // spell) comes from the scene through jumpBoost (systems/skills
+    // owns the formula; the engine layer stays entity-free).
+    this.groundedTime = this.grounded ? (this.groundedTime ?? 0) + dt : 0;
+    if (this.grounded && input.jump && this.groundedTime >= GROUNDED_JUMP_GATE_S) {
+      this.velY = JUMP_SPEED * (this.jumpBoost ? this.jumpBoost() : 1);
       this.grounded = false;
+      this.groundedTime = 0;
       this.jumped = true;   // P11: the fatigue/tally consumer reads this frame flag
     }
     if (!this.grounded) this.velY -= GRAVITY * dt * (this.fallScale ?? 1);   // S8: slowfall sets fallScale
