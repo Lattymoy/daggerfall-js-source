@@ -43,6 +43,7 @@ import {
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
 import { applySpell, tickActiveEffects, hasActiveEffect, maxFatigue } from '../systems/effects.js';
+import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
 import { audio } from '../systems/audio.js';
@@ -220,11 +221,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
-      { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity }] = await Promise.all([
+      { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity }, { EnemyCaster }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
-      import('../characters/enemyEntity.js'),
+      import('../characters/enemyEntity.js'), import('../characters/enemyCasting.js'),
     ]);
     const bodyImg = new ImgFile();
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
@@ -248,7 +249,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       fetchBytes,
       createCharacterRig: engineRig.createCharacterRig,
       bodyRamps: engineRig.deriveClassicRamps(palette, bodyImg.getDFBitmap()),
-      buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
+      buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, EnemyCaster, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
     };
    } catch (err) {
      // The foe SUBSYSTEM failing to initialize (a dynamic import, the
@@ -331,6 +332,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // from here (absent -> stays flagged-skip).
     setMagicItemTemplates(readMagicDef(await fetchBytes('MAGIC.DEF')));
   } catch { /* data absent: casts + MI no-op, loudly flagged */ }
+  // S16: enemy spell lists ride SPELLS.STD (loaded just above, after
+  // the foe build) - SetEnemyCareer's assignment tail per live foe:
+  // class enemies with CastsMagic take EnemyClassSpells[min(6,
+  // level/3)] (monsters' fixed lists ship in the same table and go
+  // live when monsters leave their billboards). A caster foe gets an
+  // EnemyCaster driving the classic decide-and-release shape.
+  if (spellsByIndex && foeDeps) {
+    for (const f of foes) {
+      assignEnemySpells(f.entity, spellsByIndex);
+      if (f.entity.spells?.length) f.caster = new foeDeps.EnemyCaster(f.entity);
+    }
+  }
 
   let chargenFlow = null;
   let activeOverlay = null;
@@ -464,6 +477,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // items (BowDamage's classic charm). Crouch pass-over pends.
   function fireArrow(from, dir, weapon, fromPlayer, shooterFoe = null) {
     missiles.push({ arrow: true, weapon, fromPlayer, shooterFoe, pos: [...from], dir: [...dir], age: 0, batch: null, draw: null });
+  }
+  // S16: the enemy cast - "enemies always cast ready spell instantly
+  // once queued" (EntityEffectManager.Update): spend the S10 cost
+  // (DecreaseMagicka floors at 0 - DFU casts even when the cost
+  // exceeds the pool; selection only gates magicka > 0), play the
+  // element cast sound from the caster (EnemyCastReadySpell), then
+  // CasterOnly assigns to SELF and everything else looses a missile
+  // that aims at the player mid-capsule at fire time (the shared
+  // trap-missile shape). RESIDUAL (honest): enemy missiles resolve
+  // against the player only - foe-vs-foe friendly fire pends the
+  // missile seam's target sweep.
+  function castEnemySpell(f, spell) {
+    const cost = calculateCastCost(spell, f.entity).sp;
+    f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - cost);
+    const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
+    audio.play3d(SPELL_CAST_SOUND[spell.element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 });
+    if (spell.rangeType === 0) {
+      applySpell(spell, f.entity.level, f.entity, foeSinks(f), Math.random, { entity: f.entity, sinks: foeSinks(f) });
+      return;
+    }
+    missiles.push({ spell, casterLevel: f.entity.level, casterFoe: f, pos: from, dir: null, age: 0, batch: null, fromPlayer: false });
   }
   async function ensureArrowModel(m) {
     if (m.draw !== null) return;
@@ -750,8 +784,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       const dx = target[0] - m.pos[0], dy = target[1] - m.pos[1], dz = target[2] - m.pos[2];
       if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {   // missile radius + player capsule radius
-        if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet);
-        else applySpell(m.spell, playerEntity.level, playerEntity, playerSinks);   // trap casts carry no caster entity (DFU action caster is null)
+        // S16: enemy missiles carry their caster (level + the
+        // transfer heal-back pair); trap casts stay casterless (DFU
+        // action casters are null) on the S4b player-level shape.
+        const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
+        if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, mCaster);
+        else applySpell(m.spell, m.casterLevel ?? playerEntity.level, playerEntity, playerSinks, Math.random, mCaster);
         retireMissile(m);
       }
     }
@@ -924,6 +962,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         }
       }
       f.events = f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine
+      // S16: the casting decision rides beside the attack machine
+      // (DoRangedAttack's spell branch + DoTouchSpell); the decision
+      // casts INSTANTLY. RESIDUAL (honest): DFU casters also hold at
+      // range and strafe (Enhanced AI) or stand off - our motor keeps
+      // the C8 pursuit; the foe casts while closing.
+      if (playerFeet && f.caster) {
+        const dec = f.caster.update(dt, f.ai, f.attack, playerFeet, playerEntity);
+        if (dec) castEnemySpell(f, dec.spell);
+      }
       // E3b: the machine's hit frame resolves against the player -
       // EnemyAttack.MeleeDamage verbatim: gate 0.25 / MeleeDistance +
       // 35.156deg, then CalculateAttackDamage (class hand-to-hand;

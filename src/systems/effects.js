@@ -383,6 +383,38 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   return out;
 }
 
+/** The ACTIVE-entry identity an effect would instantiate
+ *  ({ kind, stat? }), or null for instant families (S16). DFU's
+ *  EnemyMotor.EffectsAlreadyOnTarget compares live-effect TEMPLATE
+ *  types; per-stat classes (FortifyStrength vs FortifyAgility...) are
+ *  distinct templates, so stat families carry the stat in the key. */
+export function effectActiveIdentity(e) {
+  if (isContinuousDamage(e)) return { kind: 'continuousDamage' };
+  if (isContinuousDamageFatigue(e)) return { kind: 'continuousDamageFatigue' };
+  if (isContinuousDamageSpellPoints(e)) return { kind: 'continuousDamageSpellPoints' };
+  if (isFortifyAttribute(e)) return { kind: 'fortifyAttribute', stat: STAT_KEYS_ORDER[e.subType] };
+  if (isDrainAttribute(e)) return { kind: 'drainAttribute', stat: STAT_KEYS_ORDER[e.subType] };
+  if (isTransferAttribute(e)) return { kind: 'transferAttribute', stat: STAT_KEYS_ORDER[e.subType] };
+  if (isRegenerate(e)) return { kind: 'regenerate' };
+  const b = buffKind(e);
+  return b ? { kind: b } : null;
+}
+
+/** EnemyMotor.EffectsAlreadyOnTarget, verbatim shape: true only when
+ *  EVERY effect of the spell is already live on the target - one
+ *  absent effect (instants always count as absent, like DFU's expired
+ *  instant bundles) makes the spell castable. */
+export function effectsAlreadyOnTarget(spell, target) {
+  const list = target.activeEffects ?? [];
+  for (const e of spell.effects) {
+    if (e.type <= -1) continue;   // classic record padding (bundles drop these)
+    const id = effectActiveIdentity(e);
+    const found = !!id && list.some((a) => a.kind === id.kind && (id.stat == null || a.stat === id.stat));
+    if (!found) return false;
+  }
+  return true;
+}
+
 /** One magic round for one entity, DoMagicRound's exact shape:
  *  entries found at 0 rounds END this pass (removed WITHOUT acting);
  *  live entries act (saves rolled fresh per round - F10), decrement,

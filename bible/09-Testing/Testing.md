@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 301 tests across 74 files.
+Node 22). Suite: 306 tests across 75 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -48,6 +48,7 @@ Node 22). Suite: 301 tests across 74 files.
 | inventoryui.test.js | 2 | the inventory window (cursor wrap, weapon equip via callback, arrows refused, gold not equippable, close), the spellbook (the interim known-list from the file excluding caster-only/non-damage, an entity's own book preferred, ready callback, null-map empty) |
 | loot.test.js | 3 | 22 matrix rows exact (key C pinned) + brace-bounded group lists (no cross-enum bleed), gold x level + the WP halving loop at exact roll consumption + the '-'-key empty path, level-split ingredients (C1 scales/C3 flat), arrows stack/material, book template+variant, gender clothing, unknown-key -> '-' |
 | enemyequipment.test.js | 3 | verbatim material walk ([64,128,...] modifier table, level clamps), armor materials (70/90 split, plate+weapon-material), variant-0 loadout + the init-100/subtract/class-60-clamp armor pass, variant-2 + monster keep-better + city-watch itemLevel-1 + weapon-vs-weaponless averages |
+| enemyspells.test.js | 5 | S16 enemy spellcasting: the verbatim EnemyEntity spell lists (13 monster casters spot+count pinned, EnemyClassSpells order, element cast sounds 352/353/350/351/349), SetEnemySpells (MaxMagicka 10xlevel+100, the six magic skills pinned at 80 over the flat fill via skillOverrides, missing SPELLS.STD records skipped loudly), the SetEnemyCareer assignment tail (monster lists, class level/3 buckets capped at 6, non-casters empty), EffectsAlreadyOnTarget (all-live vetoes, instants never count, per-stat identity), and the classic AI decisions (DoTouchSpell resetting the SHARED melee timer, the ranged 1/40 classic-update roll inside the 6..51.2 band, bow precedence, magicka-0 refusal, CasterOnly counting as touch) |
 | enemymotor.test.js | 4 | verbatim classic AI constants (sight/hearing/FOV/melee/turn/update-rate/system-divisor/walk-base), 11.25deg turn clamp, LOS wall + FOV gates, pursue-and-stop at MeleeDistance on the classic cadence |
 | enterexit.test.js | 6 | verbatim landing offsets, door transforms, landing selection, dungeon exit, ladder climb, FixStanding floor snap |
 | interior.test.js | 8 | ModelDoor extraction, static doors, interior layout, 6832-interior corpus, R8 light offsets + MAGEAA00 pins |

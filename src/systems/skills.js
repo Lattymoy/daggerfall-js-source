@@ -29,8 +29,12 @@ export const WEAPON_SKILL = Object.freeze({
 /** Skill read across both entity shapes: enemies carry the
  *  SetEnemyCareer FLAT number (every skill equal, verbatim); the
  *  player carries the rolled 35-array after chargen (and the flat
- *  interim before it). */
+ *  interim before it). Per-skill PINS (SetPermanentSkillValue on
+ *  specific ids - S16 forces spellcasting enemies' six magic skills
+ *  to 80) ride entity.skillOverrides over either base shape. */
 export function skillValue(entity, skillId) {
+  const o = entity.skillOverrides;
+  if (o && o[skillId] != null) return o[skillId];
   const s = entity.skills;
   if (typeof s === 'number') return s;
   return s?.[skillId] ?? 0;

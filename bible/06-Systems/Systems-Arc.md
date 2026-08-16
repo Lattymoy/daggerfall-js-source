@@ -497,6 +497,60 @@ EntityEffectManager.HealAttribute + DaggerfallEntity fatigue:
 verbatim magnitude-then-save order). Suite 301/74, ARENA2 corpus
 green 301/301 BEFORE commit (the 08-14 lesson).
 
+## S16 (enemy spellcasting - audit F15 closed): SHIPPED
+
+The Ledger C row from the 08-13 parity audit. Verbatim from DFU
+EnemyEntity.cs + EnemyMotor.cs (classic AI) + EntityEffectManager:
+
+- **Data** (src/systems/enemySpells.js): the thirteen monster spell
+  lists byte-for-byte (Imp/Ghost/OrcShaman/Wraith/FrostDaedra/
+  FireDaedra/Daedroth/Vampire/Seducer/VampireAncient/DaedraLord/Lich/
+  AncientLich, keyed by MonsterCareers id) and EnemyClassSpells
+  (7 buckets, indexed min(6, level/3) C#-int-division, verbatim
+  order). SetEnemySpells: MaxMagicka = 10 x level + 100 ("enemies
+  don't follow same rule as player"), magicka full, the six magic
+  skills forced to 80 (a new skillOverrides pin layer over the flat
+  career fill - skillValue consults it first), spells resolved from
+  SPELLS.STD by classic index with missing records skipped loudly.
+  assignEnemySpells = the SetEnemyCareer tail: monsters take their
+  list; class enemies gate on the ENEMY_BASICS CastsMagic flag.
+- **AI** (src/characters/enemyCasting.js): the classic (non-Enhanced)
+  decision shape. DoTouchSpell: sight + melee reach (+ rate of
+  approach) + the SHARED melee timer at 0; a touch cast RESETS that
+  timer; classic AI counts ByTouch AND CasterOnly as touch picks.
+  DoRangedAttack spell branch: the 6..51.2m band
+  (min/maxRangedDistance), sight + 22.5deg yaw, Random.value < 1/40
+  per classic update, bow foes short-circuit to the bow branch.
+  Selection (CanCast*Spell): magicka > 0, a uniform pick over the
+  range class, then the EffectsAlreadyOnTarget veto - ported in
+  effects.js over our active-entry kinds (per-stat identity for the
+  stat families, instants never count as present, one absent effect
+  makes the spell castable). DFU's clear-path probe rides the senses'
+  LOS (inSight).
+- **Casting** (dungeonContext): "enemies always cast ready spell
+  instantly once queued" - the decision spends the S10 cost
+  (DecreaseMagicka floors at 0; DFU casts even when cost > pool),
+  plays the element cast sound (EntityEffectManager constants: fire
+  352, cold 353, poison 350, shock 351, magic 349 - element-indexed
+  in enemySpells.SPELL_CAST_SOUND) from the caster at the enemy 3D
+  profile (max 16), then CasterOnly self-assigns through the foe's
+  own sinks and everything else looses a missile on the shared
+  trap-missile shape (aimed at the player mid-capsule at fire time).
+  Enemy missiles carry casterLevel + the caster pair, so an enemy
+  Transfer heals the FOE and magnitudes ride the foe's level; trap
+  missiles stay casterless on the S4b shape.
+- **RESIDUAL (honest)**: live casters today are CLASS enemies
+  (monsters 0-42 still spawn as billboards - their lists ship and go
+  live with them); enemy missiles resolve against the player only
+  (foe-vs-foe friendly fire pends the missile target sweep); DFU's
+  stand-off/strafe movement for casters pends the motor (ours keeps
+  the C8 pursuit - the foe casts while closing); enemy magicka/spells
+  re-derive on world-snapshot load (spent magicka not persisted -
+  the save.js world FLAGGED class).
+
+5 tests (enemyspells.test.js). Suite 306/75, ARENA2 corpus 306/306
+green pre-commit.
+
 ## Queue
 - Magic remainder: Cure effects (disease/poison/paralysis - with
   their systems), enchantment economy/value.
