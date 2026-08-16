@@ -79,17 +79,41 @@ export class AudioEngine {
     return this.enabled && this.ctx && this.ctx.state === 'running';
   }
 
-  /** DFU PlayOneShot(clip, _, volumeScale): flat (non-positional). */
+  /** DFU PlayOneShot(clip, _, volumeScale): flat (non-positional).
+   *  Returns the clip duration in seconds (A3's exclusive ambient
+   *  channel tracks busy time with it), or undefined when not ready. */
   playOneShot(index, volume = 1) {
-    if (!this._ready()) return;
+    if (!this._ready()) return undefined;
     const buf = this._buffer(index);
-    if (!buf) return;
+    if (!buf) return undefined;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
     src.connect(gain).connect(this.ctx.destination);
     src.start();
+    return buf.duration;
+  }
+
+  /** Non-positional looping source (A3: the rain/crickets ambience
+   *  loops - DFU spatialBlend 0). Returns a stop handle or null. */
+  loop(index, volume = 1) {
+    if (!this._ready()) return null;
+    const buf = this._buffer(index);
+    if (!buf) return null;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const gain = this.ctx.createGain();
+    gain.gain.value = volume;
+    src.connect(gain).connect(this.ctx.destination);
+    src.start();
+    return {
+      stop() {
+        try { src.stop(); } catch { /* already stopped */ }
+        src.disconnect();
+      },
+    };
   }
 
   /** Positional one-shot: a PannerNode standing in for Unity's 3D
@@ -98,9 +122,9 @@ export class AudioEngine {
    *  analog); per-source callers override maxDistance, e.g. enemy
    *  sources clamp at AttractRadius 16 (2026-08-14 audit AU2). */
   play3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 500 } = {}) {
-    if (!this._ready()) return;
+    if (!this._ready()) return undefined;
     const buf = this._buffer(index);
-    if (!buf) return;
+    if (!buf) return undefined;
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     const pan = this.ctx.createPanner();
@@ -113,6 +137,7 @@ export class AudioEngine {
     gain.gain.value = volume;
     src.connect(gain).connect(pan).connect(this.ctx.destination);
     src.start();
+    return buf.duration;   // A3: the ambient channel's busy clock
   }
 
   /** Looping positional source (A2 torches: DFU AddTorchAudioSource -

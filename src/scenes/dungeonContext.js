@@ -49,6 +49,7 @@ import { applySpell, tickActiveEffects, hasActiveEffect, maxFatigue } from '../s
 import { FATIGUE_LOSS, maxBreath } from '../systems/statMods.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { updatePoisons, inflictPoison, rollEnemyWeaponPoison } from '../systems/poisons.js';
+import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
 import { dice100 } from '../combat/formulas.js';
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
@@ -1131,9 +1132,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
     }
   }
+  // A3: the dungeon scene ambience (the scene's Dungeon object runs
+  // 5/28) - the 14 one-shots "somewhere around" + the classic-cadence
+  // water sounds. Castle-block detection (doNotPlayInCastle) pends.
+  const sceneAmbience = new AmbientEffects(DUNGEON_AMBIENT_WAITS);
+  sceneAmbience.setPreset('dungeon');
   function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false) {
     if (playerFeet) lastPlayerFeet = [...playerFeet];
-    if (playerFeet) breathTick(dt, playerFeet);
+    if (playerFeet) {
+      breathTick(dt, playerFeet);
+      const _surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
+      sceneAmbience.update(dt, {
+        playerPos: [playerFeet[0], playerFeet[1] + 0.9, playerFeet[2]],   // the controller center (DFU transform.position)
+        waterSurfaceY: _surf,
+        submerged: _surf != null && playerFeet[1] + 0.9 + 76 * 0.025 - 0.95 < _surf,
+      });
+    }
     if (pendingClickCast) {
       pendingClickCast = false;
       playerCastInput(eye, [-view[2], -view[6], -view[10]]);   // classic: the readied spell fires on the click
