@@ -110,8 +110,8 @@ World layout:
 | Interior furniture actions, house containers, loot, spawn points | DaggerfallInterior AddFurnitureAction/MakeHouseContainer/AddSpawnPoints | Systems arc |
 | ~~Enemy AI + mobile animation~~ SHIPPED (C8: enemyMotor/enemyAttack/rigs end to end; row pruned by the 2026-08-14 audit) | EnemyMotor, MobileUnit | Characters arc C5 (spawn data + classic standing billboards shipped C3) |
 | ~~Dungeon treasure piles + loot~~ SHIPPED (S-series loot tables + corpse/pile takeLoot; row pruned by the 2026-08-14 audit) | RDBLayout AssignFixedTreasure/AddRandomTreasure | Systems arc |
-| Torch audio sources | RDBLayout.AddTorchAudioSource | Audio arc |
-| Transition + activation sounds: action PlaySound index, ladder climb, enter/exit stingers (door open/close SHIPPED in A1 - dungeon clips on the activate seam) | DaggerfallActionDoor, DaggerfallAction, DaggerfallAudioSource | Audio arc (the P2/P4-P6 systems expose the trigger points) |
+| ~~Torch audio sources~~ SHIPPED (A2, dungeon scene; exterior/interior torches join with their scenes' audio wiring) | RDBLayout.AddTorchAudioSource | Audio arc |
+| Transition + activation sounds: ladder climb, enter/exit stingers (door open/close SHIPPED in A1; action PlaySound SHIPPED in A2) | DaggerfallActionDoor, DaggerfallAudioSource | Audio arc (the P6/P7 transition seams expose the trigger points) |
 | ~~Non-movement RDB action flags: CastSpell, Hurt21-25, DrainMagicka~~ SHIPPED (S4b + the trap seam; Poison still pends the disease/poison slice) | DaggerfallAction delegates | Combat arc (magic/damage) |
 | Non-movement RDB action flags: ShowText, ShowTextWithInput, DoorText | DaggerfallAction delegates | UI arc (message boxes) + Systems (text records) |
 | ~~Non-movement RDB action flags: Teleport, Activate, LockDoor, UnlockDoor~~ SHIPPED (P10: + OpenDoor/CloseDoor, door starting locks, the look-at-lock text tiers, flat/marker actions joining the graph, the repeated-block key-collision fix) | DaggerfallAction delegates | Player arc |
@@ -119,7 +119,7 @@ World layout:
 | ~~Platform riding~~ SHIPPED 2026-08-14 (groundKey contact identity + mover frame deltas through the resolver - the DFU MoveWithMovingPlatform shape; rooted Mac's out-of-bounds ejection report) | DFU parents the player transform | Player arc |
 | Swimming + levitation motor | LevitateMotor, GetSwimSpeed | Player arc |
 | Quest monster names (MonsterName) | NameHelper.GetRandomMonsterName - rolls the bank on UnityEngine.Random, quest-facing | Systems arc (name banks + data shipped C2) |
-| Animal audio sources | GameObjectHelper | Audio arc |
+| ~~Animal audio sources~~ SHIPPED (A2, dungeon scene; RMB exterior/interior animals join with their scenes' audio wiring) | GameObjectHelper | Audio arc |
 | Music playback (HMI/XMI) | Unity synthesis, no reader | Audio arc |
 | Smaller-dungeons generation | MapsFile + QuestMachine | Systems arc |
 | ~~Enemy spellcasting (audit F15)~~ SHIPPED (S16: lists + SetEnemySpells + the classic touch/ranged AI; monsters' lists go live with their billboard-to-foe promotion) | EnemyEntity.SetEnemySpells + EnemyMotor | Systems arc (magic) |

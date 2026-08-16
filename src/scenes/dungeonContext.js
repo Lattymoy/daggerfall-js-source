@@ -47,7 +47,13 @@ import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
 import { audio } from '../systems/audio.js';
-import { SOUND, swingSoundFor, hitSoundFor } from '../systems/soundClips.js';
+import {
+  SOUND, swingSoundFor, hitSoundFor,
+  TORCH_ARCHIVE, TORCH_RECORDS, TORCH_MAX_DISTANCE, TORCH_VOLUME,
+  ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD, ANIMAL_MAX_DISTANCE, AMBIENT_RANDOM_PLAY_MAX,
+} from '../systems/soundClips.js';
+import { rand } from '../formats/dfRandom.js';
+import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
 import { BUILD_TAG } from '../buildTag.js';
 import {
   generateItems as generateLootItems, setMagicItemTemplates,
@@ -138,6 +144,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // where ns = the block INSTANCE index - positions are block-local
   // byte offsets and 3108/4232 dungeons repeat blocks.
   const positionIndex = new Map();
+  const torches = [];         // A2: { pos, handle } - looping Burning sources gated by range
+  const ambientAnimals = [];  // A2: { pos, sound } - random-cadence barks
   for (const [bi, b] of dungeon.blocks.entries()) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     for (const [pos, e] of b.layout.objectPositions) {
@@ -188,6 +196,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const key = `${f.archive}_${f.record}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([f.x + b.originX, f.y, f.z + b.originZ]);
+      // A2 ambient sources: burning torches (RDBLayout.IsTorchFlat,
+      // 210/{0,1,6,16..20}) loop within 5; animal flats (201) bark on
+      // the classic random cadence within 19.2.
+      if (f.archive === TORCH_ARCHIVE && TORCH_RECORDS.has(f.record)) {
+        torches.push({ pos: [f.x + b.originX, f.y, f.z + b.originZ], handle: null });
+      } else if (f.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[f.record] != null) {
+        ambientAnimals.push({ pos: [f.x + b.originX, f.y, f.z + b.originZ], sound: ANIMAL_SOUND_BY_RECORD[f.record] });
+      }
       if (f.action && EFFECT_ACTION_FLAGS.has(f.action.actionFlag)) {
         // P10: actioned FLATS join the graph too - 25 of the corpus's
         // 84 teleporters ride flats (the pre-P10 runtime dropped
@@ -380,6 +396,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // over the LIVE lockpicking skill).
   actions.resolvePosition = (ns, key) => positionIndex.get(`${ns}:${key}`) ?? null;
   actions.onLockedDoor = (o) => hudText.add(lookAtLockText(o.lock, playerEntity.level, skillValue(playerEntity, SKILLS.Lockpicking)));
+  // A2: DaggerfallAction.Play's sound - the RDB soundIndex fires from
+  // the object on every Play (the default min1/max500 3D profile;
+  // movers speak from their live matrix, effect objects from origin).
+  actions.onActionSound = (o) => {
+    const p = o.origin ?? (o.matrix ? [o.matrix[12], o.matrix[13], o.matrix[14]] : null);
+    if (p) audio.play3d(o.index, p);
+  };
   const clickCast = new OneShotLatch();   // classic click-to-cast: armed by readying
   let pendingClickCast = false;
   let lastPlayerFeet = null;   // S11: the save position
@@ -726,6 +749,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // (DFU default 12) in minutes; RaiseSkills gates itself at 360.
   let classicMinutes = 0;
   let _prevWeaponState = null;   // A1: swing-sound edge detect
+  let _ambientTimer = 0;         // A2: the animal random-play classic cadence
   async function ensureMissileBatch(m) {
     if (m.batch !== null) return;
     m.batch = false;   // in-flight guard
@@ -955,6 +979,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         return nx >= -1 && nx <= 1 && ny >= -1 && ny <= 1;
       };
       audio.setListener(eye, [-view[2], -view[6], -view[10]]);   // A1: the camera is the ears
+      // A2 ambient pass. Torches: LoopIfPlayerNear - the looping
+      // Burning source exists only while the player is within 5
+      // (linear rolloff, volume 0.7); out of range it stops and
+      // frees the node. Animals: PlayRandomlyIfPlayerNear - per
+      // CLASSIC UPDATE in range, DFRandom.rand() <= 100 barks.
+      for (const t of torches) {
+        const tdx = eye[0] - t.pos[0], tdy = eye[1] - t.pos[1], tdz = eye[2] - t.pos[2];
+        const inRange = tdx * tdx + tdy * tdy + tdz * tdz <= TORCH_MAX_DISTANCE * TORCH_MAX_DISTANCE;
+        if (inRange && !t.handle) t.handle = audio.loop3d(SOUND.Burning, t.pos, TORCH_VOLUME, { maxDistance: TORCH_MAX_DISTANCE });
+        else if (!inRange && t.handle) { t.handle.stop(); t.handle = null; }
+      }
+      if (ambientAnimals.length) {
+        _ambientTimer += dt;
+        while (_ambientTimer >= CLASSIC_UPDATE_INTERVAL) {
+          _ambientTimer -= CLASSIC_UPDATE_INTERVAL;
+          for (const a of ambientAnimals) {
+            const adx = eye[0] - a.pos[0], ady = eye[1] - a.pos[1], adz = eye[2] - a.pos[2];
+            if (adx * adx + ady * ady + adz * adz > ANIMAL_MAX_DISTANCE * ANIMAL_MAX_DISTANCE) continue;
+            if (rand() <= AMBIENT_RANDOM_PLAY_MAX) audio.play3d(a.sound, a.pos, 1, { maxDistance: ANIMAL_MAX_DISTANCE });
+          }
+        }
+      }
       const _wpnState = playerWeapon.machine.state;
       if (_wpnState !== _prevWeaponState) {
         // FPSWeapon plays SwingWeaponSound at swing start: the
@@ -1283,6 +1329,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     colliderTris,
     destroy() {
       for (const b of billboardBatches) renderer.destroyBatch(b);
+      for (const t of torches) { t.handle?.stop(); t.handle = null; }   // A2: free looping sources
     },
   };
 }

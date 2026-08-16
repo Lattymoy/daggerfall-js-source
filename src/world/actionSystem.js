@@ -286,6 +286,7 @@ export class ActionSystem {
       kind: 'action',
       cpu,
       base: baseMatrix,
+      index: action.index,   // A2: the RDB soundIndex plays on every Play
       duration: action.duration / 20,
       rotation: action.rotation,
       translation: action.translation,
@@ -323,6 +324,10 @@ export class ActionSystem {
     // ActivateNext cascades BEFORE this object's own tween.
     const next = this._next(o);
     if (next) this.receive(next);
+    // A2: DaggerfallAction.Play - "if (PlaySound && Index > 0)
+    // audioSource.Play()": the RDB soundIndex fires on every Play,
+    // movers and effect actions alike (the scene owns the engine).
+    if (o.index > 0) this.onActionSound?.(o);
     if (o.kind === 'effect') { this._runEffect(o); return; }
     if (o.duration <= 0) {
       // Instant flip, still honoring the state cycle.

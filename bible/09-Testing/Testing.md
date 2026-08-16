@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 308 tests across 75 files.
+Node 22). Suite: 310 tests across 75 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -14,7 +14,7 @@ Node 22). Suite: 308 tests across 75 files.
 | smoke.test.js | 1 | runner sanity |
 | clock.test.js | 4 | hour gates, LightCurve pins, sun sweep, flicker determinism |
 | riding.test.js | 2 | Platform riding (groundKey identity - the mover wins over the static floor within skin; the frame delta carries the capsule with ZERO lateral ejection; stepping off returns 'dungeon') + ClickToAttack (the DFU Range(UpRight, DownRight+1) six-direction table at roll boundaries, busy-machine refusal) |
-| audio.test.js | 4 | A1 pure parts: pcm8->float32 verbatim, SoundClips indices vs SoundClips.cs, GetSwingSound pitch table + PlayHitSound roll families (boundaries MEASURED), the restored enemy sound columns (rat/imp rows, 61-entry count) |
+| audio.test.js | 6 | A1 pure parts: pcm8->float32 verbatim, SoundClips indices vs SoundClips.cs, GetSwingSound pitch table + PlayHitSound roll families (boundaries MEASURED), the restored enemy sound columns (rat/imp rows, 61-entry count); A2 ambient data verbatim (IsTorchFlat 210/{0,1,6,16..20} + 5m/0.7 + Burning 420, the 201 animal record->clip pairs with gap records silent + 19.2m + the rand()<=100 classic cadence) and the action Play sound seam (soundIndex > 0 fires from effect origin / mover matrix, 0 stays silent) |
 | datasource.test.js | 2 | ARENA2 key rule: uppercase basename across path styles (unix/windows/bare); readZip mobile ingest on a crafted archive - store + deflate-raw byte-exact round-trips, the arena2/ prefix filter dropping siblings, directory entries skipped, flat archives ingesting whole (real-zip witness: both DaggerfallGameFiles.zip and a self-zipped arena2 round-tripped ART_PAL.COL byte-identical in the arc probe) |
 | bsa.test.js | 6 | BSA containers, closure invariant, FOO quirk |
 | palette.test.js | 10 | 8 palettes, MAP.PAL x4, embedded reads |
