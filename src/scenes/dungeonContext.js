@@ -885,14 +885,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // (up/down/jump don't trigger in classic), contact beneath the
   // player -> WalkOn else WalkInto (the Collision01 standing-raycast
   // refinement folds into the beneath test at our capsule scale).
-  let _prevTriggerFeet = null;
-  function collisionTriggers(dt, playerFeet) {
+  function collisionTriggers(dt, playerFeet, moveHeld) {
     if (!playerFeet) return;
-    const moved = _prevTriggerFeet
-      ? Math.hypot(playerFeet[0] - _prevTriggerFeet[0], playerFeet[2] - _prevTriggerFeet[2]) > 1e-4
-      : false;
-    _prevTriggerFeet = [...playerFeet];
-    if (!moved) return;
+    // Verbatim DaggerfallActionCollision: fires only while a MOVE
+    // action is HELD (up/down/jump excluded) - not on position delta.
+    // The delta gate (audit 2026-08-16) missed the classic case of a
+    // player pushing INTO a blocking WalkInto object: the collider
+    // cancels the motion, the delta is zero, and the trigger never
+    // fired. Input-held is the source's rule and covers it.
+    if (!moveHeld) return;
     const R = 0.45, H = 1.8;   // the player capsule
     for (const o of actions.objects.values()) {
       if (!o.aabb) continue;
@@ -911,7 +912,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
-  function drawFoes(dt, canvas, proj, view, eye, playerFeet) {
+  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false) {
     if (playerFeet) lastPlayerFeet = [...playerFeet];
     if (pendingClickCast) {
       pendingClickCast = false;
@@ -931,7 +932,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
     });
     for (const id of raised) hudText.add(`Your ${SKILL_NAMES[id]} skill has improved.`);   // classic phrasing; TEXT.RSC pends
-    collisionTriggers(dt, playerFeet);
+    collisionTriggers(dt, playerFeet, moveHeld);
     updateMissiles(dt, playerFeet);
     if (playerWeapon) {
       playerWeapon.gesture(_atkDx, _atkDy, _atkHeld, dt, Math.max(canvas.clientWidth, canvas.clientHeight));
