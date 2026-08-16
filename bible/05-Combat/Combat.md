@@ -114,3 +114,44 @@ SIX findings, all rooted and pinned:
    (FPSWeapon.UpdateWeapon's guard, verbatim).
 6. The standing probe gained silver/steel dye-parity evidence shots
    (gallery: public/visual-changes/combat-fp/classic-weapon/).
+
+## C9 (2026-08-16): the FP-weapon HOST ROLLOUT - SHIPPED
+
+The weapon audit's follow-up closes: the classic weapon was
+dungeon-only (the voxel path was too). combat/weaponRig.js bundles
+the host surface - PlayerWeapon + the WEAPON*.CIF art cache, the
+ShowWeapons legs (spellArmed a hook; hosts without casting omit it),
+ToggleSheath + DrawWeapon 78, the zero-arrow bow auto-sheathe, the
+RMB gesture buffer with the sheathed gate, the swing-sound edge, and
+an envAttack export (the WeaponEnvDamage ray: doors bash and consume,
+other action objects Receive(Attack), geometry occludes). Every law
+mirrors the AUDITED dungeon implementation verbatim.
+
+Mounted (the host rule - every motor host):
+- worldModes INTERIOR mode: RMB drag/click through the shared sink,
+  Z per-mode (the old unconditional dungeonCtx read CRASHED on Z
+  inside a building - fixed here), strike frames run envAttack
+  against the interior's action objects (swing doors bash), bows
+  consume an Arrow + tally Archery.
+- world.js + exterior.js walk modes: full render/swing/sheathe;
+  exterior.js only in first person (V's third-person view has no FP
+  overlay). RMB drag feeds the rig INSTEAD of the look, as the
+  dungeon host; touch gains the attack button + tap.
+
+RESIDUALS (honest): dungeonContext keeps its own inline copy - that
+file is the parallel FP lane's ACTIVE surface and conflicted on every
+merge today; folding it onto the rig is queued for when the lanes
+settle. The exterior hosts' 'You have no arrows.' line lands on
+console (their HUD-text layer pends); exterior/interior arrow
+MISSILES pend (arrows consume + tally, nothing hostile to hit yet);
+static building doors are not bashables (the E-enter seam; towns
+arc); the standalone interior.js viewer has no motor - out of scope.
+
+BYCATCH (probe-found): bare ?world had boot-CRASHED since U2b -
+walkMode read shotMode 70 lines before its declaration (TDZ), and
+?play/?fly short-circuited past the read so every played path missed
+it. Declaration hoisted; the &shot&world probe now boots and streams
+Daggerfall city green.
+
+4 tests (weaponrig.test.js). Suite 388/86, ARENA2 green pre-commit,
+dungeon + exterior(&play) + world shot probes green.

@@ -24,7 +24,7 @@
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding } from '../player/enterExit.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
-import { transferAll } from '../systems/inventory.js';
+import { transferAll, removeOne } from '../systems/inventory.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -35,6 +35,11 @@ import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE, INTERIOR_
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
 import { routeKey } from '../ui/input.js';
+import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
+import { tallySkill, SKILLS } from '../systems/skills.js';
+import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
+import { audio } from '../systems/audio.js';
+import { fetchBytes } from './shared.js';
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -48,6 +53,13 @@ export function createWorldModes(host) {
 
   let mode = 'exterior';
   let zPrev = false;   // ReadyWeapon (Z) edge state
+  // C9: the INTERIOR mode's FP weapon (the dungeon context owns its
+  // own audited copy; the host rule wants the weapon in every mode).
+  // say -> console FLAGGED: the interior HUD-text layer pends its arc.
+  const interiorWeapon = createWeaponRig({
+    renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
+    say: (l) => console.warn('[interior]', l),
+  });
   let interiorCtx = null;
   let exitReturn = null;
   let dungeonCtx = null;
@@ -308,7 +320,12 @@ export function createWorldModes(host) {
     cam.pos = player.eye;
     const useHeld = keys.has('KeyE');
     const zNow = keys.has('KeyZ');   // ReadyWeapon: sheathe toggle (audit 2026-08-17)
-    if (zNow && !zPrev) dungeonCtx.toggleSheath?.();
+    // C9: per-mode routing (the old unconditional dungeonCtx read
+    // CRASHED on Z inside a building - dungeonCtx is null there).
+    if (zNow && !zPrev) {
+      if (mode === 'dungeon') dungeonCtx?.toggleSheath?.();
+      else interiorWeapon.toggleSheath();
+    }
     zPrev = zNow;
     if (useHeld && !latch.use) (mode === 'dungeon' ? tryExitDungeon : tryExit)();
     latch.use = useHeld;
@@ -363,6 +380,21 @@ export function createWorldModes(host) {
     renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
     if (interiorCtx.animateChars) interiorCtx.animateChars((performance.now() - _charT0) / 1000, _charAnimMode);
     for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
+    // C9: the interior FP weapon - gesture/swing/sounds through the
+    // rig; the strike frame runs the WeaponEnvDamage ray against the
+    // interior's action objects (swing doors bash, verbatim). Bows
+    // consume an Arrow per loose + tally (the projectile itself pends
+    // interior missiles - nothing hostile to hit yet). No paralysis
+    // gate: effects tick only in the dungeon context.
+    for (const ev of interiorWeapon.frame(dt)) {
+      if (ev !== 'hit') continue;
+      if (weaponTypeForItem(interiorWeapon.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
+        if (removeOne(playerEntity.items, 131)) tallySkill(playerEntity, SKILLS.Archery);
+        continue;
+      }
+      envAttack(interiorCtx.actions, interiorCtx.collider, player.eye, eyeDir());
+    }
+    interiorWeapon.draw();
     return true;
   }
 
@@ -408,16 +440,22 @@ export function createWorldModes(host) {
   // (the shared machine consumes deltas once per frame). contextmenu
   // suppressed so the right button is a weapon control, as classic.
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  // C9: interior mode routes the same RMB seam to its weapon rig.
+  const modalAttackSink = () =>
+    (mode === 'dungeon' && dungeonCtx) ? dungeonCtx.playerAttackInput
+      : mode === 'interior' ? interiorWeapon.attackInput
+        : null;
   addEventListener('mousemove', (e) => {
-    if (mode === 'dungeon' && dungeonCtx && document.pointerLockElement === canvas && (e.buttons & 2)) {
-      dungeonCtx.playerAttackInput(e.movementX, e.movementY, true);
+    const sink = modalAttackSink();
+    if (sink && document.pointerLockElement === canvas && (e.buttons & 2)) {
+      sink(e.movementX, e.movementY, true);
     }
   });
   addEventListener('mouseup', (e) => {
-    if (e.button === 2 && mode === 'dungeon' && dungeonCtx) dungeonCtx.playerAttackInput(0, 0, false);
+    if (e.button === 2) modalAttackSink()?.(0, 0, false);
   });
   addEventListener('mousedown', (e) => {
-    if (e.button === 2 && mode === 'dungeon' && dungeonCtx) dungeonCtx.playerAttackInput(0, 0, true);
+    if (e.button === 2) modalAttackSink()?.(0, 0, true);
   });
 
   addEventListener('keydown', (e) => {
