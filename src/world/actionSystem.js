@@ -8,18 +8,27 @@
 //   - Play() cascades to the linked object FIRST (ActivateNext ->
 //     Receive), then runs its own tween; Receive is gated on
 //     IsPlaying(), which is true if this object OR anything down its
-//     chain is mid-tween.
+//     chain is mid-tween. ONE verbatim exception: ShowTextWithInput
+//     does NOT cascade at Play - its chain fires only through a
+//     matching answer (UserInputHandler).
 //   - Action doors swing (0, OpenAngle -90, 0) degrees in Space.Self
 //     over OpenDuration 1.5 s, linear; the door collider turns TRIGGER
 //     (passable) the moment opening starts and turns solid again only
 //     when closing COMPLETES (MakeTrigger call sites). ToggleDoor is a
-//     no-op while moving.
+//     no-op while moving; a LOCKED closed door refuses the player with
+//     the LookAtInteriorLock text (P10).
 // The matrix composition mirrors the tweens exactly: world translation
 // pre-multiplies the placement, self rotation post-multiplies it.
 // Collision (ours): doors own a collider bucket that exists only while
 // fully closed; moving action objects rebuild their bucket each frame
 // (DFU parents the player to platforms instead - riding is a later
 // milestone, standing collision is correct at every instant).
+// KEYS (P10): object positions are BLOCK-LOCAL byte offsets and
+// 3108/4232 dungeons repeat at least one RDB, so every chain key is
+// namespaced by the block INSTANCE (ns): `act:{ns}:{position}`.
+// Un-namespaced keys made repeated blocks' objects overwrite each
+// other - the earlier copy stopped ticking and its collider bucket
+// collided.
 
 import { trs, multiply } from './mat4.js';
 import { ACTION_FLAGS, TRIGGER_FLAGS, MOVE_ACTION_FLAGS } from './rdbLayout.js';
@@ -36,8 +45,8 @@ import { CASTSPELL_COOLDOWN_TICK } from '../systems/spellcast.js';   // single s
 //     (IsFlat ? Magnitude : ActionAxisRawValue) * max(level, 1).
 //   Poison (0x1a): a VERBATIM NO-OP - DFU's own delegate body is
 //     empty (a Debug.Log stub); preserved as-is.
-//   DrainMagicka (0x1c): INTERIM no-op - the magicka stat pends the
-//     Systems arc (DFU drains player.CurrentMagicka).
+//   DrainMagicka (0x1c): verbatim max(1, IsFlat ? Magnitude :
+//     AxisRaw) off current magicka.
 export const EFFECT_ACTION_FLAGS = new Set([
   ACTION_FLAGS.Hurt21, ACTION_FLAGS.Hurt22, ACTION_FLAGS.Hurt23,
   ACTION_FLAGS.Hurt24, ACTION_FLAGS.Hurt25, ACTION_FLAGS.Poison,
@@ -50,12 +59,19 @@ export const EFFECT_ACTION_FLAGS = new Set([
 //   UnlockDoor (0x11): CurrentLockValue = 0.
 //   OpenDoor (0x12): unlock + open if closed.
 //   CloseDoor (0x14): close if open, then re-lock to StartingLockValue.
-// The IsLocked gate on the PLAYER toggle stays routed (Ledger: locks
-// ship as one unit with bash + lockpicking); the lock VALUES are live
-// here so the verbs are verbatim the day the gate lands.
 export const DOOR_VERB_FLAGS = new Set([
   ACTION_FLAGS.LockDoor, ACTION_FLAGS.UnlockDoor,
   ACTION_FLAGS.OpenDoor, ACTION_FLAGS.CloseDoor,
+]);
+
+// The delegated-relay family (P10/U6): acting objects whose delegate
+// runs through a scene seam - Teleport warps the player to the NEXT
+// object's transform; the text actions pop TEXT.RSC records. All
+// other relay flags (Activate, SetGlobalVar, Dialogue, Unknowns...)
+// stay verbatim no-ops whose cascade IS the behavior.
+export const DELEGATED_RELAY_FLAGS = new Set([
+  ACTION_FLAGS.Teleport, ACTION_FLAGS.ShowText,
+  ACTION_FLAGS.ShowTextWithInput, ACTION_FLAGS.DoorText,
 ]);
 
 /** Verbatim RDBLayout AddActionModelHelper classification for a placed
@@ -89,26 +105,113 @@ export const COLLISION_TIMEOUT_S = 0.12;   // DaggerfallActionCollision.Timeout
 export const DOOR_OPEN_ANGLE = -90;
 export const DOOR_OPEN_DURATION = 1.5;
 
+// DaggerfallActionDoor lock model, verbatim: CurrentLockValue > 0 =
+// locked; >= 20 = magically held (never picked or bashed). LockDoor's
+// action value:
+export const ACTION_LOCK_VALUE = 16;
+export const MAGIC_LOCK_THRESHOLD = 20;
+
+// PlayerActivate.LookAtInteriorLock, verbatim: the chance-tiered
+// message a player sees activating a locked door. chance =
+// CalculateInteriorLockpickingChance = clamp(5*(level - lockValue) +
+// lockpickSkill, 5, 95).
+const LOCKPICK_CHANCE_TEXT = [
+  'You doubt your ability to open this lock...',
+  'This lock looks difficult...',
+  'You would be challenged by this lock...',
+  'This lock would prove a good challenge...',
+  'You think you should be able to pick this lock...',
+  'This lock seems relatively easy...',
+  'You are amused by this lock...',
+  'You laugh at the amateur quality of this lock...',
+  'You see a pathetic excuse for a lock...',
+  'This lock is an insult to your abilities...',
+];
+export function interiorLockpickingChance(level, lockValue, lockpickSkill) {
+  const chance = 5 * (level - lockValue) + lockpickSkill;
+  return Math.max(5, Math.min(95, chance));
+}
+export function lookAtLockText(lockValue, level, lockpickSkill) {
+  if (lockValue >= MAGIC_LOCK_THRESHOLD) return 'This is a magically held lock...';
+  const chance = interiorLockpickingChance(level, lockValue, lockpickSkill);
+  if (chance < 30) return 'This lock has nothing to fear from you...';
+  if (chance < 35) return "It'd be a miracle if you picked this lock...";
+  if (chance >= 95) return LOCKPICK_CHANCE_TEXT[9];
+  if (chance >= 45) return LOCKPICK_CHANCE_TEXT[Math.trunc((chance - 45) / 5)];
+  return 'This lock looks to be beyond your skills...';
+}
+
+// ---- U6: the text actions, verbatim constants ----
+export const TYPE_11_TEXT_INDEX = 8600;   // ShowText: TEXT.RSC record = Index + 8600
+export const TYPE_12_TEXT_INDEX = 5400;   // ShowTextWithInput: Index + 5400
+export const TYPE_99_TEXT_INDEX = 7700;   // DoorText: Index + 7700
+
+/** DaggerfallAction.actionTypeTwelveLookup, verbatim - the classic
+ *  riddle answers per text id (case-insensitive match). */
+export const TYPE_12_ANSWERS = Object.freeze({
+  5404: ['bow', 'bow arrow', 'crossbow', 'bows', 'crossbows'],           // sheogorath
+  5406: ['one', '1'],                                                    // blind god
+  5423: ['benefactor', 'the benefactor'],                                // benefactor
+  5424: ['shut up', 'shutup', 'shaddup'],                                // shaddup!
+  5464: ['yes', 'oK', 'i agree', 'y', 'agreed', 'done', 'fine', 'okay', 'sure', 'yep'],   // daggerfall guard
+});
+
+/** The DoorText id patch table, verbatim (comments preserved in the
+ *  source): 0 -> enabled/skip; 7701..7704 -> 7705 ("allowed" vs
+ *  "allow"); the known-missing ids -> enabled/skip. */
+const DOOR_TEXT_REMAP = Object.freeze({ 7701: 7705, 7702: 7705, 7703: 7705, 7704: 7705 });
+const DOOR_TEXT_SKIP = new Set([7700, 7706, 7711, 7712, 7715, 7717, 7719]);
+
 export class ActionSystem {
   constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, playerLevel = () => 1, rolls = Math.random } = {}) {
     this.collider = collider;
     this.objects = new Map(); // key -> runtime object
+    this._links = new Map();  // `${ns}:${position}` -> object (the chain graph)
     this._doorCount = 0;
     this._damagePlayer = damagePlayer;
     this._drainMagicka = drainMagicka;
     this._castSpell = castSpell;
     this._playerLevel = playerLevel;
     this._rolls = rolls;
+    // Scene seams (P10/U6/A2):
+    //   resolvePosition(ns, positionKey) -> { pos: [x,y,z], yawDeg }
+    //     (teleport destinations - actionless objects live only in
+    //     the layout's position index, not this graph)
+    //   onTeleport({ pos, yawDeg })  - warp the player
+    //   onLockedDoor(door)           - the classic look-at-lock text
+    //   onActionSound(o)             - Play's soundIndex (Index > 0)
+    //   onShowText(textId) / onShowTextInput(textId, submit)
+    //   onDoorText(textId) / onTrespass()
+    //   onDoorState(o, opening) / onDoorBash(o) - the A1 audio seams
+    this.resolvePosition = null;
+    this.onTeleport = null;
+    this.onLockedDoor = null;
+    this.onActionSound = null;
+    this.onShowText = null;
+    this.onShowTextInput = null;
+    this.onDoorText = null;
+    this.onTrespass = null;
   }
 
-  /** Register an effect action (Hurt/Poison/DrainMagicka): chain
-   *  participant, no tween - the model stays in the static draw and
-   *  the shared collider (the caller keeps those). */
-  addEffect(positionKey, action, origin = null) {
-    const key = `act:${positionKey}`;
+  _register(ns, positionKey, o) {
+    this.objects.set(o.key, o);
+    if (positionKey != null && positionKey >= 0) this._links.set(`${ns}:${positionKey}`, o);
+  }
+
+  _next(o) {
+    if (o.nextKey == null || o.nextKey < 0) return null;
+    return this._links.get(`${o.ns}:${o.nextKey}`) ?? null;
+  }
+
+  /** Register an effect action (Hurt/Poison/DrainMagicka/CastSpell):
+   *  chain participant, no tween - the model stays in the static draw
+   *  and the shared collider (the caller keeps those). */
+  addEffect(ns, positionKey, action, origin = null) {
+    const key = `act:${ns}:${positionKey}`;
     const o = {
       origin,
       key,
+      ns,
       kind: 'effect',
       actionFlag: action.actionFlag,
       magnitude: action.magnitude,
@@ -120,7 +223,7 @@ export class ActionSystem {
       triggerFlag: action.triggerFlag ?? TRIGGER_FLAGS.None,
       state: 'start',
     };
-    this.objects.set(key, o);
+    this._register(ns, positionKey, o);
     return o;
   }
 
@@ -160,40 +263,107 @@ export class ActionSystem {
     // Poison: verbatim DFU no-op stub (preserved).
   }
 
-  /** Register a chain RELAY: an acting object whose delegate is routed
-   *  elsewhere (Teleport, Activate, ShowText, SetGlobalVar, the
-   *  Unknowns...) or is a verbatim no-op. DFU's Play() cascades
-   *  ActivateNext for EVERY flag before the delegate runs, so these
-   *  must live in the chain or every link through them dies (audit
-   *  2026-08-16). aabb (when given) makes it a Direct/Attack/collision
-   *  target like DFU's collider-carrying models. */
-  addRelay(positionKey, action, aabb = null) {
-    const key = `act:${positionKey}`;
+  /** The delegated-relay delegates (P10/U6): Teleport + the text
+   *  actions, routed through the scene seams. Every OTHER relay flag
+   *  is a verbatim no-op whose cascade is the behavior. */
+  _runRelay(o) {
+    const F = ACTION_FLAGS;
+    if (o.actionFlag === F.Teleport) {
+      // DaggerfallAction.Teleport: player transform = NextObject's;
+      // null next logs and returns, verbatim.
+      const dest = this.resolvePosition?.(o.ns, o.nextKey) ?? null;
+      if (!dest) { console.warn('[action] Teleport next object null - can\'t teleport'); return; }
+      this.onTeleport?.(dest);
+      return;
+    }
+    if (o.actionFlag === F.ShowText) {
+      // Pop-up text: TEXT.RSC record Index + 8600, click anywhere to
+      // close (the scene owns the box).
+      o.activationCount = (o.activationCount ?? 0) + 1;
+      this.onShowText?.(TYPE_11_TEXT_INDEX + o.index);
+      return;
+    }
+    if (o.actionFlag === F.ShowTextWithInput) {
+      // Pop-up with input: record Index + 5400; a case-insensitive
+      // answer match fires ActivateNext (UserInputHandler) - the
+      // ONLY path to this action's chain (Play skips the up-front
+      // cascade for this flag).
+      o.activationCount = (o.activationCount ?? 0) + 1;
+      const textId = TYPE_12_TEXT_INDEX + o.index;
+      const answers = TYPE_12_ANSWERS[textId];
+      if (!answers) console.error(`[action] invalid key ${textId} for action type 12, couldn't get answer(s)`);
+      this.onShowTextInput?.(textId, (userInput) => {
+        if (!answers) return;
+        const given = String(userInput ?? '').toLowerCase();
+        if (answers.some((a) => a.toLowerCase() === given)) {
+          const next = this._next(o);
+          if (next) this.receive(next);
+        }
+      });
+      return;
+    }
+    if (o.actionFlag === F.DoorText) this._runDoorText(o);
+  }
+
+  /** DoorText (0x63), verbatim: first activation shows record
+   *  Index + 7700 as HUD text (2.0s); later activations run the
+   *  classic trespass check (axisRaw > 5 -> MakeEnemiesHostile). The
+   *  patch table rides actionEnabled, which the door's toggle gate
+   *  also reads. */
+  _runDoorText(o) {
+    o.activationCount = (o.activationCount ?? 0) + 1;   // DFU increments in Receive, before the delegate
+    let textId = TYPE_99_TEXT_INDEX + o.index;
+    if (DOOR_TEXT_REMAP[textId]) textId = DOOR_TEXT_REMAP[textId];
+    if (DOOR_TEXT_SKIP.has(TYPE_99_TEXT_INDEX + o.index)) o.actionEnabled = true;
+    if (o.activationCount === 1 && textId !== TYPE_99_TEXT_INDEX && !o.actionEnabled) {
+      this.onDoorText?.(textId);
+    } else if (o.axisRaw > 5) {
+      this.onTrespass?.();   // "classic seems to only check whether this value is greater than 5"
+    }
+  }
+
+  /** Register a chain RELAY: an acting object whose delegate is
+   *  routed through a scene seam (Teleport, the text actions) or is
+   *  a verbatim no-op (Activate, SetGlobalVar, the Unknowns...).
+   *  DFU's Play() cascades ActivateNext for (almost) EVERY flag
+   *  before the delegate runs, so these must live in the chain or
+   *  every link through them dies (audit 2026-08-16). aabb (when
+   *  given) makes it a Direct/Attack/collision target like DFU's
+   *  collider-carrying models. */
+  addRelay(ns, positionKey, action, aabb = null, origin = null) {
+    const key = `act:${ns}:${positionKey}`;
     const o = {
       key,
+      ns,
       kind: 'relay',
       actionFlag: action.actionFlag ?? ACTION_FLAGS.None,
       index: action.index,
+      axisRaw: action.axisRaw,
+      activationCount: 0,
       state: 'start',
       nextKey: action.nextObject,
       triggerFlag: action.triggerFlag ?? TRIGGER_FLAGS.None,
       aabb,
+      origin,
     };
-    this.objects.set(key, o);
+    this._register(ns, positionKey, o);
     return o;
   }
 
   /** Register an action door (own bucket, closed-solid lifecycle).
-   *  opts (audit 2026-08-16): positionKey keys the door into the chain
-   *  (act:<pos>) so LinkActionNodes-resolved nextObject reaches it;
-   *  action is the door's OWN record (fires on player toggle through
-   *  the Door trigger gate, verbatim ExecuteActionOnToggle);
-   *  startingLockValue seeds currentLockValue. */
+   *  opts: ns + positionKey key the door into the chain graph
+   *  (`act:{ns}:{pos}`) so LinkActionNodes-resolved nextObject
+   *  reaches it; action is the door's OWN record (fires on player
+   *  toggle through the Door trigger gate, verbatim
+   *  ExecuteActionOnToggle); startingLockValue seeds
+   *  currentLockValue (P10). */
   addDoor(cpu, baseMatrix, opts = {}) {
-    const key = opts.positionKey != null ? `act:${opts.positionKey}` : `door:${this._doorCount++}`;
+    const ns = opts.ns ?? 0;
+    const key = opts.positionKey != null ? `act:${ns}:${opts.positionKey}` : `door:${this._doorCount++}`;
     const a = opts.action ?? null;
     const o = {
       key,
+      ns,
       kind: 'door',
       cpu,
       base: baseMatrix,
@@ -215,6 +385,7 @@ export class ActionSystem {
       matrix: baseMatrix,
     };
     this.objects.set(key, o);
+    if (opts.positionKey != null) this._links.set(`${ns}:${opts.positionKey}`, o);
     this.collider.addMesh(key, cpu.positions, cpu.indices, baseMatrix);
     return o;
   }
@@ -224,8 +395,8 @@ export class ActionSystem {
    *  on a non-door) swings like a hinged door - same -90/1.5s and the
    *  same collider lifecycle - and its own record chains/fires like
    *  any action. No lock (the special door has none in DFU). */
-  addSpecialDoor(positionKey, cpu, baseMatrix, action) {
-    const o = this.addDoor(cpu, baseMatrix, { positionKey, action });
+  addSpecialDoor(ns, positionKey, cpu, baseMatrix, action) {
+    const o = this.addDoor(cpu, baseMatrix, { ns, positionKey, action });
     o.special = true;
     return o;
   }
@@ -234,13 +405,15 @@ export class ActionSystem {
    * Register an action-record model (positionKey from the RDB link map;
    * chains resolve through action.nextObject).
    */
-  addAction(positionKey, cpu, baseMatrix, action) {
-    const key = `act:${positionKey}`;
+  addAction(ns, positionKey, cpu, baseMatrix, action) {
+    const key = `act:${ns}:${positionKey}`;
     const o = {
       key,
+      ns,
       kind: 'action',
       cpu,
       base: baseMatrix,
+      index: action.index,   // A2: the RDB soundIndex plays on every Play
       duration: action.duration / 20,
       rotation: action.rotation,
       translation: action.translation,
@@ -250,7 +423,7 @@ export class ActionSystem {
       triggerFlag: action.triggerFlag ?? TRIGGER_FLAGS.None,
       matrix: baseMatrix,
     };
-    this.objects.set(key, o);
+    this._register(ns, positionKey, o);
     this.collider.addMesh(key, cpu.positions, cpu.indices, baseMatrix);
     return o;
   }
@@ -258,7 +431,7 @@ export class ActionSystem {
   _isPlaying(o, depth = 0) {
     if (o.state === 'forward' || o.state === 'reverse') return true;
     if (depth > 32) return false;
-    const next = this.objects.get(`act:${o.nextKey}`);
+    const next = this._next(o);
     return next ? this._isPlaying(next, depth + 1) : false;
   }
 
@@ -276,18 +449,28 @@ export class ActionSystem {
 
   _play(o) {
     // ActivateNext cascades BEFORE this object's own delegate, for
-    // EVERY flag (verbatim Play; relays exist for exactly this).
-    const next = this.objects.get(`act:${o.nextKey}`);
-    if (next) this.receive(next);
+    // every flag EXCEPT ShowTextWithInput (verbatim Play; relays
+    // exist for exactly this, and the input box's chain fires only
+    // through a matching answer).
+    if (o.actionFlag !== ACTION_FLAGS.ShowTextWithInput) {
+      const next = this._next(o);
+      if (next) this.receive(next);
+    }
+    // A2: DaggerfallAction.Play - "if (PlaySound && Index > 0)
+    // audioSource.Play()": the RDB soundIndex fires on every Play,
+    // movers and effect actions alike (the scene owns the engine).
+    if (o.index > 0) this.onActionSound?.(o);
     if (o.kind === 'effect') { this._runEffect(o); return; }
-    if (o.kind === 'relay') return;   // delegate routed or a verbatim no-op; the cascade above IS the behavior
+    if (o.kind === 'relay') { this._runRelay(o); return; }
     if (o.kind === 'door') {
       // A door reached through the chain runs ITS OWN delegate on
       // itself (DFU: GetComponent on thisAction.gameObject). Door-verb
       // flags act; None cascades only (a chained None-flag door does
-      // NOT open in DFU); effects run; anything else relays.
+      // NOT open in DFU); effects run; DoorText texts; anything else
+      // relays.
       if (DOOR_VERB_FLAGS.has(o.actionFlag)) { this._doorVerb(o); return; }
       if (EFFECT_ACTION_FLAGS.has(o.actionFlag)) { this._runEffect(o); return; }
+      if (o.actionFlag === ACTION_FLAGS.DoorText) { this._runDoorText(o); return; }
       return;
     }
     if (o.duration <= 0) {
@@ -305,13 +488,20 @@ export class ActionSystem {
     else if (o.state === 'end') o.state = 'reverse';
   }
 
-  /** ToggleDoor: no-op while moving; trigger (bucket gone) at
-   *  open-start, solid again only at close-complete. Opening clears
-   *  the lock (verbatim Open tail: CurrentLockValue = 0). Returns
-   *  true when the toggle started. */
-  toggleDoor(o) {
+  /** ToggleDoor: no-op while moving; a LOCKED closed door refuses -
+   *  the player toggle shows the look-at-lock text (P10, verbatim
+   *  Open(): "if (IsLocked && !ignoreLocks) { LookAtInteriorLock;
+   *  return; }"); trigger (bucket gone) at open-start, solid again
+   *  only at close-complete. Opening clears the lock (verbatim Open
+   *  tail: CurrentLockValue = 0). Returns true when the toggle
+   *  started. */
+  toggleDoor(o, byPlayer = false) {
     if (o.state === 'forward' || o.state === 'reverse') return false;
     if (o.state === 'start') {
+      if (o.currentLockValue > 0) {
+        if (byPlayer) this.onLockedDoor?.(o);
+        return false;
+      }
       o.state = 'forward';
       o.currentLockValue = 0;
       this.collider.removeBucket(o.key);
@@ -338,7 +528,7 @@ export class ActionSystem {
       this.toggleDoor(o);
       o.currentLockValue = o.startingLockValue; // re-lock to the starting value
     } else if (o.actionFlag === F.LockDoor) {
-      if (o.currentLockValue <= 0) o.currentLockValue = 16; // "don't know what setting Daggerfall uses here"
+      if (o.currentLockValue <= 0) o.currentLockValue = ACTION_LOCK_VALUE; // "don't know what setting Daggerfall uses here"
     } else if (o.actionFlag === F.UnlockDoor) {
       o.currentLockValue = 0;
     }
@@ -355,9 +545,11 @@ export class ActionSystem {
     if (o.actionFlag === ACTION_FLAGS.None && o.nextKey === -1) return;
     const allowed = TRIGGER_GATE[o.triggerFlag ?? TRIGGER_FLAGS.None];
     if (!allowed || !allowed.includes('Door')) return;
-    const next = this.objects.get(`act:${o.nextKey}`);
+    const next = this._next(o);
     if (next) this.receive(next);
-    if (EFFECT_ACTION_FLAGS.has(o.actionFlag)) this._runEffect(o);
+    if (o.index > 0) this.onActionSound?.(o);   // A2: the record's sound rides the toggle-fire too
+    if (EFFECT_ACTION_FLAGS.has(o.actionFlag)) { this._runEffect(o); return; }
+    if (o.actionFlag === ACTION_FLAGS.DoorText) this._runDoorText(o);
   }
 
   /** Verbatim DaggerfallActionDoor.AttemptBash: an OPEN door bash-
@@ -374,7 +566,7 @@ export class ActionSystem {
       if (this.toggleDoor(o)) this._execOwnAction(o);
       return true;
     }
-    if (o.currentLockValue >= 20) return false;   // magically held: cannot bash
+    if (o.currentLockValue >= MAGIC_LOCK_THRESHOLD) return false;   // magically held: cannot bash
     const chance = 20 - o.currentLockValue;
     if (Math.floor(roll01 * 100) < chance) {      // Dice100.SuccessRoll
       o.currentLockValue = 0;
@@ -385,16 +577,43 @@ export class ActionSystem {
   }
 
   /** Player activation entry: doors toggle (+ fire their own record,
-   *  Door-gated), actions receive. */
+   *  Door-gated), actions receive. U6: a DoorText door's FIRST
+   *  activation shows the text and does NOT open (the Open() special
+   *  gate, verbatim - Direct/MultiTrigger-flagged doors also enter
+   *  the gate, and the Door-typed Receive inside blocks for them
+   *  exactly as DFU's does). */
   activate(key) {
     const o = this.objects.get(key);
     if (!o) return false;
     if (o.kind === 'door') {
-      if (this.toggleDoor(o)) this._execOwnAction(o);
+      if (o.state === 'start' && !o.special
+          && o.actionFlag === ACTION_FLAGS.DoorText && o.index > 0
+          && (o.triggerFlag === TRIGGER_FLAGS.Door || o.triggerFlag === TRIGGER_FLAGS.Direct || o.triggerFlag === TRIGGER_FLAGS.MultiTrigger)
+          && o.activationCount === 0) {
+        this.receive(o, 'Door');
+        if (!o.actionEnabled) return true;
+      }
+      if (this.toggleDoor(o, true)) this._execOwnAction(o);
       return true;
     }
     this.receive(o, 'Direct');   // player activation = the Direct trigger type (the gate table applies)
     return true;
+  }
+
+  /** S12 restore reconciliation (P10): recompute a restored object's
+   *  matrix and settle its collider bucket - a door restored OPEN
+   *  must not stay solid (and was, latently, before P10); movers
+   *  rebuild at the restored pose. */
+  syncRestored(o) {
+    if (o.kind !== 'door' && o.kind !== 'action') return;
+    if (o.kind === 'door' && o.state === 'start') { o.t = 0; }
+    this._applyMatrix(o);
+    this.collider.removeBucket(o.key);
+    if (o.kind === 'door') {
+      if (o.state === 'start') this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.base);
+    } else {
+      this.collider.addMesh(o.key, o.cpu.positions, o.cpu.indices, o.matrix);
+    }
   }
 
   _applyMatrix(o) {

@@ -51,3 +51,48 @@ test('audio: enemy sound columns restored (rat/imp verbatim rows)', async () => 
   const withSounds = Object.values(ENEMY_BASICS).filter((e) => e.moveSound !== undefined).length;
   assert.equal(withSounds, 61);
 });
+
+test('audio: A2 ambient-source data verbatim (torches, animals, action sounds)', async () => {
+  const {
+    TORCH_ARCHIVE, TORCH_RECORDS, TORCH_MAX_DISTANCE, TORCH_VOLUME,
+    ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD, ANIMAL_MAX_DISTANCE, AMBIENT_RANDOM_PLAY_MAX,
+  } = await import('../src/systems/soundClips.js');
+  // RDBLayout.IsTorchFlat: 210 / {0,1,6,16..20}; 5m linear, 0.7
+  assert.equal(TORCH_ARCHIVE, 210);
+  assert.deepEqual([...TORCH_RECORDS].sort((a, b) => a - b), [0, 1, 6, 16, 17, 18, 19, 20]);
+  assert.equal(TORCH_MAX_DISTANCE, 5);
+  assert.equal(TORCH_VOLUME, 0.7);
+  assert.equal(SOUND.Burning, 420);
+  // GameObjectHelper.AddAnimalAudioSource: 201, record pairs -> clip
+  assert.equal(ANIMALS_ARCHIVE, 201);
+  assert.equal(ANIMAL_SOUND_BY_RECORD[0], 99);    // horse
+  assert.equal(ANIMAL_SOUND_BY_RECORD[1], 99);
+  assert.equal(ANIMAL_SOUND_BY_RECORD[3], 103);   // cow
+  assert.equal(ANIMAL_SOUND_BY_RECORD[5], 102);   // pig
+  assert.equal(ANIMAL_SOUND_BY_RECORD[8], 101);   // cat
+  assert.equal(ANIMAL_SOUND_BY_RECORD[10], 100);  // dog
+  assert.equal(ANIMAL_SOUND_BY_RECORD[2], undefined);   // gap records stay silent
+  assert.ok(Math.abs(ANIMAL_MAX_DISTANCE - 19.2) < 1e-9);   // 768 * GlobalScale
+  assert.equal(AMBIENT_RANDOM_PLAY_MAX, 100);     // DFRandom.rand() <= 100 per classic update
+});
+
+test('audio: A2 the action Play sound seam - soundIndex > 0 fires from the object', async () => {
+  const { ActionSystem } = await import('../src/world/actionSystem.js');
+  const { ACTION_FLAGS } = await import('../src/world/rdbLayout.js');
+  const c = { addMesh() {}, removeBucket() {}, raycast: () => Infinity };
+  const a = new ActionSystem(c);
+  const played = [];
+  a.onActionSound = (o) => played.push([o.index, o.origin ?? [o.matrix[12], o.matrix[13], o.matrix[14]]]);
+  // an effect action with soundIndex 12 speaks from its origin
+  const eff = a.addEffect(0, 1, { actionFlag: ACTION_FLAGS.Poison, index: 12, magnitude: 0, axisRaw: 0, isFlat: false, nextObject: -1 }, [3, 4, 5]);
+  a.receive(eff);
+  // a mover with soundIndex 3 speaks from its (base) matrix
+  const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 7, 8, 9, 1]);
+  const mover = a.addAction(0, 2, { positions: new Float32Array(3), indices: new Uint32Array(0) }, I, {
+    index: 3, duration: 20, rotation: { x: 0, y: 0, z: 0 }, translation: { x: 0, y: 1, z: 0 }, nextObject: -1, triggerFlag: 0x02 });
+  a.activate(mover.key);
+  // index 0 stays silent (DFU: PlaySound && Index > 0)
+  const silent = a.addEffect(0, 3, { actionFlag: ACTION_FLAGS.Poison, index: 0, magnitude: 0, axisRaw: 0, isFlat: false, nextObject: -1 }, [0, 0, 0]);
+  a.receive(silent);
+  assert.deepEqual(played, [[12, [3, 4, 5]], [3, [7, 8, 9]]]);
+});

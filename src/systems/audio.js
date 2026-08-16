@@ -115,6 +115,36 @@ export class AudioEngine {
     src.start();
   }
 
+  /** Looping positional source (A2 torches: DFU AddTorchAudioSource -
+   *  LINEAR rolloff "or the burning sound is audible almost
+   *  everywhere"). The caller gates range (LoopIfPlayerNear disables
+   *  the source outside maxDistance); returns a stop handle or null
+   *  when the context/record is not ready. */
+  loop3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 5 } = {}) {
+    if (!this._ready()) return null;
+    const buf = this._buffer(index);
+    if (!buf) return null;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    const pan = this.ctx.createPanner();
+    pan.panningModel = 'equalpower';
+    pan.distanceModel = 'linear';
+    pan.refDistance = refDistance;
+    pan.maxDistance = maxDistance;
+    pan.positionX.value = pos[0]; pan.positionY.value = pos[1]; pan.positionZ.value = pos[2];
+    const gain = this.ctx.createGain();
+    gain.gain.value = volume;
+    src.connect(gain).connect(pan).connect(this.ctx.destination);
+    src.start();
+    return {
+      stop() {
+        try { src.stop(); } catch { /* already stopped */ }
+        src.disconnect();
+      },
+    };
+  }
+
   /** Per-frame listener sync from the camera (position + forward). */
   setListener(pos, forward) {
     const L = this._listener;

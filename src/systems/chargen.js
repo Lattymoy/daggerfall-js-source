@@ -157,6 +157,7 @@ export function applyCharacter(playerEntity, career, careerIndex, { name = caree
   Object.assign(playerEntity, {
     maxMagicka,
     magicka: maxMagicka,
+    fatigue: (stats.strength + stats.endurance) * 64,   // SetEntityDefaults: currentFatigue = MaxFatigue (S15)
     name,
     gender: gender ?? playerEntity.gender ?? 'male',
     career,

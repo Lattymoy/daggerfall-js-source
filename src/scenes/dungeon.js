@@ -86,6 +86,17 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const player = new PlayerMotor(ctx.collider);
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
+  // P10 Teleport actions: player transform = the destination object's
+  // (DFU DaggerfallAction.Teleport). spawn() zeroes velY and drops
+  // the grounded flag, so the motor re-grounds on the destination
+  // floor next step (the FreezeMotor 0.5s carry-suppression is a
+  // no-op in our motor - velocity is per-frame input, not held).
+  ctx.actions.onTeleport = ({ pos, yawDeg }) => {
+    player.spawn(pos[0], pos[1], pos[2]);
+    cam.pos = [...player.eye];
+    cam.yaw = yawDeg * Math.PI / 180;
+    console.log(`[action] teleport -> [${pos.map((v) => v.toFixed(2)).join(', ')}] yaw ${yawDeg.toFixed(1)}`);
+  };
   let prevJump = false;
   let prevUse = false;
   console.log(`player: collider ${ctx.colliderTris} tris, ${ctx.actions.objects.size} activatables, walk=${walkMode}`);
@@ -195,14 +206,29 @@ export async function bootDungeon(canvas, renderer, params, status) {
       }
       const jumpHeld = keys.has('Space');
       player.fallScale = ctx.playerFallScale;   // S8 slowfall
+      // P11: the swim toggle (PlayerEnterExit verbatim - the CENTER
+      // (feet + 0.9) + 50*GlobalScale - 0.95 below the block water
+      // surface swims) + the Levitate/waterWalking effect consumers.
+      // Float keys: Jump/FloatUp = Space/PageUp; FloatDown = PageDown
+      // (DFU's default binding; DFU's Crouch alternative is C, which
+      // this port binds to castSpell - crouch itself pends).
+      const surf = ctx.waterSurfaceYAt(player.pos[0], player.pos[2]);
+      player.waterSurfaceY = surf;
+      player.swimming = surf != null && player.pos[1] + 0.9 + 50 * 0.025 - 0.95 < surf;
+      player.levitating = ctx.playerLevitating();
+      player.waterWalking = ctx.playerWaterWalking();
+      const moving = keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD');
       player.update(dt, {
         forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
         strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
         run: keys.has('ShiftLeft'),
         jump: jumpHeld && !prevJump,
-      }, cam.yaw);
+        up: jumpHeld || keys.has('PageUp'),
+        down: keys.has('PageDown'),
+      }, cam.yaw, cam.pitch);
       prevJump = jumpHeld;
       cam.pos = player.eye;
+      ctx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped });
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);
       ctx.reportInput?.([...keys].join('+') || 'none', cam.pitch);
       const useHeld = keys.has('KeyE');

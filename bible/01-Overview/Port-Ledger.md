@@ -104,29 +104,30 @@ World layout:
 
 | Feature | DFU source | Target |
 |---|---|---|
-| Exterior indirect player light | SunlightManager.IndirectLight - a player-following point light (SunlightRig prefab's second light, white 0.6) scaled by the daylight curve alongside the key light | Rendering arc (exterior ambient currently carries the PlayerAmbientLight term only; found in the R5 audit) |
+| ~~Exterior indirect player light~~ SHIPPED (R12: the prefab's ACTUAL values - point, intensity 1.0, range 150, 0.7058824 gray ("white 0.6" was the rig's directional fills); daylight-scaled, weather-dimmed, night-off; shot-proven) | SunlightManager.IndirectLight | Rendering arc |
 | Climate swaps onto mismatched record dimensions | 15 corpus swap combos (124_3 -> 24, 168_6 -> 68/368/468 families) land on records whose dimensions differ from the original; DFU stretches them identically because mesh UVs are normalized against the original archive at load - kept verbatim, pinned in the climate corpus test | Kept |
 | Interior people visibility gates (house ownership, shop hours, building-open rules, GuildHall anytime access, TG/DB House2 membership) | DaggerfallInterior.AddPeople tail | Systems arc (people + their flags/factionID shipped C1) |
 | Interior furniture actions, house containers, loot, spawn points | DaggerfallInterior AddFurnitureAction/MakeHouseContainer/AddSpawnPoints | Systems arc |
 | ~~Enemy AI + mobile animation~~ SHIPPED (C8: enemyMotor/enemyAttack/rigs end to end; row pruned by the 2026-08-14 audit) | EnemyMotor, MobileUnit | Characters arc C5 (spawn data + classic standing billboards shipped C3) |
 | ~~Dungeon treasure piles + loot~~ SHIPPED (S-series loot tables + corpse/pile takeLoot; row pruned by the 2026-08-14 audit) | RDBLayout AssignFixedTreasure/AddRandomTreasure | Systems arc |
-| Torch audio sources | RDBLayout.AddTorchAudioSource | Audio arc |
-| Transition + activation sounds: action PlaySound index, ladder climb, enter/exit stingers (door open/close SHIPPED in A1 - dungeon clips on the activate seam) | DaggerfallActionDoor, DaggerfallAction, DaggerfallAudioSource | Audio arc (the P2/P4-P6 systems expose the trigger points) |
+| ~~Torch audio sources~~ SHIPPED (A2, dungeon scene; exterior/interior torches join with their scenes' audio wiring) | RDBLayout.AddTorchAudioSource | Audio arc |
+| Transition + activation sounds: ladder climb, enter/exit stingers (door open/close SHIPPED in A1; action PlaySound SHIPPED in A2) | DaggerfallActionDoor, DaggerfallAudioSource | Audio arc (the P6/P7 transition seams expose the trigger points) |
 | ~~Non-movement RDB action flags: CastSpell, Hurt21-25, DrainMagicka~~ SHIPPED (S4b + the trap seam; Poison still pends the disease/poison slice) | DaggerfallAction delegates | Combat arc (magic/damage) |
-| Non-movement RDB action flags: ShowText, ShowTextWithInput, DoorText | DaggerfallAction delegates | UI arc (message boxes) + Systems (text records); their objects RELAY since the 2026-08-16 audit (chains pass through; the delegate bodies pend here) |
-| ~~Non-movement RDB action flags: LockDoor, UnlockDoor, OpenDoor, CloseDoor~~ SHIPPED (2026-08-16 audit: verbatim self-targeted verbs + special doors + door bashing + lock VALUES on every door) | DaggerfallAction delegates + DaggerfallActionDoorSpecial + AttemptBash | Combat/Player |
-| The door IsLocked gate + lockpicking | DaggerfallActionDoor.Open's lock check, AttemptLockpicking, LookAtInteriorLock - ships as ONE unit so a locked door is never a dead end (bash exists; picking + the lock-level message do not) | Systems arc (locks) |
-| Non-movement RDB action flags: Teleport, Activate | DaggerfallAction delegates | Player arc (teleporters); Activate is delegate-empty in DFU and its RELAY is the whole behavior - live since the 2026-08-16 audit, Teleport relays too with the jump itself pending |
+| ~~Non-movement RDB action flags: ShowText, ShowTextWithInput, DoorText~~ SHIPPED (U6 on the audit's relay spine: the 8600/5400/7700 records, the verbatim riddle-answer chain gate, the DoorText door hold + patch table; TEXT.RSC live) | DaggerfallAction delegates | UI arc + Systems |
+| ~~Non-movement RDB action flags: Teleport, Activate, LockDoor, UnlockDoor, OpenDoor, CloseDoor~~ SHIPPED (MERGED 2026-08-16, two lanes reconciled: the audit's self-targeted verbs + special doors + door bashing + lock values; P10's Teleport jump with per-block destination resolution, the IsLocked player gate + LookAtInteriorLock tiers, and the repeated-block key namespace) | DaggerfallAction delegates + DaggerfallActionDoorSpecial + AttemptBash | Player/Combat |
+| Door lockpicking (steal-mode activation, the failed-skill-level latch; the IsLocked gate + bash + the lock-level text SHIPPED in the merge) | DaggerfallActionDoor.AttemptLockpicking | UI arc (interaction modes) |
+>>>>>>> origin/main
 | ~~Platform riding~~ SHIPPED 2026-08-14 (groundKey contact identity + mover frame deltas through the resolver - the DFU MoveWithMovingPlatform shape; rooted Mac's out-of-bounds ejection report) | DFU parents the player transform | Player arc |
-| Swimming + levitation motor | LevitateMotor, GetSwimSpeed | Player arc |
-| Quest monster names (MonsterName) | NameHelper.GetRandomMonsterName - rolls the bank on UnityEngine.Random, quest-facing | Systems arc (name banks + data shipped C2) |
-| Animal audio sources | GameObjectHelper | Audio arc |
+| ~~Swimming + levitation motor~~ SHIPPED (P11: + the swim toggle, the Levitate (14,255) buff end to end, the per-minute/per-jump fatigue drains, the .7071 diagonal-limit parity fix) | LevitateMotor, GetSwimSpeed | Player arc |
+| Breath/drowning (isPlayerSubmerged at +76*GlobalScale, holding-breath UI, drowning damage) + crouch motor | PlayerEnterExit, AcrobatMotor | Player arc |
+| ~~Quest monster names (MonsterName)~~ SHIPPED (S17: monsterName in nameHelper - the bank pick uniform per Ledger A, part draws on DFRandom verbatim, Monster3 ported whole; the quest machine consumes it when it lands) | NameHelper.GetRandomMonsterName | Systems arc |
+| ~~Animal audio sources~~ SHIPPED (A2, dungeon scene; RMB exterior/interior animals join with their scenes' audio wiring) | GameObjectHelper | Audio arc |
 | Music playback (HMI/XMI) | Unity synthesis, no reader | Audio arc |
 | Smaller-dungeons generation | MapsFile + QuestMachine | Systems arc |
-| Enemy spellcasting (audit F15) | EnemyEntity.SetEnemySpells (MaxMagicka = 10*level + 100, the six magic skills forced to 80, per-monster spell lists in EnemyBasics - castsMagic already rides our data) + the casting AI | Systems arc (magic) |
+| ~~Enemy spellcasting (audit F15)~~ SHIPPED (S16: lists + SetEnemySpells + the classic touch/ranged AI; monsters' lists go live with their billboard-to-foe promotion) | EnemyEntity.SetEnemySpells + EnemyMotor | Systems arc (magic) |
 | OnMonsterHit special attack effects (audit F2 interim) | FormulaHelper.OnMonsterHit - disease/poison/drain/vampirism riders per landed monster hit; the multi-attack loop itself SHIPPED with the site flagged | Systems arc (disease/poison) |
 | Enchantment to-hit channel (audit F4) | DaggerfallEntity.ChanceToHitModifier inside CalculateSuccessfulHit - 0 until enchanted-item effects exist; site flagged in formulas.js | Systems arc (enchantments) |
 | Armor-value effect modifiers (audit F5) | Increased/DecreasedArmorValueModifier inside CalculateArmorToHit - 0 until their effects exist; site flagged in formulas.js | Systems arc (effect library) |
-| PatchRegionIndex legacy-save fix | MapsFile | Systems arc (saves) |
+| PatchRegionIndex legacy-save fix | MapsFile - a workaround for OLDER DFU SAVES missing regionIndex in quest SiteDetails (goto-from-log searching Alik'r); consumes the DFU quest-save format, which this port never loads. Dead code until the quest machine defines our quest-save shape - ships WITH the quest machine if its save shape ever needs it (2026-08-16 assessment) | Systems arc (quest machine) |
 | WorldDataReplacement / BuildingReplacement mod hooks | AssetInjection | Not planned (mod system) |
 | TangentSolver / lightmap UVs | MeshReader | Not planned (Unity-specific) |

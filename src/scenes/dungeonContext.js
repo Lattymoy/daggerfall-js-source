@@ -15,7 +15,9 @@ import { CityLightAnimator } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
-import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, classifyPlacementAction } from '../world/actionSystem.js';
+import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, classifyPlacementAction, lookAtLockText } from '../world/actionSystem.js';
+import { TextRsc } from '../formats/textRsc.js';
+import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem } from '../systems/inventory.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
@@ -43,11 +45,20 @@ import {
   MISSILE_LIFESPAN_S, isDamageHealthEffect,
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
-import { applySpell, tickActiveEffects, hasActiveEffect } from '../systems/effects.js';
+import { applySpell, tickActiveEffects, hasActiveEffect, maxFatigue } from '../systems/effects.js';
+import { FATIGUE_LOSS } from '../systems/statMods.js';
+import { dice100 } from '../combat/formulas.js';
+import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
 import { audio } from '../systems/audio.js';
-import { SOUND, swingSoundFor, hitSoundFor } from '../systems/soundClips.js';
+import {
+  SOUND, swingSoundFor, hitSoundFor,
+  TORCH_ARCHIVE, TORCH_RECORDS, TORCH_MAX_DISTANCE, TORCH_VOLUME,
+  ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD, ANIMAL_MAX_DISTANCE, AMBIENT_RANDOM_PLAY_MAX,
+} from '../systems/soundClips.js';
+import { rand } from '../formats/dfRandom.js';
+import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
 import { BUILD_TAG } from '../buildTag.js';
 import {
   generateItems as generateLootItems, setMagicItemTemplates,
@@ -138,7 +149,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // AddAction BoxCollider brackets the flat; effects keep their verbatim
   // origin; a move-flag flat has no mesh to tween here, so it relays -
   // the chain lives, the motion is INTERIM (loud) until flats can tween.
-  const registerFlatAction = async (position, action, x, y, z, archive, record) => {
+  const registerFlatAction = async (ns, position, action, x, y, z, archive, record) => {
     let aabb = null;
     const t = await getTexture(archive);
     if (t && record < t.recordCount) {
@@ -149,15 +160,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       };
     }
     if (EFFECT_ACTION_FLAGS.has(action.actionFlag)) {
-      const eo = actions.addEffect(position, action, [x, y, z]);
+      const eo = actions.addEffect(ns, position, action, [x, y, z]);
       if (aabb) eo.aabb = aabb;
     } else {
-      actions.addRelay(position, action, aabb);
+      actions.addRelay(ns, position, action, aabb, [x, y, z]);
     }
   };
 
-  for (const b of dungeon.blocks) {
+  // P10: teleport destinations resolve through a per-block-instance
+  // position index (destinations are usually actionless editor flats
+  // that live in no other runtime structure). Keys are `${ns}:${pos}`
+  // where ns = the block INSTANCE index - positions are block-local
+  // byte offsets and 3108/4232 dungeons repeat blocks (the same ns
+  // that namespaces every chain key).
+  const positionIndex = new Map();
+  const torches = [];         // A2: { pos, handle } - looping Burning sources gated by range
+  const ambientAnimals = [];  // A2: { pos, sound } - random-cadence barks
+  for (const [bi, b] of dungeon.blocks.entries()) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
+    for (const [pos, e] of b.layout.objectPositions) {
+      positionIndex.set(`${bi}:${pos}`, { pos: [e.x + b.originX, e.y, e.z + b.originZ], yawDeg: e.yawDeg });
+    }
     for (const p of b.layout.placements) {
       const matrix = multiply(originMatrix, p.matrix);
       const gpu = await getGpuMesh(p.modelIdNum);
@@ -171,7 +194,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // and lever-driven stone doors never swung).
         const cls = classifyPlacementAction(p.action.actionFlag, false);
         if (cls === 'move') {
-          const o = actions.addAction(p.position, cpu, matrix, p.action);
+          const o = actions.addAction(bi, p.position, cpu, matrix, p.action);
           // Audit 06f: movers carry their AT-REST bounds so step-on
           // platforms (classic Collision01 elevators) collision-trigger;
           // the pass only tests movers while parked at 'start', where
@@ -185,7 +208,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // DaggerfallActionDoorSpecial: OpenDoor (or CloseDoor on a
           // non-door) turns a plain model into a hinged special door -
           // own bucket, swings on the chain or the player's hand.
-          const o = actions.addSpecialDoor(p.position, cpu, matrix, p.action);
+          const o = actions.addSpecialDoor(bi, p.position, cpu, matrix, p.action);
           dynamicDraws.push({ gpu, object: o });
           continue;
         }
@@ -194,13 +217,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // logic object; the model stays static (draw + collider
           // below). Origin = the placement translation (CastSpell
           // fires missiles from here, +40*GlobalScale up, verbatim).
-          const eo = actions.addEffect(p.position, p.action, [matrix[12], matrix[13], matrix[14]]);
+          const eo = actions.addEffect(bi, p.position, p.action, [matrix[12], matrix[13], matrix[14]]);
           eo.aabb = worldAabb(cpu.positions, matrix);   // collision triggers test against this
         } else {
-          // Relay: the delegate is routed (Teleport/text/quest) or a
+          // Relay: the delegate is routed (Teleport/text) or a
           // verbatim no-op; the CHAIN through it must live, and its
           // collider makes it a Direct/Attack/collision target.
-          actions.addRelay(p.position, p.action, worldAabb(cpu.positions, matrix));
+          actions.addRelay(bi, p.position, p.action, worldAabb(cpu.positions, matrix), [matrix[12], matrix[13], matrix[14]]);
         }
       }
       drawList.push({ mesh: gpu, matrix });
@@ -213,10 +236,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const gpu = await getGpuMesh(d.modelIdNum);
       await ensureRemap(d.modelIdNum);
       // Chain key + own action record + the starting lock (audit
-      // 2026-08-16: all three were dropped - chained doors were
-      // unreachable and locks had no state to gate on).
+      // 2026-08-16 + P10: chained doors were unreachable and locks
+      // had no state to gate on; the P10 player-toggle lock gate now
+      // reads currentLockValue).
       const o = actions.addDoor(cpuModels.get(d.modelIdNum), matrix, {
-        positionKey: d.position, action: d.action, startingLockValue: d.startingLockValue,
+        ns: bi, positionKey: d.position, action: d.action, startingLockValue: d.startingLockValue,
       });
       dynamicDraws.push({ gpu, object: o });
     }
@@ -224,7 +248,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const key = `${f.archive}_${f.record}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([f.x + b.originX, f.y, f.z + b.originZ]);
-      if (f.action) await registerFlatAction(f.position, f.action, f.x + b.originX, f.y, f.z + b.originZ, f.archive, f.record);
+      // A2 ambient sources: burning torches (RDBLayout.IsTorchFlat,
+      // 210/{0,1,6,16..20}) loop within 5; animal flats (201) bark on
+      // the classic random cadence within 19.2.
+      if (f.archive === TORCH_ARCHIVE && TORCH_RECORDS.has(f.record)) {
+        torches.push({ pos: [f.x + b.originX, f.y, f.z + b.originZ], handle: null });
+      } else if (f.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[f.record] != null) {
+        ambientAnimals.push({ pos: [f.x + b.originX, f.y, f.z + b.originZ], sound: ANIMAL_SOUND_BY_RECORD[f.record] });
+      }
+      if (f.action) await registerFlatAction(bi, f.position, f.action, f.x + b.originX, f.y, f.z + b.originZ, f.archive, f.record);
     }
     for (const m of b.layout.markers) {
       // Acting markers join the runtime too (DFU AddActionFlatHelper
@@ -233,7 +265,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // on inactive objects, so their actions are inert; preserved by
       // skipping them (audit 2026-08-16).
       if (!m.action || m.record === 15 || m.record === 16) continue;
-      await registerFlatAction(m.position, m.action, m.x + b.originX, m.y, m.z + b.originZ, m.archive ?? 199, m.record);
+      await registerFlatAction(bi, m.position, m.action, m.x + b.originX, m.y, m.z + b.originZ, m.archive ?? 199, m.record);
     }
     for (const l of collectDungeonLights(b.dfBlock)) {
       lights.push({ x: l.x + b.originX, y: l.y, z: l.z + b.originZ, range: l.range });
@@ -281,11 +313,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
-      { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity }] = await Promise.all([
+      { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity }, { EnemyCaster }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
-      import('../characters/enemyEntity.js'),
+      import('../characters/enemyEntity.js'), import('../characters/enemyCasting.js'),
     ]);
     const bodyImg = new ImgFile();
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
@@ -309,7 +341,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       fetchBytes,
       createCharacterRig: engineRig.createCharacterRig,
       bodyRamps: engineRig.deriveClassicRamps(palette, bodyImg.getDFBitmap()),
-      buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
+      buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, EnemyCaster, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
     };
    } catch (err) {
      // The foe SUBSYSTEM failing to initialize (a dynamic import, the
@@ -392,10 +424,67 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // from here (absent -> stays flagged-skip).
     setMagicItemTemplates(readMagicDef(await fetchBytes('MAGIC.DEF')));
   } catch { /* data absent: casts + MI no-op, loudly flagged */ }
+  // U6: the TEXT.RSC database goes LIVE for the action text boxes
+  // (the reader shipped with the U-series; the hudText note's
+  // "database FLAGGED" narrows to the skill/loot message ids).
+  let textRsc = null;
+  try {
+    textRsc = new TextRsc().load(await fetchBytes('TEXT.RSC'));
+  } catch { console.warn('[text] TEXT.RSC unavailable; action text boxes no-op'); }
+  // S16: enemy spell lists ride SPELLS.STD (loaded just above, after
+  // the foe build) - SetEnemyCareer's assignment tail per live foe:
+  // class enemies with CastsMagic take EnemyClassSpells[min(6,
+  // level/3)] (monsters' fixed lists ship in the same table and go
+  // live when monsters leave their billboards). A caster foe gets an
+  // EnemyCaster driving the classic decide-and-release shape.
+  if (spellsByIndex && foeDeps) {
+    for (const f of foes) {
+      assignEnemySpells(f.entity, spellsByIndex);
+      if (f.entity.spells?.length) f.caster = new foeDeps.EnemyCaster(f.entity);
+    }
+  }
 
   let chargenFlow = null;
   let activeOverlay = null;
   const hudText = new HudText();   // U5: classic popup messages
+  // P10 action seams: teleport destination resolution (the scene
+  // installs onTeleport to warp its motor) + the classic look-at-lock
+  // text on a refused locked door (LookAtInteriorLock, chance-tiered
+  // over the LIVE lockpicking skill).
+  actions.resolvePosition = (ns, key) => positionIndex.get(`${ns}:${key}`) ?? null;
+  actions.onLockedDoor = (o) => hudText.add(lookAtLockText(o.currentLockValue, playerEntity.level, skillValue(playerEntity, SKILLS.Lockpicking)));
+  // A2: DaggerfallAction.Play's sound - the RDB soundIndex fires from
+  // the object on every Play (the default min1/max500 3D profile;
+  // movers speak from their live matrix, effect objects from origin).
+  actions.onActionSound = (o) => {
+    const p = o.origin ?? (o.matrix ? [o.matrix[12], o.matrix[13], o.matrix[14]] : null);
+    if (p) audio.play3d(o.index, p);
+  };
+  // U6: the text-action seams. ShowText/ShowTextWithInput open modal
+  // boxes on the overlay seam (the world holds); DoorText rides the
+  // HUD popup (AddHUDText 2.0s); the trespass check maps to our foes,
+  // which are already hostile-on-sight (MakeEnemiesHostile's passive
+  // teams pend the faction model - logged loudly).
+  const rscLines = (id) => {
+    const v = textRsc?.plainText(id);
+    return v?.length ? v[0].split('\n').filter((l) => l.length) : null;
+  };
+  actions.onShowText = (id) => {
+    const lines = rscLines(id);
+    if (!lines) return console.warn(`[action] ShowText ${id}: TEXT.RSC record unavailable`);
+    if (!activeOverlay) activeOverlay = new ActionTextBox(lines);
+  };
+  actions.onShowTextInput = (id, submit) => {
+    const lines = rscLines(id);
+    if (!lines) return console.warn(`[action] ShowTextWithInput ${id}: TEXT.RSC record unavailable`);
+    if (!activeOverlay) activeOverlay = new ActionInputBox(lines, submit);
+  };
+  actions.onDoorText = (id) => {
+    const lines = rscLines(id);
+    if (!lines) return console.error(`[action] bad DoorTextID requested: ${id}`);   // DFU throws; we log loudly
+    for (const l of lines) hudText.add(l);
+  };
+  actions.onTrespass = () => console.warn('[action] trespass check fired (MakeEnemiesHostile) - foes are hostile-on-sight; passive teams pend the faction model');
   const clickCast = new OneShotLatch();   // classic click-to-cast: armed by readying
   let pendingClickCast = false;
   let lastPlayerFeet = null;   // S11: the save position
@@ -403,6 +492,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _motorState = '';
   let _mouseState = 'no events';
   let _inputState = '';
+  const _activity = { running: false, swimming: false };   // P11: the fatigue drain's live state
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
   function healPlayer(n) {
@@ -418,21 +508,44 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       activeOverlay = new DeathScreen();
     }
   }
-  // S13 magicka sinks (parallel to heal/hurt): the SpellPoints effect
-  // family drives these. IncreaseMagicka clamps to maxMagicka;
-  // DecreaseMagicka floors at 0. Both surface for the HUD/F8 readout.
-  function restoreMagicka(n) {
-    if (n <= 0) return;
-    playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? 0, (playerEntity.magicka ?? 0) + n);
-    surfacePlayer();
-  }
+  // S13 magicka sink (parallel to heal/hurt): the SpellPoints damage
+  // family drives it. DecreaseMagicka floors at 0; surfaces for the
+  // HUD/F8 readout. (The S13 restoreMagicka door left with the S15
+  // (10,9) parity fix - that classic key is HEAL FATIGUE; DFU's
+  // Heal-SpellPoints is potion-only with no classic key, so no spell
+  // reaches a magicka-restore sink until potions/absorption ship.)
   function drainMagicka(n) {
     if (n <= 0) return;
     playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n);
     surfacePlayer();
   }
+  // S15 fatigue sinks: RAW fatigue points (the effect door applies the
+  // x64). SetFatigue clamps 0..MaxFatigue (max derived LIVE - a
+  // drained strength lowers the ceiling). INTERIM (loud): the
+  // exhaustion consumer (classic collapse at fatigue 0) pends its
+  // slice; fatigue floors at 0 with no further consequence here.
+  function drainFatigue(n) {
+    if (n <= 0) return;
+    playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - n);
+    surfacePlayer();
+  }
+  function restoreFatigue(n) {
+    if (n <= 0) return;
+    playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + n);
+    surfacePlayer();
+  }
   const foeDrainMagicka = (ent) => (n) => { if (n > 0) ent.magicka = Math.max(0, (ent.magicka ?? 0) - n); };
-  const foeRestoreMagicka = (ent) => (n) => { if (n > 0) ent.magicka = Math.min(ent.maxMagicka ?? Infinity, (ent.magicka ?? 0) + n); };
+  // The per-entity sink bundles the effect door consumes (S15 - one
+  // definition; every applySpell/tick call site rides these).
+  const playerSinks = { hurt: hurtPlayer, heal: healPlayer, drainMagicka, drainFatigue, restoreFatigue };
+  const foeSinks = (f) => ({
+    hurt: (n) => damageFoe(f, n),
+    heal: (n) => { f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + n); },
+    drainMagicka: foeDrainMagicka(f.entity),
+    drainFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.max(0, (f.entity.fatigue ?? 0) - n); },
+    restoreFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.min(maxFatigue(f.entity), (f.entity.fatigue ?? 0) + n); },
+  });
+  const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
   if (!playerEntity.chargenDone) {
     if (Number.isInteger(opts.playerClass)) {
       // ?class=N: the headless skip path (rolls + the loud policy)
@@ -503,6 +616,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function fireArrow(from, dir, weapon, fromPlayer, shooterFoe = null) {
     missiles.push({ arrow: true, weapon, fromPlayer, shooterFoe, pos: [...from], dir: [...dir], age: 0, batch: null, draw: null });
   }
+  // S16: the enemy cast - "enemies always cast ready spell instantly
+  // once queued" (EntityEffectManager.Update): spend the S10 cost
+  // (DecreaseMagicka floors at 0 - DFU casts even when the cost
+  // exceeds the pool; selection only gates magicka > 0), play the
+  // element cast sound from the caster (EnemyCastReadySpell), then
+  // CasterOnly assigns to SELF and everything else looses a missile
+  // that aims at the player mid-capsule at fire time (the shared
+  // trap-missile shape). RESIDUAL (honest): enemy missiles resolve
+  // against the player only - foe-vs-foe friendly fire pends the
+  // missile seam's target sweep.
+  function castEnemySpell(f, spell) {
+    const cost = calculateCastCost(spell, f.entity).sp;
+    f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - cost);
+    const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
+    audio.play3d(SPELL_CAST_SOUND[spell.element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 });
+    if (spell.rangeType === 0) {
+      applySpell(spell, f.entity.level, f.entity, foeSinks(f), Math.random, { entity: f.entity, sinks: foeSinks(f) });
+      return;
+    }
+    missiles.push({ spell, casterLevel: f.entity.level, casterFoe: f, pos: from, dir: null, age: 0, batch: null, fromPlayer: false });
+  }
   async function ensureArrowModel(m) {
     if (m.draw !== null) return;
     m.draw = false;
@@ -519,13 +653,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // Cast ranges II: the rangeType-4 EXPLOSION - indiscriminate sweep
   // (OverlapSphere at impact): every live foe within the radius, and
   // the player when close enough.
-  function explodeAt(pos, spell, casterLevel, playerFeet) {
+  function explodeAt(pos, spell, casterLevel, playerFeet, caster = null) {
     for (const t of sweepFoes(pos, EXPLOSION_RADIUS, foes)) {
-      applySpell(spell, casterLevel, t.entity, { hurt: (n) => damageFoe(t, n), heal: () => {}, drainMagicka: foeDrainMagicka(t.entity), restoreMagicka: foeRestoreMagicka(t.entity) });
+      applySpell(spell, casterLevel, t.entity, foeSinks(t), Math.random, caster);
     }
     if (playerFeet) {
       const d = Math.hypot(playerFeet[0] - pos[0], playerFeet[1] + 0.9 - pos[1], playerFeet[2] - pos[2]);
-      if (d <= EXPLOSION_RADIUS) applySpell(spell, casterLevel, playerEntity, { hurt: hurtPlayer, heal: healPlayer, restoreMagicka, drainMagicka });
+      if (d <= EXPLOSION_RADIUS) applySpell(spell, casterLevel, playerEntity, playerSinks, Math.random, caster);
     }
   }
 
@@ -538,7 +672,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
       // missile; the cost spends here.
       playerEntity.magicka -= cost;
-      const r = applySpell(sp, playerEntity.level, playerEntity, { hurt: hurtPlayer, heal: healPlayer, restoreMagicka, drainMagicka });
+      const r = applySpell(sp, playerEntity.level, playerEntity, playerSinks, Math.random, playerCaster());
       if (r.healed > 0) hudText.add(`You are healed ${r.healed} points.`);
       surfacePlayer();
       return true;
@@ -555,7 +689,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!t) return false;
       playerEntity.magicka -= cost;
       surfacePlayer();
-      applySpell(sp, playerEntity.level, t.entity, { hurt: (n) => damageFoe(t, n), heal: (n) => { t.entity.health = Math.min(t.entity.maxHealth ?? Infinity, t.entity.health + n); }, drainMagicka: foeDrainMagicka(t.entity), restoreMagicka: foeRestoreMagicka(t.entity) });
+      applySpell(sp, playerEntity.level, t.entity, foeSinks(t), Math.random, playerCaster());
       return true;
     }
     if (sp.rangeType === 3) {
@@ -563,7 +697,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       playerEntity.magicka -= cost;
       surfacePlayer();
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, foes)) {
-        applySpell(sp, playerEntity.level, t.entity, { hurt: (n) => damageFoe(t, n), heal: () => {}, drainMagicka: foeDrainMagicka(t.entity), restoreMagicka: foeRestoreMagicka(t.entity) });
+        applySpell(sp, playerEntity.level, t.entity, foeSinks(t), Math.random, playerCaster());
       }
       return true;
     }
@@ -720,6 +854,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // (DFU default 12) in minutes; RaiseSkills gates itself at 360.
   let classicMinutes = 0;
   let _prevWeaponState = null;   // A1: swing-sound edge detect
+  let _ambientTimer = 0;         // A2: the animal random-play classic cadence
   async function ensureMissileBatch(m) {
     if (m.batch !== null) return;
     m.batch = false;   // in-flight guard
@@ -800,13 +935,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           if (f.dead) continue;
           const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + 0.9 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];
           if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
-            if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet);
-            else applySpell(m.spell, playerEntity.level, f.entity, {
-              hurt: (n) => damageFoe(f, n),
-              heal: (n) => { f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + n); },
-              drainMagicka: foeDrainMagicka(f.entity),
-              restoreMagicka: foeRestoreMagicka(f.entity),
-            });
+            if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster());
+            else applySpell(m.spell, playerEntity.level, f.entity, foeSinks(f), Math.random, playerCaster());
             retireMissile(m);
             break;
           }
@@ -815,8 +945,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       const dx = target[0] - m.pos[0], dy = target[1] - m.pos[1], dz = target[2] - m.pos[2];
       if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {   // missile radius + player capsule radius
-        if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet);
-        else applySpell(m.spell, playerEntity.level, playerEntity, { hurt: hurtPlayer, heal: healPlayer, restoreMagicka, drainMagicka });
+        // S16: enemy missiles carry their caster (level + the
+        // transfer heal-back pair); trap casts stay casterless (DFU
+        // action casters are null) on the S4b player-level shape.
+        const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
+        if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, mCaster);
+        else applySpell(m.spell, m.casterLevel ?? playerEntity.level, playerEntity, playerSinks, Math.random, mCaster);
         retireMissile(m);
       }
     }
@@ -839,6 +973,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       actions: [...actions.objects.values()].map((o) => ({
         key: o.key, state: o.state, t: o.t ?? 0,
         activationCount: o.activationCount ?? 0,
+        ...(o.kind === 'door' ? { lock: o.currentLockValue } : {}),   // P10: door locks persist
       })),
     };
   }
@@ -859,6 +994,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       o.state = sa.state;
       o.t = sa.t;
       o.activationCount = sa.activationCount;
+      if (o.kind === 'door' && sa.lock != null) o.currentLockValue = sa.lock;   // P10
+      actions.syncRestored(o);   // P10: matrix + collider bucket settle (an open door no longer restores solid-and-closed)
     });
   }
 
@@ -923,8 +1060,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     classicMinutes += (dt * 12) / 60;
     for (let r = _prevMinute; r < Math.floor(classicMinutes); r++) {
       // S7: one magic round per classic minute (the broker's cadence)
-      tickActiveEffects(playerEntity, { hurt: hurtPlayer, heal: healPlayer, restoreMagicka, drainMagicka });
-      for (const f of foes) if (!f.dead) tickActiveEffects(f.entity, { hurt: (n) => damageFoe(f, n), heal: () => {}, drainMagicka: foeDrainMagicka(f.entity), restoreMagicka: foeRestoreMagicka(f.entity) });
+      tickActiveEffects(playerEntity, playerSinks);
+      for (const f of foes) if (!f.dead) tickActiveEffects(f.entity, foeSinks(f));
+      // P11: per-game-minute fatigue loss (PlayerEntity verbatim):
+      // default 11; running 88; swimming 44 on a FAILED roll vs the
+      // LIVE Swimming skill (success stays default) + the Swimming
+      // tally every swimming minute. Athleticism multiplier pends the
+      // career advantage flags (1.0, flagged); the Argonian exemption
+      // pends race selection.
+      {
+        let loss = FATIGUE_LOSS.Default;
+        if (_activity.running) loss = FATIGUE_LOSS.Running;
+        else if (_activity.swimming) {
+          if (!dice100(skillValue(playerEntity, SKILLS.Swimming))) loss = FATIGUE_LOSS.Swimming;   // Dice100.FailedRoll
+          tallySkill(playerEntity, SKILLS.Swimming);
+        }
+        drainFatigue(loss);
+      }
     }
     const raised = raiseSkills(playerEntity, classicMinutes, Math.random, () => {
       // U3: the level-up screen replaces the headless auto-apply
@@ -948,6 +1100,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         return nx >= -1 && nx <= 1 && ny >= -1 && ny <= 1;
       };
       audio.setListener(eye, [-view[2], -view[6], -view[10]]);   // A1: the camera is the ears
+      // A2 ambient pass. Torches: LoopIfPlayerNear - the looping
+      // Burning source exists only while the player is within 5
+      // (linear rolloff, volume 0.7); out of range it stops and
+      // frees the node. Animals: PlayRandomlyIfPlayerNear - per
+      // CLASSIC UPDATE in range, DFRandom.rand() <= 100 barks.
+      for (const t of torches) {
+        const tdx = eye[0] - t.pos[0], tdy = eye[1] - t.pos[1], tdz = eye[2] - t.pos[2];
+        const inRange = tdx * tdx + tdy * tdy + tdz * tdz <= TORCH_MAX_DISTANCE * TORCH_MAX_DISTANCE;
+        if (inRange && !t.handle) t.handle = audio.loop3d(SOUND.Burning, t.pos, TORCH_VOLUME, { maxDistance: TORCH_MAX_DISTANCE });
+        else if (!inRange && t.handle) { t.handle.stop(); t.handle = null; }
+      }
+      if (ambientAnimals.length) {
+        _ambientTimer += dt;
+        while (_ambientTimer >= CLASSIC_UPDATE_INTERVAL) {
+          _ambientTimer -= CLASSIC_UPDATE_INTERVAL;
+          for (const a of ambientAnimals) {
+            const adx = eye[0] - a.pos[0], ady = eye[1] - a.pos[1], adz = eye[2] - a.pos[2];
+            if (adx * adx + ady * ady + adz * adz > ANIMAL_MAX_DISTANCE * ANIMAL_MAX_DISTANCE) continue;
+            if (rand() <= AMBIENT_RANDOM_PLAY_MAX) audio.play3d(a.sound, a.pos, 1, { maxDistance: ANIMAL_MAX_DISTANCE });
+          }
+        }
+      }
       const _wpnState = playerWeapon.machine.state;
       if (_wpnState !== _prevWeaponState) {
         // FPSWeapon plays SwingWeaponSound at swing start: the
@@ -990,6 +1164,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         }
       }
       f.events = f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine
+      // S16: the casting decision rides beside the attack machine
+      // (DoRangedAttack's spell branch + DoTouchSpell); the decision
+      // casts INSTANTLY. RESIDUAL (honest): DFU casters also hold at
+      // range and strafe (Enhanced AI) or stand off - our motor keeps
+      // the C8 pursuit; the foe casts while closing.
+      if (playerFeet && f.caster) {
+        const dec = f.caster.update(dt, f.ai, f.attack, playerFeet, playerEntity);
+        if (dec) castEnemySpell(f, dec.spell);
+      }
       // E3b: the machine's hit frame resolves against the player -
       // EnemyAttack.MeleeDamage verbatim: gate 0.25 / MeleeDistance +
       // 35.156deg, then CalculateAttackDamage (class hand-to-hand;
@@ -1129,6 +1312,34 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // actions) is FLAGGED - the player snapshot only.
     toggleDebugHud() { debugHud = !debugHud; },
     reportMotor(grounded, velY, yaw) { _motorState = `g:${grounded ? 1 : 0} vy:${velY.toFixed(1)} yaw:${yaw.toFixed(2)}`; },
+    // P11: the current block's water surface (world y) - the swim
+    // toggle rule reads it (PlayerEnterExit blockWaterLevel).
+    waterSurfaceYAt(x, z) {
+      for (const b of dungeon.blocks) {
+        if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
+          return b.layout.waterLevel === 10000 ? null : -b.layout.waterLevel * GLOBAL_SCALE;
+        }
+      }
+      return null;
+    },
+    // P11: the motor-mode effect consumers (Levitate 14,255; the S8
+    // waterWalking flag lands its swimmer).
+    playerLevitating: () => hasActiveEffect(playerEntity, 'levitate'),
+    playerWaterWalking: () => hasActiveEffect(playerEntity, 'waterWalking'),
+    // P11: per-frame activity feed - the splash on the swim edge, the
+    // jump fatigue/tally (PlayerEntity: 11 x multiplier + Jumping
+    // tally once per jump), and the state the per-minute fatigue
+    // drain reads. Athleticism multiplier pends the career advantage
+    // flags (1.0, flagged).
+    reportActivity({ running = false, swimming = false, jumped = false } = {}) {
+      if (swimming && !_activity.swimming) audio.playOneShot(SOUND.SplashLarge);   // PlayLargeSplash on entry
+      _activity.running = running;
+      _activity.swimming = swimming;
+      if (jumped) {
+        drainFatigue(FATIGUE_LOSS.Jumping);
+        tallySkill(playerEntity, SKILLS.Jumping);
+      }
+    },
     reportMouse(dx, dy, locked) { _mouseState = `dx:${dx} dy:${dy} lock:${locked ? 'Y' : 'N'}`; },
     reportInput(keys, pitch) { _inputState = `keys:${keys} pitch:${pitch.toFixed(2)}`; },
     quickSave() {
@@ -1266,6 +1477,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     colliderTris,
     destroy() {
       for (const b of billboardBatches) renderer.destroyBatch(b);
+      for (const t of torches) { t.handle?.stop(); t.handle = null; }   // A2: free looping sources
     },
   };
 }

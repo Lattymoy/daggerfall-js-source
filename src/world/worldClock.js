@@ -35,6 +35,14 @@ export const MINUTES_PER_DAY = 1440;
 
 export const SUN_RIG_INTENSITY = 0.6;
 export const SUN_RIG_COLOR = Object.freeze([0.8161765, 0.954361, 1]);
+// R12: SunlightRig's IndirectLight - "point light that follows player
+// to simulate indirect lighting". Serialized prefab values (git show
+// Assets/Prefabs/World/SunlightRig.prefab): type Point, intensity 1,
+// range 150, color 0.7058824 gray. (The Ledger's "white 0.6" note
+// described the rig's directional FILLS - the prefab is authority.)
+export const INDIRECT_LIGHT_COLOR = Object.freeze([0.7058824, 0.7058824, 0.7058824]);
+export const INDIRECT_LIGHT_INTENSITY = 1.0;
+export const INDIRECT_LIGHT_RANGE = 150;
 export const EXTERIOR_NOON_AMBIENT = Object.freeze([0.9, 0.9, 0.9]);
 export const EXTERIOR_NIGHT_AMBIENT = Object.freeze([0.25, 0.25, 0.25]);
 
@@ -117,6 +125,13 @@ export function exteriorAmbient(minuteOfDay, nightAmbientScale = 1) {
 /** Sun contribution scale: rig intensity * daylight curve, 0 at night. */
 export function sunScale(minuteOfDay) {
   return isNight(minuteOfDay) ? 0 : SUN_RIG_INTENSITY * daylightScale(minuteOfDay);
+}
+
+/** R12: the indirect light's scale - SunlightManager disables the
+ *  whole rig at night and SetLightIntensity multiplies the saved
+ *  intensity by the same daylight-curve scale as the key light. */
+export function indirectLightScale(minuteOfDay) {
+  return isNight(minuteOfDay) ? 0 : INDIRECT_LIGHT_INTENSITY * daylightScale(minuteOfDay);
 }
 
 /** Day sky frame 0-63 (linear equivalence); null means use the night sky. */

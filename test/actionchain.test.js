@@ -32,9 +32,9 @@ const act = (over = {}) => ({
 
 test('actionchain: a relay carries the cascade through routed flags', () => {
   const a = new ActionSystem(stubCollider());
-  const mover = a.addAction(9, CUBE, I, act({ duration: 20, translation: { x: 0, y: 2, z: 0 } }));
-  a.addRelay(5, act({ actionFlag: ACTION_FLAGS.Teleport, nextObject: 9 }));
-  const lever = a.addAction(1, CUBE, I, act({ duration: 20, rotation: { x: -40, y: 0, z: 0 }, nextObject: 5, triggerFlag: TRIGGER_FLAGS.Direct }));
+  const mover = a.addAction(0, 9, CUBE, I, act({ duration: 20, translation: { x: 0, y: 2, z: 0 } }));
+  a.addRelay(0, 5, act({ actionFlag: ACTION_FLAGS.Teleport, nextObject: 9 }));
+  const lever = a.addAction(0, 1, CUBE, I, act({ duration: 20, rotation: { x: -40, y: 0, z: 0 }, nextObject: 5, triggerFlag: TRIGGER_FLAGS.Direct }));
   a.activate(lever.key);   // lever -> Teleport relay -> mover
   assert.equal(lever.state, 'forward');
   assert.equal(mover.state, 'forward', 'the chain must pass THROUGH the routed Teleport object');
@@ -48,9 +48,9 @@ test('actionchain: a chained door runs its own verb - OpenDoor unlocks + opens',
     action: act({ actionFlag: ACTION_FLAGS.OpenDoor, triggerFlag: TRIGGER_FLAGS.None }),
     startingLockValue: 0x32,
   });
-  assert.equal(door.key, 'act:12');
+  assert.equal(door.key, 'act:0:12');   // ns:position (the repeated-block namespace)
   assert.equal(door.currentLockValue, 0x32);
-  const lever = a.addAction(1, CUBE, I, act({ duration: 20, rotation: { x: -40, y: 0, z: 0 }, nextObject: 12, triggerFlag: TRIGGER_FLAGS.Direct }));
+  const lever = a.addAction(0, 1, CUBE, I, act({ duration: 20, rotation: { x: -40, y: 0, z: 0 }, nextObject: 12, triggerFlag: TRIGGER_FLAGS.Direct }));
   a.activate(lever.key);
   assert.equal(door.state, 'forward', 'chain -> OpenDoor swings the door');
   assert.equal(door.currentLockValue, 0, 'OpenDoor unlocks (verbatim)');
@@ -67,7 +67,9 @@ test('actionchain: CloseDoor closes an OPEN door and re-locks to the starting va
   // CloseDoor on a CLOSED door does nothing (verbatim: only closes open doors).
   a.receive(door);
   assert.equal(door.state, 'start');
-  // Open it by hand, settle, then chain the CloseDoor.
+  // Open it by hand (clearing the lock first - the P10 player gate
+  // refuses locked toggles), settle, then chain the CloseDoor.
+  door.currentLockValue = 0;
   a.toggleDoor(door);
   for (let i = 0; i < 100; i++) a.update(1.5 / 90);
   assert.equal(door.state, 'end');
@@ -93,9 +95,9 @@ test('actionchain: Lock/UnlockDoor mutate the lock value only', () => {
 test('actionchain: a special door swings like a hinged door and chains', () => {
   const c = stubCollider();
   const a = new ActionSystem(c);
-  const s = a.addSpecialDoor(7, CUBE, I, act({ actionFlag: ACTION_FLAGS.OpenDoor }));
+  const s = a.addSpecialDoor(0, 7, CUBE, I, act({ actionFlag: ACTION_FLAGS.OpenDoor }));
   assert.ok(s.special);
-  const lever = a.addAction(1, CUBE, I, act({ duration: 20, rotation: { x: -40, y: 0, z: 0 }, nextObject: 7, triggerFlag: TRIGGER_FLAGS.Direct }));
+  const lever = a.addAction(0, 1, CUBE, I, act({ duration: 20, rotation: { x: -40, y: 0, z: 0 }, nextObject: 7, triggerFlag: TRIGGER_FLAGS.Direct }));
   a.activate(lever.key);
   assert.equal(s.state, 'forward');
   for (let i = 0; i < 100; i++) a.update(1.5 / 90);
@@ -106,14 +108,14 @@ test('actionchain: a special door swings like a hinged door and chains', () => {
 
 test('actionchain: the player toggle fires the door\'s own record through the Door gate', () => {
   const a = new ActionSystem(stubCollider());
-  const mover = a.addAction(9, CUBE, I, act({ duration: 20, translation: { x: 0, y: 2, z: 0 } }));
+  const mover = a.addAction(0, 9, CUBE, I, act({ duration: 20, translation: { x: 0, y: 2, z: 0 } }));
   // Door trigger accepts 'Door': chain fires on the player toggle.
   const gated = a.addDoor(CUBE, I, { positionKey: 20, action: act({ triggerFlag: TRIGGER_FLAGS.Door, nextObject: 9 }) });
   a.activate(gated.key);
   assert.equal(gated.state, 'forward');
   assert.equal(mover.state, 'forward', 'ExecuteActionOnToggle cascades on the player toggle');
   // Direct trigger REJECTS 'Door': the toggle must not fire the record.
-  const mover2 = a.addAction(11, CUBE, I, act({ duration: 20, translation: { x: 0, y: 2, z: 0 } }));
+  const mover2 = a.addAction(0, 11, CUBE, I, act({ duration: 20, translation: { x: 0, y: 2, z: 0 } }));
   const wrongGate = a.addDoor(CUBE, I, { positionKey: 21, action: act({ triggerFlag: TRIGGER_FLAGS.Direct, nextObject: 11 }) });
   a.activate(wrongGate.key);
   assert.equal(wrongGate.state, 'forward', 'the door still toggles');
@@ -122,9 +124,9 @@ test('actionchain: the player toggle fires the door\'s own record through the Do
 
 test('actionchain: a chained None-flag door cascades but does NOT open (verbatim no delegate)', () => {
   const a = new ActionSystem(stubCollider());
-  const mover = a.addAction(9, CUBE, I, act({ duration: 20, translation: { x: 0, y: 2, z: 0 } }));
+  const mover = a.addAction(0, 9, CUBE, I, act({ duration: 20, translation: { x: 0, y: 2, z: 0 } }));
   const door = a.addDoor(CUBE, I, { positionKey: 12, action: act({ nextObject: 9 }) });
-  const lever = a.addAction(1, CUBE, I, act({ duration: 20, rotation: { x: -40, y: 0, z: 0 }, nextObject: 12, triggerFlag: TRIGGER_FLAGS.Direct }));
+  const lever = a.addAction(0, 1, CUBE, I, act({ duration: 20, rotation: { x: -40, y: 0, z: 0 }, nextObject: 12, triggerFlag: TRIGGER_FLAGS.Direct }));
   a.activate(lever.key);
   assert.equal(door.state, 'start', 'None-flag door has no delegate - it must not swing');
   assert.equal(mover.state, 'forward', 'but the cascade passes through it');

@@ -60,10 +60,10 @@ test('DrainMagicka: verbatim max(1, flat?mag:axis), floors at 0', () => {
   const sys = new ActionSystem({ addMesh() {}, removeMesh() {}, removeBucket() {} }, {
     drainMagicka: (n) => { magicka = Math.max(0, magicka - n); },
   });
-  const flat = sys.addEffect(1, { actionFlag: ACTION_FLAGS.DrainMagicka, isFlat: true, magnitude: 4, index: 0, axisRaw: 9, nextObject: -1 });
+  const flat = sys.addEffect(0, 1, { actionFlag: ACTION_FLAGS.DrainMagicka, isFlat: true, magnitude: 4, index: 0, axisRaw: 9, nextObject: -1 });
   sys.receive(flat);
   assert.equal(magicka, 6);
-  const model = sys.addEffect(2, { actionFlag: ACTION_FLAGS.DrainMagicka, isFlat: false, magnitude: 4, index: 0, axisRaw: 0, nextObject: -1 });
+  const model = sys.addEffect(0, 2, { actionFlag: ACTION_FLAGS.DrainMagicka, isFlat: false, magnitude: 4, index: 0, axisRaw: 0, nextObject: -1 });
   sys.receive(model); // axisRaw 0 -> max(1, 0) = 1
   assert.equal(magicka, 5);
   for (let i = 0; i < 9; i++) sys.receive(flat);
