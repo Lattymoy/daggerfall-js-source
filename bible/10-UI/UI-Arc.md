@@ -224,3 +224,42 @@ delegates:
   now LIVE via U6; the id sweep remains).
 - Starting-spell sets: SHIPPED via Systems S6 (the spellbook lists
   the character's real known spells).
+
+## U7 (the rest window): SHIPPED
+
+The classic rest flow, consuming the S20 rates - recovery finally
+has its front door. Ported from DaggerfallRestWindow's rules (the
+panel is the U-arc's clean text idiom; backgrounds stay FLAGGED
+pending art-name verification):
+
+- **The session machine** (systems/restSession.js, pure + pinned):
+  an hour of rest passes in 0.75 REAL seconds (loiter 1.25),
+  advanced in six 10-classic-minute sub-ticks so world time - magic
+  rounds, diseases, poisons, the once-per-change fatigue drain -
+  flows through the rest exactly as RaiseTime does. Each completed
+  hour: the RESTING enemies check breaks on TEXT.RSC 354 (an aware
+  foe at any spawn-band range, an unaware one only within the
+  12-unit resting distance - the P13 senses fields again); then
+  vitals tick for timed/full rest (the three S20 per-hour rates +
+  a Medical tally; loiter recovers NOTHING) and completion lands -
+  full rest ends when fully healed (health AND fatigue full,
+  magicka full or NoRegenSpellPoints; 350 "You are healed.", and
+  instantly when starting already healed), timed on 353 "You wake
+  up.", loiter on 349. Death mid-rest (disease/poison through the
+  raised hours) ends at once - the death screen owns that flow
+  (DFU's "You never awaken." line rides it).
+- **The window** (ui/restWindow.js): selection (rest a while /
+  until healed / loiter) -> an hours prompt for the timed modes
+  (loiter refused above the classic 3-hour cap with the
+  cannot-loiter lines) -> the running page (hours passed + live
+  vitals; Escape ends with the mode's finish text) -> the
+  click-to-close end box. THE WORLD RUNS UNDER THE OVERLAY - foes
+  keep moving while the player rests and genuinely break it.
+- **The key + gates**: KeyR (the DFU default) through the input
+  map; pre-rest gates in the classic order - enemies nearby (354),
+  swimming or airborne (355 "You cannot rest now.", the motor's
+  live grounded flag). Building trespass/rent rules pend towns;
+  the DFU rest-encounter spawns pend the spawn machinery.
+
+3 tests (restwindow.test.js). Suite 366/83, ARENA2 corpus
+pre-commit.

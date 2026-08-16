@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 363 tests across 82 files.
+Node 22). Suite: 366 tests across 83 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -14,6 +14,7 @@ Node 22). Suite: 363 tests across 82 files.
 | sky.test.js | 3 | SKY reader pins, panorama mirror law, night mapping |
 | smoke.test.js | 1 | runner sanity |
 | clock.test.js | 4 | hour gates, LightCurve pins, sun sweep, flicker determinism |
+| restwindow.test.js | 3 | U7 the rest session machine: the hour cadence (six 10-classic-minute sub-ticks per 0.75s rested hour, loiter slower at 1.25s), completions (timed wakes on TEXT 353 after its vitals ticks, full rest ends healed on 350 - instantly when starting already healed with NO time passed, loiter ends on 349 with vitals NEVER ticking - a throwing tickVitals proves it) and the 3-hour classic loiter cap constant, interrupts (enemies break at the hour boundary on 354 BEFORE vitals - a throwing tickVitals proves the order - with the hour's time still passed; death mid-rest ends at once with no text - the death screen owns the flow), and endEarly's per-mode finish texts |
 | rest.test.js | 2 | S20 rest/exhaustion: HealingRateModifier floor(END/10)-5 (classic's negative-mod bug deliberately not recreated, following DFU), the health rate's Medical+60 base with the RapidHealing 100 upgrades (Always; InLight only when day AND outside; InDarkness otherwise) and its floor of 1, the fatigue rate maxFatigue/8 in stored x64 units, the spell-point rate zeroed by the NoRegenSpellPoints ability bit (the low-byte cast pinned), and the exhaustion outcome - a safe collapse rests one hour (all three rates + the 1071 text), enemies nearby die on 1072, water dies on the drowning line |
 | riding.test.js | 2 | Platform riding (groundKey identity - the mover wins over the static floor within skin; the frame delta carries the capsule with ZERO lateral ejection; stepping off returns 'dungeon') + ClickToAttack (the DFU Range(UpRight, DownRight+1) six-direction table at roll boundaries, busy-machine refusal) |
 | audio.test.js | 6 | A1 pure parts: pcm8->float32 verbatim, SoundClips indices vs SoundClips.cs, GetSwingSound pitch table + PlayHitSound roll families (boundaries MEASURED), the restored enemy sound columns (rat/imp rows, 61-entry count); A2 ambient data verbatim (IsTorchFlat 210/{0,1,6,16..20} + 5m/0.7 + Burning 420, the 201 animal record->clip pairs with gap records silent + 19.2m + the rand()<=100 classic cadence) and the action Play sound seam (soundIndex > 0 fires from effect origin / mover matrix, 0 stays silent) |
