@@ -1,0 +1,137 @@
+// The FP-weapon HOST RIG (C9): one bundle of the classic-weapon
+// surface for hosts that own a motor but had NO weapon - the interior
+// mode and both exterior walk hosts (the weapon-audit follow-up: "the
+// voxel path was dungeon-only too"). Every law here mirrors the
+// AUDITED dungeon implementation (dungeonContext.js) verbatim:
+// WeaponManager's sheathe/ShowWeapons legs, FPSWeapon's bow guards,
+// the drag-to-swing gesture seam, the swing-sound edge, and the
+// WeaponEnvDamage swing ray. dungeonContext keeps its own inline copy
+// FOR NOW - that file is the parallel FP lane's active surface and
+// has conflicted on every merge today; folding it onto this rig is a
+// recorded residual (Combat.md), not an accident.
+//
+// Hosts without foes still get the full classic feel: ready/sheathe
+// on Z (DrawWeapon 78 on unsheathing a real weapon), RMB drag or
+// click to swing with the pitch-matched swing sound, bows consuming
+// an Arrow per loose with the zero-arrow auto-sheathe, and the
+// optional environment-attack ray (interiors: bash/Receive on action
+// objects; open exteriors have nothing in reach).
+
+import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
+import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
+import { worldAabb, rayAabb } from '../player/activate.js';
+import { SOUND, swingSoundFor } from '../systems/soundClips.js';
+
+/**
+ * @param deps {
+ *   renderer, canvas, fetchBytes, palette, audio,
+ *   entity          - the player entity (arrow stock reads it),
+ *   say(line)       - the classic-message sink ('You have no arrows.');
+ *                     hosts without a HUD text layer pass console
+ *                     (FLAGGED at the call sites - their HUD pends),
+ *   spellArmed()    - optional: WeaponManager's HasReadySpell leg
+ *                     (hosts without casting omit it),
+ * }
+ */
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, say = () => {}, spellArmed = () => false }) {
+  const playerWeapon = new PlayerWeapon({});
+  const cache = new Map();   // `${type}:${material}` -> art (null while loading)
+  let _dx = 0, _dy = 0, _held = false;
+  let _prevState = null;     // the swing-sound edge (A1)
+
+  function artFor(item) {
+    if (!palette) return null;
+    const type = weaponTypeForItem(item);
+    if (type === WEAPON_TYPES.None) return null;
+    const key = `${type}:${item?.material ?? 0}`;
+    if (!cache.has(key)) {
+      cache.set(key, null);
+      loadFpsWeaponArt(fetchBytes, palette, renderer, type, item?.material ?? 0)
+        .then((art) => cache.set(key, art))
+        .catch((e) => console.warn('[weaponRig] art load failed', key, e));
+    }
+    return cache.get(key);
+  }
+
+  /** WeaponManager.Update's ShowWeapons legs, verbatim order. */
+  function shown() {
+    if (playerWeapon.sheathed) return false;
+    if (spellArmed()) return false;                            // HasReadySpell / IsPlayingAnim
+    const m = playerWeapon.machine;
+    if (m.isBow && m.now < m.cooldownUntil) return false;      // bow cooldown hide
+    return true;
+  }
+
+  /** FPSWeapon.UpdateWeapon's bow guard: an UNsheathed bow with zero
+   *  Arrows auto-sheathes with the classic line. */
+  function bowArrowGuard() {
+    if (playerWeapon.sheathed) return;
+    if (weaponTypeForItem(playerWeapon.weapon) !== WEAPON_TYPES.Bow) return;
+    if (entity.items?.some((it) => it.templateIndex === 131 && (it.stackCount ?? 1) > 0)) return;
+    playerWeapon.sheathed = true;
+    say('You have no arrows.');
+  }
+
+  return {
+    playerWeapon,
+    /** Host mouse events buffer here (sheathed = no attack processing). */
+    attackInput(dx, dy, held) {
+      if (playerWeapon.sheathed) return;
+      _dx += dx; _dy += dy; _held = held;
+    },
+    /** ClickToAttack for the touch button. */
+    clickAttack() { if (!playerWeapon.sheathed) playerWeapon.clickAttack(); },
+    /** ToggleSheath + the draw sound (78) on unsheathing a real weapon. */
+    toggleSheath() {
+      if (playerWeapon.toggleSheath()) audio.playOneShot(SOUND.DrawWeapon);
+    },
+    /**
+     * Per-frame: gesture consume, the swing-sound edge, machine step.
+     * @returns the machine's events ('hit' on the strike frame) - the
+     *   host resolves them (or ignores them where nothing is in reach).
+     */
+    frame(dt, { paralyzed = false } = {}) {
+      if (!paralyzed) playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(canvas.clientWidth, canvas.clientHeight));
+      _dx = 0; _dy = 0;
+      const s = playerWeapon.machine.state;
+      if (s !== _prevState) {
+        if (s && s.startsWith('Strike')) audio.playOneShot(swingSoundFor(playerWeapon.weapon), 1.1);
+        _prevState = s;
+      }
+      return paralyzed ? [] : playerWeapon.update(dt);
+    },
+    /** The overlay draw, LAST in the host's frame (composites over the
+     *  scene; any HUD draws over it). Runs the bow guard first. */
+    draw({ paralyzed = false } = {}) {
+      bowArrowGuard();
+      if (paralyzed || !shown()) return;
+      const art = artFor(playerWeapon.weapon);
+      if (art) drawFpsWeapon(renderer, canvas, art, playerWeapon.machine.state, playerWeapon.machine.frame);
+    },
+  };
+}
+
+/**
+ * WeaponEnvDamage's swing ray, verbatim shape (mirrors the audited
+ * dungeon site): the nearest action object along the look within
+ * weapon reach, world geometry occluding; a DOOR hit is BASHED and
+ * consumes the swing, any other action object gets Receive(Attack)
+ * (the gate table filters) and the swing continues in DFU - with no
+ * foes in these hosts there is nothing further to resolve.
+ */
+export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) {
+  let best = null, bestD = Infinity;
+  for (const o of actions.objects.values()) {
+    const box = o.aabb ?? (o.cpu ? worldAabb(o.cpu.positions, o.matrix) : null);
+    if (!box) continue;
+    const d = rayAabb(eye, lookDir, box);
+    if (d === null || d > WEAPON_REACH || d >= bestD) continue;
+    const wall = collider.raycast(eye, lookDir, d - 0.05);
+    if (Number.isFinite(wall) && wall < d - 0.05) continue;   // occluded
+    best = o; bestD = d;
+  }
+  if (!best) return false;
+  if (best.kind === 'door') { actions.attemptBash(best, rolls()); return true; }
+  actions.receive(best, 'Attack');
+  return false;
+}

@@ -13,7 +13,10 @@ import { MapsFile } from '../formats/mapsFile.js';
 import { convertTilemap } from '../world/terrainSurface.js';
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor, FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
-import { jumpSpeedMultiplier } from '../systems/skills.js';
+import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
+import { createWeaponRig } from '../combat/weaponRig.js';
+import { removeOne } from '../systems/inventory.js';
+import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { Collider } from '../player/collider.js';
@@ -250,6 +253,14 @@ export async function bootExterior(canvas, renderer, params, status) {
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const player = new PlayerMotor(collider, undefined, { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14)
+  // C9: the exterior FP weapon (host rule - every motor host carries
+  // it). say -> console FLAGGED: this host has no HUD-text layer yet.
+  const weaponRig = createWeaponRig({
+    renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
+    say: (l) => console.warn('[exterior]', l),
+  });
+  let zPrevW = false;   // the ReadyWeapon (Z) edge
+  const modeNow = () => modes?.mode ?? 'exterior';   // lazy - modes binds below (boot-time mouse events)
   // ENGINE RIG (slice 2, ?rig): the canonical animated character in
   // the world - same body, same animate.js runtime as the viewer.
   // Spawned near the player at terrain height (proper grounding =
@@ -300,22 +311,30 @@ export async function bootExterior(canvas, renderer, params, status) {
   addEventListener('keydown', (e) => { keys.add(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
   canvas.addEventListener('pointerdown', () => requestLook(canvas));
+  // C9: RMB is a weapon control (drag-to-swing) exactly as the
+  // dungeon host - the drag feeds the rig INSTEAD of the look.
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
+    if (walkMode && (e.buttons & 2) && modeNow() === 'exterior') { weaponRig.attackInput(e.movementX, e.movementY, true); return; }
     cam.yaw -= e.movementX * 0.0025;
     cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
   });
+  addEventListener('mousedown', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, true); });
+  addEventListener('mouseup', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
       cam.yaw -= dx * 0.0025;
       cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * 0.0025));
     },
+    attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') weaponRig.attackInput(dx, dy, held); },
+    attackTap: () => { if (walkMode && modeNow() === 'exterior') weaponRig.clickAttack(); },
   });
 
   // P7: the exterior scene hosts the same mode machine as ?world -
   // E on a building door enters its interior, E on a DUNGEON_ENTRANCE
   // door drops into the location's crawl, exits land verbatim.
-  const modes = createWorldModes({
+  var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
     pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette },
     foes: params.has('foes'),
@@ -369,6 +388,10 @@ export async function bootExterior(canvas, renderer, params, status) {
         crouch: crouchHeld && !latch.crouch,
       }, cam.yaw);
       latch.crouch = crouchHeld;
+      // C9: ReadyWeapon (Z) - the sheathe toggle, host parity.
+      const zNowW = keys.has('KeyZ');
+      if (zNowW && !zPrevW) weaponRig.toggleSheath();
+      zPrevW = zNowW;
       // P14 fall damage (host parity; the outdoor-water exemption is
       // FLAGGED here exactly as in world.js - no tile lookup yet).
       if (player.landedFallDistance > FALL_DAMAGE_THRESHOLD) {
@@ -533,6 +556,19 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
     if (precip) {
       precip.draw(precipMode, proj, view, new Float32Array(eye), camRight, now / 1000);
+    }
+    // C9: the exterior FP weapon (first-person walk only - the V
+    // third-person view has no FP overlay). Same residuals as the
+    // world host: no bashables in melee reach, bows consume + tally
+    // with the exterior missile pending.
+    if (walkMode && !tpMode) {
+      for (const ev of weaponRig.frame(dt)) {
+        if (ev !== 'hit') continue;
+        if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
+          if (removeOne(playerEntity.items, 131)) tallySkill(playerEntity, SKILLS.Archery);
+        }
+      }
+      weaponRig.draw();
     }
 
     frames++;

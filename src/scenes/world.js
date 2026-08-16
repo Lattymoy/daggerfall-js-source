@@ -29,9 +29,12 @@ import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { fetchBytes, parseSeason, createSkyController } from './shared.js';
 import { PlayerMotor, FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
-import { jumpSpeedMultiplier } from '../systems/skills.js';
+import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
+import { createWeaponRig } from '../combat/weaponRig.js';
+import { removeOne } from '../systems/inventory.js';
+import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
@@ -311,13 +314,25 @@ export async function bootWorld(canvas, renderer, params, status) {
   const cam = { pos: [TERRAIN_SIZE / 2, playerPixel.centerHeight + 40, TERRAIN_SIZE / 2], yaw: Math.PI, pitch: -0.1 };
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   // The motor freezes until the start pixel's collider exists.
+  // C9 fix: shotMode must be declared BEFORE walkMode reads it - the
+  // old order (U2b) put it 70 lines down and every bare ?world boot
+  // died in the TDZ (?play and ?fly short-circuited past the read, so
+  // the played paths never saw it; the &shot&world probe caught it).
+  const shotMode = params.has('shot');
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
   const player = new PlayerMotor(collider, undefined, { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14)
+  // C9: the exterior FP weapon (host rule - every motor host carries
+  // it). say -> console FLAGGED: this host has no HUD-text layer yet.
+  const weaponRig = createWeaponRig({
+    renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
+    say: (l) => console.warn('[exterior]', l),
+  });
   let playerSpawned = false;
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.
   const latch = { jump: false, use: false };
+  let zPrevW = false;   // C9: the exterior ReadyWeapon (Z) edge
   if (playerPixel.location) {
     const tilePos = getLocationTerrainTileOrigin(startLoc);
     const extentZ = startLoc.exterior.exteriorData.height * RMB_SIDE;
@@ -345,24 +360,35 @@ export async function bootWorld(canvas, renderer, params, status) {
   }
 
   const keys = new Set();
+  // C9: the modal machine binds below AFTER these listeners exist -
+  // the lazy read avoids the boot-time TDZ (mouse events fire during
+  // loading) and defaults to the exterior mode.
+  const modeNow = () => modes?.mode ?? 'exterior';
   // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
   // or the browser menu steals focus (Firefox activates it on keyUP).
   addEventListener('keydown', (e) => { keys.add(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
   canvas.addEventListener('pointerdown', () => requestLook(canvas));
+  // C9: RMB is a weapon control (drag-to-swing) exactly as the
+  // dungeon host - the drag feeds the rig INSTEAD of the look.
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
+    if (walkMode && (e.buttons & 2) && modeNow() === 'exterior') { weaponRig.attackInput(e.movementX, e.movementY, true); return; }
     cam.yaw -= e.movementX * 0.0025;
     cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
   });
+  addEventListener('mousedown', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, true); });
+  addEventListener('mouseup', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
       cam.yaw -= dx * 0.0025;
       cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * 0.0025));
     },
+    attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') weaponRig.attackInput(dx, dy, held); },
+    attackTap: () => { if (walkMode && modeNow() === 'exterior') weaponRig.clickAttack(); },
   });
 
-  const shotMode = params.has('shot');
   const initialCount = queue.length + 1;
   console.log(`world: streaming from ${startPixel.x},${startPixel.y}, ${initialCount} initial pixels, ` +
     `player pixel ${playerPixel.location || 'wilderness'}, ${playerPixel.natureCount} nature flats`);
@@ -402,7 +428,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     matrix[14] = m[14] + t[2];
     return { ...entry.door, matrix };
   };
-  const modes = createWorldModes({
+  var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
     voxelfolk: params.has('voxelfolk'),
     foes: params.has('foes'),
@@ -455,6 +481,10 @@ export async function bootWorld(canvas, renderer, params, status) {
           crouch: crouchHeld && !latch.crouch,
         }, cam.yaw);
         latch.crouch = crouchHeld;
+        // C9: ReadyWeapon (Z) - the sheathe toggle, host parity.
+        const zNowW = keys.has('KeyZ');
+        if (zNowW && !zPrevW) weaponRig.toggleSheath();
+        zPrevW = zNowW;
         // P14 fall damage (host parity - CheckFallingDamage +
         // PlayerHealth verbatim; sounds 91/92). The outdoor-water
         // exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
@@ -571,6 +601,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.drawBillboards(allBatches, camRight, new Float32Array([0, 1, 0]));
     if (precip) {
       precip.draw(precipMode, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
+    }
+    // C9: the exterior FP weapon - swings/sounds through the rig; the
+    // open world has no action objects in melee reach (static building
+    // doors are the E-enter seam, not bashables - FLAGGED with the
+    // towns arc), so melee strike frames resolve to nothing; bows
+    // consume an Arrow + tally (the exterior arrow missile pends -
+    // nothing hostile outdoors until the RMB animal/exterior-foe arc).
+    if (walkMode && playerSpawned) {
+      for (const ev of weaponRig.frame(dt)) {
+        if (ev !== 'hit') continue;
+        if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
+          if (removeOne(playerEntity.items, 131)) tallySkill(playerEntity, SKILLS.Archery);
+        }
+      }
+      weaponRig.draw();
     }
 
     if (shotMode) {
