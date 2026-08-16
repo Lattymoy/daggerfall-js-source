@@ -1,3 +1,6 @@
+// ON ICE (2026-08-17, Mac): guards the PARKED voxel viewmodel path
+// only - the live FP weapon is the classic CIF overlay
+// (combat/fpsWeapon.js, probed by tools/fpsWeaponProbe.mjs).
 // FP viewmodel probe (standing tool, shipped with the 2026-08-16 audit):
 // renders the REAL drawFirstPersonViewmodel path headless (no ARENA2 -
 // the voxel rig is code-only, boot ramp synthetic) and measures where

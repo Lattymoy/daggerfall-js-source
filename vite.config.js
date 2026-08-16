@@ -18,6 +18,10 @@ function arena2DevServer() {
           res.statusCode = 404;
           return res.end('not found');
         }
+        // configureServer middlewares run BEFORE vite's cors layer, so
+        // headless probe pages (null origin via setContent) need the
+        // header here or their fetch() dies while ESM imports work.
+        res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Content-Type', 'application/octet-stream');
         createReadStream(path).pipe(res);
       });
