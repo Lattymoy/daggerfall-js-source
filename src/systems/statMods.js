@@ -20,14 +20,16 @@ export const STAT_KEYS_ORDER = Object.freeze([
 ]);
 
 /** The live value of a stat: base + every active mod on it (fortify
- *  adds, drain/transfer subtracts). Combat and advancement read THIS,
- *  never the raw base. */
+ *  adds, drain/transfer subtracts, disease entries carry an
+ *  accumulated NEGATIVE per-stat statMods map - S18). Combat and
+ *  advancement read THIS, never the raw base. */
 export function liveStat(entity, statName) {
   const base = entity.stats?.[statName] ?? 0;
   let mod = 0;
   const list = entity.activeEffects;
   if (list) {
     for (const a of list) {
+      if (a.kind === 'disease') { mod += a.statMods?.[statName] ?? 0; continue; }
       if (a.stat !== statName) continue;
       if (a.kind === 'fortifyAttribute') mod += a.magnitude;
       else if (a.kind === 'drainAttribute' || a.kind === 'transferAttribute') mod -= a.magnitude;

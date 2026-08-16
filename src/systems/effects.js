@@ -118,15 +118,26 @@ function effectMagnitude(e, casterLevel, saveScaled, element, flag, target, roll
 }
 
 /** manager.HealAttribute, verbatim: walk the live effects carrying a
- *  negative mod on this stat (drain/transfer entries), healing each
- *  in turn until the amount is spent. A drain healed to magnitude 0
- *  ENDS (DrainEffect.HealAttributeDamage: forcedRoundsRemaining = 0)
- *  and the next tick pass removes it. Heal never overshoots into a
- *  bonus (base HealAttributeDamage clamps the mod at 0). */
+ *  negative mod on this stat (drain/transfer entries AND disease
+ *  statMods - S18), healing each in turn until the amount is spent.
+ *  A drain healed to magnitude 0 ENDS (DrainEffect.HealAttributeDamage:
+ *  forcedRoundsRemaining = 0) and the next tick pass removes it; a
+ *  disease's healed stat does NOT end the disease (base
+ *  HealAttributeDamage - it keeps draining daily). Heal never
+ *  overshoots into a bonus (the mod clamps at 0). */
 export function healAttributeDamage(entity, stat, amount) {
   if (amount < 0) return;
   let remaining = amount;
   for (const a of entity.activeEffects ?? []) {
+    if (a.kind === 'disease') {
+      const mod = a.statMods?.[stat] ?? 0;
+      if (mod >= 0) continue;   // not damaged by this effect
+      const healed = Math.min(remaining, -mod);
+      a.statMods[stat] = mod + healed;
+      remaining -= healed;
+      if (remaining === 0) return;
+      continue;
+    }
     if (a.kind !== 'drainAttribute' && a.kind !== 'transferAttribute') continue;
     if (a.stat !== stat || a.magnitude <= 0) continue;   // mod >= 0 -> not damaged
     const damage = a.magnitude;

@@ -551,9 +551,68 @@ EnemyEntity.cs + EnemyMotor.cs (classic AI) + EntityEffectManager:
 5 tests (enemyspells.test.js). Suite 306/75, ARENA2 corpus 306/306
 green pre-commit.
 
+## S18 (diseases + OnMonsterHit riders): SHIPPED
+
+The Ledger C row from the 08-13 audit (F2's flagged interim closed).
+Verbatim from DFU DiseaseEffect.cs + FormulaHelper.cs
+OnMonsterHit/InflictDisease/FatigueDamage:
+
+- **Data** (src/systems/diseases.js): the 17-row DiseaseData table
+  byte-exact (8 stat multiplier columns + HEA/FAT/SPL + the daily
+  damage span + days-of-symptoms span; only Caliron's Curse, Blood
+  Rot and Wizard Fever are finite at 3-18 days - everything else is
+  0xff permanent-until-cured), the Diseases enum 0-16, the 0xff/0xfe
+  permanent/completed markers, the A/B/C transmission lists.
+- **Lifecycle**: a disease is a PERMANENT activeEffects entry
+  ({ kind: 'disease' }) owning its own clock - UpdateDisease runs
+  every magic round but acts per elapsed CLASSIC DAY (classic
+  minutes / 1440; the infection day is incubation). Each elapsed day
+  rolls Range(minDamage, maxDamage+1) ONCE and applies the row as a
+  multiplier matrix: stat columns accumulate a negative statMods map
+  (liveStat consumes it; maxFatigue follows), HEA hurts, FAT/SPL
+  drain - FAT in RAW units (DFU calls DecreaseFatigue WITHOUT
+  assignMultiplier - a disease day costs points, not x64,
+  bug-for-bug). daysPast > 1 catches up day by day (rest/travel).
+  A finite disease's final day lands damage, then EndDisease
+  completes it; the mods lift when the tick removes the entry (DFU
+  shape). "You feel somewhat bad." rides an onAlert seam to the HUD
+  every symptomatic round-with-days. Heal{Attribute}'s manager walk
+  (effects.healAttributeDamage) now heals disease statMods too,
+  clamped at 0 - WITHOUT ending the disease (base
+  HealAttributeDamage; only drains override to expire), so a healed
+  stat falls again next day, verbatim.
+- **Infection** (InflictDisease): player-only, the classic level-1
+  immunity (no rolls consumed), a FULL saving-throw save (== 0,
+  Disease flag) resists outright, then a uniform list pick assigned
+  BypassSavingThrows; Start refuses non-players and level < 2, and
+  AddState means the same disease can never be caught twice.
+- **OnMonsterHit** (the rider table, wired per LANDED hit at the
+  FormulaHelper.cs:662 site - calculateAttackDamage grew an
+  onMonsterHit seam fired inside the monster multi-attack loop
+  BEFORE the hit damage sums; dungeonContext passes the closure with
+  the classic day + playerSinks, covering both hosts since worldModes
+  delegates combat here): rat 5% listB, giant bat 2% listB, zombie 2%
+  listC, mummy 5% listC, vampire/ancient Range(0,100f) <= 0.6 ->
+  vampirism ROUTED else <= 2.0 -> plague, nymph/lamia FatigueDamage
+  (2 pts fatigue x64 per health damage - the DF Chronicles rule DFU
+  chose), werewolf/wereboar specialInfectionChance -> lycanthropy
+  ROUTED (rolls consumed verbatim so sequences match).
+- **Persistence**: snapshot/restore deep-copies the statMods map
+  (save.js copyEffectEntry) - the S15 conditional-spread shape
+  generalized.
+- **NOT shipped, still FLAGGED loudly**: spider/giant scorpion cast
+  classic spell 66 (Paralyze) on hit - pends the Paralyze effect
+  (S19 with poisons + the Cure family); the health-status box that
+  surfaces contractedMessageRecord (TEXT.RSC 100 + type) pends its
+  UI slice; vampirism/lycanthropy remain routed lines.
+
+12 tests (diseases.test.js). Suite 339/79, ARENA2 corpus 339/339
+green pre-commit.
+
 ## Queue
-- Magic remainder: Cure effects (disease/poison/paralysis - with
-  their systems), enchantment economy/value.
+- Magic remainder: S19 - poisons, the Cure family (3, 0..2),
+  Paralyze (classic spell 66 closes the spider/scorpion rider);
+  enchantment economy/value.
 - Fatigue consumers: exhaustion collapse at 0, running/swimming
   drain, rest recovery (CalculateFatigueRecoveryRate).
 - Later: quests, guilds, shops, dialog, calendar deep-wiring,

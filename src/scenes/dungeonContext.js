@@ -11,7 +11,7 @@
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { applyTextureTable } from '../world/dungeonTextures.js';
 import { collectDungeonLights } from '../world/dungeonLights.js';
-import { CityLightAnimator } from '../world/worldClock.js';
+import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
@@ -47,6 +47,7 @@ import {
 } from '../systems/spellcast.js';
 import { applySpell, tickActiveEffects, hasActiveEffect, maxFatigue } from '../systems/effects.js';
 import { FATIGUE_LOSS } from '../systems/statMods.js';
+import { updateDiseases, onMonsterHit } from '../systems/diseases.js';
 import { dice100 } from '../combat/formulas.js';
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
@@ -1063,7 +1064,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const _prevMinute = Math.floor(classicMinutes);
     classicMinutes += (dt * 12) / 60;
     for (let r = _prevMinute; r < Math.floor(classicMinutes); r++) {
-      // S7: one magic round per classic minute (the broker's cadence)
+      // S7: one magic round per classic minute (the broker's cadence).
+      // S18: diseases update FIRST so an ending disease's final day
+      // lands and the same round's tick removes the expired entry
+      // (DFU removes at the end of the same DoMagicRound). The classic
+      // day = elapsed classic minutes / 1440 (r + 1 = the minute this
+      // round completes); day 0 of an infection is incubation.
+      updateDiseases(playerEntity, Math.floor((r + 1) / MINUTES_PER_DAY), playerSinks, Math.random,
+        (msg) => hudText.add(msg));
       tickActiveEffects(playerEntity, playerSinks);
       for (const f of foes) if (!f.dead) tickActiveEffects(f.entity, foeSinks(f));
       // P11: per-game-minute fatigue loss (PlayerEntity verbatim):
@@ -1205,7 +1213,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           if (!f.entity.isClass && bx?.attackSound != null && Math.random() <= 0.5) {
             audio.play3d(bx.attackSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]], 1, { maxDistance: 16 });
           }
-          const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, { targetGroup: null, weapon: wpn });
+          // S18: the special-attack rider seam - monster weaponless
+          // hits run OnMonsterHit per hit (disease/paralysis/fatigue)
+          const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {
+            targetGroup: null, weapon: wpn,
+            onMonsterHit: (att, tgt, hit) => onMonsterHit(att, tgt, hit, {
+              currentDay: Math.floor(classicMinutes / MINUTES_PER_DAY), sinks: playerSinks,
+            }),
+          });
           if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), 1.1);   // the player takes the hit (PlayerFootsteps families)
           hurtPlayer(dmg);
         }
