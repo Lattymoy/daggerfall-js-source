@@ -25,6 +25,10 @@ for (;;) {
 const S = 4, OX = 60, OY = 50;
 const click = async (vx, vy) => { await page.mouse.click(OX + vx * S, OY + vy * S); await waitFrames(4); };
 await page.evaluate(() => {
+  // clear the boot-seeded interim dagger so the probe's loadout is
+  // the whole story (it would otherwise dual-wield with the sword)
+  const slots = window.__playerEntity.equip?.slots;
+  if (slots?.[19]) { delete slots[19].equipSlot; slots[19] = null; }
   window.__playerEntity.items = [
     { group: 'Armor', templateIndex: 102, material: 0x0200, variant: 1, name: 'Iron Cuirass' },
     { group: 'Weapons', templateIndex: 120, material: 0, name: 'Longsword' },
@@ -54,5 +58,10 @@ console.log('worn after doll chest click:', JSON.stringify(w2));
 if (w2.includes('Iron Cuirass')) { console.log('UNEQUIP FAILED'); process.exit(1); }
 await page.screenshot({ path: '/home/claude/equip-removed.png' });
 await press('Escape');
+// U8h: the FP rig now swings the WORN weapon - ready it (Z) and the
+// longsword art should draw (not the old interim dagger)
+await press('KeyZ');
+await waitFrames(6);
+await page.screenshot({ path: '/home/claude/equip-fp.png' });
 console.log('EQUIP OK');
 await browser.close(); await server.close();

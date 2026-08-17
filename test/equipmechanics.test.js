@@ -4,9 +4,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { EQUIP_SLOTS, getEquipSlot, equipItem, unequipSlot, isEquipped } from '../src/systems/equip.js';
+import { EQUIP_SLOTS, getEquipSlot, equipItem, unequipSlot, isEquipped, armorValuesOf, BODY_PARTS, seedStartingEquipment } from '../src/systems/equip.js';
 import { filterByTab } from '../src/ui/nativeInventory.js';
-import { preloadPaperDollArt, drawPaperDoll, paperDollArtLoaded, refreshPaperDoll, slotAtPaperDoll, paperdollItemImage, clampArmorVariant, _debugPaperDoll, WAIST_HEIGHT, PAPERDOLL_ORIGIN } from '../src/ui/paperDoll.js';
+import { preloadPaperDollArt, drawPaperDoll, paperDollArtLoaded, refreshPaperDoll, slotAtPaperDoll, paperdollItemImage, clampArmorVariant, _debugPaperDoll, WAIST_HEIGHT, PAPERDOLL_ORIGIN, ARMOR_LABEL_POS } from '../src/ui/paperDoll.js';
 import { getTemplate } from '../src/characters/paperdoll.js';
 import { TextureFile } from '../src/formats/textureFile.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
@@ -133,4 +133,57 @@ test('equipMechanics: the composite doll - layers, click mask, real art', { skip
   assert.ok(PAPERDOLL_ORIGIN[0] === 200 && WAIST_HEIGHT === 40);
   const m = { s: 1, ox: 0, oy: 0 };
   assert.ok(drawPaperDoll(renderer, m, e, 49, 13));
+});
+
+test('equipMechanics: U8h armor values (UpdateEquippedArmorValues verbatim)', () => {
+  const e = ent();
+  // the classic no-armor baseline: 100 per part
+  assert.deepEqual(armorValuesOf(e), [100, 100, 100, 100, 100, 100, 100]);
+  // leather cuirass: chest -= 3*5
+  const cuirass = { group: 'Armor', templateIndex: 102, material: 0x0000, name: 'Leather Cuirass' };
+  equipItem(e, cuirass);
+  assert.equal(e.armorValues[BODY_PARTS.Chest], 85);
+  // steel greaves: legs -= 9*5
+  equipItem(e, { group: 'Armor', templateIndex: 104, material: 0x0201, name: 'Steel Greaves' });
+  assert.equal(e.armorValues[BODY_PARTS.Legs], 55);
+  // a DAEDRIC buckler is material-blind: LeftArm/Hands -= 1*5 only
+  equipItem(e, { group: 'Armor', templateIndex: 109, material: 0x0209, name: 'Daedric Buckler' });
+  assert.equal(e.armorValues[BODY_PARTS.LeftArm], 95);
+  assert.equal(e.armorValues[BODY_PARTS.Hands], 95);
+  // a tower shield covers Head too (swap returns the buckler's 5s)
+  equipItem(e, { group: 'Armor', templateIndex: 112, material: 0x0200, name: 'Tower Shield' });
+  assert.equal(e.armorValues[BODY_PARTS.Head], 80);
+  assert.equal(e.armorValues[BODY_PARTS.LeftArm], 80);
+  assert.equal(e.armorValues[BODY_PARTS.Legs], 55 - 20);
+  // unequip restores; the displayed value law: (100 - av)/5
+  unequipSlot(e, EQUIP_SLOTS.ChestArmor);
+  assert.equal(e.armorValues[BODY_PARTS.Chest], 100);
+  assert.equal(Math.trunc((100 - 55) / 5), 9, 'steel greaves display 9 on the doll');
+  // weapons/clothing never touch the table
+  equipItem(e, { group: 'Weapons', templateIndex: 120, material: 9, name: 'Daedric Longsword' });
+  equipItem(e, { group: 'MensClothing', templateIndex: 165, variant: 0, name: 'Shirt' });
+  assert.equal(e.armorValues[BODY_PARTS.Chest], 100);
+  // the verbatim label positions (PaperDoll.armourLabelPos)
+  assert.deepEqual(ARMOR_LABEL_POS.map((p) => [...p]), [[70, 12], [20, 38], [86, 38], [12, 58], [6, 90], [18, 120], [22, 168]]);
+});
+
+test('equipMechanics: U8h the starting seed + the worn-weapon binding shape', () => {
+  const e = ent();
+  seedStartingEquipment(e);
+  const worn = e.equip.slots[EQUIP_SLOTS.RightHand];
+  assert.equal(worn?.name, 'Dagger');
+  assert.equal(worn.templateIndex, 113);
+  assert.equal(worn.material, 0);
+  assert.ok(e.items.includes(worn), 'the dagger lives IN the bag, worn');
+  // idempotent: a second seed adds nothing
+  seedStartingEquipment(e);
+  assert.equal(e.items.length, 1);
+  // a bag-carrying entity never seeds (probe bags stay untouched)
+  const e2 = { items: [{ group: 'Books', templateIndex: 277 }] };
+  seedStartingEquipment(e2);
+  assert.equal(e2.equip, undefined);
+  // the binding law the hosts run per frame: slots[RightHand] ?? null
+  assert.equal(e.equip.slots[EQUIP_SLOTS.RightHand] ?? null, worn);
+  unequipSlot(e, EQUIP_SLOTS.RightHand);
+  assert.equal(e.equip.slots[EQUIP_SLOTS.RightHand] ?? null, null, 'bare hands -> the unarmed path');
 });

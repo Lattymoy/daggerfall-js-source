@@ -640,3 +640,37 @@ Probed live (tools/equipProbe.mjs) + EYEBALLED: the avatar WEARING
 the iron plate cuirass with the longsword at his hip and red-dyed
 pants (all three left their list rows), then the REMOVE doll-click
 stripping exactly the cuirass. Suite 465/104.
+
+## U8h: the worn-weapon FP binding + armor values (2026-08-17)
+
+The equip system grows its TEETH - wearing gear now changes combat.
+- THE FP BINDING: both exterior hosts assign
+  weaponRig.playerWeapon.weapon = equip.slots[RightHand] ?? null
+  every frame - the rig swings the WORN weapon's art and formulas;
+  bare hands take the unarmed hand-to-hand path (weaponTypeForItem
+  null -> Melee, the C8 formulas' !weapon branch). The C8 INTERIM
+  Iron Dagger moved INTO the bag as seedStartingEquipment (equipped
+  at boot, idempotent, skips probe-seeded bags; chargen's starting
+  gear roll replaces it). The dungeon host keeps its interim weapon
+  until its inventory mounts (FLAGGED).
+- ARMOR VALUES (UpdateEquippedArmorValues verbatim): the 7-part
+  table starts at 100 each (CharacterDocument - no armor); armor
+  subtracts GetMaterialArmorValue()*5 on its body part (leather 3,
+  chain 6, plate iron 7 .. daedric 21); shields subtract
+  GetShieldArmorValue()*5 (1/2/3/4) on their protected parts
+  MATERIAL-BLIND (buckler arm+hands; round/kite +legs; tower
+  +head); unequip adds back; DFU's clothing branch is a value-0
+  no-op and is omitted. calculateSuccessfulHit consumes
+  armorValues[struckBodyPart] directly - THE PARITY CHANGE, loud:
+  the player entity now carries the verbatim 100-per-part table, so
+  an UNARMORED player is far easier to hit than under the old
+  armor:0 scalar (the classic law - armor IS the defense). The doll
+  shows (100-av)/5 per part at the verbatim armourLabelPos
+  ((70,12),(20,38),(86,38),(12,58),(6,90),(18,120),(22,168));
+  drained/increased label colors pend their effect channels.
+
+Probed (tools/equipProbe.mjs extended) + EYEBALLED: "7" engraved at
+the chest of the iron-cuirassed doll with zeros elsewhere, and the
+FP view drawing the LONGSWORD blade after Z - the worn weapon, not
+the old interim dagger (the probe clears the boot seed so the
+loadout is the whole story). Suite 467/104.

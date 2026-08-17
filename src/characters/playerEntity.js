@@ -11,7 +11,11 @@ export const playerEntity = {
   reflexes: 2,      // 0 VeryHigh .. 4 VeryLow; 2 = Average (classic default)
   maxHealth: 50,    // INTERIM until chargen rolls career HP
   health: 50,
-  armor: 0,
+  armor: 0,      // legacy scalar fallback (armorValues wins in the to-hit)
+  // U8h: the 7-part armor table (CharacterDocument: 100 each = no
+  // armor; equip subtracts material*5 - the classic law makes an
+  // UNARMORED player far easier to hit than the old armor:0 scalar)
+  armorValues: [100, 100, 100, 100, 100, 100, 100],
   skills: 30,       // INTERIM flat skills until chargen
   stats: { strength: 50, agility: 50, luck: 50 },
   fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-derives from the rolled stats (S15)

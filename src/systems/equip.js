@@ -16,7 +16,7 @@
 // enchantment start/stop payloads (no enchanted items yet).
 
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
-import { ITEM_GROUPS } from '../characters/equipRules.js';
+import { ITEM_GROUPS, SLOT_RULES } from '../characters/equipRules.js';
 import { createEquipTable, getItemHands as handsOf, ITEM_HANDS } from '../characters/equipTable.js';
 
 export { EQUIP_SLOTS, ITEM_HANDS };
@@ -39,6 +39,7 @@ export function unequipSlot(entity, slot) {
   if (!item) return null;
   slots[slot] = null;
   delete item.equipSlot;
+  updateEquippedArmorValues(entity, item, false);   // U8h: the armor table adds back
   return item;
 }
 
@@ -67,7 +68,79 @@ export function equipItem(entity, item) {
   un(slot);   // swap the occupant out (alwaysEquip)
   item.equipSlot = slot;
   slots[slot] = item;
+  updateEquippedArmorValues(entity, item, true);   // U8h: the armor table subtracts
   return unequipped;
 }
 
 export const isEquipped = (item) => item.equipSlot != null;
+
+/** INTERIM starting equipment (chargen's starting-gear roll
+ *  replaces this): the C8 interim Iron Dagger moves INTO the bag,
+ *  equipped, so the worn-weapon FP-rig binding serves it like any
+ *  other item. Idempotent per entity. */
+export function seedStartingEquipment(entity) {
+  if (entity.equip || (entity.items ?? []).length) return;
+  entity.items = entity.items ?? [];
+  const dagger = { group: 'Weapons', templateIndex: 113, name: 'Dagger', material: 0, flags: 0x10, minDamage: 1, maxDamage: 6 };
+  entity.items.push(dagger);
+  equipItem(entity, dagger);
+}
+
+// ---- U8h: ARMOR VALUES (DaggerfallEntity.UpdateEquippedArmorValues
+// verbatim) ----
+// The 7-part table starts at 100 each (CharacterDocument: no armor);
+// equipping armor SUBTRACTS GetMaterialArmorValue()*5 on its body
+// part; shields subtract GetShieldArmorValue()*5 on their protected
+// parts MATERIAL-BLIND; unequip adds back. The to-hit law consumes
+// armorValues[struckBodyPart] directly (calculateSuccessfulHit), and
+// the paperdoll shows (100 - av)/5 per part (RefreshArmourValues;
+// the Increased/DecreasedArmorValueModifier channels pend their
+// effects). The clothing branch (shoes/boots group indices) runs as
+// a no-op in DFU - GetMaterialArmorValue returns 0 for clothing -
+// so it is omitted here.
+
+export const BODY_PARTS = Object.freeze({ Head: 0, RightArm: 1, LeftArm: 2, Chest: 3, Hands: 4, Legs: 5, Feet: 6 });
+export const NUMBER_BODY_PARTS = 7;
+// GetBodyPartForEquipSlot
+const SLOT_BODY_PART = new Map([
+  [EQUIP_SLOTS.Head, BODY_PARTS.Head], [EQUIP_SLOTS.RightArm, BODY_PARTS.RightArm],
+  [EQUIP_SLOTS.LeftArm, BODY_PARTS.LeftArm], [EQUIP_SLOTS.ChestArmor, BODY_PARTS.Chest],
+  [EQUIP_SLOTS.Gloves, BODY_PARTS.Hands], [EQUIP_SLOTS.LegsArmor, BODY_PARTS.Legs],
+  [EQUIP_SLOTS.Feet, BODY_PARTS.Feet],
+]);
+// GetMaterialArmorValue: leather 3, chain 6, plate iron..daedric
+const PLATE_ARMOR_VALUES = [7, 9, 9, 11, 13, 15, 15, 17, 19, 21];   // iron, steel, silver, elven, dwarven, mithril, adamantium, ebony, orcish, daedric
+export function materialArmorValue(material) {
+  if (material === 0x0000) return 3;                                   // leather
+  if (material === 0x0100 || material === 0x0101) return 6;            // chain
+  if (material >= 0x0200) return PLATE_ARMOR_VALUES[material - 0x0200] ?? 0;
+  return 0;
+}
+// GetShieldArmorValue + GetShieldProtectedBodyParts
+const SHIELD_VALUES = new Map([[109, 1], [110, 2], [111, 3], [112, 4]]);
+const SHIELD_PARTS = new Map([
+  [109, [BODY_PARTS.LeftArm, BODY_PARTS.Hands]],
+  [110, [BODY_PARTS.LeftArm, BODY_PARTS.Hands, BODY_PARTS.Legs]],
+  [111, [BODY_PARTS.LeftArm, BODY_PARTS.Hands, BODY_PARTS.Legs]],
+  [112, [BODY_PARTS.Head, BODY_PARTS.LeftArm, BODY_PARTS.Hands, BODY_PARTS.Legs]],
+]);
+const isShield = (item) => SHIELD_VALUES.has(item.templateIndex);
+
+export const armorValuesOf = (entity) => (entity.armorValues ??= new Array(NUMBER_BODY_PARTS).fill(100));
+
+export function updateEquippedArmorValues(entity, item, equipping) {
+  if (item.group !== 'Armor') return;   // (DFU's clothing branch is a value-0 no-op)
+  const av = armorValuesOf(entity);
+  const sign = equipping ? -1 : 1;
+  if (!isShield(item)) {
+    // a non-shield armor piece's slot is FIXED by template (the C5c
+    // rule table) - no equip-table state involved (DFU GetArmorSlot)
+    const rule = SLOT_RULES.Armor[item.templateIndex];
+    const part = rule ? SLOT_BODY_PART.get(EQUIP_SLOTS[rule.slot]) : null;
+    if (part == null) return;
+    av[part] += sign * materialArmorValue(item.material ?? 0) * 5;
+  } else {
+    const bonus = SHIELD_VALUES.get(item.templateIndex);
+    for (const part of SHIELD_PARTS.get(item.templateIndex)) av[part] += sign * bonus * 5;
+  }
+}

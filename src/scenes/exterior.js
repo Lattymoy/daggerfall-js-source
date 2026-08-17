@@ -46,6 +46,7 @@ import { CharSheet, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsh
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
+import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
@@ -309,6 +310,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadInventoryArt({ renderer, fetchBytes, palette });   // U8d: INVE00I0/01I0 warm at boot
   preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/BODY/FACE + the item-record pipeline (town context; Breton male 0 INTERIM until chargen)
+  seedStartingEquipment(playerEntity);   // U8h: the interim dagger lives in the BAG now, worn (chargen's gear roll replaces)
   const droppedLoot = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });   // U8e
   // FindGroundPosition (CreateDroppedLootContainer): the pile lands
   // on the ground BELOW the player, not at the motor's height
@@ -811,6 +813,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     // world host: no bashables in melee reach; bows consume + tally
     // and the loose is VISIBLE now (C13).
     if (walkMode && !tpMode) {
+      // U8h: the FP rig swings the WORN RightHand weapon (none -> the
+      // classic unarmed hand-to-hand path)
+      weaponRig.playerWeapon.weapon = playerEntity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null;
       for (const ev of weaponRig.frame(dt)) {
         if (ev !== 'hit') continue;
         if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {

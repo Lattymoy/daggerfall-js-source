@@ -42,7 +42,7 @@
 import { loadImg, nativeMetrics, drawImg, drawImgSub, SCREEN_DIM, shadowText } from './nativePanel.js';
 import { addItem } from '../systems/inventory.js';
 import { isEquipped, equipItem, unequipSlot } from '../systems/equip.js';
-import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll } from './paperDoll.js';
+import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel } from './itemScroller.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
@@ -235,9 +235,13 @@ export class NativeInventoryWindow {
     drawImgSub(renderer, _art.gold, m, tr[0], tr[1], tr[2], tr[3]);
     const mr = INV_RECTS[this.mode];
     drawImgSub(renderer, _art.gold, m, mr[0], mr[1], mr[2], mr[3]);
-    // U8f: the paperdoll base at (49,13) - background + body welds +
-    // head (the item overlay layers ride U8g)
+    // U8f/U8g: the paperdoll at (49,13); U8h: the armor value labels
+    // (RefreshArmourValues - (100 - av)/5 per body part; the
+    // drained/increased colors pend their effect channels)
     drawPaperDoll(renderer, m, this.hooks.entity ?? { }, 49, 13);
+    const av = this.hooks.entity?.armorValues;
+    if (av) ARMOR_LABEL_POS.forEach(([lx, ly], i) =>
+      shadowText(renderer, font, String(Math.trunc((100 - (av[i] ?? 100)) / 5)), m, 49 + lx, 13 + ly));
     // both sides through the shared scroller: the filtered bag
     // locally, the pile (loot target or session drops) remotely
     for (const [rect, scroll, items] of [

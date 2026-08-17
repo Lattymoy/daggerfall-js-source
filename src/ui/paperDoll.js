@@ -43,6 +43,10 @@ export const PAPERDOLL_H = 184;
 export const PAPERDOLL_ORIGIN = Object.freeze([200, 8]);   // paperDollOrigin
 export const BG_SUBRECT = Object.freeze([8, 7, 110, 184]); // backgroundSubRect
 export const WAIST_HEIGHT = 40;
+// PaperDoll.armourLabelPos verbatim - the 7 armor value labels in
+// BodyParts order (Head, RightArm, LeftArm, Chest, Hands, Legs,
+// Feet), panel-relative
+export const ARMOR_LABEL_POS = Object.freeze([[70, 12], [20, 38], [86, 38], [12, 58], [6, 90], [18, 120], [22, 168]]);
 const FIRST_FEMALE_ARCHIVE = 245, FIRST_MALE_ARCHIVE = 249;
 const HUMAN_MORPHOLOGY = 2;        // GetBodyMorphology: Breton/Nord/Redguard
 // GetWeaponDyeColor / GetArmorDyeColor (plate m = material - 0x0200)
