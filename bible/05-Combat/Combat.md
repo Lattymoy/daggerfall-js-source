@@ -182,3 +182,79 @@ Behavior deltas, all parity-positive:
 
 Suite 389/86 (the clickAttack gate pin). ARENA2 green pre-commit,
 dungeon + world shot probes green.
+
+## C11 (2026-08-17): THE MONSTER PIVOT - classic sprite mobiles, LIVE - SHIPPED
+
+Monsters 0-42 stop being static flats and become full foes: the
+classic 8-orientation sprite animation (characters/mobileUnit.js,
+DaggerfallMobileUnit + EnemyBasics verbatim) driving a live billboard
+batch per foe, on the SAME combat spine as the rigged class enemies -
+EnemyAI/EnemyAttack senses + pursuit, makeEnemyEntity (monster HP/
+level/armor from loadMonsterCareer's ENEMY{nnn}.CFG), generateItems
+loot, S16 spells, S18 riders, corpses, damageFoe. Foes are DEFAULT ON
+in every host now (`!params.has('nofoes')` - dungeon, world walk,
+exterior walk).
+
+The laws (all pinned in mobileunit.test.js, 6 tests):
+- Record layout Move 0-4 / PrimaryAttack 5-9 / Hurt 10-14 / Idle
+  15-19; orientations 0-7 with the three back diagonals mirrored;
+  speeds 6/10/4/4 fps; orientation = -round(signedAngle/45) mod 8
+  (enemy->camera vs enemy forward, sign from cross.y - the identical
+  vector algebra to DFU, verified against UpdateOrientation line by
+  line).
+- Attack frame SEQUENCES per enemy (PrimaryAttackAnimFrames + the
+  one-Dice100-roll chance ladder to variants 2-5) with -1 as the
+  damage marker: sets hitFrame, skips, exhaust reverts to idle.
+- Hurt one-shot -> idle; hasIdle=false keeps the frame across
+  idle<->move; BounceAnim reverses at n-2.
+- Specials: Rat 0 (inverted idle flips), Ghost 18/Wraith 23 (own
+  move/attack tables, move doubles as idle), Slaughterfish 11
+  (bounce move doubles as idle), Giant Scorpion 20 (OrientEnemy's
+  flip INVERSION), and the orientation-switch frame RESCALE
+  (frame*newN/oldN - the Ancient Lich 288 8-vs-4-frame overflow).
+- The extractor grew ChanceForAttack4/5 + HasIdle + the frame
+  sequences; enemyBasics.js regenerated (C3 parity asserted, all 42
+  monsters carry sequences).
+
+THE BILLBOARD-AXIS DOCTRINE (ground-truthed, engine-wide): our
+right-handed lookAt puts world +x on screen-right where Unity puts
+it on screen-LEFT - for identical world data and camera pose our
+frame is the horizontal mirror of DFU's (the A/D strafe comment in
+every host records the same fact: Unity's (cos,-sin) right vector
+moved screen-left here). The hosts' static-flat axis
+`camRight = (cos yaw, 0, -sin yaw)` = the NEGATED view row 0 bakes
+the compensating mirror into every billboard, so the engine is
+self-consistently mirrored - and DFU's verbatim FlipLeftRight
+booleans are correct ONLY under that axis. Any new billboard pass
+MUST use the flats' axis, never the raw view row. Proven by the
+sprite-orientation doctrine: skeletal warrior 270/17 raw art faces
+image-left; with the raw view row the o=6 flip rendered it
+moonwalking (facing against its own yaw); with the flats' axis it
+faces its walk direction, matching the raw art. (The scratchpad
+record dumper + tools/monsterProbe.mjs are the standing check.)
+Corollary for the ledger: the whole render is chirality-flipped vs
+classic per-frame (texture text would read backwards); un-mirroring
+is a candidate slice (negate the view x row + frontFace swap +
+strafe/gesture audit), Mac's call - within-engine consistency holds
+either way.
+
+Rendering: one live batch per foe (unit quad; renderer `record`
+takes the composite `${record}#${frame}` key; negative size.w =
+flip; origin = ai.feet, bottom-anchored shader). Per-frame textures
+via dataPipeline.uploadRecordFrame (spectral path preserved for the
+ghost/wraith archives). Deterministic spawn yaw (Ledger A - no
+engine PRNG). Feet law vs DFU: our bottom-anchor equals DFU's
+non-idle branch exactly (controller-height algebra cancels); idle
+records deviate by half the record-height difference - accepted
+sub-pixel.
+
+Residuals (LOUD): flying/aquatic monsters use the grounded motor
+(they walk); Spell + RangedAttack1/2 anim states pend (casters cast
+without the cast anim; texture 475 female record 20-24 x1.35
+post-fix pends with them); Seducer transforms; the -1 marker as the
+DAMAGE moment (damage rides the shared EnemyAttack machine - the
+per-frame timing is a recorded refinement); foe-AI fixed stepping
+(P16 residual, all foes).
+
+Suite 400/88. ARENA2 green, dungeon + world + exterior probes green
+(foes default-on), monsterProbe close-up verified vs raw art.

@@ -53,6 +53,27 @@ export function createDataPipeline({ renderer, arch, palette }) {
       renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap));
     }
   };
+  // C11 mobile monsters: per-FRAME uploads under a composite record
+  // key (`${record}#${frame}` - the renderer keys textures by
+  // template string, so a batch whose .record is the composite draws
+  // the frame). Spectral archives (ghost/wraith) keep their verbatim
+  // TextureReader treatment per frame.
+  const uploadRecordFrame = (archive, record, frame) => {
+    const key = `${record}#${frame}`;
+    const t = textureFiles.get(archive);
+    if (!t) return;
+    const bitmap = t.getDFBitmap(record, frame);
+    if (TextureFile.isSpectralArchive(archive)) {
+      const spec = { ...bitmap, data: bitmap.data.slice() };
+      t.setSpectral(spec);
+      const albedo = t.getColor32(spec, 0, 0, TextureFile.SPECTRAL_EYES_PATCHED, TextureFile.SPECTRAL_ALPHA);
+      renderer.uploadTexture(archive, key, albedo);
+      renderer.uploadEmissionTexture(archive, key,
+        t.getSpectralEmissionColors32(spec, albedo, 0, TextureFile.SPECTRAL_EYES_PATCHED, [255, 0, 0], [0, 0, 0]));
+      return;
+    }
+    renderer.uploadTexture(archive, key, t.getColor32(bitmap, 0));
+  };
   const gpuMeshes = new Map(); // shared across pixels, never destroyed
   const cpuModels = new Map(); // id -> {positions, indices} for the collider
   async function getGpuMesh(modelIdNum) {
@@ -71,5 +92,5 @@ export function createDataPipeline({ renderer, arch, palette }) {
     gpuMeshes.set(modelIdNum, gpu);
     return gpu;
   }
-  return { textureFiles, getTexture, getTextureSize, uploadRecord, getGpuMesh, gpuMeshes, cpuModels, palette };
+  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, gpuMeshes, cpuModels, palette };
 }

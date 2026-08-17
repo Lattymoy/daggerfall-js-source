@@ -431,7 +431,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
     voxelfolk: params.has('voxelfolk'),
-    foes: params.has('foes'),
+    foes: !params.has('nofoes'),   // C11: foes are the DEFAULT now (monsters live; ?nofoes for the empty-dungeon dev view)
     playerClass: params.has('class') ? Number(params.get('class')) : undefined,
     playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined,
     playerWeapon: params.get('weapon') ?? undefined,

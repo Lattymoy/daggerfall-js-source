@@ -40,9 +40,16 @@ for (const b of blocks) {
   if (corpse) e.corpseTexture = { archive: Number(corpse[1]), record: Number(corpse[2]) };
   const mm = field(b, 'MinMetalToHit');
   e.minMetalToHit = mm ? MATERIALS[mm.replace('WeaponMaterialTypes.', '')] : 0;   // absent -> C# default(enum) = 0
-  for (const k of ['MinDamage', 'MaxDamage', 'MinDamage2', 'MaxDamage2', 'MinDamage3', 'MaxDamage3', 'MinHealth', 'MaxHealth', 'Level', 'ArmorValue', 'Weight', 'MapChance', 'ChanceForAttack2', 'ChanceForAttack3']) {
+  for (const k of ['MinDamage', 'MaxDamage', 'MinDamage2', 'MaxDamage2', 'MinDamage3', 'MaxDamage3', 'MinHealth', 'MaxHealth', 'Level', 'ArmorValue', 'Weight', 'MapChance', 'ChanceForAttack2', 'ChanceForAttack3', 'ChanceForAttack4', 'ChanceForAttack5']) {
     const v = num(field(b, k));
     if (v !== null) e[k[0].toLowerCase() + k.slice(1)] = v;
+  }
+  // C11 mobile sprites: HasIdle + the attack frame SEQUENCES (the -1
+  // entry is the damage marker) with the chance-rolled variants 2-5.
+  if (/HasIdle = true/.test(b)) e.hasIdle = true;
+  for (const k of ['PrimaryAttackAnimFrames', 'PrimaryAttackAnimFrames2', 'PrimaryAttackAnimFrames3', 'PrimaryAttackAnimFrames4', 'PrimaryAttackAnimFrames5']) {
+    const m = b.match(new RegExp(`\\b${k} = new int\\[\\] \\{([^}]+)\\}`));
+    if (m) e[k[0].toLowerCase() + k.slice(1)] = m[1].split(',').map((s) => Number(s.trim()));
   }
   const team = field(b, 'Team');
   if (team) e.team = team.replace('MobileTeams.', '');
