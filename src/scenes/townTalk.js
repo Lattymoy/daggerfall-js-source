@@ -38,6 +38,8 @@ import { buildBuildingDirectory, TOPIC_CATEGORIES, whereIsAnswer, reactionTier01
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
+import { NativeTalkWindow, preloadTalkArt, talkArtLoaded } from '../ui/nativeTalk.js';   // U8b
+import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U8b: pointer routing
 
 export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> index (DFU TalkToneToIndex)
 
@@ -68,7 +70,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, rolls = Math.random }) {
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random }) {
   const hud = new HudText();
   let font = null, factions = null, textRsc = null, people = null;
   let mode = 'grab';   // PlayerActivate default
@@ -90,6 +92,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     loading = (async () => {
       try { font = makeFont(renderer, new FntFile().load(await fetchBytes('FONT0003.FNT')), 'FONT0003'); }
       catch { console.warn('[town] FONT0003.FNT unavailable; talk UI text disabled'); }
+      if (palette) preloadTalkArt({ renderer, fetchBytes, palette });   // U8b: TALK01I0 (art-less keeps the text chain)
       try {
         factions = new FactionFile();
         factions.load(await fetchBytes('FACTION.TXT'));
@@ -235,6 +238,21 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     _talkNpc = target.person;
     toneSession = [0, 0, 0];   // T3f: per talk session (DFU TalkToNpc)
     lastToneIndex = -1;
+    // U8b: the native TALK01I0 window when the art is up (clicks/taps
+    // through the verbatim hit rects; the keyed chain is the fallback)
+    if (talkArtLoaded() && directory.length) {
+      showOverlay(new NativeTalkWindow(t.text, {
+        categories: () => TOPIC_CATEGORIES
+          .map((c) => ({ label: c.caption, buildings: directory.filter((b) => b.buildingType === c.type) }))
+          .filter((c) => c.buildings.length)
+          .map((c) => ({ label: c.label, buildings: c.buildings.map((b) => ({ label: b.name, ...b })) })),
+        answer: (b) => answerText(b),
+        tone: () => tone,
+        setTone: (t2) => { tone = t2; },
+        npcName: people?.name ?? '',
+      }));
+      return;
+    }
     showGreeting(t.text);
   }
 
@@ -304,14 +322,19 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // GetAnswerWhereIs (the seed-stable knowledge roll picks the
     // knows/doesn't-know table half) + the %hnt hint chain: a 7333
     // variant with %loc = the building, %di = the compass hint.
+    showAnswer(answerText(building));
+  }
+
+  // U8b: the answer STRING, shared by the native talk window and the
+  // fallback chain (the T3c-T3f pipeline unchanged).
+  function answerText(building) {
     const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality ?? 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });
     const hint = randomVariant(7333, '%loc is %di of here')
       .replaceAll('%loc', building.name).replaceAll('%di', a.direction);
     let text = randomVariant(a.textId, '%hnt');
-    text = expandMacros(text, { playerName: playerEntity.name ?? '' })
+    return expandMacros(text, { playerName: playerEntity.name ?? '' })
       .replaceAll('%hnt', hint).replaceAll('%key', building.name)
       .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAGGED interim
-    showAnswer(text);
   }
 
   function showAnswer(text) {
@@ -334,8 +357,25 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     else if (overlay && !font) overlay = null;   // font-less: never trap the motor
   }
 
+  // U8b: pointer routing for native windows (phone taps + mouse) -
+  // the hosts call this BEFORE requestLook; a consumed click never
+  // grabs pointer lock. Canvas CSS size maps to backing pixels first.
+  function pointerdown(e) {
+    if (!overlay?.click) return false;
+    const r = canvas.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (canvas.width / r.width);
+    const py = (e.clientY - r.top) * (canvas.height / r.height);
+    const m = nativeMetrics(canvas);
+    const v = pointToNative(m, px, py);
+    if (v) overlay.click(v[0], v[1]);
+    if (overlay.done) {
+      const cb = _onOverlayClosed; _onOverlayClosed = null; overlay = null; cb?.();
+    }
+    return true;   // an open native window owns the pointer either way
+  }
+
   return {
-    keydown, tryActivate, frame, ensureLoaded, nextMode, showOverlay, setTopics,
+    keydown, tryActivate, frame, ensureLoaded, nextMode, showOverlay, setTopics, pointerdown,
     texts: (id) => textVariants(id),
     say: (line) => hud.add(line),
     get overlayActive() { return !!overlay; },
@@ -344,7 +384,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     _debug: () => ({
       mode, overlay: !!overlay, people: people?.name ?? null,
       buildings: directory.length, tone: TONE_NAMES[tone], toneSession: [...toneSession],
-      overlayText: overlay?.lines?.[0] ?? overlay?.text ?? null,
+      native: !!overlay?.conversation, topicMode: overlay?.topicMode ?? null,
+      topicCount: overlay?.topics?.length ?? null,
+      overlayText: overlay?.conversation?.at(-1) ?? overlay?.lines?.[0] ?? overlay?.text ?? null,
       overlayOptions: overlay?.options?.filter((o) => o.label).map((o) => o.label) ?? null,
     }),
   };

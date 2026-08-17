@@ -323,3 +323,43 @@ FATIGUE: 50/50, ENCUMBRANCE: 0/75", stats in their boxes (the 0s
 are the honest pre-chargen interim entity), the portrait window
 showing the page art; Digit1 pops the skill panel; F5 toggles
 closed. Suite 452/99.
+
+## U8b (2026-08-17): THE NATIVE TALK WINDOW SHIPPED
+
+The second native window - and the most-seen screen in the game:
+TALK01I0.IMG replaces the interim ChoiceWindow talk chain in BOTH
+exterior hosts (art-less sessions keep the chain - never trap).
+
+- ui/nativeTalk.js: DaggerfallTalkWindow's verbatim geometry as
+  TALK_RECTS - the button column (Tell me about 4,4 / Where is 4,14
+  / Location 4,26 / People 4,36 / Things 4,46 / Work 4,56, all
+  107x10), Okay (4,186), Goodbye (118,183,67x10), the topic list
+  (6,71,94x104) at 9px rows, the conversation panel (189,65,
+  114x126) wrapped + bottom-anchored, the NPC name strip (117,52),
+  the tone radios (258,18/28/38,6x6). The button LABELS are baked
+  in the art - DFU overlays invisible hit rects and so do we.
+- POINTER ROUTING lands: townTalk.pointerdown maps canvas clicks/
+  taps through pointToNative to the window's hit rects, called by
+  both hosts BEFORE requestLook (a consumed click never grabs
+  pointer lock) - the phone's tap path and the desktop's mouse path
+  are the same seam. The session's keyboard accelerators stay: W
+  opens Where-is>Location, T cycles tone, digits pick rows, N/P
+  page, Esc/E goodbye.
+- The session pipeline is UNCHANGED underneath: the same
+  categories/directory, answerText (extracted, shared with the
+  fallback chain), the T3e knowledge roll, the T3f toned tiers -
+  answers append to the conversation history as classic does.
+
+FLAGGED loud: the TFAC portrait pends faces (the art's frame
+shows); the TALK02/03 tone-highlight art pends (an interim yellow
+mark fills the active radio); People/Things/Work + Tell me about
+are hit-consumed no-ops pending their topic sources; the scroll
+arrows ride their rects (no INVE06/07 arrow art yet).
+
+Probed live + EYEBALLED: the full classic screen - every baked
+button label under its rect, the NORMAL radio marked, the three
+alchemists in the topic list (long names truncating at the list
+edge), "People of Daggerfall" on the name strip, the greeting +
+answer in the conversation panel; the whole circuit driven by MOUSE
+CLICKS (Where is -> category -> building -> answer -> tone radio ->
+goodbye). Suite 454/100.

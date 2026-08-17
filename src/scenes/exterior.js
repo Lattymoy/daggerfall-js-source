@@ -286,7 +286,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // with the streaming host via townTalk.js. It also gives this host
   // its first HUD-text layer; the weapon rig's say routes there now.
   const townTalk = createTownTalk({
-    renderer, canvas, fetchBytes, playerEntity,
+    renderer, canvas, fetchBytes, playerEntity, palette,
     regionIndex: dfLocation.regionIndex,
     onCrime: () => _crimeResponse(),   // G1: late-bound - the guards mount below
     // T3c: the Where-is topics - the named-building pool merges at
@@ -407,7 +407,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (e.code === 'AltLeft') e.preventDefault();
   });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
-  canvas.addEventListener('pointerdown', () => requestLook(canvas));
+  canvas.addEventListener('pointerdown', (e) => { if (townTalk.pointerdown(e)) return; requestLook(canvas); });   // U8b: native windows own the pointer
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());

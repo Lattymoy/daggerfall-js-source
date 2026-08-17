@@ -427,7 +427,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // region - cross-region streaming keeps the boot region's people
   // until the current-pixel region wiring lands with travel.
   const townTalk = createTownTalk({
-    renderer, canvas, fetchBytes, playerEntity,
+    renderer, canvas, fetchBytes, playerEntity, palette,
     regionIndex: startLoc.regionIndex,
     onCrime: () => _crimeResponse(),   // G1: late-bound - the guards mount below
   });
@@ -566,7 +566,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (e.code === 'AltLeft') e.preventDefault();
   });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
-  canvas.addEventListener('pointerdown', () => requestLook(canvas));
+  canvas.addEventListener('pointerdown', (e) => { if (townTalk.pointerdown(e)) return; requestLook(canvas); });   // U8b: native windows own the pointer
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
