@@ -286,6 +286,18 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer, canvas, fetchBytes, playerEntity,
     regionIndex: dfLocation.regionIndex,
     onCrime: () => _crimeResponse(),   // G1: late-bound - the guards mount below
+    // T3c: the Where-is topics - the named-building pool merges at
+    // talk-load; building positions ride their exterior doors.
+    topics: {
+      exteriorBuildings: dfLocation.exterior.buildings,
+      blocks: loc.blocks,
+      doors: buildingDoors.map((e) => ({
+        dfBlock: e.dfBlock, recordIndex: e.recordIndex,
+        position: [e.door.matrix[12], e.door.matrix[13], e.door.matrix[14]],
+      })),
+      locationName, regionName,
+      playerPos: () => (walkMode ? [...player.pos] : [...cam.pos]),
+    },
   });
   townTalk.ensureLoaded();
   surfacePlayer();   // the probe surface exists from boot (T3b: pickpocket gold reads)

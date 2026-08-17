@@ -27,3 +27,9 @@ export function rand() {
 export function randomRangeInclusive(min, max) {
   return (rand() % (max - min + 1)) + min;
 }
+
+/** DFRandom.random_range(min, max), EXCLUSIVE upper (T3c: the
+ *  building-name part draws use this form). */
+export function randomRange(min, max) {
+  return (rand() % (max - min)) + min;
+}

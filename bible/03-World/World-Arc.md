@@ -614,6 +614,50 @@ calendar; banishment's SeverePunishmentFlags consequences pend;
 FillVitalSigns is a floor-at-1 until vitals wiring; the People
 faction rep half-delta pends the save-side clone.
 
+## T3c (2026-08-17): WHERE IS - building names + directions SHIPPED
+
+The talk window answers "Where is...?" in the test-city host:
+
+- BUILDING NAMES (world/buildingNames.js): GenerateBuildingName
+  verbatim - DFRandom.srand(seed), the B-then-A part draws in source
+  order over the classic FALL.EXE name lists (committed as data,
+  FULL extractions - a truncated first pull nearly shipped invented
+  tavern tails, caught in-slice); %cn/%ef (one burned rand + the
+  region-race male first name, DFU's always-Breton fix)/%rt (the
+  province ruler's title); banks "The Bank of <region>", guild
+  halls = the faction name, temples = the faction's first child,
+  palaces TEXT.RSC 475/476/477, houses empty.
+- THE NAMED-BUILDING POOL (systems/talkTopics.js, verbatim
+  GetCompleteBuildingData): the location's exterior building list is
+  a pool; scanning blocks y->x, each named-type block building draws
+  the first unused pool entry OF ITS TYPE (nameSeed/factionId/
+  quality); pool exhaustion keeps block placeholders (DFU logs the
+  same). OUR WRINKLE: repeated block names share one parsed dfBlock
+  (DFU's C# structs copy) - doors resolve to their block INSTANCE by
+  position. Building positions ride their exterior doors.
+- THE ANSWER: the 30-record answersToDirections table (15 doesn't-
+  know + 15 knows x 5 social groups x 3 reaction tiers); the tier is
+  GetReactionToPlayer_0_1_2 at the NEUTRAL tone (Personality/5 + 5
+  vs an NPC-seed-stable 0..20 roll; the +20 band is DFU's lowering
+  of classic's +30, doctrine-kept); the %hnt hint chain = a 7333
+  variant with %loc = the building and %di = the verbatim 8-way
+  compass bands over (east, north). Tier 0 commoners REFUSE rudely
+  without the hint - verbatim attitude.
+- UI: the greeting window gains "W - where is..." -> paged category
+  list (8/page, N-more) -> buildings -> the answer window with "ask
+  another". PROBED LIVE: 62 named buildings in Daggerfall city,
+  "Doctor Rodynak's Herbs" under Alchemists, and a genuine tier-0
+  answer ("Its none of yer damn business.").
+
+FLAGGED (LOUD): the NPC knowledge roll pends (every NPC knows - the
+doesn't-know half of the table is wired but unreached); the tone
+buttons (Polite/Blunt) pend; the 35% map-reveal path pends the town
+map; %hnr/%ra expand to interim literals; the STREAMING host's
+per-pixel directory pends (a host-rule debt, the immediate
+follow-up); the person-seed stands in for DFU's NPC hashcode
+(Ledger A); identically-seeded repeats in pool-exhausted cities
+mirror DFU's own fallback.
+
 ## AUDIT 2026-08-17b: the towns/talk parity pass
 
 The T1 modules were re-read line by line against MobilePersonMotor /
