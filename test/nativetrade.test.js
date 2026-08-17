@@ -2,7 +2,7 @@
 // trade machine over fake hooks (the transaction core is the host's).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { NativeTradeWindow, TRADE_RECTS, LIST_SLOTS, SLOT_H, CELL_W } from '../src/ui/nativeTrade.js';
+import { NativeTradeWindow, TRADE_RECTS, LIST_SLOTS, SLOT_H, CELL_W, CELL_X, ARROW_H, DOWN_ARROW_Y } from '../src/ui/nativeTrade.js';
 
 const hooks = () => {
   const shelf = [{ templateIndex: 277, name: 'Book A' }, { templateIndex: 277, name: 'Book B' }];
@@ -28,6 +28,9 @@ test('nativeTrade: the composed rects + the click trade machine', () => {
   assert.equal(SLOT_H, 38);
   assert.equal(LIST_SLOTS, 4);
   assert.equal(CELL_W, 50, 'ItemListScroller itemButtonRects4');
+  assert.equal(CELL_X, 9, 'itemListPanelRect - the buttons sit at x9, the rail is LEFT');
+  assert.equal(ARROW_H, 16);
+  assert.equal(DOWN_ARROW_Y, 136);
   const h = hooks();
   const w = new NativeTradeWindow(h);
   // click remote slot 0 (below the 12px scroll band) -> buys
@@ -41,12 +44,13 @@ test('nativeTrade: the composed rects + the click trade machine', () => {
   assert.equal(w.lastPrice, 8);
   assert.equal(h.gold(), 98);
   assert.equal(h.shelf.length, 2);
-  // the right 9px scroll strip never picks items (ItemListScroller's
-  // arrow strip beside the 50-wide buttons)
+  // the LEFT 9px rail never picks items (up arrow 0,0,9,16 / down
+  // 0,136,9,16 / the bar between)
   const before = h.shelf.length;
-  assert.ok(w.click(261 + 52, 48 + 20));    // strip, top half -> up
-  assert.ok(w.click(261 + 52, 48 + 130));   // strip, bottom half -> down
-  assert.equal(h.shelf.length, before, 'the strip scrolls, never trades');
+  assert.ok(w.click(261 + 4, 48 + 5));      // the up arrow
+  assert.ok(w.click(261 + 4, 48 + 140));    // the down arrow
+  assert.ok(w.click(261 + 4, 48 + 70));     // the bar between
+  assert.equal(h.shelf.length, before, 'the rail scrolls, never trades');
   // outside every rect: not consumed; exit closes
   assert.equal(w.click(10, 100), false);
   assert.ok(w.click(241, 188));
@@ -91,7 +95,7 @@ test('nativeTrade: icons NEVER upscale and centre in the 50x38 cell (ItemListScr
   assert.ok(w._drawIcon(fakeRenderer, m, { templateIndex: 277 }, [261, 48, 59, 152], 0));
   assert.equal(captured.dst.w, 8, 'no upscale');
   assert.equal(captured.dst.h, 8);
-  assert.equal(captured.dst.x, 261 + (50 - 8) / 2, 'centred in the 50-wide BUTTON, not the 59 scroller');
+  assert.equal(captured.dst.x, 261 + 9 + (50 - 8) / 2, 'centred in the BUTTON at x9, not the scroller');
   assert.equal(captured.dst.y, 48 + (38 - 8) / 2);
   // an oversized icon scales DOWN to fit
   w._iconSizes.set(key, { width: 100, height: 38 });

@@ -44,8 +44,18 @@ export const TALK_RECTS = Object.freeze({
   topicUp: [102, 69, 9, 16],
   topicDown: [102, 161, 9, 16],
 });
-export const TOPIC_ROW_H = 9;
-export const TOPIC_ROWS = Math.floor(TALK_RECTS.topicList[3] / TOPIC_ROW_H);   // 11 visible
+// ListBox verbatim (the 17d UI audit): row height = FONT0003's
+// fixedHeight 7 + RowSpacing (topic 0, conversation 4); the NPC
+// name label centres in its 197-wide panel; questions render light
+// blue (0.698,0.812,1) in the PLAYER-SAYS panel (123,8,124,38),
+// answers land in the conversation in DaggerfallAnswerTextColor
+// (227,223,0).
+export const TOPIC_ROW_H = 7;                    // FONT0003 fixedHeight + spacing 0
+export const CONV_LINE_H = 7 + 4;                // + RowSpacing 4
+export const TOPIC_ROWS = Math.floor(TALK_RECTS.topicList[3] / TOPIC_ROW_H);
+export const QUESTION_COLOR = [0.698, 0.812, 1, 1];      // DaggerfallQuestionTextColor
+export const ANSWER_COLOR = [227 / 255, 223 / 255, 0, 1];   // DaggerfallAnswerTextColor
+export const PLAYER_SAYS_RECT = Object.freeze([123, 8, 124, 38]);
 
 let _art = null;
 export async function preloadTalkArt(deps) {
@@ -86,6 +96,7 @@ export class NativeTalkWindow {
       this.topicMode = 'buildings';
       this.scroll = 0;
     } else if (this.topicMode === 'buildings') {
+      this.question = `Where is ${it.label ?? it.name}?`;   // the player-says panel (classic style)
       this.conversation.push(this.hooks.answer(it));
     }
   }
@@ -128,9 +139,15 @@ export class NativeTalkWindow {
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, SCREEN_DIM);
     drawImg(renderer, _art, m, 0, 0);
     const R = TALK_RECTS;
-    // NPC name (the seed-named person pends NPC names - the People
-    // faction stands in)
-    shadowText(renderer, font, this.hooks.npcName ?? '', m, R.npcName[0], R.npcName[1] + 1);
+    // NPC name CENTRED in its 197-wide panel (labelNameNPC
+    // HorizontalAlignment.Center; seed-named persons pend - the
+    // People faction stands in)
+    shadowText(renderer, font, this.hooks.npcName ?? '', m, R.npcName[0], R.npcName[1] + 1, { align: 'center', w: R.npcName[2] });
+    // the pending question in the PLAYER-SAYS panel, light blue
+    if (this.question) {
+      wrapText(font.fnt, this.question, PLAYER_SAYS_RECT[2]).slice(0, Math.floor(PLAYER_SAYS_RECT[3] / TOPIC_ROW_H)).forEach((l, i) =>
+        shadowText(renderer, font, l, m, PLAYER_SAYS_RECT[0], PLAYER_SAYS_RECT[1] + i * TOPIC_ROW_H, { color: QUESTION_COLOR }));
+    }
     // the active tone's interim mark (TALK02/03 highlight art pends)
     const toneRect = [R.tonePolite, R.toneNormal, R.toneBlunt][this.hooks.tone()];
     drawRect(renderer, m, toneRect[0] + 1, toneRect[1] + 1, 4, 4, DEFAULT_TEXT_COLOR);
@@ -138,13 +155,13 @@ export class NativeTalkWindow {
     const fit = (t, w) => { let s = t; while (s.length > 1 && measureText(font.fnt, s) > w) s = s.slice(0, -1); return s; };
     this.topics.slice(this.scroll, this.scroll + TOPIC_ROWS).forEach((it, i) =>
       shadowText(renderer, font, fit(it.label ?? it.name, R.topicList[2] - 2), m, R.topicList[0] + 1, R.topicList[1] + 1 + i * TOPIC_ROW_H));
-    // conversation: wrapped, bottom-anchored in the panel
-    const lineH = 8;
-    const maxLines = Math.floor(R.conversation[3] / lineH);
+    // conversation: wrapped, bottom-anchored, the verbatim line
+    // height (7 + RowSpacing 4) in the ANSWER color
+    const maxLines = Math.floor(R.conversation[3] / CONV_LINE_H);
     const wrapped = [];
-    for (const c of this.conversation) wrapped.push(...wrapText(font.fnt, c, (R.conversation[2] - 2) * 1), '');
+    for (const c of this.conversation) wrapped.push(...wrapText(font.fnt, c, R.conversation[2] - 2), '');
     const view = wrapped.slice(-maxLines);
     view.forEach((l, i) =>
-      shadowText(renderer, font, l, m, R.conversation[0] + 1, R.conversation[1] + 1 + i * lineH, { color: [0.9, 0.9, 0.85, 1] }));
+      shadowText(renderer, font, l, m, R.conversation[0] + 1, R.conversation[1] + 1 + i * CONV_LINE_H, { color: ANSWER_COLOR }));
   }
 }

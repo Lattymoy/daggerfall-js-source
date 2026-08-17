@@ -2,7 +2,7 @@
 // the click state machine over fake session hooks.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { NativeTalkWindow, TALK_RECTS, TOPIC_ROWS, TOPIC_ROW_H } from '../src/ui/nativeTalk.js';
+import { NativeTalkWindow, TALK_RECTS, TOPIC_ROWS, TOPIC_ROW_H, CONV_LINE_H, QUESTION_COLOR, ANSWER_COLOR } from '../src/ui/nativeTalk.js';
 
 const hooks = () => {
   const state = { tone: 1, closed: 0 };
@@ -28,6 +28,11 @@ test('nativeTalk: the verbatim rects + the click state machine', () => {
   assert.deepEqual([...TALK_RECTS.goodbye], [118, 183, 67, 10]);
   assert.deepEqual([...TALK_RECTS.tonePolite], [258, 18, 6, 6]);
   assert.equal(TOPIC_ROWS, Math.floor(104 / TOPIC_ROW_H));
+  // the 17d UI audit: ListBox rows = FONT0003 fixedHeight 7 + spacing
+  assert.equal(TOPIC_ROW_H, 7, 'topic RowSpacing 0');
+  assert.equal(CONV_LINE_H, 11, 'conversation RowSpacing 4');
+  assert.deepEqual(QUESTION_COLOR, [0.698, 0.812, 1, 1]);
+  assert.deepEqual(ANSWER_COLOR.map((v) => Math.round(v * 255)), [227, 223, 0, 255]);
   const h = hooks();
   const w = new NativeTalkWindow('Yes?', h);
   assert.deepEqual(w.conversation, ['Yes?']);

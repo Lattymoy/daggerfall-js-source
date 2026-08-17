@@ -19,6 +19,8 @@
 
 import { loadImg, nativeMetrics, drawImg, SCREEN_DIM, shadowText } from './nativePanel.js';
 import { templateByIndex } from '../systems/itemTemplates.js';
+import { FntFile } from '../formats/fntFile.js';
+import { makeFont } from './text.js';
 
 export const TRADE_RECTS = Object.freeze({
   costPanel: [49, 13, 111, 9],           // SHOP00I0 strip
@@ -29,25 +31,31 @@ export const TRADE_RECTS = Object.freeze({
   modeAction: [222 + 4, 10 + 124, 31, 14],   // the Buy button (panel-child 4,124)
   clear: [222 + 4, 10 + 146, 31, 14],
 });
-// ItemListScroller verbatim: four 50x38 item BUTTONS at x0 of the
-// scroller (the right 9px is the scroll strip - the art's arrows sit
-// at its top/bottom); icons ScaleToFit with MaxAutoScale 1 (never
-// upscaled), centered both axes; the ONLY text is the stack count,
-// Font4 at the button's top-left, drawn only when stackCount > 1
-// (item names ride the info/tooltip seam - classic lists draw none).
+// ItemListScroller verbatim (the FULL layout this time - the 17d
+// UI audit): itemListPanelRect (9,0,50,152) - the four 50x38 item
+// BUTTONS sit at x=9, and the LEFT 9px column is the scroll rail:
+// up arrow (0,0,9,16), down arrow (0,136,9,16), the scrollbar
+// (1,18,6,117) between. Icons ScaleToFit with MaxAutoScale 1
+// (never upscaled), centered both axes; the ONLY cell text is the
+// stack count, FONT0004 at the button's top-left, drawn only when
+// stackCount > 1 (classic lists draw no item names - the
+// info/tooltip seam pends).
 export const LIST_SLOTS = 4;
+export const CELL_X = 9;
 export const CELL_W = 50;
 export const SLOT_H = 38;
-export const SCROLL_STRIP_W = 9;
+export const ARROW_H = 16;
+export const DOWN_ARROW_Y = 136;
 
 let _art = null;
 export async function preloadTradeArt(deps) {
   if (_art) return;
   try {
-    const [base, action, cost] = await Promise.all([
+    const [base, action, cost, fnt4] = await Promise.all([
       loadImg(deps, 'INVE00I0.IMG'), loadImg(deps, 'INVE08I0.IMG'), loadImg(deps, 'SHOP00I0.IMG'),
+      deps.fetchBytes('FONT0004.FNT'),   // the stack-count font (DFU Font4)
     ]);
-    _art = { base, action, cost };
+    _art = { base, action, cost, font4: makeFont(deps.renderer, new FntFile().load(fnt4), 'FONT0004') };
   } catch { console.warn('[trade] INVE00I0/INVE08I0/SHOP00I0 unavailable; the keyed shelf window stands in'); }
 }
 export const tradeArtLoaded = () => !!_art;
@@ -99,9 +107,14 @@ export class NativeTradeWindow {
     ]) {
       if (!inRect(rect, vx, vy)) continue;
       const x = vx - rect[0], y = vy - rect[1];
-      // the right 9px scroll strip: top half up, bottom half down
-      // (the art's arrow buttons live at its ends)
-      if (x >= CELL_W) { this._scroll(which, y < rect[3] / 2 ? -1 : 1, items.length); return true; }
+      // the LEFT 9px rail (verbatim): the 16px arrows at its ends,
+      // the bar between paging by half
+      if (x < CELL_X) {
+        if (y < ARROW_H) this._scroll(which, -1, items.length);
+        else if (y >= DOWN_ARROW_Y) this._scroll(which, 1, items.length);
+        else this._scroll(which, y < rect[3] / 2 ? -1 : 1, items.length);
+        return true;
+      }
       pick(Math.floor(y / SLOT_H));
       return true;
     }
@@ -134,7 +147,7 @@ export class NativeTradeWindow {
     // over the art's slot frames).
     const fit = Math.min(1, CELL_W / size.width, SLOT_H / size.height);
     const w = size.width * fit, h = size.height * fit;
-    const x = rect[0] + (CELL_W - w) / 2;
+    const x = rect[0] + CELL_X + (CELL_W - w) / 2;
     const y = rect[1] + slot * SLOT_H + (SLOT_H - h) / 2;
     // HOTFIX (Mac's catch): record textures store BOTTOM-UP rows
     // (getColor32 keeps DFU's verbatim GL flip for the mesh/billboard
@@ -161,10 +174,10 @@ export class NativeTradeWindow {
     ]) {
       items.slice(scroll, scroll + LIST_SLOTS).forEach((it, s) => {
         this._drawIcon(renderer, m, it, rect, s);
-        // classic cells carry ONLY the stack count (top-left, >1);
-        // names ride the info/tooltip seam (FLAGGED)
+        // classic cells carry ONLY the stack count (FONT0004 at the
+        // BUTTON's top-left, >1); names ride the info/tooltip seam
         if ((it.stackCount ?? 1) > 1) {
-          shadowText(renderer, font, String(it.stackCount), m, rect[0] + 1, rect[1] + s * SLOT_H + 1);
+          shadowText(renderer, _art?.font4 ?? font, String(it.stackCount), m, rect[0] + CELL_X, rect[1] + s * SLOT_H);
         }
       });
     }

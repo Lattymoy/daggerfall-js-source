@@ -431,3 +431,43 @@ names - names ride the info/tooltip seam, FLAGGED). Pinned (the
 cell metrics, the no-upscale/centring draw, the strip-vs-pick
 split). Suite 457/101; re-probed + re-eyeballed - every book
 centred inside its own frame.
+
+### AUDIT 17d (2026-08-17, after Mac's third catch): the UI parity audit
+
+Three native-window positioning defects in two days ("dude. come on
+how hstd is it to have parity with dfu and positioning") meant the
+windows were built from MEMORY of DFU, not from its source. This
+audit re-grounded EVERY drawn element of all three native windows
+line-by-line against DaggerfallCharacterSheetWindow /
+DaggerfallTalkWindow / DaggerfallInventoryWindow + ItemListScroller
++ ListBox. Findings, all fixed + pinned:
+- TRADE (the big one): even HOTFIX 2 had the scroller MIRRORED.
+  itemListPanelRect is (9,0,50,152) - the four 50x38 buttons sit at
+  x=9 and the 9px scroll rail is the LEFT column: up arrow
+  (0,0,9,16), down arrow (0,136,9,16), scrollbar (1,18,6,117)
+  between. Rail clicks scroll (arrows one slot, the bar pages);
+  they never trade. Icons centre in the BUTTON at x9.
+- TRADE stack labels: FONT0004 (DFU's Font4 for stack counts), not
+  the default FONT0003 - preloaded with the art.
+- TALK topic rows: 7px verbatim (ListBox row height = FONT0003
+  fixedHeight 7 + RowSpacing 0), not the 9px guess; TOPIC_ROWS
+  derives (104/7 = 14 visible rows).
+- TALK conversation lines: 11px (RowSpacing 4), not the 8px guess.
+- TALK colors: questions render DaggerfallQuestionTextColor
+  (0.698,0.812,1) in the PLAYER-SAYS panel (123,8,124,38) - the
+  panel was drawn empty before; answers render
+  DaggerfallAnswerTextColor (227,223,0), not the default yellow.
+- TALK NPC name: centred in its 197-wide panel
+  (HorizontalAlignment.Center), not left-aligned.
+- CHARSHEET: audited clean - every label already on its verbatim
+  DFU coordinate.
+Both probes re-run + re-eyeballed: books inside their frames with
+the left rail clear, the light-blue question over the yellow
+conversation, the centred name. Suite 457/101 (assertions only).
+
+THE NATIVE-WINDOW RULE (standing, from this audit): every drawn
+element of a native window - rect, font, color, scale, alignment -
+must cite its DFU source line (file + member) in the code comment
+or the arc record BEFORE it ships. No free-styled geometry: if the
+DFU value is unknown, the element does not draw until it is looked
+up. Guessing cost three hotfixes; looking up costs one grep.
