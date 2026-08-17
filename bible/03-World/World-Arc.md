@@ -573,6 +573,47 @@ rep deltas pend the save-side faction clone; enemy-vs-enemy pends
 (C15 residual); the player death screen in exteriors pends (health
 hits 0 with no fanfare).
 
+## G2 (2026-08-17): ARREST + COURT - the crime loop completes SHIPPED
+
+Surrendering to a HALT now works end to end (systems/court.js
+Node-pure + scenes/arrestFlow.js driving townTalk's overlay slot in
+both hosts):
+
+- THE INTERCEPTION (EnemyAttack verbatim): a guard's landed hit on
+  an active crime WITHHOLDS the damage the first time -
+  LowerRepForCrime charges the region's LegalRep and the surrender
+  box (TEXT.RSC 15) opens; No lands the blow; later hits damage
+  normally except a would-be-fatal hit forces
+  SurrenderToCityGuards(false), which can refuse (rep < -20, or the
+  DFRandom coin at neutral rep) and let the blow kill.
+- SURRENDER (verbatim): SetHealth(1) BEFORE any refusal; voluntary
+  always reaches court when not hard-refused.
+- THE COURT (DaggerfallCourtWindow verbatim): punishmentType from
+  two FailedRolls vs -rep (cap 75) and -rep/2; penalty = base +-
+  perRep*rep clamped [min,max] /40; each unit flips a DFRandom coin
+  (40 gold fine / 3 days); unpayable fines convert to days at
+  40/day. Guilty halves both and PAYS; Not Guilty debates
+  (Etiquette) or lies (Streetwise) at rep + (skill+PER)/2 clamp
+  5..95 - free to go (8062) or guilty with the fine roll (x2 under
+  25, halved over 75). THE NEVER-CHARGED VERDICT QUIRK preserved:
+  DeductGoldAmount lives only in the guilty PLEA - a failed defense
+  never pays its fine. Sentences raise rep by half the loss - 1
+  (the classic double-raise kept, DFU-noted).
+- THE STAND-DOWN (EnemyEntity verbatim): the watch DESPAWNS the
+  frame the crime returns to None - court release, either verdict.
+- PROBE PROOF (tools/arrestProbe.mjs): crime -> guard hit -> the
+  box opened with hp UNTOUCHED (the withheld blow) -> Y set hp 1 and
+  the court opened -> G pleaded guilty -> crime 0, LegalRep {17:-2},
+  the guard despawned. SwiftShader lesson: the clamped dt runs the
+  sim at ~1/3 speed - probes POSE into reach rather than wait out
+  pursuit.
+
+FLAGGED (LOUD): guild rescues pend the guilds arc; execution is
+classic-unreachable; the prison day-skip is a no-op until the shared
+calendar; banishment's SeverePunishmentFlags consequences pend;
+FillVitalSigns is a floor-at-1 until vitals wiring; the People
+faction rep half-delta pends the save-side clone.
+
 ## AUDIT 2026-08-17b: the towns/talk parity pass
 
 The T1 modules were re-read line by line against MobilePersonMotor /

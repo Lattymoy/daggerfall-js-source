@@ -1,0 +1,45 @@
+// G2 probe: crime -> guard pursuit -> the surrender box -> Y -> the
+// court sequence -> the crime clears and the watch stands down.
+import { createServer } from 'vite';
+import { chromium } from 'playwright';
+const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5199, strictPort: true } });
+await server.listen();
+const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+page.on('pageerror', (e) => console.log('[pageerror]', e.message));
+await page.goto('http://localhost:5199/?shot&play&exterior&time=12:00');
+await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
+await new Promise((r) => setTimeout(r, 10000));
+// The crime needs to be ACTIVE for the arrest branch - set it as the
+// pickpocket path would, then call the response.
+await page.evaluate(() => { window.__playerEntity.crimeCommitted = 'Pickpocketing'; window.__crime(); });
+// The spawn is async (CLASS18.CFG + texture 399 first-load) - wait for it
+await page.waitForFunction(() => JSON.parse(window.__guards()).length > 0, null, { timeout: 60000 });
+console.log('guards:', await page.evaluate(() => window.__guards()));
+// Wait for the surrender box (a guard hit while a crime is active)
+// The probe tests the ARREST FLOW, not pathfinding: pose the player
+// into the guard's melee reach (walk-mode __pose moves the player).
+const g0 = JSON.parse(await page.evaluate(() => window.__guards()))[0];
+await page.evaluate(([x, y, z]) => window.__pose(x, y, z, Math.PI, 0), [g0.pos[0], g0.pos[1] + 0.1, g0.pos[2] + 1.6]);
+// SwiftShader's clamped dt runs the sim slow - the attack cadence +
+// a LANDED hit can still take a while.
+const opened = await page.waitForFunction(() => JSON.parse(window.__talk()).overlay === true, null, { timeout: 300000 })
+  .then(() => true).catch(() => false);
+console.log('surrender box opened:', opened, 'hp:', await page.evaluate(() => window.__playerEntity.health));
+if (!opened) { console.log('NO SURRENDER BOX'); process.exit(1); }
+await page.screenshot({ path: '/home/claude/arrest-surrender.png' });
+const waitFrames = async (n) => {
+  const f = await page.evaluate(() => window.__frame);
+  await page.waitForFunction(([f0, k]) => window.__frame > f0 + k, [f, n], { timeout: 60000 });
+};
+const press = async (code) => { await page.keyboard.down(code); await waitFrames(3); await page.keyboard.up(code); await waitFrames(2); };
+await press('KeyY');   // surrender
+console.log('after Y (court):', await page.evaluate(() => window.__talk()), 'hp:', await page.evaluate(() => window.__playerEntity.health));
+await page.screenshot({ path: '/home/claude/arrest-court.png' });
+await press('KeyG');   // plead guilty
+console.log('after G:', await page.evaluate(() => window.__talk()));
+await press('KeyE');   // close the outcome panel
+console.log('final: crime =', await page.evaluate(() => window.__playerEntity.crimeCommitted),
+  'legalRep =', await page.evaluate(() => JSON.stringify(window.__playerEntity.legalRep ?? {})),
+  'guards =', await page.evaluate(() => window.__guards()));
+await browser.close(); await server.close();

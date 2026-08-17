@@ -109,14 +109,21 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     if (overlay) {
       e.preventDefault();
       // E says goodbye too - the touch layer's E button opens AND
-      // closes talk (desktop-consistent; Esc/Enter unchanged)
-      if (e.code === 'Escape') overlay.input('back');
+      // closes talk (desktop-consistent; Esc/Enter unchanged). Choice
+      // windows (G2) receive the raw code for their keyed options.
+      if (overlay.isChoiceWindow) overlay.input(e.code);
+      else if (e.code === 'Escape') overlay.input('back');
       else if (e.code === 'Enter' || e.code === 'KeyE') overlay.input('confirm');
-      if (overlay.done) overlay = null;
+      if (overlay.done) { overlay = null; _onOverlayClosed?.(); }
       return true;
     }
     return false;
   }
+
+  // G2: the arrest/court flows push their own windows through the
+  // same overlay slot (one motor-holding seam).
+  let _onOverlayClosed = null;
+  function showOverlay(win, onClosed = null) { overlay = win; _onOverlayClosed = onClosed; }
 
   /** NextInteractionMode (the touch cycle button); returns the new mode. */
   function nextMode() { setMode(nextInteractionMode(mode)); return mode; }
@@ -169,7 +176,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   return {
-    keydown, tryActivate, frame, ensureLoaded, nextMode,
+    keydown, tryActivate, frame, ensureLoaded, nextMode, showOverlay,
+    texts: (id) => textVariants(id),
     say: (line) => hud.add(line),
     get overlayActive() { return !!overlay; },
     get mode() { return mode; },
