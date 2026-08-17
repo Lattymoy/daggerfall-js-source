@@ -36,6 +36,7 @@ import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
 import { routeKey } from '../ui/input.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
+import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
@@ -60,6 +61,10 @@ export function createWorldModes(host) {
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => console.warn('[interior]', l),
   });
+  // C13: the interior arrow flights (collider late-resolved - each
+  // building brings its own).
+  const interiorArrows = new ArrowFlight({ getGpuMesh: pipeline.getGpuMesh, collider: () => interiorCtx?.collider });
+  let _arrowsCtx = null;
   let interiorCtx = null;
   let exitReturn = null;
   let dungeonCtx = null;
@@ -377,19 +382,28 @@ export function createWorldModes(host) {
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     for (const d of interiorCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
     for (const d of interiorCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, interiorCtx.texRemap);
+    // C13: interior arrows fly and draw with the meshes; a new
+    // interior (different ctx) drops the stale flights.
+    if (_arrowsCtx !== interiorCtx) { interiorArrows.arrows.length = 0; _arrowsCtx = interiorCtx; }
+    interiorArrows.update(dt);
+    interiorArrows.draw(renderer, interiorCtx.texRemap);
     renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
     if (interiorCtx.animateChars) interiorCtx.animateChars((performance.now() - _charT0) / 1000, _charAnimMode);
     for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
     // C9: the interior FP weapon - gesture/swing/sounds through the
     // rig; the strike frame runs the WeaponEnvDamage ray against the
     // interior's action objects (swing doors bash, verbatim). Bows
-    // consume an Arrow per loose + tally (the projectile itself pends
-    // interior missiles - nothing hostile to hit yet). No paralysis
-    // gate: effects tick only in the dungeon context.
+    // consume an Arrow per loose + tally, and the loose is VISIBLE
+    // now (C13: the arrow flies until it meets geometry - lost on
+    // impact, as DFU misses are). No paralysis gate: effects tick
+    // only in the dungeon context.
     for (const ev of interiorWeapon.frame(dt)) {
       if (ev !== 'hit') continue;
       if (weaponTypeForItem(interiorWeapon.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
-        if (removeOne(playerEntity.items, 131)) tallySkill(playerEntity, SKILLS.Archery);
+        if (removeOne(playerEntity.items, 131)) {
+          tallySkill(playerEntity, SKILLS.Archery);
+          interiorArrows.fire(player.eye, eyeDir());
+        }
         continue;
       }
       envAttack(interiorCtx.actions, interiorCtx.collider, player.eye, eyeDir());

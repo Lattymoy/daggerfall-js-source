@@ -15,6 +15,7 @@ import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor, FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
+import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
 import { removeOne } from '../systems/inventory.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
@@ -259,6 +260,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => console.warn('[exterior]', l),
   });
+  const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let zPrevW = false;   // the ReadyWeapon (Z) edge
   const modeNow = () => modes?.mode ?? 'exterior';   // lazy - modes binds below (boot-time mouse events)
   // ENGINE RIG (slice 2, ?rig): the canonical animated character in
@@ -553,19 +555,26 @@ export async function bootExterior(canvas, renderer, params, status) {
       camRight[0] = -dz / l;
       camRight[2] = dx / l;
     }
+    // C13: exterior arrows fly with the scene meshes (lost on
+    // geometry, as DFU misses are).
+    arrows.update(dt);
+    arrows.draw(renderer, texRemap);
     renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
     if (precip) {
       precip.draw(precipMode, proj, view, new Float32Array(eye), camRight, now / 1000);
     }
     // C9: the exterior FP weapon (first-person walk only - the V
     // third-person view has no FP overlay). Same residuals as the
-    // world host: no bashables in melee reach, bows consume + tally
-    // with the exterior missile pending.
+    // world host: no bashables in melee reach; bows consume + tally
+    // and the loose is VISIBLE now (C13).
     if (walkMode && !tpMode) {
       for (const ev of weaponRig.frame(dt)) {
         if (ev !== 'hit') continue;
         if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
-          if (removeOne(playerEntity.items, 131)) tallySkill(playerEntity, SKILLS.Archery);
+          if (removeOne(playerEntity.items, 131)) {
+            tallySkill(playerEntity, SKILLS.Archery);
+            arrows.fire(eye, fwd);
+          }
         }
       }
       weaponRig.draw();
