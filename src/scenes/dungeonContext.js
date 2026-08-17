@@ -1208,6 +1208,37 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
+
+  // C16: EnemyAttack.MeleeDamage - one resolution for both damage
+  // clocks (the rigs' machine hit frame, the mobiles' -1 sequence
+  // marker). Gate 0.25 / MeleeDistance + 35.156deg, then
+  // CalculateAttackDamage with the S18/S19b riders.
+  function resolveFoeMelee(f, playerFeet) {
+    const hdx = playerFeet[0] - f.ai.feet[0], hdz = playerFeet[2] - f.ai.feet[2];
+    if (!foeDeps.meleeHitConnects(f.ai._dist, f.ai.inSight, foeDeps.withinYaw(f.ai.yaw, hdx, hdz, foeDeps.MELEE_HIT_YAW_DEG))) return;
+    // E4b: weapon vs weaponless per the DFU rule (EnemyAttack also
+    // drops the weapon if the target is metal-immune to it - the
+    // player has no minMetalToHit, so that gate is inert)
+    const wpn = foeDeps.chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
+    // S18: the special-attack rider seam - monster weaponless hits
+    // run OnMonsterHit per hit (disease/paralysis/fatigue)
+    const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {
+      targetGroup: null, weapon: wpn,
+      onMonsterHit: (att, tgt, hit) => onMonsterHit(att, tgt, hit, {
+        currentDay: Math.floor(classicMinutes / MINUTES_PER_DAY), sinks: playerSinks,
+        castParalyze: () => {   // S19: spider/scorpion free-cast Spider Touch (66)
+          const sp = spellsByIndex?.get(SPIDER_TOUCH_SPELL_INDEX);
+          if (sp) castEnemySpell(f, sp, true);
+        },
+      }),
+      // S19b: a damaging poisoned-weapon hit infects (and the
+      // formulas clear the weapon's poison)
+      onInflictPoison: (att, tgt, pt) => inflictPoison(foeDeps.playerEntity, pt, false, { currentMinute: Math.floor(classicMinutes) }),
+    });
+    if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), 1.1);   // the player takes the hit (PlayerFootsteps families)
+    hurtPlayer(dmg);
+  }
+
   // Combat collision triggers (the last Combat-queue row):
   // DaggerfallActionCollision verbatim shape - per-object 0.12s
   // timeout, fires only while the player ACTIVELY MOVES horizontally
@@ -1487,33 +1518,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           fireArrow(from, [d[0] / l, d[1] / l, d[2] / l], f.entity.weapon, false, f);
           continue;
         }
-        const pf = playerFeet;
-        const hdx = pf[0] - f.ai.feet[0], hdz = pf[2] - f.ai.feet[2];
-        if (foeDeps.meleeHitConnects(f.ai._dist, f.ai.inSight, foeDeps.withinYaw(f.ai.yaw, hdx, hdz, foeDeps.MELEE_HIT_YAW_DEG))) {
-          // E4b: weapon vs weaponless per the DFU rule (EnemyAttack
-          // also drops the weapon if the target is metal-immune to it
-          // - the player has no minMetalToHit, so that gate is inert)
-          const wpn = foeDeps.chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
-          // (the attack sound moved to the strike EDGE above - DFU
-          // plays it at MeleeAnimation start, audit 08-17)
-          // S18: the special-attack rider seam - monster weaponless
-          // hits run OnMonsterHit per hit (disease/paralysis/fatigue)
-          const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {
-            targetGroup: null, weapon: wpn,
-            onMonsterHit: (att, tgt, hit) => onMonsterHit(att, tgt, hit, {
-              currentDay: Math.floor(classicMinutes / MINUTES_PER_DAY), sinks: playerSinks,
-              castParalyze: () => {   // S19: spider/scorpion free-cast Spider Touch (66)
-                const sp = spellsByIndex?.get(SPIDER_TOUCH_SPELL_INDEX);
-                if (sp) castEnemySpell(f, sp, true);
-              },
-            }),
-            // S19b: a damaging poisoned-weapon hit infects (and the
-            // formulas clear the weapon's poison)
-            onInflictPoison: (att, tgt, pt) => inflictPoison(foeDeps.playerEntity, pt, false, { currentMinute: Math.floor(classicMinutes) }),
-          });
-          if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), 1.1);   // the player takes the hit (PlayerFootsteps families)
-          hurtPlayer(dmg);
-        }
+        // C16: the machine's hit frame is the RIGS' damage clock;
+        // sprite mobiles land damage on their -1 sequence markers
+        // below (doMeleeDamage, verbatim - the Frost Daedra's base
+        // sequence strikes TWICE per swing).
+        if (!f.mobile) resolveFoeMelee(f, playerFeet);
       }
       if (f.mobile) {
         // C11: the sprite mobile. Paralysis freezes the anim clock
@@ -1529,6 +1538,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             casting: !!f._castPending,   // C14: the cast decision's edge (Spell one-shot)
           }, f.ai.yaw, f.ai.feet, eye);
           f._castPending = false;
+          // C16: the -1 damage marker IS the damage moment
+          // (AnimateEnemy doMeleeDamage -> MeleeDamage) - paralysis
+          // never reaches here (FreezeAnims "prevents the attack
+          // from triggering", verbatim).
+          if (playerFeet && f.mobile.hitFrame) resolveFoeMelee(f, playerFeet);
         }
         const out = f._mout;
         const rkey = `${out.record}#${out.frame}`;

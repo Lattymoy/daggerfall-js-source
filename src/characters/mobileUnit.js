@@ -13,10 +13,9 @@
 // primary records, verbatim GetStateAnims). RangedAttack1/2 are N/A
 // for monsters (HasRangedAttack1 is class-enemy-only in EnemyBasics
 // - the rigs' bow path owns it).
-// DEFERRED (FLAGGED): the Seducer transform pair, the -1 frame as
-// the DAMAGE moment (damage rides the shared EnemyAttack machine,
-// one law for all foes - the per-frame timing is a recorded
-// refinement).
+// C16: the -1 frame IS the damage moment (hitFrame -> the scene's
+// MeleeDamage resolution; the machine's hit frame stays the RIGS'
+// clock). DEFERRED (FLAGGED): the Seducer transform pair.
 
 // Speeds in frames-per-second (EnemyBasics).
 export const MOVE_ANIM_SPEED = 6;
@@ -157,7 +156,7 @@ export class MobileUnit {
     this._reversed = false;
     this._attackFrames = null;
     this._iter = 0;
-    this.hitFrame = false;   // set on the -1 marker (unconsumed - the timing refinement pends)
+    this.hitFrame = false;   // set on the -1 marker; the scene resolves MeleeDamage on it (C16)
   }
 
   _anims() { return stateAnims(this.state, this.mobileType, this.basics.hasIdle ?? false, this.basics.hasSpellAnimation ?? false); }

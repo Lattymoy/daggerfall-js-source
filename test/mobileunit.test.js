@@ -126,6 +126,16 @@ test('mobile: the leading -1 marker + the attack/hurt priority (audit 08-17)', (
   }
   assert.equal(hits, 1);             // one damage moment per swing
   assert.equal(m.state, 'idle');
+  // C16: the BASE sequence [0,1,-1,2,3,-1,4,5,0] strikes TWICE per
+  // swing - each -1 is a damage moment (doMeleeDamage, verbatim).
+  const m2 = new MobileUnit(25, fd, () => 8, () => 0.99);   // roll 100 -> base frames
+  m2.update(1 / 60, { striking: true }, 0, [0, 0, 0], [0, 0, 5]);
+  let hits2 = m2.hitFrame ? 1 : 0;
+  for (let i = 0; i < 12 && m2.state === 'attack'; i++) {
+    m2.update(1 / PRIMARY_ATTACK_ANIM_SPEED, {}, 0, [0, 0, 0], [0, 0, 5]);
+    if (m2.hitFrame) hits2++;
+  }
+  assert.equal(hits2, 2, 'the Frost Daedra base swing lands two damage moments');
   // The DFU priority: the attack edge overrides hurt (ChangeEnemyState
   // at MeleeAnimation is unconditional)...
   const p = new MobileUnit(4, { hasIdle: true, primaryAttackAnimFrames: [0, 1] }, () => 8, () => 0.99);

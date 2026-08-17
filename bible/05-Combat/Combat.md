@@ -445,3 +445,24 @@ Residual: enemy-vs-enemy knockback (EnemyAttack:344) pends foe-vs-foe
 combat; player knockback from enemy hits is not a DFU law (none).
 
 Suite 416/91 (the C15 pin in enemymotor.test.js).
+
+## C16 (2026-08-17): the -1 damage moment SHIPPED
+
+The last loud C11 combat residual: sprite monsters now land their
+melee damage exactly on the -1 markers of their attack sequences
+(AnimateEnemy doMeleeDamage -> EnemyAttack.MeleeDamage), not on the
+shared machine's HIT_FRAME_MELEE. The machine stays authoritative
+for the attack DECISION (meleeTimer, the classic roll, the strike
+edge) and remains the RIGS' damage clock; the mobile's hitFrame is
+the mobiles'. The melee resolution (gate 0.25/MeleeDistance +
+35.156deg + CalculateAttackDamage with the S18/S19b riders) is
+extracted once - resolveFoeMelee - and both clocks call it.
+
+Consequences, verbatim: the Frost Daedra's base sequence
+[0,1,-1,2,3,-1,4,5,0] strikes TWICE per swing (pinned); paralysis
+never lands a mobile damage frame (FreezeAnims "prevents the attack
+from triggering", the DFU comment); damage timing now tracks the
+VISIBLE animation (10 fps sequence position) instead of the
+machine's SPD-scaled clock.
+
+Suite 416/91 (the double-strike pin extends mobileunit's audit test).
