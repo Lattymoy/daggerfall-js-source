@@ -29,6 +29,7 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet
+import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
@@ -433,6 +434,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
+  preloadInventoryArt({ renderer, fetchBytes, palette });   // U8d: INVE00I0/01I0 warm at boot
   // T3d: the Where-is directory follows the player's LOCATION PIXEL
   // (DFU's TalkManager builds its list for PlayerGPS.CurrentLocation).
   // On pixel crossing, townTalk's topics swap to the new pixel's
@@ -560,6 +562,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (e.code === 'F5' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
       e.preventDefault();
       townTalk.showOverlay(new CharSheet(playerEntity));
+      return;
+    }
+    // U8d: F6 opens the classic inventory (DFU's default Inventory
+    // binding; same host rule as F5).
+    if (e.code === 'F6' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && inventoryArtLoaded()) {
+      e.preventDefault();
+      townTalk.showOverlay(new NativeInventoryWindow({
+        items: () => playerEntity.items ?? [],
+        icons: { getTexture, uploadRecord, textures: renderer.textures },
+      }));
       return;
     }
     keys.add(e.code);

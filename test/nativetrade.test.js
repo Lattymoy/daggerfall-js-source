@@ -71,8 +71,8 @@ test('nativeTrade: icon draws V-FLIP the record texture (the bottom-up GL rows)'
   const h = hooks();
   const w = new NativeTradeWindow(h);
   const key = '209_2';   // the Book template's world texture
-  w._iconWarm.add(key);
-  w._iconSizes = new Map([[key, { width: 32, height: 16 }]]);
+  w._icon._warm.add(key);
+  w._icon._sizes.set(key, { width: 32, height: 16 });
   h.icons.textures.set(key, 'gl-tex');
   let captured = null;
   const fakeRenderer = { drawScreenQuad: (tex, dst, src) => { captured = { tex, src }; } };
@@ -86,8 +86,8 @@ test('nativeTrade: icons NEVER upscale and centre in the 50x38 cell (ItemListScr
   const h = hooks();
   const w = new NativeTradeWindow(h);
   const key = '209_2';
-  w._iconWarm.add(key);
-  w._iconSizes = new Map([[key, { width: 8, height: 8 }]]);   // tiny icon
+  w._icon._warm.add(key);
+  w._icon._sizes.set(key, { width: 8, height: 8 });   // tiny icon
   h.icons.textures.set(key, 'gl-tex');
   let captured = null;
   const fakeRenderer = { drawScreenQuad: (tex, dst, src) => { captured = { dst, src }; } };
@@ -98,7 +98,7 @@ test('nativeTrade: icons NEVER upscale and centre in the 50x38 cell (ItemListScr
   assert.equal(captured.dst.x, 261 + 9 + (50 - 8) / 2, 'centred in the BUTTON at x9, not the scroller');
   assert.equal(captured.dst.y, 48 + (38 - 8) / 2);
   // an oversized icon scales DOWN to fit
-  w._iconSizes.set(key, { width: 100, height: 38 });
+  w._icon._sizes.set(key, { width: 100, height: 38 });
   w._drawIcon(fakeRenderer, m, { templateIndex: 277 }, [261, 48, 59, 152], 0);
   assert.equal(captured.dst.w, 50, 'downscaled to the cell');
 });

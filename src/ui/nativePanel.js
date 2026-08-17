@@ -44,6 +44,16 @@ export function drawImg(renderer, img, m, x, y, w = img.w, h = img.h) {
   renderer.drawScreenQuad(img.tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s });
 }
 
+/** Draw a SUBREGION of an IMG at its own virtual position (DFU's
+ *  ImageReader.GetSubTexture idiom - the INVE01I0 selected-state
+ *  overlays are subrects of a full 320x200 sheet drawn back over the
+ *  base at the same rect). IMG textures are TOP-DOWN, so the source
+ *  UVs map straight. */
+export function drawImgSub(renderer, img, m, x, y, w, h) {
+  renderer.drawScreenQuad(img.tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s },
+    { u0: x / img.w, v0: y / img.h, u1: (x + w) / img.w, v1: (y + h) / img.h });
+}
+
 /** A flat color rect in virtual coords. */
 export function drawRect(renderer, m, x, y, w, h, color) {
   renderer.drawScreenQuad(null, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s }, undefined, color);

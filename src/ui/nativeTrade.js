@@ -18,9 +18,12 @@
 // no-ops), the material-dye icon variants, scroll-arrow art.
 
 import { loadImg, nativeMetrics, drawImg, SCREEN_DIM, shadowText } from './nativePanel.js';
-import { templateByIndex } from '../systems/itemTemplates.js';
+import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel } from './itemScroller.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
+
+// re-exported so the composed window keeps one import surface
+export { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y };
 
 export const TRADE_RECTS = Object.freeze({
   costPanel: [49, 13, 111, 9],           // SHOP00I0 strip
@@ -31,21 +34,8 @@ export const TRADE_RECTS = Object.freeze({
   modeAction: [222 + 4, 10 + 124, 31, 14],   // the Buy button (panel-child 4,124)
   clear: [222 + 4, 10 + 146, 31, 14],
 });
-// ItemListScroller verbatim (the FULL layout this time - the 17d
-// UI audit): itemListPanelRect (9,0,50,152) - the four 50x38 item
-// BUTTONS sit at x=9, and the LEFT 9px column is the scroll rail:
-// up arrow (0,0,9,16), down arrow (0,136,9,16), the scrollbar
-// (1,18,6,117) between. Icons ScaleToFit with MaxAutoScale 1
-// (never upscaled), centered both axes; the ONLY cell text is the
-// stack count, FONT0004 at the button's top-left, drawn only when
-// stackCount > 1 (classic lists draw no item names - the
-// info/tooltip seam pends).
-export const LIST_SLOTS = 4;
-export const CELL_X = 9;
-export const CELL_W = 50;
-export const SLOT_H = 38;
-export const ARROW_H = 16;
-export const DOWN_ARROW_Y = 136;
+// The ItemListScroller layout lives in itemScroller.js (the 17d UI
+// audit's corrected law, shared with the inventory window).
 
 let _art = null;
 export async function preloadTradeArt(deps) {
@@ -74,7 +64,7 @@ export class NativeTradeWindow {
     this.localScroll = 0;
     this.remoteScroll = 0;
     this.lastPrice = null;
-    this._iconWarm = new Set();
+    this._icon = makeIconDrawer(hooks.icons);   // the shared scroller's warm cache
   }
 
   input(code) {
@@ -93,11 +83,6 @@ export class NativeTradeWindow {
     const it = this.hooks.sellables()[this.localScroll + slot];
     if (it) this.lastPrice = this.hooks.sell(it);
   }
-  _scroll(which, d, len) {
-    const max = Math.max(0, len - LIST_SLOTS);
-    this[which] = Math.max(0, Math.min(max, this[which] + d));
-  }
-
   click(vx, vy) {
     const R = TRADE_RECTS;
     if (inRect(R.exit, vx, vy)) { this.done = true; return true; }
@@ -105,58 +90,17 @@ export class NativeTradeWindow {
       [R.remoteList, 'remoteScroll', this.hooks.shelfItems(), (s) => this._pickRemote(s)],
       [R.localList, 'localScroll', this.hooks.sellables(), (s) => this._pickLocal(s)],
     ]) {
-      if (!inRect(rect, vx, vy)) continue;
-      const x = vx - rect[0], y = vy - rect[1];
-      // the LEFT 9px rail (verbatim): the 16px arrows at its ends,
-      // the bar between paging by half
-      if (x < CELL_X) {
-        if (y < ARROW_H) this._scroll(which, -1, items.length);
-        else if (y >= DOWN_ARROW_Y) this._scroll(which, 1, items.length);
-        else this._scroll(which, y < rect[3] / 2 ? -1 : 1, items.length);
-        return true;
-      }
-      pick(Math.floor(y / SLOT_H));
+      const hit = scrollerHit(rect, vx, vy);
+      if (!hit) continue;
+      if (hit.kind === 'slot') pick(hit.slot);
+      else this[which] = applyScroll(this[which], hit.kind, items.length);
       return true;
     }
     // action-panel buttons: consumed no-ops this slice (basket/haggle pend)
     return inRect(R.actionPanel, vx, vy) || inRect(R.costPanel, vx, vy);
   }
 
-  _drawIcon(renderer, m, it, rect, slot) {
-    const t = templateByIndex(it.templateIndex);
-    if (!t || !t.worldTexArchive) return false;
-    const { getTexture, uploadRecord, textures } = this.hooks.icons;
-    const key = `${t.worldTexArchive}_${t.worldTexRecord}`;
-    if (!this._iconWarm.has(key)) {
-      // warm the record + capture its native size (the GL handle in
-      // renderer.textures carries no dimensions)
-      this._iconWarm.add(key);
-      this._iconSizes ??= new Map();
-      getTexture(t.worldTexArchive).then((tex) => {
-        if (t.worldTexRecord < tex.recordCount) {
-          uploadRecord(t.worldTexArchive, t.worldTexRecord);
-          this._iconSizes.set(key, tex.getSize(t.worldTexRecord));
-        }
-      }).catch(() => {});
-    }
-    const glTex = textures.get(key);
-    const size = this._iconSizes?.get(key);
-    if (!glTex || !size?.width) return false;
-    // ScaleToFit with MaxAutoScale 1 (never upscale), centered in
-    // the 50x38 BUTTON cell (Mac's catch: the old free-fit spilled
-    // over the art's slot frames).
-    const fit = Math.min(1, CELL_W / size.width, SLOT_H / size.height);
-    const w = size.width * fit, h = size.height * fit;
-    const x = rect[0] + CELL_X + (CELL_W - w) / 2;
-    const y = rect[1] + slot * SLOT_H + (SLOT_H - h) / 2;
-    // HOTFIX (Mac's catch): record textures store BOTTOM-UP rows
-    // (getColor32 keeps DFU's verbatim GL flip for the mesh/billboard
-    // path) while drawScreenQuad samples v0 at the TOP - the icons
-    // drew upside down. A V-flipped source rect rights them.
-    renderer.drawScreenQuad(glTex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s },
-      { u0: 0, v0: 1, u1: 1, v1: 0 });
-    return true;
-  }
+  _drawIcon(renderer, m, it, rect, slot) { return this._icon(renderer, m, it, rect, slot); }
 
   draw(renderer, canvas, font) {
     if (!_art) { this.done = true; return; }
@@ -174,11 +118,7 @@ export class NativeTradeWindow {
     ]) {
       items.slice(scroll, scroll + LIST_SLOTS).forEach((it, s) => {
         this._drawIcon(renderer, m, it, rect, s);
-        // classic cells carry ONLY the stack count (FONT0004 at the
-        // BUTTON's top-left, >1); names ride the info/tooltip seam
-        if ((it.stackCount ?? 1) > 1) {
-          shadowText(renderer, _art?.font4 ?? font, String(it.stackCount), m, rect[0] + CELL_X, rect[1] + s * SLOT_H);
-        }
+        drawStackLabel(renderer, _art?.font4 ?? font, m, it, rect, s);
       });
     }
   }

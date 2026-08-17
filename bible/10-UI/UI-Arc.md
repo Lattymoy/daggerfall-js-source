@@ -471,3 +471,46 @@ must cite its DFU source line (file + member) in the code comment
 or the arc record BEFORE it ships. No free-styled geometry: if the
 DFU value is unknown, the element does not draw until it is looked
 up. Guessing cost three hotfixes; looking up costs one grep.
+
+## U8d: the native inventory window (2026-08-17)
+
+The classic inventory screen on real art - the FIRST window built
+UNDER the native-window rule: every element below cites
+DaggerfallInventoryWindow.cs.
+- ui/nativeInventory.js: INVE00I0.IMG base; INVE01I0.IMG is DFU's
+  SELECTED-state sheet (ImageReader.GetSubTexture cuts each active
+  button from it at the button's own rect) - ported as drawImgSub
+  on nativePanel (IMG top-down, straight UVs). Verbatim rects
+  (#region UI Rects): tabs weaponsAndArmor (0,0,92,10) / magicItems
+  (93,0,69,10) / clothingAndMisc (163,0,91,10) / ingredients
+  (255,0,65,10); action buttons 31x14 at x226 - wagon y14, info
+  y36, equip y58, remove y80, use y103, gold y126; local/remote
+  lists (163/261,48,59x152); exit (222,178,39,22).
+- THE TAB FILTER (AddLocalItem verbatim): WeaponsAndArmor = groups
+  Weapons/Armor not enchanted; MagicItems = enchanted or Spellbook
+  (MiscItems.Spellbook = 132); Ingredients = isIngredient not
+  enchanted - DFU's ItemTemplates.txt marks EXACTLY template
+  indices 0..77 (verified: 78 rows, contiguous); ClothingAndMisc =
+  everything else. Defaults verbatim: WeaponsAndArmor tab
+  (SelectTabPage on setup), Equip mode (selectedActionMode; Remove
+  for loot targets pends with the loot flow).
+- ui/itemScroller.js: the ItemListScroller EXTRACTED to one shared
+  module (the 17d law - buttons at x9, the LEFT rail, no-upscale
+  centring, FONT0004 stack labels) - nativeTrade rewired onto it,
+  the inventory rides the same code. One layout, one fix site.
+- THE SLICE LINE: this is the VIEW + INFO half. Info-mode clicks
+  pop an interim name/weight/value panel (DFU's 1016 info text +
+  paperdoll cutout pend); Equip/Use/Remove local clicks and the
+  whole remote (dropped-pile) side are FLAGGED loud - equipping
+  needs the paperdoll arc, dropping needs the ground loot flat
+  (droppedItems in DFU's OnPush). Wagon/gold consumed no-ops.
+- F6 opens it in BOTH exterior hosts (DFU's default Inventory
+  binding; the F5 host-rule shape), art warmed at boot, art-less
+  sessions leave F6 dark (never trap).
+
+Probed live + EYEBALLED (tools/nativeInventoryProbe.mjs): the gold
+tab highlight landing exactly on the baked WEAPONS & ARMOR button,
+EQUIP lit as the default mode, dagger + buckler inside their slot
+frames right-side-up, the Clothing tab swapping to the book with
+its FONT0004 "3" at the button top-left, the INFO panel over the
+paperdoll space, Escape closing. Suite 460/102.
