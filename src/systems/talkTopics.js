@@ -15,13 +15,43 @@
 //   tier (GetReactionToPlayer_0_1_2, NEUTRAL tone - the tone buttons
 //   pend): Personality/5 + questionTypeReactionMods[0]=5 vs a
 //   0..20 roll; tier 1 band +20 (DFU's lowering of classic's +30,
-//   doctrine-kept). FLAGGED LOUD: the NPC knowledge roll
-//   (GetNPCKnowledgeAboutItem) pends - every NPC currently KNOWS,
-//   so the doesn't-know half of the table is wired but unreached.
+//   doctrine-kept).
+// - THE KNOWLEDGE ROLL (GetNPCKnowledgeAboutItem, verbatim): seed =
+//   NPC hash + buildingKey (the per-person seed stands in for the
+//   hash, Ledger A); rollToBeat = knowledgeModifiers[qIndex*5 +
+//   socialGroup] + 10 (local building qIndex 0, Commoners -> 15);
+//   random_range_inclusive(1,20) <= rollToBeat KNOWS. Doesn't-know
+//   answers draw the FIRST 15 table records. The DFU-only
+//   short-circuits (same-building statics, spymaster,
+//   NPCsKnowEverything debug) don't apply to street mobiles.
 
 import { generateBuildingName, isNamedBuildingType, BUILDING_TYPES } from '../world/buildingNames.js';
 import { randomRangeInclusive, srand } from '../formats/dfRandom.js';
 import { RMB_SIDE } from '../world/locationLayout.js';
+
+// TalkManager.knowledgeModifiers (verbatim, 8 question rows x 5
+// social groups).
+export const KNOWLEDGE_MODIFIERS = Object.freeze([
+  5, 7, 0, 0, 4, 1, 2, -2, 3, 7, -3, 0, 7, 2, 4, 4, 3, -2, -4, -3,
+  0, 3, 5, 2, 0, -4, -3, -6, -3, 4, -7, -5, 7, 0, 1, -1, 1, 6, 4, 2,
+]);
+
+// BuildingDirectory.MakeBuildingKey, verbatim (key 0 maps to the
+// 1<<24 sentinel so block 0,0 record 0 stays distinct from "none").
+export const BUILDING_KEY_0 = 1 << 24;
+export function makeBuildingKey(layoutX, layoutY, recordIndex) {
+  const key = (layoutX << 16) + (layoutY << 8) + recordIndex;
+  return key === 0 ? BUILDING_KEY_0 : key;
+}
+
+/** GetNPCKnowledgeAboutItem's roll, verbatim: seeded by NPC hash +
+ *  buildingKey so the SAME NPC always gives the same answer about
+ *  the SAME building. questionIndex 0 = Where-is Location. */
+export function npcKnowsAboutItem(npcSeed, buildingKey, socialGroup = 0, questionIndex = 0) {
+  srand((((npcSeed >>> 0) + (buildingKey >>> 0)) >>> 0));
+  const rollToBeat = KNOWLEDGE_MODIFIERS[questionIndex * 5 + socialGroup] + 10;
+  return randomRangeInclusive(1, 20) <= rollToBeat;
+}
 
 // The classic category captions by building type (the talk window's
 // Location list).
@@ -117,7 +147,10 @@ export function buildBuildingDirectory(exteriorBuildings, blocks, doors, nameOpt
     seen.add(key);
     const name = generateBuildingName(data.nameSeed, data.buildingType, { ...nameOpts, factionId: data.factionId });
     if (!name) continue;
-    dirs.push({ name, buildingType: data.buildingType, factionId: data.factionId, quality: data.quality, position: d.position });
+    dirs.push({
+      name, buildingType: data.buildingType, factionId: data.factionId, quality: data.quality, position: d.position,
+      buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, d.recordIndex),   // the knowledge roll's per-building term
+    });
   }
   return dirs;
 }
@@ -150,12 +183,15 @@ export function reactionTier(personality, npcSeed) {
   return 2;
 }
 
-/** GetAnswerWhereIs for a mobile townsperson (Commoners), knows-
- *  always (the knowledge roll FLAGGED). Returns { textId, direction }
- *  - the caller expands the record and replaces %di. */
+/** GetAnswerWhereIs for a mobile townsperson (Commoners): the
+ *  knowledge roll picks the table half - a doesn't-know NPC draws
+ *  the FIRST 15 records, a knowing one the LAST 15 (verbatim).
+ *  Returns { textId, direction, tier, knows } - the caller expands
+ *  the record and replaces %di/%key. */
 export function whereIsAnswer(playerPos, building, personality, npcSeed, socialGroup = 0) {
   const tier = reactionTier(personality, npcSeed);
-  const textId = ANSWERS_TO_DIRECTIONS[15 + 3 * socialGroup + tier];
+  const knows = npcKnowsAboutItem(npcSeed, building.buildingKey ?? 0, socialGroup, 0);
+  const textId = ANSWERS_TO_DIRECTIONS[(knows ? 15 : 0) + 3 * socialGroup + tier];
   const direction = compassHint(building.position[0] - playerPos[0], building.position[2] - playerPos[2]);
-  return { textId, direction, tier };
+  return { textId, direction, tier, knows };
 }

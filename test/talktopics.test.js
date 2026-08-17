@@ -6,8 +6,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { generateBuildingName, BUILDING_TYPES, isNamedBuildingType, TAVERNS_A, TAVERNS_B, STORES_A } from '../src/world/buildingNames.js';
-import { mergeNamedBuildings, buildBuildingDirectory, compassHint, reactionTier, ANSWERS_TO_DIRECTIONS, whereIsAnswer } from '../src/systems/talkTopics.js';
-import { srand, rand, randomRange } from '../src/formats/dfRandom.js';
+import { mergeNamedBuildings, buildBuildingDirectory, compassHint, reactionTier, ANSWERS_TO_DIRECTIONS, whereIsAnswer, KNOWLEDGE_MODIFIERS, makeBuildingKey, npcKnowsAboutItem, BUILDING_KEY_0 } from '../src/systems/talkTopics.js';
+import { srand, rand, randomRange, randomRangeInclusive } from '../src/formats/dfRandom.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
 import { layoutLocation } from '../src/world/locationLayout.js';
@@ -61,6 +61,32 @@ test('talkTopics: the compass bands, the tier roll, and the answer table shape',
   const a = whereIsAnswer([0, 0, 0], { position: [10, 0, 0] }, 50, 42);
   assert.equal(a.direction, 'east');
   assert.ok([7261, 7276, 7291].includes(a.textId));
+});
+
+test('talkTopics: the knowledge roll (T3e) - seed-stable, both table halves reachable', () => {
+  // Commoners on a local building: rollToBeat = knowledgeModifiers[0]
+  // + 10 = 15 (rand 1..20 <= 15 knows - 75% per NPC/building pair)
+  assert.equal(KNOWLEDGE_MODIFIERS[0] + 10, 15);
+  // MakeBuildingKey verbatim incl. the 0 -> 1<<24 sentinel
+  assert.equal(makeBuildingKey(2, 1, 3), (2 << 16) + (1 << 8) + 3);
+  assert.equal(makeBuildingKey(0, 0, 0), BUILDING_KEY_0);
+  // hand-reproduce the seeded roll; the same (NPC, building) pair
+  // always answers the same
+  const byHand = (seed, key) => { srand((seed + key) >>> 0); return randomRangeInclusive(1, 20) <= 15; };
+  let knowCount = 0;
+  for (let s = 0; s < 200; s++) {
+    const k = npcKnowsAboutItem(s, 12345);
+    assert.equal(k, byHand(s, 12345));
+    assert.equal(npcKnowsAboutItem(s, 12345), k, 'seed-stable');
+    if (k) knowCount++;
+  }
+  assert.ok(knowCount > 100 && knowCount < 200, `both halves reachable: ${knowCount}/200 know`);
+  // whereIsAnswer draws the matching table HALF (first 15 = doesn't)
+  const b = { position: [10, 0, 0], buildingKey: 12345 };
+  for (let s = 0; s < 50; s++) {
+    const a = whereIsAnswer([0, 0, 0], b, 50, s);
+    assert.equal(ANSWERS_TO_DIRECTIONS.indexOf(a.textId) >= 15, a.knows);
+  }
 });
 
 test('talkTopics: the answer is invariant under a pure frame translation (T3d)', () => {

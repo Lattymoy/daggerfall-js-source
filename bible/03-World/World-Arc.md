@@ -729,6 +729,34 @@ mirror pin). FLAGGED: loot pickup as an inventory WINDOW (take-all
 is the interim, as the dungeon's), murder/assault crimes for
 killing the watch pend the crime-table wiring.
 
+## T3e (2026-08-17): THE KNOWLEDGE ROLL - NPCs can not know SHIPPED
+
+The last recorded Where-is interim clears: GetNPCKnowledgeAboutItem
+verbatim. The roll is seeded by NPC hash + buildingKey (the
+per-person talk seed stands in for the hash, Ledger A), so the SAME
+NPC always gives the same answer about the SAME building;
+rollToBeat = knowledgeModifiers[questionIndex*5 + socialGroup] + 10
+(the 40-entry FALL.EXE table as data; local building questionIndex
+0, Commoners -> 15of20 = 75% know), random_range_inclusive(1,20) <=
+rollToBeat KNOWS. A doesn't-know NPC draws the FIRST 15
+answersToDirections records, a knowing one the LAST 15 - the
+doesn't-know half of the table, wired since T3c, is REACHABLE now.
+buildingKey is BuildingDirectory.MakeBuildingKey verbatim
+((x<<16)+(y<<8)+record, key 0 -> the 1<<24 sentinel), stamped on
+every directory entry by the pool merge. The DFU-only
+short-circuits (same-building statics, spymaster, the
+NPCsKnowEverything debug toggle) don't apply to street mobiles and
+are documented, not ported.
+
+Pinned: rollToBeat 15, MakeBuildingKey incl. the sentinel,
+hand-reproduced seeded rolls, seed-stability, both halves reachable
+over 200 seeds, whereIsAnswer drawing the matching half. The
+whereIs probe re-ran green (a knowing commoner: "Vintage Elixirs is
+south of here").
+
+Suite 443/97. Remaining Where-is residuals: tone buttons
+(Polite/Blunt), the 35% map-reveal, %hnr/%ra interim literals.
+
 ## AUDIT 2026-08-17b: the towns/talk parity pass
 
 The T1 modules were re-read line by line against MobilePersonMotor /
