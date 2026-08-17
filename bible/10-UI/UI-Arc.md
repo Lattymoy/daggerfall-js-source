@@ -416,3 +416,18 @@ IMG art through loadImg/uploadTexture is top-down (draw plain);
 RECORD art through uploadRecord is bottom-up (draw V-flipped).
 Suite 456/101; the probe re-run + re-eyeballed - books lying
 right-side up.
+
+### U8c HOTFIX 2 (2026-08-17, Mac's catch): icons/text spilling the cells
+
+The list cells were free-styled (59-wide centring, 1.5x upscale, a
+name label) and the icons spilled over the art's slot frames. The
+VERBATIM ItemListScroller law now stands: four 50x38 item BUTTONS
+at x0 of the scroller (the right 9px is the scroll strip - its top
+half scrolls up, bottom half down, and it never trades), icons
+ScaleToFit with MaxAutoScale 1 - NEVER upscaled - centred in the
+button both axes, and the ONLY cell text is the stack count at the
+button's top-left when stackCount > 1 (classic lists draw NO item
+names - names ride the info/tooltip seam, FLAGGED). Pinned (the
+cell metrics, the no-upscale/centring draw, the strip-vs-pick
+split). Suite 457/101; re-probed + re-eyeballed - every book
+centred inside its own frame.

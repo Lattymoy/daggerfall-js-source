@@ -29,8 +29,16 @@ export const TRADE_RECTS = Object.freeze({
   modeAction: [222 + 4, 10 + 124, 31, 14],   // the Buy button (panel-child 4,124)
   clear: [222 + 4, 10 + 146, 31, 14],
 });
+// ItemListScroller verbatim: four 50x38 item BUTTONS at x0 of the
+// scroller (the right 9px is the scroll strip - the art's arrows sit
+// at its top/bottom); icons ScaleToFit with MaxAutoScale 1 (never
+// upscaled), centered both axes; the ONLY text is the stack count,
+// Font4 at the button's top-left, drawn only when stackCount > 1
+// (item names ride the info/tooltip seam - classic lists draw none).
 export const LIST_SLOTS = 4;
-export const SLOT_H = Math.floor(152 / LIST_SLOTS);   // 38
+export const CELL_W = 50;
+export const SLOT_H = 38;
+export const SCROLL_STRIP_W = 9;
 
 let _art = null;
 export async function preloadTradeArt(deps) {
@@ -90,9 +98,10 @@ export class NativeTradeWindow {
       [R.localList, 'localScroll', this.hooks.sellables(), (s) => this._pickLocal(s)],
     ]) {
       if (!inRect(rect, vx, vy)) continue;
-      const y = vy - rect[1];
-      if (y < 12) { this._scroll(which, -1, items.length); return true; }        // the top band scrolls up
-      if (y >= rect[3] - 12) { this._scroll(which, 1, items.length); return true; }   // the bottom band down
+      const x = vx - rect[0], y = vy - rect[1];
+      // the right 9px scroll strip: top half up, bottom half down
+      // (the art's arrow buttons live at its ends)
+      if (x >= CELL_W) { this._scroll(which, y < rect[3] / 2 ? -1 : 1, items.length); return true; }
       pick(Math.floor(y / SLOT_H));
       return true;
     }
@@ -120,11 +129,13 @@ export class NativeTradeWindow {
     const glTex = textures.get(key);
     const size = this._iconSizes?.get(key);
     if (!glTex || !size?.width) return false;
-    // fit within the slot, centered (native icon sizes vary)
-    const fit = Math.min(1.5, 50 / size.width, (SLOT_H - 12) / size.height);
+    // ScaleToFit with MaxAutoScale 1 (never upscale), centered in
+    // the 50x38 BUTTON cell (Mac's catch: the old free-fit spilled
+    // over the art's slot frames).
+    const fit = Math.min(1, CELL_W / size.width, SLOT_H / size.height);
     const w = size.width * fit, h = size.height * fit;
-    const x = rect[0] + (rect[2] - w) / 2;
-    const y = rect[1] + slot * SLOT_H + (SLOT_H - 10 - h) / 2;
+    const x = rect[0] + (CELL_W - w) / 2;
+    const y = rect[1] + slot * SLOT_H + (SLOT_H - h) / 2;
     // HOTFIX (Mac's catch): record textures store BOTTOM-UP rows
     // (getColor32 keeps DFU's verbatim GL flip for the mesh/billboard
     // path) while drawScreenQuad samples v0 at the TOP - the icons
@@ -149,10 +160,12 @@ export class NativeTradeWindow {
       [R.localList, this.localScroll, this.hooks.sellables()],
     ]) {
       items.slice(scroll, scroll + LIST_SLOTS).forEach((it, s) => {
-        const drewIcon = this._drawIcon(renderer, m, it, rect, s);
-        const t = templateByIndex(it.templateIndex);
-        const label = `${(it.name ?? t?.name ?? it.group).slice(0, 12)}${(it.stackCount ?? 1) > 1 ? ` x${it.stackCount}` : ''}`;
-        shadowText(renderer, font, label, m, rect[0] + 1, rect[1] + s * SLOT_H + (drewIcon ? SLOT_H - 10 : 12));
+        this._drawIcon(renderer, m, it, rect, s);
+        // classic cells carry ONLY the stack count (top-left, >1);
+        // names ride the info/tooltip seam (FLAGGED)
+        if ((it.stackCount ?? 1) > 1) {
+          shadowText(renderer, font, String(it.stackCount), m, rect[0] + 1, rect[1] + s * SLOT_H + 1);
+        }
       });
     }
   }
