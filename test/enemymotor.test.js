@@ -13,6 +13,12 @@ import { Collider } from '../src/player/collider.js';
 
 const approx = (a, b, eps = 1e-4) => assert.ok(Math.abs(a - b) < eps, `${a} !~ ${b}`);
 const seqRolls = (v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
+// P17 fixed stepping: update() consumes whole 1/60 steps, so a bare
+// update(CLASSIC_UPDATE_INTERVAL) no longer lands a senses tick. Four
+// 1/60 steps accumulate 0.0667 >= 0.0625 - EXACTLY one classic tick
+// (and one roll-sequence consumption) per call, for up to ~14 calls
+// before the remainders stack a second tick (tests stay well under).
+const tick = (ai, playerFeet, senses) => { for (let i = 0; i < 4; i++) ai.update(1 / 60, playerFeet, senses); };
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 const quadIdx = new Uint32Array([0, 1, 2, 0, 2, 3]);
 
@@ -64,6 +70,32 @@ test('enemyMotor: pursues on the classic cadence and stops at MeleeDistance', ()
   approx(ai2.feet[0], 0); approx(ai2.feet[2], 0);
 });
 
+test('P17: fixed stepping - a 10fps foe pursues to the SAME spot as a 60fps foe', () => {
+  // The P16 law, foe-side: raw render-dt integration made pursuit
+  // speed/gravity frame-rate dependent (the phone failure class).
+  // Both drives decompose into identical 1/60 steps (0.1 = 6 exact
+  // steps), so the trajectories must be bit-identical.
+  const mkC = () => {
+    const c = new Collider(() => -100);
+    c.addMesh('floor', new Float32Array([-40, 0, -40, 40, 0, -40, 40, 0, 40, -40, 0, 40]), quadIdx, I);
+    return c;
+  };
+  const player = [0, 0, 12];
+  const ai60 = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
+  const ai10 = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
+  for (let i = 0; i < 60 * 4; i++) ai60.update(1 / 60, player);
+  for (let i = 0; i < 10 * 4; i++) ai10.update(1 / 10, player);
+  assert.equal(ai10.feet[0], ai60.feet[0]);
+  assert.equal(ai10.feet[2], ai60.feet[2]);
+  assert.equal(ai10.yaw, ai60.yaw);
+  // The jank clamp: one 10-second hitch integrates at most 0.25s
+  const hitch = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
+  hitch.update(10, player);
+  const ref = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
+  for (let i = 0; i < 15; i++) ref.update(1 / 60, player);   // 0.25 = 15 steps
+  assert.equal(hitch.feet[2], ref.feet[2]);
+});
+
 test('stealth: the chance formula + the spawn bands + the illusion gate (pure pins)', async () => {
   const { stealthChance, STEALTH_MAX_DISTANCE, wouldBeSpawnedInClassic, blockedByIllusionEffect,
     CLASSIC_SPAWN_XZ, CLASSIC_SPAWN_Y_UPPER, CLASSIC_DESPAWN_Y } = await import('../src/characters/enemyMotor.js');
@@ -101,19 +133,19 @@ test('stealth: hearing gates on PRIOR detection - a quiet player behind a foe st
     gameMinutes: 2, playerStealth: 100, movingLessThanHalfSpeed: true,
     sharedStealth: { minute: -1 }, rolls: () => 0.5,   // illusion roll unused (no blending); stealth roll 50 < 78 SUCCEEDS
   };
-  ai.update(CLASSIC_UPDATE_INTERVAL, [0, 0, -10], senses);
+  tick(ai, [0, 0, -10], senses);
   assert.ok(!ai.inSight);
   assert.ok(!ai.detected, 'proximity must not auto-detect an unseen, unheard player');
   // The stealth roll FAILS on a fresh minute -> detected (chance
   // 2*((400*100)>>10) = 78; roll 99 >= 78)
   const ai2 = new EnemyAI(c, [0, 0, 0], 0, { liveSpeed: 50 });
-  ai2.update(CLASSIC_UPDATE_INTERVAL, [0, 0, -10], { ...senses, sharedStealth: { minute: -1 }, rolls: () => 0.99 });
+  tick(ai2, [0, 0, -10], { ...senses, sharedStealth: { minute: -1 }, rolls: () => 0.99 });
   assert.ok(ai2.detected);
   assert.ok(ai2.hasEncounteredPlayer);
   // Once detected, hearing (dist < 25, LOS clear) HOLDS detection on
   // the cached minute even though the stealth check just returns the
   // standing value
-  ai2.update(CLASSIC_UPDATE_INTERVAL, [0, 0, -10], { ...senses, sharedStealth: { minute: -1 }, rolls: () => 0.0 });
+  tick(ai2, [0, 0, -10], { ...senses, sharedStealth: { minute: -1 }, rolls: () => 0.0 });
   assert.ok(ai2.detected, 'earshot holds the detection');
 });
 
@@ -126,21 +158,21 @@ test('stealth: minute cache, odd-minute sneak skip, fast-move auto-detect, the s
   const base = { playerStealth: 100, sharedStealth: shared, tallyStealth: () => tallies++ };
   // Odd minute + sneaking: NO roll happens (a throwing roll proves it)
   const ai = new EnemyAI(c, [0, 0, 0], 0, {});
-  ai.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 1, movingLessThanHalfSpeed: true, rolls: () => { throw new Error('rolled on an odd sneak minute'); } });
+  tick(ai, behind, { ...base, gameMinutes: 1, movingLessThanHalfSpeed: true, rolls: () => { throw new Error('rolled on an odd sneak minute'); } });
   assert.ok(!ai.detected);
   assert.equal(tallies, 0);
   // Even minute: the roll runs and the tally fires ONCE across foes
   const r = seqRolls([0.5, 0.5, 0.5, 0.5]);
-  ai.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: r });
+  tick(ai, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: r });
   const ai2 = new EnemyAI(c, [0, 0, 0], 0, {});
-  ai2.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: r });
+  tick(ai2, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: r });
   assert.equal(tallies, 1, 'one Stealth tally per classic minute across ALL foes');
   // The same minute again on the same foe: cached (no further rolls)
-  ai.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: () => { throw new Error('re-rolled a cached minute'); } });
+  tick(ai, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: () => { throw new Error('re-rolled a cached minute'); } });
   // Fast movement after an encounter: detected outright, no roll
   const ai3 = new EnemyAI(c, [0, 0, 0], 0, {});
   ai3.hasEncounteredPlayer = true;
-  ai3.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 4, movingLessThanHalfSpeed: false, rolls: () => { throw new Error('rolled on a fast-move auto-detect'); } });
+  tick(ai3, behind, { ...base, gameMinutes: 4, movingLessThanHalfSpeed: false, rolls: () => { throw new Error('rolled on a fast-move auto-detect'); } });
   assert.ok(ai3.detected);
 });
 
@@ -152,7 +184,7 @@ test('stealth: the chameleon illusion gate blocks SIGHT (the dead S8 half-sight 
   // detected even standing in plain sight (stealth also held: high
   // stealth + a succeeding roll)
   const ai = new EnemyAI(c, [0, 0, 0], 0, {});
-  ai.update(CLASSIC_UPDATE_INTERVAL, inFront, {
+  tick(ai, inFront, {
     gameMinutes: 2, playerStealth: 100, movingLessThanHalfSpeed: true,
     playerBlending: true, sharedStealth: { minute: -1 },
     rolls: seqRolls([0.5, 0.5]),   // illusion 50 >= 8 -> blocked; stealth 50 < 78 -> hidden
@@ -160,7 +192,7 @@ test('stealth: the chameleon illusion gate blocks SIGHT (the dead S8 half-sight 
   assert.ok(ai.inSight, 'the chameleon player IS in sight range');
   assert.ok(!ai.detected, 'the illusion gate blocks the sighting');
   // See-through roll under 8%: the foe pierces the chameleon
-  ai.update(CLASSIC_UPDATE_INTERVAL, inFront, {
+  tick(ai, inFront, {
     gameMinutes: 2, playerBlending: true, sharedStealth: { minute: -1 },
     playerStealth: 100, movingLessThanHalfSpeed: true,
     rolls: seqRolls([0.07, 0.5]),
@@ -168,7 +200,7 @@ test('stealth: the chameleon illusion gate blocks SIGHT (the dead S8 half-sight 
   assert.ok(ai.detected);
   // A sees-through foe ignores blending entirely
   const ai2 = new EnemyAI(c, [0, 0, 0], 0, { seesThroughInvisibility: true });
-  ai2.update(CLASSIC_UPDATE_INTERVAL, inFront, {
+  tick(ai2, inFront, {
     gameMinutes: 2, playerBlending: true, playerInvisible: true, sharedStealth: { minute: -1 },
     playerStealth: 100, movingLessThanHalfSpeed: true, rolls: seqRolls([0.5, 0.5]),
   });

@@ -826,3 +826,39 @@ motor at 60 fps AND 10 fps, both code versions):
   integrator, low risk - queued); the motor updates at 60 Hz on
   120 Hz displays (DFU has the same shape via FixedUpdate + camera
   smoothing; our camera follows raw - noted).
+
+## P17 (2026-08-17): FOE-AI FIXED STEPPING - the P16 law, foe-side SHIPPED
+
+The P16 residual closes, and it stopped being low-risk the moment
+C11 made monsters live by default: every foe's pursuit speed,
+gravity, and capsule stepping integrated on RAW RENDER dt - the
+exact phone-framerate failure class P16 root-caused for the player,
+now multiplied by ~29 foes per dungeon on the deployed mobile build.
+DFU's EnemyMotor is a FixedUpdate body; ours wasn't.
+
+- EnemyAI.update() is now the same accumulator as PlayerMotor:
+  render dt in, FIXED_DT (1/60) steps of the WHOLE body out
+  (senses/decision cadence + physics), MAX_FRAME_DT 0.25 jank clamp.
+  The inner classic-update timer (0.0625s) drains identically - it
+  only ever sees 1/60 chunks now, so the senses/turn/stealth cadence
+  is deterministic at every frame rate. FIXED_DT/MAX_FRAME_DT import
+  from player/motor.js (single source).
+- Untouched because already frame-rate independent: EnemyAttack (its
+  classic timer + the shared machine's frame clock are accumulators),
+  MobileUnit's anim clock (accumulator; DFU animates on real-time
+  WaitForSeconds), the rig reaction timer (visual seconds).
+- Paralysis (S19) skips ai.update entirely - the accumulator holds
+  and does NOT burst on unfreeze (dt is clamped per render frame).
+- Fixture doctrine (as P16): the enemymotor senses tests drove
+  update(CLASSIC_UPDATE_INTERVAL) expecting one tick per call - a
+  bare 0.0625 now lands 3 whole steps (0.05) and NO tick. The tests
+  drive 4x 1/60 per tick (0.0667 >= 0.0625: exactly one tick, one
+  roll-sequence consumption, safe for ~14 calls before remainders
+  stack). NEW pin: a 10 fps foe pursues to the BIT-IDENTICAL spot
+  and yaw as a 60 fps foe (both drives decompose into the same 1/60
+  steps), and a 10-second hitch integrates at most 0.25s.
+- RESIDUAL (carried): the 60 Hz-on-120 Hz-display note from P16
+  applies to foes the same way; foe knockback motion still pends
+  (C11 audit item 6).
+
+Suite 403/88 (the parity pin rides enemymotor.test.js).

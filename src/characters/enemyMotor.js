@@ -36,7 +36,7 @@ import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { CLASSIC_UPDATE_INTERVAL } from './weaponStates.js';   // single source (GameManager.cs:42)
 import { CAPSULE_HEIGHT } from '../player/motor.js';           // single source
 export { CLASSIC_UPDATE_INTERVAL };
-import { GRAVITY } from '../player/motor.js';   // the shared fall rule
+import { GRAVITY, FIXED_DT, MAX_FRAME_DT } from '../player/motor.js';   // the shared fall rule + the P16 fixed-timestep law
 
 export const SIGHT_RADIUS = 4096 * GLOBAL_SCALE;
 export const HEARING_RADIUS = 25;
@@ -193,6 +193,7 @@ export class EnemyAI {
     this.inSight = false;
     this.moving = false;
     this._classicTimer = 0;
+    this._acc = 0;           // P17: the fixed-step accumulator (render dt in, 1/60 steps out)
     this._dist = Infinity;
     // P13 stealth state (EnemySenses fields)
     this.hasEncounteredPlayer = false;
@@ -279,7 +280,23 @@ export class EnemyAI {
     this.moving = true;
   }
 
+  /** P17: the P16 fixed-timestep law, foe-side. DFU's EnemyMotor is a
+   *  FixedUpdate body - raw render-dt integration is exactly the
+   *  phone-framerate failure P16 root-caused for the player (gravity
+   *  error and capsule steps scaling with dt). The render loop hands
+   *  us frame dt; we accumulate and step the WHOLE body (senses
+   *  cadence + physics) at FIXED_DT, with the MAX_FRAME_DT jank
+   *  clamp. The classic-update timer drains identically (it only ever
+   *  sees 1/60 chunks now - deterministic at every frame rate). */
   update(dt, playerFeet, senses = null) {
+    this._acc = (this._acc ?? 0) + Math.min(dt, MAX_FRAME_DT);
+    while (this._acc >= FIXED_DT) {
+      this._acc -= FIXED_DT;
+      this._step(FIXED_DT, playerFeet, senses);
+    }
+  }
+
+  _step(dt, playerFeet, senses) {
     // DFU recomputes distance/sight every Update; only classic TARGET
     // SWITCHING rides the 5-unit system timer (single-target here, so
     // that timer has nothing to switch - constants stay exported for
