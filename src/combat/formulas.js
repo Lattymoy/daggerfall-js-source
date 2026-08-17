@@ -249,6 +249,16 @@ export function enemyWeightClassicUnits(isClass, gender, mobileWeight) {
   return gender === 'female' ? 240 : 350;
 }
 
+// ---- T3a: CalculatePickpocketingChance, verbatim ----
+// chance = live Pickpocket skill; vs an enemy mobile add
+// 5 * (playerLevel - targetLevel); clamp 5..95. targetLevel = null
+// for a townsperson (no level modifier).
+export function calculatePickpocketingChance(pickpocketSkill, playerLevel, targetLevel = null) {
+  let chance = pickpocketSkill;
+  if (targetLevel != null) chance += 5 * (playerLevel - targetLevel);
+  return Math.max(5, Math.min(95, chance));
+}
+
 /** The WeaponManager player-hit knockback speed, verbatim:
  *  kb = ((10d - w) * 256) / (w + 10d) * 2d;
  *  speed = (10d / w) * (2d - kb/256), through the ratio, floored at
