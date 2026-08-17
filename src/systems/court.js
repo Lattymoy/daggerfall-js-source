@@ -89,6 +89,12 @@ export function deductGold(player, amount) {
   const stack = player.items?.find((it) => it.group === 'Currency');
   if (stack) stack.stackCount = Math.max(0, stack.stackCount - amount);
 }
+export function addGold(player, amount) {   // E3: sale proceeds
+  player.items = player.items || [];
+  const stack = player.items.find((it) => it.group === 'Currency');
+  if (stack) stack.stackCount = (stack.stackCount ?? 0) + amount;
+  else player.items.push({ group: 'Currency', name: 'Gold pieces', stackCount: amount });
+}
 
 /** SurrenderToCityGuards, verbatim. setHealth1 is the host's vitals
  *  write. Returns true when the arrest goes to court. */

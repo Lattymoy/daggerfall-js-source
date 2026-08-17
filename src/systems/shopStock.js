@@ -51,6 +51,21 @@ export const SHOP_ITEM_GROUPS = Object.freeze({
   [BUILDING_TYPES.WeaponSmith]: [0x02, 0x1E, 0x03, 0x46],
 });
 
+// E3: DaggerfallTradeWindow.storeBuysItemType, verbatim - the item
+// groups each storefront BUYS from the player.
+export const SHOP_BUYS_GROUPS = Object.freeze({
+  [BUILDING_TYPES.Alchemist]: ['Gems', 'CreatureIngredients1', 'CreatureIngredients2', 'CreatureIngredients3', 'PlantIngredients1', 'PlantIngredients2', 'MiscellaneousIngredients1', 'MiscellaneousIngredients2', 'MetalIngredients'],
+  [BUILDING_TYPES.Armorer]: ['Armor', 'Weapons'],
+  [BUILDING_TYPES.Bookseller]: ['Books'],
+  [BUILDING_TYPES.ClothingStore]: ['MensClothing', 'WomensClothing'],
+  [BUILDING_TYPES.FurnitureStore]: ['Furniture'],
+  [BUILDING_TYPES.GemStore]: ['Gems', 'Jewellery'],
+  [BUILDING_TYPES.GeneralStore]: ['Books', 'MensClothing', 'WomensClothing', 'Transportation', 'Jewellery', 'Weapons', 'UselessItems2'],
+  [BUILDING_TYPES.PawnShop]: ['Armor', 'Books', 'MensClothing', 'WomensClothing', 'Gems', 'Jewellery', 'ReligiousItems', 'Weapons', 'UselessItems2', 'Paintings'],
+  [BUILDING_TYPES.WeaponSmith]: ['Armor', 'Weapons'],
+});
+export const shopBuysItem = (buildingType, item) => (SHOP_BUYS_GROUPS[buildingType] ?? []).includes(item.group);
+
 /** RMBLayout.IsShop, verbatim (the nine stocked storefronts). */
 export function isShop(buildingType) {
   return buildingType === BUILDING_TYPES.Alchemist || buildingType === BUILDING_TYPES.Armorer
