@@ -45,6 +45,32 @@ export const BUFF_KINDS = Object.freeze({
   '23,0': 'chameleonNormal',
   '14,255': 'levitate',
   '30,255': 'waterBreathing',   // P12: gates the drowning tick (IsWaterBreathing)
+  // S21 concealment (ConcealmentEffect subclasses, verbatim classic
+  // keys): the P13 illusion gate's inert invisible/shade branches go
+  // live. Normal and true variants FOLD for detection (DFU's
+  // IsInvisible/IsBlending/IsAShade OR both powers); the split
+  // matters to future consumers (IsMagicallyConcealed*Power).
+  '13,0': 'invisNormal',
+  '13,1': 'invisTrue',
+  '24,0': 'shadeNormal',
+  '24,1': 'shadeTrue',
+  '23,1': 'chameleonTrue',
+});
+
+/** DaggerfallEntity.IsInvisible / IsBlending / IsAShade, verbatim:
+ *  normal OR true power. The senses' illusion gate consumes these
+ *  (S21); foe-side concealment VISUALS pend their arc. */
+export const isInvisible = (en) => hasActiveEffect(en, 'invisNormal') || hasActiveEffect(en, 'invisTrue');
+export const isBlending = (en) => hasActiveEffect(en, 'chameleonNormal') || hasActiveEffect(en, 'chameleonTrue');
+export const isAShade = (en) => hasActiveEffect(en, 'shadeNormal') || hasActiveEffect(en, 'shadeTrue');
+
+/** ConcealmentEffect start messages (Internal_Strings verbatim),
+ *  shown ONCE when the effect becomes incumbent on the player host
+ *  (awakeAlert) - a stacking re-cast stays silent. */
+export const CONCEALMENT_START_TEXT = Object.freeze({
+  invisNormal: 'You are invisible.', invisTrue: 'You are invisible.',
+  chameleonNormal: 'You are blending.', chameleonTrue: 'You are blending.',
+  shadeNormal: 'You are a shade.', shadeTrue: 'You are a shade.',
 });
 /** Classic subType as DFU keys it: the record's sbyte cast to BYTE
  *  (ClassicSpellRecordDataToEffectBundleSettings does
@@ -467,8 +493,15 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       const rounds = rollDuration(e, casterLevel);
       if (rounds > 0) {
         const inc = target.activeEffects?.find((a) => a.kind === kind);
-        if (inc) inc.roundsRemaining += rounds;             // incumbent STACKS (F12)
-        else pushActive(target, { kind, roundsRemaining: rounds }, sinks, rolls);
+        if (inc) inc.roundsRemaining += rounds;             // incumbent STACKS (F12; = ConcealmentEffect.AddState)
+        else {
+          pushActive(target, { kind, roundsRemaining: rounds }, sinks, rolls);
+          // S21: the concealment start message fires once on NEW
+          // incumbency (ConcealmentEffect awakeAlert); a stack is
+          // silent. Only hosts wiring sinks.say (the player) hear it.
+          const msg = CONCEALMENT_START_TEXT[kind];
+          if (msg) sinks?.say?.(msg);
+        }
         out.buffs = (out.buffs ?? 0) + 1;
       }
       continue;

@@ -46,7 +46,7 @@ import {
   MISSILE_LIFESPAN_S, isDamageHealthEffect,
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
-import { applySpell, tickActiveEffects, hasActiveEffect, maxFatigue } from '../systems/effects.js';
+import { applySpell, tickActiveEffects, hasActiveEffect, maxFatigue, isInvisible, isBlending, isAShade } from '../systems/effects.js';
 import { FATIGUE_LOSS, maxBreath } from '../systems/statMods.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { updatePoisons, inflictPoison, rollEnemyWeaponPoison } from '../systems/poisons.js';
@@ -626,7 +626,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + n);
     surfacePlayer();
   }
-  const playerSinks = { hurt: hurtPlayer, heal: healPlayer, drainMagicka, drainFatigue, restoreFatigue, restoreMagicka };
+  const playerSinks = { hurt: hurtPlayer, heal: healPlayer, drainMagicka, drainFatigue, restoreFatigue, restoreMagicka, say: (l) => hudText.add(l) };   // S21: concealment start messages
   const foeSinks = (f) => ({
     hurt: (n) => damageFoe(f, n),
     heal: (n) => { f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + n); },
@@ -1223,18 +1223,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       playerCastInput(eye, [-view[2], -view[6], -view[10]]);   // classic: the readied spell fires on the click
     }
     // P13: the shared stealth senses context (EnemySenses' player-
-    // side reads). The S8 half-sight interim retires - chameleon is
-    // the verbatim illusion gate (playerBlending -> 8% see-through
-    // per classic update); invisibility/shade effects pend (false).
+    // side reads). S21: all three illusion branches are LIVE -
+    // invisible always blocks (the 13 seers exempt), blending 8%
+    // see-through, shade 4% - each folding normal + true powers
+    // (DaggerfallEntity.IsInvisible/IsBlending/IsAShade, verbatim).
     // sharedStealthMinute = PlayerEntity.TimeOfLastStealthCheck: the
     // Stealth tally fires once per classic minute ACROSS all foes.
     const _senses = {
       gameMinutes: Math.floor(classicMinutes),
       playerStealth: skillValue(playerEntity, SKILLS.Stealth),
       movingLessThanHalfSpeed: _activity.movingLessThanHalfSpeed ?? true,
-      playerBlending: hasActiveEffect(playerEntity, 'chameleonNormal'),
-      playerInvisible: false,
-      playerShade: false,
+      playerBlending: isBlending(playerEntity),
+      playerInvisible: isInvisible(playerEntity),
+      playerShade: isAShade(playerEntity),
       sharedStealth: _sharedStealth,
       tallyStealth: () => tallySkill(playerEntity, SKILLS.Stealth),
     };
