@@ -402,3 +402,17 @@ on the action panel, COST:0 / 20000 on the strip, and THREE REAL
 BOOK ICONS on the shop list; a remote click bought at 3129 (the
 book crossing to the local list), a local click sold back at 2968,
 Exit closed. Suite 455/101.
+
+### U8c HOTFIX (2026-08-17, Mac's catch): upside-down item icons
+
+The shelf books rendered INVERTED: record textures store BOTTOM-UP
+rows (baseImageFile.getColor32 keeps DFU's verbatim GL flip for the
+mesh/billboard path) while drawScreenQuad samples v0 at the TOP -
+the two paths' V conventions differ, and the icons were the first
+record-textures drawn through the screen-quad path. The icon draw
+now passes a V-flipped source rect ({v0:1, v1:0}), pinned in
+nativetrade.test.js. THE STANDING NOTE for future native windows:
+IMG art through loadImg/uploadTexture is top-down (draw plain);
+RECORD art through uploadRecord is bottom-up (draw V-flipped).
+Suite 456/101; the probe re-run + re-eyeballed - books lying
+right-side up.

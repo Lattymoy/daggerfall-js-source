@@ -57,3 +57,21 @@ test('nativeTrade: the composed rects + the click trade machine', () => {
   w2.input('Escape');
   assert.ok(w2.done);
 });
+
+test('nativeTrade: icon draws V-FLIP the record texture (the bottom-up GL rows)', () => {
+  // getColor32 stores records bottom-up (DFU's verbatim mesh flip);
+  // drawScreenQuad samples v0 at the TOP - the icon draw must flip
+  // (Mac's catch: the shelf books rendered upside down).
+  const h = hooks();
+  const w = new NativeTradeWindow(h);
+  const key = '209_2';   // the Book template's world texture
+  w._iconWarm.add(key);
+  w._iconSizes = new Map([[key, { width: 32, height: 16 }]]);
+  h.icons.textures.set(key, 'gl-tex');
+  let captured = null;
+  const fakeRenderer = { drawScreenQuad: (tex, dst, src) => { captured = { tex, src }; } };
+  const m = { s: 1, ox: 0, oy: 0 };
+  assert.ok(w._drawIcon(fakeRenderer, m, { templateIndex: 277 }, [261, 48, 59, 152], 0));
+  assert.equal(captured.tex, 'gl-tex');
+  assert.deepEqual(captured.src, { u0: 0, v0: 1, u1: 1, v1: 0 }, 'the V-flipped source rect');
+});
