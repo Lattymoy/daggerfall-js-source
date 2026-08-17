@@ -34,6 +34,8 @@ import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
+import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
+import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { fetchBytes, parseSeason, createSkyController } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
@@ -160,6 +162,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   let colliderTris = 0;
   const buildingDoors = []; // {door, dfBlock, recordIndex, climateBase, season, dfLocation, group}
   const flatGroups = new Map(); // "archive_record" -> [centers]
+  const ambientAnimals = [];    // A4: archive-201 town animals as audio sources
+  const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   for (const b of loc.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     for (const placed of b.layout.models) {
@@ -201,6 +205,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       const key = `${flat.archive}_${flat.record}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([flat.x + b.originX, flat.y, flat.z + b.originZ]);
+      // A4: every archive-201 town animal is an audio source
+      // (AddAnimalAudioSource on RMB flats, verbatim).
+      if (flat.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[flat.record] != null) {
+        ambientAnimals.push({ pos: [flat.x + b.originX, flat.y, flat.z + b.originZ], sound: ANIMAL_SOUND_BY_RECORD[flat.record] });
+      }
     }
     for (const light of collectCityLights(b.dfBlock, lightSize)) {
       cityLights.push({ x: light.x + b.originX, y: light.y, z: light.z + b.originZ });
@@ -451,6 +460,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     audio.setListener(eye, [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]]);
     ambience.setPreset(presetForExterior(weather, isNight(minute)));
     ambience.update(dt, { playerPos: eye });
+    animalAmbience.update(dt, eye);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     // Storm lightning: verbatim frame-strobe multiplier on the sun (2x
     // during a flash frame); ?flashtest pins it on for shots.
     const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);

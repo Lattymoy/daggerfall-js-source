@@ -113,3 +113,30 @@ object 5/28, the exterior WeatherAmbientEffects 5/25.
 6 tests (ambient.test.js). Suite 357/81, ARENA2 corpus 357/357
 green pre-commit; the exterior shot probe runs clean with the
 ambience live.
+
+## A4 (2026-08-17): exterior RMB animal sources - towns bark SHIPPED
+
+The queue's named row (the A3 residual's "exterior animal/torch
+sources") closes at its verbatim scope: DFU's RMBLayout adds
+AddAnimalAudioSource to every archive-201 flat and NOTHING else -
+the Burning torch loop is RDBLayout-only, so exterior torches are
+silent in DFU and stay silent here (checked, recorded).
+
+- systems/animalAmbience.js: A2's inline dungeon cadence extracted
+  as THE shared PlayRandomlyIfPlayerNear pass - per CLASSIC UPDATE
+  (16 Hz), each source within animalSoundMaxDistance (768 units =
+  19.2) rolls the classic DFRandom stream, rand() <= 100 barks. The
+  range gates BEFORE the roll (sequence preservation, pinned). One
+  implementation, three consumers: dungeonContext (folded - the
+  inline A2 block and its timer retired), exterior.js (static
+  source list from the flat build), world.js (per-pixel animal
+  lists with pixel-LOCAL positions, translated through the floating
+  origin at roll time - recenters are free).
+- The record table verbatim (GameObjectHelper): 0/1 horse, 3/4 cow,
+  5/6 pig, 7/8 cat, 9/10 dog, record 2 and 11+ silent.
+
+Remaining on the queue: transition stingers; music (Mac's strategy
+call stands).
+
+Suite 412/90 (animalambience.test.js x2: the table + constants, the
+16Hz cadence with the range-before-roll law).

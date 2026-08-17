@@ -60,12 +60,12 @@ import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
 import { audio } from '../systems/audio.js';
+import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4: the shared PlayRandomlyIfPlayerNear pass
 import {
   SOUND, hitSoundFor,
   TORCH_ARCHIVE, TORCH_RECORDS, TORCH_MAX_DISTANCE, TORCH_VOLUME,
-  ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD, ANIMAL_MAX_DISTANCE, AMBIENT_RANDOM_PLAY_MAX,
+  ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD,
 } from '../systems/soundClips.js';
-import { rand } from '../formats/dfRandom.js';
 import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
 import { BUILD_TAG } from '../buildTag.js';
 import {
@@ -183,7 +183,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // that namespaces every chain key).
   const positionIndex = new Map();
   const torches = [];         // A2: { pos, handle } - looping Burning sources gated by range
-  const ambientAnimals = [];  // A2: { pos, sound } - random-cadence barks
+  const ambientAnimals = [];  // A2: { pos, sound } - random-cadence barks (A4: consumed by the shared module)
+  const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   for (const [bi, b] of dungeon.blocks.entries()) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     for (const [pos, e] of b.layout.objectPositions) {
@@ -1023,7 +1024,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // S3b: the classic clock for skill-raise checks - dt * TimeScale
   // (DFU default 12) in minutes; RaiseSkills gates itself at 360.
   let classicMinutes = 0;
-  let _ambientTimer = 0;         // A2: the animal random-play classic cadence
   async function ensureMissileBatch(m) {
     if (m.batch !== null) return;
     m.batch = false;   // in-flight guard
@@ -1384,17 +1384,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (inRange && !t.handle) t.handle = audio.loop3d(SOUND.Burning, t.pos, TORCH_VOLUME, { maxDistance: TORCH_MAX_DISTANCE });
         else if (!inRange && t.handle) { t.handle.stop(); t.handle = null; }
       }
-      if (ambientAnimals.length) {
-        _ambientTimer += dt;
-        while (_ambientTimer >= CLASSIC_UPDATE_INTERVAL) {
-          _ambientTimer -= CLASSIC_UPDATE_INTERVAL;
-          for (const a of ambientAnimals) {
-            const adx = eye[0] - a.pos[0], ady = eye[1] - a.pos[1], adz = eye[2] - a.pos[2];
-            if (adx * adx + ady * ady + adz * adz > ANIMAL_MAX_DISTANCE * ANIMAL_MAX_DISTANCE) continue;
-            if (rand() <= AMBIENT_RANDOM_PLAY_MAX) audio.play3d(a.sound, a.pos, 1, { maxDistance: ANIMAL_MAX_DISTANCE });
-          }
-        }
-      }
+      animalAmbience.update(dt, eye);   // A4 fold: the shared PlayRandomlyIfPlayerNear pass (was inline A2)
       // C10: the rig owns the gesture consume, the swing-sound edge,
       // and the machine step (paralysis holds all three, S19).
       for (const ev of weaponRig.frame(dt, { paralyzed: _pParalyzed })) {
