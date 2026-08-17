@@ -35,6 +35,10 @@ import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
+import { CityNavigation } from '../world/cityNavigation.js';   // T1 towns
+import { TownPopulation } from '../systems/townPopulation.js';
+import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
+import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { fetchBytes, parseSeason, createSkyController } from './shared.js';
 import {
@@ -89,7 +93,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // and able to lazy-load the models/archives interiors and dungeons
   // reference beyond the location's own set.
   const pipeline = createDataPipeline({ renderer, arch, palette });
-  const { textureFiles, getTexture, uploadRecord, getGpuMesh, gpuMeshes, cpuModels } = pipeline;
+  const { textureFiles, getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, gpuMeshes, cpuModels } = pipeline;
 
   // Collect the location's model ids + referenced texture archives.
   const modelIds = new Set();
@@ -164,6 +168,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const flatGroups = new Map(); // "archive_record" -> [centers]
   const ambientAnimals = [];    // A4: archive-201 town animals as audio sources
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
+  const cityNav = new CityNavigation(loc.width, loc.height);   // T1 towns
   for (const b of loc.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     for (const placed of b.layout.models) {
@@ -211,6 +216,11 @@ export async function bootExterior(canvas, renderer, params, status) {
         ambientAnimals.push({ pos: [flat.x + b.originX, flat.y, flat.z + b.originZ], sound: ANIMAL_SOUND_BY_RECORD[flat.record] });
       }
     }
+    // T1: the navgrid - the automap carves (raw bytes, verbatim: a
+    // tree flat BLOCKS its cell), tile weights from the same ground
+    // grid the renderer reads.
+    cityNav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData,
+      (tx, ty) => srcTiles[tx][ty].textureRecord);
     for (const light of collectCityLights(b.dfBlock, lightSize)) {
       cityLights.push({ x: light.x + b.originX, y: light.y, z: light.z + b.originZ });
     }
@@ -356,9 +366,51 @@ export async function bootExterior(canvas, renderer, params, status) {
     baseCollider: () => collider,
   });
   if (shotMode) {
-    window.__pose = (x, y, z, yaw, pitch) => { cam.pos = [x, y, z]; cam.yaw = yaw; cam.pitch = pitch; };
+    window.__pose = (x, y, z, yaw, pitch) => {
+      cam.yaw = yaw; cam.pitch = pitch;
+      // walk mode: the camera FOLLOWS the motor - move the player
+      // (a bare cam.pos write is overwritten next frame; T1 probe fix)
+      if (walkMode) player.spawn(x, y, z); else cam.pos = [x, y, z];
+    };
     modes.installShotProbes();
+    // T1: the townsfolk probe surface
+    window.__people = () => JSON.stringify(population.pool.map((it, i) => ({
+      i, active: it.active, visible: it.visible, pend: it.scheduleEnable, recyc: it.scheduleRecycle,
+      archive: it.person.archive, state: it.person.state, moves: it.person.moveCount, seeks: it.person.seekCount,
+      pos: it.person.pos.map((v) => Number(v.toFixed(2))),
+    })).filter((x) => x.active));
+    window.__townDebug = () => JSON.stringify({
+      night: isNight(minuteNow()), pool: population.pool.length, max: population.maxPopulation,
+      player: cam.pos.map((v) => Number(v.toFixed(1))), yaw: Number(cam.yaw.toFixed(2)), walkMode,
+    });
   }
+
+  // T1 TOWNS: the wandering population (PopulationManager verbatim -
+  // 10Hz pool, 24/16-blocks clamp, daytime only, anti-skate hidden
+  // first move). Race: the region's people - Daggerfall = Breton
+  // (FLAGGED: the climate People table pends; the test city is
+  // correct). Each pool person owns a live billboard batch (the C11
+  // shape) drawn on the flats' axis (the billboard-axis doctrine).
+  const personArchives = [...PERSON_TEXTURES.Breton.male, ...PERSON_TEXTURES.Breton.female, GUARD_TEXTURE];
+  const personTex = new Map();
+  await Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a))));
+  const personBatchOf = new Map();   // person -> batch
+  const population = new TownPopulation(cityNav, {
+    totalBlocks: loc.width * loc.height,
+    race: 'Breton',
+    makePerson: (archive, guard) => {
+      const t = personTex.get(archive);
+      const person = new MobilePerson(cityNav, {
+        archive, guard,
+        frameCount: (rec) => t.getFrameCount(rec),
+        collider,
+        groundY: (x, z) => collider.heightAt(x, z),
+      });
+      personBatchOf.set(person, renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]));
+      return person;
+    },
+  });
+  let _lastPlayerPos = null, _playerStill = false;
 
   const lightAnimator = new CityLightAnimator(cityLights.length, CITY_LIGHT_RANGE);
   const nightAmbientFloor = new Float32Array([0.25, 0.25, 0.25]);
@@ -570,6 +622,32 @@ export async function bootExterior(canvas, renderer, params, status) {
     arrows.update(dt);
     arrows.draw(renderer, texRemap);
     renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    // T1: the wandering townsfolk - population ticks at 10Hz, the
+    // politeness idle gate (still + near + SHEATHED + visible; no
+    // exterior foes), daytime only; live persons render as C11-style
+    // mobile batches on the flats' axis.
+    if (walkMode) {
+      _playerStill = _lastPlayerPos !== null &&
+        Math.hypot(cam.pos[0] - _lastPlayerPos[0], cam.pos[2] - _lastPlayerPos[2]) < 0.001;
+      _lastPlayerPos = [cam.pos[0], cam.pos[1], cam.pos[2]];
+      const live = population.update(dt, cam.pos, cam.yaw, eye, !isNight(minute), (person) => {
+        const pd = Math.hypot(person.pos[0] - cam.pos[0], person.pos[2] - cam.pos[2]);
+        return _playerStill && pd < 2.5 && !!weaponRig.playerWeapon.sheathed && !isInvisible(playerEntity);
+      });
+      const personBatches = [];
+      for (const { person, out } of live) {
+        const batch = personBatchOf.get(person);
+        const t = personTex.get(person.archive);
+        const rkey = `${out.record}#${out.frame}`;
+        if (!renderer.textures.has(`${person.archive}_${rkey}`)) uploadRecordFrame(person.archive, out.record, out.frame);
+        const sz = scaledBillboardSize(t.getSize(out.record), t.getScale(out.record));
+        batch.record = rkey;
+        batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };
+        batch.origin = [person.pos[0], person.pos[1], person.pos[2]];
+        personBatches.push(batch);
+      }
+      if (personBatches.length) renderer.drawBillboards(personBatches, camRight, new Float32Array([0, 1, 0]));
+    }
     if (precip) {
       precip.draw(precipMode, proj, view, new Float32Array(eye), camRight, now / 1000);
     }
@@ -591,6 +669,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
 
     frames++;
+    if (shotMode) window.__frame = frames;   // T1: probes frame-sync (the process doctrine - sleeps sample stale state)
     if (shotMode && frames === 5) window.__shotReady = true;
     requestAnimationFrame(frame);
   }
