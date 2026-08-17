@@ -19,24 +19,27 @@ const deps = (over = {}) => {
   return d;
 };
 
-test('rest: the hour cadence - 6 ten-minute sub-ticks per 0.75s rested hour, loiter at 1.25s', () => {
+test('rest: the sub-tick law - waitPerHour / minutesPerTick (the DFU divisor quirk; audit 16f)', () => {
+  // DFU divides by the CONSTANT minutesPerTick (10), not the 6 ticks
+  // an hour takes - a rested hour passes in 6 x 0.075 = 0.45 real
+  // seconds (loiter 6 x 0.125 = 0.75). Quirk preserved.
   assert.equal(MINUTES_PER_TICK, 10);
+  assert.equal(REST_WAIT_PER_HOUR, 0.75);
+  assert.equal(LOITER_WAIT_PER_HOUR, 1.25);
   const d = deps();
   const s = new RestSession('timed', 3, d);
-  // Half an hour of real-time budget: 3 sub-ticks -> 30 classic minutes
-  s.tick(REST_WAIT_PER_HOUR / 2);
+  s.tick(0.225);                          // 3 sub-ticks at 0.075 -> 30 classic minutes
   assert.equal(d.minutes, 30);
   assert.equal(d.vitalTicks, 0);          // no full hour yet
-  s.tick(REST_WAIT_PER_HOUR / 2);
+  s.tick(0.225);
   assert.equal(d.minutes, 60);
   assert.equal(d.vitalTicks, 1);          // the hour landed one vitals tick
   assert.equal(s.hoursRemaining, 2);
   // Loiter runs slower: the same real time buys fewer sub-ticks
   const dl = deps();
   const sl = new RestSession('loiter', 2, dl);
-  sl.tick(REST_WAIT_PER_HOUR);            // 0.75s at the 1.25s/hour rate
-  assert.equal(dl.minutes, 30);           // floor(0.75 / (1.25/6)) = 3 sub-ticks
-  assert.equal(LOITER_WAIT_PER_HOUR, 1.25);
+  sl.tick(0.45);                          // floor(0.45 / 0.125) = 3 sub-ticks
+  assert.equal(dl.minutes, 30);
 });
 
 test('rest: completions - timed wakes on 353, full ends healed on 350 (instantly when already), loiter 349 with NO vitals', () => {
@@ -64,7 +67,16 @@ test('rest: completions - timed wakes on 353, full ends healed on 350 (instantly
   const r4 = s4.tick(LOITER_WAIT_PER_HOUR + 0.01);
   assert.equal(r4.textId, REST_TEXT.loiterDone);
   assert.equal(d4.minutes, 60);
-  assert.equal(LOITER_LIMIT_HOURS, 3);   // the classic cap the window enforces
+  assert.equal(LOITER_LIMIT_HOURS, 3);   // the classic cap the window enforces (DFU settings default/min)
+  // The 0-hour quirk (audit 16f): DFU tests hoursRemaining < 1 only
+  // AFTER an hour completes - resting 0 hours rests ONE full hour.
+  const d5 = deps();
+  const s5 = new RestSession('timed', 0, d5);
+  assert.equal(s5.tick(0.4), null);      // 5 sub-ticks in - still resting
+  const r5 = s5.tick(0.1);
+  assert.equal(r5.textId, REST_TEXT.wakeUp);
+  assert.equal(d5.minutes, 60);
+  assert.equal(d5.vitalTicks, 1);
 });
 
 test('rest: interrupts - enemies break at the hour on 354 (before vitals), death ends at once, endEarly texts', () => {

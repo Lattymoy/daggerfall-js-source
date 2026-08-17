@@ -34,7 +34,7 @@ import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet } from '../ui/charsheet.js';
 import { InventoryWindow, SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
 import { tallySkill, skillValue, SKILLS, WEAPON_SKILL, SKILL_NAMES } from '../systems/skills.js';
-import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
 import { raiseSkills, applyLevelUp } from '../systems/advancement.js';
 import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
@@ -60,7 +60,7 @@ import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
 import { audio } from '../systems/audio.js';
 import {
-  SOUND, swingSoundFor, hitSoundFor,
+  SOUND, hitSoundFor,
   TORCH_ARCHIVE, TORCH_RECORDS, TORCH_MAX_DISTANCE, TORCH_VOLUME,
   ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD, ANIMAL_MAX_DISTANCE, AMBIENT_RANDOM_PLAY_MAX,
 } from '../systems/soundClips.js';
@@ -1536,12 +1536,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // routes through the overlay as 'back' (ends a running rest).
     toggleRest() {
       if (activeOverlay) return;
-      if (foes.some((f) => !f.dead && ((f.ai.detected && f.ai.inSight) || f.ai.wouldBeSpawned))) {
+      // Audit 2026-08-16f: the PRE-gate uses AreEnemiesNearby(true) -
+      // the RESTING variant (an unaware foe blocks only within 12
+      // units), same as the hourly break check. The first cut used
+      // the strict variant and refused rest with any unaware foe in
+      // the whole 1024-unit spawn band. ROUTED leg: DFU also raises
+      // PlayerEntity.SetEnemyAlert(true) here - no alert state exists
+      // in this port yet (its consumers, fast travel among them, pend).
+      if (_restDeps.enemiesNearby()) {
         const lines = rscLines(REST_TEXT.enemiesNearby);
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;
       }
-      if (_activity.swimming || !_grounded) {
+      // StartRestGroundedCheck verbatim: grounded passes at once;
+      // otherwise a short downward ray from the controller center,
+      // height/2 + 0.2 (= floor within 0.2 below the feet) lets a
+      // near-ground levitator rest. Derived from CAPSULE_HEIGHT so
+      // the geometry cannot drift from the motor's (review 16f).
+      const feet = lastPlayerFeet;
+      const nearFloor = _grounded || (feet
+        && Number.isFinite(collider.raycast(
+          [feet[0], feet[1] + CAPSULE_HEIGHT / 2, feet[2]], [0, -1, 0], CAPSULE_HEIGHT / 2 + 0.2)));
+      if (_activity.swimming || !nearFloor) {
         const lines = rscLines(REST_TEXT.cannotRestNow);
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;

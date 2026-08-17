@@ -331,7 +331,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let playerSpawned = false;
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.
-  const latch = { jump: false, use: false };
+  const latch = { use: false, crouch: false };   // audit 16f: jump is HELD since P14 - the latch slot was dead
   let zPrevW = false;   // C9: the exterior ReadyWeapon (Z) edge
   if (playerPixel.location) {
     const tilePos = getLocationTerrainTileOrigin(startLoc);

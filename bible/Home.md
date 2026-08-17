@@ -75,7 +75,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-16d, the C10 slice)
+## Open flags (regenerated 2026-08-16d, the 16f audit)
 
 Regenerated at the S20 close (the drainFatigue "exhaustion pends"
 comment SHIPPED out; line numbers refreshed). Every row below is a
@@ -135,6 +135,38 @@ stay open to Mac's eye in live play (probe-locked).
 ## Audits
 
 Newest first.
+
+**2026-08-16f - the comprehensive audit of the P13..C10 stretch
+(the post-16e day: stealth, rest, movement, sneak, the weapon rig).**
+Re-verified the least source-grounded slices against DFU code (U7
+was ported mid-session from working notes - it drew the findings),
+swept the host-parity matrix and the day's dead code, and ran an
+independent high-effort review over the unmerged diff. THREE REAL
+FINDINGS + two review nits, all fixed at root: (F1) the REST
+SUB-TICK LAW - DFU fires a sub-tick every waitTimePerHour /
+minutesPerTick real seconds; the divisor is the CONSTANT 10, not the
+6 ticks an hour takes, so a rested hour passes in 0.45s (loiter
+0.75s) - the first cut divided by ticks-per-hour and rested ~1.7x
+slow; quirk preserved verbatim. (F2) the rest PRE-gate used the
+STRICT AreEnemiesNearby - DFU's dfuiOpenRestWindow uses the RESTING
+variant (an unaware foe blocks only within 12 units), so ours
+refused rest with any unaware foe anywhere in the 1024-unit spawn
+band; now shares the hourly check's dep. (F3) the airborne 355 gate
+lacked StartRestGroundedCheck's raycast fallback (grounded OR floor
+within 0.2 below the feet - a near-ground levitator may rest); plus
+the 0-HOUR QUIRK ported (DFU tests hoursRemaining < 1 only AFTER an
+hour: resting 0 rests one full hour) and the empty-entry no-op.
+Review nits: the 354 refusal's SetEnemyAlert leg ROUTED (no alert
+state exists yet - fast travel pends), the grounded-ray constants
+derived from CAPSULE_HEIGHT instead of hardcoded. Dead code swept:
+the post-P14 latch.jump slots, the post-C10 swingSoundFor import.
+HOST-PARITY MATRIX (the standing rule, all seams x all four motor
+hosts): crouch/sneak/held-jump/fall-damage/weapon ALL COVERED; rest
+is dungeon-only BY DESIGN for now (exterior/interior rest needs the
+classic clock + vitals machinery those hosts do not own - recorded
+residual, not a violation); breath/swim dungeon-scoped (exterior
+water pends); paralysis dungeon-scoped (no effects tick outside).
+Suite 389/86 green on real ARENA2 pre-commit.
 
 **2026-08-16e - the pre-merge audit of the S18/S19/P12/A3 stretch
 (a8de400..HEAD).** Re-diffed every slice shipped on this lane since
