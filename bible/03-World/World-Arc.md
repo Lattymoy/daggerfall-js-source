@@ -453,4 +453,56 @@ reaction, Where-is building directions) + the scene activation modes
 (Steal/Grab/Info/Talk) raycasting mobile persons in all three
 exterior-capable hosts.
 
+## T3b (2026-08-17): TALK - the talk window + activation SHIPPED
+
+Townsfolk can be talked to and pickpocketed, live in BOTH exterior
+motor hosts (the standing host rule; one shared seam module):
+
+- THE SESSION (systems/talkSession.js): mobile townsfolk all talk
+  as the region's People faction whose parent is a PROVINCE - so
+  DFU's guild-greeting branch never runs for them and the greeting
+  is purely the reaction ladder, verbatim: < -20 refuses via
+  TEXT.RSC 7205 (the -20 EDGE still talks); >= 30 -> 7209, >= 10 ->
+  7208, >= 0 -> 7207, else 7206. One random variant expands the
+  greeting-set macros: %pcf (first name token) and %oth (an oath,
+  TEXT.RSC 201 + FactionRace - DFU's deliberate fix of the classic
+  region-race oath bug; the oath variant is drawn only when the
+  greeting carries %oth). Unknown macros pass through LOUD (the
+  full MacroHelper pends).
+- THE SEAM (scenes/townTalk.js, shared): interaction modes on the
+  classic F1-F4 (Steal/Grab/Info/Talk, default GRAB, "Interaction
+  is now in %s mode.", no-op on the same mode); the activation ray
+  vs the person's controller cylinder (radius 0.45, height 1.8) at
+  the verbatim distances (mobile NPC 6.4; pickpocket 3.2 with "You
+  are too far away" beyond); Info/Grab/Talk all talk a mobile NPC
+  (DFU routing); Steal pickpockets ONCE per person
+  (PickpocketByPlayerAttempted). Lazily loads FACTION.TXT +
+  TEXT.RSC + FONT0003 through the host's fetchBytes. The refusal is
+  a HUD line; a font-less boot never traps the motor.
+- THE HOSTS: exterior.js + world.js each mount the seam: keydown
+  eats mode keys and overlay Esc/Enter BEFORE the movement set; the
+  E-use edge gives a person under the ray priority over building
+  doors (the PlayerActivate nearest order); the talk overlay holds
+  the motor (the U3 seam); townTalk.frame draws HUD lines + the
+  panel last. THIS IS THE HOSTS' FIRST HUD-TEXT LAYER - the weapon
+  rig's say() lines (C9's console flag) now land on screen.
+  surfacePlayer() at boot (the probe surface).
+- UI (ui/talkWindow.js): the U-arc text panel (the rest window's
+  shape - TALK01I0.IMG art pends the shared background note) with
+  greedy word-wrap; Esc/Enter = goodbye.
+- PROBE PROOF (tools/talkProbe.mjs): live in the test city - E on a
+  politeness-idled townsman opened the panel reading "Yes?" (a real
+  7207 variant through the real TEXT.RSC); Esc + F1 flipped to
+  steal mode ("Interaction is now in steal mode."); E pickpocketed:
+  the HUD read "You pinched 1 gold piece." (the SINGULAR form -
+  the 67% gold path with Random 1). The probe lesson: Playwright
+  press() falls between rAFs - hold keys across frame-synced waits
+  (keyboard.down + N frames + up).
+
+FLAGGED (LOUD): topics (Where-is/Tell-me-about), tones, the
+portrait, and TALK01I0.IMG all pend T3c; guards on the failed
+pickpocket pend crime; the streaming host's People faction rides
+the START region until travel wiring; touch has no mode keys yet
+(the mobile input arc).
+
 Suite 420/92. ARENA2 green, probes green.

@@ -24,6 +24,7 @@ import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
+import { createTownTalk } from './townTalk.js';   // T3b
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState } from '../world/streamingWorld.js';
@@ -400,9 +401,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   const player = new PlayerMotor(collider, undefined, { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14)
   // C9: the exterior FP weapon (host rule - every motor host carries
   // it). say -> console FLAGGED: this host has no HUD-text layer yet.
+  // T3b: the town interaction seam (modes/talk/pickpocket) - the same
+  // module the exterior host mounts (the standing host rule). It is
+  // also this host's first HUD-text layer; the rig's say routes there.
+  // FLAGGED loud: the People faction rides the START location's
+  // region - cross-region streaming keeps the boot region's people
+  // until the current-pixel region wiring lands with travel.
+  const townTalk = createTownTalk({
+    renderer, canvas, fetchBytes, playerEntity,
+    regionIndex: startLoc.regionIndex,
+  });
+  townTalk.ensureLoaded();
+  surfacePlayer();   // the probe surface exists from boot (T3b: pickpocket gold reads)
+  let _livePersons = [];
   const weaponRig = createWeaponRig({
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
-    say: (l) => console.warn('[exterior]', l),
+    say: (l) => townTalk.say(l),
   });
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let playerSpawned = false;
@@ -443,7 +457,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   const modeNow = () => modes?.mode ?? 'exterior';
   // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
   // or the browser menu steals focus (Firefox activates it on keyUP).
-  addEventListener('keydown', (e) => { keys.add(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
+  // T3b: the town seam eats its keys FIRST (F1-F4 modes; overlay
+  // Esc/Enter) so a held overlay never leaks into the movement set.
+  addEventListener('keydown', (e) => { if (townTalk.keydown(e)) return; keys.add(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
   canvas.addEventListener('pointerdown', () => requestLook(canvas));
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
@@ -521,6 +537,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       return JSON.stringify(out);
     };
+    window.__talk = () => JSON.stringify(townTalk._debug());   // T3b probe surface
     window.__townDebug = () => {
       const pixels = [];
       for (const p of built.values()) {
@@ -615,7 +632,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (playerSpawned) {
         const jumpHeld = keys.has('Space');
         const crouchHeld = keys.has('KeyX');   // P12 host parity (audit F4)
-        const _overlayHeld = modes?.dungeonCtx?.uiOverlayActive ?? false;   // chargen/windows hold the motor - typing must not walk the player
+        const _overlayHeld = (modes?.dungeonCtx?.uiOverlayActive ?? false) || townTalk.overlayActive;   // chargen/windows/talk hold the motor - typing must not walk the player
         if (!_overlayHeld) player.update(dt, {
           forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
           strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
@@ -646,7 +663,12 @@ export async function bootWorld(canvas, renderer, params, status) {
         cam.pos = player.eye;
         const useHeld = keys.has('KeyE');
         if (useHeld && !latch.use && !modes.transitioning) {
-          modes.tryEnter().catch((e) => console.error(e));
+          // T3b: a townsperson under the ray wins the activation (the
+          // PlayerActivate nearest-hit order); building doors otherwise.
+          const useFwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+          if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
+            modes.tryEnter().catch((e) => console.error(e));
+          }
         }
         latch.use = useHeld;
       }
@@ -756,6 +778,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _lastPlayerPos = [cam.pos[0], cam.pos[1], cam.pos[2]];
     const isDay = !isNight(minute);
     const livePersonBatches = [];
+    _livePersons = [];   // T3b: rebuilt each frame in WORLD space
     for (const p of built.values()) {
       if (!p.population) continue;
       const t = state.pixelTranslation(p.px, p.py);
@@ -777,6 +800,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           person.pos[1] + t[1],
           person.pos[2] + p.locOrigin[2] + t[2],
         ];
+        _livePersons.push({ person, pos: batch.origin });   // T3b: world-space activation target
         livePersonBatches.push(batch);
       }
     }
@@ -809,6 +833,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       weaponRig.draw();
     }
+    townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
 
     if (shotMode) {
       window.__frame++;
