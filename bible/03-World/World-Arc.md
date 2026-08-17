@@ -359,4 +359,51 @@ Residuals (LOUD): talk/activation pends dialog; guards pend the
 crime system (the table ships); the streaming world (?world) mounts
 in T2; interior population unchanged (C1).
 
+## T2 (2026-08-17): TOWNS - the streaming-world mount SHIPPED
+
+The T1 systems ride the floating-origin host (the standing host
+rule: every scene-side seam ships in every motor host). world.js:
+
+- PER-LOCATION POOLS: every built location pixel carries its own
+  CityNavigation + TownPopulation (DFU attaches both to each
+  streamed DaggerfallLocation). THE LOCATION-TYPE GATE, verbatim
+  from StreamingWorld: populations only for TownCity 0 / TownHamlet
+  1 / TownVillage 2 / HomeFarms 3 / ReligionTemple 5 / Tavern 6 /
+  HomeWealthy 8 (mapTableData.locationType) - graveyards, shrines,
+  dungeons and covens stay empty.
+- THE FRAME CONTRACT: persons live in the LOCATION frame -
+  horizontal from the location origin (locLocal = terrain tile
+  origin), vertical pixel-local; groundY is the flattened location
+  terrain (blendLocationTerrain planes the rect to avg - the same
+  base the RMB flats sit on). The frame loop converts the player
+  INTO each pixel's location frame (cam - pixelTranslation -
+  locOrigin) for the pool, and converts live persons OUT through
+  the same translation for the draw - recenters are free. The
+  _clear raycast wraps the world collider with the same shift.
+- LIFECYCLE: person batches are per-pixel and destroyed with the
+  pixel (destroyPixel); far location pixels keep their pools but
+  spawns fail off-grid (pool parks at 1 free item) and distance
+  recycling drains them - PROBED: Daggerfall 96/96 pool with
+  act/vis climbing while Copperfield Manor/Ripwych/Burgcester sat
+  parked at 1.
+- PROBE PROOF (tools/worldTownProbe.mjs): walkers spawn around the
+  posed player at Daggerfall city center (spawnTest green at nav
+  256,256), complete tile moves, and the POLITENESS IDLE fired on
+  the fly-cam close-up - archive 456 crops IDENTICAL to raw 456/5
+  (the doctrine: blonde Breton townswoman, white blouse, checkered
+  apron, blue skirt, red shoes) grounded on the street.
+- THE PROBE-HOOK ORDER LESSON (joins the process): the mode
+  machine's installShotProbes() defines an interior __people hook -
+  a host's town probe surface must install AFTER the mode machine
+  or the interior hook wins and reads null in exterior mode (the
+  town __people read null/[] for 300s while __townDebug thrived;
+  exterior.js had the same ordering silently right). __pose in walk
+  mode moves the PLAYER here too (the T1 lesson, host parity).
+
+Residuals (LOUD): unchanged from T1 (talk/dialog, guards/crime,
+climate People race table); night-time streets empty by law
+(daytime-only townsfolk); the pool ticks for every built location
+pixel (up to ~4 with populations in range) - idle cost is one
+failed spawn probe per tick per far pixel, negligible.
+
 Suite 420/92. ARENA2 green, probes green.
