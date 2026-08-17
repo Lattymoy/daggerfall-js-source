@@ -925,6 +925,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // shared envAttack (C10 fold): a bashed door CONSUMES the swing,
     // Receive(Attack) lets it continue, geometry occludes.
     if (lookDir && envAttack(actions, collider, eye, lookDir, Math.random)) return;
+    // C10 FOLLOW-UP (live mobile crash, 2026-08-17): the weapon now
+    // exists WITHOUT foes, so a swing's hit frame reaches here with
+    // foeDeps null (no ?foes, or the async foe deps still loading) -
+    // the env attack above already ran; nothing remains to resolve.
+    // Pre-fold this path was unreachable foe-less (playerWeapon was
+    // foes-gated), which is why no probe ever caught it.
+    if (!foeDeps) return;
     // E3d: backstab facing per foe, verbatim IsBackFacing (records
     // 3/4 of the 8-orientation wheel); the chance = the player's
     // Backstabbing skill (flat interim). TallySkill pends Systems.
@@ -938,7 +945,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const hit = collider.raycast(eye, [dx / l, dy / l, dz / l], dist);
       return { dist, inView: inViewFn(c), losClear: !Number.isFinite(hit) || hit >= dist - 1e-3 };
     };
-    const { playerEntity } = foeDeps;
+    // (the module-level playerEntity import IS foeDeps.playerEntity -
+    // the old shadowing destructure was the null read that crashed)
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => f._backFacing ? skillValue(playerEntity, SKILLS.Backstabbing) : 0)) {
       // TallySkill (E3c flag clears): the attack skill counts a use
       // per resolved swing, per WeaponManager.MeleeDamage.
