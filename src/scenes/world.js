@@ -27,6 +27,7 @@ import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobi
 import { createTownTalk } from './townTalk.js';   // T3b
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
+import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
@@ -631,6 +632,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     window.__talk = () => JSON.stringify(townTalk._debug());   // T3b probe surface
     window.__guards = () => JSON.stringify(cityGuards._debug());   // G1 probe surface
     window.__crime = () => _crimeResponse();   // G1: force the response without pickpocket RNG
+    window.__guardDamage = (i, dmg) => cityGuards._damage(i, dmg);   // G3: the real death path for loot probes
     window.__townDebug = () => {
       const pixels = [];
       for (const p of built.values()) {
@@ -757,10 +759,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         const useHeld = keys.has('KeyE');
         if (useHeld && !latch.use && !modes.transitioning) {
           // T3b: a townsperson under the ray wins the activation (the
-          // PlayerActivate nearest-hit order); building doors otherwise.
+          // PlayerActivate nearest-hit order); G3: a guard corpse next
+          // (loot pickup on the dungeon's S2 shape); doors otherwise.
           const useFwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
           if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
-            modes.tryEnter().catch((e) => console.error(e));
+            const lootKey = pickActivatable(cam.pos, useFwd, cityGuards.lootTargets(), collider);
+            if (lootKey) { cityGuards.takeLoot(lootKey, (l) => townTalk.say(l)); surfacePlayer(); }
+            else modes.tryEnter().catch((e) => console.error(e));
           }
         }
         latch.use = useHeld;

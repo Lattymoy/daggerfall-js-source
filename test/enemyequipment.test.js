@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {
   MATERIALS_BY_MODIFIER, randomMaterial, randomArmorMaterial,
   materialArmorValue, ARMOR_MATERIAL, WEAPONS_ENUM, ARMOR_ENUM,
-  createWeapon, assignEnemyEquipment, equipmentVariantFor,
+  createWeapon, assignEnemyEquipment, equipmentVariantFor, equipmentItems,
 } from '../src/combat/enemyEquipment.js';
 import { chooseEnemyWeapon } from '../src/combat/formulas.js';
 
@@ -64,4 +64,18 @@ test('equipment: variant 2 chances + monster keep-better rule + city watch iron'
   // orc warlord h2h 20-36 avg 28 > claymore avg 10 -> weaponless
   assert.equal(chooseEnemyWeapon(eq.rightHand, { minDamage: 20, maxDamage: 36 }), null);
   assert.equal(chooseEnemyWeapon(null, { minDamage: 1, maxDamage: 4 }), null);
+});
+
+test('equipment G3: every equipped piece is a droppable item (DFU Items.AddItem)', () => {
+  const entity = { isClass: true, mobileType: 128, careerIndex: 0, armor: 0 };
+  // the variant-0 shield loadout from above: Broadsword + Buckler
+  const eq = assignEnemyEquipment(entity, 0, 1, seq(0, 0, 0.10, 0, 0.5, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99));
+  const items = equipmentItems(eq);
+  // the weapon + the shield's ARMOR item (the shield leftHand marker
+  // never duplicates; a leftHand WEAPON would be its own item)
+  assert.equal(items.length, 2);
+  assert.equal(items[0].group, 'Weapons');
+  assert.equal(items[0].name, 'Broadsword');
+  assert.equal(items[1].group, 'Armor');
+  assert.equal(items[1].templateIndex, ARMOR_ENUM.Buckler);
 });

@@ -341,6 +341,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       generateItems: generateLootItems,   // the static import (audit 06e: the dynamic pair was double-sourcing)
       assignEnemyEquipment: equip.assignEnemyEquipment,
       equipmentVariantFor: equip.equipmentVariantFor,
+      equipmentItems: equip.equipmentItems,   // G3: equipment -> droppable corpse loot
+
       calculateAttackDamage: formulas.calculateAttackDamage,
       meleeHitConnects: formulas.meleeHitConnects,
       MELEE_HIT_YAW_DEG: formulas.MELEE_HIT_YAW_DEG,
@@ -395,6 +397,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           const pt = rollEnemyWeaponPoison(e.mobileType, D.playerEntity.level);
           if (pt != null) entity.weapon.poisonType = pt;
         }
+        // G3 parity fix: DFU adds every equipped piece to the
+        // entity's items (AssignEnemyStartingEquipment) - class-foe
+        // corpses dropped only table loot, never their equipment.
+        entity.items.push(...D.equipmentItems(eq));
       }
       const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, {
         liveSpeed: entity.liveSpeed,
