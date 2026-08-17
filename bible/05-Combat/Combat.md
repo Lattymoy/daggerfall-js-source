@@ -371,3 +371,39 @@ when exterior foes land (random encounters, the RMB animal arc).
 Suite 409/89 (arrowflight.test.js x3: the S5 single-source + matrix
 law, wall kill + lifespan retire, terrain landing + the function-
 collider form + the all-dead sweep).
+
+## C14 (2026-08-17): the monster Spell anim state SHIPPED
+
+The C11 cast-anim residual closes: the 13 monster casters (S16's
+exact roster) stop casting frozen. Verbatim DaggerfallMobileUnit:
+
+- GetStateAnims' Spell branch: HasSpellAnimation routes to records
+  20-24 (RangedAttack1Anims, 10 fps) - the Orc Shaman (21) is the
+  ONLY such monster; every other caster plays its SpellAnimFrames
+  over the PRIMARY attack records. And NO ghost/wraith special in
+  the Spell branch (verbatim: ghosts/wraiths cast on
+  PrimaryAttackAnims, not their own attack table).
+- ApplyEnemyState's Spell branch: the one-shot rides the shared
+  frame iterator (frames[0], iterator 1) - no chance ladder, no -1
+  in the data; exhaustion reverts to idle
+  (NextStateAfterCurrentOneShot).
+- The interrupts, verbatim: the attack edge overrides a cast
+  (ChangeEnemyState unconditional at MeleeAnimation); knockback-hurt
+  CAN cut a cast (EnemyMotor's gate is state != PrimaryAttack ONLY);
+  a cast never interrupts an attack in progress.
+- The trigger: castEnemySpell sets the cast edge (the decision IS
+  DFU's ChangeEnemyState(Spell) moment); paralysis eats the edge
+  exactly as FreezeAnims blocks ChangeEnemyState. Extraction grew
+  HasSpellAnimation + SpellAnimFrames (13 monster casters carry
+  frames; C3 parity asserted).
+- RangedAttack1/2 close as N/A for monsters: HasRangedAttack1 is
+  true only for class enemies (128+) in EnemyBasics - the rigs' bow
+  path owns actual ranged attacks. The texture-475 female casting
+  scale post-fix rides class enemies too - both documented at the
+  module head, no longer deferred work.
+
+Residual: the Seducer transform pair + the -1 damage-moment
+refinement (unchanged, LOUD at the module head).
+
+Suite 410/89 (the C14 pin in mobileunit.test.js: the route + the
+shaman one-shot playout [0,0,1,2,3,3,3] + all three interrupt laws).

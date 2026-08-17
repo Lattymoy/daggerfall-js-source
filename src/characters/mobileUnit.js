@@ -8,11 +8,15 @@
 // idle, ghost/wraith, slaughterfish). The scene owns rendering (a
 // live billboard batch per foe); this module owns the state/frames.
 //
-// DEFERRED (FLAGGED): RangedAttack1/2 + Spell anim states (monster
-// casters cast - S16 - without the cast anim yet), the Seducer
-// transform pair, the -1 frame as the DAMAGE moment (damage rides
-// the shared EnemyAttack machine, one law for all foes - the
-// per-frame timing is a recorded refinement).
+// C14: the Spell anim state is LIVE (casters play SpellAnimFrames
+// over records 20-24 when HasSpellAnimation - Orc Shaman - else the
+// primary records, verbatim GetStateAnims). RangedAttack1/2 are N/A
+// for monsters (HasRangedAttack1 is class-enemy-only in EnemyBasics
+// - the rigs' bow path owns it).
+// DEFERRED (FLAGGED): the Seducer transform pair, the -1 frame as
+// the DAMAGE moment (damage rides the shared EnemyAttack machine,
+// one law for all foes - the per-frame timing is a recorded
+// refinement).
 
 // Speeds in frames-per-second (EnemyBasics).
 export const MOVE_ANIM_SPEED = 6;
@@ -61,6 +65,14 @@ export const SLAUGHTERFISH_MOVE_ANIMS = Object.freeze([
   A(0, MOVE_ANIM_SPEED, false, true), A(1, MOVE_ANIM_SPEED, false, true), A(2, MOVE_ANIM_SPEED, false, true), A(3, MOVE_ANIM_SPEED, false, true),
   A(4, MOVE_ANIM_SPEED, false, true), A(3, MOVE_ANIM_SPEED, true, true), A(2, MOVE_ANIM_SPEED, true, true), A(1, MOVE_ANIM_SPEED, true, true),
 ]);
+// C14: RangedAttack1Anims (records 20-24, 10 fps) - for MONSTERS this
+// is the SPELL table when HasSpellAnimation (Orc Shaman 21 only);
+// actual ranged attacks belong to class enemies (rigs), N/A here.
+export const RANGED_ATTACK1_ANIM_SPEED = 10;
+export const RANGED_ATTACK1_ANIMS = Object.freeze([
+  A(20, RANGED_ATTACK1_ANIM_SPEED, false), A(21, RANGED_ATTACK1_ANIM_SPEED, false), A(22, RANGED_ATTACK1_ANIM_SPEED, false), A(23, RANGED_ATTACK1_ANIM_SPEED, false),
+  A(24, RANGED_ATTACK1_ANIM_SPEED, false), A(23, RANGED_ATTACK1_ANIM_SPEED, true), A(22, RANGED_ATTACK1_ANIM_SPEED, true), A(21, RANGED_ATTACK1_ANIM_SPEED, true),
+]);
 
 export const MOBILE_RAT = 0;
 export const MOBILE_SLAUGHTERFISH = 11;
@@ -69,8 +81,12 @@ export const MOBILE_GIANT_SCORPION = 20;
 export const MOBILE_WRAITH = 23;
 
 /** GetStateAnims, verbatim branch order (the Seducer/FemaleThief
- *  branches N/A: monsters only, no transformed seducer yet). */
-export function stateAnims(state, mobileType, hasIdle) {
+ *  branches N/A: monsters only, no transformed seducer yet).
+ *  hasSpellAnimation routes the SPELL state to records 20-24; every
+ *  other caster casts over the primary attack records - and note the
+ *  Spell branch has NO ghost/wraith special (verbatim: they cast on
+ *  PrimaryAttackAnims, not their own attack table). */
+export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false) {
   if (state === 'move') {
     if (mobileType === MOBILE_GHOST || mobileType === MOBILE_WRAITH) return GHOST_WRAITH_MOVE_ANIMS;
     if (mobileType === MOBILE_SLAUGHTERFISH) return SLAUGHTERFISH_MOVE_ANIMS;
@@ -80,6 +96,7 @@ export function stateAnims(state, mobileType, hasIdle) {
     if (mobileType === MOBILE_GHOST || mobileType === MOBILE_WRAITH) return GHOST_WRAITH_ATTACK_ANIMS;
     return PRIMARY_ATTACK_ANIMS;
   }
+  if (state === 'spell') return hasSpellAnimation ? RANGED_ATTACK1_ANIMS : PRIMARY_ATTACK_ANIMS;
   if (state === 'hurt') return HURT_ANIMS;
   // idle
   if (mobileType === MOBILE_GHOST || mobileType === MOBILE_WRAITH) return GHOST_WRAITH_MOVE_ANIMS;
@@ -143,7 +160,7 @@ export class MobileUnit {
     this.hitFrame = false;   // set on the -1 marker (unconsumed - the timing refinement pends)
   }
 
-  _anims() { return stateAnims(this.state, this.mobileType, this.basics.hasIdle ?? false); }
+  _anims() { return stateAnims(this.state, this.mobileType, this.basics.hasIdle ?? false, this.basics.hasSpellAnimation ?? false); }
 
   _change(state) {
     // ApplyEnemyStateChange: idle<->move keeps the frame for enemies
@@ -164,6 +181,14 @@ export class MobileUnit {
         this.frame = this._iter < this._attackFrames.length ? this._attackFrames[this._iter++] : 0;
       }
     }
+    // C14: the Spell one-shot rides the same iterator over
+    // SpellAnimFrames (ApplyEnemyState's Spell branch - no chance
+    // ladder, no -1 in the data).
+    if (state === 'spell') {
+      this._attackFrames = this.basics.spellAnimFrames ?? [0];
+      this.frame = Math.max(0, this._attackFrames[0]);
+      this._iter = 1;
+    }
   }
 
   /**
@@ -172,13 +197,16 @@ export class MobileUnit {
    * STARTS (EnemyAttack.MeleeAnimation fires ChangeEnemyState ONCE);
    * a level signal would replay the sequence inside one swing.
    */
-  update(dt, { moving = false, striking = false, hurting = false } = {}, yaw, feet, cameraPos) {
+  update(dt, { moving = false, striking = false, hurting = false, casting = false } = {}, yaw, feet, cameraPos) {
     this.hitFrame = false;
     // The DFU priority (audit 08-17): the attack edge overrides ANY
     // state - hurt included (ChangeEnemyState is unconditional at
     // MeleeAnimation); knockback-hurt never interrupts PrimaryAttack
-    // (EnemyMotor gates on state != PrimaryAttack).
+    // (EnemyMotor gates on state != PrimaryAttack ONLY - so hurt CAN
+    // interrupt a Spell mid-cast, verbatim). C14: casting is an edge
+    // like striking (the cast decision fires ChangeEnemyState once).
     if (striking && this.state !== 'attack') this._change('attack');
+    else if (casting && this.state !== 'spell' && this.state !== 'attack') this._change('spell');
     else if (hurting && this.state !== 'hurt' && this.state !== 'attack') this._change('hurt');
     else if (this.state === 'idle' || this.state === 'move') {
       const want = moving ? 'move' : 'idle';
@@ -219,7 +247,7 @@ export class MobileUnit {
 
   _stepFrame(a) {
     const n = Math.max(1, this.frameCount(a.record));
-    if (this.state === 'attack') {
+    if (this.state === 'attack' || this.state === 'spell') {
       if (this._iter >= this._attackFrames.length) { this._change('idle'); return; }
       let f = this._attackFrames[this._iter++];
       if (f === -1) {
