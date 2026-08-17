@@ -23,6 +23,7 @@ import { applyClimate } from '../world/climateSwaps.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
 import { isHouseContainerModel, containerTextureRecord } from '../systems/containers.js';
+import { isShopShelfModel } from '../systems/shopStock.js';   // E2
 import { LADDER_MODEL_ID } from '../player/enterExit.js';
 import { collectInteriorPeople } from '../characters/interiorPeople.js';
 import { trs } from '../world/mat4.js';
@@ -93,6 +94,14 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // systems/containers.js (pure, tested); private furniture starts
   // EMPTY, opened through the shared pickup.
   const containers = [];
+  // E2: shop shelves. DFU's AddFurnitureAction chain checks the
+  // SHELF set FIRST - a shelf-set model in a plain house is NOTHING
+  // (the else-chain never reaches the house-container check). That
+  // also fixes an S2b parity slip: 41035/41037 sit in BOTH sets and
+  // had been house containers everywhere. Shelves stock lazily
+  // (StockShopShelf on first activation) when the building IsShop;
+  // Library/Guild/Temple bookshelves + owned-house storage pend.
+  const shelves = [];
   const collider = new Collider(() => -Infinity);
   for (const p of interior.placements) {
     const matrix = parent(p.matrix);
@@ -100,7 +109,9 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     const cpu = cpuModels.get(p.modelIdNum);
     collider.addMesh('interior', cpu.positions, cpu.indices, matrix);
     if (p.modelIdNum === LADDER_MODEL_ID) ladders.push({ cpu, matrix });
-    if (isHouseContainerModel(p.modelIdNum)) {
+    if (isShopShelfModel(p.modelIdNum)) {
+      shelves.push({ cpu, matrix, items: null });
+    } else if (isHouseContainerModel(p.modelIdNum)) {
       containers.push({ cpu, matrix, items: [], record: containerTextureRecord(p.modelIdNum) });
     }
   }
@@ -216,6 +227,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     flatCount: interior.flats.length,
     ladders,
     containers,
+    shelves,   // E2: shop shelf models (stocked lazily by the mode host)
     enterMarkers,
     doors: interior.doors.map((d) => ({ ...d, matrix: parent(d.matrix) })),
     collider,

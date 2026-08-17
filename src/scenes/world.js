@@ -28,6 +28,7 @@ import { createTownTalk } from './townTalk.js';   // T3b
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
+import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
@@ -687,6 +688,25 @@ export async function bootWorld(canvas, renderer, params, status) {
       dfLocation: locationIndex.get(e.pixelKey), group: e.pixelKey,
     })),
     baseCollider: () => collider,
+    // E2: one entered door -> its merged building identity. Door
+    // positions resolve in the pixel's LOCATION frame (the raw
+    // buildingDoors matrix is pixel-local; strip the location
+    // origin); the name matches the directory only while the topics
+    // pixel is the door's pixel (else '' - the window shows Shelves).
+    buildingDataForDoor: (hit) => {
+      if (!hit?.pixelKey) return null;
+      const dfLoc = locationIndex.get(hit.pixelKey);
+      const p = built.get(hit.pixelKey);
+      if (!dfLoc || !p?.locBlocks || !p.locOrigin) return null;
+      const raw = buildingDoors.find((e) => e.pixelKey === hit.pixelKey && e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
+      const m = (raw ?? hit).door.matrix;
+      const d = buildingDataForDoor(dfLoc.exterior.buildings, p.locBlocks, {
+        dfBlock: hit.dfBlock, recordIndex: hit.recordIndex,
+        position: [m[12] - p.locOrigin[0], m[13] - p.locOrigin[1], m[14] - p.locOrigin[2]],
+      });
+      if (!d) return null;
+      return { ...d, regionIndex: dfLoc.regionIndex, name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };
+    },
   });
   if (shotMode) { modes.installShotProbes(); installTownProbes(); }
 

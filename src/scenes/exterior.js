@@ -42,6 +42,7 @@ import { createTownTalk } from './townTalk.js';   // T3b
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
+import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
@@ -427,6 +428,17 @@ export async function bootExterior(canvas, renderer, params, status) {
     playerWeapon: params.get('weapon') ?? undefined,
     doorTargets: () => buildingDoors,
     baseCollider: () => collider,
+    // E2: one entered door -> its merged building identity (the T3c
+    // pool merge) + the directory name by buildingKey.
+    buildingDataForDoor: (hit) => {
+      if (!hit) return null;
+      const d = buildingDataForDoor(dfLocation.exterior.buildings, loc.blocks, {
+        dfBlock: hit.dfBlock, recordIndex: hit.recordIndex,
+        position: [hit.door.matrix[12], hit.door.matrix[13], hit.door.matrix[14]],
+      });
+      if (!d) return null;
+      return { ...d, regionIndex: dfLocation.regionIndex, name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };
+    },
   });
   if (shotMode) {
     window.__pose = (x, y, z, yaw, pitch) => {

@@ -340,6 +340,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     say: (line) => hud.add(line),
     get overlayActive() { return !!overlay; },
     get mode() { return mode; },
+    get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
     _debug: () => ({
       mode, overlay: !!overlay, people: people?.name ?? null,
       buildings: directory.length, tone: TONE_NAMES[tone], toneSession: [...toneSession],
