@@ -21,10 +21,13 @@
 //    HALT bark (barkSound 456) fires on the detection rising edge.
 //
 // FLAGGED loud: guard archers forced melee (exterior foe arrows
-// pend); enemy-vs-enemy stays out (C15 residual); assault-triggered
-// crimes pend (pickpocket is the only trigger). G3: corpse loot is
+// pend); enemy-vs-enemy stays out (C15 residual). G3: corpse loot is
 // LIVE - killed guards (corpse flag, never walk-aways) are pickup
 // targets through the hosts' E ray on the dungeon's S2 shape.
+// G4: murder/assault are LIVE - killing the watch is Murder
+// (HandleAttackFromSource), striking a wandering civilian is
+// one-hit Murder + the response, striking a wandering guard NPC is
+// Assault + an on-the-spot conversion (WeaponManager verbatim).
 
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
@@ -42,6 +45,13 @@ import {
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { addItem } from '../systems/inventory.js';
+import { WEAPON_REACH } from '../combat/playerWeapon.js';
+import { rayPersonDistance } from './townTalk.js';
+
+// PlayerEntity.Crimes (the two this module levies - the enum lives
+// whole in systems/court.js).
+const CRIME_ASSAULT = 4;
+const CRIME_MURDER = 5;
 
 export const GUARD_MOBILE_TYPE = 146;          // MobileTypes.Knight_CityWatch
 export const MAX_ACTIVE_GUARD_SPAWNS = 5;
@@ -180,6 +190,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     if (g.entity.health <= 0) {
       g.dead = true;
       g.corpse = true;   // G3: only a KILLED guard is lootable (walk-aways vanish with their items)
+      // G4 (HandleAttackFromSource, verbatim): killing the city watch
+      // IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
+      // the thieves-guild arc.
+      playerEntity.crimeCommitted = CRIME_MURDER;
       const ct = ENEMY_BASICS[GUARD_MOBILE_TYPE].corpseTexture;
       const size = scaledBillboardSize(g.tex.getSize(0), g.tex.getScale(0));
       // corpse archive differs from the live one; upload its record
@@ -281,6 +295,35 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     return any;
   }
 
+  // G4: the weapon strike against WANDERING townsfolk (WeaponManager's
+  // mobile-NPC branch, verbatim): a CIVILIAN dies to one hit - the
+  // motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
+  // Murder + SpawnCityGuards(true) through the host's onMurder; a
+  // wandering GUARD NPC converts on the spot - Assault - and the
+  // swing carries onto the fresh guard foe (DFU re-points the hit).
+  // Returns false, {crime:'murder'} or {crime:'assault', carriedHit}.
+  async function resolveCivilianHit(playerWeapon, eye, lookDir, playerFeet, pool, { onMurder = () => {}, onHitSound = null, inViewFn = null } = {}) {
+    let best = null, bestD = Infinity;
+    for (const p of pool) {
+      const d = rayPersonDistance(eye, lookDir, p.pos);
+      if (d < bestD) { best = p; bestD = d; }
+    }
+    if (!best || bestD > WEAPON_REACH) return false;
+    const wall = collider.raycast(eye, lookDir, bestD);
+    if (Number.isFinite(wall) && wall < bestD - 1e-3) return false;   // occluded
+    if (!best.guard) {
+      best.disable();   // one weapon hit kills a civilian (SetActive(false))
+      playerEntity.crimeCommitted = CRIME_MURDER;
+      onMurder();       // SpawnCityGuards(true)
+      return { crime: 'murder' };
+    }
+    playerEntity.crimeCommitted = CRIME_ASSAULT;
+    await spawnGuardAt(best.pos, best.fwdYaw);
+    best.disable();
+    const carriedHit = resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn, onHitSound);
+    return { crime: 'assault', carriedHit };
+  }
+
   // G3: corpse loot on the dungeon's S2 pickup shape - killed guards
   // with items are activation targets for the hosts' E ray; takeLoot
   // transfers into the player entity (the corpse billboard stays, as
@@ -306,7 +349,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     return n;
   }
 
-  return { guards, spawnCityGuards, update, resolvePlayerHit, activeCount, lootTargets, takeLoot,
+  return { guards, spawnCityGuards, update, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot,
     _damage: (i, dmg) => { const g = guards[i]; if (g && !g.dead) damageGuard(g, dmg, [0, 0, 0], null); },   // probe/test seam through the REAL death path
     _debug: () => guards.map((g) => ({ dead: g.dead, hp: g.entity.health, pos: g.ai.feet.map((v) => +v.toFixed(1)), detected: g.ai.detected, state: g.attack.machine.state, moving: g.ai.moving, dist: +(g.ai._dist ?? -1).toFixed(1), giveUp: g.ai.giveUpTimer })) };
 }

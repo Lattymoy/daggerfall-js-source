@@ -788,6 +788,38 @@ standing").
 Suite 444/97. Residuals recorded: the 35% map-reveal, %hnr/%ra
 interim literals, murder/assault crimes (the board's next).
 
+## G4 (2026-08-17): MURDER + ASSAULT - the crime table's teeth SHIPPED
+
+The crime loop's last open edge closes (WeaponManager's mobile-NPC
+branch + DaggerfallEntityBehaviour.HandleAttackFromSource, verbatim):
+
+- A weapon strike on a wandering CIVILIAN kills in ONE hit (the
+  motor disables - no health roll, no damage formula), levies
+  Crimes.Murder and fires SpawnCityGuards(true) through the host's
+  crime response. TallyCrimeGuildRequirements(false, 5) FLAGGED to
+  the thieves-guild arc; DFU's blood splash pends a blood system.
+- A strike on a wandering GUARD NPC levies Crimes.Assault and
+  converts the NPC to a live Knight_CityWatch foe ON THE SPOT
+  (SpawnCityGuard at its position/facing, source disabled) - and
+  the SWING CARRIES onto the fresh foe exactly as DFU re-points the
+  hit, rolling to-hit/damage against the new entity.
+- Killing a spawned guard foe (any path through damageGuard) levies
+  Crimes.Murder (HandleAttackFromSource's Knight_CityWatch branch;
+  TallyCrimeGuildRequirements(false, 1) FLAGGED).
+- The strike resolution: nearest pool person under the look ray
+  (the townTalk person cylinder) within WEAPON_REACH (2.25 + 0.25),
+  occlusion by the world collider; the hosts try guards first, then
+  townsfolk, in both exterior hosts (the host rule).
+
+Probed live (tools/murderProbe.mjs via the new __attack hook over
+ClickToAttack): unsheathe, four re-posed swings - the fourth
+connects, the civilian vanishes, crime = 5, and TWO watch guards
+spawn and march in.
+
+Suite 445/97 (the G4 pin: one-hit murder + response, out-of-reach
+and walled no-crimes, the assault conversion with the carried
+swing, murder on the real death path).
+
 ## AUDIT 2026-08-17b: the towns/talk parity pass
 
 The T1 modules were re-read line by line against MobilePersonMotor /
