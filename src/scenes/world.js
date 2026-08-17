@@ -566,7 +566,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (e.code === 'AltLeft') e.preventDefault();
   });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
-  canvas.addEventListener('pointerdown', (e) => { if (townTalk.pointerdown(e)) return; requestLook(canvas); });   // U8b: native windows own the pointer
+  canvas.addEventListener('pointerdown', (e) => { if (townTalk.pointerdown(e)) return; if (modes.pointerdown?.(e)) return; requestLook(canvas); });   // U8b/U8c: native windows own the pointer
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());

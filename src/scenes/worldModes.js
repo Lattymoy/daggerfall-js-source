@@ -47,6 +47,8 @@ import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
 import { isShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem } from '../systems/shopStock.js';
+import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // U8c
+import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { goldAmount, deductGold, addGold } from '../systems/court.js';
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
@@ -79,6 +81,7 @@ export function createWorldModes(host) {
   let interiorOverlay = null;
   let _shopFont = null;
   const ensureShopFont = () => {
+    preloadTradeArt({ renderer, fetchBytes, palette });   // U8c: the trade screen art rides shop entry too
     if (_shopFont) return;
     fetchBytes('FONT0003.FNT')
       .then((b) => { _shopFont = makeFont(renderer, new FntFile().load(b), 'FONT0003'); })
@@ -97,7 +100,45 @@ export function createWorldModes(host) {
     if (!b || !shelf) return;
     if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
     shelf.items ??= stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity);
+    // U8c: the native trade screen when the art is up (the E2/E3
+    // loop on INVE00I0 + TRAD00I0 + SHOP00I0; keyed fallback stays)
+    if (tradeArtLoaded()) {
+      interiorOverlay = new NativeTradeWindow({
+        shelfItems: () => shelf.items,
+        sellables: () => (playerEntity.items ?? []).filter((it) => shopBuysItem(b.buildingType, it)),
+        buy: (it) => doBuy(shelf, it),
+        sell: (it) => doSell(shelf, it),
+        gold: () => goldAmount(playerEntity),
+        icons: { getTexture, uploadRecord, textures: renderer.textures },
+        shopName: b.name ?? '',
+      });
+      return;
+    }
     showShelfList(shelf, 0);
+  }
+
+  // U8c: the transaction core, shared by the keyed windows and the
+  // native trade screen. doBuy returns the price or null (can't
+  // afford); doSell always sells.
+  function doBuy(shelf, it) {
+    const price = buyPrice(it);
+    if (goldAmount(playerEntity) < price) return null;
+    deductGold(playerEntity, price);
+    shelf.items.splice(shelf.items.indexOf(it), 1);
+    playerEntity.items = playerEntity.items || [];
+    addItem(playerEntity.items, it);
+    tallySkill(playerEntity, SKILLS.Mercantile, 1);   // per completed trade (DFU OnTrade)
+    surfacePlayer();
+    return price;
+  }
+  function doSell(shelf, it) {
+    const price = sellPrice(it);
+    addGold(playerEntity, price);
+    playerEntity.items.splice(playerEntity.items.indexOf(it), 1);
+    shelf.items.push(it);   // sold goods land on the open shelf (DFU's remoteItems)
+    tallySkill(playerEntity, SKILLS.Mercantile, 1);
+    surfacePlayer();
+    return price;
   }
   function buyPrice(it) {
     const b = interiorBuilding;
@@ -137,17 +178,10 @@ export function createWorldModes(host) {
     });
   }
   function buyItem(shelf, it) {
-    const price = buyPrice(it);
-    if (goldAmount(playerEntity) < price) {
+    if (doBuy(shelf, it) === null) {
       interiorOverlay = new ChoiceWindow({ lines: ['You do not have enough gold.'], options: [{ code: 'Escape', label: 'Esc - close', action: () => {} }] });
       return;
     }
-    deductGold(playerEntity, price);
-    shelf.items.splice(shelf.items.indexOf(it), 1);
-    playerEntity.items = playerEntity.items || [];
-    addItem(playerEntity.items, it);
-    tallySkill(playerEntity, SKILLS.Mercantile, 1);   // E3: per completed trade (DFU OnTrade)
-    surfacePlayer();
     showShelfList(shelf, 0);
   }
   function showSellList(shelf, page) {
@@ -167,11 +201,7 @@ export function createWorldModes(host) {
     });
   }
   function sellItem(shelf, it) {
-    addGold(playerEntity, sellPrice(it));
-    playerEntity.items.splice(playerEntity.items.indexOf(it), 1);
-    shelf.items.push(it);   // sold goods land on the open shelf (DFU's remoteItems)
-    tallySkill(playerEntity, SKILLS.Mercantile, 1);
-    surfacePlayer();
+    doSell(shelf, it);
     showSellList(shelf, 0);
   }
   let exitReturn = null;
@@ -563,6 +593,10 @@ export function createWorldModes(host) {
     }) : null;
     window.__openShelf = (i) => { openShelf(i); return window.__shopOverlay(); };
     window.__shopOverlay = () => JSON.stringify(interiorOverlay ? {
+      native: !!interiorOverlay.hooks,   // U8c: the trade screen surfaces its lists
+      remote: interiorOverlay.hooks?.shelfItems()?.length,
+      local: interiorOverlay.hooks?.sellables()?.length,
+      lastPrice: interiorOverlay.lastPrice,
       lines: interiorOverlay.lines, options: interiorOverlay.options?.filter((o) => o.label).map((o) => o.label),
     } : null);
     window.__dungeon = () => dungeonCtx ? JSON.stringify({
@@ -632,8 +666,22 @@ export function createWorldModes(host) {
     if (routeKey(e, dungeonCtx, () => ({ eye: cam.pos, dir: eyeDir() }), (p) => { player.pos[0] = p[0]; player.pos[1] = p[1]; player.pos[2] = p[2]; })) e.preventDefault();
   });
 
+  // U8c: pointer routing for interior native windows (the townTalk
+  // shape) - hosts call this before requestLook.
+  function pointerdown(e) {
+    if (mode !== 'interior' || !interiorOverlay?.click) return false;
+    const r = canvas.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (canvas.width / r.width);
+    const py = (e.clientY - r.top) * (canvas.height / r.height);
+    const v = pointToNative(nativeMetrics(canvas), px, py);
+    if (v) interiorOverlay.click(v[0], v[1]);
+    if (interiorOverlay?.done) interiorOverlay = null;
+    return true;
+  }
+
   return {
     get mode() { return mode; },
+    pointerdown,
     get transitioning() { return transitioning; },
     get interiorCtx() { return interiorCtx; },
     get dungeonCtx() { return dungeonCtx; },

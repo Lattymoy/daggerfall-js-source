@@ -10,9 +10,11 @@ import { TEMPLATE_ROWS, GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 
 export { GROUP_TEMPLATE_INDICES };
 
-/** index -> { index, name, basePrice, rarity, weight, hitPoints } */
-export const ITEM_TEMPLATES = Object.freeze(TEMPLATE_ROWS.map(([index, name, basePrice, rarity, weight, hitPoints]) =>
-  Object.freeze({ index, name, basePrice, rarity, weight, hitPoints })));
+/** index -> { index, name, basePrice, rarity, weight, hitPoints,
+ *  worldTexArchive, worldTexRecord } (the world/inventory icon -
+ *  U8c; material-dyed weapon/armor icon variants FLAGGED). */
+export const ITEM_TEMPLATES = Object.freeze(TEMPLATE_ROWS.map(([index, name, basePrice, rarity, weight, hitPoints, worldTexArchive, worldTexRecord]) =>
+  Object.freeze({ index, name, basePrice, rarity, weight, hitPoints, worldTexArchive, worldTexRecord })));
 
 export const templateByIndex = (i) => ITEM_TEMPLATES[i] ?? null;
 
