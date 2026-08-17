@@ -140,3 +140,13 @@ call stands).
 
 Suite 412/90 (animalambience.test.js x2: the table + constants, the
 16Hz cadence with the range-before-roll law).
+
+## Transition stingers: CLOSED as verbatim N/A (2026-08-17)
+
+The queue row deflates the same way the exterior torches did: DFU
+plays NOTHING on building/dungeon enter-exit transitions
+(PlayerActivate's door path plays only the bash 28 and
+ActivateLockUnlock at activation - both already ours via P10/C9) and
+DaggerfallLadder has no climb sound. The row was A1-era speculative
+naming; there is no source law to port. The audio queue is now MUSIC
+ONLY (Mac's strategy call stands).

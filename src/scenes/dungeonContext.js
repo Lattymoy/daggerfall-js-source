@@ -47,7 +47,7 @@ import {
   MISSILE_LIFESPAN_S, isDamageHealthEffect,
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
-import { applySpell, tickActiveEffects, hasActiveEffect, maxFatigue, isInvisible, isBlending, isAShade } from '../systems/effects.js';
+import { applySpell, tickActiveEffects, hasActiveEffect, entityIsParalyzed, maxFatigue, isInvisible, isBlending, isAShade } from '../systems/effects.js';
 import { FATIGUE_LOSS, maxBreath } from '../systems/statMods.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { updatePoisons, inflictPoison, rollEnemyWeaponPoison } from '../systems/poisons.js';
@@ -1360,7 +1360,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // S19: WeaponManager's paralysis gate - weapons hide and the
     // machine holds while paralyzed (casting is NOT gated, verbatim:
     // DFU has no IsParalyzed check in the casting path).
-    const _pParalyzed = hasActiveEffect(playerEntity, 'paralyze');
+    const _pParalyzed = entityIsParalyzed(playerEntity);   // S22: the FreeAction read-time fold
     {
       // WeaponManager.IsPositionInCameraView: project through the
       // live proj*view, inside NDC with positive w
@@ -1408,7 +1408,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // FreezeAnims) stops senses/pursuit and EnemyAttack returns
       // (no decisions, no damage frame). EnemySounds is NOT gated
       // in DFU, so the bark pass below still runs.
-      const _fParalyzed = hasActiveEffect(f.entity, 'paralyze');
+      const _fParalyzed = entityIsParalyzed(f.entity);   // S22: the FreeAction read-time fold
       // C12: paralysis now flows THROUGH the motor (DFU CanAct=false +
       // flyerFalls) - senses keep running, decisions stop, paralyzed
       // FLYERS fall out of the air, swimmers freeze.
@@ -1687,7 +1687,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // waterWalking flag lands its swimmer).
     playerLevitating: () => hasActiveEffect(playerEntity, 'levitate'),
     playerWaterWalking: () => hasActiveEffect(playerEntity, 'waterWalking'),
-    playerParalyzed: () => hasActiveEffect(playerEntity, 'paralyze'),   // S19: the FrictionMotor/AcrobatMotor input gates
+    playerParalyzed: () => entityIsParalyzed(playerEntity),   // S19 gates + the S22 FreeAction fold
 
     // P11: per-frame activity feed - the splash on the swim edge, the
     // jump fatigue/tally (PlayerEntity: 11 x multiplier + Jumping

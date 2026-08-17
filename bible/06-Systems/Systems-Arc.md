@@ -806,3 +806,33 @@ visuals pend the render arc); the DFU shader/material presentation
 of the PLAYER's own concealment (first person - N/A) and town NPC
 reactions (MobilePersonMotor won't stop to chat with the invisible)
 pend their arcs; potion routes pend potions.
+
+## S22 (2026-08-17): FreeAction - the paralysis counter SHIPPED
+
+The library grows its next family, picked for live relevance:
+spiders/scorpions paralyze the player TODAY (S19a + the Spider Touch
+rider) and the only counter was a Cure instant. Verbatim
+FreeAction.cs + DaggerfallEntity + EntityEffectManager:
+
+- (26,255), Restoration, DurationCosts (20,8), an IncumbentEffect
+  whose re-cast STACKS rounds (AddState) - it rides the generic
+  BUFF_KINDS branch (the S21 shape; no start message, DFU has none).
+- THE READ-TIME FOLD (DaggerfallEntity.IsParalyzed, verbatim):
+  IsParalyzed = !IsImmuneToParalysis && isParalyzed. Casting
+  FreeAction over a live paralysis frees the entity NOW without
+  curing the bundle - it keeps ticking underneath and RESUMES if
+  FreeAction expires while rounds remain (pinned end to end).
+  entityIsParalyzed() is the new consumer surface; the three
+  dungeonContext paralysis reads (player gate, foe freeze, the
+  motor-gate callback) swapped onto it.
+- THE ASSIGNBUNDLE DROP (EntityEffectManager.cs:496): an incoming
+  Paralyze effect is dropped BEFORE Start when the target is
+  hard-immune - silently: no AddState stack, no chance roll, no
+  failure message (a throwing-roll test proves the sequence).
+- FLAGGED: career hard-immunity (Career.Paralysis == Immune) and the
+  racial template flags pend the career tolerance decode -
+  FreeAction is the only live immunity source today. Potion
+  properties pend the potion system.
+
+Suite 415/91 (freeaction.test.js x3: key/cost/stacking incl. the
+sbyte spelling, the silent drop, the read-time fold + resume).
