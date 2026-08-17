@@ -73,6 +73,13 @@ export const RANGED_ATTACK1_ANIMS = Object.freeze([
   A(24, RANGED_ATTACK1_ANIM_SPEED, false), A(23, RANGED_ATTACK1_ANIM_SPEED, true), A(22, RANGED_ATTACK1_ANIM_SPEED, true), A(21, RANGED_ATTACK1_ANIM_SPEED, true),
 ]);
 
+// C17: the female-thief idle (FemaleTexture 483) - record 11 rides
+// the front diagonals, verbatim quirk.
+export const FEMALE_THIEF_IDLE_ANIMS = Object.freeze([
+  A(15, IDLE_ANIM_SPEED, false), A(11, IDLE_ANIM_SPEED, false), A(17, IDLE_ANIM_SPEED, false), A(18, IDLE_ANIM_SPEED, false),
+  A(19, IDLE_ANIM_SPEED, false), A(18, IDLE_ANIM_SPEED, true), A(17, IDLE_ANIM_SPEED, true), A(11, IDLE_ANIM_SPEED, true),
+]);
+
 export const MOBILE_RAT = 0;
 export const MOBILE_SLAUGHTERFISH = 11;
 export const MOBILE_GHOST = 18;
@@ -85,7 +92,7 @@ export const MOBILE_WRAITH = 23;
  *  other caster casts over the primary attack records - and note the
  *  Spell branch has NO ghost/wraith special (verbatim: they cast on
  *  PrimaryAttackAnims, not their own attack table). */
-export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false) {
+export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false, femaleThief = false) {
   if (state === 'move') {
     if (mobileType === MOBILE_GHOST || mobileType === MOBILE_WRAITH) return GHOST_WRAITH_MOVE_ANIMS;
     if (mobileType === MOBILE_SLAUGHTERFISH) return SLAUGHTERFISH_MOVE_ANIMS;
@@ -96,9 +103,12 @@ export function stateAnims(state, mobileType, hasIdle, hasSpellAnimation = false
     return PRIMARY_ATTACK_ANIMS;
   }
   if (state === 'spell') return hasSpellAnimation ? RANGED_ATTACK1_ANIMS : PRIMARY_ATTACK_ANIMS;
+  if (state === 'ranged') return RANGED_ATTACK1_ANIMS;   // C17: HasRangedAttack1 archers (records 20-24)
   if (state === 'hurt') return HURT_ANIMS;
-  // idle
+  // idle (branch order verbatim: ghost/wraith, seducer N/A, the
+  // female thief 483, rat, slaughterfish, !hasIdle, idle)
   if (mobileType === MOBILE_GHOST || mobileType === MOBILE_WRAITH) return GHOST_WRAITH_MOVE_ANIMS;
+  if (femaleThief) return FEMALE_THIEF_IDLE_ANIMS;
   if (mobileType === MOBILE_RAT) return RAT_IDLE_ANIMS;
   if (mobileType === MOBILE_SLAUGHTERFISH) return SLAUGHTERFISH_MOVE_ANIMS;
   if (!hasIdle) return MOVE_ANIMS;
@@ -144,9 +154,10 @@ export function rollAttackFrames(basics, roll100) {
  * @param frameCount (record) => frames in that record (texture data)
  */
 export class MobileUnit {
-  constructor(mobileType, basics, frameCount, rolls = Math.random) {
+  constructor(mobileType, basics, frameCount, rolls = Math.random, gender = 'male') {
     this.mobileType = mobileType;
     this.basics = basics;
+    this.gender = gender;   // C17: the female-thief idle route + host archives
     this.frameCount = frameCount;
     this.rolls = rolls;
     this.state = 'idle';
@@ -159,7 +170,10 @@ export class MobileUnit {
     this.hitFrame = false;   // set on the -1 marker; the scene resolves MeleeDamage on it (C16)
   }
 
-  _anims() { return stateAnims(this.state, this.mobileType, this.basics.hasIdle ?? false, this.basics.hasSpellAnimation ?? false); }
+  _anims() {
+    const femaleThief = this.basics.femaleTexture === 483 && this.gender === 'female';
+    return stateAnims(this.state, this.mobileType, this.basics.hasIdle ?? false, this.basics.hasSpellAnimation ?? false, femaleThief);
+  }
 
   _change(state) {
     // ApplyEnemyStateChange: idle<->move keeps the frame for enemies
@@ -188,6 +202,13 @@ export class MobileUnit {
       this.frame = Math.max(0, this._attackFrames[0]);
       this._iter = 1;
     }
+    // C17: the RangedAttack1 one-shot (ApplyEnemyState's ranged
+    // branch) - the -1 marker is the shootArrow moment.
+    if (state === 'ranged') {
+      this._attackFrames = this.basics.rangedAttackAnimFrames ?? [0];
+      this.frame = Math.max(0, this._attackFrames[0]);
+      this._iter = 1;
+    }
   }
 
   /**
@@ -196,8 +217,9 @@ export class MobileUnit {
    * STARTS (EnemyAttack.MeleeAnimation fires ChangeEnemyState ONCE);
    * a level signal would replay the sequence inside one swing.
    */
-  update(dt, { moving = false, striking = false, hurting = false, casting = false } = {}, yaw, feet, cameraPos) {
+  update(dt, { moving = false, striking = false, hurting = false, casting = false, rangedStriking = false } = {}, yaw, feet, cameraPos) {
     this.hitFrame = false;
+    this.shootFrame = false;   // C17: the ranged -1 (shootArrow)
     // The DFU priority (audit 08-17): the attack edge overrides ANY
     // state - hurt included (ChangeEnemyState is unconditional at
     // MeleeAnimation); knockback-hurt never interrupts PrimaryAttack
@@ -205,6 +227,7 @@ export class MobileUnit {
     // interrupt a Spell mid-cast, verbatim). C14: casting is an edge
     // like striking (the cast decision fires ChangeEnemyState once).
     if (striking && this.state !== 'attack') this._change('attack');
+    else if (rangedStriking && this.state !== 'ranged' && this.state !== 'attack') this._change('ranged');
     else if (casting && this.state !== 'spell' && this.state !== 'attack') this._change('spell');
     else if (hurting && this.state !== 'hurt' && this.state !== 'attack') this._change('hurt');
     else if (this.state === 'idle' || this.state === 'move') {
@@ -246,11 +269,12 @@ export class MobileUnit {
 
   _stepFrame(a) {
     const n = Math.max(1, this.frameCount(a.record));
-    if (this.state === 'attack' || this.state === 'spell') {
+    if (this.state === 'attack' || this.state === 'spell' || this.state === 'ranged') {
       if (this._iter >= this._attackFrames.length) { this._change('idle'); return; }
       let f = this._attackFrames[this._iter++];
       if (f === -1) {
-        this.hitFrame = true;   // the damage marker (presentation-only for now)
+        if (this.state === 'ranged') this.shootFrame = true;   // shootArrow (AnimateEnemy)
+        else this.hitFrame = true;   // doMeleeDamage (C16: the scene resolves on it)
         if (this._iter < this._attackFrames.length) f = this._attackFrames[this._iter++];
         else { this._change('idle'); return; }
       }

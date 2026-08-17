@@ -51,7 +51,10 @@ for (const b of blocks) {
   // 20-24 (RangedAttack1Anims); everyone else casts over the primary
   // records. Orc Shaman (21) is the only true-anim monster.
   if (/HasSpellAnimation = true/.test(b)) e.hasSpellAnimation = true;
-  for (const k of ['PrimaryAttackAnimFrames', 'PrimaryAttackAnimFrames2', 'PrimaryAttackAnimFrames3', 'PrimaryAttackAnimFrames4', 'PrimaryAttackAnimFrames5', 'SpellAnimFrames']) {
+  // C17: class-enemy archer anims (records 20-24 with the -1 shoot marker)
+  if (/HasRangedAttack1 = true/.test(b)) e.hasRangedAttack1 = true;
+  if (/HasRangedAttack2 = true/.test(b)) e.hasRangedAttack2 = true;
+  for (const k of ['PrimaryAttackAnimFrames', 'PrimaryAttackAnimFrames2', 'PrimaryAttackAnimFrames3', 'PrimaryAttackAnimFrames4', 'PrimaryAttackAnimFrames5', 'SpellAnimFrames', 'RangedAttackAnimFrames']) {
     const m = b.match(new RegExp(`\\b${k} = new int\\[\\] \\{([^}]+)\\}`));
     if (m) e[k[0].toLowerCase() + k.slice(1)] = m[1].split(',').map((s) => Number(s.trim()));
   }

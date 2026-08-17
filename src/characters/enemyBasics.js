@@ -1829,6 +1829,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'hasIdle': true,
   'hasSpellAnimation': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -1888,6 +1889,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'hasIdle': true,
   'hasSpellAnimation': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -1920,6 +1922,18 @@ export const ENEMY_BASICS = Object.freeze({
    1,
    2,
    3,
+   3
+  ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
    3
   ],
   'team': 'KnightsAndMages',
@@ -1945,6 +1959,8 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'hasIdle': true,
   'hasSpellAnimation': true,
+  'hasRangedAttack1': true,
+  'hasRangedAttack2': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -1986,6 +2002,18 @@ export const ENEMY_BASICS = Object.freeze({
    3,
    3
   ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
+  ],
   'team': 'KnightsAndMages',
   'lootTableKey': 'U',
   'canOpenDoors': true,
@@ -2007,6 +2035,7 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 3,
   'chanceForAttack2': 50,
   'hasIdle': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -2024,6 +2053,18 @@ export const ENEMY_BASICS = Object.freeze({
    2,
    1,
    0
+  ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
   ],
   'team': 'KnightsAndMages',
   'lootTableKey': 'U',
@@ -2047,6 +2088,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'hasIdle': true,
   'hasSpellAnimation': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -2106,6 +2148,8 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack3': 33,
   'hasIdle': true,
   'hasSpellAnimation': true,
+  'hasRangedAttack1': true,
+  'hasRangedAttack2': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -2147,6 +2191,18 @@ export const ENEMY_BASICS = Object.freeze({
    3,
    3
   ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
+  ],
   'team': 'Criminals',
   'lootTableKey': 'U',
   'canOpenDoors': true,
@@ -2169,6 +2225,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -2202,6 +2259,18 @@ export const ENEMY_BASICS = Object.freeze({
    -1,
    5,
    0
+  ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
   ],
   'team': 'KnightsAndMages',
   'lootTableKey': 'O',
@@ -2224,6 +2293,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -2257,6 +2327,18 @@ export const ENEMY_BASICS = Object.freeze({
    -1,
    5,
    0
+  ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
   ],
   'team': 'Criminals',
   'lootTableKey': 'O',
@@ -2279,6 +2361,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -2312,6 +2395,18 @@ export const ENEMY_BASICS = Object.freeze({
    -1,
    5,
    0
+  ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
   ],
   'team': 'Criminals',
   'lootTableKey': 'O',
@@ -2334,6 +2429,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -2367,6 +2463,18 @@ export const ENEMY_BASICS = Object.freeze({
    -1,
    5,
    0
+  ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
   ],
   'team': 'KnightsAndMages',
   'lootTableKey': 'O',
@@ -2389,6 +2497,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -2422,6 +2531,18 @@ export const ENEMY_BASICS = Object.freeze({
    -1,
    5,
    0
+  ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
   ],
   'team': 'Criminals',
   'lootTableKey': 'O',
@@ -2444,6 +2565,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -2477,6 +2599,18 @@ export const ENEMY_BASICS = Object.freeze({
    -1,
    5,
    0
+  ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
   ],
   'team': 'Criminals',
   'lootTableKey': 'O',
@@ -2499,6 +2633,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    0,
@@ -2527,6 +2662,18 @@ export const ENEMY_BASICS = Object.freeze({
    1,
    0
   ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
+  ],
   'team': 'KnightsAndMages',
   'lootTableKey': 'T',
   'canOpenDoors': true,
@@ -2547,6 +2694,7 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 0,
   'chanceForAttack2': 50,
   'hasIdle': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -2563,6 +2711,18 @@ export const ENEMY_BASICS = Object.freeze({
    -1,
    5,
    0
+  ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
   ],
   'team': 'KnightsAndMages',
   'lootTableKey': 'C',
@@ -2584,6 +2744,7 @@ export const ENEMY_BASICS = Object.freeze({
   'mapChance': 1,
   'chanceForAttack2': 50,
   'hasIdle': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -2600,6 +2761,18 @@ export const ENEMY_BASICS = Object.freeze({
    -1,
    5,
    0
+  ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
   ],
   'team': 'KnightsAndMages',
   'lootTableKey': 'C',
@@ -2622,6 +2795,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    0,
@@ -2649,6 +2823,18 @@ export const ENEMY_BASICS = Object.freeze({
    2,
    1,
    0
+  ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
   ],
   'team': 'Criminals',
   'lootTableKey': 'T',
@@ -2671,6 +2857,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    0,
@@ -2698,6 +2885,18 @@ export const ENEMY_BASICS = Object.freeze({
    2,
    1,
    0
+  ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
   ],
   'team': 'KnightsAndMages',
   'lootTableKey': 'T',
@@ -2720,6 +2919,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasRangedAttack1': true,
   'primaryAttackAnimFrames': [
    0,
    0,
@@ -2747,6 +2947,18 @@ export const ENEMY_BASICS = Object.freeze({
    2,
    1,
    0
+  ],
+  'rangedAttackAnimFrames': [
+   3,
+   2,
+   0,
+   0,
+   0,
+   -1,
+   1,
+   1,
+   2,
+   3
   ],
   'team': 'KnightsAndMages',
   'lootTableKey': 'T',

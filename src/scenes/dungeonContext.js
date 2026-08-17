@@ -362,11 +362,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   for (const e of enemies) {
     const basics = ENEMY_BASICS[e.mobileType];
     if (!basics) continue;
-    if (foeDeps && e.mobileType > 43) {
+    // C17 THE HUMANOID PIVOT: class enemies (128+) render as classic
+    // sprite mobiles too - the voxel foe rig goes ON ICE with the
+    // voxel FP weapon (Mac's classic-visuals direction). The entity
+    // build below (career/equipment/poison/archer) is UNCHANGED.
+    if (foeDeps && e.mobileType > 43 && basics.maleTexture) {
      try {
       const D = foeDeps;
-      const rig = D.createCharacterRig(renderer, D.buildRaceCharacter('Human', D.bodyRamps, { tone: e.mobileType % 4, hairTone: e.mobileType % 3 }));
-      rig.setGait(3);   // standing sway (IDLE)
       const pos = D.floorLanding(collider, [e.x, e.y + 0.2, e.z]);
       const yawDeg = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing, no engine PRNG (Ledger A rule)
       // E3a: the real entity - career from CLASS{ID-128}.CFG, level =
@@ -402,7 +404,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // Combat bows: an equipped bow makes the foe an archer - the
       // attack starts from SIGHT and the strike looses an arrow.
       attack.rangedAttack = !!entity.weapon && WEAPON_SKILL[entity.weapon.name] === SKILLS.Archery;
-      foes.push({ rig, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
+      const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
+      const t = await getTexture(archive);
+      const mobile = new MobileUnit(e.mobileType, basics, (rec) => t.getFrameCount(rec), Math.random, e.gender);
+      const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
+      foes.push({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
      } catch (err) {
        // One foe failing to build (a missing CLASS*.CFG, a rig or
        // equipment error on a specific mobile type) MUST NOT abort
@@ -444,7 +450,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         behaviour, mobileId: e.mobileType, waterSurfaceY: waterSurfaceYAt,
       });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
-      const mobile = new MobileUnit(e.mobileType, basics, (rec) => t.getFrameCount(rec));
+      const mobile = new MobileUnit(e.mobileType, basics, (rec) => t.getFrameCount(rec), Math.random, e.gender);
       // One live billboard batch per foe: record/size/origin mutate
       // per frame (the batch geometry is a unit quad; size is a
       // uniform, origin a live translation - zero rebuilds).
@@ -905,11 +911,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // runtime and composite through the SHARED pixelize pass. Owned by
   // the context so both hosts (modal dungeon frame, standalone scene)
   // call one implementation.
+  // ON ICE (C17): the voxel foe-rig sprite pass - every foe renders
+  // as a classic mobile now; the loader stays for a reversible thaw.
   let _drawSprite = null;
   async function _loadSprite() {
     if (!_drawSprite) _drawSprite = (await import('../render/characterSprite.js')).drawCharacterSprite;
   }
-  if (foes.length) await _loadSprite();
+  if (foes.some((f) => f.rig)) await _loadSprite();
   // S2: one billboard batch per treasure pile (removable on pickup);
   // grounded like corpses (AlignBillboardToGround semantics).
   for (const pile of lootPiles) {
@@ -1509,13 +1517,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // in DFU). HUD pends the UI arc: health surfaces on __player.
       if (playerFeet && f.events.includes('hit')) {
         if (f.attack.rangedAttack) {
-          // Enemy archer: the strike frame LOOSES an arrow at the
-          // player (ShootBow verbatim shape) - flight + BowDamage
-          // resolve in updateMissiles.
-          const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
-          const d = [playerFeet[0] - from[0], playerFeet[1] + 0.9 - from[1], playerFeet[2] - from[2]];
-          const l = Math.hypot(...d) || 1;
-          fireArrow(from, [d[0] / l, d[1] / l, d[2] / l], f.entity.weapon, false, f);
+          // C17: sprite archers loose on their -1 shoot marker
+          // (below); the machine's hit frame stays the DECISION
+          // clock only. (ON ICE with the rig path: the machine-frame
+          // loose for rig archers.)
           continue;
         }
         // C16: the machine's hit frame is the RIGS' damage clock;
@@ -1533,11 +1538,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (!_fParalyzed || !f._mout) {
           f._mout = f.mobile.update(dt, {
             moving: f.ai.moving,
-            striking: _strikeEdge,   // the START edge (paralysis eats it - FreezeAnims blocks ChangeEnemyState, verbatim)
+            striking: _strikeEdge && !f.attack.rangedAttack,   // the START edge (paralysis eats it - FreezeAnims blocks ChangeEnemyState, verbatim)
+            rangedStriking: _strikeEdge && !!f.attack.rangedAttack,   // C17: archers draw records 20-24
             hurting: f.ai.hurtKnock,   // C15: the knockback threshold IS the hurt anim (KnockbackMovement)
             casting: !!f._castPending,   // C14: the cast decision's edge (Spell one-shot)
           }, f.ai.yaw, f.ai.feet, eye);
           f._castPending = false;
+          // C17: the ranged -1 (shootArrow) looses the arrow at the
+          // player - the machine's hit event no longer fires it for
+          // sprite archers.
+          if (playerFeet && f.mobile.shootFrame) {
+            const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
+            const d = [playerFeet[0] - from[0], playerFeet[1] + 0.9 - from[1], playerFeet[2] - from[2]];
+            const l = Math.hypot(...d) || 1;
+            fireArrow(from, [d[0] / l, d[1] / l, d[2] / l], f.entity.weapon, false, f);
+          }
           // C16: the -1 damage marker IS the damage moment
           // (AnimateEnemy doMeleeDamage -> MeleeDamage) - paralysis
           // never reaches here (FreezeAnims "prevents the attack
@@ -1548,12 +1563,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${f.mobileArchive}_${rkey}`)) uploadRecordFrame(f.mobileArchive, out.record, out.frame);
         const sz = scaledBillboardSize(f.mobileTex.getSize(out.record), f.mobileTex.getScale(out.record));
+        // C17: the texture-475 female casting records read too small
+        // from the files - DFU post-scales 20-24 by 1.35 (OrientEnemy).
+        if (f.mobileArchive === 475 && out.record >= 20 && out.record <= 24) { sz.w *= 1.35; sz.h *= 1.35; }
         f.batch.record = rkey;
         f.batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };   // negative width = FlipLeftRight (UVs ride the corners)
         f.batch.origin = f.ai.feet;   // the billboard shader bottom-anchors
         _mobileBatches.push(f.batch);
         continue;
       }
+      if (!f.rig) continue;   // ON ICE (C17): the rig path below draws nothing - every live foe is a mobile
       if (!_fParalyzed) {   // S19 FreezeAnims: the rig holds its live frame
         f.rig.setGait(f.ai.moving ? 1 : 3);   // WALK while pursuing, IDLE sway at rest
         let pose = f.attack.pose();

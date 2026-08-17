@@ -466,3 +466,49 @@ VISIBLE animation (10 fps sequence position) instead of the
 machine's SPD-scaled clock.
 
 Suite 416/91 (the double-strike pin extends mobileunit's audit test).
+
+## 2026-08-17b: the deep audit + C17 THE HUMANOID PIVOT - SHIPPED
+
+Mac's audit directive + the humanoid report ("humanoid enemies dont
+utilize the classic daggerfall artwork and still utilize the voxel
+system when it should be on ice").
+
+THE AUDIT (everything since 16f - this session's nine slices), each
+verified against the DFU source line by line where not already:
+- C15 knockback: the class-weight question CLOSED verbatim - class
+  EnemyBasics entries carry NO Weight field, so DFU's
+  `(speed <= 5 && EnemyClass) || Weight > 0` gate reduces exactly to
+  our port (classes re-knock only decayed, monsters always,
+  spectrals never). Player arrows route through the SAME
+  WeaponManager.WeaponDamage (knockback confirmed); enemy arrows
+  (EnemyAttack.BowDamage) damage without knockback - the player has
+  no knockback machinery in DFU, matching ours.
+- C13 arrows: DaggerfallMissile.MovementSpeed = 25.0 confirmed =
+  MISSILE_SPEED (the S5 single source).
+- C12/C14/S22/A4/P17: previously line-verified in their slices; no
+  new findings. The C16 hitFrame flows re-checked (paralysis skips
+  the mobile update entirely - no damage frames, verbatim
+  FreezeAnims).
+
+C17 THE HUMANOID PIVOT: class enemies (128+) render as classic
+sprite mobiles; the voxel foe rig goes ON ICE beside the voxel FP
+weapon (reversible thaw, loaders kept, draw path annotated + dead).
+The entity spine is UNCHANGED (CLASS*.CFG careers, SetEnemyEquipment
+loadouts, poisoned-weapon rolls, archer detection). New verbatim
+surface:
+- FemaleThiefIdleAnims (record 11 riding BOTH front diagonals - the
+  quirk) on the female + FemaleTexture 483 route (Thief 138);
+- the RangedAttack1 state: records 20-24 with RangedAttackAnimFrames
+  ([3,2,0,0,0,-1,1,1,2,3] shared across the bow classes) - the -1 is
+  the shootArrow moment (shootFrame): sprite archers loose exactly
+  there, the machine's hit frame demoted to the decision clock;
+- the texture-475 female casting scale x1.35 on records 20-24
+  (OrientEnemy's post-fix - the files read too small);
+- gender picks the archive (male/female textures per class).
+Extraction grew HasRangedAttack1/2 + RangedAttackAnimFrames (C3
+parity asserted). DOCTRINE PROOF: the type-138 thief's back view
+(o=4, record 19) crops IDENTICAL to the raw 484/19 art -
+human-closeup vs rec484-19, the standing probe now close-ups a class
+foe every run.
+
+Suite 417/91. ARENA2 green, probes green.
