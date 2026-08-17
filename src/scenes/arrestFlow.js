@@ -20,7 +20,7 @@
 
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import {
-  CRIMES, TEXT_SURRENDER, TEXT_COURT_START, TEXT_FOUND_GUILTY,
+  CRIMES, CRIME_NAMES, penaltyText, TEXT_SURRENDER, TEXT_COURT_START, TEXT_FOUND_GUILTY,
   TEXT_FREE_TO_GO, TEXT_BANISHED, TEXT_HOW_CONVINCE,
   lowerRepForCrime, surrenderToCityGuards, startCourt, pleaGuilty,
   pleaNotGuilty, resolveGuiltyVerdict, raiseRepForSentence,
@@ -61,10 +61,27 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
     return false;
   }
 
+  // audit 2026-08-17c: the court records carry %pcn/%cri/%pen (the
+  // probe showed them raw on screen) - expand per MacroHelper: the
+  // crime name table, the Regular_Punishment_String with the live
+  // fine/days, the player's full name.
+  function courtMacros(t, court) {
+    // %pcn is the player's FULL NAME - always set post-chargen in DFU.
+    // Pre-chargen (the exterior hosts today) it is unset; collapse the
+    // ", %pcn," appositive so the line reads "You are accused..."
+    // instead of "You, , are..." (chargen wiring FLAGGED).
+    const name = playerEntity.name ?? '';
+    if (!name) t = t.replace(/,\s*%pcn\s*,/g, '');
+    return t.replaceAll('%pcn', name)
+      .replaceAll('%cri', CRIME_NAMES[crimeId()] ?? 'None')
+      .replaceAll('%pen', penaltyText(court))
+      .replaceAll('%gtp', String(court.fine)).replaceAll('%dip', String(court.daysInPrison));
+  }
+
   function startCourtFlow() {
     const court = startCourt(playerEntity, regionIndex, crimeId(), { rolls });
     townTalk.showOverlay(new ChoiceWindow({
-      lines: [...text(TEXT_COURT_START, 'You stand accused. How do you plead?'), '', `Fine: ${court.fine} gold  Prison: ${court.daysInPrison} days`],
+      lines: [courtMacros(text(TEXT_COURT_START, 'You stand accused. How do you plead?')[0] ?? '', court)],
       options: [
         { code: 'KeyG', label: 'G - guilty', action: () => finish(pleaGuilty(court, playerEntity), court) },
         { code: 'KeyN', label: 'N - not guilty', action: () => notGuilty(court) },

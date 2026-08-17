@@ -53,6 +53,22 @@ test('guards: constants + immediate spawn converts the guard NPC first and disab
   assert.ok(dbg[0].hp > 0, 'a live Knight_CityWatch entity from CLASS18.CFG');
 });
 
+test('guards audit pin: the seen-by-guard MASS conversion quirk (verbatim)', { skip: skipReal }, async () => {
+  // DFU's non-immediate loop: once ANY guard NPC has seen the crime,
+  // EVERY REMAINING pool NPC converts (in range or not, guard or
+  // not) - the `if (seenByGuard)` sits outside the range/LOS gate.
+  const g = createCityGuards(makeDeps(() => 0.9));
+  let disabled = 0;
+  const pool = [
+    { pos: [0, 0, 500], fwdYaw: 0, guard: false, disable: () => disabled++ },   // BEFORE the seer: untouched
+    { pos: [0, 0, 10], fwdYaw: Math.PI, guard: true, disable: () => disabled++ },  // faces the player, sees
+    { pos: [0, 0, 900], fwdYaw: 0, guard: false, disable: () => disabled++ },   // far civilian: converts anyway
+  ];
+  await g.spawnCityGuards(false, { playerFeet: [0, 0, 0], playerFwd: [0, 0, 1], pool });
+  assert.equal(g.activeCount(), 2, 'the seer AND every subsequent NPC convert');
+  assert.equal(disabled, 2, 'the pre-seer civilian is untouched');
+});
+
 test('guards: behind-player civilians convert at 1/4; none seen -> the 2-5 ring fallback', { skip: skipReal }, async () => {
   // Civilian BEHIND the player (angle >= 105.469 from fwd +z), the
   // 1/4 roll passes (floor(0*4) === 0).

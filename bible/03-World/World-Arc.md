@@ -676,3 +676,28 @@ population freezes under the talk overlay). T2's "far pools park at
 caught-pickpocket path witnessed live).
 
 Suite 420/92. ARENA2 green, probes green.
+
+## AUDIT 2026-08-17c: the guards/court/where-is parity pass
+
+The G1/G2/T3c stretch (plus the touch seam) re-read line by line
+against PlayerEntity.SpawnCityGuards / EnemyAttack /
+DaggerfallCourtWindow / TalkManager.GetBuildingList. Five real
+findings, fixed with pins - the full record lives in Home.md's
+Audits section: the pool merge bounded by SubRecords.Length (garbage
+header entries stole pool draws - three identical alchemists became
+three distinct names live), the overlay callback cleared BEFORE
+firing + all chains routed through showOverlay (a court verdict
+callback could re-fire on a later window), the Dodging tally on
+every resolved enemy attack (missing since C8, both hosts), the
+seen-by-guard MASS conversion (DFU converts every REMAINING pool
+NPC once any guard sees - the `if (seenByGuard)` sits outside the
+range/LOS gate), and the court %pcn/%cri/%pen macro expansion (the
+records rendered raw on screen; %pcn's appositive collapses while
+the player is nameless pre-chargen - chargen wiring FLAGGED).
+Verbatim re-confirmed clean: the court math line by line (plea
+rolls, thresholds, the never-charged verdict quirk, execution
+unreachable), the fatal-blow interception, the spawn constants and
+order, %ef/%rt semantics, the palace dot-trim, the GiveUpTimer
+cadence. Suite 439/97; whereIsProbe + arrestProbe re-run green
+(distinct names; the full surrender -> court -> prison -> release
+circuit with expanded text).

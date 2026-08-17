@@ -49,7 +49,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 ## Active arcs
 
 - `02-Formats/Readers-Arc.md` - COMPLETE. All 8 format readers shipped with corpus gates.
-- `03-World/World-Arc.md` - ACTIVE again: TOWNS. M1-M9 COMPLETE + T1 THE WANDERING POPULATION (2026-08-17: CityNavigation's automap-carved weighted navgrid - the per-block row flip proven against the rendered tilemap - MobilePersonMotor's road-following seek + the verbatim politeness idle, PopulationManager's 10Hz pool with anti-skate/night/view-gated pop-in, the verbatim race texture tables; townsfolk probed walking Daggerfall's streets, the closeup identical to raw 386/5) SHIPPED + T2 THE STREAMING MOUNT (2026-08-17: per-location-pixel pools in ?world with the verbatim StreamingWorld location-type gate, persons in the location frame converted through the live floating-origin translation, batches destroyed with their pixel; probed live at Daggerfall city center - the politeness idle on the fly cam, archive 456 identical to raw 456/5) SHIPPED + T3a THE TALK FOUNDATION (2026-08-17: FACTION.TXT verbatim - 366 factions, the tab-stack tree, ruler seeds in classic call order; findFactions/People-of-region/getReactionToPlayer verbatim; pickpocket with the 5..95 clamp, gold/nothing/caught outcomes and the crime state - guards FLAGGED to the crime slice) SHIPPED + T3b THE TALK WINDOW + ACTIVATION (2026-08-17: F1-F4 interaction modes, the person-cylinder activation ray at 6.4/3.2, the reaction greeting ladder 7206-7209 with %pcf/%oth macros through the real TEXT.RSC, the shared townTalk seam in BOTH exterior hosts - their first HUD-text layer; probed live: "Yes?" in the panel, "You pinched 1 gold piece." on the HUD) SHIPPED + THE T3-TOUCH ADDENDUM (2026-08-17: the phone path - a live-labeled mode-cycle button on the touch row driving the verbatim NextInteractionMode wrap, E doubling as goodbye while the window is open; hasTouch-probed: grab -> info -> dialogue taps + E open/close live) SHIPPED + G1 THE CITY WATCH (2026-08-17: the crime circuit closes - SpawnCityGuards verbatim (guard NPCs first, behind-player civilians 1/4, the 2-5 ring fallback, max 5, the witness/countdown path), Knight_CityWatch class foes as the FIRST exterior foes on the C11 stack in both hosts, the GiveUpTimer hostility law joining EnemyAI generally (detection refills 200 classic ticks; MakeEnemyHostileToAttacker pre-loads x3), combat both ways + HALT + corpses; probed live: a ring guard marched 30 units, detected, and swung - the close-up crops the classic plate knight 399) SHIPPED + G2 ARREST + COURT (2026-08-17: the crime loop completes - the EnemyAttack interception withholding the first guard hit for the surrender box, SurrenderToCityGuards' SetHealth(1)/rep gates/DFRandom coin, the DaggerfallCourtWindow math verbatim incl. THE NEVER-CHARGED VERDICT QUIRK, sentence rep raises, the crime-clear stand-down; probed end to end: box -> Y -> court -> G -> crime 0, LegalRep -2, guards gone) SHIPPED + T3c WHERE IS (2026-08-17: GenerateBuildingName verbatim over the full classic name lists, the named-building pool merge with per-instance door resolution, the 30-record answer table + the NPC-stable reaction tier + the %hnt/7333 hint chain with the verbatim 8-way compass; probed live - 62 named Daggerfall buildings, a tier-0 commoner refusing rudely; the streaming-host directory FLAGGED as the follow-up) SHIPPED. Next: the world-host Where-is mount, exterior loot pickup, the NPC knowledge roll.
+- `03-World/World-Arc.md` - ACTIVE again: TOWNS. M1-M9 COMPLETE + T1 THE WANDERING POPULATION (2026-08-17: CityNavigation's automap-carved weighted navgrid - the per-block row flip proven against the rendered tilemap - MobilePersonMotor's road-following seek + the verbatim politeness idle, PopulationManager's 10Hz pool with anti-skate/night/view-gated pop-in, the verbatim race texture tables; townsfolk probed walking Daggerfall's streets, the closeup identical to raw 386/5) SHIPPED + T2 THE STREAMING MOUNT (2026-08-17: per-location-pixel pools in ?world with the verbatim StreamingWorld location-type gate, persons in the location frame converted through the live floating-origin translation, batches destroyed with their pixel; probed live at Daggerfall city center - the politeness idle on the fly cam, archive 456 identical to raw 456/5) SHIPPED + T3a THE TALK FOUNDATION (2026-08-17: FACTION.TXT verbatim - 366 factions, the tab-stack tree, ruler seeds in classic call order; findFactions/People-of-region/getReactionToPlayer verbatim; pickpocket with the 5..95 clamp, gold/nothing/caught outcomes and the crime state - guards FLAGGED to the crime slice) SHIPPED + T3b THE TALK WINDOW + ACTIVATION (2026-08-17: F1-F4 interaction modes, the person-cylinder activation ray at 6.4/3.2, the reaction greeting ladder 7206-7209 with %pcf/%oth macros through the real TEXT.RSC, the shared townTalk seam in BOTH exterior hosts - their first HUD-text layer; probed live: "Yes?" in the panel, "You pinched 1 gold piece." on the HUD) SHIPPED + THE T3-TOUCH ADDENDUM (2026-08-17: the phone path - a live-labeled mode-cycle button on the touch row driving the verbatim NextInteractionMode wrap, E doubling as goodbye while the window is open; hasTouch-probed: grab -> info -> dialogue taps + E open/close live) SHIPPED + G1 THE CITY WATCH (2026-08-17: the crime circuit closes - SpawnCityGuards verbatim (guard NPCs first, behind-player civilians 1/4, the 2-5 ring fallback, max 5, the witness/countdown path), Knight_CityWatch class foes as the FIRST exterior foes on the C11 stack in both hosts, the GiveUpTimer hostility law joining EnemyAI generally (detection refills 200 classic ticks; MakeEnemyHostileToAttacker pre-loads x3), combat both ways + HALT + corpses; probed live: a ring guard marched 30 units, detected, and swung - the close-up crops the classic plate knight 399) SHIPPED + G2 ARREST + COURT (2026-08-17: the crime loop completes - the EnemyAttack interception withholding the first guard hit for the surrender box, SurrenderToCityGuards' SetHealth(1)/rep gates/DFRandom coin, the DaggerfallCourtWindow math verbatim incl. THE NEVER-CHARGED VERDICT QUIRK, sentence rep raises, the crime-clear stand-down; probed end to end: box -> Y -> court -> G -> crime 0, LegalRep -2, guards gone) SHIPPED + T3c WHERE IS (2026-08-17: GenerateBuildingName verbatim over the full classic name lists, the named-building pool merge with per-instance door resolution, the 30-record answer table + the NPC-stable reaction tier + the %hnt/7333 hint chain with the verbatim 8-way compass; probed live - 62 named Daggerfall buildings, a tier-0 commoner refusing rudely; the streaming-host directory FLAGGED as the follow-up) SHIPPED + AUDIT 2026-08-17c (the guards/court/where-is parity pass - five findings fixed with pins: the subrecord-bounded pool merge, the overlay callback clear, the Dodging tally, the seen-by-guard mass conversion, the court macro expansion; see Audits). Next: the world-host Where-is mount, exterior loot pickup, the NPC knowledge roll.
 - `03-World/Player-Arc.md` - ACTIVE again. P1-P9 + P10 TELEPORTERS + DOOR LOCKS (the delegates verbatim, RDB starting locks + look-at-lock tiers, flat/marker actions joining the graph, the repeated-block action-key collision fixed) + P11 SWIM/LEVITATE (2026-08-16: the LevitateMotor path with GetSwimSpeed and the surface clamp, the swim toggle + splash, Levitate (14,255) end to end, the per-minute/per-jump fatigue drains, the .7071 diagonal-limit parity fix) + P12 BREATH/CROUCH (2026-08-16: MaxBreath = END/2 with the classic-update drain every 19th tick and SetHealth(0) drowning at the 76*GS head-under threshold, WaterBreathing (30,255) gating it, the verbatim HUDBreathBar; crouch 0.9/0.8 on the KeyX edge in both hosts with crouchSpeed, a per-call collider capsule height, and the CanStand ceiling probe) + P13 STEALTH (2026-08-16: the oldest src flag closes - the classic detection flow with hearing gated on prior detection, the once-per-minute StealthCheck with spawn-band gating/odd-minute sneak skip/fast-move auto-detect/the shared Stealth tally, and the verbatim illusion gate with the 13 sees-through monsters - retiring the S8 half-sight interim, which had been DEAD post-merge) + P14 MOVEMENT PARITY (2026-08-16: the live jump/incline report - Mac's reverted b9e9aa6 re-derived on the crouch-height tree: final-vertical-state grounded truth un-killing the one-frame jump, the ascending step-lift ladder with the monotone ceiling sweep and the no-depenetrate-into-ceiling clamp, slopeLimit-70 pinned 60/78; plus the verbatim jump laws - the 0.1s GroundedTime gate with HELD jump input, jumpSpeedMultiplier via Jumping skill, crouched x0.8, the moving-jump forward boost, frozen airborne momentum, HitHead reversal - and CheckFallingDamage end to end with sounds 91/92 in all four motor hosts, slowfall to the verbatim -105*dt law) + P15 SNEAK (2026-08-16: AltLeft held per DFU's default - the grounded-only run/sneak latch, running beats sneaking, base/2 - 1/39.5, swim ignoring both verbatim; IsMovingLessThanHalfSpeed now TRUE while sneak-moving, so the P13 stealth checks apply to a MOVING player) + P16 THE FIXED PHYSICS TIMESTEP (2026-08-17 live hotfix: update() accumulates render dt and steps at 1/60 with the 0.25 jank clamp - Unity FixedUpdate IS the missing parity law; real-mesh traces proved the deployed motor failed real staircases and collapsed jumps at phone frame rates while being correct at 60; + the ceiling entry-clamp firing only on residual penetration and the ladder capping rungs at resolved height) + P17 FOE-AI FIXED STEPPING (2026-08-17: the P16 accumulator law on EnemyAI - the whole body, senses cadence + physics, steps at 1/60 with the 0.25 jank clamp; a 10fps foe pursues bit-identically to a 60fps foe; urgent once C11 put ~29 raw-dt foes in every dungeon on the deployed mobile build) SHIPPED. Next: riding (the monster pivot shipped as Combat C11).
 - `04-Characters/Characters-Arc.md` - PARKED (pivot 3: classic visuals). C8 shipped E1-E4b end to end + spectral; E4c deferred by Mac; remaining interims are Systems work (ledger below).
 - `05-Combat/Combat.md` - ACTIVE again. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, the collision-trigger seam (input-held gate, 08-16), the Attack trigger + door bashing (WeaponEnvDamage, 08-16), the TRUE classic FP weapon + its six-finding parity audit (08-17, the parallel lane) + C9 THE HOST ROLLOUT (2026-08-16: combat/weaponRig.js mounts the audited weapon surface in the interior mode and BOTH exterior walk hosts - RMB drag/click, Z sheathe per mode fixing the interior Z crash, envAttack bashing interior swing doors, bows consuming arrows; dungeonContext's inline copy folds onto the rig when the FP lane settles - recorded) + C10 THE RIG FOLD (2026-08-16: dungeonContext's inline weapon collapses onto weaponRig - one home for the audited surface, the env ray now the shared envAttack, the rig canvas late-resolvable; parity-positive deltas: the weapon exists in foe-less dungeons and the listener/ambient pass un-gates - it had sat inside `if (playerWeapon)` and foe-less dungeons silently lost 3D audio since A2 - and the touch tap gains the sheathed gate) SHIPPED + C11 THE MONSTER PIVOT (2026-08-17: monsters 0-42 go LIVE - classic 8-orientation sprite mobiles (characters/mobileUnit.js, DaggerfallMobileUnit/EnemyBasics verbatim: the record layout, the signed-angle orientation law, attack sequences with the -1 damage marker + chance-rolled variants, hurt one-shots, the rat/ghost/wraith/slaughterfish/scorpion quirks, the Ancient Lich frame rescale) on the SAME combat spine as the class enemies - EnemyAI/EnemyAttack/entity/loot/S16 spells/S18 riders/corpses; one live billboard batch per foe over dataPipeline.uploadRecordFrame; foes DEFAULT ON in all hosts; THE BILLBOARD-AXIS DOCTRINE ground-truthed - DFU's flip booleans are correct only under the hosts' flats axis (the negated view row), the raw view row moonwalks every side view; cast/ranged anims + Seducer pend) SHIPPED + C12 THE BEHAVIOUR MOTORS (2026-08-17: CanFly = Flying|Spectral - imps/bats/harpies/ghosts/wraiths pursue in 3D at the target face with NO gravity, hover at spawn, floor-skim guard; Aquatic = WaterMove verbatim against the P11 block water surface - the 2.5 head margin, beached fish FROZEN; paralysis through the motor: flyers fall out of the air, swimmers freeze; flyer corpses land) SHIPPED + C13 HOST ARROWS (2026-08-17: combat/arrowFlight.js - the visible loose in worldModes interiors + both exterior walk hosts, the 99800 model on the S5 constants, lost on geometry/terrain as DFU misses are; the dungeon keeps the full seeking+recovery path) SHIPPED + C14 THE MONSTER SPELL ANIM (2026-08-17: the 13 casters play SpellAnimFrames - records 20-24 for the Orc Shaman via HasSpellAnimation, the primary records for the rest, verbatim GetStateAnims incl. no ghost/wraith special; attack>cast>hurt interrupt laws pinned; RangedAttack1/2 closed as class-enemy-only) SHIPPED + C15 KNOCKBACK (2026-08-17: WeaponManager speed formula floored at 15 classic + the Weight>0 gate - spectrals immune - and KnockbackMovement on the fixed step: shove along the attack ray, 25-cap/5-decay, hurt rides the threshold NOT the hit, flyers knocked out of the air; the C11 per-hit hurt retired) SHIPPED + C16 THE -1 DAMAGE MOMENT (2026-08-17: mobile melee damage lands on the sequence markers - the Frost Daedra base swing strikes TWICE - via the extracted resolveFoeMelee; the machine stays the decision clock + the rigs' damage clock) SHIPPED + C17 THE HUMANOID PIVOT (2026-08-17: class enemies render as classic sprite mobiles - FemaleThiefIdleAnims verbatim, the RangedAttack1 archer state with the -1 shootFrame loose, the 475 female cast scale, gender-picked archives; the voxel foe rig ON ICE beside the voxel FP weapon; entity spine unchanged; doctrine-proven vs raw 484/19) SHIPPED. Next: economy/enchantments, towns, or riding.
@@ -75,7 +75,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-17, the T3c slice)
+## Open flags (regenerated 2026-08-17, the 17c audit)
 
 Regenerated at the S20 close (the drainFatigue "exhaustion pends"
 comment SHIPPED out; line numbers refreshed). Every row below is a
@@ -97,9 +97,10 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/combat/playerWeapon.js:48` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:78` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
 - `src/combat/weaponRig.js:33` - *                     (FLAGGED at the call sites - their HUD pends),
-- `src/scenes/arrestFlow.js:100` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
+- `src/scenes/arrestFlow.js:72` - instead of "You, , are..." (chargen wiring FLAGGED).
+- `src/scenes/arrestFlow.js:117` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
 - `src/scenes/cityGuards.js:23` - FLAGGED loud: arrest/court pends (guards fight to the death for
-- `src/scenes/cityGuards.js:92` - attack.rangedAttack = false;   // FLAGGED: guard archers pend exterior foe arrows
+- `src/scenes/cityGuards.js:93` - attack.rangedAttack = false;   // FLAGGED: guard archers pend exterior foe arrows
 - `src/scenes/dungeonContext.js:159` - the chain lives, the motion is INTERIM (loud) until flats can tween.
 - `src/scenes/dungeonContext.js:478` - index into the 18 careers) or the INTERIM default Warrior (16,
 - `src/scenes/dungeonContext.js:484` - effects FLAGGED to the effect-library slice.
@@ -108,14 +109,14 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/scenes/dungeonContext.js:747` - FLAGGED: DFU recomputes per-effect via the cost tables (that
 - `src/scenes/dungeonContext.js:749` - FLAGGED to the effect library (caster-only buffs, touch, areas).
 - `src/scenes/dungeonContext.js:960` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/dungeonContext.js:1694` - actions) is FLAGGED - the player snapshot only.
+- `src/scenes/dungeonContext.js:1698` - actions) is FLAGGED - the player snapshot only.
 - `src/scenes/exterior.js:281` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
 - `src/scenes/exterior.js:335` - day-skip is a no-op FLAGGED until the shared calendar lands).
 - `src/scenes/exterior.js:456` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/exterior.js:525` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/townTalk.js:235` - GetAnswerWhereIs (knows-always FLAGGED) + the %hnt hint chain:
-- `src/scenes/townTalk.js:243` - .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAG...
+- `src/scenes/townTalk.js:243` - GetAnswerWhereIs (knows-always FLAGGED) + the %hnt hint chain:
+- `src/scenes/townTalk.js:251` - .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAG...
 - `src/scenes/world.js:407` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
 - `src/scenes/world.js:411` - FLAGGED loud: the People faction rides the START location's
 - `src/scenes/world.js:453` - day-skip is a no-op FLAGGED until the shared calendar lands).
@@ -130,8 +131,8 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/systems/chargen.js:143` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy ...
 - `src/systems/court.js:7` - People-faction half-delta FLAGGED to the save-side clone).
 - `src/systems/court.js:27` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
-- `src/systems/court.js:70` - ChangeReputation(peopleFaction, -loss/2) FLAGGED: the save-side
-- `src/systems/court.js:95` - *  daysInPrison } (guild rescues FLAGGED). */
+- `src/systems/court.js:81` - ChangeReputation(peopleFaction, -loss/2) FLAGGED: the save-side
+- `src/systems/court.js:106` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:92` - FLAGGED: career hard-immunity (Career.Paralysis == Immune) and the
 - `src/systems/effects.js:530` - out.skipped++;   // FLAGGED: the library grows one family at a time
@@ -146,7 +147,7 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/systems/talk.js:98` - SpawnCityGuards(true) FLAGGED: the crime/guards slice mounts the response.
 - `src/systems/talkSession.js:19` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 - `src/systems/talkTopics.js:18` - doctrine-kept). FLAGGED LOUD: the NPC knowledge roll
-- `src/systems/talkTopics.js:150` - *  always (the knowledge roll FLAGGED). Returns { textId, direction }
+- `src/systems/talkTopics.js:154` - *  always (the knowledge roll FLAGGED). Returns { textId, direction }
 - `src/ui/actionText.js:7` - (backgrounds FLAGGED pending art-name verification, the shared UI
 - `src/ui/chargen.js:11` - background ART is FLAGGED pending art-name verification against
 - `src/ui/chargen.js:148` - ---- drawing: clean classic-text panels (art FLAGGED, see head) ----
@@ -160,6 +161,51 @@ stay open to Mac's eye in live play (probe-locked).
 ## Audits
 
 Newest first.
+
+**2026-08-17c - the comprehensive audit of the guards/court/where-is
+stretch (T3-touch, G1, G2, T3c).** Re-read the four slices line by
+line against their DFU sources (SpawnCityGuards/SpawnCityGuard,
+EnemyAttack's surrender interception, DaggerfallCourtWindow,
+TalkManager's GetBuildingList/GenerateBuildingName pipeline), swept
+the shared-seam laws, and re-ran every gate and live probe. FIVE
+REAL FINDINGS, all fixed at root with pins:
+(F1) THE SUBRECORD-BOUNDED POOL MERGE - DFU scans
+SubRecords.Length entries of BuildingDataList, not all 32 header
+slots; our merge iterated everything, so garbage named-type entries
+past the subrecord count stole named-building pool draws and
+misaligned every later name (live proof: three identical "Doctor
+Rodynak's Herbs" alchemists became three distinct names post-fix).
+(F2) THE STALE OVERLAY CALLBACK - townTalk's onClosed callback was
+not cleared before firing, and chained windows assigned overlay
+directly past it; a court verdict callback could re-fire on a later
+unrelated window close. The callback now clears BEFORE it fires and
+every chain routes through showOverlay.
+(F3) THE DODGING TALLY - DFU tallies Dodging on EVERY resolved
+enemy attack against the player (hit or miss); never tallied since
+C8. Added at both resolution sites (dungeon foes + city guards).
+(F4) THE SEEN-BY-GUARD MASS CONVERSION - DFU's non-immediate loop
+puts `if (seenByGuard)` INSIDE the pool loop but OUTSIDE the
+range/LOS gate: once any guard NPC sees the crime, every REMAINING
+pool NPC converts to a guard (range, LOS, and guard-flag
+irrelevant). We had converted only the seer. Preserved verbatim,
+pinned.
+(F5) THE RAW COURT MACROS - TEXT.RSC 8050 renders %pcn/%cri/%pen
+literally on screen (the arrest probe caught it). Added the
+CRIME_NAMES table + Penalty string (MacroHelper verbatim) and the
+courtMacros expansion; %pcn's appositive collapses gracefully while
+the player is nameless pre-chargen (chargen wiring FLAGGED).
+Verbatim-confirmed clean: the court math line by line (the two
+FailedRolls, the penalty clamp /40, the coin loop, the gold-capped
+fine conversion, the plea formulas, THE NEVER-CHARGED VERDICT QUIRK,
+execution unreachable), the guard-hit interception incl. the
+fatal-blow forced surrender, the spawn constants/order (77.5 /
+105.469-degree behind arc at 1/4 / the 2-5 ring / max 5), the
+GiveUpTimer cadence (200 ticks, refill-on-detect, x3 for guards),
+%ef's burned rand + %rt ruler titles, the palace dot-trim, the
+compass bands, the ANSWERS_TO_DIRECTIONS table shape. Suite
+437 -> 439 (the audit pins); whereIsProbe + arrestProbe re-run
+green post-fix (distinct alchemist names; the full surrender ->
+court -> prison -> release circuit with expanded court text).
 
 **2026-08-17b - the comprehensive audit of the towns/talk stretch
 (T1, T2, T3a, T3b).** Re-verified the three T1 town modules line by

@@ -142,7 +142,15 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       if (overlay.isChoiceWindow) overlay.input(e.code);
       else if (e.code === 'Escape') overlay.input('back');
       else if (e.code === 'Enter' || e.code === 'KeyE') overlay.input('confirm');
-      if (overlay.done) { overlay = null; _onOverlayClosed?.(); }
+      if (overlay.done) {
+        // AUDIT 2026-08-17c: clear the close-callback BEFORE firing -
+        // a stale G2 callback (e.g. the court verdict) must never
+        // re-fire when a LATER unrelated window closes.
+        const cb = _onOverlayClosed;
+        _onOverlayClosed = null;
+        overlay = null;
+        cb?.();
+      }
       return true;
     }
     return false;
@@ -199,7 +207,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // uniform seed stands in, Ledger A).
     target.person._talkSeed ??= Math.floor(rolls() * 0x7fffffff);
     _talkNpc = target.person;
-    overlay = new ChoiceWindow({
+    showOverlay(new ChoiceWindow({
       lines: [t.text],
       options: [
         { code: 'KeyW', label: 'W - where is...', action: () => openCategories() },
@@ -207,7 +215,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         { code: 'KeyE', label: '', action: () => {} },
         { code: 'Enter', label: '', action: () => {} },
       ],
-    });
+    }));
   }
 
   let _talkNpc = null;
@@ -218,7 +226,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     const options = slice.map((it, i) => ({ code: `Digit${i + 1}`, label: `${i + 1} - ${it.label}`, action: () => onPick(it) }));
     if ((page + 1) * per < items.length) options.push({ code: 'KeyN', label: 'N - more', action: () => pagedList(lines, items, onPick, page + 1) });
     options.push({ code: 'Escape', label: 'Esc - goodbye', action: () => {} });
-    overlay = new ChoiceWindow({ lines, options });
+    showOverlay(new ChoiceWindow({ lines, options }));
   }
 
   function openCategories() {
@@ -241,14 +249,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     text = expandMacros(text, { playerName: playerEntity.name ?? '' })
       .replaceAll('%hnt', hint).replaceAll('%key', building.name)
       .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAGGED interim
-    overlay = new ChoiceWindow({
+    showOverlay(new ChoiceWindow({
       lines: [text],
       options: [
         { code: 'KeyW', label: 'W - ask another', action: () => openCategories() },
         { code: 'Escape', label: 'Esc - goodbye', action: () => {} },
         { code: 'KeyE', label: '', action: () => {} },
       ],
-    });
+    }));
   }
 
   function frame(dt) {
