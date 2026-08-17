@@ -187,6 +187,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   /** Per-frame drive; returns the live mobile batches (the host draws
    *  them on the flats' axis with the corpses). */
   function update(dt, playerFeet, eye, senses = {}) {
+    // EnemyEntity verbatim: the city watch DESPAWNS when the active
+    // crime returns to None (court release, death, region exit).
+    if (!playerEntity.crimeCommitted) {
+      for (const g of guards) if (!g.dead) g.dead = true;   // no corpse - they walk away
+    }
     if (countdown > 0) {
       countdown -= dt;
       if (countdown <= 0) spawnCityGuards(true, { playerFeet, playerFwd: [0, 0, 1], pool: [] });   // arrivals ride the ring fallback
@@ -218,7 +223,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         if (meleeHitConnects(g.ai._dist, g.ai.inSight, withinYaw(g.ai.yaw, hdx, hdz, MELEE_HIT_YAW_DEG))) {
           const wpn = chooseEnemyWeapon(g.entity.weapon, ENEMY_BASICS[GUARD_MOBILE_TYPE]);
           const dmg = calculateAttackDamage(g.entity, playerEntity, { targetGroup: null, weapon: wpn });
-          onPlayerHurt?.(dmg, wpn);
+          if (dmg > 0) onPlayerHurt?.(dmg, wpn);   // G2: the host's arrest interception rides this
         }
       }
       const o = g._mout;
@@ -257,5 +262,5 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     return any;
   }
 
-  return { guards, spawnCityGuards, update, resolvePlayerHit, activeCount, _debug: () => guards.map((g) => ({ dead: g.dead, hp: g.entity.health, pos: g.ai.feet.map((v) => +v.toFixed(1)), detected: g.ai.detected, state: g.attack.machine.state })) };
+  return { guards, spawnCityGuards, update, resolvePlayerHit, activeCount, _debug: () => guards.map((g) => ({ dead: g.dead, hp: g.entity.health, pos: g.ai.feet.map((v) => +v.toFixed(1)), detected: g.ai.detected, state: g.attack.machine.state, moving: g.ai.moving, dist: +(g.ai._dist ?? -1).toFixed(1), giveUp: g.ai.giveUpTimer })) };
 }

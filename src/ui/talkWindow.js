@@ -25,6 +25,43 @@ export function wrapText(fnt, text, maxWidth, measure = measureText) {
   return lines;
 }
 
+/** G2: a text panel with keyed choices (the surrender prompt and the
+ *  court sequence ride it). options = [{ code, label, action }];
+ *  input(code) runs the matching action and closes; done after. */
+export class ChoiceWindow {
+  constructor({ lines, options = [] }) {
+    this.lines = lines;
+    this.options = options;
+    this.done = false;
+    this.isChoiceWindow = true;
+  }
+
+  input(code) {
+    if (!this.options.length && (code === 'back' || code === 'confirm' || code === 'Escape' || code === 'Enter' || code === 'KeyE')) {
+      this.done = true;
+      return;
+    }
+    const opt = this.options.find((o) => o.code === code);
+    if (opt) { this.done = true; opt.action?.(); }
+  }
+
+  draw(renderer, canvas, font, s) {
+    const wrapped = this.lines.flatMap((l) => (l === '' ? [''] : wrapText(font.fnt, l, 280)));
+    const lines = [...wrapped, '', ...this.options.map((o) => o.label)];
+    if (!this.options.length) lines.push('(continue)');
+    const w = Math.max(...lines.map((l) => measureText(font.fnt, l))) * s + 24 * s;
+    const lineH = 12 * s;
+    const h = lines.length * lineH + 20 * s;
+    const x = (canvas.width - w) / 2, y = (canvas.height - h) / 2;
+    renderer.drawScreenQuad(null, { x, y, w, h }, undefined, PANEL);
+    let ty = y + 12 * s;
+    for (const l of lines) {
+      drawText(renderer, font, l, x + 12 * s, ty, s, this.options.some((o) => o.label === l) || l === '(continue)' ? DIM : TEXT);
+      ty += lineH;
+    }
+  }
+}
+
 export class TalkWindow {
   /** @param opts { text, refused } from startMobileTalk */
   constructor({ text, refused = false }) {

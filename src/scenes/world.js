@@ -26,6 +26,7 @@ import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
 import { createTownTalk } from './townTalk.js';   // T3b
 import { createCityGuards } from './cityGuards.js';   // G1
+import { createArrestFlow } from './arrestFlow.js';   // G2
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
@@ -424,9 +425,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio,
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
-      playerEntity.health = Math.max(0, playerEntity.health - dmg);
-      audio.playOneShot(hitSoundFor(wpn), 1.1);
-      surfacePlayer();
+      const apply = () => {
+        playerEntity.health = Math.max(0, playerEntity.health - dmg);
+        audio.playOneShot(hitSoundFor(wpn), 1.1);
+        surfacePlayer();
+      };
+      // G2: the verbatim arrest interception - a guard hit on an
+      // active crime opens the surrender box instead of the damage
+      if (!arrestFlow.onGuardHit(dmg, apply)) apply();
     },
   });
   const _guardPool = () => _livePersons.map(({ person, pos }) => ({
@@ -443,6 +449,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
     cityGuards.spawnCityGuards(true, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
   }
+  // G2: arrest + court through the townTalk overlay seam (the prison
+  // day-skip is a no-op FLAGGED until the shared calendar lands).
+  const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: startLoc.regionIndex });
   const weaponRig = createWeaponRig({
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => townTalk.say(l),
