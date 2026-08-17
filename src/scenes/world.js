@@ -633,6 +633,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     window.__guards = () => JSON.stringify(cityGuards._debug());   // G1 probe surface
     window.__crime = () => _crimeResponse();   // G1: force the response without pickpocket RNG
     window.__guardDamage = (i, dmg) => cityGuards._damage(i, dmg);   // G3: the real death path for loot probes
+    window.__attack = () => weaponRig.clickAttack();   // G4: ClickToAttack for swing probes
     window.__townDebug = () => {
       const pixels = [];
       for (const p of built.values()) {
@@ -937,11 +938,20 @@ export async function bootWorld(canvas, renderer, params, status) {
           }
           continue;
         }
-        // G1: melee swings resolve against live guards
+        // G1: melee swings resolve against live guards. G4: no guard
+        // hit -> WANDERING townsfolk (civilian one-hit Murder +
+        // response; wandering guard NPC -> Assault + conversion with
+        // the swing carried onto the fresh foe).
         const lookFwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-        if (cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, null,
-          (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon), g.ai.feet, 1.1, { maxDistance: 16 }))) {
+        const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon), g.ai.feet, 1.1, { maxDistance: 16 });
+        if (cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, null, guardHitSound)) {
           tallySkill(playerEntity, WEAPON_SKILL[weaponRig.playerWeapon.weapon?.name] ?? SKILLS.HandToHand);
+        } else {
+          cityGuards.resolveCivilianHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, _guardPool(),
+            { onMurder: () => _crimeResponse(), onHitSound: guardHitSound }).then((r) => {
+            if (r?.carriedHit) tallySkill(playerEntity, WEAPON_SKILL[weaponRig.playerWeapon.weapon?.name] ?? SKILLS.HandToHand);
+            if (r) surfacePlayer();
+          }).catch((e) => console.error('[civil]', e));
         }
       }
       weaponRig.draw();

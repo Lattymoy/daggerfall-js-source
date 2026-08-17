@@ -99,6 +99,42 @@ test('guards G3: killed guards are loot targets, walk-aways are not, loot takes 
   assert.equal(g.lootTargets().length, 0);
 });
 
+test('guards G4: civilian strike = one-hit Murder; wandering guard = Assault + conversion; guard kill = Murder', { skip: skipReal }, async () => {
+  const deps = makeDeps(() => 0.9);
+  const g = createCityGuards(deps);
+  let disabled = 0, murder = 0;
+  const fakeWeapon = { resolveHit: () => [] };
+  const eye = [0, 1.7, 0], fwd = [0, 0, 1], feet = [0, 0, 0];
+  // A CIVILIAN in weapon reach dies to ONE hit: disabled + Murder + the response
+  const civ = () => ({ pos: [0, 0, 1.5], fwdYaw: 0, guard: false, disable: () => disabled++ });
+  const r1 = await g.resolveCivilianHit(fakeWeapon, eye, fwd, feet, [civ()], { onMurder: () => murder++ });
+  assert.deepEqual(r1, { crime: 'murder' });
+  assert.equal(disabled, 1);
+  assert.equal(murder, 1, 'SpawnCityGuards(true) fired');
+  assert.equal(deps.playerEntity.crimeCommitted, 5, 'Crimes.Murder');
+  // Out of reach: no strike, no crime
+  deps.playerEntity.crimeCommitted = 0;
+  assert.equal(await g.resolveCivilianHit(fakeWeapon, eye, fwd, feet,
+    [{ pos: [0, 0, 5], fwdYaw: 0, guard: false, disable: () => disabled++ }], {}), false);
+  assert.equal(deps.playerEntity.crimeCommitted, 0);
+  // A wall strictly in front blocks the strike
+  const gWall = createCityGuards({ ...deps, collider: { heightAt: () => 0, raycast: () => 0.5 } });
+  assert.equal(await gWall.resolveCivilianHit(fakeWeapon, eye, fwd, feet, [civ()], {}), false);
+  // A wandering GUARD NPC: Assault + on-the-spot conversion, the
+  // swing carried onto the fresh foe (DFU re-points the hit)
+  let carried = 0;
+  const carryWeapon = { resolveHit: () => { carried++; return []; } };
+  const r2 = await g.resolveCivilianHit(carryWeapon, eye, fwd, feet,
+    [{ pos: [0, 0, 1.5], fwdYaw: 0, guard: true, disable: () => disabled++ }], {});
+  assert.equal(r2.crime, 'assault');
+  assert.equal(deps.playerEntity.crimeCommitted, 4, 'Crimes.Assault');
+  assert.equal(g.activeCount(), 1, 'converted to a live foe');
+  assert.equal(carried, 1, 'the swing resolved against the fresh guard');
+  // Killing the watch through the real death path IS Murder
+  g._damage(0, 9999);
+  assert.equal(deps.playerEntity.crimeCommitted, 5);
+});
+
 test('guards: behind-player civilians convert at 1/4; none seen -> the 2-5 ring fallback', { skip: skipReal }, async () => {
   // Civilian BEHIND the player (angle >= 105.469 from fwd +z), the
   // 1/4 roll passes (floor(0*4) === 0).
