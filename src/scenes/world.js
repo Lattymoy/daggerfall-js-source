@@ -31,6 +31,7 @@ import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
+import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
@@ -436,6 +437,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadInventoryArt({ renderer, fetchBytes, palette });   // U8d: INVE00I0/01I0 warm at boot
+  preloadPaperDollArt({ renderer, fetchBytes, palette });   // U8f: SCBG/BODY/FACE warm at boot (town context; Breton male 0 INTERIM until chargen)
   const droppedLoot = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });   // U8e
   // FindGroundPosition (CreateDroppedLootContainer): the pile lands
   // on the ground BELOW the player, not at the motor's height
@@ -580,6 +582,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       e.preventDefault();
       townTalk.showOverlay(new NativeInventoryWindow({
         items: () => (playerEntity.items ??= []),
+        entity: playerEntity,
         icons: { getTexture, uploadRecord, textures: renderer.textures },
         onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
       }));
@@ -831,6 +834,7 @@ export async function bootWorld(canvas, renderer, params, status) {
               const pile = droppedLoot.pileFor(dropKey);
               townTalk.showOverlay(new NativeInventoryWindow({
                 items: () => (playerEntity.items ??= []),
+        entity: playerEntity,
                 loot: { items: () => pile.items },
                 icons: { getTexture, uploadRecord, textures: renderer.textures },
                 onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),

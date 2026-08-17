@@ -552,3 +552,48 @@ EYEBALLED end to end: the classic treasure sprite lying on the
 street, E reopening the window with REMOVE lit and the dagger in
 the pile column, the pickup emptying the pile and the flat gone.
 Suite 462/103.
+
+## U8f: the equip foundation - ItemEquipTable + the paperdoll base (2026-08-17)
+
+The paperdoll arc opens. Two halves, every law cited:
+- systems/equip.js: the MECHANICS half of ItemEquipTable over the
+  EXISTING C5a/C5c foundation (characters/paperdoll.js EQUIP_SLOTS
+  + characters/equipTable.js's verbatim GetEquipSlot/GetItemHands,
+  whose header always deferred "equip/unequip mechanics" to the
+  Systems arc): EquipItem (arrows refused, SplitStack ONE off a
+  worn stack, a 2H clears both hands, a shield bumps a held 2H, the
+  destination swaps its occupant out and returns the unequipped
+  list), UnequipItem, the string-group bag shape translated to
+  C5c's numeric enum at the boundary (C5c's getItemHands now
+  accepts both - worn bag items land in the slots verbatim and the
+  2H-replace rule inspects them). Items STAY in the bag and carry
+  equipSlot when worn - FilterLocalItems' !IsEquipped gate hides
+  them from the tab lists. FLAGGED: equip sounds, enchantment
+  payloads.
+  THE NEAR-MISS (process): the first draft REBUILT GetEquipSlot/
+  GetItemHands from the DFU source without checking the tree - the
+  C5c foundation already carried them, and the duplicate overwrote
+  test/equip.test.js (the manifest drift guard caught the five
+  vanished tests at the gate). BEFORE porting a DFU class, grep the
+  bible + tree for an existing port; the manifest guard is load-
+  bearing - never bypass it.
+- ui/paperDoll.js: the avatar base on the inventory - the context
+  SCBG background (town SCBG04I0; dungeon/graveyard/region branches
+  cited and pending their contexts) as the subrect (8,7,110,184)
+  filling the 110x184 panel at (49,13); the BODY IMG placed by its
+  OWN baked header offset minus paperDollOrigin (200,8); BlitBody
+  verbatim - nude body, then the NoPlayerNudity censor welds from
+  the clothed sheet in waistHeight-40 bands gated on
+  IsUpperClothed/IsLowerClothed; the FACE CIF head at the entity's
+  faceIndex by its record offset. INTERIM loud: Breton male face 0
+  until chargen fronts identity.
+- THE SLICE LINE: the equip machine is TESTED but not yet wired to
+  the EQUIP button - equip-mode clicks stay flagged no-ops until
+  U8g lands the item overlay layers (playerTexture re-extraction +
+  dyes) and the paperdoll click-to-unequip mask; the FP-weapon
+  binding rides that slice too.
+
+Probed + EYEBALLED: the classic Breton avatar standing on the town
+background inside the panel frame - head with its silver band at
+the baked offset, the censor underwear from the clothed weld, the
+list icons beside him. Suite 464/104.

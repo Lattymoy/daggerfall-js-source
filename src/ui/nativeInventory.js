@@ -41,6 +41,8 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, SCREEN_DIM, shadowText } from './nativePanel.js';
 import { addItem } from '../systems/inventory.js';
+import { isEquipped } from '../systems/equip.js';
+import { drawPaperDoll } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel } from './itemScroller.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
@@ -73,6 +75,7 @@ export const isIngredientTemplate = (i) => i >= 0 && i <= 77;
  *  enchanted} item shape. */
 export function filterByTab(items, tab) {
   return items.filter((it) => {
+    if (isEquipped(it)) return false;   // FilterLocalItems: worn items leave the list
     const wa = it.group === 'Weapons' || it.group === 'Armor';
     const ench = !!it.enchanted;
     if (tab === 'weapons') return wa && !ench;
@@ -211,6 +214,9 @@ export class NativeInventoryWindow {
     drawImgSub(renderer, _art.gold, m, tr[0], tr[1], tr[2], tr[3]);
     const mr = INV_RECTS[this.mode];
     drawImgSub(renderer, _art.gold, m, mr[0], mr[1], mr[2], mr[3]);
+    // U8f: the paperdoll base at (49,13) - background + body welds +
+    // head (the item overlay layers ride U8g)
+    drawPaperDoll(renderer, m, this.hooks.entity ?? { }, 49, 13);
     // both sides through the shared scroller: the filtered bag
     // locally, the pile (loot target or session drops) remotely
     for (const [rect, scroll, items] of [

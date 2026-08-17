@@ -20,7 +20,11 @@ export const ITEM_HANDS = Object.freeze({ None: 0, RightOnly: 1, LeftOnly: 2, Ei
 const GROUP_NAME = { [ITEM_GROUPS.Armor]: 'Armor', [ITEM_GROUPS.Jewellery]: 'Jewellery', [ITEM_GROUPS.MensClothing]: 'MensClothing', [ITEM_GROUPS.WomensClothing]: 'WomensClothing' };
 
 export function getItemHands(item) {
-  if (item.group !== ITEM_GROUPS.Weapons && item.group !== ITEM_GROUPS.Armor) {
+  // U8f: the player bag speaks STRING groups (the shopStock/loot
+  // shape) and worn bag items land in the slots verbatim - accept
+  // both conventions here so the 2H-replace rule can inspect them.
+  const group = typeof item.group === 'string' ? (ITEM_GROUPS[item.group] ?? ITEM_GROUPS.None) : item.group;
+  if (group !== ITEM_GROUPS.Weapons && group !== ITEM_GROUPS.Armor) {
     return ITEM_HANDS.None;
   }
   const w = WEAPON_HANDS[item.templateIndex];
