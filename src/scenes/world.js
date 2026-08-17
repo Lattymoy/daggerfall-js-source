@@ -33,6 +33,7 @@ import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
+import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
 import { removeOne } from '../systems/inventory.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { getStaticDoors } from '../world/staticDoors.js';
@@ -328,6 +329,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => console.warn('[exterior]', l),
   });
+  const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let playerSpawned = false;
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.
@@ -602,17 +604,27 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (precip) {
       precip.draw(precipMode, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
     }
+    // C13: streaming-world arrows fly against the live pixel
+    // collider (lost on geometry/terrain, as DFU misses are). Drawn
+    // without a remap - the streaming pixels each carry their own,
+    // and 99800's weapon archive needs none.
+    arrows.update(dt);
+    arrows.draw(renderer);
     // C9: the exterior FP weapon - swings/sounds through the rig; the
     // open world has no action objects in melee reach (static building
     // doors are the E-enter seam, not bashables - FLAGGED with the
     // towns arc), so melee strike frames resolve to nothing; bows
-    // consume an Arrow + tally (the exterior arrow missile pends -
-    // nothing hostile outdoors until the RMB animal/exterior-foe arc).
+    // consume an Arrow + tally and the loose is VISIBLE now (C13 -
+    // targets pend the RMB animal/exterior-foe arc).
     if (walkMode && playerSpawned) {
       for (const ev of weaponRig.frame(dt)) {
         if (ev !== 'hit') continue;
         if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
-          if (removeOne(playerEntity.items, 131)) tallySkill(playerEntity, SKILLS.Archery);
+          if (removeOne(playerEntity.items, 131)) {
+            tallySkill(playerEntity, SKILLS.Archery);
+            const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+            arrows.fire(cam.pos, fwd);
+          }
         }
       }
       weaponRig.draw();

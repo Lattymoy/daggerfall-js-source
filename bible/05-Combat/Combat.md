@@ -344,3 +344,30 @@ doctrine); flying foes use the walk speed formula as DFU does.
 Suite 406/88 (3 C12 pins in enemymotor.test.js: 3D face pursuit +
 gravity-free hover, the WaterMove caps + beached/dry freezes, the
 paralysis triad). ARENA2 green, probes green.
+
+## C13 (2026-08-17): host arrow missiles - the visible loose SHIPPED
+
+The Combat queue's named next: bows in the exterior/interior hosts
+consumed an Arrow and tallied Archery but nothing flew - the loose
+looked broken. combat/arrowFlight.js is the shared flight for hosts
+WITHOUT the dungeon missile system: the 99800 arrow model oriented
+along its direction (dungeonContext's arrowMatrix law verbatim),
+MISSILE_SPEED/LIFESPAN/RADIUS single-sourced from S5 (spellcast.js),
+the swept geometry raycast (the sweep covers the whole step - raw
+dt cannot tunnel), plus a terrain landing check the dungeon never
+needed: the mesh raycast cannot see the collider's heightAt fallback
+floor, so an arrow at or under it has landed. A lost arrow is LOST
+(DFU's law for a miss - no recovery without a struck target).
+
+Mounted (the host rule): worldModes INTERIOR mode (fires from
+player.eye along eyeDir; per-building collider late-resolved; a new
+interior drops stale flights), exterior.js walk (frame-scope
+eye/fwd), world.js walk (cam.pos + the live streaming collider -
+arrows land on real terrain via heightAt). The dungeon keeps its
+FULL missile path (foe seeking + BowDamage recovery) - this module
+is the no-targets subset, and the dungeon path is the fold target
+when exterior foes land (random encounters, the RMB animal arc).
+
+Suite 409/89 (arrowflight.test.js x3: the S5 single-source + matrix
+law, wall kill + lifespan retire, terrain landing + the function-
+collider form + the all-dead sweep).
