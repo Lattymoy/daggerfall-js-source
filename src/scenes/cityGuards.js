@@ -40,6 +40,7 @@ import {
   KB_UNIT, enemyWeightClassicUnits, weaponKnockbackSpeed,
 } from '../combat/formulas.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { tallySkill, SKILLS } from '../systems/skills.js';
 
 export const GUARD_MOBILE_TYPE = 146;          // MobileTypes.Knight_CityWatch
 export const MAX_ACTIVE_GUARD_SPAWNS = 5;
@@ -130,23 +131,30 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       }
       return;
     }
-    // Non-immediate: witnesses. A seeing guard converts; civilians
-    // start the countdown.
+    // Non-immediate: witnesses. VERBATIM QUIRK (audit 2026-08-17c):
+    // DFU's `if (seenByGuard)` conversion sits INSIDE the pool loop
+    // but OUTSIDE the range/LOS gate - once ANY guard NPC has seen
+    // the crime, EVERY REMAINING pool NPC (in range or not, guard or
+    // not) converts into a spawned guard and is disabled. Preserved
+    // 1:1 (we had converted only the seeing guard).
     let seen = false, seenByGuard = false;
     for (const p of pool) {
       const toPlayer = [playerFeet[0] - p.pos[0], playerFeet[1] - p.pos[1], playerFeet[2] - p.pos[2]];
       const dist = Math.hypot(...toPlayer);
-      if (dist > GUARD_NPC_SPAWN_RANGE) continue;
-      const fwd = [Math.sin(p.fwdYaw), 0, Math.cos(p.fwdYaw)];
-      if (angleDeg(toPlayer, fwd) > GUARD_SEEN_ANGLE) continue;
-      // line of sight from the NPC's eye to the player's chest
-      const eye = [p.pos[0], p.pos[1] + 0.7, p.pos[2]];
-      const dir = [toPlayer[0] / (dist || 1), (toPlayer[1] + 0.6) / (dist || 1), toPlayer[2] / (dist || 1)];
-      const hit = collider.raycast(eye, dir, dist);
-      if (Number.isFinite(hit) && hit < dist - 1e-3) continue;
-      seen = true;
-      if (p.guard) {
-        seenByGuard = true;
+      if (dist <= GUARD_NPC_SPAWN_RANGE) {
+        const fwd = [Math.sin(p.fwdYaw), 0, Math.cos(p.fwdYaw)];
+        if (angleDeg(toPlayer, fwd) <= GUARD_SEEN_ANGLE) {
+          // line of sight from the NPC's eye to the player's chest
+          const eye = [p.pos[0], p.pos[1] + 0.7, p.pos[2]];
+          const dir = [toPlayer[0] / (dist || 1), (toPlayer[1] + 0.6) / (dist || 1), toPlayer[2] / (dist || 1)];
+          const hit = collider.raycast(eye, dir, dist);
+          if (!Number.isFinite(hit) || hit >= dist - 1e-3) {
+            seen = true;
+            if (p.guard) seenByGuard = true;
+          }
+        }
+      }
+      if (seenByGuard) {
         await spawnGuardAt(p.pos, p.fwdYaw);
         p.disable();
       }
@@ -222,6 +230,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         const hdx = playerFeet[0] - g.ai.feet[0], hdz = playerFeet[2] - g.ai.feet[2];
         if (meleeHitConnects(g.ai._dist, g.ai.inSight, withinYaw(g.ai.yaw, hdx, hdz, MELEE_HIT_YAW_DEG))) {
           const wpn = chooseEnemyWeapon(g.entity.weapon, ENEMY_BASICS[GUARD_MOBILE_TYPE]);
+          // AUDIT 2026-08-17c: every resolved enemy attack on the
+          // player tallies Dodging (EnemyAttack, before the damage
+          // branch) - it was never tallied anywhere.
+          tallySkill(playerEntity, SKILLS.Dodging, 1);
           const dmg = calculateAttackDamage(g.entity, playerEntity, { targetGroup: null, weapon: wpn });
           if (dmg > 0) onPlayerHurt?.(dmg, wpn);   // G2: the host's arrest interception rides this
         }

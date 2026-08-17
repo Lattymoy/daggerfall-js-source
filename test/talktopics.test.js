@@ -63,6 +63,27 @@ test('talkTopics: the compass bands, the tier roll, and the answer table shape',
   assert.ok([7261, 7276, 7291].includes(a.textId));
 });
 
+test('talkTopics audit pin: the pool merge is bounded by the SUBRECORD count', () => {
+  // DFU scans SubRecords.Length entries - a named-type entry PAST the
+  // subrecord count is header garbage and must never draw from the
+  // pool (it would misalign every later name).
+  const mkData = (type, seed = 0) => ({ nameSeed: seed, factionId: 0, sector: 0, locationId: 0, quality: 0, buildingType: type });
+  const dfBlock = { rmbBlock: {
+    fldHeader: { buildingDataList: [mkData(15), mkData(17), mkData(15), mkData(15)] },   // tavern, house, tavern(garbage), tavern(garbage)
+    subRecords: [{}, {}],   // only TWO real subrecords
+  } };
+  const blocks = [{ dfBlock, originX: 0, originZ: 0 }];
+  const pool = [
+    { nameSeed: 111, factionId: 0, sector: 0, locationId: 0, quality: 5, buildingType: 15 },
+    { nameSeed: 222, factionId: 0, sector: 0, locationId: 0, quality: 6, buildingType: 15 },
+  ];
+  const merged = mergeNamedBuildings(pool, blocks);
+  const list = merged.get(blocks[0]);
+  assert.equal(list[0].nameSeed, 111, 'the real tavern draws the first pool entry');
+  assert.equal(list[2].nameSeed, 0, 'the garbage entry past the subrecord count draws NOTHING');
+  assert.equal(list[3].nameSeed, 0);
+});
+
 test('talkTopics: the named-building pool merge over the real Daggerfall city', { skip: skipReal }, () => {
   const maps = new MapsFile();
   maps.load(

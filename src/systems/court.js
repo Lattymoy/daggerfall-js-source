@@ -41,6 +41,17 @@ export const CRIMES = Object.freeze({
 });
 export const CRIME_IDS = Object.freeze({ Pickpocketing: 12 });
 
+// The %cri crime names (MacroHelper.Crime, verbatim strings).
+export const CRIME_NAMES = Object.freeze(['None', 'Attempted Breaking and Entering', 'Trespassing', 'Breaking and Entering', 'Assault', 'Murder', 'Tax Evasion', 'Criminal Conspiracy', 'Vagrancy', 'Smuggling', 'Piracy', 'High Treason', 'Pickpocketing', 'Theft', 'Treason', 'Loan Default']);
+
+/** MacroHelper.Penalty (%pen), verbatim: type 2 = the regular
+ *  punishment string with %gtp/%dip; 0 = Banishment; 1 = Execution. */
+export function penaltyText(court) {
+  if (court.punishmentType === 2) return `${court.fine} gold pieces in fines and ${court.daysInPrison} days in prison`;
+  if (court.punishmentType === 1) return 'Execution';
+  return 'Banishment';
+}
+
 // FALL.EXE (index 0 unused; Treason = half High_Treason, DFU's note)
 export const REPUTATION_LOSS_PER_CRIME = Object.freeze(
   [0x00, 0x0A, 0x05, 0x0A, 0x08, 0x14, 0x0A, 0x02, 0x01, 0x02, 0x02, 0x4B, 0x02, 0x08, 0x24, 0x0A]);

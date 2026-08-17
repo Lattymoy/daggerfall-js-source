@@ -67,7 +67,11 @@ export function mergeNamedBuildings(exteriorBuildings, blocks) {
   const out = new Map();   // block -> merged buildingDataList copy
   for (const b of blocks) {
     const list = b.dfBlock.rmbBlock.fldHeader.buildingDataList.map((d) => ({ ...d }));
-    for (let i = 0; i < list.length; i++) {
+    // AUDIT 2026-08-17c: DFU scans SubRecords.Length entries, NOT the
+    // full 32-slot header - garbage entries past the subrecord count
+    // must never steal pool draws (they misalign every later name).
+    const count = Math.min(list.length, b.dfBlock.rmbBlock.subRecords?.length ?? list.length);
+    for (let i = 0; i < count; i++) {
       if (!isNamedBuildingType(list[i].buildingType)) continue;
       const item = next(list[i].buildingType);
       if (!item) continue;   // end of the city list (DFU logs and keeps block data)

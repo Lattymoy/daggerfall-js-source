@@ -1228,6 +1228,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // drops the weapon if the target is metal-immune to it - the
     // player has no minMetalToHit, so that gate is inert)
     const wpn = foeDeps.chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
+    // AUDIT 2026-08-17c: every resolved enemy attack on the player
+    // tallies Dodging (EnemyAttack, before the damage branch) - it
+    // was never tallied since C8.
+    tallySkill(foeDeps.playerEntity, SKILLS.Dodging, 1);
     // S18: the special-attack rider seam - monster weaponless hits
     // run OnMonsterHit per hit (disease/paralysis/fatigue)
     const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {
