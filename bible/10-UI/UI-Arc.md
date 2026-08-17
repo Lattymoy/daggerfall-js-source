@@ -281,3 +281,45 @@ ROUTED: SetEnemyAlert on the 354 refusal (no alert state yet);
 DFU's youNeverAwaken death text still defers to our death screen
 (documented departure); TEXT 26 (>99 hours) is enforced silently by
 the 2-digit entry field.
+
+## U8a (2026-08-17): THE NATIVE PANEL - real classic art begins SHIPPED
+
+Mac's call: import the real Daggerfall menus/artwork. The IMG/CIF
+readers and all 333 UI art files were already in hand; this slice
+lays the foundation and retrofits the FIRST window.
+
+- ui/nativePanel.js - DFU's NativePanel semantics: every classic
+  window authors in VIRTUAL 320x200 pixels; the screen mapping is
+  integer scale (min 1) + centered letterbox (the hud.js law).
+  loadImg (one IMG -> texture + size, deps-injected like loadHud),
+  drawImg/drawRect through the mapping, shadowText = DFU's
+  AddDefaultShadowedTextLabel (color 243,239,44 / shadow 93,77,12
+  at +1,+1 virtual px, verified against DaggerfallUI.cs), SCREEN_DIM
+  behind modals, pointToNative for touch hit rects.
+- THE CHARACTER SHEET retrofit (the first native window):
+  INFO00I0.IMG with DaggerfallCharacterSheetWindow's verbatim label
+  geometry - name (41,4) race (41,14) class (46,24) level (45,34)
+  gold (39,44) fatigue/64 (57,54) health (52,64) encumbrance (90,74)
+  = carried template weight + gold at 0.0025/piece over
+  floor(Str*1.5) (FormulaHelper.MaxEncumbrance) - and the 8 stats
+  centered in 28-wide panels at (141, 17+i*24). Keys 1-4 pop the
+  skill groups as interim text panels (the classic BUTTON popups'
+  function); art-less falls back to the old text page (never traps).
+- HOST RULE: F5 opens the sheet in BOTH exterior hosts now (it was
+  dungeon-only), routed through the townTalk overlay seam
+  (isChoiceWindow = raw codes); the dungeon keeps toggleCharSheet
+  with a lazy preload; both hosts warm INFO00I0 at boot.
+
+FLAGGED loud: the PORTRAIT (200,8) pends chargen faces; the
+level-up screen + every other window stay on the text idiom (one
+window per U8 slice: trade/inventory/talk/rest/chargen queue); the
+classic buttons draw from the ART (no click/touch rects yet -
+pointToNative is ready for them); interior-mode F5 pends worldModes
+key routing.
+
+Probed live + EYEBALLED (the doctrine): the real stone page renders
+with every label in its engraved field - "RACE: Breton, LEVEL: 1,
+FATIGUE: 50/50, ENCUMBRANCE: 0/75", stats in their boxes (the 0s
+are the honest pre-chargen interim entity), the portrait window
+showing the page art; Digit1 pops the skill panel; F5 toggles
+closed. Suite 452/99.

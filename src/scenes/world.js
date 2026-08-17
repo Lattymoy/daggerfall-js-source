@@ -28,6 +28,7 @@ import { createTownTalk } from './townTalk.js';   // T3b
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
+import { CharSheet, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
@@ -431,6 +432,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     onCrime: () => _crimeResponse(),   // G1: late-bound - the guards mount below
   });
   townTalk.ensureLoaded();
+  preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   // T3d: the Where-is directory follows the player's LOCATION PIXEL
   // (DFU's TalkManager builds its list for PlayerGPS.CurrentLocation).
   // On pixel crossing, townTalk's topics swap to the new pixel's
@@ -551,7 +553,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   // or the browser menu steals focus (Firefox activates it on keyUP).
   // T3b: the town seam eats its keys FIRST (F1-F4 modes; overlay
   // Esc/Enter) so a held overlay never leaks into the movement set.
-  addEventListener('keydown', (e) => { if (townTalk.keydown(e)) return; keys.add(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
+  addEventListener('keydown', (e) => {
+    if (townTalk.keydown(e)) return;
+    // U8a: F5 opens the classic character sheet (the dungeon's key,
+    // host rule); preventDefault stops the browser reload.
+    if (e.code === 'F5' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      e.preventDefault();
+      townTalk.showOverlay(new CharSheet(playerEntity));
+      return;
+    }
+    keys.add(e.code);
+    if (e.code === 'AltLeft') e.preventDefault();
+  });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
   canvas.addEventListener('pointerdown', () => requestLook(canvas));
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
@@ -634,6 +647,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     window.__guards = () => JSON.stringify(cityGuards._debug());   // G1 probe surface
     window.__crime = () => _crimeResponse();   // G1: force the response without pickpocket RNG
     window.__guardDamage = (i, dmg) => cityGuards._damage(i, dmg);   // G3: the real death path for loot probes
+    window.__uiArt = () => JSON.stringify({ charsheet: charSheetArtLoaded() });   // U8a probe surface
     window.__attack = () => weaponRig.clickAttack();   // G4: ClickToAttack for swing probes
     window.__townDebug = () => {
       const pixels = [];

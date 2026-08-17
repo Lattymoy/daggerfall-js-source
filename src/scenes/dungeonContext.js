@@ -32,7 +32,7 @@ import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, applyCharacter, startingSpells, CLASS_CAREERS } from '../systems/chargen.js';
 import { ChargenFlow } from '../ui/chargen.js';
-import { LevelUpScreen, CharSheet } from '../ui/charsheet.js';
+import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
 import { InventoryWindow, SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
 import { tallySkill, skillValue, SKILLS, WEAPON_SKILL, SKILL_NAMES } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
@@ -1850,6 +1850,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     toggleCharSheet() {
       if (activeOverlay) return;
+      preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: lazy - ready by the next open at worst
       activeOverlay = new CharSheet(playerEntity);
     },
     toggleInventory() {
