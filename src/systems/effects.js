@@ -55,6 +55,9 @@ export const BUFF_KINDS = Object.freeze({
   '24,0': 'shadeNormal',
   '24,1': 'shadeTrue',
   '23,1': 'chameleonTrue',
+  // S22 FreeAction (26,255): Restoration duration buff - the entity
+  // is IMMUNE TO PARALYSIS while it lives (IsImmuneToParalysis).
+  '26,255': 'freeAction',
 });
 
 /** DaggerfallEntity.IsInvisible / IsBlending / IsAShade, verbatim:
@@ -84,6 +87,19 @@ export const classicSub = (e) => e.subType & 0xff;
 export const buffKind = (e) => BUFF_KINDS[`${e.type},${classicSub(e)}`] ?? null;
 export const hasActiveEffect = (entity, kind) =>
   !!entity.activeEffects?.some((a) => a.kind === kind);   // presence = active; expired entries End on the NEXT tick pass (DFU shape)
+
+// S22 FreeAction: the two DFU laws.
+// FLAGGED: career hard-immunity (Career.Paralysis == Immune) and the
+// racial template flags pend the career tolerance decode - FreeAction
+// is the only live immunity source today.
+export const isImmuneToParalysis = (entity) => hasActiveEffect(entity, 'freeAction');
+/** DaggerfallEntity.IsParalyzed, verbatim: the immunity folds at READ
+ *  time - `!IsImmuneToParalysis && isParalyzed`. A paralysis bundle
+ *  that landed BEFORE FreeAction keeps ticking underneath; casting
+ *  FreeAction frees the entity NOW, and if FreeAction expires while
+ *  the paralysis still has rounds, the paralysis RESUMES. */
+export const entityIsParalyzed = (entity) =>
+  hasActiveEffect(entity, 'paralyze') && !isImmuneToParalysis(entity);
 
 export const isHealHealth = (e) => e.type === 10 && e.subType === 8;
 export const isDamageHealth = (e) => e.type === 4 && e.subType === 0;
@@ -445,6 +461,11 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       continue;
     }
     if (isParalyze(e)) {
+      // S22: AssignBundle drops an incoming Paralyze BEFORE Start
+      // when the entity is hard-immune (FreeAction's
+      // IsImmuneToParalysis; career/racial pend) - silently, no
+      // stack, no chance roll, no message (EntityEffectManager.cs:496).
+      if (isImmuneToParalysis(target)) continue;
       // Paralyze (0, 255): AssignBundle's exact gate order. The
       // chance rolls ALWAYS (SetChanceSuccess runs in Start); an
       // incumbent re-cast stacks its rounds INSIDE Start (AddState)

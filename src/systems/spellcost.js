@@ -33,6 +33,7 @@ export const EFFECT_COST_TABLE = Object.freeze({
   '25,255': { skill: 25, duration: { A: 20, B: 100, offset: 0 } },                                  // Slowfall (Alteration)
   '30,255': { skill: 25, duration: { A: 20, B: 8, offset: 0 } },                                    // WaterBreathing (Alteration) - P12
   '31,255': { skill: 26, duration: { A: 20, B: 8, offset: 0 } },                                    // WaterWalking (Thaumaturgy)
+  '26,255': { skill: 23, duration: { A: 20, B: 8, offset: 0 } },                                    // FreeAction (Restoration) - S22
   '23,0':   { skill: 24, duration: { A: 20, B: 80, offset: 0 } },                                   // ChameleonNormal (Illusion)
   '23,1':   { skill: 24, duration: { A: 40, B: 120, offset: 0 } },                                  // ChameleonTrue (Illusion) - S21
   '13,0':   { skill: 24, duration: { A: 40, B: 120, offset: 0 } },                                  // InvisibilityNormal (Illusion) - S21
