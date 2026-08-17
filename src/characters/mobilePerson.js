@@ -47,7 +47,7 @@ const MOVE_FLIPS = [false, false, false, false, false, true, true, true];
 export class MobilePerson {
   /**
    * @param nav CityNavigation
-   * @param opts { archive, guard, frameCount(record), collider, groundY(x,z), rand }
+   * @param opts { archive, guard, frameCount(record, archive), collider, groundY(x,z), rand }
    */
   constructor(nav, { archive, guard = false, frameCount, collider = null, groundY = () => 0, rand = Math.random } = {}) {
     this.nav = nav;
@@ -74,11 +74,21 @@ export class MobilePerson {
     this.gx = gx; this.gy = gy;
     const [x, z] = this.nav.navToWorld(gx, gy);
     this.pos = [x, this.groundY(x, z), z];
+    // InitMotor parity (audit 2026-08-17): targetScenePosition =
+    // transform.position - a resume-from-idle BEFORE the first seek
+    // marches to SELF (instant arrival -> seek), never to a stale
+    // origin target.
+    this.target = [...this.pos];
+    this.tx = -1; this.ty = -1;
     this.nav.setOccupied(gx, gy);
     this.state = 'seek';
     this.seekCount = 0;
     this.moveCount = 0;
   }
+
+  /** RandomiseNPC identity re-roll (the pool re-rolls EVERY spawn -
+   *  recycled walkers come back as someone else). */
+  setIdentity(archive, guard) { this.archive = archive; this.guard = guard; }
 
   release() { this.nav.clearOccupied(this.gx, this.gy); this.nav.clearOccupied(this.tx, this.ty); }
 
@@ -101,6 +111,11 @@ export class MobilePerson {
 
   _seek() {
     this.seekCount++;
+    // InitNavPosition: get back on the grid when unset (-1 sentinel -
+    // e.g. after an arrival at the self-target place() sets).
+    if (this.gx === -1 || this.gy === -1) {
+      [this.gx, this.gy] = this.nav.worldToNav(this.pos[0], this.pos[2]);
+    }
     const weights = [this._weight(0), this._weight(1), this._weight(2), this._weight(3)];
     const currentWeight = this.nav.weightAt(this.gx, this.gy);
     let targetWeight = this._clear(this.dir) ? weights[this.dir] : 0;
@@ -114,10 +129,15 @@ export class MobilePerson {
       this._setTarget();
       return;
     }
-    // 80% chance to leave a downgrade for the best neighbor
+    // 80% chance to leave a downgrade for the best neighbor.
+    // VERBATIM QUIRK (audit 2026-08-17): DFU scans Enumerable.
+    // Range(0, 3) = North/South/East ONLY - West (3) is never
+    // evaluated as a "best" direction; a westward road is only ever
+    // entered via the random-direction branch or by already heading
+    // west. Preserved 1:1.
     if (targetWeight < currentWeight && this.rand() > TILE_DOWNGRADE_CHANCE) {
       let bestWeight = targetWeight, bestDir = this.dir;
-      const order = [0, 1, 2, 3].sort(() => this.rand() - 0.5);
+      const order = [0, 1, 2].sort(() => this.rand() - 0.5);
       for (const d of order) {
         if (weights[d] > bestWeight && this._clear(d)) { bestWeight = weights[d]; bestDir = d; }
       }
@@ -169,12 +189,12 @@ export class MobilePerson {
     while (this._timer >= 1 / fps) { this._timer -= 1 / fps; this.frame++; }
     if (this.state === 'idle') {
       const rec = this.guard ? PERSON_GUARD_IDLE_RECORD : PERSON_IDLE_RECORD;
-      const n = Math.max(1, this.frameCount(rec));
+      const n = Math.max(1, this.frameCount(rec, this.archive));
       return { record: rec, frame: this.frame % n, flip: false };
     }
     const o = mobileOrientation(DIR_YAW[this.dir], this.pos, cameraPos);
     const rec = MOVE_RECORDS[o];
-    const n = Math.max(1, this.frameCount(rec));
+    const n = Math.max(1, this.frameCount(rec, this.archive));
     return { record: rec, frame: this.frame % n, flip: MOVE_FLIPS[o] };
   }
 }

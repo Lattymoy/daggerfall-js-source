@@ -322,10 +322,11 @@ export async function bootWorld(canvas, renderer, params, status) {
           totalBlocks: loc.width * loc.height,
           race: 'Breton',
           makePerson: (archive, guard) => {
-            const t = personTex.get(archive);
             const person = new MobilePerson(nav, {
               archive, guard,
-              frameCount: (rec) => t.getFrameCount(rec),
+              // audit 2026-08-17: identity re-rolls per spawn - resolve
+              // by the person's LIVE archive, never the creation one
+              frameCount: (rec, a) => personTex.get(a).getFrameCount(rec),
               collider: personCollider,
               groundY: () => locOrigin[1],
             });
@@ -783,12 +784,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!p.population) continue;
       const t = state.pixelTranslation(p.px, p.py);
       const local = [cam.pos[0] - t[0] - p.locOrigin[0], cam.pos[1] - t[1], cam.pos[2] - t[2] - p.locOrigin[2]];
-      const live = p.population.update(dt, local, cam.yaw, local, isDay, (person) => {
+      // audit 2026-08-17: the population freezes under the talk
+      // overlay (DFU pauses the sim under UI windows)
+      const live = p.population.update(townTalk.overlayActive ? 0 : dt, local, cam.yaw, local, isDay, (person) => {
         const pd = Math.hypot(person.pos[0] - local[0], person.pos[2] - local[2]);
         return _playerStill && pd < 2.5 && !!weaponRig.playerWeapon.sheathed && !isInvisible(playerEntity);
       });
       for (const { person, out } of live) {
         const batch = p.personBatches.get(person);
+        batch.archive = person.archive;   // audit 2026-08-17: identity re-rolls per spawn - re-point the batch
         const pt = personTex.get(person.archive);
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${person.archive}_${rkey}`)) uploadRecordFrame(person.archive, out.record, out.frame);

@@ -15,7 +15,10 @@
 //
 // FLAGGED loud: Info mode opens the same talk window (DFU routes
 // Info/Grab/Talk on mobiles identically); guards on failed
-// pickpocket pend the crime slice; topics/tones/portrait pend T3c.
+// pickpocket pend the crime slice; topics/tones/portrait pend T3c;
+// pickpocket gold/nothing land as HUD lines where DFU raises a
+// modal MessageBox ("not successful" IS a HUD popup in DFU too) -
+// the box swap rides the U-arc message-box rollout to these hosts.
 
 import { FactionFile } from '../formats/factionFile.js';
 import { TextRsc } from '../formats/textRsc.js';

@@ -413,10 +413,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     totalBlocks: loc.width * loc.height,
     race: 'Breton',
     makePerson: (archive, guard) => {
-      const t = personTex.get(archive);
       const person = new MobilePerson(cityNav, {
         archive, guard,
-        frameCount: (rec) => t.getFrameCount(rec),
+        // audit 2026-08-17: identity re-rolls per spawn - resolve the
+        // texture by the person's LIVE archive, never the creation one
+        frameCount: (rec, a) => personTex.get(a).getFrameCount(rec),
         collider,
         groundY: (x, z) => collider.heightAt(x, z),
       });
@@ -649,7 +650,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       _playerStill = _lastPlayerPos !== null &&
         Math.hypot(cam.pos[0] - _lastPlayerPos[0], cam.pos[2] - _lastPlayerPos[2]) < 0.001;
       _lastPlayerPos = [cam.pos[0], cam.pos[1], cam.pos[2]];
-      const live = population.update(dt, cam.pos, cam.yaw, eye, !isNight(minute), (person) => {
+      // audit 2026-08-17: DFU pauses the sim under UI windows - the
+      // population freezes (dt 0 still returns frames for drawing)
+      // while the talk overlay is up, so nobody walks away mid-talk.
+      const popDt = townTalk.overlayActive ? 0 : dt;
+      const live = population.update(popDt, cam.pos, cam.yaw, eye, !isNight(minute), (person) => {
         const pd = Math.hypot(person.pos[0] - cam.pos[0], person.pos[2] - cam.pos[2]);
         return _playerStill && pd < 2.5 && !!weaponRig.playerWeapon.sheathed && !isInvisible(playerEntity);
       });
@@ -657,6 +662,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       const personBatches = [];
       for (const { person, out } of live) {
         const batch = personBatchOf.get(person);
+        batch.archive = person.archive;   // audit 2026-08-17: identity re-rolls per spawn - re-point the batch
         const t = personTex.get(person.archive);
         const rkey = `${out.record}#${out.frame}`;
         if (!renderer.textures.has(`${person.archive}_${rkey}`)) uploadRecordFrame(person.archive, out.record, out.frame);

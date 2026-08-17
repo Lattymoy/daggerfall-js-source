@@ -505,4 +505,21 @@ pickpocket pend crime; the streaming host's People faction rides
 the START region until travel wiring; touch has no mode keys yet
 (the mobile input arc).
 
+## AUDIT 2026-08-17b: the towns/talk parity pass
+
+The T1 modules were re-read line by line against MobilePersonMotor /
+PopulationManager / CityNavigation (they had been built from working
+digests). Six real findings, fixed with pins - the full record lives
+in Home.md's Audits section: the self-target place() + nav rederive
+(a pre-seek idle resume marched to the origin), the N/S/E-only best
+scan (DFU's Range(0,3) quirk, now preserved), the tick-reset law (at
+most one pool tick per frame), the rect+62.5 spawn range gate (far
+pixels park at pool 0), RandomiseNPC re-rolling at EVERY spawn with
+the 1/32 GUARD branch (guards spawn now; hosts re-point batch.archive
+and resolve frameCount by the live archive), and the UI pause (the
+population freezes under the talk overlay). T2's "far pools park at
+1" note is superseded: they park at 0 under the range gate. Suite
+428/94; townProbe + worldTownProbe + talkProbe re-run green (the
+caught-pickpocket path witnessed live).
+
 Suite 420/92. ARENA2 green, probes green.
