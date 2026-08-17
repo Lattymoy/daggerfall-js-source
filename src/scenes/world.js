@@ -21,6 +21,10 @@ import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, trs } from '../world/mat4.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
+import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
+import { TownPopulation } from '../systems/townPopulation.js';
+import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
+import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState } from '../world/streamingWorld.js';
 import { layoutNature } from '../world/terrainNature.js';
@@ -127,7 +131,19 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   // --- Shared caches (dataPipeline.js, extracted at P7) -----------------
   const pipeline = createDataPipeline({ renderer, arch, palette });
-  const { getTexture, uploadRecord, getGpuMesh, cpuModels } = pipeline;
+  const { getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, cpuModels } = pipeline;
+
+  // T2 towns: the person textures (climate People table pends - Breton
+  // + guard, the T1 flag), loaded once on the first populated pixel.
+  // StreamingWorld adds PopulationManager only to these location types
+  // (verbatim): TownCity 0, TownHamlet 1, TownVillage 2, HomeFarms 3,
+  // ReligionTemple 5, Tavern 6, HomeWealthy 8.
+  const POPULATED_LOCATION_TYPES = new Set([0, 1, 2, 3, 5, 6, 8]);
+  const personArchives = [...PERSON_TEXTURES.Breton.male, ...PERSON_TEXTURES.Breton.female, GUARD_TEXTURE];
+  const personTex = new Map();
+  let _personTexLoad = null;
+  const ensurePersonTex = () =>
+    (_personTexLoad ??= Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a)))));
 
   // --- Per-pixel build --------------------------------------------------
   const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
@@ -214,6 +230,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // MaterialReader.ChangeClimate semantics).
     const texRemap = new Map();
     const models = []; // { gpu, local } - local precomposed pixel-local matrix
+    let population = null;   // T2 towns: this pixel's wandering pool
+    let locOrigin = null;    // the location origin, pixel-local
+    let personBatches = null;
     if (dfLocation) {
       const loc = layoutLocation(dfLocation, maps, blocks);
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
@@ -271,6 +290,49 @@ export async function bootWorld(canvas, renderer, params, status) {
           ]);
         }
       }
+
+      // T2 towns: the streaming host's wandering population (the
+      // standing host rule - every scene-side seam ships in every
+      // motor host). The navgrid + persons live in the LOCATION frame
+      // (horizontal from the location origin, vertical pixel-local);
+      // the frame loop converts through the live floating-origin
+      // translation. Persons ground on the flattened location terrain
+      // (blendLocationTerrain planes the rect to avg - the same base
+      // the RMB flats sit on). Location-type gate verbatim.
+      if (POPULATED_LOCATION_TYPES.has(dfLocation.mapTableData.locationType)) {
+        await ensurePersonTex();
+        const nav = new CityNavigation(loc.width, loc.height);
+        for (const b of loc.blocks) {
+          const srcTiles = b.dfBlock.rmbBlock.fldHeader.groundData.groundTiles;
+          nav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData,
+            (tx, ty) => srcTiles[tx][ty].textureRecord);
+        }
+        locOrigin = [locLocal[0], locLocal[1], locLocal[2]];
+        personBatches = new Map();   // person -> batch (destroyed with the pixel)
+        const personCollider = {
+          // location-frame raycast through the live world collider
+          raycast: (from, dir, l) => {
+            const t = state.pixelTranslation(px, py);
+            return collider.raycast(
+              [from[0] + locOrigin[0] + t[0], from[1] + t[1], from[2] + locOrigin[2] + t[2]], dir, l);
+          },
+        };
+        population = new TownPopulation(nav, {
+          totalBlocks: loc.width * loc.height,
+          race: 'Breton',
+          makePerson: (archive, guard) => {
+            const t = personTex.get(archive);
+            const person = new MobilePerson(nav, {
+              archive, guard,
+              frameCount: (rec) => t.getFrameCount(rec),
+              collider: personCollider,
+              groundY: () => locOrigin[1],
+            });
+            personBatches.set(person, renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]));
+            return person;
+          },
+        });
+      }
     }
 
     const nature = layoutNature(samples, tilemap, {
@@ -294,6 +356,7 @@ export async function bootWorld(canvas, renderer, params, status) {
 
     built.set(key, {
       px, py, terrain, tilemapTex, groundArchive, models, batches, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      population, locOrigin, personBatches,   // T2 towns
 
       location: dfLocation ? dfLocation.name : null,
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
@@ -309,6 +372,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer.destroyMesh(p.terrain);
     renderer.gl.deleteTexture(p.tilemapTex);
     for (const b of p.batches) renderer.destroyBatch(b);
+    if (p.personBatches) for (const b of p.personBatches.values()) renderer.destroyBatch(b);   // T2
     collider.removeBucket(key);
     built.delete(key);
   }
@@ -413,7 +477,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     window.__move = (dx, dy, dz) => {
       cam.pos[0] += dx; cam.pos[1] += dy; cam.pos[2] += dz;
     };
-    window.__pose = (x, y, z, yaw, pitch) => { cam.pos = [x, y, z]; cam.yaw = yaw; cam.pitch = pitch; };
+    window.__pose = (x, y, z, yaw, pitch) => {
+      // walk mode: the camera FOLLOWS the motor - move the player
+      // (a bare cam.pos write is overwritten next frame; T1 probe fix)
+      if (walkMode) { player.spawn(x, y, z); playerSpawned = true; } else cam.pos = [x, y, z];
+      cam.yaw = yaw; cam.pitch = pitch;
+    };
     window.__streamIdle = () => queue.length === 0 && !building;
     window.__builtCount = () => built.size;
     window.__currentPixel = () => `${state.current.x},${state.current.y}`;
@@ -423,6 +492,55 @@ export async function bootWorld(canvas, renderer, params, status) {
       warp: (x, y, z) => { player.spawn(x, y, z); playerSpawned = true; },
     };
     window.__frame = 0;
+  }
+
+  // T2: the townsfolk probe surface - aggregated over built pixels,
+  // positions reported in WORLD space (through the live translation).
+  // Installed AFTER the mode machine exists: modes.installShotProbes()
+  // defines an interior __people hook, and the town surface must win
+  // in this host exactly as it does in the exterior host (the probe
+  // read a null __people for 300s before this ordering was learned).
+  function installTownProbes() {
+    window.__people = () => {
+      const out = [];
+      for (const p of built.values()) {
+        if (!p.population) continue;
+        const t = state.pixelTranslation(p.px, p.py);
+        p.population.pool.forEach((it, i) => {
+          if (!it.active) return;
+          out.push({
+            pixel: `${p.px},${p.py}`, i, visible: it.visible, pend: it.scheduleEnable, recyc: it.scheduleRecycle,
+            archive: it.person.archive, state: it.person.state, moves: it.person.moveCount, seeks: it.person.seekCount,
+            pos: [
+              it.person.pos[0] + p.locOrigin[0] + t[0],
+              it.person.pos[1] + t[1],
+              it.person.pos[2] + p.locOrigin[2] + t[2],
+            ].map((v) => Number(v.toFixed(2))),
+          });
+        });
+      }
+      return JSON.stringify(out);
+    };
+    window.__townDebug = () => {
+      const pixels = [];
+      for (const p of built.values()) {
+        if (!p.population) continue;
+        const t = state.pixelTranslation(p.px, p.py);
+        const local = [cam.pos[0] - t[0] - p.locOrigin[0], cam.pos[1] - t[1], cam.pos[2] - t[2] - p.locOrigin[2]];
+        const [pgx, pgy] = p.population.nav.worldToNav(local[0], local[2]);
+        pixels.push({
+          pixel: `${p.px},${p.py}`, loc: p.location, pool: p.population.pool.length,
+          max: p.population.maxPopulation,
+          act: p.population.pool.filter((it) => it.active).length,
+          vis: p.population.pool.filter((it) => it.visible).length,
+          pgx, pgy, w: p.population.nav.weightAt(pgx, pgy),
+          spawnTest: p.population.nav.getRandomSpawnPosition(pgx, pgy, 96, 10),
+          origin: [p.locOrigin[0] + t[0], p.locOrigin[1] + t[1], p.locOrigin[2] + t[2]],
+          navW: p.population.nav.width, navH: p.population.nav.height,
+        });
+      }
+      return JSON.stringify({ night: isNight(minuteNow()), pixels });
+    };
   }
 
   // P3-P6 mode machine (worldModes.js, extracted at P7): the frame
@@ -457,9 +575,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     })),
     baseCollider: () => collider,
   });
-  if (shotMode) modes.installShotProbes();
+  if (shotMode) { modes.installShotProbes(); installTownProbes(); }
 
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
+  let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker
   // A4: the streaming world's animal sources - pixel-local positions
   // translated through the floating origin at roll time (16 Hz over
   // a handful of animals; recenters are free).
@@ -625,6 +744,43 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(allBatches, camRight, new Float32Array([0, 1, 0]));
+    // T2 towns: every built populated pixel runs its own pool
+    // (PopulationManager is per-location); the pool sees the player in
+    // the pixel's LOCATION frame, and live persons draw through the
+    // current translation on the flats' axis (the billboard-axis
+    // doctrine). The politeness gate is the exterior host's verbatim:
+    // player still + within 2.5 + weapon SHEATHED + visible + no
+    // enemies (this host's exterior has none).
+    _playerStill = _lastPlayerPos &&
+      Math.hypot(cam.pos[0] - _lastPlayerPos[0], cam.pos[2] - _lastPlayerPos[2]) < 0.001;
+    _lastPlayerPos = [cam.pos[0], cam.pos[1], cam.pos[2]];
+    const isDay = !isNight(minute);
+    const livePersonBatches = [];
+    for (const p of built.values()) {
+      if (!p.population) continue;
+      const t = state.pixelTranslation(p.px, p.py);
+      const local = [cam.pos[0] - t[0] - p.locOrigin[0], cam.pos[1] - t[1], cam.pos[2] - t[2] - p.locOrigin[2]];
+      const live = p.population.update(dt, local, cam.yaw, local, isDay, (person) => {
+        const pd = Math.hypot(person.pos[0] - local[0], person.pos[2] - local[2]);
+        return _playerStill && pd < 2.5 && !!weaponRig.playerWeapon.sheathed && !isInvisible(playerEntity);
+      });
+      for (const { person, out } of live) {
+        const batch = p.personBatches.get(person);
+        const pt = personTex.get(person.archive);
+        const rkey = `${out.record}#${out.frame}`;
+        if (!renderer.textures.has(`${person.archive}_${rkey}`)) uploadRecordFrame(person.archive, out.record, out.frame);
+        const sz = scaledBillboardSize(pt.getSize(out.record), pt.getScale(out.record));
+        batch.record = rkey;
+        batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };
+        batch.origin = [
+          person.pos[0] + p.locOrigin[0] + t[0],
+          person.pos[1] + t[1],
+          person.pos[2] + p.locOrigin[2] + t[2],
+        ];
+        livePersonBatches.push(batch);
+      }
+    }
+    if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, new Float32Array([0, 1, 0]));
     if (precip) {
       precip.draw(precipMode, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
     }
