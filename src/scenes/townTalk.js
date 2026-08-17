@@ -256,8 +256,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   function answerWhereIs(building) {
-    // GetAnswerWhereIs (knows-always FLAGGED) + the %hnt hint chain:
-    // a 7333 variant with %loc = the building, %di = the compass hint.
+    // GetAnswerWhereIs (the seed-stable knowledge roll picks the
+    // knows/doesn't-know table half) + the %hnt hint chain: a 7333
+    // variant with %loc = the building, %di = the compass hint.
     const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality ?? 50, _talkNpc?._talkSeed ?? 0);
     const hint = randomVariant(7333, '%loc is %di of here')
       .replaceAll('%loc', building.name).replaceAll('%di', a.direction);
