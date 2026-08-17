@@ -696,6 +696,39 @@ answer record on screen.
 
 Suite 440/97; the T3c "streaming host directory pends" flag clears.
 
+## G3 (2026-08-17): CORPSE LOOT - killed guards drop their gear SHIPPED
+
+The exterior hosts' first loot seam, on the dungeon's S2 pickup
+shape: cityGuards gains lootTargets() (killed guards with items ->
+E-ray AABB targets, feet to +0.6) and takeLoot() (transfer via
+addItem into the player entity, 'You take N items.', the corpse
+billboard stays as dungeon corpses do). Both hosts slot it into the
+verbatim PlayerActivate nearest-hit order: townsperson -> guard
+corpse -> building door. Only a KILLED guard (the new corpse flag,
+set in the real death path) is lootable - stand-down walk-aways
+vanish with their items; a corpse survives the crime clear, as DFU
+loot containers do.
+
+THE PARITY FIND: guard corpses came up EMPTY because
+Knight_CityWatch has NO LootTableKey in DFU (verified against
+EnemyBasics.cs - the table roll is legitimately empty). The
+droppable loot is the EQUIPMENT: DFU's AssignEnemyStartingEquipment
+adds every equipped piece to enemyEntity.Items after each EquipItem.
+Ported as equipmentItems() (the shield rides its armorPieces armor
+item, never the leftHand marker; a leftHand weapon is its own item)
+- and the SAME gap was live in the dungeon: class-foe corpses had
+dropped only table loot, never their equipment, since E4b. Both
+spawn sites feed entity.items now.
+
+Probed live: kill a guard through the real death path, E on the
+corpse - "Longsword + 5 armor pieces" into the player entity, a
+second E takes nothing.
+
+Suite 442/97 (the walk-away/kill/take-once pin + the Items.AddItem
+mirror pin). FLAGGED: loot pickup as an inventory WINDOW (take-all
+is the interim, as the dungeon's), murder/assault crimes for
+killing the watch pend the crime-table wiring.
+
 ## AUDIT 2026-08-17b: the towns/talk parity pass
 
 The T1 modules were re-read line by line against MobilePersonMotor /

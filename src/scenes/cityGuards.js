@@ -20,11 +20,11 @@
 //    through the ordinary senses (they spawn close with LOS); the
 //    HALT bark (barkSound 456) fires on the detection rising edge.
 //
-// FLAGGED loud: arrest/court pends (guards fight to the death for
-// now); guard archers forced melee (exterior foe arrows pend);
-// enemy-vs-enemy stays out (C15 residual); corpse loot pickup pends
-// the exterior activation-loot seam; assault-triggered crimes pend
-// (pickpocket is the only trigger this slice).
+// FLAGGED loud: guard archers forced melee (exterior foe arrows
+// pend); enemy-vs-enemy stays out (C15 residual); assault-triggered
+// crimes pend (pickpocket is the only trigger). G3: corpse loot is
+// LIVE - killed guards (corpse flag, never walk-aways) are pickup
+// targets through the hosts' E ray on the dungeon's S2 shape.
 
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
@@ -32,7 +32,7 @@ import { EnemyAI, withinYaw } from '../characters/enemyMotor.js';
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity } from '../characters/enemyEntity.js';
 import { ClassFile } from '../formats/classFile.js';
-import { assignEnemyEquipment, equipmentVariantFor } from '../combat/enemyEquipment.js';
+import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';
 import { generateItems } from '../systems/loot.js';
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
 import {
@@ -41,6 +41,7 @@ import {
 } from '../combat/formulas.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { tallySkill, SKILLS } from '../systems/skills.js';
+import { addItem } from '../systems/inventory.js';
 
 export const GUARD_MOBILE_TYPE = 146;          // MobileTypes.Knight_CityWatch
 export const MAX_ACTIVE_GUARD_SPAWNS = 5;
@@ -72,6 +73,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     const career = await ensureCareer();
     const entity = makeEnemyEntity(GUARD_MOBILE_TYPE, basics, career, playerEntity.level);
     entity.items = generateItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: 'male' });
+    // (Knight_CityWatch has NO LootTableKey in DFU - the table roll is
+    // legitimately empty; the corpse's loot is the EQUIPMENT below.)
     const variant = equipmentVariantFor(entity.careerIndex, entity.isClass);
     if (variant !== null) {
       const eq = assignEnemyEquipment(entity, variant, playerEntity.level);
@@ -81,6 +84,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         const pt = rollEnemyWeaponPoison(GUARD_MOBILE_TYPE, playerEntity.level);
         if (pt != null) entity.weapon.poisonType = pt;
       }
+      // G3: DFU adds every equipped piece to the entity's items - the
+      // corpse's droppable loot (AssignEnemyStartingEquipment).
+      entity.items.push(...equipmentItems(eq));
     }
     const ai = new EnemyAI(collider, [pos[0], pos[1] + 0.1, pos[2]], yaw, {
       liveSpeed: entity.liveSpeed,
@@ -173,6 +179,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     g.entity.health -= damage;
     if (g.entity.health <= 0) {
       g.dead = true;
+      g.corpse = true;   // G3: only a KILLED guard is lootable (walk-aways vanish with their items)
       const ct = ENEMY_BASICS[GUARD_MOBILE_TYPE].corpseTexture;
       const size = scaledBillboardSize(g.tex.getSize(0), g.tex.getScale(0));
       // corpse archive differs from the live one; upload its record
@@ -274,5 +281,32 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     return any;
   }
 
-  return { guards, spawnCityGuards, update, resolvePlayerHit, activeCount, _debug: () => guards.map((g) => ({ dead: g.dead, hp: g.entity.health, pos: g.ai.feet.map((v) => +v.toFixed(1)), detected: g.ai.detected, state: g.attack.machine.state, moving: g.ai.moving, dist: +(g.ai._dist ?? -1).toFixed(1), giveUp: g.ai.giveUpTimer })) };
+  // G3: corpse loot on the dungeon's S2 pickup shape - killed guards
+  // with items are activation targets for the hosts' E ray; takeLoot
+  // transfers into the player entity (the corpse billboard stays, as
+  // dungeon corpses do; 'You take N items.' - TEXT.RSC pends with the
+  // dungeon's).
+  function lootTargets() {
+    const targets = [];
+    guards.forEach((g, i) => {
+      if (!g.corpse || !g.entity?.items?.length) return;
+      const p = g.ai.feet;
+      targets.push({ key: `guardCorpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] } });
+    });
+    return targets;
+  }
+  function takeLoot(key, say = () => {}) {
+    const g = guards[Number(key.split(':')[1])];
+    if (!g?.corpse || !g.entity?.items?.length) return 0;
+    let n = 0;
+    playerEntity.items = playerEntity.items || [];
+    for (const item of g.entity.items) { addItem(playerEntity.items, item); n++; }
+    g.entity.items.length = 0;
+    if (n > 0) say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);
+    return n;
+  }
+
+  return { guards, spawnCityGuards, update, resolvePlayerHit, activeCount, lootTargets, takeLoot,
+    _damage: (i, dmg) => { const g = guards[i]; if (g && !g.dead) damageGuard(g, dmg, [0, 0, 0], null); },   // probe/test seam through the REAL death path
+    _debug: () => guards.map((g) => ({ dead: g.dead, hp: g.entity.health, pos: g.ai.feet.map((v) => +v.toFixed(1)), detected: g.ai.detected, state: g.attack.machine.state, moving: g.ai.moving, dist: +(g.ai._dist ?? -1).toFixed(1), giveUp: g.ai.giveUpTimer })) };
 }

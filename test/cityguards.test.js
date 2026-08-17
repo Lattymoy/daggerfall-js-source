@@ -69,6 +69,36 @@ test('guards audit pin: the seen-by-guard MASS conversion quirk (verbatim)', { s
   assert.equal(disabled, 2, 'the pre-seer civilian is untouched');
 });
 
+test('guards G3: killed guards are loot targets, walk-aways are not, loot takes once', { skip: skipReal }, async () => {
+  const deps = makeDeps(() => 0.9);
+  const g = createCityGuards(deps);
+  const pool = () => [{ pos: [5, 0, 5], fwdYaw: 0, guard: true, disable: () => {} }];
+  await g.spawnCityGuards(true, { playerFeet: [0, 0, 0], playerFwd: [0, 0, 1], pool: pool() });
+  g.guards[0].entity.items = [{ name: 'Gold', group: 'Currency', stackCount: 5 }];
+  // crimeCommitted is falsy -> the stand-down law marks the guard dead
+  // WITHOUT a corpse (they walk away) - never a loot target
+  g.update(0, [0, 0, 0], [0, 1.7, 0]);
+  assert.ok(g.guards[0].dead && !g.guards[0].corpse);
+  assert.equal(g.lootTargets().length, 0, 'walk-aways vanish with their items');
+  // a KILLED guard leaves a lootable corpse through the real death path
+  await g.spawnCityGuards(true, { playerFeet: [0, 0, 0], playerFwd: [0, 0, 1], pool: pool() });
+  g.guards[1].entity.items = [
+    { name: 'Gold', group: 'Currency', stackCount: 7 },
+    { name: 'Longsword', group: 'Weapons' },
+  ];
+  g._damage(1, 9999);
+  assert.ok(g.guards[1].dead && g.guards[1].corpse);
+  const targets = g.lootTargets();
+  assert.equal(targets.length, 1);
+  assert.equal(targets[0].key, 'guardCorpse:1');
+  let said = null;
+  assert.equal(g.takeLoot('guardCorpse:1', (l) => { said = l; }), 2);
+  assert.equal(said, 'You take 2 items.');
+  assert.ok(deps.playerEntity.items.some((it) => it.group === 'Currency' && it.stackCount === 7));
+  assert.equal(g.takeLoot('guardCorpse:1'), 0, 'a looted corpse is empty');
+  assert.equal(g.lootTargets().length, 0);
+});
+
 test('guards: behind-player civilians convert at 1/4; none seen -> the 2-5 ring fallback', { skip: skipReal }, async () => {
   // Civilian BEHIND the player (angle >= 105.469 from fwd +z), the
   // 1/4 roll passes (floor(0*4) === 0).

@@ -147,6 +147,19 @@ export function assignEnemyEquipment(entity, variant, playerLevel, rolls = Math.
   return { rightHand, leftHand, armorPieces, armorValues };
 }
 
+/** G3: DFU adds EVERY equipped piece to enemyEntity.Items
+ *  (AssignEnemyStartingEquipment's Items.AddItem after each
+ *  EquipItem) - that inventory is the corpse's droppable loot. The
+ *  shield rides armorPieces (its armor item), so a shield leftHand
+ *  marker is skipped; a leftHand WEAPON is its own item. */
+export function equipmentItems(eq) {
+  const items = [];
+  if (eq.rightHand) items.push({ group: 'Weapons', ...eq.rightHand });
+  if (eq.leftHand && !eq.leftHand.shield) items.push({ group: 'Weapons', ...eq.leftHand });
+  for (const a of eq.armorPieces) items.push({ group: 'Armor', templateIndex: a.piece, material: a.material });
+  return items;
+}
+
 /** SetEnemyCareer's equipment-variant table, verbatim. */
 export function equipmentVariantFor(careerIndex, isClass, rolls = Math.random) {
   if (careerIndex === 7 || careerIndex === 21) return 0;      // Orc = 7, OrcShaman = 21 (EntityEnums.cs, verified)
