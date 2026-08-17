@@ -363,3 +363,42 @@ edge), "People of Daggerfall" on the name strip, the greeting +
 answer in the conversation panel; the whole circuit driven by MOUSE
 CLICKS (Where is -> category -> building -> answer -> tone radio ->
 goodbye). Suite 454/100.
+
+## U8c (2026-08-17): THE NATIVE TRADE WINDOW + ITEM ICONS SHIPPED
+
+The third native window - the E2/E3 shop loop on the classic
+inventory screen, and the slice that brings ITEM ICONS online (the
+capability the inventory window will reuse).
+
+- THE ICON PIPELINE: itemTemplatesData regenerated with
+  worldTextureArchive/record per template (the extractor gains the
+  fields); icons are plain TEXTURE.### records through the EXISTING
+  pipeline (getTexture + uploadRecord), warmed lazily per drawn
+  item with the native size captured at warm (the GL handle carries
+  no dimensions). Material-DYED weapon/armor icon variants FLAGGED.
+- ui/nativeTrade.js: INVE00I0.IMG base + INVE08I0.IMG buy-mode
+  action panel at (222,10) + SHOP00I0.IMG cost strip at (49,13)
+  with cost/gold labels at +28/+68 (all verified against
+  DaggerfallTradeWindow - the FIRST guess TRAD00I0 does not exist;
+  the probe caught it). The classic vertical item lists: local
+  (163,48,59x152) = the player's shop-accepted sellables, remote
+  (261,48,59x152) = the open shelf, four 38px slots each with real
+  icons + name/stack labels, 12px top/bottom scroll bands.
+- THE TRADE MODEL this slice: clicking a remote item BUYS it
+  (doBuy - the E2/E3 transaction core extracted and shared with the
+  keyed fallback), clicking a local item SELLS it (onto the shelf,
+  buy-backs work); the cost strip shows the last price + live gold;
+  Exit/Esc/E close; digits buy visible slots. worldModes gains
+  pointerdown (the townTalk shape) and the hosts route it before
+  requestLook - interior native windows own the pointer.
+
+FLAGGED loud: the BASKET + mode-action flow (DFU accumulates then
+Buy), wagon/info/select/steal consumed no-ops, the sell-mode INVE10
+panel art, tab filtering, the paperdoll, scroll-arrow art.
+
+Probed live + EYEBALLED: the full classic screen - the tabs and
+jewelry slots of INVE00I0, WAGON/INFO/SELECT/STEAL/BUY/CLEAR/EXIT
+on the action panel, COST:0 / 20000 on the strip, and THREE REAL
+BOOK ICONS on the shop list; a remote click bought at 3129 (the
+book crossing to the local list), a local click sold back at 2968,
+Exit closed. Suite 455/101.
