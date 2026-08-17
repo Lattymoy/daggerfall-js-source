@@ -36,6 +36,11 @@ import { REGION_RACES } from '../formats/mapsFile.js';
 
 export const MODES = ['steal', 'grab', 'info', 'dialogue'];
 const MODE_KEYS = { F1: 'steal', F2: 'grab', F3: 'info', F4: 'dialogue' };
+
+/** NextInteractionMode, verbatim: Steal > Grab > Info > Talk > wrap. */
+export function nextInteractionMode(mode) {
+  return MODES[(MODES.indexOf(mode) + 1) % MODES.length];
+}
 export const PERSON_HIT_RADIUS = 0.45;   // MobilePersonNPC controller radius
 export const PERSON_HIT_HEIGHT = 1.8;
 
@@ -88,25 +93,33 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return v?.length ? v[Math.floor(rolls() * v.length)] : fallback;
   };
 
+  function setMode(m) {
+    if (m === mode) return;   // ChangeInteractionMode: no-op on the same mode
+    mode = m;
+    hud.add(`Interaction is now in ${m} mode.`);
+  }
+
   function keydown(e) {
     const m = MODE_KEYS[e.code];
     if (m) {
       e.preventDefault();
-      if (m !== mode) {   // ChangeInteractionMode: no-op on the same mode
-        mode = m;
-        hud.add(`Interaction is now in ${m} mode.`);
-      }
+      setMode(m);
       return true;
     }
     if (overlay) {
       e.preventDefault();
+      // E says goodbye too - the touch layer's E button opens AND
+      // closes talk (desktop-consistent; Esc/Enter unchanged)
       if (e.code === 'Escape') overlay.input('back');
-      else if (e.code === 'Enter') overlay.input('confirm');
+      else if (e.code === 'Enter' || e.code === 'KeyE') overlay.input('confirm');
       if (overlay.done) overlay = null;
       return true;
     }
     return false;
   }
+
+  /** NextInteractionMode (the touch cycle button); returns the new mode. */
+  function nextMode() { setMode(nextInteractionMode(mode)); return mode; }
 
   /** The activation ray (the host's E/use edge). persons =
    *  [{ person, pos }] world feet of LIVE townsfolk. Returns true if
@@ -154,7 +167,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   return {
-    keydown, tryActivate, frame, ensureLoaded,
+    keydown, tryActivate, frame, ensureLoaded, nextMode,
     say: (line) => hud.add(line),
     get overlayActive() { return !!overlay; },
     get mode() { return mode; },

@@ -503,7 +503,23 @@ FLAGGED (LOUD): topics (Where-is/Tell-me-about), tones, the
 portrait, and TALK01I0.IMG all pend T3c; guards on the failed
 pickpocket pend crime; the streaming host's People faction rides
 the START region until travel wiring; touch has no mode keys yet
-(the mobile input arc).
+(the mobile input arc). [RESOLVED same-day: the T3-touch addendum
+below.]
+
+### T3-touch addendum (2026-08-17): the phone interaction path
+
+The touch layer already carried the E button (synthetic KeyE), so
+talk worked on phones from T3b's merge in the default grab mode. The
+addendum closes the two gaps: a MODE-CYCLE button on the bottom row
+(hooks.cycleMode - the touch layer's hook precedent; the label shows
+the LIVE mode) driving NextInteractionMode, verbatim: Steal > Grab >
+Info > Talk > wrap; and E now says GOODBYE while the talk window is
+open (townTalk.keydown routes KeyE as confirm - desktop-consistent,
+one button opens and closes). Probe (tools/touchProbe.mjs, a
+hasTouch context): the button row renders, taps cycle grab -> info
+-> dialogue with the __talk hook confirming, and E opened + closed
+the window live. The politeness idle needs the weapon SHEATHED -
+the Z button (sheathe toggle) already ships on the touch row.
 
 ## AUDIT 2026-08-17b: the towns/talk parity pass
 

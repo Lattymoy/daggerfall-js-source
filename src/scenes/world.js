@@ -481,6 +481,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') weaponRig.attackInput(dx, dy, held); },
     attackTap: () => { if (walkMode && modeNow() === 'exterior') weaponRig.clickAttack(); },
+    cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
   });
 
   const initialCount = queue.length + 1;

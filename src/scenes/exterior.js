@@ -363,6 +363,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     },
     attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') weaponRig.attackInput(dx, dy, held); },
     attackTap: () => { if (walkMode && modeNow() === 'exterior') weaponRig.clickAttack(); },
+    cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
   });
 
   // P7: the exterior scene hosts the same mode machine as ?world -
