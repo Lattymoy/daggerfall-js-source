@@ -36,7 +36,16 @@ import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { CLASSIC_UPDATE_INTERVAL } from './weaponStates.js';   // single source (GameManager.cs:42)
 import { CAPSULE_HEIGHT } from '../player/motor.js';           // single source
 export { CLASSIC_UPDATE_INTERVAL };
-import { GRAVITY, FIXED_DT, MAX_FRAME_DT } from '../player/motor.js';   // the shared fall rule + the P16 fixed-timestep law
+import { GRAVITY, FIXED_DT, MAX_FRAME_DT, CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // the shared fall rule + the P16 fixed-timestep law
+
+// C15 knockback (EnemyMotor.KnockbackMovement): classic units through
+// the speed ratio. Stored speed clamps at 40; motion caps at 25; the
+// hurt anim rides speed > 5; decay is 5 per CLASSIC UPDATE.
+const KB = (v) => v / (CLASSIC_TO_UNITY_RATIO / 10);
+export const KNOCKBACK_STORE_CAP = 40;
+export const KNOCKBACK_MOTION_CAP = 25;
+export const KNOCKBACK_HURT_THRESHOLD = 5;
+export const KNOCKBACK_DECAY_PER_CLASSIC = 5;
 
 export const SIGHT_RADIUS = 4096 * GLOBAL_SCALE;
 export const HEARING_RADIUS = 25;
@@ -212,6 +221,9 @@ export class EnemyAI {
     this.moving = false;
     this._classicTimer = 0;
     this._acc = 0;           // P17: the fixed-step accumulator (render dt in, 1/60 steps out)
+    this.knockbackSpeed = 0;   // C15: classic-through-ratio units; the scene sets it on landed hits
+    this.knockbackDir = null;  // the attack ray direction (3D - flyers take the y)
+    this.hurtKnock = false;    // per-step: speed above the hurt threshold (the scene's hurting input)
     this._dist = Infinity;
     // P13 stealth state (EnemySenses fields)
     this.hasEncounteredPlayer = false;
@@ -324,13 +336,55 @@ export class EnemyAI {
     // that timer has nothing to switch - constants stay exported for
     // E3 multi-target). Senses + decisions both run at the classic
     // update rate. senses = the P13 stealth context (see _senses).
+    // C15: knockback is CanAct=false - decisions skip, senses run.
+    const knocked = this.knockbackSpeed > 0;
+    let classicTicks = 0;
     this._classicTimer += dt;
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
+      classicTicks++;
       this._senses(playerFeet, senses);
-      if (!paralyzed) this._classicTick(playerFeet);
+      if (!paralyzed && !knocked) this._classicTick(playerFeet);
     }
     if (paralyzed) this.moving = false;
+
+    // C15 KnockbackMovement, verbatim: runs INSTEAD of pursuit (and
+    // regardless of paralysis - DFU calls it before the CanAct
+    // gates). Stored speed clamps at 40; the hurt anim rides
+    // speed > 5 (the MobileUnit refuses it mid-attack, the DFU
+    // state gate); motion caps at 25 along the attack ray; grounded
+    // foes take it via SimpleMove (y DROPPED, gravity applies),
+    // flyers take the full 3D ray AND fall (flyerFalls), swimmers
+    // ride the WaterMove gates; decay is 5 per classic tick.
+    this.hurtKnock = false;
+    if (knocked) {
+      if (this.knockbackSpeed > KB(KNOCKBACK_STORE_CAP)) this.knockbackSpeed = KB(KNOCKBACK_STORE_CAP);
+      this.hurtKnock = this.knockbackSpeed > KB(KNOCKBACK_HURT_THRESHOLD);
+      const sp = Math.min(this.knockbackSpeed, KB(KNOCKBACK_MOTION_CAP));
+      const d = this.knockbackDir ?? [0, 0, 0];
+      const mx = d[0] * sp * dt, myRaw = d[1] * sp * dt, mz = d[2] * sp * dt;
+      if (this.swims) {
+        const waterY = this.waterSurfaceY ? this.waterSurfaceY(this.feet[0], this.feet[2]) : null;
+        const center = this.feet[1] + this.height / 2;
+        if (waterY !== null && center < waterY) {
+          let my = myRaw;
+          if (my > 0 && center + WATER_HEAD_MARGIN >= waterY) my = 0;
+          this.collider.move(this.feet, mx, my, mz);
+        }
+      } else if (this.flies) {
+        this.velY -= GRAVITY * dt;   // flyerFalls: a hit knocks them out of the air
+        const r = this.collider.move(this.feet, mx, myRaw + this.velY * dt, mz);
+        if (r.grounded) this.velY = 0;
+      } else {
+        this.velY -= GRAVITY * dt;   // SimpleMove: horizontal motion, gravity applies
+        const r = this.collider.move(this.feet, mx, this.velY * dt, mz);
+        if (r.grounded) this.velY = 0;
+      }
+      this.knockbackSpeed -= classicTicks * KB(KNOCKBACK_DECAY_PER_CLASSIC);
+      if (this.knockbackSpeed < 0) this.knockbackSpeed = 0;
+      this._restGrounded = false;
+      return;   // CanAct = false: no pursuit this step
+    }
 
     // C12 aquatic (WaterMove verbatim): movement exists ONLY while
     // the controller center is below the block water surface; a

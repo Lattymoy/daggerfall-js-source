@@ -55,7 +55,7 @@ import { exhaustionOutcome, EXHAUSTED_IN_WATER, healthRecoveryRate, fatigueRecov
 import { REST_TEXT } from '../systems/restSession.js';
 import { RestWindow } from '../ui/restWindow.js';
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
-import { dice100 } from '../combat/formulas.js';
+import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
@@ -1018,7 +1018,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       // EnemySounds.PlayHitSound at the struck foe, weapon-aware
       audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, 1.1, { maxDistance: 16 });   // rides the foe's source shape
-      damageFoe(foe, damage, playerFeet);   // stagger AWAY from the hit: player in front -> HurtFront
+      damageFoe(foe, damage, playerFeet, lookDir);   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back)
     }
   }
   // S3b: the classic clock for skill-raise checks - dt * TimeScale
@@ -1079,7 +1079,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + 0.9 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];
             if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
               const dmg = foeDeps ? foeDeps.calculateAttackDamage(playerEntity, f.entity, { weapon: m.weapon }) : 0;
-              if (dmg > 0) damageFoe(f, dmg);
+              if (dmg > 0) damageFoe(f, dmg, null, m.dir);   // C15: arrows knock along their flight
               addItem(f.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage verbatim: the arrow is recoverable from the target
               retireMissile(m);
               break;
@@ -1174,17 +1174,33 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // Shared foe-damage path: melee and spells kill through the same
   // door (corpse + reaction). Factored in S5 so missiles do not grow
   // a second death path.
-  function damageFoe(foe, damage, playerFeet = null) {
+  function damageFoe(foe, damage, playerFeet = null, knockDir = null) {
     foe.entity.health -= damage;
     if (foe.entity.health <= 0) {
       foe.dead = true;
       spawnCorpse(foe);
       return;
     }
-    if (foe.mobile) {
-      foe._hurtPending = true;   // C11: the sprite Hurt one-shot (records 10-14)
-      return;
+    // C15 knockback (WeaponManager.WeaponDamage): WEAPON hits carry
+    // the attack ray (melee = the look ray, arrows = flight) - spell
+    // damage passes no ray and knocks nothing, verbatim. The gate:
+    // monsters need MobileEnemy.Weight > 0 (weight-0 spectrals -
+    // ghosts/wraiths - take NO knockback), class enemies re-knock
+    // only once the current shove decays under the hurt threshold.
+    // The sprite Hurt anim now rides the motor's knockback threshold
+    // (KnockbackMovement), not the hit itself - damage without
+    // knockback plays no hurt, as DFU.
+    if (knockDir && foe.ai) {
+      const isClass = !!foe.entity.isClass;
+      const mobileWeight = ENEMY_BASICS[foe.mobileType]?.weight ?? 0;
+      const reKnockOk = foe.ai.knockbackSpeed <= 5 / KB_UNIT && isClass;
+      if (reKnockOk || (!isClass && mobileWeight > 0)) {
+        const w = enemyWeightClassicUnits(isClass, foe.gender, mobileWeight);
+        foe.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);
+        foe.ai.knockbackDir = [knockDir[0], knockDir[1], knockDir[2]];
+      }
     }
+    if (foe.mobile) return;
     if (playerFeet && foeDeps) {
       const hdx = playerFeet[0] - foe.ai.feet[0], hdz = playerFeet[2] - foe.ai.feet[2];
       const front = foeDeps.withinYaw(foe.ai.yaw, hdx, hdz, 90);
@@ -1509,10 +1525,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           f._mout = f.mobile.update(dt, {
             moving: f.ai.moving,
             striking: _strikeEdge,   // the START edge (paralysis eats it - FreezeAnims blocks ChangeEnemyState, verbatim)
-            hurting: !!f._hurtPending,
+            hurting: f.ai.hurtKnock,   // C15: the knockback threshold IS the hurt anim (KnockbackMovement)
             casting: !!f._castPending,   // C14: the cast decision's edge (Spell one-shot)
           }, f.ai.yaw, f.ai.feet, eye);
-          f._hurtPending = false;
           f._castPending = false;
         }
         const out = f._mout;

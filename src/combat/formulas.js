@@ -13,6 +13,7 @@
 // scalar SetEnemyCareer fills every slot with, so [part] == armor.
 
 import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source (EnemyAttack.cs:30)
+import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback units
 import { rand } from '../formats/dfRandom.js';   // the monster multi-attack reflex gate (F2)
 import { liveStat } from '../systems/statMods.js';   // S14: fortify-aware stat reads
 import { skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
@@ -232,4 +233,31 @@ export function calculateAttackDamage(attacker, target, { weapon = null, targetG
 export const MELEE_HIT_YAW_DEG = 35.156;
 export function meleeHitConnects(dist, inSight, withinHitYaw) {
   return inSight && (dist <= 0.25 || (dist <= MELEE_DISTANCE && withinHitYaw));
+}
+
+// ---- C15: knockback (WeaponManager.WeaponDamage + FormulaHelper) ----
+// PlayerSpeedChanger.classicToUnitySpeedUnitRatio / 10 - every
+// knockback constant divides through this (single source: motor.js,
+// imported at the top).
+export const KB_UNIT = CLASSIC_TO_UNITY_RATIO / 10;   // 3.95
+
+/** GetEnemyEntityWeightInClassicUnits, verbatim shape: monster =
+ *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
+ *  + Items.GetWeight()*4 term pends item weights (the items arc). */
+export function enemyWeightClassicUnits(isClass, gender, mobileWeight) {
+  if (!isClass) return mobileWeight ?? 0;
+  return gender === 'female' ? 240 : 350;
+}
+
+/** The WeaponManager player-hit knockback speed, verbatim:
+ *  kb = ((10d - w) * 256) / (w + 10d) * 2d;
+ *  speed = (10d / w) * (2d - kb/256), through the ratio, floored at
+ *  15 classic units. Caller owns the weight-0 gate. */
+export function weaponKnockbackSpeed(damage, weightClassic) {
+  const ten = damage * 10, two = damage * 2;
+  const kb = ((ten - weightClassic) * 256) / (weightClassic + ten) * two;
+  let ks = (ten / weightClassic) * (two - kb / 256);
+  ks /= KB_UNIT;
+  const floor = 15 / KB_UNIT;
+  return ks < floor ? floor : ks;
 }
