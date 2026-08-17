@@ -13,7 +13,7 @@ import { MapsFile } from '../formats/mapsFile.js';
 import { convertTilemap } from '../world/terrainSurface.js';
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor, FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
-import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
+import { jumpSpeedMultiplier, tallySkill, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
 import { removeOne } from '../systems/inventory.js';
@@ -39,6 +39,8 @@ import { CityNavigation } from '../world/cityNavigation.js';   // T1 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
 import { createTownTalk } from './townTalk.js';   // T3b
+import { createCityGuards } from './cityGuards.js';   // G1
+import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { fetchBytes, parseSeason, createSkyController } from './shared.js';
@@ -282,10 +284,35 @@ export async function bootExterior(canvas, renderer, params, status) {
   const townTalk = createTownTalk({
     renderer, canvas, fetchBytes, playerEntity,
     regionIndex: dfLocation.regionIndex,
+    onCrime: () => _crimeResponse(),   // G1: late-bound - the guards mount below
   });
   townTalk.ensureLoaded();
   surfacePlayer();   // the probe surface exists from boot (T3b: pickpocket gold reads)
   let _livePersons = [];
+  // G1: the city watch (SpawnCityGuards verbatim; Knight_CityWatch
+  // class foes on the C11 stack). A guard's hit hurts the PLAYER
+  // through the same entity the fall-damage path bills.
+  const cityGuards = createCityGuards({
+    renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio,
+    onPlayerHurt: (dmg, wpn) => {
+      if (dmg <= 0) return;
+      playerEntity.health = Math.max(0, playerEntity.health - dmg);
+      audio.playOneShot(hitSoundFor(wpn), 1.1);
+      surfacePlayer();
+    },
+  });
+  const _guardPool = () => _livePersons.map(({ person, pos }) => ({
+    pos, fwdYaw: person.facingYaw, guard: person.guard,
+    disable: () => {
+      const it = population.pool.find((i) => i.person === person);
+      if (it) { it.person.release(); it.active = false; it.scheduleEnable = false; it.scheduleRecycle = false; it.visible = false; }
+    },
+  }));
+  function _crimeResponse() {
+    const feet = walkMode ? player.pos : cam.pos;
+    const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
+    cityGuards.spawnCityGuards(true, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
+  }
   const weaponRig = createWeaponRig({
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => townTalk.say(l),
@@ -394,6 +421,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       pos: it.person.pos.map((v) => Number(v.toFixed(2))),
     })).filter((x) => x.active));
     window.__talk = () => JSON.stringify(townTalk._debug());   // T3b probe surface
+    window.__guards = () => JSON.stringify(cityGuards._debug());   // G1 probe surface
+    window.__crime = () => _crimeResponse();   // G1: force the response without pickpocket RNG
     window.__townDebug = () => JSON.stringify({
       night: isNight(minuteNow()), pool: population.pool.length, max: population.maxPopulation,
       player: cam.pos.map((v) => Number(v.toFixed(1))), yaw: Number(cam.yaw.toFixed(2)), walkMode,
@@ -673,6 +702,11 @@ export async function bootExterior(canvas, renderer, params, status) {
         batch.origin = [person.pos[0], person.pos[1], person.pos[2]];
         personBatches.push(batch);
       }
+      // G1: the guards drive + draw on the same flats' axis; the sim
+      // freezes with the population under the talk overlay.
+      const guardBatches = cityGuards.update(townTalk.overlayActive ? 0 : dt,
+        walkMode ? player.pos : cam.pos, eye, { playerInvisible: isInvisible(playerEntity) });
+      personBatches.push(...guardBatches);
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, new Float32Array([0, 1, 0]));
     }
     if (precip) {
@@ -690,6 +724,13 @@ export async function bootExterior(canvas, renderer, params, status) {
             tallySkill(playerEntity, SKILLS.Archery);
             arrows.fire(eye, fwd);
           }
+          continue;
+        }
+        // G1: melee swings resolve against live guards (reach + LOS
+        // inside resolveHit); a landed hit tallies the weapon skill.
+        if (cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, null,
+          (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon), g.ai.feet, 1.1, { maxDistance: 16 }))) {
+          tallySkill(playerEntity, WEAPON_SKILL[weaponRig.playerWeapon.weapon?.name] ?? SKILLS.HandToHand);
         }
       }
       weaponRig.draw();

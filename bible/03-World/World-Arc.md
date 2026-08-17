@@ -521,6 +521,58 @@ hasTouch context): the button row renders, taps cycle grab -> info
 the window live. The politeness idle needs the weapon SHEATHED -
 the Z button (sheathe toggle) already ships on the touch row.
 
+## G1 (2026-08-17): THE CITY WATCH - guards answer crime SHIPPED
+
+The crime circuit closes: a caught pickpocket now brings the watch.
+Guards are the FIRST exterior foes - Knight_CityWatch (146, texture
+399, CLASS18.CFG) built with the C17 class recipe and driven by the
+C11 stack (EnemyAI + EnemyAttack + MobileUnit) in BOTH exterior
+hosts (scenes/cityGuards.js, one shared module):
+
+- THE SPAWN LAW (PlayerEntity.SpawnCityGuards, verbatim): never in
+  dungeons; at most 5 active; IMMEDIATE crime -> convert pool NPCs
+  within 77.5 (wandering GUARDS first - classic disables the source
+  NPC; then civilians BEHIND the player, angle >= 105.469, at 1/4
+  each); nobody converted -> the foe-spawner ring (Random.Range(2,6)
+  guards at 12.8..51.2). NON-IMMEDIATE: a witness within 77.5 facing
+  the player (<= 95 deg) with LOS sees the crime - a seeing guard
+  NPC converts on the spot; civilians-only start the 5-10s
+  guardsArriveCountdown (re-fired as immediate).
+- THE HOSTILITY LAW (EnemyMotor, verbatim - a GENERAL parity gain):
+  GiveUpTimer joins EnemyAI - detection refills 200 classic ticks
+  (~12.5s) and an undetected foe KEEPS pursuing until it drains;
+  MakeEnemyHostileToAttacker pre-loads it (guards x3 = 600) so the
+  watch marches on the crime scene before ever seeing the player.
+  Probed: a ring guard walked 30+ units to the player, flipped
+  detected, and entered StrikeRight. Dungeon foes inherit the same
+  law (they used to stop the instant detection dropped). FLAGGED:
+  blind pursuit aims at the LIVE position until target prediction
+  (PredictedTargetPos) ships.
+- COMBAT BOTH WAYS: the guard's -1 hit frame resolves
+  CalculateAttackDamage vs the player (the C16 gate: 0.25/
+  MeleeDistance + 35.156 deg) through the host's onPlayerHurt (the
+  same entity the fall-damage path bills); the player's melee swings
+  resolve via playerWeapon.resolveHit (reach + LOS + swing mods)
+  with the C15 knockback on landed damage and the weapon-skill
+  tally. Death drops the classic corpse (380/1). HALT: the barkSound
+  (456) fires 3D at the detection rising edge.
+- THE CRIME TRIGGER: townTalk's failed pickpocket calls the host's
+  onCrime -> SpawnCityGuards(true) with the live person pool
+  (facing yaws ride MobilePerson.facingYaw; conversion recycles the
+  pool item). __crime/__guards probe hooks in both hosts.
+
+DOCTRINE PROOF: the close-up crops the classic plate-armored watch
+knight (399) mid-swing, battle axe in hand. Gates: 431/95, the
+verbatim law pinned over real CLASS18.CFG (cityguards.test.js).
+
+FLAGGED (LOUD): arrest/court pends (guards fight to the death);
+guard archers forced melee (exterior foe arrows pend); assault
+crimes pend (pickpocket is the only trigger); corpse loot pickup
+pends the exterior activation seam; LowerRepForCrime + the crime
+rep deltas pend the save-side faction clone; enemy-vs-enemy pends
+(C15 residual); the player death screen in exteriors pends (health
+hits 0 with no fanfare).
+
 ## AUDIT 2026-08-17b: the towns/talk parity pass
 
 The T1 modules were re-read line by line against MobilePersonMotor /

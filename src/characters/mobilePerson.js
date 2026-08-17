@@ -90,6 +90,9 @@ export class MobilePerson {
    *  recycled walkers come back as someone else). */
   setIdentity(archive, guard) { this.archive = archive; this.guard = guard; }
 
+  /** The person's facing as a world yaw (G1: guard spawns inherit it). */
+  get facingYaw() { return DIR_YAW[this.dir] ?? 0; }
+
   release() { this.nav.clearOccupied(this.gx, this.gy); this.nav.clearOccupied(this.tx, this.ty); }
 
   _weight(d) {

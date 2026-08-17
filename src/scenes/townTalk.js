@@ -61,7 +61,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, rolls = Math.random }) {
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, rolls = Math.random }) {
   const hud = new HudText();
   let font = null, factions = null, textRsc = null, people = null;
   let mode = 'grab';   // PlayerActivate default
@@ -147,6 +147,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         nothingText: () => randomVariant(FOUND_NOTHING_VALUABLE_TEXT_ID, 'You found nothing valuable.'),
       });
       hud.add(r.message);
+      // G1: the caught pickpocket IS the crime - SpawnCityGuards(true)
+      if (!r.success) onCrime?.();
       return;
     }
     // Info / Grab / Talk all talk to a mobile NPC (DFU verbatim)
