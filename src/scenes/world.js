@@ -237,10 +237,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     let population = null;   // T2 towns: this pixel's wandering pool
     let locOrigin = null;    // the location origin, pixel-local
     let personBatches = null;
+    let locBlocks = null;    // T3d: the layout blocks for the Where-is directory
     if (dfLocation) {
       const loc = layoutLocation(dfLocation, maps, blocks);
+      locBlocks = loc.blocks;
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
       const locLocal = [tilePos.x * tileSide, avg * worldHeight + 2.0 * 0.025, tilePos.y * tileSide];
+      // T3d: EVERY location pixel keeps its origin (the population
+      // gate below no longer owns it) - the Where-is directory
+      // resolves doors and the player in the LOCATION frame.
+      locOrigin = [locLocal[0], locLocal[1], locLocal[2]];
       for (const b of loc.blocks) {
         const originMatrix = trs(
           locLocal[0] + b.originX, locLocal[1], locLocal[2] + b.originZ, 0, 0, 0);
@@ -311,7 +317,6 @@ export async function bootWorld(canvas, renderer, params, status) {
           nav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData,
             (tx, ty) => srcTiles[tx][ty].textureRecord);
         }
-        locOrigin = [locLocal[0], locLocal[1], locLocal[2]];
         personBatches = new Map();   // person -> batch (destroyed with the pixel)
         const personCollider = {
           // location-frame raycast through the live world collider
@@ -362,6 +367,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     built.set(key, {
       px, py, terrain, tilemapTex, groundArchive, models, batches, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       population, locOrigin, personBatches,   // T2 towns
+      locBlocks,   // T3d: the Where-is directory's block scan
 
       location: dfLocation ? dfLocation.name : null,
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
@@ -379,6 +385,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const b of p.batches) renderer.destroyBatch(b);
     if (p.personBatches) for (const b of p.personBatches.values()) renderer.destroyBatch(b);   // T2
     collider.removeBucket(key);
+    // T3d fix: the pixel's doors leave with it - they accumulated
+    // across every rebuild (duplicate E-targets + unbounded growth
+    // on long streams; the directory's dedup had been masking it).
+    for (let i = buildingDoors.length - 1; i >= 0; i--) {
+      if (buildingDoors[i].pixelKey === key) buildingDoors.splice(i, 1);
+    }
     built.delete(key);
   }
 
@@ -417,6 +429,46 @@ export async function bootWorld(canvas, renderer, params, status) {
     onCrime: () => _crimeResponse(),   // G1: late-bound - the guards mount below
   });
   townTalk.ensureLoaded();
+  // T3d: the Where-is directory follows the player's LOCATION PIXEL
+  // (DFU's TalkManager builds its list for PlayerGPS.CurrentLocation).
+  // On pixel crossing, townTalk's topics swap to the new pixel's
+  // named-building data; doors and the player resolve in the pixel's
+  // LOCATION frame (the floating origin is a pure translation, so the
+  // compass answers survive - the invariance is pinned). Names ride
+  // the pixel's OWN region; the People faction stays on the boot
+  // region (the recorded cross-region flag).
+  let _topicsKey = false;   // false = never synced (null topics is a real state)
+  function syncTopics() {
+    let cur = null;
+    for (const p of built.values()) {
+      const t = state.pixelTranslation(p.px, p.py);
+      const lx = cam.pos[0] - t[0], lz = cam.pos[2] - t[2];
+      if (lx >= 0 && lz >= 0 && lx < TERRAIN_SIZE && lz < TERRAIN_SIZE) { cur = p; break; }
+    }
+    const key = cur ? `${cur.px},${cur.py}` : null;
+    if (key === _topicsKey) return;
+    _topicsKey = key;
+    const dfLocation = key ? locationIndex.get(key) : null;
+    if (!cur || !dfLocation || !cur.locBlocks) { townTalk.setTopics(null); return; }
+    const { px, py } = cur;
+    const lo = cur.locOrigin;
+    townTalk.setTopics({
+      exteriorBuildings: dfLocation.exterior.buildings,
+      blocks: cur.locBlocks,
+      doors: buildingDoors.filter((e) => e.pixelKey === key).map((e) => ({
+        dfBlock: e.dfBlock, recordIndex: e.recordIndex,
+        position: [e.door.matrix[12] - lo[0], e.door.matrix[13] - lo[1], e.door.matrix[14] - lo[2]],
+      })),
+      locationName: dfLocation.name,
+      regionName: maps.getRegionName(dfLocation.regionIndex),
+      regionIndex: dfLocation.regionIndex,
+      playerPos: () => {
+        const t = state.pixelTranslation(px, py);
+        const pos = walkMode && playerSpawned ? player.pos : cam.pos;
+        return [pos[0] - t[0] - lo[0], pos[1] - t[1] - lo[1], pos[2] - t[2] - lo[2]];
+      },
+    });
+  }
   surfacePlayer();   // the probe surface exists from boot (T3b: pickpocket gold reads)
   let _livePersons = [];
   // G1: the city watch (SpawnCityGuards verbatim) - the streaming
@@ -814,6 +866,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // doctrine). The politeness gate is the exterior host's verbatim:
     // player still + within 2.5 + weapon SHEATHED + visible + no
     // enemies (this host's exterior has none).
+    syncTopics();   // T3d: the Where-is directory follows the location pixel
     _playerStill = _lastPlayerPos &&
       Math.hypot(cam.pos[0] - _lastPlayerPos[0], cam.pos[2] - _lastPlayerPos[2]) < 0.001;
     _lastPlayerPos = [cam.pos[0], cam.pos[1], cam.pos[2]];
