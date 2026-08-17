@@ -12,10 +12,12 @@
 // - THE ANSWER (GetAnswerWhereIs): the 30-record answersToDirections
 //   table - 15 "doesn't know" + 15 "knows" by socialGroup x the
 //   0/1/2 reaction tier; mobile townsfolk are Commoners (0). The
-//   tier (GetReactionToPlayer_0_1_2, NEUTRAL tone - the tone buttons
-//   pend): Personality/5 + questionTypeReactionMods[0]=5 vs a
-//   0..20 roll; tier 1 band +20 (DFU's lowering of classic's +30,
-//   doctrine-kept).
+//   tier (GetReactionToPlayer_0_1_2, ALL THREE TONES - T3f):
+//   Personality/5 + questionTypeReactionMods[qIndex] + the tone mods
+//   (etiquette/streetwise tables + the Dice100 skill roll -10/+5) vs
+//   a 0..20 NPC-seeded roll; tier 1 band +20 (DFU's lowering of
+//   classic's +30, doctrine-kept); reactions cache per tone per talk
+//   session with a first-use skill tally.
 // - THE KNOWLEDGE ROLL (GetNPCKnowledgeAboutItem, verbatim): seed =
 //   NPC hash + buildingKey (the per-person seed stands in for the
 //   hash, Ledger A); rollToBeat = knowledgeModifiers[qIndex*5 +
@@ -171,16 +173,44 @@ export function compassHint(dx, dz) {
   return 'east';
 }
 
-/** GetReactionToPlayer_0_1_2 at the NEUTRAL tone (the tone buttons
- *  pend): no skill roll, no tone mods; the NPC-stable seed keeps the
- *  roll fixed per conversation partner. */
-export function reactionTier(personality, npcSeed) {
-  const reaction = Math.trunc(personality / 5) + 5;   // questionTypeReactionMods[WhereIsLocation]
+// T3f: the tone tables (TalkManager, verbatim; sgroup >= 5 folds to
+// Merchants before indexing).
+export const QUESTION_TYPE_REACTION_MODS = Object.freeze([5, 0, 0, 0, 5, 0, 0, 0]);
+export const ETIQUETTE_REACTION_MODS = Object.freeze([-10, 5, 10, 15, -15]);
+export const STREETWISE_REACTION_MODS = Object.freeze([10, 5, -10, -15, 15]);
+
+/** GetReactionToPlayer_0_1_2, verbatim - all three tones.
+ *  toneIndex: 0 Polite (Etiquette) / 1 Normal / 2 Blunt (Streetwise).
+ *  session is the per-talk-session reaction cache ([0,0,0], DFU's
+ *  toneReactionForTalkSession): a tone's reaction value computes ONCE
+ *  per session (skill roll included) and re-banding on a revisit uses
+ *  the cached value; onTally fires with 'Etiquette'/'Streetwise' on
+ *  the FIRST use of that tone this session (the cache-empty gate).
+ *  The NPC-seeded 0..20 roll keeps the band stable per partner. */
+export function reactionTier012({ personality, npcSeed, socialGroup = 0, questionIndex = 0, toneIndex = 1, skillValue = 0, session = null, rolls = Math.random, onTally = null }) {
+  const sg = socialGroup >= 5 ? 1 : socialGroup;   // Merchants fold
+  let toneModifier = 0;
+  if (toneIndex === 0) {
+    toneModifier += ETIQUETTE_REACTION_MODS[sg];
+    if (!session || session[0] === 0) onTally?.('Etiquette');
+  } else if (toneIndex === 2) {
+    toneModifier += STREETWISE_REACTION_MODS[sg];
+    if (!session || session[2] === 0) onTally?.('Streetwise');
+  }
+  if (toneIndex !== 1) toneModifier += Math.floor(rolls() * 100) >= skillValue ? -10 : 5;   // Dice100.FailedRoll
+  let reaction = Math.trunc(personality / 5) + QUESTION_TYPE_REACTION_MODS[questionIndex] + toneModifier;
   srand(npcSeed >>> 0);
   const rollToBeat = randomRangeInclusive(0, 20);
+  if (session && session[toneIndex] !== 0) reaction = session[toneIndex];
+  else if (session) session[toneIndex] = reaction;
   if (reaction < rollToBeat) return 0;
-  if (reaction < rollToBeat + 20) return 1;
+  if (reaction < rollToBeat + 20) return 1;   // DFU's +20 (classic +30), doctrine-kept
   return 2;
+}
+
+/** The NEUTRAL-tone tier (the T3c shape, now a thin wrapper). */
+export function reactionTier(personality, npcSeed) {
+  return reactionTier012({ personality, npcSeed });
 }
 
 /** GetAnswerWhereIs for a mobile townsperson (Commoners): the
@@ -188,8 +218,8 @@ export function reactionTier(personality, npcSeed) {
  *  the FIRST 15 records, a knowing one the LAST 15 (verbatim).
  *  Returns { textId, direction, tier, knows } - the caller expands
  *  the record and replaces %di/%key. */
-export function whereIsAnswer(playerPos, building, personality, npcSeed, socialGroup = 0) {
-  const tier = reactionTier(personality, npcSeed);
+export function whereIsAnswer(playerPos, building, personality, npcSeed, socialGroup = 0, opts = {}) {
+  const tier = opts.tier ?? reactionTier(personality, npcSeed);   // T3f: the host passes the toned tier
   const knows = npcKnowsAboutItem(npcSeed, building.buildingKey ?? 0, socialGroup, 0);
   const textId = ANSWERS_TO_DIRECTIONS[(knows ? 15 : 0) + 3 * socialGroup + tier];
   const direction = compassHint(building.position[0] - playerPos[0], building.position[2] - playerPos[2]);

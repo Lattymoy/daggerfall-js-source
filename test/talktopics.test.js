@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { generateBuildingName, BUILDING_TYPES, isNamedBuildingType, TAVERNS_A, TAVERNS_B, STORES_A } from '../src/world/buildingNames.js';
-import { mergeNamedBuildings, buildBuildingDirectory, compassHint, reactionTier, ANSWERS_TO_DIRECTIONS, whereIsAnswer, KNOWLEDGE_MODIFIERS, makeBuildingKey, npcKnowsAboutItem, BUILDING_KEY_0 } from '../src/systems/talkTopics.js';
+import { mergeNamedBuildings, buildBuildingDirectory, compassHint, reactionTier, reactionTier012, ANSWERS_TO_DIRECTIONS, whereIsAnswer, KNOWLEDGE_MODIFIERS, makeBuildingKey, npcKnowsAboutItem, BUILDING_KEY_0, QUESTION_TYPE_REACTION_MODS, ETIQUETTE_REACTION_MODS, STREETWISE_REACTION_MODS } from '../src/systems/talkTopics.js';
 import { srand, rand, randomRange, randomRangeInclusive } from '../src/formats/dfRandom.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
@@ -61,6 +61,43 @@ test('talkTopics: the compass bands, the tier roll, and the answer table shape',
   const a = whereIsAnswer([0, 0, 0], { position: [10, 0, 0] }, 50, 42);
   assert.equal(a.direction, 'east');
   assert.ok([7261, 7276, 7291].includes(a.textId));
+});
+
+test('talkTopics: the tone tiers (T3f) - mods, skill roll, session cache, first-use tally', () => {
+  // The tone tables verbatim
+  assert.deepEqual([...QUESTION_TYPE_REACTION_MODS], [5, 0, 0, 0, 5, 0, 0, 0]);
+  assert.deepEqual([...ETIQUETTE_REACTION_MODS], [-10, 5, 10, 15, -15]);
+  assert.deepEqual([...STREETWISE_REACTION_MODS], [10, 5, -10, -15, 15]);
+  // Neutral wrapper: identical to the T3c shape (p 50 -> reaction 15)
+  assert.equal(reactionTier(50, 42), reactionTier012({ personality: 50, npcSeed: 42 }));
+  // Polite for a Commoner (sg 0): reaction = 10 + 5 + (-10) + skillRoll;
+  // a PASSED skill roll (+5) lands 10, a FAILED one (-10) lands -5 -
+  // find a seed whose rollToBeat separates the two into different bands
+  let seed = -1;
+  for (let s = 0; s < 500; s++) {
+    srand(s >>> 0);
+    const rtb = randomRangeInclusive(0, 20);
+    if (10 >= rtb && -5 < rtb) { seed = s; break; }   // pass -> tier >= 1, fail -> tier 0
+  }
+  assert.ok(seed >= 0);
+  const pass = reactionTier012({ personality: 50, npcSeed: seed, toneIndex: 0, skillValue: 100, rolls: () => 0.5 });
+  const fail = reactionTier012({ personality: 50, npcSeed: seed, toneIndex: 0, skillValue: 0, rolls: () => 0.5 });
+  assert.ok(pass > fail, `the Dice100 skill roll separates: pass ${pass} > fail ${fail}`);
+  // Merchants fold: sgroup 5+ indexes the tone tables at 1
+  assert.equal(
+    reactionTier012({ personality: 50, npcSeed: 42, socialGroup: 5, toneIndex: 0, skillValue: 100, rolls: () => 0 }),
+    reactionTier012({ personality: 50, npcSeed: 42, socialGroup: 1, toneIndex: 0, skillValue: 100, rolls: () => 0 }));
+  // The session cache: the first Polite call computes + tallies; the
+  // second re-uses the cached reaction (a NOW-FAILING skill roll must
+  // not change the band) and never re-tallies
+  const session = [0, 0, 0];
+  const tallies = [];
+  const t1 = reactionTier012({ personality: 50, npcSeed: seed, toneIndex: 0, skillValue: 100, session, rolls: () => 0.5, onTally: (s) => tallies.push(s) });
+  assert.deepEqual(tallies, ['Etiquette']);
+  assert.ok(session[0] !== 0, 'the reaction cached');
+  const t2 = reactionTier012({ personality: 50, npcSeed: seed, toneIndex: 0, skillValue: 0, session, rolls: () => 0.5, onTally: (s) => tallies.push(s) });
+  assert.equal(t2, t1, 'the cached reaction wins over a fresh skill roll');
+  assert.deepEqual(tallies, ['Etiquette'], 'tallied once per tone per session');
 });
 
 test('talkTopics: the knowledge roll (T3e) - seed-stable, both table halves reachable', () => {

@@ -34,9 +34,12 @@ import {
 import { startMobileTalk, expandMacros } from '../systems/talkSession.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
 import { ChoiceWindow } from '../ui/talkWindow.js';
-import { buildBuildingDirectory, TOPIC_CATEGORIES, whereIsAnswer } from '../systems/talkTopics.js';
+import { buildBuildingDirectory, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012 } from '../systems/talkTopics.js';
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { FACTION_TYPES } from '../formats/factionFile.js';
+import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
+
+export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> index (DFU TalkToneToIndex)
 
 export const MODES = ['steal', 'grab', 'info', 'dialogue'];
 const MODE_KEYS = { F1: 'steal', F2: 'grab', F3: 'info', F4: 'dialogue' };
@@ -72,6 +75,13 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   let overlay = null;
   let loaded = false, loading = null;
   let directory = [];   // T3c: the location's named buildings
+  // T3f: the talk tone (persists across sessions, as DFU's window
+  // selection does); the reaction cache + tier recompute-on-change
+  // reset per session (TalkToNpc's toneReactionForTalkSession).
+  let tone = 1;                      // 0 Polite / 1 Normal / 2 Blunt
+  let toneSession = [0, 0, 0];
+  let lastToneIndex = -1;
+  let currentTier = 1;
 
   const npcRace = REGION_RACES[regionIndex] === 1 ? 'Redguard' : 'Breton';
 
@@ -223,18 +233,53 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // uniform seed stands in, Ledger A).
     target.person._talkSeed ??= Math.floor(rolls() * 0x7fffffff);
     _talkNpc = target.person;
+    toneSession = [0, 0, 0];   // T3f: per talk session (DFU TalkToNpc)
+    lastToneIndex = -1;
+    showGreeting(t.text);
+  }
+
+  let _talkNpc = null;
+
+  // T3f: GetAnswerText's gate - the tier recomputes only when the
+  // tone CHANGED since the last question (lastToneIndex); the
+  // session cache keeps each tone's reaction (skill roll included)
+  // fixed for the whole conversation.
+  function tierNow() {
+    if (lastToneIndex !== tone) {
+      currentTier = reactionTier012({
+        personality: playerEntity.stats?.personality ?? 50,
+        npcSeed: _talkNpc?._talkSeed ?? 0,
+        socialGroup: 0, questionIndex: 0, toneIndex: tone,
+        skillValue: tone === 0 ? skillValue(playerEntity, SKILLS.Etiquette)
+          : tone === 2 ? skillValue(playerEntity, SKILLS.Streetwise) : 0,
+        session: toneSession, rolls,
+        onTally: (s) => tallySkill(playerEntity, SKILLS[s], 1),
+      });
+      lastToneIndex = tone;
+    }
+    return currentTier;
+  }
+
+  // The T button cycles Polite > Normal > Blunt and re-shows the
+  // current window with the live label (our keyed-window idiom for
+  // DFU's three tone buttons).
+  const toneOption = (reshow) => ({
+    code: 'KeyT', label: `T - tone: ${TONE_NAMES[tone]}`,
+    action: () => { tone = (tone + 1) % 3; reshow(); },
+  });
+
+  function showGreeting(text) {
     showOverlay(new ChoiceWindow({
-      lines: [t.text],
+      lines: [text],
       options: [
         { code: 'KeyW', label: 'W - where is...', action: () => openCategories() },
+        toneOption(() => showGreeting(text)),
         { code: 'Escape', label: 'Esc - goodbye', action: () => {} },
         { code: 'KeyE', label: '', action: () => {} },
         { code: 'Enter', label: '', action: () => {} },
       ],
     }));
   }
-
-  let _talkNpc = null;
 
   function pagedList(lines, items, onPick, page = 0) {
     const per = 8;
@@ -259,17 +304,22 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // GetAnswerWhereIs (the seed-stable knowledge roll picks the
     // knows/doesn't-know table half) + the %hnt hint chain: a 7333
     // variant with %loc = the building, %di = the compass hint.
-    const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality ?? 50, _talkNpc?._talkSeed ?? 0);
+    const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality ?? 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });
     const hint = randomVariant(7333, '%loc is %di of here')
       .replaceAll('%loc', building.name).replaceAll('%di', a.direction);
     let text = randomVariant(a.textId, '%hnt');
     text = expandMacros(text, { playerName: playerEntity.name ?? '' })
       .replaceAll('%hnt', hint).replaceAll('%key', building.name)
       .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAGGED interim
+    showAnswer(text);
+  }
+
+  function showAnswer(text) {
     showOverlay(new ChoiceWindow({
       lines: [text],
       options: [
         { code: 'KeyW', label: 'W - ask another', action: () => openCategories() },
+        toneOption(() => showAnswer(text)),
         { code: 'Escape', label: 'Esc - goodbye', action: () => {} },
         { code: 'KeyE', label: '', action: () => {} },
       ],
@@ -292,7 +342,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     get mode() { return mode; },
     _debug: () => ({
       mode, overlay: !!overlay, people: people?.name ?? null,
-      buildings: directory.length,
+      buildings: directory.length, tone: TONE_NAMES[tone], toneSession: [...toneSession],
       overlayText: overlay?.lines?.[0] ?? overlay?.text ?? null,
       overlayOptions: overlay?.options?.filter((o) => o.label).map((o) => o.label) ?? null,
     }),

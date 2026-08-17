@@ -757,6 +757,37 @@ south of here").
 Suite 443/97. Remaining Where-is residuals: tone buttons
 (Polite/Blunt), the 35% map-reveal, %hnr/%ra interim literals.
 
+## T3f (2026-08-17): TONE BUTTONS - Polite/Normal/Blunt SHIPPED
+
+GetReactionToPlayer_0_1_2 lands in FULL (the neutral-tone T3c shape
+becomes a thin wrapper): reaction = Personality/5 +
+questionTypeReactionMods[qIndex] + the tone modifier, banded against
+the NPC-seeded 0..20 roll (+20 tier width, DFU's lowering of
+classic's +30). The tone modifier is the verbatim pair of tables -
+etiquetteReactionMods [-10,5,10,15,-15] / streetwiseReactionMods
+[10,5,-10,-15,15] by social group (sgroup >= 5 folds to Merchants) -
+plus the Dice100 skill roll: a FAILED Etiquette/Streetwise check
+lands -10, a passed one +5. Session laws verbatim: each tone's
+reaction value (skill roll included) computes ONCE per talk session
+(toneReactionForTalkSession) and a revisit re-uses the cache; the
+skill tallies on the FIRST use of its tone per session; the tier
+recomputes only when the tone CHANGED since the last question
+(GetAnswerText's lastToneIndex gate). The tone selection persists
+across sessions, as DFU's window selection does.
+
+UI: our keyed-window idiom folds DFU's three tone buttons into one
+T key cycling Polite > Normal > Blunt with a live label on the
+greeting and answer windows (the window re-shows through
+showOverlay so the chain law holds).
+
+Probed live: T cycles Normal -> Blunt on screen, the Blunt re-ask
+answers with reaction 30 cached in the session slot ("Beggin' yer
+pardon Sir, ... Vintage Elixirs is southwest of where we're
+standing").
+
+Suite 444/97. Residuals recorded: the 35% map-reveal, %hnr/%ra
+interim literals, murder/assault crimes (the board's next).
+
 ## AUDIT 2026-08-17b: the towns/talk parity pass
 
 The T1 modules were re-read line by line against MobilePersonMotor /
