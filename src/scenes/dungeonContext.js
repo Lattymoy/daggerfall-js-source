@@ -13,6 +13,7 @@ import { applyTextureTable } from '../world/dungeonTextures.js';
 import { collectDungeonLights } from '../world/dungeonLights.js';
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { MobileUnit } from '../characters/mobileUnit.js';   // C11: classic sprite monsters
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, classifyPlacementAction, lookAtLockText } from '../world/actionSystem.js';
@@ -88,7 +89,7 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';
  * @param climateBaseType ClimateBases value for the table remap
  */
 export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseType, opts = {}) {
-  const { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, palette } = deps;
+  const { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette } = deps;
 
   // Layout needs synchronous models (doors/exit extraction); a unit-size
   // pre-pass mirrors the standalone scene.
@@ -320,7 +321,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
-      { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity }, { EnemyCaster }] = await Promise.all([
+      { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
@@ -346,7 +347,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       fetchBytes,
       createCharacterRig: engineRig.createCharacterRig,
       bodyRamps: engineRig.deriveClassicRamps(palette, bodyImg.getDFBitmap()),
-      buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, EnemyCaster, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
+      buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, loadMonsterCareer, EnemyCaster, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
     };
    } catch (err) {
      // The foe SUBSYSTEM failing to initialize (a dynamic import, the
@@ -409,6 +410,46 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
        // path, and with ?foes a single bad enemy took the level
        // down with no signal. Skip the foe, keep the dungeon.
        console.error(`[foe] mobileType ${e.mobileType} failed to build; skipping this enemy:`, err?.message ?? err);
+     }
+      continue;
+    }
+    // C11 THE MONSTER PIVOT: monster types (0-42) become REAL foes -
+    // the same EnemyAI/senses/stealth, EnemyAttack cadence, entity
+    // (ENEMY{nnn}.CFG career + basics HP/level/armor, E4a), loot,
+    // S16 fixed spell lists, S18 OnMonsterHit riders, and corpses -
+    // rendered as classic ANIMATED sprite mobiles (MobileUnit: the
+    // DFU orientation/anim laws over the real TEXTURE archive).
+    if (foeDeps && e.mobileType <= 42 && basics.maleTexture) {
+     try {
+      const D = foeDeps;
+      const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
+      const t = await getTexture(archive);
+      const pos = D.floorLanding(collider, [e.x, e.y + 0.2, e.z]);
+      const yawDeg = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing (Ledger A rule)
+      const career = await D.loadMonsterCareer(e.mobileType, D.fetchBytes);
+      const entity = D.makeEnemyEntity(e.mobileType, basics, career, D.playerEntity.level);
+      entity.items = D.generateItems(basics.lootTableKey ?? '-', { level: D.playerEntity.level, gender: e.gender });
+      // INTERIM (loud): flying/aquatic monsters ride the grounded
+      // motor - they WALK until the behaviour motors land (C11 rec).
+      const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, {
+        liveSpeed: entity.liveSpeed,
+        seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
+      });
+      const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
+      const mobile = new MobileUnit(e.mobileType, basics, (rec) => t.getFrameCount(rec));
+      // One live billboard batch per foe: record/size/origin mutate
+      // per frame (the batch geometry is a unit quad; size is a
+      // uniform, origin a live translation - zero rebuilds).
+      const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
+      foes.push({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
+     } catch (err) {
+       // Same guard as the class branch: one bad monster must not
+       // take the dungeon down - fall back to the static flat.
+       console.error(`[foe] monster ${e.mobileType} failed to build; static flat fallback:`, err?.message ?? err);
+       const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
+       const key = `${archive}_0`;
+       if (!flatGroups.has(key)) flatGroups.set(key, []);
+       flatGroups.get(key).push([e.x, e.y, e.z]);
      }
       continue;
     }
@@ -870,7 +911,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const g = floorLanding(collider, [pile.pos[0], pile.pos[1] + 0.2, pile.pos[2]]);
     pile.pos = g;
     pile.half = [size.w / 2, size.h / 2];
-    pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, pile.record, size, [[g[0], g[1] + size.h / 2, g[2]]]);
+    // Bottom-anchored shader: the base IS the ground point (the +h/2
+    // center-anchor holdover floated piles - C11 audit 08-17).
+    pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, pile.record, size, [[g[0], g[1], g[2]]]);
     billboardBatches.push(pile.batch);
   }
 
@@ -910,7 +953,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!t || ct.record >= t.recordCount) return;
     uploadRecord(ct.archive, ct.record);
     const size = scaledBillboardSize(t.getSize(ct.record), t.getScale(ct.record));
-    const batch = renderer.createBillboardBatch(ct.archive, ct.record, size, [[p[0], p[1] + size.h / 2, p[2]]]);
+    // The billboard shader BOTTOM-anchors (position = base): the old
+    // +h/2 was a center-anchor holdover and floated every corpse by
+    // half its height (C11 audit 08-17; the static-flat path shifts
+    // DOWN for the same reason).
+    const batch = renderer.createBillboardBatch(ct.archive, ct.record, size, [[p[0], p[1], p[2]]]);
     corpses.push(batch);
     billboardBatches.push(batch);   // hosts draw + destroy() frees
   }
@@ -1124,6 +1171,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       spawnCorpse(foe);
       return;
     }
+    if (foe.mobile) {
+      foe._hurtPending = true;   // C11: the sprite Hurt one-shot (records 10-14)
+      return;
+    }
     if (playerFeet && foeDeps) {
       const hdx = playerFeet[0] - foe.ai.feet[0], hdz = playerFeet[2] - foe.ai.feet[2];
       const front = foeDeps.withinYaw(foe.ai.yaw, hdx, hdz, 90);
@@ -1215,6 +1266,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   sceneAmbience.setPreset('dungeon');
   function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false) {
     _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
+    const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) lastPlayerFeet = [...playerFeet];
     if (activeOverlay?.isRestWindow) activeOverlay.tickRest(dt);   // U7: the rest clock (the world runs on below - foes can break it)
     if (playerFeet) {
@@ -1376,6 +1428,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         }
       }
       f.events = _fParalyzed ? [] : f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine (S19: paralysis returns early)
+      // C11 audit 08-17: the attack START edge (machine Idle -> swing
+      // this frame) - MeleeAnimation fires ChangeEnemyState + the
+      // attack sound ONCE at the start, not at the hit frame, and not
+      // gated on the hit later connecting. A LEVEL signal replayed the
+      // sprite sequence inside one swing (the machine outlasts it).
+      const _mstate = f.attack.machine.state;
+      const _strikeEdge = _mstate !== 'Idle' && (f._prevMState ?? 'Idle') === 'Idle';
+      f._prevMState = _mstate;
+      if (_strikeEdge && !f.entity.isClass) {
+        const sx = ENEMY_BASICS[f.mobileType];
+        // PlayAttackSound: half the time, humans stay silent
+        if (sx?.attackSound != null && Math.random() <= 0.5) {
+          audio.play3d(sx.attackSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]], 1, { maxDistance: 16 });
+        }
+      }
       // S16: the casting decision rides beside the attack machine
       // (DoRangedAttack's spell branch + DoTouchSpell); the decision
       // casts INSTANTLY. RESIDUAL (honest): DFU casters also hold at
@@ -1408,11 +1475,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // also drops the weapon if the target is metal-immune to it
           // - the player has no minMetalToHit, so that gate is inert)
           const wpn = foeDeps.chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
-          // PlayAttackSound: half the time, humans stay silent
-          const bx = ENEMY_BASICS[f.mobileType];
-          if (!f.entity.isClass && bx?.attackSound != null && Math.random() <= 0.5) {
-            audio.play3d(bx.attackSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]], 1, { maxDistance: 16 });
-          }
+          // (the attack sound moved to the strike EDGE above - DFU
+          // plays it at MeleeAnimation start, audit 08-17)
           // S18: the special-attack rider seam - monster weaponless
           // hits run OnMonsterHit per hit (disease/paralysis/fatigue)
           const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {
@@ -1432,6 +1496,30 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           hurtPlayer(dmg);
         }
       }
+      if (f.mobile) {
+        // C11: the sprite mobile. Paralysis freezes the anim clock
+        // (FreezeAnims - the cached output redraws); otherwise the
+        // unit consumes the frame's intent: attack while the shared
+        // machine swings, hurt on the damage trigger, move/idle by
+        // pursuit. The frame texture uploads lazily per record#frame.
+        if (!_fParalyzed || !f._mout) {
+          f._mout = f.mobile.update(dt, {
+            moving: f.ai.moving,
+            striking: _strikeEdge,   // the START edge (paralysis eats it - FreezeAnims blocks ChangeEnemyState, verbatim)
+            hurting: !!f._hurtPending,
+          }, f.ai.yaw, f.ai.feet, eye);
+          f._hurtPending = false;
+        }
+        const out = f._mout;
+        const rkey = `${out.record}#${out.frame}`;
+        if (!renderer.textures.has(`${f.mobileArchive}_${rkey}`)) uploadRecordFrame(f.mobileArchive, out.record, out.frame);
+        const sz = scaledBillboardSize(f.mobileTex.getSize(out.record), f.mobileTex.getScale(out.record));
+        f.batch.record = rkey;
+        f.batch.size = { w: out.flip ? -sz.w : sz.w, h: sz.h };   // negative width = FlipLeftRight (UVs ride the corners)
+        f.batch.origin = f.ai.feet;   // the billboard shader bottom-anchors
+        _mobileBatches.push(f.batch);
+        continue;
+      }
       if (!_fParalyzed) {   // S19 FreezeAnims: the rig holds its live frame
         f.rig.setGait(f.ai.moving ? 1 : 3);   // WALK while pursuing, IDLE sway at rest
         let pose = f.attack.pose();
@@ -1447,6 +1535,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const s = f.rig.scale, p = f.ai.feet;
       const mat = trs(p[0], p[1] - f.rig.liveFootY * s, p[2], 0, f.ai.yaw * 180 / Math.PI, 0, s, s, s);   // live support point, same grounding rule as the player rig
       _drawSprite(renderer, canvas, f.rig, mat, proj, view, eye);
+    }
+    // C11: the sprite mobiles draw as one billboard pass. The right
+    // axis is the NEGATED view row - the same (cos yaw, 0, -sin yaw)
+    // axis every host passes for its static flats. That axis carries
+    // the engine's screen-mirror convention (our right-handed lookAt
+    // shows world +x on screen-right where Unity shows -x; the flats'
+    // axis bakes the compensating mirror in), so DFU's verbatim
+    // FlipLeftRight booleans land in the same frame as everything
+    // else. Ground-truthed against raw record art: skeletal warrior
+    // 270/17 renders unmirrored (facing its walk direction) with this
+    // axis, mirrored (moonwalking) with the raw view row.
+    if (_mobileBatches.length) {
+      renderer.drawBillboards(_mobileBatches,
+        new Float32Array([-view[0], -view[4], -view[8]]), new Float32Array([0, 1, 0]));
     }
     // LAST before the HUD: the classic weapon overlay composites over
     // the whole frame (DaggerfallUI draws it under the HUD). The rig
