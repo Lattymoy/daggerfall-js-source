@@ -75,7 +75,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-17, the T1 slice)
+## Open flags (regenerated 2026-08-17, the town audit)
 
 Regenerated at the S20 close (the drainFatigue "exhaustion pends"
 comment SHIPPED out; line numbers refreshed). Every row below is a
@@ -105,12 +105,14 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/scenes/dungeonContext.js:749` - FLAGGED to the effect library (caster-only buffs, touch, areas).
 - `src/scenes/dungeonContext.js:960` - 129; the inventory/equip UI pends - the INTERIM dagger note
 - `src/scenes/dungeonContext.js:1694` - actions) is FLAGGED - the player snapshot only.
-- `src/scenes/exterior.js:277` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
-- `src/scenes/exterior.js:391` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:459` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/world.js:338` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
-- `src/scenes/world.js:515` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:639` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/exterior.js:278` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
+- `src/scenes/exterior.js:405` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:474` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
+- `src/scenes/world.js:404` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
+- `src/scenes/world.js:408` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:652` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:823` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:59` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
@@ -126,6 +128,11 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/systems/loot.js:169` - FLAGGED to the economy slice (shops).
 - `src/systems/save.js:7` - (foes, loot piles, action states, doors) is FLAGGED - dungeons
 - `src/systems/skills.js:56` - *  +0.1) and the Jump spell (+0.6) are INTERIM 0 here, loudly - the
+- `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
+- `src/systems/talk.js:78` - *  FLAGGED to the crime slice - the state lands now, verbatim).
+- `src/systems/talk.js:91` - TallyCrimeGuildRequirements(true, 1) FLAGGED: thieves-guild
+- `src/systems/talk.js:98` - SpawnCityGuards(true) FLAGGED: the crime/guards slice mounts the response.
+- `src/systems/talkSession.js:19` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 - `src/ui/actionText.js:7` - (backgrounds FLAGGED pending art-name verification, the shared UI
 - `src/ui/chargen.js:11` - background ART is FLAGGED pending art-name verification against
 - `src/ui/chargen.js:148` - ---- drawing: clean classic-text panels (art FLAGGED, see head) ----
@@ -139,6 +146,51 @@ stay open to Mac's eye in live play (probe-locked).
 ## Audits
 
 Newest first.
+
+**2026-08-17b - the comprehensive audit of the towns/talk stretch
+(T1, T2, T3a, T3b).** Re-verified the three T1 town modules line by
+line against their DFU sources (they were built from working digests;
+the talk/faction slices were source-read at build time), swept the
+host-parity seams, and re-ran every gate and live probe. SIX REAL
+FINDINGS, all fixed at root with pins:
+(F1) THE SELF-TARGET PLACE - InitMotor sets targetScenePosition =
+transform.position; our place() left target at the origin, so a
+politeness idle entered BEFORE the first seek resumed marching toward
+world (0,0,0). place() now targets self with the -1 nav sentinel, and
+_seek gained InitNavPosition's rederive-from-position.
+(F2) THE N/S/E-ONLY BEST SCAN - DFU's downgrade-leave loop iterates
+Enumerable.Range(0,3): West is NEVER evaluated as a best direction (a
+DFU quirk, preserved 1:1; we had scanned all four).
+(F3) THE TICK RESET - PopulationManager resets its timer to ZERO on
+fire (at most one tick per frame, remainder dropped); our accumulator
+burst-ticked on slow frames and could spawn a crowd.
+(F4) THE SPAWN RANGE GATE - maxPlayerDistanceOutsideRect: no spawn
+attempts unless the player is inside the location rect + 2500 classic
+units (62.5); far streaming pixels now park at pool 0 (probed).
+(F5) RANDOMISE-NPC PER SPAWN - identity re-rolls at EVERY spawn, not
+per pool item: 1/32 spawns are GUARDS (texture 399, male, variant 0 -
+guards never spawned before this audit), else the gender flip + one
+of four outfit variants; recycled walkers come back as someone else.
+The hosts re-point batch.archive per frame and resolve frameCount by
+the LIVE archive (the creation-bound texture closure was stale).
+(F6) THE UI PAUSE - DFU pauses the sim under UI windows; the
+population now freezes (dt 0) while the talk overlay is up, so the
+subject cannot walk away mid-conversation.
+Verbatim-confirmed clean: tile weights/carve/row flip (TileTypes
+enum exact), spawn probe semantics (uniform [-r,r], 11 attempts), the
+anti-skate render gate, the promote/recycle gating incl. the 180-degree
+half-plane math, MoveAnims records/flips/speeds and the 4-variant
+outfit tables, idle 5 / guard 15, the politeness gate term for term
+(inBeastForm N/A), the reaction ladder + -20 edge, activation
+distances, the pickpocket formula + outcomes (the CAUGHT path
+witnessed live this audit: crime landed on the entity), FACTION.TXT
+parse laws. Departures documented LOUD: pickpocket gold/nothing as
+HUD lines pending the U-arc message boxes; DFU's dawn-churn
+scheduleRecycle quirk on inactive items not reproduced (unobservable);
+our release() clears both tiles where DFU leaks the spawn tile's
+Occupied flag on recycle-before-first-move (kept - a DFU resource
+leak with no gameplay signature). Suite 420 -> 428 (the audit pins);
+all three live probes re-run green.
 
 **2026-08-16f - the comprehensive audit of the P13..C10 stretch
 (the post-16e day: stealth, rest, movement, sneak, the weapon rig).**
