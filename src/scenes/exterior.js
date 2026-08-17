@@ -44,6 +44,7 @@ import { createArrestFlow } from './arrestFlow.js';   // G2
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
+import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
@@ -306,6 +307,15 @@ export async function bootExterior(canvas, renderer, params, status) {
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadInventoryArt({ renderer, fetchBytes, palette });   // U8d: INVE00I0/01I0 warm at boot
+  const droppedLoot = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });   // U8e
+  // FindGroundPosition (CreateDroppedLootContainer): the pile lands
+  // on the ground BELOW the player, not at the motor's height
+  const dropFeet = () => {
+    const p0 = walkMode ? [...player.pos] : [...cam.pos];
+    const d = collider.raycast(p0, [0, -1, 0], 10);
+    if (Number.isFinite(d)) p0[1] -= d;
+    return p0;
+  };
   surfacePlayer();   // the probe surface exists from boot (T3b: pickpocket gold reads)
   let _livePersons = [];
   // G1: the city watch (SpawnCityGuards verbatim; Knight_CityWatch
@@ -410,8 +420,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (e.code === 'F6' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && inventoryArtLoaded()) {
       e.preventDefault();
       townTalk.showOverlay(new NativeInventoryWindow({
-        items: () => playerEntity.items ?? [],
+        items: () => (playerEntity.items ??= []),
         icons: { getTexture, uploadRecord, textures: renderer.textures },
+        onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
       }));
       return;
     }
@@ -481,6 +492,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     })).filter((x) => x.active));
     window.__talk = () => JSON.stringify(townTalk._debug());   // T3b probe surface
     window.__guards = () => JSON.stringify(cityGuards._debug());   // G1 probe surface
+    window.__droppedLoot = () => JSON.stringify(droppedLoot._piles.map((pl) => ({ n: pl.items.length, pos: pl.pos.map((v) => +v.toFixed(1)), record: pl.record, flat: !!pl.batch })));   // U8e probe surface
     window.__crime = () => _crimeResponse();   // G1: force the response without pickpocket RNG
     window.__guardDamage = (i, dmg) => cityGuards._damage(i, dmg);   // G3: the real death path for loot probes
     window.__uiArt = () => JSON.stringify({ charsheet: charSheetArtLoaded() });   // U8a probe surface
@@ -580,7 +592,19 @@ export async function bootExterior(canvas, renderer, params, status) {
         const useFwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
         if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
           const lootKey = pickActivatable(cam.pos, useFwd, cityGuards.lootTargets(), collider);
+          const dropKey = lootKey ? null : pickActivatable(cam.pos, useFwd, droppedLoot.lootTargets(), collider);
           if (lootKey) { cityGuards.takeLoot(lootKey, (l) => townTalk.say(l)); surfacePlayer(); }
+          else if (dropKey && inventoryArtLoaded()) {
+            // U8e: a pile under the ray opens the inventory WITH the
+            // pile as the remote target (Remove defaults - the OnPush law)
+            const pile = droppedLoot.pileFor(dropKey);
+            townTalk.showOverlay(new NativeInventoryWindow({
+              items: () => (playerEntity.items ??= []),
+              loot: { items: () => pile.items },
+              icons: { getTexture, uploadRecord, textures: renderer.textures },
+              onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),
+            }));
+          }
           else modes.tryEnter().catch((e) => console.error(e));
         }
       }
@@ -772,6 +796,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       const guardBatches = cityGuards.update(townTalk.overlayActive ? 0 : dt,
         walkMode ? player.pos : cam.pos, eye, { playerInvisible: isInvisible(playerEntity) });
       personBatches.push(...guardBatches);
+      personBatches.push(...droppedLoot.batches());   // U8e: the ground piles
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, new Float32Array([0, 1, 0]));
     }
     if (precip) {

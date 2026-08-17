@@ -22,16 +22,25 @@
 // 0..77 (verified over the shipping data - 78 rows, contiguous).
 //
 // THE MODE MACHINE (verbatim shape): selectedActionMode defaults to
-// Equip (OnPush; Remove only for loot targets - pends); mode buttons
-// select + highlight. THIS SLICE the window is the VIEW + INFO half:
-// Info mode click pops an interim item panel (name/weight/value -
-// DFU's full 1016 info text pends), Equip/Use local clicks and the
-// whole remote (dropped-pile) side are FLAGGED loud - equipping
-// needs the paperdoll arc, dropping needs the ground loot flat.
-// Wagon/gold: consumed no-ops (no wagon owned; letter-of-credit
-// pends).
+// Equip when managing inventory, REMOVE when a loot target opened
+// the window ("so player does not accidentially equip when picking
+// up" - the OnPush law); mode buttons select + highlight.
+//
+// U8e - THE REMOTE SIDE: the remote scroller is DFU's droppedItems
+// by default (OnPush: "Set dropped items as default target"), or a
+// LOOT TARGET's items when a ground pile opened the window. Remove-
+// mode local clicks transfer into the remote pile
+// (LocalItemListScroller_OnItemClick); remote clicks in Equip or
+// Remove mode transfer back to the player (RemoteItemListScroller_
+// OnItemClick - Equip's equip-after-transfer half pends the
+// paperdoll arc). Closing with session-dropped items hands them to
+// hooks.onDrop - the host mints the ground pile flat. Info mode
+// pops an interim item panel (name/weight/value - DFU's 1016 info
+// text pends). Equip/Use local clicks stay FLAGGED; wagon/gold:
+// consumed no-ops (no wagon owned; letter-of-credit pends).
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, SCREEN_DIM, shadowText } from './nativePanel.js';
+import { addItem } from '../systems/inventory.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel } from './itemScroller.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
@@ -89,37 +98,70 @@ export const inventoryArtLoaded = () => !!_art;
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
 /** hooks = { items() -> the player bag, icons: { getTexture,
- *  uploadRecord, textures }, onClose() }. */
+ *  uploadRecord, textures }, loot?: { items() -> the ground pile }
+ *  (a loot target opened the window), onDrop?(items) (the session's
+ *  dropped pile needs a world flat), onClose() }. */
 export class NativeInventoryWindow {
   constructor(hooks) {
     this.hooks = hooks;
     this.done = false;
     this.isChoiceWindow = true;    // raw codes through the overlay seam
     this.tab = 'weapons';          // SelectTabPage(TabPages.WeaponsAndArmor) on setup
-    this.mode = 'equip';           // selectedActionMode default
+    // selectedActionMode: Remove for loot targets, Equip otherwise
+    this.mode = hooks.loot ? 'remove' : 'equip';
     this.scroll = 0;
+    this.remoteScroll = 0;
+    this.dropped = [];             // droppedItems (the default remote target)
     this.popup = null;             // the interim info panel lines
     this._icon = makeIconDrawer(hooks.icons);
   }
 
   _filtered() { return filterByTab(this.hooks.items(), this.tab); }
+  _remote() { return this.hooks.loot ? this.hooks.loot.items() : this.dropped; }
   _setTab(t) { this.tab = t; this.scroll = 0; }
-  _close() { this.done = true; this.hooks.onClose?.(); }
+  _close() {
+    this.done = true;
+    if (this.dropped.length) this.hooks.onDrop?.(this.dropped);   // the world pile mints on close (OnPop)
+    this.hooks.onClose?.();
+  }
+
+  _info(it) {
+    // INTERIM info panel: name/weight/value (DFU's 1016 info text
+    // + paperdoll cutout pend)
+    const t = templateByIndex(it.templateIndex);
+    this.popup = [
+      it.name ?? t?.name ?? '?',
+      `Weight: ${(t?.weight ?? 0) * (it.stackCount ?? 1)} kg`,
+      `Value: ${itemBaseValue(it)} gold`,
+    ];
+  }
 
   _pick(slot) {
     const it = this._filtered()[this.scroll + slot];
     if (!it) return;
-    if (this.mode === 'info') {
-      // INTERIM info panel: name/weight/value (DFU's 1016 info text
-      // + paperdoll cutout pend)
-      const t = templateByIndex(it.templateIndex);
-      this.popup = [
-        it.name ?? t?.name ?? '?',
-        `Weight: ${(t?.weight ?? 0) * (it.stackCount ?? 1)} kg`,
-        `Value: ${itemBaseValue(it)} gold`,
-      ];
+    if (this.mode === 'info') { this._info(it); return; }
+    if (this.mode === 'remove') {
+      // LocalItemListScroller_OnItemClick Remove: transfer to the
+      // remote items (whole stacks - the split popup pends)
+      const bag = this.hooks.items();
+      bag.splice(bag.indexOf(it), 1);
+      addItem(this._remote(), it);
+      return;
     }
-    // equip/use/remove: FLAGGED - the paperdoll/use/drop arcs pend
+    // equip/use: FLAGGED - the paperdoll/use arcs pend
+  }
+
+  _pickRemote(slot) {
+    const remote = this._remote();
+    const it = remote[this.remoteScroll + slot];
+    if (!it) return;
+    if (this.mode === 'info') { this._info(it); return; }
+    if (this.mode === 'remove' || this.mode === 'equip') {
+      // RemoteItemListScroller_OnItemClick: both modes transfer to
+      // the player (Equip's equip-after half pends the paperdoll)
+      remote.splice(remote.indexOf(it), 1);
+      addItem(this.hooks.items(), it);
+    }
   }
 
   input(code) {
@@ -149,9 +191,13 @@ export class NativeInventoryWindow {
       else this.scroll = applyScroll(this.scroll, hit.kind, this._filtered().length);
       return true;
     }
-    // the remote (dropped-pile) scroller: consumed, FLAGGED to the
-    // ground-loot slice
-    return !!scrollerHit(R.remoteList, vx, vy);
+    const rhit = scrollerHit(R.remoteList, vx, vy);
+    if (rhit) {
+      if (rhit.kind === 'slot') this._pickRemote(rhit.slot);
+      else this.remoteScroll = applyScroll(this.remoteScroll, rhit.kind, this._remote().length);
+      return true;
+    }
+    return false;
   }
 
   draw(renderer, canvas, font) {
@@ -165,12 +211,17 @@ export class NativeInventoryWindow {
     drawImgSub(renderer, _art.gold, m, tr[0], tr[1], tr[2], tr[3]);
     const mr = INV_RECTS[this.mode];
     drawImgSub(renderer, _art.gold, m, mr[0], mr[1], mr[2], mr[3]);
-    // the filtered bag through the shared scroller
-    const items = this._filtered();
-    items.slice(this.scroll, this.scroll + LIST_SLOTS).forEach((it, s) => {
-      this._icon(renderer, m, it, INV_RECTS.localList, s);
-      drawStackLabel(renderer, _art.font4, m, it, INV_RECTS.localList, s);
-    });
+    // both sides through the shared scroller: the filtered bag
+    // locally, the pile (loot target or session drops) remotely
+    for (const [rect, scroll, items] of [
+      [INV_RECTS.localList, this.scroll, this._filtered()],
+      [INV_RECTS.remoteList, this.remoteScroll, this._remote()],
+    ]) {
+      items.slice(scroll, scroll + LIST_SLOTS).forEach((it, s) => {
+        this._icon(renderer, m, it, rect, s);
+        drawStackLabel(renderer, _art.font4, m, it, rect, s);
+      });
+    }
     // the interim info popup (paperdoll region is free space)
     if (this.popup) {
       renderer.drawScreenQuad(null, { x: m.ox + 49 * m.s, y: m.oy + 60 * m.s, w: 110 * m.s, h: (this.popup.length * 11 + 8) * m.s }, undefined, [0, 0, 0, 0.85]);

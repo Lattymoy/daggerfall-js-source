@@ -514,3 +514,41 @@ EQUIP lit as the default mode, dagger + buckler inside their slot
 frames right-side-up, the Clothing tab swapping to the book with
 its FONT0004 "3" at the button top-left, the INFO panel over the
 paperdoll space, Escape closing. Suite 460/102.
+
+## U8e: dropped loot - the ground pile (2026-08-17)
+
+The inventory's remote column comes alive: DFU's droppedItems +
+CreateDroppedLootContainer, every law cited.
+- scenes/droppedLoot.js: dropPile mints a pile at the ground below
+  the player with an archive-216 flat (DaggerfallLootDataTables.
+  randomTreasureArchive) on a RANDOM record from the verbatim
+  20-entry randomTreasureIconIndices; batches ride the hosts'
+  person-flat axis (the corpse-batch shape); lootTargets carry the
+  corpse activation box. EMPTIED piles vanish from both reads
+  (SerializableLootContainer: Items.Count == 0 -> remove).
+- nativeInventory REMOTE SIDE: Remove-mode local clicks transfer
+  whole stacks into the remote pile (LocalItemListScroller_
+  OnItemClick; the stack-split popup pends); remote clicks in Equip
+  OR Remove transfer back to the player (RemoteItemListScroller
+  verbatim - Equip's equip-after half pends the paperdoll);
+  closing with session drops hands them to onDrop (the OnPop mint).
+  Loot-target opens default to REMOVE ("so player does not
+  accidentially equip when picking up").
+- HOSTS (both exteriors): dropFeet raycasts the ground below the
+  motor (FindGroundPosition); E on a pile slots between corpse loot
+  and doors in the activation order and reopens the inventory WITH
+  the pile as remote target; pile batches draw with the person
+  flats. FLAGGED loud: save persistence (piles die with the
+  session, as guard corpses do), the ?world pixel-destroy frame
+  doctrine (piles share the corpse-batch stance), the stack-split
+  popup, TrackLooseObject.
+
+PROBE LESSON (tools/droppedLootProbe.mjs): the first run dropped
+while the boot collider was still streaming - the motor hung at
+spawn height, the ground raycast had no tris, and the pile minted
+mid-air. Probes that DROP things must wait for the MOTOR TO SETTLE
+(two stable __player.pos reads), not just __shotReady. Probed +
+EYEBALLED end to end: the classic treasure sprite lying on the
+street, E reopening the window with REMOVE lit and the dagger in
+the pile column, the pickup emptying the pile and the flat gone.
+Suite 462/103.
