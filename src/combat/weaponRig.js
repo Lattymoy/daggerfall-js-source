@@ -25,6 +25,8 @@ import { SOUND, swingSoundFor } from '../systems/soundClips.js';
 /**
  * @param deps {
  *   renderer, canvas, fetchBytes, palette, audio,
+ *     (canvas may be the element OR a () => element - the dungeon
+ *      context only holds a canvas per frame, C10),
  *   entity          - the player entity (arrow stock reads it),
  *   say(line)       - the classic-message sink ('You have no arrows.');
  *                     hosts without a HUD text layer pass console
@@ -35,6 +37,7 @@ import { SOUND, swingSoundFor } from '../systems/soundClips.js';
  */
 export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, say = () => {}, spellArmed = () => false }) {
   const playerWeapon = new PlayerWeapon({});
+  const cv = typeof canvas === 'function' ? canvas : () => canvas;
   const cache = new Map();   // `${type}:${material}` -> art (null while loading)
   let _dx = 0, _dy = 0, _held = false;
   let _prevState = null;     // the swing-sound edge (A1)
@@ -91,7 +94,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *   host resolves them (or ignores them where nothing is in reach).
      */
     frame(dt, { paralyzed = false } = {}) {
-      if (!paralyzed) playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(canvas.clientWidth, canvas.clientHeight));
+      const c = cv();
+      if (!paralyzed && c) playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight));
       _dx = 0; _dy = 0;
       const s = playerWeapon.machine.state;
       if (s !== _prevState) {
@@ -105,8 +109,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     draw({ paralyzed = false } = {}) {
       bowArrowGuard();
       if (paralyzed || !shown()) return;
-      const art = artFor(playerWeapon.weapon);
-      if (art) drawFpsWeapon(renderer, canvas, art, playerWeapon.machine.state, playerWeapon.machine.frame);
+      const c = cv();
+      const art = c && artFor(playerWeapon.weapon);
+      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);
     },
   };
 }

@@ -20,9 +20,8 @@ import { TextRsc } from '../formats/textRsc.js';
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem, removeOne } from '../systems/inventory.js';
-import { worldAabb, rayAabb } from '../player/activate.js';
-import { WEAPON_REACH } from '../combat/playerWeapon.js';
-import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
+import { worldAabb } from '../player/activate.js';
+import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
 import { drawText, makeFont, measureText } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
@@ -35,7 +34,7 @@ import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet } from '../ui/charsheet.js';
 import { InventoryWindow, SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
 import { tallySkill, skillValue, SKILLS, WEAPON_SKILL, SKILL_NAMES } from '../systems/skills.js';
-import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
 import { raiseSkills, applyLevelUp } from '../systems/advancement.js';
 import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
@@ -61,7 +60,7 @@ import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
 import { audio } from '../systems/audio.js';
 import {
-  SOUND, swingSoundFor, hitSoundFor,
+  SOUND, hitSoundFor,
   TORCH_ARCHIVE, TORCH_RECORDS, TORCH_MAX_DISTANCE, TORCH_VOLUME,
   ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD, ANIMAL_MAX_DISTANCE, AMBIENT_RANDOM_PLAY_MAX,
 } from '../systems/soundClips.js';
@@ -331,11 +330,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
     const formulas = await import('../combat/formulas.js');
     const equip = await import('../combat/enemyEquipment.js');
-    const { PlayerWeapon } = await import('../combat/playerWeapon.js');
     const { REACTIONS, sampleClip } = await import('../characters/anims.js');
 
     foeDeps = {
-      PlayerWeapon, REACTIONS, sampleClip,
+      REACTIONS, sampleClip,
       isBackFacing,
       chooseEnemyWeapon: formulas.chooseEnemyWeapon,
       generateItems: generateLootItems,   // the static import (audit 06e: the dynamic pair was double-sourcing)
@@ -881,62 +879,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // here against the foes - reach/view/LOS verbatim, damage through
   // the full chain, reactions on the shipped clips, death -> the
   // extracted corpse flat replaces the rig.
-  const playerWeapon = foes.length ? new foeDeps.PlayerWeapon({}) : null;
-  if (playerWeapon && opts.playerWeapon === 'bow') {
+  // The TRUE classic FP weapon (design pivot 2026-08-17), now the
+  // SHARED host rig (C10 fold - combat/weaponRig.js owns the art
+  // cache, the ShowWeapons legs, ToggleSheath + DrawWeapon 78, the
+  // zero-arrow bow guard, the gesture buffer, and the swing-sound
+  // edge; the audited laws moved verbatim). The weapon exists even
+  // with NO foes now - host parity with the other rig mounts, and it
+  // un-gates the listener/ambient pass below, which the old
+  // foes-only playerWeapon had silently disabled in foe-less
+  // dungeons. spellArmed = the HasReadySpell / IsPlayingAnim leg.
+  let _weaponCanvas = null;   // the context sees a canvas only per drawFoes call
+  const weaponRig = createWeaponRig({
+    renderer, canvas: () => _weaponCanvas, fetchBytes, palette, audio, entity: playerEntity,
+    say: (l) => hudText.add(l),
+    spellArmed: () => clickCast.armed || pendingClickCast,
+  });
+  const playerWeapon = weaponRig.playerWeapon;   // the dungeon-side combat consumers read it
+  if (opts.playerWeapon === 'bow') {
     // Combat bows: ?weapon=bow readies a plain Short Bow (template
     // 129; the inventory/equip UI pends - the INTERIM dagger note
     // stands for melee).
     playerWeapon.weapon = { name: 'Short Bow', ...createWeapon(129, 0) };
   }
-  // The TRUE classic FP weapon (design pivot 2026-08-17): WEAPON*.CIF
-  // frames with the metal dye, drawn 320x200 screen-space per
-  // FPSWeapon - the voxel viewmodel rig is ON ICE (see the record in
-  // Combat.md; the iced surface keeps its exports + pins).
-  const fpwCache = new Map();   // `${type}:${material}` -> art (null while loading)
-  /** WeaponManager.Update's ShowWeapons legs, verbatim order (audit
-   *  2026-08-17): spell ready/casting hides, sheathed hides, the bow
-   *  cooldown hides (FPSWeapon also zeroes ShowWeapon at the bow
-   *  one-shot end until the cooldown elapses). Paralysis rides the
-   *  S19 gate at the draw site. Routed legs, no system yet: equip
-   *  countdown, climbing, transport modes. */
-  function weaponShown() {
-    if (!playerWeapon || playerWeapon.sheathed) return false;
-    if (clickCast.armed || pendingClickCast) return false;   // HasReadySpell / IsPlayingAnim
-    const m = playerWeapon.machine;
-    if (m.isBow && m.now < m.cooldownUntil) return false;    // bow cooldown hide
-    return true;
-  }
-  /** ToggleSheath through the weapon + the draw sound (SOUND.DrawWeapon
-   *  78, FPSWeapon.PlayActivateSound). */
-  function toggleSheath() {
-    if (!playerWeapon) return;
-    if (playerWeapon.toggleSheath()) audio.playOneShot(SOUND.DrawWeapon);
-  }
-  /** FPSWeapon.UpdateWeapon's bow guard, verbatim: an UNsheathed bow
-   *  with zero Arrows auto-sheathes with the classic line. Runs each
-   *  frame from the draw path. */
-  function bowArrowGuard() {
-    if (!playerWeapon || playerWeapon.sheathed) return;
-    if (weaponTypeForItem(playerWeapon.weapon) !== WEAPON_TYPES.Bow) return;
-    if (playerEntity.items.some((it) => it.templateIndex === 131 && (it.stackCount ?? 1) > 0)) return;
-    playerWeapon.sheathed = true;
-    hudText.add('You have no arrows.');
-  }
-  function fpsWeaponArtFor(item) {
-    if (!palette) return null;
-    const type = weaponTypeForItem(item);
-    if (type === WEAPON_TYPES.None) return null;
-    const material = item?.material ?? 0;
-    const key = `${type}:${material}`;
-    if (!fpwCache.has(key)) {
-      fpwCache.set(key, null);
-      loadFpsWeaponArt(fetchBytes, palette, renderer, type, material)
-        .then((art) => fpwCache.set(key, art))
-        .catch((e) => console.warn('[fpsWeapon] art load failed', key, e));
-    }
-    return fpwCache.get(key);
-  }
-  let _atkDx = 0, _atkDy = 0, _atkHeld = false;   // event deltas, consumed once per frame
   const corpses = [];
   async function spawnCorpse(f) {
     const ct = ENEMY_BASICS[f.mobileType]?.corpseTexture;
@@ -951,33 +915,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     billboardBatches.push(batch);   // hosts draw + destroy() frees
   }
   function playerAttackInput(dx, dy, held) {   // host mouse events buffer here
-    if (playerWeapon?.sheathed) return;   // WeaponManager verbatim: no attack processing while sheathed (audit 2026-08-17)
+    if (playerWeapon.sheathed) return;   // WeaponManager verbatim: no attack processing while sheathed (audit 2026-08-17)
     if (held && clickCast.consume()) { pendingClickCast = true; return; }   // the armed click casts, no swing
-    _atkDx += dx; _atkDy += dy; _atkHeld = held;
+    weaponRig.attackInput(dx, dy, held);
   }
   function resolvePlayerHit(eye, inViewFn, playerFeet, lookDir) {
     // Verbatim WeaponEnvDamage FIRST (audit 2026-08-16: nothing ever
-    // sent the Attack trigger and doors could not be bashed): the
-    // swing ray forward within weapon reach, world geometry occludes.
-    // An action object hit gets Receive(Attack) - the gate table
-    // filters - and the swing CONTINUES (env returns false in DFU);
-    // a door hit is BASHED and CONSUMES the swing.
-    if (lookDir) {
-      let best = null, bestD = Infinity;
-      for (const o of actions.objects.values()) {
-        const box = o.aabb ?? (o.cpu ? worldAabb(o.cpu.positions, o.matrix) : null);
-        if (!box) continue;
-        const d = rayAabb(eye, lookDir, box);
-        if (d === null || d > WEAPON_REACH || d >= bestD) continue;
-        const wall = collider.raycast(eye, lookDir, d - 0.05);
-        if (Number.isFinite(wall) && wall < d - 0.05) continue;   // occluded
-        best = o; bestD = d;
-      }
-      if (best) {
-        if (best.kind === 'door') { actions.attemptBash(best, Math.random()); return; }
-        actions.receive(best, 'Attack');
-      }
-    }
+    // sent the Attack trigger and doors could not be bashed) - the
+    // shared envAttack (C10 fold): a bashed door CONSUMES the swing,
+    // Receive(Attack) lets it continue, geometry occludes.
+    if (lookDir && envAttack(actions, collider, eye, lookDir, Math.random)) return;
     // E3d: backstab facing per foe, verbatim IsBackFacing (records
     // 3/4 of the 8-orientation wheel); the chance = the player's
     // Backstabbing skill (flat interim). TallySkill pends Systems.
@@ -1011,7 +958,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // S3b: the classic clock for skill-raise checks - dt * TimeScale
   // (DFU default 12) in minutes; RaiseSkills gates itself at 360.
   let classicMinutes = 0;
-  let _prevWeaponState = null;   // A1: swing-sound edge detect
   let _ambientTimer = 0;         // A2: the animal random-play classic cadence
   async function ensureMissileBatch(m) {
     if (m.batch !== null) return;
@@ -1260,6 +1206,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const sceneAmbience = new AmbientEffects(DUNGEON_AMBIENT_WAITS);
   sceneAmbience.setPreset('dungeon');
   function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false) {
+    _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
     if (playerFeet) lastPlayerFeet = [...playerFeet];
     if (activeOverlay?.isRestWindow) activeOverlay.tickRest(dt);   // U7: the rest clock (the world runs on below - foes can break it)
     if (playerFeet) {
@@ -1343,9 +1290,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // machine holds while paralyzed (casting is NOT gated, verbatim:
     // DFU has no IsParalyzed check in the casting path).
     const _pParalyzed = hasActiveEffect(playerEntity, 'paralyze');
-    if (playerWeapon) {
-      if (!_pParalyzed) playerWeapon.gesture(_atkDx, _atkDy, _atkHeld, dt, Math.max(canvas.clientWidth, canvas.clientHeight));
-      _atkDx = 0; _atkDy = 0;
+    {
       // WeaponManager.IsPositionInCameraView: project through the
       // live proj*view, inside NDC with positive w
       const pv = multiply(proj, view);
@@ -1379,14 +1324,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           }
         }
       }
-      const _wpnState = playerWeapon.machine.state;
-      if (_wpnState !== _prevWeaponState) {
-        // FPSWeapon plays SwingWeaponSound at swing start: the
-        // machine ENTERING a Strike* state is that moment here.
-        if (_wpnState && _wpnState.startsWith('Strike')) audio.playOneShot(swingSoundFor(playerWeapon.weapon), 1.1);
-        _prevWeaponState = _wpnState;
-      }
-      for (const ev of _pParalyzed ? [] : playerWeapon.update(dt)) {
+      // C10: the rig owns the gesture consume, the swing-sound edge,
+      // and the machine step (paralysis holds all three, S19).
+      for (const ev of weaponRig.frame(dt, { paralyzed: _pParalyzed })) {
         if (ev !== 'hit' || !playerFeet) continue;
         if (WEAPON_SKILL[playerWeapon.weapon.name] === SKILLS.Archery) {
           // Combat bows: the strike frame LOOSES an arrow along the
@@ -1499,13 +1439,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const mat = trs(p[0], p[1] - f.rig.liveFootY * s, p[2], 0, f.ai.yaw * 180 / Math.PI, 0, s, s, s);   // live support point, same grounding rule as the player rig
       _drawSprite(renderer, canvas, f.rig, mat, proj, view, eye);
     }
-    bowArrowGuard();
-    if (playerFeet && !_pParalyzed && weaponShown()) {   // S19 paralysis + the WeaponManager ShowWeapons legs (audit 2026-08-17)
-      // LAST before the HUD: the classic weapon overlay composites
-      // over the whole frame (DaggerfallUI draws it under the HUD).
-      const art = fpsWeaponArtFor(playerWeapon.weapon);
-      if (art) drawFpsWeapon(renderer, canvas, art, playerWeapon.machine.state, playerWeapon.machine.frame);
-    }
+    // LAST before the HUD: the classic weapon overlay composites over
+    // the whole frame (DaggerfallUI draws it under the HUD). The rig
+    // runs the bow-arrow guard and the ShowWeapons legs; S19
+    // paralysis rides the same call (C10 fold).
+    if (playerFeet) weaponRig.draw({ paralyzed: _pParalyzed });
     // U1: HUD last (over the viewmodel), heading from the view
     // forward this file already derives (0 = +z, wrapped 0..1).
     const hfw = [-view[2], -view[10]];
@@ -1563,8 +1501,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foes,
     drawFoes,
     playerAttackInput,
-    toggleSheath,
-    playerClickAttack: () => { playerWeapon?.clickAttack(); },
+    toggleSheath: weaponRig.toggleSheath,
+    // C10: the rig's clickAttack carries the sheathed gate the inline
+    // version missed - a touch tap while sheathed no longer swings
+    // (WeaponManager: no attack processing while sheathed).
+    playerClickAttack: weaponRig.clickAttack,
     playerCastInput,   // S5: C key in the hosts
     /** Verbatim MovePlayerToMarker + FixStanding: the start marker
      *  + up * (height 1.8 * 0.6), then the instant floor snap. ONE
@@ -1595,12 +1536,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // routes through the overlay as 'back' (ends a running rest).
     toggleRest() {
       if (activeOverlay) return;
-      if (foes.some((f) => !f.dead && ((f.ai.detected && f.ai.inSight) || f.ai.wouldBeSpawned))) {
+      // Audit 2026-08-16f: the PRE-gate uses AreEnemiesNearby(true) -
+      // the RESTING variant (an unaware foe blocks only within 12
+      // units), same as the hourly break check. The first cut used
+      // the strict variant and refused rest with any unaware foe in
+      // the whole 1024-unit spawn band. ROUTED leg: DFU also raises
+      // PlayerEntity.SetEnemyAlert(true) here - no alert state exists
+      // in this port yet (its consumers, fast travel among them, pend).
+      if (_restDeps.enemiesNearby()) {
         const lines = rscLines(REST_TEXT.enemiesNearby);
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;
       }
-      if (_activity.swimming || !_grounded) {
+      // StartRestGroundedCheck verbatim: grounded passes at once;
+      // otherwise a short downward ray from the controller center,
+      // height/2 + 0.2 (= floor within 0.2 below the feet) lets a
+      // near-ground levitator rest. Derived from CAPSULE_HEIGHT so
+      // the geometry cannot drift from the motor's (review 16f).
+      const feet = lastPlayerFeet;
+      const nearFloor = _grounded || (feet
+        && Number.isFinite(collider.raycast(
+          [feet[0], feet[1] + CAPSULE_HEIGHT / 2, feet[2]], [0, -1, 0], CAPSULE_HEIGHT / 2 + 0.2)));
+      if (_activity.swimming || !nearFloor) {
         const lines = rscLines(REST_TEXT.cannotRestNow);
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;
@@ -1724,7 +1681,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleInventory() {
       if (activeOverlay) return;
       activeOverlay = new InventoryWindow(playerEntity, {
-        equip: (item) => { if (playerWeapon) { playerWeapon.weapon = item; hudText.add(`${item.name} equipped.`); } },
+        equip: (item) => { playerWeapon.weapon = item; hudText.add(`${item.name} equipped.`); },   // C10: the rig's weapon always exists
       });
     },
     toggleSpellbook() {

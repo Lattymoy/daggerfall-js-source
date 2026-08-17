@@ -289,7 +289,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   player.spawn(loc.width * RMB_SIDE * 0.46, GROUND_OFFSET * 0.025 + 2, loc.height * RMB_SIDE * 0.5);
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.
-  const latch = { jump: false, use: false, view: false };
+  const latch = { use: false, view: false, crouch: false };   // audit 16f: jump is HELD since P14 - the latch slot was dead
   console.log(`player: collider ${colliderTris} tris, walk=${walkMode}`);
   if (shotMode) {
     window.__player = {

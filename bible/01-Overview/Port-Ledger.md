@@ -99,6 +99,16 @@ World layout:
   blocks (kept verbatim, like FixRdbData); action doors pin to the 9000
   model range via DoorModelIndex % 5 (900x..980x duplicates have differing
   origins); editor flats (199) are spawned as data but hidden from render.
+- Rest (16f audit): the sub-tick interval is waitTimePerHour /
+  minutesPerTick - DFU divides by the CONSTANT 10, not the 6 ticks an
+  hour takes, so a rested hour passes in 0.45 real seconds (loiter
+  0.75); and a 0-hour timed/loiter request rests ONE full hour
+  (hoursRemaining < 1 is only tested after an hour completes). Both
+  preserved verbatim (restSession.js).
+- Falling into deep water keeps the fall LIVE (P14): swimming never
+  grounds, so wading out can bill the whole drop as fall damage -
+  nothing in DFU clears it (AcrobatMotor.Falling untouched by
+  LevitateMotor); preserved bug-for-bug.
 
 ## C. DFU features not yet ported (routed)
 

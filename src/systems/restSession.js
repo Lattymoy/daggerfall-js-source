@@ -3,11 +3,15 @@
 // hour ticking, interrupts, and completion rules; the panel itself
 // lives in ui/restWindow.js.
 //
-// Timing: an hour of rest passes in restWaitTimePerHour = 0.75 REAL
-// seconds (loiter 1.25), advanced in minutesPerTick = 10 classic-
-// minute sub-ticks (6 per hour) so world time - and with it our
-// magic rounds, diseases, poisons - flows through the rest exactly
-// as DFU's RaiseTime does. Each completed HOUR: the enemy check
+// Timing (audit 2026-08-16f, verbatim quirk): DFU's sub-tick fires
+// every waitTimePerHour / minutesPerTick REAL seconds - the divisor
+// is the CONSTANT 10, not the 6 ticks an hour actually takes - so a
+// rested hour passes in 6 x 0.075 = 0.45 real seconds (loiter 6 x
+// 0.125 = 0.75). The first cut divided by ticks-per-hour and rested
+// ~1.7x too slow. Each sub-tick advances 10 classic minutes so world
+// time - and with it our magic rounds, diseases, poisons - flows
+// through the rest exactly as DFU's RaiseTime does. Each completed
+// HOUR: the enemy check
 // (the RESTING AreEnemiesNearby variant - an aware foe at any
 // spawn-band range, an unaware one only within 12 units) breaks the
 // rest (TEXT.RSC 354); then vitals tick for TimedRest/FullRest (the
@@ -57,7 +61,9 @@ export class RestSession {
     this.totalHours = 0;
     this._minutesOfHour = 0;
     this._timer = 0;
-    this._subTickEvery = (mode === 'loiter' ? LOITER_WAIT_PER_HOUR : REST_WAIT_PER_HOUR) / (60 / MINUTES_PER_TICK);
+    // waitTimePerHour / minutesPerTick, verbatim (NOT per-hour /
+    // ticks-per-hour - see the header quirk note).
+    this._subTickEvery = (mode === 'loiter' ? LOITER_WAIT_PER_HOUR : REST_WAIT_PER_HOUR) / MINUTES_PER_TICK;
   }
 
   /** End the session early (the toggle key / Escape): the mode's own
@@ -69,10 +75,12 @@ export class RestSession {
   tick(dt) {
     // The per-frame checks (DFU's Update): death ends at once (the
     // death flow owns the message); an already-healed FullRest ends
-    // without waiting for an hour; a spent timed/loiter count ends.
+    // without waiting for an hour. A timed/loiter request of ZERO
+    // hours is NOT ended here - DFU only tests hoursRemaining < 1
+    // AFTER an hour completes, so resting 0 hours rests one full
+    // hour, quirk preserved (audit 2026-08-16f).
     if (this.deps.dead()) return { textId: null, enemyBroke: false, died: true };
     if (this.mode === 'full' && this.deps.fullyHealed?.()) return { textId: REST_TEXT.healed, enemyBroke: false, died: false };
-    if (this.mode !== 'full' && this.hoursRemaining < 1) return this.endEarly();
 
     this._timer += dt;
     while (this._timer >= this._subTickEvery) {

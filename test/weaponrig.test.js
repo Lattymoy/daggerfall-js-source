@@ -56,6 +56,15 @@ test('weaponRig: sheathed = no attack processing; a drag swings with the sound e
   assert.deepEqual(r.frame(1 / 60, { paralyzed: true }), []);
 });
 
+test('weaponRig: clickAttack carries the sheathed gate (the C10 fold fix - the inline touch tap bypassed it)', () => {
+  const r = rig();
+  r.clickAttack();
+  assert.equal(r.playerWeapon.machine.state, 'Idle', 'a sheathed tap never swings');
+  r.toggleSheath();
+  r.clickAttack();
+  assert.ok(r.playerWeapon.machine.state.startsWith('Strike'), 'the unsheathed tap swings in a random direction');
+});
+
 test('weaponRig: an unsheathed bow with zero arrows auto-sheathes with the classic line', () => {
   const lines = [];
   const r = rig({ say: (l) => lines.push(l) });

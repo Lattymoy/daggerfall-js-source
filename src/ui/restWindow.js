@@ -48,8 +48,12 @@ export class RestWindow {
     if (action === 'back') { this.state = 'selection'; this.notice = null; return; }
     if (action === 'backspace') { this.value = this.value.slice(0, -1); return; }
     if (action === 'confirm') {
-      const hours = Number(this.value || '0');
-      if (hours < 1) { this.state = 'selection'; return; }
+      // DFU's prompt: an unparseable (empty) entry does nothing; 0 IS
+      // accepted - and rests one full hour, the session's preserved
+      // quirk (audit 2026-08-16f). The 2-digit entry field enforces
+      // the 99-hour cap by construction (DFU shows TEXT 26 past 99).
+      if (this.value === '') return;
+      const hours = Number(this.value);
       if (this.mode === 'loiter' && hours > LOITER_LIMIT_HOURS) { this.notice = CANNOT_LOITER_LINES; this.value = ''; return; }
       this._start(this.mode, hours);
       return;

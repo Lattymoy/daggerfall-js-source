@@ -52,7 +52,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
 - `03-World/World-Arc.md` - COMPLETE. Milestone 9: floating-origin streaming world (?world). Queue empty; routed rows (teleporters, platform riding, swim/levitate) wait in Ledger C.
 - `03-World/Player-Arc.md` - ACTIVE again. P1-P9 + P10 TELEPORTERS + DOOR LOCKS (the delegates verbatim, RDB starting locks + look-at-lock tiers, flat/marker actions joining the graph, the repeated-block action-key collision fixed) + P11 SWIM/LEVITATE (2026-08-16: the LevitateMotor path with GetSwimSpeed and the surface clamp, the swim toggle + splash, Levitate (14,255) end to end, the per-minute/per-jump fatigue drains, the .7071 diagonal-limit parity fix) + P12 BREATH/CROUCH (2026-08-16: MaxBreath = END/2 with the classic-update drain every 19th tick and SetHealth(0) drowning at the 76*GS head-under threshold, WaterBreathing (30,255) gating it, the verbatim HUDBreathBar; crouch 0.9/0.8 on the KeyX edge in both hosts with crouchSpeed, a per-call collider capsule height, and the CanStand ceiling probe) + P13 STEALTH (2026-08-16: the oldest src flag closes - the classic detection flow with hearing gated on prior detection, the once-per-minute StealthCheck with spawn-band gating/odd-minute sneak skip/fast-move auto-detect/the shared Stealth tally, and the verbatim illusion gate with the 13 sees-through monsters - retiring the S8 half-sight interim, which had been DEAD post-merge) + P14 MOVEMENT PARITY (2026-08-16: the live jump/incline report - Mac's reverted b9e9aa6 re-derived on the crouch-height tree: final-vertical-state grounded truth un-killing the one-frame jump, the ascending step-lift ladder with the monotone ceiling sweep and the no-depenetrate-into-ceiling clamp, slopeLimit-70 pinned 60/78; plus the verbatim jump laws - the 0.1s GroundedTime gate with HELD jump input, jumpSpeedMultiplier via Jumping skill, crouched x0.8, the moving-jump forward boost, frozen airborne momentum, HitHead reversal - and CheckFallingDamage end to end with sounds 91/92 in all four motor hosts, slowfall to the verbatim -105*dt law) + P15 SNEAK (2026-08-16: AltLeft held per DFU's default - the grounded-only run/sneak latch, running beats sneaking, base/2 - 1/39.5, swim ignoring both verbatim; IsMovingLessThanHalfSpeed now TRUE while sneak-moving, so the P13 stealth checks apply to a MOVING player) SHIPPED. Next: riding or Invisibility/Shade with the library.
 - `04-Characters/Characters-Arc.md` - PARKED (pivot 3: classic visuals). C8 shipped E1-E4b end to end + spectral; E4c deferred by Mac; remaining interims are Systems work (ledger below).
-- `05-Combat/Combat.md` - ACTIVE again. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, the collision-trigger seam (input-held gate, 08-16), the Attack trigger + door bashing (WeaponEnvDamage, 08-16), the TRUE classic FP weapon + its six-finding parity audit (08-17, the parallel lane) + C9 THE HOST ROLLOUT (2026-08-16: combat/weaponRig.js mounts the audited weapon surface in the interior mode and BOTH exterior walk hosts - RMB drag/click, Z sheathe per mode fixing the interior Z crash, envAttack bashing interior swing doors, bows consuming arrows; dungeonContext's inline copy folds onto the rig when the FP lane settles - recorded) SHIPPED. Next: the dungeonContext rig fold, exterior/interior arrow missiles.
+- `05-Combat/Combat.md` - ACTIVE again. Core via C8; Hurt traps, CastSpell (S4b), bows both directions, the collision-trigger seam (input-held gate, 08-16), the Attack trigger + door bashing (WeaponEnvDamage, 08-16), the TRUE classic FP weapon + its six-finding parity audit (08-17, the parallel lane) + C9 THE HOST ROLLOUT (2026-08-16: combat/weaponRig.js mounts the audited weapon surface in the interior mode and BOTH exterior walk hosts - RMB drag/click, Z sheathe per mode fixing the interior Z crash, envAttack bashing interior swing doors, bows consuming arrows; dungeonContext's inline copy folds onto the rig when the FP lane settles - recorded) + C10 THE RIG FOLD (2026-08-16: dungeonContext's inline weapon collapses onto weaponRig - one home for the audited surface, the env ray now the shared envAttack, the rig canvas late-resolvable; parity-positive deltas: the weapon exists in foe-less dungeons and the listener/ambient pass un-gates - it had sat inside `if (playerWeapon)` and foe-less dungeons silently lost 3D audio since A2 - and the touch tap gains the sheathed gate) SHIPPED. Next: exterior/interior arrow missiles.
 - `08-Audio/Audio.md` - ACTIVE. A1 + A2 (2026-08-16: action PlaySound on every Play, torch Burning loops at 5m linear/0.7 via the new loop3d engine seam, animal random barks on the classic rand()<=100 cadence at 19.2m - dungeon-scoped) + A3 SCENE AMBIENCE (2026-08-16: AmbientEffectsPlayer verbatim - the 14 dungeon one-shots somewhere-around on the scene's serialized 5/28 waits + classic-cadence water/bubbles, the weather/time presets in BOTH exterior scenes on 5/25 with rain/crickets loops and horizon storms, one shared ambient channel; building interiors silent, verbatim) SHIPPED. Next: RMB exterior animals/torches, transition stingers, music strategy (Mac's call).
 - `06-Systems/Systems-Arc.md` - ACTIVE. S1-S16 + S18 DISEASES (2026-08-16: the 17-row DiseaseData table byte-exact, the daily tick over the classic day with statMods through liveStat and RAW FAT/SPL drains bug-for-bug, InflictDisease's level-1 immunity + full-save resist + no-double-catch, Heal{Attribute} healing disease damage without curing, and the OnMonsterHit rider table wired per landed hit at the FormulaHelper.cs:662 seam - rat/bat/zombie/mummy/vampire rolls, nymph/lamia fatigue x2 x64, specials routed) + S19a PARALYZE (2026-08-16: (0,255) with AssignBundle's exact chance/save gate order incl. the AddState-first re-cast quirk, the spider/scorpion Spider Touch free-cast rider closed, the full IsParalyzed consumer set - player input/jump/weapons in both hosts, foe motor+attack freeze; plus the classic subType BYTE-CAST parity fix: 0xFF reads -1 and the 255-keyed doors never fired from real records) + S19b POISONS (2026-08-16: the 12-variant enum + timing tables byte-exact, minute-tick lifecycle Waiting/Active/Complete with drug positives stripped at the crash and attribute damage persisting until healed, InflictPoison's career-immunity/save/level-1 gates, the ItemHelper weapon-poison spawn roll + the inflict-once-and-clear formulas seam at both enemy-vs-player sites) + S19c CURES (2026-08-16: (3,0..2) chance-gated instants - CureAll* as IMMEDIATE bundle removal lifting disease/poison statMods now, CureParalyzation ending the incumbent instantly, the AssignBundle failure messages on player hosts) SHIPPED - the S19 group (Paralyze/poisons/cures) is CLOSED - + S20 EXHAUSTION/REST (2026-08-16: the three per-hour recovery rates verbatim incl. RapidHealing/NoRegenSpellPoints decodes, the OnExhausted collapse - a safe hour of rest vs death near enemies or in water, fed by the P13 senses fields - and the once-per-minute-change fatigue-drain parity fix) SHIPPED (the rest UI consuming the rates is U7, the UI arc). Next: economy/enchantments or the library's next family.
 - `07-Rendering/Rendering.md` - COMPLETE again. R12 THE EXTERIOR INDIRECT PLAYER LIGHT (2026-08-16: the SunlightRig point light from the serialized prefab - 1.0/range 150/0.706 gray - daylight-scaled at the player across all four lit programs, shot-proven near-ground brightening with a byte-identical sky). Queue EMPTY.
@@ -75,7 +75,7 @@ binding; interleaving a new pass exposed drawMesh's assumption.
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-16d, the C9 slice)
+## Open flags (regenerated 2026-08-16d, the 16f audit)
 
 Regenerated at the S20 close (the drainFatigue "exhaustion pends"
 comment SHIPPED out; line numbers refreshed). Every row below is a
@@ -93,21 +93,21 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/combat/playerWeapon.js:47` - /** INTERIM starting weapon (items arc replaces): Iron Dagger. */
 - `src/combat/playerWeapon.js:48` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:78` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
-- `src/combat/weaponRig.js:31` - *                     (FLAGGED at the call sites - their HUD pends),
-- `src/scenes/dungeonContext.js:159` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:425` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:431` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:445` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:579` - drained strength lowers the ceiling). INTERIM (loud): the
-- `src/scenes/dungeonContext.js:694` - FLAGGED: DFU recomputes per-effect via the cost tables (that
-- `src/scenes/dungeonContext.js:696` - FLAGGED to the effect library (caster-only buffs, touch, areas).
-- `src/scenes/dungeonContext.js:887` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/dungeonContext.js:1589` - actions) is FLAGGED - the player snapshot only.
+- `src/combat/weaponRig.js:33` - *                     (FLAGGED at the call sites - their HUD pends),
+- `src/scenes/dungeonContext.js:158` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:423` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:429` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:443` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:577` - drained strength lowers the ceiling). INTERIM (loud): the
+- `src/scenes/dungeonContext.js:692` - FLAGGED: DFU recomputes per-effect via the cost tables (that
+- `src/scenes/dungeonContext.js:694` - FLAGGED to the effect library (caster-only buffs, touch, areas).
+- `src/scenes/dungeonContext.js:900` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:1530` - actions) is FLAGGED - the player snapshot only.
 - `src/scenes/exterior.js:257` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
 - `src/scenes/exterior.js:396` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/world.js:321` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
-- `src/scenes/world.js:486` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:603` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:326` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
+- `src/scenes/world.js:490` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:607` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:58` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
@@ -135,6 +135,38 @@ stay open to Mac's eye in live play (probe-locked).
 ## Audits
 
 Newest first.
+
+**2026-08-16f - the comprehensive audit of the P13..C10 stretch
+(the post-16e day: stealth, rest, movement, sneak, the weapon rig).**
+Re-verified the least source-grounded slices against DFU code (U7
+was ported mid-session from working notes - it drew the findings),
+swept the host-parity matrix and the day's dead code, and ran an
+independent high-effort review over the unmerged diff. THREE REAL
+FINDINGS + two review nits, all fixed at root: (F1) the REST
+SUB-TICK LAW - DFU fires a sub-tick every waitTimePerHour /
+minutesPerTick real seconds; the divisor is the CONSTANT 10, not the
+6 ticks an hour takes, so a rested hour passes in 0.45s (loiter
+0.75s) - the first cut divided by ticks-per-hour and rested ~1.7x
+slow; quirk preserved verbatim. (F2) the rest PRE-gate used the
+STRICT AreEnemiesNearby - DFU's dfuiOpenRestWindow uses the RESTING
+variant (an unaware foe blocks only within 12 units), so ours
+refused rest with any unaware foe anywhere in the 1024-unit spawn
+band; now shares the hourly check's dep. (F3) the airborne 355 gate
+lacked StartRestGroundedCheck's raycast fallback (grounded OR floor
+within 0.2 below the feet - a near-ground levitator may rest); plus
+the 0-HOUR QUIRK ported (DFU tests hoursRemaining < 1 only AFTER an
+hour: resting 0 rests one full hour) and the empty-entry no-op.
+Review nits: the 354 refusal's SetEnemyAlert leg ROUTED (no alert
+state exists yet - fast travel pends), the grounded-ray constants
+derived from CAPSULE_HEIGHT instead of hardcoded. Dead code swept:
+the post-P14 latch.jump slots, the post-C10 swingSoundFor import.
+HOST-PARITY MATRIX (the standing rule, all seams x all four motor
+hosts): crouch/sneak/held-jump/fall-damage/weapon ALL COVERED; rest
+is dungeon-only BY DESIGN for now (exterior/interior rest needs the
+classic clock + vitals machinery those hosts do not own - recorded
+residual, not a violation); breath/swim dungeon-scoped (exterior
+water pends); paralysis dungeon-scoped (no effects tick outside).
+Suite 389/86 green on real ARENA2 pre-commit.
 
 **2026-08-16e - the pre-merge audit of the S18/S19/P12/A3 stretch
 (a8de400..HEAD).** Re-diffed every slice shipped on this lane since

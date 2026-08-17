@@ -7,8 +7,8 @@
 //
 // Host contract:
 //   canvas, renderer, player, cam, keys - the live scene objects;
-//   latch {use, jump} - shared edge-detect state (a held key must not
-//     re-trigger across a mode switch);
+//   latch {use, crouch} - shared edge-detect state (a held key must
+//     not re-trigger across a mode switch; jump is HELD since P14);
 //   blocks - BlocksFile (dungeon layout);
 //   pipeline - {getGpuMesh, cpuModels, getTexture, uploadRecord} plus
 //     arch for the dungeon pre-pass (dataPipeline.js);

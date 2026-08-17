@@ -263,3 +263,21 @@ pending art-name verification):
 
 3 tests (restwindow.test.js). Suite 366/83, ARENA2 corpus
 pre-commit.
+
+### U7 correction (2026-08-16f audit)
+
+Three parity fixes against DaggerfallRestWindow/DaggerfallUI read
+line-by-line: (1) the sub-tick interval is waitTimePerHour /
+minutesPerTick VERBATIM (the divisor quirk - an hour rests in 0.45
+real seconds, loiter 0.75; the shipped cut divided by ticks-per-hour
+and rested ~1.7x slow); (2) the pre-gate's enemy check is the
+RESTING AreEnemiesNearby(true) variant, shared with the hourly break
+dep (the shipped strict variant refused rest with any unaware foe in
+the spawn band); (3) StartRestGroundedCheck's raycast fallback lands
+(grounded OR floor within 0.2 below the feet - near-ground
+levitators may rest), derived from CAPSULE_HEIGHT. Plus the 0-hour
+quirk (resting 0 rests one full hour) and the empty-entry no-op.
+ROUTED: SetEnemyAlert on the 354 refusal (no alert state yet);
+DFU's youNeverAwaken death text still defers to our death screen
+(documented departure); TEXT 26 (>99 hours) is enforced silently by
+the 2-digit entry field.
