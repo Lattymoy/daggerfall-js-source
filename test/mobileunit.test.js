@@ -179,6 +179,48 @@ test('mobile: scorpion flip inversion + the orientation frame rescale', () => {
   assert.equal(lich.frame, Math.floor((5 * 4) / 8));   // 2, in range - not 5
 });
 
+test('C14 spell state: the HasSpellAnimation route, the one-shot, and its interrupts', async () => {
+  const { RANGED_ATTACK1_ANIMS } = await import('../src/characters/mobileUnit.js');
+  // GetStateAnims' Spell branch: HasSpellAnimation -> records 20-24
+  // (RangedAttack1Anims); everyone else casts over the primary
+  // records - and NO ghost/wraith special (verbatim: ghosts cast on
+  // PrimaryAttackAnims, not their own attack table).
+  assert.deepEqual(RANGED_ATTACK1_ANIMS.map((a) => a.record), [20, 21, 22, 23, 24, 23, 22, 21]);
+  assert.equal(stateAnims('spell', 21, true, true), RANGED_ATTACK1_ANIMS);
+  assert.equal(stateAnims('spell', 32, true, false), PRIMARY_ATTACK_ANIMS);
+  assert.equal(stateAnims('spell', MOBILE_GHOST, true, false), PRIMARY_ATTACK_ANIMS);
+  // The one-shot: SpellAnimFrames play through and revert to idle
+  // (the shaman's [0,0,1,2,3,3,3], verbatim).
+  const basics = { hasIdle: true, hasSpellAnimation: true, spellAnimFrames: [0, 0, 1, 2, 3, 3, 3], primaryAttackAnimFrames: [0, 1] };
+  const m = new MobileUnit(21, basics, () => 8, () => 0.99);
+  m.update(1 / 60, { casting: true }, 0, [0, 0, 0], [0, 0, 5]);
+  assert.equal(m.state, 'spell');
+  assert.equal(m.frame, 0);
+  const seen = [];
+  for (let i = 0; i < 8 && m.state === 'spell'; i++) {
+    m.update(1 / 10, {}, 0, [0, 0, 0], [0, 0, 5]);
+    if (m.state === 'spell') seen.push(m.frame);
+  }
+  assert.deepEqual(seen, [0, 1, 2, 3, 3, 3]);
+  assert.equal(m.state, 'idle');
+  // Interrupts, verbatim: the attack edge overrides a cast
+  // (ChangeEnemyState unconditional), and knockback-hurt CAN cut a
+  // cast (the EnemyMotor gate is state != PrimaryAttack ONLY)...
+  const c1 = new MobileUnit(21, basics, () => 8, () => 0.99);
+  c1.update(0, { casting: true }, 0, [0, 0, 0], [0, 0, 5]);
+  c1.update(0, { striking: true }, 0, [0, 0, 0], [0, 0, 5]);
+  assert.equal(c1.state, 'attack');
+  const c2 = new MobileUnit(21, basics, () => 8, () => 0.99);
+  c2.update(0, { casting: true }, 0, [0, 0, 0], [0, 0, 5]);
+  c2.update(0, { hurting: true }, 0, [0, 0, 0], [0, 0, 5]);
+  assert.equal(c2.state, 'hurt');
+  // ...while a cast never interrupts an attack in progress.
+  const c3 = new MobileUnit(21, basics, () => 8, () => 0.99);
+  c3.update(0, { striking: true }, 0, [0, 0, 0], [0, 0, 5]);
+  c3.update(0, { casting: true }, 0, [0, 0, 0], [0, 0, 5]);
+  assert.equal(c3.state, 'attack');
+});
+
 test('mobile: the extracted per-enemy anim fields (EnemyBasics regeneration)', () => {
   assert.deepEqual(ENEMY_BASICS['0'].primaryAttackAnimFrames, [0, 1, 2, -1, 3, 4, 5]);   // Rat, verbatim
   assert.equal(ENEMY_BASICS['0'].hasIdle, true);

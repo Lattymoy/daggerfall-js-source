@@ -775,6 +775,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - cost);
     }
     const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
+    f._castPending = true;   // C14: the sprite Spell one-shot (ChangeEnemyState(Spell) at the cast decision)
     audio.play3d(SPELL_CAST_SOUND[spell.element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 });
     if (spell.rangeType === 0) {
       applySpell(spell, f.entity.level, f.entity, foeSinks(f), Math.random, { entity: f.entity, sinks: foeSinks(f) });
@@ -1519,8 +1520,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             moving: f.ai.moving,
             striking: _strikeEdge,   // the START edge (paralysis eats it - FreezeAnims blocks ChangeEnemyState, verbatim)
             hurting: !!f._hurtPending,
+            casting: !!f._castPending,   // C14: the cast decision's edge (Spell one-shot)
           }, f.ai.yaw, f.ai.feet, eye);
           f._hurtPending = false;
+          f._castPending = false;
         }
         const out = f._mout;
         const rkey = `${out.record}#${out.frame}`;

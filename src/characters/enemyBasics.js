@@ -67,6 +67,13 @@ export const ENEMY_BASICS = Object.freeze({
    3,
    1
   ],
+  'spellAnimFrames': [
+   0,
+   1,
+   2,
+   3,
+   1
+  ],
   'team': 'Magic',
   'lootTableKey': 'D',
   'canOpenDoors': true,
@@ -733,6 +740,14 @@ export const ENEMY_BASICS = Object.freeze({
    2,
    3
   ],
+  'spellAnimFrames': [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
   'team': 'Undead',
   'lootTableKey': 'I',
   'canOpenDoors': true,
@@ -831,6 +846,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack4': 20,
   'chanceForAttack5': 20,
   'hasIdle': true,
+  'hasSpellAnimation': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -881,6 +897,15 @@ export const ENEMY_BASICS = Object.freeze({
    4,
    5,
    0
+  ],
+  'spellAnimFrames': [
+   0,
+   0,
+   1,
+   2,
+   3,
+   3,
+   3
   ],
   'team': 'Orcs',
   'lootTableKey': 'U',
@@ -948,6 +973,13 @@ export const ENEMY_BASICS = Object.freeze({
    2,
    -1,
    3
+  ],
+  'spellAnimFrames': [
+   0,
+   0,
+   0,
+   0,
+   0
   ],
   'team': 'Undead',
   'lootTableKey': 'I',
@@ -1052,6 +1084,12 @@ export const ENEMY_BASICS = Object.freeze({
    5,
    0
   ],
+  'spellAnimFrames': [
+   1,
+   1,
+   3,
+   3
+  ],
   'team': 'Daedra',
   'lootTableKey': 'J',
   'canOpenDoors': true,
@@ -1093,6 +1131,12 @@ export const ENEMY_BASICS = Object.freeze({
    3,
    -1,
    4
+  ],
+  'spellAnimFrames': [
+   1,
+   1,
+   3,
+   3
   ],
   'team': 'Daedra',
   'lootTableKey': 'J',
@@ -1154,6 +1198,12 @@ export const ENEMY_BASICS = Object.freeze({
    5,
    0
   ],
+  'spellAnimFrames': [
+   1,
+   1,
+   3,
+   3
+  ],
   'team': 'Daedra',
   'lootTableKey': 'E',
   'canOpenDoors': true,
@@ -1190,6 +1240,12 @@ export const ENEMY_BASICS = Object.freeze({
    4,
    5
   ],
+  'spellAnimFrames': [
+   1,
+   1,
+   5,
+   5
+  ],
   'team': 'Undead',
   'lootTableKey': 'Q',
   'canOpenDoors': true,
@@ -1221,6 +1277,11 @@ export const ENEMY_BASICS = Object.freeze({
    0,
    1,
    -1,
+   2
+  ],
+  'spellAnimFrames': [
+   0,
+   1,
    2
   ],
   'team': 'Daedra',
@@ -1257,6 +1318,12 @@ export const ENEMY_BASICS = Object.freeze({
    3,
    -1,
    4,
+   5
+  ],
+  'spellAnimFrames': [
+   1,
+   1,
+   5,
    5
   ],
   'team': 'Undead',
@@ -1325,6 +1392,12 @@ export const ENEMY_BASICS = Object.freeze({
    1,
    0
   ],
+  'spellAnimFrames': [
+   1,
+   1,
+   3,
+   3
+  ],
   'team': 'Daedra',
   'lootTableKey': 'S',
   'canOpenDoors': true,
@@ -1362,6 +1435,13 @@ export const ENEMY_BASICS = Object.freeze({
    4,
    4
   ],
+  'spellAnimFrames': [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
   'team': 'Undead',
   'lootTableKey': 'S',
   'canOpenDoors': true,
@@ -1397,6 +1477,13 @@ export const ENEMY_BASICS = Object.freeze({
    -1,
    3,
    4,
+   4
+  ],
+  'spellAnimFrames': [
+   0,
+   1,
+   2,
+   3,
    4
   ],
   'team': 'Undead',
@@ -1741,6 +1828,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasSpellAnimation': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -1770,6 +1858,13 @@ export const ENEMY_BASICS = Object.freeze({
    4,
    0
   ],
+  'spellAnimFrames': [
+   0,
+   1,
+   2,
+   3,
+   3
+  ],
   'team': 'KnightsAndMages',
   'lootTableKey': 'U',
   'canOpenDoors': true,
@@ -1792,6 +1887,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasSpellAnimation': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -1819,6 +1915,13 @@ export const ENEMY_BASICS = Object.freeze({
    1,
    0
   ],
+  'spellAnimFrames': [
+   0,
+   1,
+   2,
+   3,
+   3
+  ],
   'team': 'KnightsAndMages',
   'lootTableKey': 'P',
   'canOpenDoors': true,
@@ -1841,6 +1944,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasSpellAnimation': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -1874,6 +1978,13 @@ export const ENEMY_BASICS = Object.freeze({
    -1,
    5,
    0
+  ],
+  'spellAnimFrames': [
+   0,
+   1,
+   2,
+   3,
+   3
   ],
   'team': 'KnightsAndMages',
   'lootTableKey': 'U',
@@ -1935,6 +2046,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasSpellAnimation': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -1963,6 +2075,13 @@ export const ENEMY_BASICS = Object.freeze({
    5,
    4,
    0
+  ],
+  'spellAnimFrames': [
+   0,
+   1,
+   2,
+   3,
+   3
   ],
   'team': 'KnightsAndMages',
   'lootTableKey': 'U',
@@ -1986,6 +2105,7 @@ export const ENEMY_BASICS = Object.freeze({
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
+  'hasSpellAnimation': true,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -2019,6 +2139,13 @@ export const ENEMY_BASICS = Object.freeze({
    -1,
    5,
    0
+  ],
+  'spellAnimFrames': [
+   0,
+   1,
+   2,
+   3,
+   3
   ],
   'team': 'Criminals',
   'lootTableKey': 'U',
