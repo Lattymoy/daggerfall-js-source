@@ -307,3 +307,56 @@ swaps, sky; Player: movement, collision, activation; Audio: ambient).
 
 Real-data pins live in `test/world.test.js`. Screenshot harness is manual
 proof, not a suite gate (needs ARENA2 + chromium).
+
+## T1 (2026-08-17): TOWNS - the wandering population SHIPPED
+
+The towns arc opens (Mac's lead handoff; the World arc hosts it -
+the exterior scene owns the system). DFU's PopulationManager /
+CityNavigation / MobilePersonMotor / MobilePersonBillboard, verbatim:
+
+- THE NAVGRID (world/cityNavigation.js): per RMB block the 64x64
+  AutoMapData carves walkable cells (nonzero = covered - a tree flat
+  blocks its cell, verbatim raw bytes), weights from the ground
+  tilemap (water 0 / stone 4 / dirt 6 / grass 12 / road 15 /
+  default 7, each tile spanning 4x4 cells), stored weight<<4 with
+  the low nibble as the Occupied flag. A cell is 64 classic units =
+  1.6 world units. THE COORDINATE PROOF: the RMB row axis inverts vs
+  world z exactly as the rendered tilemap's srcTiles[tx][15-ty] read
+  - the navgrid applies the same per-block flip, and Daggerfall city
+  grids out at 198k walkable cells / 35k road cells with townsfolk
+  probed WALKING ON STREETS.
+- THE MOTOR (characters/mobilePerson.js): SeekingTile with the
+  verbatim weights walk (2.5% random shuffle, forced change on
+  0-weight/blocked targets, the 80% downgrade-leave that makes
+  mobiles FOLLOW ROADS), 1.3 u/s marches to cell centers, occupancy
+  handoff, seekCount for the pool's recycle rule; THE POLITENESS
+  IDLE, verbatim: a person stops (record 5; guards 15) only when the
+  player stands still within 2.5 with the weapon SHEATHED, visible,
+  and no enemies near - PROBED LIVE (the closeup subject flipped to
+  idle facing the camera). The billboard rides the monster wheel
+  (records 0-4 mirrored, 4 fps move / 1 fps idle).
+- THE POOL (systems/townPopulation.js): max = clamp(blocks/16,1,4) *
+  24 (Daggerfall city: 96); one spawn per 10Hz tick on the navgrid
+  within 96 cells; recycle past 150 units, after 4 failed seeks, or
+  at NIGHT; pop-in/out allowed only beyond 120 units or outside the
+  180-degree view; a spawn stays HIDDEN until its first completed
+  tile move (anti-skate). Race/gender/variant from the verbatim
+  texture tables (Redguard/Nord/Breton x male/female x 4 + guard
+  399); the region race is Breton (FLAGGED: the climate People
+  table pends - correct for the test city).
+- RENDER: C11-style live batches per person (record#frame uploads,
+  the flats' billboard axis - the doctrine). DOCTRINE PROOF: the
+  probed townsman (386) crops IDENTICAL to raw 386/5 (teal tunic,
+  pear pouch, green boots). tools/townProbe.mjs is the standing
+  probe (frame-synced; a stale-pose lesson joined the process:
+  walk-mode hosts must move the PLAYER, not the camera, in __pose).
+- PROBE FINDINGS fixed en route: getBlockAutoMap returns {data} not
+  the array (the all-covered navgrid); RDB_SIDE vs RMB_SIDE (the
+  half-scale grid clustered spawns in-view and nothing could pop
+  in).
+
+Residuals (LOUD): talk/activation pends dialog; guards pend the
+crime system (the table ships); the streaming world (?world) mounts
+in T2; interior population unchanged (C1).
+
+Suite 420/92. ARENA2 green, probes green.
