@@ -170,6 +170,54 @@ test('C12 paralysis: flyers FALL out of the air, swimmers freeze, walkers stop',
   assert.ok(Math.abs(walk.feet[2]) < 1e-6, 'no pursuit while paralyzed');
 });
 
+test('C15 knockback: the WeaponManager formula + the motor shove/decay/hurt laws', async () => {
+  const { weaponKnockbackSpeed, enemyWeightClassicUnits, KB_UNIT } = await import('../src/combat/formulas.js');
+  const { KNOCKBACK_MOTION_CAP, KNOCKBACK_HURT_THRESHOLD } = await import('../src/characters/enemyMotor.js');
+  // The formula, verbatim: 15-classic floor for weak hits; the exact
+  // curve above it. damage 20 vs weight 100 (a rat-weight target):
+  // kb = ((200-100)*256)/(100+200)*40 = 3413.33; ks = 2*(40-13.333)
+  // = 53.333 classic -> /3.95.
+  assert.equal(weaponKnockbackSpeed(1, 350), 15 / KB_UNIT);   // floored
+  // damage 20 vs weight 100: kb = 3413.33, ks = 2*(40 - 13.333) =
+  // 53.333 classic units through the ratio - exact.
+  assert.ok(Math.abs(weaponKnockbackSpeed(20, 100) - (2 * (40 - ((100 * 256) / 300 * 40) / 256)) / KB_UNIT) < 1e-9);
+  // Weight: monsters use the table weight, classes 240/350
+  assert.equal(enemyWeightClassicUnits(false, 'male', 40), 40);
+  assert.equal(enemyWeightClassicUnits(true, 'female', 40), 240);
+  assert.equal(enemyWeightClassicUnits(true, 'male', 40), 350);
+  // The motor: a knocked foe shoves along the ray INSTEAD of
+  // pursuing, hurtKnock rides the threshold, and the 5-per-classic
+  // decay ends it.
+  const c = new Collider(() => -100);
+  c.addMesh('floor', new Float32Array([-40, 0, -40, 40, 0, -40, 40, 0, 40, -40, 0, 40]), quadIdx, I);
+  const ai = new EnemyAI(c, [0, 0, 0], 0, { liveSpeed: 50 });
+  ai.detected = true;
+  ai.knockbackSpeed = 20 / KB_UNIT;   // above the store cap? 20 < 40: kept
+  ai.knockbackDir = [0, 0.5, -1];     // AWAY from the player at +z; grounded drops the y
+  const player = [0, 0, 10];
+  for (let i = 0; i < 8; i++) ai.update(1 / 60, player);
+  assert.ok(ai.feet[2] < -0.1, `shoved away from the player: ${ai.feet[2]}`);
+  assert.ok(ai.feet[1] < 0.2, 'grounded knockback DROPS the ray y (SimpleMove)');
+  assert.equal(ai.hurtKnock, true);
+  // Decay: 20 classic at 5/classic tick = 4 ticks = 0.25s
+  for (let i = 0; i < 30; i++) ai.update(1 / 60, player);
+  assert.equal(ai.knockbackSpeed, 0);
+  assert.equal(ai.hurtKnock, false);
+  // ...and pursuit resumes toward the player afterward
+  const zAfterKnock = ai.feet[2];
+  for (let i = 0; i < 60; i++) ai.update(1 / 60, player);
+  assert.ok(ai.feet[2] > zAfterKnock, 'pursuit resumes after the knockback ends');
+  // A knocked FLYER takes the full 3D ray AND falls (flyerFalls)
+  const fly = new EnemyAI(c, [0, 4, 0], 0, { liveSpeed: 50, behaviour: 'Flying' });
+  fly.knockbackSpeed = 20 / KB_UNIT;
+  fly.knockbackDir = [0, 0, -1];
+  const y0 = fly.feet[1];
+  for (let i = 0; i < 12; i++) fly.update(1 / 60, [0, 0, -30]);   // undetected: would have hovered
+  assert.ok(fly.feet[1] < y0, `a hit knocks the flyer out of the air: ${fly.feet[1]}`);
+  assert.ok(fly.feet[2] < -0.1, 'and shoves it along the ray');
+  assert.ok(KNOCKBACK_MOTION_CAP === 25 && KNOCKBACK_HURT_THRESHOLD === 5);
+});
+
 test('stealth: the chance formula + the spawn bands + the illusion gate (pure pins)', async () => {
   const { stealthChance, STEALTH_MAX_DISTANCE, wouldBeSpawnedInClassic, blockedByIllusionEffect,
     CLASSIC_SPAWN_XZ, CLASSIC_SPAWN_Y_UPPER, CLASSIC_DESPAWN_Y } = await import('../src/characters/enemyMotor.js');

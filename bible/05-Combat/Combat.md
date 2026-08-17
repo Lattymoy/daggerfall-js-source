@@ -407,3 +407,41 @@ refinement (unchanged, LOUD at the module head).
 
 Suite 410/89 (the C14 pin in mobileunit.test.js: the route + the
 shaman one-shot playout [0,0,1,2,3,3,3] + all three interrupt laws).
+
+## C15 (2026-08-17): knockback - hits shove SHIPPED
+
+C11 audit item 6 closes: landed weapon hits physically knock foes
+back, and the Hurt anim now rides the knockback threshold instead of
+the hit itself. Verbatim WeaponManager.WeaponDamage +
+EnemyMotor.KnockbackMovement + FormulaHelper:
+
+- THE SPEED (weaponKnockbackSpeed, formulas.js): kb = ((10d - w) *
+  256)/(w + 10d) * 2d; speed = (10d/w) * (2d - kb/256), through
+  classicToUnitySpeedUnitRatio/10 (3.95), FLOORED at 15 classic - so
+  every landed player hit clears the 5-classic hurt threshold.
+  Weight (enemyWeightClassicUnits): monster table Weight, class
+  female 240 / male 350; the + items*4 term FLAGGED to item weights.
+- THE GATE (WeaponManager:578): monsters need Weight > 0 - the
+  weight-0 SPECTRALS (ghost/wraith) take NO knockback, verbatim -
+  and class enemies re-knock only once the current shove decays
+  under the threshold. The attack RAY is the direction: melee = the
+  look ray, arrows = their flight; spell damage carries no ray and
+  knocks nothing (and therefore plays no hurt anim - DFU's law:
+  damage alone never triggers Hurt, only knockback does; the C11
+  per-hit _hurtPending is RETIRED).
+- THE MOTION (KnockbackMovement on the P17 fixed step): stored speed
+  clamps at 40 classic, motion caps at 25, decay 5 per CLASSIC tick;
+  CanAct=false (pursuit + decisions suspend, senses run); grounded
+  foes take it via the SimpleMove shape (ray y DROPPED, gravity on),
+  FLYERS take the full 3D ray AND FALL (flyerFalls - a hit knocks
+  them out of the air), swimmers ride the C12 WaterMove gates.
+  hurtKnock (speed > 5 classic) is the scene's hurting input - the
+  MobileUnit re-enters Hurt while it holds (DFU's repeated
+  ChangeEnemyState) and its own state gate keeps attack unbroken.
+- Rig (class) foes share the same motor knockback; their
+  HurtFront/Back stagger clips stay (our own visual, documented).
+
+Residual: enemy-vs-enemy knockback (EnemyAttack:344) pends foe-vs-foe
+combat; player knockback from enemy hits is not a DFU law (none).
+
+Suite 416/91 (the C15 pin in enemymotor.test.js).
