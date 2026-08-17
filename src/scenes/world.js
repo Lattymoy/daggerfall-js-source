@@ -20,6 +20,8 @@ import { applyClimate, getGroundArchive, getNatureArchive, SEASON } from '../wor
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
 import { lookAt, multiply, perspective, trs } from '../world/mat4.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
+import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
+import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState } from '../world/streamingWorld.js';
 import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
@@ -197,6 +199,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Flat groups: pixel-local base positions.
     const groups = new Map();
     const pixelLights = []; // archive-210 lanterns, pixel-local (R3)
+    const pixelAnimals = []; // A4: archive-201 town animals, pixel-local {pos, sound}
     const light210 = await getTexture(LIGHTS_ARCHIVE);
     const lightSize = (record) =>
       scaledBillboardSize(light210.getSize(record), light210.getScale(record));
@@ -251,6 +254,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         for (const flat of collectBlockFlats(b.dfBlock, natureArchive)) {
           addFlat(flat.archive, flat.record,
             locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z);
+          // A4: every archive-201 town animal is an audio source
+          // (AddAnimalAudioSource on RMB flats, verbatim).
+          if (flat.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[flat.record] != null) {
+            pixelAnimals.push({
+              pos: [locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z],
+              sound: ANIMAL_SOUND_BY_RECORD[flat.record],
+            });
+          }
         }
         for (const light of collectCityLights(b.dfBlock, lightSize)) {
           pixelLights.push([
@@ -282,7 +293,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
 
     built.set(key, {
-      px, py, terrain, tilemapTex, groundArchive, models, batches, texRemap, lights: pixelLights, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      px, py, terrain, tilemapTex, groundArchive, models, batches, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
 
       location: dfLocation ? dfLocation.name : null,
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
@@ -449,6 +460,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   if (shotMode) modes.installShotProbes();
 
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
+  // A4: the streaming world's animal sources - pixel-local positions
+  // translated through the floating origin at roll time (16 Hz over
+  // a handful of animals; recenters are free).
+  const animalAmbience = createAnimalAmbience(audio, () => {
+    const out = [];
+    for (const p of built.values()) {
+      if (!p.animals || !p.animals.length) continue;
+      const t = state.pixelTranslation(p.px, p.py);
+      for (const a of p.animals) out.push({ pos: [a.pos[0] + t[0], a.pos[1] + t[1], a.pos[2] + t[2]], sound: a.sound });
+    }
+    return out;
+  });
   let last = performance.now();
   function frame(now) {
     const dt = Math.min(0.1, (now - last) / 1000);
@@ -541,6 +564,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     audio.setListener(cam.pos, fwd);
     ambience.setPreset(presetForExterior(weather, isNight(minute)));
     ambience.update(dt, { playerPos: cam.pos });
+    animalAmbience.update(dt, cam.pos);   // A4: town animal barks (PlayRandomlyIfPlayerNear)
     const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
     renderer.setLighting(
       exteriorAmbient(minute), sunScale(minute) * weatherSun * flash,

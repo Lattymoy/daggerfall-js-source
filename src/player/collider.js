@@ -16,7 +16,18 @@ import {
   CAPSULE_RADIUS, CAPSULE_HEIGHT, STEP_OFFSET, SLOPE_LIMIT_DEG,
 } from './motor.js';
 
-const CELL = 8; // grid cell size in world units
+// Grid cell size in world units. The sphere resolve scans the 3x3
+// neighborhood around the center cell, so CELL only needs to exceed
+// the capsule contact radius (+push) for correctness - and the scan
+// cost scales with tris-per-cell. At 8, Privateer's Hold averaged 75
+// tris/cell (max 391) and ONE capsule move cost ~2.3ms - invisible
+// for the lone player, catastrophic once C11 put ~29 foes on the
+// P17 60Hz fixed step (66ms/frame of pure collision on desktop; the
+// live "insane lag" report, 2026-08-17). At 2 the same dungeon
+// averages ~5 tris/cell and the identical contacts resolve ~20x
+// faster. Pure spatial-index change: same triangles found, all
+// P14/P16 movement laws untouched.
+const CELL = 2;
 const GROUND_NY = Math.cos((SLOPE_LIMIT_DEG * Math.PI) / 180);
 const SKIN = 0.02;
 
