@@ -1,0 +1,76 @@
+// T3b: the mobile-NPC talk session (DFU TalkManager.TalkToNpc /
+// GetNPCGreetingRecord / TalkManagerMCP.Oath + MacroHelper, MIT
+// Daggerfall Workshop). Mobile townsfolk all talk as the region's
+// People faction, whose parent is a Province - so the guild-greeting
+// branch (GetGreetingIndex) NEVER runs for them and the greeting is
+// purely the reaction thresholds. Verbatim:
+//   reaction < -20            -> no response (TEXT.RSC 7205, a box)
+//   reaction >= 30            -> 7209 (very like)
+//   reaction >= 10            -> 7208 (like)
+//   reaction >= 0             -> 7207 (neutral)
+//   else                      -> 7206 (dislike)
+// The greeting record expands one random variant (DFU rides
+// UnityEngine.Random for the pick - a uniform roll here, Ledger A)
+// with the macros the greeting set actually uses: %pcf (player first
+// name) and %oth (an oath - TEXT.RSC 201 + FactionRace, DFU's fix of
+// the classic region-race oath bug, one random variant). Unknown
+// macros pass through verbatim (LOUD - the full MacroHelper pends).
+//
+// FLAGGED: the guild greeting indexes (records 8550..8571) pend the
+// guilds arc with static NPCs; quest greetings pend quests; the
+// tone buttons (Polite/Normal/Blunt) pend T3c topics.
+
+export const NO_RESPONSE_TEXT_ID = 7205;
+export const MIN_NEUTRAL_REACTION = 0;
+export const MIN_LIKE_REACTION = 10;
+export const MIN_VERY_LIKE_REACTION = 30;
+export const REFUSE_TALK_REACTION = -20;   // TalkToNpc: reaction < -20 -> 7205
+export const OATH_BASE_TEXT_ID = 201;
+
+// FactionRaces (FACTION.TXT race column) - the oath index space.
+export const OATH_RACE_INDEX = Object.freeze({ Nord: 0, Khajiit: 1, Redguard: 2, Breton: 3 });
+
+/** GetNPCGreetingRecord's reaction tail (the Province-parent path). */
+export function greetingTextId(reactionToPlayer) {
+  if (reactionToPlayer >= MIN_VERY_LIKE_REACTION) return 7209;
+  if (reactionToPlayer >= MIN_LIKE_REACTION) return 7208;
+  if (reactionToPlayer >= MIN_NEUTRAL_REACTION) return 7207;
+  return 7206;
+}
+
+/** MacroHelper.GetFirstname: the first space-separated token. */
+export const firstName = (name) => (name ?? '').split(' ')[0];
+
+/** %oth: TEXT.RSC 201 + FactionRace (DFU's oath fix - classic used
+ *  the region race INDEX and gave High Rock Nord oaths). */
+export const oathTextId = (race) => OATH_BASE_TEXT_ID + (OATH_RACE_INDEX[race] ?? OATH_RACE_INDEX.Breton);
+
+/** Expand the greeting-set macros; unknown %codes stay verbatim. */
+export function expandMacros(text, { playerName = '', oath = '' } = {}) {
+  return text
+    .replaceAll('%pcf', firstName(playerName))
+    .replaceAll('%pcn', playerName)
+    .replaceAll('%oth', oath);
+}
+
+/**
+ * TalkToNpc for a mobile townsperson.
+ * @param reaction getReactionToPlayer output
+ * @param textVariants (id) -> string[] (TextRsc plainText)
+ * @param npcRace 'Breton'|'Redguard'|'Nord'|'Khajiit' (region race)
+ * @param rolls Math.random-compatible (variant picks)
+ * @returns { refused, textId, text }
+ */
+export function startMobileTalk({ reaction, textVariants, playerName = '', npcRace = 'Breton', rolls = Math.random }) {
+  const pick = (id) => {
+    const variants = textVariants(id) ?? [''];
+    return variants[Math.floor(rolls() * variants.length)] ?? '';
+  };
+  if (reaction < REFUSE_TALK_REACTION) {
+    return { refused: true, textId: NO_RESPONSE_TEXT_ID, text: pick(NO_RESPONSE_TEXT_ID) };
+  }
+  const textId = greetingTextId(reaction);
+  const raw = pick(textId);
+  const oath = raw.includes('%oth') ? pick(oathTextId(npcRace)) : '';
+  return { refused: false, textId, text: expandMacros(raw, { playerName, oath }) };
+}
