@@ -784,3 +784,45 @@ options arc. All four motor hosts wired (standing rule).
 
 +1 trace in motorStairs.test.js (10). Suite 384/85, ARENA2 corpus
 green pre-commit.
+
+## P16 (2026-08-17): THE FIXED PHYSICS TIMESTEP - live hotfix SHIPPED
+
+Live mobile report: "stuck in the ground after going up the stairs;
+jumping has me go in the air but instantly snaps me to the ground."
+Root-caused by REAL-MESH numeric traces (Privateer's Hold collider
+built headless in Node - 334 scanned stair candidates driven by the
+motor at 60 fps AND 10 fps, both code versions):
+
+- At 60 fps the deployed code climbs every real staircase and jumps
+  at full apex - the P14 laws are correct AT THE RATE THEY WERE
+  DERIVED. At 10 fps (a phone rendering this scene) the SAME code
+  fails the same staircase (falls off mid-flight) and the jump apex
+  collapses (0.30 at dt 0.1; ~0.1 at dt 0.2): the motor integrated
+  with RAW RENDER dt, and the jump's same-frame gravity subtraction
+  (velY -= g*dt) scaled with the frame - dt 0.2 stole 4.0 of the 4.5
+  takeoff velocity. DFU never sees this: Unity physics runs in
+  FixedUpdate at a fixed timestep regardless of render rate. That IS
+  the parity law, and the motor was missing it.
+- THE FIX: update() is now a fixed-step accumulator - render dt in,
+  FIXED_DT (1/60) physics steps out, MAX_FRAME_DT 0.25 clamping jank
+  spikes exactly as Unity's maximumDeltaTime (time dilates instead of
+  the integrator exploding). 1/60 rather than Unity's 50 Hz default
+  keeps every shipped pin and the 60 fps behavior byte-identical -
+  documented choice. Per-frame report flags (jumped,
+  landedFallDistance) reset per RENDER frame and carry across steps;
+  the crouch EDGE is consumed by the first step only.
+- Companions kept from the same investigation (both proven
+  behavior-neutral on the real-mesh sweep at 60 fps, both principled):
+  the resolve's ceiling entry-clamp now fires only on RESIDUAL head
+  penetration (not transient grazes the iterations already fixed),
+  and the step ladder CAPS a rung at its resolved height under a low
+  ceiling instead of refusing the stair (monotone in RESOLVED height
+  - the thin-plane tunnel stays impossible).
+- The fixture doctrine note: player.test's P11 block used dt=1
+  "time compression" - retired (large dts now clamp, as live jank
+  does); one update(1/60) = one step. NEW pin: a 10 fps jump reaches
+  the SAME apex as 60 fps.
+- RESIDUAL (honest): foe AI still integrates on render dt (no jump
+  integrator, low risk - queued); the motor updates at 60 Hz on
+  120 Hz displays (DFU has the same shape via FixedUpdate + camera
+  smoothing; our camera follows raw - noted).

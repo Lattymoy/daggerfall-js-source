@@ -43,6 +43,20 @@ export const JUMP_SPEED = 4.5;
 // on landing (CheckFallingDamage: damage past 5, a hard-fall alert
 // past 2.5 - the HOST applies HP/sounds; PlayerHealth does in DFU).
 export const GROUNDED_JUMP_GATE_S = 0.1;
+// HOTFIX 2026-08-17 (live mobile report: "jumping has me go in the
+// air but instantly snaps me to the ground"): the motor integrated
+// with RAW RENDER dt - DFU's physics runs in Unity's FixedUpdate at
+// a fixed timestep no matter the render rate, and every law here
+// assumes that. At a phone's 10-15 fps the jump's same-frame gravity
+// subtraction (velY -= g*dt) scaled with the frame: dt 0.2 stole 4.0
+// of the 4.5 takeoff velocity and the apex collapsed from ~0.5 to
+// ~0.1. update() now ACCUMULATES render dt and steps the physics at
+// FIXED_DT (1/60 - the rate all shipped pins were derived at; Unity
+// defaults to 50 Hz, the choice is ours and documented). MAX_FRAME_DT
+// clamps jank spikes exactly as Unity's maximumDeltaTime does (time
+// slows instead of the integrator exploding).
+export const FIXED_DT = 1 / 60;
+export const MAX_FRAME_DT = 0.25;
 export const CROUCH_JUMP_DELTA = 0.8;
 export const JUMP_FWD_BOOST = 0.05;
 export const SLOWFALL_SPEED = 105;          // AcrobatMotor slowFallSpeed (x dt = the constant fall velocity)
@@ -168,6 +182,7 @@ export class PlayerMotor {
     this.fallStart = y;
     this._airVelX = 0;
     this._airVelZ = 0;
+    this._acc = 0;   // the fixed-step accumulator restarts clean
   }
 
   /**
@@ -195,9 +210,23 @@ export class PlayerMotor {
     this.movingLessThanHalfSpeed = walkSpeed(this.stats.speed) / 2 >= appliedSpeed;
   }
 
+  /** The RENDER-frame entry: accumulates dt and runs fixed physics
+   *  steps (see the FIXED_DT note). Per-frame report flags (jumped,
+   *  landedFallDistance) reset here and OR/carry across the steps;
+   *  the crouch EDGE is consumed by the first step only. */
   update(dt, input, yaw, pitch = 0) {
     this.jumped = false;
     this.landedFallDistance = 0;
+    this._acc = (this._acc ?? 0) + Math.min(dt, MAX_FRAME_DT);
+    let first = true;
+    while (this._acc >= FIXED_DT) {
+      this._acc -= FIXED_DT;
+      this._step(FIXED_DT, first ? input : (input.crouch ? { ...input, crouch: false } : input), yaw, pitch);
+      first = false;
+    }
+  }
+
+  _step(dt, input, yaw, pitch = 0) {
     // PlayerMotor.FixedUpdate: time the grounded state FIRST, every
     // frame (the swim/levitate early-return comes after in DFU too).
     this.groundedTime = this.grounded ? this.groundedTime + dt : 0;

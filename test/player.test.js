@@ -199,44 +199,73 @@ test('player: P11 swim/levitate motor - formulas, look-directed motion, surface 
   const rec = { move(pos, dx, dy, dz) { pos[0] += dx; pos[1] += dy; pos[2] += dz; moves.push([dx, dy, dz]); return { grounded: false }; } };
   const p = new PlayerMotor(rec);
   p.spawn(0, 0, 0);
+  // One update(1/60) = exactly one FIXED physics step = one recorded
+  // move (the 08-17 fixed-timestep hotfix retired the old dt-as-time-
+  // compression fixture style - large dts now clamp, as live jank does).
+  const DT = 1 / 60;
   // LEVITATING: look-directed (pitch tilts the path), speed 4.0, no gravity
   p.levitating = true;
   p.velY = -3;   // any prior fall velocity dies
-  p.update(1, { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false }, 0, -Math.PI / 2);
+  p.update(DT, { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false }, 0, -Math.PI / 2);
   assert.equal(p.velY, 0);
-  approx(moves[0][1], -LEVITATE_MOVE_SPEED, 1e-3);   // straight down the look
+  approx(moves[0][1], -LEVITATE_MOVE_SPEED * DT, 1e-3);   // straight down the look
   // SWIMMING: the look's vertical is ZEROED; speed = swimSpeed(walk)
   p.levitating = false;
   p.swimming = true;
   p.waterSurfaceY = 100;   // far above - no clamp
-  p.update(1, { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false }, 0, -Math.PI / 3);
+  p.update(DT, { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false }, 0, -Math.PI / 3);
   const swim = moves[1];
   assert.equal(swim[1], 0);                          // no diving via the look
-  approx(Math.hypot(swim[0], swim[2]), swimSpeed(walkSpeed(50), 30) * Math.cos(-Math.PI / 3), 1e-3);
+  approx(Math.hypot(swim[0], swim[2]), swimSpeed(walkSpeed(50), 30) * Math.cos(-Math.PI / 3) * DT, 1e-3);
   // float up rises; the surface clamp stops it at the top
-  p.update(1, { forward: 0, strafe: 0, run: false, jump: false, up: true, down: false }, 0, 0);
+  p.update(DT, { forward: 0, strafe: 0, run: false, jump: false, up: true, down: false }, 0, 0);
   assert.ok(moves[2][1] > 0);
   p.pos[1] = 99.5;                                   // center + 1.25 - 0.93 >= 100
-  p.update(1, { forward: 0, strafe: 0, run: false, jump: false, up: true, down: false }, 0, 0);
+  p.update(DT, { forward: 0, strafe: 0, run: false, jump: false, up: true, down: false }, 0, 0);
   assert.equal(moves[3][1], 0);
   // waterWalking: normal walk speed in water (the S8 consumer)
   p.pos[1] = 0;
   p.waterWalking = true;
-  p.update(1, { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false }, 0, 0);
-  approx(Math.hypot(moves[4][0], moves[4][2]), walkSpeed(50), 1e-3);
+  p.update(DT, { forward: 1, strafe: 0, run: false, jump: false, up: false, down: false }, 0, 0);
+  approx(Math.hypot(moves[4][0], moves[4][2]), walkSpeed(50) * DT, 1e-3);
   p.waterWalking = false;
   // the .7071 diagonal limit applies to the grounded path too (P11 fix)
   p.swimming = false;
   p.grounded = true;
-  p.update(1, { forward: 1, strafe: 1, run: false, jump: false, up: false, down: false }, 0, 0);
+  p.update(DT, { forward: 1, strafe: 1, run: false, jump: false, up: false, down: false }, 0, 0);
   const g = moves[5];
-  approx(Math.hypot(g[0], g[2]), Math.hypot(1, 1) * DIAGONAL_FACTOR * walkSpeed(50), 1e-3);
+  approx(Math.hypot(g[0], g[2]), Math.hypot(1, 1) * DIAGONAL_FACTOR * walkSpeed(50) * DT, 1e-3);
   // the jump flag fires exactly on the frame a jump starts
   p.grounded = true;
-  p.update(0.016, { forward: 0, strafe: 0, run: false, jump: true, up: false, down: false }, 0, 0);
+  p.groundedTime = 1;   // past the 0.1 s gate
+  p.update(DT, { forward: 0, strafe: 0, run: false, jump: true, up: false, down: false }, 0, 0);
   assert.equal(p.jumped, true);
-  p.update(0.016, { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false }, 0, 0);
+  p.update(DT, { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false }, 0, 0);
   assert.equal(p.jumped, false);
+});
+
+test('player: the FIXED physics timestep - a 10 fps jump reaches the same apex as 60 fps (the 08-17 live fix)', () => {
+  // Raw-dt integration stole g*dt from the takeoff on the jump frame:
+  // at dt 0.2 the apex collapsed 0.5 -> ~0.1 ("goes in the air but
+  // instantly snaps to the ground", live mobile). Fixed stepping makes
+  // the apex FRAME-RATE INDEPENDENT.
+  const apexAt = (frameDt) => {
+    const col = new Collider(() => 0);
+    const m = new PlayerMotor(col);
+    m.spawn(0, 0, 0);
+    for (let t = 0; t < 0.5; t += frameDt) m.update(frameDt, { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false }, 0);
+    let apex = 0, jumped = false;
+    for (let t = 0; t < 1.6; t += frameDt) {
+      m.update(frameDt, { forward: 0, strafe: 0, run: false, jump: !jumped, up: false, down: false }, 0);
+      jumped = jumped || m.jumped;
+      apex = Math.max(apex, m.pos[1]);
+    }
+    return apex;
+  };
+  const at60 = apexAt(1 / 60);
+  const at10 = apexAt(1 / 10);
+  approx(at60, (4.5 * 4.5) / (2 * 20), 0.06);
+  assert.ok(Math.abs(at10 - at60) < 0.02, `10 fps apex ${at10.toFixed(3)} must match 60 fps ${at60.toFixed(3)}`);
 });
 
 test('player: P12 crouch - toggle, heights, speed, the blocked-stand ceiling', async () => {
