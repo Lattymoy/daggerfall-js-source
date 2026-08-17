@@ -176,18 +176,36 @@ export function isBackFacing(foeYaw, foeFeet, viewerPos) {
   return record % 5 > 2;
 }
 
+// C12: the behaviour motors (EnemyMotor.cs flies/swims).
+export const MOBILE_SLAUGHTERFISH_ID = 11;      // the one swimmer that aims for the face
+export const WATER_HEAD_MARGIN = 100 * GLOBAL_SCALE;   // WaterMove: keep 2.5 under the surface
+export const FLYER_FLOOR_CLEARANCE = 1;         // FindGroundPosition((height/2) + 1)
+export const FLYER_FLOOR_LIFT = 0.1;            // direction.y forced up when skimming
+
 /**
  * Per-foe classic AI: senses on the system timer, decisions on the
  * classic update, movement applied continuously at the decided state.
+ * C12: behaviour 'Flying'/'Spectral' = CanFly (3D pursuit at the
+ * target's face, no gravity, the floor-skim guard); 'Aquatic' =
+ * WaterMove (3D pursuit gated to below the block water surface via
+ * waterSurfaceY(x, z), the 2.5 head margin, beached = frozen).
  */
 export class EnemyAI {
-  constructor(collider, feet, yawRad, { liveSpeed = 50, height = CAPSULE_HEIGHT, seesThroughInvisibility = false } = {}) {
+  constructor(collider, feet, yawRad, { liveSpeed = 50, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null } = {}) {
     this.collider = collider;
     this.feet = [feet[0], feet[1], feet[2]];
     this.yaw = yawRad;
     this.height = height;
     this.speed = enemyMoveSpeed(liveSpeed);
     this.seesThroughInvisibility = seesThroughInvisibility;
+    this.flies = behaviour === 'Flying' || behaviour === 'Spectral';   // CanFly, verbatim
+    this.swims = behaviour === 'Aquatic';
+    // Flyers (and the slaughterfish) aim for the target FACE
+    // (PredictedTargetPos + targetHeight/2 above the center = feet +
+    // height); other swimmers aim at the center (no ground flatten).
+    this._aimY = this.flies || (this.swims && mobileId === MOBILE_SLAUGHTERFISH_ID)
+      ? CAPSULE_HEIGHT : CAPSULE_HEIGHT / 2;
+    this.waterSurfaceY = waterSurfaceY;
     this.velY = 0;
     this.detected = false;
     this.inSight = false;
@@ -287,16 +305,20 @@ export class EnemyAI {
    *  us frame dt; we accumulate and step the WHOLE body (senses
    *  cadence + physics) at FIXED_DT, with the MAX_FRAME_DT jank
    *  clamp. The classic-update timer drains identically (it only ever
-   *  sees 1/60 chunks now - deterministic at every frame rate). */
-  update(dt, playerFeet, senses = null) {
+   *  sees 1/60 chunks now - deterministic at every frame rate).
+   *  C12: `paralyzed` mirrors DFU's CanAct=false + flyerFalls -
+   *  senses keep running, decisions and pursuit stop, grounded foes
+   *  and FLYERS fall ("intentional side-effect: paralyzed flying
+   *  enemies fall out of the air"), swimmers freeze in place. */
+  update(dt, playerFeet, senses = null, paralyzed = false) {
     this._acc = (this._acc ?? 0) + Math.min(dt, MAX_FRAME_DT);
     while (this._acc >= FIXED_DT) {
       this._acc -= FIXED_DT;
-      this._step(FIXED_DT, playerFeet, senses);
+      this._step(FIXED_DT, playerFeet, senses, paralyzed);
     }
   }
 
-  _step(dt, playerFeet, senses) {
+  _step(dt, playerFeet, senses, paralyzed = false) {
     // DFU recomputes distance/sight every Update; only classic TARGET
     // SWITCHING rides the 5-unit system timer (single-target here, so
     // that timer has nothing to switch - constants stay exported for
@@ -306,15 +328,63 @@ export class EnemyAI {
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
       this._senses(playerFeet, senses);
-      this._classicTick(playerFeet);
+      if (!paralyzed) this._classicTick(playerFeet);
     }
-    // continuous movement at the decided state, grounded via the SAME
-    // capsule contract the player walks on
+    if (paralyzed) this.moving = false;
+
+    // C12 aquatic (WaterMove verbatim): movement exists ONLY while
+    // the controller center is below the block water surface; a
+    // beached (or waterless-block) fish is frozen - no gravity, no
+    // pursuit. Rising motion caps 2.5 under the surface. Paralyzed
+    // swimmers "just freeze in place".
+    if (this.swims) {
+      if (paralyzed || !this.moving) return;
+      const waterY = this.waterSurfaceY ? this.waterSurfaceY(this.feet[0], this.feet[2]) : null;
+      const center = this.feet[1] + this.height / 2;
+      if (waterY === null || center >= waterY) return;
+      const d = this._dir3(playerFeet);
+      let my = d[1] * this.speed * dt;
+      if (my > 0 && center + WATER_HEAD_MARGIN >= waterY) my = 0;
+      this.collider.move(this.feet, d[0] * this.speed * dt, my, d[2] * this.speed * dt);
+      return;
+    }
+
+    // C12 flying (CanFly = Flying|Spectral): 3D pursuit at the face,
+    // NO gravity - except flyerFalls (paralysis) which drops them.
+    if (this.flies && !paralyzed) {
+      this.velY = 0;
+      if (!this.moving) return;   // hover in place (turning included)
+      const d = this._dir3(playerFeet);
+      // "Stop fliers from moving too near the floor during combat":
+      // descending with ground inside (height/2 + 1) below the center
+      // forces direction.y up to 0.1 (not renormalized, as DFU).
+      if (d[1] < 0) {
+        const hit = this.collider.raycast(
+          [this.feet[0], this.feet[1] + this.height / 2, this.feet[2]], [0, -1, 0],
+          this.height / 2 + FLYER_FLOOR_CLEARANCE);
+        if (Number.isFinite(hit)) d[1] = FLYER_FLOOR_LIFT;
+      }
+      this.collider.move(this.feet, d[0] * this.speed * dt, d[1] * this.speed * dt, d[2] * this.speed * dt);
+      return;
+    }
+
+    // Grounded (and falling paralyzed flyers): movement at the
+    // decided state via the SAME capsule contract the player walks on
     this.velY -= GRAVITY * dt;
     const dy = this.velY * dt;
     const dxm = this.moving ? Math.sin(this.yaw) * this.speed * dt : 0;
     const dzm = this.moving ? Math.cos(this.yaw) * this.speed * dt : 0;
     const r = this.collider.move(this.feet, dxm, dy, dzm);
     if (r.grounded) this.velY = 0;
+  }
+
+  /** The 3D pursuit direction to the aim point (face for flyers +
+   *  the slaughterfish, center for other swimmers), normalized. */
+  _dir3(playerFeet) {
+    const dx = playerFeet[0] - this.feet[0];
+    const dy = (playerFeet[1] + this._aimY) - this.feet[1];
+    const dz = playerFeet[2] - this.feet[2];
+    const l = Math.hypot(dx, dy, dz) || 1;
+    return [dx / l, dy / l, dz / l];
   }
 }

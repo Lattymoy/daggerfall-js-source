@@ -300,3 +300,47 @@ deviations found and fixed (five in code, one recorded):
 
 Suite 402/88 (the audit pins ride mobileunit.test.js: leading -1,
 priority, flying clock). ARENA2 green, probes re-run green.
+
+## C12 (2026-08-17): THE BEHAVIOUR MOTORS - flying + aquatic monsters SHIPPED
+
+The loudest C11 interim closes: imps, giant bats, harpies (Behaviour
+Flying) and ghosts/wraiths (Spectral - CanFly folds both, verbatim)
+stop walking; slaughterfish/dreugh/lamia (Aquatic) stop strolling on
+dry stone. EnemyMotor.cs laws on the P17 fixed-step body:
+
+- FLYING (CanFly = Flying || Spectral): 3D pursuit at the target's
+  FACE (PredictedTargetPos + targetHeight/2 = feet + 1.8), NO
+  gravity - idle/turning flyers hover exactly in place; the
+  floor-skim guard (descending with ground inside height/2 + 1 below
+  the center forces direction.y to +0.1, not renormalized, as DFU);
+  the classic turn-in-place yaw gate applies to flyers unchanged.
+  Spawn: flyers hover at the raw spawn marker (no floor landing) -
+  the probe shows 9 airborne bats/imps across Privateer's Hold.
+- AQUATIC (WaterMove verbatim): movement EXISTS only while the
+  controller center is below the block water surface (P11's
+  waterSurfaceYAt = PlayerEnterExit.blockWaterLevel, threaded in);
+  rising motion caps at center + 100*GlobalScale (2.5) under the
+  surface; a beached or waterless-block fish is FROZEN - no pursuit
+  and no gravity (WaterMove owns all its movement). The
+  slaughterfish aims at the face (the ID 11 special); other swimmers
+  aim at the target center (no ground flatten - swims skips it).
+- PARALYSIS flows through the motor now (DFU CanAct=false +
+  flyerFalls): senses keep running, decisions stop, paralyzed FLYERS
+  FALL OUT OF THE AIR ("intentional side-effect", EnemyMotor
+  comment), swimmers "just freeze in place", walkers stop pursuing
+  but keep gravity. The old scene-side full skip is gone.
+- Corpses land: a flyer killed mid-air drops its corpse to the floor
+  (floorLanding in spawnCorpse - AlignBillboardToGround for every
+  corpse).
+- Sprite anchoring needs NO change: DFU center-anchors flying/
+  aquatic billboards at the controller center = feet + h/2, which
+  equals our bottom-anchor at feet for matched heights.
+
+Residuals (carried): knockback flyerFalls (a hit knocking a flyer
+out of the air) pends with knockback motion (C11 audit item 6);
+enhanced-AI strafe/backing/pitch-pause branches N/A (classic
+doctrine); flying foes use the walk speed formula as DFU does.
+
+Suite 406/88 (3 C12 pins in enemymotor.test.js: 3D face pursuit +
+gravity-free hover, the WaterMove caps + beached/dry freezes, the
+paralysis triad). ARENA2 green, probes green.

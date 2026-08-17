@@ -424,16 +424,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const D = foeDeps;
       const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
       const t = await getTexture(archive);
-      const pos = D.floorLanding(collider, [e.x, e.y + 0.2, e.z]);
+      // C12: flyers (CanFly = Flying|Spectral) hover at the spawn
+      // marker - no floor landing; walkers and swimmers ground (a
+      // fish lands on its pool bed and swims up on pursuit).
+      const behaviour = basics.behaviour ?? 'General';
+      const canFly = behaviour === 'Flying' || behaviour === 'Spectral';
+      const pos = canFly ? [e.x, e.y, e.z] : D.floorLanding(collider, [e.x, e.y + 0.2, e.z]);
       const yawDeg = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing (Ledger A rule)
       const career = await D.loadMonsterCareer(e.mobileType, D.fetchBytes);
       const entity = D.makeEnemyEntity(e.mobileType, basics, career, D.playerEntity.level);
       entity.items = D.generateItems(basics.lootTableKey ?? '-', { level: D.playerEntity.level, gender: e.gender });
-      // INTERIM (loud): flying/aquatic monsters ride the grounded
-      // motor - they WALK until the behaviour motors land (C11 rec).
+      // C12: the behaviour motors - flying/spectral pursue in 3D at
+      // the face with no gravity, aquatic ride WaterMove against the
+      // block water surface (beached = frozen, verbatim).
       const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, {
         liveSpeed: entity.liveSpeed,
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
+        behaviour, mobileId: e.mobileType, waterSurfaceY: waterSurfaceYAt,
       });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
       const mobile = new MobileUnit(e.mobileType, basics, (rec) => t.getFrameCount(rec));
@@ -947,7 +954,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const corpses = [];
   async function spawnCorpse(f) {
     const ct = ENEMY_BASICS[f.mobileType]?.corpseTexture;
-    const p = f.ai.feet;
+    // C12: a flyer dies mid-air - the corpse lands on the floor
+    // below (AlignBillboardToGround semantics for every corpse).
+    const p = floorLanding(collider, [f.ai.feet[0], f.ai.feet[1] + 0.1, f.ai.feet[2]]);
     if (!ct) return;
     const t = await getTexture(ct.archive);
     if (!t || ct.record >= t.recordCount) return;
@@ -1409,7 +1418,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // (no decisions, no damage frame). EnemySounds is NOT gated
       // in DFU, so the bark pass below still runs.
       const _fParalyzed = hasActiveEffect(f.entity, 'paralyze');
-      if (!_fParalyzed) f.ai.update(dt, playerFeet || eye, _senses);   // E2 senses + pursuit; P13: the stealth context
+      // C12: paralysis now flows THROUGH the motor (DFU CanAct=false +
+      // flyerFalls) - senses keep running, decisions stop, paralyzed
+      // FLYERS fall out of the air, swimmers freeze.
+      f.ai.update(dt, playerFeet || eye, _senses, _fParalyzed);   // E2 senses + pursuit; P13: the stealth context
       // A1 EnemySounds verbatim: the wait counter ALWAYS steps; the
       // sound fires only inside AttractRadius 16. Delay re-rolls
       // Range(3, 9+1); 20% move / 80% bark; humans stay silent.
