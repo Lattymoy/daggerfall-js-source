@@ -16,6 +16,7 @@
 
 // Speeds in frames-per-second (EnemyBasics).
 export const MOVE_ANIM_SPEED = 6;
+export const FLY_ANIM_SPEED = 10;   // flying enemies' move/idle clock (GetStateAnims override)
 export const PRIMARY_ATTACK_ANIM_SPEED = 10;
 export const HURT_ANIM_SPEED = 4;
 export const IDLE_ANIM_SPEED = 4;
@@ -153,17 +154,32 @@ export class MobileUnit {
     if (!keepFrame) { this.frame = 0; this._reversed = false; }
     if (state === 'attack') {
       this._attackFrames = rollAttackFrames(this.basics, Math.floor(this.rolls() * 100) + 1);
-      this.frame = Math.max(0, this._attackFrames[0]);
+      this.frame = this._attackFrames[0];
       this._iter = 1;
+      // ApplyEnemyState's up-front check: one of the Frost Daedra's
+      // attack variants STARTS with the hit frame (-1) - flag damage
+      // now and advance to the next frame (audit 08-17).
+      if (this.frame === -1) {
+        this.hitFrame = true;
+        this.frame = this._iter < this._attackFrames.length ? this._attackFrames[this._iter++] : 0;
+      }
     }
   }
 
-  /** The scene's per-frame drive. Returns {record, frame, flip}. */
+  /**
+   * The scene's per-frame drive. Returns {record, frame, flip}.
+   * `striking` is an EDGE - true on the update where the attack
+   * STARTS (EnemyAttack.MeleeAnimation fires ChangeEnemyState ONCE);
+   * a level signal would replay the sequence inside one swing.
+   */
   update(dt, { moving = false, striking = false, hurting = false } = {}, yaw, feet, cameraPos) {
-    // Desired state: hurt and attack are one-shots that run out on
-    // their own; new triggers restart them.
-    if (hurting && this.state !== 'hurt') this._change('hurt');
-    else if (striking && this.state !== 'attack' && this.state !== 'hurt') this._change('attack');
+    this.hitFrame = false;
+    // The DFU priority (audit 08-17): the attack edge overrides ANY
+    // state - hurt included (ChangeEnemyState is unconditional at
+    // MeleeAnimation); knockback-hurt never interrupts PrimaryAttack
+    // (EnemyMotor gates on state != PrimaryAttack).
+    if (striking && this.state !== 'attack') this._change('attack');
+    else if (hurting && this.state !== 'hurt' && this.state !== 'attack') this._change('hurt');
     else if (this.state === 'idle' || this.state === 'move') {
       const want = moving ? 'move' : 'idle';
       if (want !== this.state) this._change(want);
@@ -183,11 +199,15 @@ export class MobileUnit {
       this.orientation = o;
     }
 
-    // The fps clock: step one frame per 1/fps (AnimateEnemy).
-    this.hitFrame = false;
+    // The fps clock: step one frame per 1/fps (AnimateEnemy). Flying
+    // enemies move/idle at FlyAnimSpeed 10 (GetStateAnims' tail
+    // override; audit 08-17) - the table stays frozen, the clock
+    // overrides.
     const a = anims[this.orientation];
+    const fps = (this.basics.behaviour === 'Flying' && (this.state === 'move' || this.state === 'idle'))
+      ? FLY_ANIM_SPEED : a.fps;
     this._timer += dt;
-    const stepEvery = 1 / a.fps;
+    const stepEvery = 1 / fps;
     while (this._timer >= stepEvery) {
       this._timer -= stepEvery;
       this._stepFrame(a);

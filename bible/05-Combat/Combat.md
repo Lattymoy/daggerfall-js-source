@@ -258,3 +258,45 @@ per-frame timing is a recorded refinement); foe-AI fixed stepping
 
 Suite 400/88. ARENA2 green, dungeon + world + exterior probes green
 (foes default-on), monsterProbe close-up verified vs raw art.
+
+### C11 pre-merge audit (2026-08-17, Mac-directed): six findings
+
+Line-by-line re-read of DaggerfallMobileUnit/EnemyBasics/EnemyAttack/
+EnemyMotor/EnemySounds against the port. All tables, GetStateAnims
+branch order, UpdateOrientation algebra, AnimateEnemy stepping, and
+NextStateAfterCurrentOneShot verified verbatim-identical. Six real
+deviations found and fixed (five in code, one recorded):
+
+1. LEADING -1 SWALLOWED: ApplyEnemyState checks the FIRST attack
+   frame for -1 up front (the Frost Daedra's 50% variant [-1,4,5,0])
+   - damage flags immediately, display advances to the next entry.
+   The port clamped it to frame 0 and lost the hit flag.
+2. HURT/ATTACK PRIORITY BACKWARDS: DFU's ChangeEnemyState(
+   PrimaryAttack) at MeleeAnimation is unconditional (overrides
+   Hurt); knockback-hurt gates on state != PrimaryAttack. The port
+   had hurt preempting attack. (Hurt-per-player-hit stands: the
+   WeaponManager knockback floor 15 clears the 5-unit hurt threshold
+   on every landed hit.)
+3. FLYING CLOCK: Behaviour == Flying overrides Move/Idle to
+   FlyAnimSpeed 10 fps (GetStateAnims' tail). The port ran flyers at
+   the ground 6/4.
+4. STRIKING WAS LEVEL-TRIGGERED: the shared machine's swing (~1s at
+   speed 50) outlasts the sprite sequence (~0.6s), so
+   `machine.state != Idle` REPLAYED the attack anim (+ re-rolled the
+   variant) inside one swing. Now an EDGE (Idle -> swing), computed
+   beside the machine update; paralysis eats the edge exactly as
+   FreezeAnims blocks ChangeEnemyState. The attack SOUND moved to
+   the same edge - DFU plays it at MeleeAnimation START, not at the
+   hit frame, and not gated on the hit connecting.
+5. CORPSES + LOOT PILES FLOATED h/2: both passed base + h/2 to the
+   bottom-anchored billboard shader (a center-anchor holdover; the
+   static-flat path shifts DOWN for the same reason, missiles pass
+   the base). Pre-existing since C8/S2, magnified by C11's common
+   monster corpses. Both grounded now.
+6. RECORDED, NOT MODELED: knockback MOTION (the push-back
+   displacement + its decay re-triggering Hurt) pends with foe
+   knockback; the hit-test foe center at feet+0.9 overshoots small
+   sprites (rats) - cosmetic-only today (LOS raycast, not a hitbox).
+
+Suite 402/88 (the audit pins ride mobileunit.test.js: leading -1,
+priority, flying clock). ARENA2 green, probes re-run green.

@@ -6,7 +6,7 @@ import {
   GHOST_WRAITH_MOVE_ANIMS, SLAUGHTERFISH_MOVE_ANIMS, stateAnims,
   mobileOrientation, rollAttackFrames, MobileUnit,
   MOBILE_RAT, MOBILE_GHOST, MOBILE_WRAITH, MOBILE_SLAUGHTERFISH, MOBILE_GIANT_SCORPION,
-  MOVE_ANIM_SPEED, PRIMARY_ATTACK_ANIM_SPEED, HURT_ANIM_SPEED, IDLE_ANIM_SPEED,
+  MOVE_ANIM_SPEED, FLY_ANIM_SPEED, PRIMARY_ATTACK_ANIM_SPEED, HURT_ANIM_SPEED, IDLE_ANIM_SPEED,
 } from '../src/characters/mobileUnit.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 
@@ -102,6 +102,57 @@ test('mobile: state transitions - hasIdle frame carry, the hurt one-shot, bounce
   const frames = [];
   for (let i = 0; i < 8; i++) { s.update(1 / MOVE_ANIM_SPEED, { moving: true }, 0, [0, 0, 0], [0, 0, 5]); frames.push(s.frame); }
   assert.deepEqual(frames, [1, 2, 3, 2, 1, 0, 1, 2]);   // up then bounced back down
+});
+
+test('mobile: the leading -1 marker + the attack/hurt priority (audit 08-17)', () => {
+  // ApplyEnemyState's up-front check: the Frost Daedra's 50% variant
+  // [-1,4,5,0] STARTS with the hit frame - damage flags immediately
+  // and the displayed frame advances to the second entry.
+  const fd = {
+    hasIdle: true,
+    primaryAttackAnimFrames: [0, 1, -1, 2, 3, -1, 4, 5, 0],
+    primaryAttackAnimFrames2: [-1, 4, 5, 0],
+    chanceForAttack2: 50,
+  };
+  const m = new MobileUnit(25, fd, () => 8, () => 0.3);   // roll 31 <= 50 -> frames2
+  m.update(1 / 60, { striking: true }, 0, [0, 0, 0], [0, 0, 5]);
+  assert.equal(m.state, 'attack');
+  assert.equal(m.hitFrame, true);    // the leading -1 lands NOW
+  assert.equal(m.frame, 4);          // displayed = the second entry
+  let hits = 1;
+  for (let i = 0; i < 5 && m.state === 'attack'; i++) {
+    m.update(1 / PRIMARY_ATTACK_ANIM_SPEED, {}, 0, [0, 0, 0], [0, 0, 5]);
+    if (m.hitFrame) hits++;
+  }
+  assert.equal(hits, 1);             // one damage moment per swing
+  assert.equal(m.state, 'idle');
+  // The DFU priority: the attack edge overrides hurt (ChangeEnemyState
+  // at MeleeAnimation is unconditional)...
+  const p = new MobileUnit(4, { hasIdle: true, primaryAttackAnimFrames: [0, 1] }, () => 8, () => 0.99);
+  p.update(0, { hurting: true }, 0, [0, 0, 0], [0, 0, 5]);
+  assert.equal(p.state, 'hurt');
+  p.update(0, { striking: true }, 0, [0, 0, 0], [0, 0, 5]);
+  assert.equal(p.state, 'attack');
+  // ...while knockback-hurt never interrupts PrimaryAttack
+  // (EnemyMotor gates on state != PrimaryAttack).
+  p.update(0, { hurting: true }, 0, [0, 0, 0], [0, 0, 5]);
+  assert.equal(p.state, 'attack');
+});
+
+test('mobile: flying enemies move/idle on the FlyAnimSpeed clock', () => {
+  // GetStateAnims' tail: Behaviour == Flying overrides Move/Idle to
+  // 10 fps (the imp/harpy flap rate); attack/hurt keep their own.
+  assert.equal(FLY_ANIM_SPEED, 10);
+  const fly = new MobileUnit(1, { hasIdle: true, behaviour: 'Flying', primaryAttackAnimFrames: [0] }, () => 6, () => 0.5);
+  const walk = new MobileUnit(4, { hasIdle: true, primaryAttackAnimFrames: [0] }, () => 6, () => 0.5);
+  fly.update(0.1, { moving: true }, 0, [0, 0, 0], [0, 0, 5]);    // 0.1 >= 1/10 -> steps
+  walk.update(0.1, { moving: true }, 0, [0, 0, 0], [0, 0, 5]);   // 0.1 < 1/6 -> holds
+  assert.equal(fly.frame, 1);
+  assert.equal(walk.frame, 0);
+  // Idle rides the same override (4 -> 10 fps for flyers)
+  const flyIdle = new MobileUnit(1, { hasIdle: true, behaviour: 'Flying', primaryAttackAnimFrames: [0] }, () => 6, () => 0.5);
+  flyIdle.update(0.1, {}, 0, [0, 0, 0], [0, 0, 5]);
+  assert.equal(flyIdle.frame, 1);
 });
 
 test('mobile: scorpion flip inversion + the orientation frame rescale', () => {

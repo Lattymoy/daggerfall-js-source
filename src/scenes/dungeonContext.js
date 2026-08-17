@@ -911,7 +911,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const g = floorLanding(collider, [pile.pos[0], pile.pos[1] + 0.2, pile.pos[2]]);
     pile.pos = g;
     pile.half = [size.w / 2, size.h / 2];
-    pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, pile.record, size, [[g[0], g[1] + size.h / 2, g[2]]]);
+    // Bottom-anchored shader: the base IS the ground point (the +h/2
+    // center-anchor holdover floated piles - C11 audit 08-17).
+    pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, pile.record, size, [[g[0], g[1], g[2]]]);
     billboardBatches.push(pile.batch);
   }
 
@@ -951,7 +953,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!t || ct.record >= t.recordCount) return;
     uploadRecord(ct.archive, ct.record);
     const size = scaledBillboardSize(t.getSize(ct.record), t.getScale(ct.record));
-    const batch = renderer.createBillboardBatch(ct.archive, ct.record, size, [[p[0], p[1] + size.h / 2, p[2]]]);
+    // The billboard shader BOTTOM-anchors (position = base): the old
+    // +h/2 was a center-anchor holdover and floated every corpse by
+    // half its height (C11 audit 08-17; the static-flat path shifts
+    // DOWN for the same reason).
+    const batch = renderer.createBillboardBatch(ct.archive, ct.record, size, [[p[0], p[1], p[2]]]);
     corpses.push(batch);
     billboardBatches.push(batch);   // hosts draw + destroy() frees
   }
@@ -1422,6 +1428,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         }
       }
       f.events = _fParalyzed ? [] : f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine (S19: paralysis returns early)
+      // C11 audit 08-17: the attack START edge (machine Idle -> swing
+      // this frame) - MeleeAnimation fires ChangeEnemyState + the
+      // attack sound ONCE at the start, not at the hit frame, and not
+      // gated on the hit later connecting. A LEVEL signal replayed the
+      // sprite sequence inside one swing (the machine outlasts it).
+      const _mstate = f.attack.machine.state;
+      const _strikeEdge = _mstate !== 'Idle' && (f._prevMState ?? 'Idle') === 'Idle';
+      f._prevMState = _mstate;
+      if (_strikeEdge && !f.entity.isClass) {
+        const sx = ENEMY_BASICS[f.mobileType];
+        // PlayAttackSound: half the time, humans stay silent
+        if (sx?.attackSound != null && Math.random() <= 0.5) {
+          audio.play3d(sx.attackSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]], 1, { maxDistance: 16 });
+        }
+      }
       // S16: the casting decision rides beside the attack machine
       // (DoRangedAttack's spell branch + DoTouchSpell); the decision
       // casts INSTANTLY. RESIDUAL (honest): DFU casters also hold at
@@ -1454,11 +1475,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // also drops the weapon if the target is metal-immune to it
           // - the player has no minMetalToHit, so that gate is inert)
           const wpn = foeDeps.chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
-          // PlayAttackSound: half the time, humans stay silent
-          const bx = ENEMY_BASICS[f.mobileType];
-          if (!f.entity.isClass && bx?.attackSound != null && Math.random() <= 0.5) {
-            audio.play3d(bx.attackSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]], 1, { maxDistance: 16 });
-          }
+          // (the attack sound moved to the strike EDGE above - DFU
+          // plays it at MeleeAnimation start, audit 08-17)
           // S18: the special-attack rider seam - monster weaponless
           // hits run OnMonsterHit per hit (disease/paralysis/fatigue)
           const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {
@@ -1487,7 +1505,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (!_fParalyzed || !f._mout) {
           f._mout = f.mobile.update(dt, {
             moving: f.ai.moving,
-            striking: f.attack.machine.state !== 'Idle',
+            striking: _strikeEdge,   // the START edge (paralysis eats it - FreezeAnims blocks ChangeEnemyState, verbatim)
             hurting: !!f._hurtPending,
           }, f.ai.yaw, f.ai.feet, eye);
           f._hurtPending = false;
