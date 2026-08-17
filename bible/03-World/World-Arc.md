@@ -406,4 +406,51 @@ climate People race table); night-time streets empty by law
 pixel (up to ~4 with populations in range) - idle cost is one
 failed spawn probe per tick per far pixel, negligible.
 
+## T3a (2026-08-17): TALK - the faction foundation SHIPPED
+
+The talk arc opens under the townsfolk. The data + rules layer,
+Node-pure (the window UI and the scene activation wiring are T3b):
+
+- FACTION.TXT (formats/factionFile.js): FactionFile.cs verbatim -
+  '#'-headed blocks, tag:value with the original file's one
+  malformed space-split tag, parent/child by preceding-TAB depth
+  stack, duplicate-id resolver from 980 (never fires on vanilla
+  data - the real file is exactly 366 unique factions), region
+  1-based -> 0-based, flats archive<<7|record (one flat fills both
+  gender slots, the second is female), ruler name seed + power
+  bonus drawn in classic DFRandom call order (stream-position
+  dependent in DFU too), relinkChildren building the tree. Enums:
+  FactionTypes/SocialGroups (11)/GuildGroups.
+- THE REACTION LAYER (systems/talk.js): findFactions with the -1
+  wildcards (PersistentFactionData verbatim; region compares the
+  parser's 0-based value - DFU's misleadingly named
+  oneBasedRegionIndex parameter receives 0-based too);
+  getPeopleOfCurrentRegion = the region's single People/Commoners/
+  GeneralPopulace faction (every mobile townsperson talks as it -
+  People of Daggerfall for region 17, proven child of the
+  Daggerfall province); getReactionToPlayer = rep + biography mod
+  + live-effect reactionMods[sgroup] + sGroupReputations[sgroup]
+  (all zero at chargen; ensureReactionState folds the fields onto
+  the entity).
+- PICKPOCKET (talk.js + formulas.js): the verbatim chance (live
+  Pickpocket skill, +5*(playerLevel-targetLevel) vs enemies only,
+  clamp 5..95), tally on every attempt, success splitting
+  Dice100(33): 67% pinch Random.Range(0,6)+1 gold onto the
+  Currency stack, 33% "found nothing valuable" (TEXT.RSC 8999 -
+  the caller supplies the text source); failure lands
+  crimeCommitted='Pickpocketing' verbatim. Constants: mobile/static
+  NPC activation 256 units = 6.4, pickpocket 128 = 3.2.
+
+FLAGGED (LOUD): guard spawning on the failed pickpocket pends the
+crime slice (the crime STATE lands now); TallyCrimeGuildRequirements
+pends the guilds arc; enemy pickpocketing pends the same wiring;
+biographyReactionMod is 0 until chargen's biography quiz ships; rep
+deltas (quests/crimes) pend the save-side faction clone - the live
+FactionFile dict IS the state until then.
+
+T3b next: the talk window (TALK01I0.IMG shell, greetings by
+reaction, Where-is building directions) + the scene activation modes
+(Steal/Grab/Info/Talk) raycasting mobile persons in all three
+exterior-capable hosts.
+
 Suite 420/92. ARENA2 green, probes green.
