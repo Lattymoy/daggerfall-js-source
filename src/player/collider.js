@@ -263,13 +263,23 @@ export class Collider {
     feet[0] = low[0];
     feet[1] = low[1] - CAPSULE_RADIUS;
     feet[2] = low[2];
-    // A body cannot be depenetrated UP into a ceiling: when this
-    // resolve made real head contact, net rise is clamped to entry
-    // (P14 stairs audit - slope-legal riser-edge pushes crept the
-    // capsule upward under stairwell ceilings until a grounded stand
-    // put the head 0.7 INSIDE the plane; motorStairs pins the
-    // grounded head-clearance and the impossible-tread block).
-    if (out.hitCeiling && feet[1] > entryY) feet[1] = entryY;
+    // A body cannot be depenetrated UP into a ceiling: when the FINAL
+    // position still has real head penetration the iterations could
+    // not separate, net rise is clamped to entry (P14 stairs audit -
+    // slope-legal riser-edge pushes crept a grounded stand 0.7 INSIDE
+    // the plane). The clamp fires ONLY on residual penetration - the
+    // 08-17 live wedge: clamping on ANY transient ceiling touch
+    // reverted the floor's own legitimate push-out every frame and
+    // EMBEDDED the capsule in stair treads under low-but-legal
+    // stairwell ceilings (and killed every jump from the squeezed
+    // stand at one frame).
+    if (out.hitCeiling && feet[1] > entryY) {
+      const headY = feet[1] + height - CAPSULE_RADIUS;
+      const probe = [feet[0], headY, feet[2]];
+      const probeOut = { grounded: false, hitCeiling: false, pushedDown: false };
+      this._resolveSphere(probe, CAPSULE_RADIUS, probeOut);
+      if (probe[1] < headY - 1e-4) feet[1] = entryY;   // still being pushed DOWN out of a ceiling -> too tight, revert
+    }
   }
 
   /**
@@ -360,18 +370,26 @@ export class Collider {
     // height is kept this frame and the snap below settles it onto
     // the tread as forward progress clears the edge.
     if (dy <= 0 && wantedSq > 1e-8 && movedSq < wantedSq * 0.25) {
+      // Each rung's raised start is RESOLVED, and a low ceiling CAPS
+      // the rung to its resolved height instead of refusing the stair
+      // (the 08-17 live jam: legal 2.0-headroom stairwells - a
+      // following ceiling above every tread - blocked at tread 1
+      // because the old sweep broke on ANY raised-start ceiling
+      // touch; Unity raises as far as the ceiling allows and slides
+      // under). The ladder stays MONOTONE in RESOLVED height - a rung
+      // that gains nothing over the last ends it - so a thin ceiling
+      // plane still cannot be teleported past: every rung is resolved
+      // where the plane pushes it back down, never skipped beyond.
+      let prevResolvedY = feet[1];
       for (const lift of [0.125, 0.25, 0.375, STEP_OFFSET]) {
-        // The raised START must itself be clear (no ceiling contact).
         const raisedStart = [beforeX, feet[1] + lift, beforeZ];
         const startOut = { grounded: false, hitCeiling: false, pushedDown: false };
         this._resolveCapsule(raisedStart, startOut, height);
-        // MONOTONE sweep: a ceiling hit at THIS rung forbids every
-        // higher one - independent rungs let the head sphere teleport
-        // clean past a thin ceiling plane between rungs (the tunnel
-        // that stood the capsule ON TOP of a stairwell ceiling).
-        if (startOut.hitCeiling || startOut.pushedDown) break;
-        // Forward from the raised start, full intent.
-        const retry = [beforeX + dx, feet[1] + lift, beforeZ + dz];
+        if (raisedStart[1] <= prevResolvedY + 1e-4) break;   // no headroom gained - the ladder tops out
+        prevResolvedY = raisedStart[1];
+        // Forward from the RESOLVED (possibly ceiling-capped) height,
+        // full intent.
+        const retry = [beforeX + dx, raisedStart[1], beforeZ + dz];
         const retryOut = { grounded: false, hitCeiling: false, pushedDown: false };
         this._resolveCapsule(retry, retryOut, height);
         const retrySq = (retry[0] - beforeX) ** 2 + (retry[2] - beforeZ) ** 2;
@@ -379,7 +397,7 @@ export class Collider {
         // threshold the plain move failed), not merely jitter-better -
         // a wall blocks it at every lift exactly as at 0 (the P9
         // facade-ladder regression pin stands).
-        if (retrySq < wantedSq * 0.25 || retryOut.pushedDown || retryOut.hitCeiling) continue;
+        if (retrySq < wantedSq * 0.25 || retryOut.pushedDown) continue;
         feet[0] = retry[0];
         feet[1] = retry[1];
         feet[2] = retry[2];
