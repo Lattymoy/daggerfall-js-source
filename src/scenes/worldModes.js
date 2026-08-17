@@ -46,9 +46,9 @@ import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
-import { isShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment } from '../systems/shopStock.js';
-import { templateByIndex } from '../systems/itemTemplates.js';
-import { goldAmount, deductGold } from '../systems/court.js';
+import { isShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem } from '../systems/shopStock.js';
+import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
+import { goldAmount, deductGold, addGold } from '../systems/court.js';
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -107,6 +107,17 @@ export function createWorldModes(host) {
       personality: playerEntity.stats?.personality ?? 50,
     }, false);
   }
+  // E3: the sell offer - CalculateCost(value)*stack through the
+  // SELLING branch of CalculateTradePrice (DaggerfallTradeWindow's
+  // GetTradePrice; DFU's condition parameter is declared-but-unused).
+  function sellPrice(it) {
+    const b = interiorBuilding;
+    const cost = calculateCost(it.value ?? itemBaseValue(it), b.quality, regionPriceAdjustment(playerEntity, b.regionIndex ?? 0)) * (it.stackCount ?? 1);
+    return calculateTradePrice(cost, b.quality, {
+      mercantile: skillValue(playerEntity, SKILLS.Mercantile),
+      personality: playerEntity.stats?.personality ?? 50,
+    }, true);
+  }
   function showShelfList(shelf, page) {
     const per = 8;
     const slice = shelf.items.slice(page * per, (page + 1) * per);
@@ -115,6 +126,10 @@ export function createWorldModes(host) {
       action: () => buyItem(shelf, it),
     }));
     if ((page + 1) * per < shelf.items.length) options.push({ code: 'KeyN', label: 'N - more', action: () => showShelfList(shelf, page + 1) });
+    // E3: the sell mode (storeBuysItemType gates what they take)
+    if ((SHOP_BUYS_GROUPS[interiorBuilding.buildingType] ?? []).length) {
+      options.push({ code: 'KeyS', label: 'S - sell', action: () => showSellList(shelf, 0) });
+    }
     options.push({ code: 'Escape', label: 'Esc - close', action: () => {} });
     interiorOverlay = new ChoiceWindow({
       lines: [interiorBuilding.name || 'Shelves', shelf.items.length ? `Buy: (you have ${goldAmount(playerEntity)} gold)` : 'The shelf is empty.'],
@@ -131,8 +146,33 @@ export function createWorldModes(host) {
     shelf.items.splice(shelf.items.indexOf(it), 1);
     playerEntity.items = playerEntity.items || [];
     addItem(playerEntity.items, it);
+    tallySkill(playerEntity, SKILLS.Mercantile, 1);   // E3: per completed trade (DFU OnTrade)
     surfacePlayer();
     showShelfList(shelf, 0);
+  }
+  function showSellList(shelf, page) {
+    const sellable = (playerEntity.items ?? []).filter((it) => shopBuysItem(interiorBuilding.buildingType, it));
+    const per = 8;
+    const slice = sellable.slice(page * per, (page + 1) * per);
+    const options = slice.map((it, j) => ({
+      code: `Digit${j + 1}`, label: `${j + 1} - ${_itemLabel(it)} (${sellPrice(it)} gold)`,
+      action: () => sellItem(shelf, it),
+    }));
+    if ((page + 1) * per < sellable.length) options.push({ code: 'KeyN', label: 'N - more', action: () => showSellList(shelf, page + 1) });
+    options.push({ code: 'KeyB', label: 'B - buy', action: () => showShelfList(shelf, 0) });
+    options.push({ code: 'Escape', label: 'Esc - close', action: () => {} });
+    interiorOverlay = new ChoiceWindow({
+      lines: [interiorBuilding.name || 'Shelves', sellable.length ? `Sell: (you have ${goldAmount(playerEntity)} gold)` : 'You have nothing they want.'],
+      options,
+    });
+  }
+  function sellItem(shelf, it) {
+    addGold(playerEntity, sellPrice(it));
+    playerEntity.items.splice(playerEntity.items.indexOf(it), 1);
+    shelf.items.push(it);   // sold goods land on the open shelf (DFU's remoteItems)
+    tallySkill(playerEntity, SKILLS.Mercantile, 1);
+    surfacePlayer();
+    showSellList(shelf, 0);
   }
   let exitReturn = null;
   let dungeonCtx = null;

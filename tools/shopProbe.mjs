@@ -54,6 +54,17 @@ if (overlay.options.some((o) => o.startsWith('1 -'))) {
   console.log('after buy:', JSON.stringify(after), 'gold', goldBefore, '->', goldAfter, 'items', itemsBefore, '->', itemsAfter);
   if (!(goldAfter < goldBefore && itemsAfter > itemsBefore)) { console.log('BUY FAILED'); process.exit(1); }
   await page.screenshot({ path: '/home/claude/shop-bought.png' });
+  // E3: sell the bought item straight back - S opens the sell list
+  await press('KeyS');
+  const sellList = JSON.parse(await page.evaluate(() => window.__shopOverlay()));
+  console.log('sell list:', JSON.stringify(sellList));
+  if (!sellList?.options?.some((o) => o.startsWith('1 -'))) { console.log('NO SELLABLE LISTED'); process.exit(1); }
+  await press('Digit1');
+  const goldSold = await page.evaluate(() => window.__playerEntity.items.find((i) => i.group === 'Currency')?.stackCount ?? 0);
+  const itemsSold = await page.evaluate(() => window.__playerEntity.items.length);
+  console.log('after sell: gold', goldAfter, '->', goldSold, 'items', itemsAfter, '->', itemsSold);
+  if (!(goldSold > goldAfter && itemsSold < itemsAfter)) { console.log('SELL FAILED'); process.exit(1); }
+  await page.screenshot({ path: '/home/claude/shop-sold.png' });
 } else {
   console.log('empty shelf - stock rolled nothing (valid); the window rendered');
 }

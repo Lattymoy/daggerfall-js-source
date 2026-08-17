@@ -7,7 +7,7 @@ import {
 } from '../src/systems/itemTemplates.js';
 import {
   SHOP_ITEM_GROUPS, isShop, isShopShelfModel, stockShopShelf, calculateCost,
-  calculateTradePrice, regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART,
+  calculateTradePrice, regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART, SHOP_BUYS_GROUPS, shopBuysItem,
 } from '../src/systems/shopStock.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 
@@ -109,4 +109,18 @@ test('shopStock: CalculateTradePrice verbatim fixed-point (E2)', () => {
   // a better shop (higher quality) charges more for the same cost
   assert.ok(calculateTradePrice(1000, 20, { mercantile: 50, personality: 50 })
     > calculateTradePrice(1000, 5, { mercantile: 50, personality: 50 }));
+});
+
+test('shopStock: storeBuysItemType verbatim (E3 sell gating)', () => {
+  // spot pins against DaggerfallTradeWindow's table
+  assert.deepEqual([...SHOP_BUYS_GROUPS[BUILDING_TYPES.Bookseller]], ['Books']);
+  assert.deepEqual([...SHOP_BUYS_GROUPS[BUILDING_TYPES.WeaponSmith]], ['Armor', 'Weapons']);
+  assert.equal(SHOP_BUYS_GROUPS[BUILDING_TYPES.PawnShop].length, 10);
+  assert.equal(SHOP_BUYS_GROUPS[BUILDING_TYPES.Alchemist].length, 9);
+  // the gate: a weaponsmith takes a sword, never a book or gold
+  assert.ok(shopBuysItem(BUILDING_TYPES.WeaponSmith, { group: 'Weapons' }));
+  assert.ok(!shopBuysItem(BUILDING_TYPES.WeaponSmith, { group: 'Books' }));
+  assert.ok(!shopBuysItem(BUILDING_TYPES.WeaponSmith, { group: 'Currency' }));
+  // taverns and houses buy nothing
+  assert.ok(!shopBuysItem(BUILDING_TYPES.Tavern, { group: 'Weapons' }));
 });

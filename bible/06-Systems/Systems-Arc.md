@@ -919,3 +919,33 @@ Dealer" (Bookseller, quality 6) -> enter -> 4 shelves -> browse
 item in the entity, the window re-lists 2.
 
 Suite 449/98 (the CalculateTradePrice fixed-point pin).
+
+## E3 (2026-08-17): SELLING - the trade circuit closes SHIPPED
+
+The shelf window gains the SELL mode (DaggerfallTradeWindow's
+selling path):
+
+- storeBuysItemType verbatim as SHOP_BUYS_GROUPS - the item groups
+  each storefront takes (Bookseller Books only, WeaponSmith
+  Armor+Weapons, the PawnShop's 10-group sweep, the Alchemist's 9
+  ingredient groups...). S on the buy window lists the player's
+  matching items; a shop whose table is empty never offers the key.
+- The offer: CalculateCost(value)*stackCount through the SELLING
+  branch of CalculateTradePrice (DFU's declared-but-unused condition
+  parameter documented). Digit-sells pay addGold, the item leaves
+  the entity and lands ON THE OPEN SHELF (DFU's remoteItems - you
+  can buy it back), the list re-shows; B flips back to buy.
+- Mercantile tallies ONCE PER COMPLETED TRADE - buy and sell alike
+  (DFU's OnTrade tally; E2's buys had missed it).
+
+FLAGGED loud: the offer/counteroffer haggle UI pends (fixed prices,
+both directions now); letters of credit (the >maxGold overflow)
+pend banking; Repair/Identify/SellMagic window modes pend their
+systems.
+
+Probed live (tools/shopProbe.mjs, extended): the bookseller round
+trip - buy a Book at 3062, S, sell it back at 2904 (the merchant's
+margin), gold 20000 -> 16938 -> 19842, the item off then back on
+the shelf.
+
+Suite 450/98 (the storeBuysItemType pin).
