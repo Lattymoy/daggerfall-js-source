@@ -1,35 +1,57 @@
-// U8f: the PAPERDOLL BASE - the avatar on the inventory window (DFU
-// PaperDoll + PaperDollRenderer, MIT Daggerfall Workshop). Verbatim
-// laws:
-// - the panel is 110x184 at (49,13) on the inventory (paperDollWidth/
-//   Height; paperDoll.Position);
-// - the BACKGROUND is a subrect (8,7,110,184) of the context SCBG:
-//   SCBG04I0 in town, SCBG07I0 in dungeons, SCBG08I0 graveyards,
-//   else the race's own sheet (GetPaperDollBackground - the region
-//   branch pends the travel arc; our exterior hosts are towns);
-// - BODY art places by its OWN IMG header offset minus the
-//   paperDollOrigin (200,8) - the classic files bake their screen
-//   position;
-// - BlitBody: the nude body first, then (NoPlayerNudity censoring,
-//   the DFU default) the CLOTHED body welds over the unclothed
-//   halves - upper down to waistHeight 40, lower below it - gated
-//   on IsUpperClothed/IsLowerClothed (chest/legs slots);
-// - the HEAD is the race/gender FACE CIF at the entity's faceIndex,
-//   placed by its record offset.
-// INTERIM loud: race Breton / male / face 0 until chargen fronts
-// the entity (playerEntity carries no identity yet); item overlay
-// layers ride U8g.
+// U8f/U8g: the PAPERDOLL - the avatar with its equipped items (DFU
+// PaperDoll + PaperDollRenderer + ItemHelper.GetItemImage, MIT
+// Daggerfall Workshop). DFU renders the doll into ONE texture; we
+// composite the same way CPU-side over INDEXED bitmaps (which also
+// gives GetEquipIndex's click resolution for free). Verbatim laws:
+// - panel 110x184 at (49,13); background = subrect (8,7,110,184) of
+//   the context SCBG (town SCBG04I0; dungeon/graveyard/region
+//   branches pend their contexts);
+// - layer order (Refresh): cloak interiors -> nude body -> the
+//   NoPlayerNudity censor welds (clothed sheet in waistHeight-40
+//   bands, gated on chest/legs slots) -> head -> items ascending
+//   drawOrder (BlitItems; jewellery only when EquipSlot > 11);
+// - every layer places by its OWN baked offset minus paperDollOrigin
+//   (200,8); TEXTURE.237 records 52/54 carry DFU's known-bad-offset
+//   fix (237,43);
+// - item images (GetItemImage forPaperDoll + GetInventoryTexture*):
+//   clothing = template.playerTextureArchive + bodyMorphology (SetRace;
+//   Human +2 - Breton INTERIM), record = playerTextureRecord
+//   (+1 for cloaks' interior-first record) + variant;
+//   armor = firstMale/FemaleArchive (249/245) + morphology, variant
+//   CLAMPED by material family (SetVariant: cuirass leather 0 /
+//   chain 4 / plate 1..3, greaves 0..1/6/2..5, pauldrons 0/4/1..3,
+//   gauntlets 0/1, boots 0/1..2);
+//   weapons = the template archive; an Either-hand weapon worn
+//   RIGHT draws record + 1;
+//   masks removed (ChangeMask: index 0xFF -> transparent);
+// - dyes (ChangeDye through the C5b tables): clothing dye on the
+//   0x60 band (item.dye; Blue = identity); weapons/armor on the
+//   0x70 band by material (GetWeapon/GetArmorDyeColor - leather and
+//   chain fall to the identity None table);
+// - the click mask (GetEquipIndex): iterate the blitted item layers
+//   BACKWARDS, the first non-transparent pixel wins its equip slot.
+// INTERIM loud: Breton male face 0 until chargen fronts identity.
 
 import { ImgFile } from '../formats/imgFile.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
-import { bitmapToColor32 } from './hud.js';
-import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
+import { EQUIP_SLOTS, equipTableOf, getItemHands, ITEM_HANDS } from '../systems/equip.js';
+import { getTemplate, paperdollOrder } from '../characters/paperdoll.js';
+import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
 
 export const PAPERDOLL_W = 110;
 export const PAPERDOLL_H = 184;
 export const PAPERDOLL_ORIGIN = Object.freeze([200, 8]);   // paperDollOrigin
 export const BG_SUBRECT = Object.freeze([8, 7, 110, 184]); // backgroundSubRect
 export const WAIST_HEIGHT = 40;
+const FIRST_FEMALE_ARCHIVE = 245, FIRST_MALE_ARCHIVE = 249;
+const HUMAN_MORPHOLOGY = 2;        // GetBodyMorphology: Breton/Nord/Redguard
+// GetWeaponDyeColor / GetArmorDyeColor (plate m = material - 0x0200)
+export const MATERIAL_DYES = Object.freeze([
+  DYE_COLORS.Iron, DYE_COLORS.Steel, DYE_COLORS.Silver, DYE_COLORS.Elven, DYE_COLORS.Dwarven,
+  DYE_COLORS.Mithril, DYE_COLORS.Adamantium, DYE_COLORS.Ebony, DYE_COLORS.Orcish, DYE_COLORS.Daedric,
+]);
+const CLOAK_TEMPLATES = new Set([154, 155, 191, 192]);
+export { CLOTHING_DYES };
 
 // Breton (RaceTemplate verbatim); the other 7 races join with chargen
 const RACE_ART = Object.freeze({
@@ -42,63 +64,194 @@ const RACE_ART = Object.freeze({
 });
 const CONTEXT_BG = Object.freeze({ town: 'SCBG04I0.IMG', dungeon: 'SCBG07I0.IMG', graveyard: 'SCBG08I0.IMG' });
 
-let _art = null;
+/** GetInventoryTextureRecord's armor variant clamp (SetVariant). */
+export function clampArmorVariant(templateIndex, material, variant) {
+  const leather = material === 0x0000, chain = material === 0x0100 || material === 0x0101;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  if (templateIndex === 102) return leather ? 0 : chain ? 4 : clamp(variant, 1, 3);       // Cuirass
+  if (templateIndex === 104) return leather ? clamp(variant, 0, 1) : chain ? 6 : clamp(variant, 2, 5);   // Greaves
+  if (templateIndex === 105 || templateIndex === 106) return leather ? 0 : chain ? 4 : clamp(variant, 1, 3);   // Pauldrons
+  if (templateIndex === 103) return leather ? 0 : 1;                                      // Gauntlets
+  if (templateIndex === 108) return leather ? 0 : clamp(variant, 1, 2);                   // Boots
+  return variant;
+}
+
+/** GetItemImage(forPaperDoll) resolution: {archive, record, dye,
+ *  target} or null for groups with no paperdoll layer. */
+export function paperdollItemImage(item, { gender = 'male' } = {}) {
+  const t = getTemplate(item.templateIndex);
+  if (!t) return null;
+  const variants = t.variants ?? 0;
+  if (item.group === 'MensClothing' || item.group === 'WomensClothing') {
+    let record = t.playerTextureRecord;
+    if (variants > 0) record += (CLOAK_TEMPLATES.has(item.templateIndex) ? 1 : 0) + Math.min(item.variant ?? 0, variants - 1);
+    return { archive: t.playerTextureArchive + HUMAN_MORPHOLOGY, record, dye: item.dye ?? DYE_COLORS.Blue, target: DYE_TARGETS.Clothing };
+  }
+  if (item.group === 'Armor') {
+    const archive = (gender === 'male' ? FIRST_MALE_ARCHIVE : FIRST_FEMALE_ARCHIVE) + HUMAN_MORPHOLOGY;
+    const m = item.material ?? 0;
+    let record = t.playerTextureRecord;
+    if (variants > 0) record += clampArmorVariant(item.templateIndex, m, item.variant ?? 0);
+    const dye = m >= 0x0200 ? MATERIAL_DYES[m - 0x0200] ?? DYE_COLORS.Unchanged : DYE_COLORS.Unchanged;
+    return { archive, record, dye, target: DYE_TARGETS.WeaponsAndArmor };
+  }
+  if (item.group === 'Weapons') {
+    let record = t.playerTextureRecord;
+    // an Either-hand weapon worn RIGHT uses the +1 record
+    if (item.equipSlot === EQUIP_SLOTS.RightHand && getItemHands(item) === ITEM_HANDS.Either) record += 1;
+    return { archive: t.playerTextureArchive, record, dye: MATERIAL_DYES[item.material ?? 0] ?? DYE_COLORS.Unchanged, target: DYE_TARGETS.WeaponsAndArmor };
+  }
+  if (item.group === 'Jewellery' && (item.equipSlot ?? -1) > 11) {   // IsEquippedToBody
+    return { archive: t.playerTextureArchive, record: t.playerTextureRecord, dye: null, target: null };
+  }
+  return null;
+}
+
+let _art = null;      // indexed bitmaps + palette
+let _live = null;     // { tex } - the current composite
+let _layout = [];     // blitted item layers, draw order (backwards hit test)
+let _deps = null;
+let _version = 0;
+let _refreshing = false;
+
 export async function preloadPaperDollArt(deps, { race = 'Breton', gender = 'male', faceIndex = 0, context = 'town' } = {}) {
   if (_art) return;
   try {
-    const { renderer, fetchBytes, palette } = deps;
+    const { fetchBytes, palette } = deps;
+    _deps = { ...deps, gender };
     const ra = RACE_ART[race];
     const [unclothed, clothed] = gender === 'male' ? ra.bodyMale : ra.bodyFemale;
-    const loadOne = async (name) => {
+    const loadImgBmp = async (name) => {
       const img = new ImgFile();
       img.load(await fetchBytes(name), name, palette);
-      const bmp = img.getDFBitmap();
-      return { tex: renderer.uploadTexture('img', name, bitmapToColor32(bmp, palette)), w: bmp.width, h: bmp.height, off: img.imageOffset };
+      return { bmp: img.getDFBitmap(), off: img.imageOffset };
     };
+    const faceName = gender === 'male' ? ra.headsMale : ra.headsFemale;
     const face = new CifRciFile();
-    face.load(await fetchBytes(gender === 'male' ? ra.headsMale : ra.headsFemale), gender === 'male' ? ra.headsMale : ra.headsFemale, palette);
-    const headBmp = face.getDFBitmap(faceIndex, 0);
-    const head = {
-      tex: renderer.uploadTexture('img', `head_${race}_${gender}_${faceIndex}`, bitmapToColor32(headBmp, palette)),
-      w: headBmp.width, h: headBmp.height, off: face.getOffset(faceIndex),
-    };
+    face.load(await fetchBytes(faceName), faceName, palette);
     _art = {
-      bg: await loadOne(CONTEXT_BG[context] ?? ra.background),
-      nude: await loadOne(unclothed),
-      clothed: await loadOne(clothed),
-      head,
+      palette,
+      bg: await loadImgBmp(CONTEXT_BG[context] ?? ra.background),
+      nude: await loadImgBmp(unclothed),
+      clothed: await loadImgBmp(clothed),
+      head: { bmp: face.getDFBitmap(faceIndex, 0), off: face.getOffset(faceIndex) },
     };
   } catch { console.warn('[paperdoll] BODY/FACE/SCBG art unavailable; the panel stays bare'); }
 }
 export const paperDollArtLoaded = () => !!_art;
 
-/** One layer at its baked IMG offset, translated to the panel. src
- *  is an optional {v0,v1} band for the censor welds. */
-function layer(renderer, m, x, y, img, band) {
-  const [ox, oy] = PAPERDOLL_ORIGIN;
-  const sy = band ? img.h * band[0] : 0;
-  const h = band ? img.h * (band[1] - band[0]) : img.h;
-  renderer.drawScreenQuad(img.tex,
-    { x: m.ox + (x + img.off.x - ox) * m.s, y: m.oy + (y + img.off.y - oy + sy) * m.s, w: img.w * m.s, h: h * m.s },
-    band ? { u0: 0, v0: band[0], u1: 1, v1: band[1] } : undefined);
+/** Blit an indexed bitmap into the 110x184 RGBA composite at its
+ *  baked offset minus paperDollOrigin. rows = [y0,y1) source band
+ *  (the censor welds); remap = the dye. Index 0 stays transparent;
+ *  0xFF is the classic mask (removed - ChangeMask). */
+function blit(out, img, { rows = null, remap = null, atOffset = null } = {}) {
+  const [orgX, orgY] = PAPERDOLL_ORIGIN;
+  const off = atOffset ?? img.off;
+  const px = off.x - orgX, py = off.y - orgY;
+  const { width, height, data } = img.bmp;
+  const [y0, y1] = rows ?? [0, height];
+  for (let y = y0; y < y1; y++) {
+    const dy = py + y;
+    if (dy < 0 || dy >= PAPERDOLL_H) continue;
+    for (let x = 0; x < width; x++) {
+      const dx = px + x;
+      if (dx < 0 || dx >= PAPERDOLL_W) continue;
+      let idx = data[y * width + x];
+      if (idx === 0 || idx === 0xff) continue;
+      if (remap) idx = remap(idx);
+      const c = _art.palette.get(idx);
+      const o = (dy * PAPERDOLL_W + dx) * 4;
+      out[o] = c.r; out[o + 1] = c.g; out[o + 2] = c.b; out[o + 3] = 255;
+    }
+  }
 }
 
-/** Draw the avatar with the panel's top-left at virtual (x,y). */
+/** Recompose the doll from the entity's live equip table. Item
+ *  records stream through the host getTexture pipeline (async);
+ *  the composite swaps in whole when done. */
+export async function refreshPaperDoll(entity) {
+  if (!_art || !_deps || _refreshing) return;
+  _refreshing = true;
+  try {
+    const out = new Uint8Array(PAPERDOLL_W * PAPERDOLL_H * 4);
+    const layout = [];
+    // background subrect fills the panel
+    const bg = _art.bg.bmp;
+    for (let y = 0; y < PAPERDOLL_H; y++) {
+      for (let x = 0; x < PAPERDOLL_W; x++) {
+        const idx = bg.data[(y + BG_SUBRECT[1]) * bg.width + (x + BG_SUBRECT[0])];
+        const c = _art.palette.get(idx);
+        const o = (y * PAPERDOLL_W + x) * 4;
+        out[o] = c.r; out[o + 1] = c.g; out[o + 2] = c.b; out[o + 3] = 255;
+      }
+    }
+    const table = equipTableOf(entity);
+    const worn = table.filter(Boolean).map((it) => ({ it, t: getTemplate(it.templateIndex) })).filter((w) => w.t);
+    // cloak interiors first (BlitCloakInterior: cloak2 then cloak1,
+    // the template's own record = the interior image)
+    for (const slot of [EQUIP_SLOTS.Cloak2, EQUIP_SLOTS.Cloak1]) {
+      const it = table[slot];
+      if (!it || !CLOAK_TEMPLATES.has(it.templateIndex)) continue;
+      const t = getTemplate(it.templateIndex);
+      const img = await loadRecord(t.playerTextureArchive + HUMAN_MORPHOLOGY, t.playerTextureRecord);
+      if (img) blit(out, img, { remap: (i) => applyDyeToIndex(i, it.dye ?? DYE_COLORS.Blue, DYE_TARGETS.Clothing) });
+      break;   // DFU stops at the first drawn cloak interior
+    }
+    // body + welds + head (BlitBody)
+    blit(out, _art.nude);
+    const split = WAIST_HEIGHT;
+    if (!table[EQUIP_SLOTS.ChestClothes] && !table[EQUIP_SLOTS.ChestArmor]) blit(out, _art.clothed, { rows: [0, split] });
+    if (!table[EQUIP_SLOTS.LegsClothes]) blit(out, _art.clothed, { rows: [split, _art.clothed.bmp.height] });
+    blit(out, _art.head);
+    // items ascending drawOrder (BlitItems)
+    const ordered = paperdollOrder(worn.map((w) => ({ ...w.it, drawOrder: w.t.drawOrderOrEffect })));
+    for (const it of ordered) {
+      const res = paperdollItemImage(it, { gender: _deps.gender });
+      if (!res) continue;
+      const img = await loadRecord(res.archive, res.record);
+      if (!img) continue;
+      const remap = res.target == null ? null : (i) => applyDyeToIndex(i, res.dye, res.target);
+      blit(out, img, { remap });
+      layout.push({ slot: it.equipSlot, img });
+    }
+    const key = `paperdoll_v${++_version}`;
+    _live = { tex: _deps.renderer.uploadTexture('img', key, { width: PAPERDOLL_W, height: PAPERDOLL_H, colors: new Uint32Array(out.buffer) }) };
+    _layout = layout;
+  } finally { _refreshing = false; }
+}
+
+/** One TEXTURE.### record as an indexed bitmap + its baked offset
+ *  (with DFU's 237/52+54 bad-offset fix). */
+async function loadRecord(archive, record) {
+  try {
+    const tex = await _deps.getTexture(archive);
+    if (!tex || record >= tex.recordCount) return null;
+    const off = (archive === 237 && (record === 52 || record === 54)) ? { x: 237, y: 43 } : tex.getOffset(record);
+    return { bmp: tex.getDFBitmap(record, 0), off };
+  } catch { return null; }
+}
+
+/** Draw the doll with the panel's top-left at virtual (x,y). */
 export function drawPaperDoll(renderer, m, entity, x, y) {
   if (!_art) return false;
-  // the background subrect fills the panel exactly
-  renderer.drawScreenQuad(_art.bg.tex,
-    { x: m.ox + x * m.s, y: m.oy + y * m.s, w: PAPERDOLL_W * m.s, h: PAPERDOLL_H * m.s },
-    { u0: BG_SUBRECT[0] / _art.bg.w, v0: BG_SUBRECT[1] / _art.bg.h, u1: (BG_SUBRECT[0] + BG_SUBRECT[2]) / _art.bg.w, v1: (BG_SUBRECT[1] + BG_SUBRECT[3]) / _art.bg.h });
-  layer(renderer, m, x, y, _art.nude);
-  // the censor welds (NoPlayerNudity default): clothed halves cover
-  // unclothed chest/legs
-  const table = equipTableOf(entity);
-  const upperClothed = table[EQUIP_SLOTS.ChestClothes] || table[EQUIP_SLOTS.ChestArmor];
-  const lowerClothed = table[EQUIP_SLOTS.LegsClothes];
-  const split = WAIST_HEIGHT / _art.clothed.h;
-  if (!upperClothed) layer(renderer, m, x, y, _art.clothed, [0, split]);
-  if (!lowerClothed) layer(renderer, m, x, y, _art.clothed, [split, 1]);
-  layer(renderer, m, x, y, _art.head);
+  if (!_live) refreshPaperDoll(entity);   // first draw composes async
+  if (_live) renderer.drawScreenQuad(_live.tex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: PAPERDOLL_W * m.s, h: PAPERDOLL_H * m.s });
   return true;
 }
+
+/** GetEquipIndex: panel-relative point -> the equip slot of the
+ *  topmost non-transparent item pixel (layers walked BACKWARDS). */
+export function slotAtPaperDoll(px, py) {
+  const [orgX, orgY] = PAPERDOLL_ORIGIN;
+  for (let i = _layout.length - 1; i >= 0; i--) {
+    const { slot, img } = _layout[i];
+    const x = px - (img.off.x - orgX), y = py - (img.off.y - orgY);
+    if (x < 0 || y < 0 || x >= img.bmp.width || y >= img.bmp.height) continue;
+    const idx = img.bmp.data[y * img.bmp.width + x];
+    if (idx !== 0 && idx !== 0xff) return slot;
+  }
+  return null;
+}
+
+/** Test seam. */
+export const _debugPaperDoll = () => ({ live: !!_live, layers: _layout.map((l) => l.slot), version: _version });

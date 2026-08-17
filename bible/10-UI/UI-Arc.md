@@ -597,3 +597,46 @@ Probed + EYEBALLED: the classic Breton avatar standing on the town
 background inside the panel frame - head with its silver band at
 the baked offset, the censor underwear from the clothed weld, the
 list icons beside him. Suite 464/104.
+
+## U8g: item overlays + LIVE EQUIP (2026-08-17)
+
+The paperdoll dresses and the EQUIP button works. The renderer
+moved to DFU's own architecture - the doll composes into ONE
+texture (PaperDollRenderer renders to target), done CPU-side over
+INDEXED bitmaps, which hands us GetEquipIndex's click resolution
+for free. Every law cited:
+- LAYER ORDER (Refresh): cloak interiors (the first drawn cloak's
+  template record) -> nude body -> the censor welds gated on
+  chest/legs slots -> head -> items ascending drawOrder (BlitItems;
+  jewellery only when EquipSlot > 11). Each layer places by its OWN
+  baked offset minus paperDollOrigin (200,8); TEXTURE.237 records
+  52/54 carry DFU's known-bad-offset fix (237,43).
+- ITEM IMAGES (GetItemImage forPaperDoll + GetInventoryTexture*):
+  clothing = template archive + bodyMorphology (Human +2, Breton
+  INTERIM) with cloaks +1 past their interior record; armor =
+  firstMale/FemaleArchive (249/245) + morphology with the
+  SetVariant MATERIAL-FAMILY CLAMPS (cuirass leather 0 / chain 4 /
+  plate 1..3; greaves 0..1/6/2..5; pauldrons 0/4/1..3; gauntlets
+  0/1; boots 0/1..2); weapons = the template archive, an
+  Either-hand weapon worn RIGHT draws record+1; masks removed
+  (ChangeMask 0xFF -> transparent).
+- DYES through the C5b tables (ChangeDye): clothing on the 0x60
+  band (item.dye, Blue identity default - stock dye variety
+  FLAGGED); weapons/armor on the 0x70 band by material
+  (GetWeapon/GetArmorDyeColor; leather + chain fall to the identity
+  None table).
+- THE CLICK MASK (GetEquipIndex): blitted item layers walked
+  BACKWARDS, first non-transparent pixel wins its slot. REMOVE mode
+  clicks the doll to unequip; INFO pops the item panel.
+- LIVE EQUIP: equip-mode list clicks run EquipItem (swap-outs
+  reappear in the lists), equip-mode REMOTE clicks transfer AND
+  equip (TransferItem equip true), every change recomposes.
+FLAGGED loud: the FP-weapon rig binding (the worn RightHand weapon
+should drive weaponRig - U8h), light-source Use, stock clothing
+dye variety, armor values on the doll (RefreshArmourValues), the
+other 7 races/genders (chargen).
+
+Probed live (tools/equipProbe.mjs) + EYEBALLED: the avatar WEARING
+the iron plate cuirass with the longsword at his hip and red-dyed
+pants (all three left their list rows), then the REMOVE doll-click
+stripping exactly the cuirass. Suite 465/104.

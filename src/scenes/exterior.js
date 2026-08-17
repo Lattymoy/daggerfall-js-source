@@ -308,7 +308,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadInventoryArt({ renderer, fetchBytes, palette });   // U8d: INVE00I0/01I0 warm at boot
-  preloadPaperDollArt({ renderer, fetchBytes, palette });   // U8f: SCBG/BODY/FACE warm at boot (town context; Breton male 0 INTERIM until chargen)
+  preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/BODY/FACE + the item-record pipeline (town context; Breton male 0 INTERIM until chargen)
   const droppedLoot = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });   // U8e
   // FindGroundPosition (CreateDroppedLootContainer): the pile lands
   // on the ground BELOW the player, not at the motor's height

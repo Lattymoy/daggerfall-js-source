@@ -6,7 +6,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { EQUIP_SLOTS, getEquipSlot, equipItem, unequipSlot, isEquipped } from '../src/systems/equip.js';
 import { filterByTab } from '../src/ui/nativeInventory.js';
-import { preloadPaperDollArt, drawPaperDoll, paperDollArtLoaded, WAIST_HEIGHT, PAPERDOLL_ORIGIN } from '../src/ui/paperDoll.js';
+import { preloadPaperDollArt, drawPaperDoll, paperDollArtLoaded, refreshPaperDoll, slotAtPaperDoll, paperdollItemImage, clampArmorVariant, _debugPaperDoll, WAIST_HEIGHT, PAPERDOLL_ORIGIN } from '../src/ui/paperDoll.js';
+import { getTemplate } from '../src/characters/paperdoll.js';
+import { TextureFile } from '../src/formats/textureFile.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
@@ -60,35 +62,75 @@ test('equipMechanics: EquipItem over string-group bag items - hands, 2H, shields
   assert.deepEqual(filterByTab(bag, 'weapons').map((i) => i.name), ['Steel Cuirass', 'Longsword']);
 });
 
-test('equipMechanics: the paperdoll base renders the real classic art at the baked offsets', { skip: skipReal }, async () => {
+test('equipMechanics: the item image laws (GetItemImage forPaperDoll)', () => {
+  // armor: firstMaleArchive 249 + Human morphology 2; the SetVariant
+  // clamp (plate cuirass variant 0 -> 1); plate iron dyes Iron (15)
+  const plate = paperdollItemImage({ group: 'Armor', templateIndex: 102, material: 0x0200, variant: 0, equipSlot: 18 });
+  assert.deepEqual([plate.archive, plate.record, plate.dye], [251, 3 + 1, 15]);
+  // leather cuirass: variant clamps to 0, dye Unchanged (the identity None table)
+  const leather = paperdollItemImage({ group: 'Armor', templateIndex: 102, material: 0x0000, variant: 2, equipSlot: 18 });
+  assert.deepEqual([leather.archive, leather.record, leather.dye], [251, 3, 18]);
+  // chain greaves clamp to variant 6
+  assert.equal(clampArmorVariant(104, 0x0100, 3), 6);
+  // an Either-hand weapon worn RIGHT draws record + 1
+  const t120 = getTemplate(120);
+  const right = paperdollItemImage({ group: 'Weapons', templateIndex: 120, material: 0, equipSlot: EQUIP_SLOTS.RightHand });
+  const left = paperdollItemImage({ group: 'Weapons', templateIndex: 120, material: 0, equipSlot: EQUIP_SLOTS.LeftHand });
+  assert.equal(right.record, t120.playerTextureRecord + 1);
+  assert.equal(left.record, t120.playerTextureRecord);
+  // clothing rides its template archive + morphology, dye defaults Blue (0)
+  const shirt = paperdollItemImage({ group: 'MensClothing', templateIndex: 165, variant: 1, equipSlot: 17 });
+  assert.deepEqual([shirt.archive, shirt.record, shirt.dye], [getTemplate(165).playerTextureArchive + 2, getTemplate(165).playerTextureRecord + 1, 0]);
+  // jewellery blits only when equipped to BODY (slot > 11)
+  assert.equal(paperdollItemImage({ group: 'Jewellery', templateIndex: 135, equipSlot: 4 }), null);
+  // books have no paperdoll layer
+  assert.equal(paperdollItemImage({ group: 'Books', templateIndex: 277, equipSlot: 18 }), null);
+});
+
+test('equipMechanics: the composite doll - layers, click mask, real art', { skip: skipReal }, async () => {
   const palette = new DFPalette();
   palette.load(new Uint8Array(readFileSync(join(ARENA2, 'ART_PAL.COL'))), 'ART_PAL.COL');
-  const draws = [];
+  let uploaded = null;
   const renderer = {
-    uploadTexture: (g, name, bmp) => ({ name, w: bmp.width, h: bmp.height }),
-    drawScreenQuad: (tex, dst, src) => draws.push({ tex, dst, src }),
+    uploadTexture: (g, name, bmp) => { uploaded = { name, w: bmp.width, h: bmp.height }; return `tex:${name}`; },
+    drawScreenQuad: () => {},
   };
-  await preloadPaperDollArt({ renderer, palette, fetchBytes: async (n) => new Uint8Array(readFileSync(join(ARENA2, n))) });
+  const texCache = new Map();
+  const getTexture = async (archive) => {
+    if (!texCache.has(archive)) {
+      const name = `TEXTURE.${String(archive).padStart(3, '0')}`;
+      const tf = new TextureFile();
+      tf.load(new Uint8Array(readFileSync(join(ARENA2, name))), name, palette);
+      texCache.set(archive, tf);
+    }
+    return texCache.get(archive);
+  };
+  await preloadPaperDollArt({ renderer, palette, getTexture, fetchBytes: async (n) => new Uint8Array(readFileSync(join(ARENA2, n))) });
   assert.ok(paperDollArtLoaded());
+  // equip a plate cuirass + a longsword, compose
+  const e = ent();
+  equipItem(e, { group: 'Armor', templateIndex: 102, material: 0x0200, variant: 1, name: 'Cuirass' });
+  equipItem(e, { group: 'Weapons', templateIndex: 120, material: 0, name: 'Longsword' });
+  await refreshPaperDoll(e);
+  const dbg = _debugPaperDoll();
+  assert.ok(dbg.live, 'the composite uploaded');
+  assert.deepEqual([...dbg.layers].sort((a, b) => a - b), [EQUIP_SLOTS.ChestArmor, EQUIP_SLOTS.RightHand]);
+  assert.equal(uploaded.w, 110);
+  assert.equal(uploaded.h, 184);
+  // GetEquipIndex: some panel pixel resolves each worn slot; walking
+  // every pixel must find both layers and nothing else
+  const found = new Set();
+  for (let y = 0; y < 184; y++) for (let x = 0; x < 110; x++) {
+    const s = slotAtPaperDoll(x, y);
+    if (s != null) found.add(s);
+  }
+  assert.deepEqual([...found].sort((a, b) => a - b), [EQUIP_SLOTS.ChestArmor, EQUIP_SLOTS.RightHand]);
+  // unequip -> recompose empties the layout
+  unequipSlot(e, EQUIP_SLOTS.ChestArmor);
+  unequipSlot(e, EQUIP_SLOTS.RightHand);
+  await refreshPaperDoll(e);
+  assert.deepEqual(_debugPaperDoll().layers, []);
+  assert.ok(PAPERDOLL_ORIGIN[0] === 200 && WAIST_HEIGHT === 40);
   const m = { s: 1, ox: 0, oy: 0 };
-  assert.ok(drawPaperDoll(renderer, m, ent(), 49, 13));
-  // background (SCBG04I0 town subrect 8,7,110,184) fills the panel
-  assert.equal(draws[0].tex.name, 'SCBG04I0.IMG');
-  assert.deepEqual(draws[0].dst, { x: 49, y: 13, w: 110, h: 184 });
-  // the nude body sits at its OWN header offset minus paperDollOrigin (200,8)
-  const nude = draws[1];
-  assert.equal(nude.tex.name, 'BODY00I0.IMG');
-  assert.ok(nude.dst.x >= 49 && nude.dst.x < 49 + 110, 'the baked offset lands inside the panel');
-  assert.ok(nude.dst.y >= 13 && nude.dst.y < 13 + 184);
-  // nothing equipped: BOTH censor welds draw from the clothed sheet
-  const welds = draws.filter((d) => d.tex.name === 'BODY00I1.IMG');
-  assert.equal(welds.length, 2);
-  const split = WAIST_HEIGHT / welds[0].tex.h;
-  assert.deepEqual(welds[0].src, { u0: 0, v0: 0, u1: 1, v1: split }, 'the upper weld is the top waistHeight band');
-  assert.deepEqual(welds[1].src, { u0: 0, v0: split, u1: 1, v1: 1 });
-  // the head rides the FACE CIF record offset
-  const head = draws[draws.length - 1];
-  assert.ok(head.tex.name.startsWith('head_Breton_male_0'));
-  assert.ok(head.dst.y < nude.dst.y, 'the head sits above the body');
-  assert.ok(PAPERDOLL_ORIGIN[0] === 200 && PAPERDOLL_ORIGIN[1] === 8);
+  assert.ok(drawPaperDoll(renderer, m, e, 49, 13));
 });

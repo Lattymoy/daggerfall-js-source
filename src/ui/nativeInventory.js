@@ -41,8 +41,8 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, SCREEN_DIM, shadowText } from './nativePanel.js';
 import { addItem } from '../systems/inventory.js';
-import { isEquipped } from '../systems/equip.js';
-import { drawPaperDoll } from './paperDoll.js';
+import { isEquipped, equipItem, unequipSlot } from '../systems/equip.js';
+import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel } from './itemScroller.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
@@ -59,6 +59,7 @@ export const INV_RECTS = Object.freeze({
   remove: [226, 80, 31, 14],
   use: [226, 103, 31, 14],
   gold: [226, 126, 31, 14],
+  paperDoll: [49, 13, 110, 184],   // paperDoll.Position + its 110x184 panel
   localList: [163, 48, 59, 152],
   remoteList: [261, 48, 59, 152],
   exit: [222, 178, 39, 22],
@@ -117,6 +118,7 @@ export class NativeInventoryWindow {
     this.dropped = [];             // droppedItems (the default remote target)
     this.popup = null;             // the interim info panel lines
     this._icon = makeIconDrawer(hooks.icons);
+    if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
   }
 
   _filtered() { return filterByTab(this.hooks.items(), this.tab); }
@@ -151,7 +153,13 @@ export class NativeInventoryWindow {
       addItem(this._remote(), it);
       return;
     }
-    // equip/use: FLAGGED - the paperdoll/use arcs pend
+    if (this.mode === 'equip' && this.hooks.entity) {
+      // U8g: EquipItem live (the unequipped swap-outs stay in the
+      // bag and reappear in the lists; light-source Use pends)
+      if (equipItem(this.hooks.entity, it) !== null) refreshPaperDoll(this.hooks.entity);
+      return;
+    }
+    // use: FLAGGED - the use arc pends
   }
 
   _pickRemote(slot) {
@@ -161,9 +169,11 @@ export class NativeInventoryWindow {
     if (this.mode === 'info') { this._info(it); return; }
     if (this.mode === 'remove' || this.mode === 'equip') {
       // RemoteItemListScroller_OnItemClick: both modes transfer to
-      // the player (Equip's equip-after half pends the paperdoll)
+      // the player; Equip mode also EQUIPS the taken item (verbatim
+      // TransferItem(..., equip: true))
       remote.splice(remote.indexOf(it), 1);
       addItem(this.hooks.items(), it);
+      if (this.mode === 'equip' && this.hooks.entity && equipItem(this.hooks.entity, it) !== null) refreshPaperDoll(this.hooks.entity);
     }
   }
 
@@ -186,6 +196,17 @@ export class NativeInventoryWindow {
       if (!inRect(R[mode], vx, vy)) continue;
       // wagon/gold: consumed no-ops (flagged); the rest select
       if (mode !== 'wagon' && mode !== 'gold') this.mode = mode;
+      return true;
+    }
+    // U8g: the paperdoll takes clicks - Remove unequips the topmost
+    // item layer under the point (GetEquipIndex), Info pops its panel
+    if (inRect(R.paperDoll, vx, vy) && this.hooks.entity) {
+      const slot = slotAtPaperDoll(Math.floor(vx - R.paperDoll[0]), Math.floor(vy - R.paperDoll[1]));
+      const table = this.hooks.entity.equip?.slots;
+      if (slot != null && table?.[slot]) {
+        if (this.mode === 'remove') { unequipSlot(this.hooks.entity, slot); refreshPaperDoll(this.hooks.entity); }
+        else if (this.mode === 'info') this._info(table[slot]);
+      }
       return true;
     }
     const hit = scrollerHit(R.localList, vx, vy);
