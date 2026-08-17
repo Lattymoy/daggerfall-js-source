@@ -231,6 +231,42 @@ test('C14 spell state: the HasSpellAnimation route, the one-shot, and its interr
   assert.equal(c3.state, 'attack');
 });
 
+test('C17 humanoids: the female-thief idle, the ranged one-shot, the class fields', async () => {
+  const { FEMALE_THIEF_IDLE_ANIMS } = await import('../src/characters/mobileUnit.js');
+  // FemaleThiefIdleAnims, verbatim: record 11 rides BOTH front
+  // diagonals (the quirk), mirrored on the SE.
+  assert.deepEqual(FEMALE_THIEF_IDLE_ANIMS.map((a) => a.record), [15, 11, 17, 18, 19, 18, 17, 11]);
+  // The idle route: female + FemaleTexture 483 (Thief 138) takes the
+  // special set; the male thief takes the plain idle.
+  assert.equal(stateAnims('idle', 138, true, false, true), FEMALE_THIEF_IDLE_ANIMS);
+  assert.equal(stateAnims('idle', 138, true, false, false), IDLE_ANIMS);
+  // The ranged state: records 20-24, the shared class sequence
+  // [3,2,0,0,0,-1,1,1,2,3] - the -1 is the shootArrow moment
+  // (shootFrame, NOT hitFrame), one loose per draw, exhaust -> idle.
+  const basics = { hasIdle: true, primaryAttackAnimFrames: [0], rangedAttackAnimFrames: [3, 2, 0, 0, 0, -1, 1, 1, 2, 3] };
+  const m = new MobileUnit(135, basics, () => 8, () => 0.5);
+  m.update(1 / 60, { rangedStriking: true }, 0, [0, 0, 0], [0, 0, 5]);
+  assert.equal(m.state, 'ranged');
+  assert.equal(m.frame, 3);
+  let shoots = 0, melees = 0;
+  for (let i = 0; i < 12 && m.state === 'ranged'; i++) {
+    m.update(1 / 10, {}, 0, [0, 0, 0], [0, 0, 5]);
+    if (m.shootFrame) shoots++;
+    if (m.hitFrame) melees++;
+  }
+  assert.equal(shoots, 1, 'one arrow per draw');
+  assert.equal(melees, 0, 'the ranged -1 is a SHOOT marker, not melee');
+  assert.equal(m.state, 'idle');
+  // The class extraction: mage textures 486/485, the archer classes
+  // carry the shared ranged frames, the corpse rides 380.
+  assert.equal(ENEMY_BASICS['128'].maleTexture, 486);
+  assert.equal(ENEMY_BASICS['128'].femaleTexture, 485);
+  assert.deepEqual(ENEMY_BASICS['133'].rangedAttackAnimFrames, [3, 2, 0, 0, 0, -1, 1, 1, 2, 3]);
+  assert.equal(ENEMY_BASICS['138'].femaleTexture, 483);   // the thief
+  assert.equal(ENEMY_BASICS['129'].femaleTexture, 475);   // the 1.35 cast-scale class
+  assert.deepEqual(ENEMY_BASICS['128'].corpseTexture, { archive: 380, record: 1 });
+});
+
 test('mobile: the extracted per-enemy anim fields (EnemyBasics regeneration)', () => {
   assert.deepEqual(ENEMY_BASICS['0'].primaryAttackAnimFrames, [0, 1, 2, -1, 3, 4, 5]);   // Rat, verbatim
   assert.equal(ENEMY_BASICS['0'].hasIdle, true);
