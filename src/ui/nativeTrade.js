@@ -125,7 +125,12 @@ export class NativeTradeWindow {
     const w = size.width * fit, h = size.height * fit;
     const x = rect[0] + (rect[2] - w) / 2;
     const y = rect[1] + slot * SLOT_H + (SLOT_H - 10 - h) / 2;
-    renderer.drawScreenQuad(glTex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s });
+    // HOTFIX (Mac's catch): record textures store BOTTOM-UP rows
+    // (getColor32 keeps DFU's verbatim GL flip for the mesh/billboard
+    // path) while drawScreenQuad samples v0 at the TOP - the icons
+    // drew upside down. A V-flipped source rect rights them.
+    renderer.drawScreenQuad(glTex, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s },
+      { u0: 0, v0: 1, u1: 1, v1: 0 });
     return true;
   }
 
