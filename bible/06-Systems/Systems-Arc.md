@@ -836,3 +836,45 @@ FreeAction.cs + DaggerfallEntity + EntityEffectManager:
 
 Suite 415/91 (freeaction.test.js x3: key/cost/stacking incl. the
 sbyte spelling, the silent drop, the read-time fold + resume).
+
+## E1 (2026-08-17): THE SHOP FOUNDATION - templates, stock, cost SHIPPED
+
+The economy arc opens on the T3c/G-series groundwork (every named
+building carries its type/quality/name through the pool merge). This
+slice is the NODE-PURE foundation; the interior shelf mount + the
+buy/sell windows are E2.
+
+- ITEM TEMPLATES (systems/itemTemplates.js over the GENERATED
+  itemTemplatesData.js): DFU's ItemTemplates.txt baked whole - 288
+  rows of [index, name, basePrice, rarity, weight, hitPoints] - plus
+  the per-ItemGroup template-index arrays extracted from the C# item
+  enums (the enum VALUES are template indices; ItemHelper.
+  GetEnumArray/GetItemTemplate as templateFor/groupTemplates). The
+  ItemBuilder VALUE laws ride itemBaseValue: weapons and plate =
+  basePrice * 3 * [1,2,4,...,512][material], chain doubles, leather
+  and everything else the flat basePrice.
+- THE STOCK LAW (systems/shopStock.js, StockShopShelf verbatim):
+  the eight DaggerfallLootDataTables (group, chance) pair tables;
+  per template, stock requires rarity <= shop quality and a Dice100
+  under chance*5*(21-rarity)/100; books ride the quality ladder
+  ((q+3)/5 with the >=4 step-down, +1, NO dice gate); general
+  stores always shelve a Horse + Small Cart; clothing swaps to the
+  player's gender; Furniture/UselessItems1 skip. RMBLayout.IsShop
+  (the nine storefronts) and the shelf MODEL set (41000+i, the
+  27-index list from DaggerfallInterior) ship here for E2's mount.
+- THE COST LAW (CalculateCost verbatim): clamp >=1, the regional
+  adjustment (value*adj/1000, floor 1), then 2*(cost*(q-10)/100 +
+  cost) in C# integer math. Regional prices initialize
+  Random.Range(0,501)+750 per region (lazily, engine-PRNG in DFU
+  too) - the daily UpdateRegionalPrices drift is FLAGGED to the
+  calendar/economy sim.
+
+INTERIM loud: MagicItems stock SKIPPED (the loot MI interim); the
+Alchemist's 25% potion recipe pends recipes; books carry the
+template price (classic prices each BOOK FILE); restocking pends
+the shared calendar.
+
+Suite 448/98 (shopstock.test.js x3: the table + enum-mapping +
+material-value pins, the stock law incl. the rarity gate / gender
+swap / horse+cart / both book-ladder branches, CalculateCost incl.
+the toward-zero truncation and the sticky 750..1250 region band).
