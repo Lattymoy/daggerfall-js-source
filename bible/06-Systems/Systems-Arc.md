@@ -773,3 +773,36 @@ DaggerfallEntity.SetFatigue + PlayerEntity's OnExhausted handler:
   11.
 
 2 tests (rest.test.js). Suite 363/82, ARENA2 corpus pre-commit.
+
+## S21 (2026-08-17): the concealment family SHIPPED
+
+Invisibility (13,0 normal / 13,1 true), Shadow (24,0 / 24,1), and
+Chameleon TRUE (23,1) join the S8 normal - the P13 illusion gate's
+inert invisible/shade branches go LIVE. Verbatim from
+ConcealmentEffect + DaggerfallEntity + EnemySenses:
+
+- The classic keys land as buff kinds through the generic branch;
+  the Illusion duration costs verbatim (Invis 40/120 normal, 60/140
+  true; Shadow 20/80 + 40/120; Chameleon true 40/120; skill 24).
+- IsInvisible/IsBlending/IsAShade FOLD normal + true powers for
+  detection (the split is preserved in the kinds - future
+  IsMagicallyConcealed*Power consumers read it).
+- The senses feed: playerInvisible/playerShade/playerBlending all
+  live from the helpers - invisible always blocks detection (the 13
+  sees-through monsters exempt), blending 8% see-through per classic
+  update, shade 4%, unconcealed rolls nothing (P13's lazy-rolls law
+  unchanged).
+- Start messages once on NEW incumbency (ConcealmentEffect
+  awakeAlert): "You are invisible." / "You are blending." / "You are
+  a shade." through the new playerSinks.say seam; a stacking re-cast
+  (AddState, the F12 semantics already verbatim) stays silent.
+- With P15 sneak, full illusion-stealth play is live: sneak-move
+  past foes under any concealment, the gate + StealthCheck deciding.
+
+RESIDUALS (honest): foe-side concealment is CASTABLE (the generic
+branch lands kinds on any entity) but has no consumer - the player-
+facing render never conceals foes (EntityConcealmentBehaviour's
+visuals pend the render arc); the DFU shader/material presentation
+of the PLAYER's own concealment (first person - N/A) and town NPC
+reactions (MobilePersonMotor won't stop to chat with the invisible)
+pend their arcs; potion routes pend potions.

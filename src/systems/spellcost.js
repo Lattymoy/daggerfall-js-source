@@ -34,6 +34,11 @@ export const EFFECT_COST_TABLE = Object.freeze({
   '30,255': { skill: 25, duration: { A: 20, B: 8, offset: 0 } },                                    // WaterBreathing (Alteration) - P12
   '31,255': { skill: 26, duration: { A: 20, B: 8, offset: 0 } },                                    // WaterWalking (Thaumaturgy)
   '23,0':   { skill: 24, duration: { A: 20, B: 80, offset: 0 } },                                   // ChameleonNormal (Illusion)
+  '23,1':   { skill: 24, duration: { A: 40, B: 120, offset: 0 } },                                  // ChameleonTrue (Illusion) - S21
+  '13,0':   { skill: 24, duration: { A: 40, B: 120, offset: 0 } },                                  // InvisibilityNormal (Illusion) - S21
+  '13,1':   { skill: 24, duration: { A: 60, B: 140, offset: 0 } },                                  // InvisibilityTrue (Illusion) - S21
+  '24,0':   { skill: 24, duration: { A: 20, B: 80, offset: 0 } },                                   // ShadowNormal (Illusion) - S21
+  '24,1':   { skill: 24, duration: { A: 40, B: 120, offset: 0 } },                                  // ShadowTrue (Illusion) - S21
 });
 
 export const TARGET_COST_MULT = Object.freeze({ 0: 1.0, 1: 1.0, 2: 1.5, 3: 2.0, 4: 2.5 });
