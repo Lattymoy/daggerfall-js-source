@@ -862,3 +862,35 @@ DFU's EnemyMotor is a FixedUpdate body; ours wasn't.
   (C11 audit item 6).
 
 Suite 403/88 (the parity pin rides enemymotor.test.js).
+
+## PERF HOTFIX (2026-08-17): the collider grid + the foe rest path - the live lag
+
+Live report #3 ("an insane amount of lag now ingame"), root-caused by
+a Node bench on the real Privateer's Hold collider
+(tools/colliderBench.mjs, promoted standing):
+
+- ONE capsule move cost ~2.3ms: the grid CELL was 8 world units, so
+  the sphere resolve's 3x3 neighborhood scanned a 24-unit square -
+  75 tris/cell average, 391 max, closestPointOnTriangle on each.
+  Invisible for the lone player (2.3ms of a 16ms frame since P9);
+  catastrophic when C11 put ~29 foes on the P17 60Hz fixed step:
+  66ms/frame of pure collision on a fast DESKTOP, several times
+  worse on the phone the game is played on. The lag arrived with
+  C11 (foes default-on) and P17 made it render-rate-independent.
+- FIX 1, the grid: CELL 8 -> 2. The 3x3 scan only needs to exceed
+  the capsule contact radius + the worst chained push (~1.1 units;
+  2.0 keeps margin - CELL=1 measured 1.4x faster still but shaves
+  that margin, rejected). Same triangles found, every movement law
+  untouched: all 412 tests green UNCHANGED, and the P16 real-mesh
+  8-heading sweep reproduces its healthy shape (apexes 0.45-0.5,
+  zero penetration). A capsule move: 2323us -> 228us (10x). The
+  PLAYER motor gets the same 10x on phones.
+- FIX 2, the rest path: an idle foe standing on solid ground skips
+  the capsule query entirely until it moves again (gravity would
+  resolve to the same spot). 29 idle foes: 66ms/frame -> 0.72ms.
+  Accepted edge (documented in the motor): a mover sliding out from
+  under a parked foe leaves it frozen mid-air until it next pursues
+  - foes never ride movers.
+- Worst case, all 29 foes pursuing at once at 10fps render:
+  767ms/frame -> ~65ms; the realistic handful-of-pursuers case is
+  low single-digit ms.

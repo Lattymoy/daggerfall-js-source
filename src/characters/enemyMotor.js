@@ -369,13 +369,23 @@ export class EnemyAI {
     }
 
     // Grounded (and falling paralyzed flyers): movement at the
-    // decided state via the SAME capsule contract the player walks on
+    // decided state via the SAME capsule contract the player walks on.
+    // REST FAST PATH (the C11 lag fix): an idle foe standing on
+    // solid ground has nothing to integrate - gravity would resolve
+    // to the same spot - so the capsule query is skipped entirely
+    // until it moves again (29 idle foes x 60Hz x a capsule move was
+    // the other half of the live lag). A mover sliding out from
+    // under a parked foe leaves it frozen mid-air until it next
+    // pursues - accepted: foes never ride movers (pre-C11 statics
+    // did not either).
+    if (!this.moving && this._restGrounded) return;
     this.velY -= GRAVITY * dt;
     const dy = this.velY * dt;
     const dxm = this.moving ? Math.sin(this.yaw) * this.speed * dt : 0;
     const dzm = this.moving ? Math.cos(this.yaw) * this.speed * dt : 0;
     const r = this.collider.move(this.feet, dxm, dy, dzm);
     if (r.grounded) this.velY = 0;
+    this._restGrounded = !this.moving && r.grounded;
   }
 
   /** The 3D pursuit direction to the aim point (face for flyers +
