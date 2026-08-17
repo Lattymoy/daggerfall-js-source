@@ -7,7 +7,7 @@ import {
   greetingTextId, startMobileTalk, expandMacros, firstName, oathTextId,
   NO_RESPONSE_TEXT_ID,
 } from '../src/systems/talkSession.js';
-import { rayPersonDistance } from '../src/scenes/townTalk.js';
+import { rayPersonDistance, nextInteractionMode, MODES } from '../src/scenes/townTalk.js';
 import { wrapText } from '../src/ui/talkWindow.js';
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
@@ -43,6 +43,14 @@ test('talk: the macro set - %pcf first token, %oth by faction race (the DFU oath
   assert.equal(withOath.text, 'Oath B, hello.');
   const noOath = startMobileTalk({ reaction: 0, textVariants: (id) => texts[id], npcRace: 'Breton', rolls: seq(0.9, 0.0) });
   assert.equal(noOath.text, 'Plain hello.');
+});
+
+test('townTalk: NextInteractionMode cycles Steal > Grab > Info > Talk > wrap', () => {
+  assert.deepEqual(MODES, ['steal', 'grab', 'info', 'dialogue']);
+  assert.equal(nextInteractionMode('steal'), 'grab');
+  assert.equal(nextInteractionMode('grab'), 'info');
+  assert.equal(nextInteractionMode('info'), 'dialogue');
+  assert.equal(nextInteractionMode('dialogue'), 'steal');
 });
 
 test('townTalk: the activation ray hits the person cylinder; wrap is greedy', () => {
