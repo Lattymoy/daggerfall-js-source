@@ -47,7 +47,7 @@ export class ChoiceWindow {
 
   draw(renderer, canvas, font, s) {
     const wrapped = this.lines.flatMap((l) => (l === '' ? [''] : wrapText(font.fnt, l, 280)));
-    const lines = [...wrapped, '', ...this.options.map((o) => o.label)];
+    const lines = [...wrapped, '', ...this.options.filter((o) => o.label).map((o) => o.label)];
     if (!this.options.length) lines.push('(continue)');
     const w = Math.max(...lines.map((l) => measureText(font.fnt, l))) * s + 24 * s;
     const lineH = 12 * s;
