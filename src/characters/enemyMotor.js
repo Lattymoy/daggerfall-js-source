@@ -36,6 +36,7 @@ import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { CLASSIC_UPDATE_INTERVAL } from './weaponStates.js';   // single source (GameManager.cs:42)
 import { CAPSULE_HEIGHT } from '../player/motor.js';           // single source
 export { CLASSIC_UPDATE_INTERVAL };
+export const GIVE_UP_TICKS = 200;   // EnemyMotor.GiveUpTimer refill (classic ticks; ~12.5s)
 import { GRAVITY, FIXED_DT, MAX_FRAME_DT, CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // the shared fall rule + the P16 fixed-timestep law
 
 // C15 knockback (EnemyMotor.KnockbackMovement): classic units through
@@ -207,6 +208,7 @@ export class EnemyAI {
     this.height = height;
     this.speed = enemyMoveSpeed(liveSpeed);
     this.seesThroughInvisibility = seesThroughInvisibility;
+    this.giveUpTimer = 0;   // G1: blind-pursuit ticks (EnemyMotor.GiveUpTimer)
     this.flies = behaviour === 'Flying' || behaviour === 'Spectral';   // CanFly, verbatim
     this.swims = behaviour === 'Aquatic';
     // Flyers (and the slaughterfish) aim for the target FACE
@@ -265,6 +267,11 @@ export class EnemyAI {
     if (this.detected && !this.hasEncounteredPlayer) this.hasEncounteredPlayer = true;
   }
 
+  /** EnemyMotor.MakeEnemyHostileToAttacker (G1): pre-load the give-up
+   *  timer so a crime-responding guard pursues without having seen the
+   *  player yet (guards get 200 * 3 classic ticks, verbatim). */
+  makeHostileToPlayer(ticks = GIVE_UP_TICKS) { this.giveUpTimer = ticks; }
+
   /** EnemySenses.StealthCheck, verbatim: the castle-non-hostile gate
    *  is inert here (no castle detection; foes are hostile-on-sight);
    *  un-spawnable-in-classic foes never stealth-detect; one check per
@@ -294,7 +301,14 @@ export class EnemyAI {
   }
 
   _classicTick(playerFeet) {
-    if (!this.detected) { this.moving = false; return; }
+    // G1 (EnemyMotor verbatim): detection refills GiveUpTimer to 200
+    // classic ticks; while undetected it counts down and the foe KEEPS
+    // pursuing (12.5s of blind chase toward the target - DFU pursues
+    // the predicted last-known position; the live position stands in,
+    // FLAGGED, until target prediction ships). At zero the foe stops.
+    if (this.detected) this.giveUpTimer = GIVE_UP_TICKS;
+    else if (this.giveUpTimer > 0) this.giveUpTimer--;
+    if (!this.detected && this.giveUpTimer <= 0) { this.moving = false; return; }
     const dx = playerFeet[0] - this.feet[0], dz = playerFeet[2] - this.feet[2];
     // classic stop: MeleeDistance vs the player; always moves in for attack
     if (this._dist <= MELEE_DISTANCE) {
