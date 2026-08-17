@@ -24,7 +24,7 @@
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding } from '../player/enterExit.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
-import { transferAll, removeOne } from '../systems/inventory.js';
+import { transferAll, removeOne, addItem } from '../systems/inventory.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -37,10 +37,18 @@ import { lookAt, perspective } from '../world/mat4.js';
 import { routeKey } from '../ui/input.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
-import { tallySkill, SKILLS } from '../systems/skills.js';
+import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
 import { fetchBytes } from './shared.js';
+// E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
+import { ChoiceWindow } from '../ui/talkWindow.js';
+import { FntFile } from '../formats/fntFile.js';
+import { makeFont } from '../ui/text.js';
+import { hudScale } from '../ui/hud.js';
+import { isShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment } from '../systems/shopStock.js';
+import { templateByIndex } from '../systems/itemTemplates.js';
+import { goldAmount, deductGold } from '../systems/court.js';
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -49,7 +57,7 @@ const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
 const DUNGEON_WATER_SCROLL = 0.05;
 
 export function createWorldModes(host) {
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false } = host;   // host.foes: C8 E1 rigged class enemies in dungeons
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
 
   let mode = 'exterior';
@@ -66,6 +74,66 @@ export function createWorldModes(host) {
   const interiorArrows = new ArrowFlight({ getGpuMesh: pipeline.getGpuMesh, collider: () => interiorCtx?.collider });
   let _arrowsCtx = null;
   let interiorCtx = null;
+  // E2: the entered building's identity + the shop browse overlay.
+  let interiorBuilding = null;
+  let interiorOverlay = null;
+  let _shopFont = null;
+  const ensureShopFont = () => {
+    if (_shopFont) return;
+    fetchBytes('FONT0003.FNT')
+      .then((b) => { _shopFont = makeFont(renderer, new FntFile().load(b), 'FONT0003'); })
+      .catch(() => console.warn('[shop] FONT0003.FNT unavailable; the shelf browse is disabled'));
+  };
+
+  // E2: the shelf browse/buy chain (DFU's trade window collapsed to
+  // our keyed-window idiom; haggling is the fixed CalculateTradePrice
+  // buy price - the offer/counteroffer UI pends). Stock is lazy per
+  // shelf (StockShopShelf on first activation); buying deducts gold
+  // and moves the item into the player entity.
+  const _itemLabel = (it) => it.name ?? templateByIndex(it.templateIndex)?.name ?? it.group;
+  function openShelf(i) {
+    const b = interiorBuilding;
+    const shelf = interiorCtx?.shelves[i];
+    if (!b || !shelf) return;
+    if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+    shelf.items ??= stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity);
+    showShelfList(shelf, 0);
+  }
+  function buyPrice(it) {
+    const b = interiorBuilding;
+    const cost = calculateCost(it.value ?? 1, b.quality, regionPriceAdjustment(playerEntity, b.regionIndex ?? 0));
+    return calculateTradePrice(cost, b.quality, {
+      mercantile: skillValue(playerEntity, SKILLS.Mercantile),
+      personality: playerEntity.stats?.personality ?? 50,
+    }, false);
+  }
+  function showShelfList(shelf, page) {
+    const per = 8;
+    const slice = shelf.items.slice(page * per, (page + 1) * per);
+    const options = slice.map((it, j) => ({
+      code: `Digit${j + 1}`, label: `${j + 1} - ${_itemLabel(it)} (${buyPrice(it)} gold)`,
+      action: () => buyItem(shelf, it),
+    }));
+    if ((page + 1) * per < shelf.items.length) options.push({ code: 'KeyN', label: 'N - more', action: () => showShelfList(shelf, page + 1) });
+    options.push({ code: 'Escape', label: 'Esc - close', action: () => {} });
+    interiorOverlay = new ChoiceWindow({
+      lines: [interiorBuilding.name || 'Shelves', shelf.items.length ? `Buy: (you have ${goldAmount(playerEntity)} gold)` : 'The shelf is empty.'],
+      options,
+    });
+  }
+  function buyItem(shelf, it) {
+    const price = buyPrice(it);
+    if (goldAmount(playerEntity) < price) {
+      interiorOverlay = new ChoiceWindow({ lines: ['You do not have enough gold.'], options: [{ code: 'Escape', label: 'Esc - close', action: () => {} }] });
+      return;
+    }
+    deductGold(playerEntity, price);
+    shelf.items.splice(shelf.items.indexOf(it), 1);
+    playerEntity.items = playerEntity.items || [];
+    addItem(playerEntity.items, it);
+    surfacePlayer();
+    showShelfList(shelf, 0);
+  }
   let exitReturn = null;
   let dungeonCtx = null;
   let dungeonReturn = null; // entrance-door candidates of the group
@@ -106,6 +174,10 @@ export function createWorldModes(host) {
       if (!landing) throw new Error('no interior landing');
       exitReturn = { siblings };
       interiorCtx = ctx;
+      // E2: the building's identity (type/quality/key/name) rides the
+      // host's merge closure; shops warm the browse font.
+      interiorBuilding = buildingDataForDoor?.(hit) ?? null;
+      if (interiorBuilding && isShop(interiorBuilding.buildingType)) ensureShopFont();
       player.collider = ctx.collider;
       const floored = floorLanding(ctx.collider, landing);   // verbatim FixStanding: instant snap, no gravity drop-in
       player.spawn(floored[0], floored[1], floored[2]);
@@ -145,6 +217,9 @@ export function createWorldModes(host) {
     interiorCtx.containers.forEach((c, i) => {
       targets.push({ key: `container:${i}`, aabb: worldAabb(c.cpu.positions, c.matrix) });   // S2b
     });
+    interiorCtx.shelves.forEach((s, i) => {
+      targets.push({ key: `shelf:${i}`, aabb: worldAabb(s.cpu.positions, s.matrix) });   // E2
+    });
     for (const o of interiorCtx.actions.objects.values()) {
       targets.push({ key: o.key, aabb: objAabb(o) });
     }
@@ -172,6 +247,10 @@ export function createWorldModes(host) {
       return true;
     }
     if (!key.startsWith('exit:')) {
+      if (key.startsWith('shelf:')) {
+        openShelf(Number(key.split(':')[1]));   // E2: the browse/buy window (no-op outside shops)
+        return true;
+      }
       if (key.startsWith('container:')) {
         // S2b: open the house container - synchronous transfer through
         // the shared inventory (private furniture starts EMPTY; shops/
@@ -197,6 +276,8 @@ export function createWorldModes(host) {
     if (!landing) { console.error('exit: no exterior landing (empty sibling doors)'); return false; }   // tryEnter guards its landing; this path was unguarded - a null here killed the frame loop
     interiorCtx.destroy();
     interiorCtx = null;
+    interiorBuilding = null;   // E2: the identity + overlay leave with the interior
+    interiorOverlay = null;
     player.collider = baseCollider();
     player.spawn(landing[0], landing[1], landing[2]);
     mode = 'exterior';
@@ -281,6 +362,10 @@ export function createWorldModes(host) {
   // the host's exterior path (streaming, sky, weather) must not run.
   function frame(dt, now) {
     if (mode === 'exterior') return false;
+    // E2: modal frames advance the shot-mode frame counter too - the
+    // hosts' early return froze __frame inside interiors/dungeons and
+    // every probe frame-sync starved (the process doctrine).
+    if (window.__frame !== undefined) window.__frame++;
     const fwd = eyeDir();
     const jumpHeld = keys.has('Space');
     if (mode === 'dungeon' && dungeonCtx) {
@@ -301,10 +386,14 @@ export function createWorldModes(host) {
     // stays live (FrictionMotor/AcrobatMotor verbatim gates).
     // P12 crouch: KeyX edge toggle (host parity with ?dungeon).
     const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : false;
+    // E2: the shop overlay holds the motor like every other window
+    // (typing digits must not walk the player).
+    const overlayHeld = mode === 'interior' && !!interiorOverlay;
+    const inputHeld = paralyzed || overlayHeld;
     const crouchHeld = keys.has('KeyX');
-    const moving = !paralyzed && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
+    const moving = !inputHeld && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
     // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
-    player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
+    player.update(dt, inputHeld ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
       forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
       strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
       run: keys.has('ShiftLeft'),
@@ -332,7 +421,7 @@ export function createWorldModes(host) {
       else interiorWeapon.toggleSheath();
     }
     zPrev = zNow;
-    if (useHeld && !latch.use) (mode === 'dungeon' ? tryExitDungeon : tryExit)();
+    if (useHeld && !latch.use && !overlayHeld) (mode === 'dungeon' ? tryExitDungeon : tryExit)();
     latch.use = useHeld;
     // A successful exit destroyed the modal context and flipped the
     // mode - the render below must NOT run against it. This frame is
@@ -409,6 +498,12 @@ export function createWorldModes(host) {
       envAttack(interiorCtx.actions, interiorCtx.collider, player.eye, eyeDir());
     }
     interiorWeapon.draw();
+    // E2: the shop browse overlay draws above everything; font-less
+    // never traps the motor (the townTalk law).
+    if (interiorOverlay) {
+      if (_shopFont) interiorOverlay.draw(renderer, canvas, _shopFont, hudScale(canvas.width, canvas.height));
+      else interiorOverlay = null;
+    }
     return true;
   }
 
@@ -420,6 +515,16 @@ export function createWorldModes(host) {
       { i, pos: doorWorldPosition(e.door), normal: doorWorldNormal(e.door), record: e.recordIndex, block: e.dfBlock.name, type: e.door.doorType }));
     window.__enter = () => tryEnter();
     window.__exit = () => tryExit();
+    // E2: the shop probe surface
+    window.__buildingAt = (i) => JSON.stringify(buildingDataForDoor?.(doorTargets()[i]) ?? null);
+    window.__shelves = () => interiorCtx ? JSON.stringify({
+      building: interiorBuilding,
+      shelves: interiorCtx.shelves.map((s) => ({ stocked: s.items?.length ?? null, pos: [s.matrix[12], s.matrix[13], s.matrix[14]].map((v) => +v.toFixed(1)) })),
+    }) : null;
+    window.__openShelf = (i) => { openShelf(i); return window.__shopOverlay(); };
+    window.__shopOverlay = () => JSON.stringify(interiorOverlay ? {
+      lines: interiorOverlay.lines, options: interiorOverlay.options?.filter((o) => o.label).map((o) => o.label),
+    } : null);
     window.__dungeon = () => dungeonCtx ? JSON.stringify({
       exits: dungeonCtx.exitDoors.map((d) => ({ pos: doorWorldPosition(d).map((v) => +v.toFixed(2)), normal: doorWorldNormal(d).map((v) => +v.toFixed(3)) })),
       actions: dungeonCtx.actions.objects.size,
@@ -473,6 +578,15 @@ export function createWorldModes(host) {
   });
 
   addEventListener('keydown', (e) => {
+    // E2: an open shop overlay owns the keys (the townTalk pattern:
+    // done-then-clear so chained windows survive the keydown).
+    if (mode === 'interior' && interiorOverlay) {
+      const w = interiorOverlay;
+      w.input(e.code);
+      if (w.done && interiorOverlay === w) interiorOverlay = null;
+      e.preventDefault();
+      return;
+    }
     // The input map (ui/input.js) owns all bindings.
     if (mode !== 'dungeon' || !dungeonCtx) return;
     if (routeKey(e, dungeonCtx, () => ({ eye: cam.pos, dir: eyeDir() }), (p) => { player.pos[0] = p[0]; player.pos[1] = p[1]; player.pos[2] = p[2]; })) e.preventDefault();

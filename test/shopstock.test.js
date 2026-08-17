@@ -7,7 +7,7 @@ import {
 } from '../src/systems/itemTemplates.js';
 import {
   SHOP_ITEM_GROUPS, isShop, isShopShelfModel, stockShopShelf, calculateCost,
-  regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART,
+  calculateTradePrice, regionPriceAdjustment, TRANSPORT_HORSE, TRANSPORT_SMALL_CART,
 } from '../src/systems/shopStock.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 
@@ -90,4 +90,23 @@ test('shopStock: CalculateCost verbatim + the regional price band', () => {
   assert.equal(a, 750);
   assert.equal(regionPriceAdjustment(player, 17, () => 0.999), 750, 'initialized once, stable');
   assert.equal(regionPriceAdjustment(player, 18, () => 0.999), 1250);
+});
+
+test('shopStock: CalculateTradePrice verbatim fixed-point (E2)', () => {
+  // Hand-reproduced at quality 10 (merchant level 50), skill 50/50:
+  // dm = (64+128)*(64+128)>>8 = 144; dp = 144<<6 = 9216;
+  // buy = ((192*144)>>8 + (9216>>8)) * cost >> 8 = (108+36)*cost>>8
+  assert.equal(calculateTradePrice(256, 10, { mercantile: 50, personality: 50 }, false), 144);
+  // selling always yields less than buying costs
+  const buy = calculateTradePrice(1000, 10, { mercantile: 50, personality: 50 }, false);
+  const sell = calculateTradePrice(1000, 10, { mercantile: 50, personality: 50 }, true);
+  assert.ok(sell < buy, `sell ${sell} < buy ${buy}`);
+  // higher Mercantile lowers buys and raises sells
+  assert.ok(calculateTradePrice(1000, 10, { mercantile: 100, personality: 50 })
+    < calculateTradePrice(1000, 10, { mercantile: 0, personality: 50 }));
+  assert.ok(calculateTradePrice(1000, 10, { mercantile: 100, personality: 50 }, true)
+    > calculateTradePrice(1000, 10, { mercantile: 0, personality: 50 }, true));
+  // a better shop (higher quality) charges more for the same cost
+  assert.ok(calculateTradePrice(1000, 20, { mercantile: 50, personality: 50 })
+    > calculateTradePrice(1000, 5, { mercantile: 50, personality: 50 }));
 });

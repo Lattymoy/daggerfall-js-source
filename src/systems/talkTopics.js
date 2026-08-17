@@ -123,18 +123,30 @@ export function mergeNamedBuildings(exteriorBuildings, blocks) {
  *         entry per building exterior door (position = the door)
  *  @param nameOpts generateBuildingName opts (location/region/bank/
  *         ruler/faction resolvers) */
+// Repeated block NAMES share one parsed dfBlock object (our cache;
+// DFU's C# structs copy per instance) - resolve a door to its block
+// INSTANCE by position, dfBlock as the tie filter.
+function blockInstanceOf(blocks, d) {
+  const cands = blocks.filter((b) => b.dfBlock === d.dfBlock);
+  if (cands.length === 1) return cands[0];
+  return cands.find((b) =>
+    d.position[0] >= b.originX - 1 && d.position[0] < b.originX + RMB_SIDE + 1 &&
+    d.position[2] >= b.originZ - 1 && d.position[2] < b.originZ + RMB_SIDE + 1) ?? cands[0];
+}
+
+/** E2: one exterior door -> its MERGED building data + buildingKey
+ *  (the interior host's shop identity: type/quality/seed/faction). */
+export function buildingDataForDoor(exteriorBuildings, blocks, door) {
+  const merged = mergeNamedBuildings(exteriorBuildings, blocks);
+  const inst = blockInstanceOf(blocks, door);
+  const data = inst ? merged.get(inst)?.[door.recordIndex] : null;
+  if (!data) return null;
+  return { ...data, buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, door.recordIndex) };
+}
+
 export function buildBuildingDirectory(exteriorBuildings, blocks, doors, nameOpts) {
   const merged = mergeNamedBuildings(exteriorBuildings, blocks);
-  // Repeated block NAMES share one parsed dfBlock object (our cache;
-  // DFU's C# structs copy per instance) - resolve each door to its
-  // block INSTANCE by position, dfBlock as the tie filter.
-  const blockOf = (d) => {
-    const cands = blocks.filter((b) => b.dfBlock === d.dfBlock);
-    if (cands.length === 1) return cands[0];
-    return cands.find((b) =>
-      d.position[0] >= b.originX - 1 && d.position[0] < b.originX + RMB_SIDE + 1 &&
-      d.position[2] >= b.originZ - 1 && d.position[2] < b.originZ + RMB_SIDE + 1) ?? cands[0];
-  };
+  const blockOf = (d) => blockInstanceOf(blocks, d);
   const blockIdx = new Map(blocks.map((b, i) => [b, i]));
   const dirs = [];
   const seen = new Set();

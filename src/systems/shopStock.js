@@ -139,3 +139,20 @@ export function calculateCost(baseValue, shopQuality, priceAdjustment = 1000) {
   cost = 2 * (Math.trunc(cost * (shopQuality - 10) / 100) + cost);
   return cost;
 }
+
+/** FormulaHelper.CalculateTradePrice, verbatim - the classic
+ *  fixed-point haggle over the merchant's quality-derived levels vs
+ *  the player's Mercantile + Personality. selling=false is the BUY
+ *  price of a shelf item (applied over CalculateCost's cost). */
+export function calculateTradePrice(cost, shopQuality, { mercantile = 0, personality = 50 } = {}, selling = false) {
+  const merchantLevel = 5 * (shopQuality - 10) + 50;   // mercantile and personality alike
+  let dm, dp;
+  if (selling) {
+    dm = ((Math.trunc(((100 - merchantLevel) << 8) / 200) + 128) * (Math.trunc((mercantile << 8) / 200) + 128)) >> 8;
+    dp = ((Math.trunc(((100 - merchantLevel) << 8) / 200) + 128) * (Math.trunc((personality << 8) / 200) + 128)) >> 8;
+    return ((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) >> 8;
+  }
+  dm = ((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - mercantile) << 8) / 200) + 128)) >> 8;
+  dp = (((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - personality) << 8) / 200) + 128)) >> 8) << 6;
+  return ((((192 * dm) >> 8) + (dp >> 8)) * cost) >> 8;
+}

@@ -878,3 +878,44 @@ Suite 448/98 (shopstock.test.js x3: the table + enum-mapping +
 material-value pins, the stock law incl. the rarity gate / gender
 swap / horse+cart / both book-ladder branches, CalculateCost incl.
 the toward-zero truncation and the sticky 750..1250 region band).
+
+## E2 (2026-08-17): THE SHELF MOUNT - browse and buy in shops SHIPPED
+
+The E1 laws go live in the interior mode (worldModes - both exterior
+hosts' door path):
+
+- THE IDENTITY SEAM: hosts pass buildingDataForDoor - one entered
+  door resolves through the T3c pool merge (talkTopics.
+  buildingDataForDoor: block-instance + subrecord + MakeBuildingKey)
+  to type/quality/seed/faction + the directory NAME by buildingKey;
+  the world host resolves door positions in the pixel's LOCATION
+  frame. tryEnter stamps interiorBuilding; exit clears it.
+- SHELVES: interiorContext collects the 27-model shelf set in DFU's
+  AddFurnitureAction chain order - shelf-set FIRST, so a shelf-set
+  model in a plain house is NOTHING (the else-chain never reaches
+  the house check). PARITY FIX ON THE WAY: 41035/41037 sit in BOTH
+  sets and had been S2b house containers everywhere.
+- THE BROWSE/BUY WINDOW: E on a shelf in an IsShop building stocks
+  it lazily (StockShopShelf per shelf) and opens a keyed ChoiceWindow
+  - the shop's NAME, the player's gold, up to 8 items per page with
+  LIVE prices (CalculateTradePrice over CalculateCost over the
+  region band, Mercantile + Personality in the fixed-point math),
+  N pagination, digit-buys (gold deducts, the item lands in the
+  player entity, the list re-shows), a can't-afford box. The overlay
+  holds the motor and owns the keys (the townTalk chain law); FONT
+  0003 loads lazily on shop entry; font-less never traps.
+- THE FRAME COUNTER FIX: modal frames now advance the shot-mode
+  __frame counter - the hosts' early return had FROZEN __frame
+  inside interiors/dungeons and every probe frame-sync starved.
+
+FLAGGED loud: selling + the offer/counteroffer haggle UI pend
+(CalculateTradePrice's selling branch is ported + pinned); shop
+OPEN HOURS pend (shelves answer at any hour); Library/Guild/Temple
+bookshelves + owned-house storage pend; restock pends the calendar.
+
+Probed live (tools/shopProbe.mjs): door 37 = "The Adventurer's Book
+Dealer" (Bookseller, quality 6) -> enter -> 4 shelves -> browse
+"1 - Book (2950 gold)" x3 -> Digit1 buys: gold 20000 -> 17050, the
+item in the entity, the window re-lists 2.
+
+Suite 449/98 (the CalculateTradePrice fixed-point pin).
