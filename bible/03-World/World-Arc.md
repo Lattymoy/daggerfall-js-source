@@ -658,6 +658,44 @@ follow-up); the person-seed stands in for DFU's NPC hashcode
 (Ledger A); identically-seeded repeats in pool-exhausted cities
 mirror DFU's own fallback.
 
+## T3d (2026-08-17): WHERE IS - the streaming-host mount SHIPPED
+
+The recorded host-rule debt from T3c clears: the ?world host's talk
+window carries the SAME Where-is directory as the fixed exterior
+host. DFU's TalkManager builds its building list for
+PlayerGPS.CurrentLocation - here a frame-loop tracker resolves the
+player's LOCATION PIXEL (the built-pixel whose local frame contains
+the camera) and swaps townTalk's topics on pixel crossing:
+townTalk.setTopics() rebuilds the directory from the new pixel's
+exterior buildings, layout blocks, and doors, or clears it over the
+open wilderness (the talk window falls back to the plain greeting).
+
+The frame law: doors and the player both resolve in the pixel's
+LOCATION frame - door positions strip the pixel-local location
+origin (now stored for EVERY location pixel, not just populated
+ones), and playerPos() subtracts the live floating-origin
+translation plus that origin. The floating origin is a pure
+translation, so the compass answers survive recenters - pinned
+(whereIsAnswer invariant under a uniform shift of both frames).
+Directory names ride the pixel's OWN region (bank names, the name
+bank, the province ruler via topics.regionIndex); the People
+faction/greetings stay on the boot region until travel lands (the
+recorded cross-region flag).
+
+FOUND ON THE WAY: buildingDoors leaked on destroyPixel - doors
+accumulated across every pixel rebuild (duplicate E-targets,
+unbounded growth on long streams; the directory's per-building
+dedup had been masking it). They splice out with their pixel now.
+
+Probed live on ?world&play at Daggerfall city: 62 named buildings
+in the streaming directory - the SAME 62 the fixed exterior host
+reports, identical alchemist names ("Vintage Elixirs" / "The
+Emperor's Potions" / "Mordard's Spices") proving the location-frame
+conversion lines up; E -> W -> Alchemists -> a tier-0 refusal
+answer record on screen.
+
+Suite 440/97; the T3c "streaming host directory pends" flag clears.
+
 ## AUDIT 2026-08-17b: the towns/talk parity pass
 
 The T1 modules were re-read line by line against MobilePersonMotor /

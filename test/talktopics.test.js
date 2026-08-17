@@ -63,6 +63,20 @@ test('talkTopics: the compass bands, the tier roll, and the answer table shape',
   assert.ok([7261, 7276, 7291].includes(a.textId));
 });
 
+test('talkTopics: the answer is invariant under a pure frame translation (T3d)', () => {
+  // The streaming host resolves doors and the player in the pixel's
+  // LOCATION frame through the floating-origin translation - a pure
+  // translation of BOTH positions must never change the answer.
+  const building = { position: [10, 0, 30] };
+  const base = whereIsAnswer([2, 0, -5], building, 50, 7);
+  const t = [1234.5, -20, -987.25];
+  const shifted = whereIsAnswer(
+    [2 - t[0], 0 - t[1], -5 - t[2]],
+    { position: [10 - t[0], 0 - t[1], 30 - t[2]] }, 50, 7);
+  assert.deepEqual(shifted, base);
+  assert.equal(base.direction, 'north');   // dx 8, dz 35 -> the 67.5..112.5 band
+});
+
 test('talkTopics audit pin: the pool merge is bounded by the SUBRECORD count', () => {
   // DFU scans SubRecords.Length entries - a named-type entry PAST the
   // subrecord count is header garbage and must never draw from the

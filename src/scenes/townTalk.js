@@ -90,29 +90,45 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // T3c: the named-building directory (the pool merge + the
       // classic seed names; guild/temple names resolve through the
       // faction tree, palaces through TEXT.RSC 475/476/477).
-      if (topics && factions) {
-        try {
-          const province = findFactions(factions.factionDict, { type: FACTION_TYPES.Province, region: regionIndex })[0];
-          directory = buildBuildingDirectory(topics.exteriorBuildings, topics.blocks, topics.doors, {
-            locationName: topics.locationName, regionName: topics.regionName,
-            nameBank: getNameBankOfRegion(regionIndex),
-            regentRuler: province?.ruler ?? 0,
-            factionName: (id) => factions.getFaction(id)?.name ?? '',
-            templeName: (id) => {
-              const f = factions.getFaction(id);
-              return (f?.children?.length ? factions.getFaction(f.children[0])?.name : f?.name) ?? '';
-            },
-            palaceName: (locName) => {
-              const id = { Daggerfall: 475, Wayrest: 476, Sentinel: 477 }[locName];
-              const v = id ? textRsc?.plainText(id) : null;
-              return v?.[0] ? v[0].replace(/\.$/, '') : 'Palace';
-            },
-          });
-        } catch (e) { console.warn('[town] building directory failed:', e.message); }
-      }
+      rebuildDirectory();
       loaded = true;
     })();
     return loading;
+  }
+
+  // T3d: the directory follows the CURRENT topics - static in the
+  // fixed exterior host, swapped per location pixel in the streaming
+  // host (DFU's TalkManager rebuilds for PlayerGPS.CurrentLocation).
+  // Names ride the topics' OWN region (bank names, the name bank, the
+  // province ruler); the People faction/greetings stay on the boot
+  // region until travel lands (the recorded cross-region flag).
+  function rebuildDirectory() {
+    directory = [];
+    if (!topics || !factions) return;
+    try {
+      const region = topics.regionIndex ?? regionIndex;
+      const province = findFactions(factions.factionDict, { type: FACTION_TYPES.Province, region })[0];
+      directory = buildBuildingDirectory(topics.exteriorBuildings, topics.blocks, topics.doors, {
+        locationName: topics.locationName, regionName: topics.regionName,
+        nameBank: getNameBankOfRegion(region),
+        regentRuler: province?.ruler ?? 0,
+        factionName: (id) => factions.getFaction(id)?.name ?? '',
+        templeName: (id) => {
+          const f = factions.getFaction(id);
+          return (f?.children?.length ? factions.getFaction(f.children[0])?.name : f?.name) ?? '';
+        },
+        palaceName: (locName) => {
+          const id = { Daggerfall: 475, Wayrest: 476, Sentinel: 477 }[locName];
+          const v = id ? textRsc?.plainText(id) : null;
+          return v?.[0] ? v[0].replace(/\.$/, '') : 'Palace';
+        },
+      });
+    } catch (e) { console.warn('[town] building directory failed:', e.message); }
+  }
+
+  function setTopics(t) {
+    topics = t;
+    if (loaded) rebuildDirectory();   // pre-load swaps build at load's tail
   }
 
   const textVariants = (id) => textRsc?.plainText(id) ?? [''];
@@ -268,7 +284,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   return {
-    keydown, tryActivate, frame, ensureLoaded, nextMode, showOverlay,
+    keydown, tryActivate, frame, ensureLoaded, nextMode, showOverlay, setTopics,
     texts: (id) => textVariants(id),
     say: (line) => hud.add(line),
     get overlayActive() { return !!overlay; },
