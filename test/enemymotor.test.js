@@ -13,6 +13,12 @@ import { Collider } from '../src/player/collider.js';
 
 const approx = (a, b, eps = 1e-4) => assert.ok(Math.abs(a - b) < eps, `${a} !~ ${b}`);
 const seqRolls = (v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
+// P17 fixed stepping: update() consumes whole 1/60 steps, so a bare
+// update(CLASSIC_UPDATE_INTERVAL) no longer lands a senses tick. Four
+// 1/60 steps accumulate 0.0667 >= 0.0625 - EXACTLY one classic tick
+// (and one roll-sequence consumption) per call, for up to ~14 calls
+// before the remainders stack a second tick (tests stay well under).
+const tick = (ai, playerFeet, senses) => { for (let i = 0; i < 4; i++) ai.update(1 / 60, playerFeet, senses); };
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 const quadIdx = new Uint32Array([0, 1, 2, 0, 2, 3]);
 
@@ -64,6 +70,106 @@ test('enemyMotor: pursues on the classic cadence and stops at MeleeDistance', ()
   approx(ai2.feet[0], 0); approx(ai2.feet[2], 0);
 });
 
+test('P17: fixed stepping - a 10fps foe pursues to the SAME spot as a 60fps foe', () => {
+  // The P16 law, foe-side: raw render-dt integration made pursuit
+  // speed/gravity frame-rate dependent (the phone failure class).
+  // Both drives decompose into identical 1/60 steps (0.1 = 6 exact
+  // steps), so the trajectories must be bit-identical.
+  const mkC = () => {
+    const c = new Collider(() => -100);
+    c.addMesh('floor', new Float32Array([-40, 0, -40, 40, 0, -40, 40, 0, 40, -40, 0, 40]), quadIdx, I);
+    return c;
+  };
+  const player = [0, 0, 12];
+  const ai60 = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
+  const ai10 = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
+  for (let i = 0; i < 60 * 4; i++) ai60.update(1 / 60, player);
+  for (let i = 0; i < 10 * 4; i++) ai10.update(1 / 10, player);
+  assert.equal(ai10.feet[0], ai60.feet[0]);
+  assert.equal(ai10.feet[2], ai60.feet[2]);
+  assert.equal(ai10.yaw, ai60.yaw);
+  // The jank clamp: one 10-second hitch integrates at most 0.25s
+  const hitch = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
+  hitch.update(10, player);
+  const ref = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
+  for (let i = 0; i < 15; i++) ref.update(1 / 60, player);   // 0.25 = 15 steps
+  assert.equal(hitch.feet[2], ref.feet[2]);
+});
+
+test('C12 flying: 3D pursuit at the face, hover with NO gravity when idle', () => {
+  const mkC = () => {
+    const c = new Collider(() => -100);
+    c.addMesh('floor', new Float32Array([-40, 0, -40, 40, 0, -40, 40, 0, 40, -40, 0, 40]), quadIdx, I);
+    return c;
+  };
+  // Undetected (far + behind): a flyer HOVERS exactly in place while
+  // a grounded twin falls to the floor from the same spawn.
+  const hover = new EnemyAI(mkC(), [0, 4, 0], 0, { liveSpeed: 50, behaviour: 'Flying' });
+  const walker = new EnemyAI(mkC(), [0, 4, 0], 0, { liveSpeed: 50 });
+  const far = [0, 0, -30];
+  for (let i = 0; i < 60; i++) { hover.update(1 / 60, far); walker.update(1 / 60, far); }
+  assert.equal(hover.feet[1], 4, 'flyers do not fall');
+  assert.ok(walker.feet[1] < 0.1, 'walkers land');
+  // Detected: pursue in 3D toward the target FACE (feet + 1.8) and
+  // stop at MeleeDistance - the flyer DESCENDS from altitude to
+  // striking height instead of walking beneath the player.
+  const fly = new EnemyAI(mkC(), [0, 4, 0], 0, { liveSpeed: 50, behaviour: 'Flying' });
+  const player = [0, 0, 10];
+  for (let i = 0; i < 60 * 8; i++) fly.update(1 / 60, player);
+  const d3 = Math.hypot(player[0] - fly.feet[0], player[1] - fly.feet[1], player[2] - fly.feet[2]);
+  assert.ok(d3 <= MELEE_DISTANCE + 0.1, `closed to ${d3}`);
+  assert.ok(fly.feet[1] < 4 && fly.feet[1] > 0.5, `at striking height, airborne: ${fly.feet[1]}`);
+  assert.equal(fly.moving, false);
+});
+
+test('C12 aquatic: WaterMove gates - the surface margin cap and the beached freeze', () => {
+  const mkC = () => {
+    const c = new Collider(() => -100);
+    c.addMesh('floor', new Float32Array([-40, 0, -40, 40, 0, -40, 40, 0, 40, -40, 0, 40]), quadIdx, I);
+    return c;
+  };
+  // Surface at y=6: the fish rises toward a target face above the
+  // water but its rise CAPS at center + 2.5 = surface (feet 2.6).
+  const fish = new EnemyAI(mkC(), [0, 0, 2], 0, { liveSpeed: 50, behaviour: 'Aquatic', mobileId: 11, waterSurfaceY: () => 6 });
+  const player = [0, 4, 12];   // face aim = y 5.8, above the cap
+  for (let i = 0; i < 60 * 8; i++) fish.update(1 / 60, player);
+  assert.ok(fish.feet[1] > 1, `rose in the water: ${fish.feet[1]}`);
+  assert.ok(fish.feet[1] <= 6 - 0.9 - 2.5 + 0.05, `capped under the surface: ${fish.feet[1]}`);
+  assert.ok(fish.feet[2] > 4, `still closed horizontally: ${fish.feet[2]}`);
+  // Beached (center above the surface): FROZEN verbatim - no
+  // pursuit, and no gravity either (WaterMove owns all movement).
+  const beached = new EnemyAI(mkC(), [0, 7, 2], 0, { liveSpeed: 50, behaviour: 'Aquatic', mobileId: 11, waterSurfaceY: () => 6 });
+  for (let i = 0; i < 60; i++) beached.update(1 / 60, [0, 7, 8]);
+  assert.deepEqual(beached.feet, [0, 7, 2]);
+  // A waterless block freezes the same way
+  const dry = new EnemyAI(mkC(), [0, 3, 2], 0, { liveSpeed: 50, behaviour: 'Aquatic', mobileId: 11, waterSurfaceY: () => null });
+  for (let i = 0; i < 60; i++) dry.update(1 / 60, [0, 3, 8]);
+  assert.deepEqual(dry.feet, [0, 3, 2]);
+});
+
+test('C12 paralysis: flyers FALL out of the air, swimmers freeze, walkers stop', () => {
+  const mkC = () => {
+    const c = new Collider(() => -100);
+    c.addMesh('floor', new Float32Array([-40, 0, -40, 40, 0, -40, 40, 0, 40, -40, 0, 40]), quadIdx, I);
+    return c;
+  };
+  const player = [0, 0, 10];
+  // "Intentional side-effect: paralyzed flying enemies fall out of
+  // the air" (EnemyMotor comment) - flyerFalls.
+  const fly = new EnemyAI(mkC(), [0, 4, 0], 0, { liveSpeed: 50, behaviour: 'Flying' });
+  for (let i = 0; i < 60 * 2; i++) fly.update(1 / 60, player, null, true);
+  assert.ok(fly.feet[1] < 0.1, `fell: ${fly.feet[1]}`);
+  // "Paralyzed swimming enemies will just freeze in place"
+  const fish = new EnemyAI(mkC(), [0, 1, 0], 0, { liveSpeed: 50, behaviour: 'Aquatic', mobileId: 11, waterSurfaceY: () => 6 });
+  for (let i = 0; i < 60; i++) fish.update(1 / 60, player, null, true);
+  assert.deepEqual(fish.feet, [0, 1, 0]);
+  // Walkers: decisions stop (no pursuit) but gravity still runs
+  const walk = new EnemyAI(mkC(), [0, 2, 0], 0, { liveSpeed: 50 });
+  for (let i = 0; i < 60 * 2; i++) walk.update(1 / 60, player, null, true);
+  assert.ok(walk.feet[1] < 0.1, 'landed');
+  assert.ok(Math.abs(walk.feet[2]) < 1e-6, 'no pursuit while paralyzed');
+});
+
 test('stealth: the chance formula + the spawn bands + the illusion gate (pure pins)', async () => {
   const { stealthChance, STEALTH_MAX_DISTANCE, wouldBeSpawnedInClassic, blockedByIllusionEffect,
     CLASSIC_SPAWN_XZ, CLASSIC_SPAWN_Y_UPPER, CLASSIC_DESPAWN_Y } = await import('../src/characters/enemyMotor.js');
@@ -101,19 +207,19 @@ test('stealth: hearing gates on PRIOR detection - a quiet player behind a foe st
     gameMinutes: 2, playerStealth: 100, movingLessThanHalfSpeed: true,
     sharedStealth: { minute: -1 }, rolls: () => 0.5,   // illusion roll unused (no blending); stealth roll 50 < 78 SUCCEEDS
   };
-  ai.update(CLASSIC_UPDATE_INTERVAL, [0, 0, -10], senses);
+  tick(ai, [0, 0, -10], senses);
   assert.ok(!ai.inSight);
   assert.ok(!ai.detected, 'proximity must not auto-detect an unseen, unheard player');
   // The stealth roll FAILS on a fresh minute -> detected (chance
   // 2*((400*100)>>10) = 78; roll 99 >= 78)
   const ai2 = new EnemyAI(c, [0, 0, 0], 0, { liveSpeed: 50 });
-  ai2.update(CLASSIC_UPDATE_INTERVAL, [0, 0, -10], { ...senses, sharedStealth: { minute: -1 }, rolls: () => 0.99 });
+  tick(ai2, [0, 0, -10], { ...senses, sharedStealth: { minute: -1 }, rolls: () => 0.99 });
   assert.ok(ai2.detected);
   assert.ok(ai2.hasEncounteredPlayer);
   // Once detected, hearing (dist < 25, LOS clear) HOLDS detection on
   // the cached minute even though the stealth check just returns the
   // standing value
-  ai2.update(CLASSIC_UPDATE_INTERVAL, [0, 0, -10], { ...senses, sharedStealth: { minute: -1 }, rolls: () => 0.0 });
+  tick(ai2, [0, 0, -10], { ...senses, sharedStealth: { minute: -1 }, rolls: () => 0.0 });
   assert.ok(ai2.detected, 'earshot holds the detection');
 });
 
@@ -126,21 +232,21 @@ test('stealth: minute cache, odd-minute sneak skip, fast-move auto-detect, the s
   const base = { playerStealth: 100, sharedStealth: shared, tallyStealth: () => tallies++ };
   // Odd minute + sneaking: NO roll happens (a throwing roll proves it)
   const ai = new EnemyAI(c, [0, 0, 0], 0, {});
-  ai.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 1, movingLessThanHalfSpeed: true, rolls: () => { throw new Error('rolled on an odd sneak minute'); } });
+  tick(ai, behind, { ...base, gameMinutes: 1, movingLessThanHalfSpeed: true, rolls: () => { throw new Error('rolled on an odd sneak minute'); } });
   assert.ok(!ai.detected);
   assert.equal(tallies, 0);
   // Even minute: the roll runs and the tally fires ONCE across foes
   const r = seqRolls([0.5, 0.5, 0.5, 0.5]);
-  ai.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: r });
+  tick(ai, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: r });
   const ai2 = new EnemyAI(c, [0, 0, 0], 0, {});
-  ai2.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: r });
+  tick(ai2, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: r });
   assert.equal(tallies, 1, 'one Stealth tally per classic minute across ALL foes');
   // The same minute again on the same foe: cached (no further rolls)
-  ai.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: () => { throw new Error('re-rolled a cached minute'); } });
+  tick(ai, behind, { ...base, gameMinutes: 2, movingLessThanHalfSpeed: true, rolls: () => { throw new Error('re-rolled a cached minute'); } });
   // Fast movement after an encounter: detected outright, no roll
   const ai3 = new EnemyAI(c, [0, 0, 0], 0, {});
   ai3.hasEncounteredPlayer = true;
-  ai3.update(CLASSIC_UPDATE_INTERVAL, behind, { ...base, gameMinutes: 4, movingLessThanHalfSpeed: false, rolls: () => { throw new Error('rolled on a fast-move auto-detect'); } });
+  tick(ai3, behind, { ...base, gameMinutes: 4, movingLessThanHalfSpeed: false, rolls: () => { throw new Error('rolled on a fast-move auto-detect'); } });
   assert.ok(ai3.detected);
 });
 
@@ -152,7 +258,7 @@ test('stealth: the chameleon illusion gate blocks SIGHT (the dead S8 half-sight 
   // detected even standing in plain sight (stealth also held: high
   // stealth + a succeeding roll)
   const ai = new EnemyAI(c, [0, 0, 0], 0, {});
-  ai.update(CLASSIC_UPDATE_INTERVAL, inFront, {
+  tick(ai, inFront, {
     gameMinutes: 2, playerStealth: 100, movingLessThanHalfSpeed: true,
     playerBlending: true, sharedStealth: { minute: -1 },
     rolls: seqRolls([0.5, 0.5]),   // illusion 50 >= 8 -> blocked; stealth 50 < 78 -> hidden
@@ -160,7 +266,7 @@ test('stealth: the chameleon illusion gate blocks SIGHT (the dead S8 half-sight 
   assert.ok(ai.inSight, 'the chameleon player IS in sight range');
   assert.ok(!ai.detected, 'the illusion gate blocks the sighting');
   // See-through roll under 8%: the foe pierces the chameleon
-  ai.update(CLASSIC_UPDATE_INTERVAL, inFront, {
+  tick(ai, inFront, {
     gameMinutes: 2, playerBlending: true, sharedStealth: { minute: -1 },
     playerStealth: 100, movingLessThanHalfSpeed: true,
     rolls: seqRolls([0.07, 0.5]),
@@ -168,7 +274,7 @@ test('stealth: the chameleon illusion gate blocks SIGHT (the dead S8 half-sight 
   assert.ok(ai.detected);
   // A sees-through foe ignores blending entirely
   const ai2 = new EnemyAI(c, [0, 0, 0], 0, { seesThroughInvisibility: true });
-  ai2.update(CLASSIC_UPDATE_INTERVAL, inFront, {
+  tick(ai2, inFront, {
     gameMinutes: 2, playerBlending: true, playerInvisible: true, sharedStealth: { minute: -1 },
     playerStealth: 100, movingLessThanHalfSpeed: true, rolls: seqRolls([0.5, 0.5]),
   });

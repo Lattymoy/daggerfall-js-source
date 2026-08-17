@@ -18,6 +18,12 @@ await page.waitForFunction(() => window.__frame > 10, null, { timeout: 120000 })
 const foes = JSON.parse(await page.evaluate(() => window.__foes()));
 const monsters = foes.filter((f) => f.type <= 42 && !f.dead && f.pos);
 console.log('monster foes:', monsters.length, 'first:', JSON.stringify(monsters[0]));
+// C12: the behaviour motors - report the flyers/swimmers so hover
+// height and water gating are visible in the probe output.
+const SPECIAL = { 1: 'fly', 3: 'fly', 13: 'fly', 34: 'fly', 40: 'fly', 18: 'spectral', 23: 'spectral', 11: 'swim', 41: 'swim', 42: 'swim' };
+for (const m of monsters) {
+  if (SPECIAL[m.type]) console.log(`  ${SPECIAL[m.type]} type ${m.type} at [${m.pos.map((v) => v.toFixed(1))}]`);
+}
 if (monsters.length) {
   const m = monsters[0];
   // camera 2.5 units south of the foe at eye height, facing it (yaw toward -z if we stand at +z)
