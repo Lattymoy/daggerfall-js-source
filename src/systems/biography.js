@@ -140,6 +140,62 @@ export function applyBiographyEffect(entity, effect, { rolls = Math.random } = {
   return null;
 }
 
+/** DigestRepChanges (:150-167): the per-social-group TOTAL a set of
+ *  answers moved, for the closing reputation box. Skips `rf` (faction)
+ *  and anything malformed, exactly as DFU's guard chain does. */
+export function digestRepChanges(effects, groups = 5) {
+  const changed = new Array(groups).fill(0);
+  for (const e of effects ?? []) {
+    const tokens = String(e).split(/\s+/).filter((x) => x.length);
+    // the `e[1] === 'f'` arm is DEFENSIVE in DFU and redundant in
+    // practice - "rf42".split('r')[1] is "f42", which never parses -
+    // so it is ported but carries no pin of its own
+    if (e[0] !== 'r' || e[1] === 'f' || tokens.length < 2) continue;
+    const id = Number.parseInt(tokens[0].split('r')[1], 10);
+    const amount = Number.parseInt(tokens[1], 10);
+    if (!Number.isFinite(id) || !Number.isFinite(amount) || id < 0 || id >= groups) continue;
+    changed[id] += amount;
+  }
+  return changed;
+}
+
+/** GenerateBackstory (:169-232). The class's TEXT.RSC record
+ *  (DEFAULT_BACKSTORIES_START + classIndex) is prose with %q1..%q12
+ *  and %q1a..%q12a macros; each expands to the FIRST text line of a
+ *  TEXT.RSC record the player's answers named. Both the '#' and the
+ *  '!' token of a question land in the SAME per-question list in file
+ *  order (tokenLists is indexed by the QUESTION, not the prefix), so
+ *  %qN is that list's first entry and %qNa its second
+ *  (BiogFileMCP.cs:150-161, :306-317).
+ *
+ *  Returns the backstory ROWS. `textRsc` is a loaded TextRsc. */
+export function generateBackstory(textRsc, backstoryId, effects) {
+  if (!textRsc) return [];
+  const perQuestion = [];
+  for (const e of effects ?? []) {
+    if (!isTextEffect(e)) continue;
+    const [command, index] = String(e).split(' ');
+    const q = Number.parseInt(index, 10);
+    if (!Number.isFinite(q)) { console.warn('[biog] GenerateBackstory: Invalid question index.'); continue; }
+    const id = Number.parseInt(command.slice(1), 10);
+    if (!Number.isFinite(id)) continue;
+    (perQuestion[q] = perQuestion[q] ?? []).push(id);
+  }
+  const firstLine = (id) => textRsc.linesById(id)?.[0]?.text ?? '';
+  // the capture is the digits and the optional 'a', so there is only
+  // ONE path here - a question with no token of that kind expands to
+  // NOTHING, which is what leaves classic's prose reading cleanly
+  const macro = (digits, secondary) => {
+    const list = perQuestion[Number(digits) - 1] ?? [];
+    const id = secondary ? list[1] : list[0];
+    return id == null ? '' : firstLine(id);
+  };
+  return textRsc.linesById(backstoryId).map((row) => ({
+    ...row,
+    text: row.text.replace(/%q(\d+)(a?)/g, (_, digits, secondary) => macro(digits, secondary)),
+  }));
+}
+
 /** ApplyEffects (:447-456). */
 export function applyBiographyEffects(entity, effects, opts = {}) {
   const applied = [];

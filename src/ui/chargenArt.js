@@ -23,15 +23,20 @@
 // verbatim TEXT.RSC 2200 prompt with Male/Female, and the race's
 // DescriptionID with Yes/No).
 //
-// FLAGGED loud: biography questions, reflexes and the custom-class
-// path are not in the flow yet, so their screens (CreateCharBiography,
-// CreateCharReflexSelect, CreateCharCustomClass) are not ported.
+// FLAGGED loud: the CUSTOM-CLASS path has no screen yet
+// (CreateCharCustomClass) - the starting-gear law already handles
+// `isCustom`, so only the builder window is missing. The port's
+// overall wizard ORDER also still differs from DFU's: we ask the name
+// first and the face early, where classic asks race, gender, class,
+// biography, name, face. Both are their own slices.
 
 import { ImgFile } from '../formats/imgFile.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { TextRsc } from '../formats/textRsc.js';   // U11: the race description
+import { generateBackstory } from '../systems/biography.js';   // U13
 import { bitmapToColor32 } from './hud.js';
 import { drawImg, drawRect, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR, SCREEN_DIM } from './nativePanel.js';
+import { measureText } from './text.js';   // U13: the reflex info rows
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U11
 import { FACES_PER_RACE, raceById, raceArt } from '../systems/races.js';
 import { SKILL_NAMES } from '../systems/skills.js';
@@ -92,11 +97,26 @@ export const biogButtonRect = (i) => [
 ];
 export const BIOG_BUTTONS = BIOG_BUTTON_COUNT;
 
+// U13 / CreateCharReflexSelect.cs:32-96 + ReflexPicker.cs:31-98 - the
+// info panel at (0,15) carrying TEXT.RSC 307, and the picker at
+// (127,148): five 66x9 buttons stacked, with CHAR05I1.IMG (66x45,
+// baked at that very offset) as a five-band highlight strip. DFU
+// draws band `0.2 * (4 - value)` in Unity's BOTTOM-UP texcoords,
+// which is band `value` counted from the TOP.
+export const REFLEX_INFO_TOP = 15;
+export const REFLEX_INFO_TEXT_ID = 307;
+export const REFLEX_PICKER = [127, 148, 66, 45];
+export const REFLEX_ROW_H = 9;
+/** EntityEnums.PlayerReflexes - 0 VeryHigh .. 4 VeryLow. */
+export const PLAYER_REFLEXES = Object.freeze({ VeryHigh: 0, High: 1, Average: 2, Low: 3, VeryLow: 4 });
+export const REFLEX_COUNT = 5;
+export const reflexRowRect = (i) => [REFLEX_PICKER[0], REFLEX_PICKER[1] + i * REFLEX_ROW_H, REFLEX_PICKER[2], REFLEX_ROW_H];
+
 // ListBox.cs:36-37 - nine rows, one pixel of spacing.
 export const CLASS_LIST_ROWS = 9;   // ListBox.cs:36 rowsDisplayed
 const LIST_ROWS = CLASS_LIST_ROWS, LIST_ROW_SPACING = 1;
 
-const IMG_NAMES = ['CHAR00I0.IMG', 'CHAR01I0.IMG', 'CHAR02I0.IMG', 'CHAR03I0.IMG', 'PICK00I0.IMG', 'TMAP00I0.IMG', 'CHAR02I1.IMG', 'CHAR03I1.IMG', 'BIOG00I0.IMG'];
+const IMG_NAMES = ['CHAR00I0.IMG', 'CHAR01I0.IMG', 'CHAR02I0.IMG', 'CHAR03I0.IMG', 'PICK00I0.IMG', 'TMAP00I0.IMG', 'CHAR02I1.IMG', 'CHAR03I1.IMG', 'BIOG00I0.IMG', 'CHAR05I0.IMG', 'CHAR05I1.IMG'];
 
 let _art = null;          // { imgs: Map<name, {tex,w,h}>, picker: DFBitmap }
 let _faces = null;        // { key, tex[] } - the loaded race/gender face set
@@ -210,11 +230,57 @@ export function drawChargenNative(renderer, m, font, flow) {
   if (s === 'stats') return drawStats(renderer, m, font, flow);
   if (s === 'skills') return drawSkills(renderer, m, font, flow);
   if (s === 'biography') return drawBiography(renderer, m, font, flow);
+  if (s === 'reflexes') return drawReflexes(renderer, m, font, flow);
   return false;
+}
+
+/** TEXT.RSC 307 - "Player reflexes determine..." - the rows the info
+ *  panel carries, cached once the art is up. */
+export function reflexInfoLines() {
+  return _art?.textRsc?.linesById(REFLEX_INFO_TEXT_ID) ?? [];
+}
+
+function drawReflexes(renderer, m, font, flow) {
+  drawImg(renderer, img('CHAR05I0.IMG'), m, 0, 0);
+  const rows = reflexInfoLines();
+  const rh = rowH(font);
+  rows.forEach((r, i) => {
+    const w = measureText(font.fnt, r.text);
+    shadowText(renderer, font, r.text, m, r.center ? Math.round((320 - w) / 2) : 0, REFLEX_INFO_TOP + i * rh);
+  });
+  // the highlight band for the current pick, drawn from the strip
+  const strip = img('CHAR05I1.IMG');
+  const v = Math.max(0, Math.min(REFLEX_COUNT - 1, flow.reflexes ?? PLAYER_REFLEXES.Average));
+  const [px, py, pw] = REFLEX_PICKER;
+  renderer.drawScreenQuad(strip.tex,
+    { x: m.ox + px * m.s, y: m.oy + (py + v * REFLEX_ROW_H) * m.s, w: pw * m.s, h: REFLEX_ROW_H * m.s },
+    { u0: 0, v0: v / REFLEX_COUNT, u1: 1, v1: (v + 1) / REFLEX_COUNT });
+  return true;
+}
+
+/** U13: the class's backstory prose, its %qN macros expanded from the
+ *  player's own answers (GenerateBackstory). */
+export const buildBackstory = (backstoryId, effects) =>
+  generateBackstory(_art?.textRsc ?? null, backstoryId, effects).map((r) => r.text);
+
+/** U13: TEXT.RSC 35's rows with %r1..%r5 filled from DigestRepChanges
+ *  - the box that closes the biography screen. */
+export function repBoxRows(changed) {
+  const t = _art?.textRsc;
+  if (!t || !changed) return null;
+  return t.linesById(35).map((r) => ({
+    ...r,
+    text: r.text.replace(/%r([1-5])/g, (_, n) => String(changed[Number(n) - 1] ?? 0)),
+  }));
 }
 
 function drawBiography(renderer, m, font, flow) {
   drawImg(renderer, img('BIOG00I0.IMG'), m, 0, 0);
+  if (flow.biogRepBox) {
+    const box = layoutMessageBox(font, flow.biogRepBox);
+    drawMessageBox(renderer, m, font, box);
+    return true;
+  }
   const q = flow.biogQuestion?.();
   if (!q) return true;
   for (let j = 0; j < BIOG_QUESTION_LINES; j++) {
@@ -457,6 +523,7 @@ export function chargenHit(flow, vx, vy) {
     return null;
   }
   if (s === 'biography') {
+    if (flow.biogRepBox) return 'confirm';   // ClickAnywhereToClose
     const q = flow.biogQuestion?.();
     if (!q) return null;
     for (let i = 0; i < BIOG_BUTTONS; i++) {
@@ -465,6 +532,10 @@ export function chargenHit(flow, vx, vy) {
       if (inRect(biogButtonRect(i))) return { answerBiography: i };
     }
     return null;
+  }
+  if (s === 'reflexes') {
+    for (let i = 0; i < REFLEX_COUNT; i++) if (inRect(reflexRowRect(i))) return { setReflexes: i };
+    return inRect(RECTS.ok) ? 'confirm' : null;
   }
   if (s === 'stats') {
     if (inRect(RECTS.reroll)) return 'reroll';

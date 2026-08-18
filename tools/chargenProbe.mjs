@@ -85,6 +85,17 @@ for (let i = 0; i < 12; i++) {
   if (cur.state !== 'biography') break;
   await key('Enter');          // the cursor sits on the first answer
 }
+// U13: the last answer pops the REPUTATION box (TEXT.RSC 35) and
+// composes the backstory; any key closes it.
+const rep = JSON.parse(await page.evaluate(() => {
+  const f = window.__chargenFlow?.();
+  return JSON.stringify({ box: f?.biogRepBox?.map((r) => r.text) ?? null, story: f?.backStory?.length ?? 0, changes: f?.repChanges ?? null });
+}));
+console.log('reputation box:', JSON.stringify(rep.box?.slice(0, 3)), 'changes', JSON.stringify(rep.changes), 'backstory rows', rep.story);
+if (!rep.box?.length) { console.log('REPUTATION BOX DID NOT OPEN'); process.exit(1); }
+if (!rep.story) { console.log('BACKSTORY NOT COMPOSED'); process.exit(1); }
+await page.screenshot({ path: '/home/claude/chargen-repbox.png' });
+await key('Enter');            // close the box -> stats
 const after = await biog();
 console.log('after the twelve questions:', JSON.stringify({ state: after.state, effects: after.effects }));
 if (after.state !== 'stats') { console.log('BIOGRAPHY DID NOT COMPLETE', JSON.stringify(after)); process.exit(1); }
@@ -100,7 +111,15 @@ await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-skills.png' });   // U10: CHAR03I0
 for (let row = 0; row < 9; row++) { await spend(); await page.keyboard.press('ArrowDown'); }
 await waitFrames(2);
-await key('Enter');
+await key('Enter');            // skills -> REFLEXES (U13)
+await waitFrames(2);
+await page.screenshot({ path: '/home/claude/chargen-reflexes.png' });
+const reflexBefore = await page.evaluate(() => window.__chargenFlow?.()?.reflexes ?? null);
+await key('ArrowUp'); await key('ArrowUp');   // Average -> VeryHigh
+const reflexAfter = await page.evaluate(() => window.__chargenFlow?.()?.reflexes ?? null);
+console.log('reflexes:', reflexBefore, '->', reflexAfter);
+if (reflexBefore !== 2 || reflexAfter !== 0) { console.log('REFLEX PICKER DID NOT MOVE'); process.exit(1); }
+await key('Enter');            // -> done
 await waitFrames(4);
 const e = await page.evaluate(() => {
   const p = window.__playerEntity;
@@ -165,5 +184,10 @@ const bio = await page.evaluate(() => {
 });
 console.log('biography on the entity:', JSON.stringify(bio));
 if (!bio.rep.some((v) => v !== 0)) { console.log('BIOGRAPHY REPUTATION NEVER LANDED', JSON.stringify(bio.rep)); process.exit(1); }
+// U13: the reflex pick must reach the entity - both consumers (the
+// EnemyAttack melee timer and the monster multi-attack gate) read it.
+const reflexOnEntity = await page.evaluate(() => window.__playerEntity.reflexes);
+console.log('reflexes on the entity:', reflexOnEntity);
+if (reflexOnEntity !== 0) { console.log('REFLEX PICK NEVER LANDED', reflexOnEntity); process.exit(1); }
 console.log('CHARGEN OK');
 await browser.close(); await server.close();

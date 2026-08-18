@@ -99,6 +99,11 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
  *  the IDENTITY the paperdoll reads. */
 export function finishChargen(playerEntity, result, spellsByIndex = null, { rolls = Math.random } = {}) {
   applyCharacter(playerEntity, result.career, result.careerIndex, result);
+  // U13: the reflex pick. Both consumers were already live - the
+  // EnemyAttack melee timer (450ms per step from Average) and the
+  // monster multi-attack gate (50 - 10*(reflexes-2)) - reading a
+  // hardcoded Average until the screen existed.
+  if (result.reflexes != null) playerEntity.reflexes = result.reflexes;
   if (spellsByIndex) playerEntity.spells = startingSpells(result.careerIndex, spellsByIndex);
   // S3d: the real starting kit replaces the INTERIM dagger seed -
   // AssignStartingGear runs ONCE, at creation, exactly as DFU does.

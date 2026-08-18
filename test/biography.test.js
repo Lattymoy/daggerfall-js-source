@@ -9,10 +9,11 @@ import { parseBiog, biogFileName, BIOG_QUESTION_COUNT, DEFAULT_BACKSTORIES_START
 import {
   applyBiographyEffect, applyBiographyEffects, biographySkillBonuses,
   weaponToArmorMaterial, tagEffect, ITEM_GROUP_BY_ID,
+  digestRepChanges, generateBackstory,
 } from '../src/systems/biography.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 import { ChargenFlow } from '../src/ui/chargen.js';
-import { biogButtonRect, BIOG_BUTTONS } from '../src/ui/chargenArt.js';
+import { biogButtonRect, BIOG_BUTTONS, PLAYER_REFLEXES, REFLEX_COUNT, REFLEX_PICKER, reflexRowRect } from '../src/ui/chargenArt.js';
 import { SKILLS, SKILL_COUNT } from '../src/systems/skills.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
@@ -245,4 +246,68 @@ test('S3e: every effect in the corpus is a command we implement', { skip: skipRe
   } finally { console.warn = warn; console.log = log; }
   assert.equal(unknown.length, 12, 'exactly the twelve bare & lines');
   assert.ok(unknown.every((m) => m.endsWith('&')));
+});
+
+// ---- U13: the backstory, the reputation box, and reflexes ----
+test('U13: DigestRepChanges totals the social groups only', () => {
+  // BiogFile.cs:150-167 - the guard chain skips rf (faction), short
+  // lines and anything unparseable.
+  const changed = digestRepChanges(['r0 -5', 'r2 +5', 'r0 +2', 'rf42 +10', 'r9 +1', 'r', 'GP +500']);
+  assert.deepEqual(changed, [-3, 0, 5, 0, 0]);
+  assert.deepEqual(digestRepChanges([]), [0, 0, 0, 0, 0]);
+});
+
+test('U13: the backstory expands %qN from the answers themselves', () => {
+  // GenerateBackstory (:169-232) + BiogFileMCP.cs:150-161,306-317 -
+  // both the '#' and the '!' token of a question land in the SAME
+  // per-question list in file order, so %qN is its first entry and
+  // %qNa its second.
+  const rsc = {
+    linesById: (id) => ({
+      900: [{ text: 'Story: %q1 and %q1a.', center: false }, { text: 'Nothing: %q5', center: false }],
+      4150: [{ text: 'the first thing', center: false }],
+      4156: [{ text: 'the second thing', center: false }],
+    })[id] ?? [],
+  };
+  const rows = generateBackstory(rsc, 900, ['#4150 0', '!4156 0', '22 +6']);
+  assert.equal(rows[0].text, 'Story: the first thing and the second thing.');
+  assert.equal(rows[1].text, 'Nothing: ', 'a question with no token expands EMPTY, not to the macro');
+  assert.deepEqual(generateBackstory(null, 900, []), [], 'no TEXT.RSC -> no backstory, never a throw');
+});
+
+test('U13: the reflex picker geometry and its five rows', () => {
+  // ReflexPicker.cs:81-98 - five 66x9 buttons stacked from (127,148),
+  // the panel exactly 66x45, and Average the starting value.
+  assert.equal(REFLEX_COUNT, 5);
+  assert.deepEqual(PLAYER_REFLEXES, { VeryHigh: 0, High: 1, Average: 2, Low: 3, VeryLow: 4 });
+  assert.deepEqual(REFLEX_PICKER, [127, 148, 66, 45]);
+  assert.deepEqual(reflexRowRect(0), [127, 148, 66, 9], 'VeryHigh is the TOP row');
+  assert.deepEqual(reflexRowRect(4), [127, 184, 66, 9]);
+  assert.equal(reflexRowRect(4)[1] + 9, REFLEX_PICKER[1] + REFLEX_PICKER[3], 'the five rows fill the panel exactly');
+});
+
+test('U13: the flow ends on reflexes, clamped, and carries the pick', () => {
+  const f = new ChargenFlow([{ name: 'Mage', career: CAREER }], () => 0);
+  f.state = 'reflexes';
+  assert.equal(f.reflexes, PLAYER_REFLEXES.Average, 'the picker\'s own starting value');
+  f.input('up'); f.input('up'); f.input('up');
+  assert.equal(f.reflexes, PLAYER_REFLEXES.VeryHigh, 'clamps at the top');
+  f.input('down'); f.input('down'); f.input('down'); f.input('down'); f.input('down'); f.input('down');
+  assert.equal(f.reflexes, PLAYER_REFLEXES.VeryLow, 'and at the bottom');
+  f.input('confirm');
+  assert.ok(f.done);
+  assert.equal(f.result().reflexes, PLAYER_REFLEXES.VeryLow);
+});
+
+test('U13: the reputation box is modal and closes the screen', () => {
+  const biog = parseBiog(CRAFT, 0);
+  const f = flowWithBiog(biog);
+  f.input('confirm');                        // -> biography
+  f.answerBiography(0);                      // q1
+  f.biogRepBox = [{ text: 'Commoners: -5', center: false }];   // the box the draw path opens
+  const before = f.state;
+  f.input('down');                           // ClickAnywhereToClose: ANY key
+  assert.equal(f.biogRepBox, null, 'the box closes');
+  assert.equal(before, 'biography');
+  assert.equal(f.state, 'stats', 'and the screen ends with it');
 });

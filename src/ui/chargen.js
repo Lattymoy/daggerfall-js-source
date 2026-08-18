@@ -14,12 +14,13 @@
 
 import { rollStats, rollSkills, STAT_KEYS_ORDER, spellPoints, spellPointMultiplier } from '../systems/chargen.js';
 import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsModifier, healingRateModifier } from '../combat/formulas.js';   // U10: the derived block
-import { tagEffect, biographySkillBonuses } from '../systems/biography.js';   // S3e
+import { tagEffect, biographySkillBonuses, digestRepChanges } from '../systems/biography.js';   // S3e
+import { buildBackstory, repBoxRows } from './chargenArt.js';   // U13
 import { RACE_TEMPLATES, FACES_PER_RACE } from '../systems/races.js';   // S3c/U9
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
-import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, CLASS_LIST_ROWS } from './chargenArt.js';   // U10
+import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, CLASS_LIST_ROWS, PLAYER_REFLEXES, REFLEX_COUNT } from './chargenArt.js';   // U10
 
 export const MAX_STAT_VALUE = 100;   // FormulaHelper.MaxStatValue
 
@@ -52,7 +53,9 @@ export function skillDown(working, rolled, pool) {
 // sequence is its own slice. What matters for the effects is the
 // RELATIVE position - biography before the bonus-skill screen, so its
 // bonuses show while the player distributes.
-const STATES = ['name', 'race', 'gender', 'face', 'class', 'biography', 'stats', 'skills', 'done'];
+// U13: REFLEXES closes the flow, where DFU's wizard also puts it
+// (SelectReflexes sits after AddBonusSkills, before the Summary).
+const STATES = ['name', 'race', 'gender', 'face', 'class', 'biography', 'stats', 'skills', 'reflexes', 'done'];
 
 export class ChargenFlow {
   /** careers: [{ name, career }] x18 (loaded from CLASS*.CFG). */
@@ -72,6 +75,13 @@ export class ChargenFlow {
     this.biogFor = null;
     this.biogQuestionIndex = 0;
     this.biographyEffects = [];
+    // U13: PlayerReflexes.Average is the picker's own starting value
+    // (ReflexPicker.cs:98), and the two consumers - the melee timer
+    // and the monster multi-attack gate - were already reading it.
+    this.reflexes = PLAYER_REFLEXES.Average;
+    this.backStory = [];        // U13: the composed biography prose
+    this.repChanges = null;     // and the per-group totals it changed
+    this.biogRepBox = null;     // the open reputation box, if any
     this.raceConfirm = null;   // U11: the open race-description box, if any
     // AUDIT 17g F5: the description source, so BOTH the click and the
     // keyboard confirm open the same box. Null until the art loads.
@@ -184,7 +194,17 @@ export class ChargenFlow {
     for (const e of a.effects) this.biographyEffects.push(tagEffect(e, this.biogQuestionIndex));
     const total = this.biogFor(this.classIndex).questions.length;
     if (this.biogQuestionIndex < total - 1) { this.biogQuestionIndex++; this.cursor = 0; }
-    else this._leaveBiography();
+    else {
+      // U13: the last answer composes the BACKSTORY and pops the
+      // reputation box (CreateCharBiography.cs:143-152) - a
+      // ClickAnywhereToClose message box on TEXT.RSC 35, whose %r1..%r5
+      // are DigestRepChanges' per-group totals.
+      const b = this.biogFor(this.classIndex);
+      this.backStory = buildBackstory?.(b.backstoryId, this.biographyEffects) ?? [];
+      this.repChanges = digestRepChanges(this.biographyEffects);
+      this.biogRepBox = repBoxRows?.(this.repChanges) ?? null;
+      if (!this.biogRepBox?.length) this._leaveBiography();
+    }
     return true;
   }
 
@@ -248,7 +268,10 @@ export class ChargenFlow {
       // the ten answer buttons are digits 1-0 on the keyboard; the
       // flow's own cursor walks them for the probe and the phone
       const q = this.biogQuestion();
-      if (!q) { this._leaveBiography(); return; }
+      if (!q && !this.biogRepBox) { this._leaveBiography(); return; }
+      // the reputation box is MODAL and closes on any key
+      // (ClickAnywhereToClose), then the screen ends
+      if (this.biogRepBox) { this.biogRepBox = null; this._leaveBiography(); return; }
       if (action === 'up') this.cursor = (this.cursor + q.answers.length - 1) % q.answers.length;
       else if (action === 'down') this.cursor = (this.cursor + 1) % q.answers.length;
       else if (action === 'confirm') this.answerBiography(this.cursor);
@@ -265,6 +288,15 @@ export class ChargenFlow {
       else if (action === 'back') this.state = 'class';
       return;
     }
+    if (s === 'reflexes') {
+      // ReflexPicker: five rows, VeryHigh at the top. Classic has no
+      // keyboard path (you click a row), so up/down walk them.
+      if (action === 'up') this.reflexes = Math.max(0, this.reflexes - 1);
+      else if (action === 'down') this.reflexes = Math.min(REFLEX_COUNT - 1, this.reflexes + 1);
+      else if (action === 'confirm') this.state = 'done';
+      else if (action === 'back') { this.state = 'skills'; this.cursor = 0; }
+      return;
+    }
     if (s === 'skills') {
       const total = this.skillRows().reduce((a, [, ids]) => a + ids.length, 0);
       const at = this._skillAt(this.cursor);
@@ -273,7 +305,7 @@ export class ChargenFlow {
       else if (action === 'plus' && at) { const r = skillUp(this.skills[at.id], this.pools[at.group]); this.skills[at.id] = r.working; this.pools[at.group] = r.pool; }
       else if (action === 'minus' && at) { const r = skillDown(this.skills[at.id], this.rolledSkills[at.id], this.pools[at.group]); this.skills[at.id] = r.working; this.pools[at.group] = r.pool; }
       else if (action === 'reroll') this.reroll();
-      else if (action === 'confirm' && this.pools.primary === 0 && this.pools.major === 0 && this.pools.minor === 0) this.state = 'done';
+      else if (action === 'confirm' && this.pools.primary === 0 && this.pools.major === 0 && this.pools.minor === 0) this.state = 'reflexes';
       else if (action === 'back') { this.state = 'stats'; this.cursor = 0; }
       return;
     }
@@ -301,12 +333,13 @@ export class ChargenFlow {
     if (hit.setCursor != null) { this.cursor = hit.setCursor; return true; }
     if (hit.setClass != null) { this.classIndex = hit.setClass; return true; }
     if (hit.answerBiography != null) return this.answerBiography(hit.answerBiography);
+    if (hit.setReflexes != null) { this.reflexes = hit.setReflexes; return true; }
     return false;
   }
 
   get done() { return this.state === 'done'; }
   result() {
-    return { name: this.name, gender: this.gender, race: this.race.key, raceId: this.race.id, faceIndex: this.faceIndex, careerIndex: this.classIndex, career: this.career, stats: this.stats, skills: this.skills, biographyEffects: this.biographyEffects };
+    return { name: this.name, gender: this.gender, race: this.race.key, raceId: this.race.id, faceIndex: this.faceIndex, careerIndex: this.classIndex, career: this.career, stats: this.stats, skills: this.skills, biographyEffects: this.biographyEffects, reflexes: this.reflexes, backStory: this.backStory };
   }
 
   // ---- drawing ----

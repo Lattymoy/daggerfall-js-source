@@ -1361,3 +1361,62 @@ command we implement bar the twelve `&`.
 Probed + eyeballed: the classic BIOGRAPHY screen with "What school of
 magic have you been studying the longest?" and its six answers in two
 columns, the picked one in the classic dark red.
+
+## U13: REFLEXES + THE BACKSTORY (2026-08-18)
+
+The two pieces S3e left flagged, and the ones that close chargen.
+
+**REFLEXES** (CHAR05I0.IMG + the CHAR05I1.IMG highlight strip). The
+info panel at (0,15) carries TEXT.RSC 307 - classic's own explanation
+that reflexes set "the overall speed of the game" - and the picker
+sits at (127,148): five 66x9 rows stacked, VeryHigh at the top, with
+the 66x45 highlight strip banded five ways. DFU draws band
+`0.2 * (4 - value)` in Unity's BOTTOM-UP texcoords, which is band
+`value` counted from the top; the strip's own baked offset is
+(127,148), the picker position exactly.
+
+**This screen was the only missing piece - the mechanics were already
+live.** Both consumers have been in the port for slices:
+`EnemyAttack`'s melee timer (`+= 450 * (reflexes - 2)`, enemyAttack.js)
+and the monster multi-attack gate (`50 - 10 * (reflexes - 2)`,
+formulas.js), and both hosts already passed `playerEntity.reflexes`.
+They were reading a hardcoded Average because nothing could set it.
+Picking Very High now genuinely makes monsters swing sooner and land
+fewer of their extra attacks. Probed: the pick reaches the entity.
+
+**THE BACKSTORY.** `GenerateBackstory` (BiogFile.cs:169-232): the
+class's TEXT.RSC record (4116 + classIndex) is prose carrying %q1..%q12
+and %q1a..%q12a macros, each expanding to the FIRST text line of a
+record the player's own answers named. The subtlety worth recording:
+both the '#' and the '!' token of a question land in the SAME
+per-question list, because `tokenLists` is indexed by the QUESTION and
+not by the prefix - so %qN is that list's first entry and %qNa its
+second (BiogFileMCP.cs:150-161, :306-317). A question with no token of
+that kind expands to NOTHING, which is what leaves the prose reading
+cleanly. Live over real data: the Mage backstory is 62 rows, and its
+six macros all resolve - "%q1" became "sending sparks of flame and ice
+flying around the yard", which is the Destruction answer's own record.
+
+**THE REPUTATION BOX.** The last biography answer composes the
+backstory and pops TEXT.RSC 35 in a ClickAnywhereToClose box, its
+%r1..%r5 filled from `DigestRepChanges` - the per-group totals the
+twelve answers moved. Probed live: "Commoners: -5" over
+[-5, 0, 5, 5, 0]. The box is MODAL: any key closes it AND ends the
+screen, which is the pin that catches a half-wired dismissal.
+
+Two of DFU's guards here are DEFENSIVE and unreachable, and are ported
+WITHOUT pins rather than with fake ones: DigestRepChanges' `rf` arm
+(the split never parses a faction id anyway) joins the two BIOG parser
+rules S3e already recorded.
+
+Pins: `test/biography.test.js` grows to 21, the five new laws each
+mutation-proven.
+Probed + eyeballed: the REFLEXES screen with classic's own text and
+the highlight band on AVERAGE, and the reputation box carrying the
+real deltas.
+
+FLAGGED, still: the custom-class path (CreateCharCustomClass - the
+gear law already handles `isCustom`, only the screen is missing) and
+the port's overall wizard ORDER, which still asks the name first and
+the face early where DFU asks race, gender, class, biography, name,
+face. Chargen is otherwise complete.

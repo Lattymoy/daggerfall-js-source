@@ -130,7 +130,8 @@ function walkChargen(onDone) {
   key('Equal', 6); key('Enter');      // spend the 6-point stat pool
   key('Equal', 6); key('ArrowDown', 3);
   key('Equal', 6); key('ArrowDown', 3);
-  key('Equal', 6); key('Enter');      // the three skill pools -> done
+  key('Equal', 6); key('Enter');      // the three skill pools -> reflexes
+  key('Enter');                       // U13: the reflex pick -> done
   return w;
 }
 

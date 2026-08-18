@@ -78,6 +78,17 @@ test('chargen ui: the flow end to end, conservation, confirm gates', () => {
   flow.input('down'); flow.input('down'); flow.input('down');
   for (let i = 0; i < 6; i++) flow.input('plus');
   flow.input('confirm');
+  // U13: REFLEXES closes the flow (DFU's SelectReflexes sits after
+  // AddBonusSkills), starting on Average and clamped at both ends.
+  assert.equal(flow.state, 'reflexes');
+  assert.equal(flow.reflexes, 2, 'PlayerReflexes.Average is the picker\'s own start');
+  flow.input('up');
+  assert.equal(flow.reflexes, 1);
+  flow.input('up'); flow.input('up');
+  assert.equal(flow.reflexes, 0, 'VeryHigh is the top row, and it clamps');
+  flow.input('down'); flow.input('down');
+  assert.equal(flow.reflexes, 2);
+  flow.input('confirm');
   assert.ok(flow.done);
   const r = flow.result();
   assert.equal(r.name, 'Mac');
@@ -86,6 +97,7 @@ test('chargen ui: the flow end to end, conservation, confirm gates', () => {
   assert.equal(r.raceId, 3, 'the Races enum is 1-based');
   assert.equal(r.faceIndex, 2);
   assert.equal(r.careerIndex, 0);
+  assert.equal(r.reflexes, 2, 'the pick rides the result');
   assert.equal(Object.values(r.stats).reduce((a, b) => a + b, 0), baseTotal + pool0);
 });
 
