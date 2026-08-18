@@ -26,12 +26,9 @@
 // verbatim TEXT.RSC 2200 prompt with Male/Female, and the race's
 // DescriptionID with Yes/No).
 //
-// FLAGGED loud: the SPECIAL ADVANTAGES/DISADVANTAGES window
-// (CreateCharSpecialAdvantageWindow) pends U20b - the builder's own
-// two buttons answer loudly until it lands, and the difficulty
-// tally's advantageAdjust/disadvantageAdjust terms stay 0.
-// (The CUSTOM-CLASS flag this note carried retired with U20a - the
-// builder ships; the sentence went with it.)
+// (This note used to carry two flags. The CUSTOM-CLASS one retired
+// with U20a and the SPECIAL ADVANTAGES one with U20b - both ship, and
+// both sentences went with them.)
 
 import { ImgFile } from '../formats/imgFile.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
@@ -46,6 +43,7 @@ import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './m
 import { FACES_PER_RACE, raceById, raceArt } from '../systems/races.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { daggerY, REP_GREEN, REP_RED, REP_EXIT, REP_BAR_TOP, REP_BAR_BOTTOM, REP_GROUPS, HELP_TOPICS } from '../systems/customClass.js';   // U20a
+import { labelRows, labelFor, LABEL_ORIGIN, TANDEM_SPACING } from '../systems/specialAdvantages.js';   // U20b
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 
 // DaggerfallUI.cs:52-62 - the colours these windows actually use.
@@ -134,6 +132,18 @@ export const CUSTOM_ADVANTAGE = Object.freeze([249, 98, 66, 22]);
 export const CUSTOM_DISADVANTAGE = Object.freeze([249, 122, 66, 22]);
 export const CUSTOM_REP = Object.freeze([249, 146, 66, 22]);
 export const CUSTOM_EXIT = Object.freeze([263, 172, 38, 21]);
+
+// U20b - CreateCharSpecialAdvantageWindow. CUST01I0.IMG is the window
+// (168x198) and CUST02I0.IMG (168x31) is the OVERLAY that retitles it
+// from Disadvantages to Special Advantages (:243-254) - the same art
+// serves both, which is why only the advantages arm draws the strip.
+// The panel is Left/Top (:236-237, :248-249), NOT the Center/Middle
+// the reputation window uses (:110-111), so it sits at the origin.
+export const SPECIAL_ADV_PANEL = Object.freeze([0, 0, 168, 198]);
+export const SPECIAL_ADV_OVERLAY_H = 31;
+export const SPECIAL_ADV_ADD = Object.freeze([80, 4, 72, 22]);     // addAdvantageButtonRect (:190)
+export const SPECIAL_ADV_EXIT = Object.freeze([6, 179, 155, 13]);  // exitButtonRect (:191)
+export const ADV_PICKER_ITEM_COUNT = 12;                           // advPickerItemCount (:45)
 export const CUSTOM_HP_LABEL = Object.freeze([285, 55]);
 export const CUSTOM_DAGGER_X = 220;
 /** The skill label sits at (3,2) inside its button (:227). */
@@ -232,7 +242,7 @@ export const reflexRowRect = (i, origin = REFLEX_PICKER) =>
 export const CLASS_LIST_ROWS = 9;   // ListBox.cs:36 rowsDisplayed
 const LIST_ROWS = CLASS_LIST_ROWS, LIST_ROW_SPACING = 1;
 
-const IMG_NAMES = ['CHAR00I0.IMG', 'CHAR01I0.IMG', 'CHAR02I0.IMG', 'CHAR03I0.IMG', 'CHAR04I0.IMG', 'PICK00I0.IMG', 'TMAP00I0.IMG', 'CHAR02I1.IMG', 'CHAR03I1.IMG', 'BIOG00I0.IMG', 'CHAR05I0.IMG', 'CHAR05I1.IMG', 'BUTN01I0.IMG', 'BUTN02I0.IMG', 'CUST00I0.IMG', 'CUST08I0.IMG', 'CUST03I0.IMG'];
+const IMG_NAMES = ['CHAR00I0.IMG', 'CHAR01I0.IMG', 'CHAR02I0.IMG', 'CHAR03I0.IMG', 'CHAR04I0.IMG', 'PICK00I0.IMG', 'TMAP00I0.IMG', 'CHAR02I1.IMG', 'CHAR03I1.IMG', 'BIOG00I0.IMG', 'CHAR05I0.IMG', 'CHAR05I1.IMG', 'BUTN01I0.IMG', 'BUTN02I0.IMG', 'CUST00I0.IMG', 'CUST08I0.IMG', 'CUST03I0.IMG', 'CUST01I0.IMG', 'CUST02I0.IMG'];
 
 let _art = null;          // { imgs: Map<name, {tex,w,h}>, picker: DFBitmap }
 let _faces = null;        // { key, tex[] } - the loaded race/gender face set
@@ -623,7 +633,7 @@ function drawClass(renderer, m, font, flow) {
   // - not a centred window recomputed here every frame. U20a: the
   // list's LAST row is Custom.
   const names = Array.from({ length: flow.classRowCount() }, (_, i) => flow.classRowName(i));
-  const [, , h] = drawListPicker(renderer, m, font, names, flow.classScroll ?? 0, flow.classIndex);
+  const [, , h] = drawListPicker(renderer, m, font, names, flow.classScroll ?? 0, flow.classListIndex);
   flow._classRowH = h;   // the hit path has no font (the _genderBox pattern)
   drawClassConfirm(renderer, m, font, flow);
   return true;
@@ -682,6 +692,35 @@ function drawCustomRep(renderer, m, font, flow) {
   return true;
 }
 
+/** U20b - CreateCharSpecialAdvantageWindow. ONE window serves both
+ *  lists: CUST01I0 is the body, and the advantages arm lays CUST02I0
+ *  over its top strip to retitle it (:243-254). The label block is the
+ *  laws module's own layout (UpdateLabels), so the draw and the click
+ *  test cannot disagree about where a row is. The primary/secondary
+ *  pickers are DaggerfallListPickerWindows pushed OVER this one, the
+ *  same component the class list and the skill picker ride. */
+function drawSpecialAdv(renderer, m, font, flow) {
+  const c = flow.custom;
+  const [px, py] = SPECIAL_ADV_PANEL;
+  drawImg(renderer, img('CUST01I0.IMG'), m, px, py);
+  if (c.sub === 'advantage') drawImg(renderer, img('CUST02I0.IMG'), m, px, py);
+  // DFU's rows are TextLabels with their own click handlers, so a
+  // click only removes an item when it lands ON the text - the widths
+  // are cached here for the hit test, the `_rowH` idiom.
+  const rows = labelRows(c.sub === 'advantage' ? c.advantages : c.disadvantages);
+  for (const row of rows) {
+    shadowText(renderer, font, row.text, m, px + LABEL_ORIGIN[0], py + row.y);
+    row.w = measureText(font.fnt, row.text);
+  }
+  c._advRows = rows;
+  // the two pickers push over the window (:271-278)
+  if (c.pickList) {
+    const [, , h] = drawListPicker(renderer, m, font, c.pickList.map(labelFor), c.pickScroll, c.pickCursor);
+    c._rowH = h;
+  }
+  return true;
+}
+
 /** U20a - CreateCharCustomClass (CUST00I0.IMG full-screen): the name
  *  box, the freeEdit stats rollout, the twelve skill buttons' labels,
  *  the HP label and the difficulty DAGGER (CUST08I0 at x220, its Y
@@ -716,6 +755,8 @@ function drawCustomClass(renderer, m, font, flow) {
     c._rowH = h;
   } else if (c.sub === 'rep') {
     drawCustomRep(renderer, m, font, flow);
+  } else if (c.sub === 'advantage' || c.sub === 'disadvantage') {
+    drawSpecialAdv(renderer, m, font, flow);
   }
   // the refusal / help boxes are ClickAnywhereToClose parchment
   if (c.box) drawMessageBox(renderer, m, font, layoutMessageBox(font, c.box));
@@ -1047,6 +1088,36 @@ export function chargenHit(flow, vx, vy) {
       // RepPanel_OnMouseClick takes PANEL-local coords; the band test
       // and the column thresholds live in the pure law
       if (ly >= REP_BAR_TOP && ly <= REP_BAR_BOTTOM) return { repClick: [lx, ly] };
+      return null;
+    }
+    if (c.sub === 'advantage' || c.sub === 'disadvantage') {
+      // the pickers push OVER the window, so they answer first
+      if (c.pickList) {
+        const [ox, oy] = PICK_PANEL;
+        const lx = vx - ox, ly = vy - oy;
+        if (lx >= RECTS.pickPrev[0] && ly >= RECTS.pickPrev[1] && lx < RECTS.pickPrev[0] + 9 && ly < RECTS.pickPrev[1] + 9) return { pickStep: -1 };
+        if (lx >= RECTS.pickNext[0] && ly >= RECTS.pickNext[1] && lx < RECTS.pickNext[0] + 9 && ly < RECTS.pickNext[1] + 9) return { pickStep: 1 };
+        const [plx, ply, plw] = RECTS.pickList;
+        if (lx >= plx && lx < plx + plw && ly >= ply) {
+          const row = Math.floor((ly - ply) / (c._rowH || 1));
+          const idx = (c.pickScroll ?? 0) + row;
+          if (row >= 0 && row < LIST_ROWS && idx < c.pickList.length) return { pickRow: idx };
+        }
+        return null;
+      }
+      // the window's own handlers hang off the PANEL (:236-237), so a
+      // click outside its 168x198 bounds never reaches it
+      const [px, py, pw, ph] = SPECIAL_ADV_PANEL;
+      const lx = vx - px, ly = vy - py;
+      if (lx < 0 || ly < 0 || lx >= pw || ly >= ph) return null;
+      if (lx >= SPECIAL_ADV_ADD[0] && ly >= SPECIAL_ADV_ADD[1]
+        && lx < SPECIAL_ADV_ADD[0] + SPECIAL_ADV_ADD[2] && ly < SPECIAL_ADV_ADD[1] + SPECIAL_ADV_ADD[3]) return { advAdd: true };
+      if (lx >= SPECIAL_ADV_EXIT[0] && ly >= SPECIAL_ADV_EXIT[1]
+        && lx < SPECIAL_ADV_EXIT[0] + SPECIAL_ADV_EXIT[2] && ly < SPECIAL_ADV_EXIT[1] + SPECIAL_ADV_EXIT[3]) return { advExit: true };
+      for (const row of c._advRows ?? []) {
+        if (lx >= LABEL_ORIGIN[0] && lx < LABEL_ORIGIN[0] + (row.w ?? 0)
+          && ly >= row.y && ly < row.y + TANDEM_SPACING) return { advRemove: row.index };
+      }
       return null;
     }
     if (inRect(CUSTOM_EXIT)) return { customExit: true };

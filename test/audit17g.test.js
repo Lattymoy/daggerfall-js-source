@@ -44,7 +44,7 @@ test('17g F2: TEXT.RSC really does mix the two alignments', () => {
 test('17g F3: chargenHit returns null without art instead of throwing', () => {
   // every branch but `class` already did; that one derefed the art
   // directly, so the ONE state that needs it was the one that crashed.
-  const flow = { state: 'class', careers: [{ name: 'Mage' }], classIndex: 0, classScroll: 0 };
+  const flow = { state: 'class', careers: [{ name: 'Mage' }], classListIndex: 0, classScroll: 0 };
   assert.equal(chargenHit(flow, 100, 100), null);
   for (const state of ['name', 'race', 'gender', 'face', 'stats', 'skills', 'done']) {
     assert.doesNotThrow(() => chargenHit({ ...flow, state, skillRows: () => [], cursor: 0 }, 100, 100), state);
@@ -87,21 +87,21 @@ test('17g F6: the class list window moves only when the selection leaves it', ()
   assert.equal(CLASS_LIST_ROWS, 9);
   assert.equal(f.classScroll, 0);
   for (let i = 0; i < 8; i++) f.input('down');      // to index 8, the last visible row
-  assert.equal(f.classIndex, 8);
+  assert.equal(f.classListIndex, 8);
   assert.equal(f.classScroll, 0, 'still inside the window: no scroll at all');
   f.input('down');                                   // index 9 falls below
   assert.equal(f.classScroll, 1, 'and the window moves by exactly one');
   for (let i = 0; i < 4; i++) f.input('up');         // back to 5, inside again
-  assert.equal(f.classIndex, 5);
+  assert.equal(f.classListIndex, 5);
   assert.equal(f.classScroll, 1, 'coming back does NOT pull the window');
   f.input('up'); f.input('up');                      // 3, still >= scroll
   assert.equal(f.classScroll, 1);
   f.input('up'); f.input('up'); f.input('up');       // 0, now above
-  assert.equal(f.classIndex, 0);
+  assert.equal(f.classListIndex, 0);
   assert.equal(f.classScroll, 0);
   // and the window never runs past the end
   for (let i = 0; i < 17; i++) f.input('down');
-  assert.equal(f.classIndex, 17);
+  assert.equal(f.classListIndex, 17);
   assert.equal(f.classScroll, 18 - CLASS_LIST_ROWS);
 });
 

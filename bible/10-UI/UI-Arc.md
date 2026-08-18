@@ -2019,12 +2019,15 @@ FLAGGED to U20b: `CreateCharSpecialAdvantageWindow` - the builder's
 two Edit Special Advantages/Disadvantages buttons answer loudly and
 the difficulty tally's advantage/disadvantage terms stay 0 until it
 ships. Recorded in the Ledger: the hidden ResetBonusPool shortcut,
-the dagger's fading trail, the rep window's stale-bar quirk, and the
-port's conflation of the class ListBox's selection with the
-document's class index (so backing out of a finished custom class
-re-opens the list on the affinity row, where DFU keeps the two apart).
+the dagger's fading trail, and the rep window's stale-bar quirk.
 
-Pins (test/customclass.test.js, 26): the difficulty tally and its
+The class-index CONFLATION this paragraph used to carry as a fourth
+item is FIXED, not recorded - see AUDIT 17m. The sentence claimed the
+Ledger held it and the Ledger never did, which is the drift the
+Ledger exists to prevent: a departure narrated in an arc doc but
+absent from the table is not recorded at all.
+
+Pins (test/customclass.test.js, 28): the difficulty tally and its
 multiplier at both ends of the legal band; the dagger's truncation
 and clamps; the picker's alphabetical unassigned list; the built
 career's DFCareer defaults, skills and stats, with its x0.50 spell
@@ -2049,3 +2052,223 @@ the custom starting kit, and sGroupReputations carrying the builder's
 seed with the biography's changes added on top. Eyeballed: the stone
 window with its three skill panels and the dagger exactly on AVERAGE,
 and the reputation window with its green bar and refusal parchment.
+
+## AUDIT 17m - the picker's row is not the document's class
+
+2026-08-18. U20a's own adversarial review came back after the slice
+had shipped, and one finding survived every lens: the port carried
+DFU's TWO class indices in ONE field.
+
+DFU keeps them apart and the separation is load-bearing.
+`characterDocument.classIndex` is the document's class, written in
+exactly three places - DaggerfallStartNewGameWizard.cs:343 (the
+questions path), :364 (a list pick, copying the window's
+SelectedClassIndex across) and :382 (a custom class's biography
+AFFINITY). `listBox.SelectedIndex` is CreateCharClassSelect's own
+highlighted row; the wizard never writes it, and it SURVIVES a
+revisit because SetClassSelectWindow (:158-167) reuses the window
+behind a `== null` guard - unlike SetCustomClassWindow (:170-175),
+which reconstructs every time.
+
+The port's single `classIndex` was both. So `customExit`, writing the
+affinity for the biography quiz, also moved the class picker and
+scrolled to it. The consequence was a lost character, not a cosmetic
+slip: build a custom class, press Escape off the biography-method
+screen (the wizard's own cancel arm, :458-461), and the list came
+back with a STANDARD class highlighted. Confirm there and `useClass`
+took the non-Custom branch into `_acceptStandardClass`, which nulls
+`customCareer` - the built class was gone and the player became a
+class they had never picked. DFU, with the Custom row still selected,
+re-opens the builder.
+
+The fix is the second field, not a guard: `classListIndex` is the
+picker's row and `classIndex` is the document's. Every list gesture -
+the arrow clamp, the click, the row hit, the Custom-row test, the
+description lookup, both draws - moves the picker; the document is
+written only by the three accept arms, and `_acceptStandardClass`
+now performs :364's copy explicitly instead of inheriting it from the
+shared field. `_adoptCareer` is the shared tail so the two arms cannot
+drift apart again.
+
+Found on the way, and fixed with it: the builder's keyboard had a
+LIVE `plus` arm against a DEAD `minus` one. The shared overlay table
+(ui/input.js:18) matches `-` inside its character class first, so the
+minus arm never fired from any host - but `+` is not in that class and
+fell through to spend a point. A keyboard could take from the freeEdit
+pool and never give back. DFU has no keyboard stat control on this
+screen at all (StatsRollout's steps are UpDownSpinner *Button*
+handlers, :231-256 and :259-281, mouse only) while the name TextBox
+holds focus unfiltered, so a typed `-` belongs in the CLASS NAME,
+which is what the port already did. The `plus` arm is gone; the pool
+moves by click. Residual, deliberate and small: DFU would type a
+literal `+` where the port's shared table has already spent that key
+on the stats and skills screens, so `+` is inert here rather than
+typed.
+
+And a documentation find that matters more than its size. This arc
+doc claimed the conflation was "Recorded in the Ledger". It was not -
+there is no such row, and there never was. A departure narrated in an
+arc doc but missing from the Ledger table is not recorded at all, and
+the claim actively hid the defect: a reviewer checking whether the
+behaviour was known would read the sentence and stop. The sentence is
+deleted rather than backfilled, because the departure is fixed.
+
+Pins (test/audit17m.test.js, 6), every one mutation-proven - restoring
+the original defect fails three of them: the affinity landing on the
+document with the picker untouched; the whole back-out path ending in
+the BUILDER with the career intact; a list pick copying the row only
+on accept; the questions path leaving the picker alone; the builder's
+keyboard moving no stat while `-` types; and a source sweep failing if
+`customExit` ever writes the picker again or the list art draws the
+document index.
+
+## U20b - the special advantages / disadvantages window
+
+2026-08-18. `CreateCharSpecialAdvantageWindow` - the last chargen
+window the port lacked, and the one that makes U20a's two difficulty
+terms real.
+
+This was never "a missing screen". U20a shipped
+`difficultyPoints(hp, advantageAdjust, disadvantageAdjust)` and nothing
+ever passed the last two arguments, so the whole
+advantage/disadvantage balance was inert: the tally fed
+`advancementMultiplier`, which became `career.advancementMultiplier`,
+which `advancement.js` consumes in `skillUsesForAdvancement`. Every
+custom class advanced at its HP-only rate however many advantages it
+took on. A Scout with Immunity To Fire now carries a multiplier of
+1.442 where it read 0.923 - the balance lever the builder is FOR.
+
+ONE window serves both lists: CUST01I0 is the body and CUST02I0 (168x31)
+lays over its top strip to retitle it from Disadvantages to Special
+Advantages (:243-254), which is why only the advantages arm draws the
+overlay. The panel is Left/Top (:236-237), NOT the Center/Middle the
+reputation window uses (:110-111) - and the screenshot proves that
+deliberate rather than a DFU slip: the window covers the left half and
+leaves the builder's control column AND THE DIFFICULTY DAGGER visible
+on the right, so you watch the dagger climb as you add advantages.
+Every rect is relative to that origin, which is why the add button sits
+at x=80 and the exit strip spans 6..161 inside a 168-wide panel.
+
+THE STRINGS were the slice's real obstacle. DFU resolves them through
+`TextManager` from HardStrings KEYS, and the display text lives in
+StreamingAssets, which the sparse Scripts checkout does not carry. They
+are not in TEXT.RSC either - I searched every record of the real file
+and found nothing, because they were hard-coded in FALL.EXE, which is
+in neither the data directory nor DaggerfallGameFiles.zip. The
+recovered text is DFU's `Internal_Strings.csv`, fetched out of the repo
+tree, whose own header says it "stores text that was hard-coded in
+FALL.EXE" - so the labels are classic's, by way of DFU's recovery.
+
+THE BIT LAYOUT was ground-truthed before anything was built on it. The
+port keeps a career in its raw CLASS.CFG bitfield form, not DFU's
+decoded properties, so `parseCareerData` writes bitfields: forbidden
+proficiencies at 0..5 and expert at 16..21 of one u32, armors at 6..8,
+shields at 9..12, the special abilities in the ability bitfield's low
+byte with light magery at 6..7, darkness at 8..9 and the spell-point
+multiplier at 10..12 above them. Decoding the real 18-class corpus
+through those positions returns exactly what classic's classes should
+be - Archer is the one class expert in missile weapons, Sorcerer
+carries noRegenSpellPoints, Monk forbids all three armors, Warrior
+forbids nothing, Knight forbids leather - which is the check that the
+positions are right rather than merely self-consistent.
+
+The pins decode back through the port's OWN consumers -
+`spellPointMultiplier`, `hasSpecialAbility`, `careerAttackModifier` -
+rather than re-asserting the literals just written (TEST THE SHAPE THE
+PRODUCER MINTS). That is what caught the one real subtlety: Increased
+Magery must REPLACE the multiplier bits, not OR into them, because the
+builder starts at Times_0_50 and an OR leaves a corrupt value.
+
+Counted rather than remembered: the difficulty table has FIFTY entries,
+not the 53 an earlier reading of this slice recorded. The port's table
+diffs key-for-key against the C# literal with no duplicates, and the
+pin asserts 50.
+
+One departure, recorded in the Ledger: DFU pushes a half-built item
+onto the list before opening the secondary picker and pops it on
+cancel; the port never pushes it. Same end state, and no frame in which
+a redraw could catch a primary with no secondary under it.
+
+Pins (test/specialadvantages.test.js, 27), each mutation-proven -
+dropping the two adjust terms from the tally fails four of them, and
+the ONLY-ONE limit, the equal-secondary pair rule, the magery replace
+and the expert-proficiency shift each fail their own. Probed live by
+clicks: the window over the builder, an eleven-row primary list, a
+secondary pick landing as Immunity/To Fire with the +6 tandem squish,
+the dagger moving off AVERAGE because of it, a label click removing it
+and the tally following, and immunityFlags 8 on the built career at the
+far end.
+
+## AUDIT 17n - the parity pass over U20b
+
+2026-08-18. Mac asked for a comprehensive audit after U20b shipped.
+The data transcription came back clean; the wiring did not.
+
+WHAT WAS CLEAN, checked mechanically rather than by eye: the 50-entry
+difficulty table diffs key-for-key AND value-for-value against the C#
+literal with no duplicates; all 71 display labels match DFU's recovered
+FALL.EXE text exactly; every secondary list matches its DFU array in
+order; the builder is reconstructed on re-entry on both sides, so the
+pick lists reset; a career's flags survive the save round trip (the
+career is spread as plain CFG data, save.js:61,88 - worth checking
+because AUDIT 17h caught exactly this shape dropping player
+reputation); and parseCareerData leaves every numeric field finite and
+unsigned under the maximal fourteen-pick set.
+
+F1 - THE ENEMY-TYPE ATTACK MODIFIER HAD NEVER APPLIED TO ANYBODY, and
+it was broken in two independent places, which is why neither half
+showed up as an obvious bug.
+
+DFU reads `attacker.Career.<group>AttackModifier` for every attacker
+(FormulaHelper.cs:993-1030). The port flattened that byte onto the
+entity, and only the FOE builder ever set it (enemyEntity.js:105). A
+player carries `career` and no flat field, so
+`bonusOrPenaltyByEnemyType`'s null guard returned 0 on every swing.
+That alone would have been enough.
+
+Underneath it, a second break: `calculateAttackDamage` resolves
+`targetGroup` and threads it to the monster branch and the
+hand-to-hand branch, but the WEAPON branch called
+`weaponAttackDamage` without it - and that function read
+`target.group`, a field NOTHING in the codebase mints. So even a
+correctly-flagged attacker got nothing through the path players
+actually use. DFU has one call taking the target entity
+(FormulaHelper.cs:788) and derives the group inside it; the port split
+that apart and only carried the group down one of the two forks.
+
+The target half of the player's swing was correct all along -
+playerWeapon.js:159 passes `enemyGroupOf(foe.entity.affinity)` - which
+is precisely why this looked wired.
+
+This is NOT a U20b regression. The classic ASSASSIN ships
+attackModifierFlags 0x04, a Humanoid bonus, and has never received it;
+the gap dates to the combat arc. U20b only made the same modifier
+purchasable, at 3-6 difficulty points for a bonus and -4 for a phobia,
+which is what turned a dormant gap into one the player pays for.
+
+F2 - WHICH PICKS ACTUALLY DO ANYTHING. A window that writes a career
+flag no system reads is not a working feature, and the slice must not
+imply otherwise. Catalogued in the Ledger rather than left to be
+rediscovered. LIVE: Increased Magery (maxMagicka reads the
+multiplier), the tolerance quartet (spellcast.js), Rapid Healing
+(rest.js), Inability To Regen Spell Points, and - after F1 - Bonus to
+hit and Phobia. INERT for want of a consuming subsystem: Spell
+Absorption, Regenerate Health, Acute Hearing, Athleticism, Adrenaline
+Rush, Damage From Sunlight/Holy Places, and all four Forbidden
+categories plus Expertise In. The flags are written correctly and
+persist; they simply have no reader yet.
+
+F3 - U20b UNBLOCKS THREE STANDING INTERIMS. Two source notes said the
+career advantage flags "pend" a decode - formulas.js on adrenaline
+rush and dungeonContext.js on the Athleticism fatigue multiplier.
+That decode now exists (SPECIAL_ABILITY_BITS beside
+rest.js's hasSpecialAbility), so what actually pends is the EFFECT,
+not the read. Both sentences re-pointed rather than left to imply a
+missing capability the port now has.
+
+Pins (test/audit17n.test.js, 7), each mutation-proven - reverting
+either half of F1 fails three and one respectively, and dropping the
+level scaling fails three. F1 is pinned on both entity shapes, on an
+attacker carrying neither, through real damage via
+calculateAttackDamage, and against the real CLASS11.CFG so the
+Assassin claim fails if the corpus ever disagrees.

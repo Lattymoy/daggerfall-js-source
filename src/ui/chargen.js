@@ -14,6 +14,7 @@
 
 import { rollStats, rollSkills, STAT_KEYS_ORDER, spellPoints, spellPointMultiplier } from '../systems/chargen.js';
 import { QUESTION_COUNT, NO_CLASS_INDEX, displayQuestion, pickQuestionIndices, answerWeightIndex, resolveClassIndex } from '../systems/classQuestions.js';   // U18
+import { ADVANTAGE_KEYS, DISADVANTAGE_KEYS, ONLY_ONE_KEYS, MAX_ITEMS, secondaryListFor, advDisAdjustment, cannotAdd, totalAdjust, parseCareerData } from '../systems/specialAdvantages.js';   // U20b
 import { HP_MIN, HP_MAX, HP_DEFAULT, DIFFICULTY_MIN, DIFFICULTY_MAX, FREE_EDIT_MIN, FREE_EDIT_MAX, STAT_DEFAULT, difficultyPoints, availableSkills, buildCustomCareer, classAffinityIndex, repClick, repPointsToDistribute, HELP_TOPICS } from '../systems/customClass.js';   // U20a
 import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsModifier, healingRateModifier } from '../combat/formulas.js';   // U10: the derived block
 import { tagEffect, biographySkillBonuses, digestRepChanges } from '../systems/biography.js';   // S3e
@@ -98,7 +99,17 @@ export class ChargenFlow {
     this.gender = 'male';
     this.raceIndex = 0;      // RACE_TEMPLATES order (Breton first)
     this.faceIndex = 0;      // 0..9 within the race/gender FACE CIF
-    this.classIndex = 0;
+    // AUDIT 17m: DFU carries these as TWO members and the port had
+    // collapsed them into one. `characterDocument.classIndex` is the
+    // DOCUMENT's class - written at DaggerfallStartNewGameWizard.cs:343
+    // (the questions path), :364 (a list pick) and :382 (a custom
+    // class's biography AFFINITY). `listBox.SelectedIndex` is the class
+    // picker's own highlighted row, which the wizard NEVER writes and
+    // which survives because SetClassSelectWindow (:158-167) REUSES the
+    // window. One field doing both jobs meant a finished custom class
+    // moved the list's selection onto the affinity row.
+    this.classIndex = 0;       // characterDocument.classIndex
+    this.classListIndex = 0;   // CreateCharClassSelect's listBox.SelectedIndex
     this.classScroll = 0;      // AUDIT 17g F6: the list's own scroll index
     // S3e: the biography screen's state. biogFor is the question-set
     // source (the host loads BIOG<class>T0.TXT); null until it does,
@@ -185,13 +196,18 @@ export class ChargenFlow {
     this.summaryPoolBox = null;
   }
 
-  /** U20a: a finished custom class OVERRIDES the list - classIndex
-   *  then holds the AFFINITY index (the biography quiz's), exactly as
-   *  DFU's characterDocument carries career + classIndex separately.
-   *  NULL while the CUSTOM ROW is merely highlighted: that row has no
-   *  career behind it (DFU's selectedClass is null there, :74), and
-   *  the raw index read THREW - the live probe caught it the moment
-   *  the arrow walk landed on the row. */
+  /** U20a: a finished custom class OVERRIDES the careers array -
+   *  classIndex then holds the AFFINITY index (the biography quiz's),
+   *  exactly as DFU's characterDocument carries career + classIndex
+   *  separately.
+   *
+   *  AUDIT 17m: classIndex is the DOCUMENT's index, so it never names
+   *  the Custom ROW - highlighting that row moves classListIndex and
+   *  leaves this alone. The `?.` stays as the guard it always was (a
+   *  document index with no career behind it must read null, not
+   *  throw), but the case it was WRITTEN for - the arrow walk landing
+   *  on the Custom row and the raw read throwing, which the live probe
+   *  caught - can no longer reach it. */
   get career() { return this.customCareer ?? this.careers[this.classIndex]?.career ?? null; }
   get race() { return RACE_TEMPLATES[this.raceIndex]; }
 
@@ -288,8 +304,8 @@ export class ChargenFlow {
   _scrollToClass(rows = CLASS_LIST_ROWS) {
     const n = this.classRowCount();
     const max = Math.max(0, n - rows);
-    if (this.classIndex < this.classScroll) this.classScroll = this.classIndex;
-    else if (this.classIndex >= this.classScroll + rows) this.classScroll = this.classIndex - rows + 1;
+    if (this.classListIndex < this.classScroll) this.classScroll = this.classListIndex;
+    else if (this.classListIndex >= this.classScroll + rows) this.classScroll = this.classListIndex - rows + 1;
     this.classScroll = Math.max(0, Math.min(max, this.classScroll));
   }
 
@@ -402,9 +418,10 @@ export class ChargenFlow {
    *  moves to the biography, as SetChooseBioWindow does. */
   _acceptQuestionClass() {
     this.qConfirm = null;
-    this.classIndex = this.qClassIndex;
-    this._scrollToClass();
-    this._acceptStandardClass();
+    // AUDIT 17m: the DOCUMENT only (:343). This used to scroll the
+    // class LIST to the generated class as well, which DFU does not
+    // do - CreateCharClassQuestions_OnClose never touches the picker.
+    this._adoptCareer(this.qClassIndex);
   }
 
   /** ConfirmDialog No: classIndex = noClassIndex, both windows close,
@@ -433,6 +450,17 @@ export class ChargenFlow {
    *  recorded in the Ledger; the earlier draft "tidied" it and was
    *  wrong to. */
   _acceptStandardClass() {
+    // AUDIT 17m: the LIST's row becomes the DOCUMENT's class here and
+    // ONLY here, exactly as :364 copies SelectedClassIndex across. The
+    // two were one field before, so this assignment was implicit.
+    this._adoptCareer(this.classListIndex);
+  }
+
+  /** The shared tail of both accept arms: the document takes a
+   *  standard career (so the `career` getter falls back through the
+   *  careers array) and the wizard moves to the biography. */
+  _adoptCareer(classIndex) {
+    this.classIndex = classIndex;
     this.customCareer = null;
     this._leaveClass();
   }
@@ -450,7 +478,16 @@ export class ChargenFlow {
       statPool: 0,
       statCursor: 0,
       reps: { merchants: 0, peasants: 0, scholars: 0, nobility: 0, underworld: 0 },
-      sub: null,        // null | 'skillPick' | 'help' | 'rep'
+      // U20b: the two windows' pick lists. DFU hands EACH window the
+      // other's list as `otherList` so CannotAddAdvantage can see
+      // across both (:554-586).
+      advantages: [],
+      disadvantages: [],
+      advantageAdjust: 0,
+      disadvantageAdjust: 0,
+      pickList: null,      // U20b: the open primary/secondary picker's keys
+      pickPrimary: null,   // the primary awaiting its secondary
+      sub: null,        // null | 'skillPick' | 'help' | 'rep' | 'advantage' | 'disadvantage'
       pickSlot: null,   // which of the twelve buttons opened the picker
       pickCursor: 0,
       pickScroll: 0,
@@ -461,7 +498,13 @@ export class ChargenFlow {
 
   /** The builder's difficulty tally - U20b's advantage/disadvantage
    *  adjustments join here when that window ships. */
-  customDifficulty() { return difficultyPoints(this.custom?.hp ?? HP_DEFAULT); }
+  customDifficulty() {
+    // U20b: the two adjust terms are REAL now. They were pinned at 0
+    // for the whole of U20a, so every custom class advanced at its
+    // HP-only rate no matter what it took on.
+    return difficultyPoints(this.custom?.hp ?? HP_DEFAULT,
+      this.custom?.advantageAdjust ?? 0, this.custom?.disadvantageAdjust ?? 0);
+  }
 
   /** The freeEdit spinner (StatsRollout.cs:231-276): value clamped to
    *  10..75, the POOL free to go negative - it is a zero-sum ledger,
@@ -516,14 +559,133 @@ export class ChargenFlow {
     if (c.statPool !== 0) { box(302); return; }
     const dp = this.customDifficulty();
     if (dp < DIFFICULTY_MIN || dp > DIFFICULTY_MAX) { box(306); return; }
-    this.customCareer = buildCustomCareer({ name: c.className, hp: c.hp, skills: c.skills, stats: c.stats });
+    this.customCareer = buildCustomCareer({ name: c.className, hp: c.hp, skills: c.skills, stats: c.stats, points: dp });
+    // U20b: ParseCareerData for BOTH windows, after every gate has
+    // passed and immediately before the close (:460-470). The picks
+    // fold onto the career the builder just minted - tolerances,
+    // proficiencies, the magery multiplier, the ability bits.
+    parseCareerData(this.customCareer, [...c.advantages, ...c.disadvantages]);
+    // AUDIT 17m: the affinity lands on the DOCUMENT (:382) and NOWHERE
+    // else. It used to be written onto the one field that was also the
+    // picker's selection, and then scrolled to - so a player who built
+    // a custom class and pressed Escape off the biography method found
+    // the list highlighting a STANDARD class, and confirming there ran
+    // _acceptStandardClass and threw the built career away. DFU reuses
+    // the class window (:158-167) with its listBox untouched, so the
+    // Custom row is still selected and confirming re-opens the builder.
     this.classIndex = classAffinityIndex(c.skills, this.careers);
-    this._scrollToClass();
     // document.reputation* in sGroupReputations order: commoners (the
     // window's PEASANTS column), merchants, scholars, nobility,
     // underworld (PlayerEntity.AssignCharacter :844-848)
     this.customReps = [c.reps.peasants, c.reps.merchants, c.reps.scholars, c.reps.nobility, c.reps.underworld];
     this._leaveClass();
+  }
+
+  // ---- U20b: the special advantages / disadvantages window ----
+
+  /** The builder's two buttons (:246-253). Each opens ONE window over
+   *  the builder; `sub` names which list is being edited. */
+  _openSpecialAdv(which) {
+    const c = this.custom;
+    c.sub = which;                 // 'advantage' | 'disadvantage'
+    c.pickList = null;
+    c.pickPrimary = null;
+    c.pickCursor = 0;
+    c.pickScroll = 0;
+  }
+
+  /** The list the open window is editing, and the OTHER one -
+   *  CannotAddAdvantage reads both (:556-559). */
+  _advList(which = this.custom.sub) { return which === 'advantage' ? this.custom.advantages : this.custom.disadvantages; }
+  _advOther(which = this.custom.sub) { return which === 'advantage' ? this.custom.disadvantages : this.custom.advantages; }
+
+  /** AddAdvantageButton_OnMouseClick (:295-310): silently does nothing
+   *  at seven items - no message, no sound beyond the button's own. */
+  advAdd() {
+    const c = this.custom;
+    if (this._advList().length >= MAX_ITEMS) return;
+    c.pickList = c.sub === 'advantage' ? ADVANTAGE_KEYS : DISADVANTAGE_KEYS;
+    c.pickPrimary = null;
+    c.pickCursor = 0;
+    c.pickScroll = 0;
+  }
+
+  /** PrimaryPicker_OnItemPicked (:312-421) then
+   *  SecondaryPicker_OnItemPicked (:423-437), folded onto the one
+   *  picker seam the port uses. */
+  advPick(index) {
+    const c = this.custom;
+    const key = c.pickList?.[index];
+    if (key == null) return;
+    if (c.pickPrimary == null) {
+      // the ONLY-ONE limit is checked BEFORE the secondary window
+      // opens, and DFU simply returns - the window closes with
+      // nothing added (:340-346, :390-392)
+      if (ONLY_ONE_KEYS.includes(key) && this._advList().some((s) => s.primary === key)) {
+        c.pickList = null;
+        return;
+      }
+      const secondary = secondaryListFor(key);
+      if (!secondary) {
+        const item = { primary: key, secondary: '', difficulty: advDisAdjustment(key, '') };
+        c.pickList = null;
+        if (cannotAdd(item, this._advList(), this._advOther())) return;
+        this._advList().push(item);
+        this._advUpdateAdjust();
+        return;
+      }
+      c.pickPrimary = key;
+      c.pickList = secondary;
+      c.pickCursor = 0;
+      c.pickScroll = 0;
+      return;
+    }
+    // the secondary arm
+    const primary = c.pickPrimary;
+    const item = { primary, secondary: key, difficulty: advDisAdjustment(primary, key) };
+    c.pickList = null;
+    c.pickPrimary = null;
+    if (cannotAdd(item, this._advList(), this._advOther())) return;
+    this._advList().push(item);
+    this._advUpdateAdjust();
+  }
+
+  /** SecondaryPicker_OnCancel (:439-442). DFU pushes the half-built
+   *  item onto the list BEFORE opening the secondary window and pops
+   *  it on cancel; the port never pushes it, so cancelling is simply
+   *  dropping the pending primary - the same end state without the
+   *  transient half-item a redraw could catch. */
+  advCancelPick() {
+    const c = this.custom;
+    c.pickList = null;
+    c.pickPrimary = null;
+  }
+
+  /** AdvantageLabel_OnMouseClick (:436-460): a click on a row REMOVES
+   *  that item, and removing an Increased Magery restores the spell
+   *  point multiplier to its default. */
+  advRemove(index) {
+    const c = this.custom;
+    const list = this._advList();
+    if (index < 0 || index >= list.length) return;
+    list.splice(index, 1);
+    this._advUpdateAdjust();
+  }
+
+  /** UpdateDifficultyAdjustment (:534-552) - the window writes its own
+   *  total onto the BUILDER, which is what the dagger reads. */
+  _advUpdateAdjust() {
+    const c = this.custom;
+    if (c.sub === 'advantage') c.advantageAdjust = totalAdjust(c.advantages);
+    else c.disadvantageAdjust = totalAdjust(c.disadvantages);
+  }
+
+  /** ExitButton_OnMouseClick (:462-465) - CloseWindow, nothing gated. */
+  advExit() {
+    const c = this.custom;
+    c.sub = null;
+    c.pickList = null;
+    c.pickPrimary = null;
   }
 
   /** The reputation window's own exit gate (:186-198): the balance
@@ -542,12 +704,24 @@ export class ChargenFlow {
    *  extracted picker carried the geometry but not the gesture law,
    *  so the builder's skill and help pickers committed on a SINGLE
    *  click. One click selects; two pick. */
+  /** However many rows the OPEN picker has. Three windows share this
+   *  one component now (the skill buttons, the help topics and U20b's
+   *  primary/secondary lists), and a per-site count is exactly how the
+   *  arrows and the click path drift apart. */
+  _pickCount() {
+    const c = this.custom;
+    if (!c) return 0;
+    if (c.pickList) return c.pickList.length;        // U20b
+    if (c.sub === 'help') return HELP_TOPICS.length;
+    return c.pickItems?.length ?? 0;
+  }
+
   clickPickRow(idx, now) {
     const c = this.custom;
     if (!c) return false;
     const wasDouble = c._lastPickClick != null && (now - c._lastPickClick) < DOUBLE_CLICK_DELAY_MS;
     c.pickCursor = idx;
-    this._scrollPick(c.sub === 'help' ? HELP_TOPICS.length : (c.pickItems?.length ?? 0));
+    this._scrollPick(this._pickCount());
     c._lastPickClick = now;
     if (!wasDouble) return true;
     c._lastPickClick = null;
@@ -561,7 +735,8 @@ export class ChargenFlow {
    *  record as a ClickAnywhereToClose box. */
   usePickRow(idx) {
     const c = this.custom;
-    if (c.sub === 'skillPick') this.customPickSkill(idx);
+    if (c.pickList) this.advPick(idx);   // U20b: primary then secondary
+    else if (c.sub === 'skillPick') this.customPickSkill(idx);
     else if (c.sub === 'help') {
       const t = HELP_TOPICS[idx];
       if (t) { c.sub = null; c.box = this.describeText?.(t[1]) ?? [{ text: `TEXT.RSC ${t[1]}`, center: true }]; }
@@ -933,8 +1108,8 @@ export class ChargenFlow {
       // the list ran off its own ends onto the far one; the FacePicker
       // wrap the face screen uses is that component's OWN law
       // (FacePicker.cs:116-127), not this one's.
-      if (action === 'up') { this.classIndex = Math.max(0, this.classIndex - 1); this._scrollToClass(); }
-      else if (action === 'down') { this.classIndex = Math.min(this.classRowCount() - 1, this.classIndex + 1); this._scrollToClass(); }
+      if (action === 'up') { this.classListIndex = Math.max(0, this.classListIndex - 1); this._scrollToClass(); }
+      else if (action === 'down') { this.classListIndex = Math.min(this.classRowCount() - 1, this.classListIndex + 1); this._scrollToClass(); }
       // ListBox.cs:296-297 - Return USES the selected item, the same
       // door the double click goes through.
       else if (action === 'confirm') this.useClass();
@@ -972,6 +1147,24 @@ export class ChargenFlow {
         else if (action === 'back') c.sub = null;
         return;
       }
+      if (c.sub === 'advantage' || c.sub === 'disadvantage') {
+        // U20b. The two pickers are DaggerfallListPickerWindows pushed
+        // OVER the window, so they take the keys while open; Escape is
+        // SecondaryPicker_OnCancel (:439-442) on the secondary and the
+        // primary picker's own cancel otherwise.
+        if (c.pickList) {
+          const n = this._pickCount();
+          if (action === 'up') { c.pickCursor = Math.max(0, c.pickCursor - 1); this._scrollPick(n); }
+          else if (action === 'down') { c.pickCursor = Math.min(n - 1, c.pickCursor + 1); this._scrollPick(n); }
+          else if (action === 'confirm') this.usePickRow(c.pickCursor);
+          else if (action === 'back') this.advCancelPick();
+          return;
+        }
+        // the window itself: Return is the ADD button, Escape the exit
+        if (action === 'confirm') this.advAdd();
+        else if (action === 'back') this.advExit();
+        return;
+      }
       if (c.sub === 'rep') {
         // clicks own the bars. Return stands in for the exit BUTTON,
         // which is gated on the balance; ESCAPE is the popup's own
@@ -986,15 +1179,28 @@ export class ChargenFlow {
         return;
       }
       // the main screen: the name box always has focus (a TextBox, so
-      // the 31-char default cap), the stat block spends freeEdit,
-      // Return attempts the gated exit, Escape cancels to the list
-      // (the wizard's cancel arm :403-406).
+      // the 31-char default cap), Return attempts the gated exit,
+      // Escape cancels to the list (the wizard's cancel arm :403-406).
+      //
+      // AUDIT 17m: there is NO keyboard stat control here. DFU's stat
+      // steps are UpDownSpinner *Button* handlers (StatsRollout.cs
+      // :231-256, :259-281) - mouse only, nothing binds them to a key -
+      // while the name TextBox holds focus with no character filter
+      // (CreateCharCustomClass.cs:156-158). The port had a 'plus' arm
+      // that spent a point, and a 'minus' arm that was DEAD: the shared
+      // overlay table (ui/input.js:18) matches '-' inside its char
+      // class first, so '-' arrives as 'char:-' and types a hyphen into
+      // the class name, exactly as DFU's unfiltered TextBox does. The
+      // pair was therefore asymmetric - a keyboard could spend from the
+      // freeEdit pool and never refund it. The pool moves by CLICK, as
+      // DFU's does. RESIDUAL, small and deliberate: DFU would type a
+      // literal '+' into the name where the port's table has already
+      // spent that key on 'plus' for the stats and skills screens (no
+      // text box there), so '+' is inert here rather than typed.
       if (action.startsWith('char:') && c.className.length < NAME_MAX_CHARACTERS) c.className += action.slice(5);
       else if (action === 'backspace') c.className = c.className.slice(0, -1);
       else if (action === 'up') c.statCursor = (c.statCursor + 7) % 8;
       else if (action === 'down') c.statCursor = (c.statCursor + 1) % 8;
-      else if (action === 'plus') this.customSpendStat(1);
-      else if (action === 'minus') this.customSpendStat(-1);
       else if (action === 'confirm') this.customExit();
       else if (action === 'back') this.state = 'class';
       return;
@@ -1112,7 +1318,7 @@ export class ChargenFlow {
    *  the selection to it by the time MouseDoubleClick reads it. */
   clickClassRow(idx, now) {
     const wasDouble = this._lastClassClick != null && (now - this._lastClassClick) < DOUBLE_CLICK_DELAY_MS;
-    this.classIndex = idx;
+    this.classListIndex = idx;   // MouseClick moves the LIST's selection
     this._lastClassClick = now;
     if (wasDouble) { this._lastClassClick = null; this.useClass(); }
     return true;
@@ -1125,14 +1331,14 @@ export class ChargenFlow {
    *  row closes STRAIGHT to the builder - no description, no drums
    *  (the :72-77 arm). */
   useClass() {
-    if (this.classIndex === this.careers.length) {
+    if (this.classListIndex === this.careers.length) {
       // :356-359 - the flag is raised HERE, at the row pick, before
       // the builder is even constructed (and is never lowered again)
       this.isCustom = true;
       this._enterCustomClass();
       return;
     }
-    this.classConfirm = this.describeClass?.(this.classIndex) ?? null;
+    this.classConfirm = this.describeClass?.(this.classListIndex) ?? null;
     if (!this.classConfirm) this._acceptStandardClass();   // no description available: the pick stands
   }
 
@@ -1162,7 +1368,7 @@ export class ChargenFlow {
     }
     if (hit.setStatCursor != null) { this.statCursor = hit.setStatCursor; return true; }
     if (hit.setSkillCursor != null) { this.skillCursor = hit.setSkillCursor; this._syncSkillSel(); return true; }
-    if (hit.setClass != null) { this.classIndex = hit.setClass; return true; }
+    if (hit.setClass != null) { this.classListIndex = hit.setClass; return true; }
     if (hit.confirmClass) { this.classConfirm = null; this._acceptStandardClass(); return true; }
     if (hit.cancelClass) { this.classConfirm = null; return true; }
     // U18: the method screen's two buttons - the click sets AND closes,
@@ -1184,12 +1390,11 @@ export class ChargenFlow {
       c.sub = 'help'; c.pickCursor = 0; c.pickScroll = 0;
       return true;
     }
-    if (hit.customAdvantage || hit.customDisadvantage) {
-      // FLAGGED to U20b: CreateCharSpecialAdvantageWindow. The click
-      // answers loudly rather than dying silently.
-      console.warn('[chargen] special advantages/disadvantages pend U20b');
-      return true;
-    }
+    if (hit.customAdvantage) { this._openSpecialAdv('advantage'); return true; }
+    if (hit.customDisadvantage) { this._openSpecialAdv('disadvantage'); return true; }
+    if (hit.advAdd) { this.advAdd(); return true; }
+    if (hit.advExit) { this.advExit(); return true; }
+    if (hit.advRemove != null) { this.advRemove(hit.advRemove); return true; }
     if (hit.customRep) {
       // ReputationButton_OnMouseClick NEWS the window each time, and
       // its `pointsToDistribute` is a field initialised to 0 -
@@ -1205,7 +1410,7 @@ export class ChargenFlow {
     if (hit.pickRow != null) return this.clickPickRow(hit.pickRow, hit.now ?? this._now());
     if (hit.pickStep != null) {
       const c = this.custom;
-      const n = c.sub === 'help' ? HELP_TOPICS.length : (c.pickItems?.length ?? 0);
+      const n = this._pickCount();
       // the picker's arrows are the ListBox's own SelectPrevious /
       // SelectNext, which CLAMP (ListBox.cs:709-740) - not a wrap
       c.pickCursor = Math.max(0, Math.min(n - 1, c.pickCursor + hit.pickStep));
@@ -1299,7 +1504,7 @@ export class ChargenFlow {
     } else if (this.state === 'class') {
       title('CHOOSE YOUR CLASS');
       for (let i = 0; i < this.classRowCount(); i++) {
-        line((i === this.classIndex ? '> ' : '  ') + this.classRowName(i), i, i === this.classIndex ? hot : white);
+        line((i === this.classListIndex ? '> ' : '  ') + this.classRowName(i), i, i === this.classListIndex ? hot : white);
       }
     } else if (this.state === 'classMethod') {
       title('CHOOSE YOUR CLASS METHOD');

@@ -225,7 +225,7 @@ test('17j F7: changing the CLASS does reroll, as DFU\'s DFClass check does', () 
 
   f.state = 'class';
   f.input('down');                            // a different career
-  assert.equal(f.classIndex, 1);
+  assert.equal(f.classListIndex, 1, 'the LIST moves; the document takes it on confirm');
   f.input('confirm');                         // -> name (no biography set)
   f.input('confirm');                         // -> face
   f.input('confirm');                         // -> stats

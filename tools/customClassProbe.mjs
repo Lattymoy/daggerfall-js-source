@@ -24,7 +24,11 @@ const st = async () => JSON.parse(await page.evaluate(() => {
   const f = window.__chargenFlow();
   const c = f.custom;
   return JSON.stringify({
-    state: f.state, cls: f.classIndex, rows: f.classRowCount(), rowName: f.classRowName(f.classIndex),
+    // AUDIT 17m: the PICKER's row and the DOCUMENT's class are two
+    // fields now - the row name comes from the picker, the affinity
+    // (`cls`) from the document.
+    state: f.state, cls: f.classIndex, row: f.classListIndex, rows: f.classRowCount(),
+    rowName: f.classRowName(f.classListIndex),
     isCustom: f.isCustom, careerName: f.career?.name ?? null, reps: f.customReps,
     custom: c && { name: c.className, hp: c.hp, skills: c.skills.filter((s) => s != null).length,
       pool: c.statPool, sub: c.sub, box: !!c.box, reps: c.reps, difficulty: f.customDifficulty() },

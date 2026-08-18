@@ -1446,7 +1446,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // DecreaseFatigue - no loop over elapsed minutes), so a
     // multi-minute jump (the collapse hour, rest) costs one minute's
     // fatigue - the pre-S20 shape drained every caught-up round.
-    // Athleticism multiplier pends the career advantage flags (1.0,
+    // Athleticism multiplier: the career advantage flags DECODE now
+    // (U20b) - the effect is what pends. AUDIT 17n re-pointed. (1.0,
     // flagged); the Argonian exemption pends race selection.
     if (Math.floor(classicMinutes) !== _prevMinute) {
       let loss = FATIGUE_LOSS.Default;

@@ -57,7 +57,13 @@ export function availableSkills(assigned) {
  *  spell-point multiplier (:161-165); every flag field is the C#
  *  default 0. The port stores the multiplier the way its readers do -
  *  Times_0_50 = 20 encoded in the bitfield's 0x1C00 band (20 << 8). */
-export function buildCustomCareer({ name, hp, skills, stats }) {
+/** U20b: `points` is the FULL difficulty tally - HP plus the two
+ *  special-advantage adjusts - because UpdateDifficulty recomputes
+ *  createdClass.AdvancementMultiplier from it on every change
+ *  (CreateCharCustomClass.cs:477-498), so by exit time the multiplier
+ *  already carries them. It defaults to the HP-only tally, which is
+ *  what the value was for the whole of U20a. */
+export function buildCustomCareer({ name, hp, skills, stats, points = null }) {
   return {
     resistanceFlags: 0, immunityFlags: 0, lowToleranceFlags: 0,
     criticalWeaknessFlags: 0,
@@ -70,7 +76,7 @@ export function buildCustomCareer({ name, hp, skills, stats }) {
     minorSkills: skills.slice(6, 12),
     name,
     hitPointsPerLevel: hp,
-    advancementMultiplier: advancementMultiplier(difficultyPoints(hp)),
+    advancementMultiplier: advancementMultiplier(points ?? difficultyPoints(hp)),
     // the wizard copies the builder's WORKING stats onto the career's
     // base attributes (DaggerfallStartNewGameWizard.cs:392-399)
     strength: stats.strength, intelligence: stats.intelligence,

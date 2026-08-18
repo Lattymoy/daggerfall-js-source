@@ -23,7 +23,9 @@ const click = async (vx, vy) => { await page.mouse.click(M.ox + vx * M.s, M.oy +
 const st = async () => JSON.parse(await page.evaluate(() => {
   const f = window.__chargenFlow();
   return JSON.stringify({ state: f.state, race: f.race?.key, gender: f.gender, face: f.faceIndex,
-    cls: f.classIndex, q: f.biogQuestionIndex, pool: f.statPool ?? null, reflexes: f.reflexes,
+    // AUDIT 17m: `cls` is the DOCUMENT's class; `row` is the picker's
+    // own selection, which is what a row click moves.
+    cls: f.classIndex, row: f.classListIndex, q: f.biogQuestionIndex, pool: f.statPool ?? null, reflexes: f.reflexes,
     poolBox: !!f.summaryPoolBox, classBox: !!f.classConfirm });
 }));
 
@@ -102,7 +104,7 @@ const pickOx = await page.evaluate(() => Math.floor((320 - 190) / 2));   // PICK
 const rowY = 65 + Math.floor(rowH * 2.5) - rowH * 2 + 2 * rowH;
 await click(pickOx + 60, rowY);
 s = await st();
-console.log('class after a row click:', s.cls);
+console.log('picker row after a row click:', s.row, '(the document is still', s.cls + ')');
 // U17: a SINGLE click only selects - the row must NOT pick
 if (s.state !== 'class' || s.classBox) { console.log('SINGLE CLICK PICKED THE CLASS', JSON.stringify(s)); process.exit(1); }
 // a DOUBLE click picks it and opens the class description box. The

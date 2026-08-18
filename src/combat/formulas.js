@@ -85,8 +85,21 @@ export function enemyGroupOf(affinity) {
 
 // ---- GetBonusOrPenaltyByEnemyType (the DFU always-on port) ----
 export function bonusOrPenaltyByEnemyType(attacker, targetGroup) {
-  if (attacker.attackModifierFlags == null || targetGroup == null) return 0;
-  return careerAttackModifier(attacker.attackModifierFlags, targetGroup) * attacker.level;
+  // AUDIT 17n: DFU reads attacker.Career.<group>AttackModifier for
+  // EVERY attacker (FormulaHelper.cs:993-1030). The port flattened the
+  // byte onto the entity, and only the foe builder ever set it
+  // (enemyEntity.js:105) - the player carries `career` and no flat
+  // field, so this guard returned 0 on every player swing. The target
+  // half was wired correctly all along (playerWeapon.js passes
+  // enemyGroupOf(affinity)), which is why nothing looked broken.
+  //
+  // Not just a U20b concern: the classic ASSASSIN ships
+  // attackModifierFlags 0x04 - a Humanoid bonus - and has never
+  // received it. U20b only made the same modifier purchasable, at 3-6
+  // difficulty points for a bonus and -4 for a phobia.
+  const flags = attacker.attackModifierFlags ?? attacker.career?.attackModifierFlags ?? null;
+  if (flags == null || targetGroup == null) return 0;
+  return careerAttackModifier(flags, targetGroup) * attacker.level;
 }
 
 // ---- CalculateStatsToHit ----
@@ -120,7 +133,10 @@ export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckB
   // SetEnemyCareer scalar otherwise. Increased/DecreasedArmorValueModifier
   // channels pend their effects (none exist yet) - 0 (audit F5).
   chance += target.armorValues ? target.armorValues[struckBodyPart] ?? 0 : (target.armor ?? 0);
-  // adrenaline rush: career ability bitfield decode pending (Systems) - 0
+  // adrenaline rush: the career ability bitfield DECODES now (U20b
+  // put SPECIAL_ABILITY_BITS on specialAdvantages.js and rest.js
+  // already exports hasSpecialAbility) - what pends is the EFFECT,
+  // not the read. AUDIT 17n re-pointed this note; still 0.
   // attacker.ChanceToHitModifier (enchantments): pends the enchantment
   // system - 0 (audit F4).
   chance += statsToHit(attacker, target);
@@ -145,7 +161,16 @@ export function handToHandAttackDamage(attacker, targetGroup, damageMod, isPlaye
 export const SKELETAL_WARRIOR_INDEX = 15;   // MonsterCareers.SkeletalWarrior
 
 // ---- CalculateWeaponAttackDamage ----
-export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = Math.random) {
+/** AUDIT 17n: `targetGroup` is threaded in because the port split
+ *  DFU's one call apart. CalculateWeaponAttackDamage passes the TARGET
+ *  ENTITY to GetBonusOrPenaltyByEnemyType (FormulaHelper.cs:788) and
+ *  derives the group inside it; the port lifted the group into a
+ *  parameter for the monster and hand-to-hand branches but left this
+ *  one reading `target.group` - a field NOTHING in the codebase mints.
+ *  So the enemy-type modifier was dead on the weapon path for every
+ *  attacker, independently of whether the attacker carried the byte at
+ *  all. The `target.group` read stays as the fallback it was. */
+export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = Math.random, targetGroup = null) {
   let damage = weapon.minDamage + Math.floor(rolls() * (weapon.maxDamage + 1 - weapon.minDamage)) + damageMod;
   if (!target.isPlayer && target.careerIndex === SKELETAL_WARRIOR_INDEX) {
     if ((weapon.flags & 0x10) === 0) damage = Math.trunc(damage / 2);   // edged-weapon rule
@@ -154,7 +179,7 @@ export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = 
   damage += damageModifier(liveStat(attacker, 'strength'));
   damage += WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0;   // half of the in-game display, per the source comment
   if (damage < 1) damage = 0;
-  damage += bonusOrPenaltyByEnemyType(attacker, target.group ?? null);
+  damage += bonusOrPenaltyByEnemyType(attacker, targetGroup ?? target.group ?? null);
   return damage;
 }
 
@@ -231,7 +256,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, targetG
     }
   } else {
     if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls)) {
-      damage = weaponAttackDamage(attacker, target, damageMod, weapon, rolls);
+      damage = weaponAttackDamage(attacker, target, damageMod, weapon, rolls, targetGroup);
     }
   }
   damage = backstabDamage(damage, backstabChance, rolls());   // applied AFTER the damage calc, verbatim (lines 627/688)

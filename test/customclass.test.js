@@ -231,7 +231,7 @@ const flow = () => {
 const readyBuilder = () => {
   const f = flow();
   f.state = 'class';
-  f.classIndex = CAREERS.length;   // the Custom row
+  f.classListIndex = CAREERS.length;   // the Custom row
   f.useClass();
   const c = f.custom;
   c.className = 'Scout';
@@ -247,7 +247,7 @@ test('U20a: the class list\'s LAST row is Custom, and it opens the builder witho
   assert.equal(f.classRowName(CAREERS.length), 'Custom');
   f.state = 'class';
   f.describeClass = () => [{ text: 'should not be shown', center: false }];
-  f.classIndex = CAREERS.length;
+  f.classListIndex = CAREERS.length;
   f.useClass();
   assert.equal(f.state, 'customClass');
   assert.equal(f.classConfirm, null, 'the Custom row opens NO description box');
@@ -257,11 +257,11 @@ test('U20a: the class list\'s LAST row is Custom, and it opens the builder witho
   const g = flow();
   g.state = 'class';
   g.input('up');
-  assert.equal(g.classIndex, 0, 'up from row 0 CLAMPS - the list does not wrap');
+  assert.equal(g.classListIndex, 0, 'up from row 0 CLAMPS - the list does not wrap');
   for (let i = 0; i < 30; i++) g.input('down');
-  assert.equal(g.classIndex, CAREERS.length, 'walking down stops ON Custom, the last row');
+  assert.equal(g.classListIndex, CAREERS.length, 'walking down stops ON Custom, the last row');
   g.input('down');
-  assert.equal(g.classIndex, CAREERS.length, 'and stays there');
+  assert.equal(g.classListIndex, CAREERS.length, 'and stays there');
 });
 
 test('U20a: the reroll memo keys on the CAREER, not its index', () => {
@@ -278,7 +278,7 @@ test('U20a: the reroll memo keys on the CAREER, not its index', () => {
   // build a custom class whose affinity lands on 5
   CAREERS[5] = { name: 'C5', career: { primarySkills: twelve.slice(0, 3), majorSkills: twelve.slice(3, 6), minorSkills: twelve.slice(6, 12) } };
   f.state = 'class';
-  f.classIndex = CAREERS.length;
+  f.classListIndex = CAREERS.length;
   f.useClass();
   f.custom.className = 'Scout';
   twelve.forEach((id, i) => { f.custom.skills[i] = id; });
@@ -301,12 +301,24 @@ test('U20a: the CUSTOM row has no career behind it - reading one must not THROW'
   // the row: `careers[classIndex].career` with classIndex 18 threw.
   // DFU's selectedClass is NULL for that row (CreateCharClassSelect
   // .cs:74), so the getter answers null and every caller stays alive.
+  //
+  // AUDIT 17m: the two indices are separate now, so highlighting the
+  // Custom row moves the LIST and leaves the DOCUMENT where it was -
+  // which is DFU's own shape (:74 nulls the window's selectedClass;
+  // characterDocument is untouched until an accept arm runs). The
+  // getter's guard therefore cannot be reached from this row any
+  // more, and the row must still name and draw without throwing.
   const f = flow();
   f.state = 'class';
-  f.classIndex = CAREERS.length;
-  assert.equal(f.career, null, 'the highlighted Custom row has no career');
-  assert.doesNotThrow(() => f.classRowName(f.classIndex));
+  f.classListIndex = CAREERS.length;
+  assert.equal(f.classIndex, 0, 'the DOCUMENT does not follow the highlight');
+  assert.doesNotThrow(() => f.classRowName(f.classListIndex));
   assert.doesNotThrow(() => f.result(), 'even a result read survives it');
+  // the guard itself still answers null for a document index with no
+  // career behind it, which is what it exists for
+  const bare = flow();
+  bare.classIndex = CAREERS.length;
+  assert.equal(bare.career, null, 'no career behind that index -> null, not a throw');
   // and once the builder finishes, the getter serves the BUILT class
   f.useClass();
   f.custom.className = 'Scout';
@@ -322,7 +334,7 @@ test('U20a: the CUSTOM row is CLICKABLE, not keyboard-only', () => {
   // row count.
   const f = flow();
   f.state = 'class';
-  f.classIndex = CAREERS.length;
+  f.classListIndex = CAREERS.length;
   f._scrollToClass();
   f._classRowH = 7;                      // what the draw caches from the font
   const [plx, ply] = [26, 27];
@@ -339,7 +351,7 @@ test('U20a: the CUSTOM row is CLICKABLE, not keyboard-only', () => {
 test('U20a: a fresh builder starts at the DFU defaults', () => {
   const f = flow();
   f.state = 'class';
-  f.classIndex = CAREERS.length;
+  f.classListIndex = CAREERS.length;
   f.useClass();
   const c = f.custom;
   assert.equal(c.hp, HP_DEFAULT);
@@ -380,7 +392,7 @@ test('U20a: the exit gates refuse in DFU\'s ORDER, each on its own record', () =
   // ExitButton_OnMouseClick (:414-460): name 301, skills 300,
   // stats 302, difficulty 306 - each a ClickAnywhereToClose box.
   const f = flow();
-  f.state = 'class'; f.classIndex = CAREERS.length; f.useClass();
+  f.state = 'class'; f.classListIndex = CAREERS.length; f.useClass();
   const c = f.custom;
   f.customExit();
   assert.match(c.box[0].text, /301/, 'no name -> strNameYourClass');
@@ -441,7 +453,7 @@ test('U20a: a standard class afterwards replaces the CAREER - and isCustom STICK
   f.customExit();
   assert.equal(f.isCustom, true);
   f.state = 'class';
-  f.classIndex = 3;
+  f.classListIndex = 3;
   f.describeClass = () => null;   // no art -> the pick stands at once
   f.useClass();
   assert.equal(f.career.name, 'C3', 'the LIST class is served again');
@@ -455,7 +467,7 @@ test('U20a: cancelling the builder drops the half-built career, not the flag', (
   // constructed (:356-359), so cancelling out of it cannot lower it -
   // DFU has no code that does.
   const f = flow();
-  f.state = 'class'; f.classIndex = CAREERS.length; f.useClass();
+  f.state = 'class'; f.classListIndex = CAREERS.length; f.useClass();
   f.custom.className = 'Half';
   f.input('back');
   assert.equal(f.state, 'class', 'Escape returns to the list (the wizard\'s cancel arm)');

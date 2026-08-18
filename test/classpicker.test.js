@@ -30,7 +30,7 @@ test('U17: a SINGLE click on a class row only selects it', () => {
   // phone the class screen was a dead end - which is the bug.
   const f = atClass();
   f.clickClassRow(2, 1000);
-  assert.equal(f.classIndex, 2, 'the row is selected');
+  assert.equal(f.classListIndex, 2, 'the row is selected');
   assert.equal(f.state, 'class', 'and the screen has NOT moved on');
   assert.equal(f.classConfirm, null, 'nor has anything been picked');
 });
@@ -61,7 +61,7 @@ test('U17: the double-click window is DOUBLE_CLICK_DELAY_MS, on time alone', () 
   other.clickClassRow(0, 500);
   other.clickClassRow(2, 600);
   assert.ok(other.classConfirm, 'still a double click');
-  assert.equal(other.classIndex, 2, 'and it picks the SECOND row');
+  assert.equal(other.classListIndex, 2, 'and it picks the SECOND row');
 });
 
 test('U17: a third click does not re-trigger off the second', () => {
@@ -96,7 +96,7 @@ test('U17: Yes leaves the screen, No returns to the list', () => {
 test('U17: Return uses the selected item, the same door as the double click', () => {
   // ListBox.cs:296-297.
   const f = atClass();
-  f.classIndex = 2;
+  f.classListIndex = 2;
   f.input('confirm');
   assert.ok(f.classConfirm, 'Enter opens the same box');
   f.input('back');
