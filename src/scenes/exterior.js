@@ -48,6 +48,7 @@ import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
+import { loadCareers, createChargenWindow, finishChargen } from '../systems/chargenSession.js';   // S3c/U9
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
@@ -315,6 +316,23 @@ export async function bootExterior(canvas, renderer, params, status) {
   preloadInventoryArt({ renderer, fetchBytes, palette });   // U8d: INVE00I0/01I0 warm at boot
   preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/BODY/FACE + the item-record pipeline (town context; Breton male 0 INTERIM until chargen)
   seedStartingEquipment(playerEntity);   // U8h: the interim dagger lives in the BAG now, worn (chargen's gear roll replaces)
+  // S3c/U9 / THE FOUR HOSTS RULE: chargen lived only in the dungeon
+  // host, so booting straight into a town left the player on the
+  // pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+  // whole session. Both exterior hosts now run it through the shared
+  // session, and the paperdoll reloads on the chosen identity.
+  if (!playerEntity.chargenDone) {
+    loadCareers(fetchBytes).then((careers) => {
+      townTalk.showOverlay(createChargenWindow(careers, {
+        onDone: (r) => {
+          finishChargen(playerEntity, r);
+          preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
+            { race: r.race, gender: r.gender, faceIndex: r.faceIndex });
+          surfacePlayer();
+        },
+      }));
+    }).catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
+  }
   const droppedLoot = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });   // U8e
   // FindGroundPosition (CreateDroppedLootContainer): the pile lands
   // on the ground BELOW the player, not at the motor's height

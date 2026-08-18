@@ -151,7 +151,7 @@ export function createCharacter(playerEntity, career, careerIndex, { rolls = Mat
 /** Apply FINISHED chargen values (the U2b flow's hand-distributed
  *  stats/skills, or the headless roll above) onto the shared entity -
  *  the health/magicka/sum derivations live here ONCE. */
-export function applyCharacter(playerEntity, career, careerIndex, { name = career.name, gender, stats, skills, rolls = Math.random } = {}) {
+export function applyCharacter(playerEntity, career, careerIndex, { name = career.name, gender, race, raceId, faceIndex, stats, skills, rolls = Math.random } = {}) {
   const maxHealth = rollMaxHealthLevel1(career);
   const maxMagicka = spellPoints(stats.intelligence, spellPointMultiplier(career.abilityFlagsAndSpellPointsBitfield ?? 0x1000));   // absent bitfield -> x1.00
   Object.assign(playerEntity, {
@@ -160,6 +160,12 @@ export function applyCharacter(playerEntity, career, careerIndex, { name = caree
     fatigue: (stats.strength + stats.endurance) * 64,   // SetEntityDefaults: currentFatigue = MaxFatigue (S15)
     name,
     gender: gender ?? playerEntity.gender ?? 'male',
+    // S3c/U9: the IDENTITY the paperdoll and the race tables read
+    // (RaceTemplate art + GetBodyMorphology). Defaulted so the
+    // headless createCharacter path stays valid.
+    race: race ?? playerEntity.race ?? 'Breton',
+    raceId: raceId ?? playerEntity.raceId ?? 1,
+    faceIndex: faceIndex ?? playerEntity.faceIndex ?? 0,
     career,
     careerIndex,
     level: 1,

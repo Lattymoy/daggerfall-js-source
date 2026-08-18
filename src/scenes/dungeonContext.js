@@ -32,6 +32,7 @@ import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, applyCharacter, startingSpells, CLASS_CAREERS } from '../systems/chargen.js';
+import { loadCareers } from '../systems/chargenSession.js';   // S3c/U9: one career loader
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
 import { InventoryWindow, SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
@@ -710,13 +711,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // U2b: the real flow - all 18 careers load; the host routes
       // input and draws the overlay until done, then applies the
       // HAND-distributed result. The Warrior-16 default is GONE.
-      const careers = [];
-      for (let i = 0; i < CLASS_CAREERS.length; i++) {
-        const cf = new ClassFile();
-        cf.load(await fetchBytes(`CLASS${String(i).padStart(2, '0')}.CFG`));
-        careers.push({ name: cf.career.name || CLASS_CAREERS[i], career: cf.career });
-      }
-      chargenFlow = new ChargenFlow(careers);
+      // S3c/U9 / ONE DFU MEMBER, ONE EXPORT: the career load lived
+      // here AND (once the exterior hosts gained chargen) would have
+      // been copied there. Both use systems/chargenSession.js.
+      chargenFlow = new ChargenFlow(await loadCareers(fetchBytes));
       activeOverlay = chargenFlow;
     }
   }

@@ -7,6 +7,12 @@
 // LiveSpeed lives in PlayerMotor stats.
 export const playerEntity = {
   isPlayer: true,
+  // S3c/U9: the identity chargen writes; the paperdoll and the race
+  // art tables read it. Breton/male/0 until chargen runs.
+  race: 'Breton',
+  raceId: 1,
+  faceIndex: 0,
+  gender: 'male',
   level: 1,
   reflexes: 2,      // 0 VeryHigh .. 4 VeryLow; 2 = Average (classic default)
   maxHealth: 50,    // INTERIM until chargen rolls career HP

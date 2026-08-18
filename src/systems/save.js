@@ -14,7 +14,8 @@ export const SAVE_VERSION = 1;
 export const QUICKSAVE_KEY = 'dagger.quicksave';
 
 const ENTITY_FIELDS = [
-  'name', 'gender', 'careerIndex', 'level', 'reflexes',
+  'name', 'gender', 'race', 'raceId', 'faceIndex',   // S3c/U9: the identity rides the save
+  'careerIndex', 'level', 'reflexes',
   'health', 'maxHealth', 'magicka', 'maxMagicka', 'fatigue',
   'currentBreath',   // P12 (SerializablePlayer carries it; missing = 0/surfaced on old saves)
   'startingLevelUpSkillSum', 'currentLevelUpSkillSum',

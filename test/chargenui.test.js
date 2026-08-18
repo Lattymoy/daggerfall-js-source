@@ -31,10 +31,25 @@ test('chargen ui: the flow end to end, conservation, confirm gates', () => {
   const flow = new ChargenFlow([{ name: 'Warrior', career }], seq(0));
   for (const c of 'Mac') flow.input('char:' + c);
   flow.input('confirm');
+  // S3c/U9: RACE and FACE now sit between name and class (classic
+  // asks race first) - the port hardcoded Breton male face 0.
+  assert.equal(flow.state, 'race');
+  flow.input('down'); flow.input('down');      // Breton -> Nord
+  assert.equal(flow.race.key, 'Nord');
+  flow.input('confirm');
   assert.equal(flow.state, 'gender');
   flow.input('down');                          // toggles
   assert.equal(flow.gender, 'female');
   flow.input('confirm');
+  assert.equal(flow.state, 'face');
+  flow.input('up');                            // wraps to the last face
+  assert.equal(flow.faceIndex, 9);
+  flow.input('down');
+  assert.equal(flow.faceIndex, 0);
+  flow.input('down'); flow.input('down');
+  assert.equal(flow.faceIndex, 2);
+  flow.input('confirm');
+  assert.equal(flow.state, 'class');
   flow.input('confirm');                       // class -> stats (rolled)
   assert.equal(flow.state, 'stats');
   const baseTotal = Object.values(flow.rolledStats).reduce((a, b) => a + b, 0);
@@ -67,13 +82,19 @@ test('chargen ui: the flow end to end, conservation, confirm gates', () => {
   const r = flow.result();
   assert.equal(r.name, 'Mac');
   assert.equal(r.gender, 'female');
+  assert.equal(r.race, 'Nord');
+  assert.equal(r.raceId, 3, 'the Races enum is 1-based');
+  assert.equal(r.faceIndex, 2);
   assert.equal(r.careerIndex, 0);
   assert.equal(Object.values(r.stats).reduce((a, b) => a + b, 0), baseTotal + pool0);
 });
 
 test('chargen ui: reroll replaces the working set on the active screen', () => {
   const flow = new ChargenFlow([{ name: 'W', career }], seq(0.999));
-  flow.input('char:X'); flow.input('confirm'); flow.input('confirm'); flow.input('confirm');
+  // name -> race -> gender -> face -> class -> stats (S3c/U9 added
+  // the race and face screens)
+  for (const a of ['char:X', 'confirm', 'confirm', 'confirm', 'confirm', 'confirm']) flow.input(a);
+  assert.equal(flow.state, 'stats');
   assert.equal(flow.statPool, 14);             // max pool at seq(0.999)
   flow.input('plus');
   flow.rolls = seq(0);                         // the next roll set

@@ -862,3 +862,59 @@ reachability (the constant is fixed, but nothing mints 0x0103 until
 classic-save import exists).
 
 All four native-window probes re-run green. Suite 480/105.
+
+## S3c/U9: CHARGEN - identity, all eight races, and the fourth host (2026-08-18)
+
+The loudest INTERIM in the tree retires: the player is no longer a
+Breton male face 0 with flat skills.
+
+FIRST, per the audit's ONE DFU MEMBER ONE EXPORT rule, the tree was
+grepped before anything was ported - and most of chargen ALREADY
+existed. systems/chargen.js held the verbatim S3 rolling laws
+(StatsRollout/SkillsRollout pools, hit points, spell points,
+starting spells) and ui/chargen.js held the ChargenFlow with the
+pool-distribution rules. What was actually missing was identity, the
+other seven races, and three of the four hosts. Nothing was rebuilt.
+
+- systems/races.js: DFU RaceTemplate (RaceTemplate.cs:172-345) for
+  all EIGHT races. The art tables are GENERATED from the regular
+  scheme (background SCBG0nI0, male BODY0nI0/I1, female BODY1nI0/I1,
+  heads FACE0nI0/FACE1nI0) because the Races ENUM is 1-based while
+  the art index is 0-based - exactly the off-by-one that makes
+  hand-typed tables drift - and pinned against the DFU literals.
+  Each FACE CIF carries 10 heads (verified against shipping ARENA2).
+- THE PAPERDOLL IS IDENTITY-DRIVEN: it carried a Breton-only table
+  and hardcoded the Human body morphology. It now loads the entity's
+  race/gender/face and RELOADS when that identity changes (chargen
+  picks after boot, so the old bare `if (_art) return` guard would
+  have frozen the doll on Breton forever). Clothing, armor and cloak
+  archives all take the race's morphology (Argonian 0 / Elf 1 /
+  Human 2 / Khajiit 3) instead of assuming Human.
+- THE FLOW GAINS RACE + FACE between name and gender/class, in
+  classic's order. result() carries race/raceId/faceIndex,
+  applyCharacter writes them onto the entity, and the save envelope
+  carries them.
+- THE FOURTH HOST (the four hosts rule, the audit's own): chargen
+  ran ONLY in dungeonContext, so booting straight into a town left
+  the player on the pre-chargen INTERIM entity - flat skills 30,
+  maxHealth 50 - for the entire session. systems/chargenSession.js
+  now owns the career load, the overlay-shaped window (translating
+  raw key codes through the SHARED overlayAction table, not a second
+  copy) and the finish; both exterior hosts mount it at boot, and
+  the dungeon was repointed at the same loader.
+
+Probed live in the EXTERIOR host (tools/chargenProbe.mjs) +
+EYEBALLED: the flow drove name -> race -> gender -> face -> class ->
+stats -> skills to a finished Khajiit FEMALE face 3 Mage with rolled
+maxHealth 31 and a real skills array, and F6 then drew the paperdoll
+as a female Khajiit - the striped facial markings and the female
+body, entirely different art from the Breton male the port had shown
+since U8f.
+
+STILL FLAGGED: the classic chargen ART (the flow draws clean text
+panels; the portrait/biography/reflex screens ride the chargen-art
+slice), the biography questions, reflexes, and DFU's
+starting-equipment roll (seedStartingEquipment's interim dagger
+stands in).
+
+Suite 482/106.

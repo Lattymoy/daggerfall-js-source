@@ -13,6 +13,7 @@
 // Race/face pend their systems (racial saving flags, paperdoll).
 
 import { rollStats, rollSkills, STAT_KEYS_ORDER } from '../systems/chargen.js';
+import { RACE_TEMPLATES, FACES_PER_RACE } from '../systems/races.js';   // S3c/U9
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
 
@@ -36,7 +37,10 @@ export function skillDown(working, rolled, pool) {
   return { working: working - 1, pool: pool + 1 };
 }
 
-const STATES = ['name', 'gender', 'class', 'stats', 'skills', 'done'];
+// S3c/U9: RACE and FACE join the flow between gender and class -
+// classic asks race first, and until now the port hardcoded Breton
+// male face 0 (the loud INTERIM the paperdoll records carried).
+const STATES = ['name', 'race', 'gender', 'face', 'class', 'stats', 'skills', 'done'];
 
 export class ChargenFlow {
   /** careers: [{ name, career }] x18 (loaded from CLASS*.CFG). */
@@ -46,12 +50,15 @@ export class ChargenFlow {
     this.state = 'name';
     this.name = '';
     this.gender = 'male';
+    this.raceIndex = 0;      // RACE_TEMPLATES order (Breton first)
+    this.faceIndex = 0;      // 0..9 within the race/gender FACE CIF
     this.classIndex = 0;
     this.cursor = 0;
     this._rolled = null;
   }
 
   get career() { return this.careers[this.classIndex].career; }
+  get race() { return RACE_TEMPLATES[this.raceIndex]; }
 
   _enterStats() {
     const { stats, bonusPool } = rollStats(this.career, this.rolls);
@@ -99,20 +106,34 @@ export class ChargenFlow {
     if (s === 'name') {
       if (action.startsWith('char:') && this.name.length < 16) this.name += action.slice(5);
       else if (action === 'backspace') this.name = this.name.slice(0, -1);
-      else if (action === 'confirm' && this.name.length) this.state = 'gender';
+      else if (action === 'confirm' && this.name.length) this.state = 'race';
+      return;
+    }
+    if (s === 'race') {
+      if (action === 'up') this.raceIndex = (this.raceIndex + RACE_TEMPLATES.length - 1) % RACE_TEMPLATES.length;
+      else if (action === 'down') this.raceIndex = (this.raceIndex + 1) % RACE_TEMPLATES.length;
+      else if (action === 'confirm') this.state = 'gender';
+      else if (action === 'back') this.state = 'name';
       return;
     }
     if (s === 'gender') {
       if (action === 'up' || action === 'down') this.gender = this.gender === 'male' ? 'female' : 'male';
+      else if (action === 'confirm') this.state = 'face';
+      else if (action === 'back') this.state = 'race';
+      return;
+    }
+    if (s === 'face') {
+      if (action === 'up') this.faceIndex = (this.faceIndex + FACES_PER_RACE - 1) % FACES_PER_RACE;
+      else if (action === 'down') this.faceIndex = (this.faceIndex + 1) % FACES_PER_RACE;
       else if (action === 'confirm') this.state = 'class';
-      else if (action === 'back') this.state = 'name';
+      else if (action === 'back') this.state = 'gender';
       return;
     }
     if (s === 'class') {
       if (action === 'up') this.classIndex = (this.classIndex + this.careers.length - 1) % this.careers.length;
       else if (action === 'down') this.classIndex = (this.classIndex + 1) % this.careers.length;
       else if (action === 'confirm') { this.state = 'stats'; this._enterStats(); }
-      else if (action === 'back') this.state = 'gender';
+      else if (action === 'back') this.state = 'face';
       return;
     }
     if (s === 'stats') {
@@ -142,7 +163,7 @@ export class ChargenFlow {
 
   get done() { return this.state === 'done'; }
   result() {
-    return { name: this.name, gender: this.gender, careerIndex: this.classIndex, career: this.career, stats: this.stats, skills: this.skills };
+    return { name: this.name, gender: this.gender, race: this.race.key, raceId: this.race.id, faceIndex: this.faceIndex, careerIndex: this.classIndex, career: this.career, stats: this.stats, skills: this.skills };
   }
 
   // ---- drawing: clean classic-text panels (art FLAGGED, see head) ----
@@ -160,6 +181,15 @@ export class ChargenFlow {
       title('GENDER');
       line((this.gender === 'male' ? '> ' : '  ') + 'Male', 1, this.gender === 'male' ? hot : white);
       line((this.gender === 'female' ? '> ' : '  ') + 'Female', 2, this.gender === 'female' ? hot : white);
+    } else if (this.state === 'race') {
+      title('CHOOSE YOUR RACE');
+      RACE_TEMPLATES.forEach((r, i) => line((i === this.raceIndex ? '> ' : '  ') + r.name, i, i === this.raceIndex ? hot : white));
+    } else if (this.state === 'face') {
+      title('CHOOSE YOUR FACE');
+      line(`${this.race.name} ${this.gender}`, 0, white);
+      line(`face ${this.faceIndex + 1} of ${FACES_PER_RACE}`, 2, hot);
+      line('up/down to cycle, ENTER to continue', 4, dim);
+      line('(the portrait draws with the chargen art slice)', 6, dim);
     } else if (this.state === 'class') {
       title('CHOOSE YOUR CLASS');
       this.careers.forEach((c, i) => line((i === this.classIndex ? '> ' : '  ') + c.name, i, i === this.classIndex ? hot : white));

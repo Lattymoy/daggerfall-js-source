@@ -38,6 +38,7 @@ import { EQUIP_SLOTS, equipTableOf, getItemHands, ITEM_HANDS } from '../systems/
 import { getTemplate, paperdollOrder } from '../characters/paperdoll.js';
 import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
 import { clampArmorVariant, armorArchive, HUMAN_MORPHOLOGY, ARMOR_MATERIAL } from '../systems/armorMaterials.js';
+import { raceArt, FACES_PER_RACE, raceByKey } from '../systems/races.js';   // S3c/U9: all eight races
 
 export const PAPERDOLL_W = 110;
 export const PAPERDOLL_H = 184;
@@ -56,15 +57,9 @@ export const MATERIAL_DYES = Object.freeze([
 const CLOAK_TEMPLATES = new Set([154, 155, 191, 192]);
 export { CLOTHING_DYES };
 
-// Breton (RaceTemplate verbatim); the other 7 races join with chargen
-const RACE_ART = Object.freeze({
-  Breton: {
-    background: 'SCBG00I0.IMG',
-    bodyMale: ['BODY00I0.IMG', 'BODY00I1.IMG'],      // unclothed, clothed
-    bodyFemale: ['BODY10I0.IMG', 'BODY10I1.IMG'],
-    headsMale: 'FACE00I0.CIF', headsFemale: 'FACE10I0.CIF',
-  },
-});
+// S3c/U9: all EIGHT races now come from systems/races.js (DFU
+// RaceTemplate verbatim) - this file used to carry a Breton-only
+// table, the loud INTERIM the U8f/U8g records flagged.
 const CONTEXT_BG = Object.freeze({ town: 'SCBG04I0.IMG', dungeon: 'SCBG07I0.IMG', graveyard: 'SCBG08I0.IMG' });
 
 // AUDIT 17e F32/F33: clampArmorVariant + the armor archive rule
@@ -74,17 +69,18 @@ export { clampArmorVariant };
 
 /** GetItemImage(forPaperDoll) resolution: {archive, record, dye,
  *  target} or null for groups with no paperdoll layer. */
-export function paperdollItemImage(item, { gender = 'male' } = {}) {
+export function paperdollItemImage(item, { gender = 'male', race = 'Breton' } = {}) {
+  const morph = raceByKey(race)?.morphologyIndex ?? HUMAN_MORPHOLOGY;
   const t = getTemplate(item.templateIndex);
   if (!t) return null;
   const variants = t.variants ?? 0;
   if (item.group === 'MensClothing' || item.group === 'WomensClothing') {
     let record = t.playerTextureRecord;
     if (variants > 0) record += (CLOAK_TEMPLATES.has(item.templateIndex) ? 1 : 0) + Math.min(item.variant ?? 0, variants - 1);
-    return { archive: t.playerTextureArchive + HUMAN_MORPHOLOGY, record, dye: item.dye ?? DYE_COLORS.Blue, target: DYE_TARGETS.Clothing };
+    return { archive: t.playerTextureArchive + morph, record, dye: item.dye ?? DYE_COLORS.Blue, target: DYE_TARGETS.Clothing };
   }
   if (item.group === 'Armor') {
-    const archive = armorArchive(gender);
+    const archive = armorArchive(gender, morph);
     const m = item.material ?? 0;
     let record = t.playerTextureRecord;
     if (variants > 0) record += clampArmorVariant(item.templateIndex, m, item.variant ?? 0);
@@ -111,30 +107,46 @@ let _version = 0;
 let _refreshing = false;
 let _pending = null;   // AUDIT 17e F16: the coalesced follow-up
 
+/** S3c/U9: the art set is keyed by the ENTITY'S identity. Reloads
+ *  when the identity changes (chargen picks a race/gender/face after
+ *  boot, and the doll must follow) - `_identity` is the guard that
+ *  used to be a bare `if (_art) return`. */
+let _identity = null;
 export async function preloadPaperDollArt(deps, { race = 'Breton', gender = 'male', faceIndex = 0, context = 'town' } = {}) {
-  if (_art) return;
+  const key = `${race}|${gender}|${faceIndex}|${context}`;
+  if (_art && _identity === key) return;
   try {
     const { fetchBytes, palette } = deps;
-    _deps = { ...deps, gender };
-    const ra = RACE_ART[race];
-    const [unclothed, clothed] = gender === 'male' ? ra.bodyMale : ra.bodyFemale;
+    _deps = { ...deps, gender, race };
+    const art = raceArt(race, gender);
+    const [unclothed, clothed] = art.body;
     const loadImgBmp = async (name) => {
       const img = new ImgFile();
       img.load(await fetchBytes(name), name, palette);
       return { bmp: img.getDFBitmap(), off: img.imageOffset };
     };
-    const faceName = gender === 'male' ? ra.headsMale : ra.headsFemale;
     const face = new CifRciFile();
-    face.load(await fetchBytes(faceName), faceName, palette);
+    face.load(await fetchBytes(art.heads), art.heads, palette);
+    const fi = Math.max(0, Math.min(FACES_PER_RACE - 1, faceIndex | 0));
     _art = {
       palette,
-      bg: await loadImgBmp(CONTEXT_BG[context] ?? ra.background),
+      bg: await loadImgBmp(CONTEXT_BG[context] ?? art.background),
       nude: await loadImgBmp(unclothed),
       clothed: await loadImgBmp(clothed),
-      head: { bmp: face.getDFBitmap(faceIndex, 0), off: face.getOffset(faceIndex) },
+      head: { bmp: face.getDFBitmap(fi, 0), off: face.getOffset(fi) },
     };
+    _identity = key;
+    _live = null;   // the composite is stale: recompose on the next draw
   } catch { console.warn('[paperdoll] BODY/FACE/SCBG art unavailable; the panel stays bare'); }
 }
+
+/** Load the art for whatever identity the entity currently carries
+ *  (chargen writes race/gender/faceIndex onto it). */
+export const preloadPaperDollForEntity = (deps, entity, context = 'town') =>
+  preloadPaperDollArt(deps, {
+    race: entity?.race ?? 'Breton', gender: entity?.gender ?? 'male',
+    faceIndex: entity?.faceIndex ?? 0, context,
+  });
 export const paperDollArtLoaded = () => !!_art;
 
 /** Blit an indexed bitmap into the 110x184 RGBA composite at its
@@ -196,7 +208,7 @@ export async function refreshPaperDoll(entity) {
       const it = table[slot];
       if (!it || !CLOAK_TEMPLATES.has(it.templateIndex)) continue;
       const t = getTemplate(it.templateIndex);
-      const img = await loadRecord(t.playerTextureArchive + HUMAN_MORPHOLOGY, t.playerTextureRecord);
+      const img = await loadRecord(t.playerTextureArchive + (raceByKey(_deps.race)?.morphologyIndex ?? HUMAN_MORPHOLOGY), t.playerTextureRecord);
       if (img) blit(out, img, { remap: (i) => applyDyeToIndex(i, it.dye ?? DYE_COLORS.Blue, DYE_TARGETS.Clothing) });
       break;   // DFU stops at the first drawn cloak interior
     }
@@ -209,7 +221,7 @@ export async function refreshPaperDoll(entity) {
     // items ascending drawOrder (BlitItems)
     const ordered = paperdollOrder(worn.map((w) => ({ ...w.it, drawOrder: w.t.drawOrderOrEffect })));
     for (const it of ordered) {
-      const res = paperdollItemImage(it, { gender: _deps.gender });
+      const res = paperdollItemImage(it, { gender: _deps.gender, race: _deps.race });
       if (!res) continue;
       const img = await loadRecord(res.archive, res.record);
       if (!img) continue;
