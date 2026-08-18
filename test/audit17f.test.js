@@ -136,7 +136,8 @@ function walkChargen(onDone) {
   key('Equal', 6); key('ArrowDown', 3);
   key('Equal', 6); key('ArrowDown', 3);
   key('Equal', 6); key('Enter');      // the three skill pools -> reflexes
-  key('Enter');                       // U13: the reflex pick -> done
+  key('Enter');                       // U13: the reflex pick -> U16's summary
+  key('Enter');                       // U16: the summary's OK -> done
   return w;
 }
 

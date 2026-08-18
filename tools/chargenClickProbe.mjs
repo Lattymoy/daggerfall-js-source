@@ -23,7 +23,8 @@ const click = async (vx, vy) => { await page.mouse.click(M.ox + vx * M.s, M.oy +
 const st = async () => JSON.parse(await page.evaluate(() => {
   const f = window.__chargenFlow();
   return JSON.stringify({ state: f.state, race: f.race?.key, gender: f.gender, face: f.faceIndex,
-    cls: f.classIndex, q: f.biogQuestionIndex, pool: f.statPool ?? null, reflexes: f.reflexes });
+    cls: f.classIndex, q: f.biogQuestionIndex, pool: f.statPool ?? null, reflexes: f.reflexes,
+    poolBox: !!f.summaryPoolBox });
 }));
 
 // U15: RACE is the FIRST screen in the classic order.
@@ -110,6 +111,33 @@ await page.screenshot({ path: '/home/claude/click-reflexes.png' });
 
 await click(127 + 30, 148 + 4);              // VERY HIGH row
 if ((await st()).reflexes !== 0) { console.log('REFLEX ROW CLICK DEAD'); process.exit(1); }
+await click(283, 183);                       // OK -> U16's SUMMARY
+s = await st();
+if (s.state !== 'summary') { console.log('REFLEX OK DID NOT REACH THE SUMMARY', JSON.stringify(s)); process.exit(1); }
+await page.screenshot({ path: '/home/claude/click-summary.png' });
+
+// U16: the summary's own controls are live. Take a stat point back
+// DOWN, which is the only way to open the bonus-points gate, and check
+// that OK refuses until it is spent again.
+await click(44 + 7, 21 + 15);                // the spinner's DOWN half on the selected stat
+let sum = await st();
+if (sum.pool !== 1) { console.log('SUMMARY STAT SPINNER DEAD', JSON.stringify(sum)); process.exit(1); }
+await click(283, 183);                       // OK -> refused, box up
+sum = await st();
+if (sum.state !== 'summary' || !sum.poolBox) { console.log('SUMMARY OK GATE DEAD', JSON.stringify(sum)); process.exit(1); }
+await page.screenshot({ path: '/home/claude/click-summary-gate.png' });
+await click(160, 100);                       // ClickAnywhereToClose
+if ((await st()).poolBox) { console.log('SUMMARY POOL BOX WOULD NOT CLOSE'); process.exit(1); }
+await click(44 + 7, 21 + 3);                 // spend it again
+if ((await st()).pool !== 0) { console.log('SUMMARY RESPEND DEAD'); process.exit(1); }
+
+// the summary's reflex picker sits at (246,95), not the reflex
+// screen's (127,148) - click HIGH there and watch the pick move
+await click(246 + 30, 95 + 9 + 4);
+if ((await st()).reflexes !== 1) { console.log('SUMMARY REFLEX PICKER DEAD'); process.exit(1); }
+await click(246 + 30, 95 + 4);               // back to VERY HIGH
+if ((await st()).reflexes !== 0) { console.log('SUMMARY REFLEX PICKER DEAD (2)'); process.exit(1); }
+
 await click(283, 183);                       // OK -> done
 await waitFrames(6);
 const e = await page.evaluate(() => ({ done: !!window.__playerEntity.chargenDone, race: window.__playerEntity.race,

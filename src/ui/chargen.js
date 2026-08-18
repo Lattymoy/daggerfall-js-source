@@ -17,7 +17,7 @@ import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsMo
 import { tagEffect, biographySkillBonuses, digestRepChanges } from '../systems/biography.js';   // S3e
 import { fullName, getNameBank, GENDERS } from '../characters/nameHelper.js';   // U15
 import { srand } from '../formats/dfRandom.js';   // AUDIT 17j F1: the name screen's reseed
-import { buildBackstory, repBoxRows } from './chargenArt.js';   // U13
+import { buildBackstory, repBoxRows, bonusPointsRows } from './chargenArt.js';   // U13 / U16
 import { RACE_TEMPLATES, FACES_PER_RACE } from '../systems/races.js';   // S3c/U9
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
@@ -65,7 +65,7 @@ export function skillDown(working, rolled, pool) {
 // forced by the random-name button: CreateCharNameSelect DISABLES it
 // without a race template (:112-119), so the name screen cannot come
 // before the race and still be classic.
-const STATES = ['race', 'gender', 'class', 'biography', 'name', 'face', 'stats', 'skills', 'reflexes', 'done'];
+const STATES = ['race', 'gender', 'class', 'biography', 'name', 'face', 'stats', 'skills', 'reflexes', 'summary', 'done'];
 
 /** AUDIT 17j F5: the port capped the typed name at 16. DFU's name
  *  box is a plain TextBox and CreateCharNameSelect never sets
@@ -104,7 +104,13 @@ export class ChargenFlow {
     // AUDIT 17g F5: the description source, so BOTH the click and the
     // keyboard confirm open the same box. Null until the art loads.
     this.describeRace = (race) => raceDescriptionLines(race);
-    this.cursor = 0;
+    this.cursor = 0;          // the BIOGRAPHY screen's answer cursor
+    // U16: StatsRollout and SkillsRollout are two INDEPENDENT DFU
+    // components with a selection each. One shared cursor was fine
+    // while they were separate screens; the summary draws both at
+    // once, and a click on a skill would have moved the stat spinner.
+    this.statCursor = 0;
+    this.skillCursor = 0;
     this._rolled = null;
     // AUDIT 17j F1/F4: DFU's `new System.Random().Next()` is an
     // ENGINE PRNG draw (Ledger A), so it rides Math.random here, and
@@ -114,6 +120,8 @@ export class ChargenFlow {
     // until the first push, because DFU's first assignment cannot clear
     this._nameRaceId = null;
     this._nameGender = null;
+    // U16: the open "you must distribute your bonus points" box.
+    this.summaryPoolBox = null;
   }
 
   get career() { return this.careers[this.classIndex].career; }
@@ -137,23 +145,23 @@ export class ChargenFlow {
    *  otherwise restore. `force` is the explicit Reroll button, which
    *  rerolls regardless. */
   _enterStats(force = false) {
-    if (!force && this.rolledStats && this._statsClassIndex === this.classIndex) { this.cursor = 0; return; }
+    if (!force && this.rolledStats && this._statsClassIndex === this.classIndex) { this.statCursor = 0; return; }
     const { stats, bonusPool } = rollStats(this.career, this.rolls);
     this.rolledStats = { ...stats };
     this.stats = { ...stats };
     this.statPool = bonusPool;
     this._statsClassIndex = this.classIndex;
-    this.cursor = 0;
+    this.statCursor = 0;
   }
 
   _enterSkills(force = false) {
-    if (!force && this.rolledSkills && this._skillsClassIndex === this.classIndex) { this.cursor = 0; return; }
+    if (!force && this.rolledSkills && this._skillsClassIndex === this.classIndex) { this.skillCursor = 0; return; }
     const { skills, groupPools } = rollSkills(this.career, this.rolls);
     this.rolledSkills = [...skills];
     this.skills = [...skills];
     this.pools = { ...groupPools };
     this._skillsClassIndex = this.classIndex;
-    this.cursor = 0;
+    this.skillCursor = 0;
   }
 
   /** The three skill-screen rows in career order: [groupName, ids[]]. */
@@ -212,10 +220,27 @@ export class ChargenFlow {
   /** S3e: the class choice leads into the biography when its file
    *  loaded, and straight to the stats roll when it did not. */
   _leaveClass() {
+    if (this.biogFor?.(this.classIndex)?.questions?.length) this._enterBiography();
+    else this._leaveBiography();   // U15: -> name, the classic next screen
+  }
+
+  /** U16 / THE ONE CONSTRUCTION SEAM: every path into the biography
+   *  screen resets it here. DFU never REUSES that window - both
+   *  SetBiographyWindow and SetChooseBioWindow `new` a fresh
+   *  CreateCharBiography over a fresh BiogFile every time - so every
+   *  arrival starts from no answers. AUDIT 17j F3 put the reset on the
+   *  NAME screen's cancel, which was the only arrival that existed
+   *  then; the summary's RESTART button is a second one, and it would
+   *  have walked back through the questions with the previous run's
+   *  effects still in the list, applying every one of them twice. */
+  _enterBiography() {
     this.biogQuestionIndex = 0;
     this.cursor = 0;
-    if (this.biogFor?.(this.classIndex)?.questions?.length) this.state = 'biography';
-    else this._leaveBiography();   // U15: -> name, the classic next screen
+    this.biographyEffects = [];
+    this.backStory = [];
+    this.repChanges = null;
+    this.biogRepBox = null;
+    this.state = 'biography';
   }
 
   _leaveBiography() { this._enterName(); }
@@ -267,13 +292,7 @@ export class ChargenFlow {
    *  screen to go back to, and the cancel is inert. */
   _enterBiographyBack() {
     if (!this.biogFor?.(this.classIndex)?.questions?.length) return;
-    this.biogQuestionIndex = 0;
-    this.cursor = 0;
-    this.biographyEffects = [];
-    this.backStory = [];
-    this.repChanges = null;
-    this.biogRepBox = null;
-    this.state = 'biography';
+    this._enterBiography();
   }
 
   /** The per-skill biography bonus the SKILLS screen displays. */
@@ -309,6 +328,75 @@ export class ChargenFlow {
       if (!this.biogRepBox?.length) this._leaveBiography();
     }
     return true;
+  }
+
+  /** U16 / ONE DFU MEMBER, ONE EXPORT: the two rollouts' spend. The
+   *  stats and skills SCREENS reach it from their keyboard arms and
+   *  the SUMMARY from its spinners, which is a third caller and the
+   *  reason it stopped being written inline. */
+  spendStat(delta) {
+    const key = STAT_KEYS_ORDER[this.statCursor];
+    const r = delta > 0
+      ? statUp(this.stats[key], this.statPool)
+      : statDown(this.stats[key], this.rolledStats[key], this.statPool);
+    this.stats[key] = r.working;
+    this.statPool = r.pool;
+  }
+
+  spendSkill(delta) {
+    const at = this._skillAt(this.skillCursor);
+    if (!at) return;
+    const r = delta > 0
+      ? skillUp(this.skills[at.id], this.pools[at.group])
+      : skillDown(this.skills[at.id], this.rolledSkills[at.id], this.pools[at.group]);
+    this.skills[at.id] = r.working;
+    this.pools[at.group] = r.pool;
+  }
+
+  /** U16: SetSummaryWindow assigns CharacterDocument on EVERY push,
+   *  and that setter is SetCharacterSheet (:119-136), which zeroes all
+   *  four pools - `statsRollout.BonusPool = 0` and the three
+   *  skill bonus-point counters. Verbatim, including the quirk it
+   *  carries: un-spend a point ON the summary, back out to the reflex
+   *  screen and come forward again, and the pool is zeroed while the
+   *  lowered value stands, so the point is gone. DFU does exactly that
+   *  - the setter runs before every PushWindow. Zeroing here is also
+   *  what makes the pools well-defined for a flow that reached the
+   *  summary without ever opening the skills screen. */
+  _enterSummary() {
+    // SetStats calls SelectStat(0) (StatsRollout.cs:190), so arriving
+    // here puts the stat selection back on Strength - the spinner does
+    // not stay where the stats screen left it.
+    this.statCursor = 0;
+    this.skillCursor = 0;
+    this.statPool = 0;
+    this.pools = { primary: 0, major: 0, minor: 0 };
+    this.summaryPoolBox = null;
+    this.state = 'summary';
+  }
+
+  /** U16: OkButton_OnMouseClick (CreateCharSummary.cs:174-189). The
+   *  gate is FOUR pools, not one - the stat bonus pool and all three
+   *  skill bonus pools - because the summary lets you take points back
+   *  DOWN off any of them. Unspent points pop TEXT.RSC 14 as a
+   *  ClickAnywhereToClose box rather than closing the window. */
+  confirmSummary() {
+    if (this.statPool > 0 || this.pools.primary > 0 || this.pools.major > 0 || this.pools.minor > 0) {
+      this.summaryPoolBox = bonusPointsRows?.() ?? [''];
+      return;
+    }
+    this.state = 'done';
+  }
+
+  /** RestartButton_OnMouseClick (:170-174) - PopWindow then OnRestart,
+   *  which the wizard answers with SetRaceSelectWindow (:555-558). It
+   *  is a SOFT restart: the document survives, so a player who picks
+   *  the same class again keeps the stats they rolled (the F7 rule).
+   *  The biography is the one thing that must not survive, and
+   *  _enterBiography is where that is handled for every arrival. */
+  restartSummary() {
+    this.summaryPoolBox = null;
+    this._enterRace();
   }
 
   /** The screens' own Reroll button - it forces, where re-entry does not. */
@@ -395,11 +483,10 @@ export class ChargenFlow {
       return;
     }
     if (s === 'stats') {
-      const key = STAT_KEYS_ORDER[this.cursor];
-      if (action === 'up') this.cursor = (this.cursor + 7) % 8;
-      else if (action === 'down') this.cursor = (this.cursor + 1) % 8;
-      else if (action === 'plus') { const r = statUp(this.stats[key], this.statPool); this.stats[key] = r.working; this.statPool = r.pool; }
-      else if (action === 'minus') { const r = statDown(this.stats[key], this.rolledStats[key], this.statPool); this.stats[key] = r.working; this.statPool = r.pool; }
+      if (action === 'up') this.statCursor = (this.statCursor + 7) % 8;
+      else if (action === 'down') this.statCursor = (this.statCursor + 1) % 8;
+      else if (action === 'plus') this.spendStat(1);
+      else if (action === 'minus') this.spendStat(-1);
       else if (action === 'reroll') this.reroll();
       else if (action === 'confirm' && this.statPool === 0) { this.state = 'skills'; this._enterSkills(); }   // classic requires the pool spent
       else if (action === 'back') this.state = 'face';
@@ -410,20 +497,34 @@ export class ChargenFlow {
       // keyboard path (you click a row), so up/down walk them.
       if (action === 'up') this.reflexes = Math.max(0, this.reflexes - 1);
       else if (action === 'down') this.reflexes = Math.min(REFLEX_COUNT - 1, this.reflexes + 1);
-      else if (action === 'confirm') this.state = 'done';
-      else if (action === 'back') { this.state = 'skills'; this.cursor = 0; }
+      else if (action === 'confirm') this._enterSummary();   // U16: SetSummaryWindow (:551-558)
+      else if (action === 'back') { this.state = 'skills'; this.skillCursor = 0; }
+      return;
+    }
+    if (s === 'summary') {
+      // U16: CHAR04I0 composites the stats, skills, face and reflex
+      // components on one screen with the name box, so nearly every
+      // control is live here. The port edits ONE flow object, which is
+      // why it needs no equivalent of SummaryWindow_OnClose's cancel
+      // arm copying skills, stats, bonus points and faceIndex back to
+      // the windows behind it (:571-583) - there is nothing to copy
+      // back to.
+      if (this.summaryPoolBox) { this.summaryPoolBox = null; return; }   // ClickAnywhereToClose
+      if (action.startsWith('char:') && this.name.length < NAME_MAX_CHARACTERS) this.name += action.slice(5);
+      else if (action === 'backspace') this.name = this.name.slice(0, -1);
+      else if (action === 'confirm') this.confirmSummary();
+      else if (action === 'back') { this.state = 'reflexes'; }
       return;
     }
     if (s === 'skills') {
       const total = this.skillRows().reduce((a, [, ids]) => a + ids.length, 0);
-      const at = this._skillAt(this.cursor);
-      if (action === 'up') this.cursor = (this.cursor + total - 1) % total;
-      else if (action === 'down') this.cursor = (this.cursor + 1) % total;
-      else if (action === 'plus' && at) { const r = skillUp(this.skills[at.id], this.pools[at.group]); this.skills[at.id] = r.working; this.pools[at.group] = r.pool; }
-      else if (action === 'minus' && at) { const r = skillDown(this.skills[at.id], this.rolledSkills[at.id], this.pools[at.group]); this.skills[at.id] = r.working; this.pools[at.group] = r.pool; }
+      if (action === 'up') this.skillCursor = (this.skillCursor + total - 1) % total;
+      else if (action === 'down') this.skillCursor = (this.skillCursor + 1) % total;
+      else if (action === 'plus') this.spendSkill(1);
+      else if (action === 'minus') this.spendSkill(-1);
       else if (action === 'reroll') this.reroll();
       else if (action === 'confirm' && this.pools.primary === 0 && this.pools.major === 0 && this.pools.minor === 0) this.state = 'reflexes';
-      else if (action === 'back') { this.state = 'stats'; this.cursor = 0; }
+      else if (action === 'back') { this.state = 'stats'; this.statCursor = 0; }
       return;
     }
   }
@@ -464,10 +565,21 @@ export class ChargenFlow {
       this.state = 'class';
       return true;
     }
-    if (hit.setCursor != null) { this.cursor = hit.setCursor; return true; }
+    if (hit.setStatCursor != null) { this.statCursor = hit.setStatCursor; return true; }
+    if (hit.setSkillCursor != null) { this.skillCursor = hit.setSkillCursor; return true; }
     if (hit.setClass != null) { this.classIndex = hit.setClass; return true; }
     if (hit.answerBiography != null) return this.answerBiography(hit.answerBiography);
     if (hit.setReflexes != null) { this.reflexes = hit.setReflexes; return true; }
+    if (hit.restart) { this.restartSummary(); return true; }
+    // U16: the summary's FacePicker keeps its PREVIOUS/NEXT buttons,
+    // but 'up'/'down' belong to the face SCREEN's state arm - the
+    // summary has no such arm, so the step is explicit.
+    if (hit.statStep != null) { this.spendStat(hit.statStep); return true; }
+    if (hit.skillStep != null) { this.spendSkill(hit.skillStep); return true; }
+    if (hit.faceStep != null) {
+      this.faceIndex = (this.faceIndex + FACES_PER_RACE + hit.faceStep) % FACES_PER_RACE;
+      return true;
+    }
     if (hit.randomName) {
       // U15: NameHelper.FullName over the race's bank
       // (CreateCharNameSelect.cs:166-171). The classic wizard order
@@ -523,15 +635,15 @@ export class ChargenFlow {
     } else if (this.state === 'stats') {
       title(`DISTRIBUTE  POOL: ${this.statPool}`);
       STAT_KEYS_ORDER.forEach((k, i) => line(
-        `${i === this.cursor ? '> ' : '  '}${k.slice(0, 3).toUpperCase()}  ${this.stats[k]}`,
-        i, i === this.cursor ? hot : white));
+        `${i === this.statCursor ? '> ' : '  '}${k.slice(0, 3).toUpperCase()}  ${this.stats[k]}`,
+        i, i === this.statCursor ? hot : white));
       line('+/- assign   R reroll   ENTER when pool 0', 10, dim);
     } else if (this.state === 'skills') {
       title(`SKILLS  P:${this.pools.primary} M:${this.pools.major} m:${this.pools.minor}`);
       let row = 0, idx = 0;
       for (const [group, ids] of this.skillRows()) {
         for (const id of ids) {
-          line(`${idx === this.cursor ? '> ' : '  '}${SKILL_NAMES[id]}  ${this.skills[id]}`, row, idx === this.cursor ? hot : white);
+          line(`${idx === this.skillCursor ? '> ' : '  '}${SKILL_NAMES[id]}  ${this.skills[id]}`, row, idx === this.skillCursor ? hot : white);
           row++; idx++;
         }
         row++;

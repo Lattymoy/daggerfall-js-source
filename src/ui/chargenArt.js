@@ -67,7 +67,22 @@ export const RECTS = Object.freeze({
   pickPrev: [179, 10, 9, 9],          // :88
   pickNext: [179, 108, 9, 9],         // :92
   pickScroll: [181, 23, 5, 82],       // :97-98
+  // U16 - CreateCharSummary.cs:86-96. The name box sits 20px further
+  // right than the name SCREEN's (80,5), and RESTART takes the slot
+  // the stats screen gives to REROLL.
+  summaryName: [100, 5, 214, 7],      // :86-87
+  restart: [263, 147, 39, 22],        // :91
 });
+
+/** ReflexPicker is a self-contained 66x45 Panel of five 66x9 buttons
+ *  (ReflexPicker.cs:81-95) that its host merely POSITIONS - the reflex
+ *  screen at (127,148) (CreateCharReflexSelect.cs:93), the summary at
+ *  (246,95) (CreateCharSummary.cs:80). ONE DFU MEMBER, ONE EXPORT: the
+ *  draw and the hit take the origin rather than being written twice. */
+export const SUMMARY_REFLEX_ORIGIN = Object.freeze([246, 95]);
+
+/** CreateCharSummary.cs:32 - strYouMustDistributeYourBonusPoints. */
+const SUMMARY_BONUS_TEXT_ID = 14;
 
 // StatsRollout.cs:88-127 - value panel (8,33) 34x6 stepping 22, the
 // select button (7,20) 36x20 stepping 22, spinner at (44, 21+22i).
@@ -116,13 +131,14 @@ export const REFLEX_ROW_H = 9;
 /** EntityEnums.PlayerReflexes - 0 VeryHigh .. 4 VeryLow. */
 export const PLAYER_REFLEXES = Object.freeze({ VeryHigh: 0, High: 1, Average: 2, Low: 3, VeryLow: 4 });
 export const REFLEX_COUNT = 5;
-export const reflexRowRect = (i) => [REFLEX_PICKER[0], REFLEX_PICKER[1] + i * REFLEX_ROW_H, REFLEX_PICKER[2], REFLEX_ROW_H];
+export const reflexRowRect = (i, origin = REFLEX_PICKER) =>
+  [origin[0], origin[1] + i * REFLEX_ROW_H, REFLEX_PICKER[2], REFLEX_ROW_H];
 
 // ListBox.cs:36-37 - nine rows, one pixel of spacing.
 export const CLASS_LIST_ROWS = 9;   // ListBox.cs:36 rowsDisplayed
 const LIST_ROWS = CLASS_LIST_ROWS, LIST_ROW_SPACING = 1;
 
-const IMG_NAMES = ['CHAR00I0.IMG', 'CHAR01I0.IMG', 'CHAR02I0.IMG', 'CHAR03I0.IMG', 'PICK00I0.IMG', 'TMAP00I0.IMG', 'CHAR02I1.IMG', 'CHAR03I1.IMG', 'BIOG00I0.IMG', 'CHAR05I0.IMG', 'CHAR05I1.IMG'];
+const IMG_NAMES = ['CHAR00I0.IMG', 'CHAR01I0.IMG', 'CHAR02I0.IMG', 'CHAR03I0.IMG', 'CHAR04I0.IMG', 'PICK00I0.IMG', 'TMAP00I0.IMG', 'CHAR02I1.IMG', 'CHAR03I1.IMG', 'BIOG00I0.IMG', 'CHAR05I0.IMG', 'CHAR05I1.IMG'];
 
 let _art = null;          // { imgs: Map<name, {tex,w,h}>, picker: DFBitmap }
 let _faces = null;        // { key, tex[] } - the loaded race/gender face set
@@ -243,6 +259,7 @@ export function drawChargenNative(renderer, m, font, flow) {
   if (s === 'skills') return drawSkills(renderer, m, font, flow);
   if (s === 'biography') return drawBiography(renderer, m, font, flow);
   if (s === 'reflexes') return drawReflexes(renderer, m, font, flow);
+  if (s === 'summary') return drawSummary(renderer, m, font, flow);
   return false;
 }
 
@@ -264,14 +281,22 @@ function drawReflexes(renderer, m, font, flow) {
   const box = layoutMessageBox(font, rows);
   const top = REFLEX_INFO_TOP;
   drawMessageBox(renderer, m, font, { ...box, y: top, textY: top + (box.textY - box.y) });
-  // the highlight band for the current pick, drawn from the strip
+  drawReflexBlock(renderer, m, flow, REFLEX_PICKER);
+  return true;
+}
+
+/** ReflexPicker.Draw (:59-64) - the CHAR05I1 strip's band for the
+ *  current pick, blitted into the SELECTED button's rect. DFU picks
+ *  band `0.2 * (4 - value)` in Unity's bottom-up texcoords, which is
+ *  band `value` counted from the top. Shared by the reflex screen and
+ *  U16's summary, which differ only in where the panel sits. */
+function drawReflexBlock(renderer, m, flow, origin) {
   const strip = img('CHAR05I1.IMG');
   const v = Math.max(0, Math.min(REFLEX_COUNT - 1, flow.reflexes ?? PLAYER_REFLEXES.Average));
-  const [px, py, pw] = REFLEX_PICKER;
+  const [px, py] = origin;
   renderer.drawScreenQuad(strip.tex,
-    { x: m.ox + px * m.s, y: m.oy + (py + v * REFLEX_ROW_H) * m.s, w: pw * m.s, h: REFLEX_ROW_H * m.s },
+    { x: m.ox + px * m.s, y: m.oy + (py + v * REFLEX_ROW_H) * m.s, w: REFLEX_PICKER[2] * m.s, h: REFLEX_ROW_H * m.s },
     { u0: 0, v0: v / REFLEX_COUNT, u1: 1, v1: (v + 1) / REFLEX_COUNT });
-  return true;
 }
 
 /** U13: the class's backstory prose, its %qN macros expanded from the
@@ -332,6 +357,33 @@ function drawName(renderer, m, font, flow) {
   return true;
 }
 
+/** U16 - CreateCharSummary (CHAR04I0.IMG). The wizard's closing screen
+ *  is not a new layout so much as a COMPOSITE: Setup (:63-96) adds the
+ *  stats rollout, the skills rollout, the reflex picker at (246,95),
+ *  the face picker and a name box, then two buttons. Every one of
+ *  those components is already ported for its own screen, so the
+ *  summary draws the same blocks over a different background - which
+ *  is why they were extracted rather than copied. */
+function drawSummary(renderer, m, font, flow) {
+  drawImg(renderer, img('CHAR04I0.IMG'), m, 0, 0);
+  drawStatBlock(renderer, m, font, flow);
+  drawSkillBlock(renderer, m, font, flow);
+  drawFaceBlock(renderer, m, flow);
+  drawReflexBlock(renderer, m, flow, SUMMARY_REFLEX_ORIGIN);
+  // the name is EDITABLE here too (textBox at 100,5) - the caret says so
+  const [bx, by] = RECTS.summaryName;
+  shadowText(renderer, font, `${flow.name}_`, m, bx, by, { color: INPUT_TEXT });
+  // "You must distribute your bonus points" - a ClickAnywhereToClose
+  // parchment box over the screen (:180-186).
+  if (flow.summaryPoolBox) drawMessageBox(renderer, m, font, layoutMessageBox(font, flow.summaryPoolBox));
+  return true;
+}
+
+/** TEXT.RSC 14 - strYouMustDistributeYourBonusPoints (:32). */
+export function bonusPointsRows() {
+  return _art?.textRsc?.linesById(SUMMARY_BONUS_TEXT_ID) ?? [''];
+}
+
 function drawRace(renderer, m, font, flow) {
   drawImg(renderer, img('TMAP00I0.IMG'), m, 0, 0);
   // promptLabel (0,16) CENTERED, default colour + default shadow
@@ -377,6 +429,13 @@ function drawGender(renderer, m, font, flow) {
 
 function drawFace(renderer, m, font, flow) {
   drawImg(renderer, img('CHAR01I0.IMG'), m, 0, 0);
+  drawFaceBlock(renderer, m, flow);
+  return true;
+}
+
+/** FacePicker (FacePicker.cs:55-57) - the 64x40 display panel at
+ *  (247,25), on the face screen and on U16's summary alike. */
+function drawFaceBlock(renderer, m, flow) {
   const [px, py, pw, ph] = RECTS.faceDisplay;
   if (_faces) {
     // facePanel is Center/Middle inside the 64x40 display panel
@@ -388,7 +447,6 @@ function drawFace(renderer, m, font, flow) {
       w: fw * m.s, h: fh * m.s,
     });
   }
-  return true;
 }
 
 function drawClass(renderer, m, font, flow) {
@@ -436,18 +494,13 @@ function drawSpinnerUD(renderer, m, font, x, y, value) {
 
 function drawStats(renderer, m, font, flow) {
   drawImg(renderer, img('CHAR02I0.IMG'), m, 0, 0);
-  const [sx, sy, sw] = STAT_PANEL;
-  STAT_KEYS_ORDER.forEach((k, i) => {
-    const v = flow.stats[k];
-    alt(renderer, font, String(v), m, sx, sy + i * STAT_STEP, {
-      align: 'center', w: sw,
-      color: v !== flow.rolledStats[k] ? MODIFIED_STAT : DEFAULT_TEXT_COLOR,
-    });
-  });
-  // the spinner rides the SELECTED stat's row and carries the pool
-  drawSpinnerUD(renderer, m, font, STAT_SPINNER_X, STAT_SPINNER_Y + flow.cursor * STAT_STEP, flow.statPool);
-  // the derived block - all seven, each through the FormulaHelper home
-  // (CreateCharAddBonusStats.cs:94-100)
+  drawStatBlock(renderer, m, font, flow);
+  // U16: the seven derived labels belong to THIS WINDOW, not to the
+  // rollout - CreateCharAddBonusStats.cs:94-100 adds them to its
+  // NativePanel and StatsRollout has never heard of them. Folding them
+  // into the shared block put them on the summary too, where they
+  // landed across the skill panels ("+BRIMARY SKILLS", a 110 over the
+  // Axe row). The screenshot is what caught it.
   const d = flow.derived?.() ?? null;
   if (d) {
     alt(renderer, font, d.damage, m, ...DERIVED_POS.damage);
@@ -461,8 +514,42 @@ function drawStats(renderer, m, font, flow) {
   return true;
 }
 
+/** StatsRollout (StatsRollout.cs:88-127) - one component, drawn by the
+ *  stats screen and by U16's summary, which composites it on CHAR04I0
+ *  at the SAME geometry: CreateCharSummary news it up with
+ *  onCharacterSheet false, so the (141,17)/24-step alternate layout is
+ *  the character sheet's, not the summary's. */
+function drawStatBlock(renderer, m, font, flow) {
+  const [sx, sy, sw] = STAT_PANEL;
+  STAT_KEYS_ORDER.forEach((k, i) => {
+    const v = flow.stats[k];
+    alt(renderer, font, String(v), m, sx, sy + i * STAT_STEP, {
+      align: 'center', w: sw,
+      color: v !== flow.rolledStats[k] ? MODIFIED_STAT : DEFAULT_TEXT_COLOR,
+    });
+  });
+  // the spinner rides the SELECTED stat's row and carries the pool
+  drawSpinnerUD(renderer, m, font, STAT_SPINNER_X, STAT_SPINNER_Y + flow.statCursor * STAT_STEP, flow.statPool);
+}
+
 function drawSkills(renderer, m, font, flow) {
   drawImg(renderer, img('CHAR03I0.IMG'), m, 0, 0);
+  drawSkillBlock(renderer, m, font, flow);
+  return true;
+}
+
+/** SkillsRollout (SkillsRollout.cs:182-236) - the summary's other
+ *  composited component, same geometry again.
+ *
+ *  U16 FLAGGED: DFU's rollout carries THREE LeftRightSpinners, one per
+ *  group, each with its own selected skill and its own Value - the
+ *  group's remaining pool (SkillsRollout.cs:41-46, 240-244). The port
+ *  collapses that to one cursor across all nine rows and so draws a
+ *  single spinner on whichever row is selected. Every point can still
+ *  be spent, but classic shows all three pools at once; the summary
+ *  screenshot is where the difference becomes obvious. Its own slice:
+ *  three selected indices, three spinners, and hit routing per group. */
+function drawSkillBlock(renderer, m, font, flow) {
   const lr = img('CHAR03I1.IMG');
   const bonuses = flow.skillBonuses?.() ?? null;
   let idx = 0;
@@ -477,7 +564,7 @@ function drawSkills(renderer, m, font, flow) {
       // but does NOT turn it green - that colour compares working
       // against ROLLED, and the bonus is not the player's spend.
       alt(renderer, font, String(v + (bonuses?.[id] ?? 0)), m, SKILL_VALUE_X, y, { color: modified ? MODIFIED_STAT : DEFAULT_TEXT_COLOR });
-      if (idx === flow.cursor) {
+      if (idx === flow.skillCursor) {
         const sy = SKILL_SPINNER_TOP[group] + i * SKILL_ROW_STEP;
         drawImg(renderer, lr, m, SKILL_SPINNER_X, sy);
         // HorizontalAlignment.Center places the LABEL BOX inside its
@@ -491,7 +578,6 @@ function drawSkills(renderer, m, font, flow) {
       idx++;
     });
   }
-  return true;
 }
 
 /** Pointer routing: a native point -> the flow ACTION it triggers, or
@@ -570,36 +656,67 @@ export function chargenHit(flow, vx, vy) {
   if (s === 'stats') {
     if (inRect(RECTS.reroll)) return 'reroll';
     if (inRect(RECTS.ok)) return 'confirm';
-    const [bx, by, bw, bh] = STAT_BUTTON;
-    for (let i = 0; i < STAT_KEYS_ORDER.length; i++) {
-      if (vx >= bx && vx < bx + bw && vy >= by + i * STAT_STEP && vy < by + i * STAT_STEP + bh) return { setCursor: i };
+    return statBlockHit(flow, vx, vy);
+  }
+  if (s === 'summary') {
+    if (flow.summaryPoolBox) return 'confirm';   // ClickAnywhereToClose
+    if (inRect(RECTS.ok)) return 'confirm';
+    if (inRect(RECTS.restart)) return { restart: true };
+    if (inRect(RECTS.facePrev)) return { faceStep: -1 };
+    if (inRect(RECTS.faceNext)) return { faceStep: 1 };
+    for (let i = 0; i < REFLEX_COUNT; i++) {
+      if (inRect(reflexRowRect(i, SUMMARY_REFLEX_ORIGIN))) return { setReflexes: i };
     }
-    const sy = STAT_SPINNER_Y + flow.cursor * STAT_STEP;
-    if (vx >= STAT_SPINNER_X && vx < STAT_SPINNER_X + UD_SPINNER.w) {
-      if (vy >= sy && vy < sy + UD_SPINNER.up[3]) return 'plus';
-      if (vy >= sy + UD_SPINNER.down[1] && vy < sy + UD_SPINNER.down[1] + UD_SPINNER.down[3]) return 'minus';
-    }
+    // Both rollouts are live at once here, and each answers a spinner
+    // with the same bare 'plus'/'minus' its own screen uses. On the
+    // summary that is ambiguous, so the branch that ANSWERED names
+    // itself - it is the only place that knows.
+    const st = statBlockHit(flow, vx, vy);
+    if (st) return typeof st === 'string' ? { statStep: st === 'plus' ? 1 : -1 } : st;
+    const sk = skillBlockHit(flow, vx, vy);
+    if (sk) return typeof sk === 'string' ? { skillStep: sk === 'plus' ? 1 : -1 } : sk;
     return null;
   }
   if (s === 'skills') {
     if (inRect(RECTS.ok)) return 'confirm';
-    let idx = 0;
-    for (const [group, ids] of flow.skillRows()) {
-      for (let i = 0; i < ids.length; i++) {
-        const y = SKILL_GROUP_TOP[group] + i * SKILL_ROW_STEP;
-        // skillSelectButtonSize (106,7) at the label position
-        if (vx >= SKILL_LABEL_X && vx < SKILL_LABEL_X + 106 && vy >= y && vy < y + 7) return { setCursor: idx };
-        if (idx === flow.cursor) {
-          const sy = SKILL_SPINNER_TOP[group] + i * SKILL_ROW_STEP;
-          if (vy >= sy && vy < sy + 9) {
-            if (vx >= SKILL_SPINNER_X && vx < SKILL_SPINNER_X + 11) return 'minus';
-            if (vx >= SKILL_SPINNER_X + LR_SPINNER.right[0] && vx < SKILL_SPINNER_X + LR_SPINNER.right[0] + 11) return 'plus';
-          }
+    return skillBlockHit(flow, vx, vy);
+  }
+  return null;
+}
+
+/** The two rollouts' own hit routing, shared by their screens and by
+ *  U16's summary, which draws BOTH at once. They cannot collide: the
+ *  stat buttons and spinner live at x 7..59, the skill rows and their
+ *  spinner at x 68..240. */
+function statBlockHit(flow, vx, vy) {
+  const [bx, by, bw, bh] = STAT_BUTTON;
+  for (let i = 0; i < STAT_KEYS_ORDER.length; i++) {
+    if (vx >= bx && vx < bx + bw && vy >= by + i * STAT_STEP && vy < by + i * STAT_STEP + bh) return { setStatCursor: i };
+  }
+  const sy = STAT_SPINNER_Y + flow.statCursor * STAT_STEP;
+  if (vx >= STAT_SPINNER_X && vx < STAT_SPINNER_X + UD_SPINNER.w) {
+    if (vy >= sy && vy < sy + UD_SPINNER.up[3]) return 'plus';
+    if (vy >= sy + UD_SPINNER.down[1] && vy < sy + UD_SPINNER.down[1] + UD_SPINNER.down[3]) return 'minus';
+  }
+  return null;
+}
+
+function skillBlockHit(flow, vx, vy) {
+  let idx = 0;
+  for (const [group, ids] of flow.skillRows()) {
+    for (let i = 0; i < ids.length; i++) {
+      const y = SKILL_GROUP_TOP[group] + i * SKILL_ROW_STEP;
+      // skillSelectButtonSize (106,7) at the label position
+      if (vx >= SKILL_LABEL_X && vx < SKILL_LABEL_X + 106 && vy >= y && vy < y + 7) return { setSkillCursor: idx };
+      if (idx === flow.skillCursor) {
+        const sy = SKILL_SPINNER_TOP[group] + i * SKILL_ROW_STEP;
+        if (vy >= sy && vy < sy + 9) {
+          if (vx >= SKILL_SPINNER_X && vx < SKILL_SPINNER_X + 11) return 'minus';
+          if (vx >= SKILL_SPINNER_X + LR_SPINNER.right[0] && vx < SKILL_SPINNER_X + LR_SPINNER.right[0] + 11) return 'plus';
         }
-        idx++;
       }
+      idx++;
     }
-    return null;
   }
   return null;
 }

@@ -1620,6 +1620,86 @@ alone and exercises the random button on the way through. Out the
 other end, unchanged: a Redguard female with Very High reflexes -
 named `Rlillki` by the button, not by the keyboard.
 
+## U16 - THE SUMMARY SCREEN (2026-08-18)
+
+`WizardStages.Summary` was the last stage the port did not have, and
+it is the one that CLOSES the wizard: `ReflexSelectWindow_OnClose`
+goes to `SetSummaryWindow`, and it is `SummaryWindow_OnClose` that
+calls `StartNewGame`. The port had been ending on the reflex screen.
+
+`CreateCharSummary` is barely a layout of its own. Setup (:63-96)
+COMPOSITES components that already exist onto `CHAR04I0.IMG`:
+
+| component | where | already ported for |
+|---|---|---|
+| `StatsRollout` | (8,33) step 22 | the stats screen |
+| `SkillsRollout` | groups at 32 / 81 / 130 | the skills screen |
+| `FacePicker` | (247,25) 64x40 | the face screen |
+| `ReflexPicker` | **(246,95)** | the reflex screen, at (127,148) |
+| `TextBox` | **(100,5)** 214x7 | the name screen, at (80,5) |
+
+Only the last two move. `ReflexPicker` is a self-contained 66x45 panel
+its host merely POSITIONS, so it takes an origin now instead of being
+written twice - and the four blocks were EXTRACTED from their screens
+rather than copied, which is the whole reason this slice is small.
+
+Worth noting for the stats block: `CreateCharSummary` news up
+`StatsRollout()` with `onCharacterSheet` false, so the (141,17)/24-step
+alternate layout in that class is the CHARACTER SHEET's, not the
+summary's. Same geometry as the stats screen, verbatim.
+
+**What the screen actually does.** Nearly every control is live - this
+is a review screen you can still edit on. OK is gated on FOUR pools,
+not one, because you can take points back DOWN off any of them; an
+unspent point pops TEXT.RSC 14 ("You must distribute your bonus
+points") on U11's parchment rather than closing. RESTART is a SOFT
+restart: `SetRaceSelectWindow` with the document intact, so a player
+who re-picks the same class keeps the roll (the 17j F7 rule).
+
+**Two things the port had to change underneath.**
+
+- The stats and skills rollouts needed INDEPENDENT selections. One
+  shared `cursor` was fine while they were separate screens; the
+  summary draws both, and a click on a skill row would have moved the
+  stat spinner.
+- The biography reset moved onto `_enterBiography`. AUDIT 17j F3 put
+  it on the NAME screen's cancel, which was the only arrival that
+  existed then. RESTART is a second one, and it would have walked back
+  through the questions with the previous run's effects still in the
+  list, applying every one of them twice. DFU never reuses that window
+  - both `SetBiographyWindow` and `SetChooseBioWindow` construct a
+  fresh `CreateCharBiography` over a fresh `BiogFile` - so every
+  arrival resets, and now every arrival goes through one door.
+
+**One verbatim quirk, ported deliberately.** `SetSummaryWindow`
+assigns `CharacterDocument` on every push, and that setter zeroes all
+four pools (:119-136). So: un-spend a point ON the summary, back out
+to the reflex screen, come forward again, and the pool is zeroed while
+the lowered value stands - the point is gone. DFU does exactly that.
+
+**What the screenshot caught.** The seven DERIVED labels (damage,
+encumbrance, spell points, magic resistance, to-hit, hit points,
+healing rate) had been folded into the shared stats block. They belong
+to `CreateCharAddBonusStats`' OWN panel (:94-100) - `StatsRollout` has
+never heard of them - so the summary drew them across its skill
+panels: "+BRIMARY SKILLS", a stray 110 over the Axe row, a +0 between
+two groups. No test would have found that; eyeballing did.
+
+FLAGGED: DFU's `SkillsRollout` carries THREE `LeftRightSpinner`s, one
+per group, each with its own selected skill and its own remaining
+pool. The port collapses that to one cursor over all nine rows and
+draws a single spinner. Every point can still be spent, but classic
+shows all three pools at once, and the summary is where the difference
+becomes obvious. Its own slice.
+
+Probed: the click probe now walks the summary too - it takes a stat
+point back down, watches OK REFUSE with the parchment box up, closes
+the box, re-spends, moves the reflex pick at the summary's own picker
+origin, and only then confirms. Eyeballed: every panel reads, the
+green modified values are right, and the gate screenshot shows STR
+70 -> 69 with a 1 in the spinner behind "You must distribute your
+bonus points."
+
 **AUDIT 17j corrected the back arms.** U15 got the wizard's ORDER
 right and every one of its BACK arms wrong, because the order was read
 forwards and the cancels then inferred by reading it backwards. DFU

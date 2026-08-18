@@ -296,6 +296,8 @@ test('U13: the flow ends on reflexes, clamped, and carries the pick', () => {
   f.input('down'); f.input('down'); f.input('down'); f.input('down'); f.input('down'); f.input('down');
   assert.equal(f.reflexes, PLAYER_REFLEXES.VeryLow, 'and at the bottom');
   f.input('confirm');
+  assert.equal(f.state, 'summary');   // U16: the summary closes the wizard now
+  f.input('confirm');
   assert.ok(f.done);
   assert.equal(f.result().reflexes, PLAYER_REFLEXES.VeryLow);
 });

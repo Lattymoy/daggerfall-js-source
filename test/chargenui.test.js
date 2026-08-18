@@ -89,6 +89,10 @@ test('chargen ui: the flow end to end, conservation, confirm gates', () => {
   flow.input('down'); flow.input('down');
   assert.equal(flow.reflexes, 2);
   flow.input('confirm');
+  // U16: reflexes no longer CLOSE the wizard - SetSummaryWindow does,
+  // and the summary's OK is what ends it (WizardStages.Summary).
+  assert.equal(flow.state, 'summary');
+  flow.input('confirm');
   assert.ok(flow.done);
   const r = flow.result();
   assert.equal(r.name, 'Mac');

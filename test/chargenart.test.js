@@ -24,6 +24,8 @@ test('U10: the window rects, pinned WHOLE against the DFU literals', () => {
     pickPrev: [179, 10, 9, 9],       // :88
     pickNext: [179, 108, 9, 9],      // :92
     pickScroll: [181, 23, 5, 82],    // :97-98
+    summaryName: [100, 5, 214, 7],   // U16 - CreateCharSummary.cs:86-87
+    restart: [263, 147, 39, 22],     // :91
   });
 });
 
@@ -125,17 +127,17 @@ test('U10: clicks land on DFU\'s own buttons', () => {
   f.state = 'stats'; f._enterStats();
   assert.equal(chargenHit(f, 280, 155), 'reroll');
   assert.equal(chargenHit(f, 280, 180), 'confirm');
-  assert.deepEqual(chargenHit(f, 20, 70), { setCursor: 2 }, 'the third stat button (7,20)+22*2');
+  assert.deepEqual(chargenHit(f, 20, 70), { setStatCursor: 2 }, 'the third stat button (7,20)+22*2');
   assert.equal(chargenHit(f, 50, 24), 'plus', 'the spinner rides the cursor row');
   assert.equal(chargenHit(f, 50, 36), 'minus');
   f.state = 'skills'; f._enterSkills();
-  assert.deepEqual(chargenHit(f, 100, 34), { setCursor: 0 }, 'primary row 0 at y=32, 106x7');
-  assert.deepEqual(chargenHit(f, 100, 84), { setCursor: 3 }, 'major row 0 at y=81');
-  assert.deepEqual(chargenHit(f, 100, 133), { setCursor: 6 }, 'minor row 0 at y=130');
+  assert.deepEqual(chargenHit(f, 100, 34), { setSkillCursor: 0 }, 'primary row 0 at y=32, 106x7');
+  assert.deepEqual(chargenHit(f, 100, 84), { setSkillCursor: 3 }, 'major row 0 at y=81');
+  assert.deepEqual(chargenHit(f, 100, 133), { setSkillCursor: 6 }, 'minor row 0 at y=130');
   assert.equal(chargenHit(f, 100, 120), null, 'the gaps between the groups are dead');
   // the row button is 7 tall on a 10px pitch (SkillsRollout.cs:184),
   // so the 3px BETWEEN rows is dead too - a button sized to the pitch
   // would swallow it and mis-target the row above
   assert.equal(chargenHit(f, 100, 40), null, 'the 3px between two primary rows');
-  assert.deepEqual(chargenHit(f, 100, 38), { setCursor: 0 }, 'the button\'s last pixel row still hits');
+  assert.deepEqual(chargenHit(f, 100, 38), { setSkillCursor: 0 }, 'the button\'s last pixel row still hits');
 });
