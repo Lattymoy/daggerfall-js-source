@@ -511,6 +511,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   try {
     textRsc = new TextRsc().load(await fetchBytes('TEXT.RSC'));
   } catch { console.warn('[text] TEXT.RSC unavailable; action text boxes no-op'); }
+  // AUDIT 17g F1: the parchment frame warms HERE, beside the records
+  // it frames. U11 wired it inside toggleCharSheet() - the comment
+  // even said "for the action boxes" - so a dungeon trigger that
+  // popped a ShowText box drew the FLAT fallback unless the player had
+  // pressed F5 at some point first. Nothing failed loudly; the box
+  // just quietly wasn't classic.
+  preloadMessageBoxArt({ renderer, fetchBytes, palette });
   // S16: enemy spell lists ride SPELLS.STD (loaded just above, after
   // the foe build) - SetEnemyCareer's assignment tail per live foe:
   // class enemies with CastsMagic take EnemyClassSpells[min(6,
@@ -1865,7 +1872,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleCharSheet() {
       if (activeOverlay) return;
       preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: lazy - ready by the next open at worst
-      preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11: SPOP/BUTTONS for the action boxes
       activeOverlay = new CharSheet(playerEntity);
     },
     toggleInventory() {

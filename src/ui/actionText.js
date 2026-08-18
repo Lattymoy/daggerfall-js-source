@@ -13,6 +13,9 @@ import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';   // U11
 
+/** DaggerfallInputMessageBox maxCharacters. */
+export const MAX_INPUT = 20;
+
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 const TEXT = [0.86, 0.82, 0.68, 1];
 const DIM = [0.55, 0.52, 0.45, 1];
@@ -46,7 +49,7 @@ export class ActionTextBox {
       // ClickAnywhereToClose has NO buttons (DaggerfallMessageBox
       // .ClickAnywhereToClose) - the box is text only.
       const box = layoutMessageBox(font, this.lines);
-      if (drawMessageBox(renderer, m, font, box, this.lines)) return;
+      if (drawMessageBox(renderer, m, font, box)) return;
     }
     drawPanel(renderer, canvas, font, s, this.lines);
   }
@@ -71,7 +74,7 @@ export class ActionInputBox {
     }
     if (action === 'back') { this.done = true; return; }
     if (action === 'backspace') { this.value = this.value.slice(0, -1); return; }
-    if (action.startsWith('char:') && this.value.length < 20) this.value += action.slice(5);   // maxCharacters 20
+    if (action.startsWith('char:') && this.value.length < MAX_INPUT) this.value += action.slice(5);
   }
 
   draw(renderer, canvas, font, s) {
@@ -81,8 +84,10 @@ export class ActionInputBox {
       // DaggerfallInputMessageBox puts the entry line UNDER the
       // prompt inside the same parchment box.
       const rows = [...this.lines, entry];
-      const box = layoutMessageBox(font, rows);
-      if (drawMessageBox(renderer, m, font, box, rows)) return;
+      // the entry field never sizes the box past its maximum
+      // (maxCharacters 20, the same clamp input() enforces)
+      const box = layoutMessageBox(font, rows, [], { sizingRows: [...this.lines, ` > ${'M'.repeat(MAX_INPUT)}_`] });
+      if (drawMessageBox(renderer, m, font, box)) return;
     }
     const at = drawPanel(renderer, canvas, font, s, this.lines, entry);
     drawText(renderer, font, entry, at.x + 12 * s, at.y - 12 * s, s, DIM);

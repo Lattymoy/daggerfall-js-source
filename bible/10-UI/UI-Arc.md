@@ -1225,3 +1225,66 @@ proper lines with YES and NO clear beneath it.
 FLAGGED, not done: the scrolling variant (a label past MaxTextHeight
 gets a scroll bar and clipped rendering, :571-590) - nothing in the
 port yet feeds a box more text than fits.
+
+## AUDIT 17g: the deep parity pass over U10 + U11 (2026-08-18)
+
+Mac asked for a deep audit of the two slices just shipped. Read by
+hand against DFU source. Six confirmed; the full ledger is in
+`bible/Home.md` under Audits, and the parts that belong to this arc:
+
+**The wiring that read right and did nothing.** U11's
+`preloadMessageBoxArt` landed inside `dungeonContext.toggleCharSheet()`
+- the comment beside it said "for the action boxes" - so a dungeon
+trigger popping a ShowText box drew the FLAT fallback unless the
+player had pressed F5 earlier in the session. It warms at scene boot
+now, beside the TEXT.RSC load whose records it frames. Exactly the
+shape of 17e's silently-no-op'd `releaseEmptied`: a line that reads
+correct, sits in the wrong scope, and fails without a sound.
+
+**The box centred every row.** `MultiFormatTextLabel` sets
+HorizontalAlignment.Center on the rows a JustifyCenter closed and
+leaves the rest LEFT (:341-344). U11's own `linesById` carries that
+flag and `drawMessageBox` discarded it. Counted over the shipping
+TEXT.RSC: of 676 multi-row records, 596 are all-centre - which is
+precisely why the race descriptions looked right and hid this - but
+**53 are entirely left and 27 mix the two**. Rows flow as
+{ text, center } now; a plain string still centres, which is what the
+gender prompt (composed in code, not read from a record) wants.
+
+**The class list jumped.** `ListBox` scrolls minimally on a selection
+move: `SelectPrevious` pulls the window up only when the selection
+falls above it, `SelectNext` pushes it down only when it falls below
+(:709-730). U10 recomputed a CENTRED window at draw time, so the whole
+list lurched on every arrow and the selection could never sit anywhere
+but the middle. The scroll index is the list's own state now, moved by
+the verbatim rule, and a click on a row selects it as DFU's list does.
+
+**Three smaller ones.** `chargenHit`'s `class` case derefed the art
+directly where every other case returns null, so the ONE state that
+needs the art was the one that threw. `ActionInputBox` re-laid its box
+out from its own live entry every frame, so the parchment gained a
+whole 22px slice mid-word - `layoutMessageBox` takes `sizingRows` and
+measures the field at its maximum (maxCharacters 20). And a keyboard
+confirm on the race screen walked straight past the description box a
+click always opened; DFU has no keyboard path there at all, so both
+route through the same box now, with an art-less flow pinned never to
+trap.
+
+**Checked and CLEARED**, recorded because both looked like findings:
+the ten FACE textures per identity are not a leak - `uploadTexture`
+memoises by key, so they are bounded (160 worst case) and shared
+exactly like archive art. And the U11 TEXT.RSC line-break fix has no
+live regression despite changing 714 of 1408 records: every record the
+port currently draws through a single-string path (greetings, tones,
+where-is answers, palace names) is single-row, and `drawText` renders
+a stray control byte as a blank advance rather than a glyph.
+
+**FLAGGED, not fixed:** the class picker's scrollbar THUMB. The
+geometry is verbatim and simple (height = rail x displayed/total,
+floored at 10; y = scroll x (rail - height) / (total - displayed)) but
+the thumb is three texture slices this port has not identified, and
+inventing a colour would break the NATIVE-WINDOW RULE.
+
+Pins: `test/audit17g.test.js`, six tests, each mutation-proven.
+Probed: all seven exterior probes green, and the keyboard confirm
+opens the Khajiit description at 9 rows live.

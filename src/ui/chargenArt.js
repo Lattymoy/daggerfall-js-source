@@ -76,7 +76,8 @@ const SKILL_SPINNER_TOP = Object.freeze({ primary: 31, major: 80, minor: 129 });
 const UD_SPINNER = { w: 15, h: 20, up: [0, 0, 15, 7], value: [0, 7, 15, 6], down: [0, 13, 15, 7] };
 const LR_SPINNER = { left: [0, 0, 11, 9], value: [0, 2, 15, 9], right: [26, 0, 11, 9] };
 // ListBox.cs:36-37 - nine rows, one pixel of spacing.
-const LIST_ROWS = 9, LIST_ROW_SPACING = 1;
+export const CLASS_LIST_ROWS = 9;   // ListBox.cs:36 rowsDisplayed
+const LIST_ROWS = CLASS_LIST_ROWS, LIST_ROW_SPACING = 1;
 
 const IMG_NAMES = ['CHAR00I0.IMG', 'CHAR01I0.IMG', 'CHAR02I0.IMG', 'CHAR03I0.IMG', 'PICK00I0.IMG', 'TMAP00I0.IMG', 'CHAR02I1.IMG', 'CHAR03I1.IMG'];
 
@@ -166,7 +167,10 @@ export const faceSetLoaded = () => !!_faces;
 export function raceDescriptionLines(race) {
   const t = _art?.textRsc;
   if (!t || !race) return [];
-  return t.linesById(race.descriptionId).map((r) => r.text);
+  // AUDIT 17g F2: the ROWS, with the record's own per-row alignment -
+  // mapping them to bare strings threw away the JustifyCenter flag the
+  // box needs.
+  return t.linesById(race.descriptionId);
 }
 
 const img = (n) => _art.imgs.get(n);
@@ -215,7 +219,7 @@ function drawRace(renderer, m, font, flow) {
     const lines = flow.raceConfirm;
     const box = layoutMessageBox(font, lines, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
     flow._raceBox = box;
-    drawMessageBox(renderer, m, font, box, lines);
+    drawMessageBox(renderer, m, font, box);
   } else {
     flow._raceBox = null;
   }
@@ -233,7 +237,7 @@ function drawGender(renderer, m, font, flow) {
   drawImg(renderer, img('TMAP00I0.IMG'), m, 0, 0);
   const box = genderBox(font);
   flow._genderBox = box;   // the hit path has no font; the draw hands it the geometry
-  if (!drawMessageBox(renderer, m, font, box, [GENDER_PROMPT])) return true;
+  if (!drawMessageBox(renderer, m, font, box)) return true;
   // the keyboard flow's current pick, named under the box - classic
   // has no selected STATE here (you click a button and the window
   // closes), but the up/down seam has to be legible
@@ -269,8 +273,18 @@ function drawClass(renderer, m, font, flow) {
   drawImg(renderer, pick, m, ox, oy);
   const [lx, ly, , lh] = RECTS.pickList;
   const h = rowH(font);
-  // ListBox scrolls to keep the selection in its nine rows
-  const first = Math.max(0, Math.min(flow.classIndex - Math.floor((LIST_ROWS - 1) / 2), flow.careers.length - LIST_ROWS));
+  // AUDIT 17g F6: the scroll index is the LIST'S STATE, moved
+  // minimally as the selection leaves the window (ListBox.cs:709-730)
+  // - not a centred window recomputed here every frame.
+  const first = flow.classScroll ?? 0;
+  flow._classRowH = h;   // the hit path has no font (the _genderBox pattern)
+  // AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
+  // is verbatim and simple (VerticalScrollBar.cs:206-221 - height =
+  // rail * displayed/total floored at 10, y = scroll * (rail - height)
+  // / (total - displayed)) but the thumb is three texture slices this
+  // port has not identified yet, and inventing a colour would break
+  // the NATIVE-WINDOW RULE. The rail and both arrows are baked into
+  // PICK00I0 and do draw.
   for (let i = 0; i < LIST_ROWS; i++) {
     const c = flow.careers[first + i];
     if (!c) break;
@@ -380,12 +394,23 @@ export function chargenHit(flow, vx, vy) {
     return inRect(RECTS.ok) ? 'confirm' : null;
   }
   if (s === 'class') {
-    const pick = img('PICK00I0.IMG');
+    // AUDIT 17g F3: this derefed _art.imgs directly, so the ONE branch
+    // that needs the art THREW where every other branch returns null.
+    // The live caller guards on chargenArtLoaded(); nothing else has
+    // to know that.
+    const pick = _art ? img('PICK00I0.IMG') : null;
     if (!pick) return null;
     const ox = Math.floor((320 - pick.w) / 2), oy = Math.floor((200 - pick.h) / 2);
     const lx = vx - ox, ly = vy - oy;
     if (lx >= RECTS.pickPrev[0] && ly >= RECTS.pickPrev[1] && lx < RECTS.pickPrev[0] + 9 && ly < RECTS.pickPrev[1] + 9) return 'up';
     if (lx >= RECTS.pickNext[0] && ly >= RECTS.pickNext[1] && lx < RECTS.pickNext[0] + 9 && ly < RECTS.pickNext[1] + 9) return 'down';
+    // a click ON a row selects it (DaggerfallListPickerWindow's list)
+    const [plx, ply, plw] = RECTS.pickList;
+    if (lx >= plx && lx < plx + plw && ly >= ply) {
+      const row = Math.floor((ly - ply) / (flow._classRowH || 1));
+      const idx = (flow.classScroll ?? 0) + row;
+      if (row >= 0 && row < LIST_ROWS && idx < flow.careers.length) return { setClass: idx };
+    }
     return null;
   }
   if (s === 'stats') {

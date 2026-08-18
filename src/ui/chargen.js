@@ -18,7 +18,7 @@ import { RACE_TEMPLATES, FACES_PER_RACE } from '../systems/races.js';   // S3c/U
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
-import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit } from './chargenArt.js';   // U10
+import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, CLASS_LIST_ROWS } from './chargenArt.js';   // U10
 
 export const MAX_STAT_VALUE = 100;   // FormulaHelper.MaxStatValue
 
@@ -56,7 +56,11 @@ export class ChargenFlow {
     this.raceIndex = 0;      // RACE_TEMPLATES order (Breton first)
     this.faceIndex = 0;      // 0..9 within the race/gender FACE CIF
     this.classIndex = 0;
+    this.classScroll = 0;      // AUDIT 17g F6: the list's own scroll index
     this.raceConfirm = null;   // U11: the open race-description box, if any
+    // AUDIT 17g F5: the description source, so BOTH the click and the
+    // keyboard confirm open the same box. Null until the art loads.
+    this.describeRace = (race) => raceDescriptionLines(race);
     this.cursor = 0;
     this._rolled = null;
   }
@@ -119,6 +123,20 @@ export class ChargenFlow {
     };
   }
 
+  /** AUDIT 17g F6: ListBox scrolls MINIMALLY on a selection move -
+   *  SelectPrevious only pulls the window up when the selection falls
+   *  above it, SelectNext only pushes it down when the selection falls
+   *  below (ListBox.cs:709-730). The port recomputed a CENTRED window
+   *  at draw time, so the whole list jumped on every arrow and the
+   *  selection never sat anywhere but the middle. */
+  _scrollToClass(rows = CLASS_LIST_ROWS) {
+    const n = this.careers.length;
+    const max = Math.max(0, n - rows);
+    if (this.classIndex < this.classScroll) this.classScroll = this.classIndex;
+    else if (this.classIndex >= this.classScroll + rows) this.classScroll = this.classIndex - rows + 1;
+    this.classScroll = Math.max(0, Math.min(max, this.classScroll));
+  }
+
   reroll() {
     if (this.state === 'stats') this._enterStats();
     else if (this.state === 'skills') this._enterSkills();
@@ -143,8 +161,16 @@ export class ChargenFlow {
       }
       if (action === 'up') this.raceIndex = (this.raceIndex + RACE_TEMPLATES.length - 1) % RACE_TEMPLATES.length;
       else if (action === 'down') this.raceIndex = (this.raceIndex + 1) % RACE_TEMPLATES.length;
-      else if (action === 'confirm') this.state = 'gender';
-      else if (action === 'back') this.state = 'name';
+      else if (action === 'confirm') {
+        // AUDIT 17g F5: a keyboard confirm walked straight past the
+        // race DESCRIPTION box a click opens, so a keyboard player
+        // never saw it and a tapping one always did. DFU has no
+        // keyboard path here at all - the map click IS the selection -
+        // so routing both through the same confirm is the closer read.
+        const rows = this.describeRace?.(this.race) ?? null;
+        if (rows?.length) this.raceConfirm = rows;
+        else this.state = 'gender';
+      } else if (action === 'back') this.state = 'name';
       return;
     }
     if (s === 'gender') {
@@ -161,8 +187,8 @@ export class ChargenFlow {
       return;
     }
     if (s === 'class') {
-      if (action === 'up') this.classIndex = (this.classIndex + this.careers.length - 1) % this.careers.length;
-      else if (action === 'down') this.classIndex = (this.classIndex + 1) % this.careers.length;
+      if (action === 'up') { this.classIndex = (this.classIndex + this.careers.length - 1) % this.careers.length; this._scrollToClass(); }
+      else if (action === 'down') { this.classIndex = (this.classIndex + 1) % this.careers.length; this._scrollToClass(); }
       else if (action === 'confirm') { this.state = 'stats'; this._enterStats(); }
       else if (action === 'back') this.state = 'face';
       return;
@@ -212,6 +238,7 @@ export class ChargenFlow {
     if (hit.cancelRace) { this.raceConfirm = null; return true; }
     if (hit.setGender != null) { this.gender = hit.setGender; return true; }
     if (hit.setCursor != null) { this.cursor = hit.setCursor; return true; }
+    if (hit.setClass != null) { this.classIndex = hit.setClass; return true; }
     return false;
   }
 

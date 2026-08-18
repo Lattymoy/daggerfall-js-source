@@ -97,13 +97,30 @@ function buttonTex(record) {
 
 const roundUpSlice = (v) => (v > MIN_BOX_SIDE ? Math.ceil(v / SLICE) * SLICE : MIN_BOX_SIDE);
 
+/** Rows may arrive as plain strings or as TextRsc.linesById's
+ *  { text, center } records. AUDIT 17g F2: a plain string CENTRES,
+ *  which is what a caller composing its own prompt wants, but a row
+ *  that came from TEXT.RSC carries the record's own alignment - and
+ *  53 multi-row records are entirely LEFT while 27 mix the two, so
+ *  centring everything drew 80 of 676 of them wrong. */
+const normalizeRows = (lines) =>
+  (lines ?? []).map((l) => (typeof l === 'string' ? { text: l, center: true } : { text: l.text ?? '', center: l.center !== false }));
+
 /** UpdatePanelSizes verbatim. `lines` are the already-wrapped rows the
- *  caller draws; `buttons` are MB_BUTTONS values. Returns everything
- *  the draw and the hit test need, in VIRTUAL (320x200) pixels. */
-export function layoutMessageBox(font, lines, buttons = []) {
+ *  caller draws (strings, or { text, center } from linesById);
+ *  `buttons` are MB_BUTTONS values. Returns everything the draw and
+ *  the hit test need, in VIRTUAL (320x200) pixels. */
+export function layoutMessageBox(font, lines, buttons = [], { sizingRows = null } = {}) {
   const rowH = font?.fnt?.fixedHeight ?? 6;         // rowLeading 0
-  const textW = lines.length ? Math.max(...lines.map((l) => measureText(font.fnt, l))) : 0;
-  const textH = lines.length * rowH;
+  const rows = normalizeRows(lines);
+  // AUDIT 17g F4: an input box re-measured its own live entry every
+  // frame, so the parchment GREW A SLICE as the player typed past a
+  // 22px boundary. `sizingRows` measures the widest the content can
+  // get (DaggerfallInputMessageBox's field is fixed at maxCharacters)
+  // while the real rows are what draws.
+  const measured = sizingRows ? normalizeRows(sizingRows) : rows;
+  const textW = measured.length ? Math.max(...measured.map((r) => measureText(font.fnt, r.text))) : 0;
+  const textH = Math.max(rows.length, measured.length) * rowH;
   // the strip: n buttons of 32 with 32 between them
   const stripW = buttons.length ? buttons.length * BUTTON_W + (buttons.length - 1) * BUTTON_SPACING : 0;
   const stripH = buttons.length ? BUTTON_H : 0;
@@ -142,7 +159,7 @@ export function layoutMessageBox(font, lines, buttons = []) {
     button: b,
     rect: [stripX + i * (BUTTON_W + BUTTON_SPACING), stripY, BUTTON_W, BUTTON_H],
   }));
-  return { x, y, w, h, textX: x, textY, textW, textH, rowH, rows: lines.length, buttons: rects };
+  return { x, y, w, h, textY, textW, textH, rowH, rows, buttons: rects };
 }
 
 /** Draw the nine-slice frame. Corners once, edges and fill tiled -
@@ -162,12 +179,18 @@ function drawFrame(renderer, m, box) {
 
 /** Draw a laid-out box. Returns false when the art is not up, so the
  *  caller keeps its flat-panel fallback. */
-export function drawMessageBox(renderer, m, font, box, lines, { textColor = undefined } = {}) {
+export function drawMessageBox(renderer, m, font, box, { textColor = undefined } = {}) {
   if (!_art || !font) return false;
   drawFrame(renderer, m, box);
-  lines.forEach((l, i) => {
-    const lw = measureText(font.fnt, l);
-    shadowText(renderer, font, l, m, box.x + Math.round((box.w - lw) / 2), box.textY + i * box.rowH, { color: textColor });
+  // the LABEL BOX is textW wide, centred in the panel; a centred row
+  // centres inside the panel, a left row starts at the label box's
+  // left edge (MultiFormatTextLabel.cs:341-344 sets HorizontalAlignment
+  // .Center on JustifyCenter rows ONLY)
+  const labelX = box.x + Math.round((box.w - box.textW) / 2);
+  box.rows.forEach((r, i) => {
+    const lw = measureText(font.fnt, r.text);
+    const rx = r.center ? box.x + Math.round((box.w - lw) / 2) : labelX;
+    shadowText(renderer, font, r.text, m, rx, box.textY + i * box.rowH, { color: textColor });
   });
   for (const b of box.buttons) {
     const tex = buttonTex(b.button);

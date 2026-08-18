@@ -49,7 +49,13 @@ if (await page.evaluate(() => window.__chargenConfirm?.() ?? null)) { console.lo
 for (let i = 0; i < 5; i++) await key('ArrowDown');
 await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-race.png' });   // U10: TMAP00I0
-await key('Enter');            // gender
+// AUDIT 17g F5: a KEYBOARD confirm opens the same description box a
+// click does - it used to walk straight past it.
+await key('Enter');
+const kbConfirm = await page.evaluate(() => window.__chargenConfirm?.() ?? null);
+if (!kbConfirm?.length) { console.log('KEYBOARD CONFIRM SKIPPED THE RACE BOX'); process.exit(1); }
+console.log('keyboard confirm opened the box:', kbConfirm.length, 'rows');
+await key('Enter');            // YES -> gender
 await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-gender.png' });
 await key('ArrowDown');        // female
