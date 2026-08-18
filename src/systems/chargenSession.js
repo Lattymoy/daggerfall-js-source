@@ -18,6 +18,7 @@ import { ClassFile } from '../formats/classFile.js';
 import { ChargenFlow } from '../ui/chargen.js';
 import { applyCharacter, startingSpells, CLASS_CAREERS } from './chargen.js';
 import { overlayAction } from '../ui/input.js';
+import { assignStartingGear } from './startingGear.js';   // S3d
 
 /** The 18 classic careers (CLASS00..17.CFG). */
 export async function loadCareers(fetchBytes) {
@@ -33,9 +34,17 @@ export async function loadCareers(fetchBytes) {
 /** Apply a finished flow result onto the entity: the career/stat/
  *  skill derivations (applyCharacter), the starting spellbook, and
  *  the IDENTITY the paperdoll reads. */
-export function finishChargen(playerEntity, result, spellsByIndex = null) {
+export function finishChargen(playerEntity, result, spellsByIndex = null, { rolls = Math.random } = {}) {
   applyCharacter(playerEntity, result.career, result.careerIndex, result);
   if (spellsByIndex) playerEntity.spells = startingSpells(result.careerIndex, spellsByIndex);
+  // S3d: the real starting kit replaces the INTERIM dagger seed -
+  // AssignStartingGear runs ONCE, at creation, exactly as DFU does.
+  // Anything the interim seed put in the bag is cleared first so a
+  // host that seeded at boot does not leave a stray dagger.
+  playerEntity.items = [];
+  playerEntity.equip = null;
+  playerEntity.armorValues = null;
+  assignStartingGear(playerEntity, { classIndex: result.careerIndex, rolls });
   return playerEntity;
 }
 

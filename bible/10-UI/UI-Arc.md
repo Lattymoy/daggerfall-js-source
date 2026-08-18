@@ -918,3 +918,40 @@ starting-equipment roll (seedStartingEquipment's interim dagger
 stands in).
 
 Suite 482/106.
+
+## S3d: STARTING EQUIPMENT (2026-08-18)
+
+AssignStartingGear (ItemHelper.cs:1277-1364) verbatim - the INTERIM
+iron dagger retires and a new character begins dressed, armed and
+funded, which closes the loop chargen -> identity -> gear -> equip
+table -> paperdoll art.
+- CLOTHES are gender-specific and WORN: men Short_shirt (165) +
+  Casual_pants (151), women Short_shirt_closed (206) + Casual_pants
+  (190). The shirt takes a RandomClothingDye from the 10-entry
+  table, the pants a random variant, and both go through EquipItem.
+- a SPELLBOOK for every player, carried not worn.
+- the CLASS WEAPON from StartingWeaponTypesByClass with its
+  iron/steel choice (the Mage's shortsword is STEEL; the Monk gets a
+  staff; the Warrior an iron broadsword). A CUSTOM class gets an
+  iron Longsword instead.
+- the ARCHER alone also gets a steel Battle Axe and 24 iron arrows -
+  proven archer-only against the Ranger, who carries a battle axe as
+  its class weapon but no bow and no arrows.
+- +100 gold as a Currency stack.
+- torches/candles ride DFU's PlayerTorchFromItems SETTING, which is
+  a DFU enhancement rather than classic - ported but defaulted OFF,
+  the same stance the 17e audit took on the enhanced 16-slot list.
+- every minted item carries a NAME and a VALUE (the 17e F2 root fix:
+  an item reaching the shop without a value priced at 1, which was
+  half of an unbounded gold loop).
+- THE SEED ORDER: the interim dagger seed is now the FALLBACK only.
+  A character who runs chargen gets the real kit, and finishChargen
+  clears the bag/equip table first so a host that seeded at boot
+  cannot leave a stray dagger behind. The dungeon's headless
+  fallback path gets the real kit too.
+
+Probed + EYEBALLED: the Khajiit female Mage from the S3c probe now
+begins with a shirt, pants, spellbook, steel shortsword and 100
+gold, and her paperdoll draws her DRESSED - real classic shirt and
+trouser art, the censor welds gone because actual clothing covers
+chest and legs. Suite 488/107.

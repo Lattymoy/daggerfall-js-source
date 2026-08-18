@@ -445,7 +445,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadInventoryArt({ renderer, fetchBytes, palette });   // U8d: INVE00I0/01I0 warm at boot
   preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/BODY/FACE + the item-record pipeline (town context; Breton male 0 INTERIM until chargen)
-  seedStartingEquipment(playerEntity);   // U8h: the interim dagger lives in the BAG now, worn (chargen's gear roll replaces)
+  // S3d: the INTERIM dagger seed is the FALLBACK only - a character
+  // who runs chargen gets AssignStartingGear's real kit instead, so
+  // seeding here would leave a stray dagger in the bag.
+  if (playerEntity.chargenDone) seedStartingEquipment(playerEntity);
   // S3c/U9 / THE FOUR HOSTS RULE: chargen lived only in the dungeon
   // host, so booting straight into a town left the player on the
   // pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the

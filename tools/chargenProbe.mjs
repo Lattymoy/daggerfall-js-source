@@ -48,12 +48,21 @@ const e = await page.evaluate(() => {
   const p = window.__playerEntity;
   return { name: p.name, race: p.race, raceId: p.raceId, gender: p.gender, face: p.faceIndex,
     chargenDone: !!p.chargenDone, maxHealth: p.maxHealth, career: p.career?.name,
-    skillsIsArray: Array.isArray(p.skills), overlay: JSON.parse(window.__talk()).overlay };
+    skillsIsArray: Array.isArray(p.skills), overlay: JSON.parse(window.__talk()).overlay,
+    // S3d: the real starting kit replaces the interim dagger
+    items: (p.items ?? []).map((i) => `${i.name}${i.stackCount > 1 ? 'x' + i.stackCount : ''}`),
+    worn: (p.equip?.slots ?? []).filter(Boolean).map((i) => i.name),
+    gold: (p.items ?? []).find((i) => i.group === 'Currency')?.stackCount ?? 0 };
 });
 console.log('entity after chargen:', JSON.stringify(e));
 if (!e.chargenDone) { console.log('CHARGEN DID NOT COMPLETE'); process.exit(1); }
 if (e.race !== 'Khajiit' || e.gender !== 'female') { console.log('IDENTITY NOT APPLIED'); process.exit(1); }
 if (!e.skillsIsArray) { console.log('SKILLS STILL THE INTERIM FLAT NUMBER'); process.exit(1); }
+// S3d: AssignStartingGear - dressed, armed, funded, and NO interim dagger
+if (e.gold !== 100) { console.log('STARTING GOLD WRONG', e.gold); process.exit(1); }
+if (e.worn.length !== 2) { console.log('CLOTHES NOT WORN', JSON.stringify(e.worn)); process.exit(1); }
+if (!e.items.includes('Spellbook')) { console.log('NO SPELLBOOK'); process.exit(1); }
+if (e.items.includes('Dagger')) { console.log('THE INTERIM DAGGER SURVIVED CHARGEN'); process.exit(1); }
 // the paperdoll must reload on the chosen identity
 await waitFrames(10);
 await page.keyboard.press('F6');

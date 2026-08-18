@@ -33,6 +33,7 @@ import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, applyCharacter, startingSpells, CLASS_CAREERS } from '../systems/chargen.js';
 import { loadCareers } from '../systems/chargenSession.js';   // S3c/U9: one career loader
+import { assignStartingGear } from '../systems/startingGear.js';   // S3d
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
 import { InventoryWindow, SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
@@ -728,6 +729,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     console.warn('[chargen] FONT art unavailable; falling back to the headless roll');
     const r = { career: chargenFlow.career, careerIndex: chargenFlow.classIndex };
     createCharacter(playerEntity, r.career, r.careerIndex);
+    assignStartingGear(playerEntity, { classIndex: r.careerIndex });   // S3d: the headless path gets the real kit too
     surfacePlayer();
     chargenFlow = null;
   }
@@ -1812,6 +1814,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           const r = chargenFlow.result();
           applyCharacter(playerEntity, r.career, r.careerIndex, r);
           playerEntity.spells = startingSpells(r.careerIndex, spellsByIndex);   // S6: the spellbook interim retires
+          // S3d: AssignStartingGear - the real kit, once, at creation
+          playerEntity.items = []; playerEntity.equip = null; playerEntity.armorValues = null;
+          assignStartingGear(playerEntity, { classIndex: r.careerIndex });
           if (playerEntity.spells.length && !readiedSpell) readiedSpell = playerEntity.spells[0];
           chargenFlow = null;
         }

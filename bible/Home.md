@@ -139,7 +139,7 @@ code "looks right").
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-17, S3c/U9 chargen)
+## Open flags (regenerated 2026-08-17, S3d starting gear)
 
 Regenerated at the S20 close (the drainFatigue "exhaustion pends"
 comment SHIPPED out; line numbers refreshed). Every row below is a
@@ -168,30 +168,32 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/scenes/cityGuards.js:194` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:312` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/droppedLoot.js:16` - FLAGGED loud: pile persistence across saves (the quicksave arc
-- `src/scenes/dungeonContext.js:161` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:486` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:492` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:506` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:640` - drained strength lowers the ceiling). INTERIM (loud): the
-- `src/scenes/dungeonContext.js:752` - FLAGGED: DFU recomputes per-effect via the cost tables (that
-- `src/scenes/dungeonContext.js:754` - FLAGGED to the effect library (caster-only buffs, touch, areas).
-- `src/scenes/dungeonContext.js:966` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/dungeonContext.js:1704` - actions) is FLAGGED - the player snapshot only.
+- `src/scenes/dungeonContext.js:162` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:487` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:493` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:507` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:641` - drained strength lowers the ceiling). INTERIM (loud): the
+- `src/scenes/dungeonContext.js:754` - FLAGGED: DFU recomputes per-effect via the cost tables (that
+- `src/scenes/dungeonContext.js:756` - FLAGGED to the effect library (caster-only buffs, touch, areas).
+- `src/scenes/dungeonContext.js:968` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:1706` - actions) is FLAGGED - the player snapshot only.
 - `src/scenes/exterior.js:317` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
-- `src/scenes/exterior.js:321` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:380` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/exterior.js:446` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:544` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:613` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:318` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:324` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:383` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/exterior.js:449` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:547` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:616` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/townTalk.js:359` - .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAG...
 - `src/scenes/world.js:436` - FLAGGED loud: the People faction rides the START location's
 - `src/scenes/world.js:447` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
-- `src/scenes/world.js:451` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:551` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/world.js:606` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:840` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1039` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:448` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:454` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:554` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/world.js:609` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:843` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1042` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:70` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:102` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-hous...
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
@@ -202,6 +204,7 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/systems/chargen.js:124` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
 - `src/systems/chargen.js:143` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy ...
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
+- `src/systems/chargenSession.js:40` - S3d: the real starting kit replaces the INTERIM dagger seed -
 - `src/systems/court.js:7` - People-faction half-delta FLAGGED to the save-side clone).
 - `src/systems/court.js:27` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
 - `src/systems/court.js:81` - ChangeReputation(peopleFaction, -loss/2) FLAGGED: the save-side
@@ -221,6 +224,7 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
 - `src/systems/shopStock.js:109` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
 - `src/systems/skills.js:56` - *  +0.1) and the Jump spell (+0.6) are INTERIM 0 here, loudly - the
+- `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
 - `src/systems/talk.js:78` - *  FLAGGED to the crime slice - the state lands now, verbatim).
 - `src/systems/talk.js:91` - TallyCrimeGuildRequirements(true, 1) FLAGGED: thieves-guild
@@ -363,6 +367,16 @@ Probed + eyeballed: a Khajiit female Mage created in town, her
 paperdoll drawn with the classic striped Khajiit face and female
 body. Chargen ART, biography, reflexes and DFU's starting-equipment
 roll stay FLAGGED.
+
+S3d STARTING EQUIPMENT (2026-08-18): AssignStartingGear verbatim - the
+INTERIM dagger retires. Gender-specific clothes (dyed, varied, and
+WORN), a spellbook, the class weapon with its iron/steel choice, the
+archer's extra axe and 24 arrows, a custom class's iron longsword, and
+100 gold; DFU's PlayerTorchFromItems is ported but defaulted off as a
+non-classic setting. The interim seed becomes the fallback only, and
+finishChargen clears the bag first so a boot seed cannot leave a stray
+dagger. Probed + eyeballed: the Khajiit Mage now begins dressed - real
+classic shirt and trousers on the paperdoll, censor welds gone.
 
 **2026-08-17d - the native-window UI parity audit (U8a/U8b/U8c).**
 Triggered by Mac's third positioning catch in two days. Every drawn
