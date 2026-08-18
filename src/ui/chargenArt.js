@@ -42,6 +42,8 @@ import { SKILL_NAMES } from '../systems/skills.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 
 // DaggerfallUI.cs:52-62 - the colours these windows actually use.
+/** DaggerfallBaseWindow.cs:40 - parentPanel.BackgroundColor = black. */
+export const MENU_BACKDROP = [0, 0, 0, 1];
 export const ALT_SHADOW_1 = [44 / 255, 60 / 255, 60 / 255, 1];        // DaggerfallAlternateShadowColor1
 export const SELECTED_TEXT = [162 / 255, 36 / 255, 12 / 255, 1];      // DaggerfallDefaultSelectedTextColor
 export const INPUT_TEXT = [227 / 255, 223 / 255, 0, 1];               // DaggerfallDefaultInputTextColor
@@ -50,6 +52,8 @@ const MODIFIED_STAT = [0, 1, 0, 1];                                   // StatsRo
 /** Every verbatim rect this arc draws, [x, y, w, h]. */
 export const RECTS = Object.freeze({
   nameBox: [80, 5, 214, 7],           // CreateCharNameSelect.cs:73-74
+  // U14 FLAGGED: the random-name button is drawn by the art but
+  // INERT - it needs the NAMEGEN name banks, which are their own slice.
   randomName: [279, 3, 36, 10],       // :78
   ok: [263, 172, 39, 22],             // :85 (and face/stats/skills OK)
   reroll: [263, 147, 39, 22],         // CreateCharAddBonusStats.cs:112
@@ -220,6 +224,12 @@ const alt = (renderer, font, text, m, x, y, opts = {}) =>
  *  when it drew (false = no art; the caller keeps its text panel). */
 export function drawChargenNative(renderer, m, font, flow) {
   if (!_art || !font) return false;
+  // U14 / THE MENU BACKDROP: DaggerfallBaseWindow.cs:40 paints the
+  // parent panel BLACK behind the 320x200 native panel. Classic runs
+  // chargen from the menu, so the world is NEVER visible around it;
+  // the port ran it in-world and let the town show through the
+  // letterbox on every screen. Black first, then the screen.
+  renderer.drawScreenQuad(null, { x: 0, y: 0, w: renderer.gl.drawingBufferWidth, h: renderer.gl.drawingBufferHeight }, undefined, MENU_BACKDROP);
   const s = flow.state;
   if (s === 'name') return drawName(renderer, m, font, flow);
   if (s === 'race') return drawRace(renderer, m, font, flow);
@@ -370,9 +380,11 @@ function drawFace(renderer, m, font, flow) {
 }
 
 function drawClass(renderer, m, font, flow) {
-  // DaggerfallPopupWindow dims what is behind it (DaggerfallUI
-  // .ScreenDimColor) - the list picker is the one chargen screen that
-  // does NOT cover the whole 320x200 panel.
+  // U14: a DaggerfallPopupWindow is pushed OVER the previous window,
+  // which keeps drawing beneath it - so the picker sits on the FACE
+  // screen it was opened from, dimmed, not on a bare backdrop.
+  drawFace(renderer, m, font, flow);
+  // DaggerfallUI.ScreenDimColor over that previous window.
   drawRect(renderer, m, 0, 0, 320, 200, SCREEN_DIM);
   const pick = img('PICK00I0.IMG');
   // pickerPanel is Center/Middle on the 320x200 native panel

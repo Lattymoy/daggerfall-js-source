@@ -28,6 +28,7 @@ import { fetchBytes } from './shared.js';
 import { routeKey } from '../ui/input.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
+import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
 
 // Water surface color: presentation choice (see renderer WATER_VS note).
 // R11: the surface is the classic water tile (climate ground archive
@@ -120,7 +121,21 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // or the browser menu steals focus (Firefox activates it on keyUP).
   addEventListener('keydown', (e) => { keys.add(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
-  canvas.addEventListener('pointerdown', () => requestLook(canvas));   // safe: a refused lock never crashes (was bare requestPointerLock - the sh/< crash + lock:N frozen yaw)
+  // U14: an OPEN overlay owns the pointer - the click goes to the
+  // window, not to the pointer lock. This host had no pointer path at
+  // all, so chargen here was keyboard-only while the exterior hosts
+  // had been clickable since U8b.
+  canvas.addEventListener('pointerdown', (e) => {
+    if (ctx.uiOverlayActive) {
+      const r = canvas.getBoundingClientRect();
+      const px = (e.clientX - r.left) * (canvas.width / r.width);
+      const py = (e.clientY - r.top) * (canvas.height / r.height);
+      const v = pointToNative(nativeMetrics(canvas), px, py);
+      if (v && ctx.overlayClick?.(v[0], v[1])) return;
+      return;   // a window is up: never grab the pointer behind it
+    }
+    requestLook(canvas);   // safe: a refused lock never crashes (was bare requestPointerLock - the sh/< crash + lock:N frozen yaw)
+  });
   // C8 E3c: RMB drag-to-swing (classic weapon control; menu suppressed)
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('mousedown', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, true); });

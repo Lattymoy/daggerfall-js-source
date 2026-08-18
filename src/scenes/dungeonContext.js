@@ -740,6 +740,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   // U1: the classic HUD (vitals bottom-left, compass bottom-right) -
   // surfaces the Systems stats every frame; art-gated like all data.
+  /** AUDIT 17f / ONE DFU MEMBER, ONE EXPORT: the completion the KEY
+   *  seam and the U14 POINTER seam share. It was already the second
+   *  copy of finishChargen once; it is not going to become a third. */
+  function finishChargenHere() {
+    finishChargen(playerEntity, chargenFlow.result(), spellsByIndex);
+    if (playerEntity.spells.length && !readiedSpell) readiedSpell = playerEntity.spells[0];
+    chargenFlow = null;
+  }
+
   function chargenInputFallback() {
     // no font art: the flow cannot render - fall back to the headless
     // roll (loud) so the game remains playable without ARENA2 UI art.
@@ -1827,21 +1836,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // pause gameplay while any overlay is active.
     get uiOverlayActive() { return !!activeOverlay; },
     chargenFlow: () => chargenFlow,   // AUDIT 17i probe surface
+    /** U14: the POINTER half of the overlay seam. This host routed
+     *  every click to requestPointerLock and nothing else, so chargen
+     *  here was keyboard-only while the exterior hosts had been
+     *  clickable since U8b. Takes NATIVE (320x200) coords like
+     *  townTalk's seam does, and reports whether it consumed the
+     *  click so the caller can withhold the pointer lock. */
+    overlayClick(vx, vy) {
+      if (!activeOverlay?.clickNative) return false;
+      activeOverlay.clickNative(vx, vy);
+      if (activeOverlay.done) {
+        if (activeOverlay === chargenFlow) { finishChargenHere(); }
+        surfacePlayer();
+        activeOverlay = null;
+      }
+      return true;
+    },
     overlayInput(action) {
       if (!activeOverlay) return;
       activeOverlay.input(action);
       if (activeOverlay.done) {
-        if (activeOverlay === chargenFlow) {
-          // AUDIT 17f / ONE DFU MEMBER, ONE EXPORT: this hand-inlined
-          // applyCharacter + startingSpells + AssignStartingGear was
-          // the SECOND copy of finishChargen - the exact duplication
-          // systems/chargenSession.js was extracted to end, re-grown
-          // one slice later. The shared function owns the sequence;
-          // only the readied-spell pick is this host's business.
-          finishChargen(playerEntity, chargenFlow.result(), spellsByIndex);
-          if (playerEntity.spells.length && !readiedSpell) readiedSpell = playerEntity.spells[0];
-          chargenFlow = null;
-        }
+        if (activeOverlay === chargenFlow) finishChargenHere();
         surfacePlayer();
         activeOverlay = null;
       }

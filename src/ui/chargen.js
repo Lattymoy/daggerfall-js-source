@@ -317,8 +317,17 @@ export class ChargenFlow {
    *  `setCursor` are the direct-set hits classic's windows have and
    *  the keyboard flow reaches by stepping. */
   clickNative(vx, vy) {
+    // the ART gate is about the DRAW, not the geometry: without it the
+    // screens fall back to text panels whose layout does not match the
+    // native rects, so a click would hit a button that is not there.
     if (!chargenArtLoaded()) return false;
-    const hit = chargenHit(this, vx, vy);
+    return this.applyHit(chargenHit(this, vx, vy));
+  }
+
+  /** U14: the pure apply step - a hit from chargenHit -> the state it
+   *  changes. Split out from clickNative so the pointer path is
+   *  testable without art, the way chargenHit already is. */
+  applyHit(hit) {
     if (!hit) return false;
     if (typeof hit === 'string') { this.input(hit); return true; }
     if (hit.setRace != null) {
@@ -329,7 +338,15 @@ export class ChargenFlow {
       return true;
     }
     if (hit.cancelRace) { this.raceConfirm = null; return true; }
-    if (hit.setGender != null) { this.gender = hit.setGender; return true; }
+    if (hit.setGender != null) {
+      // U14: the Male/Female BUTTON sets the gender AND closes the
+      // window (CreateCharGenderSelect.cs:59-71 - both handlers end in
+      // CloseWindow). The port made the click a selection and demanded
+      // a separate confirm, which classic has no button for.
+      this.gender = hit.setGender;
+      this.state = 'face';
+      return true;
+    }
     if (hit.setCursor != null) { this.cursor = hit.setCursor; return true; }
     if (hit.setClass != null) { this.classIndex = hit.setClass; return true; }
     if (hit.answerBiography != null) return this.answerBiography(hit.answerBiography);

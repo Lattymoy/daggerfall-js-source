@@ -1515,3 +1515,56 @@ A probe lesson worth keeping: the first draft waited on
 `__shotReady`, which never fires while a chargen overlay is up -
 the modal pauses the scene before frame 5, correctly. Wait on the
 thing the probe is actually about.
+
+## U14: THE MENU BACKDROP + THE POINTER PATH (2026-08-18)
+
+Mac, on seeing chargen run: the true menu backdrop, and the pointer
+working rather than the keyboard alone. Both are parity gaps, and
+both had the same root - the port grew chargen INSIDE the running
+world, where classic runs it from the menu.
+
+**The backdrop.** `DaggerfallBaseWindow.cs:40` paints the parent panel
+BLACK behind the 320x200 native panel. Classic never shows the world
+around a chargen window because there is no world yet. The port drew
+the live town through the letterbox on every screen. Black now, drawn
+before the screen - and it is OPAQUE, which the pin states plainly,
+because a translucent value would look like a design choice and be
+the same bug.
+
+**The class picker sits on the screen it came from.** A
+`DaggerfallPopupWindow` is pushed OVER the previous window, which
+keeps drawing beneath it - so the list is dimmed over the FACE screen,
+not over a bare backdrop. Eyeballed: the Redguard portrait and
+PREVIOUS/NEXT show through the dim behind the scroll.
+
+**The pointer.** Three gaps, not one:
+- the DUNGEON host had NO pointer path at all. Every click went to
+  `requestPointerLock`, so chargen there was keyboard-only while the
+  exterior hosts had been clickable since U8b. It has an
+  `overlayClick` seam now, taking native coords like townTalk's, and
+  an open window withholds the pointer lock instead of grabbing the
+  mouse behind itself.
+- the GENDER buttons were a selection that then demanded a separate
+  confirm. `CreateCharGenderSelect.cs:59-71`: both handlers end in
+  `CloseWindow()`. The classic box has no OK for the extra step to
+  use, so the button sets AND closes.
+- `clickNative` gained a pure `applyHit` half, so the pointer path is
+  testable without art the way `chargenHit` already was.
+
+**The guard rail.** A screen that ships keyboard-only is invisible on
+a phone, and three of them did. `test/chargenpointer.test.js` walks
+every chargen state and requires EVERY one of its own controls to
+answer a click - not merely one of them, because a screen whose OK
+button works while its controls are dead is still keyboard-only in
+practice. That is the pin that would have caught all three.
+
+Probed: `tools/chargenClickProbe.mjs` drives a COMPLETE chargen with
+clicks alone - the name OK, a province, the race YES, the gender
+button, face NEXT and OK, a class row, twelve biography answers, the
+reputation box, the stat spinner, three skill spinners, a reflex row
+and the final OK. Only the name's letters are typed, as they are in
+classic. Out the other end: a Redguard female with Very High reflexes.
+
+FLAGGED: the name screen's RANDOM-NAME button (279,3,36,10) is drawn
+by the art but inert - it needs the NAMEGEN banks, which are their own
+slice.
