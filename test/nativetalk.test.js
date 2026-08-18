@@ -27,7 +27,12 @@ test('nativeTalk: the verbatim rects + the click state machine', () => {
   assert.deepEqual([...TALK_RECTS.conversation], [189, 65, 114, 126]);
   assert.deepEqual([...TALK_RECTS.goodbye], [118, 183, 67, 10]);
   assert.deepEqual([...TALK_RECTS.tonePolite], [258, 18, 6, 6]);
-  assert.equal(TOPIC_ROWS, Math.floor(104 / TOPIC_ROW_H));
+  // AUDIT 17e F19: DFU's PixelWise list DRAWS the partially clipped
+  // last row and its hit test selects it - 104/7 = 14.857 -> 15 rows.
+  // The port drew floor() = 14 while the click rect admitted row 14,
+  // so the bottom band selected a row that was never rendered.
+  assert.equal(TOPIC_ROWS, Math.ceil(104 / TOPIC_ROW_H));
+  assert.equal(TOPIC_ROWS, 15);
   // the 17d UI audit: ListBox rows = FONT0003 fixedHeight 7 + spacing
   assert.equal(TOPIC_ROW_H, 7, 'topic RowSpacing 0');
   // AUDIT 17e F18: RowSpacing is per ITEM, not per wrapped line -

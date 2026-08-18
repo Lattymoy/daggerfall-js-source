@@ -28,6 +28,7 @@ import { createTownTalk } from './townTalk.js';   // T3b
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit } from '../systems/court.js';   // AUDIT 17e F6   // G2
+import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
@@ -577,15 +578,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (townTalk.keydown(e)) return;
     // U8a: F5 opens the classic character sheet (the dungeon's key,
     // host rule); preventDefault stops the browser reload.
+    // AUDIT 17e F41: preventDefault must run for F5 in EVERY mode -
+    // the mode gate skipped the handler AND its preventDefault, so
+    // pressing F5 inside a building reloaded the page and destroyed
+    // the session. Routing F5/F6 into interiors is its own arc
+    // (FLAGGED); swallowing the browser reload is not optional.
+    if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
     if (e.code === 'F5' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      e.preventDefault();
       townTalk.showOverlay(new CharSheet(playerEntity));
       return;
     }
     // U8d: F6 opens the classic inventory (DFU's default Inventory
     // binding; same host rule as F5).
     if (e.code === 'F6' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && inventoryArtLoaded()) {
-      e.preventDefault();
       townTalk.showOverlay(new NativeInventoryWindow({
         items: () => (playerEntity.items ??= []),
         entity: playerEntity,
@@ -840,6 +845,7 @@ export async function bootWorld(canvas, renderer, params, status) {
               const pile = droppedLoot.pileFor(dropKey);
               townTalk.showOverlay(new NativeInventoryWindow({
                 items: () => (playerEntity.items ??= []),
+                onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
         entity: playerEntity,
                 loot: { items: () => pile.items },
                 icons: { getTexture, uploadRecord, textures: renderer.textures },
@@ -864,6 +870,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (r.offset) {
       cam.pos[0] += r.offset[0]; cam.pos[1] += r.offset[1]; cam.pos[2] += r.offset[2];
       player.pos[0] += r.offset[0]; player.pos[1] += r.offset[1]; player.pos[2] += r.offset[2];
+      // AUDIT 17e F23: everything else holding a WORLD position must
+      // follow the origin too, or it strands 819.2 units behind.
+      cityGuards.offsetAll(r.offset);
+      droppedLoot.offsetAll(r.offset);
+      arrows.offsetAll?.(r.offset);
     }
     if (r.pixelChanged) {
       queue.push(...r.load);
@@ -1027,7 +1038,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // the swing carried onto the fresh foe).
         const lookFwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
         const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon), g.ai.feet, 1.1, { maxDistance: 16 });
-        if (cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, null, guardHitSound)) {
+        if (cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           tallySkill(playerEntity, WEAPON_SKILL[weaponRig.playerWeapon.weapon?.name] ?? SKILLS.HandToHand);
         } else {
           cityGuards.resolveCivilianHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, _guardPool(),

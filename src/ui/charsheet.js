@@ -20,6 +20,7 @@
 // a later U8 slice).
 
 import { statUp, statDown } from './chargen.js';
+import { itemWeight } from '../systems/inventory.js';   // AUDIT 17e F30
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../systems/advancement.js';
@@ -39,11 +40,18 @@ export async function preloadCharSheetArt(deps) {
 export const charSheetArtLoaded = () => !!_art;
 
 const GOLD_PIECE_KG = 0.0025;   // DaggerfallBankManager.goldPieceWeightInKg
+// AUDIT 17e F30 / ONE DFU MEMBER, ONE EXPORT: this re-implemented
+// carried weight from the raw template baseWeight, ignoring the
+// MATERIAL weight rule that systems/inventory.js already ports
+// verbatim (ItemBuilder.CalculateWeightForMaterial + the Erisceres
+// leather formula) - so a daedric warhammer weighed its iron base.
+// Gold is the one term inventory.js does not own (a Currency stack
+// is 0.0025 kg per piece).
 function carriedWeight(e) {
   let kg = 0;
   for (const it of e.items ?? []) {
     if (it.group === 'Currency') kg += (it.stackCount ?? 0) * GOLD_PIECE_KG;
-    else kg += (templateByIndex(it.templateIndex)?.weight ?? 0) * (it.stackCount ?? 1);
+    else kg += itemWeight(it);
   }
   return kg;
 }

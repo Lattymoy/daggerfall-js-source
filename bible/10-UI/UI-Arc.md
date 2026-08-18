@@ -756,3 +756,61 @@ Probed + EYEBALLED: the item lists now draw real INVENTORY sprites -
 the dagger with its golden hilt instead of the world drop sprite -
 and the equip probe drives the corrected doll-click law end to end.
 Suite 477/105.
+
+## AUDIT 17e Wave 2: the leaks, the origin, and the remaining parity (2026-08-18)
+
+- F19 THE CLIPPED TOPIC ROW: DFU's PixelWise ListBox DRAWS the
+  partially clipped last row (104/7 = 14.857 -> 15) and its hit test
+  selects it. The port drew floor() = 14 while the click rect already
+  admitted row 14 - clicking the bottom band selected a row that was
+  never rendered. Fixed the DRAW, not the click.
+- F20 THE WHERE-IS CATEGORY LIST: CheckBuildingTypeInSkipList
+  (TalkManager.cs:2919-2938) drops Palaces, Furniture stores, all six
+  house types, HouseForSale, Ship, Town4/23 and the Specials - the
+  port offered Palaces and Furniture stores. The list is now built in
+  BUILDING_TYPES enum order (DFU walks the enum) with the three
+  paraphrased captions corrected (Armorers / Bookstores / Local
+  temples).
+- F22 COURT REPUTATION, BOTH WAYS: banishment does NOT call
+  RaiseReputationForDoingSentence (DaggerfallCourtWindow.cs:263-278)
+  and the port did; a successful not-guilty defense DOES (:426) and
+  the port did not. DFU's own comment notes classic repairs nothing
+  there - we port DFU.
+- F23 THE FLOATING ORIGIN LEFT THINGS BEHIND: the ?world recenter
+  shifted the camera and player only, so live guards, corpse
+  billboards, corpse-loot AABBs and dropped piles stranded 819.2
+  units away on every crossing. Live guards rebuild their billboards
+  per frame (shifting ai.feet is enough); the PERSISTENT corpse and
+  pile batches bake their centers into a STATIC_DRAW buffer, so they
+  are REBUILT at the new origin rather than mutated. Pile keys became
+  STABLE IDS in the same pass - an index-based key would rebind to a
+  different pile after releaseEmptied splices.
+- F24 THE MISSING FOV GATE: WeaponManager's melee requires the target
+  inside the CAMERA VIEW; the dungeon host had the test inline while
+  both exterior hosts passed null and cityGuards defaulted to ACCEPT,
+  so a guard standing behind the player could be hit. Extracted to
+  player/cameraView.js and passed by both hosts.
+- F27/F28/F29 THREE GL LEAKS (EVERY ALLOCATION HAS AN OWNER): the
+  paperdoll minted a new versioned texture per refresh and never
+  freed the old one (~81 KB per equip click); emptied dropped piles
+  kept their billboard batch forever - now freed at WINDOW CLOSE, as
+  DFU's RemoveLootContainer fires there and NOT on the empty
+  transition (a pile refilled before closing must keep its flat, or
+  lootTargets - which gates only on items.length - would offer an
+  invisible activatable ghost); and the dungeon never freed its
+  per-foe, corpse or missile batches, leaking a VAO + buffers per
+  sprite on every enter/exit cycle. renderer.releaseTexture is new.
+- F30 CARRIED WEIGHT: the char sheet re-implemented it from the raw
+  template baseWeight, ignoring the MATERIAL weight rule
+  systems/inventory.js already ports - a daedric warhammer weighed
+  its iron base. Now the single-sourced itemWeight plus the gold term.
+- F37 THE FRAME COUNTER RAN BACKWARDS: the exterior host ASSIGNED
+  window.__frame from its own counter where the world host
+  increments, undoing worldModes' modal-frame increments - probes
+  frame-syncing across an overlay could stall. Probe-only.
+- F41 F5 RELOADED THE PAGE INSIDE BUILDINGS: the mode gate skipped
+  the handler AND its preventDefault, so F5 in an interior destroyed
+  the session. preventDefault now runs in every mode; routing F5/F6
+  into interiors stays its own arc (FLAGGED).
+
+Suite 480/105.

@@ -55,7 +55,12 @@ export const ROW_H = 7;                          // FONT0003 fixedHeight
 export const ROW_SPACING = 4;                    // ListBox RowSpacing, per ITEM
 export const CONV_LINE_H = ROW_H + ROW_SPACING;  // kept: one single-line entry to the next
 export const SELECTED_TEXT_COLOR = [0.98, 0.98, 0.98, 1];   // DaggerfallUI selectedTextColor (the newest row)
-export const TOPIC_ROWS = Math.floor(TALK_RECTS.topicList[3] / TOPIC_ROW_H);
+// AUDIT 17e F19: DFU's PixelWise ListBox DRAWS the partially-clipped
+// last row (104/7 = 14.857 -> 15 rows, the last one cut) and its hit
+// test selects it. The port drew floor() = 14 while the click rect
+// admitted row 14, so clicking the bottom band selected a row that
+// was never rendered. Render ceil; do NOT clamp the click.
+export const TOPIC_ROWS = Math.ceil(TALK_RECTS.topicList[3] / TOPIC_ROW_H);
 export const QUESTION_COLOR = [0.698, 0.812, 1, 1];      // DaggerfallQuestionTextColor
 export const ANSWER_COLOR = [227 / 255, 223 / 255, 0, 1];   // DaggerfallAnswerTextColor
 export const PLAYER_SAYS_RECT = Object.freeze([123, 8, 124, 38]);

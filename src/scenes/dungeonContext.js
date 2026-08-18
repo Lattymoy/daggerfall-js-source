@@ -1918,6 +1918,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     colliderTris,
     destroy() {
       for (const b of billboardBatches) renderer.destroyBatch(b);
+      // AUDIT 17e F29 / EVERY ALLOCATION HAS AN OWNER: foes and
+      // corpses each own a live billboard batch that is NOT in
+      // billboardBatches (that list is the static layout art), so
+      // every dungeon enter/exit cycle leaked one VAO + buffers per
+      // sprite. Missiles in flight own one too.
+      for (const f of foes) if (f.batch) renderer.destroyBillboardBatch(f.batch);
+      for (const c of corpses) if (c) renderer.destroyBillboardBatch(c);
+      for (const m of missiles) if (m.batch) renderer.destroyBillboardBatch(m.batch);
       for (const t of torches) { t.handle?.stop(); t.handle = null; }   // A2: free looping sources
     },
   };

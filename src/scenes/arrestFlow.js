@@ -104,6 +104,11 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
     if (r.outcome === 'free') {
       playerEntity.crimeCommitted = 0;
       playerEntity.haveShownSurrenderDialogue = false;
+      // AUDIT 17e F22: DFU raises reputation on a successful defense
+      // (DaggerfallCourtWindow.cs:426) - and says so against classic
+      // in its own comment two lines up ("Also does not repair
+      // reputation"). We port DFU.
+      raiseRepForSentence(playerEntity, court);
       townTalk.showOverlay(new ChoiceWindow({ lines: text(TEXT_FREE_TO_GO, 'The court finds you not guilty. You are free to go.') }));
       return;
     }
@@ -115,7 +120,9 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
   function finish(result, court) {
     if (result.outcome === 'banished') {
       // SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
-      raiseRepForSentence(playerEntity, court);
+      // AUDIT 17e F22: state 4 (Banished) does NOT call
+      // RaiseReputationForDoingSentence (DaggerfallCourtWindow.cs:263-278)
+      // - being run out of the region repairs nothing.
       release();
       townTalk.showOverlay(new ChoiceWindow({ lines: text(TEXT_BANISHED, 'You are banished from this region.') }));
       return;

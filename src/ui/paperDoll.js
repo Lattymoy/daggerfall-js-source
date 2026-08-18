@@ -218,7 +218,12 @@ export async function refreshPaperDoll(entity) {
       layout.push({ slot: it.equipSlot, img });
     }
     const key = `paperdoll_v${++_version}`;
-    _live = { tex: _deps.renderer.uploadTexture('img', key, { width: PAPERDOLL_W, height: PAPERDOLL_H, colors: new Uint32Array(out.buffer) }) };
+    const prevKey = _live?.key ?? null;
+    _live = { key, tex: _deps.renderer.uploadTexture('img', key, { width: PAPERDOLL_W, height: PAPERDOLL_H, colors: new Uint32Array(out.buffer) }) };
+    // AUDIT 17e F27 / EVERY ALLOCATION HAS AN OWNER: each refresh mints
+    // a NEW versioned key, so the previous composite leaked (~81 KB per
+    // equip click, unbounded across a session).
+    if (prevKey) _deps.renderer.releaseTexture?.('img', prevKey);
     _layout = layout;
   } finally {
     _refreshing = false;

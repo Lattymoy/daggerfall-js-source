@@ -14,6 +14,9 @@ import { weaponTypeForItem, WEAPON_TYPES } from '../src/combat/fpsWeapon.js';
 import { NativeInventoryWindow } from '../src/ui/nativeInventory.js';
 import { safeScrollIndex } from '../src/ui/itemScroller.js';
 import { inventoryItemImage, usesWorldTexture, templateByIndex } from '../src/systems/itemTemplates.js';
+import { TOPIC_CATEGORIES, isBuildingTypeSkipped } from '../src/systems/talkTopics.js';
+import { BUILDING_TYPES } from '../src/world/buildingNames.js';
+import { createDroppedLoot } from '../src/scenes/droppedLoot.js';
 
 const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
 import { readFileSync } from 'node:fs';
@@ -253,4 +256,75 @@ test('audit17e W1: F17 the worn-weapon bind lives in the RIG, so all four hosts 
     const s = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', host), 'utf8');
     assert.ok(!/weaponRig\.playerWeapon\.weapon =/.test(s), `${host} no longer hand-binds`);
   }
+});
+
+test('audit17e W2: the Where-is category list (skip list, enum order, captions)', () => {
+  // CheckBuildingTypeInSkipList (TalkManager.cs:2919-2938). The port
+  // offered Palaces and Furniture stores, which classic never lists.
+  assert.equal(isBuildingTypeSkipped(BUILDING_TYPES.Palace), true);
+  assert.equal(isBuildingTypeSkipped(BUILDING_TYPES.FurnitureStore), true);
+  assert.equal(isBuildingTypeSkipped(BUILDING_TYPES.House1), true);
+  assert.equal(isBuildingTypeSkipped(BUILDING_TYPES.Ship), true);
+  assert.equal(isBuildingTypeSkipped(BUILDING_TYPES.Tavern), false);
+  const types = TOPIC_CATEGORIES.map((c) => c.type);
+  assert.deepEqual(types, [...types].sort((a, b) => a - b), 'DFU walks the enum in numeric order');
+  assert.equal(types.length, 13);
+  assert.ok(!types.includes(BUILDING_TYPES.Palace));
+  assert.ok(!types.includes(BUILDING_TYPES.FurnitureStore));
+  const cap = (t) => TOPIC_CATEGORIES.find((c) => c.type === t)?.caption;
+  assert.equal(cap(BUILDING_TYPES.Armorer), 'Armorers');
+  assert.equal(cap(BUILDING_TYPES.Bookseller), 'Bookstores');
+  assert.equal(cap(BUILDING_TYPES.Temple), 'Local temples');
+});
+
+test('audit17e W2: the three GL leaks each have an owner now', () => {
+  // EVERY ALLOCATION HAS AN OWNER. DFU relies on Destroy/GC; we do not.
+  const read = (f) => readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', f), 'utf8');
+  // F27 the paperdoll mints a NEW versioned texture per refresh
+  assert.ok(/releaseTexture/.test(read('src/render/renderer.js')), 'the renderer can free a texture');
+  assert.ok(/releaseTexture\?\.\('img', prevKey\)/.test(read('src/ui/paperDoll.js')), 'and the doll frees its previous composite');
+  // F28 emptied piles free at WINDOW CLOSE, not on the empty transition
+  const dl = read('src/scenes/droppedLoot.js');
+  assert.ok(/function releaseEmptied\(\)/.test(dl));
+  assert.ok(/destroyBillboardBatch/.test(dl));
+  for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
+    assert.ok(/droppedLoot\.releaseEmptied\(\)/.test(read(host)), `${host} frees on close`);
+  }
+  // F29 the dungeon frees its per-sprite batches on teardown
+  const dc = read('src/scenes/dungeonContext.js');
+  assert.ok(/for \(const f of foes\) if \(f\.batch\) renderer\.destroyBillboardBatch/.test(dc));
+});
+
+test('audit17e W2: dropped piles carry STABLE ids and follow the floating origin', async () => {
+  // F23: the ?world recenter shifted only the camera and player, so
+  // world-space piles/corpses stranded 819.2 units behind. And the
+  // billboard centers are baked into a STATIC_DRAW buffer, so the
+  // batch must be REBUILT, not mutated.
+  const built = [];
+  const deps = {
+    renderer: {
+      createBillboardBatch: (a, r, size, centers) => { const b = { a, r, centers: centers.map((c) => [...c]) }; built.push(b); return b; },
+      destroyBillboardBatch: (b) => { b.destroyed = true; },
+    },
+    getTexture: async () => ({ getSize: () => ({ width: 16, height: 10 }), getScale: () => ({ width: 0, height: 0 }) }),
+    uploadRecordFrame: () => {},
+    pick: () => 1,
+  };
+  const dl = createDroppedLoot(deps);
+  const a = dl.dropPile([{ templateIndex: 277 }], [10, 2, 30]);
+  const b = dl.dropPile([{ templateIndex: 277 }], [20, 2, 30]);
+  await Promise.resolve(); await Promise.resolve();
+  assert.notEqual(a.id, b.id, 'ids are distinct');
+  // emptying + releasing the FIRST must not rebind the second's key
+  const keyB = dl.lootTargets().find((t) => t.key.endsWith(String(b.id))).key;
+  a.items.length = 0;
+  dl.releaseEmptied();
+  assert.equal(dl.pileFor(keyB), b, 'the surviving pile keeps its key after a splice');
+  assert.equal(a.batch.destroyed, true, 'the emptied pile freed its batch');
+  // the recenter rebuilds at the new origin
+  const beforeCount = built.length;
+  dl.offsetAll([-819.2, 0, 0]);
+  assert.deepEqual(b.pos, [20 - 819.2, 2, 30]);
+  assert.ok(built.length > beforeCount, 'the batch was REBUILT (centers are baked into a static buffer)');
+  assert.deepEqual(built[built.length - 1].centers[0], [20 - 819.2, 2, 30]);
 });

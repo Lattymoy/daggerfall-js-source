@@ -200,8 +200,12 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       getTexture(ct.archive).then((t) => {
         uploadRecordFrame(ct.archive, ct.record, 0);
         const sz = scaledBillboardSize(t.getSize(ct.record), t.getScale(ct.record));
-        const batch = renderer.createBillboardBatch(ct.archive, `${ct.record}#0`, sz ?? size, [[g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]]]);
-        corpseBatches.push(batch);
+        const pos = [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]];
+        const batch = renderer.createBillboardBatch(ct.archive, `${ct.record}#0`, sz ?? size, [pos]);
+        // AUDIT 17e F23: keep the creation params - a floating-origin
+        // recenter has to REBUILD the batch (the centers are baked into
+        // a STATIC_DRAW buffer, so they cannot be shifted in place).
+        corpseBatches.push({ batch, archive: ct.archive, record: `${ct.record}#0`, size: sz ?? size, pos });
       }).catch(() => {});
       return;
     }
@@ -276,7 +280,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       g.batch.origin = g.ai.feet;
       out.push(g.batch);
     }
-    return [...out, ...corpseBatches];
+    return [...out, ...corpseBatches.map((c) => c.batch)];
   }
 
   /** The player's swing resolves against live guards (the dungeon's
@@ -357,7 +361,31 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     return n;
   }
 
-  return { guards, spawnCityGuards, update, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot,
+  /** AUDIT 17e F23 / THE FOUR HOSTS RULE: the ?world host recenters
+   *  the floating origin by shifting the camera and player, but live
+   *  guards, their corpse billboards and the corpse loot AABBs are
+   *  world-space too - they were left 819.2 units behind on every
+   *  recenter (guards marching to where the player USED to be, corpses
+   *  un-lootable). The fixed exterior host never recenters, so this
+   *  only ever manifested in ?world. */
+  function offsetAll(offset) {
+    const [dx, dy, dz] = offset;
+    for (const g of guards) {
+      if (g.ai?.feet) { g.ai.feet[0] += dx; g.ai.feet[1] += dy; g.ai.feet[2] += dz; }
+      if (g.ai?.knockbackDir) continue;   // a direction, not a position
+    }
+    // live guards rebuild their billboards every frame from ai.feet,
+    // so shifting the feet is enough for them; the persistent CORPSE
+    // batches bake their centers into a static buffer and must be
+    // rebuilt at the new origin.
+    for (const c of corpseBatches) {
+      c.pos[0] += dx; c.pos[1] += dy; c.pos[2] += dz;
+      renderer.destroyBillboardBatch(c.batch);
+      c.batch = renderer.createBillboardBatch(c.archive, c.record, c.size, [c.pos]);
+    }
+  }
+
+  return { guards, spawnCityGuards, update, offsetAll, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot,
     _damage: (i, dmg) => { const g = guards[i]; if (g && !g.dead) damageGuard(g, dmg, [0, 0, 0], null); },   // probe/test seam through the REAL death path
     _debug: () => guards.map((g) => ({ dead: g.dead, hp: g.entity.health, pos: g.ai.feet.map((v) => +v.toFixed(1)), detected: g.ai.detected, state: g.attack.machine.state, moving: g.ai.moving, dist: +(g.ai._dist ?? -1).toFixed(1), giveUp: g.ai.giveUpTimer })) };
 }

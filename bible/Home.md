@@ -139,7 +139,7 @@ code "looks right").
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-17, AUDIT 17e W1)
+## Open flags (regenerated 2026-08-17, AUDIT 17e W2)
 
 Regenerated at the S20 close (the drainFatigue "exhaustion pends"
 comment SHIPPED out; line numbers refreshed). Every row below is a
@@ -162,11 +162,11 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/combat/playerWeapon.js:78` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
 - `src/combat/weaponRig.js:34` - *                     (FLAGGED at the call sites - their HUD pends),
 - `src/scenes/arrestFlow.js:72` - instead of "You, , are..." (chargen wiring FLAGGED).
-- `src/scenes/arrestFlow.js:117` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
+- `src/scenes/arrestFlow.js:122` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
 - `src/scenes/cityGuards.js:23` - FLAGGED loud: guard archers forced melee (exterior foe arrows
 - `src/scenes/cityGuards.js:109` - attack.rangedAttack = false;   // FLAGGED: guard archers pend exterior foe arrows
 - `src/scenes/cityGuards.js:194` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
-- `src/scenes/cityGuards.js:308` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
+- `src/scenes/cityGuards.js:312` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/droppedLoot.js:16` - FLAGGED loud: pile persistence across saves (the quicksave arc
 - `src/scenes/dungeonContext.js:160` - the chain lives, the motion is INTERIM (loud) until flats can tween.
 - `src/scenes/dungeonContext.js:485` - index into the 18 careers) or the INTERIM default Warrior (16,
@@ -177,19 +177,21 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/scenes/dungeonContext.js:756` - FLAGGED to the effect library (caster-only buffs, touch, areas).
 - `src/scenes/dungeonContext.js:968` - 129; the inventory/equip UI pends - the INTERIM dagger note
 - `src/scenes/dungeonContext.js:1706` - actions) is FLAGGED - the player snapshot only.
-- `src/scenes/exterior.js:288` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
-- `src/scenes/exterior.js:312` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
-- `src/scenes/exterior.js:358` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/exterior.js:517` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:586` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:289` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
+- `src/scenes/exterior.js:313` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
+- `src/scenes/exterior.js:359` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/exterior.js:425` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:523` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:592` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/townTalk.js:359` - .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAG...
-- `src/scenes/world.js:427` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
-- `src/scenes/world.js:431` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:442` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
-- `src/scenes/world.js:529` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/world.js:814` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1007` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:428` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
+- `src/scenes/world.js:432` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:443` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
+- `src/scenes/world.js:530` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/world.js:585` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:819` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1018` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:70` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:102` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-hous...
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
@@ -235,8 +237,8 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/ui/nativeInventory.js:171` - use: FLAGGED - the use arc pends
 - `src/ui/nativeInventory.js:223` - 'use' -> UseItem FLAGGED with the light-source/use arc
 - `src/ui/nativeTalk.js:22` - N/P page, Esc/E goodbye. People/Things/Work are INTERIM no-ops
-- `src/ui/nativeTalk.js:135` - lands with the Tell-me-about slice (FLAGGED).
-- `src/ui/nativeTalk.js:145` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
+- `src/ui/nativeTalk.js:140` - lands with the Tell-me-about slice (FLAGGED).
+- `src/ui/nativeTalk.js:150` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
 - `src/ui/nativeTrade.js:16` - scroll. FLAGGED loud: the basket + mode-action flow (DFU
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord
 - `src/ui/paperDoll.js:33` - INTERIM loud: Breton male face 0 until chargen fronts identity.
@@ -312,9 +314,21 @@ requests; the worn-weapon bind moved into the weapon RIG so all four
 hosts inherit it; stack labels and icon scaling were off by the 2px
 button margin; and GetMaterialArmorValue's two divergent copies (both
 inventing Chain2 = 0x0101 for DFU's 0x0103) collapsed into
-systems/armorMaterials.js. Waves 2-3 (the three GL leaks,
-floating-origin offsets, the FOV gate, remaining duplicate ports and
-stale flags) follow.
+systems/armorMaterials.js. WAVE 2 (shipped): the three GL leaks each got an owner (the
+paperdoll's per-refresh composite, emptied loot piles freeing at
+window close as DFU does, the dungeon's per-sprite batches); the
+?world floating origin left guards, corpses and ground piles 819.2
+units behind on every crossing (persistent billboard batches are
+REBUILT, since their centers are baked into a static buffer, and pile
+keys became stable ids); melee lost DFU's camera-FOV gate in both
+exterior hosts, so a guard behind the player could be hit; the
+Where-is list offered Palaces and Furniture stores that classic skips
+and was out of enum order; court reputation was raised on banishment
+(DFU does not) and withheld on acquittal (DFU does); the char sheet
+weighed items by raw base weight, ignoring the material rule;
+the exterior host's frame counter ran backwards after a modal frame;
+and F5 inside a building reloaded the page. Wave 3 (remaining
+duplicate ports, vacuous-test repairs, stale flags) follows.
 
 **2026-08-17d - the native-window UI parity audit (U8a/U8b/U8c).**
 Triggered by Mac's third positioning catch in two days. Every drawn

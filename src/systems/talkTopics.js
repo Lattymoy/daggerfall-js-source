@@ -55,25 +55,42 @@ export function npcKnowsAboutItem(npcSeed, buildingKey, socialGroup = 0, questio
   return randomRangeInclusive(1, 20) <= rollToBeat;
 }
 
-// The classic category captions by building type (the talk window's
-// Location list).
-export const TOPIC_CATEGORIES = Object.freeze([
-  { type: BUILDING_TYPES.Alchemist, caption: 'Alchemists' },
-  { type: BUILDING_TYPES.Armorer, caption: 'Armor smiths' },
-  { type: BUILDING_TYPES.Bank, caption: 'Banks' },
-  { type: BUILDING_TYPES.Bookseller, caption: 'Book stores' },
-  { type: BUILDING_TYPES.ClothingStore, caption: 'Clothing stores' },
-  { type: BUILDING_TYPES.FurnitureStore, caption: 'Furniture stores' },
-  { type: BUILDING_TYPES.GemStore, caption: 'Gem stores' },
-  { type: BUILDING_TYPES.GeneralStore, caption: 'General stores' },
-  { type: BUILDING_TYPES.GuildHall, caption: 'Guilds' },
-  { type: BUILDING_TYPES.Library, caption: 'Libraries' },
-  { type: BUILDING_TYPES.PawnShop, caption: 'Pawn shops' },
-  { type: BUILDING_TYPES.Temple, caption: 'Temples' },
-  { type: BUILDING_TYPES.Tavern, caption: 'Taverns' },
-  { type: BUILDING_TYPES.WeaponSmith, caption: 'Weapon smiths' },
-  { type: BUILDING_TYPES.Palace, caption: 'Palaces' },
+// AUDIT 17e F20 - the Where-is category list, verbatim.
+// CheckBuildingTypeInSkipList (TalkManager.cs:2919-2938) drops
+// AllValid, FurnitureStore, House1-6, HouseForSale, PALACE, Ship,
+// Special1-4, Town23 and Town4 - the port listed Palaces and
+// Furniture stores, which classic never offers. The list is built in
+// BUILDING_TYPES enum order (DFU walks the enum), and three captions
+// were paraphrased rather than taken from DFU's strings.
+const SKIPPED_BUILDING_TYPES = new Set([
+  BUILDING_TYPES.HouseForSale, BUILDING_TYPES.Town4, BUILDING_TYPES.FurnitureStore,
+  BUILDING_TYPES.Palace, BUILDING_TYPES.House1, BUILDING_TYPES.House2,
+  BUILDING_TYPES.House3, BUILDING_TYPES.House4, BUILDING_TYPES.House5,
+  BUILDING_TYPES.House6, BUILDING_TYPES.Town23, BUILDING_TYPES.Ship,
 ]);
+export const isBuildingTypeSkipped = (t) => SKIPPED_BUILDING_TYPES.has(t);
+
+const CAPTION_BY_TYPE = Object.freeze({
+  [BUILDING_TYPES.Alchemist]: 'Alchemists',
+  [BUILDING_TYPES.Armorer]: 'Armorers',
+  [BUILDING_TYPES.Bank]: 'Banks',
+  [BUILDING_TYPES.Bookseller]: 'Bookstores',
+  [BUILDING_TYPES.ClothingStore]: 'Clothing stores',
+  [BUILDING_TYPES.GemStore]: 'Gem stores',
+  [BUILDING_TYPES.GeneralStore]: 'General stores',
+  [BUILDING_TYPES.Library]: 'Libraries',
+  [BUILDING_TYPES.GuildHall]: 'Guilds',
+  [BUILDING_TYPES.PawnShop]: 'Pawn shops',
+  [BUILDING_TYPES.WeaponSmith]: 'Weapon smiths',
+  [BUILDING_TYPES.Temple]: 'Local temples',
+  [BUILDING_TYPES.Tavern]: 'Taverns',
+});
+export const TOPIC_CATEGORIES = Object.freeze(
+  Object.keys(CAPTION_BY_TYPE)
+    .map(Number)
+    .sort((a, b) => a - b)   // DFU walks the enum in numeric order
+    .filter((t) => !isBuildingTypeSkipped(t))
+    .map((t) => Object.freeze({ type: t, caption: CAPTION_BY_TYPE[t] })));
 
 // TalkManager.answersToDirections (TalkManager.cs:107-108): 15
 // doesn't-know + 15 knows, 3 reaction tiers x 5 social groups.

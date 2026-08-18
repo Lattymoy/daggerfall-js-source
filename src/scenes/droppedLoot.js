@@ -30,6 +30,7 @@ export const RANDOM_TREASURE_ICONS = Object.freeze([
  *  is the icon roll seam - UnityEngine.Random.Range over the list). */
 export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pick }) {
   const piles = [];
+  let _nextId = 0;   // AUDIT 17e F28: stable ids - keys must survive releaseEmptied's splice
   const roll = pick ?? (() => Math.floor(Math.random() * RANDOM_TREASURE_ICONS.length));
 
   /** Drop items as a pile at the player's feet; the flat mounts when
@@ -37,11 +38,12 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   function dropPile(items, feet) {
     if (!items?.length) return null;
     const record = RANDOM_TREASURE_ICONS[roll()];
-    const pile = { items, pos: [feet[0], feet[1], feet[2]], record, batch: null };
+    const pile = { id: ++_nextId, items, pos: [feet[0], feet[1], feet[2]], record, batch: null };
     piles.push(pile);
     getTexture(RANDOM_TREASURE_ARCHIVE).then((t) => {
       uploadRecordFrame(RANDOM_TREASURE_ARCHIVE, record, 0);
       const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+      pile.size = size;   // AUDIT 17e F23: kept so a recenter can rebuild
       pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, `${record}#0`, size, [[pile.pos[0], pile.pos[1], pile.pos[2]]]);
     }).catch(() => {});
     return pile;
@@ -51,13 +53,45 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   const batches = () => piles.filter((p) => p.items.length && p.batch).map((p) => p.batch);
   function lootTargets() {
     const out = [];
-    piles.forEach((p, i) => {
+    piles.forEach((p) => {
       if (!p.items.length) return;
-      out.push({ key: `droppedLoot:${i}`, aabb: { min: [p.pos[0] - 0.5, p.pos[1], p.pos[2] - 0.5], max: [p.pos[0] + 0.5, p.pos[1] + 0.6, p.pos[2] + 0.5] } });
+      out.push({ key: `droppedLoot:${p.id}`, aabb: { min: [p.pos[0] - 0.5, p.pos[1], p.pos[2] - 0.5], max: [p.pos[0] + 0.5, p.pos[1] + 0.6, p.pos[2] + 0.5] } });
     });
     return out;
   }
-  const pileFor = (key) => piles[Number(key.split(':')[1])] ?? null;
+  const pileFor = (key) => piles.find((p) => p.id === Number(key.split(':')[1])) ?? null;
 
-  return { dropPile, batches, lootTargets, pileFor, _piles: piles };
+  /** AUDIT 17e F28 / EVERY ALLOCATION HAS AN OWNER: an emptied pile
+   *  stopped being drawn but kept its GL billboard batch forever, and
+   *  the piles array grew without bound. DFU frees the container when
+   *  the INVENTORY WINDOW CLOSES (DaggerfallInventoryWindow.cs:697-722
+   *  mints/removes there), not the instant the last item leaves - a
+   *  pile refilled before closing must keep its flat, or lootTargets
+   *  (which gates only on items.length) would offer an invisible
+   *  activatable ghost. Hosts call this when a loot window closes. */
+  function releaseEmptied() {
+    for (let i = piles.length - 1; i >= 0; i--) {
+      const p = piles[i];
+      if (p.items.length) continue;
+      if (p.batch) renderer.destroyBillboardBatch(p.batch);
+      piles.splice(i, 1);
+    }
+  }
+
+  /** AUDIT 17e F23: the ?world floating-origin recenter shifts the
+   *  camera and player; ground piles are world-space and must follow
+   *  or they drift 819.2 units away from where they were dropped. */
+  function offsetAll(offset) {
+    const [dx, dy, dz] = offset;
+    for (const p of piles) {
+      p.pos[0] += dx; p.pos[1] += dy; p.pos[2] += dz;
+      // the centers are baked into a STATIC_DRAW buffer - rebuild
+      if (p.batch) {
+        renderer.destroyBillboardBatch(p.batch);
+        p.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, `${p.record}#0`, p.size, [[p.pos[0], p.pos[1], p.pos[2]]]);
+      }
+    }
+  }
+
+  return { dropPile, batches, lootTargets, pileFor, releaseEmptied, offsetAll, _piles: piles };
 }

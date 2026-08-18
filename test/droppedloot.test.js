@@ -28,7 +28,10 @@ test('droppedLoot: the verbatim treasure flat + empty-pile removal', async () =>
   // the activation box wraps the drop position (the corpse shape)
   const t = dl.lootTargets();
   assert.equal(t.length, 1);
-  assert.equal(t[0].key, 'droppedLoot:0');
+  // AUDIT 17e F28: pile keys are STABLE IDS now - releaseEmptied
+  // splices the array, so an index-based key would rebind to a
+  // different pile after a cleanup.
+  assert.equal(t[0].key, `droppedLoot:${pile.id}`);
   assert.deepEqual(t[0].aabb.min, [9.5, 2, 29.5]);
   assert.deepEqual(t[0].aabb.max, [10.5, 2.6, 30.5]);
   assert.equal(dl.batches().length, 1);

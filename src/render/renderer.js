@@ -917,6 +917,20 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return tex;
   }
 
+  /** AUDIT 17e F27 / EVERY ALLOCATION HAS AN OWNER: release one
+   *  uploaded texture. uploadTexture memoizes by key and never freed,
+   *  which is right for archive/record art (finite, reused) but wrong
+   *  for the paperdoll, which mints a NEW versioned key per refresh -
+   *  an ~81 KB RGBA texture leaked on every equip click. */
+  releaseTexture(archive, record) {
+    const key = record === undefined ? archive : `${archive}_${record}`;
+    const tex = this.textures.get(key);
+    if (!tex) return false;
+    this.gl.deleteTexture(tex);
+    this.textures.delete(key);
+    return true;
+  }
+
   /** Build a VAO bundle from meshReader output. */
   createMesh(model) {
     const gl = this.gl;
