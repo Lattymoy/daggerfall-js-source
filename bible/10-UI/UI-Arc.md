@@ -1473,3 +1473,45 @@ Pins: `test/audit17h.test.js`, four tests, each mutation-proven -
 including the greeting compared either side of a save round trip,
 which is the assertion that would have caught this years of slices
 ago.
+
+## AUDIT 17i: THE ONE CONSTRUCTION SEAM (2026-08-18)
+
+Not a parity slice - a root-cause fix for a bug SHAPE that had
+recurred three times.
+
+The dungeon host built its `ChargenFlow` by hand while the exterior
+hosts went through `createChargenWindow`. So every dependency the flow
+grew had to be remembered twice, and each time it was not:
+
+- 17f: the starting SPELLBOOK (a town-created Mage began with none)
+- 17f: the starting KIT (`?class=N` minted an empty bag)
+- 17h: the BIOGRAPHY (a dungeon-created character answered no
+  questions at all)
+
+Three separate audits, three fixes, one shape. Patching a fourth
+instance later is not a plan.
+
+**`createChargenFlow(fetchBytes)`** is now the only place a flow is
+built. It loads the careers, SPELLS.STD and the eighteen biography
+sets, ATTACHES them, and hands back `{ flow, careers, spellsByIndex,
+biogs }`. All three hosts call it; `createChargenWindow` no longer
+constructs anything, it WRAPS a flow for the exterior overlay seam.
+A dependency added tomorrow is added HERE, once, where no host can
+miss it.
+
+**The rule is enforced, not remembered.** `test/chargenseam.test.js`
+sweeps `src/scenes` and fails if any host contains
+`new ChargenFlow(`. A host that news one up gets whatever
+dependencies existed the day it was written and silently misses every
+one added since - which is exactly how all three bugs happened. The
+companion pin proves the seam attaches everything rather than merely
+returning it beside the flow.
+
+Probed: `tools/dungeonChargenProbe.mjs` boots the DUNGEON host with no
+`?class` and reads its live flow - 18 careers, 12 biography questions.
+The host that kept falling behind is the one the probe watches.
+
+A probe lesson worth keeping: the first draft waited on
+`__shotReady`, which never fires while a chargen overlay is up -
+the modal pauses the scene before frame 5, correctly. Wait on the
+thing the probe is actually about.

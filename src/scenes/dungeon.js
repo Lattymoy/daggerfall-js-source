@@ -168,6 +168,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       get pos() { return [...player.pos]; },
       warp: (x, y, z) => player.spawn(x, y, z),
     };
+    window.__chargenFlow = () => ctx.chargenFlow?.() ?? null;   // AUDIT 17i probe surface
     window.__activate = () => tryActivate();
     window.__activateKey = (k) => ctx.actions.activate(k);
     window.__ray = () => {

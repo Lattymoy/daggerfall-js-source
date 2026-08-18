@@ -32,7 +32,7 @@ import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, applyCharacter, startingSpells, CLASS_CAREERS } from '../systems/chargen.js';
-import { loadCareers, finishChargen, applyHeadlessChargen, loadBiogs } from '../systems/chargenSession.js';   // S3c/U9: one career loader
+import { createChargenFlow, finishChargen, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { assignStartingGear } from '../systems/startingGear.js';   // S3d
@@ -727,13 +727,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // the dungeon host runs the same flow, and an unwarmed art set
       // would silently leave it on the interim text panels.
       await preloadChargenArt({ renderer, fetchBytes, palette });
-      chargenFlow = new ChargenFlow(await loadCareers(fetchBytes));
-      // AUDIT 17h F2 / THE FOUR HOSTS RULE: the biography question
-      // sets. Without them a character created in the DUNGEON skipped
-      // all twelve questions - the same host gap 17f found for the
-      // starting spellbook and the starting kit, one slice later.
-      const biogs = await loadBiogs(fetchBytes);
-      chargenFlow.biogFor = (i) => biogs[i] ?? null;
+      // AUDIT 17i: this host no longer CONSTRUCTS a flow. It built its
+      // own by hand while the exterior hosts went through the shared
+      // session, and so structurally missed every dependency the flow
+      // grew - the starting spellbook (17f), the starting kit (17f)
+      // and the biography (17h). One seam mints it for everyone.
+      chargenFlow = (await createChargenFlow(fetchBytes)).flow;
       activeOverlay = chargenFlow;
     }
   }
@@ -1827,6 +1826,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
     // pause gameplay while any overlay is active.
     get uiOverlayActive() { return !!activeOverlay; },
+    chargenFlow: () => chargenFlow,   // AUDIT 17i probe surface
     overlayInput(action) {
       if (!activeOverlay) return;
       activeOverlay.input(action);

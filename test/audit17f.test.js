@@ -14,6 +14,7 @@ import { GOLD_TEMPLATE, goldStack, itemWeight } from '../src/systems/inventory.j
 import { addGold } from '../src/systems/court.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { createChargenWindow, finishChargen } from '../src/systems/chargenSession.js';
+import { ChargenFlow } from '../src/ui/chargen.js';
 import { startingSpells, STARTING_SPELL_SETS } from '../src/systems/chargen.js';
 import { SKILLS } from '../src/systems/skills.js';
 
@@ -119,7 +120,9 @@ const CAREER = {
 };
 /** Drive the window to done with real key codes. Returns the window. */
 function walkChargen(onDone) {
-  const w = createChargenWindow([{ name: 'Mage', career: CAREER }], { onDone, rolls: () => 0 });
+  // AUDIT 17i: the window WRAPS a flow now - hosts no longer
+  // construct one, so neither does the pin.
+  const w = createChargenWindow(new ChargenFlow([{ name: 'Mage', career: CAREER }], () => 0), { onDone });
   for (const c of 'KeyM KeyA KeyC'.split(' ')) w.input(c);
   const key = (code, n = 1) => { for (let i = 0; i < n; i++) w.input(code); };
   key('Enter');                       // name -> race

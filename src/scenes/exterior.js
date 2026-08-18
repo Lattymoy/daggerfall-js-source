@@ -48,7 +48,7 @@ import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
-import { loadCareers, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen, loadBiogs } from '../systems/chargenSession.js';   // S3c/U9
+import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
@@ -342,13 +342,12 @@ export async function bootExterior(canvas, renderer, params, status) {
       })
       .catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
   } else if (!playerEntity.chargenDone) {
-    // AUDIT 17f: SPELLS.STD loads WITH the careers - finishChargen was
-    // called with no spell table here, so a Mage created in a town
-    // began with an empty spellbook where the dungeon host's identical
-    // flow filled it.
-    Promise.all([loadCareers(fetchBytes), loadSpellIndex(fetchBytes), loadBiogs(fetchBytes)]).then(([careers, spellsByIndex, biogs]) => {
-      townTalk.showOverlay(createChargenWindow(careers, {
-        biogs,   // S3e: the biography question sets
+    // AUDIT 17i: ONE construction seam - the flow arrives with every
+    // dependency already attached (careers, SPELLS.STD, the biography
+    // question sets), so a host cannot forget one. Three separate bugs
+    // came from hosts wiring these by hand.
+    createChargenFlow(fetchBytes).then(({ flow, spellsByIndex }) => {
+      townTalk.showOverlay(createChargenWindow(flow, {
         onDone: (r) => {
           finishChargen(playerEntity, r, spellsByIndex);
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },

@@ -121,13 +121,32 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   return playerEntity;
 }
 
+/** AUDIT 17i / THE ONE-SEAM RULE: everything the flow needs, loaded
+ *  and ATTACHED in one place.
+ *
+ *  The dungeon host built its own ChargenFlow by hand while the
+ *  exterior hosts went through createChargenWindow, so it
+ *  structurally missed every dependency the flow grew: 17f found it
+ *  for the starting spellbook and again for the starting kit, 17h for
+ *  the biography. Three instances of one shape. The fix is not to
+ *  remember the dungeon host - it is that a host may no longer
+ *  CONSTRUCT a flow. Both call this, and a future dependency is added
+ *  HERE, once, where no host can miss it.
+ *
+ *  Returns { flow, careers, spellsByIndex, biogs } - the flow ready to
+ *  run, plus the tables a host needs for finishChargen. */
+export async function createChargenFlow(fetchBytes, { rolls = Math.random } = {}) {
+  const [careers, spellsByIndex, biogs] = await Promise.all([
+    loadCareers(fetchBytes), loadSpellIndex(fetchBytes), loadBiogs(fetchBytes),
+  ]);
+  const flow = new ChargenFlow(careers, rolls);
+  flow.biogFor = (i) => biogs[i] ?? null;   // S3e
+  return { flow, careers, spellsByIndex, biogs };
+}
+
 /** An overlay-shaped chargen window for the exterior hosts.
  *  onDone(result) fires once, after the flow reaches 'done'. */
-export function createChargenWindow(careers, { onDone, rolls = Math.random, hudScale = 2, biogs = null } = {}) {
-  const flow = new ChargenFlow(careers, rolls);
-  // S3e: the question sets, keyed by class index. Absent = the
-  // biography screen is skipped rather than blocking the flow.
-  if (biogs) flow.biogFor = (i) => biogs[i] ?? null;
+export function createChargenWindow(flow, { onDone, hudScale = 2 } = {}) {
   let _fired = false;
   return {
     flow,
