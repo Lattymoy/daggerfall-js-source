@@ -20,8 +20,25 @@ const INGREDIENT_GROUPS = new Set([
   'MiscellaneousIngredients1', 'MiscellaneousIngredients2',
 ]);
 
+/** DaggerfallUnityItem.IsEnchanted verbatim
+ *  (DaggerfallUnityItem.cs:266-269): DERIVED from the enchantment
+ *  arrays, never a stored flag.
+ *  AUDIT 17e C2: three consumers (this stacking rule, the inventory
+ *  tab router, the FP weapon's enchanted animation set) all read a
+ *  property `item.enchanted` that NOTHING ever wrote - loot.js stamps
+ *  `magic: true` and the enchantments array. So no item in the game
+ *  was ever enchanted: looted magic weapons sat in Weapons & Armor
+ *  instead of Magic Items, swung the mundane animation set, and
+ *  stacked when DFU forbids it. */
+export function isEnchanted(item) {
+  return !!(item?.enchantments?.length || item?.customEnchantments?.length);
+}
+
 export function isStackable(item) {
-  if (item.equipped || item.enchanted || item.questItem) return false;   // never stack
+  // AUDIT 17e C2: `item.equipped` was never written either - the port
+  // marks worn items with equipSlot (equip.js) - so all three clauses
+  // of DFU's rule were no-ops.
+  if (item.equipSlot != null || isEnchanted(item) || item.questItem) return false;   // never stack
   if (item.group === 'Currency') return true;
   if (item.group === 'Weapons' && item.name === 'Arrow') return true;
   if (INGREDIENT_GROUPS.has(item.group)) return true;

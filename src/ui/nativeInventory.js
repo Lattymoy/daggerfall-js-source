@@ -40,7 +40,7 @@
 // consumed no-ops (no wagon owned; letter-of-credit pends).
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, SCREEN_DIM, shadowText } from './nativePanel.js';
-import { addItem } from '../systems/inventory.js';
+import { addItem, isEnchanted } from '../systems/inventory.js';
 import { isEquipped, equipItem, unequipSlot } from '../systems/equip.js';
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel } from './itemScroller.js';
@@ -78,7 +78,7 @@ export function filterByTab(items, tab) {
   return items.filter((it) => {
     if (isEquipped(it)) return false;   // FilterLocalItems: worn items leave the list
     const wa = it.group === 'Weapons' || it.group === 'Armor';
-    const ench = !!it.enchanted;
+    const ench = isEnchanted(it);   // AUDIT 17e C2: DERIVED, not a stored flag
     if (tab === 'weapons') return wa && !ench;
     if (tab === 'magic') return ench || it.templateIndex === SPELLBOOK_TEMPLATE;
     if (tab === 'ingredients') return isIngredientTemplate(it.templateIndex) && !ench;

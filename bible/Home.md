@@ -32,6 +32,61 @@ terrain fragments - when a diff spans a large frame fraction, check
 full-frame composition (every draw pass still present?) before
 explaining the diff away. Draw entry points must own their program
 binding; interleaving a new pass exposed drawMesh's assumption.
+THE FOUR HOSTS RULE (17e). Four files own a motor:
+scenes/exterior.js, scenes/world.js, scenes/worldModes.js
+(interiors), scenes/dungeonContext.js. A slice wiring a seam into
+one must NAME ALL FOUR in its record - each either wired or FLAGGED
+by name. U8h enumerated "both exterior hosts" and flagged the
+dungeon; the interior host owns a fourth weapon rig and went
+unmentioned, so buildings still swing the interim dagger. The same
+omission produced the missing FOV gate and the unshifted guards in
+?world.
+
+THE MODAL CONTRACT (17e). A function whose return value gates a
+host frame must return the same type from EVERY exit. One branch of
+ten in worldModes.frame() returned undefined; the hosts read that
+as "not handled" and ran a whole exterior frame on top of the
+dungeon. Assert the contract in a test, not a comment.
+
+ONE DFU MEMBER, ONE EXPORT (17e; restated after U8f's near-miss and
+violated by the very next slice). Before porting a DFU class or
+method, grep the tree for its name AND its constants. U8h rebuilt
+GetMaterialArmorValue in systems/equip.js and drifted; droppedLoot.js
+re-declared the treasure table the 2026-07-06b audit had already
+single-sourced. If two files legitimately need it, one exports and
+the other imports - never two literals.
+
+A PIN MUST FAIL (17e). Every assertion claiming to pin a DFU law
+must fail under a one-character mutation of that law. Three shipped
+pins did not: `assert.ok(bows >= 8)` survives promoting any weapon
+to two-handed; `Math.trunc((100-55)/5) === 9` touches no port code;
+and `ANSWERS_TO_DIRECTIONS[15] === 7261` certified the WRONG table
+and would have blocked its own fix. Prefer deepEqual against DFU
+literals over spot checks and inequalities, and mutation-check new
+pins.
+
+TEST THE SHAPE THE PRODUCER MINTS (17e). A test that hand-builds an
+item/entity literal can pass while nothing in the running game
+satisfies it. Three suites asserted on `{ enchanted: true }` - a
+property no producer writes - so the enchanted paths were dead in
+the shipping game and green in CI. Build fixtures from the real
+producer, or assert the producer's own output.
+
+ASYNC NEVER DROPS (17e). DFU is synchronous; where the port awaits,
+a request arriving mid-flight must be COALESCED, never discarded.
+refreshPaperDoll's boolean re-entrancy guard silently threw away
+equip updates, leaving the doll and its click mask stale.
+
+EVERY ALLOCATION HAS AN OWNER (17e). DFU relies on Destroy/GC; the
+port does not. Every createBillboardBatch / uploadTexture needs a
+matching free in the owning module's teardown, and that teardown
+must be reachable from the path that ends the object's life.
+
+RETIRING A FLAG DELETES THE SENTENCE (17e). When a slice closes an
+INTERIM/FLAGGED site, remove the old sentence - do not append the
+retiring one beneath it. The open-flags list is grep-regenerated
+and lifts stale half-sentences out of their retiring context.
+
 THE NATIVE-WINDOW RULE (from the 17d UI audit, after three
 positioning hotfixes in two days): every drawn element of a native
 window - rect, font, color, scale, alignment - must cite its DFU
@@ -84,7 +139,7 @@ code "looks right").
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-17, U8h)
+## Open flags (regenerated 2026-08-17, AUDIT 17e W0)
 
 Regenerated at the S20 close (the drainFatigue "exhaustion pends"
 comment SHIPPED out; line numbers refreshed). Every row below is a
@@ -111,7 +166,7 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/scenes/cityGuards.js:23` - FLAGGED loud: guard archers forced melee (exterior foe arrows
 - `src/scenes/cityGuards.js:109` - attack.rangedAttack = false;   // FLAGGED: guard archers pend exterior foe arrows
 - `src/scenes/cityGuards.js:194` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
-- `src/scenes/cityGuards.js:300` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
+- `src/scenes/cityGuards.js:308` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/droppedLoot.js:16` - FLAGGED loud: pile persistence across saves (the quicksave arc
 - `src/scenes/dungeonContext.js:159` - the chain lives, the motion is INTERIM (loud) until flats can tween.
 - `src/scenes/dungeonContext.js:484` - index into the 18 careers) or the INTERIM default Warrior (16,
@@ -124,19 +179,19 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/scenes/dungeonContext.js:1704` - actions) is FLAGGED - the player snapshot only.
 - `src/scenes/exterior.js:288` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
 - `src/scenes/exterior.js:312` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
-- `src/scenes/exterior.js:355` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/exterior.js:514` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:583` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:358` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/exterior.js:517` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:586` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/townTalk.js:337` - .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAG...
-- `src/scenes/world.js:426` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
-- `src/scenes/world.js:430` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:441` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
-- `src/scenes/world.js:525` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/world.js:810` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1003` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/worldModes.js:69` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
-- `src/scenes/worldModes.js:101` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-hous...
+- `src/scenes/world.js:427` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
+- `src/scenes/world.js:431` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:442` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
+- `src/scenes/world.js:529` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/world.js:814` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1007` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/worldModes.js:70` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
+- `src/scenes/worldModes.js:102` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-hous...
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/chargen.js:6` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
@@ -151,12 +206,13 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/systems/effects.js:92` - FLAGGED: career hard-immunity (Career.Paralysis == Immune) and the
 - `src/systems/effects.js:530` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
-- `src/systems/equip.js:77` - /** INTERIM starting equipment (chargen's starting-gear roll
+- `src/systems/equip.js:103` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/inventory.js:12` - weight pends S2b (FLAGGED - leather/chain/plate multipliers).
 - `src/systems/itemTemplates.js:15` - *  U8c; material-dyed weapon/armor icon variants FLAGGED). */
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls are SKIPPED until the magic
 - `src/systems/loot.js:169` - FLAGGED to the economy slice (shops).
 - `src/systems/save.js:7` - (foes, loot piles, action states, doors) is FLAGGED - dungeons
+- `src/systems/save.js:41` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
 - `src/systems/shopStock.js:109` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
@@ -187,6 +243,57 @@ stay open to Mac's eye in live play (probe-locked).
 ## Audits
 
 Newest first.
+
+**2026-08-18 - AUDIT 17e, the comprehensive parity pass over the U8
+native-UI arc + the economy/talk/crime slices.** Ten dimensions
+audited line-by-line against DFU source in parallel, every finding
+put through two independent verifiers (one adversarial, one
+checking user-visible consequence + reachability), then a
+completeness critic hunting what the audit itself missed. 106 raw
+findings, 59 confirmed, 46 unanimous. WAVE 0 (shipped): seven
+ship-blockers plus two the critic found.
+(F1) THE MODAL CONTRACT BREAK - worldModes.frame() returned
+`undefined` from the dungeon's UI-overlay early-out while every
+other exit returned true; both hosts gate their whole exterior
+frame on that value, so a dungeon overlay made them draw the town
+over the dungeon and feed dungeon-local coordinates to the ?world
+streaming recenter.
+(F2/F3) TWO UNBOUNDED GOLD LOOPS - buyPrice fell back to value 1
+where sellPrice fell back to itemBaseValue, and only sellPrice
+multiplied by the stack. Nothing outside shopStock stamps `value`,
+so any looted item sold for thousands, landed on the shelf, and
+bought back for 1; and any stack bought for the price of one item.
+Both branches now share one value resolution and the multiplier,
+pinned by a round-trip invariant (buy never undercuts sell).
+(F4) WORN GEAR WAS MERCHANDISE - the sell lists offered equipped
+items and doSell spliced them out of the bag without releasing the
+slot: a dangling equip table, a permanent armor bonus, and the FP
+rig still swinging a sold weapon.
+(F5) THE WRONG ANSWER TABLE - ANSWERS_TO_DIRECTIONS' knows-half was
+DFU's answersToNonDirections (7261..7294 instead of 7256..7289), so
+EVERY successful Where-is answer drew the wrong TEXT.RSC record -
+and the test pinned 7261, certifying the bug and blocking its own
+fix. Both tables now exist, pinned whole against the DFU literals.
+(F6/F7) CRIME STATE HAD NO LIFECYCLE OWNER - crimeCommitted was
+cleared only by the court, so walking out of town left the player
+wanted for the session (the watch kept respawning; the despawn law,
+gated on the same flag, could never fire); and
+haveShownSurrenderDialogue never reset when the watch died, killing
+the surrender box - the only call site of LowerRepForCrime.
+(C1, critic) SAVE/LOAD DROPPED THE EQUIP TABLE - a load left it
+empty, and since worn items are hidden from every inventory tab
+they became permanently unreachable and un-removable, with armor
+silently reset; a same-session load left the table pointing at
+pre-load objects and kept the old armor bonus forever. Both fixed
+by DFU's own derive-on-restore (SerializablePlayer.cs:301,355-368).
+(C2, critic) NO ITEM WAS EVER ENCHANTED - three consumers read
+`item.enchanted`, a property nothing writes (loot mints
+`enchantments[]`), so looted magic weapons sat in Weapons & Armor
+instead of Magic Items, swung the mundane animation set, and
+stacked when DFU forbids it. IsEnchanted is now DERIVED, as in DFU,
+and the three tests that fed hand-built `enchanted: true` literals
+no producer could create were repointed at the real shape.
+Waves 1-3 (parity, leaks, duplicate ports, stale flags) follow.
 
 **2026-08-17d - the native-window UI parity audit (U8a/U8b/U8c).**
 Triggered by Mac's third positioning catch in two days. Every drawn

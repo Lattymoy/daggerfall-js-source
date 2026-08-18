@@ -26,7 +26,8 @@ import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
 import { createTownTalk } from './townTalk.js';   // T3b
 import { createCityGuards } from './cityGuards.js';   // G1
-import { createArrestFlow } from './arrestFlow.js';   // G2
+import { createArrestFlow } from './arrestFlow.js';
+import { clearCrimeOnLocationExit } from '../systems/court.js';   // AUDIT 17e F6   // G2
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
@@ -467,6 +468,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const key = cur ? `${cur.px},${cur.py}` : null;
     if (key === _topicsKey) return;
+    // AUDIT 17e F6: this crossing IS DFU's OnExitLocationRect - the
+    // active crime clears when the player leaves the location.
+    clearCrimeOnLocationExit(playerEntity, _topicsKey, key);
     _topicsKey = key;
     const dfLocation = key ? locationIndex.get(key) : null;
     if (!cur || !dfLocation || !cur.locBlocks) { townTalk.setTopics(null); return; }

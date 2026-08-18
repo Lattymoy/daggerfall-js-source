@@ -25,6 +25,7 @@ import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, ext
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { pickActivatable, worldAabb, activationTargets } from '../player/activate.js';
 import { transferAll, removeOne, addItem } from '../systems/inventory.js';
+import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -105,7 +106,7 @@ export function createWorldModes(host) {
     if (tradeArtLoaded()) {
       interiorOverlay = new NativeTradeWindow({
         shelfItems: () => shelf.items,
-        sellables: () => (playerEntity.items ?? []).filter((it) => shopBuysItem(b.buildingType, it)),
+        sellables: () => (playerEntity.items ?? []).filter((it) => shopBuysItem(b.buildingType, it) && !isEquipped(it)),   // AUDIT 17e F4
         buy: (it) => doBuy(shelf, it),
         sell: (it) => doSell(shelf, it),
         gold: () => goldAmount(playerEntity),
@@ -133,6 +134,11 @@ export function createWorldModes(host) {
   }
   function doSell(shelf, it) {
     const price = sellPrice(it);
+    // AUDIT 17e F4: selling a WORN item left equip.slots pointing at
+    // it - a permanent armor bonus and an FP rig still swinging the
+    // sold weapon. The lists no longer offer worn gear; this is the
+    // belt-and-braces release.
+    if (isEquipped(it)) unequipSlot(playerEntity, it.equipSlot);
     addGold(playerEntity, price);
     playerEntity.items.splice(playerEntity.items.indexOf(it), 1);
     shelf.items.push(it);   // sold goods land on the open shelf (DFU's remoteItems)
@@ -140,9 +146,17 @@ export function createWorldModes(host) {
     surfacePlayer();
     return price;
   }
+  // AUDIT 17e F2/F3: the buy branch used to fall back to value 1 and
+  // omit the stack multiplier while the SELL branch fell back to
+  // itemBaseValue and multiplied - two unbounded gold loops (sell a
+  // looted daedric weapon for thousands, it lands on the shelf, buy
+  // it back for 1; or buy a 20-arrow stack for the price of one).
+  // Both branches now share one value resolution (DFU's item.value,
+  // which every item carries once minted) and the stack multiplier.
+  function itemValue(it) { return it.value ?? itemBaseValue(it); }
   function buyPrice(it) {
     const b = interiorBuilding;
-    const cost = calculateCost(it.value ?? 1, b.quality, regionPriceAdjustment(playerEntity, b.regionIndex ?? 0));
+    const cost = calculateCost(itemValue(it), b.quality, regionPriceAdjustment(playerEntity, b.regionIndex ?? 0)) * (it.stackCount ?? 1);
     return calculateTradePrice(cost, b.quality, {
       mercantile: skillValue(playerEntity, SKILLS.Mercantile),
       personality: playerEntity.stats?.personality ?? 50,
@@ -153,7 +167,7 @@ export function createWorldModes(host) {
   // GetTradePrice; DFU's condition parameter is declared-but-unused).
   function sellPrice(it) {
     const b = interiorBuilding;
-    const cost = calculateCost(it.value ?? itemBaseValue(it), b.quality, regionPriceAdjustment(playerEntity, b.regionIndex ?? 0)) * (it.stackCount ?? 1);
+    const cost = calculateCost(itemValue(it), b.quality, regionPriceAdjustment(playerEntity, b.regionIndex ?? 0)) * (it.stackCount ?? 1);
     return calculateTradePrice(cost, b.quality, {
       mercantile: skillValue(playerEntity, SKILLS.Mercantile),
       personality: playerEntity.stats?.personality ?? 50,
@@ -185,7 +199,7 @@ export function createWorldModes(host) {
     showShelfList(shelf, 0);
   }
   function showSellList(shelf, page) {
-    const sellable = (playerEntity.items ?? []).filter((it) => shopBuysItem(interiorBuilding.buildingType, it));
+    const sellable = (playerEntity.items ?? []).filter((it) => shopBuysItem(interiorBuilding.buildingType, it) && !isEquipped(it));   // AUDIT 17e F4
     const per = 8;
     const slice = sellable.slice(page * per, (page + 1) * per);
     const options = slice.map((it, j) => ({
@@ -518,7 +532,12 @@ export function createWorldModes(host) {
       for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
       renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
-      if (dungeonCtx.uiOverlayActive) { dungeonCtx.drawOverlay(canvas); return; }   // U2b/U3: overlays gate the dungeon
+      // AUDIT 17e F1: this MUST return true like every other exit of
+      // the dungeon branch. Returning undefined let the host fall
+      // through and run its whole exterior frame on top - the town
+      // drawn over the dungeon, and in ?world the streaming recenter
+      // fed dungeon-local coordinates.
+      if (dungeonCtx.uiOverlayActive) { dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon
       dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD'));   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,

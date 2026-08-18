@@ -8,8 +8,8 @@ test('inventory: the stackable rule verbatim', () => {
   assert.ok(isStackable({ group: 'Weapons', name: 'Arrow', templateIndex: 131 }));
   assert.ok(isStackable({ group: 'PlantIngredients1', templateIndex: 8 }));
   assert.ok(!isStackable({ group: 'Weapons', name: 'Dagger', templateIndex: 113 }));
-  assert.ok(!isStackable({ group: 'PlantIngredients1', templateIndex: 8, equipped: true }));   // never stack
-  assert.ok(!isStackable({ group: 'Currency', enchanted: true }));
+  assert.ok(!isStackable({ group: 'PlantIngredients1', templateIndex: 8, equipSlot: 4 }));   // never stack
+  assert.ok(!isStackable({ group: 'Currency', enchantments: [{ type: 1, param: 5 }] }));
 });
 
 test('inventory: AddItem merges same-thing stacks, appends the rest', () => {

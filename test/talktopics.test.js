@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { generateBuildingName, BUILDING_TYPES, isNamedBuildingType, TAVERNS_A, TAVERNS_B, STORES_A } from '../src/world/buildingNames.js';
-import { mergeNamedBuildings, buildBuildingDirectory, compassHint, reactionTier, reactionTier012, ANSWERS_TO_DIRECTIONS, whereIsAnswer, KNOWLEDGE_MODIFIERS, makeBuildingKey, npcKnowsAboutItem, BUILDING_KEY_0, QUESTION_TYPE_REACTION_MODS, ETIQUETTE_REACTION_MODS, STREETWISE_REACTION_MODS } from '../src/systems/talkTopics.js';
+import { mergeNamedBuildings, buildBuildingDirectory, compassHint, reactionTier, reactionTier012, ANSWERS_TO_DIRECTIONS, ANSWERS_TO_NON_DIRECTIONS, whereIsAnswer, KNOWLEDGE_MODIFIERS, makeBuildingKey, npcKnowsAboutItem, BUILDING_KEY_0, QUESTION_TYPE_REACTION_MODS, ETIQUETTE_REACTION_MODS, STREETWISE_REACTION_MODS } from '../src/systems/talkTopics.js';
 import { srand, rand, randomRange, randomRangeInclusive } from '../src/formats/dfRandom.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
@@ -49,9 +49,19 @@ test('talkTopics: the compass bands, the tier roll, and the answer table shape',
   assert.equal(compassHint(-1, -1), 'southwest');
   assert.equal(compassHint(0, -1), 'south');
   assert.equal(compassHint(1, -1), 'southeast');
-  // 30 records: 15 doesn't-know + 15 knows
-  assert.equal(ANSWERS_TO_DIRECTIONS.length, 30);
-  assert.equal(ANSWERS_TO_DIRECTIONS[15], 7261);   // knows, Commoners, tier 0
+  // 30 records: 15 doesn't-know + 15 knows. AUDIT 17e F5: pinned as
+  // the WHOLE table against the DFU literals (TalkManager.cs:107-108).
+  // The old spot check asserted 7261 - a value from
+  // answersToNonDirections - so it certified the wrong table and
+  // would have blocked its own fix. A pin must fail when the law does.
+  assert.deepEqual([...ANSWERS_TO_DIRECTIONS], [
+    7251, 7266, 7281, 7250, 7265, 7280, 7252, 7267, 7282, 7253, 7268, 7283, 7304, 7269, 7284,
+    7256, 7271, 7286, 7255, 7270, 7285, 7257, 7272, 7287, 7258, 7273, 7288, 7259, 7274, 7289,
+  ]);
+  assert.deepEqual([...ANSWERS_TO_NON_DIRECTIONS], [
+    7251, 7266, 7281, 7250, 7265, 7280, 7252, 7267, 7282, 7253, 7268, 7283, 7304, 7269, 7284,
+    7261, 7276, 7291, 7260, 7275, 7290, 7262, 7277, 7292, 7263, 7278, 7293, 7264, 7279, 7294,
+  ], 'the Tell-me-about table stays distinct (TalkManager.cs:109-110)');
   // The tier is stable per NPC seed; personality 50 -> reaction 15
   // beats any roll <= 15 into tier 1+ (rollToBeat is 0..20)
   const t1 = reactionTier(50, 42);
@@ -60,7 +70,7 @@ test('talkTopics: the compass bands, the tier roll, and the answer table shape',
   // whereIsAnswer picks from the knows half for Commoners
   const a = whereIsAnswer([0, 0, 0], { position: [10, 0, 0] }, 50, 42);
   assert.equal(a.direction, 'east');
-  assert.ok([7261, 7276, 7291].includes(a.textId));
+  assert.ok([7256, 7271, 7286].includes(a.textId), 'the KNOWS half of answersToDirections');
 });
 
 test('talkTopics: the tone tiers (T3f) - mods, skill roll, session cache, first-use tally', () => {

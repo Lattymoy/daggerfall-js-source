@@ -346,6 +346,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (it) { it.person.release(); it.active = false; it.scheduleEnable = false; it.scheduleRecycle = false; it.visible = false; }
     },
   }));
+  // AUDIT 17e F6: DFU clears the active crime on OnExitLocationRect.
+  // This host IS one fixed location with no rect to leave - the
+  // streaming host (world.js) owns that edge. Nothing to clear here.
   function _crimeResponse() {
     const feet = walkMode ? player.pos : cam.pos;
     const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];

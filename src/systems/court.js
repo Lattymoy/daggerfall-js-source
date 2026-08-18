@@ -190,3 +190,17 @@ export function resolveGuiltyVerdict(court, player) {
   raiseRepForSentence(player, court);
   return { outcome: 'released' };
 }
+
+/** AUDIT 17e F6 - PlayerGPS_OnExitLocationRect verbatim
+ *  (PlayerEntity.cs:2449-2453): leaving the location rect clears the
+ *  active crime. Nothing but the court cleared it before, so a player
+ *  who simply walked out of town stayed "wanted" forever - the watch
+ *  kept respawning and cityGuards' despawn law (gated on
+ *  crimeCommitted) could never fire. Pass the previous and current
+ *  location keys (null = wilderness, false = never synced).
+ *  Returns true when the crime was cleared. */
+export function clearCrimeOnLocationExit(entity, prevKey, nextKey) {
+  if (prevKey === false || prevKey == null || nextKey === prevKey) return false;
+  entity.crimeCommitted = 0;
+  return true;
+}

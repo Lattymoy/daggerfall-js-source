@@ -30,9 +30,9 @@ test('fpsweapon: template index -> animation set, verbatim (+ enchanted promotio
   assert.equal(weaponTypeForItem({ templateIndex: W.War_Axe }), T.Battleaxe);
   assert.equal(weaponTypeForItem({ templateIndex: W.Short_Bow }), T.Bow);
   assert.equal(weaponTypeForItem({ templateIndex: W.Long_Bow }), T.Bow);
-  assert.equal(weaponTypeForItem({ templateIndex: W.Katana, enchanted: true }), T.LongBlade_Magic);
-  assert.equal(weaponTypeForItem({ templateIndex: W.Battle_Axe, enchanted: true }), T.Battleaxe_Magic);
-  assert.equal(weaponTypeForItem({ templateIndex: W.Short_Bow, enchanted: true }), T.Bow, 'no magic bow variant, verbatim');
+  assert.equal(weaponTypeForItem({ templateIndex: W.Katana, enchantments: [{ type: 1, param: 5 }] }), T.LongBlade_Magic);
+  assert.equal(weaponTypeForItem({ templateIndex: W.Battle_Axe, enchantments: [{ type: 1, param: 5 }] }), T.Battleaxe_Magic);
+  assert.equal(weaponTypeForItem({ templateIndex: W.Short_Bow, enchantments: [{ type: 1, param: 5 }] }), T.Bow, 'no magic bow variant, verbatim');
   assert.equal(weaponTypeForItem(null), T.Melee, 'bare hands');
   assert.equal(weaponTypeForItem({ templateIndex: 300 }), T.None);
 });

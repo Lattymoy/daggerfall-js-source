@@ -221,6 +221,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     if (!playerEntity.crimeCommitted) {
       for (const g of guards) if (!g.dead) g.dead = true;   // no corpse - they walk away
     }
+    // AUDIT 17e F7 - PlayerEntity.cs:533-537 verbatim: the surrender
+    // dialogue flag resets once no city watch is alive. It only ever
+    // cleared inside the court flow, so a player who killed or
+    // outran the watch never saw the surrender box again - and that
+    // box is the ONLY call site of LowerRepForCrime.
+    if (playerEntity.haveShownSurrenderDialogue && !guards.some((g) => !g.dead)) {
+      playerEntity.haveShownSurrenderDialogue = false;
+    }
     if (countdown > 0) {
       countdown -= dt;
       if (countdown <= 0) spawnCityGuards(true, { playerFeet, playerFwd: [0, 0, 1], pool: [] });   // arrivals ride the ring fallback

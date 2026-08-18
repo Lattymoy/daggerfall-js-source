@@ -75,9 +75,19 @@ export const TOPIC_CATEGORIES = Object.freeze([
   { type: BUILDING_TYPES.Palace, caption: 'Palaces' },
 ]);
 
-// TalkManager.answersToDirections: 15 doesn't-know + 15 knows,
-// 3 reaction tiers x 5 social groups.
+// TalkManager.answersToDirections (TalkManager.cs:107-108): 15
+// doesn't-know + 15 knows, 3 reaction tiers x 5 social groups.
+// AUDIT 17e F5: the KNOWS half was DFU's answersToNonDirections
+// table (7261..7294) - EVERY successful Where-is answer drew the
+// wrong TEXT.RSC record, and the test pinned the wrong value so it
+// certified the bug. The non-directions table is kept as its own
+// export for the pending Tell-me-about slice, which is what DFU
+// uses it for (TalkManager.cs:109-110).
 export const ANSWERS_TO_DIRECTIONS = Object.freeze([
+  7251, 7266, 7281, 7250, 7265, 7280, 7252, 7267, 7282, 7253, 7268, 7283, 7304, 7269, 7284,
+  7256, 7271, 7286, 7255, 7270, 7285, 7257, 7272, 7287, 7258, 7273, 7288, 7259, 7274, 7289,
+]);
+export const ANSWERS_TO_NON_DIRECTIONS = Object.freeze([
   7251, 7266, 7281, 7250, 7265, 7280, 7252, 7267, 7282, 7253, 7268, 7283, 7304, 7269, 7284,
   7261, 7276, 7291, 7260, 7275, 7290, 7262, 7277, 7292, 7263, 7278, 7293, 7264, 7279, 7294,
 ]);

@@ -55,7 +55,7 @@ test('nativeInventory: the AddLocalItem tab filter law (verbatim four-way)', () 
   const bag = [
     { group: 'Weapons', templateIndex: 113 },
     { group: 'Armor', templateIndex: 102 },
-    { group: 'Weapons', templateIndex: 113, enchanted: true },      // enchanted weapon -> magic
+    { group: 'Weapons', templateIndex: 113, enchantments: [{ type: 1, param: 5 }] },   // enchanted weapon -> magic
     { group: 'MiscItems', templateIndex: 132 },                     // Spellbook -> magic
     { group: 'PlantIngredients1', templateIndex: 0 },               // ingredient low bound
     { group: 'MiscellaneousIngredients1', templateIndex: 77 },      // ingredient high bound

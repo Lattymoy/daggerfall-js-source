@@ -22,6 +22,7 @@
 //   - weaponOffsetHeight is 0: the large HUD does not exist here yet.
 
 import { CifRciFile } from '../formats/cifRciFile.js';
+import { isEnchanted } from '../systems/inventory.js';   // AUDIT 17e C2
 import { WEAPONS, WEAPON_MATERIALS, weaponDyeColor } from '../characters/weapons.js';
 import { applyDyeToIndex, DYE_TARGETS } from '../characters/dyes.js';
 
@@ -168,7 +169,7 @@ export function weaponTypeForItem(item) {
     case W.Short_Bow: case W.Long_Bow: result = T.Bow; break;
     default: return T.None;
   }
-  if (item.enchanted) {
+  if (isEnchanted(item)) {   // AUDIT 17e C2: the enchanted WEAPO1xx set was unreachable
     switch (result) {
       case T.Dagger: result = T.Dagger_Magic; break;
       case T.Staff: result = T.Staff_Magic; break;

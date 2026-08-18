@@ -8,6 +8,8 @@
 // re-derive from their location on load; the world snapshot pends
 // its slice. Versioned envelope; a mismatch refuses loudly.
 
+import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
+
 export const SAVE_VERSION = 1;
 export const QUICKSAVE_KEY = 'dagger.quicksave';
 
@@ -35,7 +37,9 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   const snap = { v: SAVE_VERSION, position, classicMinutes, readiedSpellIndex, world, locationKey };
   for (const k of ENTITY_FIELDS) snap[k] = entity[k];
   snap.stats = { ...entity.stats };
-  snap.skills = [...(entity.skills ?? [])];
+  // AUDIT 17e: pre-chargen the entity carries a flat NUMBER here
+  // (playerEntity's INTERIM skills: 30) - spreading it threw.
+  snap.skills = Array.isArray(entity.skills) ? [...entity.skills] : entity.skills;
   snap.skillUses = [...(entity.skillUses ?? [])];
   snap.career = entity.career ? { ...entity.career } : null;   // plain CFG data
   snap.items = (entity.items ?? []).map((it) => ({ ...it }));
@@ -58,10 +62,15 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // (Str + End) x 64) - the additive-field shape DFU's serializer
   // gives missing members, so the envelope version holds at 1.
   if (entity.fatigue == null) entity.fatigue = ((snap.stats?.strength ?? 0) + (snap.stats?.endurance ?? 0)) * 64;
-  entity.skills = [...snap.skills];
+  entity.skills = Array.isArray(snap.skills) ? [...snap.skills] : snap.skills;   // AUDIT 17e: pre-chargen skills is a flat number
   entity.skillUses = [...snap.skillUses];
   entity.career = snap.career ? { ...snap.career } : entity.career;
   entity.items = snap.items.map((it) => ({ ...it }));
+  // AUDIT 17e C1: the equip table + armor values are DERIVED state -
+  // rebuild them from the freshly restored items (SerializablePlayer
+  // .cs:301, :355-368). Must run AFTER items are replaced, or the
+  // table relinks to the discarded objects.
+  rebuildEquipState(entity);
   entity.activeEffects = snap.activeEffects.map(copyEffectEntry);
   entity.spells = spellsByIndex
     ? snap.spells.map((i) => spellsByIndex.get(i)).filter(Boolean)

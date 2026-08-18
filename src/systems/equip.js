@@ -74,6 +74,32 @@ export function equipItem(entity, item) {
 
 export const isEquipped = (item) => item.equipSlot != null;
 
+/** AUDIT 17e C1 - SerializablePlayer.RestoreItems verbatim
+ *  (SerializablePlayer.cs:301, :355-368): after items are restored,
+ *  the equip TABLE is rebuilt by re-linking each worn item into its
+ *  slot, then the armor values are wiped to 100 and re-applied from
+ *  the rebuilt table. DFU relinks by item UID; our items carry the
+ *  slot itself (item.equipSlot), which survives the JSON round trip,
+ *  so the slot IS the link.
+ *  Without this, a load left the table empty (every worn item
+ *  unreachable - filterByTab hides equipped items, so they vanished
+ *  from all four tabs AND the paperdoll, with no way to take them
+ *  off) while a same-session load left the table pointing at the
+ *  PRE-load item objects and kept the old armor bonus forever. */
+export function rebuildEquipState(entity) {
+  const slots = equipTableOf(entity);
+  slots.fill(null);
+  for (const it of entity.items ?? []) {
+    if (it.equipSlot == null) continue;
+    if (slots[it.equipSlot]) { delete it.equipSlot; continue; }   // two items claiming one slot: the first wins
+    slots[it.equipSlot] = it;
+  }
+  const av = armorValuesOf(entity);
+  av.fill(100);   // "Initialize body part armor values to 100 (no armor)"
+  for (const it of slots) if (it) updateEquippedArmorValues(entity, it, true);
+  return slots;
+}
+
 /** INTERIM starting equipment (chargen's starting-gear roll
  *  replaces this): the C8 interim Iron Dagger moves INTO the bag,
  *  equipped, so the worn-weapon FP-rig binding serves it like any
