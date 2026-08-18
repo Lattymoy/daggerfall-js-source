@@ -16,6 +16,7 @@ import { rollStats, rollSkills, STAT_KEYS_ORDER, spellPoints, spellPointMultipli
 import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsModifier, healingRateModifier } from '../combat/formulas.js';   // U10: the derived block
 import { tagEffect, biographySkillBonuses, digestRepChanges } from '../systems/biography.js';   // S3e
 import { fullName, getNameBank, GENDERS } from '../characters/nameHelper.js';   // U15
+import { srand } from '../formats/dfRandom.js';   // AUDIT 17j F1: the name screen's reseed
 import { buildBackstory, repBoxRows } from './chargenArt.js';   // U13
 import { RACE_TEMPLATES, FACES_PER_RACE } from '../systems/races.js';   // S3c/U9
 import { SKILL_NAMES } from '../systems/skills.js';
@@ -66,6 +67,14 @@ export function skillDown(working, rolled, pool) {
 // before the race and still be classic.
 const STATES = ['race', 'gender', 'class', 'biography', 'name', 'face', 'stats', 'skills', 'reflexes', 'done'];
 
+/** AUDIT 17j F5: the port capped the typed name at 16. DFU's name
+ *  box is a plain TextBox and CreateCharNameSelect never sets
+ *  MaxCharacters, so it keeps the class default of 31
+ *  (TextBox.cs:26). Sixteen cut real names short - and the RANDOM
+ *  button, which assigns rather than types, could already mint a
+ *  name the player was then unable to retype. */
+export const NAME_MAX_CHARACTERS = 31;
+
 export class ChargenFlow {
   /** careers: [{ name, career }] x18 (loaded from CLASS*.CFG). */
   constructor(careers, rolls = Math.random) {
@@ -97,24 +106,53 @@ export class ChargenFlow {
     this.describeRace = (race) => raceDescriptionLines(race);
     this.cursor = 0;
     this._rolled = null;
+    // AUDIT 17j F1/F4: DFU's `new System.Random().Next()` is an
+    // ENGINE PRNG draw (Ledger A), so it rides Math.random here, and
+    // the range is System.Random.Next()'s [0, int.MaxValue).
+    this.seedRandom = () => Math.floor(Math.random() * 0x7fffffff);
+    // the race and gender the name box was last filled under - null
+    // until the first push, because DFU's first assignment cannot clear
+    this._nameRaceId = null;
+    this._nameGender = null;
   }
 
   get career() { return this.careers[this.classIndex].career; }
   get race() { return RACE_TEMPLATES[this.raceIndex]; }
 
-  _enterStats() {
+  /** AUDIT 17j F7: these REROLLED on every entry, so walking back a
+   *  screen and forward again threw away the roll AND everything the
+   *  player had spent from the pool. DFU keeps both.
+   *
+   *  SetAddBonusStatsWindow (:227-246) constructs the window once and
+   *  calls Reroll() then; on every later push it rerolls only `if
+   *  (createCharAddBonusStatsWindow.DFClass != characterDocument.
+   *  career)`. SetAddBonusSkillsWindow (:249-259) passes
+   *  `!skillsNeedReroll` as isRestored, and CreateCharAddBonusSkills.
+   *  SetCharacterDocument (:59-74) then RESTORES the document's
+   *  starting and working skills rather than rolling; skillsNeedReroll
+   *  is raised only by SetChooseBioWindow, which the flow reaches
+   *  exactly when a class has just been chosen.
+   *
+   *  Both rules reduce to the same one: reroll when the CLASS changed,
+   *  otherwise restore. `force` is the explicit Reroll button, which
+   *  rerolls regardless. */
+  _enterStats(force = false) {
+    if (!force && this.rolledStats && this._statsClassIndex === this.classIndex) { this.cursor = 0; return; }
     const { stats, bonusPool } = rollStats(this.career, this.rolls);
     this.rolledStats = { ...stats };
     this.stats = { ...stats };
     this.statPool = bonusPool;
+    this._statsClassIndex = this.classIndex;
     this.cursor = 0;
   }
 
-  _enterSkills() {
+  _enterSkills(force = false) {
+    if (!force && this.rolledSkills && this._skillsClassIndex === this.classIndex) { this.cursor = 0; return; }
     const { skills, groupPools } = rollSkills(this.career, this.rolls);
     this.rolledSkills = [...skills];
     this.skills = [...skills];
     this.pools = { ...groupPools };
+    this._skillsClassIndex = this.classIndex;
     this.cursor = 0;
   }
 
@@ -180,7 +218,63 @@ export class ChargenFlow {
     else this._leaveBiography();   // U15: -> name, the classic next screen
   }
 
-  _leaveBiography() { this.state = 'name'; }
+  _leaveBiography() { this._enterName(); }
+
+  /** AUDIT 17j F1: SetNameSelectWindow pushes the name window, whose
+   *  OnPush runs ShowRandomButton - and ShowRandomButton RESEEDS the
+   *  shared DFRandom stream from a fresh System.Random
+   *  (CreateCharNameSelect.cs:123-126, "better than starting with a
+   *  seed of 0 every time"). The port never did, and DFRandom is a
+   *  global whose last srand at chargen is the dungeon's locationId,
+   *  so the RANDOM button handed every character of a given race and
+   *  gender the SAME name on every boot. seedRandom is injectable for
+   *  the pins, the Ledger A engine-PRNG rule.
+   *
+   *  F4: SetNameSelectWindow also re-assigns RaceTemplate and Gender,
+   *  and both setters EMPTY the textbox when the value changed
+   *  (:142-161) - so walking back, picking a different race, and
+   *  coming forward gives you a blank box, not the old name. The
+   *  first assignment never clears: SetRaceTemplate is guarded on the
+   *  previous template being non-null. */
+  _enterName() {
+    if (this._nameRaceId != null && this._nameRaceId !== this.race.id) this.name = '';
+    if (this._nameGender != null && this._nameGender !== this.gender) this.name = '';
+    this._nameRaceId = this.race.id;
+    this._nameGender = this.gender;
+    srand(this.seedRandom());
+    this.state = 'name';
+  }
+
+  /** AUDIT 17j F2: ClassSelectWindow_OnClose's cancel arm. DFU also
+   *  calls createCharRaceSelectWindow.Reset() here, which nulls the
+   *  SELECTED race (:85-90) so the map reopens with its prompt and no
+   *  province chosen. The port's race screen has no unselected state -
+   *  raceIndex is always valid because the keyboard cursor and the
+   *  description panel both read it - so that half is not
+   *  represented; the open description box is what there is to clear. */
+  _enterRace() {
+    this.raceConfirm = null;
+    this.state = 'race';
+  }
+
+  /** AUDIT 17j F3: the name screen's cancel. DFU sends it to
+   *  SetChooseBioWindow, which on its way forward CONSTRUCTS a fresh
+   *  CreateCharBiography over a fresh BiogFile - so the questions
+   *  restart and the answers so far are DISCARDED. That discard is
+   *  load-bearing here and not cosmetic: answerBiography appends to
+   *  biographyEffects, so re-answering without it would apply every
+   *  effect twice. With no question set for this class there is no
+   *  screen to go back to, and the cancel is inert. */
+  _enterBiographyBack() {
+    if (!this.biogFor?.(this.classIndex)?.questions?.length) return;
+    this.biogQuestionIndex = 0;
+    this.cursor = 0;
+    this.biographyEffects = [];
+    this.backStory = [];
+    this.repChanges = null;
+    this.biogRepBox = null;
+    this.state = 'biography';
+  }
 
   /** The per-skill biography bonus the SKILLS screen displays. */
   skillBonuses() { return this.biographyEffects.length ? biographySkillBonuses(this.biographyEffects) : null; }
@@ -217,18 +311,27 @@ export class ChargenFlow {
     return true;
   }
 
+  /** The screens' own Reroll button - it forces, where re-entry does not. */
   reroll() {
-    if (this.state === 'stats') this._enterStats();
-    else if (this.state === 'skills') this._enterSkills();
+    if (this.state === 'stats') this._enterStats(true);
+    else if (this.state === 'skills') this._enterSkills(true);
   }
 
   /** actions: up/down/plus/minus/confirm/back/reroll/char:<c>/backspace */
   input(action) {
     const s = this.state;
     if (s === 'name') {
-      if (action.startsWith('char:') && this.name.length < 16) this.name += action.slice(5);
+      if (action.startsWith('char:') && this.name.length < NAME_MAX_CHARACTERS) this.name += action.slice(5);
       else if (action === 'backspace') this.name = this.name.slice(0, -1);
+      // AcceptName (CreateCharNameSelect.cs:137-140): an EMPTY name
+      // does not close the window, so OK and Return are both inert.
       else if (action === 'confirm' && this.name.length) this.state = 'face';
+      // AUDIT 17j F3: this screen had NO cancel at all - the one
+      // screen in the wizard you could not back out of. DFU's
+      // NameSelectWindow_OnClose sends a cancel to SetChooseBioWindow
+      // (:483-493); the port collapses chooseBio into the biography
+      // questions, so that is where back lands.
+      else if (action === 'back') this._enterBiographyBack();
       return;
     }
     if (s === 'race') {
@@ -263,14 +366,19 @@ export class ChargenFlow {
       if (action === 'up') this.faceIndex = (this.faceIndex + FACES_PER_RACE - 1) % FACES_PER_RACE;
       else if (action === 'down') this.faceIndex = (this.faceIndex + 1) % FACES_PER_RACE;
       else if (action === 'confirm') { this.state = 'stats'; this._enterStats(); }
-      else if (action === 'back') this.state = 'name';
+      else if (action === 'back') this._enterName();   // FaceSelectWindow_OnClose (:496-508) - and re-entry reseeds + clears, as DFU's push does
       return;
     }
     if (s === 'class') {
       if (action === 'up') { this.classIndex = (this.classIndex + this.careers.length - 1) % this.careers.length; this._scrollToClass(); }
       else if (action === 'down') { this.classIndex = (this.classIndex + 1) % this.careers.length; this._scrollToClass(); }
       else if (action === 'confirm') this._leaveClass();
-      else if (action === 'back') this.state = 'gender';
+      // AUDIT 17j F2: this went to GENDER, which is the screen before
+      // it. DFU does not step back one - ClassSelectWindow_OnClose's
+      // cancel arm calls SetRaceSelectWindow (:353-370), skipping the
+      // gender screen entirely. The U15 pin asserted the bug: I wrote
+      // it from the STATES order rather than from DFU's handler table.
+      else if (action === 'back') this._enterRace();
       return;
     }
     if (s === 'biography') {

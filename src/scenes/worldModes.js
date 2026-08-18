@@ -689,10 +689,24 @@ export function createWorldModes(host) {
   // U8c: pointer routing for interior native windows (the townTalk
   // shape) - hosts call this before requestLook.
   function pointerdown(e) {
-    if (mode !== 'interior' || !interiorOverlay?.click) return false;
     const r = canvas.getBoundingClientRect();
     const px = (e.clientX - r.left) * (canvas.width / r.width);
     const py = (e.clientY - r.top) * (canvas.height / r.height);
+    // AUDIT 17j F6 / THE FOUR HOSTS RULE: this gated on interior mode
+    // alone, so the DUNGEON overlay seam U14 added to dungeonContext
+    // reached exactly one of the two hosts that mount a dungeon
+    // context. dungeon.js wired it; worldModes DRAWS the same overlay
+    // (the uiOverlayActive branch of its dungeon frame) and could not
+    // click it. Latent rather than live today - chargen is the only
+    // overlay with a clickNative, and it runs at boot where this host
+    // already has a player - but a seam one host cannot reach is the
+    // shape that has bitten this flow four times.
+    if (mode === 'dungeon' && dungeonCtx?.uiOverlayActive) {
+      const vd = pointToNative(nativeMetrics(canvas), px, py);
+      if (vd) dungeonCtx.overlayClick?.(vd[0], vd[1]);
+      return true;   // an open window withholds the pointer lock, as in dungeon.js
+    }
+    if (mode !== 'interior' || !interiorOverlay?.click) return false;
     const v = pointToNative(nativeMetrics(canvas), px, py);
     if (v) interiorOverlay.click(v[0], v[1]);
     if (interiorOverlay?.done) interiorOverlay = null;

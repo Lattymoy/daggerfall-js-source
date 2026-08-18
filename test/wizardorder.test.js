@@ -47,14 +47,23 @@ test('U15: RACE is the first screen and BACK cannot leave it', () => {
   assert.equal(f.state, 'race', 'there is nothing before it to go back to');
 });
 
-test('U15: every screen\'s BACK returns to the one before it', () => {
+// AUDIT 17j F2: this pin USED to assert class -> gender, which is the
+// STATES order read backwards, not DFU's handler table. DFU skips the
+// gender screen: ClassSelectWindow_OnClose's cancel arm calls
+// SetRaceSelectWindow. The pin asserted the bug.
+test('U15/17j: BACK follows DFU\'s cancel arms, not the STATES order', () => {
   const f = flow();
   f.input('confirm'); f.input('confirm');    // -> class
   assert.equal(f.state, 'class');
   f.input('back');
-  assert.equal(f.state, 'gender');
-  f.input('back');
-  assert.equal(f.state, 'race');
+  assert.equal(f.state, 'race', 'ClassSelectWindow_OnClose cancels to the RACE screen, skipping gender');
+  // and the gender screen itself does step back one, because its own
+  // cancel arm names the race window too (GenderSelectWindow_OnClose)
+  const g = flow();
+  g.input('confirm');
+  assert.equal(g.state, 'gender');
+  g.input('back');
+  assert.equal(g.state, 'race');
 });
 
 test('U15: the name banks map by race, with the Argonian quirk', () => {

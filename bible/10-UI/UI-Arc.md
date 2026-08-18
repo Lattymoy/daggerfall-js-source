@@ -1619,3 +1619,14 @@ Probed: `tools/chargenClickProbe.mjs` walks the new order by clicks
 alone and exercises the random button on the way through. Out the
 other end, unchanged: a Redguard female with Very High reflexes -
 named `Rlillki` by the button, not by the keyboard.
+
+**AUDIT 17j corrected the back arms.** U15 got the wizard's ORDER
+right and every one of its BACK arms wrong, because the order was read
+forwards and the cancels then inferred by reading it backwards. DFU
+writes its cancel targets out one handler at a time, and three of them
+do not step back one screen: the class screen cancels to RACE, the
+name screen cancels to the biography method (and DISCARDS the answers
+so far), and the stats and skills screens RESTORE rather than reroll.
+The U15 back pin asserted the bug. The random-name button was also
+deterministic - `Rlillki` on every boot - because DFU reseeds DFRandom
+on every push of the name window and the port never did. See Audits.
