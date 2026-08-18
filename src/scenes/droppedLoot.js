@@ -19,12 +19,13 @@
 // pixel destroy (piles share the corpse-batch frame doctrine).
 
 import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../systems/loot.js';
 
-export const RANDOM_TREASURE_ARCHIVE = 216;
-// DaggerfallLootDataTables.randomTreasureIconIndices verbatim
-export const RANDOM_TREASURE_ICONS = Object.freeze([
-  0, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 37, 43, 44, 45, 46, 47,
-]);
+// AUDIT 17e F34 / ONE DFU MEMBER, ONE EXPORT: this file re-declared
+// randomTreasureArchive and randomTreasureIconIndices, regressing the
+// single-sourcing the 2026-07-06b audit had already done in
+// systems/loot.js. Re-exported so existing importers keep working.
+export { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS };
 
 /** deps = { renderer, getTexture, uploadRecordFrame, pick? } (pick
  *  is the icon roll seam - UnityEngine.Random.Range over the list). */

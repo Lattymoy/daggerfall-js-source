@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { EQUIP_SLOTS, getEquipSlot, equipItem, unequipSlot, isEquipped, armorValuesOf, BODY_PARTS, seedStartingEquipment } from '../src/systems/equip.js';
-import { filterByTab } from '../src/ui/nativeInventory.js';
+import { filterByTab, armorLabelValue } from '../src/ui/nativeInventory.js';
 import { preloadPaperDollArt, drawPaperDoll, paperDollArtLoaded, refreshPaperDoll, slotAtPaperDoll, paperdollItemImage, clampArmorVariant, _debugPaperDoll, WAIST_HEIGHT, PAPERDOLL_ORIGIN, ARMOR_LABEL_POS } from '../src/ui/paperDoll.js';
 import { getTemplate } from '../src/characters/paperdoll.js';
 import { TextureFile } from '../src/formats/textureFile.js';
@@ -158,7 +158,14 @@ test('equipMechanics: U8h armor values (UpdateEquippedArmorValues verbatim)', ()
   // unequip restores; the displayed value law: (100 - av)/5
   unequipSlot(e, EQUIP_SLOTS.ChestArmor);
   assert.equal(e.armorValues[BODY_PARTS.Chest], 100);
-  assert.equal(Math.trunc((100 - 55) / 5), 9, 'steel greaves display 9 on the doll');
+  // AUDIT 17e F36 / A PIN MUST FAIL: this asserted
+  // Math.trunc((100-55)/5) === 9 - literal arithmetic touching no
+  // port code (mutation-proven: changing the divisor kept it green),
+  // and the 55 was stale besides. Pinned against the LIVE table now.
+  assert.equal(armorLabelValue(e.armorValues[BODY_PARTS.Legs]),
+    Math.trunc((100 - e.armorValues[BODY_PARTS.Legs]) / 5));
+  assert.equal(armorLabelValue(100), 0, 'unarmored reads 0');
+  assert.equal(armorLabelValue(85), 3, 'leather reads its material value');
   // weapons/clothing never touch the table
   equipItem(e, { group: 'Weapons', templateIndex: 120, material: 9, name: 'Daedric Longsword' });
   equipItem(e, { group: 'MensClothing', templateIndex: 165, variant: 0, name: 'Shirt' });

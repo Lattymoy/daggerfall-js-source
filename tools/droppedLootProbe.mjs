@@ -66,7 +66,10 @@ const bag = await page.evaluate(() => (window.__playerEntity.items ?? []).map((i
 piles = JSON.parse(await page.evaluate(() => window.__droppedLoot()));
 console.log('bag after pickup:', JSON.stringify(bag), 'piles:', JSON.stringify(piles));
 if (bag[0] !== 'Dagger') { console.log('DAGGER NOT RECOVERED'); process.exit(1); }
-if (piles[0].n !== 0) { console.log('PILE NOT EMPTIED'); process.exit(1); }
+// AUDIT 17e F28: DFU's RemoveLootContainer fires on WINDOW CLOSE, so
+// an emptied pile is GONE (batch freed, entry dropped) rather than
+// lingering as an empty husk - the stronger assertion.
+if (piles.length !== 0) { console.log('EMPTIED PILE NOT RELEASED', JSON.stringify(piles)); process.exit(1); }
 await waitFrames(4);
 await page.screenshot({ path: '/home/claude/dropped-gone.png' });
 console.log('DROPPED LOOT OK');

@@ -31,12 +31,16 @@
 // LOOT TARGET's items when a ground pile opened the window. Remove-
 // mode local clicks transfer into the remote pile
 // (LocalItemListScroller_OnItemClick); remote clicks in Equip or
-// Remove mode transfer back to the player (RemoteItemListScroller_
-// OnItemClick - Equip's equip-after-transfer half pends the
-// paperdoll arc). Closing with session-dropped items hands them to
-// hooks.onDrop - the host mints the ground pile flat. Info mode
-// pops an interim item panel (name/weight/value - DFU's 1016 info
-// text pends). Equip/Use local clicks stay FLAGGED; wagon/gold:
+// Remove mode transfer back to the player, and in EQUIP mode the
+// taken item is equipped too (RemoteItemListScroller_OnItemClick's
+// TransferItem equip:true - shipped in U8g). Closing with
+// session-dropped items hands them to hooks.onDrop - the host mints
+// the ground pile flat. Info mode pops an interim item panel
+// (name/weight/value - DFU's 1016 info text PENDS).
+// AUDIT 17e F39 / RETIRING A FLAG DELETES THE SENTENCE: this header
+// still said Equip and equip-after-transfer were FLAGGED after U8g
+// shipped both. STILL OPEN here: Use mode (UseItem / the
+// IsLightSource branch of an Equip click), and wagon/gold as
 // consumed no-ops (no wagon owned; letter-of-credit pends).
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, SCREEN_DIM, shadowText } from './nativePanel.js';
@@ -71,6 +75,15 @@ const SPELLBOOK_TEMPLATE = 132;    // MiscItems.Spellbook
 
 // DFU ItemTemplates.txt isIngredient - exactly indices 0..77
 export const isIngredientTemplate = (i) => i >= 0 && i <= 77;
+
+/** AUDIT 17e F36 - RefreshArmourValues' displayed number
+ *  (PaperDoll.cs:159-173): (100 - armorValue) / 5, plus armorMod
+ *  (DecreasedArmorValueModifier - IncreasedArmorValueModifier), which
+ *  is 0 until those effect channels exist (FLAGGED). Exported so the
+ *  law can be pinned against LIVE armor values - the old pin was
+ *  `Math.trunc((100-55)/5) === 9`, pure literal arithmetic that
+ *  touched no port code at all. */
+export const armorLabelValue = (av, armorMod = 0) => Math.trunc((100 - av) / 5) + armorMod;
 
 /** AddLocalItem verbatim, over the session's {group, templateIndex,
  *  enchanted} item shape. */
@@ -256,7 +269,7 @@ export class NativeInventoryWindow {
     drawPaperDoll(renderer, m, this.hooks.entity ?? { }, 49, 13);
     const av = this.hooks.entity?.armorValues;
     if (av) ARMOR_LABEL_POS.forEach(([lx, ly], i) =>
-      shadowText(renderer, font, String(Math.trunc((100 - (av[i] ?? 100)) / 5)), m, 49 + lx, 13 + ly));
+      shadowText(renderer, font, String(armorLabelValue(av[i] ?? 100)), m, 49 + lx, 13 + ly));
     this._clampScroll();
     // both sides through the shared scroller: the filtered bag
     // locally, the pile (loot target or session drops) remotely

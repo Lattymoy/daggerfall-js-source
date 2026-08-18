@@ -425,7 +425,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const startKey = `${startPixel.x},${startPixel.y}`;
   const player = new PlayerMotor(collider, undefined, { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14)
   // C9: the exterior FP weapon (host rule - every motor host carries
-  // it). say -> console FLAGGED: this host has no HUD-text layer yet.
+  // it). AUDIT 17e F38 / RETIRING A FLAG DELETES THE SENTENCE: the
+  // 'no HUD-text layer yet' flag that stood here was retired by T3b
+  // three lines below, but survived to be re-published as live work
+  // by the grep-regenerated open-flags list.
   // T3b: the town interaction seam (modes/talk/pickpocket) - the same
   // module the exterior host mounts (the standing host rule). It is
   // also this host's first HUD-text layer; the rig's say routes there.

@@ -133,7 +133,14 @@ export function mergeNamedBuildings(exteriorBuildings, blocks) {
     for (let i = 0; i < count; i++) {
       if (!isNamedBuildingType(list[i].buildingType)) continue;
       const item = next(list[i].buildingType);
-      if (!item) continue;   // end of the city list (DFU logs and keeps block data)
+      // AUDIT 17e F40: this comment claimed DFU "keeps block data" on
+      // pool exhaustion; DFU actually copies a ZEROED pool item. The
+      // branch is unreachable on classic data (the pool balances
+      // exactly - 39256 draws against 39256 entries across all 15251
+      // locations), and DFU only reaches it via WorldDataReplacement,
+      // which this port deliberately omits. Doc-corrected, not
+      // implemented - implementing it would be untestable dead code.
+      if (!item) continue;
       list[i].nameSeed = item.nameSeed;
       list[i].factionId = item.factionId;
       list[i].sector = item.sector;

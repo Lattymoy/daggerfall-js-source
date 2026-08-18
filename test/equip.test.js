@@ -21,8 +21,15 @@ test('equip: hands verbatim (bow rides the classic default)', () => {
   assert.equal(getItemHands({ group: W, templateIndex: 123 }), ITEM_HANDS.Both);   // Claymore
   assert.equal(getItemHands({ group: ITEM_GROUPS.Armor, templateIndex: 109 }), ITEM_HANDS.LeftOnly); // Buckler
   assert.equal(getItemHands({ group: ITEM_GROUPS.Gems, templateIndex: 0 }), ITEM_HANDS.None);
-  const bows = Object.entries(WEAPON_HANDS).filter(([, v]) => v === 'Both').length;
-  assert.ok(bows >= 8); // 2H set + both bows land Both
+  // AUDIT 17e F35 / A PIN MUST FAIL: `assert.ok(bows >= 8)` was
+  // one-sided - promoting ANY weapon to two-handed kept it green
+  // (mutation-proven with Mace). The whole table is pinned instead.
+  assert.deepEqual({ ...WEAPON_HANDS }, {
+    113: 'Either', 114: 'Either', 115: 'Both', 116: 'Either', 117: 'Either',
+    118: 'Either', 119: 'Either', 120: 'Either', 121: 'Either', 122: 'Both',
+    123: 'Both', 124: 'Either', 125: 'Both', 126: 'Both', 127: 'Either',
+    128: 'Both', 129: 'Both', 130: 'Both',
+  }, 'ItemEquipTable.GetItemHands verbatim (bows ride BowLeftHandWithSwitching=false)');
 });
 
 test('equip: paired slots pick first open, else first', () => {

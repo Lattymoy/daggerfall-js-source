@@ -139,7 +139,7 @@ code "looks right").
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-17, AUDIT 17e W2)
+## Open flags (regenerated 2026-08-17, AUDIT 17e W3)
 
 Regenerated at the S20 close (the drainFatigue "exhaustion pends"
 comment SHIPPED out; line numbers refreshed). Every row below is a
@@ -177,21 +177,19 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/scenes/dungeonContext.js:756` - FLAGGED to the effect library (caster-only buffs, touch, areas).
 - `src/scenes/dungeonContext.js:968` - 129; the inventory/equip UI pends - the INTERIM dagger note
 - `src/scenes/dungeonContext.js:1706` - actions) is FLAGGED - the player snapshot only.
-- `src/scenes/exterior.js:289` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
-- `src/scenes/exterior.js:313` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
-- `src/scenes/exterior.js:359` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/exterior.js:425` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:523` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:592` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:316` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
+- `src/scenes/exterior.js:362` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/exterior.js:428` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:526` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:595` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/townTalk.js:359` - .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAG...
-- `src/scenes/world.js:428` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
-- `src/scenes/world.js:432` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:443` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
-- `src/scenes/world.js:530` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/world.js:585` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:819` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1018` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:435` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:446` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
+- `src/scenes/world.js:533` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/world.js:588` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:822` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1021` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:70` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:102` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-hous...
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
@@ -232,10 +230,11 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/ui/inventory.js:2` - windows in classic text (backgrounds FLAGGED pending art-name
 - `src/ui/inventory.js:9` - Enter readies one (retires ?spell). INTERIM loud: with no
 - `src/ui/inventory.js:85` - /** The known list: entity.spells when it exists; the INTERIM fallback
-- `src/ui/nativeInventory.js:39` - text pends). Equip/Use local clicks stay FLAGGED; wagon/gold:
-- `src/ui/nativeInventory.js:142` - INTERIM info panel: name/weight/value (DFU's 1016 info text
-- `src/ui/nativeInventory.js:171` - use: FLAGGED - the use arc pends
-- `src/ui/nativeInventory.js:223` - 'use' -> UseItem FLAGGED with the light-source/use arc
+- `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
+- `src/ui/nativeInventory.js:82` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
+- `src/ui/nativeInventory.js:155` - INTERIM info panel: name/weight/value (DFU's 1016 info text
+- `src/ui/nativeInventory.js:184` - use: FLAGGED - the use arc pends
+- `src/ui/nativeInventory.js:236` - 'use' -> UseItem FLAGGED with the light-source/use arc
 - `src/ui/nativeTalk.js:22` - N/P page, Esc/E goodbye. People/Things/Work are INTERIM no-ops
 - `src/ui/nativeTalk.js:140` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/nativeTalk.js:150` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
@@ -327,8 +326,18 @@ and was out of enum order; court reputation was raised on banishment
 (DFU does not) and withheld on acquittal (DFU does); the char sheet
 weighed items by raw base weight, ignoring the material rule;
 the exterior host's frame counter ran backwards after a modal frame;
-and F5 inside a building reloaded the page. Wave 3 (remaining
-duplicate ports, vacuous-test repairs, stale flags) follows.
+and F5 inside a building reloaded the page. WAVE 3 (shipped): the treasure table's second declaration removed
+(it had regressed a 2026-07-06b single-sourcing), two vacuous pins
+repaired - a one-sided `bows >= 8` that survived promoting any weapon
+to two-handed, and a "display law" pin that was pure literal
+arithmetic touching no port code - and three stale flags deleted that
+the grep-regenerated open-flags list had been re-publishing as live
+work (two retired HUD-text flags, one Equip flag U8g had closed).
+DEFERRED with reasons recorded: the paperdoll mask pass (cosmetic,
+and the obvious fix is wrong for this architecture), the KRAVE01.HS2
+Order-of-the-Raven override (real, 10 Dwynnen towns, needs otherNames
+threading), and Chain2 reachability (constant fixed; nothing mints it
+until classic-save import).
 
 **2026-08-17d - the native-window UI parity audit (U8a/U8b/U8c).**
 Triggered by Mac's third positioning catch in two days. Every drawn

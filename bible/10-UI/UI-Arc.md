@@ -814,3 +814,51 @@ Suite 477/105.
   into interiors stays its own arc (FLAGGED).
 
 Suite 480/105.
+
+## AUDIT 17e Wave 3: duplicates, vacuous pins, stale flags (2026-08-18)
+
+The cheap half of the pass - no behaviour changes except where a
+duplicate had drifted, but this is the wave that keeps the bible
+honest.
+- F34 ONE DFU MEMBER, ONE EXPORT: droppedLoot.js re-declared
+  randomTreasureArchive + randomTreasureIconIndices, regressing the
+  single-sourcing the 2026-07-06b audit had already done in
+  systems/loot.js. Now imported and re-exported.
+- F35 A PIN MUST FAIL: equip.test.js asserted `bows >= 8`, a
+  one-sided inequality that survives promoting ANY weapon to
+  two-handed (mutation-proven with Mace). The whole 18-row
+  GetItemHands table is pinned instead.
+- F36 A PIN MUST FAIL: the "(100-av)/5 display law" was pinned by
+  `Math.trunc((100-55)/5) === 9` - literal arithmetic touching no
+  port code, with a stale 55 besides. The law is now an exported
+  armorLabelValue pinned against LIVE armor values, and DFU's
+  armorMod term is flagged where it belongs.
+- F38/F39 RETIRING A FLAG DELETES THE SENTENCE: both exterior hosts
+  still carried "this host has no HUD-text layer yet" three lines
+  above the T3b wiring that gave them one, and nativeInventory's
+  header still called Equip and equip-after-transfer FLAGGED after
+  U8g shipped both. The open-flags list is grep-regenerated, so it
+  had been re-publishing all three as live work. Corrected, with what
+  is genuinely still open (interior HUD text; Use mode; wagon/gold)
+  left standing.
+- F40 the pool-exhaustion comment claimed DFU keeps the block's
+  placeholder data; DFU copies a ZEROED pool item. Doc-corrected but
+  deliberately NOT implemented: the branch is unreachable on classic
+  data (39256 draws against 39256 entries across all 15251
+  locations) and DFU only reaches it through WorldDataReplacement,
+  which this port omits - implementing it would be untestable dead
+  code.
+
+DEFERRED with reasons recorded (see Home Open flags): the paperdoll
+MASK pass (F31 - DFU's shader erases layers beneath a masked item, so
+a helm cuts out the hair; the port only skips the item's own masked
+pixels. The obvious fix - writing transparent black - is WRONG for
+this architecture because the SCBG is baked into the same buffer, so
+it needs either an SCBG restore or a layering restructure; measured
+divergence is 6-89 px per item, cosmetic); the KRAVE01.HS2
+Order-of-the-Raven override (F21 - real, affects 10 Dwynnen towns,
+needs otherNames threaded through the pool merge); and Chain2
+reachability (the constant is fixed, but nothing mints 0x0103 until
+classic-save import exists).
+
+All four native-window probes re-run green. Suite 480/105.
