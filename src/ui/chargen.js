@@ -22,7 +22,7 @@ import { RACE_TEMPLATES, FACES_PER_RACE } from '../systems/races.js';   // S3c/U
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
-import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, CLASS_LIST_ROWS, PLAYER_REFLEXES, REFLEX_COUNT } from './chargenArt.js';   // U10
+import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, classDescriptionLines, DOUBLE_CLICK_DELAY_MS, CLASS_LIST_ROWS, PLAYER_REFLEXES, REFLEX_COUNT } from './chargenArt.js';   // U10 / U17
 
 export const MAX_STAT_VALUE = 100;   // FormulaHelper.MaxStatValue
 
@@ -101,9 +101,14 @@ export class ChargenFlow {
     this.repChanges = null;     // and the per-group totals it changed
     this.biogRepBox = null;     // the open reputation box, if any
     this.raceConfirm = null;   // U11: the open race-description box, if any
+    this.classConfirm = null;  // U17: and the open CLASS-description box
+    this._lastClassClick = null;   // the ListBox double-click clock
     // AUDIT 17g F5: the description source, so BOTH the click and the
     // keyboard confirm open the same box. Null until the art loads.
     this.describeRace = (race) => raceDescriptionLines(race);
+    // U17: the same shape for the CLASS description box, so the pins
+    // can drive it without the art the way the race box's can.
+    this.describeClass = (i) => classDescriptionLines(i);
     this.cursor = 0;          // the BIOGRAPHY screen's answer cursor
     // U16: StatsRollout and SkillsRollout are two INDEPENDENT DFU
     // components with a selection each. One shared cursor was fine
@@ -111,6 +116,15 @@ export class ChargenFlow {
     // once, and a click on a skill would have moved the stat spinner.
     this.statCursor = 0;
     this.skillCursor = 0;
+    // U17: SkillsRollout carries THREE LeftRightSpinners, one per
+    // group, each with its OWN selected skill and its own remaining
+    // pool (SkillsRollout.cs:44-46, 240-262, 356-372). The port drew a
+    // single spinner on one shared row, so two of the three pools were
+    // invisible until the cursor happened to walk into them. The flat
+    // skillCursor stays as the keyboard's walk over all nine rows -
+    // classic has no keyboard here at all - and moving it keeps the
+    // group selection underneath it in step.
+    this.skillSel = { primary: 0, major: 0, minor: 0 };
     this._rolled = null;
     // AUDIT 17j F1/F4: DFU's `new System.Random().Next()` is an
     // ENGINE PRNG draw (Ledger A), so it rides Math.random here, and
@@ -162,6 +176,7 @@ export class ChargenFlow {
     this.pools = { ...groupPools };
     this._skillsClassIndex = this.classIndex;
     this.skillCursor = 0;
+    this.skillSel = { primary: 0, major: 0, minor: 0 };   // SelectPrimarySkill(0) and its two siblings
   }
 
   /** The three skill-screen rows in career order: [groupName, ids[]]. */
@@ -177,7 +192,7 @@ export class ChargenFlow {
   _skillAt(cursor) {
     let i = cursor;
     for (const [group, ids] of this.skillRows()) {
-      if (i < ids.length) return { group, id: ids[i] };
+      if (i < ids.length) return { group, id: ids[i], indexInGroup: i };
       i -= ids.length;
     }
     return null;
@@ -343,9 +358,28 @@ export class ChargenFlow {
     this.statPool = r.pool;
   }
 
-  spendSkill(delta) {
+  /** The flat keyboard cursor and the three group selections are two
+   *  views of one thing: moving the cursor onto a row IS selecting
+   *  that row within its group (SelectPrimarySkill and its two
+   *  siblings). */
+  _syncSkillSel() {
     const at = this._skillAt(this.skillCursor);
-    if (!at) return;
+    if (at) this.skillSel[at.group] = at.indexInGroup;
+  }
+
+  /** The skill a group's OWN spinner is sitting on. */
+  _skillInGroup(group) {
+    for (const [g, ids] of this.skillRows()) {
+      if (g === group) return ids[this.skillSel[group]] ?? null;
+    }
+    return null;
+  }
+
+  spendSkill(delta, group = null) {
+    const at = group
+      ? { group, id: this._skillInGroup(group) }
+      : this._skillAt(this.skillCursor);
+    if (!at?.id && at?.id !== 0) return;
     const r = delta > 0
       ? skillUp(this.skills[at.id], this.pools[at.group])
       : skillDown(this.skills[at.id], this.rolledSkills[at.id], this.pools[at.group]);
@@ -458,9 +492,18 @@ export class ChargenFlow {
       return;
     }
     if (s === 'class') {
+      // U17: the description box is MODAL over the list, like the race
+      // screen's - its own confirm and back are Yes and No.
+      if (this.classConfirm) {
+        if (action === 'confirm') { this.classConfirm = null; this._leaveClass(); }
+        else if (action === 'back') this.classConfirm = null;
+        return;
+      }
       if (action === 'up') { this.classIndex = (this.classIndex + this.careers.length - 1) % this.careers.length; this._scrollToClass(); }
       else if (action === 'down') { this.classIndex = (this.classIndex + 1) % this.careers.length; this._scrollToClass(); }
-      else if (action === 'confirm') this._leaveClass();
+      // ListBox.cs:296-297 - Return USES the selected item, the same
+      // door the double click goes through.
+      else if (action === 'confirm') this.useClass();
       // AUDIT 17j F2: this went to GENDER, which is the screen before
       // it. DFU does not step back one - ClassSelectWindow_OnClose's
       // cancel arm calls SetRaceSelectWindow (:353-370), skipping the
@@ -518,8 +561,8 @@ export class ChargenFlow {
     }
     if (s === 'skills') {
       const total = this.skillRows().reduce((a, [, ids]) => a + ids.length, 0);
-      if (action === 'up') this.skillCursor = (this.skillCursor + total - 1) % total;
-      else if (action === 'down') this.skillCursor = (this.skillCursor + 1) % total;
+      if (action === 'up') { this.skillCursor = (this.skillCursor + total - 1) % total; this._syncSkillSel(); }
+      else if (action === 'down') { this.skillCursor = (this.skillCursor + 1) % total; this._syncSkillSel(); }
       else if (action === 'plus') this.spendSkill(1);
       else if (action === 'minus') this.spendSkill(-1);
       else if (action === 'reroll') this.reroll();
@@ -534,12 +577,44 @@ export class ChargenFlow {
    *  when the click was consumed. `setRace`/`setGender`/
    *  `setCursor` are the direct-set hits classic's windows have and
    *  the keyboard flow reaches by stepping. */
-  clickNative(vx, vy) {
+  clickNative(vx, vy, now = null) {
     // the ART gate is about the DRAW, not the geometry: without it the
     // screens fall back to text panels whose layout does not match the
     // native rects, so a click would hit a button that is not there.
     if (!chargenArtLoaded()) return false;
-    return this.applyHit(chargenHit(this, vx, vy));
+    const hit = chargenHit(this, vx, vy);
+    // U17: the class LIST is a ListBox, and a ListBox's single click
+    // only SELECTS - MouseClick sets selectedIndex and raises
+    // OnSelectItem (ListBox.cs:500-504). It takes a DOUBLE click to
+    // USE the row (:507-512 -> OnUseSelectedItem -> OnItemPicked), or
+    // Return (:296-297). The port picked on a single click and then
+    // demanded a keyboard confirm the picker has no button for, so on
+    // a phone the class screen was a dead end.
+    if (hit?.setClass != null) return this.clickClassRow(hit.setClass, now ?? this._now());
+    return this.applyHit(hit);
+  }
+
+  _now() { return typeof performance !== 'undefined' ? performance.now() : Date.now(); }
+
+  /** ListBox.MouseClick then MouseDoubleClick. The double-click test is
+   *  on TIME ALONE (BaseScreenComponent.cs:691) - the second click need
+   *  not land on the same row, because MouseClick has already moved
+   *  the selection to it by the time MouseDoubleClick reads it. */
+  clickClassRow(idx, now) {
+    const wasDouble = this._lastClassClick != null && (now - this._lastClassClick) < DOUBLE_CLICK_DELAY_MS;
+    this.classIndex = idx;
+    this._lastClassClick = now;
+    if (wasDouble) { this._lastClassClick = null; this.useClass(); }
+    return true;
+  }
+
+  /** DaggerfallClassSelectWindow_OnItemPicked (:70-96): picking a class
+   *  does not close the picker, it opens the class's DESCRIPTION in a
+   *  Yes/No box on TEXT.RSC 2100 + index. Yes closes both windows, No
+   *  drops the selection and returns to the list. */
+  useClass() {
+    this.classConfirm = this.describeClass?.(this.classIndex) ?? null;
+    if (!this.classConfirm) this._leaveClass();   // no description available: the pick stands
   }
 
   /** U14: the pure apply step - a hit from chargenHit -> the state it
@@ -566,8 +641,10 @@ export class ChargenFlow {
       return true;
     }
     if (hit.setStatCursor != null) { this.statCursor = hit.setStatCursor; return true; }
-    if (hit.setSkillCursor != null) { this.skillCursor = hit.setSkillCursor; return true; }
+    if (hit.setSkillCursor != null) { this.skillCursor = hit.setSkillCursor; this._syncSkillSel(); return true; }
     if (hit.setClass != null) { this.classIndex = hit.setClass; return true; }
+    if (hit.confirmClass) { this.classConfirm = null; this._leaveClass(); return true; }
+    if (hit.cancelClass) { this.classConfirm = null; return true; }
     if (hit.answerBiography != null) return this.answerBiography(hit.answerBiography);
     if (hit.setReflexes != null) { this.reflexes = hit.setReflexes; return true; }
     if (hit.restart) { this.restartSummary(); return true; }
@@ -575,7 +652,7 @@ export class ChargenFlow {
     // but 'up'/'down' belong to the face SCREEN's state arm - the
     // summary has no such arm, so the step is explicit.
     if (hit.statStep != null) { this.spendStat(hit.statStep); return true; }
-    if (hit.skillStep != null) { this.spendSkill(hit.skillStep); return true; }
+    if (hit.skillStep != null) { this.spendSkill(hit.skillStep, hit.group ?? null); return true; }
     if (hit.faceStep != null) {
       this.faceIndex = (this.faceIndex + FACES_PER_RACE + hit.faceStep) % FACES_PER_RACE;
       return true;

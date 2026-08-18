@@ -1620,6 +1620,57 @@ alone and exercises the random button on the way through. Out the
 other end, unchanged: a Redguard female with Very High reflexes -
 named `Rlillki` by the button, not by the keyboard.
 
+## U17 - THE CLASS PICKER + THE THREE SKILL SPINNERS (2026-08-18)
+
+Mac's report: **double-tapping to select a class does not work.** It
+is worse than that - there was no pointer path off the class screen at
+all, and the probe had been papering over it with a keyboard press and
+a comment admitting why ("no OK button on the picker").
+
+**The list is a ListBox, and a ListBox has two gestures.**
+`MouseClick` (`ListBox.cs:500-504`) sets `selectedIndex` and raises
+`OnSelectItem` - it SELECTS and nothing more. `MouseDoubleClick`
+(`:507-512`) calls `UseSelectedItem`, which is what raises
+`OnUseSelectedItem` -> `OnItemPicked`. Return does the same
+(`:296-297`). The port had folded both into one click and then wanted
+a confirm the picker has no button for.
+
+The double-click window is `doubleClickDelay = 0.3f`
+(`BaseScreenComponent.cs:54`), and the test at `:691` is on TIME
+ALONE - the second click need not land on the same row, because
+`MouseClick` has already moved the selection there by the time
+`MouseDoubleClick` reads it. So a fast pair across two rows picks the
+second one, verbatim.
+
+**And picking is not choosing.** `DaggerfallClassSelectWindow_OnItemPicked`
+(`CreateCharClassSelect.cs:70-96`) opens the class's DESCRIPTION in a
+Yes/No box on `TEXT.RSC 2100 + index`, exactly as the race screen does
+on its own template id. Yes closes both windows; No drops the
+selection and returns to the list. The port had no such box, so it
+also never showed the player what the class they were choosing
+actually was.
+
+**The three skill spinners.** `SkillsRollout` carries THREE
+`LeftRightSpinner`s, not one (`:41-46`, `:240-262`), each with its own
+selected skill (`SelectPrimarySkill` and its two siblings, `:356-372`)
+and its own `Value` - that group's remaining pool. The port collapsed
+the nine rows onto one cursor and drew a single spinner, so two of the
+three pools were invisible until the cursor happened to walk into
+them. All three draw now, each on its group's own selected row.
+
+The flat cursor survives as the KEYBOARD's walk - classic has no
+keyboard on this screen at all - and moving it keeps the group
+selection underneath it in step. One consequence worth naming: a walk
+necessarily re-selects every row it passes through, where a click
+jumps. That is the flat cursor's own artefact, not something DFU has
+an opinion about.
+
+Probed: the click walk now selects a row with one tap (and pins that
+it does NOT pick), picks it with a double tap, reads the description
+box and presses YES - all by pointer. Eyeballed: the Battle Mage
+description on the parchment with YES/NO, and the skills screen with
+all three spinners showing 6.
+
 ## U16 - THE SUMMARY SCREEN (2026-08-18)
 
 `WizardStages.Summary` was the last stage the port did not have, and

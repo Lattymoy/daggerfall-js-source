@@ -84,6 +84,21 @@ export const SUMMARY_REFLEX_ORIGIN = Object.freeze([246, 95]);
 /** CreateCharSummary.cs:32 - strYouMustDistributeYourBonusPoints. */
 const SUMMARY_BONUS_TEXT_ID = 14;
 
+/** CreateCharClassSelect.cs:31 - startClassDescriptionID. The picked
+ *  class's description is record 2100 + its index. */
+const CLASS_DESCRIPTION_TEXT_ID = 2100;
+
+/** BaseScreenComponent.cs:54 - doubleClickDelay, in SECONDS. The test
+ *  at :691 is on TIME ALONE; the two clicks need not land on the same
+ *  row, only inside the same component. */
+export const DOUBLE_CLICK_DELAY_MS = 300;
+
+/** The rows a class-description box carries, or null. */
+export function classDescriptionLines(classIndex) {
+  const rows = _art?.textRsc?.linesById(CLASS_DESCRIPTION_TEXT_ID + classIndex) ?? [];
+  return rows.length ? rows : null;
+}
+
 // StatsRollout.cs:88-127 - value panel (8,33) 34x6 stepping 22, the
 // select button (7,20) 36x20 stepping 22, spinner at (44, 21+22i).
 const STAT_PANEL = [8, 33, 34, 6], STAT_BUTTON = [7, 20, 36, 20], STAT_STEP = 22;
@@ -449,6 +464,13 @@ function drawFaceBlock(renderer, m, flow) {
   }
 }
 
+function drawClassConfirm(renderer, m, font, flow) {
+  if (!flow.classConfirm) { flow._classBox = null; return; }
+  const box = layoutMessageBox(font, flow.classConfirm, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
+  flow._classBox = box;
+  drawMessageBox(renderer, m, font, box);
+}
+
 function drawClass(renderer, m, font, flow) {
   // U14: a DaggerfallPopupWindow is pushed OVER the previous window,
   // which keeps drawing beneath it - so the picker sits on the FACE
@@ -483,6 +505,7 @@ function drawClass(renderer, m, font, flow) {
     shadowText(renderer, font, c.name, m, ox + lx, oy + y,
       { color: on ? SELECTED_TEXT : DEFAULT_TEXT_COLOR, shadow: DEFAULT_SHADOW_COLOR });
   }
+  drawClassConfirm(renderer, m, font, flow);
   return true;
 }
 
@@ -539,16 +562,8 @@ function drawSkills(renderer, m, font, flow) {
 }
 
 /** SkillsRollout (SkillsRollout.cs:182-236) - the summary's other
- *  composited component, same geometry again.
- *
- *  U16 FLAGGED: DFU's rollout carries THREE LeftRightSpinners, one per
- *  group, each with its own selected skill and its own Value - the
- *  group's remaining pool (SkillsRollout.cs:41-46, 240-244). The port
- *  collapses that to one cursor across all nine rows and so draws a
- *  single spinner on whichever row is selected. Every point can still
- *  be spent, but classic shows all three pools at once; the summary
- *  screenshot is where the difference becomes obvious. Its own slice:
- *  three selected indices, three spinners, and hit routing per group. */
+ *  composited component, same geometry again. U17 gave it its three
+ *  real spinners, one per group. */
 function drawSkillBlock(renderer, m, font, flow) {
   const lr = img('CHAR03I1.IMG');
   const bonuses = flow.skillBonuses?.() ?? null;
@@ -564,19 +579,22 @@ function drawSkillBlock(renderer, m, font, flow) {
       // but does NOT turn it green - that colour compares working
       // against ROLLED, and the bonus is not the player's spend.
       alt(renderer, font, String(v + (bonuses?.[id] ?? 0)), m, SKILL_VALUE_X, y, { color: modified ? MODIFIED_STAT : DEFAULT_TEXT_COLOR });
-      if (idx === flow.skillCursor) {
-        const sy = SKILL_SPINNER_TOP[group] + i * SKILL_ROW_STEP;
-        drawImg(renderer, lr, m, SKILL_SPINNER_X, sy);
-        // HorizontalAlignment.Center places the LABEL BOX inside its
-        // PARENT (the 37-wide spinner), not the label inside itself -
-        // which is what puts the number BETWEEN the two arrows
-        // (left ends at 11, right starts at 26). Centering within the
-        // label's own 15px alone drew it over the left arrow.
-        const [, vy, vw] = LR_SPINNER.value;
-        alt(renderer, font, String(flow.pools[group]), m, SKILL_SPINNER_X + (lr.w - vw) / 2, sy + vy, { align: 'center', w: vw });
-      }
       idx++;
     });
+    // U17: EACH GROUP has its own spinner, on its own selected row,
+    // showing its own remaining pool (SkillsRollout.cs:240-262 builds
+    // three; :356-372 positions each at (203, top + 10*index)). The
+    // port drew ONE, on whichever row the shared cursor sat, so two of
+    // the three pools were invisible until you walked into them.
+    const sy = SKILL_SPINNER_TOP[group] + (flow.skillSel?.[group] ?? 0) * SKILL_ROW_STEP;
+    drawImg(renderer, lr, m, SKILL_SPINNER_X, sy);
+    // HorizontalAlignment.Center places the LABEL BOX inside its
+    // PARENT (the 37-wide spinner), not the label inside itself -
+    // which is what puts the number BETWEEN the two arrows
+    // (left ends at 11, right starts at 26). Centering within the
+    // label's own 15px alone drew it over the left arrow.
+    const [, vy, vw] = LR_SPINNER.value;
+    alt(renderer, font, String(flow.pools[group]), m, SKILL_SPINNER_X + (lr.w - vw) / 2, sy + vy, { align: 'center', w: vw });
   }
 }
 
@@ -619,6 +637,15 @@ export function chargenHit(flow, vx, vy) {
     return inRect(RECTS.ok) ? 'confirm' : null;
   }
   if (s === 'class') {
+    // U17: the class DESCRIPTION box is modal over the list, exactly
+    // as the race screen's is (CreateCharClassSelect.cs:84-93 pushes a
+    // DaggerfallMessageBox with Yes and No).
+    if (flow._classBox) {
+      const hit = messageBoxHit(flow._classBox, vx, vy);
+      if (hit === MB_BUTTONS.Yes) return { confirmClass: true };   // sender.CloseWindow(); CloseWindow();
+      if (hit === MB_BUTTONS.No) return { cancelClass: true };     // selectedClass = null; sender.CancelWindow();
+      return null;
+    }
     // AUDIT 17g F3: this derefed _art.imgs directly, so the ONE branch
     // that needs the art THREW where every other branch returns null.
     // The live caller guards on chargenArtLoaded(); nothing else has
@@ -673,9 +700,7 @@ export function chargenHit(flow, vx, vy) {
     // itself - it is the only place that knows.
     const st = statBlockHit(flow, vx, vy);
     if (st) return typeof st === 'string' ? { statStep: st === 'plus' ? 1 : -1 } : st;
-    const sk = skillBlockHit(flow, vx, vy);
-    if (sk) return typeof sk === 'string' ? { skillStep: sk === 'plus' ? 1 : -1 } : sk;
-    return null;
+    return skillBlockHit(flow, vx, vy);
   }
   if (s === 'skills') {
     if (inRect(RECTS.ok)) return 'confirm';
@@ -708,14 +733,14 @@ function skillBlockHit(flow, vx, vy) {
       const y = SKILL_GROUP_TOP[group] + i * SKILL_ROW_STEP;
       // skillSelectButtonSize (106,7) at the label position
       if (vx >= SKILL_LABEL_X && vx < SKILL_LABEL_X + 106 && vy >= y && vy < y + 7) return { setSkillCursor: idx };
-      if (idx === flow.skillCursor) {
-        const sy = SKILL_SPINNER_TOP[group] + i * SKILL_ROW_STEP;
-        if (vy >= sy && vy < sy + 9) {
-          if (vx >= SKILL_SPINNER_X && vx < SKILL_SPINNER_X + 11) return 'minus';
-          if (vx >= SKILL_SPINNER_X + LR_SPINNER.right[0] && vx < SKILL_SPINNER_X + LR_SPINNER.right[0] + 11) return 'plus';
-        }
-      }
       idx++;
+    }
+    // U17: this group's OWN spinner, which names its group because all
+    // three are live at once and 'plus' alone could not say which.
+    const sy = SKILL_SPINNER_TOP[group] + (flow.skillSel?.[group] ?? 0) * SKILL_ROW_STEP;
+    if (vy >= sy && vy < sy + 9) {
+      if (vx >= SKILL_SPINNER_X && vx < SKILL_SPINNER_X + 11) return { skillStep: -1, group };
+      if (vx >= SKILL_SPINNER_X + LR_SPINNER.right[0] && vx < SKILL_SPINNER_X + LR_SPINNER.right[0] + 11) return { skillStep: 1, group };
     }
   }
   return null;

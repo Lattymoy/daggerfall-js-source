@@ -24,7 +24,7 @@ const st = async () => JSON.parse(await page.evaluate(() => {
   const f = window.__chargenFlow();
   return JSON.stringify({ state: f.state, race: f.race?.key, gender: f.gender, face: f.faceIndex,
     cls: f.classIndex, q: f.biogQuestionIndex, pool: f.statPool ?? null, reflexes: f.reflexes,
-    poolBox: !!f.summaryPoolBox });
+    poolBox: !!f.summaryPoolBox, classBox: !!f.classConfirm });
 }));
 
 // U15: RACE is the FIRST screen in the classic order.
@@ -54,12 +54,27 @@ await page.screenshot({ path: '/home/claude/click-class.png' });
 // the class list: click the third visible row
 const rowH = await page.evaluate(() => window.__chargenFlow()._classRowH ?? 0);
 const pickOx = await page.evaluate(() => Math.floor((320 - 190) / 2));   // PICK00I0 is 190 wide
-await click(pickOx + 60, 65 + Math.floor(rowH * 2.5) - rowH * 2 + 2 * rowH);
+const rowY = 65 + Math.floor(rowH * 2.5) - rowH * 2 + 2 * rowH;
+await click(pickOx + 60, rowY);
 s = await st();
 console.log('class after a row click:', s.cls);
-await page.keyboard.press('Enter');          // confirm the class (no OK button on the picker)
+// U17: a SINGLE click only selects - the row must NOT pick
+if (s.state !== 'class' || s.classBox) { console.log('SINGLE CLICK PICKED THE CLASS', JSON.stringify(s)); process.exit(1); }
+// a DOUBLE click picks it and opens the class description box. The
+// probe's own click helper waits frames between clicks, so drive the
+// pair straight at the mouse to stay inside doubleClickDelay.
+await page.mouse.click(M.ox + (pickOx + 60) * M.s, M.oy + rowY * M.s, { clickCount: 2, delay: 20 });
 await waitFrames(3);
-if ((await st()).state !== 'biography') { console.log('CLASS CONFIRM DEAD'); process.exit(1); }
+s = await st();
+if (!s.classBox) { console.log('DOUBLE CLICK DID NOT OPEN THE CLASS BOX', JSON.stringify(s)); process.exit(1); }
+await page.screenshot({ path: '/home/claude/click-classbox.png' });
+// Yes leaves the picker - by CLICK, which is the whole point: the
+// picker has no OK button, so before U17 there was no pointer path
+// off this screen at all.
+const yesRect = JSON.parse(await page.evaluate(() => JSON.stringify(window.__chargenFlow()._classBox?.buttons?.[0]?.rect ?? null)));
+if (!yesRect) { console.log('NO YES BUTTON ON THE CLASS BOX'); process.exit(1); }
+await click(yesRect[0] + 4, yesRect[1] + 4);
+if ((await st()).state !== 'biography') { console.log('CLASS CONFIRM DEAD', JSON.stringify(await st())); process.exit(1); }
 await page.screenshot({ path: '/home/claude/click-biography.png' });
 
 // the biography: click answer button 0 twelve times (149x24 from 10,71)
@@ -99,6 +114,7 @@ await page.screenshot({ path: '/home/claude/click-stats.png' });
 await click(283, 183);                       // OK -> skills
 if ((await st()).state !== 'skills') { console.log('STATS OK DEAD'); process.exit(1); }
 
+await page.screenshot({ path: '/home/claude/click-skills.png' });   // U17: all THREE group spinners
 // skills: the RIGHT half of the left-right spinner on each group row
 const spend = async (top) => { for (let i = 0; i < 8; i++) await click(203 + 30, top + 4); };
 await spend(31);                             // primary row 0
