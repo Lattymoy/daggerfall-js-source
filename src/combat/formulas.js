@@ -24,6 +24,23 @@ export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 1
 // ---- FormulaHelper.DamageModifier ----
 export const damageModifier = (strength) => Math.floor((strength - 50) / 5);
 
+// ---- U10 / ONE DFU MEMBER, ONE EXPORT: the rest of FormulaHelper's
+// DERIVED STATS (FormulaHelper.cs:66-125). The chargen bonus-stats
+// screen shows all seven in one block, and the port had them
+// scattered - MaxEncumbrance inline in charsheet.js, MagicResist
+// inline in spellcast.js, HealingRateModifier in rest.js, SpellPoints
+// in chargen.js - with ToHitModifier and HitPointsModifier missing
+// entirely. They live here, beside DamageModifier, and the old sites
+// import them.
+export const maxEncumbrance = (strength) => Math.floor(strength * 1.5);
+export const spellPointsFor = (intelligence, multiplier) => Math.floor(intelligence * multiplier);
+export const magicResist = (willpower) => Math.floor(willpower / 10);
+export const toHitModifier = (agility) => Math.floor(agility / 10) - 5;
+export const hitPointsModifier = (endurance) => Math.floor(endurance / 10) - 5;
+/** DFU deliberately skips classic's negative-modifier-plus-one bug;
+ *  so do we (the note rest.js carried since S20). */
+export const healingRateModifier = (endurance) => Math.floor(endurance / 10) - 5;
+
 // ---- CalculateHandToHandMin/MaxDamage (int division) ----
 export const handToHandMinDamage = (skill) => Math.floor(skill / 10) + 1;
 export const handToHandMaxDamage = (skill) => Math.floor(skill / 5) + 1;   // the character-sheet rule, not the Chronicles table

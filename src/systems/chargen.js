@@ -1,4 +1,5 @@
 import { SKILLS, SKILL_COUNT } from './skills.js';
+import { spellPointsFor } from '../combat/formulas.js';   // U10
 
 // Character creation (Systems S3). Verbatim ports from DFU
 // StatsRollout.cs / SkillsRollout.cs / DaggerfallSkills.cs /
@@ -107,7 +108,10 @@ export const SPELL_POINT_MULTIPLIERS = Object.freeze({ 0: 3.0, 4: 2.0, 8: 1.75, 
 export function spellPointMultiplier(abilityFlagsAndSpellPointsBitfield) {
   return SPELL_POINT_MULTIPLIERS[(abilityFlagsAndSpellPointsBitfield & 0x1C00) >> 8] ?? 1.0;
 }
-export const spellPoints = (intelligence, multiplier) => Math.floor(intelligence * multiplier);
+// U10 / ONE DFU MEMBER, ONE EXPORT: FormulaHelper.SpellPoints lives
+// with the other six derived stats; re-exported under the name the
+// chargen callers already use.
+export const spellPoints = spellPointsFor;
 
 // ---- FormulaHelper HP, verbatim ----
 export const hitPointsModifier = (endurance) => Math.floor(endurance / 10) - 5;

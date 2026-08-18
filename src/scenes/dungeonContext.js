@@ -33,6 +33,7 @@ import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, applyCharacter, startingSpells, CLASS_CAREERS } from '../systems/chargen.js';
 import { loadCareers, finishChargen, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9: one career loader
+import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { assignStartingGear } from '../systems/startingGear.js';   // S3d
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
@@ -714,6 +715,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // S3c/U9 / ONE DFU MEMBER, ONE EXPORT: the career load lived
       // here AND (once the exterior hosts gained chargen) would have
       // been copied there. Both use systems/chargenSession.js.
+      // U10 / THE FOUR HOSTS RULE: the classic screens warm here too -
+      // the dungeon host runs the same flow, and an unwarmed art set
+      // would silently leave it on the interim text panels.
+      await preloadChargenArt({ renderer, fetchBytes, palette });
       chargenFlow = new ChargenFlow(await loadCareers(fetchBytes));
       activeOverlay = chargenFlow;
     }

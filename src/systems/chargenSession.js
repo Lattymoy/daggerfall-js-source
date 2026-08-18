@@ -108,6 +108,13 @@ export function createChargenWindow(careers, { onDone, rolls = Math.random, hudS
       if (a) flow.input(a);
       if (flow.done) { _fired = true; onDone?.(flow.result()); }
     },
+    // U10: the shared overlay pointer seam hands NATIVE coords; the
+    // classic screens are clickable exactly where DFU's buttons are.
+    click(vx, vy) {
+      if (_fired) return;
+      flow.clickNative(vx, vy);
+      if (flow.done) { _fired = true; onDone?.(flow.result()); }
+    },
     draw(renderer, canvas, font) { flow.draw(renderer, canvas, font, hudScale); },
   };
 }

@@ -1,6 +1,9 @@
 // U8c probe: the NATIVE trade screen - enter a shop, E a shelf,
 // and BUY + SELL by CLICKING the classic item lists (INVE00I0 +
 // TRAD00I0 + SHOP00I0 with real item icons).
+// U10: ?class=16 is the HEADLESS chargen skip. S3c put the chargen
+// overlay on a fresh town boot and wedged this probe too - AUDIT 17f
+// found three of the six, this is the rest.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 const SHOP_TYPES = new Set([0, 2, 5, 6, 7, 8, 9, 12, 13]);
@@ -9,11 +12,18 @@ await server.listen();
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto('http://localhost:5199/?shot&play&exterior&time=12:00');
+await page.goto('http://localhost:5199/?shot&play&exterior&time=12:00&class=16');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 await page.evaluate(() => {
   window.__playerEntity.items = window.__playerEntity.items ?? [];
-  window.__playerEntity.items.push({ group: 'Currency', name: 'Gold pieces', stackCount: 20000 });
+  // U10 / TEST THE SHAPE THE PRODUCER MINTS: this pushed a hand-built
+  // Currency literal with no templateIndex. Since AUDIT 17f gold is
+  // Currency.Gold_pieces (276) and stacksWith compares the template,
+  // so the literal no longer MERGED with the starting kit's stack -
+  // it sat behind it as a second pile goldAmount never reached, and
+  // the buy was refused for lack of funds. Add gold the way the game
+  // does.
+  window.__addGold(20000);
 });
 const doors = JSON.parse(await page.evaluate(() => JSON.stringify(window.__doors())));
 let pick = null;

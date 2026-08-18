@@ -13,8 +13,18 @@ export const SKILLS = Object.freeze({
   CriticalStrike: 34,
 });
 export const SKILL_COUNT = 35;
-/** Display names, index-ordered (the enum inverted once). */
-export const SKILL_NAMES = Object.freeze(Object.entries(SKILLS).reduce((a, [k, v]) => { a[v] = k; return a; }, new Array(SKILL_COUNT)));
+/** The enum KEYS, index-ordered (the enum inverted once). Code
+ *  identity - not what a window prints. */
+export const SKILL_KEYS = Object.freeze(Object.entries(SKILLS).reduce((a, [k, v]) => { a[v] = k; return a; }, new Array(SKILL_COUNT)));
+
+/** U10: what a window PRINTS - TextProvider.GetSkillName's strings
+ *  (Internal_Strings.csv:380-400,498): the enum key with a space
+ *  before each interior capital, and Hand-to-Hand hyphenated. The
+ *  port printed the raw enum key, so the char sheet and the new
+ *  chargen skills screen read "ShortBlade" and "BluntWeapon" where
+ *  classic reads "Short Blade" and "Blunt Weapon". */
+export const SKILL_NAMES = Object.freeze(SKILL_KEYS.map((k) =>
+  (k === 'HandToHand' ? 'Hand-to-Hand' : k.replace(/([a-z])([A-Z])/g, '$1 $2'))));
 
 /** DaggerfallUnityItem.GetWeaponSkillUsed -> skill id, by name. */
 export const WEAPON_SKILL = Object.freeze({

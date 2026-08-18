@@ -61,11 +61,14 @@ export function drawRect(renderer, m, x, y, w, h, color) {
 
 /** DFU's default shadowed label at a virtual position. align:
  *  'left' | 'center' (center within `w` virtual px, the stat-panel
- *  shape). Returns the text's virtual width. */
-export function shadowText(renderer, font, text, m, x, y, { color = DEFAULT_TEXT_COLOR, align = 'left', w = 0 } = {}) {
+ *  shape). `shadow` overrides the default shadow colour - U10: the
+ *  chargen rollouts use DaggerfallAlternateShadowColor1, and the
+ *  colour belongs in the ONE label helper, not a copy per window.
+ *  Returns the text's virtual width. */
+export function shadowText(renderer, font, text, m, x, y, { color = DEFAULT_TEXT_COLOR, align = 'left', w = 0, shadow = DEFAULT_SHADOW_COLOR } = {}) {
   const tw = measureText(font.fnt, text);
   const ax = align === 'center' ? x + (w - tw) / 2 : x;
-  drawText(renderer, font, text, m.ox + (ax + 1) * m.s, m.oy + (y + 1) * m.s, m.s, DEFAULT_SHADOW_COLOR);
+  drawText(renderer, font, text, m.ox + (ax + 1) * m.s, m.oy + (y + 1) * m.s, m.s, shadow);
   drawText(renderer, font, text, m.ox + ax * m.s, m.oy + y * m.s, m.s, color);
   return tw;
 }

@@ -13,6 +13,7 @@
 
 import { liveStat, maxFatigue } from './statMods.js';
 import { skillValue, SKILLS } from './skills.js';
+import { healingRateModifier } from '../combat/formulas.js';   // U10
 
 // ---- DFCareer.SpecialAbilityFlags (the low byte of
 // AbilityFlagsAndSpellPointsBitfield) + RapidHealingFlags ----
@@ -27,9 +28,10 @@ export const RAPID_HEALING = Object.freeze({ None: 0, InLight: 1, InDarkness: 2,
 export const hasSpecialAbility = (career, flag) =>
   ((career?.abilityFlagsAndSpellPointsBitfield ?? 0) & flag) === flag;
 
-/** HealingRateModifier: floor(endurance / 10) - 5. DFU deliberately
- *  skips classic's negative-modifier-plus-one bug; so do we. */
-export const healingRateModifier = (endurance) => Math.floor(endurance / 10) - 5;
+// U10: HealingRateModifier moved to the FormulaHelper home beside
+// the other six derived stats; re-exported so existing importers of
+// rest.js keep working.
+export { healingRateModifier };
 
 /**
  * CalculateHealthRecoveryRate, verbatim: live Medical + an add of 60

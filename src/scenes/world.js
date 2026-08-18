@@ -27,7 +27,7 @@ import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobi
 import { createTownTalk } from './townTalk.js';   // T3b
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
-import { clearCrimeOnLocationExit } from '../systems/court.js';   // AUDIT 17e F6   // G2
+import { clearCrimeOnLocationExit, addGold } from '../systems/court.js';   // AUDIT 17e F6   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet
@@ -36,6 +36,7 @@ import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
 import { loadCareers, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
+import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
@@ -444,7 +445,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadInventoryArt({ renderer, fetchBytes, palette });   // U8d: INVE00I0/01I0 warm at boot
-  preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/BODY/FACE + the item-record pipeline (town context; Breton male 0 INTERIM until chargen)
+  preloadChargenArt({ renderer, fetchBytes, palette });   // U10: CHAR0*/PICK00/TMAP00 warm at boot
+  preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/BODY/FACE + the item-record pipeline (town context; Breton male 0 is the PRE-chargen default, reloaded on the chosen identity)
   // S3d: the INTERIM dagger seed is the FALLBACK only - a character
   // who runs chargen gets AssignStartingGear's real kit instead, so
   // seeding here would leave a stray dagger in the bag.
@@ -721,6 +723,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       return JSON.stringify(out);
     };
     window.__talk = () => JSON.stringify(townTalk._debug());   // T3b probe surface
+    window.__chargenRace = () => townTalk._debug().overlayFlow?.race?.key ?? null;   // U10 probe surface
+    window.__addGold = (n) => addGold(playerEntity, n);   // U10 probe surface: gold through the real producer
     window.__guards = () => JSON.stringify(cityGuards._debug());   // G1 probe surface
     window.__droppedLoot = () => JSON.stringify(droppedLoot._piles.map((pl) => ({ n: pl.items.length, pos: pl.pos.map((v) => +v.toFixed(1)), record: pl.record, flat: !!pl.batch })));   // U8e probe surface
     window.__crime = () => _crimeResponse();   // G1: force the response without pickpocket RNG

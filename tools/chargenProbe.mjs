@@ -27,19 +27,39 @@ await key('Enter');
 await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-race.png' });
 // race: Breton -> Redguard -> Nord -> DarkElf -> HighElf -> WoodElf -> Khajiit
-for (let i = 0; i < 6; i++) await key('ArrowDown');
+// U10: the PROVINCE CLICK is verbatim - TAMRIEL2.IMG's palette index
+// at the click point IS the race id. Click Hammerfell and the flow
+// must land on Redguard (id 2) with no key pressed.
+const M = { s: 4, ox: 60, oy: 50 };   // 1400x900 -> the native mapping
+const clickNative = async (vx, vy) => { await page.mouse.click(M.ox + vx * M.s, M.oy + vy * M.s); await waitFrames(3); };
+await clickNative(110, 95);           // Hammerfell
+const clicked = await page.evaluate(() => window.__chargenRace?.() ?? null);
+console.log('province click ->', clicked);
+if (clicked !== 'Redguard') { console.log('PROVINCE CLICK DID NOT PICK A RACE', clicked); process.exit(1); }
+// the click left the cursor on Redguard (index 1); step to Khajiit (6)
+for (let i = 0; i < 5; i++) await key('ArrowDown');
+await waitFrames(2);
+await page.screenshot({ path: '/home/claude/chargen-race.png' });   // U10: TMAP00I0
 await key('Enter');            // gender
+await waitFrames(2);
+await page.screenshot({ path: '/home/claude/chargen-gender.png' });
 await key('ArrowDown');        // female
 await key('Enter');            // face
 for (let i = 0; i < 3; i++) await key('ArrowDown');
-await waitFrames(2);
+await waitFrames(10);          // U10: the FACE CIF streams in
 await page.screenshot({ path: '/home/claude/chargen-face.png' });
 await key('Enter');            // class
+await waitFrames(2);
+await page.screenshot({ path: '/home/claude/chargen-class.png' });   // U10: PICK00I0
 await key('Enter');            // -> stats
+await waitFrames(2);
+await page.screenshot({ path: '/home/claude/chargen-stats.png' });   // U10: CHAR02I0
 // spend the stat pool, then each skill pool
 const spend = async () => { for (let i = 0; i < 30; i++) await page.keyboard.press('='); await waitFrames(2); };
 await spend();
 await key('Enter');            // -> skills (gated until pool 0)
+await waitFrames(2);
+await page.screenshot({ path: '/home/claude/chargen-skills.png' });   // U10: CHAR03I0
 for (let row = 0; row < 9; row++) { await spend(); await page.keyboard.press('ArrowDown'); }
 await waitFrames(2);
 await key('Enter');

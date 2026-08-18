@@ -1055,3 +1055,103 @@ Probes: the chargen probe now asserts bag ORDER, template names, the
 starting spellbook and the wearer-addressed icon archive; the equip
 probe clears the derived tables instead of unhooking "the interim
 dagger" by hand; all three exterior probes take the `?class=16` skip.
+
+## U10: CHARGEN ART - the classic screens + the portrait (2026-08-18)
+
+Mac: chargen art next. The U2b flow has drawn on clean text panels
+since it shipped, with the background art FLAGGED pending name
+verification against real ARENA2 - and S3c's face picker chose a face
+index BLIND, with the text panel apologising for it in so many words.
+This retires both.
+
+`src/ui/chargenArt.js` draws all seven screens on the U8a native
+panel, every rect and colour citing its DFU line (THE NATIVE-WINDOW
+RULE):
+
+- **name** CHAR00I0.IMG, the text box at (80,5) 214x7 in
+  DaggerfallDefaultInputTextColor, OK at (263,172,39,22)
+  (CreateCharNameSelect.cs:26,73-85).
+- **race** TMAP00I0.IMG, the province map, with the verbatim prompt
+  centred at y=16 - and the PROVINCE CLICK is live: TAMRIEL2.IMG is
+  never drawn, its palette INDEX at the click point IS the race id,
+  because RaceTemplate.GetRaceDictionary keys on ID
+  (CreateCharRaceSelect.cs:30-31,93-102). Probed: a click on
+  Hammerfell lands on Redguard with no key pressed.
+- **gender** the verbatim TEXT.RSC 2200 prompt over the same map.
+  FLAGGED: DFU's is a DaggerfallMessageBox and the port has no
+  message-box FRAME art, so a plain panel stands behind it.
+- **face** CHAR01I0.IMG and THE PORTRAIT - FacePicker's 64x40 display
+  panel at (247,25) with the head centred/middle inside it, PREVIOUS
+  (245,69,42,9) and NEXT (287,69,26,9) (FacePicker.cs:55-68). The ten
+  head records come from the race/gender FACE CIF, and the load
+  COALESCES rather than dropping when the identity changes mid-flight.
+- **class** PICK00I0.IMG centred/middle, the nine-row list at (26,27)
+  138x72 with rowSpacing 1 (ListBox.cs:36-37) and the selected row in
+  DaggerfallDefaultSelectedTextColor - over a SCREEN DIM, because the
+  list picker is the one chargen screen that is a popup rather than a
+  full-panel window.
+- **stats** CHAR02I0.IMG + StatsRollout: value panels at (8,33) 34x6
+  stepping 22 with CENTRED labels, green when raised above the roll,
+  the UpDownSpinner (CHAR02I1.IMG) riding the selected row and
+  carrying the bonus pool, the seven derived labels at their verbatim
+  positions, REROLL and OK.
+- **skills** CHAR03I0.IMG + SkillsRollout: three groups at y 32 / 81 /
+  130, labels at x=68, values at x=187, rows 10 apart, the
+  LeftRightSpinner (CHAR03I1.IMG) on the cursor row carrying that
+  GROUP's pool.
+
+Clicks land on DFU's own buttons through the shared overlay pointer
+seam (the U8b law - taps and clicks ride one path), and the whole
+keyboard flow is untouched, so the phone, the probe and the mouse all
+drive the same window.
+
+**Three things this slice found on the way.**
+
+**Solid quads never blended.** `drawScreenQuad` wrote a solid colour's
+alpha straight out with GL blending OFF, so every translucent UI panel
+in the port drew OPAQUE - DaggerfallUI.ScreenDimColor (0,0,0,0.5)
+BLACKED OUT the screen behind a modal window instead of dimming it,
+and the same went for the talk, rest, action-text and char-sheet
+backdrops. SIXTEEN call sites had been authoring alpha that never
+applied. Blending is enabled for untextured quads with alpha < 1;
+textured quads keep their existing discard law, so no art path
+changes. Eyeballed on the class picker and the talk window.
+
+**The port printed enum keys where classic prints names.** The skills
+screen was the first window to show a skill list at chargen scale and
+it read "ShortBlade" and "BluntWeapon". `TextProvider.GetSkillName`
+returns "Short Blade" and "Blunt Weapon" (Internal_Strings.csv:380-
+400,498), and the char sheet had been printing the raw keys too since
+U8a. `SKILL_KEYS` is now the code identity and `SKILL_NAMES` is what a
+window prints.
+
+**The derived stats had no home.** Drawing CHAR02I0's right column
+needed all seven of FormulaHelper's derived values, and the port had
+them scattered - MaxEncumbrance inline in charsheet.js, MagicResist
+inline in spellcast.js, HealingRateModifier in rest.js, SpellPoints in
+chargen.js - with ToHitModifier and HitPointsModifier missing
+entirely. They live in `combat/formulas.js` beside DamageModifier now,
+and the old sites import them.
+
+**And three more wedged probes.** AUDIT 17f found that S3c's
+chargen-on-boot silently wedged three probes; it wedged SIX. The char
+sheet, talk and trade probes take the `?class=16` skip too now. The
+trade probe additionally hand-built a Currency literal with no
+template index, which stopped MERGING with the starting kit's stack
+once 17f gave gold its template - it sat behind it as a second pile
+`goldAmount` never reached and the buy was refused for lack of funds.
+It adds gold through the real producer now (TEST THE SHAPE THE
+PRODUCER MINTS).
+
+Pins: `test/chargenart.test.js`, seven tests, each mutation-proven.
+Probed + eyeballed, every screen: "Name thyself" with the OK button,
+the Empire of Tamriel map with the verbatim prompt, "Choose thy face"
+with a Khajiit female portrait in the picker frame, the class scroll
+over a real dim, "Add bonus points" with all eight stats and the
+derived block, and the three skill groups with "Short Blade" and the
+spinner sitting between its arrows.
+
+FLAGGED, not done: the DaggerfallMessageBox frame (which the gender
+screen and the race DESCRIPTION box both want), biography questions,
+reflexes, and the custom-class path - none of which the flow has
+states for yet.

@@ -849,7 +849,18 @@ void main() {
     gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
     gl.uniform1i(this._screenQuad.useTex, tex ? 1 : 0);
     if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuad.tex, 0); }
+    // U10: a SOLID quad's alpha was written straight out with blending
+    // OFF, so every translucent UI panel in the port drew OPAQUE -
+    // DaggerfallUI.ScreenDimColor (0,0,0,0.5) blacked the screen out
+    // behind a modal window instead of dimming it, and the same went
+    // for the talk/rest/action panels and the char-sheet backdrops.
+    // Sixteen call sites had been authoring alpha that never applied.
+    // Textured quads keep their existing law (discard a<0.5, opaque
+    // rgb) so no art path changes.
+    const blend = !tex && color[3] < 1;
+    if (blend) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); }
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+    if (blend) gl.disable(gl.BLEND);
     gl.enable(gl.DEPTH_TEST);
     gl.bindVertexArray(null);
   }

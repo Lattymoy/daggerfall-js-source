@@ -7,15 +7,18 @@
 //   skills: + blocked at group pool 0 (no upper clamp);
 //           - blocked at the ROLLED value
 // Both screens offer REROLL, exactly the rollout components' own.
-// Screens draw as clean text panels on drawScreenQuad; the classic
-// background ART is FLAGGED pending art-name verification against
-// real ARENA2 (no data in this container - Mac signs off visuals).
-// Race/face pend their systems (racial saving flags, paperdoll).
+// U10: the screens draw as the REAL classic windows (ui/chargenArt.js
+// over the U8a native panel) - the clean-text panels below are the
+// art-less fallback now, not the plan - the note this file carried
+// about unverified art names shipped out with them.
 
-import { rollStats, rollSkills, STAT_KEYS_ORDER } from '../systems/chargen.js';
+import { rollStats, rollSkills, STAT_KEYS_ORDER, spellPoints, spellPointMultiplier } from '../systems/chargen.js';
+import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsModifier, healingRateModifier } from '../combat/formulas.js';   // U10: the derived block
 import { RACE_TEMPLATES, FACES_PER_RACE } from '../systems/races.js';   // S3c/U9
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
+import { nativeMetrics } from './nativePanel.js';
+import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit } from './chargenArt.js';   // U10
 
 export const MAX_STAT_VALUE = 100;   // FormulaHelper.MaxStatValue
 
@@ -38,8 +41,8 @@ export function skillDown(working, rolled, pool) {
 }
 
 // S3c/U9: RACE and FACE join the flow between gender and class -
-// classic asks race first, and until now the port hardcoded Breton
-// male face 0 (the loud INTERIM the paperdoll records carried).
+// classic asks race first. (The Breton-male-face-0 hardcode this
+// retired, and U10's blind face index, are both gone.)
 const STATES = ['name', 'race', 'gender', 'face', 'class', 'stats', 'skills', 'done'];
 
 export class ChargenFlow {
@@ -93,6 +96,26 @@ export class ChargenFlow {
       i -= ids.length;
     }
     return null;
+  }
+
+  /** U10: the seven derived values CHAR02I0's right column shows
+   *  (CreateCharAddBonusStats.cs:94-100), each through the
+   *  FormulaHelper home. Signed modifiers print with their sign, as
+   *  DFU's labels do. */
+  derived() {
+    if (!this.stats) return null;
+    const st = this.stats;
+    const sign = (n) => (n >= 0 ? `+${n}` : String(n));
+    const mult = spellPointMultiplier(this.career.abilityFlagsAndSpellPointsBitfield ?? 0x1000);
+    return {
+      damage: sign(damageModifier(st.strength)),
+      encumbrance: String(maxEncumbrance(st.strength)),
+      spellPoints: String(spellPoints(st.intelligence, mult)),
+      magicResist: String(magicResist(st.willpower)),
+      toHit: sign(toHitModifier(st.agility)),
+      hitPoints: sign(hitPointsModifier(st.endurance)),
+      healingRate: sign(healingRateModifier(st.endurance)),
+    };
   }
 
   reroll() {
@@ -161,13 +184,39 @@ export class ChargenFlow {
     }
   }
 
+  /** U10: a NATIVE-panel point (the townTalk overlay seam's own
+   *  coordinate space) -> the flow state it changes. Returns true
+   *  when the click was consumed. `setRace`/`setGender`/
+   *  `setCursor` are the direct-set hits classic's windows have and
+   *  the keyboard flow reaches by stepping. */
+  clickNative(vx, vy) {
+    if (!chargenArtLoaded()) return false;
+    const hit = chargenHit(this, vx, vy);
+    if (!hit) return false;
+    if (typeof hit === 'string') { this.input(hit); return true; }
+    if (hit.setRace != null) { this.raceIndex = RACE_TEMPLATES.findIndex((r) => r.key === hit.setRace); return true; }
+    if (hit.setGender != null) { this.gender = hit.setGender; return true; }
+    if (hit.setCursor != null) { this.cursor = hit.setCursor; return true; }
+    return false;
+  }
+
   get done() { return this.state === 'done'; }
   result() {
     return { name: this.name, gender: this.gender, race: this.race.key, raceId: this.race.id, faceIndex: this.faceIndex, careerIndex: this.classIndex, career: this.career, stats: this.stats, skills: this.skills };
   }
 
-  // ---- drawing: clean classic-text panels (art FLAGGED, see head) ----
+  // ---- drawing ----
+  // U10: the REAL classic screens when the art is up (ui/chargenArt.js
+  // over the U8a native panel); the clean-text panels below stay as
+  // the art-less fallback, exactly as every other native window keeps
+  // its text path.
   draw(renderer, canvas, font, scale) {
+    if (chargenArtLoaded()) {
+      const m = nativeMetrics(canvas);
+      // the FACE CIF follows the identity being chosen
+      if (this.state === 'face') loadFaceSet(this.race.key, this.gender);
+      if (drawChargenNative(renderer, m, font, this)) return;
+    }
     const s = scale, W = canvas.width, H = canvas.height;
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: W, h: H }, undefined, [0.04, 0.03, 0.02, 0.92]);
     const gold = [0.85, 0.72, 0.35, 1], white = [0.9, 0.9, 0.85, 1], dim = [0.5, 0.5, 0.45, 1], hot = [1, 0.95, 0.6, 1];

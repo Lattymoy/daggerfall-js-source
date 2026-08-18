@@ -1,6 +1,9 @@
 // U8b probe: the NATIVE talk window live - E on a walker opens
 // TALK01I0.IMG; mouse clicks drive the verbatim hit rects (Where is
 // -> category -> building -> the answer in the conversation panel).
+// U10: ?class=16 is the HEADLESS chargen skip. S3c put the chargen
+// overlay on a fresh town boot and wedged this probe too - AUDIT 17f
+// found three of the six, this is the rest.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5199, strictPort: true } });
@@ -8,7 +11,7 @@ await server.listen();
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto('http://localhost:5199/?shot&play&exterior&time=12:00');
+await page.goto('http://localhost:5199/?shot&play&exterior&time=12:00&class=16');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 const readPeople = async () => JSON.parse(await page.evaluate(() => window.__people()));
 let live = null;
