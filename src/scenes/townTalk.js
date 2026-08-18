@@ -168,7 +168,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // E says goodbye too - the touch layer's E button opens AND
       // closes talk (desktop-consistent; Esc/Enter unchanged). Choice
       // windows (G2) receive the raw code for their keyed options.
-      if (overlay.isChoiceWindow) overlay.input(e.code);
+      // U20a: the EVENT rides along with the code. Without it the
+      // chargen window fell back to codeToKey, which lowercases every
+      // letter ('KeyS' -> 's'), so a typed character NAME - and now a
+      // typed CLASS name - could never carry a capital in this host.
+      // The dungeon host never had the bug: routeKey passes the real
+      // event to overlayAction. The live probe caught it typing
+      // "Scout" and reading back "scout".
+      if (overlay.isChoiceWindow) overlay.input(e.code, e);
       else if (e.code === 'Escape') overlay.input('back');
       else if (e.code === 'Enter' || e.code === 'KeyE') overlay.input('confirm');
       if (overlay.done) {

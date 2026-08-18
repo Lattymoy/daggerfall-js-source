@@ -172,7 +172,9 @@ const flowWithBiog = (biog) => {
 test('S3e: the flow walks the questions and ends at the NAME screen', () => {
   const biog = parseBiog(CRAFT, 0);
   const f = flowWithBiog(biog);
-  f.input('confirm');                       // class -> biography
+  f.input('confirm');                       // class -> U19's bio-method screen
+  assert.equal(f.state, 'bioMethod');
+  f.input('down'); f.input('confirm');      // answer questions -> biography
   assert.equal(f.state, 'biography');
   assert.equal(f.biogQuestion().text[0], 'First question line one');
   // an index past THIS question's answers is inert (:121-124)
@@ -305,7 +307,8 @@ test('U13: the flow ends on reflexes, clamped, and carries the pick', () => {
 test('U13: the reputation box is modal and closes the screen', () => {
   const biog = parseBiog(CRAFT, 0);
   const f = flowWithBiog(biog);
-  f.input('confirm');                        // -> biography
+  f.input('confirm');                        // -> the bio-method screen (U19)
+  f.input('down'); f.input('confirm');       // -> biography
   f.answerBiography(0);                      // q1
   f.biogRepBox = [{ text: 'Commoners: -5', center: false }];   // the box the draw path opens
   const before = f.state;

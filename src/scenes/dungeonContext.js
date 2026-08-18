@@ -31,11 +31,10 @@ import { OneShotLatch } from '../ui/input.js';
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
-import { createCharacter, applyCharacter, startingSpells, CLASS_CAREERS } from '../systems/chargen.js';
-import { createChargenFlow, finishChargen, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
+import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
+import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
-import { assignStartingGear } from '../systems/startingGear.js';   // S3d
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
 import { InventoryWindow, SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
@@ -753,12 +752,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // no font art: the flow cannot render - fall back to the headless
     // roll (loud) so the game remains playable without ARENA2 UI art.
     console.warn('[chargen] FONT art unavailable; falling back to the headless roll');
-    const r = { career: chargenFlow.career, careerIndex: chargenFlow.classIndex };
+    // U20a follow-up / THE ONE SEAM: this path had hand-rolled its
+    // own apply code, so every field the flow grew had to be
+    // remembered here too - 17f caught it for the spellbook, and it
+    // had ALREADY regrown for U20a's isCustom and custom
+    // reputations. The career and the class index are the fallback's
+    // own (the roll is headless), everything else rides the shared
+    // applyCreationExtras that finishChargen uses.
+    const r = {
+      career: chargenFlow.career, careerIndex: chargenFlow.classIndex,
+      isCustom: chargenFlow.isCustom, customReps: chargenFlow.customReps,
+    };
     createCharacter(playerEntity, r.career, r.careerIndex);
-    // AUDIT 17f: the font-less fallback skipped the spellbook that
-    // both the flow and ?class=N fill in.
-    playerEntity.spells = startingSpells(r.careerIndex, spellsByIndex);
-    assignStartingGear(playerEntity, { classIndex: r.careerIndex });   // S3d: the headless path gets the real kit too
+    applyCreationExtras(playerEntity, r, spellsByIndex);
     surfacePlayer();
     chargenFlow = null;
   }
@@ -1053,7 +1059,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => f._backFacing ? skillValue(playerEntity, SKILLS.Backstabbing) : 0)) {
       // TallySkill (E3c flag clears): the attack skill counts a use
       // per resolved swing, per WeaponManager.MeleeDamage.
-      tallySkill(playerEntity, WEAPON_SKILL[playerWeapon.weapon.name] ?? SKILLS.HandToHand);
+      // AUDIT 17k / Mac's report: BARE HANDS are a null weapon since
+      // U8h bound the rig to equip.slots[RightHand] - and the DEFAULT
+      // state, because starting weapons land in the bag unequipped
+      // (DFU adds them via AddItem, never equips). The exterior hosts
+      // guarded with ?.; this host's raw deref crashed every resolved
+      // fist hit.
+      tallySkill(playerEntity, WEAPON_SKILL[playerWeapon.weapon?.name] ?? SKILLS.HandToHand);
       if (damage <= 0) {
         // WeaponManager: a resolved swing that deals nothing plays
         // Hit2 barehanded / Parry6 armed (strikingWeapon test).
@@ -1485,7 +1497,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // and the machine step (paralysis holds all three, S19).
       for (const ev of weaponRig.frame(dt, { paralyzed: _pParalyzed })) {
         if (ev !== 'hit' || !playerFeet) continue;
-        if (WEAPON_SKILL[playerWeapon.weapon.name] === SKILLS.Archery) {
+        // AUDIT 17k / Mac's report: null weapon = fists, never a bow
+        // (the ?. is load-bearing - this raw deref threw on EVERY
+        // bare-handed strike frame, the fist crash)
+        if (WEAPON_SKILL[playerWeapon.weapon?.name] === SKILLS.Archery) {
           // Combat bows: the strike frame LOOSES an arrow along the
           // look instead of the melee arc (WeaponManager verbatim
           // shape); the weapon skill tallies the same.

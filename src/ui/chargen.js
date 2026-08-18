@@ -13,6 +13,8 @@
 // about unverified art names shipped out with them.
 
 import { rollStats, rollSkills, STAT_KEYS_ORDER, spellPoints, spellPointMultiplier } from '../systems/chargen.js';
+import { QUESTION_COUNT, NO_CLASS_INDEX, displayQuestion, pickQuestionIndices, answerWeightIndex, resolveClassIndex } from '../systems/classQuestions.js';   // U18
+import { HP_MIN, HP_MAX, HP_DEFAULT, DIFFICULTY_MIN, DIFFICULTY_MAX, FREE_EDIT_MIN, FREE_EDIT_MAX, STAT_DEFAULT, difficultyPoints, availableSkills, buildCustomCareer, classAffinityIndex, repClick, repPointsToDistribute, HELP_TOPICS } from '../systems/customClass.js';   // U20a
 import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsModifier, healingRateModifier } from '../combat/formulas.js';   // U10: the derived block
 import { tagEffect, biographySkillBonuses, digestRepChanges } from '../systems/biography.js';   // S3e
 import { fullName, getNameBank, GENDERS } from '../characters/nameHelper.js';   // U15
@@ -22,7 +24,7 @@ import { RACE_TEMPLATES, FACES_PER_RACE } from '../systems/races.js';   // S3c/U
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
-import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, classDescriptionLines, DOUBLE_CLICK_DELAY_MS, CLASS_LIST_ROWS, PLAYER_REFLEXES, REFLEX_COUNT } from './chargenArt.js';   // U10 / U17
+import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, classDescriptionLines, textRecordLines, DOUBLE_CLICK_DELAY_MS, CLASS_LIST_ROWS, PLAYER_REFLEXES, REFLEX_COUNT, QUESTION_ROW_H, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES } from './chargenArt.js';   // U10 / U17 / U18 / U20a
 
 export const MAX_STAT_VALUE = 100;   // FormulaHelper.MaxStatValue
 
@@ -49,10 +51,9 @@ export function skillDown(working, rolled, pool) {
 // retired, and U10's blind face index, are both gone.)
 // S3e: BIOGRAPHY sits immediately after the class choice, which is
 // where DFU's wizard puts it (WizardStages: ...SelectClassFromList,
-// SelectBiographyMethod, BiographyQuestions, SelectName...). FLAGGED:
-// the port's overall ORDER already differs from DFU's (we ask the name
-// first and the face early); moving the whole wizard onto the classic
-// sequence is its own slice. What matters for the effects is the
+// SelectBiographyMethod, BiographyQuestions, SelectName...). (The
+// order flag this note carried retired with U15 - the whole wizard
+// runs the classic sequence now; the stale sentence deleted at U18.) What matters for the effects is the
 // RELATIVE position - biography before the bonus-skill screen, so its
 // bonuses show while the player distributes.
 // U13: REFLEXES closes the flow, where DFU's wizard also puts it
@@ -65,7 +66,19 @@ export function skillDown(working, rolled, pool) {
 // forced by the random-name button: CreateCharNameSelect DISABLES it
 // without a race template (:112-119), so the name screen cannot come
 // before the race and still be classic.
-const STATES = ['race', 'gender', 'class', 'biography', 'name', 'face', 'stats', 'skills', 'reflexes', 'summary', 'done'];
+// U18: SelectClassMethod and GenerateClass join between gender and
+// the list - the wizard's enum has always named them (:67-68), the
+// port just went straight to SelectClassFromList. classQuestions is
+// only reachable through the method screen, exactly as GenerateClass
+// is only reachable through ChooseClassGen_OnClose's ChoseGenerate arm.
+// U19: SelectBiographyMethod joins between the class choice and the
+// questions - the LAST stage the enum named that the port skipped.
+// Every class-accept arm goes to SetChooseBioWindow (:344/:365/:401),
+// and the name screen's cancel returns THERE (:483-493), not to the
+// questions the port had collapsed it onto.
+// U20a: CustomClassBuilder joins behind the list's Custom row - with
+// it, every stage in the enum exists.
+const STATES = ['race', 'gender', 'classMethod', 'classQuestions', 'class', 'customClass', 'bioMethod', 'biography', 'name', 'face', 'stats', 'skills', 'reflexes', 'summary', 'done'];
 
 /** AUDIT 17j F5: the port capped the typed name at 16. DFU's name
  *  box is a plain TextBox and CreateCharNameSelect never sets
@@ -103,12 +116,46 @@ export class ChargenFlow {
     this.raceConfirm = null;   // U11: the open race-description box, if any
     this.classConfirm = null;  // U17: and the open CLASS-description box
     this._lastClassClick = null;   // the ListBox double-click clock
+    // U18: the class-METHOD screen (CreateCharChooseClassGen). Classic
+    // has no keyboard here - two mouse buttons - so the cursor is the
+    // port's up/down seam over them: 0 = choose from a list (the top
+    // button), 1 = answer questions (the bottom one).
+    this.methodCursor = 0;
+    // U19: the biography-METHOD screen (CreateCharChooseBio) - 0 =
+    // have the history generated (the top button), 1 = answer the
+    // questions (the bottom one).
+    this.bioMethodCursor = 0;
+    // U20a: the custom-class BUILDER. custom is the screen's working
+    // state (null until entered); customCareer survives it - the
+    // built DFCareer the career getter serves once the builder exits.
+    this.custom = null;
+    this.customCareer = null;
+    this.customReps = null;   // [commoners, merchants, scholars, nobility, underworld]
+    this.isCustom = false;
+    // U18: the class QUESTIONS screen (CreateCharClassQuestions).
+    // questionLibrary (the 40 parsed TEXT.RSC 9000 questions) and
+    // classesData (CLASSES.DAT's bytes) are attached by
+    // createChargenFlow - THE ONE CONSTRUCTION SEAM - and null until
+    // it does; without either, the questions arm falls to the list.
+    this.questionLibrary = null;
+    this.classesData = null;
+    this.qIndices = null;      // the ten picked library indices
+    this.qAnswered = 0;        // questionsAnswered
+    this.qWeights = [0, 0, 0]; // [warrior, rogue, mage] (:66)
+    this.qClassIndex = NO_CLASS_INDEX;
+    this.qConfirm = null;      // the open class-description Yes/No box
+    this.qDisplay = null;      // displayQuestion() of the question on screen
+    this.qLabelY = QSCROLL_TEXT_OFFSET;   // questionLabel.Position.y within the scroll
+    this.qScrollFrame = 0;     // which SCRL frame the parchment shows
     // AUDIT 17g F5: the description source, so BOTH the click and the
     // keyboard confirm open the same box. Null until the art loads.
     this.describeRace = (race) => raceDescriptionLines(race);
     // U17: the same shape for the CLASS description box, so the pins
     // can drive it without the art the way the race box's can.
     this.describeClass = (i) => classDescriptionLines(i);
+    // U20a: and a bare TEXT.RSC record source for the builder's
+    // refusal boxes (301/300/302/306 + the rep window's 303).
+    this.describeText = (id) => textRecordLines(id);
     this.cursor = 0;          // the BIOGRAPHY screen's answer cursor
     // U16: StatsRollout and SkillsRollout are two INDEPENDENT DFU
     // components with a selection each. One shared cursor was fine
@@ -138,7 +185,14 @@ export class ChargenFlow {
     this.summaryPoolBox = null;
   }
 
-  get career() { return this.careers[this.classIndex].career; }
+  /** U20a: a finished custom class OVERRIDES the list - classIndex
+   *  then holds the AFFINITY index (the biography quiz's), exactly as
+   *  DFU's characterDocument carries career + classIndex separately.
+   *  NULL while the CUSTOM ROW is merely highlighted: that row has no
+   *  career behind it (DFU's selectedClass is null there, :74), and
+   *  the raw index read THREW - the live probe caught it the moment
+   *  the arrow walk landed on the row. */
+  get career() { return this.customCareer ?? this.careers[this.classIndex]?.career ?? null; }
   get race() { return RACE_TEMPLATES[this.raceIndex]; }
 
   /** AUDIT 17j F7: these REROLLED on every entry, so walking back a
@@ -159,22 +213,29 @@ export class ChargenFlow {
    *  otherwise restore. `force` is the explicit Reroll button, which
    *  rerolls regardless. */
   _enterStats(force = false) {
-    if (!force && this.rolledStats && this._statsClassIndex === this.classIndex) { this.statCursor = 0; return; }
+    // U20a: the memo keys on the CAREER, not its index. DFU compares
+    // `createCharAddBonusStatsWindow.DFClass != characterDocument.career`
+    // (:238) - an object comparison. Keying on classIndex was
+    // equivalent while every class came from the list, but a CUSTOM
+    // class carries the AFFINITY index, so a custom whose affinity
+    // matched the previously rolled class restored that class's roll
+    // instead of rolling for the new career.
+    if (!force && this.rolledStats && this._statsCareer === this.career) { this.statCursor = 0; return; }
     const { stats, bonusPool } = rollStats(this.career, this.rolls);
     this.rolledStats = { ...stats };
     this.stats = { ...stats };
     this.statPool = bonusPool;
-    this._statsClassIndex = this.classIndex;
+    this._statsCareer = this.career;
     this.statCursor = 0;
   }
 
   _enterSkills(force = false) {
-    if (!force && this.rolledSkills && this._skillsClassIndex === this.classIndex) { this.skillCursor = 0; return; }
+    if (!force && this.rolledSkills && this._skillsCareer === this.career) { this.skillCursor = 0; return; }
     const { skills, groupPools } = rollSkills(this.career, this.rolls);
     this.rolledSkills = [...skills];
     this.skills = [...skills];
     this.pools = { ...groupPools };
-    this._skillsClassIndex = this.classIndex;
+    this._skillsCareer = this.career;
     this.skillCursor = 0;
     this.skillSel = { primary: 0, major: 0, minor: 0 };   // SelectPrimarySkill(0) and its two siblings
   }
@@ -225,19 +286,305 @@ export class ChargenFlow {
    *  at draw time, so the whole list jumped on every arrow and the
    *  selection never sat anywhere but the middle. */
   _scrollToClass(rows = CLASS_LIST_ROWS) {
-    const n = this.careers.length;
+    const n = this.classRowCount();
     const max = Math.max(0, n - rows);
     if (this.classIndex < this.classScroll) this.classScroll = this.classIndex;
     else if (this.classIndex >= this.classScroll + rows) this.classScroll = this.classIndex - rows + 1;
     this.classScroll = Math.max(0, Math.min(max, this.classScroll));
   }
 
-  /** S3e: the class choice leads into the biography when its file
-   *  loaded, and straight to the stats roll when it did not. */
+  /** U20a: the list's LAST row is Custom (CreateCharClassSelect
+   *  :66-67 appends it after the eighteen CLASS*.CFG rows). */
+  classRowCount() { return this.careers.length + 1; }
+  classRowName(i) { return this.careers[i]?.name ?? 'Custom'; }
+
+  /** S3e / U19: the class choice leads into the biography METHOD
+   *  screen when its question file loaded (every accept arm calls
+   *  SetChooseBioWindow), and straight to the name when it did not
+   *  (never trap - DFU would throw on the missing file). */
   _leaveClass() {
-    if (this.biogFor?.(this.classIndex)?.questions?.length) this._enterBiography();
+    if (this.biogFor?.(this.classIndex)?.questions?.length) this._enterBioMethod();
     else this._leaveBiography();   // U15: -> name, the classic next screen
   }
+
+  /** U18: GenderSelectWindow_OnClose's accept arm goes to
+   *  SetChooseClassGenWindow (DaggerfallStartNewGameWizard.cs:305-316),
+   *  not straight to the list. The window is CONSTRUCTED fresh on
+   *  every arrival (:142-148 has no null guard, unlike the reused
+   *  windows), so the cursor resets. */
+  _enterClassMethod() {
+    this.methodCursor = 0;
+    this.state = 'classMethod';
+  }
+
+  /** U18: SetClassQuestionsWindow (:150-156) - also constructed fresh
+   *  every time, so re-entry rolls NEW questions and zeroed weights.
+   *  Without the library or CLASSES.DAT the screen cannot resolve a
+   *  class; DFU throws, the port logs loudly and falls to the list
+   *  (the crash-class doctrine). */
+  _enterClassQuestions() {
+    if (!this.questionLibrary?.length || !this.classesData) {
+      console.warn('[chargen] TEXT.RSC 9000 / CLASSES.DAT unavailable; the questions path falls to the class list');
+      this.state = 'class';
+      return;
+    }
+    this.qIndices = pickQuestionIndices(this.questionLibrary.length, this.rolls);
+    this.qAnswered = 0;
+    this.qWeights = [0, 0, 0];
+    this.qClassIndex = NO_CLASS_INDEX;
+    this.qConfirm = null;
+    this._displayClassQuestion();
+    this.state = 'classQuestions';
+  }
+
+  /** DisplayQuestion (:255-289): the question on screen, the scroll
+   *  rewound to frame 0 and the label back at the top offset. */
+  _displayClassQuestion() {
+    this.qDisplay = displayQuestion(this.questionLibrary[this.qIndices[this.qAnswered]]);
+    this.qLabelY = QSCROLL_TEXT_OFFSET;
+    this.qScrollFrame = 0;
+  }
+
+  /** The scroll law (NativePanel_OnMouseScrollDown/Up :432-450 and the
+   *  click-scroll in Update :189-204, one pixel per step): scrolling
+   *  down is allowed while the label's bottom hangs below the text
+   *  window, up while its top has been pushed above the offset. The
+   *  parchment frame advances WITH the text, wrapping over all 16. */
+  scrollQuestion(dir) {
+    const labelH = (this.qDisplay?.lines.length ?? 0) * QUESTION_ROW_H;
+    if (dir > 0 && this.qLabelY + labelH > QSCROLL_H - QSCROLL_TEXT_OFFSET) {
+      this.qScrollFrame = (this.qScrollFrame + 1) % QSCROLL_FRAMES;
+      this.qLabelY -= 1;
+    } else if (dir < 0 && this.qLabelY < QSCROLL_TEXT_OFFSET) {
+      this.qScrollFrame = this.qScrollFrame - 1 < 0 ? QSCROLL_FRAMES - 1 : this.qScrollFrame - 1;
+      this.qLabelY += 1;
+    }
+  }
+
+  /** AnswerAndPlayAnim (:310-354), minus the FLC constellation anims
+   *  (FLAGGED - the port has no FLIC decoder yet, so the next question
+   *  shows immediately where DFU waits for the CEL to finish; the
+   *  palette brightening itself is live, see constellationBlues).
+   *  choice: 0 a, 1 b, 2 c. */
+  answerClassQuestion(choice) {
+    if (this.state !== 'classQuestions' || this.qConfirm || this.qAnswered === QUESTION_COUNT) return false;
+    const weightIndex = answerWeightIndex(this.qIndices[this.qAnswered], choice);
+    this.qWeights[weightIndex]++;
+    if (this.qAnswered === QUESTION_COUNT - 1) {   // final question answered
+      const idx = resolveClassIndex(this.classesData, this.qWeights);
+      if (idx === null) {
+        // DFU throws "could not find a results match" - corrupt file
+        console.warn('[chargen] CLASSES.DAT results walk found no match', this.qWeights);
+        this.qClassIndex = NO_CLASS_INDEX;
+      } else this.qClassIndex = idx;
+    }
+    this.qAnswered++;
+    if (this.qAnswered === QUESTION_COUNT) this._endClassQuestions();
+    else this._displayClassQuestion();
+    return true;
+  }
+
+  /** EndQuestions (:400-413): the background and scroll blank and the
+   *  class's DESCRIPTION opens in a Yes/No box on TEXT.RSC 2100 +
+   *  index - the same describeClass source the list's pick uses. A
+   *  failed results walk, or artless describeClass, closes the screen
+   *  the way its box would. */
+  _endClassQuestions() {
+    if (this.qClassIndex === NO_CLASS_INDEX) { this.state = 'class'; return; }
+    this.qConfirm = this.describeClass?.(this.qClassIndex) ?? null;
+    if (!this.qConfirm) this._acceptQuestionClass();   // no description available: the pick stands
+  }
+
+  /** ConfirmDialog Yes (:424-430) + the wizard's OnClose accept arm
+   *  (:330-350): the generated index becomes the character's class -
+   *  the careers array is CLASS00..17.CFG in file order, which is
+   *  exactly the "CLASS" + classIndex + ".CFG" load - and the flow
+   *  moves to the biography, as SetChooseBioWindow does. */
+  _acceptQuestionClass() {
+    this.qConfirm = null;
+    this.classIndex = this.qClassIndex;
+    this._scrollToClass();
+    this._acceptStandardClass();
+  }
+
+  /** ConfirmDialog No: classIndex = noClassIndex, both windows close,
+   *  and the wizard's OnClose falls to SetClassSelectWindow. */
+  _cancelQuestionClass() {
+    this.qConfirm = null;
+    this.qClassIndex = NO_CLASS_INDEX;
+    this.state = 'class';
+  }
+
+  /** U20a: accepting a STANDARD class replaces the career, exactly as
+   *  ClassSelectWindow_OnClose's else arm does (:363-364) - the
+   *  document's career becomes the list's class, so the getter serves
+   *  it again.
+   *
+   *  What it does NOT do is clear `isCustom` or the reputations,
+   *  BECAUSE DFU NEVER DOES. `isCustom` is assigned in exactly one
+   *  place in the whole codebase - `= true` on the Custom row
+   *  (:358) - and the five reputation fields only in the builder's
+   *  own accept arm (:385-389). So opening the builder, cancelling
+   *  out of it, and then picking a standard class leaves a document
+   *  that still says CUSTOM: ItemHelper.cs:1310 gives it the custom
+   *  starting kit, and StartGameBehaviour.cs:804-809 routes it
+   *  through the custom spell rule (a Mage picked that way gets the
+   *  SPELLSWORD set, not the Mage set). Ported bug-for-bug and
+   *  recorded in the Ledger; the earlier draft "tidied" it and was
+   *  wrong to. */
+  _acceptStandardClass() {
+    this.customCareer = null;
+    this._leaveClass();
+  }
+
+  /** U20a: SetCustomClassWindow (:170-176) - constructed FRESH every
+   *  time, like the other one-shot windows: HP at the default, no
+   *  skills chosen, every attribute at the DaggerfallStats default 50
+   *  with an untouched zero pool (the freeEdit ledger), reps flat. */
+  _enterCustomClass() {
+    this.custom = {
+      className: '',
+      hp: HP_DEFAULT,
+      skills: Array(12).fill(null),   // 0-2 primary, 3-5 major, 6-11 minor
+      stats: Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, STAT_DEFAULT])),
+      statPool: 0,
+      statCursor: 0,
+      reps: { merchants: 0, peasants: 0, scholars: 0, nobility: 0, underworld: 0 },
+      sub: null,        // null | 'skillPick' | 'help' | 'rep'
+      pickSlot: null,   // which of the twelve buttons opened the picker
+      pickCursor: 0,
+      pickScroll: 0,
+      box: null,        // the open refusal/help box's rows (ClickAnywhereToClose)
+    };
+    this.state = 'customClass';
+  }
+
+  /** The builder's difficulty tally - U20b's advantage/disadvantage
+   *  adjustments join here when that window ships. */
+  customDifficulty() { return difficultyPoints(this.custom?.hp ?? HP_DEFAULT); }
+
+  /** The freeEdit spinner (StatsRollout.cs:231-276): value clamped to
+   *  10..75, the POOL free to go negative - it is a zero-sum ledger,
+   *  and the exit gate is what demands the balance. */
+  customSpendStat(delta) {
+    const c = this.custom;
+    const key = STAT_KEYS_ORDER[c.statCursor];
+    if (delta > 0 && c.stats[key] < FREE_EDIT_MAX) { c.stats[key]++; c.statPool--; }
+    else if (delta < 0 && c.stats[key] > FREE_EDIT_MIN) { c.stats[key]--; c.statPool++; }
+  }
+
+  /** HitPointsUp/DownButton (:346-364): 4..30, one per click. */
+  customHp(delta) {
+    const c = this.custom;
+    c.hp = Math.max(HP_MIN, Math.min(HP_MAX, c.hp + delta));
+  }
+
+  /** skillButton_OnMouseClick (:283-293): the picker lists every
+   *  skill NOT already on a button, alphabetical. */
+  customOpenSkillPick(slot) {
+    const c = this.custom;
+    c.sub = 'skillPick';
+    c.pickSlot = slot;
+    c.pickItems = availableSkills(c.skills);
+    c.pickCursor = 0;
+    c.pickScroll = 0;
+  }
+
+  /** SkillPicker_OnItemPicked (:295-344): the pick lands on the slot,
+   *  the replaced skill returns to the pool (the list re-sorts on the
+   *  next open - availableSkills derives it). */
+  customPickSkill(index) {
+    const c = this.custom;
+    const id = c.pickItems?.[index];
+    if (id == null) return;
+    c.skills[c.pickSlot] = id;
+    c.sub = null;
+  }
+
+  /** ExitButton_OnMouseClick (:414-460) - the four refusal gates in
+   *  DFU's order, each a ClickAnywhereToClose box: no name (301), a
+   *  skill unset (300), an unbalanced stat pool (302), the dagger in
+   *  the red (306). Passing them builds the career and follows the
+   *  wizard's accept arm (:374-401): the name onto the career, the
+   *  AFFINITY index onto classIndex for the biography quiz, the reps
+   *  onto the document, and SetChooseBioWindow. */
+  customExit() {
+    const c = this.custom;
+    const box = (id) => { c.box = this.describeText?.(id) ?? [{ text: `TEXT.RSC ${id}`, center: true }]; };
+    if (!c.className.length) { box(301); return; }
+    if (c.skills.some((s) => s == null)) { box(300); return; }
+    if (c.statPool !== 0) { box(302); return; }
+    const dp = this.customDifficulty();
+    if (dp < DIFFICULTY_MIN || dp > DIFFICULTY_MAX) { box(306); return; }
+    this.customCareer = buildCustomCareer({ name: c.className, hp: c.hp, skills: c.skills, stats: c.stats });
+    this.classIndex = classAffinityIndex(c.skills, this.careers);
+    this._scrollToClass();
+    // document.reputation* in sGroupReputations order: commoners (the
+    // window's PEASANTS column), merchants, scholars, nobility,
+    // underworld (PlayerEntity.AssignCharacter :844-848)
+    this.customReps = [c.reps.peasants, c.reps.merchants, c.reps.scholars, c.reps.nobility, c.reps.underworld];
+    this._leaveClass();
+  }
+
+  /** The reputation window's own exit gate (:186-198): the balance
+   *  must be zero (TEXT.RSC 303) or the window stays. */
+  customRepExit() {
+    const c = this.custom;
+    // the gate reads the WINDOW'S field, not a fresh sum - see the
+    // customRep arm for why that difference is load-bearing
+    if ((c.repPoints ?? 0) !== 0) { c.box = this.describeText?.(303) ?? [{ text: 'TEXT.RSC 303', center: true }]; return; }
+    c.sub = null;
+  }
+
+  /** U20a follow-up: a DaggerfallListPickerWindow raises OnItemPicked
+   *  from `listBox.OnUseSelectedItem` (:84,136-148) - the DOUBLE-click
+   *  door, exactly as the class list's picker does (U17). The
+   *  extracted picker carried the geometry but not the gesture law,
+   *  so the builder's skill and help pickers committed on a SINGLE
+   *  click. One click selects; two pick. */
+  clickPickRow(idx, now) {
+    const c = this.custom;
+    if (!c) return false;
+    const wasDouble = c._lastPickClick != null && (now - c._lastPickClick) < DOUBLE_CLICK_DELAY_MS;
+    c.pickCursor = idx;
+    this._scrollPick(c.sub === 'help' ? HELP_TOPICS.length : (c.pickItems?.length ?? 0));
+    c._lastPickClick = now;
+    if (!wasDouble) return true;
+    c._lastPickClick = null;
+    this.usePickRow(idx);
+    return true;
+  }
+
+  /** The picker's OnItemPicked handlers (:295-344 for skills,
+   *  :376-384 for help): the skill lands on the slot that opened the
+   *  picker; a help topic closes the picker and shows its TEXT.RSC
+   *  record as a ClickAnywhereToClose box. */
+  usePickRow(idx) {
+    const c = this.custom;
+    if (c.sub === 'skillPick') this.customPickSkill(idx);
+    else if (c.sub === 'help') {
+      const t = HELP_TOPICS[idx];
+      if (t) { c.sub = null; c.box = this.describeText?.(t[1]) ?? [{ text: `TEXT.RSC ${t[1]}`, center: true }]; }
+    }
+  }
+
+  /** The pick list's minimal scroll (the ListBox law the class list
+   *  already carries). */
+  _scrollPick(n = this.custom?.pickItems?.length ?? 0) {
+    const c = this.custom;
+    const rows = CLASS_LIST_ROWS;
+    const max = Math.max(0, n - rows);
+    if (c.pickCursor < c.pickScroll) c.pickScroll = c.pickCursor;
+    else if (c.pickCursor >= c.pickScroll + rows) c.pickScroll = c.pickCursor - rows + 1;
+    c.pickScroll = Math.max(0, Math.min(max, c.pickScroll));
+  }
+
+  /** The three constellations' palette blues - 8 at rest, +24 per
+   *  answer on that path (rogueBlue/mageBlue/warriorBlue start 8,
+   *  constellationBrightnessIncrement = 24, :48-58,336-350), written
+   *  to palette indices 192/160/128 by the draw. Same order as
+   *  qWeights: [warrior, rogue, mage]. */
+  constellationBlues() { return this.qWeights.map((w) => 8 + 24 * w); }
 
   /** U16 / THE ONE CONSTRUCTION SEAM: every path into the biography
    *  screen resets it here. DFU never REUSES that window - both
@@ -249,13 +596,62 @@ export class ChargenFlow {
    *  have walked back through the questions with the previous run's
    *  effects still in the list, applying every one of them twice. */
   _enterBiography() {
+    this._resetBiography();
+    this.state = 'biography';
+  }
+
+  /** U19: the reset half, shared with the AUTO path - both arms of
+   *  SetChooseBioWindow construct over a fresh BiogFile. */
+  _resetBiography() {
     this.biogQuestionIndex = 0;
     this.cursor = 0;
     this.biographyEffects = [];
     this.backStory = [];
     this.repChanges = null;
     this.biogRepBox = null;
-    this.state = 'biography';
+  }
+
+  /** U19: SetChooseBioWindow (DaggerfallStartNewGameWizard.cs:178-186)
+   *  - every class-accept arm lands here, and the window is
+   *  CONSTRUCTED fresh each time (:180), so the cursor resets. (Its
+   *  other side effect, skillsNeedReroll = true, reduces to the
+   *  port's reroll-when-the-class-changed rule - the 17j F7 read.) */
+  _enterBioMethod() {
+    this.bioMethodCursor = 0;
+    this.state = 'bioMethod';
+  }
+
+  /** U19: the GENERATE arm (CreateCharChooseBioWindow_OnClose
+   *  :427-452): a fresh BiogFile, every question answered at
+   *  rand.Next(0, answers.Count) - `new System.Random(...)` is an
+   *  engine PRNG (Ledger A), so it rides the flow's injectable rolls -
+   *  each answer's effects added exactly as AddEffect does, then
+   *  DigestRepChanges and the ClickAnywhereToClose reputation box.
+   *  The box shows over THIS screen (the message box is pushed over
+   *  createCharChooseBioWindow, :444), and closing it goes to the
+   *  name screen (ReputationBox_OnClose :464-467). */
+  _autoBiography() {
+    const b = this.biogFor?.(this.classIndex);
+    if (!b?.questions?.length) { this._leaveBiography(); return; }
+    this._resetBiography();
+    for (let i = 0; i < b.questions.length; i++) {
+      const answers = b.questions[i].answers;
+      const index = Math.floor(this.rolls() * answers.length);   // rand.Next(0, Count)
+      for (const e of answers[index].effects) this.biographyEffects.push(tagEffect(e, i));
+    }
+    this._finishBiography();   // no box rows (artless) -> straight to the name
+  }
+
+  /** U13 / U19: the biography's closing tail, shared by the LAST
+   *  manual answer and the auto path - the backstory composes, the
+   *  per-group totals digest, and the TEXT.RSC 35 box pops; without
+   *  box rows the screen simply ends. */
+  _finishBiography() {
+    const b = this.biogFor(this.classIndex);
+    this.backStory = buildBackstory?.(b.backstoryId, this.biographyEffects) ?? [];
+    this.repChanges = digestRepChanges(this.biographyEffects);
+    this.biogRepBox = repBoxRows?.(this.repChanges) ?? null;
+    if (!this.biogRepBox?.length) this._leaveBiography();
   }
 
   _leaveBiography() { this._enterName(); }
@@ -297,17 +693,18 @@ export class ChargenFlow {
     this.state = 'race';
   }
 
-  /** AUDIT 17j F3: the name screen's cancel. DFU sends it to
-   *  SetChooseBioWindow, which on its way forward CONSTRUCTS a fresh
-   *  CreateCharBiography over a fresh BiogFile - so the questions
-   *  restart and the answers so far are DISCARDED. That discard is
-   *  load-bearing here and not cosmetic: answerBiography appends to
-   *  biographyEffects, so re-answering without it would apply every
-   *  effect twice. With no question set for this class there is no
-   *  screen to go back to, and the cancel is inert. */
+  /** AUDIT 17j F3 / U19: the name screen's cancel. DFU sends it to
+   *  SetChooseBioWindow - the METHOD screen now that U19 exists,
+   *  where the port had collapsed it onto the questions. Either arm
+   *  forward CONSTRUCTS over a fresh BiogFile, so the answers so far
+   *  are DISCARDED there - load-bearing, not cosmetic:
+   *  answerBiography appends to biographyEffects, so re-answering
+   *  without the reset would apply every effect twice. With no
+   *  question set for this class there is no screen to go back to,
+   *  and the cancel is inert. */
   _enterBiographyBack() {
     if (!this.biogFor?.(this.classIndex)?.questions?.length) return;
-    this._enterBiography();
+    this._enterBioMethod();
   }
 
   /** The per-skill biography bonus the SKILLS screen displays. */
@@ -331,17 +728,12 @@ export class ChargenFlow {
     for (const e of a.effects) this.biographyEffects.push(tagEffect(e, this.biogQuestionIndex));
     const total = this.biogFor(this.classIndex).questions.length;
     if (this.biogQuestionIndex < total - 1) { this.biogQuestionIndex++; this.cursor = 0; }
-    else {
-      // U13: the last answer composes the BACKSTORY and pops the
-      // reputation box (CreateCharBiography.cs:143-152) - a
-      // ClickAnywhereToClose message box on TEXT.RSC 35, whose %r1..%r5
-      // are DigestRepChanges' per-group totals.
-      const b = this.biogFor(this.classIndex);
-      this.backStory = buildBackstory?.(b.backstoryId, this.biographyEffects) ?? [];
-      this.repChanges = digestRepChanges(this.biographyEffects);
-      this.biogRepBox = repBoxRows?.(this.repChanges) ?? null;
-      if (!this.biogRepBox?.length) this._leaveBiography();
-    }
+    // U13: the last answer composes the BACKSTORY and pops the
+    // reputation box (CreateCharBiography.cs:143-152) - a
+    // ClickAnywhereToClose message box on TEXT.RSC 35, whose %r1..%r5
+    // are DigestRepChanges' per-group totals. U19 shares the tail
+    // with the auto path.
+    else this._finishBiography();
     return true;
   }
 
@@ -480,8 +872,44 @@ export class ChargenFlow {
     }
     if (s === 'gender') {
       if (action === 'up' || action === 'down') this.gender = this.gender === 'male' ? 'female' : 'male';
-      else if (action === 'confirm') this.state = 'class';
+      // U18: the accept arm is SetChooseClassGenWindow (:305-316) -
+      // the method screen sits between gender and the list.
+      else if (action === 'confirm') this._enterClassMethod();
       else if (action === 'back') this.state = 'race';
+      return;
+    }
+    if (s === 'classMethod') {
+      // CreateCharChooseClassGen: two buttons, ChooseClass_OnMouseClick
+      // just closes, ChooseGenerate_OnMouseClick raises ChoseGenerate
+      // first (:63-72); the wizard's OnClose has NO cancelled arm
+      // (:318-328) - ANY close that is not "generate" goes to the class
+      // list, Escape included, so back lands there too.
+      if (action === 'up' || action === 'down') this.methodCursor = this.methodCursor === 0 ? 1 : 0;
+      else if (action === 'confirm') {
+        if (this.methodCursor === 1) this._enterClassQuestions();
+        else this.state = 'class';
+      } else if (action === 'back') this.state = 'class';
+      return;
+    }
+    if (s === 'classQuestions') {
+      // the description box is MODAL, its confirm and back Yes and No
+      if (this.qConfirm) {
+        if (action === 'confirm') this._acceptQuestionClass();
+        else if (action === 'back') this._cancelQuestionClass();
+        return;
+      }
+      // the A, B and C keys answer (Update :176-181); they arrive
+      // through the overlay table as typed characters
+      if (action === 'char:a' || action === 'char:A') this.answerClassQuestion(0);
+      else if (action === 'char:b' || action === 'char:B') this.answerClassQuestion(1);
+      else if (action === 'char:c' || action === 'char:C') this.answerClassQuestion(2);
+      // the mouse wheel's scroll (GetUIScrollMovement), on the arrows
+      // for the keyboard seam
+      else if (action === 'down') this.scrollQuestion(1);
+      else if (action === 'up') this.scrollQuestion(-1);
+      // Escape cancels the popup with classIndex still noClassIndex,
+      // and the wizard's OnClose falls to SetClassSelectWindow
+      else if (action === 'back') this.state = 'class';
       return;
     }
     if (s === 'face') {
@@ -495,12 +923,18 @@ export class ChargenFlow {
       // U17: the description box is MODAL over the list, like the race
       // screen's - its own confirm and back are Yes and No.
       if (this.classConfirm) {
-        if (action === 'confirm') { this.classConfirm = null; this._leaveClass(); }
+        if (action === 'confirm') { this.classConfirm = null; this._acceptStandardClass(); }
         else if (action === 'back') this.classConfirm = null;
         return;
       }
-      if (action === 'up') { this.classIndex = (this.classIndex + this.careers.length - 1) % this.careers.length; this._scrollToClass(); }
-      else if (action === 'down') { this.classIndex = (this.classIndex + 1) % this.careers.length; this._scrollToClass(); }
+      // U20a: ListBox.SelectPrevious/SelectNext CLAMP (ListBox.cs
+      // :709-740 - both guard `if (selectedIndex > 0)` /
+      // `< listItems.Count - 1`). The port wrapped with a modulo, so
+      // the list ran off its own ends onto the far one; the FacePicker
+      // wrap the face screen uses is that component's OWN law
+      // (FacePicker.cs:116-127), not this one's.
+      if (action === 'up') { this.classIndex = Math.max(0, this.classIndex - 1); this._scrollToClass(); }
+      else if (action === 'down') { this.classIndex = Math.min(this.classRowCount() - 1, this.classIndex + 1); this._scrollToClass(); }
       // ListBox.cs:296-297 - Return USES the selected item, the same
       // door the double click goes through.
       else if (action === 'confirm') this.useClass();
@@ -510,6 +944,73 @@ export class ChargenFlow {
       // gender screen entirely. The U15 pin asserted the bug: I wrote
       // it from the STATES order rather than from DFU's handler table.
       else if (action === 'back') this._enterRace();
+      return;
+    }
+    if (s === 'customClass') {
+      const c = this.custom;
+      // any open box is ClickAnywhereToClose and MODAL
+      if (c.box) { c.box = null; return; }
+      if (c.sub === 'skillPick') {
+        const n = c.pickItems.length;
+        // the same ListBox CLAMP as the class list
+        if (action === 'up') { c.pickCursor = Math.max(0, c.pickCursor - 1); this._scrollPick(); }
+        else if (action === 'down') { c.pickCursor = Math.min(n - 1, c.pickCursor + 1); this._scrollPick(); }
+        // Return goes through the SAME door as the double click
+        // (ListBox.cs:296-297 -> UseSelectedItem)
+        else if (action === 'confirm') this.usePickRow(c.pickCursor);
+        else if (action === 'back') c.sub = null;   // the picker is a cancellable popup
+        return;
+      }
+      if (c.sub === 'help') {
+        const n = HELP_TOPICS.length;
+        if (action === 'up') { c.pickCursor = Math.max(0, c.pickCursor - 1); this._scrollPick(n); }
+        else if (action === 'down') { c.pickCursor = Math.min(n - 1, c.pickCursor + 1); this._scrollPick(n); }
+        // HelpPicker_OnItemPicked closes the picker, then the topic
+        // shows as a ClickAnywhereToClose box (:377-384) - the same
+        // UseSelectedItem door
+        else if (action === 'confirm') this.usePickRow(c.pickCursor);
+        else if (action === 'back') c.sub = null;
+        return;
+      }
+      if (c.sub === 'rep') {
+        // clicks own the bars. Return stands in for the exit BUTTON,
+        // which is gated on the balance; ESCAPE is the popup's own
+        // cancel (DaggerfallPopupWindow.cs:28,72 - allowCancel is
+        // true and this window never clears it), and that closes
+        // UNCONDITIONALLY. The values persist either way: UpdateRep
+        // writes straight into the builder as you click, and the
+        // builder's own exit gates never re-check the balance - so
+        // classic really does let you leave it unspent this way.
+        if (action === 'confirm') this.customRepExit();
+        else if (action === 'back') { c.box = null; c.sub = null; }
+        return;
+      }
+      // the main screen: the name box always has focus (a TextBox, so
+      // the 31-char default cap), the stat block spends freeEdit,
+      // Return attempts the gated exit, Escape cancels to the list
+      // (the wizard's cancel arm :403-406).
+      if (action.startsWith('char:') && c.className.length < NAME_MAX_CHARACTERS) c.className += action.slice(5);
+      else if (action === 'backspace') c.className = c.className.slice(0, -1);
+      else if (action === 'up') c.statCursor = (c.statCursor + 7) % 8;
+      else if (action === 'down') c.statCursor = (c.statCursor + 1) % 8;
+      else if (action === 'plus') this.customSpendStat(1);
+      else if (action === 'minus') this.customSpendStat(-1);
+      else if (action === 'confirm') this.customExit();
+      else if (action === 'back') this.state = 'class';
+      return;
+    }
+    if (s === 'bioMethod') {
+      // U19: the reputation box the GENERATE arm pops is MODAL over
+      // this screen (the wizard pushes it over createCharChooseBioWindow,
+      // :444) and closes on any key, then the name screen follows
+      if (this.biogRepBox) { this.biogRepBox = null; this._leaveBiography(); return; }
+      if (action === 'up' || action === 'down') this.bioMethodCursor = this.bioMethodCursor === 0 ? 1 : 0;
+      else if (action === 'confirm') {
+        if (this.bioMethodCursor === 1) this._enterBiography();
+        else this._autoBiography();
+      }
+      // the cancel arm (:458-461) - SetClassSelectWindow
+      else if (action === 'back') this.state = 'class';
       return;
     }
     if (s === 'biography') {
@@ -523,13 +1024,22 @@ export class ChargenFlow {
       if (action === 'up') this.cursor = (this.cursor + q.answers.length - 1) % q.answers.length;
       else if (action === 'down') this.cursor = (this.cursor + 1) % q.answers.length;
       else if (action === 'confirm') this.answerBiography(this.cursor);
+      // U19: CreateCharBiographyWindow_OnClose's cancel arm (:477-480)
+      // returns to SetChooseBioWindow - the method screen
+      else if (action === 'back') this._enterBioMethod();
       return;
     }
     if (s === 'stats') {
       if (action === 'up') this.statCursor = (this.statCursor + 7) % 8;
       else if (action === 'down') this.statCursor = (this.statCursor + 1) % 8;
       else if (action === 'plus') this.spendStat(1);
-      else if (action === 'minus') this.spendStat(-1);
+      // AUDIT 17k follow-up: 'minus' was UNREACHABLE from a keyboard.
+      // overlayAction tests the typed-character class FIRST and the
+      // hyphen is a literal inside it (input.js:18), so the '-' key
+      // always arrives as 'char:-' - a point could be spent and never
+      // taken back except by clicking the spinner. '+' and '=' were
+      // never affected (neither is a typed character here).
+      else if (action === 'minus' || action === 'char:-') this.spendStat(-1);
       else if (action === 'reroll') this.reroll();
       else if (action === 'confirm' && this.statPool === 0) { this.state = 'skills'; this._enterSkills(); }   // classic requires the pool spent
       else if (action === 'back') this.state = 'face';
@@ -564,7 +1074,7 @@ export class ChargenFlow {
       if (action === 'up') { this.skillCursor = (this.skillCursor + total - 1) % total; this._syncSkillSel(); }
       else if (action === 'down') { this.skillCursor = (this.skillCursor + 1) % total; this._syncSkillSel(); }
       else if (action === 'plus') this.spendSkill(1);
-      else if (action === 'minus') this.spendSkill(-1);
+      else if (action === 'minus' || action === 'char:-') this.spendSkill(-1);   // the same unreachable-minus fix
       else if (action === 'reroll') this.reroll();
       else if (action === 'confirm' && this.pools.primary === 0 && this.pools.major === 0 && this.pools.minor === 0) this.state = 'reflexes';
       else if (action === 'back') { this.state = 'stats'; this.statCursor = 0; }
@@ -611,10 +1121,19 @@ export class ChargenFlow {
   /** DaggerfallClassSelectWindow_OnItemPicked (:70-96): picking a class
    *  does not close the picker, it opens the class's DESCRIPTION in a
    *  Yes/No box on TEXT.RSC 2100 + index. Yes closes both windows, No
-   *  drops the selection and returns to the list. */
+   *  drops the selection and returns to the list. U20a: the CUSTOM
+   *  row closes STRAIGHT to the builder - no description, no drums
+   *  (the :72-77 arm). */
   useClass() {
+    if (this.classIndex === this.careers.length) {
+      // :356-359 - the flag is raised HERE, at the row pick, before
+      // the builder is even constructed (and is never lowered again)
+      this.isCustom = true;
+      this._enterCustomClass();
+      return;
+    }
     this.classConfirm = this.describeClass?.(this.classIndex) ?? null;
-    if (!this.classConfirm) this._leaveClass();   // no description available: the pick stands
+    if (!this.classConfirm) this._acceptStandardClass();   // no description available: the pick stands
   }
 
   /** U14: the pure apply step - a hit from chargenHit -> the state it
@@ -636,15 +1155,82 @@ export class ChargenFlow {
       // window (CreateCharGenderSelect.cs:59-71 - both handlers end in
       // CloseWindow). The port made the click a selection and demanded
       // a separate confirm, which classic has no button for.
+      // U18: the close lands on the method screen (:305-316).
       this.gender = hit.setGender;
-      this.state = 'class';
+      this._enterClassMethod();
       return true;
     }
     if (hit.setStatCursor != null) { this.statCursor = hit.setStatCursor; return true; }
     if (hit.setSkillCursor != null) { this.skillCursor = hit.setSkillCursor; this._syncSkillSel(); return true; }
     if (hit.setClass != null) { this.classIndex = hit.setClass; return true; }
-    if (hit.confirmClass) { this.classConfirm = null; this._leaveClass(); return true; }
+    if (hit.confirmClass) { this.classConfirm = null; this._acceptStandardClass(); return true; }
     if (hit.cancelClass) { this.classConfirm = null; return true; }
+    // U18: the method screen's two buttons - the click sets AND closes,
+    // as both DFU handlers end in CloseWindow (:63-72).
+    if (hit.classMethod != null) {
+      if (hit.classMethod === 'questions') this._enterClassQuestions();
+      else this.state = 'class';
+      return true;
+    }
+    if (hit.answerClass != null) return this.answerClassQuestion(hit.answerClass);
+    if (hit.qScroll != null) { this.scrollQuestion(hit.qScroll); return true; }
+    if (hit.confirmQClass) { this._acceptQuestionClass(); return true; }
+    if (hit.cancelQClass) { this._cancelQuestionClass(); return true; }
+    // U20a: the custom-class builder's controls.
+    if (hit.customSkill != null) { this.customOpenSkillPick(hit.customSkill); return true; }
+    if (hit.customHp != null) { this.customHp(hit.customHp); return true; }
+    if (hit.customHelp) {
+      const c = this.custom;
+      c.sub = 'help'; c.pickCursor = 0; c.pickScroll = 0;
+      return true;
+    }
+    if (hit.customAdvantage || hit.customDisadvantage) {
+      // FLAGGED to U20b: CreateCharSpecialAdvantageWindow. The click
+      // answers loudly rather than dying silently.
+      console.warn('[chargen] special advantages/disadvantages pend U20b');
+      return true;
+    }
+    if (hit.customRep) {
+      // ReputationButton_OnMouseClick NEWS the window each time, and
+      // its `pointsToDistribute` is a field initialised to 0 -
+      // UpdatePointsToDistribute only runs on a BAR CLICK. So a
+      // re-opened window reads 0 until you touch a bar, and its exit
+      // gate reads that stale 0: classic really does let you leave an
+      // unbalanced ledger this way. Ported verbatim as a field.
+      this.custom.sub = 'rep';
+      this.custom.repPoints = 0;
+      return true;
+    }
+    if (hit.customExit) { this.customExit(); return true; }
+    if (hit.pickRow != null) return this.clickPickRow(hit.pickRow, hit.now ?? this._now());
+    if (hit.pickStep != null) {
+      const c = this.custom;
+      const n = c.sub === 'help' ? HELP_TOPICS.length : (c.pickItems?.length ?? 0);
+      // the picker's arrows are the ListBox's own SelectPrevious /
+      // SelectNext, which CLAMP (ListBox.cs:709-740) - not a wrap
+      c.pickCursor = Math.max(0, Math.min(n - 1, c.pickCursor + hit.pickStep));
+      this._scrollPick(n);
+      return true;
+    }
+    if (hit.repClick) {
+      const r = repClick(hit.repClick[0], hit.repClick[1]);
+      if (r) {
+        this.custom.reps[r.group] = r.value;
+        this.custom.repPoints = repPointsToDistribute(this.custom.reps);   // UpdatePointsToDistribute
+      }
+      return true;
+    }
+    if (hit.repExit) { this.customRepExit(); return true; }
+    if (hit.customStatCursor != null) { this.custom.statCursor = hit.customStatCursor; return true; }
+    if (hit.customStatStep != null) { this.customSpendStat(hit.customStatStep); return true; }
+    if (hit.customBox) { this.custom.box = null; return true; }
+    // U19: the bio-method buttons - both DFU handlers end in
+    // CloseWindow (:65-73), so the click chooses AND closes.
+    if (hit.bioMethod != null) {
+      if (hit.bioMethod === 'questions') this._enterBiography();
+      else this._autoBiography();
+      return true;
+    }
     if (hit.answerBiography != null) return this.answerBiography(hit.answerBiography);
     if (hit.setReflexes != null) { this.reflexes = hit.setReflexes; return true; }
     if (hit.restart) { this.restartSummary(); return true; }
@@ -669,7 +1255,11 @@ export class ChargenFlow {
 
   get done() { return this.state === 'done'; }
   result() {
-    return { name: this.name, gender: this.gender, race: this.race.key, raceId: this.race.id, faceIndex: this.faceIndex, careerIndex: this.classIndex, career: this.career, stats: this.stats, skills: this.skills, biographyEffects: this.biographyEffects, reflexes: this.reflexes, backStory: this.backStory };
+    return { name: this.name, gender: this.gender, race: this.race.key, raceId: this.race.id, faceIndex: this.faceIndex, careerIndex: this.classIndex, career: this.career, stats: this.stats, skills: this.skills, biographyEffects: this.biographyEffects, reflexes: this.reflexes, backStory: this.backStory,
+      // U20a: the custom document halves - isCustom drives the
+      // starting kit + the Spellsword spell rule, customReps the
+      // sGroupReputations seed (PlayerEntity.AssignCharacter :844-848)
+      isCustom: this.isCustom, customReps: this.customReps };
   }
 
   // ---- drawing ----
@@ -708,7 +1298,52 @@ export class ChargenFlow {
       line('(the portrait draws with the chargen art slice)', 6, dim);
     } else if (this.state === 'class') {
       title('CHOOSE YOUR CLASS');
-      this.careers.forEach((c, i) => line((i === this.classIndex ? '> ' : '  ') + c.name, i, i === this.classIndex ? hot : white));
+      for (let i = 0; i < this.classRowCount(); i++) {
+        line((i === this.classIndex ? '> ' : '  ') + this.classRowName(i), i, i === this.classIndex ? hot : white);
+      }
+    } else if (this.state === 'classMethod') {
+      title('CHOOSE YOUR CLASS METHOD');
+      line((this.methodCursor === 0 ? '> ' : '  ') + 'Select from a list', 1, this.methodCursor === 0 ? hot : white);
+      line((this.methodCursor === 1 ? '> ' : '  ') + 'Answer questions', 2, this.methodCursor === 1 ? hot : white);
+    } else if (this.state === 'customClass' && this.custom) {
+      const c = this.custom;
+      title('CUSTOM CLASS');
+      if (c.box) c.box.slice(0, 10).forEach((r, i) => line(r.text ?? r, i, white));
+      else if (c.sub === 'skillPick') {
+        c.pickItems.slice(c.pickScroll, c.pickScroll + 12).forEach((id, i) => {
+          const at = c.pickScroll + i;
+          line((at === c.pickCursor ? '> ' : '  ') + SKILL_NAMES[id], i, at === c.pickCursor ? hot : white);
+        });
+      } else if (c.sub === 'help') {
+        HELP_TOPICS.forEach(([label], i) => line((i === c.pickCursor ? '> ' : '  ') + label, i, i === c.pickCursor ? hot : white));
+      } else if (c.sub === 'rep') {
+        Object.entries(c.reps).forEach(([g, v], i) => line(`${g}: ${v}`, i, white));
+        line(`to distribute: ${-Object.values(c.reps).reduce((a, b) => a + b, 0)}`, 6, dim);
+      } else {
+        line(`Name: ${c.className}_`, 0, white);
+        line(`HP/level: ${c.hp}  difficulty: ${this.customDifficulty()}`, 1, white);
+        line(`Skills set: ${c.skills.filter((v) => v != null).length}/12`, 2, white);
+        line(`Stat pool: ${c.statPool}`, 3, white);
+        line('ENTER exit (gated), ESC cancel', 5, dim);
+      }
+    } else if (this.state === 'bioMethod') {
+      title('CHOOSE YOUR HISTORY METHOD');
+      if (this.biogRepBox) {
+        this.biogRepBox.slice(0, 10).forEach((r, i) => line(r.text ?? r, i, white));
+        line('any key to continue', 11, dim);
+      } else {
+        line((this.bioMethodCursor === 0 ? '> ' : '  ') + 'Have your history generated', 1, this.bioMethodCursor === 0 ? hot : white);
+        line((this.bioMethodCursor === 1 ? '> ' : '  ') + 'Answer questions', 2, this.bioMethodCursor === 1 ? hot : white);
+      }
+    } else if (this.state === 'classQuestions') {
+      title(`QUESTION ${Math.min(this.qAnswered + 1, 10)} OF 10`);
+      if (this.qConfirm) {
+        this.qConfirm.slice(0, 12).forEach((r, i) => line(r.text ?? r, i, white));
+        line('ENTER yes, ESC no', 13, dim);
+      } else if (this.qDisplay) {
+        this.qDisplay.lines.slice(0, 14).forEach((t, i) => line(t.trim(), i, white));
+        line('A / B / C to answer', 15, dim);
+      }
     } else if (this.state === 'stats') {
       title(`DISTRIBUTE  POOL: ${this.statPool}`);
       STAT_KEYS_ORDER.forEach((k, i) => line(

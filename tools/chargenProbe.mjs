@@ -20,12 +20,9 @@ const key = async (k) => { await page.keyboard.press(k); await waitFrames(2); };
 await page.waitForFunction(() => JSON.parse(window.__talk()).overlay === true, null, { timeout: 60000 });
 console.log('chargen overlay on boot:', JSON.parse(await page.evaluate(() => window.__talk())).overlay);
 await waitFrames(2);
-await page.screenshot({ path: '/home/claude/chargen-name.png' });
-// name
-for (const c of 'MAC') await key(c);
-await key('Enter');
-await waitFrames(2);
-await page.screenshot({ path: '/home/claude/chargen-race.png' });
+// U15: RACE is the first screen (the name comes after the biography);
+// this walk had rotted on the pre-U15 order - the click probe had
+// taken over - and is back on the classic sequence as of U18.
 // race: Breton -> Redguard -> Nord -> DarkElf -> HighElf -> WoodElf -> Khajiit
 // U10: the PROVINCE CLICK is verbatim - TAMRIEL2.IMG's palette index
 // at the click point IS the race id. Click Hammerfell and the flow
@@ -59,48 +56,54 @@ await key('Enter');            // YES -> gender
 await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-gender.png' });
 await key('ArrowDown');        // female
-await key('Enter');            // face
-for (let i = 0; i < 3; i++) await key('ArrowDown');
-await waitFrames(10);          // U10: the FACE CIF streams in
-await page.screenshot({ path: '/home/claude/chargen-face.png' });
-await key('Enter');            // class
+await key('Enter');            // U18: -> the class-METHOD screen
+await waitFrames(2);
+await page.screenshot({ path: '/home/claude/chargen-method.png' });   // U18: BUTN01I0
+await key('Enter');            // choose from a list (cursor 0) -> the class list
+for (let i = 0; i < 3; i++) await key('ArrowDown');   // -> Sorcerer's row
 await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-class.png' });   // U10: PICK00I0
-await key('Enter');            // -> BIOGRAPHY (S3e)
+await key('Enter');            // U17: Return USES the row - the description box opens
+await key('Enter');            // Yes -> U19's BIO-METHOD screen
 await waitFrames(2);
-// S3e: twelve real BIOG00T0.TXT questions. Shoot the first, then
-// answer every one with its first option.
+// U19: the GENERATE path is this probe's leg (the click probe walks
+// the manual questions): the BUTN02I0 method screen, then the
+// auto-answered biography with its reputation box.
 const biog = async () => JSON.parse(await page.evaluate(() => {
   const f = window.__chargenFlow?.();
-  return JSON.stringify(f ? { state: f.state, q: f.biogQuestionIndex, text: f.biogQuestion?.()?.text ?? null,
-    answers: f.biogQuestion?.()?.answers?.map((a) => a.text) ?? [], effects: f.biographyEffects.length } : null);
+  return JSON.stringify(f ? { state: f.state, q: f.biogQuestionIndex, effects: f.biographyEffects.length } : null);
 }));
 let b = await biog();
-console.log('biography opened:', JSON.stringify(b));
-if (b?.state !== 'biography') { console.log('BIOGRAPHY SCREEN DID NOT OPEN', JSON.stringify(b)); process.exit(1); }
-if (!b.text?.[0] || !b.answers.length) { console.log('BIOGRAPHY QUESTION EMPTY'); process.exit(1); }
-await page.screenshot({ path: '/home/claude/chargen-biography.png' });
-for (let i = 0; i < 12; i++) {
-  const cur = await biog();
-  if (cur.state !== 'biography') break;
-  await key('Enter');          // the cursor sits on the first answer
-}
-// U13: the last answer pops the REPUTATION box (TEXT.RSC 35) and
-// composes the backstory; any key closes it.
+console.log('bio-method opened:', JSON.stringify(b));
+if (b?.state !== 'bioMethod') { console.log('BIO-METHOD SCREEN DID NOT OPEN', JSON.stringify(b)); process.exit(1); }
+await page.screenshot({ path: '/home/claude/chargen-biomethod.png' });   // U19: BUTN02I0
+await key('Enter');            // cursor 0 = have your history GENERATED
+await waitFrames(2);
+// the auto path answers all twelve and pops the REPUTATION box
+// (TEXT.RSC 35) over the method screen; any key closes it.
 const rep = JSON.parse(await page.evaluate(() => {
   const f = window.__chargenFlow?.();
-  return JSON.stringify({ box: f?.biogRepBox?.map((r) => r.text) ?? null, story: f?.backStory?.length ?? 0, changes: f?.repChanges ?? null });
+  return JSON.stringify({ state: f?.state, box: f?.biogRepBox?.map((r) => r.text) ?? null, story: f?.backStory?.length ?? 0, changes: f?.repChanges ?? null });
 }));
 console.log('reputation box:', JSON.stringify(rep.box?.slice(0, 3)), 'changes', JSON.stringify(rep.changes), 'backstory rows', rep.story);
+if (rep.state !== 'bioMethod') { console.log('THE REP BOX SHOULD SHOW OVER THE METHOD SCREEN', rep.state); process.exit(1); }
 if (!rep.box?.length) { console.log('REPUTATION BOX DID NOT OPEN'); process.exit(1); }
 if (!rep.story) { console.log('BACKSTORY NOT COMPOSED'); process.exit(1); }
 await page.screenshot({ path: '/home/claude/chargen-repbox.png' });
-await key('Enter');            // close the box -> stats
+await key('Enter');            // close the box -> the NAME screen (U15 order)
 const after = await biog();
-console.log('after the twelve questions:', JSON.stringify({ state: after.state, effects: after.effects }));
-if (after.state !== 'stats') { console.log('BIOGRAPHY DID NOT COMPLETE', JSON.stringify(after)); process.exit(1); }
-if (after.effects < 12) { console.log('BIOGRAPHY COLLECTED NO EFFECTS', after.effects); process.exit(1); }
+console.log('after the generated biography:', JSON.stringify({ state: after.state, effects: after.effects }));
+if (after.state !== 'name') { console.log('GENERATED BIOGRAPHY DID NOT COMPLETE', JSON.stringify(after)); process.exit(1); }
+if (after.effects < 12) { console.log('GENERATED BIOGRAPHY COLLECTED NO EFFECTS', after.effects); process.exit(1); }
 await waitFrames(2);
+// the name, typed as classic types it
+await page.screenshot({ path: '/home/claude/chargen-name.png' });
+for (const c of 'MAC') await key(c);
+await key('Enter');            // -> face
+for (let i = 0; i < 3; i++) await key('ArrowDown');
+await waitFrames(10);          // U10: the FACE CIF streams in
+await page.screenshot({ path: '/home/claude/chargen-face.png' });
+await key('Enter');            // -> stats
 await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-stats.png' });   // U10: CHAR02I0
 // spend the stat pool, then each skill pool
@@ -119,7 +122,10 @@ await key('ArrowUp'); await key('ArrowUp');   // Average -> VeryHigh
 const reflexAfter = await page.evaluate(() => window.__chargenFlow?.()?.reflexes ?? null);
 console.log('reflexes:', reflexBefore, '->', reflexAfter);
 if (reflexBefore !== 2 || reflexAfter !== 0) { console.log('REFLEX PICKER DID NOT MOVE'); process.exit(1); }
-await key('Enter');            // -> done
+await key('Enter');            // -> U16's SUMMARY
+await waitFrames(2);
+await page.screenshot({ path: '/home/claude/chargen-summary.png' });
+await key('Enter');            // the summary's OK -> done
 await waitFrames(4);
 const e = await page.evaluate(() => {
   const p = window.__playerEntity;
@@ -183,7 +189,12 @@ const bio = await page.evaluate(() => {
     poison: p.biographyResistPoisonMod ?? 0, skillSum: (p.skills ?? []).reduce((a, b) => a + b, 0) };
 });
 console.log('biography on the entity:', JSON.stringify(bio));
-if (!bio.rep.some((v) => v !== 0)) { console.log('BIOGRAPHY REPUTATION NEVER LANDED', JSON.stringify(bio.rep)); process.exit(1); }
+// U19: the answers are RANDOM now (the generate path), so the pin is
+// the run's OWN digested totals landing on the entity, not a fixed
+// first-answer vector.
+if (JSON.stringify(bio.rep.slice(0, 5)) !== JSON.stringify(rep.changes)) {
+  console.log('BIOGRAPHY REPUTATION DID NOT LAND', JSON.stringify(bio.rep.slice(0, 5)), 'vs', JSON.stringify(rep.changes)); process.exit(1);
+}
 // U13: the reflex pick must reach the entity - both consumers (the
 // EnemyAttack melee timer and the monster multi-attack gate) read it.
 const reflexOnEntity = await page.evaluate(() => window.__playerEntity.reflexes);

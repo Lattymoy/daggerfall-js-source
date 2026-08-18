@@ -13,6 +13,14 @@ export const SKILLS = Object.freeze({
   CriticalStrike: 34,
 });
 export const SKILL_COUNT = 35;
+
+/** DFCareer.MagicSkills - the six schools. One home: the custom-class
+ *  builder's Spellsword rule (U20a) and SetEnemyCareer's flat magic
+ *  skill (enemySpells) had grown byte-identical private copies. */
+export const MAGIC_SKILLS = Object.freeze([
+  SKILLS.Destruction, SKILLS.Restoration, SKILLS.Illusion,
+  SKILLS.Alteration, SKILLS.Thaumaturgy, SKILLS.Mysticism,
+]);
 /** The enum KEYS, index-ordered (the enum inverted once). Code
  *  identity - not what a window prints. */
 export const SKILL_KEYS = Object.freeze(Object.entries(SKILLS).reduce((a, [k, v]) => { a[v] = k; return a; }, new Array(SKILL_COUNT)));

@@ -18,9 +18,10 @@ const CAREER = {
   minorSkills: [SKILLS.Medical, SKILLS.ShortBlade, SKILLS.BluntWeapon, SKILLS.Dragonish, SKILLS.Daedric, SKILLS.Dodging],
 };
 const flow = () => new ChargenFlow([{ name: 'Mage', career: CAREER }], () => 0);
-/** race -> gender -> class -> name -> face -> stats -> skills -> reflexes -> summary */
+/** race -> gender -> U18's method -> class -> name -> face -> stats
+ *  -> skills -> reflexes -> summary */
 function toSummary(f = flow()) {
-  f.input('confirm'); f.input('confirm'); f.input('confirm');   // -> name
+  f.input('confirm'); f.input('confirm'); f.input('confirm'); f.input('confirm');   // -> name
   f.name = 'Vanus';
   f.input('confirm');                                           // -> face
   f.input('confirm');                                           // -> stats
@@ -101,7 +102,8 @@ test('U16: RESTART cannot double-apply the biography', () => {
   // effects still in the list.
   const f = flow();
   f.biogFor = () => ({ questions: [{ text: 'Q1', answers: [{ effects: [{ type: 'gold', amount: 100 }] }] }] });
-  f.input('confirm'); f.input('confirm'); f.input('confirm');   // -> biography
+  f.input('confirm'); f.input('confirm'); f.input('confirm'); f.input('confirm');   // -> U19's bio-method screen
+  f.input('down'); f.input('confirm');                                              // answer questions -> biography
   assert.equal(f.state, 'biography');
   f.answerBiography(0);
   assert.equal(f.biographyEffects.length, 1);
@@ -109,7 +111,8 @@ test('U16: RESTART cannot double-apply the biography', () => {
   f.state = 'summary';
   f.restartSummary();
   assert.equal(f.state, 'race');
-  f.input('confirm'); f.input('confirm'); f.input('confirm');   // -> biography again
+  f.input('confirm'); f.input('confirm'); f.input('confirm'); f.input('confirm');   // -> the bio-method screen again
+  f.input('down'); f.input('confirm');                                              // -> biography again
   assert.equal(f.state, 'biography');
   assert.deepEqual(f.biographyEffects, [], 'the previous run\'s effects are gone');
   f.answerBiography(0);

@@ -127,7 +127,8 @@ function walkChargen(onDone) {
   // U15: the CLASSIC ORDER - race, gender, class, biography, name,
   // face, stats, skills, reflexes.
   key('Enter');                       // race (Breton) -> gender
-  key('Enter');                       // gender (male) -> class
+  key('Enter');                       // gender (male) -> U18's class method
+  key('Enter');                       // method (choose from a list) -> class
   key('Enter');                       // class -> (no biog set) name
   for (const c of 'KeyM KeyA KeyC'.split(' ')) w.input(c);
   key('Enter');                       // name -> face

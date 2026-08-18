@@ -15,6 +15,8 @@
 // rather than a second mapping of its own.
 
 import { ClassFile } from '../formats/classFile.js';
+import { TextRsc } from '../formats/textRsc.js';   // U18: the class questions ride TEXT.RSC 9000
+import { parseQuestionLibrary } from './classQuestions.js';   // U18
 import { ChargenFlow } from '../ui/chargen.js';
 import { applyCharacter, createCharacter, startingSpells, CLASS_CAREERS } from './chargen.js';
 import { overlayAction } from '../ui/input.js';
@@ -22,6 +24,8 @@ import { assignStartingGear } from './startingGear.js';   // S3d
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { parseBiog, biogFileName } from '../formats/biogFile.js';   // S3e
 import { applyBiographyEffects } from './biography.js';   // S3e
+import { customSpellSetIndex } from './customClass.js';   // U20a
+import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // U20a
 
 /** SPELLS.STD as an index -> spell map. AUDIT 17f: the exterior
  *  hosts ran chargen without one and called finishChargen with no
@@ -62,6 +66,22 @@ export async function loadBiog(fetchBytes, classIndex) {
   }
 }
 
+/** U18: the class-questions data - TEXT.RSC 9000's forty questions
+ *  and CLASSES.DAT's results table. Null halves are LOUD and skip the
+ *  questions path (the method screen's questions arm falls to the
+ *  list); DFU throws on both. */
+export async function loadClassQuestionData(fetchBytes) {
+  let questionLibrary = null, classesData = null;
+  try {
+    questionLibrary = parseQuestionLibrary(new TextRsc().load(await fetchBytes('TEXT.RSC')));
+    if (!questionLibrary) console.warn('[chargen] TEXT.RSC has no record 9000; the class questions are skipped');
+  } catch (e) { console.warn('[chargen] TEXT.RSC unavailable; the class questions are skipped', e); }
+  try {
+    classesData = await fetchBytes('CLASSES.DAT');
+  } catch (e) { console.warn('[chargen] CLASSES.DAT unavailable; the class questions are skipped', e); }
+  return { questionLibrary, classesData };
+}
+
 /** The 18 classic careers (CLASS00..17.CFG). */
 export async function loadCareers(fetchBytes) {
   const careers = [];
@@ -94,6 +114,38 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   return playerEntity;
 }
 
+/** U20a follow-up / THE ONE SEAM: everything a NEW character gets
+ *  besides its rolled career - the starting spellbook, the starting
+ *  kit and the custom reputations. finishChargen and the hosts'
+ *  font-less fallback both come through here, because the dungeon
+ *  fallback had hand-rolled its own copy and so silently dropped
+ *  every field the flow grew (17f found that shape for the
+ *  spellbook, 17h for the biography, and it had regrown for U20a's
+ *  isCustom and reputations).
+ *
+ *  - spells: SetStartingSpells (StartGameBehaviour.cs:802-826) - a
+ *    CUSTOM class takes the Spellsword set only with a magic primary
+ *    or major, a standard one takes its own class set.
+ *  - the kit: AssignStartingGear runs ONCE, at creation; the bag is
+ *    cleared first so an interim seed leaves no stray dagger.
+ *  - the reputations: PlayerEntity.AssignCharacter (:844-848) seeds
+ *    the five social groups BEFORE any biography effect adds to them. */
+export function applyCreationExtras(playerEntity, result, spellsByIndex = null, { rolls = Math.random } = {}) {
+  if (spellsByIndex) {
+    const setIndex = result.isCustom ? customSpellSetIndex(result.career) : result.careerIndex;
+    playerEntity.spells = setIndex == null ? [] : startingSpells(setIndex, spellsByIndex);
+  }
+  playerEntity.items = [];
+  playerEntity.equip = null;
+  playerEntity.armorValues = null;
+  assignStartingGear(playerEntity, { classIndex: result.careerIndex, isCustom: result.isCustom ?? false, rolls });
+  if (result.customReps) {
+    if (!playerEntity.sGroupReputations) playerEntity.sGroupReputations = new Array(SOCIAL_GROUP_COUNT).fill(0);
+    for (let i = 0; i < result.customReps.length; i++) playerEntity.sGroupReputations[i] = result.customReps[i];
+  }
+  return playerEntity;
+}
+
 /** Apply a finished flow result onto the entity: the career/stat/
  *  skill derivations (applyCharacter), the starting spellbook, and
  *  the IDENTITY the paperdoll reads. */
@@ -104,15 +156,7 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   // monster multi-attack gate (50 - 10*(reflexes-2)) - reading a
   // hardcoded Average until the screen existed.
   if (result.reflexes != null) playerEntity.reflexes = result.reflexes;
-  if (spellsByIndex) playerEntity.spells = startingSpells(result.careerIndex, spellsByIndex);
-  // S3d: the real starting kit replaces the INTERIM dagger seed -
-  // AssignStartingGear runs ONCE, at creation, exactly as DFU does.
-  // Anything the interim seed put in the bag is cleared first so a
-  // host that seeded at boot does not leave a stray dagger.
-  playerEntity.items = [];
-  playerEntity.equip = null;
-  playerEntity.armorValues = null;
-  assignStartingGear(playerEntity, { classIndex: result.careerIndex, rolls });
+  applyCreationExtras(playerEntity, result, spellsByIndex, { rolls });
   // S3e: the BIOGRAPHY effects land LAST, exactly where DFU applies
   // them (StartGameBehaviour.cs:416 - at game start, over the built
   // character), so a skill bonus rides on top of the distributed value
@@ -136,11 +180,14 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
  *  Returns { flow, careers, spellsByIndex, biogs } - the flow ready to
  *  run, plus the tables a host needs for finishChargen. */
 export async function createChargenFlow(fetchBytes, { rolls = Math.random } = {}) {
-  const [careers, spellsByIndex, biogs] = await Promise.all([
+  const [careers, spellsByIndex, biogs, questionData] = await Promise.all([
     loadCareers(fetchBytes), loadSpellIndex(fetchBytes), loadBiogs(fetchBytes),
+    loadClassQuestionData(fetchBytes),   // U18
   ]);
   const flow = new ChargenFlow(careers, rolls);
   flow.biogFor = (i) => biogs[i] ?? null;   // S3e
+  flow.questionLibrary = questionData.questionLibrary;   // U18
+  flow.classesData = questionData.classesData;
   return { flow, careers, spellsByIndex, biogs };
 }
 

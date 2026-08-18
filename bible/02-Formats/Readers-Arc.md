@@ -53,3 +53,9 @@ Suite: 52 tests, all green with and without ARENA2_PATH. Next per Port-Doctrine 
 Post-close addition: SKY??.DAT reader (`src/formats/skyFile.js`) shipped
 under Rendering-Arc R4 with its own corpus gate - see
 07-Rendering/Rendering-Arc.md.
+
+Post-close addition: GFX reader (`src/formats/gfxFile.js`, GfxFile.cs
+verbatim) shipped under UI-Arc U18 with its own corpus gate. The only
+GFX files in the game are SCRL00I0/SCRL01I0 - 8 parchment frames each,
+320x80, TEXTURE-style RLE rows behind a per-row offset table - used
+exclusively by the class-questions screen. See 10-UI/UI-Arc.md.

@@ -18,7 +18,7 @@ const CAREERS = ['Mage', 'Spellsword', 'Battlemage'].map((n) => ({ name: n, care
 /** at the class screen, with a description source attached */
 function atClass({ describe = (i) => [{ text: `Class ${i} description`, center: false }] } = {}) {
   const f = new ChargenFlow(CAREERS, () => 0);
-  f.input('confirm'); f.input('confirm');   // race -> gender -> class
+  f.input('confirm'); f.input('confirm'); f.input('confirm');   // race -> gender -> U18's method -> class
   f.describeClass = describe;
   return f;
 }

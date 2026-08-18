@@ -512,3 +512,21 @@ human-closeup vs rec484-19, the standing probe now close-ups a class
 foe every run.
 
 Suite 417/91. ARENA2 green, probes green.
+
+## AUDIT 17k hotfix (2026-08-18): the fist crash
+
+Mac's report: attacking with a fist crashed the game. Bare hands are a
+NULL weapon since U8h bound the rig to `equip.slots[RightHand]` - and
+the DEFAULT state, because starting weapons land in the bag unequipped
+(DFU adds them via AddItem, never equips) - and the DUNGEON host read
+`WEAPON_SKILL[playerWeapon.weapon.name]` raw at both its swing sites
+where the exterior hosts guarded with `?.`: the strike-frame bow test
+threw on EVERY bare-handed swing (reproduced live at
+dungeonContext.js:1488 by tools/fistProbe.mjs), the melee tally on
+every resolved fist hit. Fixed with the rule enforced, not remembered:
+a source sweep over src/scenes fails on any unguarded
+`playerWeapon.weapon.` deref, the bare-handed path is driven
+functionally (ready without the draw sound, swing, HandToHand damage),
+and WEAPON10.CIF - the fist art, now the default draw - is
+corpus-pinned against every MELEE_ANIMS row. The fourth instance of
+the dungeon-host-falls-behind shape; see Home.md Audits, 17k.

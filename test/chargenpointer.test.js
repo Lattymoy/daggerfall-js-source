@@ -4,7 +4,7 @@
 // keyboard-only.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MENU_BACKDROP, chargenHit, biogButtonRect, reflexRowRect, RECTS } from '../src/ui/chargenArt.js';
+import { MENU_BACKDROP, chargenHit, biogButtonRect, reflexRowRect, RECTS, METHOD_PANEL, METHOD_CHOOSE_CLASS, METHOD_CHOOSE_QUESTIONS, BIO_METHOD_PANEL, BIO_CHOOSE_GENERATE, BIO_CHOOSE_QUESTIONS, CUSTOM_EXIT, CUSTOM_HP_UP, CUSTOM_HP_DOWN, CUSTOM_HELP, CUSTOM_REP, CUSTOM_SKILL_RECTS, QSCROLL_Y, QSCROLL_H } from '../src/ui/chargenArt.js';
 import { ChargenFlow } from '../src/ui/chargen.js';
 import { SKILLS } from '../src/systems/skills.js';
 
@@ -35,7 +35,7 @@ test('U14: the gender BUTTON sets and closes, as classic has no OK', () => {
   f._genderBox = { buttons: [{ button: 6, rect: [10, 10, 32, 16] }, { button: 7, rect: [80, 10, 32, 16] }] };
   assert.ok(f.applyHit(chargenHit(f, 85, 15)), 'the Female button is live');
   assert.equal(f.gender, 'female');
-  assert.equal(f.state, 'class', 'and it CLOSED the box (U15: class is next in the classic order)');
+  assert.equal(f.state, 'classMethod', 'and it CLOSED the box (U18: the class-method screen is next in the classic order)');
 });
 
 test('U14: EVERY chargen screen answers a click somewhere', () => {
@@ -51,6 +51,23 @@ test('U14: EVERY chargen screen answers a click somewhere', () => {
       [RECTS.faceNext[0] + 2, RECTS.faceNext[1] + 2],
       [RECTS.ok[0] + 2, RECTS.ok[1] + 2]],
     biography: [[biogButtonRect(0)[0] + 2, biogButtonRect(0)[1] + 2]],
+    // U18: the method screen's two buttons and the questions screen's
+    // scroll margins + three answer rows
+    classMethod: [[METHOD_PANEL[0] + METHOD_CHOOSE_CLASS[0] + 2, METHOD_PANEL[1] + METHOD_CHOOSE_CLASS[1] + 2],
+      [METHOD_PANEL[0] + METHOD_CHOOSE_QUESTIONS[0] + 2, METHOD_PANEL[1] + METHOD_CHOOSE_QUESTIONS[1] + 2]],
+    classQuestions: [[160, QSCROLL_Y + 2], [160, QSCROLL_Y + QSCROLL_H - 2],
+      [160, QSCROLL_Y + 16 + 7 + 3], [160, QSCROLL_Y + 16 + 14 + 3], [160, QSCROLL_Y + 16 + 21 + 3]],
+    // U19: the bio-method screen's two buttons
+    bioMethod: [[BIO_METHOD_PANEL[0] + BIO_CHOOSE_GENERATE[0] + 2, BIO_METHOD_PANEL[1] + BIO_CHOOSE_GENERATE[1] + 2],
+      [BIO_METHOD_PANEL[0] + BIO_CHOOSE_QUESTIONS[0] + 2, BIO_METHOD_PANEL[1] + BIO_CHOOSE_QUESTIONS[1] + 2]],
+    // U20a: the builder - exit, both HP arrows, the three side
+    // buttons that are live in this slice, all twelve skill rows,
+    // and the freeEdit rollout
+    customClass: [[CUSTOM_EXIT[0] + 2, CUSTOM_EXIT[1] + 2],
+      [CUSTOM_HP_UP[0] + 2, CUSTOM_HP_UP[1] + 2], [CUSTOM_HP_DOWN[0] + 2, CUSTOM_HP_DOWN[1] + 2],
+      [CUSTOM_HELP[0] + 2, CUSTOM_HELP[1] + 2], [CUSTOM_REP[0] + 2, CUSTOM_REP[1] + 2],
+      ...CUSTOM_SKILL_RECTS.map((r) => [r[0] + 2, r[1] + 2]),
+      [20, 22], [51, 24]],
     stats: [[RECTS.reroll[0] + 2, RECTS.reroll[1] + 2],
       [RECTS.ok[0] + 2, RECTS.ok[1] + 2], [20, 22]],
     skills: [[100, 34], [RECTS.ok[0] + 2, RECTS.ok[1] + 2]],
@@ -64,6 +81,8 @@ test('U14: EVERY chargen screen answers a click somewhere', () => {
     if (state === 'stats') f._enterStats();
     if (state === 'skills') f._enterSkills();
     if (state === 'biography') f.biogFor = () => ({ questions: [{ text: ['q', ''], answers: [{ text: 'a', effects: [] }] }] });
+    if (state === 'classQuestions') f.qDisplay = { lines: ['q', ' a) x', ' b) y', ' c) z'], aIndex: 1, bIndex: 2, cIndex: 3 };
+    if (state === 'customClass') f._enterCustomClass();
     // EVERY listed control must answer, not merely one of them - a
     // screen whose OK button works while its own controls are dead is
     // still keyboard-only in practice.

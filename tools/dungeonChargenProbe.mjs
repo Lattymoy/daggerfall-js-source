@@ -24,11 +24,17 @@ const state = JSON.parse(await page.evaluate(() => {
     careers: f.careers?.length ?? 0,
     hasBiog: typeof f.biogFor === 'function' && !!f.biogFor(0)?.questions?.length,
     biogQuestions: f.biogFor?.(0)?.questions?.length ?? 0,
+    classQuestions: f.questionLibrary?.length ?? 0,   // U18
+    hasClassesDat: !!f.classesData?.length,           // U18
   });
 }));
 console.log('dungeon chargen flow:', JSON.stringify(state));
 if (state.careers !== 18) { console.log('CAREERS MISSING', state.careers); process.exit(1); }
 if (!state.hasBiog) { console.log('THE DUNGEON HOST STILL HAS NO BIOGRAPHY'); process.exit(1); }
 if (state.biogQuestions !== 12) { console.log('BIOGRAPHY INCOMPLETE', state.biogQuestions); process.exit(1); }
+// U18: the class-questions data rides createChargenFlow, so the host
+// that kept falling behind gets it structurally
+if (state.classQuestions !== 40) { console.log('CLASS QUESTIONS MISSING', state.classQuestions); process.exit(1); }
+if (!state.hasClassesDat) { console.log('CLASSES.DAT MISSING'); process.exit(1); }
 console.log('DUNGEON CHARGEN OK');
 await browser.close(); await server.close();

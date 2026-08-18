@@ -12,6 +12,9 @@
 //           DaggerfallMessageBox - ui/messageBox.js draws it)
 //   face    CreateCharFaceSelect.cs:31,61 + FacePicker.cs:55-68
 //   class   DaggerfallListPickerWindow.cs:31,82-98   PICK00I0.IMG
+//   method  CreateCharChooseClassGen.cs:24-31        BUTN01I0.IMG (U18)
+//   questions CreateCharClassQuestions.cs:32-51      CHGN00I0.IMG +
+//           SCRL00I0/SCRL01I0.GFX (U18)
 //   stats   CreateCharAddBonusStats.cs:32,88-124 + StatsRollout.cs
 //   skills  CreateCharAddBonusSkills.cs:32,91-95 + SkillsRollout.cs
 //   spinners UpDownSpinner.cs:25,96-116 / LeftRightSpinner.cs:30,76-96
@@ -23,23 +26,26 @@
 // verbatim TEXT.RSC 2200 prompt with Male/Female, and the race's
 // DescriptionID with Yes/No).
 //
-// FLAGGED loud: the CUSTOM-CLASS path has no screen yet
-// (CreateCharCustomClass) - the starting-gear law already handles
-// `isCustom`, so only the builder window is missing. The port's
-// overall wizard ORDER also still differs from DFU's: we ask the name
-// first and the face early, where classic asks race, gender, class,
-// biography, name, face. Both are their own slices.
+// FLAGGED loud: the SPECIAL ADVANTAGES/DISADVANTAGES window
+// (CreateCharSpecialAdvantageWindow) pends U20b - the builder's own
+// two buttons answer loudly until it lands, and the difficulty
+// tally's advantageAdjust/disadvantageAdjust terms stay 0.
+// (The CUSTOM-CLASS flag this note carried retired with U20a - the
+// builder ships; the sentence went with it.)
 
 import { ImgFile } from '../formats/imgFile.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
+import { GfxFile } from '../formats/gfxFile.js';   // U18: the question scroll
+import { DFPalette } from '../formats/dfPalette.js';   // U18: CHGN00I0's own palette
 import { TextRsc } from '../formats/textRsc.js';   // U11: the race description
 import { generateBackstory } from '../systems/biography.js';   // U13
 import { bitmapToColor32 } from './hud.js';
 import { drawImg, drawRect, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR, SCREEN_DIM } from './nativePanel.js';
-import { measureText } from './text.js';   // U15: the RANDOM button label
+import { drawText, measureText } from './text.js';   // U15: the RANDOM button label; U18: the black scroll text
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U11
 import { FACES_PER_RACE, raceById, raceArt } from '../systems/races.js';
 import { SKILL_NAMES } from '../systems/skills.js';
+import { daggerY, REP_GREEN, REP_RED, REP_EXIT, REP_BAR_TOP, REP_BAR_BOTTOM, REP_GROUPS, HELP_TOPICS } from '../systems/customClass.js';   // U20a
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 
 // DaggerfallUI.cs:52-62 - the colours these windows actually use.
@@ -93,9 +99,82 @@ const CLASS_DESCRIPTION_TEXT_ID = 2100;
  *  row, only inside the same component. */
 export const DOUBLE_CLICK_DELAY_MS = 300;
 
+// U18 - the class-METHOD screen (CreateCharChooseClassGen.cs). The
+// window is BUTN01I0.IMG centred on the native panel (:49-51,
+// Center/Middle); the file is headerless 26496 bytes = 184x144
+// (ImgFile's exact-length table), so the panel sits at (68,28). The
+// two buttons are BAKED in the art; only the hit rects are DFU's.
+export const METHOD_PANEL = Object.freeze([68, 28, 184, 144]);
+export const METHOD_CHOOSE_CLASS = Object.freeze([8, 41, 167, 43]);       // chooseClassRect (:30)
+export const METHOD_CHOOSE_QUESTIONS = Object.freeze([8, 100, 167, 34]);  // chooseQuestionsRect (:31)
+
+/** DaggerfallListPickerWindow's pickerPanel is Center/Middle on the
+ *  native panel and PICK00I0.IMG decodes 200x128, so it sits at
+ *  (60,36). U20a made this a CONSTANT, as the U18/U19 panels already
+ *  were: the list hit used to derive the origin from the loaded
+ *  image, which made it the one hit path in the arc that needed art -
+ *  and so the one the pins could not drive. Draw and hit share it. */
+export const PICK_PANEL = Object.freeze([60, 36, 200, 128]);
+
+// U20a - the CUSTOM-CLASS BUILDER (CreateCharCustomClass.cs). The
+// window is CUST00I0.IMG full-screen; the difficulty dagger is
+// CUST08I0.IMG (24x9) at x 220 with its Y from the difficulty law;
+// the reputation window is CUST03I0.IMG centred. Every rect is DFU's
+// (:84-107 + CreateCharReputationWindow.cs:27,120-129).
+export const CUSTOM_SKILL_RECTS = Object.freeze([
+  [66, 31, 108, 8], [66, 41, 108, 8], [66, 51, 108, 8],
+  [66, 80, 108, 8], [66, 90, 108, 8], [66, 100, 108, 8],
+  [66, 129, 108, 8], [66, 139, 108, 8], [66, 149, 108, 8],
+  [66, 159, 108, 8], [66, 169, 108, 8], [66, 179, 108, 8],
+]);
+export const CUSTOM_HP_UP = Object.freeze([252, 46, 8, 10]);
+export const CUSTOM_HP_DOWN = Object.freeze([252, 57, 8, 10]);
+export const CUSTOM_HELP = Object.freeze([249, 74, 66, 22]);
+export const CUSTOM_ADVANTAGE = Object.freeze([249, 98, 66, 22]);
+export const CUSTOM_DISADVANTAGE = Object.freeze([249, 122, 66, 22]);
+export const CUSTOM_REP = Object.freeze([249, 146, 66, 22]);
+export const CUSTOM_EXIT = Object.freeze([263, 172, 38, 21]);
+export const CUSTOM_HP_LABEL = Object.freeze([285, 55]);
+export const CUSTOM_DAGGER_X = 220;
+/** The skill label sits at (3,2) inside its button (:227). */
+export const CUSTOM_SKILL_LABEL_OFF = Object.freeze([3, 2]);
+
+// U19 - the biography-METHOD screen (CreateCharChooseBio.cs). The
+// window is BUTN02I0.IMG centred on the native panel (:50-52,
+// Center/Middle); the file decodes 184x168, so the panel sits at
+// (68,16). Both buttons are BAKED in the art; the rects are DFU's.
+export const BIO_METHOD_PANEL = Object.freeze([68, 16, 184, 168]);
+export const BIO_CHOOSE_GENERATE = Object.freeze([8, 41, 167, 54]);       // chooseGenerateRect (:29)
+export const BIO_CHOOSE_QUESTIONS = Object.freeze([8, 113, 167, 46]);     // chooseQuestionsRect (:30)
+
+// U18 - the class QUESTIONS screen (CreateCharClassQuestions.cs).
+export const QSCROLL_Y = 120;           // questionScroll.Position (:121)
+export const QSCROLL_W = 320, QSCROLL_H = 80;   // the SCRL GFX header (always 320x80)
+export const QSCROLL_TEXT_OFFSET = 16;  // topTextOffset (:47)
+export const QSCROLL_TEXT_LEFT = 20;    // leftTextOffset (:46)
+export const QSCROLL_FRAMES = 16;       // SCRL00I0 + SCRL01I0, 8 frames each, one contiguous list (:103-118)
+/** The question label's row pitch - MultiFormatTextLabel stacks
+ *  TextLabels at the font's glyph height, FONT0003's fixedHeight 7
+ *  (the nativeTalk ROW_H law). */
+export const QUESTION_ROW_H = 7;
+/** The constellations' palette slots, in the flow's [warrior, rogue,
+ *  mage] weight order - warriorPaletteIndex 192, roguePaletteIndex
+ *  160, magePaletteIndex 128 (:48-50). */
+const CONSTELLATION_INDICES = Object.freeze([192, 160, 128]);
+/** questionLabel: TextColor = Color.black, ShadowPosition zero (:262-263). */
+const QUESTION_TEXT_COLOR = [0, 0, 0, 1];
+
 /** The rows a class-description box carries, or null. */
 export function classDescriptionLines(classIndex) {
   const rows = _art?.textRsc?.linesById(CLASS_DESCRIPTION_TEXT_ID + classIndex) ?? [];
+  return rows.length ? rows : null;
+}
+
+/** U20a: a bare TEXT.RSC record as box rows, or null - the builder's
+ *  refusal boxes (301/300/302/306), the rep gate (303) and the help
+ *  topics (2400-2407). */
+export function textRecordLines(id) {
+  const rows = _art?.textRsc?.linesById(id) ?? [];
   return rows.length ? rows : null;
 }
 
@@ -153,7 +232,7 @@ export const reflexRowRect = (i, origin = REFLEX_PICKER) =>
 export const CLASS_LIST_ROWS = 9;   // ListBox.cs:36 rowsDisplayed
 const LIST_ROWS = CLASS_LIST_ROWS, LIST_ROW_SPACING = 1;
 
-const IMG_NAMES = ['CHAR00I0.IMG', 'CHAR01I0.IMG', 'CHAR02I0.IMG', 'CHAR03I0.IMG', 'CHAR04I0.IMG', 'PICK00I0.IMG', 'TMAP00I0.IMG', 'CHAR02I1.IMG', 'CHAR03I1.IMG', 'BIOG00I0.IMG', 'CHAR05I0.IMG', 'CHAR05I1.IMG'];
+const IMG_NAMES = ['CHAR00I0.IMG', 'CHAR01I0.IMG', 'CHAR02I0.IMG', 'CHAR03I0.IMG', 'CHAR04I0.IMG', 'PICK00I0.IMG', 'TMAP00I0.IMG', 'CHAR02I1.IMG', 'CHAR03I1.IMG', 'BIOG00I0.IMG', 'CHAR05I0.IMG', 'CHAR05I1.IMG', 'BUTN01I0.IMG', 'BUTN02I0.IMG', 'CUST00I0.IMG', 'CUST08I0.IMG', 'CUST03I0.IMG'];
 
 let _art = null;          // { imgs: Map<name, {tex,w,h}>, picker: DFBitmap }
 let _faces = null;        // { key, tex[] } - the loaded race/gender face set
@@ -184,7 +263,38 @@ export async function preloadChargenArt(deps) {
     let textRsc = null;
     try { textRsc = new TextRsc().load(await deps.fetchBytes('TEXT.RSC')); }
     catch { console.warn('[chargen] TEXT.RSC unavailable; the race description box stays bare'); }
-    _art = { imgs, picker, textRsc };
+    // U18: the class-questions art in its own guard, so a missing GFX
+    // never costs the other screens their art. CHGN00I0 is PALETTIZED
+    // (its 768 palette bytes follow the image, x4 on load) and
+    // ImgFile._readPalette writes INTO the palette it was handed - so
+    // it gets its OWN DFPalette, never the shared ART_PAL. The scroll
+    // GFX files borrow that palette exactly as DFU assigns
+    // scrollFile.Palette = backgroundBitmap.Palette (:106-107).
+    let questions = null;
+    try {
+      const chgnPalette = new DFPalette();
+      const chgnImg = new ImgFile();
+      chgnImg.load(await deps.fetchBytes('CHGN00I0.IMG'), 'CHGN00I0.IMG', chgnPalette);
+      const chgnBmp = chgnImg.getDFBitmap();   // reads the embedded palette
+      const scroll = [];
+      for (const name of ['SCRL00I0.GFX', 'SCRL01I0.GFX']) {
+        const gfx = new GfxFile();
+        gfx.load(await deps.fetchBytes(name), name);
+        for (let i = 0; i < gfx.getFrameCount(); i++) {
+          const bmp = gfx.getDFBitmap(0, i);
+          scroll.push({ tex: deps.renderer.uploadTexture('img', `chargen:${name}:${i}`, bitmapToColor32(bmp, chgnPalette)), w: bmp.width, h: bmp.height });
+        }
+      }
+      // AUDIT 17k F1: the PRISTINE slot colours, captured at load. DFU
+      // constructs the window over a fresh ImgFile every time, so its
+      // re-entry palette is always the file's own; the port keeps ONE
+      // palette and must RESTORE these before drawing pristine, or a
+      // second run's un-answered screen re-uploads the LAST run's
+      // constellation blues under the 'pristine' key.
+      const pristine = [192, 160, 128].map((i) => chgnPalette.get(i));
+      questions = { bmp: chgnBmp, palette: chgnPalette, pristine, scroll, texKey: null, tex: null };
+    } catch (e) { console.warn('[chargen] CHGN00I0/SCRL0*I0 unavailable; the class questions keep the text panel', e); }
+    _art = { imgs, picker, textRsc, questions };
     _deps = deps;
   } catch (e) { console.warn('[chargen] CHAR0*/PICK00/TMAP00 art unavailable; the interim text panels stand in', e); }
 }
@@ -270,6 +380,10 @@ export function drawChargenNative(renderer, m, font, flow) {
   if (s === 'gender') return drawGender(renderer, m, font, flow);
   if (s === 'face') return drawFace(renderer, m, font, flow);
   if (s === 'class') return drawClass(renderer, m, font, flow);
+  if (s === 'classMethod') return drawClassMethod(renderer, m, font, flow);
+  if (s === 'classQuestions') return drawClassQuestions(renderer, m, font, flow);
+  if (s === 'bioMethod') return drawBioMethod(renderer, m, font, flow);
+  if (s === 'customClass') return drawCustomClass(renderer, m, font, flow);
   if (s === 'stats') return drawStats(renderer, m, font, flow);
   if (s === 'skills') return drawSkills(renderer, m, font, flow);
   if (s === 'biography') return drawBiography(renderer, m, font, flow);
@@ -381,7 +495,7 @@ function drawName(renderer, m, font, flow) {
  *  is why they were extracted rather than copied. */
 function drawSummary(renderer, m, font, flow) {
   drawImg(renderer, img('CHAR04I0.IMG'), m, 0, 0);
-  drawStatBlock(renderer, m, font, flow);
+  drawStatBlock(renderer, m, font, statView(flow));
   drawSkillBlock(renderer, m, font, flow);
   drawFaceBlock(renderer, m, flow);
   drawReflexBlock(renderer, m, flow, SUMMARY_REFLEX_ORIGIN);
@@ -471,6 +585,32 @@ function drawClassConfirm(renderer, m, font, flow) {
   drawMessageBox(renderer, m, font, box);
 }
 
+/** U20a: DaggerfallListPickerWindow's body over PICK00I0, extracted
+ *  from the class list so the builder's skill and help pickers share
+ *  it (ONE DFU MEMBER, ONE EXPORT). Draws the visible window from
+ *  `scroll`, the selected row in the selected colour; returns the
+ *  panel origin + row height for the caller's overlays.
+ *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
+ *  is verbatim and simple (VerticalScrollBar.cs:206-221) but the
+ *  thumb is three texture slices this port has not identified yet,
+ *  and inventing a colour would break the NATIVE-WINDOW RULE. The
+ *  rail and both arrows are baked into PICK00I0 and do draw. */
+function drawListPicker(renderer, m, font, names, scroll, selected) {
+  const [ox, oy] = PICK_PANEL;
+  drawImg(renderer, img('PICK00I0.IMG'), m, ox, oy);
+  const [lx, ly, , lh] = RECTS.pickList;
+  const h = rowH(font);
+  for (let i = 0; i < LIST_ROWS; i++) {
+    const idx = scroll + i;
+    if (idx >= names.length) break;
+    const y = ly + i * h;
+    if (y + h > ly + lh) break;
+    shadowText(renderer, font, names[idx], m, ox + lx, oy + y,
+      { color: idx === selected ? SELECTED_TEXT : DEFAULT_TEXT_COLOR, shadow: DEFAULT_SHADOW_COLOR });
+  }
+  return [ox, oy, h];
+}
+
 function drawClass(renderer, m, font, flow) {
   // U14: a DaggerfallPopupWindow is pushed OVER the previous window,
   // which keeps drawing beneath it - so the picker sits on the FACE
@@ -478,34 +618,195 @@ function drawClass(renderer, m, font, flow) {
   drawFace(renderer, m, font, flow);
   // DaggerfallUI.ScreenDimColor over that previous window.
   drawRect(renderer, m, 0, 0, 320, 200, SCREEN_DIM);
-  const pick = img('PICK00I0.IMG');
-  // pickerPanel is Center/Middle on the 320x200 native panel
-  const ox = Math.floor((320 - pick.w) / 2), oy = Math.floor((200 - pick.h) / 2);
-  drawImg(renderer, pick, m, ox, oy);
-  const [lx, ly, , lh] = RECTS.pickList;
-  const h = rowH(font);
   // AUDIT 17g F6: the scroll index is the LIST'S STATE, moved
   // minimally as the selection leaves the window (ListBox.cs:709-730)
-  // - not a centred window recomputed here every frame.
-  const first = flow.classScroll ?? 0;
+  // - not a centred window recomputed here every frame. U20a: the
+  // list's LAST row is Custom.
+  const names = Array.from({ length: flow.classRowCount() }, (_, i) => flow.classRowName(i));
+  const [, , h] = drawListPicker(renderer, m, font, names, flow.classScroll ?? 0, flow.classIndex);
   flow._classRowH = h;   // the hit path has no font (the _genderBox pattern)
-  // AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
-  // is verbatim and simple (VerticalScrollBar.cs:206-221 - height =
-  // rail * displayed/total floored at 10, y = scroll * (rail - height)
-  // / (total - displayed)) but the thumb is three texture slices this
-  // port has not identified yet, and inventing a colour would break
-  // the NATIVE-WINDOW RULE. The rail and both arrows are baked into
-  // PICK00I0 and do draw.
-  for (let i = 0; i < LIST_ROWS; i++) {
-    const c = flow.careers[first + i];
-    if (!c) break;
-    const y = ly + i * h;
-    if (y + h > ly + lh) break;
-    const on = first + i === flow.classIndex;
-    shadowText(renderer, font, c.name, m, ox + lx, oy + y,
-      { color: on ? SELECTED_TEXT : DEFAULT_TEXT_COLOR, shadow: DEFAULT_SHADOW_COLOR });
-  }
   drawClassConfirm(renderer, m, font, flow);
+  return true;
+}
+
+/** U18 - CreateCharChooseClassGen: BUTN01I0.IMG centred on the native
+ *  panel (:49-51), its two buttons BAKED in the art. A
+ *  DaggerfallPopupWindow draws over its previous window - here the
+ *  race map (the wizard constructs it with createCharRaceSelectWindow,
+ *  DaggerfallStartNewGameWizard.cs:144) - dimmed, the U14 popup law. */
+function drawClassMethod(renderer, m, font, flow) {
+  drawImg(renderer, img('TMAP00I0.IMG'), m, 0, 0);
+  drawRect(renderer, m, 0, 0, 320, 200, SCREEN_DIM);
+  const [px, py, pw, ph] = METHOD_PANEL;
+  drawImg(renderer, img('BUTN01I0.IMG'), m, px, py);
+  // the keyboard cursor's legibility line under the panel (the gender
+  // screen's seam) - classic's two buttons are mouse-only
+  shadowText(renderer, font, flow.methodCursor === 0 ? 'Choose from a list' : 'Answer ten questions', m,
+    px, py + ph + 4, { align: 'center', w: pw, color: SELECTED_TEXT });
+  return true;
+}
+
+/** U20a - CreateCharReputationWindow: CUST03I0.IMG (168x189) centred,
+ *  so the panel sits at (76,5). The five columns' bars are flat
+ *  COLOUR panels 5 wide (:37-41,203-232): green grows UP from the
+ *  middle line for positive rep, red DOWN from middle+1 for negative;
+ *  the per-column value labels sit at y143, the balance at (64,173). */
+// Center/Middle of a 168x189 image on the 320x200 panel: x is exactly
+// 76, and y is DFU's own 5.5 - Unity's alignment is float math and
+// the panel really does land on the half pixel (the mapping carries
+// it: m.oy + 5.5 * scale).
+const REP_PANEL = Object.freeze([76, 5.5, 168, 189]);
+const REP_COLUMN_X = Object.freeze([3, 36, 69, 102, 135]);        // merchants..underworld (:123-127)
+const REP_LABEL_X = Object.freeze([18, 50, 82, 114, 146]);        // :131-135
+// ONE DFU MEMBER, ONE EXPORT: the five-group ORDER is REP_GROUPS,
+// declared once in the laws module - this file imports it.
+
+function drawCustomRep(renderer, m, font, flow) {
+  const [px, py] = REP_PANEL;
+  drawImg(renderer, img('CUST03I0.IMG'), m, px, py);
+  const reps = flow.custom.reps;
+  REP_GROUPS.forEach((g, i) => {
+    const v = reps[g] ?? 0;
+    if (v > 0) {
+      // greenBar.Position.y = 76 - v*5, height = 76 - position
+      drawRect(renderer, m, px + REP_COLUMN_X[i], py + 76 - v * 5, 5, v * 5, REP_GREEN);
+    } else if (v < 0) {
+      // redBar sits at y77 and grows by -v*5
+      drawRect(renderer, m, px + REP_COLUMN_X[i], py + 77, 5, -v * 5, REP_RED);
+    }
+    shadowText(renderer, font, String(v), m, px + REP_LABEL_X[i], py + 143);
+  });
+  // distributePtsLabel prints the WINDOW'S field, which is 0 until a
+  // bar is clicked - not a fresh sum of the bars (:136,283-287)
+  shadowText(renderer, font, String(flow.custom.repPoints ?? 0), m, px + 64, py + 173);
+  return true;
+}
+
+/** U20a - CreateCharCustomClass (CUST00I0.IMG full-screen): the name
+ *  box, the freeEdit stats rollout, the twelve skill buttons' labels,
+ *  the HP label and the difficulty DAGGER (CUST08I0 at x220, its Y
+ *  from the difficulty law). FLAGGED: the dagger's one-second fading
+ *  TRAIL (AnimateDagger, :513-531) does not draw - the port has no
+ *  per-frame UI tween seam here, and the dagger itself lands on the
+ *  verbatim pixel. Sub-windows draw OVER it, as their pushes do. */
+function drawCustomClass(renderer, m, font, flow) {
+  const c = flow.custom;
+  if (!c) return false;   // the hit path guards the same way
+  drawImg(renderer, img('CUST00I0.IMG'), m, 0, 0);
+  // the name TextBox at (100,5) 214x7 (:157-160) - the input colour
+  const [nx, ny] = [100, 5];
+  shadowText(renderer, font, `${c.className}_`, m, nx, ny, { color: INPUT_TEXT });
+  drawStatBlock(renderer, m, font, customStatView(flow));
+  // the twelve skill labels inside their buttons (:225-228)
+  CUSTOM_SKILL_RECTS.forEach((r, i) => {
+    const id = c.skills[i];
+    if (id == null) return;
+    shadowText(renderer, font, SKILL_NAMES[id], m, r[0] + CUSTOM_SKILL_LABEL_OFF[0], r[1] + CUSTOM_SKILL_LABEL_OFF[1]);
+  });
+  // hpLabel (:169) and the difficulty dagger (:500-512)
+  shadowText(renderer, font, String(c.hp), m, ...CUSTOM_HP_LABEL);
+  drawImg(renderer, img('CUST08I0.IMG'), m, CUSTOM_DAGGER_X, daggerY(flow.customDifficulty()));
+  // the sub-windows, each pushed OVER this one
+  if (c.sub === 'skillPick') {
+    const names = c.pickItems.map((id) => SKILL_NAMES[id]);
+    const [, , h] = drawListPicker(renderer, m, font, names, c.pickScroll, c.pickCursor);
+    c._rowH = h;
+  } else if (c.sub === 'help') {
+    const [, , h] = drawListPicker(renderer, m, font, HELP_TOPICS.map(([label]) => label), c.pickScroll, c.pickCursor);
+    c._rowH = h;
+  } else if (c.sub === 'rep') {
+    drawCustomRep(renderer, m, font, flow);
+  }
+  // the refusal / help boxes are ClickAnywhereToClose parchment
+  if (c.box) drawMessageBox(renderer, m, font, layoutMessageBox(font, c.box));
+  return true;
+}
+
+/** U19 - CreateCharChooseBio: BUTN02I0.IMG centred (:50-52), its two
+ *  buttons BAKED in the art. The popup draws over its previous window
+ *  - the race map again (the wizard constructs it with
+ *  createCharRaceSelectWindow, :180) - dimmed, the U14 popup law. The
+ *  GENERATE arm's reputation box shows over THIS screen (the wizard
+ *  pushes it over createCharChooseBioWindow, :444). */
+function drawBioMethod(renderer, m, font, flow) {
+  drawImg(renderer, img('TMAP00I0.IMG'), m, 0, 0);
+  drawRect(renderer, m, 0, 0, 320, 200, SCREEN_DIM);
+  const [px, py, pw, ph] = BIO_METHOD_PANEL;
+  drawImg(renderer, img('BUTN02I0.IMG'), m, px, py);
+  if (flow.biogRepBox) {
+    drawMessageBox(renderer, m, font, layoutMessageBox(font, flow.biogRepBox));
+    return true;
+  }
+  // the keyboard cursor's legibility line under the panel (the U18 seam)
+  shadowText(renderer, font, flow.bioMethodCursor === 0 ? 'Have your history generated' : 'Answer questions', m,
+    px, py + ph + 4, { align: 'center', w: pw, color: SELECTED_TEXT });
+  return true;
+}
+
+/** U18 / AUDIT 17k F1: the constellation palette law, pure. Answered
+ *  runs write (0, 0, blue) into the three slots - blue 8 + 24 per
+ *  answer on that path (CEL_OnAnimEnd :504-513 rebuilds the texture
+ *  from the mutated palette). A pristine draw (no answers yet)
+ *  RESTORES the file's own slot colours: DFU constructs the window
+ *  over a FRESH ImgFile every time, so its re-entry palette is always
+ *  the file's own; the port keeps one palette, and without the
+ *  restore a second run's un-answered screen re-uploaded the LAST
+ *  run's blues under the 'pristine' key. */
+export function constellationPalette(palette, pristine, blues) {
+  if (blues) for (let i = 0; i < 3; i++) palette.set(CONSTELLATION_INDICES[i], 0, 0, blues[i]);
+  else for (let i = 0; i < 3; i++) palette.set(CONSTELLATION_INDICES[i], pristine[i].r, pristine[i].g, pristine[i].b);
+}
+
+/** The CHGN00I0 background: the palette law above, textures versioned
+ *  by the blues and the stale one released (the paperdoll ownership
+ *  law). The PRISTINE palette shows until the first answer, exactly
+ *  as DFU only writes the slots at the first anim's end. */
+function ensureChgnTexture(renderer, flow) {
+  const q = _art.questions;
+  const blues = flow.qAnswered > 0 ? flow.constellationBlues() : null;
+  const rec = `CHGN00I0:${blues ? blues.join(',') : 'pristine'}`;
+  if (q.texKey === rec) return;
+  constellationPalette(q.palette, q.pristine, blues);
+  if (q.texKey) renderer.releaseTexture('img', q.texKey);
+  q.tex = renderer.uploadTexture('img', rec, bitmapToColor32(q.bmp, q.palette));
+  q.texKey = rec;
+}
+
+/** U18 - CreateCharClassQuestions: the question scroll over the
+ *  constellation chart. FLAGGED loud: the three FLC constellation
+ *  animations (ROGUE/MAGE/WARRIOR.CEL, an Autodesk FLIC decoder the
+ *  port does not have) do not play, so the next question shows
+ *  immediately where DFU waits out the CEL - and the Ignite one-shot
+ *  that rides the answer (:353) waits with them. The palette
+ *  brightening the anims reveal IS live. */
+function drawClassQuestions(renderer, m, font, flow) {
+  // EndQuestions (:400-413) blanks the background and the scroll
+  // before the confirm box shows - only the box draws, over the
+  // parent panel's black.
+  if (flow.qConfirm) {
+    const box = layoutMessageBox(font, flow.qConfirm, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
+    flow._qBox = box;
+    drawMessageBox(renderer, m, font, box);
+    return true;
+  }
+  flow._qBox = null;
+  const q = _art.questions;
+  if (!q || !flow.qDisplay) return false;
+  ensureChgnTexture(renderer, flow);
+  drawImg(renderer, { tex: q.tex, w: q.bmp.width, h: q.bmp.height }, m, 0, 0);
+  const frame = q.scroll[flow.qScrollFrame % q.scroll.length];
+  drawImg(renderer, frame, m, 0, QSCROLL_Y);
+  // the question label: black, unshadowed (:262-263), rows at the
+  // label position inside the scroll. DFU pixel-clips the label to
+  // the textArea; the port draws the rows that fit it WHOLE - a
+  // documented departure until the renderer grows a scissor seam.
+  const top = QSCROLL_Y + QSCROLL_TEXT_OFFSET;
+  const bottom = QSCROLL_Y + QSCROLL_H - QSCROLL_TEXT_OFFSET;
+  for (let i = 0; i < flow.qDisplay.lines.length; i++) {
+    const vy = QSCROLL_Y + flow.qLabelY + i * QUESTION_ROW_H;
+    if (vy < top || vy + QUESTION_ROW_H > bottom) continue;
+    drawText(renderer, font, flow.qDisplay.lines[i], m.ox + QSCROLL_TEXT_LEFT * m.s, m.oy + vy * m.s, m.s, QUESTION_TEXT_COLOR);
+  }
   return true;
 }
 
@@ -517,7 +818,7 @@ function drawSpinnerUD(renderer, m, font, x, y, value) {
 
 function drawStats(renderer, m, font, flow) {
   drawImg(renderer, img('CHAR02I0.IMG'), m, 0, 0);
-  drawStatBlock(renderer, m, font, flow);
+  drawStatBlock(renderer, m, font, statView(flow));
   // U16: the seven derived labels belong to THIS WINDOW, not to the
   // rollout - CreateCharAddBonusStats.cs:94-100 adds them to its
   // NativePanel and StatsRollout has never heard of them. Folding them
@@ -542,18 +843,27 @@ function drawStats(renderer, m, font, flow) {
  *  at the SAME geometry: CreateCharSummary news it up with
  *  onCharacterSheet false, so the (141,17)/24-step alternate layout is
  *  the character sheet's, not the summary's. */
-function drawStatBlock(renderer, m, font, flow) {
+function drawStatBlock(renderer, m, font, view) {
   const [sx, sy, sw] = STAT_PANEL;
   STAT_KEYS_ORDER.forEach((k, i) => {
-    const v = flow.stats[k];
+    const v = view.stats[k];
+    // U20a: in freeEdit the rollout's modifiedStatTextColor IS the
+    // default text colour (StatsRollout.cs:76-80), so the builder's
+    // values never turn green - there is no roll to differ from.
+    const modified = !view.freeEdit && v !== view.rolled[k];
     alt(renderer, font, String(v), m, sx, sy + i * STAT_STEP, {
       align: 'center', w: sw,
-      color: v !== flow.rolledStats[k] ? MODIFIED_STAT : DEFAULT_TEXT_COLOR,
+      color: modified ? MODIFIED_STAT : DEFAULT_TEXT_COLOR,
     });
   });
   // the spinner rides the SELECTED stat's row and carries the pool
-  drawSpinnerUD(renderer, m, font, STAT_SPINNER_X, STAT_SPINNER_Y + flow.statCursor * STAT_STEP, flow.statPool);
+  drawSpinnerUD(renderer, m, font, STAT_SPINNER_X, STAT_SPINNER_Y + view.cursor * STAT_STEP, view.pool);
 }
+
+/** The flow's own rollout view (the stats screen + U16's summary). */
+const statView = (flow) => ({ stats: flow.stats, rolled: flow.rolledStats, cursor: flow.statCursor, pool: flow.statPool });
+/** U20a: the BUILDER's, in freeEdit. */
+const customStatView = (flow) => ({ stats: flow.custom.stats, rolled: flow.custom.stats, cursor: flow.custom.statCursor, pool: flow.custom.statPool, freeEdit: true });
 
 function drawSkills(renderer, m, font, flow) {
   drawImg(renderer, img('CHAR03I0.IMG'), m, 0, 0);
@@ -646,13 +956,11 @@ export function chargenHit(flow, vx, vy) {
       if (hit === MB_BUTTONS.No) return { cancelClass: true };     // selectedClass = null; sender.CancelWindow();
       return null;
     }
-    // AUDIT 17g F3: this derefed _art.imgs directly, so the ONE branch
-    // that needs the art THREW where every other branch returns null.
-    // The live caller guards on chargenArtLoaded(); nothing else has
-    // to know that.
-    const pick = _art ? img('PICK00I0.IMG') : null;
-    if (!pick) return null;
-    const ox = Math.floor((320 - pick.w) / 2), oy = Math.floor((200 - pick.h) / 2);
+    // AUDIT 17g F3 / U20a: this used to deref the loaded image for its
+    // origin, so the ONE branch that needed art returned null where
+    // every other screen answers art-free. PICK_PANEL is the constant
+    // the draw uses too, so the pins can drive this path.
+    const [ox, oy] = PICK_PANEL;
     const lx = vx - ox, ly = vy - oy;
     if (lx >= RECTS.pickPrev[0] && ly >= RECTS.pickPrev[1] && lx < RECTS.pickPrev[0] + 9 && ly < RECTS.pickPrev[1] + 9) return 'up';
     if (lx >= RECTS.pickNext[0] && ly >= RECTS.pickNext[1] && lx < RECTS.pickNext[0] + 9 && ly < RECTS.pickNext[1] + 9) return 'down';
@@ -661,8 +969,109 @@ export function chargenHit(flow, vx, vy) {
     if (lx >= plx && lx < plx + plw && ly >= ply) {
       const row = Math.floor((ly - ply) / (flow._classRowH || 1));
       const idx = (flow.classScroll ?? 0) + row;
-      if (row >= 0 && row < LIST_ROWS && idx < flow.careers.length) return { setClass: idx };
+      // U20a: the bound is the LIST's row count, not the careers'.
+      // Bounding on careers.length left the CUSTOM row unclickable -
+      // reachable by keyboard, dead to a tap, which is the U14
+      // keyboard-only shape again. The live probe caught it.
+      if (row >= 0 && row < LIST_ROWS && idx < flow.classRowCount()) return { setClass: idx };
     }
+    return null;
+  }
+  if (s === 'classMethod') {
+    // the panel geometry is fixed (headerless 184x144, centred), so
+    // the hit needs no art - the pointer pin drives it bare
+    const lx = vx - METHOD_PANEL[0], ly = vy - METHOD_PANEL[1];
+    const inR = ([x, y, w, h]) => lx >= x && ly >= y && lx < x + w && ly < y + h;
+    if (inR(METHOD_CHOOSE_CLASS)) return { classMethod: 'list' };
+    if (inR(METHOD_CHOOSE_QUESTIONS)) return { classMethod: 'questions' };
+    return null;
+  }
+  if (s === 'classQuestions') {
+    // the description box is MODAL, Yes and No its only answers
+    if (flow.qConfirm) {
+      const hit = flow._qBox ? messageBoxHit(flow._qBox, vx, vy) : null;
+      if (hit === MB_BUTTONS.Yes) return { confirmQClass: true };
+      if (hit === MB_BUTTONS.No) return { cancelQClass: true };
+      return null;
+    }
+    if (!flow.qDisplay) return null;
+    if (vy < QSCROLL_Y || vy >= QSCROLL_Y + QSCROLL_H) return null;
+    const ly = vy - QSCROLL_Y;
+    // QuestionScroll_OnMouseDown (:452-466): the top margin scrolls
+    // up, the bottom margin down - held-to-scroll in DFU, one pixel
+    // per event here (the wheel repeats; a held touch does not, yet)
+    if (ly < QSCROLL_TEXT_OFFSET) return { qScroll: -1 };
+    if (ly > QSCROLL_H - QSCROLL_TEXT_OFFSET) return { qScroll: 1 };
+    // the answer rows (:468-489): the row under the click - strict
+    // bounds, NO x test, the LAST matching row wins - then the a/b/c
+    // ranges over aIndex/bIndex/cIndex, all verbatim
+    let labelIndex = 0;
+    for (let i = 0; i < flow.qDisplay.lines.length; i++) {
+      const top = flow.qLabelY + i * QUESTION_ROW_H;
+      if (ly > top && ly < top + QUESTION_ROW_H) labelIndex = i;
+    }
+    const { aIndex, bIndex, cIndex } = flow.qDisplay;
+    if (labelIndex >= aIndex && labelIndex < bIndex) return { answerClass: 0 };
+    if (labelIndex >= bIndex && labelIndex < cIndex) return { answerClass: 1 };
+    if (labelIndex >= cIndex) return { answerClass: 2 };
+    return null;
+  }
+  if (s === 'customClass') {
+    const c = flow.custom;
+    if (!c) return null;
+    // every open box is MODAL and ClickAnywhereToClose
+    if (c.box) return { customBox: true };
+    if (c.sub === 'skillPick' || c.sub === 'help') {
+      const [ox, oy] = PICK_PANEL;
+      const lx = vx - ox, ly = vy - oy;
+      if (lx >= RECTS.pickPrev[0] && ly >= RECTS.pickPrev[1] && lx < RECTS.pickPrev[0] + 9 && ly < RECTS.pickPrev[1] + 9) return { pickStep: -1 };
+      if (lx >= RECTS.pickNext[0] && ly >= RECTS.pickNext[1] && lx < RECTS.pickNext[0] + 9 && ly < RECTS.pickNext[1] + 9) return { pickStep: 1 };
+      const [plx, ply, plw] = RECTS.pickList;
+      if (lx >= plx && lx < plx + plw && ly >= ply) {
+        const row = Math.floor((ly - ply) / (c._rowH || 1));
+        const n = c.sub === 'help' ? HELP_TOPICS.length : (c.pickItems?.length ?? 0);
+        const idx = (c.pickScroll ?? 0) + row;
+        if (row >= 0 && row < LIST_ROWS && idx < n) return { pickRow: idx };
+      }
+      return null;
+    }
+    if (c.sub === 'rep') {
+      const [px, py, pw, ph] = REP_PANEL;
+      const lx = vx - px, ly = vy - py;
+      // DFU hangs the handler on the PANEL, so a click outside its
+      // 168x189 bounds never reaches it at all. Testing the y band
+      // alone let a click to the RIGHT of the window (lx >= 134) set
+      // underworld reputation from off-panel.
+      if (lx < 0 || ly < 0 || lx >= pw || ly >= ph) return null;
+      if (lx >= REP_EXIT[0] && ly >= REP_EXIT[1] && lx < REP_EXIT[0] + REP_EXIT[2] && ly < REP_EXIT[1] + REP_EXIT[3]) return { repExit: true };
+      // RepPanel_OnMouseClick takes PANEL-local coords; the band test
+      // and the column thresholds live in the pure law
+      if (ly >= REP_BAR_TOP && ly <= REP_BAR_BOTTOM) return { repClick: [lx, ly] };
+      return null;
+    }
+    if (inRect(CUSTOM_EXIT)) return { customExit: true };
+    if (inRect(CUSTOM_HP_UP)) return { customHp: 1 };
+    if (inRect(CUSTOM_HP_DOWN)) return { customHp: -1 };
+    if (inRect(CUSTOM_HELP)) return { customHelp: true };
+    if (inRect(CUSTOM_ADVANTAGE)) return { customAdvantage: true };
+    if (inRect(CUSTOM_DISADVANTAGE)) return { customDisadvantage: true };
+    if (inRect(CUSTOM_REP)) return { customRep: true };
+    for (let i = 0; i < CUSTOM_SKILL_RECTS.length; i++) if (inRect(CUSTOM_SKILL_RECTS[i])) return { customSkill: i };
+    // the freeEdit rollout shares the stats screen's geometry
+    const st = statBlockHit(c.statCursor, vx, vy);
+    if (st) {
+      if (typeof st === 'string') return { customStatStep: st === 'plus' ? 1 : -1 };
+      return { customStatCursor: st.setStatCursor };
+    }
+    return null;
+  }
+  if (s === 'bioMethod') {
+    // the reputation box is MODAL and ClickAnywhereToClose
+    if (flow.biogRepBox) return 'confirm';
+    const lx = vx - BIO_METHOD_PANEL[0], ly = vy - BIO_METHOD_PANEL[1];
+    const inR = ([x, y, w, h]) => lx >= x && ly >= y && lx < x + w && ly < y + h;
+    if (inR(BIO_CHOOSE_GENERATE)) return { bioMethod: 'generate' };
+    if (inR(BIO_CHOOSE_QUESTIONS)) return { bioMethod: 'questions' };
     return null;
   }
   if (s === 'biography') {
@@ -683,7 +1092,7 @@ export function chargenHit(flow, vx, vy) {
   if (s === 'stats') {
     if (inRect(RECTS.reroll)) return 'reroll';
     if (inRect(RECTS.ok)) return 'confirm';
-    return statBlockHit(flow, vx, vy);
+    return statBlockHit(flow.statCursor, vx, vy);
   }
   if (s === 'summary') {
     if (flow.summaryPoolBox) return 'confirm';   // ClickAnywhereToClose
@@ -698,7 +1107,7 @@ export function chargenHit(flow, vx, vy) {
     // with the same bare 'plus'/'minus' its own screen uses. On the
     // summary that is ambiguous, so the branch that ANSWERED names
     // itself - it is the only place that knows.
-    const st = statBlockHit(flow, vx, vy);
+    const st = statBlockHit(flow.statCursor, vx, vy);
     if (st) return typeof st === 'string' ? { statStep: st === 'plus' ? 1 : -1 } : st;
     return skillBlockHit(flow, vx, vy);
   }
@@ -713,12 +1122,12 @@ export function chargenHit(flow, vx, vy) {
  *  U16's summary, which draws BOTH at once. They cannot collide: the
  *  stat buttons and spinner live at x 7..59, the skill rows and their
  *  spinner at x 68..240. */
-function statBlockHit(flow, vx, vy) {
+function statBlockHit(cursor, vx, vy) {
   const [bx, by, bw, bh] = STAT_BUTTON;
   for (let i = 0; i < STAT_KEYS_ORDER.length; i++) {
     if (vx >= bx && vx < bx + bw && vy >= by + i * STAT_STEP && vy < by + i * STAT_STEP + bh) return { setStatCursor: i };
   }
-  const sy = STAT_SPINNER_Y + flow.statCursor * STAT_STEP;
+  const sy = STAT_SPINNER_Y + cursor * STAT_STEP;
   if (vx >= STAT_SPINNER_X && vx < STAT_SPINNER_X + UD_SPINNER.w) {
     if (vy >= sy && vy < sy + UD_SPINNER.up[3]) return 'plus';
     if (vy >= sy + UD_SPINNER.down[1] && vy < sy + UD_SPINNER.down[1] + UD_SPINNER.down[3]) return 'minus';

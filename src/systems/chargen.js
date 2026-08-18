@@ -73,8 +73,10 @@ export function rollSkills(career, rolls = Math.random) {
 // ---- Starting spells (S6), verbatim ----
 // StartGameBehaviour.SetStartingSpells: classes with index > 6 have
 // no starting spells; 0..6 use the StartingSpells asset's sets
-// (SpellIDs into SPELLS.STD). The custom-class Spellsword rule
-// (any primary/major magic skill -> set 1) pends custom classes.
+// (SpellIDs into SPELLS.STD). The custom-class Spellsword rule (any
+// primary/major magic skill -> set 1) is LIVE as of U20a; it lives
+// with the builder's other laws (systems/customClass.js
+// customSpellSetIndex) and finishChargen picks the set through it.
 export const STARTING_SPELL_SETS = Object.freeze({
   0: [1, 37, 2, 97, 8],    // Mage: Fenrik's Door Jam, Slowfalling, Buoyancy, Balyna's Balm, Shock
   1: [8, 44, 37],          // Spellsword: Shock, Chameleon, Slowfalling

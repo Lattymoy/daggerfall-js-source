@@ -195,6 +195,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // Combat probes (2026-08-13 audit): the live-play smoke reads
     // vitals + the foe roster to verify the frame-loop combat path.
     window.__hp = () => JSON.stringify({ health: playerEntity.health, maxHealth: playerEntity.maxHealth });
+    // The fist repro (2026-08-18): the entity + the rig's two combat
+    // entries, so a probe can strip the worn weapon and swing bare.
+    window.__playerEntity = playerEntity;
+    window.__combat = { toggleSheath: ctx.toggleSheath, clickAttack: ctx.playerClickAttack };
     window.__foes = () => JSON.stringify(ctx.foes.map((f, i) => ({
       i, type: f.mobileType, dead: !!f.dead, health: f.entity?.health,
       pos: f.ai ? f.ai.feet.map((v) => Number(v.toFixed(2))) : null,

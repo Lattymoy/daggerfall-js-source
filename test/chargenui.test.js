@@ -38,6 +38,8 @@ test('chargen ui: the flow end to end, conservation, confirm gates', () => {
   flow.input('down');                          // toggles
   assert.equal(flow.gender, 'female');
   flow.input('confirm');
+  assert.equal(flow.state, 'classMethod');     // U18: the method screen first
+  flow.input('confirm');
   assert.equal(flow.state, 'class');
   flow.input('confirm');                       // no biography set -> name
   assert.equal(flow.state, 'name');
@@ -107,9 +109,9 @@ test('chargen ui: the flow end to end, conservation, confirm gates', () => {
 
 test('chargen ui: reroll replaces the working set on the active screen', () => {
   const flow = new ChargenFlow([{ name: 'W', career }], seq(0.999));
-  // U15, the classic order: race -> gender -> class -> (no biography
-  // set) name -> face -> stats
-  for (const a of ['confirm', 'confirm', 'confirm', 'char:X', 'confirm', 'confirm']) flow.input(a);
+  // the classic order (U15 + U18's method screen): race -> gender ->
+  // method -> class -> (no biography set) name -> face -> stats
+  for (const a of ['confirm', 'confirm', 'confirm', 'confirm', 'char:X', 'confirm', 'confirm']) flow.input(a);
   assert.equal(flow.state, 'stats');
   assert.equal(flow.statPool, 14);             // max pool at seq(0.999)
   flow.input('plus');

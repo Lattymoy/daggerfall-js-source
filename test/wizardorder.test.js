@@ -28,7 +28,9 @@ test('U15: the wizard runs in DFU\'s own order', () => {
   const walked = [f.state];
   f.input('confirm');                       // race (no description) -> gender
   walked.push(f.state);
-  f.input('confirm');                       // gender -> class
+  f.input('confirm');                       // gender -> U18's class method
+  walked.push(f.state);
+  f.input('confirm');                       // method (from a list) -> class
   walked.push(f.state);
   f.input('confirm');                       // class, no biography set -> name
   walked.push(f.state);
@@ -37,7 +39,7 @@ test('U15: the wizard runs in DFU\'s own order', () => {
   walked.push(f.state);
   f.input('confirm');                       // face -> stats
   walked.push(f.state);
-  assert.deepEqual(walked, ['race', 'gender', 'class', 'name', 'face', 'stats']);
+  assert.deepEqual(walked, ['race', 'gender', 'classMethod', 'class', 'name', 'face', 'stats']);
 });
 
 test('U15: RACE is the first screen and BACK cannot leave it', () => {
@@ -53,7 +55,7 @@ test('U15: RACE is the first screen and BACK cannot leave it', () => {
 // SetRaceSelectWindow. The pin asserted the bug.
 test('U15/17j: BACK follows DFU\'s cancel arms, not the STATES order', () => {
   const f = flow();
-  f.input('confirm'); f.input('confirm');    // -> class
+  f.input('confirm'); f.input('confirm'); f.input('confirm');    // -> class (U18: via the method screen)
   assert.equal(f.state, 'class');
   f.input('back');
   assert.equal(f.state, 'race', 'ClassSelectWindow_OnClose cancels to the RACE screen, skipping gender');

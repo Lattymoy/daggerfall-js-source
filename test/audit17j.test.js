@@ -18,8 +18,9 @@ const CAREER = {
   minorSkills: [SKILLS.Medical, SKILLS.ShortBlade, SKILLS.BluntWeapon, SKILLS.Dragonish, SKILLS.Daedric, SKILLS.Dodging],
 };
 const flow = () => new ChargenFlow([{ name: 'Mage', career: CAREER }], () => 0);
-/** race -> gender -> class -> (no biography set) -> name */
-const toName = (f) => { f.input('confirm'); f.input('confirm'); f.input('confirm'); return f; };
+/** race -> gender -> U18's class method -> class -> (no biography
+ *  set) -> name */
+const toName = (f) => { f.input('confirm'); f.input('confirm'); f.input('confirm'); f.input('confirm'); return f; };
 
 test('17j F1: entering the name screen RESEEDS, so the random button is not deterministic', () => {
   // CreateCharNameSelect.cs:123-126 - ShowRandomButton runs on Setup
@@ -73,7 +74,7 @@ test('17j F2: the class screen cancels to RACE, skipping gender', () => {
   // ClassSelectWindow_OnClose (:353-370) - the cancel arm is
   // SetRaceSelectWindow, not the screen before it.
   const f = flow();
-  f.input('confirm'); f.input('confirm');
+  f.input('confirm'); f.input('confirm'); f.input('confirm');   // U18: through the method screen
   assert.equal(f.state, 'class');
   f.input('back');
   assert.equal(f.state, 'race');
@@ -88,15 +89,19 @@ test('17j F3: the name screen can be backed out of, and DISCARDS the biography',
   // without it would apply every effect twice.
   const f = flow();
   f.biogFor = () => ({ questions: [{ text: 'Q1', answers: [{ effects: [{ type: 'gold', amount: 100 }] }] }] });
-  f.input('confirm'); f.input('confirm');   // -> class
-  f.input('confirm');                        // -> biography
+  f.input('confirm'); f.input('confirm'); f.input('confirm');   // -> class (U18: via the method screen)
+  f.input('confirm');                        // -> U19's bio-method screen
+  f.input('down'); f.input('confirm');       // answer questions -> biography
   assert.equal(f.state, 'biography');
   f.answerBiography(0);
   assert.equal(f.state, 'name');
   assert.equal(f.biographyEffects.length, 1);
 
   f.input('back');
-  assert.equal(f.state, 'biography', 'back lands on the questions, DFU\'s chooseBio collapsed');
+  // U19: SetChooseBioWindow IS a screen now - the method choice
+  assert.equal(f.state, 'bioMethod', 'back lands on the bio-method screen (SetChooseBioWindow)');
+  f.input('down'); f.input('confirm');       // back through the questions arm
+  assert.equal(f.state, 'biography');
   assert.equal(f.biogQuestionIndex, 0, 'and they restart');
   assert.deepEqual(f.biographyEffects, [], 'the answers so far are DISCARDED, or they would double-apply');
 });
@@ -121,7 +126,7 @@ test('17j F4: changing race or gender EMPTIES the name box', () => {
   f.input('back');                          // name cancel is inert (no biography)
   f.state = 'gender';
   f.input('up');                             // flip the gender
-  f.input('confirm'); f.input('confirm');    // -> class -> name
+  f.input('confirm'); f.input('confirm'); f.input('confirm');    // -> method -> class -> name
   assert.equal(f.state, 'name');
   assert.equal(f.name, '', 'a changed gender empties the box');
 
@@ -130,7 +135,7 @@ test('17j F4: changing race or gender EMPTIES the name box', () => {
   g.name = 'Vanus Galerion';
   g.state = 'race';
   g.raceIndex = 3;                           // a different province
-  g.input('confirm'); g.input('confirm'); g.input('confirm');
+  g.input('confirm'); g.input('confirm'); g.input('confirm'); g.input('confirm');
   assert.equal(g.name, '', 'a changed race empties it too');
 });
 

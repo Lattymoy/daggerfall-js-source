@@ -47,8 +47,53 @@ await click(female[0] + 4, female[1] + 4);
 // the button SETS and CLOSES - classic has no OK on this box
 let g = await st();
 if (g.gender !== 'female') { console.log('GENDER CLICK DEAD'); process.exit(1); }
-// the box closes AND the classic order lands on the class picker
-if (g.state !== 'class') { console.log('GENDER BUTTON DID NOT CLOSE ONTO CLASS', JSON.stringify(g)); process.exit(1); }
+// U18: the box closes onto the class-METHOD screen (BUTN01I0)
+if (g.state !== 'classMethod') { console.log('GENDER BUTTON DID NOT CLOSE ONTO THE METHOD SCREEN', JSON.stringify(g)); process.exit(1); }
+await page.screenshot({ path: '/home/claude/click-method.png' });
+
+// U18: the QUESTIONS path first - the bottom button (68+8, 28+100)
+await click(68 + 8 + 80, 28 + 100 + 17);
+let qs = await st();
+if (qs.state !== 'classQuestions') { console.log('QUESTIONS BUTTON DEAD', JSON.stringify(qs)); process.exit(1); }
+await page.screenshot({ path: '/home/claude/click-questions.png' });
+// answer all ten by CLICKING the a) row, scrolling it into the click
+// band (local y 16..64) through the bottom margin when a long
+// question pushes it below
+const qState = async () => JSON.parse(await page.evaluate(() => {
+  const f = window.__chargenFlow();
+  return JSON.stringify({ answered: f.qAnswered, labelY: f.qLabelY, a: f.qDisplay?.aIndex ?? null,
+    weights: f.qWeights, cls: f.qClassIndex, box: !!f.qConfirm });
+}));
+for (let i = 0; i < 10; i++) {
+  let q = await qState();
+  if (q.box) break;
+  let target = q.labelY + q.a * 7 + 3;
+  for (let s2 = 0; s2 < 120 && target > 62; s2++) {   // one native px per margin click
+    await page.mouse.click(M.ox + 160 * M.s, M.oy + (120 + 70) * M.s);
+    q = await qState();
+    target = q.labelY + q.a * 7 + 3;
+  }
+  await waitFrames(2);
+  await click(160, 120 + target);
+  const after = await qState();
+  if (after.answered !== q.answered + 1 && !after.box) { console.log('ANSWER CLICK DEAD at question', i, JSON.stringify(after)); process.exit(1); }
+  // the constellation palette-brightening, mid-run (blues 8 + 24w)
+  if (after.answered === 5) await page.screenshot({ path: '/home/claude/click-questions-mid.png' });
+}
+let qEnd = await qState();
+console.log('ten answers:', JSON.stringify(qEnd));
+if (!qEnd.box) { console.log('THE CLASS DESCRIPTION BOX DID NOT OPEN'); process.exit(1); }
+if (qEnd.weights[0] + qEnd.weights[1] + qEnd.weights[2] !== 10) { console.log('WEIGHTS DID NOT SUM TO TEN'); process.exit(1); }
+if (qEnd.cls < 0 || qEnd.cls > 17) { console.log('NO CLASS RESOLVED', qEnd.cls); process.exit(1); }
+await page.screenshot({ path: '/home/claude/click-questions-box.png' });
+// NO drops the pick and falls to the class LIST - which is exactly
+// where the original walk continues
+const noRect = JSON.parse(await page.evaluate(() => JSON.stringify(window.__chargenFlow()._qBox?.buttons?.[1]?.rect ?? null)));
+if (!noRect) { console.log('NO BUTTON MISSING ON THE QUESTIONS BOX'); process.exit(1); }
+await click(noRect[0] + 4, noRect[1] + 4);
+g = await st();
+if (g.state !== 'class') { console.log('QUESTIONS NO DID NOT FALL TO THE LIST', JSON.stringify(g)); process.exit(1); }
+console.log('questions path probed: ten click-answers, box up, NO -> the list');
 await page.screenshot({ path: '/home/claude/click-class.png' });
 
 // the class list: click the third visible row
@@ -74,7 +119,14 @@ await page.screenshot({ path: '/home/claude/click-classbox.png' });
 const yesRect = JSON.parse(await page.evaluate(() => JSON.stringify(window.__chargenFlow()._classBox?.buttons?.[0]?.rect ?? null)));
 if (!yesRect) { console.log('NO YES BUTTON ON THE CLASS BOX'); process.exit(1); }
 await click(yesRect[0] + 4, yesRect[1] + 4);
-if ((await st()).state !== 'biography') { console.log('CLASS CONFIRM DEAD', JSON.stringify(await st())); process.exit(1); }
+// U19: the class accept lands on the BIO-METHOD screen; this probe
+// clicks ANSWER QUESTIONS (the bottom button, 8,113 on the panel at
+// 68,16) and keeps the manual walk - the keyboard probe takes the
+// generate path.
+if ((await st()).state !== 'bioMethod') { console.log('CLASS CONFIRM DID NOT REACH THE BIO-METHOD SCREEN', JSON.stringify(await st())); process.exit(1); }
+await page.screenshot({ path: '/home/claude/click-biomethod.png' });
+await click(68 + 8 + 80, 16 + 113 + 20);
+if ((await st()).state !== 'biography') { console.log('BIO QUESTIONS BUTTON DEAD', JSON.stringify(await st())); process.exit(1); }
 await page.screenshot({ path: '/home/claude/click-biography.png' });
 
 // the biography: click answer button 0 twelve times (149x24 from 10,71)

@@ -7,7 +7,7 @@
 // skipped loudly). Cast sound ids from EntityEffectManager (the
 // element-indexed constants).
 
-import { SKILLS } from './skills.js';
+import { SKILLS, MAGIC_SKILLS } from './skills.js';
 
 // EnemyEntity.cs static spell lists - classic SPELLS.STD record
 // indices, byte-for-byte.
@@ -51,10 +51,7 @@ export const ENEMY_CLASS_SPELLS = Object.freeze([
 ]);
 
 export const ENEMY_MAGIC_SKILL = 80;
-const MAGIC_SKILL_IDS = Object.freeze([
-  SKILLS.Destruction, SKILLS.Restoration, SKILLS.Illusion,
-  SKILLS.Alteration, SKILLS.Thaumaturgy, SKILLS.Mysticism,
-]);
+// the six schools live in skills.js (ONE DFU MEMBER, ONE EXPORT)
 
 /** EntityEffectManager cast sounds, element-indexed (our classic
  *  order fire/cold/poison/shock/magic): fire 352, cold 353,
@@ -68,7 +65,7 @@ export function setEnemySpells(entity, spellList, spellsByIndex) {
   // SetPermanentSkillValue x6: pins over the flat career fill (the
   // skillValue override shape - the base number stays level-derived)
   entity.skillOverrides = { ...(entity.skillOverrides ?? {}) };
-  for (const id of MAGIC_SKILL_IDS) entity.skillOverrides[id] = ENEMY_MAGIC_SKILL;
+  for (const id of MAGIC_SKILLS) entity.skillOverrides[id] = ENEMY_MAGIC_SKILL;
   entity.spells = [];
   for (const idx of spellList) {
     const sp = spellsByIndex?.get(idx);

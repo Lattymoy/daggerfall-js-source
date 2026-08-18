@@ -1761,3 +1761,291 @@ so far), and the stats and skills screens RESTORE rather than reroll.
 The U15 back pin asserted the bug. The random-name button was also
 deterministic - `Rlillki` on every boot - because DFU reseeds DFRandom
 on every push of the name window and the port never did. See Audits.
+
+## U18 - THE CLASS-QUESTIONS PATH (2026-08-18)
+
+The first item off the U17 queue: `WizardStages.SelectClassMethod` and
+`GenerateClass` - the two stages between gender and the class list
+that the wizard's enum has always named (:67-68) and the port skipped
+straight past. A classic player was never sent to the list; they were
+ASKED how they want their class chosen.
+
+**The method screen** (`CreateCharChooseClassGen`). BUTN01I0.IMG
+centred on the native panel - headerless 26496 bytes = 184x144, so the
+panel sits at (68,28) - with both buttons BAKED in the art:
+choose-from-a-list at (8,41,167,43), answer-questions at (8,100,167,34).
+Both handlers end in `CloseWindow()` (:63-72), so the click sets AND
+closes, the U14 gender law again. The wizard's `ChooseClassGen_OnClose`
+(:318-328) has NO cancelled arm - ANY close that is not ChoseGenerate
+goes to the class list, Escape included - so `back` lands there too,
+ported verbatim rather than "one screen up". The popup draws over the
+race map dimmed (`previous = createCharRaceSelectWindow`, :144).
+
+**The questions screen** (`CreateCharClassQuestions`). Three format
+finds on the way in:
+
+- THE QUESTIONS LIVE IN TEXT.RSC RECORD 9000 AS LITERAL '{' MARKERS.
+  Not subrecord separators (0xFF) - the byte 0x7B, inside the text
+  range. DFU's string-table importer splits the record on '{' and keys
+  the pieces "9000.1".."9000.40" (`SplitQuestionnaireRecord`); the
+  port performs the same split on the record's plain text. Each
+  question then loses its leading number through the `\d+[.]` split
+  law, quirk included (a number-dot ANYWHERE in a line truncates
+  everything before it), and the a)/b)/c) row indices come from
+  `Contains`, last match wins - all verbatim from `GetQuestions` /
+  `DisplayQuestion`.
+- THE SCROLL IS THE ONLY GFX CONSUMER IN THE GAME. SCRL00I0.GFX +
+  SCRL01I0.GFX are 8 parchment frames each, 320x80, TEXTURE-style RLE
+  rows behind a per-row offset table - `src/formats/gfxFile.js` is the
+  ninth format reader, GfxFile.cs verbatim. The two files load as ONE
+  contiguous 16-frame list (:103-118) and the frame advances with
+  every pixel of text scroll, wrapping.
+- CHGN00I0.IMG IS PALETTIZED (its own 768-byte palette after the
+  pixels, x4 on load) and ImgFile._readPalette writes INTO the palette
+  it is handed - so the screen loads it over its OWN DFPalette, never
+  the shared ART_PAL. The scroll frames borrow that palette, exactly
+  as DFU assigns `scrollFile.Palette = backgroundBitmap.Palette`.
+
+**The logic, verbatim** (`src/systems/classQuestions.js`): ten UNIQUE
+questions picked by random start + linear probe; the 40x3 answer
+table ripped from FALL.EXE v1.07.213 at 0x0059820C steering each
+answer to Warrior/Rogue/Mage weights; and CLASSES.DAT's results walk -
+all 66 possible ten-answer triples from offset 18, four slots per
+class, the header byte with its left nibble zeroed past slot 3. The
+classic anchors hold on the real file: all-warrior is the KNIGHT,
+all-rogue the THIEF, all-mage the MAGE. The ten answers then open the
+resolved class's DESCRIPTION on TEXT.RSC 2100 + index - the SAME
+describeClass source the list's double-click uses - Yes adopting it
+into the flow (the careers array is CLASS00..17.CFG in file order, so
+the index IS the load), No dropping it to the class list, exactly
+`CreateCharClassQuestions_OnClose`'s two arms.
+
+**The constellations.** Answering brightens the answered path's
+constellation: palette slots 192/160/128 hold (0,0,blue), blue 8 +
+24 per answer, and the background re-uploads from the mutated palette
+(versioned textures, stale ones released - the paperdoll ownership
+law). The PRISTINE embedded palette shows until the first answer,
+as DFU only writes the slots at the first anim's end.
+
+**FLAGGED loud, three departures recorded in the Ledger:** the three
+FLC constellation animations (ROGUE/MAGE/WARRIOR.CEL - an Autodesk
+FLIC decoder the port does not have) do not play, so the next question
+shows immediately where DFU waits out the CEL, and the Ignite one-shot
+that rides the answer waits with them; the question label is clipped
+to the text window BY ROW where DFU clips by pixel (until the renderer
+grows a scissor seam); and the mouse WHEEL is not wired through the
+hosts' overlay seam - the scroll answers the click margins (one pixel
+per event) and the arrow keys.
+
+**Also on the way through:** the wizard-ORDER flag retired by U15 was
+still printed in two file headers (chargen.js, chargenArt.js) - the
+sentences deleted, per RETIRING A FLAG DELETES THE SENTENCE. And
+tools/chargenProbe.mjs had ROTTED on the pre-U15 order (it typed the
+name first, expected the biography to land on stats, and ended before
+U16's summary) - the click probe had quietly taken over as the only
+live walk. Repaired to the classic sequence; both probes run again.
+Port-Ledger housekeeping: a stray `>>>>>>> origin/main` conflict
+marker in section C (left by the 2026-08-16 two-lane merge) deleted.
+
+Pins (test/classquestions.test.js, 23 with the pointer sweep): the
+answer table deepEqual against the FALL.EXE literal AND every row
+covering all three paths; the linear-probe pick under a stuck PRNG;
+the nibble law on crafted and real headers; the no-cancel-arm law; the
+weights walk (ten a) answers -> [7,1,2] -> Barbarian on the real
+file); the description box's Yes/No arms; re-entry freshness; the
+blues law; the scroll clamp + frame wrap; the crafted-GFX RLE
+round-trip byte-exact; and the corpus gates - all 40 questions parse
+with ordered answer rows, all 66 triples resolve on the real
+CLASSES.DAT, all 16 scroll frames decode. The U14 pointer sweep now
+walks the two new screens too.
+
+Probed by clicks end to end (tools/chargenClickProbe.mjs): the gender
+button closes onto the METHOD screen, the questions button opens the
+scroll, ten a)-row clicks (auto-scrolled into the click band on long
+questions) sum the weights to ten and open the description box, NO
+falls to the class list - where the original U17 walk continues
+unchanged - and the list path then runs to the finished character.
+Eyeballed: the method panel over the dimmed province map, the
+parchment scroll under the constellation chart, the description box.
+
+## U19 - THE BIOGRAPHY-METHOD SCREEN (2026-08-18)
+
+`WizardStages.SelectBiographyMethod` - the LAST stage in the wizard's
+enum the port skipped. Every class-accept arm in DFU goes to
+`SetChooseBioWindow` (:344 for the questions path, :365 for the list,
+:401 for the custom builder); the port had collapsed the stage and
+sent the class choice straight to the questions.
+
+**The screen** (`CreateCharChooseBio`): BUTN02I0.IMG centred - the
+file decodes 184x168, so the panel sits at (68,16) - with both
+buttons BAKED in the art: have-your-history-generated at
+(8,41,167,54), answer-questions at (8,113,167,46). Both handlers end
+in `CloseWindow()`, so the click chooses AND closes (the U14/U18
+law); the popup draws over the race map dimmed (previous =
+createCharRaceSelectWindow, :180); Escape cancels to the CLASS LIST
+(the OnClose cancel arm :458-461).
+
+**The GENERATE arm** (`CreateCharChooseBioWindow_OnClose` :427-452):
+a fresh BiogFile, every question answered at `rand.Next(0,
+answers.Count)` - `new System.Random(DateTime.Now.Millisecond)` is an
+engine PRNG, so it rides the flow's injectable rolls (Ledger A) -
+each chosen answer's effects added through the SAME tagEffect the
+manual path uses, then DigestRepChanges and the ClickAnywhereToClose
+reputation box on TEXT.RSC 35, shown OVER the method screen (the
+wizard pushes it over createCharChooseBioWindow, :444). Closing it
+goes to the name screen (`ReputationBox_OnClose` :464-467). The
+backstory composes from the rolled answers, exactly as the manual
+path's does.
+
+**Three cancel arms rewired onto the stage.** The name screen's
+cancel returns HERE (:483-493) - 17j F3 had collapsed it onto the
+questions; the BIOGRAPHY's own cancel comes here too (:477-480),
+which the port simply lacked; and the method screen's Escape falls
+to the class list. The fresh-BiogFile reset now rides BOTH arms
+(the U16/17j double-apply law), extracted with the biography's
+closing tail (`_resetBiography` / `_finishBiography`) so the manual
+and auto paths share one implementation - ONE DFU MEMBER, ONE
+EXPORT.
+
+**Also: the stale queue entry retired.** "The dungeon-host
+worn-weapon binding" had sat in the queue since U8h flagged it -
+but AUDIT 17e F17 moved the bind INTO createWeaponRig (every host
+that passes an entity inherits it), and 17k's fist crash proved the
+dungeon binding live (the null weapon CAME from the bound empty
+hand). Retired with this record rather than re-shipped.
+
+Pins (test/biomethod.test.js, 6): every class-accept arm lands on
+the method screen and a missing question set skips it; the questions
+arm resets; the generate arm's pick law pinned at both PRNG extremes
+(rolls 0 -> answer a everywhere, rolls .999 -> the LAST answer, every
+effect of a multi-effect answer landing); generating twice cannot
+double-apply; the three cancel arms; the pointer path (both DFU
+rects, the dead zone, the modal reputation box eating the buttons).
+The U14 pointer sweep walks the new screen.
+
+Probed both ways: the KEYBOARD probe takes the generate path -
+BUTN02I0 eyeballed, one Enter auto-answers all twelve, the
+reputation box shows OVER the method screen with the run's own
+totals, and those totals land verbatim on the entity
+(sGroupReputations[0..5] deepEqual the digest - the pin is the run's
+OWN numbers now that the answers are random). The CLICK probe keeps
+the manual path: the questions button by tap, then the twelve
+answer clicks as before.
+
+## U20a - THE CUSTOM-CLASS BUILDER (2026-08-18)
+
+`WizardStages.CustomClassBuilder` - the last chargen SCREEN the port
+did not have. With it, every stage in DFU's wizard enum exists.
+
+**The way in.** `CreateCharClassSelect` appends ONE row after the
+eighteen CLASS*.CFG careers (:66-67) and that row is Custom; picking
+it sets `selectedClass = null` and closes with NO description box and
+no drums (:72-77). The port's list had only ever known its careers,
+so the row is new state (`classRowCount`/`classRowName`) - and the
+LIVE PROBE caught both bugs that came with it: `careers[classIndex]`
+THREW on the highlighted row (DFU's selectedClass is simply null
+there), and the list's click bound was still `careers.length`, so the
+row answered the keyboard and NOTHING to a tap - the U14
+keyboard-only shape again.
+
+**The builder** (CUST00I0.IMG full-screen): the name TextBox at
+(100,5), a StatsRollout in FREE EDIT (values clamp 10..75, the pool
+is a zero-sum ledger that may go negative, and modified values do NOT
+turn green because freeEdit's modifiedStatTextColor IS the default
+colour), twelve skill buttons at their verbatim rects each opening a
+list picker of the UNASSIGNED skills alphabetically, the HP spinner
+(4..30), the HELP picker over eight TEXT.RSC topics, the REPUTATIONS
+window, and EXIT behind four gates in DFU's order: no name (301), a
+skill unset (300), an unbalanced pool (302), the dagger in the red
+(306).
+
+**The difficulty gauge, verbatim.** Points are +1 per HP above the
+default and -2 per HP BELOW it; the advancement multiplier is
+`0.3 + 2.7*(points+12)/52` - exactly 0.3 at the legal floor and 3.0
+at the ceiling; and the dagger's Y walks 115 up toward 46 or down
+toward 186 with C#'s `(int)` TRUNCATION, not rounding.
+
+**The reputation window** (CUST03I0, centred on DFU's half pixel -
+Unity's Middle alignment on a 189-tall image really is 5.5): five
+columns whose bars are flat colour panels, the click's column picked
+by x threshold and its sign by which side of the middle line it fell,
+the value `+-(height/5)` after RoundNearestBarHeight's own quirk (a
+remainder of exactly 4 rounds UP, 1..3 round DOWN, capped at 50), and
+an exit gated on the NEGATED sum being zero (303).
+
+**What the finished class carries out** (`CreateCharCustomClassWindow_
+OnClose` :374-401): the typed name onto the career, the working stats
+copied onto its base attributes, `BiogFile.GetClassAffinityIndex`'s
+best-overlap index onto classIndex - which is what picks the
+BIOGRAPHY QUIZ - and the five reputations onto the document, where
+they SEED sGroupReputations before the biography's own changes add on
+top. A custom class's starting spells follow
+`SetStartingSpells`' custom arm: the SPELLSWORD set if any PRIMARY or
+MAJOR skill is one of the six magic schools, none otherwise (a magic
+MINOR does not qualify).
+
+**Three verbatim quirks ported deliberately, one of them ugly.**
+`isCustom` is assigned in exactly ONE place in the whole DFU codebase
+- `= true` when the Custom ROW is picked (:358) - and is never
+cleared. So opening the builder, cancelling out of it and then
+picking a standard class leaves a document that still says custom:
+ItemHelper gives it the custom starting kit and StartGameBehaviour
+routes it through the custom spell rule. The first draft of this
+slice "tidied" that by clearing the flag on every standard accept,
+and the parity review caught it. The reputations ride the same rule.
+And a click exactly ON the rep window's middle line ZEROES that
+group (repVal is computed on every click) while moving no bar.
+
+**Two pre-existing defects the slice's own review surfaced and fixed.**
+DFU's `ListBox.SelectPrevious/SelectNext` CLAMP at the list's ends
+(:709-740); the port wrapped with a modulo, so the class list ran off
+its own ends onto the far one - and this slice's first draft asserted
+the wrap in a pin. (The FacePicker's wrap is that component's own law
+and stays.) And the stats/skills REROLL MEMO keyed on `classIndex`,
+which was equivalent while every class came from the list - but a
+custom class carries the AFFINITY index, so a custom whose affinity
+matched a previously rolled class restored that class's roll instead
+of rolling for the new career. DFU compares the CAREER object
+(`DFClass != characterDocument.career`), and so does the port now.
+
+**And one the probe caught in a neighbouring host.** Typing "Scout"
+read back "scout": the exterior hosts' key router handed the overlay
+only `e.code`, so `codeToKey` lowercased every letter and a typed
+character NAME could never carry a capital there. The dungeon host
+never had it - `routeKey` passes the real event. The event rides
+along now, and a source sweep pins the seam.
+
+FLAGGED to U20b: `CreateCharSpecialAdvantageWindow` - the builder's
+two Edit Special Advantages/Disadvantages buttons answer loudly and
+the difficulty tally's advantage/disadvantage terms stay 0 until it
+ships. Recorded in the Ledger: the hidden ResetBonusPool shortcut,
+the dagger's fading trail, the rep window's stale-bar quirk, and the
+port's conflation of the class ListBox's selection with the
+document's class index (so backing out of a finished custom class
+re-opens the list on the affinity row, where DFU keeps the two apart).
+
+Pins (test/customclass.test.js, 26): the difficulty tally and its
+multiplier at both ends of the legal band; the dagger's truncation
+and clamps; the picker's alphabetical unassigned list; the built
+career's DFCareer defaults, skills and stats, with its x0.50 spell
+multiplier decoded through the port's OWN reader; the affinity
+index's tie rule; the custom spell rule at every arm including the
+magic-MINOR negative; the bar rounding quirk; the column thresholds
+and the sign rule; the balance ledger; the Custom row's null career
+and its clickability; the freeEdit clamps and the ledger's
+conservation; the four exit gates in order; the affinity + reputation
+handoff; the isCustom quirk both ways; the sub-windows' modality; and
+the typed-capitals seam.
+
+Probed live by clicks (tools/customClassProbe.mjs): eighteen clicks
+of the picker's own NEXT arrow to reach Custom, a double click into
+the builder, twelve skills through twelve pickers, the HP spinner
+moving the difficulty 0 -> 6, the name TYPED with its capital, the
+stat gate refusing and clearing, the reputation window's own gate
+refusing until balanced, and out through the rest of the wizard. The
+entity at the end: career Scout, 11 HP/level, advancement 1.0788
+(0.3 + 2.7*15/52), the Spellsword spell set from its magic primary,
+the custom starting kit, and sGroupReputations carrying the builder's
+seed with the biography's changes added on top. Eyeballed: the stone
+window with its three skill panels and the dagger exactly on AVERAGE,
+and the reputation window with its green bar and refusal parchment.
