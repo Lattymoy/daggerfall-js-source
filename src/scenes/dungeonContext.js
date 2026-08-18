@@ -34,6 +34,7 @@ import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, applyCharacter, startingSpells, CLASS_CAREERS } from '../systems/chargen.js';
 import { loadCareers, finishChargen, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9: one career loader
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
+import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { assignStartingGear } from '../systems/startingGear.js';   // S3d
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
@@ -1864,6 +1865,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleCharSheet() {
       if (activeOverlay) return;
       preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: lazy - ready by the next open at worst
+      preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11: SPOP/BUTTONS for the action boxes
       activeOverlay = new CharSheet(playerEntity);
     },
     toggleInventory() {

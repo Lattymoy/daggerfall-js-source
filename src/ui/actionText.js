@@ -3,11 +3,15 @@
 // a click-anywhere-to-close box; ShowTextWithInput (12) pops record
 // Index + 5400 with a 20-char ' > ' input line (DaggerfallInputMessageBox)
 // and hands the entry back to the action system's answer gate.
-// Presentation: clean classic-text panels like the other windows
-// (backgrounds FLAGGED pending art-name verification, the shared UI
-// note); the overlay seam holds the world while a box is open.
+// Presentation: U11 gave the port DaggerfallMessageBox's parchment
+// frame, so these draw as the REAL classic popup - SPOP.RCI's
+// nine-slice with the verbatim sizing law. The flat panel below is
+// the art-less fallback now, not the plan. The overlay seam holds the
+// world while a box is open.
 
 import { drawText, measureText } from './text.js';
+import { nativeMetrics } from './nativePanel.js';
+import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';   // U11
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 const TEXT = [0.86, 0.82, 0.68, 1];
@@ -37,6 +41,13 @@ export class ActionTextBox {
   input() { this.done = true; }
 
   draw(renderer, canvas, font, s) {
+    if (messageBoxArtLoaded() && font) {
+      const m = nativeMetrics(canvas);
+      // ClickAnywhereToClose has NO buttons (DaggerfallMessageBox
+      // .ClickAnywhereToClose) - the box is text only.
+      const box = layoutMessageBox(font, this.lines);
+      if (drawMessageBox(renderer, m, font, box, this.lines)) return;
+    }
     drawPanel(renderer, canvas, font, s, this.lines);
   }
 }
@@ -65,6 +76,14 @@ export class ActionInputBox {
 
   draw(renderer, canvas, font, s) {
     const entry = ` > ${this.value}_`;
+    if (messageBoxArtLoaded() && font) {
+      const m = nativeMetrics(canvas);
+      // DaggerfallInputMessageBox puts the entry line UNDER the
+      // prompt inside the same parchment box.
+      const rows = [...this.lines, entry];
+      const box = layoutMessageBox(font, rows);
+      if (drawMessageBox(renderer, m, font, box, rows)) return;
+    }
     const at = drawPanel(renderer, canvas, font, s, this.lines, entry);
     drawText(renderer, font, entry, at.x + 12 * s, at.y - 12 * s, s, DIM);
   }

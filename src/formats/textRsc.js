@@ -62,12 +62,45 @@ export class TextRsc {
       const b = raw[i];
       if (b === RSC.EndOfRecord) break;
       if (b === RSC.SubrecordSeparator) { variants.push(cur); cur = ''; continue; }
-      if (b === RSC.NewLine) { cur += '\n'; continue; }
+      // U11: JustifyLeft (0xFC) and JustifyCenter (0xFD) each BREAK
+      // THE LINE - MultiFormatTextLabel.cs:333-345 calls NewLine() for
+      // all three, JustifyCenter additionally centring the row it just
+      // closed. The port dropped both as "every other control byte",
+      // so every record that lays its text out with them (the race
+      // descriptions, most centred popups) came back as ONE run-on
+      // line with words fused across the break: "Hammerfell.You are".
+      if (b === RSC.NewLine || b === RSC.JustifyLeft || b === RSC.JustifyCenter) { cur += '\n'; continue; }
       if (b === RSC.FontPrefix || b === RSC.PositionPrefix) { i++; continue; }   // one operand each, never leaks
       if (b >= RSC.FirstCharacter && b <= RSC.LastCharacter) { cur += String.fromCharCode(b); continue; }
-      // every other control byte (justify, page, cursor) drops here
+      // every remaining control byte (page, cursor) drops here
     }
     variants.push(cur);
     return variants;
+  }
+
+  /** The first variant as ROWS, with the per-row alignment the record
+   *  asks for: a row closed by JustifyCenter is centred, one closed by
+   *  JustifyLeft or a bare NewLine is left (MultiFormatTextLabel.cs
+   *  :333-345). Trailing empties drop - a record almost always ends
+   *  with a break. */
+  linesById(id) {
+    const raw = this.bytesById(id);
+    if (!raw) return [];
+    const rows = [];
+    let cur = '';
+    for (let i = 0; i < raw.length; i++) {
+      const b = raw[i];
+      if (b === RSC.EndOfRecord || b === RSC.SubrecordSeparator) break;
+      if (b === RSC.NewLine || b === RSC.JustifyLeft || b === RSC.JustifyCenter) {
+        rows.push({ text: cur, center: b === RSC.JustifyCenter });
+        cur = '';
+        continue;
+      }
+      if (b === RSC.FontPrefix || b === RSC.PositionPrefix) { i++; continue; }
+      if (b >= RSC.FirstCharacter && b <= RSC.LastCharacter) cur += String.fromCharCode(b);
+    }
+    if (cur) rows.push({ text: cur, center: false });
+    while (rows.length && rows[rows.length - 1].text === '') rows.pop();
+    return rows;
   }
 }

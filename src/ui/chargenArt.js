@@ -9,7 +9,7 @@
 //   name    CreateCharNameSelect.cs:26,73-85   CHAR00I0.IMG
 //   race    CreateCharRaceSelect.cs:30-31,64   TMAP00I0 + TAMRIEL2
 //   gender  CreateCharGenderSelect.cs:31       TEXT.RSC 2200 (a
-//           DaggerfallMessageBox - its frame art is FLAGGED below)
+//           DaggerfallMessageBox - ui/messageBox.js draws it)
 //   face    CreateCharFaceSelect.cs:31,61 + FacePicker.cs:55-68
 //   class   DaggerfallListPickerWindow.cs:31,82-98   PICK00I0.IMG
 //   stats   CreateCharAddBonusStats.cs:32,88-124 + StatsRollout.cs
@@ -17,23 +17,22 @@
 //   spinners UpDownSpinner.cs:25,96-116 / LeftRightSpinner.cs:30,76-96
 //   colours DaggerfallUI.cs:52-62,81
 //
-// FLAGGED loud:
-// - GENDER is a DaggerfallMessageBox in DFU, not a full-screen
-//   window. The port has no message-box FRAME art yet (U6's action
-//   boxes draw plain), so the verbatim 2200 prompt draws over the
-//   province map with a plain panel behind it. The frame lands with
-//   the DaggerfallMessageBox port.
-// - The race screen's province MAP CLICK is live (TAMRIEL2's palette
-//   index IS the race id), but the classic RACE DESCRIPTION message
-//   box (TEXT.RSC DescriptionID) rides the same missing frame.
-// - Biography questions, reflexes and the custom-class path are not
-//   in the flow yet, so their screens (CreateCharBiography,
-//   CreateCharReflexSelect, CreateCharCustomClass) are not ported.
+// GENDER and the race DESCRIPTION are DaggerfallMessageBoxes rather
+// than full-screen windows; U11 gave the port that frame, so both
+// draw as the real parchment popup over the province map (the
+// verbatim TEXT.RSC 2200 prompt with Male/Female, and the race's
+// DescriptionID with Yes/No).
+//
+// FLAGGED loud: biography questions, reflexes and the custom-class
+// path are not in the flow yet, so their screens (CreateCharBiography,
+// CreateCharReflexSelect, CreateCharCustomClass) are not ported.
 
 import { ImgFile } from '../formats/imgFile.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
+import { TextRsc } from '../formats/textRsc.js';   // U11: the race description
 import { bitmapToColor32 } from './hud.js';
 import { drawImg, drawRect, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR, SCREEN_DIM } from './nativePanel.js';
+import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U11
 import { FACES_PER_RACE, raceById, raceArt } from '../systems/races.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
@@ -105,7 +104,12 @@ export async function preloadChargenArt(deps) {
     // (RaceTemplate.GetRaceDictionary keys on ID), so only the raw
     // indexed bitmap is needed.
     const picker = (await loadOne(deps, 'TAMRIEL2.IMG')).bmp;
-    _art = { imgs, picker };
+    // U11: the race confirm box quotes TEXT.RSC by the template's
+    // DescriptionID, so the strings ride with the art.
+    let textRsc = null;
+    try { textRsc = new TextRsc().load(await deps.fetchBytes('TEXT.RSC')); }
+    catch { console.warn('[chargen] TEXT.RSC unavailable; the race description box stays bare'); }
+    _art = { imgs, picker, textRsc };
     _deps = deps;
   } catch (e) { console.warn('[chargen] CHAR0*/PICK00/TMAP00 art unavailable; the interim text panels stand in', e); }
 }
@@ -157,6 +161,14 @@ export async function loadFaceSet(raceKey, gender) {
 }
 export const faceSetLoaded = () => !!_faces;
 
+/** RaceTemplate.DescriptionID through TEXT.RSC, split to rows
+ *  (CreateCharRaceSelect.cs:104-106). */
+export function raceDescriptionLines(race) {
+  const t = _art?.textRsc;
+  if (!t || !race) return [];
+  return t.linesById(race.descriptionId).map((r) => r.text);
+}
+
 const img = (n) => _art.imgs.get(n);
 const rowH = (font) => (font.fnt?.fixedHeight ?? 6) + LIST_ROW_SPACING;
 
@@ -196,17 +208,37 @@ function drawRace(renderer, m, font, flow) {
   // seam has to be legible without a click (phone + probe drive it by
   // key). Under the prompt, not over the banner at the map's foot.
   shadowText(renderer, font, flow.race.name, m, 0, 26, { align: 'center', w: 320, color: SELECTED_TEXT });
+  // U11: a province click opens the race's DESCRIPTION in a Yes/No
+  // box (CreateCharRaceSelect.cs:100-112) - Yes accepts the race and
+  // leaves the screen, No returns to the map.
+  if (flow.raceConfirm) {
+    const lines = flow.raceConfirm;
+    const box = layoutMessageBox(font, lines, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
+    flow._raceBox = box;
+    drawMessageBox(renderer, m, font, box, lines);
+  } else {
+    flow._raceBox = null;
+  }
   return true;
 }
 
+/** CreateCharGenderSelect is a DaggerfallMessageBox over the province
+ *  map: the TEXT.RSC 2200 prompt with the Male and Female buttons.
+ *  U11 gave the port the parchment frame, so it is the real box now -
+ *  the flat black panel U10 shipped is gone. */
+export const GENDER_PROMPT = 'Select thy character\'s gender.';   // TEXT.RSC 2200
+export const genderBox = (font) => layoutMessageBox(font, [GENDER_PROMPT], [MB_BUTTONS.Male, MB_BUTTONS.Female]);
+
 function drawGender(renderer, m, font, flow) {
   drawImg(renderer, img('TMAP00I0.IMG'), m, 0, 0);
-  // FLAGGED: DaggerfallMessageBox frame art pends its own port.
-  drawRect(renderer, m, 60, 78, 200, 44, [0, 0, 0, 0.85]);
-  shadowText(renderer, font, 'Select thy character\'s gender.', m, 60, 84, { align: 'center', w: 200 });
-  const male = flow.gender === 'male';
-  shadowText(renderer, font, 'Male', m, 60, 102, { align: 'center', w: 100, color: male ? SELECTED_TEXT : DEFAULT_TEXT_COLOR });
-  shadowText(renderer, font, 'Female', m, 160, 102, { align: 'center', w: 100, color: male ? DEFAULT_TEXT_COLOR : SELECTED_TEXT });
+  const box = genderBox(font);
+  flow._genderBox = box;   // the hit path has no font; the draw hands it the geometry
+  if (!drawMessageBox(renderer, m, font, box, [GENDER_PROMPT])) return true;
+  // the keyboard flow's current pick, named under the box - classic
+  // has no selected STATE here (you click a button and the window
+  // closes), but the up/down seam has to be legible
+  shadowText(renderer, font, flow.gender === 'male' ? 'Male' : 'Female', m,
+    box.x, box.y + box.h + 4, { align: 'center', w: box.w, color: SELECTED_TEXT });
   return true;
 }
 
@@ -320,13 +352,26 @@ export function chargenHit(flow, vx, vy) {
   const s = flow.state;
   if (s === 'name') return inRect(RECTS.ok) ? 'confirm' : null;
   if (s === 'race') {
+    if (flow._raceBox) {
+      const hit = messageBoxHit(flow._raceBox, vx, vy);
+      if (hit === MB_BUTTONS.Yes) return 'confirm';        // CloseWindow - the race stands
+      if (hit === MB_BUTTONS.No) return { cancelRace: true };   // CancelWindow - back to the map
+      return null;   // the box is modal: the map underneath is dead
+    }
     const r = raceAtProvince(vx, vy);
     if (!r) return null;
-    return { setRace: r.key };
+    return { setRace: r.key, describe: raceDescriptionLines(r) };
   }
   if (s === 'gender') {
-    if (vy >= 96 && vy < 112 && vx >= 60 && vx < 160) return { setGender: 'male' };
-    if (vy >= 96 && vy < 112 && vx >= 160 && vx < 260) return { setGender: 'female' };
+    // U11: the real BUTTONS.RCI rects, not the invented halves of a
+    // flat panel. The layout needs the font, which the hit path does
+    // not carry - the box geometry is font-INDEPENDENT for a single
+    // known line width, so the flow caches the last drawn box.
+    const box = flow._genderBox;
+    if (!box) return null;
+    const hit = messageBoxHit(box, vx, vy);
+    if (hit === MB_BUTTONS.Male) return { setGender: 'male' };
+    if (hit === MB_BUTTONS.Female) return { setGender: 'female' };
     return null;
   }
   if (s === 'face') {

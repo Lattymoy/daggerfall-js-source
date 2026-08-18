@@ -45,12 +45,27 @@ const MORPHOLOGY_OF = Object.freeze({
 
 export const FACES_PER_RACE = 10;   // records in each FACE*.CIF
 
+/** RaceTemplate DescriptionID / ClipID (RaceTemplate.cs:177-332).
+ *  U11: the chargen race screen pops the description in a Yes/No
+ *  message box, so the TEXT.RSC record has to ride the table. Note
+ *  the ids are NOT in enum order - Nord is 2000, Breton 2003. */
+const DESCRIPTION_ID = Object.freeze({
+  Breton: 2003, Redguard: 2002, Nord: 2000, DarkElf: 2007,
+  HighElf: 2006, WoodElf: 2005, Khajiit: 2001, Argonian: 2004,
+});
+const CLIP_ID = Object.freeze({
+  Breton: 209, Redguard: 210, Nord: 211, DarkElf: 212,
+  HighElf: 213, WoodElf: 214, Khajiit: 215, Argonian: 216,
+});
+
 const two = (n) => String(n).padStart(2, '0');
 const build = (key, artIndex) => Object.freeze({
   key,
   name: key.replace(/([a-z])([A-Z])/g, '$1 $2'),   // DarkElf -> "Dark Elf"
   id: RACES[key],
   artIndex,
+  descriptionId: DESCRIPTION_ID[key],
+  clipId: CLIP_ID[key],
   morphology: MORPHOLOGY_OF[key],
   morphologyIndex: BODY_MORPHOLOGY[MORPHOLOGY_OF[key]],
   background: `SCBG${two(artIndex)}I0.IMG`,

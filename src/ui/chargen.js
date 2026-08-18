@@ -56,6 +56,7 @@ export class ChargenFlow {
     this.raceIndex = 0;      // RACE_TEMPLATES order (Breton first)
     this.faceIndex = 0;      // 0..9 within the race/gender FACE CIF
     this.classIndex = 0;
+    this.raceConfirm = null;   // U11: the open race-description box, if any
     this.cursor = 0;
     this._rolled = null;
   }
@@ -133,6 +134,13 @@ export class ChargenFlow {
       return;
     }
     if (s === 'race') {
+      // U11: the confirm box is MODAL - it eats the map's keys, and
+      // its own confirm/back are Yes and No.
+      if (this.raceConfirm) {
+        if (action === 'confirm') { this.raceConfirm = null; this.state = 'gender'; }
+        else if (action === 'back') this.raceConfirm = null;
+        return;
+      }
       if (action === 'up') this.raceIndex = (this.raceIndex + RACE_TEMPLATES.length - 1) % RACE_TEMPLATES.length;
       else if (action === 'down') this.raceIndex = (this.raceIndex + 1) % RACE_TEMPLATES.length;
       else if (action === 'confirm') this.state = 'gender';
@@ -194,7 +202,14 @@ export class ChargenFlow {
     const hit = chargenHit(this, vx, vy);
     if (!hit) return false;
     if (typeof hit === 'string') { this.input(hit); return true; }
-    if (hit.setRace != null) { this.raceIndex = RACE_TEMPLATES.findIndex((r) => r.key === hit.setRace); return true; }
+    if (hit.setRace != null) {
+      this.raceIndex = RACE_TEMPLATES.findIndex((r) => r.key === hit.setRace);
+      // U11: the province click OPENS the confirm box (Yes accepts,
+      // No returns to the map) rather than accepting outright.
+      this.raceConfirm = hit.describe?.length ? hit.describe : null;
+      return true;
+    }
+    if (hit.cancelRace) { this.raceConfirm = null; return true; }
     if (hit.setGender != null) { this.gender = hit.setGender; return true; }
     if (hit.setCursor != null) { this.cursor = hit.setCursor; return true; }
     return false;

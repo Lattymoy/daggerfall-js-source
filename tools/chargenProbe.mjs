@@ -36,6 +36,15 @@ await clickNative(110, 95);           // Hammerfell
 const clicked = await page.evaluate(() => window.__chargenRace?.() ?? null);
 console.log('province click ->', clicked);
 if (clicked !== 'Redguard') { console.log('PROVINCE CLICK DID NOT PICK A RACE', clicked); process.exit(1); }
+// U11: the click opens the race's TEXT.RSC description in a Yes/No
+// parchment box (CreateCharRaceSelect.cs:100-112).
+await waitFrames(3);
+const confirm = await page.evaluate(() => window.__chargenConfirm?.() ?? null);
+console.log('race confirm box:', JSON.stringify(confirm?.slice(0, 2) ?? null));
+if (!confirm?.length) { console.log('RACE DESCRIPTION BOX DID NOT OPEN'); process.exit(1); }
+await page.screenshot({ path: '/home/claude/chargen-raceconfirm.png' });
+await key('Escape');                  // NO - back to the map, race kept
+if (await page.evaluate(() => window.__chargenConfirm?.() ?? null)) { console.log('NO DID NOT DISMISS'); process.exit(1); }
 // the click left the cursor on Redguard (index 1); step to Khajiit (6)
 for (let i = 0; i < 5; i++) await key('ArrowDown');
 await waitFrames(2);

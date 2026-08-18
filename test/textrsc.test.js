@@ -30,8 +30,22 @@ test('textrsc: header walk, ids, raw bytes with terminator', () => {
   assert.equal(t.bytesById(9999), null);
 });
 
-test('textrsc: plainText - newline, variants, operand consumption, control drops', () => {
+test('textrsc: plainText - newline, variants, operand consumption, justify BREAKS', () => {
   const t = new TextRsc().load(craft());
   assert.deepEqual(t.plainText(500), ['Hi\nyo', 'alt']);     // subrecord split
-  assert.deepEqual(t.plainText(501), ['ok']);                // '!' and 'A' operands never leak; justify drops
+  // U11: JustifyCenter (0xFD) and JustifyLeft (0xFC) each call
+  // NewLine() in DFU (MultiFormatTextLabel.cs:333-345) - this pin used
+  // to assert "justify drops", which is exactly the bug that fused
+  // "Hammerfell." to "You are" in every centred TEXT.RSC record.
+  assert.deepEqual(t.plainText(501), ['\nok']);              // '!' and 'A' operands never leak; the justify BREAKS
+});
+
+test('textrsc: linesById - rows with their per-row alignment', () => {
+  const t = new TextRsc().load(craft());
+  // record 501 is FontPrefix/PositionPrefix operands, a JustifyCenter,
+  // then "ok" - so one CENTRED empty row closes and "ok" is the tail.
+  assert.deepEqual(t.linesById(501), [{ text: '', center: true }, { text: 'ok', center: false }]);
+  // record 500 breaks on a bare NewLine, which is LEFT
+  assert.deepEqual(t.linesById(500), [{ text: 'Hi', center: false }, { text: 'yo', center: false }]);
+  assert.deepEqual(t.linesById(9999), []);
 });

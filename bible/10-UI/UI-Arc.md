@@ -1155,3 +1155,73 @@ FLAGGED, not done: the DaggerfallMessageBox frame (which the gender
 screen and the race DESCRIPTION box both want), biography questions,
 reflexes, and the custom-class path - none of which the flow has
 states for yet.
+
+## U11: THE PARCHMENT MESSAGE BOX (2026-08-18)
+
+The last plain panel in an otherwise native chargen. DFU's
+`DaggerfallMessageBox` is the frame behind every popup in the game
+and the port had never had it: U6's action boxes, U10's gender screen
+and the race description all drew on a flat colour rect.
+
+`src/ui/messageBox.js` ports it whole, every law citing its DFU line:
+
+- **the frame** is a NINE-SLICE over SPOP.RCI
+  (DaggerfallUI.cs:48,905-949): records 0-8 are topLeft, top,
+  topRight, left, fill, right, bottomLeft, bottom, bottomRight, all
+  22x22 in the shipping data - which is WHY the box rounds its size
+  to a multiple of 22. Corners draw once, edges and fill tile
+  (Panel.cs:243-330), here an exact integer repeat.
+- **the sizing law** (UpdatePanelSizes, :506-570): margins 10;
+  width = max(button strip, text) + both margins, floored at
+  minBoxWidth 132; height = label block + both margins; each rounded
+  UP to a slice, or 44 if under 44. Adding buttons grows the label
+  block ONCE by the button height + buttonTextDistance 4 - the
+  `finalSize.y - buttonPanel.Size.y > 0` gate passes only on the
+  first button, so one button and four cost the same height.
+- **the buttons** are BUTTONS.RCI records INDEXED BY THE ENUM VALUE
+  (:67-90, :369-371), 32x16, laid left to right with buttonSpacing
+  32, the strip centred, and the verbatim single-button HACK that
+  drops a lone button 11px lower "so that it aligns like two or more
+  buttons".
+
+**One deliberate departure, flagged at the site.** DFU computes the
+button Y from `messagePanel.Size.y` - which at that moment still holds
+the height from the PREVIOUS UpdatePanelSizes call, the panel being
+resized three lines later. The strip lands 6px above the last text
+row even though the label block reserved exactly stripH + 4 beneath
+it. Eyeballed on the Redguard description, whose final line is long
+and centred: "Is your [YES]ter to [NO]Redguard?". The reservation is
+plainly the intent - 4px under the text is where 16px of button
+exactly fills it - so the port clamps the strip to that and never
+lets it ride higher. Nothing else in the file departs.
+
+**The TEXT.RSC bug this uncovered.** The race description came back as
+one run-on line with words fused across the breaks - "Hammerfell.You
+are part of". `plainText` broke only on NewLine (0x00) and dropped
+JustifyLeft (0xFC) and JustifyCenter (0xFD) as "every other control
+byte". In DFU all three call `NewLine()`
+(MultiFormatTextLabel.cs:333-345); JustifyCenter additionally centres
+the row it just closed. Most centred records lay their text out with
+0xFD, so **every one of them had been rendering as a single fused
+line** everywhere the port shows TEXT.RSC. Fixed, with a new
+`linesById` returning rows WITH their per-row alignment. The old pin
+asserted "justify drops" - it was pinning the bug.
+
+**Wired:** the chargen gender screen (TEXT.RSC 2200 with Male/Female),
+the race confirm box (the template's DescriptionID with Yes/No -
+Yes accepts and moves on, No returns to the map, and the box is MODAL
+over both the map's clicks and its keys), and U6's ActionTextBox and
+ActionInputBox. The race table gained `descriptionId` and `clipId`
+(RaceTemplate.cs:177-332; note the ids are NOT in enum order - Nord is
+2000, Breton 2003). Warmed in all three chargen hosts; worldModes
+hosts no popup (its `say` goes to the console, already flagged).
+
+Pins: `test/messagebox.test.js`, six tests, and the corrected
+`textrsc` pins - each mutation-proven.
+Probed + eyeballed: the gender box on the province map with real MALE
+and FEMALE buttons, and the Redguard description reading as seven
+proper lines with YES and NO clear beneath it.
+
+FLAGGED, not done: the scrolling variant (a label past MaxTextHeight
+gets a scroll bar and clipped rendering, :571-590) - nothing in the
+port yet feeds a box more text than fits.
