@@ -36,7 +36,6 @@ import { TextRsc } from '../formats/textRsc.js';   // U11: the race description
 import { generateBackstory } from '../systems/biography.js';   // U13
 import { bitmapToColor32 } from './hud.js';
 import { drawImg, drawRect, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR, SCREEN_DIM } from './nativePanel.js';
-import { measureText } from './text.js';   // U13: the reflex info rows
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U11
 import { FACES_PER_RACE, raceById, raceArt } from '../systems/races.js';
 import { SKILL_NAMES } from '../systems/skills.js';
@@ -242,12 +241,16 @@ export function reflexInfoLines() {
 
 function drawReflexes(renderer, m, font, flow) {
   drawImg(renderer, img('CHAR05I0.IMG'), m, 0, 0);
+  // AUDIT 17h F3: the info panel is a PARCHMENT POPUP
+  // (CreateCharReflexSelect.cs:60-88 calls SetDaggerfallPopupStyle),
+  // centred horizontally and sized to its text plus the margins - not
+  // bare rows laid over the map. U11 owns that frame, so the box lays
+  // out here and the panel's own TOP (15) overrides the middle
+  // alignment layoutMessageBox gives a free-standing box.
   const rows = reflexInfoLines();
-  const rh = rowH(font);
-  rows.forEach((r, i) => {
-    const w = measureText(font.fnt, r.text);
-    shadowText(renderer, font, r.text, m, r.center ? Math.round((320 - w) / 2) : 0, REFLEX_INFO_TOP + i * rh);
-  });
+  const box = layoutMessageBox(font, rows);
+  const top = REFLEX_INFO_TOP;
+  drawMessageBox(renderer, m, font, { ...box, y: top, textY: top + (box.textY - box.y) });
   // the highlight band for the current pick, drawn from the strip
   const strip = img('CHAR05I1.IMG');
   const v = Math.max(0, Math.min(REFLEX_COUNT - 1, flow.reflexes ?? PLAYER_REFLEXES.Average));

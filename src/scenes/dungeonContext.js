@@ -32,7 +32,7 @@ import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, applyCharacter, startingSpells, CLASS_CAREERS } from '../systems/chargen.js';
-import { loadCareers, finishChargen, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9: one career loader
+import { loadCareers, finishChargen, applyHeadlessChargen, loadBiogs } from '../systems/chargenSession.js';   // S3c/U9: one career loader
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { assignStartingGear } from '../systems/startingGear.js';   // S3d
@@ -728,6 +728,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // would silently leave it on the interim text panels.
       await preloadChargenArt({ renderer, fetchBytes, palette });
       chargenFlow = new ChargenFlow(await loadCareers(fetchBytes));
+      // AUDIT 17h F2 / THE FOUR HOSTS RULE: the biography question
+      // sets. Without them a character created in the DUNGEON skipped
+      // all twelve questions - the same host gap 17f found for the
+      // starting spellbook and the starting kit, one slice later.
+      const biogs = await loadBiogs(fetchBytes);
+      chargenFlow.biogFor = (i) => biogs[i] ?? null;
       activeOverlay = chargenFlow;
     }
   }

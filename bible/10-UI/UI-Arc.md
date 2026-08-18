@@ -1420,3 +1420,56 @@ gear law already handles `isCustom`, only the screen is missing) and
 the port's overall wizard ORDER, which still asks the name first and
 the face early where DFU asks race, gender, class, biography, name,
 face. Chargen is otherwise complete.
+
+## AUDIT 17h: the parity pass over S3e + U13 (2026-08-18)
+
+Three findings. The arc-local two, and one that turned out to be
+several slices older than the work that exposed it.
+
+**The port had never saved player reputation.** `sGroupReputations`
+and `reactionMods` are read by `getReactionToPlayer` on EVERY greeting
+and written by the T3f tone tallies, the G2 court sentences and now
+the biography - and the quicksave carried neither, nor any of the six
+`biography*Mod` fields. DFU writes all of it out field by field
+(SerializablePlayer.cs:136-141, :152-162, :305-310). A load reset the
+player's standing with every social group to zero.
+
+This gap predates the biography. What S3e changed is that reputation
+now matters from the FIRST MINUTE of a new character rather than
+accumulating quietly over a session, which is what made a load-wipe
+visible enough to find. Persisted now, along with the queued faction
+deltas and the composed backstory - and the SNAPSHOT detaches from the
+live entity, because the quicksave write happens after
+`snapshotPlayer` returns, the same law save.js already stated for its
+nested effect entries. A pre-17h save leaves the entity's own state
+alone rather than nulling it.
+
+**The dungeon host skipped the biography.** It builds its own
+`ChargenFlow` and never received the question sets, so a character
+created in a dungeon answered no questions at all. This is the THIRD
+time this exact host gap has hit this flow - 17f found it for the
+starting spellbook and for the starting kit, and here it is one slice
+later for the biography. The lesson is not "remember the dungeon
+host". It is that anything the flow needs should be handed to it BY
+THE SHARED SESSION, the way `createChargenWindow` takes `biogs`, not
+wired per host. The dungeon builds its flow by hand and so keeps
+missing each new dependency; folding that construction into
+chargenSession is the standing fix, and it is now the obvious next
+tidy on this arc.
+
+**The reflex info panel is a parchment popup.**
+`CreateCharReflexSelect.cs:60-88` calls `SetDaggerfallPopupStyle` on
+it and sizes it to its text plus the margins. U13 drew bare rows over
+the province map. U11 already owned that frame - a two-line fix that
+should have been the first draft.
+
+**Checked and CLEARED:** the level-up sums anchor before the biography
+bonuses in the port, and they do in DFU too (the effects are applied
+at game start, after the entity setup that computes the sums). The 18
+BIOG files loaded at boot mirror the 18 CLASS files already loaded
+beside them, and only when chargen actually runs.
+
+Pins: `test/audit17h.test.js`, four tests, each mutation-proven -
+including the greeting compared either side of a save round trip,
+which is the assertion that would have caught this years of slices
+ago.

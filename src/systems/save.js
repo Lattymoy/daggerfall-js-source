@@ -21,7 +21,22 @@ const ENTITY_FIELDS = [
   'currentBreath',   // P12 (SerializablePlayer carries it; missing = 0/surfaced on old saves)
   'startingLevelUpSkillSum', 'currentLevelUpSkillSum',
   'readyToLevelUp', 'pendingLevel', 'chargenDone',
+  // AUDIT 17h F1: the six BIOGRAPHY modifiers, which DFU persists
+  // one-for-one (SerializablePlayer.cs:136-141, :305-310). Without
+  // them a load reset every biography answer's lasting effect.
+  'biographyResistDiseaseMod', 'biographyResistMagicMod', 'biographyAvoidHitMod',
+  'biographyResistPoisonMod', 'biographyFatigueMod', 'biographyReactionMod',
 ];
+
+/** AUDIT 17h F1: the ELEVEN social-group reputations DFU writes out
+ *  field by field (SerializablePlayer.cs:152-162) and the matching
+ *  reaction modifiers. Nothing persisted these, so a quicksave/load
+ *  reset the player's standing with every social group to zero -
+ *  which getReactionToPlayer reads on EVERY greeting, and which the
+ *  biography, the T3f tone tallies and the G2 court sentences all
+ *  write to. The port has never carried them; the biography made the
+ *  gap load-bearing from the first minute of a new character. */
+const REP_ARRAYS = ['sGroupReputations', 'reactionMods'];
 
 /** Deep-copy one activeEffects entry: permanent drain entries carry
  *  no effect record (S15); disease entries carry the accumulating
@@ -47,6 +62,10 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   snap.items = (entity.items ?? []).map((it) => ({ ...it }));
   snap.spells = (entity.spells ?? []).map((sp) => sp.index);   // resolve against SPELLS.STD on load
   snap.activeEffects = (entity.activeEffects ?? []).map(copyEffectEntry);
+  for (const k of REP_ARRAYS) snap[k] = entity[k] ? [...entity[k]] : null;
+  // the biography's faction-rep deltas wait here for the faction slice
+  snap.pendingFactionRep = (entity.pendingFactionRep ?? []).map((r) => ({ ...r }));
+  snap.backStory = [...(entity.backStory ?? [])];
   return snap;
 }
 
@@ -82,6 +101,12 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // table relinks to the discarded objects.
   rebuildEquipState(entity);
   entity.activeEffects = snap.activeEffects.map(copyEffectEntry);
+  // Missing on a pre-17h save: leave whatever the entity carries (a
+  // fresh entity starts every group at zero, which is classic's own
+  // starting state), the additive-field shape DFU's serializer gives.
+  for (const k of REP_ARRAYS) if (snap[k]) entity[k] = [...snap[k]];
+  if (snap.pendingFactionRep) entity.pendingFactionRep = snap.pendingFactionRep.map((r) => ({ ...r }));
+  if (snap.backStory) entity.backStory = [...snap.backStory];
   entity.spells = spellsByIndex
     ? snap.spells.map((i) => spellsByIndex.get(i)).filter(Boolean)
     : [];
