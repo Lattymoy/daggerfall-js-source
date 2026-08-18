@@ -18,6 +18,7 @@
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES } from '../characters/equipRules.js';
 import { createEquipTable, getItemHands as handsOf, ITEM_HANDS } from '../characters/equipTable.js';
+import { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, SHIELD_VALUES, SHIELD_PARTS, isShieldTemplate } from './armorMaterials.js';
 
 export { EQUIP_SLOTS, ITEM_HANDS };
 const ARROW = 131;
@@ -125,44 +126,41 @@ export function seedStartingEquipment(entity) {
 // a no-op in DFU - GetMaterialArmorValue returns 0 for clothing -
 // so it is omitted here.
 
-export const BODY_PARTS = Object.freeze({ Head: 0, RightArm: 1, LeftArm: 2, Chest: 3, Hands: 4, Legs: 5, Feet: 6 });
-export const NUMBER_BODY_PARTS = 7;
-// GetBodyPartForEquipSlot
+// AUDIT 17e F32: these tables lived here AND in ui/paperDoll.js with
+// divergent constants; they now have one home.
+export { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue };
+
+/** GetBodyPartForEquipSlot (DaggerfallUnityItem.cs:1131-1153): only
+ *  these seven slots map to an armor body part. */
 const SLOT_BODY_PART = new Map([
   [EQUIP_SLOTS.Head, BODY_PARTS.Head], [EQUIP_SLOTS.RightArm, BODY_PARTS.RightArm],
   [EQUIP_SLOTS.LeftArm, BODY_PARTS.LeftArm], [EQUIP_SLOTS.ChestArmor, BODY_PARTS.Chest],
   [EQUIP_SLOTS.Gloves, BODY_PARTS.Hands], [EQUIP_SLOTS.LegsArmor, BODY_PARTS.Legs],
   [EQUIP_SLOTS.Feet, BODY_PARTS.Feet],
 ]);
-// GetMaterialArmorValue: leather 3, chain 6, plate iron..daedric
-const PLATE_ARMOR_VALUES = [7, 9, 9, 11, 13, 15, 15, 17, 19, 21];   // iron, steel, silver, elven, dwarven, mithril, adamantium, ebony, orcish, daedric
-export function materialArmorValue(material) {
-  if (material === 0x0000) return 3;                                   // leather
-  if (material === 0x0100 || material === 0x0101) return 6;            // chain
-  if (material >= 0x0200) return PLATE_ARMOR_VALUES[material - 0x0200] ?? 0;
-  return 0;
-}
-// GetShieldArmorValue + GetShieldProtectedBodyParts
-const SHIELD_VALUES = new Map([[109, 1], [110, 2], [111, 3], [112, 4]]);
-const SHIELD_PARTS = new Map([
-  [109, [BODY_PARTS.LeftArm, BODY_PARTS.Hands]],
-  [110, [BODY_PARTS.LeftArm, BODY_PARTS.Hands, BODY_PARTS.Legs]],
-  [111, [BODY_PARTS.LeftArm, BODY_PARTS.Hands, BODY_PARTS.Legs]],
-  [112, [BODY_PARTS.Head, BODY_PARTS.LeftArm, BODY_PARTS.Hands, BODY_PARTS.Legs]],
-]);
-const isShield = (item) => SHIELD_VALUES.has(item.templateIndex);
 
 export const armorValuesOf = (entity) => (entity.armorValues ??= new Array(NUMBER_BODY_PARTS).fill(100));
 
 export function updateEquippedArmorValues(entity, item, equipping) {
-  if (item.group !== 'Armor') return;   // (DFU's clothing branch is a value-0 no-op)
+  // AUDIT 17e F10 - UpdateEquippedArmorValues verbatim
+  // (DaggerfallEntity.cs:591-594): the branch admits Armor AND the
+  // FOOTWEAR window of each clothing group - MensClothing GroupIndex
+  // 6..8 = Shoes/Tall_Boots/Boots (141+6..8 = 147..149), WomensClothing
+  // 4..6 = Shoes/Tall_boots/Boots (182+4..6 = 186..188). Sandals
+  // (150/189) map to Feet but sit OUTSIDE the window and get nothing -
+  // preserved as DFU has it. Their material is Leather (3), so a pair
+  // of boots is worth 15 on the Feet part; the port granted 0.
+  const FOOTWEAR = item.group === 'MensClothing' ? [147, 148, 149]
+    : item.group === 'WomensClothing' ? [186, 187, 188] : null;
+  if (item.group !== 'Armor' && !(FOOTWEAR && FOOTWEAR.includes(item.templateIndex))) return;
   const av = armorValuesOf(entity);
   const sign = equipping ? -1 : 1;
-  if (!isShield(item)) {
+  if (!isShieldTemplate(item.templateIndex)) {
     // a non-shield armor piece's slot is FIXED by template (the C5c
     // rule table) - no equip-table state involved (DFU GetArmorSlot)
     const rule = SLOT_RULES.Armor[item.templateIndex];
-    const part = rule ? SLOT_BODY_PART.get(EQUIP_SLOTS[rule.slot]) : null;
+    const part = rule ? SLOT_BODY_PART.get(EQUIP_SLOTS[rule.slot])
+      : (FOOTWEAR ? BODY_PARTS.Feet : null);   // clothing footwear -> Feet
     if (part == null) return;
     av[part] += sign * materialArmorValue(item.material ?? 0) * 5;
   } else {

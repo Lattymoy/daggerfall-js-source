@@ -18,6 +18,7 @@
 // objects; open exteriors have nothing in reach).
 
 import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
+import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 17e F17
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
 import { SOUND, swingSoundFor } from '../systems/soundClips.js';
@@ -35,8 +36,19 @@ import { SOUND, swingSoundFor } from '../systems/soundClips.js';
  *                     (hosts without casting omit it),
  * }
  */
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, say = () => {}, spellArmed = () => false }) {
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, say = () => {}, spellArmed = () => false, bindWorn = true }) {
   const playerWeapon = new PlayerWeapon({});
+  // AUDIT 17e F17 / THE FOUR HOSTS RULE: U8h bound the worn weapon in
+  // the two EXTERIOR hosts by hand, so the interior host (which owns
+  // its own rig) kept swinging the interim dagger inside every
+  // building, and the dungeon host was flagged but unwired. The bind
+  // belongs to the rig: every host that passes an entity inherits it.
+  // bindWorn:false is for rigs that manage their own weapon (the
+  // dungeon's scripted bow demo).
+  const syncWorn = () => {
+    if (!bindWorn || !entity?.equip?.slots) return;
+    playerWeapon.weapon = entity.equip.slots[EQUIP_SLOTS.RightHand] ?? null;
+  };
   const cv = typeof canvas === 'function' ? canvas : () => canvas;
   const cache = new Map();   // `${type}:${material}` -> art (null while loading)
   let _dx = 0, _dy = 0, _held = false;
@@ -86,6 +98,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     clickAttack() { if (!playerWeapon.sheathed) playerWeapon.clickAttack(); },
     /** ToggleSheath + the draw sound (78) on unsheathing a real weapon. */
     toggleSheath() {
+      syncWorn();
       if (playerWeapon.toggleSheath()) audio.playOneShot(SOUND.DrawWeapon);
     },
     /**
@@ -94,6 +107,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *   host resolves them (or ignores them where nothing is in reach).
      */
     frame(dt, { paralyzed = false } = {}) {
+      syncWorn();   // AUDIT 17e F17: the rig owns the worn-weapon bind
       const c = cv();
       if (!paralyzed && c) playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight));
       _dx = 0; _dy = 0;

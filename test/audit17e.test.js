@@ -11,6 +11,11 @@ import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { calculateCost, calculateTradePrice } from '../src/systems/shopStock.js';
 import { itemBaseValue } from '../src/systems/itemTemplates.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../src/combat/fpsWeapon.js';
+import { NativeInventoryWindow } from '../src/ui/nativeInventory.js';
+import { safeScrollIndex } from '../src/ui/itemScroller.js';
+import { inventoryItemImage, usesWorldTexture, templateByIndex } from '../src/systems/itemTemplates.js';
+
+const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -157,4 +162,95 @@ test('audit17e F1: worldModes.frame() returns a boolean from EVERY exit (the mod
   const bare = [...body.matchAll(/\breturn\s*;/g)];
   assert.deepEqual(bare.map((m) => body.slice(Math.max(0, m.index - 60), m.index + 8)), [],
     'every return in frame() must carry a value - a bare return reads as "not handled" to the hosts');
+});
+
+test('audit17e W1: the paperdoll click, clothing armor, arrows, scroll clamp', () => {
+  // F8 - PaperDoll_OnMouseClick (DaggerfallInventoryWindow.cs:1932-1952)
+  // unequips in EQUIP/Select. REMOVE has NO branch: inert. U8g shipped
+  // this inverted, and its probe asserted the inversion.
+  const e = { items: [], stats: {} };
+  const cuirass = { group: 'Armor', templateIndex: 102, material: 0x0200, name: 'Cuirass' };
+  e.items.push(cuirass);
+  equipItem(e, cuirass);
+  const w = new NativeInventoryWindow({ items: () => e.items, entity: e, icons: ICONS });
+  w.mode = 'remove';
+  const slot = cuirass.equipSlot;
+  w.click(49 + 55, 13 + 90);   // a doll click in REMOVE mode
+  assert.equal(e.equip.slots[slot], cuirass, 'REMOVE-mode doll clicks are inert');
+
+  // F10 - UpdateEquippedArmorValues' clothing branch
+  // (DaggerfallEntity.cs:591-594): the FOOTWEAR window of each
+  // clothing group counts; Sandals sit outside it and count 0.
+  const f = { items: [], stats: {} };
+  equipItem(f, { group: 'MensClothing', templateIndex: 149, material: 0, name: 'Boots' });
+  assert.equal(f.armorValues[BODY_PARTS.Feet], 85, 'leather boots are worth 3*5 on Feet');
+  const g = { items: [], stats: {} };
+  equipItem(g, { group: 'MensClothing', templateIndex: 150, material: 0, name: 'Sandals' });
+  assert.equal(armorValuesOf(g)[BODY_PARTS.Feet], 100, 'Sandals map to Feet but DFU grants nothing');
+  const h = { items: [], stats: {} };
+  equipItem(h, { group: 'WomensClothing', templateIndex: 188, material: 0, name: 'Boots' });
+  assert.equal(h.armorValues[BODY_PARTS.Feet], 85, "the women's window is 186..188");
+
+  // F14 - CreateWeapon's arrow branch takes no material multiplier
+  const arrowBase = templateByIndex(131).basePrice;
+  assert.equal(itemBaseValue({ group: 'Weapons', templateIndex: 131, material: 0 }), arrowBase);
+  assert.equal(itemBaseValue({ group: 'Weapons', templateIndex: 131, material: 9 }), arrowBase,
+    'a daedric-material arrow is still worth its basePrice, not 3*512x it');
+
+  // F15 - delayScrollUp: correct only once the index runs PAST the end
+  assert.equal(safeScrollIndex(4, 8), 4, 'still in range: untouched');
+  assert.equal(safeScrollIndex(4, 5), 4, 'partly-filled column is classic');
+  assert.equal(safeScrollIndex(4, 4), 0, 'past the end: snap');
+  assert.equal(safeScrollIndex(9, 10), 9);
+  assert.equal(safeScrollIndex(9, 3), 0);
+});
+
+test('audit17e W1: F9 the inventory icon draws the PLAYER texture, not the world sprite', () => {
+  // GetItemImage (ItemHelper.cs:399-430) + GetInventoryTexture*
+  // (DaggerfallUnityItem.cs:1728-1764) + UseWorldTexture (:1830-1855).
+  const dagger = inventoryItemImage({ group: 'Weapons', templateIndex: 113 });
+  const t113 = templateByIndex(113);
+  assert.deepEqual(dagger, { archive: t113.playerTextureArchive, record: t113.playerTextureRecord });
+  assert.notEqual(dagger.archive, t113.worldTextureArchive, 'the world sprite is a DIFFERENT archive');
+  // the Katana +1 inventory bump (it uses the right-hand image)
+  const t121 = templateByIndex(121);
+  assert.equal(inventoryItemImage({ group: 'Weapons', templateIndex: 121 }).record, t121.playerTextureRecord + 1);
+  // UseWorldTexture: arrows, ingredients, and the three groups
+  const t131 = templateByIndex(131);
+  assert.deepEqual(inventoryItemImage({ group: 'Weapons', templateIndex: 131 }),
+    { archive: t131.worldTextureArchive, record: t131.worldTextureRecord }, 'arrows keep the world sprite');
+  assert.equal(usesWorldTexture({ group: 'PlantIngredients1', templateIndex: 0 }), true, 'isIngredient');
+  assert.equal(usesWorldTexture({ group: 'MiscItems', templateIndex: 132 }), true);
+  assert.equal(usesWorldTexture({ group: 'Weapons', templateIndex: 113 }), false);
+  // variants advance the record (armor/clothing)
+  const t165 = templateByIndex(165);
+  assert.ok(t165.variants > 0);
+  assert.equal(inventoryItemImage({ group: 'MensClothing', templateIndex: 165, variant: 2 }).record,
+    t165.playerTextureRecord + 2);
+  // the templates now carry the FULL DFU row (the lossy copy is gone)
+  assert.equal(typeof t113.drawOrderOrEffect, 'number');
+  assert.equal(typeof t113.enchantmentPoints, 'number');
+});
+
+test('audit17e W1: F16 refreshPaperDoll COALESCES a concurrent request instead of dropping it', async () => {
+  // ASYNC NEVER DROPS. The boolean guard threw away any refresh that
+  // arrived mid-compose, so an equip during the first paint left the
+  // doll - and its click mask - permanently stale.
+  const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'src/ui/paperDoll.js'), 'utf8');
+  assert.ok(/_pending\s*=\s*entity/.test(src), 'a concurrent request is remembered');
+  assert.ok(/if \(_pending\)/.test(src), 'and re-run when the pass finishes');
+  assert.ok(!/if \(!_art \|\| !_deps \|\| _refreshing\) return;/.test(src), 'the dropping guard is gone');
+});
+
+test('audit17e W1: F17 the worn-weapon bind lives in the RIG, so all four hosts inherit it', () => {
+  // THE FOUR HOSTS RULE. U8h bound it by hand in the two exterior
+  // hosts; the interior host owns a fourth rig and kept swinging the
+  // interim dagger inside every building.
+  const rigSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'src/combat/weaponRig.js'), 'utf8');
+  assert.ok(/EQUIP_SLOTS\.RightHand/.test(rigSrc), 'the rig reads the equip table');
+  assert.ok(/syncWorn\(\);/.test(rigSrc), 'and syncs per frame');
+  for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
+    const s = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', host), 'utf8');
+    assert.ok(!/weaponRig\.playerWeapon\.weapon =/.test(s), `${host} no longer hand-binds`);
+  }
 });

@@ -247,6 +247,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
           .filter((c) => c.buildings.length)
           .map((c) => ({ label: c.label, buildings: c.buildings.map((b) => ({ label: b.name, ...b })) })),
         answer: (b) => answerText(b),
+        question: (b) => { const q = questionText(b); _questionsAsked++; return q; },   // AUDIT 17e F13
         tone: () => tone,
         setTone: (t2) => { tone = t2; },
         npcName: people?.name ?? '',
@@ -323,6 +324,27 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // knows/doesn't-know table half) + the %hnt hint chain: a 7333
     // variant with %loc = the building, %di = the compass hint.
     showAnswer(answerText(building));
+  }
+
+  // AUDIT 17e F13 - the PLAYER'S QUESTION, verbatim
+  // (TalkManager.cs:1324 question = ExpandRandomTextRecord(7225 +
+  // toneIndex), with %1com -> GetPCGreetingOrFollowUpText
+  // (:1149-1156): the FIRST question opens with a greeting
+  // (7215 + tone), later ones with a follow-up (7218 + tone); %n /
+  // greetingNameNPC is "friend"/"stranger" (7221 + tone) when the
+  // reaction is <= 0, else the NPC's name (:1133-1142)).
+  // U8b shipped a hardcoded English literal ("Where is X?") that no
+  // tone or record could reach - the three tone records carry real
+  // classic flavour ("Where the hell is %key?" at Blunt).
+  let _questionsAsked = 0;
+  function questionText(building) {
+    const opening = randomVariant((_questionsAsked === 0 ? 7215 : 7218) + tone, 'Hail to thee');
+    const rp = people ? getReactionToPlayer(people, playerEntity) : 0;
+    const npcName = (rp <= 0 ? randomVariant(7221 + tone, 'stranger') : (people?.name ?? 'stranger'));
+    const q = randomVariant(7225 + tone, '%1com. Where can I find %key?');
+    return expandMacros(q, { playerName: playerEntity.name ?? '' })
+      .replaceAll('%1com', expandMacros(opening, { playerName: playerEntity.name ?? '' }).replaceAll('%n', npcName))
+      .replaceAll('%key', building.name ?? building.label ?? '');
   }
 
   // U8b: the answer STRING, shared by the native talk window and the

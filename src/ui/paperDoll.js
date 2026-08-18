@@ -37,6 +37,7 @@ import { CifRciFile } from '../formats/cifRciFile.js';
 import { EQUIP_SLOTS, equipTableOf, getItemHands, ITEM_HANDS } from '../systems/equip.js';
 import { getTemplate, paperdollOrder } from '../characters/paperdoll.js';
 import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
+import { clampArmorVariant, armorArchive, HUMAN_MORPHOLOGY, ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 
 export const PAPERDOLL_W = 110;
 export const PAPERDOLL_H = 184;
@@ -47,8 +48,6 @@ export const WAIST_HEIGHT = 40;
 // BodyParts order (Head, RightArm, LeftArm, Chest, Hands, Legs,
 // Feet), panel-relative
 export const ARMOR_LABEL_POS = Object.freeze([[70, 12], [20, 38], [86, 38], [12, 58], [6, 90], [18, 120], [22, 168]]);
-const FIRST_FEMALE_ARCHIVE = 245, FIRST_MALE_ARCHIVE = 249;
-const HUMAN_MORPHOLOGY = 2;        // GetBodyMorphology: Breton/Nord/Redguard
 // GetWeaponDyeColor / GetArmorDyeColor (plate m = material - 0x0200)
 export const MATERIAL_DYES = Object.freeze([
   DYE_COLORS.Iron, DYE_COLORS.Steel, DYE_COLORS.Silver, DYE_COLORS.Elven, DYE_COLORS.Dwarven,
@@ -68,17 +67,10 @@ const RACE_ART = Object.freeze({
 });
 const CONTEXT_BG = Object.freeze({ town: 'SCBG04I0.IMG', dungeon: 'SCBG07I0.IMG', graveyard: 'SCBG08I0.IMG' });
 
-/** GetInventoryTextureRecord's armor variant clamp (SetVariant). */
-export function clampArmorVariant(templateIndex, material, variant) {
-  const leather = material === 0x0000, chain = material === 0x0100 || material === 0x0101;
-  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-  if (templateIndex === 102) return leather ? 0 : chain ? 4 : clamp(variant, 1, 3);       // Cuirass
-  if (templateIndex === 104) return leather ? clamp(variant, 0, 1) : chain ? 6 : clamp(variant, 2, 5);   // Greaves
-  if (templateIndex === 105 || templateIndex === 106) return leather ? 0 : chain ? 4 : clamp(variant, 1, 3);   // Pauldrons
-  if (templateIndex === 103) return leather ? 0 : 1;                                      // Gauntlets
-  if (templateIndex === 108) return leather ? 0 : clamp(variant, 1, 2);                   // Boots
-  return variant;
-}
+// AUDIT 17e F32/F33: clampArmorVariant + the armor archive rule
+// moved to systems/armorMaterials.js (they were duplicated here with
+// a fabricated Chain2 constant). Re-exported for existing pins.
+export { clampArmorVariant };
 
 /** GetItemImage(forPaperDoll) resolution: {archive, record, dye,
  *  target} or null for groups with no paperdoll layer. */
@@ -92,11 +84,11 @@ export function paperdollItemImage(item, { gender = 'male' } = {}) {
     return { archive: t.playerTextureArchive + HUMAN_MORPHOLOGY, record, dye: item.dye ?? DYE_COLORS.Blue, target: DYE_TARGETS.Clothing };
   }
   if (item.group === 'Armor') {
-    const archive = (gender === 'male' ? FIRST_MALE_ARCHIVE : FIRST_FEMALE_ARCHIVE) + HUMAN_MORPHOLOGY;
+    const archive = armorArchive(gender);
     const m = item.material ?? 0;
     let record = t.playerTextureRecord;
     if (variants > 0) record += clampArmorVariant(item.templateIndex, m, item.variant ?? 0);
-    const dye = m >= 0x0200 ? MATERIAL_DYES[m - 0x0200] ?? DYE_COLORS.Unchanged : DYE_COLORS.Unchanged;
+    const dye = m >= ARMOR_MATERIAL.Iron ? MATERIAL_DYES[m - ARMOR_MATERIAL.Iron] ?? DYE_COLORS.Unchanged : DYE_COLORS.Unchanged;
     return { archive, record, dye, target: DYE_TARGETS.WeaponsAndArmor };
   }
   if (item.group === 'Weapons') {
@@ -117,6 +109,7 @@ let _layout = [];     // blitted item layers, draw order (backwards hit test)
 let _deps = null;
 let _version = 0;
 let _refreshing = false;
+let _pending = null;   // AUDIT 17e F16: the coalesced follow-up
 
 export async function preloadPaperDollArt(deps, { race = 'Breton', gender = 'male', faceIndex = 0, context = 'town' } = {}) {
   if (_art) return;
@@ -174,7 +167,13 @@ function blit(out, img, { rows = null, remap = null, atOffset = null } = {}) {
  *  records stream through the host getTexture pipeline (async);
  *  the composite swaps in whole when done. */
 export async function refreshPaperDoll(entity) {
-  if (!_art || !_deps || _refreshing) return;
+  if (!_art || !_deps) return;
+  // AUDIT 17e F16 / ASYNC NEVER DROPS: this guard used to DISCARD a
+  // refresh requested while one was in flight, so an equip landing
+  // during the first compose left the doll - and its GetEquipIndex
+  // click mask - permanently stale. Coalesce instead: remember the
+  // latest request and re-run once the current pass finishes.
+  if (_refreshing) { _pending = entity; return; }
   _refreshing = true;
   try {
     const out = new Uint8Array(PAPERDOLL_W * PAPERDOLL_H * 4);
@@ -221,7 +220,10 @@ export async function refreshPaperDoll(entity) {
     const key = `paperdoll_v${++_version}`;
     _live = { tex: _deps.renderer.uploadTexture('img', key, { width: PAPERDOLL_W, height: PAPERDOLL_H, colors: new Uint32Array(out.buffer) }) };
     _layout = layout;
-  } finally { _refreshing = false; }
+  } finally {
+    _refreshing = false;
+    if (_pending) { const next = _pending; _pending = null; await refreshPaperDoll(next); }
+  }
 }
 
 /** One TEXTURE.### record as an indexed bitmap + its baked offset

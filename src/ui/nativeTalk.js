@@ -51,7 +51,10 @@ export const TALK_RECTS = Object.freeze({
 // answers land in the conversation in DaggerfallAnswerTextColor
 // (227,223,0).
 export const TOPIC_ROW_H = 7;                    // FONT0003 fixedHeight + spacing 0
-export const CONV_LINE_H = 7 + 4;                // + RowSpacing 4
+export const ROW_H = 7;                          // FONT0003 fixedHeight
+export const ROW_SPACING = 4;                    // ListBox RowSpacing, per ITEM
+export const CONV_LINE_H = ROW_H + ROW_SPACING;  // kept: one single-line entry to the next
+export const SELECTED_TEXT_COLOR = [0.98, 0.98, 0.98, 1];   // DaggerfallUI selectedTextColor (the newest row)
 export const TOPIC_ROWS = Math.floor(TALK_RECTS.topicList[3] / TOPIC_ROW_H);
 export const QUESTION_COLOR = [0.698, 0.812, 1, 1];      // DaggerfallQuestionTextColor
 export const ANSWER_COLOR = [227 / 255, 223 / 255, 0, 1];   // DaggerfallAnswerTextColor
@@ -96,8 +99,14 @@ export class NativeTalkWindow {
       this.topicMode = 'buildings';
       this.scroll = 0;
     } else if (this.topicMode === 'buildings') {
-      this.question = `Where is ${it.label ?? it.name}?`;   // the player-says panel (classic style)
-      this.conversation.push(this.hooks.answer(it));
+      // AUDIT 17e F13: the question is a TEXT.RSC record chosen by
+      // tone, not an English literal. F-addendum: DFU pushes the
+      // question/answer PAIR into the conversation
+      // (SetQuestionAnswerPairInConversationListbox) - the question
+      // was only ever shown in the player-says panel here.
+      this.question = this.hooks.question?.(it) ?? `Where is ${it.label ?? it.name}?`;
+      this.conversation.push({ text: this.question, kind: 'question' });
+      this.conversation.push({ text: this.hooks.answer(it), kind: 'answer' });
     }
   }
   _page(d) {
@@ -120,7 +129,12 @@ export class NativeTalkWindow {
   /** Pointer path (phone taps + mouse): virtual-space hit rects. */
   click(vx, vy) {
     const R = TALK_RECTS;
-    if (inRect(R.goodbye, vx, vy) || inRect(R.okay, vx, vy)) { this._close(); return true; }
+    // AUDIT 17e F12: GOODBYE closes. OKAY is DFU's "ask the selected
+    // topic" button (DaggerfallTalkWindow) - it never closed the
+    // window. Consumed as a no-op until the highlight/selection model
+    // lands with the Tell-me-about slice (FLAGGED).
+    if (inRect(R.goodbye, vx, vy)) { this._close(); return true; }
+    if (inRect(R.okay, vx, vy)) return true;
     if (inRect(R.whereIs, vx, vy) || inRect(R.categoryLocation, vx, vy)) { this._openCategories(); return true; }
     if (inRect(R.tonePolite, vx, vy)) { this.hooks.setTone(0); return true; }
     if (inRect(R.toneNormal, vx, vy)) { this.hooks.setTone(1); return true; }
@@ -155,13 +169,38 @@ export class NativeTalkWindow {
     const fit = (t, w) => { let s = t; while (s.length > 1 && measureText(font.fnt, s) > w) s = s.slice(0, -1); return s; };
     this.topics.slice(this.scroll, this.scroll + TOPIC_ROWS).forEach((it, i) =>
       shadowText(renderer, font, fit(it.label ?? it.name, R.topicList[2] - 2), m, R.topicList[0] + 1, R.topicList[1] + 1 + i * TOPIC_ROW_H));
-    // conversation: wrapped, bottom-anchored, the verbatim line
-    // height (7 + RowSpacing 4) in the ANSWER color
-    const maxLines = Math.floor(R.conversation[3] / CONV_LINE_H);
-    const wrapped = [];
-    for (const c of this.conversation) wrapped.push(...wrapText(font.fnt, c, R.conversation[2] - 2), '');
-    const view = wrapped.slice(-maxLines);
-    view.forEach((l, i) =>
-      shadowText(renderer, font, l, m, R.conversation[0] + 1, R.conversation[1] + 1 + i * CONV_LINE_H, { color: ANSWER_COLOR }));
+    // conversation - AUDIT 17e F11/F18. Two laws were wrong here:
+    // (1) RowSpacing 4 is per LIST ITEM, not per wrapped line, so
+    //     rows INSIDE one entry sit 7px apart (FONT0003 fixedHeight)
+    //     and only the gap BETWEEN entries adds 4 - the port applied
+    //     11px to every wrapped line and then pushed a blank row
+    //     between entries, doubling the gaps;
+    // (2) the whole panel rendered DaggerfallAnswerTextColor. DFU's
+    //     ListBox default is the standard text colour, the QUESTION
+    //     rows carry DaggerfallQuestionTextColor, and the NEWEST row
+    //     is highlighted white (selectedTextColor).
+    const entries = [];
+    for (const c of this.conversation) {
+      const e = typeof c === 'string' ? { text: c, kind: 'answer' } : c;
+      entries.push({ lines: wrapText(font.fnt, e.text, R.conversation[2] - 2), kind: e.kind });
+    }
+    // lay out from the bottom so the newest entry is always visible
+    const laid = [];
+    let y = R.conversation[3] - ROW_H;
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const e = entries[i];
+      const newest = i === entries.length - 1;
+      for (let j = e.lines.length - 1; j >= 0; j--) {
+        if (y < 0) break;
+        laid.push({ text: e.lines[j], y, kind: e.kind, newest });
+        y -= ROW_H;
+      }
+      y -= ROW_SPACING;   // the per-ITEM gap
+    }
+    for (const l of laid) {
+      const color = l.newest ? SELECTED_TEXT_COLOR
+        : l.kind === 'question' ? QUESTION_COLOR : DEFAULT_TEXT_COLOR;
+      shadowText(renderer, font, l.text, m, R.conversation[0] + 1, R.conversation[1] + 1 + l.y, { color });
+    }
   }
 }

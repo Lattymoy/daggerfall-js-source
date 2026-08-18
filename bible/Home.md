@@ -139,7 +139,7 @@ code "looks right").
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-17, AUDIT 17e W0)
+## Open flags (regenerated 2026-08-17, AUDIT 17e W1)
 
 Regenerated at the S20 close (the drainFatigue "exhaustion pends"
 comment SHIPPED out; line numbers refreshed). Every row below is a
@@ -160,7 +160,7 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/combat/playerWeapon.js:47` - /** INTERIM starting weapon (items arc replaces): Iron Dagger. */
 - `src/combat/playerWeapon.js:48` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:78` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
-- `src/combat/weaponRig.js:33` - *                     (FLAGGED at the call sites - their HUD pends),
+- `src/combat/weaponRig.js:34` - *                     (FLAGGED at the call sites - their HUD pends),
 - `src/scenes/arrestFlow.js:72` - instead of "You, , are..." (chargen wiring FLAGGED).
 - `src/scenes/arrestFlow.js:117` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
 - `src/scenes/cityGuards.js:23` - FLAGGED loud: guard archers forced melee (exterior foe arrows
@@ -168,22 +168,22 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/scenes/cityGuards.js:194` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:308` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/droppedLoot.js:16` - FLAGGED loud: pile persistence across saves (the quicksave arc
-- `src/scenes/dungeonContext.js:159` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:484` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:490` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:504` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:638` - drained strength lowers the ceiling). INTERIM (loud): the
-- `src/scenes/dungeonContext.js:753` - FLAGGED: DFU recomputes per-effect via the cost tables (that
-- `src/scenes/dungeonContext.js:755` - FLAGGED to the effect library (caster-only buffs, touch, areas).
-- `src/scenes/dungeonContext.js:966` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/dungeonContext.js:1704` - actions) is FLAGGED - the player snapshot only.
+- `src/scenes/dungeonContext.js:160` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:485` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:491` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:505` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:639` - drained strength lowers the ceiling). INTERIM (loud): the
+- `src/scenes/dungeonContext.js:754` - FLAGGED: DFU recomputes per-effect via the cost tables (that
+- `src/scenes/dungeonContext.js:756` - FLAGGED to the effect library (caster-only buffs, touch, areas).
+- `src/scenes/dungeonContext.js:968` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:1706` - actions) is FLAGGED - the player snapshot only.
 - `src/scenes/exterior.js:288` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
 - `src/scenes/exterior.js:312` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
 - `src/scenes/exterior.js:358` - day-skip is a no-op FLAGGED until the shared calendar lands).
 - `src/scenes/exterior.js:517` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/exterior.js:586` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/townTalk.js:337` - .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAG...
+- `src/scenes/townTalk.js:359` - .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAG...
 - `src/scenes/world.js:427` - it). say -> console FLAGGED: this host has no HUD-text layer yet.
 - `src/scenes/world.js:431` - FLAGGED loud: the People faction rides the START location's
 - `src/scenes/world.js:442` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
@@ -194,6 +194,7 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/scenes/worldModes.js:102` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-hous...
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
+- `src/systems/armorMaterials.js:70` - *  morphologies arrive with chargen (INTERIM, flagged there). */
 - `src/systems/chargen.js:6` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
 - `src/systems/chargen.js:21` - INTERIM (loud): the UI distributes the bonus pools by hand; the
 - `src/systems/chargen.js:124` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
@@ -206,9 +207,8 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/systems/effects.js:92` - FLAGGED: career hard-immunity (Career.Paralysis == Immune) and the
 - `src/systems/effects.js:530` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
-- `src/systems/equip.js:103` - /** INTERIM starting equipment (chargen's starting-gear roll
+- `src/systems/equip.js:104` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/inventory.js:12` - weight pends S2b (FLAGGED - leather/chain/plate multipliers).
-- `src/systems/itemTemplates.js:15` - *  U8c; material-dyed weapon/armor icon variants FLAGGED). */
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls are SKIPPED until the magic
 - `src/systems/loot.js:169` - FLAGGED to the economy slice (shops).
 - `src/systems/save.js:7` - (foes, loot piles, action states, doors) is FLAGGED - dungeons
@@ -231,10 +231,12 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/ui/inventory.js:9` - Enter readies one (retires ?spell). INTERIM loud: with no
 - `src/ui/inventory.js:85` - /** The known list: entity.spells when it exists; the INTERIM fallback
 - `src/ui/nativeInventory.js:39` - text pends). Equip/Use local clicks stay FLAGGED; wagon/gold:
-- `src/ui/nativeInventory.js:134` - INTERIM info panel: name/weight/value (DFU's 1016 info text
-- `src/ui/nativeInventory.js:162` - use: FLAGGED - the use arc pends
+- `src/ui/nativeInventory.js:142` - INTERIM info panel: name/weight/value (DFU's 1016 info text
+- `src/ui/nativeInventory.js:171` - use: FLAGGED - the use arc pends
+- `src/ui/nativeInventory.js:223` - 'use' -> UseItem FLAGGED with the light-source/use arc
 - `src/ui/nativeTalk.js:22` - N/P page, Esc/E goodbye. People/Things/Work are INTERIM no-ops
-- `src/ui/nativeTalk.js:131` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
+- `src/ui/nativeTalk.js:135` - lands with the Tell-me-about slice (FLAGGED).
+- `src/ui/nativeTalk.js:145` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
 - `src/ui/nativeTrade.js:16` - scroll. FLAGGED loud: the basket + mode-action flow (DFU
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord
 - `src/ui/paperDoll.js:33` - INTERIM loud: Breton male face 0 until chargen fronts identity.
@@ -293,7 +295,26 @@ instead of Magic Items, swung the mundane animation set, and
 stacked when DFU forbids it. IsEnchanted is now DERIVED, as in DFU,
 and the three tests that fed hand-built `enchanted: true` literals
 no producer could create were repointed at the real shape.
-Waves 1-3 (parity, leaks, duplicate ports, stale flags) follow.
+WAVE 1 (shipped): the paperdoll click was INVERTED (DFU unequips in
+Equip/Select; Remove is inert - and the U8g probe asserted the
+inversion, so the bug had a green test and a green probe); the item
+lists drew WORLD sprites where DFU draws the player/inventory texture
+for 111 of 288 templates - the port only had the world texture
+because a lossy generated copy of ItemTemplates.txt shadowed the
+verbatim one, now deleted; clothing footwear granted no armor;
+the talk conversation had the wrong line pitch (RowSpacing is per
+ITEM, not per wrapped line) and one flat colour; Okay closed the
+window instead of asking; the player's question was a hardcoded
+English literal instead of TEXT.RSC 7225+tone through the greeting
+chain; arrows were material-priced and stocked as a stack of 1;
+scroll indices never re-clamped; refreshPaperDoll dropped concurrent
+requests; the worn-weapon bind moved into the weapon RIG so all four
+hosts inherit it; stack labels and icon scaling were off by the 2px
+button margin; and GetMaterialArmorValue's two divergent copies (both
+inventing Chain2 = 0x0101 for DFU's 0x0103) collapsed into
+systems/armorMaterials.js. Waves 2-3 (the three GL leaks,
+floating-origin offsets, the FOV gate, remaining duplicate ports and
+stale flags) follow.
 
 **2026-08-17d - the native-window UI parity audit (U8a/U8b/U8c).**
 Triggered by Mac's third positioning catch in two days. Every drawn

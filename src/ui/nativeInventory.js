@@ -43,7 +43,7 @@ import { loadImg, nativeMetrics, drawImg, drawImgSub, SCREEN_DIM, shadowText } f
 import { addItem, isEnchanted } from '../systems/inventory.js';
 import { isEquipped, equipItem, unequipSlot } from '../systems/equip.js';
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
-import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel } from './itemScroller.js';
+import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex } from './itemScroller.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
@@ -121,6 +121,14 @@ export class NativeInventoryWindow {
     if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
   }
 
+  // AUDIT 17e F15: a list can shrink under a scrolled index (equip,
+  // drop, sell). DFU's ItemListScroller delays the snap - it only
+  // corrects when the index is PAST the end, leaving a partly filled
+  // column otherwise - so a plain clamp would over-correct.
+  _clampScroll() {
+    this.scroll = safeScrollIndex(this.scroll, this._filtered().length);
+    this.remoteScroll = safeScrollIndex(this.remoteScroll, this._remote().length);
+  }
   _filtered() { return filterByTab(this.hooks.items(), this.tab); }
   _remote() { return this.hooks.loot ? this.hooks.loot.items() : this.dropped; }
   _setTab(t) { this.tab = t; this.scroll = 0; }
@@ -142,6 +150,7 @@ export class NativeInventoryWindow {
   }
 
   _pick(slot) {
+    this._clampScroll();
     const it = this._filtered()[this.scroll + slot];
     if (!it) return;
     if (this.mode === 'info') { this._info(it); return; }
@@ -163,6 +172,7 @@ export class NativeInventoryWindow {
   }
 
   _pickRemote(slot) {
+    this._clampScroll();
     const remote = this._remote();
     const it = remote[this.remoteScroll + slot];
     if (!it) return;
@@ -204,8 +214,13 @@ export class NativeInventoryWindow {
       const slot = slotAtPaperDoll(Math.floor(vx - R.paperDoll[0]), Math.floor(vy - R.paperDoll[1]));
       const table = this.hooks.entity.equip?.slots;
       if (slot != null && table?.[slot]) {
-        if (this.mode === 'remove') { unequipSlot(this.hooks.entity, slot); refreshPaperDoll(this.hooks.entity); }
+        // AUDIT 17e F8 - PaperDoll_OnMouseClick verbatim
+        // (DaggerfallInventoryWindow.cs:1932-1952): EQUIP (and Select)
+        // unequips, Info reads, Use uses. REMOVE has no branch at all
+        // - a Remove-mode doll click is inert. U8g had this inverted.
+        if (this.mode === 'equip') { unequipSlot(this.hooks.entity, slot); refreshPaperDoll(this.hooks.entity); }
         else if (this.mode === 'info') this._info(table[slot]);
+        // 'use' -> UseItem FLAGGED with the light-source/use arc
       }
       return true;
     }
@@ -242,6 +257,7 @@ export class NativeInventoryWindow {
     const av = this.hooks.entity?.armorValues;
     if (av) ARMOR_LABEL_POS.forEach(([lx, ly], i) =>
       shadowText(renderer, font, String(Math.trunc((100 - (av[i] ?? 100)) / 5)), m, 49 + lx, 13 + ly));
+    this._clampScroll();
     // both sides through the shared scroller: the filtered bag
     // locally, the pile (loot target or session drops) remotely
     for (const [rect, scroll, items] of [

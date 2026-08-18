@@ -23,6 +23,7 @@ import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem, removeOne } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
+import { equipItem } from '../systems/equip.js';   // AUDIT 17e F17
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
 import { drawText, makeFont, measureText } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
@@ -957,6 +958,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _weaponCanvas = null;   // the context sees a canvas only per drawFoes call
   const weaponRig = createWeaponRig({
     renderer, canvas: () => _weaponCanvas, fetchBytes, palette, audio, entity: playerEntity,
+    bindWorn: opts.playerWeapon !== 'bow',   // AUDIT 17e F17: the ?weapon=bow debug flag keeps its scripted weapon
     say: (l) => hudText.add(l),
     spellArmed: () => clickCast.armed || pendingClickCast,
   });
@@ -965,7 +967,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // Combat bows: ?weapon=bow readies a plain Short Bow (template
     // 129; the inventory/equip UI pends - the INTERIM dagger note
     // stands for melee).
-    playerWeapon.weapon = { name: 'Short Bow', ...createWeapon(129, 0) };
+    playerWeapon.weapon = { name: 'Short Bow', ...createWeapon(129, 0) };   // scripted demo: the rig's worn bind is off for this context (see createWeaponRig bindWorn)
   }
   const corpses = [];
   async function spawnCorpse(f) {
@@ -1856,7 +1858,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleInventory() {
       if (activeOverlay) return;
       activeOverlay = new InventoryWindow(playerEntity, {
-        equip: (item) => { playerWeapon.weapon = item; hudText.add(`${item.name} equipped.`); },   // C10: the rig's weapon always exists
+        // AUDIT 17e F17: route through the real equip table - the rig
+        // now binds slots[RightHand] every frame, so a direct assignment
+        // here would be overwritten. One equip model in every host.
+        equip: (item) => { equipItem(playerEntity, item); hudText.add(`${item.name} equipped.`); },
       });
     },
     toggleSpellbook() {

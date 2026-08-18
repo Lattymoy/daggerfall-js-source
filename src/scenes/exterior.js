@@ -816,9 +816,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     // world host: no bashables in melee reach; bows consume + tally
     // and the loose is VISIBLE now (C13).
     if (walkMode && !tpMode) {
-      // U8h: the FP rig swings the WORN RightHand weapon (none -> the
-      // classic unarmed hand-to-hand path)
-      weaponRig.playerWeapon.weapon = playerEntity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null;
+      // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
+      // so all four hosts inherit it (the interior host was missing it).
       for (const ev of weaponRig.frame(dt)) {
         if (ev !== 'hit') continue;
         if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {

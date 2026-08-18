@@ -49,12 +49,21 @@ const w1 = await worn();
 console.log('worn after pants:', JSON.stringify(w1));
 if (w1.length !== 3) { console.log('EQUIP FAILED'); process.exit(1); }
 await page.screenshot({ path: '/home/claude/equip-worn.png' });
-// REMOVE mode: click the doll's chest - the cuirass comes off
-await click(226 + 15, 80 + 7);
+// AUDIT 17e F8: a REMOVE-mode doll click is INERT in DFU
+// (PaperDoll_OnMouseClick has no Remove branch) - this probe used to
+// assert the inverted behaviour the port shipped.
+await click(226 + 15, 80 + 7);      // REMOVE
+await click(49 + 55, 13 + 70);      // the doll's chest
+await waitFrames(6);
+const inert = await worn();
+console.log('worn after REMOVE-mode doll click (must be unchanged):', JSON.stringify(inert));
+if (!inert.includes('Iron Cuirass')) { console.log('REMOVE-MODE DOLL CLICK SHOULD BE INERT'); process.exit(1); }
+// EQUIP mode is what unequips (DaggerfallInventoryWindow.cs:1939-1943)
+await click(226 + 15, 58 + 7);      // EQUIP
 await click(49 + 55, 13 + 70);
 await waitFrames(10);
 const w2 = await worn();
-console.log('worn after doll chest click:', JSON.stringify(w2));
+console.log('worn after EQUIP-mode doll click:', JSON.stringify(w2));
 if (w2.includes('Iron Cuirass')) { console.log('UNEQUIP FAILED'); process.exit(1); }
 await page.screenshot({ path: '/home/claude/equip-removed.png' });
 await press('Escape');

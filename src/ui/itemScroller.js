@@ -9,8 +9,8 @@
 // cell text is the stack count (FONT0004 at the button's top-left,
 // drawn when stackCount > 1 - names ride the info/tooltip seam).
 
-import { templateByIndex } from '../systems/itemTemplates.js';
-import { shadowText } from './nativePanel.js';
+import { inventoryItemImage } from '../systems/itemTemplates.js';
+import { drawText, measureText } from './text.js';
 
 export const LIST_SLOTS = 4;
 export const CELL_X = 9;         // itemListPanelRect.x - the buttons' column
@@ -18,6 +18,15 @@ export const CELL_W = 50;
 export const SLOT_H = 38;
 export const ARROW_H = 16;       // upArrowRect (0,0,9,16)
 export const DOWN_ARROW_Y = 136; // downArrowRect (0,136,9,16)
+// AUDIT 17e F26: itemButtonMargin = 2 on all sides
+// (ItemListScroller.cs:98, :339) - the icon panel is a ScaleToFit
+// child of the BUTTON, so it fits the button's INTERIOR (46x34), not
+// its full 50x38. Icons drew ~9% oversized.
+export const CELL_MARGIN = 2;
+// AUDIT 17e F25: stack labels are Right/Bottom aligned with
+// ShadowPosition ZERO and the tooltip text colour
+// (ItemListScroller.cs:360-365; DaggerfallUI.cs:69).
+export const STACK_LABEL_COLOR = [230 / 255, 230 / 255, 200 / 255, 1];
 
 /** Hit-test a scroller-relative click. rect = [x,y,w,h] virtual;
  *  returns null outside, {kind:'up'|'down'|'page-up'|'page-down'}
@@ -51,22 +60,26 @@ export function makeIconDrawer(icons) {
   const warm = new Set();
   const sizes = new Map();
   const drawer = (renderer, m, it, rect, slot) => {
-    const t = templateByIndex(it.templateIndex);
-    if (!t || !t.worldTexArchive) return false;
-    const key = `${t.worldTexArchive}_${t.worldTexRecord}`;
+    // AUDIT 17e F9: the lists used to draw the WORLD texture for every
+    // item. DFU's GetItemImage draws the PLAYER (inventory) texture
+    // for everything except UselessItems1 / ingredients / arrows /
+    // ReligiousItems / MiscItems - 111 of 288 templates differ.
+    const img = inventoryItemImage(it);
+    if (!img || !img.archive) return false;
+    const key = `${img.archive}_${img.record}`;
     if (!warm.has(key)) {
       warm.add(key);
-      icons.getTexture(t.worldTexArchive).then((tex) => {
-        if (t.worldTexRecord < tex.recordCount) {
-          icons.uploadRecord(t.worldTexArchive, t.worldTexRecord);
-          sizes.set(key, tex.getSize(t.worldTexRecord));
+      icons.getTexture(img.archive).then((tex) => {
+        if (img.record < tex.recordCount) {
+          icons.uploadRecord(img.archive, img.record);
+          sizes.set(key, tex.getSize(img.record));
         }
       }).catch(() => {});
     }
     const glTex = icons.textures.get(key);
     const size = sizes.get(key);
     if (!glTex || !size?.width) return false;
-    const fit = Math.min(1, CELL_W / size.width, SLOT_H / size.height);
+    const fit = Math.min(1, (CELL_W - CELL_MARGIN * 2) / size.width, (SLOT_H - CELL_MARGIN * 2) / size.height);
     const w = size.width * fit, h = size.height * fit;
     const x = rect[0] + CELL_X + (CELL_W - w) / 2;
     const y = rect[1] + slot * SLOT_H + (SLOT_H - h) / 2;
@@ -79,9 +92,28 @@ export function makeIconDrawer(icons) {
   return drawer;
 }
 
-/** The stack-count label (FONT0004), only above 1. */
+/** The stack-count label (FONT0004), only above 1. AUDIT 17e F25:
+ *  right/bottom aligned INSIDE the 2px button margin, with NO shadow
+ *  and the tooltip colour - the port drew it top-left, shadowed, in
+ *  default gold. */
 export function drawStackLabel(renderer, font4, m, it, rect, slot) {
-  if ((it.stackCount ?? 1) > 1) {
-    shadowText(renderer, font4, String(it.stackCount), m, rect[0] + CELL_X, rect[1] + slot * SLOT_H);
-  }
+  if ((it.stackCount ?? 1) <= 1) return;
+  const text = String(it.stackCount);
+  const tw = measureText(font4.fnt, text);
+  const th = font4.fnt?.fixedHeight ?? 6;
+  const x = rect[0] + CELL_X + CELL_W - CELL_MARGIN - tw;
+  const y = rect[1] + slot * SLOT_H + SLOT_H - CELL_MARGIN - th;
+  drawText(renderer, font4, text, m.ox + x * m.s, m.oy + y * m.s, m.s, STACK_LABEL_COLOR);
+}
+
+/** AUDIT 17e F15 - ItemListScroller's delayScrollUp semantics
+ *  (ItemListScroller.cs): when the backing list shrinks under a
+ *  scrolled index the scroller does NOT re-clamp tightly - it only
+ *  corrects once the index runs past the end, which leaves a
+ *  partly-filled column exactly as classic does. Nothing re-clamped
+ *  at all before, so equipping or dropping items while scrolled
+ *  could strand the rest of the list off-screen. */
+export function safeScrollIndex(scroll, len) {
+  if (scroll < len) return scroll;
+  return Math.max(0, len - LIST_SLOTS);
 }

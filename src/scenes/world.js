@@ -1009,9 +1009,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // consume an Arrow + tally and the loose is VISIBLE now (C13 -
     // targets pend the RMB animal/exterior-foe arc).
     if (walkMode && playerSpawned) {
-      // U8h: the FP rig swings the WORN RightHand weapon (none -> the
-      // classic unarmed hand-to-hand path)
-      weaponRig.playerWeapon.weapon = playerEntity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null;
+      // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
+      // so all four hosts inherit it (the interior host was missing it).
       for (const ev of weaponRig.frame(dt)) {
         if (ev !== 'hit') continue;
         if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {

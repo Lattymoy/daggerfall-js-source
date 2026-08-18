@@ -124,7 +124,7 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
       if (!dice100(stockChance, rolls())) continue;
       if (group === 'Weapons') {
         const templateIndex = GROUP_TEMPLATE_INDICES.Weapons[j];
-        if (templateIndex === 131) add({ group: 'Weapons', name: 'Arrow', templateIndex, material: randomMaterial(level, rolls), stackCount: 1 });
+        if (templateIndex === 131) add({ group: 'Weapons', name: 'Arrow', templateIndex, material: 0, stackCount: 1 + Math.floor(rolls() * 20) });   // AUDIT 17e F14: CreateWeapon's arrow branch takes NO material roll and DFU stocks a real stack (loot.js already had this right)
         else add({ group: 'Weapons', ...createWeapon(templateIndex, randomMaterial(level, rolls)) });
       } else if (group === 'Armor') {
         add({ group: 'Armor', templateIndex: GROUP_TEMPLATE_INDICES.Armor[j], material: randomArmorMaterial(level, rolls) });

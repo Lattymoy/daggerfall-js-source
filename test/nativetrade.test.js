@@ -100,5 +100,7 @@ test('nativeTrade: icons NEVER upscale and centre in the 50x38 cell (ItemListScr
   // an oversized icon scales DOWN to fit
   w._icon._sizes.set(key, { width: 100, height: 38 });
   w._drawIcon(fakeRenderer, m, { templateIndex: 277 }, [261, 48, 59, 152], 0);
-  assert.equal(captured.dst.w, 50, 'downscaled to the cell');
+  // AUDIT 17e F26: ScaleToFit fits the button's INTERIOR - the 2px
+  // margin on all sides (ItemListScroller.cs:98,:339) makes it 46x34.
+  assert.equal(captured.dst.w, 46, 'downscaled to the button INTERIOR, not the full cell');
 });

@@ -674,3 +674,85 @@ the chest of the iron-cuirassed doll with zeros elsewhere, and the
 FP view drawing the LONGSWORD blade after Z - the worn weapon, not
 the old interim dagger (the probe clears the boot seed so the
 loadout is the whole story). Suite 467/104.
+
+## AUDIT 17e Wave 1: high-impact parity across the U8 arc (2026-08-18)
+
+The comprehensive pass's second wave - ten confirmed parity defects,
+each cited and pinned.
+- F8 THE PAPERDOLL CLICK WAS INVERTED: PaperDoll_OnMouseClick
+  (DaggerfallInventoryWindow.cs:1932-1952) unequips in EQUIP and
+  Select, uses in Use, reads in Info - REMOVE has NO branch and is
+  INERT. U8g shipped it on Remove, and its probe asserted the
+  inversion, so the bug had a green test AND a green probe. The probe
+  now asserts BOTH halves (a Remove-mode doll click changes nothing;
+  an Equip-mode click strips the piece).
+- F9 THE LISTS DREW WORLD SPRITES: GetItemImage draws the PLAYER
+  (inventory) texture for everything except UselessItems1 /
+  ingredients / arrows / ReligiousItems / MiscItems
+  (DaggerfallUnityItem.UseWorldTexture:1830-1855) - 111 of 288
+  templates differ. The port only HAD the world texture because
+  systems/itemTemplatesData.js was a LOSSY second copy of
+  characters/itemTemplates.json. The two were verified identical
+  field-for-field, the copy was deleted, and systems/itemTemplates.js
+  now reads the verbatim DFU row - which also brings variants,
+  drawOrder and enchantment points into the one place. inventoryItemImage
+  ports GetInventoryTextureArchive/Record incl. the Katana +1 bump
+  and the cloak interior-first record.
+- F10 CLOTHING GAVE NO ARMOR: UpdateEquippedArmorValues admits Armor
+  AND the FOOTWEAR window of each clothing group (Mens 147..149,
+  Womens 186..188). Leather boots are worth 15 on the Feet part; the
+  port granted 0. Sandals (150/189) map to Feet but sit outside DFU's
+  GroupIndex window and correctly grant nothing - preserved.
+- F11/F18 THE CONVERSATION PANEL: RowSpacing 4 is per LIST ITEM, not
+  per wrapped line - rows inside one entry sit 7px apart and only the
+  gap BETWEEN entries adds 4 (the port applied 11px to every wrapped
+  line AND pushed a blank row, doubling the gaps). Colours were one
+  flat ANSWER yellow; DFU uses the ListBox default, the question
+  colour on question rows, and white on the NEWEST row.
+- F12 OKAY CLOSED THE WINDOW: DFU's Okay is the ASK button. Goodbye
+  is the only close; Okay is a consumed no-op until the topic
+  highlight lands (FLAGGED).
+- F13 THE QUESTION WAS AN ENGLISH LITERAL: it is TEXT.RSC
+  7225 + toneIndex (TalkManager.cs:1324), with %1com expanding
+  through GetPCGreetingOrFollowUpText (:1149-1156) - the FIRST
+  question opens with a greeting (7215 + tone), later ones with a
+  follow-up (7218 + tone), and the NPC name is "friend"/"stranger"
+  (7221 + tone) at reaction <= 0. The tone flavour is real classic
+  text: Blunt asks "Where the hell is %key?". DFU also pushes the
+  question/answer PAIR into the conversation - the port only ever
+  showed the question in the player-says panel.
+- F14 ARROWS: CreateWeapon's arrow branch takes NO material roll, so
+  a shelf arrow is worth its basePrice (the port multiplied it by
+  material, and stocked a hardcoded stack of 1 where DFU stocks
+  1..20). loot.js already had this right - a second divergent copy of
+  one special case.
+- F15 SCROLL INDICES NEVER RE-CLAMPED: equipping, dropping or selling
+  under a scrolled list stranded the rest off-screen. Ported as
+  ItemListScroller's delayScrollUp semantics - correct ONLY once the
+  index runs past the end, which leaves the partly-filled column
+  classic keeps (a plain clamp would over-correct).
+- F16 refreshPaperDoll DROPPED concurrent requests (ASYNC NEVER
+  DROPS): now coalesced.
+- F17 THE FOURTH HOST: the worn-weapon bind moved INTO createWeaponRig,
+  so the interior host (which owns its own rig and kept swinging the
+  interim dagger inside every building) and the dungeon inherit it.
+  The dungeon's own inventory now equips through the real table
+  instead of assigning the rig's weapon directly - one equip model in
+  every host. ?weapon=bow opts out via bindWorn:false.
+- F25/F26 CELL LAYOUT: stack labels are Right/Bottom aligned inside
+  the 2px margin with NO shadow in the tooltip colour (230,230,200)
+  (ItemListScroller.cs:360-365) - the port drew them top-left,
+  shadowed, in gold; and ScaleToFit fits the button's INTERIOR
+  (46x34 after itemButtonMargin 2), so icons drew ~9% oversized.
+- F32/F33 ONE DFU MEMBER, ONE EXPORT: systems/armorMaterials.js now
+  owns ArmorMaterialTypes, GetMaterialArmorValue, the shield tables,
+  BodyParts and SetVariant's clamps. systems/equip.js and
+  ui/paperDoll.js each carried a copy, and both had invented
+  Chain2 = 0x0101 where DFU has 0x0103 (so a Chain2 piece would take
+  the PLATE variant clamp and a plate armor value). Latent until
+  classic-save import, fixed now.
+
+Probed + EYEBALLED: the item lists now draw real INVENTORY sprites -
+the dagger with its golden hilt instead of the world drop sprite -
+and the equip probe drives the corrected doll-click law end to end.
+Suite 477/105.
