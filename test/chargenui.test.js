@@ -29,10 +29,7 @@ test('chargen ui: the four verbatim clamps', () => {
 
 test('chargen ui: the flow end to end, conservation, confirm gates', () => {
   const flow = new ChargenFlow([{ name: 'Warrior', career }], seq(0));
-  for (const c of 'Mac') flow.input('char:' + c);
-  flow.input('confirm');
-  // S3c/U9: RACE and FACE now sit between name and class (classic
-  // asks race first) - the port hardcoded Breton male face 0.
+  // U15: RACE is the FIRST screen now, as classic's wizard has it.
   assert.equal(flow.state, 'race');
   flow.input('down'); flow.input('down');      // Breton -> Nord
   assert.equal(flow.race.key, 'Nord');
@@ -41,6 +38,11 @@ test('chargen ui: the flow end to end, conservation, confirm gates', () => {
   flow.input('down');                          // toggles
   assert.equal(flow.gender, 'female');
   flow.input('confirm');
+  assert.equal(flow.state, 'class');
+  flow.input('confirm');                       // no biography set -> name
+  assert.equal(flow.state, 'name');
+  for (const c of 'Mac') flow.input('char:' + c);
+  flow.input('confirm');
   assert.equal(flow.state, 'face');
   flow.input('up');                            // wraps to the last face
   assert.equal(flow.faceIndex, 9);
@@ -48,9 +50,7 @@ test('chargen ui: the flow end to end, conservation, confirm gates', () => {
   assert.equal(flow.faceIndex, 0);
   flow.input('down'); flow.input('down');
   assert.equal(flow.faceIndex, 2);
-  flow.input('confirm');
-  assert.equal(flow.state, 'class');
-  flow.input('confirm');                       // class -> stats (rolled)
+  flow.input('confirm');                       // face -> stats (rolled)
   assert.equal(flow.state, 'stats');
   const baseTotal = Object.values(flow.rolledStats).reduce((a, b) => a + b, 0);
   const pool0 = flow.statPool;
@@ -103,9 +103,9 @@ test('chargen ui: the flow end to end, conservation, confirm gates', () => {
 
 test('chargen ui: reroll replaces the working set on the active screen', () => {
   const flow = new ChargenFlow([{ name: 'W', career }], seq(0.999));
-  // name -> race -> gender -> face -> class -> stats (S3c/U9 added
-  // the race and face screens)
-  for (const a of ['char:X', 'confirm', 'confirm', 'confirm', 'confirm', 'confirm']) flow.input(a);
+  // U15, the classic order: race -> gender -> class -> (no biography
+  // set) name -> face -> stats
+  for (const a of ['confirm', 'confirm', 'confirm', 'char:X', 'confirm', 'confirm']) flow.input(a);
   assert.equal(flow.state, 'stats');
   assert.equal(flow.statPool, 14);             // max pool at seq(0.999)
   flow.input('plus');

@@ -123,13 +123,15 @@ function walkChargen(onDone) {
   // AUDIT 17i: the window WRAPS a flow now - hosts no longer
   // construct one, so neither does the pin.
   const w = createChargenWindow(new ChargenFlow([{ name: 'Mage', career: CAREER }], () => 0), { onDone });
-  for (const c of 'KeyM KeyA KeyC'.split(' ')) w.input(c);
   const key = (code, n = 1) => { for (let i = 0; i < n; i++) w.input(code); };
-  key('Enter');                       // name -> race
+  // U15: the CLASSIC ORDER - race, gender, class, biography, name,
+  // face, stats, skills, reflexes.
   key('Enter');                       // race (Breton) -> gender
-  key('Enter');                       // gender (male) -> face
-  key('Enter');                       // face 0 -> class
-  key('Enter');                       // class -> stats
+  key('Enter');                       // gender (male) -> class
+  key('Enter');                       // class -> (no biog set) name
+  for (const c of 'KeyM KeyA KeyC'.split(' ')) w.input(c);
+  key('Enter');                       // name -> face
+  key('Enter');                       // face 0 -> stats
   key('Equal', 6); key('Enter');      // spend the 6-point stat pool
   key('Equal', 6); key('ArrowDown', 3);
   key('Equal', 6); key('ArrowDown', 3);

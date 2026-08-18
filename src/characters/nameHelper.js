@@ -37,6 +37,18 @@ const BANK_NAMES = ['Breton', 'Redguard', 'Nord', 'DarkElf', 'HighElf',
 const bankOf = (type) => nameGen[BANK_NAMES[type]];
 const draw = (parts) => parts[rand() % parts.length];
 
+/** MacroHelper.GetNameBank (MacroHelper.cs:344-366) - the PLAYER
+ *  race's bank. Note the quirk DFU's own enum comments: ARGONIAN maps
+ *  to the IMPERIAL bank, "Imperial names appear where one would
+ *  expect Argonian names" (NameHelper.cs:50). Anything unknown falls
+ *  to Breton, which is C#'s `default` arm sharing the Breton case. */
+const BANK_BY_RACE = Object.freeze({
+  Breton: BANK_TYPES.Breton, Redguard: BANK_TYPES.Redguard, Nord: BANK_TYPES.Nord,
+  DarkElf: BANK_TYPES.DarkElf, HighElf: BANK_TYPES.HighElf, WoodElf: BANK_TYPES.WoodElf,
+  Khajiit: BANK_TYPES.Khajiit, Argonian: BANK_TYPES.Imperial,
+});
+export const getNameBank = (raceKey) => BANK_BY_RACE[raceKey] ?? BANK_TYPES.Breton;
+
 /** Verbatim MapsFile.GetNameBankOfRegion. */
 export function getNameBankOfRegion(regionIndex) {
   if (regionIndex > -1) return REGION_RACES[regionIndex];

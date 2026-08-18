@@ -35,7 +35,7 @@ test('U14: the gender BUTTON sets and closes, as classic has no OK', () => {
   f._genderBox = { buttons: [{ button: 6, rect: [10, 10, 32, 16] }, { button: 7, rect: [80, 10, 32, 16] }] };
   assert.ok(f.applyHit(chargenHit(f, 85, 15)), 'the Female button is live');
   assert.equal(f.gender, 'female');
-  assert.equal(f.state, 'face', 'and it CLOSED the box');
+  assert.equal(f.state, 'class', 'and it CLOSED the box (U15: class is next in the classic order)');
 });
 
 test('U14: EVERY chargen screen answers a click somewhere', () => {

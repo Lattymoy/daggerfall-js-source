@@ -169,7 +169,7 @@ const flowWithBiog = (biog) => {
   return f;
 };
 
-test('S3e: the flow walks the questions and ends in stats', () => {
+test('S3e: the flow walks the questions and ends at the NAME screen', () => {
   const biog = parseBiog(CRAFT, 0);
   const f = flowWithBiog(biog);
   f.input('confirm');                       // class -> biography
@@ -182,7 +182,8 @@ test('S3e: the flow walks the questions and ends in stats', () => {
   assert.equal(f.biogQuestionIndex, 1);
   assert.deepEqual(f.biographyEffects, ['GP +500']);
   f.answerBiography(0);                      // the LAST question
-  assert.equal(f.state, 'stats', 'the last answer leaves the screen');
+  // U15: the classic order puts NAME after the biography
+  assert.equal(f.state, 'name', 'the last answer leaves the screen');
   assert.deepEqual(f.biographyEffects, ['GP +500', 'r4 +10']);
   assert.ok(f.result().biographyEffects.length, 'and the result carries them to finishChargen');
 });
@@ -197,10 +198,10 @@ test('S3e: text effects reach the result TAGGED with their question', () => {
 test('S3e: no question set must SKIP the screen, never trap the flow', () => {
   const f = flowWithBiog(null);
   f.input('confirm');
-  assert.equal(f.state, 'stats');
+  assert.equal(f.state, 'name', 'U15: straight to the next classic screen');
   const g = flowWithBiog({ questions: [] });
   g.input('confirm');
-  assert.equal(g.state, 'stats');
+  assert.equal(g.state, 'name');
 });
 
 test('S3e: the ten answer buttons, two columns of five', () => {
@@ -309,5 +310,5 @@ test('U13: the reputation box is modal and closes the screen', () => {
   f.input('down');                           // ClickAnywhereToClose: ANY key
   assert.equal(f.biogRepBox, null, 'the box closes');
   assert.equal(before, 'biography');
-  assert.equal(f.state, 'stats', 'and the screen ends with it');
+  assert.equal(f.state, 'name', 'and the screen ends with it');
 });

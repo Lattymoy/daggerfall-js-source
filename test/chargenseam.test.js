@@ -25,7 +25,7 @@ test('17i: the seam hands back a flow with EVERY dependency attached', { skip: s
   assert.equal(typeof flow.biogFor, 'function');
   assert.ok(flow.biogFor(0)?.questions?.length, 'the flow can reach question one');
   assert.equal(flow.careers.length, 18);
-  assert.equal(flow.state, 'name', 'and it starts at the beginning');
+  assert.equal(flow.state, 'race', 'U15: race is the first classic screen');
 });
 
 test('17i: no host CONSTRUCTS a ChargenFlow of its own', () => {

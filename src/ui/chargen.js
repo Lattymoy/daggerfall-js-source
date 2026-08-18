@@ -15,6 +15,7 @@
 import { rollStats, rollSkills, STAT_KEYS_ORDER, spellPoints, spellPointMultiplier } from '../systems/chargen.js';
 import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsModifier, healingRateModifier } from '../combat/formulas.js';   // U10: the derived block
 import { tagEffect, biographySkillBonuses, digestRepChanges } from '../systems/biography.js';   // S3e
+import { fullName, getNameBank, GENDERS } from '../characters/nameHelper.js';   // U15
 import { buildBackstory, repBoxRows } from './chargenArt.js';   // U13
 import { RACE_TEMPLATES, FACES_PER_RACE } from '../systems/races.js';   // S3c/U9
 import { SKILL_NAMES } from '../systems/skills.js';
@@ -55,14 +56,22 @@ export function skillDown(working, rolled, pool) {
 // bonuses show while the player distributes.
 // U13: REFLEXES closes the flow, where DFU's wizard also puts it
 // (SelectReflexes sits after AddBonusSkills, before the Summary).
-const STATES = ['name', 'race', 'gender', 'face', 'class', 'biography', 'stats', 'skills', 'reflexes', 'done'];
+// U15: THE CLASSIC WIZARD ORDER. DFU's StartNewGameWizard runs
+// SelectRace, SelectGender, SelectClass*, BiographyQuestions,
+// SelectName, SelectFace, AddBonusStats, AddBonusSkills,
+// SelectReflexes (DaggerfallStartNewGameWizard.cs, WizardStages:63-79). The port asked the NAME first
+// and the face early, which was flagged from S3c on and was finally
+// forced by the random-name button: CreateCharNameSelect DISABLES it
+// without a race template (:112-119), so the name screen cannot come
+// before the race and still be classic.
+const STATES = ['race', 'gender', 'class', 'biography', 'name', 'face', 'stats', 'skills', 'reflexes', 'done'];
 
 export class ChargenFlow {
   /** careers: [{ name, career }] x18 (loaded from CLASS*.CFG). */
   constructor(careers, rolls = Math.random) {
     this.careers = careers;
     this.rolls = rolls;
-    this.state = 'name';
+    this.state = 'race';
     this.name = '';
     this.gender = 'male';
     this.raceIndex = 0;      // RACE_TEMPLATES order (Breton first)
@@ -168,10 +177,10 @@ export class ChargenFlow {
     this.biogQuestionIndex = 0;
     this.cursor = 0;
     if (this.biogFor?.(this.classIndex)?.questions?.length) this.state = 'biography';
-    else this._leaveBiography();
+    else this._leaveBiography();   // U15: -> name, the classic next screen
   }
 
-  _leaveBiography() { this.state = 'stats'; this._enterStats(); }
+  _leaveBiography() { this.state = 'name'; }
 
   /** The per-skill biography bonus the SKILLS screen displays. */
   skillBonuses() { return this.biographyEffects.length ? biographySkillBonuses(this.biographyEffects) : null; }
@@ -219,7 +228,7 @@ export class ChargenFlow {
     if (s === 'name') {
       if (action.startsWith('char:') && this.name.length < 16) this.name += action.slice(5);
       else if (action === 'backspace') this.name = this.name.slice(0, -1);
-      else if (action === 'confirm' && this.name.length) this.state = 'race';
+      else if (action === 'confirm' && this.name.length) this.state = 'face';
       return;
     }
     if (s === 'race') {
@@ -241,27 +250,27 @@ export class ChargenFlow {
         const rows = this.describeRace?.(this.race) ?? null;
         if (rows?.length) this.raceConfirm = rows;
         else this.state = 'gender';
-      } else if (action === 'back') this.state = 'name';
+      } else if (action === 'back') return;   // race is the FIRST screen now
       return;
     }
     if (s === 'gender') {
       if (action === 'up' || action === 'down') this.gender = this.gender === 'male' ? 'female' : 'male';
-      else if (action === 'confirm') this.state = 'face';
+      else if (action === 'confirm') this.state = 'class';
       else if (action === 'back') this.state = 'race';
       return;
     }
     if (s === 'face') {
       if (action === 'up') this.faceIndex = (this.faceIndex + FACES_PER_RACE - 1) % FACES_PER_RACE;
       else if (action === 'down') this.faceIndex = (this.faceIndex + 1) % FACES_PER_RACE;
-      else if (action === 'confirm') this.state = 'class';
-      else if (action === 'back') this.state = 'gender';
+      else if (action === 'confirm') { this.state = 'stats'; this._enterStats(); }
+      else if (action === 'back') this.state = 'name';
       return;
     }
     if (s === 'class') {
       if (action === 'up') { this.classIndex = (this.classIndex + this.careers.length - 1) % this.careers.length; this._scrollToClass(); }
       else if (action === 'down') { this.classIndex = (this.classIndex + 1) % this.careers.length; this._scrollToClass(); }
       else if (action === 'confirm') this._leaveClass();
-      else if (action === 'back') this.state = 'face';
+      else if (action === 'back') this.state = 'gender';
       return;
     }
     if (s === 'biography') {
@@ -285,7 +294,7 @@ export class ChargenFlow {
       else if (action === 'minus') { const r = statDown(this.stats[key], this.rolledStats[key], this.statPool); this.stats[key] = r.working; this.statPool = r.pool; }
       else if (action === 'reroll') this.reroll();
       else if (action === 'confirm' && this.statPool === 0) { this.state = 'skills'; this._enterSkills(); }   // classic requires the pool spent
-      else if (action === 'back') this.state = 'class';
+      else if (action === 'back') this.state = 'face';
       return;
     }
     if (s === 'reflexes') {
@@ -344,13 +353,20 @@ export class ChargenFlow {
       // CloseWindow). The port made the click a selection and demanded
       // a separate confirm, which classic has no button for.
       this.gender = hit.setGender;
-      this.state = 'face';
+      this.state = 'class';
       return true;
     }
     if (hit.setCursor != null) { this.cursor = hit.setCursor; return true; }
     if (hit.setClass != null) { this.classIndex = hit.setClass; return true; }
     if (hit.answerBiography != null) return this.answerBiography(hit.answerBiography);
     if (hit.setReflexes != null) { this.reflexes = hit.setReflexes; return true; }
+    if (hit.randomName) {
+      // U15: NameHelper.FullName over the race's bank
+      // (CreateCharNameSelect.cs:166-171). The classic wizard order
+      // means the race and gender are both already chosen.
+      this.name = fullName(getNameBank(this.race.key), this.gender === 'female' ? GENDERS.Female : GENDERS.Male);
+      return true;
+    }
     return false;
   }
 

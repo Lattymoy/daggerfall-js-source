@@ -26,11 +26,8 @@ const st = async () => JSON.parse(await page.evaluate(() => {
     cls: f.classIndex, q: f.biogQuestionIndex, pool: f.statPool ?? null, reflexes: f.reflexes });
 }));
 
-// the name screen needs typed letters (classic types a name too); the
-// OK button is the click under test
-for (const c of 'MAC') await page.keyboard.press(c);
-await click(283, 183);                       // OK (263,172,39,22)
-if ((await st()).state !== 'race') { console.log('NAME OK BUTTON DEAD'); process.exit(1); }
+// U15: RACE is the FIRST screen in the classic order.
+if ((await st()).state !== 'race') { console.log('RACE IS NOT THE FIRST SCREEN'); process.exit(1); }
 await page.screenshot({ path: '/home/claude/click-race.png' });
 
 await click(110, 95);                        // Hammerfell -> Redguard + the confirm box
@@ -49,13 +46,8 @@ await click(female[0] + 4, female[1] + 4);
 // the button SETS and CLOSES - classic has no OK on this box
 let g = await st();
 if (g.gender !== 'female') { console.log('GENDER CLICK DEAD'); process.exit(1); }
-if (g.state !== 'face') { console.log('GENDER BUTTON DID NOT CLOSE THE BOX', JSON.stringify(g)); process.exit(1); }
-
-await click(300, 73);                        // NEXT face (287,69,26,9)
-if ((await st()).face !== 1) { console.log('FACE NEXT DEAD'); process.exit(1); }
-await page.screenshot({ path: '/home/claude/click-face.png' });
-await click(283, 183);                       // OK -> class
-if ((await st()).state !== 'class') { console.log('FACE OK DEAD'); process.exit(1); }
+// the box closes AND the classic order lands on the class picker
+if (g.state !== 'class') { console.log('GENDER BUTTON DID NOT CLOSE ONTO CLASS', JSON.stringify(g)); process.exit(1); }
 await page.screenshot({ path: '/home/claude/click-class.png' });
 
 // the class list: click the third visible row
@@ -79,8 +71,25 @@ for (let i = 0; i < 12; i++) {
 // the reputation box closes on a click anywhere
 if (await page.evaluate(() => !!window.__chargenFlow().biogRepBox)) await click(160, 100);
 s = await st();
-if (s.state !== 'stats') { console.log('BIOGRAPHY CLICKS DID NOT FINISH', JSON.stringify(s)); process.exit(1); }
-console.log('biography finished by clicks; stat pool', s.pool);
+if (s.state !== 'name') { console.log('BIOGRAPHY CLICKS DID NOT FINISH', JSON.stringify(s)); process.exit(1); }
+console.log('biography finished by clicks; now at', s.state);
+
+// U15: the RANDOM NAME button (279,3,36,10) - live now that the race
+// is known, which is exactly why the classic order had to land first.
+await click(279 + 18, 3 + 5);
+const rolled = await page.evaluate(() => window.__chargenFlow().name);
+console.log('random name:', JSON.stringify(rolled));
+if (!rolled) { console.log('RANDOM NAME BUTTON DEAD'); process.exit(1); }
+await page.screenshot({ path: '/home/claude/click-name.png' });
+await click(283, 183);                       // OK -> face
+if ((await st()).state !== 'face') { console.log('NAME OK DEAD'); process.exit(1); }
+await click(300, 73);                        // NEXT face (287,69,26,9)
+if ((await st()).face !== 1) { console.log('FACE NEXT DEAD'); process.exit(1); }
+await page.screenshot({ path: '/home/claude/click-face.png' });
+await click(283, 183);                       // OK -> stats
+s = await st();
+if (s.state !== 'stats') { console.log('FACE OK DEAD', JSON.stringify(s)); process.exit(1); }
+console.log('stat pool', s.pool);
 
 // stats: spend the pool on the spinner's UP half (44, 21 + 22*cursor)
 for (let i = 0; i < 20 && (await st()).pool > 0; i++) await click(44 + 7, 21 + 3);

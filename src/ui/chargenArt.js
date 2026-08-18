@@ -36,12 +36,17 @@ import { TextRsc } from '../formats/textRsc.js';   // U11: the race description
 import { generateBackstory } from '../systems/biography.js';   // U13
 import { bitmapToColor32 } from './hud.js';
 import { drawImg, drawRect, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR, SCREEN_DIM } from './nativePanel.js';
+import { measureText } from './text.js';   // U15: the RANDOM button label
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U11
 import { FACES_PER_RACE, raceById, raceArt } from '../systems/races.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 
 // DaggerfallUI.cs:52-62 - the colours these windows actually use.
+/** CreateCharNameSelect.cs:79-81 - the RANDOM button's own colours. */
+export const RANDOM_BUTTON_BG = [0.5, 0.5, 0.5, 0.75];
+export const RANDOM_LABEL = 'Random';
+
 /** DaggerfallBaseWindow.cs:40 - parentPanel.BackgroundColor = black. */
 export const MENU_BACKDROP = [0, 0, 0, 1];
 export const ALT_SHADOW_1 = [44 / 255, 60 / 255, 60 / 255, 1];        // DaggerfallAlternateShadowColor1
@@ -52,9 +57,7 @@ const MODIFIED_STAT = [0, 1, 0, 1];                                   // StatsRo
 /** Every verbatim rect this arc draws, [x, y, w, h]. */
 export const RECTS = Object.freeze({
   nameBox: [80, 5, 214, 7],           // CreateCharNameSelect.cs:73-74
-  // U14 FLAGGED: the random-name button is drawn by the art but
-  // INERT - it needs the NAMEGEN name banks, which are their own slice.
-  randomName: [279, 3, 36, 10],       // :78
+  randomName: [279, 3, 36, 10],       // :78 - live since U15
   ok: [263, 172, 39, 22],             // :85 (and face/stats/skills OK)
   reroll: [263, 147, 39, 22],         // CreateCharAddBonusStats.cs:112
   faceDisplay: [247, 25, 64, 40],     // FacePicker.cs:55-57
@@ -314,6 +317,15 @@ function drawBiography(renderer, m, font, flow) {
 
 function drawName(renderer, m, font, flow) {
   drawImg(renderer, img('CHAR00I0.IMG'), m, 0, 0);
+  // U15: the RANDOM button - a grey backing with a black-shadowed
+  // label (CreateCharNameSelect.cs:78-82). It is only ENABLED once a
+  // race is known (:112-119), which the classic wizard order now
+  // guarantees: race is the first screen.
+  const [rx, ry, rw, rh] = RECTS.randomName;
+  drawRect(renderer, m, rx, ry, rw, rh, RANDOM_BUTTON_BG);
+  const lw = measureText(font.fnt, RANDOM_LABEL);
+  shadowText(renderer, font, RANDOM_LABEL, m, rx + Math.round((rw - lw) / 2), ry + 2,
+    { shadow: [0, 0, 0, 1] });
   // TextBox at (80,5) 214x7 - the input colour, not the default
   const [bx, by] = RECTS.nameBox;
   shadowText(renderer, font, `${flow.name}_`, m, bx, by, { color: INPUT_TEXT });
@@ -488,7 +500,10 @@ function drawSkills(renderer, m, font, flow) {
 export function chargenHit(flow, vx, vy) {
   const inRect = ([x, y, w, h]) => vx >= x && vy >= y && vx < x + w && vy < y + h;
   const s = flow.state;
-  if (s === 'name') return inRect(RECTS.ok) ? 'confirm' : null;
+  if (s === 'name') {
+    if (inRect(RECTS.randomName)) return { randomName: true };
+    return inRect(RECTS.ok) ? 'confirm' : null;
+  }
   if (s === 'race') {
     if (flow._raceBox) {
       const hit = messageBoxHit(flow._raceBox, vx, vy);

@@ -1565,6 +1565,57 @@ reputation box, the stat spinner, three skill spinners, a reflex row
 and the final OK. Only the name's letters are typed, as they are in
 classic. Out the other end: a Redguard female with Very High reflexes.
 
-FLAGGED: the name screen's RANDOM-NAME button (279,3,36,10) is drawn
-by the art but inert - it needs the NAMEGEN banks, which are their own
-slice.
+RETIRED by U15: the random-name button is live.
+
+## U15 - THE CLASSIC WIZARD ORDER + THE RANDOM NAME BUTTON (2026-08-18)
+
+The port had invented its own chargen order. DFU's is an enum, and it
+is not a suggestion - `DaggerfallStartNewGameWizard.cs:63-79`:
+
+    SelectRace, SelectGender, SelectClassMethod/GenerateClass/
+    SelectClassFromList/CustomClassBuilder, SelectBiographyMethod,
+    BiographyQuestions, SelectName, SelectFace, AddBonusStats,
+    AddBonusSkills, SelectReflexes, Summary
+
+The port asked the NAME first and put the FACE early. `STATES` is now
+`race, gender, class, biography, name, face, stats, skills, reflexes`
+and every transition and `back` target follows it - the race screen is
+first, so its `back` returns rather than moving.
+
+**Why the order is not cosmetic.** Two screens read state that the old
+order had not collected yet:
+
+- the FACE screen draws RACE-and-GENDER face art. Running it before
+  the race is chosen paints faces from whatever race the flow happened
+  to be seeded with. The click probe's `click-face.png` now shows a
+  Redguard female head because a Redguard female had already been
+  chosen two screens earlier.
+- `CreateCharNameSelect.cs:112-119` DISABLES the random-name button
+  when `raceTemplate == null`. A name screen that precedes the race
+  can only ever draw that button dead. This is what finally forced the
+  reorder: the flag U14 left could not be cleared without it.
+
+**The button.** `getNameBank(raceKey)` in `characters/nameHelper.js`
+is `MacroHelper.GetNameBank` (`MacroHelper.cs:344-366`) - the eight
+player races onto `NameHelper.BankTypes`, with the quirk DFU's own
+enum comment spells out: ARGONIAN maps to the IMPERIAL bank, because
+"Imperial names appear where one would expect Argonian names"
+(`NameHelper.cs:50`). Unknown races fall to Breton, which is the C#
+`default` arm sharing the Breton case. The button mints
+`fullName(getNameBank(race), gender)` - the same NAMEGEN path the rest
+of the port already used for NPCs - and is drawn at
+`RECTS.randomName = [279,3,36,10]` on a grey `[0.5,0.5,0.5,0.75]`
+backing with the verbatim shadowed label.
+
+**The pin that mattered.** The first draft asserted the button
+returned some non-empty string. That passes while wired to the WRONG
+bank - a Khajiit handed Breton names is still a name. The pin now
+seeds `srand(12345)` and requires the button's output to equal a
+direct `fullName(getNameBank(race), gender)` call character for
+character, so the bank and the gender are both pinned, not just the
+liveness.
+
+Probed: `tools/chargenClickProbe.mjs` walks the new order by clicks
+alone and exercises the random button on the way through. Out the
+other end, unchanged: a Redguard female with Very High reflexes -
+named `Rlillki` by the button, not by the keyboard.
