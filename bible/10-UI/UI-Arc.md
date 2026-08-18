@@ -1288,3 +1288,76 @@ inventing a colour would break the NATIVE-WINDOW RULE.
 Pins: `test/audit17g.test.js`, six tests, each mutation-proven.
 Probed: all seven exterior probes green, and the keyboard confirm
 opens the Khajiit description at 9 rows live.
+
+## S3e/U12: THE BIOGRAPHY QUESTIONS (2026-08-18)
+
+The chargen screen classic players actually remember, and the one that
+makes two characters of the same class play differently. Twelve
+questions per class, each answer carrying a list of EFFECTS.
+
+**`src/formats/biogFile.js`** ports BiogFile's StringReader walk
+(BiogFile.cs:44-146): blank lines skipped between questions, a
+question's first line leading with `N.` and its text being everything
+after the FIRST dot, an optional second line, then answers while the
+line has `.` at index 1 and starts with a LETTER, each followed by its
+effect lines. One trap worth naming: C#'s `Split('.', 2)` keeps the
+REMAINDER in the last element where JavaScript's limit argument
+DISCARDS it, so a naive port loses everything after a second dot -
+"What is it, Mr. Smith?" would come back as "What is it, Mr". Two of
+DFU's rules are defensive and unreachable in the shipping data and are
+ported but deliberately NOT pinned; the corpus gate is the proof.
+
+**`src/systems/biography.js`** ports ApplyPlayerEffect (:248-445) -
+the whole grammar, counted over all 18 shipping files: 692 skill
+lines, 589 text tokens, 420 item grants, 136 faction and 111
+social-group reputation changes, 84 AF, 55 gold, 38 AE, 18 each of
+RP/FT/RD/MR, 14 each of RR/TH, and 12 bare `&` lines. Both gold quirks
+are verbatim: "GP + 250" is ONE argument (DFU corrects the spaced
+sign), and the player can never carry negative gold. Social reputation
+ACCUMULATES while the six single-field mods ASSIGN - a second `RP`
+overwrites the first, because every one of those branches reads
+`= parseResult`.
+
+**This is not cosmetic.** `biographyReactionMod` and
+`sGroupReputations` are already read by `getReactionToPlayer`
+(talk.js), so a biography answer changes how townspeople greet you
+from the first conversation. Probed live: a walk through all twelve
+questions left social reputations at [-5, 0, 5, 5, ...], poison
+resistance at -10, and 950 gold instead of the kit's 100.
+
+**Where the effects land.** DFU keeps the answer list on the
+CharacterDocument and applies it at StartGameBehaviour.cs:416 - at
+GAME START, over the finished character. The port does the same in
+`finishChargen`, after `applyCharacter`, so a skill bonus rides on top
+of the distributed value instead of being overwritten by the roll. The
+SKILLS SCREEN meanwhile DISPLAYS the bonus on top of the working value
+(CreateCharAddBonusSkills.cs:67-72) without turning it green, since
+that colour compares working against ROLLED and the bonus is not the
+player's spend.
+
+**The screen** is BIOG00I0.IMG with the verbatim geometry
+(CreateCharBiography.cs:32-42): the two question lines at (30,23)
+stepping 11, and TEN answer buttons 149x24 from (10,71) - even indices
+in the left column, odd in the right, a row every two - with the
+answer label at (21,5) inside its button. Answers past the question's
+count leave their buttons BLANK and a click on them is INERT, verbatim.
+
+FLAGGED: `rf` faction reputation queues on the entity for the faction
+slice to drain; AE/AF/AO are parsed and logged but NOT applied,
+exactly as DFU leaves them (:427-440) - applying a guess would be a
+divergence, not a fix; the bare `&` hits DFU's own invalid-command
+branch. Also FLAGGED: the port's overall wizard ORDER still differs
+from DFU's (we ask the name first and the face early); biography sits
+where it does relative to the class choice and the bonus screens,
+which is what the effects depend on, but putting the whole wizard on
+the classic sequence is its own slice. The backstory TEXT the '#'/'!'
+tokens compose, and the reputation-change message box that closes the
+screen (reputationToken 35), pend with it.
+
+Pins: `test/biography.test.js`, 16 tests, each mutation-proven, plus a
+CORPUS GATE walking all 18 shipping files - twelve full questions each
+that fit the ten buttons, and every one of their ~2200 effects a
+command we implement bar the twelve `&`.
+Probed + eyeballed: the classic BIOGRAPHY screen with "What school of
+magic have you been studying the longest?" and its six answers in two
+columns, the picked one in the classic dark red.

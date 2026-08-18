@@ -75,11 +75,28 @@ const SKILL_SPINNER_TOP = Object.freeze({ primary: 31, major: 80, minor: 129 });
 // UpDownSpinner.cs:96-116 / LeftRightSpinner.cs:82-96.
 const UD_SPINNER = { w: 15, h: 20, up: [0, 0, 15, 7], value: [0, 7, 15, 6], down: [0, 13, 15, 7] };
 const LR_SPINNER = { left: [0, 0, 11, 9], value: [0, 2, 15, 9], right: [26, 0, 11, 9] };
+// S3e / CreateCharBiography.cs:32-42 - the question block and the
+// TEN answer buttons in two columns of five.
+const BIOG_QUESTION_LINES = 2, BIOG_LINE_SPACE = 11;
+const BIOG_QUESTION_LEFT = 30, BIOG_QUESTION_TOP = 23;
+const BIOG_BUTTON_COUNT = 10, BIOG_BUTTONS_LEFT = 10, BIOG_BUTTONS_TOP = 71;
+const BIOG_BUTTON_W = 149, BIOG_BUTTON_H = 24;
+const BIOG_LABEL_OFF = [21, 5];   // the answer label inside its button
+
+/** The i-th answer button's rect (:83-92): even indices in the left
+ *  column, odd in the right, stepping a row every TWO. */
+export const biogButtonRect = (i) => [
+  i % 2 === 0 ? BIOG_BUTTONS_LEFT : BIOG_BUTTONS_LEFT + BIOG_BUTTON_W,
+  BIOG_BUTTONS_TOP + Math.floor(i / 2) * BIOG_BUTTON_H,
+  BIOG_BUTTON_W, BIOG_BUTTON_H,
+];
+export const BIOG_BUTTONS = BIOG_BUTTON_COUNT;
+
 // ListBox.cs:36-37 - nine rows, one pixel of spacing.
 export const CLASS_LIST_ROWS = 9;   // ListBox.cs:36 rowsDisplayed
 const LIST_ROWS = CLASS_LIST_ROWS, LIST_ROW_SPACING = 1;
 
-const IMG_NAMES = ['CHAR00I0.IMG', 'CHAR01I0.IMG', 'CHAR02I0.IMG', 'CHAR03I0.IMG', 'PICK00I0.IMG', 'TMAP00I0.IMG', 'CHAR02I1.IMG', 'CHAR03I1.IMG'];
+const IMG_NAMES = ['CHAR00I0.IMG', 'CHAR01I0.IMG', 'CHAR02I0.IMG', 'CHAR03I0.IMG', 'PICK00I0.IMG', 'TMAP00I0.IMG', 'CHAR02I1.IMG', 'CHAR03I1.IMG', 'BIOG00I0.IMG'];
 
 let _art = null;          // { imgs: Map<name, {tex,w,h}>, picker: DFBitmap }
 let _faces = null;        // { key, tex[] } - the loaded race/gender face set
@@ -192,7 +209,28 @@ export function drawChargenNative(renderer, m, font, flow) {
   if (s === 'class') return drawClass(renderer, m, font, flow);
   if (s === 'stats') return drawStats(renderer, m, font, flow);
   if (s === 'skills') return drawSkills(renderer, m, font, flow);
+  if (s === 'biography') return drawBiography(renderer, m, font, flow);
   return false;
+}
+
+function drawBiography(renderer, m, font, flow) {
+  drawImg(renderer, img('BIOG00I0.IMG'), m, 0, 0);
+  const q = flow.biogQuestion?.();
+  if (!q) return true;
+  for (let j = 0; j < BIOG_QUESTION_LINES; j++) {
+    if (!q.text[j]) continue;
+    shadowText(renderer, font, q.text[j], m, BIOG_QUESTION_LEFT, BIOG_QUESTION_TOP + j * BIOG_LINE_SPACE);
+  }
+  // the answers fill the buttons in order; the rest stay BLANK
+  // (PopulateControls blanks the remaining labels, :104-118)
+  for (let i = 0; i < BIOG_BUTTON_COUNT; i++) {
+    const a = q.answers[i];
+    if (!a) continue;
+    const [bx, by] = biogButtonRect(i);
+    shadowText(renderer, font, a.text, m, bx + BIOG_LABEL_OFF[0], by + BIOG_LABEL_OFF[1],
+      { color: i === flow.cursor ? SELECTED_TEXT : DEFAULT_TEXT_COLOR });
+  }
+  return true;
 }
 
 function drawName(renderer, m, font, flow) {
@@ -333,6 +371,7 @@ function drawStats(renderer, m, font, flow) {
 function drawSkills(renderer, m, font, flow) {
   drawImg(renderer, img('CHAR03I0.IMG'), m, 0, 0);
   const lr = img('CHAR03I1.IMG');
+  const bonuses = flow.skillBonuses?.() ?? null;
   let idx = 0;
   for (const [group, ids] of flow.skillRows()) {
     ids.forEach((id, i) => {
@@ -340,7 +379,11 @@ function drawSkills(renderer, m, font, flow) {
       const v = flow.skills[id];
       const modified = v !== flow.rolledSkills[id];
       alt(renderer, font, SKILL_NAMES[id], m, SKILL_LABEL_X, y);
-      alt(renderer, font, String(v), m, SKILL_VALUE_X, y, { color: modified ? MODIFIED_STAT : DEFAULT_TEXT_COLOR });
+      // S3e: the BIOGRAPHY bonus shows on top of the working value
+      // (CreateCharAddBonusSkills.cs:67-72 + SkillsRollout.cs:295-308)
+      // but does NOT turn it green - that colour compares working
+      // against ROLLED, and the bonus is not the player's spend.
+      alt(renderer, font, String(v + (bonuses?.[id] ?? 0)), m, SKILL_VALUE_X, y, { color: modified ? MODIFIED_STAT : DEFAULT_TEXT_COLOR });
       if (idx === flow.cursor) {
         const sy = SKILL_SPINNER_TOP[group] + i * SKILL_ROW_STEP;
         drawImg(renderer, lr, m, SKILL_SPINNER_X, sy);
@@ -410,6 +453,16 @@ export function chargenHit(flow, vx, vy) {
       const row = Math.floor((ly - ply) / (flow._classRowH || 1));
       const idx = (flow.classScroll ?? 0) + row;
       if (row >= 0 && row < LIST_ROWS && idx < flow.careers.length) return { setClass: idx };
+    }
+    return null;
+  }
+  if (s === 'biography') {
+    const q = flow.biogQuestion?.();
+    if (!q) return null;
+    for (let i = 0; i < BIOG_BUTTONS; i++) {
+      // an index past this question's answers is INERT, verbatim
+      if (i >= q.answers.length) continue;
+      if (inRect(biogButtonRect(i))) return { answerBiography: i };
     }
     return null;
   }

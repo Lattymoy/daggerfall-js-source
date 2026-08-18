@@ -35,7 +35,7 @@ import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
-import { loadCareers, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
+import { loadCareers, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen, loadBiogs } from '../systems/chargenSession.js';   // S3c/U9
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
@@ -475,8 +475,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // called with no spell table here, so a Mage created in a town
     // began with an empty spellbook where the dungeon host's identical
     // flow filled it.
-    Promise.all([loadCareers(fetchBytes), loadSpellIndex(fetchBytes)]).then(([careers, spellsByIndex]) => {
+    Promise.all([loadCareers(fetchBytes), loadSpellIndex(fetchBytes), loadBiogs(fetchBytes)]).then(([careers, spellsByIndex, biogs]) => {
       townTalk.showOverlay(createChargenWindow(careers, {
+        biogs,   // S3e: the biography question sets
         onDone: (r) => {
           finishChargen(playerEntity, r, spellsByIndex);
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
@@ -727,6 +728,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     window.__talk = () => JSON.stringify(townTalk._debug());   // T3b probe surface
     window.__chargenRace = () => townTalk._debug().overlayFlow?.race?.key ?? null;   // U10 probe surface
     window.__chargenConfirm = () => townTalk._debug().overlayFlow?.raceConfirm ?? null;   // U11 probe surface
+    window.__chargenFlow = () => townTalk._debug().overlayFlow ?? null;   // S3e probe surface
     window.__addGold = (n) => addGold(playerEntity, n);   // U10 probe surface: gold through the real producer
     window.__guards = () => JSON.stringify(cityGuards._debug());   // G1 probe surface
     window.__droppedLoot = () => JSON.stringify(droppedLoot._piles.map((pl) => ({ n: pl.items.length, pos: pl.pos.map((v) => +v.toFixed(1)), record: pl.record, flat: !!pl.batch })));   // U8e probe surface

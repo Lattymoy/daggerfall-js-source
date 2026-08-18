@@ -14,6 +14,7 @@
 
 import { rollStats, rollSkills, STAT_KEYS_ORDER, spellPoints, spellPointMultiplier } from '../systems/chargen.js';
 import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsModifier, healingRateModifier } from '../combat/formulas.js';   // U10: the derived block
+import { tagEffect, biographySkillBonuses } from '../systems/biography.js';   // S3e
 import { RACE_TEMPLATES, FACES_PER_RACE } from '../systems/races.js';   // S3c/U9
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
@@ -43,7 +44,15 @@ export function skillDown(working, rolled, pool) {
 // S3c/U9: RACE and FACE join the flow between gender and class -
 // classic asks race first. (The Breton-male-face-0 hardcode this
 // retired, and U10's blind face index, are both gone.)
-const STATES = ['name', 'race', 'gender', 'face', 'class', 'stats', 'skills', 'done'];
+// S3e: BIOGRAPHY sits immediately after the class choice, which is
+// where DFU's wizard puts it (WizardStages: ...SelectClassFromList,
+// SelectBiographyMethod, BiographyQuestions, SelectName...). FLAGGED:
+// the port's overall ORDER already differs from DFU's (we ask the name
+// first and the face early); moving the whole wizard onto the classic
+// sequence is its own slice. What matters for the effects is the
+// RELATIVE position - biography before the bonus-skill screen, so its
+// bonuses show while the player distributes.
+const STATES = ['name', 'race', 'gender', 'face', 'class', 'biography', 'stats', 'skills', 'done'];
 
 export class ChargenFlow {
   /** careers: [{ name, career }] x18 (loaded from CLASS*.CFG). */
@@ -57,6 +66,12 @@ export class ChargenFlow {
     this.faceIndex = 0;      // 0..9 within the race/gender FACE CIF
     this.classIndex = 0;
     this.classScroll = 0;      // AUDIT 17g F6: the list's own scroll index
+    // S3e: the biography screen's state. biogFor is the question-set
+    // source (the host loads BIOG<class>T0.TXT); null until it does,
+    // and the screen is skipped rather than blocking the flow.
+    this.biogFor = null;
+    this.biogQuestionIndex = 0;
+    this.biographyEffects = [];
     this.raceConfirm = null;   // U11: the open race-description box, if any
     // AUDIT 17g F5: the description source, so BOTH the click and the
     // keyboard confirm open the same box. Null until the art loads.
@@ -137,6 +152,42 @@ export class ChargenFlow {
     this.classScroll = Math.max(0, Math.min(max, this.classScroll));
   }
 
+  /** S3e: the class choice leads into the biography when its file
+   *  loaded, and straight to the stats roll when it did not. */
+  _leaveClass() {
+    this.biogQuestionIndex = 0;
+    this.cursor = 0;
+    if (this.biogFor?.(this.classIndex)?.questions?.length) this.state = 'biography';
+    else this._leaveBiography();
+  }
+
+  _leaveBiography() { this.state = 'stats'; this._enterStats(); }
+
+  /** The per-skill biography bonus the SKILLS screen displays. */
+  skillBonuses() { return this.biographyEffects.length ? biographySkillBonuses(this.biographyEffects) : null; }
+
+  /** The question on screen, or null when the set is exhausted. */
+  biogQuestion() {
+    const b = this.biogFor?.(this.classIndex);
+    return b?.questions?.[this.biogQuestionIndex] ?? null;
+  }
+
+  /** AnswerButton_OnMouseClick (CreateCharBiography.cs:118-152): an
+   *  index past this question's answers is INERT, the chosen answer's
+   *  effects are tagged with the question index, and the last question
+   *  ends the screen. */
+  answerBiography(answerIndex) {
+    const q = this.biogQuestion();
+    if (!q) return false;
+    const a = q.answers[answerIndex];
+    if (!a) return false;   // "not an answer for this question"
+    for (const e of a.effects) this.biographyEffects.push(tagEffect(e, this.biogQuestionIndex));
+    const total = this.biogFor(this.classIndex).questions.length;
+    if (this.biogQuestionIndex < total - 1) { this.biogQuestionIndex++; this.cursor = 0; }
+    else this._leaveBiography();
+    return true;
+  }
+
   reroll() {
     if (this.state === 'stats') this._enterStats();
     else if (this.state === 'skills') this._enterSkills();
@@ -189,8 +240,18 @@ export class ChargenFlow {
     if (s === 'class') {
       if (action === 'up') { this.classIndex = (this.classIndex + this.careers.length - 1) % this.careers.length; this._scrollToClass(); }
       else if (action === 'down') { this.classIndex = (this.classIndex + 1) % this.careers.length; this._scrollToClass(); }
-      else if (action === 'confirm') { this.state = 'stats'; this._enterStats(); }
+      else if (action === 'confirm') this._leaveClass();
       else if (action === 'back') this.state = 'face';
+      return;
+    }
+    if (s === 'biography') {
+      // the ten answer buttons are digits 1-0 on the keyboard; the
+      // flow's own cursor walks them for the probe and the phone
+      const q = this.biogQuestion();
+      if (!q) { this._leaveBiography(); return; }
+      if (action === 'up') this.cursor = (this.cursor + q.answers.length - 1) % q.answers.length;
+      else if (action === 'down') this.cursor = (this.cursor + 1) % q.answers.length;
+      else if (action === 'confirm') this.answerBiography(this.cursor);
       return;
     }
     if (s === 'stats') {
@@ -239,12 +300,13 @@ export class ChargenFlow {
     if (hit.setGender != null) { this.gender = hit.setGender; return true; }
     if (hit.setCursor != null) { this.cursor = hit.setCursor; return true; }
     if (hit.setClass != null) { this.classIndex = hit.setClass; return true; }
+    if (hit.answerBiography != null) return this.answerBiography(hit.answerBiography);
     return false;
   }
 
   get done() { return this.state === 'done'; }
   result() {
-    return { name: this.name, gender: this.gender, race: this.race.key, raceId: this.race.id, faceIndex: this.faceIndex, careerIndex: this.classIndex, career: this.career, stats: this.stats, skills: this.skills };
+    return { name: this.name, gender: this.gender, race: this.race.key, raceId: this.race.id, faceIndex: this.faceIndex, careerIndex: this.classIndex, career: this.career, stats: this.stats, skills: this.skills, biographyEffects: this.biographyEffects };
   }
 
   // ---- drawing ----

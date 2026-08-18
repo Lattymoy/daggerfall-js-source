@@ -20,6 +20,8 @@ import { applyCharacter, createCharacter, startingSpells, CLASS_CAREERS } from '
 import { overlayAction } from '../ui/input.js';
 import { assignStartingGear } from './startingGear.js';   // S3d
 import { readSpellsStd } from '../formats/spellsStd.js';
+import { parseBiog, biogFileName } from '../formats/biogFile.js';   // S3e
+import { applyBiographyEffects } from './biography.js';   // S3e
 
 /** SPELLS.STD as an index -> spell map. AUDIT 17f: the exterior
  *  hosts ran chargen without one and called finishChargen with no
@@ -33,6 +35,29 @@ export async function loadSpellIndex(fetchBytes) {
     return new Map(readSpellsStd(await fetchBytes('SPELLS.STD')).map((sp) => [sp.index, sp]));
   } catch (e) {
     console.warn('[chargen] SPELLS.STD unavailable; the starting spellbook stays empty', e);
+    return null;
+  }
+}
+
+/** All 18 classes' question sets, index-keyed - the shape
+ *  createChargenWindow wants. A class whose file is missing is simply
+ *  absent, and its biography screen is skipped. */
+export async function loadBiogs(fetchBytes) {
+  const out = [];
+  for (let i = 0; i < CLASS_CAREERS.length; i++) out.push(await loadBiog(fetchBytes, i));
+  return out;
+}
+
+/** S3e: one class's BIOGRAPHY questions (BIOG<class>T0.TXT). The
+ *  file is latin1 text, not a binary record table. Returns null
+ *  (loud) when unavailable, which skips the biography screen. */
+export async function loadBiog(fetchBytes, classIndex) {
+  try {
+    const bytes = await fetchBytes(biogFileName(classIndex));
+    const text = new TextDecoder('latin1').decode(bytes);
+    return parseBiog(text, classIndex);
+  } catch (e) {
+    console.warn(`[chargen] ${biogFileName(classIndex)} unavailable; the biography questions are skipped`, e);
     return null;
   }
 }
@@ -83,13 +108,21 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   playerEntity.equip = null;
   playerEntity.armorValues = null;
   assignStartingGear(playerEntity, { classIndex: result.careerIndex, rolls });
+  // S3e: the BIOGRAPHY effects land LAST, exactly where DFU applies
+  // them (StartGameBehaviour.cs:416 - at game start, over the built
+  // character), so a skill bonus rides on top of the distributed value
+  // instead of being overwritten by applyCharacter's roll.
+  if (result.biographyEffects?.length) applyBiographyEffects(playerEntity, result.biographyEffects, { rolls });
   return playerEntity;
 }
 
 /** An overlay-shaped chargen window for the exterior hosts.
  *  onDone(result) fires once, after the flow reaches 'done'. */
-export function createChargenWindow(careers, { onDone, rolls = Math.random, hudScale = 2 } = {}) {
+export function createChargenWindow(careers, { onDone, rolls = Math.random, hudScale = 2, biogs = null } = {}) {
   const flow = new ChargenFlow(careers, rolls);
+  // S3e: the question sets, keyed by class index. Absent = the
+  // biography screen is skipped rather than blocking the flow.
+  if (biogs) flow.biogFor = (i) => biogs[i] ?? null;
   let _fired = false;
   return {
     flow,

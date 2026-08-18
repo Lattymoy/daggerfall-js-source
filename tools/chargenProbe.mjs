@@ -66,7 +66,30 @@ await page.screenshot({ path: '/home/claude/chargen-face.png' });
 await key('Enter');            // class
 await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-class.png' });   // U10: PICK00I0
-await key('Enter');            // -> stats
+await key('Enter');            // -> BIOGRAPHY (S3e)
+await waitFrames(2);
+// S3e: twelve real BIOG00T0.TXT questions. Shoot the first, then
+// answer every one with its first option.
+const biog = async () => JSON.parse(await page.evaluate(() => {
+  const f = window.__chargenFlow?.();
+  return JSON.stringify(f ? { state: f.state, q: f.biogQuestionIndex, text: f.biogQuestion?.()?.text ?? null,
+    answers: f.biogQuestion?.()?.answers?.map((a) => a.text) ?? [], effects: f.biographyEffects.length } : null);
+}));
+let b = await biog();
+console.log('biography opened:', JSON.stringify(b));
+if (b?.state !== 'biography') { console.log('BIOGRAPHY SCREEN DID NOT OPEN', JSON.stringify(b)); process.exit(1); }
+if (!b.text?.[0] || !b.answers.length) { console.log('BIOGRAPHY QUESTION EMPTY'); process.exit(1); }
+await page.screenshot({ path: '/home/claude/chargen-biography.png' });
+for (let i = 0; i < 12; i++) {
+  const cur = await biog();
+  if (cur.state !== 'biography') break;
+  await key('Enter');          // the cursor sits on the first answer
+}
+const after = await biog();
+console.log('after the twelve questions:', JSON.stringify({ state: after.state, effects: after.effects }));
+if (after.state !== 'stats') { console.log('BIOGRAPHY DID NOT COMPLETE', JSON.stringify(after)); process.exit(1); }
+if (after.effects < 12) { console.log('BIOGRAPHY COLLECTED NO EFFECTS', after.effects); process.exit(1); }
+await waitFrames(2);
 await waitFrames(2);
 await page.screenshot({ path: '/home/claude/chargen-stats.png' });   // U10: CHAR02I0
 // spend the stat pool, then each skill pool
@@ -94,7 +117,10 @@ if (!e.chargenDone) { console.log('CHARGEN DID NOT COMPLETE'); process.exit(1); 
 if (e.race !== 'Khajiit' || e.gender !== 'female') { console.log('IDENTITY NOT APPLIED'); process.exit(1); }
 if (!e.skillsIsArray) { console.log('SKILLS STILL THE INTERIM FLAT NUMBER'); process.exit(1); }
 // S3d: AssignStartingGear - dressed, armed, funded, and NO interim dagger
-if (e.gold !== 100) { console.log('STARTING GOLD WRONG', e.gold); process.exit(1); }
+// S3e: the kit's 100 gold is the FLOOR now - a biography answer can
+// add to it (GP +N) or take from it, so the assertion is that the kit
+// landed and the biography moved it, not a fixed number.
+if (e.gold < 100) { console.log('STARTING GOLD BELOW THE KIT', e.gold); process.exit(1); }
 if (e.worn.length !== 2) { console.log('CLOTHES NOT WORN', JSON.stringify(e.worn)); process.exit(1); }
 if (!e.items.includes('Spellbook')) { console.log('NO SPELLBOOK'); process.exit(1); }
 if (e.items.includes('Dagger')) { console.log('THE INTERIM DAGGER SURVIVED CHARGEN'); process.exit(1); }
@@ -130,5 +156,14 @@ const S = 4, OX = 60, OY = 50;
 await page.mouse.click(OX + 205 * S, OY + 4 * S);
 await waitFrames(12);
 await page.screenshot({ path: '/home/claude/chargen-clothing-icons.png' });
+// S3e: the biography effects must have REACHED the entity - the
+// skills screen only displays the bonus, finishChargen applies it.
+const bio = await page.evaluate(() => {
+  const p = window.__playerEntity;
+  return { rep: [...(p.sGroupReputations ?? [])], reaction: p.biographyReactionMod ?? 0,
+    poison: p.biographyResistPoisonMod ?? 0, skillSum: (p.skills ?? []).reduce((a, b) => a + b, 0) };
+});
+console.log('biography on the entity:', JSON.stringify(bio));
+if (!bio.rep.some((v) => v !== 0)) { console.log('BIOGRAPHY REPUTATION NEVER LANDED', JSON.stringify(bio.rep)); process.exit(1); }
 console.log('CHARGEN OK');
 await browser.close(); await server.close();
