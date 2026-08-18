@@ -11,7 +11,8 @@
 //   (RandomClothingDye over the 10-entry table) and the pants a
 //   RANDOM variant (RandomizeClothingVariant). Both are EQUIPPED.
 // - every player starts with a Spellbook (MiscItems 132), carried
-//   not equipped.
+//   not equipped - and added FIRST, ahead of the clothes, so it heads
+//   the bag exactly as classic shows it.
 // - the class weapon comes from StartingWeaponTypesByClass, with
 //   StartingWeaponMaterialsByClass choosing iron (0) or steel (1);
 //   a CUSTOM class gets an iron Longsword instead.
@@ -23,7 +24,7 @@
 //   defaulted OFF, the same stance the 17e audit took on the
 //   enhanced 16-slot item list.
 
-import { addItem } from './inventory.js';
+import { addItem, goldStack } from './inventory.js';
 import { equipItem } from './equip.js';
 import { itemBaseValue, templateByIndex } from './itemTemplates.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
@@ -52,7 +53,10 @@ export const ARCHER_ARROWS = 24;
 export const STARTING_GOLD = 100;
 
 /** Every item the port mints carries its own value (the 17e F2 root
- *  fix - a missing value made the shop price it at 1). */
+ *  fix - a missing value made the shop price it at 1) and its
+ *  TEMPLATE name (AUDIT 17f: the hand-written names here were
+ *  lower-cased copies - DFU's ItemName is ItemTemplate.name, so the
+ *  bag read "Short shirt" where classic reads "Short Shirt"). */
 const mint = (item) => ({
   ...item,
   name: item.name ?? templateByIndex(item.templateIndex)?.name,
@@ -68,45 +72,54 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
   const added = [];
   const add = (item) => { const it = mint(item); addItem(entity.items, it); added.push(it); return it; };
 
+  // AUDIT 17f: the SPELLBOOK is added FIRST (ItemHelper.cs:1300-1306).
+  // AddItem's default is AddPosition.Back (ItemCollection.cs:217), so
+  // the collection order IS the order the item list draws in
+  // (ItemListScroller walks items[scrollIndex + i] forward) - the
+  // port added the clothes first and put a new character's spellbook
+  // third in their bag where classic puts it first.
+  add({ group: 'MiscItems', templateIndex: SPELLBOOK });
+
   // gender-specific clothes, dyed + varied, then EQUIPPED
+  const pantsTemplate = female ? CASUAL_PANTS_F : CASUAL_PANTS_M;
   const shirt = add({
     group: female ? 'WomensClothing' : 'MensClothing',
     templateIndex: female ? SHORT_SHIRT_CLOSED_F : SHORT_SHIRT_M,
-    name: female ? 'Short shirt' : 'Short shirt',
-    variant: 0,
+    variant: 0,   // CreateMens/WomensClothing(..., 0) - the shirt is NOT randomized
     dye: CLOTHING_DYES[Math.floor(rolls() * CLOTHING_DYES.length)],
   });
   const pants = add({
     group: female ? 'WomensClothing' : 'MensClothing',
-    templateIndex: female ? CASUAL_PANTS_F : CASUAL_PANTS_M,
-    name: 'Casual pants',
-    variant: Math.floor(rolls() * 4),   // RandomizeClothingVariant over the template's variants
+    templateIndex: pantsTemplate,
+    // RandomizeClothingVariant: Random.Range(0, ItemTemplate.variants)
+    // (ItemBuilder.cs:803-807). AUDIT 17f: this was hardcoded to 4,
+    // which is the MEN'S count - women's Casual pants (template 190)
+    // has FIVE variants, so a woman could never roll the last one.
+    variant: Math.floor(rolls() * (templateByIndex(pantsTemplate)?.variants ?? 1)),
   });
 
-  // every player starts with a spellbook (carried, not equipped)
-  add({ group: 'MiscItems', templateIndex: SPELLBOOK, name: 'Spellbook' });
+  // clothes go ON before the weapon is minted (equipTable.EquipItem
+  // twice at ItemHelper.cs:1305-1306, ahead of the isCustom branch)
+  equipItem(entity, shirt);
+  equipItem(entity, pants);
 
   // the class weapon (or an iron longsword for a custom class)
   if (isCustom) {
-    add({ group: 'Weapons', templateIndex: LONGSWORD, material: 0, name: 'Longsword' });
+    add({ group: 'Weapons', templateIndex: LONGSWORD, material: 0 });
   } else {
     const i = Math.max(0, Math.min(STARTING_WEAPON_BY_CLASS.length - 1, classIndex | 0));
     add({ group: 'Weapons', templateIndex: STARTING_WEAPON_BY_CLASS[i], material: STARTING_MATERIAL_BY_CLASS[i] });
     if (i === ARCHER_CLASS_INDEX) {
-      add({ group: 'Weapons', templateIndex: BATTLE_AXE, material: 1, name: 'Battle Axe' });
-      add({ group: 'Weapons', templateIndex: ARROW, material: 0, name: 'Arrow', stackCount: ARCHER_ARROWS });
+      add({ group: 'Weapons', templateIndex: BATTLE_AXE, material: 1 });
+      add({ group: 'Weapons', templateIndex: ARROW, material: 0, stackCount: ARCHER_ARROWS });
     }
   }
 
   // DFU's PlayerTorchFromItems setting - an enhancement, not classic
   if (torchesFromItems) {
-    for (let i = 0; i < 5; i++) add({ group: 'UselessItems2', templateIndex: TORCH, name: 'Torch' });
-    for (let i = 0; i < 2; i++) add({ group: 'UselessItems2', templateIndex: CANDLE, name: 'Candle' });
+    for (let i = 0; i < 5; i++) add({ group: 'UselessItems2', templateIndex: TORCH });
+    for (let i = 0; i < 2; i++) add({ group: 'UselessItems2', templateIndex: CANDLE });
   }
-
-  // clothes go ON (equipTable.EquipItem for both, after the adds)
-  equipItem(entity, shirt);
-  equipItem(entity, pants);
 
   addStartingGold(entity, STARTING_GOLD);
   return added;
@@ -116,6 +129,6 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
  *  the bag (the port's S2 shape). */
 export function addStartingGold(entity, amount = STARTING_GOLD) {
   entity.items = entity.items ?? [];
-  addItem(entity.items, { group: 'Currency', name: 'Gold Pieces', stackCount: amount });
+  addItem(entity.items, goldStack(amount));
   return entity;
 }

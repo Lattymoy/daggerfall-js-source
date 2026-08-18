@@ -31,6 +31,7 @@
 
 import { rand } from '../formats/dfRandom.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
+import { goldStack } from './inventory.js';   // AUDIT 17f: one gold mint
 
 export const CRIMES = Object.freeze({
   None: 0, Attempted_Breaking_And_Entering: 1, Trespassing: 2,
@@ -93,7 +94,7 @@ export function addGold(player, amount) {   // E3: sale proceeds
   player.items = player.items || [];
   const stack = player.items.find((it) => it.group === 'Currency');
   if (stack) stack.stackCount = (stack.stackCount ?? 0) + amount;
-  else player.items.push({ group: 'Currency', name: 'Gold pieces', stackCount: amount });
+  else player.items.push(goldStack(amount));
 }
 
 /** SurrenderToCityGuards, verbatim. setHealth1 is the host's vitals

@@ -56,7 +56,7 @@ export function applyScroll(current, kind, len) {
  *  template's world-texture record + captures its native size, then
  *  draws it centered in the button with the V-FLIPPED source rect
  *  (record textures store BOTTOM-UP GL rows - the hotfix law). */
-export function makeIconDrawer(icons) {
+export function makeIconDrawer(icons, identityOf = null) {
   const warm = new Set();
   const sizes = new Map();
   const drawer = (renderer, m, it, rect, slot) => {
@@ -64,7 +64,11 @@ export function makeIconDrawer(icons) {
     // item. DFU's GetItemImage draws the PLAYER (inventory) texture
     // for everything except UselessItems1 / ingredients / arrows /
     // ReligiousItems / MiscItems - 111 of 288 templates differ.
-    const img = inventoryItemImage(it);
+    // AUDIT 17f: the icon is addressed for a WEARER - SetRace offsets
+    // clothing/armor archives by body morphology, and GetInventory-
+    // TextureArchive reads that offset field back. Without it every
+    // list drew the morphology-0 (Argonian) row.
+    const img = inventoryItemImage(it, identityOf?.() ?? undefined);
     if (!img || !img.archive) return false;
     const key = `${img.archive}_${img.record}`;
     if (!warm.has(key)) {

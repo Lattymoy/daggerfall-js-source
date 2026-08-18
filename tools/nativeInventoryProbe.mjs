@@ -1,6 +1,10 @@
 // U8d probe: F6 in the exterior host opens the CLASSIC inventory -
 // INVE00I0.IMG with the INVE01I0 selected-state highlights, the tab
 // filter, and the shared ItemListScroller (icons + stack counts).
+// AUDIT 17f: ?class=16 is the HEADLESS chargen skip. S3c put the
+// chargen overlay on a fresh town boot, which silently wedged this
+// probe (the overlay ate every key and Escape does not dismiss it) -
+// and the exterior hosts had no skip at all until 17f wired one.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5199, strictPort: true } });
@@ -8,7 +12,7 @@ await server.listen();
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto('http://localhost:5199/?shot&play&exterior&time=12:00');
+await page.goto('http://localhost:5199/?shot&play&exterior&time=12:00&class=16');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 const waitFrames = async (n) => {
   const f = await page.evaluate(() => window.__frame);

@@ -1,6 +1,10 @@
 // U8g probe: EQUIP mode live - click items to wear them (they leave
 // the list and appear ON the paperdoll with dyes), REMOVE mode
 // clicks the doll to take them off (the GetEquipIndex mask).
+// AUDIT 17f: ?class=16 is the HEADLESS chargen skip. S3c put the
+// chargen overlay on a fresh town boot, which silently wedged this
+// probe (the overlay ate every key and Escape does not dismiss it) -
+// and the exterior hosts had no skip at all until 17f wired one.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5199, strictPort: true } });
@@ -8,7 +12,7 @@ await server.listen();
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto('http://localhost:5199/?shot&play&exterior&time=12:00');
+await page.goto('http://localhost:5199/?shot&play&exterior&time=12:00&class=16');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 const waitFrames = async (n) => {
   const f = await page.evaluate(() => window.__frame);
@@ -25,10 +29,14 @@ for (;;) {
 const S = 4, OX = 60, OY = 50;
 const click = async (vx, vy) => { await page.mouse.click(OX + vx * S, OY + vy * S); await waitFrames(4); };
 await page.evaluate(() => {
-  // clear the boot-seeded interim dagger so the probe's loadout is
-  // the whole story (it would otherwise dual-wield with the sword)
-  const slots = window.__playerEntity.equip?.slots;
-  if (slots?.[19]) { delete slots[19].equipSlot; slots[19] = null; }
+  // AUDIT 17f: clear whatever the boot path equipped so the probe's
+  // loadout is the whole story. This used to unhook slot 19 alone -
+  // the interim dagger - and S3d's real starting kit arrives WORN
+  // (shirt + pants), so two extra items rode along unnoticed. Null
+  // the derived tables and let them rebuild, exactly as finishChargen
+  // does.
+  window.__playerEntity.equip = null;
+  window.__playerEntity.armorValues = null;
   window.__playerEntity.items = [
     { group: 'Armor', templateIndex: 102, material: 0x0200, variant: 1, name: 'Iron Cuirass' },
     { group: 'Weapons', templateIndex: 120, material: 0, name: 'Longsword' },

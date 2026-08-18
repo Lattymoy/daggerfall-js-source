@@ -955,3 +955,103 @@ begins with a shirt, pants, spellbook, steel shortsword and 100
 gold, and her paperdoll draws her DRESSED - real classic shirt and
 trouser art, the censor welds gone because actual clothing covers
 chest and legs. Suite 488/107.
+
+## AUDIT 17f: the parity pass over the audit's own changes (2026-08-18)
+
+Mac: "lets first do a comprehensive audit on changes so far and parity
+pass" - the same request that produced 17e, now aimed at what 17e
+itself (Waves 0-3) plus S3c/U9 and S3d shipped. Read by hand against
+DFU source rather than fanned out; the surface is one arc wide, and
+the interesting findings are the ones a wave INTRODUCED while fixing
+something else. Sixteen confirmed, all in this slice. The full ledger
+lives in `bible/Home.md` under Audits - the parts that belong to this
+arc:
+
+**The item lists never got SetRace.** 17e F9's whole point was that
+the lists must draw the PLAYER texture, not the world sprite - and it
+read that archive straight off the TEMPLATE. In DFU the archive is an
+INSTANCE field that `SetRace` offsets by the wearer's body morphology
+at creation (ItemBuilder.cs:850-854; armor replaces it outright via
+ApplyArmorSettings :466-485), and `GetInventoryTextureArchive`
+(DaggerfallUnityItem.cs:1728-1735) returns that offset field. So every
+list - inventory, trade, loot - drew clothing off the morphology-0
+ARGONIAN row and armor off the men's Argonian archive, whoever was
+wearing it. The paperdoll had the law since U8g; the list did not,
+which is exactly the split ONE DFU MEMBER, ONE EXPORT exists to catch.
+`characters/paperdollArt.js` now owns `playerArchiveFor` and both
+windows resolve through it; `makeIconDrawer` takes the wearer.
+Eyeballed: a Khajiit female's short shirt is archive 238, not 235.
+
+**The gold stack had no template.** Three producers hand-built it
+with no `templateIndex` and two spellings of the name, so it drew NO
+icon (there was nothing for GetItemImage's world-texture fallback to
+fall back FROM) and weighed nothing through `itemWeight` - which is
+why `charsheet.js` carried its own 0.0025 constant. It is
+Currency.Gold_pieces (276) now: the classic pile icon at 216/1, the
+template weight, one name. A pre-17f save upgrades its stack on
+restore, because `stacksWith` compares template index and a legacy
+stack would otherwise split off a second pile `goldAmount` never
+looks past. Eyeballed: the pile icon draws in Clothing & Misc where a
+bare "100" had floated in an empty button.
+
+**The paperdoll leaked on identity change.** 17e F27 gave the
+composite an owner; S3c then added the identity-reload path and set
+`_live = null` directly, orphaning the texture the refresh would have
+freed. Chargen hits it on every race/gender/face change. The same
+path advanced `_deps` before the art loaded, so a failed load left a
+Khajiit identity addressing Breton bitmaps.
+
+**paperdollArt kept a third copy.** 17e F32 collapsed the armor
+material tables out of equip.js and paperDoll.js and stopped one file
+short. `characters/paperdollArt.js` still held the SetVariant clamps
+keyed by material FAMILY and a second export literally named
+`armorArchive` whose second argument was a RACE where the other's was
+a MORPHOLOGY. Same member, same name, incompatible arguments. It
+wraps the single home now, keeping the C6a signature.
+
+**Chargen: the town path was the poor relation.** A Mage created in a
+town got an EMPTY spellbook (the exterior hosts called `finishChargen`
+with no spell table; only the dungeon host loaded SPELLS.STD), the
+`?class=N` headless skip minted an empty bag (S3d landed the kit on
+two of three creation paths), and the exterior hosts PARSED `?class`
+for the dungeon they might build while ignoring it for their own
+chargen - which is why S3c's chargen-on-boot silently wedged the
+U8d/U8e/U8g probes and no gate noticed. `loadSpellIndex` and
+`applyHeadlessChargen` join `loadCareers`/`finishChargen` as shared
+session members; dungeonContext, which had re-grown a hand-inlined
+copy of finishChargen one slice after it was extracted, calls the
+shared one. `createChargenWindow`'s doc promised onDone fires once and
+the code fired it on every key after done, each re-running
+applyCharacter and re-rolling the kit.
+
+**AssignStartingGear, three drifted details.** The Spellbook is added
+FIRST (ItemHelper.cs:1300-1306) and `AddPosition.Back` makes
+collection order the DRAW order, so the port's bag led with the
+shirt; the pants variant was hardcoded to 4, the MEN'S count, where
+women's Casual pants (190) has FIVE, so a woman could never roll her
+last variant; and the names were lower-cased hand copies of
+`ItemTemplate.name`. Clothes are equipped where DFU equips them, ahead
+of the weapon.
+
+**Checked and CLEARED** - recorded because it reads like a bug: 17e
+F15's `safeScrollIndex` only re-clamps when the index is past the end,
+which looks like a missing clamp against `GetSafeScrollIndex`. It is
+not. That function has two branches, and the port implements the
+`delayScrollUp = TRUE` one - which is precisely the branch the `Items`
+SETTER takes (ItemListScroller.cs:181), and the setter is what a
+refilter runs. The tight clamp belongs to the scrollbar and
+mouse-leave paths, which we raise no event for. The partly-filled
+column really is classic.
+
+**FLAGGED, not fixed** (reasons at the sites): gold as a bag stack at
+all - classic keeps `playerEntity.GoldPieces` as a counter that never
+appears in a list, and retiring the port's S2 shape touches
+goldAmount, trade and loot; a REMOTE list drawing its clothing on the
+PLAYER's morphology, because shop stock carries no owner identity;
+quicksave still living only in the dungeon host.
+
+Pins: `test/audit17f.test.js`, ten tests, each mutation-proven.
+Probes: the chargen probe now asserts bag ORDER, template names, the
+starting spellbook and the wearer-addressed icon archive; the equip
+probe clears the derived tables instead of unhooking "the interim
+dagger" by hand; all three exterior probes take the `?class=16` skip.

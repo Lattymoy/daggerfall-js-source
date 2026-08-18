@@ -66,10 +66,30 @@ export function clampArmorVariant(templateIndex, material, variant) {
 /** ItemBuilder.ApplyArmorSettings + SetRace + GetBodyMorphology
  *  (ItemBuilder.cs:35-36, :466-485, :850-854, :910-925): armor art
  *  lives in a per-gender archive offset by the race's body
- *  morphology. Human (Breton/Nord/Redguard) is 2 - the other
- *  morphologies arrive with chargen (INTERIM, flagged there). */
+ *  morphology. AUDIT 17f / RETIRING A FLAG DELETES THE SENTENCE: the
+ *  "other morphologies arrive with chargen (INTERIM)" note shipped
+ *  out with S3c - every race picks its own morphology now. */
 export const FIRST_FEMALE_ARCHIVE = 245;
 export const FIRST_MALE_ARCHIVE = 249;
-export const HUMAN_MORPHOLOGY = 2;
+
+/** GetBodyMorphology's four values (ItemEnums.BodyMorphology). */
+export const BODY_MORPHOLOGY = Object.freeze({ Argonian: 0, Elf: 1, Human: 2, Khajiit: 3 });
+export const HUMAN_MORPHOLOGY = BODY_MORPHOLOGY.Human;
+
 export const armorArchive = (gender = 'male', morphology = HUMAN_MORPHOLOGY) =>
   (gender === 'male' ? FIRST_MALE_ARCHIVE : FIRST_FEMALE_ARCHIVE) + morphology;
+
+/** MATERIAL FAMILY - the C6a art axis (leather / chain / plate rows).
+ *  AUDIT 17f / ONE DFU MEMBER, ONE EXPORT: 17e F32 collapsed equip.js
+ *  and paperDoll.js onto this file but MISSED characters/
+ *  paperdollArt.js, which kept a third copy of the SetVariant clamps
+ *  keyed by family instead of material - and a SECOND export named
+ *  `armorArchive` whose second argument was a RACE where this one
+ *  takes a MORPHOLOGY. Same name, same DFU member, incompatible
+ *  arguments: exactly the footgun the rule exists to stop. The clamps
+ *  live here; paperdollArt re-exports the family-keyed adapter for
+ *  the C6a callers that already speak families. */
+export const MATERIAL_FAMILY = Object.freeze({ Leather: 0, Chain: 1, Plate: 2 });
+const MATERIAL_OF_FAMILY = [ARMOR_MATERIAL.Leather, ARMOR_MATERIAL.Chain, ARMOR_MATERIAL.Iron];
+export const armorVariant = (templateIndex, family, requested = 0) =>
+  clampArmorVariant(templateIndex, MATERIAL_OF_FAMILY[family] ?? ARMOR_MATERIAL.Iron, requested);

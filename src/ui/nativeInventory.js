@@ -130,7 +130,7 @@ export class NativeInventoryWindow {
     this.remoteScroll = 0;
     this.dropped = [];             // droppedItems (the default remote target)
     this.popup = null;             // the interim info panel lines
-    this._icon = makeIconDrawer(hooks.icons);
+    this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // AUDIT 17f: icons follow the wearer's morphology
     if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
   }
 

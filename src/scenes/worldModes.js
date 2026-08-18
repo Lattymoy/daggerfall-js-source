@@ -111,6 +111,7 @@ export function createWorldModes(host) {
         sell: (it) => doSell(shelf, it),
         gold: () => goldAmount(playerEntity),
         icons: { getTexture, uploadRecord, textures: renderer.textures },
+        entity: playerEntity,   // AUDIT 17f: icons address for the wearer's morphology
         shopName: b.name ?? '',
       });
       return;

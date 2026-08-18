@@ -120,7 +120,7 @@ code "looks right").
 - `08-Audio/Audio.md` - ACTIVE. A1 + A2 (2026-08-16: action PlaySound on every Play, torch Burning loops at 5m linear/0.7 via the new loop3d engine seam, animal random barks on the classic rand()<=100 cadence at 19.2m - dungeon-scoped) + A3 SCENE AMBIENCE (2026-08-16: AmbientEffectsPlayer verbatim - the 14 dungeon one-shots somewhere-around on the scene's serialized 5/28 waits + classic-cadence water/bubbles, the weather/time presets in BOTH exterior scenes on 5/25 with rain/crickets loops and horizon storms, one shared ambient channel; building interiors silent, verbatim) SHIPPED + A4 EXTERIOR ANIMALS (2026-08-17: the shared PlayRandomlyIfPlayerNear pass - systems/animalAmbience.js, one implementation for dungeon + both exteriors incl. the streaming world's floating-origin sources; exterior torches SILENT verbatim - Burning is RDBLayout-only in DFU) SHIPPED; transition stingers CLOSED verbatim-N/A (2026-08-17: DFU plays nothing on enter/exit or ladders - no source law to port). Next: music strategy (Mac's call) - the queue's last row.
 - `06-Systems/Systems-Arc.md` - ACTIVE. S1-S16 + S18 DISEASES (2026-08-16: the 17-row DiseaseData table byte-exact, the daily tick over the classic day with statMods through liveStat and RAW FAT/SPL drains bug-for-bug, InflictDisease's level-1 immunity + full-save resist + no-double-catch, Heal{Attribute} healing disease damage without curing, and the OnMonsterHit rider table wired per landed hit at the FormulaHelper.cs:662 seam - rat/bat/zombie/mummy/vampire rolls, nymph/lamia fatigue x2 x64, specials routed) + S19a PARALYZE (2026-08-16: (0,255) with AssignBundle's exact chance/save gate order incl. the AddState-first re-cast quirk, the spider/scorpion Spider Touch free-cast rider closed, the full IsParalyzed consumer set - player input/jump/weapons in both hosts, foe motor+attack freeze; plus the classic subType BYTE-CAST parity fix: 0xFF reads -1 and the 255-keyed doors never fired from real records) + S19b POISONS (2026-08-16: the 12-variant enum + timing tables byte-exact, minute-tick lifecycle Waiting/Active/Complete with drug positives stripped at the crash and attribute damage persisting until healed, InflictPoison's career-immunity/save/level-1 gates, the ItemHelper weapon-poison spawn roll + the inflict-once-and-clear formulas seam at both enemy-vs-player sites) + S19c CURES (2026-08-16: (3,0..2) chance-gated instants - CureAll* as IMMEDIATE bundle removal lifting disease/poison statMods now, CureParalyzation ending the incumbent instantly, the AssignBundle failure messages on player hosts) SHIPPED - the S19 group (Paralyze/poisons/cures) is CLOSED - + S20 EXHAUSTION/REST (2026-08-16: the three per-hour recovery rates verbatim incl. RapidHealing/NoRegenSpellPoints decodes, the OnExhausted collapse - a safe hour of rest vs death near enemies or in water, fed by the P13 senses fields - and the once-per-minute-change fatigue-drain parity fix) SHIPPED (the rest UI consuming the rates is U7, the UI arc) + S21 CONCEALMENT (2026-08-17: Invisibility 13,0/13,1 + Shadow 24,0/24,1 + Chameleon true 23,1 - the P13 gate's inert branches go LIVE, normal/true folding per IsInvisible/IsBlending/IsAShade, the verbatim Illusion costs, start messages once on new incumbency through the sinks.say seam; with P15 sneak the full illusion-stealth play works; foe-side visuals pend) SHIPPED + S22 FREEACTION (2026-08-17: (26,255) Restoration duration buff on the generic incumbent branch; the READ-TIME immunity fold - IsParalyzed = !immune && paralyzed, a covered paralysis ticks underneath and RESUMES - and the AssignBundle silent drop of incoming Paralyze; career/racial immunity FLAGGED to the tolerance decode) SHIPPED + E1 THE SHOP FOUNDATION (2026-08-17: the economy arc opens node-pure - DFU's ItemTemplates.txt baked whole (288 rows) + the per-group enum arrays with ItemBuilder's material value laws; StockShopShelf verbatim (the eight pair tables, the rarity/Dice100 stock law, the no-dice book ladder, horse+cart, the gender swap) + RMBLayout.IsShop + the 27-model shelf set for E2's mount; CalculateCost verbatim with the lazy 750..1250 regional band; MagicItems/potion-recipe/book-file-pricing/restocking INTERIM loud) SHIPPED + E2 THE SHELF MOUNT (2026-08-17: the E1 laws go LIVE in the interior mode of both hosts - buildingDataForDoor resolves the entered door through the pool merge to type/quality/name, interiorContext collects the shelf set in DFU's chain order (parity fix: 41035/41037 were wrongly S2b house containers), E on a shelf in an IsShop stocks lazily and opens the keyed browse window with live CalculateTradePrice prices, digit-buys deduct gold into the entity; the modal-__frame probe-starvation fix; probed live - entered "The Adventurer's Book Dealer", bought a 2950-gold book; selling/haggle-UI/open-hours/bookshelves FLAGGED) SHIPPED + E3 SELLING (2026-08-17: the trade circuit closes - storeBuysItemType verbatim gating the S sell mode per storefront, the selling-branch offer over CalculateCost*stack, proceeds via addGold with sold goods landing on the OPEN shelf (buy-backs work), Mercantile tallying once per trade both directions; probed live - the bookseller round trip, buy 3062 / sell back 2904; haggle UI/letters of credit/Repair/Identify FLAGGED) SHIPPED. Next: shop open hours, enchantments, or banking.
 - `07-Rendering/Rendering.md` - COMPLETE again. R12 THE EXTERIOR INDIRECT PLAYER LIGHT (2026-08-16: the SunlightRig point light from the serialized prefab - 1.0/range 150/0.706 gray - daylight-scaled at the player across all four lit programs, shot-proven near-ground brightening with a byte-identical sky). Queue EMPTY.
-- `10-UI/UI-Arc.md` - ACTIVE. U1-U5 + U6 THE ACTION TEXT BOXES (2026-08-16: ShowText 8600 / ShowTextWithInput 5400 with the verbatim riddle answers gating ActivateNext / DoorText 7700 with the patch table and the first-activation door hold; TEXT.RSC live), input map, CLICK-TO-CAST SHIPPED, U7 THE REST WINDOW (2026-08-16: KeyR, timed/full/loiter on the S20 per-hour rates, 354/355 pre-gates, enemies break rest live under the overlay) + U8a THE NATIVE PANEL (2026-08-17: Mac's call - real classic art begins; ui/nativePanel.js = DFU's virtual 320x200 with integer-scale letterbox, IMG loads, the verbatim shadowed-label idiom (243,239,44 / 93,77,12 +1,+1), pointToNative for touch; the CHARACTER SHEET is the first native window - INFO00I0.IMG with DaggerfallCharacterSheetWindow's verbatim label geometry, encumbrance over floor(Str*1.5), keys 1-4 skill popups, F5 in BOTH exterior hosts (host rule; was dungeon-only), text fallback never traps; probed + eyeballed - the real stone page with every label in its engraved field) SHIPPED + U8b THE NATIVE TALK WINDOW (2026-08-17: TALK01I0.IMG replaces the ChoiceWindow talk chain in both hosts - DaggerfallTalkWindow's verbatim rects with the labels baked in the art, the topic list + bottom-anchored conversation panel, tone radios; POINTER ROUTING lands - townTalk.pointerdown maps taps/clicks through pointToNative before requestLook, phone and desktop on one seam, keyboard accelerators kept; the T3-T3f session pipeline unchanged underneath; probed by MOUSE CLICKS end to end + eyeballed) SHIPPED + U8c THE NATIVE TRADE WINDOW + ITEM ICONS (2026-08-17: the E2/E3 shop loop on the classic inventory screen - INVE00I0 + the INVE08I0 buy panel + the SHOP00I0 cost strip (the TRAD00I0 first guess does not exist - the probe caught it); ITEM ICONS come online through the regenerated templates' worldTexture fields over the existing texture pipeline, lazily warmed with sizes; remote-click buys / local-click sells through the extracted doBuy/doSell core, worldModes pointerdown routes interior clicks; probed - three real book icons, bought 3129, sold back 2968; basket/tabs/paperdoll/dyed-icons FLAGGED) SHIPPED + AUDIT 2026-08-17d (the native-window parity audit after Mac's third positioning catch - the trade scroller un-mirrored to the verbatim ItemListScroller (buttons at x=9, the LEFT 9px rail with 16px arrows), FONT0004 stack counts, talk rows 7px / lines 11px, the light-blue question in the player-says panel + the yellow answer color, the centred NPC name; the char sheet clean; THE NATIVE-WINDOW RULE entered Process - every drawn element cites its DFU source or does not draw; see Audits) + U8d THE NATIVE INVENTORY WINDOW (2026-08-17: the first window built under the rule - INVE00I0 base with INVE01I0 selected-state subrect highlights (drawImgSub), the verbatim tab/action-button rects, the AddLocalItem four-way filter (ingredients = templates 0..77 exactly per ItemTemplates.txt, Spellbook 132 to magic), the ItemListScroller EXTRACTED to a shared module riding trade + inventory alike, F6 in both exterior hosts; the view+info half - equip/use/drop + paperdoll FLAGGED to their arcs; probed + eyeballed: gold highlights exactly on the baked buttons, icons in their frames, the stack '3' in FONT0004) + U8e DROPPED LOOT (2026-08-17: the remote column lives - Remove-mode drops mint an archive-216 treasure flat at the ground below the player (CreateDroppedLootContainer verbatim: the 20-entry random icon list, FindGroundPosition), E on a pile reopens the inventory as a loot target with REMOVE defaulted (the anti-accidental-equip law), pickups empty the pile and the flat vanishes (the serializer's removal law); probe lesson recorded - drop probes wait for the MOTOR to settle, not just __shotReady; save persistence + stack-split + TrackLooseObject FLAGGED) + U8f THE EQUIP FOUNDATION (2026-08-17: ItemEquipTable verbatim - the 27-slot table, GetEquipSlot per group over the extracted enum indices, GetItemHands, EquipItem with the 2H/shield/swap/SplitStack laws, FilterLocalItems hiding worn items; THE PAPERDOLL BASE renders - town SCBG04I0 subrect in the 110x184 panel at (49,13), BODY IMGs at their baked offsets minus paperDollOrigin (200,8), the verbatim censor welds, the FACE CIF head; probed + eyeballed - the classic Breton avatar standing in the window; equip-mode clicks stay flagged until U8g's overlay layers + unequip mask; Breton-male-0 INTERIM until chargen). + U8g ITEM OVERLAYS + LIVE EQUIP (2026-08-17: the doll composes CPU-side into one texture like DFU's own renderer - layer order verbatim, the GetItemImage forPaperDoll laws with morphology archives and the SetVariant material-family clamps, the C5b ChangeDye bands live, GetEquipIndex click resolution walking the layers backwards; EQUIP clicks wear items, REMOVE doll-clicks strip them, INFO reads them; probed + eyeballed - iron plate + longsword + red pants ON the avatar, the chest click stripping exactly the cuirass; FP-rig binding + armor values FLAGGED to U8h) + U8h THE WORN-WEAPON BINDING + ARMOR VALUES (2026-08-17: the rig swings equip.slots[RightHand] every frame (bare hands -> the unarmed path), the interim dagger moved into the bag as the boot seed; UpdateEquippedArmorValues verbatim - the 100-per-part baseline, material*5 subtractions, material-blind shields with their protected-part tables, the to-hit consuming the table directly (THE PARITY CHANGE: an unarmored player is now classically easy to hit), the (100-av)/5 labels at the verbatim armourLabelPos; probed + eyeballed - the chest reads 7 in iron and the FP view draws the worn longsword; dungeon-host binding + effect label colors FLAGGED). Queue: rest-on-native-art, chargen (identity + starting gear), the dungeon-host worn-weapon binding; portraits pend.
+- `10-UI/UI-Arc.md` - ACTIVE. U1-U5 + U6 THE ACTION TEXT BOXES (2026-08-16: ShowText 8600 / ShowTextWithInput 5400 with the verbatim riddle answers gating ActivateNext / DoorText 7700 with the patch table and the first-activation door hold; TEXT.RSC live), input map, CLICK-TO-CAST SHIPPED, U7 THE REST WINDOW (2026-08-16: KeyR, timed/full/loiter on the S20 per-hour rates, 354/355 pre-gates, enemies break rest live under the overlay) + U8a THE NATIVE PANEL (2026-08-17: Mac's call - real classic art begins; ui/nativePanel.js = DFU's virtual 320x200 with integer-scale letterbox, IMG loads, the verbatim shadowed-label idiom (243,239,44 / 93,77,12 +1,+1), pointToNative for touch; the CHARACTER SHEET is the first native window - INFO00I0.IMG with DaggerfallCharacterSheetWindow's verbatim label geometry, encumbrance over floor(Str*1.5), keys 1-4 skill popups, F5 in BOTH exterior hosts (host rule; was dungeon-only), text fallback never traps; probed + eyeballed - the real stone page with every label in its engraved field) SHIPPED + U8b THE NATIVE TALK WINDOW (2026-08-17: TALK01I0.IMG replaces the ChoiceWindow talk chain in both hosts - DaggerfallTalkWindow's verbatim rects with the labels baked in the art, the topic list + bottom-anchored conversation panel, tone radios; POINTER ROUTING lands - townTalk.pointerdown maps taps/clicks through pointToNative before requestLook, phone and desktop on one seam, keyboard accelerators kept; the T3-T3f session pipeline unchanged underneath; probed by MOUSE CLICKS end to end + eyeballed) SHIPPED + U8c THE NATIVE TRADE WINDOW + ITEM ICONS (2026-08-17: the E2/E3 shop loop on the classic inventory screen - INVE00I0 + the INVE08I0 buy panel + the SHOP00I0 cost strip (the TRAD00I0 first guess does not exist - the probe caught it); ITEM ICONS come online through the regenerated templates' worldTexture fields over the existing texture pipeline, lazily warmed with sizes; remote-click buys / local-click sells through the extracted doBuy/doSell core, worldModes pointerdown routes interior clicks; probed - three real book icons, bought 3129, sold back 2968; basket/tabs/paperdoll/dyed-icons FLAGGED) SHIPPED + AUDIT 2026-08-17d (the native-window parity audit after Mac's third positioning catch - the trade scroller un-mirrored to the verbatim ItemListScroller (buttons at x=9, the LEFT 9px rail with 16px arrows), FONT0004 stack counts, talk rows 7px / lines 11px, the light-blue question in the player-says panel + the yellow answer color, the centred NPC name; the char sheet clean; THE NATIVE-WINDOW RULE entered Process - every drawn element cites its DFU source or does not draw; see Audits) + U8d THE NATIVE INVENTORY WINDOW (2026-08-17: the first window built under the rule - INVE00I0 base with INVE01I0 selected-state subrect highlights (drawImgSub), the verbatim tab/action-button rects, the AddLocalItem four-way filter (ingredients = templates 0..77 exactly per ItemTemplates.txt, Spellbook 132 to magic), the ItemListScroller EXTRACTED to a shared module riding trade + inventory alike, F6 in both exterior hosts; the view+info half - equip/use/drop + paperdoll FLAGGED to their arcs; probed + eyeballed: gold highlights exactly on the baked buttons, icons in their frames, the stack '3' in FONT0004) + U8e DROPPED LOOT (2026-08-17: the remote column lives - Remove-mode drops mint an archive-216 treasure flat at the ground below the player (CreateDroppedLootContainer verbatim: the 20-entry random icon list, FindGroundPosition), E on a pile reopens the inventory as a loot target with REMOVE defaulted (the anti-accidental-equip law), pickups empty the pile and the flat vanishes (the serializer's removal law); probe lesson recorded - drop probes wait for the MOTOR to settle, not just __shotReady; save persistence + stack-split + TrackLooseObject FLAGGED) + U8f THE EQUIP FOUNDATION (2026-08-17: ItemEquipTable verbatim - the 27-slot table, GetEquipSlot per group over the extracted enum indices, GetItemHands, EquipItem with the 2H/shield/swap/SplitStack laws, FilterLocalItems hiding worn items; THE PAPERDOLL BASE renders - town SCBG04I0 subrect in the 110x184 panel at (49,13), BODY IMGs at their baked offsets minus paperDollOrigin (200,8), the verbatim censor welds, the FACE CIF head; probed + eyeballed - the classic Breton avatar standing in the window; equip-mode clicks stay flagged until U8g's overlay layers + unequip mask; Breton-male-0 INTERIM until chargen). + U8g ITEM OVERLAYS + LIVE EQUIP (2026-08-17: the doll composes CPU-side into one texture like DFU's own renderer - layer order verbatim, the GetItemImage forPaperDoll laws with morphology archives and the SetVariant material-family clamps, the C5b ChangeDye bands live, GetEquipIndex click resolution walking the layers backwards; EQUIP clicks wear items, REMOVE doll-clicks strip them, INFO reads them; probed + eyeballed - iron plate + longsword + red pants ON the avatar, the chest click stripping exactly the cuirass; FP-rig binding + armor values FLAGGED to U8h) + U8h THE WORN-WEAPON BINDING + ARMOR VALUES (2026-08-17: the rig swings equip.slots[RightHand] every frame (bare hands -> the unarmed path), the interim dagger moved into the bag as the boot seed; UpdateEquippedArmorValues verbatim - the 100-per-part baseline, material*5 subtractions, material-blind shields with their protected-part tables, the to-hit consuming the table directly (THE PARITY CHANGE: an unarmored player is now classically easy to hit), the (100-av)/5 labels at the verbatim armourLabelPos; probed + eyeballed - the chest reads 7 in iron and the FP view draws the worn longsword; dungeon-host binding + effect label colors FLAGGED). S3c/U9 CHARGEN (identity + all eight races + the fourth host) and S3d STARTING EQUIPMENT SHIPPED, then AUDIT 17f (2026-08-18: the parity pass over the audit's own changes - SetRace reaching the item LISTS at last, a town-created Mage's spellbook, the headless ?class skip in all three hosts, one gold mint, and the three duplications the 17e waves themselves re-grew; see Audits). Queue: chargen ART (the classic screens + the portrait on the face picker), biography questions, reflexes, rest-on-native-art, the dungeon-host worn-weapon binding.
 - **Mobile test build (2026-08-13, Mac-directed)**: deployed-site play
   on phones. `src/ui/touch.js` - a virtual stick synthesizing REAL
   W/A/S/D/Shift KeyboardEvents (the scenes' keys Sets and the input
@@ -139,10 +139,12 @@ code "looks right").
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-17, S3d starting gear)
+## Open flags (regenerated 2026-08-18, AUDIT 17f)
 
-Regenerated at the S20 close (the drainFatigue "exhaustion pends"
-comment SHIPPED out; line numbers refreshed). Every row below is a
+Regenerated at the AUDIT 17f close: armorMaterials' "the other
+morphologies arrive with chargen" INTERIM shipped out with S3c and its
+sentence is deleted; the gold-as-a-bag-stack and remote-list-morphology
+rows are new; line numbers refreshed. Every row below is a
 live
 INTERIM/FLAGGED/PENDING site in src; the code comment at each site is
 the authority. `src/render/characterSprite.js` FP framing constants
@@ -150,6 +152,7 @@ stay open to Mac's eye in live play (probe-locked).
 
 - `src/characters/enemyMotor.js:308` - FLAGGED, until target prediction ships). At zero the foe stops.
 - `src/characters/mobileUnit.js:18` - clock). DEFERRED (FLAGGED): the Seducer transform pair.
+- `src/characters/paperdollArt.js:67` - *  needs no new field; FLAGGED: a remote list (shop stock, a corpse)
 - `src/characters/playerEntity.js:5` - UI later fronts it everywhere). INTERIM until then, loudly: flat
 - `src/characters/playerEntity.js:18` - maxHealth: 50,    // INTERIM until chargen rolls career HP
 - `src/characters/playerEntity.js:25` - skills: 30,       // INTERIM flat skills until chargen
@@ -173,62 +176,63 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/scenes/dungeonContext.js:493` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:507` - "database FLAGGED" narrows to the skill/loot message ids).
 - `src/scenes/dungeonContext.js:641` - drained strength lowers the ceiling). INTERIM (loud): the
-- `src/scenes/dungeonContext.js:754` - FLAGGED: DFU recomputes per-effect via the cost tables (that
-- `src/scenes/dungeonContext.js:756` - FLAGGED to the effect library (caster-only buffs, touch, areas).
-- `src/scenes/dungeonContext.js:968` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/dungeonContext.js:1706` - actions) is FLAGGED - the player snapshot only.
+- `src/scenes/dungeonContext.js:756` - FLAGGED: DFU recomputes per-effect via the cost tables (that
+- `src/scenes/dungeonContext.js:758` - FLAGGED to the effect library (caster-only buffs, touch, areas).
+- `src/scenes/dungeonContext.js:970` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:1708` - actions) is FLAGGED - the player snapshot only.
 - `src/scenes/exterior.js:317` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
 - `src/scenes/exterior.js:318` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:324` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:383` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/exterior.js:449` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:547` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:616` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:399` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/exterior.js:465` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:563` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:632` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/townTalk.js:359` - .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAG...
 - `src/scenes/world.js:436` - FLAGGED loud: the People faction rides the START location's
 - `src/scenes/world.js:447` - preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture });   // U8f/U8g: SCBG/...
 - `src/scenes/world.js:448` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/world.js:454` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:554` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/world.js:609` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:843` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1042` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:570` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/world.js:625` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:859` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1058` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:70` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:102` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-hous...
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
-- `src/systems/armorMaterials.js:70` - *  morphologies arrive with chargen (INTERIM, flagged there). */
+- `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/chargen.js:6` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
 - `src/systems/chargen.js:21` - INTERIM (loud): the UI distributes the bonus pools by hand; the
 - `src/systems/chargen.js:124` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
 - `src/systems/chargen.js:143` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy ...
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
-- `src/systems/chargenSession.js:40` - S3d: the real starting kit replaces the INTERIM dagger seed -
+- `src/systems/chargenSession.js:78` - S3d: the real starting kit replaces the INTERIM dagger seed -
 - `src/systems/court.js:7` - People-faction half-delta FLAGGED to the save-side clone).
 - `src/systems/court.js:27` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
-- `src/systems/court.js:81` - ChangeReputation(peopleFaction, -loss/2) FLAGGED: the save-side
-- `src/systems/court.js:112` - *  daysInPrison } (guild rescues FLAGGED). */
+- `src/systems/court.js:82` - ChangeReputation(peopleFaction, -loss/2) FLAGGED: the save-side
+- `src/systems/court.js:113` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:92` - FLAGGED: career hard-immunity (Career.Paralysis == Immune) and the
 - `src/systems/effects.js:530` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 - `src/systems/equip.js:104` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/inventory.js:12` - weight pends S2b (FLAGGED - leather/chain/plate multipliers).
+- `src/systems/inventory.js:45` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls are SKIPPED until the magic
 - `src/systems/loot.js:169` - FLAGGED to the economy slice (shops).
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/save.js:7` - (foes, loot piles, action states, doors) is FLAGGED - dungeons
-- `src/systems/save.js:42` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:43` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
 - `src/systems/shopStock.js:109` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
 - `src/systems/skills.js:56` - *  +0.1) and the Jump spell (+0.6) are INTERIM 0 here, loudly - the
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
-- `src/systems/talk.js:78` - *  FLAGGED to the crime slice - the state lands now, verbatim).
-- `src/systems/talk.js:91` - TallyCrimeGuildRequirements(true, 1) FLAGGED: thieves-guild
-- `src/systems/talk.js:98` - SpawnCityGuards(true) FLAGGED: the crime/guards slice mounts the response.
+- `src/systems/talk.js:79` - *  FLAGGED to the crime slice - the state lands now, verbatim).
+- `src/systems/talk.js:92` - TallyCrimeGuildRequirements(true, 1) FLAGGED: thieves-guild
+- `src/systems/talk.js:99` - SpawnCityGuards(true) FLAGGED: the crime/guards slice mounts the response.
 - `src/systems/talkSession.js:19` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 - `src/ui/actionText.js:7` - (backgrounds FLAGGED pending art-name verification, the shared UI
 - `src/ui/chargen.js:11` - background ART is FLAGGED pending art-name verification against
@@ -248,6 +252,7 @@ stay open to Mac's eye in live play (probe-locked).
 - `src/ui/nativeTalk.js:140` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/nativeTalk.js:150` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
 - `src/ui/nativeTrade.js:16` - scroll. FLAGGED loud: the basket + mode-action flow (DFU
+- `src/ui/nativeTrade.js:68` - player's own gear. The REMOTE (shelf) list borrows it, FLAGGED at
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord
 - `src/ui/paperDoll.js:33` - INTERIM loud: Breton male face 0 until chargen fronts identity.
 - `src/ui/paperDoll.js:62` - table, the loud INTERIM the U8f/U8g records flagged.
@@ -256,6 +261,107 @@ stay open to Mac's eye in live play (probe-locked).
 ## Audits
 
 Newest first.
+
+**2026-08-18 - AUDIT 17f, the parity pass over the audit's own
+changes.** Mac asked for a comprehensive audit of everything shipped
+SINCE 17e - the four 17e waves themselves, S3c/U9 chargen, S3d
+starting gear (PRs #51-#56). Read line-by-line against DFU source by
+hand rather than fanned out: the surface is one arc wide, and the
+findings that matter here are the ones a wave INTRODUCED while fixing
+something else. Sixteen confirmed, all shipped in this one slice.
+(F1) THE BIGGEST ONE - SetRace never reached the INVENTORY LIST.
+17e F9 correctly moved the lists off world sprites onto the PLAYER
+texture, but read the archive straight off the TEMPLATE. DFU offsets
+that field by the wearer's body morphology at creation
+(ItemBuilder.SetRace :850-854, ApplyArmorSettings :466-485) and
+GetInventoryTextureArchive hands the OFFSET field back
+(DaggerfallUnityItem.cs:1728-1735) - so every item list in the game
+drew clothing from the morphology-0 ARGONIAN row and armor from the
+Argonian archive, for every player of every race. The paperdoll had
+the law; the list did not. `playerArchiveFor` is now the one home and
+both windows call it; the wearer identity threads through
+makeIconDrawer into the inventory and trade windows. Probed live: a
+Khajiit's short shirt resolves to archive 238, not 235.
+(F2) A MAGE CREATED IN A TOWN HAD AN EMPTY SPELLBOOK. The exterior
+hosts called finishChargen with NO spell table - SPELLS.STD was
+loaded only by the dungeon host - so the identical character created
+in a town silently lost their starting spells. loadSpellIndex joins
+loadCareers as a shared loader. Probed live: five spells.
+(F3) THE ?class=N SKIP MINTED AN EMPTY BAG. S3d put AssignStartingGear
+on the flow and on the font-less fallback and missed the headless
+path, which sets chargenDone - so the hosts' interim seed skipped it
+too and the character had no clothes, no weapon and no gold. The skip
+is now one shared function (applyHeadlessChargen) and the exterior
+hosts honour it too; they had PARSED ?class for the dungeon they might
+build and ignored it for their own chargen.
+(F4) THE PROBE ROT S3c CAUSED. Putting chargen on a fresh town boot
+wedged the U8d/U8e/U8g probes - the overlay ate every key - and
+nothing caught it because a probe is not a gate. Fixed by the F3 skip;
+the equip probe additionally still cleared "the interim dagger" from
+slot 19 by hand, so S3d's WORN starting clothes rode along and its
+count assertion was reading four where it meant three.
+(F5) ONE DFU MEMBER, ONE EXPORT, again. 17e F32 collapsed the armor
+material tables from equip.js and paperDoll.js and stopped one file
+short: characters/paperdollArt.js still held a third copy of the
+SetVariant clamps and a SECOND export named `armorArchive` whose
+second argument was a RACE where the other's was a MORPHOLOGY - the
+same DFU member, same name, incompatible arguments. Collapsed onto the
+single home with the C6a signature kept as a wrapper.
+(F6) ONE GOLD MINT. Three producers (startingGear, court, talk) hand-
+built the Currency stack with NO template index and two spellings of
+the name, so the stack drew no icon at all - eyeballed as a bare
+"100" floating in an empty button - and weighed nothing through
+itemWeight, which is why charsheet carried a second copy of the
+0.0025 constant. It is Currency.Gold_pieces (276) now, with the
+classic pile icon (216/1) and the template weight; a pre-17f save
+upgrades its stack on restore, because stacksWith compares template
+index and a legacy stack would otherwise split off a second pile
+goldAmount could never see.
+(F7) THE CHARGEN COMPLETION GREW A SECOND COPY. dungeonContext
+hand-inlined applyCharacter + startingSpells + AssignStartingGear -
+the exact duplication systems/chargenSession.js had been extracted to
+end one slice earlier. It calls finishChargen now.
+(F8) createChargenWindow's own doc said onDone fires once; the code
+fired it on EVERY key after the flow reached done, each one re-running
+applyCharacter and re-rolling the starting kit.
+(F9) THE PAPERDOLL LEAKED ON IDENTITY CHANGE. 17e F27 gave the
+composite an owner, and S3c then added an identity-reload path that
+set `_live = null` directly - orphaning the GL texture the refresh
+would have freed. Chargen reaches it on every race/gender/face change.
+(F10) The same reload advanced `_deps` (the identity paperdollItemImage
+keys off) BEFORE the art loaded, so a failed load left a Khajiit
+identity addressing Breton bitmaps.
+(F11-F13) AssignStartingGear's three drifted details: the Spellbook is
+added FIRST in DFU (ItemHelper.cs:1300-1306) and AddPosition.Back
+makes collection order the DRAW order, so a new character's bag led
+with their shirt instead; the pants variant was hardcoded to 4, which
+is the MEN'S count - women's Casual pants (template 190) has FIVE, so
+a woman could never roll her last variant; and the item names were
+hand-written lower-cased copies of ItemTemplate.name ("Short shirt"
+for "Short Shirt"). The clothes are also equipped where DFU equips
+them, before the weapon is minted.
+(F14) RETIRING A FLAG DELETES THE SENTENCE: armorMaterials.js still
+carried "the other morphologies arrive with chargen (INTERIM, flagged
+there)" after chargen shipped.
+CHECKED AND CLEARED, worth recording because it looked wrong: 17e
+F15's `safeScrollIndex` is CORRECT. DFU's GetSafeScrollIndex has two
+branches and the port implements the delayScrollUp=TRUE one - which
+is exactly the branch the Items SETTER takes
+(ItemListScroller.cs:181), and the setter is what a refilter runs. The
+tight clamp is the scrollbar/mouse-leave path we have no event for.
+The partly-filled column really is classic.
+FLAGGED, not fixed, with reasons: gold as a bag stack at all (classic
+keeps playerEntity.GoldPieces as a counter that never appears in the
+list - retiring the port's S2 shape touches goldAmount, trade and
+loot, and is its own slice); a REMOTE list drawing its clothing on the
+PLAYER's morphology (shop stock carries no owner identity yet);
+quicksave living only in the dungeon host.
+Pins: test/audit17f.test.js, ten tests, each mutation-proven - a
+one-character change to the law it names turns it red.
+Probed + eyeballed: chargen -> the Khajiit female in real clothes,
+the bag reading Spellbook / Short Shirt / Casual Pants / Shortsword /
+Gold Pieces, five starting spells, and the gold PILE icon drawing in
+the Clothing & Misc list where a bare "100" had floated.
 
 **2026-08-18 - AUDIT 17e, the comprehensive parity pass over the U8
 native-UI arc + the economy/talk/crime slices.** Ten dimensions

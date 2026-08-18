@@ -19,6 +19,7 @@
 import { SOCIAL_GROUP_COUNT, FACTION_TYPES, SOCIAL_GROUPS, GUILD_GROUPS } from '../formats/factionFile.js';
 import { calculatePickpocketingChance, dice100 } from '../combat/formulas.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
+import { goldStack } from './inventory.js';   // AUDIT 17f: one gold mint
 
 // PlayerActivate constants, verbatim (classic units x GlobalScale).
 export const MOBILE_NPC_ACTIVATION_DISTANCE = 256 * 0.025;   // 6.4
@@ -86,7 +87,7 @@ export function pickpocketTownsperson(player, { rolls = Math.random, nothingText
     if (!dice100(33, rolls())) {   // Dice100.FailedRoll(33)
       const gold = Math.floor(rolls() * 6) + 1;   // Random.Range(0,6) + 1
       let stack = player.items.find((it) => it.group === 'Currency');
-      if (!stack) player.items.push(stack = { group: 'Currency', name: 'Gold pieces', stackCount: 0 });
+      if (!stack) player.items.push(stack = goldStack(0));
       stack.stackCount += gold;
       // TallyCrimeGuildRequirements(true, 1) FLAGGED: thieves-guild
       // membership pends the guilds arc.

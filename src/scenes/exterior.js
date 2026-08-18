@@ -48,7 +48,7 @@ import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment, EQUIP_SLOTS } from '../systems/equip.js';   // U8h: the worn-weapon binding
-import { loadCareers, createChargenWindow, finishChargen } from '../systems/chargenSession.js';   // S3c/U9
+import { loadCareers, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
@@ -324,11 +324,27 @@ export async function bootExterior(canvas, renderer, params, status) {
   // pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
   // whole session. Both exterior hosts now run it through the shared
   // session, and the paperdoll reloads on the chosen identity.
-  if (!playerEntity.chargenDone) {
-    loadCareers(fetchBytes).then((careers) => {
+  if (!playerEntity.chargenDone && params.has('class')) {
+    // AUDIT 17f: ?class=N is the headless skip - parsed here for the
+    // DUNGEON the host might build, but never honoured for the host's
+    // own chargen, so a town boot had no way past the overlay.
+    loadSpellIndex(fetchBytes).then((spellsByIndex) =>
+      applyHeadlessChargen(playerEntity, Number(params.get('class')), { fetchBytes, spellsByIndex }))
+      .then(() => {
+        preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
+          { race: playerEntity.race, gender: playerEntity.gender, faceIndex: playerEntity.faceIndex });
+        surfacePlayer();
+      })
+      .catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
+  } else if (!playerEntity.chargenDone) {
+    // AUDIT 17f: SPELLS.STD loads WITH the careers - finishChargen was
+    // called with no spell table here, so a Mage created in a town
+    // began with an empty spellbook where the dungeon host's identical
+    // flow filled it.
+    Promise.all([loadCareers(fetchBytes), loadSpellIndex(fetchBytes)]).then(([careers, spellsByIndex]) => {
       townTalk.showOverlay(createChargenWindow(careers, {
         onDone: (r) => {
-          finishChargen(playerEntity, r);
+          finishChargen(playerEntity, r, spellsByIndex);
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
             { race: r.race, gender: r.gender, faceIndex: r.faceIndex });
           surfacePlayer();

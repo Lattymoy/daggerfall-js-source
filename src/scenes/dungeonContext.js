@@ -32,7 +32,7 @@ import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
 import { createCharacter, applyCharacter, startingSpells, CLASS_CAREERS } from '../systems/chargen.js';
-import { loadCareers } from '../systems/chargenSession.js';   // S3c/U9: one career loader
+import { loadCareers, finishChargen, applyHeadlessChargen } from '../systems/chargenSession.js';   // S3c/U9: one career loader
 import { assignStartingGear } from '../systems/startingGear.js';   // S3d
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
@@ -702,12 +702,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
   if (!playerEntity.chargenDone) {
     if (Number.isInteger(opts.playerClass)) {
-      // ?class=N: the headless skip path (rolls + the loud policy)
-      const cf = new ClassFile();
-      cf.load(await fetchBytes(`CLASS${String(opts.playerClass).padStart(2, '0')}.CFG`));
-      createCharacter(playerEntity, cf.career, opts.playerClass);
-      playerEntity.spells = startingSpells(opts.playerClass, spellsByIndex);
-      console.log(`[chargen] ${CLASS_CAREERS[opts.playerClass]}: HP ${playerEntity.maxHealth}, spells ${playerEntity.spells.length}`);
+      // AUDIT 17f: the shared headless skip. This copy minted a
+      // character with an EMPTY bag - no clothes, no weapon, no gold -
+      // because S3d landed the kit on the flow and the font-less
+      // fallback and missed this third path.
+      await applyHeadlessChargen(playerEntity, opts.playerClass, { fetchBytes, spellsByIndex });
     } else {
       // U2b: the real flow - all 18 careers load; the host routes
       // input and draws the overlay until done, then applies the
@@ -729,6 +728,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     console.warn('[chargen] FONT art unavailable; falling back to the headless roll');
     const r = { career: chargenFlow.career, careerIndex: chargenFlow.classIndex };
     createCharacter(playerEntity, r.career, r.careerIndex);
+    // AUDIT 17f: the font-less fallback skipped the spellbook that
+    // both the flow and ?class=N fill in.
+    playerEntity.spells = startingSpells(r.careerIndex, spellsByIndex);
     assignStartingGear(playerEntity, { classIndex: r.careerIndex });   // S3d: the headless path gets the real kit too
     surfacePlayer();
     chargenFlow = null;
@@ -1811,12 +1813,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       activeOverlay.input(action);
       if (activeOverlay.done) {
         if (activeOverlay === chargenFlow) {
-          const r = chargenFlow.result();
-          applyCharacter(playerEntity, r.career, r.careerIndex, r);
-          playerEntity.spells = startingSpells(r.careerIndex, spellsByIndex);   // S6: the spellbook interim retires
-          // S3d: AssignStartingGear - the real kit, once, at creation
-          playerEntity.items = []; playerEntity.equip = null; playerEntity.armorValues = null;
-          assignStartingGear(playerEntity, { classIndex: r.careerIndex });
+          // AUDIT 17f / ONE DFU MEMBER, ONE EXPORT: this hand-inlined
+          // applyCharacter + startingSpells + AssignStartingGear was
+          // the SECOND copy of finishChargen - the exact duplication
+          // systems/chargenSession.js was extracted to end, re-grown
+          // one slice later. The shared function owns the sequence;
+          // only the readied-spell pick is this host's business.
+          finishChargen(playerEntity, chargenFlow.result(), spellsByIndex);
           if (playerEntity.spells.length && !readiedSpell) readiedSpell = playerEntity.spells[0];
           chargenFlow = null;
         }

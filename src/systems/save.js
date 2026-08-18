@@ -9,6 +9,7 @@
 // its slice. Versioned envelope; a mismatch refuses loudly.
 
 import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
+import { goldStack } from './inventory.js';   // AUDIT 17f
 
 export const SAVE_VERSION = 1;
 export const QUICKSAVE_KEY = 'dagger.quicksave';
@@ -67,6 +68,14 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.skillUses = [...snap.skillUses];
   entity.career = snap.career ? { ...snap.career } : entity.career;
   entity.items = snap.items.map((it) => ({ ...it }));
+  // AUDIT 17f: a Currency stack saved before gold gained its template
+  // index carries none, and stacksWith compares templateIndex - a
+  // restored save would grow a SECOND gold stack the next time gold
+  // was added, and goldAmount only ever finds the first. The
+  // additive-field upgrade DFU's serializer gives missing members.
+  for (const it of entity.items) {
+    if (it.group === 'Currency' && it.templateIndex == null) Object.assign(it, goldStack(it.stackCount ?? 0));
+  }
   // AUDIT 17e C1: the equip table + armor values are DERIVED state -
   // rebuild them from the freshly restored items (SerializablePlayer
   // .cs:301, :355-368). Must run AFTER items are replaced, or the

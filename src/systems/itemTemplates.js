@@ -8,6 +8,7 @@
 
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };
+import { playerArchiveFor } from '../characters/paperdollArt.js';   // AUDIT 17f: SetRace, one home
 
 export { GROUP_TEMPLATE_INDICES };
 
@@ -85,15 +86,25 @@ export function usesWorldTexture(item, template = templateByIndex(item.templateI
 
 /** The archive+record an item's INVENTORY LIST icon draws
  *  (GetItemImage with forPaperDoll false). Returns null when the
- *  template is unknown. */
-export function inventoryItemImage(item) {
+ *  template is unknown.
+ *
+ *  AUDIT 17f: the list drew the TEMPLATE's player archive, which is
+ *  only the BASE - DFU's SetRace/ApplyArmorSettings offset it by the
+ *  wearer's body morphology at creation and GetInventoryTextureArchive
+ *  hands that same offset field back (DaggerfallUnityItem.cs:1728-
+ *  1735). Nothing added the offset here, so every list drew clothing
+ *  from the morphology-0 (Argonian) row and armor from the men's
+ *  Argonian archive whoever was wearing it - a human male's short
+ *  shirt came off archive 239 instead of 241. `identity` is the
+ *  wearer; it defaults to the Breton male the pre-chargen entity is. */
+export function inventoryItemImage(item, identity = undefined) {
   const t = templateByIndex(item.templateIndex);
   if (!t) return null;
   let archive, record;
   if (usesWorldTexture(item, t)) {
     archive = t.worldTextureArchive; record = t.worldTextureRecord;
   } else {
-    archive = t.playerTextureArchive;
+    archive = playerArchiveFor(item, t, identity);
     if ((t.variants ?? 0) > 0) {
       // GetInventoryTextureRecord: start + variant, cloaks skipping
       // their interior-first record

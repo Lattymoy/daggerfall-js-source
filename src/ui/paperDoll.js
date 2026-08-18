@@ -117,7 +117,6 @@ export async function preloadPaperDollArt(deps, { race = 'Breton', gender = 'mal
   if (_art && _identity === key) return;
   try {
     const { fetchBytes, palette } = deps;
-    _deps = { ...deps, gender, race };
     const art = raceArt(race, gender);
     const [unclothed, clothed] = art.body;
     const loadImgBmp = async (name) => {
@@ -136,7 +135,18 @@ export async function preloadPaperDollArt(deps, { race = 'Breton', gender = 'mal
       head: { bmp: face.getDFBitmap(fi, 0), off: face.getOffset(fi) },
     };
     _identity = key;
+    // AUDIT 17f: _deps carries the identity paperdollItemImage keys
+    // off, so it may only advance once the new art is actually in
+    // hand - a failed load used to leave a Khajiit _deps addressing
+    // Breton bitmaps.
+    _deps = { ...deps, gender, race };
+    // AUDIT 17f / EVERY ALLOCATION HAS AN OWNER: dropping _live here
+    // orphaned the previous composite's GL texture - refreshPaperDoll
+    // frees `prevKey` from _live, and _live was already null. Chargen
+    // reaches this path on every identity change.
+    if (_live) { deps.renderer?.releaseTexture?.('img', _live.key); }
     _live = null;   // the composite is stale: recompose on the next draw
+    _layout = [];   // and its click mask with it
   } catch { console.warn('[paperdoll] BODY/FACE/SCBG art unavailable; the panel stays bare'); }
 }
 

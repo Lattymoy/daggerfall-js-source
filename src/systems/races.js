@@ -23,7 +23,10 @@
 // material tables, and this module names each race's morphology so
 // the two never drift apart.
 
-import { BODY_MORPHOLOGY } from '../characters/paperdollArt.js';
+// AUDIT 17f: from the single armor-material home, not through
+// paperdollArt - paperdollArt now resolves morphology THROUGH this
+// table, and the old import made that a cycle.
+import { BODY_MORPHOLOGY } from './armorMaterials.js';
 
 /** EntityEnums.Races (1-based; Vampire/Werewolf/Wereboar are the
  *  transformed pseudo-races and are not selectable at chargen). */

@@ -16,9 +16,26 @@
 
 import { ClassFile } from '../formats/classFile.js';
 import { ChargenFlow } from '../ui/chargen.js';
-import { applyCharacter, startingSpells, CLASS_CAREERS } from './chargen.js';
+import { applyCharacter, createCharacter, startingSpells, CLASS_CAREERS } from './chargen.js';
 import { overlayAction } from '../ui/input.js';
 import { assignStartingGear } from './startingGear.js';   // S3d
+import { readSpellsStd } from '../formats/spellsStd.js';
+
+/** SPELLS.STD as an index -> spell map. AUDIT 17f: the exterior
+ *  hosts ran chargen without one and called finishChargen with no
+ *  spell table at all, so a Mage or Spellsword created in a TOWN
+ *  started with an EMPTY spellbook - the same character created in
+ *  the dungeon host got their three starting spells. One loader, so
+ *  a host cannot forget it. Returns null (loud) when the file is
+ *  unavailable, which is the pre-existing no-magic fallback. */
+export async function loadSpellIndex(fetchBytes) {
+  try {
+    return new Map(readSpellsStd(await fetchBytes('SPELLS.STD')).map((sp) => [sp.index, sp]));
+  } catch (e) {
+    console.warn('[chargen] SPELLS.STD unavailable; the starting spellbook stays empty', e);
+    return null;
+  }
+}
 
 /** The 18 classic careers (CLASS00..17.CFG). */
 export async function loadCareers(fetchBytes) {
@@ -29,6 +46,27 @@ export async function loadCareers(fetchBytes) {
     careers.push({ name: cf.career.name || CLASS_CAREERS[i], career: cf.career });
   }
   return careers;
+}
+
+/** AUDIT 17f: the HEADLESS skip (?class=N) - the rolls-and-go path
+ *  the dungeon host has had since U2b. It lived only there, so the
+ *  exterior hosts parsed ?class for the dungeon they might build and
+ *  ignored it for their OWN chargen: a probe (or anyone booting a
+ *  town) had no way past the overlay, which is how S3c broke the
+ *  U8d/U8e/U8g probes without a gate noticing. One implementation,
+ *  three hosts. */
+export async function applyHeadlessChargen(playerEntity, classIndex, { fetchBytes, spellsByIndex = null } = {}) {
+  const cf = new ClassFile();
+  cf.load(await fetchBytes(`CLASS${String(classIndex).padStart(2, '0')}.CFG`));
+  createCharacter(playerEntity, cf.career, classIndex);
+  playerEntity.spells = startingSpells(classIndex, spellsByIndex);
+  // S3d: the same kit every other creation path gets
+  playerEntity.items = [];
+  playerEntity.equip = null;
+  playerEntity.armorValues = null;
+  assignStartingGear(playerEntity, { classIndex });
+  console.log(`[chargen] ${CLASS_CAREERS[classIndex]}: HP ${playerEntity.maxHealth}, spells ${playerEntity.spells.length}`);
+  return playerEntity;
 }
 
 /** Apply a finished flow result onto the entity: the career/stat/
@@ -52,15 +90,23 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
  *  onDone(result) fires once, after the flow reaches 'done'. */
 export function createChargenWindow(careers, { onDone, rolls = Math.random, hudScale = 2 } = {}) {
   const flow = new ChargenFlow(careers, rolls);
+  let _fired = false;
   return {
     flow,
     isChoiceWindow: true,   // raw key codes through the overlay seam
     get done() { return flow.done; },
     input(code, ev) {
+      // AUDIT 17f / THE MODAL CONTRACT: the doc above promised onDone
+      // fires once and the code did not - every key after the flow
+      // reached 'done' fired it again, and each call re-ran
+      // applyCharacter and re-rolled the starting kit. A host that
+      // tears the overlay down on `.done` hid it; a key repeat inside
+      // the same frame did not.
+      if (_fired) return;
       // the SHARED overlay table (ui/input.js) - not a second copy
       const a = overlayAction(ev ?? { key: codeToKey(code) });
       if (a) flow.input(a);
-      if (flow.done) onDone?.(flow.result());
+      if (flow.done) { _fired = true; onDone?.(flow.result()); }
     },
     draw(renderer, canvas, font) { flow.draw(renderer, canvas, font, hudScale); },
   };

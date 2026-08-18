@@ -64,7 +64,10 @@ export class NativeTradeWindow {
     this.localScroll = 0;
     this.remoteScroll = 0;
     this.lastPrice = null;
-    this._icon = makeIconDrawer(hooks.icons);   // the shared scroller's warm cache
+    // AUDIT 17f: the wearer identity rides too - the local list is the
+    // player's own gear. The REMOTE (shelf) list borrows it, FLAGGED at
+    // playerArchiveFor: shop stock carries no owner identity yet.
+    this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // the shared scroller's warm cache
   }
 
   input(code) {

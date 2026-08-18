@@ -63,10 +63,37 @@ if (e.gold !== 100) { console.log('STARTING GOLD WRONG', e.gold); process.exit(1
 if (e.worn.length !== 2) { console.log('CLOTHES NOT WORN', JSON.stringify(e.worn)); process.exit(1); }
 if (!e.items.includes('Spellbook')) { console.log('NO SPELLBOOK'); process.exit(1); }
 if (e.items.includes('Dagger')) { console.log('THE INTERIM DAGGER SURVIVED CHARGEN'); process.exit(1); }
+// AUDIT 17f: the bag order is AssignStartingGear's - Spellbook FIRST
+// (AddPosition.Back), then the clothes, then the class weapon.
+if (e.items[0] !== 'Spellbook') { console.log('SPELLBOOK NOT FIRST', JSON.stringify(e.items)); process.exit(1); }
+if (e.items[1] !== 'Short Shirt' || e.items[2] !== 'Casual Pants') { console.log('TEMPLATE NAMES WRONG', JSON.stringify(e.items)); process.exit(1); }
+// AUDIT 17f F2: a Mage/Spellsword created in a TOWN gets their
+// starting spellbook - the exterior hosts used to call finishChargen
+// with no spell table at all.
+const spells = await page.evaluate(() => (window.__playerEntity.spells ?? []).map((s) => s.name ?? s.index));
+console.log('starting spells:', JSON.stringify(spells));
+// AUDIT 17f F1: the item list addresses icons for the WEARER'S
+// morphology (SetRace). A Khajiit's short shirt must resolve to the
+// Khajiit clothing archive, not the morphology-0 Argonian row the
+// template carries.
+const icons = await page.evaluate(async () => {
+  const m = await import('/src/systems/itemTemplates.js');
+  const p = window.__playerEntity;
+  const shirt = (p.items ?? []).find((i) => i.name === 'Short Shirt');
+  return { worn: m.inventoryItemImage(shirt, p), base: m.inventoryItemImage(shirt, { gender: 'female', race: 'Argonian' }) };
+});
+console.log('shirt icon archive:', JSON.stringify(icons));
+if (icons.worn.archive !== icons.base.archive + 3) { console.log('ICON NOT ADDRESSED FOR THE WEARER', JSON.stringify(icons)); process.exit(1); }
 // the paperdoll must reload on the chosen identity
 await waitFrames(10);
 await page.keyboard.press('F6');
 await waitFrames(10);
 await page.screenshot({ path: '/home/claude/chargen-paperdoll.png' });
+// AUDIT 17f: eyeball the CLOTHING & MISC tab - the shirt/pants icons
+// are the ones that were coming off the wrong morphology row.
+const S = 4, OX = 60, OY = 50;
+await page.mouse.click(OX + 205 * S, OY + 4 * S);
+await waitFrames(12);
+await page.screenshot({ path: '/home/claude/chargen-clothing-icons.png' });
 console.log('CHARGEN OK');
 await browser.close(); await server.close();

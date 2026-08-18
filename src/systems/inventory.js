@@ -34,6 +34,25 @@ export function isEnchanted(item) {
   return !!(item?.enchantments?.length || item?.customEnchantments?.length);
 }
 
+/** Currency.Gold_pieces (ItemEnums.cs:605-608) - template 276, whose
+ *  player texture is unset so GetItemImage falls back to the world
+ *  pile (216/1). AUDIT 17f / ONE DFU MEMBER, ONE EXPORT: three
+ *  producers minted the gold stack by hand (startingGear, court,
+ *  talk) with NO template index and two different names ("Gold
+ *  Pieces" / "Gold pieces"), so the stack drew no icon at all and its
+ *  label changed depending on who created it.
+ *
+ *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
+ *  the GOLD button reads - it is not an item and never appears in the
+ *  list. The port's S2 shape carries it as a bag stack; retiring that
+ *  is its own slice (goldAmount/trade/loot all read the stack). */
+export const GOLD_TEMPLATE = 276;
+export const goldStack = (stackCount = 0) => ({
+  group: 'Currency', templateIndex: GOLD_TEMPLATE,
+  name: templates.find((t) => t.index === GOLD_TEMPLATE)?.name ?? 'Gold Pieces',
+  stackCount,
+});
+
 export function isStackable(item) {
   // AUDIT 17e C2: `item.equipped` was never written either - the port
   // marks worn items with equipSlot (equip.js) - so all three clauses
