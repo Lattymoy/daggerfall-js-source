@@ -114,12 +114,17 @@ test('actionchain: the player toggle fires the door\'s own record through the Do
   a.activate(gated.key);
   assert.equal(gated.state, 'forward');
   assert.equal(mover.state, 'forward', 'ExecuteActionOnToggle cascades on the player toggle');
-  // Direct trigger REJECTS 'Door': the toggle must not fire the record.
+  // Direct trigger REJECTS 'Door', so ExecuteActionOnToggle drops it -
+  // but PlayerActivate's SECOND check (ActionCheck -> Receive(Direct),
+  // no else after ActivateActionDoor) does fire it. Audit 18: the port
+  // ran only the first half, which left Direct-flagged door records dead.
   const mover2 = a.addAction(0, 11, CUBE, I, act({ duration: 20, translation: { x: 0, y: 2, z: 0 } }));
   const wrongGate = a.addDoor(CUBE, I, { positionKey: 21, action: act({ triggerFlag: TRIGGER_FLAGS.Direct, nextObject: 11 }) });
   a.activate(wrongGate.key);
   assert.equal(wrongGate.state, 'forward', 'the door still toggles');
-  assert.equal(mover2.state, 'start', 'the Door-gated record does not fire on a Direct-only trigger');
+  assert.equal(mover2.state, 'forward', 'the Direct-typed Receive fires the record the Door gate rejected');
+  // A Door-typed trigger rejects 'Direct', so it fires exactly once.
+  assert.equal(gated.activationCount, 1);
 });
 
 test('actionchain: a chained None-flag door cascades but does NOT open (verbatim no delegate)', () => {
