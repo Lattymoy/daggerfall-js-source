@@ -25,6 +25,7 @@
 // decide, because a throw here would take a scene host down over a
 // mis-clicked building.
 import { SKILLS } from './skills.js';
+import { GUILD_GROUPS } from '../formats/factionFile.js';
 
 /** Temple.Divines (:49-59) - value = factionId. */
 export const DIVINES = Object.freeze({
@@ -84,6 +85,26 @@ export const TEMPLE_DATA = Object.freeze({
 /** Temple.cs :27-29 - shared across every divine. */
 export const TEMPLE_TEXT = Object.freeze({ ineligibleBadRep: 745, ineligibleLowSkill: 744, eligible: 740 });
 
+/** Temple.cs :31-41 - the promotion record per SERVICE, which is what
+ *  makes the service-rank columns load-bearing: RankData.GetPromotionMsgId
+ *  asks which service opens AT this rank and announces that one. */
+export const TEMPLE_PROMOTION = Object.freeze({
+  buyPotions: 6600, library: 6601, makePotions: 6602, soulGems: 6603, summoning: 6604,
+  healing: 6605, buySpells: 6606, makeSpells: 6607, buyMagic: 6608, makeMagic: 6609,
+  highest: 5241,
+});
+/** RankData.GetPromotionMsgId, in DFU's own order - rank 9 first, then
+ *  the services in declaration order, then the divine's default. */
+const TEMPLE_SERVICE_ORDER = ['library', 'healing', 'buyPotions', 'makePotions',
+  'buyMagic', 'makeMagic', 'buySpells', 'makeSpells', 'soulGems', 'summoning'];
+export function templePromotionId(data, rank) {
+  if (rank === 9) return TEMPLE_PROMOTION.highest;
+  for (const svc of TEMPLE_SERVICE_ORDER) {
+    if (data[svc] === rank) return TEMPLE_PROMOTION[svc];
+  }
+  return data.promotion;
+}
+
 /** KnightlyOrder guildSkills (:67-76). ONE list for all ten orders -
  *  unlike the Temple, the orders differ by faction and message, not by
  *  what they ask of you. */
@@ -103,10 +124,14 @@ export function templeOf(divine) {
   const d = TEMPLE_DATA[divine];
   return {
     name: `Temple:${divine}`,
+    // ALL EIGHT temples share the HolyOrder membership slot, so a
+    // player belongs to at most one - AUDIT 20.
+    guildGroup: GUILD_GROUPS.HolyOrder,
     divine,
     factionId,
     skills: TEMPLE_SKILLS[divine],
     text: { ...TEMPLE_TEXT, welcome: d.welcome, promotion: d.promotion },
+    promotionForRank: (rank) => templePromotionId(d, rank),
     services: d,
   };
 }
@@ -115,7 +140,20 @@ export function templeOf(divine) {
 export function orderOf(order) {
   const factionId = ORDERS[order];
   if (factionId == null) return null;
-  return { name: `Order:${order}`, order, factionId, skills: KNIGHTLY_SKILLS, text: KNIGHTLY_TEXT };
+  return {
+    name: `Order:${order}`,
+    // and all ten orders share the KnightlyOrder slot.
+    guildGroup: GUILD_GROUPS.KnightlyOrder,
+    order,
+    factionId,
+    skills: KNIGHTLY_SKILLS,
+    text: KNIGHTLY_TEXT,
+    // KnightlyOrder.GetPromotionMsgId: free rooms at 4, free ships at
+    // 6. Rank 9 is OwnsHouse-gated (5240 house / 5241 no-house) and
+    // banking does not exist yet, so it is FLAGGED to the banking
+    // slice and rank 9 takes the plain promotion message.
+    promotionByRank: { 4: 5238, 6: 5239 },
+  };
 }
 
 const DIVINE_BY_ID = new Map(Object.entries(DIVINES).map(([k, v]) => [v, k]));
@@ -142,3 +180,15 @@ export function getDivine(factionDict, factionId) {
  *  looked up directly, and DFU throws otherwise. Null here, per the
  *  departure above. */
 export const getOrder = (factionId) => ORDER_BY_ID.get(factionId) ?? null;
+
+/** The variant half of GuildManager.GetGuild(factionId): a temple hall,
+ *  a TEMPLAR ORDER (which resolves to its divine's temple), or one of
+ *  the ten knightly orders. Pass it to guilds.guildOfFaction as
+ *  `resolveVariant` - guilds.js cannot import this module without a
+ *  cycle, so the resolver travels the other way. */
+export const resolveVariantGuild = (factionDict) => (factionId) => {
+  const order = getOrder(factionId);
+  if (order) return orderOf(order);
+  const divine = getDivine(factionDict, factionId);
+  return divine ? templeOf(divine) : null;
+};

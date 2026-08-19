@@ -47,7 +47,7 @@
 // window that needs a title lands with them.
 import { SKILLS, skillValue } from './skills.js';
 import { getReputation } from './factionRep.js';
-import { GUILD_GROUPS } from '../formats/factionFile.js';
+import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
 
 /** Guild.cs :36-38. Ten rows, one per rank. */
 export const RANK_REQ_REPUTATION = Object.freeze([0, 10, 20, 30, 40, 50, 60, 70, 80, 90]);
@@ -81,6 +81,7 @@ export const DAYS_BETWEEN_RANK_CHANGES = 28;
 export const GUILDS = Object.freeze({
   FightersGuild: {
     name: 'FightersGuild',
+    guildGroup: GUILD_GROUPS.FightersGuild,
     factionId: 41,
     skills: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.Giantish,
       SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade],
@@ -88,24 +89,38 @@ export const GUILDS = Object.freeze({
   },
   MagesGuild: {
     name: 'MagesGuild',
+    guildGroup: GUILD_GROUPS.MagesGuild,
     factionId: 40,
     skills: [SKILLS.Alteration, SKILLS.Destruction, SKILLS.Illusion,
       SKILLS.Mysticism, SKILLS.Restoration, SKILLS.Thaumaturgy],
     text: { ineligibleBadRep: 612, ineligibleLowSkill: 611, eligible: 606, welcome: 5293, promotion: 5236 },
+    // MagesGuild.GetPromotionMsgId (:92-106) - the message ANNOUNCES
+    // the benefit the new rank unlocked, so it is per rank.
+    promotionByRank: { 2: 5230, 3: 5231, 6: 5233, 8: 5234 },
   },
   ThievesGuild: {
     name: 'ThievesGuild',
+    guildGroup: GUILD_GROUPS.GeneralPopulace,
     factionId: 42,
     skills: [SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.Lockpicking, SKILLS.Pickpocket,
       SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
     text: { welcome: 5225, promotion: 5235, bribesJudge: 550 },
+    // ThievesGuild.GetPromotionMsgId (:92-106). Ranks 6 and 8 are
+    // RevealLocation()-gated in DFU (map1/map2 vs the plain message);
+    // that reads quest/map state the port has no source for, so those
+    // two ranks take the plain promotion message and the map variants
+    // are FLAGGED to the quest slice.
+    promotionByRank: { 2: 5226, 4: 5227 },
   },
   DarkBrotherhood: {
     name: 'DarkBrotherhood',
+    guildGroup: GUILD_GROUPS.DarkBrotherHood,
     factionId: 108,
     skills: [SKILLS.Archery, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
       SKILLS.Daedric, SKILLS.Destruction, SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
     text: { welcome: 5292, promotion: 666, bribesJudge: 551 },
+    // DarkBrotherhood.GetPromotionMsgId - odd ranks, all pure data.
+    promotionByRank: { 1: 6611, 3: 6612, 5: 6613, 7: 6614 },
   },
 });
 
@@ -170,11 +185,31 @@ export function updateRank(memberships, guild, entity, store, now) {
   m.rank = newRank;
   m.lastRankChange = today;
   if (outcome === 'expulsion') leaveGuild(memberships, guild);
-  return { outcome, rank: newRank, textId: textIdFor(guild, outcome) };
+  return { outcome, rank: newRank, textId: textIdFor(guild, outcome, newRank) };
 }
 
-const textIdFor = (guild, outcome) => (
-  outcome === 'promotion' ? guild.text.promotion
+/** TokensPromotion is NOT one record per guild - AUDIT 20 found the
+ *  port flattening it. Five of the six guilds switch on the NEW RANK,
+ *  because the message ANNOUNCES the benefit that rank just unlocked:
+ *  the Mages Guild library at 2, magic items at 3, summoning at 6,
+ *  teleport at 8; the Thieves Guild fence at 2 and spymaster at 4; and
+ *  so on. A member promoted into a benefit was being told the generic
+ *  line instead of what they had earned.
+ *
+ *  A guild supplies either a `promotionByRank` map or a
+ *  `promotionForRank(rank)` function (the Temple's is computed from
+ *  its own service-rank columns). Falling through to text.promotion is
+ *  DFU's own `default:`. */
+export function promotionTextId(guild, rank) {
+  if (guild.promotionForRank) {
+    const id = guild.promotionForRank(rank);
+    if (id != null) return id;
+  }
+  return guild.promotionByRank?.[rank] ?? guild.text.promotion;
+}
+
+const textIdFor = (guild, outcome, rank) => (
+  outcome === 'promotion' ? promotionTextId(guild, rank)
     : outcome === 'demotion' ? DEMOTION_TEXT_ID
       : EXPULSION_TEXT_ID
 );
@@ -192,11 +227,17 @@ export function getTitle(membership, entity) {
   return entity?.name ?? '';
 }
 
-/** GuildManager.GetGuild(factionId) (:254-267), narrowed to the four
- *  guilds this slice carries. Null for a faction that is not one. */
-export function guildOfFaction(factionId) {
+/** GuildManager.GetGuild(factionId) (:254-267). Null for a faction that
+ *  is not a guild.
+ *
+ *  `resolveVariant` is how the variant-keyed guilds join in without
+ *  this module importing them (guildVariants imports THIS one, so the
+ *  other direction would be a cycle). guildVariants exports a ready
+ *  resolver; AUDIT 20 found this answering null for all eight temples
+ *  and all ten orders after G2 shipped them. */
+export function guildOfFaction(factionId, resolveVariant = null) {
   for (const g of Object.values(GUILDS)) if (g.factionId === factionId) return g;
-  return null;
+  return resolveVariant ? resolveVariant(factionId) : null;
 }
 
 
@@ -211,31 +252,71 @@ export function guildOfFaction(factionId) {
 export const MERCHANTS_FACTION_ID = 510;
 export function guildGroupOfFaction(factionDict, factionId) {
   if (factionId === MERCHANTS_FACTION_ID) return GUILD_GROUPS.None;
-  const f = factionDict.get(factionId);
-  return f ? f.ggroup : GUILD_GROUPS.None;
+  const f = factionDict?.get(factionId);
+  if (!f) return GUILD_GROUPS.None;
+  // TEMPLES NESTED UNDER A DEITY (:281-289), which AUDIT 20 found
+  // missing. A divine's OWN ggroup is None in the shipped file - all
+  // eight of them - and the group lives on its single child, the
+  // templar order (HolyOrder). Without this every temple answers
+  // "not a guild".
+  if (f.type === FACTION_TYPES.God && f.ggroup === GUILD_GROUPS.None && f.children?.length) {
+    const first = factionDict.get(f.children[0]);
+    if (first) return first.ggroup;
+  }
+  return f.ggroup;
 }
 
-/** Join (:309-313): rank 0, and the 28-day clock starts now. */
+/** THE MEMBERSHIP KEY IS THE GUILD GROUP, not the guild. DFU's
+ *  Memberships is Dictionary<GuildGroups, IGuild> and AddMembership
+ *  does `Memberships[guildGroup] = guild` - an ASSIGNMENT, so joining
+ *  Mara's temple when you are in Arkay's REPLACES it. All eight
+ *  temples share HolyOrder and all ten knightly orders share
+ *  KnightlyOrder, so a player holds at most one of each.
+ *
+ *  AUDIT 20: keyed by guild NAME, the port let a player hold all
+ *  eight temples and all ten orders at once. */
+export const membershipKey = (guild) => guild.guildGroup;
+
+/** Join (:309-313): rank 0, and the 28-day clock starts now. The guild
+ *  is stored beside the rank because the KEY no longer identifies it -
+ *  one HolyOrder slot has to remember WHICH temple. */
 export function joinGuild(memberships, guild, now) {
-  const m = { rank: 0, lastRankChange: daySinceZero(now) };
-  memberships[guild.name] = m;
+  const m = { guild: guild.name, rank: 0, lastRankChange: daySinceZero(now) };
+  memberships[membershipKey(guild)] = m;
   return m;
 }
 
 /** RemoveMembership (:128-144). Leave() is empty in DFU - the guild
  *  object is simply dropped - so this drops the record. */
 export function leaveGuild(memberships, guild) {
-  if (!memberships[guild.name]) return false;
-  delete memberships[guild.name];
+  const k = membershipKey(guild);
+  if (!memberships[k]) return false;
+  delete memberships[k];
   return true;
 }
 
-/** HasJoined (:146-149) - the KEY's presence, not the rank. An expelled
- *  member is removed outright, so there is no rank -1 sitting in here. */
-export const hasJoined = (memberships, guild) => Object.hasOwn(memberships ?? {}, guild.name);
+/** HasJoined (:146-149) takes a GUILD GROUP, not a guild - the key's
+ *  presence, not the rank. An expelled member is removed outright, so
+ *  no rank -1 sits in here.
+ *
+ *  Keeping DFU's signature matters: HasJoined(HolyOrder) is true once
+ *  you are in ANY temple, which is exactly the question a temple hall
+ *  asks at the door. The port briefly had this taking a guild, which
+ *  made it answer "yes" for Arkay's temple while you were in Mara's. */
+export const hasJoinedGroup = (memberships, guildGroup) => Object.hasOwn(memberships ?? {}, guildGroup);
 
-/** GetJoinedGuildOfGuildGroup (:151-159). */
-export const membershipOf = (memberships, guild) => (memberships ?? {})[guild.name] ?? null;
+/** GetJoinedGuildOfGuildGroup (:151-159): whatever occupies the group's
+ *  slot, or null. */
+export const joinedGuildOfGroup = (memberships, guildGroup) => (memberships ?? {})[guildGroup] ?? null;
+
+/** OURS, not DFU's: "am I in THIS guild", which the group-keyed pair
+ *  above cannot answer alone. A membership in Arkay's temple must not
+ *  answer for Mara's, so the stored guild name has to match. */
+export function membershipOf(memberships, guild) {
+  const m = joinedGuildOfGroup(memberships, membershipKey(guild));
+  return m && m.guild === guild.name ? m : null;
+}
+export const hasJoined = (memberships, guild) => membershipOf(memberships, guild) !== null;
 
 /** IsEligibleToJoin (:319-325). Row 0's bars exactly - DFU writes them
  *  as `high > 0 && low + high > 1`, which is the same test the rank

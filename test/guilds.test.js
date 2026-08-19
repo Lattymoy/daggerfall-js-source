@@ -11,11 +11,13 @@ import {
   DEFAULT_TRAINING_MAX, MEMBER_TRAINING_COST, NON_MEMBER_TRAINING_COST,
   daySinceZero, numHighLowSkills, calculateNewRank, updateRank, isMember, guildOfFaction,
   joinGuild, leaveGuild, hasJoined, membershipOf, isEligibleToJoin,
+  hasJoinedGroup, joinedGuildOfGroup, promotionTextId,
   guildGroupOfFaction, MERCHANTS_FACTION_ID,
 } from '../src/systems/guilds.js';
 import { createFactionRep, setReputation } from '../src/systems/factionRep.js';
 import { FactionFile, GUILD_GROUPS } from '../src/formats/factionFile.js';
 import { SKILLS } from '../src/systems/skills.js';
+import { templeOf, orderOf, resolveVariantGuild, DIVINES } from '../src/systems/guildVariants.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
@@ -215,7 +217,7 @@ test('guilds: joining sets rank 0 and starts the 28-day clock; leaving drops the
   assert.equal(membershipOf(memberships, g), null);
 
   const m = joinGuild(memberships, g, { year: 405, dayOfYear: 10 });
-  assert.deepEqual(m, { rank: 0, lastRankChange: daySinceZero({ year: 405, dayOfYear: 10 }) });
+  assert.deepEqual(m, { guild: g.name, rank: 0, lastRankChange: daySinceZero({ year: 405, dayOfYear: 10 }) });
   assert.equal(hasJoined(memberships, g), true);
   assert.equal(isMember(membershipOf(memberships, g)), true, 'rank 0 IS a member');
 
@@ -259,4 +261,101 @@ test('guilds: the guild group comes from FACTION.TXT, and THE MERCHANTS are the 
   // the Thieves Guild is GeneralPopulace, not a group of its own
   assert.equal(guildGroupOfFaction(dict, GUILDS.ThievesGuild.factionId), GUILD_GROUPS.GeneralPopulace);
   assert.equal(guildGroupOfFaction(dict, 999999), GUILD_GROUPS.None, 'an unknown faction');
+});
+
+
+test('guilds: AUDIT 20 - the membership slot is the GUILD GROUP, so one temple at a time', () => {
+  // DFU's Memberships is Dictionary<GuildGroups, IGuild> and
+  // AddMembership ASSIGNS into it, so joining Mara's temple when you
+  // are in Arkay's replaces it. Keyed by guild name, the port let a
+  // player hold all eight temples and all ten orders at once.
+  const day = { year: 405, dayOfYear: 1 };
+  const m = {};
+  joinGuild(m, templeOf('Arkay'), day);
+  joinGuild(m, templeOf('Mara'), day);
+  joinGuild(m, templeOf('Dibella'), day);
+  assert.equal(Object.keys(m).length, 1, 'all eight temples share ONE slot');
+  assert.equal(hasJoined(m, templeOf('Dibella')), true, 'the last one joined is the one held');
+  assert.equal(hasJoined(m, templeOf('Arkay')), false, 'and the earlier ones are gone');
+  assert.equal(membershipOf(m, templeOf('Arkay')), null);
+
+  joinGuild(m, orderOf('Rose'), day);
+  joinGuild(m, orderOf('Owl'), day);
+  assert.equal(Object.keys(m).length, 2, 'the ten orders share a second slot');
+
+  // but the fixed guilds each have their own group and coexist
+  joinGuild(m, GUILDS.FightersGuild, day);
+  joinGuild(m, GUILDS.MagesGuild, day);
+  assert.equal(Object.keys(m).length, 4);
+  assert.equal(hasJoined(m, GUILDS.FightersGuild), true);
+  assert.equal(hasJoined(m, GUILDS.MagesGuild), true);
+});
+
+test('guilds: AUDIT 20 - HasJoined takes a GROUP, the way DFU asks it', () => {
+  // HasJoined(HolyOrder) is "am I in A temple", which is the question
+  // a temple hall asks at the door. The port had it taking a guild,
+  // which answered yes for Arkay's temple while you were in Mara's.
+  const m = {};
+  joinGuild(m, templeOf('Mara'), { year: 405, dayOfYear: 1 });
+  assert.equal(hasJoinedGroup(m, GUILD_GROUPS.HolyOrder), true);
+  assert.equal(hasJoinedGroup(m, GUILD_GROUPS.KnightlyOrder), false);
+  assert.equal(joinedGuildOfGroup(m, GUILD_GROUPS.HolyOrder).guild, 'Temple:Mara');
+  assert.equal(joinedGuildOfGroup(m, GUILD_GROUPS.MagesGuild), null);
+});
+
+test('guilds: AUDIT 20 - the promotion message is PER RANK, not per guild', () => {
+  // Five of the six guilds switch on the new rank, because the message
+  // announces the benefit that rank unlocked. The port returned one
+  // flat record, so a member promoted into a benefit was told the
+  // generic line instead of what they had earned.
+  const mg = GUILDS.MagesGuild;
+  assert.equal(promotionTextId(mg, 2), 5230, 'rank 2 opens the library');
+  assert.equal(promotionTextId(mg, 3), 5231, 'rank 3 opens magic items');
+  assert.equal(promotionTextId(mg, 6), 5233, 'rank 6 opens summoning');
+  assert.equal(promotionTextId(mg, 8), 5234, 'rank 8 opens teleport');
+  assert.equal(promotionTextId(mg, 5), mg.text.promotion, "and DFU's default in between");
+  assert.notEqual(promotionTextId(mg, 2), promotionTextId(mg, 5), 'the two ARE different records');
+
+  assert.equal(promotionTextId(GUILDS.ThievesGuild, 2), 5226, 'the fence');
+  assert.equal(promotionTextId(GUILDS.ThievesGuild, 4), 5227, 'the spymaster');
+  assert.equal(promotionTextId(GUILDS.DarkBrotherhood, 1), 6611);
+  assert.equal(promotionTextId(GUILDS.DarkBrotherhood, 7), 6614);
+  // the Fighters Guild really is flat - the one that always was
+  for (const r of [0, 2, 5, 9]) assert.equal(promotionTextId(GUILDS.FightersGuild, r), 686);
+
+  // and updateRank reports the per-rank record, not the default
+  const store = storeWith(20);
+  const memberships = {};
+  const mem = joinGuild(memberships, mg, { year: 405, dayOfYear: 0 });
+  mem.rank = 1;
+  const up = updateRank(memberships, mg, withSkills(mg, 100), store, { year: 405, dayOfYear: 28 });
+  assert.equal(up.rank, 2);
+  assert.equal(up.textId, 5230, 'promoted to 2, told about the library');
+});
+
+test('guilds: AUDIT 20 - guildOfFaction resolves temples and orders too', { skip: skipReal }, () => {
+  const ff = new FactionFile();
+  ff.load(readFileSync(join(ARENA2, 'FACTION.TXT')));
+  const resolve = resolveVariantGuild(ff.factionDict);
+  assert.equal(guildOfFaction(GUILDS.FightersGuild.factionId, resolve).name, 'FightersGuild');
+  assert.equal(guildOfFaction(21, resolve).name, 'Temple:Arkay', "a divine's own faction");
+  assert.equal(guildOfFaction(82, resolve).name, 'Temple:Arkay', 'and its templar order');
+  assert.equal(guildOfFaction(409, resolve).name, 'Order:Rose');
+  assert.equal(guildOfFaction(999999, resolve), null);
+  // without a resolver it still answers for the four fixed guilds only
+  assert.equal(guildOfFaction(21), null);
+});
+
+test('guilds: AUDIT 20 - a temple faction resolves to a GROUP through its child', { skip: skipReal }, () => {
+  // Every divine's OWN ggroup is None in the shipped file; the group
+  // lives on its single child, the templar order. Without DFU's
+  // "temples nested under deity" branch every temple answered "not a
+  // guild".
+  const ff = new FactionFile();
+  ff.load(readFileSync(join(ARENA2, 'FACTION.TXT')));
+  for (const [name, id] of Object.entries(DIVINES)) {
+    assert.equal(ff.factionDict.get(id).ggroup, GUILD_GROUPS.None, `${name}'s own ggroup is None`);
+    assert.equal(guildGroupOfFaction(ff.factionDict, id), GUILD_GROUPS.HolyOrder,
+      `${name} must resolve to HolyOrder through its templar order`);
+  }
 });
