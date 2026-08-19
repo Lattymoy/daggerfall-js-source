@@ -1137,3 +1137,100 @@ test('AUDIT 19: a bend or CC7 during a HELD note reaches it', async () => {
   assert.ok(vol.length >= 1, 'CC7 never reached the channel gain');
   p.stop();
 });
+
+// ---------------------------------------------------------------------------
+// AUDIT 21: the constants the mutation campaign found unpinned. All three are
+// DFU LAW read out of C# enums, not port choices - and an unpinned constant is
+// right only until someone edits it.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 21: the guild faction ids are FactionFile\'s', async () => {
+  const { MAGES_GUILD_FACTION, FIGHTERS_GUILD_FACTION, environmentForBuilding, MUSIC_ENV } =
+    await import('../src/systems/songManager.js');
+  const { BUILDING_TYPES } = await import('../src/world/buildingNames.js');
+  // FactionFile.cs:89-90. These select the Mages Guild and FighterTrainers
+  // music arms, so a wrong id silently routes both to the plain interior.
+  assert.equal(MAGES_GUILD_FACTION, 40);
+  assert.equal(FIGHTERS_GUILD_FACTION, 41);
+  // And they must be the ids the fold actually tests against.
+  assert.equal(environmentForBuilding(BUILDING_TYPES.GuildHall, { factionId: 40 }), MUSIC_ENV.MagesGuild);
+  assert.equal(environmentForBuilding(BUILDING_TYPES.GuildHall, { factionId: 41 }), MUSIC_ENV.Interior);
+  assert.equal(environmentForBuilding(BUILDING_TYPES.Temple, { factionId: 41 }), MUSIC_ENV.FighterTrainers);
+  assert.equal(environmentForBuilding(BUILDING_TYPES.Temple, { factionId: 40 }), MUSIC_ENV.Interior);
+});
+
+test('AUDIT 21: LOCATION_TYPES is DFRegion\'s enum, whole', async () => {
+  const { LOCATION_TYPES } = await import('../src/systems/songManager.js');
+  // DFRegion.cs - the values the environment switch indexes on. Pinned
+  // WHOLE: a drifted value silently moves a location into another arm, and
+  // the switch is written by name so nothing else would notice.
+  assert.deepEqual({ ...LOCATION_TYPES }, {
+    TownCity: 0, TownHamlet: 1, TownVillage: 2, HomeFarms: 3,
+    DungeonLabyrinth: 4, ReligionTemple: 5, Tavern: 6, DungeonKeep: 7,
+    HomeWealthy: 8, ReligionCult: 9, DungeonRuin: 10, HomePoor: 11,
+    Graveyard: 12, Coven: 13, HomeYourShips: 14, None: 0xffff,
+  });
+});
+
+test('AUDIT 21: the manager routes the TAVERN arm, and only for taverns', async () => {
+  const { SongManager, TAVERN_SONGS } = await import('../src/systems/songManager.js');
+  const played = [];
+  const sm = new SongManager({ play: (n) => played.push(n) });
+
+  // The tavern arm is `gameDays % length` with NO generator, so consecutive
+  // days walk the list in sequence. Nothing else does that - if the manager
+  // stopped routing it, the day seed would scatter instead.
+  const seen = [];
+  for (let d = 0; d < TAVERN_SONGS.length * 2; d++) {
+    sm.update({ environment: 'tavern', weather: 'sunny', night: false,
+      gameDays: d, locationIndex: 1, arrested: false });
+    seen.push(sm.currentSongIndex);
+  }
+  assert.deepEqual(seen, [...TAVERN_SONGS.keys(), ...TAVERN_SONGS.keys()],
+    'taverns walk the list in sequence, twice around');
+
+  // And a non-tavern environment must NOT take that arm.
+  const sm2 = new SongManager({ play: () => {} });
+  const walk = [];
+  for (let d = 0; d < 8; d++) {
+    sm2.update({ environment: 'city', weather: 'sunny', night: false,
+      gameDays: d, locationIndex: 1, arrested: false });
+    walk.push(sm2.currentSongIndex);
+  }
+  assert.notDeepEqual(walk, [...walk.keys()].map((i) => i % 7),
+    'a city must not walk in sequence - it takes the day SEED');
+});
+
+test('AUDIT 21: playPrevious wraps at the boundary, not near it', async () => {
+  const { SongManager, DUNGEON_SONGS } = await import('../src/systems/songManager.js');
+  const sm = new SongManager({ play: () => {} });
+  sm.update({ environment: 'dungeonInterior', weather: 'sunny', night: false,
+    gameDays: 1, locationIndex: 1, arrested: false, dungeonKey: 7 });
+
+  // From 1 it must step to 0, NOT wrap. Testing only from 0 leaves the
+  // boundary comparison free to be `< 1` - which the mutation campaign
+  // found surviving.
+  sm.currentSongIndex = 1;
+  sm.playPreviousSong();
+  assert.equal(sm.currentSongIndex, 0, 'index 1 steps down to 0');
+  sm.playPreviousSong();
+  assert.equal(sm.currentSongIndex, DUNGEON_SONGS.length - 1, 'and 0 wraps to the end');
+  // Likewise the top boundary.
+  sm.currentSongIndex = DUNGEON_SONGS.length - 2;
+  sm.playNextSong();
+  assert.equal(sm.currentSongIndex, DUNGEON_SONGS.length - 1, 'steps up to the last');
+  sm.playNextSong();
+  assert.equal(sm.currentSongIndex, 0, 'and then wraps');
+});
+
+test('AUDIT 21: a manager starts PLAYING, and stop latches', async () => {
+  const { SongManager } = await import('../src/systems/songManager.js');
+  const sm = new SongManager({ play: () => {}, stop: () => {} });
+  // DFU's `playSong` initialises TRUE - a manager that started false would
+  // be silent until something toggled it, which nothing does on boot.
+  assert.equal(sm.playSong, true);
+  sm.stopPlaying();
+  assert.equal(sm.playSong, false);
+  sm.startPlaying();
+  assert.equal(sm.playSong, true);
+});
