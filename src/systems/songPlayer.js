@@ -24,7 +24,7 @@
 // the windows advance, which is what a MIDI sequencer does.
 
 import {
-  noteToHz, voiceSpec, percussionSpec, velocityGain, volumeGain,
+  noteToHz, fmSpec, percussionSpec, velocityGain, volumeGain,
   panPosition, bendCents, PERCUSSION_CHANNEL,
 } from './gmSynth.js';
 
@@ -202,39 +202,52 @@ export class SongPlayer {
       return;
     }
 
-    spec = voiceSpec(ch.program);
+    // TWO-OPERATOR FM, the synthesis Daggerfall was scored for: a
+    // modulator sine driving the carrier's FREQUENCY, not its amplitude.
+    // The modulator's output is in Hz, so a gain of index*hz gives a
+    // modulation depth of `index` multiples of the carrier - which is
+    // what "brightness" means in FM.
+    spec = fmSpec(ch.program);
     const hz = noteToHz(e.note);
-    node = ctx.createOscillator();
-    node.type = spec.type;
-    node.frequency.value = hz;
-    if (ch.bend) node.detune.value = ch.bend;
-
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    // Cutoff tracks the note, so high notes stay bright and low notes
-    // do not turn to mud - a fixed cutoff makes a bank sound like one
-    // instrument played through a blanket.
-    filter.frequency.value = Math.min(ctx.sampleRate / 2 - 1000, hz * spec.cutoff + 200);
-    filter.Q.value = spec.q;
-    node.connect(filter);
-    filter.connect(gain);
-
-    const peak = amp * spec.gain;
-    const sustain = Math.max(0.0001, peak * spec.sustain);
     const t0 = when;
     const tA = t0 + spec.attack;
     const tD = tA + spec.decay;
     const tOff = Math.max(tD, t0 + dur);
+    const end = tOff + spec.release;
+
+    const carrier = ctx.createOscillator();
+    carrier.type = 'sine';
+    carrier.frequency.value = hz * spec.car;
+    if (ch.bend) carrier.detune.value = ch.bend;
+
+    const mod = ctx.createOscillator();
+    mod.type = 'sine';
+    mod.frequency.value = hz * spec.mod;
+    if (ch.bend) mod.detune.value = ch.bend;
+
+    const modGain = ctx.createGain();
+    // The index DECAYS: a real instrument's bright attack settles into a
+    // duller sustain, and a fixed index is the "cheap FM" sound.
+    const depth = Math.max(1, spec.index * hz);
+    modGain.gain.setValueAtTime(depth, t0);
+    modGain.gain.exponentialRampToValueAtTime(
+      Math.max(1, depth * 0.12), t0 + Math.max(0.02, spec.idxDecay));
+    mod.connect(modGain);
+    modGain.connect(carrier.frequency);
+    carrier.connect(gain);
+
+    const peak = amp * spec.gain;
+    const sustain = Math.max(0.0001, peak * spec.sustain);
     gain.gain.setValueAtTime(0.0001, t0);
     gain.gain.linearRampToValueAtTime(Math.max(0.0001, peak), tA);
     gain.gain.exponentialRampToValueAtTime(sustain, tD);
     gain.gain.setValueAtTime(sustain, tOff);
-    gain.gain.exponentialRampToValueAtTime(0.0001, tOff + spec.release);
+    gain.gain.exponentialRampToValueAtTime(0.0001, end);
 
     this._connect(gain, ch.pan);
-    node.start(t0);
-    node.stop(tOff + spec.release + 0.02);
-    this._voices.push({ stop: () => node.stop(), endsAt: tOff + spec.release });
+    mod.start(t0); carrier.start(t0);
+    mod.stop(end + 0.02); carrier.stop(end + 0.02);
+    this._voices.push({ stop: () => { mod.stop(); carrier.stop(); }, endsAt: end });
   }
 
   _connect(gain, pan) {

@@ -41,6 +41,9 @@ import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
+import { music } from '../systems/music.js';
+import { TAVERN_SONGS } from '../systems/songManager.js';
+import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { audio } from '../systems/audio.js';
 import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
@@ -63,7 +66,7 @@ const DUNGEON_WATER_SCROLL = 0.05;
 export function createWorldModes(host) {
   // AUDIT 18: the interior host's share of the player world clock.
   const interiorTicker = createPlayerTicker(playerEntity, { say: (msg) => console.log('[player]', msg) });
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, gameDaysNow = () => 0, resumeOutdoorMusic = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
 
   let mode = 'exterior';
@@ -272,6 +275,13 @@ export function createWorldModes(host) {
       // host's merge closure; shops warm the browse font.
       interiorBuilding = buildingDataForDoor?.(hit) ?? null;
       if (interiorBuilding && isShop(interiorBuilding.buildingType)) ensureShopFont();
+      // A5b: TAVERN MUSIC. AssignPlaylist's Tavern arm, and the one
+      // playlist DFU indexes on gameDays DIRECTLY - every tavern shares
+      // a song for the day and they walk in sequence day to day, which
+      // is why `tavern: true` is passed rather than the seeded branch.
+      if (interiorBuilding?.buildingType === BUILDING_TYPES.Tavern) {
+        music.playFrom(TAVERN_SONGS, { gameDays: gameDaysNow(), tavern: true });
+      }
       player.collider = ctx.collider;
       const floored = floorLanding(ctx.collider, landing);   // verbatim FixStanding: instant snap, no gravity drop-in
       player.spawn(floored[0], floored[1], floored[2]);
@@ -370,6 +380,8 @@ export function createWorldModes(host) {
     if (!landing) { console.error('exit: no exterior landing (empty sibling doors)'); return false; }   // tryEnter guards its landing; this path was unguarded - a null here killed the frame loop
     interiorCtx.destroy();
     interiorCtx = null;
+    // Leaving a tavern hands the street back its own song.
+    if (interiorBuilding?.buildingType === BUILDING_TYPES.Tavern) resumeOutdoorMusic?.();
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
     interiorOverlay = null;
     player.collider = baseCollider();

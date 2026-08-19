@@ -168,3 +168,41 @@ export function selectSong(playlist, { gameDays = 0, tavern = false, dungeonKey 
 export function dungeonKey(unknown2, regionIndex) {
   return ((unknown2 & 0xffff) ^ ((regionIndex & 0xff) << 8)) >>> 0;
 }
+
+/**
+ * AssignPlaylist's outdoor arms, verbatim (SongManager.cs:585-612) plus
+ * UpdatePlayerMusicWeather's mapping (:529-553).
+ *
+ *   City and Wilderness share one rule: NIGHT overrides everything, and
+ *   by day the weather picks the list. DFU's weather mapping folds Fog
+ *   in with Overcast and Thunder in with Rain, and anything unrecognised
+ *   falls to Sunny - that default is DFU's, not a guess.
+ *
+ * `night` is the port's own isNight (DawnHour 6 / DuskHour 18), which is
+ * DaggerfallDateTime.IsDay's rule already ported in world/worldClock.js.
+ */
+export function outdoorPlaylist({ night = false, weather = 'sunny', fm = false } = {}) {
+  if (night) return fm ? NIGHT_SONGS_FM : NIGHT_SONGS;
+  switch (String(weather).toLowerCase()) {
+    case 'cloudy':   return fm ? CLOUDY_SONGS_FM : CLOUDY_SONGS;
+    case 'overcast':
+    case 'fog':      return fm ? OVERCAST_SONGS_FM : OVERCAST_SONGS;
+    case 'rain':
+    case 'thunder':  return fm ? RAIN_SONGS_FM : RAIN_SONGS;
+    case 'snow':     return fm ? SNOW_SONGS_FM : SNOW_SONGS;
+    default:         return fm ? SUNNY_SONGS_FM : SUNNY_SONGS;   // DFU's own default arm
+  }
+}
+
+/** Night, FM. SongManager.cs:908-916.
+ *
+ *  SIX entries where the GM list has SEVEN, and the difference is not a
+ *  transcription slip - it is DFU's, and it is the point of their note at
+ *  :818. In general midi classic DUPLICATES song_10 into the night list,
+ *  so the GM array carries both song_10 and song_21; the FM array does
+ *  not duplicate and simply starts at song_11fm. There is no 10FM record
+ *  in MIDI.BSA at all, which is how the corpus pin caught an earlier
+ *  version of this list that had extrapolated one from the GM shape. */
+export const NIGHT_SONGS_FM = Object.freeze([
+  '11FM.HMI', 'FCURSE.HMI', 'FEERIE.HMI', 'FRUINS.HMI', '18FM.HMI', '21FM.HMI',
+]);

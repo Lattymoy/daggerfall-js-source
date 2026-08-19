@@ -130,3 +130,63 @@ export function bendCents(value, semitoneRange = 2) {
   const v = Math.max(0, Math.min(16383, Number(value) || 0));
   return ((v - 8192) / 8192) * semitoneRange * 100;
 }
+
+// --- FM: the voice bank that actually sounds like Daggerfall ----------
+//
+// A5b. The first bank was subtractive (an oscillator through a lowpass),
+// which is cheap and sounds like nothing in particular. Daggerfall in
+// 1996 played through an AdLib or SoundBlaster card - OPL2/OPL3, which
+// is TWO-OPERATOR FM: one sine modulating another's frequency. That is
+// why the archive carries an F*/FM* arrangement of nearly every song.
+//
+// There is NO OPL patch bank to read. It lived in HMI's sound driver,
+// not in the data - ARENA2 has no .AD/.BNK/.OPL and no driver, and the
+// song headers carry a device/channel map and zeros where patches would
+// be (checked, byte by byte, before writing this). So the RATIOS AND
+// INDICES BELOW ARE OURS, exactly like the subtractive specs were, and
+// they are pinned for structure rather than asserted as truth.
+//
+// What is not taste is the METHOD. FM is the synthesis the game was
+// scored for, and it gets timbres - struck bells, buzzy brass, hollow
+// reeds, plucked strings - that a filtered sawtooth cannot reach at any
+// setting. It also subsumes the old bank: modulation index 0 is a bare
+// carrier, so nothing is lost.
+//
+//   ratio  the modulator's frequency as a multiple of the carrier's.
+//          Integer ratios are harmonic (tonal); non-integer are
+//          inharmonic (bells, metal).
+//   index  modulation depth, in multiples of the carrier frequency.
+//          This is the timbre control - it is what "brightness" means
+//          in FM - and it DECAYS, because a real instrument's bright
+//          attack settles into a duller sustain.
+
+const FM_SPECS = Object.freeze({
+  //             car ratio  mod ratio  index  idxDecay  attack decay sustain release gain
+  piano:        { car: 1, mod: 1,    index: 2.6, idxDecay: 0.30, attack: 0.003, decay: 0.55, sustain: 0.18, release: 0.30, gain: 0.80 },
+  chromatic:    { car: 1, mod: 3.5,  index: 4.0, idxDecay: 0.22, attack: 0.002, decay: 0.70, sustain: 0.04, release: 0.50, gain: 0.70 },
+  organ:        { car: 1, mod: 2,    index: 1.2, idxDecay: 2.00, attack: 0.012, decay: 0.06, sustain: 0.92, release: 0.10, gain: 0.55 },
+  guitar:       { car: 1, mod: 2,    index: 3.2, idxDecay: 0.18, attack: 0.004, decay: 0.45, sustain: 0.16, release: 0.28, gain: 0.70 },
+  bass:         { car: 1, mod: 1,    index: 2.0, idxDecay: 0.16, attack: 0.006, decay: 0.35, sustain: 0.45, release: 0.18, gain: 0.95 },
+  strings:      { car: 1, mod: 1,    index: 1.1, idxDecay: 1.20, attack: 0.090, decay: 0.30, sustain: 0.78, release: 0.40, gain: 0.60 },
+  ensemble:     { car: 1, mod: 1,    index: 1.4, idxDecay: 1.40, attack: 0.130, decay: 0.30, sustain: 0.82, release: 0.50, gain: 0.55 },
+  brass:        { car: 1, mod: 1,    index: 3.4, idxDecay: 0.55, attack: 0.045, decay: 0.22, sustain: 0.75, release: 0.22, gain: 0.65 },
+  reed:         { car: 1, mod: 2,    index: 2.4, idxDecay: 0.60, attack: 0.030, decay: 0.20, sustain: 0.78, release: 0.20, gain: 0.55 },
+  pipe:         { car: 1, mod: 2,    index: 0.8, idxDecay: 1.00, attack: 0.045, decay: 0.15, sustain: 0.85, release: 0.20, gain: 0.60 },
+  synthLead:    { car: 1, mod: 1,    index: 2.8, idxDecay: 0.70, attack: 0.010, decay: 0.25, sustain: 0.70, release: 0.20, gain: 0.60 },
+  synthPad:     { car: 1, mod: 1,    index: 1.0, idxDecay: 2.00, attack: 0.260, decay: 0.40, sustain: 0.82, release: 0.70, gain: 0.50 },
+  synthEffects: { car: 1, mod: 1.41, index: 3.0, idxDecay: 0.80, attack: 0.110, decay: 0.50, sustain: 0.45, release: 0.55, gain: 0.45 },
+  ethnic:       { car: 1, mod: 3,    index: 2.6, idxDecay: 0.20, attack: 0.006, decay: 0.40, sustain: 0.20, release: 0.28, gain: 0.65 },
+  percussive:   { car: 1, mod: 3.5,  index: 5.0, idxDecay: 0.12, attack: 0.002, decay: 0.40, sustain: 0.02, release: 0.25, gain: 0.75 },
+  soundEffects: { car: 1, mod: 1.73, index: 2.0, idxDecay: 0.60, attack: 0.020, decay: 0.40, sustain: 0.25, release: 0.35, gain: 0.45 },
+});
+
+/**
+ * The FM voice for one GM program. Pure, like voiceSpec, and clamps the
+ * same way - the reader hands through whatever the bytes said, and a bad
+ * program change must not silence a song or put undefined into a ratio.
+ */
+export function fmSpec(program) {
+  const p = Math.max(0, Math.min(127, Math.trunc(Number(program) || 0)));
+  const family = GM_FAMILIES[p >> 3];
+  return { ...FM_SPECS[family], program: p, family };
+}

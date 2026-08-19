@@ -32,6 +32,8 @@ import { lookAt, multiply, perspective, transformPoint, trs } from '../world/mat
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
+import { music } from '../systems/music.js';
+import { outdoorPlaylist } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
@@ -176,6 +178,18 @@ export async function bootExterior(canvas, renderer, params, status) {
   const bootedAt = performance.now();
   const minuteNow = () =>
     (baseTod + ((performance.now() - bootedAt) / 1000) * timeScale) % 1440;
+
+  // A5b: OUTDOOR MUSIC. AssignPlaylist's City/Wilderness arms - night
+  // overrides everything, and by day the weather picks the list
+  // (SongManager.cs:585-612). The pick itself is DFU's day-seeded
+  // branch, so a location's song is stable until midnight.
+  music.ensure(fetchBytes).then(() => {
+    const minute = minuteNow();
+    music.playFrom(outdoorPlaylist({ night: isNight(minute), weather }), {
+      gameDays: Math.floor(minute / 1440),
+    });
+  });
+
   const lightsOnAt = (minute) =>
     params.has('window') ? params.get('window') === 'night' : isCityLightsOn(minute);
   const lightSize = (record) => {
@@ -532,6 +546,16 @@ export async function bootExterior(canvas, renderer, params, status) {
   // door drops into the location's crawl, exits land verbatim.
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
+    // A5b: the tavern arm needs the host's clock, and leaving one has to
+    // hand the street back its own song - the host owns both, so both
+    // ride in as closures rather than worldModes reaching for a global.
+    gameDaysNow: () => Math.floor(minuteNow() / 1440),
+    resumeOutdoorMusic: () => {
+      const minute = minuteNow();
+      music.playFrom(outdoorPlaylist({ night: isNight(minute), weather }), {
+        gameDays: Math.floor(minute / 1440),
+      });
+    },
     pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette },
     foes: !params.has('nofoes'),   // C11: foes are the DEFAULT now (monsters live; ?nofoes for the empty-dungeon dev view)
     playerClass: params.has('class') ? Number(params.get('class')) : undefined,

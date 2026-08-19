@@ -292,3 +292,123 @@ test('A5: the MIDI conversions are the real law and are exact', () => {
   }
   assert.ok(Number.isFinite(noteToHz(0)) && noteToHz(0) > 0);
 });
+
+// ---------------------------------------------------------------------------
+// A5b: FM, and the outdoor/tavern playlists.
+//
+// The first bank was subtractive and sounded like nothing in particular.
+// Daggerfall in 1996 played through AdLib/SoundBlaster - OPL2/OPL3, two-
+// operator FM - which is why the archive carries an F*/FM* arrangement of
+// nearly every song. There is NO OPL patch bank to read: it lived in HMI's
+// sound driver, and ARENA2 has no .AD/.BNK/.OPL, no driver, and song headers
+// that carry a device/channel map and zeros where patches would be (checked
+// byte by byte). So the ratios and indices are OURS and are pinned for
+// STRUCTURE, exactly as the subtractive specs were. What is NOT taste is the
+// method: FM is the synthesis the score was written for.
+// ---------------------------------------------------------------------------
+
+test('A5b: every GM program resolves to a finite, sane FM voice', async () => {
+  const { fmSpec, GM_FAMILIES } = await import('../src/systems/gmSynth.js');
+  for (let p = 0; p < 128; p++) {
+    const v = fmSpec(p);
+    assert.equal(v.program, p);
+    assert.equal(v.family, GM_FAMILIES[p >> 3], `program ${p} lands in its GM family`);
+    for (const k of ['car', 'mod', 'index', 'idxDecay', 'attack', 'decay', 'sustain', 'release', 'gain']) {
+      assert.ok(Number.isFinite(v[k]), `program ${p} ${k} is finite - a NaN ratio silences the voice`);
+      assert.ok(v[k] >= 0, `program ${p} ${k} is non-negative`);
+    }
+    assert.ok(v.car > 0, `program ${p} carrier ratio must be positive - 0 Hz is silence`);
+    assert.ok(v.mod > 0, `program ${p} modulator ratio must be positive`);
+    assert.ok(v.attack > 0, `program ${p} attack is non-zero - a zero ramp clicks`);
+    assert.ok(v.idxDecay > 0, `program ${p} index decay is non-zero - exponentialRamp needs it`);
+    assert.ok(v.sustain <= 1, `program ${p} sustain is a level`);
+  }
+});
+
+test('A5b: bad program numbers CLAMP into a real FM voice', async () => {
+  const { fmSpec, GM_FAMILIES } = await import('../src/systems/gmSynth.js');
+  for (const bad of [-1, 128, 9999, NaN, undefined, null, 'x']) {
+    const v = fmSpec(bad);
+    assert.ok(GM_FAMILIES.includes(v.family), `${String(bad)} still resolves`);
+    assert.ok(Number.isFinite(v.index) && Number.isFinite(v.car) && v.car > 0);
+  }
+});
+
+test('A5b: outdoor playlists are AssignPlaylist\'s arms, verbatim', async () => {
+  const { outdoorPlaylist, SUNNY_SONGS, CLOUDY_SONGS, OVERCAST_SONGS, RAIN_SONGS,
+    SNOW_SONGS, NIGHT_SONGS, NIGHT_SONGS_FM, SUNNY_SONGS_FM } =
+    await import('../src/systems/songManager.js');
+
+  // NIGHT overrides the weather entirely (SongManager.cs:608-611).
+  assert.equal(outdoorPlaylist({ night: true, weather: 'snow' }), NIGHT_SONGS);
+  assert.equal(outdoorPlaylist({ night: true, weather: 'sunny' }), NIGHT_SONGS);
+
+  // By day the weather picks, with DFU's own foldings.
+  assert.equal(outdoorPlaylist({ weather: 'sunny' }), SUNNY_SONGS);
+  assert.equal(outdoorPlaylist({ weather: 'cloudy' }), CLOUDY_SONGS);
+  assert.equal(outdoorPlaylist({ weather: 'overcast' }), OVERCAST_SONGS);
+  assert.equal(outdoorPlaylist({ weather: 'fog' }), OVERCAST_SONGS, 'Fog folds in with Overcast (:540-541)');
+  assert.equal(outdoorPlaylist({ weather: 'rain' }), RAIN_SONGS);
+  assert.equal(outdoorPlaylist({ weather: 'thunder' }), RAIN_SONGS, 'Thunder folds in with Rain (:544-545)');
+  assert.equal(outdoorPlaylist({ weather: 'snow' }), SNOW_SONGS);
+
+  // Anything unrecognised falls to Sunny - that default is DFU's own
+  // (:550-552), not a guess, so an unmapped weather is never silent.
+  assert.equal(outdoorPlaylist({ weather: 'nonsense' }), SUNNY_SONGS);
+  assert.equal(outdoorPlaylist({}), SUNNY_SONGS);
+
+  // The FM arm reaches FM lists, and they are not the same objects.
+  assert.equal(outdoorPlaylist({ fm: true }), SUNNY_SONGS_FM);
+  assert.equal(outdoorPlaylist({ night: true, fm: true }), NIGHT_SONGS_FM);
+  assert.notEqual(NIGHT_SONGS_FM, NIGHT_SONGS);
+  // SIX FM entries against SEVEN GM ones, which is DFU's own asymmetry
+  // and the point of their note at :818: general midi DUPLICATES song_10
+  // into the night list, so the GM array carries both song_10 and
+  // song_21; the FM array does not duplicate and starts at song_11fm.
+  // There is no 10FM record in MIDI.BSA at all - the corpus pin caught an
+  // earlier version of this list that had extrapolated one.
+  assert.equal(NIGHT_SONGS_FM.length, 6);
+  assert.equal(NIGHT_SONGS.length, 7);
+  assert.equal(NIGHT_SONGS_FM[0], '11FM.HMI', 'the FM list starts at 11FM, not a 10FM that does not exist');
+  assert.equal(NIGHT_SONGS[0], '10.HMI');
+  assert.equal(NIGHT_SONGS_FM.at(-1), '21FM.HMI');
+  assert.equal(NIGHT_SONGS.at(-1), '21.HMI');
+});
+
+test('A5b: every outdoor and FM playlist entry EXISTS in MIDI.BSA', { skip: skipReal }, async () => {
+  const sm = await import('../src/systems/songManager.js');
+  const bsa = new MidiBsaFile();
+  bsa.load(new Uint8Array(readFileSync(join(ARENA2, 'MIDI.BSA'))));
+  const missing = [];
+  for (const [label, list] of Object.entries(sm)) {
+    if (!Array.isArray(list) || !list.length || typeof list[0] !== 'string') continue;
+    for (const name of list) {
+      const i = bsa.getSongIndex(name);
+      if (i === null || i === undefined || i < 0) missing.push(`${label}: ${name}`);
+    }
+  }
+  assert.deepEqual(missing, [], 'every exported playlist resolves against the real archive');
+});
+
+test('A5b: the tavern arm reaches all four hosts through their own clocks', () => {
+  // A source sweep, stated honestly: these hosts have no execution
+  // coverage in node. What is checkable is that the wiring EXISTS in each
+  // and that taverns take the sequence arm, not the seeded one - the
+  // host-gap shape this project keeps finding.
+  const wm = readFileSync('src/scenes/worldModes.js', 'utf8');
+  assert.match(wm, /BUILDING_TYPES\.Tavern/, 'worldModes recognises a tavern');
+  assert.match(wm, /TAVERN_SONGS, \{ gameDays: gameDaysNow\(\), tavern: true \}/,
+    'taverns take the DIRECT gameDays arm, not the seeded one');
+  assert.match(wm, /resumeOutdoorMusic\?\.\(\)/, 'leaving a tavern hands the street back its song');
+
+  for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
+    const text = readFileSync(host, 'utf8');
+    assert.match(text, /outdoorPlaylist\(\{ night: isNight\(minute\), weather \}\)/,
+      `${host} never picks an outdoor playlist`);
+    assert.match(text, /resumeOutdoorMusic:/, `${host} never feeds worldModes the resume closure`);
+    assert.match(text, /gameDaysNow:/, `${host} never feeds worldModes its clock`);
+  }
+  // And the dungeon host takes the dungeon list, not an outdoor one.
+  const dc = readFileSync('src/scenes/dungeonContext.js', 'utf8');
+  assert.match(dc, /music\.playFrom\(DUNGEON_SONGS/, 'the dungeon host plays dungeon music');
+});
