@@ -206,28 +206,28 @@ combat line numbers below are refreshed with it.
 - `src/scenes/cityGuards.js:205` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:357` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/droppedLoot.js:16` - FLAGGED loud: pile persistence across saves (the quicksave arc
-- `src/scenes/dungeonContext.js:146` - is FLAGGED rather than faked - a wrong seed is a wrong song every
-- `src/scenes/dungeonContext.js:183` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:508` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:514` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:541` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:902` - exterior spell paths are FLAGGED with their own hosts.
-- `src/scenes/dungeonContext.js:1054` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/exterior.js:354` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:360` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:435` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/exterior.js:501` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:613` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:710` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/dungeonContext.js:1792` - to DFU's OWN day-seeded branch and the dungeon seed is FLAGGED rather
+- `src/scenes/dungeonContext.js:185` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:510` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:516` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:543` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:904` - exterior spell paths are FLAGGED with their own hosts.
+- `src/scenes/dungeonContext.js:1056` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/exterior.js:376` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:382` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:457` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/exterior.js:523` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:630` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:728` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:151` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:462` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:476` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:482` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:598` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/world.js:653` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:922` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1131` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:484` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:498` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:504` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:620` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/world.js:675` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:940` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1149` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:76` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:108` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage...
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,

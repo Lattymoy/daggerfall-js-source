@@ -52,7 +52,7 @@ import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes } from './shared.js';
+import { fetchBytes, ensureAudio } from './shared.js';
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
   MISSILE_LIFESPAN_S, isDamageHealthEffect,
@@ -137,19 +137,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // A1: sound. DAGGER.SND loads through the data seam; the context
   // starts on the first gesture (mobile discipline). Dungeon doors
   // ride the DFU dungeon clips (DaggerfallActionDoor's RDB shape).
-  audio.ensure(fetchBytes);   // AUDIT 18 F6: the shared, idempotent bootstrap (was the ONLY host that booted sound)
-  // A5: DUNGEON MUSIC. SongManager's DungeonInteriorSongs playlist,
-  // verbatim. DFU seeds the pick with the dungeon block's Unknown2
-  // header field XOR the region (SongManager.cs:346-358); the port
-  // reads that field but does not thread it to a music layer yet, so
-  // the pick falls to DFU's OWN day-seeded branch and the dungeon seed
-  // is FLAGGED rather than faked - a wrong seed is a wrong song every
-  // time, which is worse than the general rule. The context is created
-  // on the first gesture, so this arms music that starts when the
-  // player first clicks.
-  music.ensure(fetchBytes).then(() => {
-    music.playFrom(DUNGEON_SONGS, { gameDays: Math.floor(classicMinutes / MINUTES_PER_DAY) });
-  });
+  // AUDIT 19 F1(doctrine): this host called audio.ensure and music.ensure
+  // DIRECTLY, not through the shared seam - so the F6 pin's own
+  // justification ("a host physically cannot take one and miss the
+  // other") was false here, and deleting the music bootstrap left a
+  // ?dungeon boot permanently silent while the whole suite passed. It
+  // takes the seam now, like the other three hosts, and the pin requires
+  // it of every host rather than asserting it of the seam alone.
+  const _audioUp = ensureAudio(fetchBytes);   // AUDIT 18 F6: sound + music, one idempotent bootstrap
+  // AUDIT 19 F4 (critical): the music start USED to sit right here and
+  // read `classicMinutes` - a `let` declared ~1000 lines and THIRTY awaits
+  // later. The promise resolved DURING one of those awaits, so every
+  // dungeon boot threw a TDZ ReferenceError and painted the crash overlay.
+  // It now starts at the end of this function, where every binding exists.
+  // A `.then` registered early is not "later"; it is "as soon as the first
+  // await yields".
   actions.onDoorState = (o, opening) => {
     const m = o.matrix;
     audio.play3d(opening ? SOUND.DungeonDoorOpen : SOUND.DungeonDoorClose, [m[12], m[13], m[14]]);
@@ -1782,6 +1784,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
+  // A5/AUDIT 19 F4: DUNGEON MUSIC, started HERE - after every binding in
+  // this function exists. SongManager's DungeonInteriorSongs playlist,
+  // verbatim. DFU seeds the pick with the dungeon block's Unknown2 header
+  // field XOR the region (SongManager.cs:346-358); the port reads that
+  // field but does not thread it to a music layer yet, so the pick falls
+  // to DFU's OWN day-seeded branch and the dungeon seed is FLAGGED rather
+  // than faked - a wrong seed is a wrong song every time, which is worse
+  // than the general rule.
+  _audioUp.then(() => {
+    music.playFrom(DUNGEON_SONGS, { gameDays: Math.floor(classicMinutes / MINUTES_PER_DAY) });
+  });
+
   return {
     drawList,
     dynamicDraws,
@@ -1923,7 +1937,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends
       if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);
       surfacePlayer();
-      if (activeOverlay instanceof DeathScreen) activeOverlay = null;   // rising from a save beats the reload
+      // A loaded game supersedes whatever pre-game overlay is up.
+      // AUDIT 19 F7 (critical): only DeathScreen was cleared, so the
+      // menu's LOAD GAME restored the character and then left the
+      // CHARGEN WIZARD sitting on top of it - and playing through the
+      // wizard runs finishChargen, overwriting the character that was
+      // just loaded. The context mounts chargen at build time
+      // (dungeonContext.js:772) and dungeon.js calls quickLoad after,
+      // so the wizard is ALWAYS up on this path.
+      // NOTE: activeOverlay is cleared but chargenFlow is NOT nulled.
+      // Four later sites test `activeOverlay === chargenFlow`, and with
+      // both null that comparison is TRUE - which would fire
+      // finishChargen on the very character the load just restored.
+      if (activeOverlay instanceof DeathScreen || activeOverlay === chargenFlow) activeOverlay = null;
       hudText.add('Game loaded.');
     },
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts

@@ -279,13 +279,25 @@ test('U21c: the logo draws ALPHA-BLENDED, where classic art keeps the cutout', a
   // The backdrop - and every other quad in the port - does not.
   assert.notEqual(quads[0].opts?.blend, true, 'the solid backdrop takes no texture blend');
 
-  // And the opt-in really is opt-in: the shader keeps the discard on the
-  // default path, so no classic art path changed. Read the source rather
-  // than a GL context, which the suite has none of.
-  const src = readFileSync('src/render/renderer.js', 'utf8');
-  assert.match(src, /uBlendTex == 1/, 'the blended arm exists in the shader');
-  assert.match(src, /if \(t\.a < 0\.5\) discard;/, 'and the 1-bit cutout is still the ELSE');
-  assert.match(src, /opts\.blend \? 1 : 0/, 'gated on the caller, not on the texture');
+  // AUDIT 19 F6: this used to be three source REGEXES, and a regex cannot
+  // see whether a computed value is ever USED - swapping the shader's two
+  // arms, or making the flag dead, passed all of them. The decision is a
+  // pure function now, so it is pinned BEHAVIOURALLY.
+  const { screenQuadBlends } = await import('../src/render/renderer.js');
+  const OPAQUE = [1, 1, 1, 1];
+  const HALF = [0, 0, 0, 0.5];
+  // Textured: the 1-bit cutout unless the caller opts in. This is the law
+  // for every piece of classic art in the game.
+  assert.equal(screenQuadBlends('TEX', OPAQUE, {}), false, 'classic art keeps the cutout');
+  assert.equal(screenQuadBlends('TEX', OPAQUE, { blend: true }), true, 'and the caller can opt in');
+  // A translucent COLOUR still blends with no texture (U10's sixteen panels).
+  assert.equal(screenQuadBlends(null, HALF, {}), true, 'a translucent solid quad blends');
+  assert.equal(screenQuadBlends(null, OPAQUE, {}), false, 'an opaque solid quad does not');
+  // And the flag must not leak across the tex/solid boundary.
+  assert.equal(screenQuadBlends(null, OPAQUE, { blend: true }), false,
+    'blend is a TEXTURE opt-in; a solid quad still decides on its alpha');
+  const shader = readFileSync('src/render/renderer.js', 'utf8');
+  assert.match(shader, /if \(t\.a < 0\.5\) discard;/, 'the 1-bit cutout is still the shader ELSE');
 });
 
 test('U21c: the logo uploads LINEAR/CLAMP, where classic art stays NEAREST/REPEAT', async () => {
@@ -347,11 +359,16 @@ test('U21c: the logo uploads LINEAR/CLAMP, where classic art stays NEAREST/REPEA
   assert.equal(uploads[0].px.width, 2000);
   assert.equal(uploads[0].px.colors.length, 2000 * 650 * 4, 'RGBA, one byte a channel');
 
-  // smooth is OPT-IN: the default is still the classic law, so no game
-  // art path changed. The suite has no GL context, so read the source.
-  const rendSrc = readFileSync('src/render/renderer.js', 'utf8');
-  assert.match(rendSrc, /opts\.smooth \? gl\.CLAMP_TO_EDGE : gl\.REPEAT/, 'wrap is opt-in');
-  assert.match(rendSrc, /opts\.smooth \? gl\.LINEAR : gl\.NEAREST/, 'and so is the filter');
+  // AUDIT 19 F6: behavioural, not a source regex. A renderer that computed
+  // wrap/filter and then ignored them passed the old pins.
+  const { textureParams } = await import('../src/render/renderer.js');
+  const gl = { CLAMP_TO_EDGE: 'CLAMP', REPEAT: 'REPEAT', LINEAR: 'LINEAR', NEAREST: 'NEAREST' };
+  assert.deepEqual(textureParams(gl, {}), { wrap: 'REPEAT', filter: 'NEAREST' },
+    'the DEFAULT is the classic law - game art tiles and stays pixel-exact');
+  assert.deepEqual(textureParams(gl), { wrap: 'REPEAT', filter: 'NEAREST' },
+    'and with no opts at all');
+  assert.deepEqual(textureParams(gl, { smooth: true }), { wrap: 'CLAMP', filter: 'LINEAR' },
+    'smooth gives LINEAR + CLAMP_TO_EDGE - REPEAT would sample the opposite edge');
 });
 
 // ---------------------------------------------------------------------------
@@ -443,4 +460,22 @@ test('U21d: OUR logo still wins when it is present', async () => {
     globalThis.fetch = saved.fetch;
     globalThis.createImageBitmap = saved.bitmap;
   }
+});
+
+test('AUDIT 19 F5: the MENU blacks its own letterbox', () => {
+  // The original U21 bug - the renderer clears to the pale Iliac Bay sky
+  // and the menu drew its 320x200 panel over it, so the bars read as a
+  // blue border around the scroll. It was fixed and NEVER PINNED: deleting
+  // the backdrop from StartWindow.draw passed all 990 tests. Chargen and
+  // the splash both have this pinned; the menu, where it was found, did not.
+  const quads = [];
+  const renderer = { drawScreenQuad: (tex, rect, uv, color) => quads.push({ tex, rect, color }) };
+  const canvas = { width: 1400, height: 900 };
+
+  new StartWindow(null).draw(renderer, canvas);
+  assert.ok(quads.length >= 1, 'the menu drew something');
+  assert.equal(quads[0].tex, null, 'the FIRST quad is a solid backdrop, not the art');
+  assert.deepEqual(quads[0].rect, { x: 0, y: 0, w: 1400, h: 900 },
+    'covering the WHOLE canvas - a 320x200-sized quad leaves the bars showing');
+  assert.deepEqual(quads[0].color, [0, 0, 0, 1], 'and it is OPAQUE black, not a dim');
 });

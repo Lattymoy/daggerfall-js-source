@@ -453,6 +453,11 @@ export function createWorldModes(host) {
     dungeonCtx.destroy();
     dungeonCtx = null;
     mode = 'exterior';
+    // AUDIT 19 F3: the street gets its own song back. This exit had NO
+    // music caller at all, so dungeon music looped over the sunlit city
+    // forever - the interior exit remembered and this one did not, which
+    // is the host-gap shape one more time.
+    resumeOutdoorMusic?.();
     player.collider = baseCollider();
     if (landing) {
       player.spawn(landing.pos[0], landing.pos[1], landing.pos[2]);

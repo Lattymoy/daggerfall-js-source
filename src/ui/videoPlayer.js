@@ -237,22 +237,42 @@ export function playVideo(canvas, renderer, bytes, {
     if (!player.play(bytes)) { resolve(false); return; }
 
     let anyKey = false;
+    let settled = false;
     const detach = listen(() => { anyKey = true; });
+    const finish = (played) => {
+      if (settled) return;
+      settled = true;
+      detach();
+      try { player.dispose(); } catch { /* nothing to release */ }
+      resolve(played);
+    };
     const frame = () => {
-      player.update();
-      renderer.beginFrame(IDENTITY, IDENTITY, LIGHT);
-      // The letterbox is BLACK - the THIRD time this has bitten. The
-      // renderer clears to the pale Iliac Bay sky, which is right behind a
-      // world and reads as a blue border around anything on the native
-      // panel; U21 blacked it for the menu and U21b for chargen, and the
-      // splash arrived with the same blue frame until the eyeball caught
-      // it. drawMenuBackdrop is the one helper all three now share.
-      drawMenuBackdrop(renderer, canvas);
-      player.draw(nativeMetrics(canvas));
+      try {
+        player.update();
+        renderer.beginFrame(IDENTITY, IDENTITY, LIGHT);
+        // The letterbox is BLACK - the THIRD time this has bitten. The
+        // renderer clears to the pale Iliac Bay sky, which is right behind
+        // a world and reads as a blue border around anything on the native
+        // panel; U21 blacked it for the menu and U21b for chargen, and the
+        // splash arrived with the same blue frame until the eyeball caught
+        // it. drawMenuBackdrop is the one helper all three now share.
+        drawMenuBackdrop(renderer, canvas);
+        player.draw(nativeMetrics(canvas));
+      } catch (e) {
+        // AUDIT 19 F1(vid): THE ERROR BOUNDARY THIS DID NOT HAVE. The
+        // reader throws OUTSIDE ReadBlock's try on purpose (end of stream
+        // on the block-type byte, a null audioBuffer). In Unity that logs
+        // and the next frame retries; here it killed the rAF chain, so the
+        // promise never settled, the key watch never detached and the
+        // texture never released. main.js AWAITS this - a truncated
+        // ANIM0001.VID was a permanent black screen, which made the
+        // "NEVER TRAPS" law in this file's header a false claim.
+        console.warn('[video] playback stopped:', e?.message ?? e);
+        finish(false);
+        return;
+      }
       if (player.shouldClose(anyKey, endOnAnyKey)) {
-        detach();
-        player.dispose();
-        resolve(true);
+        finish(true);
         return;
       }
       raf(frame);

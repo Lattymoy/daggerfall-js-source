@@ -126,6 +126,27 @@ test('AUDIT 18 F2: every ARENA2 name live code fetches survives the ingest diet'
     }
   }
 
+  // AUDIT 19 F8: THE REGEX ABOVE HAS A BLIND SPOT, and it cost a slice.
+  // chargenArt fetches its parchment scroll as
+  //     for (const name of ['SCRL00I0.GFX', 'SCRL01I0.GFX'])
+  // which is not a `getBytes('LITERAL')` call, so the sweep never saw it
+  // and .GFX sat outside KEEP through a whole audit - the U18 class
+  // questions fell back to the text panel on every deployed and phone
+  // boot while this pin passed 17/17.
+  //
+  // The stronger rule: if src/ NAMES an ARENA2 file anywhere in code, the
+  // diet must keep it. That needs no guess about the call shape.
+  const ARENA2_NAME = /'([A-Z0-9_$][A-Z0-9_.$]*\.(?:BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX|VID|DAT))'/g;
+  const stripComments = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+  const named = new Set();
+  for (const file of walk(SRC)) {
+    for (const m of stripComments(readFileSync(file, 'utf8')).matchAll(ARENA2_NAME)) named.add(m[1]);
+  }
+  assert.ok(named.size >= 20, `expected the named-file set, found ${named.size}`);
+  const starved = [...named].filter((n) => !KEEP(n, false) || !KEEP(n, true));
+  assert.deepEqual(starved, [],
+    `src/ names these ARENA2 files but the ingest diet drops them:\n${starved.join('\n')}`);
+
   // The three the diet actually starved, named so a regression is legible.
   for (const n of ['CLASSES.DAT', 'FACTION.TXT']) assert.ok(KEEP(n, true), n);
   for (let i = 0; i < 18; i++) {
@@ -218,9 +239,19 @@ test('AUDIT 18 F5: a resting window actually advances hours when ticked', () => 
 });
 
 test('AUDIT 18 F6: every host boots audio through the shared idempotent seam', () => {
-  for (const rel of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
+  // AUDIT 19 F1(doctrine): this used to accept a bare `audio.ensure(` in a
+  // host, which let dungeonContext boot sound and music DIRECTLY rather
+  // than through shared.ensureAudio. That made the rule below - one seam,
+  // so a host cannot take sound and miss music - false of the very host it
+  // was written for: deleting its music bootstrap left ?dungeon silent and
+  // the whole suite passed. Every host must take the SEAM.
+  for (const rel of ['src/scenes/world.js', 'src/scenes/exterior.js',
+    'src/scenes/dungeonContext.js', 'src/scenes/interior.js']) {
     const text = readFileSync(join(SRC, '..', rel), 'utf8');
-    assert.ok(/audio\.ensure\(/.test(text), `${rel} never boots audio - it will be silent`);
+    assert.match(text, /ensureAudio\(/, `${rel} must boot audio through shared.ensureAudio`);
+    const direct = text.match(/(?<!\w)music\.ensure\(/g) ?? [];
+    assert.deepEqual(direct, [],
+      `${rel} boots music directly instead of through the seam - that is the gap F6 closed`);
   }
   // And nobody may go back to the raw pair, which is what made it host-local.
   // audio.js itself is exempt: ensure() is the one legitimate caller of init().
@@ -247,6 +278,17 @@ test('AUDIT 18 F6: every host boots audio through the shared idempotent seam', (
   const body = fn.slice(0, fn.indexOf('\n}') + 2);
   assert.match(body, /audio\.ensure\(/, 'ensureAudio must boot sound');
   assert.match(body, /music\.ensure\(/, 'ensureAudio must boot music through the SAME seam');
+
+  // AUDIT 19 F1: idempotence must be PROMISE-memoised, not flag-and-return.
+  // A flag set before its own await lets the second caller resolve while the
+  // archive is still loading, so it plays into a disabled service - which is
+  // exactly how the exterior host went silent. Assert the shape that cannot
+  // race: one stored promise every caller awaits.
+  const musicSrc = readFileSync(join(SRC, 'systems', 'music.js'), 'utf8');
+  assert.match(musicSrc, /this\._booted \?\?= this\._boot\(/,
+    'MusicService.ensure must memoise the BOOT PROMISE, not a boolean');
+  assert.ok(!/_booted = true;/.test(musicSrc),
+    'a bare `_booted = true` before the await is the AUDIT 19 F1 race');
 });
 
 test('AUDIT 18 F6: audio.ensure boots once and is safe to call from every host', async () => {

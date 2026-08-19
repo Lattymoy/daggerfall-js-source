@@ -387,6 +387,35 @@ export const CHAR_PIXEL = 7;
  *  clamps pw/ph to this; sprites render into a viewport sub-rect). */
 export const CHAR_SPRITE_RT_SIZE = 512;   // raised for the FP viewmodel frame (E3d): screenW/CHAR_PIXEL at 1440p ~ 366
 
+/**
+ * AUDIT 19 F6: the smooth/blend opt-ins used to be pinned by SOURCE REGEX,
+ * which cannot see whether a computed value is USED - and a regex pin let a
+ * completely dead memo ship in music.js the same day. The DECISIONS are pure,
+ * so they live here and are pinned behaviourally; the GL calls that consume
+ * them are the only part the suite cannot reach.
+ *
+ * REPEAT/NEAREST is the law for GAME art: classic textures tile, and NEAREST
+ * keeps a 320x200 IMG pixel-exact at the integer scales nativePanel picks.
+ * { smooth: true } is for art authored outside that world - a high-resolution
+ * banner at a NON-integer scale, where NEAREST aliases and REPEAT lets a
+ * linear tap at the border sample the opposite edge.
+ */
+export function textureParams(gl, opts = {}) {
+  return opts.smooth
+    ? { wrap: gl.CLAMP_TO_EDGE, filter: gl.LINEAR }
+    : { wrap: gl.REPEAT, filter: gl.NEAREST };
+}
+
+/**
+ * Does this screen quad blend? A SOLID quad blends when it carries alpha
+ * (U10: sixteen translucent UI panels were drawing opaque). A TEXTURED quad
+ * takes the 1-bit cutout unless the caller opts in - classic art IS a 1-bit
+ * cutout, and only ui/titleScreen.js asks for anything else.
+ */
+export function screenQuadBlends(tex, color, opts = {}) {
+  return (!tex && color[3] < 1) || Boolean(tex && opts.blend);
+}
+
 export class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -875,7 +904,7 @@ void main() {
     // Textured quads keep their existing law (discard a<0.5, opaque
     // rgb) so no art path changes - unless the CALLER opts in with
     // { blend: true }, which only ui/titleScreen.js does (U21c).
-    const blend = (!tex && color[3] < 1) || Boolean(tex && opts.blend);
+    const blend = screenQuadBlends(tex, color, opts);
     if (blend) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); }
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
     if (blend) gl.disable(gl.BLEND);
@@ -936,6 +965,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  REPEAT lets a LINEAR tap at the border sample the opposite edge.
    *  { smooth: true } gives it LINEAR/CLAMP_TO_EDGE instead. */
   uploadTexture(archive, record, color32, opts = {}) {
+    // (see textureParams below - the decision is pure and pinned there)
     const key = `${archive}_${record}`;
     if (this.textures.has(key)) return this.textures.get(key);
     const gl = this.gl;
@@ -946,8 +976,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.TEXTURE_2D, 0, gl.RGBA, color32.width, color32.height, 0,
       gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(color32.colors.buffer)
     );
-    const wrap = opts.smooth ? gl.CLAMP_TO_EDGE : gl.REPEAT;
-    const filter = opts.smooth ? gl.LINEAR : gl.NEAREST;
+    const { wrap, filter } = textureParams(gl, opts);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);

@@ -41,6 +41,14 @@ const mem = new Map(); // NAME -> Uint8Array
 // remembering. CLASSES.DAT is named EXACTLY, because a bare \.DAT$ would
 // drag in the 247MB SKY/PACKED sets the diet exists to refuse.
 //
+// AUDIT 19 F8: .GFX joined the wholesale list. There are exactly TWO
+// (SCRL00I0/SCRL01I0, the U18 class-questions parchment scroll) and they
+// were STARVED - fetched in a `for (const name of [...])` loop, which the
+// F2 pin's single-literal regex could not see, so the deployed and phone
+// paths fell back to the text panel and the pin passed. The pin now scans
+// every ARENA2 filename the source NAMES, not just the ones it fetches in
+// a shape the regex recognises.
+//
 // U22: the VIDs are the same trap and CANNOT ride wholesale - the set is
 // 86MB and \.VID$ would undo the diet's single biggest saving. So they
 // are named one at a time, and ONLY when something actually plays them:
@@ -60,12 +68,12 @@ const mem = new Map(); // NAME -> Uint8Array
 const LEAN = typeof window !== 'undefined' &&
   ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0);
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
-  /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT)$/.test(name) ||
+  /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX)$/.test(name) ||
   name === 'CLASSES.DAT' ||
   name === 'ANIM0001.VID' ||                // the U22 splash - see the VID note above
   (!lean && /^SKY\d+\.DAT$/.test(name));   // skies: 247MB - full sets on desktop, gradient fallback on the lean diet
 const MANIFEST_KEY = '__MANIFEST__';
-const MANIFEST_V = 4;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID - all auto-wiped
+const MANIFEST_V = 5;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID, v4 = the sets missing the .GFX scroll (AUDIT 19 F8) - all auto-wiped
 
 /** Uppercase basename: the canonical ARENA2 key. Exported for tests. */
 export function normalizeName(name) {

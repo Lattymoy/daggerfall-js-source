@@ -137,8 +137,15 @@ export class SongPlayer {
 
     if (this._cursorTick < toTick) {
       const window = eventsInWindow(events, this._cursorTick, toTick);
-      applyChannelEvents(this._state, window);
+      // AUDIT 19 F6: INTERLEAVED, not fold-then-voice. This used to apply
+      // every control event in the window and THEN voice its notes, so a
+      // program change or CC7 late in the window reached back and changed
+      // notes earlier in the same window - 20,808 notes across the
+      // shipped archive were voiced with state from their own future. The
+      // window is a scheduling convenience, not a unit of time: inside it
+      // the stream is still ordered, and it has to be played that way.
       for (const e of window) {
+        applyChannelEvents(this._state, [e]);
         if (e.type !== 'noteOn' || !e.velocity) continue;
         this._voice(e, this._originTime + e.tick * secondsPerTick,
           (e.duration || 0) * secondsPerTick);

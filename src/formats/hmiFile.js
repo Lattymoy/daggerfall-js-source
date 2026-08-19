@@ -371,12 +371,22 @@ export class HmiFile {
         case 0xd0:
           push({ tick, type: 'channelPressure', channel: ch, pressure: data() }, RANK_EVENT);
           break;
-        default: {
+        case 0xe0: {
           const lsb = data();
           const msb = data();
           push({ tick, type: 'pitchBend', channel: ch, value: (msb << 7) | lsb }, RANK_EVENT);
           break;
         }
+        default:
+          // AUDIT 19 F3: pitch bend used to be the DEFAULT arm, so every
+          // undefined status - 0xF1..0xF6 and 0xF8..0xFD - was decoded as
+          // a bend on a phantom channel taken from its low nibble (0xF8
+          // became "channel 8"). That directly contradicted this file's
+          // own claim that anything outside the vocabulary throws, and it
+          // is the shape the reader exists to prevent: garbage in, plausible
+          // data out. 0xE0 is now explicit and the default fails loudly.
+          this._fail(`track ${index} unknown status byte 0x${st.toString(16)}`, p - 1);
+          break;
       }
     }
 
@@ -386,6 +396,14 @@ export class HmiFile {
       if (off.tick > endTick) endTick = off.tick;
     }
     events.sort((a, b) => a.tick - b.tick || a._rank - b._rank || a._seq - b._seq);
+
+    // AUDIT 19 F2: ENFORCE the gate rather than merely reporting it. A
+    // track that does not consume exactly to its limit has been misparsed,
+    // and continuing produces a plausible-looking event stream that is
+    // simply wrong. The whole retail archive satisfies this at 1286/1286.
+    if (limit - p !== 0) {
+      this._fail(`track ${index} consumed to ${p}, not its limit ${limit} (${limit - p} bytes adrift)`, p);
+    }
 
     return {
       index,
@@ -401,9 +419,12 @@ export class HmiFile {
       // are resolved into note-offs and excluding the end-of-track meta.
       streamEventCount,
       endTick,
-      // 0 for every track but the last in the retail archive; the last track is
-      // followed by the song's 16-byte source-name trailer, which `limit`
-      // already excludes.
+      // AUDIT 19 F2: this is the reader's OWN GATE and it used to be
+      // computed and thrown away - only the test looked at it. An injected
+      // early FF 2F 00 made D1.HMI silently lose 839 events with load()
+      // still returning true, which is exactly the "decodes to garbage
+      // silently" failure this reader claims it cannot have. It is
+      // enforced below; the field stays for the pins that report it.
       trailingBytes: limit - p,
     };
   }

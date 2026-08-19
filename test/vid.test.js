@@ -707,3 +707,75 @@ test('U22: the splash blacks its letterbox before the frame goes down', async ()
   assert.deepEqual(quads[0].color, MENU_BACKDROP,
     'and it is the SHARED backdrop constant - one black, not a third hand-written one');
 });
+
+// ---------------------------------------------------------------------------
+// AUDIT 19 F1(vid): THE ERROR BOUNDARY. The reader throws OUTSIDE ReadBlock's
+// try on purpose - end of stream on the block-type byte, a null audioBuffer
+// before any audio block. In Unity that logs and the next frame retries. Here
+// it killed the rAF chain: the promise NEVER SETTLED, the any-key watch was
+// never detached and the frame texture was never released. main.js AWAITS
+// playVideo, so a truncated ANIM0001.VID was a permanent black screen - which
+// made this file's own "NEVER TRAPS" header a false claim.
+// ---------------------------------------------------------------------------
+
+test('U22/AUDIT 19: a throwing video RESOLVES, detaches and disposes', async () => {
+  const { playVideo } = await import('../src/ui/videoPlayer.js');
+
+  let released = 0;
+  let detached = 0;
+  const renderer = {
+    beginFrame: () => {}, drawScreenQuad: () => {}, uploadTexture: () => 'TEX',
+    releaseTexture: () => { released++; return true; }, screenOffset: [0, 0],
+  };
+
+  // A real frame first (so there IS a texture to release), then the stream
+  // simply ENDS with no end-of-file block - so the next block-type read
+  // runs off the end and throws OUT of readNextBlock. That is one of the
+  // two throws that escape ReadBlock's own try, and the exact shape that
+  // used to hang the promise forever.
+  const bytes = buildVid({
+    blocks: [audioStart([128, 128, 128, 128]), videoStart(1, [0x80 + 8, 9])],
+  });
+
+  let frames = 0;
+  const played = await playVideo({ width: 640, height: 400 }, renderer, bytes, {
+    raf: (fn) => { if (frames++ < 40) fn(); },
+    listen: () => () => { detached++; },
+    audioContext: () => null,
+  });
+
+  assert.equal(played, false, 'it resolves FALSE rather than hanging forever');
+  assert.equal(detached, 1, 'the any-key watch is detached exactly once');
+  // >= 1 rather than == 1: _uploadFrame releases the previous texture
+  // before each upload, so the count is frames + the dispose. What matters
+  // is that dispose RAN - before the boundary existed it never did.
+  assert.ok(released >= 1, `the frame texture is released (saw ${released})`);
+});
+
+test('U22/AUDIT 19: the DRAW half is inside the boundary too', async () => {
+  const { playVideo } = await import('../src/ui/videoPlayer.js');
+  let detached = 0;
+  // A renderer that dies mid-frame. The reader is not the only thing that
+  // can throw in a frame, so the boundary wraps update AND the draw calls;
+  // a boundary around update() alone would still hang here.
+  //
+  // NOTE on scope: playVideo also carries a `settled` guard against a
+  // double resolve. This pin does NOT cover it - the frame loop returns
+  // without re-arming raf, so the guard is unreachable from here. It is
+  // defensive, and it is not claimed as pinned.
+  const renderer = {
+    beginFrame: () => { throw new Error('GL is gone'); },
+    drawScreenQuad: () => {}, uploadTexture: () => 'TEX',
+    releaseTexture: () => true, screenOffset: [0, 0],
+  };
+  const bytes = buildVid({ blocks: [audioStart([128, 128, 128, 128]), videoStart(1, [0x80 + 8, 9]), eof()] });
+
+  let frames = 0;
+  const played = await playVideo({ width: 640, height: 400 }, renderer, bytes, {
+    raf: (fn) => { if (frames++ < 10) fn(); },
+    listen: () => () => { detached++; },
+    audioContext: () => null,
+  });
+  assert.equal(played, false);
+  assert.equal(detached, 1, 'detached, with the failure caught in the draw half');
+});

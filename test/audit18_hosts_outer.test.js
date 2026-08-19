@@ -612,8 +612,11 @@ test('audit18 hosts: the audio bootstrap runs in EVERY host, not only in a dunge
   assert.match(body, /music\.ensure\(/,
     'ensureAudio must delegate to the music engine seam too');
   assert.ok(!/_booted/.test(body), 'the seam must hold no bootstrap flag of its own');
-  assert.match(src('src/systems/music.js'), /if \(this\._booted\) return;/,
-    'MusicService.ensure must stay idempotent');
+  // AUDIT 19 F1: idempotent AND non-racing - the stored value is the boot
+  // PROMISE, so a second caller awaits the same load instead of resolving
+  // early into a service whose archive has not arrived.
+  assert.match(src('src/systems/music.js'), /this\._booted \?\?= this\._boot\(/,
+    'MusicService.ensure must memoise the boot promise'); 
   assert.match(src('src/systems/audio.js'), /if \(this\._booted\) return;/,
     'AudioEngine.ensure must stay idempotent');
 });

@@ -25,14 +25,33 @@ export class MusicService {
     this.archive = null;
     this.player = null;
     this.enabled = false;
-    this._booted = false;
+    // null, NOT false: `ensure` memoises with `??=`, which assigns only
+    // over null/undefined. A `false` here is neither, so _boot was never
+    // called at all and ensure() returned the boolean - which Promise.all
+    // accepts happily, so every host thought music had booted. Caught by a
+    // live boot probe, not by the suite (AUDIT 19).
+    this._booted = null;
     this._current = null;
   }
 
-  /** The one bootstrap. Safe to call from every host, every entry. */
-  async ensure(fetchBytes) {
-    if (this._booted) return;
-    this._booted = true;
+  /** The one bootstrap. Safe to call from every host, every entry.
+   *
+   *  AUDIT 19 F1/F11: this used to set `_booted` and return, which made
+   *  the SECOND caller resolve IMMEDIATELY - before the archive had
+   *  loaded, so `enabled` was still false. A host that did
+   *  `music.ensure(f).then(play)` then played into a disabled service,
+   *  and playSong dropped the request WITHOUT arming `_pending` because
+   *  arming is itself gated on `enabled`. The exterior host was silent
+   *  forever, and only because it happened to call second.
+   *
+   *  The flag is now the PROMISE, so every caller awaits the same load.
+   *  A guard set before its own async work is not idempotence, it is a
+   *  race with a flag on it. */
+  ensure(fetchBytes) {
+    return (this._booted ??= this._boot(fetchBytes));
+  }
+
+  async _boot(fetchBytes) {
     try {
       const bsa = new MidiBsaFile();
       bsa.load(await fetchBytes('MIDI.BSA'));
@@ -42,6 +61,10 @@ export class MusicService {
       // NEVER TRAPS: no archive is no music, not a failed boot.
       console.warn('[music] MIDI.BSA unavailable - music disabled:', e?.message ?? e);
       this.enabled = false;
+      // Kept, not just logged: a host that boots silently gives no other
+      // way to ask WHY from outside, and "music is off" was indistinguishable
+      // from "music never started" during AUDIT 19.
+      this.bootError = e?.message ?? String(e);
     }
     if (typeof window !== 'undefined') this.attachGestureStart();
   }
@@ -88,9 +111,12 @@ export class MusicService {
     const player = this._ensurePlayer();
     if (!player) {
       // No context yet: remember it for the gesture hook rather than
-      // dropping it. `enabled` false means there is no archive at all,
-      // and then there is nothing to remember.
-      if (this.enabled) this._pending = name;
+      // dropping it. AUDIT 19: this used to be gated on `enabled`, which
+      // made it the SECOND casualty of the ensure() race - a request
+      // arriving before the archive finished loading was neither played
+      // nor remembered. Arm unconditionally; the retry re-checks
+      // everything, and arming with no archive costs one no-op.
+      this._pending = name;
       return false;
     }
     if (this._current === name && player.playing) return true;

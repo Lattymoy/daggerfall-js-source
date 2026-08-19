@@ -390,25 +390,202 @@ test('A5b: every outdoor and FM playlist entry EXISTS in MIDI.BSA', { skip: skip
   assert.deepEqual(missing, [], 'every exported playlist resolves against the real archive');
 });
 
-test('A5b: the tavern arm reaches all four hosts through their own clocks', () => {
-  // A source sweep, stated honestly: these hosts have no execution
-  // coverage in node. What is checkable is that the wiring EXISTS in each
-  // and that taverns take the sequence arm, not the seeded one - the
-  // host-gap shape this project keeps finding.
+test('A5b/AUDIT 19: every host reaches music through ITS OWN seam', () => {
+  // A source sweep, stated honestly: these hosts have no execution coverage
+  // in node. AUDIT 19 also showed how weak a text sweep is - a regex pin let
+  // a completely dead memo ship - so this asserts STRUCTURE that a defect
+  // would actually have to break, and the behavioural half lives in
+  // tools/bootProbe.mjs, which drives a real boot and reports whether music
+  // is playing.
   const wm = readFileSync('src/scenes/worldModes.js', 'utf8');
   assert.match(wm, /BUILDING_TYPES\.Tavern/, 'worldModes recognises a tavern');
   assert.match(wm, /TAVERN_SONGS, \{ gameDays: gameDaysNow\(\), tavern: true \}/,
     'taverns take the DIRECT gameDays arm, not the seeded one');
-  assert.match(wm, /resumeOutdoorMusic\?\.\(\)/, 'leaving a tavern hands the street back its song');
+  // BOTH exits hand the street back its song. F3 found the dungeon exit had
+  // no caller at all, so dungeon music looped over the sunlit city forever.
+  const resumes = wm.match(/resumeOutdoorMusic\?\.\(\)/g) ?? [];
+  assert.equal(resumes.length, 2,
+    'the interior exit AND the dungeon exit must both resume outdoor music');
 
   for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
     const text = readFileSync(host, 'utf8');
-    assert.match(text, /outdoorPlaylist\(\{ night: isNight\(minute\), weather \}\)/,
+    assert.match(text, /outdoorPlaylist\(\{ night, weather \}\)/,
       `${host} never picks an outdoor playlist`);
-    assert.match(text, /resumeOutdoorMusic:/, `${host} never feeds worldModes the resume closure`);
-    assert.match(text, /gameDaysNow:/, `${host} never feeds worldModes its clock`);
+    assert.match(text, /resumeOutdoorMusic: startOutdoorMusic/,
+      `${host} must hand worldModes the SAME seam it uses itself`);
+    // AUDIT 19 F4: gameDays must come from the CUMULATIVE clock. minuteNow()
+    // ends in `% 1440`, so deriving it there is structurally zero forever.
+    assert.match(text, /playerTicker\.classicMinutes \/ 1440/,
+      `${host} must take gameDays from the cumulative clock`);
+    assert.ok(!/Math\.floor\(minuteNow\(\) \/ 1440\)/.test(text),
+      `${host}: gameDays from minuteNow() is identically 0`);
+    // F5: nightfall must re-pick, or night never brings night music.
+    assert.match(text, /updateOutdoorMusic\(\)/, `${host} never re-evaluates at nightfall`);
   }
   // And the dungeon host takes the dungeon list, not an outdoor one.
   const dc = readFileSync('src/scenes/dungeonContext.js', 'utf8');
   assert.match(dc, /music\.playFrom\(DUNGEON_SONGS/, 'the dungeon host plays dungeon music');
+});
+
+
+// ---------------------------------------------------------------------------
+// AUDIT 19. Three lessons, pinned.
+//
+// 1. THE MEMO MUST BE BEHAVIOURAL, NOT TEXTUAL. `ensure` was rewritten to
+//    memoise the boot PROMISE, and a pin asserted the source read
+//    `this._booted ??= this._boot(`. It did. It was also completely dead:
+//    the constructor initialised `_booted = false`, and `??=` assigns only
+//    over null/undefined, so _boot NEVER RAN and ensure() returned the
+//    boolean - which Promise.all accepts, so every host believed music had
+//    booted. 990 tests passed. A live boot probe caught it.
+// 2. The GM PERCUSSION KEY MAP is spec, not taste.
+// 3. MIDI has SIXTEEN channels - also spec.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 19: ensure() boots ONCE and every caller awaits the same load', async () => {
+  const { MusicService } = await import('../src/systems/music.js');
+
+  let fetches = 0;
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  const fetchBytes = async () => { fetches++; await gate; throw new Error('no archive in this test'); };
+
+  const svc = new MusicService();
+  const a = svc.ensure(fetchBytes);
+  const b = svc.ensure(fetchBytes);
+
+  // Both callers get a REAL promise, and the same one.
+  assert.ok(a instanceof Promise, 'ensure must return a promise, not a flag');
+  assert.equal(a, b, 'the second caller gets the SAME boot, not a fresh one');
+
+  // And crucially: the second caller must NOT have resolved yet. The old
+  // flag-and-return let it through while the archive was still loading,
+  // which is how the exterior host went silent.
+  let bSettled = false;
+  b.then(() => { bSettled = true; });
+  for (let i = 0; i < 5; i++) await Promise.resolve();
+  assert.equal(bSettled, false, 'the second caller must WAIT for the first boot');
+
+  release();
+  await a; await b;
+  assert.equal(fetches, 1, 'the archive is fetched exactly once');
+  assert.equal(svc.enabled, false, 'a failed load disables music rather than throwing');
+});
+
+test('AUDIT 19: a successful ensure() actually ENABLES music', async () => {
+  // The dead-memo bug left `enabled` false forever while every pin passed,
+  // so the happy path is pinned too, not just the failure path.
+  const { MusicService } = await import('../src/systems/music.js');
+  const bytes = skipReal ? null : new Uint8Array(readFileSync(join(ARENA2, 'MIDI.BSA')));
+  if (!bytes) return;                       // corpus-gated half
+  const svc = new MusicService();
+  await svc.ensure(async () => bytes);
+  assert.equal(svc.enabled, true, 'a real archive enables music');
+  assert.equal(svc.bootError ?? null, null);
+  assert.ok(svc.archive.getSongIndex('DUNGEON.HMI') >= 0);
+});
+
+test('AUDIT 19: the GM PERCUSSION KEY MAP is spec, and is held to it', async () => {
+  const { percussionSpec } = await import('../src/systems/gmSynth.js');
+  // General MIDI Level 1 Percussion Key Map. These are published note
+  // numbers every GM file is authored against - not our choice. The TIMBRE
+  // of each drum (hz/decay/gain) is ours and stays unpinned; the KEY each
+  // one answers to is law. Move 38 and every snare in every song plays the
+  // wrong drum, which is what used to pass silently.
+  const GM = {
+    35: 'acoustic bass drum', 36: 'bass drum 1', 38: 'acoustic snare',
+    40: 'electric snare', 42: 'closed hi-hat', 45: 'low tom',
+    46: 'open hi-hat', 47: 'low-mid tom', 49: 'crash cymbal 1',
+    50: 'high tom', 51: 'ride cymbal 1',
+  };
+  for (const key of Object.keys(GM).map(Number)) {
+    const d = percussionSpec(key);
+    assert.equal(d.note, key,
+      `GM key ${key} (${GM[key]}) must map to ITSELF, not to a neighbour`);
+  }
+  // The kicks are TONES and the cymbals/hats are NOISE - the one timbre
+  // distinction that is structural rather than taste.
+  for (const k of [35, 36, 45, 47, 50]) assert.equal(percussionSpec(k).kind, 'tone', `key ${k}`);
+  for (const k of [38, 40, 42, 46, 49, 51]) assert.equal(percussionSpec(k).kind, 'noise', `key ${k}`);
+  // Hi-hats: closed must ring SHORTER than open, or the groove inverts.
+  assert.ok(percussionSpec(42).decay < percussionSpec(46).decay, 'closed hat is shorter than open');
+});
+
+test('AUDIT 19: MIDI has sixteen channels, and percussion is one of them', async () => {
+  const { freshChannelState } = await import('../src/systems/songPlayer.js');
+  const { PERCUSSION_CHANNEL } = await import('../src/systems/gmSynth.js');
+  const s = freshChannelState();
+  assert.deepEqual(Object.keys(s).map(Number).sort((a, b) => a - b),
+    Array.from({ length: 16 }, (_, i) => i),
+    'exactly 16 channels, 0..15 - MIDI spec, not a buffer size');
+  assert.ok(s[PERCUSSION_CHANNEL], 'channel 9 exists, or every drum track is silent');
+  for (const c of Object.values(s)) {
+    assert.deepEqual(c, { program: 0, volume: 1, pan: 0, bend: 0 });
+  }
+});
+
+test('AUDIT 19 F13: EVERY playlist is pinned WHOLE, not just the sampled ones', async () => {
+  // 12 of 24 lists had no content pin at all: the audit reversed
+  // DUNGEON_SONGS_FM and swapped SUNNY_SONGS entirely and the suite stayed
+  // green, because only the duplicate COUNTS were checked. A count survives
+  // any reordering, and order is what the modulo indexes into.
+  const sm = await import('../src/systems/songManager.js');
+  const EXPECT = {
+    DUNGEON_SONGS_FM: ['FM_DNGN1.HMI', 'FM_DNGN1.HMI', 'FM_DNGN2.HMI', 'FM_DNGN3.HMI',
+      'FM_DNGN4.HMI', 'FM_DNGN5.HMI', 'FDNGN10.HMI', 'FDNGN11.HMI', 'FDUNGN4.HMI',
+      'FDUNGN9.HMI', '04FM.HMI', '05FM.HMI', '07FM.HMI', '15FM.HMI', '15FM.HMI'],
+    SUNNY_SONGS: ['GDAY___D.HMI', 'SWIMMING.HMI', 'GSUNNY2.HMI', 'SUNNYDAY.HMI',
+      '02.HMI', '03.HMI', '22.HMI'],
+    SUNNY_SONGS_FM: ['FDAY___D.HMI', 'FM_SWIM2.HMI', 'FM_SUNNY.HMI', '02FM.HMI',
+      '03FM.HMI', '22FM.HMI'],
+    CLOUDY_SONGS: ['GDAY___D.HMI', 'SWIMMING.HMI', 'GSUNNY2.HMI', 'SUNNYDAY.HMI',
+      '02.HMI', '03.HMI', '22.HMI', '29.HMI', '12.HMI'],
+    CLOUDY_SONGS_FM: ['FDAY___D.HMI', 'FM_SWIM2.HMI', 'FM_SUNNY.HMI', '02FM.HMI',
+      '03FM.HMI', '22FM.HMI', '29FM.HMI', '12FM.HMI'],
+    OVERCAST_SONGS_FM: ['29FM.HMI', '12FM.HMI', '13FM.HMI', 'FPALAC.HMI', 'FMOVER_C.HMI'],
+    RAIN_SONGS_FM: ['FMOVER_C.HMI', 'FM_RAIN.HMI', '08FM.HMI'],
+    SNOW_SONGS_FM: ['20FM.HMI', 'FSNOW__B.HMI', 'FMOVER_S.HMI'],
+    SNEAKING_SONGS: ['GSNEAK2.HMI', 'SNEAKING.HMI', 'SNEAKNG2.HMI', '16.HMI', '09.HMI',
+      '25.HMI', '30.HMI'],
+    SNEAKING_SONGS_FM: ['FSNEAK2.HMI', 'FMSNEAK2.HMI', 'FSNEAK2.HMI', '16FM.HMI',
+      '09FM.HMI', '25FM.HMI', '30FM.HMI'],
+    DAY_SONGS_FM: ['FDAY___D.HMI', 'FM_SWIM2.HMI', 'FM_SUNNY.HMI', '02FM.HMI', '03FM.HMI',
+      '22FM.HMI', '29FM.HMI', '12FM.HMI', '13FM.HMI', 'FPALAC.HMI'],
+    NIGHT_SONGS_FM: ['11FM.HMI', 'FCURSE.HMI', 'FEERIE.HMI', 'FRUINS.HMI', '18FM.HMI', '21FM.HMI'],
+    TEMPLE_GOOD_SONGS_FM: ['FGOOD.HMI'],
+    TEMPLE_NEUTRAL_SONGS_FM: ['FNEUT.HMI'],
+    TEMPLE_BAD_SONGS_FM: ['FBAD.HMI'],
+  };
+  for (const [name, expected] of Object.entries(EXPECT)) {
+    assert.deepEqual([...sm[name]], expected, `${name} drifted from SongManager.cs`);
+  }
+  // And nothing exported is left without a whole-list pin: every string
+  // array this module exports must be named above or in the earlier pin.
+  const PINNED_ELSEWHERE = new Set(['DUNGEON_SONGS', 'OVERCAST_SONGS', 'RAIN_SONGS',
+    'SNOW_SONGS', 'TAVERN_SONGS', 'NIGHT_SONGS', 'TEMPLE_GOOD_SONGS',
+    'TEMPLE_NEUTRAL_SONGS', 'TEMPLE_BAD_SONGS']);
+  const unpinned = Object.entries(sm)
+    .filter(([, v]) => Array.isArray(v) && typeof v[0] === 'string')
+    .map(([k]) => k)
+    .filter((k) => !(k in EXPECT) && !PINNED_ELSEWHERE.has(k));
+  assert.deepEqual(unpinned, [], `these playlists have no whole-list pin:\n${unpinned.join('\n')}`);
+});
+
+test('AUDIT 19 F14: the day seed is pinned where it actually DISCRIMINATES', async () => {
+  const { selectSong, DUNGEON_SONGS } = await import('../src/systems/songManager.js');
+  // The old pin used gameDays 93 against a 5-entry list, where
+  // srand(93)%5 === srand(94)%5 - so seeding with gameDays+1 passed. Pick a
+  // day and list where the neighbours genuinely differ, and assert BOTH
+  // that the day maps to its own index and that its neighbours do not.
+  const day = 35;   // neighbours land on 11 / 4 / 5 - genuinely distinct
+  const here = selectSong(DUNGEON_SONGS, { gameDays: day }).index;
+  const before = selectSong(DUNGEON_SONGS, { gameDays: day - 1 }).index;
+  const after = selectSong(DUNGEON_SONGS, { gameDays: day + 1 }).index;
+  assert.notEqual(here, before, 'an off-by-one seed must change the song');
+  assert.notEqual(here, after, 'an off-by-one seed must change the song');
+
+  // Re-derive the expected index from DFRandom directly, so the pin states
+  // the LAW rather than echoing selectSong back at itself.
+  srand(day);
+  assert.equal(here, rand() % DUNGEON_SONGS.length);
 });
