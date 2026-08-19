@@ -468,6 +468,15 @@ export function createMusicDirector({ fm = false } = {}) {
      *  (worldModes.musicContext()), or null outdoors. */
     update(base, overlay = null) {
       const merged = { ...base, ...(overlay ?? {}) };
+      // Probe hook: the four scene hosts have no execution coverage in
+      // node, and AUDIT 21 F1 found this director being fed exclusively on
+      // frames where the overlay was guaranteed null - the whole interior
+      // and dungeon music path was dead. tools/bootProbe.mjs reads this to
+      // check the wiring from a real boot, which is the only place it is
+      // observable at all.
+      if (typeof window !== 'undefined') {
+        window.__musicCtx = { environment: musicEnvironment(merged), overlay: overlay !== null };
+      }
       return manager.update({
         environment: musicEnvironment(merged),
         weather: merged.weather ?? 'sunny',

@@ -876,6 +876,28 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Modal frame (worldModes.js): interior/dungeon consume the frame
     // entirely - the early return also freezes streaming (the
     // context-local player position must never feed the recenter logic).
+    // AUDIT 21 F1: THE MUSIC CONTEXT IS FED BEFORE THE MODAL RETURN.
+    // worldModes.frame() consumes the frame and returns TRUE for interior
+    // and dungeon; musicContext() returns null ONLY for exterior. They are
+    // the same predicate, so with the update below the early return it ran
+    // exclusively on frames where the overlay was guaranteed to be null -
+    // entering a tavern kept the street song, entering a dungeon kept the
+    // sunny outdoor track, and when that song ended nothing fed `songEnded`
+    // so it fell silent for the rest of the visit. The whole interior and
+    // dungeon music path was dead code in this host.
+    musicDirector.update({
+      inside: false,
+      inLocationRect: _musicInLocationRect(),
+      locationType: _musicLocationType(),
+      locationIndex: _musicLocationIndex(),
+      weather,
+      night: isNight(minuteNow()),
+      gameDays: gameDaysNow(),
+      // UpdatePlayerMusicArrested (:568-571). Checked FIRST in
+      // AssignPlaylist and overrides the environment entirely.
+      arrested: Boolean(playerEntity.arrested),
+    }, modes?.musicContext?.() ?? null);
+
     if (modes.frame(dt, now)) {
       requestAnimationFrame(frame);
       return;
@@ -904,20 +926,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       // motor already held here - the clock did not, so a disease
       // aged while the game was paused.
       if (!_overlayHeld) playerTicker.tick(dt, { running: player.running, swimming: player.swimming });
-      // One frame of music context. The mode host reports whether we are
-      // inside and where; outdoors its overlay is null and this stands.
-      musicDirector.update({
-        inside: false,
-        inLocationRect: _musicInLocationRect(),
-        locationType: _musicLocationType(),
-        locationIndex: _musicLocationIndex(),
-        weather,
-        night: isNight(minuteNow()),
-        gameDays: gameDaysNow(),
-        // UpdatePlayerMusicArrested (:568-571). Checked FIRST in
-        // AssignPlaylist and overrides the environment entirely.
-        arrested: Boolean(playerEntity.arrested),
-      }, modes?.musicContext?.() ?? null);
         // AUDIT 18 HOST GAP: levitate/waterWalking/slowFall were
         // written ONLY inside the dungeon branch of worldModes and
         // never cleared, so leaving a dungeon while levitating

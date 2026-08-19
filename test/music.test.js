@@ -1234,3 +1234,31 @@ test('AUDIT 21: a manager starts PLAYING, and stop latches', async () => {
   sm.startPlaying();
   assert.equal(sm.playSong, true);
 });
+
+test('AUDIT 21 F1: the music context is fed BEFORE the modal return', () => {
+  // worldModes.frame() consumes the frame and returns TRUE for interior and
+  // dungeon; worldModes.musicContext() returns null ONLY for exterior. They
+  // are the same predicate - so with the director fed AFTER the early
+  // return it ran exclusively on frames where the overlay was guaranteed
+  // null. Entering a tavern kept the street song, entering a dungeon kept
+  // the sunny outdoor track, and once that song ended nothing fed
+  // `songEnded` so it fell silent for the rest of the visit.
+  //
+  // This is a SOURCE-ORDER pin and that is a weak instrument - this very
+  // audit found regex pins passing while code was dead. It is here because
+  // these hosts have no execution coverage in node at all. The real proof
+  // is tools/musicHostProbe.mjs, which drives a browser into a building and
+  // reads the resolved environment on both sides:
+  //     outdoors GDAY___D.HMI / city     -> inside 23.HMI / interior
+  // and with the ordering reverted, inside stays city and the song never
+  // changes. Run it when touching either host's frame loop.
+  for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const text = readFileSync(host, 'utf8');
+    const feed = text.indexOf('musicDirector.update(');
+    const modal = text.indexOf('if (modes.frame(dt, now)) {');
+    assert.ok(feed > 0 && modal > 0, `${host}: both seams must exist`);
+    assert.ok(feed < modal,
+      `${host}: the music context must be fed BEFORE the modal early return - `
+      + 'after it, the mode host\'s overlay is always null and interior music is dead code');
+  }
+});

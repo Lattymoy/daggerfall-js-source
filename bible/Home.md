@@ -244,7 +244,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:447` - day-skip is a no-op FLAGGED until the shared calendar lands).
 - `src/scenes/exterior.js:513` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/exterior.js:618` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:729` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:737` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:152` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/world.js:476` - FLAGGED loud: the People faction rides the START location's
@@ -252,8 +252,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:496` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:613` - day-skip is a no-op FLAGGED until the shared calendar lands).
 - `src/scenes/world.js:668` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:944` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1153` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:952` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1161` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/systems/songManager.js:306` - temple falls to Interior rather than inventing an alignment. FLAGGED.
 - `src/scenes/worldModes.js:788` - a castle reads as a plain dungeon interior. FLAGGED.
 - `src/scenes/worldModes.js:73` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
