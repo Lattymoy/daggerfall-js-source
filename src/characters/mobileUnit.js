@@ -8,9 +8,12 @@
 // idle, ghost/wraith, slaughterfish). The scene owns rendering (a
 // live billboard batch per foe); this module owns the state/frames.
 //
-// C14: the Spell anim state is LIVE (casters play SpellAnimFrames
-// over records 20-24 when HasSpellAnimation - Orc Shaman - else the
-// primary records, verbatim GetStateAnims). RangedAttack1/2 are N/A
+// C14: the Spell anim state is LIVE (casters play over records 20-24
+// when HasSpellAnimation - Orc Shaman - else the primary records,
+// verbatim GetStateAnims). SpellAnimFrames only SEEDS the state: it
+// is not one of AnimateEnemy's doingAttackAnimation states, so the
+// run is a plain +1 walk from frames[0] to the record's frame count
+// (AUDIT 18). RangedAttack1/2 are N/A
 // for monsters (HasRangedAttack1 is class-enemy-only in EnemyBasics
 // - the rigs' bow path owns it).
 // C16: the -1 frame IS the damage moment (hitFrame -> the scene's
@@ -194,13 +197,18 @@ export class MobileUnit {
         this.frame = this._iter < this._attackFrames.length ? this._attackFrames[this._iter++] : 0;
       }
     }
-    // C14: the Spell one-shot rides the same iterator over
-    // SpellAnimFrames (ApplyEnemyState's Spell branch - no chance
-    // ladder, no -1 in the data).
+    // C14: ApplyEnemyState's Spell branch SEEDS from SpellAnimFrames
+    // (currentFrame = frames[0]; frameIterator = 1) - but AnimateEnemy's
+    // doingAttackAnimation is PrimaryAttack/RangedAttack1/RangedAttack2
+    // ONLY (DaggerfallMobileUnit.cs:536-538), so that iterator is never
+    // consumed for Spell: the state steps as a PLAIN frame run from the
+    // seed until currentFrame >= NumFrames, then exits as a one-shot
+    // (AUDIT 18).
     if (state === 'spell') {
       this._attackFrames = this.basics.spellAnimFrames ?? [0];
       this.frame = Math.max(0, this._attackFrames[0]);
       this._iter = 1;
+      this._reversed = false;
     }
     // C17: the RangedAttack1 one-shot (ApplyEnemyState's ranged
     // branch) - the -1 marker is the shootArrow moment.
@@ -269,7 +277,9 @@ export class MobileUnit {
 
   _stepFrame(a) {
     const n = Math.max(1, this.frameCount(a.record));
-    if (this.state === 'attack' || this.state === 'spell' || this.state === 'ranged') {
+    // doingAttackAnimation (AnimateEnemy): PrimaryAttack and the two
+    // RangedAttack states only - Spell is deliberately NOT in it.
+    if (this.state === 'attack' || this.state === 'ranged') {
       if (this._iter >= this._attackFrames.length) { this._change('idle'); return; }
       let f = this._attackFrames[this._iter++];
       if (f === -1) {
@@ -283,7 +293,10 @@ export class MobileUnit {
     }
     this.frame = this._reversed ? this.frame - 1 : this.frame + 1;
     if (this.frame >= n || (this._reversed && this.frame <= 0)) {
-      if (this.state === 'hurt') { this._change('idle'); return; }   // one-shot -> Idle (NextStateAfterCurrentOneShot default)
+      // IsPlayingOneShot() -> NextStateAfterCurrentOneShot() (default
+      // Idle). The one-shots that reach this plain-run branch are Hurt
+      // and Spell (the attack states exit through the iterator above).
+      if (this.state === 'hurt' || this.state === 'spell') { this._change('idle'); return; }
       if (a.bounce && !this._reversed) {
         this.frame = Math.max(0, n - 2);
         this._reversed = true;

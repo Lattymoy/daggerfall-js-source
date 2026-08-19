@@ -95,7 +95,9 @@ test('enemyspells: the casting AI - touch resets the shared melee timer, ranged 
   const touchSpell = mkSpell(1, 1), selfSpell = mkSpell(2, 0), rangedSpell = mkSpell(3, 2);
   const ent = { level: 5, magicka: 100, spells: [touchSpell, rangedSpell] };
   const player = { activeEffects: [] };
-  const mkAi = (dist) => ({ _dist: dist, inSight: true, yaw: 0, feet: [0, 0, 0] });
+  // detected + giveUpTimer are the DetectedTarget / CanAct gates DFU
+  // puts on BOTH cast branches (EnemyMotor.cs:573, :620, :359-365).
+  const mkAi = (dist) => ({ _dist: dist, inSight: true, detected: true, giveUpTimer: 200, yaw: 0, feet: [0, 0, 0] });
   const mkAttack = () => ({ machine: { state: 'Idle' }, meleeTimer: 0, playerLevel: 10, reflexes: 2, rangedAttack: false });
   // TOUCH: in melee reach with the timer at 0 -> the touch pick casts
   // and RESETS the melee timer (DoTouchSpell -> ResetMeleeTimer)
