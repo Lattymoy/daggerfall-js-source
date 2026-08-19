@@ -279,7 +279,8 @@ Modules:
   T(XPos, 0, 4096 - ZPos) * R(0, -YRot/5.6889, 0); building model =
   subrecordMatrix * TRS((X, -Y, Z), euler(-rot)/div); misc models with
   propsOffsetY -4 and Z + 4096; ground tiles GroundTiles[x][15 - y] with
-  records >= 56 reset to grass 8. Classic data never sets model scale (fields
+  records >= 56 reset to grass - DFU's tilemap index 8, i.e. texture
+  record 2 (index = record * 4 + variant). Classic data never sets model scale (fields
   are mod-injection only) so scale is identity.
 - `src/render/renderer.js` - WebGL2: REPEAT + NEAREST textures uploaded
   bottom-up as getColor32 emits them, alpha < 0.5 discard, directional light.

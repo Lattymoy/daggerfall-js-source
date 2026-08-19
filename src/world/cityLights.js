@@ -2,9 +2,12 @@
 // Daggerfall Unity's RMBLayout AddLights/AddLight and the exterior-subrecord
 // light path (MIT, Daggerfall Workshop). Verbatim:
 //   - Misc block flats with archive 210: light at
-//     (XPos, -YPos + size.y, ZPos + 4096) * GlobalScale, where size is the
-//     SCALED billboard size (world units) added to native units BEFORE the
-//     scale multiply - as DFU wrote it, the offset contributes size.y * 0.025.
+//     (XPos, -YPos + nativeSize.y, ZPos + 4096) * GlobalScale. DFU's
+//     GetScaledBillboardSize returns NATIVE units (MeshReader.cs:549-568 -
+//     cm.recordSizes is raw texture pixels, no GlobalScale), so the offset is
+//     added INSIDE the scaled vector; our getScaledSize returns WORLD units
+//     (the contract DaggerfallInterior.cs:939 relies on), so we add it AFTER
+//     the multiply, which is the same number.
 //     Note the light Y differs from the billboard Y (blockFlatsOffsetY -6).
 //   - Exterior subrecord flats with archive 210: same formula plus the
 //     unrotated (subX, 0, -subZ) * scale offset. Original archive is checked
@@ -39,7 +42,7 @@ export function collectCityLights(dfBlock, getScaledSize) {
     const size = getScaledSize(obj.textureRecord);
     lights.push({
       x: obj.xPos * GLOBAL_SCALE,
-      y: (-obj.yPos + size.h) * GLOBAL_SCALE,
+      y: -obj.yPos * GLOBAL_SCALE + size.h,
       z: (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
     });
   }
@@ -53,7 +56,7 @@ export function collectCityLights(dfBlock, getScaledSize) {
       const size = getScaledSize(obj.textureRecord);
       lights.push({
         x: obj.xPos * GLOBAL_SCALE + subX,
-        y: (-obj.yPos + size.h) * GLOBAL_SCALE,
+        y: -obj.yPos * GLOBAL_SCALE + size.h,
         z: (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE + subZ,
       });
     }

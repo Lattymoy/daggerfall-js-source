@@ -68,11 +68,13 @@ World layout:
   is a dead code path on classic data and only fires for mod-injected
   buildings. Verbatim is provably identical to any fix.
 - Ground tiles read [x][15 - y]; scenery skips records < 1; tile records
-  >= 56 reset to grass 8; offsets propsOffsetY -4, blockFlatsOffsetY -6,
+  >= 56 reset to grass (DFU's tilemap index 8 == texture record 2);
+  offsets propsOffsetY -4, blockFlatsOffsetY -6,
   natureFlatsOffsetY -2; classic data never sets model scale.
-- City LIGHTS (archive 210) place at -Y + size.y where size.y is the SCALED
-  billboard height added to native units pre-scale (as DFU wrote it), and
-  the light Y differs from the billboard's -6 offset by design.
+- City LIGHTS (archive 210) place at (-Y + size.y) * GlobalScale where
+  size.y is GetScaledBillboardSize's NATIVE height (MeshReader.cs:549-568
+  applies no GlobalScale), and the light Y differs from the billboard's -6
+  offset by design.
 - ModelDoor extraction: door Index resets per submesh (DFU's doorCount
   scope); archive 156 (Scourg exterior) only exempts the base-archive
   reduction and never becomes a door; ruin-enter 331 record 0 is plain
