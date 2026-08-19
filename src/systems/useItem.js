@@ -29,7 +29,6 @@
 // and recorded in the Ledger; the port's startPoison refuses an
 // unregistered type the same way rather than indexing past its
 // tables.
-import { removeOne } from './inventory.js';
 import { templateByIndex } from './itemTemplates.js';
 import { inflictPoison } from './poisons.js';
 
@@ -150,84 +149,122 @@ export const expandItemMacro = (text, item, name) =>
  */
 export function useItem(item, collection, {
   entity = null, rolls = Math.random, nowMinute = 0,
-  spellCount = () => 0, isEnchanted = () => false,
+  localItems = null, spellCount = () => 0, isEnchanted = () => false,
 } = {}) {
   if (!item) return { kind: 'none' };
   const named = (t) => expandItemMacro(USE_TEXT[t], item);
+  // AUDIT 22 F4: the oil arm searches the LOCAL pack (:1791
+  // `localItems.GetItem(...)`), not the list the click came from - so
+  // using oil off a loot pile still refuels the lantern in your bag.
+  // `collection` is the list the item LIVES in, which is a different
+  // question and is what every consuming arm uses.
+  const bag = localItems ?? collection;
 
-  // Quest items come first in DFU (:1668-1700) and pop back to the HUD
-  // for anything that is not a parchment or clothing.
-  if (item.questItem) {
-    return { kind: 'questItem', pending: true, popToHud: !isParchment(item) && !isClothing(item) };
+  // AUDIT 22 F1: QUEST ITEMS FALL THROUGH. DFU's quest block
+  // (:1668-1700) returns in exactly ONE case - the quest system is
+  // WATCHING this item (`!UseClicked && ActionWatching`) and it is
+  // neither a parchment nor clothing, so the world gets first shot at
+  // it. Every other quest item runs the whole ladder underneath,
+  // which is why a quest letter reads and a quest torch lights. The
+  // port returned for ALL of them, so a quest torch could not be lit.
+  //
+  // With no quest machine nothing is watching anything, so
+  // ActionWatching is false and DFU's own answer is to fall through.
+  // The flag is carried on the result for the host that will one day
+  // read it; the pop-to-HUD half lands with the quest machine.
+  const questItem = !!item.questItem;
+
+  let out = null;
+  if (isBook(item)) out = { kind: 'book', pending: true, text: named('bookUnavailable') };
+
+  else if (isPotion(item)) {
+    // DrinkPotion + RemoveOne. AUDIT 22 F5: RemoveOne takes THIS
+    // record off the stack - removing the first item that merely
+    // shares a template index would drink someone else's potion,
+    // since every potion is the same Glass_Bottle template and only
+    // its recipe differs.
+    if (collection) removeOneRecord(collection, item);
+    out = { kind: 'potion', pending: true };
   }
 
-  if (isBook(item)) return { kind: 'book', pending: true, text: named('bookUnavailable') };
+  else if (isPotionRecipe(item)) out = { kind: 'potionRecipe', text: named('cannotUseThis') };
 
-  if (isPotion(item)) {
-    // DrinkPotion + RemoveOne - the bottle leaves the pack whether or
-    // not the potion had a recipe attached.
-    if (collection) removeOne(collection, item.templateIndex);
-    return { kind: 'potion', pending: true };
-  }
-
-  if (isPotionRecipe(item)) return { kind: 'potionRecipe', text: named('cannotUseThis') };
-
-  if (isMap(item) && collection) {
+  else if (isMap(item) && collection) {
     const i = collection.indexOf(item);
     if (i >= 0) collection.splice(i, 1);   // RemoveItem, not RemoveOne
-    return { kind: 'map', pending: true, textId: MAP_TEXT_ID };
+    out = { kind: 'map', pending: true, textId: MAP_TEXT_ID };
   }
 
-  if (isSpellbook(item)) {
-    return spellCount() === 0
+  else if (isSpellbook(item)) {
+    out = spellCount() === 0
       ? { kind: 'noSpells', textId: NO_SPELLS_TEXT_ID }
       : { kind: 'spellbook' };
   }
 
-  if (isDrug(item) && collection) {
+  else if (isDrug(item) && collection) {
     // See the header: the +66 is DFU's, it lands outside the Poisons
     // enum, and nothing is inflicted. The item is consumed regardless.
     const poisonType = item.templateIndex + DRUG_POISON_OFFSET;
     const inflicted = entity ? inflictPoison(entity, poisonType, true, { rolls, currentMinute: nowMinute }) : null;
     const i = collection.indexOf(item);
     if (i >= 0) collection.splice(i, 1);
-    return { kind: 'drugged', poisonType, inflicted: !!inflicted };
+    out = { kind: 'drugged', poisonType, inflicted: !!inflicted };
   }
 
-  if (isLightSource(item)) {
-    if ((item.currentCondition ?? 0) <= 0) return { kind: 'empty', text: named('lightEmpty') };
+  else if (isLightSource(item)) {
+    if ((item.currentCondition ?? 0) <= 0) out = { kind: 'empty', text: named('lightEmpty') };
     // PlayerEntity.LightSource is a single slot: using the one already
     // lit DOUSES it, using another one SWAPS.
-    if (entity?.lightSource === item) {
-      if (entity) entity.lightSource = null;
-      return { kind: 'doused', text: named('lightDouse') };
+    else if (entity?.lightSource === item) {
+      entity.lightSource = null;
+      out = { kind: 'doused', text: named('lightDouse') };
+    } else {
+      if (entity) entity.lightSource = item;
+      out = { kind: 'lit', text: named('lightLight') };
     }
-    if (entity) entity.lightSource = item;
-    return { kind: 'lit', text: named('lightLight') };
   }
 
-  if (item.group === 'UselessItems2' && item.templateIndex === TEMPLATES.Oil && collection) {
+  else if (item.group === 'UselessItems2' && item.templateIndex === TEMPLATES.Oil && collection) {
     // The oil refuels a LANTERN in the LOCAL pack, and only if the
     // whole bottle fits - DFU adds the oil's condition to the
-    // lantern's and refuses when it would overflow.
-    const lantern = collection.find((it) => it.group === 'UselessItems2' && it.templateIndex === TEMPLATES.Lantern);
+    // lantern's and refuses when it would overflow. FLAGGED: DFU
+    // passes allowQuestItem: false, and the port has no quest items
+    // to exclude yet.
+    const lantern = (bag ?? []).find((it) => it.group === 'UselessItems2' && it.templateIndex === TEMPLATES.Lantern);
     const oil = item.currentCondition ?? 0;
     if (lantern && (lantern.currentCondition ?? 0) <= (lantern.maxCondition ?? 0) - oil) {
       lantern.currentCondition = (lantern.currentCondition ?? 0) + oil;
       // A STACK splits one off; a single leaves entirely.
       if ((item.stackCount ?? 1) > 1) item.stackCount--;
       else { const i = collection.indexOf(item); if (i >= 0) collection.splice(i, 1); }
-      return { kind: 'refuelled', text: expandItemMacro(USE_TEXT.lightRefuel, lantern) };
-    }
-    return { kind: 'full', text: expandItemMacro(USE_TEXT.lightFull, lantern ?? item) };
+      out = { kind: 'refuelled', text: expandItemMacro(USE_TEXT.lightRefuel, lantern) };
+    } else out = { kind: 'full', text: expandItemMacro(USE_TEXT.lightFull, lantern ?? item) };
   }
 
-  // The catch-all.
-  const moved = nextVariant(item);
-  const out = moved ? { kind: 'variant', variant: item.variant } : { kind: 'none' };
+  else {
+    // The catch-all.
+    const moved = nextVariant(item);
+    out = moved ? { kind: 'variant', variant: item.variant } : { kind: 'none' };
+  }
 
-  // The enchantment payload runs AFTER the ladder, on top of whatever
-  // it did (:1809-1816), and DFU closes the inventory window for it.
-  if (isEnchanted(item)) return { ...out, kind: 'enchanted', pending: true, closesWindow: true };
+  if (questItem) out = { ...out, questItem: true };
+  // AUDIT 22 F9: the enchantment payload runs AFTER THE WHOLE CHAIN
+  // (:1809-1816), on top of whatever the arm did - DFU's arms are one
+  // if/else ladder with no returns, so an enchanted potion is drunk
+  // AND fires its Used payload. Every arm here used to return early,
+  // which made this reachable only from the catch-all.
+  if (isEnchanted(item)) return { ...out, enchanted: true, pending: true, closesWindow: true };
   return out;
+}
+
+/** ItemCollection.RemoveOne over the port's list: decrement THIS
+ *  record's stack, or splice THIS record out. inventory.removeOne
+ *  takes a template index and finds the first match, which is the
+ *  wrong record whenever two items share a template (AUDIT 22 F5). */
+function removeOneRecord(list, item) {
+  const i = list.indexOf(item);
+  if (i < 0) return false;
+  if ((item.stackCount ?? 1) > 1) item.stackCount--;
+  else list.splice(i, 1);
+  return true;
 }

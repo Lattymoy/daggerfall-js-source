@@ -27,6 +27,12 @@ const ENTITY_FIELDS = [
   // them a load reset every biography answer's lasting effect.
   'biographyResistDiseaseMod', 'biographyResistMagicMod', 'biographyAvoidHitMod',
   'biographyResistPoisonMod', 'biographyFatigueMod', 'biographyReactionMod',
+  // AUDIT 22 F8: the guild TRAINING cooldown. DFU persists it one for
+  // one (SerializablePlayer.cs:126, :294) and the gate is a DIFFERENCE
+  // against it, so a save that dropped it reset the clock to 0 and a
+  // player could train every skill to its cap by saving and loading
+  // between sessions. Twelve hours of a law, undone by a reload.
+  'timeOfLastSkillTraining',
 ];
 
 /** AUDIT 17h F1: the ELEVEN social-group reputations DFU writes out
@@ -93,6 +99,23 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // only the MUTABLE columns need to travel. Three parallel arrays
   // beside a sorted id list - lossless, and a few KB rather than 366
   // whole records. Same shape of decision as legalRep above.
+  // AUDIT 22 F7: THE LIT LIGHT SOURCE. DFU writes lightSourceUID and
+  // relinks through Items.GetItem(uid) on load (SerializablePlayer.cs
+  // :151, :320). The port's entity carried a live OBJECT REFERENCE
+  // into entity.items and the envelope carried nothing, so a lit torch
+  // went out on every load - and worse, had the reference survived as
+  // a copy it could never have matched again, so UseItem's
+  // `LightSource == item` douse test would have been permanently
+  // false and the torch unquenchable.
+  //
+  // DEPARTURE (Ledger A): the port's items have no UID, so the INDEX
+  // into the items array travels instead. It is exact rather than
+  // approximate - snap.items is written and restored in order - and
+  // it is the same shape rebuildEquipState already uses to relink the
+  // equip table after a restore.
+  snap.lightSourceIndex = entity.lightSource
+    ? (entity.items ?? []).indexOf(entity.lightSource) : -1;
+
   snap.factionRep = entity.factionRep ? snapshotFactionRep(entity.factionRep) : null;
   // GuildMembership_v1, keyed by guild GROUP exactly as DFU keys it.
   snap.guildMemberships = entity.guildMemberships
@@ -156,6 +179,12 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // .cs:301, :355-368). Must run AFTER items are replaced, or the
   // table relinks to the discarded objects.
   rebuildEquipState(entity);
+  // AUDIT 22 F7: relink the lit light source to the RESTORED record,
+  // beside the equip table for the same reason - both are references
+  // into an items array that was just replaced. A snapshot older than
+  // this field carries none, which reads as "nothing lit".
+  const li = snap.lightSourceIndex ?? -1;
+  entity.lightSource = li >= 0 ? (entity.items[li] ?? null) : null;
   entity.activeEffects = snap.activeEffects.map(copyEffectEntry);
   // Missing on a pre-17h save: leave whatever the entity carries (a
   // fresh entity starts every group at zero, which is classic's own

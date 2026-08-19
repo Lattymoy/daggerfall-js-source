@@ -233,6 +233,12 @@ export class NativeInventoryWindow {
     else if (r.textId && this.hooks.rows) this.boxes = [{ rows: this.hooks.rows(r.textId) ?? [] }];
     else if (r.pending) this.boxes = [{ rows: [{ text: USE_PENDING[r.kind] ?? 'Nothing happens.', center: true }] }];
     if (r.kind === 'variant' && this.hooks.entity) refreshPaperDoll(this.hooks.entity);
+    // AUDIT 22 F9: `enchanted` is now a RIDER on the arm's own result
+    // rather than a kind that replaced it, so the message the arm
+    // produced still shows and the payload still closes the window.
+    if (r.enchanted && !r.text && !r.textId) {
+      this.boxes = [{ rows: [{ text: USE_PENDING.enchanted, center: true }] }];
+    }
     if (r.closesWindow) this._close();
   }
 
@@ -269,6 +275,10 @@ export class NativeInventoryWindow {
   _use(it, collection) {
     this._useResult(useItem(it, collection, {
       entity: this.hooks.entity,
+      // AUDIT 22 F4: the oil arm looks for its lantern in the LOCAL
+      // pack whatever list the click came from, so the bag travels
+      // separately from the list the item lives in.
+      localItems: this.hooks.items(),
       spellCount: () => this.hooks.entity?.spells?.length ?? 0,
       isEnchanted,
       nowMinute: this.hooks.nowMinute?.() ?? 0,
@@ -294,7 +304,10 @@ export class NativeInventoryWindow {
       // click on a LIGHT SOURCE does not equip it, it USES it - which
       // is how a torch is lit in play. The port flagged this from U8g
       // until the use arc existed.
-      if (isLightSource(it)) { this._use(it, this.hooks.items()); return; }
+      // AUDIT 22 F6: DFU calls UseItem(item) here with NO collection
+      // (:1980), so an equip-click cannot consume anything - only the
+      // light arm, which needs none, is reachable this way.
+      if (isLightSource(it)) { this._use(it, null); return; }
       // U8g: EquipItem live (the unequipped swap-outs stay in the
       // bag and reappear in the lists)
       if (this._refuseForbidden(it)) return;   // S23

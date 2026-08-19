@@ -172,22 +172,88 @@ test('U25: the catch-all is NextVariant, and an enchanted item runs its payload 
   assert.equal(useItem(shirt, [shirt], {}).kind, 'variant');
   const rock = { group: 'Gems', templateIndex: 0, name: 'Ruby' };
   assert.deepEqual(useItem(rock, [rock], {}), { kind: 'none' });
-  // the enchantment payload runs AFTER the ladder and closes the window
+  // AUDIT 22 F9: the payload runs after the WHOLE CHAIN, not only
+  // after the catch-all. DFU's arms are one if/else ladder with no
+  // returns, so an enchanted item does its ordinary thing AND fires
+  // its Used payload - and the ordinary thing must still be visible
+  // in the result, which is what the old `kind: 'enchanted'`
+  // overwrite destroyed.
   const ring = { group: 'Jewellery', templateIndex: 133, name: 'Ring' };
   const r = useItem(ring, [ring], { isEnchanted: () => true });
-  assert.equal(r.kind, 'enchanted');
+  assert.equal(r.enchanted, true);
   assert.equal(r.closesWindow, true);
+  assert.equal(r.kind, 'none', 'a ring has no ladder arm of its own');
+  // an enchanted TORCH still lights, and still fires the payload
+  const e = player();
+  const torch = { group: 'UselessItems2', templateIndex: TEMPLATES.Torch, name: 'Torch', currentCondition: 5 };
+  const lit = useItem(torch, [torch], { entity: e, isEnchanted: () => true });
+  assert.equal(lit.kind, 'lit', 'the arm still ran');
+  assert.equal(lit.enchanted, true, 'and so did the payload');
+  assert.equal(e.lightSource, torch);
+  // an enchanted POTION is drunk AND fires it
+  const bag = [{ group: 'UselessItems1', templateIndex: TEMPLATES.Glass_Bottle, name: 'Potion' }];
+  const drunk = useItem(bag[0], bag, { isEnchanted: () => true });
+  assert.equal(drunk.kind, 'potion');
+  assert.equal(drunk.enchanted, true);
+  assert.equal(bag.length, 0);
 });
 
-test('U25: a potion RECIPE cannot be used, and a quest item pops to the HUD', () => {
+test('AUDIT 22 F5: RemoveOne takes THIS record, not the first of its template', () => {
+  // Every potion is the same Glass_Bottle template and differs only by
+  // recipe, so removing "the first item with this template index"
+  // drinks the wrong bottle.
+  const a = { group: 'UselessItems1', templateIndex: TEMPLATES.Glass_Bottle, name: 'Cure Disease' };
+  const b = { group: 'UselessItems1', templateIndex: TEMPLATES.Glass_Bottle, name: 'Free Action' };
+  const bag = [a, b];
+  useItem(b, bag, {});
+  assert.deepEqual(bag, [a], 'the SECOND bottle was drunk');
+  // and a stack decrements rather than vanishing
+  const stack = { group: 'UselessItems1', templateIndex: TEMPLATES.Glass_Bottle, stackCount: 3 };
+  const bag2 = [stack];
+  useItem(stack, bag2, {});
+  assert.equal(stack.stackCount, 2);
+  assert.equal(bag2.length, 1);
+});
+
+test('AUDIT 22 F4: the oil arm searches the LOCAL pack, whatever list the click came from', () => {
+  // DFU reads localItems.GetItem(...) at :1791 - so oil clicked on a
+  // loot pile still refuels the lantern in your own bag.
+  const lantern = { group: 'UselessItems2', templateIndex: TEMPLATES.Lantern, name: 'Lantern', currentCondition: 0, maxCondition: 100 };
+  const oil = { group: 'UselessItems2', templateIndex: TEMPLATES.Oil, name: 'Oil', currentCondition: 20 };
+  const pile = [oil];          // the oil lives on the ground
+  const localItems = [lantern];   // the lantern is in the pack
+  const r = useItem(oil, pile, { localItems });
+  assert.equal(r.kind, 'refuelled');
+  assert.equal(lantern.currentCondition, 20);
+  assert.equal(pile.length, 0, 'and the bottle leaves the list it lived in');
+  // without the local pack there is no lantern to find
+  const oil2 = { group: 'UselessItems2', templateIndex: TEMPLATES.Oil, currentCondition: 20 };
+  assert.equal(useItem(oil2, [oil2], {}).kind, 'full');
+});
+
+test('U25: a potion RECIPE cannot be used', () => {
   const recipe = { group: 'MiscItems', templateIndex: TEMPLATES.Potion_recipe, name: 'Potion recipe' };
   assert.equal(useItem(recipe, [recipe], {}).text, USE_TEXT.cannotUseThis);
-  // a quest item pops back to the HUD unless it is a parchment or
-  // clothing - "usually incorrect (e.g. a letter to read)"
-  const letter = { group: 'UselessItems2', templateIndex: TEMPLATES.Parchment, questItem: true };
-  const bell = { group: 'ReligiousItems', templateIndex: 261, questItem: true };
-  assert.equal(useItem(letter, [letter], {}).popToHud, false);
-  assert.equal(useItem(bell, [bell], {}).popToHud, true);
+});
+
+test('AUDIT 22 F1: a QUEST item still runs the whole ladder', () => {
+  // DFU's quest block returns in ONE case: the quest system is
+  // WATCHING the item and it is neither parchment nor clothing. Every
+  // other quest item falls through to the ladder underneath - which
+  // is why a quest letter reads and a quest torch lights. The port
+  // returned for all of them.
+  const e = player();
+  const torch = { group: 'UselessItems2', templateIndex: TEMPLATES.Torch, name: 'Torch', currentCondition: 9, questItem: true };
+  const r = useItem(torch, [torch], { entity: e });
+  assert.equal(r.kind, 'lit', 'a quest torch lights');
+  assert.equal(e.lightSource, torch);
+  assert.equal(r.questItem, true, 'and the flag rides the result for the quest machine');
+  // a quest garment still cycles its variant
+  const cloak = { group: 'MensClothing', templateIndex: 154, variant: 0, questItem: true };
+  assert.equal(useItem(cloak, [cloak], {}).kind, 'variant');
+  assert.equal(cloak.variant, 1);
+  // and an ordinary item carries no such flag
+  assert.equal(useItem({ group: 'Gems', templateIndex: 0 }, [], {}).questItem, undefined);
 });
 
 test('U25: the %it macro takes the item\'s own name', () => {

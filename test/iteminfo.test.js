@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   INFO_TEXT, HELM_AND_SHIELD_MATERIAL_DISPLAY, armorShouldShowMaterial, itemInfoTextId,
@@ -156,3 +157,53 @@ test('U25: the four macros the port cannot compute fall back rather than printin
   assert.equal(/%/.test(out), false, out);
   assert.equal(out, 'Nothing Thing Thing by Anonymous');
 });
+
+test('AUDIT 22 F2: a multi-variant record reads ANY of its variants, with alignment', () => {
+  const ARENA2 = process.env.ARENA2_PATH;
+  if (!ARENA2 || !existsSync(join(ARENA2, 'TEXT.RSC'))) return;   // corpus-gated
+  const rsc = new TextRsc().load(new Uint8Array(readFileSync(join(ARENA2, 'TEXT.RSC'))));
+  // The rank refusal the guild popup shows has EIGHT, and the port
+  // drew variant 0 forever because linesById could not reach the rest.
+  assert.equal(rsc.variantCount(3100), 8);
+  const seen = new Set();
+  for (let v = 0; v < 8; v++) {
+    const rows = rsc.linesById(3100, v);
+    assert.ok(rows.length > 0, `variant ${v} is empty`);
+    assert.equal(/%|�/.test(rows.map((r) => r.text).join('')), false);
+    seen.add(rows.map((r) => r.text).join(' '));
+  }
+  assert.equal(seen.size, 8, 'all eight are distinct - the reader is not returning the same one');
+  // ...and it still carries the per-row alignment linesById established
+  assert.equal(typeof rsc.linesById(3100, 3)[0].center, 'boolean');
+  // A SINGLE-variant record is unchanged by the new path
+  assert.equal(rsc.variantCount(350), 1);
+  assert.deepEqual(rsc.variantLinesById(350, () => 0.5), rsc.linesById(350));
+  // the pick is bounded even at the top of the range
+  assert.deepEqual(rsc.variantLinesById(3100, () => 0.999999), rsc.linesById(3100, 7));
+  assert.deepEqual(rsc.variantLinesById(3100, () => 0), rsc.linesById(3100, 0));
+});
+
+test('AUDIT 22 F11: three item flags no producer mints yet', () => {
+  // itemInfo reads `artifact`, `azurasStar` and `oghmaInfinium`, all
+  // verbatim DFU branches - and NOTHING in src/ writes any of them, so
+  // the branches are unreachable in the running game and any test that
+  // hand-builds one describes a shape no producer makes (TEST THE
+  // SHAPE THE PRODUCER MINTS). Flagged at their sites rather than
+  // deleted: they are correct the moment artifacts are minted. This
+  // pin goes red on that day and sends its author to the flag.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const producers = walkSrc(root).filter((f) => !/systems\/(itemInfo|useItem|mysticism)\.js$/.test(f));
+  for (const flag of ['artifact', 'azurasStar', 'oghmaInfinium']) {
+    const writer = producers.find((f) => new RegExp(`${flag}\\s*:`).test(readFileSync(f, 'utf8')));
+    assert.equal(writer, undefined, `${flag} now has a producer (${writer}) - retire its flag`);
+  }
+});
+
+function walkSrc(root, dir = 'src', out = []) {
+  for (const e of readdirSync(join(root, dir))) {
+    const rel = `${dir}/${e}`;
+    if (statSync(join(root, rel)).isDirectory()) walkSrc(root, rel, out);
+    else if (e.endsWith('.js')) out.push(join(root, rel));
+  }
+  return out;
+}

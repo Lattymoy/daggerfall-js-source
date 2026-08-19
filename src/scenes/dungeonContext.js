@@ -618,7 +618,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       items: () => (playerEntity.items ??= []),
       entity: playerEntity,
       icons: { getTexture, uploadRecord, textures: renderer.textures },
-      rows: (id) => textRsc?.linesById(id) ?? [],
+      rows: (id) => textRsc?.variantLinesById(id) ?? [],   // AUDIT 22 F2
       nowMinute: () => Math.floor(classicMinutes),
       loot: lootItems ? { items: () => lootItems } : undefined,
       // lastPlayerFeet is written by the frame loop; a drop before the

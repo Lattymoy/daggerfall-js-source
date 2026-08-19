@@ -47,6 +47,12 @@ export const INFO_TEXT = Object.freeze({
  *  artifact never shows one either way. */
 export const HELM_AND_SHIELD_MATERIAL_DISPLAY = 0;
 export function armorShouldShowMaterial(item) {
+  // FLAGGED (AUDIT 22 F11): `artifact` is read here, on the weapon
+  // arm and - as `oghmaInfinium`/`azurasStar` - in three more places,
+  // and NOTHING in src/ mints any of them. The branches are verbatim
+  // and correct the moment artifacts are minted; until then they are
+  // unreachable, and a test that hand-builds one describes a shape no
+  // producer makes. Pinned both ways in test/iteminfo.test.js.
   if (item?.artifact) return false;
   const isHelmOrShield = isShieldTemplate(item?.templateIndex) || item?.templateIndex === TEMPLATES.Helm;
   if (isHelmOrShield) {

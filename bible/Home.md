@@ -306,13 +306,14 @@ combat line numbers below are refreshed with it.
 - `src/systems/guilds.js:127` - are FLAGGED to the quest slice.
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/itemInfo.js:5` - U8e's inventory shipped an INTERIM info panel that made up its own
-- `src/systems/itemInfo.js:74` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens...
-- `src/systems/itemInfo.js:160` - *  FLAGGED as a group - they land with their own arcs. */
+- `src/systems/itemInfo.js:50` - FLAGGED (AUDIT 22 F11): `artifact` is read here, on the weapon
+- `src/systems/itemInfo.js:80` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens...
+- `src/systems/itemInfo.js:166` - *  FLAGGED as a group - they land with their own arcs. */
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/save.js:8` - (foes, loot piles, action states, doors) is FLAGGED - dungeons
-- `src/systems/save.js:59` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:65` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
 - `src/systems/shopStock.js:152` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
@@ -325,6 +326,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/talk.js:99` - SpawnCityGuards(true) FLAGGED: the crime/guards slice mounts the response.
 - `src/systems/talkSession.js:21` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 - `src/systems/talkSession.js:77` - .replaceAll('%ra', race);   // honorific/race macros FLAGGED interim
+- `src/systems/useItem.js:230` - lantern's and refuses when it would overflow. FLAGGED: DFU
 - `src/ui/chargen.js:454` - *  (FLAGGED - the port has no FLIC decoder yet, so the next question
 - `src/ui/chargenArt.js:662` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/chargenArt.js:794` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
@@ -342,7 +344,7 @@ combat line numbers below are refreshed with it.
 - `src/ui/nativeInventory.js:102` - *  list to the cart's own 750kg collection. FLAGGED: Transportation
 - `src/ui/nativeInventory.js:116` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
 - `src/ui/nativeInventory.js:193` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-- `src/ui/nativeInventory.js:452` - FLAGGED: the hover fill is the mouse-move seam's, not this
+- `src/ui/nativeInventory.js:465` - FLAGGED: the hover fill is the mouse-move seam's, not this
 - `src/ui/nativeTalk.js:29` - INTERIM no-ops (their topic sources pend quests/work).
 - `src/ui/nativeTalk.js:180` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/nativeTalk.js:192` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
@@ -356,6 +358,82 @@ combat line numbers below are refreshed with it.
 ## Audits
 
 Newest first.
+
+**2026-08-19 - AUDIT 22, the parity pass over G3 + S26 + S27 + U23-U26.**
+Everything this arc shipped, re-read against the DFU source rather than
+against its own comments. Eleven findings, seven fixed and
+mutation-checked, three routed, one verified clean.
+
+FIXED, and every one is a departure the port INTRODUCED rather than a
+gap it inherited:
+
+- **F1 QUEST ITEMS NEVER RAN THE LADDER.** UseItem's quest block
+  returns in exactly ONE case - the quest system is WATCHING the item
+  and it is neither parchment nor clothing - and falls through for
+  every other, which is why a quest letter reads and a quest torch
+  lights. The port returned for all of them. With no quest machine
+  nothing is watching anything, so DFU's own answer is to fall
+  through; the flag now rides the result instead.
+- **F9 THE ENCHANTMENT PAYLOAD WAS UNREACHABLE.** DFU's arms are one
+  if/else ladder with NO returns, so `if (item.IsEnchanted)` at the
+  bottom runs on top of whatever the arm did - an enchanted potion is
+  drunk AND fires its Used payload. Every arm in the port returned
+  early, so only the catch-all could reach it, and `kind: 'enchanted'`
+  overwrote the arm's own outcome besides.
+- **F2 THIRTEEN RECORDS SHOWED ONE VARIANT FOREVER.** The guild and
+  inventory windows read TEXT.RSC through linesById, which is variant
+  0; DFU fetches nearly every message they draw with
+  GetRandomTokens. The rank refusal (3100) has EIGHT variants. Neither
+  existing reader could do it - plainText splits variants but loses
+  the per-row ALIGNMENT AUDIT 17g F2 established matters - so
+  linesById took a variant argument and variantLinesById picks.
+- **F7 A LIT TORCH WENT OUT ON EVERY LOAD**, and would have been
+  unquenchable if it had not. entity.lightSource is a live OBJECT
+  REFERENCE into entity.items and the envelope carried nothing; DFU
+  writes lightSourceUID and relinks through Items.GetItem. Had a copy
+  survived instead, UseItem's `LightSource == item` douse test could
+  never have matched again. The items array index travels (Ledger A -
+  the port has no UIDs) and relinks beside rebuildEquipState, which
+  solves the same problem for the same reason.
+- **F8 FREE UNLIMITED TRAINING.** timeOfLastSkillTraining did not
+  persist, and the 12-hour gate is a DIFFERENCE against it - so every
+  reload reset the clock to 0 and a player could train any skill to
+  its cap by saving and loading. DFU persists it one for one.
+- **F4** the oil arm searched the list the click came from; DFU reads
+  localItems, so oil used off a loot pile still refuels the lantern in
+  your own bag. **F5** the potion arm removed the first item sharing a
+  template index rather than THIS record - every potion is the same
+  Glass_Bottle and differs only by recipe, so it drank the wrong
+  bottle. **F6** the equip-click light path passed a collection DFU
+  does not.
+
+ROUTED, with their DFU members named in Port-Ledger C: **F10** the
+port keeps TWO classicMinutes counters and the guild windows read the
+interior host's, so a date is wrong by however long the player spent
+outdoors; **F11** three item flags (artifact, azurasStar,
+oghmaInfinium) that itemInfo and mysticism read and NO producer mints,
+flagged at their sites and pinned both ways so the day artifacts land
+their author is sent to the flag; **F12** lighting a torch changes
+nothing - EnablePlayerTorch is the whole consumer (a point light at
+the template's capacityOrTarget range, a per-tick condition burn, the
+"lightDies" message, the item consumed unless it is a lantern, and the
+guttering under condition 3).
+
+VERIFIED CLEAN, because each was a plausible defect worth ruling out:
+Temple.FreeHealing against a non-member (Guild.rank defaults to -1, so
+`healing <= rank` is false - the port's `?? -1` matches); G3's
+scaleByRank precedence (C# binds `/` tighter than `<<`, so the
+truncation really does happen before the multiply, and JS's int32 `>>`
+overflows the same way); and U23's claim that dungeons carry no
+StaticNPCs (blockPeopleRecords is parsed in the RMB path alone and no
+dungeon reader touches it).
+
+A NOTE ON THE PROCESS. AUDIT 18 F5's host sweep read ONE LINE for both
+its gate and its return, which was true while each host's gate was a
+one-liner. U26 gave the dungeon's a body and the pin silently stopped
+counting it - only its gates TOTAL caught that. A structural pin needs
+a structural scope: it reads the whole branch now, and only the frame
+loop's.
 
 **2026-08-19 - AUDIT 20, the parity pass over S25 + G1 + G2.** Numbered
 20 because AUDIT 19 is in flight on main (batch 1 landed; its Home.md

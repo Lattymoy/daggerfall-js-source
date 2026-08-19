@@ -436,7 +436,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // loaded here, once, so worldModes borrows them rather than opening
     // a second copy of each file.
     get factionDict() { return factions?.factionDict ?? null; },
-    lines: (id) => textRsc?.linesById(id) ?? [],
+    // AUDIT 22 F2: a RANDOM variant, because DFU shows nearly every
+    // one of these with GetRandomTokens - the rank refusal alone has
+    // eight, and the port drew the same one forever.
+    lines: (id) => textRsc?.variantLinesById(id, rolls) ?? [],
     ensureFactions: () => ensureLoaded(),
     say: (line) => hud.add(line),
     get overlayActive() { return !!overlay; },
