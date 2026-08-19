@@ -49,7 +49,7 @@ await page.evaluate(() => {
 });
 await press('F6');
 const worn = () => page.evaluate(() => (window.__playerEntity.equip?.slots ?? []).filter(Boolean).map((i) => i.name));
-const popup = () => page.evaluate(() => JSON.parse(window.__talk()).overlayPopup);
+const popup = () => page.evaluate(() => JSON.parse(window.__talk()).overlayBox);
 
 // the cuirass is first in the weapons-and-armor tab: PLATE, refused
 await click(163 + 9 + 25, 48 + 19);

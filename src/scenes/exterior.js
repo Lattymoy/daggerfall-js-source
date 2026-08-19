@@ -523,6 +523,8 @@ export async function bootExterior(canvas, renderer, params, status) {
         items: () => (playerEntity.items ??= []),
         entity: playerEntity,
         icons: { getTexture, uploadRecord, textures: renderer.textures },
+        rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
+        nowMinute: () => Math.floor(playerTicker.classicMinutes),
         onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
       }));
       return;
@@ -597,6 +599,10 @@ export async function bootExterior(canvas, renderer, params, status) {
       pos: it.person.pos.map((v) => Number(v.toFixed(2))),
     })).filter((x) => x.active));
     window.__talk = () => JSON.stringify(townTalk._debug());   // T3b probe surface
+    // U25: the inventory window's live message box (info, use, wagon,
+    // the drop-gold field) - the probe reads what the player is being
+    // told rather than only that a box exists.
+    window.__invBox = () => townTalk._debug().overlayBox;
     window.__chargenRace = () => townTalk._debug().overlayFlow?.race?.key ?? null;   // U10 probe surface
     window.__chargenConfirm = () => townTalk._debug().overlayFlow?.raceConfirm ?? null;   // U11 probe surface
     window.__chargenFlow = () => townTalk._debug().overlayFlow ?? null;   // S3e probe surface
@@ -750,6 +756,8 @@ export async function bootExterior(canvas, renderer, params, status) {
         entity: playerEntity,
               loot: { items: () => pile.items },
               icons: { getTexture, uploadRecord, textures: renderer.textures },
+              rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
+              nowMinute: () => Math.floor(playerTicker.classicMinutes),
               onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),
             }));
           }

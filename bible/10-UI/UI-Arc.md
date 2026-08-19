@@ -2461,3 +2461,80 @@ FLAGGED: the scroll bar does not drag (the two paging buttons and the
 keyboard cover the list), and DFU's ListBox selects on the first click
 and USES on the second, where the port picks straight through - a
 one-shot service list has nothing to preview.
+
+## U25 - POINT-AND-CLICK USE, and the real item info (2026-08-19)
+
+`src/systems/useItem.js` (DaggerfallInventoryWindow.UseItem :1661-1817
++ the DaggerfallUnityItem predicates and NextVariant),
+`src/systems/itemInfo.js` (ItemHelper.GetItemInfo :748-817 + the
+DaggerfallUnityItemMCP macros), and the wiring in
+`src/ui/nativeInventory.js`. `test/useitem.test.js` (12),
+`test/iteminfo.test.js` (9), `test/nativeinventory.test.js` (+4).
+
+**The Use button has existed since U8d and did nothing.** The mode
+selected and every click fell through - the header said so, twice, for
+five slices. This is the branch table behind it.
+
+**The ladder's ORDER is the law.** A book is checked before "is it a
+potion", a light source before the oil that refuels it, and the
+catch-all is NextVariant - which is why clicking an ordinary shirt in
+Use mode CYCLES ITS COLOUR rather than doing nothing. Only twenty-four
+garments can do that; DFU names them by hand and calls four of the
+others "unchangeable" in the enum itself.
+
+**A light source is the one item Equip mode does not equip.** DFU's
+local-list click handler routes `IsLightSource` to `UseItem` from the
+EQUIP arm (:1976-1985), which is how a torch is lit in play. The port
+flagged this from U8g and it is closed here. `IsLightSource` also
+spans two groups - the Holy candle is in ReligiousItems, not beside
+the torch - which is the sort of thing a hurried port drops.
+
+**THE DRUG BUG, preserved.** DFU's drug arm is
+`InflictPoison(player, player, (Poisons)item.TemplateIndex + 66, true)`
+under a comment reading "Drug poison IDs are 136 through 139. Template
+indexes are 78 through 81, so add to that." 78 + 66 is 144, not 136 -
+the constant wants to be 58. `Poisons` has no member 144, so
+`GetClassicPoisonEffectKey` formats "Poison-144", nothing is
+registered under that key and `AssignBundle` instantiates nothing:
+**using a drug in Daggerfall Unity does nothing at all, silently, and
+eats the item.** Ported verbatim, recorded in Ledger B, and pinned so
+a later reader cannot quietly "fix" it. `startPoison` now refuses an
+unregistered type rather than indexing past its own timing tables -
+which is the faithful translation of "no effect under that key", not a
+guard bolted on.
+
+**The info panel is real at last.** U8e invented three lines (name /
+weight / value). DFU picks one of THIRTEEN TEXT.RSC records by group
+and template and fills its macros from the item, so a sword, a shield,
+an arrow, a soul trap and a letter of credit all read differently -
+which is most of what the panel is for. An arrow's record has no
+condition line at all; a helm and a shield never show their material
+under classic's own setting default; an artifact never shows one at
+all. Both of DFU's surfaces now draw: the Info-mode click box on the
+U11 parchment (with TEXT.RSC 1016, "Item powers", queued behind it for
+an enchanted item), and the small `itemInfoPanel` at (223,145,37,32) -
+a 50x37 cutout of ITEM00I0 at `TextScale` 0.43 with `ExtraLeading` 3,
+which needed a source-rect-to-destination-rect blit
+(`nativePanel.drawImgCrop`) the port did not have.
+
+**WAGON and GOLD were never mode buttons.** They ACT (:1234-1285), so
+selecting them as a mode was always wrong. The wagon answers "You
+don't own a wagon." - which is the RIGHT answer and not a placeholder,
+since the port has no Transportation items - and the gold button opens
+the drop-gold field, TEXT.RSC 25, numeric and eight characters, which
+REFUSES an amount below 1 or above what the player carries rather than
+clamping it.
+
+**THE FOUR HOSTS, named.** `exterior.js` and `world.js` build the
+native window (twice each - bare, and over a loot pile), and all four
+sites are swept by a test, because a hook added to three of them is
+exactly what THE ONE CONSTRUCTION SEAM exists to catch.
+`worldModes.js` opens no inventory of its own. `dungeonContext.js`
+STILL CONSTRUCTS the old keyed `ui/inventory.js` window, so a dungeon
+has no Use mode, no paperdoll and no real info panel - the last host
+without the real inventory. Pinned both ways and routed to U26.
+
+**Probed live**: the info box reads "Book by Anonymous | Worth: 2500
+gold | Weight: 6 kilograms" off record 1009 with a stack's weight; an
+equip-click lights a torch and a use-click douses it; a shirt cycles
+its variant; the wagon says its line.

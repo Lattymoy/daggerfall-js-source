@@ -453,7 +453,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       overlayFlow: overlay?.flow ?? null,   // U10: the chargen probe reads the live flow
       npcName: overlay?.hooks?.npcName ?? null,   // U8b: the native window's name plate
       hooks: overlay?.hooks ?? null,              // the live session seam (question/answer)
-      overlayPopup: overlay?.popup ?? null,   // S23: the equip-refusal probe reads the popup
+      // U25: the inventory's box queue replaced the interim popup, so
+      // the probe surface follows it - the equip refusal that S23
+      // watched here is now a real TEXT.RSC box in this queue.
+      overlayBox: (overlay?.boxes?.[0]?.rows ?? []).map((r) => r.text ?? r).join(' | ') || null,
     }),
   };
 }

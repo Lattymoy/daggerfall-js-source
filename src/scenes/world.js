@@ -678,6 +678,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         items: () => (playerEntity.items ??= []),
         entity: playerEntity,
         icons: { getTexture, uploadRecord, textures: renderer.textures },
+        rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
+        nowMinute: () => Math.floor(playerTicker.classicMinutes),
         onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
       }));
       return;
@@ -969,6 +971,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         entity: playerEntity,
                 loot: { items: () => pile.items },
                 icons: { getTexture, uploadRecord, textures: renderer.textures },
+                rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
+                nowMinute: () => Math.floor(playerTicker.classicMinutes),
                 onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),
               }));
             }

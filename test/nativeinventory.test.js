@@ -2,8 +2,12 @@
 // filter law, and the shared ItemListScroller component.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { NativeInventoryWindow, INV_RECTS, TABS, filterByTab, isIngredientTemplate } from '../src/ui/nativeInventory.js';
+import { NativeInventoryWindow, INV_RECTS, TABS, filterByTab, isIngredientTemplate, NO_WAGON_TEXT
+} from '../src/ui/nativeInventory.js';
 import { scrollerHit, applyScroll, LIST_SLOTS, CELL_X, ARROW_H, DOWN_ARROW_Y } from '../src/ui/itemScroller.js';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
 
@@ -32,16 +36,20 @@ test('nativeInventory: the verbatim DFU rects + the tab/mode click machine', () 
   assert.equal(w.tab, 'ingredients');
   assert.ok(w.click(0 + 5, 5));
   assert.equal(w.tab, 'weapons');
-  // mode buttons select (wagon/gold consumed no-ops keep the mode)
+  // mode buttons select; U25: WAGON and GOLD are not modes at all -
+  // they ACT, so the mode is unchanged and a box opens
   assert.ok(w.click(230, 40));
   assert.equal(w.mode, 'info');
   assert.ok(w.click(230, 16));      // wagon
   assert.equal(w.mode, 'info');
-  // info-mode slot click pops the interim panel; the next click clears
+  assert.equal(w.topBox.rows[0].text, NO_WAGON_TEXT);
+  assert.ok(w.click(163 + CELL_X + 5, 48 + 5));   // the box eats the click
+  assert.equal(w.topBox, null);
+  // info-mode slot click opens the real info box; the next click clears
   assert.ok(w.click(163 + CELL_X + 5, 48 + 5));
-  assert.ok(w.popup && w.popup[0] === 'Dagger');
+  assert.ok(w.topBox, 'an info box opened');
   assert.ok(w.click(163 + CELL_X + 5, 48 + 5));
-  assert.equal(w.popup, null);
+  assert.equal(w.topBox, null);
   // outside every rect: not consumed; exit closes; Escape too
   assert.equal(w.click(10, 100), false);
   assert.ok(w.click(240, 185));
@@ -88,4 +96,98 @@ test('itemScroller: the shared rail law (hit kinds + clamped paging)', () => {
   assert.equal(applyScroll(0, 'page-down', 10), LIST_SLOTS);
   assert.equal(applyScroll(9, 'page-down', 10), 10 - LIST_SLOTS);
   assert.equal(applyScroll(3, 'down', 3), 0);   // short lists never scroll
+});
+
+// ---------------------------------------------------------------------------
+// U25: the Use mode, and the four construction sites that must agree.
+// ---------------------------------------------------------------------------
+
+test('U25: Use mode uses, and an EQUIP click on a light source uses too', () => {
+  const torch = { group: 'UselessItems2', templateIndex: 247, name: 'Torch', currentCondition: 10 };
+  const entity = { isPlayer: true, activeEffects: [], equip: { slots: {} } };
+  const bag = [torch];
+  const w = new NativeInventoryWindow({ items: () => bag, icons: ICONS, entity });
+  // the default mode is EQUIP, and DFU routes a light source there to
+  // UseItem rather than EquipItem (:1976-1985) - which is how a torch
+  // is lit in play
+  assert.equal(w.mode, 'equip');
+  // a torch is neither weapon/armor, magic nor an ingredient, so it
+  // lives on the Clothing & Misc tab (AddLocalItem's `else`)
+  w.click(163 + 5, 5);
+  assert.equal(w.tab, 'clothing');
+  w.click(163 + CELL_X + 5, 48 + 5);
+  assert.equal(entity.lightSource, torch, 'lit from an EQUIP click');
+  assert.ok(w.topBox.rows[0].text.startsWith('You light'));
+  w.click(0, 0);   // dismiss
+  // and Use mode douses it
+  w.click(230, 108);            // the use button
+  assert.equal(w.mode, 'use');
+  w.click(163 + CELL_X + 5, 48 + 5);
+  assert.equal(entity.lightSource, null);
+});
+
+test('U25: the gold button drops gold into the remote pile, refusing bad amounts', () => {
+  const gold = { group: 'Currency', name: 'Gold pieces', templateIndex: 276, stackCount: 500 };
+  // (the gold button acts wherever the lists are pointing)
+  const bag = [gold];
+  const entity = { isPlayer: true, items: bag };
+  const w = new NativeInventoryWindow({ items: () => bag, icons: ICONS, entity });
+  w.click(230, 130);            // the gold button
+  assert.equal(w.topBox.field, true);
+  assert.equal(w.goldEntry, '0', 'TextBox.Text = "0"');
+  // 0 is refused outright - DFU returns without clamping
+  w.input('Enter');
+  assert.equal(gold.stackCount, 500);
+  // so is more than you carry
+  w.click(230, 130);
+  w.goldEntry = '9999';
+  w.input('Enter');
+  assert.equal(gold.stackCount, 500);
+  // a real amount lands in the remote pile
+  w.click(230, 130);
+  w.goldEntry = '120';
+  w.input('Enter');
+  assert.equal(gold.stackCount, 380);
+  assert.equal(w._remote().find((it) => it.group === 'Currency')?.stackCount, 120);
+});
+
+test('U25 / THE ONE CONSTRUCTION SEAM: all four inventory sites pass the same hooks', () => {
+  // Four call sites build this window - both exterior hosts, each
+  // twice (bare, and over a loot pile) - and a hook added to three of
+  // them is exactly the failure this rule exists for. The window has
+  // no execution coverage in node, so the seam is read.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const REQUIRED = ['items:', 'entity:', 'icons:', 'rows:', 'nowMinute:'];
+  let sites = 0;
+  for (const f of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
+    const src = readFileSync(join(root, f), 'utf8');
+    let i = 0;
+    for (;;) {
+      const j = src.indexOf('new NativeInventoryWindow({', i);
+      if (j < 0) break;
+      sites++;
+      const block = src.slice(j, src.indexOf('}));', j));
+      for (const hook of REQUIRED) {
+        assert.ok(block.includes(hook), `${f} site ${sites} is missing ${hook}`);
+      }
+      i = j + 1;
+    }
+  }
+  assert.equal(sites, 4, 'the number of construction sites changed - re-read this rule');
+});
+
+test('U25: the dungeon host is the ONE that still opens the old keyed inventory', () => {
+  // THE FOUR HOSTS RULE. exterior.js and world.js build the native
+  // window; worldModes mounts them and has no inventory of its own;
+  // dungeonContext.js still constructs ui/inventory.js's keyed
+  // InventoryWindow, so a dungeon has no Use mode, no paperdoll and no
+  // real info panel. Recorded in the Ledger and pinned BOTH ways, so
+  // the day it is swapped this test sends its author to update the
+  // record.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const dungeon = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
+  assert.ok(dungeon.includes('new InventoryWindow('), 'the dungeon still uses the keyed window');
+  assert.equal(dungeon.includes('new NativeInventoryWindow('), false);
+  const modes = readFileSync(join(root, 'src/scenes/worldModes.js'), 'utf8');
+  assert.equal(modes.includes('NativeInventoryWindow'), false, 'the interior host opens none');
 });
