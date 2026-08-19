@@ -1346,3 +1346,56 @@ Only Arkay discounts curing; only the Fighters Guild alters rewards
 and repair costs; only a temple has a library, at its own rank.
 
 13 mutations run, 13 killed.
+
+## S26 - MYSTICISM: the effect library's empty school
+
+2026-08-19. The other five schools stood at 96%, 96%, 75%, 50% and 22%
+when this landed. Mysticism was 0 of 10, and the reason is structural:
+NOT ONE of its ten effects supports MAGNITUDE. They do not fit the
+"roll a magnitude and apply it" ladder applySpell grew around - they
+open doors, destroy nearby enemies, gag a caster, fill a soul gem.
+Each is its own payload, so the school got its own module.
+
+All ten classic keys are checked against the same DFU extraction the
+coverage measurement uses: 10 of 10.
+
+**Open and Lock are asymmetric, and that is the law.** Open is an
+ARMED effect - the chance rolls at CAST, the caster is told "Ready to
+open.", and the payload waits for them to activate a door. It yields a
+lock only to a caster whose LEVEL REACHES its value ("unlocks chest or
+door to lock-level of caster"), and a door it fails to beat stays shut.
+An item cast, and the Skeleton's Key, skip the roll entirely - and the
+Key ignores the level rule too, so it opens even a magical lock. LOCK
+has no level test at all: it simply imposes the caster's own level,
+and refuses an already-locked door rather than deepening it. A level-9
+caster cannot strengthen a level-3 lock.
+
+**Dispel Undead and Daedra DESTROY, they do not kill.** DFU's own
+comment: "just like classic, dispel simply destroys serializable enemy
+object in scene - target is not killed and will drop no loot. This can
+break quests if used carelessly." Ported as such, with the chance
+rolled PER TARGET rather than once for the group.
+
+**Soul Trap fills Azura's Star first**, wherever it sits in the pack -
+the reusable artifact takes the soul before any ordinary gem - and
+azurasStarOnly refuses to fall back at all.
+
+**Silence** blocks a cast that COSTS spell points and only that: DFU
+guards with `!noSpellPointCost && SilenceCheck()`, so an item cast or a
+free effect fires through a silence. DFU checks it in two places, at
+READY and at CAST, and both clear the readied spell.
+
+FLAGGED, by name, per THE FOUR HOSTS RULE: nothing here is wired into
+a host. Silence needs the readied-spell gate and Open/Lock need the
+door-activation path in ALL FOUR of scenes/exterior.js, scenes/world.js,
+scenes/worldModes.js and scenes/dungeonContext.js. The predicates are
+the shape those hosts will call; none is called today.
+
+Three effects also own a WINDOW in DFU - Dispel Magic picks a bundle,
+Create Item picks an item, Teleport picks and recalls an anchor - and
+those are the UI arc's. Where the law stands without its window it is
+stated: Dispel Magic's validity rule is a pure predicate over the
+caster's live bundles (a Spell or a HeldMagicItem, showing an icon -
+never a disease or a poison).
+
+12 mutations run, 12 killed.

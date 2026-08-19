@@ -284,6 +284,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).
+- `src/systems/mysticism.js:23` - // FLAGGED, by name, per THE FOUR HOSTS RULE: nothing here is wired
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/save.js:8` - (foes, loot piles, action states, doors) is FLAGGED - dungeons
 - `src/systems/save.js:59` - (playerEntity's INTERIM skills: 30) - spreading it threw.
