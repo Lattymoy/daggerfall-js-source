@@ -12,6 +12,9 @@ import { raceByKey } from '../systems/races.js';
 // MensClothing Casual/Formal cloak + WomensClothing Casual/Formal cloak.
 const CLOAK_TEMPLATES = new Set([154, 155, 191, 192]);
 
+// Weapons.Arrow - the one weapon ApplyWeaponMaterial never sees.
+const ARROW_TEMPLATE = 131;
+
 export const isCloak = (template) => CLOAK_TEMPLATES.has(template.index);
 
 export function resolvePaperdollRecord(template, variant = 0) {
@@ -77,5 +80,17 @@ export function playerArchiveFor(item, template, { gender = 'male', race = 'Bret
     return base === 0 ? 0 : base + morph;
   }
   if (item.group === 'Armor') return armorArchiveByMorphology(gender, morph);
+  if (item.group === 'Weapons') {
+    // ApplyWeaponMaterial's tail (ItemBuilder.cs:408-417): "Female
+    // characters use archive - 1 (i.e. 233 rather than 234) for
+    // weapons". CreateWeapon/CreateRandomWeapon route every NON-arrow
+    // weapon through it; the arrow branch sets stackCount/condition/
+    // material and never calls it. AUDIT 18: the rule was ported into
+    // a private copy in characters/weapons.js that nothing minting a
+    // real weapon ever called, so every female character drew the
+    // male weapon art.
+    if (item.templateIndex === ARROW_TEMPLATE) return base;
+    return gender === 'female' ? base - 1 : base;
+  }
   return base;
 }

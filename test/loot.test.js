@@ -65,10 +65,13 @@ test('loot: level split (C1 scales, C3 flat), arrows, books, gender clothing', (
   assert.equal(arrows.material, 0);
   const armor = createRandomArmor(1, seq(0, 0.5));    // piece 0 = Cuirass(102), leather
   assert.equal(armor.templateIndex, 102);
-  // K: BK 5 - roll .04 hits -> book template 277 variant floor(.5*4)=2
+  // K: BK 5 - roll .04 hits -> book template 277. AUDIT 18: the
+  // variant is Range(0, book.TotalVariants) and template 277 has
+  // variants 2, so floor(.5*2) = 1 (it read floor(.5*4) = 2, an
+  // out-of-range variant, until the fix).
   const k = generateItems('K', { level: 1, gender: 'female' },
     seq(0, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.04, 0.5, 0.99, 0.99));
   const book = k.find((i) => i.group === 'Books');
-  assert.ok(book && book.templateIndex === BOOK_TEMPLATE && book.variant === 2);
+  assert.ok(book && book.templateIndex === BOOK_TEMPLATE && book.variant === 1);
   assert.equal(generateItems('ZZ', { level: 1, gender: 'male' }, seq(0)).length, 0);   // unknown key -> '-'
 });
