@@ -71,11 +71,32 @@
 // Anything outside this vocabulary throws. A reader that decodes most of an
 // archive and says so is worth more than one that silently emits garbage.
 //
+// HOW STRONG THE EVIDENCE ACTUALLY IS (AUDIT 19 F1 - this used to overstate it)
+//   The byte-exact gate - every one of the 1286 tracks consuming to its
+//   end-of-track meta exactly at the next track's offset - was described here
+//   and in the manifest as proving all the 0xFE sizes. It does not. Measured,
+//   by sweeping the sizes and re-decoding the whole archive:
+//
+//     0x15 = 7        DETERMINED by the gate. Size 6 makes 130 of 131 songs
+//                     throw, so this one really is pinned by byte alignment.
+//     0x10 = 8 + len  DETERMINED likewise (its length byte is self-checking).
+//     0x14 = 3        NOT determined by the gate: sizes 1 and 2 also land all
+//                     1286 tracks byte-exactly. What separates them is a
+//                     SECOND, stronger invariant - with size 3, 123 of 131
+//                     songs have every track ending on the same tick; with 1
+//                     or 2 that collapses to 4 of 131. Tracks of one song are
+//                     meant to end together, so 3 is the reading.
+//     0x12, 0x13 = 3  NOT determined by EITHER check. Both appear only in
+//                     TAVERN.HMI, once each, so the archive carries almost no
+//                     evidence about them; several sizes decode it identically.
+//                     These two are an ASSUMPTION, not a measurement, and are
+//                     recorded as one rather than dressed up as proven.
+//
 // NOT DECODED, AND SAID SO
 //   - The 174..180 byte track header past the three fields above, the track
-//     prologue records, and the payload of every 0xFE event. Their SIZES are
-//     proven (all 1286 tracks land byte-exactly on their end-of-track meta at
-//     the next track's offset), their MEANING is not. Raw bytes are exposed.
+//     prologue records, and the payload of every 0xFE event. Their MEANING is
+//     unknown; their sizes are evidenced to the degrees set out above. Raw
+//     bytes are exposed.
 //   - The song header words at 0x0D6/0x0F4 are derived from the track count, so
 //     they carry no information; the rest of the 370-byte song header is zero
 //     or constant across the archive.

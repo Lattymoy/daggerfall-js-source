@@ -31,7 +31,8 @@ import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../systems/advancement.js';
 import { drawText, measureText } from './text.js';
-import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, SCREEN_DIM } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
+import { drawMenuBackdrop } from './chargenArt.js';
 import { maxFatigue, liveStat } from '../systems/statMods.js';
 import { templateByIndex } from '../systems/itemTemplates.js';
 
@@ -157,7 +158,15 @@ export class CharSheet {
     if (!_art) return this._drawFallback(renderer, canvas, font, s);
     const e = this.entity;
     const m = nativeMetrics(canvas);
-    renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, SCREEN_DIM);
+    // AUDIT 19 F2: OPAQUE BLACK, not a dim. DaggerfallBaseWindow's
+    // constructor sets `parentPanel.BackgroundColor = Color.black`
+    // (DaggerfallBaseWindow.cs:40) - ScreenDimColor is used only by the
+    // handful of windows that explicitly override it, and this is not one.
+    // Drawing a 50% dim here left the letterbox showing the world at half
+    // brightness around the panel, which is the SAME defect U21 fixed for
+    // the menu, U21b for chargen and U22 for the splash. Fourth, fifth and
+    // sixth instance; one shared helper now.
+    drawMenuBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, 0, 0);
     // The verbatim label geometry (DaggerfallCharacterSheetWindow)
     const label = (text, x, y, opts) => shadowText(renderer, font, String(text), m, x, y, opts);

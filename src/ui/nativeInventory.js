@@ -43,7 +43,8 @@
 // IsLightSource branch of an Equip click), and wagon/gold as
 // consumed no-ops (no wagon owned; letter-of-credit pends).
 
-import { loadImg, nativeMetrics, drawImg, drawImgSub, SCREEN_DIM, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawImgSub, shadowText } from './nativePanel.js';
+import { drawMenuBackdrop } from './chargenArt.js';
 import { addItem, isEnchanted } from '../systems/inventory.js';
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, FORBIDDEN_EQUIPMENT_TEXT_ID } from '../systems/equip.js';   // S23
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
@@ -273,7 +274,15 @@ export class NativeInventoryWindow {
   draw(renderer, canvas, font) {
     if (!_art) { this._close(); return; }
     const m = nativeMetrics(canvas);
-    renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, SCREEN_DIM);
+    // AUDIT 19 F2: OPAQUE BLACK, not a dim. DaggerfallBaseWindow's
+    // constructor sets `parentPanel.BackgroundColor = Color.black`
+    // (DaggerfallBaseWindow.cs:40) - ScreenDimColor is used only by the
+    // handful of windows that explicitly override it, and this is not one.
+    // Drawing a 50% dim here left the letterbox showing the world at half
+    // brightness around the panel, which is the SAME defect U21 fixed for
+    // the menu, U21b for chargen and U22 for the splash. Fourth, fifth and
+    // sixth instance; one shared helper now.
+    drawMenuBackdrop(renderer, canvas);
     drawImg(renderer, _art.base, m, 0, 0);
     // the selected tab + action mode: the INVE01I0 subrect back over
     // the base (DFU's GetSubTexture highlight)

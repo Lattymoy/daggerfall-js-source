@@ -281,16 +281,16 @@ combat line numbers below are refreshed with it.
 - `src/ui/messageBox.js:35` - FLAGGED: the scrolling variant (a label taller than MaxTextHeight
 - `src/ui/messageBox.js:153` - so the strip never rides higher than that. FLAGGED as a
 - `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
-- `src/ui/nativeInventory.js:82` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
-- `src/ui/nativeInventory.js:156` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-- `src/ui/nativeInventory.js:168` - INTERIM info panel: name/weight/value (DFU's 1016 info text
-- `src/ui/nativeInventory.js:198` - use: FLAGGED - the use arc pends
-- `src/ui/nativeInventory.js:254` - 'use' -> UseItem FLAGGED with the light-source/use arc
+- `src/ui/nativeInventory.js:83` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
+- `src/ui/nativeInventory.js:157` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
+- `src/ui/nativeInventory.js:169` - INTERIM info panel: name/weight/value (DFU's 1016 info text
+- `src/ui/nativeInventory.js:199` - use: FLAGGED - the use arc pends
+- `src/ui/nativeInventory.js:255` - 'use' -> UseItem FLAGGED with the light-source/use arc
 - `src/ui/nativeTalk.js:29` - INTERIM no-ops (their topic sources pend quests/work).
-- `src/ui/nativeTalk.js:179` - lands with the Tell-me-about slice (FLAGGED).
-- `src/ui/nativeTalk.js:191` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
+- `src/ui/nativeTalk.js:180` - lands with the Tell-me-about slice (FLAGGED).
+- `src/ui/nativeTalk.js:192` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
 - `src/ui/nativeTrade.js:16` - scroll. FLAGGED loud: the basket + mode-action flow (DFU
-- `src/ui/nativeTrade.js:68` - player's own gear. The REMOTE (shelf) list borrows it, FLAGGED at
+- `src/ui/nativeTrade.js:69` - player's own gear. The REMOTE (shelf) list borrows it, FLAGGED at
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord
 - `src/ui/paperDoll.js:33` - INTERIM loud: Breton male face 0 until chargen fronts identity.
 - `src/ui/paperDoll.js:62` - table, the loud INTERIM the U8f/U8g records flagged.

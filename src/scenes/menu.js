@@ -48,6 +48,18 @@ export async function runMenu(canvas, renderer, status) {
       const py = (e.clientY - r.top) * (canvas.height / r.height);
       const action = win.click(canvas, px, py);
       if (!action) return;                      // consumed, but not a button
+      if (action === 'load' && !hasSavedGame()) {
+        // AUDIT 19 F3: LOAD with no save used to fall through and silently
+        // START A NEW GAME - the boot set `load`, quickLoad found nothing,
+        // printed "No saved game." into a HUD nobody was looking at yet,
+        // and chargen came up as if NEW GAME had been pressed. DFU's Load
+        // opens a save list, which is simply empty; it never starts a game
+        // you did not ask for. The port has no save list yet, so the
+        // honest equivalent is to say so and stay on the menu.
+        status('no saved game');
+        console.log('[menu] Load Game: no quicksave to load');
+        return;
+      }
       if (action === 'exit') {
         // DFU's exit quits the application (DaggerfallStartWindow.cs:60).
         // A browser tab cannot close itself unless script opened it, so

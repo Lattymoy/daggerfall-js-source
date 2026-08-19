@@ -479,3 +479,30 @@ test('AUDIT 19 F5: the MENU blacks its own letterbox', () => {
     'covering the WHOLE canvas - a 320x200-sized quad leaves the bars showing');
   assert.deepEqual(quads[0].color, [0, 0, 0, 1], 'and it is OPAQUE black, not a dim');
 });
+
+test('AUDIT 19 F2: EVERY native window blacks its letterbox - the rule, not a list', () => {
+  // This defect has now been found FOUR times: the menu (U21), chargen
+  // (U21b), the splash (U22) and finally the char sheet, inventory, talk
+  // and trade windows - which drew DaggerfallUI.ScreenDimColor (a 50% dim)
+  // where DaggerfallBaseWindow.cs:40 sets `parentPanel.BackgroundColor =
+  // Color.black`, OPAQUE. ScreenDimColor is used only by the few windows
+  // that explicitly override it, and none of these is one.
+  //
+  // So this is a RULE, not four more spot checks: a window that draws the
+  // native panel must first cover the WHOLE canvas in opaque black, and
+  // the only sanctioned way to do that is the one shared helper.
+  const WINDOWS = [
+    'src/ui/charsheet.js', 'src/ui/nativeTalk.js',
+    'src/ui/nativeTrade.js', 'src/ui/nativeInventory.js',
+    'src/ui/startWindow.js', 'src/ui/titleScreen.js', 'src/ui/videoPlayer.js',
+  ];
+  for (const f of WINDOWS) {
+    const text = readFileSync(f, 'utf8');
+    const backdrop = /drawMenuBackdrop\(renderer/.test(text)
+      || /drawScreenQuad\(null, \{ x: 0, y: 0, w: canvas\.width, h: canvas\.height \}, undefined, \[0, 0, 0, 1\]\)/.test(text);
+    assert.ok(backdrop, `${f} draws the native panel with no opaque backdrop`);
+    // And nobody may go back to the dim for a PARENT panel.
+    assert.ok(!/undefined, SCREEN_DIM\)/.test(text),
+      `${f}: ScreenDimColor is not DaggerfallBaseWindow's parent panel - that is Color.black`);
+  }
+});

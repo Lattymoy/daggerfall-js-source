@@ -589,3 +589,128 @@ test('AUDIT 19 F14: the day seed is pinned where it actually DISCRIMINATES', asy
   srand(day);
   assert.equal(here, rand() % DUNGEON_SONGS.length);
 });
+
+// ---------------------------------------------------------------------------
+// AUDIT 19 F7/F8: the scheduler's two time faults. Both need a controllable
+// clock, so the AudioContext is a stub and _voice is replaced with a recorder
+// - everything under test here is the scheduling arithmetic, which is ours
+// and is the part that can silently ruin a song.
+// ---------------------------------------------------------------------------
+
+const fakeCtx = () => ({ currentTime: 0, sampleRate: 44100 });
+
+/** A SongPlayer whose voices are recorded rather than sounded, and whose
+ *  pump WE drive - play() arms a real setInterval, which would keep the
+ *  test process alive and pump against a clock that never moves. */
+async function recordingPlayer(song) {
+  const { SongPlayer } = await import('../src/systems/songPlayer.js');
+  const ctx = fakeCtx();
+  const p = new SongPlayer(ctx);
+  p._ensureMaster = () => {};
+  const scheduled = [];
+  p._voice = (e, when) => scheduled.push({ tick: e.tick, when });
+  const start = () => {
+    p.play(song);
+    clearInterval(p._timer);          // we pump by hand from here
+    p._timer = null;
+  };
+  return { p, ctx, scheduled, start };
+}
+
+/** A synthetic song: one note every 480 ticks at 1ms/tick. */
+const syntheticSong = (notes = 200) => ({
+  secondsPerTick: 0.001,
+  durationTicks: notes * 480,
+  events: Array.from({ length: notes }, (_, i) => ({
+    tick: i * 480, type: 'noteOn', channel: 0, note: 60, velocity: 100, duration: 240,
+  })),
+});
+
+test('AUDIT 19 F8: a stalled tab never schedules a note IN THE PAST', async () => {
+  const song = syntheticSong();
+  const { p, ctx, scheduled, start } = await recordingPlayer(song);
+
+  start();
+  const before = scheduled.length;
+  assert.ok(before > 0, 'the first window scheduled something');
+
+  // The tab is throttled for a full second - far beyond the 0.25s lookahead.
+  ctx.currentTime += 1.0;
+  p._pump();
+
+  // WebAudio fires a start time that has already passed IMMEDIATELY, so a
+  // scheduler that walked the gap would dump ~75 notes into one instant.
+  // Only the notes scheduled AFTER the stall are under test - the ones
+  // from before it were correctly in the future when they were queued.
+  const late = scheduled.slice(before).filter((s) => s.when < ctx.currentTime - 1e-9);
+  assert.deepEqual(late, [], `${late.length} notes were scheduled in the past`);
+
+  // And it must not silently stop playing either - it resumes at "now".
+  assert.ok(scheduled.length > before, 'it kept scheduling after the stall');
+  p.stop();
+});
+
+test('AUDIT 19 F7: the loop seam is scheduled AHEAD, not squashed', async () => {
+  const song = syntheticSong(6);                       // ends at tick 2880
+  const { p, ctx, scheduled, start } = await recordingPlayer(song);
+  start();
+
+  // Past the end AND past the ring-out grace (the rewind waits one full
+  // second after the last tick so a held note can finish).
+  ctx.currentTime += song.durationTicks * song.secondsPerTick + 1.2;
+  const before = scheduled.length;
+  p._pump();
+
+  // The rewind re-pumps immediately, so the first notes of the repeat are
+  // scheduled with lead - not at a time that has already gone.
+  const repeat = scheduled.slice(before);
+  assert.ok(repeat.length > 0, 'the repeat scheduled notes');
+  assert.equal(repeat[0].tick, 0, 'and it restarted at the top of the song');
+  const late = repeat.filter((s) => s.when < ctx.currentTime - 1e-9);
+  assert.deepEqual(late, [], 'no note of the repeat lands in the past');
+  p.stop();
+});
+
+test('AUDIT 19 F6: control events do NOT reach back over notes in their window', async () => {
+  // The scheduler used to apply EVERY control event in a window and then
+  // voice its notes, so a program change late in the window changed notes
+  // earlier in the same window - 20,808 notes across the shipped archive
+  // were voiced with state from their own future. The window is a
+  // scheduling convenience, not a unit of time.
+  const { SongPlayer } = await import('../src/systems/songPlayer.js');
+  const ctx = { currentTime: 0, sampleRate: 44100 };
+  const p = new SongPlayer(ctx);
+  p._ensureMaster = () => {};
+
+  const voiced = [];
+  // Record the program the note WOULD have been sounded with.
+  p._voice = (e) => voiced.push({ tick: e.tick, program: p._state[e.channel].program });
+
+  // Everything below lands inside one 0.25s lookahead window.
+  const song = {
+    secondsPerTick: 0.001, durationTicks: 200,
+    events: [
+      { tick: 0, type: 'programChange', channel: 0, program: 40 },
+      { tick: 10, type: 'noteOn', channel: 0, note: 60, velocity: 100, duration: 5 },
+      { tick: 20, type: 'programChange', channel: 0, program: 73 },
+      { tick: 30, type: 'noteOn', channel: 0, note: 62, velocity: 100, duration: 5 },
+    ],
+  };
+  p.play(song);
+  clearInterval(p._timer); p._timer = null;
+
+  assert.equal(voiced.length, 2, 'both notes were voiced in the one window');
+  assert.equal(voiced[0].program, 40, 'the FIRST note keeps the program in force when it sounds');
+  assert.equal(voiced[1].program, 73, 'and the second takes the change that precedes it');
+  p.stop();
+});
+
+test('AUDIT 19 F7: the loop lead is non-zero, so the seam is never "now"', async () => {
+  const { LOOP_LEAD_SECONDS, LOOKAHEAD_SECONDS } = await import('../src/systems/songPlayer.js');
+  // A start time of exactly `now` is what WebAudio treats as immediate, so
+  // the lead has to be strictly positive - and strictly SMALLER than the
+  // lookahead, or the re-pumped window is empty and the repeat starts late.
+  assert.ok(LOOP_LEAD_SECONDS > 0, 'a zero lead schedules the repeat AT now');
+  assert.ok(LOOP_LEAD_SECONDS < LOOKAHEAD_SECONDS,
+    'a lead of a full lookahead makes the re-pumped window exactly empty');
+});

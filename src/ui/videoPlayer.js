@@ -23,9 +23,14 @@
 //     start(when) on ctx.currentTime; both are the same audio-hardware
 //     clock, which is why now() defaults to ctx.currentTime).
 // DFU's two-AudioSource flip-flop pool is dropped: a WebAudio buffer source
-// is one-shot and self-owned, so the pool has no observable effect.
+// is one-shot and self-owned. AUDIT 19 corrected the claim that used to sit
+// here - "the pool has no observable effect" is false. DFU's pool BOUNDS
+// concurrent clips at two; ours has no cap, so after a long host stall more
+// clips can be in flight than DFU would ever have. Ledgered rather than
+// left as a comfortable sentence.
 //
-// Presentation departures (Port-Ledger A, engine side):
+// Presentation departures (Port-Ledger A - the rows exist now; AUDIT 19
+// found this comment citing a Ledger page that had none):
 //   - Unity uploads Color32[] into a Texture2D; here the frame buffer is
 //     uploaded through renderer.uploadTexture under one key, released first
 //     so the memoized upload is replaced rather than leaked.
