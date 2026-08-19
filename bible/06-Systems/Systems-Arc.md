@@ -1292,3 +1292,159 @@ to fix the wrong thing. Pinned that the two records differ, and that
 the decision agrees with isEligibleToJoin across the whole grid.
 
 10 mutations run, 10 killed.
+
+## G3 - guild services: what rank BUYS
+
+2026-08-19. G1 and G2 built membership and rank; this is what rank is
+FOR. Law only - the windows that spend it are their own slice.
+
+**The service NPC table is copied from DFU's SWITCH, not inferred from
+its enum names**, and that is the whole reason to be careful with it.
+The 61 GuildNpcServices members are named `PREFIX_ServiceName`, so
+deriving the mapping from the suffix is the obvious shortcut - and it
+is wrong in exactly three places: MG_BuySpells maps to
+BuySpellsMages (not BuySpells), KO_Smith to ReceiveArmor and
+KO_Seneschal to ReceiveHouse. Extracted mechanically, checked 61
+against 61 with no member missing a case, and the three disagreements
+are pinned by name. DFU's own comment explains why the table exists at
+all: it "duplicates data from faction.txt mainly because guild flags
+are not consistent".
+
+**-1 IN THE TEMPLE SERVICE TABLE DOES NOT MEAN "NEVER"** - and G2's
+comment said it did. CanAccessService tests `serviceRank <= rank`, so
+a -1 column PASSES at every rank. It reads as "never offered" only
+because the temple has no NPC for that service, so the question is
+never asked: the rank gate and the OFFER are two different things.
+The same -1 never matches GetPromotionMsgId's `== rank`, since ranks
+run 0..9. Both behaviours pinned, and G2's comment corrected.
+
+**The money formulas truncate before they multiply.**
+`(((10 + rank) << 8) / 10 * reward) >> 8` is C# int arithmetic: the
+/10 truncates FIRST, so a rank-3 Fighters Guild reward on 1000 gold is
+1296 and not 1300, and a rank-9 repair is 97 and not 100. Pinned on
+those exact values, because a "cleaner" reward * (10+rank) / 10 passes
+a spot check at rank 0 and drifts everywhere else.
+
+Training: the cap is a flat 50 and no guild overrides it; the price is
+(member 100 / non-member 400) x the player's LEVEL, so it scales with
+the character rather than the skill, and rank does not discount it. A
+KNIGHTLY ORDER TRAINS NOTHING - KnightlyOrder.cs returns null outright.
+A TEMPLE TRAINS NON-MEMBERS where a guild does not.
+
+The training list is not the guild-skill list the rank law reads - but
+not uniformly, and that was measured after a pin asserting it always
+differs failed. FIVE divines train a wider set than they rank on;
+Kynareth, Mara and Zenithar use the same list for both.
+
+Two benefits worth naming. The Mages Guild's free magicka recharge is
+gated on Career.NoRegenSpellPoints - the perk exists FOR the Sorcerer,
+and reads the same career flag U20b writes. And a knightly order's
+free tavern rooms come at rank 4 OR at any rank inside the order's own
+region: a knight is a local somebody at home.
+
+Only Arkay discounts curing; only the Fighters Guild alters rewards
+and repair costs; only a temple has a library, at its own rank.
+
+13 mutations run, 13 killed.
+
+## S26 - MYSTICISM: the effect library's empty school
+
+2026-08-19. The other five schools stood at 96%, 96%, 75%, 50% and 22%
+when this landed. Mysticism was 0 of 10, and the reason is structural:
+NOT ONE of its ten effects supports MAGNITUDE. They do not fit the
+"roll a magnitude and apply it" ladder applySpell grew around - they
+open doors, destroy nearby enemies, gag a caster, fill a soul gem.
+Each is its own payload, so the school got its own module.
+
+All ten classic keys are checked against the same DFU extraction the
+coverage measurement uses: 10 of 10.
+
+**Open and Lock are asymmetric, and that is the law.** Open is an
+ARMED effect - the chance rolls at CAST, the caster is told "Ready to
+open.", and the payload waits for them to activate a door. It yields a
+lock only to a caster whose LEVEL REACHES its value ("unlocks chest or
+door to lock-level of caster"), and a door it fails to beat stays shut.
+An item cast, and the Skeleton's Key, skip the roll entirely - and the
+Key ignores the level rule too, so it opens even a magical lock. LOCK
+has no level test at all: it simply imposes the caster's own level,
+and refuses an already-locked door rather than deepening it. A level-9
+caster cannot strengthen a level-3 lock.
+
+**Dispel Undead and Daedra DESTROY, they do not kill.** DFU's own
+comment: "just like classic, dispel simply destroys serializable enemy
+object in scene - target is not killed and will drop no loot. This can
+break quests if used carelessly." Ported as such, with the chance
+rolled PER TARGET rather than once for the group.
+
+**Soul Trap fills Azura's Star first**, wherever it sits in the pack -
+the reusable artifact takes the soul before any ordinary gem - and
+azurasStarOnly refuses to fall back at all.
+
+**Silence** blocks a cast that COSTS spell points and only that: DFU
+guards with `!noSpellPointCost && SilenceCheck()`, so an item cast or a
+free effect fires through a silence. DFU checks it in two places, at
+READY and at CAST, and both clear the readied spell.
+
+FLAGGED, by name, per THE FOUR HOSTS RULE: nothing here is wired into
+a host. Silence needs the readied-spell gate and Open/Lock need the
+door-activation path in ALL FOUR of scenes/exterior.js, scenes/world.js,
+scenes/worldModes.js and scenes/dungeonContext.js. The predicates are
+the shape those hosts will call; none is called today.
+
+Three effects also own a WINDOW in DFU - Dispel Magic picks a bundle,
+Create Item picks an item, Teleport picks and recalls an anchor - and
+those are the UI arc's. Where the law stands without its window it is
+stated: Dispel Magic's validity rule is a pure predicate over the
+caster's live bundles (a Spell or a HeldMagicItem, showing an icon -
+never a disease or a poison).
+
+12 mutations run, 12 killed.
+
+## S27 - Mysticism reaches a host: SILENCE, and the four-host truth
+
+2026-08-19. S26 landed the ten laws and flagged the wiring. This wires
+Silence, and the flag it retires turned out to be hiding a fact about
+the port rather than a to-do.
+
+**SILENCE IS LIVE, in both of DFU's gates.** SilenceCheck runs when a
+spell is READIED and again when it is CAST, and BOTH clear the readied
+spell - so a silence landing mid-aim disarms you rather than waiting
+for the click. Both are wired in dungeonContext: the spellbook's
+`ready` hook refuses outright, and playerCastInput refuses and clears.
+Every cast on that path costs spell points, so DFU's
+`!noSpellPointCost` arm is always true here and is recorded rather
+than re-derived.
+
+**THE FOUR HOSTS, and why three of them are empty.** The rule wants
+all four named:
+  - dungeonContext.js  WIRED - it owns readiedSpell and playerCastInput.
+  - exterior.js        no cast path at all.
+  - world.js           no cast path at all.
+  - worldModes.js      no cast path of its own; it MOUNTS
+    interiorContext and dungeonContext, so a dungeon cast reaches the
+    wired gate through it.
+
+That is not three hosts forgetting something. SPELLCASTING IN THIS
+PORT IS DUNGEON-ONLY: readiedSpell, applySpell and the spellbook live
+in dungeonContext and nowhere else, so there is no exterior or
+interior cast for a silence to block. A source sweep pins it BOTH
+ways - the gate is present in the casting host, and absent from the
+other three because they cast nothing. If an exterior host ever grows
+a cast path the sweep fails and sends its author to the gate.
+
+**Open and Lock are still not wired, and the record now names their
+seams** rather than saying "pending". Their payload is an ARMED effect
+that has to survive between the cast and the next door the player
+touches, which needs a slot on the entity's active effects; the door
+end hangs off world/actionSystem.js's `activate(key)` - the single
+activation point, where `toggleDoor(o, true)` already runs - in the
+two contexts that own an ActionSystem, dungeonContext.js and
+interiorContext.js. Neither exterior host owns doors. A pin holds that
+claim honest: it fails the moment either context calls triggerOpen or
+triggerLock without the record being updated.
+
+These hosts have no execution coverage in node - AUDIT 19 found a
+crash that 990 tests could not see - so the seam is pinned by READING
+them, the same idiom audit17e uses for its four-host rules.
+
+4 mutations run, 4 killed.

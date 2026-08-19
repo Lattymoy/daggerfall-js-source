@@ -233,12 +233,12 @@ combat line numbers below are refreshed with it.
 - `src/scenes/cityGuards.js:205` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:357` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/droppedLoot.js:16` - FLAGGED loud: pile persistence across saves (the quicksave arc
-- `src/scenes/dungeonContext.js:184` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:509` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:515` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:542` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:903` - exterior spell paths are FLAGGED with their own hosts.
-- `src/scenes/dungeonContext.js:1055` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:185` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:510` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:516` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:543` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:904` - exterior spell paths are FLAGGED with their own hosts.
+- `src/scenes/dungeonContext.js:1066` - 129; the inventory/equip UI pends - the INTERIM dagger note
 - `src/scenes/exterior.js:366` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:372` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:447` - day-skip is a no-op FLAGGED until the shared calendar lands).
@@ -280,7 +280,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/guilds.js:39` - FLAGGED loud - RANK TITLES. DFU reads them from its own
 - `src/systems/guilds.js:113` - // are FLAGGED to the quest slice.
 - `src/systems/guilds.js:236` - /** GetTitle (:180-183). FLAGGED - see the header: the rank titles live
-- `src/systems/guildVariants.js:153` - // banking does not exist yet, so it is FLAGGED to the banking
+- `src/systems/guildVariants.js:158` - // banking does not exist yet, so it is FLAGGED to the banking
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).
