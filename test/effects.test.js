@@ -249,7 +249,11 @@ test('effects: HealAttribute (10,s) heals DRAIN damage only; drained-to-zero ent
   // the next tick pass removes the entry (forcedRoundsRemaining = 0)
   applySpell({ element: 4, rangeType: 0, effects: [{ ...healA, magnitudeBaseLow: 100, magnitudeBaseHigh: 100 }] }, 1, t, {}, seq(0));
   assert.equal(liveStat(t, 'strength'), 50);
-  assert.equal(t.activeEffects.length, 1);
+  // the drain + one 0-round Heal-Strength marker per cast (AUDIT 18:
+  // an instant effect is live in its bundle until the next magic
+  // round, which is what EffectsAlreadyOnTarget walks)
+  assert.equal(t.activeEffects.length, 3);
+  assert.equal(t.activeEffects.filter((a) => a.instant).length, 2);
   tickActiveEffects(t, {});
   assert.equal(t.activeEffects.length, 0);
   // healing an undrained stat is a no-op (manager walk finds no
@@ -398,7 +402,8 @@ test('effects: S19c the Cure family (3,0..2) - chance-gated immediate bundle rem
   const r = applySpell({ element: 4, rangeType: 0, effects: [cure(0)] }, 5, p, {}, seq(0));
   assert.equal(r.cured, 1);
   assert.equal(liveStat(p, 'strength'), 47);   // the disease's -9 lifted NOW; the drain stays
-  assert.equal(p.activeEffects.length, 1);
+  assert.equal(p.activeEffects.length, 2);     // the drain + the one-round CureDisease marker
+  assert.deepEqual(p.activeEffects.filter((a) => a.instant), [{ kind: 'cureDisease', instant: true, roundsRemaining: 0 }]);
   // Chance fail (base 5, roll .99): nothing cured, the failure counted
   const q = { isPlayer: true, level: 5, career: {}, stats: { willpower: 50 } };
   startDisease(q, 3, 0);
@@ -417,9 +422,9 @@ test('effects: S19c the Cure family (3,0..2) - chance-gated immediate bundle rem
   startPoison(w, POISONS.Thyrwort, 0, seq(0, 0));
   w.activeEffects.push({ kind: 'paralyze', roundsRemaining: 9 });
   applySpell({ element: 4, rangeType: 0, effects: [cure(1)] }, 5, w, {}, seq(0));
-  assert.equal(w.activeEffects.length, 1);   // the poison is gone
+  assert.ok(!hasActiveEffect(w, 'poison'));   // the poison is gone
   assert.ok(hasActiveEffect(w, 'paralyze'));
   applySpell({ element: 4, rangeType: 0, effects: [cure(2)] }, 5, w, {}, seq(0));
   assert.ok(!hasActiveEffect(w, 'paralyze'));
-  assert.equal(w.activeEffects.length, 0);
+  assert.equal(w.activeEffects.filter((a) => !a.instant).length, 0);
 });

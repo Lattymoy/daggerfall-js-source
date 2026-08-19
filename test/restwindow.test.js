@@ -68,15 +68,15 @@ test('rest: completions - timed wakes on 353, full ends healed on 350 (instantly
   assert.equal(r4.textId, REST_TEXT.loiterDone);
   assert.equal(d4.minutes, 60);
   assert.equal(LOITER_LIMIT_HOURS, 3);   // the classic cap the window enforces (DFU settings default/min)
-  // The 0-hour quirk (audit 16f): DFU tests hoursRemaining < 1 only
-  // AFTER an hour completes - resting 0 hours rests ONE full hour.
+  // AUDIT 18: a 0-hour timed request ends on the FIRST frame with no
+  // time passing - DaggerfallRestWindow.Update tests
+  // `hoursRemaining < 1` BEFORE calling TickRest (:225-226). The
+  // pinned-quirk shape (one full hour) was never DFU's.
   const d5 = deps();
-  const s5 = new RestSession('timed', 0, d5);
-  assert.equal(s5.tick(0.4), null);      // 5 sub-ticks in - still resting
-  const r5 = s5.tick(0.1);
+  const r5 = new RestSession('timed', 0, d5).tick(0.4);
   assert.equal(r5.textId, REST_TEXT.wakeUp);
-  assert.equal(d5.minutes, 60);
-  assert.equal(d5.vitalTicks, 1);
+  assert.equal(d5.minutes, 0);
+  assert.equal(d5.vitalTicks, 0);
 });
 
 test('rest: interrupts - enemies break at the hour on 354 (before vitals), death ends at once, endEarly texts', () => {

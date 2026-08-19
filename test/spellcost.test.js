@@ -18,9 +18,17 @@ test('spellcost: component math, averaged magnitude, skill scaling per effect', 
   const s = effectCost(slow, (id) => skills[id]);
   assert.equal(s.gold, 160);
   assert.equal(s.sp, Math.trunc(160 * 40 / 400));           // 16
-  // unknown family: the zero-component fudge (60,100,160) -> 160+60+100=320
+  // AUDIT 18: a classic key with NO effect class in DFU is dropped
+  // from the bundle by ClassicEffectRecordToEffectEntry and costs
+  // nothing; the zero-component fudge is for CLASSES without
+  // components (Teleport 43,255 / MorphSelf 29,255), which keep
+  // their own magic skill - Mysticism and Illusion, never Destruction
   const unk = { type: 99, subType: 99 };
-  assert.equal(effectCost(unk, () => 50).gold, 320);
+  assert.equal(effectCost(unk, () => 50).gold, 0);
+  const tele = { type: 43, subType: -1 };
+  const skillsSeen = [];
+  assert.equal(effectCost(tele, (id) => { skillsSeen.push(id); return 50; }).gold, 320);   // 160+60*1+100*1
+  assert.deepEqual(skillsSeen, [27]);                       // Mysticism, not the old 22 default
   // Parity fix 2026-08-16d: real records read subType 0xFF as -1 -
   // the table lookup normalizes to the BYTE key (a real Slowfall
   // record must hit '25,255', not the fudge)
