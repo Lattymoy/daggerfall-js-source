@@ -18,6 +18,11 @@ import { rand } from '../formats/dfRandom.js';   // the monster multi-attack ref
 import { liveStat } from '../systems/statMods.js';   // S14: fortify-aware stat reads
 import { skillValue, SKILLS } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
 import { RACES } from '../systems/races.js';   // CalculateRacialModifiers reads the DFU-numbered race id
+import { SPECIAL_ABILITY_BITS } from '../systems/specialAdvantages.js';   // AUDIT 21 F2: the Adrenaline Rush bit
+// NOT from rest.js, which re-exports healingRateModifier FROM here - importing
+// hasSpecialAbility back out of it makes a cycle, and the ESM binding lands in
+// the temporal dead zone: the helper reads `undefined` at call time and the
+// bonus silently never applies. specialAdvantages.js is a leaf.
 import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';   // AUDIT 18: GetBaseDamageMin/Max and GetWeaponSkillIDAsShort resolve the TEMPLATE, never a baked field or a display name
 
 // ---- Dice100.cs verbatim ----
@@ -204,9 +209,59 @@ export function skillsToHit(a, t, roll01 = Math.random()) {
 // ("DF Chronicles says -60 ... it actually seems to be -50").
 export function adjustmentsToHit(target) {
   let mod = 0;
-  // biography adjustments: chargen biography pending - 0
+  // AUDIT 21 F3: THE BIOGRAPHY MODIFIER, which was minted and never read.
+  //     if (target == player) chanceToHitMod -= player.BiographyAvoidHitMod;
+  // (FormulaHelper.cs:1236-1239.) The comment that stood here said the
+  // chargen biography was "pending". It shipped in S3e/U13:
+  // applyBiographyEffects runs inside finishChargen, biography.js mints
+  // biographyAvoidHitMod from the real BIOG*.TXT, and save.js has persisted
+  // it since AUDIT 17h. Every populated BIOG*.TXT that carries the answer
+  // carries TH -5, and 14 of the 18 class biographies have one - so a
+  // character who answered "Fighting without magic" was a flat 5 points
+  // harder to hit than the one the player built, for the whole game.
+  //
+  // Note the SIGN: DFU SUBTRACTS the modifier, so a negative TH is a
+  // PENALTY to the player - the answer makes them easier to hit, not safer.
+  if (target.isPlayer) mod -= (target.biographyAvoidHitMod ?? 0);
   if (!target.isPlayer && target.isClass === false) mod += 40;   // EntityTypes.EnemyMonster
   mod -= 50;
+  return mod;
+}
+
+/** CalculateAdrenalineRushToHit (FormulaHelper.cs:1163-1183), called from
+ *  CalculateSuccessfulHit at :811.
+ *
+ *  AUDIT 21 F2. The Ledger listed Adrenaline Rush as INERT "because the
+ *  consuming subsystem does not exist" - but the consumer IS
+ *  CalculateSuccessfulHit, which is live, and every input was already here:
+ *  the bit decodes (specialAdvantages.js, rest.js), and health/maxHealth are
+ *  on both entity shapes. No effect, no enchantment and no window involved.
+ *
+ *  CLASS09.CFG (Acrobat) ships bitfield 0x1406 with bit 4 set, so a VANILLA
+ *  Acrobat has it; ten monster careers do too (Werewolf, Vampire Ancient, all
+ *  four atronachs, horse, dragonling, dreugh, Lamia). The enemy half only
+ *  works once the career is stored - AUDIT 21 F1.
+ *
+ *  ImprovedAdrenalineRush is an unported enchantment, so the improved
+ *  modifier (8) is unreachable and the base (5) stands. That is a routed gap,
+ *  not a blocker: DFU's ternary picks the base whenever it is false. */
+export const ADRENALINE_RUSH_MODIFIER = 5;
+export const IMPROVED_ADRENALINE_RUSH_MODIFIER = 8;
+/** DFCareer.HasSpecialAbility: the flag masked against the bitfield's LOW
+ *  BYTE (rest.js's hasSpecialAbility, restated here to keep this file a
+ *  leaf-ward importer - see the import note above). */
+const hasAbility = (career, flag) => ((career?.abilityFlagsAndSpellPointsBitfield ?? 0) & flag) === flag;
+const inAdrenalineRush = (e) => Boolean(e)
+  && hasAbility(e.career, SPECIAL_ABILITY_BITS.adrenalineRush)
+  && (e.health ?? 0) < Math.trunc((e.maxHealth ?? 0) / 8);   // C# integer division
+export function adrenalineRushToHit(attacker, target) {
+  let mod = 0;
+  if (inAdrenalineRush(attacker)) {
+    mod += attacker.improvedAdrenalineRush ? IMPROVED_ADRENALINE_RUSH_MODIFIER : ADRENALINE_RUSH_MODIFIER;
+  }
+  if (inAdrenalineRush(target)) {
+    mod -= target.improvedAdrenalineRush ? IMPROVED_ADRENALINE_RUSH_MODIFIER : ADRENALINE_RUSH_MODIFIER;
+  }
   return mod;
 }
 
@@ -217,10 +272,9 @@ export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckB
   // SetEnemyCareer scalar otherwise. Increased/DecreasedArmorValueModifier
   // channels pend their effects (none exist yet) - 0 (audit F5).
   chance += target.armorValues ? target.armorValues[struckBodyPart] ?? 0 : (target.armor ?? 0);
-  // adrenaline rush: the career ability bitfield DECODES now (U20b
-  // put SPECIAL_ABILITY_BITS on specialAdvantages.js and rest.js
-  // already exports hasSpecialAbility) - what pends is the EFFECT,
-  // not the read. AUDIT 17n re-pointed this note; still 0.
+  // AUDIT 21 F2: the adrenaline rush is APPLIED now, in DFU's own slot
+  // (FormulaHelper.cs:811, between the armour term and the stats term).
+  chance += adrenalineRushToHit(attacker, target);
   // attacker.ChanceToHitModifier (enchantments): pends the enchantment
   // system - 0 (audit F4).
   chance += statsToHit(attacker, target);

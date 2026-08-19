@@ -218,10 +218,10 @@ combat line numbers below are refreshed with it.
 - `src/characters/playerEntity.js:25` - skills: 30,       // INTERIM flat skills until chargen
 - `src/characters/playerEntity.js:27` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-...
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): adrenaline rush
-- `src/combat/formulas.js:71` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
-- `src/combat/formulas.js:148` - *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
-- `src/combat/formulas.js:313` - FLAGGED: CalculateProficiencyModifiers pends the career
-- `src/combat/formulas.js:386` - *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
+- `src/combat/formulas.js:76` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
+- `src/combat/formulas.js:153` - *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
+- `src/combat/formulas.js:367` - FLAGGED: CalculateProficiencyModifiers pends the career
+- `src/combat/formulas.js:440` - *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
 - `src/combat/playerWeapon.js:13` - INTERIM (loud): the equipped weapon is an Iron Dagger until the
 - `src/combat/playerWeapon.js:46` - /** INTERIM starting weapon (items arc replaces): Iron Dagger.
 - `src/combat/playerWeapon.js:56` - export const INTERIM_WEAPON = Object.freeze({
@@ -272,8 +272,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/court.js:176` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:33` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:342` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:583` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:358` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:599` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 - `src/systems/equip.js:170` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/guilds.js:39` - FLAGGED loud - RANK TITLES. DFU reads them from its own
