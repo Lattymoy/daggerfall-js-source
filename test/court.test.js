@@ -179,7 +179,7 @@ test('save: AUDIT 20 - the faction store and guild memberships ride the envelope
 // AUDIT 21: the two halves of the reputation economy the port was missing.
 // ---------------------------------------------------------------------------
 
-test('AUDIT 21 F1: doing the sentence refunds BOTH channels, not just legal', () => {
+test('AUDIT 21 F1: doing the sentence refunds BOTH channels, not just legal', { skip: skipReal }, () => {
   // RaiseReputationForDoingSentence (PlayerEntity.cs:2301-2311) credits
   // legalRep by `half - 1` AND the region's People faction by
   // `(half - 1) / 2`. The port credited only the legal half while
@@ -232,7 +232,7 @@ test('AUDIT 21 F3: legal reputation is CLAMPED, and drifts back over time', () =
   assert.equal(q.legalRep[1], -99, 'clamp then drift, in that order');
 });
 
-test('AUDIT 21 F3: normalize drifts FACTION reputations too, through the walk', () => {
+test('AUDIT 21 F3: normalize drifts FACTION reputations too, through the walk', { skip: skipReal }, () => {
   const dict = realFactions();
   const store = createFactionRep(dict);
   const player = { legalRep: {} };
