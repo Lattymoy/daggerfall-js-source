@@ -109,7 +109,7 @@ GroundTiles read [x][15 - y] as everywhere; records >= 56 skipped; zero
 bitfields stored as the 0xFF sentinel; bounds + clearance (3 TownCity,
 else 2) become the locationRect. calcAvgMaxHeight + blendLocationTerrain
 flatten the rect to the pixel average and lerp the blend space by
-edge-scaled strengths (bilinear corners). `src/render/terrainMesh.js`
+edge-scaled strengths (bilinear corners). `src/render/terrainMesh.js` (DELETED at R9)
 drapes 128x128 tile quads over the heightfield (byte decode
 record = b & 63 / rotate 64 / flip 128, 0xFF -> record 0), the
 renderer-side equivalent of DFU's tilemap shader.
@@ -284,9 +284,9 @@ Modules:
   are mod-injection only) so scale is identity.
 - `src/render/renderer.js` - WebGL2: REPEAT + NEAREST textures uploaded
   bottom-up as getColor32 emits them, alpha < 0.5 discard, directional light.
-- `src/render/groundMesh.js` - 16x16 tile quads at GroundOffset (-1), batched
+- `src/render/groundMesh.js` (DELETED at R10) - 16x16 tile quads at GroundOffset (-1), batched
   per record, rotate/flip as UV transforms. DFU uses a tilemap-shader atlas;
-  per-tile quads are our renderer-side equivalent.
+  per-tile quads are our renderer-side equivalent. Retired at R10: all ground - exterior blocks and terrain - now runs the verbatim tilemap shader inside renderer.js drawTerrain, and the Ledger A departure row went with the module.
 - `src/main.js` - loads /arena2/* (dev-only vite middleware in
   vite.config.js; data never bundled), assembles the block, fly camera
   (click to lock, WASD + mouse, Shift speed), ?shot fixed vantage.

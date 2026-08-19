@@ -1,6 +1,14 @@
 # Characters
 
-ACTIVE - see Characters-Arc.md. C1-C3 SHIPPED (interior people, exterior
+PARKED under pivot 3 (classic visuals) - see Characters-Arc.md for the live
+record, which runs past this page's summary: C8 shipped the enemy rigs E1-E4b
+end to end plus spectral (E4c deferred by Mac), and the remaining interims
+are Systems work (ledger below). The C9-C17 slices that carry the same letter
+are recorded in `05-Combat/Combat.md`, not here. AUDIT 18 corrected the status
+word and the cutoff: this page said ACTIVE and stopped its record at C5 while
+Home.md's arc index said PARKED with C8 and the E-series shipped.
+
+C1-C3 SHIPPED (interior people, exterior
 NPCs + name banks, dungeon enemies). C4 voxel rigs SHIPPED (character
 render path, ?voxelfolk). C5 SHIPPED: the vendored/trace rigs are retired
 for a designed `buildNeutralBody` figure, plus a full race system -

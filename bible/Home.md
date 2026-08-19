@@ -165,7 +165,15 @@ chargen.js rewritten now that the custom Spellsword rule is live, and
 the slice's own flags joined. The U20b special advantages window
 retired at U20b - the window ships, and both its sentences (the button
 site and the art note) went with it. The difficulty dagger's fading
-trail remains. Line numbers refreshed.
+trail remains.
+
+AUDIT 18: "Line numbers refreshed" used to close this paragraph as a hand
+kept promise, and six of the 109 citations had already drifted (up to 41
+lines) when a14ac0e moved chargenArt.js. The promise is gone; the list is
+now checked mechanically both ways by test/audit18_bible_docs.test.js -
+every citation's quoted text must sit on the cited line, and every
+FLAGGED/INTERIM site in `src/` must appear here. A slice that moves a
+flagged site turns that test red until the list is regenerated.
 
 AUDIT 18 (combat) RETIRED the racial/proficiency half of
 playerWeapon.js's INTERIM sentence and DELETED it: chargen writes the
@@ -203,7 +211,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:789` - FLAGGED: DFU recomputes per-effect via the cost tables (that
 - `src/scenes/dungeonContext.js:791` - FLAGGED to the effect library (caster-only buffs, touch, areas).
 - `src/scenes/dungeonContext.js:1003` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/dungeonContext.js:1750` - actions) is FLAGGED - the player snapshot only.
+- `src/scenes/dungeonContext.js:1751` - actions) is FLAGGED - the player snapshot only.
 - `src/scenes/exterior.js:323` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:329` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:404` - day-skip is a no-op FLAGGED until the shared calendar lands).
@@ -257,10 +265,10 @@ combat line numbers below are refreshed with it.
 - `src/systems/talk.js:92` - TallyCrimeGuildRequirements(true, 1) FLAGGED: thieves-guild
 - `src/systems/talk.js:99` - SpawnCityGuards(true) FLAGGED: the crime/guards slice mounts the response.
 - `src/systems/talkSession.js:19` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
-- `src/ui/chargen.js:380` - *  (FLAGGED - the port has no FLIC decoder yet, so the next question
-- `src/ui/chargenArt.js:593` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
-- `src/ui/chargenArt.js:688` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
-- `src/ui/chargenArt.js:776` - *  constellation chart. FLAGGED loud: the three FLC constellation
+- `src/ui/chargen.js:381` - *  (FLAGGED - the port has no FLIC decoder yet, so the next question
+- `src/ui/chargenArt.js:603` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
+- `src/ui/chargenArt.js:727` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
+- `src/ui/chargenArt.js:817` - *  constellation chart. FLAGGED loud: the three FLC constellation
 - `src/ui/charsheet.js:17` - major/minor/misc); the PORTRAIT pends chargen faces (FLAGGED);
 - `src/ui/hudText.js:5` - improved."); the TEXT.RSC database itself is FLAGGED - these
 - `src/ui/inventory.js:2` - windows in classic text (backgrounds FLAGGED pending art-name
@@ -286,6 +294,59 @@ combat line numbers below are refreshed with it.
 ## Audits
 
 Newest first.
+
+**2026-08-19 - AUDIT 18, the DOC-TRUTH sweep.** The bible is load-bearing:
+17m proved a false "recorded in the Ledger" claim actively hid a live defect
+from the person checking whether it was known. This pass audited the bible
+AGAINST the code and fixed what was false, with the checks that keep it that
+way in test/audit18_bible_docs.test.js.
+
+Present-tense lies, corrected: `06-Systems/Systems.md` and `10-UI/UI.md` both
+said "Not started" through S1-S22/E1-E3 and U1-U20b (37 and 19 live modules);
+`03-World/World.md` said COMPLETE where the arc had reopened;
+`04-Characters/Characters.md` said ACTIVE and stopped at C5;
+`01-Overview/Port-Doctrine.md`'s phase plan still called Readers-Arc active.
+`07-Rendering/Rendering.md` listed `groundMesh.js`, deleted at R10, as a
+CURRENT module and tagged it "(ledgered departure)" when Ledger A has no
+ground-mesh row - the 17m shape exactly; `03-World/World-Arc.md` carried the
+same module plus `terrainMesh.js`, deleted at R9. This page's ground rules
+still said "Desktop-only. No touch controls, no mobile layout" six days after
+the approved touch layer shipped into all four hosts. This page's open-flags
+list promised "Line numbers refreshed" while six of its 109 citations pointed
+at the wrong line, up to 41 off.
+
+Ledger lies, corrected: section C still listed breath/drowning AND the crouch
+motor as unported, so P12's live code was sitting inside the Ledger's "not
+yet ported" exemption (the Argonian breath refund and PlayerHeightChanger's
+0.1s timed transition, which genuinely are unported, now have their own row);
+the house-container row claimed a feature S2b shipped; `Audio.md` closed the
+activation-sounds queue on the claim that both PlayerActivate clips were
+"already ours", when ActivateLockUnlock = 316 is in neither soundClips.js nor
+any consumer (folded into the door-lockpicking row, where its mechanic
+lives); section B recorded a 0-hour rest running a full hour as a preserved
+DFU quirk when DaggerfallRestWindow.Update ends a 0-hour rest immediately -
+the row was a divergence wearing a quirk's clothes; and the SetEnemyEquipment
+Feet-slot quirk (EnemyEntity.cs:414's strict `<`, which leaves enemy boots
+out of ArmorValues[Feet]) had no row at all while enemyEquipment.js
+subtracted them - up to a 65-point swing at daedric. Two source comments cited
+Ledger rows that did not exist (chargen.js's `isCustom`, encounterTables.js's
+dead Cemetery block); both now have B rows.
+
+Silent gaps promoted out of prose: `collectExteriorNpcs` has NO production
+caller - the interior twin is live, the exterior side is dead - so no
+exterior static NPC is a talk or activation target, recorded as a C row
+rather than left inside a "C2 SHIPPED" heading. `Systems-Arc.md` said
+DamageSpellPoints' MagnitudeCosts(20, 28) was "already in the S10 cost
+table"; spellcost.js has no `4,2` key, so those spells fall through to the
+zero-component fudge and are priced wrong.
+
+Lesson, and the reason for the new test: EVERY check here is mechanical.
+Home.md's open-flags list is grep-regenerated from `src/`, which is why it
+could never catch a false claim in Home.md's own prose - a doc rule that
+only a human re-reads is a doc rule that rots. The pins assert citations
+resolve, that flagged sites and the list agree BOTH ways, that every
+`src/...` path the bible names exists, and that a section index cannot say
+"Not started" while its own arc says SHIPPED.
 
 **2026-08-18 - AUDIT 17n, the parity pass over U20b.** The data came
 back clean - the 50-entry difficulty table diffs key-for-key AND
@@ -1110,7 +1171,13 @@ engine now defaults to the inverse/500 shape with per-call overrides
 and every enemy-side call passes 16. The data diet's whole fetch
 surface (literal + variable-name sites: HUD art, palette indirection
 incl. MAP.PAL/NIGHTSKY.COL, NITE images, TEXTURE templates) passes
-KEEP on both diets; SKY-on-lean is the designed gradient. The
+KEEP on both diets; SKY-on-lean is the designed gradient. (AUDIT 18
+correction: NIGHTSKY.COL really is fetched - scenes/shared.js:46 loads
+it through `img.paletteName` - but MAP.PAL is NOT. Its only namer is
+ImgFile.paletteName for TMAP00I0.IMG, and the one loader of that file,
+chargenArt.js loadOne, draws it with the shared ART_PAL and never
+re-palettes. MAP.PAL belongs to the diet's KEEP list, not to its
+VERIFIED-FETCHED list, until the re-palette loader lands.) The
 letterbox offset has exactly one caller pair (set + finally-reset).
 Three stale Ledger C rows pruned with shipped evidence (enemy AI,
 dungeon loot, Hurt/CastSpell traps - Poison stays routed). Lesson:
@@ -1285,7 +1352,13 @@ Data readers in `src/formats/`, world assembly in `src/world/`, GL in
 
 ## Ground rules carried from project-final
 
-- Desktop-only. No touch controls, no mobile layout.
+- Desktop-first. A mobile touch layer (`src/ui/touch.js`: virtual stick +
+  look/attack drag + button row speaking the desktop input language) ships
+  for on-device testing and is wired into all four hosts - Port-Doctrine.md:19,
+  approved by Mac 2026-08-13. (AUDIT 18: this bullet denied the touch
+  layer outright for six days after it landed (approved 2026-08-13). The
+  open-flags list below is grep-regenerated from `src/`, so it can never catch
+  a false claim in this file's own prose.)
 - Bible is flat under `bible/`. This file is the index. No Dashboard.md.
 - Prototype HTMLs at repo root must register in `vite.config.js` rollupOptions.input.
 - One feature at a time. Grep first. str_replace over rewrites.

@@ -419,8 +419,12 @@ in test/weather.test.js.
 
 ## Queue
 
-Owned by `Rendering.md`. Next up: spectral/firewall emission colors
-(lands with spectral enemies - Characters arc dependency).
+Owned by `Rendering.md`, which says EMPTY - and that is the answer.
+~~Next up: spectral/firewall emission colors (lands with spectral enemies -
+Characters arc dependency).~~ The spectral half SHIPPED 2026-07-06 (see
+Characters-Arc E4); only GetFireWallColors32 is unported, and it waits on a
+firewall consumer rather than sitting on a queue. AUDIT 18 struck this line:
+two pages gave opposite answers to whether the Rendering queue was empty.
 
 ## Milestone R12 - the exterior indirect player light (SHIPPED 2026-08-16)
 

@@ -290,7 +290,7 @@ rig is the authoring bench for monster morphologies. Slices:
 - **E2a (senses + approach): SHIPPED.** enemyMotor.js is a verbatim
   port of the CLASSIC path (EnhancedCombatAI=false) from DFU
   EnemyMotor/EnemySenses/EnemyAttack: sight 4096*GlobalScale, FOV 180,
-  hearing 25, melee stop 2.25 (vs AI 1.5), 11.25deg in-place turns on
+  hearing 25, melee stop 2.25 (vs AI 1.5), in-place turns on
   the 0.0625s classic update behind the 5.625deg move yaw-gate,
   moveSpeed = (LiveSpeed + dfWalkBase)*GlobalScale ("same formula as
   when the player walks"), classic always moves in for attack. Senses
@@ -2011,3 +2011,30 @@ behind ?voxelfolk (C4c) - DECIDE-C1 goes live there.
   needs per-instance colour/mesh; currently one mesh per race.
 
 See: 01-Overview/Port-Ledger.md section C rows routed here.
+
+## AUDIT 18 - doc-truth corrections to this page
+
+Two claims on this page were false about the code and are corrected here
+rather than rewritten out of the milestone records above.
+
+**E2a's turn rate.** The E2a paragraph listed "11.25deg in-place turns"
+inside a sentence describing enemyMotor.js as a VERBATIM port of DFU's
+classic path. 11.25 is classic's rate, but it is not what DFU ships:
+EnemyMotor.TurnToTarget (:1348-1355) reads
+`const float turnSpeed = 20f;` with the 11.25 sitting directly beneath it
+as a dead comment - "Classic speed is 11.25f, too slow for Daggerfall
+Unity's agile player movement". The port shipped 11.25 at E2a and called it
+verbatim, so the number has been struck from the E2a sentence; the constant
+itself (enemyMotor.js CLASSIC_TURN_DEG) is routed to the Enemies lane of
+this audit. Whichever value ships, "verbatim DFU" means 20.
+
+**C2's exterior NPCs.** The C2 record says "collectExteriorNpcs filters the
+registry", and the function does exactly that - but NOTHING IN `src/` CALLS
+IT. Its only importer is test/names.test.js, so no scene ever builds the
+exterior NPC registry and no exterior static NPC is a talk or activation
+target in the running game. The interior twin IS live
+(interiorContext.js:131 -> collectInteriorPeople), which is what made the
+gap invisible: the feature demonstrably works on one side. The corpus pin
+(76 NPCs across 16 RMB blocks) pins the FUNCTION, not the game. Recorded as
+a Port-Ledger C row (static-NPC activation, exterior side) so the gap stops
+living only inside a SHIPPED heading.
