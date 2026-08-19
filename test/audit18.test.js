@@ -229,11 +229,24 @@ test('AUDIT 18 F6: every host boots audio through the shared idempotent seam', (
     const text = readFileSync(file, 'utf8');
     assert.ok(!/audio\.init\(/.test(text), `${file}: use audio.ensure(), not audio.init()`);
   }
-  // Exactly ONE bootstrap flag exists - AUDIT 18 fixed this gap twice
-  // independently, and two flags would let one host boot while another slept.
+  // ONE bootstrap flag PER SUBSYSTEM, and every subsystem behind the one
+  // host-facing seam. AUDIT 18 fixed this gap twice independently, and two
+  // flags for the SAME subsystem would let one host boot while another
+  // slept. A5 added music, which is a second subsystem with its own
+  // engine-side flag - legitimate - but only because it boots from the
+  // SAME seam, so a host physically cannot take one and miss the other.
   const booted = walk(SRC).filter((f) => /_audioBooted|_booted\s*=/.test(readFileSync(f, 'utf8')));
-  assert.deepEqual(booted.map((f) => f.split(sep).slice(-2).join('/')), ['systems/audio.js'],
-    'the audio booted-flag must live only on the engine');
+  assert.deepEqual(booted.map((f) => f.split(sep).slice(-2).join('/')).sort(),
+    ['systems/audio.js', 'systems/music.js'],
+    'a booted-flag may live ONLY on an engine, never on a host');
+
+  // The seam drives both. If music ever drifts out of ensureAudio, a host
+  // could boot sound and stay musically silent - the exact F6 shape.
+  const seam = readFileSync(join(SRC, 'scenes', 'shared.js'), 'utf8');
+  const fn = seam.slice(seam.indexOf('export function ensureAudio'));
+  const body = fn.slice(0, fn.indexOf('\n}') + 2);
+  assert.match(body, /audio\.ensure\(/, 'ensureAudio must boot sound');
+  assert.match(body, /music\.ensure\(/, 'ensureAudio must boot music through the SAME seam');
 });
 
 test('AUDIT 18 F6: audio.ensure boots once and is safe to call from every host', async () => {

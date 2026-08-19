@@ -70,6 +70,8 @@ import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, KB_UNIT } from 
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
+import { music } from '../systems/music.js';
+import { DUNGEON_SONGS } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4: the shared PlayRandomlyIfPlayerNear pass
 import {
@@ -136,6 +138,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // starts on the first gesture (mobile discipline). Dungeon doors
   // ride the DFU dungeon clips (DaggerfallActionDoor's RDB shape).
   audio.ensure(fetchBytes);   // AUDIT 18 F6: the shared, idempotent bootstrap (was the ONLY host that booted sound)
+  // A5: DUNGEON MUSIC. SongManager's DungeonInteriorSongs playlist,
+  // verbatim. DFU seeds the pick with the dungeon block's Unknown2
+  // header field XOR the region (SongManager.cs:346-358); the port
+  // reads that field but does not thread it to a music layer yet, so
+  // the pick falls to DFU's OWN day-seeded branch and the dungeon seed
+  // is FLAGGED rather than faked - a wrong seed is a wrong song every
+  // time, which is worse than the general rule. The context is created
+  // on the first gesture, so this arms music that starts when the
+  // player first clicks.
+  music.ensure(fetchBytes).then(() => {
+    music.playFrom(DUNGEON_SONGS, { gameDays: Math.floor(classicMinutes / MINUTES_PER_DAY) });
+  });
   actions.onDoorState = (o, opening) => {
     const m = o.matrix;
     audio.play3d(opening ? SOUND.DungeonDoorOpen : SOUND.DungeonDoorClose, [m[12], m[13], m[14]]);

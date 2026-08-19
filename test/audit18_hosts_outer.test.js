@@ -599,8 +599,21 @@ test('audit18 hosts: the audio bootstrap runs in EVERY host, not only in a dunge
   // so the flag was consolidated onto the ENGINE: shared.ensureAudio is
   // now just the host-facing name for AudioEngine.ensure, and the guard
   // is pinned there rather than duplicated here.
-  assert.match(src('src/scenes/shared.js'), /return audio\.ensure\(/,
-    'ensureAudio must delegate to the single engine seam, not run a second bootstrap');
+  // A5 added music as a SECOND subsystem on the same seam. The rule is
+  // unchanged and now covers both: ensureAudio may DELEGATE to engine
+  // ensures, never run a bootstrap of its own - and it must reach every
+  // engine, or a host boots sound and stays musically silent, which is
+  // the original F6 shape wearing a different hat.
+  const seam = src('src/scenes/shared.js');
+  const fn = seam.slice(seam.indexOf('export function ensureAudio'));
+  const body = fn.slice(0, fn.indexOf('\n}') + 2);
+  assert.match(body, /audio\.ensure\(/,
+    'ensureAudio must delegate to the sound engine seam, not run a second bootstrap');
+  assert.match(body, /music\.ensure\(/,
+    'ensureAudio must delegate to the music engine seam too');
+  assert.ok(!/_booted/.test(body), 'the seam must hold no bootstrap flag of its own');
+  assert.match(src('src/systems/music.js'), /if \(this\._booted\) return;/,
+    'MusicService.ensure must stay idempotent');
   assert.match(src('src/systems/audio.js'), /if \(this\._booted\) return;/,
     'AudioEngine.ensure must stay idempotent');
 });

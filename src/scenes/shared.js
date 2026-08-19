@@ -19,6 +19,7 @@ import { liveStat } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer } from '../characters/playerEntity.js';
+import { music } from '../systems/music.js';
 import { audio } from '../systems/audio.js';
 
 import { getBytes } from './dataSource.js';
@@ -348,8 +349,18 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null }
  *  The booted flag lives on the ENGINE (AudioEngine.ensure), not here:
  *  AUDIT 18 fixed this gap twice independently, and two bootstraps with
  *  two flags is the duplicate-port shape this project keeps catching. This
- *  is the host-facing name for that one seam. */
-export function ensureAudio(fetch = fetchBytes) { return audio.ensure(fetch); }
+ *  is the host-facing name for that one seam.
+ *
+ *  A5: MUSIC BOOTS HERE TOO, for exactly the same reason. A separate
+ *  music bootstrap would be a second thing every host has to remember,
+ *  which is the gap F6 closed - so the seam that already reaches all
+ *  four hosts carries both. MusicService.ensure keeps its own flag, is
+ *  idempotent, and disables itself quietly if MIDI.BSA will not load. */
+export function ensureAudio(fetch = fetchBytes) {
+  const sound = audio.ensure(fetch);
+  const songs = music.ensure(fetch);
+  return Promise.all([sound, songs]);
+}
 
 // --- The outdoor fog COLOUR (DaggerfallSky.SetSkyFogColor) -----------
 
