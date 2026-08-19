@@ -417,6 +417,10 @@ test('audit18 hosts: the star pass constants and the clear-sky window are verbat
   const keep = new Uint8Array([20, 20, 20]);
   applyNightStars({ data: keep }, { nextDouble: () => 1, next: () => 0 });
   assert.deepEqual([...keep], [20, 20, 20]);
+
+  // emptyBitmap() (a failed decode) must pass through, as getColor32 does.
+  assert.doesNotThrow(() => applyNightStars({ width: 0, height: 0, data: null },
+    { nextDouble: () => 0, next: () => 0 }));
 });
 
 test('audit18 hosts: the seeded star field is deterministic', () => {

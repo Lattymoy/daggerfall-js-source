@@ -294,6 +294,7 @@ export const STAR_COLOR_INDICES = Object.freeze([16, 32, 74, 105, 112, 120]);
  *  builds a new ImgFile per panorama, so nothing cached is touched). */
 export function applyNightStars(bmp, random) {
   const data = bmp.data;
+  if (!data) return bmp;   // emptyBitmap() - getColor32 already tolerates it
   for (let i = 0; i < data.length; i++) {
     const index = data[i];
     if (index > 16 && index < 32) {
