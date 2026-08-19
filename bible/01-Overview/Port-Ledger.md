@@ -63,6 +63,18 @@ Characters:
 
 Readers:
 - BSA: junk record 669 "FOO" in BLOCKS.BSA; structural closure invariant.
+- BLOCKS vs the C#, MEASURED at AUDIT 18 by running DaggerfallConnect's own
+  BlocksFile under Mono over the whole corpus: 5,411,170 values compared,
+  NINE differ, and all nine are inert and accounted for. (a) Record 669 (the
+  junk "FOO") - DFU's ReadBlock falls through its else and returns a
+  populated-but-empty DFBlock; the port returns null. Every call site guards
+  it (world.js, locationLayout.js). (b) FixRdbData's three SYNTHESIZED
+  objects in blocks 1025/1034/1036 - C# leaves ActionResource.
+  PreviousObjectOffset and NextObjectIndex at the struct default 0 where the
+  port's defaultActionResource() uses -1. Dead data: those objects carry
+  Flags = 0, so HasAction is false and RDBLayout.AddActionModelHelper - the
+  only reader of PreviousObjectOffset - never runs for them. Before AUDIT 18
+  fixed the fixed-length ReadCString this count was 262,589.
 - Palettes: MAP.PAL filename triggers x4 six-bit expansion.
 - TEXTURE: archives 215/217/436 unsupported (as DFU); wild compression values
   0x900/0x101/0x100 fall through to the uncompressed default; getColor32
