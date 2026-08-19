@@ -216,7 +216,7 @@ combat line numbers below are refreshed with it.
 - `src/characters/playerEntity.js:5` - UI later fronts it everywhere). INTERIM until then, loudly: flat
 - `src/characters/playerEntity.js:18` - maxHealth: 50,    // INTERIM until chargen rolls career HP
 - `src/characters/playerEntity.js:25` - skills: 30,       // INTERIM flat skills until chargen
-- `src/characters/playerEntity.js:27` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-...
+- `src/characters/playerEntity.js:27` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-derives from the rolled stats (S15)
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): adrenaline rush
 - `src/combat/formulas.js:76` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
 - `src/combat/formulas.js:153` - *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
@@ -229,7 +229,7 @@ combat line numbers below are refreshed with it.
 - `src/combat/weaponRig.js:34` - *                     (FLAGGED at the call sites - their HUD pends),
 - `src/scenes/arrestFlow.js:101` - instead of "You, , are..." (chargen wiring FLAGGED).
 - `src/scenes/arrestFlow.js:158` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
-- `src/scenes/arrestFlow.js:218` - // FLAGGED, still owed to their own slices: PreventEnemySpawns across the
+- `src/scenes/arrestFlow.js:218` - FLAGGED, still owed to their own slices: PreventEnemySpawns across the
 - `src/scenes/cityGuards.js:23` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/cityGuards.js:205` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:357` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
@@ -238,25 +238,23 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:512` - index into the 18 careers) or the INTERIM default Warrior (16,
 - `src/scenes/dungeonContext.js:518` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:545` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:906` - exterior spell paths are FLAGGED with their own hosts.
-- `src/scenes/dungeonContext.js:1068` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/exterior.js:366` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:372` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:521` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:626` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:745` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/dungeonContext.js:908` - exterior spell paths are FLAGGED with their own hosts.
+- `src/scenes/dungeonContext.js:1070` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/exterior.js:389` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:395` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:544` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:649` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:768` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:152` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:476` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:490` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:496` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:676` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:960` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1169` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/systems/songManager.js:306` - temple falls to Interior rather than inventing an alignment. FLAGGED.
-- `src/scenes/worldModes.js:788` - a castle reads as a plain dungeon interior. FLAGGED.
-- `src/scenes/worldModes.js:73` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
-- `src/scenes/worldModes.js:105` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage...
+- `src/scenes/world.js:499` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:513` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:519` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:699` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:983` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1192` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/worldModes.js:110` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
+- `src/scenes/worldModes.js:142` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
@@ -265,7 +263,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/chargen.js:7` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
 - `src/systems/chargen.js:22` - INTERIM (loud): the UI distributes the bonus pools by hand; the
 - `src/systems/chargen.js:130` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
-- `src/systems/chargen.js:149` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b ...
+- `src/systems/chargen.js:149` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b flow replaces this path)
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
 - `src/systems/court.js:7` - People-faction half-delta FLAGGED to the save-side clone).
 - `src/systems/court.js:27` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
@@ -276,10 +274,10 @@ combat line numbers below are refreshed with it.
 - `src/systems/effects.js:599` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 - `src/systems/equip.js:170` - /** INTERIM starting equipment (chargen's starting-gear roll
+- `src/systems/guildVariants.js:174` - Banking does not exist yet, so WHICH of the two is FLAGGED to the
 - `src/systems/guilds.js:39` - FLAGGED loud - RANK TITLES. DFU reads them from its own
-- `src/systems/guilds.js:134` - // are FLAGGED to the quest slice.
-- `src/systems/guilds.js:266` -  *  FLAGGED - see the header: the rank titles live in DFU's localization
-- `src/systems/guildVariants.js:174` - // Banking does not exist yet, so WHICH of the two is FLAGGED to the
+- `src/systems/guilds.js:134` - are FLAGGED to the quest slice.
+- `src/systems/guilds.js:266` - *  FLAGGED - see the header: the rank titles live in DFU's localization
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).
@@ -323,6 +321,9 @@ combat line numbers below are refreshed with it.
 - `src/ui/paperDoll.js:62` - table, the loud INTERIM the U8f/U8g records flagged.
 - `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
 
+<<<<<<< HEAD
+=======
+>>>>>>> origin/main
 ## Audits
 
 Newest first.

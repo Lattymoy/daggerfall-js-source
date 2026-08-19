@@ -28,7 +28,8 @@
 // water level, rand() < 50 plays WaterGentle at the surface beside
 // the player (x/z +- Range(-3, 3), min dist 8); submerged, rand() <
 // 100 adds AmbientWaterBubbles flat. doNotPlayInCastle gates the
-// dungeon one-shots (deps.inCastle - castle-block detection pends);
+// dungeon one-shots (deps.inCastle - LIVE since AUDIT 21 music F3, fed from
+// the block the player stands in; it was read here and written by nobody);
 // the cemetery howl/bird layer pends locations (routed).
 
 import { audio as defaultAudio } from './audio.js';
@@ -82,6 +83,23 @@ export class AmbientEffects {
     this._counter = 0;
   }
 
+  /** VERBATIM QUIRK, checked at AUDIT 21 and NOT changed.
+   *
+   *  The outdoor rain/crickets loop keeps playing when you walk into a
+   *  building, and layers under the dungeon ambience underground. The hosts
+   *  lane filed that as a bug. It is DFU's behaviour:
+   *
+   *    - WeatherManager.Update (:146-155) opens with "Do nothing if player
+   *      inside" and RETURNS, so SetAmbientEffects is never called and
+   *      `Presets` stays frozen at Rain.
+   *    - AmbientEffectsPlayer.Update (:134-137) then keeps the loop alive for
+   *      as long as Presets says Rain or Storm.
+   *    - The component is still RUNNING indoors, which its own
+   *      `IsCemeteryNearby && !playerEnterExit.IsPlayerInside` guard at :154
+   *      proves - that line would be dead code otherwise.
+   *
+   *  So a setPreset('none') on the interior transition would be a DEPARTURE,
+   *  not a fix, and this port is bug-for-bug. Recorded in Port-Ledger B. */
   setPreset(preset) {
     if (preset === this.preset) return;
     this.preset = preset;

@@ -919,10 +919,20 @@ discovery no-dupe all mutation-checked (three planted mutants caught).
   the entity's gender/race. The T3c "interim literals" flag is
   retired, its sentence deleted, its Home list row removed.
 
-PROBE: tools/mapRevealProbe.mjs - the whereIsProbe flow asking up to
-15 times (P(no reveal) = 0.65^15 ~ 0.2%), watching for the answer to
-switch from the compass hint to a "marked on your map" line. Its
-result lands in this record when the run completes.
+PROBED LIVE (tools/mapRevealProbe.mjs - the whereIsProbe flow asking
+repeatedly, ?class=16 booting past the chargen wizard): ask 0 drew
+the compass arm ("Vintage Elixirs is a ways south of here"), ask 1
+the REVEAL - "its right there (points to Vintage Elixirs your map)",
+7332 variant 6 with classic's own missing "on" - and the prior
+15-ask diagnostic run drew 7 reveals / 8 directions, sitting on the
+0.35. Three container truths the runs surfaced, fixed in the probe:
+the tree is heavy enough under SwiftShader that the lone pooled
+townsperson parks on the politeness idle beside a static camera
+(moves = 0 forever - a standing interlocutor answers Where-is the
+same, so the probe stopped demanding a walker); ?play without
+?class=N now lands in the U-wave chargen wizard, which owns the
+overlay; and __talk's answer window reports { text, kind }, not a
+string.
 
 Pins: test/mapReveal.test.js x6 (the boundary/inside fork, the store's
 whole-record/no-dupe/per-location laws, the envelope round trip incl.

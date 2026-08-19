@@ -36,19 +36,23 @@ import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js'
 import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
-import { routeKey } from '../ui/input.js';
+import { routeKey, overlayAction } from '../ui/input.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
+import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
 import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
+import { setDeathPresenter } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6
+import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying in a building
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
 import { isShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem } from '../systems/shopStock.js';
+import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // U8c
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
@@ -62,7 +66,40 @@ const DUNGEON_WATER_SCROLL = 0.05;
 
 export function createWorldModes(host) {
   // AUDIT 18: the interior host's share of the player world clock.
-  const interiorTicker = createPlayerTicker(playerEntity, { say: (msg) => console.log('[player]', msg) });
+  //
+  // AUDIT 21 (hosts lane, F3): onLevelUp, through this host's own overlay
+  // slot. Without it advancement.js took its headless arm and dumped every
+  // attribute point into the LOWEST stats - standing in a shop when you
+  // crossed a threshold built a different character than standing in a
+  // dungeon. `interiorOverlay` is declared below and the closure only runs
+  // once time has passed, so it is initialised by then.
+  // AUDIT 21 (hosts lane, F6): the INTERIOR death presenter. Fall damage in a
+  // building and the ticker's disease/poison sink both reach the one shared
+  // damage door; without a presenter registered here the door had nothing to
+  // call and you kept walking at 0 HP.
+  //
+  // dungeonContext registers its own on mount, which REPLACES this one - which
+  // is right, since the dungeon owns the screen while it is up. The interior
+  // arm re-registers below whenever it takes a frame, so leaving a dungeon
+  // hands the presenter back.
+  /** AUDIT 21 (hosts lane, F8): the swing-fatigue sink, matching the dungeon's
+   *  (DecreaseFatigue with the x64 assign multiplier already inside the
+   *  constant's home). Exhaustion above ground is the ticker's business, so
+   *  this only takes the points. */
+  const drainInteriorFatigue = (n) => {
+    if (n > 0) playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - n);
+  };
+  const presentInteriorDeath = () => {
+    if (!(interiorOverlay instanceof DeathScreen)) interiorOverlay = new DeathScreen();
+  };
+  setDeathPresenter(presentInteriorDeath);
+  const interiorTicker = createPlayerTicker(playerEntity, {
+    say: (msg) => console.log('[player]', msg),
+    onLevelUp: () => {
+      console.log('[player] You have gained a level!');
+      if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
+    },
+  });
   const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
 
@@ -467,6 +504,19 @@ export function createWorldModes(host) {
     // every probe frame-sync starved (the process doctrine).
     if (window.__frame !== undefined) window.__frame++;
     const fwd = eyeDir();
+    // AUDIT 21 (hosts lane, F4): THE EARS MOVE IN HERE TOO.
+    //
+    // The 3D listener was set by world.js, exterior.js and dungeonContext.js
+    // and by nothing in this host, so in INTERIOR mode it stayed frozen
+    // wherever the last exterior frame parked it - at the town's world
+    // position. interiorContext plays door open/close and door-bash through
+    // sfx.play3d at INTERIOR-LOCAL coordinates against a linear model with a
+    // finite maxDistance, so those sounds were out of range: inaudible, or
+    // panned from nowhere.
+    //
+    // Covers both modes. The dungeon arm sets it again later from its own
+    // view matrix, which is a pure write and harmless.
+    audio.setListener(cam.pos, fwd);
     const jumpHeld = keys.has('Space');
     if (mode === 'dungeon' && dungeonCtx) {
       player.slowFalling = dungeonCtx.playerSlowFalling;   // S8 slowfall (P14: the verbatim constant-speed law lives in the motor)
@@ -537,6 +587,7 @@ export function createWorldModes(host) {
       // and R mid-fall opened the window DFU refuses (TEXT.RSC 355).
       dungeonCtx.reportMotor?.(player.grounded, player.velY, cam.yaw);
     } else if (mode === 'interior') {
+      setDeathPresenter(presentInteriorDeath);   // AUDIT 21 hosts F6: take the presenter back from a dungeon we just left
       // AUDIT 18: interior mode had NO fall-damage seam at all, behind
       // a flag that claimed single-storey shells could never fall far
       // enough to matter. That was false - interiors carry ladder
@@ -630,15 +681,31 @@ export function createWorldModes(host) {
     // now (C13: the arrow flies until it meets geometry - lost on
     // impact, as DFU misses are). No paralysis gate: effects tick
     // only in the dungeon context.
+    // AUDIT 21 (hosts lane, F8): SWINGING INDOORS COST NOTHING AND TRAINED
+    // NOTHING. WeaponManager.cs:419-436 drains the swing's fatigue whatever it
+    // hits, and only then takes the tally arm - the dungeon does both
+    // (dungeonContext's two arms), the city guards do, and this rig did
+    // neither. A shop was a free, fatigue-less place to swing a longsword.
+    //
+    // The bow arm was half-right: it tallied Archery and drained nothing,
+    // which disagreed with the dungeon's own bow arm. A bow always takes the
+    // tally arm in DFU (`!hitEnemy && WeaponType != Bow` is false for a bow),
+    // so it is tallySwingSkills - Archery AND CriticalStrike - not one skill.
     for (const ev of interiorWeapon.frame(dt)) {
       if (ev !== 'hit') continue;
       if (weaponTypeForItem(interiorWeapon.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
         if (removeOne(playerEntity.items, 131)) {
-          tallySkill(playerEntity, SKILLS.Archery);
+          drainInteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);
+          tallySwingSkills(playerEntity, interiorWeapon.playerWeapon.weapon);
           interiorArrows.fire(player.eye, eyeDir());
         }
         continue;
       }
+      // "// Fatigue loss" - unconditional. envAttack hits the interior's
+      // ACTION objects, not an enemy, so there is no hitEnemy to gate the
+      // tally on: the swing costs its fatigue and trains nothing, which is
+      // what DFU does on a miss.
+      drainInteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);
       envAttack(interiorCtx.actions, interiorCtx.collider, player.eye, eyeDir());
     }
     interiorWeapon.draw();
@@ -730,7 +797,16 @@ export function createWorldModes(host) {
     // done-then-clear so chained windows survive the keydown).
     if (mode === 'interior' && interiorOverlay) {
       const w = interiorOverlay;
-      w.input(e.code);
+      // AUDIT 21 (hosts lane, F3): the same widening townTalk needed. This
+      // passed the raw key CODE, which is what a ChoiceWindow wants and is
+      // useless to a LevelUpScreen - it needs up/down and plus/minus. So a
+      // level-up in a building could not be driven even once it was opened.
+      if (w.isChoiceWindow) w.input(e.code, e);
+      else {
+        const a = overlayAction(e);
+        if (a) w.input(a, e);
+        else w.input(e.code, e);
+      }
       if (w.done && interiorOverlay === w) interiorOverlay = null;
       e.preventDefault();
       return;
@@ -784,9 +860,14 @@ export function createWorldModes(host) {
         return {
           inside: true,
           insideDungeon: true,
-          // IsPlayerInsideDungeonCastle: no castle-block detection yet, so
-          // a castle reads as a plain dungeon interior. FLAGGED.
-          insideDungeonCastle: false,
+          // AUDIT 21 (music lane, F3): IsPlayerInsideDungeonCastle, LIVE.
+          // The flag that stood here said "no castle-block detection yet" -
+          // rdbLayout has computed castleBlock verbatim on every block all
+          // along, and five real castle blocks are already pinned in the
+          // archive. MUSIC_ENV.Castle was unreachable and CASTLE_SONGS a dead
+          // constant: the non-hostile wing of Castle Daggerfall played a
+          // random dungeon track instead of GPALAC.
+          insideDungeonCastle: dungeonCtx?.inCastle ?? false,
           dungeonKey: dungeonCtx?.musicSeed ?? null,
         };
       }

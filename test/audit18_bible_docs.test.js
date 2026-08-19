@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -330,4 +331,22 @@ test('AUDIT 18: Home.md does not list MAP.PAL as verified-fetched while nothing 
     assert.match(read('bible/Home.md'), /MAP\.PAL is NOT/,
       "Home.md still counts MAP.PAL in the diet's verified live fetch surface; no code path fetches it");
   }
+});
+
+// ---------------------------------------------------------------------------
+// AUDIT 21: the list is regenerated MECHANICALLY, and now that is true.
+//
+// Testing.md has said so for three audits and no such tool existed, so the
+// list rotted on every host edit and three audits spent time hand-patching
+// line numbers - each patch a chance to point a citation at the wrong line.
+// tools/regenOpenFlags.mjs writes the list; this asserts the checked-in list
+// is what the tool would write, so the two can never drift apart again.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 21: bible/Home.md open-flags list matches the regenerator', () => {
+  const r = spawnSync(process.execPath, [join(root, 'tools/regenOpenFlags.mjs'), '--check'],
+    { cwd: root, encoding: 'utf8' });
+  assert.equal(r.status, 0,
+    `${r.stderr || r.stdout}\nthe checked-in open-flags list is not what the tool produces - `
+    + 'run: node tools/regenOpenFlags.mjs');
 });

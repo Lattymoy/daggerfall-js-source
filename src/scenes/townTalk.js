@@ -27,6 +27,7 @@ import { makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
 import { TalkWindow } from '../ui/talkWindow.js';
 import { hudScale } from '../ui/hud.js';
+import { overlayAction } from '../ui/input.js';
 import {
   getPeopleOfCurrentRegion, getReactionToPlayer, pickpocketTownsperson, findFactions,
   MOBILE_NPC_ACTIVATION_DISTANCE, PICKPOCKET_DISTANCE, FOUND_NOTHING_VALUABLE_TEXT_ID,
@@ -187,9 +188,21 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // The dungeon host never had the bug: routeKey passes the real
       // event to overlayAction. The live probe caught it typing
       // "Scout" and reading back "scout".
+      //
+      // AUDIT 21 (hosts lane, F3): the FULL action map for anything that is
+      // not a ChoiceWindow. This used to understand Escape and Enter/E and
+      // nothing else, which is fine for a talk window and useless for a
+      // LevelUpScreen - it needs up/down to move the cursor and plus/minus to
+      // spend the pool. That is why levelling outside a dungeon could not
+      // open a screen here, and silently auto-spent into your LOWEST stats
+      // instead. overlayAction is the same map routeKey feeds the dungeon
+      // host's overlays, so both hosts drive an overlay identically now.
       if (overlay.isChoiceWindow) overlay.input(e.code, e);
-      else if (e.code === 'Escape') overlay.input('back');
-      else if (e.code === 'Enter' || e.code === 'KeyE') overlay.input('confirm');
+      else {
+        const a = overlayAction(e);
+        if (a) overlay.input(a, e);
+        else if (e.code === 'KeyE') overlay.input('confirm');   // this host's own alias
+      }
       if (overlay.done) {
         // AUDIT 2026-08-17c: clear the close-callback BEFORE firing -
         // a stale G2 callback (e.g. the court verdict) must never
@@ -447,6 +460,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     texts: (id) => textVariants(id),
     say: (line) => hud.add(line),
     get overlayActive() { return !!overlay; },
+    /** AUDIT 21 (hosts lane, F6): the live overlay, so a death presenter can
+     *  refuse to stack a second death screen on the first. */
+    get overlay() { return overlay; },
     get mode() { return mode; },
     get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
     get locationName() { return cityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)

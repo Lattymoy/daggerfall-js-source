@@ -31,6 +31,24 @@ export const HAND_REST_ROLL = 0.4 * Math.PI;
 // group about this.
 export const NECK_PIVOT_Y = 1.655;
 
+/** The rig's proportion vocabulary: per-part GIRTH multipliers, all 1
+ *  = the human neutral figure. Passed as `opts.build`. Keys map to the
+ *  loft groups a silhouette actually reads by:
+ *    torso    - ribcage/waist/pelvis barrel
+ *    shoulder - trap yoke + deltoid caps (the shoulder LINE)
+ *    arm      - upper arm + forearm profile
+ *    hand     - mitten + thumb
+ *    neck     - the column
+ *    skull    - cranium above the cheek row
+ *    jaw      - chin/jaw/cheek rows (a heavy jaw without a swollen head)
+ *    leg      - thigh/calf profile and the pelvis connector
+ *  Anything outside 0.6..1.6 is a different creature, not a build -
+ *  buildNeutralBody clamps to that band rather than tear a seam. */
+export const BUILD_IDENTITY = Object.freeze({
+  torso: 1, shoulder: 1, arm: 1, hand: 1, neck: 1, skull: 1, jaw: 1, leg: 1,
+});
+export const BUILD_MIN = 0.6, BUILD_MAX = 1.6;
+
 export function buildNeutralBody(ramps, opts = {}) {
   const SEG = 28;
   const SKIN = [196, 154, 116], BOOT = [92, 74, 58], HAIR = [64, 54, 44];
@@ -61,6 +79,27 @@ export function buildNeutralBody(ramps, opts = {}) {
     }
   }
 
+  // BUILD: per-part GIRTH multipliers (half-extents only - rx/rz).
+  // Y IS NEVER TOUCHED here. Every exported constant on this rig
+  // (WRIST_JUNCTION_Y, NECK_PIVOT_Y) and every consumer that derives
+  // from them (the viewer's wristY/neckY, animate's limb pivots) is a
+  // HEIGHT, so scaling y would silently invalidate all of them across
+  // callers that never asked for a build. Girth carries the mass a
+  // non-human silhouette needs (a thicker torso, a heavier jaw, a
+  // wider shoulder shelf) without moving a single joint.
+  //
+  // Default is exactly 1 for every key, so `buildNeutralBody(ramps)`
+  // and `buildNeutralBody(ramps, { build: {} })` return byte-identical
+  // face lists - asserted in test/neutralbody.build.test.js.
+  const BD = { ...BUILD_IDENTITY, ...(opts.build || {}) };
+  for (const k of Object.keys(BUILD_IDENTITY)) {
+    BD[k] = Math.min(BUILD_MAX, Math.max(BUILD_MIN, Number.isFinite(BD[k]) ? BD[k] : 1));
+  }
+  // Scaled COPY of a row list: rx/rz only. y, p, cx, cz, dx pass
+  // through untouched - cz is a DEPTH OFFSET (where the ring sits),
+  // not a radius, and scaling it would swing the head off the neck.
+  const girth = (rows, k) => (k === 1 ? rows : rows.map((r) => ({ ...r, rx: r.rx * k, rz: r.rz * k })));
+
   // TORSO: designed, not the sprite barrel. V-taper from broad
   // shoulders to a narrow waist with a slight hip flare, and a
   // FLATTENED squarish cross-section (p 0.72) so the chest reads broad
@@ -76,7 +115,7 @@ export function buildNeutralBody(ramps, opts = {}) {
     { y: 1.04, rx: 0.168, rz: 0.088, p: TP }, // pelvis
     { y: 0.99, rx: 0.170, rz: 0.090, p: TP }, // pelvis floor (caps the thigh tops)
   ];
-  loft(torso, SKIN);
+  loft(girth(torso, BD.torso), SKIN);
 
   // DELTOID shoulder caps: connect the torso top out to each arm so the
   // shoulders are a distinct broad line, and the arm reads as separate
@@ -89,7 +128,7 @@ export function buildNeutralBody(ramps, opts = {}) {
     { y: 1.64, rx: 0.150, rz: 0.070, p: 0.5, cx: 0.00 }, // sloping out
     { y: 1.61, rx: 0.215, rz: 0.082, p: 0.5, cx: 0.00 }, // shoulder shelf
   ];
-  loft(TRAP, SKIN);
+  loft(girth(TRAP, BD.shoulder), SKIN);
   // DELTOID: an angular capped wedge over the joint (low p = planar
   // facets, flatter than deep), defined edge into the arm - not a ball.
   const DELT = [
@@ -98,15 +137,18 @@ export function buildNeutralBody(ramps, opts = {}) {
     { y: 1.55, rx: 0.082, rz: 0.076, p: 0.55 }, // mid deltoid
     { y: 1.50, rx: 0.066, rz: 0.068, p: 0.6 },  // defined edge into the arm
   ];
-  grp = 'armL'; loft(DELT, SKIN, () => -0.240, () => 0);
-  grp = 'armR'; loft(DELT, SKIN, () => 0.240, () => 0);
+  {
+    const D = girth(DELT, BD.shoulder);
+    grp = 'armL'; loft(D, SKIN, () => -0.240, () => 0);
+    grp = 'armR'; loft(D, SKIN, () => 0.240, () => 0);
+  }
   grp = 'body';
   // NECK: narrow column from the shoulders up into the head base.
-  loft([
+  loft(girth([
     { y: 1.63, rx: 0.078, rz: 0.078, p: 0.8 },
     { y: 1.68, rx: 0.070, rz: 0.072, p: 0.8 },
     { y: 1.73, rx: 0.072, rz: 0.074, p: 0.8 },
-  ], SKIN, () => 0, () => -0.01);
+  ], BD.neck), SKIN, () => 0, () => -0.01);
   // HEAD: a proper head (the sprite hair-blob was rx 0.35, wider than
   // the shoulders - a mushroom). Rounded, sized like a head, sits on
   // the neck. cz back a touch so the face plane faces forward.
@@ -114,14 +156,28 @@ export function buildNeutralBody(ramps, opts = {}) {
   // Egg-shaped: DEEPER than wide (face-to-skull longer than ear-to-ear),
   // tapered jaw/chin at the bottom, widest at the temples, rounded
   // crown. Skull sits back a touch (neck is forward), face plane fwd.
-  loft([
+  // JAW and SKULL scale SEPARATELY (BD.jaw / BD.skull). A heavy jaw is
+  // the single strongest non-human read on a humanoid head, and tying
+  // it to the cranium just inflates the whole skull into a balloon.
+  // The cheek row (1.79) is the seam: it takes the MEAN of the two so
+  // the jaw meets the temple on a continuous ring instead of a step.
+  const HEAD_JAW = [
     { y: 1.70, rx: 0.052, rz: 0.070, cz: 0.010 }, // chin (narrow, forward)
     { y: 1.74, rx: 0.082, rz: 0.105, cz: 0.005 }, // jaw
-    { y: 1.79, rx: 0.102, rz: 0.130, cz: -0.005 }, // cheek
+  ];
+  const HEAD_SEAM = [
+    { y: 1.79, rx: 0.102, rz: 0.130, cz: -0.005 }, // cheek (the seam ring)
+  ];
+  const HEAD_SKULL = [
     { y: 1.85, rx: 0.108, rz: 0.140, cz: -0.015 }, // temple (widest, deepest)
     { y: 1.92, rx: 0.100, rz: 0.135, cz: -0.020 }, // upper skull (back-heavy)
     { y: 1.98, rx: 0.082, rz: 0.108, cz: -0.018 }, // crown curve
     { y: 2.03, rx: 0.045, rz: 0.058, cz: -0.012 }, // crown top
+  ];
+  loft([
+    ...girth(HEAD_JAW, BD.jaw),
+    ...girth(HEAD_SEAM, (BD.jaw + BD.skull) / 2),
+    ...girth(HEAD_SKULL, BD.skull),
   ], SKIN, () => 0, (r) => r.cz);
   grp = 'body';
 
@@ -138,28 +194,33 @@ export function buildNeutralBody(ramps, opts = {}) {
     { y: 1.06, rx: 0.044, rz: 0.046 }, // lower forearm
     { y: 0.99, rx: 0.036, rz: 0.038 }, // wrist
   ];
-  grp = 'armL'; loft(armProf, SKIN, () => -ARM_X, () => 0);
-  grp = 'armR'; loft(armProf, SKIN, () => ARM_X, () => 0);
+  {
+    const A = girth(armProf, BD.arm);
+    grp = 'armL'; loft(A, SKIN, () => -ARM_X, () => 0);
+    grp = 'armR'; loft(A, SKIN, () => ARM_X, () => 0);
+  }
   grp = 'body';
   // HAND: small block at the wrist
   function hand(sign) {
     const cx = sign * ARM_X;
     // MITTEN: flat palm + fused fingers, hanging down. Flat = rx > rz.
-    loft([
+    loft(girth([
       { y: 0.985, rx: 0.036, rz: 0.038 }, // wrist
       { y: 0.950, rx: 0.052, rz: 0.030 }, // palm (wide, flat)
       { y: 0.905, rx: 0.054, rz: 0.030 }, // knuckles
       { y: 0.860, rx: 0.048, rz: 0.026 }, // fingers
       { y: 0.820, rx: 0.036, rz: 0.020 }, // fingertips (rounded)
-    ], SKIN, () => cx, () => 0);
+    ], BD.hand), SKIN, () => cx, () => 0);
     // THUMB: short nub off the OUTER side (away from the body), upper
     // palm, angled slightly forward.
     const tside = sign; // outer
-    loft([
+    // The thumb's OWN cx offset rides BD.hand too - a scaled mitten
+    // with an unscaled offset seats the thumb inside the palm.
+    loft(girth([
       { y: 0.955, rx: 0.016, rz: 0.020, cz: 0.010 },
       { y: 0.935, rx: 0.020, rz: 0.024, cz: 0.018 },
       { y: 0.912, rx: 0.014, rz: 0.018, cz: 0.014 },
-    ], SKIN, () => cx + tside * 0.052, (r) => r.cz);
+    ], BD.hand), SKIN, () => cx + tside * 0.052 * BD.hand, (r) => r.cz);
   }
   grp = 'armL'; hand(-1); grp = 'armR'; hand(1); grp = 'body';
 
@@ -190,8 +251,8 @@ export function buildNeutralBody(ramps, opts = {}) {
     { y: 1.00, rx: 0.108, rz: 0.100, dx: 0.012 }, // meets the pelvis floor - does NOT rise past it
   ];
   function leg(sign) {
-    loft(legProf, SKIN, () => sign * LEG_X, () => 0);
-    loft(CONNECT, SKIN, (r) => sign * (LEG_X - r.dx), () => 0); // dx pulls the top toward centre
+    loft(girth(legProf, BD.leg), SKIN, () => sign * LEG_X, () => 0);
+    loft(girth(CONNECT, BD.leg), SKIN, (r) => sign * (LEG_X - r.dx), () => 0); // dx pulls the top toward centre
   }
   grp = 'legL'; leg(-1); grp = 'legR'; leg(1); grp = 'body';
 

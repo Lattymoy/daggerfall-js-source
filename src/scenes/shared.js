@@ -18,9 +18,9 @@ import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { liveStat } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
 import { SOUND } from '../systems/soundClips.js';
-import { surfacePlayer } from '../characters/playerEntity.js';
+import { surfacePlayer, hurtPlayer } from '../characters/playerEntity.js';
 import { music } from '../systems/music.js';
-import { SongManager, musicEnvironment } from '../systems/songManager.js';
+import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 
 import { getBytes } from './dataSource.js';
@@ -326,8 +326,11 @@ export function applyNightStars(bmp, random) {
 export function applyFallLanding(entity, distance, { hurt = null, sound = null } = {}) {
   if (distance > FALL_DAMAGE_THRESHOLD) {
     const dmg = Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD));
+    // AUDIT 21 (hosts lane, F6): the no-`hurt` arm went through the ONE
+    // damage door now, so a fatal fall outdoors or in a building raises the
+    // death screen instead of leaving you walking around at 0 HP.
     if (hurt) hurt(dmg);
-    else { entity.health = Math.max(0, entity.health - dmg); surfacePlayer(); }
+    else hurtPlayer(entity, dmg);
     sound?.(SOUND.FallDamage);
   } else if (distance > FALL_DAMAGE_THRESHOLD / 2) {
     sound?.(SOUND.FallHard);   // BadFallDetected
@@ -413,7 +416,10 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } 
   // their own mode ran. Walking through a door rewound time.
 
   const sinks = {
-    hurt: (n) => { if (n > 0) entity.health = Math.max(0, (entity.health ?? 0) - n); },
+    // AUDIT 21 (hosts lane, F6): through the one damage door - disease,
+    // poison and continuous-damage effects can kill you, and above ground
+    // they used to do it silently.
+    hurt: (n) => hurtPlayer(entity, n),
     heal: (n) => { if (n > 0) entity.health = Math.min(entity.maxHealth ?? Infinity, (entity.health ?? 0) + n); },
     drainMagicka: (n) => { if (n > 0) entity.magicka = Math.max(0, (entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + n); },
@@ -460,10 +466,31 @@ export function fatigueLossMultiplierFor(entity) {
  * @param {object} [opts]
  * @param {boolean} [opts.fm]  take DFU's FM playlists
  */
-export function createMusicDirector({ fm = false } = {}) {
+/**
+ * AUDIT 21 (music lane, F1): THE SINKS ARE INJECTABLE NOW.
+ *
+ * This director is the single seam through which every host feeds SongManager,
+ * and it had ZERO behavioural coverage - its only pins were source-regex
+ * sweeps over the host files, and a regex cannot see whether a value is used.
+ * Three mutations were run against it and the WHOLE SUITE stayed green:
+ *
+ *   - reversing the spread below, which makes `base` win and permanently
+ *     overwrite the mode host's inside/buildingType/factionId/dungeonKey -
+ *     ALL interior and dungeon music dead, i.e. the exact AUDIT 21 F1 defect
+ *     re-introduced by a different edit than the one F1's pin watches;
+ *   - `songEnded: false`, killing DFU's whole !IsPlaying arm;
+ *   - `play: () => {}`, so no music ever plays anywhere in the game.
+ *
+ * The only thing standing between a node test and this function was the
+ * `music` module singleton needing an AudioContext, so the sinks default to it
+ * and can be replaced. Nothing in the hosts passes them.
+ */
+export function createMusicDirector({ fm = false, play = null, stop = null, playing = null } = {}) {
+  const isPlaying = playing ?? (() => music.playing);
+  let _lastEnvironment = null;
   const manager = new SongManager({
-    play: (name) => music.playFrom([name], { gameDays: 0 }),
-    stop: () => music.stop(),
+    play: play ?? ((name) => music.playFrom([name], { gameDays: 0 })),
+    stop: stop ?? (() => music.stop()),
     fm,
   });
   return {
@@ -472,6 +499,13 @@ export function createMusicDirector({ fm = false } = {}) {
      *  (worldModes.musicContext()), or null outdoors. */
     update(base, overlay = null) {
       const merged = { ...base, ...(overlay ?? {}) };
+      // AUDIT 21 (music lane, F4): DFU's temple arm writes NOTHING when
+      // GetTempleIndex returns -1, so the environment holds - walk into an
+      // unresolvable temple from a city street and the city track keeps
+      // playing. musicEnvironment answers null for that case; the hold is
+      // here, because a pure function cannot leave a field alone.
+      const environment = holdEnvironment(musicEnvironment(merged), _lastEnvironment);
+      _lastEnvironment = environment;
       // Probe hook: the four scene hosts have no execution coverage in
       // node, and AUDIT 21 F1 found this director being fed exclusively on
       // frames where the overlay was guaranteed null - the whole interior
@@ -479,17 +513,17 @@ export function createMusicDirector({ fm = false } = {}) {
       // check the wiring from a real boot, which is the only place it is
       // observable at all.
       if (typeof window !== 'undefined') {
-        window.__musicCtx = { environment: musicEnvironment(merged), overlay: overlay !== null };
+        window.__musicCtx = { environment, overlay: overlay !== null };
       }
       return manager.update({
-        environment: musicEnvironment(merged),
+        environment,
         weather: merged.weather ?? 'sunny',
         night: Boolean(merged.night),
         gameDays: merged.gameDays ?? 0,
         locationIndex: merged.locationIndex ?? -1,
         arrested: Boolean(merged.arrested),
         dungeonKey: merged.dungeonKey ?? null,
-      }, { songEnded: !music.playing });
+      }, { songEnded: !isPlaying() });
     },
   };
 }

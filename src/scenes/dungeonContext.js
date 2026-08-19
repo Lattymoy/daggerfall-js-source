@@ -19,7 +19,7 @@ import { RDB_SIDE } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, classifyPlacementAction, lookAtLockText } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
-import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter } from '../characters/playerEntity.js';
 import { addItem, removeOne } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
@@ -662,13 +662,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n);
     surfacePlayer();
   }
+  // AUDIT 21 (hosts lane, F6): this host's arm is now the PRESENTER on the one
+  // shared damage door, not a second door of its own. It was the only one of
+  // the four writers that checked for death, which is exactly why the other
+  // three could go on writing health raw and nobody noticed.
+  setDeathPresenter(() => {
+    if (!(activeOverlay instanceof DeathScreen)) activeOverlay = new DeathScreen();
+  });
   function hurtPlayer(dmg) {
-    if (dmg <= 0) return;
-    playerEntity.health = Math.max(0, playerEntity.health - dmg);
-    surfacePlayer();
-    if (playerEntity.health === 0 && !(activeOverlay instanceof DeathScreen)) {
-      activeOverlay = new DeathScreen();
-    }
+    hurtEntity(playerEntity, dmg);
   }
   // S13 magicka sink (parallel to heal/hurt): the SpellPoints damage
   // family drives it. DecreaseMagicka floors at 0; surfaces for the
@@ -1438,6 +1440,31 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     return null;
   }
+  /** AUDIT 21 (music lane, F3): IsPlayerInsideDungeonCastle.
+   *
+   *      isPlayerInsideDungeonCastle = playerDungeonBlockData.CastleBlock;
+   *  (PlayerEnterExit.cs:338), read by SongManager.cs:450-457 for the Castle
+   *  playlist (GPALAC/FPALAC) and by AmbientEffectsPlayer.cs:291-299 for
+   *  doNotPlayInCastle.
+   *
+   *  Both call sites hardcoded `insideDungeonCastle: false`, so MUSIC_ENV.Castle
+   *  was unreachable and CASTLE_SONGS was a dead constant - and `deps.inCastle`
+   *  was READ by ambientEffects and WRITTEN by nobody, so the one-shot
+   *  suppression was inert too. The flag blamed "no castle-block detection
+   *  yet", and rdbLayout has computed castleBlock verbatim
+   *  (DaggerfallBillboard.cs:227) on every block all along - test/dungeon.test.js
+   *  already pins that five real castle blocks exist in the archive.
+   *
+   *  Same block lookup as the water surface above, because it is the same
+   *  question: which RDB block is the player standing in. */
+  function castleBlockAt(x, z) {
+    for (const b of dungeon.blocks) {
+      if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
+        return Boolean(b.layout.castleBlock);
+      }
+    }
+    return false;
+  }
   // P12/P18: breath/drowning (PlayerEntity.FixedUpdate on the classic
   // update cadence). Submerged = the controller CENTER (feet + 0.9)
   // + 76*GlobalScale - 0.95 below the block water surface (the head-
@@ -1480,6 +1507,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         playerPos: [playerFeet[0], playerFeet[1] + 0.9, playerFeet[2]],   // the controller center (DFU transform.position)
         waterSurfaceY: _surf,
         submerged: _surf != null && playerFeet[1] + 0.9 + 76 * 0.025 - 0.95 < _surf,
+        // AUDIT 21 (music lane, F3): doNotPlayInCastle
+        // (AmbientEffectsPlayer.cs:291-299). ambientEffects READ deps.inCastle
+        // and nothing in src/ ever WROTE it, so the suppression was inert and
+        // a castle kept dripping and moaning. Same block lookup as the water.
+        inCastle: castleBlockAt(playerFeet[0], playerFeet[2]),
       });
     }
     if (pendingClickCast) {
@@ -1807,6 +1839,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the 15-song list.
     /** The host's cumulative clock, for the music context's gameDays. */
     get classicMinutes() { return classicMinutesRef.value; },
+    /** AUDIT 21 (music lane, F3): IsPlayerInsideDungeonCastle, live off the
+     *  block the player is standing in - the Castle playlist and
+     *  doNotPlayInCastle both had it hardcoded false. */
+    get inCastle() { return lastPlayerFeet ? castleBlockAt(lastPlayerFeet[0], lastPlayerFeet[2]) : false; },
     musicSeed: dungeonKey(
       (dfLocation?.dungeon?.recordElement?.header?.unknown2 ?? 0) & 0xffff,
       dfLocation?.regionIndex ?? 0),

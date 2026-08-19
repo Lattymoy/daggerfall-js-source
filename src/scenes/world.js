@@ -30,7 +30,8 @@ import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold } from '../systems/court.js';   // AUDIT 17e F6   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
-import { CharSheet, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet
+import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying above ground
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
@@ -52,7 +53,7 @@ import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../sy
 import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier, tallySkill, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
-import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
@@ -442,7 +443,29 @@ export async function bootWorld(canvas, renderer, params, status) {
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
   const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14); motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
-  const playerTicker = createPlayerTicker(playerEntity, { say: (msg) => console.log('[player]', msg) });   // AUDIT 18: the per-minute tick every host owes
+  // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
+  // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
+  // stats with no message and no choice. Cross a level threshold walking a
+  // town and you got a different character than crossing it in a dungeon, off
+  // the same XP. The dungeon host has passed one since U3; the three carriers
+  // above ground passed only `say`.
+  //
+  // `townTalk` is declared further down this function and the closure only
+  // runs once time has passed, so it is initialised by then.
+  const playerTicker = createPlayerTicker(playerEntity, {
+    say: (msg) => console.log('[player]', msg),
+    onLevelUp: () => {
+      console.log('[player] You have gained a level!');
+      townTalk.showOverlay(new LevelUpScreen(playerEntity));
+    },
+  });   // AUDIT 18: the per-minute tick every host owes
+  // AUDIT 21 (hosts lane, F6): this host's death presenter. Guard damage,
+  // fall damage and the ticker's disease/poison sink all reach the one damage
+  // door in playerEntity.js; the door calls this. Registered here rather than
+  // passed down four call chains, because there is one player and one death.
+  setDeathPresenter(() => {
+    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen());
+  });
 
   // AUDIT 19 F4: the CUMULATIVE game-day count, for the music seed. The
   // ticker's classicMinutes is the only clock in this host that keeps
@@ -586,7 +609,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
       const apply = () => {
-        playerEntity.health = Math.max(0, playerEntity.health - dmg);
+        hurtPlayer(playerEntity, dmg);   // AUDIT 21 hosts F6: the one damage door - this used to write health raw and never check for death
         audio.playOneShot(hitSoundFor(wpn), 1.1);
         surfacePlayer();
       };
