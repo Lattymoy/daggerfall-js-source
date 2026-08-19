@@ -40,14 +40,32 @@ const mem = new Map(); // NAME -> Uint8Array
 // than by name - a future .TXT reader is then covered without anyone
 // remembering. CLASSES.DAT is named EXACTLY, because a bare \.DAT$ would
 // drag in the 247MB SKY/PACKED sets the diet exists to refuse.
+//
+// U22: the VIDs are the same trap and CANNOT ride wholesale - the set is
+// 86MB and \.VID$ would undo the diet's single biggest saving. So they
+// are named one at a time, and ONLY when something actually plays them:
+// ANIM0001 is the splash (1.4MB) and is wired in main.js. DFU names five
+// more - ANIM0012 the death video (DaggerfallUI.cs:50), ANIM0000/
+// ANIM0011/DAG2 the new-game cinematics (DaggerfallStartNewGameWizard.cs
+// :33-35, 26.6MB between them), ANIM0002/ANIM0004 the lycanthropy and
+// vampire dreams - and none of those is wired here yet, so none is
+// ingested. Adding a file nobody plays costs every user the bytes for
+// nothing; forgetting one that IS played is the F2 silent degradation.
+// Which is why the rule is ENFORCED, not remembered - and the enforcement
+// was already here: AUDIT 18 F2's pin re-derives the fetch list from the
+// source on every run, so main.js's getBytes('ANIM0001.VID') put the
+// splash under the rule the moment it was written. Proven by mutation -
+// drop the name below and F2 fails with "desktop diet drops
+// ANIM0001.VID". Wire a video, and the pin makes you feed it.
 const LEAN = typeof window !== 'undefined' &&
   ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0);
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT)$/.test(name) ||
   name === 'CLASSES.DAT' ||
+  name === 'ANIM0001.VID' ||                // the U22 splash - see the VID note above
   (!lean && /^SKY\d+\.DAT$/.test(name));   // skies: 247MB - full sets on desktop, gradient fallback on the lean diet
 const MANIFEST_KEY = '__MANIFEST__';
-const MANIFEST_V = 3;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES - both auto-wiped
+const MANIFEST_V = 4;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID - all auto-wiped
 
 /** Uppercase basename: the canonical ARENA2 key. Exported for tests. */
 export function normalizeName(name) {

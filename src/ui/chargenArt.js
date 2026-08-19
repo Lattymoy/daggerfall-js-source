@@ -67,13 +67,22 @@ export const MENU_BACKDROP = [0, 0, 0, 1];
  *  was (57,75,97) - the sky at 40% - and (0,0,0) after.
  *
  *  The exterior hosts pass the REAL canvas with no offset, where this
- *  subtracts zero and nothing changes. */
-export function drawMenuBackdrop(renderer) {
+ *  subtracts zero and nothing changes.
+ *
+ *  U22: a TOP-LEVEL host (the splash) has a canvas rather than a live GL
+ *  context to measure - and the letterbox bit there too, a third time.
+ *  Pass one and it is measured instead of renderer.gl; the offset is
+ *  still subtracted, which is a no-op at top level and correct anywhere
+ *  else. Without this the helper cannot be shared with a host that draws
+ *  before the world does, and a fourth copy of the idiom gets written. */
+export function drawMenuBackdrop(renderer, canvas = null) {
   const [ox, oy] = renderer.screenOffset ?? [0, 0];
+  const w = canvas ? canvas.width : renderer.gl.drawingBufferWidth;
+  const h = canvas ? canvas.height : renderer.gl.drawingBufferHeight;
   renderer.drawScreenQuad(null,
     // `0 - ox` rather than `-ox`: unary negation on 0 yields -0, which is
     // the same pixel but a different value to anything comparing rects.
-    { x: 0 - ox, y: 0 - oy, w: renderer.gl.drawingBufferWidth, h: renderer.gl.drawingBufferHeight },
+    { x: 0 - ox, y: 0 - oy, w, h },
     undefined, MENU_BACKDROP);
 }
 export const ALT_SHADOW_1 = [44 / 255, 60 / 255, 60 / 255, 1];        // DaggerfallAlternateShadowColor1
