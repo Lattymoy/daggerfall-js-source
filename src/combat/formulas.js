@@ -16,8 +16,9 @@ import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source
 import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback units
 import { rand } from '../formats/dfRandom.js';   // the monster multi-attack reflex gate (F2)
 import { liveStat } from '../systems/statMods.js';   // S14: fortify-aware stat reads
-import { skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
-import { weaponMinDamage, weaponMaxDamage } from '../characters/weapons.js';   // AUDIT 18 F1: GetBaseDamageMin/Max resolve the TEMPLATE, never a baked field
+import { skillValue, SKILLS } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
+import { RACES } from '../systems/races.js';   // CalculateRacialModifiers reads the DFU-numbered race id
+import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';   // AUDIT 18: GetBaseDamageMin/Max and GetWeaponSkillIDAsShort resolve the TEMPLATE, never a baked field or a display name
 
 // ---- Dice100.cs verbatim ----
 export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 100) < chance;   // Random.Range(0,100) < chance
@@ -84,39 +85,105 @@ const BODY_PARTS = Object.freeze([0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4
 export const calculateStruckBodyPart = (roll01 = Math.random()) => BODY_PARTS[Math.floor(roll01 * BODY_PARTS.length)];
 
 // ---- DFCareer.StructureData attack-modifier bit table ----
-export const ENEMY_GROUPS = Object.freeze({ Undead: 0, Daedra: 1, Humanoid: 2, Animals: 3 });
+export const ENEMY_GROUPS = Object.freeze({ None: -1, Undead: 0, Daedra: 1, Humanoid: 2, Animals: 3 });
 const GROUP_BITS = Object.freeze([[0x01, 0x10], [0x02, 0x20], [0x04, 0x40], [0x08, 0x80]]);   // [bonus, phobia] per group
+/** DFCareer.GetAttackModifier (DFCareer.cs:817-848), verbatim: the two
+ *  bits are decoded EXCLUSIVELY, bonus first - `if (HasFlags(0x01))
+ *  result = Bonus; else if (HasFlags(0x10)) result = Phobia;`. The
+ *  resolved AttackModifier enum (Normal 0 / Bonus 1 / Phobia 2) is
+ *  what GetBonusOrPenaltyByEnemyType then masks, so a career carrying
+ *  BOTH bits for one group is a BONUS in DFU, never a wash.
+ *  AUDIT 18: the port summed the raw bits instead (+1 and -1 netting
+ *  0) and its comment asserted the inverse of the C#. Vanilla data
+ *  never sets both (every CLASS*.CFG and ENEMY*.CFG byte in ARENA2 is
+ *  0x00 or 0x04), but U20b's custom-class builder ORs them
+ *  independently, so "Bonus to hit: Undead" + "Phobia: Undead" = 0x11
+ *  reaches here. */
 export function careerAttackModifier(attackModifierFlags, group) {
-  const [bonus, phobia] = GROUP_BITS[group];
-  // DFU applies BOTH bits additively (+level for bonus, -level for
-  // phobia; a career carrying both nets 0) - audit F16.
-  return ((attackModifierFlags & bonus) === bonus ? 1 : 0) - ((attackModifierFlags & phobia) === phobia ? 1 : 0);
+  const [bonus, phobia] = GROUP_BITS[group] ?? [];
+  if (bonus == null) return 0;                                     // EnemyGroups.None
+  if ((attackModifierFlags & bonus) === bonus) return 1;
+  if ((attackModifierFlags & phobia) === phobia) return -1;
+  return 0;
 }
 
-/** Affinity string -> enemy group (class enemies are Humanoid). DFU's
- *  GetEnemyGroup uses a per-careerIndex table; affinity carries the
- *  same partition for every entry we spawn. */
-export function enemyGroupOf(affinity) {
-  return { Human: ENEMY_GROUPS.Humanoid, Undead: ENEMY_GROUPS.Undead, Daedra: ENEMY_GROUPS.Daedra, Animal: ENEMY_GROUPS.Animals }[affinity] ?? null;
+/** FormulaHelper.GetEnemyEntityEnemyGroup (FormulaHelper.cs:2746-2805),
+ *  verbatim: the switch is on CareerIndex, NOT on MobileEnemy.Affinity.
+ *  The four atronachs, the horse and every unlisted career are None.
+ *  (Careers whose classic grouping disagrees carry DFU's own comment.) */
+const ENEMY_GROUP_BY_CAREER = Object.freeze({
+  0: 3, 3: 3, 4: 3, 5: 3, 6: 3, 11: 3, 20: 3, 34: 3, 39: 3, 40: 3,          // Animals (39/40 "grouped as undead in classic")
+  1: 2, 2: 2, 7: 2, 8: 2, 9: 2, 10: 2, 12: 2, 13: 2, 14: 2, 16: 2,          // Humanoid
+  21: 2, 22: 2, 24: 2, 41: 2, 42: 2,                                        // (41/42 "grouped as undead in classic")
+  15: 0, 17: 0, 18: 0, 19: 0, 23: 0, 28: 0, 30: 0, 32: 0, 33: 0,            // Undead (17 "grouped as animal in classic")
+  25: 1, 26: 1, 27: 1, 29: 1, 31: 1,                                        // Daedra
+});
+export function enemyEntityGroup(careerIndex) {
+  return ENEMY_GROUP_BY_CAREER[careerIndex] ?? ENEMY_GROUPS.None;
 }
 
 // ---- GetBonusOrPenaltyByEnemyType (the DFU always-on port) ----
-export function bonusOrPenaltyByEnemyType(attacker, targetGroup) {
-  // AUDIT 17n: DFU reads attacker.Career.<group>AttackModifier for
-  // EVERY attacker (FormulaHelper.cs:993-1030). The port flattened the
-  // byte onto the entity, and only the foe builder ever set it
-  // (enemyEntity.js:105) - the player carries `career` and no flat
-  // field, so this guard returned 0 on every player swing. The target
-  // half was wired correctly all along (playerWeapon.js passes
-  // enemyGroupOf(affinity)), which is why nothing looked broken.
-  //
-  // Not just a U20b concern: the classic ASSASSIN ships
-  // attackModifierFlags 0x04 - a Humanoid bonus - and has never
-  // received it. U20b only made the same modifier purchasable, at 3-6
-  // difficulty points for a bonus and -4 for a phobia.
+/** FormulaHelper.cs:993-1057, verbatim including the ladder's ORDER.
+ *
+ *  AUDIT 17n wired the ATTACKER half (DFU reads
+ *  attacker.Career.<group>AttackModifier for every attacker; the port
+ *  had flattened the byte onto the entity and only the foe builder
+ *  ever set it). AUDIT 18 wires the TARGET half, which had two holes:
+ *
+ *  1. the port pre-resolved ONE group from the target's affinity and
+ *     handed the callee a number. DFU uses TWO discriminants - the
+ *     Humanoid arm keys on `MobileEnemy.Affinity == MobileAffinity.
+ *     Human` (so an Orc, whose group IS Humanoid but whose affinity is
+ *     Darkness, gets NOTHING - a DFU quirk, reproduced) while the
+ *     Undead/Daedra/Animals arms key on GetEnemyGroup(). The two
+ *     disagree for Slaughterfish 11, Vampire 28, Vampire Ancient 30
+ *     and both Dragonlings 34/40, which the port scored 0.
+ *  2. `target is PlayerEntity` had no port at all: every enemy->player
+ *     site passed a null group, so the "player is assumed humanoid"
+ *     arm never fired. Every 0x04 (Humanoid bonus) career in the real
+ *     MONSTER.BSA - both vampires, all four atronachs, dragonling,
+ *     dreugh, lamia - is an ATTACKER on the player, so that arm is
+ *     where the whole modifier lives.
+ *
+ *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
+ *  player HasVampirism(); the vampirism effect is not ported, so only
+ *  the humanoid arm exists here. */
+export function bonusOrPenaltyByEnemyType(attacker, target) {
+  if (!attacker || !target) return 0;
   const flags = attacker.attackModifierFlags ?? attacker.career?.attackModifierFlags ?? null;
-  if (flags == null || targetGroup == null) return 0;
-  return careerAttackModifier(flags, targetGroup) * attacker.level;
+  if (flags == null) return 0;
+  let group = ENEMY_GROUPS.None;
+  if (target.isPlayer) {
+    group = ENEMY_GROUPS.Humanoid;   // "Player is assumed humanoid" (:1048)
+  } else if (target.affinity === 'Human') {
+    group = ENEMY_GROUPS.Humanoid;
+  } else {
+    const g = enemyEntityGroup(target.careerIndex);
+    // the else-if ladder has no Humanoid arm: a non-Human-affinity
+    // enemy whose GROUP is Humanoid falls through to 0, verbatim
+    if (g === ENEMY_GROUPS.Undead || g === ENEMY_GROUPS.Daedra || g === ENEMY_GROUPS.Animals) group = g;
+  }
+  if (group === ENEMY_GROUPS.None) return 0;
+  return careerAttackModifier(flags, group) * attacker.level;
+}
+
+/** FormulaHelper.CalculateRacialModifiers (FormulaHelper.cs:933-962),
+ *  verbatim - INCLUDING the else-if ladder, which is load-bearing:
+ *  a Dark Elf ARCHER takes the DarkElf arm (Level/4, not Level/3), and
+ *  a Redguard ARCHER takes the archery arm, fails the WoodElf test and
+ *  gets NOTHING. Applied to the player only, and only with a weapon.
+ *  AUDIT 18: not ported at all before now - the site note claiming the
+ *  entity "has no career/race yet" went stale when chargen shipped
+ *  (chargen.applyCharacter writes the DFU-numbered raceId). */
+export function racialModifiers(attacker, weapon) {
+  const mods = { damageMod: 0, toHitMod: 0 };
+  if (!weapon) return mods;
+  const set = (n) => { mods.damageMod = n; mods.toHitMod = n; };
+  if (attacker.raceId === RACES.DarkElf) set(Math.trunc(attacker.level / 4));
+  else if (weaponSkillUsed(weapon.templateIndex) === SKILLS.Archery) {
+    if (attacker.raceId === RACES.WoodElf) set(Math.trunc(attacker.level / 3));
+  } else if (attacker.raceId === RACES.Redguard) set(Math.trunc(attacker.level / 3));
+  return mods;
 }
 
 // ---- CalculateStatsToHit ----
@@ -164,30 +231,31 @@ export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckB
 }
 
 // ---- CalculateHandToHandAttackDamage ----
-export function handToHandAttackDamage(attacker, targetGroup, damageMod, isPlayer, rolls = Math.random) {
+export function handToHandAttackDamage(attacker, target, damageMod, isPlayer, rolls = Math.random) {
   const h2h = skillValue(attacker, SKILLS.HandToHand);
   const min = handToHandMinDamage(h2h);
   const max = handToHandMaxDamage(h2h);
   let damage = min + Math.floor(rolls() * (max + 1 - min));  // Range(min, max+1)
   damage += damageMod;
-  if (isPlayer) damage += damageModifier(attacker.stats.strength);   // "not applied in classic" for AI - DFU preserves that
-  damage += bonusOrPenaltyByEnemyType(attacker, targetGroup);
+  // FormulaHelper.cs:786 reads Stats.LiveStrength here exactly as the
+  // weapon path does (:755) - AUDIT 18: this arm read the RAW stat, so
+  // a strength drain (diseases.js writes signed statMods) moved a
+  // player's weapon damage and left their fists untouched.
+  if (isPlayer) damage += damageModifier(liveStat(attacker, 'strength'));   // "not applied in classic" for AI - DFU preserves that
+  damage += bonusOrPenaltyByEnemyType(attacker, target);
   return damage;
 }
 
 export const SKELETAL_WARRIOR_INDEX = 15;   // MonsterCareers.SkeletalWarrior
 
 // ---- CalculateWeaponAttackDamage ----
-/** AUDIT 17n: `targetGroup` is threaded in because the port split
- *  DFU's one call apart. CalculateWeaponAttackDamage passes the TARGET
- *  ENTITY to GetBonusOrPenaltyByEnemyType (FormulaHelper.cs:788) and
- *  derives the group inside it; the port lifted the group into a
- *  parameter for the monster and hand-to-hand branches but left this
- *  one reading `target.group` - a field NOTHING in the codebase mints.
- *  So the enemy-type modifier was dead on the weapon path for every
- *  attacker, independently of whether the attacker carried the byte at
- *  all. The `target.group` read stays as the fallback it was. */
-export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = Math.random, targetGroup = null) {
+/** AUDIT 18: the pre-resolved `targetGroup` parameter is GONE. DFU
+ *  passes the TARGET ENTITY to GetBonusOrPenaltyByEnemyType
+ *  (FormulaHelper.cs:763) and derives the group inside it; the port
+ *  had lifted a single group number into a parameter, which could not
+ *  express DFU's two discriminants and left `target.group` - a field
+ *  NOTHING in the codebase mints - as this arm's fallback. */
+export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = Math.random) {
   const wMin = baseDamageMin(weapon), wMax = baseDamageMax(weapon);
   let damage = wMin + Math.floor(rolls() * (wMax + 1 - wMin)) + damageMod;
   if (!target.isPlayer && target.careerIndex === SKELETAL_WARRIOR_INDEX) {
@@ -197,7 +265,7 @@ export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = 
   damage += damageModifier(liveStat(attacker, 'strength'));
   damage += WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0;   // half of the in-game display, per the source comment
   if (damage < 1) damage = 0;
-  damage += bonusOrPenaltyByEnemyType(attacker, targetGroup ?? target.group ?? null);
+  damage += bonusOrPenaltyByEnemyType(attacker, target);
   return damage;
 }
 
@@ -226,7 +294,7 @@ export function chooseEnemyWeapon(weapon, basics) {
   return noWeaponAvg > weaponAvg ? null : weapon;
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, targetGroup = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null } = {}) {
+export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null } = {}) {
   if (!attacker || !target) return 0;
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) return 0;   // material too low
   // source: chanceToHitMod = skill, then player swing/proficiency/
@@ -235,8 +303,21 @@ export function calculateAttackDamage(attacker, target, { weapon = null, targetG
   // chanceToHitMod = the LIVE skill for the attack in hand (weapon's
   // skill or HandToHand), + player mods. Enemies read the same value
   // for every skill (flat, SetEnemyCareer verbatim).
-  const attackSkill = weapon ? (WEAPON_SKILL[weapon.name] ?? SKILLS.HandToHand) : SKILLS.HandToHand;
-  let chanceToHitMod = skillValue(attacker, attackSkill) + toHitMod + backstabChance;
+  const attackSkill = weapon ? (weaponSkillUsed(weapon.templateIndex) ?? SKILLS.HandToHand) : SKILLS.HandToHand;
+  let chanceToHitMod = skillValue(attacker, attackSkill) + toHitMod;
+  let damageModifiers = damageMod;
+  // FormulaHelper.cs:594-613, the `attacker == player` block, in DFU's
+  // order: swing mods (the caller's damageMod/toHitMod - they need the
+  // screen weapon's state), then proficiency, then racial, then
+  // backstab onto chanceToHitMod alone.
+  // FLAGGED: CalculateProficiencyModifiers pends the career
+  // proficiency flags (Port-Ledger "Expertise In") - 0.
+  if (attacker.isPlayer) {
+    const racial = racialModifiers(attacker, weapon);
+    damageModifiers += racial.damageMod;
+    chanceToHitMod += racial.toHitMod;
+  }
+  chanceToHitMod += backstabChance;
   // CalculateWeaponToHit: material modifier x 10 rides the WEAPON
   // branch only, verbatim (audit F3).
   if (weapon) chanceToHitMod += (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;
@@ -267,14 +348,14 @@ export function calculateAttackDamage(attacker, target, { weapon = null, targetG
           if (hitDamage > 0 && onMonsterHit) onMonsterHit(attacker, target, hitDamage);
           damage += hitDamage;
         }
-        if (hitDamage > 0) damage += bonusOrPenaltyByEnemyType(attacker, targetGroup);
+        if (hitDamage > 0) damage += bonusOrPenaltyByEnemyType(attacker, target);
       }
     } else if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls)) {
-      damage = handToHandAttackDamage(attacker, targetGroup, damageMod, !!attacker.isPlayer, rolls);
+      damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls);
     }
   } else {
     if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls)) {
-      damage = weaponAttackDamage(attacker, target, damageMod, weapon, rolls, targetGroup);
+      damage = weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls);
     }
   }
   damage = backstabDamage(damage, backstabChance, rolls());   // applied AFTER the damage calc, verbatim (lines 627/688)

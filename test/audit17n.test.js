@@ -31,17 +31,22 @@ test('17n F1: an attacker carrying only a CAREER still gets its enemy-type modif
   const c = career();
   parseCareerData(c, [{ primary: 'bonusToHit', secondary: 'undead' }]);
   const player = { career: c, level: 7 };
-  assert.equal(bonusOrPenaltyByEnemyType(player, ENEMY_GROUPS.Undead), 7,
+  // AUDIT 18 re-shaped the second argument: DFU passes the TARGET
+  // ENTITY and derives the group inside (FormulaHelper.cs:1005-1035).
+  const zombie = { isPlayer: false, careerIndex: 17, affinity: 'Undead' };
+  const daedroth = { isPlayer: false, careerIndex: 27, affinity: 'Daedra' };
+  const rat = { isPlayer: false, careerIndex: 0, affinity: 'Animal' };
+  assert.equal(bonusOrPenaltyByEnemyType(player, zombie), 7,
     'the bonus is +1 per level against the chosen group');
-  assert.equal(bonusOrPenaltyByEnemyType(player, ENEMY_GROUPS.Daedra), 0, 'and neutral elsewhere');
+  assert.equal(bonusOrPenaltyByEnemyType(player, daedroth), 0, 'and neutral elsewhere');
   // the phobia half, and the FOE shape (a flat field, no career) still works
   const d = career();
   parseCareerData(d, [{ primary: 'phobia', secondary: 'animals' }]);
-  assert.equal(bonusOrPenaltyByEnemyType({ career: d, level: 3 }, ENEMY_GROUPS.Animals), -3);
-  assert.equal(bonusOrPenaltyByEnemyType({ attackModifierFlags: 0x01, level: 5 }, ENEMY_GROUPS.Undead), 5,
+  assert.equal(bonusOrPenaltyByEnemyType({ career: d, level: 3 }, rat), -3);
+  assert.equal(bonusOrPenaltyByEnemyType({ attackModifierFlags: 0x01, level: 5 }, zombie), 5,
     'the foe shape - a flat byte and no career - is unchanged');
   // and an attacker with NEITHER is still neutral, not a throw
-  assert.equal(bonusOrPenaltyByEnemyType({ level: 4 }, ENEMY_GROUPS.Undead), 0);
+  assert.equal(bonusOrPenaltyByEnemyType({ level: 4 }, zombie), 0);
 });
 
 test('17n F1: the classic ASSASSIN carries a humanoid bonus it had never received', { skip: skipReal }, () => {
@@ -54,7 +59,8 @@ test('17n F1: the classic ASSASSIN carries a humanoid bonus it had never receive
   assert.equal(cf.career.attackModifierFlags, 0x04, 'Humanoid | Bonus');
   assert.equal(careerAttackModifier(cf.career.attackModifierFlags, ENEMY_GROUPS.Humanoid), 1);
   // through the entity shape chargen actually mints
-  assert.equal(bonusOrPenaltyByEnemyType({ career: cf.career, level: 6 }, ENEMY_GROUPS.Humanoid), 6);
+  assert.equal(bonusOrPenaltyByEnemyType({ career: cf.career, level: 6 },
+    { isPlayer: false, isClass: true, careerIndex: 11, affinity: 'Human' }), 6);
 });
 
 test('17n F1: the modifier reaches real damage through calculateAttackDamage', () => {
@@ -64,9 +70,9 @@ test('17n F1: the modifier reaches real damage through calculateAttackDamage', (
   parseCareerData(c, [{ primary: 'bonusToHit', secondary: 'undead' }]);
   const attacker = { career: c, level: 10, isPlayer: true, stats, skills: new Array(40).fill(50) };
   const plain = { level: 10, isPlayer: true, stats, skills: new Array(40).fill(50) };
-  const target = { isPlayer: false, careerIndex: 0, level: 1 };
-  const weapon = { name: 'Longsword', minDamage: 5, maxDamage: 5, material: 0, flags: 0x10 };
-  const opts = { weapon, targetGroup: ENEMY_GROUPS.Undead, rolls: () => 0, dfRand: () => 0, toHitMod: 1000 };
+  const target = { isPlayer: false, careerIndex: 17, affinity: 'Undead', level: 1 };
+  const weapon = { name: 'Longsword', templateIndex: 120, material: 0, flags: 0 };
+  const opts = { weapon, rolls: () => 0, dfRand: () => 0, toHitMod: 1000 };
   const withBonus = calculateAttackDamage(attacker, target, opts);
   const without = calculateAttackDamage(plain, target, opts);
   assert.equal(withBonus - without, 10, 'exactly +level, and only for the career that bought it');
@@ -139,7 +145,8 @@ test('17n F3: a career with advantages survives the save round trip', () => {
   const restored = { ...JSON.parse(JSON.stringify({ career: c })).career };
   assert.equal(restored.immunityFlags, 8);
   assert.equal(restored.abilityFlagsAndSpellPointsBitfield, c.abilityFlagsAndSpellPointsBitfield);
-  assert.equal(bonusOrPenaltyByEnemyType({ career: restored, level: 2 }, ENEMY_GROUPS.Undead), 0);
+  assert.equal(bonusOrPenaltyByEnemyType({ career: restored, level: 2 },
+    { isPlayer: false, careerIndex: 17, affinity: 'Undead' }), 0);
 });
 
 // ---- the rule, swept rather than remembered ----
