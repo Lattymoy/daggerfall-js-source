@@ -170,3 +170,41 @@ test('tusks track the jaw they are anchored to', () => {
   const spread = (fs) => Math.max(...fs.flatMap((f) => [f.p[0], f.p[3], f.p[6], f.p[9]]));
   assert.ok(spread(wide) > spread(narrow), 'tusks did not widen with the jaw');
 });
+
+test('every orc leg is covered end to end - no bare shin', () => {
+  // Mac's catch on the first pass: thigh zone + boot zone left y 0.12
+  // to 0.70 (lower calf, calf belly, below-knee, kneecap, knee joint,
+  // lower thigh) as bare skin under armour on both armoured tiers.
+  // The rig's leg profile runs ankle 0.10 -> upper thigh 0.95, so any
+  // uncovered band inside that range is a hole.
+  const ANKLE = 0.10, THIGH_TOP = 0.95;
+  for (const d of ORC_DESIGNS) {
+    const legZones = d.zones.filter((z) => z.leg)
+      .map((z) => [z.yLo, z.yHi]).sort((a, b) => a[0] - b[0]);
+    assert.ok(legZones.length, `${d.name} has no leg zones at all`);
+    assert.ok(legZones[0][0] <= ANKLE, `${d.name} leaves the ankle bare (starts at ${legZones[0][0]})`);
+    let reach = legZones[0][1];
+    for (const [lo, hi] of legZones.slice(1)) {
+      assert.ok(lo <= reach, `${d.name} has a bare band from ${reach} to ${lo}`);
+      reach = Math.max(reach, hi);
+    }
+    assert.ok(reach >= THIGH_TOP, `${d.name} leaves the upper thigh bare (reaches ${reach})`);
+  }
+});
+
+test('no leg-zone seam lands on the knee', () => {
+  // The kneecap is at 0.50 and the joint pinch at 0.55. A zone EDGE in
+  // that neighbourhood is a seam sitting on the one part of the leg
+  // that bends, so every boundary must clear it - the knee belongs
+  // inside a single zone, which is where buildGreaves puts its poleyn.
+  const KNEE_LO = 0.44, KNEE_HI = 0.58;
+  for (const d of ORC_DESIGNS) {
+    for (const z of d.zones.filter((x) => x.leg)) {
+      for (const edge of [z.yLo, z.yHi]) {
+        if (edge <= 0 || edge >= 1) continue;   // the ends of the leg are not seams
+        assert.ok(edge < KNEE_LO || edge > KNEE_HI,
+          `${d.name} puts a leg-zone edge at ${edge}, on the knee`);
+      }
+    }
+  }
+});
