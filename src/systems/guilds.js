@@ -250,8 +250,28 @@ export function getTitle(membership, entity) {
  *  other direction would be a cycle). guildVariants exports a ready
  *  resolver; AUDIT 20 found this answering null for all eight temples
  *  and all ten orders after G2 shipped them. */
-export function guildOfFaction(factionId, resolveVariant = null) {
+export function guildOfFaction(factionId, resolveVariant = null, factionDict = null) {
+  // AUDIT 21 F3: DFU resolves by GUILD GROUP, not by a faction id match.
+  // GetGuild(factionId) (GuildManager.cs:254-267) calls GetGuildGroup and
+  // dispatches on the group; the port matched `g.factionId === factionId`
+  // first and answered null for anything else. That is the difference
+  // between "the Fighters Guild's own faction record" and "any of the 68
+  // faction ids that CARRY a guild group" - and the ids DFU's building and
+  // NPC callers pass in are the latter.
+  //
+  // The id match stays as a fast path (and as the answer when no dict is
+  // supplied), because a guild's own record obviously resolves to itself.
   for (const g of Object.values(GUILDS)) if (g.factionId === factionId) return g;
+
+  if (factionDict) {
+    const group = guildGroupOfFaction(factionDict, factionId);
+    if (group !== GUILD_GROUPS.None) {
+      // The variant groups (HolyOrder, KnightlyOrder) need the building
+      // faction to pick WHICH temple or order, so they stay with the
+      // variant resolver; the fixed groups map straight to their guild.
+      for (const g of Object.values(GUILDS)) if (g.guildGroup === group) return g;
+    }
+  }
   return resolveVariant ? resolveVariant(factionId) : null;
 }
 

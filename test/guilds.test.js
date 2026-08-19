@@ -477,3 +477,63 @@ test('AUDIT 21 F2: holding one temple blocks joining another', () => {
   assert.notEqual(joinDecision(withSkills(GUILDS.FightersGuild, 100), GUILDS.FightersGuild,
     { dict: new Map([[GUILDS.FightersGuild.factionId, { rep: 50 }]]) }, m), null);
 });
+
+test('AUDIT 21 F3: guildOfFaction resolves by GUILD GROUP, over the whole corpus',
+  { skip: skipReal }, () => {
+    // DFU's GetGuild(factionId) (GuildManager.cs:254-267) calls
+    // GetGuildGroup and dispatches on the GROUP. The port matched
+    // `g.factionId === factionId` and answered null for everything else -
+    // so only the six guilds' OWN faction records resolved, and the ids
+    // DFU's building and NPC callers pass in did not.
+    //
+    // CreateGuildObj's switch (:186-210) implements exactly SIX groups and
+    // ends `default: return null`, so a group DFU has no class for must
+    // still answer null here. Oblivion is the big one - 209 Daedric
+    // factions carry ggroup 2 and DFU has no OblivionGuild.
+    const ff = new FactionFile();
+    ff.load(readFileSync(join(ARENA2, 'FACTION.TXT')));
+    const dict = ff.factionDict;
+    const resolve = resolveVariantGuild(dict);        // curried: ONE argument
+
+    const IMPLEMENTED = new Set([
+      GUILD_GROUPS.FightersGuild, GUILD_GROUPS.MagesGuild, GUILD_GROUPS.HolyOrder,
+      GUILD_GROUPS.KnightlyOrder, GUILD_GROUPS.GeneralPopulace, GUILD_GROUPS.DarkBrotherHood,
+    ]);
+    let carrying = 0, shouldResolve = 0;
+    const missed = [], overreached = [];
+    for (const [id] of dict) {
+      const grp = guildGroupOfFaction(dict, id);
+      if (grp === GUILD_GROUPS.None) continue;
+      carrying++;
+      const got = guildOfFaction(id, resolve, dict);
+      if (IMPLEMENTED.has(grp)) {
+        shouldResolve++;
+        if (!got) missed.push([id, grp]);
+      } else if (got) {
+        overreached.push([id, grp, got.name]);
+      }
+    }
+    assert.equal(carrying, 307, 'the corpus carries this many guild-group factions');
+    assert.equal(shouldResolve, 161, 'of which this many are in a group DFU implements');
+
+    // 98 of those resolve to a guild. The other 63 are SUB-factions of a
+    // temple or a knightly order - "Apothecaries of Arkay", "Teachers of
+    // Mara", "The Royal Guard" - which carry the group but are not one of
+    // the eight divines or ten orders. In DFU Temple.GetDivine and
+    // KnightlyOrder.GetOrder THROW for those, and GetGuild(factionId)
+    // catches it (:263-266, "Catch erroneous faction data entries") and
+    // answers not-a-member. So null is the right answer here too, and this
+    // pin holds the split rather than pretending everything resolves.
+    assert.equal(shouldResolve - missed.length, 98, 'this many actually resolve');
+    assert.equal(missed.length, 63, 'and this many are unplaceable sub-factions');
+    assert.ok(missed.every(([, grp]) => grp === GUILD_GROUPS.HolyOrder || grp === GUILD_GROUPS.KnightlyOrder),
+      'every unplaceable one is in a VARIANT group - a fixed guild must never miss');
+
+    assert.deepEqual(overreached, [],
+      'and a group DFU has no class for must still answer null - Oblivion is not a guild');
+
+    // WITHOUT the dict the old id-match behaviour stands, which is what
+    // keeps existing callers working - the group path is additive.
+    assert.equal(guildOfFaction(GUILDS.FightersGuild.factionId).name, 'FightersGuild');
+    assert.equal(guildOfFaction(9999), null);
+  });
