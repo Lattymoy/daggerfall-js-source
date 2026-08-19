@@ -157,15 +157,14 @@ trusting the next author to recall it.
   mode exposes no yaw getter); the body is the literal mouse
   expression. Desktop untouched - the layer no-ops without touch.
 
-## Open flags (regenerated 2026-08-18, U20a; refreshed at 17l, line numbers again at 17m)
+## Open flags (regenerated 2026-08-19, AUDIT 18)
 
-Regenerated at the U20a close: the CUSTOM-CLASS flag RETIRED and its
-sentence DELETED (the builder ships), the starting-spells note in
-chargen.js rewritten now that the custom Spellsword rule is live, and
-the slice's own flags joined. The U20b special advantages window
-retired at U20b - the window ships, and both its sentences (the button
-site and the art note) went with it. The difficulty dagger's fading
-trail remains.
+Regenerated mechanically at the AUDIT 18 close, from the FLAGGED/INTERIM
+sites themselves. The audit retired 30+ flags whose text had gone false and
+the eleven fix domains moved many more, so every line number and quotation
+here was re-derived rather than edited. test/audit18_bible_docs.test.js now
+pins this list BOTH ways: a citation that drifts, a flag retired without its
+sentence, or a new flag never listed all fail the suite.
 
 AUDIT 18: "Line numbers refreshed" used to close this paragraph as a hand
 kept promise, and six of the 109 citations had already drifted (up to 41
@@ -181,99 +180,99 @@ DFU-numbered raceId, so CalculateRacialModifiers is ported and LIVE
 (formulas.js). What still pends there is CalculateProficiencyModifiers
 alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
-
-- `src/characters/enemyMotor.js:308` - FLAGGED, until target prediction ships). At zero the foe stops.
-- `src/characters/mobileUnit.js:18` - clock). DEFERRED (FLAGGED): the Seducer transform pair.
+- `src/characters/enemyMotor.js:338` - FLAGGED, until target prediction ships). At zero the foe stops.
+- `src/characters/mobilePerson.js:8` - while the scene's politeness gate holds. FLAGGED (AUDIT 18):
+- `src/characters/mobilePerson.js:176` - *        the FLAGGED note in this file's header)
+- `src/characters/mobileUnit.js:21` - clock). DEFERRED (FLAGGED): the Seducer transform pair.
 - `src/characters/paperdollArt.js:70` - *  needs no new field; FLAGGED: a remote list (shop stock, a corpse)
 - `src/characters/playerEntity.js:5` - UI later fronts it everywhere). INTERIM until then, loudly: flat
 - `src/characters/playerEntity.js:18` - maxHealth: 50,    // INTERIM until chargen rolls career HP
 - `src/characters/playerEntity.js:25` - skills: 30,       // INTERIM flat skills until chargen
-- `src/characters/playerEntity.js:27` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyChar...
+- `src/characters/playerEntity.js:27` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-...
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): adrenaline rush
+- `src/combat/formulas.js:71` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
+- `src/combat/formulas.js:148` - *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
+- `src/combat/formulas.js:313` - FLAGGED: CalculateProficiencyModifiers pends the career
 - `src/combat/formulas.js:386` - *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
 - `src/combat/playerWeapon.js:13` - INTERIM (loud): the equipped weapon is an Iron Dagger until the
 - `src/combat/playerWeapon.js:46` - /** INTERIM starting weapon (items arc replaces): Iron Dagger.
 - `src/combat/playerWeapon.js:56` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:83` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
 - `src/combat/weaponRig.js:34` - *                     (FLAGGED at the call sites - their HUD pends),
-- `src/scenes/arrestFlow.js:72` - instead of "You, , are..." (chargen wiring FLAGGED).
-- `src/scenes/arrestFlow.js:122` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
-- `src/scenes/cityGuards.js:23` - FLAGGED loud: guard archers forced melee (exterior foe arrows
-- `src/scenes/cityGuards.js:109` - attack.rangedAttack = false;   // FLAGGED: guard archers pend exterior foe arrows
-- `src/scenes/cityGuards.js:194` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
-- `src/scenes/cityGuards.js:312` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
+- `src/scenes/arrestFlow.js:82` - instead of "You, , are..." (chargen wiring FLAGGED).
+- `src/scenes/arrestFlow.js:133` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
+- `src/scenes/cityGuards.js:23` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
+- `src/scenes/cityGuards.js:205` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
+- `src/scenes/cityGuards.js:357` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/droppedLoot.js:16` - FLAGGED loud: pile persistence across saves (the quicksave arc
-- `src/scenes/dungeonContext.js:163` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:488` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:494` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:508` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:649` - drained strength lowers the ceiling). INTERIM (loud): the
-- `src/scenes/dungeonContext.js:789` - FLAGGED: DFU recomputes per-effect via the cost tables (that
-- `src/scenes/dungeonContext.js:791` - FLAGGED to the effect library (caster-only buffs, touch, areas).
-- `src/scenes/dungeonContext.js:1003` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/dungeonContext.js:1751` - actions) is FLAGGED - the player snapshot only.
-- `src/scenes/exterior.js:323` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:329` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:404` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/exterior.js:470` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:572` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:641` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/dungeonContext.js:168` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:493` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:499` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:526` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:1030` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/exterior.js:339` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:345` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:420` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/exterior.js:486` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:588` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:671` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/shared.js:148` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/townTalk.js:366` - .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAG...
-- `src/scenes/world.js:438` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:452` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:458` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:574` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/world.js:629` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:867` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1066` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:447` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:461` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:467` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:583` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/world.js:638` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:884` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1093` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:70` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
-- `src/scenes/worldModes.js:102` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-hous...
+- `src/scenes/worldModes.js:102` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage...
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
 - `src/systems/biography.js:19` - FLAGGED (ours): `rf` FACTION reputation needs the live faction data
-- `src/systems/biography.js:112` - FLAGGED: the faction slice drains these into FactionData
+- `src/systems/biography.js:80` - INTERIM, loud and the same one shopStock.js:115 carries: message
+- `src/systems/biography.js:139` - FLAGGED: the faction slice drains these into FactionData
 - `src/systems/chargen.js:7` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
 - `src/systems/chargen.js:22` - INTERIM (loud): the UI distributes the bonus pools by hand; the
 - `src/systems/chargen.js:130` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
-- `src/systems/chargen.js:149` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy ...
+- `src/systems/chargen.js:149` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b ...
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
 - `src/systems/court.js:7` - People-faction half-delta FLAGGED to the save-side clone).
 - `src/systems/court.js:27` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
 - `src/systems/court.js:82` - ChangeReputation(peopleFaction, -loss/2) FLAGGED: the save-side
 - `src/systems/court.js:113` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
-- `src/systems/effects.js:92` - FLAGGED: career hard-immunity (Career.Paralysis == Immune) and the
-- `src/systems/effects.js:530` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:561` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 - `src/systems/equip.js:104` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
-- `src/systems/save.js:7` - (foes, loot piles, action states, doors) is FLAGGED - dungeons
-- `src/systems/save.js:58` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:8` - (foes, loot piles, action states, doors) is FLAGGED - dungeons
+- `src/systems/save.js:59` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
 - `src/systems/shopStock.js:143` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
-- `src/systems/skills.js:74` - *  +0.1) and the Jump spell (+0.6) are INTERIM 0 here, loudly - the
+- `src/systems/skills.js:83` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
 - `src/systems/talk.js:79` - *  FLAGGED to the crime slice - the state lands now, verbatim).
 - `src/systems/talk.js:92` - TallyCrimeGuildRequirements(true, 1) FLAGGED: thieves-guild
 - `src/systems/talk.js:99` - SpawnCityGuards(true) FLAGGED: the crime/guards slice mounts the response.
-- `src/systems/talkSession.js:19` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
-- `src/ui/chargen.js:381` - *  (FLAGGED - the port has no FLIC decoder yet, so the next question
-- `src/ui/chargenArt.js:603` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
-- `src/ui/chargenArt.js:727` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
-- `src/ui/chargenArt.js:817` - *  constellation chart. FLAGGED loud: the three FLC constellation
-- `src/ui/charsheet.js:17` - major/minor/misc); the PORTRAIT pends chargen faces (FLAGGED);
-- `src/ui/hudText.js:5` - improved."); the TEXT.RSC database itself is FLAGGED - these
+- `src/systems/talkSession.js:21` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
+- `src/systems/talkSession.js:77` - .replaceAll('%ra', race);   // honorific/race macros FLAGGED interim
+- `src/ui/chargen.js:454` - *  (FLAGGED - the port has no FLIC decoder yet, so the next question
+- `src/ui/chargenArt.js:631` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
+- `src/ui/chargenArt.js:763` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
+- `src/ui/chargenArt.js:853` - *  constellation chart. FLAGGED loud: the three FLC constellation
+- `src/ui/charsheet.js:22` - major/minor/misc); the PORTRAIT pends chargen faces (FLAGGED);
+- `src/ui/hudText.js:17` - improved."); the TEXT.RSC database itself is FLAGGED - these
 - `src/ui/inventory.js:2` - windows in classic text (backgrounds FLAGGED pending art-name
-- `src/ui/inventory.js:9` - Enter readies one (retires ?spell). INTERIM loud: with no
-- `src/ui/inventory.js:85` - /** The known list: entity.spells when it exists; the INTERIM fallback
+- `src/ui/inventory.js:13` - Enter readies one (retires ?spell). INTERIM loud: with no
+- `src/ui/inventory.js:92` - /** The known list: entity.spells when it exists; the INTERIM fallback
 - `src/ui/messageBox.js:35` - FLAGGED: the scrolling variant (a label taller than MaxTextHeight
 - `src/ui/messageBox.js:153` - so the strip never rides higher than that. FLAGGED as a
 - `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
@@ -281,9 +280,9 @@ combat line numbers below are refreshed with it.
 - `src/ui/nativeInventory.js:155` - INTERIM info panel: name/weight/value (DFU's 1016 info text
 - `src/ui/nativeInventory.js:184` - use: FLAGGED - the use arc pends
 - `src/ui/nativeInventory.js:236` - 'use' -> UseItem FLAGGED with the light-source/use arc
-- `src/ui/nativeTalk.js:22` - N/P page, Esc/E goodbye. People/Things/Work are INTERIM no-ops
-- `src/ui/nativeTalk.js:140` - lands with the Tell-me-about slice (FLAGGED).
-- `src/ui/nativeTalk.js:150` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
+- `src/ui/nativeTalk.js:29` - INTERIM no-ops (their topic sources pend quests/work).
+- `src/ui/nativeTalk.js:179` - lands with the Tell-me-about slice (FLAGGED).
+- `src/ui/nativeTalk.js:191` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
 - `src/ui/nativeTrade.js:16` - scroll. FLAGGED loud: the basket + mode-action flow (DFU
 - `src/ui/nativeTrade.js:68` - player's own gear. The REMOTE (shelf) list borrows it, FLAGGED at
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord

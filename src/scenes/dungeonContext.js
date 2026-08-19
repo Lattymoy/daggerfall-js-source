@@ -35,7 +35,7 @@ import { SWING_MODS } from '../combat/playerWeapon.js';   // CalculateSwingModif
 import {
   equipEnemy, hasBowAttack, attackSkillOf, isBowWeapon, backstabChanceOf,
   tallySwingSkills, zeroDamageHitSound, SWING_WEAPON_FATIGUE_LOSS,
-  PLAYER_TARGET_GROUP, CORPSE_ACTIVATION_DISTANCE,
+  CORPSE_ACTIVATION_DISTANCE,
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
@@ -65,7 +65,7 @@ import { exhaustionOutcome, EXHAUSTED_IN_WATER, healthRecoveryRate, fatigueRecov
 import { REST_TEXT } from '../systems/restSession.js';
 import { RestWindow } from '../ui/restWindow.js';
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
-import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, KB_UNIT, enemyGroupOf } from '../combat/formulas.js';   // C15: + knockback
+import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
@@ -1178,7 +1178,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               const _back = foeDeps ? foeDeps.isBackFacing(f.ai.yaw, f.ai.feet, playerFeet) : false;
               const dmg = foeDeps ? foeDeps.calculateAttackDamage(playerEntity, f.entity, {
                 weapon: m.weapon,
-                targetGroup: enemyGroupOf(f.entity.affinity),
+                // AUDIT 18: the group is no longer passed in - calculateAttackDamage
+                // derives it from the TARGET ENTITY, verbatim to
+                // GetBonusOrPenaltyByEnemyType (FormulaHelper.cs:1037-1052).
                 damageMod: _swing.damage, toHitMod: _swing.toHit,
                 backstabChance: backstabChanceOf(playerEntity, _back),
               }) : 0;
@@ -1193,7 +1195,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           if (Math.hypot(dx2, dy2, dz2) <= MISSILE_COLLIDER_RADIUS + 0.45) {
             const shooter = m.shooterFoe;
             const dmg = foeDeps && shooter ? foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {
-              targetGroup: PLAYER_TARGET_GROUP, weapon: m.weapon,
+              weapon: m.weapon,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
               onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(classicMinutes) }),   // S19b: poisoned arrows
             }) : 0;
             hurtPlayer(dmg);
@@ -1330,7 +1332,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // S18: the special-attack rider seam - monster weaponless hits
     // run OnMonsterHit per hit (disease/paralysis/fatigue)
     const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {
-      targetGroup: PLAYER_TARGET_GROUP, weapon: wpn,
+      weapon: wpn,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
       onMonsterHit: (att, tgt, hit) => onMonsterHit(att, tgt, hit, {
         currentDay: Math.floor(classicMinutes / MINUTES_PER_DAY), sinks: playerSinks,
         castParalyze: () => {   // S19: spider/scorpion free-cast Spider Touch (66)

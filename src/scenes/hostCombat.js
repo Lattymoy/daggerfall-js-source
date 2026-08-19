@@ -131,7 +131,10 @@ export function backstabChanceOf(player, isEnemyFacingAwayFromPlayer) {
  *  Undead arm is unreachable and the player is always Humanoid.
  *  Passing `targetGroup: null` - what all three enemy-vs-player call
  *  sites did - made the whole modifier dead against the player. */
-export const PLAYER_TARGET_GROUP = ENEMY_GROUPS.Humanoid;
+// AUDIT 18: retired. calculateAttackDamage no longer takes a targetGroup -
+// bonusOrPenaltyByEnemyType derives it from the TARGET ENTITY, and the
+// player's isPlayer flag selects DFU's "player is assumed humanoid" arm
+// (FormulaHelper.cs:1048). Passing a group in was an ignored key.
 
 // ---- WeaponManager.cs:609-615, the ZERO-damage connected swing ----
 export const PARRY_1 = 428;          // SoundClips.Parry1

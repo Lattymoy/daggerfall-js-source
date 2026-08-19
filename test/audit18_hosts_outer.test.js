@@ -595,9 +595,14 @@ test('audit18 hosts: the audio bootstrap runs in EVERY host, not only in a dunge
       `${host} never initialises the audio engine - every sound is a silent no-op`);
   }
   // The bootstrap must be idempotent, or a second host double-registers
-  // the gesture listeners.
-  const sh = src('src/scenes/shared.js');
-  assert.match(sh, /if \(_audioBooted\) return;/);
+  // the gesture listeners. AUDIT 18 fixed this gap in two places at once,
+  // so the flag was consolidated onto the ENGINE: shared.ensureAudio is
+  // now just the host-facing name for AudioEngine.ensure, and the guard
+  // is pinned there rather than duplicated here.
+  assert.match(src('src/scenes/shared.js'), /return audio\.ensure\(/,
+    'ensureAudio must delegate to the single engine seam, not run a second bootstrap');
+  assert.match(src('src/systems/audio.js'), /if \(this\._booted\) return;/,
+    'AudioEngine.ensure must stay idempotent');
 });
 
 test('audit18 hosts: worldModes feeds the rest gate its live grounded state', () => {

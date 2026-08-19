@@ -4,8 +4,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { readFileSync, readdirSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname, join, sep } from 'node:path';
 
 import { weaponAttackDamage, baseDamageMin, baseDamageMax, chooseEnemyWeapon } from '../src/combat/formulas.js';
 import { WEAPONS, weaponMinDamage, weaponMaxDamage } from '../src/characters/weapons.js';
@@ -222,10 +222,17 @@ test('AUDIT 18 F6: every host boots audio through the shared idempotent seam', (
     assert.ok(/audio\.ensure\(/.test(text), `${rel} never boots audio - it will be silent`);
   }
   // And nobody may go back to the raw pair, which is what made it host-local.
+  // audio.js itself is exempt: ensure() is the one legitimate caller of init().
   for (const file of walk(SRC)) {
+    if (file.endsWith(`${sep}systems${sep}audio.js`)) continue;
     const text = readFileSync(file, 'utf8');
     assert.ok(!/audio\.init\(/.test(text), `${file}: use audio.ensure(), not audio.init()`);
   }
+  // Exactly ONE bootstrap flag exists - AUDIT 18 fixed this gap twice
+  // independently, and two flags would let one host boot while another slept.
+  const booted = walk(SRC).filter((f) => /_audioBooted|_booted\s*=/.test(readFileSync(f, 'utf8')));
+  assert.deepEqual(booted.map((f) => f.split(sep).slice(-2).join('/')), ['systems/audio.js'],
+    'the audio booted-flag must live only on the engine');
 });
 
 test('AUDIT 18 F6: audio.ensure boots once and is safe to call from every host', async () => {
@@ -238,4 +245,39 @@ test('AUDIT 18 F6: audio.ensure boots once and is safe to call from every host',
   await eng.ensure(fetchBytes);
   await eng.ensure(fetchBytes);
   assert.equal(calls, 1, 'ensure must load DAGGER.SND exactly once across all hosts');
+});
+
+// ---------------------------------------------------------------------------
+// F7: every module in src/ must actually LINK.
+//
+// AUDIT 18 merged eleven independently-developed fix domains. One had replaced
+// formulas.enemyGroupOf with enemyEntityGroup (DFU groups by careerIndex, not
+// affinity); another, written against the old API, still imported the old name
+// in src/scenes/dungeonContext.js. That import is a hard ESM link error - and
+// it survived the ENTIRE 904-test suite, because the four scene hosts have no
+// execution coverage at all. Only `vite build` caught it.
+//
+// This pin closes that gap: it imports every module under src/, so a dangling
+// import fails the suite instead of the deploy.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 18 F7: every src/ module imports cleanly (no dangling exports)', async () => {
+  const skip = new Set(['main.js']);                 // boots the app against a live DOM
+  const failures = [];
+  for (const file of walk(SRC)) {
+    const rel = file.slice(SRC.length + 1);
+    if (skip.has(rel)) continue;
+    try {
+      await import(pathToFileURL(file).href);
+    } catch (e) {
+      // A browser-API reference at module scope is a runtime concern, not a
+      // link error - only unresolved bindings and syntax errors count here.
+      if (/is not exported by|does not provide an export|Unexpected|SyntaxError/.test(String(e?.message))) {
+        failures.push(`${rel}: ${e.message.split('\n')[0]}`);
+      } else if (e instanceof SyntaxError) {
+        failures.push(`${rel}: ${e.message}`);
+      }
+    }
+  }
+  assert.deepEqual(failures, [], `modules that do not link:\n${failures.join('\n')}`);
 });

@@ -331,7 +331,6 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null }
 }
 
 // --- The audio bootstrap ---------------------------------------------
-let _audioBooted = false;
 
 /** AUDIT 18 HOST GAP: `audio` is a module singleton whose `enabled`
  *  flag is set ONLY inside init(), and every play call is a silent
@@ -342,13 +341,13 @@ let _audioBooted = false;
  *  sound. DFU has no per-scene sound bootstrap: DaggerfallAudioSource
  *  and SoundReader are global, and AmbientEffectsPlayer.Start (:77-88)
  *  runs on the exterior prefab, so the exterior is audible from frame
- *  one. Idempotent, so a host may call it unconditionally. */
-export function ensureAudio(fetch = fetchBytes) {
-  if (_audioBooted) return;
-  _audioBooted = true;
-  audio.init(fetch);
-  if (typeof window !== 'undefined') audio.attachGestureResume();
-}
+ *  one. Idempotent, so a host may call it unconditionally.
+ *
+ *  The booted flag lives on the ENGINE (AudioEngine.ensure), not here:
+ *  AUDIT 18 fixed this gap twice independently, and two bootstraps with
+ *  two flags is the duplicate-port shape this project keeps catching. This
+ *  is the host-facing name for that one seam. */
+export function ensureAudio(fetch = fetchBytes) { return audio.ensure(fetch); }
 
 // --- The outdoor fog COLOUR (DaggerfallSky.SetSkyFogColor) -----------
 

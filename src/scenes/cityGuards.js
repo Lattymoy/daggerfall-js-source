@@ -46,7 +46,7 @@ import {
 import {
   equipEnemy, backstabChanceOf, tallySwingSkills,
   zeroDamageHitSound, SWING_WEAPON_FATIGUE_LOSS,
-  PLAYER_TARGET_GROUP, CORPSE_ACTIVATION_DISTANCE,
+  CORPSE_ACTIVATION_DISTANCE,
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { tallySkill, SKILLS } from '../systems/skills.js';
@@ -284,7 +284,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           // guard weapon poison was ROLLED at spawn and could never
           // be inflicted, because the exterior call dropped the hook.
           const dmg = calculateAttackDamage(g.entity, playerEntity, {
-            targetGroup: PLAYER_TARGET_GROUP, weapon: wpn,
+            weapon: wpn,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
             onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(currentMinute()) }),
           });
           if (dmg > 0) onPlayerHurt?.(dmg, wpn);   // G2: the host's arrest interception rides this

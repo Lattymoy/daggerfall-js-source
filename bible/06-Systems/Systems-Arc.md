@@ -362,10 +362,14 @@ active shapes the Health family uses:
   sink, clamped to maxMagicka by the caller. out.magickaHealed.
 - **DamageSpellPoints** (ClassicKey MakeClassicKey(4, 2); DFU
   Destruction/DamageSpellPoints): single-target-other, instant,
-  MagicSkill Destruction, MagnitudeCosts(20, 28) - the row joined the
-  S10 cost table in AUDIT 18 (it was NOT there when this slice landed,
-  so every DamageSpellPoints spell was priced by the zero-component
-  fudge until then). MagicRound calls DamageMagickaFromSource(magnitude);
+  MagicSkill Destruction, MagnitudeCosts(20, 28), already in the S10
+  cost table - but only since AUDIT 18. This line used to assert the
+  pair was carried when it was not: EFFECT_COST_TABLE had no `4,2` key
+  (nor `1,2` for ContinuousDamageSpellPoints, DurationCosts(40, 8) +
+  MagnitudeCosts(40, 28)), and the 20/28 pair the claim was reading
+  belongs to `4,0` DamageHealth. With no key, effectCost fell through to
+  the zero-component fudge, so every spell carrying these effects was
+  priced wrong. Both rows landed at AUDIT 18. MagicRound calls DamageMagickaFromSource(magnitude);
   ours scales by the saving throw exactly like DamageHealth and sinks
   through drainMagicka (floors at 0). out.magickaDrained.
 - **ContinuousDamageSpellPoints** (ClassicKey MakeClassicKey(1, 2);

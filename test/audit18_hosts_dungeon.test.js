@@ -19,11 +19,11 @@ import { join } from 'node:path';
 import {
   WEAPON_SKILL_BY_TEMPLATE, weaponSkillUsed, attackSkillOf, isBowWeapon,
   hasBowAttack, equipEnemy, SWING_WEAPON_FATIGUE_LOSS, tallySwingSkills,
-  backstabChanceOf, PLAYER_TARGET_GROUP, zeroDamageHitSound,
+  backstabChanceOf, zeroDamageHitSound,
   PARRY_1, CORPSE_ACTIVATION_DISTANCE,
 } from '../src/scenes/hostCombat.js';
 import { SKILLS, WEAPON_SKILL } from '../src/systems/skills.js';
-import { ENEMY_GROUPS } from '../src/combat/formulas.js';
+import { ENEMY_GROUPS, bonusOrPenaltyByEnemyType } from '../src/combat/formulas.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { makeEnemyEntity, loadMonsterCareer } from '../src/characters/enemyEntity.js';
 import { swingSoundFor, SOUND } from '../src/systems/soundClips.js';
@@ -202,25 +202,41 @@ test('audit18: the backstab chance IS the tally site', () => {
 // 6. GetBonusOrPenaltyByEnemyType's PlayerEntity arm (FormulaHelper.cs:1037-1053)
 // ---------------------------------------------------------------
 
-test('audit18: the player is the Humanoid group, and no host passes targetGroup: null any more', () => {
-  assert.equal(PLAYER_TARGET_GROUP, ENEMY_GROUPS.Humanoid);
+test('audit18: the player is the Humanoid group, and no host can kill the modifier', () => {
+  // REWRITTEN AT THE AUDIT 18 MERGE. This pin used to assert that each host
+  // passed `targetGroup: PLAYER_TARGET_GROUP` by hand. The combat domain then
+  // made calculateAttackDamage derive the group from the TARGET ENTITY,
+  // verbatim to GetBonusOrPenaltyByEnemyType (FormulaHelper.cs:1037-1052), so
+  // the parameter - and the constant - are gone. The BEHAVIOUR is what
+  // mattered, so it is pinned directly now instead of through source text.
+  const foe = {
+    level: 10,
+    attackModifierFlags: 0x04,       // DFCareer humanoid BONUS bit
+    stats: { strength: 50, agility: 50, luck: 50 }, skills: 40,
+  };
+  const player = { isPlayer: true, stats: { strength: 50, agility: 50, luck: 50 }, skills: 40 };
+  assert.equal(bonusOrPenaltyByEnemyType(foe, player), 10,
+    'DFU assumes the player is humanoid (:1048), so a humanoid-bonus attacker adds its level');
+  // A phobia attacker subtracts it, and a flagless one scores nothing.
+  assert.equal(bonusOrPenaltyByEnemyType({ ...foe, attackModifierFlags: 0x40 }, player), -10);
+  assert.equal(bonusOrPenaltyByEnemyType({ ...foe, attackModifierFlags: 0 }, player), 0);
+  // And no host may reintroduce an explicit group - the key is ignored now,
+  // so passing one is a lie about where the value comes from.
   for (const [name, src] of allHosts()) {
-    if (name === 'hostCombat.js') continue;   // names the defect in a comment
-    assert.equal(/targetGroup:\s*null/.test(src), false, `${name} still kills the enemy-type modifier against the player`);
+    if (name === 'hostCombat.js') continue;   // names the retired constant in a comment
+    assert.equal(/targetGroup:/.test(src), false,
+      `${name} passes targetGroup, which calculateAttackDamage no longer reads`);
   }
-  const dungeon = hostSrc('dungeonContext.js');
-  assert.equal((dungeon.match(/targetGroup: PLAYER_TARGET_GROUP/g) ?? []).length, 2,
-    'foe melee AND the foe arrow');
-  assert.ok(/targetGroup: enemyGroupOf\(f\.entity\.affinity\)/.test(dungeon),
-    'the PLAYER arrow carries the foe group it used to drop');
-  assert.ok(/targetGroup: PLAYER_TARGET_GROUP/.test(hostSrc('cityGuards.js')));
 });
 
 test('audit18 sweep: the player arrow recovers the swing mods and the backstab it dropped', () => {
   const src = hostSrc('dungeonContext.js');
-  const shot = src.slice(src.indexOf('SWING_MODS[playerWeapon.machine.state]'));
-  assert.ok(/damageMod: _swing\.damage, toHitMod: _swing\.toHit/.test(shot.slice(0, 600)));
-  assert.ok(/backstabChance: backstabChanceOf\(playerEntity, _back\)/.test(shot.slice(0, 600)));
+  // The window is generous on purpose: an AUDIT 18 merge note sits inside
+  // this call, and a tight slice made the pin fail on a COMMENT rather than
+  // on the arguments it exists to hold.
+  const shot = src.slice(src.indexOf('SWING_MODS[playerWeapon.machine.state]'), src.indexOf('SWING_MODS[playerWeapon.machine.state]') + 1200);
+  assert.ok(/damageMod: _swing\.damage, toHitMod: _swing\.toHit/.test(shot));
+  assert.ok(/backstabChance: backstabChanceOf\(playerEntity, _back\)/.test(shot));
 });
 
 // ---------------------------------------------------------------
@@ -384,10 +400,18 @@ test('guards audit18: a zero-damage swing against a guard makes a noise', { skip
   const hit = g.resolvePlayerHit(pw, [0, 1.7, 0], [0, 0, 1], [0, 0, 0], () => true, null);
   assert.ok(hit, 'the swing connected');
   assert.ok(!g.guards[0].dead, 'and dealt nothing');
-  // ENEMY_BASICS carries no parrySounds column yet, so DFU's first arm
-  // applies: ScreenWeapon.PlaySwingSound() at the player.
-  assert.deepEqual(played, [['flat', swingSoundFor(pw.weapon)]],
-    'the exterior host played NOTHING at all on a zero-damage swing');
+  // MERGE NOTE (AUDIT 18): this pin was written while ENEMY_BASICS still
+  // had no parrySounds column, and asserted DFU's FIRST arm. The enemies
+  // domain then landed the column, and EnemyBasics.cs:2197-2210 gives
+  // Knight_CityWatch (146) ParrySounds = true - so the guard takes the
+  // SECOND arm, which is the correct DFU behaviour and what the merged
+  // tree now does. WeaponManager.cs:609-614 -> EnemySounds.PlayParrySound
+  // (EnemySounds.cs:134-140) = Parry1 + Random.Range(0, 9), AT THE ENEMY.
+  assert.equal(played.length, 1, 'the exterior host played NOTHING at all on a zero-damage swing');
+  const [where, clip] = played[0];
+  assert.equal(where, '3d', 'a parrying enemy takes the sound at ITS position, not the player\'s');
+  assert.ok(clip >= PARRY_1 && clip <= PARRY_1 + 8,
+    `expected one of Parry1..Parry9 (${PARRY_1}..${PARRY_1 + 8}), got ${clip}`);
 });
 
 test('guards audit18: the weapon-poison seam reaches InflictPoison', { skip: skipReal }, () => {

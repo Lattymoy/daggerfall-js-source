@@ -51,7 +51,7 @@ export class AudioEngine {
     if (this._booted) return;
     this._booted = true;
     await this.init(fetchBytes);
-    this.attachGestureResume();
+    if (typeof window !== 'undefined') this.attachGestureResume();
   }
 
   /** Load DAGGER.SND through the data seam. Safe to call before any
