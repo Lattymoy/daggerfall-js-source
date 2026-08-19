@@ -38,6 +38,20 @@ Chargen:
   Ledger" and no such row existed - the 17m shape exactly.)
 
 Characters:
+- ENEMY BOOTS never reduce ArmorValues[Feet]. EnemyEntity.SetEnemyEquipment's
+  armour pass is `for (int i = (int)EquipSlots.Head; i < (int)EquipSlots.Feet;
+  i++)` (EnemyEntity.cs:414) - a STRICT `<` against Feet, and Head = 12 /
+  Feet = 26, so slot 26 is never visited. DFU still rolls and equips the
+  boots (ItemHelper.cs:1452-1457) and they still drop as corpse loot; only
+  the armour-value pass skips them, leaving ArmorValues[Feet] at 100 before
+  the class/monster clamp. To preserve it the port must skip Boots in the
+  value loop ONLY - never in the roll, which consumes a Dice100 and a
+  material draw from the stream. (Added at AUDIT 18, which found
+  combat/enemyEquipment.js:131-139 subtracting boots there while its header
+  called the pass verbatim: at plate steel that is Feet 55 against DFU's 60,
+  and at daedric -5 against 60, a 65-point swing straight into
+  calculateSuccessfulHit. The code fix is routed to the Combat lane of the
+  same audit.)
 - RandomEncounters.cs:580-599 carries a commented-out second Cemetery table
   ("Cemetery - DF Unity version"); the generated encounterTables.js is
   comment-stripped, so the port ships the 45 LIVE tables and not that dead

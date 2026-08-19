@@ -233,6 +233,20 @@ test('AUDIT 18: source comments that cite the Ledger cite a row that exists', ()
   }
 });
 
+test('AUDIT 18: the enemy-boots armour quirk is ledgered wherever the pass lives', () => {
+  // EnemyEntity.cs:414 walks Head..Feet with a STRICT `<`, so an enemy's
+  // boots never touch ArmorValues[Feet]. The port computes that pass, so the
+  // quirk has to be on the page one way or the other - it was on neither.
+  const eq = read('src/combat/enemyEquipment.js');
+  assert.match(eq, /armorValues/, 'the enemy armour-value pass moved out of enemyEquipment.js');
+  assert.match(eq, /Boots/, 'enemyEquipment.js no longer rolls boots at all - re-read ItemHelper.cs:1452');
+  const ledger = read('bible/01-Overview/Port-Ledger.md');
+  assert.match(ledger, /ENEMY BOOTS never reduce ArmorValues\[Feet\]/,
+    'the SetEnemyEquipment Feet-slot quirk has no Ledger row');
+  assert.match(ledger, /EquipSlots\.Feet/,
+    'the row must carry the C# that settles it, not just the assertion');
+});
+
 test('AUDIT 18: the Ledger does not blame a missing subsystem for Athleticism', () => {
   // Both consumers ship: skills.jumpSpeedMultiplier and the per-minute
   // fatigue drain. The flag is unread, which is a different defect from

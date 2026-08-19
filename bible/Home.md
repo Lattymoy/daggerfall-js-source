@@ -319,7 +319,10 @@ activation-sounds queue on the claim that both PlayerActivate clips were
 any consumer (folded into the door-lockpicking row, where its mechanic
 lives); section B recorded a 0-hour rest running a full hour as a preserved
 DFU quirk when DaggerfallRestWindow.Update ends a 0-hour rest immediately -
-the row was a divergence wearing a quirk's clothes. Two source comments cited
+the row was a divergence wearing a quirk's clothes; and the SetEnemyEquipment
+Feet-slot quirk (EnemyEntity.cs:414's strict `<`, which leaves enemy boots
+out of ArmorValues[Feet]) had no row at all while enemyEquipment.js
+subtracted them - up to a 65-point swing at daedric. Two source comments cited
 Ledger rows that did not exist (chargen.js's `isCustom`, encounterTables.js's
 dead Cemetery block); both now have B rows.
 
