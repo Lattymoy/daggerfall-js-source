@@ -12,15 +12,21 @@
 //   topic list (6,71) 94x104; conversation (189,65) 114x126;
 //   player-says label (123,8) 124x38; NPC name (117,52) 197x10;
 //   portrait (119,65) 64x64 (TFAC faces PEND - the art's frame
-//   shows); tone radios (258, 18/28/38) 6x6 (the TALK02/03
-//   highlight art PENDS - an interim mark fills the active box).
-//   Topic scroll arrows: up (102,69,9,16) down (102,161,9,16).
+//   shows); tone radios (258, 18/28/38) 6x6 - the selection marker is
+//   panelTone, a flat 6x6 toggleColor (162,36,12) fill moved between
+//   those three positions by UpdateCheckboxes (:916-930); no art is
+//   involved.
+//   Topic scroll arrows: up (102,69,9,16) down (102,161,9,16), each
+//   worth +/-5 PIXELS of scroll (ButtonTopicUp/Down_OnMouseClick,
+//   :1418-1428) - both listboxes are VerticalScrollModes.PixelWise,
+//   so the scroll index is a pixel offset, never a row count.
 //
 // Interaction: clicks/taps through the hit rects (the phone path),
 // with the session's keyboard accelerators preserved - W opens
 // Where-is > Location, T cycles tone, digits pick visible rows,
-// N/P page, Esc/E goodbye. People/Things/Work are INTERIM no-ops
-// (their topic sources pend quests/work).
+// N/P page (OURS: DFU has no keyboard scroll here, so they step a
+// full listbox height), Esc/E goodbye. People/Things/Work are
+// INTERIM no-ops (their topic sources pend quests/work).
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, SCREEN_DIM, pointToNative, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { wrapText } from './talkWindow.js';
@@ -57,13 +63,42 @@ export const CONV_LINE_H = ROW_H + ROW_SPACING;  // kept: one single-line entry 
 export const SELECTED_TEXT_COLOR = [0.98, 0.98, 0.98, 1];   // DaggerfallUI selectedTextColor (the newest row)
 // AUDIT 17e F19: DFU's PixelWise ListBox DRAWS the partially-clipped
 // last row (104/7 = 14.857 -> 15 rows, the last one cut) and its hit
-// test selects it. The port drew floor() = 14 while the click rect
-// admitted row 14, so clicking the bottom band selected a row that
-// was never rendered. Render ceil; do NOT clamp the click.
+// test selects it. AUDIT 18 folded that law into layoutPixelRows -
+// a row is dropped only when it falls WHOLLY outside the band - so
+// this count is now descriptive (the visible-row ceiling at scroll 0)
+// rather than a slice bound; do NOT clamp the click to it.
 export const TOPIC_ROWS = Math.ceil(TALK_RECTS.topicList[3] / TOPIC_ROW_H);
 export const QUESTION_COLOR = [0.698, 0.812, 1, 1];      // DaggerfallQuestionTextColor
 export const ANSWER_COLOR = [227 / 255, 223 / 255, 0, 1];   // DaggerfallAnswerTextColor
 export const PLAYER_SAYS_RECT = Object.freeze([123, 8, 124, 38]);
+export const TALK_TOGGLE_COLOR = [162 / 255, 36 / 255, 12 / 255, 1];   // DaggerfallTalkWindow.toggleColor
+export const TOPIC_ARROW_SCROLL = 5;   // ButtonTopicUp/Down_OnMouseClick: ScrollIndex -/+= 5
+
+/** VerticalScrollBar.SetScrollIndex (VerticalScrollBar.cs:187-198):
+ *  clamp to [0, max(0, totalUnits - displayUnits)]. */
+export const clampScrollPixels = (px, contentH, panelH) =>
+  Math.max(0, Math.min(Math.max(0, contentH - panelH), px));
+
+/** ListBox.Draw's PixelWise branch (ListBox.cs:329-355): rows lay
+ *  out from the listbox origin at y = -scrollIndex, striding
+ *  TextHeight + rowSpacing, and a row is skipped only when it falls
+ *  wholly outside the panel band. Returns [{ index, y }] for the rows
+ *  DFU would draw. */
+export function layoutPixelRows(heights, scrollPx, panelH, rowSpacing = 0) {
+  const out = [];
+  let y = scrollPx ? -scrollPx : 0;
+  for (let i = 0; i < heights.length; i++) {
+    if (!(y + heights[i] < 0 || y >= panelH)) out.push({ index: i, y });
+    y += heights[i] + rowSpacing;
+  }
+  return out;
+}
+
+/** UpdateScrollBarConversation (DaggerfallTalkWindow.cs:820-828):
+ *  ScrollIndex = HeightContent() - Size.y, floored at 0 by
+ *  SetScrollIndex - so a conversation shorter than the panel sits at
+ *  the TOP, and a long one is pinned to its last row. */
+export const conversationScroll = (contentH, panelH) => Math.max(0, contentH - panelH);
 
 let _art = null;
 export async function preloadTalkArt(deps) {
@@ -95,8 +130,12 @@ export class NativeTalkWindow {
     this.topicMode = 'categories';
     this.scroll = 0;
   }
-  _pick(i) {
-    const it = this.topics[this.scroll + i];
+  /** The index of the first row ListBox.Draw renders at this pixel
+   *  scroll - what the port's digit accelerators address. */
+  _firstVisible() { return Math.max(0, Math.ceil(this.scroll / TOPIC_ROW_H) - 1); }
+  _pick(i) { this._pickIndex(this._firstVisible() + i); }
+  _pickIndex(idx) {
+    const it = this.topics[idx];
     if (!it) return;
     if (this.topicMode === 'categories') {
       this._category = it;
@@ -114,9 +153,9 @@ export class NativeTalkWindow {
       this.conversation.push({ text: this.hooks.answer(it), kind: 'answer' });
     }
   }
-  _page(d) {
-    const max = Math.max(0, this.topics.length - TOPIC_ROWS);
-    this.scroll = Math.max(0, Math.min(max, this.scroll + d * TOPIC_ROWS));
+  /** VerticalScrollBar.ScrollIndex +/- dPx, clamped. */
+  _scrollBy(dPx) {
+    this.scroll = clampScrollPixels(this.scroll + dPx, this.topics.length * TOPIC_ROW_H, TALK_RECTS.topicList[3]);
   }
   _close() { this.done = true; this.hooks.onClose?.(); }
 
@@ -125,8 +164,8 @@ export class NativeTalkWindow {
     if (code === 'Escape' || code === 'KeyE' || code === 'Enter') { this._close(); return; }
     if (code === 'KeyW') { this._openCategories(); return; }
     if (code === 'KeyT') { this.hooks.setTone((this.hooks.tone() + 1) % 3); return; }
-    if (code === 'KeyN') { this._page(1); return; }
-    if (code === 'KeyP') { this._page(-1); return; }
+    if (code === 'KeyN') { this._scrollBy(TALK_RECTS.topicList[3]); return; }   // ours: a full page
+    if (code === 'KeyP') { this._scrollBy(-TALK_RECTS.topicList[3]); return; }
     const d = /^Digit([1-9])$/.exec(code);
     if (d) this._pick(Number(d[1]) - 1);
   }
@@ -144,9 +183,11 @@ export class NativeTalkWindow {
     if (inRect(R.tonePolite, vx, vy)) { this.hooks.setTone(0); return true; }
     if (inRect(R.toneNormal, vx, vy)) { this.hooks.setTone(1); return true; }
     if (inRect(R.toneBlunt, vx, vy)) { this.hooks.setTone(2); return true; }
-    if (inRect(R.topicUp, vx, vy)) { this._page(-1); return true; }
-    if (inRect(R.topicDown, vx, vy)) { this._page(1); return true; }
-    if (inRect(R.topicList, vx, vy)) { this._pick(Math.floor((vy - R.topicList[1]) / TOPIC_ROW_H)); return true; }
+    if (inRect(R.topicUp, vx, vy)) { this._scrollBy(-TOPIC_ARROW_SCROLL); return true; }
+    if (inRect(R.topicDown, vx, vy)) { this._scrollBy(TOPIC_ARROW_SCROLL); return true; }
+    // ListBox.MouseClick's PixelWise branch: the hit row is found at
+    // scrollIndex + clickY, not at the visible-row ordinal.
+    if (inRect(R.topicList, vx, vy)) { this._pickIndex(Math.floor((vy - R.topicList[1] + this.scroll) / TOPIC_ROW_H)); return true; }
     // Tell me about / People / Things / Work: INTERIM no-ops (pend)
     return inRect(R.tellMeAbout, vx, vy) || inRect(R.categoryPeople, vx, vy)
       || inRect(R.categoryThings, vx, vy) || inRect(R.categoryWork, vx, vy);
@@ -167,13 +208,16 @@ export class NativeTalkWindow {
       wrapText(font.fnt, this.question, PLAYER_SAYS_RECT[2]).slice(0, Math.floor(PLAYER_SAYS_RECT[3] / TOPIC_ROW_H)).forEach((l, i) =>
         shadowText(renderer, font, l, m, PLAYER_SAYS_RECT[0], PLAYER_SAYS_RECT[1] + i * TOPIC_ROW_H, { color: QUESTION_COLOR }));
     }
-    // the active tone's interim mark (TALK02/03 highlight art pends)
+    // panelTone: the flat 6x6 toggleColor fill at the active position
     const toneRect = [R.tonePolite, R.toneNormal, R.toneBlunt][this.hooks.tone()];
-    drawRect(renderer, m, toneRect[0] + 1, toneRect[1] + 1, 4, 4, DEFAULT_TEXT_COLOR);
-    // topic rows, truncated to the list width
+    drawRect(renderer, m, toneRect[0], toneRect[1], toneRect[2], toneRect[3], TALK_TOGGLE_COLOR);
+    // topic rows, truncated to the listbox width (ListBox.AddItem sets
+    // MaxWidth = Size.x), laid out at the listbox origin
     const fit = (t, w) => { let s = t; while (s.length > 1 && measureText(font.fnt, s) > w) s = s.slice(0, -1); return s; };
-    this.topics.slice(this.scroll, this.scroll + TOPIC_ROWS).forEach((it, i) =>
-      shadowText(renderer, font, fit(it.label ?? it.name, R.topicList[2] - 2), m, R.topicList[0] + 1, R.topicList[1] + 1 + i * TOPIC_ROW_H));
+    layoutPixelRows(this.topics.map(() => TOPIC_ROW_H), this.scroll, R.topicList[3]).forEach(({ index, y }) => {
+      const it = this.topics[index];
+      shadowText(renderer, font, fit(it.label ?? it.name, R.topicList[2]), m, R.topicList[0], R.topicList[1] + y);
+    });
     // conversation - AUDIT 17e F11/F18. Two laws were wrong here:
     // (1) RowSpacing 4 is per LIST ITEM, not per wrapped line, so
     //     rows INSIDE one entry sit 7px apart (FONT0003 fixedHeight)
@@ -187,25 +231,23 @@ export class NativeTalkWindow {
     const entries = [];
     for (const c of this.conversation) {
       const e = typeof c === 'string' ? { text: c, kind: 'answer' } : c;
-      entries.push({ lines: wrapText(font.fnt, e.text, R.conversation[2] - 2), kind: e.kind });
+      entries.push({ lines: wrapText(font.fnt, e.text, R.conversation[2]), kind: e.kind });
     }
-    // lay out from the bottom so the newest entry is always visible
-    const laid = [];
-    let y = R.conversation[3] - ROW_H;
-    for (let i = entries.length - 1; i >= 0; i--) {
-      const e = entries[i];
-      const newest = i === entries.length - 1;
-      for (let j = e.lines.length - 1; j >= 0; j--) {
-        if (y < 0) break;
-        laid.push({ text: e.lines[j], y, kind: e.kind, newest });
-        y -= ROW_H;
-      }
-      y -= ROW_SPACING;   // the per-ITEM gap
-    }
-    for (const l of laid) {
-      const color = l.newest ? SELECTED_TEXT_COLOR
-        : l.kind === 'question' ? QUESTION_COLOR : DEFAULT_TEXT_COLOR;
-      shadowText(renderer, font, l.text, m, R.conversation[0] + 1, R.conversation[1] + 1 + l.y, { color });
+    // AUDIT 18: DFU lays the conversation out FORWARD from the listbox
+    // origin at y = -scrollIndex, and UpdateScrollBarConversation's
+    // HeightContent() - Size.y is floored at 0 - so a short
+    // conversation fills from the TOP and only a long one is pinned to
+    // its last row. The port anchored every conversation to the bottom.
+    const heights = entries.map((e) => e.lines.length * ROW_H);
+    const contentH = heights.reduce((a, b) => a + b, 0) + Math.max(0, entries.length - 1) * ROW_SPACING;
+    const scroll = conversationScroll(contentH, R.conversation[3]);
+    for (const { index, y } of layoutPixelRows(heights, scroll, R.conversation[3], ROW_SPACING)) {
+      const e = entries[index];
+      const newest = index === entries.length - 1;
+      const color = newest ? SELECTED_TEXT_COLOR
+        : e.kind === 'question' ? QUESTION_COLOR : DEFAULT_TEXT_COLOR;
+      e.lines.forEach((text, j) =>
+        shadowText(renderer, font, text, m, R.conversation[0], R.conversation[1] + y + j * ROW_H, { color }));
     }
   }
 }

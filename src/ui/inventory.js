@@ -2,16 +2,21 @@
 // windows in classic text (backgrounds FLAGGED pending art-name
 // verification, as U2/U3):
 //   Inventory (classic F6): the player's items with stack counts and
-//   CalculateWeightForMaterial weights + the total; Enter on a
-//   Weapons-group item EQUIPS it (retires ?weapon - loot a bow, use
-//   it). Drop/use pend their slices.
+//   CalculateWeightForMaterial weights + the total; Enter EQUIPS the
+//   selected item. AUDIT 18: the Enter branch used to admit only the
+//   Weapons group, so armor and clothing could never be worn in a
+//   dungeon. DaggerfallInventoryWindow.EquipItem (:1322-1328) excludes
+//   exactly ONE thing - Weapons/Arrow - and hands everything else to
+//   the equip table, whose GetEquipSlot refuses what has no slot.
+//   Drop/use pend their slices.
 //   Spellbook (DFU default Backspace): the player's KNOWN spells;
 //   Enter readies one (retires ?spell). INTERIM loud: with no
 //   starting-spells data yet, an empty book lists the file's ranged
 //   damage spells as known - the classic starting-spell sets replace
 //   this when their data lands.
 //   Death: health 0 opens it through the ONE hurtPlayer door; Enter
-//   restarts (reload - save/load pends Systems).
+//   restarts (a page reload), and the screen's F11 hint is the real
+//   quickload binding (InputManager.SetupDefaults: F9 save, F11 load).
 
 import { drawText, measureText } from './text.js';
 import { itemWeight, totalWeight } from '../systems/inventory.js';
@@ -20,6 +25,7 @@ import { isDamageHealthEffect } from '../systems/spellcast.js';
 const panel = (renderer, canvas) =>
   renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.04, 0.03, 0.02, 0.92]);
 const GOLD = [0.85, 0.72, 0.35, 1], WHITE = [0.9, 0.9, 0.85, 1], HOT = [1, 0.95, 0.6, 1], DIM = [0.5, 0.5, 0.45, 1];
+const ARROW_TEMPLATE_INDEX = 131;   // Weapons.Arrow (DaggerfallInventoryWindow.EquipItem's one exclusion)
 
 export class InventoryWindow {
   /** equip(item) comes from the scene (swaps the readied weapon). */
@@ -35,7 +41,8 @@ export class InventoryWindow {
     else if (action === 'down' && items.length) this.cursor = (this.cursor + 1) % items.length;
     else if (action === 'confirm') {
       const it = items[this.cursor];
-      if (it && it.group === 'Weapons' && it.name !== 'Arrow' && this.equip) { this.equip(it); this.done = true; }
+      const isArrow = it?.group === 'Weapons' && it?.templateIndex === ARROW_TEMPLATE_INDEX;
+      if (it && !isArrow && this.equip) { this.equip(it); this.done = true; }
     } else if (action === 'back' || action === 'inventory') this.done = true;
   }
   draw(renderer, canvas, font, s) {
@@ -48,7 +55,7 @@ export class InventoryWindow {
       const n = `${i === this.cursor ? '> ' : '  '}${it.name ?? it.group}${(it.stackCount ?? 1) > 1 ? ' x' + it.stackCount : ''}  ${itemWeight(it).toFixed(2)}kg${it.magic ? ' *' : ''}`;
       drawText(renderer, font, n, 20 * s, (36 + i * 10) * s, s, i === this.cursor ? HOT : WHITE);
     });
-    drawText(renderer, font, 'ENTER equip weapon   ESC close', 20 * s, canvas.height - 20 * s, s, DIM);
+    drawText(renderer, font, 'ENTER equip   ESC close', 20 * s, canvas.height - 20 * s, s, DIM);
   }
 }
 
@@ -98,12 +105,12 @@ export function knownSpells(entity, spellsByIndex) {
 export class DeathScreen {
   constructor() { this.done = false; }
   input(action) {
-    if (action === 'confirm' && typeof location !== 'undefined') location.reload();   // save/load pends Systems
+    if (action === 'confirm' && typeof location !== 'undefined') location.reload();
   }
   draw(renderer, canvas, font, s) {
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.15, 0.01, 0.01, 0.94]);
     const t = 'YOU HAVE DIED';
     drawText(renderer, font, t, (canvas.width - measureText(font.fnt, t) * s) / 2, canvas.height / 2 - 10 * s, s, [0.9, 0.2, 0.15, 1]);
-    drawText(renderer, font, 'ENTER restart   F12 load', (canvas.width - measureText(font.fnt, 'ENTER restart   F12 load') * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
+    drawText(renderer, font, 'ENTER restart   F11 load', (canvas.width - measureText(font.fnt, 'ENTER restart   F11 load') * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
   }
 }
