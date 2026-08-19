@@ -42,11 +42,19 @@ export const HIT_FRAME_MELEE = 2;
 export const HIT_FRAME_BOW = 5;
 export const BOW_SOUND_FRAME = 4;                  // swing sound fires here
 export const BOW_DRAWN_HOLD_FRAME = 3;             // fully drawn; drawback holds here
-// Bow frame span reconstructed FROM the verbatim mechanics (single
-// record; StrikeUp caps at NumFrames-1=3 for the draw-hold, release
-// continues 4..5 with sound@4 and arrow@5): draw entry 4 frames,
-// release entry 6.
-export const BOW_NUM_FRAMES = { Idle: 1, StrikeUp: 4, StrikeDown: 6 };
+// WeaponBasics.cs BowWeaponAnims, read off the table: row 0 (Idle)
+// NumFrames 1, rows 1-5 (every strike) 7, row 6 (StrikeUp, the draw)
+// 4. AUDIT 18: StrikeDown had been RECONSTRUCTED as 6 from the
+// mechanics rather than read, which cut frame 6 off every release and
+// started the bow cooldown one classic tick early.
+export const BOW_NUM_FRAMES = { Idle: 1, StrikeUp: 4, StrikeDown: 7 };
+
+// FPSWeapon.cs:71 verbatim: the unarmed strike-to-the-LEFT plays its
+// own eight-tick frame list - up and back down again - instead of the
+// generic 5-frame increment. FPSWeapon.AnimateWeapon:500-511 takes
+// this arm FIRST, for WeaponTypes.Melee and Werecreature only, and
+// cannot end before the eighth tick.
+export const LEFT_UNARMED_ANIMS = Object.freeze([0, 1, 2, 3, 4, 2, 1, 0]);
 
 // WeaponManager.TrackMouseAttack verbatim: 15deg radial sections.
 // Note gesture tracking emits only SIX directions (UpLeft/UpRight
@@ -73,8 +81,12 @@ export function canChangeState(isBow, currentState, nextState) {
 // The frame engine, distilled from FPSWeapon.AnimateWeapon +
 // WeaponManager's bow block. step(machine, dt) advances ticks;
 // events collect hit/sound/loose moments for the caller.
-export function createWeaponMachine(isBow) {
-  return { isBow, state: 'Idle', frame: 0, ticks: 0, acc: 0, cooldownUntil: 0, now: 0 };
+/** `isUnarmed` = the FPSWeapon.AnimateWeapon gate WeaponType ==
+ *  Melee || Werecreature. It is the PLAYER's screen weapon only, and
+ *  the caller must re-read it every step - a sheathed sword flips the
+ *  rig between armed and bare-handed while the machine lives on. */
+export function createWeaponMachine(isBow, isUnarmed = false) {
+  return { isBow, isUnarmed, state: 'Idle', frame: 0, ticks: 0, acc: 0, cooldownUntil: 0, now: 0, animIndex: 0, damageDone: false };
 }
 
 export function machineAttack(m, strikeState) {
@@ -84,6 +96,7 @@ export function machineAttack(m, strikeState) {
   // ChangeWeaponState verbatim: bows keep frames unless going Idle
   if (!m.isBow || strikeState === 'Idle') { m.frame = 0; m.ticks = 0; }
   m.acc = 0;
+  m.animIndex = 0; m.damageDone = false;   // leftUnarmedAnimIndex / isDamageFinished
   return true;
 }
 
@@ -101,7 +114,20 @@ export function machineStep(m, dt, liveSpeed) {
   m.acc += dt;
   while (m.acc >= tick) {
     m.acc -= tick;
-    if (m.isBow && m.state === 'StrikeUp') {
+    if (m.isUnarmed && m.state === 'StrikeLeft') {
+      // FPSWeapon.AnimateWeapon's FIRST arm: the frame comes from
+      // leftUnarmedAnims, never from an increment, and the swing ends
+      // only when the index runs off the end. The damageDone latch is
+      // WeaponManager.cs:381's isDamageFinished - without it the
+      // list's SECOND visit to frame 2 would fire a hit DFU never fires.
+      m.frame = LEFT_UNARMED_ANIMS[m.animIndex++];
+      if (m.frame === HIT_FRAME_MELEE && !m.damageDone) { events.push('hit'); m.damageDone = true; }
+      if (m.animIndex >= LEFT_UNARMED_ANIMS.length) {
+        m.state = 'Idle'; m.frame = 0; m.ticks = 0; m.animIndex = 0; m.damageDone = false;
+        events.push('done');
+        break;
+      }
+    } else if (m.isBow && m.state === 'StrikeUp') {
       if (m.frame < frames - 1) m.frame++;             // draw to the hold frame, then hold
       m.ticks++;                                        // held-time keeps counting (GetAnimTime)
       if (m.ticks * tick > MAX_BOW_HELD_DRAWN_SECONDS) { machineCancelBowDraw(m); events.push('undraw'); break; }

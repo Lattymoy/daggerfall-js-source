@@ -167,6 +167,13 @@ retired at U20b - the window ships, and both its sentences (the button
 site and the art note) went with it. The difficulty dagger's fading
 trail remains. Line numbers refreshed.
 
+AUDIT 18 (combat) RETIRED the racial/proficiency half of
+playerWeapon.js's INTERIM sentence and DELETED it: chargen writes the
+DFU-numbered raceId, so CalculateRacialModifiers is ported and LIVE
+(formulas.js). What still pends there is CalculateProficiencyModifiers
+alone, flagged at its new site inside calculateAttackDamage. The
+combat line numbers below are refreshed with it.
+
 - `src/characters/enemyMotor.js:308` - FLAGGED, until target prediction ships). At zero the foe stops.
 - `src/characters/mobileUnit.js:18` - clock). DEFERRED (FLAGGED): the Seducer transform pair.
 - `src/characters/paperdollArt.js:67` - *  needs no new field; FLAGGED: a remote list (shop stock, a corpse)
@@ -175,11 +182,11 @@ trail remains. Line numbers refreshed.
 - `src/characters/playerEntity.js:25` - skills: 30,       // INTERIM flat skills until chargen
 - `src/characters/playerEntity.js:27` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyChar...
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): adrenaline rush
-- `src/combat/formulas.js:262` - *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
+- `src/combat/formulas.js:386` - *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
 - `src/combat/playerWeapon.js:13` - INTERIM (loud): the equipped weapon is an Iron Dagger until the
-- `src/combat/playerWeapon.js:47` - /** INTERIM starting weapon (items arc replaces): Iron Dagger. */
-- `src/combat/playerWeapon.js:48` - export const INTERIM_WEAPON = Object.freeze({
-- `src/combat/playerWeapon.js:78` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
+- `src/combat/playerWeapon.js:46` - /** INTERIM starting weapon (items arc replaces): Iron Dagger.
+- `src/combat/playerWeapon.js:56` - export const INTERIM_WEAPON = Object.freeze({
+- `src/combat/playerWeapon.js:83` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
 - `src/combat/weaponRig.js:34` - *                     (FLAGGED at the call sites - their HUD pends),
 - `src/scenes/arrestFlow.js:72` - instead of "You, , are..." (chargen wiring FLAGGED).
 - `src/scenes/arrestFlow.js:122` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)

@@ -4,11 +4,13 @@
 // ItemEnums.cs (Weapons, WeaponMaterialTypes), ItemBuilder.cs
 // (SetItemPropertiesByMaterial + the three multiplier arrays,
 // ApplyWeaponMaterial incl. the female archive-1 rule),
-// DaggerfallUnityItem.GetWeaponMaterialModifier, ItemHelper.
+// DaggerfallUnityItem.GetWeaponMaterialModifier and
+// GetWeaponSkillUsed/GetWeaponSkillIDAsShort, ItemHelper.
 // GetWeaponDyeColor, FormulaHelper.CalculateWeaponMin/MaxDamage and
 // CalculateWeaponToHit (modifier * 10). Constants byte-exact.
 import templates from './itemTemplates.json' with { type: 'json' };
 import { DYE_COLORS, DYE_TARGETS, getDyeColorTable } from './dyes.js';
+import { SKILLS } from '../systems/skills.js';   // GetWeaponSkillIDAsShort's return set
 
 export const WEAPONS = Object.freeze({
   Dagger: 113, Tanto: 114, Staff: 115, Shortsword: 116, Wakazashi: 117,
@@ -49,6 +51,28 @@ const MAX_DAMAGE = new Map([
   [[W.Dai_Katana], 21],
 ].flatMap(([ws, v]) => ws.map((w) => [w, v])));
 export function weaponMaxDamage(weapon) { return MAX_DAMAGE.get(weapon) ?? 0; }
+
+/** DaggerfallUnityItem.GetWeaponSkillUsed + GetWeaponSkillIDAsShort
+ *  (DaggerfallUnityItem.cs:910-962), verbatim: the switch is on
+ *  TEMPLATE INDEX, which is immutable, and returns Skills.None for
+ *  anything that is not one of the eighteen weapons.
+ *
+ *  AUDIT 18: the port keyed its table by the item's DISPLAY NAME
+ *  instead (systems/skills.js WEAPON_SKILL). A name is not immutable -
+ *  loot.createRegularMagicItem renames an enchanted weapon to its
+ *  MAGIC.DEF name - and itemTemplates.json spells 117/123 "Wakizashi"
+ *  and "Dai-katana" against the table's "Wakazashi"/"Dai-Katana", so
+ *  an enchanted broadsword swung with LongBlade 70 was scored on
+ *  HandToHand 20. Returns null (not HandToHand) for an unmapped
+ *  template so callers keep DFU's own fallthrough. */
+const WEAPON_SKILL_USED = new Map([
+  [[W.Dagger, W.Tanto, W.Wakazashi, W.Shortsword], SKILLS.ShortBlade],
+  [[W.Broadsword, W.Longsword, W.Saber, W.Katana, W.Claymore, W.Dai_Katana], SKILLS.LongBlade],
+  [[W.Battle_Axe, W.War_Axe], SKILLS.Axe],
+  [[W.Flail, W.Mace, W.Warhammer, W.Staff], SKILLS.BluntWeapon],
+  [[W.Short_Bow, W.Long_Bow], SKILLS.Archery],
+].flatMap(([ws, v]) => ws.map((w) => [w, v])));
+export function weaponSkillUsed(templateIndex) { return WEAPON_SKILL_USED.get(templateIndex) ?? null; }
 
 // DaggerfallUnityItem.GetWeaponMaterialModifier, verbatim.
 export function weaponMaterialModifier(material) {

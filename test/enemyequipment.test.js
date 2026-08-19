@@ -35,7 +35,10 @@ test('equipment: variant 0 loadout + the armor-value pass (class clamp)', () => 
   const eq = assignEnemyEquipment(entity, 0, 1, seq(0, 0, 0.10, 0, 0.5, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99));
   assert.equal(eq.rightHand.name, 'Broadsword');
   assert.equal(eq.rightHand.material, 0);
-  assert.equal(eq.rightHand.flags & 0x10, 0x10);      // edged
+  // AUDIT 18: DaggerfallUnityItem.SetItem gives every generated item
+  // flags 0 - no DFU path mints the 0x10 "edged" bit, and the port's
+  // minting of it inverted the Skeletal Warrior halving.
+  assert.equal(eq.rightHand.flags, 0);
   assert.equal(eq.leftHand.shield, true);
   // Buckler protects LeftArm(2) + Hands(4) at 1*5; everything else no-armor 100 -> clamp 60
   assert.deepEqual(eq.armorValues, [60, 60, 95 > 60 ? 60 : 95, 60, 60, 60, 60].map((v, i) => (i === 2 || i === 4 ? 60 : 60)));

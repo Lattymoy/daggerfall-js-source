@@ -8,8 +8,10 @@
 //
 // Body parts (ArmorValues indices, = the struck-body-part range):
 //   0 Head, 1 RightArm, 2 LeftArm, 3 Chest, 4 Hands, 5 Legs, 6 Feet
-// Weapon items here carry exactly what the formulas consume:
-//   { name, material (0..9), flags, minDamage, maxDamage }.
+// Weapon items here carry what the formulas consume:
+//   { name, templateIndex, material (0..9), flags }. The damage span
+//   is NOT stored - baseDamageMin/Max resolve the template on every
+//   swing, exactly as GetBaseDamageMin/Max do.
 // Unity Random slots stay uniform rolls, as in DFU itself.
 
 import { WEAPON_MIN_DAMAGE, WEAPON_MAX_DAMAGE, dice100 } from './formulas.js';
@@ -22,8 +24,6 @@ export const WEAPONS_ENUM = Object.freeze({
   'Battle Axe': 127, 'War Axe': 128, 'Short Bow': 129, 'Long Bow': 130,
 });
 const WEAPON_BY_INDEX = Object.freeze(Object.fromEntries(Object.entries(WEAPONS_ENUM).map(([k, v]) => [v, k])));
-// Blade flag 0x10 (edged) - staves/maces/flails/hammers are blunt
-const BLUNT = new Set([115, 124, 125, 126]);
 
 export const ARMOR_ENUM = Object.freeze({
   Cuirass: 102, Gauntlets: 103, Greaves: 104, Left_Pauldron: 105,
@@ -82,11 +82,19 @@ export function materialArmorValue(armorMaterial) {
   return [7, 9, 9, 11, 13, 15, 15, 17, 19, 21][plate] ?? 0;
 }
 
+/** ItemBuilder mints every weapon through DaggerfallUnityItem.SetItem,
+ *  which sets `flags = 0` (DaggerfallUnityItem.cs:565); the only other
+ *  writers are the artifact mask (:617, 0x820) and the classic-save
+ *  importer (:1563), and neither touches bit 0x10. AUDIT 18: the port
+ *  minted 0x10 on every EDGED weapon by intent, which inverted
+ *  FormulaHelper.cs:742-744 - DFU halves EVERY weapon's damage against
+ *  a Skeletal Warrior, and the port halved only blunt ones. Reproduced
+ *  bug-for-bug: no port site mints the bit. */
 export function createWeapon(templateIndex, material) {
   const name = WEAPON_BY_INDEX[templateIndex];
   return {
     name, templateIndex, material,
-    flags: BLUNT.has(templateIndex) ? 0x00 : 0x10,
+    flags: 0,
     minDamage: WEAPON_MIN_DAMAGE[name], maxDamage: WEAPON_MAX_DAMAGE[name],
   };
 }
@@ -134,6 +142,15 @@ export function assignEnemyEquipment(entity, variant, playerLevel, rolls = Math.
       const bonus = SHIELD_VALUE[a.piece] ?? 0;
       for (const part of SHIELD_PARTS[a.piece] ?? []) armorValues[part] -= bonus * 5;
     } else {
+      // EnemyEntity.cs:414 `for (i = EquipSlots.Head (12); i <
+      // EquipSlots.Feet (26); i++)` - Feet is the EXCLUSIVE bound, so
+      // the boots AssignEnemyStartingEquipment just equipped never
+      // reach UpdateEquippedArmorValues. AUDIT 18: the port ran them
+      // through the same loop as every other piece, so a well-armoured
+      // class enemy's Feet came out below the 60 clamp. They stay in
+      // armorPieces - the corpse still drops them, as DFU's
+      // Items.AddItem gives it.
+      if (a.piece === ARMOR_ENUM.Boots) continue;
       const part = PIECE_BODY_PART[a.piece];
       if (part != null) armorValues[part] -= materialArmorValue(a.material) * 5;
     }
