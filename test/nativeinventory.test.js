@@ -8,6 +8,7 @@ import { scrollerHit, applyScroll, LIST_SLOTS, CELL_X, ARROW_H, DOWN_ARROW_Y } f
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { routeKey, typedChar } from '../src/ui/input.js';
 
 const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
 
@@ -176,18 +177,93 @@ test('U25 / THE ONE CONSTRUCTION SEAM: all four inventory sites pass the same ho
   assert.equal(sites, 4, 'the number of construction sites changed - re-read this rule');
 });
 
-test('U25: the dungeon host is the ONE that still opens the old keyed inventory', () => {
-  // THE FOUR HOSTS RULE. exterior.js and world.js build the native
-  // window; worldModes mounts them and has no inventory of its own;
-  // dungeonContext.js still constructs ui/inventory.js's keyed
-  // InventoryWindow, so a dungeon has no Use mode, no paperdoll and no
-  // real info panel. Recorded in the Ledger and pinned BOTH ways, so
-  // the day it is swapped this test sends its author to update the
-  // record.
+test('U26 / THE FOUR HOSTS: every host that opens an inventory opens the NATIVE one', () => {
+  // U25 pinned the opposite of this and fired the moment U26 swapped
+  // the dungeon, which is what a both-ways pin is for. The keyed
+  // InventoryWindow is now gone from every host.
   const root = join(dirname(fileURLToPath(import.meta.url)), '..');
   const dungeon = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
-  assert.ok(dungeon.includes('new InventoryWindow('), 'the dungeon still uses the keyed window');
-  assert.equal(dungeon.includes('new NativeInventoryWindow('), false);
+  assert.equal(dungeon.includes('new InventoryWindow('), false, 'the keyed window is retired here');
+  assert.ok(dungeon.includes('new NativeInventoryWindow('));
+  // ...and the dungeon builds it in ONE place, so its loot targets and
+  // its F6 press cannot drift apart
+  assert.equal((dungeon.match(/new NativeInventoryWindow\(/g) ?? []).length, 1);
+  for (const hook of ['items:', 'entity:', 'icons:', 'rows:', 'nowMinute:', 'onDrop:', 'onClose:']) {
+    assert.ok(dungeon.includes(hook), `the dungeon builder is missing ${hook}`);
+  }
+  // worldModes opens no inventory of its own - it MOUNTS the other
+  // two, so a click inside a building reaches theirs.
   const modes = readFileSync(join(root, 'src/scenes/worldModes.js'), 'utf8');
   assert.equal(modes.includes('NativeInventoryWindow'), false, 'the interior host opens none');
+  // ...and the keyed window is DELETED, not merely unimported. Its one
+  // law lives in systems/equip.js, which every host reaches.
+  const keyed = readFileSync(join(root, 'src/ui/inventory.js'), 'utf8');
+  assert.equal(keyed.includes('export class InventoryWindow'), false, 'the keyed window is gone');
+  assert.ok(keyed.includes('export class SpellbookWindow'), 'its module still carries the other two');
+});
+
+test('U26: the dungeon routes RAW KEY CODES to a native overlay', () => {
+  // routeKey handed every overlay an ACTION ('back'/'confirm'/'up'),
+  // which is the keyed windows' vocabulary and cannot express F6, a
+  // mode button or a digit - so the native window could not have
+  // worked in this host without the branch.
+  let got = null;
+  const ctx = {
+    uiOverlayActive: true, overlayIsNative: true,
+    overlayInput: (a) => { got = a; },
+  };
+  routeKey({ code: 'KeyU', key: 'u' }, ctx, () => ({}));
+  assert.equal(got, 'KeyU', 'the raw code, not char:u');
+  // a KEYED overlay still gets the action map
+  const keyed = { uiOverlayActive: true, overlayIsNative: false, overlayInput: (a) => { got = a; } };
+  routeKey({ code: 'Escape', key: 'Escape' }, keyed, () => ({}));
+  assert.equal(got, 'back');
+  // typedChar reads BOTH hosts' vocabularies
+  assert.equal(typedChar('char:7'), '7');
+  assert.equal(typedChar('Digit7'), '7');
+  assert.equal(typedChar('Numpad7'), '7');
+  assert.equal(typedChar('KeyA', { key: 'a' }), 'a');
+  assert.equal(typedChar('Escape'), null);
+});
+
+test('U26: the dungeon host wires the four things the swap needed', () => {
+  // No execution coverage in node, so the seams are read - the idiom
+  // this repo already uses for its scene hosts.
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const ctx = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
+  const scene = readFileSync(join(root, 'src/scenes/dungeon.js'), 'utf8');
+  const modes = readFileSync(join(root, 'src/scenes/worldModes.js'), 'utf8');
+
+  // 1. A GROUND PILE. droppedLoot is host-agnostic and had simply
+  //    never been mounted here, so a Remove-mode drop had nowhere to
+  //    land - which is what made this a slice and not an edit.
+  assert.ok(ctx.includes('createDroppedLoot('), 'droppedLoot is mounted');
+  assert.ok(ctx.includes('droppedLoot.lootTargets()'), 'and its piles are activatable');
+  assert.ok(ctx.includes('droppedLoot.batches()'), 'and they draw');
+  assert.ok(ctx.includes('droppedLoot.releaseEmptied()'), 'and empty ones are freed on close');
+  // EVERY ALLOCATION HAS AN OWNER: the piles leave with the dungeon
+  assert.ok(/destroy\(\)[\s\S]*droppedLoot\._piles\) if \(p\.batch\) renderer\.destroyBillboardBatch/.test(ctx),
+    'the piles\' BATCHES are destroyed in destroy(), not just the array emptied');
+
+  // 2. BOTH dungeon hosts route the new key prefix. The standalone
+  //    scene and the world-modes machine each own a loot arm, and a
+  //    prefix added to one is exactly the drift this repo keeps
+  //    finding.
+  for (const [name, src] of [['dungeon.js', scene], ['worldModes.js', modes]]) {
+    assert.ok(src.includes("droppedLoot:'"), `${name} routes droppedLoot: to takeLoot`);
+  }
+
+  // 3. takeLoot OPENS THE WINDOW rather than vacuuming the pile - the
+  //    old body transferred every item on one keypress.
+  assert.ok(ctx.includes('activeOverlay = openInventory(source'), 'a loot target opens the window');
+  assert.equal(/for \(const item of source\) \{ addItem\(playerEntity/.test(ctx), false, 'the vacuum is gone');
+
+  // 4. A native overlay draws against the REAL canvas with no screen
+  //    offset - it letterboxes itself, and applying the offset twice
+  //    left the dimmed world showing in the bars (AUDIT 19 F2 again).
+  assert.ok(/isChoiceWindow\)\s*\{\s*\n\s*activeOverlay\.draw\(renderer, canvas,/.test(ctx),
+    'the native branch passes the real canvas');
+  // ...and the shot counter advances under an overlay, or a probe
+  // cannot frame-sync through one (the Process rule forbids sleeping).
+  assert.ok(/uiOverlayActive\) \{[\s\S]{0,600}?frames\+\+/.test(scene), 'the frame counter still ticks');
 });

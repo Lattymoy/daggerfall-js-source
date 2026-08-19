@@ -2538,3 +2538,67 @@ without the real inventory. Pinned both ways and routed to U26.
 gold | Weight: 6 kilograms" off record 1009 with a stack's weight; an
 equip-click lights a torch and a use-click douses it; a shirt cycles
 its variant; the wagon says its line.
+
+## U26 - THE DUNGEON GETS THE REAL INVENTORY (2026-08-19)
+
+`src/scenes/dungeonContext.js` + `src/scenes/dungeon.js` +
+`src/ui/input.js`; `src/ui/inventory.js`'s keyed `InventoryWindow` is
+DELETED. `test/nativeinventory.test.js` (+2 sweeps).
+
+**The last host without it.** The exterior hosts moved to the classic
+window at U8d; the dungeon kept a text list, so underground there were
+no tabs, no paperdoll, no info panel and - after U25 - no Use mode,
+which is precisely where a torch gets lit. U25 pinned that gap BOTH
+ways and the pin went red the moment this slice closed it, which is
+what a both-ways pin is for.
+
+**Three things the swap needed, and they are why it was a slice.**
+
+1. **A ground pile.** `droppedLoot` was written host-agnostically at
+   U8e (renderer + getTexture + uploadRecordFrame) and had simply
+   never been mounted here, so a Remove-mode drop in a dungeon had
+   nowhere to land. It now mounts, draws in the same billboard pass as
+   the sprite mobiles, offers its piles as activation targets, frees
+   emptied ones when the window closes, and frees every batch when the
+   dungeon is destroyed.
+2. **Raw key codes.** `routeKey` handed every overlay an ACTION
+   (`back`/`confirm`/`up`) - the keyed windows' vocabulary, which
+   cannot express F6, a mode button or a digit. `ui/input.js` now
+   passes the code through for a native window, exactly as townTalk's
+   seam has since G2, and `typedChar` is the one reader that
+   understands both hosts' vocabularies.
+3. **LOOT OPENS THE WINDOW.** `takeLoot` used to vacuum a whole
+   container into the pack on one keypress. PlayerActivate makes the
+   container the inventory's REMOTE TARGET and lets the player choose,
+   with the window opening in Remove mode (the OnPush law U8e already
+   ported). Both dungeon hosts - the standalone scene and the
+   world-modes machine - route the new `droppedLoot:` prefix; the
+   probe found the pickup half missing when only one of them had it.
+
+**Two defects the probe surfaced on the way.** The shot-mode frame
+counter sat AFTER the overlay branch's early return, so `__frame`
+froze the instant any overlay opened - and this repo's Process rules
+forbid a probe from sleeping, so an overlay made frame-syncing
+impossible in this host. And a native window handed the VIRTUAL canvas
+plus a screen offset letterboxes itself twice: its opaque backdrop
+then covers only the virtual rect and the dimmed world shows through
+the bars. That is AUDIT 19 F2's defect for the seventh time; a native
+window now gets the real canvas and no offset.
+
+**The paperdoll came too**, and this host is the one that can ask for a
+non-town backdrop: `CONTEXT_BG` has mapped `dungeon` to SCBG07I0 since
+U8f with no caller, because the town hosts only ever want SCBG04I0.
+
+**One equip model, finally.** This host carried its own equip hook with
+its own career gate - AUDIT 17e F17's point, made twice. The window
+owns equipping now, so the duplicate is gone, and `ui/inventory.js`'s
+keyed window with it: nothing imported it any more, and its one law
+(EquipItem excludes exactly Weapons/Arrow) was never the window's -
+it lives in `systems/equip.js`, which every host reaches.
+
+**Probed live** (`tools/dungeonInventoryProbe.mjs`): F6 through the
+real key path opens `NativeInventoryWindow`; the info box reads "Steel
+Broadsword | 1 - 12 points of damage | Condition: Used | Weight: 5
+kilograms"; an equip-click lights the torch; Remove drops the sword,
+the pile mints with its flat, and activating it reopens the window
+with the pile as the remote target.

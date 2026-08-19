@@ -661,8 +661,10 @@ export function createWorldModes(host) {
     targets.push(...dungeonCtx.lootTargets());   // S2: piles + lootable corpses
     const key = pickActivatable(eye, dir, targets, dungeonCtx.collider);
     if (key === null) return false;
-    if (key.startsWith('loot:') || key.startsWith('corpse:')) {
-      dungeonCtx.takeLoot(key);   // transfer message: UI arc
+    // U26: droppedLoot: is the player's own pile - the same three-way
+    // arm the standalone dungeon scene carries, kept in step here.
+    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:')) {
+      dungeonCtx.takeLoot(key);   // opens the inventory with the pile as the remote target
       return true;
     }
     if (!key.startsWith('exit:')) {

@@ -35,10 +35,28 @@ export function gameAction(e) {
   return null;
 }
 
+/** The character a key event types, for the windows that carry a text
+ *  field. The two hosts route keys differently - townTalk hands a
+ *  choice window the raw `e.code` while the dungeon's routeKey hands
+ *  it an ACTION - so a field has to read both, and this is the one
+ *  place that knows how (U26). */
+export function typedChar(code, e = null) {
+  if (typeof code === 'string' && code.startsWith('char:')) return code.slice(5);
+  if (e && e.key?.length === 1) return e.key;
+  const d = /^(?:Digit|Numpad)([0-9])$/.exec(code ?? '');
+  return d ? d[1] : null;
+}
+
 /** Route one keydown against a dungeon context. Returns true when
  *  consumed (the host preventDefaults and stops). */
 export function routeKey(e, ctx, castDir, setPlayerPos = null) {
   if (ctx.uiOverlayActive) {
+    // U26: a NATIVE window keys off raw codes, exactly as townTalk's
+    // seam has since G2 - the action map ('back'/'confirm'/'up') is
+    // the keyed windows' vocabulary and says nothing about F6, the
+    // mode buttons or a digit. The dungeon host had no such branch,
+    // which is one of the reasons it never got the native inventory.
+    if (ctx.overlayIsNative) { ctx.overlayInput(e.code, e); return true; }
     const a = overlayAction(e);
     if (a) { ctx.overlayInput(a); return true; }
     // Quickload works from ANY overlay (the death screen's F11 hint

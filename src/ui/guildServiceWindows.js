@@ -20,6 +20,7 @@ import { nativeMetrics } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
 import { wrapText } from './talkWindow.js';
+import { typedChar } from './input.js';
 import {
   trainingOffer, canAffordTraining, tooSkilledToTrain, trainSkill, trainableSkills,
   donate, DONATION_DEFAULT, DONATION_MAX_CHARACTERS,
@@ -91,7 +92,7 @@ export class ServiceFlowWindow {
 
   push(boxes) { if (boxes?.length) this.boxes.unshift(...boxes); this._syncPicker(); }
 
-  input(code) {
+  input(code, e = null) {
     const t = this.top;
     if (!t) { this._close(); return; }
     if (t.picker) { this._picker?.input(code); if (this._picker?.done) this._syncPicker(); return; }
@@ -99,8 +100,8 @@ export class ServiceFlowWindow {
       if (code === 'Escape') { this._advance(); return; }
       if (code === 'Enter') { const v = this.value; this._advance(t.onInput?.(v) ?? null); return; }
       if (code === 'backspace' || code === 'Backspace') { this.value = this.value.slice(0, -1); return; }
-      if (code.startsWith('char:')) {
-        const ch = code.slice(5);
+      const ch = typedChar(code, e);   // U26: raw codes or 'char:x'
+      if (ch) {
         // TextBox.Numeric refuses anything but a digit (:49)
         if (t.field.numeric && !/^[0-9]$/.test(ch)) return;
         if (this.value.length < (t.field.maxCharacters ?? 8)) this.value += ch;

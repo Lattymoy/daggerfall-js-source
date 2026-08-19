@@ -211,18 +211,34 @@ test('AUDIT 18 F5: every host that gates on uiOverlayActive also ticks the overl
   // The defect was structural - the tick sat on the wrong side of a gate - so
   // the pin is structural too: any host branch that returns on uiOverlayActive
   // must tick first, or its overlays are frozen.
+  // U26 note: this used to scan ONE LINE for both the gate and its
+  // return, which was true when each host's gate was a one-liner. The
+  // dungeon's grew a body (the shot counter has to advance under an
+  // overlay or a probe cannot frame-sync through one), and a
+  // line-scoped pin silently stopped counting it - the gates total is
+  // what caught that. It reads the whole BRANCH now, so the law
+  // survives the branch being reformatted.
   const hosts = ['src/scenes/dungeon.js', 'src/scenes/worldModes.js'];
   let gates = 0;
   for (const rel of hosts) {
     const text = readFileSync(join(SRC, '..', rel), 'utf8');
-    for (const line of text.split('\n')) {
-      if (!/uiOverlayActive/.test(line) || !/\breturn\b/.test(line)) continue;
+    const lines = text.split('\n');
+    lines.forEach((line, i) => {
+      if (!/if \(.*uiOverlayActive/.test(line)) return;
+      // the branch is either the rest of this line or the block under it
+      const branch = /\breturn\b/.test(line) ? line : lines.slice(i, i + 12).join('\n');
+      // Only the FRAME LOOP's gate owes a tick. Both hosts also gate
+      // their POINTER handler on uiOverlayActive and return without
+      // ticking, correctly - a click is not a frame. drawOverlay is
+      // what marks the frame-loop branch.
+      if (!/drawOverlay\(/.test(branch)) return;
+      assert.ok(/\breturn\b/.test(branch), `${rel}: the uiOverlayActive gate does not return`);
       gates++;
-      assert.ok(/tickOverlay\(/.test(line),
+      assert.ok(/tickOverlay\(/.test(branch),
         `${rel}: a branch returns on uiOverlayActive without ticking the overlay:\n  ${line.trim()}`);
-      assert.ok(line.indexOf('tickOverlay(') < line.indexOf('return'),
+      assert.ok(branch.indexOf('tickOverlay(') < branch.indexOf('return'),
         `${rel}: tickOverlay must run BEFORE the return`);
-    }
+    });
   }
   assert.equal(gates, 2, 'expected exactly the two dungeon-mounting host gates');
 });

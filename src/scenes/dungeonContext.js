@@ -23,7 +23,10 @@ import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem, removeOne } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
-import { equipItem, isForbiddenEquip} from '../systems/equip.js';   // AUDIT 17e F17
+// U26: this host's own equip hook is retired - the native inventory
+// window owns equipping, the career gate (S23) and the paperdoll, so
+// the duplicate pair here had nothing left to serve. AUDIT 17e F17's
+// point stands and is now made in ONE place instead of two.
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
 import { drawText, makeFont, measureText } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
@@ -43,7 +46,14 @@ import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
-import { InventoryWindow, SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
+import { SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
+// U26: the dungeon finally gets the SAME inventory window the exterior
+// hosts have had since U8d - tabs, paperdoll, the real info panel and
+// point-and-click Use. The keyed InventoryWindow it used until now is
+// retired from this host.
+import { NativeInventoryWindow, preloadInventoryArt } from '../ui/nativeInventory.js';
+import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
+import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
 import { applyLevelUp } from '../systems/advancement.js';
@@ -567,6 +577,60 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   let chargenFlow = null;
   let activeOverlay = null;
+
+  // ── U26: THE NATIVE INVENTORY IN THE DUNGEON ─────────────────────
+  // This host kept ui/inventory.js's keyed window while the exterior
+  // hosts moved to the classic one at U8d, so a dungeon had no tabs,
+  // no paperdoll, no real info panel and - after U25 - no Use mode
+  // either, which is where a torch is actually lit. It was the last
+  // host without it.
+  //
+  // What the swap needed, and why it was a slice rather than an edit:
+  //  - a GROUND PILE for Remove-mode drops. droppedLoot is written
+  //    host-agnostically (renderer + getTexture + uploadRecordFrame)
+  //    and simply had never been mounted here, so items dropped in a
+  //    dungeon had nowhere to land.
+  //  - RAW KEY CODES. routeKey handed every overlay an ACTION
+  //    ('back'/'confirm'/'up'), which is the keyed windows'
+  //    vocabulary and cannot express F6, a mode button or a digit.
+  //    ui/input.js now passes the code through for a native window,
+  //    exactly as townTalk's seam has since G2.
+  const droppedLoot = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });
+  preloadInventoryArt({ renderer, fetchBytes, palette });
+  // U26: the PAPERDOLL too. The exterior hosts have warmed it since
+  // U8f; this one never did, because its keyed window had no doll to
+  // draw - so the native window opened here with an empty panel until
+  // the art was asked for.
+  // ...and this host is the one that can pass a NON-TOWN context:
+  // CONTEXT_BG maps 'dungeon' to SCBG07I0, which is the backdrop
+  // classic shows behind the doll underground. The town hosts have
+  // only ever asked for SCBG04I0, so the constant existed with no
+  // caller until now.
+  preloadPaperDollForEntity({ renderer, fetchBytes, palette, getTexture }, playerEntity, 'dungeon')
+    .catch(() => console.warn('[paperdoll] art unavailable in this dungeon'));
+
+  /** One builder for every way this host opens the window - the bare
+   *  F6 press and each loot target - so a hook cannot reach one and
+   *  miss the others (THE ONE CONSTRUCTION SEAM, which U25's sweep
+   *  found four instances of in the exterior hosts). */
+  function openInventory(lootItems, onEmptied = null) {
+    return new NativeInventoryWindow({
+      items: () => (playerEntity.items ??= []),
+      entity: playerEntity,
+      icons: { getTexture, uploadRecord, textures: renderer.textures },
+      rows: (id) => textRsc?.linesById(id) ?? [],
+      nowMinute: () => Math.floor(classicMinutes),
+      loot: lootItems ? { items: () => lootItems } : undefined,
+      // lastPlayerFeet is written by the frame loop; a drop before the
+      // first frame has nowhere to land, and DFU's own container mint
+      // is at the player's position - so no feet, no pile, loudly.
+      onDrop: (items) => (lastPlayerFeet
+        ? droppedLoot.dropPile(items, [...lastPlayerFeet])
+        : console.warn('[loot] dropped before the first frame; no ground position yet')),
+      onClose: () => { onEmptied?.(); droppedLoot.releaseEmptied(); surfacePlayer(); },
+    });
+  }
+
   const hudText = new HudText();   // U5: classic popup messages
   // P10 action seams: teleport destination resolution (the scene
   // installs onTeleport to warp its motor) + the classic look-at-lock
@@ -1745,8 +1809,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // else. Ground-truthed against raw record art: skeletal warrior
     // 270/17 renders unmirrored (facing its walk direction) with this
     // axis, mirrored (moonwalking) with the raw view row.
-    if (_mobileBatches.length) {
-      renderer.drawBillboards(_mobileBatches,
+    // U26: the player's own dropped piles ride the SAME pass as the
+    // sprite mobiles - they are billboards at a world position with
+    // no animation, exactly like a corpse.
+    const _dropBatches = droppedLoot.batches();
+    if (_mobileBatches.length || _dropBatches.length) {
+      renderer.drawBillboards([..._mobileBatches, ..._dropBatches],
         new Float32Array([-view[0], -view[4], -view[8]]), new Float32Array([0, 1, 0]));
     }
     // LAST before the HUD: the classic weapon overlay composites over
@@ -1970,6 +2038,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
     // pause gameplay while any overlay is active.
     get uiOverlayActive() { return !!activeOverlay; },
+    overlayWindow: () => activeOverlay,   // U26 probe surface
+    dropped: () => droppedLoot._piles,
     /** AUDIT 18 F5: the overlay's own clock. DFU runs
      *  DaggerfallRestWindow.Update every frame the window is topmost
      *  (DaggerfallRestWindow.cs:183-227), and TickRest reads
@@ -1999,8 +2069,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  townTalk's seam does, and reports whether it consumed the
      *  click so the caller can withhold the pointer lock. */
     overlayClick(vx, vy) {
-      if (!activeOverlay?.clickNative) return false;
-      activeOverlay.clickNative(vx, vy);
+      // U26: a native window exposes `click`, the keyed ones
+      // `clickNative`. Both route here.
+      if (!activeOverlay?.clickNative && !activeOverlay?.click) return false;
+      if (activeOverlay.clickNative) activeOverlay.clickNative(vx, vy);
+      else activeOverlay.click(vx, vy);
       if (activeOverlay.done) {
         if (activeOverlay === chargenFlow) { finishChargenHere(); }
         surfacePlayer();
@@ -2008,9 +2081,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       return true;
     },
-    overlayInput(action) {
+    /** U26: ui/input.js asks this before mapping a key to an action -
+     *  a native window keys off raw codes. */
+    get overlayIsNative() { return !!activeOverlay?.isChoiceWindow; },
+    overlayInput(action, e = null) {
       if (!activeOverlay) return;
-      activeOverlay.input(action);
+      activeOverlay.input(action, e);
       if (activeOverlay.done) {
         if (activeOverlay === chargenFlow) finishChargenHere();
         surfacePlayer();
@@ -2030,6 +2106,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           surfacePlayer();
         }
         activeOverlay = null;
+        return;
+      }
+      // U26: a NATIVE window letterboxes ITSELF - nativeMetrics reads
+      // the real canvas and returns its own integer scale and offset,
+      // which is how townTalk has driven these since U8b. Handing it
+      // the virtual canvas AND a screen offset applies the letterbox
+      // twice: its opaque backdrop then covers only the virtual rect
+      // and the dimmed world shows through the bars, which is AUDIT
+      // 19 F2's defect for the seventh time. So a native window gets
+      // the real canvas and no offset.
+      if (activeOverlay.isChoiceWindow) {
+        activeOverlay.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
         return;
       }
       // Letterbox seam (2026-08-14): overlays lay out on a virtual
@@ -2053,17 +2141,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     toggleInventory() {
       if (activeOverlay) return;
-      activeOverlay = new InventoryWindow(playerEntity, {
-        // AUDIT 17e F17: route through the real equip table - the rig
-        // now binds slots[RightHand] every frame, so a direct assignment
-        // here would be overwritten. One equip model in every host.
-        equip: (item) => {
-          // S23: the same career gate the inventory window applies -
-          // this host's equip hook is the other player-facing seam
-          if (isForbiddenEquip(playerEntity.career, item)) { hudText.add('You cannot use this item.'); return; }
-          equipItem(playerEntity, item); hudText.add(`${item.name} equipped.`);
-        },
-      });
+      activeOverlay = openInventory(null);
     },
     toggleSpellbook() {
       if (activeOverlay) return;
@@ -2079,7 +2157,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       });
     },
     // S2 pickup: piles + dead foes' corpses as activation targets;
-    // takeLoot transfers into the player entity and removes the flat.
+    // U26: activating one now OPENS THE INVENTORY with the pile as the
+    // remote target, which is what PlayerActivate does - the old
+    // takeLoot vacuumed everything in one keypress.
     lootTargets() {
       const targets = [];
       lootPiles.forEach((p, i) => {
@@ -2095,33 +2175,45 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // 128-unit default the loot piles use.
         targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: CORPSE_ACTIVATION_DISTANCE });
       });
+      targets.push(...droppedLoot.lootTargets());   // U26: the player's own drops
       return targets;
     },
+    /** U26: PlayerActivate's loot handling, verbatim in shape - the
+     *  container becomes the inventory window's REMOTE TARGET and the
+     *  player takes what they want, rather than the whole pile
+     *  teleporting into the pack on one keypress. Returns the number
+     *  of items the target holds, so the caller's "did anything
+     *  happen" test still reads. */
     takeLoot(key) {
       const [kind, iStr] = key.split(':');
       const i = Number(iStr);
       let source = null;
+      let onEmptied = null;
       if (kind === 'loot') {
         const p = lootPiles[i];
         if (!p || !p.batch) return 0;
         source = p.items;
-        const bi = billboardBatches.indexOf(p.batch);
-        if (bi >= 0) billboardBatches.splice(bi, 1);
-        renderer.destroyBillboardBatch(p.batch);
-        p.batch = null;
+        // The RDB pile's flat leaves when the window CLOSES on an
+        // emptied container, not the instant the last item moves -
+        // the same law droppedLoot.releaseEmptied ports.
+        onEmptied = () => {
+          if (p.items.length || !p.batch) return;
+          const bi = billboardBatches.indexOf(p.batch);
+          if (bi >= 0) billboardBatches.splice(bi, 1);
+          renderer.destroyBillboardBatch(p.batch);
+          p.batch = null;
+        };
       } else if (kind === 'corpse') {
         const f = foes[i];
         if (!f?.dead) return 0;
         source = f.entity.items;
+      } else if (kind.startsWith('droppedLoot')) {
+        source = droppedLoot.pileFor(key)?.items ?? null;
       }
       if (!source) return 0;
-      let n = 0;
-      playerEntity.items = playerEntity.items || [];
-      for (const item of source) { addItem(playerEntity.items, item); n++; }
-      source.length = 0;
-      surfacePlayer();
-      if (n > 0) hudText.add(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);   // TEXT.RSC pends
-      return n;
+      if (activeOverlay) return source.length;
+      activeOverlay = openInventory(source, onEmptied);
+      return source.length;
     },
     textureTable: dungeon.textureTable,
     exitDoors,
@@ -2137,6 +2229,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const c of corpses) if (c) renderer.destroyBillboardBatch(c);
       for (const m of missiles) if (m.batch) renderer.destroyBillboardBatch(m.batch);
       for (const t of torches) { t.handle?.stop(); t.handle = null; }   // A2: free looping sources
+      // U26 / EVERY ALLOCATION HAS AN OWNER: the dropped piles own a
+      // billboard batch each and leave with the dungeon.
+      for (const p of droppedLoot._piles) if (p.batch) renderer.destroyBillboardBatch(p.batch);
+      droppedLoot._piles.length = 0;
     },
   };
 }

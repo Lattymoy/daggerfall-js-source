@@ -56,6 +56,7 @@ import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, s
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont, drawText } from './text.js';
+import { typedChar } from './input.js';   // U26: one reader for both hosts' key routing
 
 export const INV_RECTS = Object.freeze({
   tabWeapons: [0, 0, 92, 10],        // weaponsAndArmorRect
@@ -327,17 +328,18 @@ export class NativeInventoryWindow {
 
   _dismissBox() { this.boxes.shift(); }
 
-  input(code) {
+  input(code, e = null) {
     const box = this.topBox;
     if (box) {
       if (box.field) {
         if (code === 'Escape') { this._dismissBox(); return; }
         if (code === 'Enter') { const v = this.goldEntry ?? ''; this._dismissBox(); box.onInput?.(v); return; }
         if (code === 'backspace' || code === 'Backspace') { this.goldEntry = (this.goldEntry ?? '').slice(0, -1); return; }
-        if (code.startsWith('char:')) {
-          const ch = code.slice(5);
-          if (/^[0-9]$/.test(ch) && (this.goldEntry ?? '').length < 8) this.goldEntry = (this.goldEntry ?? '') + ch;
-        }
+        // U26: the two hosts route keys differently - raw codes here,
+        // 'char:x' actions in the dungeon - so the field reads both
+        // through the one helper that knows the difference.
+        const ch = typedChar(code, e);
+        if (ch && /^[0-9]$/.test(ch) && (this.goldEntry ?? '').length < 8) this.goldEntry = (this.goldEntry ?? '') + ch;
         return;
       }
       this._dismissBox();
