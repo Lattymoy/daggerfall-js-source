@@ -1237,3 +1237,58 @@ such: DFU's `rep < 0` early return in CalculateNewRank (redundant
 because rankReqReputation[0] is 0 - the loop breaks at row 0 anyway;
 confirmed identical over 1809 cases, kept because it is DFU's line),
 and hasJoined's key-vs-rank test after the expulsion fix.
+
+## G2 - the variant-keyed guilds and the join decision
+
+2026-08-19. G1 carried the four guilds that are ONE guild each. Temple
+and KnightlyOrder are not: joining "the Temple" means joining
+Akatosh's or Arkay's. Both produce a guild record shaped exactly like
+G1's, so the rank law consumes them without knowing they are variants
+- pinned by running a Stendarr temple and a Candle order through
+calculateNewRank unchanged.
+
+**The enum value IS the faction id** in both (Temple.cs says so in a
+comment), so the tables are 18 faction ids and every one is checked
+against the real FACTION.TXT: all eight divines are type God with
+EXACTLY ONE CHILD - their templar order - and all ten orders are
+ggroup 9. That God/child shape is also why S25's propagation needed a
+God branch at all.
+
+**GetDivine takes the hall OR the order.** It accepts a divine's own
+faction id or a TEMPLAR ORDER's, resolving the latter through its
+parent, so walking into the Order of Arkay answers Arkay. GetOrder
+does NOT walk - pinned by asking it for an order's parent and
+requiring null.
+
+DEPARTURE: DFU throws ArgumentOutOfRangeException from both when
+nothing matches, and GuildManager.GetGuild catches that exact type
+with the comment "Catch erroneous faction data entries. (e.g. #91)" -
+so the throw is EXPECTED traffic, not an error. The port returns null:
+same control flow, without an exception on a routine path a scene host
+would have to guard.
+
+**Temple data is per divine, knightly data is not.** Each divine has
+its own guild skills (7 to 12 of them), its own welcome and promotion
+records, and its own service ranks; the ten orders share one skill
+list and one message set and differ only by faction. The templeData
+RankData row is ported WHOLE - the ten SERVICE columns have no reader
+until the services slice, but splitting one DFU table across two
+slices is how a table drifts. Verbatim oddities pinned rather than
+tidied: Arkay's blessing id is 0, Julianos alone welcomes on 6610 and
+alone sells magic items, Kynareth alone sells spells, and Zenithar's
+faction is named "Zen" in the shipped file.
+
+**THE THIEVES GUILD AND THE DARK BROTHERHOOD CANNOT BE ASKED.** Both
+throw NotImplementedException from TokensIneligible and TokensEligible
+- they are joined by INVITATION, through a quest, and have no walk-in
+application at all. That is a law, so it is named (INVITATION_ONLY)
+rather than left for a caller to discover as a crash: joinDecision
+returns null for them, and they carry no eligibility record to show.
+
+**The refusal reason is not cosmetic.** A negative reputation is
+refused FOR reputation and anything else for skill, on two different
+TEXT.RSC records - a player refused for the wrong reason has been told
+to fix the wrong thing. Pinned that the two records differ, and that
+the decision agrees with isEligibleToJoin across the whole grid.
+
+10 mutations run, 10 killed.

@@ -245,3 +245,31 @@ export function isEligibleToJoin(entity, guild, store) {
   const { high, low } = numHighLowSkills(entity, guild, 0);
   return rep >= RANK_REQ_REPUTATION[0] && high > 0 && low + high > 1;
 }
+
+/** NOT EVERY GUILD CAN BE ASKED. ThievesGuild.cs :180-187 and
+ *  DarkBrotherhood.cs :189-196 both THROW NotImplementedException from
+ *  TokensIneligible and TokensEligible - the two are joined by
+ *  INVITATION, through a quest, and have no walk-in application at all.
+ *  That is a law, not an omission, so it is named rather than left for
+ *  a caller to discover as a crash. */
+export const INVITATION_ONLY = Object.freeze(['ThievesGuild', 'DarkBrotherhood']);
+export const isJoinableByApplication = (guild) => !INVITATION_ONLY.includes(guild.name);
+
+/** TokensIneligible (:111-115) as a decision rather than tokens: a
+ *  NEGATIVE reputation is refused FOR reputation, anything else for
+ *  skill. The two are different TEXT.RSC records, and a player refused
+ *  for the wrong reason has been told to fix the wrong thing.
+ *
+ *  Null for an invitation-only guild - asking is what DFU throws on. */
+export function joinDecision(entity, guild, store) {
+  if (!isJoinableByApplication(guild)) return null;
+  const rep = getReputation(store, guild.factionId);
+  if (isEligibleToJoin(entity, guild, store)) {
+    return { eligible: true, textId: guild.text.eligible };
+  }
+  return {
+    eligible: false,
+    reason: rep < 0 ? 'reputation' : 'skill',
+    textId: rep < 0 ? guild.text.ineligibleBadRep : guild.text.ineligibleLowSkill,
+  };
+}
