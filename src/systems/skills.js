@@ -1,6 +1,13 @@
 // The skills MODEL (extracted from chargen in the 2026-07-06d audit
 // - entity-layer concepts, not creation logic; formulas, advancement,
 // chargen, and the scenes all consume it from here).
+
+// AUDIT 18: the career SPECIAL-ABILITY bits, from the one home that
+// already decodes them (specialAdvantages.js is a leaf - it imports
+// nothing - so this cannot cycle; rest.js's copy imports skills.js
+// and would).
+import { SPECIAL_ABILITY_BITS } from './specialAdvantages.js';
+
 export const SKILLS = Object.freeze({
   Medical: 0, Etiquette: 1, Streetwise: 2, Jumping: 3, Orcish: 4,
   Harpy: 5, Giantish: 6, Dragonish: 7, Nymph: 8, Daedric: 9,
@@ -69,11 +76,24 @@ export function tallySkill(entity, skillId, amount = 1) {
   if (entity.skillUses[skillId] > 20000) entity.skillUses[skillId] = 20000;
 }
 
-/** Verbatim AcrobatMotor jumpSpeedMultiplier: 1 + JumpingSkill * 0.5
- *  / 100 (skill adds up to +50% force). Athleticism (+0.1, improved
- *  +0.1) and the Jump spell (+0.6) are INTERIM 0 here, loudly - the
- *  career advantage decode and the jump effect family pend their
- *  slices. P14. */
+/** Verbatim AcrobatMotor.jumpSpeedMultiplier (:88-105): 1 +
+ *  JumpingSkill * 0.5 / 100 (skill adds up to +50% force), plus
+ *  athleticismMultiplier 0.1 when the career carries Athleticism.
+ *
+ *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
+ *  decode that had ALREADY SHIPPED in U20b (specialAdvantages.js
+ *  parses the bitfield) - and CLASS09 (Acrobat) carries
+ *  abilityFlagsAndSpellPointsBitfield 0x1406, so a VANILLA Acrobat,
+ *  not just a custom class, jumped 10% short.
+ *
+ *  Still honestly 0 here: improvedAthleticism (+0.1) is an
+ *  ImprovesTalents ENCHANTMENT and the Jump spell (+0.6) an active
+ *  effect - neither family exists yet. P14. */
 export function jumpSpeedMultiplier(entity) {
-  return 1 + (skillValue(entity, SKILLS.Jumping) * 0.5) / 100;
+  let m = 1 + (skillValue(entity, SKILLS.Jumping) * 0.5) / 100;
+  // DFCareer.HasSpecialAbility: the flag masked against the
+  // bitfield's LOW BYTE, verbatim (the C# (byte)flags cast).
+  const bits = entity.career?.abilityFlagsAndSpellPointsBitfield ?? 0;
+  if ((bits & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism) m += 0.1;
+  return m;
 }

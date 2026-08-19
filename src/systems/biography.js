@@ -52,12 +52,39 @@ export function weaponToArmorMaterial(weaponMaterial) {
  *  consumed by the backstory generator, not applied to the entity. */
 export const isTextEffect = (effect) => effect[0] === '#' || effect[0] === '!' || effect[0] === '?';
 
-const mintItem = (group, groupIndex, material) => {
+const ARROW_TEMPLATE = 131;
+
+/** BiogFile.cs:305-324's IT arm: Weapons go through CreateWeapon,
+ *  Armor through CreateArmor with the weapon->armor material map,
+ *  Books through CreateRandomBook, everything else is the bare
+ *  group/index record. */
+const mintItem = (group, groupIndex, material, rolls) => {
   const t = templateFor(group, groupIndex);
   if (!t) return null;
   const item = { group, templateIndex: t.index };
-  if (group === 'Weapons') item.material = material;
-  else if (group === 'Armor') item.material = weaponToArmorMaterial(material);
+  if (group === 'Weapons') {
+    // ItemBuilder.CreateWeapon:353-368 - "Ignored for arrows": an
+    // arrow takes NO material (nativeMaterialValue = 0), a stack of
+    // Range(1, 20+1) and currentCondition 0. loot.js:85 and
+    // shopStock.js:127 already carry this branch; this was the third
+    // site and it minted ONE arrow at the file's material, so two IT
+    // lines of different material could not even stack.
+    if (t.index === ARROW_TEMPLATE) {
+      item.material = 0;
+      item.stackCount = 1 + Math.floor(rolls() * 20);
+      item.currentCondition = 0;
+    } else item.material = material;
+  } else if (group === 'Armor') item.material = weaponToArmorMaterial(material);
+  // CreateRandomBook (ItemBuilder.cs:256-269) rolls Range(0,
+  // TotalVariants) so biography books vary the way shop books do.
+  // INTERIM, loud and the same one shopStock.js:115 carries: message
+  // (GetRandomBookID) and value (BookFile.Price, a 300..800 roll off
+  // the file's own seed) need the books arc's BOOKS reader, so the
+  // value below is the TEMPLATE price.
+  else if (group === 'Books') {
+    item.variant = Math.floor(rolls() * (t.variants ?? 1));
+    console.log('[biog] IT Books - book-file pricing pends (loud); the value is the template price');
+  }
   item.name = templateByIndex(t.index)?.name;
   item.value = itemBaseValue(item);
   return item;
@@ -97,7 +124,7 @@ export function applyBiographyEffect(entity, effect, { rolls = Math.random } = {
     const [g, gi, mat] = [tokens[1], tokens[2], tokens[3]].map((t) => Number.parseInt(t, 10));
     if (![g, gi, mat].every(Number.isFinite)) { console.warn(`[biog] IT - invalid argument(s): ${effect}`); return null; }
     const group = ITEM_GROUP_BY_ID[g];
-    const item = group ? mintItem(group, gi, mat) : null;
+    const item = group ? mintItem(group, gi, mat, rolls) : null;
     if (!item) { console.warn(`[biog] IT - no template for ${effect}`); return null; }
     entity.items = entity.items ?? [];
     addItem(entity.items, item);
@@ -160,13 +187,13 @@ export function digestRepChanges(effects, groups = 5) {
 }
 
 /** GenerateBackstory (:169-232). The class's TEXT.RSC record
- *  (DEFAULT_BACKSTORIES_START + classIndex) is prose with %q1..%q12
- *  and %q1a..%q12a macros; each expands to the FIRST text line of a
- *  TEXT.RSC record the player's answers named. Both the '#' and the
- *  '!' token of a question land in the SAME per-question list in file
- *  order (tokenLists is indexed by the QUESTION, not the prefix), so
- *  %qN is that list's first entry and %qNa its second
- *  (BiogFileMCP.cs:150-161, :306-317).
+ *  (DEFAULT_BACKSTORIES_START + classIndex) is prose with %q1..%q12,
+ *  %q1a..%q12a and %q1b..%q12b macros; each expands to the FIRST text
+ *  line of a TEXT.RSC record the player's answers named. Both the '#'
+ *  and the '!' token of a question land in the SAME per-question list
+ *  in file order (tokenLists is indexed by the QUESTION, not the
+ *  prefix), so %qN is that list's first entry, %qNa its second and
+ *  %qNb its third (BiogFileMCP.cs:150-161, :306-317, :462-473).
  *
  *  Returns the backstory ROWS. `textRsc` is a loaded TextRsc. */
 export function generateBackstory(textRsc, backstoryId, effects) {
@@ -182,17 +209,25 @@ export function generateBackstory(textRsc, backstoryId, effects) {
     (perQuestion[q] = perQuestion[q] ?? []).push(id);
   }
   const firstLine = (id) => textRsc.linesById(id)?.[0]?.text ?? '';
-  // the capture is the digits and the optional 'a', so there is only
-  // ONE path here - a question with no token of that kind expands to
-  // NOTHING, which is what leaves classic's prose reading cleanly
-  const macro = (digits, secondary) => {
+  // AUDIT 18: the TERTIARY %qNb family is live in DFU - MacroHelper
+  // registers %q1b..%q12b (:189-200) and ExpandMacros reads a macro
+  // name up to the next MACRO_TERMINATORS char (:412, :453), which is
+  // punctuation, never a letter - so "%q1b." is the whole macro.
+  // BiogFileMCP.Q1b (:462-473) returns the THIRD token's first line
+  // and null when the list is shorter than three. The regex only knew
+  // the optional 'a', so record 4130 (Ranger) rendered its %q1b as the
+  // PRIMARY token plus a literal 'b' ("...daggerb."), and 4123
+  // (Burglar) the same for %q3b. A question with no token of that
+  // kind expands to NOTHING, which is what leaves classic's prose
+  // reading cleanly (ExpandMacros appends a null value as empty).
+  const macro = (digits, suffix) => {
     const list = perQuestion[Number(digits) - 1] ?? [];
-    const id = secondary ? list[1] : list[0];
+    const id = list[suffix === 'b' ? 2 : suffix === 'a' ? 1 : 0];
     return id == null ? '' : firstLine(id);
   };
   return textRsc.linesById(backstoryId).map((row) => ({
     ...row,
-    text: row.text.replace(/%q(\d+)(a?)/g, (_, digits, secondary) => macro(digits, secondary)),
+    text: row.text.replace(/%q(\d+)([ab]?)/g, (_, digits, suffix) => macro(digits, suffix)),
   }));
 }
 
