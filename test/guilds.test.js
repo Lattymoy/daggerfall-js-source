@@ -11,7 +11,7 @@ import {
   DEFAULT_TRAINING_MAX, MEMBER_TRAINING_COST, NON_MEMBER_TRAINING_COST,
   daySinceZero, numHighLowSkills, calculateNewRank, updateRank, isMember, guildOfFaction,
   joinGuild, leaveGuild, hasJoined, membershipOf, isEligibleToJoin,
-  hasJoinedGroup, joinedGuildOfGroup, promotionTextId, membershipKey,
+  hasJoinedGroup, joinedGuildOfGroup, promotionTextId, membershipKey, joinDecision,
   guildGroupOfFaction, MERCHANTS_FACTION_ID,
 } from '../src/systems/guilds.js';
 import { createFactionRep, setReputation } from '../src/systems/factionRep.js';
@@ -414,4 +414,66 @@ test('AUDIT 21 F1: expulsion never REMOVES a TG or DB membership', () => {
     assert.ok(membershipOf(memberships, g), `${name}'s membership must survive`);
     assert.equal(membershipOf(memberships, g).rank, 0, 'demoted to 0 instead');
   }
+});
+
+// ---------------------------------------------------------------------------
+// AUDIT 21 F2: THE JOIN GATES, in DFU's order.
+//
+// JoinButton_OnMouseClick (DaggerfallGuildServicePopupWindow.cs:498-524) runs
+// three checks and the port had only the third:
+//   1. JoinGuild(group, factionId) RETURNS THE GUILD ALREADY IN THAT SLOT
+//   2. if (!guild.IsMember())   <- nothing happens at all when it is
+//   3. IsEligibleToJoin
+// joinGuild ASSIGNS into the group slot, so without gates 1 and 2 a rank-7
+// member could re-join and reset to rank 0, and a Patriarch of Mara could
+// trade a lifetime in her temple for rank 0 in Arkay's.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 21 F2: an existing member is offered NOTHING', () => {
+  const day = { year: 405, dayOfYear: 1 };
+  const g = GUILDS.FightersGuild;
+  const entity = withSkills(g, 100);        // comfortably over every bar
+  const store = { dict: new Map([[g.factionId, { rep: 50 }]]) };
+
+  // Eligible and not yet a member: the dialogue is offered.
+  assert.equal(joinDecision(entity, g, store, {})?.eligible, true);
+
+  // A member of the same guild - at ANY rank - gets no dialogue at all.
+  for (const rank of [0, 3, 7]) {
+    const m = {};
+    joinGuild(m, g, day);
+    membershipOf(m, g).rank = rank;
+    assert.equal(joinDecision(entity, g, store, m), null,
+      `a rank-${rank} member must not be offered the join dialogue`);
+    // And the membership is untouched by asking.
+    assert.equal(membershipOf(m, g).rank, rank);
+  }
+});
+
+test('AUDIT 21 F2: holding one temple blocks joining another', () => {
+  // The slot hands back MARA, IsMember is true, and the window closes -
+  // so the eligibility of Arkay's temple is never even consulted.
+  const day = { year: 405, dayOfYear: 1 };
+  const arkay = templeOf('Arkay');
+  const mara = templeOf('Mara');
+  const entity = withSkills(arkay, 100);
+  const store = { dict: new Map([[arkay.factionId, { rep: 90 }], [mara.factionId, { rep: 90 }]]) };
+
+  const m = {};
+  joinGuild(m, mara, day);
+  assert.equal(joinDecision(entity, arkay, store, m), null,
+    'a member of one temple is offered no other');
+  assert.equal(joinDecision(entity, mara, store, m), null, 'nor their own again');
+  // Mara's membership survives the asking.
+  assert.equal(hasJoined(m, mara), true);
+  assert.equal(hasJoined(m, arkay), false);
+
+  // The same for the knightly orders, which share the other variant slot.
+  const m2 = {};
+  joinGuild(m2, orderOf('Rose'), day);
+  assert.equal(joinDecision(entity, orderOf('Owl'), store, m2), null);
+
+  // But a DIFFERENT group is unaffected - the gate is per slot, not global.
+  assert.notEqual(joinDecision(withSkills(GUILDS.FightersGuild, 100), GUILDS.FightersGuild,
+    { dict: new Map([[GUILDS.FightersGuild.factionId, { rep: 50 }]]) }, m), null);
 });

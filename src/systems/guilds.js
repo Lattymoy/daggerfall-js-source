@@ -357,7 +357,27 @@ export const isJoinableByApplication = (guild) => !INVITATION_ONLY.includes(guil
  *  for the wrong reason has been told to fix the wrong thing.
  *
  *  Null for an invitation-only guild - asking is what DFU throws on. */
-export function joinDecision(entity, guild, store) {
+export function joinDecision(entity, guild, store, memberships = null) {
+  // AUDIT 21 F2: DFU's gate ORDER, which the port skipped the front of.
+  // JoinButton_OnMouseClick (DaggerfallGuildServicePopupWindow.cs:498-524)
+  // runs three checks and only the third was ported:
+  //
+  //   1. guildManager.JoinGuild(group, factionId) - which RETURNS THE
+  //      GUILD ALREADY IN THAT GROUP SLOT if one is there (:161-162)
+  //   2. if (!guild.IsMember())    <- nothing happens at all when it is
+  //   3. IsEligibleToJoin          <- the only one the port had
+  //
+  // So in DFU a rank-7 Fighters Guild member gets NO join dialogue, and a
+  // Patriarch of Mara clicking Arkay's temple gets none either - the slot
+  // hands back Mara, IsMember is true, and the window closes. The port
+  // offered both, and joinGuild ASSIGNS into the slot, so accepting reset
+  // a rank-7 member to rank 0 or traded a lifetime in Mara's temple for
+  // rank 0 in Arkay's.
+  //
+  // `memberships` is optional so existing callers that only ask "could
+  // this character qualify" keep working; a caller driving the actual
+  // join must pass it.
+  if (memberships && joinedGuildOfGroup(memberships, membershipKey(guild))) return null;
   if (!isJoinableByApplication(guild)) return null;
   const rep = getReputation(store, guild.factionId);
   if (isEligibleToJoin(entity, guild, store)) {
