@@ -168,6 +168,10 @@ export class SongPlayer {
       // the stream is still ordered, and it has to be played that way.
       for (const e of window) {
         applyChannelEvents(this._state, [e]);
+        // AUDIT 19: control events are also SCHEDULED, not just folded into
+        // state. Folding alone means only the NEXT note hears them, and the
+        // archive puts 15,017 of them inside notes that are already sounding.
+        if (e.type !== 'noteOn') this._control(e, this._originTime + e.tick * secondsPerTick);
         if (e.type !== 'noteOn' || !e.velocity) continue;
         this._voice(e, this._originTime + e.tick * secondsPerTick,
           (e.duration || 0) * secondsPerTick);
@@ -204,7 +208,9 @@ export class SongPlayer {
     const ctx = this.ctx;
     const ch = this._state[e.channel] ?? { program: 0, volume: 1, pan: 0, bend: 0 };
     const dur = Math.max(0.05, durationSeconds || 0.2);
-    const amp = velocityGain(e.velocity) * ch.volume;
+    // NOT multiplied by ch.volume any more - the channel's gain node owns
+    // that, so a CC7 during a held note is audible (AUDIT 19).
+    const amp = velocityGain(e.velocity);
     if (amp <= 0) return;
 
     const gain = ctx.createGain();
@@ -234,7 +240,7 @@ export class SongPlayer {
       gain.gain.setValueAtTime(0, when);
       gain.gain.linearRampToValueAtTime(peak, when + spec.attack);
       gain.gain.exponentialRampToValueAtTime(0.0001, when + spec.attack + spec.decay);
-      this._connect(gain, ch.pan);
+      this._connect(gain, ch.pan, e.channel);
       node.start(when);
       node.stop(when + spec.attack + spec.decay + 0.02);
       this._voices.push({ stop: () => node.stop(), endsAt: when + spec.attack + spec.decay });
@@ -283,21 +289,63 @@ export class SongPlayer {
     gain.gain.setValueAtTime(sustain, tOff);
     gain.gain.exponentialRampToValueAtTime(0.0001, end);
 
-    this._connect(gain, ch.pan);
+    this._connect(gain, ch.pan, e.channel);
     mod.start(t0); carrier.start(t0);
     mod.stop(end + 0.02); carrier.stop(end + 0.02);
-    this._voices.push({ stop: () => { mod.stop(); carrier.stop(); }, endsAt: end });
+    this._voices.push({
+      stop: () => { mod.stop(); carrier.stop(); }, endsAt: end,
+      channel: e.channel, detunes: [carrier.detune, mod.detune],
+    });
   }
 
-  _connect(gain, pan) {
+  /** AUDIT 19: each channel owns a GAIN NODE, and CC7 writes to it.
+   *  Channel volume used to be folded into a note's amplitude at the
+   *  moment it started, so a volume change mid-note did nothing - the
+   *  archive has 15,017 controller events landing inside a sounding note.
+   *  A channel node also cannot fight the per-note envelope, which is what
+   *  modulating the voice's own gain would have done. */
+  _channelGain(channel) {
+    this._chGains ??= {};
+    let g = this._chGains[channel];
+    if (!g) {
+      g = this.ctx.createGain();
+      g.gain.value = this._state[channel]?.volume ?? 1;
+      g.connect(this._master);
+      this._chGains[channel] = g;
+    }
+    return g;
+  }
+
+  _connect(gain, pan, channel = 0) {
+    const dest = this._channelGain(channel);
     if (pan && this.ctx.createStereoPanner) {
       const p = this.ctx.createStereoPanner();
       p.pan.value = Math.max(-1, Math.min(1, pan));
       gain.connect(p);
-      p.connect(this._master);
+      p.connect(dest);
       return;
     }
-    gain.connect(this._master);
+    gain.connect(dest);
+  }
+
+  /** Schedule a CONTROL event on the sounding graph, at its own time.
+   *  These used to be applied to channel STATE only, which the next note
+   *  read - so nothing already sounding ever heard them. */
+  _control(e, when) {
+    if (e.type === 'pitchBend') {
+      const cents = bendCents(e.value);
+      for (const v of this._voices) {
+        if (v.channel !== e.channel || v.endsAt <= when) continue;
+        for (const d of v.detunes) {
+          try { d.setValueAtTime(cents, when); } catch { /* param already past */ }
+        }
+      }
+      return;
+    }
+    if (e.type === 'controller' && e.controller === 7) {
+      const g = this._channelGain(e.channel);
+      try { g.gain.setValueAtTime(volumeGain(e.value), when); } catch { /* ignore */ }
+    }
   }
 
   /** One second of white noise, made once and reused by every drum. */

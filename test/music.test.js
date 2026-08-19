@@ -1088,3 +1088,52 @@ test('AUDIT 19 1:1: the temple and guild arms resolve on REAL buildings', { skip
   }
   assert.ok(seen[E.MagesGuild] > 100, 'about half the guild halls are the Mages Guild');
 });
+
+test('AUDIT 19: a bend or CC7 during a HELD note reaches it', async () => {
+  const { SongPlayer } = await import('../src/systems/songPlayer.js');
+  const { bendCents, volumeGain } = await import('../src/systems/gmSynth.js');
+
+  // The archive has 15,017 controller events landing inside a sounding
+  // note. Channel state alone is read at note START, so folding them into
+  // state made every one of them inaudible until the next note began.
+  const detuneWrites = [];
+  const gainWrites = [];
+  const param = (sink) => ({ value: 0, setValueAtTime: (v, t) => sink.push({ v, t }) });
+  const osc = () => ({ type: '', frequency: { value: 0 }, detune: param(detuneWrites),
+    connect: () => {}, start: () => {}, stop: () => {} });
+  const ctx = {
+    currentTime: 0, sampleRate: 44100,
+    createOscillator: osc,
+    createGain: () => ({ gain: Object.assign(param(gainWrites), {
+      setValueAtTime: (v, t) => gainWrites.push({ v, t }),
+      linearRampToValueAtTime: () => {}, exponentialRampToValueAtTime: () => {},
+    }), connect: () => {} }),
+    createStereoPanner: null, destination: {},
+  };
+  const p = new SongPlayer(ctx);
+  p._master = { connect: () => {} };
+  p._ensureMaster = () => {};
+
+  const song = {
+    secondsPerTick: 0.001, durationTicks: 400,
+    events: [
+      { tick: 0, type: 'noteOn', channel: 0, note: 60, velocity: 100, duration: 300 },
+      { tick: 100, type: 'pitchBend', channel: 0, value: 12288 },
+      { tick: 150, type: 'controller', channel: 0, controller: 7, value: 40 },
+    ],
+  };
+  p.play(song);
+  clearInterval(p._timer); p._timer = null;
+
+  // The bend must be scheduled AT ITS OWN TIME on the sounding voice, not
+  // dropped and not applied at the note's start.
+  const bent = detuneWrites.filter((w) => Math.abs(w.v - bendCents(12288)) < 1e-6);
+  assert.ok(bent.length >= 1, 'the bend never reached the sounding note');
+  assert.ok(bent.every((w) => w.t > 0), 'and it is scheduled at its own tick, not at note-on');
+
+  // CC7 must land on the CHANNEL, so it affects everything sounding on it
+  // and cannot fight the per-note envelope.
+  const vol = gainWrites.filter((w) => Math.abs(w.v - volumeGain(40)) < 1e-6);
+  assert.ok(vol.length >= 1, 'CC7 never reached the channel gain');
+  p.stop();
+});
