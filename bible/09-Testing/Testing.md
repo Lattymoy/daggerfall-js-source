@@ -156,11 +156,12 @@ Two tiers per module:
    absent. Pin observed counts, names, ids, checksums, and structural
    closure invariants.
 
-Without game data the suite runs 619 pass / 75 skip (AUDIT 18 corrected
+Without game data the suite runs 805 pass / 120 skip (AUDIT 18 corrected
 the long-stale "88 pass, 49 skip", which described a 137-test suite that
 has not existed for many milestones). Those 75 skipped pins DO NOT RUN
 IN THE DEPLOY GATE - CI has no ARENA2 - so a real-data pin is a local
-gate only. `manifest.test.js` guards the totals above but not this line;
+gate only. (Measured on main at the AUDIT 18 merge; recount by hand
+when the split moves.) `manifest.test.js` guards the totals above but not this line;
 recount it by hand when the split moves.
 
 Sourcing data in a fresh session: `sh tools/fetch-data.sh`, then
