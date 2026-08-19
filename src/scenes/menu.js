@@ -17,6 +17,7 @@
 // already works, which is the shape this project's audits keep finding.
 
 import { StartWindow, loadStartArt } from '../ui/startWindow.js';
+import { TitleScreen, loadLogo } from '../ui/titleScreen.js';
 import { fetchBytes } from './shared.js';
 import { readQuicksave } from '../systems/save.js';
 
@@ -28,6 +29,7 @@ import { readQuicksave } from '../systems/save.js';
  * chargen follow).
  */
 export async function runMenu(canvas, renderer, status) {
+  await runTitle(canvas, renderer, status);
   status('main menu');
   let art = null;
   try {
@@ -77,3 +79,40 @@ export async function runMenu(canvas, renderer, status) {
 /** Is there a game to load? The menu shows Load unconditionally, as
  *  DFU does; this is for the host that has to act on the press. */
 export const hasSavedGame = () => !!readQuicksave();
+
+/**
+ * U21c: the title screen, before the menu. Resolves as soon as the
+ * player clicks or presses a key - and IMMEDIATELY if there is no logo
+ * to show, so a missing asset costs a splash and never a game.
+ */
+export async function runTitle(canvas, renderer, status) {
+  const pixels = await loadLogo();
+  if (!pixels) return false;                       // no art, no title screen
+  status('title');
+  const title = new TitleScreen({
+    tex: renderer.uploadTexture('ui', 'logo', pixels),
+    width: pixels.width,
+    height: pixels.height,
+  });
+
+  const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const LIGHT = new Float32Array([0, 1, 0]);
+  await new Promise((resolve) => {
+    const finish = () => {
+      if (title.done) return;
+      title.done = true;
+      canvas.removeEventListener('pointerdown', finish);
+      removeEventListener('keydown', finish);
+      resolve();
+    };
+    canvas.addEventListener('pointerdown', finish);
+    addEventListener('keydown', finish);
+    const frame = () => {
+      renderer.beginFrame(IDENTITY, IDENTITY, LIGHT);
+      title.draw(renderer, canvas);
+      if (!title.done) requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  });
+  return true;
+}

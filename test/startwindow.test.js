@@ -188,3 +188,66 @@ test('U21b: the renderer reports its screen offset', async () => {
   r.setScreenOffset(0, 0);
   assert.deepEqual(r.screenOffset, [0, 0]);
 });
+
+// ---------------------------------------------------------------------------
+// U21c: THE TITLE SCREEN. A deliberate departure (Ledger A), not a port -
+// classic's TITL00I0 is read and pinned but DFU does not draw it either, so
+// this shows OUR branding as DFU shows its own. The rules that matter are
+// that it never traps the boot, and that the logo is placed by arithmetic
+// rather than by eye.
+// ---------------------------------------------------------------------------
+
+test('U21c: a missing logo means NO title screen, never a trapped boot', async () => {
+  const { loadLogo, TitleScreen } = await import('../src/ui/titleScreen.js');
+
+  // No document at all (node): resolves null rather than throwing.
+  assert.equal(await loadLogo('logo.png', undefined), null);
+  // A 404 resolves null too - absent art is not an error.
+  const orig = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: false });
+  try {
+    assert.equal(await loadLogo('logo.png', { createElement: () => ({}) }), null);
+  } finally { globalThis.fetch = orig; }
+
+  // And a screen with no logo declares itself undrawable, which is the
+  // signal the boot uses to skip straight to the menu.
+  assert.equal(new TitleScreen(null).drawable, false);
+  assert.equal(new TitleScreen({ tex: {}, width: 8, height: 4 }).drawable, true);
+});
+
+test('U21c: the logo is centred, aspect-preserved, and never fills the screen', async () => {
+  const { logoRect, LOGO_MAX_WIDTH } = await import('../src/ui/titleScreen.js');
+
+  // A wide banner (the logo is ~3:1) on a 1400x900 canvas.
+  const r = logoRect(1400, 900, 2000, 650);
+  assert.ok(r.w <= Math.round(1400 * LOGO_MAX_WIDTH), 'never wider than the cap');
+  assert.ok(r.h < 900, 'and it fits vertically');
+  // Aspect preserved to within a rounded pixel.
+  assert.ok(Math.abs(r.w / r.h - 2000 / 650) < 0.01, `aspect drifted: ${r.w}x${r.h}`);
+  // Centred on both axes.
+  assert.equal(r.x, Math.round((1400 - r.w) / 2));
+  assert.equal(r.y, Math.round((900 - r.h) / 2));
+
+  // A TALL logo must be bound by height, not width - the naive
+  // width-only fit would run it off the top and bottom.
+  const tall = logoRect(1400, 900, 400, 3000);
+  assert.ok(tall.h <= Math.round(900 * LOGO_MAX_WIDTH), 'a tall logo is height-bound');
+  assert.ok(tall.y >= 0 && tall.y + tall.h <= 900, 'and stays on screen');
+
+  // Degenerate input is refused rather than dividing by zero.
+  assert.equal(logoRect(1400, 900, 0, 0), null);
+});
+
+test('U21c: the title screen paints opaque black behind the logo', async () => {
+  const { TitleScreen } = await import('../src/ui/titleScreen.js');
+  const quads = [];
+  const renderer = { drawScreenQuad: (tex, rect, uv, color) => quads.push({ tex, rect, color }) };
+  const canvas = { width: 1400, height: 900 };
+
+  const rect = new TitleScreen({ tex: 'LOGO', width: 2000, height: 650 }).draw(renderer, canvas);
+  assert.equal(quads.length, 2, 'backdrop then logo');
+  assert.deepEqual(quads[0].rect, { x: 0, y: 0, w: 1400, h: 900 }, 'the backdrop is the whole canvas');
+  assert.deepEqual(quads[0].color, [0, 0, 0, 1], 'and it is OPAQUE black - no scene shows through');
+  assert.equal(quads[1].tex, 'LOGO');
+  assert.deepEqual(quads[1].rect, rect);
+});
