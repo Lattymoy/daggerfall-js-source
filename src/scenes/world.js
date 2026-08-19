@@ -80,6 +80,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const locationName = params.get('loc') || 'Daggerfall';
   const season = parseSeason(params);
 
+  audio.ensure(fetchBytes);   // AUDIT 18 F6: sound was booted ONLY by buildDungeonContext, so this host was silent until a dungeon was entered
   status('loading data');
   const [palBytes, blocksBytes, archBytes, mapsBytes, climateBytes, politicBytes, woodsBytes] =
     await Promise.all([

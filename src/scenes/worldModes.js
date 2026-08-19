@@ -538,7 +538,7 @@ export function createWorldModes(host) {
       // through and run its whole exterior frame on top - the town
       // drawn over the dungeon, and in ?world the streaming recenter
       // fed dungeon-local coordinates.
-      if (dungeonCtx.uiOverlayActive) { dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon
+      if (dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)
       dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD'));   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,

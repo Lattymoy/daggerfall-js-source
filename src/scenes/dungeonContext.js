@@ -128,8 +128,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // A1: sound. DAGGER.SND loads through the data seam; the context
   // starts on the first gesture (mobile discipline). Dungeon doors
   // ride the DFU dungeon clips (DaggerfallActionDoor's RDB shape).
-  audio.init(fetchBytes);
-  audio.attachGestureResume();
+  audio.ensure(fetchBytes);   // AUDIT 18 F6: the shared, idempotent bootstrap (was the ONLY host that booted sound)
   actions.onDoorState = (o, opening) => {
     const m = o.matrix;
     audio.play3d(opening ? SOUND.DungeonDoorOpen : SOUND.DungeonDoorClose, [m[12], m[13], m[14]]);
@@ -1386,7 +1385,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) lastPlayerFeet = [...playerFeet];
-    if (activeOverlay?.isRestWindow) activeOverlay.tickRest(dt);   // U7: the rest clock (the world runs on below - foes can break it)
+    // AUDIT 18 F5: the rest clock USED to tick here, which made it
+    // unreachable - drawFoes only runs when NO overlay is up, and the
+    // rest window IS an overlay. It ticks from tickOverlay now, called
+    // by the hosts' overlay branch. Left as a marker so the seam is
+    // not re-added to the wrong side of the gate.
     if (playerFeet) {
       breathTick(dt, playerFeet);
       const _surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
@@ -1851,6 +1854,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
     // pause gameplay while any overlay is active.
     get uiOverlayActive() { return !!activeOverlay; },
+    /** AUDIT 18 F5: the overlay's own clock. DFU runs
+     *  DaggerfallRestWindow.Update every frame the window is topmost
+     *  (DaggerfallRestWindow.cs:183-227), and TickRest reads
+     *  Time.realtimeSinceStartup, so PauseWhileOpen's timeScale = 0
+     *  does not stop it. The port had the tick inside drawFoes, which
+     *  the hosts SKIP whenever an overlay is up - so U7's rest never
+     *  advanced an hour in either host that mounts a dungeon: the
+     *  window sat on "Hours passed: 0" until Escape.
+     *  The done-drain is not optional here: RestWindow._end() sets
+     *  done on the death path and on a missing endLines, and until
+     *  now only overlayInput/overlayClick cleared activeOverlay, so a
+     *  rest that ended itself would latch a dead window on screen. */
+    tickOverlay(dt) {
+      if (!activeOverlay) return;
+      if (activeOverlay.isRestWindow) activeOverlay.tickRest(dt);
+      if (activeOverlay.done) {
+        if (activeOverlay === chargenFlow) finishChargenHere();
+        surfacePlayer();
+        activeOverlay = null;
+      }
+    },
     chargenFlow: () => chargenFlow,   // AUDIT 17i probe surface
     /** U14: the POINTER half of the overlay seam. This host routed
      *  every click to requestPointerLock and nothing else, so chargen

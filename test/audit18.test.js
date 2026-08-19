@@ -172,3 +172,70 @@ test('AUDIT 18 F4: faceUVTool matches DFU on a corpus face the divide got wrong'
     [[3072, 0], [0, 0], [996, 1236], [2076, 1236]],
     'point 3 v must be 1236 (reciprocal), not 1235 (divide)');
 });
+
+// ---------------------------------------------------------------------------
+// F5: the rest clock ticks from the branch that OWNS the open window.
+//
+// DFU runs DaggerfallRestWindow.Update every frame the window is topmost
+// (DaggerfallRestWindow.cs:183-227); TickRest reads Time.realtimeSinceStartup,
+// so PauseWhileOpen's timeScale = 0 does not stop it. The port ticked inside
+// drawFoes - which BOTH hosts return before whenever an overlay is up, and the
+// rest window IS the overlay. U7 rest never advanced an hour in either host.
+//
+// F6: the audio bootstrap belongs to every host, not to the dungeon.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 18 F5: every host that gates on uiOverlayActive also ticks the overlay', () => {
+  // The defect was structural - the tick sat on the wrong side of a gate - so
+  // the pin is structural too: any host branch that returns on uiOverlayActive
+  // must tick first, or its overlays are frozen.
+  const hosts = ['src/scenes/dungeon.js', 'src/scenes/worldModes.js'];
+  let gates = 0;
+  for (const rel of hosts) {
+    const text = readFileSync(join(SRC, '..', rel), 'utf8');
+    for (const line of text.split('\n')) {
+      if (!/uiOverlayActive/.test(line) || !/\breturn\b/.test(line)) continue;
+      gates++;
+      assert.ok(/tickOverlay\(/.test(line),
+        `${rel}: a branch returns on uiOverlayActive without ticking the overlay:\n  ${line.trim()}`);
+      assert.ok(line.indexOf('tickOverlay(') < line.indexOf('return'),
+        `${rel}: tickOverlay must run BEFORE the return`);
+    }
+  }
+  assert.equal(gates, 2, 'expected exactly the two dungeon-mounting host gates');
+});
+
+test('AUDIT 18 F5: a resting window actually advances hours when ticked', () => {
+  // Behavioural half: the old placement could not satisfy this at all.
+  const perHour = 0.45;                                  // S20 rate the port ports
+  let hours = 0;
+  const session = { totalHours: 0, tick(dt) { this.acc = (this.acc ?? 0) + dt; while (this.acc >= perHour) { this.acc -= perHour; this.totalHours++; hours++; } return null; } };
+  const win = { isRestWindow: true, state: 'resting', session, done: false,
+    tickRest(dt) { if (this.state !== 'resting') return; this.session.tick(dt); } };
+  for (let i = 0; i < 6; i++) win.tickRest(perHour + 1e-6);
+  assert.equal(hours, 6, 'six ticks of one hour each must pass six hours');
+});
+
+test('AUDIT 18 F6: every host boots audio through the shared idempotent seam', () => {
+  for (const rel of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
+    const text = readFileSync(join(SRC, '..', rel), 'utf8');
+    assert.ok(/audio\.ensure\(/.test(text), `${rel} never boots audio - it will be silent`);
+  }
+  // And nobody may go back to the raw pair, which is what made it host-local.
+  for (const file of walk(SRC)) {
+    const text = readFileSync(file, 'utf8');
+    assert.ok(!/audio\.init\(/.test(text), `${file}: use audio.ensure(), not audio.init()`);
+  }
+});
+
+test('AUDIT 18 F6: audio.ensure boots once and is safe to call from every host', async () => {
+  const { AudioEngine } = await import('../src/systems/audio.js');
+  const eng = new AudioEngine();
+  let calls = 0;
+  const fetchBytes = async () => { calls++; throw new Error('no data in this test'); };
+  eng.attachGestureResume = () => {};                     // no window in Node
+  await eng.ensure(fetchBytes);
+  await eng.ensure(fetchBytes);
+  await eng.ensure(fetchBytes);
+  assert.equal(calls, 1, 'ensure must load DAGGER.SND exactly once across all hosts');
+});

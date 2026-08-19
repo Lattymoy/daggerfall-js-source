@@ -26,7 +26,32 @@ export class AudioEngine {
     this.snd = null;
     this.buffers = new Map();   // index -> AudioBuffer
     this.enabled = false;
+    this._booted = false;
     this._listener = { x: 0, y: 0, z: 0, fx: 0, fy: 0, fz: -1 };
+  }
+
+  /** AUDIT 18 F6: the one bootstrap every host calls.
+   *
+   *  AudioEngine is a module singleton and `enabled` is only ever set
+   *  inside init(), so until some host called it every playOneShot /
+   *  play3d / loop3d returned silently. Only buildDungeonContext did -
+   *  which meant ?world and ?exterior were ENTIRELY SILENT (swings,
+   *  fall damage, the A3 ambient effects, the A4 animal ambience, city
+   *  guards, rain) until the player happened to enter a dungeon, after
+   *  which the singleton stayed booted and the exterior gained sound
+   *  on the way back out. DFU has no per-scene sound bootstrap at all:
+   *  DaggerfallAudioSource/SoundReader are global singletons and
+   *  AmbientEffectsPlayer.Start (:77-88) runs on the exterior prefab,
+   *  so the exterior is audible from frame one.
+   *
+   *  Idempotent by construction, so every host entry point can call it
+   *  unconditionally - which is the point: a host that forgets is the
+   *  bug this replaces. */
+  async ensure(fetchBytes) {
+    if (this._booted) return;
+    this._booted = true;
+    await this.init(fetchBytes);
+    this.attachGestureResume();
   }
 
   /** Load DAGGER.SND through the data seam. Safe to call before any

@@ -296,7 +296,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(ctx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
-    if (ctx.uiOverlayActive) { ctx.drawOverlay(canvas); requestAnimationFrame(frame); return; }   // U2b/U3: hold gameplay, keep the loop
+    if (ctx.uiOverlayActive) { ctx.tickOverlay(dt); ctx.drawOverlay(canvas); requestAnimationFrame(frame); return; }   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
     ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD'));   // moveHeld: the collision-trigger input gate (verbatim)   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
     renderer.drawWater(ctx.waterQuads, WATER_COLOR,
       renderer.textures.get(`${waterArchive}_0`),

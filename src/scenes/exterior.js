@@ -69,6 +69,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
   const locationName = params.get('loc') || 'Daggerfall';
 
+  audio.ensure(fetchBytes);   // AUDIT 18 F6: sound was booted ONLY by buildDungeonContext, so this host was silent until a dungeon was entered
   status('loading data');
   const [palBytes, blocksBytes, archBytes, mapsBytes, climateBytes, politicBytes] =
     await Promise.all([
