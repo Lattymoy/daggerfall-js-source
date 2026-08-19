@@ -36,17 +36,31 @@
 // join flow is a window with an eligibility message, and only the
 // rules it consumes live here.
 //
-// ── RANK TITLES, recovered (U23) ──────────────────────────────────
-// G1 shipped without them and said so: DFU reads the titles from its
-// own localization StringTables, which the sparse clone excluded, so
-// getTitle returned the player's name at every rank and %lev could
-// not expand. The clone's sparse set now includes Assets/Localization,
-// and the six lists are read straight out of
-// Internal_Strings{,_en}.asset - "fightersRanks", "magesRanks",
-// "thievesRanks", "darkBrotherhoodRanks" here; "templeRanks" and
-// "knightlyOrderRanks" with their variants in guildVariants.js.
+// ── RANK TITLES, recovered (U23) - and WHICH ranks gender-swap,
+// which AUDIT 21 F7 had already worked out (AUDIT 22 merge) ───────
+// G1 shipped without the titles and said so: DFU reads them from its
+// own localization StringTables, which the sparse clone excluded. The
+// clone's sparse set now includes Assets/Localization, so all six
+// lists come straight out of Internal_Strings - "fightersRanks",
+// "magesRanks", "thievesRanks", "darkBrotherhoodRanks" here;
+// "templeRanks" and "knightlyOrderRanks" in guildVariants.js.
 // GetLocalizedTextList splits the entry on newlines, which is why
 // "Master Wizard" and "Knight Brother" are one title each.
+//
+// AUDIT 21 F7 CORRECTED A DOC LIE that this file used to carry: the
+// old paragraph said getTitle "falls back to the player's name, which
+// is DFU's own non-member return". True for only three of the six.
+// Temple.cs:389-398, KnightlyOrder.cs:121-127 and
+// DarkBrotherhood.cs:86-92 each OVERRIDE GetTitle and return
+// GetLocalizedText("nonMember") - a string, not a name. It also
+// worked out the STRUCTURE the strings alone would not give: which
+// rank in which guild gender-swaps (Temple 9 and 6, KnightlyOrder 5,
+// DarkBrotherhood 8), recorded as `femaleTitleRanks`.
+//
+// The two halves met at the AUDIT 22 merge. The structure was right
+// and U23 had only found two of the four swaps; the strings were
+// there to be read all along - "Matriarch", "Sister", "Knight
+// Sister", "Dark Sister". Both ship, and the flag is retired.
 import { SKILLS, skillValue } from './skills.js';
 import { getReputation } from './factionRep.js';
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
@@ -106,6 +120,10 @@ export const GUILDS = Object.freeze({
       SKILLS.Mysticism, SKILLS.Restoration, SKILLS.Thaumaturgy],
     rankTitles: ['Apprentice', 'Journeyman', 'Evoker', 'Conjurer', 'Magician',
       'Enchanter', 'Warlock', 'Wizard', 'Master Wizard', 'Archmage'],
+    // MagesGuild.cs:67-70 overrides IsSatisfyQuestReqByLevel to true - see
+    // questRankFor below. The Mages Guild and the knightly orders are the
+    // only two of the six that do.
+    questReqByLevel: true,
     text: { ineligibleBadRep: 612, ineligibleLowSkill: 611, eligible: 606, welcome: 5293, promotion: 5236 },
     // MagesGuild.GetPromotionMsgId (:92-106) - the message ANNOUNCES
     // the benefit the new rank unlocked, so it is per rank.
@@ -113,6 +131,7 @@ export const GUILDS = Object.freeze({
   },
   ThievesGuild: {
     name: 'ThievesGuild',
+    neverExpels: true,          // AllowGuildExpulsion (ThievesGuild.cs:128-131)
     guildGroup: GUILD_GROUPS.GeneralPopulace,
     factionId: 42,
     skills: [SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.Lockpicking, SKILLS.Pickpocket,
@@ -120,6 +139,8 @@ export const GUILDS = Object.freeze({
     rankTitles: ['Apprentice', 'Journeyman', 'Filcher', 'Crook', 'Robber',
       'Bandit', 'Thief', 'Ringleader', 'Mastermind', 'Master Thief'],
     text: { welcome: 5225, promotion: 5235, bribesJudge: 550 },
+    // ThievesGuild.cs:24 - the ONLY way in. See INVITATION_ONLY below.
+    initiationQuest: 'O0A0AL00',
     // ThievesGuild.GetPromotionMsgId (:92-106). Ranks 6 and 8 are
     // RevealLocation()-gated in DFU (map1/map2 vs the plain message);
     // that reads quest/map state the port has no source for, so those
@@ -129,14 +150,23 @@ export const GUILDS = Object.freeze({
   },
   DarkBrotherhood: {
     name: 'DarkBrotherhood',
+    neverExpels: true,          // AllowGuildExpulsion (DarkBrotherhood.cs:132-135)
     guildGroup: GUILD_GROUPS.DarkBrotherHood,
     factionId: 108,
     skills: [SKILLS.Archery, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
       SKILLS.Daedric, SKILLS.Destruction, SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
     rankTitles: ['Apprentice', 'Journeyman', 'Operator', 'Slayer', 'Executioner',
       'Punisher', 'Terminator', 'Assassin', 'Dark Brother', 'Master Assassin'],
-    nonMemberTitle: NON_MEMBER_TITLE,   // DarkBrotherhood.cs :86-92 overrides GetTitle
     text: { welcome: 5292, promotion: 666, bribesJudge: 551 },
+    // DarkBrotherhood.cs:24.
+    initiationQuest: 'L0A01L00',
+    // DarkBrotherhood.cs:86-92 - GetTitle is overridden twice over: a
+    // non-member reads GetLocalizedText("nonMember") rather than their
+    // own name, and rank 8 is gender-swapped. `nonMemberTitle` is the
+    // MARKER of which override applies, not a second copy of the string.
+    nonMemberTitle: 'nonMember',
+    femaleTitleRanks: [8],
+    femaleRankTitles: { 8: 'Dark Sister' },   // DarkBrotherhood.cs:88-89
     // DarkBrotherhood.GetPromotionMsgId - odd ranks, all pure data.
     promotionByRank: { 1: 6611, 3: 6612, 5: 6613, 7: 6614 },
   },
@@ -170,6 +200,19 @@ export function numHighLowSkills(entity, guild, rank) {
 
 /** CalculateNewRank (:100-111). Returns -1 for expulsion. */
 export function calculateNewRank(entity, guild, store) {
+  // AUDIT 21 F1: DFU's shape exactly. Guild.CalculateNewRank is the base
+  // computation; ThievesGuild and DarkBrotherhood OVERRIDE it as
+  //     AllowGuildExpulsion(player, base.CalculateNewRank(player))
+  // so the clamp wraps the WHOLE base call - including its early return
+  // for negative reputation, which is the branch that actually fires. A
+  // first cut of this fix clamped only the loop's exit and did nothing,
+  // because the early return got there first.
+  const newRank = baseCalculateNewRank(entity, guild, store);
+  return guild?.neverExpels && newRank < 0 ? 0 : newRank;
+}
+
+/** Guild.CalculateNewRank (:98-116), the base every guild shares. */
+function baseCalculateNewRank(entity, guild, store) {
   const rep = getReputation(store, guild.factionId);
   // DFU's early return. Measured EQUIVALENT over 1809 cases: because
   // rankReqReputation[0] is 0, a negative reputation breaks the loop at
@@ -244,25 +287,59 @@ const textIdFor = (guild, outcome, rank) => (
  *  also what an expulsion leaves behind. */
 export const isMember = (membership) => (membership?.rank ?? -1) >= 0;
 
-/** GetTitle (Guild.cs :178-181), now with the titles (see the header).
- *  A NON-MEMBER reads back their own name here - that is Guild.cs's own
- *  return, and it is why the four base guilds do not use the
- *  "non-member" string the Temple, the Dark Brotherhood and the
- *  knightly orders return instead (Temple.cs :397, DarkBrotherhood.cs
- *  :91, KnightlyOrder.cs :126). The three overriding subclasses carry
- *  `nonMemberTitle`; the rest fall through to the name.
+/** GetTitle (Guild.cs:178-181), plus the three subclass overrides
+ *  (Temple.cs:389-398, KnightlyOrder.cs:121-127, DarkBrotherhood.cs:86-92).
  *
- *  The Temple's gendered overrides (Temple.cs :389-397 - "Not calling
- *  female chars 'Patriarch'!") ride `titleFor`, which the guild record
- *  supplies when it has one. */
+ *  A MEMBER reads their RANK TITLE - recovered at U23, see the header.
+ *  A NON-MEMBER is a different question, and AUDIT 21 F7 found the port
+ *  answering it wrong for half the guilds: DFU's base returns the
+ *  player's NAME, while the Temple, the knightly orders and the Dark
+ *  Brotherhood each return GetLocalizedText("nonMember") instead.
+ *  `nonMemberTitle` on the guild record says which.
+ *
+ *  The gender swap is per GUILD and per RANK - `femaleTitleRanks` is the
+ *  structure, `femaleRankTitles` the strings - and DFU annotates every
+ *  one of them the same way: "Not calling female chars 'Brother'!". */
 export function getTitle(membership, entity, guild = null) {
-  if (!isMember(membership)) return guild?.nonMemberTitle ?? entity?.name ?? '';
+  if (!isMember(membership)) {
+    return guild?.nonMemberTitle === 'nonMember' ? NON_MEMBER_TITLE : (entity?.name ?? '');
+  }
   const rank = membership.rank;
-  if (guild?.titleFor) {
-    const t = guild.titleFor(rank, entity);
-    if (t != null) return t;
+  if (entity?.gender === 'female' && guild?.femaleTitleRanks?.includes(rank)) {
+    const t = guild.femaleRankTitles?.[rank];
+    if (t) return t;
   }
   return guild?.rankTitles?.[rank] ?? entity?.name ?? '';
+}
+
+/** IsSatisfyQuestReqByLevel (Guild.cs:51-54, overridden true by
+ *  MagesGuild.cs:67-70 and KnightlyOrder.cs:83-86), as its ONE consumer
+ *  uses it - DaggerfallGuildServicePopupWindow.cs:564-568:
+ *
+ *      int rank = guild.Rank;
+ *      if (guild.IsSatisfyQuestReqByLevel() && playerEntity.Level > rank)
+ *          rank = playerEntity.Level;
+ *
+ *  For those two guilds a high-level low-rank member draws from the quest
+ *  pool of their LEVEL, not their rank; for the other four the rank stands
+ *  however high the player has levelled. The flag alone would be inert
+ *  data, so the three lines that read it live here with it. */
+export function questRankFor(guild, rank, playerLevel) {
+  return guild?.questReqByLevel && playerLevel > rank ? playerLevel : rank;
+}
+
+/** GetGuildFactionId (GuildManager.cs:74-101) - the group -> faction
+ *  inverse, "used for non-member quests". The two VARIANT groups answer
+ *  0 on purpose, in DFU's own words, "since they have variants each with
+ *  different faction ids": there is no single faction for "a temple".
+ *
+ *  Derived from GUILDS rather than restated, so the two cannot drift.
+ *  DFU's `default:` consults its custom-guild registry, which is a mod
+ *  hook and not Daggerfall; the 0 it falls through to is what remains. */
+const GUILD_FACTION_BY_GROUP = new Map(Object.values(GUILDS).map((g) => [g.guildGroup, g.factionId]));
+export function guildFactionIdOfGroup(guildGroup) {
+  if (guildGroup === GUILD_GROUPS.HolyOrder || guildGroup === GUILD_GROUPS.KnightlyOrder) return 0;
+  return GUILD_FACTION_BY_GROUP.get(guildGroup) ?? 0;
 }
 
 /** GuildManager.GetGuild(factionId) (:254-267). Null for a faction that
@@ -273,8 +350,28 @@ export function getTitle(membership, entity, guild = null) {
  *  other direction would be a cycle). guildVariants exports a ready
  *  resolver; AUDIT 20 found this answering null for all eight temples
  *  and all ten orders after G2 shipped them. */
-export function guildOfFaction(factionId, resolveVariant = null) {
+export function guildOfFaction(factionId, resolveVariant = null, factionDict = null) {
+  // AUDIT 21 F3: DFU resolves by GUILD GROUP, not by a faction id match.
+  // GetGuild(factionId) (GuildManager.cs:254-267) calls GetGuildGroup and
+  // dispatches on the group; the port matched `g.factionId === factionId`
+  // first and answered null for anything else. That is the difference
+  // between "the Fighters Guild's own faction record" and "any of the 68
+  // faction ids that CARRY a guild group" - and the ids DFU's building and
+  // NPC callers pass in are the latter.
+  //
+  // The id match stays as a fast path (and as the answer when no dict is
+  // supplied), because a guild's own record obviously resolves to itself.
   for (const g of Object.values(GUILDS)) if (g.factionId === factionId) return g;
+
+  if (factionDict) {
+    const group = guildGroupOfFaction(factionDict, factionId);
+    if (group !== GUILD_GROUPS.None) {
+      // The variant groups (HolyOrder, KnightlyOrder) need the building
+      // faction to pick WHICH temple or order, so they stay with the
+      // variant resolver; the fixed groups map straight to their guild.
+      for (const g of Object.values(GUILDS)) if (g.guildGroup === group) return g;
+    }
+  }
   return resolveVariant ? resolveVariant(factionId) : null;
 }
 
@@ -302,6 +399,43 @@ export function guildGroupOfFaction(factionDict, factionId) {
     if (first) return first.ggroup;
   }
   return f.ggroup;
+}
+
+/** THE SECOND, PARALLEL MEMBERSHIP DICTIONARY (GuildManager.cs:105-112).
+ *
+ *      private readonly Dictionary<GuildGroups, IGuild> memberships;
+ *      private readonly Dictionary<GuildGroups, IGuild> vampMemberships;
+ *      private Dictionary<GuildGroups, IGuild> Memberships {
+ *          get { return ...HasVampirism() ? vampMemberships : memberships; }
+ *      }
+ *
+ *  Every membership read and write in DFU goes through that ONE property,
+ *  so becoming a vampire does not lose your guilds - it swaps the whole
+ *  book for an empty one, and a cure swaps it back. The save format keeps
+ *  both halves (GetMembershipData(bool vampire), :313-320), and
+ *  ClearMembershipData() clears BOTH (:298-302).
+ *
+ *  Vampirism itself is another slice, so nothing sets `hasVampirism` yet.
+ *  The STORE is defined here because it is a property of the membership
+ *  model this slice owns, and retrofitting a second book later would mean
+ *  touching every call site. A PLAIN OBJECT is still accepted everywhere
+ *  and means the mortal book - which is exactly what every current caller
+ *  intends - so this adds a shape without breaking one. */
+export const newMembershipStore = () => ({ mortal: {}, vampire: {} });
+export function membershipsFor(store, hasVampirism = false) {
+  if (!store) return {};
+  if (!Object.hasOwn(store, 'mortal') || !Object.hasOwn(store, 'vampire')) return store;
+  return hasVampirism ? store.vampire : store.mortal;
+}
+/** ClearMembershipData() (:298-302) clears BOTH books, not the active one. */
+export function clearMembershipData(store) {
+  if (!store) return;
+  if (Object.hasOwn(store, 'mortal') && Object.hasOwn(store, 'vampire')) {
+    store.mortal = {};
+    store.vampire = {};
+    return;
+  }
+  for (const k of Object.keys(store)) delete store[k];
 }
 
 /** THE MEMBERSHIP KEY IS THE GUILD GROUP, not the guild. DFU's
@@ -380,7 +514,27 @@ export const isJoinableByApplication = (guild) => !INVITATION_ONLY.includes(guil
  *  for the wrong reason has been told to fix the wrong thing.
  *
  *  Null for an invitation-only guild - asking is what DFU throws on. */
-export function joinDecision(entity, guild, store) {
+export function joinDecision(entity, guild, store, memberships = null) {
+  // AUDIT 21 F2: DFU's gate ORDER, which the port skipped the front of.
+  // JoinButton_OnMouseClick (DaggerfallGuildServicePopupWindow.cs:498-524)
+  // runs three checks and only the third was ported:
+  //
+  //   1. guildManager.JoinGuild(group, factionId) - which RETURNS THE
+  //      GUILD ALREADY IN THAT GROUP SLOT if one is there (:161-162)
+  //   2. if (!guild.IsMember())    <- nothing happens at all when it is
+  //   3. IsEligibleToJoin          <- the only one the port had
+  //
+  // So in DFU a rank-7 Fighters Guild member gets NO join dialogue, and a
+  // Patriarch of Mara clicking Arkay's temple gets none either - the slot
+  // hands back Mara, IsMember is true, and the window closes. The port
+  // offered both, and joinGuild ASSIGNS into the slot, so accepting reset
+  // a rank-7 member to rank 0 or traded a lifetime in Mara's temple for
+  // rank 0 in Arkay's.
+  //
+  // `memberships` is optional so existing callers that only ask "could
+  // this character qualify" keep working; a caller driving the actual
+  // join must pass it.
+  if (memberships && joinedGuildOfGroup(memberships, membershipKey(guild))) return null;
   if (!isJoinableByApplication(guild)) return null;
   const rep = getReputation(store, guild.factionId);
   if (isEligibleToJoin(entity, guild, store)) {

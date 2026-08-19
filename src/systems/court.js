@@ -74,9 +74,60 @@ export const TEXT_BANISHED = 8063;
 export const TEXT_HOW_CONVINCE = 8064;
 
 export const legalRepOf = (player, regionIndex) => player.legalRep?.[regionIndex] ?? 0;
+/** ClampLegalReputations' bounds (PlayerEntity.cs:2245-2247). */
+export const LEGAL_REP_MIN = -100;
+export const LEGAL_REP_MAX = 100;
+
+/** Minutes between NormalizeReputations runs (PlayerEntity.cs:457, 112 days). */
+export const NORMALIZE_INTERVAL_MINUTES = 161280;
+
 export function changeLegalRep(player, regionIndex, delta) {
   if (!player.legalRep) player.legalRep = {};
   player.legalRep[regionIndex] = (player.legalRep[regionIndex] ?? 0) + delta;
+}
+
+/**
+ * ClampLegalReputations (PlayerEntity.cs:2245-2257).
+ *
+ * AUDIT 21 F3: the port had NO clamp at all, so legal reputation was
+ * unbounded - twelve High Treasons drove a region to -900, a number DFU
+ * cannot hold. DFU clamps on save load, on the quest LegalRepute action,
+ * and inside NormalizeReputations.
+ */
+export function clampLegalReputations(player) {
+  if (!player.legalRep) return;
+  for (const key of Object.keys(player.legalRep)) {
+    const v = player.legalRep[key];
+    if (v < LEGAL_REP_MIN) player.legalRep[key] = LEGAL_REP_MIN;
+    else if (v > LEGAL_REP_MAX) player.legalRep[key] = LEGAL_REP_MAX;
+  }
+}
+
+/**
+ * NormalizeReputations (PlayerEntity.cs:2223-2243). Every 112 game days:
+ * clamp, then walk EVERY legal reputation and EVERY faction reputation
+ * one point TOWARDS ZERO. That drift is the only thing that ever forgives
+ * a crime the player did not answer for, and the port had none of it.
+ *
+ * Note the asymmetry, which is DFU's: legal reputations are nudged by
+ * direct increment, faction reputations go through ChangeReputation - so
+ * the faction side PROPAGATES through allies and enemies and the legal
+ * side does not.
+ */
+export function normalizeReputations(player, store) {
+  clampLegalReputations(player);
+  for (const key of Object.keys(player.legalRep ?? {})) {
+    const v = player.legalRep[key];
+    if (v < 0) player.legalRep[key] = v + 1;
+    else if (v > 0) player.legalRep[key] = v - 1;
+  }
+  if (!store?.dict) return;
+  for (const id of [...store.dict.keys()]) {
+    const f = store.dict.get(id);
+    if (!f) continue;
+    if (f.rep < 0) changeReputation(store, f.id, 1);
+    else if (f.rep > 0) changeReputation(store, f.id, -1);
+  }
 }
 
 export function lowerRepForCrime(player, regionIndex, crime) {
@@ -124,6 +175,13 @@ export function surrenderToCityGuards(player, regionIndex, voluntary, { setHealt
 /** The court's state-0 math. Returns { punishmentType, fine,
  *  daysInPrison } (guild rescues FLAGGED). */
 export function startCourt(player, regionIndex, crime, { rolls = Math.random, dfRand = rand } = {}) {
+  // AUDIT 21 F6: HandleCourtLogic's FIRST statement, on every state -
+  // "Close immediately if no crime assigned to player"
+  // (DaggerfallCourtWindow.cs:109-114). Without it `crime - 1` is -1, the
+  // penalty tables index undefined, the fine becomes NaN, and the player
+  // is tried for nothing - then credited -1 legal reputation for serving
+  // a sentence for a crime that never happened.
+  if (!crime) return null;
   const crimeType = crime - 1;
   const legalRep = legalRepOf(player, regionIndex);
   let threshold1 = 0, threshold2 = 0;
@@ -131,10 +189,16 @@ export function startCourt(player, regionIndex, crime, { rolls = Math.random, df
     threshold1 = Math.min(75, -legalRep);
     threshold2 = Math.min(75, Math.trunc(-legalRep / 2));
   }
-  // Dice100.FailedRoll(t) = roll >= t
+  // Dice100.FailedRoll(t) = roll >= t.
+  //
+  // AUDIT 21 F5: C#'s `&&` SHORT-CIRCUITS. DFU writes
+  //     if (Dice100.FailedRoll(threshold2) && Dice100.FailedRoll(threshold1))
+  // so the second roll is drawn ONLY when the first fails. Drawing both
+  // unconditionally consumed an extra number from the generator on every
+  // court appearance, which shifts every later roll in the session - the
+  // classic way a port stays "correct" per-expression and still desyncs.
   const failed2 = Math.floor(rolls() * 100) >= threshold2;
-  const failed1 = Math.floor(rolls() * 100) >= threshold1;
-  const punishmentType = failed2 && failed1 ? 2 : 0;
+  const punishmentType = failed2 && Math.floor(rolls() * 100) >= threshold1 ? 2 : 0;
 
   let penaltyAmount = legalRep >= 0
     ? PENALTY_PER_LEGAL_REP_POINT[crimeType] * legalRep + BASE_PENALTY[crimeType]
@@ -155,16 +219,56 @@ export function startCourt(player, regionIndex, crime, { rolls = Math.random, df
   return { punishmentType, fine, daysInPrison, crime, regionIndex };
 }
 
-/** RaiseReputationForDoingSentence, verbatim: +half the loss - 1. */
+/**
+ * RaiseReputationForDoingSentence (PlayerEntity.cs:2301-2311).
+ *
+ * AUDIT 21 F1: this credited only the LEGAL channel. DFU credits BOTH -
+ * legalRep by `half - 1`, and the region's People faction by
+ * `(half - 1) / 2` - and lowerRepForCrime above already debits both. A
+ * one-sided refund makes the faction channel a RATCHET: serve the
+ * sentence for Murder and the People faction keeps the whole -10 where
+ * DFU hands back +4, so a law-abiding player's standing only ever falls.
+ *
+ * DFU's own comment marks the second line as a probable classic bug
+ * ("Classic changes reputation here by (1 - half) / 2"), and ports it
+ * anyway. So do we: the sign is DFU's, not classic's.
+ */
 export function raiseRepForSentence(player, court) {
   const half = Math.trunc(REPUTATION_LOSS_PER_CRIME[court.crime] / 2);
   changeLegalRep(player, court.regionIndex, half - 1);
+
+  const store = player?.factionRep;
+  if (!store) return;                       // no store: same silence as the debit
+  const people = getPeopleOfCurrentRegion(store.dict, court.regionIndex);
+  if (people) {
+    // `(half - 1) / 2`, truncating - the division is OUTSIDE the credit
+    // exactly as the debit's negation is outside its own division.
+    changeReputation(store, people.id, Math.trunc((half - 1) / 2), true);
+  }
 }
 
+/** TEXT.RSC 8060, courtTextExecuted (DaggerfallCourtWindow.cs:37). */
+export const TEXT_EXECUTED = 8060;
+
 /** The Guilty plea (punishmentType 2): halve both, pay, serve or
- *  walk. Returns { outcome: 'prison'|'released'|'banished', ... }. */
+ *  walk. Returns { outcome: 'prison'|'released'|'banished'|'executed', ... }.
+ *
+ *  AUDIT 21 F7: DFU's cascade is THREE-WAY, not two
+ *  (GuiltyNotGuilty_OnButtonClick, :327-331):
+ *      if (punishmentType != 0) { if (punishmentType == 1) state = 5;   // Execution
+ *                                 else { fine >>= 1; ... } }
+ *      else state = 4;                                                 // Banished
+ *  The port tested only `=== 0` and let a 1 fall into the fine/prison arm,
+ *  so an execution sentence would have been halved, charged and served.
+ *
+ *  It is unreachable: startCourt can only ever produce 0 or 2, which is
+ *  DFU's own note at :279 ("Seems like an execution sentence can't be given
+ *  in classic. It can't be given here, either."). Ported anyway, because an
+ *  arm that is absent and an arm that is wrong read the same from the call
+ *  site and only one of them is safe to build on. */
 export function pleaGuilty(court, player) {
   if (court.punishmentType === 0) return { outcome: 'banished' };
+  if (court.punishmentType === 1) return { outcome: 'executed' };
   court.fine >>= 1;
   court.daysInPrison >>= 1;
   deductGold(player, court.fine);
@@ -184,7 +288,9 @@ export function pleaNotGuilty(court, player, useDebate, { rolls = Math.random } 
   let chance = legalRep + Math.trunc((playerSkill + (player.stats?.personality ?? 50)) / 2);
   chance = Math.max(5, Math.min(95, chance));
   if (Math.floor(rolls() * 100) >= chance) {   // FailedRoll
+    // The same three-way cascade, on the failed defense (:394-402).
     if (court.punishmentType === 0) return { outcome: 'banished' };
+    if (court.punishmentType === 1) return { outcome: 'executed' };
     const roll = legalRep + (Math.floor(rolls() * 100) + 1);   // Dice100.Roll 1..100
     if (roll < 25) court.fine *= 2;
     else if (roll > 75) court.fine >>= 1;

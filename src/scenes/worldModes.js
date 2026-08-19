@@ -36,7 +36,7 @@ import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js'
 import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
-import { routeKey } from '../ui/input.js';
+import { routeKey, overlayAction } from '../ui/input.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
@@ -49,6 +49,7 @@ import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
 import { isShop, isRepairShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem } from '../systems/shopStock.js';
+import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
 import { STATIC_NPC_ACTIVATION_DISTANCE } from '../systems/talk.js';
@@ -57,7 +58,7 @@ import { npcServiceKind, freeHealing, freeMagickaRecharge } from '../systems/gui
 import { createGuildForGroup } from '../systems/guildVariants.js';
 import { membershipOf, joinGuild, joinDecision } from '../systems/guilds.js';
 import { ensureFactionRep } from '../systems/factionRep.js';
-import { dateFromElapsedMinutes, classicMinutesFromElapsed } from '../systems/gameDate.js';
+import { dateFromClassicMinutes } from '../systems/gameDate.js';
 import { serviceDestination } from '../systems/guildServiceFlow.js';
 import { buildTrainingFlow, buildDonationFlow, buildCureDiseaseFlow } from '../ui/guildServiceWindows.js';
 import { preloadListPickerArt } from '../ui/listPicker.js';
@@ -78,8 +79,21 @@ const DUNGEON_WATER_SCROLL = 0.05;
 
 export function createWorldModes(host) {
   // AUDIT 18: the interior host's share of the player world clock.
-  const interiorTicker = createPlayerTicker(playerEntity, { say: (msg) => console.log('[player]', msg) });
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure
+  //
+  // AUDIT 21 (hosts lane, F3): onLevelUp, through this host's own overlay
+  // slot. Without it advancement.js took its headless arm and dumped every
+  // attribute point into the LOWEST stats - standing in a shop when you
+  // crossed a threshold built a different character than standing in a
+  // dungeon. `interiorOverlay` is declared below and the closure only runs
+  // once time has passed, so it is initialised by then.
+  const interiorTicker = createPlayerTicker(playerEntity, {
+    say: (msg) => console.log('[player]', msg),
+    onLevelUp: () => {
+      console.log('[player] You have gained a level!');
+      if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
+    },
+  });
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
 
   let mode = 'exterior';
@@ -230,10 +244,11 @@ export function createWorldModes(host) {
     max: [pn.x + pn.width / 2, pn.y + pn.height, pn.z + pn.width / 2],
   });
 
-  /** The live date the guild rank gate reads (S28). The interior
-   *  ticker counts elapsed classic minutes from the classic game
-   *  start, which is exactly what dateFromElapsedMinutes takes. */
-  const gameDate = () => dateFromElapsedMinutes(interiorTicker.classicMinutes);
+  /** The live date the guild rank gate reads (S28). AUDIT 21 F2 made
+   *  every ticker a VIEW on one absolute world clock, so this reads
+   *  straight through - the epoch is already in it, and S28's
+   *  elapsed-minute bridge is retired. */
+  const gameDate = () => dateFromClassicMinutes(interiorTicker.classicMinutes);
 
   function activateStaticNpc(pn) {
     if (!pn) return;
@@ -347,7 +362,7 @@ export function createWorldModes(host) {
     const membership = membershipOf(memberships, guild);
     const b = interiorBuilding;
     const closeSelf = () => { if (interiorOverlay === flow) interiorOverlay = null; };
-    const now = () => classicMinutesFromElapsed(interiorTicker.classicMinutes);
+    const now = () => interiorTicker.classicMinutes;   // already CLASSIC minutes (AUDIT 21 F2)
     const godName = guild.divine ?? '';
     let flow = null;
     if (destination === 'guildServiceTraining') {
@@ -696,6 +711,19 @@ export function createWorldModes(host) {
     // every probe frame-sync starved (the process doctrine).
     if (window.__frame !== undefined) window.__frame++;
     const fwd = eyeDir();
+    // AUDIT 21 (hosts lane, F4): THE EARS MOVE IN HERE TOO.
+    //
+    // The 3D listener was set by world.js, exterior.js and dungeonContext.js
+    // and by nothing in this host, so in INTERIOR mode it stayed frozen
+    // wherever the last exterior frame parked it - at the town's world
+    // position. interiorContext plays door open/close and door-bash through
+    // sfx.play3d at INTERIOR-LOCAL coordinates against a linear model with a
+    // finite maxDistance, so those sounds were out of range: inaudible, or
+    // panned from nowhere.
+    //
+    // Covers both modes. The dungeon arm sets it again later from its own
+    // view matrix, which is a pure write and harmless.
+    audio.setListener(cam.pos, fwd);
     const jumpHeld = keys.has('Space');
     if (mode === 'dungeon' && dungeonCtx) {
       player.slowFalling = dungeonCtx.playerSlowFalling;   // S8 slowfall (P14: the verbatim constant-speed law lives in the motor)
@@ -986,7 +1014,16 @@ export function createWorldModes(host) {
     // done-then-clear so chained windows survive the keydown).
     if (mode === 'interior' && interiorOverlay) {
       const w = interiorOverlay;
-      w.input(e.code);
+      // AUDIT 21 (hosts lane, F3): the same widening townTalk needed. This
+      // passed the raw key CODE, which is what a ChoiceWindow wants and is
+      // useless to a LevelUpScreen - it needs up/down and plus/minus. So a
+      // level-up in a building could not be driven even once it was opened.
+      if (w.isChoiceWindow) w.input(e.code, e);
+      else {
+        const a = overlayAction(e);
+        if (a) w.input(a, e);
+        else w.input(e.code, e);
+      }
       if (w.done && interiorOverlay === w) interiorOverlay = null;
       e.preventDefault();
       return;
@@ -1040,9 +1077,14 @@ export function createWorldModes(host) {
         return {
           inside: true,
           insideDungeon: true,
-          // IsPlayerInsideDungeonCastle: no castle-block detection yet, so
-          // a castle reads as a plain dungeon interior. FLAGGED.
-          insideDungeonCastle: false,
+          // AUDIT 21 (music lane, F3): IsPlayerInsideDungeonCastle, LIVE.
+          // The flag that stood here said "no castle-block detection yet" -
+          // rdbLayout has computed castleBlock verbatim on every block all
+          // along, and five real castle blocks are already pinned in the
+          // archive. MUSIC_ENV.Castle was unreachable and CASTLE_SONGS a dead
+          // constant: the non-hostile wing of Castle Daggerfall played a
+          // random dungeon track instead of GPALAC.
+          insideDungeonCastle: dungeonCtx?.inCastle ?? false,
           dungeonKey: dungeonCtx?.musicSeed ?? null,
         };
       }

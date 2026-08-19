@@ -64,6 +64,17 @@ export const BUFF_KINDS = Object.freeze({
   // S22 FreeAction (26,255): Restoration duration buff - the entity
   // is IMMUNE TO PARALYSIS while it lives (IsImmuneToParalysis).
   '26,255': 'freeAction',
+  // AUDIT 21 F5 SILENCE (19,255). The GATE was ported and the PRODUCER was
+  // not, so `entity.isSilenced` had no writer anywhere in src/ and
+  // silenceBlocksCast was a constant false for every entity in the game -
+  // while mysticism.js's own header said "SILENCE IS WIRED". A Wraith casts
+  // classic spell 0x1C at you and DFU silences you; here applySpell fell
+  // through to `out.skipped++` and you cast freely.
+  //
+  // Silence.cs:27-39 is duration-and-chance with NO magnitude
+  // (SupportDuration + SupportChance, no SupportMagnitude), which is exactly
+  // this buff arm - so it needs no new machinery, only its row.
+  '19,255': 'silenced',
 });
 
 /** DaggerfallEntity.IsInvisible / IsBlending / IsAShade, verbatim:
@@ -92,7 +103,7 @@ export const CONCEALMENT_START_TEXT = Object.freeze({
 export const classicSub = (e) => e.subType & 0xff;
 export const buffKind = (e) => BUFF_KINDS[`${e.type},${classicSub(e)}`] ?? null;
 export const hasActiveEffect = (entity, kind) =>
-  !!entity.activeEffects?.some((a) => a.kind === kind);   // presence = active; expired entries End on the NEXT tick pass (DFU shape)
+  !!entity?.activeEffects?.some((a) => a.kind === kind);   // presence = active; expired entries End on the NEXT tick pass (DFU shape)
 
 // S22 FreeAction: the two DFU laws.
 // AUDIT 18 retires the "career/racial hard-immunity pends" flag that
@@ -102,6 +113,11 @@ export const hasActiveEffect = (entity, kind) =>
 // career or racial paralysis tolerance never reaches this gate, it
 // enters through FormulaHelper.SavingThrow, which carries both arms.
 export const isImmuneToParalysis = (entity) => hasActiveEffect(entity, 'freeAction');
+/** DaggerfallEntity.IsSilenced, minted by Silence.StartSilence (Silence.cs:87)
+ *  and cleared at :105. A read-time fold over the active effects, the same
+ *  shape as the concealment and paralysis predicates above, so nothing has to
+ *  remember to clear a flag when the bundle expires. */
+export const isSilencedEffect = (entity) => hasActiveEffect(entity, 'silenced');
 /** DaggerfallEntity.IsParalyzed, verbatim: the immunity folds at READ
  *  time - `!IsImmuneToParalysis && isParalyzed`. A paralysis bundle
  *  that landed BEFORE FreeAction keeps ticking underneath; casting

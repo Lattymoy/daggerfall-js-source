@@ -350,7 +350,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
     if (shotMode) window.__frame = frames;
     if (shotMode && frames === 5) window.__shotReady = true;
     musicDirector.update({
-      inside: true, insideDungeon: true, insideDungeonCastle: false,
+      // AUDIT 21 (music lane, F3): the Castle arm, live off the block the
+      // player stands in - both call sites had it hardcoded false.
+      inside: true, insideDungeon: true, insideDungeonCastle: ctx.inCastle ?? false,
       gameDays: Math.floor(ctx.classicMinutes / 1440),
       dungeonKey: ctx.musicSeed,
       locationIndex: dfLocation?.locationIndex ?? -1,

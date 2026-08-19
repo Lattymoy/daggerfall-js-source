@@ -141,10 +141,14 @@ export const DAY_SONGS_FM = Object.freeze([
  *   - everything else seeds DFRandom with gameDays, so a location's song
  *     is stable for a whole day and changes at midnight.
  *
- * `random % length` is DFU's own modulo bias and is preserved - a list
- * whose length does not divide 2^32 favours its early entries, which is
- * audible as "you hear the first dungeon track more often" and is how
- * the game has always behaved.
+ * `random % length` is DFU's own modulo bias and is preserved. AUDIT 21
+ * (music lane, F13) corrected the arithmetic this comment used to claim: it
+ * said 2^32 and called the skew "audible as you hear the first dungeon track
+ * more often". DFRandom.rand() returns `(next >> 16) & 0x7FFF`, i.e. 0..32767
+ * - so for the 15-entry dungeon list the skew is 32768 = 15*2184 + 8, under
+ * 0.05%, and nothing about it is audible. It is preserved because it is the
+ * arithmetic C# performs, not because anyone can hear it, and it is not ours
+ * to round away.
  */
 export function selectSong(playlist, {
   gameDays = 0, tavern = false, dungeonKey = null, unseeded = false,
@@ -301,10 +305,26 @@ export function environmentForBuilding(buildingType, { factionId = 0, templeAlig
     if (templeAlignment === 'good') return 'templeGood';
     if (templeAlignment === 'neutral') return 'templeNeutral';
     if (templeAlignment === 'bad') return 'templeBad';
-    // DFU leaves the environment UNCHANGED when GetTempleIndex returns -1;
-    // the port has no temple-faction table wired yet, so an unresolved
-    // temple falls to Interior rather than inventing an alignment. FLAGGED.
-    return 'interior';
+    // AUDIT 21 (music lane, F4): DFU'S NO-OP ELSE.
+    //
+    //     int index = GetTempleIndex(playerEnterExit.FactionID);
+    //     if (index >= 0) { switch (templeAlignments[index]) { ... } }
+    //     break;                                  // <- no else
+    // (SongManager.cs:494-518.) currentContext.environment is a struct field
+    // that persists frame to frame, so an unresolvable temple leaves it at
+    // whatever it already was - walk in from a city street and the CITY track
+    // keeps playing. Only the `default:` arm at :520 assigns Interior.
+    //
+    // The comment that stood here blamed a missing temple-faction table. That
+    // table is in this file (TEMPLE_FACTIONS/GOD_FACTIONS/TEMPLE_ALIGNMENTS,
+    // and musicEnvironment passes templeAlignment(factionId) in on every
+    // interior evaluation) - so the flag was a DOC LIE hiding the real
+    // divergence behind a retired excuse. On the real corpus, 10 of the 2,980
+    // Temple buildings carry factionId 0 and reach this line.
+    //
+    // null means "DFU writes nothing here"; the caller holds the previous
+    // environment.
+    return null;
   }
   return 'interior';
 }
@@ -458,6 +478,17 @@ export function musicEnvironment({
   return environmentForBuilding(buildingType, {
     factionId, templeAlignment: templeAlignment(factionId),
   });
+}
+
+/** AUDIT 21 (music lane, F4): the caller side of DFU's no-op else.
+ *
+ *  musicEnvironment is a pure function and cannot "leave the field alone", so
+ *  the HOLD lives here: null means DFU wrote nothing, and the previous
+ *  environment stands. Anything else is a real answer, including the first
+ *  frame's (where there is no previous and Wilderness is DFU's own default
+ *  for an unset context). */
+export function holdEnvironment(next, previous) {
+  return next === null || next === undefined ? (previous ?? MUSIC_ENV.Wilderness) : next;
 }
 
 /** PlayerMusicContext.Equals (SongManager.cs:71-79) - the six fields that

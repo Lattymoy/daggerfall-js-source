@@ -29,6 +29,14 @@ await page.goto(`http://localhost:5208/?${query}`);
 await page.waitForTimeout(Number(process.env.BOOT_WAIT ?? 12000));
 await page.mouse.click(640, 400);
 await page.waitForTimeout(3000);
+// Optional: walk into a building and report the song on each side.
+if (process.env.PROBE_ENTER) {
+  const before = await page.evaluate(async () => (await import('/src/systems/music.js')).music.current);
+  const what = await page.evaluate(process.env.PROBE_ENTER);
+  await page.waitForTimeout(Number(process.env.PROBE_ENTER_WAIT ?? 2500));
+  const after = await page.evaluate(async () => (await import('/src/systems/music.js')).music.current);
+  console.log(`ENTER[${what}]: ${before} -> ${after} | mode=${await page.evaluate(() => window.__mode?.() ?? 'n/a')}`);
+}
 
 const state = await page.evaluate(async () => {
   const mod = await import('/src/systems/music.js');

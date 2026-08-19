@@ -21,8 +21,19 @@
 // caster's live bundles.
 //
 // ── THE FOUR HOSTS, named (S27) ───────────────────────────────────
-// SILENCE IS WIRED, in both of DFU's gates, in the one host that can
-// cast:
+// SILENCE IS WIRED - and AUDIT 21 F5 found that sentence half true. Both of
+// DFU's GATES were ported and its PRODUCER was not: `entity.isSilenced` had
+// no writer anywhere in src/ (the only two were test fixtures), so
+// silenceBlocksCast answered false for every entity in the game and the
+// paragraph below described a mechanism that could not fire. Silence's
+// classic key (19,255) is now a BUFF_KIND and isSilenced folds over the
+// active effects, so the gates below have something to gate on.
+//
+// The pin that let this through is worth naming: test/mysticism.test.js read
+// dungeonContext.js with readFileSync and matched /silenceBlocksCast\(...\)/.
+// A source regex cannot see that the value the gate reads is never produced.
+//
+// The gates, in the one host that can cast:
 //   - scenes/dungeonContext.js  WIRED. It owns readiedSpell and
 //     playerCastInput, and now refuses at READY and at CAST, clearing
 //     the readied spell each time.
@@ -49,6 +60,7 @@
 // interiorContext.js. Neither exterior host owns doors. That is the
 // next slice, and those are its seams.
 import { EFFECT_FLAGS } from './spellcast.js';
+import { isSilencedEffect } from './effects.js';
 
 /** The ten, with the classic key DFU registers and which of the three
  *  cost axes each supports. `chance` and `duration` cost pairs are
@@ -195,7 +207,16 @@ export function fillEmptyTrap(items, soulType, {
  *  The NO-SPELL-POINT-COST arms are exempt in DFU (`!noSpellPointCost
  *  && SilenceCheck()`), so an item-cast or a free effect still fires
  *  through a silence. */
-export const isSilenced = (entity) => !!entity?.isSilenced;
+/** DaggerfallEntity.IsSilenced.
+ *
+ *  AUDIT 21 F5: this read a raw `entity.isSilenced` flag that NOTHING in src/
+ *  ever wrote - the only writers were two test fixtures - so the gate below
+ *  was a constant false for every entity in the game. The producer now exists:
+ *  Silence's classic key (19,255) is a BUFF_KIND, and this folds over the
+ *  active effects the way isImmuneToParalysis and the concealment predicates
+ *  already do. The raw flag is still honoured so a host or a save can force
+ *  it, but it is no longer the only path in. */
+export const isSilenced = (entity) => !!entity?.isSilenced || isSilencedEffect(entity);
 
 /** The gate itself: true means the cast is REFUSED. Clearing the
  *  readied spell is the caller's, since the readied slot lives on the

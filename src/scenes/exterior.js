@@ -43,7 +43,7 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
-import { CharSheet, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet
+import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
@@ -311,7 +311,22 @@ export async function bootExterior(canvas, renderer, params, status) {
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14); motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
-  const playerTicker = createPlayerTicker(playerEntity, { say: (msg) => console.log('[player]', msg) });   // AUDIT 18: the per-minute tick every host owes
+  // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
+  // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
+  // stats with no message and no choice. Cross a level threshold walking a
+  // town and you got a different character than crossing it in a dungeon, off
+  // the same XP. The dungeon host has passed one since U3; the three carriers
+  // above ground passed only `say`.
+  //
+  // `townTalk` is declared further down this function and the closure only
+  // runs once time has passed, so it is initialised by then.
+  const playerTicker = createPlayerTicker(playerEntity, {
+    say: (msg) => console.log('[player]', msg),
+    onLevelUp: () => {
+      console.log('[player] You have gained a level!');
+      townTalk.showOverlay(new LevelUpScreen(playerEntity));
+    },
+  });   // AUDIT 18: the per-minute tick every host owes
 
   // AUDIT 19 F4: the CUMULATIVE game-day count, for the music seed. The
   // ticker's classicMinutes is the only clock in this host that keeps
@@ -443,8 +458,16 @@ export async function bootExterior(canvas, renderer, params, status) {
     const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
     cityGuards.spawnCityGuards(true, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
   }
-  // G2: arrest + court through the townTalk overlay seam (the prison
-  // day-skip is a no-op FLAGGED until the shared calendar lands).
+  // G2: arrest + court through the townTalk overlay seam.
+  //
+  // AUDIT 21 F8 RETIRED THE OPEN FLAG THAT STOOD HERE. It said the prison
+  // day-skip was a no-op until the shared calendar lands, and it was false
+  // twice over: the clock landed in AUDIT 21 F2 (worldTick owns one now), and
+  // the no-op was no longer inert once DAYS drive diseases - a thirty-day
+  // sentence cost the player and the world nothing. createArrestFlow now
+  // defaults advanceDays to the real clock, so there is no argument left for a
+  // host to forget. What still pends is the prison SCREEN and FillVitalSigns'
+  // full refill, neither of which is a calendar.
   const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: dfLocation.regionIndex });
   const weaponRig = createWeaponRig({
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
@@ -673,6 +696,28 @@ export async function bootExterior(canvas, renderer, params, status) {
 
     // Modal frame (worldModes.js): interior/dungeon consume the frame
     // entirely - none of the exterior sky/weather/light path runs.
+    // AUDIT 21 F1: THE MUSIC CONTEXT IS FED BEFORE THE MODAL RETURN.
+    // worldModes.frame() consumes the frame and returns TRUE for interior
+    // and dungeon; musicContext() returns null ONLY for exterior. They are
+    // the same predicate, so with the update below the early return it ran
+    // exclusively on frames where the overlay was guaranteed to be null -
+    // entering a tavern kept the street song, entering a dungeon kept the
+    // sunny outdoor track, and when that song ended nothing fed `songEnded`
+    // so it fell silent for the rest of the visit. The whole interior and
+    // dungeon music path was dead code in this host.
+    musicDirector.update({
+      inside: false,
+      inLocationRect: _musicInLocationRect(),
+      locationType: _musicLocationType(),
+      locationIndex: _musicLocationIndex(),
+      weather,
+      night: isNight(minuteNow()),
+      gameDays: gameDaysNow(),
+      // UpdatePlayerMusicArrested (:568-571). Checked FIRST in
+      // AssignPlaylist and overrides the environment entirely.
+      arrested: Boolean(playerEntity.arrested),
+    }, modes?.musicContext?.() ?? null);
+
     if (modes.frame(dt, now)) {
       requestAnimationFrame(frame);
       return;
@@ -698,20 +743,6 @@ export async function bootExterior(canvas, renderer, params, status) {
       // motor already held here - the clock did not, so a disease
       // aged while the game was paused.
       if (!_overlayHeld) playerTicker.tick(dt, { running: player.running, swimming: player.swimming });
-      // One frame of music context. The mode host reports whether we are
-      // inside and where; outdoors its overlay is null and this stands.
-      musicDirector.update({
-        inside: false,
-        inLocationRect: _musicInLocationRect(),
-        locationType: _musicLocationType(),
-        locationIndex: _musicLocationIndex(),
-        weather,
-        night: isNight(minuteNow()),
-        gameDays: gameDaysNow(),
-        // UpdatePlayerMusicArrested (:568-571). Checked FIRST in
-        // AssignPlaylist and overrides the environment entirely.
-        arrested: Boolean(playerEntity.arrested),
-      }, modes?.musicContext?.() ?? null);
       // AUDIT 18 HOST GAP: levitate/waterWalking/slowFall were written
       // ONLY inside worldModes' dungeon branch and never cleared, so
       // leaving a dungeon while levitating stranded the player in the

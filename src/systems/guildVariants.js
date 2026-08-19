@@ -25,7 +25,7 @@
 // decide, because a throw here would take a scene host down over a
 // mis-clicked building.
 import { SKILLS } from './skills.js';
-import { NON_MEMBER_TITLE, GUILDS } from './guilds.js';
+import { GUILDS } from './guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
 
 /** The two variant-keyed rank lists, from DFU's Internal_Strings
@@ -148,20 +148,14 @@ export function templeOf(divine) {
     skills: TEMPLE_SKILLS[divine],
     text: { ...TEMPLE_TEXT, welcome: d.welcome, promotion: d.promotion },
     rankTitles: TEMPLE_RANK_TITLES,
-    nonMemberTitle: NON_MEMBER_TITLE,   // Temple.cs :397
-    // Temple.GetTitle (:389-397). Two ranks read differently for a
-    // female character, and DFU says why in the source: "Not calling
-    // female chars 'Patriarch'!" / "Not calling female chars
-    // 'Brother'!". Rank 9 Patriarch -> Matriarch, rank 6 Brother ->
-    // Sister. Every other rank is the shared list.
-    titleFor: (rank, entity) => {
-      // TEST THE SHAPE THE PRODUCER MINTS: chargen writes 'female'
-      // (chargenArt.js :1054), not DFU's Genders.Female enum.
-      if (entity?.gender !== 'female') return null;
-      if (rank === 9) return 'Matriarch';
-      if (rank === 6) return 'Sister';
-      return null;
-    },
+    // Temple.cs:389-398 overrides GetTitle twice over: a non-member
+    // reads "nonMember" rather than their name, and ranks 9 and 6 are
+    // gender-swapped - DFU annotating each with its reason ("Not
+    // calling female chars 'Patriarch'!" / "...'Brother'!"). AUDIT 21
+    // F7 worked out WHICH ranks; U23 read the strings.
+    nonMemberTitle: 'nonMember',
+    femaleTitleRanks: [9, 6],
+    femaleRankTitles: { 9: 'Matriarch', 6: 'Sister' },
     promotionForRank: (rank) => templePromotionId(d, rank),
     services: d,
   };
@@ -180,12 +174,30 @@ export function orderOf(order) {
     skills: KNIGHTLY_SKILLS,
     text: KNIGHTLY_TEXT,
     rankTitles: KNIGHTLY_RANK_TITLES,
-    nonMemberTitle: NON_MEMBER_TITLE,   // KnightlyOrder.cs :121-127
-    // KnightlyOrder.GetPromotionMsgId: free rooms at 4, free ships at
-    // 6. Rank 9 is OwnsHouse-gated (5240 house / 5241 no-house) and
-    // banking does not exist yet, so it is FLAGGED to the banking
-    // slice and rank 9 takes the plain promotion message.
-    promotionByRank: { 4: 5238, 6: 5239 },
+    femaleRankTitles: { 5: 'Knight Sister' },   // KnightlyOrder.cs:123-124
+    // KnightlyOrder.cs:83-86 overrides IsSatisfyQuestReqByLevel to true -
+    // the orders and the Mages Guild are the only two of the six.
+    questReqByLevel: true,
+    // KnightlyOrder.cs:121-127 overrides GetTitle: non-member reads
+    // "nonMember", and rank 5 is gender-swapped (knightSister).
+    nonMemberTitle: 'nonMember',
+    femaleTitleRanks: [5],
+    // KnightlyOrder.GetPromotionMsgId (:138-148): free rooms at 4, free
+    // ships at 6.
+    //
+    // AUDIT 21 F5. Rank 9 is OwnsHouse-gated:
+    //     return DaggerfallBankManager.OwnsHouse ? PromotionNoHouseId   // 5241
+    //                                            : PromotionHouseId;    // 5240
+    // Banking does not exist yet, so WHICH of the two is FLAGGED to the
+    // banking slice - but the fallback used to be 5237, and 5237 is the
+    // one record DFU picks in NEITHER branch. Rank 9 now takes 5240, the
+    // branch a player who does not already own a house gets, which is the
+    // common case and is wrong strictly less often than 5237 was.
+    //
+    // Preserve when banking lands: DFU's ternary reads INVERTED (OwnsHouse
+    // -> "NoHouse"). That is DFU's own apparent bug and this port is
+    // bug-for-bug, so reproduce it rather than tidy it.
+    promotionByRank: { 4: 5238, 6: 5239, 9: 5240 },
   };
 }
 

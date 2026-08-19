@@ -6,11 +6,12 @@ import {
   CLASSIC_EPOCH_IN_SECONDS, CLASSIC_GAME_START_TIME, DEFAULT_DATE,
   DAY_NAMES, MONTH_NAMES, BIRTH_SIGN_NAMES, SEASON_NAMES, SEASONS,
   dateToSeconds, dateFromSeconds, dateToClassicMinutes, dateFromClassicMinutes,
-  classicGameStartDate, dateFromElapsedMinutes,
+  classicGameStartDate,
   dayOfYear, monthOfYear, dayOfMonth, minuteOfDay,
   dayName, monthName, birthSignName, seasonValue, seasonName, dateString,
 } from '../src/systems/gameDate.js';
 import { daySinceZero, DAYS_BETWEEN_RANK_CHANGES } from '../src/systems/guilds.js';
+import { CLASSIC_GAME_START_MINUTES } from '../src/systems/worldTick.js';
 
 // S28 - DaggerfallDateTime.cs. Every pin here is against a DFU literal
 // or a statement DFU makes in its own source comments, never against
@@ -102,14 +103,22 @@ test('S28: the guild 28-day gate now has a clock that reaches it', () => {
   // The whole reason the calendar landed: daySinceZero over the port's
   // elapsed-minute counter must move exactly one per game day, so 28
   // days of play crosses DAYS_BETWEEN_RANK_CHANGES and 27 does not.
-  const start = daySinceZero(dateFromElapsedMinutes(0));
-  assert.equal(daySinceZero(dateFromElapsedMinutes(27 * MINUTES_PER_DAY)) - start, 27);
-  assert.equal(daySinceZero(dateFromElapsedMinutes(28 * MINUTES_PER_DAY)) - start, 28);
+  //
+  // AUDIT 21 F2 made the world clock ABSOLUTE - worldMinutes IS the
+  // classic minute count and boots at CLASSIC_GAME_START_TIME - so the
+  // pair of elapsed-minute converters S28 shipped had nobody left to
+  // convert for and were RETIRED. The gate is pinned on the absolute
+  // clock the hosts actually hand it.
+  const at = (m) => dateFromClassicMinutes(CLASSIC_GAME_START_TIME + m);
+  assert.equal(CLASSIC_GAME_START_MINUTES, CLASSIC_GAME_START_TIME);
+  const start = daySinceZero(at(0));
+  assert.equal(daySinceZero(at(27 * MINUTES_PER_DAY)) - start, 27);
+  assert.equal(daySinceZero(at(28 * MINUTES_PER_DAY)) - start, 28);
   assert.ok(27 < DAYS_BETWEEN_RANK_CHANGES && DAYS_BETWEEN_RANK_CHANGES <= 28);
   // and it survives a year boundary, which is what an absolute day
   // number is for
-  const eve = dateFromElapsedMinutes(0);
-  const nextYear = dateFromElapsedMinutes(DAYS_PER_YEAR * MINUTES_PER_DAY);
+  const eve = at(0);
+  const nextYear = at(DAYS_PER_YEAR * MINUTES_PER_DAY);
   assert.equal(nextYear.year, eve.year + 1);
   assert.equal(daySinceZero(nextYear) - daySinceZero(eve), DAYS_PER_YEAR);
 });

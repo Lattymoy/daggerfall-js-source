@@ -96,13 +96,17 @@ export const dateFromClassicMinutes = (minutes) =>
 /** SetClassicGameStartTime (:491-494): 13:30 4th Morning Star 3E405. */
 export const classicGameStartDate = () => dateFromClassicMinutes(CLASSIC_GAME_START_TIME);
 
-/** The port's own bridge, and the only new sentence in this file: the
- *  hosts count ELAPSED classic minutes from the game start, so a live
- *  date is the start plus that. */
-export const classicMinutesFromElapsed = (elapsed) =>
-  CLASSIC_GAME_START_TIME + Math.floor(elapsed);
-export const dateFromElapsedMinutes = (elapsed) =>
-  dateFromClassicMinutes(classicMinutesFromElapsed(elapsed));
+
+// RETIRED AT THE AUDIT 22 MERGE. S28 shipped
+// classicMinutesFromElapsed/dateFromElapsedMinutes because the port's
+// hosts each counted ELAPSED minutes from zero, so the epoch had to be
+// added back on every read. AUDIT 21 F2 (main) made the world clock a
+// single absolute counter that STARTS at CLASSIC_GAME_START_TIME -
+// worldTick.worldMinutes() is already a classic minute count - so
+// adding the epoch again would land the calendar 363 days out. The
+// bridge is gone rather than deprecated: a helper that double-counts
+// is worse than no helper. Read a date with
+// dateFromClassicMinutes(worldMinutes()).
 
 /** GetDayOfYear (:629-633): `(Month * DaysPerMonth) + (Day + 1)`, so it
  *  is 1-based and the first day of the year is 1. Guild.cs's

@@ -218,50 +218,48 @@ combat line numbers below are refreshed with it.
 - `src/characters/playerEntity.js:27` - skills: 30,       // INTERIM flat skills until chargen
 - `src/characters/playerEntity.js:29` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); ...
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): adrenaline rush
-- `src/combat/formulas.js:71` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
-- `src/combat/formulas.js:148` - *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
-- `src/combat/formulas.js:313` - FLAGGED: CalculateProficiencyModifiers pends the career
-- `src/combat/formulas.js:386` - *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
+- `src/combat/formulas.js:76` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
+- `src/combat/formulas.js:153` - *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
+- `src/combat/formulas.js:367` - FLAGGED: CalculateProficiencyModifiers pends the career
+- `src/combat/formulas.js:440` - *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
 - `src/combat/playerWeapon.js:13` - INTERIM (loud): the equipped weapon is an Iron Dagger until the
 - `src/combat/playerWeapon.js:46` - /** INTERIM starting weapon (items arc replaces): Iron Dagger.
 - `src/combat/playerWeapon.js:56` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:83` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
 - `src/combat/weaponRig.js:34` - *                     (FLAGGED at the call sites - their HUD pends),
-- `src/scenes/arrestFlow.js:82` - instead of "You, , are..." (chargen wiring FLAGGED).
-- `src/scenes/arrestFlow.js:140` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
+- `src/scenes/arrestFlow.js:101` - instead of "You, , are..." (chargen wiring FLAGGED).
+- `src/scenes/arrestFlow.js:158` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
+- `src/scenes/arrestFlow.js:218` - FLAGGED, still owed to their own slices: PreventEnemySpawns across the
 - `src/scenes/cityGuards.js:23` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/cityGuards.js:205` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:357` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/droppedLoot.js:16` - FLAGGED loud: pile persistence across saves (the quicksave arc
-- `src/scenes/dungeonContext.js:195` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:520` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:526` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:553` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:968` - exterior spell paths are FLAGGED with their own hosts.
-- `src/scenes/dungeonContext.js:1130` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/exterior.js:366` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:372` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:447` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/exterior.js:513` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:625` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:736` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/dungeonContext.js:196` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:521` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:527` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:554` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:969` - exterior spell paths are FLAGGED with their own hosts.
+- `src/scenes/dungeonContext.js:1131` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/exterior.js:381` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:387` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:536` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:648` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:767` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:152` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:476` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:490` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:496` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:613` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/world.js:668` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:947` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1158` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/worldModes.js:89` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
-- `src/scenes/worldModes.js:130` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + o...
-- `src/scenes/worldModes.js:223` - Person placed in a dungeon is the quest machine's, FLAGGED
-- `src/scenes/worldModes.js:262` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:281` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:324` - onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToSta...
-- `src/scenes/worldModes.js:331` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:1044` - a castle reads as a plain dungeon interior. FLAGGED.
+- `src/scenes/world.js:491` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:505` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:511` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:691` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:978` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1189` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/worldModes.js:103` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
+- `src/scenes/worldModes.js:144` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + o...
+- `src/scenes/worldModes.js:237` - Person placed in a dungeon is the quest machine's, FLAGGED
+- `src/scenes/worldModes.js:277` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:296` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:339` - onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToSta...
+- `src/scenes/worldModes.js:346` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
@@ -274,11 +272,11 @@ combat line numbers below are refreshed with it.
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
 - `src/systems/court.js:7` - People-faction half-delta FLAGGED to the save-side clone).
 - `src/systems/court.js:27` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
-- `src/systems/court.js:125` - *  daysInPrison } (guild rescues FLAGGED). */
+- `src/systems/court.js:176` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:33` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:354` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:594` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:370` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:610` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 - `src/systems/equip.js:170` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/factionRep.js:218` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
@@ -302,8 +300,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/guildServiceFlow.js:252` - Spymaster: null,         // FLAGGED: 402 then the quest offer
 - `src/systems/guildServiceFlow.js:253` - ReceiveArmor: null,      // FLAGGED: the knightly armor gift
 - `src/systems/guildServiceFlow.js:254` - ReceiveHouse: null,      // FLAGGED: banking / house ownership
-- `src/systems/guildVariants.js:186` - banking does not exist yet, so it is FLAGGED to the banking
-- `src/systems/guilds.js:127` - are FLAGGED to the quest slice.
+- `src/systems/guildVariants.js:191` - Banking does not exist yet, so WHICH of the two is FLAGGED to the
+- `src/systems/guilds.js:148` - are FLAGGED to the quest slice.
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/itemInfo.js:5` - U8e's inventory shipped an INTERIM info panel that made up its own
 - `src/systems/itemInfo.js:50` - FLAGGED (AUDIT 22 F11): `artifact` is read here, on the weapon
@@ -318,7 +316,6 @@ combat line numbers below are refreshed with it.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
 - `src/systems/shopStock.js:152` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
 - `src/systems/skills.js:83` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
-- `src/systems/songManager.js:306` - temple falls to Interior rather than inventing an alignment. FLAGGED.
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
 - `src/systems/talk.js:79` - *  FLAGGED to the crime slice - the state lands now, verbatim).
@@ -358,6 +355,59 @@ combat line numbers below are refreshed with it.
 ## Audits
 
 Newest first.
+
+**2026-08-19 - THE AUDIT 21 / AUDIT 22 MERGE.** Two lanes reached the
+same two problems from opposite ends and had to be reconciled by hand
+rather than by the merge driver.
+
+THE CLOCK. AUDIT 21 F2 made the world clock ABSOLUTE - `worldMinutes`
+IS the classic minute count and boots at 523530 - while S28, on this
+branch, had derived that same 523530 from `DaggerfallDateTime`'s
+`SetClassicGameStartTime` and shipped a pair of elapsed-minute
+converters to bridge a RELATIVE counter to it. After the merge the
+bridge had nobody left to cross: `CLASSIC_GAME_START_MINUTES` is now
+re-exported from `gameDate.CLASSIC_GAME_START_TIME` so ONE DFU MEMBER
+still has ONE EXPORT, and `classicMinutesFromElapsed` /
+`dateFromElapsedMinutes` were RETIRED rather than left as a second way
+to say the same thing. `worldModes.gameDate()` and the dungeon's
+`nowMinute` read the absolute clock directly. The 28-day rank gate is
+re-pinned on it.
+
+AND THE MERGE RETIRED A LEDGER ROW. AUDIT 22 F10 had recorded ONE CLOCK
+PER HOST as an unclosed gap - the interior ticker and the dungeon each
+keeping a private `classicMinutes`, so the rank gate, the training
+cooldown and the holiday date all ran short by however long the player
+spent elsewhere. AUDIT 21 F2 had already closed it from the other side:
+both are now read-through VIEWS on `worldTick`'s single module-level
+counter, and audit18.test.js pins it twice - once behaviourally (three
+game-days ticked through one carrier are visible in the other) and once
+structurally (a sweep of `src/` for any classicMinutes-ish binding whose
+initialiser does not read the world clock, which a mutation proved must
+match the SHAPE and not the spelling). A SLICE CLOSES ITS LEDGER ROW,
+and so does a merge: the row is deleted, not annotated.
+
+THE TITLES. AUDIT 21 F7 worked out the STRUCTURE - that Temple,
+KnightlyOrder and DarkBrotherhood each override `GetTitle`, that a
+non-member there reads a localized string and not the player's name,
+and WHICH rank in which guild gender-swaps - but could not read the
+strings, because the sparse DFU clone excluded `Assets/Localization`.
+U23 widened the sparse set and read them. Structure and data met here:
+`getTitle` answers a real rank title where it used to withhold a null,
+`nonMemberTitle` stays the MARKER (never a second copy of the string),
+and `femaleTitleRanks` (which ranks) now travels with `femaleRankTitles`
+(what they say). A declared swap with no string would fall silently
+through to the male form, so the tests pin both halves and the identity
+of the shared tables; five mutations were run against the guilds pin and
+three against the variants pin, and all eight died.
+
+TWO REPAIRS the merge exposed rather than caused. AUDIT 21's
+`court.test.js` F1 and F3 called `realFactions()` unconditionally, so
+they threw rather than skipped with `ARENA2_PATH` unset - the CI half of
+the gate. They now run on a synthetic dict carrying exactly the field
+set `FactionFile` mints, with the People faction filled in on all FOUR
+columns `getPeopleOfCurrentRegion` matches, since a record short of any
+one of them is silently no People faction at all and would have made
+both pins vacuous. Deleting the People debit still fails them.
 
 **2026-08-19 - AUDIT 22, the parity pass over G3 + S26 + S27 + U23-U26.**
 Everything this arc shipped, re-read against the DFU source rather than
@@ -1428,7 +1478,10 @@ light constants. ELEVEN real findings, all rooted and shipped:
 (1) the FP viewmodel rendered ZERO pixels in every state and frame -
 the P9 hole-fix constants overshot the whole rig out of the frustum;
 probe-locked replacement (back 0.25, cast -0.20) via the new standing
-tools/fpProbe.mjs, before/after gallery in public/visual-changes/.
+tools/fpProbe.mjs. The before/after gallery is generated LOCALLY into
+visual-changes/ and is gitignored - AUDIT 21 (doctrine F1) found it under
+public/, which Vite copies into dist/ and deploy.yml publishes, and twelve of
+its fourteen frames carried classic WEAPON*.CIF sprites.
 (2) sampleClip takes SECONDS and all three pose paths passed a PHASE -
 FP strikes lost their back half, enemy swings died at 40-66%, staggers
 cut at a third. (3) pressing use CRASHED on any registered trap (effect

@@ -70,7 +70,8 @@ pose() with its units pins, and tools/fpProbe.mjs - each annotated ON
 ICE at the site. tools/fpsWeaponProbe.mjs is the live path's standing
 probe (real ARENA2 CIFs headless; zero coverage in any state is the
 failure class the voxel path shipped for six weeks). Gallery:
-public/visual-changes/combat-fp/classic-weapon/. Departures at the
+visual-changes/combat-fp/classic-weapon/ (generated locally, gitignored -
+AUDIT 21 doctrine F1 took it out of public/, which publishes). Departures at the
 module head: no FlipHorizontal (right-hand only until a settings
 surface), weaponOffsetHeight 0 (no large HUD yet). Follow-up rollout:
 the exterior/interior hosts (the voxel path was dungeon-only too).
@@ -113,7 +114,7 @@ SIX findings, all rooted and pinned:
    auto-sheathes with the classic "You have no arrows." line
    (FPSWeapon.UpdateWeapon's guard, verbatim).
 6. The standing probe gained silver/steel dye-parity evidence shots
-   (gallery: public/visual-changes/combat-fp/classic-weapon/).
+   (gallery: regenerate locally with tools/fpProbe.mjs; it is not committed).
 
 ## C9 (2026-08-16): the FP-weapon HOST ROLLOUT - SHIPPED
 
