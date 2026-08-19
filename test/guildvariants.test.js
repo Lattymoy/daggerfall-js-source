@@ -7,12 +7,12 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  DIVINES, ORDERS, TEMPLE_DATA, TEMPLE_TEXT, KNIGHTLY_TEXT,
-  templeOf, orderOf, getDivine, getOrder,
+  DIVINES, ORDERS, TEMPLE_DATA, TEMPLE_TEXT, KNIGHTLY_TEXT, TEMPLE_PROMOTION,
+  templeOf, orderOf, getDivine, getOrder, templePromotionId,
 } from '../src/systems/guildVariants.js';
 import {
   GUILDS, INVITATION_ONLY, isJoinableByApplication, joinDecision,
-  calculateNewRank, isEligibleToJoin,
+  calculateNewRank, isEligibleToJoin, promotionTextId,
 } from '../src/systems/guilds.js';
 import { createFactionRep, setReputation } from '../src/systems/factionRep.js';
 import { FactionFile, FACTION_TYPES, GUILD_GROUPS } from '../src/formats/factionFile.js';
@@ -199,4 +199,126 @@ test('variants: every variant guild skill is a real skill id', () => {
   const o = orderOf('Horn');
   for (const s of o.skills) assert.ok(s !== undefined && ids.has(s), 'order skill');
   assert.equal(o.skills.length, 7);
+});
+
+// ===========================================================================
+// AUDIT 21 F11-F15: THE TABLES THEMSELVES.
+//
+// The lane's finding, in one line: TEMPLE_DATA is 8 rows x 14 columns = 112
+// numbers, and the pins checked 4 of them against a literal, range-checked one
+// column, and asserted the other 107 were *of type number*. Scrambling Mara's
+// library/healing/buyPotions from (4,1,2) to (9,3,8) left the suite at 36
+// pass / 0 fail. The same held for every guild skill list (checked for
+// validity, never for content) and for the whole Temple promotion mechanism,
+// which survived five independent mutations.
+//
+// The expected literals below were GENERATED FROM Temple.cs and the subclass
+// files - decoding RankData's positional constructor through its own field
+// assignments (note `makeItems` -> `this.makeMagic`) - and then diffed against
+// the port mechanically. They are not a re-transcription of what the port
+// already says, which would pin the port to itself.
+// ===========================================================================
+
+/** Temple.cs:132-142, through the RankData ctor at :79-97. */
+const TEMPLE_DATA_CSHARP = {
+  Akatosh: { library: 2, healing: 1, buyPotions: 4, makePotions: 5, buyMagic: -1, makeMagic: -1, buySpells: -1, makeSpells: -1, soulGems: -1, summoning: 7, welcome: 5290, promotion: 5245, templeName: 4058, blessing: 709 },
+  Arkay: { library: 3, healing: 0, buyPotions: 1, makePotions: 4, buyMagic: -1, makeMagic: -1, buySpells: -1, makeSpells: -1, soulGems: 4, summoning: 7, welcome: 5287, promotion: 5242, templeName: 4055, blessing: 0 },
+  Dibella: { library: 4, healing: 2, buyPotions: 1, makePotions: 5, buyMagic: -1, makeMagic: -1, buySpells: -1, makeSpells: -1, soulGems: -1, summoning: 7, welcome: 5290, promotion: 5247, templeName: 4059, blessing: 712 },
+  Julianos: { library: 0, healing: 2, buyPotions: -1, makePotions: -1, buyMagic: 3, makeMagic: 5, buySpells: -1, makeSpells: -1, soulGems: -1, summoning: 6, welcome: 6610, promotion: 5246, templeName: 4060, blessing: 710 },
+  Kynareth: { library: 4, healing: 1, buyPotions: -1, makePotions: -1, buyMagic: -1, makeMagic: -1, buySpells: 3, makeSpells: 6, soulGems: -1, summoning: 7, welcome: 5290, promotion: 5249, templeName: 4062, blessing: 717 },
+  Mara: { library: 4, healing: 1, buyPotions: 2, makePotions: 5, buyMagic: -1, makeMagic: -1, buySpells: -1, makeSpells: -1, soulGems: -1, summoning: 7, welcome: 5289, promotion: 5244, templeName: 4057, blessing: 707 },
+  Stendarr: { library: 4, healing: 0, buyPotions: 2, makePotions: 5, buyMagic: -1, makeMagic: -1, buySpells: -1, makeSpells: -1, soulGems: -1, summoning: 7, welcome: 5289, promotion: 5248, templeName: 4061, blessing: 716 },
+  Zenithar: { library: 4, healing: 1, buyPotions: 1, makePotions: 6, buyMagic: -1, makeMagic: -1, buySpells: -1, makeSpells: -1, soulGems: -1, summoning: 8, welcome: 5288, promotion: 5243, templeName: 4056, blessing: 705 },
+};
+
+test('AUDIT 21 F11: all 112 TEMPLE_DATA values, not four of them', () => {
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(TEMPLE_DATA).map(([k, v]) => [k, { ...v }])),
+    TEMPLE_DATA_CSHARP);
+});
+
+/** Temple.cs:144-230 - the per-divine guild skills, in declaration order.
+ *  These are the rank law's ONLY skill input, so a wrong entry silently caps
+ *  every member of that temple a rank low. */
+const TEMPLE_SKILLS_CSHARP = {
+  Akatosh: [SKILLS.Alteration, SKILLS.Daedric, SKILLS.Destruction, SKILLS.Dragonish, SKILLS.LongBlade, SKILLS.Running, SKILLS.Stealth],
+  Arkay: [SKILLS.Axe, SKILLS.Backstabbing, SKILLS.Daedric, SKILLS.Destruction, SKILLS.Medical, SKILLS.Restoration, SKILLS.ShortBlade],
+  Dibella: [SKILLS.Daedric, SKILLS.Etiquette, SKILLS.Illusion, SKILLS.Lockpicking, SKILLS.LongBlade, SKILLS.Nymph, SKILLS.Orcish, SKILLS.Restoration],
+  Julianos: [SKILLS.Alteration, SKILLS.Daedric, SKILLS.Impish, SKILLS.Lockpicking, SKILLS.Mysticism, SKILLS.ShortBlade, SKILLS.Thaumaturgy],
+  Kynareth: [SKILLS.Archery, SKILLS.Climbing, SKILLS.Daedric, SKILLS.Destruction, SKILLS.Dodging, SKILLS.Dragonish, SKILLS.Harpy, SKILLS.Illusion, SKILLS.Jumping, SKILLS.Running, SKILLS.Stealth],
+  Mara: [SKILLS.Archery, SKILLS.CriticalStrike, SKILLS.Daedric, SKILLS.Etiquette, SKILLS.Harpy, SKILLS.Illusion, SKILLS.Medical, SKILLS.Nymph, SKILLS.Restoration, SKILLS.Streetwise],
+  Stendarr: [SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.CriticalStrike, SKILLS.Daedric, SKILLS.Dodging, SKILLS.Medical, SKILLS.Restoration],
+  Zenithar: [SKILLS.BluntWeapon, SKILLS.Centaurian, SKILLS.Daedric, SKILLS.Etiquette, SKILLS.Giantish, SKILLS.Harpy, SKILLS.Mercantile, SKILLS.Orcish, SKILLS.Pickpocket, SKILLS.Spriggan, SKILLS.Streetwise, SKILLS.Thaumaturgy],
+};
+
+test('AUDIT 21 F12: WHICH skills, not just that they are skills', () => {
+  for (const d of Object.keys(DIVINES)) {
+    assert.deepEqual([...templeOf(d).skills], TEMPLE_SKILLS_CSHARP[d], `${d} guild skills`);
+  }
+  // KnightlyOrder.cs:67-75 - one list, shared by all ten orders.
+  const knightly = [SKILLS.Archery, SKILLS.CriticalStrike, SKILLS.Dragonish,
+    SKILLS.Etiquette, SKILLS.Giantish, SKILLS.LongBlade, SKILLS.Medical];
+  for (const o of Object.keys(ORDERS)) {
+    assert.deepEqual([...orderOf(o).skills], knightly, `Order:${o} guild skills`);
+  }
+});
+
+test('AUDIT 21 F13: the Temple promotion mechanism, which had no pin at all', () => {
+  // Temple.cs:31-41. Five mutations of this table and its readers all survived.
+  assert.deepEqual({ ...TEMPLE_PROMOTION }, {
+    buyPotions: 6600, library: 6601, makePotions: 6602, soulGems: 6603, summoning: 6604,
+    healing: 6605, buySpells: 6606, makeSpells: 6607, buyMagic: 6608, makeMagic: 6609,
+    highest: 5241,
+  });
+
+  // RankData.GetPromotionMsgId (Temple.cs:99-125): rank 9 first, then the
+  // services in DECLARATION order, then the divine's own default.
+  const arkay = TEMPLE_DATA.Arkay;
+  assert.equal(templePromotionId(arkay, 9), 5241, 'rank 9 short-circuits before any service');
+  assert.equal(templePromotionId(arkay, 0), 6605, 'healing: 0 -> PromotionHealingId');
+  assert.equal(templePromotionId(arkay, 1), 6600, 'buyPotions: 1 -> PromotionBuyPotionsId');
+  assert.equal(templePromotionId(arkay, 3), 6601, 'library: 3 -> PromotionLibraryId');
+  // ARKAY IS THE PRECEDENCE CASE: makePotions and soulGems are BOTH 4, and
+  // DFU checks makePotions first. Reordering TEMPLE_SERVICE_ORDER inverts
+  // this one answer and nothing else in the table would notice.
+  assert.equal(templePromotionId(arkay, 4), 6602, 'makePotions wins over soulGems at rank 4');
+  assert.equal(templePromotionId(arkay, 5), 5242, 'no service at 5 -> the divine default');
+  assert.equal(templePromotionId(arkay, 7), 6604, 'summoning: 7 -> PromotionSummoningId');
+
+  const jul = TEMPLE_DATA.Julianos;
+  assert.equal(templePromotionId(jul, 0), 6601, 'Julianos library: 0');
+  assert.equal(templePromotionId(jul, 3), 6608, 'Julianos buyMagic: 3');
+  assert.equal(templePromotionId(jul, 5), 6609, 'Julianos makeMagic: 5');
+  assert.equal(templePromotionId(jul, 6), 6604, 'Julianos summoning: 6');
+
+  // and the wiring: templeOf -> promotionForRank -> promotionTextId. Deleting
+  // either half reduces a temple to one constant message per divine.
+  assert.equal(promotionTextId(templeOf('Arkay'), 4), 6602);
+  assert.equal(promotionTextId(templeOf('Julianos'), 3), 6608);
+  assert.equal(promotionTextId(templeOf('Arkay'), 5), 5242);
+});
+
+test('AUDIT 21 F14: the text-record ids are pinned to literals, not to themselves', () => {
+  // Every one of these survived a mutation because the pin asked the mutated
+  // table what it expected. Temple.cs:27-29 and KnightlyOrder.cs:27-31.
+  assert.deepEqual({ ...TEMPLE_TEXT }, { ineligibleBadRep: 745, ineligibleLowSkill: 744, eligible: 740 });
+  assert.deepEqual({ ...KNIGHTLY_TEXT }, {
+    ineligibleBadRep: 751, ineligibleLowSkill: 750, eligible: 752, welcome: 5291, promotion: 5237,
+  });
+  // KnightlyOrder.cs:138-148 - and see F5 for rank 9.
+  assert.deepEqual(orderOf('Rose').promotionByRank, { 4: 5238, 6: 5239, 9: 5240 });
+});
+
+test('AUDIT 21 F15: guildGroup is pinned by value, on the real corpus', () => {
+  // membershipKey(guild) IS guild.guildGroup, so a wrong value silently
+  // changes which guilds collide in a membership slot - and the existing
+  // "count is 2" pins are satisfied by ANY group value at all.
+  assert.equal(GUILD_GROUPS.HolyOrder, 17);
+  assert.equal(GUILD_GROUPS.KnightlyOrder, 9);
+  for (const d of Object.keys(DIVINES)) {
+    assert.equal(templeOf(d).guildGroup, GUILD_GROUPS.HolyOrder, `Temple:${d}`);
+  }
+  for (const o of Object.keys(ORDERS)) {
+    assert.equal(orderOf(o).guildGroup, GUILD_GROUPS.KnightlyOrder, `Order:${o}`);
+  }
 });

@@ -137,6 +137,11 @@ export function templeOf(divine) {
     skills: TEMPLE_SKILLS[divine],
     text: { ...TEMPLE_TEXT, welcome: d.welcome, promotion: d.promotion },
     promotionForRank: (rank) => templePromotionId(d, rank),
+    // Temple.cs:389-398 overrides GetTitle: a non-member reads
+    // "nonMember", not their name, and ranks 9 and 6 are gender-swapped
+    // (matriarch / sister). See guilds.getTitle - AUDIT 21 F7.
+    nonMemberTitle: 'nonMember',
+    femaleTitleRanks: [9, 6],
     services: d,
   };
 }
@@ -153,11 +158,29 @@ export function orderOf(order) {
     factionId,
     skills: KNIGHTLY_SKILLS,
     text: KNIGHTLY_TEXT,
-    // KnightlyOrder.GetPromotionMsgId: free rooms at 4, free ships at
-    // 6. Rank 9 is OwnsHouse-gated (5240 house / 5241 no-house) and
-    // banking does not exist yet, so it is FLAGGED to the banking
-    // slice and rank 9 takes the plain promotion message.
-    promotionByRank: { 4: 5238, 6: 5239 },
+    // KnightlyOrder.cs:83-86 overrides IsSatisfyQuestReqByLevel to true -
+    // the orders and the Mages Guild are the only two of the six.
+    questReqByLevel: true,
+    // KnightlyOrder.cs:121-127 overrides GetTitle: non-member reads
+    // "nonMember", and rank 5 is gender-swapped (knightSister).
+    nonMemberTitle: 'nonMember',
+    femaleTitleRanks: [5],
+    // KnightlyOrder.GetPromotionMsgId (:138-148): free rooms at 4, free
+    // ships at 6.
+    //
+    // AUDIT 21 F5. Rank 9 is OwnsHouse-gated:
+    //     return DaggerfallBankManager.OwnsHouse ? PromotionNoHouseId   // 5241
+    //                                            : PromotionHouseId;    // 5240
+    // Banking does not exist yet, so WHICH of the two is FLAGGED to the
+    // banking slice - but the fallback used to be 5237, and 5237 is the
+    // one record DFU picks in NEITHER branch. Rank 9 now takes 5240, the
+    // branch a player who does not already own a house gets, which is the
+    // common case and is wrong strictly less often than 5237 was.
+    //
+    // Preserve when banking lands: DFU's ternary reads INVERTED (OwnsHouse
+    // -> "NoHouse"). That is DFU's own apparent bug and this port is
+    // bug-for-bug, so reproduce it rather than tidy it.
+    promotionByRank: { 4: 5238, 6: 5239, 9: 5240 },
   };
 }
 

@@ -278,9 +278,9 @@ combat line numbers below are refreshed with it.
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 - `src/systems/equip.js:170` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/guilds.js:39` - FLAGGED loud - RANK TITLES. DFU reads them from its own
-- `src/systems/guilds.js:113` - // are FLAGGED to the quest slice.
-- `src/systems/guilds.js:236` - /** GetTitle (:180-183). FLAGGED - see the header: the rank titles live
-- `src/systems/guildVariants.js:158` - // banking does not exist yet, so it is FLAGGED to the banking
+- `src/systems/guilds.js:134` - // are FLAGGED to the quest slice.
+- `src/systems/guilds.js:266` -  *  FLAGGED - see the header: the rank titles live in DFU's localization
+- `src/systems/guildVariants.js:174` - // Banking does not exist yet, so WHICH of the two is FLAGGED to the
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).
