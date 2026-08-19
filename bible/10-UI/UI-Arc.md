@@ -855,11 +855,11 @@ a helm cuts out the hair; the port only skips the item's own masked
 pixels. The obvious fix - writing transparent black - is WRONG for
 this architecture because the SCBG is baked into the same buffer, so
 it needs either an SCBG restore or a layering restructure; measured
-divergence is 6-89 px per item, cosmetic); the KRAVE01.HS2
-Order-of-the-Raven override (F21 - real, affects 10 Dwynnen towns,
-needs otherNames threaded through the pool merge); and Chain2
+divergence is 6-89 px per item, cosmetic); and Chain2
 reachability (the constant is fixed, but nothing mints 0x0103 until
-classic-save import exists).
+classic-save import exists). The KRAVE01.HS2 Order-of-the-Raven
+override (F21) SHIPPED in AUDIT 18 - otherNames needed no threading,
+it was already on dfBlock.rmbBlock.fldHeader.
 
 All four native-window probes re-run green. Suite 480/105.
 

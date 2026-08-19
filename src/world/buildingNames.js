@@ -43,7 +43,10 @@ export const GEM_STORES_B = Object.freeze(['Gems', 'Gemstones', 'Jewelry', 'Jewe
 export const PAWN_STORES_B = Object.freeze(['Pawnshop', 'Pawnbrokers', 'Used Supplies', 'Used Gear', 'Used Equipment', 'Used Merchandise', 'Hockshop', 'Antiquities']);
 export const FURNITURE_STORES_B = Object.freeze(['Furniture', 'Furnishings', 'Interior Design', 'Furniture Shop', 'Decor', 'Carpentry', 'Woodworking', 'Crafts', 'Woodwork']);
 export const LIBRARY_STORES_B = Object.freeze(['Library', 'Bookroom', 'Athenaeum', 'Public Library', 'Historians', 'Bookroom', 'Seminary', 'Lyceum']);
-export const RULER_TITLES = Object.freeze({ 1: 'King', 2: 'Queen', 3: 'Duke', 4: 'Duchess', 5: 'Marquis', 6: 'Marquise', 7: 'Count', 8: 'Countess', 9: 'Baron', 10: 'Baroness' });
+// MacroHelper.GetRulerTitle: twelve explicit cases, then `default: "Lord"`.
+// 11 is written out even though it equals the default - the table is a
+// transcription of the switch, and 'Lady' is reachable only via case 12.
+export const RULER_TITLES = Object.freeze({ 1: 'King', 2: 'Queen', 3: 'Duke', 4: 'Duchess', 5: 'Marquis', 6: 'Marquise', 7: 'Count', 8: 'Countess', 9: 'Baron', 10: 'Baroness', 11: 'Lord', 12: 'Lady' });
 export const rulerTitle = (ruler) => RULER_TITLES[ruler] ?? 'Lord';
 
 const STORE_B = {

@@ -1,12 +1,29 @@
 // Sky backdrop renderer. The data logic follows DaggerfallSky.cs (MIT,
 // Daggerfall Workshop): record 0 is the east half, record 1 the west half;
 // frames 0-31 sweep sunrise to noon; afternoon frames 32-63 reuse frame
-// 63 - n MIRRORED; the fill color above the strip is west pixel 0; at night
-// the NITE0?I0.IMG matching the sky group replaces both halves (0-7 -> 3,
-// 8-15 -> 1, 16-23 -> 2, else 0).
+// 63 - n with the two halves SWAPPED (DFU's flip is a hemisphere swap, not
+// a pixel mirror - PromoteToTexture:266-286 only crosses west/east over);
+// at night the NITE0?I0.IMG matching the sky group replaces both halves
+// (0-7 -> 3, 8-15 -> 1, 16-23 -> 2, else 0), with the right-edge seam fix
+// of LoadVanillaNightSky:605-610.
+// Two DISTINCT colors come out of a panorama and must not be confused:
+//   - clearColor: verbatim DaggerfallSky.cs:554/:611 `colors.west[0]`.
+//     GetColor32 emits bottom-up (BaseImageFile.cs:246-250), so element 0
+//     is the source image's BOTTOM row = the HORIZON. This is DFU's
+//     cameraClearColor and, via SetSkyFogColor:325/:329, its fogColor.
+//     The exterior hosts read it for the distance haze.
+//   - fillColor: the zenith texel, used for the region of OUR cylinder
+//     ABOVE the 220-row strip. DFU's screen-space layout has no such
+//     region (its clear colour fills BELOW the strip), so this is a
+//     presentation value, not a parity one.
 // The presentation is ours (Port-Doctrine): DFU scrolls two screen-space
 // quads by camera angles; we render one fullscreen pass that maps the view
-// ray to a cylinder - each 512-wide half spans 180 degrees of azimuth
+// ray to a cylinder. The afternoon half is additionally REFLECTED here,
+// which DFU never does - under our azimuth convention (azimuth 0 = +X, map
+// east, starts the east half) reflecting the swapped halves is what keeps
+// the sun travelling east-to-west, the same thing DFU's screen-space rects
+// achieve by re-centring. Documented equivalence, not a verbatim step.
+// Each 512-wide half spans 180 degrees of azimuth
 // (anglePerPixel = PI/512, so the 220-row strip covers ~77.3 degrees of
 // elevation above the horizon), the same angular size DFU's layout implies.
 // Azimuth 0 (+X, map east) starts the east half. Documented equivalence.
@@ -29,8 +46,10 @@ export function nightSkyImageName(skyIndex) {
  * Build the 1024-wide combined panorama for a day frame 0-63.
  * Morning (n < 32): [east | west] of frame n.
  * Afternoon (n >= 32): [mirror(west) | mirror(east)] of frame 63 - n, so the
- * sun side migrates east to west across the day, exactly as DFU's flip.
- * Also returns the fill color above the strip (west pixel 0, verbatim).
+ * sun side migrates east to west across the day - DFU's hemisphere swap
+ * plus our azimuth-convention reflection (see the header).
+ * Returns clearColor (verbatim west element 0 = the horizon, DFU's
+ * cameraClearColor/fogColor) and fillColor (our above-strip zenith fill).
  * @param {SkyFile} skyFile
  * @param {number} frame 0-63
  */
@@ -57,20 +76,31 @@ export function buildDaySkyPanorama(skyFile, frame) {
       }
     }
   }
-  // Fill color: west pixel 0 of DFU's (top-down) array = first pixel of the
-  // LAST row in our bottom-up buffer.
+  // Verbatim DaggerfallSky.cs:554 `colors.clearColor = colors.west[0]`.
+  const wc = west.colors;
+  const clearColor = [wc[0] / 255, wc[1] / 255, wc[2] / 255];
+  // Ours: the zenith texel fills the cylinder above the strip.
   const top = ((h - 1) * w) * 4;
-  const clearColor = [west.colors[top] / 255, west.colors[top + 1] / 255, west.colors[top + 2] / 255];
-  return { colors: out, width: w * 2, height: h, clearColor };
+  const fillColor = [wc[top] / 255, wc[top + 1] / 255, wc[top + 2] / 255];
+  return { colors: out, width: w * 2, height: h, clearColor, fillColor };
 }
 
-/** Duplicate a night IMG (512x219) across both halves. */
+/**
+ * Duplicate a night IMG (512x219) across both halves, with the right-edge
+ * seam fix of LoadVanillaNightSky (DaggerfallSky.cs:605-610):
+ *   for (y...) { pos = y*width + width-2; colors[pos+1] = colors[pos]; }
+ * i.e. the last column is overwritten by its neighbour. Sourcing column
+ * w-2 for x == w-1 is the same output without mutating the caller's array
+ * (DFU applies it BEFORE reading clearColor, but element 0 is column 0 and
+ * so is untouched either way).
+ */
 export function buildNightSkyPanorama(color32) {
   const { width: w, height: h, colors: src } = color32;
   const out = new Uint8ClampedArray(w * 2 * h * 4);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w * 2; x++) {
-      const s = (y * w + (x % w)) * 4;
+      const col = x % w;
+      const s = (y * w + (col === w - 1 ? w - 2 : col)) * 4;
       const d = (y * w * 2 + x) * 4;
       out[d] = src[s];
       out[d + 1] = src[s + 1];
@@ -78,9 +108,11 @@ export function buildNightSkyPanorama(color32) {
       out[d + 3] = 255;
     }
   }
+  // Verbatim DaggerfallSky.cs:611 `skyColors.clearColor = skyColors.west[0]`.
+  const clearColor = [src[0] / 255, src[1] / 255, src[2] / 255];
   const top = ((h - 1) * w) * 4;
-  const clearColor = [src[top] / 255, src[top + 1] / 255, src[top + 2] / 255];
-  return { colors: out, width: w * 2, height: h, clearColor };
+  const fillColor = [src[top] / 255, src[top + 1] / 255, src[top + 2] / 255];
+  return { colors: out, width: w * 2, height: h, clearColor, fillColor };
 }
 
 /** Fallback panorama when SKY??.DAT is unavailable (the mobile lean
@@ -101,7 +133,13 @@ export function buildFallbackSkyPanorama() {
       out[d] = r; out[d + 1] = g; out[d + 2] = b; out[d + 3] = 255;
     }
   }
-  return { colors: out, width: w, height: h, clearColor: [top[0] / 255, top[1] / 255, top[2] / 255] };
+  return {
+    colors: out, width: w, height: h,
+    // clearColor is the horizon end of the gradient (DFU's west[0] role);
+    // fillColor is the zenith end, above the strip.
+    clearColor: [bot[0] / 255, bot[1] / 255, bot[2] / 255],
+    fillColor: [top[0] / 255, top[1] / 255, top[2] / 255],
+  };
 }
 
 
@@ -140,7 +178,7 @@ void main() {
   float elevation = asin(clamp(dir.y, -1.0, 1.0));
   float u = fract(azimuth / 6.28318530718);
   float v = elevation / uVSpan;
-  vec3 color = v > 1.0 ? uClear : texture(uSky, vec2(u, clamp(v, 0.0, 1.0))).rgb;
+  vec3 color = v > 1.0 ? uClear : texture(uSky, vec2(u, clamp(v, 0.0, 1.0))).rgb;  // uClear = fillColor
   outColor = vec4(mix(color, uFogColor, uFogMix), 1.0);
 }`;
 
@@ -191,7 +229,10 @@ export class SkyRenderer {
     gl.bindVertexArray(null);
 
     this.texture = null;
+    // clearColor = DFU's cameraClearColor/fogColor (horizon); fillColor
+    // paints our cylinder above the strip (zenith). See the header.
     this.clearColor = new Float32Array([0.53, 0.7, 0.92]);
+    this.fillColor = new Float32Array([0.53, 0.7, 0.92]);
     this.vSpan = 220 * SKY_ANGLE_PER_PIXEL;
   }
 
@@ -210,6 +251,7 @@ export class SkyRenderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     this.clearColor = new Float32Array(pano.clearColor);
+    this.fillColor = new Float32Array(pano.fillColor ?? pano.clearColor);
     this.vSpan = pano.height * SKY_ANGLE_PER_PIXEL;
   }
 
@@ -224,7 +266,7 @@ export class SkyRenderer {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.uniform1i(this.uSky, 0);
-    gl.uniform3fv(this.uClear, this.clearColor);
+    gl.uniform3fv(this.uClear, this.fillColor);
     gl.uniform1f(this.uYaw, yaw);
     gl.uniform1f(this.uPitch, pitch);
     gl.uniform1f(this.uTanHalfFov, Math.tan(fovY / 2));

@@ -118,8 +118,8 @@ test('world: ground tilemap flip and grass override', () => {
   assert.equal(tiles[15][2].flipped, true);
   assert.equal(tiles[0][5].record, src[5][15].textureRecord);
 
-  // Record >= 56 resets to grass 8.
-  assert.deepEqual(tiles[0][3], { record: 8, rotated: false, flipped: false });
+  // Record >= 56 resets to grass: DFU's tilemap index 8 == texture record 2.
+  assert.deepEqual(tiles[0][3], { record: 2, rotated: false, flipped: false });
 
   assert.equal(GROUND_OFFSET, -1);
   assert.equal(GROUND_TILE_SIZE, 256);
@@ -363,12 +363,14 @@ test('world: MAGEAA00 city lights pinned - both verbatim paths', { skip: skipRea
   assert.equal(lights.length, 3);
 
   // Same lantern as the archive-210 flat pin (84.325, -0.05, 43.45): the
-  // LIGHT uses -Y + size.h (record 29 scaled height 4) instead of the -6
-  // billboard offset, so y = (4 + 4) * 0.025 = 0.2. Cross-checks both
-  // verbatim formulas on real data.
+  // LIGHT uses -YPos + nativeSize.y (record 29 native scaled height 160)
+  // instead of the -6 billboard offset, and DFU scales the SUM:
+  // y = (4 + 160) * 0.025 = 4.1. getScaledSize hands us world units, so
+  // size.h (= 4) is added AFTER the multiply. Both verbatim formulas on
+  // real data.
   assert.deepEqual(size(29), { w: 0.525, h: 4 });
   approx(lights[0].x, 84.325);
-  approx(lights[0].y, 0.2);
+  approx(lights[0].y, 4.1);
   approx(lights[0].z, 43.45);
 });
 

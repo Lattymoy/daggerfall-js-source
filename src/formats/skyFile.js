@@ -5,8 +5,10 @@
 //   - 64 raw indexed frames (record * 32 + frame) of 512x220 at offset
 //     549120. Record 0 is the EAST half, record 1 the WEST half (the
 //     DaggerfallSky consumer maps them so; the file itself has no names).
-//   - 32 frames sweep sunrise to noon; afternoon reuses frame 63 - n
-//     mirrored, and DFU's top fill color is west pixel 0.
+//   - 32 frames sweep sunrise to noon; afternoon reuses frame 63 - n with
+//     the halves swapped. DFU's cameraClearColor/fogColor is west ELEMENT
+//     0 of getColor32's bottom-up array, i.e. the source image's BOTTOM
+//     (horizon) row - not the zenith.
 // getColor32 keeps the base convention: bottom-up rows, per-FRAME palette.
 
 import { DFPalette } from './dfPalette.js';

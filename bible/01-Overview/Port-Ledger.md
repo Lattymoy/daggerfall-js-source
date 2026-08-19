@@ -17,6 +17,7 @@ work queue routed to arcs.
 | Billboards | Vertex-shader expansion, Y-locked, batched per (archive, record) instead of Unity GameObjects/BillboardBatch | Renderer-side |
 | FaceUVTool arithmetic | JS doubles instead of C# float mix; (Int32) casts become Math.trunc. AUDIT 18 MEASURED THE COST for the first time, by compiling DaggerfallConnect's own FaceUVTool under Mono and dumping both sides over the whole ARCH3D corpus: **52,505 of 1,917,087 UVs (2.74%) differ from stock DFU**, each by a raw unit or two (1/16 texel). The departure stands - but 'validated against corpus' had never meant bit-identical, and now says so. A further **1,803 UVs still differ from DFU compiled AT MATCHED PRECISION** (float widened to double, reciprocal normalize): that residual is NOT explained by this row and is queued in C. | Documented in faceUVTool.js, measured against the C# in AUDIT 18 |
 | Data access | Bytes in, objects out; no FileProxy/disk-usage modes | Runtime difference |
+| Sky fill ABOVE the strip | A panorama returns two colours. `clearColor` is verbatim DaggerfallSky's `colors.west[0]` (getColor32 element 0 = the source image's HORIZON row); it is DFU's cameraClearColor/fogColor and drives the outdoor haze in both exterior hosts. `fillColor` is the ZENITH texel, painted on the region of our cylinder above the 220-row strip - DFU's screen-space layout has no such region (its clear colour fills BELOW the strip). Presentation-only; the parity value is never taken from the zenith. | AUDIT 18 (F2/F5) |
 | Engine-internal randomness (terrain noise + nature scatter) | Ken Perlin reference improved noise (perlin.js) in place of Unity's Mathf.PerlinNoise, and umRandom seeded by the verbatim terrain key in place of UnityEngine.Random for nature scatter - neither engine PRNG is in DFU source; same role and statistics, different concrete samples; all pins pin our pipeline. The beach-line jitter and NextInt/NextFloat primitives are NOT departures - Unity.Mathematics Random is open MIT source and umRandom.js is a byte-exact 1:1 translation | APPROVED by Mac (option A, post-M9 audit): the substitutes are canonical for this port; bit parity with Unity engine PRNGs is out of scope |
 
 | WebAudio playback engine (A1) | Unity AudioSource/3D audio -> WebAudio (PannerNode linear falloff, gesture-gated context, lazy 8-bit PCM decode). The DATA path stays 1:1: SoundClips indices, GetSwingSound pitch table, PlayHitSound roll families, EnemySounds attract shape (radius 16, delay 3..9, 80/20 bark/move, humans silent, attack 50%), door clips. |
@@ -68,11 +69,13 @@ World layout:
   is a dead code path on classic data and only fires for mod-injected
   buildings. Verbatim is provably identical to any fix.
 - Ground tiles read [x][15 - y]; scenery skips records < 1; tile records
-  >= 56 reset to grass 8; offsets propsOffsetY -4, blockFlatsOffsetY -6,
+  >= 56 reset to grass (DFU's tilemap index 8 == texture record 2);
+  offsets propsOffsetY -4, blockFlatsOffsetY -6,
   natureFlatsOffsetY -2; classic data never sets model scale.
-- City LIGHTS (archive 210) place at -Y + size.y where size.y is the SCALED
-  billboard height added to native units pre-scale (as DFU wrote it), and
-  the light Y differs from the billboard's -6 offset by design.
+- City LIGHTS (archive 210) place at (-Y + size.y) * GlobalScale where
+  size.y is GetScaledBillboardSize's NATIVE height (MeshReader.cs:549-568
+  applies no GlobalScale), and the light Y differs from the billboard's -6
+  offset by design.
 - ModelDoor extraction: door Index resets per submesh (DFU's doorCount
   scope); archive 156 (Scourg exterior) only exempts the base-archive
   reduction and never becomes a door; ruin-enter 331 record 0 is plain

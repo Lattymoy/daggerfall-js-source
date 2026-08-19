@@ -803,10 +803,13 @@ arithmetic touching no port code - and three stale flags deleted that
 the grep-regenerated open-flags list had been re-publishing as live
 work (two retired HUD-text flags, one Equip flag U8g had closed).
 DEFERRED with reasons recorded: the paperdoll mask pass (cosmetic,
-and the obvious fix is wrong for this architecture), the KRAVE01.HS2
-Order-of-the-Raven override (real, 10 Dwynnen towns, needs otherNames
-threading), and Chain2 reachability (constant fixed; nothing mints it
-until classic-save import).
+and the obvious fix is wrong for this architecture) and Chain2
+reachability (constant fixed; nothing mints it until classic-save
+import). The KRAVE01.HS2 Order-of-the-Raven override SHIPPED in
+AUDIT 18 - the "needs otherNames threading" blocker was stale
+(otherNames has always been at dfBlock.rmbBlock.fldHeader.otherNames);
+it is now in talkTopics.mergeNamedBuildings and fires on 16 Dwynnen
+buildings across 16 towns, pinned over the real corpus.
 
 S3c/U9 CHARGEN (2026-08-18): the loudest INTERIM retires - the player
 is no longer a Breton male face 0 with flat skills. Grepping first

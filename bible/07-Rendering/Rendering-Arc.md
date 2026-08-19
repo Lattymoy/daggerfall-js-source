@@ -89,9 +89,11 @@ the corpus test.
 One point light per archive-210 flat, verbatim RMBLayout AddLights/AddLight
 positions on both paths: misc flats at (X, -Y + size.y, Z + 4096) * scale
 and exterior-subrecord flats with the unrotated (subX, 0, -subZ) offset.
-As-written DFU quirk kept: size.y is the SCALED billboard size added to
-native units before the scale multiply (contributes size.y * 0.025) - and
-the light Y intentionally differs from the billboard's blockFlatsOffsetY.
+size.y is DFU's GetScaledBillboardSize, which returns NATIVE units
+(MeshReader.cs:549-568), added inside the vector that is then scaled - so
+a record-29 lantern lands at (4 + 160) * 0.025 = 4.1, not 0.2. Our
+getScaledSize returns world units, so the port adds it after the multiply.
+The light Y intentionally differs from the billboard's blockFlatsOffsetY.
 Light properties from the DaggerfallLight [City] prefab: point, range 18,
 intensity 1, white. Renderer: solid program gains a 16-slot point-light
 loop (world-position varying, N.L, squared linear falloff to range -
@@ -115,11 +117,16 @@ per-frame palettes at 776-stride (+8 header) from offset 0, 64 raw
 record 1 WEST; per-frame-palette getColor32 with the repo's bottom-up
 convention. All 32 SKY files load; SKY16 frame sums pinned.
 Consumer logic follows DaggerfallSky.cs: frames 0-63 across the day,
-afternoon uses frame 63 - n MIRRORED ([mirror(west)|mirror(east)] - the
-mirror law is pinned as a test against real frames 6/57); the fill above
-the strip is west pixel 0; night swaps to the NITE0?I0.IMG of the sky
-group (0-7 -> 3, 8-15 -> 1, 16-23 -> 2, else 0) duplicated across both
-halves. Presentation is ours (documented equivalence): one fullscreen
+afternoon uses frame 63 - n with the halves SWAPPED (DFU's flip is a
+hemisphere swap only; the extra reflection is ours, the equivalence our
+azimuth convention needs - pinned against real frames 6/57). Two colors
+come out of a panorama and are not the same: clearColor is verbatim
+`colors.west[0]` = element 0 of the bottom-up array = the HORIZON row,
+which is DFU's cameraClearColor and its fogColor; fillColor is the
+zenith texel our cylinder paints ABOVE the strip, a region DFU's
+screen-space layout does not have. Night swaps to the NITE0?I0.IMG of
+the sky group (0-7 -> 3, 8-15 -> 1, 16-23 -> 2, else 0) duplicated
+across both halves, with LoadVanillaNightSky's right-edge seam fix. Presentation is ours (documented equivalence): one fullscreen
 cylindrical pass - each 512-wide half spans 180 degrees (anglePerPixel
 PI/512, so the strip covers ~77.3 degrees of elevation), azimuth 0 (+X,
 map east) starts the east half - replacing DFU's screen-space scrolled
@@ -370,8 +377,9 @@ factors, camera position extracted from the view matrix each frame
 (numeric round-trip verified); the sky pass gains a fogMix (heavy fog
 swallows the sky, mix = 1 - exp(-density * 800)). EQUIVALENCES: the R2
 Fog WINDOW style is wired to WeatherType.Fog (DFU defines it, never
-wires it); outdoor fog COLOR is the live sky horizon fill (upstream's
-literal fogColor TODO wishes for this); shadowStrength has no consumer.
+wires it); outdoor fog COLOR is DaggerfallSky.SetSkyFogColor's cameraClearColor
+(= west element 0, the sky horizon), verbatim; shadowStrength has no
+consumer.
 Scenes: exterior + world take ?weather= and ?wseed (deterministic sky
 variant); dungeon and interior apply their verbatim always-on fog.
 Proofs: heavy fog collapses the far band to the fog color (stddev 4.6
