@@ -53,6 +53,7 @@ import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes, ensureAudio } from './shared.js';
+import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
   MISSILE_LIFESPAN_S, isDamageHealthEffect,
@@ -632,7 +633,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     (playerEntity.fatigue ?? 0) === maxFatigue(playerEntity) &&
     ((playerEntity.magicka ?? 0) === (playerEntity.maxMagicka ?? 0) || hasSpecialAbility(playerEntity.career, SPECIAL_ABILITY.NoRegenSpellPoints));
   const _restDeps = {
-    advanceMinutes: (n) => { classicMinutes += n; },   // the round loop catches the magic rounds up
+    advanceMinutes: (n) => { classicMinutesRef.value += n; },   // the round loop catches the magic rounds up
     tickVitals: () => {
       playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + healthRecoveryRate(playerEntity, { day: false, inside: true }));
       playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + fatigueRecoveryRate(maxFatigue(playerEntity)));
@@ -715,7 +716,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const lines = out.inWater ? [EXHAUSTED_IN_WATER] : rscLines(out.textId);
     if (!activeOverlay && lines) { activeOverlay = new ActionTextBox(lines); _exhaustedShowing = true; }
     if (out.kind === 'rest') {
-      classicMinutes += 60;   // RaiseTime(1 hour) - the round loop catches up the magic rounds
+      classicMinutesRef.value += 60;   // RaiseTime(1 hour) - the round loop catches up the magic rounds
       playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + out.health);
       playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + out.fatigue);
       playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + out.magicka);
@@ -1149,7 +1150,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
   // S3b: the classic clock for skill-raise checks - dt * TimeScale
   // (DFU default 12) in minutes; RaiseSkills gates itself at 360.
-  let classicMinutes = 0;
+  // AUDIT 21 F2: a READ-THROUGH on the one world clock. This used to be a
+  // private accumulator per built context, so every dungeon entry started
+  // the day count over - which made a disease caught underground get
+  // LONGER each time you walked out, and re-fired SongManager's "a new day
+  // re-picks" on every crawl.
+  const classicMinutesRef = {
+    get value() { return worldMinutes(); },
+    set value(v) { setWorldMinutes(v); },
+  };
   async function ensureMissileBatch(m) {
     if (m.batch !== null) return;
     m.batch = false;   // in-flight guard
@@ -1233,7 +1242,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             const shooter = m.shooterFoe;
             const dmg = foeDeps && shooter ? foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {
               weapon: m.weapon,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
-              onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(classicMinutes) }),   // S19b: poisoned arrows
+              onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),   // S19b: poisoned arrows
             }) : 0;
             hurtPlayer(dmg);
             addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
@@ -1371,7 +1380,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {
       weapon: wpn,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
       onMonsterHit: (att, tgt, hit) => onMonsterHit(att, tgt, hit, {
-        currentDay: Math.floor(classicMinutes / MINUTES_PER_DAY), sinks: playerSinks,
+        currentDay: Math.floor(classicMinutesRef.value / MINUTES_PER_DAY), sinks: playerSinks,
         castParalyze: () => {   // S19: spider/scorpion free-cast Spider Touch (66)
           const sp = spellsByIndex?.get(SPIDER_TOUCH_SPELL_INDEX);
           if (sp) castEnemySpell(f, sp, true);
@@ -1379,7 +1388,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }),
       // S19b: a damaging poisoned-weapon hit infects (and the
       // formulas clear the weapon's poison)
-      onInflictPoison: (att, tgt, pt) => inflictPoison(foeDeps.playerEntity, pt, false, { currentMinute: Math.floor(classicMinutes) }),
+      onInflictPoison: (att, tgt, pt) => inflictPoison(foeDeps.playerEntity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),
     });
     if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), 1.1);   // the player takes the hit (PlayerFootsteps families)
     hurtPlayer(dmg);
@@ -1485,7 +1494,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // sharedStealthMinute = PlayerEntity.TimeOfLastStealthCheck: the
     // Stealth tally fires once per classic minute ACROSS all foes.
     const _senses = {
-      gameMinutes: Math.floor(classicMinutes),
+      gameMinutes: Math.floor(classicMinutesRef.value),
       playerStealth: skillValue(playerEntity, SKILLS.Stealth),
       movingLessThanHalfSpeed: _activity.movingLessThanHalfSpeed ?? true,
       playerBlending: isBlending(playerEntity),
@@ -1499,10 +1508,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // character who stayed above ground never aged an effect, never
     // progressed a disease, never drained fatigue and NEVER GAINED A
     // LEVEL. The FOE half stays here: it walks this host's foe list.
-    const _prevMinute = Math.floor(classicMinutes);
+    const _prevMinute = Math.floor(classicMinutesRef.value);
     const _tick = tickPlayerMinutes({
       entity: playerEntity,
-      classicMinutes,
+      classicMinutes: classicMinutesRef.value,
       dt,
       sinks: playerSinks,
       activity: _activity,
@@ -1515,9 +1524,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
       },
     });
-    classicMinutes = _tick.classicMinutes;
+    classicMinutesRef.value = _tick.classicMinutes;
     const raised = _tick.raised;
-    for (let r = _prevMinute; r < Math.floor(classicMinutes); r++) {
+    for (let r = _prevMinute; r < Math.floor(classicMinutesRef.value); r++) {
       for (const f of foes) {
         if (f.dead) continue;
         updatePoisons(f.entity, r + 1, foeSinks(f), Math.random);
@@ -1797,7 +1806,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // archive: 4,232 dungeons, 3,769 distinct keys, near-uniform across
     // the 15-song list.
     /** The host's cumulative clock, for the music context's gameDays. */
-    get classicMinutes() { return classicMinutes; },
+    get classicMinutes() { return classicMinutesRef.value; },
     musicSeed: dungeonKey(
       (dfLocation?.dungeon?.recordElement?.header?.unknown2 ?? 0) & 0xffff,
       dfLocation?.regionIndex ?? 0),
@@ -1922,7 +1931,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     reportInput(keys, pitch) { _inputState = `keys:${keys} pitch:${pitch.toFixed(2)}`; },
     quickSave() {
       const snap = snapshotPlayer(playerEntity, {
-        position: lastPlayerFeet, classicMinutes,
+        position: lastPlayerFeet, classicMinutes: classicMinutesRef.value,
         readiedSpellIndex: readiedSpell?.index ?? null,
         locationKey: _locationKey,
         world: collectWorld(),
@@ -1935,7 +1944,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!snap) { hudText.add('No saved game.'); return; }
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { hudText.add('Save version mismatch.'); return; }
-      classicMinutes = extras.classicMinutes ?? classicMinutes;
+      classicMinutesRef.value = extras.classicMinutes ?? classicMinutesRef.value;
       readiedSpell = extras.readiedSpellIndex != null ? spellsByIndex?.get(extras.readiedSpellIndex) ?? null : null;
       if (extras.world && extras.locationKey === _locationKey) applyWorld(extras.world);
       else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends

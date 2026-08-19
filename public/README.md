@@ -3,8 +3,17 @@
 Vite serves this directory at the site root, so `public/logo.png` is
 fetched as `logo.png`.
 
-Nothing here is game data. Port-Doctrine keeps ARENA2 out of the repo
-permanently: the readers load the user's own files at runtime (dev via
+Nothing here is game data - and AUDIT 21 found that sentence FALSE, so it
+is now enforced rather than asserted. Fourteen before/after gallery frames
+lived under `public/visual-changes/`, twelve of them carrying classic
+`WEAPON*.CIF` sprites upscaled onto the probe's magenta clear, and because
+Vite serves this directory verbatim every one of them shipped to GitHub
+Pages. A RENDER OF GAME DATA IS GAME DATA: the galleries are generated
+locally by `tools/fpProbe.mjs`, are gitignored, and do not live here.
+`test/doctrine.test.js` fails the suite if a tracked file under `public/`
+is not on the allow-list below.
+
+Port-Doctrine keeps ARENA2 out of the repo permanently: the readers load the user's own files at runtime (dev via
 the vite middleware in `vite.config.js`, production via the folder
 picker persisted in IndexedDB). What lives here is artwork that is
 *ours*, which is a different thing entirely and does ship with the

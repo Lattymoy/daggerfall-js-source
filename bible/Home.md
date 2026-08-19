@@ -227,33 +227,32 @@ combat line numbers below are refreshed with it.
 - `src/combat/playerWeapon.js:56` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:83` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
 - `src/combat/weaponRig.js:34` - *                     (FLAGGED at the call sites - their HUD pends),
-- `src/scenes/arrestFlow.js:82` - instead of "You, , are..." (chargen wiring FLAGGED).
-- `src/scenes/arrestFlow.js:139` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
+- `src/scenes/arrestFlow.js:101` - instead of "You, , are..." (chargen wiring FLAGGED).
+- `src/scenes/arrestFlow.js:158` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
+- `src/scenes/arrestFlow.js:218` - // FLAGGED, still owed to their own slices: PreventEnemySpawns across the
 - `src/scenes/cityGuards.js:23` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/cityGuards.js:205` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:357` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/droppedLoot.js:16` - FLAGGED loud: pile persistence across saves (the quicksave arc
-- `src/scenes/dungeonContext.js:186` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:511` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:517` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:544` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:905` - exterior spell paths are FLAGGED with their own hosts.
-- `src/scenes/dungeonContext.js:1067` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:187` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:512` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:518` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:545` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:906` - exterior spell paths are FLAGGED with their own hosts.
+- `src/scenes/dungeonContext.js:1068` - 129; the inventory/equip UI pends - the INTERIM dagger note
 - `src/scenes/exterior.js:366` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:372` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:447` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/exterior.js:513` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:618` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:737` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:521` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:626` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:745` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:152` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/world.js:476` - FLAGGED loud: the People faction rides the START location's
 - `src/scenes/world.js:490` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/world.js:496` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:613` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/world.js:668` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:952` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1161` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:676` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:960` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1169` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/systems/songManager.js:306` - temple falls to Interior rather than inventing an alignment. FLAGGED.
 - `src/scenes/worldModes.js:788` - a castle reads as a plain dungeon interior. FLAGGED.
 - `src/scenes/worldModes.js:73` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
@@ -278,9 +277,9 @@ combat line numbers below are refreshed with it.
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 - `src/systems/equip.js:170` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/guilds.js:39` - FLAGGED loud - RANK TITLES. DFU reads them from its own
-- `src/systems/guilds.js:113` - // are FLAGGED to the quest slice.
-- `src/systems/guilds.js:236` - /** GetTitle (:180-183). FLAGGED - see the header: the rank titles live
-- `src/systems/guildVariants.js:158` - // banking does not exist yet, so it is FLAGGED to the banking
+- `src/systems/guilds.js:134` - // are FLAGGED to the quest slice.
+- `src/systems/guilds.js:266` -  *  FLAGGED - see the header: the rank titles live in DFU's localization
+- `src/systems/guildVariants.js:174` - // Banking does not exist yet, so WHICH of the two is FLAGGED to the
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).
@@ -1322,7 +1321,10 @@ light constants. ELEVEN real findings, all rooted and shipped:
 (1) the FP viewmodel rendered ZERO pixels in every state and frame -
 the P9 hole-fix constants overshot the whole rig out of the frustum;
 probe-locked replacement (back 0.25, cast -0.20) via the new standing
-tools/fpProbe.mjs, before/after gallery in public/visual-changes/.
+tools/fpProbe.mjs. The before/after gallery is generated LOCALLY into
+visual-changes/ and is gitignored - AUDIT 21 (doctrine F1) found it under
+public/, which Vite copies into dist/ and deploy.yml publishes, and twelve of
+its fourteen frames carried classic WEAPON*.CIF sprites.
 (2) sampleClip takes SECONDS and all three pose paths passed a PHASE -
 FP strikes lost their back half, enemy swings died at 40-66%, staggers
 cut at a third. (3) pressing use CRASHED on any registered trap (effect

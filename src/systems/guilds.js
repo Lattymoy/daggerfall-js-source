@@ -42,9 +42,24 @@
 // DFU's restatement of the classic strings; they are not in ARENA2 and
 // not in the sparse clone, so the titles are NOT INVENTED HERE. The
 // NATIVE-WINDOW RULE applies to text as much as geometry: if the
-// source value is unknown, it does not ship. getTitle falls back to
-// the player's name, which is DFU's own non-member return, and the
-// window that needs a title lands with them.
+// source value is unknown, it does not ship, and the window that needs
+// a title lands with them.
+//
+// AUDIT 21 F7 CORRECTED A DOC LIE HERE. This paragraph used to say
+// "getTitle falls back to the player's name, which is DFU's own
+// non-member return". That is true for only three of the six guilds.
+// Temple.cs:389-398, KnightlyOrder.cs:121-127 and DarkBrotherhood.cs:86-92
+// each OVERRIDE GetTitle and return GetLocalizedText("nonMember") - a
+// string, not the player's name. So the port was shipping a WRONG KNOWN
+// value for half the guilds while claiming to withhold only the unknown
+// one. getTitle now answers null where DFU answers a string we do not
+// have, which is the honest shape: "unavailable", not "your name".
+//
+// The three overrides also gender-swap two ranks apiece (Temple 9
+// matriarch / 6 sister, KnightlyOrder 5 knightSister, DarkBrotherhood 8
+// darkSister). Which rank in which guild is swapped is STRUCTURE, not
+// localization, so it is recorded on the guild records as
+// `femaleTitleRanks` even while the strings stay out.
 import { SKILLS, skillValue } from './skills.js';
 import { getReputation } from './factionRep.js';
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
@@ -93,6 +108,10 @@ export const GUILDS = Object.freeze({
     factionId: 40,
     skills: [SKILLS.Alteration, SKILLS.Destruction, SKILLS.Illusion,
       SKILLS.Mysticism, SKILLS.Restoration, SKILLS.Thaumaturgy],
+    // MagesGuild.cs:67-70 overrides IsSatisfyQuestReqByLevel to true - see
+    // questRankFor below. The Mages Guild and the knightly orders are the
+    // only two of the six that do.
+    questReqByLevel: true,
     text: { ineligibleBadRep: 612, ineligibleLowSkill: 611, eligible: 606, welcome: 5293, promotion: 5236 },
     // MagesGuild.GetPromotionMsgId (:92-106) - the message ANNOUNCES
     // the benefit the new rank unlocked, so it is per rank.
@@ -106,6 +125,8 @@ export const GUILDS = Object.freeze({
     skills: [SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.Lockpicking, SKILLS.Pickpocket,
       SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
     text: { welcome: 5225, promotion: 5235, bribesJudge: 550 },
+    // ThievesGuild.cs:24 - the ONLY way in. See INVITATION_ONLY below.
+    initiationQuest: 'O0A0AL00',
     // ThievesGuild.GetPromotionMsgId (:92-106). Ranks 6 and 8 are
     // RevealLocation()-gated in DFU (map1/map2 vs the plain message);
     // that reads quest/map state the port has no source for, so those
@@ -121,6 +142,12 @@ export const GUILDS = Object.freeze({
     skills: [SKILLS.Archery, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
       SKILLS.Daedric, SKILLS.Destruction, SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
     text: { welcome: 5292, promotion: 666, bribesJudge: 551 },
+    // DarkBrotherhood.cs:24.
+    initiationQuest: 'L0A01L00',
+    // DarkBrotherhood.cs:86-92 - GetTitle is overridden: rank 8 is
+    // gender-swapped and a non-member reads "nonMember", not their name.
+    nonMemberTitle: 'nonMember',
+    femaleTitleRanks: [8],
     // DarkBrotherhood.GetPromotionMsgId - odd ranks, all pure data.
     promotionByRank: { 1: 6611, 3: 6612, 5: 6613, 7: 6614 },
   },
@@ -233,13 +260,52 @@ const textIdFor = (guild, outcome, rank) => (
  *  also what an expulsion leaves behind. */
 export const isMember = (membership) => (membership?.rank ?? -1) >= 0;
 
-/** GetTitle (:180-183). FLAGGED - see the header: the rank titles live
- *  in DFU's localization tables and are not invented here, so a member
- *  reads back their own name exactly as a non-member does until the
- *  titles are looked up. The RANK is correct and available; only its
- *  NAME is missing. */
-export function getTitle(membership, entity) {
-  return entity?.name ?? '';
+/** GetTitle (Guild.cs:178-181), plus the three subclass overrides
+ *  (Temple.cs:389-398, KnightlyOrder.cs:121-127, DarkBrotherhood.cs:86-92).
+ *
+ *  FLAGGED - see the header: the rank titles live in DFU's localization
+ *  tables and are not invented here. The RANK is correct and available;
+ *  only its NAME is missing, so a MEMBER reads null.
+ *
+ *  A NON-MEMBER is a different question, and AUDIT 21 F7 found the port
+ *  answering it wrong for half the guilds. DFU's base returns the player's
+ *  NAME; the Temple, the knightly orders and the Dark Brotherhood each
+ *  return GetLocalizedText("nonMember") instead. `nonMemberTitle` on the
+ *  guild record says which, and null means "a string we do not have" -
+ *  never the player's name in a guild that would not use it. */
+export function getTitle(membership, entity, guild = null) {
+  if (isMember(membership)) return null;                 // RankTitles[rank] - withheld
+  return guild?.nonMemberTitle === 'nonMember' ? null : (entity?.name ?? '');
+}
+
+/** IsSatisfyQuestReqByLevel (Guild.cs:51-54, overridden true by
+ *  MagesGuild.cs:67-70 and KnightlyOrder.cs:83-86), as its ONE consumer
+ *  uses it - DaggerfallGuildServicePopupWindow.cs:564-568:
+ *
+ *      int rank = guild.Rank;
+ *      if (guild.IsSatisfyQuestReqByLevel() && playerEntity.Level > rank)
+ *          rank = playerEntity.Level;
+ *
+ *  For those two guilds a high-level low-rank member draws from the quest
+ *  pool of their LEVEL, not their rank; for the other four the rank stands
+ *  however high the player has levelled. The flag alone would be inert
+ *  data, so the three lines that read it live here with it. */
+export function questRankFor(guild, rank, playerLevel) {
+  return guild?.questReqByLevel && playerLevel > rank ? playerLevel : rank;
+}
+
+/** GetGuildFactionId (GuildManager.cs:74-101) - the group -> faction
+ *  inverse, "used for non-member quests". The two VARIANT groups answer
+ *  0 on purpose, in DFU's own words, "since they have variants each with
+ *  different faction ids": there is no single faction for "a temple".
+ *
+ *  Derived from GUILDS rather than restated, so the two cannot drift.
+ *  DFU's `default:` consults its custom-guild registry, which is a mod
+ *  hook and not Daggerfall; the 0 it falls through to is what remains. */
+const GUILD_FACTION_BY_GROUP = new Map(Object.values(GUILDS).map((g) => [g.guildGroup, g.factionId]));
+export function guildFactionIdOfGroup(guildGroup) {
+  if (guildGroup === GUILD_GROUPS.HolyOrder || guildGroup === GUILD_GROUPS.KnightlyOrder) return 0;
+  return GUILD_FACTION_BY_GROUP.get(guildGroup) ?? 0;
 }
 
 /** GuildManager.GetGuild(factionId) (:254-267). Null for a faction that
@@ -299,6 +365,43 @@ export function guildGroupOfFaction(factionDict, factionId) {
     if (first) return first.ggroup;
   }
   return f.ggroup;
+}
+
+/** THE SECOND, PARALLEL MEMBERSHIP DICTIONARY (GuildManager.cs:105-112).
+ *
+ *      private readonly Dictionary<GuildGroups, IGuild> memberships;
+ *      private readonly Dictionary<GuildGroups, IGuild> vampMemberships;
+ *      private Dictionary<GuildGroups, IGuild> Memberships {
+ *          get { return ...HasVampirism() ? vampMemberships : memberships; }
+ *      }
+ *
+ *  Every membership read and write in DFU goes through that ONE property,
+ *  so becoming a vampire does not lose your guilds - it swaps the whole
+ *  book for an empty one, and a cure swaps it back. The save format keeps
+ *  both halves (GetMembershipData(bool vampire), :313-320), and
+ *  ClearMembershipData() clears BOTH (:298-302).
+ *
+ *  Vampirism itself is another slice, so nothing sets `hasVampirism` yet.
+ *  The STORE is defined here because it is a property of the membership
+ *  model this slice owns, and retrofitting a second book later would mean
+ *  touching every call site. A PLAIN OBJECT is still accepted everywhere
+ *  and means the mortal book - which is exactly what every current caller
+ *  intends - so this adds a shape without breaking one. */
+export const newMembershipStore = () => ({ mortal: {}, vampire: {} });
+export function membershipsFor(store, hasVampirism = false) {
+  if (!store) return {};
+  if (!Object.hasOwn(store, 'mortal') || !Object.hasOwn(store, 'vampire')) return store;
+  return hasVampirism ? store.vampire : store.mortal;
+}
+/** ClearMembershipData() (:298-302) clears BOTH books, not the active one. */
+export function clearMembershipData(store) {
+  if (!store) return;
+  if (Object.hasOwn(store, 'mortal') && Object.hasOwn(store, 'vampire')) {
+    store.mortal = {};
+    store.vampire = {};
+    return;
+  }
+  for (const k of Object.keys(store)) delete store[k];
 }
 
 /** THE MEMBERSHIP KEY IS THE GUILD GROUP, not the guild. DFU's

@@ -12,12 +12,14 @@ import {
   daySinceZero, numHighLowSkills, calculateNewRank, updateRank, isMember, guildOfFaction,
   joinGuild, leaveGuild, hasJoined, membershipOf, isEligibleToJoin,
   hasJoinedGroup, joinedGuildOfGroup, promotionTextId, membershipKey, joinDecision,
-  guildGroupOfFaction, MERCHANTS_FACTION_ID,
+  guildGroupOfFaction, MERCHANTS_FACTION_ID, INVITATION_ONLY,
+  getTitle, questRankFor, guildFactionIdOfGroup,
+  newMembershipStore, membershipsFor, clearMembershipData,
 } from '../src/systems/guilds.js';
 import { createFactionRep, setReputation } from '../src/systems/factionRep.js';
 import { FactionFile, GUILD_GROUPS } from '../src/formats/factionFile.js';
 import { SKILLS } from '../src/systems/skills.js';
-import { templeOf, orderOf, resolveVariantGuild, DIVINES } from '../src/systems/guildVariants.js';
+import { templeOf, orderOf, resolveVariantGuild, DIVINES, ORDERS } from '../src/systems/guildVariants.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
@@ -536,4 +538,183 @@ test('AUDIT 21 F3: guildOfFaction resolves by GUILD GROUP, over the whole corpus
     // keeps existing callers working - the group path is additive.
     assert.equal(guildOfFaction(GUILDS.FightersGuild.factionId).name, 'FightersGuild');
     assert.equal(guildOfFaction(9999), null);
+  });
+
+// ===========================================================================
+// AUDIT 21 F4, F7-F10, F12, F14, F15 - the guilds lane's second half.
+// ===========================================================================
+
+test('AUDIT 21 F4: IsSatisfyQuestReqByLevel, and the three lines that read it', () => {
+  // Guild.cs:51-54 returns false; MagesGuild.cs:67-70 and
+  // KnightlyOrder.cs:83-86 override it to true. Exactly two of the six.
+  assert.equal(GUILDS.MagesGuild.questReqByLevel, true);
+  assert.equal(orderOf('Rose').questReqByLevel, true);
+  for (const g of [GUILDS.FightersGuild, GUILDS.ThievesGuild, GUILDS.DarkBrotherhood, templeOf('Mara')]) {
+    assert.ok(!g.questReqByLevel, `${g.name} must NOT satisfy quest requirements by level`);
+  }
+
+  // DaggerfallGuildServicePopupWindow.cs:564-568 - the only consumer.
+  //   int rank = guild.Rank;
+  //   if (guild.IsSatisfyQuestReqByLevel() && playerEntity.Level > rank) rank = playerEntity.Level;
+  assert.equal(questRankFor(GUILDS.MagesGuild, 2, 12), 12, 'a level-12 rank-2 mage draws level-12 quests');
+  assert.equal(questRankFor(GUILDS.FightersGuild, 2, 12), 2, 'but a fighter draws rank-2 quests');
+  assert.equal(questRankFor(orderOf('Hawk'), 3, 9), 9);
+  // strictly GREATER than - a level equal to the rank does not override.
+  // EQUIVALENT MUTANT, recorded so nobody re-hunts it: `>` -> `>=` cannot be
+  // killed, because when playerLevel === rank both branches return the same
+  // number. The expression is Math.max either way, in DFU too. The mutation
+  // that IS observable - making the flag inert - is killed by the two
+  // assertions above.
+  assert.equal(questRankFor(GUILDS.MagesGuild, 5, 5), 5);
+  assert.equal(questRankFor(GUILDS.MagesGuild, 5, 4), 5, 'and a LOW level never demotes the pool');
+});
+
+test('AUDIT 21 F7: getTitle answers null where DFU answers a string we do not have', () => {
+  const bob = { name: 'Bob' };
+  // Guild.cs:178-181 - the base non-member return IS the player's name.
+  for (const g of [GUILDS.FightersGuild, GUILDS.MagesGuild, GUILDS.ThievesGuild]) {
+    assert.equal(getTitle({ rank: -1 }, bob, g), 'Bob', `${g.name} non-member reads their name`);
+  }
+  // Temple.cs:389-398, KnightlyOrder.cs:121-127, DarkBrotherhood.cs:86-92 all
+  // override it and return GetLocalizedText("nonMember") instead. Returning
+  // 'Bob' there was a WRONG KNOWN value, not a withheld unknown one.
+  for (const g of [templeOf('Mara'), orderOf('Rose'), GUILDS.DarkBrotherhood]) {
+    assert.equal(getTitle({ rank: -1 }, bob, g), null, `${g.name} non-member is not the player's name`);
+    assert.equal(g.nonMemberTitle, 'nonMember');
+  }
+  // A MEMBER's title is RankTitles[rank] in every guild - localization, withheld.
+  for (const g of [GUILDS.FightersGuild, templeOf('Mara')]) {
+    assert.equal(getTitle({ rank: 4 }, bob, g), null, `${g.name} member title is withheld, not guessed`);
+  }
+  // The gendered rank slots are STRUCTURE and are recorded even though the
+  // strings are not: Temple 9/6, KnightlyOrder 5, DarkBrotherhood 8.
+  assert.deepEqual(templeOf('Arkay').femaleTitleRanks, [9, 6]);
+  assert.deepEqual(orderOf('Owl').femaleTitleRanks, [5]);
+  assert.deepEqual(GUILDS.DarkBrotherhood.femaleTitleRanks, [8]);
+  for (const g of [GUILDS.FightersGuild, GUILDS.MagesGuild, GUILDS.ThievesGuild]) {
+    assert.equal(g.femaleTitleRanks, undefined, `${g.name} does not override GetTitle`);
+  }
+});
+
+test('AUDIT 21 F8: the two invitation-only guilds have an entrance, not just an exit', () => {
+  // ThievesGuild.cs:24 and DarkBrotherhood.cs:24 - the quest names
+  // GuildManager.cs:53-68 matches on to grant the membership. These are the
+  // ONLY way into either guild, and INVITATION_ONLY named only the refusal.
+  assert.equal(GUILDS.ThievesGuild.initiationQuest, 'O0A0AL00');
+  assert.equal(GUILDS.DarkBrotherhood.initiationQuest, 'L0A01L00');
+  assert.deepEqual([...INVITATION_ONLY].sort(), ['DarkBrotherhood', 'ThievesGuild']);
+  // and every guild that cannot be applied to must name its initiation quest
+  for (const name of INVITATION_ONLY) {
+    assert.ok(GUILDS[name].initiationQuest, `${name} is invitation-only and must say by which quest`);
+  }
+  for (const g of [GUILDS.FightersGuild, GUILDS.MagesGuild]) {
+    assert.equal(g.initiationQuest, undefined, `${g.name} is joined by walking in`);
+  }
+});
+
+test('AUDIT 21 F9: vampMemberships - the second, parallel membership book', () => {
+  // GuildManager.cs:105-112. Every read and write goes through ONE property
+  // that swaps the whole dictionary on vampirism.
+  const store = newMembershipStore();
+  const now = { year: 405, dayOfYear: 100 };
+  joinGuild(membershipsFor(store, false), GUILDS.FightersGuild, now);
+
+  assert.ok(hasJoined(membershipsFor(store, false), GUILDS.FightersGuild), 'mortal book holds it');
+  assert.equal(hasJoined(membershipsFor(store, true), GUILDS.FightersGuild), false,
+    'and a vampire reads an EMPTY book - the membership is suspended, not lost');
+  // curing swaps it back, untouched
+  assert.ok(hasJoined(membershipsFor(store, false), GUILDS.FightersGuild));
+
+  // a PLAIN object is still a membership dictionary, and means the mortal
+  // book - which is what every pre-existing caller intends
+  const plain = {};
+  joinGuild(plain, GUILDS.MagesGuild, now);
+  assert.equal(membershipsFor(plain, false), plain);
+  assert.equal(membershipsFor(plain, true), plain);
+
+  // ClearMembershipData() (:298-302) clears BOTH books, not the active one.
+  joinGuild(membershipsFor(store, true), GUILDS.MagesGuild, now);
+  clearMembershipData(store);
+  assert.deepEqual(membershipsFor(store, false), {});
+  assert.deepEqual(membershipsFor(store, true), {});
+});
+
+test('AUDIT 21 F10: GetGuildFactionId, including the two deliberate zeros', () => {
+  // GuildManager.cs:74-101.
+  assert.equal(guildFactionIdOfGroup(GUILD_GROUPS.FightersGuild), 41);
+  assert.equal(guildFactionIdOfGroup(GUILD_GROUPS.MagesGuild), 40);
+  assert.equal(guildFactionIdOfGroup(GUILD_GROUPS.GeneralPopulace), 42);
+  assert.equal(guildFactionIdOfGroup(GUILD_GROUPS.DarkBrotherHood), 108);
+  // "Returns 0 for HolyOrder and KnightlyOrder since they have variants each
+  // with different faction ids" - there is no single faction for "a temple".
+  //
+  // EQUIVALENT MUTANT, recorded so nobody re-hunts it: DELETING the explicit
+  // variant branch cannot be killed. The lookup is derived from GUILDS, which
+  // holds only the four fixed guilds, so those two groups miss the map and
+  // fall to the same 0. DFU's switch has exactly the same property - its two
+  // variant cases return what `default:` returns - and it writes them out
+  // anyway, with the XML comment above, because the zero is a STATEMENT, not
+  // a fallthrough. What IS killable, and pinned here, is the branch answering
+  // any NON-zero id.
+  assert.equal(guildFactionIdOfGroup(GUILD_GROUPS.HolyOrder), 0);
+  assert.equal(guildFactionIdOfGroup(GUILD_GROUPS.KnightlyOrder), 0);
+  assert.equal(guildFactionIdOfGroup(GUILD_GROUPS.None), 0, "default: - a group that is not a guild");
+  assert.equal(guildFactionIdOfGroup(undefined), 0);
+  // and it is the exact inverse of the records, so the two cannot drift
+  for (const g of Object.values(GUILDS)) {
+    assert.equal(guildFactionIdOfGroup(g.guildGroup), g.factionId, g.name);
+  }
+});
+
+test('AUDIT 21 F12/F14/F15: the four fixed guilds pinned to literals', () => {
+  // WHICH skills (FightersGuild.cs:32-40, MagesGuild.cs:37-44,
+  // ThievesGuild.cs:42-50, DarkBrotherhood.cs:42-52) - the rank law's only
+  // skill input, previously checked only for being valid skill ids.
+  assert.deepEqual([...GUILDS.FightersGuild.skills], [SKILLS.Archery, SKILLS.Axe,
+    SKILLS.BluntWeapon, SKILLS.Giantish, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade]);
+  assert.deepEqual([...GUILDS.MagesGuild.skills], [SKILLS.Alteration, SKILLS.Destruction,
+    SKILLS.Illusion, SKILLS.Mysticism, SKILLS.Restoration, SKILLS.Thaumaturgy]);
+  assert.deepEqual([...GUILDS.ThievesGuild.skills], [SKILLS.Backstabbing, SKILLS.Climbing,
+    SKILLS.Lockpicking, SKILLS.Pickpocket, SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise]);
+  assert.deepEqual([...GUILDS.DarkBrotherhood.skills], [SKILLS.Archery, SKILLS.Backstabbing,
+    SKILLS.Climbing, SKILLS.CriticalStrike, SKILLS.Daedric, SKILLS.Destruction,
+    SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise]);
+
+  // The TEXT.RSC records, as literals. Every pin on these used to read the
+  // expected value back out of the table under test.
+  assert.deepEqual({ ...GUILDS.FightersGuild.text },
+    { ineligibleBadRep: 679, ineligibleLowSkill: 680, eligible: 681, welcome: 684, promotion: 686 });
+  assert.deepEqual({ ...GUILDS.MagesGuild.text },
+    { ineligibleBadRep: 612, ineligibleLowSkill: 611, eligible: 606, welcome: 5293, promotion: 5236 });
+  assert.deepEqual({ ...GUILDS.ThievesGuild.text }, { welcome: 5225, promotion: 5235, bribesJudge: 550 });
+  assert.deepEqual({ ...GUILDS.DarkBrotherhood.text }, { welcome: 5292, promotion: 666, bribesJudge: 551 });
+
+  // and the per-rank promotion maps (MagesGuild.cs:92-107,
+  // ThievesGuild.cs:92-107, DarkBrotherhood.cs:111-123). MagesGuild's 5232
+  // PromotionEnchantId is declared but unreachable in DFU too, so it is
+  // correctly absent here.
+  assert.deepEqual(GUILDS.MagesGuild.promotionByRank, { 2: 5230, 3: 5231, 6: 5233, 8: 5234 });
+  assert.deepEqual(GUILDS.ThievesGuild.promotionByRank, { 2: 5226, 4: 5227 });
+  assert.deepEqual(GUILDS.DarkBrotherhood.promotionByRank, { 1: 6611, 3: 6612, 5: 6613, 7: 6614 });
+
+  // F15: the membership key IS this value, so pin it by value.
+  assert.equal(GUILDS.FightersGuild.guildGroup, GUILD_GROUPS.FightersGuild);
+  assert.equal(GUILDS.MagesGuild.guildGroup, GUILD_GROUPS.MagesGuild);
+  assert.equal(GUILDS.ThievesGuild.guildGroup, GUILD_GROUPS.GeneralPopulace);
+  assert.equal(GUILDS.DarkBrotherhood.guildGroup, GUILD_GROUPS.DarkBrotherHood);
+});
+
+test('AUDIT 21 F15: every guild record agrees with the shipped FACTION.TXT ggroup',
+  { skip: skipReal }, () => {
+    const ff = new FactionFile();
+    ff.load(readFileSync(join(ARENA2, 'FACTION.TXT')));
+    const dict = ff.factionDict;
+    for (const g of Object.values(GUILDS)) {
+      assert.equal(g.guildGroup, guildGroupOfFaction(dict, g.factionId),
+        `${g.name}: the record's guildGroup must be the one the real file carries`);
+    }
+    for (const o of Object.keys(ORDERS)) {
+      const rec = orderOf(o);
+      assert.equal(rec.guildGroup, guildGroupOfFaction(dict, rec.factionId), `Order:${o}`);
+    }
   });

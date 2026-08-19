@@ -68,8 +68,11 @@ test('AUDIT 18: every open-flags citation in Home.md points at the line it quote
       wrong.push(`${file}:${no} quotes "${quoted.trim()}" - really at ${real.join(',') || '(nowhere)'}`);
     }
   }
-  // The list existed with 109 entries at AUDIT 18; guard against it silently
-  // emptying out (a regex that stops matching would make this test vacuous).
+  // Guard against the list silently emptying out - a regex that stopped
+  // matching would make this test vacuous. Deliberately NOT an exact count:
+  // the BOTH-ways rule below already pins the list and src/ to exact
+  // agreement, and a hard number here is one more thing to rot (AUDIT 21
+  // found Testing.md still quoting 109 when the list had reached 115).
   assert.ok(seen >= 100, `only ${seen} open-flag citations parsed - the list or its format changed`);
   assert.deepEqual(wrong, [], `stale open-flags citations:\n${wrong.join('\n')}`);
 });

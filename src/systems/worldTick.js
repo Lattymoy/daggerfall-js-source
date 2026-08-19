@@ -94,3 +94,38 @@ export function tickPlayerMinutes({
   const raised = raiseSkills(entity, next, rolls, onLevelUp) ?? [];
   return { classicMinutes: next, rounds, raised };
 }
+
+// --- THE WORLD CLOCK (AUDIT 21 F2) -----------------------------------
+//
+// There were THREE of these, plus a fourth inside dungeonContext. AUDIT 18
+// extracted the per-minute LAW here and left the ACCUMULATOR with each
+// carrier, so world.js, exterior.js, worldModes.js and every built dungeon
+// context each counted from zero and only while their own mode was active.
+// Crossing a host rewound time.
+//
+// That is not a cosmetic split. Diseases are DAY-driven
+// (daysPast = currentDay - entry.lastDay): catch one three days into a
+// crawl, walk out to a clock that reads day 0, and daysPast goes NEGATIVE -
+// the damage loop runs zero times and `daysOfSymptomsLeft -= daysPast` ADDS
+// days. A finite disease got longer every time you opened a door. Poisons
+// are minute-indexed and drift the same way, and the music director's
+// gameDays reset on every dungeon entry.
+//
+// One clock, module-level, because there is one world. The carriers below
+// are VIEWS on it.
+
+let _worldMinutes = 0;
+
+/** Classic minutes since the game began. */
+export const worldMinutes = () => _worldMinutes;
+
+/** Set the clock - a load restores it, a rest or a court sentence jumps it. */
+export function setWorldMinutes(v) {
+  _worldMinutes = Number.isFinite(v) ? v : 0;
+  return _worldMinutes;
+}
+
+/** Move the clock forward (or back, for a load). */
+export function advanceWorldMinutes(delta) {
+  return setWorldMinutes(_worldMinutes + (Number(delta) || 0));
+}

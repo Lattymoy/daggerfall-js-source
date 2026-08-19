@@ -451,3 +451,68 @@ test('AUDIT 18 F9: every host gates the world clock on its overlay hold', () => 
   assert.equal(new Set(shapes.values()).size, 1,
     `hosts disagree on whether the world clock is held: ${JSON.stringify([...shapes])}`);
 });
+
+// ---------------------------------------------------------------------------
+// AUDIT 21 F2: THERE IS ONE WORLD CLOCK.
+//
+// AUDIT 18 extracted the per-minute LAW into systems/worldTick.js and left the
+// ACCUMULATOR with each carrier. world.js, exterior.js and worldModes.js each
+// build a createPlayerTicker, and dungeonContext kept a fourth private one -
+// so each counted from zero and only while its own mode was running, and
+// crossing a host rewound time.
+//
+// That is not cosmetic. Diseases are DAY-driven (daysPast = currentDay -
+// entry.lastDay): catch one three days into a crawl, walk out to a clock
+// reading day 0, and daysPast goes NEGATIVE - the damage loop runs zero times
+// and `daysOfSymptomsLeft -= daysPast` ADDS days. A finite disease got longer
+// every time you opened a door.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 21 F2: every carrier is a VIEW on one clock, not an owner', async () => {
+  const { worldMinutes, setWorldMinutes, CLASSIC_MINUTES_PER_SECOND } =
+    await import('../src/systems/worldTick.js');
+  const { createPlayerTicker } = await import('../src/scenes/shared.js');
+
+  const entity = { health: 500, maxHealth: 500, fatigue: 10000, magicka: 200, level: 1, skills: {} };
+  const outdoor = createPlayerTicker(entity, {});
+  const interior = createPlayerTicker(entity, {});
+
+  setWorldMinutes(0);
+  assert.equal(outdoor.classicMinutes, 0);
+  assert.equal(interior.classicMinutes, 0);
+
+  // Three game-days pass while ONLY the interior carrier ticks - the shape
+  // of a long crawl, or a long stay in a building.
+  interior.tick((3 * 1440) / CLASSIC_MINUTES_PER_SECOND);
+
+  assert.equal(Math.floor(interior.classicMinutes / 1440), 3);
+  assert.equal(outdoor.classicMinutes, interior.classicMinutes,
+    'the other carrier must read the SAME clock - walking out cannot rewind time');
+  assert.equal(worldMinutes(), interior.classicMinutes);
+
+  setWorldMinutes(0);      // leave the clock where the suite found it
+});
+
+test('AUDIT 21 F2: exactly ONE accumulator exists under src/', () => {
+  // The rule, enforced rather than remembered. Four of these existed; the
+  // fix is only durable if a fifth cannot be added quietly.
+  //
+  // The first draft of this pin matched `let classicMinutes =` and nothing
+  // else, and a mutation proved that too narrow: rewriting dungeonContext's
+  // read-through as `const classicMinutesRef = { value: 0 }` restored the
+  // whole defect and the pin still passed. So match the SHAPE that matters -
+  // any classicMinutes-ish binding whose initialiser does not read the world
+  // clock is a private accumulator, whatever it is spelled.
+  const owners = [];
+  let holders = 0;
+  for (const file of walk(SRC)) {
+    const text = readFileSync(file, 'utf8');
+    if (/let\s+_worldMinutes\s*=/.test(text)) { holders++; continue; }
+    for (const m of text.matchAll(/(?:let|const|var)\s+(classicMinutes\w*)\s*=\s*([^;]*)/g)) {
+      if (!/worldMinutes\s*\(/.test(m[2])) owners.push(`${file}: ${m[1]} = ${m[2].trim().slice(0, 60)}`);
+    }
+  }
+  assert.deepEqual(owners, [],
+    `these own a private minute accumulator instead of reading the world clock:\n${owners.join('\n')}`);
+  assert.equal(holders, 1, 'and exactly one module holds the real one');
+});

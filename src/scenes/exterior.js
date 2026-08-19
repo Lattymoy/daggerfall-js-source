@@ -443,8 +443,16 @@ export async function bootExterior(canvas, renderer, params, status) {
     const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
     cityGuards.spawnCityGuards(true, { playerFeet: [...feet], playerFwd: fwd, pool: _guardPool() }).catch((e) => console.error('[guards]', e));
   }
-  // G2: arrest + court through the townTalk overlay seam (the prison
-  // day-skip is a no-op FLAGGED until the shared calendar lands).
+  // G2: arrest + court through the townTalk overlay seam.
+  //
+  // AUDIT 21 F8 RETIRED THE OPEN FLAG THAT STOOD HERE. It said the prison
+  // day-skip was a no-op until the shared calendar lands, and it was false
+  // twice over: the clock landed in AUDIT 21 F2 (worldTick owns one now), and
+  // the no-op was no longer inert once DAYS drive diseases - a thirty-day
+  // sentence cost the player and the world nothing. createArrestFlow now
+  // defaults advanceDays to the real clock, so there is no argument left for a
+  // host to forget. What still pends is the prison SCREEN and FillVitalSigns'
+  // full refill, neither of which is a calendar.
   const arrestFlow = createArrestFlow({ townTalk, playerEntity, regionIndex: dfLocation.regionIndex });
   const weaponRig = createWeaponRig({
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
