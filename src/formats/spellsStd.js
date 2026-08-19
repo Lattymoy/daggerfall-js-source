@@ -15,6 +15,13 @@
 //   25-byte C-string name, icon u8, index u8, 15 skip
 // A record is valid when any effect type > -1 (the reader's own
 // gate); invalid records are skipped, matching ReadSpellsFile.
+// DEPARTURE (inert on classic data): when that gate fails, DFU's
+// ReadSpellData returns false having consumed only 6 of the 89 bytes and
+// WITHOUT seeking to the record boundary, so ReadSpellsFile's loop resumes
+// 83 bytes early and mis-parses the rest of the file. We always resync to
+// start + SPELL_RECORD_SIZE. SPELLS.STD is exactly 7921 = 89 x 89 bytes and
+// all 89 records pass the gate, so DFU's desync path is unreachable on
+// shipping data.
 
 export const SPELL_RECORD_SIZE = 0x59;
 
@@ -52,4 +59,26 @@ export function readSpellsStd(bytes) {
     }
   }
   return spells;
+}
+
+/**
+ * EntityEffectBroker.RebuildClassicSpellsDict's fold of the record list
+ * into a spell-index dictionary. A duplicate `index` is IGNORED, not
+ * overwritten - the FIRST record in file order wins:
+ *   if (standardSpells.ContainsKey(spell.index)) continue;
+ *   standardSpells.Add(spell.index, spell);
+ * ("Holy Word" and "Holy Touch" both carry index 58; classic spell 58 is
+ * Holy Word.) A plain `new Map(list.map(...))` would keep the LAST.
+ * ReadSpellsFile appends in raw file order and the SpellRecords.json merge
+ * matches BY index, so neither can reorder the list first.
+ * @param {Array<{index:number}>} records readSpellsStd output
+ * @returns {Map<number, object>}
+ */
+export function spellsByIndexMap(records) {
+  const map = new Map();
+  for (const sp of records) {
+    if (map.has(sp.index)) continue;
+    map.set(sp.index, sp);
+  }
+  return map;
 }
