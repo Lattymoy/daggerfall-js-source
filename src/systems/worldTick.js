@@ -60,14 +60,42 @@ export function tickPlayerMinutes({
   say = () => {},
   onLevelUp = null,
 } = {}) {
-  const prevMinute = Math.floor(classicMinutes);
   const next = classicMinutes + dt * CLASSIC_MINUTES_PER_SECOND;
   let rounds = 0;
+
+  // AUDIT 21 F4: THE BROKER'S OWN MARKER, which the port did not have.
+  //
+  // This used to anchor on `Math.floor(classicMinutes)` - whatever the clock
+  // read at the START of this frame - so minutes added by anyone ELSE
+  // produced ZERO magic rounds. Rest, a court sentence, a RaiseTime: the
+  // clock jumped and the round loop began at the far side of the jump.
+  // Diseases and poisons survived that by accident (they carry their own
+  // lastDay/lastMinute and catch up on the next ordinary tick); active spell
+  // effects did not, because roundsRemaining is only decremented in here.
+  // Cast Levitate, rest eight hours, wake still levitating with the full
+  // duration intact - and rest off a Continuous Damage Health for free.
+  //
+  // EntityEffectBroker.Update (:202-240) keeps its OWN lastGameMinute for
+  // exactly this reason, and says so: "Effect system must be able to update
+  // while game is paused but game time still passes, e.g. rest or fast
+  // travel". The 2880 cap is its too - maxCatchupDays = 2 - and it is not
+  // optional: prison time steps the clock by 30,240 minutes and a load by
+  // millions.
+  const nextFloor = Math.floor(next);
+  const here = Math.floor(classicMinutes);
+  // Anchor on first use, and RE-anchor whenever the clock has moved BACKWARDS
+  // relative to the marker - that is a load, and DFU sits it out through
+  // `SaveLoadManager.Instance.LoadInProgress` (:206-207). Re-anchoring here
+  // rather than trusting callers to call resetMagicRoundMarker keeps the
+  // function total: a restored save cannot fire the cap's worth of rounds
+  // against effects that already expired in the saved game.
+  if (_lastMagicRoundMinute === null || here < _lastMagicRoundMinute) _lastMagicRoundMinute = here;
+  const prevMinute = Math.max(_lastMagicRoundMinute, nextFloor - MAX_CATCHUP_ROUNDS);
 
   // S7/S18/S19b, verbatim order: diseases update FIRST so an ending
   // disease's final day lands and the same round's tick removes the
   // expired entry (DFU removes at the end of the same DoMagicRound).
-  for (let r = prevMinute; r < Math.floor(next); r++) {
+  for (let r = prevMinute; r < nextFloor; r++) {
     updateDiseases(entity, Math.floor((r + 1) / MINUTES_PER_DAY), sinks, rolls, say);
     updatePoisons(entity, r + 1, sinks, rolls, say);
     tickActiveEffects(entity, sinks);
@@ -78,14 +106,31 @@ export function tickPlayerMinutes({
   // (`lastGameMinutes != gameMinutes` guards a single DecreaseFatigue),
   // so a multi-minute jump costs one minute's fatigue, not one per
   // minute caught up. The (int) cast happens AFTER the multiply.
-  if (Math.floor(next) !== prevMinute) {
+  if (nextFloor > _lastMagicRoundMinute) _lastMagicRoundMinute = nextFloor;
+
+  // The fatigue band still asks "did the minute CHANGE this frame", which is
+  // DFU's `lastGameMinutes != gameMinutes` - a different marker from the
+  // broker's, and deliberately so: a multi-minute jump costs ONE minute's
+  // fatigue (S20) while it costs many magic rounds.
+  if (nextFloor !== Math.floor(classicMinutes)) {
     let loss = FATIGUE_LOSS.Default;
     if (activity.running) loss = FATIGUE_LOSS.Running;
     else if (activity.swimming) {
-      // PlayerEntity.cs:412 (P18): the Argonian exemption SHORT-
-      // CIRCUITS before the Dice100 roll - an Argonian never rolls,
-      // pays the default loss, and still tallies (:414).
-      if (entity.raceId !== RACES.Argonian && !dice100(skillValue(entity, SKILLS.Swimming), rolls())) loss = FATIGUE_LOSS.Swimming;
+      // AUDIT 21 F8: THE ARGONIAN EXEMPTION, and its short-circuit.
+      //     if (Race != Races.Argonian && Dice100.FailedRoll(...Swimming))
+      //         amount = (int)(SwimmingFatigueLoss * fatigueLossMultiplier);
+      // C#'s `&&` means an Argonian never pays the penalty AND never consumes
+      // the roll - the operand order is preserved here for the same reason
+      // the court's roll order was (AUDIT 21 F5): a roll drawn where DFU
+      // draws none shifts every later roll from the same generator.
+      //
+      // Without it, an Argonian with Swimming 20 paid 44 fatigue on ~80% of
+      // minutes instead of 11 - four times the drain, in the water, for the
+      // race built for it, ending in exhaustionOutcome's death arm in about a
+      // quarter of the time DFU allows. (P18 shipped this same line in
+      // the parallel Player lane the same day - two finders, one law.)
+      if (entity.raceId !== RACES.Argonian
+        && !dice100(skillValue(entity, SKILLS.Swimming), rolls())) loss = FATIGUE_LOSS.Swimming;
       tallySkill(entity, SKILLS.Swimming);          // the 20000 clamp is load-bearing
     }
     sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier));
@@ -116,6 +161,18 @@ export function tickPlayerMinutes({
 
 let _worldMinutes = 0;
 
+/** EntityEffectBroker.maxCatchupDays = 2, i.e. 2880 game minutes
+ *  (EntityEffectBroker.cs:36, applied at :223). DFU's own reasoning: the
+ *  longest spell duration is under 2000 minutes, constant-state effects need
+ *  one tick, and poisons and diseases catch up by themselves - so the cap
+ *  stops the framework spinning on empty across a prison sentence or a load. */
+export const MAX_CATCHUP_ROUNDS = 2880;
+
+/** The broker's `lastGameMinute` (EntityEffectBroker.cs:213-237). null until
+ *  the first tick, which is DFU's `if (lastGameMinute == 0) return;` - a
+ *  pre-init frame fires no rounds. */
+let _lastMagicRoundMinute = null;
+
 /** Classic minutes since the game began. */
 export const worldMinutes = () => _worldMinutes;
 
@@ -123,6 +180,15 @@ export const worldMinutes = () => _worldMinutes;
 export function setWorldMinutes(v) {
   _worldMinutes = Number.isFinite(v) ? v : 0;
   return _worldMinutes;
+}
+
+/** A LOAD resets the marker rather than catching up across it - DFU's
+ *  `SaveLoadManager.Instance.LoadInProgress` early return (:206-207). Without
+ *  this a restored save would fire the cap's worth of rounds on its first
+ *  frame against effects that already expired in the saved game. */
+export function resetMagicRoundMarker(v = null) {
+  _lastMagicRoundMinute = v === null ? null : Math.floor(v);
+  return _lastMagicRoundMinute;
 }
 
 /** Move the clock forward (or back, for a load). */

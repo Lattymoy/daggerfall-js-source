@@ -102,6 +102,21 @@ export function makeEnemyEntity(mobileType, basics, career, playerLevel, rollFn 
     stats,
     // SetEntityDefaults: currentFatigue = MaxFatigue = (Str+End) x 64 (S15)
     fatigue: (stats.strength + stats.endurance) * 64,
+    // AUDIT 21 F1: THE CAREER ITSELF. EnemyEntity.SetEnemyCareer keeps it -
+    //     career = GetMonsterCareerTemplate((MonsterCareers)careerIndex);
+    // and DaggerfallEntity.Career is what SavingThrow reads for all SEVEN
+    // tolerance channels (FormulaHelper.cs:1478-1526) and what InflictPoison
+    // checks for immunity (:1392-1395). This builder took `career` as an
+    // argument, flattened exactly ONE field out of it, and dropped the rest,
+    // so `target.career ?? {}` in spellcast.js and poisons.js resolved to an
+    // empty object and EVERY enemy in the game read Normal tolerance to Fire,
+    // Frost, Shock, Magic, Poison, Disease and Paralysis.
+    //
+    // Twenty of the 43 ENEMY*.CFG records in the shipping MONSTER.BSA carry
+    // non-zero tolerance bytes. Measured on the real archive: a Fire Daedra
+    // (immunityFlags 0x08) took full fire damage in 434 of 1000 rolls where
+    // DFU returns zero in 1000 of 1000.
+    career,
     attackModifierFlags: career ? career.attackModifierFlags : null,
     minMetalToHit: basics.minMetalToHit,
     team: basics.team ?? 'None',
