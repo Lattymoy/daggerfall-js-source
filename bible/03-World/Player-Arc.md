@@ -635,8 +635,17 @@ PlayerHeightChanger/PlayerSpeedChanger + HUDBreathBar:
   grew a per-call capsule height (foes share the instance - a
   mutable field would have resized THEM); standing back up runs the
   CanStand probe (the STANDING capsule must fit - blocked under a
-  low ceiling the player stays crouched); the FP viewmodel rides the
-  LIVE eye offset so the weapon lowers with the camera. RESIDUAL
+  low ceiling the player stays crouched, and AUDIT 18 gave the
+  blocked request PlayerHeightChanger's own 0.10 s retry window:
+  DFU's Update chain falls through to the do-nothing DoDismount,
+  which only ticks camTimer and calls timerResetAction at timerMax,
+  so the stand-up re-tries every frame for timerFast and is only
+  then forgotten); the crouch key is decided on the RENDER frame
+  (DecideHeightAction is called from PlayerMotor.Update, never from
+  FixedUpdate - AUDIT 18: reading it inside the fixed-step loop
+  swallowed every press that landed on a sub-1/60 s frame); the FP
+  viewmodel rides the LIVE eye offset so the weapon lowers with the
+  camera. RESIDUAL
   (honest): crouch-based stealth pends the enemyMotor stealth row
   (foes still target the standing height); jump-while-crouched stays
   allowed (DFU's AcrobatMotor has no crouch gate).
@@ -809,8 +818,7 @@ motor at 60 fps AND 10 fps, both code versions):
   the integrator exploding). 1/60 rather than Unity's 50 Hz default
   keeps every shipped pin and the 60 fps behavior byte-identical -
   documented choice. Per-frame report flags (jumped,
-  landedFallDistance) reset per RENDER frame and carry across steps;
-  the crouch EDGE is consumed by the first step only.
+  landedFallDistance) reset per RENDER frame and carry across steps.
 - Companions kept from the same investigation (both proven
   behavior-neutral on the real-mesh sweep at 60 fps, both principled):
   the resolve's ceiling entry-clamp now fires only on RESIDUAL head
