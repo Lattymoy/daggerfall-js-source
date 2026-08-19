@@ -32,7 +32,7 @@ import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
 import { getGroundArchive } from '../world/climateSwaps.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
-import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
+import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
 import { routeKey } from '../ui/input.js';
@@ -41,7 +41,7 @@ import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interi
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
-import { fetchBytes } from './shared.js';
+import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
@@ -250,7 +250,13 @@ export function createWorldModes(host) {
       // through the door is coordinate-seamless.
       const ctx = await buildInteriorContext(
         { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord, palette },
-        hit.dfBlock, 0, hit.recordIndex, hit.climateBase, hit.season,
+        // DaggerfallInterior.IsBadInteriorModel (:530-548) keys the
+        // 31000-overlap repair on EntryDoor.blockIndex, which
+        // RMBLayout.cs:848 mints as blockData.Index. The literal 0 is
+        // not a key in the table, so the repair could never fire when
+        // a building was entered from ?world / ?exterior - the same
+        // building reached through ?interior=NAME:REC omitted it.
+        hit.dfBlock, hit.dfBlock.index, hit.recordIndex, hit.climateBase, hit.season,
         hit.door.matrix, { voxelfolk, piece, paint });
       const siblings = entries.filter((e) =>
         e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
@@ -465,6 +471,15 @@ export function createWorldModes(host) {
       player.swimming = surf != null && player.pos[1] + 0.9 + 50 * 0.025 - 0.95 < surf;
       player.levitating = dungeonCtx.playerLevitating();
       player.waterWalking = dungeonCtx.playerWaterWalking();
+    } else {
+      // AUDIT 18 HOST GAP: these four flags were written ONLY in the
+      // branch above and never cleared, so a player who left a dungeon
+      // levitating stayed in the motor's no-gravity branch forever -
+      // and an interior kept whatever the last dungeon frame left.
+      // The EFFECT owns levitate/waterWalking/slowFall (Levitate.cs
+      // :131/:136 sets IsLevitating on Start AND End), so they are
+      // recomputed; swimming is false with no blockWaterLevel.
+      applyMotorEffectFlags(player, playerEntity);
     }
     // S19 paralysis host parity (the standing host rule): movement
     // input zeroed, jump cancelled - the player still falls; look
@@ -473,10 +488,23 @@ export function createWorldModes(host) {
     const paralyzed = (mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : false;
     // E2: the shop overlay holds the motor like every other window
     // (typing digits must not walk the player).
-    const overlayHeld = mode === 'interior' && !!interiorOverlay;
+    // AUDIT 18 HOST GAP: the dungeon overlay was absent from this
+    // expression, so with F6/the rest window open in a world-hosted
+    // dungeon the motor kept walking, E still exited the dungeon and
+    // the movers kept travelling - all of it under the open menu.
+    // DFU UserInterfaceManager.AddWindow (:179-184) calls
+    // PauseGame(true) for any PauseWhileOpen window (the default),
+    // which is what dungeon.js:218's `held` already implements.
+    const overlayHeld = (mode === 'interior' && !!interiorOverlay) ||
+      (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive);
     const inputHeld = paralyzed || overlayHeld;
     const crouchHeld = keys.has('KeyX');
     const moving = !inputHeld && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
+    // Platform riding (the DFU MoveWithMovingPlatform shape) was wired
+    // ONLY into the standalone ?dungeon scene, so a world/exterior
+    // hosted dungeon dropped the mover delta and the lift penetrated
+    // the capsule. The delta applies BEFORE the player's own move.
+    if (!overlayHeld) ridePlatform(player, mode === 'dungeon' ? dungeonCtx?.actions : interiorCtx?.actions);
     // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
     player.update(dt, inputHeld ? { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false, crouch: crouchHeld && !latch.crouch } : {
       forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
@@ -491,10 +519,23 @@ export function createWorldModes(host) {
     latch.crouch = crouchHeld;
     if (mode === 'dungeon' && dungeonCtx) {
       // P11: the splash/jump/swim-minute fatigue feed (same seam as
-      // the standalone scene). P14 adds the fall landing (interior
-      // mode has no context seam for it yet - single-story shells
-      // cannot fall 2.5+; the seam joins interiorCtx with its arc).
+      // the standalone scene); P14's fall landing rides the same call.
       dungeonCtx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
+      // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
+      // grounded state; dungeonContext's `_grounded` is host-fed and
+      // only dungeon.js:270 fed it, so in a world-hosted dungeon the
+      // rest gate read the initialiser `true` for the whole session
+      // and R mid-fall opened the window DFU refuses (TEXT.RSC 355).
+      dungeonCtx.reportMotor?.(player.grounded, player.velY, cam.yaw);
+    } else if (mode === 'interior') {
+      // AUDIT 18: interior mode had NO fall-damage seam at all, behind
+      // a flag that claimed single-storey shells could never fall far
+      // enough to matter. That was false - interiors carry ladder
+      // markers well past the BadFallDetected alert, and
+      // IsBadInteriorModel's own comment is about "trapping player
+      // upstairs". AcrobatMotor.CheckFallingDamage has exactly one
+      // exemption and it is the outdoor water tile, never an interior.
+      applyFallLanding(playerEntity, player.landedFallDistance, { sound: (id) => audio.playOneShot(id) });
     }
     cam.pos = player.eye;
     const useHeld = keys.has('KeyE');
@@ -522,7 +563,7 @@ export function createWorldModes(host) {
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
 
     if (mode === 'dungeon') {
-      dungeonCtx.actions.update(dt);
+      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:219's `if (!held)` - a paused game advances no movers
       dungeonCtx.flicker.tick(dt);
       renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
       renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));
@@ -555,7 +596,7 @@ export function createWorldModes(host) {
     renderer.setLighting(new Float32Array(INTERIOR_AMBIENT), 0);
     renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
     renderer.setPointLights(
-      nearestLights(interiorCtx.lights, cam.pos, 16, INTERIOR_LIGHT_RANGE),
+      nearestLights(interiorCtx.lights, cam.pos, 16, interiorCtx.lights.map((l) => l.range)),   // per-light range (DaggerfallInterior.AddLight); a scalar drops the per-record switch
       new Float32Array(INTERIOR_LIGHT_COLOR));
     interiorCtx.actions.update(dt);
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
@@ -706,9 +747,13 @@ export function createWorldModes(host) {
       if (vd) dungeonCtx.overlayClick?.(vd[0], vd[1]);
       return true;   // an open window withholds the pointer lock, as in dungeon.js
     }
-    if (mode !== 'interior' || !interiorOverlay?.click) return false;
+    // The guard is on the WINDOW, not on its click method: an open
+    // window with no click handler must still withhold the pointer
+    // (DFU's top window consumes the click), or a pointerdown escapes
+    // to requestLook and grabs pointer lock from under the menu.
+    if (mode !== 'interior' || !interiorOverlay) return false;
     const v = pointToNative(nativeMetrics(canvas), px, py);
-    if (v) interiorOverlay.click(v[0], v[1]);
+    if (v) interiorOverlay.click?.(v[0], v[1]);
     if (interiorOverlay?.done) interiorOverlay = null;
     return true;
   }

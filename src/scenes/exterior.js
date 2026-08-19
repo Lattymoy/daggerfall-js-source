@@ -12,7 +12,7 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
 import { convertTilemap } from '../world/terrainSurface.js';
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
-import { PlayerMotor, FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
+import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier, tallySkill, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
@@ -55,7 +55,7 @@ import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the sho
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { fetchBytes, parseSeason, createSkyController } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, motorStats, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -109,6 +109,12 @@ export async function bootExterior(canvas, renderer, params, status) {
   // and able to lazy-load the models/archives interiors and dungeons
   // reference beyond the location's own set.
   const pipeline = createDataPipeline({ renderer, arch, palette });
+  // AUDIT 18 HOST GAP: the audio engine's bootstrap lived only in
+  // buildDungeonContext, so every sound in this host was a silent
+  // no-op until a dungeon was entered (DFU's sound reader is global
+  // and the exterior prefab is audible from frame one).
+  ensureAudio(fetchBytes);
+
   const { textureFiles, getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, gpuMeshes, cpuModels } = pipeline;
 
   // Collect the location's model ids + referenced texture archives.
@@ -199,7 +205,11 @@ export async function bootExterior(canvas, renderer, params, status) {
       // (P7: the world's registry shape; matrices are already
       // world-space, so entries feed the machine unshifted).
       if (cpu.doors && cpu.doors.length) {
-        for (const door of getStaticDoors(cpu, 0, placed.recordIndex, matrix)) {
+        // StaticDoor.blockIndex must be TRUTHFUL (RMBLayout.cs:848
+        // passes blockData.Index): DaggerfallInterior.IsBadInteriorModel
+        // keys the 31000-overlap repair on EntryDoor.blockIndex, and a
+        // hardcoded 0 made it unreachable from this host.
+        for (const door of getStaticDoors(cpu, b.dfBlock.index, placed.recordIndex, matrix)) {
           buildingDoors.push({
             door, dfBlock: b.dfBlock, recordIndex: placed.recordIndex,
             climateBase, season, dfLocation, group: 'loc',
@@ -208,14 +218,19 @@ export async function bootExterior(canvas, renderer, params, status) {
       }
     }
     // Ground tiles gather into one location-wide tilemap for the R9
-    // tilemap-shader pass (raw RMB bytes; random markers >= 56 reset to
-    // grass 8 exactly as buildGroundTilemap, zeros as the 0xFF sentinel).
+    // tilemap-shader pass. These bytes are PRE-conversion (tileBitfield
+    // space); convertTilemap turns a byte b into texture record
+    // (b * 4) + rotate + flip. MeshReader.cs:487 resets a random marker
+    // (TextureRecord >= 56) to RECORD 8, "Index 8 is grass" - so the
+    // byte written here must be 2, not 8. Writing 8 made convertTilemap
+    // decode record 32 and the shader drew a different ground texture.
+    // Zeros ride the 0xFF sentinel.
     const srcTiles = b.dfBlock.rmbBlock.fldHeader.groundData.groundTiles;
     for (let ty = 0; ty < GROUND_TILE_DIM; ty++) {
       for (let tx = 0; tx < GROUND_TILE_DIM; tx++) {
         const tile = srcTiles[tx][GROUND_TILE_DIM - 1 - ty];
         const raw = tile.textureRecord >= 56
-          ? 8
+          ? 2   // record 2 * 4 = 8, grass (MeshReader.cs:487)
           : (tile.tileBitfield === 0 ? 0xff : tile.tileBitfield);
         locationTilemap[(b.x * GROUND_TILE_DIM + tx) +
           (b.y * GROUND_TILE_DIM + ty) * tilemapDim] = raw;
@@ -288,7 +303,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(collider, undefined, { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14)
+  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14); motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
   // C9: the exterior FP weapon (host rule - every motor host carries
   // it). AUDIT 17e F38 / RETIRING A FLAG DELETES THE SENTENCE: the
   // 'no HUD-text layer yet' flag that stood here was retired by T3b
@@ -388,7 +403,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const _guardPool = () => _livePersons.map(({ person, pos }) => ({
     pos, fwdYaw: person.facingYaw, guard: person.guard,
     disable: () => {
-      const it = population.pool.find((i) => i.person === person);
+      const it = population?.pool.find((i) => i.person === person);
       if (it) { it.person.release(); it.active = false; it.scheduleEnable = false; it.scheduleRecycle = false; it.visible = false; }
     },
   }));
@@ -544,7 +559,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     };
     modes.installShotProbes();
     // T1: the townsfolk probe surface
-    window.__people = () => JSON.stringify(population.pool.map((it, i) => ({
+    window.__people = () => JSON.stringify((population?.pool ?? []).map((it, i) => ({
       i, active: it.active, visible: it.visible, pend: it.scheduleEnable, recyc: it.scheduleRecycle,
       archive: it.person.archive, state: it.person.state, moves: it.person.moveCount, seeks: it.person.seekCount,
       pos: it.person.pos.map((v) => Number(v.toFixed(2))),
@@ -561,7 +576,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     window.__uiArt = () => JSON.stringify({ charsheet: charSheetArtLoaded() });   // U8a probe surface
     window.__attack = () => weaponRig.clickAttack();   // G4: ClickToAttack for swing probes
     window.__townDebug = () => JSON.stringify({
-      night: isNight(minuteNow()), pool: population.pool.length, max: population.maxPopulation,
+      night: isNight(minuteNow()), pool: population?.pool.length ?? 0, max: population?.maxPopulation ?? 0, populated,
       player: cam.pos.map((v) => Number(v.toFixed(1))), yaw: Number(cam.yaw.toFixed(2)), walkMode,
     });
   }
@@ -572,11 +587,18 @@ export async function bootExterior(canvas, renderer, params, status) {
   // (FLAGGED: the climate People table pends; the test city is
   // correct). Each pool person owns a live billboard batch (the C11
   // shape) drawn on the flats' axis (the billboard-axis doctrine).
+  // AUDIT 18 HOST GAP: StreamingWorld.cs:771-781 adds PopulationManager
+  // to exactly SEVEN LocationTypes. The streaming host gated on them;
+  // this host constructed a population for whatever ?region/?loc
+  // resolved to, so every graveyard, coven, keep, ruin and poor home
+  // got wandering townsfolk (and the talk/crime surfaces they carry)
+  // that DFU never creates there. The table now lives in shared.js.
+  const populated = populatesWanderingNpcs(dfLocation.mapTableData.locationType);
   const personArchives = [...PERSON_TEXTURES.Breton.male, ...PERSON_TEXTURES.Breton.female, GUARD_TEXTURE];
   const personTex = new Map();
-  await Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a))));
+  if (populated) await Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a))));
   const personBatchOf = new Map();   // person -> batch
-  const population = new TownPopulation(cityNav, {
+  const population = !populated ? null : new TownPopulation(cityNav, {
     totalBlocks: loc.width * loc.height,
     race: 'Breton',
     makePerson: (archive, guard) => {
@@ -624,6 +646,13 @@ export async function bootExterior(canvas, renderer, params, status) {
       const jumpHeld = keys.has('Space');
       const crouchHeld = keys.has('KeyX');   // P12 host parity (audit F4)
       const _overlayHeld = (modes?.dungeonCtx?.uiOverlayActive ?? false) || townTalk.overlayActive;   // chargen/windows/talk hold the motor - typing must not walk the player
+      // AUDIT 18 HOST GAP: levitate/waterWalking/slowFall were written
+      // ONLY inside worldModes' dungeon branch and never cleared, so
+      // leaving a dungeon while levitating stranded the player in the
+      // motor's no-gravity branch forever. The EFFECT owns the flag
+      // (Levitate.cs:131/:136); swimming is false outdoors (there is
+      // no blockWaterLevel - PlayerEnterExit.IsPlayerSwimming).
+      applyMotorEffectFlags(player, playerEntity);
       if (!_overlayHeld) player.update(dt, {
         forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
         strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
@@ -639,13 +668,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       zPrevW = zNowW;
       // P14 fall damage (host parity; the outdoor-water exemption is
       // FLAGGED here exactly as in world.js - no tile lookup yet).
-      if (player.landedFallDistance > FALL_DAMAGE_THRESHOLD) {
-        playerEntity.health = Math.max(0, playerEntity.health - Math.trunc(FALL_HP_PER_METRE * (player.landedFallDistance - FALL_DAMAGE_THRESHOLD)));
-        surfacePlayer();
-        audio.playOneShot(SOUND.FallDamage);
-      } else if (player.landedFallDistance > FALL_DAMAGE_THRESHOLD / 2) {
-        audio.playOneShot(SOUND.FallHard);   // BadFallDetected
-      }
+      applyFallLanding(playerEntity, player.landedFallDistance, { sound: (id) => audio.playOneShot(id) });
       cam.pos = player.eye;
       const useHeld = keys.has('KeyE');
       if (useHeld && !latch.use && !modes.transitioning) {
@@ -736,14 +759,21 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.setWindowEmission(windowEmissionRGB(
       params.has('window') ? params.get('window')
         : (windowStyleForWeather(weather) ?? windowStyleForTime(minute))));
-    sky.use(dfLocation.climate.skyBase + weatherSkyOffset, minute);
+    // DaggerfallSky.cs:363-367 - a non-Normal WeatherStyle (every rain,
+    // thunder and snow) disables the clear night sky, so the DAY sky at
+    // frame 0 is drawn instead. weatherSkyOffset IS the WeatherStyle
+    // (Rain1 4 / Rain2 5 / Snow1 6 / Snow2 7; Normal is 0).
+    sky.use(dfLocation.climate.skyBase + weatherSkyOffset, minute, weatherSkyOffset === 0);
     // Weather fog, colored by the live sky horizon fill (fills DFU's
     // fogColor TODO); heavy fog also swallows the sky.
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
     // Sunny/Overcast ARE linear fog to 2400 - the classic distance haze.
+    // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than
+    // heavy rain fogs to Color.gray, not to the sky tint.
+    const fogColor = outdoorFogColor(weatherFog, sky.renderer.clearColor);
     renderer.setFog(weatherFog.mode,
-      weatherFog.density, weatherFog.start, weatherFog.end, sky.renderer.clearColor);
-    sky.renderer.fogColor = sky.renderer.clearColor;
+      weatherFog.density, weatherFog.start, weatherFog.end, fogColor);
+    sky.renderer.fogColor = fogColor;
     sky.renderer.fogMix = weatherFog.excludeSky ? 0 : 1 - fogFactor(weatherFog, 800);
 
     // City lanterns: on 17:00-08:00 (IsCityLightsOn), each flickering
@@ -838,7 +868,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // population freezes (dt 0 still returns frames for drawing)
       // while the talk overlay is up, so nobody walks away mid-talk.
       const popDt = townTalk.overlayActive ? 0 : dt;
-      const live = population.update(popDt, cam.pos, cam.yaw, eye, !isNight(minute), (person) => {
+      const live = !population ? [] : population.update(popDt, cam.pos, cam.yaw, eye, !isNight(minute), (person) => {
         const pd = Math.hypot(person.pos[0] - cam.pos[0], person.pos[2] - cam.pos[2]);
         return _playerStill && pd < 2.5 && !!weaponRig.playerWeapon.sheathed && !isInvisible(playerEntity);
       });

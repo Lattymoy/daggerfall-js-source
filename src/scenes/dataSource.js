@@ -20,18 +20,31 @@ const mem = new Map(); // NAME -> Uint8Array
 // Ingest DIET (2026-08-14, the mobile storage fix): ARENA2 is 517MB
 // but the engine reads ~155MB - TEXTURE archives, the BSAs, palettes,
 // PAKs, CFGs, fonts, WOODS.WLD, MAGIC.DEF, SPELLS.STD, IMG/CIF art,
-// RSC text, RCI, SND. The other 362MB (VIDs 83, SKY/PACKED DATs 247,
+// RSC text, RCI, SND, the .TXT set (BIOG*.TXT biographies + FACTION.TXT)
+// and CLASSES.DAT. The other 362MB (VIDs 83, SKY/PACKED DATs 247,
 // FLCs, quest QBN/QRC) is unread by the port - ingesting it tripled
 // storage + memory pressure and quota-killed phones. When a future
 // slice needs a dropped kind: bump MANIFEST_V - stale stored sets
 // auto-wipe to the picker.
+//
+// AUDIT 18: that instruction was never honoured. S3e (biography),
+// the class-questions walk and townTalk's factions all shipped
+// readers for files the diet drops, and each one degrades SILENTLY
+// through a warn-and-skip: on the deployed / phone ZIP path the whole
+// biography stage, the class-questions screen and every faction datum
+// were simply absent, while dev hid it because the vite ARENA2_PATH
+// middleware serves the network fallback. The .TXT set is 19 files /
+// 148KB, so it rides wholesale; CLASSES.DAT is named EXACTLY, because
+// a bare \.DAT$ would drag the 247MB SKY/PACKED sets the diet exists
+// to exclude.
 const LEAN = typeof window !== 'undefined' &&
   ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0);
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
-  /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND)$/.test(name) ||
+  /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT)$/.test(name) ||
+  name === 'CLASSES.DAT' ||
   (!lean && /^SKY\d+\.DAT$/.test(name));   // skies: 247MB - full sets on desktop, gradient fallback on the lean diet
 const MANIFEST_KEY = '__MANIFEST__';
-const MANIFEST_V = 2;   // v1 = the broken-era sets (pre-diet) - auto-wiped
+const MANIFEST_V = 3;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES - both auto-wiped
 
 /** Uppercase basename: the canonical ARENA2 key. Exported for tests. */
 export function normalizeName(name) {
