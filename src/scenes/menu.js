@@ -17,7 +17,7 @@
 // already works, which is the shape this project's audits keep finding.
 
 import { StartWindow, loadStartArt } from '../ui/startWindow.js';
-import { TitleScreen, loadLogo } from '../ui/titleScreen.js';
+import { TitleScreen, loadTitleArt } from '../ui/titleScreen.js';
 import { fetchBytes } from './shared.js';
 import { readQuicksave } from '../systems/save.js';
 
@@ -86,17 +86,18 @@ export const hasSavedGame = () => !!readQuicksave();
  * to show, so a missing asset costs a splash and never a game.
  */
 export async function runTitle(canvas, renderer, status) {
-  const pixels = await loadLogo();
-  if (!pixels) return false;                       // no art, no title screen
-  status('title');
-  const title = new TitleScreen({
-    // smooth: LINEAR/CLAMP, because this is a high-resolution banner
+  const art = await loadTitleArt({
+    renderer,
+    fetchBytes,
+    // smooth: LINEAR/CLAMP, because our logo is a high-resolution banner
     // drawn at a non-integer scale - NEAREST is for pixel-exact classic
-    // art and would alias the serifs here.
-    tex: renderer.uploadTexture('ui', 'logo', pixels, { smooth: true }),
-    width: pixels.width,
-    height: pixels.height,
+    // art and would alias the serifs. Classic's own title takes the
+    // native path instead and never reaches here.
+    uploadLogo: (pixels) => renderer.uploadTexture('ui', 'logo', pixels, { smooth: true }),
   });
+  if (!art) return false;                          // no art, no title screen
+  status('title');
+  const title = new TitleScreen(art);
 
   const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
   const LIGHT = new Float32Array([0, 1, 0]);

@@ -212,7 +212,7 @@ test('U21c: a missing logo means NO title screen, never a trapped boot', async (
   // And a screen with no logo declares itself undrawable, which is the
   // signal the boot uses to skip straight to the menu.
   assert.equal(new TitleScreen(null).drawable, false);
-  assert.equal(new TitleScreen({ tex: {}, width: 8, height: 4 }).drawable, true);
+  assert.equal(new TitleScreen({ kind: 'logo', tex: {}, width: 8, height: 4 }).drawable, true);
 });
 
 test('U21c: the logo is centred, aspect-preserved, and never fills the screen', async () => {
@@ -244,7 +244,7 @@ test('U21c: the title screen paints opaque black behind the logo', async () => {
   const renderer = { drawScreenQuad: (tex, rect, uv, color) => quads.push({ tex, rect, color }) };
   const canvas = { width: 1400, height: 900 };
 
-  const rect = new TitleScreen({ tex: 'LOGO', width: 2000, height: 650 }).draw(renderer, canvas);
+  const rect = new TitleScreen({ kind: 'logo', tex: 'LOGO', width: 2000, height: 650 }).draw(renderer, canvas);
   assert.equal(quads.length, 2, 'backdrop then logo');
   assert.deepEqual(quads[0].rect, { x: 0, y: 0, w: 1400, h: 900 }, 'the backdrop is the whole canvas');
   assert.deepEqual(quads[0].color, [0, 0, 0, 1], 'and it is OPAQUE black - no scene shows through');
@@ -270,7 +270,7 @@ test('U21c: the logo draws ALPHA-BLENDED, where classic art keeps the cutout', a
   const renderer = {
     drawScreenQuad: (tex, rect, uv, color, opts) => quads.push({ tex, opts }),
   };
-  new TitleScreen({ tex: 'LOGO', width: 2000, height: 650 })
+  new TitleScreen({ kind: 'logo', tex: 'LOGO', width: 2000, height: 650 })
     .draw(renderer, { width: 1400, height: 900 });
 
   assert.equal(quads[1].tex, 'LOGO');
@@ -352,4 +352,95 @@ test('U21c: the logo uploads LINEAR/CLAMP, where classic art stays NEAREST/REPEA
   const rendSrc = readFileSync('src/render/renderer.js', 'utf8');
   assert.match(rendSrc, /opts\.smooth \? gl\.CLAMP_TO_EDGE : gl\.REPEAT/, 'wrap is opt-in');
   assert.match(rendSrc, /opts\.smooth \? gl\.LINEAR : gl\.NEAREST/, 'and so is the filter');
+});
+
+// ---------------------------------------------------------------------------
+// U21d: THE FALLBACK IS CLASSIC'S OWN TITLE, not a placeholder.
+//
+// public/logo.png is ours and may simply not be there. Rather than showing
+// nothing, the screen falls back to TITL00I0.IMG - the Daggerfall wordmark
+// over the box art, which this port already reads byte-exact and which comes
+// out of the user's own ARENA2 at runtime, so there is nothing to ship and
+// nothing to install. Classic drew its title here; drawing it here is the
+// least surprising thing to do while our own art is missing.
+//
+// The two are drawn by DIFFERENT laws, and that is the point: TITL00I0 is
+// 320x200 palettized game art (native panel, integer scale, 1-bit cutout,
+// NEAREST) and our logo is high-resolution art with real partial alpha
+// (fitted, blended, smoothed). Each law is wrong for the other's art.
+// ---------------------------------------------------------------------------
+
+test('U21d: with no logo the title falls back to CLASSIC art, on the native panel', async () => {
+  const { TitleScreen, loadTitleArt, TITLE_IMG } = await import('../src/ui/titleScreen.js');
+  const { nativeMetrics } = await import('../src/ui/nativePanel.js');
+
+  assert.equal(TITLE_IMG, 'TITL00I0.IMG');
+
+  // No document (node) means no logo, so loadTitleArt must reach for the IMG.
+  let asked = null;
+  const art = await loadTitleArt({
+    renderer: {},
+    fetchBytes: async (name) => { asked = name; throw new Error('absent'); },
+    doc: undefined,
+  });
+  assert.equal(asked, TITLE_IMG, 'it asked for classic art when ours was missing');
+  assert.equal(art, null, 'and a missing IMG too is still no title screen, never a throw');
+
+  // The native arm draws on the native panel, NOT through logoRect.
+  const quads = [];
+  const drawn = [];
+  const renderer = {
+    drawScreenQuad: (tex, rect, uv, color, opts) => quads.push({ tex, rect, color, opts }),
+    drawImgSub: () => {},
+  };
+  const canvas = { width: 1400, height: 900 };
+  const nativeArt = { tex: 'TITL', w: 320, h: 200 };
+  const screen = new TitleScreen({ kind: 'native', art: nativeArt });
+  assert.equal(screen.drawable, true);
+
+  // drawImg routes through drawScreenQuad; the backdrop is quad 0 either way.
+  const m = screen.draw(renderer, canvas);
+  assert.deepEqual(m, nativeMetrics(canvas), 'it returns the NATIVE metrics, not a logo rect');
+  assert.equal(quads[0].tex, null, 'backdrop first');
+  assert.deepEqual(quads[0].rect, { x: 0, y: 0, w: 1400, h: 900 });
+
+  // The classic art must NOT take the logo's blend/smooth opt-ins - it is a
+  // 1-bit cutout like every other classic screen, and blending it would let
+  // its index-0 pixels ghost instead of dropping out.
+  for (const q of quads.slice(1)) {
+    assert.notEqual(q.opts?.blend, true, 'classic art keeps the cutout');
+  }
+  void drawn;
+});
+
+test('U21d: OUR logo still wins when it is present', async () => {
+  const { loadTitleArt } = await import('../src/ui/titleScreen.js');
+
+  const saved = { fetch: globalThis.fetch, bitmap: globalThis.createImageBitmap };
+  try {
+    globalThis.fetch = async () => ({ ok: true, blob: async () => 'BLOB' });
+    globalThis.createImageBitmap = async () => ({ width: 2000, height: 650 });
+    const doc = {
+      createElement: () => ({
+        getContext: () => ({
+          drawImage: () => {},
+          getImageData: (x, y, w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }),
+        }),
+      }),
+    };
+    let askedForImg = false;
+    const art = await loadTitleArt({
+      renderer: {},
+      fetchBytes: async () => { askedForImg = true; throw new Error('should not be reached'); },
+      uploadLogo: () => 'OURTEX',
+      doc,
+    });
+    assert.equal(art.kind, 'logo', 'ours wins');
+    assert.equal(art.tex, 'OURTEX');
+    assert.equal(art.width, 2000);
+    assert.equal(askedForImg, false, 'and classic art is never even fetched');
+  } finally {
+    globalThis.fetch = saved.fetch;
+    globalThis.createImageBitmap = saved.bitmap;
+  }
 });
