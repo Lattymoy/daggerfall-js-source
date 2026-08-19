@@ -14,3 +14,4 @@ back-drafts/
 
 # Disposable agent worktrees (nested checkouts) - never commit.
 .claude/worktrees/
+node_modules
