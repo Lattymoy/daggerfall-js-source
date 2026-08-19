@@ -786,6 +786,10 @@ void main() {
    *  on a virtual 320x200*s screen and this centers that screen on
    *  the real canvas. Set, draw, reset - never leave it on. */
   setScreenOffset(x, y) { this._screenOffset = [x, y]; }
+  /** The offset screen draws are currently shifted by. A full-canvas
+   *  backdrop drawn from inside an offset overlay has to subtract it,
+   *  or it lands displaced by the letterbox margin (U21b). */
+  get screenOffset() { return this._screenOffset ?? [0, 0]; }
 
   /** Positioned screen-space quad in PIXELS (origin top-left), with a
    *  source UV rect - textured (uv0/uv1) or solid color (tex null).

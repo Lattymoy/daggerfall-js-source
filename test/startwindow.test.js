@@ -130,3 +130,61 @@ test('U21: LOAD reuses the host quickLoad rather than a second loader', () => {
   const menu = readFileSync(join(root, 'src/scenes/menu.js'), 'utf8');
   assert.equal(/restorePlayer\(/.test(menu), false, 'the menu must not restore a save itself');
 });
+
+// ---------------------------------------------------------------------------
+// U21b: the chargen parent panel, in the HOST's space.
+//
+// DaggerfallBaseWindow.cs:40 paints parentPanel.BackgroundColor black behind
+// the 320x200 native panel. The port painted it at (0,0,realW,realH) from
+// INSIDE the overlay's draw - but the dungeon host sets a letterbox offset
+// before calling overlays (dungeonContext drawOverlay), so the backdrop landed
+// down-right by the margin and left the top and left strips showing the host's
+// 60% dim over the pale Iliac Bay sky. Measured on the live app at 1400x900:
+// the left strip read (57,75,97) - the sky at 40% - and (0,0,0) after the fix.
+// ---------------------------------------------------------------------------
+
+const fakeRenderer = (offset) => {
+  const quads = [];
+  return {
+    quads,
+    screenOffset: offset,
+    gl: { drawingBufferWidth: 1400, drawingBufferHeight: 900 },
+    drawScreenQuad: (tex, rect, uv, color) => quads.push({ rect, color }),
+  };
+};
+
+test('U21b: the chargen backdrop subtracts the host letterbox offset', async () => {
+  const { drawMenuBackdrop, MENU_BACKDROP } = await import('../src/ui/chargenArt.js');
+
+  // The dungeon host's shape: a 1400x900 canvas at scale 4 letterboxes the
+  // 320x200 panel, so the offset is (60, 50).
+  const offsetR = fakeRenderer([60, 50]);
+  drawMenuBackdrop(offsetR);
+  assert.equal(offsetR.quads.length, 1);
+  assert.deepEqual(offsetR.quads[0].rect, { x: -60, y: -50, w: 1400, h: 900 },
+    'the backdrop must land on the real canvas origin, not the panel origin');
+  assert.deepEqual(offsetR.quads[0].color, MENU_BACKDROP, 'and it is OPAQUE black');
+  assert.equal(MENU_BACKDROP[3], 1, 'DaggerfallBaseWindow.cs:40 is black, not a dim');
+
+  // The exterior hosts pass the real canvas with NO offset - unchanged.
+  const plainR = fakeRenderer([0, 0]);
+  drawMenuBackdrop(plainR);
+  assert.deepEqual(plainR.quads[0].rect, { x: 0, y: 0, w: 1400, h: 900 });
+
+  // A renderer that has never had an offset set must not throw.
+  const bareR = { ...fakeRenderer(undefined), screenOffset: undefined };
+  bareR.quads = []; bareR.drawScreenQuad = (t, rect, uv, c) => bareR.quads.push({ rect, color: c });
+  drawMenuBackdrop(bareR);
+  assert.deepEqual(bareR.quads[0].rect, { x: 0, y: 0, w: 1400, h: 900 });
+});
+
+test('U21b: the renderer reports its screen offset', async () => {
+  // The getter is what makes the backdrop correct in both host shapes.
+  const { Renderer } = await import('../src/render/renderer.js');
+  const r = Object.create(Renderer.prototype);
+  assert.deepEqual(r.screenOffset, [0, 0], 'defaults to no offset');
+  r.setScreenOffset(60, 50);
+  assert.deepEqual(r.screenOffset, [60, 50]);
+  r.setScreenOffset(0, 0);
+  assert.deepEqual(r.screenOffset, [0, 0]);
+});

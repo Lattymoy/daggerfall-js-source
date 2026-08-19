@@ -54,6 +54,28 @@ export const RANDOM_LABEL = 'Random';
 
 /** DaggerfallBaseWindow.cs:40 - parentPanel.BackgroundColor = black. */
 export const MENU_BACKDROP = [0, 0, 0, 1];
+
+/** U14 / U21b: paint DaggerfallBaseWindow's BLACK parent panel over the
+ *  whole real canvas, in the host's own space.
+ *
+ *  It has to SUBTRACT the screen offset. The dungeon host draws overlays
+ *  with a virtual 320x200*s canvas and a letterbox offset already set
+ *  (dungeonContext's drawOverlay), so a quad at (0,0) landed DOWN-RIGHT
+ *  by the margin: the top and left strips kept showing the host's 60%
+ *  dim over the pale Iliac Bay sky, which read as a blue border down the
+ *  side of every chargen screen. Measured before the fix, the left strip
+ *  was (57,75,97) - the sky at 40% - and (0,0,0) after.
+ *
+ *  The exterior hosts pass the REAL canvas with no offset, where this
+ *  subtracts zero and nothing changes. */
+export function drawMenuBackdrop(renderer) {
+  const [ox, oy] = renderer.screenOffset ?? [0, 0];
+  renderer.drawScreenQuad(null,
+    // `0 - ox` rather than `-ox`: unary negation on 0 yields -0, which is
+    // the same pixel but a different value to anything comparing rects.
+    { x: 0 - ox, y: 0 - oy, w: renderer.gl.drawingBufferWidth, h: renderer.gl.drawingBufferHeight },
+    undefined, MENU_BACKDROP);
+}
 export const ALT_SHADOW_1 = [44 / 255, 60 / 255, 60 / 255, 1];        // DaggerfallAlternateShadowColor1
 export const SELECTED_TEXT = [162 / 255, 36 / 255, 12 / 255, 1];      // DaggerfallDefaultSelectedTextColor
 export const INPUT_TEXT = [227 / 255, 223 / 255, 0, 1];               // DaggerfallDefaultInputTextColor
@@ -405,7 +427,7 @@ export function drawChargenNative(renderer, m, font, flow) {
   // chargen from the menu, so the world is NEVER visible around it;
   // the port ran it in-world and let the town show through the
   // letterbox on every screen. Black first, then the screen.
-  renderer.drawScreenQuad(null, { x: 0, y: 0, w: renderer.gl.drawingBufferWidth, h: renderer.gl.drawingBufferHeight }, undefined, MENU_BACKDROP);
+  drawMenuBackdrop(renderer);
   const s = flow.state;
   if (s === 'name') return drawName(renderer, m, font, flow);
   if (s === 'race') return drawRace(renderer, m, font, flow);
