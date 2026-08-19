@@ -100,6 +100,7 @@ export const GUILDS = Object.freeze({
   },
   ThievesGuild: {
     name: 'ThievesGuild',
+    neverExpels: true,          // AllowGuildExpulsion (ThievesGuild.cs:128-131)
     guildGroup: GUILD_GROUPS.GeneralPopulace,
     factionId: 42,
     skills: [SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.Lockpicking, SKILLS.Pickpocket,
@@ -114,6 +115,7 @@ export const GUILDS = Object.freeze({
   },
   DarkBrotherhood: {
     name: 'DarkBrotherhood',
+    neverExpels: true,          // AllowGuildExpulsion (DarkBrotherhood.cs:132-135)
     guildGroup: GUILD_GROUPS.DarkBrotherHood,
     factionId: 108,
     skills: [SKILLS.Archery, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
@@ -144,6 +146,19 @@ export function numHighLowSkills(entity, guild, rank) {
 
 /** CalculateNewRank (:100-111). Returns -1 for expulsion. */
 export function calculateNewRank(entity, guild, store) {
+  // AUDIT 21 F1: DFU's shape exactly. Guild.CalculateNewRank is the base
+  // computation; ThievesGuild and DarkBrotherhood OVERRIDE it as
+  //     AllowGuildExpulsion(player, base.CalculateNewRank(player))
+  // so the clamp wraps the WHOLE base call - including its early return
+  // for negative reputation, which is the branch that actually fires. A
+  // first cut of this fix clamped only the loop's exit and did nothing,
+  // because the early return got there first.
+  const newRank = baseCalculateNewRank(entity, guild, store);
+  return guild?.neverExpels && newRank < 0 ? 0 : newRank;
+}
+
+/** Guild.CalculateNewRank (:98-116), the base every guild shares. */
+function baseCalculateNewRank(entity, guild, store) {
   const rep = getReputation(store, guild.factionId);
   // DFU's early return. Measured EQUIVALENT over 1809 cases: because
   // rankReqReputation[0] is 0, a negative reputation breaks the loop at

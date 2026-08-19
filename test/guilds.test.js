@@ -11,7 +11,7 @@ import {
   DEFAULT_TRAINING_MAX, MEMBER_TRAINING_COST, NON_MEMBER_TRAINING_COST,
   daySinceZero, numHighLowSkills, calculateNewRank, updateRank, isMember, guildOfFaction,
   joinGuild, leaveGuild, hasJoined, membershipOf, isEligibleToJoin,
-  hasJoinedGroup, joinedGuildOfGroup, promotionTextId,
+  hasJoinedGroup, joinedGuildOfGroup, promotionTextId, membershipKey,
   guildGroupOfFaction, MERCHANTS_FACTION_ID,
 } from '../src/systems/guilds.js';
 import { createFactionRep, setReputation } from '../src/systems/factionRep.js';
@@ -357,5 +357,61 @@ test('guilds: AUDIT 20 - a temple faction resolves to a GROUP through its child'
     assert.equal(ff.factionDict.get(id).ggroup, GUILD_GROUPS.None, `${name}'s own ggroup is None`);
     assert.equal(guildGroupOfFaction(ff.factionDict, id), GUILD_GROUPS.HolyOrder,
       `${name} must resolve to HolyOrder through its templar order`);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// AUDIT 21 F1: THE THIEVES GUILD AND THE DARK BROTHERHOOD NEVER EXPEL.
+//
+// ThievesGuild.cs:121-131 and DarkBrotherhood.cs:126-136 both override
+// CalculateNewRank as AllowGuildExpulsion(player, base.CalculateNewRank(...)),
+// which clamps a negative rank to 0. DFU's own comment: the thieves guild
+// "never expel members (I assume at some point they 'retire' you instead!)".
+//
+// The port had ONE calculateNewRank for all six guilds, so a member of either
+// with negative reputation was expelled outright - the membership deleted -
+// and both are joinable only by an initiation quest, so it could not be
+// undone. The clamp has to wrap the WHOLE base call, including its early
+// return for negative reputation, which is the branch that actually fires.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 21 F1: TG and DB clamp to rank 0 where the others expel', () => {
+  const entity = { level: 10, skills: {} };
+  const at = (guild, rep) => calculateNewRank(entity, guild,
+    { dict: new Map([[guild.factionId, { rep }]]) });
+
+  for (const name of ['ThievesGuild', 'DarkBrotherhood']) {
+    const g = GUILDS[name];
+    assert.equal(g.neverExpels, true, `${name} must be marked as never expelling`);
+    for (const rep of [-1, -30, -100]) {
+      assert.equal(at(g, rep), 0, `${name} at rep ${rep} demotes to 0, never below`);
+    }
+  }
+  // Every OTHER guild still expels - the clamp must not leak.
+  for (const name of ['FightersGuild', 'MagesGuild']) {
+    const g = GUILDS[name];
+    assert.notEqual(g.neverExpels, true, `${name} does expel`);
+    assert.equal(at(g, -30), -1, `${name} at rep -30 still expels`);
+  }
+});
+
+test('AUDIT 21 F1: expulsion never REMOVES a TG or DB membership', () => {
+  // The end-to-end consequence, through updateRank - which is what deletes
+  // the record. A clamp that only fixed the number would still be wrong
+  // here if updateRank read the rank a second way.
+  const entity = { level: 10, skills: {} };
+  for (const name of ['ThievesGuild', 'DarkBrotherhood']) {
+    const g = GUILDS[name];
+    // Memberships are a plain object keyed by GUILD GROUP, not by name -
+    // one HolyOrder slot has to remember which temple.
+    const memberships = {};
+    joinGuild(memberships, g, 0);
+    memberships[membershipKey(g)].rank = 4;
+    const store = { dict: new Map([[g.factionId, { rep: -50 }]]) };
+    // Far enough past the join that the 28-day rank clock has elapsed.
+    const out = updateRank(memberships, g, entity, store, 400 * 24 * 60 * 60 * 1000);
+    assert.notEqual(out?.outcome, 'expulsion', `${name} must not be expelled`);
+    assert.ok(membershipOf(memberships, g), `${name}'s membership must survive`);
+    assert.equal(membershipOf(memberships, g).rank, 0, 'demoted to 0 instead');
   }
 });

@@ -120,8 +120,7 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
   function verdict(court, useDebate) {
     const r = pleaNotGuilty(court, playerEntity, useDebate, { rolls });
     if (r.outcome === 'free') {
-      playerEntity.crimeCommitted = 0;
-      playerEntity.haveShownSurrenderDialogue = false;
+      clearArrest();                   // AUDIT 21 F2: including `arrested`
       // AUDIT 17e F22: DFU raises reputation on a successful defense
       // (DaggerfallCourtWindow.cs:426) - and says so against classic
       // in its own comment two lines up ("Also does not repair
@@ -163,10 +162,26 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
     release();
   }
 
-  function release() {
-    playerEntity.arrested = false;     // OnPop (DaggerfallCourtWindow.cs:435)
+  /** OnPop (DaggerfallCourtWindow.cs:427-441). EVERY court exit funnels
+   *  through it in DFU - guilty, acquitted, banished alike - which is why
+   *  the flags live here and not on one arm.
+   *
+   *  AUDIT 21 F2: the acquittal arm used to clear the crime INLINE and
+   *  never come through here, so `arrested` stayed set for the rest of
+   *  the session. Its one consumer is the music, and AssignPlaylist tests
+   *  it FIRST, so winning your case left court music playing over
+   *  everything, forever. */
+  function clearArrest() {
+    playerEntity.arrested = false;
     playerEntity.crimeCommitted = 0;   // ReleaseFromPrison: the crime clears; guards despawn on the crime-clear law
     playerEntity.haveShownSurrenderDialogue = false;
+  }
+
+  /** Leaving CUSTODY - the court exit plus the prison vitals floor. An
+   *  acquitted player never went to prison, so they take clearArrest
+   *  alone: the floor is FillVitalSigns' and belongs to release. */
+  function release() {
+    clearArrest();
     playerEntity.health = Math.max(1, playerEntity.health);   // FillVitalSigns' floor (full refill pends vitals wiring)
   }
 

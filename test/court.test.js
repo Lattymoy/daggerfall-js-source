@@ -6,9 +6,10 @@ import {
   CRIMES, REPUTATION_LOSS_PER_CRIME, lowerRepForCrime, legalRepOf,
   surrenderToCityGuards, startCourt, pleaGuilty, pleaNotGuilty,
   resolveGuiltyVerdict, raiseRepForSentence, goldAmount,
+  clampLegalReputations, normalizeReputations, LEGAL_REP_MIN, LEGAL_REP_MAX,
 } from '../src/systems/court.js';
 import { FactionFile } from '../src/formats/factionFile.js';
-import { createFactionRep, getReputation } from '../src/systems/factionRep.js';
+import { createFactionRep, getReputation, setReputation } from '../src/systems/factionRep.js';
 import { getPeopleOfCurrentRegion } from '../src/systems/talk.js';
 import { changeReputation } from '../src/systems/factionRep.js';
 import { snapshotFactionRep, restoreFactionRep } from '../src/systems/save.js';
@@ -20,6 +21,12 @@ const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
   ? 'ARENA2_PATH not set or missing - real-data validation skipped'
   : false;
+
+const realFactions = () => {
+  const ff = new FactionFile();
+  ff.load(readFileSync(join(ARENA2, 'FACTION.TXT')));
+  return ff.factionDict;
+};
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 
@@ -166,4 +173,80 @@ test('save: AUDIT 20 - the faction store and guild memberships ride the envelope
   const older = { factionRep: createFactionRep(ff.factionDict) };
   assert.equal(restoreFactionRep(older.factionRep, undefined), false);
   assert.equal(getReputation(older.factionRep, GUILDS.ThievesGuild.factionId), 0);
+});
+
+// ---------------------------------------------------------------------------
+// AUDIT 21: the two halves of the reputation economy the port was missing.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 21 F1: doing the sentence refunds BOTH channels, not just legal', () => {
+  // RaiseReputationForDoingSentence (PlayerEntity.cs:2301-2311) credits
+  // legalRep by `half - 1` AND the region's People faction by
+  // `(half - 1) / 2`. The port credited only the legal half while
+  // lowerRepForCrime debited both, which made the faction channel a
+  // RATCHET - a player who always served their time still slid to the
+  // bottom with the People.
+  const dict = realFactions();
+  const store = createFactionRep(dict);
+  const player = { factionRep: store, legalRep: {} };
+  const region = 17;
+  const peopleRep = () => {
+    for (const v of store.dict.values()) if (v.type === 15 && v.region === region) return v.rep;
+    return null;
+  };
+
+  const crime = 5;                       // loss 20 -> half 10
+  const start = peopleRep();
+  lowerRepForCrime(player, region, crime);
+  const afterCrime = peopleRep();
+  raiseRepForSentence(player, { crime, regionIndex: region });
+  const afterSentence = peopleRep();
+
+  assert.equal(afterCrime, start - 10, 'the crime costs the People half the legal loss');
+  assert.equal(afterSentence, afterCrime + 4, 'and the sentence refunds (half - 1) / 2');
+  // The legal channel too, so a fix to one side cannot hide the other.
+  assert.equal(player.legalRep[region], -20 + 9);
+});
+
+test('AUDIT 21 F3: legal reputation is CLAMPED, and drifts back over time', () => {
+  assert.equal(LEGAL_REP_MIN, -100);
+  assert.equal(LEGAL_REP_MAX, 100);
+
+  // ClampLegalReputations (:2245-2257). The port had no clamp at all, so
+  // twelve High Treasons drove a region to -900 - a value DFU cannot hold.
+  const p = { legalRep: { 1: -900, 2: 250, 3: 0, 4: -4, 5: 100, 6: -100 } };
+  clampLegalReputations(p);
+  assert.deepEqual(p.legalRep, { 1: -100, 2: 100, 3: 0, 4: -4, 5: 100, 6: -100 },
+    'out-of-range values clamp; in-range values are untouched');
+
+  // NormalizeReputations (:2223-2243) then walks every value ONE POINT
+  // toward zero, and zero stays zero. This is the only thing that ever
+  // forgives a crime the player did not answer for.
+  normalizeReputations(p, null);
+  assert.deepEqual(p.legalRep, { 1: -99, 2: 99, 3: 0, 4: -3, 5: 99, 6: -99 });
+
+  // And it clamps FIRST, so an out-of-range value lands inside the bounds
+  // in a single pass rather than creeping back over many.
+  const q = { legalRep: { 1: -900 } };
+  normalizeReputations(q, null);
+  assert.equal(q.legalRep[1], -99, 'clamp then drift, in that order');
+});
+
+test('AUDIT 21 F3: normalize drifts FACTION reputations too, through the walk', () => {
+  const dict = realFactions();
+  const store = createFactionRep(dict);
+  const player = { legalRep: {} };
+
+  // Push one faction off zero, then normalize and confirm it moved back.
+  // The faction side goes through changeReputation, so unlike the legal
+  // side it PROPAGATES - that asymmetry is DFU's, not an accident.
+  const id = [...store.dict.keys()][0];
+  setReputation(store, id, 20);
+  assert.equal(store.dict.get(id).rep, 20);
+  normalizeReputations(player, store);
+  assert.equal(store.dict.get(id).rep, 19, 'a positive faction rep drifts down');
+
+  setReputation(store, id, -20);
+  normalizeReputations(player, store);
+  assert.equal(store.dict.get(id).rep, -19, 'and a negative one drifts up');
 });

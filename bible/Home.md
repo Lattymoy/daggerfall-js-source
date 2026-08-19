@@ -228,7 +228,7 @@ combat line numbers below are refreshed with it.
 - `src/combat/playerWeapon.js:83` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
 - `src/combat/weaponRig.js:34` - *                     (FLAGGED at the call sites - their HUD pends),
 - `src/scenes/arrestFlow.js:82` - instead of "You, , are..." (chargen wiring FLAGGED).
-- `src/scenes/arrestFlow.js:140` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
+- `src/scenes/arrestFlow.js:139` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
 - `src/scenes/cityGuards.js:23` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/cityGuards.js:205` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:357` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
@@ -270,7 +270,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
 - `src/systems/court.js:7` - People-faction half-delta FLAGGED to the save-side clone).
 - `src/systems/court.js:27` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
-- `src/systems/court.js:125` - *  daysInPrison } (guild rescues FLAGGED). */
+- `src/systems/court.js:176` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:33` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
 - `src/systems/effects.js:342` - enchantment bundles are FLAGGED to their own arc.
@@ -278,8 +278,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 - `src/systems/equip.js:170` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/guilds.js:39` - FLAGGED loud - RANK TITLES. DFU reads them from its own
-- `src/systems/guilds.js:112` - // are FLAGGED to the quest slice.
-- `src/systems/guilds.js:221` - /** GetTitle (:180-183). FLAGGED - see the header: the rank titles live
+- `src/systems/guilds.js:113` - // are FLAGGED to the quest slice.
+- `src/systems/guilds.js:236` - /** GetTitle (:180-183). FLAGGED - see the header: the rank titles live
 - `src/systems/guildVariants.js:153` - // banking does not exist yet, so it is FLAGGED to the banking
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
