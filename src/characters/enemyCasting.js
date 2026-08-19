@@ -9,7 +9,13 @@
 // then the EffectsAlreadyOnTarget veto), and the
 // EntityEffectManager.Update rule "enemies always cast ready spell
 // instantly once queued" - the decision IS the cast; the scene owns
-// the spend + release. DFU's clear-path probe
+// the spend + release. AUDIT 18: both branches also require
+// DetectedTarget (EnemyMotor.cs:573 and :620), and both live inside
+// TakeAction, which HandleNoAction (:359-365) skips once GiveUpTimer
+// hits 0 - so a concealed target stops the casting entirely. The
+// melee reach is a FLAT MeleeDistance: DFU's
+// `+ senses.TargetRateOfApproach` term is only ever non-zero under
+// EnhancedCombatAI (EnemySenses.cs:354-363). DFU's clear-path probe
 // (HasClearPathToShootProjectile) rides the senses' LOS here (inSight
 // gates every decision); the Enhanced Combat AI branches are off, as
 // everywhere in this port.
@@ -53,11 +59,11 @@ export class EnemyCaster {
     this.entity = entity;
     this.rolls = rolls;
     this._classicTimer = 0;
-    this._prevDist = null;
   }
 
   /**
-   * @param ai the foe's EnemyAI (senses: _dist, inSight, yaw, feet)
+   * @param ai the foe's EnemyAI (senses: _dist, inSight, detected,
+   *   giveUpTimer, yaw, feet)
    * @param attack the foe's EnemyAttack - the shared melee timer +
    *   one-shot state (no cast mid-swing), and rangedAttack (bow
    *   precedence over ranged spells, hasBowAttack's short-circuit)
@@ -69,12 +75,11 @@ export class EnemyCaster {
     const ent = this.entity;
     if (!ent.spells?.length) return null;
     const dist = ai._dist;
-    const approach = this._prevDist === null ? 0 : Math.max(0, this._prevDist - dist);
-    this._prevDist = dist;
     const idle = attack.machine.state === 'Idle';
     // DoTouchSpell: sight + melee reach + the melee timer at 0; a
     // touch cast RESETS the melee timer (ResetMeleeTimer, verbatim).
-    if (idle && ai.inSight && attack.meleeTimer === 0 && dist <= MELEE_DISTANCE + approach) {
+    if (idle && ai.inSight && ai.detected && ai.giveUpTimer > 0
+        && attack.meleeTimer === 0 && dist <= MELEE_DISTANCE) {
       const sp = pickTouchSpell(ent, playerEntity, this.rolls);
       if (sp) {
         attack.meleeTimer = resetMeleeTimer(attack.playerLevel, attack.reflexes, this.rolls());
@@ -87,9 +92,9 @@ export class EnemyCaster {
     let decision = null;
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
-      if (decision || attack.rangedAttack || !idle) continue;
+      if (decision || attack.rangedAttack || !idle || ai.giveUpTimer <= 0) continue;
       if (dist <= MIN_RANGED_DISTANCE || dist >= MAX_RANGED_DISTANCE) continue;
-      if (!ai.inSight || !withinYaw(ai.yaw, dx, dz, SPELL_YAW_DEG)) continue;
+      if (!ai.inSight || !ai.detected || !withinYaw(ai.yaw, dx, dz, SPELL_YAW_DEG)) continue;
       if (this.rolls() >= RANGED_SPELL_CHANCE) continue;
       const sp = pickRangedSpell(ent, playerEntity, this.rolls);
       if (sp) decision = { spell: sp, touch: false };

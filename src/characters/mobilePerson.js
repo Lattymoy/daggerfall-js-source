@@ -5,9 +5,16 @@
 // weight-0/blocked targets, an 80% chance to leave a downgrade for
 // the best neighbor - "mobiles generally follow roads"), MovingForward
 // pushes at 1.3 u/s to the cell center, and the person idles ONLY
-// when the player stands still within 2.5 with the weapon SHEATHED,
-// not invisible, and no enemies nearby (the verbatim politeness
-// gate). The billboard: MoveAnims records 0-4 over the same mirrored
+// while the scene's politeness gate holds. FLAGGED (AUDIT 18):
+// MobilePersonMotor.cs:216-230 builds that gate as player-still +
+// within 2.5 + weapon SHEATHED + not invisible + not in beast form,
+// and then forces it false unless !GameManager.AreEnemiesNearby()
+// (GameManager.cs:684-718). The exterior hosts supply only the first
+// four terms - the AreEnemiesNearby() term is NOT applied anywhere,
+// so a townsperson still idles beside a hostile city guard where DFU
+// keeps it walking. (!inBeastForm is legitimately absent:
+// lycanthropy is a routed Ledger C item.)
+// The billboard: MoveAnims records 0-4 over the same mirrored
 // 8-orientation wheel as the monsters (4 fps), idle record 5 (guards
 // 15, 1 fps). Race/gender texture tables verbatim; guards ride 399.
 //
@@ -163,8 +170,10 @@ export class MobilePerson {
   }
 
   /**
-   * @param wantsToStop the scene's verbatim politeness gate (player
-   *        still + near + sheathed + visible + no enemies nearby)
+   * @param wantsToStop the scene's politeness gate (player still +
+   *        near + sheathed + visible; the AreEnemiesNearby() term of
+   *        MobilePersonMotor.cs:227 is missing from both hosts - see
+   *        the FLAGGED note in this file's header)
    * @returns {record, frame, flip} for the billboard
    */
   update(dt, cameraPos, wantsToStop = false) {

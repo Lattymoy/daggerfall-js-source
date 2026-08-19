@@ -297,6 +297,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Orcs',
   'lootTableKey': 'A',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 136,
   'barkSound': 137,
   'attackSound': 138
@@ -353,6 +354,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Centaurs',
   'lootTableKey': 'C',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 139,
   'barkSound': 140,
   'attackSound': 141
@@ -530,6 +532,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Orcs',
   'lootTableKey': 'A',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 151,
   'barkSound': 152,
   'attackSound': 153
@@ -632,6 +635,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Undead',
   'lootTableKey': 'H',
   'canOpenDoors': true,
+  'parrySounds': true,
   'seesThroughInvisibility': true,
   'moveSound': 160,
   'barkSound': 161,
@@ -910,6 +914,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Orcs',
   'lootTableKey': 'U',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 178,
   'barkSound': 179,
   'attackSound': 138
@@ -1032,7 +1037,7 @@ export const ENEMY_BASICS = Object.freeze({
    -1,
    2,
    3,
-   null,
+   3,
    5,
    0,
    4,
@@ -1043,6 +1048,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Orcs',
   'lootTableKey': 'T',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 186,
   'barkSound': 187,
   'attackSound': 188
@@ -1093,6 +1099,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Daedra',
   'lootTableKey': 'J',
   'canOpenDoors': true,
+  'parrySounds': true,
   'seesThroughInvisibility': true,
   'moveSound': 189,
   'barkSound': 190,
@@ -1141,6 +1148,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Daedra',
   'lootTableKey': 'J',
   'canOpenDoors': true,
+  'parrySounds': true,
   'seesThroughInvisibility': true,
   'moveSound': 192,
   'barkSound': 193,
@@ -1207,6 +1215,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Daedra',
   'lootTableKey': 'E',
   'canOpenDoors': true,
+  'parrySounds': true,
   'seesThroughInvisibility': true,
   'moveSound': 195,
   'barkSound': 196,
@@ -1401,6 +1410,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Daedra',
   'lootTableKey': 'S',
   'canOpenDoors': true,
+  'parrySounds': true,
   'seesThroughInvisibility': true,
   'moveSound': 207,
   'barkSound': 208,
@@ -1585,6 +1595,7 @@ export const ENEMY_BASICS = Object.freeze({
   ],
   'team': 'Magic',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 222,
   'barkSound': 223,
   'attackSound': 224
@@ -1658,6 +1669,7 @@ export const ENEMY_BASICS = Object.freeze({
   ],
   'team': 'Magic',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 228,
   'barkSound': 229,
   'attackSound': 230
@@ -1939,6 +1951,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'KnightsAndMages',
   'lootTableKey': 'P',
   'canOpenDoors': true,
+  'parrySounds': true,
   'castsMagic': true,
   'moveSound': 243,
   'barkSound': 244,
@@ -2017,6 +2030,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'KnightsAndMages',
   'lootTableKey': 'U',
   'canOpenDoors': true,
+  'parrySounds': true,
   'castsMagic': true,
   'moveSound': 243,
   'barkSound': 244,
@@ -2206,6 +2220,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Criminals',
   'lootTableKey': 'U',
   'canOpenDoors': true,
+  'parrySounds': true,
   'castsMagic': true,
   'moveSound': 243,
   'barkSound': 244,
@@ -2275,6 +2290,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'KnightsAndMages',
   'lootTableKey': 'O',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 243,
   'barkSound': 244,
   'attackSound': 245
@@ -2343,6 +2359,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Criminals',
   'lootTableKey': 'O',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 243,
   'barkSound': 244,
   'attackSound': 245
@@ -2411,6 +2428,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Criminals',
   'lootTableKey': 'O',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 243,
   'barkSound': 244,
   'attackSound': 245
@@ -2479,6 +2497,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'KnightsAndMages',
   'lootTableKey': 'O',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 243,
   'barkSound': 244,
   'attackSound': 245
@@ -2547,6 +2566,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Criminals',
   'lootTableKey': 'O',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 243,
   'barkSound': 244,
   'attackSound': 245
@@ -2615,6 +2635,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Criminals',
   'lootTableKey': 'O',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 243,
   'barkSound': 244,
   'attackSound': 245
@@ -2677,6 +2698,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'KnightsAndMages',
   'lootTableKey': 'T',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 243,
   'barkSound': 244,
   'attackSound': 245
@@ -2727,6 +2749,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'KnightsAndMages',
   'lootTableKey': 'C',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 243,
   'barkSound': 244,
   'attackSound': 245
@@ -2777,6 +2800,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'KnightsAndMages',
   'lootTableKey': 'C',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 243,
   'barkSound': 244,
   'attackSound': 245
@@ -2839,6 +2863,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'Criminals',
   'lootTableKey': 'T',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 243,
   'barkSound': 244,
   'attackSound': 245
@@ -2901,6 +2926,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'KnightsAndMages',
   'lootTableKey': 'T',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 243,
   'barkSound': 244,
   'attackSound': 245
@@ -2963,6 +2989,7 @@ export const ENEMY_BASICS = Object.freeze({
   'team': 'KnightsAndMages',
   'lootTableKey': 'T',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 243,
   'barkSound': 244,
   'attackSound': 245
@@ -2989,6 +3016,7 @@ export const ENEMY_BASICS = Object.freeze({
   ],
   'team': 'CityWatch',
   'canOpenDoors': true,
+  'parrySounds': true,
   'moveSound': 243,
   'barkSound': 456,
   'attackSound': 245

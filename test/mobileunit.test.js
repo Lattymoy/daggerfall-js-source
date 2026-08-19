@@ -199,8 +199,10 @@ test('C14 spell state: the HasSpellAnimation route, the one-shot, and its interr
   assert.equal(stateAnims('spell', 21, true, true), RANGED_ATTACK1_ANIMS);
   assert.equal(stateAnims('spell', 32, true, false), PRIMARY_ATTACK_ANIMS);
   assert.equal(stateAnims('spell', MOBILE_GHOST, true, false), PRIMARY_ATTACK_ANIMS);
-  // The one-shot: SpellAnimFrames play through and revert to idle
-  // (the shaman's [0,0,1,2,3,3,3], verbatim).
+  // The one-shot: SpellAnimFrames only SEEDS the state (currentFrame =
+  // frames[0]) - Spell is NOT one of AnimateEnemy's
+  // doingAttackAnimation states, so the run is a plain +1 walk to the
+  // record's NumFrames, then IsPlayingOneShot() sends it to Idle.
   const basics = { hasIdle: true, hasSpellAnimation: true, spellAnimFrames: [0, 0, 1, 2, 3, 3, 3], primaryAttackAnimFrames: [0, 1] };
   const m = new MobileUnit(21, basics, () => 8, () => 0.99);
   m.update(1 / 60, { casting: true }, 0, [0, 0, 0], [0, 0, 5]);
@@ -211,7 +213,7 @@ test('C14 spell state: the HasSpellAnimation route, the one-shot, and its interr
     m.update(1 / 10, {}, 0, [0, 0, 0], [0, 0, 5]);
     if (m.state === 'spell') seen.push(m.frame);
   }
-  assert.deepEqual(seen, [0, 1, 2, 3, 3, 3]);
+  assert.deepEqual(seen, [1, 2, 3, 4, 5, 6, 7]);   // seeded at 0, +1 each step, exits at 8 = NumFrames
   assert.equal(m.state, 'idle');
   // Interrupts, verbatim: the attack edge overrides a cast
   // (ChangeEnemyState unconditional), and knockback-hurt CAN cut a
