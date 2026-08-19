@@ -21,6 +21,8 @@ work queue routed to arcs.
 
 | WebAudio playback engine (A1) | Unity AudioSource/3D audio -> WebAudio (PannerNode linear falloff, gesture-gated context, lazy 8-bit PCM decode). The DATA path stays 1:1: SoundClips indices, GetSwingSound pitch table, PlayHitSound roll families, EnemySounds attract shape (radius 16, delay 3..9, 80/20 bark/move, humans silent, attack 50%), door clips. |
 
+| The faction reputation store CLONES each record (S25) | DFU's PersistentFactionData.Reset assigns the reader's dictionary straight across, safe because C# FactionData is a STRUCT - indexing hands back a copy and writes go through an explicit write-back. JS objects are references, so assigning across would let a reputation change reach into the shared reader and follow one character into the next. createFactionRep clones. Same semantics; the only way to get them | Approved |
+
 ## B. Verbatim quirks preserved (real-data reality)
 
 Characters:

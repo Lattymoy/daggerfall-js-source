@@ -245,8 +245,6 @@ trail remains. Line numbers refreshed.
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
-- `src/systems/biography.js:19` - FLAGGED (ours): `rf` FACTION reputation needs the live faction data
-- `src/systems/biography.js:112` - FLAGGED: the faction slice drains these into FactionData
 - `src/systems/chargen.js:7` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
 - `src/systems/chargen.js:22` - INTERIM (loud): the UI distributes the bonus pools by hand; the
 - `src/systems/chargen.js:130` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
@@ -254,7 +252,6 @@ trail remains. Line numbers refreshed.
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
 - `src/systems/court.js:7` - People-faction half-delta FLAGGED to the save-side clone).
 - `src/systems/court.js:27` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
-- `src/systems/court.js:82` - ChangeReputation(peopleFaction, -loss/2) FLAGGED: the save-side
 - `src/systems/court.js:113` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:92` - FLAGGED: career hard-immunity (Career.Paralysis == Immune) and the

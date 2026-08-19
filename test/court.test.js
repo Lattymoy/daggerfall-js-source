@@ -7,6 +7,16 @@ import {
   surrenderToCityGuards, startCourt, pleaGuilty, pleaNotGuilty,
   resolveGuiltyVerdict, raiseRepForSentence, goldAmount,
 } from '../src/systems/court.js';
+import { FactionFile } from '../src/formats/factionFile.js';
+import { createFactionRep, getReputation } from '../src/systems/factionRep.js';
+import { getPeopleOfCurrentRegion } from '../src/systems/talk.js';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+
+const ARENA2 = process.env.ARENA2_PATH;
+const skipReal = !ARENA2 || !existsSync(ARENA2)
+  ? 'ARENA2_PATH not set or missing - real-data validation skipped'
+  : false;
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 
@@ -70,4 +80,56 @@ test('court: the not-guilty pleas - free, and the never-charged guilty-verdict q
   assert.equal(legalRepOf(p3, 17), 0);
   raiseRepForSentence(p3, { crime: CRIMES.Murder, regionIndex: 17 });   // 20/2-1 = +9
   assert.equal(legalRepOf(p3, 17), 9);
+});
+
+
+test('court: a crime also costs HALF the loss with the region People, propagating', { skip: skipReal }, () => {
+  // PlayerEntity.cs:2294-2298. The legal rep and the FACTION rep are
+  // two channels and a crime moves both; the port ran only the first
+  // until the faction store existed.
+  const ff = new FactionFile();
+  ff.load(readFileSync(join(ARENA2, 'FACTION.TXT')));
+  const store = createFactionRep(ff.factionDict);
+  const p = { health: 30, items: [], skills: 30, stats: { personality: 50 }, factionRep: store };
+  const people = getPeopleOfCurrentRegion(store.dict, 17);
+  assert.ok(people, 'region 17 has a single People faction');
+
+  lowerRepForCrime(p, 17, CRIMES.Murder);
+  const loss = REPUTATION_LOSS_PER_CRIME[CRIMES.Murder];
+  assert.equal(legalRepOf(p, 17), -loss, 'the legal channel takes the whole loss');
+  assert.equal(getReputation(store, people.id), -Math.trunc(loss / 2),
+    'the People faction takes HALF, negated OUTSIDE the truncating division');
+
+  // AND IT REACHES THE COURT. This is the half that makes the
+  // propagating flag matter: People of Daggerfall has no allies and no
+  // children, so its OWN value is identical either way - a pin that
+  // stopped at the People faction survived turning propagation off.
+  // The walk goes UP: the region itself takes the full loss as a root
+  // parent, and its ruler and guard take half.
+  // Careful with "full": the amount handed to changeReputation is
+  // ALREADY the halved crime delta, so the region takes that, and the
+  // hierarchy below it takes half of THAT - not half of the raw loss.
+  const delta = -Math.trunc(loss / 2);
+  const region = store.dict.get(people.parent);
+  assert.ok(region, 'the People faction hangs off its region');
+  assert.equal(getReputation(store, region.id), delta,
+    'the region is a root parent, so it takes the whole delta');
+  const court = [...store.dict.values()].filter((f) => f.rep === Math.trunc(delta / 2));
+  assert.ok(court.length >= 4,
+    `the region's ruler, guard and nobles take half again (saw ${court.length})`);
+
+  // an ODD loss is where the truncation shows: Trespassing is 5.
+  const q = { factionRep: createFactionRep(ff.factionDict) };
+  const odd = REPUTATION_LOSS_PER_CRIME[CRIMES.Trespassing];
+  assert.equal(odd % 2, 1, 'Trespassing is an odd loss, which is the point of this case');
+  lowerRepForCrime(q, 17, CRIMES.Trespassing);
+  assert.equal(getReputation(q.factionRep, people.id), -Math.trunc(odd / 2),
+    `an odd ${odd} costs ${Math.trunc(odd / 2)}, rounded toward the player - not ${Math.ceil(odd / 2)}`);
+});
+
+test('court: a crime without a faction store still runs the legal channel', () => {
+  // Not every host has run chargen. The crime path must not throw.
+  const p = {};
+  lowerRepForCrime(p, 17, CRIMES.Murder);
+  assert.equal(legalRepOf(p, 17), -REPUTATION_LOSS_PER_CRIME[CRIMES.Murder]);
 });

@@ -32,6 +32,8 @@
 import { rand } from '../formats/dfRandom.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { goldStack } from './inventory.js';   // AUDIT 17f: one gold mint
+import { getPeopleOfCurrentRegion } from './talk.js';   // T3a shipped the lookup
+import { changeReputation } from './factionRep.js';     // S25
 
 export const CRIMES = Object.freeze({
   None: 0, Attempted_Breaking_And_Entering: 1, Trespassing: 2,
@@ -79,8 +81,18 @@ export function changeLegalRep(player, regionIndex, delta) {
 
 export function lowerRepForCrime(player, regionIndex, crime) {
   changeLegalRep(player, regionIndex, -REPUTATION_LOSS_PER_CRIME[crime]);
-  // ChangeReputation(peopleFaction, -loss/2) FLAGGED: the save-side
-  // faction clone pends; the regional LegalRep is the live state.
+  // PlayerEntity.cs:2294-2298 - the region's People faction takes HALF
+  // the legal loss, propagating out to its allies and enemies. The
+  // negation sits OUTSIDE the division in DFU, `-(loss / 2)`, and the
+  // division truncates toward zero, so an odd loss rounds toward the
+  // player's favour by one point. Silent when the store is absent
+  // (a host that never ran chargen) rather than throwing on a crime.
+  const store = player?.factionRep;
+  if (!store) return;
+  const people = getPeopleOfCurrentRegion(store.dict, regionIndex);
+  if (people) {
+    changeReputation(store, people.id, -Math.trunc(REPUTATION_LOSS_PER_CRIME[crime] / 2), true);
+  }
 }
 
 export function goldAmount(player) {
