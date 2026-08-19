@@ -45,6 +45,7 @@
   <button id="hairstyle">hair: short</button>
   <button id="drape">drape: None</button>
   <select id="villager" title="villager design (editor only - no game wiring)"></select>
+  <select id="orc" title="orc line (editor only - no game wiring)"></select>
 </div>
 <div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 72px); left:0; right:0; display:flex; flex-direction:column; gap:8px; align-items:center; color:#8a8a99; font-size:12px; pointer-events:none;">
   <button id="tunertab">tuners &#9650;</button>
@@ -228,6 +229,16 @@ function buildPiece(cp) {
 const animTargets = [{ pos, base: basePos, vgrp, geo }];
 const pieceMesh = {};
 for (const name of ['pauldrons','helm']) if (D[name]) pieceMesh[name] = buildPiece(D[name]);
+// ORC PIECES: one tusk pair and one brow per design, all built up front
+// and hidden. Building them lazily on selection would drop a new mesh
+// into animTargets mid-animation, and the animator holds a base-pose
+// snapshot per target - a target that joins late has no snapshot for
+// the frame in flight and snaps to rest for one tick.
+const orcPieceMesh = (D.orcs || []).map((o) => ({
+  tusks: o.tusks ? buildPiece(o.tusks) : null,
+  brow: o.brow ? buildPiece(o.brow) : null,
+}));
+for (const m of orcPieceMesh) { if (m.tusks) m.tusks.visible = false; if (m.brow) m.brow.visible = false; }
 const RACES = ['Human','Elf','Khajiit','Argonian']; let raceIx = 0;
 const raceHair = {};
 for (const R of RACES) {
@@ -449,6 +460,74 @@ const fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-1, 0
 // THREE adapter so every existing call site (and probe) is unchanged.
 const ACTX = createAnimContext({ basePos, vgrp, armX: D.armX, wristY: D.wristY, neckY: D.neckY });
 
+// ── ORC LINE picker (editor only) ────────────────────────────────
+// An orc is the SAME delta mechanism as a villager (build girth moves
+// the rig's own faces, adds none), so it reuses applyVillager's path
+// for the body and adds its two authored pieces on top.
+//
+// The two pickers are MUTUALLY EXCLUSIVE. They write the same face
+// list from the same pristine copy, so leaving one selected while the
+// other applies would show a villager's gown stretched over a
+// warlord's ribcage - whichever wrote last wins per face, and the
+// result is neither design.
+let orcOn = null;
+function applyOrc(o) {
+  for (const m of orcPieceMesh) { if (m.tusks) m.tusks.visible = false; if (m.brow) m.brow.visible = false; }
+  orcOn = o;
+  if (!o) { applyVillager(null); return; }
+  // Hide the human head furniture: an orc wears neither.
+  const hs = document.getElementById('hairstyle');
+  applyVillager(null);
+  for (const rr of RACES) { const h = raceHair[rr]; if (h) for (const st of h.styles) h.meshes[st].visible = false; }
+  if (pieceMesh.helm) pieceMesh.helm.visible = false;
+  // Body: repaint to the orc hide first (setBodyRamp touches EVERY body
+  // face), THEN lay the delta over it - same ordering hazard the
+  // villager path documents above.
+  if (o.hide) setBodyRamp(o.hide);
+  for (let k = 0; k < o.idx.length; k++) {
+    const f = o.idx[k], pb = k * 12, cb = k * 3;
+    const r = o.C[cb] / 255, g = o.C[cb + 1] / 255, b = o.C[cb + 2] / 255;
+    let oo = f * 18;
+    for (const vi of TRI) {
+      pos[oo] = o.P[pb + vi * 3] / 1000;
+      pos[oo + 1] = o.P[pb + vi * 3 + 1] / 1000;
+      pos[oo + 2] = o.P[pb + vi * 3 + 2] / 1000;
+      col[oo] = r; col[oo + 1] = g; col[oo + 2] = b;
+      oo += 3;
+    }
+  }
+  basePos.set(pos);
+  geo.getAttribute('position').needsUpdate = true;
+  geo.getAttribute('color').needsUpdate = true;
+  const pm = orcPieceMesh[(D.orcs || []).indexOf(o)];
+  if (pm) { if (pm.tusks) pm.tusks.visible = true; if (pm.brow) pm.brow.visible = true; }
+  if (hs) hs.textContent = 'hair: none (orc)';
+}
+{
+  const sel = document.getElementById('orc');
+  if (sel) {
+    const none = document.createElement('option');
+    none.value = ''; none.textContent = 'orc: none (bare rig)';
+    sel.appendChild(none);
+    for (const o of (D.orcs || [])) {
+      const opt = document.createElement('option');
+      opt.value = String(o.id);
+      opt.textContent = o.name + '  (lvl ' + o.level + ', ' + o.damage[0] + '-' + o.damage[1] + ' dmg)';
+      sel.appendChild(opt);
+    }
+    sel.onchange = () => {
+      const o = (D.orcs || []).find((x) => String(x.id) === sel.value) || null;
+      const vsel = document.getElementById('villager');
+      if (o && vsel) vsel.value = '';   // the two pickers are exclusive
+      applyOrc(o);
+      const hud = document.getElementById('hud');
+      if (hud) hud.textContent = o
+        ? o.name + ' \u00b7 MobileType ' + o.id + ' \u00b7 lvl ' + o.level + ' \u00b7 ' + o.damage[0] + '-' + o.damage[1] + ' dmg \u00b7 weapon tier ' + o.weaponTier
+        : 'NEUTRAL POSE prototype \u00b7 drag to rotate \u00b7 pinch to zoom';
+    };
+  }
+}
+
 // villager picker: grouped by race so the roster reads as a town
 {
   const sel = document.getElementById('villager');
@@ -470,6 +549,7 @@ const ACTX = createAnimContext({ basePos, vgrp, armX: D.armX, wristY: D.wristY, 
   }
   sel.onchange = () => {
     const v = (D.villagers || []).find((x) => String(x.archive) === sel.value) || null;
+    if (v) { const osel = document.getElementById('orc'); if (osel) osel.value = ''; applyOrc(null); }
     applyVillager(v);
     const hud = document.getElementById('hud');
     if (hud) hud.textContent = v
