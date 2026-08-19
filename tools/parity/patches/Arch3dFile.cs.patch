@@ -1,0 +1,13 @@
+--- /tmp/claude-0/-home-user-project-dagger/1515f936-8347-5cbe-b4ea-21fede5b6b72/scratchpad/dfu/Assets/Scripts/API/Arch3dFile.cs	2026-08-19 00:32:45.117503963 +0000
++++ /tmp/claude-0/-home-user-project-dagger/1515f936-8347-5cbe-b4ea-21fede5b6b72/scratchpad/diff/cs/api/Arch3dFile.cs	2026-08-19 00:53:14.780376746 +0000
+@@ -897,6 +897,10 @@
+             // Find corner points
+             int cornerCount = GetCornerPoints(ref planeIn.Points);
+ 
++            // HARNESS: side-effect-free observer that records the exact inputs handed to
++            // FaceUVTool so the JS side can be fed an identical corpus. No value is altered.
++            HarnessCorpus.CaptureFaceUV(ref planeIn.Points);
++
+             // Calculate UV coordinates of all points
+             if (faceUVTool.ComputeFaceUVCoordinates(ref planeIn.Points, ref calculatedUVBuffer))
+             {

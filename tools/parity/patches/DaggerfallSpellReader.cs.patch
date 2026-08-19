@@ -1,0 +1,102 @@
+--- /tmp/claude-0/-home-user-project-dagger/1515f936-8347-5cbe-b4ea-21fede5b6b72/scratchpad/dfu/Assets/Scripts/Utility/DaggerfallSpellReader.cs	2026-08-19 00:32:45.323299018 +0000
++++ /tmp/claude-0/-home-user-project-dagger/1515f936-8347-5cbe-b4ea-21fede5b6b72/scratchpad/diff/cs/api/DaggerfallSpellReader.cs	2026-08-19 01:20:54.322746717 +0000
+@@ -40,7 +40,7 @@
+             var managedFile = new DaggerfallConnect.Utility.FileProxy();
+ 
+             if(string.IsNullOrEmpty(filePath))
+-                filePath = Path.Combine(DaggerfallUnity.Instance.Arena2Path, DEFAULT_FILENAME);
++                filePath = Path.Combine(System.Environment.GetEnvironmentVariable("ARENA2_PATH"), DEFAULT_FILENAME);
+             
+             if (!File.Exists(filePath))
+             {
+@@ -263,89 +263,7 @@
+             return true;
+         }
+ 
+-        #region json
+-        /// <summary>
+-        /// Serializes spell record to json
+-        /// </summary>
+-        /// <param name="spell"></param>
+-        /// <returns></returns>
+-        public static string SerializeSpell(SpellRecord.SpellRecordData spell)
+-        {
+-            return DoSerialize<SpellRecord.SpellRecordData>(spell);
+-        }
+-
+-        /// <summary>
+-        /// serializes array of spells to json
+-        /// </summary>
+-        /// <param name="spell"></param>
+-        /// <returns></returns>
+-        public static string SerializeSpells(List<SpellRecord.SpellRecordData> spells)
+-        {
+-            return DoSerialize<List<SpellRecord.SpellRecordData>>(spells);
+-        }
+-
+-        /// <summary>
+-        /// Deserializes array of spell records 
+-        /// </summary>
+-        /// <param name="data"></param>
+-        /// <returns></returns>
+-        public static List<SpellRecord.SpellRecordData> DeserializeSpells(string data)
+-        {
+-            List<SpellRecord.SpellRecordData> spells;
+-            DoDeserialize<List<SpellRecord.SpellRecordData>>(data, out spells);
+-            return spells;
+-        }
+-
+-        /// <summary>
+-        /// Deserializes single
+-        /// </summary>
+-        /// <param name="data"></param>
+-        /// <returns></returns>
+-        public static SpellRecord.SpellRecordData DeserializeSpell(string data)
+-        {
+-            SpellRecord.SpellRecordData spell;
+-            DoDeserialize<SpellRecord.SpellRecordData>(data, out spell);
+-            return spell;
+-        }
+-
+-        private static bool DoDeserialize<T>(string textdata, out T obj)
+-        {
+-            obj = default(T);
+-            bool succeeded = false;
+-
+-            if (string.IsNullOrEmpty(textdata))
+-            {
+-                Debug.LogError("nothing to deserialize");
+-                return succeeded;
+-            }
+-
+-            try
+-            {
+-                fsData data = FullSerializer.fsJsonParser.Parse(textdata);
+-                fsSerializer serializer = new fsSerializer();
+-                serializer.TryDeserialize<T>(data, ref obj);
+-                succeeded = true;
+-            }
+-            catch (System.Exception ex)
+-            {
+-                Debug.LogError(ex.Message);
+-                succeeded = false;
+-            }
+-
+-            return succeeded;
+-
+-        }
+-
+-        private static string DoSerialize<T>(T spell)
+-        {
+-            fsData data;
+-            fsSerializer serializer = new fsSerializer();
+-            serializer.TrySerialize(typeof(T), spell, out data);
+-            string results = FullSerializer.fsJsonPrinter.PrettyJson(data);
+-            return results;
+-        }
+-
+-        #endregion
++        // HARNESS: FullSerializer JSON (de)serialize helpers removed - not part of SPELLS.STD parsing.
+     }
+ 
+     #region format_info

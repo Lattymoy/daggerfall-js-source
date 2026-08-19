@@ -1,0 +1,38 @@
+--- /tmp/claude-0/-home-user-project-dagger/1515f936-8347-5cbe-b4ea-21fede5b6b72/scratchpad/dfu/Assets/Scripts/API/BlocksFile.cs	2026-08-19 00:32:45.118245762 +0000
++++ /tmp/claude-0/-home-user-project-dagger/1515f936-8347-5cbe-b4ea-21fede5b6b72/scratchpad/diff/cs/api/BlocksFile.cs	2026-08-19 00:43:13.747978943 +0000
+@@ -541,22 +541,21 @@
+                 }
+ 
+                 // Replace a corner near the original exit with a model having a door
+-                ref var rdbObject = ref blocks[block].DFBlock.RdbBlock.ObjectRootList[5].RdbObjects[39];
+-                rdbObject.XPos += 64;
+-                rdbObject.ZPos -= 64;
+-                int x = rdbObject.XPos;
+-                int y = rdbObject.YPos;
+-                int z = rdbObject.ZPos;
+-                rdbObject.Resources.ModelResource.ModelIndex = 35;
+-                rdbObject.Resources.ModelResource.YRotation = -512;
++                // HARNESS: ref-local reassignment rewritten as direct struct-array element access
++                // (behaviourally identical: array[i].Field = v mutates the slot in place).
++                blocks[block].DFBlock.RdbBlock.ObjectRootList[5].RdbObjects[39].XPos += 64;
++                blocks[block].DFBlock.RdbBlock.ObjectRootList[5].RdbObjects[39].ZPos -= 64;
++                int x = blocks[block].DFBlock.RdbBlock.ObjectRootList[5].RdbObjects[39].XPos;
++                int y = blocks[block].DFBlock.RdbBlock.ObjectRootList[5].RdbObjects[39].YPos;
++                int z = blocks[block].DFBlock.RdbBlock.ObjectRootList[5].RdbObjects[39].ZPos;
++                blocks[block].DFBlock.RdbBlock.ObjectRootList[5].RdbObjects[39].Resources.ModelResource.ModelIndex = 35;
++                blocks[block].DFBlock.RdbBlock.ObjectRootList[5].RdbObjects[39].Resources.ModelResource.YRotation = -512;
+                 // Move the exit to the corner door position
+-                rdbObject = ref blocks[block].DFBlock.RdbBlock.ObjectRootList[8].RdbObjects[0];
+-                rdbObject.XPos = x;
+-                rdbObject.ZPos = z + 126;
++                blocks[block].DFBlock.RdbBlock.ObjectRootList[8].RdbObjects[0].XPos = x;
++                blocks[block].DFBlock.RdbBlock.ObjectRootList[8].RdbObjects[0].ZPos = z + 126;
+                 // Move the start marker near the exit
+-                rdbObject = ref blocks[block].DFBlock.RdbBlock.ObjectRootList[4].RdbObjects[5];
+-                rdbObject.XPos = x;
+-                rdbObject.ZPos = z;
++                blocks[block].DFBlock.RdbBlock.ObjectRootList[4].RdbObjects[5].XPos = x;
++                blocks[block].DFBlock.RdbBlock.ObjectRootList[4].RdbObjects[5].ZPos = z;
+ 
+                 // Add an wall to seal the door in case the block is not the starting one
+                 var rdbObjects = new List<DFBlock.RdbObject>(blocks[block].DFBlock.RdbBlock.ObjectRootList[8].RdbObjects);

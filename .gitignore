@@ -15,3 +15,12 @@ back-drafts/
 # Disposable agent worktrees (nested checkouts) - never commit.
 .claude/worktrees/
 node_modules
+
+# tools/parity: reproducible from prepare.sh / run.sh. cs/api holds DFU's
+# own sources (kept EXTERNAL per Port-Doctrine); out/ reaches ~2.4GB.
+tools/parity/dfu/
+tools/parity/cs/api/
+tools/parity/cs/*.exe
+tools/parity/out/
+tools/mutation/*.jsonl
+tools/mutation/*.log
