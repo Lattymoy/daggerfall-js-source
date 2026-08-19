@@ -51,9 +51,25 @@ import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
-import { isShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem } from '../systems/shopStock.js';
+import { isShop, isRepairShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem } from '../systems/shopStock.js';
 import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // U8c
+// U23: the static-NPC seam and the guild service popup.
+import { STATIC_NPC_ACTIVATION_DISTANCE } from '../systems/talk.js';
+import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects } from '../systems/guildServiceFlow.js';
+import { npcServiceKind, freeHealing, freeMagickaRecharge } from '../systems/guildServices.js';
+import { createGuildForGroup } from '../systems/guildVariants.js';
+import { membershipOf, joinGuild, joinDecision } from '../systems/guilds.js';
+import { ensureFactionRep } from '../systems/factionRep.js';
+import { dateFromClassicMinutes } from '../systems/gameDate.js';
+import { serviceDestination } from '../systems/guildServiceFlow.js';
+import { buildTrainingFlow, buildDonationFlow, buildCureDiseaseFlow } from '../ui/guildServiceWindows.js';
+import { preloadListPickerArt } from '../ui/listPicker.js';
+import { getTitle } from '../systems/guilds.js';
+import { getDivine, DIVINES } from '../systems/guildVariants.js';
+import { BUILDING_TYPES } from '../world/buildingNames.js';
+import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
+import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { goldAmount, deductGold, addGold } from '../systems/court.js';
@@ -100,7 +116,7 @@ export function createWorldModes(host) {
       if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
     },
   });
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
 
   let mode = 'exterior';
@@ -127,6 +143,15 @@ export function createWorldModes(host) {
     fetchBytes('FONT0003.FNT')
       .then((b) => { _shopFont = makeFont(renderer, new FntFile().load(b), 'FONT0003'); })
       .catch(() => console.warn('[shop] FONT0003.FNT unavailable; the shelf browse is disabled'));
+  };
+  // U23: the guild popup's own art. It rides EVERY interior entry, not
+  // just a shop's - a guild hall, a temple and a knightly order are
+  // none of them shops, and the popup is the only window they open.
+  const ensureInteriorWindowArt = () => {
+    ensureShopFont();                                       // FONT0003 + the trade art
+    preloadGuildServiceArt({ renderer, fetchBytes, palette });
+    preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11 parchment for its boxes
+    preloadListPickerArt({ renderer, fetchBytes, palette });   // U24: PICK00I0 for the training skill list
   };
 
   // E2: the shelf browse/buy chain (DFU's trade window collapsed to
@@ -214,6 +239,198 @@ export function createWorldModes(host) {
       personality: playerEntity.stats?.personality ?? 50,
     }, true);
   }
+  // ── U23: THE STATIC NPC SEAM ────────────────────────────────────
+  // PlayerActivate.ActivateStaticNPC/StaticNPCClick (:742-766,
+  // :1512-1607). Until now the people standing in a building interior
+  // were scenery: interiorContext spawned them (C1) and nothing could
+  // click one. They are activation targets now, at DFU's own
+  // StaticNPCActivationDistance (256 classic units, twice a door's).
+  //
+  // THE FOUR HOSTS, named. This seam belongs to the INTERIOR host and
+  // to no other:
+  //   - scenes/worldModes.js      WIRED (here). It is the only host
+  //     that builds a building interior, so it is the only one with
+  //     StaticNPCs to click.
+  //   - scenes/exterior.js        no interior of its own; it MOUNTS
+  //     this machine, and a click inside reaches here through it.
+  //   - scenes/world.js           the same - it mounts this machine.
+  //   - scenes/dungeonContext.js  dungeons have no StaticNPC people
+  //     records at all (RDB blocks carry flats and enemies, not
+  //     blockPeopleRecords), so there is nothing here to wire. A quest
+  //     Person placed in a dungeon is the quest machine's, FLAGGED
+  //     with it.
+  //
+  // The routing law is systems/guildServiceFlow.js; this end owns only
+  // the geometry, the faction lookups and the window.
+  const personAabb = (pn) => ({
+    min: [pn.x - pn.width / 2, pn.y, pn.z - pn.width / 2],
+    max: [pn.x + pn.width / 2, pn.y + pn.height, pn.z + pn.width / 2],
+  });
+
+  /** The live date the guild rank gate reads (S28). AUDIT 21 F2 made
+   *  every ticker a VIEW on one absolute world clock, so this reads
+   *  straight through - the epoch is already in it, and S28's
+   *  elapsed-minute bridge is retired. */
+  const gameDate = () => dateFromClassicMinutes(interiorTicker.classicMinutes);
+
+  function activateStaticNpc(pn) {
+    if (!pn) return;
+    // ASYNC NEVER DROPS: FACTION.TXT may still be loading on the first
+    // click of a session. ensureFactions coalesces, so the click lands
+    // when the file does rather than being swallowed.
+    Promise.resolve(townTalk?.ensureFactions?.()).then(() => openStaticNpc(pn)).catch(() => {});
+  }
+
+  function openStaticNpc(pn) {
+    const dict = townTalk?.factionDict ?? null;
+    const npcFaction = dict?.get(pn.factionID) ?? null;
+    const buildingFactionId = interiorBuilding?.factionId ?? 0;
+    const route = staticNpcRoute({
+      npcFactionId: pn.factionID,
+      npcFaction,
+      buildingFaction: buildingFactionId ? (dict?.get(buildingFactionId) ?? null) : null,
+      buildingType: interiorBuilding?.buildingType ?? -1,
+      insideBuilding: !!interiorBuilding,
+      isShop,
+      isRepairShop,
+      isBank: (t) => t === BUILDING_TYPES.Bank,
+      isTavern: (t) => t === BUILDING_TYPES.Tavern,
+    });
+    if (route.kind === 'guildService') { openGuildService(pn, route); return; }
+    // FLAGGED, each with the slice it waits on:
+    //   merchant  - DaggerfallMerchantServicePopupWindow (sell /
+    //               banking / repair / tavern rooms). The tavern and
+    //               banking arms need the rest window's room booking
+    //               and a bank that does not exist yet.
+    //   witchesCoven - DaggerfallWitchesCovenPopupWindow.
+    // Both fall through to TALK, which is DFU's own last arm for an
+    // NPC with no special handling, so nothing is inert.
+    console.log('[interior] static NPC route:', route.kind, route.service ?? '');
+    townTalk?.say?.('You get no response.');
+  }
+
+  function openGuildService(pn, route) {
+    const dict = townTalk?.factionDict ?? null;
+    const guild = createGuildForGroup(route.guildGroup, route.buildingFactionId, dict);
+    if (!guild) { townTalk?.say?.('You get no response.'); return; }
+    if (!guildServiceArtLoaded() || !_shopFont) return;   // no art, no window (the U8 idiom)
+    const memberships = (playerEntity.guildMemberships ??= {});
+    // THE ONE CONSTRUCTION SEAM (5th): DFU's PlayerEntity always has
+    // FactionData; the port's pre-chargen INTERIM entity does not, and
+    // the join decision reads reputation. The live probe hit this as a
+    // pageerror on `store.dict`.
+    const store = ensureFactionRep(playerEntity, dict);
+    const service = npcServiceKind(pn.factionID);
+    const rows = (id) => townTalk?.lines?.(id) ?? [];
+    // U24: a window that dispatches to another window must not be
+    // nulled by its OWN onClose - DFU closes the popup and pushes the
+    // next one, and the port's overlay slot is single. The identity
+    // guard is what keeps the second window alive; without it the join
+    // welcome and every service flow vanished the moment they opened.
+    let win = null;
+    win = new GuildServiceWindow({
+      member: () => !showsJoinButton(memberships, route.guildGroup),
+      service: () => service,
+      rows,
+      // OnPush (:158-205) runs once, on construction.
+      steps: () => onPushEffects(playerEntity, guild, memberships, store, gameDate(), {
+        freeHealing: freeHealing(guild, membershipOf(memberships, guild)),
+        freeMagickaRecharge: freeMagickaRecharge(guild, membershipOf(memberships, guild), playerEntity),
+      }),
+      onJoin: () => {
+        // JoinButton_OnMouseClick (:497-525). joinDecision is null for
+        // the two invitation-only guilds, which DFU reaches by
+        // THROWING from TokensEligible - it never shows them a join
+        // button, because their group is forced-member above.
+        // No FACTION.TXT, no reputation, no honest decision - and DFU
+        // has no branch for it, so the port says nothing rather than
+        // guessing a zero.
+        if (!store) return null;
+        const decision = joinDecision(playerEntity, guild, store);
+        if (!decision) return null;
+        if (!decision.eligible) return { rows: rows(decision.textId) };
+        return {
+          rows: rows(decision.textId),
+          buttons: 'YesNo',
+          onYes: () => {
+            joinGuild(memberships, guild, gameDate());
+            const welcome = new GuildServiceWindow(_welcomeHooks(guild, rows, () => welcome));
+            interiorOverlay = welcome;
+          },
+        };
+      },
+      onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToStaticNPC pends the static-NPC conversation
+      onService: () => {
+        const access = serviceAccess(guild, membershipOf(memberships, guild), service);
+        if (!access.allowed) {
+          return { rows: access.textId ? rows(access.textId) : [access.text] };
+        }
+        // U24: the three the port can perform. Every other arm is
+        // FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+        const flow = openServiceFlow(serviceDestination(service), { guild, memberships, store, rows, route });
+        if (!flow) return { rows: ['That service is not available yet.'] };
+        interiorOverlay = flow;
+        return { dispatched: true };
+      },
+      onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
+    });
+    interiorOverlay = win;
+  }
+
+  /** DoGuildService's three built arms (U24). Each returns a
+   *  ServiceFlowWindow, or null for a destination that does not exist
+   *  yet. `onClose` uses the same identity guard as the popup's. */
+  function openServiceFlow(destination, { guild, memberships, store, rows, route }) {
+    if (!destination) return null;
+    const membership = membershipOf(memberships, guild);
+    const b = interiorBuilding;
+    const closeSelf = () => { if (interiorOverlay === flow) interiorOverlay = null; };
+    const now = () => interiorTicker.classicMinutes;   // already CLASSIC minutes (AUDIT 21 F2)
+    const godName = guild.divine ?? '';
+    let flow = null;
+    if (destination === 'guildServiceTraining') {
+      flow = buildTrainingFlow(playerEntity, guild, membership, {
+        rows, now, onClose: () => closeSelf(),
+        guildTitle: getTitle(membership, playerEntity, guild),
+        // The clock advance and the fatigue drain are the HOST's -
+        // trainSkill hands them back rather than reaching for a ticker.
+        applyTraining: (result, price) => {
+          deductGold(playerEntity, price);
+          tallySkill(playerEntity, result.skill, result.tally);
+          playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - result.fatigueLoss);
+          interiorTicker.advance(result.advanceMinutes);
+          surfacePlayer();
+        },
+      });
+    } else if (destination === 'guildServiceDonation') {
+      // "Based on the building faction id rather than guild object so
+      // it works for non-members as well" (:29-30) - and the id the
+      // reputation lands on is the DIVINE's, which for a temple hall
+      // is the building faction itself.
+      const divine = getDivine(townTalk?.factionDict ?? null, route.buildingFactionId);
+      flow = buildDonationFlow(playerEntity, store, DIVINES[divine] ?? route.buildingFactionId, {
+        rows, onClose: () => closeSelf(), godName: divine ?? '',
+      });
+    } else if (destination === 'guildServiceCureDisease') {
+      flow = buildCureDiseaseFlow(playerEntity, guild, membership, {
+        rows, now, onClose: () => closeSelf(), godName,
+        quality: b?.quality ?? 0, regionIndex: b?.regionIndex ?? 0,
+      });
+    }
+    return flow;
+  }
+
+  /** ConfirmJoinGuild's welcome box (:527-541): a fresh click-anywhere
+   *  box over the popup, which the port shows as its own one-box
+   *  window since the popup underneath has already closed. */
+  const _welcomeHooks = (guild, rows, self) => ({
+    member: () => true,
+    service: () => null,
+    rows,
+    steps: () => [{ textId: guild.text.welcome, clickAnywhere: true, closesWindow: true }],
+    onClose: () => { if (interiorOverlay === self()) interiorOverlay = null; },
+  });
+
   function showShelfList(shelf, page) {
     const per = 8;
     const slice = shelf.items.slice(page * per, (page + 1) * per);
@@ -308,7 +525,7 @@ export function createWorldModes(host) {
       // E2: the building's identity (type/quality/key/name) rides the
       // host's merge closure; shops warm the browse font.
       interiorBuilding = buildingDataForDoor?.(hit) ?? null;
-      if (interiorBuilding && isShop(interiorBuilding.buildingType)) ensureShopFont();
+      ensureInteriorWindowArt();   // U23: every interior can open a window now
       // Music is NOT started here any more. AUDIT 19's 1:1 pass moved it
       // to the SongManager: the host feeds a context every frame and the
       // manager decides when the song changes, which is the only way to
@@ -363,6 +580,13 @@ export function createWorldModes(host) {
     interiorCtx.ladders.forEach((l, i) => {
       targets.push({ key: `ladder:${i}`, aabb: objAabb(l) });
     });
+    // U23: the StaticNPCs. Their reach is DFU's own 256 classic units
+    // (PlayerActivate.cs:87), twice a door's, and a person with no
+    // billboard size resolved is not a target at all.
+    interiorCtx.people.forEach((pn, i) => {
+      if (!pn.width) return;
+      targets.push({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE });
+    });
     const key = pickActivatable(eye, dir, targets, interiorCtx.collider);
     if (key === null) return false;
     if (key.startsWith('ladder:')) {
@@ -386,6 +610,10 @@ export function createWorldModes(host) {
     if (!key.startsWith('exit:')) {
       if (key.startsWith('shelf:')) {
         openShelf(Number(key.split(':')[1]));   // E2: the browse/buy window (no-op outside shops)
+        return true;
+      }
+      if (key.startsWith('person:')) {
+        activateStaticNpc(interiorCtx.people[Number(key.split(':')[1])]);   // U23
         return true;
       }
       if (key.startsWith('container:')) {
@@ -471,8 +699,10 @@ export function createWorldModes(host) {
     targets.push(...dungeonCtx.lootTargets());   // S2: piles + lootable corpses
     const key = pickActivatable(eye, dir, targets, dungeonCtx.collider);
     if (key === null) return false;
-    if (key.startsWith('loot:') || key.startsWith('corpse:')) {
-      dungeonCtx.takeLoot(key);   // transfer message: UI arc
+    // U26: droppedLoot: is the player's own pile - the same three-way
+    // arm the standalone dungeon scene carries, kept in step here.
+    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:')) {
+      dungeonCtx.takeLoot(key);   // opens the inventory with the pile as the remote target
       return true;
     }
     if (!key.startsWith('exit:')) {
@@ -759,6 +989,33 @@ export function createWorldModes(host) {
     window.__ladders = () => interiorCtx ? JSON.stringify(interiorCtx.ladders.map((l) => ({ x: +l.matrix[12].toFixed(2), y: +l.matrix[13].toFixed(2), z: +l.matrix[14].toFixed(2) }))) : null;
     window.__people = () => interiorCtx ? interiorCtx.people.length : null;
     window.__peopleList = () => interiorCtx ? JSON.stringify(interiorCtx.people.map((pn) => ({ a: pn.textureArchive, r: pn.textureRecord, x: +pn.x.toFixed(1), y: +pn.y.toFixed(1), z: +pn.z.toFixed(1) }))) : null;
+    // U23: the static-NPC seam, probe-side. __staticNpcs surfaces the
+    // faction id and the resolved billboard extent (no extent, no
+    // activation target); __activateNpc runs the click without needing
+    // the probe to aim a ray; __guildOverlay reads the open popup.
+    window.__staticNpcs = () => (interiorCtx ? JSON.stringify(interiorCtx.people.map((pn, i) => ({
+      i, faction: pn.factionID, service: npcServiceKind(pn.factionID),
+      w: pn.width ? +pn.width.toFixed(2) : null, h: pn.height ? +pn.height.toFixed(2) : null,
+    }))) : null);
+    window.__activateNpc = (i) => { activateStaticNpc(interiorCtx?.people[i]); return true; };
+    window.__guildOverlay = () => JSON.stringify(interiorOverlay?.hooks?.service ? {
+      guild: true, member: interiorOverlay.hooks.member(), service: interiorOverlay.hooks.service(),
+      boxes: interiorOverlay.boxes.map((b) => b.textId ?? (b.rows?.[0]?.text ?? b.rows?.[0])),
+    } : null);
+    // U24: the service flow's own surface (the guild popup is gone by
+    // the time one is open, so __guildOverlay reads null).
+    window.__serviceFlow = () => JSON.stringify(interiorOverlay?.boxes && !interiorOverlay.hooks ? {
+      flow: true,
+      box: interiorOverlay.top?.rows?.map((r) => r.text ?? r).join(' | ') ?? null,
+      buttons: interiorOverlay.top?.buttons ?? null,
+      picker: interiorOverlay.top?.picker ?? null,
+      field: !!interiorOverlay.top?.field,
+      value: interiorOverlay.value ?? null,
+      queued: interiorOverlay.boxes.length,
+    } : null);
+    window.__building = () => JSON.stringify(interiorBuilding ? {
+      type: interiorBuilding.buildingType, faction: interiorBuilding.factionId, name: interiorBuilding.name,
+    } : null);
     window.__enemies = () => dungeonCtx ? JSON.stringify(dungeonCtx.enemies.slice(0, 8).map((e) => ({ t: e.mobileType, x: +e.x.toFixed(1), y: +e.y.toFixed(1), z: +e.z.toFixed(1), fixed: e.fixed }))) : null;
     window.__interiorActions = () => interiorCtx ? JSON.stringify(
       [...interiorCtx.actions.objects.values()].map((o) => ({ key: o.key, state: o.state, pos: [o.matrix[12], o.matrix[13], o.matrix[14]].map((v) => +v.toFixed(2)), fwd: [o.matrix[8], o.matrix[9], o.matrix[10]].map((v) => +v.toFixed(3)) }))) : null;

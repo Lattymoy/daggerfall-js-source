@@ -54,6 +54,16 @@ export function drawImgSub(renderer, img, m, x, y, w, h) {
     { u0: x / img.w, v0: y / img.h, u1: (x + w) / img.w, v1: (y + h) / img.h });
 }
 
+/** Blit an arbitrary SOURCE rect of an IMG to an arbitrary
+ *  DESTINATION rect (ImageReader.GetSubTexture into a differently
+ *  placed panel - U25's item info panel is a 50x37 cutout of
+ *  ITEM00I0 drawn into a 37x32 rect). drawImgSub above is the special
+ *  case where source and destination coincide. */
+export function drawImgCrop(renderer, img, m, [sx, sy, sw, sh], [dx, dy, dw, dh]) {
+  renderer.drawScreenQuad(img.tex, { x: m.ox + dx * m.s, y: m.oy + dy * m.s, w: dw * m.s, h: dh * m.s },
+    { u0: sx / img.w, v0: sy / img.h, u1: (sx + sw) / img.w, v1: (sy + sh) / img.h });
+}
+
 /** A flat color rect in virtual coords. */
 export function drawRect(renderer, m, x, y, w, h, color) {
   renderer.drawScreenQuad(null, { x: m.ox + x * m.s, y: m.oy + y * m.s, w: w * m.s, h: h * m.s }, undefined, color);

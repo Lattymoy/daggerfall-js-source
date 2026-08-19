@@ -121,7 +121,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const targets = activationTargets(ctx.actions.objects);   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
     targets.push(...ctx.lootTargets());   // S2: piles + lootable corpses
     const key = pickActivatable(eye, dir, targets, ctx.collider);
-    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:'))) { ctx.takeLoot(key); return; }
+    // U26: the player's OWN dropped piles are loot targets too, and
+    // they carry the droppedLoot: prefix. Without this arm a dungeon
+    // drop was one-way - the pile drew, the ray found it, and E did
+    // nothing. The probe caught it on the first pickup.
+    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:'))) {
+      ctx.takeLoot(key);
+      return key;
+    }
     if (key) ctx.actions.activate(key);
     return key;
   };
@@ -204,6 +211,21 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // Combat probes (2026-08-13 audit): the live-play smoke reads
     // vitals + the foe roster to verify the frame-loop combat path.
     window.__hp = () => JSON.stringify({ health: playerEntity.health, maxHealth: playerEntity.maxHealth });
+    // U26: the dungeon's overlay, for the native-inventory probe. The
+    // window's own surface (mode/tab/box) rather than just its name.
+    window.__overlay = () => {
+      const w = ctx.overlayWindow?.();
+      if (!w) return null;
+      return JSON.stringify({
+        kind: w.constructor.name, mode: w.mode ?? null, tab: w.tab ?? null,
+        local: w._filtered?.().length ?? null, remote: w._remote?.().length ?? null,
+        box: (w.topBox?.rows ?? []).map((r) => r.text ?? r).join(' | ') || null,
+      });
+    };
+    window.__overlayKey = (code) => ctx.overlayInput(code, { code, key: code });
+    window.__overlayClick = (vx, vy) => ctx.overlayClick(vx, vy);
+    window.__toggleInventory = () => { ctx.toggleInventory(); return window.__overlay(); };
+    window.__piles = () => JSON.stringify(ctx.dropped?.().map((p) => ({ n: p.items.length, flat: !!p.batch })) ?? []);
     // The fist repro (2026-08-18): the entity + the rig's two combat
     // entries, so a probe can strip the worn weapon and swing bare.
     window.__playerEntity = playerEntity;
@@ -307,7 +329,18 @@ export async function bootDungeon(canvas, renderer, params, status) {
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(ctx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
-    if (ctx.uiOverlayActive) { ctx.tickOverlay(dt); ctx.drawOverlay(canvas); requestAnimationFrame(frame); return; }   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
+    if (ctx.uiOverlayActive) {
+      ctx.tickOverlay(dt); ctx.drawOverlay(canvas);
+      // U26: the shot counter advances HERE TOO. This early return
+      // skipped it, so __frame froze the moment any overlay opened -
+      // and the Process rule says a probe must frame-sync rather than
+      // sleep, which an overlay made impossible in this host. The
+      // dungeon inventory probe hit it on its first press of F6.
+      frames++;
+      if (shotMode) window.__frame = frames;
+      requestAnimationFrame(frame);
+      return;   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
+    }
     ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD'));   // moveHeld: the collision-trigger input gate (verbatim)   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
     renderer.drawWater(ctx.waterQuads, WATER_COLOR,
       renderer.textures.get(`${waterArchive}_0`),

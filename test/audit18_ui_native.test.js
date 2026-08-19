@@ -23,7 +23,8 @@ import {
 } from '../src/ui/nativeTalk.js';
 import { NativeTradeWindow } from '../src/ui/nativeTrade.js';
 import { CharSheet, CHARSHEET_RECTS } from '../src/ui/charsheet.js';
-import { InventoryWindow } from '../src/ui/inventory.js';
+import { NativeInventoryWindow } from '../src/ui/nativeInventory.js';   // U26: the keyed window is deleted
+const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
 import { gameAction } from '../src/ui/input.js';
 import { equipItem, equipTableOf, EQUIP_SLOTS } from '../src/systems/equip.js';
 import { wrapText } from '../src/ui/talkWindow.js';
@@ -391,27 +392,32 @@ test('audit18 ui-native F12: CharSheet.click - the exit button closes, every DFU
 // ---------------------------------------------------------------
 // F13  The dungeon host's inventory equips ARMOR, and still not arrows
 // ---------------------------------------------------------------
-test('audit18 ui-native F13: InventoryWindow equips every group, arrows excepted', () => {
+test('audit18 ui-native F13: the dungeon equips every group, arrows excepted', () => {
+  // AUDIT 18 wrote this against ui/inventory.js's keyed window, which
+  // was the dungeon's until U26 swapped it for the native one and
+  // DELETED it. The LAW is unchanged and is what this pins - it just
+  // lives in equipItem now rather than in a window's Enter branch,
+  // which is the whole point of the swap: one equip model, one career
+  // gate, one arrow exclusion, in every host.
   const cuirass = { group: 'Armor', name: 'Iron Cuirass', templateIndex: 102, material: 0x0200, variant: 0 };
-  const e = { items: [cuirass] };
-  const w = new InventoryWindow(e, { equip: (item) => equipItem(e, item) });
-  w.input('confirm');
+  const e = { items: [cuirass], equip: undefined };
+  equipItem(e, cuirass);
   assert.equal(equipTableOf(e)[EQUIP_SLOTS.ChestArmor], cuirass, 'armor is wearable in a dungeon');
   assert.ok(e.armorValues.some((v) => v !== 100), 'and the armor table moved off unarmored');
   // clothing too
   const shirt = { group: 'MensClothing', name: 'Casual shirt', templateIndex: 141, variant: 0 };
   const e2 = { items: [shirt] };
-  const w2 = new InventoryWindow(e2, { equip: (item) => equipItem(e2, item) });
-  w2.input('confirm');
+  equipItem(e2, shirt);
   assert.equal(equipTableOf(e2)[EQUIP_SLOTS.ChestClothes], shirt, 'clothing is wearable in a dungeon');
-  // DaggerfallInventoryWindow.EquipItem's ONE exclusion still stands
+  // DaggerfallInventoryWindow.EquipItem's ONE exclusion still stands,
+  // and the window that reaches it is now the native one
   const arrow = { group: 'Weapons', name: 'Arrow', templateIndex: 131, stackCount: 20 };
-  const e3 = { items: [arrow] };
-  let called = 0;
-  const w3 = new InventoryWindow(e3, { equip: () => { called++; } });
-  w3.input('confirm');
-  assert.equal(called, 0, 'arrows never equip');
-  assert.equal(w3.done, false, 'and the window stays open');
+  const e3 = { items: [arrow], activeEffects: [] };
+  assert.equal(equipItem(e3, arrow), null, 'arrows never equip');
+  const w = new NativeInventoryWindow({ items: () => e3.items, entity: e3, icons: ICONS });
+  w.click(163 + 9 + 25, 48 + 5);   // an EQUIP-mode click on the arrow
+  assert.equal(equipTableOf(e3).filter(Boolean).length, 0, 'still nothing worn');
+  assert.equal(w.done, false, 'and the window stays open');
 });
 
 // ---------------------------------------------------------------

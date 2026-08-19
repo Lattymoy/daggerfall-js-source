@@ -13,13 +13,16 @@ import {
   joinGuild, leaveGuild, hasJoined, membershipOf, isEligibleToJoin,
   hasJoinedGroup, joinedGuildOfGroup, promotionTextId, membershipKey, joinDecision,
   guildGroupOfFaction, MERCHANTS_FACTION_ID, INVITATION_ONLY,
-  getTitle, questRankFor, guildFactionIdOfGroup,
+  getTitle, questRankFor, guildFactionIdOfGroup, NON_MEMBER_TITLE,
   newMembershipStore, membershipsFor, clearMembershipData,
 } from '../src/systems/guilds.js';
 import { createFactionRep, setReputation } from '../src/systems/factionRep.js';
 import { FactionFile, GUILD_GROUPS } from '../src/formats/factionFile.js';
 import { SKILLS } from '../src/systems/skills.js';
-import { templeOf, orderOf, resolveVariantGuild, DIVINES, ORDERS } from '../src/systems/guildVariants.js';
+import {
+  templeOf, orderOf, resolveVariantGuild, DIVINES, ORDERS,
+  TEMPLE_RANK_TITLES, KNIGHTLY_RANK_TITLES,
+} from '../src/systems/guildVariants.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
@@ -569,30 +572,59 @@ test('AUDIT 21 F4: IsSatisfyQuestReqByLevel, and the three lines that read it', 
   assert.equal(questRankFor(GUILDS.MagesGuild, 5, 4), 5, 'and a LOW level never demotes the pool');
 });
 
-test('AUDIT 21 F7: getTitle answers null where DFU answers a string we do not have', () => {
+test('AUDIT 21 F7 + U23: getTitle reads the recovered rank titles, and the three overriding guilds withhold the name', () => {
   const bob = { name: 'Bob' };
+  const bess = { name: 'Bess', gender: 'female' };
   // Guild.cs:178-181 - the base non-member return IS the player's name.
   for (const g of [GUILDS.FightersGuild, GUILDS.MagesGuild, GUILDS.ThievesGuild]) {
     assert.equal(getTitle({ rank: -1 }, bob, g), 'Bob', `${g.name} non-member reads their name`);
   }
   // Temple.cs:389-398, KnightlyOrder.cs:121-127, DarkBrotherhood.cs:86-92 all
-  // override it and return GetLocalizedText("nonMember") instead. Returning
-  // 'Bob' there was a WRONG KNOWN value, not a withheld unknown one.
+  // override it and return GetLocalizedText("nonMember") instead. AUDIT 21
+  // could only record the MARKER; U23 widened the DFU sparse clone to
+  // Assets/Localization and read the string the marker names.
   for (const g of [templeOf('Mara'), orderOf('Rose'), GUILDS.DarkBrotherhood]) {
-    assert.equal(getTitle({ rank: -1 }, bob, g), null, `${g.name} non-member is not the player's name`);
-    assert.equal(g.nonMemberTitle, 'nonMember');
+    assert.equal(g.nonMemberTitle, 'nonMember', `${g.name} names the override`);
+    assert.equal(getTitle({ rank: -1 }, bob, g), NON_MEMBER_TITLE,
+      `${g.name} non-member is not the player's name`);
+    assert.notEqual(getTitle({ rank: -1 }, bob, g), 'Bob');
   }
-  // A MEMBER's title is RankTitles[rank] in every guild - localization, withheld.
-  for (const g of [GUILDS.FightersGuild, templeOf('Mara')]) {
-    assert.equal(getTitle({ rank: 4 }, bob, g), null, `${g.name} member title is withheld, not guessed`);
+  // A MEMBER's title is RankTitles[rank] in every guild - the whole point of
+  // the marker is that it does NOT apply to members.
+  assert.equal(getTitle({ rank: 4 }, bob, GUILDS.FightersGuild), 'Defender');
+  assert.equal(getTitle({ rank: 0 }, bob, GUILDS.MagesGuild), 'Apprentice');
+  assert.equal(getTitle({ rank: 8 }, bob, GUILDS.MagesGuild), 'Master Wizard');
+  assert.equal(getTitle({ rank: 9 }, bob, GUILDS.ThievesGuild), 'Master Thief');
+  assert.equal(getTitle({ rank: 4 }, bob, templeOf('Mara')), 'Curate');
+  // and a member of an overriding guild reads their RANK, never NON_MEMBER_TITLE.
+  for (const g of [templeOf('Mara'), orderOf('Rose'), GUILDS.DarkBrotherhood]) {
+    assert.notEqual(getTitle({ rank: 4 }, bob, g), NON_MEMBER_TITLE,
+      `${g.name} member is not read as a non-member`);
   }
-  // The gendered rank slots are STRUCTURE and are recorded even though the
-  // strings are not: Temple 9/6, KnightlyOrder 5, DarkBrotherhood 8.
+  // The gendered rank slots are STRUCTURE (AUDIT 21) and the strings that
+  // fill them are DATA (U23). Both are pinned, for all four swaps.
   assert.deepEqual(templeOf('Arkay').femaleTitleRanks, [9, 6]);
   assert.deepEqual(orderOf('Owl').femaleTitleRanks, [5]);
   assert.deepEqual(GUILDS.DarkBrotherhood.femaleTitleRanks, [8]);
+  assert.equal(getTitle({ rank: 9 }, bess, templeOf('Arkay')), 'Matriarch');
+  assert.equal(getTitle({ rank: 9 }, bob, templeOf('Arkay')), 'Patriarch');
+  assert.equal(getTitle({ rank: 6 }, bess, templeOf('Arkay')), 'Sister');
+  assert.equal(getTitle({ rank: 6 }, bob, templeOf('Arkay')), 'Brother');
+  assert.equal(getTitle({ rank: 5 }, bess, orderOf('Owl')), 'Knight Sister');
+  assert.equal(getTitle({ rank: 5 }, bob, orderOf('Owl')), 'Knight Brother');
+  assert.equal(getTitle({ rank: 8 }, bess, GUILDS.DarkBrotherhood), 'Dark Sister');
+  assert.equal(getTitle({ rank: 8 }, bob, GUILDS.DarkBrotherhood), 'Dark Brother');
+  // the swap is per RANK, not per guild: a female at a NEIGHBOURING rank in
+  // the same guild reads the ungendered title.
+  assert.equal(getTitle({ rank: 7 }, bess, GUILDS.DarkBrotherhood), 'Assassin');
+  assert.equal(getTitle({ rank: 8 }, bess, templeOf('Arkay')), TEMPLE_RANK_TITLES[8]);
+  assert.equal(getTitle({ rank: 4 }, bess, orderOf('Owl')), KNIGHTLY_RANK_TITLES[4]);
+  // and the three guilds that do not override GetTitle have neither half.
   for (const g of [GUILDS.FightersGuild, GUILDS.MagesGuild, GUILDS.ThievesGuild]) {
     assert.equal(g.femaleTitleRanks, undefined, `${g.name} does not override GetTitle`);
+    assert.equal(g.femaleRankTitles, undefined, `${g.name} has no gendered strings either`);
+    assert.equal(getTitle({ rank: 8 }, bess, g), g.rankTitles[8],
+      `${g.name} reads the same title for either gender`);
   }
 });
 
