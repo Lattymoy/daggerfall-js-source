@@ -1013,3 +1013,68 @@ is now a pin.
 What this turns on: five of AUDIT 17n's twelve inert U20b picks
 (Expertise In still writes only the expert half, which no formula reads
 yet), and the classic restrictions for all seventeen affected classes.
+
+## S24 - spell absorption
+
+2026-08-19. `spellAbsorptionFlags` had zero consumers, which AUDIT 17n
+catalogued as one of U20b's inert picks. It is worse than that in one
+specific place: the SORCERER ships absorb = Always ALONGSIDE
+NoRegenSpellPoints, and NoRegenSpellPoints was already live. The class
+was paying its entire classic cost - no spell point regeneration at all
+- and receiving none of the benefit it is traded for. Strictly worse
+than every other class, since the trade only makes sense as a pair.
+
+EntityEffectManager.TryAbsorption (:1160-1200) in DFU's own order:
+
+DESTRUCTION ONLY (:1168-1172), and DFU's comment says why - absorption
+is tested against EVERY incoming effect, so without the school gate a
+benign self-heal would be swallowed. The port already single-sources
+the school partition in the cost table, so `effectSchool` reads it
+rather than minting a second map.
+
+The cost is computed AS IF THE TARGET CAST IT (:1177), which matters
+only for another entity's spell and agrees trivially for a self-cast.
+GetEffectCastingCost carries the target multiplier and DFU's floor of
+5, which DFU spells out as the guard that stops an absorb from
+DRAINING the pool it is meant to fill.
+
+The target must have ROOM: `cost > (max - current)` refuses
+(:1180-1184). This is the throttle on the whole trait - an absorber at
+full magicka absorbs nothing and takes the spell like anyone else, and
+the probe shows exactly that.
+
+Then the sources in order: the Spell Absorption EFFECT, the CAREER
+flag, and a persistent absorb state. The port has neither the effect
+nor the state yet, so both are injectable and FLAGGED; the career
+branch is the live one.
+
+The career branches read `inside` and `day` - darkness is
+inside-OR-night, light is outside-AND-day - which is the same law
+rest.js's RapidHealing already uses, and DFU takes both from the
+PLAYER for every entity ("everything is where the player is",
+:1305). The dungeon host passes `inside: true` because a dungeon is;
+the exterior spell paths are FLAGGED with their own hosts.
+
+An absorbed effect is SKIPPED, not reduced - DFU `continue`s past it,
+so no damage is dealt at all. The tally is credited after the loop with
+one cap: a SELF-cast cannot refund more than it cost, because
+absorption is counted per effect and can otherwise exceed the spell's
+own price. That cap deliberately does NOT apply to another entity's
+spell.
+
+FLAGGED: DFU pulls "Spell was absorbed." from the localised string
+table; this surface has no text source, so the literal stands.
+
+Pins (test/absorption.test.js, 9), each mutation-proven - removing the
+Destruction gate, the headroom check, the cost floor, the skip, or the
+self-cast cap, or inverting the darkness branch, each fails its own.
+The headroom law is pinned at the boundary in both directions: exactly
+enough room absorbs, one point short refuses.
+
+Probed live (tools/absorptionProbe.mjs) as a Sorcerer, through the
+host's own applySpellToPlayer - the same function the foe-cast and
+missile-impact sites call. 133 spell points absorbed and zero damage
+taken; then with a full pool the same bolt lands for 20. The probe's
+first draft asserted on HEALTH in the full-pool case and was wrong to -
+whether an unabsorbed bolt deals damage rides the saving throw, which
+is a different system's dice.

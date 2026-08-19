@@ -845,11 +845,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const pitch = Math.asin(-Math.max(-1, Math.min(1, m.dir[1]))) * 180 / Math.PI;
     return trs(m.pos[0], m.pos[1], m.pos[2], pitch, yaw, 0);
   }
+  // S24: a dungeon is inside by definition; `day` only matters to the
+  // InLight branch, which requires being OUTSIDE.
+  const ABSORB_CONTEXT = Object.freeze({ inside: true, day: false });
+
   /** Every spell landing ON THE PLAYER rides this: the S19 Paralyze
    *  awakeAlert ("You are paralyzed.", once per new instance) fires
    *  for player hosts only, exactly like DFU's StartParalyzation. */
   function applySpellToPlayer(spell, casterLevel, caster = null) {
-    const r = applySpell(spell, casterLevel, playerEntity, playerSinks, Math.random, caster);
+    // S24: the absorption context. DFU reads the PLAYER's surroundings
+    // for every entity ("everything is where the player is",
+    // EntityEffectManager :1305), and this host is a DUNGEON - always
+    // inside, so InDarkness absorbs and InLight never does. The
+    // exterior spell paths are FLAGGED with their own hosts.
+    const r = applySpell(spell, casterLevel, playerEntity, playerSinks, Math.random, caster, ABSORB_CONTEXT);
     if (r.paralyzed) hudText.add('You are paralyzed.');
     // S19c: AssignBundle's failure messages, player hosts only -
     // CasterOnly chance fails say "Spell effect failed.", external
@@ -1723,6 +1732,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     drawFoes,
     playerAttackInput,
     toggleSheath: weaponRig.toggleSheath,
+    // S24 probe seam: drive a real spell record onto the player
+    // through the host's own absorption path (the same function the
+    // foe-cast and missile-impact sites call).
+    applySpellToPlayer,
     // C10: the rig's clickAttack carries the sheathed gate the inline
     // version missed - a touch tap while sheathed no longer swings
     // (WeaponManager: no attack processing while sheathed).

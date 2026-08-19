@@ -198,7 +198,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // The fist repro (2026-08-18): the entity + the rig's two combat
     // entries, so a probe can strip the worn weapon and swing bare.
     window.__playerEntity = playerEntity;
-    window.__combat = { toggleSheath: ctx.toggleSheath, clickAttack: ctx.playerClickAttack };
+    window.__combat = { toggleSheath: ctx.toggleSheath, clickAttack: ctx.playerClickAttack, applySpellToPlayer: ctx.applySpellToPlayer };   // S24
     window.__foes = () => JSON.stringify(ctx.foes.map((f, i) => ({
       i, type: f.mobileType, dead: !!f.dead, health: f.entity?.health,
       pos: f.ai ? f.ai.feet.map((v) => Number(v.toFixed(2))) : null,
