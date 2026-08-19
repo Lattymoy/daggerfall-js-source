@@ -36,7 +36,7 @@ import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js'
 import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
-import { routeKey } from '../ui/input.js';
+import { routeKey, overlayAction } from '../ui/input.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
@@ -49,6 +49,7 @@ import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
 import { isShop, stockShopShelf, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem } from '../systems/shopStock.js';
+import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // U8c
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
@@ -62,7 +63,20 @@ const DUNGEON_WATER_SCROLL = 0.05;
 
 export function createWorldModes(host) {
   // AUDIT 18: the interior host's share of the player world clock.
-  const interiorTicker = createPlayerTicker(playerEntity, { say: (msg) => console.log('[player]', msg) });
+  //
+  // AUDIT 21 (hosts lane, F3): onLevelUp, through this host's own overlay
+  // slot. Without it advancement.js took its headless arm and dumped every
+  // attribute point into the LOWEST stats - standing in a shop when you
+  // crossed a threshold built a different character than standing in a
+  // dungeon. `interiorOverlay` is declared below and the closure only runs
+  // once time has passed, so it is initialised by then.
+  const interiorTicker = createPlayerTicker(playerEntity, {
+    say: (msg) => console.log('[player]', msg),
+    onLevelUp: () => {
+      console.log('[player] You have gained a level!');
+      if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
+    },
+  });
   const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
 
@@ -467,6 +481,19 @@ export function createWorldModes(host) {
     // every probe frame-sync starved (the process doctrine).
     if (window.__frame !== undefined) window.__frame++;
     const fwd = eyeDir();
+    // AUDIT 21 (hosts lane, F4): THE EARS MOVE IN HERE TOO.
+    //
+    // The 3D listener was set by world.js, exterior.js and dungeonContext.js
+    // and by nothing in this host, so in INTERIOR mode it stayed frozen
+    // wherever the last exterior frame parked it - at the town's world
+    // position. interiorContext plays door open/close and door-bash through
+    // sfx.play3d at INTERIOR-LOCAL coordinates against a linear model with a
+    // finite maxDistance, so those sounds were out of range: inaudible, or
+    // panned from nowhere.
+    //
+    // Covers both modes. The dungeon arm sets it again later from its own
+    // view matrix, which is a pure write and harmless.
+    audio.setListener(cam.pos, fwd);
     const jumpHeld = keys.has('Space');
     if (mode === 'dungeon' && dungeonCtx) {
       player.slowFalling = dungeonCtx.playerSlowFalling;   // S8 slowfall (P14: the verbatim constant-speed law lives in the motor)
@@ -730,7 +757,16 @@ export function createWorldModes(host) {
     // done-then-clear so chained windows survive the keydown).
     if (mode === 'interior' && interiorOverlay) {
       const w = interiorOverlay;
-      w.input(e.code);
+      // AUDIT 21 (hosts lane, F3): the same widening townTalk needed. This
+      // passed the raw key CODE, which is what a ChoiceWindow wants and is
+      // useless to a LevelUpScreen - it needs up/down and plus/minus. So a
+      // level-up in a building could not be driven even once it was opened.
+      if (w.isChoiceWindow) w.input(e.code, e);
+      else {
+        const a = overlayAction(e);
+        if (a) w.input(a, e);
+        else w.input(e.code, e);
+      }
       if (w.done && interiorOverlay === w) interiorOverlay = null;
       e.preventDefault();
       return;

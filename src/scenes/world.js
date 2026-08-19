@@ -30,7 +30,7 @@ import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold } from '../systems/court.js';   // AUDIT 17e F6   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
-import { CharSheet, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet
+import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
@@ -442,7 +442,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
   const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14); motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
-  const playerTicker = createPlayerTicker(playerEntity, { say: (msg) => console.log('[player]', msg) });   // AUDIT 18: the per-minute tick every host owes
+  // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
+  // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
+  // stats with no message and no choice. Cross a level threshold walking a
+  // town and you got a different character than crossing it in a dungeon, off
+  // the same XP. The dungeon host has passed one since U3; the three carriers
+  // above ground passed only `say`.
+  //
+  // `townTalk` is declared further down this function and the closure only
+  // runs once time has passed, so it is initialised by then.
+  const playerTicker = createPlayerTicker(playerEntity, {
+    say: (msg) => console.log('[player]', msg),
+    onLevelUp: () => {
+      console.log('[player] You have gained a level!');
+      townTalk.showOverlay(new LevelUpScreen(playerEntity));
+    },
+  });   // AUDIT 18: the per-minute tick every host owes
 
   // AUDIT 19 F4: the CUMULATIVE game-day count, for the music seed. The
   // ticker's classicMinutes is the only clock in this host that keeps

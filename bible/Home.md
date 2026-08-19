@@ -240,21 +240,21 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:544` - "database FLAGGED" narrows to the skill/loot message ids).
 - `src/scenes/dungeonContext.js:905` - exterior spell paths are FLAGGED with their own hosts.
 - `src/scenes/dungeonContext.js:1067` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/exterior.js:366` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:372` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:521` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:626` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:745` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:381` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:387` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:536` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:641` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:760` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:152` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:476` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:490` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:496` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:676` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:960` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1169` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/worldModes.js:73` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
-- `src/scenes/worldModes.js:105` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage...
+- `src/scenes/world.js:491` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:505` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:511` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:691` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:975` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1184` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/worldModes.js:87` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
+- `src/scenes/worldModes.js:119` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage...
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped

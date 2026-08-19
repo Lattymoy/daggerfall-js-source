@@ -1,0 +1,152 @@
+// AUDIT 21 - the HOSTS lane. The six scene hosts (world, exterior, dungeon,
+// dungeonContext, interior, worldModes) have ZERO node execution coverage, and
+// that is the single most repeated bug shape in this project: a feature lands
+// in one host and not its siblings, and every test stays green.
+//
+// So these are RULES over the host sources, plus behavioural pins on the
+// shared machinery underneath them. A rule is weaker than driving the code -
+// AUDIT 21 said so about source regexes repeatedly - so each one is written
+// against the SHAPE that has to hold, not a word that happens to appear.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createPlayerTicker } from '../src/scenes/shared.js';
+import { setWorldMinutes, worldMinutes, CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
+import { LevelUpScreen } from '../src/ui/charsheet.js';
+import { raiseSkills } from '../src/systems/advancement.js';
+
+const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
+const read = (p) => readFileSync(join(SRC, p), 'utf8');
+
+/** The hosts that build a player ticker - i.e. that can level a character. */
+const TICKER_HOSTS = ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js'];
+
+test('AUDIT 21 hosts F3: every ticker host passes onLevelUp', () => {
+  // Without it advancement.js takes its HEADLESS arm:
+  //     if (!onLevelUp) applyLevelUp(entity, (stats, pool) =>
+  //         spendPoolLowest(stats, Object.keys(stats), pool), rolls);
+  // - no message, no screen, and every attribute point dumped into your
+  // LOWEST stats. The dungeon host has passed one since U3; these three
+  // passed only `say`, so the SAME XP built a different character depending
+  // on where you were standing when you crossed the threshold.
+  const missing = [];
+  for (const h of TICKER_HOSTS) {
+    const text = read(h);
+    for (const m of text.matchAll(/createPlayerTicker\((.*?)\n\s*\}\);/gs)) {
+      if (!/onLevelUp\s*:/.test(m[1])) missing.push(h);
+    }
+    // a single-line call cannot carry the key at all
+    for (const m of text.matchAll(/createPlayerTicker\([^\n]*\);/g)) {
+      if (!/onLevelUp\s*:/.test(m[0])) missing.push(`${h} (one-liner)`);
+    }
+  }
+  assert.deepEqual(missing, [],
+    `these hosts build a player ticker with no onLevelUp, so a level-up there\n`
+    + `silently auto-spends into the lowest stats:\n${missing.join('\n')}`);
+
+  // and each one must open the SCREEN, not just log
+  for (const h of TICKER_HOSTS) {
+    assert.match(read(h), /new LevelUpScreen\(playerEntity\)/,
+      `${h} must open the level-up screen, not merely announce the level`);
+  }
+});
+
+test('AUDIT 21 hosts F3: onLevelUp really suppresses the headless auto-spend', () => {
+  // The behavioural half, on the shared machinery the rule guards. If this
+  // ever stops being true, the rule above is guarding nothing - and the first
+  // draft of this pin WAS vacuous (its fixture never levelled at all, so both
+  // arms trivially matched), which is the exact shape this audit keeps
+  // finding. The assertions below fail if no level-up fires.
+  const N = 40;
+  const career = { advancementMultiplier: 0.3, primarySkills: [0, 1, 2],
+    majorSkills: [3, 4], minorSkills: [5, 6, 7, 8, 9, 10] };
+  const mk = () => ({
+    level: 1, health: 100, maxHealth: 100, fatigue: 10000, magicka: 100,
+    chargenDone: true, reflexes: 2, lastSkillCheckTime: 0, career,
+    stats: { strength: 40, intelligence: 30, willpower: 35, agility: 45,
+      endurance: 50, personality: 25, speed: 55, luck: 20 },
+    skills: Array.from({ length: N }, () => 50),
+    skillUses: Array.from({ length: N }, () => 20000),
+    startingLevelUpSkillSum: 0, currentLevelUpSkillSum: 0,
+  });
+  const base = mk().stats;
+
+  const headless = mk();
+  const raisedH = raiseSkills(headless, 400, () => 0.5, null);
+  assert.ok(raisedH.length > 0, 'the fixture must actually raise skills');
+  assert.ok(headless.level > 1, 'and actually LEVEL - otherwise this pin proves nothing');
+  assert.notDeepEqual(headless.stats, base,
+    'the headless arm SPENDS the pool - into the lowest stats, unasked');
+
+  let opened = 0;
+  const hooked = mk();
+  raiseSkills(hooked, 400, () => 0.5, () => { opened++; });
+  assert.equal(opened, 1, 'onLevelUp fires exactly once');
+  assert.deepEqual(hooked.stats, base,
+    'with onLevelUp the stats are NOT auto-spent - the screen decides');
+  assert.ok(hooked.readyToLevelUp && hooked.pendingLevel > 1,
+    'the level is PENDING, waiting for the screen');
+  assert.notDeepEqual(headless.stats, hooked.stats,
+    'the two arms really do differ - which is the whole finding');
+});
+
+test('AUDIT 21 hosts F3: a non-ChoiceWindow overlay gets the FULL action map', () => {
+  // A LevelUpScreen needs up/down to move the cursor and plus/minus to spend
+  // the pool. townTalk understood Escape and Enter/E and nothing else, and
+  // worldModes passed the raw key CODE - so even once the screen opened above
+  // ground it could not be driven. Both now route through overlayAction, the
+  // same map routeKey feeds the dungeon host.
+  for (const h of ['scenes/townTalk.js', 'scenes/worldModes.js']) {
+    const text = read(h);
+    assert.match(text, /overlayAction\(e\)/, `${h} must use the shared action map`);
+    assert.match(text, /isChoiceWindow/, `${h} must still pass raw codes to a ChoiceWindow`);
+  }
+  // and the screen really does want those actions
+  const s = new LevelUpScreen({ stats: { strength: 40, intelligence: 30, willpower: 35,
+    agility: 45, endurance: 50, personality: 25, speed: 55, luck: 20 }, pendingLevel: 2 }, () => 0.5);
+  const cursor0 = s.cursor;
+  s.input('down');
+  assert.notEqual(s.cursor, cursor0, "'down' moves the cursor - a raw key code would not");
+  const pool0 = s.pool;
+  s.input('plus');
+  assert.equal(s.pool, pool0 - 1, "'plus' spends from the pool");
+});
+
+test('AUDIT 21 hosts F4: every host that renders a 3D scene moves the LISTENER', () => {
+  // The listener was set by world, exterior and dungeonContext and by nothing
+  // in worldModes, so in INTERIOR mode it stayed parked at the town's world
+  // position while interiorContext played door sounds at interior-LOCAL
+  // coordinates - against a linear model with a finite maxDistance, so out of
+  // range entirely.
+  const hosts = ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeonContext.js', 'scenes/worldModes.js'];
+  const deaf = hosts.filter((h) => !/audio\.setListener\(/.test(read(h)));
+  assert.deepEqual(deaf, [],
+    `these hosts render a 3D scene and never move the audio listener, so every\n`
+    + `positional sound they play is measured from wherever another host left it:\n${deaf.join('\n')}`);
+  // in worldModes it must be in the MODAL frame, before the mode branches -
+  // one call covering both interior and dungeon
+  const modes = read('scenes/worldModes.js');
+  const atFrame = modes.indexOf('audio.setListener(');
+  const atDungeonBranch = modes.indexOf("if (mode === 'dungeon' && dungeonCtx)");
+  assert.ok(atFrame > 0 && atFrame < atDungeonBranch,
+    'the listener must move before the mode branches, so INTERIOR mode is covered too');
+});
+
+test('AUDIT 21 hosts: the ticker carriers still agree on the ONE world clock', () => {
+  // AUDIT 21 F2's law, re-asserted from the hosts lane's side: adding
+  // onLevelUp must not have reintroduced a private accumulator.
+  const before = worldMinutes();
+  try {
+    const entity = { health: 500, maxHealth: 500, fatigue: 10000, magicka: 200, level: 1, skills: {} };
+    const a = createPlayerTicker(entity, {});
+    const b = createPlayerTicker(entity, { onLevelUp: () => {} });
+    setWorldMinutes(0);
+    a.tick(60 / CLASSIC_MINUTES_PER_SECOND);
+    assert.equal(b.classicMinutes, a.classicMinutes);
+    assert.equal(worldMinutes(), a.classicMinutes);
+  } finally {
+    setWorldMinutes(before);
+  }
+});
