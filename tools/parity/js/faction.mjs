@@ -1,0 +1,38 @@
+import { FactionFile } from '../../../src/formats/factionFile.js';
+import { openOut, out, closeOut, read, pad, S } from './common.mjs';
+openOut(process.argv[2]);
+const ff = new FactionFile();
+ff.load(read('FACTION.TXT'));
+const ids = [...ff.factionDict.keys()].sort((a, b) => a - b);
+out('faction.count', ids.length);
+for (const id of ids) {
+  const fd = ff.factionDict.get(id);
+  const p = `faction.${pad(id, 6)}.`;
+  out(p + 'id', fd.id);
+  out(p + 'parent', fd.parent);
+  out(p + 'type', fd.type);
+  out(p + 'name', S(fd.name));
+  out(p + 'rep', fd.rep);
+  out(p + 'summon', fd.summon);
+  out(p + 'region', fd.region);
+  out(p + 'power', fd.power);
+  out(p + 'face', fd.face);
+  out(p + 'race', fd.race);
+  out(p + 'flat1', fd.flat1);
+  out(p + 'flat2', fd.flat2);
+  out(p + 'sgroup', fd.sgroup);
+  out(p + 'ggroup', fd.ggroup);
+  out(p + 'vam', fd.vam);
+  out(p + 'children', fd.children === null || fd.children === undefined ? '-1' : fd.children.join(','));
+  out(p + 'ally', `${fd.ally1},${fd.ally2},${fd.ally3}`);
+  out(p + 'enemy', `${fd.enemy1},${fd.enemy2},${fd.enemy3}`);
+  out(p + 'flags', fd.flags);
+  out(p + 'ruler', fd.ruler);
+  out(p + 'minf', fd.minf);
+  out(p + 'maxf', fd.maxf);
+  out(p + 'rank', fd.rank);
+  out(p + 'rulerNameSeed', fd.rulerNameSeed);
+  out(p + 'rulerPowerBonus', fd.rulerPowerBonus);
+}
+out('faction.nameDict.count', ff.factionNameToId.size);
+await closeOut();

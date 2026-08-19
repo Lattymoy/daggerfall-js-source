@@ -14,12 +14,15 @@
 //   - DFU reseeds Unity's global Random with items.GetHashCode()
 //     (an arbitrary hash, no determinism value); our uniform roll
 //     slots match the role per the approved engine-PRNG stance
-// INTERIM (loud): MI (magic items) rolls are SKIPPED until the magic
-// arc - loot under-generates by that category; CL clothing carries
-// group + index + variant only (paperdoll dressing is the UI arc).
+// INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
+// (setMagicItemTemplates) - a context that has not loaded it
+// under-generates by that category.
 
 import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { dice100 } from '../combat/formulas.js';
+import { goldStack } from './inventory.js';
+import { ITEM_TEMPLATES } from './itemTemplates.js';
+import { CLOTHING_DYES } from '../characters/dyes.js';
 
 // LootChanceMatrix rows, verbatim (21 keys).
 export const LOOT_MATRICES = Object.freeze({
@@ -72,7 +75,7 @@ export const RANDOM_TREASURE_ARCHIVE = 216;                    // randomTreasure
 export const RANDOM_TREASURE_MARKER_RECORD = 19;               // RDBLayout randomTreasureFlatIndex (editor 199.19)
 export const RANDOM_TREASURE_ICONS = Object.freeze([0, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 37, 43, 44, 45, 46, 47]);
 /** GenerateLoot's dungeon-type -> key rows (19 types, in order). */
-export const DUNGEON_LOOT_KEYS = Object.freeze(['K', 'N', 'N', 'N', 'K', 'M', 'M', 'Q', 'K', 'U', 'D', 'N', 'L', 'F', 'S', 'N', 'M', 'L', 'N']);   // Book0..3 all template 277; variant Range(0, 4)
+export const DUNGEON_LOOT_KEYS = Object.freeze(['K', 'N', 'N', 'N', 'K', 'M', 'M', 'Q', 'K', 'U', 'D', 'N', 'L', 'F', 'S', 'N', 'M', 'L', 'N']);   // Book0..3 all template 277; CreateRandomBook rolls Range(0, TotalVariants) = Range(0, 2) - the 4 is the Books ENUM NAME count, not a variant count
 
 const WEAPON_NAMES = Object.keys(WEAPONS_ENUM);   // 18 melee/bow names; index 18 = Arrow
 const ARMOR_PIECES = Object.values(ARMOR_ENUM);   // 11 pieces incl shields
@@ -97,16 +100,41 @@ export function createRandomArmor(playerLevel, rolls = Math.random) {
 
 const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];
 
+/** DaggerfallUnityItem.ItemName is the TEMPLATE's name for every
+ *  plain item (only magic items and weapons carry their own).
+ *  AUDIT 18: the loot factories minted bare {group, templateIndex},
+ *  so the dungeon item list (ui/inventory.js) labelled a looted
+ *  Yellow Flowers "PlantIngredients1". */
+const named = (item) => ({ ...item, name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name });
+
+/** ItemBuilder.CreateRandomClothing verbatim (:184-208): a uniform
+ *  template over the gender's group, then RandomClothingDye, THEN
+ *  SetVariant(Range(0, TotalVariants)) - that roll order is the
+ *  opposite of the shop shelf's (DaggerfallLoot.cs:230-239 rolls the
+ *  variant inside CreateMensClothing and assigns the dye after), so
+ *  the two paths must NOT share a helper. */
+export function createRandomClothing(gender, rolls = Math.random) {
+  const group = gender === 'female' ? 'WomensClothing' : 'MensClothing';
+  const templateIndex = pick(ITEM_GROUPS[group], rolls);
+  const dye = CLOTHING_DYES[Math.floor(rolls() * CLOTHING_DYES.length)];
+  const variant = Math.floor(rolls() * (ITEM_TEMPLATES[templateIndex]?.variants ?? 0));
+  return { group, templateIndex, dye, variant };
+}
+
 /** LootTables.GenerateRandomLoot, verbatim flow. `who` = { level,
  *  gender } (race feeds clothing variants later - S2). */
 export function generateRandomLoot(matrix, who, rolls = Math.random) {
   const items = [];
   const level = Math.max(1, who.level | 0);
   const gold = (matrix.MinGold + Math.floor(rolls() * (matrix.MaxGold + 1 - matrix.MinGold))) * level;
-  if (gold > 0) items.push({ group: 'Currency', name: 'Gold pieces', stackCount: gold });
+  // ItemBuilder.CreateGoldPieces = CreateItem(Currency, Gold_pieces).
+  // AUDIT 18: this minted a bare Currency row with NO templateIndex,
+  // so inventory.stacksWith could never merge it with the player's
+  // gold stack (276) - looted gold was a second, unspendable row.
+  if (gold > 0) items.push(goldStack(gold));
   const halving = (chance, make) => {
     let c = chance;
-    while (dice100(Math.trunc(c), rolls())) { items.push(make()); c *= 0.5; }
+    while (dice100(Math.trunc(c), rolls())) { items.push(named(make())); c *= 0.5; }
   };
   halving(matrix.WP, () => createRandomWeapon(level, rolls));
   halving(matrix.AM, () => createRandomArmor(level, rolls));
@@ -124,11 +152,10 @@ export function generateRandomLoot(matrix, who, rolls = Math.random) {
   if (_magicItemTemplates) {
     halving(matrix.MI, () => createRegularMagicItem(_magicItemTemplates, level, who.gender, rolls));
   }
-  halving(matrix.CL, () => ({
-    group: who.gender === 'female' ? 'WomensClothing' : 'MensClothing',
-    templateIndex: pick(ITEM_GROUPS[who.gender === 'female' ? 'WomensClothing' : 'MensClothing'], rolls),
-  }));
-  halving(matrix.BK, () => ({ group: 'Books', templateIndex: BOOK_TEMPLATE, variant: Math.floor(rolls() * 4) }));
+  halving(matrix.CL, () => createRandomClothing(who.gender, rolls));
+  // CreateRandomBook: CurrentVariant = Range(0, book.TotalVariants),
+  // and TotalVariants is ItemTemplate.variants (2 for template 277).
+  halving(matrix.BK, () => ({ group: 'Books', templateIndex: BOOK_TEMPLATE, variant: Math.floor(rolls() * (ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0)) }));
   halving(matrix.RL, () => ({ group: 'ReligiousItems', templateIndex: pick(ITEM_GROUPS.ReligiousItems, rolls) }));
   return items;
 }
@@ -158,10 +185,8 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
     base = createRandomWeapon(playerLevel, rolls);
     while (base.name === 'Arrow') base = createRandomWeapon(playerLevel, rolls);   // "No arrows as enchanted items"
   } else if (groupId === 2) base = createRandomArmor(playerLevel, rolls);
-  else if (groupId === 6 || groupId === 12) {
-    const g = gender === 'female' ? 'WomensClothing' : 'MensClothing';
-    base = { group: g, templateIndex: pick(ITEM_GROUPS[g], rolls) };
-  } else if (groupId === 10) base = { group: 'ReligiousItems', templateIndex: pick(ITEM_GROUPS.ReligiousItems, rolls) };
+  else if (groupId === 6 || groupId === 12) base = createRandomClothing(gender, rolls);
+  else if (groupId === 10) base = { group: 'ReligiousItems', templateIndex: pick(ITEM_GROUPS.ReligiousItems, rolls) };
   else if (groupId === 14) base = { group: 'Gems', templateIndex: pick(ITEM_GROUPS.Gems, rolls) };
   else base = { group: 'Jewellery', templateIndex: pick(ITEM_GROUPS.Jewellery, rolls) };
   // The regular name is replaced by the magic name; enchantments ride

@@ -141,12 +141,27 @@ call stands).
 Suite 412/90 (animalambience.test.js x2: the table + constants, the
 16Hz cadence with the range-before-roll law).
 
-## Transition stingers: CLOSED as verbatim N/A (2026-08-17)
+## Transition stingers: CLOSED as verbatim N/A (2026-08-17, corrected at AUDIT 18)
 
-The queue row deflates the same way the exterior torches did: DFU
-plays NOTHING on building/dungeon enter-exit transitions
-(PlayerActivate's door path plays only the bash 28 and
-ActivateLockUnlock at activation - both already ours via P10/C9) and
-DaggerfallLadder has no climb sound. The row was A1-era speculative
-naming; there is no source law to port. The audio queue is now MUSIC
-ONLY (Mac's strategy call stands).
+The TRANSITION half of the queue row deflates the same way the exterior
+torches did: DFU plays NOTHING on building/dungeon enter-exit transitions
+(PlayerEnterExit.cs contains no PlayOneShot and no SoundClips reference at
+all) and DaggerfallLadder has no climb sound. That half was A1-era
+speculative naming; there is no source law to port.
+
+The ACTIVATION half did NOT deflate, and AUDIT 18 corrected this section for
+claiming it had. PlayerActivate's door path plays two clips, not one, and
+they are not both ours:
+- `PlayerDoorBash = 7` (SoundClips.cs:38, PlayerActivate.cs:510) - OURS,
+  `SOUND.PlayerDoorBash` in soundClips.js. This page previously mis-numbered
+  it as 28.
+- `ActivateLockUnlock = 316` (SoundClips.cs:386) - NOT OURS. It is
+  PlayerActivate.cs:556's successful exterior lockpick and
+  DaggerfallActionDoor's PickedLockSound (:41/:229/:237); 316 appears in
+  neither soundClips.js nor any consumer. It rides
+  DaggerfallActionDoor.AttemptLockpicking and the steal-mode unlock, neither
+  of which is ported, so it has moved onto the Ledger's door-lockpicking C
+  row rather than being added as dead data.
+
+The audio queue is MUSIC ONLY once that clip is accounted for at its own
+mechanic (Mac's strategy call stands).

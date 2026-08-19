@@ -7,15 +7,15 @@
 // pursuing at 10fps ~65ms/frame (pre-fix: 66ms / 767ms).
 // Run: ARENA2_PATH=... node tools/colliderBench.mjs
 import { readFileSync } from 'node:fs';
-import { BsaFile } from '/home/user/project-dagger/src/formats/bsaFile.js';
-import { Arch3dFile } from '/home/user/project-dagger/src/formats/arch3dFile.js';
-import { BlocksFile } from '/home/user/project-dagger/src/formats/blocksFile.js';
-import { MapsFile } from '/home/user/project-dagger/src/formats/mapsFile.js';
-import { layoutDungeon } from '/home/user/project-dagger/src/world/dungeonLayout.js';
-import { dfMeshToModel } from '/home/user/project-dagger/src/world/meshReader.js';
-import { Collider } from '/home/user/project-dagger/src/player/collider.js';
-import { EnemyAI } from '/home/user/project-dagger/src/characters/enemyMotor.js';
-import { multiply, trs } from '/home/user/project-dagger/src/world/mat4.js';
+import { BsaFile } from '../src/formats/bsaFile.js';
+import { Arch3dFile } from '../src/formats/arch3dFile.js';
+import { BlocksFile } from '../src/formats/blocksFile.js';
+import { MapsFile } from '../src/formats/mapsFile.js';
+import { layoutDungeon } from '../src/world/dungeonLayout.js';
+import { dfMeshToModel } from '../src/world/meshReader.js';
+import { Collider } from '../src/player/collider.js';
+import { EnemyAI } from '../src/characters/enemyMotor.js';
+import { multiply, trs } from '../src/world/mat4.js';
 
 const A2 = process.env.ARENA2_PATH;
 const bytes = (n) => new Uint8Array(readFileSync(`${A2}/${n}`));

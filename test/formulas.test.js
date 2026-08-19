@@ -1,4 +1,5 @@
 // C8 E3b: the FormulaHelper core, deterministic rolls, source-pinned.
+import { WEAPONS } from '../src/characters/weapons.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -36,7 +37,10 @@ test('formulas: career attack-modifier bits + enemy-type bonus', () => {
   assert.equal(careerAttackModifier(0x08, ENEMY_GROUPS.Animals), 1);
   assert.equal(careerAttackModifier(0, ENEMY_GROUPS.Daedra), 0);
   const atk = { level: 7, attackModifierFlags: 0x04 };
-  assert.equal(bonusOrPenaltyByEnemyType(atk, ENEMY_GROUPS.Humanoid), 7);
+  // AUDIT 18: the second argument is the TARGET ENTITY - DFU derives
+  // the group inside GetBonusOrPenaltyByEnemyType, from the affinity
+  // for the Humanoid arm and from GetEnemyGroup() for the other three.
+  assert.equal(bonusOrPenaltyByEnemyType(atk, { isPlayer: false, careerIndex: 0, affinity: 'Human' }), 7);
   assert.equal(bonusOrPenaltyByEnemyType(atk, null), 0);
 });
 
@@ -69,12 +73,15 @@ test('formulas: damage paths verbatim', () => {
   assert.equal(handToHandAttackDamage(A, null, 0, true, seq(0)), 9);
   assert.equal(handToHandAttackDamage(A, null, 0, false, seq(0)), 4);
   // weapon: dagger 1-6 roll max (0.999 -> 6), +str 5, +Daedric 6
-  const dagger = { minDamage: 1, maxDamage: 6, material: 9, flags: 0x10 };
-  const foe = { isPlayer: false, careerIndex: 3, group: null };
+  // AUDIT 18 F1: real items carry a template, not baked damage. AUDIT
+  // 18: and flags 0, because SetItem gives every generated item flags 0.
+  const dagger = { templateIndex: WEAPONS.Dagger, material: 9, flags: 0 };
+  const foe = { isPlayer: false, careerIndex: 3, affinity: 'Animal' };
   assert.equal(weaponAttackDamage(A, foe, 0, dagger, seq(0.999)), 17);
-  // skeletal warrior: blunt (no 0x10) halves BEFORE str/material; silver doubles
-  const mace = { minDamage: 1, maxDamage: 12, material: 2, flags: 0x00 };
-  const skel = { isPlayer: false, careerIndex: SKELETAL_WARRIOR_INDEX, group: null };
+  // skeletal warrior: the halving is on (flags & 0x10) == 0, which no
+  // generated weapon fails - it halves BEFORE str/material; silver doubles
+  const mace = { templateIndex: WEAPONS.Mace, material: 2, flags: 0 };
+  const skel = { isPlayer: false, careerIndex: SKELETAL_WARRIOR_INDEX, affinity: 'Undead' };
   // roll max: 12 -> /2 = 6 -> *2 (silver) = 12 -> +5 str +0 silver = 17
   assert.equal(weaponAttackDamage(A, skel, 0, mace, seq(0.999)), 17);
   assert.equal(backstabDamage(10, 50, 0.4), 30);
@@ -82,7 +89,7 @@ test('formulas: damage paths verbatim', () => {
   assert.equal(backstabDamage(10, 1, 0.0), 10);     // needs > 1
   // material gate: iron weapon vs Silver-required target -> 0
   const ghost = { minMetalToHit: 2, skills: 35, stats: { strength: 50, agility: 50, luck: 50 }, armor: 0 };
-  assert.equal(calculateAttackDamage(A, ghost, { weapon: { minDamage: 1, maxDamage: 6, material: 0, flags: 0x10 } }), 0);
+  assert.equal(calculateAttackDamage(A, ghost, { weapon: { templateIndex: WEAPONS.Dagger, material: 0, flags: 0 } }), 0);
 });
 
 test('formulas: monster multi-attack loop (F2) - basics spans, reflex gate, per-hit type bonus', () => {
@@ -101,14 +108,12 @@ test('formulas: monster multi-attack loop (F2) - basics spans, reflex gate, per-
   // Attack 1 hits (.02): 2 damage + humanoid bonus 2 (level). Attack 2
   // misses (.03). Attack 3 min 0: gate skips it entirely.
   const d = calculateAttackDamage(M, P, {
-    targetGroup: ENEMY_GROUPS.Humanoid,
     dfRand: () => 0,
     rolls: seq(0, 0.99, 0.02, 0, 0.99, 0.03, 0.5),
   });
   assert.equal(d, 4);   // (2 + 2) + 0 + 0
   // The reflex gate: dfRand >= reflexesChance blocks every attack outright
   const blocked = calculateAttackDamage(M, P, {
-    targetGroup: ENEMY_GROUPS.Humanoid,
     dfRand: () => 50,
     rolls: seq(0, 0.99, 0.02, 0),
   });
@@ -118,7 +123,6 @@ test('formulas: monster multi-attack loop (F2) - basics spans, reflex gate, per-
   // roll 0 -> 5 + humanoid bonus 2 = 7 (no reflex gate consulted)
   const C = { ...M, isClass: true, basics: undefined };
   const c = calculateAttackDamage(C, P, {
-    targetGroup: ENEMY_GROUPS.Humanoid,
     dfRand: () => { throw new Error('class enemies never roll the reflex gate'); },
     rolls: seq(0, 0.99, 0.02, 0),
   });

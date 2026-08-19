@@ -95,9 +95,12 @@ export const hasActiveEffect = (entity, kind) =>
   !!entity.activeEffects?.some((a) => a.kind === kind);   // presence = active; expired entries End on the NEXT tick pass (DFU shape)
 
 // S22 FreeAction: the two DFU laws.
-// FLAGGED: career hard-immunity (Career.Paralysis == Immune) and the
-// racial template flags pend the career tolerance decode - FreeAction
-// is the only live immunity source today.
+// AUDIT 18 retires the "career/racial hard-immunity pends" flag that
+// stood here: it was wrong about DFU. DaggerfallEntity
+// .IsImmuneToParalysis is written by FreeAction.cs:99/109 and (when
+// vampirism ships) VampirismEffect.cs:124 and by NOTHING else - a
+// career or racial paralysis tolerance never reaches this gate, it
+// enters through FormulaHelper.SavingThrow, which carries both arms.
 export const isImmuneToParalysis = (entity) => hasActiveEffect(entity, 'freeAction');
 /** DaggerfallEntity.IsParalyzed, verbatim: the immunity folds at READ
  *  time - `!IsImmuneToParalysis && isParalyzed`. A paralysis bundle
@@ -170,6 +173,7 @@ export const isCureDisease = (e) => e.type === 3 && e.subType === 0;
 export const isCurePoison = (e) => e.type === 3 && e.subType === 1;
 export const isCureParalyzation = (e) => e.type === 3 && e.subType === 2;
 const CURE_KINDS = Object.freeze(['disease', 'poison', 'paralyze']);   // subType-indexed
+const CURE_MARKER_KINDS = Object.freeze(['cureDisease', 'curePoison', 'cureParalyzation']);   // the three cure CLASSES themselves
 
 /** Duration in rounds, verbatim (straight arithmetic, no roll).
  *  The per-level multiplier CLAMPS AT 1 (audit F11 - DFU SetDuration:
@@ -287,6 +291,24 @@ function pushPermanent(target, entry) {
   target.activeEffects.push(entry);
 }
 
+/** AssignBundle adds an INSTANT effect to liveEffects exactly like a
+ *  lasting one (EntityEffectManager.cs:584-593) and keeps its bundle
+ *  in instancedBundles (:610-612); only the NEXT DoMagicRound finds
+ *  it at 0 rounds and drops it (:1728-1760). So for up to one magic
+ *  round the target really does carry that effect - which is what
+ *  EnemyMotor.EffectsAlreadyOnTarget walks. A 0-round marker entry
+ *  reproduces that lifetime exactly: tickActiveEffects removes a
+ *  0-round entry WITHOUT acting, and no round branch matches these
+ *  kinds. (AUDIT 18: instants used to count as always-absent, so an
+ *  instant-only caster - Fire Daedra, whose whole list is (4,0) -
+ *  could re-cast every 2.5s where DFU vetoes the pick.) */
+function pushInstantMarker(target, kind, stat = null) {
+  target.activeEffects = target.activeEffects || [];
+  const entry = { kind, instant: true, roundsRemaining: 0 };
+  if (stat) entry.stat = stat;
+  target.activeEffects.push(entry);
+}
+
 /**
  * Apply a spell to a target entity through the sinks:
  *   hurt(n)           - damage (the caller owns floors/death)
@@ -330,12 +352,14 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       const n = magnitude(e);
       out.healed += n;
       if (n > 0 && sinks.heal) sinks.heal(n);
+      pushInstantMarker(target, 'healHealth');
       continue;
     }
     if (isDamageHealth(e)) {
       const n = magnitude(e);
       out.damage += n;
       if (n > 0 && sinks.hurt) sinks.hurt(n);
+      pushInstantMarker(target, 'damageHealth');
       continue;
     }
     if (isContinuousDamage(e)) {
@@ -396,6 +420,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // heals DRAIN damage only, never fortifies past the base.
       const n = magnitude(e);
       if (n > 0) healAttributeDamage(target, STAT_KEYS_ORDER[e.subType], n);
+      pushInstantMarker(target, 'healAttribute', STAT_KEYS_ORDER[e.subType]);
       out.attrHealed = (out.attrHealed ?? 0) + 1;
       continue;
     }
@@ -411,6 +436,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
           if (caster.sinks?.heal) caster.sinks.heal(n);
         }
       }
+      pushInstantMarker(target, 'transferHealth');   // added to liveEffects at assignment, caster or not
       continue;
     }
     if (isTransferFatigue(e)) {
@@ -425,12 +451,14 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
           out.fatigueDrained = (out.fatigueDrained ?? 0) + 1;
         }
       }
+      pushInstantMarker(target, 'transferFatigue');
       continue;
     }
     if (isHealFatigue(e)) {
       // HealFatigue (10, 9): instant IncreaseFatigue(mag, x64).
       const n = magnitude(e);
       if (n > 0 && sinks.restoreFatigue) sinks.restoreFatigue(n * FATIGUE_MULTIPLIER);
+      pushInstantMarker(target, 'healFatigue');
       out.fatigueHealed = (out.fatigueHealed ?? 0) + 1;
       continue;
     }
@@ -438,6 +466,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // DamageFatigue (4, 1): instant DamageFatigueFromSource(mag, x64).
       const n = magnitude(e);
       if (n > 0 && sinks.drainFatigue) sinks.drainFatigue(n * FATIGUE_MULTIPLIER);
+      pushInstantMarker(target, 'damageFatigue');
       out.fatigueDrained = (out.fatigueDrained ?? 0) + 1;
       continue;
     }
@@ -457,6 +486,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       const n = magnitude(e);
       out.magickaDrained = (out.magickaDrained ?? 0) + n;
       if (n > 0 && sinks.drainMagicka) sinks.drainMagicka(n);
+      pushInstantMarker(target, 'damageSpellPoints');
       continue;
     }
     if (isContinuousDamageSpellPoints(e)) {
@@ -528,6 +558,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       }
       const kind = CURE_KINDS[e.subType];
       if (target.activeEffects) target.activeEffects = target.activeEffects.filter((a) => a.kind !== kind);
+      pushInstantMarker(target, CURE_MARKER_KINDS[e.subType]);   // after the removal pass, as AssignBundle adds before MagicRound cures
       out.cured = (out.cured ?? 0) + 1;
       continue;
     }
@@ -568,10 +599,14 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
 }
 
 /** The ACTIVE-entry identity an effect would instantiate
- *  ({ kind, stat? }), or null for instant families (S16). DFU's
- *  EnemyMotor.EffectsAlreadyOnTarget compares live-effect TEMPLATE
- *  types; per-stat classes (FortifyStrength vs FortifyAgility...) are
- *  distinct templates, so stat families carry the stat in the key. */
+ *  ({ kind, stat? }), or null for a family the library has not
+ *  reached (S16). DFU's EnemyMotor.EffectsAlreadyOnTarget compares
+ *  live-effect TEMPLATE types; per-stat classes (FortifyStrength vs
+ *  FortifyAgility, HealStrength vs HealAgility...) are distinct
+ *  templates, so stat families carry the stat in the key. The INSTANT
+ *  families are here too (AUDIT 18): DFU keeps an instant effect live
+ *  in its bundle until the next DoMagicRound, so it is "already on
+ *  the target" for one round - see pushInstantMarker. */
 export function effectActiveIdentity(e) {
   if (isContinuousDamage(e)) return { kind: 'continuousDamage' };
   if (isContinuousDamageFatigue(e)) return { kind: 'continuousDamageFatigue' };
@@ -581,14 +616,23 @@ export function effectActiveIdentity(e) {
   if (isTransferAttribute(e)) return { kind: 'transferAttribute', stat: STAT_KEYS_ORDER[e.subType] };
   if (isRegenerate(e)) return { kind: 'regenerate' };
   if (isParalyze(e)) return { kind: 'paralyze' };
+  if (isDamageHealth(e)) return { kind: 'damageHealth' };
+  if (isDamageFatigue(e)) return { kind: 'damageFatigue' };
+  if (isDamageSpellPoints(e)) return { kind: 'damageSpellPoints' };
+  if (isHealHealth(e)) return { kind: 'healHealth' };
+  if (isHealFatigue(e)) return { kind: 'healFatigue' };
+  if (isHealAttribute(e)) return { kind: 'healAttribute', stat: STAT_KEYS_ORDER[e.subType] };
+  if (isTransferHealth(e)) return { kind: 'transferHealth' };
+  if (isTransferFatigue(e)) return { kind: 'transferFatigue' };
+  if (isCureDisease(e) || isCurePoison(e) || isCureParalyzation(e)) return { kind: CURE_MARKER_KINDS[e.subType] };
   const b = buffKind(e);
   return b ? { kind: b } : null;
 }
 
 /** EnemyMotor.EffectsAlreadyOnTarget, verbatim shape: true only when
  *  EVERY effect of the spell is already live on the target - one
- *  absent effect (instants always count as absent, like DFU's expired
- *  instant bundles) makes the spell castable. */
+ *  absent effect makes the spell castable. A family the port has not
+ *  implemented has no identity and so always counts as absent. */
 export function effectsAlreadyOnTarget(spell, target) {
   const list = target.activeEffects ?? [];
   for (const e of spell.effects) {

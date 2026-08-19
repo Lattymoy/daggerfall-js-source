@@ -43,8 +43,16 @@ export function computeFaceUVCoordinates(faceVertsIn, faceVertsOut) {
   const m0 = Math.sqrt(dot(V0[0], V0[1], V0[2], V0[0], V0[1], V0[2]));
   const m1 = Math.sqrt(dot(V1[0], V1[1], V1[2], V1[0], V1[1], V1[2]));
   if (m0 === 0 || m1 === 0) throw new Error('Can not normalize a vector when it\'s magnitude is zero');
-  const n0 = [V0[0] / m0, V0[1] / m0, V0[2] / m0];
-  const n1 = [V1[0] / m1, V1[1] / m1, V1[2] / m1];
+  // AUDIT 18 F4: DFU's Vector3.Normalize (API/Vector3.cs:583-597) computes
+  // `double inverse = 1 / Magnitude` and MULTIPLIES each component by it.
+  // x*(1/m) and x/m are not the same double, and the difference survives
+  // the (Int32) truncations below that pick the 2D basis: dividing put 611
+  // of 1,917,087 corpus UVs one raw unit (1/16 texel) off DFU. Ledger row
+  // 18 authorises the float->double widening here, not a different
+  // normalize formulation.
+  const i0 = 1 / m0, i1 = 1 / m1;
+  const n0 = [V0[0] * i0, V0[1] * i0, V0[2] * i0];
+  const n1 = [V1[0] * i1, V1[1] * i1, V1[2] * i1];
 
   // Compute first three vertices in 2D space ((Int32) casts preserved).
   const p0x = Math.trunc(dot(P0[0], P0[1], P0[2], n0[0], n0[1], n0[2]));

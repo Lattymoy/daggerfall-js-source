@@ -15,6 +15,7 @@ export default [
         performance: 'readonly', fetch: 'readonly', navigator: 'readonly',
         globalThis: 'readonly', URLSearchParams: 'readonly', URL: 'readonly',
         setTimeout: 'readonly', clearTimeout: 'readonly', alert: 'readonly',
+        setInterval: 'readonly', clearInterval: 'readonly',
         Image: 'readonly', OffscreenCanvas: 'readonly', FileReader: 'readonly',
         WebGL2RenderingContext: 'readonly', AudioContext: 'readonly', createImageBitmap: 'readonly',
         TextDecoder: 'readonly', TextEncoder: 'readonly', DecompressionStream: 'readonly', Response: 'readonly', Blob: 'readonly',

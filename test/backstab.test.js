@@ -7,6 +7,7 @@ import { calculateAttackDamage, backstabDamage } from '../src/combat/formulas.js
 import { PlayerWeapon } from '../src/combat/playerWeapon.js';
 import { POSES } from '../src/characters/poses.js';
 import { combinePose } from '../src/characters/animate.js';
+import { WEAPONS } from '../src/characters/weapons.js';
 
 const seq = (...vals) => { let i = 0; return () => vals[i++ % vals.length]; };
 const at = (deg) => {   // foe at origin facing +z (yaw 0); viewer placed at `deg` off the foe's forward
@@ -29,7 +30,7 @@ test('isBackFacing: the 8-orientation wheel, records 3/4 = back, banker boundary
 test('backstab: chance rides chanceToHitMod, x3 rides the post-calc roll', () => {
   const A = { isPlayer: true, level: 1, skills: 30, stats: { strength: 50, agility: 50, luck: 50 } };
   const T = { isPlayer: false, isClass: false, careerIndex: 0, armor: 0, skills: 0, minMetalToHit: -1, stats: { strength: 50, agility: 50, luck: 50 } };
-  const dagger = { minDamage: 1, maxDamage: 6, material: 0, flags: 0x10 };
+  const dagger = { templateIndex: WEAPONS.Dagger, material: 0, flags: 0x10 };
   // rolls: [struck, crit(fail .99), hitRoll, damageRoll, backstabRoll]
   // MEASURED chain (F1/F3): skill 30 + weaponToHit(iron -1 x10 = -10)
   // + adjustments(+40 monster - 50 = -10) = 10

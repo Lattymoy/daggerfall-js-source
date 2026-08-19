@@ -48,10 +48,11 @@ test('save: round-trip restores everything; extras carried; deep copies', () => 
   assert.doesNotThrow(() => writeQuicksave(snap, throwing));
 });
 
-test('save: F12 pierces overlays (the death hint is true)', () => {
+test('save: F11 pierces overlays (the death hint is true)', () => {
   const calls = [];
   const ctx = { uiOverlayActive: true, overlayInput: (a) => calls.push('ov:' + a), quickLoad: (fn) => calls.push('load:' + typeof fn) };
-  assert.ok(routeKey({ key: 'F12' }, ctx, () => ({}), 'APPLIER'));
+  // AUDIT 18: InputManager.SetupDefaults binds QuickLoad to F11, not F12.
+  assert.ok(routeKey({ key: 'F11' }, ctx, () => ({}), 'APPLIER'));
   assert.ok(!routeKey({ key: 'F9' }, ctx, () => ({})));      // save stays gated under overlays
   assert.deepEqual(calls, ['load:string']);
 });

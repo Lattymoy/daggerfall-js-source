@@ -207,11 +207,23 @@ export class FactionFile {
         this.factionNameToId.set(faction.name, faction.id);
       }
 
-      // Ruler name seed + power bonus, classic call order (values ride
-      // the DFRandom stream position, exactly as DFU's do).
+      // Ruler name seed + power bonus. AUDIT 18 F3: the draws happen -
+      // they advance the DFRandom stream and every later faction depends
+      // on that - but the RESULTS ARE DISCARDED, because DFU discards
+      // them. FactionData is a STRUCT (FactionFile.cs:640), so
+      // `factionDict.Add(faction.id, faction)` at :1003/:1009 takes a
+      // COPY before :1026-1027 assign these two fields to the local. The
+      // only thing that outlives the loop body is `previousFaction`, read
+      // for `.id` alone (:984). Every faction in DFU's FactionDict
+      // therefore carries rulerNameSeed 0 and rulerPowerBonus 0, and
+      // PersistentFactionData.Reset() hands that same zeroed dict to the
+      // game - which is why MacroHelper.cs:328 seeds every province's
+      // ruler name from 0, and why PlayerEntity's ten regional-power
+      // rolls all add nothing. The port stored what DFU throws away.
+      // Bug-for-bug: draw, then drop.
       const random = (rand() << 16) >>> 0;
-      faction.rulerNameSeed = (rand() | random) >>> 0;
-      faction.rulerPowerBonus = randomRangeInclusive(0, 50) + 20;
+      void ((rand() | random) >>> 0);          // DFU: faction.rulerNameSeed on the discarded copy
+      void (randomRangeInclusive(0, 50) + 20);  // DFU: faction.rulerPowerBonus on the discarded copy
 
       previousId = faction.id;
     }

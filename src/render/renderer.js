@@ -387,6 +387,35 @@ export const CHAR_PIXEL = 7;
  *  clamps pw/ph to this; sprites render into a viewport sub-rect). */
 export const CHAR_SPRITE_RT_SIZE = 512;   // raised for the FP viewmodel frame (E3d): screenW/CHAR_PIXEL at 1440p ~ 366
 
+/**
+ * AUDIT 19 F6: the smooth/blend opt-ins used to be pinned by SOURCE REGEX,
+ * which cannot see whether a computed value is USED - and a regex pin let a
+ * completely dead memo ship in music.js the same day. The DECISIONS are pure,
+ * so they live here and are pinned behaviourally; the GL calls that consume
+ * them are the only part the suite cannot reach.
+ *
+ * REPEAT/NEAREST is the law for GAME art: classic textures tile, and NEAREST
+ * keeps a 320x200 IMG pixel-exact at the integer scales nativePanel picks.
+ * { smooth: true } is for art authored outside that world - a high-resolution
+ * banner at a NON-integer scale, where NEAREST aliases and REPEAT lets a
+ * linear tap at the border sample the opposite edge.
+ */
+export function textureParams(gl, opts = {}) {
+  return opts.smooth
+    ? { wrap: gl.CLAMP_TO_EDGE, filter: gl.LINEAR }
+    : { wrap: gl.REPEAT, filter: gl.NEAREST };
+}
+
+/**
+ * Does this screen quad blend? A SOLID quad blends when it carries alpha
+ * (U10: sixteen translucent UI panels were drawing opaque). A TEXTURED quad
+ * takes the 1-bit cutout unless the caller opts in - classic art IS a 1-bit
+ * cutout, and only ui/titleScreen.js asks for anything else.
+ */
+export function screenQuadBlends(tex, color, opts = {}) {
+  return (!tex && color[3] < 1) || Boolean(tex && opts.blend);
+}
+
 export class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -786,11 +815,15 @@ void main() {
    *  on a virtual 320x200*s screen and this centers that screen on
    *  the real canvas. Set, draw, reset - never leave it on. */
   setScreenOffset(x, y) { this._screenOffset = [x, y]; }
+  /** The offset screen draws are currently shifted by. A full-canvas
+   *  backdrop drawn from inside an offset overlay has to subtract it,
+   *  or it lands displaced by the letterbox margin (U21b). */
+  get screenOffset() { return this._screenOffset ?? [0, 0]; }
 
   /** Positioned screen-space quad in PIXELS (origin top-left), with a
    *  source UV rect - textured (uv0/uv1) or solid color (tex null).
    *  The UI arc's primitive (U1): compass window + vitals bars. */
-  drawScreenQuad(tex, dst, src = { u0: 0, v0: 0, u1: 1, v1: 1 }, color = [1, 1, 1, 1]) {
+  drawScreenQuad(tex, dst, src = { u0: 0, v0: 0, u1: 1, v1: 1 }, color = [1, 1, 1, 1], opts = {}) {
     const gl = this.gl;
     if (!this.screenQuadProgram) {
       const vs = `#version 300 es
@@ -811,10 +844,21 @@ precision highp float;
 in vec2 vUV;
 uniform sampler2D uTex;
 uniform int uUseTex;
+uniform int uBlendTex;
 uniform vec4 uColor;
 out vec4 outColor;
 void main() {
-  if (uUseTex == 1) { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = vec4(t.rgb, 1.0) * uColor; }
+  if (uUseTex == 1) {
+    vec4 t = texture(uTex, vUV);
+    // U21c: the opt-in arm. Classic art is a 1-BIT cutout (palette index
+    // 0 transparent, every other index fully opaque), so the default
+    // discards and forces alpha 1 - correct for every IMG/CIF/texture in
+    // the game. Art authored OUTSIDE that palette (our logo) carries real
+    // partial alpha: anti-aliased edges and a soft shadow, which the
+    // threshold would turn into jagged gold and a hard silhouette.
+    if (uBlendTex == 1) { outColor = vec4(t.rgb * uColor.rgb, t.a * uColor.a); }
+    else { if (t.a < 0.5) discard; outColor = vec4(t.rgb, 1.0) * uColor; }
+  }
   else outColor = uColor;
 }`;
       this.screenQuadProgram = this._buildProgram(vs, fs);
@@ -824,6 +868,7 @@ void main() {
         src: gl.getUniformLocation(this.screenQuadProgram, 'uSrc'),
         tex: gl.getUniformLocation(this.screenQuadProgram, 'uTex'),
         useTex: gl.getUniformLocation(this.screenQuadProgram, 'uUseTex'),
+        blendTex: gl.getUniformLocation(this.screenQuadProgram, 'uBlendTex'),
         color: gl.getUniformLocation(this.screenQuadProgram, 'uColor'),
       };
       const vao = gl.createVertexArray();
@@ -848,6 +893,7 @@ void main() {
     gl.uniform4f(this._screenQuad.src, src.u0, src.v0, src.u1, src.v1);
     gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
     gl.uniform1i(this._screenQuad.useTex, tex ? 1 : 0);
+    gl.uniform1i(this._screenQuad.blendTex, tex && opts.blend ? 1 : 0);
     if (tex) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(this._screenQuad.tex, 0); }
     // U10: a SOLID quad's alpha was written straight out with blending
     // OFF, so every translucent UI panel in the port drew OPAQUE -
@@ -856,8 +902,9 @@ void main() {
     // for the talk/rest/action panels and the char-sheet backdrops.
     // Sixteen call sites had been authoring alpha that never applied.
     // Textured quads keep their existing law (discard a<0.5, opaque
-    // rgb) so no art path changes.
-    const blend = !tex && color[3] < 1;
+    // rgb) so no art path changes - unless the CALLER opts in with
+    // { blend: true }, which only ui/titleScreen.js does (U21c).
+    const blend = screenQuadBlends(tex, color, opts);
     if (blend) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); }
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
     if (blend) gl.disable(gl.BLEND);
@@ -908,8 +955,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.enable(gl.DEPTH_TEST);
   }
 
-  /** Upload a getColor32 result as a REPEAT/NEAREST texture, keyed and cached. */
-  uploadTexture(archive, record, color32) {
+  /** Upload a getColor32 result as a REPEAT/NEAREST texture, keyed and cached.
+   *
+   *  REPEAT/NEAREST is the law for GAME art and stays the default: classic
+   *  textures tile, and NEAREST is what keeps a 320x200 IMG pixel-exact at
+   *  the integer scales nativePanel picks. U21c adds an opt-in for art
+   *  authored outside that world - our logo is a high-resolution banner
+   *  drawn at a NON-integer scale, where NEAREST aliases the serifs and
+   *  REPEAT lets a LINEAR tap at the border sample the opposite edge.
+   *  { smooth: true } gives it LINEAR/CLAMP_TO_EDGE instead. */
+  uploadTexture(archive, record, color32, opts = {}) {
+    // (see textureParams below - the decision is pure and pinned there)
     const key = `${archive}_${record}`;
     if (this.textures.has(key)) return this.textures.get(key);
     const gl = this.gl;
@@ -920,10 +976,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.TEXTURE_2D, 0, gl.RGBA, color32.width, color32.height, 0,
       gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(color32.colors.buffer)
     );
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    const { wrap, filter } = textureParams(gl, opts);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
     this.textures.set(key, tex);
     return tex;
   }

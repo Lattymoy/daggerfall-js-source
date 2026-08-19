@@ -17,6 +17,9 @@ test('U10: the window rects, pinned WHOLE against the DFU literals', () => {
     randomName: [279, 3, 36, 10],    // :78
     ok: [263, 172, 39, 22],          // :85
     reroll: [263, 147, 39, 22],      // CreateCharAddBonusStats.cs:112
+    // AUDIT 18: the stats screen's other two buttons, missing entirely
+    saveRoll: [162, 162, 71, 9],     // :117
+    loadRoll: [162, 171, 71, 9],     // :121
     faceDisplay: [247, 25, 64, 40],  // FacePicker.cs:55-57
     facePrev: [245, 69, 42, 9],      // :65
     faceNext: [287, 69, 26, 9],      // :67

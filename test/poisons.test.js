@@ -10,6 +10,7 @@ import {
 import { tickActiveEffects, healAttributeDamage } from '../src/systems/effects.js';
 import { liveStat } from '../src/systems/statMods.js';
 import { calculateAttackDamage } from '../src/combat/formulas.js';
+import { WEAPONS } from '../src/characters/weapons.js';
 import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
 import { YOU_FEEL_SOMEWHAT_BAD } from '../src/systems/diseases.js';
 
@@ -175,7 +176,7 @@ test('poisons: the enemy weapon-poison roll + the formulas inflict-once seam', (
   // ONCE and clears the weapon's poison
   const M = { isPlayer: false, isClass: true, level: 5, skills: 200, stats: { strength: 50, agility: 50, luck: 50 } };
   const T = { isPlayer: true, armor: 0, skills: 0, stats: { strength: 50, agility: 50, luck: 50 } };
-  const weapon = { name: 'Longsword', minDamage: 2, maxDamage: 16, material: 1, flags: 0, poisonType: POISONS.Moonseed };
+  const weapon = { name: 'Longsword', templateIndex: WEAPONS.Longsword, material: 1, flags: 0, poisonType: POISONS.Moonseed };
   const hits = [];
   // rolls: [struck, crit fail, hitRoll, damageRoll, backstab] - skill
   // 200 clamps the chance to 97, roll .02 hits

@@ -8,6 +8,7 @@ import {
   hitPointsPerLevelUp, spendPoolLowest, createCharacter, CLASS_CAREERS,
 } from '../src/systems/chargen.js';
 import { calculateAttackDamage } from '../src/combat/formulas.js';
+import { WEAPONS } from '../src/characters/weapons.js';
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 const career = {
@@ -67,7 +68,7 @@ test('chargen: skillValue dual shape + formulas consume real skills', () => {
   const arr = new Array(SKILL_COUNT).fill(5); arr[SKILLS.LongBlade] = 40; arr[SKILLS.HandToHand] = 20;
   const player = { isPlayer: true, level: 1, skills: arr, armor: 0, stats: { strength: 50, agility: 50, luck: 50 } };
   const foe = { isPlayer: false, isClass: false, careerIndex: 0, armor: 0, skills: 0, minMetalToHit: -1, stats: { strength: 50, agility: 50, luck: 50 } };
-  const sword = { name: 'Longsword', minDamage: 2, maxDamage: 16, material: 0, flags: 0x10 };
+  const sword = { name: 'Longsword', templateIndex: WEAPONS.Longsword, material: 0, flags: 0x10 };
   // MEASURED (F1/F3): weapon = LongBlade 40 - 10 (iron x10) - 10
   // (+40 monster - 50) = 20; unarmed = HandToHand 20 - 10 = 10.
   // The SAME roll .15 hits with the sword, misses barehanded -

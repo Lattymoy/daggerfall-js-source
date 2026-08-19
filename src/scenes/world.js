@@ -47,10 +47,12 @@ import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
+import { music } from '../systems/music.js';
+import { outdoorPlaylist } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, parseSeason, createSkyController } from './shared.js';
-import { PlayerMotor, FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, motorStats, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs } from './shared.js';
+import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier, tallySkill, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -80,6 +82,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const locationName = params.get('loc') || 'Daggerfall';
   const season = parseSeason(params);
 
+  audio.ensure(fetchBytes);   // AUDIT 18 F6: sound was booted ONLY by buildDungeonContext, so this host was silent until a dungeon was entered
   status('loading data');
   const [palBytes, blocksBytes, archBytes, mapsBytes, climateBytes, politicBytes, woodsBytes] =
     await Promise.all([
@@ -141,20 +144,30 @@ export async function bootWorld(canvas, renderer, params, status) {
   const bootedAt = performance.now();
   const minuteNow = () =>
     (baseTod + ((performance.now() - bootedAt) / 1000) * timeScale) % 1440;
+
+  // A5b: OUTDOOR MUSIC. AssignPlaylist's City/Wilderness arms - night
+  // overrides everything, and by day the weather picks the list
+  // (SongManager.cs:585-612). The pick itself is DFU's day-seeded
+  // branch, so a location's song is stable until midnight.
+
   const lightsOnAt = (minute) =>
     params.has('window') ? params.get('window') === 'night' : isCityLightsOn(minute);
   const worldLightAnimator = new CityLightAnimator(4096, CITY_LIGHT_RANGE);
 
   // --- Shared caches (dataPipeline.js, extracted at P7) -----------------
   const pipeline = createDataPipeline({ renderer, arch, palette });
+  // AUDIT 18 HOST GAP: the audio engine's bootstrap lived only in
+  // buildDungeonContext, so every sound in this host was a silent
+  // no-op until a dungeon was entered (DFU's sound reader is global
+  // and the exterior prefab is audible from frame one).
+  ensureAudio(fetchBytes);
+
   const { getTexture, uploadRecord, uploadRecordFrame, getGpuMesh, cpuModels } = pipeline;
 
   // T2 towns: the person textures (climate People table pends - Breton
   // + guard, the T1 flag), loaded once on the first populated pixel.
-  // StreamingWorld adds PopulationManager only to these location types
-  // (verbatim): TownCity 0, TownHamlet 1, TownVillage 2, HomeFarms 3,
-  // ReligionTemple 5, Tavern 6, HomeWealthy 8.
-  const POPULATED_LOCATION_TYPES = new Set([0, 1, 2, 3, 5, 6, 8]);
+  // StreamingWorld.cs:771-781's seven-LocationType PopulationManager
+  // gate now lives in shared.js so the ?exterior host cannot miss it.
   const personArchives = [...PERSON_TEXTURES.Breton.male, ...PERSON_TEXTURES.Breton.female, GUARD_TEXTURE];
   const personTex = new Map();
   let _personTexLoad = null;
@@ -282,7 +295,11 @@ export async function bootWorld(canvas, renderer, params, status) {
             () => state.pixelTranslation(px, py));
           // Building models expose their static doors for E-transitions.
           if (cpu.doors && cpu.doors.length) {
-            const staticDoors = getStaticDoors(cpu, 0, placed.recordIndex, local);
+            // StaticDoor.blockIndex must be TRUTHFUL (RMBLayout.cs:848
+            // passes blockData.Index): DaggerfallInterior.IsBadInteriorModel
+            // keys the 31000-overlap repair on EntryDoor.blockIndex, and a
+            // hardcoded 0 made it unreachable from this host.
+            const staticDoors = getStaticDoors(cpu, b.dfBlock.index, placed.recordIndex, local);
             for (const door of staticDoors) {
               buildingDoors.push({
                 door, pixelKey: key, dfBlock: b.dfBlock,
@@ -321,7 +338,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // translation. Persons ground on the flattened location terrain
       // (blendLocationTerrain planes the rect to avg - the same base
       // the RMB flats sit on). Location-type gate verbatim.
-      if (POPULATED_LOCATION_TYPES.has(dfLocation.mapTableData.locationType)) {
+      if (populatesWanderingNpcs(dfLocation.mapTableData.locationType)) {
         await ensurePersonTex();
         const nav = new CityNavigation(loc.width, loc.height);
         for (const b of loc.blocks) {
@@ -426,7 +443,36 @@ export async function bootWorld(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
-  const player = new PlayerMotor(collider, undefined, { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14)
+  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14); motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  const playerTicker = createPlayerTicker(playerEntity, { say: (msg) => console.log('[player]', msg) });   // AUDIT 18: the per-minute tick every host owes
+
+  // AUDIT 19 F4: the CUMULATIVE game-day count, for the music seed. The
+  // ticker's classicMinutes is the only clock in this host that keeps
+  // counting past midnight - minuteNow() wraps at 1440 by design (it
+  // drives the sun and the window styles, which want a time of day).
+  const gameDaysNow = () => Math.floor(playerTicker.classicMinutes / 1440);
+
+  // A5b/AUDIT 19: ONE SEAM for this host's music, because there are now
+  // four callers - the boot, nightfall, returning from an interior and
+  // returning from a dungeon - and four copies is how the host-gap bugs
+  // start. F3 found the dungeon exit had no caller at all, so dungeon
+  // music looped over the sunlit city forever; F5 found the playlist was
+  // chosen once at boot, so night never brought night music.
+  let _musicNight = null;
+  const startOutdoorMusic = () => {
+    const night = isNight(minuteNow());
+    _musicNight = night;
+    // AUDIT 19 F4: gameDays is the CUMULATIVE day count. minuteNow()
+    // ends in `% 1440`, so deriving it there was structurally zero -
+    // every tavern played SQUARE_2.HMI forever and the day-seeded
+    // outdoor pick never changed.
+    music.playFrom(outdoorPlaylist({ night, weather }), { gameDays: gameDaysNow() });
+  };
+  /** Cheap per-frame check: re-pick only when the day/night gate flips. */
+  const updateOutdoorMusic = () => {
+    if (_musicNight !== null && isNight(minuteNow()) !== _musicNight) startOutdoorMusic();
+  };
+  ensureAudio(fetchBytes).then(startOutdoorMusic);   // the SEAM, not music.ensure - AUDIT 19 F1(doctrine)
   // C9: the exterior FP weapon (host rule - every motor host carries
   // it). AUDIT 17e F38 / RETIRING A FLAG DELETES THE SENTENCE: the
   // 'no HUD-text layer yet' flag that stood here was retired by T3b
@@ -775,6 +821,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
+    // A5b: the tavern arm needs the host's clock, and leaving one has to
+    // hand the street back its own song - the host owns both, so both
+    // ride in as closures rather than worldModes reaching for a global.
+    gameDaysNow,
+    resumeOutdoorMusic: startOutdoorMusic,
     voxelfolk: params.has('voxelfolk'),
     foes: !params.has('nofoes'),   // C11: foes are the DEFAULT now (monsters live; ?nofoes for the empty-dungeon dev view)
     playerClass: params.has('class') ? Number(params.get('class')) : undefined,
@@ -839,6 +890,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       return;
     }
 
+
     if (walkMode) {
       if (!playerSpawned && built.has(startKey)) {
         // Drop in above the terrain once the start pixel's collider is up.
@@ -849,6 +901,27 @@ export async function bootWorld(canvas, renderer, params, status) {
         const jumpHeld = keys.has('Space');
         const crouchHeld = keys.has('KeyX');   // P12 host parity (audit F4)
         const _overlayHeld = (modes?.dungeonCtx?.uiOverlayActive ?? false) || townTalk.overlayActive;   // chargen/windows/talk hold the motor - typing must not walk the player
+      // AUDIT 18 F9: the player's world clock, HELD by the same gate.
+      // It ran only inside a dungeon before F8 moved it here; F8 then
+      // ran it unconditionally, which is the U7 bug shape inverted -
+      // DFU stops the clock outright under a paused window. PauseGame
+      // (GameManager.cs:600-610) sets Time.timeScale = 0, and
+      // WorldTime.Update (:60-69) advances the calendar by
+      // `Time.deltaTime * TimeScale`, so a PauseWhileOpen window
+      // freezes game time entirely: no magic round, no disease day, no
+      // fatigue, no skill advancement. Open the char sheet and the
+      // motor already held here - the clock did not, so a disease
+      // aged while the game was paused.
+      if (!_overlayHeld) playerTicker.tick(dt, { running: player.running, swimming: player.swimming });
+      updateOutdoorMusic();   // AUDIT 19 F5: nightfall re-picks the playlist
+        // AUDIT 18 HOST GAP: levitate/waterWalking/slowFall were
+        // written ONLY inside the dungeon branch of worldModes and
+        // never cleared, so leaving a dungeon while levitating
+        // stranded the player in the motor's no-gravity branch
+        // forever. The EFFECT owns the flag (Levitate.cs:131/:136),
+        // so it is recomputed per frame in every host; swimming is
+        // false outdoors (no blockWaterLevel - PlayerEnterExit).
+        applyMotorEffectFlags(player, playerEntity);
         if (!_overlayHeld) player.update(dt, {
           forward: (keys.has('KeyW') ? 1 : 0) - (keys.has('KeyS') ? 1 : 0),
           strafe: (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0),
@@ -869,13 +942,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // bills like ground until the tile probe ships. Death at 0
         // rides the shared entity; the exterior death screen pends
         // with the world-mode UI arc.
-        if (player.landedFallDistance > FALL_DAMAGE_THRESHOLD) {
-          playerEntity.health = Math.max(0, playerEntity.health - Math.trunc(FALL_HP_PER_METRE * (player.landedFallDistance - FALL_DAMAGE_THRESHOLD)));
-          surfacePlayer();
-          audio.playOneShot(SOUND.FallDamage);
-        } else if (player.landedFallDistance > FALL_DAMAGE_THRESHOLD / 2) {
-          audio.playOneShot(SOUND.FallHard);   // BadFallDetected
-        }
+        applyFallLanding(playerEntity, player.landedFallDistance, { sound: (id) => audio.playOneShot(id) });
         cam.pos = player.eye;
         const useHeld = keys.has('KeyE');
         if (useHeld && !latch.use && !modes.transitioning) {
@@ -916,13 +983,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Streaming step: recentre, enqueue new pixels, drop far ones.
     const r = state.update(cam.pos);
     if (r.offset) {
+      // FloatingOrigin.OffsetPlayerController (:176-181) adjusts the
+      // fall start BEFORE it moves the controller - without it a
+      // vertical recenter mid-air bills the whole 500-unit shift as a
+      // fall (trunc(5 * 495) = 2475 HP from a two-metre hop), or bills
+      // a killing fall as nothing when it crosses downward.
+      adjustFallStart(player, r.offset[1]);
       cam.pos[0] += r.offset[0]; cam.pos[1] += r.offset[1]; cam.pos[2] += r.offset[2];
       player.pos[0] += r.offset[0]; player.pos[1] += r.offset[1]; player.pos[2] += r.offset[2];
       // AUDIT 17e F23: everything else holding a WORLD position must
       // follow the origin too, or it strands 819.2 units behind.
       cityGuards.offsetAll(r.offset);
       droppedLoot.offsetAll(r.offset);
-      arrows.offsetAll?.(r.offset);
+      // AUDIT 18: this line used to be an optional call to a method
+      // ArrowFlight has never had, so it was swallowed every time and
+      // every in-flight arrow was stranded 819.2 units behind.
+      offsetArrows(arrows, r.offset);
     }
     if (r.pixelChanged) {
       queue.push(...r.load);
@@ -960,12 +1036,19 @@ export async function bootWorld(canvas, renderer, params, status) {
       params.has('window') ? params.get('window')
         : (windowStyleForWeather(weather) ?? windowStyleForTime(minute))));
     const currentEntry = built.get(`${state.current.x},${state.current.y}`);
-    sky.use((currentEntry ? currentEntry.skyBase : 16) + weatherSkyOffset, minute);
+    // DaggerfallSky.cs:363-367 - a non-Normal WeatherStyle (every rain,
+    // thunder and snow) disables the clear night sky, so the DAY sky at
+    // frame 0 is drawn instead. weatherSkyOffset IS the WeatherStyle
+    // (Rain1 4 / Rain2 5 / Snow1 6 / Snow2 7; Normal is 0).
+    sky.use((currentEntry ? currentEntry.skyBase : 16) + weatherSkyOffset, minute, weatherSkyOffset === 0);
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
     // Sunny/Overcast ARE linear fog to 2400 - the classic distance haze.
+    // DaggerfallSky.SetSkyFogColor (:318-325): anything denser than
+    // heavy rain fogs to Color.gray, not to the sky tint.
+    const fogColor = outdoorFogColor(weatherFog, sky.renderer.clearColor);
     renderer.setFog(weatherFog.mode,
-      weatherFog.density, weatherFog.start, weatherFog.end, sky.renderer.clearColor);
-    sky.renderer.fogColor = sky.renderer.clearColor;
+      weatherFog.density, weatherFog.start, weatherFog.end, fogColor);
+    sky.renderer.fogColor = fogColor;
     sky.renderer.fogMix = weatherFog.excludeSky ? 0 : 1 - fogFactor(weatherFog, 800);
 
     // Lanterns on 17:00-08:00, flickering verbatim; pixel-local lights

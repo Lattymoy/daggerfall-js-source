@@ -73,14 +73,20 @@ export class RestSession {
   }
 
   tick(dt) {
-    // The per-frame checks (DFU's Update): death ends at once (the
-    // death flow owns the message); an already-healed FullRest ends
-    // without waiting for an hour. A timed/loiter request of ZERO
-    // hours is NOT ended here - DFU only tests hoursRemaining < 1
-    // AFTER an hour completes, so resting 0 hours rests one full
-    // hour, quirk preserved (audit 2026-08-16f).
+    // The per-frame checks, in DFU's Update order (:215-227): death
+    // ends at once (the death flow owns the message); an
+    // already-healed FullRest ends without waiting for an hour; and a
+    // NON-FullRest session with hoursRemaining < 1 ends BEFORE
+    // TickRest runs - so a 0-hour timed/loiter request (the prompts
+    // clamp a negative input to 0 and accept it, :745-748/:770-773)
+    // passes no world time at all: no RaiseTime, no enemy check, no
+    // vitals. The `hoursRemaining < 1` test inside TickRest is the
+    // SECOND one, not the only one.
     if (this.deps.dead()) return { textId: null, enemyBroke: false, died: true };
     if (this.mode === 'full' && this.deps.fullyHealed?.()) return { textId: REST_TEXT.healed, enemyBroke: false, died: false };
+    if (this.mode !== 'full' && this.hoursRemaining < 1) {
+      return { textId: this.mode === 'loiter' ? REST_TEXT.loiterDone : REST_TEXT.wakeUp, enemyBroke: false, died: false };
+    }
 
     this._timer += dt;
     while (this._timer >= this._subTickEvery) {

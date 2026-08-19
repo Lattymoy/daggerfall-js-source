@@ -4,9 +4,12 @@
 //   - sight = 4096 * MeshReader.GlobalScale, FOV 180, hearing 25
 //   - senses re-evaluate when the classic system timer (dt divided by
 //     0.0549254, the 0x46C memory-timer divisor) accumulates past 5
-//   - decisions gate on the CLASSIC UPDATE (0.0625s); classic turns IN
-//     PLACE at 11.25 deg/update (DFU raises to 20 for its agile player;
-//     we keep classic per doctrine) behind the 5.625 deg move yaw-gate
+//   - decisions gate on the CLASSIC UPDATE (0.0625s); turns happen IN
+//     PLACE at TurnToTarget's `const float turnSpeed = 20f`
+//     (EnemyMotor.cs:1348-1350 - classic's 11.25 survives only in
+//     that method's comment, "too slow for Daggerfall Unity's agile
+//     player movement", and is NOT the compiled constant) behind the
+//     5.625 deg move yaw-gate
 //   - moveSpeed = (LiveSpeed + dfWalkBase 150) * GlobalScale - "Monster
 //     speed of movement follows the same formula as for when the
 //     player walks"
@@ -53,7 +56,7 @@ export const HEARING_RADIUS = 25;
 export const FIELD_OF_VIEW = 180;                    // deg
 export const MELEE_DISTANCE = 2.25;
 export const CLASSIC_MELEE_DISTANCE_VS_AI = 1.5;
-export const CLASSIC_TURN_DEG = 11.25;               // per classic update
+export const CLASSIC_TURN_DEG = 20;                  // per classic update (TurnToTarget's turnSpeed)
 export const SYSTEM_TIMER_UPDATES_DIVISOR = 0.0549254;
 export const SENSES_INTERVAL_UNITS = 5;              // classicTargetUpdateTimer > 5
 export const MOVE_YAW_GATE_DEG = 5.625;
@@ -70,27 +73,49 @@ export function stealthChance(distance, liveStealth) {
 }
 export const STEALTH_MAX_DISTANCE = 1024 * GLOBAL_SCALE;   // 25.6
 
-// The classic spawn/despawn bands (EnemySenses' distance arrays,
-// index = ClassicSpawnDistanceType - NEVER assigned in EnemyBasics,
-// so every enemy uses row 0). Player-inside (dungeons): a foe not
-// yet "spawned" joins inside the SPAWN band, an already-spawned foe
-// leaves outside the wider DESPAWN band - hysteresis, verbatim.
-export const CLASSIC_SPAWN_XZ = 1024 * GLOBAL_SCALE;
-export const CLASSIC_SPAWN_Y_UPPER = 128 * GLOBAL_SCALE;
-export const CLASSIC_SPAWN_Y_LOWER = 0;
-export const CLASSIC_DESPAWN_XZ = 1024 * GLOBAL_SCALE;
-export const CLASSIC_DESPAWN_Y = 384 * GLOBAL_SCALE;
+// The classic spawn/despawn bands (EnemySenses.Start's five distance
+// arrays, verbatim - index = MobileUnit.ClassicSpawnDistanceType,
+// which is NOT an EnemyBasics field: RDBLayout reads it off the
+// enemy marker's FlatResource.SoundIndex (RDBLayout.cs:1353, :1413,
+// :1485) and it rides SetEnemy into the mobile). Player-inside
+// (dungeons): a foe not yet "spawned" joins inside the SPAWN band,
+// an already-spawned foe leaves outside the wider DESPAWN band -
+// hysteresis, verbatim. Outdoors there is no band table and NO
+// vertical test at all: upperXZ is the flat classicSpawnDespawnExterior.
+export const CLASSIC_SPAWN_XZ_BY_TYPE = Object.freeze([1024, 384, 640, 768, 768, 768, 768].map((v) => v * GLOBAL_SCALE));
+export const CLASSIC_SPAWN_Y_UPPER_BY_TYPE = Object.freeze([128, 128, 128, 384, 768, 128, 256].map((v) => v * GLOBAL_SCALE));
+export const CLASSIC_SPAWN_Y_LOWER_BY_TYPE = Object.freeze([0, 0, 0, 0, -128, -768, 0].map((v) => v * GLOBAL_SCALE));
+export const CLASSIC_DESPAWN_XZ_BY_TYPE = Object.freeze([1024, 1024, 1024, 1024, 768, 768, 768].map((v) => v * GLOBAL_SCALE));
+export const CLASSIC_DESPAWN_Y_BY_TYPE = Object.freeze([384, 384, 384, 384, 768, 768, 768].map((v) => v * GLOBAL_SCALE));
+export const CLASSIC_SPAWN_DESPAWN_EXTERIOR = 4096 * GLOBAL_SCALE;
+// Row 0 (the default distance type) kept as named constants - the
+// stealth/rest consumers read them.
+export const CLASSIC_SPAWN_XZ = CLASSIC_SPAWN_XZ_BY_TYPE[0];
+export const CLASSIC_SPAWN_Y_UPPER = CLASSIC_SPAWN_Y_UPPER_BY_TYPE[0];
+export const CLASSIC_SPAWN_Y_LOWER = CLASSIC_SPAWN_Y_LOWER_BY_TYPE[0];
+export const CLASSIC_DESPAWN_XZ = CLASSIC_DESPAWN_XZ_BY_TYPE[0];
+export const CLASSIC_DESPAWN_Y = CLASSIC_DESPAWN_Y_BY_TYPE[0];
 
-/** The wouldBeSpawnedInClassic recompute (per classic update, inside
- *  buildings/dungeons - our foes are dungeon-resident). yDiff =
- *  foeY - playerY (SIGNED: the lower band uses the sign). */
-export function wouldBeSpawnedInClassic(distanceToPlayer, yDiff, already) {
+/** The wouldBeSpawnedInClassic recompute (per classic update). yDiff
+ *  = foeY - playerY (SIGNED: the lower band uses the sign).
+ *  distanceType = the marker's ClassicSpawnDistanceType (row into the
+ *  five band arrays); playerInside = PlayerEnterExit.IsPlayerInside.
+ *  Out-of-range rows are reproduced, not clamped: DFU indexes short[7]
+ *  with the marker byte, and RDBLayout.cs:1478 notes fixed markers
+ *  "have garbage data in the 8 MSBs" - the corpus carries one such
+ *  marker (soundIndex 35). The IndexOutOfRangeException aborts
+ *  EnemySenses.Start, leaving all five band fields at their 0f
+ *  defaults, i.e. that foe is never spawned in classic indoors. */
+export function wouldBeSpawnedInClassic(distanceToPlayer, yDiff, already, distanceType = 0, playerInside = true) {
   if (distanceToPlayer >= 1094 * GLOBAL_SCALE) return false;
   const yAbs = Math.abs(yDiff);
   const xz = Math.sqrt(Math.max(0, distanceToPlayer * distanceToPlayer - yAbs * yAbs));
-  const upperXZ = already ? CLASSIC_DESPAWN_XZ : CLASSIC_SPAWN_XZ;
-  const upperY = already ? CLASSIC_DESPAWN_Y : CLASSIC_SPAWN_Y_UPPER;
-  const lowerY = already ? 0 : CLASSIC_SPAWN_Y_LOWER;
+  if (!playerInside) return xz <= CLASSIC_SPAWN_DESPAWN_EXTERIOR;   // no Y test outdoors
+  const row = distanceType >= 0 && distanceType < CLASSIC_SPAWN_XZ_BY_TYPE.length ? distanceType : -1;
+  const band = (arr) => (row < 0 ? 0 : arr[row]);
+  const upperXZ = already ? band(CLASSIC_DESPAWN_XZ_BY_TYPE) : band(CLASSIC_SPAWN_XZ_BY_TYPE);
+  const upperY = already ? band(CLASSIC_DESPAWN_Y_BY_TYPE) : band(CLASSIC_SPAWN_Y_UPPER_BY_TYPE);
+  const lowerY = already ? 0 : band(CLASSIC_SPAWN_Y_LOWER_BY_TYPE);
   if (xz > upperXZ) return false;
   if (lowerY === 0) {
     if (yAbs > upperY) return false;
@@ -201,13 +226,17 @@ export const FLYER_FLOOR_LIFT = 0.1;            // direction.y forced up when sk
  * waterSurfaceY(x, z), the 2.5 head margin, beached = frozen).
  */
 export class EnemyAI {
-  constructor(collider, feet, yawRad, { liveSpeed = 50, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null } = {}) {
+  constructor(collider, feet, yawRad, { liveSpeed = 50, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null, spawnDistanceType = 0, playerInside = true } = {}) {
     this.collider = collider;
     this.feet = [feet[0], feet[1], feet[2]];
     this.yaw = yawRad;
     this.height = height;
     this.speed = enemyMoveSpeed(liveSpeed);
     this.seesThroughInvisibility = seesThroughInvisibility;
+    // MobileUnit.ClassicSpawnDistanceType (the marker's SoundIndex) and
+    // PlayerEnterExit.IsPlayerInside - both feed the spawn-band recompute.
+    this.spawnDistanceType = spawnDistanceType;
+    this.playerInside = playerInside;
     this.giveUpTimer = 0;   // G1: blind-pursuit ticks (EnemyMotor.GiveUpTimer)
     this.flies = behaviour === 'Flying' || behaviour === 'Spectral';   // CanFly, verbatim
     this.swims = behaviour === 'Aquatic';
@@ -250,7 +279,8 @@ export class EnemyAI {
     }
     const rolls = senses.rolls ?? Math.random;
     // per classic update: the spawn-band recompute + the illusion roll
-    this.wouldBeSpawned = wouldBeSpawnedInClassic(this._dist, this.feet[1] - playerFeet[1], this.wouldBeSpawned);
+    this.wouldBeSpawned = wouldBeSpawnedInClassic(
+      this._dist, this.feet[1] - playerFeet[1], this.wouldBeSpawned, this.spawnDistanceType, this.playerInside);
     this._blocked = blockedByIllusionEffect(this.seesThroughInvisibility, {
       invisible: senses.playerInvisible ?? false,
       blending: senses.playerBlending ?? false,

@@ -58,6 +58,30 @@ const CLIP_ID = Object.freeze({
   HighElf: 213, WoodElf: 214, Khajiit: 215, Argonian: 216,
 });
 
+/** AUDIT 18: the four RACIAL EFFECT-FLAG fields (RaceTemplate.cs:38-42)
+ *  the table used to drop entirely, so SavingThrow's racial arm had
+ *  nothing to read. DFCareer.EffectFlags bits (DFCareer.cs:398-408):
+ *  Paralysis 1, Magic 2, Poison 4, Fire 8, Frost 16, Shock 32,
+ *  Disease 64 - the same numbers spellcast.js's EFFECT_FLAGS carries,
+ *  spelled out here so the leaf race table takes no import.
+ *
+ *  Only three playable races set anything, and each sets exactly one
+ *  field: Breton ResistanceFlags = Magic (:191), Nord ResistanceFlags
+ *  = Frost (:235), HighElf ImmunityFlags = Paralysis (:279). No
+ *  playable race sets LowToleranceFlags, CriticalWeaknessFlags or
+ *  SpecialAbilities - those stay 0, verbatim.
+ *
+ *  The CONSUMER is FormulaHelper.SavingThrow's player block
+ *  (:1463-1476), which reads all four through SpellHasFlags BEFORE
+ *  the career tolerance folds and ASSIGNS savingThrow = 100 for an
+ *  immunity. That block lives in src/systems/spellcast.js and is not
+ *  written yet - AUDIT 18 routed it to that file's owner. */
+const RACE_EFFECT_FLAGS = Object.freeze({
+  Breton: { resistanceFlags: 2 },     // EffectFlags.Magic
+  Nord: { resistanceFlags: 16 },      // EffectFlags.Frost
+  HighElf: { immunityFlags: 1 },      // EffectFlags.Paralysis
+});
+
 const two = (n) => String(n).padStart(2, '0');
 const build = (key, artIndex) => Object.freeze({
   key,
@@ -73,6 +97,12 @@ const build = (key, artIndex) => Object.freeze({
   bodyFemale: Object.freeze([`BODY1${artIndex}I0.IMG`, `BODY1${artIndex}I1.IMG`]),
   headsMale: `FACE${two(artIndex)}I0.CIF`,
   headsFemale: `FACE1${artIndex}I0.CIF`,
+  resistanceFlags: 0,
+  immunityFlags: 0,
+  lowToleranceFlags: 0,
+  criticalWeaknessFlags: 0,
+  specialAbilities: 0,
+  ...RACE_EFFECT_FLAGS[key],
 });
 
 export const RACE_TEMPLATES = Object.freeze(

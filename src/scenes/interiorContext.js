@@ -33,6 +33,29 @@ import { IDLE, WALK, POSE_L } from '../characters/animate.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { fetchBytes } from './shared.js';
 import { ActionSystem } from '../world/actionSystem.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
+
+/**
+ * The A1 door-audio seams for a BUILDING interior's ActionSystem.
+ * Verbatim DaggerfallActionDoor: the class defaults (which
+ * SetInteriorDoorSounds also sets) are NormalDoorOpen / NormalDoorClose
+ * / PlayerDoorBash - NOT the DungeonDoorOpen/Close pair the RDB dungeon
+ * prefab uses. Wired here, in the context BOTH interior hosts build
+ * (worldModes' entered buildings and the standalone interior scene), so
+ * neither can be left silent.
+ * @param sfx - the audio engine (injectable for tests).
+ */
+export function attachInteriorDoorSounds(actions, sfx = audio) {
+  actions.onDoorState = (o, opening) => {
+    const m = o.matrix;
+    sfx.play3d(opening ? SOUND.NormalDoorOpen : SOUND.NormalDoorClose, [m[12], m[13], m[14]]);
+  };
+  actions.onDoorBash = (o) => {
+    const m = o.matrix;
+    sfx.play3d(SOUND.PlayerDoorBash, [m[12], m[13], m[14]]);
+  };
+}
 
 /**
  * @param deps {{
@@ -116,8 +139,12 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     }
   }
   // Interior swing doors run on the ActionSystem (P4): the verbatim
-  // -90 / 1.5 s toggle with trigger-at-open-start - inner rooms open.
+  // -90 / 1.5 s toggle with trigger-at-open-start - inner rooms open,
+  // and they are audible (DaggerfallInterior.AddActionDoors builds them
+  // from Option_InteriorDoorPrefab, which carries the same
+  // DaggerfallActionDoor component the dungeon doors have).
   const actions = new ActionSystem(collider);
+  attachInteriorDoorSounds(actions);
   const dynamicDraws = [];
   for (const d of interior.actionDoors) {
     const cpu = cpuModels.get(d.modelIdNum);

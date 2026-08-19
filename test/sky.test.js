@@ -33,18 +33,21 @@ test('sky: night mapping and panorama duplication', () => {
   assert.equal(SkyFile.indexToFileName(3), 'SKY03.DAT');
   assert.ok(Math.abs(SKY_ANGLE_PER_PIXEL - Math.PI / 512) < 1e-12);
 
-  // 2x2 night image duplicates across both halves; fill color is DFU's
-  // pixel 0 = first pixel of the last bottom-up row.
+  // 2x2 night image duplicates across both halves. clearColor is DFU's
+  // west[0] = element 0 of the bottom-up array = the HORIZON row; the
+  // zenith texel is the above-strip fillColor. The last column is the
+  // seam fix (LoadVanillaNightSky:605-610), so it repeats column w - 2.
   const colors = new Uint8ClampedArray([
-    1, 2, 3, 255, 4, 5, 6, 255, // bottom row
-    7, 8, 9, 255, 10, 11, 12, 255, // top row (DFU pixel 0 lives here)
+    1, 2, 3, 255, 4, 5, 6, 255, // bottom row (DFU element 0 lives here)
+    7, 8, 9, 255, 10, 11, 12, 255, // top row
   ]);
   const pano = buildNightSkyPanorama({ colors, width: 2, height: 2 });
   assert.equal(pano.width, 4);
   assert.equal(pano.height, 2);
-  assert.deepEqual(Array.from(pano.colors.slice(0, 8)), [1, 2, 3, 255, 4, 5, 6, 255]);
-  assert.deepEqual(Array.from(pano.colors.slice(8, 16)), [1, 2, 3, 255, 4, 5, 6, 255]);
-  assert.deepEqual(pano.clearColor, [7 / 255, 8 / 255, 9 / 255]);
+  assert.deepEqual(Array.from(pano.colors.slice(0, 8)), [1, 2, 3, 255, 1, 2, 3, 255]);
+  assert.deepEqual(Array.from(pano.colors.slice(8, 16)), [1, 2, 3, 255, 1, 2, 3, 255]);
+  assert.deepEqual(pano.clearColor, [1 / 255, 2 / 255, 3 / 255]);
+  assert.deepEqual(pano.fillColor, [7 / 255, 8 / 255, 9 / 255]);
 });
 
 // ---------------------------------------------------------------------------
@@ -106,10 +109,16 @@ test('sky: afternoon panorama is the mirror of its morning frame', { skip: skipR
     }
   }
 
-  // Fill color is west pixel 0 (first pixel of the last bottom-up row).
+  // clearColor is verbatim west element 0 (the horizon row); fillColor is
+  // the zenith texel our cylinder paints above the strip.
   const west6 = s.getColor32(1, 6);
-  const top = (west6.height - 1) * west6.width * 4;
   assert.deepEqual(morning.clearColor, [
+    west6.colors[0] / 255,
+    west6.colors[1] / 255,
+    west6.colors[2] / 255,
+  ]);
+  const top = (west6.height - 1) * west6.width * 4;
+  assert.deepEqual(morning.fillColor, [
     west6.colors[top] / 255,
     west6.colors[top + 1] / 255,
     west6.colors[top + 2] / 255,

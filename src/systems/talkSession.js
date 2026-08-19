@@ -11,10 +11,12 @@
 //   else                      -> 7206 (dislike)
 // The greeting record expands one random variant (DFU rides
 // UnityEngine.Random for the pick - a uniform roll here, Ledger A)
-// with the macros the greeting set actually uses: %pcf (player first
-// name) and %oth (an oath - TEXT.RSC 201 + FactionRace, DFU's fix of
-// the classic region-race oath bug, one random variant). Unknown
-// macros pass through verbatim (LOUD - the full MacroHelper pends).
+// with the macros these records actually carry: %pcf/%pcn (the player
+// name), %cn (MacroHelper.CityName - the current location) and %oth
+// (an oath - TEXT.RSC 201 + FactionRace, DFU's fix of the classic
+// region-race oath bug, one random variant). expandAnswerRecord adds
+// the Where-is answer set's %hnt/%key/%hnr/%ra. Unknown macros pass
+// through verbatim (LOUD - the full MacroHelper pends).
 //
 // FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 // guilds arc with static NPCs; quest greetings pend quests; the
@@ -45,12 +47,34 @@ export const firstName = (name) => (name ?? '').split(' ')[0];
  *  the region race INDEX and gave High Rock Nord oaths). */
 export const oathTextId = (race) => OATH_BASE_TEXT_ID + (OATH_RACE_INDEX[race] ?? OATH_RACE_INDEX.Breton);
 
-/** Expand the greeting-set macros; unknown %codes stay verbatim. */
-export function expandMacros(text, { playerName = '', oath = '' } = {}) {
+/** Expand the greeting-set macros; unknown %codes stay verbatim.
+ *  %cn is MacroHelper.CityName (MacroHelper.cs:566-573): the current
+ *  LOCATION name, falling back to the region name off-location. */
+export function expandMacros(text, { playerName = '', oath = '', cityName = '' } = {}) {
   return text
     .replaceAll('%pcf', firstName(playerName))
     .replaceAll('%pcn', playerName)
+    .replaceAll('%cn', cityName)
     .replaceAll('%oth', oath);
+}
+
+/** The Where-is ANSWER record's macro chain. TalkManager's
+ *  ExpandRandomTextRecord (:3580-3587) runs the WHOLE MacroHelper over
+ *  every answer record, so %oth (MacroHelper.cs:150 -> TalkManagerMCP
+ *  Oath, TEXT.RSC 201 + the NPC's faction race) and %cn resolve there
+ *  exactly as they do in a greeting. AUDIT 18 F1: the port expanded
+ *  only %pcf/%pcn/%hnt/%key, so 7251 variant 13 printed a bare leading
+ *  comma (", as if I know...") and 7251 variant 10 printed "I'm new to
+ *  %cn too." with the macro raw on screen. */
+export function expandAnswerRecord(raw, {
+  playerName = '', oath = '', cityName = '', hint = '', key = '',
+  honorific = 'Sir', race = 'Breton',
+} = {}) {
+  return expandMacros(raw, { playerName, oath, cityName })
+    .replaceAll('%hnt', hint)
+    .replaceAll('%key', key)
+    .replaceAll('%hnr', honorific)
+    .replaceAll('%ra', race);   // honorific/race macros FLAGGED interim
 }
 
 /**
@@ -61,7 +85,7 @@ export function expandMacros(text, { playerName = '', oath = '' } = {}) {
  * @param rolls Math.random-compatible (variant picks)
  * @returns { refused, textId, text }
  */
-export function startMobileTalk({ reaction, textVariants, playerName = '', npcRace = 'Breton', rolls = Math.random }) {
+export function startMobileTalk({ reaction, textVariants, playerName = '', npcRace = 'Breton', cityName = '', rolls = Math.random }) {
   const pick = (id) => {
     const variants = textVariants(id) ?? [''];
     return variants[Math.floor(rolls() * variants.length)] ?? '';
@@ -72,5 +96,5 @@ export function startMobileTalk({ reaction, textVariants, playerName = '', npcRa
   const textId = greetingTextId(reaction);
   const raw = pick(textId);
   const oath = raw.includes('%oth') ? pick(oathTextId(npcRace)) : '';
-  return { refused: false, textId, text: expandMacros(raw, { playerName, oath }) };
+  return { refused: false, textId, text: expandMacros(raw, { playerName, oath, cityName }) };
 }

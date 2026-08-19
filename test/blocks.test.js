@@ -80,10 +80,12 @@ test('blocks: full corpus decomposes with type and resource closure', { skip: sk
       const { width, height } = blk.rdbBlock.header;
       assert.equal(blk.rdbBlock.objectRootList.length, width * height);
       assert.equal(blk.rdbBlock.modelReferenceList.length, 750);
-      // 179 RDBs carry the 'DAGR' signature; 8 carry 0xff padding instead.
+      // 179 RDBs carry the 'DAGR' signature; 8 carry 0xff padding instead,
+      // which Encoding.UTF8.GetString turns into four U+FFFD (FileProxy's
+      // fixed-length ReadCString is UTF-8, not latin1).
       assert.ok(
         blk.rdbBlock.objectHeader.dagr === 'DAGR' ||
-          blk.rdbBlock.objectHeader.dagr === '\u00ff\u00ff\u00ff\u00ff',
+          blk.rdbBlock.objectHeader.dagr === '\ufffd\ufffd\ufffd\ufffd',
         `${name}: dagr field`
       );
       for (const root of blk.rdbBlock.objectRootList) {

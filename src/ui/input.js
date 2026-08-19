@@ -30,7 +30,7 @@ export function gameAction(e) {
   if (e.code === 'KeyC') return 'castSpell';       // ours (classic click-to-cast also live)
   if (e.code === 'KeyR') return 'rest';            // DFU default (U7)
   if (e.key === 'F9') return 'quickSave';          // DFU default
-  if (e.key === 'F12') return 'quickLoad';         // DFU default
+  if (e.key === 'F11') return 'quickLoad';         // DFU default (InputManager.SetupDefaults:1032)
   if (e.key === 'F8') return 'debugHud';           // diagnostics
   return null;
 }
@@ -41,7 +41,7 @@ export function routeKey(e, ctx, castDir, setPlayerPos = null) {
   if (ctx.uiOverlayActive) {
     const a = overlayAction(e);
     if (a) { ctx.overlayInput(a); return true; }
-    // Quickload works from ANY overlay (the death screen's F12 hint
+    // Quickload works from ANY overlay (the death screen's F11 hint
     // must be true); everything else stays gated.
     if (gameAction(e) === 'quickLoad') { ctx.quickLoad?.(setPlayerPos); return true; }
     return false;

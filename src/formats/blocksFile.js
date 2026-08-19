@@ -49,6 +49,10 @@ export const RDB_DIMENSION = 2048;
 // Scale divisor for billboards.
 export const SCALE_DIVISOR = 256;
 
+// Encoding.UTF8 for FileProxy.ReadCString's fixed-length variant. Hoisted:
+// _readCString runs ~310k times over BLOCKS.BSA.
+const UTF8_DECODER = new TextDecoder('utf-8');
+
 function defaultActionResource() {
   return {
     position: 0,
@@ -302,13 +306,19 @@ export class BlocksFile {
     return true;
   }
 
+  /**
+   * FileProxy.ReadCString(reader, readLength) with readLength != 0: the
+   * terminator scan is skipped entirely and the whole fixed-length field is
+   * `Encoding.UTF8.GetString(...).TrimEnd('\0')` - so EMBEDDED NULs survive
+   * and only TRAILING ones are dropped. Every BlocksFile.cs call site
+   * (:763, :767, :1061, :1063, :1086) passes a non-zero readLength. The
+   * null-terminated readLength==0 variant lives in bsaFile/textureFile and
+   * must keep stopping at the first NUL.
+   */
   _readCString(rec, offset, fieldLength) {
-    let end = offset;
-    const limit = offset + fieldLength;
-    while (end < limit && rec.bytes[end] !== 0) end++;
-    let s = '';
-    for (let i = offset; i < end; i++) s += String.fromCharCode(rec.bytes[i]);
-    return s;
+    return UTF8_DECODER
+      .decode(rec.bytes.subarray(offset, offset + fieldLength))
+      .replace(/\0+$/, '');
   }
 
   // --- RMB readers ---
@@ -606,7 +616,11 @@ export class BlocksFile {
     const list = new Array(750);
     for (let i = 0; i < 750; i++) {
       const modelId = this._readCString(rec, r.pos, 5);
-      // C# UInt32.TryParse semantics: only fully-numeric strings parse.
+      // C# `UInt32.TryParse(ModelId, out ModelIdNum)` (BlocksFile.cs:1062).
+      // The no-style overload is NumberStyles.Integer, so C# also accepts
+      // leading/trailing whitespace and a leading sign; measured over all
+      // 140,250 BLOCKS.BSA modelId fields, no classic record exercises
+      // that, so /^\d+$/ is corpus-equivalent (not semantics-equivalent).
       list[i] = {
         modelId,
         modelIdNum: /^\d+$/.test(modelId) ? Number.parseInt(modelId, 10) : 0,

@@ -11,11 +11,12 @@
 //     (drag-to-swing gestureDirection + ATTACK_THRESHOLD, the combat
 //     layer's ported input)
 // INTERIM (loud): the equipped weapon is an Iron Dagger until the
-// items/inventory arc - every field the formulas need is explicit
-// here so the real item system swaps in as plumbing. Proficiency and
-// racial modifiers pend chargen (both 0 in the interim, as the
-// entity has no career/race yet); backstab pends facing bookkeeping
-// on foes (E3d with the FP viewmodel).
+// items/inventory arc - the template index is explicit here so the
+// real item system swaps in as plumbing. Racial modifiers are LIVE
+// (AUDIT 18 ported CalculateRacialModifiers into formulas.js, which
+// reads the raceId chargen writes); proficiency modifiers pend the
+// career proficiency flags. Backstab is threaded by the host that
+// keeps facing bookkeeping on foes.
 
 import {
   createWeaponMachine, machineAttack, machineStep, gestureDirection,
@@ -26,9 +27,7 @@ import { combinePose } from '../characters/animate.js';
 import { weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { POSES } from '../characters/poses.js';
-import {
-  calculateAttackDamage, enemyGroupOf, WEAPON_MIN_DAMAGE, WEAPON_MAX_DAMAGE,
-} from './formulas.js';
+import { calculateAttackDamage } from './formulas.js';
 
 export const DEFAULT_WEAPON_REACH = 2.25;   // WeaponManager.cs:35
 export const SPHERE_CAST_RADIUS = 0.25;     // WeaponManager.cs:51
@@ -44,14 +43,20 @@ export const SWING_MODS = Object.freeze({
   StrikeRight: { damage: 0, toHit: 0 },
 });
 
-/** INTERIM starting weapon (items arc replaces): Iron Dagger. */
+/** INTERIM starting weapon (items arc replaces): Iron Dagger.
+ *  AUDIT 18: the baked minDamage/maxDamage are gone - the formulas
+ *  resolve the span from templateIndex, as GetBaseDamageMin/Max do -
+ *  and so is `flags: 0x10`. DaggerfallUnityItem.SetItem
+ *  (DaggerfallUnityItem.cs:565) initialises `flags = 0` for every item
+ *  the game generates; only the classic-save importer (:1563) and the
+ *  artifact mask (:617, 0x820) ever write it, and neither touches bit
+ *  0x10. So in DFU the Skeletal Warrior edged-damage halving at
+ *  FormulaHelper.cs:742-744 applies to EVERY weapon; the port minted
+ *  the bit by intent and had the rule exactly inverted. */
 export const INTERIM_WEAPON = Object.freeze({
   name: 'Dagger',
   templateIndex: WEAPONS.Dagger,   // audit 2026-08-17: without this, weaponTypeForItem -> None and the STARTING dagger drew no weapon art at all
   material: 0,        // Iron
-  flags: 0x10,        // edged
-  minDamage: WEAPON_MIN_DAMAGE.Dagger,
-  maxDamage: WEAPON_MAX_DAMAGE.Dagger,
 });
 
 /**
@@ -115,6 +120,12 @@ export class PlayerWeapon {
 
   /** @returns machine events; the caller resolves 'hit' via resolveHit. */
   update(dt) {
+    // FPSWeapon.AnimateWeapon reads WeaponType every tick, and
+    // weaponRig.syncWorn swaps this.weapon between the worn item and
+    // null whenever the player sheathes - so the unarmed gate is READ
+    // per step, never frozen at construction.
+    const t = weaponTypeForItem(this.weapon);
+    this.machine.isUnarmed = t === WEAPON_TYPES.Melee || t === WEAPON_TYPES.Werecreature;
     return machineStep(this.machine, dt, this.liveSpeed);
   }
 
@@ -143,28 +154,36 @@ export class PlayerWeapon {
    * @returns [{foe, damage}]
    */
   resolveHit(foes, playerCombat, canSee, rolls = Math.random, backstabOf = () => 0) {
-    const swing = SWING_MODS[this.machine.state] ?? { damage: 0, toHit: 0 };
     const results = [];
     for (const foe of foes) {
       if (foe.dead || !foe.entity) continue;
       const { dist, inView, losClear } = canSee(foe);
       if (!playerMeleeCanHit(dist, inView, losClear)) continue;
-      // swing mods ride the source's channels: toHit onto
-      // chanceToHitMod, damage INTO the damage call (before the
-      // skeletal rules and the <1 floor) - not post-hoc. Backstab
-      // (E3d) rides its own verbatim channels: chance onto
-      // chanceToHitMod, x3 roll AFTER the damage calc.
-      const damage = calculateAttackDamage(playerCombat, foe.entity, {
-        weapon: this.weapon,
-        targetGroup: enemyGroupOf(foe.entity.affinity),
-        damageMod: swing.damage,
-        toHitMod: swing.toHit,
-        backstabChance: backstabOf(foe),
-        rolls,
-      });
+      const damage = calculateAttackDamage(playerCombat, foe.entity,
+        playerAttackOptions(this.weapon, this.machine.state, backstabOf(foe), rolls));
       results.push({ foe, damage });
       break;   // one target per swing (the ray resolves a single center)
     }
     return results;
   }
+}
+
+/** The `attacker == player` option bag, in ONE place.
+ *  FormulaHelper.CalculateAttackDamage takes the same entry for a
+ *  melee swing (WeaponManager.cs:1054) and for a loosed arrow
+ *  (DaggerfallMissile.AssignBowDamageToTarget -> WeaponManager.cs:546),
+ *  so swing mods, backstab and the enemy-type modifier all apply to a
+ *  bow shot too - and CalculateSwingModifiers keys on the SCREEN
+ *  WEAPON's state, which for a bow release is StrikeDown (+4 damage,
+ *  -10 to hit).
+ *  AUDIT 18: the port's arrow fork built its own bag with only the
+ *  weapon in it, so those channels were silently zero on every shot.
+ *  Callers pass the machine state they are resolving - 'StrikeDown'
+ *  for a bow release. Swing mods ride the source's channels: toHit
+ *  onto chanceToHitMod, damage INTO the damage call (before the
+ *  skeletal rules and the <1 floor) - not post-hoc. Backstab rides
+ *  its own: chance onto chanceToHitMod, x3 roll AFTER the damage. */
+export function playerAttackOptions(weapon, machineState, backstabChance = 0, rolls = Math.random) {
+  const swing = SWING_MODS[machineState] ?? { damage: 0, toHit: 0 };
+  return { weapon, damageMod: swing.damage, toHitMod: swing.toHit, backstabChance, rolls };
 }

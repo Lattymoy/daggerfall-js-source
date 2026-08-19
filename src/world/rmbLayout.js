@@ -9,7 +9,10 @@
 //     is identity here.
 //   - Misc models: TRS((X, -Y + propsOffsetY, Z + RMBDimension) * scale, ...).
 //   - Ground tiles read GroundTiles[x][15 - y]; records >= 56 are random
-//     markers reset to grass (record 8). Ground sits at GroundOffset (-1)
+//     markers reset to grass. DFU writes tilemap INDEX 8 there, which is
+//     texture RECORD 2 (index = record * 4 + variant; TerrainTexturing's
+//     grass = 2), so our decoded tile is record 2. Ground sits at
+//     GroundOffset (-1)
 //     to minimise depth-fighting, tile size 256, 16x16 tiles.
 // Flats/billboards live in rmbFlats.js (milestone 3). Interiors and people
 // records are later features of this arc; see bible/03-World/World-Arc.md.
@@ -86,6 +89,10 @@ export function layoutRmbBlock(dfBlock) {
 /**
  * 16x16 ground tilemap, row 0 nearest Z=0, with the verbatim
  * GroundTiles[x][15 - y] source flip and grass override for records >= 56.
+ * DFU writes the marker as tilemap INDEX 8 (`new Color32(8, 0, 0, 8)`) in
+ * the same space as `record * 4 + variant`, i.e. texture RECORD 2 - which
+ * is TerrainTexturing.cs:44's `const byte grass = 2`. We store decoded
+ * records, so the marker is record 2, not 8.
  * Indexed [y][x].
  */
 export function buildGroundTilemap(dfBlock) {
@@ -102,8 +109,8 @@ export function buildGroundTilemap(dfBlock) {
           flipped: tile.isFlipped,
         };
       } else {
-        // Random marker reset to grass.
-        tiles[y][x] = { record: 8, rotated: false, flipped: false };
+        // Random marker reset to grass: DFU's index 8 == record 2, variant 0.
+        tiles[y][x] = { record: 2, rotated: false, flipped: false };
       }
     }
   }

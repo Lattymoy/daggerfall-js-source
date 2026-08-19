@@ -15,9 +15,11 @@
 //     reverse engineered from classic.
 // Not ported (documented): WorldDataReplacement mod hooks (Unity
 // AssetInjection), smaller-dungeon generation and PatchRegionIndex (both
-// depend on quest/save systems - they belong to the Systems arcs), and
-// GetNameBankOfRegion (NameHelper lands with townsfolk generation; the
-// underlying REGION_RACES table is ported here).
+// depend on quest/save systems - they belong to the Systems arcs).
+// GetNameBankOfRegion SHIPPED with the Characters arc (C2): it lives at
+// characters/nameHelper.js getNameBankOfRegion over the REGION_RACES table
+// exported from here, and scenes/townTalk.js calls it on every directory
+// rebuild.
 
 import { BsaFile, DIRECTORY_TYPES } from './bsaFile.js';
 import { PakFile } from './pakFile.js';

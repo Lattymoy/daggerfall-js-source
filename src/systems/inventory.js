@@ -4,21 +4,19 @@
 //   "Only ingredients, potions, gold pieces, oil and arrows are
 //    stackable, but equipped items, enchanted ingredients and quest
 //    items are never stackable."
-// Potions/oil don't exist as items yet (their groups pend the magic
-// and general-items slices) - the rule covers them the day they do.
-// Weight: template baseWeight; weapons scale by the ItemBuilder rule
-// "Weight is baseWeight * value / 4" through the material multiplier
-// table (already single-sourced in weapons.js). Armor material
-// weight pends S2b (FLAGGED - leather/chain/plate multipliers).
+// Potions have no group yet (they pend the magic slice) - the rule
+// covers them the day they do.
+// Weight: template baseWeight, zeroed by the template's
+// hasNoEncumbrance bit (EffectiveUnitWeightInKg); weapons scale by
+// the ItemBuilder rule "Weight is baseWeight * value / 4" through the
+// material multiplier table (already single-sourced in weapons.js).
+// Armor material weight is LIVE: leather through the Erisceres
+// formula AS CODED (the int division makes Mathf.Round a no-op),
+// plate through CalculateWeightForMaterial, chain a verbatim no-op
+// (ApplyArmorMaterial's Chain arm touches value only).
 
 import templates from '../characters/itemTemplates.json' with { type: 'json' };
 import { weightMultipliersByMaterial } from '../characters/weapons.js';
-
-const INGREDIENT_GROUPS = new Set([
-  'PlantIngredients1', 'PlantIngredients2', 'CreatureIngredients1',
-  'CreatureIngredients2', 'CreatureIngredients3',
-  'MiscellaneousIngredients1', 'MiscellaneousIngredients2',
-]);
 
 /** DaggerfallUnityItem.IsEnchanted verbatim
  *  (DaggerfallUnityItem.cs:266-269): DERIVED from the enchantment
@@ -53,15 +51,37 @@ export const goldStack = (stackCount = 0) => ({
   stackCount,
 });
 
+/** Weapons.Arrow / UselessItems2.Oil (ItemEnums.cs) - the two
+ *  IsOfTemplate arms of IsItemStackable. */
+export const ARROW_TEMPLATE = 131;
+export const OIL_TEMPLATE = 252;
+
+/** FormulaHelper.IsItemStackable (:2096-2110) behind
+ *  DaggerfallUnityItem.IsStackable's three never-stack clauses.
+ *
+ *  AUDIT 18: the ingredient arm is `item.IsIngredient`, and
+ *  DaggerfallUnityItem.cs:250-253 defines that as the TEMPLATE's
+ *  isIngredient bit - not a group list. The port hard-coded seven
+ *  group names, which silently dropped Gems (templates 0-7) and
+ *  MetalIngredients (65-75): both carry isIngredient and both are
+ *  shelved by the Alchemist/GemStore/PawnShop stock tables, so ten
+ *  bought rubies sat as ten rows. Oil was dropped the same way.
+ *
+ *  Books are the one arm deliberately NOT ported: IsItemStackable
+ *  does name ItemGroups.Books, but ItemCollection.FindExistingStack
+ *  (:699-718) additionally requires `checkItem.message == item.message`
+ *  - the per-book id the port does not model - so stacking books here
+ *  would merge two DIFFERENT books, which DFU never does. */
 export function isStackable(item) {
   // AUDIT 17e C2: `item.equipped` was never written either - the port
   // marks worn items with equipSlot (equip.js) - so all three clauses
   // of DFU's rule were no-ops.
   if (item.equipSlot != null || isEnchanted(item) || item.questItem) return false;   // never stack
-  if (item.group === 'Currency') return true;
-  if (item.group === 'Weapons' && item.name === 'Arrow') return true;
-  if (INGREDIENT_GROUPS.has(item.group)) return true;
-  // Potions + oil join here when their groups exist (the rule names them).
+  if (templates[item.templateIndex]?.isIngredient) return true;   // IsIngredient
+  if (item.group === 'Currency') return true;                     // IsOfTemplate(Currency, Gold_pieces)
+  if (item.group === 'Weapons' && item.templateIndex === ARROW_TEMPLATE) return true;
+  if (item.group === 'UselessItems2' && item.templateIndex === OIL_TEMPLATE) return true;
+  // Potions join here when their group exists (the rule names them).
   return false;
 }
 
@@ -132,13 +152,20 @@ export function weightForMaterial(weightKg, weaponMaterial) {
   return roundHalfEven(matQuarterKgs) / 4;
 }
 
-/** Weight in kg: template baseWeight (x stack); weapons + plate armor
- *  through the verbatim material function; leather through the
- *  Erisceres formula AS CODED - trunc(INT(w*4)/2)/4, the int division
- *  making Round a no-op (F13); chain unchanged (its x2 is a VALUE
- *  rule, not weight). */
+/** Weight in kg: template baseWeight (x stack), zero when the
+ *  template has hasNoEncumbrance; weapons + plate armor through the
+ *  verbatim material function; leather through the Erisceres formula
+ *  AS CODED - trunc(INT(w*4)/2)/4, the int division making Round a
+ *  no-op (F13); chain unchanged (its x2 is a VALUE rule, not weight). */
 export function itemWeight(item) {
   const t = templates[item.templateIndex];
+  // EffectiveUnitWeightInKg (DaggerfallUnityItem.cs:667-673) returns
+  // 0f for a hasNoEncumbrance template, and ItemCollection.GetWeight
+  // (:94-101) multiplies the stack by THAT - so the zero survives the
+  // stack multiply. AUDIT 18: the flag ships in itemTemplates.json
+  // (horse, cart, arrows, maps, quest letters) and nothing read it, so
+  // a bought horse added 800 kg to the character sheet.
+  if (t?.hasNoEncumbrance) return 0;
   let base = t ? t.baseWeight : 0;
   if (item.group === 'Weapons' && item.name !== 'Arrow' && item.material != null) {
     base = weightForMaterial(base, item.material);

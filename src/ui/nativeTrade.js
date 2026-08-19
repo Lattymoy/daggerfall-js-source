@@ -74,8 +74,13 @@ export class NativeTradeWindow {
     if (code === 'Escape' || code === 'Enter' || code === 'KeyE') { this.done = true; return; }
     const d = /^Digit([1-4])$/.exec(code);   // keyboard: digits buy the visible remote slots
     if (d) this._pickRemote(Number(d[1]) - 1);
-    if (code === 'KeyN') this.remoteScroll++;
-    if (code === 'KeyP') this.remoteScroll = Math.max(0, this.remoteScroll - 1);
+    // AUDIT 18: KeyN had no upper clamp, so the keyboard alone could
+    // drive the shelf list past its end into a blank panel. Route both
+    // through the shared ItemListScroller clamp (DFU sends every scroll
+    // index through VerticalScrollBar.SetScrollIndex, which bounds it
+    // to [0, totalUnits - displayUnits]), exactly as nativeInventory does.
+    if (code === 'KeyN') this.remoteScroll = applyScroll(this.remoteScroll, 'down', this.hooks.shelfItems().length);
+    if (code === 'KeyP') this.remoteScroll = applyScroll(this.remoteScroll, 'up', this.hooks.shelfItems().length);
   }
 
   _pickRemote(slot) {

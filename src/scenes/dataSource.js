@@ -20,18 +20,60 @@ const mem = new Map(); // NAME -> Uint8Array
 // Ingest DIET (2026-08-14, the mobile storage fix): ARENA2 is 517MB
 // but the engine reads ~155MB - TEXTURE archives, the BSAs, palettes,
 // PAKs, CFGs, fonts, WOODS.WLD, MAGIC.DEF, SPELLS.STD, IMG/CIF art,
-// RSC text, RCI, SND. The other 362MB (VIDs 83, SKY/PACKED DATs 247,
+// RSC text, RCI, SND, the .TXT set (BIOG*.TXT biographies + FACTION.TXT)
+// and CLASSES.DAT. The other 362MB (VIDs 83, SKY/PACKED DATs 247,
 // FLCs, quest QBN/QRC) is unread by the port - ingesting it tripled
 // storage + memory pressure and quota-killed phones. When a future
 // slice needs a dropped kind: bump MANIFEST_V - stale stored sets
 // auto-wipe to the picker.
+//
+// AUDIT 18 F2: the diet outlived three slices that shipped readers for
+// kinds it drops, and each degraded SILENTLY through a warn-and-skip.
+// CLASSES.DAT (the U18 class-questions results walk, chargenSession.js),
+// FACTION.TXT (the T3a reaction layer, townTalk.js) and every BIOG*.TXT
+// (the S3e biography, biogFile.js) are fetched by LIVE code and were all
+// filtered out - so on the deployed and phone paths the whole biography
+// stage, the class-questions screen and every faction datum were simply
+// absent. Dev hid it: the vite ARENA2_PATH middleware serves the network
+// fallback, which production 404s.
+// The whole .TXT set is 19 files / 148KB, so it rides WHOLESALE rather
+// than by name - a future .TXT reader is then covered without anyone
+// remembering. CLASSES.DAT is named EXACTLY, because a bare \.DAT$ would
+// drag in the 247MB SKY/PACKED sets the diet exists to refuse.
+//
+// AUDIT 19 F8: .GFX joined the wholesale list. There are exactly TWO
+// (SCRL00I0/SCRL01I0, the U18 class-questions parchment scroll) and they
+// were STARVED - fetched in a `for (const name of [...])` loop, which the
+// F2 pin's single-literal regex could not see, so the deployed and phone
+// paths fell back to the text panel and the pin passed. The pin now scans
+// every ARENA2 filename the source NAMES, not just the ones it fetches in
+// a shape the regex recognises.
+//
+// U22: the VIDs are the same trap and CANNOT ride wholesale - the set is
+// 86MB and \.VID$ would undo the diet's single biggest saving. So they
+// are named one at a time, and ONLY when something actually plays them:
+// ANIM0001 is the splash (1.4MB) and is wired in main.js. DFU names five
+// more - ANIM0012 the death video (DaggerfallUI.cs:50), ANIM0000/
+// ANIM0011/DAG2 the new-game cinematics (DaggerfallStartNewGameWizard.cs
+// :33-35, 26.6MB between them), ANIM0002/ANIM0004 the lycanthropy and
+// vampire dreams - and none of those is wired here yet, so none is
+// ingested. Adding a file nobody plays costs every user the bytes for
+// nothing; forgetting one that IS played is the F2 silent degradation.
+// Which is why the rule is ENFORCED, not remembered - and the enforcement
+// was already here: AUDIT 18 F2's pin re-derives the fetch list from the
+// source on every run, so main.js's getBytes('ANIM0001.VID') put the
+// splash under the rule the moment it was written. Proven by mutation -
+// drop the name below and F2 fails with "desktop diet drops
+// ANIM0001.VID". Wire a video, and the pin makes you feed it.
 const LEAN = typeof window !== 'undefined' &&
   ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0);
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
-  /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND)$/.test(name) ||
+  /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX)$/.test(name) ||
+  name === 'CLASSES.DAT' ||
+  name === 'ANIM0001.VID' ||                // the U22 splash - see the VID note above
   (!lean && /^SKY\d+\.DAT$/.test(name));   // skies: 247MB - full sets on desktop, gradient fallback on the lean diet
 const MANIFEST_KEY = '__MANIFEST__';
-const MANIFEST_V = 2;   // v1 = the broken-era sets (pre-diet) - auto-wiped
+const MANIFEST_V = 5;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES, v3 = the sets missing the U22 splash VID, v4 = the sets missing the .GFX scroll (AUDIT 19 F8) - all auto-wiped
 
 /** Uppercase basename: the canonical ARENA2 key. Exported for tests. */
 export function normalizeName(name) {

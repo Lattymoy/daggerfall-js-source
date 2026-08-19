@@ -19,6 +19,7 @@ import { TextRsc } from '../formats/textRsc.js';   // U18: the class questions r
 import { parseQuestionLibrary } from './classQuestions.js';   // U18
 import { ChargenFlow } from '../ui/chargen.js';
 import { applyCharacter, createCharacter, startingSpells, CLASS_CAREERS } from './chargen.js';
+import { levelUpSkillSum } from './advancement.js';   // AUDIT 18: SetCurrentLevelUpSkillSum, one home
 import { overlayAction } from '../ui/input.js';
 import { assignStartingGear } from './startingGear.js';   // S3d
 import { readSpellsStd } from '../formats/spellsStd.js';
@@ -157,16 +158,32 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   // monster multi-attack gate (50 - 10*(reflexes-2)) - reading a
   // hardcoded Average until the screen existed.
   if (result.reflexes != null) playerEntity.reflexes = result.reflexes;
+  // U13 / AUDIT 18: the composed biography prose. AssignCharacter
+  // copies it onto the entity (PlayerEntity.cs:871 `BackStory =
+  // character.backStory;`) and DaggerfallPlayerHistoryWindow reads it
+  // back; nothing here assigned it, so save.js only ever serialised [].
+  playerEntity.backStory = [...(result.backStory ?? [])];
   applyCreationExtras(playerEntity, result, spellsByIndex, { rolls });
   // S3e: the BIOGRAPHY effects land LAST, exactly where DFU applies
-  // them (StartGameBehaviour.cs:416 - at game start, over the built
+  // them (StartGameBehaviour.cs:415-416 - at game start, over the built
   // character), so a skill bonus rides on top of the distributed value
   // instead of being overwritten by applyCharacter's roll.
   if (result.biographyEffects?.length) applyBiographyEffects(playerEntity, result.biographyEffects, { rolls });
-  // S25: LAST, and it must be last - applyBiographyEffects is what
-  // parks the `rf` deltas, so attaching earlier would build the store
-  // and drain nothing.
+  // S25: right after the biography, because applyBiographyEffects is
+  // what parks the `rf` deltas - attaching earlier would build the
+  // store and drain nothing. DFU applies these INSIDE the biography
+  // (BiogFile.cs:339), before the level-up anchor below, so this is
+  // also where the order puts it.
   attachFactionRep(playerEntity, result.factionDict);
+  // AUDIT 18: and the LEVEL-UP ANCHOR is taken AFTER them
+  // (StartGameBehaviour.cs:424-426 - SetCurrentLevelUpSkillSum, then
+  // StartingLevelUpSkillSum = CurrentLevelUpSkillSum), unconditionally.
+  // applyCharacter's anchor is the pre-biography sum, so every SKILL
+  // line a biography answer carried used to read as post-creation
+  // progress: calculatePlayerLevel saw ~+20 already banked and the
+  // first raiseSkills raise jumped the character straight to level 3.
+  playerEntity.currentLevelUpSkillSum = levelUpSkillSum(playerEntity);
+  playerEntity.startingLevelUpSkillSum = playerEntity.currentLevelUpSkillSum;
   return playerEntity;
 }
 

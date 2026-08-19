@@ -36,9 +36,43 @@ async function boot() {
   if (params.has('dungeon')) return bootDungeon(canvas, renderer, params, status);
   if (params.has('world')) return bootWorld(canvas, renderer, params, status);
   if (params.has('exterior') || params.has('region') || params.has('loc')) return bootExterior(canvas, renderer, params, status);
-  // The bare URL is the CLASSIC START (2026-08-14, Mac-directed):
-  // Privateer's Hold with the chargen flow - the game, not a test
-  // scene. Dev scenes stay one param away (?exterior/?world/etc).
+  // U21: the bare URL is THE MAIN MENU, and the menu hands off to the
+  // classic start (Privateer's Hold + chargen) that used to run here
+  // directly. Dev scenes stay one param away (?exterior/?world/etc).
+  //
+  // ?shot BYPASSES the menu: it is the fixed-vantage test path that
+  // tools/screenshot.mjs and the 25 probes in tools/ drive, and a menu
+  // in front of it would block every one of them. ?nomenu is the same
+  // escape hatch for a human.
+  if (params.has('shot') || params.has('nomenu')) return bootDungeon(canvas, renderer, params, status);
+  // U22: THE SPLASH. DaggerfallUI.InitGame pushes the Start window and
+  // THEN pushes the VidPlayer on top of it, so ANIM0001.VID (splashVideo,
+  // DaggerfallUI.cs:49) plays first and reveals the menu when it ends -
+  // which is why this sits ahead of runMenu rather than inside it.
+  // ?novideo is DFU's enableVideos setting. ?shot/?nomenu return above,
+  // so no probe in tools/ ever reaches this.
+  //
+  // NEVER TRAPS, the same law the title screen and every native window
+  // follow: a video that will not load costs you the splash, not the
+  // game. ANIM0001 is named in dataSource's KEEP diet and a pin enforces
+  // that, so the warn-and-skip here is a real fallback rather than the
+  // AUDIT 18 F2 silent degradation it would otherwise be.
+  if (!params.has('novideo')) {
+    try {
+      const { playVideo } = await import('./ui/videoPlayer.js');
+      const { getBytes } = await import('./scenes/dataSource.js');
+      status('splash');
+      await playVideo(canvas, renderer, await getBytes('ANIM0001.VID'));
+    } catch (e) {
+      console.warn('[boot] ANIM0001.VID unavailable - skipping the splash:', e?.message ?? e);
+    }
+  }
+  const { runMenu } = await import('./scenes/menu.js');
+  const action = await runMenu(canvas, renderer, status);
+  // Load Game rides the dungeon host's OWN quickLoad (the F12 path) -
+  // dungeon.js calls ctx.quickLoad once the context is built. A
+  // menu-side loader would be a second copy of a working path.
+  if (action === 'load') params.set('load', '1');
   return bootDungeon(canvas, renderer, params, status);
 }
 

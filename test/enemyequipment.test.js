@@ -5,8 +5,7 @@ import assert from 'node:assert/strict';
 import {
   MATERIALS_BY_MODIFIER, randomMaterial, randomArmorMaterial,
   materialArmorValue, ARMOR_MATERIAL, WEAPONS_ENUM, ARMOR_ENUM,
-  createWeapon, assignEnemyEquipment, equipmentVariantFor, equipmentItems,
-} from '../src/combat/enemyEquipment.js';
+  createWeapon, assignEnemyEquipment, equipmentVariantFor, equipmentItems, shieldProtectedBodyParts } from '../src/combat/enemyEquipment.js';
 import { chooseEnemyWeapon } from '../src/combat/formulas.js';
 
 const seq = (...vals) => { let i = 0; return () => vals[i++ % vals.length]; };
@@ -35,12 +34,29 @@ test('equipment: variant 0 loadout + the armor-value pass (class clamp)', () => 
   const eq = assignEnemyEquipment(entity, 0, 1, seq(0, 0, 0.10, 0, 0.5, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99));
   assert.equal(eq.rightHand.name, 'Broadsword');
   assert.equal(eq.rightHand.material, 0);
-  assert.equal(eq.rightHand.flags & 0x10, 0x10);      // edged
+  // AUDIT 18: DaggerfallUnityItem.SetItem gives every generated item
+  // flags 0 - no DFU path mints the 0x10 "edged" bit, and the port's
+  // minting of it inverted the Skeletal Warrior halving.
+  assert.equal(eq.rightHand.flags, 0);
   assert.equal(eq.leftHand.shield, true);
-  // Buckler protects LeftArm(2) + Hands(4) at 1*5; everything else no-armor 100 -> clamp 60
-  assert.deepEqual(eq.armorValues, [60, 60, 95 > 60 ? 60 : 95, 60, 60, 60, 60].map((v, i) => (i === 2 || i === 4 ? 60 : 60)));
-  // all parts end 60: 100-5=95 still clamps to 60 for a class enemy
-  assert.ok(eq.armorValues.every((v) => v === 60));
+  // KNOWN-VACUOUS UNTIL NOW, flagged by AUDIT 18 and again by its
+  // re-measurement: this line used to be
+  //   deepEqual(eq.armorValues, [60,60, 95>60?60:95, 60,60,60,60]
+  //             .map((v, i) => (i === 2 || i === 4 ? 60 : 60)))
+  // whose ternary has IDENTICAL branches, so it evaluated to seven 60s
+  // and pinned nothing about which parts a Buckler covers. It is the
+  // only unfalsifiable assertion in 5,635 assert sites, and it survived
+  // two audits because it LOOKS like it pins the shield table.
+  //
+  // On a class enemy every part clamps to 60 regardless, so this fixture
+  // can never discriminate. Pin the table itself against DFU instead -
+  // GetShieldProtectedBodyParts (DaggerfallUnityItem.cs:1082-1095).
+  assert.ok(eq.armorValues.every((v) => v === 60), 'class enemy: every part clamps to 60');
+  assert.deepEqual(shieldProtectedBodyParts(109), [2, 4], 'Buckler: LeftArm, Hands');
+  assert.deepEqual(shieldProtectedBodyParts(110), [2, 4, 5], 'Round: + Legs');
+  assert.deepEqual(shieldProtectedBodyParts(111), [2, 4, 5], 'Kite: same as Round');
+  assert.deepEqual(shieldProtectedBodyParts(112), [0, 2, 4, 5], 'Tower: + Head');
+  assert.deepEqual(shieldProtectedBodyParts(999), [], 'anything else: no parts');
 });
 
 test('equipment: variant 2 chances + monster keep-better rule + city watch iron', () => {

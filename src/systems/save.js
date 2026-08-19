@@ -3,7 +3,8 @@
 // faithful port shape. This slice: THE PLAYER snapshot - entity
 // (stats, skills, uses, health/magicka, level sums, career by
 // index + data), items, known spells (by SPELLS.STD index),
-// active effects, the classic clock, and position. WORLD state
+// active effects, the crime + per-region legal reputation, the
+// classic clock, and position. WORLD state
 // (foes, loot piles, action states, doors) is FLAGGED - dungeons
 // re-derive from their location on load; the world snapshot pends
 // its slice. Versioned envelope; a mismatch refuses loudly.
@@ -63,6 +64,19 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   snap.spells = (entity.spells ?? []).map((sp) => sp.index);   // resolve against SPELLS.STD on load
   snap.activeEffects = (entity.activeEffects ?? []).map(copyEffectEntry);
   for (const k of REP_ARRAYS) snap[k] = entity[k] ? [...entity[k]] : null;
+  // AUDIT 18 F3: the CRIME/LEGAL state DFU writes out one field at a
+  // time - crimeCommitted and haveShownSurrenderToGuardsDialogue
+  // (SerializablePlayer.cs:149-150) and regionData, whose LegalRep the
+  // court reads and writes (PlayerEntity.cs:2291-2311). Nothing
+  // persisted any of them, so every reload reset the player's standing
+  // to spotless: startCourt's severe-punishment thresholds collapsed
+  // to 0, penaltyAmount took the legalRep >= 0 arm and pleaNotGuilty's
+  // chanceToGoFree gained the whole missing penalty back.
+  snap.crimeCommitted = entity.crimeCommitted ?? 0;
+  snap.haveShownSurrenderDialogue = !!entity.haveShownSurrenderDialogue;
+  // legalRep is a region-keyed object here, not DFU's 62-entry array;
+  // it must be COPIED or the snapshot aliases live state.
+  snap.legalRep = entity.legalRep ? { ...entity.legalRep } : null;
   // the biography's faction-rep deltas wait here for the faction slice
   snap.pendingFactionRep = (entity.pendingFactionRep ?? []).map((r) => ({ ...r }));
   snap.backStory = [...(entity.backStory ?? [])];
@@ -105,6 +119,14 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // fresh entity starts every group at zero, which is classic's own
   // starting state), the additive-field shape DFU's serializer gives.
   for (const k of REP_ARRAYS) if (snap[k]) entity[k] = [...snap[k]];
+  // AUDIT 18 F3. A snapshot older than this field carries no member,
+  // which C#'s deserializer would leave at the type default - 0/false,
+  // NOT undefined (SerializablePlayer.cs:317-318 then assigns it).
+  // RegionData restores under DFU's own guard (:344-347): present ->
+  // take it, absent -> InitializeRegionData, i.e. every region at 0.
+  entity.crimeCommitted = snap.crimeCommitted ?? 0;
+  entity.haveShownSurrenderDialogue = snap.haveShownSurrenderDialogue ?? false;
+  entity.legalRep = snap.legalRep ? { ...snap.legalRep } : {};
   if (snap.pendingFactionRep) entity.pendingFactionRep = snap.pendingFactionRep.map((r) => ({ ...r }));
   if (snap.backStory) entity.backStory = [...snap.backStory];
   entity.spells = spellsByIndex

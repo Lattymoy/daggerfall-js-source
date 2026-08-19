@@ -20,8 +20,10 @@
 //    through the ordinary senses (they spawn close with LOS); the
 //    HALT bark (barkSound 456) fires on the detection rising edge.
 //
-// FLAGGED loud: guard archers forced melee (exterior foe arrows
-// pend); enemy-vs-enemy stays out (C15 residual). G3: corpse loot is
+// FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
+// "guard archers forced melee" flag retired in AUDIT 18: DFU's
+// Knight_CityWatch has HasRangedAttack1 = false, so the watch never
+// had a bow to force away.) G3: corpse loot is
 // LIVE - killed guards (corpse flag, never walk-aways) are pickup
 // targets through the hosts' E ray on the dungeon's S2 shape.
 // G4: murder/assault are LIVE - killing the watch is Murder
@@ -31,17 +33,21 @@
 
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
-import { EnemyAI, withinYaw } from '../characters/enemyMotor.js';
+import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity } from '../characters/enemyEntity.js';
 import { ClassFile } from '../formats/classFile.js';
-import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';
 import { generateItems } from '../systems/loot.js';
-import { rollEnemyWeaponPoison } from '../systems/poisons.js';
+import { inflictPoison } from '../systems/poisons.js';
 import {
   calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon,
   KB_UNIT, enemyWeightClassicUnits, weaponKnockbackSpeed,
 } from '../combat/formulas.js';
+import {
+  equipEnemy, backstabChanceOf, tallySwingSkills,
+  zeroDamageHitSound, SWING_WEAPON_FATIGUE_LOSS,
+  CORPSE_ACTIVATION_DISTANCE,
+} from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { addItem } from '../systems/inventory.js';
@@ -61,11 +67,17 @@ export const GUARD_SEEN_ANGLE = 95;            // an NPC facing the player withi
 export const GUARD_FALLBACK_MIN_DIST = 12.8;   // CreateFoeSpawner ring
 export const GUARD_FALLBACK_MAX_DIST = 51.2;
 
-export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, rand = Math.random }) {
+export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute = () => 0, rand = Math.random }) {
   const guards = [];       // { mobile, ai, attack, entity, batch, tex, archive, dead, _halted }
   const corpseBatches = [];
   let _career = null;      // CLASS18.CFG, fetched once
   let countdown = 0;       // guardsArriveCountdown (seconds)
+  // The last camera-view predicate a host handed resolvePlayerHit.
+  // Both exterior hosts call resolvePlayerHit with a live
+  // makeInView() every swing and only then fall through to
+  // resolveCivilianHit, so the assault-carry swing has one to reuse -
+  // and DFU applies the camera test to that swing too.
+  let _lastInView = null;
 
   async function ensureCareer() {
     if (_career) return _career;
@@ -82,22 +94,15 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     const basics = ENEMY_BASICS[GUARD_MOBILE_TYPE];
     const career = await ensureCareer();
     const entity = makeEnemyEntity(GUARD_MOBILE_TYPE, basics, career, playerEntity.level);
-    entity.items = generateItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: 'male' });
+    // AUDIT 18: LootTables.cs:212/:229/:237 pass the PLAYER's gender
+    // into the random-item builders; the hard-coded 'male' here made
+    // a female character's guard loot roll male clothing.
+    entity.items = generateItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: playerEntity.gender });
     // (Knight_CityWatch has NO LootTableKey in DFU - the table roll is
     // legitimately empty; the corpse's loot is the EQUIPMENT below.)
-    const variant = equipmentVariantFor(entity.careerIndex, entity.isClass);
-    if (variant !== null) {
-      const eq = assignEnemyEquipment(entity, variant, playerEntity.level);
-      entity.armorValues = eq.armorValues;
-      entity.weapon = eq.rightHand;
-      if (entity.weapon) {
-        const pt = rollEnemyWeaponPoison(GUARD_MOBILE_TYPE, playerEntity.level);
-        if (pt != null) entity.weapon.poisonType = pt;
-      }
-      // G3: DFU adds every equipped piece to the entity's items - the
-      // corpse's droppable loot (AssignEnemyStartingEquipment).
-      entity.items.push(...equipmentItems(eq));
-    }
+    // AUDIT 18: the whole SetEnemyEquipment chain is now shared with
+    // the dungeon host's two spawn branches (hostCombat.equipEnemy).
+    equipEnemy(entity, GUARD_MOBILE_TYPE, playerEntity.level);
     const ai = new EnemyAI(collider, [pos[0], pos[1] + 0.1, pos[2]], yaw, {
       liveSpeed: entity.liveSpeed,
       seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
@@ -106,7 +111,13 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // crime-responding guard pursues without having seen the player.
     ai.makeHostileToPlayer(600);
     const attack = new EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: playerEntity.level, reflexes: playerEntity.reflexes });
-    attack.rangedAttack = false;   // FLAGGED: guard archers pend exterior foe arrows
+    // EnemyMotor.cs:131-137 computes hasBowAttack from the MobileEnemy
+    // FLAGS, and EnemyBasics.cs:2197-2212 gives Knight_CityWatch
+    // HasRangedAttack1 = false / CastsMagic = false - so DFU's
+    // predicate is FALSE here and this literal IS the verbatim value,
+    // not an interim. (Checked in AUDIT 18: the routed claim that 146
+    // carries HasRangedAttack1 does not hold against the table.)
+    attack.rangedAttack = false;
     const archive = basics.maleTexture;
     const tex = await getTexture(archive);
     const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
@@ -267,7 +278,15 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           // player tallies Dodging (EnemyAttack, before the damage
           // branch) - it was never tallied anywhere.
           tallySkill(playerEntity, SKILLS.Dodging, 1);
-          const dmg = calculateAttackDamage(g.entity, playerEntity, { targetGroup: null, weapon: wpn });
+          // AUDIT 18: the player is the Humanoid group
+          // (GetBonusOrPenaltyByEnemyType's PlayerEntity arm), and the
+          // InflictPoison seam the dungeon host already passes -
+          // guard weapon poison was ROLLED at spawn and could never
+          // be inflicted, because the exterior call dropped the hook.
+          const dmg = calculateAttackDamage(g.entity, playerEntity, {
+            weapon: wpn,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
+            onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(currentMinute()) }),
+          });
           if (dmg > 0) onPlayerHurt?.(dmg, wpn);   // G2: the host's arrest interception rides this
         }
       }
@@ -286,6 +305,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   /** The player's swing resolves against live guards (the dungeon's
    *  resolvePlayerHit shape over playerWeapon.resolveHit). */
   function resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn, onHitSound) {
+    if (inViewFn) _lastInView = inViewFn;   // the assault-carry swing below reaches here without one
+    const view = inViewFn ?? _lastInView;
     const live = guards.filter((g) => !g.dead);
     if (!live.length) return false;
     const canSee = (g) => {
@@ -294,16 +315,40 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       const dist = Math.hypot(dx, dy, dz);
       const l = dist || 1;
       const hit = collider.raycast(eye, [dx / l, dy / l, dz / l], dist);
-      return { dist, inView: inViewFn ? inViewFn(c) : true, losClear: !Number.isFinite(hit) || hit >= dist - 1e-3 };
+      // WeaponManager.cs:951-955 applies `if (!IsPositionInCameraView
+      // (center)) canHit = false;` UNCONDITIONALLY, before the LOS
+      // test - so a missing projection cannot mean "accept". This
+      // default was ACCEPT, contradicting cameraView.js's own note.
+      return { dist, inView: view ? view(c) : false, losClear: !Number.isFinite(hit) || hit >= dist - 1e-3 };
     };
     let any = false;
-    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rand, () => 0)) {
+    // AUDIT 18: the backstab argument was hard-zeroed, so guard combat
+    // had no backstab at all where the dungeon host computes facing
+    // per foe - and CalculateBackstabChance's Backstabbing tally
+    // (FormulaHelper.cs:975-990) ran nowhere in the port.
+    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rand,
+      (g) => backstabChanceOf(playerEntity, isBackFacing(g.ai.yaw, g.ai.feet, eye)))) {
       any = true;
       if (damage > 0) {
         onHitSound?.(foe);
         damageGuard(foe, damage, playerFeet, lookDir);
+      } else {
+        // WeaponManager.cs:609-615: a connecting swing that dealt
+        // nothing still makes a noise. The exterior hosts played
+        // nothing at all.
+        const snd = zeroDamageHitSound({
+          weapon: playerWeapon.weapon, arrowHit: false,
+          parrySounds: !!ENEMY_BASICS[GUARD_MOBILE_TYPE]?.parrySounds, roll: rand(),
+        });
+        if (snd?.at === 'enemy') audio?.play3d?.(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
+        else if (snd) audio?.playOneShot?.(snd.sound, 1.1);
       }
     }
+    // WeaponManager.cs:419-436: the swing costs fatigue whatever it
+    // hits, and a connecting swing tallies the weapon skill AND
+    // CriticalStrike. Neither ran in the exterior hosts.
+    playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - SWING_WEAPON_FATIGUE_LOSS);
+    if (any) tallySwingSkills(playerEntity, playerWeapon.weapon);
     return any;
   }
 
@@ -332,7 +377,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     playerEntity.crimeCommitted = CRIME_ASSAULT;
     await spawnGuardAt(best.pos, best.fwdYaw);
     best.disable();
-    const carriedHit = resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn, onHitSound);
+    const carriedHit = resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn ?? _lastInView, onHitSound);
     return { crime: 'assault', carriedHit };
   }
 
@@ -346,7 +391,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     guards.forEach((g, i) => {
       if (!g.corpse || !g.entity?.items?.length) return;
       const p = g.ai.feet;
-      targets.push({ key: `guardCorpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] } });
+      // PlayerActivate.cs:85/:938 - corpses reach 150 * GlobalScale,
+      // not the 128-unit default.
+      targets.push({ key: `guardCorpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: CORPSE_ACTIVATION_DISTANCE });
     });
     return targets;
   }

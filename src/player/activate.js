@@ -11,6 +11,13 @@ export const GLOBAL_SCALE = 0.025;
 export const RAY_DISTANCE = 3072 * GLOBAL_SCALE; // 76.8
 export const DEFAULT_ACTIVATION_DISTANCE = 128 * GLOBAL_SCALE; // 3.2
 export const DOOR_ACTIVATION_DISTANCE = 128 * GLOBAL_SCALE;
+// PlayerActivate.cs:85 - corpses reach FURTHER than everything else
+// (150 classic units, not 128). It is deliberate, not incidental:
+// ActivateLootContainer (:866-874) exempts CorpseMarker from the
+// TreasureActivationDistance gate and re-tests it at :938 against
+// CorpseActivationDistance. AUDIT 18: this constant was missing, so
+// corpse targets fell back to the 128-unit default.
+export const CORPSE_ACTIVATION_DISTANCE = 150 * GLOBAL_SCALE; // 3.75
 
 /** Axis-aligned bounds of a model's positions under a matrix. */
 export function worldAabb(positions, m) {

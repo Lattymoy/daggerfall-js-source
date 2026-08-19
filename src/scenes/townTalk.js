@@ -31,7 +31,7 @@ import {
   getPeopleOfCurrentRegion, getReactionToPlayer, pickpocketTownsperson, findFactions,
   MOBILE_NPC_ACTIVATION_DISTANCE, PICKPOCKET_DISTANCE, FOUND_NOTHING_VALUABLE_TEXT_ID,
 } from '../systems/talk.js';
-import { startMobileTalk, expandMacros } from '../systems/talkSession.js';
+import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId } from '../systems/talkSession.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { buildBuildingDirectory, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012 } from '../systems/talkTopics.js';
@@ -84,6 +84,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   let toneSession = [0, 0, 0];
   let lastToneIndex = -1;
   let currentTier = 1;
+  let _questionsAsked = 0;           // TalkManager.numQuestionsAsked
 
   const npcRace = REGION_RACES[regionIndex] === 1 ? 'Redguard' : 'Breton';
 
@@ -145,6 +146,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   const textVariants = (id) => textRsc?.plainText(id) ?? [''];
+  /** MacroHelper.CityName (%cn): the current location, falling back to
+   *  the region when the player is off-location. */
+  const cityName = () => topics?.locationName ?? topics?.regionName ?? '';
+  /** One record through the greeting/question macro set: the oath is
+   *  drawn ONLY when the record carries %oth (DFU expands lazily). */
+  const expandRecord = (raw) => expandMacros(raw, {
+    playerName: playerEntity.name ?? '',
+    oath: raw.includes('%oth') ? randomVariant(oathTextId(npcRace), '') : '',
+    cityName: cityName(),
+  });
   const randomVariant = (id, fallback) => {
     const v = textRsc?.plainText(id);
     return v?.length ? v[Math.floor(rolls() * v.length)] : fallback;
@@ -233,7 +244,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // Info / Grab / Talk all talk to a mobile NPC (DFU verbatim)
     const reaction = people ? getReactionToPlayer(people, playerEntity) : 0;
     const t = startMobileTalk({
-      reaction, textVariants, playerName: playerEntity.name ?? '', npcRace, rolls,
+      reaction, textVariants, playerName: playerEntity.name ?? '', npcRace, rolls, cityName: cityName(),
     });
     if (t.refused) { hud.add(t.text || 'You get no response.'); return; }
     if (!directory.length) { overlay = new TalkWindow(t); return; }
@@ -245,6 +256,13 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     _talkNpc = target.person;
     toneSession = [0, 0, 0];   // T3f: per talk session (DFU TalkToNpc)
     lastToneIndex = -1;
+    // AUDIT 18 F4 - StartNewConversation (TalkManager.cs:867-871),
+    // which DaggerfallTalkWindow.OnPush runs through
+    // SetStartConversation (:654) on EVERY window push. Without the
+    // reset the counter only ever climbed, so 7215+tone (the greeting
+    // opening) was reachable at most ONCE per play session and every
+    // later conversation opened on the follow-up (7218+tone).
+    _questionsAsked = 0;
     // U8b: the native TALK01I0 window when the art is up (clicks/taps
     // through the verbatim hit rects; the keyed chain is the fallback)
     if (talkArtLoaded() && directory.length) {
@@ -257,7 +275,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         question: (b) => { const q = questionText(b); _questionsAsked++; return q; },   // AUDIT 17e F13
         tone: () => tone,
         setTone: (t2) => { tone = t2; },
-        npcName: people?.name ?? '',
+        npcName: _talkNpc?.nameNPC ?? '',   // AUDIT 18 F5: the NPC's OWN name, not the People faction
       }));
       return;
     }
@@ -343,14 +361,13 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // U8b shipped a hardcoded English literal ("Where is X?") that no
   // tone or record could reach - the three tone records carry real
   // classic flavour ("Where the hell is %key?" at Blunt).
-  let _questionsAsked = 0;
   function questionText(building) {
     const opening = randomVariant((_questionsAsked === 0 ? 7215 : 7218) + tone, 'Hail to thee');
     const rp = people ? getReactionToPlayer(people, playerEntity) : 0;
-    const npcName = (rp <= 0 ? randomVariant(7221 + tone, 'stranger') : (people?.name ?? 'stranger'));
+    const npcName = (rp <= 0 ? randomVariant(7221 + tone, 'stranger') : (_talkNpc?.nameNPC || 'stranger'));
     const q = randomVariant(7225 + tone, '%1com. Where can I find %key?');
-    return expandMacros(q, { playerName: playerEntity.name ?? '' })
-      .replaceAll('%1com', expandMacros(opening, { playerName: playerEntity.name ?? '' }).replaceAll('%n', npcName))
+    return expandRecord(q)
+      .replaceAll('%1com', expandRecord(opening).replaceAll('%n', npcName))
       .replaceAll('%key', building.name ?? building.label ?? '');
   }
 
@@ -360,10 +377,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality ?? 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });
     const hint = randomVariant(7333, '%loc is %di of here')
       .replaceAll('%loc', building.name).replaceAll('%di', a.direction);
-    let text = randomVariant(a.textId, '%hnt');
-    return expandMacros(text, { playerName: playerEntity.name ?? '' })
-      .replaceAll('%hnt', hint).replaceAll('%key', building.name)
-      .replaceAll('%hnr', 'Sir').replaceAll('%ra', 'Breton');   // honorific/race macros FLAGGED interim
+    const raw = randomVariant(a.textId, '%hnt');
+    // AUDIT 18 F1: ExpandRandomTextRecord (TalkManager.cs:3580-3587)
+    // runs the FULL MacroHelper over the answer record - %oth and %cn
+    // resolve here exactly as they do in the greeting.
+    return expandAnswerRecord(raw, {
+      playerName: playerEntity.name ?? '',
+      oath: raw.includes('%oth') ? randomVariant(oathTextId(npcRace), '') : '',
+      cityName: cityName(),
+      hint, key: building.name,
+    });
   }
 
   function showAnswer(text) {
@@ -410,6 +433,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     get overlayActive() { return !!overlay; },
     get mode() { return mode; },
     get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
+    get locationName() { return cityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)
     _debug: () => ({
       mode, overlay: !!overlay, people: people?.name ?? null,
       buildings: directory.length, tone: TONE_NAMES[tone], toneSession: [...toneSession],
@@ -418,6 +442,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       overlayText: overlay?.conversation?.at(-1) ?? overlay?.lines?.[0] ?? overlay?.text ?? null,
       overlayOptions: overlay?.options?.filter((o) => o.label).map((o) => o.label) ?? null,
       overlayFlow: overlay?.flow ?? null,   // U10: the chargen probe reads the live flow
+      npcName: overlay?.hooks?.npcName ?? null,   // U8b: the native window's name plate
+      hooks: overlay?.hooks ?? null,              // the live session seam (question/answer)
       overlayPopup: overlay?.popup ?? null,   // S23: the equip-refusal probe reads the popup
     }),
   };

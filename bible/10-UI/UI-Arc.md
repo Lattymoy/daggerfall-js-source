@@ -37,8 +37,10 @@ expanding MSB-first) pinned on crafted bytes. ui/text.js builds ONE
 white 256x240 atlas per font through the existing uploadTexture and
 draws through drawScreenQuad with per-call tint - one atlas serves
 every classic text color; DaggerfallFont's rules carried (glyph =
-code - 33, sub-33 codes advance a fixedWidth space, classic 1px
-spacing, integer scale). Live consumer NOW (infra never ships dead):
+code - 33, classic 1px spacing, integer scale). The sub-33 / no-glyph
+case this sentence used to describe as "advance a fixedWidth space" is
+corrected in the AUDIT 18 section at the foot of this
+page. Live consumer NOW (infra never ships dead):
 the HUD shows the readied spell name + cost in FONT0003 above the
 vitals - the U4 spellbook window replaces it. Review catch: the font
 load was written as dynamic imports IN THE SLICE AFTER the 06e class
@@ -222,8 +224,15 @@ delegates:
 ## Queue
 - Classic window art, per-ID TEXT.RSC verification (the database is
   now LIVE via U6; the id sweep remains).
-- Starting-spell sets: SHIPPED via Systems S6 (the spellbook lists
-  the character's real known spells).
+- Starting-spell sets: SHIPPED via Systems S6. AUDIT 18 struck this row's
+  parenthetical, which read "(the spellbook lists the character's real known
+  spells)". It does when the character HAS spells; when `entity.spells` is
+  empty or absent, ui/inventory.js `knownSpells` falls through to an INTERIM
+  fallback that returns every ranged damage-health spell in SPELLS.STD - so
+  a Warrior's spellbook lists eight attack spells and can cast them.
+  DFU's DaggerfallSpellBookWindow.RefreshSpellsList has no fallback of any
+  kind. The fallback is flagged at its site (inventory.js:85-87); the row's
+  parenthetical is what let a reader treat that flag as already retired.
 
 ## U7 (the rest window): SHIPPED
 
@@ -855,11 +864,11 @@ a helm cuts out the hair; the port only skips the item's own masked
 pixels. The obvious fix - writing transparent black - is WRONG for
 this architecture because the SCBG is baked into the same buffer, so
 it needs either an SCBG restore or a layering restructure; measured
-divergence is 6-89 px per item, cosmetic); the KRAVE01.HS2
-Order-of-the-Raven override (F21 - real, affects 10 Dwynnen towns,
-needs otherNames threaded through the pool merge); and Chain2
+divergence is 6-89 px per item, cosmetic); and Chain2
 reachability (the constant is fixed, but nothing mints 0x0103 until
-classic-save import exists).
+classic-save import exists). The KRAVE01.HS2 Order-of-the-Raven
+override (F21) SHIPPED in AUDIT 18 - otherNames needed no threading,
+it was already on dfBlock.rmbBlock.fldHeader.
 
 All four native-window probes re-run green. Suite 480/105.
 
@@ -2236,9 +2245,20 @@ actually use. DFU has one call taking the target entity
 (FormulaHelper.cs:788) and derives the group inside it; the port split
 that apart and only carried the group down one of the two forks.
 
-The target half of the player's swing was correct all along -
-playerWeapon.js:159 passes `enemyGroupOf(foe.entity.affinity)` - which
-is precisely why this looked wired.
+The target half of the player's swing was PARTLY correct -
+playerWeapon.js:159 passed `enemyGroupOf(foe.entity.affinity)` - which
+is precisely why this looked wired. AUDIT 18 corrected the rest: DFU
+uses TWO discriminants, not one. The Humanoid arm keys on
+`MobileEnemy.Affinity == MobileAffinity.Human`, as the port did, but
+the Undead/Daedra/Animals arms key on `GetEnemyGroup()`, a per-
+careerIndex table (FormulaHelper.cs:1004-1035 and :2746-2805). The two
+disagree for five spawnable careers - Slaughterfish 11, Vampire 28,
+Vampire Ancient 30, Dragonling 34 and Dragonling_Alternate 40 - all of
+which the affinity map scored 0. And `target is PlayerEntity`, DFU's
+"player is assumed humanoid" arm, had no port at all: every
+enemy->player site passed a null group, so the modifier could never
+fire on an attack against the player. `bonusOrPenaltyByEnemyType` now
+takes the target ENTITY, as DFU does.
 
 This is NOT a U20b regression. The classic ASSASSIN ships
 attackModifierFlags 0x04, a Humanoid bonus, and has never received it;
@@ -2251,8 +2271,9 @@ flag no system reads is not a working feature, and the slice must not
 imply otherwise. Catalogued in the Ledger rather than left to be
 rediscovered. LIVE: Increased Magery (maxMagicka reads the
 multiplier), the tolerance quartet (spellcast.js), Rapid Healing
-(rest.js), Inability To Regen Spell Points, and - after F1 - Bonus to
-hit and Phobia. INERT for want of a consuming subsystem: Spell
+(rest.js), Inability To Regen Spell Points, and - after F1 and AUDIT
+18 - Bonus to hit and Phobia on every fork: the player's melee and
+hand-to-hand swing, and (AUDIT 18) an enemy's attack on the player. INERT for want of a consuming subsystem: Spell
 Absorption, Regenerate Health, Acute Hearing, Athleticism, Adrenaline
 Rush, Damage From Sunlight/Holy Places, and all four Forbidden
 categories plus Expertise In. The flags are written correctly and
@@ -2272,3 +2293,33 @@ level scaling fails three. F1 is pinned on both entity shapes, on an
 attacker carrying neither, through real damage via
 calculateAttackDamage, and against the real CLASS11.CFG so the
 Assassin claim fails if the corpus ever disagrees.
+
+## AUDIT 18 - doc-truth corrections to this page
+
+**The sub-33 glyph law (U3).** The U3 record described "sub-33 codes advance
+a fixedWidth space" as one of DaggerfallFont's rules carried verbatim. It is
+not DFU's rule. DaggerfallFont.cs:
+
+- any code with no glyph is REPLACED by SpaceCode 32 before layout
+  (`if (!HasGlyph(asciiBytes[i])) asciiBytes[i] = SpaceCode;`, :312-314) -
+  it is not "advanced past";
+- the space glyph is manufactured at load with `int width =
+  fntFile.FixedWidth - 1` (CreateSpaceGlyph, :623-625), so its advance is
+  FixedWidth MINUS ONE;
+- in DrawText the space branch advances by `rect.width` ONLY, with NO
+  GlyphSpacing (:326-328), while every drawn glyph adds GlyphSpacing after
+  it (:320-322);
+- CalculateTextWidth measures every code, space included, through
+  GetGlyphWidth(code, scale, GlyphSpacing) (:381), so the MEASURED width of
+  a space does include the 1px spacing that the DRAWN advance does not.
+
+The port's ui/text.js used FixedWidth + 1px spacing for both. The code fix
+is routed to the UI lane of this audit; this record now states the DFU law
+so the next reader is not measuring against the wrong ruler.
+
+**The custom-class document's isCustom (U20a).** ui/chargen.js's
+`_acceptStandardClass` says the never-cleared `isCustom` quirk is "recorded
+in the Ledger". It was not - Port-Ledger.md had no such row until AUDIT 18
+added one to section B. That is the 17m shape: a comment pointing at a
+Ledger row that does not exist, which reads to an auditor as "already
+known".

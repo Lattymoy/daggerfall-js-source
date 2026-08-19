@@ -31,6 +31,12 @@ import { OneShotLatch } from '../ui/input.js';
 import { FntFile } from '../formats/fntFile.js';
 import { ImgFile } from '../formats/imgFile.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
+import { SWING_MODS } from '../combat/playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact
+import {
+  equipEnemy, hasBowAttack, attackSkillOf, isBowWeapon, backstabChanceOf,
+  tallySwingSkills, zeroDamageHitSound, SWING_WEAPON_FATIGUE_LOSS,
+  CORPSE_ACTIVATION_DISTANCE,
+} from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
@@ -38,14 +44,15 @@ import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
 import { InventoryWindow, SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
-import { tallySkill, skillValue, SKILLS, WEAPON_SKILL, SKILL_NAMES } from '../systems/skills.js';
+import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
-import { raiseSkills, applyLevelUp } from '../systems/advancement.js';
+import { applyLevelUp } from '../systems/advancement.js';
+import { tickPlayerMinutes } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes } from './shared.js';
+import { fetchBytes, ensureAudio } from './shared.js';
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
   MISSILE_LIFESPAN_S, isDamageHealthEffect,
@@ -54,7 +61,7 @@ import {
 import { applySpell, tickActiveEffects, hasActiveEffect, entityIsParalyzed, maxFatigue, isInvisible, isBlending, isAShade } from '../systems/effects.js';
 import { FATIGUE_LOSS, maxBreath } from '../systems/statMods.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
-import { updatePoisons, inflictPoison, rollEnemyWeaponPoison } from '../systems/poisons.js';
+import { updatePoisons, inflictPoison } from '../systems/poisons.js';
 import { exhaustionOutcome, EXHAUSTED_IN_WATER, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { REST_TEXT } from '../systems/restSession.js';
 import { RestWindow } from '../ui/restWindow.js';
@@ -63,6 +70,8 @@ import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, KB_UNIT } from 
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
+import { music } from '../systems/music.js';
+import { DUNGEON_SONGS } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4: the shared PlayRandomlyIfPlayerNear pass
 import {
@@ -128,8 +137,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // A1: sound. DAGGER.SND loads through the data seam; the context
   // starts on the first gesture (mobile discipline). Dungeon doors
   // ride the DFU dungeon clips (DaggerfallActionDoor's RDB shape).
-  audio.init(fetchBytes);
-  audio.attachGestureResume();
+  // AUDIT 19 F1(doctrine): this host called audio.ensure and music.ensure
+  // DIRECTLY, not through the shared seam - so the F6 pin's own
+  // justification ("a host physically cannot take one and miss the
+  // other") was false here, and deleting the music bootstrap left a
+  // ?dungeon boot permanently silent while the whole suite passed. It
+  // takes the seam now, like the other three hosts, and the pin requires
+  // it of every host rather than asserting it of the seam alone.
+  const _audioUp = ensureAudio(fetchBytes);   // AUDIT 18 F6: sound + music, one idempotent bootstrap
+  // AUDIT 19 F4 (critical): the music start USED to sit right here and
+  // read `classicMinutes` - a `let` declared ~1000 lines and THIRTY awaits
+  // later. The promise resolved DURING one of those awaits, so every
+  // dungeon boot threw a TDZ ReferenceError and painted the crash overlay.
+  // It now starts at the end of this function, where every binding exists.
+  // A `.then` registered early is not "later"; it is "as soon as the first
+  // await yields".
   actions.onDoorState = (o, opening) => {
     const m = o.matrix;
     audio.play3d(opening ? SOUND.DungeonDoorOpen : SOUND.DungeonDoorClose, [m[12], m[13], m[14]]);
@@ -335,7 +357,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const bodyImg = new ImgFile();
     bodyImg.load(await fetchBytes('BODY00I0.IMG'), 'BODY00I0.IMG', palette);
     const formulas = await import('../combat/formulas.js');
-    const equip = await import('../combat/enemyEquipment.js');
     const { REACTIONS, sampleClip } = await import('../characters/anims.js');
 
     foeDeps = {
@@ -343,9 +364,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       isBackFacing,
       chooseEnemyWeapon: formulas.chooseEnemyWeapon,
       generateItems: generateLootItems,   // the static import (audit 06e: the dynamic pair was double-sourcing)
-      assignEnemyEquipment: equip.assignEnemyEquipment,
-      equipmentVariantFor: equip.equipmentVariantFor,
-      equipmentItems: equip.equipmentItems,   // G3: equipment -> droppable corpse loot
 
       calculateAttackDamage: formulas.calculateAttackDamage,
       meleeHitConnects: formulas.meleeHitConnects,
@@ -386,34 +404,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // S1: GenerateItems(LootTableKey) per SetEnemyCareer order -
       // the loot rides the entity; corpses carry it on death (pickup
       // pends Player activation, flagged in the arc).
-      entity.items = D.generateItems(basics.lootTableKey ?? '-', { level: D.playerEntity.level, gender: e.gender });
+      // AUDIT 18: LootTables.cs:212/:229/:237 pass the PLAYER's gender
+      // and race into CreateRandomArmor/MagicItem/Clothing, not the
+      // dead enemy's - the level in the same call is already the
+      // player's, and this argument was the odd one out.
+      entity.items = D.generateItems(basics.lootTableKey ?? '-', { level: D.playerEntity.level, gender: D.playerEntity.gender });
       // E4b: SetEnemyEquipment verbatim - loadout + the per-part
       // armor-value pass (init 100, subtract, class clamp 60);
-      // the right-hand weapon feeds the attack path.
-      const variant = D.equipmentVariantFor(entity.careerIndex, entity.isClass);
-      if (variant !== null) {
-        const eq = D.assignEnemyEquipment(entity, variant, D.playerEntity.level);
-        entity.armorValues = eq.armorValues;
-        entity.weapon = eq.rightHand;
-        // S19b: ItemHelper's poisoned-weapon roll rides the spawn -
-        // class enemies + Orc/Centaur/OrcSergeant, 5% (Assassin 60%)
-        if (entity.weapon) {
-          const pt = rollEnemyWeaponPoison(e.mobileType, D.playerEntity.level);
-          if (pt != null) entity.weapon.poisonType = pt;
-        }
-        // G3 parity fix: DFU adds every equipped piece to the
-        // entity's items (AssignEnemyStartingEquipment) - class-foe
-        // corpses dropped only table loot, never their equipment.
-        entity.items.push(...D.equipmentItems(eq));
-      }
+      // the right-hand weapon feeds the attack path. AUDIT 18: the
+      // whole block moved to hostCombat.equipEnemy so the monster
+      // branch and the city watch run the same chain.
+      equipEnemy(entity, e.mobileType, D.playerEntity.level);
       const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, {
         liveSpeed: entity.liveSpeed,
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,   // P13: the illusion-gate exemption
       });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
-      // Combat bows: an equipped bow makes the foe an archer - the
-      // attack starts from SIGHT and the strike looses an arrow.
-      attack.rangedAttack = !!entity.weapon && WEAPON_SKILL[entity.weapon.name] === SKILLS.Archery;
+      // Combat bows: EnemyMotor.cs:131-137 reads the MobileEnemy
+      // FLAGS, with zero inventory involvement (AUDIT 18 - minting
+      // this from an equipped bow meant no enemy could ever fire one,
+      // because AssignEnemyStartingEquipment never rolls a bow).
+      attack.rangedAttack = hasBowAttack(basics);
       const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
       const t = await getTexture(archive);
       const mobile = new MobileUnit(e.mobileType, basics, (rec) => t.getFrameCount(rec), Math.random, e.gender);
@@ -450,7 +461,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const yawDeg = ((e.mobileType * 73 + Math.round(e.x + e.z)) % 8) * 45;   // deterministic facing (Ledger A rule)
       const career = await D.loadMonsterCareer(e.mobileType, D.fetchBytes);
       const entity = D.makeEnemyEntity(e.mobileType, basics, career, D.playerEntity.level);
-      entity.items = D.generateItems(basics.lootTableKey ?? '-', { level: D.playerEntity.level, gender: e.gender });
+      entity.items = D.generateItems(basics.lootTableKey ?? '-', { level: D.playerEntity.level, gender: D.playerEntity.gender });
+      // AUDIT 18: EnemyEntity.cs:330-347 runs the equipment chain BY
+      // careerIndex before the class arm, so Orc(7)/OrcShaman(21),
+      // Centaur(8)/OrcSergeant(12) and OrcWarlord(24) are equipped
+      // too. The monster branch went straight from GenerateItems to
+      // the AI, so five equipment-using monsters spawned naked - no
+      // weapon, no armorValues, no equipment on the corpse.
+      equipEnemy(entity, e.mobileType, D.playerEntity.level);
       // C12: the behaviour motors - flying/spectral pursue in 3D at
       // the face with no gravity, aquatic ride WaterMove against the
       // block water surface (beached = frozen, verbatim).
@@ -460,6 +478,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         behaviour, mobileId: e.mobileType, waterSurfaceY: waterSurfaceYAt,
       });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
+      // The same EnemyMotor.cs:131-137 flag test the class branch
+      // runs - false for all 43 monsters today, but it must not stay
+      // undefined (the archer draw/loose path reads it every frame).
+      attack.rangedAttack = hasBowAttack(basics);
       const mobile = new MobileUnit(e.mobileType, basics, (rec) => t.getFrameCount(rec), Math.random, e.gender);
       // One live billboard batch per foe: record/size/origin mutate
       // per frame (the batch geometry is a unit quad; size is a
@@ -496,13 +518,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const missiles = [];
   let spellsByIndex = null;
   try {
-    spellsByIndex = new Map(readSpellsStd(await fetchBytes('SPELLS.STD')).map((sp) => [sp.index, sp]));
+    // AUDIT 18: SPELLS.STD carries DUPLICATE indices and DFU keeps the
+    // FIRST (SpellRecord's `if (!map.ContainsKey(index)) map.Add(...)`
+    // shape) - a straight `new Map(entries)` keeps the LAST, so
+    // classic spell 58 readied Holy Touch (rangeType 1) where DFU
+    // readies Holy Word (rangeType 3).
+    const _byIndex = new Map();
+    for (const sp of readSpellsStd(await fetchBytes('SPELLS.STD'))) {
+      if (!_byIndex.has(sp.index)) _byIndex.set(sp.index, sp);
+    }
+    spellsByIndex = _byIndex;
+  } catch { /* data absent: casts no-op, loudly flagged */ }
+  try {
     // S4c: MAGIC.DEF registers the magic-item templates - a
     // module-level registry, correct for the single active context
     // (each dungeon build re-sets it); the loot MI category is live
-    // from here (absent -> stays flagged-skip).
+    // from here (absent -> stays flagged-skip). AUDIT 18: its own try
+    // block - it shared one with the SPELLS.STD fold, so a bad
+    // MAGIC.DEF silently nulled the whole spell table too.
     setMagicItemTemplates(readMagicDef(await fetchBytes('MAGIC.DEF')));
-  } catch { /* data absent: casts + MI no-op, loudly flagged */ }
+  } catch { /* data absent: the loot MI category stays flagged-skip */ }
   // U6: the TEXT.RSC database goes LIVE for the action text boxes
   // (the reader shipped with the U-series; the hudText note's
   // "database FLAGGED" narrows to the skill/loot message ids).
@@ -646,12 +681,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
   // S15 fatigue sinks: RAW fatigue points (the effect door applies the
   // x64). SetFatigue clamps 0..MaxFatigue (max derived LIVE - a
-  // drained strength lowers the ceiling). INTERIM (loud): the
+  // drained strength lowers the ceiling).
   // S20: SetFatigue's exhaustion event - hitting 0 with health left
   // raises OnExhausted (once; the popup guard mirrors DFU's
   // displayingExhaustedPopup so rapid drains - the Somnalius case -
   // never stack collapses).
   let _exhaustedShowing = false;
+  /** PlayerEntity.cs:396-400: 1.0, or 0.9 with the Athleticism career
+   *  advantage (0.8 needs the Improved Athleticism enchantment, which
+   *  the port has no source for). */
+  const fatigueLossMultiplier = () =>
+    (hasSpecialAbility(playerEntity.career, SPECIAL_ABILITY.Athleticism) ? 0.9 : 1.0);
   function drainFatigue(n) {
     if (n <= 0) return;
     playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - n);
@@ -784,11 +824,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
 
   // S5: player casting - the readied spell is ?spell=N or the FIRST
-  // ranged damage spell in the file (deterministic, no magic index;
-  // the spellbook UI pends). Cost = the record's classic cost field,
-  // FLAGGED: DFU recomputes per-effect via the cost tables (that
-  // slice replaces this). Range types beyond 2/4 (missile) are
-  // FLAGGED to the effect library (caster-only buffs, touch, areas).
+  // ranged damage spell in the file (deterministic, no magic index).
+  // The spellbook readies it (toggleSpellbook's ready()), the cost
+  // comes from calculateCastCost's per-effect tables, and rangeTypes
+  // 0/1/3 are handled beside 2/4 below.
   let readiedSpell = null;
   if (spellsByIndex) {
     if (Number.isInteger(opts.playerSpell)) readiedSpell = spellsByIndex.get(opts.playerSpell) ?? null;
@@ -820,7 +859,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // S19: SetReadySpell(spell, true) - the spider-touch rider casts
     // free; ordinary decisions spend the S10 cost (floored at 0).
     if (!noSpellPointCost) {
-      const cost = calculateCastCost(spell, f.entity).sp;
+      // EntityEffectManager.cs:322-327 passes a NULL caster when
+      // UsePlayerCharacterSkillsForEnemyMagicCost (default true at
+      // :148), and CalculateEffectCosts reads GameManager.PlayerEntity
+      // .Skills for a null caster - enemy spell costs are priced off
+      // the PLAYER's magic skills, not the foe's.
+      const cost = calculateCastCost(spell, playerEntity).sp;
       f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - cost);
     }
     const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
@@ -1042,17 +1086,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // sent the Attack trigger and doors could not be bashed) - the
     // shared envAttack (C10 fold): a bashed door CONSUMES the swing,
     // Receive(Attack) lets it continue, geometry occludes.
-    if (lookDir && envAttack(actions, collider, eye, lookDir, Math.random)) return;
+    if (lookDir && envAttack(actions, collider, eye, lookDir, Math.random)) return false;
     // C10 FOLLOW-UP (live mobile crash, 2026-08-17): the weapon now
     // exists WITHOUT foes, so a swing's hit frame reaches here with
     // foeDeps null (no ?foes, or the async foe deps still loading) -
     // the env attack above already ran; nothing remains to resolve.
     // Pre-fold this path was unreachable foe-less (playerWeapon was
     // foes-gated), which is why no probe ever caught it.
-    if (!foeDeps) return;
+    if (!foeDeps) return false;
     // E3d: backstab facing per foe, verbatim IsBackFacing (records
     // 3/4 of the 8-orientation wheel); the chance = the player's
-    // Backstabbing skill (flat interim). TallySkill pends Systems.
+    // Backstabbing skill, tallied inside CalculateBackstabChance
+    // (FormulaHelper.cs:975-990 - the tally was ported nowhere).
     for (const f of foes) if (!f.dead) f._backFacing = foeDeps.isBackFacing(f.ai.yaw, f.ai.feet, playerFeet);
     const live = foes.filter((f) => !f.dead);
     const canSee = (f) => {
@@ -1065,27 +1110,31 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     };
     // (the module-level playerEntity import IS foeDeps.playerEntity -
     // the old shadowing destructure was the null read that crashed)
-    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => f._backFacing ? skillValue(playerEntity, SKILLS.Backstabbing) : 0)) {
-      // TallySkill (E3c flag clears): the attack skill counts a use
-      // per resolved swing, per WeaponManager.MeleeDamage.
-      // AUDIT 17k / Mac's report: BARE HANDS are a null weapon since
-      // U8h bound the rig to equip.slots[RightHand] - and the DEFAULT
-      // state, because starting weapons land in the bag unequipped
-      // (DFU adds them via AddItem, never equips). The exterior hosts
-      // guarded with ?.; this host's raw deref crashed every resolved
-      // fist hit.
-      tallySkill(playerEntity, WEAPON_SKILL[playerWeapon.weapon?.name] ?? SKILLS.HandToHand);
+    let hitEnemy = false;
+    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing))) {
+      // WeaponDamage returns true for a CONNECTING swing even at zero
+      // damage (WeaponManager.cs:617-637 falls through to
+      // DecreaseHealth/HandleAttackFromSource and returns true), so
+      // hitEnemy - and with it the skill tallies at :423-435 - is set
+      // before the damage branch.
+      hitEnemy = true;
       if (damage <= 0) {
-        // WeaponManager: a resolved swing that deals nothing plays
-        // Hit2 barehanded / Parry6 armed (strikingWeapon test).
-        const armed = (WEAPON_SKILL[playerWeapon.weapon?.name] ?? SKILLS.HandToHand) !== SKILLS.HandToHand;
-        audio.playOneShot(armed ? SOUND.Parry6 : SOUND.Hit2);
+        // WeaponManager.cs:609-615, the zero-damage arm. The old code
+        // played :483's WALL pair (Hit2/Parry6), a branch DFU's own
+        // comment marks "not in classic".
+        const snd = zeroDamageHitSound({
+          weapon: playerWeapon.weapon, arrowHit: false,
+          parrySounds: !!ENEMY_BASICS[foe.mobileType]?.parrySounds, roll: Math.random(),
+        });
+        if (snd?.at === 'enemy') audio.play3d(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
+        else if (snd) audio.playOneShot(snd.sound, 1.1);
         continue;
       }
       // EnemySounds.PlayHitSound at the struck foe, weapon-aware
       audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, 1.1, { maxDistance: 16 });   // rides the foe's source shape
       damageFoe(foe, damage, playerFeet, lookDir);   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back)
     }
+    return hitEnemy;
   }
   // S3b: the classic clock for skill-raise checks - dt * TimeScale
   // (DFU default 12) in minutes; RaiseSkills gates itself at 360.
@@ -1144,7 +1193,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             if (f.dead) continue;
             const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + 0.9 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];
             if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
-              const dmg = foeDeps ? foeDeps.calculateAttackDamage(playerEntity, f.entity, { weapon: m.weapon }) : 0;
+              // AUDIT 18: an arrow hit runs the SAME
+              // FormulaHelper.CalculateAttackDamage the melee swing
+              // does (WeaponManager.cs:547) - `attacker == player`, so
+              // the swing modifiers, the backstab chance and the
+              // enemy-type modifier all apply. The port passed the
+              // weapon alone, so every shot lost the target group, the
+              // swing mods and any chance of a backstab.
+              const _swing = SWING_MODS[playerWeapon.machine.state] ?? { damage: 0, toHit: 0 };
+              const _back = foeDeps ? foeDeps.isBackFacing(f.ai.yaw, f.ai.feet, playerFeet) : false;
+              const dmg = foeDeps ? foeDeps.calculateAttackDamage(playerEntity, f.entity, {
+                weapon: m.weapon,
+                // AUDIT 18: the group is no longer passed in - calculateAttackDamage
+                // derives it from the TARGET ENTITY, verbatim to
+                // GetBonusOrPenaltyByEnemyType (FormulaHelper.cs:1037-1052).
+                damageMod: _swing.damage, toHitMod: _swing.toHit,
+                backstabChance: backstabChanceOf(playerEntity, _back),
+              }) : 0;
               if (dmg > 0) damageFoe(f, dmg, null, m.dir);   // C15: arrows knock along their flight
               addItem(f.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage verbatim: the arrow is recoverable from the target
               retireMissile(m);
@@ -1156,7 +1221,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           if (Math.hypot(dx2, dy2, dz2) <= MISSILE_COLLIDER_RADIUS + 0.45) {
             const shooter = m.shooterFoe;
             const dmg = foeDeps && shooter ? foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {
-              targetGroup: null, weapon: m.weapon,
+              weapon: m.weapon,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
               onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(classicMinutes) }),   // S19b: poisoned arrows
             }) : 0;
             hurtPlayer(dmg);
@@ -1293,7 +1358,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // S18: the special-attack rider seam - monster weaponless hits
     // run OnMonsterHit per hit (disease/paralysis/fatigue)
     const dmg = foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {
-      targetGroup: null, weapon: wpn,
+      weapon: wpn,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
       onMonsterHit: (att, tgt, hit) => onMonsterHit(att, tgt, hit, {
         currentDay: Math.floor(classicMinutes / MINUTES_PER_DAY), sinks: playerSinks,
         castParalyze: () => {   // S19: spider/scorpion free-cast Spider Touch (66)
@@ -1395,7 +1460,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) lastPlayerFeet = [...playerFeet];
-    if (activeOverlay?.isRestWindow) activeOverlay.tickRest(dt);   // U7: the rest clock (the world runs on below - foes can break it)
+    // AUDIT 18 F5: the rest clock USED to tick here, which made it
+    // unreachable - drawFoes only runs when NO overlay is up, and the
+    // rest window IS an overlay. It ticks from tickOverlay now, called
+    // by the hosts' overlay branch. Left as a marker so the seam is
+    // not re-added to the wrong side of the gate.
     if (playerFeet) {
       breathTick(dt, playerFeet);
       const _surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
@@ -1426,52 +1495,36 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       sharedStealth: _sharedStealth,
       tallyStealth: () => tallySkill(playerEntity, SKILLS.Stealth),
     };
+    // AUDIT 18: the PLAYER half of this tick moved to systems/worldTick.js
+    // and is now called by every host - it used to run only here, so a
+    // character who stayed above ground never aged an effect, never
+    // progressed a disease, never drained fatigue and NEVER GAINED A
+    // LEVEL. The FOE half stays here: it walks this host's foe list.
     const _prevMinute = Math.floor(classicMinutes);
-    classicMinutes += (dt * 12) / 60;
+    const _tick = tickPlayerMinutes({
+      entity: playerEntity,
+      classicMinutes,
+      dt,
+      sinks: playerSinks,
+      activity: _activity,
+      fatigueMultiplier: fatigueLossMultiplier(),
+      rolls: Math.random,
+      say: (msg) => hudText.add(msg),
+      onLevelUp: () => {
+        // U3: the level-up screen replaces the headless auto-apply
+        hudText.add('You have gained a level!');
+        if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
+      },
+    });
+    classicMinutes = _tick.classicMinutes;
+    const raised = _tick.raised;
     for (let r = _prevMinute; r < Math.floor(classicMinutes); r++) {
-      // S7: one magic round per classic minute (the broker's cadence).
-      // S18: diseases update FIRST so an ending disease's final day
-      // lands and the same round's tick removes the expired entry
-      // (DFU removes at the end of the same DoMagicRound). The classic
-      // day = elapsed classic minutes / 1440 (r + 1 = the minute this
-      // round completes); day 0 of an infection is incubation.
-      updateDiseases(playerEntity, Math.floor((r + 1) / MINUTES_PER_DAY), playerSinks, Math.random,
-        (msg) => hudText.add(msg));
-      // S19b: the poison minute tick (r + 1 = the classic minute this
-      // round completes); foes tick too - poisons are not player-only
-      updatePoisons(playerEntity, r + 1, playerSinks, Math.random, (msg) => hudText.add(msg));
-      tickActiveEffects(playerEntity, playerSinks);
       for (const f of foes) {
         if (f.dead) continue;
         updatePoisons(f.entity, r + 1, foeSinks(f), Math.random);
         tickActiveEffects(f.entity, foeSinks(f));
       }
     }
-    // P11: per-game-minute fatigue loss (PlayerEntity verbatim):
-    // default 11; running 88; swimming 44 on a FAILED roll vs the
-    // LIVE Swimming skill (success stays default) + the Swimming
-    // tally. S20 parity fix: DFU applies the loss ONCE per
-    // minute-CHANGE (`lastGameMinutes != gameMinutes` guards a single
-    // DecreaseFatigue - no loop over elapsed minutes), so a
-    // multi-minute jump (the collapse hour, rest) costs one minute's
-    // fatigue - the pre-S20 shape drained every caught-up round.
-    // Athleticism multiplier: the career advantage flags DECODE now
-    // (U20b) - the effect is what pends. AUDIT 17n re-pointed. (1.0,
-    // flagged); the Argonian exemption pends race selection.
-    if (Math.floor(classicMinutes) !== _prevMinute) {
-      let loss = FATIGUE_LOSS.Default;
-      if (_activity.running) loss = FATIGUE_LOSS.Running;
-      else if (_activity.swimming) {
-        if (!dice100(skillValue(playerEntity, SKILLS.Swimming))) loss = FATIGUE_LOSS.Swimming;   // Dice100.FailedRoll
-        tallySkill(playerEntity, SKILLS.Swimming);
-      }
-      drainFatigue(loss);
-    }
-    const raised = raiseSkills(playerEntity, classicMinutes, Math.random, () => {
-      // U3: the level-up screen replaces the headless auto-apply
-      hudText.add('You have gained a level!');
-      if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
-    });
     for (const id of raised) hudText.add(`Your ${SKILL_NAMES[id]} skill has improved.`);   // classic phrasing; TEXT.RSC pends
     collisionTriggers(dt, playerFeet, moveHeld);
     updateMissiles(dt, playerFeet);
@@ -1510,17 +1563,32 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // AUDIT 17k / Mac's report: null weapon = fists, never a bow
         // (the ?. is load-bearing - this raw deref threw on EVERY
         // bare-handed strike frame, the fist crash)
-        if (WEAPON_SKILL[playerWeapon.weapon?.name] === SKILLS.Archery) {
+        // AUDIT 17k / Mac's report: null weapon = fists, never a bow
+        // (the ?. is load-bearing). AUDIT 18: the test now reads the
+        // TEMPLATE, not the display name - an enchanted Long Bow is
+        // renamed by createRegularMagicItem and stopped being a bow.
+        if (isBowWeapon(playerWeapon.weapon)) {
           // Combat bows: the strike frame LOOSES an arrow along the
           // look instead of the melee arc (WeaponManager verbatim
-          // shape); the weapon skill tallies the same.
+          // shape).
           const lookDir = [-view[2], -view[6], -view[10]];   // the view-matrix forward this file already uses for the viewmodel
           if (!removeOne(playerEntity.items, 131)) continue;   // one Arrow per loose, verbatim (the arrow guard normally pre-sheathes at zero)
           fireArrow(eye, lookDir, playerWeapon.weapon, true);
-          tallySkill(playerEntity, SKILLS.Archery);
+          // WeaponManager.cs:419-436, in DFU's order: the swing costs
+          // fatigue whatever it hits, and a BOW always takes the tally
+          // arm (`!hitEnemy && WeaponType != Bow` is false for a bow),
+          // so Archery AND CriticalStrike count a use per loose.
+          drainFatigue(SWING_WEAPON_FATIGUE_LOSS);
+          tallySwingSkills(playerEntity, playerWeapon.weapon);
           continue;
         }
-        resolvePlayerHit(eye, inView, playerFeet, [-view[2], -view[6], -view[10]]);
+        const hitEnemy = resolvePlayerHit(eye, inView, playerFeet, [-view[2], -view[6], -view[10]]);
+        // "// Fatigue loss" - unconditional, then the tally arm only
+        // when the swing connected. swingWeaponFatigueLoss (11) was
+        // ported as a constant and applied by nobody, and
+        // CriticalStrike was tallied nowhere in the port at all.
+        drainFatigue(SWING_WEAPON_FATIGUE_LOSS);
+        if (hitEnemy) tallySwingSkills(playerEntity, playerWeapon.weapon);
       }
     }
     for (const f of foes) {
@@ -1579,8 +1647,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // E3b: the machine's hit frame resolves against the player -
       // EnemyAttack.MeleeDamage verbatim: gate 0.25 / MeleeDistance +
       // 35.156deg, then CalculateAttackDamage (class hand-to-hand;
-      // equipment E4). Player-as-target group is null (vampirism only
-      // in DFU). HUD pends the UI arc: health surfaces on __player.
+      // equipment E4). The player is the Humanoid group
+      // (GetBonusOrPenaltyByEnemyType's PlayerEntity arm - the Undead
+      // half needs vampirism, which the port does not have).
+      // HUD pends the UI arc: health surfaces on __player.
       if (playerFeet && f.events.includes('hit')) {
         if (f.attack.rangedAttack) {
           // C17: sprite archers loose on their -1 shoot marker
@@ -1714,6 +1784,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
+  // A5/AUDIT 19 F4: DUNGEON MUSIC, started HERE - after every binding in
+  // this function exists. SongManager's DungeonInteriorSongs playlist,
+  // verbatim. DFU seeds the pick with the dungeon block's Unknown2 header
+  // field XOR the region (SongManager.cs:346-358); the port reads that
+  // field but does not thread it to a music layer yet, so the pick falls
+  // to DFU's OWN day-seeded branch and the dungeon seed is FLAGGED rather
+  // than faked - a wrong seed is a wrong song every time, which is worse
+  // than the general rule.
+  _audioUp.then(() => {
+    music.playFrom(DUNGEON_SONGS, { gameDays: Math.floor(classicMinutes / MINUTES_PER_DAY) });
+  });
+
   return {
     drawList,
     dynamicDraws,
@@ -1760,8 +1842,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return floorLanding(collider, [m.x, m.y + 1.08, m.z]);
     },
     get playerSlowFalling() { return hasActiveEffect(playerEntity, 'slowfall'); },   // S8: hosts feed their motor (P14: the -105 * dt constant-speed law lives in the motor)
-    // S11: quicksave/quickload (F9/F12). WORLD state (foes, piles,
-    // actions) is FLAGGED - the player snapshot only.
     toggleDebugHud() { debugHud = !debugHud; },
     reportMotor(grounded, velY, yaw) { _grounded = grounded; _motorState = `g:${grounded ? 1 : 0} vy:${velY.toFixed(1)} yaw:${yaw.toFixed(2)}`; },
     // U7: the rest key. Pre-rest gates (the classic order): enemies
@@ -1810,15 +1890,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // P11: per-frame activity feed - the splash on the swim edge, the
     // jump fatigue/tally (PlayerEntity: 11 x multiplier + Jumping
     // tally once per jump), and the state the per-minute fatigue
-    // drain reads. Athleticism multiplier pends the career advantage
-    // flags (1.0, flagged).
+    // drain reads.
     reportActivity({ running = false, swimming = false, jumped = false, movingLessThanHalfSpeed = true, fell = 0 } = {}) {
       if (swimming && !_activity.swimming) audio.playOneShot(SOUND.SplashLarge);   // PlayLargeSplash on entry
       _activity.running = running;
       _activity.swimming = swimming;
       _activity.movingLessThanHalfSpeed = movingLessThanHalfSpeed;   // P13: IsMovingLessThanHalfSpeed (the motor computes it)
       if (jumped) {
-        drainFatigue(FATIGUE_LOSS.Jumping);
+        drainFatigue(Math.trunc(FATIGUE_LOSS.Jumping * fatigueLossMultiplier()));   // PlayerEntity.cs:427, the same multiplier
         tallySkill(playerEntity, SKILLS.Jumping);
       }
       // P14 fall landing (CheckFallingDamage + PlayerHealth verbatim):
@@ -1858,12 +1937,45 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends
       if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);
       surfacePlayer();
-      if (activeOverlay instanceof DeathScreen) activeOverlay = null;   // rising from a save beats the reload
+      // A loaded game supersedes whatever pre-game overlay is up.
+      // AUDIT 19 F7 (critical): only DeathScreen was cleared, so the
+      // menu's LOAD GAME restored the character and then left the
+      // CHARGEN WIZARD sitting on top of it - and playing through the
+      // wizard runs finishChargen, overwriting the character that was
+      // just loaded. The context mounts chargen at build time
+      // (dungeonContext.js:772) and dungeon.js calls quickLoad after,
+      // so the wizard is ALWAYS up on this path.
+      // NOTE: activeOverlay is cleared but chargenFlow is NOT nulled.
+      // Four later sites test `activeOverlay === chargenFlow`, and with
+      // both null that comparison is TRUE - which would fire
+      // finishChargen on the very character the load just restored.
+      if (activeOverlay instanceof DeathScreen || activeOverlay === chargenFlow) activeOverlay = null;
       hudText.add('Game loaded.');
     },
     // U3: ONE overlay seam (chargen, level-up, char sheet) - hosts
     // pause gameplay while any overlay is active.
     get uiOverlayActive() { return !!activeOverlay; },
+    /** AUDIT 18 F5: the overlay's own clock. DFU runs
+     *  DaggerfallRestWindow.Update every frame the window is topmost
+     *  (DaggerfallRestWindow.cs:183-227), and TickRest reads
+     *  Time.realtimeSinceStartup, so PauseWhileOpen's timeScale = 0
+     *  does not stop it. The port had the tick inside drawFoes, which
+     *  the hosts SKIP whenever an overlay is up - so U7's rest never
+     *  advanced an hour in either host that mounts a dungeon: the
+     *  window sat on "Hours passed: 0" until Escape.
+     *  The done-drain is not optional here: RestWindow._end() sets
+     *  done on the death path and on a missing endLines, and until
+     *  now only overlayInput/overlayClick cleared activeOverlay, so a
+     *  rest that ended itself would latch a dead window on screen. */
+    tickOverlay(dt) {
+      if (!activeOverlay) return;
+      if (activeOverlay.isRestWindow) activeOverlay.tickRest(dt);
+      if (activeOverlay.done) {
+        if (activeOverlay === chargenFlow) finishChargenHere();
+        surfacePlayer();
+        activeOverlay = null;
+      }
+    },
     chargenFlow: () => chargenFlow,   // AUDIT 17i probe surface
     /** U14: the POINTER half of the overlay seam. This host routed
      *  every click to requestPointerLock and nothing else, so chargen
@@ -1957,7 +2069,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       foes.forEach((f, i) => {
         if (!f.dead || !f.entity?.items?.length) return;
         const p = f.ai.feet;
-        targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] } });
+        // PlayerActivate.cs:85/:938 - a corpse has its OWN reach,
+        // CorpseActivationDistance = 150 * GlobalScale = 3.75, not the
+        // 128-unit default the loot piles use.
+        targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: CORPSE_ACTIVATION_DISTANCE });
       });
       return targets;
     },

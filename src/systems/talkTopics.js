@@ -140,12 +140,26 @@ export function mergeNamedBuildings(exteriorBuildings, blocks) {
       // locations), and DFU only reaches it via WorldDataReplacement,
       // which this port deliberately omits. Doc-corrected, not
       // implemented - implementing it would be untestable dead code.
-      if (!item) continue;
-      list[i].nameSeed = item.nameSeed;
-      list[i].factionId = item.factionId;
-      list[i].sector = item.sector;
-      list[i].locationId = item.locationId;
-      list[i].quality = item.quality;
+      if (item) {
+        list[i].nameSeed = item.nameSeed;
+        list[i].factionId = item.factionId;
+        list[i].sector = item.sector;
+        list[i].locationId = item.locationId;
+        list[i].quality = item.quality;
+      }
+      // RMBLayout.cs:677-683, "Matched to classic: special handling for
+      // some Order of the Raven buildings" - still inside the
+      // IsNamedBuilding branch and AFTER the pool merge, so it overrides
+      // whatever type/faction the pool supplied:
+      //   if (FldHeader.OtherNames != null && OtherNames[i] == "KRAVE01.HS2")
+      //     { building.BuildingType = GuildHall; building.FactionId = 414; }
+      // DFU runs it even when the pool draw failed (its item is a zeroed
+      // struct, not a skip), which is why it sits outside the merge above.
+      const otherNames = b.dfBlock.rmbBlock.fldHeader.otherNames;
+      if (otherNames && otherNames[i] === 'KRAVE01.HS2') {
+        list[i].buildingType = BUILDING_TYPES.GuildHall;
+        list[i].factionId = 414;
+      }
     }
     out.set(b, list);
   }

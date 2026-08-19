@@ -20,19 +20,36 @@ import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
 export const COMPASS_BOX_OUTLINE = 2;
 export const COMPASS_BOX_INTERIOR = 64;
 export const COMPASS_NON_WRAPPED = 258;
-export const HUD_BORDER = 10;   // HUDVitals borderSize
+// HUDVitals.borderSize (HUDVitals.cs:26), applied through
+// SetMargins(Margins.All, borderSize) (:88-90). The bars read it as
+// Parent.LeftMargin/BottomMargin * parentScale in
+// BaseScreenComponent.GetRectangle (:1211/:1231) and parentScale is
+// the top-level parentPanel's LocalScale = Vector2.one (:43, :1180),
+// so the inset is 10 SCREEN pixels at every HUD scale - it is NOT
+// multiplied by Scale the way the bar geometry is.
+export const HUD_BORDER = 10;
+// HUDVitals.nativeBarWidth (HUDVitals.cs:25). PositionIndicators
+// (:219-234) sets barWidth = nativeBarWidth * Scale.x and places
+// health at +0, fatigue at +barWidth*2, magicka at +barWidth*4 - a
+// stride of 8 native px that does NOT come from the loaded art's
+// width.
+export const HUD_NATIVE_BAR_WIDTH = 4;
+export const HUD_BAR_STRIDE = HUD_NATIVE_BAR_WIDTH * 2;   // 8
 
 // P12: HUDBreathBar verbatim - a SOLID VerticalProgress, width 6
 // classic px, height = LiveEndurance px, filled bottom-anchored by
 // breath/MaxBreath. Yellow (247,239,41); short-on-breath dark red
-// (148,12,0) when (LiveEndurance >> 3) + 4 > currentBreath. Layout:
-// x offset 306 on the 320 screen = 14 from the RIGHT edge (right-
-// anchored here, like the compass, so wide canvases keep the classic
-// proportion); the bar's BOTTOM sits 92 + border above the canvas
-// bottom (the -92 offset from the bottom-aligned parent panel).
+// (148,12,0) when (LiveEndurance >> 3) + 4 > currentBreath. Layout
+// (HUDBreathBar.cs:66-72): breathBar.Position = Position +
+// (306 * Scale.x, -92 * Scale.y - height) - BOTH terms are already
+// scaled, so 306 is a LEFT edge in screen px, not a right inset. The
+// panel itself carries SetMargins(All, 10) and has no Size, so its
+// rect collapses onto the viewport's bottom edge and the child's
+// alignment-None branches add the margin unscaled: x = 10 + 306*S,
+// bottom = screenH + 10 - 92*S.
 // Drawn only while holding breath (Amount 0 draws nothing in DFU).
 export const BREATH_BAR_WIDTH = 6;
-export const BREATH_BAR_RIGHT = 320 - 306;   // 14
+export const BREATH_BAR_LEFT = 306;
 export const BREATH_BAR_BOTTOM = 92;
 export const BREATH_COLOR_NORMAL = [247, 239, 41];
 export const BREATH_COLOR_SHORT = [148, 12, 0];
@@ -111,10 +128,10 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
 export function drawHud(renderer, canvas, art, vitals, heading01) {
   if (!art) return;
   const s = hudScale(canvas.width, canvas.height);
-  const bottom = canvas.height - HUD_BORDER * s;
+  const bottom = canvas.height - HUD_BORDER;
   // Vitals, left to right: health, fatigue, magicka (classic order),
-  // 2px gaps at scale.
-  let x = HUD_BORDER * s;
+  // strided by barWidth * 2 = 8 native px (PositionIndicators).
+  let x = HUD_BORDER;
   const bars = [
     [art.health, vitals.health, vitals.maxHealth],
     [art.fatigue, vitals.fatigue ?? 0, maxFatigue(vitals) || 1],   // S15: the live fatigue stat ((Str+End) x 64 ceiling)
@@ -124,7 +141,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01) {
     const { ratio, v0, v1 } = barFill(cur, max);
     const w = img.w * s, hFull = img.h * s, h = hFull * ratio;
     if (h > 0) renderer.drawScreenQuad(img.tex, { x, y: bottom - h, w, h }, { u0: 0, v0, u1: 1, v1 });
-    x += w + 2 * s;
+    x += HUD_BAR_STRIDE * s;
   }
   // P12: the breath bar (HUDBreathBar verbatim geometry) - only
   // while holding breath.
@@ -134,16 +151,19 @@ export function drawHud(renderer, canvas, art, vitals, heading01) {
     const mb = maxBreath(vitals) || 1;
     const bh = liveEnd * s;
     const fill = Math.max(0, Math.min(1, breath / mb)) * bh;
-    const bx2 = canvas.width - BREATH_BAR_RIGHT * s - BREATH_BAR_WIDTH * s;
-    const bBottom = canvas.height - (BREATH_BAR_BOTTOM + HUD_BORDER) * s;
+    const bx2 = HUD_BORDER + BREATH_BAR_LEFT * s;
+    const bBottom = canvas.height + HUD_BORDER - BREATH_BAR_BOTTOM * s;
     const img = breathShortThreshold(liveEnd) > breath ? art.breathShort : art.breathNormal;
     if (fill > 0) renderer.drawScreenQuad(img.tex, { x: bx2, y: bBottom - fill, w: BREATH_BAR_WIDTH * s, h: fill });
   }
   // Compass, bottom-right: strip window first, frame over it.
+  // DaggerfallHUD.cs:254-257 sets compass.Position to
+  // (screenRect.xMax - Size.x, screenRect.yMax - Size.y) and HUDCompass
+  // never calls SetMargins - COMPBOX sits FLUSH in the corner.
   const box = art.compassBox;
   const bw = box.w * s, bh = box.h * s;
-  const bx = canvas.width - HUD_BORDER * s - bw;
-  const by = canvas.height - HUD_BORDER * s - bh;
+  const bx = canvas.width - bw;
+  const by = canvas.height - bh;
   const scroll = compassScroll(heading01);
   const stripH = art.compass.h * s;
   renderer.drawScreenQuad(art.compass.tex,

@@ -28,7 +28,7 @@ test('enemyMotor: verbatim classic constants', () => {
   assert.equal(FIELD_OF_VIEW, 180);                // EnemySenses.cs:32
   assert.equal(MELEE_DISTANCE, 2.25);              // EnemyAttack.cs:30
   assert.equal(CLASSIC_MELEE_DISTANCE_VS_AI, 1.5); // EnemyAttack.cs:31
-  assert.equal(CLASSIC_TURN_DEG, 11.25);           // EnemyMotor.cs TurnToTarget classic comment
+  assert.equal(CLASSIC_TURN_DEG, 20);              // EnemyMotor.cs:1348 TurnToTarget `const float turnSpeed = 20f`
   assert.equal(CLASSIC_UPDATE_INTERVAL, 0.0625);   // GameManager.cs:42
   approx(SYSTEM_TIMER_UPDATES_DIVISOR, 0.0549254); // EnemySenses.cs:75
   assert.equal(MOVE_YAW_GATE_DEG, 5.625);          // EnemyMotor.cs AttemptMove
@@ -36,9 +36,9 @@ test('enemyMotor: verbatim classic constants', () => {
   approx(enemyMoveSpeed(50), (50 + 150) * GLOBAL_SCALE);   // "same formula as when the player walks"
 });
 
-test('enemyMotor: classic turn clamps at 11.25deg per update', () => {
+test('enemyMotor: turn clamps at TurnToTarget\'s 20deg per update', () => {
   const y1 = turnTowards(0, 1, 0);                  // target due +x = yaw PI/2
-  approx(y1, 11.25 * Math.PI / 180);
+  approx(y1, 20 * Math.PI / 180);
   const y2 = turnTowards(0, Math.sin(0.05), Math.cos(0.05));   // 2.9deg away: full turn
   approx(y2, 0.05);
   assert.ok(withinYaw(y2, Math.sin(0.05), Math.cos(0.05), MOVE_YAW_GATE_DEG));

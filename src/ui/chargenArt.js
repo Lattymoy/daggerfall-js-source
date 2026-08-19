@@ -38,7 +38,8 @@ import { TextRsc } from '../formats/textRsc.js';   // U11: the race description
 import { generateBackstory } from '../systems/biography.js';   // U13
 import { bitmapToColor32 } from './hud.js';
 import { drawImg, drawRect, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR, SCREEN_DIM } from './nativePanel.js';
-import { drawText, measureText } from './text.js';   // U15: the RANDOM button label; U18: the black scroll text
+import { drawText, measureText, makeFont } from './text.js';   // U15: the RANDOM button label; U18: the black scroll text; AUDIT 18: SmallFont
+import { FntFile } from '../formats/fntFile.js';   // AUDIT 18: FONT0002, DaggerfallUI.SmallFont
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U11
 import { FACES_PER_RACE, raceById, raceArt } from '../systems/races.js';
 import { SKILL_NAMES } from '../systems/skills.js';
@@ -53,6 +54,37 @@ export const RANDOM_LABEL = 'Random';
 
 /** DaggerfallBaseWindow.cs:40 - parentPanel.BackgroundColor = black. */
 export const MENU_BACKDROP = [0, 0, 0, 1];
+
+/** U14 / U21b: paint DaggerfallBaseWindow's BLACK parent panel over the
+ *  whole real canvas, in the host's own space.
+ *
+ *  It has to SUBTRACT the screen offset. The dungeon host draws overlays
+ *  with a virtual 320x200*s canvas and a letterbox offset already set
+ *  (dungeonContext's drawOverlay), so a quad at (0,0) landed DOWN-RIGHT
+ *  by the margin: the top and left strips kept showing the host's 60%
+ *  dim over the pale Iliac Bay sky, which read as a blue border down the
+ *  side of every chargen screen. Measured before the fix, the left strip
+ *  was (57,75,97) - the sky at 40% - and (0,0,0) after.
+ *
+ *  The exterior hosts pass the REAL canvas with no offset, where this
+ *  subtracts zero and nothing changes.
+ *
+ *  U22: a TOP-LEVEL host (the splash) has a canvas rather than a live GL
+ *  context to measure - and the letterbox bit there too, a third time.
+ *  Pass one and it is measured instead of renderer.gl; the offset is
+ *  still subtracted, which is a no-op at top level and correct anywhere
+ *  else. Without this the helper cannot be shared with a host that draws
+ *  before the world does, and a fourth copy of the idiom gets written. */
+export function drawMenuBackdrop(renderer, canvas = null) {
+  const [ox, oy] = renderer.screenOffset ?? [0, 0];
+  const w = canvas ? canvas.width : renderer.gl.drawingBufferWidth;
+  const h = canvas ? canvas.height : renderer.gl.drawingBufferHeight;
+  renderer.drawScreenQuad(null,
+    // `0 - ox` rather than `-ox`: unary negation on 0 yields -0, which is
+    // the same pixel but a different value to anything comparing rects.
+    { x: 0 - ox, y: 0 - oy, w, h },
+    undefined, MENU_BACKDROP);
+}
 export const ALT_SHADOW_1 = [44 / 255, 60 / 255, 60 / 255, 1];        // DaggerfallAlternateShadowColor1
 export const SELECTED_TEXT = [162 / 255, 36 / 255, 12 / 255, 1];      // DaggerfallDefaultSelectedTextColor
 export const INPUT_TEXT = [227 / 255, 223 / 255, 0, 1];               // DaggerfallDefaultInputTextColor
@@ -64,6 +96,11 @@ export const RECTS = Object.freeze({
   randomName: [279, 3, 36, 10],       // :78 - live since U15
   ok: [263, 172, 39, 22],             // :85 (and face/stats/skills OK)
   reroll: [263, 147, 39, 22],         // CreateCharAddBonusStats.cs:112
+  // AUDIT 18: the stats screen's other two buttons (:116-122). Both
+  // were missing entirely - the rects, the hit branch and the state -
+  // so a player who rerolled away a good roll could not get it back.
+  saveRoll: [162, 162, 71, 9],        // :117
+  loadRoll: [162, 171, 71, 9],        // :121
   faceDisplay: [247, 25, 64, 40],     // FacePicker.cs:55-57
   facePrev: [245, 69, 42, 9],         // :65
   faceNext: [287, 69, 26, 9],         // :67
@@ -304,11 +341,27 @@ export async function preloadChargenArt(deps) {
       const pristine = [192, 160, 128].map((i) => chgnPalette.get(i));
       questions = { bmp: chgnBmp, palette: chgnPalette, pristine, scroll, texKey: null, tex: null };
     } catch (e) { console.warn('[chargen] CHGN00I0/SCRL0*I0 unavailable; the class questions keep the text panel', e); }
-    _art = { imgs, picker, textRsc, questions };
+    // AUDIT 18: DaggerfallUI.SmallFont is FONT0002 (DaggerfallUI.cs:155),
+    // and the special advantage/disadvantage window draws its labels
+    // AND both of its list pickers in it (CreateCharSpecialAdvantage
+    // Window.cs:243, :263, :270, :273-274). FONT0002's fixedHeight is
+    // 5 against FONT0003's 7, which is exactly why advPickerItemCount
+    // is 12: 12 x (5+1) = 72 = the listBox height at
+    // DaggerfallListPickerWindow.cs:83. In its own guard - a missing
+    // FNT must not cost the other screens their art.
+    let smallFont = null;
+    try { smallFont = makeFont(deps.renderer, new FntFile().load(await deps.fetchBytes('FONT0002.FNT')), 'FONT0002'); }
+    catch (e) { console.warn('[chargen] FONT0002.FNT unavailable; the advantages window falls back to the default font', e); }
+    _art = { imgs, picker, textRsc, questions, smallFont };
     _deps = deps;
   } catch (e) { console.warn('[chargen] CHAR0*/PICK00/TMAP00 art unavailable; the interim text panels stand in', e); }
 }
 export const chargenArtLoaded = () => !!_art;
+/** AUDIT 18: DaggerfallUI.SmallFont (FONT0002), the font the special
+ *  advantage/disadvantage window and both of its pickers draw in. Null
+ *  when the FNT could not be fetched, in which case the draw falls back
+ *  to the caller's font. */
+export const chargenSmallFont = () => _art?.smallFont ?? null;
 export const chargenPickerBitmap = () => _art?.picker ?? null;
 
 /** TAMRIEL2's index at a native point -> the race there, or null
@@ -383,7 +436,7 @@ export function drawChargenNative(renderer, m, font, flow) {
   // chargen from the menu, so the world is NEVER visible around it;
   // the port ran it in-world and let the town show through the
   // letterbox on every screen. Black first, then the screen.
-  renderer.drawScreenQuad(null, { x: 0, y: 0, w: renderer.gl.drawingBufferWidth, h: renderer.gl.drawingBufferHeight }, undefined, MENU_BACKDROP);
+  drawMenuBackdrop(renderer);
   const s = flow.state;
   if (s === 'name') return drawName(renderer, m, font, flow);
   if (s === 'race') return drawRace(renderer, m, font, flow);
@@ -431,7 +484,10 @@ function drawReflexes(renderer, m, font, flow) {
  *  U16's summary, which differ only in where the panel sits. */
 function drawReflexBlock(renderer, m, flow, origin) {
   const strip = img('CHAR05I1.IMG');
-  const v = Math.max(0, Math.min(REFLEX_COUNT - 1, flow.reflexes ?? PLAYER_REFLEXES.Average));
+  // AUDIT 18: the SUMMARY carries its own ReflexPicker value, re-seeded
+  // from the document on every push and only committed by OK.
+  const picked = flow.state === 'summary' ? flow.sumReflexes : flow.reflexes;
+  const v = Math.max(0, Math.min(REFLEX_COUNT - 1, picked ?? PLAYER_REFLEXES.Average));
   const [px, py] = origin;
   renderer.drawScreenQuad(strip.tex,
     { x: m.ox + px * m.s, y: m.oy + (py + v * REFLEX_ROW_H) * m.s, w: REFLEX_PICKER[2] * m.s, h: REFLEX_ROW_H * m.s },
@@ -511,10 +567,10 @@ function drawSummary(renderer, m, font, flow) {
   drawReflexBlock(renderer, m, flow, SUMMARY_REFLEX_ORIGIN);
   // the name is EDITABLE here too (textBox at 100,5) - the caret says so
   const [bx, by] = RECTS.summaryName;
-  shadowText(renderer, font, `${flow.name}_`, m, bx, by, { color: INPUT_TEXT });
+  shadowText(renderer, font, `${flow.sumName ?? flow.name}_`, m, bx, by, { color: INPUT_TEXT });
   // "You must distribute your bonus points" - a ClickAnywhereToClose
   // parchment box over the screen (:180-186).
-  if (flow.summaryPoolBox) drawMessageBox(renderer, m, font, layoutMessageBox(font, flow.summaryPoolBox));
+  if (flow.poolBox) drawMessageBox(renderer, m, font, layoutMessageBox(font, flow.poolBox));
   return true;
 }
 
@@ -578,7 +634,10 @@ function drawFaceBlock(renderer, m, flow) {
   const [px, py, pw, ph] = RECTS.faceDisplay;
   if (_faces) {
     // facePanel is Center/Middle inside the 64x40 display panel
-    const i = Math.max(0, Math.min(FACES_PER_RACE - 1, flow.faceIndex));
+    // AUDIT 18: the face SCREEN draws its own picker value (reset to 0
+    // on every push, CreateCharFaceSelect.cs:65-69); the SUMMARY's
+    // picker is seeded from the document (CreateCharSummary.cs:132).
+    const i = Math.max(0, Math.min(FACES_PER_RACE - 1, flow.state === 'face' ? flow.facePick : flow.faceIndex));
     const [fw, fh] = _faces.size[i];
     renderer.drawScreenQuad(_faces.tex[i], {
       x: m.ox + Math.round(px + (pw - fw) / 2) * m.s,
@@ -605,16 +664,19 @@ function drawClassConfirm(renderer, m, font, flow) {
  *  thumb is three texture slices this port has not identified yet,
  *  and inventing a colour would break the NATIVE-WINDOW RULE. The
  *  rail and both arrows are baked into PICK00I0 and do draw. */
-function drawListPicker(renderer, m, font, names, scroll, selected) {
+function drawListPicker(renderer, m, font, names, scroll, selected, rows = LIST_ROWS) {
   const [ox, oy] = PICK_PANEL;
   drawImg(renderer, img('PICK00I0.IMG'), m, ox, oy);
-  const [lx, ly, , lh] = RECTS.pickList;
+  const [lx, ly] = RECTS.pickList;
   const h = rowH(font);
-  for (let i = 0; i < LIST_ROWS; i++) {
+  for (let i = 0; i < rows; i++) {
     const idx = scroll + i;
     if (idx >= names.length) break;
     const y = ly + i * h;
-    if (y + h > ly + lh) break;
+    // AUDIT 18: the height break here was the port's own invention.
+    // ListBox.Draw clips on rowsDisplayed ALONE (ListBox.cs:313), and
+    // the caller's row count is what makes the two agree - 9 rows of
+    // FONT0003 and 12 of FONT0002 both fill the 72px list exactly.
     shadowText(renderer, font, names[idx], m, ox + lx, oy + y,
       { color: idx === selected ? SELECTED_TEXT : DEFAULT_TEXT_COLOR, shadow: DEFAULT_SHADOW_COLOR });
   }
@@ -707,15 +769,20 @@ function drawSpecialAdv(renderer, m, font, flow) {
   // DFU's rows are TextLabels with their own click handlers, so a
   // click only removes an item when it lands ON the text - the widths
   // are cached here for the hit test, the `_rowH` idiom.
+  // AUDIT 18: this window is drawn in SmallFont (:243 sets `font =
+  // DaggerfallUI.SmallFont` and :263 hands it to every label), not the
+  // FONT0003 the rest of the arc uses.
+  const f = _art.smallFont ?? font;
   const rows = labelRows(c.sub === 'advantage' ? c.advantages : c.disadvantages);
   for (const row of rows) {
-    shadowText(renderer, font, row.text, m, px + LABEL_ORIGIN[0], py + row.y);
-    row.w = measureText(font.fnt, row.text);
+    shadowText(renderer, f, row.text, m, px + LABEL_ORIGIN[0], py + row.y);
+    row.w = measureText(f.fnt, row.text);
   }
   c._advRows = rows;
-  // the two pickers push over the window (:271-278)
+  // the two pickers push over the window (:271-278), BOTH constructed
+  // with SmallFont and advPickerItemCount = 12 rows
   if (c.pickList) {
-    const [, , h] = drawListPicker(renderer, m, font, c.pickList.map(labelFor), c.pickScroll, c.pickCursor);
+    const [, , h] = drawListPicker(renderer, m, f, c.pickList.map(labelFor), c.pickScroll, c.pickCursor, ADV_PICKER_ITEM_COUNT);
     c._rowH = h;
   }
   return true;
@@ -876,6 +943,9 @@ function drawStats(renderer, m, font, flow) {
     alt(renderer, font, d.hitPoints, m, ...DERIVED_POS.hitPoints);
     alt(renderer, font, d.healingRate, m, ...DERIVED_POS.healingRate);
   }
+  // AUDIT 18: "You must distribute your bonus points" - the same
+  // ClickAnywhereToClose parchment box the summary pops (:189-194).
+  if (flow.poolBox) drawMessageBox(renderer, m, font, layoutMessageBox(font, flow.poolBox));
   return true;
 }
 
@@ -909,6 +979,8 @@ const customStatView = (flow) => ({ stats: flow.custom.stats, rolled: flow.custo
 function drawSkills(renderer, m, font, flow) {
   drawImg(renderer, img('CHAR03I0.IMG'), m, 0, 0);
   drawSkillBlock(renderer, m, font, flow);
+  // AUDIT 18: CreateCharAddBonusSkills.cs:126-130 pops the same box.
+  if (flow.poolBox) drawMessageBox(renderer, m, font, layoutMessageBox(font, flow.poolBox));
   return true;
 }
 
@@ -1099,9 +1171,10 @@ export function chargenHit(flow, vx, vy) {
         if (lx >= RECTS.pickNext[0] && ly >= RECTS.pickNext[1] && lx < RECTS.pickNext[0] + 9 && ly < RECTS.pickNext[1] + 9) return { pickStep: 1 };
         const [plx, ply, plw] = RECTS.pickList;
         if (lx >= plx && lx < plx + plw && ly >= ply) {
+          // AUDIT 18: advPickerItemCount rows, at SmallFont's 6px pitch
           const row = Math.floor((ly - ply) / (c._rowH || 1));
           const idx = (c.pickScroll ?? 0) + row;
-          if (row >= 0 && row < LIST_ROWS && idx < c.pickList.length) return { pickRow: idx };
+          if (row >= 0 && row < ADV_PICKER_ITEM_COUNT && idx < c.pickList.length) return { pickRow: idx };
         }
         return null;
       }
@@ -1161,12 +1234,15 @@ export function chargenHit(flow, vx, vy) {
     return inRect(RECTS.ok) ? 'confirm' : null;
   }
   if (s === 'stats') {
+    if (flow.poolBox) return 'confirm';   // ClickAnywhereToClose - the box is MODAL over the window
     if (inRect(RECTS.reroll)) return 'reroll';
+    if (inRect(RECTS.saveRoll)) return { saveRoll: true };
+    if (inRect(RECTS.loadRoll)) return { loadRoll: true };
     if (inRect(RECTS.ok)) return 'confirm';
     return statBlockHit(flow.statCursor, vx, vy);
   }
   if (s === 'summary') {
-    if (flow.summaryPoolBox) return 'confirm';   // ClickAnywhereToClose
+    if (flow.poolBox) return 'confirm';   // ClickAnywhereToClose
     if (inRect(RECTS.ok)) return 'confirm';
     if (inRect(RECTS.restart)) return { restart: true };
     if (inRect(RECTS.facePrev)) return { faceStep: -1 };
@@ -1183,6 +1259,7 @@ export function chargenHit(flow, vx, vy) {
     return skillBlockHit(flow, vx, vy);
   }
   if (s === 'skills') {
+    if (flow.poolBox) return 'confirm';   // ClickAnywhereToClose
     if (inRect(RECTS.ok)) return 'confirm';
     return skillBlockHit(flow, vx, vy);
   }

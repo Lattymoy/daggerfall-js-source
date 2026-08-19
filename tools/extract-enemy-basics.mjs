@@ -21,6 +21,19 @@ const blocks = table.split('new MobileEnemy()').slice(1);
 const MATERIALS = { None: -1, Iron: 0, Steel: 1, Silver: 2, Elven: 3, Dwarven: 4, Mithril: 5, Adamantium: 6, Ebony: 7, Orcish: 8, Daedric: 9 };
 const field = (b, k) => { const m = b.match(new RegExp(`\\b${k} = ([^,\\n]+),`)); return m ? m[1].trim() : null; };
 const num = (v) => (v === null ? null : Number(v));
+// An anim-frame element is a C# CONSTANT EXPRESSION, not a literal:
+// EnemyBasics.cs:1066 has a missing comma, so the Orc Warlord's
+// PrimaryAttackAnimFrames3 element `4 -1` is the binary expression
+// 4 - 1 = 3 (a DFU typo the compiler evaluates - reproduced, not
+// corrected). Bare Number('4 -1') is NaN, which JSON-serialises to
+// null; sum the whitespace-separated signed terms instead, and hard
+// fail on anything that is not an integer so a future regeneration
+// can never silently emit null again.
+function animFrame(s, id, key) {
+  const v = s.trim().split(/\s+/).map(Number).reduce((a, b) => a + b, 0);
+  if (!Number.isInteger(v)) throw new Error(`ASSERT FAIL: enemy ${id} ${key} element "${s.trim()}" -> ${v}`);
+  return v;
+}
 
 const out = {};
 for (const b of blocks) {
@@ -56,13 +69,18 @@ for (const b of blocks) {
   if (/HasRangedAttack2 = true/.test(b)) e.hasRangedAttack2 = true;
   for (const k of ['PrimaryAttackAnimFrames', 'PrimaryAttackAnimFrames2', 'PrimaryAttackAnimFrames3', 'PrimaryAttackAnimFrames4', 'PrimaryAttackAnimFrames5', 'SpellAnimFrames', 'RangedAttackAnimFrames']) {
     const m = b.match(new RegExp(`\\b${k} = new int\\[\\] \\{([^}]+)\\}`));
-    if (m) e[k[0].toLowerCase() + k.slice(1)] = m[1].split(',').map((s) => Number(s.trim()));
+    if (m) e[k[0].toLowerCase() + k.slice(1)] = m[1].split(',').map((s) => animFrame(s, id, k));
   }
   const team = field(b, 'Team');
   if (team) e.team = team.replace('MobileTeams.', '');
   const loot = b.match(/LootTableKey = "(.)"/);
   if (loot) e.lootTableKey = loot[1];
   if (/CanOpenDoors = true/.test(b)) e.canOpenDoors = true;
+  // AUDIT 18: ParrySounds ("plays parry sounds when attacks against
+  // this enemy miss", DaggerfallUnityStructs.cs:208) was dropped by
+  // the E3a extraction; it is the gate WeaponManager.cs:609-615 and
+  // EnemyAttack.cs:371-373 read on a zero-damage hit.
+  if (/ParrySounds = true/.test(b)) e.parrySounds = true;
   if (/CastsMagic = true/.test(b)) e.castsMagic = true;
   if (/SeesThroughInvisibility = true/.test(b)) e.seesThroughInvisibility = true;   // P13: the illusion-gate exemption
   // A1: the sound columns (MoveSound/BarkSound/AttackSound) -

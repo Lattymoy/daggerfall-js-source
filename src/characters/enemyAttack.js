@@ -9,8 +9,14 @@
 //     && MeleeTimer == 0 -> try MeleeAnimation (DFU keeps classic's
 //     reversed speed comparison; so do we)
 //   - MeleeAnimation: target in sight, within 22.5deg yaw, and
-//     distance <= MeleeDistance + rate-of-approach -> attack starts
-//   - ResetMeleeTimer: Random.Range(1500, 3001) - 50*(playerLevel-10)
+//     distance <= MeleeDistance -> attack starts. DFU's gate reads
+//     `MeleeDistance + senses.TargetRateOfApproach`, but
+//     targetRateOfApproach is assigned a non-zero value ONLY inside
+//     `if (DaggerfallUnity.Settings.EnhancedCombatAI)`
+//     (EnemySenses.cs:354-363), so on the classic path the term is
+//     identically 0 and the reach is a flat 2.25 (AUDIT 18)
+//   - ResetMeleeTimer: Random.Range(1500, 3001) - an INT roll, one of
+//     1501 discrete values - then - 50*(playerLevel-10)
 //     + 450*(reflexes-2), floored at 0, / 980 (classicFrameUpdate)
 //     - Unity Random slots stay uniform rolls (DFU's own choice);
 //     DFRandom is used exactly where DFU uses it
@@ -38,7 +44,8 @@ export const MELEE_TIMER_LEVEL_MS = 50;            // per player level above 10
 export const MELEE_TIMER_REFLEX_MS = 450;          // per reflexes step from average
 
 export function resetMeleeTimer(playerLevel = 10, reflexes = 2, roll = Math.random()) {
-  let t = MELEE_TIMER_MIN_MS + roll * (MELEE_TIMER_MAX_MS + 1 - MELEE_TIMER_MIN_MS);
+  // Random.Range(int, int) returns an INT (DFU rolls whole ms).
+  let t = MELEE_TIMER_MIN_MS + Math.floor(roll * (MELEE_TIMER_MAX_MS + 1 - MELEE_TIMER_MIN_MS));
   t -= MELEE_TIMER_LEVEL_MS * (playerLevel - 10);
   t += MELEE_TIMER_REFLEX_MS * (reflexes - 2);
   if (t < 0) t = 0;
@@ -61,7 +68,6 @@ export class EnemyAttack {
     this.reflexes = reflexes;
     this.meleeTimer = 0;
     this._classicTimer = 0;
-    this._prevDist = null;
   }
 
   /**
@@ -72,10 +78,7 @@ export class EnemyAttack {
   update(dt, ai, playerFeet) {
     this.meleeTimer -= dt;
     if (this.meleeTimer < 0) this.meleeTimer = 0;
-    // rate of approach: how much the distance CLOSED since last update
     const dist = ai._dist;
-    const approach = this._prevDist === null ? 0 : Math.max(0, this._prevDist - dist);
-    this._prevDist = dist;
     this._classicTimer += dt;
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
@@ -86,7 +89,7 @@ export class EnemyAttack {
       if (!ai.inSight || !withinYaw(ai.yaw, dx, dz, ATTACK_YAW_DEG)) continue;
       // Ranged (bow-equipped) foes attack from SIGHT - the melee
       // distance gate is the melee path's (EnemyAttack bow branch).
-      if (!this.rangedAttack && dist > MELEE_DISTANCE + approach) continue;
+      if (!this.rangedAttack && dist > MELEE_DISTANCE) continue;
       const strike = STRIKES[Math.floor(Math.random() * STRIKES.length)];
       if (machineAttack(this.machine, strike)) {
         this.meleeTimer = resetMeleeTimer(this.playerLevel, this.reflexes);
