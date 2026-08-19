@@ -278,6 +278,10 @@ combat line numbers below are refreshed with it.
 - `src/systems/effects.js:583` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 - `src/systems/equip.js:170` - /** INTERIM starting equipment (chargen's starting-gear roll
+- `src/systems/guilds.js:39` - FLAGGED loud - RANK TITLES. DFU reads them from its own
+- `src/systems/guilds.js:112` - // are FLAGGED to the quest slice.
+- `src/systems/guilds.js:221` - /** GetTitle (:180-183). FLAGGED - see the header: the rank titles live
+- `src/systems/guildVariants.js:153` - // banking does not exist yet, so it is FLAGGED to the banking
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).
@@ -325,6 +329,54 @@ combat line numbers below are refreshed with it.
 ## Audits
 
 Newest first.
+
+**2026-08-19 - AUDIT 20, the parity pass over S25 + G1 + G2.** Numbered
+20 because AUDIT 19 is in flight on main (batch 1 landed; its Home.md
+entry has not). Scope: the faction reputation store and the two guild
+slices built on it, read against PersistentFactionData.cs, Guild.cs,
+GuildManager.cs, Temple.cs and KnightlyOrder.cs. The read was completed
+BEFORE any fix (17l), and every one of the nine fixes is pinned and
+proven to fail when reverted.
+
+FIVE MAJOR. (1) THE THIRD REPUTATION CHANNEL DID NOT PERSIST: the save
+envelope carried sGroupReputations and legalRep but not the faction
+store, so every backstory `rf` answer and every crime's People delta
+was lost on load - and guild rank, computed from it, reset with it.
+(2) Guild memberships did not persist either; DFU serialises
+GuildMembership_v1. (3) applyHeadlessChargen - the ?class= path all
+three exterior hosts can boot - never attached the store, because it
+is a SECOND copy of the construction that hand-rolls the starting kit
+instead of going through applyCreationExtras. THE ONE CONSTRUCTION
+SEAM, found for a fourth time, in the same shape 17f, 17h and 17i each
+found. (4) The membership slot is keyed by GUILD GROUP in DFU, not by
+guild: all eight temples share HolyOrder and all ten orders share
+KnightlyOrder, so joining Mara's temple REPLACES Arkay's. Keyed by
+name, the port let a player hold all eight temples and all ten orders
+at once. (5) TokensPromotion is PER RANK in five of the six guilds -
+the message announces the benefit that rank unlocked (Mages library at
+2, magic items at 3, summoning at 6, teleport at 8; Thieves fence at
+2, spymaster at 4; the Temple's is computed from its own service-rank
+columns, which is what makes those columns load-bearing). The port
+returned one flat record, so a member promoted into a benefit was told
+the generic line.
+
+FOUR MINOR. GetGuildGroup's "temples nested under deity" branch was
+missing, and every divine's own ggroup is None in the shipped file, so
+every temple answered "not a guild". guildOfFaction still answered
+null for all eighteen variants after G2 shipped them. zeroAllReputations
+REBOUND store.dict, stranding any caller that captured it - court.js
+reads it on every crime. And createFactionRep's clone was one level
+deep, leaving the children array shared with the reader, so the
+module header promised a guarantee it did not keep.
+
+Two DFU behaviours were left deliberately unported and flagged rather
+than guessed: the Thieves Guild's rank 6/8 promotion messages are
+RevealLocation()-gated (quest/map state), and the Knightly Order's
+rank 9 message is OwnsHouse-gated (banking). Both take the plain
+promotion record until those slices land.
+
+1051 tests -> 1060, and the suite is green with ARENA2 set and unset.
+
 
 **2026-08-19 - AUDIT 18, the whole-codebase parity audit.** Mac's call:
 the ultimate bug-and-parity pass over everything ported so far. 18

@@ -77,10 +77,52 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // legalRep is a region-keyed object here, not DFU's 62-entry array;
   // it must be COPIED or the snapshot aliases live state.
   snap.legalRep = entity.legalRep ? { ...entity.legalRep } : null;
-  // the biography's faction-rep deltas wait here for the faction slice
+  // Any biography deltas still parked (only if FACTION.TXT was missing
+  // at creation - S25 drains them at the chargen seam otherwise).
   snap.pendingFactionRep = (entity.pendingFactionRep ?? []).map((r) => ({ ...r }));
   snap.backStory = [...(entity.backStory ?? [])];
+
+  // AUDIT 20: THE THIRD REPUTATION CHANNEL. sGroupReputations and
+  // legalRep have ridden the envelope for a while; S25's per-FACTION
+  // reputation did not, so every backstory `rf` answer and every
+  // crime's People-faction delta was lost on load - and guild rank,
+  // which is computed from it, silently reset with it.
+  //
+  // DEPARTURE from DFU's FactionData_v2, which serialises the whole
+  // dictionary: the port re-reads FACTION.TXT to build the store, so
+  // only the MUTABLE columns need to travel. Three parallel arrays
+  // beside a sorted id list - lossless, and a few KB rather than 366
+  // whole records. Same shape of decision as legalRep above.
+  snap.factionRep = entity.factionRep ? snapshotFactionRep(entity.factionRep) : null;
+  // GuildMembership_v1, keyed by guild GROUP exactly as DFU keys it.
+  snap.guildMemberships = entity.guildMemberships
+    ? Object.fromEntries(Object.entries(entity.guildMemberships).map(([k, m]) => [k, { ...m }]))
+    : null;
   return snap;
+}
+
+/** The store's mutable columns, id-sorted so the arrays line up. */
+export function snapshotFactionRep(store) {
+  const ids = [...store.dict.keys()].sort((a, b) => a - b);
+  const rep = [], flags = [], power = [];
+  for (const id of ids) {
+    const f = store.dict.get(id);
+    rep.push(f.rep); flags.push(f.flags); power.push(f.power);
+  }
+  return { ids, rep, flags, power };
+}
+
+/** Write a snapshot back into a LIVE store. The store is rebuilt from
+ *  FACTION.TXT at creation, so this only restores what play changed;
+ *  an id the file no longer has is skipped rather than invented. */
+export function restoreFactionRep(store, snap) {
+  if (!store || !snap?.ids) return false;
+  for (let i = 0; i < snap.ids.length; i++) {
+    const f = store.dict.get(snap.ids[i]);
+    if (!f) continue;
+    f.rep = snap.rep[i]; f.flags = snap.flags[i]; f.power = snap.power[i];
+  }
+  return true;
 }
 
 /** Restore a snapshot onto the live entity. Returns the scene
@@ -129,6 +171,16 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.legalRep = snap.legalRep ? { ...snap.legalRep } : {};
   if (snap.pendingFactionRep) entity.pendingFactionRep = snap.pendingFactionRep.map((r) => ({ ...r }));
   if (snap.backStory) entity.backStory = [...snap.backStory];
+  // AUDIT 20: the faction store is rebuilt from FACTION.TXT at
+  // creation, so a load writes the saved columns back INTO it rather
+  // than replacing it. A save from before this field simply leaves the
+  // freshly-read values standing - the additive-field shape the
+  // fatigue default above already uses, so the envelope version holds.
+  if (snap.factionRep) restoreFactionRep(entity.factionRep, snap.factionRep);
+  if (snap.guildMemberships) {
+    entity.guildMemberships = Object.fromEntries(
+      Object.entries(snap.guildMemberships).map(([k, m]) => [k, { ...m }]));
+  }
   entity.spells = spellsByIndex
     ? snap.spells.map((i) => spellsByIndex.get(i)).filter(Boolean)
     : [];

@@ -10,6 +10,9 @@ import {
 import { FactionFile } from '../src/formats/factionFile.js';
 import { createFactionRep, getReputation } from '../src/systems/factionRep.js';
 import { getPeopleOfCurrentRegion } from '../src/systems/talk.js';
+import { changeReputation } from '../src/systems/factionRep.js';
+import { snapshotFactionRep, restoreFactionRep } from '../src/systems/save.js';
+import { GUILDS, joinGuild } from '../src/systems/guilds.js';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -132,4 +135,35 @@ test('court: a crime without a faction store still runs the legal channel', () =
   const p = {};
   lowerRepForCrime(p, 17, CRIMES.Murder);
   assert.equal(legalRepOf(p, 17), -REPUTATION_LOSS_PER_CRIME[CRIMES.Murder]);
+});
+
+
+test('save: AUDIT 20 - the faction store and guild memberships ride the envelope', { skip: skipReal }, () => {
+  // THE THIRD REPUTATION CHANNEL. sGroupReputations and legalRep have
+  // ridden the envelope for a while; S25's per-faction reputation did
+  // not, so every backstory `rf` answer and every crime's People delta
+  // was lost on load - and guild rank, computed from it, reset too.
+  const ff = new FactionFile();
+  ff.load(readFileSync(join(ARENA2, 'FACTION.TXT')));
+  const entity = { stats: {}, skills: 30, skillUses: [], items: [], spells: [] };
+  entity.factionRep = createFactionRep(ff.factionDict);
+  entity.guildMemberships = {};
+  changeReputation(entity.factionRep, GUILDS.ThievesGuild.factionId, 25, true);
+  joinGuild(entity.guildMemberships, GUILDS.FightersGuild, { year: 405, dayOfYear: 3 });
+
+  const snap = snapshotFactionRep(entity.factionRep);
+  assert.equal(snap.ids.length, ff.factionDict.size, 'every faction travels');
+
+  // a LOAD rebuilds the store from FACTION.TXT, then writes the save in
+  const loaded = { factionRep: createFactionRep(ff.factionDict) };
+  assert.equal(getReputation(loaded.factionRep, GUILDS.ThievesGuild.factionId), 0, 'fresh from the file');
+  restoreFactionRep(loaded.factionRep, snap);
+  for (const id of snap.ids) {
+    assert.equal(getReputation(loaded.factionRep, id), getReputation(entity.factionRep, id),
+      `faction ${id} survived the round trip`);
+  }
+  // a save from BEFORE this field leaves the fresh values standing
+  const older = { factionRep: createFactionRep(ff.factionDict) };
+  assert.equal(restoreFactionRep(older.factionRep, undefined), false);
+  assert.equal(getReputation(older.factionRep, GUILDS.ThievesGuild.factionId), 0);
 });

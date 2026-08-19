@@ -284,3 +284,30 @@ test('factions: attaching without a faction file leaves the deltas parked', () =
   assert.equal(entity.factionRep, undefined);
   assert.deepEqual(entity.pendingFactionRep, [{ id: 1, amount: 20 }], 'still parked, not lost');
 });
+
+
+test('factions: AUDIT 20 - the clone detaches the CHILDREN array too', { skip: skipReal }, () => {
+  // The spread detaches the record; children is an array and stayed
+  // shared, so the store could mutate the reader's own hierarchy - the
+  // header promised a clone that was only one level deep.
+  const dict = realFactions();
+  const store = createFactionRep(dict);
+  const a = store.dict.get(THE_DARK_BROTHERHOOD), b = dict.get(THE_DARK_BROTHERHOOD);
+  assert.notEqual(a.children, b.children, 'a different array');
+  assert.deepEqual(a.children, b.children, 'with the same contents');
+  a.children.push(999999);
+  assert.equal(b.children.includes(999999), false, 'the reader is untouched');
+});
+
+test('factions: AUDIT 20 - zeroing REFILLS the map, it does not rebind it', { skip: skipReal }, () => {
+  // court.js reads store.dict on every crime. Rebinding strands any
+  // caller that captured it.
+  const dict = realFactions();
+  const store = createFactionRep(dict);
+  const captured = store.dict;
+  setReputation(store, THE_DARK_BROTHERHOOD, 50);
+  zeroAllReputations(store, dict, {});
+  assert.equal(captured, store.dict, 'the same Map object');
+  assert.equal(getReputation(store, THE_DARK_BROTHERHOOD), 0);
+  assert.equal(captured.get(THE_DARK_BROTHERHOOD).rep, 0, 'and the captured reference sees it');
+});
