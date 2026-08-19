@@ -24,3 +24,4 @@ tools/parity/cs/*.exe
 tools/parity/out/
 tools/mutation/*.jsonl
 tools/mutation/*.log
+.mutaudit/
