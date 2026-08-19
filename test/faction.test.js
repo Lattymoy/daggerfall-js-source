@@ -37,8 +37,16 @@ test('factionFile: the real FACTION.TXT parses into the classic tree', { skip: s
   assert.equal(people.ggroup, GUILD_GROUPS.GeneralPopulace);
   assert.equal(people.parent, provinces[0].id, 'People of is a child of the province');
   assert.ok(provinces[0].children.includes(people.id), 'relinkChildren wired the tree');
-  // Ruler seeds drawn per faction (classic call order over DFRandom)
-  assert.ok(provinces[0].rulerPowerBonus >= 20 && provinces[0].rulerPowerBonus <= 70);
+  // AUDIT 18 F3: the draws happen (they advance the DFRandom stream) but the
+  // RESULTS ARE DISCARDED, because FactionData is a struct and DFU copies it
+  // into factionDict BEFORE assigning them (FactionFile.cs:640/1003/1026).
+  // Every faction DFU hands the game carries 0/0. This pin used to assert
+  // 20..70 - the port's own invention - which would have made the fix look
+  // like the regression.
+  for (const fac of [...f.factionDict.values()]) {
+    assert.equal(fac.rulerNameSeed, 0, `faction ${fac.id} must carry DFU's discarded seed`);
+    assert.equal(fac.rulerPowerBonus, 0, `faction ${fac.id} must carry DFU's discarded bonus`);
+  }
   // Flat decode round-trips
   if (people.flat1 > 0) {
     assert.equal((flatArchive(people.flat1) << 7) + flatRecord(people.flat1), people.flat1);

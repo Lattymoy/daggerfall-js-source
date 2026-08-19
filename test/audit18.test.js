@@ -11,6 +11,7 @@ import { weaponAttackDamage, baseDamageMin, baseDamageMax, chooseEnemyWeapon } f
 import { WEAPONS, weaponMinDamage, weaponMaxDamage } from '../src/characters/weapons.js';
 import { assignStartingGear } from '../src/systems/startingGear.js';
 import { KEEP } from '../src/scenes/dataSource.js';
+import { computeFaceUVCoordinates } from '../src/formats/faceUVTool.js';
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 const walk = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((d) =>
@@ -142,4 +143,32 @@ test('AUDIT 18 F2: the template-built CLASS**.CFG fetches all survive the diet',
   for (let i = 0; i < 19; i++) {
     assert.ok(KEEP(`CLASS${String(i).padStart(2, '0')}.CFG`, true));
   }
+});
+
+// ---------------------------------------------------------------------------
+// F4: Vector3.Normalize multiplies by the reciprocal.
+//
+// API/Vector3.cs:583-597 computes `double inverse = 1 / v1.Magnitude` and
+// multiplies each component. The port divided. x*(1/m) and x/m are different
+// doubles, and the difference survives the (Int32) truncations that choose the
+// 2D basis: 608 UVs across 542 faces of the real ARCH3D corpus were wrong.
+//
+// Expected values below are DFU's OWN output, dumped by compiling
+// DaggerfallConnect's FaceUVTool under Mono with only the Ledger row-18
+// float->double widening applied - not the port's output.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 18 F4: faceUVTool matches DFU on a corpus face the divide got wrong', () => {
+  // ARCH3D record 1162, a 4-point plane. Point 3's v was 1235; DFU gives 1236.
+  const plane = [
+    { x: -49152, y: 0, z: 16384, nx: 0, ny: 256, nz: 0, u: 3072, v: 0 },
+    { x: 16384, y: 0, z: 16384, nx: 0, ny: 256, nz: 0, u: -3072, v: 0 },
+    { x: -4864, y: 0, z: -9984, nx: 0, ny: 256, nz: 0, u: 996, v: 1236 },
+    { x: -27904, y: 0, z: -9984, nx: 0, ny: 256, nz: 0, u: 2076, v: 1236 },
+  ];
+  const out = new Array(24);                       // DFU's fixed calculatedUVBuffer
+  assert.equal(computeFaceUVCoordinates(plane, out), true);
+  assert.deepEqual(out.slice(0, 4).map((p) => [p.u, p.v]),
+    [[3072, 0], [0, 0], [996, 1236], [2076, 1236]],
+    'point 3 v must be 1236 (reciprocal), not 1235 (divide)');
 });

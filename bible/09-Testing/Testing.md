@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 694 tests across 127 files.
+Node 22). Suite: 695 tests across 127 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -130,7 +130,7 @@ Node 22). Suite: 694 tests across 127 files.
 | weather.test.js | 4 | verbatim fog tables, mapping, offsets, scales, fog math, lightning strobe |
 | window.test.js | 2 | MaterialReader style constants, real glass-texel mask pins |
 | world.test.js | 13 | mat4, meshReader, rmbLayout, location grid, flats, nature-quirk pin, city lights, R9 tilemap conversion + grid pins |
-| audit18.test.js | 6 | AUDIT 18 pins, each mutation-proven: F1 GetBaseDamageMin/Max resolve the TEMPLATE (every WEAPONS entry finite and table-exact at both roll ends, the baked-field path unreachable, chooseEnemyWeapon's average over templates, and every weapon assignStartingGear mints carrying a templateIndex across all 18 classes); F2 the ingest diet vs live readers - a RULE that re-derives the fetchBytes/getBytes name list from src/ on every run and asserts KEEP() accepts each on BOTH diets (lean and desktop), names the three it starved (CLASSES.DAT, FACTION.TXT, all 18 BIOG**T0.TXT), holds the template-built CLASS**.CFG range, and still refuses the bulk the diet exists to refuse |
+| audit18.test.js | 7 | AUDIT 18 pins, each mutation-proven: F1 GetBaseDamageMin/Max resolve the TEMPLATE (every WEAPONS entry finite and table-exact at both roll ends, the baked-field path unreachable, chooseEnemyWeapon's average over templates, and every weapon assignStartingGear mints carrying a templateIndex across all 18 classes); F2 the ingest diet vs live readers - a RULE that re-derives the fetchBytes/getBytes name list from src/ on every run and asserts KEEP() accepts each on BOTH diets (lean and desktop), names the three it starved (CLASSES.DAT, FACTION.TXT, all 18 BIOG**T0.TXT), holds the template-built CLASS**.CFG range, and still refuses the bulk the diet exists to refuse; F4 Vector3.Normalize multiplies by the reciprocal (ARCH3D record 1162's 4-point plane, expected UVs taken from DFU's OWN Mono-compiled output, not the port's) |
 | manifest.test.js | 1 | drift guard: this table and the total against the real suite |
 
 Two tiers per module:
