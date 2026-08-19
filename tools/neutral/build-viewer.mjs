@@ -29,6 +29,8 @@ import { buildLongBow, buildShortBow, buildNockedArrow } from '../../src/charact
 import { buildBladeWeapon, BLADE_SPECS } from '../../src/characters/pieces/blades.js';
 import { buildHaftedWeapon, HAFTED_SPECS } from '../../src/characters/pieces/hafted.js';
 import { VILLAGER_DESIGNS, designOpts, designDrape, villagerDelta, RACE_TONE } from '../../src/characters/villagerDesigns.js';
+import { ORC_DESIGNS, orcOpts } from '../../src/characters/orcBody.js';
+import { buildTusks, buildBrow, IVORY_RAMP } from '../../src/characters/pieces/orcHead.js';
 
 const A = process.env.ARENA2_PATH;
 const pal = new DFPalette(); pal.load(readFileSync(A + '/ART_PAL.COL'), 'ART_PAL.COL');
@@ -76,6 +78,27 @@ const villagerPacks = VILLAGER_DESIGNS.map((d) => {
 
 // armor pieces (separate meshes in the viewer, toggleable).
 const packPiece = (pf) => { const pP=[], pN=[], pC=[], pG=[], pI=[]; for (const f of pf) { for (let i=0;i<4;i++) pP.push(Math.round(f.p[i*3]*1000), Math.round(f.p[i*3+1]*1000), Math.round(f.p[i*3+2]*1000)); pN.push(Math.round(f.n[0]*127), Math.round(f.n[1]*127), Math.round(f.n[2]*127)); pC.push(f.c[0], f.c[1], f.c[2]); pI.push(Math.round((f._i ?? 0.6) * 255)); pG.push(GI[f.g] ?? 0); } return { P: pP, N: pN, C: pC, G: pG, I: pI }; };
+
+// ── the ORC LINE (editor only - nothing here touches a game host).
+// Same DELTA mechanism as the villagers, and for the same reason: a
+// build spec scales the rig's loft rows but adds and drops NO faces
+// (asserted in test/orcbody.test.js), so all four orcs ride the base
+// face list and ship only what moved. The tusks and the brow ARE new
+// geometry, so those go as their own packs - one pair per design,
+// because a warlord's tusk is not a baseline orc's scaled up in the
+// shader, it is a different root anchor and a different length.
+const orcPacks = ORC_DESIGNS.map((d) => {
+  const { ramps: oramps, opts, hide } = orcOpts(d, pal);
+  const of = buildNeutralBody(oramps, { face, ...opts });
+  return {
+    id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
+    build: d.build, hide,
+    tusks: packPiece(buildTusks(IVORY_RAMP, { jaw: d.build.jaw, size: d.tusk.size })),
+    brow: packPiece(buildBrow(hide, { skull: d.build.skull, jut: d.brow.jut })),
+    ...villagerDelta(faces, of),
+  };
+});
+
 // Per-race hairstyle packs (haired races get multiple styles).
 const HAIRSTYLES = { Human: ['short','buzz','medium','long','ponytail','topknot','mohawk','bald'], Elf: ['short','medium','long','ponytail','mohawk','bald'] };
 const hairPacks = {};
@@ -113,7 +136,7 @@ const payload = JSON.stringify({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: 
     return list;
   })(),
   swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
-  swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, hairRamps: HAIR_RAMPS, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
+  swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, hairRamps: HAIR_RAMPS, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 const dir = new URL('.', import.meta.url).pathname;
 let clothSrc = readFileSync(dir + '../../src/characters/clothSim.js', 'utf8').replace(/^export /gm, '');
 let animsSrc = readFileSync(dir + '../../src/characters/anims.js', 'utf8').replace(/^export /gm, '');
