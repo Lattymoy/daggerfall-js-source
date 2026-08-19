@@ -45,6 +45,8 @@ import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
 import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying above ground
+import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
+import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
@@ -382,6 +384,13 @@ export async function bootExterior(canvas, renderer, params, status) {
   });
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
+  // AUDIT 21 (hosts lane, F7): the classic HUD art. loadHud swallows a missing
+  // file and answers null, and drawHud no-ops on null, so a host without the
+  // art draws no HUD rather than failing to boot - the same law the title
+  // screen and the char sheet follow.
+  let hudArt = null;
+  loadHud({ fetchBytes, ImgFile, palette, renderer }).then((a) => { hudArt = a; })
+    .catch((e) => console.error('[hud]', e));
   preloadInventoryArt({ renderer, fetchBytes, palette });   // U8d: INVE00I0/01I0 warm at boot
   preloadChargenArt({ renderer, fetchBytes, palette });   // U10: CHAR0*/PICK00/TMAP00 warm at boot
   preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11: SPOP/BUTTONS warm at boot
@@ -1028,6 +1037,23 @@ export async function bootExterior(canvas, renderer, params, status) {
         }
       }
       weaponRig.draw();
+    }
+    // AUDIT 21 (hosts lane, F7): THE HUD, which this host did not have.
+    //
+    // ?world and ?exterior drew no status bar at all - no health, no fatigue,
+    // no magicka, no compass. Guards can hurt you here, falls can hurt you,
+    // fatigue drains every classic minute and diseases drain attributes, and
+    // you could see none of it. Walk into the dungeon and the whole classic
+    // HUD appears; walk out and it vanishes.
+    //
+    // ui/hud.js was already host-agnostic - drawHud(renderer, canvas, art,
+    // vitals, heading01) - so this is the art loaded once and drawn last,
+    // over the viewmodel, exactly as dungeonContext draws it. Under the talk
+    // layer, because a talk window is a modal above the vitals.
+    if (hudArt) {
+      const _hfw = [-view[2], -view[10]];
+      drawHud(renderer, canvas, hudArt, playerEntity,
+        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1);
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
 

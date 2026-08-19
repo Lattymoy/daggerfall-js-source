@@ -46,6 +46,8 @@ import { audio } from '../systems/audio.js';
 import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
 import { setDeathPresenter } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6
 import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying in a building
+import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the HUD vanished inside buildings
+import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { FntFile } from '../formats/fntFile.js';
@@ -102,6 +104,13 @@ export function createWorldModes(host) {
   });
   const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
+  // AUDIT 21 (hosts lane, F7): the HUD art for interior mode. A missing file
+  // answers null and drawHud no-ops, so this host draws no HUD rather than
+  // failing to mount.
+  let hudArt = null;
+  loadHud({ fetchBytes, ImgFile, palette, renderer }).then((a) => { hudArt = a; })
+    .catch((e) => console.error('[hud]', e));
+
 
   let mode = 'exterior';
   let zPrev = false;   // ReadyWeapon (Z) edge state
@@ -709,6 +718,16 @@ export function createWorldModes(host) {
       envAttack(interiorCtx.actions, interiorCtx.collider, player.eye, eyeDir());
     }
     interiorWeapon.draw();
+    // AUDIT 21 (hosts lane, F7): THE HUD, in a building. drawHud lives inside
+    // dungeonContext.drawFoes, which the interior arm never calls - so the
+    // whole classic status bar vanished the moment you stepped through a door
+    // and came back when you stepped out. Same call, same place in the order:
+    // last, over the viewmodel, under the overlay.
+    if (hudArt) {
+      const _hfw = [-view[2], -view[10]];
+      drawHud(renderer, canvas, hudArt, playerEntity,
+        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1);
+    }
     // E2: the shop browse overlay draws above everything; font-less
     // never traps the motor (the townTalk law).
     if (interiorOverlay) {

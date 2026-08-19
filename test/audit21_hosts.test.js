@@ -19,6 +19,13 @@ import { raiseSkills } from '../src/systems/advancement.js';
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 const read = (p) => readFileSync(join(SRC, p), 'utf8');
+/** Source with comments stripped. A rule that greps raw text matches the
+ *  PROSE explaining the rule - AUDIT 21's F7 mutation caught exactly that:
+ *  removing the drawHud CALL left the word in the comment above it and the
+ *  rule passed. */
+const code = (p) => read(p)
+  .replace(/\/\*[\s\S]*?\*\//g, ' ')
+  .split('\n').map((l) => l.replace(/(^|[^:])\/\/.*$/, '$1')).join('\n');
 
 /** The hosts that build a player ticker - i.e. that can level a character. */
 const TICKER_HOSTS = ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js'];
@@ -33,7 +40,7 @@ test('AUDIT 21 hosts F3: every ticker host passes onLevelUp', () => {
   // on where you were standing when you crossed the threshold.
   const missing = [];
   for (const h of TICKER_HOSTS) {
-    const text = read(h);
+    const text = code(h);
     for (const m of text.matchAll(/createPlayerTicker\((.*?)\n\s*\}\);/gs)) {
       if (!/onLevelUp\s*:/.test(m[1])) missing.push(h);
     }
@@ -48,7 +55,7 @@ test('AUDIT 21 hosts F3: every ticker host passes onLevelUp', () => {
 
   // and each one must open the SCREEN, not just log
   for (const h of TICKER_HOSTS) {
-    assert.match(read(h), /new LevelUpScreen\(playerEntity\)/,
+    assert.match(code(h), /new LevelUpScreen\(playerEntity\)/,
       `${h} must open the level-up screen, not merely announce the level`);
   }
 });
@@ -99,7 +106,7 @@ test('AUDIT 21 hosts F3: a non-ChoiceWindow overlay gets the FULL action map', (
   // ground it could not be driven. Both now route through overlayAction, the
   // same map routeKey feeds the dungeon host.
   for (const h of ['scenes/townTalk.js', 'scenes/worldModes.js']) {
-    const text = read(h);
+    const text = code(h);
     assert.match(text, /overlayAction\(e\)/, `${h} must use the shared action map`);
     assert.match(text, /isChoiceWindow/, `${h} must still pass raw codes to a ChoiceWindow`);
   }
@@ -121,13 +128,13 @@ test('AUDIT 21 hosts F4: every host that renders a 3D scene moves the LISTENER',
   // coordinates - against a linear model with a finite maxDistance, so out of
   // range entirely.
   const hosts = ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeonContext.js', 'scenes/worldModes.js'];
-  const deaf = hosts.filter((h) => !/audio\.setListener\(/.test(read(h)));
+  const deaf = hosts.filter((h) => !/audio\.setListener\(/.test(code(h)));
   assert.deepEqual(deaf, [],
     `these hosts render a 3D scene and never move the audio listener, so every\n`
     + `positional sound they play is measured from wherever another host left it:\n${deaf.join('\n')}`);
   // in worldModes it must be in the MODAL frame, before the mode branches -
   // one call covering both interior and dungeon
-  const modes = read('scenes/worldModes.js');
+  const modes = code('scenes/worldModes.js');
   const atFrame = modes.indexOf('audio.setListener(');
   const atDungeonBranch = modes.indexOf("if (mode === 'dungeon' && dungeonCtx)");
   assert.ok(atFrame > 0 && atFrame < atDungeonBranch,
@@ -241,7 +248,7 @@ test('AUDIT 21 hosts F6: no host writes player health raw any more', () => {
     'scenes/dungeonContext.js', 'scenes/interior.js', 'scenes/dungeon.js', 'scenes/shared.js'];
   const raw = [];
   for (const h of HOSTS) {
-    const text = read(h);
+    const text = code(h);
     for (const m of text.matchAll(/^\s*\w*[Ee]ntity\.health\s*=\s*Math\.max\(0[^\n]*/gm)) {
       raw.push(`${h}: ${m[0].trim()}`);
     }
@@ -252,8 +259,8 @@ test('AUDIT 21 hosts F6: no host writes player health raw any more', () => {
 
   // and every gameplay host registers a presenter, or the door has nobody to call
   for (const h of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js']) {
-    assert.match(read(h), /(?<![\w$])setDeathPresenter\(/, `${h} must register a death presenter`);
-    assert.match(read(h), /new DeathScreen\(\)/, `${h} must actually raise the screen`);
+    assert.match(code(h), /(?<![\w$])setDeathPresenter\(/, `${h} must register a death presenter`);
+    assert.match(code(h), /new DeathScreen\(\)/, `${h} must actually raise the screen`);
   }
 });
 
@@ -266,7 +273,7 @@ test('AUDIT 21 hosts F8: a swing costs fatigue in EVERY host that mounts a weapo
   // shape all over again.
   const RIG_HOSTS = ['scenes/dungeonContext.js', 'scenes/worldModes.js'];
   for (const h of RIG_HOSTS) {
-    const text = read(h);
+    const text = code(h);
     assert.match(text, /SWING_WEAPON_FATIGUE_LOSS/,
       `${h} mounts a weapon rig and must charge the swing`);
     assert.match(text, /tallySwingSkills\(/,
@@ -274,12 +281,43 @@ test('AUDIT 21 hosts F8: a swing costs fatigue in EVERY host that mounts a weapo
   }
   // and the interior arm must charge on BOTH paths - the bow arm used to
   // tally one skill and drain nothing, disagreeing with the dungeon's own
-  const modes = read('scenes/worldModes.js');
+  const modes = code('scenes/worldModes.js');
   const drains = [...modes.matchAll(/drainInteriorFatigue\(SWING_WEAPON_FATIGUE_LOSS\)/g)];
   assert.equal(drains.length, 2, 'the bow arm and the melee arm each charge the swing');
   assert.doesNotMatch(modes, /tallySkill\(playerEntity, SKILLS\.Archery\)/,
     'the bow arm takes tallySwingSkills, not a single hand-picked skill');
 
   // the constant is the shared one, not a re-typed literal
-  assert.match(read('scenes/hostCombat.js'), /SWING_WEAPON_FATIGUE_LOSS = 11/);
+  assert.match(code('scenes/hostCombat.js'), /SWING_WEAPON_FATIGUE_LOSS = 11/);
+});
+
+test('AUDIT 21 hosts F7: every gameplay host draws the HUD', () => {
+  // ?world and ?exterior drew no status bar at all - no health, no fatigue, no
+  // magicka, no compass. Guards hurt you there, falls hurt you, fatigue drains
+  // every classic minute and diseases drain attributes, and you could see none
+  // of it. Walk into the dungeon and the whole classic HUD appears; walk out
+  // and it vanishes. Inside a BUILDING it vanished too, because drawHud lived
+  // inside dungeonContext.drawFoes, which the interior arm never calls.
+  //
+  // ui/hud.js was already host-agnostic. This is a rule because the hosts have
+  // no node coverage; tools/hudProbe.mjs is the other half - it boots both
+  // exterior hosts for real and counts saturated pixels where the bars belong,
+  // calibrated by mutation (1600/1799 with the draw, 438 without).
+  const GAMEPLAY_HOSTS = ['scenes/world.js', 'scenes/exterior.js',
+    'scenes/worldModes.js', 'scenes/dungeonContext.js'];
+  const blind = GAMEPLAY_HOSTS.filter((h) => !/drawHud\(/.test(code(h)));
+  assert.deepEqual(blind, [],
+    'these hosts run gameplay and draw no status bar, so the player cannot see\n'
+    + `health, fatigue, magicka or a compass while in them:\n${blind.join('\n')}`);
+
+  // each must also LOAD the art - a drawHud call with nothing to draw is a
+  // no-op, which is exactly how this would look fixed and not be
+  for (const h of GAMEPLAY_HOSTS) {
+    assert.match(code(h), /loadHud\(/, `${h} must load the HUD art it draws`);
+  }
+
+  // and drawHud must no-op rather than throw when the art is missing, which is
+  // what lets a host without ARENA2 still boot
+  assert.match(code('ui/hud.js'), /if \(!art\) return;/,
+    'drawHud tolerates missing art - a missing file costs a HUD, never a boot');
 });
