@@ -24,7 +24,7 @@ import { jumpSpeedMultiplier } from '../systems/skills.js';
 import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
-import { fetchBytes } from './shared.js';
+import { fetchBytes, motorStats, ridePlatform } from './shared.js';
 import { routeKey } from '../ui/input.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -85,7 +85,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // P2: grounded walking is the default (?fly restores the fly cam);
   // spawn drops onto the start-marker floor.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(ctx.collider, undefined, { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14)
+  const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14); motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
   // P10 Teleport actions: player transform = the destination object's
@@ -224,12 +224,9 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // shape. Without this the elevator penetrated the capsule and
       // the nearest-face ejection could throw the player through
       // thin walls (Mac's out-of-bounds report).
-      const gk = player.groundKey;
-      if (gk && gk !== 'dungeon') {
-        const rideO = ctx.actions.objects.get(gk);
-        const d = rideO?.frameDelta;
-        if (d && (d[0] || d[1] || d[2])) player.collider.move(player.pos, d[0], d[1], d[2]);
-      }
+      // AUDIT 18: extracted to shared.js so the worldModes host (which
+      // had dropped it entirely) cannot half-apply it again.
+      ridePlatform(player, ctx.actions);
       const jumpHeld = keys.has('Space');
       player.slowFalling = ctx.playerSlowFalling;   // S8 slowfall (P14: the verbatim constant-speed law lives in the motor)
       // P11: the swim toggle (PlayerEnterExit verbatim - the CENTER

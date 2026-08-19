@@ -10,11 +10,11 @@ import { requestLook } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_RANGE, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
+import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { lookAt, perspective } from '../world/mat4.js';
-import { fetchBytes, parseSeason } from './shared.js';
+import { fetchBytes, parseSeason, ensureAudio } from './shared.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { buildInteriorContext } from './interiorContext.js';
 
@@ -49,6 +49,12 @@ export async function bootInterior(canvas, renderer, params, status) {
 
   status(`laying out ${blockName}:${recordIndex}`);
   const pipeline = createDataPipeline({ renderer, arch, palette });
+  // AUDIT 18 HOST GAP: the audio engine's bootstrap lived only in
+  // buildDungeonContext, so every sound in this host was a silent
+  // no-op until a dungeon was entered (DFU's sound reader is global
+  // and the exterior prefab is audible from frame one).
+  ensureAudio(fetchBytes);
+
   const ctx = await buildInteriorContext(
     { ...pipeline, renderer }, dfBlock, blockIndex, recordIndex, climateBase, season);
 
@@ -118,7 +124,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     const view = lookAt(cam.pos, target, [0, 1, 0]);
 
     renderer.setPointLights(
-      nearestLights(ctx.lights, cam.pos, 16, INTERIOR_LIGHT_RANGE),
+      nearestLights(ctx.lights, cam.pos, 16, ctx.lights.map((l) => l.range)),   // per-light range (DaggerfallInterior.AddLight); a scalar drops the per-record switch
       new Float32Array(INTERIOR_LIGHT_COLOR));
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
     for (const d of ctx.drawList) renderer.drawMesh(d.mesh, d.matrix, ctx.texRemap);

@@ -20,31 +20,34 @@ const mem = new Map(); // NAME -> Uint8Array
 // Ingest DIET (2026-08-14, the mobile storage fix): ARENA2 is 517MB
 // but the engine reads ~155MB - TEXTURE archives, the BSAs, palettes,
 // PAKs, CFGs, fonts, WOODS.WLD, MAGIC.DEF, SPELLS.STD, IMG/CIF art,
-// RSC text, RCI, SND. The other 362MB (VIDs 83, SKY/PACKED DATs 247,
+// RSC text, RCI, SND, the .TXT set (BIOG*.TXT biographies + FACTION.TXT)
+// and CLASSES.DAT. The other 362MB (VIDs 83, SKY/PACKED DATs 247,
 // FLCs, quest QBN/QRC) is unread by the port - ingesting it tripled
 // storage + memory pressure and quota-killed phones. When a future
 // slice needs a dropped kind: bump MANIFEST_V - stale stored sets
 // auto-wipe to the picker.
 //
 // AUDIT 18 F2: the diet outlived three slices that shipped readers for
-// kinds it drops. CLASSES.DAT (the U18 class-questions results walk,
-// chargenSession.js:80), FACTION.TXT (the T3a reaction layer,
-// townTalk.js:98) and BIOG*.TXT (the S3e biography, biogFile.js:103)
-// are all fetched by LIVE code and were all filtered out, so on the
-// deployed site - where the network arm 404s and IndexedDB is the only
-// source - three shipped features had no data at all. Named, not
-// blanket: PACKED.DAT alone is most of the 247MB the diet exists to
-// refuse. The three kinds together cost 148KB.
+// kinds it drops, and each degraded SILENTLY through a warn-and-skip.
+// CLASSES.DAT (the U18 class-questions results walk, chargenSession.js),
+// FACTION.TXT (the T3a reaction layer, townTalk.js) and every BIOG*.TXT
+// (the S3e biography, biogFile.js) are fetched by LIVE code and were all
+// filtered out - so on the deployed and phone paths the whole biography
+// stage, the class-questions screen and every faction datum were simply
+// absent. Dev hid it: the vite ARENA2_PATH middleware serves the network
+// fallback, which production 404s.
+// The whole .TXT set is 19 files / 148KB, so it rides WHOLESALE rather
+// than by name - a future .TXT reader is then covered without anyone
+// remembering. CLASSES.DAT is named EXACTLY, because a bare \.DAT$ would
+// drag in the 247MB SKY/PACKED sets the diet exists to refuse.
 const LEAN = typeof window !== 'undefined' &&
   ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0);
-/** The named small files live readers fetch that no extension rule covers. */
-const KEEP_NAMED = /^(CLASSES\.DAT|FACTION\.TXT|BIOG\d+T\d+\.TXT)$/;
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
-  /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND)$/.test(name) ||
-  KEEP_NAMED.test(name) ||
+  /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT)$/.test(name) ||
+  name === 'CLASSES.DAT' ||
   (!lean && /^SKY\d+\.DAT$/.test(name));   // skies: 247MB - full sets on desktop, gradient fallback on the lean diet
 const MANIFEST_KEY = '__MANIFEST__';
-const MANIFEST_V = 3;   // v1 = pre-diet sets; v2 = the diet that dropped CLASSES/FACTION/BIOG (AUDIT 18 F2) - both auto-wiped
+const MANIFEST_V = 3;   // v1 = the broken-era sets (pre-diet), v2 = the sets missing BIOG*/FACTION/CLASSES - both auto-wiped
 
 /** Uppercase basename: the canonical ARENA2 key. Exported for tests. */
 export function normalizeName(name) {
