@@ -1627,7 +1627,30 @@ gorget top splits around the neck gap - the first anchor pass grabbed
 the left run twice) converging to the waist. Material-honest: straps
 stay leather under every metal dye; back metal fraction 84.8%.
 
-### C6i - in-house backs (SHIPPED; supersedes C6h)
+### C6i - in-house backs (SHIPPED, then SUPERSEDED BY C6z - see the note below)
+
+> **AUDIT 21 (doctrine lane, F10).** Two things were wrong with this slice's
+> record. First, C6z retired the derived-shading path outright ("the back
+> sheet starter is now TRANSPARENT ... gen-back-sheet.mjs deleted"), and this
+> entry still read SHIPPED with no forward pointer, so the arc log made the
+> in-house back grids look live when nothing had read them for slices.
+>
+> Second, `src/characters/backs/body00i0.json` (DELETED) and
+> `src/characters/backs/cuirass-251-4.json` (DELETED) were committed ARENA2
+> DERIVATIVES - which is why they are gone rather than merely marked dead. Measured against the real corpus, the body grid's opaque
+> mask is identical to the mirrored BODY00I0 sprite pixel for pixel -
+> 5237/5237 texels, 100.00% silhouette agreement. The shading is recomputed
+> (only 1.83% of palette indices match), but the SHAPE and the ramps are the
+> source art's. Port-Doctrine now says it plainly: A RENDER OF GAME DATA IS
+> GAME DATA, and a re-shaded sprite that keeps the original silhouette answers
+> yes to "did these pixels come from ARENA2?".
+>
+> The claim below that "everything comes from data we own" was the doc lie
+> that let them sit there: the front sprite they are derived from is the
+> USER'S ARENA2 file, not ours. Regenerate locally with `tools/derive-back.mjs`
+> if the path is ever revived.
+
+
 
 Mac rejected the RD art ("doesn't read right") and set PROJECT POLICY:
 no AI generation - backs derive in-house. tools/derive-back.mjs

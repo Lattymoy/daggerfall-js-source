@@ -21,6 +21,8 @@ Translation rule: read the DFU C# source, translate logic verbatim into JS, keep
 ## Non-negotiables
 
 - Original game data (ARENA2) is freeware but NOT redistributable. It never enters the repo. `.gitignore` blocks it. Readers load user-supplied data at runtime or from a local uncommitted directory.
+- **A RENDER OF GAME DATA IS GAME DATA.** A screenshot, a gallery frame, a derived raster, a re-shaded sprite that keeps the original silhouette - if the pixels came from ARENA2, the rule above applies to them exactly as it applies to a `.BSA`. `.gitignore` can block `ARENA2/` and `*.BSA`; it cannot recognise a PNG of the same art, so this one is enforced by a test, not by a pattern.
+  AUDIT 21 found this rule unwritten and violated: fourteen before/after gallery frames sat under `public/`, twelve of them carrying classic `WEAPON*.CIF` sprites upscaled onto the probe's magenta clear. `public/` is Vite's static root, so every one of them was copied into `dist/` and uploaded to GitHub Pages by `deploy.yml` - whose own header comment says the build contains no game data. The galleries are now generated locally by `tools/fpProbe.mjs` and gitignored. Note for the record: removing them from HEAD does not remove them from git HISTORY; a full purge is a history rewrite and is Mac's call.
 - Every reader validates against real ARENA2 files with test harnesses before anything builds on it.
 - No mock/placeholder data shipped silently.
 

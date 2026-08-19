@@ -1321,7 +1321,10 @@ light constants. ELEVEN real findings, all rooted and shipped:
 (1) the FP viewmodel rendered ZERO pixels in every state and frame -
 the P9 hole-fix constants overshot the whole rig out of the frustum;
 probe-locked replacement (back 0.25, cast -0.20) via the new standing
-tools/fpProbe.mjs, before/after gallery in public/visual-changes/.
+tools/fpProbe.mjs. The before/after gallery is generated LOCALLY into
+visual-changes/ and is gitignored - AUDIT 21 (doctrine F1) found it under
+public/, which Vite copies into dist/ and deploy.yml publishes, and twelve of
+its fourteen frames carried classic WEAPON*.CIF sprites.
 (2) sampleClip takes SECONDS and all three pose paths passed a PHASE -
 FP strikes lost their back half, enemy swings died at 40-66%, staggers
 cut at a third. (3) pressing use CRASHED on any registered trap (effect
