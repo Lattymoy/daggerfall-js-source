@@ -146,7 +146,12 @@ export class MusicService {
   }
 
   stop() {
+    // AUDIT 19 F12: clear the PENDING request too. `_pending` is what the
+    // gesture hook replays, so a stop that left it armed meant the next
+    // click restarted the song that had just been stopped - the one thing
+    // stop() exists to prevent.
     this._current = null;
+    this._pending = null;
     this.player?.stop();
   }
 

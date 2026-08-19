@@ -72,7 +72,12 @@ async function boot() {
   // Load Game rides the dungeon host's OWN quickLoad (the F12 path) -
   // dungeon.js calls ctx.quickLoad once the context is built. A
   // menu-side loader would be a second copy of a working path.
+  // AUDIT 19 F12: SET on load, DELETE on anything else. `load` was only
+  // ever set, never cleared, so a URL that already carried ?load made NEW
+  // GAME restore the save instead - the one action whose whole point is
+  // not to.
   if (action === 'load') params.set('load', '1');
+  else params.delete('load');
   return bootDungeon(canvas, renderer, params, status);
 }
 

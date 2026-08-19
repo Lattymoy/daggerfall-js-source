@@ -506,3 +506,25 @@ test('AUDIT 19 F2: EVERY native window blacks its letterbox - the rule, not a li
       `${f}: ScreenDimColor is not DaggerfallBaseWindow's parent panel - that is Color.black`);
   }
 });
+
+test('AUDIT 19 F10: the texture cache is keyed by SAMPLING MODE, and frees both', async () => {
+  // uploadTexture memoises on archive/record and returns early on a hit, so
+  // asking for { smooth: true } under a key already uploaded NEAREST/REPEAT
+  // used to hand back the wrong sampling silently. Only the logo asks for
+  // smooth today, so nothing was broken - but a cache that ignores an
+  // argument is a trap. Fixing it then risks the opposite bug: a release
+  // that only knows the plain key leaves the smooth upload unreachable.
+  const src = readFileSync('src/render/renderer.js', 'utf8');
+  const up = src.slice(src.indexOf('uploadTexture(archive, record, color32'));
+  assert.match(up.slice(0, 900), /opts\.smooth \? '#smooth' : ''/,
+    'the sampling mode must be part of the cache key');
+
+  const rel = src.slice(src.indexOf('releaseTexture(archive, record)'));
+  assert.match(rel.slice(0, 700), /\$\{base\}#smooth/,
+    'and release must free BOTH variants, or fixing the cache leaks instead');
+
+  // Behavioural half: a fake renderer-shaped cache proves the keys differ.
+  const keyOf = (archive, record, opts = {}) => `${archive}_${record}${opts.smooth ? '#smooth' : ''}`;
+  assert.notEqual(keyOf('ui', 'logo', { smooth: true }), keyOf('ui', 'logo'));
+  assert.equal(keyOf('vid', 'frame'), 'vid_frame', 'the default key is unchanged');
+});

@@ -966,7 +966,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  { smooth: true } gives it LINEAR/CLAMP_TO_EDGE instead. */
   uploadTexture(archive, record, color32, opts = {}) {
     // (see textureParams below - the decision is pure and pinned there)
-    const key = `${archive}_${record}`;
+    // AUDIT 19 F10: the SAMPLING MODE is part of the key. The cache is
+    // keyed by archive/record and returns early on a hit, so asking for
+    // { smooth: true } under a key already uploaded NEAREST/REPEAT used to
+    // hand back the wrong sampling silently. Only the logo asks for smooth
+    // today and its key is unique, so nothing was broken - but a cache
+    // that quietly ignores an argument is a trap, not a cache.
+    const key = `${archive}_${record}${opts.smooth ? '#smooth' : ''}`;
     if (this.textures.has(key)) return this.textures.get(key);
     const gl = this.gl;
     const tex = gl.createTexture();
@@ -991,12 +997,20 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  for the paperdoll, which mints a NEW versioned key per refresh -
    *  an ~81 KB RGBA texture leaked on every equip click. */
   releaseTexture(archive, record) {
-    const key = record === undefined ? archive : `${archive}_${record}`;
-    const tex = this.textures.get(key);
-    if (!tex) return false;
-    this.gl.deleteTexture(tex);
-    this.textures.delete(key);
-    return true;
+    // AUDIT 19 F10: releases BOTH sampling variants. uploadTexture now
+    // folds the mode into the key, so a caller that released only the
+    // plain key would leave a smooth upload permanently unreachable -
+    // fixing the cache bug by creating a leak.
+    const base = record === undefined ? archive : `${archive}_${record}`;
+    let freed = false;
+    for (const key of [base, `${base}#smooth`]) {
+      const tex = this.textures.get(key);
+      if (!tex) continue;
+      this.gl.deleteTexture(tex);
+      this.textures.delete(key);
+      freed = true;
+    }
+    return freed;
   }
 
   /** Build a VAO bundle from meshReader output. */

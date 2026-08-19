@@ -23,7 +23,10 @@ cutout, not a blend — `drawScreenQuad` discards texels under 0.5 alpha,
 which is the port's law for every screen quad — so a soft-edged logo
 hardens at that threshold. A fully opaque banner is unaffected.
 
-**The file is optional and its absence is not an error.** `loadLogo`
-resolves null, `runTitle` returns before it touches the renderer, and
-the boot goes straight to the menu. A missing asset costs a splash,
-never a game. `node tools/titleProbe.mjs` shoots that arm live.
+**The file is optional and its absence is not an error** — and today it
+is absent, so the fallback is what you actually see. When `logo.png` is
+missing the title screen draws CLASSIC's own title, `TITL00I0.IMG`,
+straight out of the user's ARENA2 at runtime. Nothing to ship, nothing
+to install, and it swaps to ours the moment the file lands. If neither
+is available the boot goes straight to the menu: a missing asset costs
+a splash, never a game. `node tools/titleProbe.mjs` shoots both arms.

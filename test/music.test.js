@@ -809,3 +809,19 @@ test('AUDIT 19 F2: the building arm folds the way DFU folds it', async () => {
     assert.equal(environmentForBuilding(t), 'interior', `building type ${t} is a plain interior`);
   }
 });
+
+test('AUDIT 19 F12: stop() clears the PENDING request, not just the player', async () => {
+  const { MusicService } = await import('../src/systems/music.js');
+  const svc = new MusicService();
+  svc.enabled = true;
+  svc.archive = { getSongIndex: () => 0, getSong: () => ({ events: [{ tick: 0 }] }) };
+
+  // No AudioContext yet, so the request is remembered for the gesture hook.
+  assert.equal(svc.playSong('DUNGEON.HMI'), false);
+  assert.equal(svc._pending, 'DUNGEON.HMI', 'the request is armed for the first gesture');
+
+  svc.stop();
+  assert.equal(svc._pending, null,
+    'stop() must disarm it - otherwise the next click restarts what was just stopped');
+  assert.equal(svc.current, null);
+});
