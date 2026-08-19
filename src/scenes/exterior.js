@@ -18,7 +18,7 @@ import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
 import { removeOne } from '../systems/inventory.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
-import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
 import { Collider } from '../player/collider.js';
 import { getStaticDoors } from '../world/staticDoors.js';
@@ -44,6 +44,7 @@ import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying above ground
 import { NativeInventoryWindow, preloadInventoryArt, inventoryArtLoaded } from '../ui/nativeInventory.js';   // U8d: the native inventory
 import { createDroppedLoot } from './droppedLoot.js';   // U8e: the ground piles
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
@@ -327,6 +328,13 @@ export async function bootExterior(canvas, renderer, params, status) {
       townTalk.showOverlay(new LevelUpScreen(playerEntity));
     },
   });   // AUDIT 18: the per-minute tick every host owes
+  // AUDIT 21 (hosts lane, F6): this host's death presenter. Guard damage,
+  // fall damage and the ticker's disease/poison sink all reach the one damage
+  // door in playerEntity.js; the door calls this. Registered here rather than
+  // passed down four call chains, because there is one player and one death.
+  setDeathPresenter(() => {
+    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen());
+  });
 
   // AUDIT 19 F4: the CUMULATIVE game-day count, for the music seed. The
   // ticker's classicMinutes is the only clock in this host that keeps
@@ -434,7 +442,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
       const apply = () => {
-        playerEntity.health = Math.max(0, playerEntity.health - dmg);
+        hurtPlayer(playerEntity, dmg);   // AUDIT 21 hosts F6: the one damage door - this used to write health raw and never check for death
         audio.playOneShot(hitSoundFor(wpn), 1.1);
         surfacePlayer();
       };

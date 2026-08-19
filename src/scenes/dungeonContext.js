@@ -19,7 +19,7 @@ import { RDB_SIDE } from '../world/rdbLayout.js';
 import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, classifyPlacementAction, lookAtLockText } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
-import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter } from '../characters/playerEntity.js';
 import { addItem, removeOne } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
@@ -661,13 +661,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n);
     surfacePlayer();
   }
+  // AUDIT 21 (hosts lane, F6): this host's arm is now the PRESENTER on the one
+  // shared damage door, not a second door of its own. It was the only one of
+  // the four writers that checked for death, which is exactly why the other
+  // three could go on writing health raw and nobody noticed.
+  setDeathPresenter(() => {
+    if (!(activeOverlay instanceof DeathScreen)) activeOverlay = new DeathScreen();
+  });
   function hurtPlayer(dmg) {
-    if (dmg <= 0) return;
-    playerEntity.health = Math.max(0, playerEntity.health - dmg);
-    surfacePlayer();
-    if (playerEntity.health === 0 && !(activeOverlay instanceof DeathScreen)) {
-      activeOverlay = new DeathScreen();
-    }
+    hurtEntity(playerEntity, dmg);
   }
   // S13 magicka sink (parallel to heal/hurt): the SpellPoints damage
   // family drives it. DecreaseMagicka floors at 0; surfaces for the

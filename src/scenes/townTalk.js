@@ -444,6 +444,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     texts: (id) => textVariants(id),
     say: (line) => hud.add(line),
     get overlayActive() { return !!overlay; },
+    /** AUDIT 21 (hosts lane, F6): the live overlay, so a death presenter can
+     *  refuse to stack a second death screen on the first. */
+    get overlay() { return overlay; },
     get mode() { return mode; },
     get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
     get locationName() { return cityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)

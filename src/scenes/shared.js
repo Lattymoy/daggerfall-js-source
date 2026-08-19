@@ -18,7 +18,7 @@ import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { liveStat } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
 import { SOUND } from '../systems/soundClips.js';
-import { surfacePlayer } from '../characters/playerEntity.js';
+import { surfacePlayer, hurtPlayer } from '../characters/playerEntity.js';
 import { music } from '../systems/music.js';
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -326,8 +326,11 @@ export function applyNightStars(bmp, random) {
 export function applyFallLanding(entity, distance, { hurt = null, sound = null } = {}) {
   if (distance > FALL_DAMAGE_THRESHOLD) {
     const dmg = Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD));
+    // AUDIT 21 (hosts lane, F6): the no-`hurt` arm went through the ONE
+    // damage door now, so a fatal fall outdoors or in a building raises the
+    // death screen instead of leaving you walking around at 0 HP.
     if (hurt) hurt(dmg);
-    else { entity.health = Math.max(0, entity.health - dmg); surfacePlayer(); }
+    else hurtPlayer(entity, dmg);
     sound?.(SOUND.FallDamage);
   } else if (distance > FALL_DAMAGE_THRESHOLD / 2) {
     sound?.(SOUND.FallHard);   // BadFallDetected
@@ -413,7 +416,10 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } 
   // their own mode ran. Walking through a door rewound time.
 
   const sinks = {
-    hurt: (n) => { if (n > 0) entity.health = Math.max(0, (entity.health ?? 0) - n); },
+    // AUDIT 21 (hosts lane, F6): through the one damage door - disease,
+    // poison and continuous-damage effects can kill you, and above ground
+    // they used to do it silently.
+    hurt: (n) => hurtPlayer(entity, n),
     heal: (n) => { if (n > 0) entity.health = Math.min(entity.maxHealth ?? Infinity, (entity.health ?? 0) + n); },
     drainMagicka: (n) => { if (n > 0) entity.magicka = Math.max(0, (entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + n); },
