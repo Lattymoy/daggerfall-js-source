@@ -13,9 +13,14 @@ await page.goto('http://localhost:5199/?shot&play&exterior&time=12:00');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 const readPeople = async () => JSON.parse(await page.evaluate(() => window.__people()));
 let live = null;
-for (let i = 0; i < 60 && !live; i++) {
+for (let i = 0; i < 120 && !live; i++) {
   await new Promise((r) => setTimeout(r, 5000));
-  live = (await readPeople()).find((p) => p.visible && p.moves > 0);
+  const arr = await readPeople();
+  live = arr.find((p) => p.visible && p.moves > 0);
+  if (i % 6 === 5) {
+    const dbg = await page.evaluate(() => window.__townDebug ? window.__townDebug() : '{}');
+    console.log(`t+${(i + 1) * 5}s pool=${arr.length} visible=${arr.filter((p) => p.visible).length} moved=${arr.filter((p) => p.moves > 0).length} dbg=${dbg}`);
+  }
 }
 if (!live) { console.log('NO LIVE WALKER'); process.exit(1); }
 const waitFrames = async (n) => {
