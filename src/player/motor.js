@@ -74,6 +74,15 @@ export const EYE_HEIGHT = 1.7;
 // crouched eye keeps that same law: 0.9 - 0.1 = 0.8 above the feet.
 export const CROUCH_HEIGHT = 0.9;
 export const CROUCH_EYE_HEIGHT = 0.8;
+// PlayerHeightChanger.timerFast - the crouch/stand action's camTimer
+// budget. AUDIT 18: a BLOCKED stand-up is not dropped on the spot.
+// PlayerHeightChanger.Update's chain is `else if (heightAction ==
+// DoStanding && CanStand()) DoStand(); ... else DoDismount();`, so a
+// blocked stand falls through to DoDismount, which (already
+// dismounted) does nothing but tick camTimer and calls
+// timerResetAction() once camTimer >= timerMax - the request RETRIES
+// every frame for 0.10 s and is only then forgotten.
+export const HEIGHT_TIMER_FAST = 0.10;
 
 /** PlayerSpeedChanger.GetWalkSpeed, verbatim (audit 2026-08-16e F1):
  *  drag = 0.5 x (100 - max(30, LiveSpeed)) rides the WALK base only -
@@ -149,6 +158,11 @@ export class PlayerMotor {
     this.waterSurfaceY = null;   // the current block's water surface (world y), null when dry
     this.jumped = false;         // set for the frame a jump actually starts (fatigue/tally consumer)
     this.crouching = false;      // P12: toggled via input.crouch (edge); standing needs headroom
+    // PlayerHeightChanger.heightAction / camTimer: null | 'crouch' |
+    // 'stand'. The pending action lives on the RENDER frame, exactly
+    // where DFU decides and applies it.
+    this.heightAction = null;
+    this.heightTimer = 0;
     // P15 (PlayerSpeedChanger): the run/sneak STATES - latched from
     // held input only while grounded; airborne keeps the takeoff
     // state (the swim quirk rides it too: waterWalking's Speed read).
@@ -157,6 +171,12 @@ export class PlayerMotor {
     // P13: PlayerMotor.IsMovingLessThanHalfSpeed - the stealth
     // sneak condition, recomputed each update from the frame's input.
     this.movingLessThanHalfSpeed = true;
+    // PlayerMotor.speed (the `speed` FIELD, not a recomputation):
+    // UpdateSpeed writes it, and the swim/levitate early return sits
+    // ABOVE UpdateSpeed, so while swimming/levitating it keeps its
+    // last GROUNDED value - IsMovingLessThanHalfSpeed reads that
+    // stale value, verbatim.
+    this.speed = walkSpeed(this.stats.speed);
   }
 
   get eye() {
@@ -202,7 +222,11 @@ export class PlayerMotor {
    *  that final subtracted unit is exactly what makes a moving sneak
    *  qualify for the P13 stealth checks. */
   _trackHalfSpeed(input, appliedSpeed) {
-    const standing = !input.forward && !input.strafe && !input.up && !input.down;
+    // IsStandingStill runs its zero-magnitude test ONLY inside
+    // `if (grounded)` and returns false otherwise (PlayerMotor.cs:
+    // 113-125), so an AIRBORNE player is never "standing still" no
+    // matter how empty the input is.
+    const standing = this.grounded && !input.forward && !input.strafe && !input.up && !input.down;
     if (standing) { this.movingLessThanHalfSpeed = true; return; }
     // Crouched compares GetWalkSpeed/2; the else compares
     // GetBaseSpeed/2, and GetBaseSpeed NOT crouched is the same
@@ -210,19 +234,56 @@ export class PlayerMotor {
     this.movingLessThanHalfSpeed = walkSpeed(this.stats.speed) / 2 >= appliedSpeed;
   }
 
+  /** PlayerHeightChanger.DecideHeightAction + PlayerHeightChanger
+   *  .Update, both of which run on the RENDER frame in DFU.
+   *  DecideHeightAction TOGGLES the pending action off the Crouch
+   *  press (:174-181); Update applies DoCrouch unconditionally and
+   *  DoStand only while CanStand() passes (:223-226), a blocked stand
+   *  falling through to the do-nothing DoDismount that clears the
+   *  action once camTimer >= timerMax. camTimer is reset ONLY by
+   *  timerResetAction, so re-pressing during a blocked stand-up does
+   *  not extend the window.
+   *  (The 0.10 s controller/camera LERP itself is not ported - our
+   *  height change is instant; Ledger row 139 residue.) */
+  _heightAction(dt, input) {
+    if (input.crouch) this.heightAction = this.crouching ? 'stand' : 'crouch';
+    if (this.heightAction === 'crouch') {
+      this.crouching = true;
+      this.heightAction = null;
+      this.heightTimer = 0;
+    } else if (this.heightAction === 'stand') {
+      // CanStand: the STANDING capsule must fit at the current feet.
+      if (this.collider.penetrationAt(this.pos, CAPSULE_HEIGHT) < 0.03) {
+        this.crouching = false;
+        this.heightAction = null;
+        this.heightTimer = 0;
+      } else {
+        this.heightTimer += dt;
+        if (this.heightTimer >= HEIGHT_TIMER_FAST) {
+          this.heightAction = null;
+          this.heightTimer = 0;
+        }
+      }
+    }
+  }
+
   /** The RENDER-frame entry: accumulates dt and runs fixed physics
    *  steps (see the FIXED_DT note). Per-frame report flags (jumped,
-   *  landedFallDistance) reset here and OR/carry across the steps;
-   *  the crouch EDGE is consumed by the first step only. */
+   *  landedFallDistance) reset here and OR/carry across the steps.
+   *  The crouch key is decided and applied HERE, not inside a step:
+   *  DFU reads it in PlayerMotor.Update (:371 heightChanger
+   *  .DecideHeightAction) and never in FixedUpdate, so a render frame
+   *  that accumulates less than one physics step must not swallow the
+   *  press (AUDIT 18 - at 120 Hz that dropped every other crouch). */
   update(dt, input, yaw, pitch = 0) {
     this.jumped = false;
     this.landedFallDistance = 0;
-    this._acc = (this._acc ?? 0) + Math.min(dt, MAX_FRAME_DT);
-    let first = true;
+    const frameDt = Math.min(dt, MAX_FRAME_DT);
+    this._heightAction(frameDt, input);
+    this._acc = (this._acc ?? 0) + frameDt;
     while (this._acc >= FIXED_DT) {
       this._acc -= FIXED_DT;
-      this._step(FIXED_DT, first ? input : (input.crouch ? { ...input, crouch: false } : input), yaw, pitch);
-      first = false;
+      this._step(FIXED_DT, input, yaw, pitch);
     }
   }
 
@@ -230,17 +291,8 @@ export class PlayerMotor {
     // PlayerMotor.FixedUpdate: time the grounded state FIRST, every
     // frame (the swim/levitate early-return comes after in DFU too).
     this.groundedTime = this.grounded ? this.groundedTime + dt : 0;
-    // P12 crouch toggle (edge input; the scene owns the key edge).
-    // Standing back up needs headroom: the STANDING capsule must fit
-    // at the current feet (PlayerHeightChanger's CanStand probe) -
-    // blocked under a low ceiling, the player stays crouched.
-    if (input.crouch) {
-      if (this.crouching) {
-        if (this.collider.penetrationAt(this.pos, CAPSULE_HEIGHT) < 0.03) this.crouching = false;
-      } else {
-        this.crouching = true;
-      }
-    }
+    // (P12 crouch is decided and applied by _heightAction on the
+    // RENDER frame, exactly as PlayerHeightChanger is.)
     const sin = Math.sin(yaw);
     const cos = Math.cos(yaw);
     // limitDiagonalSpeed, verbatim: .7071 when both axes are live.
@@ -273,7 +325,14 @@ export class PlayerMotor {
       } else {
         speed = swimSpeed(walkSpeed(this.stats.speed), this.stats.swimming ?? 0);
       }
-      this._trackHalfSpeed(input, speed);
+      // IsMovingLessThanHalfSpeed while swimming/levitating: DFU's
+      // FixedUpdate zeroes moveDirection and RETURNS at :322-326,
+      // above UpdateSpeed - so IsStandingStill is the grounded test
+      // over a zero moveDirection, and the comparison runs against
+      // the STALE land `speed`, never the swim speed computed here.
+      this.movingLessThanHalfSpeed = this.grounded
+        ? true
+        : walkSpeed(this.stats.speed) / 2 >= this.speed;
       const r = this.collider.move(this.pos, mx * speed * dt, my * speed * dt, mz * speed * dt, this.height);
       this.groundKey = r.grounded ? (r.groundKey ?? null) : null;
       this.grounded = r.grounded;
@@ -318,6 +377,7 @@ export class PlayerMotor {
       speed = this.crouching ? crouchSpeed(this.stats.speed) : walkSpeed(this.stats.speed);
       if (this.isSneaking) speed = sneakSpeed(speed);
     }
+    this.speed = speed;   // UpdateSpeed writes the field the getter reads
     this._trackHalfSpeed(input, speed);
 
     // fwd = (sin, 0, cos); camera-right = up x back per lookAt =
