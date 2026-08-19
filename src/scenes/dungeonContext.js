@@ -70,8 +70,7 @@ import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, KB_UNIT } from 
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
-import { music } from '../systems/music.js';
-import { DUNGEON_SONGS } from '../systems/songManager.js';
+import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4: the shared PlayRandomlyIfPlayerNear pass
 import {
@@ -1784,19 +1783,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
-  // A5/AUDIT 19 F4: DUNGEON MUSIC, started HERE - after every binding in
-  // this function exists. SongManager's DungeonInteriorSongs playlist,
-  // verbatim. DFU seeds the pick with the dungeon block's Unknown2 header
-  // field XOR the region (SongManager.cs:346-358); the port reads that
-  // field but does not thread it to a music layer yet, so the pick falls
-  // to DFU's OWN day-seeded branch and the dungeon seed is FLAGGED rather
-  // than faked - a wrong seed is a wrong song every time, which is worse
-  // than the general rule.
-  _audioUp.then(() => {
-    music.playFrom(DUNGEON_SONGS, { gameDays: Math.floor(classicMinutes / MINUTES_PER_DAY) });
-  });
+  // Music is NOT started here any more (AUDIT 19's 1:1 pass): the
+  // SongManager decides when a song changes, from a context the host feeds
+  // it every frame. What this context owes it is the SEED, above.
 
   return {
+    // AUDIT 19 / 1:1: SelectCurrentSong's dungeon arm seeds DFRandom with
+    // the dungeon record header's Unknown2 XOR the region byte
+    // (SongManager.cs:346-358). An earlier pass flagged this as
+    // "unavailable" - it is not. mapsFile parses unknown2 onto the same
+    // header this host already reads locationId from, and DFU casts it to
+    // ushort, so the low 16 bits are the field. Verified over the real
+    // archive: 4,232 dungeons, 3,769 distinct keys, near-uniform across
+    // the 15-song list.
+    /** The host's cumulative clock, for the music context's gameDays. */
+    get classicMinutes() { return classicMinutes; },
+    musicSeed: dungeonKey(
+      (dfLocation?.dungeon?.recordElement?.header?.unknown2 ?? 0) & 0xffff,
+      dfLocation?.regionIndex ?? 0),
     drawList,
     dynamicDraws,
     actions,

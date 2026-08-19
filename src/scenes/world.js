@@ -47,11 +47,9 @@ import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
-import { music } from '../systems/music.js';
-import { outdoorPlaylist } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, motorStats, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier, tallySkill, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
@@ -452,27 +450,21 @@ export async function bootWorld(canvas, renderer, params, status) {
   // drives the sun and the window styles, which want a time of day).
   const gameDaysNow = () => Math.floor(playerTicker.classicMinutes / 1440);
 
-  // A5b/AUDIT 19: ONE SEAM for this host's music, because there are now
-  // four callers - the boot, nightfall, returning from an interior and
-  // returning from a dungeon - and four copies is how the host-gap bugs
-  // start. F3 found the dungeon exit had no caller at all, so dungeon
-  // music looped over the sunlit city forever; F5 found the playlist was
-  // chosen once at boot, so night never brought night music.
-  let _musicNight = null;
-  const startOutdoorMusic = () => {
-    const night = isNight(minuteNow());
-    _musicNight = night;
-    // AUDIT 19 F4: gameDays is the CUMULATIVE day count. minuteNow()
-    // ends in `% 1440`, so deriving it there was structurally zero -
-    // every tavern played SQUARE_2.HMI forever and the day-seeded
-    // outdoor pick never changed.
-    music.playFrom(outdoorPlaylist({ night, weather }), { gameDays: gameDaysNow() });
-  };
-  /** Cheap per-frame check: re-pick only when the day/night gate flips. */
-  const updateOutdoorMusic = () => {
-    if (_musicNight !== null && isNight(minuteNow()) !== _musicNight) startOutdoorMusic();
-  };
-  ensureAudio(fetchBytes).then(startOutdoorMusic);   // the SEAM, not music.ensure - AUDIT 19 F1(doctrine)
+  // AUDIT 19 / 1:1: the MUSIC DIRECTOR replaces this host's three ad-hoc
+  // music entry points (boot, nightfall, returning from an interior). DFU
+  // has one Update() that rebuilds a context every frame and reacts to the
+  // difference; feeding that is the only way to get its law that a new day
+  // or a new LOCATION re-picks even when the playlist is unchanged.
+  // The STREAMING host moves between locations, so all three are live.
+  // `_musicLoc` is refreshed on the same pixel crossing that swaps talk
+  // topics - outside any location rect it is null, which is DFU's
+  // IsPlayerInLocationRect == false and its locationIndex == -1.
+  let _musicLoc = null;
+  const _musicInLocationRect = () => _musicLoc !== null;
+  const _musicLocationType = () => _musicLoc?.mapTableData?.locationType ?? 0xffff;
+  const _musicLocationIndex = () => _musicLoc?.locationIndex ?? -1;
+  const musicDirector = createMusicDirector();
+  ensureAudio(fetchBytes);
   // C9: the exterior FP weapon (host rule - every motor host carries
   // it). AUDIT 17e F38 / RETIRING A FLAG DELETES THE SENTENCE: the
   // 'no HUD-text layer yet' flag that stood here was retired by T3b
@@ -564,6 +556,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     clearCrimeOnLocationExit(playerEntity, _topicsKey, key);
     _topicsKey = key;
     const dfLocation = key ? locationIndex.get(key) : null;
+    _musicLoc = dfLocation ?? null;   // AUDIT 19: the music context's location half
     if (!cur || !dfLocation || !cur.locBlocks) { townTalk.setTopics(null); return; }
     const { px, py } = cur;
     const lo = cur.locOrigin;
@@ -824,8 +817,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     // A5b: the tavern arm needs the host's clock, and leaving one has to
     // hand the street back its own song - the host owns both, so both
     // ride in as closures rather than worldModes reaching for a global.
-    gameDaysNow,
-    resumeOutdoorMusic: startOutdoorMusic,
     voxelfolk: params.has('voxelfolk'),
     foes: !params.has('nofoes'),   // C11: foes are the DEFAULT now (monsters live; ?nofoes for the empty-dungeon dev view)
     playerClass: params.has('class') ? Number(params.get('class')) : undefined,
@@ -913,7 +904,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       // motor already held here - the clock did not, so a disease
       // aged while the game was paused.
       if (!_overlayHeld) playerTicker.tick(dt, { running: player.running, swimming: player.swimming });
-      updateOutdoorMusic();   // AUDIT 19 F5: nightfall re-picks the playlist
+      // One frame of music context. The mode host reports whether we are
+      // inside and where; outdoors its overlay is null and this stands.
+      musicDirector.update({
+        inside: false,
+        inLocationRect: _musicInLocationRect(),
+        locationType: _musicLocationType(),
+        locationIndex: _musicLocationIndex(),
+        weather,
+        night: isNight(minuteNow()),
+        gameDays: gameDaysNow(),
+      }, modes?.musicContext?.() ?? null);
         // AUDIT 18 HOST GAP: levitate/waterWalking/slowFall were
         // written ONLY inside the dungeon branch of worldModes and
         // never cleared, so leaving a dungeon while levitating

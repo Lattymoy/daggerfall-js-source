@@ -20,6 +20,7 @@ import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer } from '../characters/playerEntity.js';
 import { music } from '../systems/music.js';
+import { SongManager, musicEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 
 import { getBytes } from './dataSource.js';
@@ -434,4 +435,48 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } 
 /** PlayerEntity.cs:388-400 - Athleticism loses fatigue 10% slower. */
 export function fatigueLossMultiplierFor(entity) {
   return hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism) ? 0.9 : 1.0;
+}
+
+// --- THE MUSIC DIRECTOR (AUDIT 19's 1:1 pass) ------------------------
+//
+// DFU's SongManager is a MonoBehaviour with an Update(): it rebuilds a
+// context every frame and reacts to the difference. The port had no
+// equivalent - hosts called music.playFrom at moments they chose - and
+// three of DFU's behaviours are unreachable that way (a new day or a new
+// location re-picks even when the playlist is identical; locationIndex is
+// part of the context at all; a finished song re-evaluates the context
+// before the next is chosen).
+//
+// This is the one seam every host uses. It owns a SongManager, wires its
+// play/stop sinks to the music service, and takes a context per frame.
+// Hosts supply their own half of that context and nothing else - which is
+// what stopped the four of them drifting apart before.
+
+/**
+ * @param {object} [opts]
+ * @param {boolean} [opts.fm]  take DFU's FM playlists
+ */
+export function createMusicDirector({ fm = false } = {}) {
+  const manager = new SongManager({
+    play: (name) => music.playFrom([name], { gameDays: 0 }),
+    stop: () => music.stop(),
+    fm,
+  });
+  return {
+    manager,
+    /** One frame. `base` is the host's half; `overlay` is the mode host's
+     *  (worldModes.musicContext()), or null outdoors. */
+    update(base, overlay = null) {
+      const merged = { ...base, ...(overlay ?? {}) };
+      return manager.update({
+        environment: musicEnvironment(merged),
+        weather: merged.weather ?? 'sunny',
+        night: Boolean(merged.night),
+        gameDays: merged.gameDays ?? 0,
+        locationIndex: merged.locationIndex ?? -1,
+        arrested: Boolean(merged.arrested),
+        dungeonKey: merged.dungeonKey ?? null,
+      }, { songEnded: !music.playing });
+    },
+  };
 }

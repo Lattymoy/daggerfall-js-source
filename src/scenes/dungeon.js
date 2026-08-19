@@ -24,7 +24,7 @@ import { jumpSpeedMultiplier } from '../systems/skills.js';
 import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
-import { fetchBytes, motorStats, ridePlatform } from './shared.js';
+import { createMusicDirector, fetchBytes, motorStats, ridePlatform } from './shared.js';
 import { routeKey } from '../ui/input.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -219,6 +219,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
 
   let frames = 0;
   let last = performance.now();
+  // AUDIT 19 / 1:1: this host gets the SAME music director as the other
+  // three. Removing dungeonContext's own playFrom without giving this host
+  // a director left ?dungeon silent - the host-gap shape, committed by the
+  // very pass that was closing it. The pin below now sweeps ALL FOUR.
+  const musicDirector = createMusicDirector();
   function frame(now) {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
@@ -311,6 +316,12 @@ export async function bootDungeon(canvas, renderer, params, status) {
     frames++;
     if (shotMode) window.__frame = frames;
     if (shotMode && frames === 5) window.__shotReady = true;
+    musicDirector.update({
+      inside: true, insideDungeon: true, insideDungeonCastle: false,
+      gameDays: Math.floor(ctx.classicMinutes / 1440),
+      dungeonKey: ctx.musicSeed,
+      locationIndex: dfLocation?.locationIndex ?? -1,
+    });
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

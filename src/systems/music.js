@@ -145,6 +145,11 @@ export class MusicService {
     return this.playSong(picked.name);
   }
 
+  /** Is a song sounding right now? The director asks each frame - it is
+   *  the port's stand-in for DFU's `songPlayer.IsPlaying`, which drives
+   *  both the re-evaluation and the replay in UpdateSong. */
+  get playing() { return Boolean(this.player?.playing); }
+
   stop() {
     // AUDIT 19 F12: clear the PENDING request too. `_pending` is what the
     // gesture hook replays, so a stop that left it armed meant the next

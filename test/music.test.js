@@ -392,48 +392,50 @@ test('A5b: every outdoor and FM playlist entry EXISTS in MIDI.BSA', { skip: skip
   assert.deepEqual(missing, [], 'every exported playlist resolves against the real archive');
 });
 
-test('A5b/AUDIT 19: every host reaches music through ITS OWN seam', () => {
-  // A source sweep, stated honestly: these hosts have no execution coverage
-  // in node. AUDIT 19 also showed how weak a text sweep is - a regex pin let
-  // a completely dead memo ship - so this asserts STRUCTURE that a defect
-  // would actually have to break, and the behavioural half lives in
-  // tools/bootProbe.mjs, which drives a real boot and reports whether music
-  // is playing.
+test('AUDIT 19 1:1: every host feeds the ONE music director', () => {
+  // The port used to call music.playFrom at moments each host chose. DFU
+  // has a SongManager.Update() that rebuilds a context every frame and
+  // reacts to the difference, so the port now has one director and the
+  // hosts only feed it. This sweep is what stops the four of them drifting
+  // apart again - the shape every previous audit found.
   const wm = readFileSync('src/scenes/worldModes.js', 'utf8');
-  // AUDIT 19: EVERY building arm, not only the tavern - shops, palaces,
-  // the Mages Guild and the temple alignments each have their own list.
-  assert.match(wm, /environmentForBuilding\(interiorBuilding\.buildingType/,
-    'entering a building resolves its music ENVIRONMENT');
-  assert.match(wm, /playlistForEnvironment\(env\)/, 'and takes that environment\'s list');
-  assert.match(wm, /tavern: env === 'tavern'/,
-    'the tavern keeps the DIRECT gameDays arm - it is the one list DFU indexes that way');
-  assert.match(wm, /if \(interiorBuilding\) resumeOutdoorMusic/,
-    'leaving ANY interior resumes the street, not just a tavern');
-  // BOTH exits hand the street back its song. F3 found the dungeon exit had
-  // no caller at all, so dungeon music looped over the sunlit city forever.
-  const resumes = wm.match(/resumeOutdoorMusic\?\.\(\)/g) ?? [];
-  assert.equal(resumes.length, 2,
-    'the interior exit AND the dungeon exit must both resume outdoor music');
+  assert.match(wm, /musicContext\(\)/, 'the mode host reports its half of the context');
+  assert.match(wm, /insideDungeon: true/, 'including whether the player is in a dungeon');
+  assert.match(wm, /dungeonKey: dungeonCtx\?\.musicSeed/, 'and the dungeon selection seed');
+  assert.ok(!/music\.playFrom\(/.test(wm),
+    'the mode host must NOT start songs itself - the director decides');
 
   for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
     const text = readFileSync(host, 'utf8');
-    assert.match(text, /outdoorPlaylist\(\{ night, weather \}\)/,
-      `${host} never picks an outdoor playlist`);
-    assert.match(text, /resumeOutdoorMusic: startOutdoorMusic/,
-      `${host} must hand worldModes the SAME seam it uses itself`);
-    // AUDIT 19 F4: gameDays must come from the CUMULATIVE clock. minuteNow()
-    // ends in `% 1440`, so deriving it there is structurally zero forever.
-    assert.match(text, /playerTicker\.classicMinutes \/ 1440/,
-      `${host} must take gameDays from the cumulative clock`);
-    assert.ok(!/Math\.floor\(minuteNow\(\) \/ 1440\)/.test(text),
-      `${host}: gameDays from minuteNow() is identically 0`);
-    // F5: nightfall must re-pick, or night never brings night music.
-    assert.match(text, /updateOutdoorMusic\(\)/, `${host} never re-evaluates at nightfall`);
+    assert.match(text, /createMusicDirector\(\)/, `${host} has no music director`);
+    assert.match(text, /musicDirector\.update\(/, `${host} never feeds it`);
+    assert.match(text, /modes\?\.musicContext\?\.\(\)/,
+      `${host} must merge the mode host's half of the context`);
+    assert.match(text, /gameDays: gameDaysNow\(\)/,
+      `${host} must feed the CUMULATIVE day count`);
+    assert.ok(!/music\.playFrom\(/.test(text),
+      `${host} must not start songs directly any more`);
   }
-  // And the dungeon host takes the dungeon list, not an outdoor one.
+
+  // The dungeon context supplies the seed and no longer plays.
   const dc = readFileSync('src/scenes/dungeonContext.js', 'utf8');
-  assert.match(dc, /music\.playFrom\(DUNGEON_SONGS/, 'the dungeon host plays dungeon music');
+  assert.match(dc, /musicSeed: dungeonKey\(/, 'the dungeon context exposes its selection seed');
+  assert.ok(!/music\.playFrom\(/.test(dc), 'and does not start songs itself');
+
+  // ALL FOUR HOSTS. Removing dungeonContext's own playFrom without giving
+  // scenes/dungeon.js a director left ?dungeon silent - the host gap, made
+  // by the very pass that was closing it. Sweeping three hosts is what let
+  // that through, so the list is the whole set.
+  for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/dungeon.js']) {
+    const text = readFileSync(host, 'utf8');
+    assert.match(text, /createMusicDirector\(\)/, `${host} has no music director`);
+    assert.match(text, /musicDirector\.update\(/, `${host} never feeds it`);
+  }
+  const dh = readFileSync('src/scenes/dungeon.js', 'utf8');
+  assert.match(dh, /dungeonKey: ctx\.musicSeed/,
+    'the dungeon host must feed the SEED, or its songs fall back to the day roll');
 });
+
 
 
 // ---------------------------------------------------------------------------
@@ -824,4 +826,265 @@ test('AUDIT 19 F12: stop() clears the PENDING request, not just the player', asy
   assert.equal(svc._pending, null,
     'stop() must disarm it - otherwise the next click restarts what was just stopped');
   assert.equal(svc.current, null);
+});
+
+// ---------------------------------------------------------------------------
+// AUDIT 19, THE 1:1 PASS: SongManager's ENGINE, not just its tables.
+//
+// The port had the playlists and none of the loop. DFU rebuilds a context
+// every frame (UpdateSong, SongManager.cs:198-231) and reacts to the
+// difference, and three of its behaviours cannot exist without that:
+//   - a new DAY or a new LOCATION re-picks even when the playlist is IDENTICAL
+//   - locationIndex is part of the context at all
+//   - a finished song re-evaluates the context before the next is chosen
+// ---------------------------------------------------------------------------
+
+const CTX = {
+  environment: 'city', weather: 'sunny', night: false,
+  gameDays: 3, locationIndex: 7, arrested: false,
+};
+
+test('AUDIT 19 1:1: an unchanged context does NOT restart the song', async () => {
+  const { SongManager } = await import('../src/systems/songManager.js');
+  const played = [];
+  const sm = new SongManager({ play: (n) => played.push(n) });
+  sm.update(CTX);
+  for (let i = 0; i < 20; i++) sm.update(CTX);
+  assert.equal(played.length, 1, 'twenty identical frames, one song start');
+});
+
+test('AUDIT 19 1:1: a NEW DAY re-picks even when the playlist is identical', async () => {
+  const { SongManager, SUNNY_SONGS } = await import('../src/systems/songManager.js');
+  const played = [];
+  const sm = new SongManager({ play: (n) => played.push(n) });
+  sm.update(CTX);
+  const first = sm.currentPlaylist;
+  sm.update({ ...CTX, gameDays: 4 });
+  assert.equal(sm.currentPlaylist, first, 'same playlist - still a sunny city');
+  assert.equal(sm.currentPlaylist, SUNNY_SONGS);
+  assert.equal(played.length, 2, 'and yet the song was re-picked');
+  // This is the law a playlist-only comparison cannot express: the lists
+  // are the same object, so nothing about them says "choose again".
+});
+
+test('AUDIT 19 1:1: a NEW LOCATION re-picks; locationIndex is in the context', async () => {
+  const { SongManager, contextEquals } = await import('../src/systems/songManager.js');
+  const played = [];
+  const sm = new SongManager({ play: (n) => played.push(n) });
+  sm.update(CTX);
+  const firstSong = sm.currentSong;
+  sm.update({ ...CTX, locationIndex: 9 });
+  // The selection RE-RUNS - but outside a dungeon the seed is the day, so
+  // the same day yields the same song and DFU's PlayCurrentSong guard
+  // refuses to restart it. Faithful: walking between two towns on one day
+  // does not restart the music. What proves the re-pick happened is that
+  // the manager took the branch at all, which a changed DAY makes audible.
+  assert.equal(sm.currentSong, firstSong, 'same day, same seed, same song');
+  assert.equal(played.length, 1, 'and it is NOT restarted');
+  // Change the day too and the re-pick becomes audible.
+  sm.update({ ...CTX, locationIndex: 9, gameDays: 4 });
+  assert.equal(played.length, 2);
+
+  // And the context equality is DFU's six fields, no more and no fewer.
+  const a = { ...CTX };
+  assert.equal(contextEquals(a, { ...a }), true);
+  for (const field of ['environment', 'weather', 'night', 'gameDays', 'locationIndex', 'arrested']) {
+    const b = { ...a, [field]: field === 'night' || field === 'arrested' ? true : 'CHANGED' };
+    assert.equal(contextEquals(a, b), false, `${field} must be part of the context`);
+  }
+  // dungeonKey is NOT part of it - DFU reads it inside SelectCurrentSong,
+  // not from the context, so it must not by itself force a re-pick.
+  assert.equal(contextEquals(a, { ...a, dungeonKey: 1234 }), true);
+});
+
+test('AUDIT 19 1:1: a finished song re-evaluates the context first', async () => {
+  const { SongManager } = await import('../src/systems/songManager.js');
+  const played = [];
+  const sm = new SongManager({ play: (n) => played.push(n) });
+  sm.update(CTX);
+  assert.equal(played.length, 1);
+  // Same context, but the song ended: DFU replays rather than falling silent.
+  sm.update(CTX, { songEnded: true });
+  assert.equal(played.length, 2, 'the song is replayed, not dropped');
+});
+
+test('AUDIT 19 1:1: the playback controls are DFU\'s', async () => {
+  const { SongManager, DUNGEON_SONGS } = await import('../src/systems/songManager.js');
+  const played = [];
+  let stops = 0;
+  const sm = new SongManager({ play: (n) => played.push(n), stop: () => stops++ });
+  sm.update({ ...CTX, environment: 'dungeonInterior', dungeonKey: 0x1234 });
+  const startIndex = sm.currentSongIndex;
+
+  // PlayNextSong / PlayPreviousSong walk the list and WRAP.
+  sm.playNextSong();
+  assert.equal(sm.currentSongIndex, (startIndex + 1) % DUNGEON_SONGS.length);
+  sm.currentSongIndex = DUNGEON_SONGS.length - 1;
+  sm.playNextSong();
+  assert.equal(sm.currentSongIndex, 0, 'next wraps to the top');
+  sm.playPreviousSong();
+  assert.equal(sm.currentSongIndex, DUNGEON_SONGS.length - 1, 'previous wraps to the end');
+
+  // StopPlaying silences and LATCHES - a stopped manager must not resume
+  // itself on the next context change.
+  sm.stopPlaying();
+  assert.equal(stops, 1);
+  const before = played.length;
+  sm.update({ ...CTX, environment: 'tavern', gameDays: 99 });
+  assert.equal(played.length, before, 'a stopped manager stays stopped');
+
+  // TogglePlay brings it back, and StartPlaying FORCES - it restarts the
+  // song even though currentSong never changed.
+  sm.togglePlay();
+  assert.ok(played.length > before, 'toggling play resumes');
+});
+
+test('AUDIT 19 1:1: the dungeon seed is the header field, over real data', { skip: skipReal }, async () => {
+  const { dungeonKey, selectSong, DUNGEON_SONGS } = await import('../src/systems/songManager.js');
+  const { MapsFile } = await import('../src/formats/mapsFile.js');
+  const B = (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
+  const maps = new MapsFile();
+  maps.load(B('MAPS.BSA'), B('CLIMATE.PAK'), B('POLITIC.PAK'));
+
+  // SelectCurrentSong seeds DFRandom with the dungeon record header's
+  // Unknown2 XOR the region byte. An earlier pass recorded this as
+  // "unavailable"; it is not - mapsFile parses unknown2 onto the same
+  // header the dungeon host already reads locationId from.
+  const spread = {};
+  let dungeons = 0;
+  const keys = new Set();
+  for (let region = 0; region < 62; region++) {
+    const reg = maps.getRegion(region);
+    if (!reg?.locationCount) continue;
+    for (let i = 0; i < reg.locationCount; i++) {
+      const loc = maps.getLocation(region, i);
+      const h = loc?.hasDungeon ? loc.dungeon?.recordElement?.header : null;
+      if (!h) continue;
+      dungeons++;
+      const key = dungeonKey(h.unknown2 & 0xffff, region);   // DFU casts to ushort
+      keys.add(key);
+      const pick = selectSong(DUNGEON_SONGS, { dungeonKey: key });
+      spread[pick.name] = (spread[pick.name] ?? 0) + 1;
+    }
+  }
+  assert.equal(dungeons, 4232, 'every dungeon in the archive');
+  assert.equal(keys.size, 3769, 'and the seeds are genuinely distinct');
+  // A near-uniform spread is what a correct seed produces; a broken one
+  // collapses onto a handful of songs.
+  assert.equal(Object.keys(spread).length, DUNGEON_SONGS.length, 'every dungeon song is reachable');
+  const counts = Object.values(spread);
+  assert.ok(Math.min(...counts) > 200 && Math.max(...counts) < 360,
+    `the spread collapsed: ${JSON.stringify(spread)}`);
+});
+
+test('AUDIT 19 1:1: UpdatePlayerMusicEnvironment, every location type', async () => {
+  const { musicEnvironment, LOCATION_TYPES: L, MUSIC_ENV: E } =
+    await import('../src/systems/songManager.js');
+  const out = (locationType) => musicEnvironment({ inLocationRect: true, locationType });
+
+  // SongManager.cs:414-438, the WHOLE switch. Sampling it lets a drifted
+  // row through, and one row here is genuinely surprising: HomePoor sits
+  // with the DUNGEON EXTERIORS, not with the towns. That reads like a
+  // mistake and is not - it is what DFU does, so it is pinned by name.
+  assert.equal(out(L.DungeonKeep), E.DungeonExterior);
+  assert.equal(out(L.DungeonLabyrinth), E.DungeonExterior);
+  assert.equal(out(L.DungeonRuin), E.DungeonExterior);
+  assert.equal(out(L.Coven), E.DungeonExterior);
+  assert.equal(out(L.HomePoor), E.DungeonExterior, 'HomePoor is DUNGEON music in DFU');
+  assert.equal(out(L.Graveyard), E.Graveyard);
+  for (const t of [L.HomeFarms, L.HomeWealthy, L.Tavern, L.TownCity, L.TownHamlet,
+    L.TownVillage, L.ReligionTemple]) {
+    assert.equal(out(t), E.City, `location type ${t} is City music`);
+  }
+  // DFU's default arm: ReligionCult, HomeYourShips and anything unmapped.
+  assert.equal(out(L.ReligionCult), E.Wilderness);
+  assert.equal(out(L.HomeYourShips), E.Wilderness);
+  assert.equal(out(L.None), E.Wilderness);
+  assert.equal(out(9999), E.Wilderness);
+
+  // OUTSIDE a location rect is Wilderness whatever the location says -
+  // the rect test comes first (:411-443).
+  assert.equal(musicEnvironment({ inLocationRect: false, locationType: L.TownCity }), E.Wilderness);
+  assert.equal(musicEnvironment({ inLocationRect: false, locationType: L.Graveyard }), E.Wilderness);
+
+  // Dungeons are checked BEFORE building types, and a castle is its own
+  // environment (:448-457).
+  assert.equal(musicEnvironment({ inside: true, insideDungeon: true }), E.DungeonInterior);
+  assert.equal(musicEnvironment({ inside: true, insideDungeon: true, insideDungeonCastle: true }), E.Castle);
+
+  // And the temple faction tables resolve through the same call.
+  const { BUILDING_TYPES } = await import('../src/world/buildingNames.js');
+  assert.equal(musicEnvironment({ inside: true, buildingType: BUILDING_TYPES.Temple, factionId: 0x52 }),
+    E.TempleGood, 'Arkay is a good temple');
+  assert.equal(musicEnvironment({ inside: true, buildingType: BUILDING_TYPES.Temple, factionId: 0x54 }),
+    E.TempleBad, "Z'en is a bad temple");
+  assert.equal(musicEnvironment({ inside: true, buildingType: BUILDING_TYPES.Temple, factionId: 0x5C }),
+    E.TempleNeutral, 'Akatosh is neutral');
+});
+
+test('AUDIT 19 1:1: the temple/god faction tables are DFU\'s, whole', async () => {
+  const { TEMPLE_FACTIONS, GOD_FACTIONS, TEMPLE_ALIGNMENTS, getTempleIndex, templeAlignment } =
+    await import('../src/systems/songManager.js');
+  // SongManager.cs:306-320 - two parallel id lists sharing one alignment
+  // table by index, which is why GetTempleIndex searches the second only
+  // after the first misses.
+  assert.deepEqual([...TEMPLE_FACTIONS], [0x52, 0x54, 0x58, 0x5C, 0x5E, 0x62, 0x6A, 0x24]);
+  assert.deepEqual([...GOD_FACTIONS], [0x15, 0x16, 0x18, 0x1A, 0x1B, 0x1D, 0x21, 0x23]);
+  assert.deepEqual([...TEMPLE_ALIGNMENTS],
+    ['good', 'bad', 'good', 'neutral', 'bad', 'good', 'bad', 'neutral']);
+
+  // The two lists agree index for index - a god resolves to its temple's
+  // alignment, which is the whole point of the parallel arrays.
+  for (let i = 0; i < 8; i++) {
+    assert.equal(getTempleIndex(TEMPLE_FACTIONS[i]), i);
+    assert.equal(getTempleIndex(GOD_FACTIONS[i]), i);
+    assert.equal(templeAlignment(TEMPLE_FACTIONS[i]), templeAlignment(GOD_FACTIONS[i]),
+      `god ${GOD_FACTIONS[i]} must align with temple ${TEMPLE_FACTIONS[i]}`);
+  }
+  assert.equal(getTempleIndex(0), -1);
+  assert.equal(templeAlignment(999), null, 'an unknown faction has no alignment');
+  // DFU casts to (byte), so an id above 255 takes its low byte.
+  assert.equal(getTempleIndex(0x152), getTempleIndex(0x52), 'the (byte) cast is DFU\'s');
+});
+
+test('AUDIT 19 1:1: the temple and guild arms resolve on REAL buildings', { skip: skipReal }, async () => {
+  const { musicEnvironment, MUSIC_ENV: E } = await import('../src/systems/songManager.js');
+  const { MapsFile } = await import('../src/formats/mapsFile.js');
+  const { BUILDING_TYPES } = await import('../src/world/buildingNames.js');
+  const B = (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
+  const maps = new MapsFile();
+  maps.load(B('MAPS.BSA'), B('CLIMATE.PAK'), B('POLITIC.PAK'));
+
+  // Two audit passes recorded the building faction id as "not available",
+  // which routed every temple and guild hall to the plain-interior default.
+  // It IS available - blocksFile parses factionId onto the building record
+  // and buildingDataForDoor spreads it through. Measured over the real
+  // archive so the claim cannot rot back.
+  const seen = {};
+  let temples = 0, guilds = 0, scanned = 0;
+  outer:
+  for (let r = 0; r < 62; r++) {
+    const reg = maps.getRegion(r);
+    if (!reg?.locationCount) continue;
+    for (let i = 0; i < reg.locationCount; i++) {
+      const buildings = maps.getLocation(r, i)?.exterior?.buildings;
+      if (!buildings) continue;
+      for (const b of buildings) {
+        scanned++;
+        if (b.buildingType !== BUILDING_TYPES.Temple && b.buildingType !== BUILDING_TYPES.GuildHall) continue;
+        if (b.buildingType === BUILDING_TYPES.Temple) temples++; else guilds++;
+        const env = musicEnvironment({ inside: true, buildingType: b.buildingType, factionId: b.factionId });
+        seen[env] = (seen[env] ?? 0) + 1;
+      }
+      if (scanned > 60000) break outer;
+    }
+  }
+  assert.ok(temples > 500, `expected the temple corpus, saw ${temples}`);
+  assert.ok(guilds > 200, `expected the guild corpus, saw ${guilds}`);
+  // All three alignments occur, and so does the Fighters Guild arm - if
+  // factionId were being dropped, EVERY one of these would be 'interior'.
+  for (const env of [E.TempleGood, E.TempleNeutral, E.TempleBad, E.FighterTrainers, E.MagesGuild]) {
+    assert.ok(seen[env] > 0, `no real building resolved to ${env} - factionId is not reaching the fold`);
+  }
+  assert.ok(seen[E.MagesGuild] > 100, 'about half the guild halls are the Mages Guild');
 });

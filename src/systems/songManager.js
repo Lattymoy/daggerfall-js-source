@@ -146,11 +146,27 @@ export const DAY_SONGS_FM = Object.freeze([
  * audible as "you hear the first dungeon track more often" and is how
  * the game has always behaved.
  */
-export function selectSong(playlist, { gameDays = 0, tavern = false, dungeonKey = null } = {}) {
+export function selectSong(playlist, {
+  gameDays = 0, tavern = false, dungeonKey = null, unseeded = false,
+  random = Math.random,
+} = {}) {
   if (!playlist || playlist.length === 0) return null;
 
   let index = 0;
-  if (tavern) {
+  if (unseeded) {
+    // AUDIT 19 / 1:1 PASS: the Mages Guild and Sneaking lists take
+    // `UnityEngine.Random.Range(0, Length)` - UNSEEDED, a fresh roll every
+    // time, not the day seed (SongManager.cs:392-395). DFU's own comment
+    // says so. This arm was missing entirely, so the two-entry Mages Guild
+    // list fell to the day-seeded branch and played ONE of its two songs
+    // for a whole game day instead of re-rolling on every entry.
+    //
+    // Unity's generator is not reproducible outside Unity and DFU does not
+    // seed it here, so there is nothing to be byte-identical WITH; the
+    // observable law is "uniform over the list, fresh each call", and
+    // `random` is injectable so a pin can hold it to that.
+    index = Math.floor(random() * playlist.length) % playlist.length;
+  } else if (tavern) {
     // AUDIT 19 F5: `>>> 0` like its two neighbours. Without it a negative
     // gameDays yields a NEGATIVE index and playlist[-1] is undefined - a
     // song name of `undefined` that resolves to no record and plays
@@ -328,5 +344,282 @@ export function playlistForEnvironment(environment, {
     case 'templeBad':       return fm ? TEMPLE_BAD_SONGS_FM : TEMPLE_BAD_SONGS;
     case 'interior':
     default:                return fm ? INTERIOR_SONGS_FM : INTERIOR_SONGS;
+  }
+}
+
+// ===========================================================================
+// THE SONG MANAGER ITSELF (SongManager.cs:55-660, 1:1)
+//
+// Up to now the port had SongManager's TABLES and none of its ENGINE: hosts
+// called playFrom at moments they chose - boot, nightfall, entering a
+// building. DFU does not work that way. It builds a CONTEXT every frame,
+// compares it with the last one, and reacts to the difference. That
+// distinction is not academic; three of its behaviours are unreachable
+// without it:
+//
+//   - A NEW DAY gives a new song EVEN WHEN THE PLAYLIST IS UNCHANGED. So
+//     does changing LOCATION. The playlist comparison alone would keep the
+//     same song playing (UpdateSong :222).
+//   - locationIndex is part of the context, so walking from one town to
+//     the next re-rolls the song even though both are `City`.
+//   - When a song ENDS, the whole context is re-evaluated before the next
+//     one is chosen, rather than the player looping a cue forever.
+//
+// The port's SongPlayer loops by itself, which is a departure recorded
+// below: DFU replays through the manager and we keep the loop in the
+// player, so `songEnded` is what the host reports instead.
+// ===========================================================================
+
+/** PlayerMusicEnvironment (SongManager.cs:93-110), by name. */
+export const MUSIC_ENV = Object.freeze({
+  Castle: 'castle', City: 'city', DungeonExterior: 'dungeonExterior',
+  DungeonInterior: 'dungeonInterior', Graveyard: 'graveyard',
+  MagesGuild: 'magesGuild', Interior: 'interior', Palace: 'palace',
+  Shop: 'shop', Tavern: 'tavern', TempleGood: 'templeGood',
+  TempleNeutral: 'templeNeutral', TempleBad: 'templeBad',
+  Wilderness: 'wilderness', FighterTrainers: 'fighterTrainers',
+});
+
+/** DFRegion.LocationTypes, the values UpdatePlayerMusicEnvironment reads. */
+export const LOCATION_TYPES = Object.freeze({
+  TownCity: 0, TownHamlet: 1, TownVillage: 2, HomeFarms: 3,
+  DungeonLabyrinth: 4, ReligionTemple: 5, Tavern: 6, DungeonKeep: 7,
+  HomeWealthy: 8, ReligionCult: 9, DungeonRuin: 10, HomePoor: 11,
+  Graveyard: 12, Coven: 13, HomeYourShips: 14, None: 0xffff,
+});
+
+/** The temple faction tables (SongManager.cs:306-320), verbatim. Two
+ *  parallel id lists - the TEMPLE factions and the GOD factions - share
+ *  one alignment table by index, which is why GetTempleIndex searches
+ *  the second only after the first misses. */
+export const TEMPLE_FACTIONS = Object.freeze([0x52, 0x54, 0x58, 0x5C, 0x5E, 0x62, 0x6A, 0x24]);
+export const GOD_FACTIONS = Object.freeze([0x15, 0x16, 0x18, 0x1A, 0x1B, 0x1D, 0x21, 0x23]);
+export const TEMPLE_ALIGNMENTS = Object.freeze([
+  'good',     // Arkay
+  'bad',      // Z'en
+  'good',     // Mara
+  'neutral',  // Akatosh
+  'bad',      // Julianos
+  'good',     // Dibella
+  'bad',      // Stendarr
+  'neutral',  // Kynareth
+]);
+
+/** GetTempleIndex: -1 when the id is neither a temple nor a god faction.
+ *  The (byte) cast is DFU's, so an id above 255 takes its low byte. */
+export function getTempleIndex(factionId) {
+  const b = Number(factionId) & 0xff;
+  const i = TEMPLE_FACTIONS.indexOf(b);
+  return i >= 0 ? i : GOD_FACTIONS.indexOf(b);
+}
+
+/** The alignment a temple's faction resolves to, or null. */
+export function templeAlignment(factionId) {
+  const i = getTempleIndex(factionId);
+  return i >= 0 ? TEMPLE_ALIGNMENTS[i] : null;
+}
+
+/**
+ * UpdatePlayerMusicEnvironment (SongManager.cs:403-525), whole.
+ *
+ * The order is DFU's and it matters: EXTERIORS first (and a player outside
+ * a location rect is Wilderness whatever the location says), then DUNGEONS,
+ * then interiors by building type. HomePoor sits with the dungeon
+ * exteriors, which looks like a mistake and is not - it is what DFU reads.
+ */
+export function musicEnvironment({
+  inside = false, insideDungeon = false, insideDungeonCastle = false,
+  inLocationRect = false, locationType = LOCATION_TYPES.None,
+  buildingType = -1, factionId = 0,
+} = {}) {
+  const L = LOCATION_TYPES;
+  if (!inside) {
+    if (!inLocationRect) return MUSIC_ENV.Wilderness;
+    switch (locationType) {
+      case L.DungeonKeep:
+      case L.DungeonLabyrinth:
+      case L.DungeonRuin:
+      case L.Coven:
+      case L.HomePoor:        return MUSIC_ENV.DungeonExterior;
+      case L.Graveyard:       return MUSIC_ENV.Graveyard;
+      case L.HomeFarms:
+      case L.HomeWealthy:
+      case L.Tavern:
+      case L.TownCity:
+      case L.TownHamlet:
+      case L.TownVillage:
+      case L.ReligionTemple:  return MUSIC_ENV.City;
+      default:                return MUSIC_ENV.Wilderness;
+    }
+  }
+  if (insideDungeon) {
+    return insideDungeonCastle ? MUSIC_ENV.Castle : MUSIC_ENV.DungeonInterior;
+  }
+  return environmentForBuilding(buildingType, {
+    factionId, templeAlignment: templeAlignment(factionId),
+  });
+}
+
+/** PlayerMusicContext.Equals (SongManager.cs:71-79) - the six fields that
+ *  decide whether the music re-evaluates. */
+export function contextEquals(a, b) {
+  if (!a || !b) return false;
+  return a.environment === b.environment
+    && a.weather === b.weather
+    && a.night === b.night
+    && a.gameDays === b.gameDays
+    && a.locationIndex === b.locationIndex
+    && a.arrested === b.arrested;
+}
+
+/**
+ * UpdateSong (SongManager.cs:198-231) and the playback controls, 1:1.
+ *
+ * Feed it a context every frame with `update()`. It answers with the song
+ * that should be playing, and calls its `play` sink only when DFU would.
+ *
+ * ONE DEPARTURE, deliberate: DFU's `!songPlayer.IsPlaying` drives both the
+ * re-evaluation and the replay, because its player stops at the end of a
+ * cue. Ours loops in the player (songs are 4-44s), so the host reports
+ * `songEnded` instead and the same two arms hang off that. The law being
+ * preserved is WHEN a song changes, not what stops it.
+ */
+export class SongManager {
+  /**
+   * @param {object} sinks
+   * @param {(name: string) => void} sinks.play   start this song
+   * @param {() => void} sinks.stop               silence
+   * @param {boolean} [sinks.fm]                  take the FM playlists
+   */
+  constructor({ play, stop, fm = false, random = Math.random } = {}) {
+    this._play = play ?? (() => {});
+    this._stop = stop ?? (() => {});
+    this.fm = fm;
+    this.random = random;
+    this.playSong = true;              // DFU's `playSong` flag
+    this.currentPlaylist = null;
+    this.currentSong = null;
+    this.currentSongIndex = 0;
+    this._last = null;                 // lastContext
+    this._current = null;              // currentContext
+  }
+
+  /**
+   * One frame. `songEnded` stands in for DFU's !IsPlaying.
+   * Returns the song now playing (or null).
+   */
+  update(context, { songEnded = false } = {}) {
+    const ctx = {
+      environment: context.environment ?? MUSIC_ENV.Wilderness,
+      weather: context.weather ?? 'sunny',
+      night: Boolean(context.night),
+      gameDays: Math.trunc(context.gameDays ?? 0),
+      locationIndex: context.locationIndex ?? -1,   // -1 is DFU's "no location"
+      arrested: Boolean(context.arrested),
+      // Not part of Equals - DFU reads it inside SelectCurrentSong, not
+      // from the context - but it has to reach the selection somehow.
+      dungeonKey: context.dungeonKey ?? null,
+    };
+    this._current = ctx;
+
+    // DFU's guard in PlayCurrentSong is `songPlayer.Song == currentSong &&
+    // songPlayer.IsPlaying` - BOTH halves. When a song ends, IsPlaying goes
+    // false and the same song is allowed to start again. `_playing` is the
+    // port's stand-in for that flag, so it has to be cleared here or a
+    // finished song would never be replayed.
+    if (songEnded) this._playing = null;
+
+    if (!contextEquals(ctx, this._last) || (songEnded && this.playSong)) {
+      // DFU reads these BEFORE overwriting lastContext.
+      const dayChanged = ctx.gameDays !== this._last?.gameDays;
+      const locationChanged = ctx.locationIndex !== this._last?.locationIndex;
+      const first = this._last === null;
+      this._last = ctx;
+
+      const lastPlaylist = this.currentPlaylist;
+      this.currentPlaylist = playlistForEnvironment(ctx.environment, {
+        arrested: ctx.arrested, night: ctx.night, weather: ctx.weather, fm: this.fm,
+      });
+
+      // THE LAW THAT NEEDS THE CONTEXT: a new day or a new location picks
+      // a new song even when the playlist is IDENTICAL. Comparing playlists
+      // alone would leave the same song playing across both.
+      if (this.currentPlaylist !== lastPlaylist || dayChanged || locationChanged || first) {
+        this._playAnotherSong();
+        return this.currentSong;
+      }
+    }
+
+    if (songEnded) this._playCurrentSong();
+    return this.currentSong;
+  }
+
+  /** SelectCurrentSong + PlayCurrentSong. The four selection arms are
+   *  chosen by PLAYLIST IDENTITY in DFU (`currentPlaylist == TavernSongs`),
+   *  so they are keyed off the resolved environment here - the same
+   *  decision, expressed where the port can see it. */
+  _playAnotherSong() {
+    const env = this._current.environment;
+    const isTavern = env === MUSIC_ENV.Tavern;
+    const isDungeon = env === MUSIC_ENV.DungeonInterior;
+    // Mages Guild (and Sneaking, which DFU never assigns) re-roll UNSEEDED
+    // on every entry - DFU's own comment calls it "a random track each time".
+    const unseeded = env === MUSIC_ENV.MagesGuild;
+    const pick = selectSong(this.currentPlaylist, {
+      gameDays: this._current.gameDays,
+      tavern: isTavern,
+      dungeonKey: isDungeon ? (this._current.dungeonKey ?? null) : null,
+      unseeded,
+      random: this.random,
+    });
+    if (!pick) return;
+    this.currentSong = pick.name;
+    this.currentSongIndex = pick.index;
+    this._playCurrentSong();
+  }
+
+  /** PlayCurrentSong(forcePlay) - the guard is the point: re-issuing the
+   *  song that is already playing must NOT restart it. */
+  _playCurrentSong(forcePlay = false) {
+    if (!this.currentSong) return;
+    if (!forcePlay && (this._playing === this.currentSong || !this.playSong)) return;
+    this._playing = this.currentSong;
+    this._play(this.currentSong);
+  }
+
+  /** StartPlaying (:240) - forces, so it restarts a stopped song. */
+  startPlaying() {
+    this.playSong = true;
+    this._playing = null;
+    this._playCurrentSong(true);
+  }
+
+  /** StopPlaying (:249). */
+  stopPlaying() {
+    this.playSong = false;
+    this._playing = null;
+    this._stop();
+  }
+
+  /** TogglePlay (:258). */
+  togglePlay() {
+    if (this.playSong) this.stopPlaying();
+    else this.startPlaying();
+  }
+
+  /** PlayNextSong (:269) - wraps at the end. */
+  playNextSong() {
+    if (!this.currentPlaylist?.length) return;
+    if (++this.currentSongIndex >= this.currentPlaylist.length) this.currentSongIndex = 0;
+    this.currentSong = this.currentPlaylist[this.currentSongIndex];
+    this._playCurrentSong();
+  }
+
+  /** PlayPreviousSong (:284) - wraps at the start. */
+  playPreviousSong() {
+    if (!this.currentPlaylist?.length) return;
+    if (--this.currentSongIndex < 0) this.currentSongIndex = this.currentPlaylist.length - 1;
+    this.currentSong = this.currentPlaylist[this.currentSongIndex];
+    this._playCurrentSong();
   }
 }

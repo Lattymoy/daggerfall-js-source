@@ -41,8 +41,6 @@ import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
-import { music } from '../systems/music.js';
-import { environmentForBuilding, playlistForEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
@@ -65,7 +63,7 @@ const DUNGEON_WATER_SCROLL = 0.05;
 export function createWorldModes(host) {
   // AUDIT 18: the interior host's share of the player world clock.
   const interiorTicker = createPlayerTicker(playerEntity, { say: (msg) => console.log('[player]', msg) });
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, gameDaysNow = () => 0, resumeOutdoorMusic = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
 
   let mode = 'exterior';
@@ -274,27 +272,12 @@ export function createWorldModes(host) {
       // host's merge closure; shops warm the browse font.
       interiorBuilding = buildingDataForDoor?.(hit) ?? null;
       if (interiorBuilding && isShop(interiorBuilding.buildingType)) ensureShopFont();
-      // A5b/AUDIT 19: INTERIOR MUSIC, all of AssignPlaylist's building
-      // arms rather than only the tavern. Shops, palaces, the Mages Guild,
-      // the three temple alignments and the plain-interior default each
-      // have their own list in DFU, and the port reached none of them - so
-      // entering a shop kept playing the street. The tavern stays special
-      // for one reason: it is the ONE list DFU indexes on gameDays
-      // directly, so every tavern shares a song for the day and they walk
-      // in sequence, which is why `tavern` is passed rather than seeded.
-      //
-      // FLAGGED: factionId is not threaded here yet, so a GuildHall reads
-      // as a plain Interior rather than the Mages Guild, and a Temple
-      // cannot take its god's alignment. Both fall to DFU's own Interior
-      // default rather than guessing an alignment.
-      if (interiorBuilding) {
-        const env = environmentForBuilding(interiorBuilding.buildingType, {
-          factionId: interiorBuilding.factionId ?? 0,
-        });
-        music.playFrom(playlistForEnvironment(env), {
-          gameDays: gameDaysNow(), tavern: env === 'tavern',
-        });
-      }
+      // Music is NOT started here any more. AUDIT 19's 1:1 pass moved it
+      // to the SongManager: the host feeds a context every frame and the
+      // manager decides when the song changes, which is the only way to
+      // get DFU's law that a new day or a new location re-picks even when
+      // the playlist is identical. `musicContext()` below reports this
+      // host's half of that context.
       player.collider = ctx.collider;
       const floored = floorLanding(ctx.collider, landing);   // verbatim FixStanding: instant snap, no gravity drop-in
       player.spawn(floored[0], floored[1], floored[2]);
@@ -393,9 +376,6 @@ export function createWorldModes(host) {
     if (!landing) { console.error('exit: no exterior landing (empty sibling doors)'); return false; }   // tryEnter guards its landing; this path was unguarded - a null here killed the frame loop
     interiorCtx.destroy();
     interiorCtx = null;
-    // Leaving ANY interior hands the street back its own song - the
-    // tavern-only test was wrong the moment every building got music.
-    if (interiorBuilding) resumeOutdoorMusic?.();
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
     interiorOverlay = null;
     player.collider = baseCollider();
@@ -467,11 +447,6 @@ export function createWorldModes(host) {
     dungeonCtx.destroy();
     dungeonCtx = null;
     mode = 'exterior';
-    // AUDIT 19 F3: the street gets its own song back. This exit had NO
-    // music caller at all, so dungeon music looped over the sunlit city
-    // forever - the interior exit remembered and this one did not, which
-    // is the host-gap shape one more time.
-    resumeOutdoorMusic?.();
     player.collider = baseCollider();
     if (landing) {
       player.spawn(landing.pos[0], landing.pos[1], landing.pos[2]);
@@ -798,6 +773,32 @@ export function createWorldModes(host) {
 
   return {
     get mode() { return mode; },
+    /** AUDIT 19 / 1:1: what THIS host contributes to the music context.
+     *  The outer host owns the clock, the weather and the location; the
+     *  mode host owns whether the player is inside, in a dungeon, and
+     *  which building. DFU reads all of it off PlayerEnterExit in one
+     *  place; here it is split across two, so each reports its own half
+     *  rather than either guessing the other's. */
+    musicContext() {
+      if (mode === 'dungeon') {
+        return {
+          inside: true,
+          insideDungeon: true,
+          // IsPlayerInsideDungeonCastle: no castle-block detection yet, so
+          // a castle reads as a plain dungeon interior. FLAGGED.
+          insideDungeonCastle: false,
+          dungeonKey: dungeonCtx?.musicSeed ?? null,
+        };
+      }
+      if (mode === 'interior') {
+        return {
+          inside: true,
+          buildingType: interiorBuilding?.buildingType ?? -1,
+          factionId: interiorBuilding?.factionId ?? 0,
+        };
+      }
+      return null;                       // exterior: the host's own context stands
+    },
     pointerdown,
     get transitioning() { return transitioning; },
     get interiorCtx() { return interiorCtx; },
