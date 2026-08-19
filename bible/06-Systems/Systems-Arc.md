@@ -1553,3 +1553,65 @@ entity is not, so any host reached without chargen hands every
 reputation reader a null. `factionRep.ensureFactionRep` is the
 idempotent front door, and it refuses to invent a store without
 FACTION.TXT rather than pretending the reputation is zero.
+
+## S29 - HOLIDAYS, and U24's law half
+
+`src/systems/holidays.js` from FormulaHelper.GetHolidayId (:1819-1852)
+and DFLocation.Holidays; `src/systems/guildServiceActions.js` from the
+three guild-service window classes. `test/holidays.test.js` (6) and
+`test/guildserviceactions.test.js` (16).
+
+**Holidays landed because the temple charges for them.** Three of the
+53 - South Winds Prayer, First Harvest, Second Harvest - cure disease
+FREE, and North Winds Festival halves the price, so without the tables
+a temple takes full price on days classic does not. Both tables are 53
+rows and the loop covers all of them, which is what makes the enum's
+54th member (Old_Life_Festival, marked "Not used" in DFU's own source)
+unreachable. The `dayOfYear <= 355` gate means the last five days of
+the year are never a holiday, and the tables end exactly at 355, so the
+gate is inclusive of its own last row.
+
+**The three services, and the three things each gets wrong if hurried.**
+
+- **Training** has a 720-minute cooldown, and it is a DIFFERENCE
+  against `TimeOfLastSkillTraining`, not a time of day. It costs three
+  hours of clock AND `DefaultFatigueLoss * 180` of fatigue - the second
+  is not a double charge: DFU's per-minute drain fires once across a
+  jump, so the session's fatigue has to be charged explicitly. The
+  gates run in an order that matters: gold BEFORE the skill picker
+  opens, the skill cap BEFORE payment is taken. `Random.Range(10, 20 +
+  1)` is inclusive of 20.
+- **Donation**'s chance is `(2 * amount / max(rep, 1)) + 1` with C#
+  integer division truncating before the +1, over the ABSOLUTE
+  reputation - a temple that hates you is exactly as hard to impress as
+  one that loves you. The change does NOT propagate, and DFU says why:
+  "Does not propagate in classic". A donation larger than the purse
+  buys nothing at all - not a partial gift.
+- **Cure disease** is 250 per disease through the guild's discount
+  (Arkay's members only), the building's quality, the holiday halving
+  and then bargaining. `CalculateCost` is called with TWO arguments, so
+  the regional price adjustment stays neutral: curing costs the same in
+  every province. The haggle message is three SHIFT bands, `>> 1` and
+  `- (>> 2)`, which truncate.
+
+FLAGGED: `numberOfDiseases` is DFU's count PLUS ONE when the player is
+turning into a vampire or werebeast. The port has no such timer, so
+`becomingVampireOrWerebeast` is an argument that is false everywhere
+today and correct the moment that arc lands.
+
+**THE ONE CONSTRUCTION SEAM, sixth occurrence.** The live probe trained
+a skill, took the gold, and tallied nothing: `characters/playerEntity.js`
+had no `skillUses` array, so `TallySkill`'s defensive
+`if (!entity.skillUses) return` swallowed every tally on a pre-chargen
+entity - and `raiseSkills` had nothing to read either. DFU's
+PlayerEntity is constructed with its counters. The literal carries them
+now.
+
+**Two shared members were extracted rather than duplicated**:
+`effects.cureAllOfKind` (with the three named wrappers DFU exposes), so
+the temple's cure and a Cure Disease spell are one implementation; and
+`diseases.diseaseCount`, which is money here rather than decoration.
+`shared.createPlayerTicker.advance(minutes)` is DaggerfallDateTime's
+RaiseTime for the hosts: it runs the SAME per-minute tick over the
+jump, so a three-hour training session owes the world its magic rounds,
+disease days and skill-advancement passes.

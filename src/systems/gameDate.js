@@ -99,8 +99,10 @@ export const classicGameStartDate = () => dateFromClassicMinutes(CLASSIC_GAME_ST
 /** The port's own bridge, and the only new sentence in this file: the
  *  hosts count ELAPSED classic minutes from the game start, so a live
  *  date is the start plus that. */
+export const classicMinutesFromElapsed = (elapsed) =>
+  CLASSIC_GAME_START_TIME + Math.floor(elapsed);
 export const dateFromElapsedMinutes = (elapsed) =>
-  dateFromClassicMinutes(CLASSIC_GAME_START_TIME + Math.floor(elapsed));
+  dateFromClassicMinutes(classicMinutesFromElapsed(elapsed));
 
 /** GetDayOfYear (:629-633): `(Month * DaysPerMonth) + (Day + 1)`, so it
  *  is 1-based and the first day of the year is 1. Guild.cs's

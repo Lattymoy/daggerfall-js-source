@@ -13,7 +13,7 @@ import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
 import { hasActiveEffect } from '../systems/effects.js';
 import { skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
-import { tickPlayerMinutes } from '../systems/worldTick.js';
+import { tickPlayerMinutes, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { liveStat } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
@@ -428,6 +428,20 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } 
       classicMinutes = r.classicMinutes;
       for (const id of r.raised) say(`Your ${SKILL_NAMES[id]} skill has improved.`);
       return r;
+    },
+    /** U24: DaggerfallDateTime.RaiseTime. Guild training eats three
+     *  hours of the day, and a jump that only moved the counter would
+     *  skip every magic round, disease day and skill-advancement pass
+     *  inside it. Running the SAME tick with the equivalent dt is what
+     *  makes the jump real: DFU's clock and its per-minute laws are
+     *  the same loop, so a rest, a training session and a fast travel
+     *  all owe the world those minutes. The once-per-minute-change
+     *  fatigue drain still fires once, exactly as it does in DFU
+     *  across a jump, which is why the callers that need a session's
+     *  worth of fatigue charge it explicitly. */
+    advance(minutes) {
+      if (!(minutes > 0)) return null;
+      return this.tick(minutes / CLASSIC_MINUTES_PER_SECOND);
     },
   };
 }

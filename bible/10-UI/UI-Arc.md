@@ -2404,3 +2404,60 @@ from the player's own keybind file, which the port has no source for, so
 the keyboard accelerators (J/T/S/Esc) are the port's own - Ledger A. The
 TALK button and the three non-guild routing destinations are Ledger C
 rows of their own.
+
+## U24 - THE THREE GUILD SERVICE FLOWS + THE LIST PICKER (2026-08-19)
+
+`src/ui/listPicker.js` and `src/ui/guildServiceWindows.js`; the law is
+S29's `systems/guildServiceActions.js`. `test/guildserviceflows.test.js`,
+17 tests.
+
+**None of DFU's three service classes has art of its own.** It says so
+about the training one outright - "Note this is not a real UI window,
+and is not actually pushed onto the stack. This is so replacements are
+not constrained what to present first" - and the other two ARE message
+boxes by inheritance. So each is a short chain of U11 parchment boxes,
+and one class runs all three: a queue where each box may carry buttons,
+an input field, or a list picker, and each may push the next.
+
+**THE LIST PICKER is the reusable half.** PICK00I0.IMG, 200x128 in the
+shipping data and exactly `pickerPanel.Size`, Center/Middle at (60,36).
+The list is a panel-child at (26,27,138,72); the paging buttons are 9x9
+at (179,10) and (179,108) and move a WHOLE PAGE; the scroll bar is
+5x82 at (181,23). ListBox's own defaults are rowsDisplayed 9 and
+rowSpacing 1, and a row advances by the font's glyph height plus that
+spacing - which is the arithmetic a list click resolves against, so a
+click is pinned resolving through the SCROLL INDEX rather than the
+visible row. The selected row draws in DaggerfallUI's 162,36,12 DARK
+RED, not a brighter yellow; that is the one people guess wrong. The
+spell maker, the item maker, the travel map's teleport list and the
+quest journal all want this window next.
+
+**The chain order is the parity that matters**, and each half is
+pinned: training checks gold BEFORE the picker opens, so a player who
+cannot pay never sees the list, and checks the skill cap BEFORE taking
+payment, so a too-skilled pick costs nothing. The donation field opens
+pre-filled on "1000", is numeric-only, caps at 8 characters, and does
+NOTHING AT ALL on an unparsable entry - `int.TryParse` has no else.
+The free-holiday cure fires on OPEN, before any question and with an
+empty purse.
+
+**Two defects the live probe found, both fixed here.** A window that
+dispatches to another window was nulling the second one through its own
+`onClose` - the port's overlay slot is single, where DFU has a stack -
+so the join welcome and every service flow vanished the moment they
+opened; the identity guard fixes it. And the picker's handler ran
+AFTER the queue advanced, which emptied the queue, closed the window
+and threw the result box away: the skill trained and "You and the
+trainer practice for 3 hours" never appeared.
+
+**Probed live end to end** (`tools/guildServiceProbe.mjs`): in the
+Mages Guild, join -> TEXT.RSC 606 with Yes/No -> the 5293 welcome ->
+membership stored under group 10 at rank 0 -> the popup redraws on the
+MEMBER art -> "Training will cost you 100." with %a expanded -> the
+picker with the guild's twelve TRAINING skills -> 100 gold taken, 15
+uses tallied against Alteration, and the 5221 box.
+
+FLAGGED: the scroll bar does not drag (the two paging buttons and the
+keyboard cover the list), and DFU's ListBox selects on the first click
+and USES on the second, where the port picks straight through - a
+one-shot service list has nothing to preview.

@@ -57,7 +57,12 @@ import { npcServiceKind, freeHealing, freeMagickaRecharge } from '../systems/gui
 import { createGuildForGroup } from '../systems/guildVariants.js';
 import { membershipOf, joinGuild, joinDecision } from '../systems/guilds.js';
 import { ensureFactionRep } from '../systems/factionRep.js';
-import { dateFromElapsedMinutes } from '../systems/gameDate.js';
+import { dateFromElapsedMinutes, classicMinutesFromElapsed } from '../systems/gameDate.js';
+import { serviceDestination } from '../systems/guildServiceFlow.js';
+import { buildTrainingFlow, buildDonationFlow, buildCureDiseaseFlow } from '../ui/guildServiceWindows.js';
+import { preloadListPickerArt } from '../ui/listPicker.js';
+import { getTitle } from '../systems/guilds.js';
+import { getDivine, DIVINES } from '../systems/guildVariants.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
 import { preloadMessageBoxArt } from '../ui/messageBox.js';
@@ -109,6 +114,7 @@ export function createWorldModes(host) {
     ensureShopFont();                                       // FONT0003 + the trade art
     preloadGuildServiceArt({ renderer, fetchBytes, palette });
     preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11 parchment for its boxes
+    preloadListPickerArt({ renderer, fetchBytes, palette });   // U24: PICK00I0 for the training skill list
   };
 
   // E2: the shelf browse/buy chain (DFU's trade window collapsed to
@@ -278,7 +284,13 @@ export function createWorldModes(host) {
     const store = ensureFactionRep(playerEntity, dict);
     const service = npcServiceKind(pn.factionID);
     const rows = (id) => townTalk?.lines?.(id) ?? [];
-    interiorOverlay = new GuildServiceWindow({
+    // U24: a window that dispatches to another window must not be
+    // nulled by its OWN onClose - DFU closes the popup and pushes the
+    // next one, and the port's overlay slot is single. The identity
+    // guard is what keeps the second window alive; without it the join
+    // welcome and every service flow vanished the moment they opened.
+    let win = null;
+    win = new GuildServiceWindow({
       member: () => !showsJoinButton(memberships, route.guildGroup),
       service: () => service,
       rows,
@@ -304,7 +316,8 @@ export function createWorldModes(host) {
           buttons: 'YesNo',
           onYes: () => {
             joinGuild(memberships, guild, gameDate());
-            interiorOverlay = new GuildServiceWindow(_welcomeHooks(guild, rows));
+            const welcome = new GuildServiceWindow(_welcomeHooks(guild, rows, () => welcome));
+            interiorOverlay = welcome;
           },
         };
       },
@@ -314,23 +327,70 @@ export function createWorldModes(host) {
         if (!access.allowed) {
           return { rows: access.textId ? rows(access.textId) : [access.text] };
         }
-        // FLAGGED: every destination window is U24 or later
-        // (guildServiceFlow.SERVICE_DESTINATION names which).
-        return { rows: ['That service is not available yet.'] };
+        // U24: the three the port can perform. Every other arm is
+        // FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+        const flow = openServiceFlow(serviceDestination(service), { guild, memberships, store, rows, route });
+        if (!flow) return { rows: ['That service is not available yet.'] };
+        interiorOverlay = flow;
+        return { dispatched: true };
       },
-      onClose: () => { interiorOverlay = null; },
+      onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
     });
+    interiorOverlay = win;
+  }
+
+  /** DoGuildService's three built arms (U24). Each returns a
+   *  ServiceFlowWindow, or null for a destination that does not exist
+   *  yet. `onClose` uses the same identity guard as the popup's. */
+  function openServiceFlow(destination, { guild, memberships, store, rows, route }) {
+    if (!destination) return null;
+    const membership = membershipOf(memberships, guild);
+    const b = interiorBuilding;
+    const closeSelf = () => { if (interiorOverlay === flow) interiorOverlay = null; };
+    const now = () => classicMinutesFromElapsed(interiorTicker.classicMinutes);
+    const godName = guild.divine ?? '';
+    let flow = null;
+    if (destination === 'guildServiceTraining') {
+      flow = buildTrainingFlow(playerEntity, guild, membership, {
+        rows, now, onClose: () => closeSelf(),
+        guildTitle: getTitle(membership, playerEntity, guild),
+        // The clock advance and the fatigue drain are the HOST's -
+        // trainSkill hands them back rather than reaching for a ticker.
+        applyTraining: (result, price) => {
+          deductGold(playerEntity, price);
+          tallySkill(playerEntity, result.skill, result.tally);
+          playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - result.fatigueLoss);
+          interiorTicker.advance(result.advanceMinutes);
+          surfacePlayer();
+        },
+      });
+    } else if (destination === 'guildServiceDonation') {
+      // "Based on the building faction id rather than guild object so
+      // it works for non-members as well" (:29-30) - and the id the
+      // reputation lands on is the DIVINE's, which for a temple hall
+      // is the building faction itself.
+      const divine = getDivine(townTalk?.factionDict ?? null, route.buildingFactionId);
+      flow = buildDonationFlow(playerEntity, store, DIVINES[divine] ?? route.buildingFactionId, {
+        rows, onClose: () => closeSelf(), godName: divine ?? '',
+      });
+    } else if (destination === 'guildServiceCureDisease') {
+      flow = buildCureDiseaseFlow(playerEntity, guild, membership, {
+        rows, now, onClose: () => closeSelf(), godName,
+        quality: b?.quality ?? 0, regionIndex: b?.regionIndex ?? 0,
+      });
+    }
+    return flow;
   }
 
   /** ConfirmJoinGuild's welcome box (:527-541): a fresh click-anywhere
    *  box over the popup, which the port shows as its own one-box
    *  window since the popup underneath has already closed. */
-  const _welcomeHooks = (guild, rows) => ({
+  const _welcomeHooks = (guild, rows, self) => ({
     member: () => true,
     service: () => null,
     rows,
     steps: () => [{ textId: guild.text.welcome, clickAnywhere: true, closesWindow: true }],
-    onClose: () => { interiorOverlay = null; },
+    onClose: () => { if (interiorOverlay === self()) interiorOverlay = null; },
   });
 
   function showShelfList(shelf, page) {
@@ -871,6 +931,17 @@ export function createWorldModes(host) {
     window.__guildOverlay = () => JSON.stringify(interiorOverlay?.hooks?.service ? {
       guild: true, member: interiorOverlay.hooks.member(), service: interiorOverlay.hooks.service(),
       boxes: interiorOverlay.boxes.map((b) => b.textId ?? (b.rows?.[0]?.text ?? b.rows?.[0])),
+    } : null);
+    // U24: the service flow's own surface (the guild popup is gone by
+    // the time one is open, so __guildOverlay reads null).
+    window.__serviceFlow = () => JSON.stringify(interiorOverlay?.boxes && !interiorOverlay.hooks ? {
+      flow: true,
+      box: interiorOverlay.top?.rows?.map((r) => r.text ?? r).join(' | ') ?? null,
+      buttons: interiorOverlay.top?.buttons ?? null,
+      picker: interiorOverlay.top?.picker ?? null,
+      field: !!interiorOverlay.top?.field,
+      value: interiorOverlay.value ?? null,
+      queued: interiorOverlay.boxes.length,
     } : null);
     window.__building = () => JSON.stringify(interiorBuilding ? {
       type: interiorBuilding.buildingType, faction: interiorBuilding.factionId, name: interiorBuilding.name,
