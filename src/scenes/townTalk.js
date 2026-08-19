@@ -429,6 +429,15 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   return {
     keydown, tryActivate, frame, ensureLoaded, nextMode, showOverlay, setTopics, pointerdown,
     texts: (id) => textVariants(id),
+    // U23: the interior host's static-NPC seam needs both of these -
+    // FACTION.TXT to route a click (PlayerActivate.StaticNPCClick reads
+    // the NPC's and the building's faction records) and TEXT.RSC rows
+    // for the parchment boxes the guild popup stacks. Both are already
+    // loaded here, once, so worldModes borrows them rather than opening
+    // a second copy of each file.
+    get factionDict() { return factions?.factionDict ?? null; },
+    lines: (id) => textRsc?.linesById(id) ?? [],
+    ensureFactions: () => ensureLoaded(),
     say: (line) => hud.add(line),
     get overlayActive() { return !!overlay; },
     get mode() { return mode; },

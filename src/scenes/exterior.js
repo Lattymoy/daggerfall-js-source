@@ -558,6 +558,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // door drops into the location's crawl, exits land verbatim.
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
+    townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
     // A5b: the tavern arm needs the host's clock, and leaving one has to
     // hand the street back its own song - the host owns both, so both
     // ride in as closures rather than worldModes reaching for a global.

@@ -11,7 +11,7 @@ import {
   DEFAULT_TRAINING_MAX, MEMBER_TRAINING_COST, NON_MEMBER_TRAINING_COST,
   daySinceZero, numHighLowSkills, calculateNewRank, updateRank, isMember, guildOfFaction,
   joinGuild, leaveGuild, hasJoined, membershipOf, isEligibleToJoin,
-  hasJoinedGroup, joinedGuildOfGroup, promotionTextId,
+  hasJoinedGroup, getTitle, NON_MEMBER_TITLE, joinedGuildOfGroup, promotionTextId,
   guildGroupOfFaction, MERCHANTS_FACTION_ID,
 } from '../src/systems/guilds.js';
 import { createFactionRep, setReputation } from '../src/systems/factionRep.js';
@@ -358,4 +358,39 @@ test('guilds: AUDIT 20 - a temple faction resolves to a GROUP through its child'
     assert.equal(guildGroupOfFaction(ff.factionDict, id), GUILD_GROUPS.HolyOrder,
       `${name} must resolve to HolyOrder through its templar order`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// U23: the rank titles, recovered from DFU's Internal_Strings.
+// ---------------------------------------------------------------------------
+
+test('U23: GetTitle returns the RANK TITLE for a member (Guild.cs :178-181)', () => {
+  const bob = { name: 'Bob' };
+  // the four lists, verbatim - "Master Wizard", "Master Thief",
+  // "Dark Brother" and "Master Assassin" are ONE title each, because
+  // GetLocalizedTextList splits the entry on newlines only.
+  assert.deepEqual(GUILDS.FightersGuild.rankTitles, ['Apprentice', 'Journeyman', 'Swordsman',
+    'Protector', 'Defender', 'Warder', 'Guardian', 'Champion', 'Warrior', 'Master']);
+  assert.deepEqual(GUILDS.MagesGuild.rankTitles, ['Apprentice', 'Journeyman', 'Evoker',
+    'Conjurer', 'Magician', 'Enchanter', 'Warlock', 'Wizard', 'Master Wizard', 'Archmage']);
+  assert.deepEqual(GUILDS.ThievesGuild.rankTitles, ['Apprentice', 'Journeyman', 'Filcher',
+    'Crook', 'Robber', 'Bandit', 'Thief', 'Ringleader', 'Mastermind', 'Master Thief']);
+  assert.deepEqual(GUILDS.DarkBrotherhood.rankTitles, ['Apprentice', 'Journeyman', 'Operator',
+    'Slayer', 'Executioner', 'Punisher', 'Terminator', 'Assassin', 'Dark Brother', 'Master Assassin']);
+  for (const g of Object.values(GUILDS)) assert.equal(g.rankTitles.length, 10, g.name);
+  assert.equal(getTitle({ guild: 'MagesGuild', rank: 8 }, bob, GUILDS.MagesGuild), 'Master Wizard');
+  assert.equal(getTitle({ guild: 'FightersGuild', rank: 0 }, bob, GUILDS.FightersGuild), 'Apprentice');
+});
+
+test('U23: a NON-member reads back their own NAME - except in the three overriding guilds', () => {
+  const bob = { name: 'Bob' };
+  // Guild.GetTitle's own else-branch is PlayerEntity.Name (:180).
+  assert.equal(getTitle(null, bob, GUILDS.FightersGuild), 'Bob');
+  assert.equal(getTitle(null, bob, GUILDS.MagesGuild), 'Bob');
+  assert.equal(getTitle(null, bob, GUILDS.ThievesGuild), 'Bob');
+  // DarkBrotherhood.cs :86-92 overrides it with the "nonMember" string.
+  assert.equal(getTitle(null, bob, GUILDS.DarkBrotherhood), NON_MEMBER_TITLE);
+  assert.equal(NON_MEMBER_TITLE, 'non-member');
+  // an EXPELLED member (rank -1) is a non-member here too
+  assert.equal(getTitle({ guild: 'FightersGuild', rank: -1 }, bob, GUILDS.FightersGuild), 'Bob');
 });

@@ -9,10 +9,11 @@ import { join } from 'node:path';
 import {
   DIVINES, ORDERS, TEMPLE_DATA, TEMPLE_TEXT, KNIGHTLY_TEXT,
   templeOf, orderOf, getDivine, getOrder,
+  TEMPLE_RANK_TITLES, KNIGHTLY_RANK_TITLES,
 } from '../src/systems/guildVariants.js';
 import {
   GUILDS, INVITATION_ONLY, isJoinableByApplication, joinDecision,
-  calculateNewRank, isEligibleToJoin,
+  calculateNewRank, isEligibleToJoin, getTitle,
 } from '../src/systems/guilds.js';
 import { createFactionRep, setReputation } from '../src/systems/factionRep.js';
 import { FactionFile, FACTION_TYPES, GUILD_GROUPS } from '../src/formats/factionFile.js';
@@ -199,4 +200,37 @@ test('variants: every variant guild skill is a real skill id', () => {
   const o = orderOf('Horn');
   for (const s of o.skills) assert.ok(s !== undefined && ids.has(s), 'order skill');
   assert.equal(o.skills.length, 7);
+});
+
+// ---------------------------------------------------------------------------
+// U23: the two variant-keyed rank lists + the Temple's gendered titles.
+// ---------------------------------------------------------------------------
+
+test('U23: all eight temples share one rank list and all ten orders share the other', () => {
+  assert.deepEqual(TEMPLE_RANK_TITLES, ['Novice', 'Initiate', 'Acolyte', 'Adept', 'Curate',
+    'Disciple', 'Brother', 'Diviner', 'Master', 'Patriarch']);
+  assert.deepEqual(KNIGHTLY_RANK_TITLES, ['Aspirant', 'Squire', 'Gallant', 'Chevalier', 'Keeper',
+    'Knight Brother', 'Commander', 'Marshall', 'Seneschal', 'Paladin']);
+  // the TITLE is the group's, not the divine's or the order's
+  for (const d of Object.keys(DIVINES)) assert.equal(templeOf(d).rankTitles, TEMPLE_RANK_TITLES);
+  for (const o of Object.keys(ORDERS)) assert.equal(orderOf(o).rankTitles, KNIGHTLY_RANK_TITLES);
+});
+
+test('U23: Temple.GetTitle\'s two gendered overrides (:389-397)', () => {
+  const t = templeOf('Arkay');
+  const f = { name: 'Bea', gender: 'female' }, m = { name: 'Bob', gender: 'male' };
+  // DFU's own comments: "Not calling female chars 'Patriarch'!" and
+  // "Not calling female chars 'Brother'!"
+  assert.equal(getTitle({ guild: t.name, rank: 9 }, f, t), 'Matriarch');
+  assert.equal(getTitle({ guild: t.name, rank: 9 }, m, t), 'Patriarch');
+  assert.equal(getTitle({ guild: t.name, rank: 6 }, f, t), 'Sister');
+  assert.equal(getTitle({ guild: t.name, rank: 6 }, m, t), 'Brother');
+  // and ONLY those two ranks differ
+  for (let r = 0; r < 10; r++) {
+    if (r === 6 || r === 9) continue;
+    assert.equal(getTitle({ guild: t.name, rank: r }, f, t), TEMPLE_RANK_TITLES[r], `rank ${r}`);
+  }
+  // both override the non-member string, which the base guilds do not
+  assert.equal(getTitle(null, f, t), 'non-member');
+  assert.equal(getTitle(null, f, orderOf('Rose')), 'non-member');
 });

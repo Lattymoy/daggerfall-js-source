@@ -1448,3 +1448,108 @@ crash that 990 tests could not see - so the seam is pinned by READING
 them, the same idiom audit17e uses for its four-host rules.
 
 4 mutations run, 4 killed.
+
+## S28 - THE CALENDAR: the port finally knows what day it is
+
+`src/systems/gameDate.js`, 1:1 from `Utility/DaggerfallDateTime.cs`.
+`test/gamedate.test.js`, 9 tests.
+
+**This landed because a UI slice tripped over its absence.** The port has
+had a clock since the beginning - `worldTick.js`'s `classicMinutes` - and
+no DATE. A surprising number of DFU's laws are written in DAYS rather
+than minutes: the guild rank gate is 28 days between changes, shop
+opening hours are a clock hour, the magic-item stock rotates on a
+day seed, quest timers are due-dates. U23 wired the guild service popup,
+whose OnPush calls `UpdateRank`, which takes `{ year, dayOfYear }`.
+Inventing one would have made the 28-day gate fiction, so the calendar
+is ported instead. `Guild.daySinceZero` now DERIVES the day of year the
+way DFU's property does rather than reading a field a caller invented.
+
+**Daggerfall's calendar is fixed 30-day months**, twelve of them, so
+every date is exact integer arithmetic with no leap rules. The two
+constants that are not obvious are `classicEpochInSeconds`
+(12,566,016,000 - the offset between DFU's own year-zero seconds and the
+minute counter classic saves keep) and `classicGameStartTime` (523,530
+minutes). The second is pinned against DFU's own docstring: it is 13:30
+on the 4th of Morning Star, 3E405, and the port reproduces that to the
+minute.
+
+**Two start dates exist in DFU and they disagree.** The class's field
+defaults are year 405 month 5 day 0 hour 12; `SetClassicGameStartTime`
+is the date above. Both ship here, because collapsing them would lose a
+real distinction - a fresh `DaggerfallDateTime` is not a new game.
+
+**The season boundary is DFU's own admitted approximation**, kept
+verbatim: "Daggerfall seems to roll over seasons part way through final
+month. Using clean month boundaries here for simplicity." The port must
+not be more accurate than the thing it is a port of, so the twelve-entry
+table is pinned as written, Evening Star wrapping to Winter included.
+
+**Names came out of the localization tables**, the same source U23 used
+for the rank titles: `dayNames`, `monthNames`, `birthSignNames`,
+`seasonNames`. `GetLocalizedTextList` splits on newlines only, which is
+why "Rain's Hand" and "Sun's Dusk" are one entry each.
+
+FLAGGED, and routed to a sky slice: the two lunar phase getters. Nothing
+in the port reads a moon, and DFU's own comment says that logic mirrors
+the Enhanced Sky mod rather than classic. `RaiseTime`'s carry chain is
+absent by design - this module is pure functions over an absolute minute
+count, so there is no mutable clock to carry.
+
+NOTED, not fixed: the port keeps TWO independent `classicMinutes`
+counters, one in `scenes/shared.js`'s ticker and one in
+`dungeonContext.js`. DFU has a single WorldTime. Ledger C.
+
+## U23 (systems half) - StaticNPCClick and the guild popup's law
+
+`src/systems/guildServiceFlow.js`, from
+`DaggerfallGuildServicePopupWindow.cs` and the routing block of
+`PlayerActivate.StaticNPCClick`. `test/guildserviceflow.test.js`, 15
+tests. The window half is recorded in the UI arc.
+
+The split is the one G3 already made: `guildServices.js` holds WHICH
+service an NPC offers and WHO may use it; this file holds what CLICKING
+that NPC does. All of it is headless, so the window is only geometry and
+hit rects.
+
+**The routing is a five-way branch** on the NPC's faction record and the
+BUILDING's: guild service, merchant social group, witches coven,
+everything else talks - and a faction id that does not resolve talks
+before reaching the table at all. Two escapes in the guild arm are
+bug-numbered in DFU's own comments and are ported verbatim, because both
+are the difference between a service menu and a conversation:
+
+- **t=1238** - a holy-order NPC standing in a building that is not a
+  divine's falls back to talk. `Temple.IsDivine` is the NARROW test (one
+  of the eight halls), not `GetDivine`'s parent walk.
+- **t=2037** - the Thieves Guild spymaster in a building with no faction
+  at all falls back to talk, and carries a flag saying it is the
+  spymaster, which is the third `TalkToStaticNPC` argument.
+
+**Setup's member flag decides one thing** - whether a Join Guild button
+exists - and it is FORCED true for the Dark Brotherhood and for
+GeneralPopulace. That second one looks like a mismatch and is not: the
+Thieves Guild's guild group IS GeneralPopulace. DFU's comment says why:
+"should never find em until a member".
+
+**The two refusals are different messages** and the distinction matters.
+A member of too low a rank gets TEXT.RSC 3100 ("I can only help persons
+of a certain rank"); a non-member gets a plain string ("My services are
+reserved for members only"). One says come back senior, the other says
+join first.
+
+**OnPush's order is load-bearing**: the heal lands BEFORE its box and the
+sorceror recharge AFTER, damaged attributes ASK before curing, and the
+rank step carries `UpdateRank`'s own text id rather than a recomputed
+one. `HasDamagedAttributes` and `CureAllAttributes` are asked of the
+port's `activeEffects` contributions rather than of per-effect statMods
+arrays the port does not have; a POSITIVE mod (a drug's fortify) is not
+damage and survives the cure.
+
+**THE ONE CONSTRUCTION SEAM, fifth occurrence.** The live probe opened
+the join box and threw on `store.dict`: DFU's PlayerEntity is
+CONSTRUCTED with its FactionData, and the port's pre-chargen INTERIM
+entity is not, so any host reached without chargen hands every
+reputation reader a null. `factionRep.ensureFactionRep` is the
+idempotent front door, and it refuses to invent a store without
+FACTION.TXT rather than pretending the reputation is zero.

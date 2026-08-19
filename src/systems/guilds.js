@@ -36,18 +36,27 @@
 // join flow is a window with an eligibility message, and only the
 // rules it consumes live here.
 //
-// FLAGGED loud - RANK TITLES. DFU reads them from its own
-// localization tables (TextManager.GetLocalizedTextList("fightersRanks"
-// and friends), resolved through the %lev macro). Those tables are
-// DFU's restatement of the classic strings; they are not in ARENA2 and
-// not in the sparse clone, so the titles are NOT INVENTED HERE. The
-// NATIVE-WINDOW RULE applies to text as much as geometry: if the
-// source value is unknown, it does not ship. getTitle falls back to
-// the player's name, which is DFU's own non-member return, and the
-// window that needs a title lands with them.
+// ── RANK TITLES, recovered (U23) ──────────────────────────────────
+// G1 shipped without them and said so: DFU reads the titles from its
+// own localization StringTables, which the sparse clone excluded, so
+// getTitle returned the player's name at every rank and %lev could
+// not expand. The clone's sparse set now includes Assets/Localization,
+// and the six lists are read straight out of
+// Internal_Strings{,_en}.asset - "fightersRanks", "magesRanks",
+// "thievesRanks", "darkBrotherhoodRanks" here; "templeRanks" and
+// "knightlyOrderRanks" with their variants in guildVariants.js.
+// GetLocalizedTextList splits the entry on newlines, which is why
+// "Master Wizard" and "Knight Brother" are one title each.
 import { SKILLS, skillValue } from './skills.js';
 import { getReputation } from './factionRep.js';
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
+import { dayOfYear } from './gameDate.js';   // S28: DaggerfallDateTime.DayOfYear
+
+/** Internal_Strings "nonMember". Guild.GetTitle returns the PLAYER'S
+ *  NAME for a non-member; three subclasses override that with this
+ *  string instead (Temple.cs :397, DarkBrotherhood.cs :91,
+ *  KnightlyOrder.cs :126). */
+export const NON_MEMBER_TITLE = 'non-member';
 
 /** Guild.cs :36-38. Ten rows, one per rank. */
 export const RANK_REQ_REPUTATION = Object.freeze([0, 10, 20, 30, 40, 50, 60, 70, 80, 90]);
@@ -85,6 +94,8 @@ export const GUILDS = Object.freeze({
     factionId: 41,
     skills: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.Giantish,
       SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade],
+    rankTitles: ['Apprentice', 'Journeyman', 'Swordsman', 'Protector', 'Defender',
+      'Warder', 'Guardian', 'Champion', 'Warrior', 'Master'],
     text: { ineligibleBadRep: 679, ineligibleLowSkill: 680, eligible: 681, welcome: 684, promotion: 686 },
   },
   MagesGuild: {
@@ -93,6 +104,8 @@ export const GUILDS = Object.freeze({
     factionId: 40,
     skills: [SKILLS.Alteration, SKILLS.Destruction, SKILLS.Illusion,
       SKILLS.Mysticism, SKILLS.Restoration, SKILLS.Thaumaturgy],
+    rankTitles: ['Apprentice', 'Journeyman', 'Evoker', 'Conjurer', 'Magician',
+      'Enchanter', 'Warlock', 'Wizard', 'Master Wizard', 'Archmage'],
     text: { ineligibleBadRep: 612, ineligibleLowSkill: 611, eligible: 606, welcome: 5293, promotion: 5236 },
     // MagesGuild.GetPromotionMsgId (:92-106) - the message ANNOUNCES
     // the benefit the new rank unlocked, so it is per rank.
@@ -104,6 +117,8 @@ export const GUILDS = Object.freeze({
     factionId: 42,
     skills: [SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.Lockpicking, SKILLS.Pickpocket,
       SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
+    rankTitles: ['Apprentice', 'Journeyman', 'Filcher', 'Crook', 'Robber',
+      'Bandit', 'Thief', 'Ringleader', 'Mastermind', 'Master Thief'],
     text: { welcome: 5225, promotion: 5235, bribesJudge: 550 },
     // ThievesGuild.GetPromotionMsgId (:92-106). Ranks 6 and 8 are
     // RevealLocation()-gated in DFU (map1/map2 vs the plain message);
@@ -118,6 +133,9 @@ export const GUILDS = Object.freeze({
     factionId: 108,
     skills: [SKILLS.Archery, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
       SKILLS.Daedric, SKILLS.Destruction, SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
+    rankTitles: ['Apprentice', 'Journeyman', 'Operator', 'Slayer', 'Executioner',
+      'Punisher', 'Terminator', 'Assassin', 'Dark Brother', 'Master Assassin'],
+    nonMemberTitle: NON_MEMBER_TITLE,   // DarkBrotherhood.cs :86-92 overrides GetTitle
     text: { welcome: 5292, promotion: 666, bribesJudge: 551 },
     // DarkBrotherhood.GetPromotionMsgId - odd ranks, all pure data.
     promotionByRank: { 1: 6611, 3: 6612, 5: 6613, 7: 6614 },
@@ -125,8 +143,16 @@ export const GUILDS = Object.freeze({
 });
 
 /** CalculateDaySinceZero (:132-135). An ABSOLUTE day number, which is
- *  what makes the 28-day gate survive a year boundary. */
-export const daySinceZero = (date) => (date.year * DAYS_PER_YEAR) + date.dayOfYear;
+ *  what makes the 28-day gate survive a year boundary.
+ *
+ *  DFU reads `DaggerfallUnity.Instance.WorldTime.Now.DayOfYear` - a
+ *  DERIVED property, not a field. S28 landed the calendar that derives
+ *  it, so a live date arrives as { year, month, day, ... } and its
+ *  day-of-year is computed here exactly as DFU's getter does. The
+ *  older { year, dayOfYear } shape a test may hand-build is still
+ *  accepted, so the ONE law has ONE reader either way. */
+export const daySinceZero = (date) =>
+  (date.year * DAYS_PER_YEAR) + (date.dayOfYear ?? dayOfYear(date));
 
 /** CalculateNumHighLowSkills (:113-130). The `else if` is load-bearing:
  *  a skill that cleared the HIGH bar is not also counted low, so
@@ -218,13 +244,25 @@ const textIdFor = (guild, outcome, rank) => (
  *  also what an expulsion leaves behind. */
 export const isMember = (membership) => (membership?.rank ?? -1) >= 0;
 
-/** GetTitle (:180-183). FLAGGED - see the header: the rank titles live
- *  in DFU's localization tables and are not invented here, so a member
- *  reads back their own name exactly as a non-member does until the
- *  titles are looked up. The RANK is correct and available; only its
- *  NAME is missing. */
-export function getTitle(membership, entity) {
-  return entity?.name ?? '';
+/** GetTitle (Guild.cs :178-181), now with the titles (see the header).
+ *  A NON-MEMBER reads back their own name here - that is Guild.cs's own
+ *  return, and it is why the four base guilds do not use the
+ *  "non-member" string the Temple, the Dark Brotherhood and the
+ *  knightly orders return instead (Temple.cs :397, DarkBrotherhood.cs
+ *  :91, KnightlyOrder.cs :126). The three overriding subclasses carry
+ *  `nonMemberTitle`; the rest fall through to the name.
+ *
+ *  The Temple's gendered overrides (Temple.cs :389-397 - "Not calling
+ *  female chars 'Patriarch'!") ride `titleFor`, which the guild record
+ *  supplies when it has one. */
+export function getTitle(membership, entity, guild = null) {
+  if (!isMember(membership)) return guild?.nonMemberTitle ?? entity?.name ?? '';
+  const rank = membership.rank;
+  if (guild?.titleFor) {
+    const t = guild.titleFor(rank, entity);
+    if (t != null) return t;
+  }
+  return guild?.rankTitles?.[rank] ?? entity?.name ?? '';
 }
 
 /** GuildManager.GetGuild(factionId) (:254-267). Null for a faction that

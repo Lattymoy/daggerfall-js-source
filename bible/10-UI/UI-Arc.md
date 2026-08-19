@@ -2323,3 +2323,84 @@ in the Ledger". It was not - Port-Ledger.md had no such row until AUDIT 18
 added one to section B. That is the 17m shape: a comment pointing at a
 Ledger row that does not exist, which reads to an auditor as "already
 known".
+
+## U23 - THE GUILD SERVICE POPUP, and the static NPC becomes clickable (2026-08-19)
+
+`src/ui/guildServiceWindow.js` + the interior host's static-NPC seam in
+`src/scenes/worldModes.js`. `test/guildservicewindow.test.js`, 8 tests.
+The law half is `systems/guildServiceFlow.js`, recorded in the Systems
+arc; the calendar it needed is S28.
+
+**The thing that did not exist.** The people standing in a building
+interior have been spawned since C1 - `collectInteriorPeople` reads
+their StaticNPC inputs, factionID included - and NOTHING could click
+one. The whole `PlayerActivate.StaticNPCClick` branch had no port. So
+every guild hall, temple and knightly order in the game was a room with
+furniture in it. That is what this slice closes.
+
+**THE NATIVE-WINDOW RULE, element by element.** The panel is
+GILD00I0.IMG for a non-member (it has the Join Guild row baked in) or
+GILD01I0.IMG for a member; both are 130x51 in the shipping data, which is
+exactly `mainPanel.Size`. The four button rects are the `#region UI
+Rects` literals: join (5,5,120,7), talk (5,14,120,7), service
+(5,23,120,7), exit (44,33,43,15).
+
+**The position is the pin worth having.** DFU declares
+`mainPanel.Position = new Vector2(0, 50)` and then sets BOTH alignments
+to Center/Middle - and `BaseScreenComponent` :1217/:1234 make each
+alignment IGNORE position on its axis, so the declared line never
+applies. The panel sits at ((320-130)/2, (200-51)/2) = (95, 74.5), not
+(0, 50). A reader porting the declared line would have put it 25px too
+high, so the test asserts `PANEL_Y !== 50` as well as `=== 75`. The half
+pixel is real in DFU too (its rect is float); the port rounds it the way
+`layoutMessageBox` already rounds its own centring.
+
+**The service label is the only text the window draws** - the rest of
+the words are painted into the art. `serviceLabel.Position` is (0,1)
+inside the service button, horizontally centred, and
+`ShadowPosition = Vector2.zero`: NO SHADOW, unlike every other label in
+this port. The string is `Services.GetServiceLabelText`, twenty entries
+recovered from DFU's Internal_Strings table.
+
+**A member's join rect is DEAD, not merely unpainted.** `Setup` only
+ADDS the join button when `!member`, so the member panel has no button
+where that row used to be. The test clicks there and requires nothing
+to happen - which is what fails if a later slice swaps the IMG and keeps
+the rects.
+
+**The seam, and THE FOUR HOSTS.** Interior people are activation targets
+at DFU's own `StaticNPCActivationDistance` (256 classic units, twice a
+door's), against the swept box of their billboard - a billboard turns to
+face the player, so the volume it occupies over a turn is square in x/z,
+and a 0.1-deep collider would miss from the side (Ledger A, ray-only).
+`worldModes.js` is WIRED and is the only host that can be: it is the
+only one that builds a building interior. `exterior.js` and `world.js`
+MOUNT this machine, so a click inside reaches the seam through them.
+`dungeonContext.js` has nothing to wire - RDB blocks carry flats and
+enemies, not `blockPeopleRecords`.
+
+**RANK TITLES, recovered.** G1 shipped without them and said so: DFU
+reads the six lists from its own localization StringTables, which the
+sparse clone excluded, so `getTitle` returned the player's name at every
+rank. Widening the sparse set to `Assets/Localization` produced all six.
+"Master Wizard", "Master Thief", "Dark Brother", "Knight Brother" and
+"Master Assassin" are ONE title each - `GetLocalizedTextList` splits on
+newlines only - and the compound titles are pinned as such. A NON-member
+reads back their own NAME in the three guilds that do not override
+`GetTitle`, and the "non-member" string in the three that do. The
+Temple's two gendered overrides ship with DFU's own reason in the
+source: rank 9 Patriarch becomes Matriarch, rank 6 Brother becomes
+Sister.
+
+**Live-probed** (`tools/guildServiceProbe.mjs`): 7 guild/temple doors in
+the test city, the Mages Guild has 12 people of whom 11 offer a service,
+the popup opens on GILD00I0 with "Make Spells" on its middle button, the
+service button answers the members-only refusal, and the join button
+raises TEXT.RSC 606 on the U11 parchment with Yes/No. The probe is what
+found THE ONE CONSTRUCTION SEAM's fifth occurrence.
+
+FLAGGED here: DFU binds each button to a `DaggerfallShortcut` hotkey read
+from the player's own keybind file, which the port has no source for, so
+the keyboard accelerators (J/T/S/Esc) are the port's own - Ledger A. The
+TALK button and the three non-guild routing destinations are Ledger C
+rows of their own.
