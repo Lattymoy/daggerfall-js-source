@@ -440,3 +440,55 @@ test('xmi: real-archive quirks stay pinned', { skip: skipReal }, () => {
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) differing++;
   assert.equal(differing, 18);
 });
+
+// ---------------------------------------------------------------------------
+// AUDIT 19 F1: THE SECOND INVARIANT, and an honest account of the first.
+//
+// The byte-exact gate was described as proving the 0xFE event sizes. It does
+// not. Sweeping the sizes and re-decoding the whole archive shows 0x14 = 1 or
+// 2 ALSO lands all 1286 tracks byte-exactly - while blowing D1.HMI from 26,926
+// to 2,123,950 ticks. What actually separates them is that the tracks of a
+// song are meant to END TOGETHER: at 0x14 = 3, 123 of 131 songs have every
+// track finishing on the same tick; at 1 or 2 that collapses to 4 of 131.
+//
+// So the reader is pinned on BOTH invariants, and this one is the discriminating
+// one. Without it, a wrong size passes every other pin in this file.
+// ---------------------------------------------------------------------------
+
+test('hmi: the tracks of a song END TOGETHER - the discriminating invariant', { skip: skipReal }, () => {
+  const bsa = new MidiBsaFile();
+  bsa.load(new Uint8Array(readFileSync(join(ARENA2, 'MIDI.BSA'))));
+
+  let together = 0;
+  const stragglers = [];
+  for (let i = 0; i < 131; i++) {
+    const song = bsa.getSong(i);
+    const ends = new Set(song.tracks.map((t) => t.endTick));
+    if (ends.size === 1) together++;
+    else stragglers.push(`${bsa.getSongName(i)} (${ends.size} distinct end ticks)`);
+  }
+
+  // 123/131 with the decoded sizes. A wrong 0x14 size drops this to 4, so the
+  // bound is what makes the pin discriminate - it is not a round number for
+  // its own sake, it is the measured value with a wide margin below it.
+  assert.ok(together >= 120,
+    `only ${together}/131 songs have all tracks ending together - the 0xFE sizes are wrong.\n`
+    + stragglers.slice(0, 6).join('\n'));
+  assert.equal(together, 123, 'the measured value, so a drift in either direction is visible');
+
+  // And the eight that genuinely differ are the corpus quirk, not a misparse:
+  // each still lands byte-exactly on its end-of-track (the gate above).
+  assert.equal(stragglers.length, 8);
+});
+
+test('hmi: an unknown status byte THROWS rather than becoming a pitch bend', () => {
+  // AUDIT 19 F3: pitch bend used to be the switch's DEFAULT arm, so every
+  // undefined status - 0xF1..0xF6, 0xF8..0xFD - decoded as a bend on a phantom
+  // channel taken from its low nibble. That contradicted this reader's central
+  // promise. 0xE0 is explicit now and the default fails loudly.
+  const src = readFileSync('src/formats/hmiFile.js', 'utf8');
+  assert.match(src, /case 0xe0: \{/, 'pitch bend is an EXPLICIT case, not the default');
+  const dflt = src.slice(src.indexOf('        default:'), src.indexOf('        default:') + 600);
+  assert.match(dflt, /_fail\(/, 'the default arm throws');
+  assert.ok(!/pitchBend/.test(dflt), 'and it does not invent a pitch bend');
+});

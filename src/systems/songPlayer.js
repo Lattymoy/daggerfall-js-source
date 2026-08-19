@@ -37,6 +37,13 @@ export const TICK_INTERVAL_MS = 100;
  *  stay legible over it. */
 export const MUSIC_GAIN = 0.22;
 
+/** Lead given to a loop's new origin. It must be SMALLER than the
+ *  lookahead: the re-pump schedules [now, now + lookahead), so a lead of a
+ *  full lookahead makes that window exactly empty and the repeat starts a
+ *  beat late. Small and non-zero is what we want - far enough ahead that
+ *  nothing lands in the past, near enough that the seam is inaudible. */
+export const LOOP_LEAD_SECONDS = 0.02;
+
 /**
  * The events falling in [fromTick, toTick). Pure, and the half-open
  * interval matters: a closed one would schedule a note twice when it
@@ -135,6 +142,21 @@ export class SongPlayer {
     const nowTick = (this.ctx.currentTime - this._originTime) / secondsPerTick;
     const toTick = Math.min(nowTick + aheadTicks, durationTicks + 1);
 
+    // AUDIT 19 F8: A STALLED TAB IS NOT A REASON TO PLAY THE PAST. A
+    // background throttle can park this loop for a second or more; on the
+    // next pump `nowTick` has jumped far ahead of `_cursorTick`, and every
+    // note in between would be scheduled with a start time already gone -
+    // WebAudio fires those IMMEDIATELY, so ~75 notes arrive as one burst.
+    // Skip the gap instead: the song is a looping cue, and losing a beat
+    // is better than detonating it.
+    if (nowTick - this._cursorTick > aheadTicks) {
+      this._cursorTick = nowTick;
+      // Fold the skipped control events forward so the instruments and
+      // volumes on the far side of the gap are still right.
+      applyChannelEvents(this._state, eventsInWindow(events, 0, nowTick)
+        .filter((e) => e.type !== 'noteOn'));
+    }
+
     if (this._cursorTick < toTick) {
       const window = eventsInWindow(events, this._cursorTick, toTick);
       // AUDIT 19 F6: INTERLEAVED, not fold-then-voice. This used to apply
@@ -155,11 +177,21 @@ export class SongPlayer {
 
     // Loop: songs are 4-44s cues, so ending in silence is wrong. Rewind
     // once the last note has had time to ring out.
+    //
+    // AUDIT 19 F7: the rewind used to take 0.02s of lead against a 0.1s
+    // pump interval and then wait for the NEXT pump, so by the time the
+    // first window was scheduled its notes were already ~0.08s in the
+    // past - eight of them squashed into one instant on every repeat. The
+    // new origin gets a full lookahead of lead, and we pump IMMEDIATELY
+    // rather than waiting, so the loop seam is scheduled ahead like any
+    // other window.
     if (nowTick > durationTicks + 1 / secondsPerTick) {
       if (!this.loop) { this.stop(); return; }
       this._state = freshChannelState();
       this._cursorTick = 0;
-      this._originTime = this.ctx.currentTime + 0.02;
+      this._originTime = this.ctx.currentTime + LOOP_LEAD_SECONDS;
+      this._pump();          // schedule the seam NOW, not on the next tick
+      return;
     }
     // Drop finished voices so a long song does not grow an unbounded list.
     if (this._voices.length > 512) {

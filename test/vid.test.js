@@ -659,7 +659,17 @@ test('video player: drives ANIM0001 to the last frame', { skip: skipReal }, () =
 
   // The last uploaded frame is the reader's final frame buffer.
   const fb = p.vidFile.frameBuffer;
-  assert.equal(fnv1a(fb), fnv1a(new Uint8Array(renderer.uploads.at(-1).colors.buffer)));
+  // AUDIT 19 F7: compare the VIEW's contents and its LENGTH, not the
+  // identity of its backing buffer. Reaching through `.buffer` discarded
+  // byteOffset and length, so this compared the frame buffer with itself
+  // and passed even when the upload handed over a ONE-PIXEL view. The
+  // renderer shared exactly the same blind spot, which is why neither
+  // caught it - a pin and the code it watches must not be wrong together.
+  const up = renderer.uploads.at(-1);
+  assert.equal(up.colors.length, up.width * up.height,
+    'the uploaded view must span the whole frame, not just its buffer');
+  assert.equal(fnv1a(new Uint8Array(up.colors.buffer, up.colors.byteOffset, up.colors.byteLength)),
+    fnv1a(fb));
 });
 
 // ---------------------------------------------------------------------------
@@ -778,4 +788,57 @@ test('U22/AUDIT 19: the DRAW half is inside the boundary too', async () => {
   });
   assert.equal(played, false);
   assert.equal(detached, 1, 'detached, with the failure caught in the draw half');
+});
+
+// ---------------------------------------------------------------------------
+// AUDIT 19 F2(vid): THE SPLASH WAS UNCONDITIONALLY SILENT, and the reason
+// given in the source was the wrong one. videoPlayer resolves its
+// AudioContext ONCE at construction - deliberately, so the clock cannot move
+// under a running stream - and nothing had booted an AudioEngine by splash
+// time, so there was no context to resolve at all. The file blamed the
+// browser's gesture rule; the gesture rule gates whether a context RUNS, not
+// whether one EXISTS, and a suspended context can be built without one.
+// Measured after the fix: 70 audio clips scheduled where it scheduled zero.
+// ---------------------------------------------------------------------------
+
+test('U22/AUDIT 19: AudioEngine.ensure leaves a context to resolve', async () => {
+  const { AudioEngine } = await import('../src/systems/audio.js');
+
+  const madeContexts = [];
+  const savedWindow = globalThis.window;
+  try {
+    globalThis.window = {
+      AudioContext: class { constructor() { this.state = 'suspended'; madeContexts.push(this); } },
+      addEventListener: () => {},
+    };
+    const eng = new AudioEngine();
+    await eng.ensure(async () => { throw new Error('no DAGGER.SND in this test'); });
+    // Sound EFFECTS are disabled without DAGGER.SND, and that is fine -
+    // but the context is not theirs alone. Music and the video player need
+    // only a clock, so ensure() must leave one even when the sound archive
+    // is missing. Nothing is called by hand here: if ensure() did not
+    // build it, this fails.
+    assert.equal(eng.enabled, false, 'no DAGGER.SND means no sound effects');
+    assert.equal(madeContexts.length, 1, 'and yet a context exists after ensure()');
+    assert.ok(eng.ctx, 'exposed as audio.ctx for the video player to resolve');
+    assert.equal(eng.ctx.state, 'suspended',
+      'and it is SUSPENDED - existing is not the same as making sound before a gesture');
+  } finally {
+    if (savedWindow === undefined) delete globalThis.window;
+    else globalThis.window = savedWindow;
+  }
+});
+
+test('U22/AUDIT 19: the boot awaits audio BEFORE it plays the splash', () => {
+  // Ordering, and it is the whole bug: the player resolves its context at
+  // construction, so booting audio after playVideo would be exactly as
+  // silent as not booting it.
+  const main = readFileSync('src/main.js', 'utf8');
+  const boot = main.indexOf('ensureAudio(getBytes)');
+  const play = main.indexOf('playVideo(canvas, renderer');
+  assert.ok(boot > 0, 'main.js must boot audio for the splash');
+  assert.ok(play > 0, 'main.js must play the splash');
+  assert.ok(boot < play, 'audio must be booted BEFORE the video is constructed');
+  assert.match(main.slice(boot - 10, boot + 30), /await ensureAudio/,
+    'and awaited - a floating promise leaves the same race');
 });

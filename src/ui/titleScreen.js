@@ -10,7 +10,11 @@
 //
 // It is also the first non-ARENA2 image the port has ever loaded. Game
 // data never enters the repo (Port-Doctrine); OUR artwork is ours and
-// ships with the build, out of public/ where vite serves it at the root.
+// WOULD ship with the build, out of public/ where vite serves it at the
+// root. AUDIT 19: it is not in the repo yet, so today this arm never runs
+// and the fallback below is what every boot actually draws. Stated rather
+// than implied - "ours ships with the build" was a claim about a file that
+// is not there.
 //
 // TWO KINDS OF ART, and the fallback is not a placeholder. Ours is
 // public/logo.png. When that file is absent the screen falls back to

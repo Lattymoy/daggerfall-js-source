@@ -28,7 +28,8 @@
 // full listbox height), Esc/E goodbye. People/Things/Work are
 // INTERIM no-ops (their topic sources pend quests/work).
 
-import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, SCREEN_DIM, pointToNative, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { drawMenuBackdrop } from './chargenArt.js';
 import { wrapText } from './talkWindow.js';
 import { measureText } from './text.js';
 
@@ -196,7 +197,15 @@ export class NativeTalkWindow {
   draw(renderer, canvas, font) {
     if (!_art) { this._close(); return; }   // art gone mid-session: release the motor
     const m = nativeMetrics(canvas);
-    renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, SCREEN_DIM);
+    // AUDIT 19 F2: OPAQUE BLACK, not a dim. DaggerfallBaseWindow's
+    // constructor sets `parentPanel.BackgroundColor = Color.black`
+    // (DaggerfallBaseWindow.cs:40) - ScreenDimColor is used only by the
+    // handful of windows that explicitly override it, and this is not one.
+    // Drawing a 50% dim here left the letterbox showing the world at half
+    // brightness around the panel, which is the SAME defect U21 fixed for
+    // the menu, U21b for chargen and U22 for the splash. Fourth, fifth and
+    // sixth instance; one shared helper now.
+    drawMenuBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, 0, 0);
     const R = TALK_RECTS;
     // NPC name CENTRED in its 197-wide panel (labelNameNPC

@@ -23,9 +23,14 @@
 //     start(when) on ctx.currentTime; both are the same audio-hardware
 //     clock, which is why now() defaults to ctx.currentTime).
 // DFU's two-AudioSource flip-flop pool is dropped: a WebAudio buffer source
-// is one-shot and self-owned, so the pool has no observable effect.
+// is one-shot and self-owned. AUDIT 19 corrected the claim that used to sit
+// here - "the pool has no observable effect" is false. DFU's pool BOUNDS
+// concurrent clips at two; ours has no cap, so after a long host stall more
+// clips can be in flight than DFU would ever have. Ledgered rather than
+// left as a comfortable sentence.
 //
-// Presentation departures (Port-Ledger A, engine side):
+// Presentation departures (Port-Ledger A - the rows exist now; AUDIT 19
+// found this comment citing a Ledger page that had none):
 //   - Unity uploads Color32[] into a Texture2D; here the frame buffer is
 //     uploaded through renderer.uploadTexture under one key, released first
 //     so the memoized upload is replaced rather than leaked.
@@ -68,9 +73,16 @@ export class VideoPlayer {
     // schedule have to live on the same clock for the whole video, and an
     // AudioContext that appears mid-playback (the first-gesture resume)
     // would move the clock's origin under a running stream. No context at
-    // construction means silent playback on the wall clock - which is what
-    // a boot splash gets, since a browser will not start audio before a
-    // gesture and DFU's dspTime has no such rule.
+    // construction means silent playback on the wall clock.
+    //
+    // AUDIT 19 F2(vid) corrected what used to follow: this said the boot
+    // splash is silent "since a browser will not start audio before a
+    // gesture". That was the wrong culprit. Nothing had booted an
+    // AudioEngine by splash time AT ALL, so there was no context to
+    // resolve, gesture or no gesture - the audio path was fully ported and
+    // unconditionally dead. main.js awaits ensureAudio before playing now.
+    // The gesture rule is real and still applies to STARTING the context;
+    // it was simply not what was stopping this.
     this._ctx = (audioContext ?? (() => audio.ctx))();
     this._now = now ?? (() => (this._ctx
       ? this._ctx.currentTime
@@ -171,6 +183,10 @@ export class VideoPlayer {
     gain.gain.value = this.soundVolume;
     source.connect(gain).connect(ctx.destination);
     source.start(this._nextEventTime);
+    // Probe hook: tools/splashProbe.mjs counts scheduled clips, because a
+    // context that exists while nothing is scheduled looks identical to
+    // working audio from the outside (AUDIT 19 F2).
+    if (typeof window !== 'undefined') window.__vidClips = (window.__vidClips ?? 0) + 1;
     return source;
   }
 

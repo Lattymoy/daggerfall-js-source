@@ -61,7 +61,16 @@ async function boot() {
     try {
       const { playVideo } = await import('./ui/videoPlayer.js');
       const { getBytes } = await import('./scenes/dataSource.js');
+      const { ensureAudio } = await import('./scenes/shared.js');
       status('splash');
+      // AUDIT 19 F2(vid): BOOT AUDIO FIRST. The player resolves its
+      // AudioContext ONCE at construction, and nothing had booted one by
+      // this point, so the splash's audio path was fully ported and
+      // unconditionally silent - the file's own header blamed the browser
+      // gesture rule, which is not what was stopping it. The context still
+      // only starts on a gesture; this makes sure there IS one to start,
+      // and on a first run the ARENA2 folder pick is itself a gesture.
+      await ensureAudio(getBytes);
       await playVideo(canvas, renderer, await getBytes('ANIM0001.VID'));
     } catch (e) {
       console.warn('[boot] ANIM0001.VID unavailable - skipping the splash:', e?.message ?? e);
@@ -72,7 +81,12 @@ async function boot() {
   // Load Game rides the dungeon host's OWN quickLoad (the F12 path) -
   // dungeon.js calls ctx.quickLoad once the context is built. A
   // menu-side loader would be a second copy of a working path.
+  // AUDIT 19 F12: SET on load, DELETE on anything else. `load` was only
+  // ever set, never cleared, so a URL that already carried ?load made NEW
+  // GAME restore the save instead - the one action whose whole point is
+  // not to.
   if (action === 'load') params.set('load', '1');
+  else params.delete('load');
   return bootDungeon(canvas, renderer, params, status);
 }
 

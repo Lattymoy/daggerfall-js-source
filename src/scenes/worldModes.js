@@ -42,8 +42,7 @@ import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interi
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { music } from '../systems/music.js';
-import { TAVERN_SONGS } from '../systems/songManager.js';
-import { BUILDING_TYPES } from '../world/buildingNames.js';
+import { environmentForBuilding, playlistForEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
 // E2: the shop shelf browse/buy layer (node-pure laws in shopStock.js)
@@ -275,12 +274,26 @@ export function createWorldModes(host) {
       // host's merge closure; shops warm the browse font.
       interiorBuilding = buildingDataForDoor?.(hit) ?? null;
       if (interiorBuilding && isShop(interiorBuilding.buildingType)) ensureShopFont();
-      // A5b: TAVERN MUSIC. AssignPlaylist's Tavern arm, and the one
-      // playlist DFU indexes on gameDays DIRECTLY - every tavern shares
-      // a song for the day and they walk in sequence day to day, which
-      // is why `tavern: true` is passed rather than the seeded branch.
-      if (interiorBuilding?.buildingType === BUILDING_TYPES.Tavern) {
-        music.playFrom(TAVERN_SONGS, { gameDays: gameDaysNow(), tavern: true });
+      // A5b/AUDIT 19: INTERIOR MUSIC, all of AssignPlaylist's building
+      // arms rather than only the tavern. Shops, palaces, the Mages Guild,
+      // the three temple alignments and the plain-interior default each
+      // have their own list in DFU, and the port reached none of them - so
+      // entering a shop kept playing the street. The tavern stays special
+      // for one reason: it is the ONE list DFU indexes on gameDays
+      // directly, so every tavern shares a song for the day and they walk
+      // in sequence, which is why `tavern` is passed rather than seeded.
+      //
+      // FLAGGED: factionId is not threaded here yet, so a GuildHall reads
+      // as a plain Interior rather than the Mages Guild, and a Temple
+      // cannot take its god's alignment. Both fall to DFU's own Interior
+      // default rather than guessing an alignment.
+      if (interiorBuilding) {
+        const env = environmentForBuilding(interiorBuilding.buildingType, {
+          factionId: interiorBuilding.factionId ?? 0,
+        });
+        music.playFrom(playlistForEnvironment(env), {
+          gameDays: gameDaysNow(), tavern: env === 'tavern',
+        });
       }
       player.collider = ctx.collider;
       const floored = floorLanding(ctx.collider, landing);   // verbatim FixStanding: instant snap, no gravity drop-in
@@ -380,8 +393,9 @@ export function createWorldModes(host) {
     if (!landing) { console.error('exit: no exterior landing (empty sibling doors)'); return false; }   // tryEnter guards its landing; this path was unguarded - a null here killed the frame loop
     interiorCtx.destroy();
     interiorCtx = null;
-    // Leaving a tavern hands the street back its own song.
-    if (interiorBuilding?.buildingType === BUILDING_TYPES.Tavern) resumeOutdoorMusic?.();
+    // Leaving ANY interior hands the street back its own song - the
+    // tavern-only test was wrong the moment every building got music.
+    if (interiorBuilding) resumeOutdoorMusic?.();
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
     interiorOverlay = null;
     player.collider = baseCollider();
