@@ -23,7 +23,26 @@ work queue routed to arcs.
 
 ## B. Verbatim quirks preserved (real-data reality)
 
+Chargen:
+- `characterDocument.isCustom` is assigned in exactly ONE place in the whole
+  DFU codebase (`= true` on the Custom row,
+  DaggerfallStartNewGameWizard.cs:358) and is never cleared. So opening the
+  custom builder, cancelling out of it
+  and then picking a standard class still ships a document marked custom: it
+  gets the custom starting kit (ItemHelper.cs:1310) and the Spellsword spell
+  set (StartGameBehaviour.cs:804-809), so a Mage picked that way starts with
+  the Spellsword spells. The five reputation fields ride the same rule
+  (:385-389, written only in the builder's accept arm). Reproduced
+  bug-for-bug in ui/chargen.js `_acceptStandardClass`.
+  (Added at AUDIT 18: that function's comment already said "recorded in the
+  Ledger" and no such row existed - the 17m shape exactly.)
+
 Characters:
+- RandomEncounters.cs:580-599 carries a commented-out second Cemetery table
+  ("Cemetery - DF Unity version"); the generated encounterTables.js is
+  comment-stripped, so the port ships the 45 LIVE tables and not that dead
+  block. (Added at AUDIT 18 - encounterTables.js:5 cited "Ledger B" for it
+  and there was no row.)
 - SENT7.RMB carries one archive-210 lamp flat with factionID -4080 (Int16): DFU's faction != 0 rule makes the lamp a StaticNPC; reproduced verbatim (C2 corpus pin).
 - NameGen.txt ships with two lenient-JSON constructs inside Monster3 (a missing comma, a trailing comma); FullSerializer treats commas as optional, so the committed normalized nameGen.json equals what DFU loads.
 
@@ -102,9 +121,17 @@ World layout:
 - Rest (16f audit): the sub-tick interval is waitTimePerHour /
   minutesPerTick - DFU divides by the CONSTANT 10, not the 6 ticks an
   hour takes, so a rested hour passes in 0.45 real seconds (loiter
-  0.75); and a 0-hour timed/loiter request rests ONE full hour
-  (hoursRemaining < 1 is only tested after an hour completes). Both
-  preserved verbatim (restSession.js).
+  0.75). Preserved verbatim (restSession.js).
+  AUDIT 18 deleted this row's second sentence, which claimed a 0-hour
+  timed/loiter request rests ONE full hour in DFU "because hoursRemaining
+  < 1 is only tested after an hour completes". That is backwards:
+  DaggerfallRestWindow.Update (:215-227) is an else-if ladder whose
+  `(currentRestMode != RestModes.FullRest) && hoursRemaining < 1` arm sits
+  AHEAD of `TickRest()`, so DFU ends a 0-hour rest on the very next Update
+  with the clock unmoved. The row was recording a port divergence as a
+  preserved quirk, which is what kept it from being audited; the code fix
+  is routed to the Systems lane of the same audit (restSession.tick must
+  test `mode !== 'full' && hoursRemaining < 1` before the sub-tick loop).
 - Falling into deep water keeps the fall LIVE (P14): swimming never
   grounds, so wading out can bill the whole drop as fall damage -
   nothing in DFU clears it (AcrobatMotor.Falling untouched by
@@ -117,26 +144,28 @@ World layout:
 | ~~Exterior indirect player light~~ SHIPPED (R12: the prefab's ACTUAL values - point, intensity 1.0, range 150, 0.7058824 gray ("white 0.6" was the rig's directional fills); daylight-scaled, weather-dimmed, night-off; shot-proven) | SunlightManager.IndirectLight | Rendering arc |
 | Climate swaps onto mismatched record dimensions | 15 corpus swap combos (124_3 -> 24, 168_6 -> 68/368/468 families) land on records whose dimensions differ from the original; DFU stretches them identically because mesh UVs are normalized against the original archive at load - kept verbatim, pinned in the climate corpus test | Kept |
 | Interior people visibility gates (house ownership, shop hours, building-open rules, GuildHall anytime access, TG/DB House2 membership) | DaggerfallInterior.AddPeople tail | Systems arc (people + their flags/factionID shipped C1) |
-| Interior furniture actions, house containers, loot, spawn points | DaggerfallInterior AddFurnitureAction/MakeHouseContainer/AddSpawnPoints | Systems arc |
+| STATIC-NPC ACTIVATION, exterior side (AUDIT 18). `characters/exteriorNpcs.js` collectExteriorNpcs ports RMBLayout's non-zero-factionID rule and is pinned on the corpus, but NOTHING in `src/` calls it - its only importer is test/names.test.js - so no scene ever builds the exterior NPC registry and no exterior static NPC is a talk or activation target. The interior twin IS live (interiorContext.js:131 -> collectInteriorPeople). Wiring it means the exterior hosts (world.js, exterior.js) plus townTalk's activation targets, which is the four-hosts shape | RMBLayout static NPCs + PlayerActivate StaticNPC | Characters/UI arcs |
+| Interior furniture actions, house-container CONTENTS, spawn points. (AUDIT 18 split this row: MakeHouseContainer's IDENTIFICATION half SHIPPED at S2b - systems/containers.js ports the modelId/100 == 418 or (modelId - 41000) in the 13-entry list rule with TextureRecord = modelId % 100, and interiorContext.js:114 consumes it. Shop shelves, owned-house everything-is-a-container and the Library/Guild/Temple bookshelves are still out.) | DaggerfallInterior AddFurnitureAction/MakeHouseContainer/AddSpawnPoints | Systems arc |
 | ~~Enemy AI + mobile animation~~ SHIPPED (C8: enemyMotor/enemyAttack/rigs end to end; row pruned by the 2026-08-14 audit) | EnemyMotor, MobileUnit | Characters arc C5 (spawn data + classic standing billboards shipped C3) |
 | ~~Dungeon treasure piles + loot~~ SHIPPED (S-series loot tables + corpse/pile takeLoot; row pruned by the 2026-08-14 audit) | RDBLayout AssignFixedTreasure/AddRandomTreasure | Systems arc |
 | ~~Torch audio sources~~ SHIPPED (A2, dungeon scene; exterior/interior torches join with their scenes' audio wiring) | RDBLayout.AddTorchAudioSource | Audio arc |
-| Transition + activation sounds: ladder climb, enter/exit stingers (door open/close SHIPPED in A1; action PlaySound SHIPPED in A2) | DaggerfallActionDoor, DaggerfallAudioSource | Audio arc (the P6/P7 transition seams expose the trigger points) |
+| ~~Transition stingers: ladder climb, enter/exit~~ CLOSED as verbatim N/A (2026-08-17, re-verified at AUDIT 18: PlayerEnterExit.cs contains no PlayOneShot and no SoundClips reference, DaggerfallLadder.cs likewise - there is no source law to port; door open/close SHIPPED in A1, action PlaySound in A2). The ACTIVATION half did NOT deflate with it and moved to the lockpicking row below | DaggerfallActionDoor, DaggerfallAudioSource | Audio arc |
 | ~~Non-movement RDB action flags: CastSpell, Hurt21-25, DrainMagicka~~ SHIPPED (S4b + the trap seam; the Poison action (0x1a) is a VERBATIM NO-OP - DFU's own delegate body is empty, ported as such; entity poisons themselves shipped in S19b) | DaggerfallAction delegates | Combat arc (magic/damage) |
 | ~~Non-movement RDB action flags: ShowText, ShowTextWithInput, DoorText~~ SHIPPED (U6 on the audit's relay spine: the 8600/5400/7700 records, the verbatim riddle-answer chain gate, the DoorText door hold + patch table; TEXT.RSC live) | DaggerfallAction delegates | UI arc + Systems |
 | ~~Non-movement RDB action flags: Teleport, Activate, LockDoor, UnlockDoor, OpenDoor, CloseDoor~~ SHIPPED (MERGED 2026-08-16, two lanes reconciled: the audit's self-targeted verbs + special doors + door bashing + lock values; P10's Teleport jump with per-block destination resolution, the IsLocked player gate + LookAtInteriorLock tiers, and the repeated-block key namespace) | DaggerfallAction delegates + DaggerfallActionDoorSpecial + AttemptBash | Player/Combat |
-| Door lockpicking (steal-mode activation, the failed-skill-level latch; the IsLocked gate + bash + the lock-level text SHIPPED in the merge) | DaggerfallActionDoor.AttemptLockpicking | UI arc (interaction modes) |
+| Door lockpicking (steal-mode activation, the failed-skill-level latch; the IsLocked gate + bash + the lock-level text SHIPPED in the merge; the successful pick plays SoundClips.ActivateLockUnlock = 316, which AUDIT 18 moved here from the transition-stingers row - it is in neither soundClips.js nor any consumer, and it must land from BOTH door paths, the interior/dungeon DaggerfallActionDoor seam and PlayerActivate.cs:556's exterior steal-mode unlock) | DaggerfallActionDoor.AttemptLockpicking + PlayerActivate.cs:556 | UI arc (interaction modes) |
 | FLC constellation animations (ROGUE/MAGE/WARRIOR.CEL) + the Ignite one-shot riding the answer (U18: the questions screen advances immediately where DFU waits out the CEL; the palette brightening itself is live) | CreateCharClassQuestions FLCPlayer + PlayOneShot | UI arc (a FLIC decoder slice) |
 | Pixel-clipped question-scroll text (U18 draws only rows that fit the text window WHOLE; a row pops instead of shearing at the boundary) | MultiFormatTextLabel RestrictedRenderArea | Rendering arc (a scissor seam for UI draws) |
 | Mouse-wheel scroll on the question scroll (U18: the click margins - one pixel per event - and the arrow keys stand in) | CreateCharClassQuestions OnMouseScrollDown/Up + GetUIScrollMovement | UI arc (the hosts' overlay wheel seam) |
 | The custom builder's HIDDEN ResetBonusPool control (U20a: a DFU-added convenience on a rebindable shortcut, not a classic control - it zeroes the freeEdit pool outright. The port has no keybinding registry to hang it on, so it is recorded rather than invented) | CreateCharCustomClass resetButton + DaggerfallShortcut.Buttons.ResetBonusPool | UI arc (a keybinding slice) |
 | The difficulty dagger's fading TRAIL (U20a: AnimateDagger's one-second alpha fade behind the moved dagger; the dagger itself lands on the verbatim pixel) | CreateCharCustomClass.AnimateDagger | UI arc (a per-frame UI tween seam) |
-| U20b picks whose CAREER FLAG NOTHING READS YET (AUDIT 17n catalogued them rather than leave the window implying they all work). LIVE today: Increased Magery (maxMagicka reads the multiplier), the tolerance quartet (spellcast.js resistance/immunity/low-tolerance/critical-weakness), Rapid Healing (rest.js), Inability To Regen Spell Points, and - after 17n's two fixes - Bonus to hit / Phobia. INERT, because the consuming subsystem does not exist: Spell Absorption, Regenerate Health, Acute Hearing, Athleticism, Adrenaline Rush, Damage From Sunlight/Holy Places, Expertise In, Forbidden Weaponry, Forbidden Armor Type, Forbidden Material, Forbidden Shield Types. The flags are written correctly and persist through save; they simply have no reader. Each lands with its own arc | CreateCharSpecialAdvantageWindow.ParseCareerData | Their own arcs (items/effects/regen) |
+| U20b picks whose CAREER FLAG NOTHING READS YET (AUDIT 17n catalogued them rather than leave the window implying they all work). LIVE today: Increased Magery (maxMagicka reads the multiplier), the tolerance quartet (spellcast.js resistance/immunity/low-tolerance/critical-weakness), Rapid Healing (rest.js), Inability To Regen Spell Points, and - after 17n's two fixes - Bonus to hit / Phobia. INERT, because the consuming subsystem does not exist: Spell Absorption, Regenerate Health, Acute Hearing, Adrenaline Rush, Damage From Sunlight/Holy Places, Expertise In, Forbidden Weaponry, Forbidden Armor Type, Forbidden Material, Forbidden Shield Types. INERT FOR A DIFFERENT REASON (AUDIT 18 correction - the justification above was false for it): Athleticism. Its two consumers both SHIP - skills.jumpSpeedMultiplier and the per-minute swim/run fatigue drain - so the +0.1 jump term and the fatigue multiplier are missing because the career flag was never read, not for want of a subsystem. The flags are written correctly and persist through save; they simply have no reader. Each lands with its own arc | CreateCharSpecialAdvantageWindow.ParseCareerData | Their own arcs (items/effects/regen) |
 | The secondary picker's CANCEL path (U20b: DFU pushes the half-built item onto the list BEFORE opening the secondary window and pops it again on cancel - CreateCharSpecialAdvantageWindow :417-420, :439-442. The port never pushes it, so a cancel is simply dropping the pending primary. Same end state; the port has no frame in which a redraw could catch the transient half-item, and its label block would have drawn a bare primary with no secondary) | SecondaryPicker_OnCancel + PrimaryPicker_OnItemPicked's else arm | Kept (end-state-verbatim) |
 | The rep window's STALE BAR quirk (U20a: a click exactly on the middle line zeroes the value but re-enables neither bar, so classic leaves the previous bar drawn beside a 0 label. The port derives its bars FROM the value, so it cannot show one; the VALUE is verbatim) | CreateCharReputationWindow.UpdateRep | Kept (value-verbatim) |
 | ~~Platform riding~~ SHIPPED 2026-08-14 (groundKey contact identity + mover frame deltas through the resolver - the DFU MoveWithMovingPlatform shape; rooted Mac's out-of-bounds ejection report) | DFU parents the player transform | Player arc |
 | ~~Swimming + levitation motor~~ SHIPPED (P11: + the swim toggle, the Levitate (14,255) buff end to end, the per-minute/per-jump fatigue drains, the .7071 diagonal-limit parity fix) | LevitateMotor, GetSwimSpeed | Player arc |
-| Breath/drowning (isPlayerSubmerged at +76*GlobalScale, holding-breath UI, drowning damage) + crouch motor | PlayerEnterExit, AcrobatMotor | Player arc |
+| ~~Breath/drowning + crouch motor~~ SHIPPED (P12, un-struck until AUDIT 18 found live code sitting inside this row's "not yet ported" exemption: dungeonContext.js breathTick is PlayerEntity.cs:322-343 verbatim - the +76*GlobalScale-0.95 head-under test, the `currentBreath == 0` refill from MaxBreath = (END/2), the `breathUpdateTally > 18` drain, SetHealth(0) at <= 0, the surfacing zero; hud.js draws HUDBreathBar with the (LiveEndurance >> 3) + 4 threshold; save.js persists currentBreath; motor.js ships controllerCrouchHeight 0.9 with the headroom-gated stand-up) | PlayerEnterExit, AcrobatMotor | Player arc |
+| RESIDUE of the P12 row above, genuinely unported: (1) the crouch/stand TIMED transition - PlayerHeightChanger lerps the camera over timerMax 0.1s and flips IsCrouching only at the END of the timer (:246-262), where the port toggles instantly; (2) the Argonian breath refund, `if (Race == Races.Argonian && UnityEngine.Random.Range(0, 2) == 1) ++currentBreath` (PlayerEntity.cs:332), whose in-code note still blames race selection though races shipped at U9; (3) GuildManager.DeepBreath's guild bonus on the refill, which pends guilds | PlayerHeightChanger, PlayerEntity.FixedUpdate, GuildManager.DeepBreath | Player arc |
 | ~~Quest monster names (MonsterName)~~ SHIPPED (S17: monsterName in nameHelper - the bank pick uniform per Ledger A, part draws on DFRandom verbatim, Monster3 ported whole; the quest machine consumes it when it lands) | NameHelper.GetRandomMonsterName | Systems arc |
 | ~~Animal audio sources~~ SHIPPED (A2, dungeon scene; RMB exterior/interior animals join with their scenes' audio wiring) | GameObjectHelper | Audio arc |
 | Music playback (HMI/XMI) | Unity synthesis, no reader | Audio arc |

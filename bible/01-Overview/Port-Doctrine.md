@@ -30,7 +30,7 @@ Format knowledge and game logic derive from Daggerfall Unity (MIT license, Inter
 
 ## Phase plan
 
-1. **Readers-Arc** (active): BSA -> TEXTURE/IMG/CIF -> ARCH3D -> BLOCKS -> MAPS. Each validated against real data before the next.
+1. **Readers-Arc** (COMPLETE - all 8 readers shipped with corpus gates; status corrected at AUDIT 18, it still read "active"): BSA -> TEXTURE/IMG/CIF -> ARCH3D -> BLOCKS -> MAPS. Each validated against real data before the next.
 2. **World-Arc**: block assembly + terrain on our renderer, palette-correct.
 3. **Player-Arc**: movement, collision, streaming exterior world.
 4. **Character-Arc**: voxel rigs, paperdoll outfits, NPC population.

@@ -37,8 +37,10 @@ expanding MSB-first) pinned on crafted bytes. ui/text.js builds ONE
 white 256x240 atlas per font through the existing uploadTexture and
 draws through drawScreenQuad with per-call tint - one atlas serves
 every classic text color; DaggerfallFont's rules carried (glyph =
-code - 33, sub-33 codes advance a fixedWidth space, classic 1px
-spacing, integer scale). Live consumer NOW (infra never ships dead):
+code - 33, classic 1px spacing, integer scale). The sub-33 / no-glyph
+case this sentence used to describe as "advance a fixedWidth space" is
+corrected in the AUDIT 18 section at the foot of this
+page. Live consumer NOW (infra never ships dead):
 the HUD shows the readied spell name + cost in FONT0003 above the
 vitals - the U4 spellbook window replaces it. Review catch: the font
 load was written as dynamic imports IN THE SLICE AFTER the 06e class
@@ -222,8 +224,15 @@ delegates:
 ## Queue
 - Classic window art, per-ID TEXT.RSC verification (the database is
   now LIVE via U6; the id sweep remains).
-- Starting-spell sets: SHIPPED via Systems S6 (the spellbook lists
-  the character's real known spells).
+- Starting-spell sets: SHIPPED via Systems S6. AUDIT 18 struck this row's
+  parenthetical, which read "(the spellbook lists the character's real known
+  spells)". It does when the character HAS spells; when `entity.spells` is
+  empty or absent, ui/inventory.js `knownSpells` falls through to an INTERIM
+  fallback that returns every ranged damage-health spell in SPELLS.STD - so
+  a Warrior's spellbook lists eight attack spells and can cast them.
+  DFU's DaggerfallSpellBookWindow.RefreshSpellsList has no fallback of any
+  kind. The fallback is flagged at its site (inventory.js:85-87); the row's
+  parenthetical is what let a reader treat that flag as already retired.
 
 ## U7 (the rest window): SHIPPED
 
@@ -2272,3 +2281,33 @@ level scaling fails three. F1 is pinned on both entity shapes, on an
 attacker carrying neither, through real damage via
 calculateAttackDamage, and against the real CLASS11.CFG so the
 Assassin claim fails if the corpus ever disagrees.
+
+## AUDIT 18 - doc-truth corrections to this page
+
+**The sub-33 glyph law (U3).** The U3 record described "sub-33 codes advance
+a fixedWidth space" as one of DaggerfallFont's rules carried verbatim. It is
+not DFU's rule. DaggerfallFont.cs:
+
+- any code with no glyph is REPLACED by SpaceCode 32 before layout
+  (`if (!HasGlyph(asciiBytes[i])) asciiBytes[i] = SpaceCode;`, :312-314) -
+  it is not "advanced past";
+- the space glyph is manufactured at load with `int width =
+  fntFile.FixedWidth - 1` (CreateSpaceGlyph, :623-625), so its advance is
+  FixedWidth MINUS ONE;
+- in DrawText the space branch advances by `rect.width` ONLY, with NO
+  GlyphSpacing (:326-328), while every drawn glyph adds GlyphSpacing after
+  it (:320-322);
+- CalculateTextWidth measures every code, space included, through
+  GetGlyphWidth(code, scale, GlyphSpacing) (:381), so the MEASURED width of
+  a space does include the 1px spacing that the DRAWN advance does not.
+
+The port's ui/text.js used FixedWidth + 1px spacing for both. The code fix
+is routed to the UI lane of this audit; this record now states the DFU law
+so the next reader is not measuring against the wrong ruler.
+
+**The custom-class document's isCustom (U20a).** ui/chargen.js's
+`_acceptStandardClass` says the never-cleared `isCustom` quirk is "recorded
+in the Ledger". It was not - Port-Ledger.md had no such row until AUDIT 18
+added one to section B. That is the 17m shape: a comment pointing at a
+Ledger row that does not exist, which reads to an auditor as "already
+known".

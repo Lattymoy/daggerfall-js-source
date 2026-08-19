@@ -359,8 +359,20 @@ active shapes the Health family uses:
   sink, clamped to maxMagicka by the caller. out.magickaHealed.
 - **DamageSpellPoints** (ClassicKey MakeClassicKey(4, 2); DFU
   Destruction/DamageSpellPoints): single-target-other, instant,
-  MagicSkill Destruction, MagnitudeCosts(20, 28) - already in the S10
-  cost table. MagicRound calls DamageMagickaFromSource(magnitude);
+  MagicSkill Destruction, MagnitudeCosts(20, 28)
+  (DamageSpellPoints.cs:28/:34). AUDIT 18 CORRECTION: this line used to
+  claim the pair was already carried by the S10 cost table, and that was
+  false. spellcost.js's
+  EFFECT_COST_TABLE has no `4,2` key (nor `1,2` for
+  ContinuousDamageSpellPoints, whose real factors are DurationCosts(40, 8)
+  + MagnitudeCosts(40, 28)); the 20/28 pair the claim was reading belongs
+  to `4,0` DamageHealth. With no key, effectCost falls through to the
+  zero-component fudge MakeEffectCosts(60, 100, 160), so any classic spell
+  carrying these effects is priced wrong. The rows are routed to the
+  Systems lane, not closed here. (HealSpellPoints has NO ClassicKey and NO
+  MagnitudeCosts in DFU at all - it is a potion-only effect - so its "type
+  10, subType 9" line above describes the classic record, not a DFU cost
+  row.) MagicRound calls DamageMagickaFromSource(magnitude);
   ours scales by the saving throw exactly like DamageHealth and sinks
   through drainMagicka (floors at 0). out.magickaDrained.
 - **ContinuousDamageSpellPoints** (ClassicKey MakeClassicKey(1, 2);

@@ -3,14 +3,26 @@
 Started with World-Arc milestone 1. Presentation is ours per Port-Doctrine;
 this section owns renderer specifics.
 
-Current (`src/render/`):
+Current (`src/render/`) - one bullet per module, pinned against the real
+directory by `test/audit18_bible_docs.test.js`:
 - `renderer.js` - WebGL2, two programs: lit solid geometry (MVP, directional
   light 0.45 + 0.55*diffuse, alpha < 0.5 discard) and Y-locked billboards
   expanded in the vertex shader. Textures per (archive, record), REPEAT +
   NEAREST, uploaded bottom-up exactly as getColor32 emits (matches GL texel
-  order; DFU's negative-V UVs rely on REPEAT).
-- `groundMesh.js` - per-tile quads with UV rotate/flip; renderer-side
-  equivalent of DFU's tilemap-shader atlas (ledgered departure).
+  order; DFU's negative-V UVs rely on REPEAT). ALL ground - exterior blocks
+  and terrain alike - runs through this file's `drawTerrain` tilemap pass.
+- `characterMesh.js` - the voxel character mesh path.
+- `characterSprite.js` - the classic-visuals sprite pass (one fixed
+  CHAR_SPRITE_RT_SIZE target).
+- `skyRenderer.js` - painted skies (R4) + the night sky.
+- `windowEmission.js` - R2 window emission.
+- `precipitation.js` - R13 rain/snow + storm lightning.
+
+AUDIT 18 deleted a `groundMesh.js` bullet from this list: R10 had already
+deleted that module, and the bullet tagged it "(ledgered departure)" when
+Ledger A has no ground-mesh row of any kind - a citation to a Ledger row
+that does not exist, which is the exact 17m shape. The page contradicted
+itself further down, where "R10 retired groundMesh.js" already stood.
 
 Milestone log: `07-Rendering/Rendering-Arc.md` (R1 climate swaps,
 R2 window emission, R3 city lanterns, R4 painted skies, R5 day/night
