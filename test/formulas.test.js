@@ -1,4 +1,5 @@
 // C8 E3b: the FormulaHelper core, deterministic rolls, source-pinned.
+import { WEAPONS } from '../src/characters/weapons.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -69,11 +70,11 @@ test('formulas: damage paths verbatim', () => {
   assert.equal(handToHandAttackDamage(A, null, 0, true, seq(0)), 9);
   assert.equal(handToHandAttackDamage(A, null, 0, false, seq(0)), 4);
   // weapon: dagger 1-6 roll max (0.999 -> 6), +str 5, +Daedric 6
-  const dagger = { minDamage: 1, maxDamage: 6, material: 9, flags: 0x10 };
+  const dagger = { templateIndex: WEAPONS.Dagger, material: 9, flags: 0x10 };   // AUDIT 18 F1: real items carry a template, not baked damage
   const foe = { isPlayer: false, careerIndex: 3, group: null };
   assert.equal(weaponAttackDamage(A, foe, 0, dagger, seq(0.999)), 17);
   // skeletal warrior: blunt (no 0x10) halves BEFORE str/material; silver doubles
-  const mace = { minDamage: 1, maxDamage: 12, material: 2, flags: 0x00 };
+  const mace = { templateIndex: WEAPONS.Mace, material: 2, flags: 0x00 };
   const skel = { isPlayer: false, careerIndex: SKELETAL_WARRIOR_INDEX, group: null };
   // roll max: 12 -> /2 = 6 -> *2 (silver) = 12 -> +5 str +0 silver = 17
   assert.equal(weaponAttackDamage(A, skel, 0, mace, seq(0.999)), 17);
@@ -82,7 +83,7 @@ test('formulas: damage paths verbatim', () => {
   assert.equal(backstabDamage(10, 1, 0.0), 10);     // needs > 1
   // material gate: iron weapon vs Silver-required target -> 0
   const ghost = { minMetalToHit: 2, skills: 35, stats: { strength: 50, agility: 50, luck: 50 }, armor: 0 };
-  assert.equal(calculateAttackDamage(A, ghost, { weapon: { minDamage: 1, maxDamage: 6, material: 0, flags: 0x10 } }), 0);
+  assert.equal(calculateAttackDamage(A, ghost, { weapon: { templateIndex: WEAPONS.Dagger, material: 0, flags: 0x10 } }), 0);
 });
 
 test('formulas: monster multi-attack loop (F2) - basics spans, reflex gate, per-hit type bonus', () => {

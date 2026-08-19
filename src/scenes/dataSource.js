@@ -25,13 +25,26 @@ const mem = new Map(); // NAME -> Uint8Array
 // storage + memory pressure and quota-killed phones. When a future
 // slice needs a dropped kind: bump MANIFEST_V - stale stored sets
 // auto-wipe to the picker.
+//
+// AUDIT 18 F2: the diet outlived three slices that shipped readers for
+// kinds it drops. CLASSES.DAT (the U18 class-questions results walk,
+// chargenSession.js:80), FACTION.TXT (the T3a reaction layer,
+// townTalk.js:98) and BIOG*.TXT (the S3e biography, biogFile.js:103)
+// are all fetched by LIVE code and were all filtered out, so on the
+// deployed site - where the network arm 404s and IndexedDB is the only
+// source - three shipped features had no data at all. Named, not
+// blanket: PACKED.DAT alone is most of the 247MB the diet exists to
+// refuse. The three kinds together cost 148KB.
 const LEAN = typeof window !== 'undefined' &&
   ('ontouchstart' in window || (navigator?.maxTouchPoints ?? 0) > 0);
+/** The named small files live readers fetch that no extension rule covers. */
+const KEEP_NAMED = /^(CLASSES\.DAT|FACTION\.TXT|BIOG\d+T\d+\.TXT)$/;
 export const KEEP = (name, lean = LEAN) => /^TEXTURE\.\d+$/.test(name) ||
   /\.(BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND)$/.test(name) ||
+  KEEP_NAMED.test(name) ||
   (!lean && /^SKY\d+\.DAT$/.test(name));   // skies: 247MB - full sets on desktop, gradient fallback on the lean diet
 const MANIFEST_KEY = '__MANIFEST__';
-const MANIFEST_V = 2;   // v1 = the broken-era sets (pre-diet) - auto-wiped
+const MANIFEST_V = 3;   // v1 = pre-diet sets; v2 = the diet that dropped CLASSES/FACTION/BIOG (AUDIT 18 F2) - both auto-wiped
 
 /** Uppercase basename: the canonical ARENA2 key. Exported for tests. */
 export function normalizeName(name) {

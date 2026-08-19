@@ -17,6 +17,7 @@ import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback 
 import { rand } from '../formats/dfRandom.js';   // the monster multi-attack reflex gate (F2)
 import { liveStat } from '../systems/statMods.js';   // S14: fortify-aware stat reads
 import { skillValue, SKILLS, WEAPON_SKILL } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
+import { weaponMinDamage, weaponMaxDamage } from '../characters/weapons.js';   // AUDIT 18 F1: GetBaseDamageMin/Max resolve the TEMPLATE, never a baked field
 
 // ---- Dice100.cs verbatim ----
 export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 100) < chance;   // Random.Range(0,100) < chance
@@ -58,6 +59,22 @@ export const WEAPON_MAX_DAMAGE = Object.freeze({
   Longsword: 16, Katana: 16, 'War Axe': 16, 'Short Bow': 16,
   Claymore: 18, Warhammer: 18, 'Long Bow': 18, 'Dai-Katana': 21,
 });
+
+/** DaggerfallUnityItem.GetBaseDamageMin/GetBaseDamageMax
+ *  (DaggerfallUnityItem.cs:969-977), verbatim: DFU NEVER stores a
+ *  weapon's damage on the item - it resolves the TEMPLATE INDEX
+ *  through CalculateWeaponMin/MaxDamage on every swing.
+ *
+ *  AUDIT 18 F1: the port read `weapon.minDamage`/`weapon.maxDamage`
+ *  instead, fields only enemyEquipment.createWeapon and the retired
+ *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
+ *  weapons from the item templates - {group, templateIndex, material,
+ *  name, value} - so the moment starting gear replaced the interim
+ *  dagger, EVERY armed player swing computed `undefined + ...` = NaN.
+ *  Deriving from the template, as DFU does, is both the fix and the
+ *  reason a baked field can never rot again. */
+export const baseDamageMin = (weapon) => weaponMinDamage(weapon?.templateIndex);
+export const baseDamageMax = (weapon) => weaponMaxDamage(weapon?.templateIndex);
 
 // ---- DaggerfallUnityItem.GetWeaponMaterialModifier (index = material 0..9) ----
 export const WEAPON_MATERIAL_MODIFIER = Object.freeze([-1, 0, 0, 1, 2, 3, 3, 4, 5, 6]);
@@ -171,7 +188,8 @@ export const SKELETAL_WARRIOR_INDEX = 15;   // MonsterCareers.SkeletalWarrior
  *  attacker, independently of whether the attacker carried the byte at
  *  all. The `target.group` read stays as the fallback it was. */
 export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = Math.random, targetGroup = null) {
-  let damage = weapon.minDamage + Math.floor(rolls() * (weapon.maxDamage + 1 - weapon.minDamage)) + damageMod;
+  const wMin = baseDamageMin(weapon), wMax = baseDamageMax(weapon);
+  let damage = wMin + Math.floor(rolls() * (wMax + 1 - wMin)) + damageMod;
   if (!target.isPlayer && target.careerIndex === SKELETAL_WARRIOR_INDEX) {
     if ((weapon.flags & 0x10) === 0) damage = Math.trunc(damage / 2);   // edged-weapon rule
     if (weapon.material === 2) damage *= 2;                             // Silver
@@ -203,7 +221,7 @@ export function backstabDamage(damage, backstabbingLevel, roll01 = Math.random()
  *  enemies' weapons undershoot similar-tier monsters). */
 export function chooseEnemyWeapon(weapon, basics) {
   if (!weapon) return null;
-  const weaponAvg = Math.trunc((weapon.minDamage + weapon.maxDamage) / 2);
+  const weaponAvg = Math.trunc((baseDamageMin(weapon) + baseDamageMax(weapon)) / 2);
   const noWeaponAvg = Math.trunc(((basics?.minDamage ?? 0) + (basics?.maxDamage ?? 0)) / 2);
   return noWeaponAvg > weaponAvg ? null : weapon;
 }

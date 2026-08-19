@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 688 tests across 126 files.
+Node 22). Suite: 694 tests across 127 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -130,6 +130,7 @@ Node 22). Suite: 688 tests across 126 files.
 | weather.test.js | 4 | verbatim fog tables, mapping, offsets, scales, fog math, lightning strobe |
 | window.test.js | 2 | MaterialReader style constants, real glass-texel mask pins |
 | world.test.js | 13 | mat4, meshReader, rmbLayout, location grid, flats, nature-quirk pin, city lights, R9 tilemap conversion + grid pins |
+| audit18.test.js | 6 | AUDIT 18 pins, each mutation-proven: F1 GetBaseDamageMin/Max resolve the TEMPLATE (every WEAPONS entry finite and table-exact at both roll ends, the baked-field path unreachable, chooseEnemyWeapon's average over templates, and every weapon assignStartingGear mints carrying a templateIndex across all 18 classes); F2 the ingest diet vs live readers - a RULE that re-derives the fetchBytes/getBytes name list from src/ on every run and asserts KEEP() accepts each on BOTH diets (lean and desktop), names the three it starved (CLASSES.DAT, FACTION.TXT, all 18 BIOG**T0.TXT), holds the template-built CLASS**.CFG range, and still refuses the bulk the diet exists to refuse |
 | manifest.test.js | 1 | drift guard: this table and the total against the real suite |
 
 Two tiers per module:
@@ -138,6 +139,13 @@ Two tiers per module:
 2. **Real-data validation** - gated on `ARENA2_PATH`; skip cleanly when
    absent. Pin observed counts, names, ids, checksums, and structural
    closure invariants.
+
+Without game data the suite runs 619 pass / 75 skip (AUDIT 18 corrected
+the long-stale "88 pass, 49 skip", which described a 137-test suite that
+has not existed for many milestones). Those 75 skipped pins DO NOT RUN
+IN THE DEPLOY GATE - CI has no ARENA2 - so a real-data pin is a local
+gate only. `manifest.test.js` guards the totals above but not this line;
+recount it by hand when the split moves.
 
 Sourcing data in a fresh session: `sh tools/fetch-data.sh`, then
 `ARENA2_PATH=/home/claude/dfdata/arena2 npm test`.
