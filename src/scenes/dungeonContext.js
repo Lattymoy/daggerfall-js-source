@@ -58,6 +58,7 @@ import {
   MISSILE_LIFESPAN_S, isDamageHealthEffect,
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
+import { silenceBlocksCast, SILENCED_TEXT } from '../systems/mysticism.js';   // S27
 import { applySpell, tickActiveEffects, hasActiveEffect, entityIsParalyzed, maxFatigue, isInvisible, isBlending, isAShade } from '../systems/effects.js';
 import { FATIGUE_LOSS, maxBreath } from '../systems/statMods.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
@@ -926,6 +927,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function playerCastInput(eye, dir) {
     const sp = readiedSpell;
     if (!sp) return false;
+    // S27 / SilenceCheck (EntityEffectManager :1932-1946). DFU tests
+    // this at CAST as well as at ready, and BOTH clear the readied
+    // spell - a silence landing mid-aim disarms you rather than
+    // waiting for the click. Every cast on this path costs spell
+    // points, so DFU's `!noSpellPointCost` arm is always true here.
+    if (silenceBlocksCast(playerEntity)) {
+      readiedSpell = null;
+      hudText.add(SILENCED_TEXT);
+      return false;
+    }
     const cost = calculateCastCost(sp, playerEntity).sp;   // S10: the per-effect skill-scaled cost (the record-cost interim retires)
     if ((playerEntity.magicka ?? 0) < cost) return false;   // classic refuses without the points
     if (sp.rangeType === 0) {
@@ -2057,7 +2068,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleSpellbook() {
       if (activeOverlay) return;
       activeOverlay = new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
-        ready: (sp) => { readiedSpell = sp; clickCast.arm(); hudText.add(`${sp.name} readied.`); },   // classic: the next attack-click CASTS
+        ready: (sp) => {
+          // S27: the FIRST of DFU's two silence gates. Readying is
+          // refused outright, so the spellbook cannot arm a spell a
+          // silenced caster could never fire.
+          if (silenceBlocksCast(playerEntity)) { readiedSpell = null; hudText.add(SILENCED_TEXT); return; }
+          readiedSpell = sp; clickCast.arm(); hudText.add(`${sp.name} readied.`);   // classic: the next attack-click CASTS
+        },
         castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
       });
     },

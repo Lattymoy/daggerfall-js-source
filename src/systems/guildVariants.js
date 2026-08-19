@@ -64,11 +64,16 @@ const TEMPLE_SKILLS = Object.freeze({
 });
 
 /** Temple templeData (:132-142), the whole RankData row per divine.
- *  Ported WHOLE rather than half now and half later: the first ten
- *  columns are the SERVICE ranks (the rank at which each service opens,
- *  -1 for never) and have no reader until the services slice, but
- *  splitting one DFU table across two slices is how a table drifts.
- *  The four ids are join/rank scope and are live.
+ *  Ported WHOLE rather than half now and half later, which paid off:
+ *  G3 found the first ten columns - the SERVICE ranks - reading in TWO
+ *  places, CanAccessService and GetPromotionMsgId.
+ *
+ *  A -1 column does NOT mean "never", which is what this comment said
+ *  until G3 read the gate. CanAccessService tests `serviceRank <= rank`,
+ *  so -1 passes at every rank; the service simply is not OFFERED,
+ *  because the temple has no NPC for it. The rank gate and the offer
+ *  are different things. The same -1 never matches GetPromotionMsgId's
+ *  `== rank`, since ranks run 0..9.
  *
  *  Note Arkay's blessing id is 0 - verbatim, not a gap. */
 export const TEMPLE_DATA = Object.freeze({
