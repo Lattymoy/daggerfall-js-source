@@ -175,6 +175,13 @@ export function surrenderToCityGuards(player, regionIndex, voluntary, { setHealt
 /** The court's state-0 math. Returns { punishmentType, fine,
  *  daysInPrison } (guild rescues FLAGGED). */
 export function startCourt(player, regionIndex, crime, { rolls = Math.random, dfRand = rand } = {}) {
+  // AUDIT 21 F6: HandleCourtLogic's FIRST statement, on every state -
+  // "Close immediately if no crime assigned to player"
+  // (DaggerfallCourtWindow.cs:109-114). Without it `crime - 1` is -1, the
+  // penalty tables index undefined, the fine becomes NaN, and the player
+  // is tried for nothing - then credited -1 legal reputation for serving
+  // a sentence for a crime that never happened.
+  if (!crime) return null;
   const crimeType = crime - 1;
   const legalRep = legalRepOf(player, regionIndex);
   let threshold1 = 0, threshold2 = 0;
@@ -182,10 +189,16 @@ export function startCourt(player, regionIndex, crime, { rolls = Math.random, df
     threshold1 = Math.min(75, -legalRep);
     threshold2 = Math.min(75, Math.trunc(-legalRep / 2));
   }
-  // Dice100.FailedRoll(t) = roll >= t
+  // Dice100.FailedRoll(t) = roll >= t.
+  //
+  // AUDIT 21 F5: C#'s `&&` SHORT-CIRCUITS. DFU writes
+  //     if (Dice100.FailedRoll(threshold2) && Dice100.FailedRoll(threshold1))
+  // so the second roll is drawn ONLY when the first fails. Drawing both
+  // unconditionally consumed an extra number from the generator on every
+  // court appearance, which shifts every later roll in the session - the
+  // classic way a port stays "correct" per-expression and still desyncs.
   const failed2 = Math.floor(rolls() * 100) >= threshold2;
-  const failed1 = Math.floor(rolls() * 100) >= threshold1;
-  const punishmentType = failed2 && failed1 ? 2 : 0;
+  const punishmentType = failed2 && Math.floor(rolls() * 100) >= threshold1 ? 2 : 0;
 
   let penaltyAmount = legalRep >= 0
     ? PENALTY_PER_LEGAL_REP_POINT[crimeType] * legalRep + BASE_PENALTY[crimeType]

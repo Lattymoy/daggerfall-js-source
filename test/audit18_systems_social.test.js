@@ -284,8 +284,15 @@ test('audit18 social F2: the verdict, acquittal and banishment boxes expand thei
 
   // (c) banishment (8063, %pcn AND %cn). legalRep -30 -> threshold2
   // = 15, and a roll of 5 passes it -> punishmentType 0.
+  //
+  // AUDIT 21 F5: only TWO rolls here, not three. C#'s `&&` short-circuits
+  // (DaggerfallCourtWindow.cs:136), so a first roll that PASSES means the
+  // second court roll is never drawn and the next value goes to the
+  // defense. This sequence used to carry a third value written against the
+  // port's old both-rolls-always behaviour; with the short-circuit fixed
+  // it fed 0.05 to the defense and acquitted the player instead.
   srand(391);
-  const ban = courtHarness({ legalRep: -30, rolls: seq(0.05, 0.05, 0.99) });
+  const ban = courtHarness({ legalRep: -30, rolls: seq(0.05, 0.99) });
   ban.flow.startCourtFlow();
   ban.press('KeyN');
   ban.press('KeyL');

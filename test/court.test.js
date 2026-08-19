@@ -250,3 +250,46 @@ test('AUDIT 21 F3: normalize drifts FACTION reputations too, through the walk', 
   normalizeReputations(player, store);
   assert.equal(store.dict.get(id).rep, -19, 'and a negative one drifts up');
 });
+
+test('AUDIT 21 F5: the second court roll is SHORT-CIRCUITED, as C# does', () => {
+  // DaggerfallCourtWindow.cs:136 -
+  //   if (Dice100.FailedRoll(threshold2) && Dice100.FailedRoll(threshold1))
+  // C#'s `&&` short-circuits, so the second roll is drawn ONLY when the
+  // first fails. Drawing both unconditionally burned an extra number from
+  // the generator on every court appearance, shifting every later roll in
+  // the session - a port can be right expression by expression and still
+  // desync the stream.
+  const player = { legalRep: { 17: -100 } };   // both thresholds at their 75 cap
+
+  let drawn = 0;
+  const counting = (v) => () => { drawn++; return v; };
+
+  // First roll FAILS (0.99 -> 99 >= threshold): the second is needed.
+  drawn = 0;
+  startCourt(player, 17, 5, { rolls: counting(0.99) });
+  assert.equal(drawn, 2, 'a failed first roll draws the second');
+
+  // First roll PASSES (0.0 -> 0 < threshold): the second must NOT be drawn.
+  drawn = 0;
+  startCourt(player, 17, 5, { rolls: counting(0.0) });
+  assert.equal(drawn, 1, 'a passed first roll short-circuits - no second draw');
+
+  // And the outcome is still right in both cases.
+  assert.equal(startCourt(player, 17, 5, { rolls: () => 0.99 }).punishmentType, 2);
+  assert.equal(startCourt(player, 17, 5, { rolls: () => 0.0 }).punishmentType, 0);
+});
+
+test('AUDIT 21 F6: a court with NO crime closes immediately', () => {
+  // HandleCourtLogic's first statement, on every state (:109-114). Without
+  // it `crime - 1` is -1, the penalty tables index undefined, the fine is
+  // NaN, and the player is tried for nothing - then charged a point of
+  // legal reputation for serving the sentence.
+  assert.equal(startCourt({ legalRep: {} }, 17, 0, { rolls: () => 0.5 }), null,
+    'crime None yields no court at all');
+
+  // A real crime still opens one, so the guard cannot be a blanket refusal.
+  const real = startCourt({ legalRep: {} }, 17, 5, { rolls: () => 0.5 });
+  assert.ok(real, 'a real crime opens a court');
+  assert.ok(Number.isFinite(real.fine), 'with a finite fine');
+  assert.ok(Number.isFinite(real.daysInPrison));
+});
