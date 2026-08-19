@@ -97,6 +97,33 @@ INTERIM/FLAGGED site, remove the old sentence - do not append the
 retiring one beneath it. The open-flags list is grep-regenerated
 and lifts stale half-sentences out of their retiring context.
 
+A SLICE CLOSES ITS LEDGER ROW (2026-08-19). Port-Ledger section C
+is not a memo, it is a CLAIM that something is unported - so a
+stale row is worse than a missing one: it sends the next slice off
+to build what already ships. Before closing, grep section C for
+the DFU members you touched and strike, narrow, or update every
+row you moved. `node tools/ledgerSweep.mjs` narrows the read: it
+cross-references each unstruck row against the arc docs' own
+SHIPPED/CLOSED headings and against non-comment src/. Run against
+the pre-sweep ledger it caught 2 of the 4, with 2 standing false
+positives - A CLEAN RUN IS NOT PROOF. It missed the two that a
+matcher structurally cannot catch: one where the port RENAMED the
+member (MakeHouseContainer -> isHouseContainerModel) and one where
+the closing slice used its own vocabulary. Those need the eye.
+The failure mode is specific and it is NOT forgetfulness: all four
+rows found stale in the 2026-08-19 sweep were closed by a slice in
+a DIFFERENT arc from the row's Target column. P12 (Player) shipped
+breath/drowning; Audio closed the transition stingers as verbatim
+N/A; S2b and E2 (Systems) shipped two thirds of the interior
+container row; S23/S24 moved five career flags from INERT to LIVE.
+Every author updated their OWN arc doc and none thought to touch a
+ledger row filed under someone else's. So the sweep is owned by the
+slice, not by the arc - if you shipped a DFU member, the row naming
+that member is yours to close no matter whose column it sits in.
+NARROW, do not strike, when a slice ships part of a row: say what
+landed and what is still open, or the next reader reads a partial
+close as a whole one.
+
 THE NATIVE-WINDOW RULE (from the 17d UI audit, after three
 positioning hotfixes in two days): every drawn element of a native
 window - rect, font, color, scale, alignment - must cite its DFU
