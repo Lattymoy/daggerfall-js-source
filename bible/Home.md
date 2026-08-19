@@ -280,7 +280,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/guilds.js:39` - FLAGGED loud - RANK TITLES. DFU reads them from its own
 - `src/systems/guilds.js:112` - // are FLAGGED to the quest slice.
 - `src/systems/guilds.js:221` - /** GetTitle (:180-183). FLAGGED - see the header: the rank titles live
-- `src/systems/guildVariants.js:153` - // banking does not exist yet, so it is FLAGGED to the banking
+- `src/systems/guildVariants.js:158` - // banking does not exist yet, so it is FLAGGED to the banking
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).

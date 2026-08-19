@@ -1292,3 +1292,57 @@ to fix the wrong thing. Pinned that the two records differ, and that
 the decision agrees with isEligibleToJoin across the whole grid.
 
 10 mutations run, 10 killed.
+
+## G3 - guild services: what rank BUYS
+
+2026-08-19. G1 and G2 built membership and rank; this is what rank is
+FOR. Law only - the windows that spend it are their own slice.
+
+**The service NPC table is copied from DFU's SWITCH, not inferred from
+its enum names**, and that is the whole reason to be careful with it.
+The 61 GuildNpcServices members are named `PREFIX_ServiceName`, so
+deriving the mapping from the suffix is the obvious shortcut - and it
+is wrong in exactly three places: MG_BuySpells maps to
+BuySpellsMages (not BuySpells), KO_Smith to ReceiveArmor and
+KO_Seneschal to ReceiveHouse. Extracted mechanically, checked 61
+against 61 with no member missing a case, and the three disagreements
+are pinned by name. DFU's own comment explains why the table exists at
+all: it "duplicates data from faction.txt mainly because guild flags
+are not consistent".
+
+**-1 IN THE TEMPLE SERVICE TABLE DOES NOT MEAN "NEVER"** - and G2's
+comment said it did. CanAccessService tests `serviceRank <= rank`, so
+a -1 column PASSES at every rank. It reads as "never offered" only
+because the temple has no NPC for that service, so the question is
+never asked: the rank gate and the OFFER are two different things.
+The same -1 never matches GetPromotionMsgId's `== rank`, since ranks
+run 0..9. Both behaviours pinned, and G2's comment corrected.
+
+**The money formulas truncate before they multiply.**
+`(((10 + rank) << 8) / 10 * reward) >> 8` is C# int arithmetic: the
+/10 truncates FIRST, so a rank-3 Fighters Guild reward on 1000 gold is
+1296 and not 1300, and a rank-9 repair is 97 and not 100. Pinned on
+those exact values, because a "cleaner" reward * (10+rank) / 10 passes
+a spot check at rank 0 and drifts everywhere else.
+
+Training: the cap is a flat 50 and no guild overrides it; the price is
+(member 100 / non-member 400) x the player's LEVEL, so it scales with
+the character rather than the skill, and rank does not discount it. A
+KNIGHTLY ORDER TRAINS NOTHING - KnightlyOrder.cs returns null outright.
+A TEMPLE TRAINS NON-MEMBERS where a guild does not.
+
+The training list is not the guild-skill list the rank law reads - but
+not uniformly, and that was measured after a pin asserting it always
+differs failed. FIVE divines train a wider set than they rank on;
+Kynareth, Mara and Zenithar use the same list for both.
+
+Two benefits worth naming. The Mages Guild's free magicka recharge is
+gated on Career.NoRegenSpellPoints - the perk exists FOR the Sorcerer,
+and reads the same career flag U20b writes. And a knightly order's
+free tavern rooms come at rank 4 OR at any rank inside the order's own
+region: a knight is a local somebody at home.
+
+Only Arkay discounts curing; only the Fighters Guild alters rewards
+and repair costs; only a temple has a library, at its own rank.
+
+13 mutations run, 13 killed.
