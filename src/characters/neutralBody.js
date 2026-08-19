@@ -261,11 +261,19 @@ export function buildNeutralBody(ramps, opts = {}) {
   // rig's own surface where a piece sits and recolour it. No gaps, and
   // it animates with the body for free. Cuirass = the torso ('body')
   // faces in the chest->waist band pushed radially out + tagged steel.
-  const displace = (groups, yLo, yHi, th, cxFor, zScale = 1, mat = 'steel') => {
+  // zLo/zHi are the DEPTH gate, exactly parallel to yLo/yHi and
+  // unbounded by default (every existing caller is unchanged). A
+  // garment that must leave an opening needs it: a hood gated on
+  // height alone paints the whole skull, face included.
+  const displace = (groups, yLo, yHi, th, cxFor, zScale = 1, mat = 'steel', zLo = -Infinity, zHi = Infinity) => {
     for (const f of faces) {
       if (!groups.includes(f.g)) continue;
       let cy = 0; for (let i = 0; i < 4; i++) cy += f.p[i*3+1]; cy /= 4;
       if (cy < yLo || cy > yHi) continue;
+      if (zLo !== -Infinity || zHi !== Infinity) {
+        let cz = 0; for (let i = 0; i < 4; i++) cz += f.p[i*3+2]; cz /= 4;
+        if (cz < zLo || cz > zHi) continue;
+      }
       const cx = cxFor ? cxFor(f.g) : 0;
       for (let i = 0; i < 4; i++) {
         const x = f.p[i*3] - cx, z = f.p[i*3+2], r = Math.hypot(x, z) || 1;
@@ -284,14 +292,21 @@ export function buildNeutralBody(ramps, opts = {}) {
   // material, sits UNDER the armour. Legs/arms carry their own centre.
   for (const z of (opts.clothZones || [])) {
     const cxFor = z.leg ? legCx : z.arm ? armCx : null;
-    displace(z.groups, z.yLo, z.yHi, z.th ?? 0.008, cxFor, 1, 'cloth');
+    // A cloth zone may name its OWN material, exactly as an armour zone
+    // does below - without it an entire outfit resolves to one colour,
+    // so a tunic and its hose could never differ. Defaults to 'cloth',
+    // which is what every caller got before, and no caller in src/
+    // passes clothZones at all (raceCharacter and engineRig both call
+    // buildNeutralBody(ramps) with no opts), so this loop does not run
+    // on any game path.
+    displace(z.groups, z.yLo, z.yHi, z.th ?? 0.008, cxFor, 1, z.mat || 'cloth', z.zLo ?? -Infinity, z.zHi ?? Infinity);
   }
 
   // armour zones (from armorSet via armorZones) - over the clothing.
   // Each zone carries its family material (steel/mail/leather).
   for (const z of (opts.armorZones || [])) {
     const cxFor = z.leg ? legCx : z.arm ? armCx : null;
-    displace(z.groups, z.yLo, z.yHi, z.th ?? 0.02, cxFor, z.zScale ?? 1, z.mat || 'steel');
+    displace(z.groups, z.yLo, z.yHi, z.th ?? 0.02, cxFor, z.zScale ?? 1, z.mat || 'steel', z.zLo ?? -Infinity, z.zHi ?? Infinity);
   }
 
   // HEIGHT: vertical compress for a shorter, stockier (Daggerfall)

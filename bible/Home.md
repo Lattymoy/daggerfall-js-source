@@ -97,6 +97,33 @@ INTERIM/FLAGGED site, remove the old sentence - do not append the
 retiring one beneath it. The open-flags list is grep-regenerated
 and lifts stale half-sentences out of their retiring context.
 
+A SLICE CLOSES ITS LEDGER ROW (2026-08-19). Port-Ledger section C
+is not a memo, it is a CLAIM that something is unported - so a
+stale row is worse than a missing one: it sends the next slice off
+to build what already ships. Before closing, grep section C for
+the DFU members you touched and strike, narrow, or update every
+row you moved. `node tools/ledgerSweep.mjs` narrows the read: it
+cross-references each unstruck row against the arc docs' own
+SHIPPED/CLOSED headings and against non-comment src/. Run against
+the pre-sweep ledger it caught 2 of the 4, with 2 standing false
+positives - A CLEAN RUN IS NOT PROOF. It missed the two that a
+matcher structurally cannot catch: one where the port RENAMED the
+member (MakeHouseContainer -> isHouseContainerModel) and one where
+the closing slice used its own vocabulary. Those need the eye.
+The failure mode is specific and it is NOT forgetfulness: all four
+rows found stale in the 2026-08-19 sweep were closed by a slice in
+a DIFFERENT arc from the row's Target column. P12 (Player) shipped
+breath/drowning; Audio closed the transition stingers as verbatim
+N/A; S2b and E2 (Systems) shipped two thirds of the interior
+container row; S23/S24 moved five career flags from INERT to LIVE.
+Every author updated their OWN arc doc and none thought to touch a
+ledger row filed under someone else's. So the sweep is owned by the
+slice, not by the arc - if you shipped a DFU member, the row naming
+that member is yours to close no matter whose column it sits in.
+NARROW, do not strike, when a slice ships part of a row: say what
+landed and what is still open, or the next reader reads a partial
+close as a whole one.
+
 THE NATIVE-WINDOW RULE (from the 17d UI audit, after three
 positioning hotfixes in two days): every drawn element of a native
 window - rect, font, color, scale, alignment - must cite its DFU
@@ -234,9 +261,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
-- `src/systems/biography.js:19` - FLAGGED (ours): `rf` FACTION reputation needs the live faction data
-- `src/systems/biography.js:80` - INTERIM, loud and the same one shopStock.js:115 carries: message
-- `src/systems/biography.js:139` - FLAGGED: the faction slice drains these into FactionData
+- `src/systems/biography.js:81` - INTERIM, loud and the same one shopStock.js:115 carries: message
 - `src/systems/chargen.js:7` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
 - `src/systems/chargen.js:22` - INTERIM (loud): the UI distributes the bonus pools by hand; the
 - `src/systems/chargen.js:130` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
@@ -244,8 +269,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
 - `src/systems/court.js:7` - People-faction half-delta FLAGGED to the save-side clone).
 - `src/systems/court.js:27` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
-- `src/systems/court.js:82` - ChangeReputation(peopleFaction, -loss/2) FLAGGED: the save-side
-- `src/systems/court.js:113` - *  daysInPrison } (guild rescues FLAGGED). */
+- `src/systems/court.js:125` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:33` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
 - `src/systems/effects.js:342` - enchantment bundles are FLAGGED to their own arc.
