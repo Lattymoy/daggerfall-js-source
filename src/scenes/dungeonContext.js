@@ -23,7 +23,7 @@ import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { addItem, removeOne } from '../systems/inventory.js';
 import { worldAabb } from '../player/activate.js';
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
-import { equipItem } from '../systems/equip.js';   // AUDIT 17e F17
+import { equipItem, isForbiddenEquip} from '../systems/equip.js';   // AUDIT 17e F17
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
 import { drawText, makeFont, measureText } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
@@ -1917,7 +1917,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // AUDIT 17e F17: route through the real equip table - the rig
         // now binds slots[RightHand] every frame, so a direct assignment
         // here would be overwritten. One equip model in every host.
-        equip: (item) => { equipItem(playerEntity, item); hudText.add(`${item.name} equipped.`); },
+        equip: (item) => {
+          // S23: the same career gate the inventory window applies -
+          // this host's equip hook is the other player-facing seam
+          if (isForbiddenEquip(playerEntity.career, item)) { hudText.add('You cannot use this item.'); return; }
+          equipItem(playerEntity, item); hudText.add(`${item.name} equipped.`);
+        },
       });
     },
     toggleSpellbook() {

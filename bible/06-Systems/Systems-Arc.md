@@ -949,3 +949,67 @@ margin), gold 20000 -> 16938 -> 19842, the item off then back on
 the shelf.
 
 Suite 450/98 (the storeBuysItemType pin).
+
+## S23 - the career equip restrictions
+
+2026-08-19. AUDIT 17n catalogued which U20b advantage picks nothing
+reads, and listed the four Forbidden categories plus Expertise In among
+the inert twelve. Framing it as a custom-class gap understated it
+badly: those picks write `weaponArmorShieldsBitfield` and
+`forbiddenMaterialsFlags`, and SEVENTEEN OF THE EIGHTEEN CLASSIC
+CLASSES carry values in those fields already. The port had never
+enforced one of them. A Mage could wear plate, carry a tower shield and
+swing an axe; a Monk could wear full plate; only the Warrior was
+correct, and only because the Warrior forbids nothing.
+
+DaggerfallInventoryWindow.EquipItem (:1343-1381) is the whole law, and
+WHERE it sits is half of it: DFU hangs the check on the inventory
+WINDOW, not on ItemEquipTable.EquipItem, so AssignStartingGear equips
+straight past it. A restricted class really can START in gear it could
+never put back on after taking it off. Ported at the same seam,
+deliberately, and pinned there.
+
+The port's ARMOR_MATERIAL values ARE DFU's raw nativeMaterialValue
+(0x0000 leather / 0x0100 chain / 0x0200+ plate), so DFU's `>> 8` and
+`& 0xFF` expressions carry over unchanged rather than needing a
+translation layer. Shields index from the Buckler template; weapons
+carry the FLAT 0..9 material index instead of the packed armor value.
+
+TWO verbatim quirks. The armor MATERIAL test is gated on
+`(nativeMaterialValue >> 8) == 2` - plate only - which BITES on Chain2:
+its 0x0103 shares a low byte with Elven's 0x0203, so without the gate a
+career forbidding elven would refuse a chain piece that has nothing to
+do with elven metal. And GetWeaponSkillUsed returns Skills.None = -1
+for a template it does not name (:938); -1 masks against every bit, so
+any weapon-group item outside the sixteen named weapons reads as
+forbidden to a career with any forbidden proficiency at all.
+
+GetWeaponSkillUsed itself is mapped across the port's existing
+WEAPON_SKILL partition rather than minting a second weapon table
+(ONE DFU MEMBER, ONE EXPORT) - DFU switches on template index, the port
+already single-sources the same partition by name.
+
+FLAGGED loud, and honestly: DFU pops TEXT.RSC 1068 on a
+ClickAnywhereToClose parchment box. The inventory surface has no
+TEXT.RSC source and no message frame of its own yet, so the refusal
+shows on the same interim popup the info panel uses, carrying the
+record number. THE REFUSAL ITSELF is verbatim - the item does not
+equip, which is the half that changes play.
+
+Pins (test/equiprestrictions.test.js, 7), mutation-proven - dropping
+the plate-only gate, letting shields fall into the armor branch,
+turning the -1 default into 0, or reading forbiddenArmors from the
+wrong bits each fail their own. One mutation is EQUIVALENT and recorded
+as such: masking a weapon's material with 0xff changes nothing, because
+weapon materials are 0..9 already.
+
+Probed live (tools/equipRestrictionProbe.mjs): the U8g equip probe's
+own loadout, offered to a MAGE instead of the Warrior it was written
+for. The Iron Cuirass is refused and says why; a Dagger goes on. The
+probe's first draft used a Longsword as the "allowed" weapon and was
+rightly refused - the Mage forbids long blades too - and that correction
+is now a pin.
+
+What this turns on: five of AUDIT 17n's twelve inert U20b picks
+(Expertise In still writes only the expert half, which no formula reads
+yet), and the classic restrictions for all seventeen affected classes.

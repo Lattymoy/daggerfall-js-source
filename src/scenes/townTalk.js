@@ -418,6 +418,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       overlayText: overlay?.conversation?.at(-1) ?? overlay?.lines?.[0] ?? overlay?.text ?? null,
       overlayOptions: overlay?.options?.filter((o) => o.label).map((o) => o.label) ?? null,
       overlayFlow: overlay?.flow ?? null,   // U10: the chargen probe reads the live flow
+      overlayPopup: overlay?.popup ?? null,   // S23: the equip-refusal probe reads the popup
     }),
   };
 }

@@ -19,6 +19,7 @@ import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES } from '../characters/equipRules.js';
 import { createEquipTable, getItemHands as handsOf, ITEM_HANDS } from '../characters/equipTable.js';
 import { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, SHIELD_VALUES, SHIELD_PARTS, isShieldTemplate } from './armorMaterials.js';
+import { SKILLS, WEAPON_SKILL } from './skills.js';   // S23: the weapon partition, single-sourced
 
 export { EQUIP_SLOTS, ITEM_HANDS };
 const ARROW = 131;
@@ -43,6 +44,71 @@ export function unequipSlot(entity, slot) {
   updateEquippedArmorValues(entity, item, false);   // U8h: the armor table adds back
   return item;
 }
+
+/** S23: THE CAREER EQUIP RESTRICTIONS
+ *  (DaggerfallInventoryWindow.EquipItem :1343-1381, verbatim).
+ *
+ *  17 of the 18 classic classes carry these and the port had never
+ *  enforced any of them - a Mage could wear plate, carry a tower shield
+ *  and swing an axe. AUDIT 17n found the fields with zero consumers;
+ *  U20b then made the same restrictions PURCHASABLE in the custom
+ *  builder, which is what forced the slice.
+ *
+ *  The port's ARMOR_MATERIAL values ARE DFU's raw nativeMaterialValue
+ *  (0x0000 leather / 0x0100 chain / 0x0200+ plate), so DFU's `>> 8` and
+ *  `& 0xFF` expressions carry over unchanged.
+ *
+ *  TWO verbatim quirks ride along. The armor MATERIAL test is gated on
+ *  `(nativeMaterialValue >> 8) == 2` - plate only - so a Barbarian
+ *  forbidden orcish and daedric may still wear daedric CHAIN. And
+ *  GetWeaponSkillUsed returns Skills.None = -1 for a template it does
+ *  not name (:938), and -1 masks against every bit, so ANY item in the
+ *  weapon group that is not one of the sixteen listed weapons reads as
+ *  forbidden to a career with any forbidden proficiency at all.
+ *
+ *  WHERE THIS LIVES IS THE LAW: DFU hangs it on the inventory WINDOW,
+ *  not on ItemEquipTable.EquipItem, so AssignStartingGear equips
+ *  straight past it. A restricted class really can START in gear it
+ *  could never put back on. Ported at the same seam, deliberately. */
+export function isForbiddenEquip(career, item) {
+  if (!career || !item) return false;
+  const forbiddenArmors = (career.weaponArmorShieldsBitfield >>> 6) & 0x07;
+  const forbiddenShields = (career.weaponArmorShieldsBitfield >>> 9) & 0x0f;
+  const forbiddenProficiencies = career.weaponArmorShieldsBitfield & 0x3f;
+  const forbiddenMaterials = career.forbiddenMaterialsFlags ?? 0;
+  if (item.group === 'Armor') {
+    if (isShieldTemplate(item.templateIndex)) {
+      return ((1 << (item.templateIndex - SHIELD_TEMPLATE_START)) & forbiddenShields) !== 0;
+    }
+    if (((1 << (item.material >> 8)) & forbiddenArmors) !== 0) return true;
+    // the plate-only gate on the material test
+    return (item.material >> 8) === 2 && ((1 << (item.material & 0xff)) & forbiddenMaterials) !== 0;
+  }
+  if (item.group === 'Weapons') {
+    if ((weaponProficiencyFlag(item) & forbiddenProficiencies) !== 0) return true;
+    return ((1 << item.material) & forbiddenMaterials) !== 0;
+  }
+  return false;
+}
+
+/** GetWeaponSkillUsed (:910-940) as a ProficiencyFlag. DFU switches on
+ *  the template index; the port already single-sources that partition
+ *  as WEAPON_SKILL (name -> skill), so this maps the SKILL across
+ *  rather than minting a second weapon table (ONE DFU MEMBER, ONE
+ *  EXPORT). The -1 default is DFU's Skills.None, quirk included. */
+export function weaponProficiencyFlag(item) {
+  const flag = PROFICIENCY_OF_SKILL[WEAPON_SKILL[item?.name]];
+  return flag ?? -1;
+}
+const PROFICIENCY_OF_SKILL = Object.freeze({
+  [SKILLS.ShortBlade]: 1, [SKILLS.LongBlade]: 2, [SKILLS.HandToHand]: 4,
+  [SKILLS.Axe]: 8, [SKILLS.BluntWeapon]: 16, [SKILLS.Archery]: 32,
+});
+/** Armor.Buckler - the shield block's base template index. */
+const SHIELD_TEMPLATE_START = 109;
+
+/** The message DFU pops on a refused equip (:1325, :1372-1379). */
+export const FORBIDDEN_EQUIPMENT_TEXT_ID = 1068;
 
 /** EquipItem verbatim: the unequipped list, or null when the item
  *  cannot equip. */
