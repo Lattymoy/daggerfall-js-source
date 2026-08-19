@@ -4,7 +4,7 @@
 // keyboard-only.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MENU_BACKDROP, chargenHit, biogButtonRect, reflexRowRect, RECTS, METHOD_PANEL, METHOD_CHOOSE_CLASS, METHOD_CHOOSE_QUESTIONS, BIO_METHOD_PANEL, BIO_CHOOSE_GENERATE, BIO_CHOOSE_QUESTIONS, CUSTOM_EXIT, CUSTOM_HP_UP, CUSTOM_HP_DOWN, CUSTOM_HELP, CUSTOM_REP, CUSTOM_SKILL_RECTS, QSCROLL_Y, QSCROLL_H } from '../src/ui/chargenArt.js';
+import { MENU_BACKDROP, chargenHit, biogButtonRect, reflexRowRect, RECTS, SUMMARY_REFLEX_ORIGIN, METHOD_PANEL, METHOD_CHOOSE_CLASS, METHOD_CHOOSE_QUESTIONS, BIO_METHOD_PANEL, BIO_CHOOSE_GENERATE, BIO_CHOOSE_QUESTIONS, CUSTOM_EXIT, CUSTOM_HP_UP, CUSTOM_HP_DOWN, CUSTOM_HELP, CUSTOM_REP, CUSTOM_SKILL_RECTS, QSCROLL_Y, QSCROLL_H } from '../src/ui/chargenArt.js';
 import { ChargenFlow } from '../src/ui/chargen.js';
 import { SKILLS } from '../src/systems/skills.js';
 
@@ -43,9 +43,11 @@ test('U14: EVERY chargen screen answers a click somewhere', () => {
   // a phone, and three of them were. Each state must have at least one
   // point that produces an action.
   const probes = {
-    // the random-name button (279,3,36,10) is FLAGGED unported - it
-    // needs the NAMEGEN banks - so OK is the name screen's one control
-    name: [[RECTS.ok[0] + 2, RECTS.ok[1] + 2]],
+    // AUDIT 18: the random-name button's "FLAGGED unported" note was
+    // retired by U15 - the button ships (chargenArt.js RECTS.randomName
+    // and its {randomName:true} hit), so it is probed like any other.
+    name: [[RECTS.ok[0] + 2, RECTS.ok[1] + 2],
+      [RECTS.randomName[0] + 2, RECTS.randomName[1] + 2]],
     gender: [[85, 15]],
     face: [[RECTS.facePrev[0] + 2, RECTS.facePrev[1] + 2],
       [RECTS.faceNext[0] + 2, RECTS.faceNext[1] + 2],
@@ -68,11 +70,25 @@ test('U14: EVERY chargen screen answers a click somewhere', () => {
       [CUSTOM_HELP[0] + 2, CUSTOM_HELP[1] + 2], [CUSTOM_REP[0] + 2, CUSTOM_REP[1] + 2],
       ...CUSTOM_SKILL_RECTS.map((r) => [r[0] + 2, r[1] + 2]),
       [20, 22], [51, 24]],
+    // AUDIT 18: SAVE ROLL and LOAD ROLL (CreateCharAddBonusStats.cs
+    // :116-122) were absent from the port entirely, and this pin's
+    // hand-written list is exactly what let two of the screen's five
+    // controls go missing unnoticed.
     stats: [[RECTS.reroll[0] + 2, RECTS.reroll[1] + 2],
+      [RECTS.saveRoll[0] + 2, RECTS.saveRoll[1] + 2],
+      [RECTS.loadRoll[0] + 2, RECTS.loadRoll[1] + 2],
       [RECTS.ok[0] + 2, RECTS.ok[1] + 2], [20, 22]],
     skills: [[100, 34], [RECTS.ok[0] + 2, RECTS.ok[1] + 2]],
     reflexes: [[reflexRowRect(0)[0] + 2, reflexRowRect(0)[1] + 2],
       [RECTS.ok[0] + 2, RECTS.ok[1] + 2]],
+    // AUDIT 18: the summary was not probed at all, and it is the
+    // screen with the most live controls (CreateCharSummary.cs:63-96).
+    summary: [[RECTS.ok[0] + 2, RECTS.ok[1] + 2],
+      [RECTS.restart[0] + 2, RECTS.restart[1] + 2],
+      [RECTS.facePrev[0] + 2, RECTS.facePrev[1] + 2],
+      [RECTS.faceNext[0] + 2, RECTS.faceNext[1] + 2],
+      [SUMMARY_REFLEX_ORIGIN[0] + 2, SUMMARY_REFLEX_ORIGIN[1] + 2],
+      [20, 22], [100, 34]],
   };
   for (const [state, points] of Object.entries(probes)) {
     const f = flow();
@@ -80,6 +96,7 @@ test('U14: EVERY chargen screen answers a click somewhere', () => {
     if (state === 'gender') f._genderBox = { buttons: [{ button: 6, rect: [10, 10, 32, 16] }, { button: 7, rect: [80, 10, 32, 16] }] };
     if (state === 'stats') f._enterStats();
     if (state === 'skills') f._enterSkills();
+    if (state === 'summary') { f._enterStats(); f._enterSkills(); f._enterSummary(); f.state = 'summary'; }
     if (state === 'biography') f.biogFor = () => ({ questions: [{ text: ['q', ''], answers: [{ text: 'a', effects: [] }] }] });
     if (state === 'classQuestions') f.qDisplay = { lines: ['q', ' a) x', ' b) y', ' c) z'], aIndex: 1, bIndex: 2, cIndex: 3 };
     if (state === 'customClass') f._enterCustomClass();

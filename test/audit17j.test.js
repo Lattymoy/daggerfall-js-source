@@ -232,9 +232,15 @@ test('17j F7: changing the CLASS does reroll, as DFU\'s DFClass check does', () 
   assert.notDeepEqual(f.stats, asMage, 'a new class gets a new roll');
 });
 
-test('17j F7: re-entering SKILLS keeps its spend too', () => {
-  // CreateCharAddBonusSkills.SetCharacterDocument's isRestored arm
-  // (:62-68) restores the document's skills instead of rolling.
+test('AUDIT 18: re-entering SKILLS before the accept REROLLS, as skillsNeedReroll says', () => {
+  // The 17j F7 read collapsed CreateCharAddBonusSkills' isRestored on
+  // to the stats screen's DFClass check, and they are not the same
+  // rule. skillsNeedReroll is raised by SetChooseBioWindow
+  // (DaggerfallStartNewGameWizard.cs:184) and lowered ONLY by
+  // AddBonusSkillsWindow_OnClose's accept arm (:530), so every arrival
+  // at the skills window before that accept rolls fresh
+  // (SkillsRollout.Reroll :111-146 re-rolls all nine values AND resets
+  // the three spinners to bonusPoolPerSkillGroup).
   let roll = 0;
   const f = new ChargenFlow([{ name: 'Mage', career: CAREER }], () => { roll += 0.011; return roll % 1; });
   toName(f);
@@ -243,11 +249,28 @@ test('17j F7: re-entering SKILLS keeps its spend too', () => {
   while (f.statPool > 0) f.input('plus');
   f.input('confirm');                         // -> skills
   assert.equal(f.state, 'skills');
-  const spentSkills = [...f.skills];
-  const pools = { ...f.pools };
+  assert.equal(f.skillsNeedReroll, true, 'the class accept raised it and nothing has lowered it');
+  const firstRoll = [...f.rolledSkills];
+  f.input('plus'); f.input('plus');
+  assert.deepEqual(f.pools, { primary: 4, major: 6, minor: 6 });
 
   f.input('back');                            // -> stats
   f.input('confirm');                         // -> skills again
-  assert.deepEqual(f.skills, spentSkills, 'the skills survive the round trip');
-  assert.deepEqual(f.pools, pools, 'and so do the three group pools');
+  assert.notDeepEqual(f.rolledSkills, firstRoll, 'DFU rerolls: isRestored is !skillsNeedReroll');
+  assert.deepEqual(f.pools, { primary: 6, major: 6, minor: 6 }, 'and Reroll refunds all three pools');
+
+  // and the OTHER half: once the accept arm has LOWERED the flag, the
+  // same round trip restores (:525-530 -> :256 passes isRestored true)
+  const spent = [...f.skills];
+  for (const g of ['primary', 'major', 'minor']) while (f.pools[g] > 0) f.applyHit({ skillStep: 1, group: g });
+  f.input('confirm');                         // accept -> reflexes
+  assert.equal(f.state, 'reflexes');
+  assert.equal(f.skillsNeedReroll, false);
+  const acceptedRoll = [...f.rolledSkills];
+  const acceptedSkills = [...f.skills];
+  assert.notDeepEqual(acceptedSkills, spent, 'sanity: the pools were spent');
+  f.input('back');                            // -> skills
+  assert.deepEqual(f.rolledSkills, acceptedRoll, 'the restored arm keeps the roll');
+  assert.deepEqual(f.skills, acceptedSkills, 'and the spend');
+  assert.deepEqual(f.pools, { primary: 0, major: 0, minor: 0 }, 'and the emptied pools');
 });

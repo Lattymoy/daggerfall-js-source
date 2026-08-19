@@ -162,14 +162,22 @@ test('U17: a group spinner spends that group\'s pool, not the cursor\'s', () => 
   assert.equal(f.skills[minorIds[0]], f.rolledSkills[minorIds[0]] + 1);
 });
 
-test('U17: re-entering the skills screen resets all three selections', () => {
-  // SelectPrimarySkill(0) and its two siblings run at construction
-  // (SkillsRollout.cs:245 and the two after it).
+test('U17 / AUDIT 18: the three group selections are set ONCE, at construction', () => {
+  // SelectPrimarySkill(0) and its two siblings run in
+  // SkillsRollout.SetupControls (:245/:253/:261) and NOWHERE else -
+  // grep the class: Reroll (:111-146) touches the values and the three
+  // spinner pools and leaves the selections alone, and SkillsRollout
+  // itself is constructed once behind CreateCharAddBonusSkills.Setup's
+  // IsSetup gate. The port reset all three on every reroll.
   const f = new ChargenFlow(CAREERS, () => 0);
   f.state = 'skills';
   f._enterSkills(true);
+  assert.deepEqual(f.skillSel, { primary: 0, major: 0, minor: 0 }, 'the first entry IS the construction');
   f.skillSel = { primary: 2, major: 1, minor: 4 };
-  f.classIndex = 1;                          // a different class forces the reroll
+  f.skillCursor = 5;
+  f.classIndex = 1;                          // a different class
+  f.skillsNeedReroll = true;
   f._enterSkills();
-  assert.deepEqual(f.skillSel, { primary: 0, major: 0, minor: 0 });
+  assert.deepEqual(f.skillSel, { primary: 2, major: 1, minor: 4 }, 'a later Reroll leaves them where they were');
+  assert.equal(f.skillCursor, 5);
 });
