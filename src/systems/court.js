@@ -247,10 +247,28 @@ export function raiseRepForSentence(player, court) {
   }
 }
 
+/** TEXT.RSC 8060, courtTextExecuted (DaggerfallCourtWindow.cs:37). */
+export const TEXT_EXECUTED = 8060;
+
 /** The Guilty plea (punishmentType 2): halve both, pay, serve or
- *  walk. Returns { outcome: 'prison'|'released'|'banished', ... }. */
+ *  walk. Returns { outcome: 'prison'|'released'|'banished'|'executed', ... }.
+ *
+ *  AUDIT 21 F7: DFU's cascade is THREE-WAY, not two
+ *  (GuiltyNotGuilty_OnButtonClick, :327-331):
+ *      if (punishmentType != 0) { if (punishmentType == 1) state = 5;   // Execution
+ *                                 else { fine >>= 1; ... } }
+ *      else state = 4;                                                 // Banished
+ *  The port tested only `=== 0` and let a 1 fall into the fine/prison arm,
+ *  so an execution sentence would have been halved, charged and served.
+ *
+ *  It is unreachable: startCourt can only ever produce 0 or 2, which is
+ *  DFU's own note at :279 ("Seems like an execution sentence can't be given
+ *  in classic. It can't be given here, either."). Ported anyway, because an
+ *  arm that is absent and an arm that is wrong read the same from the call
+ *  site and only one of them is safe to build on. */
 export function pleaGuilty(court, player) {
   if (court.punishmentType === 0) return { outcome: 'banished' };
+  if (court.punishmentType === 1) return { outcome: 'executed' };
   court.fine >>= 1;
   court.daysInPrison >>= 1;
   deductGold(player, court.fine);
@@ -270,7 +288,9 @@ export function pleaNotGuilty(court, player, useDebate, { rolls = Math.random } 
   let chance = legalRep + Math.trunc((playerSkill + (player.stats?.personality ?? 50)) / 2);
   chance = Math.max(5, Math.min(95, chance));
   if (Math.floor(rolls() * 100) >= chance) {   // FailedRoll
+    // The same three-way cascade, on the failed defense (:394-402).
     if (court.punishmentType === 0) return { outcome: 'banished' };
+    if (court.punishmentType === 1) return { outcome: 'executed' };
     const roll = legalRep + (Math.floor(rolls() * 100) + 1);   // Dice100.Roll 1..100
     if (roll < 25) court.fine *= 2;
     else if (roll > 75) court.fine >>= 1;

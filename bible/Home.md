@@ -227,8 +227,9 @@ combat line numbers below are refreshed with it.
 - `src/combat/playerWeapon.js:56` - export const INTERIM_WEAPON = Object.freeze({
 - `src/combat/playerWeapon.js:83` - constructor({ liveSpeed = 50, weapon = INTERIM_WEAPON } = {}) {
 - `src/combat/weaponRig.js:34` - *                     (FLAGGED at the call sites - their HUD pends),
-- `src/scenes/arrestFlow.js:82` - instead of "You, , are..." (chargen wiring FLAGGED).
-- `src/scenes/arrestFlow.js:139` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
+- `src/scenes/arrestFlow.js:101` - instead of "You, , are..." (chargen wiring FLAGGED).
+- `src/scenes/arrestFlow.js:158` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
+- `src/scenes/arrestFlow.js:218` - // FLAGGED, still owed to their own slices: PreventEnemySpawns across the
 - `src/scenes/cityGuards.js:23` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/cityGuards.js:205` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:357` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
@@ -241,19 +242,17 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:1067` - 129; the inventory/equip UI pends - the INTERIM dagger note
 - `src/scenes/exterior.js:366` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:372` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:447` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/exterior.js:513` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:618` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:737` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:521` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:626` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:745` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:152` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/world.js:476` - FLAGGED loud: the People faction rides the START location's
 - `src/scenes/world.js:490` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/world.js:496` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:613` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/world.js:668` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:952` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1161` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:676` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:960` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1169` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/systems/songManager.js:306` - temple falls to Interior rather than inventing an alignment. FLAGGED.
 - `src/scenes/worldModes.js:788` - a castle reads as a plain dungeon interior. FLAGGED.
 - `src/scenes/worldModes.js:73` - say -> console FLAGGED: the interior HUD-text layer pends its arc.

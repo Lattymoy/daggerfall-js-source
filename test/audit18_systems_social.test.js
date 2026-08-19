@@ -15,7 +15,8 @@ import { DFPalette } from '../src/formats/dfPalette.js';
 import { srand } from '../src/formats/dfRandom.js';
 import { expandAnswerRecord, expandMacros, oathTextId } from '../src/systems/talkSession.js';
 import { createTownTalk } from '../src/scenes/townTalk.js';
-import { createArrestFlow } from '../src/scenes/arrestFlow.js';
+import { createArrestFlow, RELEASE_MINUTES } from '../src/scenes/arrestFlow.js';
+import { worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY } from '../src/systems/worldTick.js';
 import { preloadTalkArt } from '../src/ui/nativeTalk.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { TownPopulation } from '../src/systems/townPopulation.js';
@@ -248,7 +249,7 @@ function courtHarness({ legalRep = 0, gold = 1000, rolls, name = 'Mack Cothran' 
     if (win === cur && cur.done) { const cb = onClosed; onClosed = null; win = null; cb?.(); }
   };
   const close = () => press('confirm');
-  return { flow, playerEntity, boxes, press, close, lines: () => boxes.map((b) => b.lines.join('')) };
+  return { flow, townTalk, playerEntity, boxes, press, close, lines: () => boxes.map((b) => b.lines.join('')) };
 }
 
 // ---------------------------------------------------------------
@@ -388,4 +389,107 @@ test('audit18 social F3: the quicksave carries the crime and the per-region lega
   assert.equal(target.haveShownSurrenderDialogue, false);
   assert.deepEqual(target.legalRep, {});
   assert.equal(legalRepOf(target, 17), 0);
+});
+
+// ===========================================================================
+// AUDIT 21 F8: TIME PASSES IN CUSTODY.
+//
+// `advanceDays` defaulted to `() => {}` AND BOTH exterior hosts constructed
+// the flow without it - so a thirty-day sentence advanced the clock by zero
+// and you walked out of court on the same afternoon you walked in. The fix is
+// not host wiring: F2 gave the port ONE world clock, so the flow moves time
+// itself and there is no argument left to forget.
+//
+// The 4-hour bump is a SEPARATE law and was missing entirely:
+// ReleaseFromPrison (DaggerfallCourtWindow.cs:482-491) opens with
+// RaiseTime(240 * 60) on EVERY release - the zero-day guilty plea and the
+// acquittal included.
+// ===========================================================================
+
+test('AUDIT 21 F8: a sentence moves the world clock, and every release costs four hours', (t) => {
+  if (!ARENA2) return t.skip('ARENA2_PATH not set');
+
+  const before = worldMinutes();
+  try {
+    // (a) THE DEFAULT. Built exactly as the two hosts build it - no
+    // advanceDays, no advanceMinutes - which is the shape that did nothing.
+    // Seed 5 gives the penalty coin flips 1,1,0,1,1 -> fine 160, 3 days;
+    // gold 0 converts the whole fine to prison time on top of that.
+    setWorldMinutes(0);
+    srand(5);
+    const h = courtHarness({ legalRep: 0, gold: 0, rolls: seq(0.99, 0.99) });
+    h.flow.startCourtFlow();
+    h.press('KeyG');                 // plead guilty -> prison
+    assert.equal(h.playerEntity.crimeCommitted, 0, 'sentence served, crime cleared');
+    assert.ok(worldMinutes() > 0,
+      'the default flow must move the clock - it used to advance it by exactly zero');
+    const days = Math.floor(worldMinutes() / MINUTES_PER_DAY);
+    assert.ok(days >= 1, `a no-gold sentence serves whole days (got ${days})`);
+    // 240, the LITERAL. Asserting against RELEASE_MINUTES would ask the
+    // mutated constant what it expects - the exact shape AUDIT 21 found in
+    // eight guild text-id pins - and changing the bump to three hours would
+    // pass. RaiseTime(240 * 60) is DaggerfallCourtWindow.cs:485.
+    assert.equal(RELEASE_MINUTES, 240, 'four hours, in minutes');
+    assert.equal(worldMinutes(), days * MINUTES_PER_DAY + 240,
+      'and the release bump rides ON TOP of the whole days, exactly four hours');
+
+    // (b) THE FOUR HOURS ALONE. An ACQUITTAL never goes to prison, and DFU
+    // still calls ReleaseFromPrison - so the clock moves by exactly 240.
+    setWorldMinutes(0);
+    srand(12);
+    const a = courtHarness({ legalRep: 0, gold: 1000, rolls: seq(0.99, 0.99, 0.10) });
+    a.flow.startCourtFlow();
+    a.press('KeyN');
+    a.press('KeyD');                 // chance = 0 + (30+50)/2 = 40; roll 10 passes
+    assert.equal(a.playerEntity.crimeCommitted, 0, 'acquitted');
+    assert.equal(worldMinutes(), 240,
+      'an acquittal costs four hours and not one minute more');
+
+    // (c) BANISHMENT releases too (:263-278 -> OnPop), so it pays the bump
+    // as well - the only thing it does not pay is the reputation credit.
+    setWorldMinutes(0);
+    srand(12);
+    const b = courtHarness({ legalRep: -30, gold: 1000, rolls: seq(0.05) });
+    b.flow.startCourtFlow();
+    b.press('KeyG');
+    assert.equal(worldMinutes(), 240, 'banishment is a release');
+
+    // (d) THE ORDER. DFU credits the sentence at state 3 (:259) and only THEN
+    // elapses the days (:475), setting PreventNormalizingReputations across
+    // the skip so the elapsed days cannot decay what it just credited. With
+    // nothing decaying reputation on the skip today the two orders read the
+    // same from outside, so sample it FROM INSIDE the skip - which is exactly
+    // where PreventNormalizingReputations would have to look.
+    setWorldMinutes(0);
+    srand(5);
+    let repDuringSkip = null;
+    const ordered = courtHarness({ legalRep: 0, gold: 0, rolls: seq(0.99, 0.99) });
+    // Pickpocketing's credit is half(2) - 1 = 0, which would make the check
+    // below vacuous. Murder credits half(20) - 1 = 9.
+    ordered.playerEntity.crimeCommitted = CRIMES.Murder;
+    const flow2 = createArrestFlow({
+      townTalk: ordered.townTalk, playerEntity: ordered.playerEntity, regionIndex: 17,
+      rolls: seq(0.99, 0.99),
+      advanceDays: (d) => { repDuringSkip = ordered.playerEntity.legalRep[17]; advanceWorldMinutes(d * MINUTES_PER_DAY); },
+    });
+    flow2.startCourtFlow();
+    ordered.press('KeyG');
+    assert.notEqual(repDuringSkip, null, 'the sentence must actually have gone to prison');
+    assert.equal(repDuringSkip, ordered.playerEntity.legalRep[17],
+      'the sentence is CREDITED BEFORE the days elapse, not after');
+    assert.notEqual(repDuringSkip, 0, 'and the credit is non-zero, so the check is not vacuous');
+
+    // (e) an EXPLICIT host hook is still honoured over the default
+    setWorldMinutes(0);
+    let asked = null;
+    createArrestFlow({
+      townTalk: { texts: () => null, showOverlay: () => {} },
+      playerEntity: { legalRep: { 17: 0 } }, regionIndex: 17,
+      advanceDays: (d) => { asked = d; },
+    });
+    assert.equal(asked, null, 'constructing the flow does not itself move time');
+    assert.equal(worldMinutes(), 0);
+  } finally {
+    setWorldMinutes(before);
+  }
 });

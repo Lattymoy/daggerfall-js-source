@@ -163,6 +163,14 @@ test('factions: the God test reads the ROOT type, not the faction the change sta
   changeReputation(store, 82, 10, true);
   assert.ok(getReputation(store, GENERIC_TEMPLE) !== 0,
     'a non-God faction under a God root still reaches Generic Temple');
+  // AUDIT 21 F10: `!== 0` left BOTH the amount and the propagate flag free.
+  // PersistentFactionData.cs:434-435 passes `amount, true` and the `true` is
+  // the whole point - on the real file Generic Temple (450) has children
+  // [240, 810, 813, 811], and 240 (T_Quests) is a QUESTOR that takes the full
+  // amount. Replacing the call with `(GENERIC_TEMPLE, 1, false)` collapsed
+  // five factions and 70 reputation points to one faction and 1 point, and
+  // ten test files stayed at 110 pass / 0 fail.
+  assert.equal(getReputation(store, GENERIC_TEMPLE), 10, 'the FULL amount, not some amount');
 
   const noGod = createFactionRep(dictOf(
     fac({ id: 21, parent: 0, type: 2, children: [82] }),
@@ -310,4 +318,69 @@ test('factions: AUDIT 20 - zeroing REFILLS the map, it does not rebind it', { sk
   assert.equal(captured, store.dict, 'the same Map object');
   assert.equal(getReputation(store, THE_DARK_BROTHERHOOD), 0);
   assert.equal(captured.get(THE_DARK_BROTHERHOOD).rep, 0, 'and the captured reference sees it');
+});
+
+// ===========================================================================
+// AUDIT 21 F10 + F12: the propagate FLAG, and the law that a faction can be
+// written TWICE in one walk.
+// ===========================================================================
+
+test('AUDIT 21 F10: the Generic Temple hop propagates, and its children take DFU shares', () => {
+  // PersistentFactionData.cs:434-435 - `ChangeReputation(Generic_Temple,
+  // amount, true)`. The `true` fans the change out over 450's own hierarchy.
+  // Shape taken from the real file: 450's children are [240, 810, 813, 811],
+  // and 240 is in QUESTOR_IDS.
+  assert.ok(QUESTOR_IDS.has(240), 'T_Quests is a questor - that is why it takes full');
+  const store = createFactionRep(dictOf(
+    fac({ id: 21, parent: 0, type: FACTION_TYPES.God, children: [82] }),
+    fac({ id: 82, parent: 21, type: 2 }),
+    fac({ id: GENERIC_TEMPLE, parent: 0, type: 9, children: [240, 810, 813, 811] }),
+    fac({ id: 240, parent: GENERIC_TEMPLE }),   // T_Quests, a QUESTOR
+    fac({ id: 810, parent: GENERIC_TEMPLE }),
+    fac({ id: 813, parent: GENERIC_TEMPLE }),
+    fac({ id: 811, parent: GENERIC_TEMPLE }),
+  ));
+  changeReputation(store, 82, 20, true);
+  assert.equal(getReputation(store, GENERIC_TEMPLE), 20, '450 is the origin of the hop: full');
+  assert.equal(getReputation(store, 240), 20, 'the questor child takes FULL');
+  for (const id of [810, 813, 811]) {
+    assert.equal(getReputation(store, id), 10, `${id} is a plain child: half`);
+  }
+});
+
+test('AUDIT 21 F12: DFU has NO visited-set - an ally that is also a sibling is paid TWICE', () => {
+  // PersistentFactionData.cs:410-416 pays allies and enemies FIRST, then
+  // :448-459 walks the same root's children. Nothing remembers who was
+  // already paid, so a faction that is both takes the change twice. That is
+  // a LAW, and it is load-bearing on the real Daedra tree: from Molag Bal,
+  // Azura is ally1 AND a sibling under root 17, so +50 + +50 = +100; Mephala
+  // is enemy2 AND a sibling, so -50 + +50 = exactly 0 - a propagating change
+  // that lands on a faction as nothing at all. 32 (origin, faction) pairs
+  // across 26 distinct factions do this on the shipped file.
+  //
+  // Nothing pinned it, so an "obvious" de-duplication guard would have passed
+  // every test in the suite.
+  const store = createFactionRep(dictOf(
+    fac({ id: 17, parent: 0, children: [3, 16, 15, 5] }),
+    fac({ id: 3, parent: 17, ally1: 16, enemy1: 15 }),   // the origin
+    fac({ id: 16, parent: 17 }),                          // ally AND sibling
+    fac({ id: 15, parent: 17 }),                          // enemy AND sibling
+    fac({ id: 5, parent: 17 }),                           // plain sibling
+  ));
+  changeReputation(store, 3, 100, true);
+  assert.equal(getReputation(store, 5), 50, 'a plain sibling takes the hierarchy half only');
+  assert.equal(getReputation(store, 16), 100, 'ally half + hierarchy half = the FULL amount');
+  assert.equal(getReputation(store, 15), 0, 'enemy half + hierarchy half = exactly nothing');
+  assert.equal(getReputation(store, 17), 100, 'the root parent takes full');
+
+  // and the allies/enemies pass is NON-propagating (:410-416 passes no
+  // propagate flag), so the ally does not fan the change out again itself
+  const flat = createFactionRep(dictOf(
+    fac({ id: 700, parent: 0, ally1: 701 }),
+    fac({ id: 701, parent: 0, children: [702] }),
+    fac({ id: 702, parent: 701 }),
+  ));
+  changeReputation(flat, 700, 100, true);
+  assert.equal(getReputation(flat, 701), 50, 'the ally takes half');
+  assert.equal(getReputation(flat, 702), 0, "and does NOT pass it on - the ally pass never propagates");
 });

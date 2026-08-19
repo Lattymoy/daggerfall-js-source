@@ -244,7 +244,12 @@ export class PlayerMotor {
    *  timerResetAction, so re-pressing during a blocked stand-up does
    *  not extend the window.
    *  (The 0.10 s controller/camera LERP itself is not ported - our
-   *  height change is instant; Ledger row 139 residue.) */
+   *  height change is instant; the Ledger's P12 RESIDUE row in section C,
+   *  which names PlayerHeightChanger's timerMax 0.1s lerp.
+   *
+   *  AUDIT 21: this cited "Ledger row 139" and 139 is the middle of an
+   *  unrelated section-B ModelDoor bullet. Ledger rows are cited by TITLE
+   *  from here on - a line number in a file that size rots on every insert.) */
   _heightAction(dt, input) {
     if (input.crouch) this.heightAction = this.crouching ? 'stand' : 'crouch';
     if (this.heightAction === 'crouch') {

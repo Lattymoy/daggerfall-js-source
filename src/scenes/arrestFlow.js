@@ -23,10 +23,29 @@ import {
   CRIMES, CRIME_NAMES, penaltyText, TEXT_SURRENDER, TEXT_COURT_START, TEXT_FOUND_GUILTY,
   TEXT_FREE_TO_GO, TEXT_BANISHED, TEXT_HOW_CONVINCE,
   lowerRepForCrime, surrenderToCityGuards, startCourt, pleaGuilty,
-  pleaNotGuilty, resolveGuiltyVerdict, raiseRepForSentence,
+  pleaNotGuilty, resolveGuiltyVerdict, raiseRepForSentence, TEXT_EXECUTED,
 } from '../systems/court.js';
+import { advanceWorldMinutes, MINUTES_PER_DAY } from '../systems/worldTick.js';
 
-export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceDays = () => {}, rolls = Math.random }) {
+/** ReleaseFromPrison (DaggerfallCourtWindow.cs:482-491) opens with
+ *      DaggerfallUnity.WorldTime.DaggerfallDateTime.RaiseTime(240 * 60);
+ *  - four hours, on EVERY release. It is the mechanism by which the guards
+ *  are gone and the day has moved when you step back outside. */
+export const RELEASE_MINUTES = 240;
+
+// AUDIT 21 F8: `advanceDays` used to default to `() => {}` AND BOTH HOSTS
+// CONSTRUCTED THE FLOW WITHOUT IT, so a thirty-day sentence advanced the
+// clock by zero - you walked out of court on the same afternoon you walked
+// in. The fix is not host wiring: AUDIT 21 F2 gave the port ONE world clock,
+// so the flow can move time itself and there is no argument left to forget.
+// A host may still pass its own hook (a save-game driver, a test), but the
+// default is now the real thing.
+export function createArrestFlow({
+  townTalk, playerEntity, regionIndex,
+  advanceDays = (days) => advanceWorldMinutes(days * MINUTES_PER_DAY),
+  advanceMinutes = (m) => advanceWorldMinutes(m),
+  rolls = Math.random,
+}) {
   const text = (id, fallback) => {
     const v = townTalk.texts(id);
     return v?.length && v[0] ? v : [fallback];
@@ -144,9 +163,25 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
       townTalk.showOverlay(new ChoiceWindow({ lines: courtLines(TEXT_BANISHED, 'You are banished from this region.', court) }));
       return;
     }
+    if (result.outcome === 'executed') {
+      // State 5 (:280-291). SeverePunishmentFlags |= 2 pends with the rest
+      // of the severe-punishment consequences; state 6 then repositions the
+      // player at the location entrance, which is the same reposition the
+      // banishment arm owes. UNREACHABLE - startCourt cannot mint a 1 - but
+      // present, so it cannot be mistaken for verified. See court.js F7.
+      release();
+      townTalk.showOverlay(new ChoiceWindow({ lines: courtLines(TEXT_EXECUTED, 'You have been executed.', court) }));
+      return;
+    }
     if (result.outcome === 'prison') {
-      advanceDays(result.days);
+      // DFU's ORDER, which the port had backwards. State 3 credits the
+      // sentence (:259) and only THEN does the countdown elapse the days
+      // (:475) - and it sets PreventNormalizingReputations across the skip
+      // precisely so the elapsed days cannot decay what it just credited.
+      // Harmless while NormalizeReputations was unported; not harmless now
+      // that it is.
       raiseRepForSentence(playerEntity, court);
+      advanceDays(result.days);
       release();
       townTalk.showOverlay(new ChoiceWindow({ lines: [`You serve ${result.days} days in prison.`] }));
       return;
@@ -172,6 +207,17 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
    *  it FIRST, so winning your case left court music playing over
    *  everything, forever. */
   function clearArrest() {
+    // AUDIT 21 F8: RaiseTime(240 * 60) - FOUR HOURS - and it belongs HERE,
+    // not on the prison arm. ReleaseFromPrison is reached from state 100,
+    // and EVERY exit funnels through state 100: the guilty plea, the state-2
+    // verdict, banishment (:277) and the acquittal (:425-427 -> state 6 ->
+    // state 100) alike. It is the mechanism by which the guards are gone and
+    // the afternoon has moved when you step back outside, and the prison
+    // day-skip does not cover it - a zero-day plea still costs four hours.
+    //
+    // FLAGGED, still owed to their own slices: PreventEnemySpawns across the
+    // skip, ClearEnemies, and PositionPlayerAtLocationEntrance.
+    advanceMinutes(RELEASE_MINUTES);
     playerEntity.arrested = false;
     playerEntity.crimeCommitted = 0;   // ReleaseFromPrison: the crime clears; guards despawn on the crime-clear law
     playerEntity.haveShownSurrenderDialogue = false;
