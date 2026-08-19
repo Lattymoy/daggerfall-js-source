@@ -9,7 +9,9 @@ import {
   clampLegalReputations, normalizeReputations, LEGAL_REP_MIN, LEGAL_REP_MAX,
   PENALTY_PER_LEGAL_REP_POINT, BASE_PENALTY, MIN_PENALTY, MAX_PENALTY,
 } from '../src/systems/court.js';
-import { FactionFile } from '../src/formats/factionFile.js';
+import {
+  FactionFile, FACTION_TYPES, SOCIAL_GROUPS, GUILD_GROUPS,
+} from '../src/formats/factionFile.js';
 import { createFactionRep, getReputation, setReputation } from '../src/systems/factionRep.js';
 import { getPeopleOfCurrentRegion } from '../src/systems/talk.js';
 import { changeReputation } from '../src/systems/factionRep.js';
@@ -28,6 +30,39 @@ const realFactions = () => {
   ff.load(readFileSync(join(ARENA2, 'FACTION.TXT')));
   return ff.factionDict;
 };
+
+// TEST THE SHAPE THE PRODUCER MINTS. The two reputation-economy pins
+// below need a People faction in a known region and nothing else from
+// the corpus, so on CI (ARENA2_PATH unset) they run on a synthetic dict
+// carrying exactly the field set FactionFile mints - never a thinner
+// one, which would let a pin describe a record the game never produces.
+const FIELDS = ['id', 'parent', 'type', 'name', 'rep', 'summon', 'region', 'power', 'flags',
+  'ruler', 'ally1', 'ally2', 'ally3', 'enemy1', 'enemy2', 'enemy3', 'face', 'race',
+  'flat1', 'flat2', 'sgroup', 'ggroup', 'minf', 'maxf', 'vam', 'rank',
+  'rulerNameSeed', 'rulerPowerBonus', 'children'];
+const PEOPLE_REGION = 17;
+const fac = (o) => {
+  const base = {};
+  for (const k of FIELDS) base[k] = (k === 'name' ? 'f' + o.id : k === 'children' ? null : 0);
+  return Object.assign(base, o);
+};
+
+/** The real corpus where it is available, an equivalent synthetic dict
+ *  where it is not - PEOPLE_TYPE 15 in region 17, the region every pin
+ *  here names. */
+const factionsForRep = () => (skipReal
+  ? new Map([[100, fac({
+    id: 100,
+    // getPeopleOfCurrentRegion (talk.js:45-54) matches on FOUR columns
+    // and requires EXACTLY ONE hit, so a record short of any of them is
+    // silently no People faction at all - which is how a thinner
+    // fixture would have made these pins vacuous.
+    type: FACTION_TYPES.People,
+    sgroup: SOCIAL_GROUPS.Commoners,
+    ggroup: GUILD_GROUPS.GeneralPopulace,
+    region: PEOPLE_REGION,
+  })]])
+  : realFactions());
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 
@@ -215,12 +250,13 @@ test('AUDIT 21 F1: doing the sentence refunds BOTH channels, not just legal', ()
   // lowerRepForCrime debited both, which made the faction channel a
   // RATCHET - a player who always served their time still slid to the
   // bottom with the People.
-  const dict = realFactions();
+  const dict = factionsForRep();
   const store = createFactionRep(dict);
   const player = { factionRep: store, legalRep: {} };
-  const region = 17;
+  const region = PEOPLE_REGION;
   const peopleRep = () => {
-    for (const v of store.dict.values()) if (v.type === 15 && v.region === region) return v.rep;
+    const p = getPeopleOfCurrentRegion(store.dict, region);
+    if (p) return store.dict.get(p.id).rep;
     return null;
   };
 
@@ -262,7 +298,7 @@ test('AUDIT 21 F3: legal reputation is CLAMPED, and drifts back over time', () =
 });
 
 test('AUDIT 21 F3: normalize drifts FACTION reputations too, through the walk', () => {
-  const dict = realFactions();
+  const dict = factionsForRep();
   const store = createFactionRep(dict);
   const player = { legalRep: {} };
 

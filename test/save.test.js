@@ -56,3 +56,39 @@ test('save: F11 pierces overlays (the death hint is true)', () => {
   assert.ok(!routeKey({ key: 'F9' }, ctx, () => ({})));      // save stays gated under overlays
   assert.deepEqual(calls, ['load:string']);
 });
+
+test('AUDIT 22 F7/F8: the lit light source and the training clock survive a load', () => {
+  // Both are one-for-one in SerializablePlayer (:126/:294 and
+  // :151/:320) and neither rode the port's envelope.
+  const torch = { group: 'UselessItems2', templateIndex: 247, name: 'Torch', currentCondition: 9 };
+  const e = {
+    name: 'B', stats: {}, skills: 30, skillUses: [], activeEffects: [], spells: [],
+    items: [{ group: 'Currency', name: 'Gold pieces', templateIndex: 276, stackCount: 5 }, torch],
+    timeOfLastSkillTraining: 4321,
+  };
+  e.lightSource = torch;
+  const snap = snapshotPlayer(e, {});
+  assert.equal(snap.timeOfLastSkillTraining, 4321);
+  assert.equal(snap.lightSourceIndex, 1);
+
+  const e2 = { items: [], stats: {}, activeEffects: [] };
+  restorePlayer(e2, snap, null);
+  assert.equal(e2.timeOfLastSkillTraining, 4321, 'the 12-hour training gate is a DIFFERENCE against this');
+  // THE IDENTITY is the point: UseItem douses by `LightSource == item`,
+  // so a restored copy that merely LOOKS like the torch would leave it
+  // permanently unquenchable.
+  assert.equal(e2.lightSource, e2.items[1]);
+  assert.notEqual(e2.lightSource, torch, 'and it is the restored record, not the old object');
+
+  // nothing lit round-trips as nothing lit
+  const dark = { name: 'B', stats: {}, skills: 30, skillUses: [], activeEffects: [], spells: [], items: [torch] };
+  const e3 = { items: [], stats: {}, activeEffects: [] };
+  restorePlayer(e3, snapshotPlayer(dark, {}), null);
+  assert.equal(e3.lightSource, null);
+  // ...and so does a save written before the field existed
+  const old = snapshotPlayer(dark, {});
+  delete old.lightSourceIndex;
+  const e4 = { items: [], stats: {}, activeEffects: [], lightSource: torch };
+  restorePlayer(e4, old, null);
+  assert.equal(e4.lightSource, null, 'an older save reads as nothing lit, not as a dangling reference');
+});

@@ -1,31 +1,13 @@
-// U4: the three windows' pure behavior.
+// U4: the spellbook and death windows' pure behavior.
+//
+// U26 DELETED the keyed inventory window this file opened with. Its
+// two laws did not go with it: the arrow exclusion is systems/equip.js's
+// (pinned in test/audit18_ui_native.test.js F13, now against the
+// native window), and cursor wrapping belongs to the list widgets the
+// native window replaced. Nothing is left unpinned by the removal.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { InventoryWindow, SpellbookWindow, knownSpells } from '../src/ui/inventory.js';
-
-test('inventory window: cursor wrap, weapon equip via callback, arrows refused', () => {
-  const entity = { items: [
-    { group: 'Currency', name: 'Gold pieces', stackCount: 40, templateIndex: 0 },
-    { group: 'Weapons', name: 'Short Bow', templateIndex: 129, material: 0 },
-    { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 5 },
-  ] };
-  let equipped = null;
-  const w = new InventoryWindow(entity, { equip: (it) => { equipped = it; } });
-  w.input('up');
-  assert.equal(w.cursor, 2);                      // wraps
-  w.input('confirm');
-  assert.equal(equipped, null);                   // arrows refuse equip
-  assert.ok(!w.done);
-  w.input('up');
-  w.input('confirm');                             // the bow
-  assert.equal(equipped.name, 'Short Bow');
-  assert.ok(w.done);
-  const g = new InventoryWindow(entity, {});
-  g.input('confirm');                             // gold: not a weapon
-  assert.ok(!g.done);
-  g.input('back');
-  assert.ok(g.done);
-});
+import { SpellbookWindow, knownSpells } from '../src/ui/inventory.js';
 
 test('spellbook: the interim known list + ready callback', () => {
   const dmg = { type: 4, subType: 0, magnitudeBaseLow: 1, magnitudeBaseHigh: 1, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1 };

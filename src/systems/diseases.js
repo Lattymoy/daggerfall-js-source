@@ -137,6 +137,16 @@ export function startDisease(target, diseaseType, currentDay, rolls = Math.rando
   return entry;
 }
 
+/** EntityEffectManager.GetDiseaseCount (:1489-1499): how many disease
+ *  bundles are live. `ended` entries are the port's completed marker
+ *  and are gone by the next tick, so they do not count - DFU's
+ *  instancedBundles no longer holds a removed bundle either.
+ *
+ *  The temple's cure-disease price is 250 PER DISEASE, so this number
+ *  is money and not decoration. */
+export const diseaseCount = (entity) =>
+  (entity?.activeEffects ?? []).filter((a) => a.kind === 'disease' && !a.ended).length;
+
 /** EndDisease, verbatim: completed marker + expire (the tick pass
  *  removes the entry, lifting its statMods with it). */
 export function endDisease(entry) {

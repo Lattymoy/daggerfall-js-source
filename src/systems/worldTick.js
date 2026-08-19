@@ -25,6 +25,7 @@ import { raiseSkills } from './advancement.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { FATIGUE_LOSS } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
+import { CLASSIC_GAME_START_TIME } from './gameDate.js';
 import { RACES } from './races.js';
 
 /** PlayerEntity.cs:263 - the classic day is elapsed minutes / 1440. */
@@ -169,9 +170,15 @@ export function tickPlayerMinutes({
  *  walking into a tavern got SQUARE_2 (0 % 5) where DFU plays FOLK2 (363 % 5).
  *  Everything else that reads days - diseases, the 28-day guild gate, the
  *  court's normalize interval - was counting from the wrong epoch too. */
-export const CLASSIC_GAME_START_MINUTES = 523530;
+// ONE DFU MEMBER, ONE EXPORT (AUDIT 22 merge). AUDIT 21 and S28 landed
+// this same DFU constant in the same session from opposite directions -
+// the music lane needed the right day for its playlist seed, the
+// calendar needed the right date for the guild gate - and wrote it out
+// twice. DaggerfallDateTime owns it, so gameDate.js exports it and this
+// re-exports the name its own readers use.
+export { CLASSIC_GAME_START_TIME as CLASSIC_GAME_START_MINUTES } from './gameDate.js';
 
-let _worldMinutes = CLASSIC_GAME_START_MINUTES;
+let _worldMinutes = CLASSIC_GAME_START_TIME;
 
 /** EntityEffectBroker.maxCatchupDays = 2, i.e. 2880 game minutes
  *  (EntityEffectBroker.cs:36, applied at :223). DFU's own reasoning: the

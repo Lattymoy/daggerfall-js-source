@@ -40,11 +40,40 @@ const click = async (vx, vy) => { await page.mouse.click(OX + vx * S, OY + vy * 
 await click(208, 5);
 await waitFrames(6);
 await page.screenshot({ path: '/home/claude/inventory-clothing.png' });
-// info mode (226,36) then slot 0 of the local list -> the interim popup
+// info mode (226,36) then slot 0 of the local list -> the REAL info box
 await click(241, 43);
 await click(163 + 9 + 25, 48 + 19);
 await page.screenshot({ path: '/home/claude/inventory-info.png' });
-// popup clears on the next click; Escape closes the window
+console.log('info box:', await page.evaluate(() => window.__invBox()));
+await click(160, 100);   // dismiss
+
+// U25: USE. A torch lights from an EQUIP click (DFU routes light
+// sources there), and douses in Use mode.
+await page.evaluate(() => {
+  window.__playerEntity.items.push({ group: 'UselessItems2', templateIndex: 247, name: 'Torch', currentCondition: 16, maxCondition: 16 });
+  window.__playerEntity.items.push({ group: 'MensClothing', templateIndex: 165, name: 'Short shirt', variant: 0 });
+});
+await click(241, 65);                       // equip mode
+await waitFrames(4);
+await click(163 + 9 + 25, 48 + 19 + 38);    // slot 1 - the torch
+console.log('after equip-click on the torch:', await page.evaluate(() => window.__invBox()),
+  'lightSource=', await page.evaluate(() => window.__playerEntity.lightSource?.name ?? null));
+await page.screenshot({ path: '/home/claude/inventory-lit.png' });
+await click(160, 100);
+await click(241, 110);                      // use mode
+await click(163 + 9 + 25, 48 + 19 + 38);
+console.log('after use-click:', await page.evaluate(() => window.__invBox()),
+  'lightSource=', await page.evaluate(() => window.__playerEntity.lightSource?.name ?? null));
+await click(160, 100);
+// the shirt cycles its variant silently (NextVariant, the catch-all)
+const v0 = await page.evaluate(() => window.__playerEntity.items.find((i) => i.templateIndex === 165)?.variant);
+await click(163 + 9 + 25, 48 + 19 + 76);    // slot 2 - the shirt
+const v1 = await page.evaluate(() => window.__playerEntity.items.find((i) => i.templateIndex === 165)?.variant);
+console.log('shirt variant', v0, '->', v1);
+// the WAGON button acts rather than selecting a mode
+await click(241, 21);
+console.log('wagon:', await page.evaluate(() => window.__invBox()));
+await page.screenshot({ path: '/home/claude/inventory-wagon.png' });
 await click(160, 100);
 await press('Escape');
 const closed = JSON.parse(await page.evaluate(() => window.__talk()));

@@ -718,6 +718,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         items: () => (playerEntity.items ??= []),
         entity: playerEntity,
         icons: { getTexture, uploadRecord, textures: renderer.textures },
+        rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
+        nowMinute: () => Math.floor(playerTicker.classicMinutes),
         onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
       }));
       return;
@@ -854,6 +856,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
+    townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
     // A5b: the tavern arm needs the host's clock, and leaving one has to
     // hand the street back its own song - the host owns both, so both
     // ride in as closures rather than worldModes reaching for a global.
@@ -1016,6 +1019,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         entity: playerEntity,
                 loot: { items: () => pile.items },
                 icons: { getTexture, uploadRecord, textures: renderer.textures },
+                rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
+                nowMinute: () => Math.floor(playerTicker.classicMinutes),
                 onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),
               }));
             }

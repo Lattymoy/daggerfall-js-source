@@ -43,15 +43,20 @@
 // IsLightSource branch of an Equip click), and wagon/gold as
 // consumed no-ops (no wagon owned; letter-of-credit pends).
 
-import { loadImg, nativeMetrics, drawImg, drawImgSub, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
+import { useItem, isLightSource } from '../systems/useItem.js';   // U25
+import { itemInfoRows, INFO_TEXT } from '../systems/itemInfo.js';   // U25
+import { goldAmount, deductGold } from '../systems/court.js';
 import { drawMenuBackdrop } from './chargenArt.js';
-import { addItem, isEnchanted } from '../systems/inventory.js';
+import { addItem, isEnchanted, goldStack } from '../systems/inventory.js';
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, FORBIDDEN_EQUIPMENT_TEXT_ID } from '../systems/equip.js';   // S23
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex } from './itemScroller.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
-import { makeFont } from './text.js';
+import { makeFont, drawText } from './text.js';
+import { typedChar } from './input.js';   // U26: one reader for both hosts' key routing
 
 export const INV_RECTS = Object.freeze({
   tabWeapons: [0, 0, 92, 10],        // weaponsAndArmorRect
@@ -68,7 +73,35 @@ export const INV_RECTS = Object.freeze({
   localList: [163, 48, 59, 152],
   remoteList: [261, 48, 59, 152],
   exit: [222, 178, 39, 22],
+  // U25: itemInfoPanelRect + the ITEM00I0 cutout it draws
+  // (DaggerfallInventoryWindow.cs :55-56, :1036-1037).
+  itemInfoPanel: [223, 145, 37, 32],
+  infoCutout: [196, 68, 50, 37],
 });
+/** itemInfoPanelLabel's own layout (:444-455): Position (2,0), middle
+ *  aligned in the panel, TextScale 0.43 and ExtraLeading 3. */
+export const INFO_LABEL = Object.freeze({ x: 2, scale: 0.43, extraLeading: 3, maxWidth: 37 });
+/** TEXT.RSC 1016 - the "Item powers" box DFU chains behind an
+ *  enchanted item's info (:1614). */
+export const INFO_TEXT_POWERS = 1016;
+/** The arms whose destination window the port has not built. Named,
+ *  so a Use click SAYS something rather than eating itself. */
+export const USE_PENDING = Object.freeze({
+  book: 'You cannot read that yet.',
+  potion: 'You drink the potion.',
+  map: 'You study the map.',
+  questItem: 'Nothing happens.',
+  enchanted: 'Nothing happens.',
+});
+
+/** TEXT.RSC 25 - the drop-gold prompt (:1272). */
+export const GOLD_TO_DROP_TEXT_ID = 25;
+/** Internal_Strings "noWagon" (:1237). */
+export const NO_WAGON_TEXT = "You don't own a wagon.";
+/** The other half of the wagon button - ShowWagon swaps the REMOTE
+ *  list to the cart's own 750kg collection. FLAGGED: Transportation
+ *  items do not exist in the port, so nothing can reach it yet. */
+export const WAGON_PENDING_TEXT = 'Your wagon is not available yet.';
 export const TABS = ['weapons', 'magic', 'clothing', 'ingredients'];
 const TAB_RECT = { weapons: INV_RECTS.tabWeapons, magic: INV_RECTS.tabMagic, clothing: INV_RECTS.tabClothing, ingredients: INV_RECTS.tabIngredients };
 const MODES = ['wagon', 'info', 'equip', 'remove', 'use', 'gold'];
@@ -104,11 +137,12 @@ let _art = null;
 export async function preloadInventoryArt(deps) {
   if (_art) return;
   try {
-    const [base, gold, fnt4] = await Promise.all([
+    const [base, gold, info, fnt4] = await Promise.all([
       loadImg(deps, 'INVE00I0.IMG'), loadImg(deps, 'INVE01I0.IMG'),
+      loadImg(deps, 'ITEM00I0.IMG'),   // U25: the item info panel's backing art
       deps.fetchBytes('FONT0004.FNT'),
     ]);
-    _art = { base, gold, font4: makeFont(deps.renderer, new FntFile().load(fnt4), 'FONT0004') };
+    _art = { base, gold, info, font4: makeFont(deps.renderer, new FntFile().load(fnt4), 'FONT0004') };
   } catch { console.warn('[inventory] INVE00I0/INVE01I0 unavailable; F6 stays dark'); }
 }
 export const inventoryArtLoaded = () => !!_art;
@@ -130,7 +164,9 @@ export class NativeInventoryWindow {
     this.scroll = 0;
     this.remoteScroll = 0;
     this.dropped = [];             // droppedItems (the default remote target)
-    this.popup = null;             // the interim info panel lines
+    this.boxes = [];               // U25: the message-box queue (info, use, wagon, gold)
+    this.infoItem = null;
+    this.goldEntry = null;         // the drop-gold field's live text
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // AUDIT 17f: icons follow the wearer's morphology
     if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
   }
@@ -161,19 +197,92 @@ export class NativeInventoryWindow {
    *  equip, which is the half that changes play. */
   _refuseForbidden(it) {
     if (!isForbiddenEquip(this.hooks.entity?.career, it)) return false;
-    this.popup = [`You cannot use this item.`, `(TEXT.RSC ${FORBIDDEN_EQUIPMENT_TEXT_ID})`];
+    // U25: the record itself now draws, on the U11 parchment, through
+    // the host's TEXT.RSC reader - the interim two lines are gone.
+    this.boxes = [{
+      rows: this.hooks.rows?.(FORBIDDEN_EQUIPMENT_TEXT_ID)
+        ?? [{ text: 'You cannot use this item.', center: true }],
+    }];
     return true;
   }
 
+  /** ShowInfoPopup (:1594-1620). The REAL info text at last: DFU picks
+   *  one of thirteen TEXT.RSC records by group and template and fills
+   *  its macros from the item, so a sword, a shield, an arrow and a
+   *  soul trap all read differently. An ENCHANTED item gets a second
+   *  box, TEXT.RSC 1016 ("Item powers"), which DFU chains behind the
+   *  first - here it simply queues behind it.
+   *
+   *  U8e's three invented lines (name / weight / value) are gone. */
   _info(it) {
-    // INTERIM info panel: name/weight/value (DFU's 1016 info text
-    // + paperdoll cutout pend)
-    const t = templateByIndex(it.templateIndex);
-    this.popup = [
-      it.name ?? t?.name ?? '?',
-      `Weight: ${(t?.weight ?? 0) * (it.stackCount ?? 1)} kg`,
-      `Value: ${itemBaseValue(it)} gold`,
-    ];
+    const rows = this.hooks.rows;
+    if (!rows) {
+      // No TEXT.RSC in this host: say so rather than inventing lines.
+      this.boxes = [{ rows: [{ text: 'No item description available.', center: true }] }];
+      return;
+    }
+    this.boxes = [{ rows: itemInfoRows(it, rows) }];
+    if (isEnchanted(it)) this.boxes.push({ rows: rows(INFO_TEXT_POWERS) ?? [] });
+    this.infoItem = it;
+  }
+
+  /** UseItem's outcome as a box, or nothing when the arm is silent
+   *  (NextVariant on a garment repaints the doll and says nothing). */
+  _useResult(r) {
+    if (r.text) this.boxes = [{ rows: [{ text: r.text, center: true }] }];
+    else if (r.textId && this.hooks.rows) this.boxes = [{ rows: this.hooks.rows(r.textId) ?? [] }];
+    else if (r.pending) this.boxes = [{ rows: [{ text: USE_PENDING[r.kind] ?? 'Nothing happens.', center: true }] }];
+    if (r.kind === 'variant' && this.hooks.entity) refreshPaperDoll(this.hooks.entity);
+    // AUDIT 22 F9: `enchanted` is now a RIDER on the arm's own result
+    // rather than a kind that replaced it, so the message the arm
+    // produced still shows and the payload still closes the window.
+    if (r.enchanted && !r.text && !r.textId) {
+      this.boxes = [{ rows: [{ text: USE_PENDING.enchanted, center: true }] }];
+    }
+    if (r.closesWindow) this._close();
+  }
+
+  /** WagonButton_OnMouseClick (:1234-1243). The port has no
+   *  Transportation items and no wagon inventory, so the first arm is
+   *  the only reachable one - and it is the RIGHT answer, not a
+   *  placeholder: a player who owns no cart is told so. The
+   *  wagon-as-a-remote-target half lands with Transportation. */
+  _wagon() {
+    const hasCart = (this.hooks.items() ?? []).some((it) => it.group === 'Transportation');
+    this.boxes = [{ rows: [{ text: hasCart ? WAGON_PENDING_TEXT : NO_WAGON_TEXT, center: true }] }];
+  }
+
+  /** GoldButton_OnMouseClick + DropGoldPopup_OnGotUserInput
+   *  (:1269-1300). A numeric field of 8, opening on "0", and the
+   *  entry is REFUSED OUTRIGHT below 1 or above what the player
+   *  carries - not clamped. The gold lands in the remote pile, which
+   *  is the ground when nothing else opened the window. */
+  _dropGold() {
+    this.goldEntry = '0';
+    this.boxes = [{
+      rows: this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }],
+      field: true,
+      onInput: (text) => {
+        const carried = goldAmount(this.hooks.entity ?? { items: this.hooks.items() });
+        const n = /^[0-9]+$/.test(text) ? Number(text) : 0;
+        if (n < 1 || n > carried) return;
+        deductGold(this.hooks.entity ?? { items: this.hooks.items() }, n);
+        addItem(this._remote(), goldStack(n));
+      },
+    }];
+  }
+
+  _use(it, collection) {
+    this._useResult(useItem(it, collection, {
+      entity: this.hooks.entity,
+      // AUDIT 22 F4: the oil arm looks for its lantern in the LOCAL
+      // pack whatever list the click came from, so the bag travels
+      // separately from the list the item lives in.
+      localItems: this.hooks.items(),
+      spellCount: () => this.hooks.entity?.spells?.length ?? 0,
+      isEnchanted,
+      nowMinute: this.hooks.nowMinute?.() ?? 0,
+    }));
   }
 
   _pick(slot) {
@@ -189,14 +298,22 @@ export class NativeInventoryWindow {
       addItem(this._remote(), it);
       return;
     }
+    if (this.mode === 'use') { this._use(it, this.hooks.items()); return; }   // U25
     if (this.mode === 'equip' && this.hooks.entity) {
+      // U25 / LocalItemListScroller_OnItemClick (:1976-1985): an EQUIP
+      // click on a LIGHT SOURCE does not equip it, it USES it - which
+      // is how a torch is lit in play. The port flagged this from U8g
+      // until the use arc existed.
+      // AUDIT 22 F6: DFU calls UseItem(item) here with NO collection
+      // (:1980), so an equip-click cannot consume anything - only the
+      // light arm, which needs none, is reachable this way.
+      if (isLightSource(it)) { this._use(it, null); return; }
       // U8g: EquipItem live (the unequipped swap-outs stay in the
-      // bag and reappear in the lists; light-source Use pends)
+      // bag and reappear in the lists)
       if (this._refuseForbidden(it)) return;   // S23
       if (equipItem(this.hooks.entity, it) !== null) refreshPaperDoll(this.hooks.entity);
       return;
     }
-    // use: FLAGGED - the use arc pends
   }
 
   _pickRemote(slot) {
@@ -205,6 +322,7 @@ export class NativeInventoryWindow {
     const it = remote[this.remoteScroll + slot];
     if (!it) return;
     if (this.mode === 'info') { this._info(it); return; }
+    if (this.mode === 'use') { this._use(it, remote); return; }   // U25 (:2048-2051)
     if (this.mode === 'remove' || this.mode === 'equip') {
       // RemoteItemListScroller_OnItemClick: both modes transfer to
       // the player; Equip mode also EQUIPS the taken item (verbatim
@@ -219,8 +337,27 @@ export class NativeInventoryWindow {
     }
   }
 
-  input(code) {
-    if (this.popup) { this.popup = null; return; }
+  get topBox() { return this.boxes.length ? this.boxes[0] : null; }
+
+  _dismissBox() { this.boxes.shift(); }
+
+  input(code, e = null) {
+    const box = this.topBox;
+    if (box) {
+      if (box.field) {
+        if (code === 'Escape') { this._dismissBox(); return; }
+        if (code === 'Enter') { const v = this.goldEntry ?? ''; this._dismissBox(); box.onInput?.(v); return; }
+        if (code === 'backspace' || code === 'Backspace') { this.goldEntry = (this.goldEntry ?? '').slice(0, -1); return; }
+        // U26: the two hosts route keys differently - raw codes here,
+        // 'char:x' actions in the dungeon - so the field reads both
+        // through the one helper that knows the difference.
+        const ch = typedChar(code, e);
+        if (ch && /^[0-9]$/.test(ch) && (this.goldEntry ?? '').length < 8) this.goldEntry = (this.goldEntry ?? '') + ch;
+        return;
+      }
+      this._dismissBox();
+      return;
+    }
     if (code === 'Escape' || code === 'Enter' || code === 'KeyE' || code === 'F6') { this._close(); return; }
     if (code === 'KeyN') this.scroll = applyScroll(this.scroll, 'down', this._filtered().length);
     if (code === 'KeyP') this.scroll = applyScroll(this.scroll, 'up', this._filtered().length);
@@ -230,14 +367,21 @@ export class NativeInventoryWindow {
   }
 
   click(vx, vy) {
-    if (this.popup) { this.popup = null; return true; }
+    if (this.topBox) {
+      if (!this.topBox.field) this._dismissBox();   // a field takes keys, not clicks
+      return true;
+    }
     const R = INV_RECTS;
     if (inRect(R.exit, vx, vy)) { this._close(); return true; }
     for (const t of TABS) if (inRect(TAB_RECT[t], vx, vy)) { this._setTab(t); return true; }
     for (const mode of MODES) {
       if (!inRect(R[mode], vx, vy)) continue;
-      // wagon/gold: consumed no-ops (flagged); the rest select
-      if (mode !== 'wagon' && mode !== 'gold') this.mode = mode;
+      // U25: WAGON and GOLD are not mode buttons at all - they ACT
+      // (:1234-1285), which is why selecting them as a mode was
+      // always wrong.
+      if (mode === 'wagon') { this._wagon(); return true; }
+      if (mode === 'gold') { this._dropGold(); return true; }
+      this.mode = mode;
       return true;
     }
     // U8g: the paperdoll takes clicks - Remove unequips the topmost
@@ -252,7 +396,11 @@ export class NativeInventoryWindow {
         // - a Remove-mode doll click is inert. U8g had this inverted.
         if (this.mode === 'equip') { unequipSlot(this.hooks.entity, slot); refreshPaperDoll(this.hooks.entity); }
         else if (this.mode === 'info') this._info(table[slot]);
-        // 'use' -> UseItem FLAGGED with the light-source/use arc
+        // U25: Use uses. DFU passes NO COLLECTION from the doll
+        // (UseItem(item) with collection defaulting to null), so the
+        // arms that consume an item - a potion, a drug, a map, the
+        // oil - deliberately do nothing to a WORN one.
+        else if (this.mode === 'use') this._use(table[slot], null);
       }
       return true;
     }
@@ -309,10 +457,32 @@ export class NativeInventoryWindow {
         drawStackLabel(renderer, _art.font4, m, it, rect, s);
       });
     }
-    // the interim info popup (paperdoll region is free space)
-    if (this.popup) {
-      renderer.drawScreenQuad(null, { x: m.ox + 49 * m.s, y: m.oy + 60 * m.s, w: 110 * m.s, h: (this.popup.length * 11 + 8) * m.s }, undefined, [0, 0, 0, 0.85]);
-      this.popup.forEach((l, i) => shadowText(renderer, font, l, m, 53, 64 + i * 11));
+    // U25: the ITEM INFO PANEL - a 50x37 cutout of ITEM00I0 drawn into
+    // the 37x32 rect at (223,145), with the last-inspected item's rows
+    // at itemInfoPanelLabel's own TextScale 0.43 and ExtraLeading 3.
+    // DFU fills it on HOVER; the port has no mouse-move surface on
+    // this window, so it shows the item the last Info click read.
+    // FLAGGED: the hover fill is the mouse-move seam's, not this
+    // slice's.
+    if (_art.info) {
+      drawImgCrop(renderer, _art.info, m, INV_RECTS.infoCutout, INV_RECTS.itemInfoPanel);
+      if (this.infoItem && this.hooks.rows) {
+        const [px, py, , ph] = INV_RECTS.itemInfoPanel;
+        const rows = itemInfoRows(this.infoItem, this.hooks.rows);
+        const lineH = (font.fnt?.fixedHeight ?? 6) * INFO_LABEL.scale + INFO_LABEL.extraLeading;
+        const top = py + Math.max(0, (ph - rows.length * lineH) / 2);   // VerticalAlignment.Middle
+        rows.forEach((r, i) => drawText(renderer, font, r.text,
+          m.ox + (px + INFO_LABEL.x) * m.s, m.oy + (top + i * lineH) * m.s,
+          m.s * INFO_LABEL.scale, DEFAULT_TEXT_COLOR));
+      }
+    }
+    // the message-box queue (info, use, the equip refusal, wagon, gold)
+    const box = this.topBox;
+    if (box) {
+      const rows = box.field ? [...box.rows, ` > ${this.goldEntry ?? ''}_`] : box.rows;
+      const laid = layoutMessageBox(font, rows, [],
+        box.field ? { sizingRows: [...box.rows, ` > ${'0'.repeat(8)}_`] } : {});
+      drawMessageBox(renderer, m, font, laid);
     }
   }
 }

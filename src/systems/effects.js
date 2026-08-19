@@ -188,7 +188,19 @@ export const chanceValue = (e, casterLevel) =>
 export const isCureDisease = (e) => e.type === 3 && e.subType === 0;
 export const isCurePoison = (e) => e.type === 3 && e.subType === 1;
 export const isCureParalyzation = (e) => e.type === 3 && e.subType === 2;
-const CURE_KINDS = Object.freeze(['disease', 'poison', 'paralyze']);   // subType-indexed
+export const CURE_KINDS = Object.freeze(['disease', 'poison', 'paralyze']);   // subType-indexed
+
+/** EntityEffectManager.CureAll* (:1523-1546) as ONE primitive: the
+ *  kind's entries leave the list at once, lifting their statMods with
+ *  them. The three named wrappers below are the members DFU actually
+ *  exposes, and the temple's cure-disease service (U24) calls the
+ *  first one directly - not through a spell. */
+export function cureAllOfKind(target, kind) {
+  if (target?.activeEffects) target.activeEffects = target.activeEffects.filter((a) => a.kind !== kind);
+}
+export const cureAllDiseases = (t) => cureAllOfKind(t, 'disease');
+export const cureAllPoisons = (t) => cureAllOfKind(t, 'poison');
+export const cureParalyzation = (t) => cureAllOfKind(t, 'paralyze');
 const CURE_MARKER_KINDS = Object.freeze(['cureDisease', 'curePoison', 'cureParalyzation']);   // the three cure CLASSES themselves
 
 /** Duration in rounds, verbatim (straight arithmetic, no roll).
@@ -572,8 +584,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         out.saved = (out.saved ?? 0) + 1;
         continue;
       }
-      const kind = CURE_KINDS[e.subType];
-      if (target.activeEffects) target.activeEffects = target.activeEffects.filter((a) => a.kind !== kind);
+      cureAllOfKind(target, CURE_KINDS[e.subType]);
       pushInstantMarker(target, CURE_MARKER_KINDS[e.subType]);   // after the removal pass, as AssignBundle adds before MagicRound cures
       out.cured = (out.cured ?? 0) + 1;
       continue;

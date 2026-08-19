@@ -222,6 +222,25 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     billboardBatches.push(renderer.createBillboardBatch(archive, record, size, centers));
   }
 
+  // U23: the STATIC NPC's own billboard extent, which the activation
+  // ray needs. DFU gives each StaticNPC a BoxCollider sized to its
+  // billboard (DaggerfallBillboard/Billboard.cs SetMaterial ->
+  // `collider.size = new Vector3(size.x, size.y, 0.1f)`), and the
+  // billboard turns to face the player every frame, so the volume it
+  // actually occupies over a turn is the SWEPT box - square in x/z.
+  // That is what the AABB below is; a fixed 0.1 depth would miss from
+  // the side. Ledger A, and only for the ray: nothing draws from it.
+  //
+  // The voxelfolk branch never fills flatGroups for people, so the
+  // size is read here, off the archive, either way.
+  for (const pn of people) {
+    const t = await getTexture(pn.textureArchive);
+    if (!t || pn.textureRecord >= t.recordCount) continue;
+    const size = scaledBillboardSize(t.getSize(pn.textureRecord), t.getScale(pn.textureRecord));
+    pn.width = size.w;
+    pn.height = size.h;
+  }
+
   const t210 = await getTexture(210);
   const lights = (t210 ? collectInteriorLights(interior.flats, (record) =>
     scaledBillboardSize(t210.getSize(record), t210.getScale(record))) : [])

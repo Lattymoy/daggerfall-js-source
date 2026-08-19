@@ -442,6 +442,18 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   return {
     keydown, tryActivate, frame, ensureLoaded, nextMode, showOverlay, setTopics, pointerdown,
     texts: (id) => textVariants(id),
+    // U23: the interior host's static-NPC seam needs both of these -
+    // FACTION.TXT to route a click (PlayerActivate.StaticNPCClick reads
+    // the NPC's and the building's faction records) and TEXT.RSC rows
+    // for the parchment boxes the guild popup stacks. Both are already
+    // loaded here, once, so worldModes borrows them rather than opening
+    // a second copy of each file.
+    get factionDict() { return factions?.factionDict ?? null; },
+    // AUDIT 22 F2: a RANDOM variant, because DFU shows nearly every
+    // one of these with GetRandomTokens - the rank refusal alone has
+    // eight, and the port drew the same one forever.
+    lines: (id) => textRsc?.variantLinesById(id, rolls) ?? [],
+    ensureFactions: () => ensureLoaded(),
     say: (line) => hud.add(line),
     get overlayActive() { return !!overlay; },
     /** AUDIT 21 (hosts lane, F6): the live overlay, so a death presenter can
@@ -460,7 +472,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       overlayFlow: overlay?.flow ?? null,   // U10: the chargen probe reads the live flow
       npcName: overlay?.hooks?.npcName ?? null,   // U8b: the native window's name plate
       hooks: overlay?.hooks ?? null,              // the live session seam (question/answer)
-      overlayPopup: overlay?.popup ?? null,   // S23: the equip-refusal probe reads the popup
+      // U25: the inventory's box queue replaced the interim popup, so
+      // the probe surface follows it - the equip refusal that S23
+      // watched here is now a real TEXT.RSC box in this queue.
+      overlayBox: (overlay?.boxes?.[0]?.rows ?? []).map((r) => r.text ?? r).join(' | ') || null,
     }),
   };
 }

@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import {
   DIVINES, ORDERS, TEMPLE_DATA, TEMPLE_TEXT, KNIGHTLY_TEXT, TEMPLE_PROMOTION,
   templeOf, orderOf, getDivine, getOrder, templePromotionId,
+  TEMPLE_RANK_TITLES, KNIGHTLY_RANK_TITLES,
 } from '../src/systems/guildVariants.js';
 import {
   GUILDS, INVITATION_ONLY, isJoinableByApplication, joinDecision,
@@ -321,4 +322,41 @@ test('AUDIT 21 F15: guildGroup is pinned by value, on the real corpus', () => {
   for (const o of Object.keys(ORDERS)) {
     assert.equal(orderOf(o).guildGroup, GUILD_GROUPS.KnightlyOrder, `Order:${o}`);
   }
+});
+
+test('U23: the rank-title tables are ten deep and gender-swapped exactly where DFU swaps them', () => {
+  // AUDIT 21 F7 could only record WHICH ranks swap - the strings live in
+  // Assets/Localization, outside the sparse clone it had. U23 widened the
+  // clone and read them, so the structure and the data are pinned together.
+  assert.equal(TEMPLE_RANK_TITLES.length, 10);
+  assert.equal(KNIGHTLY_RANK_TITLES.length, 10);
+  // Temple.cs:389-398 - rank 9 is the top, and the MALE form is the one in
+  // the ungendered table (DFU: "Not calling female chars 'Patriarch'!").
+  assert.equal(TEMPLE_RANK_TITLES[9], 'Patriarch');
+  assert.equal(TEMPLE_RANK_TITLES[6], 'Brother');
+  assert.equal(KNIGHTLY_RANK_TITLES[5], 'Knight Brother');
+  // and every ungendered slot the swap does NOT cover is shared, so a swap
+  // added to the wrong rank shows up as a duplicate string here.
+  for (const [tbl, name] of [[TEMPLE_RANK_TITLES, 'Temple'], [KNIGHTLY_RANK_TITLES, 'Order']]) {
+    assert.equal(new Set(tbl).size, 10, `${name} rank titles are ten DISTINCT strings`);
+    for (const t of tbl) assert.ok(t && t.trim() === t, `${name}: "${t}" is a bare string`);
+  }
+  // The female overrides are keyed by the same ranks femaleTitleRanks names -
+  // a slot named but not filled falls through to the male string in getTitle,
+  // which is the silent failure this pins against.
+  for (const build of [() => templeOf('Kynareth'), () => orderOf('Candle')]) {
+    const g = build();
+    for (const r of g.femaleTitleRanks) {
+      assert.ok(g.femaleRankTitles[r], `${g.name} rank ${r} is named as swapped and must carry a string`);
+      assert.notEqual(g.femaleRankTitles[r], g.rankTitles[r],
+        `${g.name} rank ${r} female form differs from the male one`);
+    }
+    // and nothing is swapped that was not declared.
+    assert.deepEqual(Object.keys(g.femaleRankTitles).map(Number).sort(),
+      [...g.femaleTitleRanks].sort(), `${g.name} declares exactly the swaps it carries`);
+  }
+  // ALL EIGHT temples and ALL TEN orders share one table apiece - a per-divine
+  // copy would drift.
+  for (const d of Object.keys(DIVINES)) assert.equal(templeOf(d).rankTitles, TEMPLE_RANK_TITLES);
+  for (const o of Object.keys(ORDERS)) assert.equal(orderOf(o).rankTitles, KNIGHTLY_RANK_TITLES);
 });

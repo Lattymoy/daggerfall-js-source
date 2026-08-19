@@ -77,6 +77,15 @@ export function isShop(buildingType) {
     || buildingType === BUILDING_TYPES.WeaponSmith;
 }
 
+/** RMBLayout.IsRepairShop (:787-797). The three shops that will mend
+ *  your gear; PlayerActivate routes their merchant to the repair
+ *  popup instead of the sell one. */
+export function isRepairShop(buildingType) {
+  return buildingType === BUILDING_TYPES.Armorer
+    || buildingType === BUILDING_TYPES.GeneralStore
+    || buildingType === BUILDING_TYPES.WeaponSmith;
+}
+
 // DaggerfallInterior: interior models 41000+i with i in this set are
 // shop shelves (loot containers when the building IsShop).
 export const CONTAINER_MODEL_OFFSET = 41000;

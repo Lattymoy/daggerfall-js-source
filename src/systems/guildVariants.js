@@ -25,7 +25,18 @@
 // decide, because a throw here would take a scene host down over a
 // mis-clicked building.
 import { SKILLS } from './skills.js';
+import { GUILDS } from './guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
+
+/** The two variant-keyed rank lists, from DFU's Internal_Strings
+ *  ("templeRanks" / "knightlyOrderRanks"). ALL EIGHT temples share
+ *  one list and ALL TEN orders share the other - the title is the
+ *  GROUP's, not the divine's or the order's. "Knight Brother" is one
+ *  title (GetLocalizedTextList splits on newlines only). */
+export const TEMPLE_RANK_TITLES = Object.freeze(['Novice', 'Initiate', 'Acolyte',
+  'Adept', 'Curate', 'Disciple', 'Brother', 'Diviner', 'Master', 'Patriarch']);
+export const KNIGHTLY_RANK_TITLES = Object.freeze(['Aspirant', 'Squire', 'Gallant',
+  'Chevalier', 'Keeper', 'Knight Brother', 'Commander', 'Marshall', 'Seneschal', 'Paladin']);
 
 /** Temple.Divines (:49-59) - value = factionId. */
 export const DIVINES = Object.freeze({
@@ -136,12 +147,16 @@ export function templeOf(divine) {
     factionId,
     skills: TEMPLE_SKILLS[divine],
     text: { ...TEMPLE_TEXT, welcome: d.welcome, promotion: d.promotion },
-    promotionForRank: (rank) => templePromotionId(d, rank),
-    // Temple.cs:389-398 overrides GetTitle: a non-member reads
-    // "nonMember", not their name, and ranks 9 and 6 are gender-swapped
-    // (matriarch / sister). See guilds.getTitle - AUDIT 21 F7.
+    rankTitles: TEMPLE_RANK_TITLES,
+    // Temple.cs:389-398 overrides GetTitle twice over: a non-member
+    // reads "nonMember" rather than their name, and ranks 9 and 6 are
+    // gender-swapped - DFU annotating each with its reason ("Not
+    // calling female chars 'Patriarch'!" / "...'Brother'!"). AUDIT 21
+    // F7 worked out WHICH ranks; U23 read the strings.
     nonMemberTitle: 'nonMember',
     femaleTitleRanks: [9, 6],
+    femaleRankTitles: { 9: 'Matriarch', 6: 'Sister' },
+    promotionForRank: (rank) => templePromotionId(d, rank),
     services: d,
   };
 }
@@ -158,6 +173,8 @@ export function orderOf(order) {
     factionId,
     skills: KNIGHTLY_SKILLS,
     text: KNIGHTLY_TEXT,
+    rankTitles: KNIGHTLY_RANK_TITLES,
+    femaleRankTitles: { 5: 'Knight Sister' },   // KnightlyOrder.cs:123-124
     // KnightlyOrder.cs:83-86 overrides IsSatisfyQuestReqByLevel to true -
     // the orders and the Mages Guild are the only two of the six.
     questReqByLevel: true,
@@ -209,6 +226,13 @@ export function getDivine(factionDict, factionId) {
  *  departure above. */
 export const getOrder = (factionId) => ORDER_BY_ID.get(factionId) ?? null;
 
+/** Temple.IsDivine (:301-304): `Enum.IsDefined(typeof(Divines), id)`,
+ *  i.e. the id is one of the EIGHT DIVINE HALLS themselves - a
+ *  templar order id is NOT divine here, unlike GetDivine above which
+ *  walks the parent. PlayerActivate's t=1238 escape depends on that
+ *  narrower test. */
+export const isDivine = (factionId) => DIVINE_BY_ID.has(factionId);
+
 /** The variant half of GuildManager.GetGuild(factionId): a temple hall,
  *  a TEMPLAR ORDER (which resolves to its divine's temple), or one of
  *  the ten knightly orders. Pass it to guilds.guildOfFaction as
@@ -220,3 +244,35 @@ export const resolveVariantGuild = (factionDict) => (factionId) => {
   const divine = getDivine(factionDict, factionId);
   return divine ? templeOf(divine) : null;
 };
+
+/** GuildManager.CreateGuildObj (:167-213): the guild a GUILD GROUP
+ *  names, with the building's faction id as the VARIANT for the two
+ *  variant-keyed groups. This is "which guild is this hall", not "is
+ *  the player in it" - GetGuild (:220-247) then answers the second
+ *  question by checking whether the group's membership is for THIS
+ *  temple/order, which the port does through guilds.membershipOf.
+ *
+ *  DFU's Thieves Guild sits under GeneralPopulace, which is why that
+ *  arm looks mismatched and is not.
+ *
+ *  `factionDict` is needed only for the HolyOrder arm, whose variant
+ *  may arrive as a templar order id that has to walk to its divine.
+ *  Null for a group with no guild (Bards, the Fey, Necromancers...),
+ *  matching DFU's `default: return null`. */
+export function createGuildForGroup(guildGroup, buildingFactionId = 0, factionDict = null) {
+  switch (guildGroup) {
+    case GUILD_GROUPS.FightersGuild: return GUILDS.FightersGuild;
+    case GUILD_GROUPS.MagesGuild: return GUILDS.MagesGuild;
+    case GUILD_GROUPS.GeneralPopulace: return GUILDS.ThievesGuild;
+    case GUILD_GROUPS.DarkBrotherHood: return GUILDS.DarkBrotherhood;
+    case GUILD_GROUPS.HolyOrder: {
+      const divine = getDivine(factionDict, buildingFactionId);
+      return divine ? templeOf(divine) : null;
+    }
+    case GUILD_GROUPS.KnightlyOrder: {
+      const order = getOrder(buildingFactionId);
+      return order ? orderOf(order) : null;
+    }
+    default: return null;
+  }
+}

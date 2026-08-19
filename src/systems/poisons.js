@@ -72,6 +72,15 @@ export const isDrugType = (poisonType) => poisonType >= POISONS.Indulcet && pois
  */
 export function startPoison(target, poisonType, currentMinute, rolls = Math.random) {
   if (poisonType === POISONS.None) return null;
+  // NO EFFECT IS REGISTERED FOR AN UNKNOWN TYPE. DFU builds the bundle
+  // from GetClassicPoisonEffectKey's `string.Format("Poison-{0}",
+  // poisonType)`, so a value outside the enum formats a key nothing is
+  // registered under and AssignBundle instantiates NOTHING. U25 found
+  // the path that reaches here: the drug arm of UseItem adds 66 to a
+  // template index of 78..81 and lands on 144..147. Refusing is the
+  // faithful translation; indexing the timing tables at 16..19 would
+  // invent a poison DFU never creates.
+  if (poisonType < POISON_START_VALUE || poisonType >= POISON_START_VALUE + TOTAL_POISON_VARIANTS) return null;
   const i = poisonType - POISON_START_VALUE;
   const range = (lo, hi) => lo + Math.floor(rolls() * (hi + 1 - lo));   // Range(min, max + 1)
   const minutesToStart = range(MIN_MINUTES_TO_POISON[i], MAX_MINUTES_TO_POISON[i]);

@@ -36,33 +36,41 @@
 // join flow is a window with an eligibility message, and only the
 // rules it consumes live here.
 //
-// FLAGGED loud - RANK TITLES. DFU reads them from its own
-// localization tables (TextManager.GetLocalizedTextList("fightersRanks"
-// and friends), resolved through the %lev macro). Those tables are
-// DFU's restatement of the classic strings; they are not in ARENA2 and
-// not in the sparse clone, so the titles are NOT INVENTED HERE. The
-// NATIVE-WINDOW RULE applies to text as much as geometry: if the
-// source value is unknown, it does not ship, and the window that needs
-// a title lands with them.
+// ── RANK TITLES, recovered (U23) - and WHICH ranks gender-swap,
+// which AUDIT 21 F7 had already worked out (AUDIT 22 merge) ───────
+// G1 shipped without the titles and said so: DFU reads them from its
+// own localization StringTables, which the sparse clone excluded. The
+// clone's sparse set now includes Assets/Localization, so all six
+// lists come straight out of Internal_Strings - "fightersRanks",
+// "magesRanks", "thievesRanks", "darkBrotherhoodRanks" here;
+// "templeRanks" and "knightlyOrderRanks" in guildVariants.js.
+// GetLocalizedTextList splits the entry on newlines, which is why
+// "Master Wizard" and "Knight Brother" are one title each.
 //
-// AUDIT 21 F7 CORRECTED A DOC LIE HERE. This paragraph used to say
-// "getTitle falls back to the player's name, which is DFU's own
-// non-member return". That is true for only three of the six guilds.
-// Temple.cs:389-398, KnightlyOrder.cs:121-127 and DarkBrotherhood.cs:86-92
-// each OVERRIDE GetTitle and return GetLocalizedText("nonMember") - a
-// string, not the player's name. So the port was shipping a WRONG KNOWN
-// value for half the guilds while claiming to withhold only the unknown
-// one. getTitle now answers null where DFU answers a string we do not
-// have, which is the honest shape: "unavailable", not "your name".
+// AUDIT 21 F7 CORRECTED A DOC LIE that this file used to carry: the
+// old paragraph said getTitle "falls back to the player's name, which
+// is DFU's own non-member return". True for only three of the six.
+// Temple.cs:389-398, KnightlyOrder.cs:121-127 and
+// DarkBrotherhood.cs:86-92 each OVERRIDE GetTitle and return
+// GetLocalizedText("nonMember") - a string, not a name. It also
+// worked out the STRUCTURE the strings alone would not give: which
+// rank in which guild gender-swaps (Temple 9 and 6, KnightlyOrder 5,
+// DarkBrotherhood 8), recorded as `femaleTitleRanks`.
 //
-// The three overrides also gender-swap two ranks apiece (Temple 9
-// matriarch / 6 sister, KnightlyOrder 5 knightSister, DarkBrotherhood 8
-// darkSister). Which rank in which guild is swapped is STRUCTURE, not
-// localization, so it is recorded on the guild records as
-// `femaleTitleRanks` even while the strings stay out.
+// The two halves met at the AUDIT 22 merge. The structure was right
+// and U23 had only found two of the four swaps; the strings were
+// there to be read all along - "Matriarch", "Sister", "Knight
+// Sister", "Dark Sister". Both ship, and the flag is retired.
 import { SKILLS, skillValue } from './skills.js';
 import { getReputation } from './factionRep.js';
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
+import { dayOfYear } from './gameDate.js';   // S28: DaggerfallDateTime.DayOfYear
+
+/** Internal_Strings "nonMember". Guild.GetTitle returns the PLAYER'S
+ *  NAME for a non-member; three subclasses override that with this
+ *  string instead (Temple.cs :397, DarkBrotherhood.cs :91,
+ *  KnightlyOrder.cs :126). */
+export const NON_MEMBER_TITLE = 'non-member';
 
 /** Guild.cs :36-38. Ten rows, one per rank. */
 export const RANK_REQ_REPUTATION = Object.freeze([0, 10, 20, 30, 40, 50, 60, 70, 80, 90]);
@@ -100,6 +108,8 @@ export const GUILDS = Object.freeze({
     factionId: 41,
     skills: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.Giantish,
       SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade],
+    rankTitles: ['Apprentice', 'Journeyman', 'Swordsman', 'Protector', 'Defender',
+      'Warder', 'Guardian', 'Champion', 'Warrior', 'Master'],
     text: { ineligibleBadRep: 679, ineligibleLowSkill: 680, eligible: 681, welcome: 684, promotion: 686 },
   },
   MagesGuild: {
@@ -108,6 +118,8 @@ export const GUILDS = Object.freeze({
     factionId: 40,
     skills: [SKILLS.Alteration, SKILLS.Destruction, SKILLS.Illusion,
       SKILLS.Mysticism, SKILLS.Restoration, SKILLS.Thaumaturgy],
+    rankTitles: ['Apprentice', 'Journeyman', 'Evoker', 'Conjurer', 'Magician',
+      'Enchanter', 'Warlock', 'Wizard', 'Master Wizard', 'Archmage'],
     // MagesGuild.cs:67-70 overrides IsSatisfyQuestReqByLevel to true - see
     // questRankFor below. The Mages Guild and the knightly orders are the
     // only two of the six that do.
@@ -124,6 +136,8 @@ export const GUILDS = Object.freeze({
     factionId: 42,
     skills: [SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.Lockpicking, SKILLS.Pickpocket,
       SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
+    rankTitles: ['Apprentice', 'Journeyman', 'Filcher', 'Crook', 'Robber',
+      'Bandit', 'Thief', 'Ringleader', 'Mastermind', 'Master Thief'],
     text: { welcome: 5225, promotion: 5235, bribesJudge: 550 },
     // ThievesGuild.cs:24 - the ONLY way in. See INVITATION_ONLY below.
     initiationQuest: 'O0A0AL00',
@@ -141,21 +155,34 @@ export const GUILDS = Object.freeze({
     factionId: 108,
     skills: [SKILLS.Archery, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
       SKILLS.Daedric, SKILLS.Destruction, SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
+    rankTitles: ['Apprentice', 'Journeyman', 'Operator', 'Slayer', 'Executioner',
+      'Punisher', 'Terminator', 'Assassin', 'Dark Brother', 'Master Assassin'],
     text: { welcome: 5292, promotion: 666, bribesJudge: 551 },
     // DarkBrotherhood.cs:24.
     initiationQuest: 'L0A01L00',
-    // DarkBrotherhood.cs:86-92 - GetTitle is overridden: rank 8 is
-    // gender-swapped and a non-member reads "nonMember", not their name.
+    // DarkBrotherhood.cs:86-92 - GetTitle is overridden twice over: a
+    // non-member reads GetLocalizedText("nonMember") rather than their
+    // own name, and rank 8 is gender-swapped. `nonMemberTitle` is the
+    // MARKER of which override applies, not a second copy of the string.
     nonMemberTitle: 'nonMember',
     femaleTitleRanks: [8],
+    femaleRankTitles: { 8: 'Dark Sister' },   // DarkBrotherhood.cs:88-89
     // DarkBrotherhood.GetPromotionMsgId - odd ranks, all pure data.
     promotionByRank: { 1: 6611, 3: 6612, 5: 6613, 7: 6614 },
   },
 });
 
 /** CalculateDaySinceZero (:132-135). An ABSOLUTE day number, which is
- *  what makes the 28-day gate survive a year boundary. */
-export const daySinceZero = (date) => (date.year * DAYS_PER_YEAR) + date.dayOfYear;
+ *  what makes the 28-day gate survive a year boundary.
+ *
+ *  DFU reads `DaggerfallUnity.Instance.WorldTime.Now.DayOfYear` - a
+ *  DERIVED property, not a field. S28 landed the calendar that derives
+ *  it, so a live date arrives as { year, month, day, ... } and its
+ *  day-of-year is computed here exactly as DFU's getter does. The
+ *  older { year, dayOfYear } shape a test may hand-build is still
+ *  accepted, so the ONE law has ONE reader either way. */
+export const daySinceZero = (date) =>
+  (date.year * DAYS_PER_YEAR) + (date.dayOfYear ?? dayOfYear(date));
 
 /** CalculateNumHighLowSkills (:113-130). The `else if` is load-bearing:
  *  a skill that cleared the HIGH bar is not also counted low, so
@@ -263,19 +290,26 @@ export const isMember = (membership) => (membership?.rank ?? -1) >= 0;
 /** GetTitle (Guild.cs:178-181), plus the three subclass overrides
  *  (Temple.cs:389-398, KnightlyOrder.cs:121-127, DarkBrotherhood.cs:86-92).
  *
- *  FLAGGED - see the header: the rank titles live in DFU's localization
- *  tables and are not invented here. The RANK is correct and available;
- *  only its NAME is missing, so a MEMBER reads null.
- *
+ *  A MEMBER reads their RANK TITLE - recovered at U23, see the header.
  *  A NON-MEMBER is a different question, and AUDIT 21 F7 found the port
- *  answering it wrong for half the guilds. DFU's base returns the player's
- *  NAME; the Temple, the knightly orders and the Dark Brotherhood each
- *  return GetLocalizedText("nonMember") instead. `nonMemberTitle` on the
- *  guild record says which, and null means "a string we do not have" -
- *  never the player's name in a guild that would not use it. */
+ *  answering it wrong for half the guilds: DFU's base returns the
+ *  player's NAME, while the Temple, the knightly orders and the Dark
+ *  Brotherhood each return GetLocalizedText("nonMember") instead.
+ *  `nonMemberTitle` on the guild record says which.
+ *
+ *  The gender swap is per GUILD and per RANK - `femaleTitleRanks` is the
+ *  structure, `femaleRankTitles` the strings - and DFU annotates every
+ *  one of them the same way: "Not calling female chars 'Brother'!". */
 export function getTitle(membership, entity, guild = null) {
-  if (isMember(membership)) return null;                 // RankTitles[rank] - withheld
-  return guild?.nonMemberTitle === 'nonMember' ? null : (entity?.name ?? '');
+  if (!isMember(membership)) {
+    return guild?.nonMemberTitle === 'nonMember' ? NON_MEMBER_TITLE : (entity?.name ?? '');
+  }
+  const rank = membership.rank;
+  if (entity?.gender === 'female' && guild?.femaleTitleRanks?.includes(rank)) {
+    const t = guild.femaleRankTitles?.[rank];
+    if (t) return t;
+  }
+  return guild?.rankTitles?.[rank] ?? entity?.name ?? '';
 }
 
 /** IsSatisfyQuestReqByLevel (Guild.cs:51-54, overridden true by

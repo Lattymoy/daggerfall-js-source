@@ -5,6 +5,8 @@
 // UI later fronts it everywhere). INTERIM until then, loudly: flat
 // skills 30 and maxHealth 50. armor 0 until player equipment.
 // LiveSpeed lives in PlayerMotor stats.
+import { SKILL_COUNT } from '../systems/skills.js';
+
 export const playerEntity = {
   isPlayer: true,
   // S3c/U9: the identity chargen writes; the paperdoll and the race
@@ -26,6 +28,14 @@ export const playerEntity = {
   stats: { strength: 50, agility: 50, luck: 50 },
   fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-derives from the rolled stats (S15)
   items: [],        // the inventory (S2); gold rides as a Currency stack
+  // THE ONE CONSTRUCTION SEAM, sixth occurrence (U24). DFU's
+  // PlayerEntity is constructed WITH its skill-use counters, and
+  // TallySkill writes them unconditionally; this literal had none, so
+  // `if (!entity.skillUses) return` silently swallowed EVERY tally on
+  // a pre-chargen entity - guild training took the gold and taught
+  // nothing, and raiseSkills had nothing to read. Found by the U24
+  // live probe.
+  skillUses: new Array(SKILL_COUNT).fill(0),
 };
 
 /** Debug/probe surface: one place writes window.__player (audit

@@ -2323,3 +2323,282 @@ in the Ledger". It was not - Port-Ledger.md had no such row until AUDIT 18
 added one to section B. That is the 17m shape: a comment pointing at a
 Ledger row that does not exist, which reads to an auditor as "already
 known".
+
+## U23 - THE GUILD SERVICE POPUP, and the static NPC becomes clickable (2026-08-19)
+
+`src/ui/guildServiceWindow.js` + the interior host's static-NPC seam in
+`src/scenes/worldModes.js`. `test/guildservicewindow.test.js`, 8 tests.
+The law half is `systems/guildServiceFlow.js`, recorded in the Systems
+arc; the calendar it needed is S28.
+
+**The thing that did not exist.** The people standing in a building
+interior have been spawned since C1 - `collectInteriorPeople` reads
+their StaticNPC inputs, factionID included - and NOTHING could click
+one. The whole `PlayerActivate.StaticNPCClick` branch had no port. So
+every guild hall, temple and knightly order in the game was a room with
+furniture in it. That is what this slice closes.
+
+**THE NATIVE-WINDOW RULE, element by element.** The panel is
+GILD00I0.IMG for a non-member (it has the Join Guild row baked in) or
+GILD01I0.IMG for a member; both are 130x51 in the shipping data, which is
+exactly `mainPanel.Size`. The four button rects are the `#region UI
+Rects` literals: join (5,5,120,7), talk (5,14,120,7), service
+(5,23,120,7), exit (44,33,43,15).
+
+**The position is the pin worth having.** DFU declares
+`mainPanel.Position = new Vector2(0, 50)` and then sets BOTH alignments
+to Center/Middle - and `BaseScreenComponent` :1217/:1234 make each
+alignment IGNORE position on its axis, so the declared line never
+applies. The panel sits at ((320-130)/2, (200-51)/2) = (95, 74.5), not
+(0, 50). A reader porting the declared line would have put it 25px too
+high, so the test asserts `PANEL_Y !== 50` as well as `=== 75`. The half
+pixel is real in DFU too (its rect is float); the port rounds it the way
+`layoutMessageBox` already rounds its own centring.
+
+**The service label is the only text the window draws** - the rest of
+the words are painted into the art. `serviceLabel.Position` is (0,1)
+inside the service button, horizontally centred, and
+`ShadowPosition = Vector2.zero`: NO SHADOW, unlike every other label in
+this port. The string is `Services.GetServiceLabelText`, twenty entries
+recovered from DFU's Internal_Strings table.
+
+**A member's join rect is DEAD, not merely unpainted.** `Setup` only
+ADDS the join button when `!member`, so the member panel has no button
+where that row used to be. The test clicks there and requires nothing
+to happen - which is what fails if a later slice swaps the IMG and keeps
+the rects.
+
+**The seam, and THE FOUR HOSTS.** Interior people are activation targets
+at DFU's own `StaticNPCActivationDistance` (256 classic units, twice a
+door's), against the swept box of their billboard - a billboard turns to
+face the player, so the volume it occupies over a turn is square in x/z,
+and a 0.1-deep collider would miss from the side (Ledger A, ray-only).
+`worldModes.js` is WIRED and is the only host that can be: it is the
+only one that builds a building interior. `exterior.js` and `world.js`
+MOUNT this machine, so a click inside reaches the seam through them.
+`dungeonContext.js` has nothing to wire - RDB blocks carry flats and
+enemies, not `blockPeopleRecords`.
+
+**RANK TITLES, recovered.** G1 shipped without them and said so: DFU
+reads the six lists from its own localization StringTables, which the
+sparse clone excluded, so `getTitle` returned the player's name at every
+rank. Widening the sparse set to `Assets/Localization` produced all six.
+"Master Wizard", "Master Thief", "Dark Brother", "Knight Brother" and
+"Master Assassin" are ONE title each - `GetLocalizedTextList` splits on
+newlines only - and the compound titles are pinned as such. A NON-member
+reads back their own NAME in the three guilds that do not override
+`GetTitle`, and the "non-member" string in the three that do. The
+Temple's two gendered overrides ship with DFU's own reason in the
+source: rank 9 Patriarch becomes Matriarch, rank 6 Brother becomes
+Sister.
+
+**Live-probed** (`tools/guildServiceProbe.mjs`): 7 guild/temple doors in
+the test city, the Mages Guild has 12 people of whom 11 offer a service,
+the popup opens on GILD00I0 with "Make Spells" on its middle button, the
+service button answers the members-only refusal, and the join button
+raises TEXT.RSC 606 on the U11 parchment with Yes/No. The probe is what
+found THE ONE CONSTRUCTION SEAM's fifth occurrence.
+
+FLAGGED here: DFU binds each button to a `DaggerfallShortcut` hotkey read
+from the player's own keybind file, which the port has no source for, so
+the keyboard accelerators (J/T/S/Esc) are the port's own - Ledger A. The
+TALK button and the three non-guild routing destinations are Ledger C
+rows of their own.
+
+## U24 - THE THREE GUILD SERVICE FLOWS + THE LIST PICKER (2026-08-19)
+
+`src/ui/listPicker.js` and `src/ui/guildServiceWindows.js`; the law is
+S29's `systems/guildServiceActions.js`. `test/guildserviceflows.test.js`,
+17 tests.
+
+**None of DFU's three service classes has art of its own.** It says so
+about the training one outright - "Note this is not a real UI window,
+and is not actually pushed onto the stack. This is so replacements are
+not constrained what to present first" - and the other two ARE message
+boxes by inheritance. So each is a short chain of U11 parchment boxes,
+and one class runs all three: a queue where each box may carry buttons,
+an input field, or a list picker, and each may push the next.
+
+**THE LIST PICKER is the reusable half.** PICK00I0.IMG, 200x128 in the
+shipping data and exactly `pickerPanel.Size`, Center/Middle at (60,36).
+The list is a panel-child at (26,27,138,72); the paging buttons are 9x9
+at (179,10) and (179,108) and move a WHOLE PAGE; the scroll bar is
+5x82 at (181,23). ListBox's own defaults are rowsDisplayed 9 and
+rowSpacing 1, and a row advances by the font's glyph height plus that
+spacing - which is the arithmetic a list click resolves against, so a
+click is pinned resolving through the SCROLL INDEX rather than the
+visible row. The selected row draws in DaggerfallUI's 162,36,12 DARK
+RED, not a brighter yellow; that is the one people guess wrong. The
+spell maker, the item maker, the travel map's teleport list and the
+quest journal all want this window next.
+
+**The chain order is the parity that matters**, and each half is
+pinned: training checks gold BEFORE the picker opens, so a player who
+cannot pay never sees the list, and checks the skill cap BEFORE taking
+payment, so a too-skilled pick costs nothing. The donation field opens
+pre-filled on "1000", is numeric-only, caps at 8 characters, and does
+NOTHING AT ALL on an unparsable entry - `int.TryParse` has no else.
+The free-holiday cure fires on OPEN, before any question and with an
+empty purse.
+
+**Two defects the live probe found, both fixed here.** A window that
+dispatches to another window was nulling the second one through its own
+`onClose` - the port's overlay slot is single, where DFU has a stack -
+so the join welcome and every service flow vanished the moment they
+opened; the identity guard fixes it. And the picker's handler ran
+AFTER the queue advanced, which emptied the queue, closed the window
+and threw the result box away: the skill trained and "You and the
+trainer practice for 3 hours" never appeared.
+
+**Probed live end to end** (`tools/guildServiceProbe.mjs`): in the
+Mages Guild, join -> TEXT.RSC 606 with Yes/No -> the 5293 welcome ->
+membership stored under group 10 at rank 0 -> the popup redraws on the
+MEMBER art -> "Training will cost you 100." with %a expanded -> the
+picker with the guild's twelve TRAINING skills -> 100 gold taken, 15
+uses tallied against Alteration, and the 5221 box.
+
+FLAGGED: the scroll bar does not drag (the two paging buttons and the
+keyboard cover the list), and DFU's ListBox selects on the first click
+and USES on the second, where the port picks straight through - a
+one-shot service list has nothing to preview.
+
+## U25 - POINT-AND-CLICK USE, and the real item info (2026-08-19)
+
+`src/systems/useItem.js` (DaggerfallInventoryWindow.UseItem :1661-1817
++ the DaggerfallUnityItem predicates and NextVariant),
+`src/systems/itemInfo.js` (ItemHelper.GetItemInfo :748-817 + the
+DaggerfallUnityItemMCP macros), and the wiring in
+`src/ui/nativeInventory.js`. `test/useitem.test.js` (12),
+`test/iteminfo.test.js` (9), `test/nativeinventory.test.js` (+4).
+
+**The Use button has existed since U8d and did nothing.** The mode
+selected and every click fell through - the header said so, twice, for
+five slices. This is the branch table behind it.
+
+**The ladder's ORDER is the law.** A book is checked before "is it a
+potion", a light source before the oil that refuels it, and the
+catch-all is NextVariant - which is why clicking an ordinary shirt in
+Use mode CYCLES ITS COLOUR rather than doing nothing. Only twenty-four
+garments can do that; DFU names them by hand and calls four of the
+others "unchangeable" in the enum itself.
+
+**A light source is the one item Equip mode does not equip.** DFU's
+local-list click handler routes `IsLightSource` to `UseItem` from the
+EQUIP arm (:1976-1985), which is how a torch is lit in play. The port
+flagged this from U8g and it is closed here. `IsLightSource` also
+spans two groups - the Holy candle is in ReligiousItems, not beside
+the torch - which is the sort of thing a hurried port drops.
+
+**THE DRUG BUG, preserved.** DFU's drug arm is
+`InflictPoison(player, player, (Poisons)item.TemplateIndex + 66, true)`
+under a comment reading "Drug poison IDs are 136 through 139. Template
+indexes are 78 through 81, so add to that." 78 + 66 is 144, not 136 -
+the constant wants to be 58. `Poisons` has no member 144, so
+`GetClassicPoisonEffectKey` formats "Poison-144", nothing is
+registered under that key and `AssignBundle` instantiates nothing:
+**using a drug in Daggerfall Unity does nothing at all, silently, and
+eats the item.** Ported verbatim, recorded in Ledger B, and pinned so
+a later reader cannot quietly "fix" it. `startPoison` now refuses an
+unregistered type rather than indexing past its own timing tables -
+which is the faithful translation of "no effect under that key", not a
+guard bolted on.
+
+**The info panel is real at last.** U8e invented three lines (name /
+weight / value). DFU picks one of THIRTEEN TEXT.RSC records by group
+and template and fills its macros from the item, so a sword, a shield,
+an arrow, a soul trap and a letter of credit all read differently -
+which is most of what the panel is for. An arrow's record has no
+condition line at all; a helm and a shield never show their material
+under classic's own setting default; an artifact never shows one at
+all. Both of DFU's surfaces now draw: the Info-mode click box on the
+U11 parchment (with TEXT.RSC 1016, "Item powers", queued behind it for
+an enchanted item), and the small `itemInfoPanel` at (223,145,37,32) -
+a 50x37 cutout of ITEM00I0 at `TextScale` 0.43 with `ExtraLeading` 3,
+which needed a source-rect-to-destination-rect blit
+(`nativePanel.drawImgCrop`) the port did not have.
+
+**WAGON and GOLD were never mode buttons.** They ACT (:1234-1285), so
+selecting them as a mode was always wrong. The wagon answers "You
+don't own a wagon." - which is the RIGHT answer and not a placeholder,
+since the port has no Transportation items - and the gold button opens
+the drop-gold field, TEXT.RSC 25, numeric and eight characters, which
+REFUSES an amount below 1 or above what the player carries rather than
+clamping it.
+
+**THE FOUR HOSTS, named.** `exterior.js` and `world.js` build the
+native window (twice each - bare, and over a loot pile), and all four
+sites are swept by a test, because a hook added to three of them is
+exactly what THE ONE CONSTRUCTION SEAM exists to catch.
+`worldModes.js` opens no inventory of its own. `dungeonContext.js`
+STILL CONSTRUCTS the old keyed `ui/inventory.js` window, so a dungeon
+has no Use mode, no paperdoll and no real info panel - the last host
+without the real inventory. Pinned both ways and routed to U26.
+
+**Probed live**: the info box reads "Book by Anonymous | Worth: 2500
+gold | Weight: 6 kilograms" off record 1009 with a stack's weight; an
+equip-click lights a torch and a use-click douses it; a shirt cycles
+its variant; the wagon says its line.
+
+## U26 - THE DUNGEON GETS THE REAL INVENTORY (2026-08-19)
+
+`src/scenes/dungeonContext.js` + `src/scenes/dungeon.js` +
+`src/ui/input.js`; `src/ui/inventory.js`'s keyed `InventoryWindow` is
+DELETED. `test/nativeinventory.test.js` (+2 sweeps).
+
+**The last host without it.** The exterior hosts moved to the classic
+window at U8d; the dungeon kept a text list, so underground there were
+no tabs, no paperdoll, no info panel and - after U25 - no Use mode,
+which is precisely where a torch gets lit. U25 pinned that gap BOTH
+ways and the pin went red the moment this slice closed it, which is
+what a both-ways pin is for.
+
+**Three things the swap needed, and they are why it was a slice.**
+
+1. **A ground pile.** `droppedLoot` was written host-agnostically at
+   U8e (renderer + getTexture + uploadRecordFrame) and had simply
+   never been mounted here, so a Remove-mode drop in a dungeon had
+   nowhere to land. It now mounts, draws in the same billboard pass as
+   the sprite mobiles, offers its piles as activation targets, frees
+   emptied ones when the window closes, and frees every batch when the
+   dungeon is destroyed.
+2. **Raw key codes.** `routeKey` handed every overlay an ACTION
+   (`back`/`confirm`/`up`) - the keyed windows' vocabulary, which
+   cannot express F6, a mode button or a digit. `ui/input.js` now
+   passes the code through for a native window, exactly as townTalk's
+   seam has since G2, and `typedChar` is the one reader that
+   understands both hosts' vocabularies.
+3. **LOOT OPENS THE WINDOW.** `takeLoot` used to vacuum a whole
+   container into the pack on one keypress. PlayerActivate makes the
+   container the inventory's REMOTE TARGET and lets the player choose,
+   with the window opening in Remove mode (the OnPush law U8e already
+   ported). Both dungeon hosts - the standalone scene and the
+   world-modes machine - route the new `droppedLoot:` prefix; the
+   probe found the pickup half missing when only one of them had it.
+
+**Two defects the probe surfaced on the way.** The shot-mode frame
+counter sat AFTER the overlay branch's early return, so `__frame`
+froze the instant any overlay opened - and this repo's Process rules
+forbid a probe from sleeping, so an overlay made frame-syncing
+impossible in this host. And a native window handed the VIRTUAL canvas
+plus a screen offset letterboxes itself twice: its opaque backdrop
+then covers only the virtual rect and the dimmed world shows through
+the bars. That is AUDIT 19 F2's defect for the seventh time; a native
+window now gets the real canvas and no offset.
+
+**The paperdoll came too**, and this host is the one that can ask for a
+non-town backdrop: `CONTEXT_BG` has mapped `dungeon` to SCBG07I0 since
+U8f with no caller, because the town hosts only ever want SCBG04I0.
+
+**One equip model, finally.** This host carried its own equip hook with
+its own career gate - AUDIT 17e F17's point, made twice. The window
+owns equipping now, so the duplicate is gone, and `ui/inventory.js`'s
+keyed window with it: nothing imported it any more, and its one law
+(EquipItem excludes exactly Weapons/Arrow) was never the window's -
+it lives in `systems/equip.js`, which every host reaches.
+
+**Probed live** (`tools/dungeonInventoryProbe.mjs`): F6 through the
+real key path opens `NativeInventoryWindow`; the info box reads "Steel
+Broadsword | 1 - 12 points of damage | Condition: Used | Weight: 5
+kilograms"; an equip-click lights the torch; Remove drops the sword,
+the pile mints with its flat, and activating it reopens the window
+with the pile as the remote target.
