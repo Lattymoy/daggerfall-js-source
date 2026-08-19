@@ -70,6 +70,15 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const ctx = await buildDungeonContext(
     { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined });
 
+  // U21: the menu's LOAD GAME. The context is built, so restore into
+  // it through the host's own quickLoad - the same call F12 makes -
+  // rather than teaching the menu a second way to load. quickLoad
+  // hands the saved position back through its setPlayerPos callback;
+  // holding it here lets the spawn below prefer it over the start
+  // marker, so a load lands where the save was taken.
+  let loadedPos = null;
+  if (params.has('load')) ctx.quickLoad((p) => { loadedPos = p ? [...p] : null; });
+
   // Classic water tile: ground archive record 0 for this location's
   // climate (the exterior ground path never routes single records).
   const waterArchive = dfLocation.climate.groundArchive;
@@ -79,7 +88,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // The classic dungeon spawn - ONE source (ctx.startSpawn: verbatim
   // MovePlayerToMarker + FixStanding). The old raw-marker spawn put
   // the EYE at the marker - feet under the floor, wedged.
-  const spawn = ctx.startSpawn();
+  const spawn = loadedPos ?? ctx.startSpawn();   // U21: a loaded game resumes where it was saved
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
   const shotMode = params.has('shot');
   // P2: grounded walking is the default (?fly restores the fly cam);

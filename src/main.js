@@ -36,9 +36,21 @@ async function boot() {
   if (params.has('dungeon')) return bootDungeon(canvas, renderer, params, status);
   if (params.has('world')) return bootWorld(canvas, renderer, params, status);
   if (params.has('exterior') || params.has('region') || params.has('loc')) return bootExterior(canvas, renderer, params, status);
-  // The bare URL is the CLASSIC START (2026-08-14, Mac-directed):
-  // Privateer's Hold with the chargen flow - the game, not a test
-  // scene. Dev scenes stay one param away (?exterior/?world/etc).
+  // U21: the bare URL is THE MAIN MENU, and the menu hands off to the
+  // classic start (Privateer's Hold + chargen) that used to run here
+  // directly. Dev scenes stay one param away (?exterior/?world/etc).
+  //
+  // ?shot BYPASSES the menu: it is the fixed-vantage test path that
+  // tools/screenshot.mjs and the 25 probes in tools/ drive, and a menu
+  // in front of it would block every one of them. ?nomenu is the same
+  // escape hatch for a human.
+  if (params.has('shot') || params.has('nomenu')) return bootDungeon(canvas, renderer, params, status);
+  const { runMenu } = await import('./scenes/menu.js');
+  const action = await runMenu(canvas, renderer, status);
+  // Load Game rides the dungeon host's OWN quickLoad (the F12 path) -
+  // dungeon.js calls ctx.quickLoad once the context is built. A
+  // menu-side loader would be a second copy of a working path.
+  if (action === 'load') params.set('load', '1');
   return bootDungeon(canvas, renderer, params, status);
 }
 
