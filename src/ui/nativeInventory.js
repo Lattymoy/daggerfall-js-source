@@ -45,7 +45,7 @@
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, SCREEN_DIM, shadowText } from './nativePanel.js';
 import { addItem, isEnchanted } from '../systems/inventory.js';
-import { isEquipped, equipItem, unequipSlot } from '../systems/equip.js';
+import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, FORBIDDEN_EQUIPMENT_TEXT_ID } from '../systems/equip.js';   // S23
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex } from './itemScroller.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
@@ -151,6 +151,19 @@ export class NativeInventoryWindow {
     this.hooks.onClose?.();
   }
 
+  /** S23: the career equip gate (DaggerfallInventoryWindow :1343-1381).
+   *  DFU refuses the equip and pops TEXT.RSC 1068 on a
+   *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
+   *  info panel below is: this surface has no TEXT.RSC source and no
+   *  parchment frame of its own yet, so the refusal shows on the same
+   *  interim popup. The REFUSAL ITSELF is verbatim - the item does not
+   *  equip, which is the half that changes play. */
+  _refuseForbidden(it) {
+    if (!isForbiddenEquip(this.hooks.entity?.career, it)) return false;
+    this.popup = [`You cannot use this item.`, `(TEXT.RSC ${FORBIDDEN_EQUIPMENT_TEXT_ID})`];
+    return true;
+  }
+
   _info(it) {
     // INTERIM info panel: name/weight/value (DFU's 1016 info text
     // + paperdoll cutout pend)
@@ -178,6 +191,7 @@ export class NativeInventoryWindow {
     if (this.mode === 'equip' && this.hooks.entity) {
       // U8g: EquipItem live (the unequipped swap-outs stay in the
       // bag and reappear in the lists; light-source Use pends)
+      if (this._refuseForbidden(it)) return;   // S23
       if (equipItem(this.hooks.entity, it) !== null) refreshPaperDoll(this.hooks.entity);
       return;
     }
@@ -196,7 +210,11 @@ export class NativeInventoryWindow {
       // TransferItem(..., equip: true))
       remote.splice(remote.indexOf(it), 1);
       addItem(this.hooks.items(), it);
-      if (this.mode === 'equip' && this.hooks.entity && equipItem(this.hooks.entity, it) !== null) refreshPaperDoll(this.hooks.entity);
+      if (this.mode === 'equip' && this.hooks.entity) {
+        // S23: the taken item still has to pass the career gate
+        if (this._refuseForbidden(it)) return;
+        if (equipItem(this.hooks.entity, it) !== null) refreshPaperDoll(this.hooks.entity);
+      }
     }
   }
 

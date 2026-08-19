@@ -27,6 +27,12 @@
 import { savingThrow, rollMagnitude, EFFECT_FLAGS } from './spellcast.js';
 import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
+import { tryAbsorption } from './absorption.js';   // S24
+
+/** "Spell was absorbed." - the HUD line DFU prints on every absorbed
+ *  effect (:515). FLAGGED: DFU pulls it from the localised string
+ *  table; this surface has no text source, so the literal stands. */
+export const SPELL_ABSORBED_TEXT = 'Spell was absorbed.';
 
 export { FATIGUE_MULTIPLIER, maxFatigue };
 
@@ -297,13 +303,29 @@ function pushPermanent(target, entry) {
  * Instant families act now; continuous joins target.activeEffects
  * for the round ticker. Returns what happened (tested).
  */
-export function applySpell(spell, casterLevel, target, sinks, rolls = Math.random, caster = null) {
+export function applySpell(spell, casterLevel, target, sinks, rolls = Math.random, caster = null, ctx = {}) {
   const flag = ELEMENT_EFFECT_FLAG[spell.element] ?? EFFECT_FLAGS.Magic;
   const saveScaled = spell.rangeType !== 0;   // GetMagnitude's CasterOnly gate (S15)
   const magnitude = (e) => effectMagnitude(e, casterLevel, saveScaled, spell.element, flag, target, rolls);
   const out = { damage: 0, healed: 0, continuous: 0, skipped: 0 };
+  // S24: absorption is tested PER EFFECT, before any of them lands
+  // (EntityEffectManager :507-518), and an absorbed effect is skipped
+  // entirely - `continue`, not a reduced magnitude.
+  let totalAbsorbed = 0;
   for (const e of spell.effects) {
     if (e.type <= -1) continue;
+    // DFU requires a CASTER ENTITY on the bundle (:505) and
+    // BundleType == Spell (:509). The port's applySpell is the spell
+    // path only, so the caster check is the whole gate here; item and
+    // enchantment bundles are FLAGGED to their own arc.
+    if (caster) {
+      const sp = tryAbsorption(e, spell.rangeType ?? 0, target, ctx);
+      if (sp > 0) {
+        totalAbsorbed += sp;
+        out.absorbed = (out.absorbed ?? 0) + sp;
+        continue;
+      }
+    }
     if (isHealHealth(e)) {
       const n = magnitude(e);
       out.healed += n;
@@ -528,6 +550,19 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       continue;
     }
     out.skipped++;   // FLAGGED: the library grows one family at a time
+  }
+  // S24: refund the absorbed points (:596-608). A SELF-cast cannot
+  // give back more than it cost - absorption is tallied per effect and
+  // can otherwise exceed the spell's own price - and the cap does NOT
+  // apply to another entity's spell.
+  if (totalAbsorbed > 0) {
+    const selfCastCost = ctx.selfCastCost ?? 0;
+    if (caster === target && selfCastCost > 0 && totalAbsorbed > selfCastCost) totalAbsorbed = selfCastCost;
+    out.absorbed = totalAbsorbed;
+    if (target.maxMagicka != null) {
+      target.magicka = Math.min(target.maxMagicka, (target.magicka ?? 0) + totalAbsorbed);
+    }
+    sinks?.say?.(SPELL_ABSORBED_TEXT);
   }
   return out;
 }
