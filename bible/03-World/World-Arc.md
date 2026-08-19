@@ -652,8 +652,9 @@ The talk window answers "Where is...?" in the test-city host:
 
 FLAGGED (LOUD): the NPC knowledge roll pends (every NPC knows - the
 doesn't-know half of the table is wired but unreached); the tone
-buttons (Polite/Blunt) pend; the 35% map-reveal path pends the town
-map; %hnr/%ra expand to interim literals; the STREAMING host's
+buttons (Polite/Blunt) pend; the 35% map-reveal path SHIPPED at T4
+(the discovery store pends only the map that will draw it); %hnr/%ra
+SHIPPED at T4 off the entity; the STREAMING host's
 per-pixel directory pends (a host-rule debt, the immediate
 follow-up); the person-seed stands in for DFU's NPC hashcode
 (Ledger A); identically-seeded repeats in pool-exhausted cities
@@ -864,3 +865,66 @@ order, %ef/%rt semantics, the palace dot-trim, the GiveUpTimer
 cadence. Suite 439/97; whereIsProbe + arrestProbe re-run green
 (distinct names; the full surrender -> court -> prison -> release
 circuit with expanded text).
+
+## T4 (2026-08-19): THE 35% MAP-REVEAL + the %hnr/%ra literals SHIPPED
+
+The Where-is residuals the T3f close recorded - the last two live
+clauses on T3c's flag list - both off the queue. Suite green with
+ARENA2 set and unset; the fork boundary, the inside gate and the
+discovery no-dupe all mutation-checked (three planted mutants caught).
+
+- **The %hnt fork** (talkTopics.buildingHint):
+  GetKeySubjectBuildingHint (TalkManager.cs:1707-1723) verbatim - the
+  answer record's %hnt resolves to the 7333 directional hint OR the
+  7332 map reveal; DFU tests `randomFloat > ChanceToRevealLocationOnMap`
+  for the DIRECTION arm, so a roll landing exactly ON 0.35 still
+  reveals (pinned - a >= mutant fails), and IsPlayerInside forces
+  directions whatever the roll. ChanceToRevealLocationOnMap = 0.35f
+  (TalkManager.cs:123 - DFU's own comment: "Chances unknown"). The
+  draw is UnityEngine.Random.Range(0f, 1f): per THE ENGINE-PRNG RULE
+  (Ledger A) it rides the seam's injectable rolls, pinned for
+  distribution, never sequence.
+- **The mark** (systems/discovery.js): %loc's handler
+  (MacroHelper.cs:1085-1090) is where DFU performs the reveal -
+  PlayerGPS.DiscoverBuilding (:917-975), ported as ONE module-level
+  store (the worldTick one-clock precedent): locationId ->
+  buildingKey -> the DiscoveredBuilding columns this port has sources
+  for ({ buildingKey, displayName, factionId, quality, buildingType }
+  of PlayerGPS.cs:92-103; the quest name-override arms,
+  UndiscoverBuilding and lastLockpickAttempt pend quests/automap).
+  Already-discovered is a no-op (:926-928). DFU namespaces locations
+  by MapPixelID (:936); the talk seam carries no pixel yet, so the id
+  is `region:location` - the automap arc swaps it when there is a map
+  to draw. The store rides the save envelope (snapshotPlayer/
+  restorePlayer - DFU serialises discoveredLocations in SaveData_v1);
+  a pre-T4 save restores empty, and the snapshot is a copy, not an
+  alias (both pinned).
+- **The townTalk seam** (answerText): the fork runs ONLY when the
+  answer record carries %hnt - lazily, the %oth idiom - because the
+  roll lives inside the macro in DFU: a tier-0 refusal never rolls
+  and never marks the map. The reveal arm expands a 7332 variant
+  (%loc = the building; the ARENA2 gate pins all 7 variants naming
+  %loc on the map and none carrying %di) and calls discoverBuilding;
+  the direction arm is the T3c 7333 chain unchanged. The mobile-talk
+  hosts are the two exteriors, so isInside is false at this seam;
+  interiors join with static-NPC talk (in flight in a parallel lane).
+- **%hnr/%ra** (talkSession.honorificOf / raceDisplayName): %hnr is
+  TalkManager.GetHonoric (:1826-1832) - Sir / Ma'am by player gender
+  (Internal_Strings 414/415, read from the DFU repo's own string
+  table); %ra is MacroHelper.PlayerRace (:942-945), the BIRTH race
+  template's display Name - the table pinned whole against the
+  Internal_Strings literals, the elves in TWO words (Dark Elf, High
+  Elf, Wood Elf). expandAnswerRecord's defaults re-derive through the
+  same laws (the pre-chargen entity's values); the live path passes
+  the entity's gender/race. The T3c "interim literals" flag is
+  retired, its sentence deleted, its Home list row removed.
+
+PROBE: tools/mapRevealProbe.mjs - the whereIsProbe flow asking up to
+15 times (P(no reveal) = 0.65^15 ~ 0.2%), watching for the answer to
+switch from the compass hint to a "marked on your map" line. Its
+result lands in this record when the run completes.
+
+Pins: test/mapReveal.test.js x6 (the boundary/inside fork, the store's
+whole-record/no-dupe/per-location laws, the envelope round trip incl.
+pre-T4 empty, the macro tables, the townTalk source sweep - the hosts'
+zero-execution-coverage idiom - and the ARENA2 record-id gate).

@@ -31,10 +31,11 @@ import {
   getPeopleOfCurrentRegion, getReactionToPlayer, pickpocketTownsperson, findFactions,
   MOBILE_NPC_ACTIVATION_DISTANCE, PICKPOCKET_DISTANCE, FOUND_NOTHING_VALUABLE_TEXT_ID,
 } from '../systems/talk.js';
-import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId } from '../systems/talkSession.js';
+import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorificOf, raceDisplayName } from '../systems/talkSession.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
 import { ChoiceWindow } from '../ui/talkWindow.js';
-import { buildBuildingDirectory, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012 } from '../systems/talkTopics.js';
+import { buildBuildingDirectory, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint } from '../systems/talkTopics.js';
+import { discoverBuilding } from '../systems/discovery.js';   // T4: %loc's mark side effect
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
@@ -346,8 +347,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
 
   function answerWhereIs(building) {
     // GetAnswerWhereIs (the seed-stable knowledge roll picks the
-    // knows/doesn't-know table half) + the %hnt hint chain: a 7333
-    // variant with %loc = the building, %di = the compass hint.
+    // knows/doesn't-know table half) + the %hnt hint chain: the T4
+    // fork - a 7333 direction variant (%loc + the %di compass) or the
+    // 7332 map reveal that discovers the building.
     showAnswer(answerText(building));
   }
 
@@ -375,9 +377,21 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // fallback chain (the T3c-T3f pipeline unchanged).
   function answerText(building) {
     const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality ?? 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });
-    const hint = randomVariant(7333, '%loc is %di of here')
-      .replaceAll('%loc', building.name).replaceAll('%di', a.direction);
     const raw = randomVariant(a.textId, '%hnt');
+    // T4: %hnt is WHERE DFU rolls the reveal (GetKeySubjectBuildingHint
+    // rides MacroHelper's %hnt), so the fork runs only when the record
+    // carries the macro - lazily, like %oth below: a rude refusal
+    // never rolls and never marks the map. The mobile-talk hosts are
+    // the two exteriors, so isInside is false; %loc's mark side effect
+    // (MacroHelper.cs:1085-1090) is the discoverBuilding call, keyed
+    // region:location until the automap arc brings the map pixel id.
+    let hint = '';
+    if (raw.includes('%hnt')) {
+      const h = buildingHint(rolls, false);
+      hint = randomVariant(h.textId, h.reveal ? '... Let me just mark %loc here on your map' : '%loc is %di of here')
+        .replaceAll('%loc', building.name).replaceAll('%di', a.direction);
+      if (h.reveal) discoverBuilding(`${regionIndex}:${cityName()}`, building);
+    }
     // AUDIT 18 F1: ExpandRandomTextRecord (TalkManager.cs:3580-3587)
     // runs the FULL MacroHelper over the answer record - %oth and %cn
     // resolve here exactly as they do in the greeting.
@@ -386,6 +400,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       oath: raw.includes('%oth') ? randomVariant(oathTextId(npcRace), '') : '',
       cityName: cityName(),
       hint, key: building.name,
+      honorific: honorificOf(playerEntity.gender),   // T4: the real %hnr/%ra
+      race: raceDisplayName(playerEntity.race),
     });
   }
 
