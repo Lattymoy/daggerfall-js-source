@@ -43,6 +43,19 @@ export function greetingTextId(reactionToPlayer) {
 /** MacroHelper.GetFirstname: the first space-separated token. */
 export const firstName = (name) => (name ?? '').split(' ')[0];
 
+/** %hnr - TalkManager.GetHonoric (:1826-1832): by player gender,
+ *  localization keys "Sir" / "Ma'am" (Internal_Strings 414/415). */
+export const honorificOf = (gender) => (gender === 'male' ? 'Sir' : "Ma'am");
+
+/** %ra - MacroHelper.PlayerRace (:942-945): the BIRTH race template's
+ *  display Name (a transformed vampire/werewolf keeps it). The names
+ *  are DFU's Internal_Strings values - the elves are TWO words. */
+export const RACE_DISPLAY_NAME = Object.freeze({
+  Breton: 'Breton', Redguard: 'Redguard', Nord: 'Nord', DarkElf: 'Dark Elf',
+  HighElf: 'High Elf', WoodElf: 'Wood Elf', Khajiit: 'Khajiit', Argonian: 'Argonian',
+});
+export const raceDisplayName = (race) => RACE_DISPLAY_NAME[race] ?? race ?? '';
+
 /** %oth: TEXT.RSC 201 + FactionRace (DFU's oath fix - classic used
  *  the region race INDEX and gave High Rock Nord oaths). */
 export const oathTextId = (race) => OATH_BASE_TEXT_ID + (OATH_RACE_INDEX[race] ?? OATH_RACE_INDEX.Breton);
@@ -68,13 +81,16 @@ export function expandMacros(text, { playerName = '', oath = '', cityName = '' }
  *  %cn too." with the macro raw on screen. */
 export function expandAnswerRecord(raw, {
   playerName = '', oath = '', cityName = '', hint = '', key = '',
-  honorific = 'Sir', race = 'Breton',
+  // T4: the live path passes honorificOf(gender) / raceDisplayName(race)
+  // off the entity; these are the pre-chargen entity's values, for
+  // callers with no identity in hand.
+  honorific = honorificOf('male'), race = raceDisplayName('Breton'),
 } = {}) {
   return expandMacros(raw, { playerName, oath, cityName })
     .replaceAll('%hnt', hint)
     .replaceAll('%key', key)
     .replaceAll('%hnr', honorific)
-    .replaceAll('%ra', race);   // honorific/race macros FLAGGED interim
+    .replaceAll('%ra', race);
 }
 
 /**

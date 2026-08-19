@@ -71,7 +71,8 @@ import {
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT } from '../systems/mysticism.js';   // S27
 import { applySpell, tickActiveEffects, hasActiveEffect, entityIsParalyzed, maxFatigue, isInvisible, isBlending, isAShade } from '../systems/effects.js';
-import { FATIGUE_LOSS, maxBreath } from '../systems/statMods.js';
+import { FATIGUE_LOSS } from '../systems/statMods.js';
+import { breathStep } from '../systems/breath.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { updatePoisons, inflictPoison } from '../systems/poisons.js';
 import { exhaustionOutcome, EXHAUSTED_IN_WATER, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
@@ -1528,36 +1529,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     return false;
   }
-  // P12: breath/drowning (PlayerEntity.FixedUpdate on the classic
+  // P12/P18: breath/drowning (PlayerEntity.FixedUpdate on the classic
   // update cadence). Submerged = the controller CENTER (feet + 0.9)
   // + 76*GlobalScale - 0.95 below the block water surface (the head-
-  // under threshold; the swim toggle uses 50). While submerged
-  // without WaterBreathing: a fresh dive fills currentBreath
-  // (DeepBreath = MaxBreath - guild bonuses pend guilds), every 19th
-  // classic update drains 1 (the Argonian coin-flip refund pends
-  // race selection), and 0 breath is SetHealth(0) - drowned.
-  // Surfacing zeroes the counter.
-  let _breathTimer = 0, _breathTally = 0;
+  // under threshold; the swim toggle uses 50). The clause itself -
+  // the DeepBreath guild refill, the 19th-update drain with the
+  // Argonian coin refund, drowning at 0, surfacing zeroing - is
+  // systems/breath.js breathStep (P18); this host owns the cadence,
+  // the geometry, and the SetHealth(0).
+  let _breathTimer = 0;
+  const _breathState = { tally: 0 };
   function breathTick(dt, playerFeet) {
     _breathTimer += dt;
     while (_breathTimer >= CLASSIC_UPDATE_INTERVAL) {
       _breathTimer -= CLASSIC_UPDATE_INTERVAL;
       const surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
       const submerged = surf != null && playerFeet[1] + 0.9 + 76 * 0.025 - 0.95 < surf;
-      if (submerged && !hasActiveEffect(playerEntity, 'waterBreathing')) {
-        if (!playerEntity.currentBreath) playerEntity.currentBreath = maxBreath(playerEntity);
-        if (_breathTally > 18) {
-          --playerEntity.currentBreath;
-          _breathTally = 0;
-        } else {
-          ++_breathTally;
-        }
-        if (playerEntity.currentBreath <= 0) {
-          playerEntity.currentBreath = 0;
-          hurtPlayer(playerEntity.health);   // SetHealth(0): drowned
-        }
-      } else {
-        playerEntity.currentBreath = 0;
+      if (breathStep(playerEntity, submerged, _breathState) === 'drowned') {
+        hurtPlayer(playerEntity.health);   // SetHealth(0): drowned
       }
     }
   }

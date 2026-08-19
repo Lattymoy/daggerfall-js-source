@@ -574,9 +574,10 @@ LevitateMotor / PlayerSpeedChanger / PlayerEnterExit / PlayerEntity:
   every swimming minute; jumping 11 + the Jumping tally once per jump
   (the motor's per-frame jumped flag). RAW fatigue units - the x64 is
   spell-magnitude-only. Athleticism (x0.9/x0.8) pends the career
-  advantage flags; the Argonian swim exemption pends race selection;
-  breath/drowning (isPlayerSubmerged at +76*GlobalScale) routed to
-  Ledger C.
+  advantage flags; the Argonian swim exemption SHIPPED at P18 (the
+  race gate short-circuits before the roll); breath/drowning
+  (isPlayerSubmerged at +76*GlobalScale) shipped at P12, its residue
+  at P18.
 - **PARITY FIX**: PlayerMotor.limitDiagonalSpeed (.7071 when both
   axes are live) had never been ported - the grounded motor moved
   sqrt(2) fast on diagonals. Applied on both paths.
@@ -610,9 +611,9 @@ PlayerHeightChanger/PlayerSpeedChanger + HUDBreathBar:
   0.95 below the block water surface (the head-under threshold; the
   P11 swim toggle uses 50). On the CLASSIC UPDATE cadence while
   submerged without WaterBreathing: a fresh dive fills currentBreath
-  (DeepBreath = MaxBreath - guild bonuses pend guilds), every 19th
+  (DeepBreath - since P18 the real guild fold), every 19th
   classic update drains 1 (breathUpdateTally > 18; the Argonian
-  coin-flip refund pends race selection), and breath 0 is
+  coin-flip refund SHIPPED at P18), and breath 0 is
   SetHealth(0) - drowned. Surfacing zeroes the counter. The tick
   lives in dungeonContext.drawFoes, so BOTH hosts get it (the
   standing host rule - worldModes delegates here).
@@ -902,3 +903,82 @@ a Node bench on the real Privateer's Hold collider
 - Worst case, all 29 foes pursuing at once at 10fps render:
   767ms/frame -> ~65ms; the realistic handful-of-pursuers case is
   low single-digit ms.
+
+## P18 (2026-08-19): the P12 residue clears - the timed height transition + the breath refunds SHIPPED
+
+The three laws the P12 Ledger row held open, plus the stale
+race-selection excuse one bullet over (P11's swim exemption). Suite
+green with ARENA2 set and unset; every new pin mutation-checked
+(flip-at-press, coin != 1, trunc -> round, press-resets-the-clock -
+all four caught, then reverted).
+
+- **The timed height transition** (PlayerHeightChanger.cs; motor.js
+  _heightAction/_eyeLevel). ONE camTimer, ticked while any action
+  pends and reset only by timerResetAction (:451-455) - a re-press
+  mid-window re-arms the same action without extending it (the
+  toggle reads IsCrouching, which a pending crouch has not flipped),
+  and an action SWITCHED mid-window INHERITS the clock, DFU's own
+  arithmetic, pinned. DoCrouch (:246-262) flips IsCrouching + the
+  capsule only at camTimer >= timerMax (timerFast 0.10): the player
+  is mechanically STANDING for the whole window - walk speed base,
+  the 1.8 capsule, the full 4.5 jump (no crouchingJumpDelta), the
+  stealth half-speed compare. DoStand (:265-287) is the reverse
+  order: the flip lands on the FIRST CanStand tick and only the eye
+  lags, its lerp T riding the same accumulated camTimer (a stand
+  that spent 0.08 s blocked gets a nearly instant camera). The
+  AUDIT 18 blocked-stand retry window is unchanged - it was always
+  this clock.
+  DEPARTURE (documented at _eyeLevel): the eye path is a straight
+  lerp between OUR rest eyes (1.7/0.8 - the 0.1-below-top law); DFU
+  lerps the camera inside its Unity transform parenting (DoCrouch
+  runs from prevHeight/2, 0.09 above the standing rest, and sits
+  0.45 high until the height change drops the transform; a blocked
+  stand lerps stale prev/target fields). Scaffolding, not law - the
+  endpoints and the 0.10 s duration are DFU's.
+  THE FOUR HOSTS: the seam is the MOTOR. exterior.js, world.js,
+  worldModes.js and dungeonContext.js all drive it through the
+  shared input.crouch edge - no host wiring changed, all four carry
+  the law.
+- **systems/breath.js**: PlayerEntity.FixedUpdate's breath clause
+  (PlayerEntity.cs:322-343) extracted as breathStep - one classic
+  update's worth; the cadence, the submergence geometry and the
+  SetHealth(0) stay in dungeonContext.breathTick, which BOTH
+  dungeon-mode hosts drive through dungeonCtx.drawFoes
+  (worldModes.js:596). exterior.js and world.js have no submersion
+  path for it to ride yet - when exterior water lands, it consumes
+  this same step. New in the step:
+  (1) THE ARGONIAN COIN REFUND (:331-333): on each drain tick,
+  raceId 8 (EntityEnums.Races.Argonian) + Range(0, 2) == 1 re-adds
+  the point. The refund lands BEFORE the drowned check, so a lucky
+  Argonian at 1 breath survives that tick - pinned both ways, roll
+  injectable.
+  (2) THE DEEPBREATH REFILL (GuildManager.cs:388-394): the fill
+  from empty folds MaxBreath through every membership.
+  Guild.DeepBreath is the identity (Guild.cs:246-249); the ONE
+  override is Temple.DeepBreath's Kynareth arm (Temple.cs:440-448),
+  (int)(((10f + rank) / 10) * duration) - the whole rank ladder
+  pinned (duration 25 -> 25,27,30,32,35,37,40,42,45,47). Ported on
+  DOUBLES per the Ledger A FaceUVTool row (Mono widens float math);
+  the two disagree inside the fortified-Endurance range and the
+  edge is pinned: rank 4 x 45 = 62 where float32 lands 63.
+  deepBreath lives in breath.js rather than systems/guilds.js -
+  that file is mid-flight in a parallel session today - and it is
+  the member's only export either way.
+- **The Argonian swim-fatigue exemption** (PlayerEntity.cs:412;
+  worldTick.js): the race gate SHORT-CIRCUITS before the Dice100
+  roll - an Argonian never consumes a roll (sequence preservation,
+  pinned with a counting rolls()), pays the DEFAULT 11, and still
+  tallies Swimming (:414). Closes P11's "pends race selection"
+  excuse - races shipped at U9.
+
+Pins: test/breath.test.js (the identity fold, the Kynareth ladder,
+the precision edge, the coin + its race gate, the drown order,
+surfacing/WaterBreathing zeroing); player.test.js P18 x2 (flip at
+the END going down / at the START going up on one clock, the
+standing jump inside the window, the swim exemption); the P12
+crouch test and audit18_player F1/F2 re-derived on the timed law
+(the no-step-frame press law and the blocked-stand retry survive
+unchanged). The doc-truth suite re-anchored: the breath clause is
+asserted at its new seam (dungeonContext must call breathStep,
+breath.js must own currentBreath), and the open-flags citations
+regenerated for the one-line import shift in dungeonContext.

@@ -176,7 +176,8 @@ test('AUDIT 18: Ledger C does not list breath/drowning + the crouch motor, which
   // asserting a string about a feature that quietly went away.
   const dungeon = read('src/scenes/dungeonContext.js');
   assert.match(dungeon, /function breathTick/, 'P12 breathTick is gone from dungeonContext.js');
-  assert.match(dungeon, /currentBreath/, 'P12 currentBreath is gone from dungeonContext.js');
+  assert.match(dungeon, /breathStep/, 'P18: dungeonContext no longer drives the extracted breath clause');
+  assert.match(read('src/systems/breath.js'), /currentBreath/, 'the P12/P18 breath clause is gone from systems/breath.js');
   assert.match(read('src/systems/save.js'), /currentBreath/, 'save.js no longer persists currentBreath');
   assert.match(read('src/ui/hud.js'), /breathShort|breathNormal/, 'hud.js no longer draws the breath bar');
   assert.match(read('src/player/motor.js'), /CROUCH_HEIGHT/, 'the P12 crouch motor is gone from motor.js');

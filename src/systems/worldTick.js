@@ -128,7 +128,8 @@ export function tickPlayerMinutes({
       // Without it, an Argonian with Swimming 20 paid 44 fatigue on ~80% of
       // minutes instead of 11 - four times the drain, in the water, for the
       // race built for it, ending in exhaustionOutcome's death arm in about a
-      // quarter of the time DFU allows.
+      // quarter of the time DFU allows. (P18 shipped this same line in
+      // the parallel Player lane the same day - two finders, one law.)
       if (entity.raceId !== RACES.Argonian
         && !dice100(skillValue(entity, SKILLS.Swimming), rolls())) loss = FATIGUE_LOSS.Swimming;
       tallySkill(entity, SKILLS.Swimming);          // the 20000 clamp is load-bearing

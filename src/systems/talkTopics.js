@@ -285,3 +285,27 @@ export function whereIsAnswer(playerPos, building, personality, npcSeed, socialG
   const direction = compassHint(building.position[0] - playerPos[0], building.position[2] - playerPos[2]);
   return { textId, direction, tier, knows };
 }
+
+// T4: the %hnt fork. TalkManager.cs:123 - DFU's own comment on the
+// constant is "Chances unknown".
+export const CHANCE_TO_REVEAL_LOCATION_ON_MAP = 0.35;
+export const DIRECTION_TEXT_ID = 7333;   // GetKeySubjectBuildingDirection (:1693-1696)
+export const MAP_REVEAL_TEXT_ID = 7332;  // GetKeySubjectBuildingOnMap (:1698-1705)
+
+/** GetKeySubjectBuildingHint (TalkManager.cs:1707-1723): %hnt resolves
+ *  to EITHER the 7333 directional hint or the 7332 map reveal - the
+ *  reveal only when the roll lands AT or under the chance (DFU tests
+ *  `randomFloat > Chance` for the direction arm) and NEVER while the
+ *  player is inside. The draw is UnityEngine.Random.Range(0f, 1f) -
+ *  per THE ENGINE-PRNG RULE (Ledger A) it rides an injectable uniform
+ *  roll, pinned for distribution, never for sequence. The caller runs
+ *  this only when the answer record actually carries %hnt (the macro
+ *  is where DFU rolls), and performs the DiscoverBuilding side effect
+ *  on reveal - MacroHelper's %loc handler does it there
+ *  (MacroHelper.cs:1085-1090). */
+export function buildingHint(roll = Math.random, isInside = false) {
+  if (roll() > CHANCE_TO_REVEAL_LOCATION_ON_MAP || isInside) {
+    return { reveal: false, textId: DIRECTION_TEXT_ID };
+  }
+  return { reveal: true, textId: MAP_REVEAL_TEXT_ID };
+}

@@ -80,25 +80,35 @@ test('audit18 player F1: the crouch key is read on the RENDER frame - a 120 Hz f
   // SECOND frame, so half of these presses land on a frame that runs
   // no physics at all. DFU's DecideHeightAction sees every one.
   assert.ok(1 / 120 < FIXED_DT);
+  // P18: the toggle is TIMED - each press lands on IsCrouching still
+  // false (DoCrouch flips at camTimer >= timerMax), so every re-press
+  // re-arms DoCrouching and the FIRST press's clock keeps running.
+  // The law under test is that the un-stepped frames still ARM it.
   const presses = [true, false, true, false, true, false, true, false];
-  const trace = presses.map((crouch) => {
+  for (const crouch of presses) {
     m.update(1 / 120, { ...still(), crouch }, 0);
-    return m.crouching;
-  });
-  assert.deepEqual(trace, [true, true, false, false, true, true, false, false]);
-  // and the toggle is real, not just a flag: the capsule and the eye
-  // follow it.
-  m.update(1 / 120, { ...still(), crouch: true }, 0);
-  assert.equal(m.crouching, true);
+    assert.equal(m.heightAction, 'crouch', 'a no-step frame must not swallow the press');
+    assert.equal(m.crouching, false, 'nothing flips before camTimer >= timerMax');
+  }
+  m.update(0.04, still(), 0);   // 8/120 + 0.04 crosses the 0.10 budget
+  assert.equal(m.crouching, true, 'the un-stepped presses were never swallowed');
+  // and the flip is real, not just a flag: the capsule and the eye
+  // land with it.
   assert.equal(m.height, CROUCH_HEIGHT);
   assert.equal(m.eye[1], m.pos[1] + CROUCH_EYE_HEIGHT);
+  // The stand direction flips at the START (DoStand adjusts height
+  // first) - same frame as the press, only the eye lags.
   m.update(1 / 120, { ...still(), crouch: true }, 0);
+  assert.equal(m.crouching, false);
   assert.equal(m.height, CAPSULE_HEIGHT);
+  assert.ok(m.eye[1] < m.pos[1] + EYE_HEIGHT, 'the eye is still rising');
+  m.update(0.12, still(), 0);   // the camera window closes
   assert.equal(m.eye[1], m.pos[1] + EYE_HEIGHT);
   // The mirror: ONE edge across a 3-step catch-up frame toggles ONCE.
   const m2 = new PlayerMotor(floored());
   m2.spawn(0, 0, 0);
   m2.update(3 / 60, { ...still(), crouch: true }, 0);
+  m2.update(3 / 60, still(), 0);   // 0.05 + 0.05 completes the window
   assert.equal(m2.crouching, true);
   m2.update(3 / 60, still(), 0);
   assert.equal(m2.crouching, true);
@@ -110,8 +120,9 @@ test('audit18 player F2: a blocked stand-up RETRIES for timerFast 0.10 s, then t
   const m = new PlayerMotor(col);
   m.spawn(0, 0, 0);
   m.update(0.04, { ...still(), crouch: true }, 0);
+  m.update(0.08, still(), 0);              // P18: DoCrouch completes at camTimer 0.10
   assert.equal(m.crouching, true);
-  assert.equal(m.heightAction, null);      // DoCrouch is never blocked
+  assert.equal(m.heightAction, null);      // DoCrouch is never blocked, and it has completed
 
   // Press stand under a low ceiling: CanStand() fails, so DFU keeps
   // heightAction == DoStanding and retries it on every Update.
@@ -136,6 +147,7 @@ test('audit18 player F2: a blocked stand-up RETRIES for timerFast 0.10 s, then t
   const m2 = new PlayerMotor(col2);
   m2.spawn(0, 0, 0);
   m2.update(0.04, { ...still(), crouch: true }, 0);
+  m2.update(0.08, still(), 0);             // the crouch completes
   col2.blockedStand = true;
   m2.update(0.04, { ...still(), crouch: true }, 0);   // camTimer 0.04
   m2.update(0.04, still(), 0);                        // camTimer 0.08
@@ -152,6 +164,7 @@ test('audit18 player F2: a blocked stand-up RETRIES for timerFast 0.10 s, then t
   const m3 = new PlayerMotor(col3);
   m3.spawn(0, 0, 0);
   m3.update(0.04, { ...still(), crouch: true }, 0);
+  m3.update(0.08, still(), 0);             // the crouch completes
   col3.blockedStand = true;
   m3.update(0.04, { ...still(), crouch: true }, 0);
   m3.update(0.04, { ...still(), crouch: true }, 0);

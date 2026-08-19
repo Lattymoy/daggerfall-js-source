@@ -11,6 +11,7 @@
 
 import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
 import { goldStack } from './inventory.js';   // AUDIT 17f
+import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
 
 export const SAVE_VERSION = 1;
 export const QUICKSAVE_KEY = 'dagger.quicksave';
@@ -121,6 +122,10 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   snap.guildMemberships = entity.guildMemberships
     ? Object.fromEntries(Object.entries(entity.guildMemberships).map(([k, m]) => [k, { ...m }]))
     : null;
+  // T4: the building-discovery store (PlayerGPS discoveredLocations -
+  // DFU serialises it in SaveData_v1). Module-level world state, so
+  // the snapshot reads the store, not the entity.
+  snap.discovery = snapshotDiscovery();
   return snap;
 }
 
@@ -213,6 +218,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.spells = spellsByIndex
     ? snap.spells.map((i) => spellsByIndex.get(i)).filter(Boolean)
     : [];
+  // T4: a load replaces the discovery store; a pre-T4 save carries no
+  // field and restores an empty one (nothing was discoverable then).
+  restoreDiscovery(snap.discovery);
   return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null };
 }
 

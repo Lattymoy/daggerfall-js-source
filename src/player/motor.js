@@ -180,7 +180,25 @@ export class PlayerMotor {
   }
 
   get eye() {
-    return [this.pos[0], this.pos[1] + (this.crouching ? CROUCH_EYE_HEIGHT : EYE_HEIGHT), this.pos[2]];
+    return [this.pos[0], this.pos[1] + this._eyeLevel(), this.pos[2]];
+  }
+
+  /** The presentation eye across the height actions (P18): DoCrouch
+   *  sinks it standing->crouched BEFORE the stance flips, DoStand
+   *  raises it crouched->standing AFTER, both across DFU's
+   *  clamp(camTimer/timerMax) (:246-287). The path itself is ours - a
+   *  straight lerp between the two rest eyes (the 0.1-below-top
+   *  presentation law), where DFU lerps the camera inside its Unity
+   *  transform parenting (DoCrouch runs from prevHeight/2, 0.09 above
+   *  the standing rest, and sits 0.45 high until the height change
+   *  drops the transform - scaffolding, not law). A BLOCKED stand
+   *  holds the crouched rest: DFU's DoDismount fallback lerps stale
+   *  prev/target fields there, which is the same scaffolding. */
+  _eyeLevel() {
+    const t = Math.min(this.heightTimer / HEIGHT_TIMER_FAST, 1);
+    if (this.heightAction === 'crouch') return EYE_HEIGHT + (CROUCH_EYE_HEIGHT - EYE_HEIGHT) * t;
+    if (this.heightAction === 'stand' && !this.crouching) return CROUCH_EYE_HEIGHT + (EYE_HEIGHT - CROUCH_EYE_HEIGHT) * t;
+    return this.crouching ? CROUCH_EYE_HEIGHT : EYE_HEIGHT;
   }
 
   get height() {
@@ -203,6 +221,7 @@ export class PlayerMotor {
     this._airVelX = 0;
     this._airVelZ = 0;
     this._acc = 0;   // the fixed-step accumulator restarts clean
+    this._heightReset();   // a pending height action does not ride a teleport/load
   }
 
   /**
@@ -237,39 +256,47 @@ export class PlayerMotor {
   /** PlayerHeightChanger.DecideHeightAction + PlayerHeightChanger
    *  .Update, both of which run on the RENDER frame in DFU.
    *  DecideHeightAction TOGGLES the pending action off the Crouch
-   *  press (:174-181); Update applies DoCrouch unconditionally and
-   *  DoStand only while CanStand() passes (:223-226), a blocked stand
-   *  falling through to the do-nothing DoDismount that clears the
-   *  action once camTimer >= timerMax. camTimer is reset ONLY by
-   *  timerResetAction, so re-pressing during a blocked stand-up does
-   *  not extend the window.
-   *  (The 0.10 s controller/camera LERP itself is not ported - our
-   *  height change is instant; the Ledger's P12 RESIDUE row in section C,
-   *  which names PlayerHeightChanger's timerMax 0.1s lerp.
+   *  press (:174-181) - it reads IsCrouching, which a pending crouch
+   *  has not flipped yet, so a re-press mid-window re-arms the SAME
+   *  action; Update applies DoCrouch unconditionally and DoStand only
+   *  while CanStand() passes (:223-226), a blocked stand falling
+   *  through to the do-nothing DoDismount. camTimer is reset ONLY by
+   *  timerResetAction (:451-455), at COMPLETION - neither a re-press
+   *  nor an action switch mid-window restarts the clock.
    *
-   *  AUDIT 21: this cited "Ledger row 139" and 139 is the middle of an
-   *  unrelated section-B ModelDoor bullet. Ledger rows are cited by TITLE
-   *  from here on - a line number in a file that size rots on every insert.) */
+   *  THE TIMED TRANSITION (P18, the P12 residue). DoCrouch (:246-262,
+   *  "first lower camera, Controller height last") flips IsCrouching
+   *  and the controller height only once camTimer >= timerMax - the
+   *  player is mechanically STANDING (speed base, capsule, jump
+   *  delta, the stealth half-speed compare) for the whole 0.10 s.
+   *  DoStand (:265-287, "adjust height first, camera last") is the
+   *  reverse order: height + IsCrouching flip on the FIRST tick
+   *  CanStand passes, and only the camera lags, its lerp T fed by the
+   *  SAME accumulated camTimer - a stand that spent 0.08 s blocked
+   *  gets a nearly instant camera, DFU's own arithmetic. The eye path
+   *  lives in _eyeLevel. */
   _heightAction(dt, input) {
     if (input.crouch) this.heightAction = this.crouching ? 'stand' : 'crouch';
+    if (!this.heightAction) return;
+    this.heightTimer += dt;   // timerTick (:442-447): every pending action runs the one clock
     if (this.heightAction === 'crouch') {
-      this.crouching = true;
-      this.heightAction = null;
-      this.heightTimer = 0;
-    } else if (this.heightAction === 'stand') {
-      // CanStand: the STANDING capsule must fit at the current feet.
-      if (this.collider.penetrationAt(this.pos, CAPSULE_HEIGHT) < 0.03) {
-        this.crouching = false;
-        this.heightAction = null;
-        this.heightTimer = 0;
-      } else {
-        this.heightTimer += dt;
-        if (this.heightTimer >= HEIGHT_TIMER_FAST) {
-          this.heightAction = null;
-          this.heightTimer = 0;
-        }
+      if (this.heightTimer >= HEIGHT_TIMER_FAST) {
+        this.crouching = true;   // the flip IS the end of DoCrouch
+        this._heightReset();
       }
+    } else if (this.collider.penetrationAt(this.pos, CAPSULE_HEIGHT) < 0.03) {
+      // CanStand: the STANDING capsule must fit at the current feet.
+      this.crouching = false;    // DoStand flips at the START; the eye keeps lerping
+      if (this.heightTimer >= HEIGHT_TIMER_FAST) this._heightReset();
+    } else if (this.heightTimer >= HEIGHT_TIMER_FAST) {
+      this._heightReset();       // the blocked request is forgotten past the budget
     }
+  }
+
+  /** timerResetAction (:451-455). */
+  _heightReset() {
+    this.heightAction = null;
+    this.heightTimer = 0;
   }
 
   /** The RENDER-frame entry: accumulates dt and runs fixed physics
