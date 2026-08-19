@@ -298,6 +298,7 @@ test('player: P12 crouch - toggle, heights, speed, the blocked-stand ceiling', a
   // crouchSpeed, RUNNING crouched at the crouch base x run mult
   // (GetRunSpeed's crouch branch - audit F1)
   m.update(0.05, { ...noInput, crouch: true }, 0);
+  m.update(0.05, noInput, 0);   // P18: the flip waits on camTimer 0.10
   assert.ok(m.crouching);
   approx(m.height, 0.9);
   approx(m.eye[1], m.pos[1] + CROUCH_EYE_HEIGHT);
@@ -317,8 +318,94 @@ test('player: P12 crouch - toggle, heights, speed, the blocked-stand ceiling', a
   for (let i = 0; i < 400 && m.pos[0] > 1.5; i++) m.update(0.05, { forward: -1, strafe: 0, run: true, jump: false }, Math.PI / 2);
   assert.ok(m.pos[0] <= 1.5, `crawled back to ${m.pos[0]}`);
   m.update(0.05, { ...noInput, crouch: true }, 0);
-  assert.ok(!m.crouching);
+  assert.ok(!m.crouching);   // P18: DoStand flips at the START
+  m.update(0.05, noInput, 0);   // the eye window closes
   approx(m.eye[1], m.pos[1] + EYE_HEIGHT);
+});
+
+test('player: P18 timed height transition - the flip lands at the END going down, at the START going up, ONE clock', async () => {
+  const { HEIGHT_TIMER_FAST, CROUCH_EYE_HEIGHT, EYE_HEIGHT } = await import('../src/player/motor.js');
+  assert.equal(HEIGHT_TIMER_FAST, 0.10);
+  // The law is in the motor; the probe is the test's (audit18_player
+  // owns the geometry-driven CanStand cases).
+  const floor = {
+    penetrationAt: () => 0,
+    move(pos, dx, dy, dz) {
+      pos[0] += dx; pos[2] += dz; pos[1] += dy;
+      if (pos[1] <= 0) { pos[1] = 0; return { grounded: true, groundKey: 'floor' }; }
+      return { grounded: false, groundKey: null };
+    },
+  };
+  const noInput = { forward: 0, strafe: 0, run: false, jump: false };
+
+  // DOWN: DoCrouch (PlayerHeightChanger.cs:246-262) flips IsCrouching
+  // + the capsule only at camTimer >= timerMax. Mechanically STANDING
+  // for the whole window: the capsule, the eye's start, and the jump
+  // all read the unflipped state.
+  const m = new PlayerMotor(floor, { speed: 50, running: 30 });
+  m.spawn(0, 0, 0);
+  for (let f = 0; f < 30; f++) m.update(1 / 60, noInput, 0);
+  m.update(0.04, { ...noInput, crouch: true }, 0);
+  assert.equal(m.crouching, false);
+  assert.equal(m.height, CAPSULE_HEIGHT);
+  approx(m.eye[1], EYE_HEIGHT + (CROUCH_EYE_HEIGHT - EYE_HEIGHT) * 0.4);   // the eye sinks FIRST
+  // A jump inside the window is a STANDING jump - no crouchingJumpDelta:
+  // launch velocity 4.5 (less one step of gravity), where a crouched
+  // jump starts from 4.5 * 0.8 = 3.6.
+  m.update(0.04, { ...noInput, jump: true }, 0);
+  assert.equal(m.crouching, false);
+  assert.equal(m.jumped, true);
+  assert.ok(m.velY > JUMP_SPEED * 0.8, `velY ${m.velY} reads as a crouched jump`);
+
+  // UP: DoStand (:265-287) flips on the FIRST CanStand tick - only the
+  // eye lags, riding the SAME camTimer. An action switched mid-window
+  // INHERITS the clock: timerResetAction (:451-455) is the only reset.
+  const m2 = new PlayerMotor(floor, { speed: 50, running: 30 });
+  m2.spawn(0, 0, 0);
+  m2.update(0.04, { ...noInput, crouch: true }, 0);
+  m2.update(0.08, noInput, 0);
+  assert.equal(m2.crouching, true);
+  m2.update(0.04, { ...noInput, crouch: true }, 0);   // the stand press
+  assert.equal(m2.crouching, false, 'DoStand adjusts height first');
+  assert.equal(m2.height, CAPSULE_HEIGHT);
+  approx(m2.eye[1], CROUCH_EYE_HEIGHT + (EYE_HEIGHT - CROUCH_EYE_HEIGHT) * 0.4);   // camTimer 0.04
+  m2.update(0.04, { ...noInput, crouch: true }, 0);   // re-crouch mid-lerp: camTimer is already 0.08
+  assert.equal(m2.crouching, false);
+  assert.equal(m2.heightAction, 'crouch');
+  m2.update(0.04, noInput, 0);                        // 0.12 on the INHERITED clock
+  assert.equal(m2.crouching, true, 'the switched action inherits camTimer');
+});
+
+test('player: P18 the Argonian swim-fatigue exemption - the race gate short-circuits BEFORE the roll', async () => {
+  const { tickPlayerMinutes } = await import('../src/systems/worldTick.js');
+  const { RACES } = await import('../src/systems/races.js');
+  const { SKILLS } = await import('../src/systems/skills.js');
+  const entity = (raceId) => ({
+    chargenDone: true, skillUses: new Array(35).fill(0), stats: {}, skills: 30,
+    activeEffects: [], lastSkillCheckTime: 0, fatigue: 3200, health: 50, maxHealth: 50, raceId,
+  });
+  const sinks = (drained) => ({
+    hurt() {}, heal() {}, drainMagicka() {}, restoreMagicka() {}, restoreFatigue() {}, say() {},
+    drainFatigue: (n) => { drained.n += n; },
+  });
+  const swim = { running: false, swimming: true };
+  // PlayerEntity.cs:412: a failed Swimming roll costs 44...
+  const breton = entity(RACES.Breton);
+  const bretonDrain = { n: 0 };
+  tickPlayerMinutes({ entity: breton, classicMinutes: 0, dt: 5, sinks: sinks(bretonDrain), activity: swim, rolls: () => 0.5 });
+  assert.equal(bretonDrain.n, 44);
+  // ...unless the race is Argonian, which pays the DEFAULT loss - and
+  // the gate sits BEFORE Dice100, so the roll is never consumed
+  // (sequence preservation: the shared stream must not desync).
+  const argonian = entity(RACES.Argonian);
+  const argonianDrain = { n: 0 };
+  let rolled = 0;
+  tickPlayerMinutes({ entity: argonian, classicMinutes: 0, dt: 5, sinks: sinks(argonianDrain), activity: swim, rolls: () => { rolled++; return 0.5; } });
+  assert.equal(argonianDrain.n, 11);
+  assert.equal(rolled, 0);
+  // The Swimming tally runs for BOTH races (:414).
+  assert.equal(breton.skillUses[SKILLS.Swimming], 1);
+  assert.equal(argonian.skillUses[SKILLS.Swimming], 1);
 });
 
 test('player: P12 breath - MaxBreath law, the short threshold, WaterBreathing key, the save field', async () => {

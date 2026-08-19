@@ -24,6 +24,7 @@ import { tickActiveEffects } from './effects.js';
 import { raiseSkills } from './advancement.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { FATIGUE_LOSS } from './statMods.js';
+import { RACES } from './races.js';
 import { dice100 } from '../combat/formulas.js';
 
 /** PlayerEntity.cs:263 - the classic day is elapsed minutes / 1440. */
@@ -81,7 +82,10 @@ export function tickPlayerMinutes({
     let loss = FATIGUE_LOSS.Default;
     if (activity.running) loss = FATIGUE_LOSS.Running;
     else if (activity.swimming) {
-      if (!dice100(skillValue(entity, SKILLS.Swimming), rolls())) loss = FATIGUE_LOSS.Swimming;
+      // PlayerEntity.cs:412 (P18): the Argonian exemption SHORT-
+      // CIRCUITS before the Dice100 roll - an Argonian never rolls,
+      // pays the default loss, and still tallies (:414).
+      if (entity.raceId !== RACES.Argonian && !dice100(skillValue(entity, SKILLS.Swimming), rolls())) loss = FATIGUE_LOSS.Swimming;
       tallySkill(entity, SKILLS.Swimming);          // the 20000 clamp is load-bearing
     }
     sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier));
