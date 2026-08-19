@@ -28,6 +28,7 @@ import { buildClaymore } from '../../src/characters/pieces/claymore.js';
 import { buildLongBow, buildShortBow, buildNockedArrow } from '../../src/characters/pieces/bow.js';
 import { buildBladeWeapon, BLADE_SPECS } from '../../src/characters/pieces/blades.js';
 import { buildHaftedWeapon, HAFTED_SPECS } from '../../src/characters/pieces/hafted.js';
+import { VILLAGER_DESIGNS, designOpts, designDrape, villagerDelta, RACE_TONE } from '../../src/characters/villagerDesigns.js';
 
 const A = process.env.ARENA2_PATH;
 const pal = new DFPalette(); pal.load(readFileSync(A + '/ART_PAL.COL'), 'ART_PAL.COL');
@@ -42,9 +43,9 @@ const fb = cif.getDFBitmap(0, 0);
 const faceRgb = []; for (let i = 0; i < fb.data.length; i++) { const idx = fb.data[i]; if (idx) { const c = pal.get(idx); faceRgb.push([c.r, c.g, c.b]); } else faceRgb.push(null); }
 const face = { w: fb.width, h: fb.height, rgb: faceRgb };
 
-const outfit = [...clothingZones(167), ...clothingZones(151)]; // Long Shirt + Casual Pants (under)
-const armor = [...armorZones(102), ...armorZones(104), ...armorZones(103), ...armorZones(108)]; // full plate over it
-const mats = { steel: STEEL_RAMP, mail: MAIL_RAMP, leather: LEATHER_RAMP };
+// (The old `outfit`/`armor`/`mats` sample zones were built and never
+// passed to anything - the cloth path had no consumer until the
+// villager designs below became its first.)
 const faces = buildNeutralBody(ramps, { face });
 let minY = 1e9, maxY = -1e9;
 for (const f of faces) for (let i=0;i<4;i++){ const y=f.p[i*3+1]; if(y<minY)minY=y; if(y>maxY)maxY=y; }
@@ -57,6 +58,22 @@ for (const f of faces) {
   Ib.push(Math.round((f._i ?? 0.6) * 255));
   G.push(GI[f.g] ?? 0);
 }
+// ── the VILLAGER DESIGNS (editor only - nothing here touches a game
+// host). A design's zones DISPLACE the body's own faces and recolour
+// them; they never add geometry, so all 25 share the base body's face
+// list and only ~11% of it differs. Shipping 25 whole bodies would be
+// megabytes of payload for one standalone file, so each villager is a
+// DELTA: the indices that changed, their new corners, their new
+// colour. Normals are untouched (displace moves corners radially and
+// leaves f.n alone), so the delta carries none.
+const villagerPacks = VILLAGER_DESIGNS.map((d) => {
+  const vf = buildNeutralBody(ramps, { face, ...designOpts(d, pal) });
+  return {
+    archive: d.archive, race: d.race, gender: d.gender, name: d.name, build: d.build,
+    hair: d.hair, tone: RACE_TONE[d.race], drape: designDrape(d, pal), ...villagerDelta(faces, vf),
+  };
+});
+
 // armor pieces (separate meshes in the viewer, toggleable).
 const packPiece = (pf) => { const pP=[], pN=[], pC=[], pG=[], pI=[]; for (const f of pf) { for (let i=0;i<4;i++) pP.push(Math.round(f.p[i*3]*1000), Math.round(f.p[i*3+1]*1000), Math.round(f.p[i*3+2]*1000)); pN.push(Math.round(f.n[0]*127), Math.round(f.n[1]*127), Math.round(f.n[2]*127)); pC.push(f.c[0], f.c[1], f.c[2]); pI.push(Math.round((f._i ?? 0.6) * 255)); pG.push(GI[f.g] ?? 0); } return { P: pP, N: pN, C: pC, G: pG, I: pI }; };
 // Per-race hairstyle packs (haired races get multiple styles).
@@ -96,12 +113,18 @@ const payload = JSON.stringify({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: 
     return list;
   })(),
   swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
-  swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
+  swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, hairRamps: HAIR_RAMPS, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 const dir = new URL('.', import.meta.url).pathname;
 let clothSrc = readFileSync(dir + '../../src/characters/clothSim.js', 'utf8').replace(/^export /gm, '');
 let animsSrc = readFileSync(dir + '../../src/characters/anims.js', 'utf8').replace(/^export /gm, '');
 let statesSrc = readFileSync(dir + '../../src/characters/weaponStates.js', 'utf8').replace(/^export /gm, '');
-let animateSrc = readFileSync(dir + '../../src/characters/animate.js', 'utf8').replace(/^export /gm, '').replace('function animateTarget(', 'function animateTargetCore(');
+// The template carries its OWN copy of the animation helpers, so the
+// injected module has to avoid colliding with them. animateTarget was
+// already renamed; ZERO_ARM was not, and two `const ZERO_ARM` in one
+// scope is a SyntaxError that killed the WHOLE viewer script - the
+// page loaded and nothing ran. Renamed the same way, over every
+// occurrence so the injected copy stays self-consistent.
+let animateSrc = readFileSync(dir + '../../src/characters/animate.js', 'utf8').replace(/^export /gm, '').replace('function animateTarget(', 'function animateTargetCore(').replace(/\bZERO_ARM\b/g, 'ZERO_ARM_CORE');
 const tpl = readFileSync(dir + 'viewer-template.html', 'utf8').replace('/*__CLOTHSIM__*/', clothSrc).replace('/*__ANIMS__*/', animsSrc).replace('/*__WEAPONSTATES__*/', statesSrc).replace('/*__ANIMATE__*/', animateSrc);
 writeFileSync(process.argv[2] || 'dagger-viewer.html', tpl.replace('__PAYLOAD__', payload));
 console.log('viewer written (', faces.length, 'faces ) ->', process.argv[2] || 'dagger-viewer.html');

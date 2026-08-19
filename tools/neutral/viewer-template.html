@@ -44,6 +44,7 @@
   <button id="tone">tone: Pale</button>
   <button id="hairstyle">hair: short</button>
   <button id="drape">drape: None</button>
+  <select id="villager" title="villager design (editor only - no game wiring)"></select>
 </div>
 <div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 72px); left:0; right:0; display:flex; flex-direction:column; gap:8px; align-items:center; color:#8a8a99; font-size:12px; pointer-events:none;">
   <button id="tunertab">tuners &#9650;</button>
@@ -142,6 +143,45 @@ for (let f = 0; f < nf; f++) {
 const vgrp = new Uint8Array(nf * 6);
 for (let f = 0; f < nf; f++) for (let k = 0; k < 6; k++) vgrp[f*6+k] = D.G ? D.G[f] : 0;
 const basePos = pos.slice();
+// ── VILLAGER DESIGNS (editor only) ────────────────────────────────
+// A design's zones DISPLACE the body's own faces and recolour them -
+// they never add geometry - so each villager ships as a DELTA over
+// this same face list: the indices that changed, their new corners,
+// their new colour. Selecting one writes the delta over pristine
+// copies; selecting "none" restores them. basePos is rewritten too,
+// because the animator poses from it rather than from `pos`.
+const pristinePos = pos.slice(), pristineCol = col.slice();
+let villagerOn = null;
+// ORDER MATTERS HERE. applyVillagerHair -> syncHair -> applyTone calls
+// setBodyRamp, which repaints EVERY body face from the skin ramp - run
+// it after the delta and the villager's clothes are wiped, leaving a
+// nude body under a floating gown. So: reset, set the skin tone and
+// hair the design asks for, and only THEN lay the garment delta over
+// the top. Unchanged faces keep the tone; garment faces take the
+// delta's colour, which is what both halves want.
+function applyVillager(v) {
+  pos.set(pristinePos); col.set(pristineCol);
+  applyVillagerHair(v);
+  if (v) {
+    for (let k = 0; k < v.idx.length; k++) {
+      const f = v.idx[k], pb = k * 12, cb = k * 3;
+      const r = v.C[cb] / 255, g = v.C[cb + 1] / 255, b = v.C[cb + 2] / 255;
+      let o = f * 18;
+      for (const vi of TRI) {
+        pos[o] = v.P[pb + vi * 3] / 1000;
+        pos[o + 1] = v.P[pb + vi * 3 + 1] / 1000;
+        pos[o + 2] = v.P[pb + vi * 3 + 2] / 1000;
+        col[o] = r; col[o + 1] = g; col[o + 2] = b;
+        o += 3;
+      }
+    }
+  }
+  basePos.set(pos);
+  geo.getAttribute('position').needsUpdate = true;
+  geo.getAttribute('color').needsUpdate = true;
+  villagerOn = v;
+  applyVillagerDrape(v);
+}
 function setBodyColors(Carr) {
   if (!Carr) Carr = D.C;
   let o = 0;
@@ -220,17 +260,79 @@ for (const nm in (D.drapeGrids||{})) {
 for (const nm in (D.draped||{})) { const m = buildPiece(D.draped[nm]); m.visible = false; drapedMeshes[nm] = m; }
 let drapeIx = 0;
 const setDrape = () => { for (const nm in drapedMeshes) drapedMeshes[nm].visible = false; const cur = DRAPES[drapeIx]; if (cur !== 'None' && drapedMeshes[cur]) drapedMeshes[cur].visible = true; };
+// ── VILLAGER DYE. A villager's hanging cloth is a drape name plus the
+// design's OWN ART_PAL ramp, so picking one has to repaint the garment
+// rather than leave it in draped.js's built-in DRAPE_MATERIAL colour.
+// Two kinds of drape, two repaint paths: a simulated one is reshaded
+// from cs.mat every frame, so swapping the ramp on the material is
+// enough; a static panel is baked, so it goes through the pack's own
+// recolor(), which re-snaps each face's stored intensity.
+const drapeBaseRamp = {};
+for (const nm in clothSims) drapeBaseRamp[nm] = clothSims[nm].mat.ramp;
+for (const nm in drapedMeshes) if (!clothSims[nm]) drapeBaseRamp[nm] = ((D.drapeMaterials||{})[nm] || {}).ramp || CLOTH_RAMP;
+function dyeDrape(nm, ramp) {
+  const use = ramp || drapeBaseRamp[nm];
+  if (!use) return;
+  if (clothSims[nm]) { clothSims[nm].mat = Object.assign({}, clothSims[nm].mat, { ramp: use }); return; }
+  const m = drapedMeshes[nm];
+  if (m && m.userData.recolor) m.userData.recolor(use);
+}
+// A design also names a HAIRSTYLE and a hair colour, so selecting a
+// villager drives those controls the same way. The hair packs are all
+// baked brown at build time; recolour() re-snaps each face's stored
+// intensity onto the design's ramp, which is exactly the drape's
+// static path.
+function applyVillagerHair(v) {
+  // The design's RACE picks a skin tone out of the human palette; the
+  // rig race stays Human (Redguard/Nord/Breton all are). Deselecting
+  // restores the viewer's own tone rather than stranding the last
+  // villager's.
+  if (v && v.tone) {
+    const pal = (D.PALETTES || {})[PKEY.Human] || [];
+    const ti = pal.findIndex((e) => e.name === v.tone);
+    if (ti >= 0) { raceIx = RACES.indexOf('Human'); toneIx.Human = ti; }
+  } else if (!v) { toneIx.Human = 0; }
+  { const pal = (D.PALETTES || {})[PKEY[RACES[raceIx]]]; const b = document.getElementById('tone');
+    if (pal && b) b.textContent = 'tone: ' + pal[toneIx[RACES[raceIx]] % pal.length].name; }
+  const h = raceHair[RACES[raceIx]];
+  if (!h || !h.styles.length) { applyTone(); return; }
+  const ramps = D.hairRamps || {};
+  const want = v && v.hair && h.styles.indexOf(v.hair.style);
+  if (want >= 0) h.ix = want;
+  const ramp = (v && v.hair && ramps[v.hair.ramp]) || ramps.brown;
+  if (ramp) for (const st of h.styles) { const m = h.meshes[st]; if (m && m.userData.recolor) m.userData.recolor(ramp); }
+  syncHair();
+  refreshHairLabel();
+}
+// Selecting a villager DRIVES the drape control: their gown is part of
+// the design, not a separate toggle the reader has to find.
+function applyVillagerDrape(v) {
+  for (const nm in drapeBaseRamp) dyeDrape(nm, null);   // undye whatever the last villager dyed
+  const want = v && v.drape ? DRAPES.indexOf(v.drape.name) : (v ? 0 : drapeIx);
+  if (want >= 0) drapeIx = want;
+  setDrape();
+  if (v && v.drape && want >= 0) dyeDrape(v.drape.name, v.drape.ramp);
+  const btn = document.getElementById('drape');
+  if (btn) btn.textContent = 'drape: ' + DRAPES[drapeIx];
+}
 // step the visible simulated cloth from the animation state
 // Articulated collider (bent legs + swinging arms) for the current gait,
 // using the rig's real joint heights + measured limb radii.
+//
+// ankleY comes from ACTX. It used to read a bare `ankL`, which is a
+// LOCAL inside createAnimContext and has never existed in this scope -
+// so drapeColliders threw a ReferenceError the first time any
+// simulated drape was selected, and every drape in DRAPED_NAMES is
+// simulated. The cloth never stepped and never reshaded. Exposing the
+// ankle on the context is the fix; it was already measured there.
 function drapeColliders(phase, motion, bob, L) {
   L = L || WALK;
   const walking = motion > 0.5, sA = L.strideAmp, kA = L.kneeAmp, kb = L.kneeBase;
   const legL = walking ? { sw: -sA*Math.sin(phase),         bd: kb + kA*Math.max(0, Math.sin(phase+1.2)) }         : { sw: 0, bd: 0 };
   const legR = walking ? { sw: -sA*Math.sin(phase+Math.PI), bd: kb + kA*Math.max(0, Math.sin(phase+Math.PI+1.2)) } : { sw: 0, bd: 0 };
   // capsules follow bob (leg mesh does too); bone-drive gets rest joints + bob separately
-  const caps = articulatedCapsules({ legX: 0.082, hipY: hipY+bob, kneeY: kneeY+bob, ankleY: ankL+bob, legR: [0.115, 0.10, 0.075] }, { legL, legR });
-  const bones = { legX: 0.082, hipY, kneeY, ankleY: ankL, legL, legR, bob, strength: 0.85 };
+  const caps = articulatedCapsules({ legX: 0.082, hipY: hipY+bob, kneeY: kneeY+bob, ankleY: ankleY+bob, legR: [0.115, 0.10, 0.075] }, { legL, legR });
+  const bones = { legX: 0.082, hipY, kneeY, ankleY, legL, legR, bob, strength: 0.85 };
   return { caps, bones };
 }
 function stepDrapeCloth(phase, motion, bob, L) {
@@ -346,7 +448,36 @@ const fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-1, 0
 // consumes the same module. The template binds a context and keeps a
 // THREE adapter so every existing call site (and probe) is unchanged.
 const ACTX = createAnimContext({ basePos, vgrp, armX: D.armX, wristY: D.wristY, neckY: D.neckY });
-const { hipY, shoulderY, kneeY, elbowY, wristY, armRootX } = ACTX;
+
+// villager picker: grouped by race so the roster reads as a town
+{
+  const sel = document.getElementById('villager');
+  const none = document.createElement('option');
+  none.value = ''; none.textContent = 'villager: none (bare rig)';
+  sel.appendChild(none);
+  const byRace = {};
+  for (const v of (D.villagers || [])) (byRace[v.race] ||= []).push(v);
+  for (const [race, list] of Object.entries(byRace)) {
+    const g = document.createElement('optgroup');
+    g.label = race;
+    for (const v of list) {
+      const o = document.createElement('option');
+      o.value = String(v.archive);
+      o.textContent = v.archive + '  ' + v.name + '  (' + v.gender + ', ' + v.build + ')';
+      g.appendChild(o);
+    }
+    sel.appendChild(g);
+  }
+  sel.onchange = () => {
+    const v = (D.villagers || []).find((x) => String(x.archive) === sel.value) || null;
+    applyVillager(v);
+    const hud = document.getElementById('hud');
+    if (hud) hud.textContent = v
+      ? v.name + ' \u00b7 ' + v.race + ' ' + v.gender + ' \u00b7 archive ' + v.archive + ' \u00b7 ' + v.build + ' build'
+      : 'NEUTRAL POSE prototype \u00b7 drag to rotate \u00b7 pinch to zoom';
+  };
+}
+const { hipY, shoulderY, kneeY, elbowY, wristY, armRootX, ankleY } = ACTX;
 let gaitIx = 0, wt = 0;   // 0 idle, 1 walk, 2 run
 // arm/hand posing tuner (radians): applied to the rest stance at idle.
 const armTune = { pitch: 0, spread: 0, elbow: 0, hand: 0, handPitch: 0, handYaw: 0 };

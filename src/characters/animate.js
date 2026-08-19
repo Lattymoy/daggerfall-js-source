@@ -38,7 +38,10 @@ export function createAnimContext({ basePos, vgrp, armX, wristY, neckY }) {
   const [ankL, hipY] = grpRange(4);
   const [wristL, shoulderY] = grpRange(2);
   return {
-    hipY, shoulderY,
+    // ankleY is the bottom of the leg group - already measured for
+    // kneeY, and the drape colliders need it by name. Additive: no
+    // existing reader of this context looks at it.
+    hipY, shoulderY, ankleY: ankL,
     kneeY: hipY - 0.52*(hipY-ankL),
     elbowY: shoulderY - 0.50*(shoulderY-wristL),
     wristY, armX, neckY,

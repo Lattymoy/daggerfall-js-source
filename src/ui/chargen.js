@@ -1654,7 +1654,10 @@ export class ChargenFlow {
       // U20a: the custom document halves - isCustom drives the
       // starting kit + the Spellsword spell rule, customReps the
       // sGroupReputations seed (PlayerEntity.AssignCharacter :844-848)
-      isCustom: this.isCustom, customReps: this.customReps };
+      isCustom: this.isCustom, customReps: this.customReps,
+      // S25: FACTION.TXT travels on the RESULT so finishChargen can
+      // build the reputation store without any host unpacking it.
+      factionDict: this.factionDict };
   }
 
   // ---- drawing ----

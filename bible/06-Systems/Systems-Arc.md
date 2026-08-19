@@ -1088,3 +1088,91 @@ taken; then with a full pool the same bolt lands for 20. The probe's
 first draft asserted on HEALTH in the full-pool case and was wrong to -
 whether an unabsorbed bolt deals damage rides the saving throw, which
 is a different system's dice.
+
+## S25 - the faction reputation store
+
+2026-08-19. The board said Guilds next. Reading DFU's Guild.cs first
+line of rank law said otherwise:
+
+    public virtual int GetReputation(PlayerEntity playerEntity)
+    { return playerEntity.FactionData.GetReputation(GetFactionId()); }
+
+Guild rank IS faction reputation, and the port had no per-faction
+reputation at all. It had two OTHER reputation channels - the regional
+LegalRep the court runs on, and the social-group array the talk
+reaction reads - and neither is this one. So Guilds could not be built
+on what was there; this is the floor underneath it.
+
+Two sites were already parked waiting, which is how you know it was
+the real prerequisite rather than a detour. `biography.js` parses `rf`
+answers correctly - 136 of them across the files, the second most
+common command in the biography data - and had nowhere to put one, so
+it pushed {id, amount} onto the entity and moved on. `court.js` ran
+the legal half of a crime and left DFU's halved People-faction delta
+as a comment. Both drain here.
+
+**The store** (systems/factionRep.js, PersistentFactionData.cs's
+reputation/flag/power half): the player's live clone of FACTION.TXT.
+get/set/change, the flags, power, and ZeroAllReputations.
+
+**The propagation law** is the whole slice. A propagating change is
+not a write, it is a walk: allies take +amount/2 and enemies
+-amount/2 first and flat; then a knightly order pays itself and hands
+a propagating change to Generic Knightly Order (DFU adds that second
+call deliberately - its comment calls classic's omission of the
+generic children an assumed bug); everything else walks UP to its root
+- treating the Dark Brotherhood as a root although it has a parent -
+and propagates back DOWN, full amount for the origin, any root parent
+and the six guild QUESTORS, half for everyone else. If the ROOT is
+type God, Generic Temple takes a propagating change too.
+
+TERMINATION IS DATA, NOT STRUCTURE, and that is pinned. Step 4
+re-enters with propagate=true, so the walk only ends because Generic
+Temple's own type is 9 rather than God; the knightly branch only ends
+because 844's ggroup is 17 rather than 9. DFU has no cycle guard and
+neither do we. The corpus test asserts both facts about the data and
+then runs a propagating change through all 366 factions, BOUNDED, so a
+mutation that breaks termination fails an assert instead of hanging
+the suite.
+
+`amount / 2` is C# int division - it truncates TOWARD ZERO, so -5/2 is
+-2 and not -3. Every halving here is Math.trunc. An odd crime loss
+therefore rounds toward the player by a point, and that is pinned on
+Trespassing, whose loss is 5.
+
+**What a crime now costs.** Murder in Daggerfall: the legal channel
+takes the whole 20 as before, and the People of Daggerfall take 10 -
+but People has no allies and no children, so the interesting half is
+the walk UP. Daggerfall itself takes 10 as a root parent, and King
+Gothryd, Queen Aubk-i and the Royal Guard take 5 each. Fourteen
+factions move where one moved before.
+
+**The seam.** FACTION.TXT loads in createChargenFlow - THE ONE
+CONSTRUCTION SEAM - and rides the FLOW into flow.result(), so
+finishChargen builds the store without any host unpacking a new return
+value. That shape was chosen because dungeonContext takes `.flow` off
+that call and drops everything else, which is exactly the omission the
+17i rule exists to defeat. Attaching is the LAST thing finishChargen
+does: applyBiographyEffects is what parks the deltas, so attaching
+earlier would build the store and drain nothing. A missing FACTION.TXT
+degrades - the deltas stay parked, loudly - rather than failing a
+character build.
+
+DEPARTURE (Ledger A): the store CLONES each faction record. DFU
+assigns the reader's dictionary straight across because C#
+FactionData is a struct; JS objects are references, so assigning
+across would let one character's crimes follow the next character into
+a fresh game.
+
+Two findings from the pass, both from the probe rather than the tests.
+The live probe caught `zeroAllReputations` walking
+`player.regionData[i].legalRep` - DFU's field name, which nothing in
+this port mints; court.js keeps legal rep as `player.legalRep` keyed
+by region index. The unit test had passed because it hand-built DFU's
+shape to match the wrong implementation - TEST THE SHAPE THE PRODUCER
+MINTS, failed and then fixed by letting changeLegalRep mint it. And a
+mutation run caught the clamp pin asserting against MIN_POWER rather
+than DFU's literal 1, so mutating the constant moved the expectation
+with it - vacuous, exactly what A PIN MUST FAIL is for.
+
+18 mutations run, 18 killed.

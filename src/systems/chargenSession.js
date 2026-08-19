@@ -26,7 +26,8 @@ import { readSpellsStd } from '../formats/spellsStd.js';
 import { parseBiog, biogFileName } from '../formats/biogFile.js';   // S3e
 import { applyBiographyEffects } from './biography.js';   // S3e
 import { customSpellSetIndex } from './customClass.js';   // U20a
-import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // U20a
+import { SOCIAL_GROUP_COUNT, FactionFile } from '../formats/factionFile.js';   // U20a + S25
+import { attachFactionRep } from './factionRep.js';   // S25
 
 /** SPELLS.STD as an index -> spell map. AUDIT 17f: the exterior
  *  hosts ran chargen without one and called finishChargen with no
@@ -168,6 +169,12 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   // character), so a skill bonus rides on top of the distributed value
   // instead of being overwritten by applyCharacter's roll.
   if (result.biographyEffects?.length) applyBiographyEffects(playerEntity, result.biographyEffects, { rolls });
+  // S25: right after the biography, because applyBiographyEffects is
+  // what parks the `rf` deltas - attaching earlier would build the
+  // store and drain nothing. DFU applies these INSIDE the biography
+  // (BiogFile.cs:339), before the level-up anchor below, so this is
+  // also where the order puts it.
+  attachFactionRep(playerEntity, result.factionDict);
   // AUDIT 18: and the LEVEL-UP ANCHOR is taken AFTER them
   // (StartGameBehaviour.cs:424-426 - SetCurrentLevelUpSkillSum, then
   // StartingLevelUpSkillSum = CurrentLevelUpSkillSum), unconditionally.
@@ -178,6 +185,22 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   playerEntity.currentLevelUpSkillSum = levelUpSkillSum(playerEntity);
   playerEntity.startingLevelUpSkillSum = playerEntity.currentLevelUpSkillSum;
   return playerEntity;
+}
+
+/** FACTION.TXT for the chargen flow. TOLERANT on purpose: the talk
+ *  host already wraps its own load in a try/catch, and a missing
+ *  faction file must not stop a character being made. Null means the
+ *  biography's `rf` deltas stay parked on the entity exactly as they
+ *  did before S25 - degraded, not broken, and not silent. */
+async function loadFactions(fetchBytes) {
+  try {
+    const ff = new FactionFile();
+    ff.load(await fetchBytes('FACTION.TXT'));
+    return ff.factionDict;
+  } catch (e) {
+    console.warn('[chargen] FACTION.TXT unavailable, faction reputation stays parked:', e.message);
+    return null;
+  }
 }
 
 /** AUDIT 17i / THE ONE-SEAM RULE: everything the flow needs, loaded
@@ -195,15 +218,23 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
  *  Returns { flow, careers, spellsByIndex, biogs } - the flow ready to
  *  run, plus the tables a host needs for finishChargen. */
 export async function createChargenFlow(fetchBytes, { rolls = Math.random } = {}) {
-  const [careers, spellsByIndex, biogs, questionData] = await Promise.all([
+  const [careers, spellsByIndex, biogs, questionData, factionDict] = await Promise.all([
     loadCareers(fetchBytes), loadSpellIndex(fetchBytes), loadBiogs(fetchBytes),
     loadClassQuestionData(fetchBytes),   // U18
+    loadFactions(fetchBytes),            // S25
   ]);
   const flow = new ChargenFlow(careers, rolls);
   flow.biogFor = (i) => biogs[i] ?? null;   // S3e
   flow.questionLibrary = questionData.questionLibrary;   // U18
   flow.classesData = questionData.classesData;
-  return { flow, careers, spellsByIndex, biogs };
+  // S25: FACTION.TXT rides the FLOW, so it reaches finishChargen
+  // through flow.result() rather than through a fifth return value a
+  // host has to remember to unpack. dungeonContext takes `.flow` off
+  // this call and drops everything else - the exact shape THE ONE
+  // CONSTRUCTION SEAM exists to defeat - so a new dependency that
+  // travels on the RESULT cannot be missed by any of the three hosts.
+  flow.factionDict = factionDict;
+  return { flow, careers, spellsByIndex, biogs, factionDict };
 }
 
 /** An overlay-shaped chargen window for the exterior hosts.

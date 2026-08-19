@@ -16,9 +16,10 @@
 // (BiogFile.cs:427-440), so applying a guess would be a divergence,
 // not a fix. `&` is a data quirk in six of the files; DFU logs it as
 // an invalid command and moves on.
-// FLAGGED (ours): `rf` FACTION reputation needs the live faction data
-// to persist a per-faction delta; the port keeps the pending changes
-// on the entity so the faction slice can drain them.
+// `rf` FACTION reputation parks its deltas on the entity, because this
+// runs before FACTION.TXT is in hand. S25's attachFactionRep drains
+// them at the end of finishChargen, PROPAGATING, exactly as
+// BiogFile.cs:339 does.
 
 import { addItem, goldStack } from './inventory.js';
 import { itemBaseValue, templateByIndex, templateFor } from './itemTemplates.js';
@@ -136,7 +137,8 @@ export function applyBiographyEffect(entity, effect, { rolls = Math.random } = {
     if (effect[1] === 'f') {
       const id = Number.parseInt(tokens[0].split('f')[1], 10);
       if (!Number.isFinite(id)) { console.warn(`[biog] rf - invalid argument: ${effect}`); return null; }
-      // FLAGGED: the faction slice drains these into FactionData
+      // parked for attachFactionRep (S25) - the store does not exist
+      // yet at this point in the flow
       entity.pendingFactionRep = entity.pendingFactionRep ?? [];
       entity.pendingFactionRep.push({ id, amount });
       return 'factionRep';

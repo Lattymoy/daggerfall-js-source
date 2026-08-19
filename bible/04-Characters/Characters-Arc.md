@@ -1998,6 +1998,61 @@ render/ stays Voxlight-side; dagger's renderer grows its own
 vertex-color character path next (C4b), then one townsfolk archetype
 behind ?voxelfolk (C4c) - DECIDE-C1 goes live there.
 
+### C5 - the villager designs (EDITOR ONLY, no game wiring)
+
+`src/characters/villagerDesigns.js`: the 25 wandering-townsperson
+variations as DATA the editor consumes. Mac's call, twice over -
+FULLY REDESIGNED (the classic sprites are inspiration, not a trace,
+per tools/neutral's retired 1:1 silhouette pin) and delivered as a
+data spec rather than as engine wiring. Nothing in src/ reads them.
+
+The ROSTER is not ours to choose. mobilePerson.js's PERSON_TEXTURES is
+3 races x 2 genders x 4 archives plus the city guard, and SetPerson
+spawns off that table, so an archive with no design is a blank
+townsperson - test/villagerdesigns.test.js fails the moment the two
+drift. Colour is an ART_PAL INDEX SPAN, never free RGB: the rig snaps
+faces to ramp steps, which is what makes the blocky look.
+
+**A gown is not a cloth zone.** The first cut expressed skirts as a
+zone spanning [body, legL, legR]. That cannot work: `displace` pushes
+a group's faces out from THAT GROUP's centre, so it thickens each leg
+about its own axis and the render came back as a tunic plus a pair of
+shorts. Only the render said so - every numeric check passed.
+pieces/draped.js already owned the answer, with a standoff grid per
+garment that clothSim swings, so hanging cloth is now a
+`drape: {name, mat}` and only what lies ON the body stays a zone.
+
+**A hood needs a face opening.** Same lesson, same day: gated on
+height alone the hood painted the whole skull, face included. So
+`displace` grew a DEPTH gate (zLo/zHi, unbounded by default, inert for
+every existing caller) and a hood became two zones - temples-back,
+plus the crown above the brow. The guard's closed helm still covers
+the face, on purpose.
+
+Two engine seams, both additive and both inert for the game: the cloth
+loop passes `z.mat || 'cloth'` (it hardcoded one colour, so a whole
+outfit resolved to a single dye), and createAnimContext returns the
+`ankleY` it already measured. No src/ caller passes clothZones at all.
+
+**Two dead viewer paths found while wiring the editor.** `ZERO_ARM`
+was declared by BOTH the template and the injected animate.js - two
+`const` in one scope is a SyntaxError, so the entire viewer script had
+never run for anyone. And `drapeColliders` read a bare `ankL`, a local
+inside createAnimContext that has never existed in that scope, so
+every simulated drape threw on its first frame - which is every drape
+in DRAPED_NAMES. Both are fixed; both had been committed and green.
+
+Editor support: selecting a villager drives the drape, hairstyle,
+hair-colour and skin-tone controls, because all four are part of the
+design rather than separate toggles a reader has to find. Villagers
+ship as a DELTA over the base body's faces (zones displace and
+recolour, they never add geometry) - 25 whole bodies would be
+megabytes in one standalone file. `tools/villagerRender.mjs` is the
+offline still life for when a browser is not to hand.
+
+OPEN: nothing consumes these designs in-engine. Wiring them to
+SetPerson is the next step and is deliberately not taken here.
+
 ## DECIDEs (Mac)
 
 - **DECIDE-C1 (RESCOPED at the pivot)** - equipment-piece art review
