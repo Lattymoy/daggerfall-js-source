@@ -46,19 +46,28 @@ test('chargen ui: the flow end to end, conservation, confirm gates', () => {
   for (const c of 'Mac') flow.input('char:' + c);
   flow.input('confirm');
   assert.equal(flow.state, 'face');
+  // AUDIT 18: the FACE SCREEN's picker is its own value (facePick);
+  // only FaceSelectWindow_OnClose's accept arm writes the document.
   flow.input('up');                            // wraps to the last face
-  assert.equal(flow.faceIndex, 9);
+  assert.equal(flow.facePick, 9);
   flow.input('down');
-  assert.equal(flow.faceIndex, 0);
+  assert.equal(flow.facePick, 0);
   flow.input('down'); flow.input('down');
-  assert.equal(flow.faceIndex, 2);
+  assert.equal(flow.facePick, 2);
+  assert.equal(flow.faceIndex, 0, 'the document is untouched until OK');
   flow.input('confirm');                       // face -> stats (rolled)
+  assert.equal(flow.faceIndex, 2, 'and OK commits it (:496-501)');
   assert.equal(flow.state, 'stats');
   const baseTotal = Object.values(flow.rolledStats).reduce((a, b) => a + b, 0);
   const pool0 = flow.statPool;
   assert.equal(pool0, 6);                      // seq(0) -> min pool
   flow.input('confirm');
   assert.equal(flow.state, 'stats');           // gated: pool unspent
+  // AUDIT 18: the gate is not a swallowed click - it pops TEXT.RSC 14
+  // (CreateCharAddBonusStats.cs:187-200), ClickAnywhereToClose.
+  assert.ok(flow.poolBox, 'the OK button pops the box');
+  flow.input('confirm');                       // close it
+  assert.equal(flow.poolBox, null);
   for (let i = 0; i < pool0; i++) flow.input('plus');
   assert.equal(flow.statPool, 0);
   const spentTotal = Object.values(flow.stats).reduce((a, b) => a + b, 0);
@@ -70,6 +79,9 @@ test('chargen ui: the flow end to end, conservation, confirm gates', () => {
   assert.equal(flow.state, 'skills');
   flow.input('confirm');
   assert.equal(flow.state, 'skills');          // gated: three pools of 6
+  assert.ok(flow.poolBox, 'the skills OK pops the same box (:120-135)');
+  flow.input('confirm');
+  assert.equal(flow.poolBox, null);
   // spend primary 6 on the cursor skill, then the other two groups
   for (let i = 0; i < 6; i++) flow.input('plus');
   assert.equal(flow.pools.primary, 0);

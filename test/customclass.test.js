@@ -290,9 +290,12 @@ test('U20a: the reroll memo keys on the CAREER, not its index', () => {
   // pinned directly, because an index-keyed memo can still reroll by
   // accident and pass the behavioural half
   assert.equal(f._statsCareer, f.career, 'the stats memo keys on the career object');
-  f._enterSkills();
-  assert.equal(f._skillsCareer, f.career, 'and so does the skills memo');
   assert.equal(typeof f._statsCareer, 'object');
+  // AUDIT 18: the SKILLS window has no such memo at all - it is gated
+  // on skillsNeedReroll (DaggerfallStartNewGameWizard.cs:256), which
+  // the custom accept raised on its way through SetChooseBioWindow.
+  assert.equal(f.skillsNeedReroll, true);
+  assert.equal(f._skillsCareer, undefined, 'the career memo is gone from the skills screen');
   CAREERS[5] = { name: 'C5', career: { ...CAREER, name: 'C5' } };
 });
 

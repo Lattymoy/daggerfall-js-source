@@ -57,9 +57,9 @@ test('U16: OK is gated on ALL FOUR pools, not just the stat one', () => {
     if (pool === 'stat') f.statPool = 1; else f.pools[pool] = 1;
     f.input('confirm');
     assert.equal(f.state, 'summary', `an unspent ${pool} point holds the window`);
-    assert.ok(f.summaryPoolBox, 'and pops TEXT.RSC 14 instead');
+    assert.ok(f.poolBox, 'and pops TEXT.RSC 14 instead');
     f.input('confirm');                       // ClickAnywhereToClose
-    assert.equal(f.summaryPoolBox, null, 'the box closes on any key');
+    assert.equal(f.poolBox, null, 'the box closes on any key');
     assert.equal(f.state, 'summary', 'closing the box does not also confirm');
   }
 });
@@ -121,13 +121,15 @@ test('U16: RESTART cannot double-apply the biography', () => {
 
 test('U16: the summary keeps the name box, the face picker and the reflex picker live', () => {
   const f = toSummary();
-  // the name is editable here too (textBox at 100,5)
+  // the name is editable here too (textBox at 100,5). AUDIT 18: the
+  // box is the SUMMARY's own control (sumName), re-seeded from the
+  // document on every push and committed only by OK.
   f.input('backspace');
-  assert.equal(f.name, 'Vanu');
+  assert.equal(f.sumName, 'Vanu');
   f.input('char:s');
-  assert.equal(f.name, 'Vanus');
+  assert.equal(f.sumName, 'Vanus');
   for (let i = 0; i < 40; i++) f.input('char:a');
-  assert.equal(f.name.length, NAME_MAX_CHARACTERS, 'and holds the same 31 as the name screen');
+  assert.equal(f.sumName.length, NAME_MAX_CHARACTERS, 'and holds the same 31 as the name screen');
 
   // FacePicker's PREVIOUS/NEXT, which have no 'up'/'down' state arm here
   const before = f.faceIndex;
@@ -211,5 +213,8 @@ test('U16: arriving at the summary puts the stat selection back on the first row
   f.input('confirm');
   assert.equal(f.state, 'summary');
   assert.equal(f.statCursor, 0, 'SelectStat(0)');
-  assert.equal(f.skillCursor, 0);
+  // AUDIT 18: and the SKILL selection is NOT reset - SetCharacterSheet
+  // assigns SetSkills, and SelectPrimarySkill lives in
+  // SkillsRollout.SetupControls alone.
+  assert.equal(f.skillCursor, 4);
 });

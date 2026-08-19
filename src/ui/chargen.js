@@ -6,7 +6,9 @@
 //           - blocked at the ROLLED value (points return to pool)
 //   skills: + blocked at group pool 0 (no upper clamp);
 //           - blocked at the ROLLED value
-// Both screens offer REROLL, exactly the rollout components' own.
+// The STATS screen offers REROLL, exactly the rollout component's own
+// button; the SKILLS screen has no such control in classic (AUDIT 18 -
+// CreateCharAddBonusSkills.Setup adds only OK).
 // U10: the screens draw as the REAL classic windows (ui/chargenArt.js
 // over the U8a native panel) - the clean-text panels below are the
 // art-less fallback now, not the plan - the note this file carried
@@ -25,7 +27,7 @@ import { RACE_TEMPLATES, FACES_PER_RACE } from '../systems/races.js';   // S3c/U
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
-import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, classDescriptionLines, textRecordLines, DOUBLE_CLICK_DELAY_MS, CLASS_LIST_ROWS, PLAYER_REFLEXES, REFLEX_COUNT, QUESTION_ROW_H, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES } from './chargenArt.js';   // U10 / U17 / U18 / U20a
+import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, classDescriptionLines, textRecordLines, DOUBLE_CLICK_DELAY_MS, CLASS_LIST_ROWS, ADV_PICKER_ITEM_COUNT, PLAYER_REFLEXES, REFLEX_COUNT, QUESTION_ROW_H, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES } from './chargenArt.js';   // U10 / U17 / U18 / U20a
 
 export const MAX_STAT_VALUE = 100;   // FormulaHelper.MaxStatValue
 
@@ -89,6 +91,21 @@ const STATES = ['race', 'gender', 'classMethod', 'classQuestions', 'class', 'cus
  *  name the player was then unable to retype. */
 export const NAME_MAX_CHARACTERS = 31;
 
+/** AUDIT 18: what `new ClassFile(files[0]).Career` yields - a DISTINCT
+ *  DFCareer object carrying identical values, re-read from the same
+ *  CLASSnn.CFG. A ClassFile's career is flat scalars plus the three
+ *  skill arrays (verified against all eighteen real CFGs), so a spread
+ *  with the arrays copied is the whole of it. */
+export function freshCareer(career) {
+  if (!career) return null;
+  return {
+    ...career,
+    primarySkills: [...career.primarySkills],
+    majorSkills: [...career.majorSkills],
+    minorSkills: [...career.minorSkills],
+  };
+}
+
 export class ChargenFlow {
   /** careers: [{ name, career }] x18 (loaded from CLASS*.CFG). */
   constructor(careers, rolls = Math.random) {
@@ -98,7 +115,15 @@ export class ChargenFlow {
     this.name = '';
     this.gender = 'male';
     this.raceIndex = 0;      // RACE_TEMPLATES order (Breton first)
-    this.faceIndex = 0;      // 0..9 within the race/gender FACE CIF
+    this.faceIndex = 0;      // characterDocument.faceIndex - 0..9 within the race/gender FACE CIF
+    // AUDIT 18: the FACE SCREEN's own picker value, which DFU keeps
+    // separately from the document. SetFaceSelectWindow calls
+    // SetFaceTextures on EVERY push (DaggerfallStartNewGameWizard.cs:213-224)
+    // and CreateCharFaceSelect.SetFaceTextures (:65-69) is verbatim
+    // `facePicker.FaceIndex = 0;` first - so re-entering the screen
+    // always shows face 0 - while the CANCEL arm (:502-507) writes
+    // nothing back, so the previously accepted face survives an Escape.
+    this.facePick = 0;
     // AUDIT 17m: DFU carries these as TWO members and the port had
     // collapsed them into one. `characterDocument.classIndex` is the
     // DOCUMENT's class - written at DaggerfallStartNewGameWizard.cs:343
@@ -141,6 +166,17 @@ export class ChargenFlow {
     // built DFCareer the career getter serves once the builder exits.
     this.custom = null;
     this.customCareer = null;
+    // AUDIT 18: the QUESTIONS path's career. CreateCharClassQuestions_
+    // OnClose (:335-343) constructs `new ClassFile(files[0])` and takes
+    // its `.Career` on EVERY trip, and ClassFile.Load assigns a fresh
+    // `new DFCareer(cfg)` (API/ClassFile.cs:184). DFCareer has no
+    // operator== and no Equals override, so SetAddBonusStatsWindow's
+    // `DFClass != characterDocument.career` (:238) is a REFERENCE
+    // comparison and fires - the stats reroll. The list path is
+    // genuinely different: CreateCharClassSelect builds its classList
+    // once inside Setup, so re-picking a row hands back the SAME
+    // object and does NOT reroll.
+    this._questionCareer = null;
     this.customReps = null;   // [commoners, merchants, scholars, nobility, underworld]
     this.isCustom = false;
     // U18: the class QUESTIONS screen (CreateCharClassQuestions).
@@ -192,8 +228,23 @@ export class ChargenFlow {
     // until the first push, because DFU's first assignment cannot clear
     this._nameRaceId = null;
     this._nameGender = null;
-    // U16: the open "you must distribute your bonus points" box.
-    this.summaryPoolBox = null;
+    // U16 / AUDIT 18: the open "you must distribute your bonus points"
+    // box. It belongs to THREE windows, not one - CreateCharAddBonusStats
+    // .cs:187-200, CreateCharAddBonusSkills.cs:120-135 and
+    // CreateCharSummary.cs:174-189 all pop TEXT.RSC 14 rather than
+    // closing when a pool is unspent.
+    this.poolBox = null;
+    // AUDIT 18: DaggerfallStartNewGameWizard.cs:56 - `bool
+    // skillsNeedReroll;`. RAISED by SetChooseBioWindow (:184) and
+    // LOWERED only on AddBonusSkillsWindow_OnClose's accept arm
+    // (:530); SetAddBonusSkillsWindow passes `!skillsNeedReroll` as
+    // isRestored (:256).
+    this.skillsNeedReroll = false;
+    // AUDIT 18: the stats screen's SAVE ROLL snapshot (rollSaved +
+    // savedRolledStats/savedWorkingStats/savedBonusPool,
+    // CreateCharAddBonusStats.cs:47-50). Null = rollSaved false, so
+    // LOAD ROLL is inert until a save has happened.
+    this._savedRoll = null;
   }
 
   /** U20a: a finished custom class OVERRIDES the careers array -
@@ -208,7 +259,7 @@ export class ChargenFlow {
    *  throw), but the case it was WRITTEN for - the arrow walk landing
    *  on the Custom row and the raw read throwing, which the live probe
    *  caught - can no longer reach it. */
-  get career() { return this.customCareer ?? this.careers[this.classIndex]?.career ?? null; }
+  get career() { return this.customCareer ?? this._questionCareer ?? this.careers[this.classIndex]?.career ?? null; }
   get race() { return RACE_TEMPLATES[this.raceIndex]; }
 
   /** AUDIT 17j F7: these REROLLED on every entry, so walking back a
@@ -221,13 +272,12 @@ export class ChargenFlow {
    *  career)`. SetAddBonusSkillsWindow (:249-259) passes
    *  `!skillsNeedReroll` as isRestored, and CreateCharAddBonusSkills.
    *  SetCharacterDocument (:59-74) then RESTORES the document's
-   *  starting and working skills rather than rolling; skillsNeedReroll
-   *  is raised only by SetChooseBioWindow, which the flow reaches
-   *  exactly when a class has just been chosen.
+   *  starting and working skills rather than rolling.
    *
-   *  Both rules reduce to the same one: reroll when the CLASS changed,
-   *  otherwise restore. `force` is the explicit Reroll button, which
-   *  rerolls regardless. */
+   *  AUDIT 18: the two rules are NOT the same rule, and collapsing the
+   *  skills one onto "the class changed" was the defect - see
+   *  _enterSkills. `force` is the stats screen's explicit Reroll
+   *  button (:167-170), which rerolls regardless. */
   _enterStats(force = false) {
     // U20a: the memo keys on the CAREER, not its index. DFU compares
     // `createCharAddBonusStatsWindow.DFClass != characterDocument.career`
@@ -236,24 +286,42 @@ export class ChargenFlow {
     // class carries the AFFINITY index, so a custom whose affinity
     // matched the previously rolled class restored that class's roll
     // instead of rolling for the new career.
-    if (!force && this.rolledStats && this._statsCareer === this.career) { this.statCursor = 0; return; }
+    // AUDIT 18: the RESTORE arm moves nothing. DFU's spinner selection
+    // is written by StatsRollout.SelectStat, which runs only from
+    // SetStats (StatsRollout.cs:190) - and a push that does not reroll
+    // never calls it, so the spinner stays on the stat the player left
+    // it on. The port zeroed it here and on the skills screen's cancel.
+    if (!force && this.rolledStats && this._statsCareer === this.career) return;
     const { stats, bonusPool } = rollStats(this.career, this.rolls);
     this.rolledStats = { ...stats };
     this.stats = { ...stats };
     this.statPool = bonusPool;
     this._statsCareer = this.career;
-    this.statCursor = 0;
+    this.statCursor = 0;   // Reroll -> SetStats -> SelectStat(0)
   }
 
+  /** AUDIT 18: THE FLAG, NOT A MEMO. DFU gates this window on
+   *  `skillsNeedReroll` alone (:256 passes `!skillsNeedReroll` as
+   *  isRestored), and that flag is raised by SetChooseBioWindow - which
+   *  FIVE arms reach (:344 questions accept, :365 list accept, :401
+   *  custom accept, :479 biography cancel, :492 name cancel), two of
+   *  them cancels with no class change at all. The port had collapsed
+   *  it onto "the career object changed", so walking back from the
+   *  skills screen and forward again RESTORED the roll and everything
+   *  spent from the three pools where DFU rerolls all nine values and
+   *  refunds all three pools (SkillsRollout.Reroll :111-146). */
   _enterSkills(force = false) {
-    if (!force && this.rolledSkills && this._skillsCareer === this.career) { this.skillCursor = 0; return; }
+    if (!force && !this.skillsNeedReroll && this.rolledSkills) return;
+    // SkillsRollout is constructed ONCE (CreateCharAddBonusSkills.
+    // Setup's IsSetup gate), and SelectPrimarySkill(0) with its two
+    // siblings run in SetupControls (:245/:253/:261) and NOWHERE else -
+    // Reroll leaves all three group selections where they were.
+    const first = !this.rolledSkills;
     const { skills, groupPools } = rollSkills(this.career, this.rolls);
     this.rolledSkills = [...skills];
     this.skills = [...skills];
     this.pools = { ...groupPools };
-    this._skillsCareer = this.career;
-    this.skillCursor = 0;
-    this.skillSel = { primary: 0, major: 0, minor: 0 };   // SelectPrimarySkill(0) and its two siblings
+    if (first) { this.skillCursor = 0; this.skillSel = { primary: 0, major: 0, minor: 0 }; }
   }
 
   /** The three skill-screen rows in career order: [groupName, ids[]]. */
@@ -319,6 +387,11 @@ export class ChargenFlow {
    *  SetChooseBioWindow), and straight to the name when it did not
    *  (never trap - DFU would throw on the missing file). */
   _leaveClass() {
+    // AUDIT 18: the no-BIOG fallthrough stands in for the same
+    // SetChooseBioWindow push (:344/:365/:401), so it raises
+    // skillsNeedReroll too - inert on the real corpus, where all
+    // eighteen classes have a BIOG file, but it is DFU's fifth arm.
+    this.skillsNeedReroll = true;
     if (this.biogFor?.(this.classIndex)?.questions?.length) this._enterBioMethod();
     else this._leaveBiography();   // U15: -> name, the classic next screen
   }
@@ -421,7 +494,7 @@ export class ChargenFlow {
     // AUDIT 17m: the DOCUMENT only (:343). This used to scroll the
     // class LIST to the generated class as well, which DFU does not
     // do - CreateCharClassQuestions_OnClose never touches the picker.
-    this._adoptCareer(this.qClassIndex);
+    this._adoptCareer(this.qClassIndex, freshCareer(this.careers[this.qClassIndex]?.career));
   }
 
   /** ConfirmDialog No: classIndex = noClassIndex, both windows close,
@@ -446,9 +519,14 @@ export class ChargenFlow {
    *  that still says CUSTOM: ItemHelper.cs:1310 gives it the custom
    *  starting kit, and StartGameBehaviour.cs:804-809 routes it
    *  through the custom spell rule (a Mage picked that way gets the
-   *  SPELLSWORD set, not the Mage set). Ported bug-for-bug and
-   *  recorded in the Ledger; the earlier draft "tidied" it and was
-   *  wrong to. */
+   *  SPELLSWORD set, not the Mage set). Ported bug-for-bug; the
+   *  earlier draft "tidied" it and was wrong to.
+   *
+   *  AUDIT 18: this used to claim the quirk was "recorded in the
+   *  Ledger". It is not - Port-Ledger.md section B has no chargen row
+   *  of any kind, and its own preamble says a departure not on that
+   *  page does not exist. The citation is deleted rather than kept
+   *  false; adding the row is a Ledger edit, routed to that owner. */
   _acceptStandardClass() {
     // AUDIT 17m: the LIST's row becomes the DOCUMENT's class here and
     // ONLY here, exactly as :364 copies SelectedClassIndex across. The
@@ -459,9 +537,10 @@ export class ChargenFlow {
   /** The shared tail of both accept arms: the document takes a
    *  standard career (so the `career` getter falls back through the
    *  careers array) and the wizard moves to the biography. */
-  _adoptCareer(classIndex) {
+  _adoptCareer(classIndex, career = null) {
     this.classIndex = classIndex;
     this.customCareer = null;
+    this._questionCareer = career;
     this._leaveClass();
   }
 
@@ -743,11 +822,24 @@ export class ChargenFlow {
     }
   }
 
+  /** AUDIT 18: however many rows the OPEN picker DISPLAYS. Both
+   *  advantage pickers are constructed `new DaggerfallListPickerWindow(
+   *  uiManager, this, DaggerfallUI.SmallFont, advPickerItemCount)`
+   *  (CreateCharSpecialAdvantageWindow.cs:270, :273), and
+   *  advPickerItemCount is 12 (:46). The builder's SKILL and HELP
+   *  pickers pass neither font nor row count (CreateCharCustomClass.cs
+   *  :283, :368), so they keep ListBox's own default of 9 (ListBox.cs
+   *  :36). The port scrolled all three at 9 and drew all three at 9,
+   *  which put a scrollbar on an 11-item list DFU shows whole. */
+  _pickRows() {
+    return this.custom?.pickList ? ADV_PICKER_ITEM_COUNT : CLASS_LIST_ROWS;
+  }
+
   /** The pick list's minimal scroll (the ListBox law the class list
    *  already carries). */
   _scrollPick(n = this.custom?.pickItems?.length ?? 0) {
     const c = this.custom;
-    const rows = CLASS_LIST_ROWS;
+    const rows = this._pickRows();
     const max = Math.max(0, n - rows);
     if (c.pickCursor < c.pickScroll) c.pickScroll = c.pickCursor;
     else if (c.pickCursor >= c.pickScroll + rows) c.pickScroll = c.pickCursor - rows + 1;
@@ -788,10 +880,15 @@ export class ChargenFlow {
 
   /** U19: SetChooseBioWindow (DaggerfallStartNewGameWizard.cs:178-186)
    *  - every class-accept arm lands here, and the window is
-   *  CONSTRUCTED fresh each time (:180), so the cursor resets. (Its
-   *  other side effect, skillsNeedReroll = true, reduces to the
-   *  port's reroll-when-the-class-changed rule - the 17j F7 read.) */
+   *  CONSTRUCTED fresh each time (:180), so the cursor resets.
+   *
+   *  AUDIT 18: its other side effect is `skillsNeedReroll = true`
+   *  (:184), which does NOT reduce to a class change - the biography
+   *  screen's cancel (:479) and the name screen's cancel (:492) reach
+   *  this push with the class untouched, and DFU rerolls the skills
+   *  for both. */
   _enterBioMethod() {
+    this.skillsNeedReroll = true;
     this.bioMethodCursor = 0;
     this.state = 'bioMethod';
   }
@@ -854,6 +951,17 @@ export class ChargenFlow {
     this._nameGender = this.gender;
     srand(this.seedRandom());
     this.state = 'name';
+  }
+
+  /** AUDIT 18: SetFaceSelectWindow (:213-224) calls SetFaceTextures
+   *  OUTSIDE the null-guarded construction block, and that method's
+   *  first statement is `facePicker.FaceIndex = 0` - so BOTH arrivals
+   *  (NameSelectWindow_OnClose's accept :487 and AddBonusStatsWindow_
+   *  OnClose's CANCEL :517) put the picker back on face 0. The port had
+   *  no _enterFace at all and kept whatever the last visit chose. */
+  _enterFace() {
+    this.facePick = 0;
+    this.state = 'face';
   }
 
   /** AUDIT 17j F2: ClassSelectWindow_OnClose's cancel arm. DFU also
@@ -965,14 +1073,28 @@ export class ChargenFlow {
    *  what makes the pools well-defined for a flow that reached the
    *  summary without ever opening the skills screen. */
   _enterSummary() {
-    // SetStats calls SelectStat(0) (StatsRollout.cs:190), so arriving
-    // here puts the stat selection back on Strength - the spinner does
-    // not stay where the stats screen left it.
+    // The `statsRollout.StartingStats = ...` setter is SetStats
+    // (StatsRollout.cs:54-57), which ends in SelectStat(0), so arriving
+    // here puts the stat selection back on Strength. The SKILLS
+    // selections are NOT reset: SetCharacterSheet only assigns
+    // SetSkills, and SelectPrimarySkill and its siblings live in
+    // SkillsRollout.SetupControls alone.
     this.statCursor = 0;
-    this.skillCursor = 0;
     this.statPool = 0;
     this.pools = { primary: 0, major: 0, minor: 0 };
-    this.summaryPoolBox = null;
+    this.poolBox = null;
+    // AUDIT 18: the name box and the reflex picker are the summary's
+    // OWN controls, re-seeded from the document by the same setter
+    // (`this.textBox.Text = characterDocument.name` :122 and
+    // `this.reflexPicker.PlayerReflexes = characterDocument.reflexes`
+    // :135). SummaryWindow_OnClose's CANCEL arm (:567-577) copies back
+    // only startingSkills, workingSkills, startingStats, workingStats,
+    // the three bonus-point counters and faceIndex - name and reflexes
+    // are absent from that list, so backing out of the summary REVERTS
+    // both. Only GetUpdatedCharacterDocument (:138-148), the OK arm,
+    // writes them.
+    this.sumName = this.name;
+    this.sumReflexes = this.reflexes;
     this.state = 'summary';
   }
 
@@ -983,9 +1105,13 @@ export class ChargenFlow {
    *  ClickAnywhereToClose box rather than closing the window. */
   confirmSummary() {
     if (this.statPool > 0 || this.pools.primary > 0 || this.pools.major > 0 || this.pools.minor > 0) {
-      this.summaryPoolBox = bonusPointsRows?.() ?? [''];
+      this.poolBox = bonusPointsRows?.() ?? [''];
       return;
     }
+    // GetUpdatedCharacterDocument (:138-148): the OK arm is where the
+    // summary's two own controls reach the document.
+    this.name = this.sumName;
+    this.reflexes = this.sumReflexes;
     this.state = 'done';
   }
 
@@ -996,14 +1122,45 @@ export class ChargenFlow {
    *  The biography is the one thing that must not survive, and
    *  _enterBiography is where that is handled for every arrival. */
   restartSummary() {
-    this.summaryPoolBox = null;
+    this.poolBox = null;
     this._enterRace();
   }
 
-  /** The screens' own Reroll button - it forces, where re-entry does not. */
+  /** The STATS screen's Reroll button (CreateCharAddBonusStats.cs:112-113
+   *  -> :167-170) - it forces, where re-entry does not.
+   *
+   *  AUDIT 18: there is no such button on the SKILLS screen and no key
+   *  bound to one. CreateCharAddBonusSkills.Setup (:76-99) adds exactly
+   *  one control, OK at (263,172,39,22), and SkillsRollout.SetupControls
+   *  (:179-260) adds only the nine labels, their select buttons and the
+   *  three LeftRightSpinners. The port's 'r' key on that screen rerolled
+   *  all nine skills and refunded all three pools - an invented control,
+   *  and the exact opposite of the reroll DFU DOES have there
+   *  (skillsNeedReroll on re-entry). */
   reroll() {
     if (this.state === 'stats') this._enterStats(true);
-    else if (this.state === 'skills') this._enterSkills(true);
+  }
+
+  /** AUDIT 18: SaveRoll_OnMouseClick (CreateCharAddBonusStats.cs:172-178)
+   *  - the rolled stats, the working stats and the bonus pool are
+   *  COPIED into the window's three saved fields and rollSaved goes
+   *  true. Neither button existed in the port at all. */
+  saveRoll() {
+    if (!this.rolledStats) return;
+    this._savedRoll = { rolled: { ...this.rolledStats }, working: { ...this.stats }, pool: this.statPool };
+  }
+
+  /** LoadRoll_OnMouseClick (:180-186): INERT until a save has happened,
+   *  and otherwise statsRollout.SetStats(saved...) - which ends in
+   *  SelectStat(0) (StatsRollout.cs:183-191), so the spinner returns to
+   *  Strength. */
+  loadRoll() {
+    const r = this._savedRoll;
+    if (!r) return;
+    this.rolledStats = { ...r.rolled };
+    this.stats = { ...r.working };
+    this.statPool = r.pool;
+    this.statCursor = 0;
   }
 
   /** actions: up/down/plus/minus/confirm/back/reroll/char:<c>/backspace */
@@ -1014,7 +1171,7 @@ export class ChargenFlow {
       else if (action === 'backspace') this.name = this.name.slice(0, -1);
       // AcceptName (CreateCharNameSelect.cs:137-140): an EMPTY name
       // does not close the window, so OK and Return are both inert.
-      else if (action === 'confirm' && this.name.length) this.state = 'face';
+      else if (action === 'confirm' && this.name.length) this._enterFace();
       // AUDIT 17j F3: this screen had NO cancel at all - the one
       // screen in the wizard you could not back out of. DFU's
       // NameSelectWindow_OnClose sends a cancel to SetChooseBioWindow
@@ -1088,10 +1245,12 @@ export class ChargenFlow {
       return;
     }
     if (s === 'face') {
-      if (action === 'up') this.faceIndex = (this.faceIndex + FACES_PER_RACE - 1) % FACES_PER_RACE;
-      else if (action === 'down') this.faceIndex = (this.faceIndex + 1) % FACES_PER_RACE;
-      else if (action === 'confirm') { this.state = 'stats'; this._enterStats(); }
-      else if (action === 'back') this._enterName();   // FaceSelectWindow_OnClose (:496-508) - and re-entry reseeds + clears, as DFU's push does
+      if (action === 'up') this.facePick = (this.facePick + FACES_PER_RACE - 1) % FACES_PER_RACE;
+      else if (action === 'down') this.facePick = (this.facePick + 1) % FACES_PER_RACE;
+      // FaceSelectWindow_OnClose's accept arm (:496-501) is the ONE
+      // place the picker's value reaches the document.
+      else if (action === 'confirm') { this.faceIndex = this.facePick; this.state = 'stats'; this._enterStats(); }
+      else if (action === 'back') this._enterName();   // the cancel arm (:502-507) writes nothing - and re-entry reseeds + clears, as DFU's push does
       return;
     }
     if (s === 'class') {
@@ -1236,6 +1395,9 @@ export class ChargenFlow {
       return;
     }
     if (s === 'stats') {
+      // AUDIT 18: the TEXT.RSC 14 box is ClickAnywhereToClose and
+      // MODAL over the window (CreateCharAddBonusStats.cs:189-194).
+      if (this.poolBox) { this.poolBox = null; return; }
       if (action === 'up') this.statCursor = (this.statCursor + 7) % 8;
       else if (action === 'down') this.statCursor = (this.statCursor + 1) % 8;
       else if (action === 'plus') this.spendStat(1);
@@ -1247,8 +1409,15 @@ export class ChargenFlow {
       // never affected (neither is a typed character here).
       else if (action === 'minus' || action === 'char:-') this.spendStat(-1);
       else if (action === 'reroll') this.reroll();
-      else if (action === 'confirm' && this.statPool === 0) { this.state = 'skills'; this._enterSkills(); }   // classic requires the pool spent
-      else if (action === 'back') this.state = 'face';
+      // AUDIT 18: OkButton_OnMouseClick (:187-200) does not SWALLOW the
+      // click when the pool is unspent - it pops TEXT.RSC 14
+      // (strYouMustDistributeYourBonusPoints, :33) as a
+      // ClickAnywhereToClose message box. The port's guarded no-op left
+      // the live OK button doing nothing at all.
+      else if (action === 'confirm') {
+        if (this.statPool > 0) this.poolBox = bonusPointsRows?.() ?? [''];
+        else { this.state = 'skills'; this._enterSkills(); }
+      } else if (action === 'back') this._enterFace();
       return;
     }
     if (s === 'reflexes') {
@@ -1263,27 +1432,32 @@ export class ChargenFlow {
     if (s === 'summary') {
       // U16: CHAR04I0 composites the stats, skills, face and reflex
       // components on one screen with the name box, so nearly every
-      // control is live here. The port edits ONE flow object, which is
-      // why it needs no equivalent of SummaryWindow_OnClose's cancel
-      // arm copying skills, stats, bonus points and faceIndex back to
-      // the windows behind it (:571-583) - there is nothing to copy
-      // back to.
-      if (this.summaryPoolBox) { this.summaryPoolBox = null; return; }   // ClickAnywhereToClose
-      if (action.startsWith('char:') && this.name.length < NAME_MAX_CHARACTERS) this.name += action.slice(5);
-      else if (action === 'backspace') this.name = this.name.slice(0, -1);
+      // control is live here. The four things SummaryWindow_OnClose's
+      // cancel arm copies BACK to the windows behind it (:567-577) -
+      // skills, stats, bonus points and faceIndex - need no equivalent
+      // here, because the port edits ONE flow object. AUDIT 18: what
+      // DOES need one is the pair that arm OMITS. See _enterSummary.
+      if (this.poolBox) { this.poolBox = null; return; }   // ClickAnywhereToClose
+      if (action.startsWith('char:') && this.sumName.length < NAME_MAX_CHARACTERS) this.sumName += action.slice(5);
+      else if (action === 'backspace') this.sumName = this.sumName.slice(0, -1);
       else if (action === 'confirm') this.confirmSummary();
       else if (action === 'back') { this.state = 'reflexes'; }
       return;
     }
     if (s === 'skills') {
+      if (this.poolBox) { this.poolBox = null; return; }   // ClickAnywhereToClose (CreateCharAddBonusSkills.cs:126-130)
       const total = this.skillRows().reduce((a, [, ids]) => a + ids.length, 0);
       if (action === 'up') { this.skillCursor = (this.skillCursor + total - 1) % total; this._syncSkillSel(); }
       else if (action === 'down') { this.skillCursor = (this.skillCursor + 1) % total; this._syncSkillSel(); }
       else if (action === 'plus') this.spendSkill(1);
       else if (action === 'minus' || action === 'char:-') this.spendSkill(-1);   // the same unreachable-minus fix
-      else if (action === 'reroll') this.reroll();
-      else if (action === 'confirm' && this.pools.primary === 0 && this.pools.major === 0 && this.pools.minor === 0) this.state = 'reflexes';
-      else if (action === 'back') { this.state = 'stats'; this.statCursor = 0; }
+      // AUDIT 18: the same TEXT.RSC 14 box as the stats screen
+      // (:120-135), and the accept arm is the ONE place DFU lowers
+      // skillsNeedReroll (:525-530).
+      else if (action === 'confirm') {
+        if (this.pools.primary > 0 || this.pools.major > 0 || this.pools.minor > 0) this.poolBox = bonusPointsRows?.() ?? [''];
+        else { this.skillsNeedReroll = false; this.state = 'reflexes'; }
+      } else if (action === 'back') this.state = 'stats';
       return;
     }
   }
@@ -1366,6 +1540,8 @@ export class ChargenFlow {
       this._enterClassMethod();
       return true;
     }
+    if (hit.saveRoll) { this.saveRoll(); return true; }
+    if (hit.loadRoll) { this.loadRoll(); return true; }
     if (hit.setStatCursor != null) { this.statCursor = hit.setStatCursor; return true; }
     if (hit.setSkillCursor != null) { this.skillCursor = hit.setSkillCursor; this._syncSkillSel(); return true; }
     if (hit.setClass != null) { this.classListIndex = hit.setClass; return true; }
@@ -1437,7 +1613,15 @@ export class ChargenFlow {
       return true;
     }
     if (hit.answerBiography != null) return this.answerBiography(hit.answerBiography);
-    if (hit.setReflexes != null) { this.reflexes = hit.setReflexes; return true; }
+    // AUDIT 18: two ReflexPickers, two values - the reflex SCREEN's
+    // (CreateCharReflexSelect, whose accept arm writes the document at
+    // :543) and the SUMMARY's own (:135/:147), which the cancel arm
+    // does not copy back.
+    if (hit.setReflexes != null) {
+      if (this.state === 'summary') this.sumReflexes = hit.setReflexes;
+      else this.reflexes = hit.setReflexes;
+      return true;
+    }
     if (hit.restart) { this.restartSummary(); return true; }
     // U16: the summary's FacePicker keeps its PREVIOUS/NEXT buttons,
     // but 'up'/'down' belong to the face SCREEN's state arm - the
@@ -1445,7 +1629,13 @@ export class ChargenFlow {
     if (hit.statStep != null) { this.spendStat(hit.statStep); return true; }
     if (hit.skillStep != null) { this.spendSkill(hit.skillStep, hit.group ?? null); return true; }
     if (hit.faceStep != null) {
-      this.faceIndex = (this.faceIndex + FACES_PER_RACE + hit.faceStep) % FACES_PER_RACE;
+      // AUDIT 18: the SUMMARY's FacePicker is seeded from the document
+      // (CreateCharSummary.SetCharacterSheet :132) and its cancel arm
+      // copies FaceIndex straight BACK (:575), so a summary face edit
+      // legitimately writes the document. The face SCREEN's picker is
+      // its own value until OK commits it.
+      if (this.state === 'face') this.facePick = (this.facePick + FACES_PER_RACE + hit.faceStep) % FACES_PER_RACE;
+      else this.faceIndex = (this.faceIndex + FACES_PER_RACE + hit.faceStep) % FACES_PER_RACE;
       return true;
     }
     if (hit.randomName) {
@@ -1498,7 +1688,7 @@ export class ChargenFlow {
     } else if (this.state === 'face') {
       title('CHOOSE YOUR FACE');
       line(`${this.race.name} ${this.gender}`, 0, white);
-      line(`face ${this.faceIndex + 1} of ${FACES_PER_RACE}`, 2, hot);
+      line(`face ${this.facePick + 1} of ${FACES_PER_RACE}`, 2, hot);
       line('up/down to cycle, ENTER to continue', 4, dim);
       line('(the portrait draws with the chargen art slice)', 6, dim);
     } else if (this.state === 'class') {
@@ -1565,7 +1755,7 @@ export class ChargenFlow {
         }
         row++;
       }
-      line('+/- assign   R reroll   ENTER when pools 0', row, dim);
+      line('+/- assign   ENTER when pools 0', row, dim);
     }
   }
 }
