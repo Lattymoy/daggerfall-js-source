@@ -210,3 +210,123 @@ export function outdoorPlaylist({ night = false, weather = 'sunny', fm = false }
 export const NIGHT_SONGS_FM = Object.freeze([
   '11FM.HMI', 'FCURSE.HMI', 'FEERIE.HMI', 'FRUINS.HMI', '18FM.HMI', '21FM.HMI',
 ]);
+
+// --- AUDIT 19 F1/F2: the sixteen lists and the arms that were missing ----
+//
+// The first pass ported the outdoor and dungeon lists and stopped. DFU has
+// 41 SongFiles arrays and AssignPlaylist has fifteen environment arms; the
+// port had one and a half. Every list below resolves to a real MIDI.BSA
+// record - the corpus pin checks all of them - so "not ported" meant real
+// music the player could never hear, not an absent asset.
+
+/** Castle. SongManager.cs castleSongs / castleSongsFM. */
+export const CASTLE_SONGS = Object.freeze(['GPALAC.HMI']);
+export const CASTLE_SONGS_FM = Object.freeze(['FPALAC.HMI']);
+
+/** The court window (arrested). Checked BEFORE the environment. */
+export const COURT_SONGS = Object.freeze(['11.HMI']);
+export const COURT_SONGS_FM = Object.freeze(['11FM.HMI']);
+
+/** Shops - every mercantile building type folds here. */
+export const SHOP_SONGS = Object.freeze(['GSHOP.HMI']);
+export const SHOP_SONGS_FM = Object.freeze(['FM_SQR_2.HMI']);
+
+/** The Mages Guild, which is a GuildHall whose faction is the Mages Guild.
+ *  Its FM twin is a different record entirely, not a MAGIC_2 variant. */
+export const MAGES_GUILD_SONGS = Object.freeze(['GMAGE_3.HMI', 'MAGIC_2.HMI']);
+export const MAGES_GUILD_SONGS_FM = Object.freeze(['FM_NITE3.HMI']);
+
+/** Any other interior - DFU's `default` arm, and the fallback for a
+ *  GuildHall that is not the Mages Guild. */
+export const INTERIOR_SONGS = Object.freeze(['23.HMI']);
+export const INTERIOR_SONGS_FM = Object.freeze(['23FM.HMI']);
+
+/** FighterTrainers: a Temple whose faction is the Fighters Guild. */
+export const KNIGHT_SONGS = Object.freeze(['17.HMI']);
+export const KNIGHT_SONGS_FM = Object.freeze(['17FM.HMI']);
+
+/** Palace. */
+export const PALACE_SONGS = Object.freeze(['06.HMI']);
+export const PALACE_SONGS_FM = Object.freeze(['06FM.HMI']);
+
+/** Taverns, FM - a single record where the GM list has five. DFU's own
+ *  asymmetry, like the night lists. */
+export const TAVERN_SONGS_FM = Object.freeze(['FM_SQR_2.HMI']);
+
+/** The music ENVIRONMENTS, DFU's PlayerMusicEnvironment enum by name. */
+export const MUSIC_ENVIRONMENTS = Object.freeze([
+  'city', 'wilderness', 'castle', 'dungeonExterior', 'dungeonInterior',
+  'graveyard', 'magesGuild', 'fighterTrainers', 'interior', 'palace',
+  'shop', 'tavern', 'templeGood', 'templeNeutral', 'templeBad',
+]);
+
+/** UpdatePlayerMusicEnvironment's building arm (SongManager.cs:463-523).
+ *  The mercantile types fold to Shop; a GuildHall is the Mages Guild only
+ *  when its faction says so; a Temple is FighterTrainers for the Fighters
+ *  Guild and otherwise takes its god's alignment; everything else is a
+ *  plain Interior, which is DFU's own `default`. */
+export function environmentForBuilding(buildingType, { factionId = 0, templeAlignment = null } = {}) {
+  const B = {
+    Alchemist: 0, Armorer: 2, Bank: 3, Bookseller: 5, ClothingStore: 6,
+    FurnitureStore: 7, GemStore: 8, GeneralStore: 9, Library: 10,
+    GuildHall: 11, PawnShop: 12, WeaponSmith: 13, Temple: 14, Tavern: 15,
+    Palace: 16,
+  };
+  const SHOPS = [B.Alchemist, B.Armorer, B.Bank, B.Bookseller, B.ClothingStore,
+    B.FurnitureStore, B.GemStore, B.GeneralStore, B.Library, B.PawnShop, B.WeaponSmith];
+  if (SHOPS.includes(buildingType)) return 'shop';
+  if (buildingType === B.Tavern) return 'tavern';
+  if (buildingType === B.Palace) return 'palace';
+  if (buildingType === B.GuildHall) {
+    return factionId === MAGES_GUILD_FACTION ? 'magesGuild' : 'interior';
+  }
+  if (buildingType === B.Temple) {
+    if (factionId === FIGHTERS_GUILD_FACTION) return 'fighterTrainers';
+    if (templeAlignment === 'good') return 'templeGood';
+    if (templeAlignment === 'neutral') return 'templeNeutral';
+    if (templeAlignment === 'bad') return 'templeBad';
+    // DFU leaves the environment UNCHANGED when GetTempleIndex returns -1;
+    // the port has no temple-faction table wired yet, so an unresolved
+    // temple falls to Interior rather than inventing an alignment. FLAGGED.
+    return 'interior';
+  }
+  return 'interior';
+}
+
+/** FactionFile.FactionIDs, the two AssignPlaylist reads. */
+export const MAGES_GUILD_FACTION = 40;
+export const FIGHTERS_GUILD_FACTION = 41;
+
+/**
+ * AssignPlaylist, whole (SongManager.cs:573-660).
+ *
+ * The arrested check comes FIRST and overrides the environment entirely.
+ * City and Wilderness take the outdoor rule (night, then weather). Two
+ * environments take NIGHT SONGS REGARDLESS OF THE CLOCK - a dungeon
+ * exterior and a graveyard are night music at noon - which is easy to miss
+ * because it looks like the day/night gate and is not.
+ */
+export function playlistForEnvironment(environment, {
+  arrested = false, night = false, weather = 'sunny', fm = false,
+} = {}) {
+  if (arrested) return fm ? COURT_SONGS_FM : COURT_SONGS;
+  switch (environment) {
+    case 'city':
+    case 'wilderness':      return outdoorPlaylist({ night, weather, fm });
+    case 'castle':          return fm ? CASTLE_SONGS_FM : CASTLE_SONGS;
+    // NOT gated on the clock - DFU takes night songs here at any hour.
+    case 'dungeonExterior':
+    case 'graveyard':       return fm ? NIGHT_SONGS_FM : NIGHT_SONGS;
+    case 'dungeonInterior': return fm ? DUNGEON_SONGS_FM : DUNGEON_SONGS;
+    case 'magesGuild':      return fm ? MAGES_GUILD_SONGS_FM : MAGES_GUILD_SONGS;
+    case 'fighterTrainers': return fm ? KNIGHT_SONGS_FM : KNIGHT_SONGS;
+    case 'palace':          return fm ? PALACE_SONGS_FM : PALACE_SONGS;
+    case 'shop':            return fm ? SHOP_SONGS_FM : SHOP_SONGS;
+    case 'tavern':          return fm ? TAVERN_SONGS_FM : TAVERN_SONGS;
+    case 'templeGood':      return fm ? TEMPLE_GOOD_SONGS_FM : TEMPLE_GOOD_SONGS;
+    case 'templeNeutral':   return fm ? TEMPLE_NEUTRAL_SONGS_FM : TEMPLE_NEUTRAL_SONGS;
+    case 'templeBad':       return fm ? TEMPLE_BAD_SONGS_FM : TEMPLE_BAD_SONGS;
+    case 'interior':
+    default:                return fm ? INTERIOR_SONGS_FM : INTERIOR_SONGS;
+  }
+}

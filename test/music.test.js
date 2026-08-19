@@ -381,7 +381,9 @@ test('A5b: every outdoor and FM playlist entry EXISTS in MIDI.BSA', { skip: skip
   bsa.load(new Uint8Array(readFileSync(join(ARENA2, 'MIDI.BSA'))));
   const missing = [];
   for (const [label, list] of Object.entries(sm)) {
-    if (!Array.isArray(list) || !list.length || typeof list[0] !== 'string') continue;
+    // Song lists only - the module also exports MUSIC_ENVIRONMENTS, which
+    // is a list of environment NAMES, not records.
+    if (!Array.isArray(list) || !list.length || !/\.HMI$/.test(list[0])) continue;
     for (const name of list) {
       const i = bsa.getSongIndex(name);
       if (i === null || i === undefined || i < 0) missing.push(`${label}: ${name}`);
@@ -398,9 +400,15 @@ test('A5b/AUDIT 19: every host reaches music through ITS OWN seam', () => {
   // tools/bootProbe.mjs, which drives a real boot and reports whether music
   // is playing.
   const wm = readFileSync('src/scenes/worldModes.js', 'utf8');
-  assert.match(wm, /BUILDING_TYPES\.Tavern/, 'worldModes recognises a tavern');
-  assert.match(wm, /TAVERN_SONGS, \{ gameDays: gameDaysNow\(\), tavern: true \}/,
-    'taverns take the DIRECT gameDays arm, not the seeded one');
+  // AUDIT 19: EVERY building arm, not only the tavern - shops, palaces,
+  // the Mages Guild and the temple alignments each have their own list.
+  assert.match(wm, /environmentForBuilding\(interiorBuilding\.buildingType/,
+    'entering a building resolves its music ENVIRONMENT');
+  assert.match(wm, /playlistForEnvironment\(env\)/, 'and takes that environment\'s list');
+  assert.match(wm, /tavern: env === 'tavern'/,
+    'the tavern keeps the DIRECT gameDays arm - it is the one list DFU indexes that way');
+  assert.match(wm, /if \(interiorBuilding\) resumeOutdoorMusic/,
+    'leaving ANY interior resumes the street, not just a tavern');
   // BOTH exits hand the street back its song. F3 found the dungeon exit had
   // no caller at all, so dungeon music looped over the sunlit city forever.
   const resumes = wm.match(/resumeOutdoorMusic\?\.\(\)/g) ?? [];
@@ -555,6 +563,16 @@ test('AUDIT 19 F13: EVERY playlist is pinned WHOLE, not just the sampled ones', 
     TEMPLE_GOOD_SONGS_FM: ['FGOOD.HMI'],
     TEMPLE_NEUTRAL_SONGS_FM: ['FNEUT.HMI'],
     TEMPLE_BAD_SONGS_FM: ['FBAD.HMI'],
+    // AUDIT 19: the sixteen lists the first pass never ported at all.
+    CASTLE_SONGS: ['GPALAC.HMI'],            CASTLE_SONGS_FM: ['FPALAC.HMI'],
+    COURT_SONGS: ['11.HMI'],                 COURT_SONGS_FM: ['11FM.HMI'],
+    SHOP_SONGS: ['GSHOP.HMI'],               SHOP_SONGS_FM: ['FM_SQR_2.HMI'],
+    MAGES_GUILD_SONGS: ['GMAGE_3.HMI', 'MAGIC_2.HMI'],
+    MAGES_GUILD_SONGS_FM: ['FM_NITE3.HMI'],  // a different record, not a MAGIC_2 twin
+    INTERIOR_SONGS: ['23.HMI'],              INTERIOR_SONGS_FM: ['23FM.HMI'],
+    KNIGHT_SONGS: ['17.HMI'],                KNIGHT_SONGS_FM: ['17FM.HMI'],
+    PALACE_SONGS: ['06.HMI'],                PALACE_SONGS_FM: ['06FM.HMI'],
+    TAVERN_SONGS_FM: ['FM_SQR_2.HMI'],       // ONE record where GM has five
   };
   for (const [name, expected] of Object.entries(EXPECT)) {
     assert.deepEqual([...sm[name]], expected, `${name} drifted from SongManager.cs`);
@@ -565,7 +583,7 @@ test('AUDIT 19 F13: EVERY playlist is pinned WHOLE, not just the sampled ones', 
     'SNOW_SONGS', 'TAVERN_SONGS', 'NIGHT_SONGS', 'TEMPLE_GOOD_SONGS',
     'TEMPLE_NEUTRAL_SONGS', 'TEMPLE_BAD_SONGS']);
   const unpinned = Object.entries(sm)
-    .filter(([, v]) => Array.isArray(v) && typeof v[0] === 'string')
+    .filter(([, v]) => Array.isArray(v) && /\.HMI$/.test(v[0] ?? ''))
     .map(([k]) => k)
     .filter((k) => !(k in EXPECT) && !PINNED_ELSEWHERE.has(k));
   assert.deepEqual(unpinned, [], `these playlists have no whole-list pin:\n${unpinned.join('\n')}`);
@@ -713,4 +731,81 @@ test('AUDIT 19 F7: the loop lead is non-zero, so the seam is never "now"', async
   assert.ok(LOOP_LEAD_SECONDS > 0, 'a zero lead schedules the repeat AT now');
   assert.ok(LOOP_LEAD_SECONDS < LOOKAHEAD_SECONDS,
     'a lead of a full lookahead makes the re-pumped window exactly empty');
+});
+
+test('AUDIT 19 F2: AssignPlaylist, every arm (SongManager.cs:573-660)', async () => {
+  const sm = await import('../src/systems/songManager.js');
+  const { playlistForEnvironment: pick } = sm;
+
+  // ARRESTED wins over the environment entirely - the court check is the
+  // first statement in AssignPlaylist, before the switch.
+  assert.equal(pick('shop', { arrested: true }), sm.COURT_SONGS);
+  assert.equal(pick('dungeonInterior', { arrested: true }), sm.COURT_SONGS);
+  assert.equal(pick('city', { arrested: true, night: true }), sm.COURT_SONGS);
+
+  // City and Wilderness share the outdoor rule.
+  assert.equal(pick('city', { weather: 'rain' }), sm.RAIN_SONGS);
+  assert.equal(pick('wilderness', { night: true }), sm.NIGHT_SONGS);
+
+  // THE ARM THAT LOOKS LIKE THE CLOCK AND IS NOT: a dungeon exterior and a
+  // graveyard take NIGHT songs at any hour. Reading this as the day/night
+  // gate is the easy mistake, so it is pinned at NOON.
+  assert.equal(pick('dungeonExterior', { night: false, weather: 'sunny' }), sm.NIGHT_SONGS);
+  assert.equal(pick('graveyard', { night: false, weather: 'sunny' }), sm.NIGHT_SONGS);
+
+  assert.equal(pick('castle'), sm.CASTLE_SONGS);
+  assert.equal(pick('dungeonInterior'), sm.DUNGEON_SONGS);
+  assert.equal(pick('magesGuild'), sm.MAGES_GUILD_SONGS);
+  assert.equal(pick('fighterTrainers'), sm.KNIGHT_SONGS);
+  assert.equal(pick('palace'), sm.PALACE_SONGS);
+  assert.equal(pick('shop'), sm.SHOP_SONGS);
+  assert.equal(pick('tavern'), sm.TAVERN_SONGS);
+  assert.equal(pick('templeGood'), sm.TEMPLE_GOOD_SONGS);
+  assert.equal(pick('templeNeutral'), sm.TEMPLE_NEUTRAL_SONGS);
+  assert.equal(pick('templeBad'), sm.TEMPLE_BAD_SONGS);
+  assert.equal(pick('interior'), sm.INTERIOR_SONGS);
+  // DFU's `default` arm: anything unrecognised is a plain interior, never
+  // silence. An unmapped environment must still play something.
+  assert.equal(pick('somewhere-new'), sm.INTERIOR_SONGS);
+  assert.equal(pick(undefined), sm.INTERIOR_SONGS);
+
+  // Every arm has an FM twin and they are DIFFERENT records.
+  for (const env of sm.MUSIC_ENVIRONMENTS) {
+    const gm = pick(env, { fm: false });
+    const fm = pick(env, { fm: true });
+    assert.ok(gm.length && fm.length, `${env} resolves both ways`);
+    assert.notEqual(gm, fm, `${env}: the FM arm must not return the GM list`);
+  }
+});
+
+test('AUDIT 19 F2: the building arm folds the way DFU folds it', async () => {
+  const { environmentForBuilding, MAGES_GUILD_FACTION, FIGHTERS_GUILD_FACTION } =
+    await import('../src/systems/songManager.js');
+  const { BUILDING_TYPES: B } = await import('../src/world/buildingNames.js');
+
+  // Eleven mercantile types fold to ONE Shop environment (:465-476).
+  for (const t of [B.Alchemist, B.Armorer, B.Bank, B.Bookseller, B.ClothingStore,
+    B.FurnitureStore, B.GemStore, B.GeneralStore, B.Library, B.PawnShop, B.WeaponSmith]) {
+    assert.equal(environmentForBuilding(t), 'shop', `building type ${t} is a shop`);
+  }
+  assert.equal(environmentForBuilding(B.Tavern), 'tavern');
+  assert.equal(environmentForBuilding(B.Palace), 'palace');
+
+  // A GuildHall is the Mages Guild ONLY when its faction says so (:481-489).
+  assert.equal(environmentForBuilding(B.GuildHall, { factionId: MAGES_GUILD_FACTION }), 'magesGuild');
+  assert.equal(environmentForBuilding(B.GuildHall, { factionId: 999 }), 'interior');
+  assert.equal(environmentForBuilding(B.GuildHall), 'interior', 'no faction is not the Mages Guild');
+
+  // A Temple is FighterTrainers for the Fighters Guild, else its alignment.
+  assert.equal(environmentForBuilding(B.Temple, { factionId: FIGHTERS_GUILD_FACTION }), 'fighterTrainers');
+  assert.equal(environmentForBuilding(B.Temple, { templeAlignment: 'good' }), 'templeGood');
+  assert.equal(environmentForBuilding(B.Temple, { templeAlignment: 'bad' }), 'templeBad');
+  // An unresolved temple falls to Interior rather than inventing an
+  // alignment - the port has no temple-faction table yet (FLAGGED).
+  assert.equal(environmentForBuilding(B.Temple), 'interior');
+
+  // Houses and anything else are DFU's `default` (:521-523).
+  for (const t of [B.House1, B.House6, B.Ship, B.Town4, B.None, 12345]) {
+    assert.equal(environmentForBuilding(t), 'interior', `building type ${t} is a plain interior`);
+  }
 });
