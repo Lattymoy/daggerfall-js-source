@@ -2236,9 +2236,20 @@ actually use. DFU has one call taking the target entity
 (FormulaHelper.cs:788) and derives the group inside it; the port split
 that apart and only carried the group down one of the two forks.
 
-The target half of the player's swing was correct all along -
-playerWeapon.js:159 passes `enemyGroupOf(foe.entity.affinity)` - which
-is precisely why this looked wired.
+The target half of the player's swing was PARTLY correct -
+playerWeapon.js:159 passed `enemyGroupOf(foe.entity.affinity)` - which
+is precisely why this looked wired. AUDIT 18 corrected the rest: DFU
+uses TWO discriminants, not one. The Humanoid arm keys on
+`MobileEnemy.Affinity == MobileAffinity.Human`, as the port did, but
+the Undead/Daedra/Animals arms key on `GetEnemyGroup()`, a per-
+careerIndex table (FormulaHelper.cs:1004-1035 and :2746-2805). The two
+disagree for five spawnable careers - Slaughterfish 11, Vampire 28,
+Vampire Ancient 30, Dragonling 34 and Dragonling_Alternate 40 - all of
+which the affinity map scored 0. And `target is PlayerEntity`, DFU's
+"player is assumed humanoid" arm, had no port at all: every
+enemy->player site passed a null group, so the modifier could never
+fire on an attack against the player. `bonusOrPenaltyByEnemyType` now
+takes the target ENTITY, as DFU does.
 
 This is NOT a U20b regression. The classic ASSASSIN ships
 attackModifierFlags 0x04, a Humanoid bonus, and has never received it;
@@ -2251,8 +2262,9 @@ flag no system reads is not a working feature, and the slice must not
 imply otherwise. Catalogued in the Ledger rather than left to be
 rediscovered. LIVE: Increased Magery (maxMagicka reads the
 multiplier), the tolerance quartet (spellcast.js), Rapid Healing
-(rest.js), Inability To Regen Spell Points, and - after F1 - Bonus to
-hit and Phobia. INERT for want of a consuming subsystem: Spell
+(rest.js), Inability To Regen Spell Points, and - after F1 and AUDIT
+18 - Bonus to hit and Phobia on every fork: the player's melee and
+hand-to-hand swing, and (AUDIT 18) an enemy's attack on the player. INERT for want of a consuming subsystem: Spell
 Absorption, Regenerate Health, Acute Hearing, Athleticism, Adrenaline
 Rush, Damage From Sunlight/Holy Places, and all four Forbidden
 categories plus Expertise In. The flags are written correctly and
