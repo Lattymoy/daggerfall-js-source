@@ -1,14 +1,22 @@
 // AUDIT 17n: the parity pass over U20b and the seams 17m/U20b changed.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { bonusOrPenaltyByEnemyType, careerAttackModifier, ENEMY_GROUPS, calculateAttackDamage } from '../src/combat/formulas.js';
 import { parseCareerData, DIFFICULTY, LABELS, labelFor } from '../src/systems/specialAdvantages.js';
 import { buildCustomCareer } from '../src/systems/customClass.js';
 import { STAT_KEYS_ORDER } from '../src/systems/chargen.js';
 import { ClassFile } from '../src/formats/classFile.js';
 
-const ARENA2 = '/home/claude/dfdata/arena2';
+// The corpus half rides the repo's ARENA2_PATH convention: the original
+// data is freeware but NOT redistributable, so it never enters the repo
+// and CI has none. Skip loudly rather than fail - the synthetic pins
+// above carry the law either way.
+const ARENA2 = process.env.ARENA2_PATH;
+const skipReal = !ARENA2 || !existsSync(ARENA2)
+  ? 'ARENA2_PATH not set or missing - real-data validation skipped'
+  : false;
 const stats = Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 50]));
 const career = () => buildCustomCareer({ name: 'X', hp: 8, skills: Array(12).fill(0), stats });
 
@@ -36,12 +44,12 @@ test('17n F1: an attacker carrying only a CAREER still gets its enemy-type modif
   assert.equal(bonusOrPenaltyByEnemyType({ level: 4 }, ENEMY_GROUPS.Undead), 0);
 });
 
-test('17n F1: the classic ASSASSIN carries a humanoid bonus it had never received', () => {
+test('17n F1: the classic ASSASSIN carries a humanoid bonus it had never received', { skip: skipReal }, () => {
   // Not a U20b regression - the gap predates the custom builder. This
   // pin reads the real CLASS11.CFG so it fails if the corpus ever
   // disagrees about which class carries the byte.
   const cf = new ClassFile();
-  cf.load(new Uint8Array(readFileSync(`${ARENA2}/CLASS11.CFG`)));
+  cf.load(new Uint8Array(readFileSync(join(ARENA2, 'CLASS11.CFG'))));
   assert.equal(cf.career.name, 'Assassin');
   assert.equal(cf.career.attackModifierFlags, 0x04, 'Humanoid | Bonus');
   assert.equal(careerAttackModifier(cf.career.attackModifierFlags, ENEMY_GROUPS.Humanoid), 1);
@@ -132,4 +140,28 @@ test('17n F3: a career with advantages survives the save round trip', () => {
   assert.equal(restored.immunityFlags, 8);
   assert.equal(restored.abilityFlagsAndSpellPointsBitfield, c.abilityFlagsAndSpellPointsBitfield);
   assert.equal(bonusOrPenaltyByEnemyType({ career: restored, level: 2 }, ENEMY_GROUPS.Undead), 0);
+});
+
+// ---- the rule, swept rather than remembered ----
+
+test('17n: no test reads the ARENA2 corpus by a hardcoded path', () => {
+  // The original data is freeware but NOT redistributable, so it never
+  // enters the repo and CI has none. Every corpus test must ride
+  // process.env.ARENA2_PATH and SKIP when it is absent.
+  //
+  // This sweep exists because 17n's own Assassin pin shipped with
+  // `/home/claude/dfdata/arena2` baked in: it passed locally, where the
+  // data happens to sit, and took the DEPLOY down - the gate is the
+  // only thing standing between main and a broken Pages build, and a
+  // green local run is not the same check.
+  const dir = new URL('.', import.meta.url);
+  const offenders = [];
+  for (const f of readdirSync(dir).filter((n) => n.endsWith('.test.js'))) {
+    const src = readFileSync(new URL(f, dir), 'utf8');
+    for (const [i, line] of src.split('\n').entries()) {
+      if (line.trimStart().startsWith('//') || line.trimStart().startsWith('*')) continue;
+      if (/['"`][^'"`]*\/(dfdata|arena2)\//i.test(line)) offenders.push(`${f}:${i + 1}: ${line.trim()}`);
+    }
+  }
+  assert.deepEqual(offenders, [], 'corpus paths must come from process.env.ARENA2_PATH');
 });
