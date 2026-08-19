@@ -34,6 +34,7 @@ import { convertTilemap } from '../src/world/terrainSurface.js';
 import { ArrowFlight } from '../src/combat/arrowFlight.js';
 import { biogFileName } from '../src/formats/biogFile.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
+import { MapsFile } from '../src/formats/mapsFile.js';
 import { Arch3dFile } from '../src/formats/arch3dFile.js';
 import { dfMeshToModel } from '../src/world/meshReader.js';
 import { layoutInterior } from '../src/world/interiorLayout.js';
@@ -297,6 +298,25 @@ test('audit18 hosts: BOTH exterior hosts gate the population on the location typ
   assert.match(w, /populatesWanderingNpcs\(dfLocation\.mapTableData\.locationType\)/);
   assert.doesNotMatch(w, /const POPULATED_LOCATION_TYPES = new Set/,
     'the table must live in one place or the two hosts drift again');
+});
+
+test('audit18 hosts: the ?exterior gate is reachable on real MAPS.BSA', { skip: skipReal }, () => {
+  const maps = new MapsFile();
+  maps.load(
+    new Uint8Array(readFileSync(join(ARENA2, 'MAPS.BSA'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'CLIMATE.PAK'))),
+    new Uint8Array(readFileSync(join(ARENA2, 'POLITIC.PAK'))),
+  );
+  // ?exterior takes an arbitrary ?region/?loc from the URL, so the gate
+  // is not theoretical: a DungeonLabyrinth exterior is one query away.
+  const cases = [['Daggerfall', 'Daggerfall', 0, true],
+    ['Daggerfall', 'Gothway Garden', 1, true],
+    ['Daggerfall', "Privateer's Hold", 4, false]];
+  for (const [region, name, type, populated] of cases) {
+    const loc = maps.getLocationByName(region, name);
+    assert.equal(loc.mapTableData.locationType, type, `${name} locationType`);
+    assert.equal(populatesWanderingNpcs(loc.mapTableData.locationType), populated, name);
+  }
 });
 
 // ---------------------------------------------------------------------
