@@ -82,11 +82,15 @@ const half = (n) => Math.trunc(n / 2);
  *  hands back a copy and the writes go through an explicit write-back.
  *  JS objects are references, so assigning across would let a
  *  reputation change reach into the shared reader and corrupt every
- *  later load. This CLONES each record. Same semantics, and the only
- *  way to get them. */
+ *  later load. This CLONES each record AND its children array. Same
+ *  semantics, and the only way to get them. */
 export function createFactionRep(factionDict) {
   const dict = new Map();
-  for (const [id, f] of factionDict) dict.set(id, { ...f });
+  // The spread detaches the RECORD; `children` is an array and would
+  // still be shared, so the reader's own hierarchy could be mutated
+  // through the store. AUDIT 20 found the header promising a clone
+  // that was only one level deep.
+  for (const [id, f] of factionDict) dict.set(id, { ...f, children: f.children ? [...f.children] : f.children });
   return { dict };
 }
 
@@ -171,8 +175,12 @@ export function propagateReputationChange(store, faction, factionID, amount) {
  *  FACTION.TXT (not merely zeroed - a faction whose file value is
  *  non-zero returns to that), and every region's LegalRep to 0. */
 export function zeroAllReputations(store, factionDict, player) {
+  // REFILL, do not rebind. Rebinding store.dict strands any caller
+  // that captured it - court.js reads store.dict on every crime - and
+  // there is no reason to hand back a different Map (AUDIT 20).
   const fresh = createFactionRep(factionDict);
-  store.dict = fresh.dict;
+  store.dict.clear();
+  for (const [id, f] of fresh.dict) store.dict.set(id, f);
   // DFU walks player.RegionData[i].LegalRep. The port has no such
   // array - court.js's changeLegalRep mints `player.legalRep` as an
   // object KEYED BY REGION INDEX, created lazily on the first crime.

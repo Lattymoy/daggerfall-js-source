@@ -22,6 +22,8 @@ const skipReal = !ARENA2 || !existsSync(ARENA2)
   ? 'ARENA2_PATH not set or missing - real-data validation skipped'
   : false;
 const arena = (name) => new Uint8Array(readFileSync(join(ARENA2, name)));
+import { applyHeadlessChargen } from '../src/systems/chargenSession.js';
+import { getReputation } from '../src/systems/factionRep.js';
 
 // ---- a career shaped like a CLASS*.CFG one, so the synthetic arms
 // need no data files ----
@@ -254,4 +256,20 @@ test('AUDIT 18 F9: the shipping Acrobat (CLASS09) carries the flag and jumps 10%
 test('AUDIT 18 F9: the stale "career advantage decode" excuse is gone from skills.js', () => {
   const src = readFileSync(new URL('../src/systems/skills.js', import.meta.url), 'utf8');
   assert.ok(!/career advantage decode/.test(src), 'skills.js still carries the retired flag text');
+});
+
+
+test('AUDIT 20: the HEADLESS chargen path attaches the faction store too', { skip: skipReal }, async () => {
+  // THE ONE CONSTRUCTION SEAM, a fourth time. applyHeadlessChargen is
+  // a SECOND copy of the construction - it hand-rolls the starting kit
+  // rather than going through applyCreationExtras - so it silently
+  // missed the faction store S25 added at the flow's seam. A ?class=
+  // character, which all three exterior hosts can boot, had no
+  // factionRep at all: a crime moved no faction and guild rank could
+  // not be computed.
+  const entity = { stats: {}, skills: 30, items: [] };
+  await applyHeadlessChargen(entity, 1, { fetchBytes: async (n) => arena(n) });
+  assert.ok(entity.factionRep, 'the headless path builds the store');
+  assert.equal(entity.factionRep.dict.size, 366, 'the whole faction file');
+  assert.equal(getReputation(entity.factionRep, 41), 0, 'and it reads');
 });

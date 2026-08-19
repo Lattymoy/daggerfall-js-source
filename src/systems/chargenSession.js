@@ -112,6 +112,13 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   playerEntity.equip = null;
   playerEntity.armorValues = null;
   assignStartingGear(playerEntity, { classIndex });
+  // AUDIT 20 / THE ONE CONSTRUCTION SEAM, again. This path is a SECOND
+  // copy of the construction - it hand-rolls the kit rather than going
+  // through applyCreationExtras - and so it silently missed the faction
+  // store S25 added, exactly the shape 17f/17h/17i each found before.
+  // A ?class= character had no factionRep at all: crimes moved no
+  // faction, and guild rank could not be computed.
+  attachFactionRep(playerEntity, await loadFactions(fetchBytes));
   console.log(`[chargen] ${CLASS_CAREERS[classIndex]}: HP ${playerEntity.maxHealth}, spells ${playerEntity.spells.length}`);
   return playerEntity;
 }
