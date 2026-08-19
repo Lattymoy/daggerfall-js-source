@@ -4,10 +4,16 @@
 // the billboard's centre (interior AddFlat raises the transform by half
 // the scaled height above the flat position) plus a per-record vertical
 // offset tuned per light type; records 14/15 use +h/2 and 21 uses
-// +h/2.4, "todo" records add nothing. Properties from the
+// +h/2.4, "todo" records add nothing. Properties START at the
 // DaggerfallLight [Interior] prefab (read from the prefab YAML): point,
 // range 15, intensity 1, white, Animate OFF (interior lights do not
-// flicker). Interior ambient is PlayerAmbientLight's verbatim
+// flicker) - but AddLight's SECOND per-record switch then OVERWRITES
+// range/intensity/colour per light type, so the prefab values are the
+// base, not the answer. RANGE is ported below (RECORD_RANGES); per-light
+// intensity and colour need a per-light colour channel in the light
+// uniform and are routed (Port-Ledger, Rendering arc) - every light
+// still shares INTERIOR_LIGHT_COLOR. Interior ambient is
+// PlayerAmbientLight's verbatim
 // InteriorAmbientLight (0.18); the night variant (0.20, 0.18, 0.20) is
 // exposed for the clock.
 
@@ -35,6 +41,25 @@ const RECORD_OFFSETS = new Map([
   [24, -1.85], [25, -1.0], [27, -0.02],
 ]);
 
+// Verbatim per-record light RANGE, transcribed from AddLight's second
+// switch (DaggerfallInterior.cs, "adjust properties of light sources").
+// The prefab base is INTERIOR_LIGHT_RANGE 15, so `range /= 3` is 5 and
+// `range *= 1.2` is 18; records the switch leaves alone (and its "todo"
+// cases) keep the base.
+const RECORD_RANGES = new Map([
+  [0, 20.0],     // Bowl with fire
+  [2, 15 / 3],   // Skull candle           (range /= 3)
+  [3, 15 / 3],   // Candle                 (range /= 3)
+  [4, 15 / 3],   // Candle with base       (range /= 3)
+  [5, 7.5],      // Candleholder with 3 candles
+  [6, 15.0],     // Skull torch
+  [9, 15.0],     // Metallic chandelier with burning candles
+  [11, 5.0],     // Candle in lamp
+  [13, 15 * 1.2],// Round lamp             (range *= 1.2)
+  [20, 12.0],    // Brazier torch
+  [21, 15 / 3],  // Standing candle        (range /= 3)
+]);
+
 /**
  * Collect point lights for one interior's flats.
  * @param {Array<{archive:number,record:number,x:number,y:number,z:number}>} flats
@@ -54,7 +79,7 @@ export function collectInteriorLights(flats, getScaledSize) {
       x: f.x,
       y: f.y + h / 2 + offset,
       z: f.z,
-      range: INTERIOR_LIGHT_RANGE,
+      range: RECORD_RANGES.get(f.record) ?? INTERIOR_LIGHT_RANGE,
     });
   }
   return lights;
