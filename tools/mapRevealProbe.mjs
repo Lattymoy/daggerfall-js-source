@@ -11,25 +11,29 @@ const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 await page.goto('http://localhost:5199/?shot&play&exterior&time=12:00');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
+// T4 needs an INTERLOCUTOR, not a walker: a person parked by the
+// politeness idle answers Where-is exactly the same, so any visible,
+// materialized townsperson does (T1's probe demanded moves > 0
+// because MOVEMENT was its law under test).
 const readPeople = async () => JSON.parse(await page.evaluate(() => window.__people()));
 let live = null;
 for (let i = 0; i < 120 && !live; i++) {
   await new Promise((r) => setTimeout(r, 5000));
   const arr = await readPeople();
-  live = arr.find((p) => p.visible && p.moves > 0);
-  if (i % 6 === 5) {
+  live = arr.find((p) => p.visible && !p.pend);
+  if (!live && i % 6 === 5) {
     const dbg = await page.evaluate(() => window.__townDebug ? window.__townDebug() : '{}');
-    console.log(`t+${(i + 1) * 5}s pool=${arr.length} visible=${arr.filter((p) => p.visible).length} moved=${arr.filter((p) => p.moves > 0).length} dbg=${dbg}`);
+    console.log(`t+${(i + 1) * 5}s pool=${arr.length} visible=${arr.filter((p) => p.visible).length} dbg=${dbg}`);
   }
 }
-if (!live) { console.log('NO LIVE WALKER'); process.exit(1); }
+if (!live) { console.log('NO TOWNSPERSON'); process.exit(1); }
 const waitFrames = async (n) => {
   const f = await page.evaluate(() => window.__frame);
   await page.waitForFunction(([f0, k]) => window.__frame > f0 + k, [f, n], { timeout: 60000 });
 };
 const press = async (code) => { await page.keyboard.down(code); await waitFrames(3); await page.keyboard.up(code); await waitFrames(2); };
 const talk = async () => JSON.parse(await page.evaluate(() => window.__talk()));
-const p = (await readPeople()).find((q) => q.visible && q.moves > 0);
+const p = (await readPeople()).find((q) => q.visible && !q.pend);
 await page.evaluate(([x, y, z]) => window.__pose(x, y, z, 0, 0), [p.pos[0], p.pos[1] + 0.1, p.pos[2] - 1.6]);
 await waitFrames(12);
 await press('KeyE');
