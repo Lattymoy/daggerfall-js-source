@@ -849,11 +849,6 @@ export async function bootWorld(canvas, renderer, params, status) {
       return;
     }
 
-    // AUDIT 18: the player's world clock. This ran only inside a dungeon,
-    // so above ground no effect expired, no disease advanced, no fatigue
-    // drained and no skill ever rose. The modal branch above returns
-    // first, so interior/dungeon frames tick through their own hosts.
-    playerTicker.tick(dt, { running: player.running, swimming: player.swimming });
 
     if (walkMode) {
       if (!playerSpawned && built.has(startKey)) {
@@ -865,6 +860,18 @@ export async function bootWorld(canvas, renderer, params, status) {
         const jumpHeld = keys.has('Space');
         const crouchHeld = keys.has('KeyX');   // P12 host parity (audit F4)
         const _overlayHeld = (modes?.dungeonCtx?.uiOverlayActive ?? false) || townTalk.overlayActive;   // chargen/windows/talk hold the motor - typing must not walk the player
+      // AUDIT 18 F9: the player's world clock, HELD by the same gate.
+      // It ran only inside a dungeon before F8 moved it here; F8 then
+      // ran it unconditionally, which is the U7 bug shape inverted -
+      // DFU stops the clock outright under a paused window. PauseGame
+      // (GameManager.cs:600-610) sets Time.timeScale = 0, and
+      // WorldTime.Update (:60-69) advances the calendar by
+      // `Time.deltaTime * TimeScale`, so a PauseWhileOpen window
+      // freezes game time entirely: no magic round, no disease day, no
+      // fatigue, no skill advancement. Open the char sheet and the
+      // motor already held here - the clock did not, so a disease
+      // aged while the game was paused.
+      if (!_overlayHeld) playerTicker.tick(dt, { running: player.running, swimming: player.swimming });
         // AUDIT 18 HOST GAP: levitate/waterWalking/slowFall were
         // written ONLY inside the dungeon branch of worldModes and
         // never cleared, so leaving a dungeon while levitating

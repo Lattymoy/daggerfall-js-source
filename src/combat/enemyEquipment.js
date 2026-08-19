@@ -49,6 +49,13 @@ const SHIELD_PARTS = Object.freeze({
   112: [0, 2, 4, 5],    // Tower: + Head
 });
 
+/** DaggerfallUnityItem.GetShieldProtectedBodyParts (:1082-1095), verbatim:
+ *  Buckler LeftArm+Hands, Round and Kite add Legs, Tower adds Head.
+ *  Anything that is not a shield protects nothing. Exported so the table
+ *  can be pinned against the C# - AUDIT 18's re-measurement found the
+ *  only assertion in the suite that pinned it was vacuous. */
+export const shieldProtectedBodyParts = (templateIndex) => SHIELD_PARTS[templateIndex] ?? [];
+
 // ---- ItemBuilder.materialsByModifier + FormulaHelper.RandomMaterial ----
 export const MATERIALS_BY_MODIFIER = Object.freeze([64, 128, 10, 21, 13, 8, 5, 3, 2, 5]);
 export function randomMaterial(playerLevel, rolls = Math.random) {

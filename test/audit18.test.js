@@ -360,3 +360,39 @@ test('AUDIT 18 F8: EVERY host runs the player world clock, not just the dungeon'
       `${file}: the per-minute player laws belong to systems/worldTick.js`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// F9: the world clock is HELD by the same gate that holds the motor.
+//
+// Found by re-running the mutation audit after F8. F8 moved the per-minute
+// player tick out of the dungeon host so every host ran it - and then ran it
+// UNCONDITIONALLY in the two exterior hosts, while the interior host gated it
+// on `!overlayHeld`. That asymmetry is the U7-rest bug inverted: DFU stops the
+// clock outright under a paused window. PauseGame (GameManager.cs:600-610)
+// sets Time.timeScale = 0, and WorldTime.Update (:60-69) advances the calendar
+// by `Time.deltaTime * TimeScale` - so a PauseWhileOpen window freezes game
+// time entirely. Open the character sheet in ?world and the motor was already
+// held; the clock was not, so diseases aged while the game was paused.
+//
+// The F8 pin asserted `/Ticker\.tick\(dt/` per host and passed on all three -
+// a per-host grep cannot see a disagreement BETWEEN hosts. This one can.
+// ---------------------------------------------------------------------------
+
+test('AUDIT 18 F9: every host gates the world clock on its overlay hold', () => {
+  const hosts = ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js'];
+  const shapes = new Map();
+  for (const rel of hosts) {
+    const text = readFileSync(join(SRC, '..', rel), 'utf8');
+    const calls = text.split('\n').filter((l) => /Ticker\.tick\(dt/.test(l));
+    assert.equal(calls.length, 1, `${rel}: expected exactly one world-clock tick, found ${calls.length}`);
+    const gated = /if\s*\(\s*!\s*\w*[Oo]verlayHeld\s*\)/.test(calls[0]);
+    assert.ok(gated,
+      `${rel} ticks the world clock without an overlay gate:\n  ${calls[0].trim()}\n` +
+      'DFU freezes game time under a paused window (timeScale 0 -> deltaTime 0).');
+    shapes.set(rel, gated);
+  }
+  // The defect was a DISAGREEMENT between hosts, not any one host in isolation,
+  // so the pin asserts they agree - a per-host check passed while they differed.
+  assert.equal(new Set(shapes.values()).size, 1,
+    `hosts disagree on whether the world clock is held: ${JSON.stringify([...shapes])}`);
+});
