@@ -28,7 +28,8 @@
 // water level, rand() < 50 plays WaterGentle at the surface beside
 // the player (x/z +- Range(-3, 3), min dist 8); submerged, rand() <
 // 100 adds AmbientWaterBubbles flat. doNotPlayInCastle gates the
-// dungeon one-shots (deps.inCastle - castle-block detection pends);
+// dungeon one-shots (deps.inCastle - LIVE since AUDIT 21 music F3, fed from
+// the block the player stands in; it was read here and written by nobody);
 // the cemetery howl/bird layer pends locations (routed).
 
 import { audio as defaultAudio } from './audio.js';

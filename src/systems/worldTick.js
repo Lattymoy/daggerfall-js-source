@@ -158,7 +158,20 @@ export function tickPlayerMinutes({
 // One clock, module-level, because there is one world. The carriers below
 // are VIEWS on it.
 
-let _worldMinutes = 0;
+/** DaggerfallDateTime.classicGameStartTime (:30), applied by
+ *  SetClassicGameStartTime (:491-494): 13:30 on the 4th of Morning Star,
+ *  3E405. Minutes from the CLASSIC EPOCH, not from "when this session began".
+ *
+ *  AUDIT 21 (music lane, F11): the clock started at 0, and 523530 / 1440 =
+ *  DAY 363. SelectCurrentSong uses gameDays both as the DFRandom seed for
+ *  every non-dungeon playlist and as the tavern list index, so every song the
+ *  port picked on a given in-game date differed from DFU's: a new character
+ *  walking into a tavern got SQUARE_2 (0 % 5) where DFU plays FOLK2 (363 % 5).
+ *  Everything else that reads days - diseases, the 28-day guild gate, the
+ *  court's normalize interval - was counting from the wrong epoch too. */
+export const CLASSIC_GAME_START_MINUTES = 523530;
+
+let _worldMinutes = CLASSIC_GAME_START_MINUTES;
 
 /** EntityEffectBroker.maxCatchupDays = 2, i.e. 2880 game minutes
  *  (EntityEffectBroker.cs:36, applied at :223). DFU's own reasoning: the
@@ -172,7 +185,9 @@ export const MAX_CATCHUP_ROUNDS = 2880;
  *  pre-init frame fires no rounds. */
 let _lastMagicRoundMinute = null;
 
-/** Classic minutes since the game began. */
+/** Classic minutes from the CLASSIC EPOCH - DaggerfallDateTime's own unit,
+ *  which is what ToClassicDaggerfallTime returns and what gameDays divides.
+ *  A new game starts at CLASSIC_GAME_START_MINUTES, not at zero. */
 export const worldMinutes = () => _worldMinutes;
 
 /** Set the clock - a load restores it, a rest or a court sentence jumps it. */

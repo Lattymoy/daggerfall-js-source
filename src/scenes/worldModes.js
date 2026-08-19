@@ -784,9 +784,14 @@ export function createWorldModes(host) {
         return {
           inside: true,
           insideDungeon: true,
-          // IsPlayerInsideDungeonCastle: no castle-block detection yet, so
-          // a castle reads as a plain dungeon interior. FLAGGED.
-          insideDungeonCastle: false,
+          // AUDIT 21 (music lane, F3): IsPlayerInsideDungeonCastle, LIVE.
+          // The flag that stood here said "no castle-block detection yet" -
+          // rdbLayout has computed castleBlock verbatim on every block all
+          // along, and five real castle blocks are already pinned in the
+          // archive. MUSIC_ENV.Castle was unreachable and CASTLE_SONGS a dead
+          // constant: the non-hostile wing of Castle Daggerfall played a
+          // random dungeon track instead of GPALAC.
+          insideDungeonCastle: dungeonCtx?.inCastle ?? false,
           dungeonKey: dungeonCtx?.musicSeed ?? null,
         };
       }

@@ -253,8 +253,6 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:676` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/world.js:960` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
 - `src/scenes/world.js:1169` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/systems/songManager.js:306` - temple falls to Interior rather than inventing an alignment. FLAGGED.
-- `src/scenes/worldModes.js:788` - a castle reads as a plain dungeon interior. FLAGGED.
 - `src/scenes/worldModes.js:73` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:105` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage...
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,

@@ -802,9 +802,16 @@ test('AUDIT 19 F2: the building arm folds the way DFU folds it', async () => {
   assert.equal(environmentForBuilding(B.Temple, { factionId: FIGHTERS_GUILD_FACTION }), 'fighterTrainers');
   assert.equal(environmentForBuilding(B.Temple, { templeAlignment: 'good' }), 'templeGood');
   assert.equal(environmentForBuilding(B.Temple, { templeAlignment: 'bad' }), 'templeBad');
-  // An unresolved temple falls to Interior rather than inventing an
-  // alignment - the port has no temple-faction table yet (FLAGGED).
-  assert.equal(environmentForBuilding(B.Temple), 'interior');
+  // AUDIT 21 (music lane, F4) CORRECTED THIS ASSERTION. It read
+  // `assert.equal(environmentForBuilding(B.Temple), 'interior')` with the
+  // note "the port has no temple-faction table yet (FLAGGED)" - and the
+  // table was in songManager.js all along, so the note was a doc lie AND the
+  // behaviour was wrong. SongManager.cs:494-518 has NO else on the temple
+  // arm: currentContext.environment is a struct field that persists, so an
+  // unresolvable temple leaves the previous environment standing. null is
+  // "DFU writes nothing"; holdEnvironment is the caller side.
+  assert.equal(environmentForBuilding(B.Temple), null,
+    'DFU writes NOTHING for an unresolved temple - it does not write Interior');
 
   // Houses and anything else are DFU's `default` (:521-523).
   for (const t of [B.House1, B.House6, B.Ship, B.Town4, B.None, 12345]) {
@@ -1156,7 +1163,9 @@ test('AUDIT 21: the guild faction ids are FactionFile\'s', async () => {
   assert.equal(environmentForBuilding(BUILDING_TYPES.GuildHall, { factionId: 40 }), MUSIC_ENV.MagesGuild);
   assert.equal(environmentForBuilding(BUILDING_TYPES.GuildHall, { factionId: 41 }), MUSIC_ENV.Interior);
   assert.equal(environmentForBuilding(BUILDING_TYPES.Temple, { factionId: 41 }), MUSIC_ENV.FighterTrainers);
-  assert.equal(environmentForBuilding(BUILDING_TYPES.Temple, { factionId: 40 }), MUSIC_ENV.Interior);
+  // AUDIT 21 (music lane, F4): a Temple whose faction resolves to no
+  // alignment takes DFU's no-op else, not Interior - see the F2 pin above.
+  assert.equal(environmentForBuilding(BUILDING_TYPES.Temple, { factionId: 40 }), null);
 });
 
 test('AUDIT 21: LOCATION_TYPES is DFRegion\'s enum, whole', async () => {
