@@ -219,7 +219,17 @@ export async function refreshPaperDoll(entity) {
       if (!it || !CLOAK_TEMPLATES.has(it.templateIndex)) continue;
       const t = getTemplate(it.templateIndex);
       const img = await loadRecord(t.playerTextureArchive + (raceByKey(_deps.race)?.morphologyIndex ?? HUMAN_MORPHOLOGY), t.playerTextureRecord);
-      if (img) blit(out, img, { remap: (i) => applyDyeToIndex(i, it.dye ?? DYE_COLORS.Blue, DYE_TARGETS.Clothing) });
+      if (img) {
+        blit(out, img, { remap: (i) => applyDyeToIndex(i, it.dye ?? DYE_COLORS.Blue, DYE_TARGETS.Clothing) });
+        // AUDIT 18: BlitCloakInterior passes the cloak to DrawTexture
+        // (PaperDollRenderer.cs:384-400), whose tail (:284-292) pushes
+        // an ItemElement into itemLayout - so the interior IS in the
+        // GetEquipIndex click mask, and because Refresh blits it FIRST
+        // (:169) it is the LAST thing that backwards walk checks. The
+        // port drew it and entered nothing, so a click on the lining
+        // beside the body did nothing where DFU unequips the cloak.
+        layout.push({ slot: it.equipSlot ?? slot, img });
+      }
       break;   // DFU stops at the first drawn cloak interior
     }
     // body + welds + head (BlitBody)

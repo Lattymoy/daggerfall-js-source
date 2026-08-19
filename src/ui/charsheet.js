@@ -10,7 +10,12 @@
 // (DaggerfallCharacterSheetWindow): name (41,4) race (41,14) class
 // (46,24) level (45,34) gold (39,44) fatigue (57,54) health (52,64)
 // encumbrance (90,74); the 8 stats centered in 28-wide panels at
-// (141, 17 + i*24). Fatigue displays /64 (FatigueMultiplier);
+// (141, 17 + i*24). The window's fourteen Buttons (:134-204) are
+// answered by click(): exit (50,179,39,19) closes, the four skill
+// rects (11, 106/116/126/136, 115x8) toggle the same pages keys 1-4
+// do, and every other DFU button rect is consumed so the click can
+// never fall through to the host's pointer-lock request.
+// Fatigue displays /64 (FatigueMultiplier);
 // encumbrance = carried template weight (+ gold at 0.0025/piece) /
 // floor(Str*1.5) (FormulaHelper.MaxEncumbrance). The classic skill
 // BUTTON popups ride keys 1-4 as interim text panels (primary/
@@ -93,6 +98,26 @@ export class LevelUpScreen {
   }
 }
 
+// DaggerfallCharacterSheetWindow.cs:134-204 - the window's clickable
+// Button rects, verbatim, in NativePanel virtual pixels.
+export const CHARSHEET_RECTS = Object.freeze({
+  name: [4, 3, 132, 8],
+  level: [4, 33, 132, 8],
+  gold: [4, 43, 132, 8],
+  health: [4, 63, 128, 8],
+  affiliations: [3, 84, 130, 8],
+  primarySkills: [11, 106, 115, 8],
+  majorSkills: [11, 116, 115, 8],
+  minorSkills: [11, 126, 115, 8],
+  miscSkills: [11, 136, 115, 8],
+  inventory: [3, 151, 65, 12],
+  spellbook: [69, 151, 65, 12],
+  logbook: [3, 165, 65, 12],
+  history: [69, 165, 65, 12],
+  exit: [50, 179, 39, 19],
+});
+const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+
 /** The classic read-only sheet (F5). Toggle-closed by the same key
  *  or Escape; keys 1-4 pop the skill groups (interim text panels
  *  over the classic button rects' function). */
@@ -110,6 +135,22 @@ export class CharSheet {
     if (this.page && (action === 'back' || action === 'Escape')) { this.page = 0; return; }
     if (action === 'confirm' || action === 'back' || action === 'sheet'
       || action === 'Enter' || action === 'Escape' || action === 'F5' || action === 'KeyE') this.done = true;
+  }
+
+  /** AUDIT 18: the sheet had no click() at all, so its drawn EXIT
+   *  button was inert and the pointerdown fell through to the host's
+   *  requestLook. Every DFU button rect is answered or consumed. */
+  click(vx, vy) {
+    const R = CHARSHEET_RECTS;
+    if (inRect(R.exit, vx, vy)) { this.done = true; return true; }
+    const skills = [R.primarySkills, R.majorSkills, R.minorSkills, R.miscSkills];
+    for (let i = 0; i < skills.length; i++) {
+      if (inRect(skills[i], vx, vy)) { this.input(i + 1); return true; }
+    }
+    // The remaining DFU buttons (name/level/gold/health/affiliations,
+    // inventory/spellbook/logbook/history) pend their popups; consume
+    // the click so it never escapes the window.
+    return Object.values(R).some((r) => inRect(r, vx, vy));
   }
 
   draw(renderer, canvas, font, s) {

@@ -2,9 +2,15 @@
 // glyphs, 16 columns of 16x16 cells) uploaded once through
 // renderer.uploadTexture; drawText tints per call through
 // drawScreenQuad's color - so one atlas serves every classic text
-// color. Layout is DaggerfallFont's: glyph = charCode - 33; codes
-// below 33 advance a space (fixedWidth); classic 1px glyph spacing;
-// integer scale keeps the art crisp.
+// color. Layout is DaggerfallFont's + TextLabel's: glyph =
+// charCode - 33; codes below 33 take the SPACE glyph, whose width is
+// DaggerfallFont.CreateSpaceGlyph's `fntFile.FixedWidth - 1`
+// (DaggerfallFont.cs:623-627); every glyph then advances
+// GetGlyphWidth(code) + GlyphSpacing (classic spacing 1), the
+// trailing spacing INCLUDED in the measured width exactly as
+// CalculateTextWidth (DaggerfallFont.cs:377-383) and TextLabel's
+// first pass (TextLabel.cs:526-533) accumulate it; integer scale
+// keeps the art crisp.
 
 import { FNT_GLYPH_COUNT, FNT_GLYPH_DIM, FNT_ASCII_START, FNT_GLYPH_SPACING } from '../formats/fntFile.js';
 
@@ -41,14 +47,23 @@ export function glyphSrc(glyphIndex) {
   };
 }
 
-/** Advance-only pass: the pixel width of a string at scale 1. */
+/** The SPACE glyph's width: DaggerfallFont.CreateSpaceGlyph
+ *  (DaggerfallFont.cs:623-627) builds ASCII 32 at FixedWidth - 1, and
+ *  every code the font has no glyph for is cast to it. */
+export const spaceGlyphWidth = (fnt) => fnt.fixedWidth - 1;
+
+/** Advance-only pass: the pixel width of a string at scale 1.
+ *  Verbatim CalculateTextWidth (DaggerfallFont.cs:377-383): every
+ *  glyph contributes GetGlyphWidth(code) + GlyphSpacing, the trailing
+ *  spacing kept - that total is TextLabel.Size.x, the width
+ *  HorizontalAlignment.Center halves. */
 export function measureText(fnt, text) {
   let w = 0;
   for (const ch of text) {
     const code = ch.charCodeAt(0);
-    w += (code < FNT_ASCII_START ? fnt.fixedWidth : fnt.glyphWidth(code - FNT_ASCII_START)) + FNT_GLYPH_SPACING;
+    w += (code < FNT_ASCII_START ? spaceGlyphWidth(fnt) : fnt.glyphWidth(code - FNT_ASCII_START)) + FNT_GLYPH_SPACING;
   }
-  return Math.max(0, w - FNT_GLYPH_SPACING);
+  return w;
 }
 
 /** Prepare a font for drawing: the uploaded white atlas + metrics. */
@@ -62,7 +77,7 @@ export function drawText(renderer, font, text, x, y, scale = 1, color = [1, 1, 1
   const { fnt } = font;
   for (const ch of text) {
     const code = ch.charCodeAt(0);
-    if (code < FNT_ASCII_START) { cx += (fnt.fixedWidth + FNT_GLYPH_SPACING) * scale; continue; }
+    if (code < FNT_ASCII_START) { cx += (spaceGlyphWidth(fnt) + FNT_GLYPH_SPACING) * scale; continue; }
     const gi = code - FNT_ASCII_START;
     const gw = fnt.glyphWidth(gi);
     if (gw > 0) {
