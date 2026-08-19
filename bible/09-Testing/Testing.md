@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 940 tests across 144 files.
+Node 22). Suite: 947 tests across 145 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -124,6 +124,7 @@ Node 22). Suite: 940 tests across 144 files.
 | dyes.test.js | 3 | Clothing dye range shifts (Blue identity, Red 0xEF), 11 metal tables extraction-pinned, band-only swap |
 | equip.test.js | 5 | Slot-rule extraction pins (94 cases), hands verbatim, paired first-open, 2H right-hand rule, all-wearables corpus |
 | maps.test.js | 9 | 62 regions, converters, climate, city + Privateer's |
+| hmi.test.js | 7 | MIDI.BSA, the ELEVENTH format reader and the first with NO DFU SOURCE AT ALL - DFU never reads this archive (DaggerfallSongPlayer loads 133 pre-converted .mid files plus an SF2 from Unity Resources), so every claim is established from the shipped bytes and corpus-gated over the whole retail archive. The slice was commissioned as XMI and the bytes refused: there is no FORM/XDIR/CAT/ XMID chunk anywhere, only 131 "HMI-MIDISONG061595" songs holding 1286 "HMI-MIDITRACK" tracks, and HMI's deltas are ordinary MIDI VLQs where XMI's are interval counts. THE GLOBAL GATE is the pin that carries the format: with the decoded event sizes every one of the 1286 tracks consumes to its FF 2F 00 landing BYTE-EXACTLY on the next track's offset (trailingBytes 0 everywhere), so any wrong size drifts and fails - which is also why the track table (u32@0xE4 count, u32@0xE8 offsets) is pinned against the scanned signatures at 0 mismatches. Plus the merged tick-ordered event stream with note-offs sorting before note-ons at equal ticks EXCEPT a zero-duration note's own; and the corpus quirks preserved rather than smoothed - SUNNYDAY track 5's real 1,192,560-tick delta, TAVERN track 22 the only track whose header count disagrees with its stream and the only holder of FE 12/13, FOLK3's two FE 14 and no FE 15. Nothing decodes to garbage silently: unknown FE subtypes, misaligned data bytes, over-long VLQs and missing end-of-track all THROW with song name and offset |
 | snd.test.js | 3 | 459 sounds, byte-exact header, zero-length record 5 |
 | climate.test.js | 5 | applyClimate verbatim rules, texture-info classification, exterior-window table, nature/ground archives, 8820-combo corpus sweep (735 pairs, 0 missing) |
 | spectral.test.js | 2 | SetSpectral constants + gray remap (eyes 14->247, 96-index), the V^1.9 emission lerp (red eyes, body toward black) on a hand-built albedo |
