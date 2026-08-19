@@ -1176,3 +1176,64 @@ than DFU's literal 1, so mutating the constant moved the expectation
 with it - vacuous, exactly what A PIN MUST FAIL is for.
 
 18 mutations run, 18 killed.
+
+## G1 - the guild foundation: membership and RANK
+
+2026-08-19, on S25's store the same day. Guild.cs's reputation half is
+one line - `GetReputation(player) => player.FactionData.GetReputation
+(GetFactionId())` - so with the faction store in place the rank law
+ports straight across.
+
+**Rank is RECOMPUTED, not stored.** CalculateNewRank walks ten rank
+rows and stops at the first the player fails, returning the row BEFORE
+it (`return --r`), so failing row 0 lands at -1 and is expulsion. Each
+row wants reputation >= its bar, at least ONE guild skill at the high
+bar, and TWO skills counting the lower one - and the `else if` is
+load-bearing: a skill that cleared HIGH is not also counted LOW, so
+"two skills, one of them high" cannot be satisfied by one skill
+counted twice. Skills are read PERMANENT, so a Fortify Skill effect
+cannot buy a promotion.
+
+**The 28-day gate** runs on DAYS SINCE ZERO - year * 360 + dayOfYear -
+so it survives a year boundary, and every rank change resets it.
+
+**EXPULSION REMOVES THE MEMBERSHIP.** The first cut mutated a
+passed-in record and left removal to the caller; a mutation run caught
+it, because that lets the port hold a state DFU never has - a keyed
+membership sitting at rank -1, which hasJoined (which tests the KEY)
+would answer true for. updateRank now takes the memberships map and
+calls leaveGuild itself, exactly where DFU calls RemoveMembership.
+With that fixed the map never holds a negative rank, which makes
+hasJoined-by-key and by-rank equivalent - reported as an equivalent
+mutation rather than dressed up as a kill.
+
+**The guild group is DATA.** GetGuildGroup reads the faction record's
+ggroup rather than hardcoding one per subclass, and it carries DFU's
+one hardcoded exception: faction 510, THE MERCHANTS, really does ship
+ggroup 11 (FightersGuild) in FACTION.TXT - verified on the corpus - so
+without the exception every shop would answer as a Fighters Guild
+hall. The Thieves Guild is likewise not a group of its own: it is
+GeneralPopulace (4), the overload DFU's enum comments.
+
+FLAGGED loud - THE RANK TITLES. DFU reads them from its own
+localization tables through the %lev macro. Those tables are DFU's
+restatement of the classic strings; they are not in ARENA2 and not in
+the sparse clone, so they are NOT INVENTED HERE - the NATIVE-WINDOW
+RULE applies to text as much as to geometry. getTitle returns the
+player's name, which is DFU's own non-member return, and the titles
+land with the window that needs them. The RANK is correct and
+available; only its NAME is missing.
+
+Four guilds carry data: Fighters (41), Mages (40), Thieves (42), Dark
+Brotherhood (108), each with its guild-skill list and its own TEXT.RSC
+message ids, all four ids verified against the real FACTION.TXT.
+Temple and KnightlyOrder are absent on purpose - both are
+variant-keyed (eight divines, ten orders) and land with the join flow
+that has to pick a variant. Services (training, healing, spell and
+item making) are their own slice.
+
+19 mutations run, 17 killed, 2 measured EQUIVALENT and reported as
+such: DFU's `rep < 0` early return in CalculateNewRank (redundant
+because rankReqReputation[0] is 0 - the loop breaks at row 0 anyway;
+confirmed identical over 1809 cases, kept because it is DFU's line),
+and hasJoined's key-vs-rank test after the expulsion fix.

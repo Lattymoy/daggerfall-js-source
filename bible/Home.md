@@ -276,6 +276,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/effects.js:583` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 - `src/systems/equip.js:170` - /** INTERIM starting equipment (chargen's starting-gear roll
+- `src/systems/guilds.js:39` - FLAGGED loud - RANK TITLES. DFU reads them from its own
+- `src/systems/guilds.js:186` - /** GetTitle (:180-183). FLAGGED - see the header: the rank titles live
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).
