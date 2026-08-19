@@ -251,3 +251,105 @@ test('U21c: the title screen paints opaque black behind the logo', async () => {
   assert.equal(quads[1].tex, 'LOGO');
   assert.deepEqual(quads[1].rect, rect);
 });
+
+// ---------------------------------------------------------------------------
+// U21c (second pass, after Mac sent the artwork): the logo is NOT classic art
+// and must not be drawn as if it were. Every screen quad in this port takes a
+// 1-BIT cutout - discard a<0.5, then force alpha to 1 - because classic art IS
+// a 1-bit cutout: palette index 0 is transparent and every other index is
+// fully opaque. The logo has anti-aliased gold serifs and a soft shadow under
+// the dagger, so that threshold would jag the edges and cut the shadow to a
+// silhouette; and it is a high-resolution banner drawn at a non-integer scale,
+// where NEAREST aliases. Both are OPT-IN, so these pins also prove the classic
+// law is still the default for everything else.
+// ---------------------------------------------------------------------------
+
+test('U21c: the logo draws ALPHA-BLENDED, where classic art keeps the cutout', async () => {
+  const { TitleScreen } = await import('../src/ui/titleScreen.js');
+  const quads = [];
+  const renderer = {
+    drawScreenQuad: (tex, rect, uv, color, opts) => quads.push({ tex, opts }),
+  };
+  new TitleScreen({ tex: 'LOGO', width: 2000, height: 650 })
+    .draw(renderer, { width: 1400, height: 900 });
+
+  assert.equal(quads[1].tex, 'LOGO');
+  assert.equal(quads[1].opts?.blend, true, 'the logo opts INTO alpha blending');
+
+  // The backdrop - and every other quad in the port - does not.
+  assert.notEqual(quads[0].opts?.blend, true, 'the solid backdrop takes no texture blend');
+
+  // And the opt-in really is opt-in: the shader keeps the discard on the
+  // default path, so no classic art path changed. Read the source rather
+  // than a GL context, which the suite has none of.
+  const src = readFileSync('src/render/renderer.js', 'utf8');
+  assert.match(src, /uBlendTex == 1/, 'the blended arm exists in the shader');
+  assert.match(src, /if \(t\.a < 0\.5\) discard;/, 'and the 1-bit cutout is still the ELSE');
+  assert.match(src, /opts\.blend \? 1 : 0/, 'gated on the caller, not on the texture');
+});
+
+test('U21c: the logo uploads LINEAR/CLAMP, where classic art stays NEAREST/REPEAT', async () => {
+  const { runTitle } = await import('../src/scenes/menu.js');
+
+  const saved = {
+    fetch: globalThis.fetch,
+    bitmap: globalThis.createImageBitmap,
+    raf: globalThis.requestAnimationFrame,
+    doc: globalThis.document,
+    add: globalThis.addEventListener,
+    remove: globalThis.removeEventListener,
+  };
+  const uploads = [];
+  try {
+    globalThis.fetch = async () => ({ ok: true, blob: async () => 'BLOB' });
+    globalThis.createImageBitmap = async () => ({ width: 2000, height: 650 });
+    // ONE frame only - the loop re-arms itself, so calling every
+    // callback would recurse until the stack gave out.
+    let frames = 0;
+    globalThis.requestAnimationFrame = (fn) => { if (frames++ === 0) fn(); return 0; };
+    globalThis.document = {
+      createElement: () => ({
+        getContext: () => ({
+          drawImage: () => {},
+          getImageData: (x, y, w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }),
+        }),
+      }),
+    };
+    let onKey = null;
+    globalThis.addEventListener = (type, fn) => { if (type === 'keydown') onKey = fn; };
+    globalThis.removeEventListener = () => {};
+
+    const canvas = { width: 1400, height: 900, addEventListener: () => {}, removeEventListener: () => {} };
+    const renderer = {
+      uploadTexture: (a, r, px, opts) => { uploads.push({ a, r, px, opts }); return 'TEX'; },
+      beginFrame: () => {},
+      drawScreenQuad: () => {},
+    };
+
+    const done = runTitle(canvas, renderer, () => {});
+    // Let loadLogo's awaits settle, then advance the screen as a key would.
+    for (let i = 0; i < 8; i++) await Promise.resolve();
+    assert.equal(typeof onKey, 'function', 'the title screen listens for a key');
+    onKey();
+    assert.equal(await done, true, 'and a key advances it');
+  } finally {
+    globalThis.fetch = saved.fetch;
+    globalThis.createImageBitmap = saved.bitmap;
+    globalThis.requestAnimationFrame = saved.raf;
+    globalThis.document = saved.doc;
+    globalThis.addEventListener = saved.add;
+    globalThis.removeEventListener = saved.remove;
+  }
+
+  assert.equal(uploads.length, 1, 'the logo uploads exactly once');
+  assert.deepEqual(uploads[0].opts, { smooth: true },
+    'and it asks for LINEAR/CLAMP - NEAREST would alias a banner drawn at a non-integer scale');
+  assert.equal(uploads[0].px.width, 2000);
+  assert.equal(uploads[0].px.colors.length, 2000 * 650 * 4, 'RGBA, one byte a channel');
+
+  // smooth is OPT-IN: the default is still the classic law, so no game
+  // art path changed. The suite has no GL context, so read the source.
+  const rendSrc = readFileSync('src/render/renderer.js', 'utf8');
+  assert.match(rendSrc, /opts\.smooth \? gl\.CLAMP_TO_EDGE : gl\.REPEAT/, 'wrap is opt-in');
+  assert.match(rendSrc, /opts\.smooth \? gl\.LINEAR : gl\.NEAREST/, 'and so is the filter');
+});

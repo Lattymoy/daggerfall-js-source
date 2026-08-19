@@ -90,7 +90,10 @@ export async function runTitle(canvas, renderer, status) {
   if (!pixels) return false;                       // no art, no title screen
   status('title');
   const title = new TitleScreen({
-    tex: renderer.uploadTexture('ui', 'logo', pixels),
+    // smooth: LINEAR/CLAMP, because this is a high-resolution banner
+    // drawn at a non-integer scale - NEAREST is for pixel-exact classic
+    // art and would alias the serifs here.
+    tex: renderer.uploadTexture('ui', 'logo', pixels, { smooth: true }),
     width: pixels.width,
     height: pixels.height,
   });

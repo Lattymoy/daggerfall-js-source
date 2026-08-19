@@ -73,7 +73,12 @@ export class TitleScreen {
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0, 0, 0, 1]);
     if (!this.logo) return null;
     const rect = logoRect(canvas.width, canvas.height, this.logo.width, this.logo.height);
-    renderer.drawScreenQuad(this.logo.tex, rect);
+    // ALPHA-BLENDED, not the cutout every other screen quad takes. Our
+    // logo is not classic art: its edges are anti-aliased and the dagger
+    // casts a soft shadow, so the a<0.5 threshold would jag the gold and
+    // cut the shadow to a silhouette. The opt-in exists for this one
+    // caller; the classic law is untouched (renderer.js).
+    renderer.drawScreenQuad(this.logo.tex, rect, undefined, undefined, { blend: true });
     return rect;
   }
 }
