@@ -25,7 +25,9 @@
 
 import { dice100 } from '../combat/formulas.js';
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
-import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue } from './itemTemplates.js';
+import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES } from './itemTemplates.js';
+import { isLeather, isPlate } from './armorMaterials.js';
+import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 
 // ItemGroups ids used by the shelf tables (DaggerfallUnityEnums).
@@ -83,12 +85,44 @@ export const isShopShelfModel = (modelId) => SHOP_SHELF_MODEL_INDICES.has(modelI
 
 export const TRANSPORT_HORSE = 94;        // Transportation.Horse (template)
 export const TRANSPORT_SMALL_CART = 93;   // Transportation.Small_cart
+export const BOOK_TEMPLATE = 277;         // Books.Book0..Book3 all resolve here
+
+/** ItemBuilder.RandomizeArmorVariant (:813-844) - the branch
+ *  ApplyArmorSettings takes when CreateArmor is called with its
+ *  DEFAULT variant of -1, which is exactly how DaggerfallLoot.cs:228
+ *  stocks a shop shelf. (CreateRandomArmor, the LOOT path, passes
+ *  ApplyArmorSettings' default 0 and takes SetVariant instead - so
+ *  loot armor is variant 0 and must NOT take this roll.)
+ *
+ *  The picked value then goes through SetVariant, whose material
+ *  clamps live in armorMaterials.clampArmorVariant and which the port
+ *  applies at DRAW time; every range below is already inside the
+ *  template's variant count, so SetVariant's out-of-range early-out
+ *  can never fire here. */
+export function randomizeArmorVariant(templateIndex, material, rolls = Math.random) {
+  const range = (lo, hi) => lo + Math.floor(rolls() * (hi - lo));   // UnityEngine.Random.Range(int, int)
+  if (templateIndex === 102 && isPlate(material)) return range(1, 4);                    // Cuirass
+  if (templateIndex === 104) {                                                           // Greaves
+    if (isLeather(material)) return range(0, 2);
+    if (isPlate(material)) return range(2, 6);
+    return 0;
+  }
+  if ((templateIndex === 105 || templateIndex === 106) && isPlate(material)) return range(1, 4);   // Pauldrons
+  if (templateIndex === 108 && isPlate(material)) return range(1, 3);                    // Boots
+  if (templateIndex === 107) return range(0, ITEM_TEMPLATES[107]?.variants ?? 0);        // Helm
+  return 0;
+}
 
 /** StockShopShelf, verbatim. Returns the item list; every item
  *  carries value = its DaggerfallUnityItem base value. */
 export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { rolls = Math.random } = {}) {
   const items = [];
-  const add = (item) => { items.push({ ...item, value: item.value ?? itemBaseValue(item) }); };
+  // DaggerfallUnityItem.ItemName is the TEMPLATE's name for every
+  // plain item; AUDIT 18: the shelf minted rows with none, so the
+  // dungeon-style item list labelled a bought Oil "UselessItems2".
+  const add = (item) => {
+    items.push({ ...item, name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name, value: item.value ?? itemBaseValue(item) });
+  };
   const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [0];
   if (buildingType === BUILDING_TYPES.Alchemist) {
     // RandomlyAddPotionRecipe(25, items) - potion recipes pend (loud)
@@ -112,7 +146,9 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
       if (qualityMod >= 4) --qualityMod;
       qualityMod++;
       for (let j = 0; j <= qualityMod; ++j) {
-        add({ group: 'Books', templateIndex: 277, variant: Math.floor(rolls() * 4) });   // book-file pricing pends (loud)
+        // CreateRandomBook: Range(0, book.TotalVariants) = the
+        // template's variant count (2), NOT the 4 Books enum names.
+        add({ group: 'Books', templateIndex: BOOK_TEMPLATE, variant: Math.floor(rolls() * (ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0)) });   // book-file pricing pends (loud)
       }
       continue;
     }
@@ -127,9 +163,19 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
         if (templateIndex === 131) add({ group: 'Weapons', name: 'Arrow', templateIndex, material: 0, stackCount: 1 + Math.floor(rolls() * 20) });   // AUDIT 17e F14: CreateWeapon's arrow branch takes NO material roll and DFU stocks a real stack (loot.js already had this right)
         else add({ group: 'Weapons', ...createWeapon(templateIndex, randomMaterial(level, rolls)) });
       } else if (group === 'Armor') {
-        add({ group: 'Armor', templateIndex: GROUP_TEMPLATE_INDICES.Armor[j], material: randomArmorMaterial(level, rolls) });
+        // CreateArmor(gender, race, piece, RandomArmorMaterial(level))
+        // - the material roll, THEN RandomizeArmorVariant's roll.
+        const templateIndex = GROUP_TEMPLATE_INDICES.Armor[j];
+        const material = randomArmorMaterial(level, rolls);
+        add({ group: 'Armor', templateIndex, material, variant: randomizeArmorVariant(templateIndex, material, rolls) });
       } else if (group === 'MensClothing' || group === 'WomensClothing') {
-        add({ group, templateIndex: GROUP_TEMPLATE_INDICES[group][j], variant: Math.floor(rolls() * 4) });   // the loot.js clothing shape (dye/variant paperdoll pends)
+        // CreateMensClothing/CreateWomensClothing roll the VARIANT
+        // over the template's own count (Range(0, variants)); the
+        // shelf then assigns RandomClothingDye - variant roll first,
+        // dye roll second (the reverse of loot's CreateRandomClothing).
+        const templateIndex = GROUP_TEMPLATE_INDICES[group][j];
+        const variant = Math.floor(rolls() * (ITEM_TEMPLATES[templateIndex]?.variants ?? 0));
+        add({ group, templateIndex, variant, dye: CLOTHING_DYES[Math.floor(rolls() * CLOTHING_DYES.length)] });
       } else {
         add({ group, templateIndex: GROUP_TEMPLATE_INDICES[group][j] });
       }

@@ -169,7 +169,7 @@ trail remains. Line numbers refreshed.
 
 - `src/characters/enemyMotor.js:308` - FLAGGED, until target prediction ships). At zero the foe stops.
 - `src/characters/mobileUnit.js:18` - clock). DEFERRED (FLAGGED): the Seducer transform pair.
-- `src/characters/paperdollArt.js:67` - *  needs no new field; FLAGGED: a remote list (shop stock, a corpse)
+- `src/characters/paperdollArt.js:70` - *  needs no new field; FLAGGED: a remote list (shop stock, a corpse)
 - `src/characters/playerEntity.js:5` - UI later fronts it everywhere). INTERIM until then, loudly: flat
 - `src/characters/playerEntity.js:18` - maxHealth: 50,    // INTERIM until chargen rolls career HP
 - `src/characters/playerEntity.js:25` - skills: 30,       // INTERIM flat skills until chargen
@@ -234,16 +234,15 @@ trail remains. Line numbers refreshed.
 - `src/systems/effects.js:530` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 - `src/systems/equip.js:104` - /** INTERIM starting equipment (chargen's starting-gear roll
-- `src/systems/inventory.js:12` - weight pends S2b (FLAGGED - leather/chain/plate multipliers).
-- `src/systems/inventory.js:45` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
-- `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls are SKIPPED until the magic
-- `src/systems/loot.js:169` - FLAGGED to the economy slice (shops).
+- `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
+- `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
+- `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/save.js:7` - (foes, loot piles, action states, doors) is FLAGGED - dungeons
 - `src/systems/save.js:58` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
-- `src/systems/shopStock.js:109` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
+- `src/systems/shopStock.js:143` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
 - `src/systems/skills.js:74` - *  +0.1) and the Jump spell (+0.6) are INTERIM 0 here, loudly - the
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
