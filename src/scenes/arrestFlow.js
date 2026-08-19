@@ -65,6 +65,16 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
   // probe showed them raw on screen) - expand per MacroHelper: the
   // crime name table, the Regular_Punishment_String with the live
   // fine/days, the player's full name.
+  // AUDIT 18 F2: every court box is built with SetTextTokens, and
+  // DaggerfallMessageBox.SetTextTokens defaults expandMacros = true
+  // (DaggerfallMessageBox.cs:432-438), so DFU runs MacroHelper over
+  // ALL of them - 8055 (%dip), 8062 (%pcn) and 8063 (%pcn, %cn) went
+  // out raw here. %cn is MacroHelper.CityName (:566-573): the current
+  // location, or the region name when there is no location.
+  function courtLines(id, fallback, court) {
+    return text(id, fallback).map((line) => courtMacros(line, court));
+  }
+
   function courtMacros(t, court) {
     // %pcn is the player's FULL NAME - always set post-chargen in DFU.
     // Pre-chargen (the exterior hosts today) it is unset; collapse the
@@ -75,6 +85,7 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
     return t.replaceAll('%pcn', name)
       .replaceAll('%cri', CRIME_NAMES[crimeId()] ?? 'None')
       .replaceAll('%pen', penaltyText(court))
+      .replaceAll('%cn', townTalk.locationName ?? '')
       .replaceAll('%gtp', String(court.fine)).replaceAll('%dip', String(court.daysInPrison));
   }
 
@@ -109,11 +120,11 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
       // in its own comment two lines up ("Also does not repair
       // reputation"). We port DFU.
       raiseRepForSentence(playerEntity, court);
-      townTalk.showOverlay(new ChoiceWindow({ lines: text(TEXT_FREE_TO_GO, 'The court finds you not guilty. You are free to go.') }));
+      townTalk.showOverlay(new ChoiceWindow({ lines: courtLines(TEXT_FREE_TO_GO, 'The court finds you not guilty. You are free to go.', court) }));
       return;
     }
     if (r.outcome === 'banished') { finish({ outcome: 'banished' }, court); return; }
-    townTalk.showOverlay(new ChoiceWindow({ lines: text(TEXT_FOUND_GUILTY, 'The court finds you guilty.') }),
+    townTalk.showOverlay(new ChoiceWindow({ lines: courtLines(TEXT_FOUND_GUILTY, 'The court finds you guilty.', court) }),
       () => finish(resolveGuiltyVerdict(court, playerEntity), court));
   }
 
@@ -124,7 +135,7 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
       // RaiseReputationForDoingSentence (DaggerfallCourtWindow.cs:263-278)
       // - being run out of the region repairs nothing.
       release();
-      townTalk.showOverlay(new ChoiceWindow({ lines: text(TEXT_BANISHED, 'You are banished from this region.') }));
+      townTalk.showOverlay(new ChoiceWindow({ lines: courtLines(TEXT_BANISHED, 'You are banished from this region.', court) }));
       return;
     }
     if (result.outcome === 'prison') {
@@ -134,8 +145,15 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
       townTalk.showOverlay(new ChoiceWindow({ lines: [`You serve ${result.days} days in prison.`] }));
       return;
     }
+    // AUDIT 18 F6: NO box here. The zero-days arms - the guilty plea
+    // (DaggerfallCourtWindow.cs:340-348) and state 2's own release
+    // (:243-250) - both go straight to RaiseReputationForDoingSentence
+    // + FillVitalSigns + ReleaseFromPrison with nothing pushed. 8055
+    // (courtTextFoundGuilty) is raised from state 2 ONLY (:232-240),
+    // which a guilty PLEA never reaches; pushing it here both invented
+    // a "sentenced to 0 days in prison" record on the plea path and
+    // showed 8055 TWICE on the failed-defense path.
     release();
-    townTalk.showOverlay(new ChoiceWindow({ lines: text(TEXT_FOUND_GUILTY, 'The court releases you.') }));
   }
 
   function release() {

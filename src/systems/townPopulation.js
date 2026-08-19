@@ -15,6 +15,7 @@
 
 import { PERSON_TEXTURES, GUARD_TEXTURE, MobilePerson } from '../characters/mobilePerson.js';
 import { NAV_CELL } from '../world/cityNavigation.js';
+import { fullName, getNameBank, GENDERS } from '../characters/nameHelper.js';
 
 export const POP_TICKS_PER_SECOND = 10;
 export const POP_PER_16_BLOCKS = 24;           // populationIndexPer16Blocks
@@ -60,15 +61,29 @@ export class TownPopulation {
 
   /** RandomiseNPC, verbatim: Random.Range(0,32)==0 -> a GUARD (male,
    *  variant 0 - texture 399); else gender flip (Range(0,2)==1 ->
-   *  female) + one of the four outfit variants. */
+   *  female) + one of the four outfit variants. BOTH arms then run
+   *  SetPerson (MobilePersonNPC.cs:162), which mints the walker's NAME
+   *  from the region's name bank: `nameNPC = FullName(nameBankType,
+   *  gender)` (:217). AUDIT 18 F5 - nothing minted it before, so the
+   *  talk window's name plate and the %n greeting macro both fell back
+   *  to the People-of-region FACTION name ("People of Daggerfall").
+   *  The name draws ride DFRandom (NameHelper), NOT this.rand - the
+   *  same split DFU has between UnityEngine.Random and DFRandom - so
+   *  the RandomiseNPC roll stream is untouched. */
   _randomiseNPC(person) {
+    const bank = getNameBank(this.race);
     if (Math.floor(this.rand() * GUARD_CHANCE_DENOM) === 0) {
       person.setIdentity(GUARD_TEXTURE, true);
+      person.gender = GENDERS.Male;
+      person.nameNPC = fullName(bank, GENDERS.Male);
       return;
     }
     const tables = PERSON_TEXTURES[this.race] ?? PERSON_TEXTURES.Breton;
-    const genderTable = Math.floor(this.rand() * 2) === 1 ? tables.female : tables.male;
+    const female = Math.floor(this.rand() * 2) === 1;
+    const genderTable = female ? tables.female : tables.male;
     person.setIdentity(genderTable[Math.floor(this.rand() * genderTable.length)], false);
+    person.gender = female ? GENDERS.Female : GENDERS.Male;
+    person.nameNPC = fullName(bank, person.gender);
   }
 
   /** One 10Hz tick (SpawnAvailableMobile + UpdateMobiles). playerPos =
