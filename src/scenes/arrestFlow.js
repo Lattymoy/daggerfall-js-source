@@ -90,6 +90,13 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
   }
 
   function startCourtFlow() {
+    // PlayerEntity.CourtWindow (:2341) sets `arrested` immediately before
+    // the court window opens, and DaggerfallCourtWindow.OnPop (:435)
+    // clears it. Its ONE consumer is the music: SongManager checks
+    // `arrested` FIRST in AssignPlaylist and it overrides the environment
+    // entirely, so the court has its own song. The flag existed nowhere in
+    // the port, which left CourtSongs unreachable.
+    playerEntity.arrested = true;
     const court = startCourt(playerEntity, regionIndex, crimeId(), { rolls });
     townTalk.showOverlay(new ChoiceWindow({
       lines: [courtMacros(text(TEXT_COURT_START, 'You stand accused. How do you plead?')[0] ?? '', court)],
@@ -157,6 +164,7 @@ export function createArrestFlow({ townTalk, playerEntity, regionIndex, advanceD
   }
 
   function release() {
+    playerEntity.arrested = false;     // OnPop (DaggerfallCourtWindow.cs:435)
     playerEntity.crimeCommitted = 0;   // ReleaseFromPrison: the crime clears; guards despawn on the crime-clear law
     playerEntity.haveShownSurrenderDialogue = false;
     playerEntity.health = Math.max(1, playerEntity.health);   // FillVitalSigns' floor (full refill pends vitals wiring)

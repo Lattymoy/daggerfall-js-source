@@ -914,6 +914,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         weather,
         night: isNight(minuteNow()),
         gameDays: gameDaysNow(),
+        // UpdatePlayerMusicArrested (:568-571). Checked FIRST in
+        // AssignPlaylist and overrides the environment entirely.
+        arrested: Boolean(playerEntity.arrested),
       }, modes?.musicContext?.() ?? null);
         // AUDIT 18 HOST GAP: levitate/waterWalking/slowFall were
         // written ONLY inside the dungeon branch of worldModes and
