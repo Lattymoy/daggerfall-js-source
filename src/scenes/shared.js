@@ -13,7 +13,7 @@ import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
 import { hasActiveEffect } from '../systems/effects.js';
 import { skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
-import { tickPlayerMinutes } from '../systems/worldTick.js';
+import { tickPlayerMinutes, worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { liveStat } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
@@ -407,7 +407,11 @@ export function outdoorFogColor(fogSettings, skyClearColor) {
  * sink set, so a host adds the whole tick with one call.
  */
 export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } = {}) {
-  let classicMinutes = 0;
+  // AUDIT 21 F2: a VIEW on the one world clock, not an owner. This used to
+  // close over its own accumulator, so the three hosts that build a ticker -
+  // world, exterior, worldModes - each counted from zero and only while
+  // their own mode ran. Walking through a door rewound time.
+
   const sinks = {
     hurt: (n) => { if (n > 0) entity.health = Math.max(0, (entity.health ?? 0) - n); },
     heal: (n) => { if (n > 0) entity.health = Math.min(entity.maxHealth ?? Infinity, (entity.health ?? 0) + n); },
@@ -418,14 +422,14 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } 
     say,
   };
   return {
-    get classicMinutes() { return classicMinutes; },
+    get classicMinutes() { return worldMinutes(); },
     tick(dt, activity = { running: false, swimming: false }) {
       const r = tickPlayerMinutes({
-        entity, classicMinutes, dt, sinks, activity,
+        entity, classicMinutes: worldMinutes(), dt, sinks, activity,
         fatigueMultiplier: fatigueLossMultiplierFor(entity),
         say, onLevelUp,
       });
-      classicMinutes = r.classicMinutes;
+      setWorldMinutes(r.classicMinutes);
       for (const id of r.raised) say(`Your ${SKILL_NAMES[id]} skill has improved.`);
       return r;
     },

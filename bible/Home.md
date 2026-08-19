@@ -233,12 +233,12 @@ combat line numbers below are refreshed with it.
 - `src/scenes/cityGuards.js:205` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:357` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/droppedLoot.js:16` - FLAGGED loud: pile persistence across saves (the quicksave arc
-- `src/scenes/dungeonContext.js:185` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:510` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:516` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:543` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:904` - exterior spell paths are FLAGGED with their own hosts.
-- `src/scenes/dungeonContext.js:1066` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:186` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:511` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:517` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:544` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:905` - exterior spell paths are FLAGGED with their own hosts.
+- `src/scenes/dungeonContext.js:1067` - 129; the inventory/equip UI pends - the INTERIM dagger note
 - `src/scenes/exterior.js:366` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:372` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:447` - day-skip is a no-op FLAGGED until the shared calendar lands).
