@@ -46,7 +46,9 @@ for (let ask = 0; ask < 15 && !revealed; ask++) {
   await press('Digit1');        // first category
   await press('Digit1');        // first building
   const ans = await talk();
-  const text = ans.overlayText ?? '';
+  // __talk's overlayText is a { text, kind } object on answer windows.
+  const o = ans.overlayText;
+  const text = typeof o === 'string' ? o : (o?.text ?? '');
   console.log(`ask ${ask}:`, JSON.stringify(text));
   if (/map/i.test(text)) revealed = text;
   else directions++;
