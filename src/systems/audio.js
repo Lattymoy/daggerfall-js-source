@@ -51,7 +51,16 @@ export class AudioEngine {
     if (this._booted) return;
     this._booted = true;
     await this.init(fetchBytes);
-    if (typeof window !== 'undefined') this.attachGestureResume();
+    if (typeof window !== 'undefined') {
+      // AUDIT 19 F2(vid): create the context EAGERLY, suspended. A browser
+      // will not let it RUN before a gesture, but it will let it exist -
+      // and code that resolves `audio.ctx` once at construction (the video
+      // player does, deliberately, so its clock cannot move mid-stream)
+      // needs it to exist by then or it plays silently forever. The
+      // gesture still gates audibility; this only gates existence.
+      this._ensureCtx();
+      this.attachGestureResume();
+    }
   }
 
   /** Load DAGGER.SND through the data seam. Safe to call before any
@@ -79,8 +88,13 @@ export class AudioEngine {
     }
   }
 
+  /** AUDIT 19: the context is NOT gated on `enabled`. `enabled` means
+   *  DAGGER.SND loaded, which is what SOUND EFFECTS need - music and the
+   *  video player need only a clock, and gating the context on a sound
+   *  archive neither of them reads meant a missing DAGGER.SND silenced
+   *  them too. Only the absence of the AudioContext API disables sound. */
   _ensureCtx() {
-    if (this.ctx || !this.enabled) return;
+    if (this.ctx) return;
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) { this.enabled = false; return; }
     this.ctx = new AC();

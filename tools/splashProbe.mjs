@@ -28,8 +28,17 @@ const shoot = async (label, { query = '', wait = 3000 } = {}) => {
   await page.goto(`http://localhost:5204/${query}`);
   await page.waitForTimeout(wait);
   const title = await page.evaluate(() => document.title);
+  // Report the context state AND how many audio blocks the player has
+  // actually scheduled - a context that exists but schedules nothing is
+  // the bug this probe was written for.
+  const snd = await page.evaluate(async () => {
+    const aud = await import('/src/systems/audio.js');
+    const ctx = aud.audio.ctx;
+    if (!ctx) return 'none';
+    return `${ctx.state} clips=${window.__vidClips ?? 0}`;
+  }).catch(() => 'n/a');
   await page.screenshot({ path: `${out}-${label}.png` });
-  console.log(`${label}: ${JSON.stringify(title)} -> ${out}-${label}.png`);
+  console.log(`${label}: ${JSON.stringify(title)} audio=${snd} -> ${out}-${label}.png`);
   await page.close();
 };
 

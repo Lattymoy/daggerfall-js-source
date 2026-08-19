@@ -400,6 +400,12 @@ export const CHAR_SPRITE_RT_SIZE = 512;   // raised for the FP viewmodel frame (
  * banner at a NON-integer scale, where NEAREST aliases and REPEAT lets a
  * linear tap at the border sample the opposite edge.
  */
+/** A typed array as the BYTES it actually spans - offset and length
+ *  respected. `new Uint8Array(view.buffer)` silently ignores both. */
+export function asBytes(view) {
+  return new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+}
+
 export function textureParams(gl, opts = {}) {
   return opts.smooth
     ? { wrap: gl.CLAMP_TO_EDGE, filter: gl.LINEAR }
@@ -980,7 +986,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(
       gl.TEXTURE_2D, 0, gl.RGBA, color32.width, color32.height, 0,
-      gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(color32.colors.buffer)
+      // AUDIT 19 F7: respect the VIEW, not its backing buffer. Reaching
+      // through `.buffer` discards byteOffset and length, so any caller
+      // handing over a subarray - the video player hands a live view onto
+      // the reader's persistent frame buffer - would have uploaded the
+      // whole buffer from zero. Nothing did that wrongly today; it is a
+      // trap that would have gone unnoticed because the pin watching it
+      // shared the same blind spot.
+      gl.RGBA, gl.UNSIGNED_BYTE, asBytes(color32.colors)
     );
     const { wrap, filter } = textureParams(gl, opts);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
@@ -1137,7 +1150,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texImage2D(
       gl.TEXTURE_2D, 0, gl.RGBA, color32.width, color32.height, 0,
-      gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(color32.colors.buffer)
+      gl.RGBA, gl.UNSIGNED_BYTE, asBytes(color32.colors)   // AUDIT 19 F7: the view, not its buffer
     );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
