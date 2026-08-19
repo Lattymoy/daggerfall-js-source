@@ -169,7 +169,10 @@ perLevel), per-0 guarded), missile constants (speed 25, radius 0.45,
 life 8s, the sequential 375-379 element archives), and the resolved
 CLASSIC DAMAGE FAMILY - Damage Health (4,0) + Continuous (1,0)
 applied instant; every other effect FLAGGED to the effect-library
-slice. Racial saving flags + biography mods pend their slices.
+slice. (AUDIT 18: the racial resistance/immunity/low-tolerance/
+critical-weakness block and the three biography resist mods now ride
+the same function, at DFU's exact positions - SpellHasFlags included,
+element-independent Paralysis clause and all.)
 ACTION: CastSpell joins the effect flags with the verbatim
 45.454546 cooldown tick, firing (spell Index, object origin) through
 a proper constructor sink. SCENE: SPELLS.STD loads once per context
@@ -359,15 +362,18 @@ active shapes the Health family uses:
   sink, clamped to maxMagicka by the caller. out.magickaHealed.
 - **DamageSpellPoints** (ClassicKey MakeClassicKey(4, 2); DFU
   Destruction/DamageSpellPoints): single-target-other, instant,
-  MagicSkill Destruction, MagnitudeCosts(20, 28) - already in the S10
-  cost table. MagicRound calls DamageMagickaFromSource(magnitude);
+  MagicSkill Destruction, MagnitudeCosts(20, 28) - the row joined the
+  S10 cost table in AUDIT 18 (it was NOT there when this slice landed,
+  so every DamageSpellPoints spell was priced by the zero-component
+  fudge until then). MagicRound calls DamageMagickaFromSource(magnitude);
   ours scales by the saving throw exactly like DamageHealth and sinks
   through drainMagicka (floors at 0). out.magickaDrained.
 - **ContinuousDamageSpellPoints** (ClassicKey MakeClassicKey(1, 2);
   DFU Destruction/ContinuousDamageSpellPoints): joins target
-  .activeEffects as kind 'continuousDamageSpellPoints' with the
-  once-rolled save percent, and the round ticker drains magicka each
-  round (mirrors continuousDamage on health).
+  .activeEffects as kind 'continuousDamageSpellPoints', and the round
+  ticker drains magicka each round, re-rolling the magnitude AND the
+  saving throw FRESH every round (F10, as EntityEffect.GetMagnitude ->
+  ModifyEffectAmount does - it is not a once-rolled percent).
 
 PLUMBING: magicka already existed (chargen sets maxMagicka/magicka via
 spellPoints(INT, multiplier); casting spends it). This slice adds the

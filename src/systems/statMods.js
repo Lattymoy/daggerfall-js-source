@@ -19,10 +19,20 @@ export const STAT_KEYS_ORDER = Object.freeze([
   'endurance', 'personality', 'speed', 'luck',
 ]);
 
+/** FormulaHelper.MaxStatValue(), verbatim. DaggerfallStats' maxMods
+ *  layer (the only writer is the unported Mace of Molag Bal effect)
+ *  stays at 0, so the live ceiling is this flat 100. */
+export const MAX_STAT_VALUE = 100;
+
 /** The live value of a stat: base + every active mod on it (fortify
  *  adds, drain/transfer subtracts, disease entries carry an
- *  accumulated NEGATIVE per-stat statMods map - S18). Combat and
- *  advancement read THIS, never the raw base. */
+ *  accumulated NEGATIVE per-stat statMods map - S18), CLAMPED to
+ *  0..MaxStatValue exactly as DaggerfallStats.GetLiveStatValue does
+ *  (:157-163 - `value = Mathf.Clamp(permanent + mods, 0, maxValue)`).
+ *  The clamp is on the READ only: the producers (poison/disease
+ *  per-minute and per-day damage, fortify magnitudes) accumulate
+ *  unbounded, as DFU's do. Combat and advancement read THIS, never
+ *  the raw base. */
 export function liveStat(entity, statName) {
   const base = entity.stats?.[statName] ?? 0;
   let mod = 0;
@@ -37,7 +47,7 @@ export function liveStat(entity, statName) {
       else if (a.kind === 'drainAttribute' || a.kind === 'transferAttribute') mod -= a.magnitude;
     }
   }
-  return base + mod;
+  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE);
 }
 
 // ---- The fatigue stat (S15), DaggerfallEntity verbatim ----
