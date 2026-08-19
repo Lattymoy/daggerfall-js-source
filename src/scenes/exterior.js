@@ -55,7 +55,7 @@ import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the sho
 import { hitSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { fetchBytes, parseSeason, createSkyController, motorStats, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, motorStats, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -305,6 +305,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // P1: grounded first-person is the default; ?fly restores the fly cam.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14); motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  const playerTicker = createPlayerTicker(playerEntity, { say: (msg) => console.log('[player]', msg) });   // AUDIT 18: the per-minute tick every host owes
   // C9: the exterior FP weapon (host rule - every motor host carries
   // it). AUDIT 17e F38 / RETIRING A FLAG DELETES THE SENTENCE: the
   // 'no HUD-text layer yet' flag that stood here was retired by T3b
@@ -640,6 +641,13 @@ export async function bootExterior(canvas, renderer, params, status) {
       requestAnimationFrame(frame);
       return;
     }
+
+    // AUDIT 18: the player's world clock. This ran only inside a dungeon,
+    // so above ground no effect expired, no disease advanced, no fatigue
+    // drained and no skill ever rose. The modal branch above returns
+    // first, so interior/dungeon frames tick through their own hosts.
+    playerTicker.tick(dt, { running: player.running, swimming: player.swimming });
+
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [-Math.cos(cam.yaw), 0, Math.sin(cam.yaw)];   // camera-right = up x back (lookAt handedness): D must move SCREEN-right - the +cos/-sin vector was screen-LEFT (A/D felt swapped)
     if (walkMode) {

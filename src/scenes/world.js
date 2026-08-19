@@ -49,7 +49,7 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, 
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, parseSeason, createSkyController, motorStats, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, motorStats, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier, tallySkill, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
@@ -436,6 +436,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
   const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14); motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  const playerTicker = createPlayerTicker(playerEntity, { say: (msg) => console.log('[player]', msg) });   // AUDIT 18: the per-minute tick every host owes
   // C9: the exterior FP weapon (host rule - every motor host carries
   // it). AUDIT 17e F38 / RETIRING A FLAG DELETES THE SENTENCE: the
   // 'no HUD-text layer yet' flag that stood here was retired by T3b
@@ -847,6 +848,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       requestAnimationFrame(frame);
       return;
     }
+
+    // AUDIT 18: the player's world clock. This ran only inside a dungeon,
+    // so above ground no effect expired, no disease advanced, no fatigue
+    // drained and no skill ever rose. The modal branch above returns
+    // first, so interior/dungeon frames tick through their own hosts.
+    playerTicker.tick(dt, { running: player.running, swimming: player.swimming });
 
     if (walkMode) {
       if (!playerSpawned && built.has(startKey)) {

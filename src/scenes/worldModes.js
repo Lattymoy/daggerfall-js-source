@@ -27,6 +27,7 @@ import { pickActivatable, worldAabb, activationTargets } from '../player/activat
 import { transferAll, removeOne, addItem } from '../systems/inventory.js';
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
+import { createPlayerTicker } from './shared.js';   // AUDIT 18: the interior host's world clock
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
@@ -60,6 +61,8 @@ const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
 const DUNGEON_WATER_SCROLL = 0.05;
 
 export function createWorldModes(host) {
+  // AUDIT 18: the interior host's share of the player world clock.
+  const interiorTicker = createPlayerTicker(playerEntity, { say: (msg) => console.log('[player]', msg) });
   const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
 
@@ -536,6 +539,10 @@ export function createWorldModes(host) {
       // upstairs". AcrobatMotor.CheckFallingDamage has exactly one
       // exemption and it is the outdoor water tile, never an interior.
       applyFallLanding(playerEntity, player.landedFallDistance, { sound: (id) => audio.playOneShot(id) });
+      // AUDIT 18: and the interior owed the same world clock the exterior
+      // and dungeon hosts run - inside a building, effects, diseases,
+      // poisons, fatigue and skill advancement had all stopped.
+      if (!overlayHeld) interiorTicker.tick(dt, { running: player.running, swimming: false });
     }
     cam.pos = player.eye;
     const useHeld = keys.has('KeyE');

@@ -11,6 +11,7 @@ import { weaponAttackDamage, baseDamageMin, baseDamageMax, chooseEnemyWeapon } f
 import { WEAPONS, weaponMinDamage, weaponMaxDamage } from '../src/characters/weapons.js';
 import { assignStartingGear } from '../src/systems/startingGear.js';
 import { KEEP } from '../src/scenes/dataSource.js';
+import { tickPlayerMinutes } from '../src/systems/worldTick.js';
 import { computeFaceUVCoordinates } from '../src/formats/faceUVTool.js';
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
@@ -280,4 +281,82 @@ test('AUDIT 18 F7: every src/ module imports cleanly (no dangling exports)', asy
     }
   }
   assert.deepEqual(failures, [], `modules that do not link:\n${failures.join('\n')}`);
+});
+
+// ---------------------------------------------------------------------------
+// F8: the player's world clock belongs to every host.
+//
+// The per-classic-minute tick ran ONLY inside dungeonContext's frame body, so
+// above ground nothing aged: magic effects never expired, diseases never
+// advanced a day, poisons never fired a round, fatigue never drained, and
+// raiseSkills never ran - a character who stayed out of dungeons NEVER
+// ADVANCED A SKILL OR GAINED A LEVEL. DFU splits none of this by scene
+// (EntityEffectBroker raises MagicRound globally; PlayerEntity.Update runs
+// fatigue and advancement wherever the player is).
+//
+// The law moved to systems/worldTick.js precisely so it could be pinned by
+// behaviour instead of by grepping a host with no execution coverage.
+// ---------------------------------------------------------------------------
+
+const tickEntity = () => ({
+  chargenDone: true, skillUses: new Array(35).fill(0), stats: {}, skills: 30,
+  activeEffects: [], lastSkillCheckTime: 0, fatigue: 3200, health: 50, maxHealth: 50,
+});
+const tickSinks = (drained) => ({
+  hurt() {}, heal() {}, drainMagicka() {}, restoreMagicka() {}, restoreFatigue() {}, say() {},
+  drainFatigue: (n) => { drained.n += n; },
+});
+
+test('AUDIT 18 F8: one classic minute is one magic round, and 12x real time', () => {
+  const entity = tickEntity(), drained = { n: 0 };
+  // 5 real seconds = 1 classic minute (12x).
+  const r = tickPlayerMinutes({ entity, classicMinutes: 0, dt: 5, sinks: tickSinks(drained), rolls: () => 0.5 });
+  assert.equal(Number(r.classicMinutes.toFixed(6)), 1);
+  assert.equal(r.rounds, 1, 'exactly one magic round per classic minute');
+  // A ten-minute jump runs ten rounds...
+  const r2 = tickPlayerMinutes({ entity, classicMinutes: 0, dt: 50, sinks: tickSinks(drained), rolls: () => 0.5 });
+  assert.equal(r2.rounds, 10);
+});
+
+test('AUDIT 18 F8: fatigue drains ONCE per minute-change, not once per caught-up minute', () => {
+  // S20 parity: DFU guards a single DecreaseFatigue on
+  // `lastGameMinutes != gameMinutes`, so a multi-minute jump costs one
+  // minute's fatigue. Draining per round would bill 10x here.
+  const drained = { n: 0 };
+  tickPlayerMinutes({ entity: tickEntity(), classicMinutes: 0, dt: 50, sinks: tickSinks(drained), rolls: () => 0.5 });
+  assert.equal(drained.n, 11, 'ten minutes of catch-up still costs one minute of fatigue');
+  // And no minute change costs nothing at all.
+  const none = { n: 0 };
+  tickPlayerMinutes({ entity: tickEntity(), classicMinutes: 0.1, dt: 0.5, sinks: tickSinks(none), rolls: () => 0.5 });
+  assert.equal(none.n, 0);
+});
+
+test('AUDIT 18 F8: the fatigue band and Athleticism, truncated AFTER the multiply', () => {
+  const run = (activity, mult) => {
+    const d = { n: 0 };
+    tickPlayerMinutes({ entity: tickEntity(), classicMinutes: 0, dt: 5, sinks: tickSinks(d), activity, fatigueMultiplier: mult, rolls: () => 0.5 });
+    return d.n;
+  };
+  assert.equal(run({ running: false, swimming: false }, 1.0), 11);
+  assert.equal(run({ running: true, swimming: false }, 1.0), 88);
+  // PlayerEntity.cs:405 casts to int AFTER the multiply: 11 -> 9, 88 -> 79.
+  assert.equal(run({ running: false, swimming: false }, 0.9), 9);
+  assert.equal(run({ running: true, swimming: false }, 0.9), 79);
+});
+
+test('AUDIT 18 F8: EVERY host runs the player world clock, not just the dungeon', () => {
+  // The defect was a host gap, so the rule is pinned as a rule.
+  for (const rel of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js']) {
+    const text = readFileSync(join(SRC, '..', rel), 'utf8');
+    assert.match(text, /Ticker\.tick\(dt/, `${rel} never advances the player's world clock`);
+  }
+  // The dungeon host routes through the SAME shared law rather than keeping
+  // its own copy - two copies is how the gap survived eleven milestones.
+  assert.match(readFileSync(join(SRC, 'scenes', 'dungeonContext.js'), 'utf8'), /tickPlayerMinutes\(\{/);
+  for (const file of walk(SRC)) {
+    if (file.endsWith(`${sep}worldTick.js`)) continue;
+    const text = readFileSync(file, 'utf8');
+    assert.ok(!/updateDiseases\(playerEntity/.test(text),
+      `${file}: the per-minute player laws belong to systems/worldTick.js`);
+  }
 });

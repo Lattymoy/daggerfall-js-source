@@ -46,7 +46,8 @@ import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.j
 import { InventoryWindow, SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
-import { raiseSkills, applyLevelUp } from '../systems/advancement.js';
+import { applyLevelUp } from '../systems/advancement.js';
+import { tickPlayerMinutes } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
@@ -1469,56 +1470,36 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       sharedStealth: _sharedStealth,
       tallyStealth: () => tallySkill(playerEntity, SKILLS.Stealth),
     };
+    // AUDIT 18: the PLAYER half of this tick moved to systems/worldTick.js
+    // and is now called by every host - it used to run only here, so a
+    // character who stayed above ground never aged an effect, never
+    // progressed a disease, never drained fatigue and NEVER GAINED A
+    // LEVEL. The FOE half stays here: it walks this host's foe list.
     const _prevMinute = Math.floor(classicMinutes);
-    classicMinutes += (dt * 12) / 60;
+    const _tick = tickPlayerMinutes({
+      entity: playerEntity,
+      classicMinutes,
+      dt,
+      sinks: playerSinks,
+      activity: _activity,
+      fatigueMultiplier: fatigueLossMultiplier(),
+      rolls: Math.random,
+      say: (msg) => hudText.add(msg),
+      onLevelUp: () => {
+        // U3: the level-up screen replaces the headless auto-apply
+        hudText.add('You have gained a level!');
+        if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
+      },
+    });
+    classicMinutes = _tick.classicMinutes;
+    const raised = _tick.raised;
     for (let r = _prevMinute; r < Math.floor(classicMinutes); r++) {
-      // S7: one magic round per classic minute (the broker's cadence).
-      // S18: diseases update FIRST so an ending disease's final day
-      // lands and the same round's tick removes the expired entry
-      // (DFU removes at the end of the same DoMagicRound). The classic
-      // day = elapsed classic minutes / 1440 (r + 1 = the minute this
-      // round completes); day 0 of an infection is incubation.
-      updateDiseases(playerEntity, Math.floor((r + 1) / MINUTES_PER_DAY), playerSinks, Math.random,
-        (msg) => hudText.add(msg));
-      // S19b: the poison minute tick (r + 1 = the classic minute this
-      // round completes); foes tick too - poisons are not player-only
-      updatePoisons(playerEntity, r + 1, playerSinks, Math.random, (msg) => hudText.add(msg));
-      tickActiveEffects(playerEntity, playerSinks);
       for (const f of foes) {
         if (f.dead) continue;
         updatePoisons(f.entity, r + 1, foeSinks(f), Math.random);
         tickActiveEffects(f.entity, foeSinks(f));
       }
     }
-    // P11: per-game-minute fatigue loss (PlayerEntity verbatim):
-    // default 11; running 88; swimming 44 on a FAILED roll vs the
-    // LIVE Swimming skill (success stays default) + the Swimming
-    // tally. S20 parity fix: DFU applies the loss ONCE per
-    // minute-CHANGE (`lastGameMinutes != gameMinutes` guards a single
-    // DecreaseFatigue - no loop over elapsed minutes), so a
-    // multi-minute jump (the collapse hour, rest) costs one minute's
-    // fatigue - the pre-S20 shape drained every caught-up round.
-    // Athleticism (PlayerEntity.cs:388-400): a career with the
-    // Athleticism advantage loses fatigue 10% slower, and the cast to
-    // int happens AFTER the multiply (`(int)(DefaultFatigueLoss *
-    // fatigueLossMultiplier)`), so 11 -> 9, 88 -> 79, 44 -> 39. The
-    // improvedAtleticismMultiplier (0.8) needs the enchantment, which
-    // the port does not have. The Argonian swimming exemption pends
-    // race selection.
-    if (Math.floor(classicMinutes) !== _prevMinute) {
-      let loss = FATIGUE_LOSS.Default;
-      if (_activity.running) loss = FATIGUE_LOSS.Running;
-      else if (_activity.swimming) {
-        if (!dice100(skillValue(playerEntity, SKILLS.Swimming))) loss = FATIGUE_LOSS.Swimming;   // Dice100.FailedRoll
-        tallySkill(playerEntity, SKILLS.Swimming);
-      }
-      drainFatigue(Math.trunc(loss * fatigueLossMultiplier()));
-    }
-    const raised = raiseSkills(playerEntity, classicMinutes, Math.random, () => {
-      // U3: the level-up screen replaces the headless auto-apply
-      hudText.add('You have gained a level!');
-      if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
-    });
     for (const id of raised) hudText.add(`Your ${SKILL_NAMES[id]} skill has improved.`);   // classic phrasing; TEXT.RSC pends
     collisionTriggers(dt, playerFeet, moveHeld);
     updateMissiles(dt, playerFeet);

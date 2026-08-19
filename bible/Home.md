@@ -180,6 +180,7 @@ DFU-numbered raceId, so CalculateRacialModifiers is ported and LIVE
 (formulas.js). What still pends there is CalculateProficiencyModifiers
 alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
+
 - `src/characters/enemyMotor.js:338` - FLAGGED, until target prediction ships). At zero the foe stops.
 - `src/characters/mobilePerson.js:8` - while the scene's politeness gate holds. FLAGGED (AUDIT 18):
 - `src/characters/mobilePerson.js:176` - *        the FLAGGED note in this file's header)
@@ -205,28 +206,28 @@ combat line numbers below are refreshed with it.
 - `src/scenes/cityGuards.js:205` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:357` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/droppedLoot.js:16` - FLAGGED loud: pile persistence across saves (the quicksave arc
-- `src/scenes/dungeonContext.js:168` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:493` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:499` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:526` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:1030` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/exterior.js:339` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:345` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:420` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/exterior.js:486` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:588` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:671` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/shared.js:148` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
+- `src/scenes/dungeonContext.js:169` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:494` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:500` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:527` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:1031` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/exterior.js:340` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:346` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:421` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/exterior.js:487` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:589` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:679` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/shared.js:150` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:447` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:461` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:467` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:583` - day-skip is a no-op FLAGGED until the shared calendar lands).
-- `src/scenes/world.js:638` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:884` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1093` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/worldModes.js:70` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
-- `src/scenes/worldModes.js:102` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage...
+- `src/scenes/world.js:448` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:462` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:468` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:584` - day-skip is a no-op FLAGGED until the shared calendar lands).
+- `src/scenes/world.js:639` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:891` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1100` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/worldModes.js:73` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
+- `src/scenes/worldModes.js:105` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage...
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
@@ -293,6 +294,116 @@ combat line numbers below are refreshed with it.
 ## Audits
 
 Newest first.
+
+**2026-08-19 - AUDIT 18, the whole-codebase parity audit.** Mac's call:
+the ultimate bug-and-parity pass over everything ported so far. 18
+domain lanes read the port against the DFU C# and produced 147
+findings; a hostile verifier per lane, told to REFUTE by default, then
+re-opened both sources on every one - 130 CONFIRMED, 15 PARTIAL, 2
+REFUTED, and 84 MORE defects the verifiers found while re-reading.
+Eleven fix domains applied them in isolated worktrees, each required to
+prove every pin FAILS when reverted. 160+ fixes, 221 new pins, 688
+tests -> 909.
+
+TWO THINGS WERE BUILT THAT THIS PROJECT HAD NEVER HAD, and they carried
+the audit:
+
+THE DIFFERENTIAL HARNESS. DaggerfallConnect's own readers now COMPILE
+AND RUN under Mono (35 reader files + a tiny Unity shim; there is no
+UnityEngine.Vector3 dependency at all - FaceUVTool uses
+DaggerfallConnect's own DOUBLE-precision Vector3). Both sides dump the
+same format - floats as IEEE-754 bit patterns, bulk data as SHA-1 - so
+comparison is exact. 10,865,545 values compared across every reader and
+the whole ARENA2 corpus: 12,487 BSA records, 11,211 TEXTURE frames plus
+the full getColor32 parameter surface, ARCH3D's 797,433 points, WOODS'
+500,000-pixel sweep, MAPS' 15,251 locations, 1,295 BLOCKS, 65,000
+DFRandom draws. The reader layer came back byte-identical. Three real
+divergences fell out (F3, F4, and the fixed-length ReadCString), and
+one honest correction: Ledger row 18's approved float->double widening
+costs 52,505 of 1,917,087 UVs (2.74%) - nobody had ever measured it,
+and "validated against corpus" had never meant bit-identical. A 1,803-UV
+residual at MATCHED precision is unexplained and is now a Ledger C row
+rather than a silence. The harness is re-runnable.
+
+THE MUTATION AUDIT. 631 targeted one-character mutations to ported
+logic; 281 SURVIVED all 688 tests - a mutation score of 55.3%,
+validated by re-running a random sample of survivors against the full
+suite (12/12 still survived). 29.9% of src/ lines were executed by no
+test. Only 24 of 179 parity-surface tables were pinned whole. The four
+parallel scene hosts - 3,906 lines of DFU-cited behaviour - had ZERO
+execution coverage, known to the suite only through five regex greps.
+The weakest operators were the ones this port depends on most:
+trunc/floor/round swaps 44% caught, >> vs >>> 20%. And one pin was
+vacuous by construction (enemyequipment.test.js's armour deepEqual had
+IDENTICAL ternary branches, so it pinned nothing about which parts a
+Buckler protects).
+
+THE HEADLINE DEFECTS. Every armed player swing computed NaN: DFU never
+stores a weapon's damage, it resolves the TEMPLATE on every swing
+(GetBaseDamageMin/Max), and the port read baked fields that only enemy
+equipment ever set - so from the moment S3d's starting gear replaced
+the interim dagger, a chargen-created character did NaN damage with the
+weapon the game hands them. Three shipped readers had NO DATA in
+production (the ingest diet predates U18/T3a/S3e and dropped
+CLASSES.DAT, FACTION.TXT and every BIOG*.TXT; dev hid it because vite
+serves the network fallback that production 404s). U7 rest never
+advanced an hour in either host - the clock ticked inside drawFoes,
+which both hosts skip whenever an overlay is up, and the rest window IS
+the overlay. ?world and ?exterior were ENTIRELY SILENT until a dungeon
+was entered. No enemy could fire a bow. Looted gold was unspendable. 26
+of 58 fully-implemented spells were charged the wrong cost. And the
+player's whole world clock - magic rounds, disease days, poison rounds,
+fatigue, skill advancement - ran ONLY inside a dungeon, so a character
+who stayed above ground never advanced a skill or gained a level.
+
+THREE TIMES THE PIN WAS THE FINDING. F1's fixtures built weapons in a
+shape no production path mints, which is exactly why the NaN shipped
+invisibly. F3's pin asserted the port's own invention (rulerPowerBonus
+20..70) over DFU's value - FactionData is a struct, DFU copies it into
+the dict BEFORE assigning the seed, so every faction it hands the game
+carries 0 - and that pin would have made the fix read as the
+regression. And the suite could not see the NaN, the silence, the
+frozen clock or the dead bow at all, because the hosts have no
+coverage.
+
+THE MERGE FOUND FOUR MORE. Eleven independently-developed domains
+disagree, and reconciling them was not bookkeeping: two fixed the audio
+bootstrap separately (two bootstraps, two flags - the duplicate-port
+shape this project keeps catching), two fixed the ingest diet
+separately (the blanket .TXT form won over the named one: it removes
+the class, not three instances), a pin asserted ENEMY_BASICS had no
+parrySounds column while another domain was adding it (EnemyBasics.cs
+gives Knight_CityWatch ParrySounds = true, so the merged CODE was right
+and the PIN was the stale half), and one domain replaced
+enemyGroupOf(affinity) with enemyEntityGroup(careerIndex) - DFU groups
+by career - while another still imported the old name. That last one is
+a hard ESM link error that SURVIVED ALL 904 TESTS and was caught only
+by `vite build`. It is pinned now: F7 imports every module under src/,
+so a dangling import fails the suite instead of the deploy.
+
+THE DOCS WERE LOAD-BEARING AND WRONG. Port-Ledger C listed
+breath/drowning and the crouch motor as unported when P12 shipped both
+- LIVE CODE sitting inside the Ledger's own "not yet ported" exemption,
+which is precisely how a defect there would have escaped this audit.
+Systems.md and UI.md said "Not started" for arcs that shipped S1-S22
+and U1-U20b. Testing.md claimed CI ran "88 pass, 49 skip" - it was 613
+/ 75, describing a suite that had not existed for many milestones, and
+the real point it hid is that those 75 real-data pins NEVER RUN IN THE
+DEPLOY GATE. Two source comments cited Ledger rows that do not exist -
+the exact AUDIT 17m shape, twice more. Home.md's open-flags list is now
+regenerated MECHANICALLY from the flag sites and pinned BOTH ways: a
+drifted citation, a flag retired without deleting its sentence, or a
+new flag never listed all fail the suite.
+
+WHAT THE PINS LEARNED. The audit's own rule - A PIN MUST FAIL - was
+applied to every fix by reverting it, and several agents reported
+honestly that a doc-only change cannot be pinned rather than padding
+one. Where a host seam genuinely cannot be driven in node, the pin is a
+SOURCE SWEEP and says so. Where a fix made something testable for the
+first time (the player world clock, the fatigue bands), the pin is
+behavioural. Three pins were rewritten from source greps into
+behavioural assertions when the merge made their mechanism stale but
+their intent correct.
 
 **2026-08-19 - AUDIT 18, the DOC-TRUTH sweep.** The bible is load-bearing:
 17m proved a false "recorded in the Ledger" claim actively hid a live defect

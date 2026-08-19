@@ -24,6 +24,7 @@ import {
 } from '../src/scenes/hostCombat.js';
 import { SKILLS, WEAPON_SKILL } from '../src/systems/skills.js';
 import { ENEMY_GROUPS, bonusOrPenaltyByEnemyType } from '../src/combat/formulas.js';
+import { tickPlayerMinutes } from '../src/systems/worldTick.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { makeEnemyEntity, loadMonsterCareer } from '../src/characters/enemyEntity.js';
 import { swingSoundFor, SOUND } from '../src/systems/soundClips.js';
@@ -482,8 +483,25 @@ test('audit18 sweep: the swing fatigue and the tally arm are wired into the dung
 test('audit18 sweep: the Athleticism fatigue multiplier is applied and truncated AFTER the multiply', () => {
   const src = hostSrc('dungeonContext.js');
   assert.ok(/hasSpecialAbility\(playerEntity\.career, SPECIAL_ABILITY\.Athleticism\) \? 0\.9 : 1\.0/.test(src));
-  assert.ok(/drainFatigue\(Math\.trunc\(loss \* fatigueLossMultiplier\(\)\)\)/.test(src), 'the per-minute loss');
   assert.ok(/drainFatigue\(Math\.trunc\(FATIGUE_LOSS\.Jumping \* fatigueLossMultiplier\(\)\)\)/.test(src), 'the jump loss');
+  // The PER-MINUTE loss moved to systems/worldTick.js at AUDIT 18 so every
+  // host runs it. That made it testable for the first time, so it is pinned
+  // BEHAVIOURALLY here rather than by grepping the host it used to live in.
+  assert.ok(/fatigueMultiplier: fatigueLossMultiplier\(\)/.test(src),
+    'the host must still hand its multiplier to the shared tick');
+  const runTick = (mult, activity) => {
+    let drained = 0;
+    const entity = { chargenDone: true, skillUses: new Array(35).fill(0), stats: {}, skills: 30, activeEffects: [], lastSkillCheckTime: 0 };
+    tickPlayerMinutes({
+      entity, classicMinutes: 0, dt: 5.1, activity, fatigueMultiplier: mult, rolls: () => 0.5,
+      sinks: { drainFatigue: (n) => { drained += n; }, hurt() {}, heal() {}, drainMagicka() {}, restoreFatigue() {}, restoreMagicka() {}, say() {} },
+    });
+    return drained;
+  };
+  assert.equal(runTick(1.0, { running: false, swimming: false }), 11, 'Default');
+  assert.equal(runTick(0.9, { running: false, swimming: false }), 9, 'Default with Athleticism');
+  assert.equal(runTick(1.0, { running: true, swimming: false }), 88, 'Running');
+  assert.equal(runTick(0.9, { running: true, swimming: false }), 79, 'Running with Athleticism');
   // PlayerEntity.cs:405 casts to int AFTER the multiply: 11 -> 9, 88 -> 79, 44 -> 39
   assert.equal(Math.trunc(11 * 0.9), 9);
   assert.equal(Math.trunc(88 * 0.9), 79);

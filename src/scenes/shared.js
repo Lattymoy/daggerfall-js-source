@@ -12,7 +12,9 @@ import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackS
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
 import { hasActiveEffect } from '../systems/effects.js';
-import { skillValue, SKILLS } from '../systems/skills.js';
+import { skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
+import { tickPlayerMinutes } from '../systems/worldTick.js';
+import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { liveStat } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -374,4 +376,51 @@ export function outdoorFogColor(fogSettings, skyClearColor) {
     return GRAY_FOG_COLOR;
   }
   return skyClearColor;
+}
+
+// --- The player's world clock, for every host (AUDIT 18) --------------
+
+/**
+ * AUDIT 18 HOST GAP: the per-classic-minute player tick ran ONLY inside
+ * dungeonContext's frame body. Above ground nothing aged - magic effects
+ * never expired, diseases never advanced a day, poisons never fired a
+ * round, fatigue never drained, and raiseSkills never ran, so a
+ * character who stayed out of dungeons NEVER ADVANCED A SKILL OR GAINED
+ * A LEVEL. DFU splits none of this by scene: EntityEffectBroker raises
+ * MagicRound on a global interval and PlayerEntity.Update runs the
+ * fatigue and advancement path wherever the player is.
+ *
+ * The law itself lives in systems/worldTick.js, where it is testable.
+ * This is the per-host carrier: it owns the minute accumulator and the
+ * sink set, so a host adds the whole tick with one call.
+ */
+export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } = {}) {
+  let classicMinutes = 0;
+  const sinks = {
+    hurt: (n) => { if (n > 0) entity.health = Math.max(0, (entity.health ?? 0) - n); },
+    heal: (n) => { if (n > 0) entity.health = Math.min(entity.maxHealth ?? Infinity, (entity.health ?? 0) + n); },
+    drainMagicka: (n) => { if (n > 0) entity.magicka = Math.max(0, (entity.magicka ?? 0) - n); },
+    restoreMagicka: (n) => { if (n > 0) entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + n); },
+    drainFatigue: (n) => { if (n > 0) entity.fatigue = Math.max(0, (entity.fatigue ?? 0) - n); },
+    restoreFatigue: (n) => { if (n > 0) entity.fatigue = (entity.fatigue ?? 0) + n; },
+    say,
+  };
+  return {
+    get classicMinutes() { return classicMinutes; },
+    tick(dt, activity = { running: false, swimming: false }) {
+      const r = tickPlayerMinutes({
+        entity, classicMinutes, dt, sinks, activity,
+        fatigueMultiplier: fatigueLossMultiplierFor(entity),
+        say, onLevelUp,
+      });
+      classicMinutes = r.classicMinutes;
+      for (const id of r.raised) say(`Your ${SKILL_NAMES[id]} skill has improved.`);
+      return r;
+    },
+  };
+}
+
+/** PlayerEntity.cs:388-400 - Athleticism loses fatigue 10% slower. */
+export function fatigueLossMultiplierFor(entity) {
+  return hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism) ? 0.9 : 1.0;
 }
