@@ -959,3 +959,132 @@ margin), gold 20000 -> 16938 -> 19842, the item off then back on
 the shelf.
 
 Suite 450/98 (the storeBuysItemType pin).
+
+## S23 - the career equip restrictions
+
+2026-08-19. AUDIT 17n catalogued which U20b advantage picks nothing
+reads, and listed the four Forbidden categories plus Expertise In among
+the inert twelve. Framing it as a custom-class gap understated it
+badly: those picks write `weaponArmorShieldsBitfield` and
+`forbiddenMaterialsFlags`, and SEVENTEEN OF THE EIGHTEEN CLASSIC
+CLASSES carry values in those fields already. The port had never
+enforced one of them. A Mage could wear plate, carry a tower shield and
+swing an axe; a Monk could wear full plate; only the Warrior was
+correct, and only because the Warrior forbids nothing.
+
+DaggerfallInventoryWindow.EquipItem (:1343-1381) is the whole law, and
+WHERE it sits is half of it: DFU hangs the check on the inventory
+WINDOW, not on ItemEquipTable.EquipItem, so AssignStartingGear equips
+straight past it. A restricted class really can START in gear it could
+never put back on after taking it off. Ported at the same seam,
+deliberately, and pinned there.
+
+The port's ARMOR_MATERIAL values ARE DFU's raw nativeMaterialValue
+(0x0000 leather / 0x0100 chain / 0x0200+ plate), so DFU's `>> 8` and
+`& 0xFF` expressions carry over unchanged rather than needing a
+translation layer. Shields index from the Buckler template; weapons
+carry the FLAT 0..9 material index instead of the packed armor value.
+
+TWO verbatim quirks. The armor MATERIAL test is gated on
+`(nativeMaterialValue >> 8) == 2` - plate only - which BITES on Chain2:
+its 0x0103 shares a low byte with Elven's 0x0203, so without the gate a
+career forbidding elven would refuse a chain piece that has nothing to
+do with elven metal. And GetWeaponSkillUsed returns Skills.None = -1
+for a template it does not name (:938); -1 masks against every bit, so
+any weapon-group item outside the sixteen named weapons reads as
+forbidden to a career with any forbidden proficiency at all.
+
+GetWeaponSkillUsed itself is mapped across the port's existing
+WEAPON_SKILL partition rather than minting a second weapon table
+(ONE DFU MEMBER, ONE EXPORT) - DFU switches on template index, the port
+already single-sources the same partition by name.
+
+FLAGGED loud, and honestly: DFU pops TEXT.RSC 1068 on a
+ClickAnywhereToClose parchment box. The inventory surface has no
+TEXT.RSC source and no message frame of its own yet, so the refusal
+shows on the same interim popup the info panel uses, carrying the
+record number. THE REFUSAL ITSELF is verbatim - the item does not
+equip, which is the half that changes play.
+
+Pins (test/equiprestrictions.test.js, 7), mutation-proven - dropping
+the plate-only gate, letting shields fall into the armor branch,
+turning the -1 default into 0, or reading forbiddenArmors from the
+wrong bits each fail their own. One mutation is EQUIVALENT and recorded
+as such: masking a weapon's material with 0xff changes nothing, because
+weapon materials are 0..9 already.
+
+Probed live (tools/equipRestrictionProbe.mjs): the U8g equip probe's
+own loadout, offered to a MAGE instead of the Warrior it was written
+for. The Iron Cuirass is refused and says why; a Dagger goes on. The
+probe's first draft used a Longsword as the "allowed" weapon and was
+rightly refused - the Mage forbids long blades too - and that correction
+is now a pin.
+
+What this turns on: five of AUDIT 17n's twelve inert U20b picks
+(Expertise In still writes only the expert half, which no formula reads
+yet), and the classic restrictions for all seventeen affected classes.
+
+## S24 - spell absorption
+
+2026-08-19. `spellAbsorptionFlags` had zero consumers, which AUDIT 17n
+catalogued as one of U20b's inert picks. It is worse than that in one
+specific place: the SORCERER ships absorb = Always ALONGSIDE
+NoRegenSpellPoints, and NoRegenSpellPoints was already live. The class
+was paying its entire classic cost - no spell point regeneration at all
+- and receiving none of the benefit it is traded for. Strictly worse
+than every other class, since the trade only makes sense as a pair.
+
+EntityEffectManager.TryAbsorption (:1160-1200) in DFU's own order:
+
+DESTRUCTION ONLY (:1168-1172), and DFU's comment says why - absorption
+is tested against EVERY incoming effect, so without the school gate a
+benign self-heal would be swallowed. The port already single-sources
+the school partition in the cost table, so `effectSchool` reads it
+rather than minting a second map.
+
+The cost is computed AS IF THE TARGET CAST IT (:1177), which matters
+only for another entity's spell and agrees trivially for a self-cast.
+GetEffectCastingCost carries the target multiplier and DFU's floor of
+5, which DFU spells out as the guard that stops an absorb from
+DRAINING the pool it is meant to fill.
+
+The target must have ROOM: `cost > (max - current)` refuses
+(:1180-1184). This is the throttle on the whole trait - an absorber at
+full magicka absorbs nothing and takes the spell like anyone else, and
+the probe shows exactly that.
+
+Then the sources in order: the Spell Absorption EFFECT, the CAREER
+flag, and a persistent absorb state. The port has neither the effect
+nor the state yet, so both are injectable and FLAGGED; the career
+branch is the live one.
+
+The career branches read `inside` and `day` - darkness is
+inside-OR-night, light is outside-AND-day - which is the same law
+rest.js's RapidHealing already uses, and DFU takes both from the
+PLAYER for every entity ("everything is where the player is",
+:1305). The dungeon host passes `inside: true` because a dungeon is;
+the exterior spell paths are FLAGGED with their own hosts.
+
+An absorbed effect is SKIPPED, not reduced - DFU `continue`s past it,
+so no damage is dealt at all. The tally is credited after the loop with
+one cap: a SELF-cast cannot refund more than it cost, because
+absorption is counted per effect and can otherwise exceed the spell's
+own price. That cap deliberately does NOT apply to another entity's
+spell.
+
+FLAGGED: DFU pulls "Spell was absorbed." from the localised string
+table; this surface has no text source, so the literal stands.
+
+Pins (test/absorption.test.js, 9), each mutation-proven - removing the
+Destruction gate, the headroom check, the cost floor, the skip, or the
+self-cast cap, or inverting the darkness branch, each fails its own.
+The headroom law is pinned at the boundary in both directions: exactly
+enough room absorbs, one point short refuses.
+
+Probed live (tools/absorptionProbe.mjs) as a Sorcerer, through the
+host's own applySpellToPlayer - the same function the foe-cast and
+missile-impact sites call. 133 spell points absorbed and zero damage
+taken; then with a full pool the same bolt lands for 20. The probe's
+first draft asserted on HEALTH in the full-pool case and was wrong to -
+whether an unabsorbed bolt deals damage rides the saving throw, which
+is a different system's dice.

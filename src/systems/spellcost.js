@@ -120,6 +120,14 @@ const component = (c, starting, increase, per) =>
   Math.trunc(c.offset + c.A * starting + c.B * Math.trunc(increase / Math.max(1, per)));
 
 /** One effect's { gold, sp } at the caster's skill. */
+/** S24: the effect's MAGIC SCHOOL, off the same table entry the cost
+ *  reads. Absorption gates on Destruction and needs the partition the
+ *  cost table already single-sources; the default matches effectCost's
+ *  own (an unknown family is priced as Destruction). */
+export function effectSchool(e) {
+  return EFFECT_COST_TABLE[`${e.type},${e.subType & 0xff}`]?.skill ?? 22;
+}
+
 export function effectCost(e, casterSkillOf) {
   // subType normalized to BYTE (DFU MakeClassicKey casts the sbyte;
   // real records read 0xFF as -1 - parity fix 2026-08-16d)
