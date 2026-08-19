@@ -20,12 +20,34 @@
 // Magic's validity rule, for instance, is a pure predicate over the
 // caster's live bundles.
 //
-// FLAGGED, by name, per THE FOUR HOSTS RULE: nothing here is wired
-// into a host yet. Silence needs the readied-spell gate, and Open and
-// Lock need the door-activation path, in ALL FOUR of scenes/exterior.js,
-// scenes/world.js, scenes/worldModes.js and scenes/dungeonContext.js.
-// The predicates below are the shape those hosts will call; none of
-// them is called today.
+// ── THE FOUR HOSTS, named (S27) ───────────────────────────────────
+// SILENCE IS WIRED, in both of DFU's gates, in the one host that can
+// cast:
+//   - scenes/dungeonContext.js  WIRED. It owns readiedSpell and
+//     playerCastInput, and now refuses at READY and at CAST, clearing
+//     the readied spell each time.
+//   - scenes/exterior.js        no cast path at all.
+//   - scenes/world.js           no cast path at all.
+//   - scenes/worldModes.js      no cast path of its own; it MOUNTS
+//     interiorContext and dungeonContext, so a dungeon cast reaches
+//     the wired gate through it.
+//
+// That is not three hosts forgetting to wire something. SPELLCASTING
+// IN THIS PORT IS DUNGEON-ONLY: readiedSpell, applySpell and the
+// spellbook all live in dungeonContext and nowhere else, so there is
+// no exterior or interior cast for a silence to block. Wiring the
+// other three is the casting arc's job, not this slice's, and the
+// gate is ready for them.
+//
+// OPEN AND LOCK ARE NOT WIRED, and the reason is specific rather than
+// an oversight. Their payload is an ARMED effect that has to survive
+// between the cast and the next door the player touches, which needs a
+// slot on the entity's active effects; the door end then hangs off
+// world/actionSystem.js's `activate(key)` - the single activation
+// point, where `toggleDoor(o, true)` already runs - in the two
+// contexts that own an ActionSystem, dungeonContext.js and
+// interiorContext.js. Neither exterior host owns doors. That is the
+// next slice, and those are its seams.
 import { EFFECT_FLAGS } from './spellcast.js';
 
 /** The ten, with the classic key DFU registers and which of the three

@@ -1399,3 +1399,52 @@ caster's live bundles (a Spell or a HeldMagicItem, showing an icon -
 never a disease or a poison).
 
 12 mutations run, 12 killed.
+
+## S27 - Mysticism reaches a host: SILENCE, and the four-host truth
+
+2026-08-19. S26 landed the ten laws and flagged the wiring. This wires
+Silence, and the flag it retires turned out to be hiding a fact about
+the port rather than a to-do.
+
+**SILENCE IS LIVE, in both of DFU's gates.** SilenceCheck runs when a
+spell is READIED and again when it is CAST, and BOTH clear the readied
+spell - so a silence landing mid-aim disarms you rather than waiting
+for the click. Both are wired in dungeonContext: the spellbook's
+`ready` hook refuses outright, and playerCastInput refuses and clears.
+Every cast on that path costs spell points, so DFU's
+`!noSpellPointCost` arm is always true here and is recorded rather
+than re-derived.
+
+**THE FOUR HOSTS, and why three of them are empty.** The rule wants
+all four named:
+  - dungeonContext.js  WIRED - it owns readiedSpell and playerCastInput.
+  - exterior.js        no cast path at all.
+  - world.js           no cast path at all.
+  - worldModes.js      no cast path of its own; it MOUNTS
+    interiorContext and dungeonContext, so a dungeon cast reaches the
+    wired gate through it.
+
+That is not three hosts forgetting something. SPELLCASTING IN THIS
+PORT IS DUNGEON-ONLY: readiedSpell, applySpell and the spellbook live
+in dungeonContext and nowhere else, so there is no exterior or
+interior cast for a silence to block. A source sweep pins it BOTH
+ways - the gate is present in the casting host, and absent from the
+other three because they cast nothing. If an exterior host ever grows
+a cast path the sweep fails and sends its author to the gate.
+
+**Open and Lock are still not wired, and the record now names their
+seams** rather than saying "pending". Their payload is an ARMED effect
+that has to survive between the cast and the next door the player
+touches, which needs a slot on the entity's active effects; the door
+end hangs off world/actionSystem.js's `activate(key)` - the single
+activation point, where `toggleDoor(o, true)` already runs - in the
+two contexts that own an ActionSystem, dungeonContext.js and
+interiorContext.js. Neither exterior host owns doors. A pin holds that
+claim honest: it fails the moment either context calls triggerOpen or
+triggerLock without the record being updated.
+
+These hosts have no execution coverage in node - AUDIT 19 found a
+crash that 990 tests could not see - so the seam is pinned by READING
+them, the same idiom audit17e uses for its four-host rules.
+
+4 mutations run, 4 killed.

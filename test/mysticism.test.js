@@ -5,6 +5,9 @@
 // than a number.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   MYSTICISM_EFFECTS, SUPPORTS_MAGNITUDE, isMysticism,
   armOpen, triggerOpen, triggerLock, dispelNearby,
@@ -158,4 +161,69 @@ test('mysticism: silence blocks a cast that COSTS spell points, and only that', 
   // DFU guards with `!noSpellPointCost && SilenceCheck()`, so a free
   // cast - an item, or a no-cost effect - fires through a silence.
   assert.equal(silenceBlocksCast(silenced, { costsSpellPoints: false }), false);
+});
+
+
+// ── S27: the host wiring, swept from source ──────────────────────
+// These hosts have no execution coverage in node (AUDIT 19 found a
+// crash that 990 tests could not see), so the seam is pinned by
+// READING them - the same idiom audit17e uses for the four-host rules.
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const read = (f) => readFileSync(join(root, f), 'utf8');
+
+test('S27: silence gates BOTH the ready and the cast, in the host that casts', () => {
+  // DFU checks SilenceCheck in two places and both clear the readied
+  // spell, so a silence landing mid-aim disarms you rather than
+  // waiting for the click.
+  const dc = read('src/scenes/dungeonContext.js');
+  assert.ok(/import \{[^}]*silenceBlocksCast[^}]*\} from '\.\.\/systems\/mysticism\.js'/.test(dc),
+    'dungeonContext imports the gate');
+
+  const castFn = dc.slice(dc.indexOf('function playerCastInput'));
+  const castBody = castFn.slice(0, castFn.indexOf('\n  }\n'));
+  assert.ok(/silenceBlocksCast\(playerEntity\)/.test(castBody), 'the CAST gate');
+  assert.ok(/readiedSpell = null/.test(castBody), 'and it clears the readied spell');
+
+  const readyFn = dc.slice(dc.indexOf('ready: (sp) =>'));
+  const readyBody = readyFn.slice(0, readyFn.indexOf('},'));
+  assert.ok(/silenceBlocksCast\(playerEntity\)/.test(readyBody), 'the READY gate');
+  assert.ok(/readiedSpell = null/.test(readyBody), 'and it clears too');
+});
+
+test('S27: THE FOUR HOSTS - casting is dungeon-only, and that is why', () => {
+  // Not three hosts forgetting to wire something: readiedSpell,
+  // applySpell and the spellbook live in dungeonContext and nowhere
+  // else, so there is no exterior or interior cast for a silence to
+  // block. If an exterior host EVER grows a cast path, this fails and
+  // sends the author to the gate.
+  const dc = read('src/scenes/dungeonContext.js');
+  assert.ok(/readiedSpell/.test(dc) && /applySpell\(/.test(dc),
+    'dungeonContext is the casting host');
+
+  for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/worldModes.js']) {
+    const src = read(host);
+    assert.ok(!/\breadiedSpell\b/.test(src),
+      `${host} has no readied spell - if it grows one, wire silenceBlocksCast`);
+    assert.ok(!/applySpell\(/.test(src),
+      `${host} casts nothing - if it starts, wire silenceBlocksCast`);
+  }
+  // and worldModes is the ROUTER: it mounts the context that does cast
+  const wm = read('src/scenes/worldModes.js');
+  assert.ok(/buildDungeonContext/.test(wm), 'worldModes mounts the casting context');
+});
+
+test('S27: Open and Lock are NOT wired, and the seams are named', () => {
+  // Flagged deliberately: their payload is an ARMED effect that must
+  // survive between the cast and the next door touched. This pin holds
+  // the claim honest - it fails the moment someone wires one without
+  // updating the record.
+  const my = read('src/systems/mysticism.js');
+  assert.ok(/OPEN AND LOCK ARE NOT WIRED/.test(my), 'the module says so');
+  assert.ok(/actionSystem\.js's `activate\(key\)`/.test(my), 'and names the door seam');
+  assert.ok(/interiorContext\.js/.test(my), 'and both ActionSystem owners');
+
+  for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/interiorContext.js']) {
+    assert.ok(!/triggerOpen\(|triggerLock\(/.test(read(host)),
+      `${host} does not call the door payload yet - update the record when it does`);
+  }
 });
