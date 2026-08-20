@@ -43,6 +43,7 @@
 // half-delta - a crime penalty, an enemy's share of a reward - so
 // every halving here is Math.trunc.
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
+import { restoreFactionRep } from './save.js';   // AUDIT 23 C1: the stashed-load replay
 
 /** Mathf.Clamp bounds (:32-35). */
 export const MIN_REPUTATION = -100;
@@ -204,6 +205,15 @@ export function attachFactionRep(entity, factionDict) {
   if (!entity || !factionDict) return null;
   const store = createFactionRep(factionDict);
   entity.factionRep = store;
+  // AUDIT 23 C1: a save restored BEFORE the store existed (the menu
+  // LOAD GAME path) parked its faction columns on the entity; replay
+  // them onto the fresh store first, then drain any pending deltas -
+  // the stash IS the saved state, the pending list is deltas captured
+  // un-applied at save time.
+  if (entity.savedFactionRep) {
+    restoreFactionRep(store, entity.savedFactionRep);
+    delete entity.savedFactionRep;
+  }
   const pending = entity.pendingFactionRep;
   if (pending?.length) {
     for (const { id, amount } of pending) changeReputation(store, id, amount, true);

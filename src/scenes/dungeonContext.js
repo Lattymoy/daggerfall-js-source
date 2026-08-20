@@ -1359,6 +1359,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         items: (f.entity.items ?? []).map((it) => ({ ...it })),
       })),
       piles: lootPiles.map((p) => ({ items: p.items.map((it) => ({ ...it })) })),
+      // AUDIT 23 (save-load-4): player-dropped piles are containers in
+      // DFU's save (LootContainerData_v1) - without them a boot load
+      // vanished drops and a backward load duplicated them.
+      droppedLoot: droppedLoot._piles.map((p) => ({
+        pos: [...p.pos], record: p.record, items: p.items.map((it) => ({ ...it })),
+      })),
       actions: [...actions.objects.values()].map((o) => ({
         key: o.key, state: o.state, t: o.t ?? 0,
         activationCount: o.activationCount ?? 0,
@@ -1377,6 +1383,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (sf.dead && !f.dead) { f.dead = true; spawnCorpse(f); }
     });
     w.piles?.forEach((sp, i) => { if (lootPiles[i]) lootPiles[i].items = sp.items.map((it) => ({ ...it })); });
+    droppedLoot.restorePiles(w.droppedLoot);   // AUDIT 23: absent list clears, per rebuild-from-save
     w.actions?.forEach((sa) => {
       const o = actions.objects.get(sa.key);
       if (!o) return;

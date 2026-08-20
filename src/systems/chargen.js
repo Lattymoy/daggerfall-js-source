@@ -1,5 +1,6 @@
 import { SKILLS, SKILL_COUNT } from './skills.js';
 import { spellPointsFor } from '../combat/formulas.js';   // U10
+import { CLASSIC_GAME_START_TIME } from './gameDate.js';   // AUDIT 23: the skill-check anchor
 
 // Character creation (Systems S3). Verbatim ports from DFU
 // StatsRollout.cs / SkillsRollout.cs / DaggerfallSkills.cs /
@@ -180,7 +181,11 @@ export function applyCharacter(playerEntity, career, careerIndex, { name = caree
     stats,
     skills,
     skillUses: new Array(SKILL_COUNT).fill(0),   // TallySkill counters (S3b consumes them)
-    lastSkillCheckTime: 0,
+    // AUDIT 23 (entity-laws lane): DFU anchors timeOfLastSkillIncreaseCheck
+    // at NOW on AssignCharacter (PlayerEntity.cs:881); a fresh game's now
+    // is the classic start minute, so the first raise check honors the
+    // full 360-minute interval instead of passing immediately at 0.
+    lastSkillCheckTime: CLASSIC_GAME_START_TIME,
     chargenDone: true,
   });
   // S3b: the level-up sums anchor at creation (SetCurrentLevelUpSkillSum
