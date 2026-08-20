@@ -42,10 +42,12 @@ export class Parser {
    * @param {object} [opts] partialParse skips QRC/QBN; rolls is the
    *   quest's injectable uniform roll (Ledger A); nowSeconds is the
    *   world-time seam - it must ride the PARSE because PlaySound's
-   *   create stamps lastTimePlayed from the live clock (Q2b).
+   *   create stamps lastTimePlayed from the live clock (Q2b); hooks
+   *   ride the parse too since Q2b-ii - the Item mint reads player/
+   *   guild/region facts at create (DFU parses with the live world).
    */
-  parse(source, factionId = 0, { partialParse = false, rolls, actionFactory, nowSeconds } = {}) {
-    const quest = new Quest({ rolls, actionFactory, nowSeconds });
+  parse(source, factionId = 0, { partialParse = false, rolls, actionFactory, nowSeconds, hooks } = {}) {
+    const quest = new Quest({ rolls, actionFactory, nowSeconds, hooks });
     quest.factionId = factionId;
     let inQRC = false, inQBN = false;
     const qrcLines = [], qbnLines = [];

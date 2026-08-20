@@ -38,4 +38,9 @@ export const GROUP_TEMPLATE_INDICES = Object.freeze({
   Deeds: Object.freeze([0, 1, 2]),
   Jewellery: Object.freeze([133, 134, 135, 136, 137, 138, 139, 140]),
   MiscItems: Object.freeze([132, 274, 275, 276, 278, 281, 285, 286, 287]),
+  // Hand-added at Q2b-ii (the generator script predates the quest
+  // mint and did not extract it; values verbatim from ItemEnums.cs
+  // :580-590 `enum QuestItems`): Telescope, Scales, Globe, Skeleton,
+  // Totem, Dead_body, Mantella, Finger.
+  QuestItems: Object.freeze([254, 255, 256, 257, 280, 281, 282, 283]),
 });

@@ -728,9 +728,16 @@ test('VERIFY: fresh resources start cold - the tracking state has no pre-lit fla
   const person = q.getResource({ name: 'pp' });
   assert.deepEqual(
     [foe.injuredTrigger, foe.isRestrained, foe.killCount, foe.hasPlayerClicked,
-      item.useClicked, item.actionWatching, item.daggerfallUnityItem,
+      item.useClicked, item.actionWatching, item.allowDrop, item.playerDropped, item.madePermanent,
       person.isMuted, person.isDestroyed, person.isQuestor],
-    [false, false, 0, false, false, false, null, false, false, false]);
+    [false, false, 0, false, false, false, false, false, false, false, false, false]);
+  // Q2b-ii: the mint runs at parse - "letter" resolves through
+  // Quests-Items (9,5) to UselessItems2[5] = template 279, Parchment,
+  // quest-linked to THIS quest.
+  assert.equal(item.daggerfallUnityItem.templateIndex, 279);
+  assert.equal(item.daggerfallUnityItem.questItem, true);
+  assert.equal(item.daggerfallUnityItem.questUID, q.uid);
+  assert.equal(item.daggerfallUnityItem.questSymbol.name, 'it');
 });
 
 test('VERIFY: addResource auto-tracks an incoming Person already flagged questor (Quest.cs:879-881)', () => {

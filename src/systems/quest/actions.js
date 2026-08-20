@@ -42,6 +42,8 @@ import { Symbol as QuestSymbol } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
 import { staticMessagesTable, soundsTable } from './tables.js';
 import { dateFromSeconds } from '../gameDate.js';
+import { makeItemPermanent } from './item.js';
+import { QUEST_MESSAGES } from './quest.js';
 
 /** TalkManager.cs:285-291 - the dialog-link resource types. */
 export const QUEST_INFO_RESOURCE_TYPE = Object.freeze({
@@ -1010,6 +1012,305 @@ export class StartQuest extends ActionTemplate {
   }
 }
 
+// ---------------------------------------------------------------
+// Q2b-ii - THE ITEM TRANCHE (the mint lives in item.js; these are
+// its consumers, each riding the machine's player-inventory hooks)
+// ---------------------------------------------------------------
+
+/** Internal_Strings "youReceiveGoldPieces" (en id 195) - GetItem's
+ *  HUD line, %s replaced by the stack amount, as TextManager does. */
+export const YOU_RECEIVE_GOLD_PIECES = 'You receive %s gold pieces.';
+
+/** GivePc.cs: the three formats - "give pc anItem" offers the reward
+ *  through the QuestComplete box + loot window (and makes the item
+ *  PERMANENT - Sx010's cursed item stays keepable); "give pc nothing"
+ *  shows QuestComplete without loot; "give pc anItem notify nnnn" /
+ *  "... silently" put the item straight in the inventory - but only
+ *  in town, outdoors, between 07:00 and 18:00, after a 40..500-tick
+ *  random delay (the Ledger A roll; DFU's OnOfferPending event has no
+ *  port-side consumer yet - the guild questor UI is Q4). */
+export class GivePc extends ActionTemplate {
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.allowRearm = false;
+    this.offerImmediately = false;
+    this.waitingForTown = false;
+    this.ticksUntilFire = 0;
+  }
+  get pattern() {
+    return /give pc (?<nothing>nothing)|give pc (?<anItem>[a-zA-Z0-9_.]+) notify (?<id>\d+)|give pc (?<anItem2>[a-zA-Z0-9_.]+) (?<silently>silently)|give pc (?<anItem3>[a-zA-Z0-9_.]+)/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new GivePc(parentQuest);
+    action.itemSymbol = new QuestSymbol(g.anItem ?? g.anItem2 ?? g.anItem3 ?? '');
+    action.textId = questParseInt(g.id ?? '');
+    action.isNothing = !!g.nothing;
+    action.silently = !!g.silently;
+    return action;
+  }
+  update(_caller) {
+    const minHour = 7, maxHour = 18, minDelay = 40, maxDelay = 500;
+    const hooks = this.parentQuest.hooks;
+
+    // The notify/silently forms wait for town, outdoors, and daytime
+    if ((this.textId !== 0 || this.silently) && !this.offerImmediately) {
+      const now = dateFromSeconds(this.parentQuest.nowSeconds?.() ?? 0);
+      if (!hooks?.isPlayerInTown?.() || now.hour < minHour || now.hour > maxHour) {
+        this.waitingForTown = true;
+        this.ticksUntilFire = 0;
+        return;
+      }
+      if (this.waitingForTown) {
+        // Random.Range(minDelay, maxDelay + 1) so messages don't all land at once
+        const roll = this.parentQuest.rolls ?? Math.random;
+        this.ticksUntilFire = minDelay + Math.floor(roll() * (maxDelay + 1 - minDelay));
+        this.waitingForTown = false;
+      }
+    }
+    if (this.ticksUntilFire > 0) { this.ticksUntilFire--; return; }
+
+    if (this.isNothing) {
+      this._offerWithQuestComplete(null);
+      this.setComplete();
+      return;
+    }
+    const item = this.parentQuest.getItem(this.itemSymbol);
+    if (!item) {
+      console.warn(`[quest] Could not find Item resource symbol ${this.itemSymbol?.name}`);
+      return;
+    }
+    if (this.textId !== 0) {
+      this.parentQuest.hooks?.giveItemToPlayer?.(item.daggerfallUnityItem, true);   // AddPosition.Front
+      this.parentQuest.showMessagePopup(this.textId);
+    } else if (this.silently) {
+      this.parentQuest.hooks?.giveItemToPlayer?.(item.daggerfallUnityItem, true);
+    } else {
+      this._offerWithQuestComplete(item);
+    }
+    this.offerImmediately = false;
+    this.setComplete();
+  }
+  /** The guild questor UI calls this at hand-in (Q4). */
+  offerImmediatelyNow() {
+    this.waitingForTown = false;
+    this.ticksUntilFire = 0;
+    this.offerImmediately = true;
+  }
+  _offerWithQuestComplete(item) {
+    this.parentQuest.questSuccess = true;
+    this.parentQuest.showMessagePopup(QUEST_MESSAGES.QuestComplete);
+    if (!item) return;
+    // ReleaseQuestItemForReoffer(uid, item, TRUE): the reward stays
+    // with the player past quest end - permanent first, then the
+    // player-side sweep so the loot window can offer it back.
+    makeItemPermanent(item.daggerfallUnityItem);
+    this.parentQuest.hooks?.releaseQuestItem?.(this.parentQuest.uid, item);
+    // The dropped-loot reward container + its open-on-dismiss wiring
+    // is the Q4 window's; the hook receives the freed item.
+    this.parentQuest.hooks?.offerReward?.(this.parentQuest, item.daggerfallUnityItem);
+  }
+}
+
+/** GetItem.cs: gives the quest item (back) to the player - a gold
+ *  stack lands as gold with the HUD line, anything else in the
+ *  inventory at the front. "get item from" is the same action in DFU
+ *  ("appears to behave identically"). */
+export class GetItem extends ActionTemplate {
+  get pattern() {
+    return /get item (?<anItem>[a-zA-Z0-9_.]+) saying (?<id>\d+)|get item (?<anItem2>[a-zA-Z0-9_.]+)/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new GetItem(parentQuest);
+    action.itemSymbol = new QuestSymbol(g.anItem ?? g.anItem2);
+    action.textId = questParseInt(g.id ?? '');
+    return action;
+  }
+  update(_caller) {
+    const item = this.parentQuest.getItem(this.itemSymbol);
+    if (!item) {
+      console.warn(`[quest] Could not find Item resource symbol ${this.itemSymbol?.name}`);
+      return;
+    }
+    const hooks = this.parentQuest.hooks;
+    hooks?.releaseQuestItem?.(this.parentQuest.uid, item);
+    const dfItem = item.daggerfallUnityItem;
+    if (dfItem && dfItem.group === 'Currency') {
+      const amount = dfItem.stackCount ?? 0;
+      hooks?.addGold?.(amount);
+      hooks?.addHUDText?.(YOU_RECEIVE_GOLD_PIECES.replace('%s', String(amount)));
+    } else {
+      hooks?.giveItemToPlayer?.(dfItem, true);   // AddPosition.Front
+    }
+    if (this.textId !== 0) this.parentQuest.showMessagePopup(this.textId);
+    this.setComplete();
+  }
+}
+
+/** TakeItem.cs: releases the quest item from the player (unequip +
+ *  remove, the host sweep) - the item just stops being carried. */
+export class TakeItem extends ActionTemplate {
+  get pattern() {
+    return /take (?<anItem>[a-zA-Z0-9_.]+) from pc saying (?<id>\d+)|take (?<anItem2>[a-zA-Z0-9_.]+) from pc/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new TakeItem(parentQuest);
+    action.itemSymbol = new QuestSymbol(g.anItem ?? g.anItem2);
+    action.textId = questParseInt(g.id ?? '');
+    return action;
+  }
+  update(_caller) {
+    const item = this.parentQuest.getItem(this.itemSymbol);
+    if (!item) {
+      console.warn(`[quest] Could not find Item resource symbol ${this.itemSymbol?.name}`);
+      return;
+    }
+    this.parentQuest.hooks?.releaseQuestItem?.(this.parentQuest.uid, item);
+    if (this.textId !== 0) this.parentQuest.showMessagePopup(this.textId);
+    this.setComplete();
+  }
+}
+
+/** HaveItem.cs: starts the target task while the player carries the
+ *  quest item - NO SetComplete on the carry branch, so it keeps
+ *  checking (and keeps re-starting) every tick, verbatim. */
+export class HaveItem extends ActionTemplate {
+  get pattern() { return /have (?<targetItem>[a-zA-Z0-9_.-]+) set (?<targetTask>[a-zA-Z0-9_.-]+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new HaveItem(parentQuest);
+    action.targetItem = new QuestSymbol(match.groups.targetItem);
+    action.targetTask = new QuestSymbol(match.groups.targetTask);
+    return action;
+  }
+  update(_caller) {
+    const item = this.parentQuest.getItem(this.targetItem);
+    if (!item) {
+      this.setComplete();
+      throw new Error(`Could not find Item resource symbol ${this.targetItem?.name}`);
+    }
+    if (this.parentQuest.hooks?.carriesQuestItem?.(item)) {
+      this.parentQuest.startTask(this.targetTask);
+    }
+  }
+}
+
+/** TotingItemAndClickedNpc.cs: ClickedNpc plus the carried-item
+ *  check; on success the click is consumed, the message pops (id 0
+ *  passes through and shows nothing, as C#), and the item releases
+ *  for re-offer. */
+export class TotingItemAndClickedNpc extends ActionTemplate {
+  constructor(parentQuest) { super(parentQuest); this.isTriggerCondition = true; }
+  get pattern() {
+    return /toting (?<anItem>[a-zA-Z0-9_.]+) and (?<anNPC>[a-zA-Z0-9_.-]+) clicked saying (?<id>\d+)|toting (?<anItem2>[a-zA-Z0-9_.]+) and (?<anNPC2>[a-zA-Z0-9_.-]+) clicked saying (?<idName>\w+)|toting (?<anItem3>[a-zA-Z0-9_.]+) and (?<anNPC3>[a-zA-Z0-9_.-]+) clicked/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new TotingItemAndClickedNpc(parentQuest);
+    action.itemSymbol = new QuestSymbol(g.anItem ?? g.anItem2 ?? g.anItem3);
+    action.npcSymbol = new QuestSymbol(g.anNPC ?? g.anNPC2 ?? g.anNPC3);
+    action.id = questParseInt(g.id ?? '');
+    if (action.id === 0 && g.idName) {
+      action.id = questParseInt(staticMessagesTable().getValue('id', g.idName));
+    }
+    return action;
+  }
+  checkTrigger(caller) {
+    if (caller.getTriggerValue()) return true;
+    const person = this.parentQuest.getPerson(this.npcSymbol);
+    if (!person) return false;
+    const item = this.parentQuest.getItem(this.itemSymbol);
+    if (!item) return false;
+    if (person.hasPlayerClicked) {
+      if (this.parentQuest.hooks?.carriesQuestItem?.(item)) {
+        this.parentQuest.scheduleClickRearm(person);
+        this.parentQuest.showMessagePopup(this.id);
+        this.parentQuest.hooks?.releaseQuestItem?.(this.parentQuest.uid, item);
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+/** GiveItem.cs: hands the quest item to a Foe's item queue (cloned
+ *  onto instances when Q3 spawns them) or to a generic entity in the
+ *  scene - no scene object yet means the non-Foe arm keeps trying,
+ *  exactly as C# does for a target not in the world; the entity/
+ *  corpse-container halves ride Q3's behaviours. If the player holds
+ *  the item it leaves their inventory. */
+export class GiveItem extends ActionTemplate {
+  get pattern() { return /give item (?<anItem>[a-zA-Z0-9_.]+) to (?<aResource>[a-zA-Z0-9_.]+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new GiveItem(parentQuest);
+    action.itemSymbol = new QuestSymbol(match.groups.anItem);
+    action.targetSymbol = new QuestSymbol(match.groups.aResource);
+    return action;
+  }
+  update(_caller) {
+    const item = this.parentQuest.getItem(this.itemSymbol);
+    if (!item) {
+      this.setComplete();
+      throw new Error(`Could not find Item resource symbol ${this.itemSymbol?.name}`);
+    }
+    const target = this.parentQuest.getResource(this.targetSymbol);
+    if (!target) {
+      this.setComplete();
+      throw new Error(`Could not find target resource symbol ${this.targetSymbol?.name}`);
+    }
+    if (target.isFoe) {
+      target.queueItem(item.daggerfallUnityItem);
+      // Q3 FLAG: a target already standing in the scene dequeues onto
+      // its entity immediately (QuestResourceBehaviour.AddItemQueue).
+    } else {
+      // Target must exist in the world; nothing stands in scenes yet
+      if (!target.questResourceBehaviour) return;
+      // Q3 FLAG: the live-entity / corpse-loot-container arms.
+    }
+    const hooks = this.parentQuest.hooks;
+    if (hooks?.playerHasItem?.(item.daggerfallUnityItem)) {
+      hooks?.removeItemFromPlayer?.(item.daggerfallUnityItem);
+    }
+    this.setComplete();
+  }
+}
+
+/** MakePermanent.cs: converts the quest item to a permanent one (the
+ *  resource method syncs the virtual item, the current instance, and
+ *  every held copy); a missing Item completes then THROWS. */
+export class MakePermanent extends ActionTemplate {
+  get pattern() { return /make (?<target>[a-zA-Z0-9_.-]+) permanent/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new MakePermanent(parentQuest);
+    action.target = new QuestSymbol(match.groups.target);
+    return action;
+  }
+  update(_caller) {
+    const item = this.parentQuest.getItem(this.target);
+    if (!item) {
+      this.setComplete();
+      throw new Error(`Could not find Item resource symbol ${this.target?.name}`);
+    }
+    item.makePermanent();
+    this.setComplete();
+  }
+}
+
 /** AUDIT quest-P2: the registry is first-match-wins over UNANCHORED
  *  patterns, so the un-ported actions that sit before (or between)
  *  the tranche in DFU's RegisterActionTemplates order need GUARDS at
@@ -1035,7 +1336,6 @@ const GUARD_PATTERNS = Object.freeze({
   WhenReputeWith: /when repute with ([a-zA-Z0-9_.-]+) is at least (\d+)/,
   WhenSkillLevel: /when skill (\w+) is at least (\d+)/,
   WhenAttributeLevel: /when attribute (\w+) is at least (\d+)/,
-  TotingItemAndClickedNpc: /toting ([a-zA-Z0-9_.]+) and ([a-zA-Z0-9_.-]+) clicked saying (\d+)|toting ([a-zA-Z0-9_.]+) and ([a-zA-Z0-9_.-]+) clicked saying (\w+)|toting ([a-zA-Z0-9_.]+) and ([a-zA-Z0-9_.-]+) clicked/,
   DroppedItemAtPlace: /dropped ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+) saying (\d+)|dropped ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+)/,
   Season: /season (fall|summer|spring|winter)/,
   Weather: /weather (sunny|cloudy|overcast|fog|rain|thunder|snow)/,
@@ -1046,18 +1346,12 @@ const GUARD_PATTERNS = Object.freeze({
   CreateNpc: /create npc ([a-zA-Z0-9_.-]+)/,
   PlaceNpc: /place npc ([a-zA-Z0-9_.-]+) at (\w+) marker (\d+)|place npc ([a-zA-Z0-9_.-]+) at (\w+)/,
   PlaceItem: /place item ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+) marker (\d+)|place item ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+) questmarker (\d+)|place item ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+) (anymarker)|place item ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+)/,
-  GivePc: /give pc (nothing)|give pc ([a-zA-Z0-9_.]+) notify (\d+)|give pc ([a-zA-Z0-9_.]+) (silently)|give pc ([a-zA-Z0-9_.]+)/,
-  GiveItem: /give item ([a-zA-Z0-9_.]+) to ([a-zA-Z0-9_.]+)/,
   CreateFoe: /create foe ([a-zA-Z0-9_.-]+) every (\d+) minutes (indefinitely) with (\d+)% success|create foe ([a-zA-Z0-9_.-]+) every (\d+) minutes (\d+) times with (\d+)% success|(send) ([a-zA-Z0-9_.-]+) every (\d+) minutes (\d+) times with (\d+)% success|(send) ([a-zA-Z0-9_.-]+) every (\d+) minutes with (\d+)% success/,
   PlaceFoe: /place foe ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+) marker (\d+)|place foe ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+)/,
-  GetItem: /get item ([a-zA-Z0-9_.]+) saying (\d+)|get item ([a-zA-Z0-9_.]+)/,
   RunQuest: /run quest (\w+) then ([a-zA-Z0-9_.]+) or ([a-zA-Z0-9_.]+)/,
   ChangeReputeWith: /change repute with ([a-zA-Z0-9_.-]+) by ([+-])(\d+)/,
   ReputeExceedsDo: /repute with ([a-zA-Z0-9_.-]+) exceeds (\d+) do ([a-zA-Z0-9_.]+)/,
   RevealLocation: /reveal (\w+) (readmap)|reveal (\w+)/,
-  MakePermanent: /make ([a-zA-Z0-9_.-]+) permanent/,
-  HaveItem: /have ([a-zA-Z0-9_.-]+) set ([a-zA-Z0-9_.-]+)/,
-  TakeItem: /take ([a-zA-Z0-9_.]+) from pc saying (\d+)|take ([a-zA-Z0-9_.]+) from pc/,
   TeleportPc: /teleport pc to ([a-zA-Z0-9_.-]+)|transfer pc inside ([a-zA-Z0-9_.-]+) marker (\d+)/,
   MakePcDiseased: /make pc ill with ([a-zA-Z0-9_.']+)/,
   CurePcDisease: /cure vampirism|cure lycanthropy|cure ([a-zA-Z0-9_.']+)/,
@@ -1100,7 +1394,7 @@ export function defaultActionTemplates() {
     new LevelCompleted(null),
     new InjuredFoe(null),
     new KilledFoe(null),
-    guard('TotingItemAndClickedNpc'),
+    new TotingItemAndClickedNpc(null),
     new DailyFrom(null),
     guard('DroppedItemAtPlace'),
     guard('Season'),
@@ -1122,8 +1416,8 @@ export function defaultActionTemplates() {
     guard('CreateNpc'),
     guard('PlaceNpc'),
     guard('PlaceItem'),
-    guard('GivePc'),
-    guard('GiveItem'),
+    new GivePc(null),
+    new GiveItem(null),
     new StartStopTimer(null),
     guard('CreateFoe'),
     guard('PlaceFoe'),
@@ -1131,7 +1425,7 @@ export function defaultActionTemplates() {
     new RestoreNpc(null),
     new AddFace(null),
     new DropFace(null),
-    guard('GetItem'),
+    new GetItem(null),
     new StartQuest(null),
     guard('RunQuest'),
     new UnsetTask(null),
@@ -1139,12 +1433,12 @@ export function defaultActionTemplates() {
     guard('ReputeExceedsDo'),
     guard('RevealLocation'),
     new RestrainFoe(null),
-    guard('MakePermanent'),
-    guard('HaveItem'),
+    new MakePermanent(null),
+    new HaveItem(null),
     new AddAsQuestor(null),
     new DropAsQuestor(null),
     new ItemUsedDo(null),
-    guard('TakeItem'),
+    new TakeItem(null),
     guard('TeleportPc'),
     new DialogLink(null),
     new AddDialog(null),

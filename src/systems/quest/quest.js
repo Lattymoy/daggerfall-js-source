@@ -77,6 +77,7 @@ export class Quest {
     this.pendingPopups = [];                 // the pendingMessageBoxStack, hook-delivered
     this.pendingClickRearms = [];            // Quest.cs:48 - resources whose click clears after the current task
     this.questors = new Map();               // Quest.cs:47 - symbol name -> QuestorData { symbol, name }
+    this.oneTime = false;                    // Quest.OneTime - QuestListsManager stamps it at load (Q2b-ii)
   }
 
   // ---- Q1 structure ----

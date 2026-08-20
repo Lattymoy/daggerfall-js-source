@@ -254,15 +254,71 @@ uniform fails=N is the baseline, only fails>N is a kill).
   logged in the campaign JSONL for the next audit, not silently
   blessed.
 
+## Q2b-ii - THE ITEM TRANCHE (SHIPPED 2026-08-20)
+
+The mint and its seven consumers, plus the QuestListsManager.
+Coverage moved 4818 -> 5831 of 7235 corpus action lines (80.6%);
+GiveItem's ownership count was re-derived from the RAW corpus (64 -
+the coverage backlog's 63 was that script's own artifact).
+
+- THE MINT (item.js, Item.cs's create ladder verbatim): named
+  declarations resolve Quests-Items p1/p2 into the port's item system
+  (ITEM_GROUP_NAME_BY_CLASS bakes ItemEnums.cs:27-59; QuestItems was
+  hand-added to the generated enum tables, cited); MagicItems and
+  Books and the potion shape short-circuit BEFORE the random-subclass
+  arm; clothing rolls subclass THEN dye; gold carries the CLASSIC
+  REWARD FORMULA with C#'s integer division at every step (level/2+1
+  or guild rank+1 with the faction's power, the clamp at 10, the
+  region price mod, FightersGuild's fixed-point AlterReward -
+  guilds.js grew Guild.AlterReward); every minted item is
+  quest-linked and the mint runs AT PARSE (the machine now builds
+  hooks BEFORE parsing - DFU parses with the live world). MAGIC.DEF
+  arms (magic_item x42 + artifacts x31 in the corpus) mint REAL
+  items when a host has registered the file (loot.js grew
+  createArtifact - SetArtifact whole, with the ArtifactsSubTypes
+  identity flags that retired AUDIT 22 F11's producerless-flags pin -
+  and createRegularMagicItem's chosenItem arm) and PEND with
+  pendingMagicDef headless, so the no-ARENA2 corpus gate stands
+  (ledger row). Book message/value pend the book catalog (the E1
+  row); the potion shape is corpus-dead minimal, cited. MakePermanent
+  syncs virtual + instance + held copies; Dispose sweeps the
+  still-linked item from the player at tombstone.
+- THE SEVEN ACTIONS: GivePc (the town/daylight gate + 40..500-tick
+  delay on the notify/silently forms, the QuestComplete offer making
+  the reward PERMANENT - ReleaseQuestItemForReoffer's TRUE arg - and
+  the offerReward loot-window hook), GetItem (release-then-give, the
+  gold arm through addGold + the GROUNDED "You receive %s gold
+  pieces." Internal_Strings line), TakeItem, HaveItem (NO SetComplete
+  - re-checks and re-starts every tick, verbatim), TotingItemAnd-
+  ClickedNpc (click + carriesQuestItem, the click consumed, the item
+  released), GiveItem (Foe itemQueue - foe.js grew QueueItem - the
+  non-Foe arm keeps trying until a scene object exists, verbatim; the
+  player copy leaves), MakePermanent. New machine seams: playerGender,
+  getGuild, regionPriceAdjustment, isPlayerInTown, addGold,
+  addHUDText, giveItemToPlayer, removeItemFromPlayer, playerHasItem,
+  carriesQuestItem, releaseQuestItem, makeHeldQuestItemsPermanent,
+  offerReward.
+- THE QUEST LISTS (questLists.js, QuestListsManager.cs whole minus
+  the mod/quest-pack discovery, recorded): the two vendored lists
+  parse to 188 filed quests (the dash-commented Oblivion block never
+  parses - DFU's own Table law; counts derived independently from
+  the raw rows), the guild pool law (membership chars, minReq
+  rank-vs-rep at the 10 boundary, the HolyOrder membership fold,
+  oneTime spent through the machine's new onQuestStarted event,
+  adult behind PlayerNudity), the social law (level-or-rep, N/M/F),
+  SelectQuest's injectable draw, GetQuest's precedence, LoadQuest's
+  missing-source throw + OneTime stamp; machine grew
+  scheduleParsedQuest (C#'s own ScheduleQuest(quest) signature) and
+  parseQuestForLists.
+
+Gate: `test/questitems.test.js` (19 pins - the mint arms against DFU
+template literals, the gold formula hand-computed through the C#
+integer math, the seven action laws, the list laws over both the
+vendored and crafted tables) + the moved coverage/ownership pins +
+the retired-F11 producer pins in iteminfo.test.js.
+
 ## Queue
 
-- **Q2b-ii - THE ITEM TRANCHE**: GivePc (296) / GetItem (203) /
-  TotingItemAndClickedNpc (211) / MakePermanent (136) / HaveItem
-  (59) / TakeItem (44) / GiveItem (63) - they need Item.cs's
-  DaggerfallUnityItem mint (CreateItem/CreateGold against the port's
-  item system, guild reward math included) and the player-inventory
-  hooks; plus the QuestListsManager over the vendored QuestList
-  tables.
 - **Q3 - WORLD BINDING**: Place SetupLocalSite/SetupRemoteSite/
   SetupFixedLocation against the port's world data, the Person
   Setup*NPC chain against FACTION.TXT (factionData/DisplayName -

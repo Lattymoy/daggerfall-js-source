@@ -49,6 +49,17 @@ export class Foe extends QuestResource {
   /** IncrementKills (Foe.cs:219-222). */
   incrementKills(amount = 1) { this.killCount += amount; }
 
+  /** QueueItem (Foe.cs:246-252): items added to this Foe by the quest
+   *  system; Q2b-ii - GiveItem's consumer. Q3's spawner clones the
+   *  queue onto every instance (GetClonedItemQueue keeps the
+   *  originals here, as C# does). */
+  queueItem(dfItem) {
+    if (!this.itemQueue) this.itemQueue = [];
+    this.itemQueue.push(dfItem);
+  }
+
+  get itemQueueCount() { return this.itemQueue?.length ?? 0; }
+
   setResource(line) {
     super.setResource(line);
     const match = matchFirst(line, DECL);

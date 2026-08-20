@@ -60,6 +60,29 @@
 //   removeQuestInfoTopics(uid) - RemoveQuestInfoTopicsForSpecificQuest
 //   addFace(resource) / dropFace(resource) - the HUD escorting faces
 //                                (AddFace/DropFace; Q4 wires)
+//   onQuestStarted(quest)      - RaiseOnQuestStartedEvent; the
+//                                QuestListsManager's one-time
+//                                recording listens (Q4 wires)
+//
+// Q2b-ii, the item tranche's facts and seams (Q4 wires the real
+// inventory; tests capture):
+//   playerGender()             - 'male' | 'female' (the magic mint)
+//   getGuild(factionId)        - { guildGroup, rank, power,
+//                                isNonMember } or null (CreateGold)
+//   regionPriceAdjustment()    - RegionData[region].PriceAdjustment
+//   isPlayerInTown()           - PlayerGPS.IsPlayerInTown(true, true)
+//                                (GivePc's notify gate)
+//   addGold(amount) / addHUDText(text) - GetItem's gold arm
+//   giveItemToPlayer(dfItem, front) - ItemCollection.AddItem
+//   removeItemFromPlayer(dfItem)    - ItemCollection.RemoveItem
+//   playerHasItem(dfItem)      - Contains(DaggerfallUnityItem)
+//   carriesQuestItem(itemResource)  - Contains(Item): uid+symbol
+//   releaseQuestItem(questUID, itemResource) - the ReleaseQuestItem-
+//                                ForReoffer player-side sweep
+//                                (unequip + remove held matches)
+//   makeHeldQuestItemsPermanent(questUID, symbol) - MakePermanent's
+//                                held-copy sync
+//   offerReward(quest, dfItem) - GivePc's QuestComplete loot window
 //
 // The 64 global variables (classic SAVEVARS.DAT state) live here and
 // reach tasks through quest.hooks.globalVars.
@@ -107,22 +130,22 @@ export class QuestMachine {
     return null;
   }
 
-  /** Parse a quest from source lines and schedule it to start on the
-   *  next tick (DFU's InstantiateQuest -> ScheduleQuest shape).
-   *  nowSeconds rides the PARSE opts because PlaySound's create
-   *  stamps lastTimePlayed from the live clock. */
-  scheduleQuest(sourceLines, factionId = 0, { rolls } = {}) {
-    const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
-    const quest = this.parser.parse(sourceLines, factionId,
-      { rolls, actionFactory: this._actionFactory, nowSeconds });
-    quest.hooks = {
+  /** The per-quest hook surface over the machine deps. Built BEFORE
+   *  the parse since Q2b-ii: the Item mint reads player/guild/region
+   *  facts at create time, exactly as DFU parses with the live
+   *  world (PlaySound's nowSeconds went through this door first). */
+  _buildHooks() {
+    return {
       showPopup: (q, message) => this.deps.showPopup?.(q, message),
       showPrompt: (q, message, respond) => this.deps.showPrompt?.(q, message, respond),
       changeReputation: (fid, amount, propagate) => this.deps.changeReputation?.(fid, amount, propagate),
       changeLegalRep: (amount) => this.deps.changeLegalRep?.(amount),
       playerLevel: () => this.deps.playerLevel?.() ?? 0,
+      playerGender: () => this.deps.playerGender?.() ?? 'male',
       getGold: () => this.deps.getGold?.() ?? 0,
       deductGold: (amount) => this.deps.deductGold?.(amount),
+      addGold: (amount) => this.deps.addGold?.(amount),
+      addHUDText: (text) => this.deps.addHUDText?.(text),
       playVideo: (name) => this.deps.playVideo?.(name),
       playSound: (soundId) => this.deps.playSound?.(soundId),
       dialogLink: (...args) => this.deps.dialogLink?.(...args),
@@ -136,11 +159,42 @@ export class QuestMachine {
       removeQuestInfoTopics: (uid) => this.deps.removeQuestInfoTopics?.(uid),
       addFace: (resource) => this.deps.addFace?.(resource),
       dropFace: (resource) => this.deps.dropFace?.(resource),
+      // The item-mint facts (Q2b-ii): the guild record for the quest's
+      // faction ({ guildGroup, rank, power, isNonMember } or null) and
+      // the current region's PriceAdjustment.
+      getGuild: (factionId) => this.deps.getGuild?.(factionId) ?? null,
+      regionPriceAdjustment: () => this.deps.regionPriceAdjustment?.() ?? 0,
+      // The player-inventory seams (Q2b-ii; Q4 wires the real
+      // inventory): give/remove take the minted item OBJECT;
+      // carriesQuestItem answers ItemCollection.Contains(Item)'s
+      // uid+symbol match; playerHasItem answers Contains(dfItem);
+      // releaseQuestItem is PlayerEntity.ReleaseQuestItemForReoffer's
+      // player-side sweep (unequip + remove every matching held item);
+      // makeHeldQuestItemsPermanent syncs MakePermanent over held
+      // matches; offerReward opens the QuestComplete loot window.
+      giveItemToPlayer: (dfItem, front) => this.deps.giveItemToPlayer?.(dfItem, front),
+      removeItemFromPlayer: (dfItem) => this.deps.removeItemFromPlayer?.(dfItem),
+      playerHasItem: (dfItem) => this.deps.playerHasItem?.(dfItem) ?? false,
+      carriesQuestItem: (itemResource) => this.deps.carriesQuestItem?.(itemResource) ?? false,
+      releaseQuestItem: (questUID, itemResource) => this.deps.releaseQuestItem?.(questUID, itemResource),
+      makeHeldQuestItemsPermanent: (questUID, symbol) => this.deps.makeHeldQuestItemsPermanent?.(questUID, symbol),
+      offerReward: (q, dfItem) => this.deps.offerReward?.(q, dfItem),
+      isPlayerInTown: () => this.deps.isPlayerInTown?.() ?? false,
       // StartQuest schedules child quests through the machine's own
       // data seam (QuestListsManager.GetQuest -> ScheduleQuest).
       startQuest: (questName) => this.scheduleQuestByName(questName),
       globalVars: this.globalVars,
     };
+  }
+
+  /** Parse a quest from source lines and schedule it to start on the
+   *  next tick (DFU's InstantiateQuest -> ScheduleQuest shape).
+   *  nowSeconds and hooks ride the PARSE opts - PlaySound's create
+   *  stamps the live clock, the Item mint reads the live world. */
+  scheduleQuest(sourceLines, factionId = 0, { rolls } = {}) {
+    const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
+    const quest = this.parser.parse(sourceLines, factionId,
+      { rolls, actionFactory: this._actionFactory, nowSeconds, hooks: this._buildHooks() });
     this.questsToInvoke.push(quest);
     return quest;
   }
@@ -150,6 +204,22 @@ export class QuestMachine {
     const lines = this.deps.getQuestSourceLines?.(questName);
     if (!lines) { console.warn(`[quest] no source for quest ${questName}`); return null; }
     return this.scheduleQuest(lines, factionId, opts);
+  }
+
+  /** ScheduleQuest(quest) - the parsed-quest arm (QuestMachine.cs's
+   *  own ScheduleQuest signature; the QuestListsManager parses via
+   *  the machine's parse glue and schedules here, Q2b-ii). */
+  scheduleParsedQuest(quest) {
+    this.questsToInvoke.push(quest);
+    return quest;
+  }
+
+  /** The QuestListsManager's parseQuest dep: parse with THIS
+   *  machine's registry, clock and hooks, without scheduling. */
+  parseQuestForLists(lines, factionId = 0, { rolls } = {}) {
+    const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
+    return this.parser.parse(lines, factionId,
+      { rolls, actionFactory: this._actionFactory, nowSeconds, hooks: this._buildHooks() });
   }
 
   getQuest(uid) { return this.quests.get(uid) ?? null; }
@@ -167,6 +237,9 @@ export class QuestMachine {
         quest.start();
         this.deps.addQuestTopics?.(quest);
         this.quests.set(quest.uid, quest);
+        // RaiseOnQuestStartedEvent - the QuestListsManager's one-time
+        // recording listens here (Q2b-ii; Q4 wires the two together).
+        this.deps.onQuestStarted?.(quest);
       } catch (e) {
         console.warn(`[quest] QuestMachine failed to start quest ${quest.questName}: ${e?.message ?? e}`);
       }

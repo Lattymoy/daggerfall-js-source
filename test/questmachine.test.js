@@ -233,7 +233,7 @@ test('quest machine: a GlobalVarLink task reads and writes the shared store', ()
   assert.equal(lift.getTriggerValue(), false, 'the store is the truth, not the local flag');
 });
 
-test('quest machine: COVERAGE PIN - the 35-action registry resolves 4818 of 7235 corpus action lines, each to its DFU owner', () => {
+test('quest machine: COVERAGE PIN - the 42-action registry resolves 5831 of 7235 corpus action lines, each to its DFU owner', () => {
   const m = new QuestMachine({ nowSeconds: () => 0 });
   let resolved = 0, pending = 0;
   const tally = new Map();
@@ -253,8 +253,8 @@ test('quest machine: COVERAGE PIN - the 35-action registry resolves 4818 of 7235
   // moved 50 lines BACK to pending: the guards stopped Say/WhenTask
   // hijacking lines owned by not-yet-ported DFU triggers; Q2b-i's
   // full-registry mirror then made ownership structural.)
-  assert.equal(resolved, 4818);
-  assert.equal(pending, 2417);
+  assert.equal(resolved, 5831);
+  assert.equal(pending, 1404);
   // THE OWNERSHIP PIN: per-action resolved counts, each equal to the
   // line count the FULL DFU RegisterActionTemplates order assigns
   // that action over this corpus (independently derived by running
@@ -274,6 +274,14 @@ test('quest machine: COVERAGE PIN - the 35-action registry resolves 4818 of 7235
     DropAsQuestor: 36,
     DropFace: 37,
     EndQuest: 543,
+    // Q2b-ii: GiveItem's 64 was re-derived from the RAW corpus (all 64
+    // lines matching its pattern are first-match-owned by GiveItem
+    // under the full C# order) - the coverage backlog's 63 was that
+    // script's own artifact.
+    GetItem: 203,
+    GiveItem: 64,
+    GivePc: 296,
+    HaveItem: 59,
     HideNpc: 89,
     InjuredFoe: 172,
     ItemUsedDo: 80,
@@ -281,6 +289,7 @@ test('quest machine: COVERAGE PIN - the 35-action registry resolves 4818 of 7235
     LegalRepute: 14,
     LevelCompleted: 12,
     LogMessage: 409,
+    MakePermanent: 136,
     MuteNpc: 9,
     PickOneOf: 96,
     PlaySound: 3,
@@ -295,6 +304,8 @@ test('quest machine: COVERAGE PIN - the 35-action registry resolves 4818 of 7235
     StartQuest: 40,
     StartStopTimer: 420,
     StartTask: 49,
+    TakeItem: 44,
+    TotingItemAndClickedNpc: 211,
     UnsetTask: 30,
     WhenTask: 794,
   });

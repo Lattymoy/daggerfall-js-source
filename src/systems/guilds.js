@@ -461,6 +461,17 @@ export function joinGuild(memberships, guild, now) {
   return m;
 }
 
+/** Guild.AlterReward (Guild.cs:207-210, base identity) with the ONE
+ *  override in DFU: FightersGuild.cs:96-99's fixed-point rank bonus
+ *  (((10 + rank) << 8) / 10 * reward) >> 8 - integer division at each
+ *  step. The quest gold mint (Q2b-ii) is its consumer. */
+export function alterReward(guildGroup, rank, reward) {
+  if (guildGroup === GUILD_GROUPS.FightersGuild) {
+    return (Math.trunc(((10 + rank) << 8) / 10) * reward) >> 8;
+  }
+  return reward;
+}
+
 /** RemoveMembership (:128-144). Leave() is empty in DFU - the guild
  *  object is simply dropped - so this drops the record. */
 export function leaveGuild(memberships, guild) {
