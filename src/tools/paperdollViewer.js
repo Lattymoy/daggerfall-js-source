@@ -219,6 +219,7 @@ function applyVillager(v) {
   mat.transparent = false;
   mat.opacity = 1;
   mat.depthWrite = true;
+  mat.blending = THREE.NormalBlending; // or the fire's blend outlives the fire
   mat.needsUpdate = true;
   applyVillagerDrape(v);
   // A VILLAGER WEARS WHAT THEIR DESIGN SAYS AND NOTHING ELSE.
@@ -645,6 +646,11 @@ function applyOrc(o) {
   mat.transparent = !!spec;
   mat.opacity = spec ? spec.opacity : 1;
   mat.depthWrite = !spec; // a translucent body must not occlude its own far side
+  // FIRE IS NOT A COLOUR, IT IS A LIGHT. A ghost SUBTRACTS itself from
+  // what is behind it; a flame ADDS to it. Same material, opposite
+  // blend, and an orange body without this reads as a painted man
+  // rather than a burning one.
+  mat.blending = spec && spec.additive ? THREE.AdditiveBlending : THREE.NormalBlending;
   mat.needsUpdate = true;
 
   // Whichever line this design came from, show ITS pieces.
@@ -671,6 +677,33 @@ function applyUndead(u) {
   applyOrc(u ? { ...u, line: 'undead' } : null);
 }
 {
+  const sel = document.getElementById('atronach');
+  if (sel) {
+    const none = document.createElement('option');
+    none.value = '';
+    none.textContent = 'atronach: none (bare rig)';
+    sel.appendChild(none);
+    for (const a of D.atronachs || []) {
+      const opt = document.createElement('option');
+      opt.value = String(a.id);
+      opt.textContent = a.name;
+      sel.appendChild(opt);
+    }
+    sel.onchange = () => {
+      const a = (D.atronachs || []).find((x) => String(x.id) === sel.value) || null;
+      for (const other of ['orc', 'undead', 'villager', 'classes']) {
+        const o = document.getElementById(other);
+        if (o) o.value = '';
+      }
+      applyOrc(a ? { ...a, line: 'atronach' } : null);
+      const hud = document.getElementById('hud');
+      // All four are level 16 with the same damage band: the game tells
+      // them apart by element and by nothing else.
+      if (hud && a) hud.textContent = a.name + ' \u00b7 level 16 \u00b7 5-15 damage (all four are)';
+    };
+  }
+}
+{
   const sel = document.getElementById('classes');
   if (sel) {
     const none = document.createElement('option');
@@ -687,7 +720,7 @@ function applyUndead(u) {
     }
     sel.onchange = () => {
       const c = (D.classes || []).find((x) => String(x.id) === sel.value) || null;
-      for (const other of ['orc', 'undead', 'villager']) {
+      for (const other of ['orc', 'undead', 'villager', 'atronach']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
@@ -713,7 +746,7 @@ function applyUndead(u) {
     sel.onchange = () => {
       const u = (D.undead || []).find((x) => String(x.id) === sel.value) || null;
       // The three pickers are exclusive: one body at a time.
-      for (const other of ['orc', 'villager', 'classes']) {
+      for (const other of ['orc', 'villager', 'classes', 'atronach']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
