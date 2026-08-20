@@ -272,6 +272,9 @@ export function createChargenWindow(flow, { onDone, hudScale = 2 } = {}) {
       flow.clickNative(vx, vy);
       if (flow.done) { _fired = true; onDone?.(flow.result()); }
     },
+    // U-scroll: the hosts' wheel seam (scroll never advances the flow,
+    // so no done check).
+    wheel(dir) { if (!_fired) flow.wheel?.(dir); },
     draw(renderer, canvas, font) { flow.draw(renderer, canvas, font, hudScale); },
   };
 }

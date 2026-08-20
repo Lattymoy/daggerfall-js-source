@@ -2108,6 +2108,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       return true;
     },
+    /** The wheel seam (U-scroll): scroll never closes a window, so no
+     *  done check. */
+    overlayWheel(dir) { activeOverlay?.wheel?.(dir); },
     /** U26: ui/input.js asks this before mapping a key to an action -
      *  a native window keys off raw codes. */
     get overlayIsNative() { return !!activeOverlay?.isChoiceWindow; },

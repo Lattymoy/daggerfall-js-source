@@ -24,8 +24,8 @@
 // - but its exact thumb colour comes from a Panel default this port
 // has not needed anywhere else, so the bar is drawn from the same
 // palette the rest of the window uses and the drag is not implemented
-// (the two paging buttons cover the list; wheel scrolling is NOT
-// implemented - AUDIT 23 ui-native-4 corrected the old claim).
+// (the two paging buttons cover the list; the wheel scrolls one row
+// per notch through the hosts' wheel seam).
 
 import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
@@ -104,6 +104,14 @@ export class ListPickerWindow {
     this._clampScroll();
     const d = /^Digit([1-9])$/.exec(code);
     if (d) this._pick(this.scrollIndex + Number(d[1]) - 1);
+  }
+
+  /** The mouse wheel scrolls the list one row per notch (ListBox
+   *  OnMouseScrollUp/Down), selection untouched. */
+  wheel(dir) {
+    if (!dir) return;
+    this.scrollIndex += Math.sign(dir);
+    this._clampScroll();
   }
 
   /** The row height a click resolves against (ListBox.cs:434):

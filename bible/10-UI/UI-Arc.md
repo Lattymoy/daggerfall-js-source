@@ -1842,9 +1842,12 @@ FLIC decoder the port does not have) do not play, so the next question
 shows immediately where DFU waits out the CEL, and the Ignite one-shot
 that rides the answer waits with them; the question label is clipped
 to the text window BY ROW where DFU clips by pixel (until the renderer
-grows a scissor seam); and the mouse WHEEL is not wired through the
-hosts' overlay seam - the scroll answers the click margins (one pixel
-per event) and the arrow keys.
+grows a scissor seam). The third departure retired: the mouse WHEEL is
+wired through the hosts' overlay seam now (canvas `wheel` ->
+townTalk/worldModes/dungeonContext -> `overlay.wheel(dir)`), and every
+discrete scroll input - wheel notch, arrow key, margin click - steps a
+whole text row (`scrollQuestionRow`), since the port has no held-button
+per-frame repeat and one pixel per event read as a dead scroll.
 
 **Also on the way through:** the wizard-ORDER flag retired by U15 was
 still printed in two file headers (chargen.js, chargenArt.js) - the

@@ -463,8 +463,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return true;   // an open native window owns the pointer either way
   }
 
+  /** The wheel seam (U-scroll): an open window owns the wheel; the
+   *  ones with overflow implement wheel(dir). */
+  function wheel(e) {
+    if (!overlay) return false;
+    overlay.wheel?.(Math.sign(e.deltaY));
+    return true;
+  }
+
   return {
-    keydown, tryActivate, frame, ensureLoaded, nextMode, showOverlay, setTopics, pointerdown,
+    keydown, tryActivate, frame, ensureLoaded, nextMode, showOverlay, setTopics, pointerdown, wheel,
     texts: (id) => textVariants(id),
     // U23: the interior host's static-NPC seam needs both of these -
     // FACTION.TXT to route a click (PlayerActivate.StaticNPCClick reads

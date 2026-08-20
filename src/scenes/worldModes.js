@@ -1229,6 +1229,18 @@ export function createWorldModes(host) {
     return true;
   }
 
+  /** The wheel seam (U-scroll), the pointerdown shape: an open
+   *  mode-owned window owns the wheel. */
+  function wheel(e) {
+    if (mode === 'dungeon' && dungeonCtx?.uiOverlayActive) {
+      dungeonCtx.overlayWheel?.(Math.sign(e.deltaY));
+      return true;
+    }
+    if (mode !== 'interior' || !interiorOverlay) return false;
+    interiorOverlay.wheel?.(Math.sign(e.deltaY));
+    return true;
+  }
+
   return {
     get mode() { return mode; },
     // M2: the cast engine's mode-aware raycast reads the INTERIOR's
@@ -1266,6 +1278,7 @@ export function createWorldModes(host) {
       return null;                       // exterior: the host's own context stands
     },
     pointerdown,
+    wheel,
     /** A mode-owned window is up (the hosts' look gate reads this
      *  alongside townTalk.overlayActive). */
     get overlayHeld() { return (mode === 'interior' && !!interiorOverlay) || (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive); },

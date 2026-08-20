@@ -450,6 +450,21 @@ export class ChargenFlow {
     }
   }
 
+  /** One usable scroll step: a whole text row. scrollQuestion is the
+   *  1px law (frame wrap included); a discrete input event - wheel
+   *  notch, arrow key, margin click - has no held-button repeat here,
+   *  so it steps a row or the scroll reads as dead. */
+  scrollQuestionRow(dir) {
+    for (let i = 0; i < QUESTION_ROW_H; i++) this.scrollQuestion(dir);
+  }
+
+  /** The mouse wheel (NativePanel_OnMouseScrollUp/Down): the question
+   *  scroll is the one chargen surface with overflow to scroll. */
+  wheel(dir) {
+    if (this.done || !dir) return;
+    if (this.state === 'classQuestions' && !this.qConfirm) this.scrollQuestionRow(dir);
+  }
+
   /** AnswerAndPlayAnim (:310-354), minus the FLC constellation anims
    *  (FLAGGED - the port has no FLIC decoder yet, so the next question
    *  shows immediately where DFU waits for the CEL to finish; the
@@ -1236,9 +1251,9 @@ export class ChargenFlow {
       else if (action === 'char:b' || action === 'char:B') this.answerClassQuestion(1);
       else if (action === 'char:c' || action === 'char:C') this.answerClassQuestion(2);
       // the mouse wheel's scroll (GetUIScrollMovement), on the arrows
-      // for the keyboard seam
-      else if (action === 'down') this.scrollQuestion(1);
-      else if (action === 'up') this.scrollQuestion(-1);
+      // for the keyboard seam - a row per press (see scrollQuestionRow)
+      else if (action === 'down') this.scrollQuestionRow(1);
+      else if (action === 'up') this.scrollQuestionRow(-1);
       // Escape cancels the popup with classIndex still noClassIndex,
       // and the wizard's OnClose falls to SetClassSelectWindow
       else if (action === 'back') this.state = 'class';
@@ -1555,7 +1570,7 @@ export class ChargenFlow {
       return true;
     }
     if (hit.answerClass != null) return this.answerClassQuestion(hit.answerClass);
-    if (hit.qScroll != null) { this.scrollQuestion(hit.qScroll); return true; }
+    if (hit.qScroll != null) { this.scrollQuestionRow(hit.qScroll); return true; }
     if (hit.confirmQClass) { this._acceptQuestionClass(); return true; }
     if (hit.cancelQClass) { this._cancelQuestionClass(); return true; }
     // U20a: the custom-class builder's controls.

@@ -161,6 +161,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
     }
     requestLook(canvas);   // safe: a refused lock never crashes (was bare requestPointerLock - the sh/< crash + lock:N frozen yaw)
   });
+  // U-scroll: the wheel reaches an open window (question scroll, list
+  // pickers); passive:false so the page never scrolls under the game.
+  canvas.addEventListener('wheel', (e) => {
+    if (!ctx.uiOverlayActive) return;
+    e.preventDefault();
+    ctx.overlayWheel?.(Math.sign(e.deltaY));
+  }, { passive: false });
   // C8 E3c: RMB drag-to-swing (classic weapon control; menu suppressed)
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('mousedown', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, true); });

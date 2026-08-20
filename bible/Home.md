@@ -240,16 +240,16 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:457` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:463` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:658` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:788` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:923` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:789` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:924` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:153` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/world.js:557` - FLAGGED loud: the People faction rides the START location's
 - `src/scenes/world.js:578` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/world.js:584` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:868` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1198` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1425` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:1199` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1426` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:178` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:220` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
 - `src/scenes/worldModes.js:313` - Person placed in a dungeon is the quest machine's, FLAGGED
@@ -318,7 +318,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/talk.js:93` - TallyCrimeGuildRequirements(true, 1) FLAGGED: the TG
 - `src/systems/talkSession.js:21` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 - `src/systems/useItem.js:230` - lantern's and refuses when it would overflow. FLAGGED: DFU
-- `src/ui/chargen.js:454` - *  (FLAGGED - the port has no FLIC decoder yet, so the next question
+- `src/ui/chargen.js:469` - *  (FLAGGED - the port has no FLIC decoder yet, so the next question
 - `src/ui/chargenArt.js:662` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/chargenArt.js:794` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
 - `src/ui/chargenArt.js:884` - *  constellation chart. FLAGGED loud: the three FLC constellation
