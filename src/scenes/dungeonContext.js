@@ -54,6 +54,7 @@ import { SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
 import { NativeInventoryWindow, preloadInventoryArt } from '../ui/nativeInventory.js';
 import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
+import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
 import { applyLevelUp } from '../systems/advancement.js';
@@ -678,8 +679,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const l of lines) hudText.add(l);
   };
   actions.onTrespass = () => console.warn('[action] trespass check fired (MakeEnemiesHostile) - foes are hostile-on-sight; passive teams pend the faction model');
-  const clickCast = new OneShotLatch();   // classic click-to-cast: armed by readying
-  let pendingClickCast = false;
   let lastPlayerFeet = null;   // S11: the save position
   let debugHud = false;   // F8 diagnostics
   let _motorState = '';
@@ -828,7 +827,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     drainFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.max(0, (f.entity.fatigue ?? 0) - n); },
     restoreFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.min(maxFatigue(f.entity), (f.entity.fatigue ?? 0) + n); },
   });
-  const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
+  // M3: THE ONE CAST ENGINE. dungeonContext's audited player-cast stack
+  // moved to scenes/hostMagic.js (M1) and every host now consumes the
+  // same implementation - this host's enemy missiles and arrows stay
+  // below and reuse the engine's explodeAt/applySpellToPlayer. The
+  // absorb context is the dungeon constant (inside, no daylight).
+  const magic = createPlayerMagic({
+    renderer, audio, getTexture, uploadRecord,
+    collider,
+    playerEntity, playerSinks,
+    say: (l) => hudText.add(l),
+    surfacePlayer,
+    foes: () => foes,
+    foeSinks,
+    absorbCtx: () => ({ inside: true, day: false }),
+  });
   if (!playerEntity.chargenDone) {
     if (Number.isInteger(opts.playerClass)) {
       // AUDIT 17f: the shared headless skip. This copy minted a
@@ -865,7 +878,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  copy of finishChargen once; it is not going to become a third. */
   function finishChargenHere() {
     finishChargen(playerEntity, chargenFlow.result(), spellsByIndex);
-    if (playerEntity.spells.length && !readiedSpell) readiedSpell = playerEntity.spells[0];
+    if (playerEntity.spells.length && !magic.readied()) magic.setReadied(playerEntity.spells[0]);
     chargenFlow = null;
   }
 
@@ -909,12 +922,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // The spellbook readies it (toggleSpellbook's ready()), the cost
   // comes from calculateCastCost's per-effect tables, and rangeTypes
   // 0/1/3 are handled beside 2/4 below.
-  let readiedSpell = null;
   if (spellsByIndex) {
-    if (Number.isInteger(opts.playerSpell)) readiedSpell = spellsByIndex.get(opts.playerSpell) ?? null;
-    if (!readiedSpell) {
+    if (Number.isInteger(opts.playerSpell)) magic.setReadiedByIndex(opts.playerSpell, spellsByIndex);
+    if (!magic.readied()) {
       for (const sp of spellsByIndex.values()) {
-        if ((sp.rangeType === 2 || sp.rangeType === 4) && sp.effects.some(isDamageHealthEffect)) { readiedSpell = sp; break; }
+        if ((sp.rangeType === 2 || sp.rangeType === 4) && sp.effects.some(isDamageHealthEffect)) { magic.setReadied(sp); break; }
       }
     }
   }
@@ -975,127 +987,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const pitch = Math.asin(-Math.max(-1, Math.min(1, m.dir[1]))) * 180 / Math.PI;
     return trs(m.pos[0], m.pos[1], m.pos[2], pitch, yaw, 0);
   }
-  // S24: a dungeon is inside by definition; `day` only matters to the
-  // InLight branch, which requires being OUTSIDE.
-  const ABSORB_CONTEXT = Object.freeze({ inside: true, day: false });
-  // AUDIT 23 (magic-5): DFU's lastReadySpellCastingCost - set on every
-  // player cast, read by the absorption refund cap when the player's
-  // own spell lands back on them (EntityEffectManager.cs:600-604).
-  let lastCastCost = 0;
-
-  /** Every spell landing ON THE PLAYER rides this: the S19 Paralyze
-   *  awakeAlert ("You are paralyzed.", once per new instance) fires
-   *  for player hosts only, exactly like DFU's StartParalyzation. */
-  function applySpellToPlayer(spell, casterLevel, caster = null) {
-    // S24: the absorption context. DFU reads the PLAYER's surroundings
-    // for every entity ("everything is where the player is",
-    // EntityEffectManager :1305), and this host is a DUNGEON - always
-    // inside, so InDarkness absorbs and InLight never does. The
-    // exterior spell paths are FLAGGED with their own hosts.
-    const ctx = lastCastCost > 0 ? { ...ABSORB_CONTEXT, selfCastCost: lastCastCost } : ABSORB_CONTEXT;
-    const r = applySpell(spell, casterLevel, playerEntity, playerSinks, Math.random, caster, ctx);
-    if (r.paralyzed) hudText.add('You are paralyzed.');
-    // S19c: AssignBundle's failure messages, player hosts only -
-    // CasterOnly chance fails say "Spell effect failed.", external
-    // contact fails and full saves say "Save versus spell made."
-    if (r.chanceFailed) hudText.add(spell.rangeType === 0 ? 'Spell effect failed.' : 'Save versus spell made.');
-    if (r.saved) hudText.add('Save versus spell made.');
-    return r;
-  }
-  // Cast ranges II: the rangeType-4 EXPLOSION - indiscriminate sweep
-  // (OverlapSphere at impact): every live foe within the radius, and
-  // the player when close enough.
-  function explodeAt(pos, spell, casterLevel, playerFeet, caster = null) {
-    for (const t of sweepFoes(pos, EXPLOSION_RADIUS, foes)) {
-      applySpell(spell, casterLevel, t.entity, foeSinks(t), Math.random, caster);
-    }
-    if (playerFeet) {
-      const d = Math.hypot(playerFeet[0] - pos[0], playerFeet[1] + 0.9 - pos[1], playerFeet[2] - pos[2]);
-      if (d <= EXPLOSION_RADIUS) applySpellToPlayer(spell, casterLevel, caster);
-    }
-  }
-
-  // AUDIT 23 (magic-4) - EntityEffectManager.cs:2106-2108: "Always
-  // tally magic skills when player physically casts a spell" -
-  // TallyPlayerReadySpellEffectSkills (:1964-1978) tallies each real
-  // effect's MagicSkill by 1. Unknown classic keys tally nothing
-  // (DFU's effect != null gate), so the cost table's presence is the
-  // gate, not effectSchool's priced-as-Destruction default.
-  function tallyCastSkills(sp) {
-    for (const e of sp.effects) {
-      if (e.type < 0) continue;
-      if (!EFFECT_COST_TABLE[`${e.type},${e.subType & 0xff}`]) continue;
-      tallySkill(playerEntity, effectSchool(e), 1);
-    }
-    // AUDIT 23 (magic-13): the same release moment plays the element's
-    // cast sound at the player - the port shipped the table for enemy
-    // casts and the player cast in silence.
-    audio.playOneShot(SPELL_CAST_SOUND[sp.element] ?? SPELL_CAST_SOUND[4], 1);
-  }
-
-  function playerCastInput(eye, dir) {
-    const sp = readiedSpell;
-    if (!sp) return false;
-    // S27 / SilenceCheck (EntityEffectManager :1932-1946). DFU tests
-    // this at CAST as well as at ready, and BOTH clear the readied
-    // spell - a silence landing mid-aim disarms you rather than
-    // waiting for the click. Every cast on this path costs spell
-    // points, so DFU's `!noSpellPointCost` arm is always true here.
-    if (silenceBlocksCast(playerEntity)) {
-      readiedSpell = null;
-      hudText.add(SILENCED_TEXT);
-      return false;
-    }
-    const cost = calculateCastCost(sp, playerEntity).sp;   // S10: the per-effect skill-scaled cost (the record-cost interim retires)
-    if ((playerEntity.magicka ?? 0) < cost) return false;   // classic refuses without the points
-    if (sp.rangeType === 0) {
-      // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
-      // missile; the cost spends here.
-      playerEntity.magicka -= cost;
-      lastCastCost = cost;   // magic-5: the refund cap reads the spent cost
-      tallyCastSkills(sp);
-      const r = applySpellToPlayer(sp, playerEntity.level, playerCaster());
-      if (r.healed > 0) hudText.add(`You are healed ${r.healed} points.`);
-      surfacePlayer();
-      return true;
-    }
-    if (sp.rangeType === 1) {
-      // ByTouch: CastReadySpell aborts BEFORE spending when no target
-      // sits in touch range (verbatim - the S9 'spends on a whiff'
-      // rule was wrong and dies here).
-      const t = pickTouchTarget(eye, foes, 2.25 + 0.25, (c, d) => {
-        const l = d || 1, dx = (c[0] - eye[0]) / l, dy = (c[1] - eye[1]) / l, dz = (c[2] - eye[2]) / l;
-        const hit = collider.raycast(eye, [dx, dy, dz], d);
-        return !Number.isFinite(hit) || hit >= d - 1e-3;
-      });
-      if (!t) return false;
-      playerEntity.magicka -= cost;
-      lastCastCost = cost;   // magic-5: the refund cap reads the spent cost
-      tallyCastSkills(sp);
-      surfacePlayer();
-      applySpell(sp, playerEntity.level, t.entity, foeSinks(t), Math.random, playerCaster());
-      return true;
-    }
-    if (sp.rangeType === 3) {
-      // AreaAroundCaster: every live foe within the explosion radius.
-      playerEntity.magicka -= cost;
-      lastCastCost = cost;   // magic-5: the refund cap reads the spent cost
-      tallyCastSkills(sp);
-      surfacePlayer();
-      for (const t of sweepFoes(eye, EXPLOSION_RADIUS, foes)) {
-        applySpell(sp, playerEntity.level, t.entity, foeSinks(t), Math.random, playerCaster());
-      }
-      return true;
-    }
-    if (sp.rangeType !== 2 && sp.rangeType !== 4) return false;
-    playerEntity.magicka -= cost;
-      lastCastCost = cost;   // magic-5: the refund cap reads the spent cost
-      tallyCastSkills(sp);
-    surfacePlayer();
-    missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true });
-    return true;
-  }
-
+  // M3: applySpellToPlayer / explodeAt / tallyCastSkills / the four
+  // cast arms live in the ONE engine (scenes/hostMagic.js); the enemy
+  // half below calls magic.explodeAt / magic.applySpellToPlayer.
   // S2: treasure piles - random markers (199.19) roll an icon +
   // generate by the dungeon-type key; fixed 216 flats keep their
   // record. Per-pile single batches so pickup can remove one pile.
@@ -1175,7 +1069,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     renderer, canvas: () => _weaponCanvas, fetchBytes, palette, audio, entity: playerEntity,
     bindWorn: opts.playerWeapon !== 'bow',   // AUDIT 17e F17: the ?weapon=bow debug flag keeps its scripted weapon
     say: (l) => hudText.add(l),
-    spellArmed: () => clickCast.armed || pendingClickCast,
+    spellArmed: () => magic.spellArmed(),
   });
   const playerWeapon = weaponRig.playerWeapon;   // the dungeon-side combat consumers read it
   if (opts.playerWeapon === 'bow') {
@@ -1205,7 +1099,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
   function playerAttackInput(dx, dy, held) {   // host mouse events buffer here
     if (playerWeapon.sheathed) return;   // WeaponManager verbatim: no attack processing while sheathed (audit 2026-08-17)
-    if (held && clickCast.consume()) { pendingClickCast = true; return; }   // the armed click casts, no swing
+    if (magic.interceptAttack(held)) return;   // the armed click casts, no swing
     weaponRig.attackInput(dx, dy, held);
   }
   function resolvePlayerHit(eye, inViewFn, playerFeet, lookDir) {
@@ -1321,9 +1215,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // was struck; the port retired wall hits with no payload.
         if (m.spell?.rangeType === 4) {
           const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
-          const wCaster = m.fromPlayer ? playerCaster()
-            : m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
-          explodeAt(impact, m.spell, (m.fromPlayer ? playerEntity.level : m.casterLevel) ?? playerEntity.level, playerFeet, wCaster);
+          const wCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
+          magic.explodeAt(impact, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, wCaster);
         }
         retireMissile(m);
         continue;
@@ -1380,28 +1273,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         }
         continue;
       }
-      if (m.fromPlayer) {
-        // S5: player missiles seek foes (mid-capsule contact).
-        for (const f of foes) {
-          if (f.dead) continue;
-          const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + 0.9 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];
-          if (Math.hypot(fx, fy, fz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
-            if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster());
-            else applySpell(m.spell, playerEntity.level, f.entity, foeSinks(f), Math.random, playerCaster());
-            retireMissile(m);
-            break;
-          }
-        }
-        continue;
-      }
+      // M3: player SPELL missiles fly in the engine now; this loop
+      // carries enemy spells (and, upstream, both sides' arrows).
       const dx = target[0] - m.pos[0], dy = target[1] - m.pos[1], dz = target[2] - m.pos[2];
       if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {   // missile radius + player capsule radius
         // S16: enemy missiles carry their caster (level + the
         // transfer heal-back pair); trap casts stay casterless (DFU
         // action casters are null) on the S4b player-level shape.
         const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
-        if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, mCaster);
-        else applySpellToPlayer(m.spell, m.casterLevel ?? playerEntity.level, mCaster);
+        if (m.spell.rangeType === 4) magic.explodeAt(m.pos, m.spell, m.casterLevel ?? playerEntity.level, playerFeet, mCaster);
+        else magic.applySpellToPlayer(m.spell, m.casterLevel ?? playerEntity.level, mCaster);
         retireMissile(m);
       }
     }
@@ -1647,10 +1528,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         inCastle: castleBlockAt(playerFeet[0], playerFeet[2]),
       });
     }
-    if (pendingClickCast) {
-      pendingClickCast = false;
-      playerCastInput(eye, [-view[2], -view[6], -view[10]]);   // classic: the readied spell fires on the click
-    }
+    magic.firePending(eye, [-view[2], -view[6], -view[10]]);   // classic: the readied spell fires on the click
     // P13: the shared stealth senses context (EnemySenses' player-
     // side reads). S21: all three illusion branches are LIVE -
     // invisible always blocks (the 13 seers exempt), blending 8%
@@ -1694,6 +1572,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     collisionTriggers(dt, playerFeet, moveHeld);
     updateMissiles(dt, playerFeet);
+    magic.update(dt, playerFeet);   // M3: player spell missiles fly in the engine
     // S19: WeaponManager's paralysis gate - weapons hide and the
     // machine holds while paralyzed (casting is NOT gated, verbatim:
     // DFU has no IsParalyzed check in the casting path).
@@ -1915,8 +1794,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // sprite mobiles - they are billboards at a world position with
     // no animation, exactly like a corpse.
     const _dropBatches = droppedLoot.batches();
-    if (_mobileBatches.length || _dropBatches.length) {
-      renderer.drawBillboards([..._mobileBatches, ..._dropBatches],
+    const _spellBatches = magic.batches();   // M3: player spell missiles
+    if (_mobileBatches.length || _dropBatches.length || _spellBatches.length) {
+      renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],
         new Float32Array([-view[0], -view[4], -view[8]]), new Float32Array([0, 1, 0]));
     }
     // LAST before the HUD: the classic weapon overlay composites over
@@ -1956,11 +1836,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       ];
       lines.forEach((t, i) => drawText(renderer, hudFont, t, 4 * s2, (4 + i * 9) * s2, s2, [0.4, 1, 0.5, 1]));
     }
-    if (hudFont && readiedSpell) {
+    if (hudFont && magic.readied()) {
       // U2a's first consumer: the readied spell + cost, classic text
       // above the vitals (the spellbook window replaces this in U4).
       const s = hudScaleFor(canvas.width, canvas.height);
-      drawText(renderer, hudFont, `${readiedSpell.name} (${calculateCastCost(readiedSpell, playerEntity).sp})`, 10 * s, canvas.height - 60 * s, s, [0.9, 0.9, 0.75, 1]);
+      drawText(renderer, hudFont, `${magic.readied().name} (${calculateCastCost(magic.readied(), playerEntity).sp})`, 10 * s, canvas.height - 60 * s, s, [0.9, 0.9, 0.75, 1]);
     }
   }
 
@@ -2006,12 +1886,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // S24 probe seam: drive a real spell record onto the player
     // through the host's own absorption path (the same function the
     // foe-cast and missile-impact sites call).
-    applySpellToPlayer,
+    applySpellToPlayer: magic.applySpellToPlayer,
     // C10: the rig's clickAttack carries the sheathed gate the inline
     // version missed - a touch tap while sheathed no longer swings
     // (WeaponManager: no attack processing while sheathed).
     playerClickAttack: weaponRig.clickAttack,
-    playerCastInput,   // S5: C key in the hosts
+    playerCastInput: magic.castInput,   // S5: C key in the hosts
     /** Verbatim MovePlayerToMarker + FixStanding: the start marker
      *  + up * (height 1.8 * 0.6), then the instant floor snap. ONE
      *  source - both hosts spawn through this (the standalone's raw
@@ -2108,7 +1988,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     quickSave() {
       const snap = snapshotPlayer(playerEntity, {
         position: lastPlayerFeet, classicMinutes: classicMinutesRef.value,
-        readiedSpellIndex: readiedSpell?.index ?? null,
+        readiedSpellIndex: magic.readiedIndex(),
         locationKey: _locationKey,
         world: collectWorld(),
       });
@@ -2121,7 +2001,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { hudText.add('Save version mismatch.'); return; }
       classicMinutesRef.value = extras.classicMinutes ?? classicMinutesRef.value;
-      readiedSpell = extras.readiedSpellIndex != null ? spellsByIndex?.get(extras.readiedSpellIndex) ?? null : null;
+      magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
       if (extras.world && extras.locationKey === _locationKey) applyWorld(extras.world);
       else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends
       if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);
@@ -2252,25 +2132,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleSpellbook() {
       if (activeOverlay) return;
       activeOverlay = new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
-        ready: (sp) => {
-          // S27: the FIRST of DFU's two silence gates. Readying is
-          // refused outright, so the spellbook cannot arm a spell a
-          // silenced caster could never fire.
-          if (silenceBlocksCast(playerEntity)) { readiedSpell = null; hudText.add(SILENCED_TEXT); return; }
-          // AUDIT 23 (magic-14) - EntityEffectManager.cs:337-343:
-          // Daggerfall enforces the cost WHEN SETTING the ready spell
-          // (the cast-time gate stays as the backstop for drain).
-          if ((playerEntity.magicka ?? 0) < calculateCastCost(sp, playerEntity).sp) {
-            readiedSpell = null;
-            hudText.add("You don't have the spell points.");   // youDontHaveTheSpellPoints
-            return;
-          }
-          readiedSpell = sp;
-          // :350-351 - "caster only spells are cast instantly": no
-          // click latch, the self-cast fires on ready.
-          if (sp.rangeType === 0) { playerCastInput(null, null); return; }
-          clickCast.arm(); hudText.add(`${sp.name} readied.`);   // classic: the next attack-click CASTS
-        },
+        // M3: the ready laws (silence gate, cost-at-ready, instant
+        // CasterOnly, the click latch) live in the ONE engine.
+        ready: (sp) => magic.readySpell(sp),
         castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
       });
     },

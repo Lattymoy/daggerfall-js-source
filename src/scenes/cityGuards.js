@@ -440,6 +440,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   }
 
   return { guards, spawnCityGuards, update, offsetAll, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot,
+    // M2 (spellcasting above ground): the player's spell damage rides
+    // THE SAME door the melee swing uses - corpse, Murder on the kill,
+    // hostility - so a fireball is not a free crime channel.
+    hurtGuard: (g, dmg, playerFeet) => damageGuard(g, dmg, playerFeet, null),
     _damage: (i, dmg) => { const g = guards[i]; if (g && !g.dead) damageGuard(g, dmg, [0, 0, 0], null); },   // probe/test seam through the REAL death path
     _debug: () => guards.map((g) => ({ dead: g.dead, hp: g.entity.health, pos: g.ai.feet.map((v) => +v.toFixed(1)), detected: g.ai.detected, state: g.attack.machine.state, moving: g.ai.moving, dist: +(g.ai._dist ?? -1).toFixed(1), giveUp: g.ai.giveUpTimer })) };
 }

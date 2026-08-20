@@ -24,7 +24,10 @@ import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
-import { createTownTalk } from './townTalk.js';   // T3b
+import { createTownTalk } from './townTalk.js';
+import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
+import { SpellbookWindow, knownSpells } from '../ui/inventory.js';   // M2
+import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS } from './hostCombat.js';   // AUDIT 23 (C14)
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
@@ -577,12 +580,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
   // whole session. Both exterior hosts now run it through the shared
   // session, and the paperdoll reloads on the chosen identity.
+  let spellsByIndex = null;   // M2: the host-level SPELLS.STD map
   if (!playerEntity.chargenDone && params.has('class')) {
     // AUDIT 17f: ?class=N is the headless skip - parsed here for the
     // DUNGEON the host might build, but never honoured for the host's
     // own chargen, so a town boot had no way past the overlay.
-    loadSpellIndex(fetchBytes).then((spellsByIndex) =>
-      applyHeadlessChargen(playerEntity, Number(params.get('class')), { fetchBytes, spellsByIndex }))
+    loadSpellIndex(fetchBytes).then((sbi) => { spellsByIndex = sbi; return applyHeadlessChargen(playerEntity, Number(params.get('class')), { fetchBytes, spellsByIndex: sbi }); })
       .then(() => {
         preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
           { race: playerEntity.race, gender: playerEntity.gender, faceIndex: playerEntity.faceIndex });
@@ -594,10 +597,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // dependency already attached (careers, SPELLS.STD, the biography
     // question sets), so a host cannot forget one. Three separate bugs
     // came from hosts wiring these by hand.
-    createChargenFlow(fetchBytes).then(({ flow, spellsByIndex }) => {
+    createChargenFlow(fetchBytes).then(({ flow, spellsByIndex: sbi }) => {
+      spellsByIndex = sbi;   // M2
       townTalk.showOverlay(createChargenWindow(flow, {
         onDone: (r) => {
-          finishChargen(playerEntity, r, spellsByIndex);
+          finishChargen(playerEntity, r, sbi);
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
             { race: r.race, gender: r.gender, faceIndex: r.faceIndex });
           surfacePlayer();
@@ -705,7 +709,44 @@ export async function bootWorld(canvas, renderer, params, status) {
   const weaponRig = createWeaponRig({
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => townTalk.say(l),
+    spellArmed: () => magic.spellArmed(),   // M2
   });
+  // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.
+  const magic = createPlayerMagic({
+    renderer, audio, getTexture, uploadRecord,
+    collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes.interiorCollider) ? modes.interiorCollider : collider).raycast(o, d, m) },
+    playerEntity,
+    playerSinks: {
+      hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
+      heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
+      drainMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.max(0, (playerEntity.magicka ?? 0) - n); surfacePlayer(); } },
+      restoreMagicka: (n) => { if (n > 0) { playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + n); surfacePlayer(); } },
+      drainFatigue: (n) => drainExteriorFatigue(n),
+      restoreFatigue: (n) => { if (n > 0) { playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + n); surfacePlayer(); } },
+      say: (l) => townTalk.say(l),
+    },
+    say: (l) => townTalk.say(l),
+    surfacePlayer,
+    foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? cityGuards.guards : [],
+    foeSinks: (g) => ({
+      hurt: (n) => { if (n > 0) cityGuards.hurtGuard(g, n, player.pos); },
+      heal: (n) => { if (n > 0) g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },
+      drainMagicka: (n) => { if (n > 0) g.entity.magicka = Math.max(0, (g.entity.magicka ?? 0) - n); },
+      restoreMagicka: (n) => { if (n > 0) g.entity.magicka = Math.min(g.entity.maxMagicka ?? Infinity, (g.entity.magicka ?? 0) + n); },
+      drainFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.max(0, (g.entity.fatigue ?? 0) - n); },
+      restoreFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.min(maxFatigue(g.entity), (g.entity.fatigue ?? 0) + n); },
+    }),
+    absorbCtx: () => ((modes?.mode ?? 'exterior') === 'exterior'
+      ? { inside: false, day: !isNight(minuteNow()) }
+      : { inside: true, day: false }),
+  });
+  const toggleSpellbook = () => {
+    if (townTalk.overlayActive || !spellsByIndex) return;
+    townTalk.showOverlay(new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
+      ready: (sp) => magic.readySpell(sp),
+      castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
+    }));
+  };
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let playerSpawned = false;
   // Edge-detect latch shared with the mode machine: a held key must not
@@ -774,6 +815,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       }));
       return;
     }
+    // M2: the spellbook (Backspace, the DFU default) + the cast key.
+    if (e.key === 'Backspace' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      e.preventDefault();
+      toggleSpellbook();
+      return;
+    }
+    if (e.code === 'KeyC' && walkMode && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+      magic.castInput([...cam.pos], fwd);
+      return;
+    }
     keys.add(e.code);
     if (e.code === 'AltLeft') e.preventDefault();
   });
@@ -784,19 +836,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
-    if (walkMode && (e.buttons & 2) && modeNow() === 'exterior') { weaponRig.attackInput(e.movementX, e.movementY, true); return; }
+    if (walkMode && (e.buttons & 2) && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(e.movementX, e.movementY, true); return; }   // M2
     cam.yaw -= e.movementX * 0.0025;
     cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
   });
-  addEventListener('mousedown', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, true); });
+  addEventListener('mousedown', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
   addEventListener('mouseup', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
       cam.yaw -= dx * 0.0025;
       cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * 0.0025));
     },
-    attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') weaponRig.attackInput(dx, dy, held); },
-    attackTap: () => { if (walkMode && modeNow() === 'exterior') weaponRig.clickAttack(); },
+    attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') { if (held && magic.interceptAttack(true)) return; weaponRig.attackInput(dx, dy, held); } },   // M2
+    attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },   // M2
     cycleMode: () => townTalk.nextMode(),   // T3-touch: the phone's F1-F4
   });
 
@@ -906,6 +958,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
+    magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
     // A5b: the tavern arm needs the host's clock, and leaving one has to
     // hand the street back its own song - the host owns both, so both
@@ -1201,6 +1254,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(allBatches, camRight, new Float32Array([0, 1, 0]));
+    if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));   // M2: spell missiles
     // T2 towns: every built populated pixel runs its own pool
     // (PopulationManager is per-location); the pool sees the player in
     // the pixel's LOCATION frame, and live persons draw through the
@@ -1265,6 +1319,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // consume an Arrow + tally and the loose is VISIBLE now (C13 -
     // targets pend the RMB animal/exterior-foe arc).
     if (walkMode && playerSpawned) {
+      // M2: the armed click's cast fires with the LIVE look; missiles
+      // fly through this host's world every walk frame.
+      if ((modes?.mode ?? 'exterior') === 'exterior') {
+        const _mfwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+        magic.firePending([...cam.pos], _mfwd);
+        magic.update(dt, player.pos);
+      }
       // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
       // so all four hosts inherit it (the interior host was missing it).
       for (const ev of weaponRig.frame(dt)) {

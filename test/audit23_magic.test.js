@@ -8,6 +8,7 @@ import { readSpellsStd, SPELL_RECORD_SIZE } from '../src/formats/spellsStd.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dcSrc = () => readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
+const hmSrc = () => readFileSync(join(root, 'src/scenes/hostMagic.js'), 'utf8');   // M3: the cast laws' one home
 
 /** One synthetic 89-byte SPELLS.STD record. */
 const record = ({ index, e0type, e0sub }) => {
@@ -58,8 +59,8 @@ test('AUDIT 23 magic-2: a wall hit explodes an AreaAtRange payload at the impact
 test('AUDIT 23 magic-4: every spending cast arm tallies the effect schools', () => {
   // EntityEffectManager.cs:2106-2108 + TallyPlayerReadySpellEffectSkills
   // (:1964-1978): the four playerCastInput arms that spend all tally.
-  const src = dcSrc();
-  const spends = src.match(/playerEntity\.magicka -= cost;\n\s*lastCastCost = cost;[^\n]*\n\s*tallyCastSkills\(sp\);/g) ?? [];
+  const src = hmSrc();   // M3: the arms live in the engine
+  const spends = src.match(/playerEntity\.magicka -= cost;\n\s*lastCastCost = cost;\n\s*tallyCastSkills\(sp\);/g) ?? [];
   assert.equal(spends.length, 4, 'CasterOnly, ByTouch, AreaAroundCaster and the missile arm all tally');
   // the tally gates on the cost table (DFU's effect != null), not the
   // priced-as-Destruction default
@@ -70,7 +71,7 @@ test('AUDIT 23 magic-5: the self-cast absorb cap sees the wrapper and the spent 
   // EntityEffectManager.cs:600-604. The unit half (cap math on the
   // {entity, sinks} wrapper) is pinned in absorption.test.js; this
   // pins the WIRING - the cost reaches the ctx at all.
-  const src = dcSrc();
+  const src = hmSrc();   // M3
   assert.ok(src.includes('lastCastCost = cost;'), 'player casts record the spent cost');
   assert.ok(/selfCastCost: lastCastCost/.test(src), 'applySpellToPlayer forwards it as ctx.selfCastCost');
   const fx = readFileSync(join(root, 'src/systems/effects.js'), 'utf8');
@@ -80,11 +81,11 @@ test('AUDIT 23 magic-5: the self-cast absorb cap sees the wrapper and the spent 
 test('AUDIT 23 magic-14: readying enforces the cost and CasterOnly casts instantly', () => {
   // EntityEffectManager.cs:337-343 (youDontHaveTheSpellPoints at
   // ready) and :350-351 (instantCast for CasterOnly).
-  const src = dcSrc();
-  const i = src.indexOf('ready: (sp) =>');
-  const arm = src.slice(i, src.indexOf('castCost:', i));
-  assert.ok(arm.includes("hudText.add(\"You don't have the spell points.\")"), 'the classic refusal line at ready');
-  assert.ok(arm.includes('if (sp.rangeType === 0) { playerCastInput(null, null); return; }'), 'CasterOnly fires on ready, no click latch');
+  const src = hmSrc();   // M3: the ready laws live in the engine
+  const i = src.indexOf('function readySpell(sp)');
+  const arm = src.slice(i, src.indexOf('\n  }\n', i));
+  assert.ok(arm.includes("say(\"You don't have the spell points.\")"), 'the classic refusal line at ready');
+  assert.ok(arm.includes('if (sp.rangeType === 0) { castInput(null, null); return; }'), 'CasterOnly fires on ready, no click latch');
   assert.ok(arm.indexOf('calculateCastCost') < arm.indexOf('readiedSpell = sp;'), 'the cost gate sits before the assignment');
 });
 
