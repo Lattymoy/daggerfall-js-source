@@ -678,7 +678,18 @@ function applyOrc(o) {
   // `.drape`, so a lich in robes goes through the code that already
   // dresses a villager's gown — the composition costs nothing because
   // the two systems never actually needed to know about each other.
-  applyVillagerDrape(o.drape ? o : null);
+  // PASS THE DESIGN, NOT NULL. `applyVillagerDrape(null)` means "no
+  // design is selected, so leave the drape control where the user put
+  // it" — which is right for the bare rig, where cycling garments is the
+  // whole point, and absurd for an enemy. Handing it null for every
+  // design that has no drape meant a bat wore whatever garment happened
+  // to be showing: cycle the control to a skirt, pick an animal, and the
+  // animal is in a skirt.
+  //
+  // Passing the design makes it say NONE, because a design with no drape
+  // is a design that wears nothing. Same rule the loose armour pieces
+  // got: what a design wears is what its design says and nothing else.
+  applyVillagerDrape(o);
   if (hs) hs.textContent = 'hair: none (' + (o.line || 'orc') + ')';
 }
 
