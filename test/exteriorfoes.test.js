@@ -70,3 +70,23 @@ test('exteriorfoes: the world host - the cadence loop, the travel reset, the fac
   assert.ok(impFn.includes('inflictPoison(playerEntity, pt, false'), 'poisoned enemy arrows dose');
   assert.ok(impFn.includes("templateIndex: 131"), 'the arrow is recoverable from the target');
 });
+
+test('exteriorfoes X4: the PLAYER-side rolls are UNIFORM - DFRandom bytes never feed dice100', () => {
+  const s = src('exteriorFoes.js');
+  // the flake hunt's find (TP-slice night): resolveHit's rand param
+  // fed DFRandom's [0,32767] INTEGER into dice100's 0..1 contract -
+  // the player could hit an encounter foe only on the 1/32768 zero
+  // draw, and the parry clip id overflowed the sound table.
+  assert.ok(s.includes('playerWeapon.resolveHit(live, playerEntity, canSee, rolls,'),
+    "the player's hit chain draws the pool's UNIFORM seam");
+  assert.ok(!/resolveHit\(live, playerEntity, canSee, rand,/.test(s), 'never the DFRandom byte');
+  // the zero-damage arm consumes {sound, at} (the object itself went
+  // into playOneShot as a clip id) and rolls uniform for the parry pick
+  assert.ok(s.includes("if (snd?.at === 'enemy') audio?.play3d?.(snd.sound, foe.ai.feet"), 'the parry rings AT the foe');
+  assert.ok(s.includes('parrySounds: !!ENEMY_BASICS[foe.mobileType]?.parrySounds, roll: rolls(),'), 'the parry pick is uniform');
+  // the 20% attack grunt rides each pool's own injectable seam - the
+  // bare Math.random default was the recurring one-in-many suite
+  // flake (the parry pin counted a surprise second sound)
+  assert.ok(s.includes('playerAttackGrunt(playerEntity, false, rolls)'), 'the encounter pool threads the seam');
+  assert.ok(src('cityGuards.js').includes('playerAttackGrunt(playerEntity, false, rand)'), 'the guards pool threads its own');
+});

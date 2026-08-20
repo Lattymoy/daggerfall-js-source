@@ -26,6 +26,7 @@ import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
 import { createTownTalk } from './townTalk.js';
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
+import { ChoiceWindow } from '../ui/talkWindow.js';   // TP-slice: the anchor/teleport prompt
 import { SpellbookWindow, knownSpells } from '../ui/inventory.js';   // M2
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
@@ -834,6 +835,42 @@ export async function bootWorld(canvas, renderer, params, status) {
     absorbCtx: () => ((modes?.mode ?? 'exterior') === 'exterior'
       ? { inside: false, day: !isNight(minuteNow()) }
       : { inside: true, day: false }),
+    // TP-slice: the Teleport effect's prompt (Teleport.cs:81-98, the
+    // 4000 anchor/teleport box; AllowCancel is DFU's own QoL).
+    // Anchor = the S33 native shape; Teleport = the quickload warp,
+    // the anchor CONSUMED on arrival (:133/:255 both null it). A cast
+    // inside a mode leaves it first (:151's immediate transition).
+    onTeleport: () => {
+      townTalk.showOverlay(new ChoiceWindow({
+        lines: ['Teleport, or set anchor?'],   // key teleportOrSetAnchor (4000), prose ours
+        options: [
+          { code: 'KeyA', label: 'A - set anchor', action: () => {
+            const pf = walkMode && playerSpawned ? player.pos : cam.pos;
+            const wc = state.worldCoords(pf);
+            playerEntity.anchorPosition = {
+              mode: 'world-exterior', pixel: playerTravelPixel(),
+              nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
+            };
+          } },
+          { code: 'KeyT', label: 'T - teleport', action: () => {
+            const a = playerEntity.anchorPosition;
+            if (!a) { townTalk.say('You must set an anchor first.'); return; }   // key achorMustBeSet (4001), prose ours
+            if (a.mode !== 'world-exterior') { townTalk.say('(the anchor was set in another host - cross-host recall pends)'); return; }
+            (async () => {
+              if ((modes?.mode ?? 'exterior') !== 'exterior') modes.forceExitToExterior();
+              await _teleportToPixel(a.pixel.x, a.pixel.y);
+              const [lx, lz] = state.localFromWorld(a.nativeX, a.nativeZ);
+              const ly = (a.y ?? 2) + state.compensation[1];
+              if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
+              cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+              playerEntity.anchorPosition = null;   // consumed on arrival, both DFU arms
+              surfacePlayer();
+            })();
+          } },
+          { code: 'Escape', label: 'Esc - cancel', action: () => {} },
+        ],
+      }));
+    },
   });
   const toggleSpellbook = () => {
     if (townTalk.overlayActive || !spellsByIndex) return;

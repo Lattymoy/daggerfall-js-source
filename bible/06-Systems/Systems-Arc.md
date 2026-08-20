@@ -2013,3 +2013,81 @@ Pins: test/guildreveal.test.js x4 (the candidate filter/pick/
 picked-clean-null + the envelope round trip; the TG 6/8 gate with
 the dry fall-through and the 2/4 no-reveal spy; the DB
 three-promotions-three-reveals; the host-to-law threading sweep).
+
+## S38 - RECALL: the Teleport effect anchors and returns
+
+TP-slice (2026-08-20). The (43,255) Teleport effect - Mysticism,
+self-only - had no port; the S26/S27 effect sweep left it as the
+one classic spell whose whole body is HOST machinery. Teleport.cs
+whole, minus the cross-host arm (flagged loud):
+
+- **The effect** assigns NOTHING: Start prompts (:63-68). The
+  port's arm in applySpell raises `out.teleport` on a CasterOnly
+  arrival only (TargetFlags_Self, :52 - a ranged arrival is
+  dropped), and the rest of the bundle still processes. The engine
+  (hostMagic) routes every player arrival through the new
+  onTeleport dep - :88-90's player gate, structurally.
+- **The prompt** (:81-98): the 4000 anchor/teleport box as a
+  ChoiceWindow - A sets the anchor, T teleports, Escape cancels
+  (AllowCancel is DFU's own QoL note). Prose ours, keys
+  teleportOrSetAnchor/achorMustBeSet [sic] cited.
+- **The anchor** (:100-117): the S33 native shape - map pixel +
+  world coordinates + the compensation-free height - stored on
+  playerEntity.anchorPosition exactly where DFU moved it (:35),
+  riding the save envelope (pre-TP saves restore null).
+- **The teleport** (:119-164): no anchor says 4001; a cast INSIDE
+  an interior/dungeon mode leaves it first through worldModes'
+  new forceExitToExterior (the exit cores minus the landing -
+  :151's TransitionDungeonExteriorImmediate), then the quickload
+  warp lands at the anchor and CONSUMES it - :133 and :255 both
+  null AnchorPosition on arrival, so a re-anchor is needed each
+  time, verbatim. Recall OUT of a dungeon to a town anchor - the
+  classic use - works.
+- **The residue, loud**: an anchor set INSIDE an interior/dungeon
+  (the cross-host return trip) pends - the anchor stores its mode
+  and a mismatched recall says so; the standalone ?exterior and
+  ?dungeon hosts say their interim line. wa-4's castle hack keeps
+  waiting on exactly that arm (its row notes it).
+
+Mutations: 4 run, 4 killed (the self-only gate dropped; the anchor
+surviving arrival; the mode exit dropped; the anchor falling out of
+the envelope).
+
+Pins: test/teleport.test.js x3 (the marker on self-casts only with
+the bundle still processing; the envelope round trip + the pre-TP
+null; the seam sweep - the engine route, both prompt arms, the
+4001 refusal, the consume, the forced exit's mode+collider, the
+loud interim arms).
+
+### The TP night's flake hunt (X4): the encounter pool's player-side RNG
+
+The recurring one-failure suite flake (six sightings, always green
+on re-run) was finally captured in a logged run: the guards' parry
+pin counted a surprise SECOND sound. Root cause: the C2 20% attack
+grunt at cityGuards' hit frame called playerAttackGrunt WITHOUT its
+rolls seam - bare Math.random inside a deterministic test (the
+ENGINE-PRNG RULE broken at the call site). Threading each pool's
+seam killed it: 0 failures in 30 runs.
+
+The sweep of the other grunt sites then found THREE REAL BUGS in
+exteriorFoes' player-vs-encounter-foe arm, shipped at X2:
+
+- resolveHit's rolls param took DFRandom's `rand` - a [0,32767]
+  INTEGER - where the damage chain draws 0..1 uniforms. dice100
+  (floor(roll*100) < chance) is true only on the exact zero draw,
+  so THE PLAYER COULD HIT AN ENCOUNTER FOE ROUGHLY ONCE IN 32768
+  SWINGS. (The X2/X3 probes exercised enemy arrows and casts;
+  no probe ever swung at an encounter foe - the gap that let it
+  live.)
+- the parry pick fed the same integer into Random.Range(0,9)'s
+  0..1 contract - the clip id overflowed the sound table;
+- the zero-damage arm passed zeroDamageHitSound's WHOLE {sound,
+  at} object into playOneShot as a clip id, and never played the
+  at-the-enemy parry via play3d (cityGuards consumes it right -
+  the copy drifted).
+
+All three fixed to the pool's uniform `rolls` + the guards' exact
+consumption shape; DFRandom's rand stays where the classic byte
+draws belong (the enemy attack machine). Pinned in
+exteriorfoes.test.js X4 (2 more mutations killed); the 30-run soak
+stands as the flake's tombstone.

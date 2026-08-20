@@ -1244,6 +1244,16 @@ export function createWorldModes(host) {
 
   return {
     get mode() { return mode; },
+    /** TP-slice: the Teleport effect leaves ANY mode - the exit
+     *  cores of the door flows minus the landing (the caller owns
+     *  the spawn; DFU's cross-scene arm transitions immediately,
+     *  TransitionDungeonExteriorImmediate at Teleport.cs:151). */
+    forceExitToExterior() {
+      if (interiorCtx) { interiorCtx.destroy(); interiorCtx = null; interiorBuilding = null; interiorOverlay = null; }
+      if (dungeonCtx) { dungeonCtx.destroy(); dungeonCtx = null; }
+      player.collider = baseCollider();
+      mode = 'exterior';
+    },
     // M2: the cast engine's mode-aware raycast reads the INTERIOR's
     // collider while a building is mounted.
     get interiorCollider() { return interiorCtx?.collider ?? null; },

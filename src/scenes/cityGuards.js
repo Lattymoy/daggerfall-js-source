@@ -344,7 +344,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     let any = false;
     // C2-slice (combat-17): the player's 20% attack grunt, once per
     // hit frame (melee-only path).
-    const grunt = playerAttackGrunt(playerEntity, false);
+    const grunt = playerAttackGrunt(playerEntity, false, rand);   // ENGINE-PRNG RULE: the pool's seam - the bare default leaked Math.random into the parry pin (the recurring suite flake, root-caused)
     if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1);
     // AUDIT 18: the backstab argument was hard-zeroed, so guard combat
     // had no backstab at all where the dungeon host computes facing

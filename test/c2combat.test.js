@@ -120,7 +120,7 @@ test('c2combat combat-9/10/11: the host wiring sweep', () => {
   // combat-17: the grunt + pain voice ride all three player-hit paths
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js']) {
     const t = src(f);
-    assert.ok(t.includes('playerAttackGrunt(playerEntity, false)'), `${f}: the 20% grunt at the hit frame`);
+    assert.ok(t.includes('playerAttackGrunt(playerEntity, false,'), `${f}: the 20% grunt at the hit frame (X4: each site threads its roll seam)`);
     assert.ok(t.includes('enemyPainVoice(foe'), `${f}: the 40% pain voice on a landed hit`);
     assert.ok(t.includes('enemyAttackVoice('), `${f}: the 20% attack voice at the enemy frame`);
   }
