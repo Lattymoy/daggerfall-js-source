@@ -15,9 +15,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const mk = (over = {}) => {
   const traveled = [];
   const index = [
-    { name: 'Wayrest', region: 'Wayrest', pixel: { x: 10, y: 0 }, type: 0 },
-    { name: 'Waycrest Manor', region: 'Daggerfall', pixel: { x: 2, y: 0 }, type: 8 },
-    { name: 'Gothway Garden', region: 'Daggerfall', pixel: { x: 3, y: 1 }, type: 2 },
+    { name: 'Wayrest', region: 'Wayrest', pixel: { x: 10, y: 0 }, type: 0 , mapId: 3145729, discovered: true },
+    { name: 'Waycrest Manor', region: 'Daggerfall', pixel: { x: 2, y: 0 }, type: 8 , mapId: 3145730, discovered: true },
+    { name: 'Gothway Garden', region: 'Daggerfall', pixel: { x: 3, y: 1 }, type: 2 , mapId: 3145731, discovered: true },
   ];
   const w = new TravelMapWindow(index, {
     getPlayerPixel: () => ({ x: 0, y: 0 }),

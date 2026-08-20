@@ -84,7 +84,7 @@ import { getStaticDoors } from '../world/staticDoors.js';
 import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
-import { discoverRandomLocation } from '../systems/discovery.js';   // G8: the guild map reveals
+import { discoverRandomLocation, discoverLocation } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -660,6 +660,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     _topicsKey = key;
     const dfLocation = key ? locationIndex.get(key) : null;
     _musicLoc = dfLocation ?? null;   // AUDIT 19: the music context's location half
+    // TV-slice: entering a location's pixel DISCOVERS it (PlayerGPS
+    // DiscoverCurrentLocation on the location-rect entry) - the write
+    // half of the travel map's visibility law; fast-travel arrivals
+    // land here too, so one writer covers both.
+    if (dfLocation) {
+      discoverLocation(dfLocation.mapTableData.mapId, {
+        regionName: maps.getRegionName(dfLocation.regionIndex), locationName: dfLocation.name,
+      });
+    }
     if (!cur || !dfLocation || !cur.locBlocks) { townTalk.setTopics(null); return; }
     const { px, py } = cur;
     const lo = cur.locOrigin;

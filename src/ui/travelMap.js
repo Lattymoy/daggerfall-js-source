@@ -14,6 +14,7 @@
 
 import { drawText, measureText } from './text.js';
 import { calculateTravelTime, calculateTripCost, travelDays } from '../systems/travel.js';
+import { hasDiscoveredLocationId } from '../systems/discovery.js';   // TV-slice: the visibility law
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -46,8 +47,15 @@ export class TravelMapWindow {
     const q = this.search.trim().toLowerCase();
     // the classic find matches from the START of the name
     // (DaggerfallTravelMapWindow's find box), case-blind.
+    // TV-slice: checkLocationDiscovered (DaggerfallTravelMapWindow
+    // .cs:1121-1131) - a location is findable when its BAKED
+    // Discovered flag is set OR the runtime store has it; the same
+    // uniform test gates the find box (CanFindPlace :1135-1147),
+    // which is exactly what this typeahead is. No type distinction:
+    // towns pass because the DATA marks them discovered.
     this.matches = q.length < 2 ? []
-      : this.index.filter((e) => e.name.toLowerCase().startsWith(q)).slice(0, 12);
+      : this.index.filter((e) => (e.discovered || hasDiscoveredLocationId(e.mapId))
+          && e.name.toLowerCase().startsWith(q)).slice(0, 12);
     if (this.cursor >= this.matches.length) this.cursor = Math.max(0, this.matches.length - 1);
   }
 
@@ -149,6 +157,10 @@ export function buildTravelIndex(maps, longitudeLatitudeToMapPixel) {
         pixel: longitudeLatitudeToMapPixel(td.longitude, td.latitude),
         type: td.locationType ?? 0,
         regionIndex: r, locationIndex: l,
+        // TV-slice: the visibility law's inputs - the BAKED MapTable
+        // Discovered flag (towns ship discovered; hidden dungeons
+        // ship false) and the mapId the runtime store keys by.
+        mapId: td.mapId, discovered: !!td.discovered,
       });
     }
   }
