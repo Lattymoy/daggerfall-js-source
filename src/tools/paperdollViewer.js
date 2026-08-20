@@ -22,6 +22,7 @@
 // faking, and the entire class of failure goes away.
 // ═══════════════════════════════════════════════════════════════════
 
+import { MISSILE_SPEED } from '../systems/spellcast.js';   // AUDIT 23: the arrow speed's one home
 import { ensureArena2, getBytes } from '../scenes/dataSource.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { ImgFile } from '../formats/imgFile.js';
@@ -36,7 +37,6 @@ import {
   MAX_GESTURE_SECONDS,
   MAX_BOW_HELD_DRAWN_SECONDS,
   ATTACK_THRESHOLD,
-  ARROW_MOVEMENT_SPEED,
   MELEE_NUM_FRAMES,
   HIT_FRAME_MELEE,
   HIT_FRAME_BOW,
@@ -398,7 +398,8 @@ const activeWpn = () => WEAPON_DEFS[wpnIx];
 const swordMesh = WEAPON_DEFS[0].mesh;   // legacy alias
 // THE ARROW: its own held target - nocked it rides the chain like
 // the bow; on the verbatim bow HIT frame it looses into straight
-// flight at ARROW_MOVEMENT_SPEED along its own axis, then despawns
+// flight at MISSILE_SPEED (DaggerfallMissile.MovementSpeed - the one
+// home, AUDIT 23) along its own axis, then despawns
 // and re-nocks on the next draw.
 const arrowMesh = buildPiece(D.arrow);
 arrowMesh.visible = false;
@@ -662,7 +663,7 @@ function animate(dt) {
     if (atk && atk.free) { atk.t += dt; if (atk.t >= atk.clip.dur) atk = null; }
   } else if (atk) { atk.t += dt; if (atk.t >= atk.clip.dur) atk = null; }
   if (arrowFlight) {   // straight flight at the DFU missile speed
-    arrowFlight.d += ARROW_MOVEMENT_SPEED * dt;
+    arrowFlight.d += MISSILE_SPEED * dt;
     const { dir, d, snap } = arrowFlight;
     for (let i = 0; i < arrowT.pos.length; i += 3) { arrowT.pos[i] = snap[i] + dir[0]*d; arrowT.pos[i+1] = snap[i+1] + dir[1]*d; arrowT.pos[i+2] = snap[i+2] + dir[2]*d; }
     arrowT.dirty = true;
