@@ -39,6 +39,15 @@ export const BEAST_RAMPS = Object.freeze({
   tawny: [146, 155],
   // block 4 - cream -> tan. Underbelly, and the pale of a muzzle.
   pale: [64, 72],
+  // block 7 - white -> charcoal, taken dark. A werewolf's coat: grey
+  // going to black, and nothing warm anywhere in it.
+  wolfGrey: [116, 124],
+  // block 2, and NOT its dark end. A wereboar's bristle was [40,47] and
+  // resolved to a mean of 58 against a background of about 20 — the only
+  // pelt in this line dark enough to lose its own silhouette. It read
+  // narrower than a werewolf despite being measurably WIDER, because the
+  // edges went into the dark. Coarse and brown, but a boar you can see.
+  bristle: [34, 42],
 });
 
 export const BEAST_DESIGNS = [
@@ -105,6 +114,51 @@ export const BEAST_DESIGNS = [
     },
     pelt: 'tawny',
   },
+  {
+    id: MOBILE_TYPES.Werewolf,
+    name: 'Werewolf',
+    level: 6,
+    damage: [1, 10],
+    weaponTier: 0,
+    // A DAGGERFALL WEREWOLF IS NOT A WOLF ON FOUR LEGS. It is a man with
+    // the wrong head, and that is the whole design: the rig keeps its
+    // arms, its legs and its stance, and only the SKULL is replaced.
+    //
+    // Which makes this the narrowest collapse in the project — one group
+    // of six, where the beasts take all of them — and the first design
+    // that is human and animal at the same time rather than one or the
+    // other. Two systems on one figure, which is the lich's question
+    // asked of geometry instead of cloth.
+    //
+    // Heavier than a man through the chest and arms, because whatever it
+    // is now was not built by exercise.
+    build: { torso: 1.16, shoulder: 1.24, arm: 1.2, hand: 1.28, neck: 1.18, skull: 1, jaw: 1, leg: 1.12 },
+    zones: [],
+    mats: {},
+    pelt: 'wolfGrey',
+    // Only the head goes. Everything else is the man it used to be.
+    collapse: ['head'],
+    beastHead: { skull: 0.1, snout: 0.15, depth: 0.55, ears: 1, tusks: 0 },
+    tail: { len: 0.34, up: 0.25 },
+  },
+  {
+    id: MOBILE_TYPES.Wereboar,
+    name: 'Wereboar',
+    level: 8,
+    damage: [2, 12],
+    weaponTier: 0,
+    // The same affliction on a different animal: blunter, broader, and
+    // with the tusks that are the only reason anyone can tell a wereboar
+    // from a very bad man in the dark.
+    build: { torso: 1.3, shoulder: 1.3, arm: 1.24, hand: 1.3, neck: 1.3, skull: 1, jaw: 1, leg: 1.18 },
+    zones: [],
+    mats: {},
+    pelt: 'bristle',
+    collapse: ['head'],
+    beastHead: { skull: 0.11, snout: 0.11, depth: 0.95, ears: 0.5, tusks: 1 },
+    tail: { len: 0.12, up: 0.5 },
+  },
+
 ];
 
 /** Every group of the human rig, because none of it is wanted. */
@@ -132,7 +186,10 @@ export function beastOpts(design, pal) {
   return {
     drape: null,
     ramps: { skin: pelt, boot: pelt },
-    opts: { build: {}, clothZones: [], armorZones: [], mats: {} },
+    // A FULL BEAST HAS NO BUILD — its body is collapsed and the piece is
+    // everything. A werewolf DOES: it keeps the man's body, so the build
+    // is the difference between him and the man he was.
+    opts: { build: design.build || {}, clothZones: design.zones || [], armorZones: [], mats: {} },
     hide: pelt,
     pelt,
   };
