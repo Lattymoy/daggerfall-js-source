@@ -450,6 +450,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (let i = buildingDoors.length - 1; i >= 0; i--) {
       if (buildingDoors[i].pixelKey === key) buildingDoors.splice(i, 1);
     }
+    // P2-slice (items-2): a loose pile dies WITH its pixel - the
+    // reference's mid-session collection sweep (CollectLooseObjects);
+    // only the F9 envelope brings one back.
+    droppedLoot.collectPixel(key);
     built.delete(key);
   }
 
@@ -901,7 +905,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       classicMinutes: Math.floor(playerTicker.classicMinutes),
       readiedSpellIndex: magic.readiedIndex(),
       locationKey: 'world',
-      world: { pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1] },
+      world: {
+        pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
+        // P2-slice (items-2): loose piles ride the envelope in
+        // NATIVES with the compensation-free height, the player
+        // half's exact law.
+        piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),
+      },
     });
     townTalk.say(writeQuicksave(snap) ? 'Game saved.' : 'Save failed (storage full or disabled).');
   }
@@ -923,6 +933,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         const ly = (w.y ?? 2) + state.compensation[1];
         if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
         cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+        // P2-slice (items-2): the teleport's teardown collected every
+        // live pile (the reference's sweep); the envelope re-mints the
+        // saved ones at their native spots.
+        droppedLoot.restoreWorld(w.piles, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
       } else if (extras.locationKey && extras.locationKey !== 'world') {
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
       }
@@ -1006,7 +1020,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         icons: { getTexture, uploadRecord, textures: renderer.textures },
         rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
         nowMinute: () => Math.floor(playerTicker.classicMinutes),
-        onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
+        onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
       }));
       return;
     }
@@ -1390,7 +1404,7 @@ export async function bootWorld(canvas, renderer, params, status) {
                 icons: { getTexture, uploadRecord, textures: renderer.textures },
                 rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
                 nowMinute: () => Math.floor(playerTicker.classicMinutes),
-                onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),
+                onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // P2: stamped
               }));
             }
             else modes.tryEnter().catch((e) => console.error(e));
