@@ -133,7 +133,7 @@ const setFP = (on) => { fpMode = on; camera.fov = on ? 62 : 35; camera.near = on
 // ── pixelize post-pipeline: render the scene to a low-res target, then
 // a fullscreen quad upscales it (nearest) and quantizes colour depth
 // with a 4x4 ordered-dither so bands don't posterize flat.
-let pixel = 7, levels = 0; // PIXELIZE STANDARD (Mac 2026-07-06, revised same day 9 -> 7): 7x for the character and everything character-side; the WORLD is excluded (engine renders the character pass at CHAR_PIXEL = 7, world untouched)
+let pixel = 12, levels = 0; // PIXELIZE STANDARD (Mac 2026-07-06, revised same day 9 -> 7; raised to 12 on 2026-08-18): 12x for the character and everything character-side; the WORLD is excluded (engine renders the character pass at CHAR_PIXEL, world untouched). The engine's constant moves WITH this one - a viewer that pixelates differently from the game is a viewer you cannot trust to show you the game.
 const rt = new THREE.WebGLRenderTarget(2, 2, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
 const postScene = new THREE.Scene();
 const postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);

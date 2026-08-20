@@ -381,7 +381,7 @@ const ZERO_ORIGIN = [0, 0, 0];
 import { TextureFile } from '../formats/textureFile.js';
 const isSpectralArchive = TextureFile.isSpectralArchive;   // single source (the formats layer owns the archive list)
 
-export const CHAR_PIXEL = 7;
+export const CHAR_PIXEL = 12;
 
 /** The shared character-sprite render target's fixed edge (the pass
  *  clamps pw/ph to this; sprites render into a viewport sub-rect). */
