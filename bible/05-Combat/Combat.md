@@ -531,3 +531,37 @@ functionally (ready without the draw sound, swing, HandToHand damage),
 and WEAPON10.CIF - the fist art, now the default draw - is
 corpus-pinned against every MELEE_ANIMS row. The fourth instance of
 the dungeon-host-falls-behind shape; see Home.md Audits, 17k.
+
+## C18 (2026-08-20): equipment CONDITION DAMAGE - SHIPPED
+
+The C-slice's combat row (AUDIT 23 combat-1). Items had carried
+conditions since items-5; nothing in the hit chain consumed them.
+FormulaHelper.DamageEquipment (:1080-1118) +
+ApplyConditionDamageThroughPhysicalHit (:1123-1138), called at
+CalculateAttackDamage's TAIL with the clamped damage
+(FormulaHelper.cs:699-701) - so the law rides EVERY attack the
+formulas resolve, in every host, without a single scene edit.
+
+The gates are the law: a WEAPON hit that dealt damage. Hand-to-hand
+and monster natural attacks degrade nothing; a whiff degrades
+nothing. The attacker's weapon always takes (10*damage+50)/100 (C#
+int division; when that is 0, a 20% roll makes it 1 - rolled PER
+ITEM). The struck side routes to an equipped SHIELD when its
+protected-parts table covers the struck body part - DFU's own
+improvement, its comment says classic never damaged shields - else
+to the struck part's armor slot through GetEquipSlotForBodyPart
+(the inverse of the slot-part map equip.js already owned).
+
+LowerCondition/ItemBreaks (DaggerfallUnityItem.cs:1170-1214): a
+break clamps at 0, speaks the classic line - the plural variant for
+Gauntlets/Greaves/Boots; keys cited, prose pending a string source -
+and UNEQUIPS through unequipSlot, which restores the armor table.
+Broken mundane items stay in the pack; DFU removes only ENCHANTED
+player items, and that arm rides the enchantment arc.
+
+Two port guards the pin suite caught before shipping: the frozen
+pre-chargen INTERIM_WEAPON cannot be minted a condition
+(Object.isExtensible) and a 0-max item cannot break - the first
+swing of a fresh boot would otherwise have thrown a TypeError.
+
+4 pins (conditiondamage.test.js), 3 mutations run, 3 killed.
