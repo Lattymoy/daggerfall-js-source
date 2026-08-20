@@ -50,7 +50,9 @@ import { useItem, isLightSource } from '../systems/useItem.js';   // U25
 import { itemInfoRows, INFO_TEXT } from '../systems/itemInfo.js';   // U25
 import { goldAmount, deductGold } from '../systems/court.js';
 import { drawMenuBackdrop } from './chargenArt.js';
-import { addItem, isEnchanted, goldStack } from '../systems/inventory.js';
+import { addItem, isEnchanted, goldStack, canHoldAmount, effectiveUnitWeightInKg, totalWeight } from '../systems/inventory.js';   // L-slice (items-9)
+import { maxEncumbrance } from '../combat/formulas.js';   // L-slice (items-9)
+import { liveStat } from '../systems/statMods.js';   // L-slice (items-9)
 import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, FORBIDDEN_EQUIPMENT_TEXT_ID } from '../systems/equip.js';   // S23
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex } from './itemScroller.js';
@@ -99,6 +101,10 @@ export const USE_PENDING = Object.freeze({
 export const GOLD_TO_DROP_TEXT_ID = 25;
 /** Internal_Strings "noWagon" (:1237). */
 export const NO_WAGON_TEXT = "You don't own a wagon.";
+/** L-slice (items-9): the CanCarryAmount refusal - DFU key
+ *  "cannotCarryAnymore" (Unity-side localization; prose ours until a
+ *  string source is decided). */
+export const CANNOT_CARRY_TEXT = 'You cannot carry any more.';
 /** The other half of the wagon button - ShowWagon swaps the REMOTE
  *  list to the cart's own 750kg collection. FLAGGED: Transportation
  *  items do not exist in the port, so nothing can reach it yet. */
@@ -317,6 +323,22 @@ export class NativeInventoryWindow {
     }
   }
 
+  /** CanCarryAmount (DaggerfallInventoryWindow.cs:1414-1422, L-slice
+   *  AUDIT 23 items-9): how many units of the clicked item fit under
+   *  MaxEncumbrance given the current carried load; zero or less
+   *  shows the refusal box. The key is DFU's "cannotCarryAnymore"
+   *  (prose ours - the string ships in Unity-side localization, not
+   *  TEXT.RSC). No entity on the hooks = no capacity to read, so the
+   *  gate stands open (the loot-window tests mount without one). */
+  _canCarryAmount(it) {
+    const e = this.hooks.entity;
+    if (!e) return it.stackCount ?? 1;
+    const canCarry = canHoldAmount(it.stackCount ?? 1, effectiveUnitWeightInKg(it),
+      maxEncumbrance(liveStat(e, 'strength')), totalWeight(this.hooks.items()));
+    if (canCarry <= 0) this.boxes = [{ rows: [{ text: CANNOT_CARRY_TEXT, center: true }] }];
+    return canCarry;
+  }
+
   _pickRemote(slot) {
     this._clampScroll();
     const remote = this._remote();
@@ -328,12 +350,24 @@ export class NativeInventoryWindow {
       // RemoteItemListScroller_OnItemClick: both modes transfer to
       // the player; Equip mode also EQUIPS the taken item (verbatim
       // TransferItem(..., equip: true))
-      remote.splice(remote.indexOf(it), 1);
-      addItem(this.hooks.items(), it);
+      const canCarry = this._canCarryAmount(it);   // items-9
+      if (canCarry <= 0) return;
+      let taken = it;
+      if (canCarry < (it.stackCount ?? 1)) {
+        // TransferItem splits when maxAmount < stackCount (:1515),
+        // opening the how-many popup DEFAULTED to maxAmount - Enter
+        // takes exactly what fits, which is this arm; the free-entry
+        // field is INTERIM-pending with the local Remove split.
+        it.stackCount -= canCarry;
+        taken = { ...it, stackCount: canCarry };
+      } else {
+        remote.splice(remote.indexOf(it), 1);
+      }
+      addItem(this.hooks.items(), taken);
       if (this.mode === 'equip' && this.hooks.entity) {
         // S23: the taken item still has to pass the career gate
-        if (this._refuseForbidden(it)) return;
-        if (equipItem(this.hooks.entity, it) !== null) refreshPaperDoll(this.hooks.entity);
+        if (this._refuseForbidden(taken)) return;
+        if (equipItem(this.hooks.entity, taken) !== null) refreshPaperDoll(this.hooks.entity);
       }
     }
   }

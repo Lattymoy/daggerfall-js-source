@@ -81,9 +81,13 @@ test('advancement: the level-up sum shape + headless leveling applies HP + pool'
   for (let k = 0; k < 17; k++) p.skills[SKILLS.LongBlade] += 1;
   p.skillUses[SKILLS.Axe] = 20000;              // any raise recomputes + levels
   raiseSkills(p, T0 + 500, seq(0));
-  assert.equal(p.level, 3);
+  // L-slice (entity-9): ONE Level++ per check, never a jump - the
+  // +17 overshoot pays out on the NEXT 360-minute checks
+  assert.equal(p.level, 2);
   assert.ok(p.maxHealth > before.hp);           // HP applied
   const statTotal = Object.values(p.stats).reduce((a, b) => a + b, 0);
   const beforeTotal = Object.values(before.str).reduce((a, b) => a + b, 0);
   assert.equal(statTotal, beforeTotal + 4);     // pool 4 (roll 0) spent
+  raiseSkills(p, T0 + 500 + 361, seq(0));       // no raise, tail check only
+  assert.equal(p.level, 3, 'the second check pays the rest');
 });
