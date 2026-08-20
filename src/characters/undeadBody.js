@@ -36,12 +36,18 @@ export const UNDEAD_RAMPS = Object.freeze({
   // block 9 - yellow -> olive. Flesh that has gone, with the yellow of
   // old fat still in it. Not green: a green zombie is a cartoon.
   rotFlesh: [144, 156],
-  // block 7 - white -> charcoal. The mummy's cured skin, drawn tight and
-  // colourless over the bone.
-  curedSkin: [112, 124],
-  // block 4 - cream -> tan. Linen that was white once and has been in
-  // the ground for two thousand years.
-  linen: [64, 76],
+  // block 7 taken at the DARK end. Cured skin, drawn tight over bone,
+  // and dark enough that the linen over it still reads as white.
+  curedSkin: [120, 127],
+  // block 7 - white -> charcoal, taken at the WHITE end. Linen has to
+  // read as linen, and block 4 is "cream -> tan", which is leather:
+  // resolved it came out 227,194,141 and she looked bandaged in
+  // chamois. Two thousand years in the ground greys white; it does not
+  // turn it brown.
+  linen: [112, 120],
+  // The same block, taken lower, so the wrappings and what is under
+  // them are the same material family without being the same colour.
+  linenDark: [118, 125],
   // block 11 - rust -> dark brown. Dried blood, and the stain the linen
   // has taken from what is under it.
   oldBlood: [176, 188],
@@ -66,6 +72,8 @@ const pelvis = (mat, yLo = 0.9, yHi = 1.14, th = 0.012) => ({ groups: [B], yLo, 
 const legsTo = (mat, yLo, yHi = 1.0, th = 0.012) => ({ groups: [LL, LR], yLo, yHi, th, mat, leg: true });
 const arms = (mat, yLo, yHi = 1.62, th = 0.011) => ({ groups: [AL, AR], yLo, yHi, th, mat, arm: true });
 const feet = (mat, yLo = 0.0, yHi = 0.16, th = 0.014) => ({ groups: [LL, LR], yLo, yHi, th, mat, leg: true });
+const skull = (mat, yLo, yHi, th = 0.014) => ({ groups: ['head'], yLo, yHi, th, mat });
+const hands = (mat, yLo, yHi, th = 0.012) => ({ groups: [AL, AR], yLo, yHi, th, mat, arm: true });
 
 export const UNDEAD_DESIGNS = [
   {
@@ -143,6 +151,15 @@ export const UNDEAD_DESIGNS = [
       // grey boots rather than as a gap in the linen.
       legsTo('linen', 0.2, 0.96, 0.032),
       feet('linen', 0.0, 0.2, 0.034),
+      // WRAPPED OVER THE SKULL AND DOWN THE HANDS. A bare grey head on a
+      // wound body reads as a corpse in bandages rather than as a mummy:
+      // the linen goes over the crown and round the jaw, and the hands
+      // are wound too. What is left showing is the face, which is the
+      // only part that should be.
+      skull('linen', 1.62, 1.9, 0.018),
+      skull('linen', 1.5, 1.62, 0.02), // round the jaw and the throat
+      hands('linen', 0.6, 0.78, 0.016),
+
       // THE STAIN IS A BAND, NOT A SLEEVE. A second arm zone over the
       // forearms put a rust blotch across the hip instead: the arms hang
       // at the sides, so a wide band on the ARM groups at hip height
