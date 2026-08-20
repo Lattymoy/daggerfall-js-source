@@ -562,7 +562,44 @@ function applyOrc(o) {
   geo.getAttribute('color').needsUpdate = true;
   const pm = orcPieceMesh[(D.orcs || []).indexOf(o)];
   if (pm) { if (pm.tusks) pm.tusks.visible = true; if (pm.brow) pm.brow.visible = true; }
-  if (hs) hs.textContent = 'hair: none (orc)';
+  if (hs) hs.textContent = 'hair: none (' + (o.line || 'orc') + ')';
+}
+
+// ── THE UNDEAD USE THE SAME PATH ─────────────────────────────────
+// Zombie and Mummy are the same delta over the same face list with no
+// geometry of their own, so they go through applyOrc rather than
+// getting a near-identical copy of it. The one orc-specific step —
+// showing that design's tusks and brow — finds nothing for them and
+// does nothing, which is the correct behaviour rather than a special
+// case: an undead simply has no pieces.
+function applyUndead(u) {
+  applyOrc(u ? { ...u, line: 'undead' } : null);
+}
+{
+  const sel = document.getElementById('undead');
+  if (sel) {
+    const none = document.createElement('option');
+    none.value = '';
+    none.textContent = 'undead: none (bare rig)';
+    sel.appendChild(none);
+    for (const u of D.undead || []) {
+      const opt = document.createElement('option');
+      opt.value = String(u.id);
+      opt.textContent = u.name + '  (lvl ' + u.level + ', ' + u.damage[0] + '-' + u.damage[1] + ')';
+      sel.appendChild(opt);
+    }
+    sel.onchange = () => {
+      const u = (D.undead || []).find((x) => String(x.id) === sel.value) || null;
+      // The three pickers are exclusive: one body at a time.
+      for (const other of ['orc', 'villager']) {
+        const o = document.getElementById(other);
+        if (o) o.value = '';
+      }
+      applyUndead(u);
+      const hud = document.getElementById('hud');
+      if (hud && u) hud.textContent = u.name + ' \u00b7 level ' + u.level + ' \u00b7 ' + u.damage[0] + '-' + u.damage[1] + ' damage';
+    };
+  }
 }
 {
   const sel = document.getElementById('orc');

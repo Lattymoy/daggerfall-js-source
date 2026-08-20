@@ -47,6 +47,7 @@ import { buildBladeWeapon, BLADE_SPECS } from './pieces/blades.js';
 import { buildHaftedWeapon, HAFTED_SPECS } from './pieces/hafted.js';
 import { VILLAGER_DESIGNS, designOpts, designDrape, villagerDelta, RACE_TONE } from './villagerDesigns.js';
 import { ORC_DESIGNS, orcOpts } from './orcBody.js';
+import { UNDEAD_DESIGNS, undeadOpts } from './undeadBody.js';
 import { buildTusks, buildBrow, IVORY_RAMP } from './pieces/orcHead.js';
 
 /**
@@ -216,6 +217,22 @@ export function buildPaperdollPayload(pal, img, cif) {
     };
   });
 
+  // ── THE UNDEAD LINE (editor only, same as the orcs above) ──────
+  // Zombie and Mummy on the SAME delta mechanism: their build specs
+  // scale the rig's loft rows and add no faces, so both ride the base
+  // face list and ship only what moved. No tusks, no brow — they carry
+  // no geometry of their own, which is exactly why this line was the
+  // right one to take next and the skeleton was not.
+  const undeadPacks = UNDEAD_DESIGNS.map((d) => {
+    const { ramps: uramps, opts, hide } = undeadOpts(d, pal);
+    const uf = buildNeutralBody(uramps, { face, ...opts });
+    return {
+      id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
+      build: d.build, hide,
+      ...villagerDelta(faces, uf),
+    };
+  });
+
   // Per-race hairstyle packs (haired races get multiple styles).
   const HAIRSTYLES = { Human: ['short','buzz','medium','long','ponytail','topknot','mohawk','bald'], Elf: ['short','medium','long','ponytail','mohawk','bald'] };
   const hairPacks = {};
@@ -253,7 +270,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       return list;
     })(),
     swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
-    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, hairRamps: HAIR_RAMPS, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
+    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, hairRamps: HAIR_RAMPS, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 
   return payload;
 }
