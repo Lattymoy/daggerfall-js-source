@@ -1710,11 +1710,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // half needs vampirism, which the port does not have).
       // HUD pends the UI arc: health surfaces on __player.
       if (playerFeet && f.events.includes('hit')) {
-        if (f.attack.rangedAttack) {
+        if (f.attack.firedRanged) {
           // C17: sprite archers loose on their -1 shoot marker
           // (below); the machine's hit frame stays the DECISION
           // clock only. (ON ICE with the rig path: the machine-frame
-          // loose for rig archers.)
+          // loose for rig archers.) C-slice: keyed on the SWING that
+          // fired - a bow foe inside 6m swings MELEE (DoRangedAttack's
+          // fallback) and lands damage here like anyone.
           continue;
         }
         // C16: the machine's hit frame is the RIGS' damage clock;
@@ -1732,8 +1734,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (!_fParalyzed || !f._mout) {
           f._mout = f.mobile.update(dt, {
             moving: f.ai.moving,
-            striking: _strikeEdge && !f.attack.rangedAttack,   // the START edge (paralysis eats it - FreezeAnims blocks ChangeEnemyState, verbatim)
-            rangedStriking: _strikeEdge && !!f.attack.rangedAttack,   // C17: archers draw records 20-24
+            striking: _strikeEdge && !f.attack.firedRanged,   // the START edge (paralysis eats it - FreezeAnims blocks ChangeEnemyState, verbatim)
+            rangedStriking: _strikeEdge && !!f.attack.firedRanged,   // C17: archers draw records 20-24 - keyed per SWING (the in-band bow shot), not per foe
             hurting: f.ai.hurtKnock,   // C15: the knockback threshold IS the hurt anim (KnockbackMovement)
             casting: !!f._castPending,   // C14: the cast decision's edge (Spell one-shot)
           }, f.ai.yaw, f.ai.feet, eye);
