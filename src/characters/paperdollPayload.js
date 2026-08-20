@@ -49,6 +49,7 @@ import { VILLAGER_DESIGNS, designOpts, designDrape, villagerDelta, RACE_TONE } f
 import { ORC_DESIGNS, orcOpts } from './orcBody.js';
 import { UNDEAD_DESIGNS, undeadOpts } from './undeadBody.js';
 import { buildRibcage, buildPelvis, BONE_RAMP } from './pieces/skeletonBones.js';
+import { buildHorseBody, BAY_RAMP } from './pieces/centaurBody.js';
 import { buildTusks, buildBrow, IVORY_RAMP } from './pieces/orcHead.js';
 
 /**
@@ -224,9 +225,36 @@ export function buildPaperdollPayload(pal, img, cif) {
   // face list and ship only what moved. No tusks, no brow — they carry
   // no geometry of their own, which is exactly why this line was the
   // right one to take next and the skeleton was not.
+  // COLLAPSING A LIMB THE DESIGN DOES NOT USE.
+  //
+  // A centaur's human legs cannot simply be scaled away: buildNeutralBody
+  // clamps girth at 0.6 and has no way to drop a group, because the face
+  // list is fixed and every delta in this file depends on that. Burying
+  // them inside the barrel only worked sideways — a human leg runs from
+  // the hip to the FLOOR and the horse's belly is well above it, so two
+  // shins came out underneath the animal.
+  //
+  // So the faces stay in the list and lose their AREA: every corner of a
+  // collapsed group is moved to one point inside the barrel. The count
+  // is untouched, the delta still packs, and a zero-area quad draws
+  // nothing. It costs 0 faces and 0 changes to the shared rig.
+  const collapseGroups = (fs, groups, at) => {
+    for (const f of fs) {
+      if (!groups.includes(f.g)) continue;
+      for (let i = 0; i < f.p.length; i += 3) {
+        f.p[i] = at[0];
+        f.p[i + 1] = at[1];
+        f.p[i + 2] = at[2];
+      }
+    }
+    return fs;
+  };
+
   const undeadPacks = UNDEAD_DESIGNS.map((d) => {
     const { ramps: uramps, opts, hide } = undeadOpts(d, pal);
-    const uf = buildNeutralBody(uramps, { face, ...opts });
+    let uf = buildNeutralBody(uramps, { face, ...opts });
+    // A design with a body of its own has no use for the rig's legs.
+    if (d.collapse) uf = collapseGroups(uf, d.collapse, [0, 0.8, -0.2]);
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
       build: d.build, hide,
@@ -237,6 +265,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       // orc tusks are, so the viewer's one piece path serves both.
       ribcage: d.bones ? packPiece(buildRibcage(BONE_RAMP, { torso: d.build.torso, ...d.bones })) : null,
       pelvis: d.bones ? packPiece(buildPelvis(BONE_RAMP, { torso: d.build.torso })) : null,
+      horse: d.horse ? packPiece(buildHorseBody(BAY_RAMP, d.horse)) : null,
       ...villagerDelta(faces, uf),
     };
   });
