@@ -71,6 +71,17 @@ export class StreamingWorldState {
     return this._loadList();
   }
 
+  /** Native world coordinates -> scene position under the CURRENT
+   *  origin/compensation (worldCoords' inverse; the P-slice save
+   *  stores natives so a quicksave survives any floating origin). */
+  localFromWorld(nativeX, nativeZ) {
+    const corner = mapPixelToWorldCoords(this.mapOrigin.x, this.mapOrigin.y);
+    return [
+      (nativeX - corner.x) / SCENE_MAP_RATIO + this.compensation[0],
+      (nativeZ - corner.z) / SCENE_MAP_RATIO + this.compensation[2],
+    ];
+  }
+
   /** Scene position -> native Daggerfall world coordinates. */
   worldCoords(scenePos) {
     const corner = mapPixelToWorldCoords(this.mapOrigin.x, this.mapOrigin.y);

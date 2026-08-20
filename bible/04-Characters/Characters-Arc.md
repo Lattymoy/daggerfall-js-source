@@ -2173,3 +2173,42 @@ state; the faction/team model stays a ledger row.
 
 12 pins across arrows/enemydoors/pacification.test.js; 9 mutations
 run, 9 killed across the slice.
+
+## CH-X (2026-08-20): THE EXTERIOR MOBILE-FOE MOUNT - SHIPPED
+
+The X-slice; S32's above-ground arms go live. scenes/exteriorFoes.js
+is the encounter pool: the same shared pieces every foe host runs -
+EnemyAI senses/pursuit against the exterior collider (playerInside
+false for the exterior despawn band), the EnemyAttack cadence with
+the C-slice archer band, MobileUnit classic sprites with the lazy
+record/frame batch mutation, makeEnemyEntity + the loot roll +
+equipEnemy, CalculateAttackDamage both directions (the -1 damage
+marker vs the player, resolveHit with backstab and the zero-damage
+sounds against the pool), corpses on the guard shape - and NONE of
+the watch's crime machinery: killing a wilderness wolf is not
+Murder. Two allocation-owner guards bound a long session (a pool cap
+and a 120-unit relevance cull that runs AFTER fresh senses - the
+live probe caught the inversion culling every newborn foe on its
+Infinity placeholder).
+
+The world host drives it beside the watch: the classic per-minute
+catch-up loop (PlayerEntity.Update:486-492) rolls
+intermittentEnemySpawn with the live pixel's climate and the
+location-rect read off the location index, breaks on the first
+spawn, lands the foe at the classic distance on eight compass
+points, and FAST TRAVEL RESETS THE ANCHOR - DFU's
+PreventEnemySpawns parity, so a week at sea does not queue a week
+of wolves. Encounter foes are spell targets (magic.foes() sees both
+pools, the sinks route by pool to the right damage door) and melee
+targets (the chain runs watch -> encounters -> civilians).
+
+Probed LIVE in the streaming world: a rat spawned at 10 units
+detected the player and closed 8.8 -> 4.8 over four seconds, zero
+page errors. RESIDUE on the narrowed S32 row: exterior enemy
+archery/casting (their missile seams), the single-location exterior
+page's arm, RegionPower, the guard-spawn crime arms.
+
+2 pin groups (the pool laws incl. the cull order and the no-crime
+sweep; the host wiring incl. the bounded catch-up, the travel
+reset, the facade routing and the melee order); 3 mutations run, 3
+killed.

@@ -35,6 +35,9 @@ import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { TravelMapWindow, buildTravelIndex } from '../ui/travelMap.js';   // F-slice
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
+import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
+import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE } from '../systems/encounters.js';   // X-slice
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';   // P-slice: the above-ground quicksave
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1)
@@ -686,6 +689,52 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!arrestFlow.onGuardHit(dmg, apply)) apply();
     },
   });
+  // X-slice: the encounter-foe pool - S32's above-ground arms go
+  // LIVE. Same damage door shape as the guards; no crime machinery.
+  const exteriorFoes = createExteriorFoes({
+    renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio,
+    currentMinute: () => Math.floor(playerTicker.classicMinutes),
+    say: (l) => townTalk.say(l),
+    onPlayerHurt: (dmg, wpn) => {
+      if (dmg <= 0) return;
+      hurtPlayer(playerEntity, dmg);
+      audio.playOneShot(hitSoundFor(wpn), 1.1);
+      surfacePlayer();
+    },
+  });
+  // The classic catch-up loop (PlayerEntity.Update:486-492): per
+  // elapsed game minute, one intermittent roll; break on a spawn.
+  // Fast travel resets the anchor (PreventEnemySpawns parity - DFU
+  // suppresses the whole post-travel window).
+  let _lastEncMinutes = null;
+  function runEncounterTick(playerFeet) {
+    const now = Math.floor(playerTicker.classicMinutes);
+    if (_lastEncMinutes == null) _lastEncMinutes = now;
+    const span = Math.min(now - _lastEncMinutes, 1440);
+    for (let l = 0; l < span; l++) {
+      const key = `${playerTravelPixel().x},${playerTravelPixel().y}`;
+      const hit = intermittentEnemySpawn({
+        gameMinutes: _lastEncMinutes + l + 1, inside: false,
+        inLocationRect: locationIndex.has(key),
+        climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
+        playerLevel: playerEntity.level,
+      });
+      if (hit) {
+        // eight compass points at the classic distance, terrain-landed
+        for (let d = 0; d < 8; d++) {
+          const a = (d * Math.PI) / 4;
+          const x = playerFeet[0] + Math.sin(a) * hit.minDistance;
+          const z = playerFeet[2] + Math.cos(a) * hit.minDistance;
+          const down = collider.raycast([x, playerFeet[1] + 20, z], [0, -1, 0], 60);
+          if (!Number.isFinite(down)) continue;
+          exteriorFoes.spawnFoe(hit.mobileType, [x, playerFeet[1] + 20 - down, z]).catch(() => {});
+          break;
+        }
+        break;
+      }
+    }
+    _lastEncMinutes = now;
+  }
   const _guardPool = () => _livePersons.map(({ person, pos }) => ({
     pos, fwdYaw: person.facingYaw, guard: person.guard,
     disable: () => {
@@ -732,9 +781,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     say: (l) => townTalk.say(l),
     surfacePlayer,
-    foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? cityGuards.guards : [],
+    foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : [],   // X-slice: encounter foes are spell targets too
     foeSinks: (g) => ({
-      hurt: (n) => { if (n > 0) cityGuards.hurtGuard(g, n, player.pos); },
+      hurt: (n) => { if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos) : cityGuards.hurtGuard(g, n, player.pos)); },   // X-slice: route by pool
       heal: (n) => { if (n > 0) g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },
       drainMagicka: (n) => { if (n > 0) g.entity.magicka = Math.max(0, (g.entity.magicka ?? 0) - n); },
       restoreMagicka: (n) => { if (n > 0) g.entity.magicka = Math.min(g.entity.maxMagicka ?? Infinity, (g.entity.magicka ?? 0) + n); },
@@ -766,26 +815,31 @@ export async function bootWorld(canvas, renderer, params, status) {
     return worldCoordToMapPixel(wc.x, wc.z);
   };
   const footsteps = new FootstepMachine();   // FS-slice
+  /** The teleport core fast travel and the quickload share: destroy
+   *  every built pixel, re-origin the streamer (its own verbatim
+   *  ResetStreamingWorld), build the destination pixel, and land the
+   *  player - at the pixel centre, or at an exact local position. */
+  async function _teleportToPixel(px, py, localPos = null) {
+    for (const key of [...built.keys()]) {
+      const [bx, by] = key.split(',').map(Number);
+      destroyPixel(bx, by);
+      state.release(bx, by);
+    }
+    queue.length = 0;
+    queue.push(...state.init(px, py));
+    const first = queue.shift();
+    const dest = await buildPixel(first.px, first.py);
+    const pos = localPos ?? [TERRAIN_SIZE / 2, dest.centerHeight + state.compensation[1] + 2, TERRAIN_SIZE / 2];
+    if (walkMode) { player.spawn(pos[0], pos[1], pos[2]); playerSpawned = true; }
+    cam.pos = [pos[0], pos[1] + (walkMode ? 0 : 40), pos[2]];
+  }
   let _traveling = false;
   async function fastTravelTo(pick, opts, computed) {
     if (_traveling) return;
     _traveling = true;
     try {
       deductGold(playerEntity, computed.totalCost);
-      // teleport: destroy every built pixel, re-origin the streamer at
-      // the destination, and build its pixel before the frame resumes
-      for (const key of [...built.keys()]) {
-        const [px, py] = key.split(',').map(Number);
-        destroyPixel(px, py);
-        state.release(px, py);
-      }
-      queue.length = 0;
-      queue.push(...state.init(pick.pixel.x, pick.pixel.y));
-      const first = queue.shift();
-      const dest = await buildPixel(first.px, first.py);
-      const y = dest.centerHeight + state.compensation[1] + 2;
-      if (walkMode) { player.spawn(TERRAIN_SIZE / 2, y, TERRAIN_SIZE / 2); playerSpawned = true; }
-      cam.pos = [TERRAIN_SIZE / 2, y + (walkMode ? 0 : 40), TERRAIN_SIZE / 2];
+      await _teleportToPixel(pick.pixel.x, pick.pixel.y);
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
       if (opts.speedCautious) {
         playerEntity.health = playerEntity.maxHealth;
@@ -802,9 +856,58 @@ export async function bootWorld(canvas, renderer, params, status) {
         sunAverse: false,   // vampirism / DamageFromSunlight ride their arcs
       });
       if (clamp > 0) playerTicker.advance(clamp);
+      _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity - no spawn catch-up for the traveled window
       townTalk.say(`You arrive at ${pick.name}.`);
     } finally {
       _traveling = false;
+    }
+  }
+  // P-slice: the ABOVE-GROUND QUICKSAVE (F9/F11, the dungeon's
+  // bindings). The envelope is the dungeon's snapshotPlayer - entity,
+  // items, spells, conditions, faction rep, the T4 discovery store -
+  // plus this host's world half: the map pixel and the NATIVE world
+  // coordinates (stable across every floating-origin recenter) with
+  // the compensation-free height. One classic slot, shared with the
+  // dungeon key: loading a save from the other side restores the
+  // CHARACTER and says so (cross-side travel-on-load pends with the
+  // dungeon's own note).
+  function worldQuickSave() {
+    const pf = walkMode && playerSpawned ? player.pos : cam.pos;
+    const wc = state.worldCoords(pf);
+    const snap = snapshotPlayer(playerEntity, {
+      classicMinutes: Math.floor(playerTicker.classicMinutes),
+      readiedSpellIndex: magic.readiedIndex(),
+      locationKey: 'world',
+      world: { pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1] },
+    });
+    townTalk.say(writeQuicksave(snap) ? 'Game saved.' : 'Save failed (storage full or disabled).');
+  }
+  let _loading = false;
+  async function worldQuickLoad() {
+    if (_loading) return;
+    const snap = readQuicksave();
+    if (!snap) { townTalk.say('No saved game.'); return; }
+    const extras = restorePlayer(playerEntity, snap, spellsByIndex);
+    if (!extras) { townTalk.say('Save version mismatch.'); return; }
+    _loading = true;
+    try {
+      setWorldMinutes(extras.classicMinutes ?? worldMinutes());
+      magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
+      if (extras.locationKey === 'world' && extras.world?.pixel) {
+        const w = extras.world;
+        await _teleportToPixel(w.pixel.x, w.pixel.y);
+        const [lx, lz] = state.localFromWorld(w.nativeX, w.nativeZ);
+        const ly = (w.y ?? 2) + state.compensation[1];
+        if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
+        cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+      } else if (extras.locationKey && extras.locationKey !== 'world') {
+        townTalk.say('(saved elsewhere - character restored; travel there yourself)');
+      }
+      _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // no spawn catch-up across a load (DFU LoadInProgress)
+      surfacePlayer();
+      townTalk.say('Game loaded.');
+    } finally {
+      _loading = false;
     }
   }
   const toggleTravelMap = () => {
@@ -888,6 +991,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (e.key === 'Backspace' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
       e.preventDefault();
       toggleSpellbook();
+      return;
+    }
+    // P-slice: the classic quicksave bindings (F9 save, F11 load -
+    // InputManager.SetupDefaults), above ground at last.
+    if (e.key === 'F9' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      e.preventDefault();
+      worldQuickSave();
+      return;
+    }
+    if (e.key === 'F11' && (modes?.mode ?? 'exterior') === 'exterior') {
+      e.preventDefault();
+      worldQuickLoad();
       return;
     }
     // F-slice: the travel map on V (InputManager.SetupDefaults:1028).
@@ -1081,6 +1196,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // destination at least two pixels out (the live probe types its
     // name into the real window).
     window.__travelProbe = () => JSON.stringify({ pixel: playerTravelPixel(), minutes: Math.floor(playerTicker.classicMinutes), gold: goldAmount(playerEntity) });
+    window.__encounters = () => JSON.stringify({ active: exteriorFoes.activeCount(), foes: exteriorFoes.foes.filter((f) => !f.dead).map((f) => ({ type: f.mobileType, dist: +f.ai._dist.toFixed(1), detected: f.ai.detected })) });
+    window.__spawnEncounter = (type, dist = 10) => {
+      const pf = walkMode && playerSpawned ? player.pos : cam.pos;
+      return exteriorFoes.spawnFoe(type, [pf[0] + dist, pf[1] + 1, pf[2]]).then((f) => (f ? f.mobileType : null));
+    };
     window.__travelNearest = () => {
       const p0 = playerTravelPixel();
       let best = null, bd = Infinity;
@@ -1267,6 +1387,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // AUDIT 17e F23: everything else holding a WORLD position must
       // follow the origin too, or it strands 819.2 units behind.
       cityGuards.offsetAll(r.offset);
+      exteriorFoes.offsetAll(r.offset);   // X-slice
       droppedLoot.offsetAll(r.offset);
       // AUDIT 18: this line used to be an optional call to a method
       // ArrowFlight has never had, so it was swallowed every time and
@@ -1410,6 +1531,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // freezes with the population under the talk overlay.
     livePersonBatches.push(...cityGuards.update(townTalk.overlayActive ? 0 : dt,
       walkMode && playerSpawned ? player.pos : cam.pos, cam.pos, { playerInvisible: isInvisible(playerEntity) }));
+    // X-slice: the encounter pool drives + draws beside the watch;
+    // the cadence loop rolls the elapsed minutes (exterior mode only).
+    if ((modes?.mode ?? 'exterior') === 'exterior') {
+      const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
+      if (!townTalk.overlayActive) runEncounterTick(_pf);
+      exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, { playerInvisible: isInvisible(playerEntity) });
+      livePersonBatches.push(...exteriorFoes.batches());
+    }
     livePersonBatches.push(...droppedLoot.batches());   // U8e: the ground piles
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, new Float32Array([0, 1, 0]));
     if (precip) {
@@ -1463,6 +1592,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 23 (combat-4): the host-side double tallies are gone -
         // resolvePlayerHit runs DFU's tally arm itself.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
+          // X-slice: encounter foes resolve after the watch, before civilians
+          if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
+            tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
+            surfacePlayer();
+          } else
           cityGuards.resolveCivilianHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, _guardPool(),
             { onMurder: () => _crimeResponse(), onHitSound: guardHitSound }).then((r) => {
             if (r?.carriedHit) tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);

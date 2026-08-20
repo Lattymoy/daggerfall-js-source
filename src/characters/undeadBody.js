@@ -1,7 +1,7 @@
 import { MOBILE_TYPES } from './mobileTypes.js';
 
 // ═══════════════════════════════════════════════════════════════════
-// THE UNDEAD LINE
+// THE UNDEAD LINE, AND WHAT CAME AFTER IT
 //
 // Zombie and Mummy, on the mechanism the orc line proved: a build spec
 // scales the rig's loft rows and adds NO faces, so both ride the base
@@ -56,6 +56,9 @@ export const UNDEAD_RAMPS = Object.freeze({
   gravecloth: [32, 44],
   // block 7 at its palest. Bone, and the skeleton is nothing else.
   bone: [112, 118],
+  // block 2 - tan -> brown. A giant's weathered hide, and the centaur's
+  // human half, which is the same sun-cured leather as the rest of him.
+  weathered: [36, 46],
 });
 
 // ── ZONE HELPERS ─────────────────────────────────────────────────
@@ -208,6 +211,72 @@ export const UNDEAD_DESIGNS = [
     bootRamp: 'bone', // bone all the way down: it is not wearing anything
     // Geometry of its own, which no other design in this file has.
     bones: { ribs: 6, gap: 0.42 },
+  },
+  {
+    id: MOBILE_TYPES.Centaur,
+    name: 'Centaur',
+    level: 5,
+    damage: [5, 15],
+    weaponTier: 1,
+    // A SECOND BODY, WHICH IS A DIFFERENT PROBLEM FROM A SECOND PIECE.
+    //
+    // The skeleton's ribcage was geometry the loft could not express,
+    // but it sat on the rig's own chest. A horse half is not a detail on
+    // the human rig at all — and the rig has exactly one body.
+    //
+    // So the human half is built as normal, a shade heavier than a
+    // villager because he carries the front of a horse, and the LEGS go
+    // to the floor of the clamp band where the barrel swallows them.
+    // buildNeutralBody cannot drop a limb group: the face list is fixed,
+    // which is the whole reason every design here ships as a delta. Two
+    // 0.6-girth legs inside a horse's chest cannot be seen from outside
+    // it, and burying them costs nothing where teaching the rig to drop
+    // a group would cost every caller that counts on the count.
+    build: {
+      torso: 1.1,
+      shoulder: 1.14,
+      arm: 1.08,
+      hand: 1.06,
+      neck: 1.02,
+      skull: 1.0,
+      jaw: 1.0,
+      leg: 0.6,
+    },
+    zones: [],
+    mats: {},
+    hideRamp: 'weathered',
+    bootRamp: 'weathered',
+    horse: { girth: 1, len: 1, legs: 1 },
+    // The rig's own legs have no job here — the horse has four of its
+    // own. They cannot be dropped (the face list is fixed) so they are
+    // collapsed to a point inside the barrel. See paperdollPayload.
+    collapse: ['legL', 'legR'],
+  },
+  {
+    id: MOBILE_TYPES.Giant,
+    name: 'Giant',
+    level: 10,
+    damage: [10, 30],
+    weaponTier: 0,
+    // THE CHEAP ONE, AND IT IS WORTH SAYING SO. Everything a giant needs
+    // is girth: this is the orc mechanism at the ceiling of the clamp
+    // band and it proves nothing the orc line has not already proved.
+    // It is here because it is an enemy the player MEETS — mapChance 1,
+    // ten damage to thirty — and refusing to build it because it is easy
+    // would be pride rather than judgement.
+    build: {
+      torso: 1.46,
+      shoulder: 1.52,
+      arm: 1.44,
+      hand: 1.5,
+      neck: 1.4,
+      skull: 1.16,
+      jaw: 1.3,
+      leg: 1.4,
+    },
+    zones: [pelvis('pelt', 0.88, 1.14, 0.02), legsTo('pelt', 0.6, 0.94, 0.018)],
+    mats: { pelt: UNDEAD_RAMPS.gravecloth },
+    hideRamp: 'weathered',
   },
 ];
 

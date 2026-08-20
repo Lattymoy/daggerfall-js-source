@@ -92,8 +92,11 @@ test('travelmap: the world host wires V, the arrival order, and the ONE-clock ad
   const i = src.indexOf('async function fastTravelTo');
   assert.ok(i > 0);
   const fn = src.slice(i, src.indexOf('const toggleTravelMap', i));
-  const order = ['deductGold(playerEntity', 'destroyPixel(px, py)', 'state.init(pick.pixel.x', 'buildPixel(first.px',
-    'player.spawn(', 'opts.speedCautious', 'maxFatigue(playerEntity)', 'SPECIAL_ABILITY.NoRegenSpellPoints)',
+  // P-slice: the teardown/build core extracted to _teleportToPixel
+  // (the quickload shares it); the travel order pins the CALL, the
+  // core's own content pins below.
+  const order = ['deductGold(playerEntity', 'await _teleportToPixel(pick.pixel.x',
+    'opts.speedCautious', 'maxFatigue(playerEntity)', 'SPECIAL_ABILITY.NoRegenSpellPoints)',
     'playerTicker.advance(computed.minutes)', 'arrivalClampMinutes(playerTicker.classicMinutes'];
   let at = -1;
   for (const needle of order) {
@@ -102,4 +105,10 @@ test('travelmap: the world host wires V, the arrival order, and the ONE-clock ad
     at = j;
   }
   assert.ok(src.includes('buildTravelIndex(maps, longitudeLatitudeToMapPixel)'), 'the whole directory feeds the search');
+  const k = src.indexOf('async function _teleportToPixel');
+  assert.ok(k > 0, 'the shared teleport core exists');
+  const core = src.slice(k, k + 900);
+  for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'buildPixel(first.px']) {
+    assert.ok(core.includes(needle), `the core carries ${needle}`);
+  }
 });
