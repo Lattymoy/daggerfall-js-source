@@ -42,7 +42,7 @@ test('backstab: chance rides chanceToHitMod, x3 rides the post-calc roll', () =>
   assert.equal(d, 15);
   const noTriple = calculateAttackDamage(A, T, { weapon: dagger, backstabChance: 30, rolls: seq(0, 0.99, 0.30, 0.999, 0.50) });
   assert.equal(noTriple, 5);
-  assert.equal(backstabDamage(7, 0, 0.0), 7);   // no chance, no triple
+  assert.equal(backstabDamage(7, 0, () => 0.0), 7);   // no chance, no triple
 });
 
 test('FP pose: fpMelee1H base composited with the FP sweep on the machine clock', () => {

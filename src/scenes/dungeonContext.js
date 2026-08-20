@@ -39,6 +39,7 @@ import {
   equipEnemy, hasBowAttack, attackSkillOf, isBowWeapon, backstabChanceOf,
   tallySwingSkills, zeroDamageHitSound, SWING_WEAPON_FATIGUE_LOSS,
   CORPSE_ACTIVATION_DISTANCE,
+  enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt,   // C2-slice (combat-9/17)
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
@@ -1199,7 +1200,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // (the module-level playerEntity import IS foeDeps.playerEntity -
     // the old shadowing destructure was the null read that crashed)
     let hitEnemy = false;
-    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing), (l) => hudText.add(l))) {
+    // C2-slice (combat-17): the player's 20% attack grunt fires once
+    // per hit frame, never for a bow (this path is melee-only).
+    const grunt = playerAttackGrunt(playerEntity, false);
+    if (grunt && grunt.clip >= 0) audio.playOneShot(grunt.clip, 1);
+    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing), (l) => hudText.add(l),
+      (f, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }))) {   // C2-slice (combat-11): the player's poisoned blade infects its victim
       // WeaponDamage returns true for a CONNECTING swing even at zero
       // damage (WeaponManager.cs:617-637 falls through to
       // DecreaseHealth/HandleAttackFromSource and returns true), so
@@ -1220,6 +1226,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       // EnemySounds.PlayHitSound at the struck foe, weapon-aware
       audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, 1.1, { maxDistance: 16 });   // rides the foe's source shape
+      // C2-slice (combat-17): a damaged CLASS foe cries out 40% of
+      // the time (heavyDamage = a quarter of max health in one hit).
+      const pain = enemyPainVoice(foe, damage);
+      if (pain && pain.clip >= 0) audio.play3d(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16 });
       damageFoe(foe, damage, playerFeet, lookDir);   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back)
     }
     // combat-14: the no-entity fallback - only a swing that connected
@@ -1319,9 +1329,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 // GetBonusOrPenaltyByEnemyType (FormulaHelper.cs:1037-1052).
                 damageMod: _swing.damage, toHitMod: _swing.toHit,
                 backstabChance: backstabChanceOf(playerEntity, _back),
+                onInflictPoison: (att, tgt, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),   // C2-slice (combat-11): a poisoned arrow doses ITS mark
                 say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
               }) : 0;
-              if (dmg > 0) damageFoe(f, dmg, null, m.dir);   // C15: arrows knock along their flight
+              if (dmg > 0) {
+                // C2-slice (combat-17): the arrow-struck class foe cries out too
+                const pain = enemyPainVoice(f, dmg);
+                if (pain && pain.clip >= 0) audio.play3d(pain.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
+                damageFoe(f, dmg, null, m.dir);   // C15: arrows knock along their flight
+              }
               addItem(f.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage verbatim: the arrow is recoverable from the target
               retireMissile(m);
               break;
@@ -1331,6 +1347,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           const dx2 = target[0] - m.pos[0], dy2 = target[1] - m.pos[1], dz2 = target[2] - m.pos[2];
           if (Math.hypot(dx2, dy2, dz2) <= MISSILE_COLLIDER_RADIUS + 0.45) {
             const shooter = m.shooterFoe;
+            // C2-slice (AUDIT 23 combat-10): an arrow reaching the
+            // player rides the same ApplyDamageToPlayer the melee
+            // swing does (BowDamage :141) - so the Dodging tally
+            // fires here too, hit roll or no.
+            tallySkill(playerEntity, SKILLS.Dodging, 1);
             const dmg = foeDeps && shooter ? foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {
               weapon: m.weapon,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
               onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),   // S19b: poisoned arrows
@@ -1457,13 +1478,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // clocks (the rigs' machine hit frame, the mobiles' -1 sequence
   // marker). Gate 0.25 / MeleeDistance + 35.156deg, then
   // CalculateAttackDamage with the S18/S19b riders.
+  /** C2-slice (combat-17): the 20% enemy-class attack voice at the
+   *  melee damage frame, whatever the outcome (MeleeDamage's tail). */
+  function foeAttackVoice(f) {
+    const v = enemyAttackVoice(f);
+    if (v && v.clip >= 0) audio.play3d(v.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
+  }
+
   function resolveFoeMelee(f, playerFeet) {
     const hdx = playerFeet[0] - f.ai.feet[0], hdz = playerFeet[2] - f.ai.feet[2];
-    if (!foeDeps.meleeHitConnects(f.ai._dist, f.ai.inSight, foeDeps.withinYaw(f.ai.yaw, hdx, hdz, foeDeps.MELEE_HIT_YAW_DEG))) return;
     // E4b: weapon vs weaponless per the DFU rule (EnemyAttack also
     // drops the weapon if the target is metal-immune to it - the
     // player has no minMetalToHit, so that gate is inert)
     const wpn = foeDeps.chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
+    if (!foeDeps.meleeHitConnects(f.ai._dist, f.ai.inSight, foeDeps.withinYaw(f.ai.yaw, hdx, hdz, foeDeps.MELEE_HIT_YAW_DEG))) {
+      // C2-slice (combat-9): the out-of-reach whiff RINGS - the
+      // else arm of MeleeDamage's reach fork plays the miss sound,
+      // and the attack-voice roll still runs after the fork.
+      audio.play3d(enemyMissSound(wpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
+      foeAttackVoice(f);
+      return;
+    }
     // AUDIT 2026-08-17c: every resolved enemy attack on the player
     // tallies Dodging (EnemyAttack, before the damage branch) - it
     // was never tallied since C8.
@@ -1485,7 +1520,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
     });
     if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), 1.1);   // the player takes the hit (PlayerFootsteps families)
+    // C2-slice (combat-9): a connected attack that LOST the roll
+    // rings the miss sound too (ApplyDamageToPlayer's else arm).
+    else audio.play3d(enemyMissSound(wpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
     hurtPlayer(dmg);
+    foeAttackVoice(f);   // C2-slice (combat-17): after the fork, hit or miss
   }
 
   // Combat collision triggers (the last Combat-queue row):
@@ -1863,6 +1902,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             const d = [playerFeet[0] - from[0], playerFeet[1] + 0.9 - from[1], playerFeet[2] - from[2]];
             const l = Math.hypot(...d) || 1;
             fireArrow(from, [d[0] / l, d[1] / l, d[2] / l], f.entity.weapon, false, f);
+            audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });   // C2-slice (combat-9): the loose rings from the archer (EnemyAttack Update)
           }
           // C16: the -1 damage marker IS the damage moment
           // (AnimateEnemy doMeleeDamage -> MeleeDamage) - paralysis

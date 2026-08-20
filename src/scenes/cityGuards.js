@@ -48,6 +48,7 @@ import {
   equipEnemy, backstabChanceOf, tallySwingSkills,
   zeroDamageHitSound, SWING_WEAPON_FATIGUE_LOSS,
   CORPSE_ACTIVATION_DISTANCE,
+  enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt,   // C2-slice (combat-9/17)
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { tallySkill, SKILLS } from '../systems/skills.js';
@@ -279,8 +280,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // C16: the -1 damage marker resolves the melee vs the player
       if (g.mobile.hitFrame) {
         const hdx = playerFeet[0] - g.ai.feet[0], hdz = playerFeet[2] - g.ai.feet[2];
+        const wpn = chooseEnemyWeapon(g.entity.weapon, ENEMY_BASICS[GUARD_MOBILE_TYPE]);
+        const gmid = [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]];
         if (meleeHitConnects(g.ai._dist, g.ai.inSight, withinYaw(g.ai.yaw, hdx, hdz, MELEE_HIT_YAW_DEG))) {
-          const wpn = chooseEnemyWeapon(g.entity.weapon, ENEMY_BASICS[GUARD_MOBILE_TYPE]);
           // AUDIT 2026-08-17c: every resolved enemy attack on the
           // player tallies Dodging (EnemyAttack, before the damage
           // branch) - it was never tallied anywhere.
@@ -296,7 +298,17 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
             say,   // C-slice: equipment breaks speak
           });
           if (dmg > 0) onPlayerHurt?.(dmg, wpn);   // G2: the host's arrest interception rides this
+          // C2-slice (combat-9): a connected attack that LOST the
+          // roll rings the miss sound (ApplyDamageToPlayer's else)
+          else audio?.play3d?.(enemyMissSound(wpn), gmid, 1, { maxDistance: 16 });
+        } else {
+          // C2-slice (combat-9): the out-of-reach whiff rings too
+          audio?.play3d?.(enemyMissSound(wpn), gmid, 1, { maxDistance: 16 });
         }
+        // C2-slice (combat-17): the 20% attack voice - the watch is
+        // the Knight_CityWatch class, whose voice is FORCED male.
+        const v = enemyAttackVoice(g);
+        if (v && v.clip >= 0) audio?.play3d?.(v.clip, gmid, 1, { maxDistance: 16 });
       }
       const o = g._mout;
       const rkey = `${o.record}#${o.frame}`;
@@ -330,15 +342,23 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       return { dist, inView: view ? view(c) : false, losClear: !Number.isFinite(hit) || hit >= dist - 1e-3 };
     };
     let any = false;
+    // C2-slice (combat-17): the player's 20% attack grunt, once per
+    // hit frame (melee-only path).
+    const grunt = playerAttackGrunt(playerEntity, false);
+    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1);
     // AUDIT 18: the backstab argument was hard-zeroed, so guard combat
     // had no backstab at all where the dungeon host computes facing
     // per foe - and CalculateBackstabChance's Backstabbing tally
     // (FormulaHelper.cs:975-990) ran nowhere in the port.
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rand,
-      (g) => backstabChanceOf(playerEntity, isBackFacing(g.ai.yaw, g.ai.feet, eye)), say)) {
+      (g) => backstabChanceOf(playerEntity, isBackFacing(g.ai.yaw, g.ai.feet, eye)), say,
+      (g, pt) => inflictPoison(g.entity, pt, false, { currentMinute: Math.floor(currentMinute()) }))) {   // C2-slice (combat-11)
       any = true;
       if (damage > 0) {
         onHitSound?.(foe);
+        // C2-slice (combat-17): the struck watchman cries out 40%
+        const pain = enemyPainVoice(foe, damage);
+        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16 });
         damageGuard(foe, damage, playerFeet, lookDir);
       } else {
         // WeaponManager.cs:609-615: a connecting swing that dealt
