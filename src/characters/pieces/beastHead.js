@@ -138,3 +138,48 @@ export function buildBeastHead(ramp = WOLF_RAMP, s = {}) {
 
   return faces;
 }
+
+/**
+ * HORNS, which are the one thing a daedra lord has that nothing else in
+ * this project does.
+ *
+ * Swept back off the temples on an arc rather than straight up: a horn
+ * that rises vertically is a party hat, and the sweep is what makes it
+ * read as grown rather than worn.
+ *
+ * Tagged 'head' so they ride the skull, same as the ears and tusks.
+ *
+ * @param {number[][]} ramp
+ * @param {{len?:number, thick?:number, sweep?:number, skull?:number}} s
+ */
+export function buildHorns(ramp = WOLF_RAMP, s = {}) {
+  const { len = 0.22, thick = 0.022, sweep = 0.7, skull = 0.1 } = s;
+  const faces = [];
+  const quad = quadder(faces, ramp);
+  const baseY = NECK_PIVOT_Y * HSCALE + skull * 0.55;
+
+  const SEGS = 4;
+  for (const side of [-1, 1]) {
+    let px = side * skull * 0.72,
+      py = baseY + skull * 0.5,
+      pz = -skull * 0.2;
+    for (let i = 1; i <= SEGS; i++) {
+      const t = i / SEGS;
+      // Up first, then back: the arc tips over as it goes.
+      const a = t * Math.PI * 0.55 * sweep;
+      const nx = px + side * len * 0.1 * t;
+      const ny = py + Math.cos(a) * (len / SEGS);
+      const nz = pz - Math.sin(a) * (len / SEGS) * 1.4;
+      const r = thick * (1.1 - t * 0.75);
+      // A tapering box per segment, laid along its own run.
+      quad([px - r, py, pz + r], [px + r, py, pz + r], [nx + r, ny, nz + r], [nx - r, ny, nz + r], 0.92);
+      quad([px + r, py, pz - r], [px - r, py, pz - r], [nx - r, ny, nz - r], [nx + r, ny, nz - r], 0.5);
+      quad([px + r, py, pz + r], [px + r, py, pz - r], [nx + r, ny, nz - r], [nx + r, ny, nz + r], 0.72);
+      quad([px - r, py, pz - r], [px - r, py, pz + r], [nx - r, ny, nz + r], [nx - r, ny, nz - r], 0.72);
+      px = nx;
+      py = ny;
+      pz = nz;
+    }
+  }
+  return faces;
+}
