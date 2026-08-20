@@ -1130,7 +1130,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // (the module-level playerEntity import IS foeDeps.playerEntity -
     // the old shadowing destructure was the null read that crashed)
     let hitEnemy = false;
-    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing))) {
+    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing), (l) => hudText.add(l))) {
       // WeaponDamage returns true for a CONNECTING swing even at zero
       // damage (WeaponManager.cs:617-637 falls through to
       // DecreaseHealth/HandleAttackFromSource and returns true), so
@@ -1250,6 +1250,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 // GetBonusOrPenaltyByEnemyType (FormulaHelper.cs:1037-1052).
                 damageMod: _swing.damage, toHitMod: _swing.toHit,
                 backstabChance: backstabChanceOf(playerEntity, _back),
+                say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
               }) : 0;
               if (dmg > 0) damageFoe(f, dmg, null, m.dir);   // C15: arrows knock along their flight
               addItem(f.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage verbatim: the arrow is recoverable from the target
@@ -1264,6 +1265,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             const dmg = foeDeps && shooter ? foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {
               weapon: m.weapon,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
               onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),   // S19b: poisoned arrows
+              say: (l) => hudText.add(l),   // C-slice
             }) : 0;
             hurtPlayer(dmg);
             addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
@@ -1405,6 +1407,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // S19b: a damaging poisoned-weapon hit infects (and the
       // formulas clear the weapon's poison)
       onInflictPoison: (att, tgt, pt) => inflictPoison(foeDeps.playerEntity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),
+      say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
     });
     if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), 1.1);   // the player takes the hit (PlayerFootsteps families)
     hurtPlayer(dmg);

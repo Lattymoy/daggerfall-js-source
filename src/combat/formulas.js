@@ -24,6 +24,8 @@ import { SPECIAL_ABILITY_BITS } from '../systems/specialAdvantages.js';   // AUD
 // the temporal dead zone: the helper reads `undefined` at call time and the
 // bonus silently never applies. specialAdvantages.js is a leaf.
 import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';   // AUDIT 18: GetBaseDamageMin/Max and GetWeaponSkillIDAsShort resolve the TEMPLATE, never a baked field or a display name
+import { equipTableOf, lowerCondition, slotForBodyPart, EQUIP_SLOTS } from '../systems/equip.js';   // C-slice: DamageEquipment
+import { SHIELD_PARTS } from '../systems/armorMaterials.js';
 
 // ---- Dice100.cs verbatim ----
 export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 100) < chance;   // Random.Range(0,100) < chance
@@ -348,7 +350,37 @@ export function chooseEnemyWeapon(weapon, basics) {
   return noWeaponAvg > weaponAvg ? null : weapon;
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null } = {}) {
+/** FormulaHelper.DamageEquipment (:1080-1118) +
+ *  ApplyConditionDamageThroughPhysicalHit (:1123-1138), verbatim
+ *  (C-slice, AUDIT 23 combat-1). Runs at CalculateAttackDamage's
+ *  tail for every attack; the body gates on a WEAPON hit that dealt
+ *  damage, so hand-to-hand and monster natural attacks degrade
+ *  nothing. The attacker's weapon always takes (10*damage+50)/100
+ *  condition (int division; a 20% floor roll turns 0 into 1, rolled
+ *  PER ITEM); the struck side routes to an equipped shield COVERING
+ *  the struck part - DFU's own improvement, its comment notes
+ *  classic never damaged shields - else to the struck part's armor
+ *  slot. Breaks speak and unequip through lowerCondition. */
+export function damageEquipment(attacker, target, damage, weapon, struckBodyPart, { rolls = Math.random, say = null } = {}) {
+  if (!weapon || damage <= 0) return;
+  const hit = (item, owner) => {
+    let amount = Math.trunc((10 * damage + 50) / 100);
+    if (amount === 0 && dice100(20, rolls())) amount = 1;
+    lowerCondition(item, amount, owner, say);
+  };
+  hit(weapon, attacker);
+  const slots = equipTableOf(target);
+  const shield = slots[EQUIP_SLOTS.LeftHand];
+  const covered = shield ? SHIELD_PARTS.get(shield.templateIndex) ?? [] : [];
+  if (covered.includes(struckBodyPart)) hit(shield, target);
+  else {
+    const slot = slotForBodyPart(struckBodyPart);
+    const armor = slot !== EQUIP_SLOTS.None ? slots[slot] : null;
+    if (armor) hit(armor, target);
+  }
+}
+
+export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null } = {}) {
   if (!attacker || !target) return 0;
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) return 0;   // material too low
   // source: chanceToHitMod = skill, then player swing/proficiency/
@@ -421,7 +453,11 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
     if (onInflictPoison) onInflictPoison(attacker, target, weapon.poisonType);
     weapon.poisonType = -1;
   }
-  return Math.max(0, damage);
+  damage = Math.max(0, damage);
+  // FormulaHelper.cs:699-701: the equipment damages at the TAIL with
+  // the clamped value, whatever the hit rolled.
+  damageEquipment(attacker, target, damage, weapon, struck, { rolls, say });
+  return damage;
 }
 
 // ---- EnemyAttack.MeleeDamage hit gate, "matched to classic" ----

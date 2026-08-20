@@ -109,6 +109,7 @@ export function usesWorldTexture(item, template = templateByIndex(item.templateI
  *  already has a condition (magic uses, a save round-trip) keeps it. */
 export function mintCondition(item) {
   if (item.maxCondition != null) return item;
+  if (!Object.isExtensible(item)) return item;   // C-slice: the frozen pre-chargen stand-ins (INTERIM_WEAPON) carry no condition
   const t = templateByIndex(item.templateIndex);
   let max = t?.hitPoints ?? 0;
   const mat = item.material;

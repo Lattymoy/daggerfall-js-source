@@ -68,7 +68,7 @@ export const GUARD_SEEN_ANGLE = 95;            // an NPC facing the player withi
 export const GUARD_FALLBACK_MIN_DIST = 12.8;   // CreateFoeSpawner ring
 export const GUARD_FALLBACK_MAX_DIST = 51.2;
 
-export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute, rand = Math.random }) {
+export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute, rand = Math.random, say = null }) {
   // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
   // let a guard's poisoned hit anchor at minute 0, and the next world
   // tick (absolute clock ~523,530) caught the whole course up at once.
@@ -293,6 +293,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           const dmg = calculateAttackDamage(g.entity, playerEntity, {
             weapon: wpn,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
             onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(currentMinute()) }),
+            say,   // C-slice: equipment breaks speak
           });
           if (dmg > 0) onPlayerHurt?.(dmg, wpn);   // G2: the host's arrest interception rides this
         }
@@ -334,7 +335,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // per foe - and CalculateBackstabChance's Backstabbing tally
     // (FormulaHelper.cs:975-990) ran nowhere in the port.
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rand,
-      (g) => backstabChanceOf(playerEntity, isBackFacing(g.ai.yaw, g.ai.feet, eye)))) {
+      (g) => backstabChanceOf(playerEntity, isBackFacing(g.ai.yaw, g.ai.feet, eye)), say)) {
       any = true;
       if (damage > 0) {
         onHitSound?.(foe);

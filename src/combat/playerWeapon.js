@@ -178,14 +178,14 @@ export class PlayerWeapon {
    * @param playerCombat the player entity
    * @returns [{foe, damage}] - one entry per foe in reach
    */
-  resolveHit(foes, playerCombat, canSee, rolls = Math.random, backstabOf = () => 0) {
+  resolveHit(foes, playerCombat, canSee, rolls = Math.random, backstabOf = () => 0, say = null) {
     const results = [];
     for (const foe of foes) {
       if (foe.dead || !foe.entity) continue;
       const { dist, inView, losClear } = canSee(foe);
       if (!playerMeleeCanHit(dist, inView, losClear)) continue;
       const damage = calculateAttackDamage(playerCombat, foe.entity,
-        playerAttackOptions(this.weapon, this.machine.state, backstabOf(foe), rolls));
+        { ...playerAttackOptions(this.weapon, this.machine.state, backstabOf(foe), rolls), say });   // C-slice: the break line
       results.push({ foe, damage });
     }
     return results;

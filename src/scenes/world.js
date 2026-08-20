@@ -668,6 +668,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // host's guards ride the world collider (terrain heightAt included).
   const cityGuards = createCityGuards({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio,
+    say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): the poison clock
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
