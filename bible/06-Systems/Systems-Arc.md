@@ -1911,3 +1911,55 @@ Transfer never claims a plain Drain.
 run, 6 killed (one first-draft mutant survived by accidentally
 keeping the ray distance - rewritten to the true old radius law and
 killed). Suite 1432 across 188, green both modes.
+
+## S36 - THE BACKWARD REWIND: a load is the saved truth, not a merge
+
+SL2-slice (2026-08-20), closing AUDIT 23 save-load-2. The dungeon
+world snapshot (S12) reconciled only as-built-to-saved: applyWorld
+could KILL a live foe the save recorded dead, but a foe killed AFTER
+the save stayed dead on a backward mid-session load - and a pile
+emptied after the save kept its emptied state (no flat, no target)
+when the save said it still held its treasure. The reference has no
+merge at all: DFU's load REBUILDS the location fresh and overlays
+the saved truth per LoadID - SerializableEnemy.RestoreSaveData SETS
+health (:176) and disables only data.isDead (:200-203);
+SerializableLootContainer.RestoreSaveData removes an empty-in-save
+container (:158-160, RemoveLootContainer - which for marker piles is
+SetActive(false), :852-864). A rebuild-then-restore leaves NO trace
+of anything that happened after the save.
+
+The port patches the live scene in place, so the rewind is explicit:
+
+- **Foes**: beside the forward kill arm, the backward arm - save
+  says alive + live says dead -> `f.dead = false` and the corpse
+  flat leaves (spliced from BOTH owner lists - corpses and the draw
+  list - GL freed, the foe key nulled). spawnCorpse now keys its
+  batch to the foe (`f.corpseBatch`) and re-checks `f.dead` AFTER
+  the texture await: a backward load can resurrect the foe while the
+  corpse texture warms, and a corpse must never mint for a live foe.
+  Health/items/position were already restored unconditionally above
+  both arms - the full-restore law's easy half.
+- **Piles**: items restore both ways (that half stood), and the FLAT
+  now follows them exactly where a rebuild-then-restore lands:
+  emptied-in-save -> the flat leaves the draw list and frees
+  (RemoveLootContainer on restore); refilled-by-rewind -> the
+  rebuild's own mint returns at the build-time size (p.half) with
+  the pile's OWN record, never rerolled. A pile the build never
+  mounted (record out of range - no half) stays unmounted.
+- droppedLoot.restorePiles (save-load-4) and the actions restore
+  were already full-overwrite - untouched.
+
+RESIDUE: the port's foe record carries no isHostile/
+hasEncounteredPlayer halves (SerializableEnemy saves both at
+:113-114/:182-183); senses persistence rides the senses row's own
+verify pass.
+
+Mutations: 4 run, 4 killed (the resurrect arm deleted; the corpse
+batch leaked on resurrect; the pile re-mint arm deleted; the
+mid-warm race guard deleted).
+
+Pins: test/sl2rewind.test.js x3 (the resurrect arm - both splices,
+the GL free, the key clear, health-before-reconciliation; the
+flat-follows-items pair - the empty teardown and the re-mint gated
+on the build-time size with the unrerolled record; the spawnCorpse
+key + the after-await race guard).

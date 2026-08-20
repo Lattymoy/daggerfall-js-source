@@ -13,11 +13,10 @@
 //   (SerializableLootContainer: Items.Count == 0 ->
 //   RemoveLootContainer) - here the flat + target drop out the
 //   frame the last item leaves.
-// FLAGGED loud: EXTERIOR pile persistence (the save arc snapshots
-// only the dungeon world - S12 scope - so ?world/exterior piles
-// still vanish on load where DFU serialises loose containers
-// everywhere); StreamingWorld.TrackLooseObject across the ?world
-// pixel destroy (piles share the corpse-batch frame doctrine).
+// P2-slice (AUDIT 23 items-2) retired the flags that stood here:
+// world piles now ride the F9/F11 envelope (snapshotWorld/
+// restoreWorld, NATIVE coordinates) and die WITH their pixel
+// (collectPixel = the reference's mid-session collection sweep).
 // The dungeon host rides piles through collectWorld/applyWorld
 // via restorePiles below (AUDIT 23).
 
@@ -48,14 +47,56 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     }).catch(() => {});
   }
 
-  /** Drop items as a pile at the player's feet. */
-  function dropPile(items, feet) {
+  /** Drop items as a pile at the player's feet. P2-slice (items-2):
+   *  pixelKey is the map pixel the pile lives on - the reference's
+   *  LooseObjectDesc stores exactly this pair at track time
+   *  (StreamingWorld.TrackLooseObject :465-476) so the range sweep
+   *  can find it later. Hosts without pixels (the dungeon) pass
+   *  nothing. */
+  function dropPile(items, feet, pixelKey = null) {
     if (!items?.length) return null;
     const record = RANDOM_TREASURE_ICONS[roll()];
-    const pile = { id: ++_nextId, items, pos: [feet[0], feet[1], feet[2]], record, batch: null };
+    const pile = { id: ++_nextId, items, pos: [feet[0], feet[1], feet[2]], record, batch: null, pixelKey };
     piles.push(pile);
     mount(pile);
     return pile;
+  }
+
+  /** P2-slice (items-2) - CollectLooseObjects (StreamingWorld.cs
+   *  :1040-1052): a loose pile whose pixel leaves the streamed range
+   *  is DESTROYED mid-session - object and record both - and only a
+   *  save's serialized state can bring it back. The world host calls
+   *  this from its pixel teardown, so a pile dies WITH its pixel. */
+  function collectPixel(pixelKey) {
+    for (let i = piles.length - 1; i >= 0; i--) {
+      const p = piles[i];
+      if (p.pixelKey !== pixelKey) continue;
+      if (p.batch) renderer.destroyBillboardBatch(p.batch);
+      piles.splice(i, 1);
+    }
+  }
+
+  /** P2-slice (items-2): the world-save halves. The reference
+   *  serialises loose containers everywhere (LootContainerData_v1:
+   *  position, icon, items); the world host stores NATIVE coordinates
+   *  so a pile survives every floating-origin recenter - the same
+   *  law the player half of the envelope rides. */
+  function snapshotWorld(toNative) {
+    return piles.filter((p) => p.items.length).map((p) => {
+      const wc = toNative(p.pos);
+      return { nativeX: wc.x, nativeZ: wc.z, y: p.pos[1], record: p.record, pixelKey: p.pixelKey ?? null, items: p.items.map((it) => ({ ...it })) };
+    });
+  }
+  function restoreWorld(saved, fromNative, yOffset = 0) {
+    for (const p of piles) if (p.batch) renderer.destroyBillboardBatch(p.batch);
+    piles.length = 0;
+    for (const s of saved ?? []) {
+      if (!s.items?.length) continue;
+      const [lx, lz] = fromNative(s.nativeX, s.nativeZ);
+      const pile = { id: ++_nextId, items: s.items.map((it) => ({ ...it })), pos: [lx, s.y + yOffset, lz], record: s.record, batch: null, pixelKey: s.pixelKey ?? null };
+      piles.push(pile);
+      mount(pile);
+    }
   }
 
   /** AUDIT 23 (save-load-4): piles ride the world snapshot - pos,
@@ -119,5 +160,5 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     }
   }
 
-  return { dropPile, restorePiles, batches, lootTargets, pileFor, releaseEmptied, offsetAll, _piles: piles };
+  return { dropPile, restorePiles, collectPixel, snapshotWorld, restoreWorld, batches, lootTargets, pileFor, releaseEmptied, offsetAll, _piles: piles };
 }

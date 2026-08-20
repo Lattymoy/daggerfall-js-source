@@ -37,11 +37,16 @@ export class ArrowFlight {
     this.arrows = [];
   }
 
-  fire(from, dir) {
-    this.arrows.push({ pos: [...from], dir: [...dir], age: 0, gpu: null, dead: false });
+  /** X2-slice: `meta` rides the arrow record - an ENEMY arrow
+   *  carries { enemy: true, shooterFoe, weapon } and hunts the
+   *  player through update's impact arm. Player arrows stay the
+   *  visible-flight-only law (their FOE impacts resolve at the fire
+   *  host's own hit chain, not here). */
+  fire(from, dir, meta = {}) {
+    this.arrows.push({ pos: [...from], dir: [...dir], age: 0, gpu: null, dead: false, ...meta });
   }
 
-  update(dt) {
+  update(dt, { playerFeet = null, onPlayerHit = null } = {}) {
     let live = 0;
     const c = typeof this._collider === 'function' ? this._collider() : this._collider;
     for (const m of this.arrows) {
@@ -59,6 +64,17 @@ export class ArrowFlight {
       m.pos[0] += m.dir[0] * step;
       m.pos[1] += m.dir[1] * step;
       m.pos[2] += m.dir[2] * step;
+      // X2-slice: an enemy arrow tests the player mid-capsule per
+      // step - the dungeon missile's exact contact law
+      // (MISSILE_COLLIDER_RADIUS + the 0.45 body).
+      if (m.enemy && playerFeet && onPlayerHit) {
+        const dx = playerFeet[0] - m.pos[0], dy = playerFeet[1] + 0.9 - m.pos[1], dz = playerFeet[2] - m.pos[2];
+        if (Math.hypot(dx, dy, dz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+          onPlayerHit(m);
+          m.dead = true;
+          continue;
+        }
+      }
       // The mesh raycast never sees bare TERRAIN (the collider's
       // heightAt fallback floor) - an arrow at or under it has landed.
       if (c && m.pos[1] <= c.heightAt(m.pos[0], m.pos[2])) m.dead = true;

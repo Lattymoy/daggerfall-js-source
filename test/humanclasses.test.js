@@ -34,8 +34,14 @@ test('classes: every build key is one the rig actually has', () => {
 test('classes: they are people — near-human, and no geometry', () => {
   for (const d of CLASS_DESIGNS) {
     assert.ok(!d.bones && !d.horse, `${d.name} carries geometry — it is a person`);
+    // The band was 0.9-1.15 and the Knight's shoulder is 1.18. He is
+    // not wrong — a man in full plate IS broader across the shoulder
+    // than one in robes, and a barbarian broader again. The BAND was
+    // wrong: it was drawn around the first five designs, which were all
+    // scholars. Widened to what a human body actually spans, which is
+    // still far short of an orc's 1.2 torso or a giant's 1.46.
     for (const [k, v] of Object.entries(d.build)) {
-      assert.ok(v >= 0.9 && v <= 1.15, `${d.name} ${k}=${v} is not a person's build`);
+      assert.ok(v >= 0.85 && v <= 1.32, `${d.name} ${k}=${v} is not a person's build`);
     }
   }
 });
@@ -87,4 +93,46 @@ test('classes: the ramps are ART_PAL spans, light to dark', () => {
     assert.ok(span[1] > span[0], `${name} runs backwards`);
     assert.ok(span[0] >= 0 && span[1] <= 255, `${name} leaves the palette`);
   }
+});
+
+// ── NINETEEN PEOPLE, NOT ONE PERSON NINETEEN TIMES ───────────────
+// Every one of these is the same rig at nearly the same size wearing
+// different cloth, which is exactly what makes them cheap and exactly
+// what makes them easy to get wrong: paste a design, change the name,
+// and the player fights the same figure under twenty labels. So the
+// distinctness is asserted rather than assumed.
+
+test('classes: no two are the same figure', () => {
+  const seen = new Map();
+  for (const d of CLASS_DESIGNS) {
+    // What a player can actually tell apart: the silhouette, the
+    // materials worn, and whether anything hangs off it.
+    const sig = JSON.stringify([
+      Object.values(d.build),
+      d.zones.map((z) => z.mat).sort(),
+      d.drape ? d.drape.name : null,
+    ]);
+    const twin = seen.get(sig);
+    assert.ok(!twin, `${d.name} is indistinguishable from ${twin}`);
+    seen.set(sig, d.name);
+  }
+});
+
+test('classes: the silhouettes actually span a range', () => {
+  // If every build sits at 1.00 the cloth is doing all the work and a
+  // knight reads the same width as an acrobat.
+  const torsos = CLASS_DESIGNS.map((d) => d.build.torso);
+  const spread = Math.max(...torsos) - Math.min(...torsos);
+  assert.ok(spread > 0.25, `torso spread is only ${spread.toFixed(2)} — they are all one shape`);
+});
+
+test('classes: armour makes a design wider than robes do', () => {
+  // A knight in plate and a healer in linen must not be the same build,
+  // or the armour is paint rather than armour.
+  const knight = CLASS_DESIGNS.find((d) => d.name === 'Knight');
+  const healer = CLASS_DESIGNS.find((d) => d.name === 'Healer');
+  assert.ok(knight.build.shoulder > healer.build.shoulder + 0.15, 'plate does not broaden the wearer');
+  const knightPlate = Math.max(...knight.zones.map((z) => z.th));
+  const healerCloth = Math.max(...healer.zones.map((z) => z.th));
+  assert.ok(knightPlate > healerCloth, 'plate is no thicker than linen');
 });

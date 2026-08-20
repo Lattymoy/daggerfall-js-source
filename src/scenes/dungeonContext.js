@@ -363,7 +363,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
-      { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster }] = await Promise.all([
+      { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster, castEnemySpell: castShared }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
@@ -391,6 +391,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       createCharacterRig: engineRig.createCharacterRig,
       bodyRamps: engineRig.deriveClassicRamps(palette, bodyImg.getDFBitmap()),
       buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, loadMonsterCareer, EnemyCaster, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
+      castEnemySpell: castShared,   // X3: the ONE cast executor (characters/enemyCasting.js)
     };
    } catch (err) {
      // The foe SUBSYSTEM failing to initialize (a dynamic import, the
@@ -1008,41 +1009,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // trap-missile shape). RESIDUAL (honest): enemy missiles resolve
   // against the player only - foe-vs-foe friendly fire pends the
   // missile seam's target sweep.
+  // X3-slice: the cast EXECUTOR is the shared castEnemySpellShared
+  // (characters/enemyCasting.js) - one release for both foe pools;
+  // this host binds its deps once. The magic-15 silence gate, the
+  // player-priced cost, the magic-9 AoC arm and the missile shape
+  // all live in the shared member now.
   function castEnemySpell(f, spell, noSpellPointCost = false) {
-    // AUDIT 23 (magic-15) - EntityEffectManager.cs:315: SetReadySpell
-    // runs SilenceCheck for ENEMIES too, gated the same way - a free
-    // rider (spider touch) bypasses it exactly as noSpellPointCost
-    // bypasses the cost.
-    if (!noSpellPointCost && silenceBlocksCast(f.entity)) return;
-    // S19: SetReadySpell(spell, true) - the spider-touch rider casts
-    // free; ordinary decisions spend the S10 cost (floored at 0).
-    if (!noSpellPointCost) {
-      // EntityEffectManager.cs:322-327 passes a NULL caster when
-      // UsePlayerCharacterSkillsForEnemyMagicCost (default true at
-      // :148), and CalculateEffectCosts reads GameManager.PlayerEntity
-      // .Skills for a null caster - enemy spell costs are priced off
-      // the PLAYER's magic skills, not the foe's.
-      const cost = calculateCastCost(spell, playerEntity).sp;
-      f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - cost);
-    }
-    const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
-    f._castPending = true;   // C14: the sprite Spell one-shot (ChangeEnemyState(Spell) at the cast decision)
-    audio.play3d(SPELL_CAST_SOUND[spell.element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 });
-    if (spell.rangeType === 0) {
-      applySpell(spell, f.entity.level, f.entity, foeSinks(f), Math.random, { entity: f.entity, sinks: foeSinks(f) });
-      return;
-    }
-    // L2-slice (AUDIT 23 magic-9) - the missile's AreaAroundCaster
-    // arm (DaggerfallMissile.cs:279-282 + DoAreaOfEffect :477): with
-    // a caster the AoE fires AT THE CASTER'S POSITION on the first
-    // update - no flight - and the caster itself is EXCLUDED
-    // (ignoreCaster: true). Other foes in the radius are hit too.
-    if (spell.rangeType === 3) {
-      magic.explodeAt([f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], spell, f.entity.level, lastPlayerFeet,
-        { entity: f.entity, sinks: foeSinks(f) }, { excludeFoe: f });   // caster transform = mid-capsule
-      return;
-    }
-    missiles.push({ spell, casterLevel: f.entity.level, casterFoe: f, pos: from, dir: null, age: 0, batch: null, fromPlayer: false });
+    if (!foeDeps?.castEnemySpell) return;   // the foe subsystem degraded (its loud boot warning already fired)
+    foeDeps.castEnemySpell(f, spell, {
+      noSpellPointCost, playerEntity, playerFeet: lastPlayerFeet,
+      applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
+      playCastSound: (element, from) => audio.play3d(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
+      explodeAt: magic.explodeAt,
+      fireMissile: (from, spell2, casterLevel, foe) =>
+        missiles.push({ spell: spell2, casterLevel, casterFoe: foe, pos: from, dir: null, age: 0, batch: null, fromPlayer: false }),
+    });
   }
   async function ensureArrowModel(m) {
     if (m.draw !== null) return;
@@ -1157,6 +1138,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!ct) return;
     const t = await getTexture(ct.archive);
     if (!t || ct.record >= t.recordCount) return;
+    // SL2 (save-load-2): a backward load can RESURRECT this foe while
+    // the texture warms - a corpse must never mint for a live foe.
+    if (!f.dead) return;
     uploadRecord(ct.archive, ct.record);
     const size = scaledBillboardSize(t.getSize(ct.record), t.getScale(ct.record));
     // The billboard shader BOTTOM-anchors (position = base): the old
@@ -1164,6 +1148,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // half its height (C11 audit 08-17; the static-flat path shifts
     // DOWN for the same reason).
     const batch = renderer.createBillboardBatch(ct.archive, ct.record, size, [[p[0], p[1], p[2]]]);
+    f.corpseBatch = batch;   // SL2: the rewind frees a corpse BY ITS FOE
     corpses.push(batch);
     billboardBatches.push(batch);   // hosts draw + destroy() frees
   }
@@ -1392,6 +1377,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         health: f.entity.health, dead: !!f.dead,
         feet: [...f.ai.feet], yaw: f.ai.yaw,
         items: (f.entity.items ?? []).map((it) => ({ ...it })),
+        // CH4 (the senses verify pass): SerializableEnemy carries
+        // isHostile + hasEncounteredPlayer (:113-114, restored at
+        // :182-183) and currentMagicka (:112/:178 - a discharged
+        // caster must not refill on load). The port's halves.
+        hostile: f.ai.isHostile !== false,
+        encountered: !!f.ai.hasEncounteredPlayer,
+        magicka: f.entity.magicka ?? 0,
       })),
       piles: lootPiles.map((p) => ({ items: p.items.map((it) => ({ ...it })) })),
       // AUDIT 23 (save-load-4): player-dropped piles are containers in
@@ -1415,9 +1407,50 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f.entity.items = sf.items.map((it) => ({ ...it }));
       f.ai.feet[0] = sf.feet[0]; f.ai.feet[1] = sf.feet[1]; f.ai.feet[2] = sf.feet[2];
       f.ai.yaw = sf.yaw;
+      // CH4: the senses/resource halves restore when the save carries
+      // them (:182-183 motor.IsHostile / senses.HasEncounteredPlayer,
+      // :178 SetMagicka); saves from before CH4 leave the live state.
+      if (sf.hostile != null) f.ai.isHostile = !!sf.hostile;
+      if (sf.encountered != null) f.ai.hasEncounteredPlayer = !!sf.encountered;
+      if (sf.magicka != null) f.entity.magicka = sf.magicka;
       if (sf.dead && !f.dead) { f.dead = true; spawnCorpse(f); }
+      // SL2 (AUDIT 23 save-load-2): the BACKWARD rewind. DFU's load
+      // REBUILDS the location and RestoreSaveData SETS the saved
+      // truth per LoadID (SerializableEnemy.cs:176 SetHealth; only
+      // data.isDead disables, :200-203) - a foe killed AFTER the
+      // save stands alive again and its corpse container, absent
+      // from the save, leaves with the rebuild. The port patches in
+      // place: un-kill and free the corpse flat by its foe.
+      else if (!sf.dead && f.dead) {
+        f.dead = false;
+        if (f.corpseBatch) {
+          const ci = corpses.indexOf(f.corpseBatch); if (ci >= 0) corpses.splice(ci, 1);
+          const bi = billboardBatches.indexOf(f.corpseBatch); if (bi >= 0) billboardBatches.splice(bi, 1);
+          renderer.destroyBillboardBatch(f.corpseBatch);
+          f.corpseBatch = null;
+        }
+      }
     });
-    w.piles?.forEach((sp, i) => { if (lootPiles[i]) lootPiles[i].items = sp.items.map((it) => ({ ...it })); });
+    // SL2: pile items rewind BOTH ways and the flat FOLLOWS the
+    // items, exactly where a rebuild-then-restore lands: an
+    // emptied-in-save pile loses its flat (SerializableLootContainer
+    // .cs:158-160 - Items.Count == 0 -> RemoveLootContainer on
+    // restore) and a refilled-by-rewind pile gets the rebuild's own
+    // mint back (p.half is the build-time size; a pile the build
+    // never mounted stays unmounted).
+    w.piles?.forEach((sp, i) => {
+      const p = lootPiles[i];
+      if (!p) return;
+      p.items = sp.items.map((it) => ({ ...it }));
+      if (!p.items.length && p.batch) {
+        const bi = billboardBatches.indexOf(p.batch); if (bi >= 0) billboardBatches.splice(bi, 1);
+        renderer.destroyBillboardBatch(p.batch);
+        p.batch = null;
+      } else if (p.items.length && !p.batch && p.half) {
+        p.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, p.record, { w: p.half[0] * 2, h: p.half[1] * 2 }, [[p.pos[0], p.pos[1], p.pos[2]]]);
+        billboardBatches.push(p.batch);
+      }
+    });
     droppedLoot.restorePiles(w.droppedLoot);   // AUDIT 23: absent list clears, per rebuild-from-save
     w.actions?.forEach((sa) => {
       const o = actions.objects.get(sa.key);
@@ -1772,6 +1805,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // flyerFalls) - senses keep running, decisions stop, paralyzed
       // FLYERS fall out of the air, swimmers freeze.
       f.ai.update(dt, playerFeet || eye, _senses, _fParalyzed);   // E2 senses + pursuit; P13: the stealth context
+      // CH3 (characters-8): a past-threshold landing bills the
+      // player's fall formula - trunc(5 x (drop - 5)) - through the
+      // pool's damage door (no knockback), ringing FallDamage at the
+      // foe. The blood splash rides damageFoe's own art.
+      if (f.ai.landedFall > 0 && !f.dead) {
+        const dmg = Math.trunc(FALL_HP_PER_METRE * (f.ai.landedFall - FALL_DAMAGE_THRESHOLD));
+        f.ai.landedFall = 0;
+        if (dmg > 0) {
+          audio.play3d(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
+          damageFoe(f, dmg, null, null);
+        }
+      }
       // E-slice: EnemySenses:533-535 - a foe with the player IN SIGHT
       // raises the enemy alert every update (the dungeon rest roll
       // reads it; an 8-hour decay lowers it).

@@ -76,7 +76,9 @@ import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../c
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
-import { removeOne } from '../systems/inventory.js';
+import { removeOne, addItem } from '../systems/inventory.js';
+import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
+import { inflictPoison } from '../systems/poisons.js';   // X2-slice: poisoned enemy arrows
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { Collider } from '../player/collider.js';
@@ -448,6 +450,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (let i = buildingDoors.length - 1; i >= 0; i--) {
       if (buildingDoors[i].pixelKey === key) buildingDoors.splice(i, 1);
     }
+    // P2-slice (items-2): a loose pile dies WITH its pixel - the
+    // reference's mid-session collection sweep (CollectLooseObjects);
+    // only the F9 envelope brings one back.
+    droppedLoot.collectPixel(key);
     built.delete(key);
   }
 
@@ -701,6 +707,27 @@ export async function bootWorld(canvas, renderer, params, status) {
       audio.playOneShot(hitSoundFor(wpn), 1.1);
       surfacePlayer();
     },
+    // X2-slice: the shoot frame looses a REAL arrow through the C13
+    // flight (the enemy meta hunts the player mid-capsule), ringing
+    // ArrowShoot from the archer.
+    onArrow: (from, dir, f) => {
+      arrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon });
+      audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });
+    },
+    // X3-slice: casters - the S16 lists assign once the SPELLS.STD
+    // map lands, and the release seams ride the ONE engine: the AoC
+    // explosion and the enemy missile (aimed at the walking player's
+    // mid-capsule at fire time, the dungeon shape).
+    spellsByIndex: () => spellsByIndex,
+    magicHooks: {
+      explodeAt: (...a) => magic.explodeAt(...a),
+      fireMissile: (from, spell, casterLevel, foe) => {
+        if (!(walkMode && playerSpawned)) return;
+        const d = [player.pos[0] - from[0], player.pos[1] + 0.9 - from[1], player.pos[2] - from[2]];
+        const l = Math.hypot(...d) || 1;
+        magic.fireEnemyMissile(from, [d[0] / l, d[1] / l, d[2] / l], spell, casterLevel, foe);
+      },
+    },
   });
   // The classic catch-up loop (PlayerEntity.Update:486-492): per
   // elapsed game minute, one intermittent roll; break on a spawn.
@@ -878,7 +905,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       classicMinutes: Math.floor(playerTicker.classicMinutes),
       readiedSpellIndex: magic.readiedIndex(),
       locationKey: 'world',
-      world: { pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1] },
+      world: {
+        pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
+        // P2-slice (items-2): loose piles ride the envelope in
+        // NATIVES with the compensation-free height, the player
+        // half's exact law.
+        piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),
+      },
     });
     townTalk.say(writeQuicksave(snap) ? 'Game saved.' : 'Save failed (storage full or disabled).');
   }
@@ -900,6 +933,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         const ly = (w.y ?? 2) + state.compensation[1];
         if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
         cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+        // P2-slice (items-2): the teleport's teardown collected every
+        // live pile (the reference's sweep); the envelope re-mints the
+        // saved ones at their native spots.
+        droppedLoot.restoreWorld(w.piles, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
       } else if (extras.locationKey && extras.locationKey !== 'world') {
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
       }
@@ -983,7 +1020,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         icons: { getTexture, uploadRecord, textures: renderer.textures },
         rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
         nowMinute: () => Math.floor(playerTicker.classicMinutes),
-        onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
+        onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
       }));
       return;
     }
@@ -1201,6 +1238,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       const pf = walkMode && playerSpawned ? player.pos : cam.pos;
       return exteriorFoes.spawnFoe(type, [pf[0] + dist, pf[1] + 1, pf[2]]).then((f) => (f ? f.mobileType : null));
     };
+    // X2/X3 probe surface: the live exterior-combat state
+    window.__x23 = () => JSON.stringify({
+      hp: playerEntity.health,
+      enemyArrows: arrows.arrows.filter((a) => !a.dead && a.enemy).length,
+      missiles: magic.missileCount(),
+      foes: exteriorFoes.foes.filter((f) => !f.dead).map((f) => ({
+        type: f.mobileType, dist: +f.ai._dist.toFixed(1), detected: f.ai.detected,
+        bow: !!f.attack.rangedAttack, caster: !!f.caster, spells: f.entity.spells?.length ?? 0, mp: f.entity.magicka ?? 0,
+      })),
+    });
     window.__travelNearest = () => {
       const p0 = playerTravelPixel();
       let best = null, bd = Infinity;
@@ -1357,7 +1404,7 @@ export async function bootWorld(canvas, renderer, params, status) {
                 icons: { getTexture, uploadRecord, textures: renderer.textures },
                 rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
                 nowMinute: () => Math.floor(playerTicker.classicMinutes),
-                onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),
+                onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // P2: stamped
               }));
             }
             else modes.tryEnter().catch((e) => console.error(e));
@@ -1548,7 +1595,30 @@ export async function bootWorld(canvas, renderer, params, status) {
     // collider (lost on geometry/terrain, as DFU misses are). Drawn
     // without a remap - the streaming pixels each carry their own,
     // and 99800's weapon archive needs none.
-    arrows.update(dt);
+    // X2-slice: ENEMY arrows hunt the player - the impact runs the
+    // same damage member the melee does (BowDamage :141), so the
+    // Dodging tally, the poison seam and the recoverable arrow all
+    // ride the hit.
+    arrows.update(dt, {
+      // enemy arrows hunt only a SPAWNED, WALKING player - fly/orbit
+      // camera modes have no capsule to hit
+      playerFeet: walkMode && playerSpawned ? player.pos : null,
+      onPlayerHit: (m) => {
+        const shooter = m.shooterFoe;
+        tallySkill(playerEntity, SKILLS.Dodging, 1);
+        const dmg = shooter && !shooter.dead ? calculateAttackDamage(shooter.entity, playerEntity, {
+          weapon: m.weapon,
+          onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
+          say: (l) => townTalk.say(l),
+        }) : 0;
+        if (dmg > 0) {
+          hurtPlayer(playerEntity, dmg);
+          audio.playOneShot(hitSoundFor(m.weapon), 1.1);
+          surfacePlayer();
+        }
+        addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage: the arrow is recoverable from the target
+      },
+    });
     arrows.draw(renderer);
     // C9: the exterior FP weapon - swings/sounds through the rig; the
     // open world has no action objects in melee reach (static building

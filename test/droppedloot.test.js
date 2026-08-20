@@ -3,6 +3,7 @@
 // DaggerfallInventoryWindow's droppedItems/loot-target laws).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createDroppedLoot, RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../src/scenes/droppedLoot.js';
 import { NativeInventoryWindow } from '../src/ui/nativeInventory.js';
 
@@ -79,4 +80,73 @@ test('nativeInventory: the remote side - Remove drops, pile clicks pick up, onDr
   w2.hooks.onDrop = () => { minted2 = true; };
   w2.input('Escape');
   assert.equal(minted2, false);
+});
+
+test('droppedLoot P2 (items-2): a pile dies WITH its pixel; other pixels stand', async () => {
+  const freed = [];
+  const deps = {
+    renderer: {
+      createBillboardBatch: (archive, record, size, centers) => ({ archive, record, size, centers }),
+      destroyBillboardBatch: (b) => freed.push(b),
+    },
+    getTexture: async () => ({ getSize: () => ({ width: 16, height: 10 }), getScale: () => ({ width: 0, height: 0 }) }),
+    uploadRecordFrame: () => {},
+    pick: () => 1,
+  };
+  const dl = createDroppedLoot(deps);
+  dl.dropPile([{ name: 'A' }], [1, 0, 1], '10,20');
+  dl.dropPile([{ name: 'B' }], [2, 0, 2], '10,20');
+  dl.dropPile([{ name: 'C' }], [3, 0, 3], '11,20');
+  await Promise.resolve(); await Promise.resolve();
+  // the sweep: pixel 10,20 tears down - BOTH its piles die, batches freed
+  dl.collectPixel('10,20');
+  assert.equal(dl._piles.length, 1, 'only the other pixel survives');
+  assert.equal(dl._piles[0].items[0].name, 'C');
+  assert.equal(freed.length, 2, 'the collected batches are freed (EVERY ALLOCATION HAS AN OWNER)');
+  // a dungeon-shaped pile (no pixelKey) never collects
+  dl.dropPile([{ name: 'D' }], [4, 0, 4]);
+  dl.collectPixel('11,20');
+  assert.equal(dl._piles.length, 1);
+  assert.equal(dl._piles[0].items[0].name, 'D', 'pixel-less piles are outside the sweep');
+});
+
+test('droppedLoot P2 (items-2): the world-save halves round-trip in NATIVES, records unrerolled', async () => {
+  let pickVal = 3;   // record 23 at drop; poisoned before restore so a reroll is DISTINGUISHABLE
+  const deps = {
+    renderer: { createBillboardBatch: (a, r, sz, c) => ({ record: r, centers: c }), destroyBillboardBatch: () => {} },
+    getTexture: async () => ({ getSize: () => ({ width: 16, height: 10 }), getScale: () => ({ width: 0, height: 0 }) }),
+    uploadRecordFrame: () => {},
+    pick: () => pickVal,
+  };
+  const dl = createDroppedLoot(deps);
+  dl.dropPile([{ name: 'Gold', stackCount: 50 }], [100, 4, 200], '5,6');
+  const empt = dl.dropPile([{ name: 'gone' }], [7, 0, 7], '5,6');
+  empt.items.length = 0;   // an emptied pile must not serialize
+  await Promise.resolve(); await Promise.resolve();
+  // snapshot through a fake native mapper (local + 1000)
+  const snap = dl.snapshotWorld((pos) => ({ x: pos[0] + 1000, z: pos[2] + 1000 }));
+  assert.equal(snap.length, 1, 'empties are skipped');
+  assert.equal(snap[0].nativeX, 1100);
+  assert.equal(snap[0].nativeZ, 1200);
+  assert.equal(snap[0].record, 23);
+  assert.equal(snap[0].pixelKey, '5,6');
+  // restore through the inverse under a DIFFERENT origin (+ a y shift);
+  // the roll seam now yields record 0 - only the SAVED record may win
+  pickVal = 0;
+  dl.restoreWorld(snap, (nx, nz) => [nx - 900, nz - 900], 2);
+  await Promise.resolve(); await Promise.resolve();
+  assert.equal(dl._piles.length, 1);
+  assert.deepEqual(dl._piles[0].pos, [200, 6, 300], 'natives re-localize under the new origin; y gains the offset');
+  assert.equal(dl._piles[0].record, 23, 'the restore must not reroll the icon');
+  assert.equal(dl._piles[0].pixelKey, '5,6');
+});
+
+test('droppedLoot P2 (items-2): the world host wiring - collect at teardown, stamps at drop, the envelope', () => {
+  const s = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.ok(s.includes('droppedLoot.collectPixel(key)'), 'the pixel teardown sweeps its piles');
+  assert.ok(/dropPile\(items, dropFeet\(\), `\$\{playerTravelPixel\(\)\.x\},\$\{playerTravelPixel\(\)\.y\}`\)/.test(s),
+    'both drop sites stamp the map pixel');
+  assert.ok(s.includes('piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos))'), 'the F9 envelope carries the piles in natives');
+  assert.ok(s.includes('droppedLoot.restoreWorld(w.piles, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1])'),
+    'the F11 load re-mints them after the teleport');
 });

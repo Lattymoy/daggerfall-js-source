@@ -938,3 +938,53 @@ Pins: test/mapReveal.test.js x6 (the boundary/inside fork, the store's
 whole-record/no-dupe/per-location laws, the envelope round trip incl.
 pre-T4 empty, the macro tables, the townTalk source sweep - the hosts'
 zero-execution-coverage idiom - and the ARENA2 record-id gate).
+
+## P2 (2026-08-20): DROPPED-PILE MAP TAIL - piles die with their pixel, ride the save SHIPPED
+
+AUDIT 23 items-2, closed with its premise CORRECTED by the source.
+The row said exterior piles should SURVIVE pixel unloads; the
+reference says the opposite. StreamingWorld.CollectLooseObjects
+(:1040-1052) DESTROYS a loose container whose pixel leaves the
+streamed range - GameObject and LooseObjectDesc both - and nothing
+mid-session brings it back: only the SAVE's serialized loot
+containers re-mint it. The port had the inverse bug twice over:
+world piles were IMMORTAL (droppedLoot knew nothing of pixels, so a
+pile stood forever at local coordinates that went stale) and the
+F9/F11 world envelope never carried them (a quicksave dropped every
+pile on the floor of the load).
+
+- **The pixel stamp** (droppedLoot.dropPile pixelKey):
+  TrackLooseObject (:465-476) stores worldCompensation + the map
+  pixel pair AT TRACK TIME; the port's equivalent is the third
+  dropPile argument - both world-host drop sites stamp
+  `${playerTravelPixel().x},${playerTravelPixel().y}`. Hosts
+  without pixels (the dungeon) pass nothing and stay outside the
+  sweep.
+- **The collection sweep** (droppedLoot.collectPixel): the world
+  host's pixel teardown calls collectPixel(key) beside its other
+  per-pixel frees - every pile stamped with that pixel dies, batch
+  destroyed, entry spliced (EVERY ALLOCATION HAS AN OWNER). A pile
+  dies WITH its pixel, exactly the reference's mid-session law.
+- **The save halves** (snapshotWorld/restoreWorld): the F9 world
+  envelope grew `piles` - NATIVE coordinates through
+  state.worldCoords (the recenter-proof law the player half rides),
+  y compensated, empties skipped, record + pixelKey + item copies
+  carried (LootContainerData_v1's trio). F11 re-mints after the
+  player lands through state.localFromWorld + the compensation
+  offset, with the SAVED record - a restore must not reroll the
+  icon. restorePiles (the dungeon's applyWorld half from
+  save-load-4) stands untouched beside them.
+
+Mutations: 4 run, 4 killed. m2 (restoreWorld rerolls the record)
+SURVIVED the first round - the round-trip pin's fixed `pick: () => 3`
+made a reroll reproduce the same record - so the pin was
+strengthened (a mutable pick poisoned to a different index before
+the restore call), proven green on clean code, and m2 re-run to a
+kill. A PIN MUST FAIL, enforced the hard way.
+
+Pins: test/droppedloot.test.js +3 (the pixel sweep incl. the
+pixel-less exemption and the freed batches; the native round trip
+under a moved origin + y shift with empties skipped and the record
+unrerolled under a poisoned roll seam; the world-host wiring sweep -
+collect at teardown, stamps at both drop sites, both envelope
+halves).

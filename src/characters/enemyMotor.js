@@ -40,7 +40,7 @@ import { CLASSIC_UPDATE_INTERVAL } from './weaponStates.js';   // single source 
 import { CAPSULE_HEIGHT } from '../player/motor.js';           // single source
 export { CLASSIC_UPDATE_INTERVAL };
 export const GIVE_UP_TICKS = 200;   // EnemyMotor.GiveUpTimer refill (classic ticks; ~12.5s)
-import { GRAVITY, FIXED_DT, MAX_FRAME_DT, CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // the shared fall rule + the P16 fixed-timestep law
+import { GRAVITY, FIXED_DT, MAX_FRAME_DT, CLASSIC_TO_UNITY_RATIO, FALL_DAMAGE_THRESHOLD } from '../player/motor.js';   // the shared fall rule + the P16 fixed-timestep law; CH3: the fall threshold single-sources with the player's
 
 // C15 knockback (EnemyMotor.KnockbackMovement): classic units through
 // the speed ratio. Stored speed clamps at 40; motion caps at 25; the
@@ -60,6 +60,12 @@ export const CLASSIC_TURN_DEG = 20;                  // per classic update (Turn
 export const SYSTEM_TIMER_UPDATES_DIVISOR = 0.0549254;
 export const SENSES_INTERVAL_UNITS = 5;              // classicTargetUpdateTimer > 5
 export const MOVE_YAW_GATE_DEG = 5.625;
+// CH4 (the senses verify pass): the STOPPED "just look at target"
+// branch turns at a WIDER gate than AttemptMove's 5.625 - EnemyMotor
+// .cs:514 TargetIsWithinYawAngle(22.5f). A melee-stopped foe stands
+// up to 22.5deg off-face (the attack cone is 35.156, so it still
+// swings); the old 5.625 here made stopped foes micro-track.
+export const STOP_YAW_GATE_DEG = 22.5;
 export const DF_WALK_BASE = 150;
 export const EYE_FRAC = 5 / 6;
 
@@ -142,15 +148,19 @@ export function blockedByIllusionEffect(seesThrough, { invisible = false, blendi
 
 /** EnemySenses.CanHearTarget: inside the 25 radius (+HearingModifier
  *  0 for every current entry), blocked when STATIC geometry sits
- *  between. Departure (documented): our collider's ray includes
- *  closed action doors (they are collider buckets), which DFU's
- *  static-only mask lets sound pass - a closed door muffles here. */
+ *  between. CH4 (the senses verify pass): the ray runs CENTER to
+ *  center - DFU casts from transform.position (the capsule center)
+ *  along directionToTarget (:942), not from the eye; the old
+ *  eye-origin sat h/3 too high. Departure (documented): our
+ *  collider's ray includes closed action doors (they are collider
+ *  buckets), which DFU's static-only mask lets sound pass - a
+ *  closed door muffles here. */
 export function canHearTarget(collider, feet, height, targetFeet, dist) {
   if (dist >= HEARING_RADIUS) return false;
-  const eye = [feet[0], feet[1] + height * EYE_FRAC, feet[2]];
-  const ex = targetFeet[0] - eye[0], ey = targetFeet[1] + 0.9 - eye[1], ez = targetFeet[2] - eye[2];
+  const center = [feet[0], feet[1] + height / 2, feet[2]];
+  const ex = targetFeet[0] - center[0], ey = targetFeet[1] + 0.9 - center[1], ez = targetFeet[2] - center[2];
   const el = Math.hypot(ex, ey, ez) || 1;
-  const hit = collider.raycast(eye, [ex / el, ey / el, ez / el], el);
+  const hit = collider.raycast(center, [ex / el, ey / el, ez / el], el);
   return !Number.isFinite(hit) || hit >= el - 1e-3;
 }
 
@@ -259,6 +269,14 @@ export class EnemyAI {
     this.feet = [feet[0], feet[1], feet[2]];
     this.yaw = yawRad;
     this.height = height;
+    // CH3 (AUDIT 23 characters-8): EnemyMotor.ApplyFallDamage's
+    // tracking pair - LastGroundedY refreshes while grounded, and a
+    // landing after a past-threshold drop reports the distance for
+    // the host to bill (the enemy shares the player's formula, per
+    // the source's own comment).
+    this.lastGroundedY = feet[1];
+    this.landedFall = 0;   // > 0 for ONE host frame after a damaging landing
+    this._airborne = false;
     this.speed = enemyMoveSpeed(liveSpeed);
     this.seesThroughInvisibility = seesThroughInvisibility;
     // MobileUnit.ClassicSpawnDistanceType (the marker's SoundIndex) and
@@ -293,7 +311,30 @@ export class EnemyAI {
     this._lastStealthMinute = -1;        // timeOfLastStealthCheck (per foe)
   }
 
-  /** EnemySenses' classic detection flow, per classic update. senses
+  /** CH4 (the senses verify pass): the CLASSIC-gated senses halves.
+   *  DFU's FixedUpdate runs the spawn-band recompute (:260-310) and
+   *  the illusion roll (:444-449, the per-classic re-roll that makes
+   *  chameleon matter - the source's own comment) only on
+   *  GameManager.ClassicUpdate frames; sight/hearing/detection
+   *  resolve every FixedUpdate (see _senses). This half runs per
+   *  classic tick. */
+  _classicSenses(playerFeet, senses = null) {
+    if (!senses) return;
+    const dxp = playerFeet[0] - this.feet[0], dzp = playerFeet[2] - this.feet[2];
+    const dist = Math.hypot(dxp, playerFeet[1] - this.feet[1], dzp);
+    this.wouldBeSpawned = wouldBeSpawnedInClassic(
+      dist, this.feet[1] - playerFeet[1], this.wouldBeSpawned, this.spawnDistanceType, this.playerInside);
+    this._blocked = blockedByIllusionEffect(this.seesThroughInvisibility, {
+      invisible: senses.playerInvisible ?? false,
+      blending: senses.playerBlending ?? false,
+      shade: senses.playerShade ?? false,
+    }, senses.rolls ?? Math.random);
+  }
+
+  /** EnemySenses' detection resolution. CH4: runs EVERY fixed step -
+   *  DFU resolves sight (:421/:428), the hearing gate (:433-436) and
+   *  detection (:451-470) every FixedUpdate, with the illusion block
+   *  standing between classic re-rolls (_classicSenses). senses
    *  (optional, P13) = { gameMinutes, playerStealth,
    *  movingLessThanHalfSpeed, playerBlending, playerInvisible,
    *  playerShade, sharedStealth: { minute }, tallyStealth(), rolls }.
@@ -313,15 +354,6 @@ export class EnemyAI {
       if (this.detected && !this.hasEncounteredPlayer) { this.hasEncounteredPlayer = true; this.justEncountered = true; }
       return;
     }
-    const rolls = senses.rolls ?? Math.random;
-    // per classic update: the spawn-band recompute + the illusion roll
-    this.wouldBeSpawned = wouldBeSpawnedInClassic(
-      this._dist, this.feet[1] - playerFeet[1], this.wouldBeSpawned, this.spawnDistanceType, this.playerInside);
-    this._blocked = blockedByIllusionEffect(this.seesThroughInvisibility, {
-      invisible: senses.playerInvisible ?? false,
-      blending: senses.playerBlending ?? false,
-      shade: senses.playerShade ?? false,
-    }, rolls);
     // hearing only once the target is already detected and unseen -
     // "classic stealth mechanics would be interfered with by hearing"
     const inEarshot = (this.detected && !this.inSight)
@@ -376,10 +408,13 @@ export class EnemyAI {
     else if (this.giveUpTimer > 0) this.giveUpTimer--;
     if (!this.detected && this.giveUpTimer <= 0) { this.moving = false; return; }
     const dx = playerFeet[0] - this.feet[0], dz = playerFeet[2] - this.feet[2];
-    // classic stop: MeleeDistance vs the player; always moves in for attack
+    // classic stop: MeleeDistance vs the player; always moves in for
+    // attack. CH4: the STOPPED turn rides the 22.5 "just look at
+    // target" gate (EnemyMotor.cs:514), NOT AttemptMove's 5.625 -
+    // a melee foe stands up to 22.5deg off-face.
     if (this._dist <= MELEE_DISTANCE) {
       this.moving = false;
-      if (!withinYaw(this.yaw, dx, dz, MOVE_YAW_GATE_DEG)) this.yaw = turnTowards(this.yaw, dx, dz);
+      if (!withinYaw(this.yaw, dx, dz, STOP_YAW_GATE_DEG)) this.yaw = turnTowards(this.yaw, dx, dz);
       return;
     }
     if (!withinYaw(this.yaw, dx, dz, MOVE_YAW_GATE_DEG)) {
@@ -411,11 +446,16 @@ export class EnemyAI {
   }
 
   _step(dt, playerFeet, senses, paralyzed = false) {
-    // DFU recomputes distance/sight every Update; only classic TARGET
-    // SWITCHING rides the 5-unit system timer (single-target here, so
-    // that timer has nothing to switch - constants stay exported for
-    // E3 multi-target). Senses + decisions both run at the classic
-    // update rate. senses = the P13 stealth context (see _senses).
+    // CH4 (the senses verify pass): DFU's cadence split, exactly -
+    // sight/hearing/detection resolve EVERY FixedUpdate (the fixed
+    // step here); the spawn-band recompute and the illusion re-roll
+    // gate on ClassicUpdate (_classicSenses per classic tick); only
+    // classic TARGET SWITCHING rides the 5-unit system timer
+    // (single-target here, so that timer has nothing to switch -
+    // constants stay exported for E3 multi-target). Decisions stay
+    // on the classic update, reading the freshly resolved senses
+    // (DFU's senses-then-motor component order). senses = the P13
+    // stealth context (see _senses).
     // C15: knockback is CanAct=false - decisions skip, senses run.
     const knocked = this.knockbackSpeed > 0;
     let classicTicks = 0;
@@ -423,7 +463,10 @@ export class EnemyAI {
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
       classicTicks++;
-      this._senses(playerFeet, senses);
+      this._classicSenses(playerFeet, senses);
+    }
+    this._senses(playerFeet, senses);
+    for (let i = 0; i < classicTicks; i++) {
       // C-slice: a pacified foe (IsHostile false) keeps its senses
       // but takes no action - DFU's motor only pursues hostiles.
       if (!paralyzed && !knocked && this.isHostile) this._classicTick(playerFeet);
@@ -457,10 +500,12 @@ export class EnemyAI {
         this.velY -= GRAVITY * dt;   // flyerFalls: a hit knocks them out of the air
         const r = this.collider.move(this.feet, mx, myRaw + this.velY * dt, mz);
         if (r.grounded) this.velY = 0;
+        this._trackFall(r.grounded);   // CH3: a knocked-down flyer lands hard
       } else {
         this.velY -= GRAVITY * dt;   // SimpleMove: horizontal motion, gravity applies
         const r = this.collider.move(this.feet, mx, this.velY * dt, mz);
         if (r.grounded) this.velY = 0;
+        this._trackFall(r.grounded);
       }
       this.knockbackSpeed -= classicTicks * KB(KNOCKBACK_DECAY_PER_CLASSIC);
       if (this.knockbackSpeed < 0) this.knockbackSpeed = 0;
@@ -521,7 +566,28 @@ export class EnemyAI {
     const dzm = this.moving ? Math.cos(this.yaw) * this.speed * dt : 0;
     const r = this.collider.move(this.feet, dxm, dy, dzm);
     if (r.grounded) this.velY = 0;
+    this._trackFall(r.grounded);   // CH3 (characters-8): walkers and falling paralyzed flyers
     this._restGrounded = !this.moving && r.grounded;
+  }
+
+  /** ApplyFallDamage's tracking (EnemyMotor.cs:1383-1414): grounded
+   *  refreshes LastGroundedY; the grounded EDGE after airborne
+   *  measures the drop and reports a past-threshold landing through
+   *  landedFall (the host bills the damage + the clip). A flyer's
+   *  hover never touches this - only ground contacts do, so a
+   *  knocked-down flyer measures from its LAST ground height,
+   *  verbatim. */
+  _trackFall(grounded) {
+    if (grounded) {
+      if (this._airborne) {
+        const drop = this.lastGroundedY - this.feet[1];
+        if (drop > FALL_DAMAGE_THRESHOLD) this.landedFall = drop;
+        this._airborne = false;
+      }
+      this.lastGroundedY = this.feet[1];
+    } else {
+      this._airborne = true;
+    }
   }
 
   /** The 3D pursuit direction to the aim point (face for flyers +

@@ -2212,3 +2212,175 @@ page's arm, RegionPower, the guard-spawn crime arms.
 sweep; the host wiring incl. the bounded catch-up, the travel
 reset, the facade routing and the melee order); 3 mutations run, 3
 killed.
+
+## CH-X2 - EXTERIOR ENEMY ARCHERY: the band fires above ground
+
+2026-08-20, the X2-slice. The encounter pool's loud rangedAttack
+residue retires: bow foes now arm by the SAME ranged-flags law the
+dungeon build reads, and the C-slice 6..51.2 band - already ported
+into the shared attack driver - simply starts firing out here. The
+ranged -1 marker looses a REAL arrow through the host's new onArrow
+seam: the C13 exterior flight gained an enemy meta that hunts the
+player mid-capsule per step (the dungeon missile's exact contact
+law), ArrowShoot rings from the archer, and the impact runs the
+shared damage member - so the Dodging tally, the C2 poison seam and
+the recoverable arrow all ride the hit, identical to the dungeon's
+arrow arm. Player arrows keep the visible-flight-only law (their
+foe impacts resolve at the fire host's own chain); the bare
+update(dt) form still serves the single-location page, which has no
+encounter pool. Exterior enemy CASTING stays the narrowed residue -
+its missile seam is the S16 decision loop the dungeon host owns.
+
+4 pins (the hunt law + the sails-through player-arrow discriminator
++ the pool/world wiring sweeps; the old residue pin rewritten to the
+live law); 4 mutations run, 4 killed. Suite 1452 across 190, green
+both modes.
+
+## CH3 - FALL DAMAGE AND THE SWAP PAUSE: two small laws land
+
+2026-08-20. Two AUDIT 23 rows closed; the senses fine-grain trio
+(characters-9/10/12) is NOT among them - its shorthand no longer
+resolves to concrete findings and the row now says so, pending the
+original finding bodies or a dedicated senses pass.
+
+characters-8, enemy FALL DAMAGE: the foe motor tracks its grounded
+height on every ground contact, and the grounded edge after airborne
+reports a past-threshold drop. Both pools bill the PLAYER's own
+formula - trunc(5 x (drop - 5)), constants single-sourced from
+motor.js - through their damage doors, no knockback, with the
+FallDamage clip at the foe. A knocked-down flyer measures from its
+LAST ground height, verbatim: hovering never touches the anchor.
+The double-math trunc is pinned exactly as the C# cast computes it
+(an 8.2 drop bills 15, not 16).
+
+characters-13, the SWAP PAUSE (the row's name corrected - this is
+the PLAYER's equip delay): both halves bill onto the entity's
+countdown - the leaver at the one unequip door, the arriver in
+equipItem, accumulating across a swap exactly as the writer sums
+both sides per hand - and the weapon rig blocks the attack while it
+runs, draining at the classic 980 units/second. The table quirk
+carries verbatim: the delay table indexes by the item's index
+WITHIN ITS OWN GROUP, so a shield swap bills the low armor indexes
+against the weapon delay table.
+
+3 pins; 4 mutations run, 4 killed. Suite 1460 across 192, green
+both modes.
+
+## CH-X3 - EXTERIOR ENEMY CASTING: the one executor
+
+2026-08-20, the X3-slice. The above-ground combat arms COMPLETE:
+after X2's archery, the casters go live in the streaming world.
+
+The extraction first: the dungeon host's castEnemySpell body - the
+magic-15 silence gate, the player-priced cost floored at 0, the
+element cast sound, the CasterOnly self-assign, the magic-9
+at-caster AoC with the caster excluded, and the missile loose -
+moves whole into characters/enemyCasting.js beside the EnemyCaster
+decision driver it always served, behind injected deps (the M3
+one-engine doctrine). The dungeon rebinds through foeDeps and its
+local copy is gone; three pins that anchored on the old body
+repinned to the shared member.
+
+Then the exterior mount: spawnFoe assigns the S16 spell lists once
+the SPELLS.STD map lands and mints the shared decision driver; the
+pool's update runs the decision beside the attack machine and
+releases through the one executor with the world host's seams - the
+AoC through the engine's explodeAt, and missiles through the
+engine's NEW enemy arm (fireEnemyMissile + the player-hunting
+impact at the CASTER's level, the caster wrapper carrying the
+transfer heal-back sinks). The sprite Spell one-shot rides the cast
+edge, the same C14 pulse the dungeon plays.
+
+Shared residual, honest in both hosts: enemy missiles resolve
+against the player only - foe-vs-foe friendly fire pends the
+missile seam's target sweep.
+
+3 pins + 3 repins; 5 mutations run, 5 killed. Suite 1466 across
+193, green both modes.
+
+### CH-X2/CH-X3 addendum: the live probe (tools/x23Probe.mjs)
+
+2026-08-20, after the merges. The exterior combat stack proved out
+in a real browser, frame-synced on the world host: an Archer (141)
+spawned at 15 armed as a bow foe and a REAL enemy arrow flew
+(enemyArrows=1 in the live pool); a Mage (128) spawned at 20 minted
+its caster with the tier list and RELEASED an Ice Bolt missile
+through the engine. Zero page errors (the one CURSOR.IMG 404 is a
+guarded miss - the file is absent from this ARENA2 set and
+cursor.js's own header says NEVER TRAPS; the probe filters exactly
+that line).
+
+Two probe drafts died on FAITHFUL behavior, which is its own
+verification: a mage spawned at 40 stood permanently blind (outside
+the 25-unit hearing radius with an away-facing spawn yaw - the P13
+stealth flow), and a mage that reaches melee undischarged can never
+cast at all (its tier list - Ice Bolt 2, Ice Storm 4 - is all
+ranged, and DoTouchSpell picks rangeType 0/1 only). The probe now
+spawns inside hearing and sends a second mage through the band for
+the ~11% undischarged tail.
+
+## CH4 (2026-08-20): THE SENSES VERIFY PASS - characters-9/10/12 resolved
+
+The AUDIT 23 shorthand row ("roll order + yaw gate + frame clamp")
+had lost its finding bodies; CH3 marked it unfixable without a
+dedicated pass. CH4 is that pass: EnemySenses.cs (965 lines) and
+EnemyMotor.cs's classic path re-read whole against
+characters/enemyMotor.js, member by member.
+
+VERIFIED CLEAN (the "roll order" third): the illusion die is
+classic-gated in both (EnemySenses.cs:444-449 - the source's own
+comment explains the per-classic re-roll is what makes chameleon
+matter); the stealth die is minute-gated in both with the shared
+once-per-minute player tally; CalculateStealthChance is byte-exact
+(`2 * ((int)(d/GS) * liveStealth >> 10)`); BlockedByIllusionEffect
+matches arm for arm (seesThrough, invisible-always-blocks, the
+8/4 see-through, no die for an unconcealed target); StealthCheck's
+gate ladder matches (wouldBeSpawned, the 1024-unit cap, the odd-
+minute skip for a slow player, fast+encountered auto-detect);
+EvaluateMoveInForAttack, SetChangeStateTimer and the giveUpTimer
+laws all confirm the port's classic shape (always move in, no
+timer, refill-200/decrement).
+
+FIXED (the other two thirds were real):
+
+- **The stop-branch yaw gate** (the "yaw gate" finding): DFU's
+  "Not moving, just look at target" branch turns when outside
+  TargetIsWithinYawAngle(22.5f) (EnemyMotor.cs:514); AttemptMove's
+  5.625 gate (:896) belongs to the MOVING branch only. The port
+  used 5.625 in the melee-stop branch, so stopped foes
+  micro-tracked the player's every step. STOP_YAW_GATE_DEG = 22.5
+  now - a melee foe stands up to 22.5deg off-face (the 35.156
+  attack cone still covers it), turning only past that.
+- **The senses cadence** (the "frame clamp" finding): DFU resolves
+  sight (:421/:428), the hearing gate (:433-436) and the detection
+  ladder (:451-470) EVERY FixedUpdate; only the spawn-band
+  recompute (:260-310) and the illusion re-roll are classic-gated.
+  The port ran everything at the classic rate (16Hz) - up to 62ms
+  of detection lag DFU does not have - and its own _step comment
+  even said so. The split is now DFU's exactly: _classicSenses
+  (spawn band + illusion die) per classic tick, _senses (sight/
+  hearing/ladder/encounter edge) per fixed step, decisions after
+  the resolution in DFU's senses-then-motor component order.
+- **The hearing ray origin** (found on the way): CanHearTarget
+  casts from transform.position - the capsule CENTER - along
+  directionToTarget (:942); the port cast from the EYE (feet +
+  5h/6), a third of a height too high. Center-to-center now; the
+  closed-door departure stays documented.
+
+Shipped with the pass (the SL2 residue): the dungeon foe snapshot
+carries isHostile + hasEncounteredPlayer + magicka
+(SerializableEnemy.cs:112-114 save, :178/:182-183 restore) - a
+pacified foe stays pacified across F9/F11, a discharged caster
+does not refill - restore gated on field presence so pre-CH4
+saves keep the live state.
+
+Mutations: 4 run, 4 killed (the stop gate reverted to 5.625; the
+hearing origin back at the eye; the resolution re-gated on the
+classic tick; the magicka restore dropped).
+
+Pins: test/ch4senses.test.js x4 (the 22.5/5.625 pair with a live
+15deg-stands/30deg-turns drive; the hearing origin captured off
+the mock ray; the cadence - detection on the first 1/60 step with
+zero classic ticks and exactly one illusion die per classic tick,
+the failed see-through blocking the ladder; the snapshot halves
+sweep with the presence-gated restores).

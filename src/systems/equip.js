@@ -21,6 +21,7 @@ import { ITEM_GROUPS, SLOT_RULES } from '../characters/equipRules.js';
 import { createEquipTable, getItemHands as handsOf, ITEM_HANDS } from '../characters/equipTable.js';
 import { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, SHIELD_VALUES, SHIELD_PARTS, isShieldTemplate } from './armorMaterials.js';
 import { SKILLS, WEAPON_SKILL } from './skills.js';   // S23: the weapon partition, single-sourced
+import { EQUIP_DELAY_TIMES } from '../characters/weaponStates.js';   // CH3 (characters-13): the swap-pause table gains its consumer
 
 export { EQUIP_SLOTS, ITEM_HANDS };
 const ARROW = 131;
@@ -36,6 +37,24 @@ export const equipTableOf = (entity) => equipOf(entity).slots;
 export const getEquipSlot = (entity, item) => equipOf(entity).getEquipSlot(numeric(item));
 
 /** UnequipItem(slot): clears the slot + the item's mark. */
+/** CH3 (AUDIT 23 characters-13): the SWAP PAUSE - every hand item
+ *  LEAVING or ARRIVING adds its group-index delay onto the entity's
+ *  countdown, accumulating (the writer sums both sides per hand with
+ *  += at DaggerfallInventoryWindow.cs:1198); the weapon rig blocks
+ *  the attack while it runs and drains at the classic 980 units per
+ *  second. The table quirk carries verbatim: EquipDelayTimes indexes
+ *  by the item's index WITHIN ITS OWN GROUP, so a shield swap bills
+ *  the low armor indexes against the weapon delay table. Leavers
+ *  bill here (the one unequip door), arrivers in equipItem - each
+ *  transition exactly once. */
+function billEquipDelay(entity, item) {
+  const gi = item.group === 'Weapons' ? item.templateIndex - 113
+    : item.group === 'Armor' ? item.templateIndex - 102 : -1;
+  if (gi >= 0 && gi < EQUIP_DELAY_TIMES.length) {
+    entity.equipCountdown = (entity.equipCountdown ?? 0) + EQUIP_DELAY_TIMES[gi];
+  }
+}
+
 export function unequipSlot(entity, slot) {
   const slots = equipTableOf(entity);
   const item = slots[slot];
@@ -43,6 +62,7 @@ export function unequipSlot(entity, slot) {
   slots[slot] = null;
   delete item.equipSlot;
   updateEquippedArmorValues(entity, item, false);   // U8h: the armor table adds back
+  if (slot === EQUIP_SLOTS.RightHand || slot === EQUIP_SLOTS.LeftHand) billEquipDelay(entity, item);   // CH3: the leaver's half
   return item;
 }
 
@@ -135,6 +155,7 @@ export function equipItem(entity, item) {
   }
   un(slot);   // swap the occupant out (alwaysEquip)
   item.equipSlot = slot;
+  if (slot === EQUIP_SLOTS.RightHand || slot === EQUIP_SLOTS.LeftHand) billEquipDelay(entity, item);   // CH3: the arriver's half
   slots[slot] = item;
   updateEquippedArmorValues(entity, item, true);   // U8h: the armor table subtracts
   return unequipped;

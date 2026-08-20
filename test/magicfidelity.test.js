@@ -115,10 +115,11 @@ test('magicfidelity magic-8/9: the trap arms and the enemy AoC wiring', () => {
   assert.ok(fn.includes("magic.readySpell(spell, { free: true })"), 'a CasterOnly trap readies FREE on the player (:497-502)');
   assert.ok(fn.includes('trap AreaAroundCaster has no caster'), 'the casterless AoC no-op is loud');
   assert.ok(fn.includes('{ ...spell, rangeType: 2 }'), 'a ByTouch trap payload retargets to SingleTargetAtRange (:512-517)');
-  const j = dc.indexOf('function castEnemySpell');
-  const en = dc.slice(j, dc.indexOf('async function ensureArrowModel', j));
-  assert.ok(en.includes('spell.rangeType === 3') && en.includes('excludeFoe: f'),
+  // X3: the executor is SHARED - the AoC law lives in enemyCasting.js
+  const ec = readFileSync(join(root, 'src/characters/enemyCasting.js'), 'utf8');
+  assert.ok(ec.includes('spell.rangeType === 3') && ec.includes('excludeFoe: f'),
     'an enemy AoC explodes AT THE CASTER instantly, excluding the caster (DoAreaOfEffect ignoreCaster)');
+  assert.ok(dc.includes('castEnemySpell: castShared'), 'the dungeon binds the ONE executor');
   const hm = readFileSync(join(root, 'src/scenes/hostMagic.js'), 'utf8');
   assert.ok(hm.includes('let readiedFree = false;'), 'the engine carries readySpellDoesNotCostSpellPoints');
   assert.ok(hm.includes('!readiedFree && silenceBlocksCast'), 'a free ready bypasses the cast silence gate (:404)');
