@@ -1,0 +1,139 @@
+import { MOBILE_TYPES } from './mobileTypes.js';
+
+// ═══════════════════════════════════════════════════════════════════
+// THE BEASTS
+//
+// Rat, Grizzly Bear and Sabertooth Tiger: the first enemies in this
+// project with no human in them at all.
+//
+// EVERY DESIGN SO FAR HAS BEEN A PERSON UNDERNEATH. An orc is a person
+// scaled, a skeleton is a person stripped, a lich is a person in robes,
+// and even the centaur is a person from the waist up with something
+// hung off him. These are not. The rig's whole body is COLLAPSED — the
+// centaur's mechanism, which moved two leg groups to a point inside the
+// barrel, applied to all six groups — and what the player sees is
+// entirely the piece.
+//
+// WHICH MEANS THE RIG IS DOING NOTHING BUT CARRYING THEM, and that is
+// fine: it holds the face list at 2136 so they still ship as deltas, it
+// gives them a transform to ride, and it means an animal animates
+// through the same path a man does. Teaching buildNeutralBody to drop
+// groups would have cost every caller that counts on the count.
+//
+// ONE BUILDER, THREE ANIMALS. A rat is long and low with a bare tail; a
+// bear is a mountain on short legs; a tiger is longer again on longer
+// ones. Those are NUMBERS, so the fourth quadruped costs a design rather
+// than a file — the same bet the class file made and won.
+// ═══════════════════════════════════════════════════════════════════
+
+/** ART_PAL spans, same convention as the other lines. */
+export const BEAST_RAMPS = Object.freeze({
+  // block 2 - tan -> brown. Rat: the colour of something that lives in
+  // a wall.
+  vermin: [36, 46],
+  // block 11 - rust -> dark brown. A grizzly, and darker than anything
+  // else on four legs here.
+  grizzly: [178, 188],
+  // block 9 - yellow -> olive. A sabertooth's coat, which has to be
+  // BRIGHT or it reads as another bear in the dark.
+  tawny: [146, 155],
+  // block 4 - cream -> tan. Underbelly, and the pale of a muzzle.
+  pale: [64, 72],
+});
+
+export const BEAST_DESIGNS = [
+  {
+    id: MOBILE_TYPES.Rat,
+    name: 'Giant Rat',
+    level: 1,
+    damage: [1, 4],
+    weaponTier: 0,
+    // Long, low and mostly tail. The lowest thing in the project — a rat
+    // that stands at a man's knee is a dog.
+    beast: {
+      back: 0.26,
+      len: 0.6,
+      girth: 0.09,
+      legs: 0.028,
+      crouch: 0.8,
+      head: 0.075,
+      snout: 0.09,
+      tail: 0.42,
+      tailUp: 0.05,
+    },
+    pelt: 'vermin',
+  },
+  {
+    id: MOBILE_TYPES.GrizzlyBear,
+    name: 'Grizzly Bear',
+    level: 8,
+    damage: [1, 20],
+    weaponTier: 0,
+    // A mountain on short legs, and almost no tail: the bear's mass is
+    // the whole of it, so the barrel is nearly as wide as it is tall.
+    beast: {
+      back: 0.8,
+      len: 1.0,
+      girth: 0.24,
+      legs: 0.075,
+      crouch: 0.25,
+      head: 0.15,
+      snout: 0.09,
+      tail: 0.06,
+      tailUp: 0.2,
+    },
+    pelt: 'grizzly',
+  },
+  {
+    id: MOBILE_TYPES.SabertoothTiger,
+    name: 'Sabertooth Tiger',
+    level: 10,
+    damage: [1, 25],
+    weaponTier: 0,
+    // Longer than the bear on longer legs and half its width: a cat is
+    // built to cover ground, not to hold it. Carries its tail up.
+    beast: {
+      back: 0.72,
+      len: 1.1,
+      girth: 0.18,
+      legs: 0.055,
+      crouch: 0.35,
+      head: 0.13,
+      snout: 0.08,
+      tail: 0.55,
+      tailUp: 0.35,
+    },
+    pelt: 'tawny',
+  },
+];
+
+/** Every group of the human rig, because none of it is wanted. */
+export const ALL_GROUPS = ['body', 'head', 'armL', 'armR', 'legL', 'legR'];
+
+/**
+ * The same shape the other opts functions return.
+ *
+ * The ramps still matter even though the body is collapsed: the rig's
+ * faces keep their colours, and a collapsed face has no area but it does
+ * still exist. Giving it the pelt rather than leaving it human means
+ * that if a collapse ever fails, what shows through is at least the
+ * right colour — which is a smaller bug than a human arm inside a bear.
+ */
+export function beastOpts(design, pal) {
+  const ramp = ([a, b]) => {
+    const out = [];
+    for (let i = b; i >= a; i--) {
+      const c = pal.get(i);
+      out.push([c.r, c.g, c.b]);
+    }
+    return out;
+  };
+  const pelt = ramp(BEAST_RAMPS[design.pelt]);
+  return {
+    drape: null,
+    ramps: { skin: pelt, boot: pelt },
+    opts: { build: {}, clothZones: [], armorZones: [], mats: {} },
+    hide: pelt,
+    pelt,
+  };
+}
