@@ -149,16 +149,30 @@ export const TARGET_TYPES = Object.freeze(['CasterOnly', 'ByTouch', 'SingleTarge
  *  throughout the port). */
 export const EXPLOSION_RADIUS = 4.0;
 
-/** ByTouch target pick: the nearest live foe whose mid-capsule sits
- *  within melee reach of the eye (the WeaponManager touch shape -
- *  the caller supplies reach + a LOS test). */
-export function pickTouchTarget(eye, foes, reach, losClear = () => true) {
-  let best = null, bestDist = Infinity;
+/** The ByTouch cast shape (DaggerfallMissile.cs:61-62): a 0.25-radius
+ *  sphere pushed 3.0 units ALONG THE AIM. */
+export const TOUCH_SPHERE_CAST_RADIUS = 0.25;
+export const TOUCH_RANGE = 3.0;
+
+/** GetEntityTargetInTouchRange (DaggerfallMissile.cs:409-425, L2-slice
+ *  AUDIT 23 magic-7): ByTouch targets by SPHERE-CAST along the aim
+ *  direction - NOT a nearest-in-any-direction radius pick, which
+ *  could touch a foe behind the caster's shoulder. Each live foe's
+ *  mid-capsule is tested against the aim segment (closest-point
+ *  distance <= cast radius + the 0.45 body the missile hit test
+ *  uses) and the FIRST hit along the ray wins, as a physics cast
+ *  returns; the caller's losClear keeps walls blocking the touch. */
+export function pickTouchTarget(eye, dir, foes, losClear = () => true) {
+  let best = null, bestT = Infinity;
   for (const f of foes) {
     if (f.dead) continue;
     const c = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];
-    const d = Math.hypot(c[0] - eye[0], c[1] - eye[1], c[2] - eye[2]);
-    if (d <= reach && d < bestDist && losClear(c, d)) { best = f; bestDist = d; }
+    const rx = c[0] - eye[0], ry = c[1] - eye[1], rz = c[2] - eye[2];
+    const t = Math.max(0, Math.min(TOUCH_RANGE, rx * dir[0] + ry * dir[1] + rz * dir[2]));
+    const d = Math.hypot(rx - dir[0] * t, ry - dir[1] * t, rz - dir[2] * t);
+    if (d <= TOUCH_SPHERE_CAST_RADIUS + 0.45 && t < bestT && losClear(c, Math.hypot(rx, ry, rz))) {
+      best = f; bestT = t;
+    }
   }
   return best;
 }

@@ -959,11 +959,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function fireCast(index, origin) {
     const spell = spellsByIndex?.get(index);
     if (!spell || !origin) { if (!spellsByIndex) console.warn('[spellcast] SPELLS.STD unavailable; CastSpell no-op'); return; }
+    // L2-slice (AUDIT 23 magic-8) - DaggerfallAction.CastSpell
+    // (:497-518): a CasterOnly trap spell is READIED ON THE PLAYER
+    // FOR FREE (SetReadySpell(index, true)) - no missile at all.
+    if (spell.rangeType === 0) { magic.readySpell(spell, { free: true }); return; }
+    // L2-slice (magic-9): a trap AreaAroundCaster payload rides a
+    // missile with NO caster, and the missile's AoC arm requires one
+    // (DaggerfallMissile.cs:279-282) - the classic no-op, loudly.
+    if (spell.rangeType === 3) { console.warn('[spellcast] trap AreaAroundCaster has no caster; verbatim no-op'); return; }
     const from = [origin[0], origin[1] + 40 * GLOBAL_SCALE, origin[2]];
     // Audit 2026-08-16e F2: trap bundles are CASTERLESS - DFU's
     // CalculateCasterLevel(null) = 1 for magnitude, duration AND
     // chance (the pre-audit shape fell back to the player's level).
-    missiles.push({ spell, casterLevel: 1, pos: from, dir: null, age: 0, batch: null });
+    // L2-slice (magic-8): a ByTouch trap payload RETARGETS to
+    // SingleTargetAtRange (:512-517) - the touch flies to its mark.
+    const payload = spell.rangeType === 1 ? { ...spell, rangeType: 2 } : spell;
+    missiles.push({ spell: payload, casterLevel: 1, pos: from, dir: null, age: 0, batch: null });
   }
 
   // S5: player casting - ?spell=N readies a SPELLS.STD entry for the
@@ -1018,6 +1029,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     audio.play3d(SPELL_CAST_SOUND[spell.element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 });
     if (spell.rangeType === 0) {
       applySpell(spell, f.entity.level, f.entity, foeSinks(f), Math.random, { entity: f.entity, sinks: foeSinks(f) });
+      return;
+    }
+    // L2-slice (AUDIT 23 magic-9) - the missile's AreaAroundCaster
+    // arm (DaggerfallMissile.cs:279-282 + DoAreaOfEffect :477): with
+    // a caster the AoE fires AT THE CASTER'S POSITION on the first
+    // update - no flight - and the caster itself is EXCLUDED
+    // (ignoreCaster: true). Other foes in the radius are hit too.
+    if (spell.rangeType === 3) {
+      magic.explodeAt([f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], spell, f.entity.level, lastPlayerFeet,
+        { entity: f.entity, sinks: foeSinks(f) }, { excludeFoe: f });   // caster transform = mid-capsule
       return;
     }
     missiles.push({ spell, casterLevel: f.entity.level, casterFoe: f, pos: from, dir: null, age: 0, batch: null, fromPlayer: false });

@@ -54,6 +54,7 @@ export function createPlayerMagic({
   const clickCast = new OneShotLatch();   // classic click-to-cast: armed by readying
   let pendingClickCast = false;
   let readiedSpell = null;
+  let readiedFree = false;   // readySpellDoesNotCostSpellPoints (magic-8)
   // AUDIT 23 (magic-5): DFU's lastReadySpellCastingCost - set on every
   // player cast, read by the absorption refund cap when the player's
   // own spell lands back on them (EntityEffectManager.cs:600-604).
@@ -80,9 +81,13 @@ export function createPlayerMagic({
 
   // Cast ranges II: the rangeType-4 EXPLOSION - indiscriminate sweep
   // (OverlapSphere at impact): every live foe within the radius, and
-  // the player when close enough.
-  function explodeAt(pos, spell, casterLevel, playerFeet, caster = null) {
+  // the player when close enough. L2-slice (AUDIT 23 magic-9):
+  // excludeFoe carries the enemy AreaAroundCaster's ignoreCaster -
+  // DFU's caster-position AoE skips the caster itself
+  // (DoAreaOfEffect(position, true), DaggerfallMissile.cs:477-495).
+  function explodeAt(pos, spell, casterLevel, playerFeet, caster = null, { excludeFoe = null } = {}) {
     for (const t of sweepFoes(pos, EXPLOSION_RADIUS, foes())) {
+      if (excludeFoe && t === excludeFoe) continue;
       applySpell(spell, casterLevel, t.entity, foeSinks(t), rolls, caster);
     }
     if (playerFeet) {
@@ -116,14 +121,15 @@ export function createPlayerMagic({
     // S27 / SilenceCheck (EntityEffectManager :1932-1946). DFU tests
     // this at CAST as well as at ready, and BOTH clear the readied
     // spell - a silence landing mid-aim disarms you rather than
-    // waiting for the click. Every cast on this path costs spell
-    // points, so DFU's `!noSpellPointCost` arm is always true here.
-    if (silenceBlocksCast(playerEntity)) {
+    // waiting for the click. L2-slice (magic-8): a FREE ready (a
+    // trap's CasterOnly payload) bypasses the gate, exactly as :404
+    // gates SilenceCheck on !readySpellDoesNotCostSpellPoints.
+    if (!readiedFree && silenceBlocksCast(playerEntity)) {
       readiedSpell = null;
       say(SILENCED_TEXT);
       return false;
     }
-    const cost = calculateCastCost(sp, playerEntity).sp;   // S10: the per-effect skill-scaled cost
+    const cost = readiedFree ? 0 : calculateCastCost(sp, playerEntity).sp;   // S10: the per-effect skill-scaled cost; free readies spend nothing
     if ((playerEntity.magicka ?? 0) < cost) return false;   // classic refuses without the points
     if (sp.rangeType === 0) {
       // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
@@ -140,8 +146,10 @@ export function createPlayerMagic({
     if (sp.rangeType === 1) {
       // ByTouch: CastReadySpell aborts BEFORE spending when no target
       // sits in touch range (verbatim - the S9 'spends on a whiff'
-      // rule was wrong and died at its audit).
-      const t = pickTouchTarget(eye, foes(), 2.25 + 0.25, (c, d) => {
+      // rule was wrong and died at its audit). L2-slice (magic-7):
+      // the pick is now the 0.25-radius sphere-cast 3.0 ALONG THE
+      // AIM, not a nearest-in-radius sweep.
+      const t = pickTouchTarget(eye, dir, foes(), (c, d) => {
         const l = d || 1, dx = (c[0] - eye[0]) / l, dy = (c[1] - eye[1]) / l, dz = (c[2] - eye[2]) / l;
         const hit = collider.raycast(eye, [dx, dy, dz], d);
         return !Number.isFinite(hit) || hit >= d - 1e-3;
@@ -180,15 +188,19 @@ export function createPlayerMagic({
   /** The spellbook's ready hook - DFU's SetReadySpell laws in order:
    *  the silence gate (S27), the cost gate with the classic refusal
    *  (AUDIT 23 magic-14, :337-343), the assignment, and the instant
-   *  CasterOnly cast (:350-351). */
-  function readySpell(sp) {
-    if (silenceBlocksCast(playerEntity)) { readiedSpell = null; say(SILENCED_TEXT); return; }
-    if ((playerEntity.magicka ?? 0) < calculateCastCost(sp, playerEntity).sp) {
+   *  CasterOnly cast (:350-351). L2-slice (AUDIT 23 magic-8): `free`
+   *  is SetReadySpell's noSpellPointCost - a trap's CasterOnly spell
+   *  readies ON THE PLAYER for free, BYPASSING the silence gate
+   *  (:315 gates SilenceCheck on !noSpellPointCost) and the cost. */
+  function readySpell(sp, { free = false } = {}) {
+    if (!free && silenceBlocksCast(playerEntity)) { readiedSpell = null; say(SILENCED_TEXT); return; }
+    if (!free && (playerEntity.magicka ?? 0) < calculateCastCost(sp, playerEntity).sp) {
       readiedSpell = null;
       say("You don't have the spell points.");   // youDontHaveTheSpellPoints
       return;
     }
     readiedSpell = sp;
+    readiedFree = free;
     if (sp.rangeType === 0) { castInput(null, null); return; }
     clickCast.arm();
     say(`${sp.name} readied.`);   // classic: the next attack-click CASTS
@@ -283,7 +295,8 @@ export function createPlayerMagic({
     readiedIndex: () => readiedSpell?.index ?? null,
     setReadiedByIndex(index, spellsByIndex) {
       readiedSpell = index != null ? spellsByIndex?.get(index) ?? null : null;
+      readiedFree = false;   // every writer of readiedSpell declares its freeness (magic-8)
     },
-    setReadied(sp) { readiedSpell = sp ?? null; },
+    setReadied(sp) { readiedSpell = sp ?? null; readiedFree = false; },
   };
 }
