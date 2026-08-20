@@ -109,7 +109,7 @@ test('beasts: the piece is what the player sees, so it must exist', () => {
 });
 
 test('beasts: legal ramps, and a pelt each', () => {
-  const seen = new Set();
+  const seen = new Map();
   for (const d of BEAST_DESIGNS) {
     const span = BEAST_RAMPS[d.pelt];
     assert.ok(span, `${d.name} has no pelt`);
@@ -131,9 +131,21 @@ test('beasts: legal ramps, and a pelt each', () => {
           : d.wings
             ? 'wing'
             : 'were';
+    // SHARING A PELT AND A SHAPE IS ONLY WRONG IF NOTHING ELSE DIFFERS.
+    // The two dragonlings are the same animal at two ages and the game
+    // gives them identical stats, so they SHOULD share a hide — what
+    // must differ is the size, which is the only thing left to tell them
+    // apart with. Three brown quadrupeds of one size is one animal
+    // twice; a dragonling and its elder is not.
     const key = d.pelt + ':' + shape;
-    assert.ok(!seen.has(key), `${d.name} is another ${shape} in ${d.pelt} — that is one animal twice`);
-    seen.add(key);
+    const twin = seen.get(key);
+    if (twin) {
+      const a = twin.beast || twin.arachnid || twin.fish || {};
+      const c = d.beast || d.arachnid || d.fish || {};
+      const differs = Object.keys(c).some((k) => Math.abs((c[k] ?? 0) - (a[k] ?? 0)) > 0.05);
+      assert.ok(differs, `${d.name} is another ${shape} in ${d.pelt} at the same size — that is one animal twice`);
+    }
+    seen.set(key, d);
     const { ramps } = beastOpts(d, pal);
     assert.ok(ramps.skin.length > 2, `${d.name} resolved to no colours`);
   }
@@ -291,4 +303,47 @@ test('dreugh: claws without a spider under it', () => {
   const legged = buildArachnid(undefined, { claws: 1 });
   const clawsOnly = buildArachnid(undefined, { claws: 1, legPairs: 0 });
   assert.ok(clawsOnly.length < legged.length / 2, 'legPairs 0 does not actually drop the legs');
+});
+
+// ── THE LAST FIVE, WHICH ADD NOTHING ─────────────────────────────
+// Nymph, Spriggan, Gargoyle and two Dragonlings: every one a variation
+// on something already built. After five body plans and a material
+// path, the end of the roster costs data.
+
+test('the last five add no geometry of their own', () => {
+  for (const name of ['Nymph', 'Spriggan', 'Gargoyle', 'Dragonling', 'Dragonling (elder)']) {
+    const d = BEAST_DESIGNS.find((x) => x.name === name);
+    assert.ok(d, `${name} is missing`);
+    // Everything they use was built for something else.
+    const borrowed = ['beast', 'wings', 'horns', 'drape', 'fish', 'arachnid'];
+    for (const k of Object.keys(d)) {
+      if (['id', 'name', 'level', 'damage', 'weaponTier', 'build', 'zones', 'mats', 'hideRamp', 'bootRamp', 'pelt', 'collapse', 'tail', 'beastHead', 'claws'].includes(k)) continue;
+      assert.ok(borrowed.includes(k), `${name} introduces "${k}" — the last five were supposed to cost data`);
+    }
+  }
+});
+
+test('spriggan: heavy where it is OLD, not where it is strong', () => {
+  // The opposite proportions to everything else here. A tree is broad
+  // through the trunk and thin at the limbs.
+  const s = BEAST_DESIGNS.find((d) => d.name === 'Spriggan');
+  assert.ok(s.build.torso > 1.25, 'the trunk is no broader than a man');
+  assert.ok(s.build.arm < 0.85, 'the branches are as thick as arms');
+  assert.ok(s.build.torso / s.build.arm > 1.5, 'trunk and limb are the same tree');
+  // And its canopy is a DRAPE, which is the least likely reuse here and
+  // the most obviously right: a canopy hangs off a thing the way a cloak
+  // does.
+  assert.ok(s.drape, 'the spriggan has no canopy');
+});
+
+test('dragonlings: the game gives them identical numbers, so the eye must tell them apart', () => {
+  const a = BEAST_DESIGNS.find((d) => d.name === 'Dragonling');
+  const b = BEAST_DESIGNS.find((d) => d.name === 'Dragonling (elder)');
+  assert.deepEqual(a.damage, b.damage, 'they disagree with ENEMY_BASICS');
+  assert.equal(a.level, b.level);
+  // So every visible difference has to be real.
+  assert.ok(b.beast.len > a.beast.len * 1.15, 'the elder is no longer');
+  assert.ok(b.beast.girth > a.beast.girth, 'the elder is no heavier');
+  assert.ok(b.wings.span > a.wings.span, 'the elder has no greater span');
+  assert.ok(b.wings.fold < a.wings.fold, 'the elder does not carry its wings further open');
 });

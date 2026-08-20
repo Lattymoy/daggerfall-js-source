@@ -897,7 +897,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // below and reuse the engine's explodeAt/applySpellToPlayer. The
   // absorb context is the dungeon constant (inside, no daylight).
   const magic = createPlayerMagic({
-    onTeleport: () => say?.('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+    // hudText.add, not `say?.()`. There is no `say` in this scope — the
+    // optional-call syntax made an undefined identifier look like a
+    // guarded one, so it read as safe and was a ReferenceError waiting
+    // for the first Recall cast in a standalone dungeon. Every other
+    // line in this file speaks through hudText, including the one four
+    // below it.
+    onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
     renderer, audio, getTexture, uploadRecord,
     collider,
     playerEntity, playerSinks,

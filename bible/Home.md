@@ -237,7 +237,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:541` - index into the 18 careers) or the INTERIM default Warrior (16,
 - `src/scenes/dungeonContext.js:547` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:574` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:900` - onTeleport: () => say?.('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:906` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:457` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:463` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:568` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
