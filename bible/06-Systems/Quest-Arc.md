@@ -139,16 +139,94 @@ recorded; the corpus gate and all pins stayed green after.
   answers-0 quirk (Message.cs:161); WhenTask's Contains-ladder
   operator misclassification; Person's whole-line options scan.
 
+## Q2b-i - THE STATE TRANCHE (SHIPPED 2026-08-20)
+
+The 25 actions that ride RESOURCE STATE, task state, world time and
+the machine's hook seams - chosen by walking the coverage backlog (the
+pending lines bucketed by owning DFU action over the FULL
+RegisterActionTemplates order) and taking everything portable without
+the item mint or world binding. Coverage moved 3297 -> 4818 of 7235
+corpus action lines (66.6%).
+
+- Trigger conditions: ClickedNpc (268 corpus lines, with the gold
+  gate deducting through the player hooks and the otherwise-task),
+  ClickedItem (66, DFU's rearm call ships commented out - kept),
+  KilledFoe (222, count clamps up to 1), InjuredFoe (172),
+  LevelCompleted (12, player level >= N), DailyFrom (25, ALWAYS-ON
+  inclusive window - as primary it stops the task outside hours;
+  hour/minute via gameDate over nowSeconds).
+- Actions: Prompt (102, yes/no through showPrompt - Q2's "Prompt at
+  Q4" note superseded by the hook seam; the parchment window itself
+  is still Q4), DialogLink (120, with the C# empty-namePlace quirk
+  kept verbatim and PINNED), AddDialog (77, its own alternation
+  order), ItemUsedDo (80, actionWatching re-raised every tick),
+  HideNpc (89) / RestoreNpc (14) / MuteNpc (9, UNMUTES on rearm) /
+  DestroyNpc (4), StartQuest (40, S%07d through the machine's data
+  seam), DropFace (37) / AddFace (35, saying pops IMMEDIATE),
+  DropAsQuestor (36) / AddAsQuestor (21), RestrainFoe (33), RemoveFoe
+  (22, missing foe THROWS -> error termination), LegalRepute (14),
+  RumorMill (10, a null message passes through), PlayVideo (10,
+  ANIM%04d.VID, five digits pends), PlaySound (3, the interval/count
+  law with timesPlayed burning on every elapsed check, no
+  SetComplete ever; SND resolution host-side - Ledger A row).
+- The RESOURCE LIFECYCLE the actions read: QuestResource grew the
+  click law (SetPlayerClicked with the muted/destroyed Person
+  refusal, RearmPlayerClick, PostTick's UNCONDITIONAL rearm - a
+  click lives one tick), the IsHidden setter, and Tick's show/hide
+  law gated whole on the scene behaviour (incl. destroyed-Person->
+  hidden, which DFU applies only in-scene); Person grew
+  isMuted/isDestroyed/isQuestor/displayName (display name pends the
+  Q3 Setup chain); Foe grew injured/restrained/killCount tracking;
+  Item grew useClicked/actionWatching and the null
+  daggerfallUnityItem pending the Q2b-ii mint.
+- Quest grew ScheduleClickRearm + the per-task clear (N0B00Y16's
+  first-come-first-serve click ownership), the questor registry
+  (AddQuestor/DropQuestor with C#'s IsQuestor-left-raised quirk,
+  DropAllQuestors from the tombstone), EndQuest's talk scrub and the
+  tombstone's talk half (post-quest rumor/questor messages by
+  outcome + the rumor/topic scrubs) through the machine hooks;
+  QUEST_MESSAGES (QuestMachine.cs:260) lives in quest.js,
+  re-exported by machine.js. The machine's nowSeconds contract is
+  now DFU year-zero seconds (DaggerfallDateTime.ToSeconds) so
+  DailyFrom/PlaySound read DFU's own calendar; nowSeconds rides the
+  PARSE opts because PlaySound's create stamps the live clock.
+- THE FULL REGISTRY MIRROR: defaultActionTemplates now holds all 82
+  RegisterActionTemplates slots in the C# order - a ported action's
+  template or a guard carrying the un-ported action's VERBATIM
+  pattern (group-stripped). Every corpus line therefore lands
+  exactly where DFU's first-match scan sends it, and THE OWNERSHIP
+  PIN (questmachine.test.js) deepEquals the per-action resolved
+  tally (35 actions) against counts derived independently by running
+  the C# patterns in C# order - any future hijack shifts a bucket
+  and fails.
+
+Gate: `test/questactions.test.js` (26 pins - the click laws, the gold
+gate, the foe tracking, the questor quirks, the DailyFrom window, the
+Prompt fork, the PlaySound cadence incl. the busy-source no-restamp,
+the DialogLink empty-namePlace quirk, the tombstone talk halves) +
+the moved coverage/ownership pins.
+
 ## Queue
 
-- **Q2b - MORE ACTIONS**: the remaining 73 Actions/*.cs in
-  coverage-ordered slices (the pin names the backlog); the
-  QuestListsManager over the vendored QuestList tables.
+- **Q2b-ii - THE ITEM TRANCHE**: GivePc (296) / GetItem (203) /
+  TotingItemAndClickedNpc (211) / MakePermanent (136) / HaveItem
+  (59) / TakeItem (44) / GiveItem (63) - they need Item.cs's
+  DaggerfallUnityItem mint (CreateItem/CreateGold against the port's
+  item system, guild reward math included) and the player-inventory
+  hooks; plus the QuestListsManager over the vendored QuestList
+  tables.
 - **Q3 - WORLD BINDING**: Place SetupLocalSite/SetupRemoteSite/
   SetupFixedLocation against the port's world data, the Person
-  Setup*NPC chain against FACTION.TXT, SiteLinks + QuestMarkers,
-  Foe spawning through the host enemy seams, Clock travel time
-  (2.5x cautious, the F-slice calculator).
+  Setup*NPC chain against FACTION.TXT (factionData/DisplayName -
+  ChangeReputeWith (207) and ReputeExceedsDo (41) wait on it),
+  SiteLinks + QuestMarkers, Foe spawning through the host enemy
+  seams (CreateFoe 241 / PlaceFoe 224 / the click+kill+injury world
+  wiring), PcAt (95) / PlaceNpc (125) / PlaceItem (106) /
+  CreateNpc(At) / RevealLocation (193) / TeleportPc /
+  DroppedItemAtPlace / the When* triggers, Clock travel time (2.5x
+  cautious, the F-slice calculator).
 - **Q4 - SURFACES**: the offer flow (guild questors + TalkManager
-  rumours), the journal/log UI, quest items through the inventory,
+  rumours - the rumor/dialog-link/questor-message hooks now carry
+  the data), the journal/log UI, the parchment popup/prompt windows,
+  the HUD escorting-faces panel, quest items through the inventory,
   the quest save envelope.

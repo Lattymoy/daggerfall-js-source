@@ -31,8 +31,20 @@ export class Item extends QuestResource {
     this.isGold = false;
     this.rangeLow = -1;
     this.rangeHigh = -1;
+    // Q2b use-tracking (Item.cs:46-47,71-86): the world's "use item
+    // from inventory" path (useItem.js at Q4's item wiring) sets
+    // useClicked while an ItemUsedDo action watches; actionWatching
+    // tells the inventory UI a quest is listening.
+    this.useClicked = false;
+    this.actionWatching = false;
+    // The minted item (Item.cs SetResource's CreateItem half) lands
+    // with the item tranche (Q2b-ii); null pends it LOUDLY - actions
+    // that need it (GivePc/GetItem/Toting...) are still guards.
+    this.daggerfallUnityItem = null;
     if (line !== null) this.setResource(line);
   }
+
+  get isItem() { return true; }
 
   setResource(line) {
     super.setResource(line);

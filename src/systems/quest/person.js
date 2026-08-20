@@ -26,8 +26,21 @@ export class Person extends QuestResource {
     this.locationScopeName = '';
     this.atHome = false;
     this.npcPending = true;   // Q1: the Setup*NPC chain (faction/world binding) ships at Q3
+    // Q2b lifecycle flags (Person.cs:42,86,143,149). displayName is
+    // assigned by the Q3 Setup*NPC chain - '' pends until then, and
+    // the questor record / dialog-link display names ride it.
+    this.isMuted = false;
+    this.isDestroyed = false;
+    this.isQuestor = false;
+    this.displayName = '';
     if (line !== null) this.setResource(line);
   }
+
+  get isPerson() { return true; }
+
+  /** DestroyNPC (Person.cs:507-511). The Tick law then keeps a
+   *  destroyed NPC hidden while it stands in a scene. */
+  destroyNPC() { this.isDestroyed = true; }
 
   setResource(line) {
     super.setResource(line);

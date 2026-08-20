@@ -8,18 +8,53 @@
 // is the law to pace by) and injects the world clock as nowSeconds.
 //
 // deps (all injectable, every one a routed system):
-//   nowSeconds()               - classic game seconds (worldClock)
+//   nowSeconds()               - world time in DFU year-zero seconds
+//                                (DaggerfallDateTime.ToSeconds - the
+//                                host injects CLASSIC_EPOCH_IN_SECONDS
+//                                + classicMinutes*60 so DailyFrom's
+//                                hour-of-day and PlaySound's cadence
+//                                read the SAME calendar as DFU's
+//                                WorldTime.Now; clocks use deltas, so
+//                                the base change is invisible to them)
 //   getQuestSourceLines(name)  - quest source by name (the vendored
-//                                pack through the host's data seam)
+//                                pack through the host's data seam;
+//                                the QuestListsManager stand-in that
+//                                StartQuest schedules through)
 //   showPopup(quest, message)  - the parchment popup (Q4 wires the
 //                                real message box; tests capture)
+//   showPrompt(quest, message, respond) - Prompt's yes/no box (Q4
+//                                wires; respond(true) = Yes)
 //   changeReputation(factionId, amount) - factionRep (Q4 wires)
+//   changeLegalRep(amount)     - LegalRepute: current region's
+//                                LegalRep += amount then the clamp
+//                                (the G2 court system owns both)
+//   playerLevel()              - PlayerEntity.Level (LevelCompleted)
+//   getGold() / deductGold(n)  - PlayerEntity.GoldPieces (ClickedNpc)
+//   playVideo(name)            - "ANIM0013.VID" (Q4 UI)
+//   playSound(soundId)         - one-shot; return truthy if it PLAYED
+//                                (C# skips while the source is busy,
+//                                and only a real play re-stamps
+//                                PlaySound's lastTimePlayed)
+//   dialogLink(uid, name, type[, name2, type2]) - TalkManager
+//                                DialogLinkForQuestInfoResource
+//   addDialog(uid, name, type, isSpecial) - AddDialogForQuestInfoResource
+//   addQuestRumor(uid, message)          - AddQuestRumorToRumorMill
+//   addProgressRumor(uid, message)       - AddOrReplaceQuestProgressRumor
+//   addQuestorPostMessage(uid, message)  - AddQuestorPostQuestMessage
+//   removeProgressRumors(uid)  - RemoveQuestProgressRumorsFromRumorMill
+//   removeQuestorPostMessage(uid) - RemoveQuestorPostQuestMessage
+//   removeQuestRumors(uid)     - RemoveQuestRumorsFromRumorMill
+//   removeQuestInfoTopics(uid) - RemoveQuestInfoTopicsForSpecificQuest
+//   addFace(resource) / dropFace(resource) - the HUD escorting faces
+//                                (AddFace/DropFace; Q4 wires)
 //
 // The 64 global variables (classic SAVEVARS.DAT state) live here and
 // reach tasks through quest.hooks.globalVars.
 
 import { Parser } from './parser.js';
 import { defaultActionTemplates } from './actions.js';
+
+export { QUEST_MESSAGES } from './quest.js';   // QuestMachine.cs:260's enum, defined leaf-side
 
 /** QuestMachine.cs:45 - how often DFU ticks quest logic per second
  *  of real time. The host paces tick() by this. */
@@ -60,13 +95,37 @@ export class QuestMachine {
   }
 
   /** Parse a quest from source lines and schedule it to start on the
-   *  next tick (DFU's InstantiateQuest -> ScheduleQuest shape). */
+   *  next tick (DFU's InstantiateQuest -> ScheduleQuest shape).
+   *  nowSeconds rides the PARSE opts because PlaySound's create
+   *  stamps lastTimePlayed from the live clock. */
   scheduleQuest(sourceLines, factionId = 0, { rolls } = {}) {
-    const quest = this.parser.parse(sourceLines, factionId, { rolls, actionFactory: this._actionFactory });
-    quest.nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
+    const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
+    const quest = this.parser.parse(sourceLines, factionId,
+      { rolls, actionFactory: this._actionFactory, nowSeconds });
     quest.hooks = {
       showPopup: (q, message) => this.deps.showPopup?.(q, message),
+      showPrompt: (q, message, respond) => this.deps.showPrompt?.(q, message, respond),
       changeReputation: (fid, amount) => this.deps.changeReputation?.(fid, amount),
+      changeLegalRep: (amount) => this.deps.changeLegalRep?.(amount),
+      playerLevel: () => this.deps.playerLevel?.() ?? 0,
+      getGold: () => this.deps.getGold?.() ?? 0,
+      deductGold: (amount) => this.deps.deductGold?.(amount),
+      playVideo: (name) => this.deps.playVideo?.(name),
+      playSound: (soundId) => this.deps.playSound?.(soundId),
+      dialogLink: (...args) => this.deps.dialogLink?.(...args),
+      addDialog: (...args) => this.deps.addDialog?.(...args),
+      addQuestRumor: (uid, message) => this.deps.addQuestRumor?.(uid, message),
+      addProgressRumor: (uid, message) => this.deps.addProgressRumor?.(uid, message),
+      addQuestorPostMessage: (uid, message) => this.deps.addQuestorPostMessage?.(uid, message),
+      removeProgressRumors: (uid) => this.deps.removeProgressRumors?.(uid),
+      removeQuestorPostMessage: (uid) => this.deps.removeQuestorPostMessage?.(uid),
+      removeQuestRumors: (uid) => this.deps.removeQuestRumors?.(uid),
+      removeQuestInfoTopics: (uid) => this.deps.removeQuestInfoTopics?.(uid),
+      addFace: (resource) => this.deps.addFace?.(resource),
+      dropFace: (resource) => this.deps.dropFace?.(resource),
+      // StartQuest schedules child quests through the machine's own
+      // data seam (QuestListsManager.GetQuest -> ScheduleQuest).
+      startQuest: (questName) => this.scheduleQuestByName(questName),
       globalVars: this.globalVars,
     };
     this.questsToInvoke.push(quest);

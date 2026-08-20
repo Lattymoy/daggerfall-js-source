@@ -50,6 +50,7 @@ export const globalVarsTable = () => need('globalVars', 'Quests-GlobalVars');
 export const placesTable = () => need('places', 'Quests-Places');
 export const itemsTable = () => need('items', 'Quests-Items');
 export const foesTable = () => need('foes', 'Quests-Foes');
+export const soundsTable = () => need('sounds', 'Quests-Sounds');
 
 /** Test seam. */
 export function resetQuestTables() {
