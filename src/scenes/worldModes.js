@@ -1266,6 +1266,9 @@ export function createWorldModes(host) {
       return null;                       // exterior: the host's own context stands
     },
     pointerdown,
+    /** A mode-owned window is up (the hosts' look gate reads this
+     *  alongside townTalk.overlayActive). */
+    get overlayHeld() { return (mode === 'interior' && !!interiorOverlay) || (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive); },
     get transitioning() { return transitioning; },
     get interiorCtx() { return interiorCtx; },
     get dungeonCtx() { return dungeonCtx; },

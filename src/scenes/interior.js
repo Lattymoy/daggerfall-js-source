@@ -85,7 +85,11 @@ export async function bootInterior(canvas, renderer, params, status) {
     pitch: 0,
   };
   const keys = new Set();
-  addEventListener('keydown', (e) => keys.add(e.code));
+  addEventListener('keydown', (e) => {
+    keys.add(e.code);
+    // DFU parity: any keypress re-engages a dropped lock (no click-to-look mode).
+    if (document.pointerLockElement !== canvas) requestLook(canvas);
+  });
   addEventListener('keyup', (e) => keys.delete(e.code));
   canvas.addEventListener('pointerdown', () => requestLook(canvas));
   addEventListener('mousemove', (e) => {

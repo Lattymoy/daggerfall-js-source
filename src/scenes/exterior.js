@@ -5,7 +5,7 @@
 // location's climate (CLIMATE.PAK -> GetWorldClimateSettings).
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
-import { requestLook } from '../player/pointerLock.js';
+import { requestLook, makeLookGate } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
@@ -688,6 +688,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     keys.add(e.code);
     if (e.code === 'AltLeft') e.preventDefault();
+    // DFU parity: mouselook is the resting state - any gameplay
+    // keypress re-engages a dropped lock (no click-to-look mode).
+    if (!townTalk.overlayActive && !(modes?.overlayHeld ?? false) && document.pointerLockElement !== canvas) requestLook(canvas);
   });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
   canvas.addEventListener('pointerdown', (e) => { if (townTalk.pointerdown(e)) return; if (modes.pointerdown?.(e)) return; requestLook(canvas); });   // U8b/U8c: native windows own the pointer
@@ -834,9 +837,11 @@ export async function bootExterior(canvas, renderer, params, status) {
   let frames = 0;
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
   let last = performance.now();
+  const lookGate = makeLookGate(canvas);
   function frame(now) {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
+    lookGate(townTalk.overlayActive || (modes?.overlayHeld ?? false));   // a window up frees the cursor; closing re-locks
 
     // Modal frame (worldModes.js): interior/dungeon consume the frame
     // entirely - none of the exterior sky/weather/light path runs.

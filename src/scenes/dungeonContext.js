@@ -28,7 +28,7 @@ import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: t
 // the duplicate pair here had nothing left to serve. AUDIT 17e F17's
 // point stands and is now made in ONE place instead of two.
 import { loadHud, drawHud, hudScale as hudScaleFor } from '../ui/hud.js';
-import { drawText, makeFont, measureText } from '../ui/text.js';
+import { drawText, makeFont } from '../ui/text.js';
 import { HudText } from '../ui/hudText.js';
 import { OneShotLatch } from '../ui/input.js';
 import { FntFile } from '../formats/fntFile.js';
@@ -1857,15 +1857,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     drawHud(renderer, canvas, hudArt, playerEntity, heading01);
     hudText.tick(dt);
     if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
-    if (hudFont && !activeOverlay && typeof document !== 'undefined' && !document.pointerLockElement) {
-      // The lock-lost gap (Mac's F8 readout: 'lock NO' was the whole
-      // dead-look mystery): the browser drops pointer lock on every
-      // Escape and re-engages only on a click - and the game said
-      // NOTHING. Now it says.
-      const s3 = hudScaleFor(canvas.width, canvas.height);
-      const msg = 'CLICK TO LOOK';
-      drawText(renderer, hudFont, msg, (canvas.width - measureText(hudFont.fnt, msg) * s3) / 2, canvas.height / 2 - 30 * s3, s3, [1, 0.9, 0.4, 1]);
-    }
+    // The CLICK TO LOOK banner retired with click-to-look itself: the
+    // hosts re-engage a dropped lock on the next gesture (DFU shape),
+    // so an unlocked frame is transient, not a mode to advertise.
+    // The F8 'lock' debug line below keeps the diagnostic.
     if (debugHud && hudFont) {
       // F8 diagnostics: every live-play unknown, on screen.
       const s2 = hudScaleFor(canvas.width, canvas.height);

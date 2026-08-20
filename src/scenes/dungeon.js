@@ -11,7 +11,7 @@
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { audio } from '../systems/audio.js';   // FS-slice: the stride plays flat 2D, as PlayerFootsteps' customAudioSource does
-import { requestLook } from '../player/pointerLock.js';
+import { requestLook, makeLookGate } from '../player/pointerLock.js';
 import { playerEntity } from '../characters/playerEntity.js';   // shot-mode __hp probe
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
@@ -138,7 +138,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const keys = new Set();
   // P15: AltLeft is Sneak (DFU default) - preventDefault on BOTH edges
   // or the browser menu steals focus (Firefox activates it on keyUP).
-  addEventListener('keydown', (e) => { keys.add(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
+  addEventListener('keydown', (e) => {
+    keys.add(e.code);
+    if (e.code === 'AltLeft') e.preventDefault();
+    // DFU parity: mouselook is the resting state - any gameplay
+    // keypress re-engages a dropped lock (no click-to-look mode).
+    if (!ctx.uiOverlayActive && document.pointerLockElement !== canvas) requestLook(canvas);
+  });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
   // U14: an OPEN overlay owns the pointer - the click goes to the
   // window, not to the pointer lock. This host had no pointer path at
@@ -254,12 +260,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // a director left ?dungeon silent - the host-gap shape, committed by the
   // very pass that was closing it. The pin below now sweeps ALL FOUR.
   const musicDirector = createMusicDirector();
+  const lookGate = makeLookGate(canvas);
   function frame(now) {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
     const right = [-Math.cos(cam.yaw), 0, Math.sin(cam.yaw)];   // camera-right = up x back (lookAt handedness): D must move SCREEN-right - the +cos/-sin vector was screen-LEFT (A/D felt swapped)
     const held = ctx.uiOverlayActive;   // overlays HOLD the world: no movers, no motor - typing a name must not walk the player off the start ledge
+    lookGate(held);   // a window up frees the cursor; closing re-locks
     if (!held) ctx.actions.update(dt);
     if (walkMode && !held) {
       // Platform riding (Ledger C row -> SHIPPED 2026-08-14): standing

@@ -7,7 +7,8 @@
 // by default (?region=<name>&loc=<name>). Scene details live in
 // src/scenes/*.js headers.
 //
-// Controls: click to lock pointer, WASD + mouse to fly, Shift for speed.
+// Controls: mouselook engages on any click/keypress and windows free
+// the cursor (DFU shape); WASD + mouse, Shift for speed.
 // ?shot raises window.__shotReady at a fixed vantage for tools/screenshot.mjs.
 
 import { Renderer } from './render/renderer.js';
@@ -17,7 +18,8 @@ import { bootInterior } from './scenes/interior.js';
 import { bootDungeon } from './scenes/dungeon.js';
 import { bootWorld } from './scenes/world.js';
 
-import { ensureArena2 } from './scenes/dataSource.js';
+import { ensureArena2, getBytes } from './scenes/dataSource.js';
+import { installCursor } from './ui/cursor.js';
 
 async function boot() {
   const canvas = document.getElementById('c');
@@ -30,6 +32,8 @@ async function boot() {
   // (Port-Doctrine) - dev serves it via middleware, production asks
   // for the folder once and persists it in IndexedDB.
   await ensureArena2();
+  // The classic pointer for every surface (fire-and-forget; never traps).
+  installCursor(getBytes);
   // Window emission style for every scene. DFU's GetMaterial default is Day.
   renderer.setWindowEmission(windowEmissionRGB(params.get('window') || 'day'));
   if (params.has('interior')) return bootInterior(canvas, renderer, params, status);
