@@ -29,11 +29,13 @@ import { MOBILE_TYPES } from './mobileTypes.js';
 /** ART_PAL spans, same convention as the other lines. */
 export const BEAST_RAMPS = Object.freeze({
   // block 2 - tan -> brown. Rat: the colour of something that lives in
-  // a wall.
-  vermin: [36, 46],
-  // block 11 - rust -> dark brown. A grizzly, and darker than anything
-  // else on four legs here.
-  grizzly: [178, 188],
+  // a wall — but taken high enough to have a silhouette. At [36,46] it
+  // meant 77 and would have been the same invisible animal the wereboar
+  // and the spider both were.
+  vermin: [32, 40],
+  // block 11 - rust -> dark brown. A grizzly: still the darkest thing on
+  // four legs here, and now light enough to be one.
+  grizzly: [176, 184],
   // block 9 - yellow -> olive. A sabertooth's coat, which has to be
   // BRIGHT or it reads as another bear in the dark.
   tawny: [146, 155],
@@ -48,6 +50,18 @@ export const BEAST_RAMPS = Object.freeze({
   // narrower than a werewolf despite being measurably WIDER, because the
   // edges went into the dark. Coarse and brown, but a boar you can see.
   bristle: [34, 42],
+  // block 5 - lavender grey -> slate, taken HIGH. Chitin: the only thing
+  // in this file that is neither fur nor skin.
+  //
+  // It was [84,91], mean 100, which cleared the contrast gate at 70 and
+  // was still lost against the dark — a spider is a small body on thin
+  // legs, so it has far less area to be seen with than a wereboar and
+  // needs more brightness for the same read. The gate's floor was set
+  // by the thing that failed rather than by the thing that has to pass.
+  chitin: [80, 86],
+  // block 9 - yellow -> olive, bright. A scorpion's carapace, which is
+  // the colour of something that wants to be seen and left alone.
+  carapace: [148, 156],
 });
 
 export const BEAST_DESIGNS = [
@@ -157,6 +171,40 @@ export const BEAST_DESIGNS = [
     collapse: ['head'],
     beastHead: { skull: 0.11, snout: 0.11, depth: 0.95, ears: 0.5, tusks: 1 },
     tail: { len: 0.12, up: 0.5 },
+  },
+
+  {
+    id: MOBILE_TYPES.Spider,
+    name: 'Giant Spider',
+    level: 3,
+    damage: [1, 8],
+    weaponTier: 0,
+    // NO SPINE AT ALL, which is why it has its own builder rather than
+    // more numbers on the quadruped's. That builder assumes a backbone
+    // with a leg near each corner, and every animal it makes is a
+    // variation on that; a spider's legs radiate from one joint in a
+    // ring and its body is two lumps rather than a tube.
+    //
+    // The test of whether a mechanism is right is what happens to the
+    // thing that does not fit it. The beasts stretched from a rat to a
+    // bear on numbers alone. This does not stretch at all, so it gets a
+    // builder, and that is the mechanism telling the truth about its own
+    // edges rather than being forced past them.
+    arachnid: { span: 0.36, ride: 0.16, thorax: 0.11, abdomen: 0.15, legR: 0.024, arch: 0.6 },
+    pelt: 'chitin',
+  },
+  {
+    id: MOBILE_TYPES.GiantScorpion,
+    name: 'Giant Scorpion',
+    level: 9,
+    damage: [1, 20],
+    weaponTier: 0,
+    // The same plan with things added: claws forward, and a tail that
+    // arches UP AND OVER rather than dragging. Lower and flatter than
+    // the spider — a scorpion keeps its body near the ground and its
+    // threat above it.
+    arachnid: { span: 0.26, ride: 0.11, thorax: 0.1, abdomen: 0.1, legR: 0.015, arch: 0.3, claws: 1, sting: 0.5 },
+    pelt: 'carapace',
   },
 
 ];

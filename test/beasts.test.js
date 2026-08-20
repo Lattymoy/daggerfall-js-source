@@ -22,7 +22,13 @@ test('beasts: a design collapses exactly what it does not use', () => {
   assert.deepEqual(ALL_GROUPS.sort(), ['armL', 'armR', 'body', 'head', 'legL', 'legR']);
   for (const d of BEAST_DESIGNS) {
     const groups = d.collapse || ALL_GROUPS;
-    if (d.beast) {
+    // Three kinds of design now, and the check has been rewritten twice
+    // for the same reason: it kept naming the kinds it knew instead of
+    // stating the rule. A design that REPLACES the whole body collapses
+    // all of it, whether the replacement is a quadruped or an arachnid;
+    // a design that replaces only the head collapses only that.
+    const wholeBody = d.beast || d.arachnid;
+    if (wholeBody) {
       assert.deepEqual(groups, ALL_GROUPS, `${d.name} is a whole animal but keeps part of a man`);
     } else {
       assert.ok(d.beastHead, `${d.name} collapses ${groups} and puts nothing in its place`);
@@ -147,6 +153,12 @@ test('beasts: every pelt survives the background it stands on', () => {
       n++;
     }
     const mean = sum / n;
-    assert.ok(mean > 70, `${name} means ${mean.toFixed(0)} — it loses its silhouette against the dark`);
+    // THE FLOOR WAS SET BY THE THING THAT FAILED, not by the thing that
+    // has to pass. A wereboar at 58 was invisible so the gate went to
+    // 70 — and a spider at 100 was ALSO invisible, because it is a small
+    // body on thin legs with a fraction of the area to be seen with.
+    // Area and brightness trade off, and 70 only ever protected the big
+    // ones.
+    assert.ok(mean > 95, `${name} means ${mean.toFixed(0)} — it loses its silhouette against the dark`);
   }
 });

@@ -53,6 +53,7 @@ import { ATRONACH_DESIGNS, atronachOpts } from './atronachs.js';
 import { BEAST_DESIGNS, beastOpts, ALL_GROUPS } from './beasts.js';
 import { buildBeastBody, buildBeastTail } from './pieces/beastBody.js';
 import { buildBeastHead, WOLF_RAMP } from './pieces/beastHead.js';
+import { buildArachnid } from './pieces/arachnid.js';
 import { buildRibcage, buildPelvis, BONE_RAMP } from './pieces/skeletonBones.js';
 import { buildHorseBody, BAY_RAMP } from './pieces/centaurBody.js';
 import { buildTusks, buildBrow, IVORY_RAMP } from './pieces/orcHead.js';
@@ -337,6 +338,9 @@ export function buildPaperdollPayload(pal, img, cif) {
       build: d.build || {}, zones: d.zones || [], hide,
       beast: d.beast ? packPiece(buildBeastBody(pelt, d.beast)) : null,
       beastHead: d.beastHead ? packPiece(buildBeastHead(pelt, d.beastHead)) : null,
+      // NO SPINE: an arachnid gets its own builder rather than more
+      // parameters on the quadruped's. See pieces/arachnid.js.
+      arachnid: d.arachnid ? packPiece(buildArachnid(pelt, d.arachnid)) : null,
       // A werebeast keeps a tail, which the human rig has no concept of.
       beastTail: d.tail ? packPiece(buildBeastTail(pelt, d.tail)) : null,
       ...villagerDelta(faces, bf),
