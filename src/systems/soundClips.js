@@ -24,6 +24,16 @@ export const SOUND = {
   SwingMediumPitch: 347,
   Burning: 420,
   Parry6: 433,
+  // ---- The UI one-shots (the windows' own calls, per DFU window) ----
+  Ignite: 16,               // CreateCharClassQuestions.AnswerAndPlayAnim
+  LevelUp: 96,              // DaggerfallCharacterSheetWindow.UpdatePlayerValues
+  DiceRoll: 300,            // StatsRollout.Reroll (chargen attribute roll)
+  ButtonClick: 360,         // DaggerfallMessageBox buttons + every assigned Button.ClickSound
+  GoldPieces: 361,          // gold transfers / deal concluded
+  PageTurn: 362,            // spellbook close + edits
+  ParchmentScratching: 363, // letter-of-credit deal
+  SelectClassDrums: 374,    // CreateCharClassSelect confirm
+  OpenBook: 384,            // spellbook OnPush
 };
 
 // ---- A2 ambient sources, verbatim data ----

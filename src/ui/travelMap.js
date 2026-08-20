@@ -14,6 +14,8 @@
 
 import { drawText, measureText } from './text.js';
 import { calculateTravelTime, calculateTripCost, travelDays } from '../systems/travel.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
 
 const GOLD = [0.85, 0.72, 0.35, 1], WHITE = [0.9, 0.9, 0.85, 1], HOT = [1, 0.95, 0.6, 1], DIM = [0.5, 0.5, 0.45, 1];
 // DFRegion.LocationTypes, the display names only.
@@ -69,8 +71,8 @@ export class TravelMapWindow {
       else if (action === 'backspace') { this.search = this.search.slice(0, -1); this._refilter(); }
       else if (action === 'up' && this.matches.length) this.cursor = (this.cursor + this.matches.length - 1) % this.matches.length;
       else if (action === 'down' && this.matches.length) this.cursor = (this.cursor + 1) % this.matches.length;
-      else if (action === 'confirm' && this.matches[this.cursor]) { this.pick = this.matches[this.cursor]; this.mode = 'options'; }
-      else if (action === 'back') this.done = true;
+      else if (action === 'confirm' && this.matches[this.cursor]) { audio.playOneShot(SOUND.ButtonClick, 1); this.pick = this.matches[this.cursor]; this.mode = 'options'; }   // FindlocationButton confirm (:964)
+      else if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; }   // ExitButton (:947)
       return;
     }
     // options
@@ -80,8 +82,9 @@ export class TravelMapWindow {
     else if (c === 'i') this.sleepModeInn = true;
     else if (c === 't') this.sleepModeInn = false;
     else if (c === 's') this.travelShip = !this.travelShip;
-    else if (action === 'back') { this.mode = 'search'; this.pick = null; }
+    else if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this.mode = 'search'; this.pick = null; }
     else if (action === 'confirm') {
+      audio.playOneShot(SOUND.ButtonClick, 1);   // BeginButton confirm (:979)
       const computed = this._compute();
       // enoughGoldCheck - one pool today; the pieces split waits on
       // letters of credit (systems/travel.js note).

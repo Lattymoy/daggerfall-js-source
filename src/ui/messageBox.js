@@ -41,6 +41,8 @@ import { CifRciFile } from '../formats/cifRciFile.js';
 import { bitmapToColor32 } from './hud.js';
 import { drawText, measureText } from './text.js';
 import { shadowText } from './nativePanel.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
 
 /** MessageBoxButtons (DaggerfallMessageBox.cs:67-90) - the value IS
  *  the BUTTONS.RCI record. */
@@ -200,11 +202,17 @@ export function drawMessageBox(renderer, m, font, box, { textColor = undefined }
   return true;
 }
 
-/** A native point -> the MB_BUTTONS value it hit, or null. */
+/** A native point -> the MB_BUTTONS value it hit, or null. Every hit
+ *  clicks: DaggerfallMessageBox.ButtonClickHandler (:487) plays
+ *  SoundClips.ButtonClick for every popup button, and this is the one
+ *  place all of the port's box clicks route through. */
 export function messageBoxHit(box, vx, vy) {
   for (const b of box.buttons) {
     const [bx, by, bw, bh] = b.rect;
-    if (vx >= bx && vy >= by && vx < bx + bw && vy < by + bh) return b.button;
+    if (vx >= bx && vy >= by && vx < bx + bw && vy < by + bh) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      return b.button;
+    }
   }
   return null;
 }

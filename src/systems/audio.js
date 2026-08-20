@@ -101,6 +101,7 @@ export class AudioEngine {
    *  them too. Only the absence of the AudioContext API disables sound. */
   _ensureCtx() {
     if (this.ctx) return;
+    if (typeof window === 'undefined') { this.enabled = false; return; }   // headless: the UI windows call playOneShot in node tests
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) { this.enabled = false; return; }
     this.ctx = new AC();

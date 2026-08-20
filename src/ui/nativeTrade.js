@@ -22,6 +22,8 @@ import { drawMenuBackdrop } from './chargenArt.js';
 import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel } from './itemScroller.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
 
 // re-exported so the composed window keeps one import surface
 export { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y };
@@ -86,15 +88,22 @@ export class NativeTradeWindow {
 
   _pickRemote(slot) {
     const it = this.hooks.shelfItems()[this.remoteScroll + slot];
-    if (it) this.lastPrice = this.hooks.buy(it) ?? this.lastPrice;
+    if (!it) return;
+    const price = this.hooks.buy(it);
+    // ConfirmTrade_OnButtonClick (:1085-1087): a concluded deal clinks
+    // (GoldPieces; the letter-of-credit ParchmentScratching arm waits
+    // on banking) - the port's trades conclude at the click.
+    if (price != null) { audio.playOneShot(SOUND.GoldPieces, 1); this.lastPrice = price; }
   }
   _pickLocal(slot) {
     const it = this.hooks.sellables()[this.localScroll + slot];
-    if (it) this.lastPrice = this.hooks.sell(it);
+    if (!it) return;
+    const price = this.hooks.sell(it);
+    if (price != null) { audio.playOneShot(SOUND.GoldPieces, 1); this.lastPrice = price; }
   }
   click(vx, vy) {
     const R = TRADE_RECTS;
-    if (inRect(R.exit, vx, vy)) { this.done = true; return true; }
+    if (inRect(R.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; return true; }   // every trade button clicks (:887-1022)
     for (const [rect, which, items, pick] of [
       [R.remoteList, 'remoteScroll', this.hooks.shelfItems(), (s) => this._pickRemote(s)],
       [R.localList, 'localScroll', this.hooks.sellables(), (s) => this._pickLocal(s)],

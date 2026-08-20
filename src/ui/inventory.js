@@ -20,8 +20,8 @@
 //   Rename is a ledger row: entity.spells hold SHARED SPELLS.STD
 //   records and the envelope stores bare indexes, so a rename needs
 //   per-entity copies + name persistence first. DFU's edit sound
-//   (SoundClips.PageTurn) and open sound (OpenBook) are unwired -
-//   the window has no audio seam; ledger residue with Rename.
+//   (SoundClips.PageTurn) and open sound (OpenBook) play through the
+//   audio singleton (the videoPlayer import pattern).
 //   Death: health 0 opens it through the ONE hurtPlayer door; Enter
 //   restarts (a page reload), and the screen's F11 hint is the real
 //   quickload binding (InputManager.SetupDefaults: F9 save, F11 load).
@@ -29,6 +29,8 @@
 import { drawText, measureText } from './text.js';
 import { itemWeight, totalWeight } from '../systems/inventory.js';
 import { isDamageHealthEffect } from '../systems/spellcast.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
 
 const panel = (renderer, canvas) =>
   renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.04, 0.03, 0.02, 0.92]);
@@ -60,6 +62,7 @@ export class SpellbookWindow {
     this.done = false;
     this.confirm = null;   // 'delete' | 'sort' - the DaggerfallMessageBox YesNo, keyed
     this.notice = null;    // the curse-tag refusal line
+    audio.playOneShot(SOUND.OpenBook, 1);   // OnPush (:173) - the U26 "no audio seam" ledger row retires
   }
   input(action) {
     const ch = typeof action === 'string' && action.startsWith('char:') ? action.slice(5).toLowerCase() : null;
@@ -82,16 +85,17 @@ export class SpellbookWindow {
       const sp = this.spells[this.cursor];
       if (sp && this.ready) { this.ready(sp); this.done = true; }
     } else if (ch === 'd' && this.spells[this.cursor]) {
+      audio.playOneShot(SOUND.PageTurn, 1);   // DeleteButton (:848)
       // DeleteButton_OnMouseClick:811-838 - the curse tags refuse
       // BEFORE the prompt; otherwise arm the YesNo.
       const tag = this.spells[this.cursor].tag;
       if (tag === VAMPIRE_SPELL_TAG) this.notice = CANNOT_DELETE_VAMP_TEXT;
       else if (tag === LYCANTHROPY_SPELL_TAG) this.notice = CANNOT_DELETE_WERE_TEXT;
       else this.confirm = 'delete';
-    } else if (ch === 's' && this.spells.length) this.confirm = 'sort';   // SortButton_OnMouseClick:900-905
-    else if (ch === 'u') this.swap(-1);
-    else if (ch === 'j') this.swap(+1);
-    else if (action === 'back' || action === 'spellbook') this.done = true;
+    } else if (ch === 's' && this.spells.length) { audio.playOneShot(SOUND.PageTurn, 1); this.confirm = 'sort'; }   // SortButton_OnMouseClick:900-905
+    else if (ch === 'u') { audio.playOneShot(SOUND.PageTurn, 1); this.swap(-1); }   // the swap buttons page (:885-895)
+    else if (ch === 'j') { audio.playOneShot(SOUND.PageTurn, 1); this.swap(+1); }
+    else if (action === 'back' || action === 'spellbook') { audio.playOneShot(SOUND.PageTurn, 1); this.done = true; }   // OnPop (:181)
   }
   /** DeleteSpellConfirm_OnButtonClick:840-852 + DaggerfallEntity.
    *  DeleteSpell (:767-773): RemoveAt, then the selection clamps

@@ -318,28 +318,28 @@ combat line numbers below are refreshed with it.
 - `src/systems/talk.js:93` - TallyCrimeGuildRequirements(true, 1) FLAGGED: the TG
 - `src/systems/talkSession.js:21` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 - `src/systems/useItem.js:230` - lantern's and refuses when it would overflow. FLAGGED: DFU
-- `src/ui/chargen.js:469` - *  (FLAGGED - the port has no FLIC decoder yet, so the next question
+- `src/ui/chargen.js:472` - *  (FLAGGED - the port has no FLIC decoder yet, so the next question
 - `src/ui/chargenArt.js:662` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/chargenArt.js:794` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
 - `src/ui/chargenArt.js:884` - *  constellation chart. FLAGGED loud: the three FLC constellation
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/inventory.js:2` - overlay-seam windows in classic text (backgrounds FLAGGED pending
 - `src/ui/inventory.js:11` - Enter readies one (retires ?spell). INTERIM loud: with no
-- `src/ui/inventory.js:45` - table is not in the source snapshot, so the VALUES are FLAGGED
-- `src/ui/inventory.js:145` - /** The known list: entity.spells when it exists; the INTERIM fallback
+- `src/ui/inventory.js:47` - table is not in the source snapshot, so the VALUES are FLAGGED
+- `src/ui/inventory.js:149` - /** The known list: entity.spells when it exists; the INTERIM fallback
 - `src/ui/listPicker.js:22` - FLAGGED: the scroll bar draws as DFU's plain thumb rect rather than
 - `src/ui/messageBox.js:35` - FLAGGED: the scrolling variant (a label taller than MaxTextHeight
-- `src/ui/messageBox.js:153` - so the strip never rides higher than that. FLAGGED as a
+- `src/ui/messageBox.js:155` - so the strip never rides higher than that. FLAGGED as a
 - `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
-- `src/ui/nativeInventory.js:103` - *  list to the cart's own 750kg collection. FLAGGED: Transportation
-- `src/ui/nativeInventory.js:117` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
-- `src/ui/nativeInventory.js:194` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-- `src/ui/nativeInventory.js:466` - FLAGGED: the hover fill is the mouse-move seam's, not this
+- `src/ui/nativeInventory.js:105` - *  list to the cart's own 750kg collection. FLAGGED: Transportation
+- `src/ui/nativeInventory.js:119` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
+- `src/ui/nativeInventory.js:197` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
+- `src/ui/nativeInventory.js:475` - FLAGGED: the hover fill is the mouse-move seam's, not this
 - `src/ui/nativeTalk.js:29` - INTERIM no-ops (their topic sources pend quests/work).
-- `src/ui/nativeTalk.js:180` - lands with the Tell-me-about slice (FLAGGED).
-- `src/ui/nativeTalk.js:192` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
+- `src/ui/nativeTalk.js:182` - lands with the Tell-me-about slice (FLAGGED).
+- `src/ui/nativeTalk.js:196` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
 - `src/ui/nativeTrade.js:16` - scroll. FLAGGED loud: the basket + mode-action flow (DFU
-- `src/ui/nativeTrade.js:69` - player's own gear. The REMOTE (shelf) list borrows it, FLAGGED at
+- `src/ui/nativeTrade.js:71` - player's own gear. The REMOTE (shelf) list borrows it, FLAGGED at
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord
 - `src/ui/paperDoll.js:63` - table, the loud INTERIM the U8f/U8g records flagged.
 - `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name

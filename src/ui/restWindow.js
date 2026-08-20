@@ -11,6 +11,8 @@
 
 import { drawText, measureText } from './text.js';
 import { RestSession, REST_PROMPT, LOITER_PROMPT, LOITER_LIMIT_HOURS, CANNOT_LOITER_LINES } from '../systems/restSession.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 const TEXT = [0.86, 0.82, 0.68, 1];
@@ -40,14 +42,16 @@ export class RestWindow {
       return;
     }
     if (this.state === 'resting') {
-      if (action === 'back') this._end(this.session.endEarly());
+      // StopRestButton (:713-718) clicks like the rest (:644-718)
+      if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this._end(this.session.endEarly()); }
       return;
     }
     if (this.state === 'selection') {
-      if (action === 'back') { this.done = true; return; }
-      if (action === 'char:1' || action === 'char:r') { this.state = 'hours'; this.mode = 'timed'; this.value = ''; this.notice = null; }
-      else if (action === 'char:2' || action === 'char:h') this._start('full', 0);
-      else if (action === 'char:3' || action === 'char:l') { this.state = 'hours'; this.mode = 'loiter'; this.value = ''; this.notice = null; }
+      if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; return; }
+      // the while/healed/loiter buttons all assign ButtonClick (:644-718)
+      if (action === 'char:1' || action === 'char:r') { audio.playOneShot(SOUND.ButtonClick, 1); this.state = 'hours'; this.mode = 'timed'; this.value = ''; this.notice = null; }
+      else if (action === 'char:2' || action === 'char:h') { audio.playOneShot(SOUND.ButtonClick, 1); this._start('full', 0); }
+      else if (action === 'char:3' || action === 'char:l') { audio.playOneShot(SOUND.ButtonClick, 1); this.state = 'hours'; this.mode = 'loiter'; this.value = ''; this.notice = null; }
       return;
     }
     // hours entry: digits, backspace, confirm

@@ -37,6 +37,8 @@ import { drawMenuBackdrop } from './chargenArt.js';
 import { drawPaperDoll, refreshPaperDoll, PAPERDOLL_ORIGIN } from './paperDoll.js';
 import { maxFatigue, liveStat } from '../systems/statMods.js';
 import { templateByIndex } from '../systems/itemTemplates.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
 
 // U8a: the module-level art cache - hosts preload once at boot; a
 // failed load leaves the text fallback in charge.
@@ -62,6 +64,7 @@ const carriedWeight = (e) => (e.items ?? []).reduce((kg, it) => kg + itemWeight(
 
 export class LevelUpScreen {
   constructor(entity, rolls = Math.random) {
+    audio.playOneShot(SOUND.LevelUp, 1);   // UpdatePlayerValues (:373) - the level-up fanfare
     this.entity = entity;
     // Roll the pool NOW so the screen can show it; the base stats are
     // the floors (statDown returns points only above them).
@@ -78,8 +81,8 @@ export class LevelUpScreen {
     const key = STAT_KEYS_ORDER[this.cursor];
     if (action === 'up') this.cursor = (this.cursor + 7) % 8;
     else if (action === 'down') this.cursor = (this.cursor + 1) % 8;
-    else if (action === 'plus') { const r = statUp(this.working[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }
-    else if (action === 'minus') { const r = statDown(this.working[key], this.base[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }
+    else if (action === 'plus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statUp(this.working[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }   // freeEdit spinner (StatsRollout.cs:255)
+    else if (action === 'minus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statDown(this.working[key], this.base[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }
     else if (action === 'confirm' && this.pool === 0) {
       // applyLevelUp rolls HP; our pre-rolled pool distributes here -
       // the distribute hook writes the hand-built stats.
@@ -146,15 +149,21 @@ export class CharSheet {
    *  requestLook. Every DFU button rect is answered or consumed. */
   click(vx, vy) {
     const R = CHARSHEET_RECTS;
-    if (inRect(R.exit, vx, vy)) { this.done = true; return true; }
+    if (inRect(R.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; return true; }
     const skills = [R.primarySkills, R.majorSkills, R.minorSkills, R.miscSkills];
     for (let i = 0; i < skills.length; i++) {
-      if (inRect(skills[i], vx, vy)) { this.input(i + 1); return true; }
+      if (inRect(skills[i], vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.input(i + 1); return true; }
     }
     // The remaining DFU buttons (name/level/gold/health/affiliations,
     // inventory/spellbook/logbook/history) pend their popups; consume
-    // the click so it never escapes the window.
-    return Object.values(R).some((r) => inRect(r, vx, vy));
+    // the click so it never escapes the window. They still CLICK -
+    // every DaggerfallCharacterSheetWindow button assigns ButtonClick
+    // (:772-952).
+    if (Object.values(R).some((r) => inRect(r, vx, vy))) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      return true;
+    }
+    return false;
   }
 
   draw(renderer, canvas, font, s) {

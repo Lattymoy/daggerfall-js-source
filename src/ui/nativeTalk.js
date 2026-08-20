@@ -32,6 +32,8 @@ import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, pointToNative, D
 import { drawMenuBackdrop } from './chargenArt.js';
 import { wrapText } from './talkWindow.js';
 import { measureText } from './text.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
 
 export const TALK_RECTS = Object.freeze({
   tellMeAbout: [4, 4, 107, 10],
@@ -178,17 +180,19 @@ export class NativeTalkWindow {
     // topic" button (DaggerfallTalkWindow) - it never closed the
     // window. Consumed as a no-op until the highlight/selection model
     // lands with the Tell-me-about slice (FLAGGED).
-    if (inRect(R.goodbye, vx, vy)) { this._close(); return true; }
-    if (inRect(R.okay, vx, vy)) return true;
-    if (inRect(R.whereIs, vx, vy) || inRect(R.categoryLocation, vx, vy)) { this._openCategories(); return true; }
-    if (inRect(R.tonePolite, vx, vy)) { this.hooks.setTone(0); return true; }
-    if (inRect(R.toneNormal, vx, vy)) { this.hooks.setTone(1); return true; }
-    if (inRect(R.toneBlunt, vx, vy)) { this.hooks.setTone(2); return true; }
-    if (inRect(R.topicUp, vx, vy)) { this._scrollBy(-TOPIC_ARROW_SCROLL); return true; }
-    if (inRect(R.topicDown, vx, vy)) { this._scrollBy(TOPIC_ARROW_SCROLL); return true; }
+    // Every talk-window button assigns ButtonClick (DaggerfallTalkWindow
+    // :1315-1605); the topic ask itself clicks at the Q&A pair (:1253).
+    if (inRect(R.goodbye, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
+    if (inRect(R.okay, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); return true; }
+    if (inRect(R.whereIs, vx, vy) || inRect(R.categoryLocation, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._openCategories(); return true; }
+    if (inRect(R.tonePolite, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(0); return true; }
+    if (inRect(R.toneNormal, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(1); return true; }
+    if (inRect(R.toneBlunt, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(2); return true; }
+    if (inRect(R.topicUp, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(-TOPIC_ARROW_SCROLL); return true; }
+    if (inRect(R.topicDown, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._scrollBy(TOPIC_ARROW_SCROLL); return true; }
     // ListBox.MouseClick's PixelWise branch: the hit row is found at
     // scrollIndex + clickY, not at the visible-row ordinal.
-    if (inRect(R.topicList, vx, vy)) { this._pickIndex(Math.floor((vy - R.topicList[1] + this.scroll) / TOPIC_ROW_H)); return true; }
+    if (inRect(R.topicList, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._pickIndex(Math.floor((vy - R.topicList[1] + this.scroll) / TOPIC_ROW_H)); return true; }
     // Tell me about / People / Things / Work: INTERIM no-ops (pend)
     return inRect(R.tellMeAbout, vx, vy) || inRect(R.categoryPeople, vx, vy)
       || inRect(R.categoryThings, vx, vy) || inRect(R.categoryWork, vx, vy);

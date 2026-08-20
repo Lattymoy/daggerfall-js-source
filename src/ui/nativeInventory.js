@@ -56,6 +56,8 @@ import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } fro
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex } from './itemScroller.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { FntFile } from '../formats/fntFile.js';
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
 import { makeFont, drawText } from './text.js';
 import { typedChar } from './input.js';   // U26: one reader for both hosts' key routing
 
@@ -182,8 +184,9 @@ export class NativeInventoryWindow {
   }
   _filtered() { return filterByTab(this.hooks.items(), this.tab); }
   _remote() { return this.hooks.loot ? this.hooks.loot.items() : this.dropped; }
-  _setTab(t) { this.tab = t; this.scroll = 0; }
+  _setTab(t) { audio.playOneShot(SOUND.ButtonClick, 1); this.tab = t; this.scroll = 0; }   // the four tab buttons (:1209-1227)
   _close() {
+    audio.playOneShot(SOUND.ButtonClick, 1);   // exit, mouse and key alike (:2082, :2090)
     this.done = true;
     if (this.dropped.length) this.hooks.onDrop?.(this.dropped);   // the world pile mints on close (OnPop)
     this.hooks.onClose?.();
@@ -216,6 +219,7 @@ export class NativeInventoryWindow {
    *
    *  U8e's three invented lines (name / weight / value) are gone. */
   _info(it) {
+    audio.playOneShot(SOUND.ButtonClick, 1);   // ShowInfoPopup (:1596)
     const rows = this.hooks.rows;
     if (!rows) {
       // No TEXT.RSC in this host: say so rather than inventing lines.
@@ -294,6 +298,7 @@ export class NativeInventoryWindow {
     if (this.mode === 'remove') {
       // LocalItemListScroller_OnItemClick Remove: transfer to the
       // remote items (whole stacks - the split popup pends)
+      audio.playOneShot(SOUND.ButtonClick, 1);   // DoTransferItem (:1583)
       const bag = this.hooks.items();
       bag.splice(bag.indexOf(it), 1);
       addItem(this._remote(), it);
@@ -328,6 +333,9 @@ export class NativeInventoryWindow {
       // RemoteItemListScroller_OnItemClick: both modes transfer to
       // the player; Equip mode also EQUIPS the taken item (verbatim
       // TransferItem(..., equip: true))
+      // DoTransferItem: gold rides its own clink (:1569), everything
+      // else the button click (:1583).
+      audio.playOneShot(it.group === 'Currency' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
       remote.splice(remote.indexOf(it), 1);
       addItem(this.hooks.items(), it);
       if (this.mode === 'equip' && this.hooks.entity) {
@@ -377,6 +385,7 @@ export class NativeInventoryWindow {
     for (const t of TABS) if (inRect(TAB_RECT[t], vx, vy)) { this._setTab(t); return true; }
     for (const mode of MODES) {
       if (!inRect(R[mode], vx, vy)) continue;
+      audio.playOneShot(SOUND.ButtonClick, 1);   // every action button clicks (:1242-1272)
       // U25: WAGON and GOLD are not mode buttons at all - they ACT
       // (:1234-1285), which is why selecting them as a mode was
       // always wrong.

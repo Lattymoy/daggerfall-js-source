@@ -24,6 +24,8 @@ import { fullName, getNameBank, GENDERS } from '../characters/nameHelper.js';   
 import { srand } from '../formats/dfRandom.js';   // AUDIT 17j F1: the name screen's reseed
 import { buildBackstory, repBoxRows, bonusPointsRows } from './chargenArt.js';   // U13 / U16
 import { RACE_TEMPLATES, FACES_PER_RACE } from '../systems/races.js';   // S3c/U9
+import { audio } from '../systems/audio.js';
+import { SOUND } from '../systems/soundClips.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
@@ -292,6 +294,7 @@ export class ChargenFlow {
     // never calls it, so the spinner stays on the stat the player left
     // it on. The port zeroed it here and on the skills screen's cancel.
     if (!force && this.rolledStats && this._statsCareer === this.career) return;
+    audio.playOneShot(SOUND.DiceRoll, 1);   // StatsRollout.Reroll (:180) - entry roll and the Reroll button alike
     const { stats, bonusPool } = rollStats(this.career, this.rolls);
     this.rolledStats = { ...stats };
     this.stats = { ...stats };
@@ -472,6 +475,7 @@ export class ChargenFlow {
    *  choice: 0 a, 1 b, 2 c. */
   answerClassQuestion(choice) {
     if (this.state !== 'classQuestions' || this.qConfirm || this.qAnswered === QUESTION_COUNT) return false;
+    audio.playOneShot(SOUND.Ignite, 1);   // AnswerAndPlayAnim (:353) - the brazier lights with the answer
     const weightIndex = answerWeightIndex(this.qIndices[this.qAnswered], choice);
     this.qWeights[weightIndex]++;
     if (this.qAnswered === QUESTION_COUNT - 1) {   // final question answered
@@ -1199,8 +1203,10 @@ export class ChargenFlow {
       // U11: the confirm box is MODAL - it eats the map's keys, and
       // its own confirm/back are Yes and No.
       if (this.raceConfirm) {
-        if (action === 'confirm') { this.raceConfirm = null; this.state = 'gender'; }
-        else if (action === 'back') this.raceConfirm = null;
+        // ButtonKeyboardEvent (DaggerfallMessageBox.cs:496) clicks for
+        // keys exactly as the mouse path does (messageBoxHit).
+        if (action === 'confirm') { audio.playOneShot(SOUND.ButtonClick, 1); this.raceConfirm = null; this.state = 'gender'; }
+        else if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this.raceConfirm = null; }
         return;
       }
       if (action === 'up') this.raceIndex = (this.raceIndex + RACE_TEMPLATES.length - 1) % RACE_TEMPLATES.length;
@@ -1211,6 +1217,7 @@ export class ChargenFlow {
         // never saw it and a tapping one always did. DFU has no
         // keyboard path here at all - the map click IS the selection -
         // so routing both through the same confirm is the closer read.
+        this._playRaceClip();
         const rows = this.describeRace?.(this.race) ?? null;
         if (rows?.length) this.raceConfirm = rows;
         else this.state = 'gender';
@@ -1241,8 +1248,9 @@ export class ChargenFlow {
     if (s === 'classQuestions') {
       // the description box is MODAL, its confirm and back Yes and No
       if (this.qConfirm) {
-        if (action === 'confirm') this._acceptQuestionClass();
-        else if (action === 'back') this._cancelQuestionClass();
+        // ButtonKeyboardEvent (DaggerfallMessageBox.cs:496), as the other boxes
+        if (action === 'confirm') { audio.playOneShot(SOUND.ButtonClick, 1); this._acceptQuestionClass(); }
+        else if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this._cancelQuestionClass(); }
         return;
       }
       // the A, B and C keys answer (Update :176-181); they arrive
@@ -1272,8 +1280,9 @@ export class ChargenFlow {
       // U17: the description box is MODAL over the list, like the race
       // screen's - its own confirm and back are Yes and No.
       if (this.classConfirm) {
-        if (action === 'confirm') { this.classConfirm = null; this._acceptStandardClass(); }
-        else if (action === 'back') this.classConfirm = null;
+        // ButtonKeyboardEvent (DaggerfallMessageBox.cs:496), as the race box
+        if (action === 'confirm') { audio.playOneShot(SOUND.ButtonClick, 1); this.classConfirm = null; this._acceptStandardClass(); }
+        else if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this.classConfirm = null; }
         return;
       }
       // U20a: ListBox.SelectPrevious/SelectNext CLAMP (ListBox.cs
@@ -1527,6 +1536,7 @@ export class ChargenFlow {
       this._enterCustomClass();
       return;
     }
+    audio.playOneShot(SOUND.SelectClassDrums, 1);   // CreateCharClassSelect (:93-94) - the pick opens the confirm under drums
     this.classConfirm = this.describeClass?.(this.classListIndex) ?? null;
     if (!this.classConfirm) this._acceptStandardClass();   // no description available: the pick stands
   }
@@ -1534,11 +1544,20 @@ export class ChargenFlow {
   /** U14: the pure apply step - a hit from chargenHit -> the state it
    *  changes. Split out from clickNative so the pointer path is
    *  testable without art, the way chargenHit already is. */
+  /** CreateCharRaceSelect (:115) plays RaceTemplate.ClipID - a BSA
+   *  sound id resolved through SndFile.GetRecordIndex, the verbatim
+   *  path ("From high in the Wrothgarian mountains..."). */
+  _playRaceClip() {
+    const idx = audio.snd?.getRecordIndex(RACE_TEMPLATES[this.raceIndex]?.clipId) ?? -1;
+    if (idx >= 0) audio.playOneShot(idx, 1);
+  }
+
   applyHit(hit) {
     if (!hit) return false;
     if (typeof hit === 'string') { this.input(hit); return true; }
     if (hit.setRace != null) {
       this.raceIndex = RACE_TEMPLATES.findIndex((r) => r.key === hit.setRace);
+      this._playRaceClip();
       // U11: the province click OPENS the confirm box (Yes accepts,
       // No returns to the map) rather than accepting outright.
       this.raceConfirm = hit.describe?.length ? hit.describe : null;
@@ -1573,7 +1592,17 @@ export class ChargenFlow {
     if (hit.qScroll != null) { this.scrollQuestionRow(hit.qScroll); return true; }
     if (hit.confirmQClass) { this._acceptQuestionClass(); return true; }
     if (hit.cancelQClass) { this._cancelQuestionClass(); return true; }
-    // U20a: the custom-class builder's controls.
+    // U20a: the custom-class builder's controls. Every builder BUTTON
+    // clicks: CreateCharCustomClass ClickSounds (:227-264, :408), the
+    // special advantage window (:257-260), the reputation window
+    // (:121, :180) and the freeEdit StatsRollout spinners (:228, :255,
+    // :279) all assign SoundClips.ButtonClick.
+    if (hit.customSkill != null || hit.customHp != null || hit.customHelp
+      || hit.customAdvantage || hit.customDisadvantage || hit.advAdd || hit.advExit
+      || hit.advRemove != null || hit.customRep || hit.customExit || hit.repExit
+      || hit.customStatCursor != null || hit.customStatStep != null) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+    }
     if (hit.customSkill != null) { this.customOpenSkillPick(hit.customSkill); return true; }
     if (hit.customHp != null) { this.customHp(hit.customHp); return true; }
     if (hit.customHelp) {
