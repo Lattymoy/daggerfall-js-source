@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { raiseSkills, applyLevelUp } from '../src/systems/advancement.js';
 import { createCharacter } from '../src/systems/chargen.js';
+import { CLASSIC_GAME_START_TIME } from '../src/systems/gameDate.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { LevelUpScreen } from '../src/ui/charsheet.js';
 
@@ -28,7 +29,7 @@ test('levelup: with a sink, raiseSkills sets ready + pending, no auto-apply', ()
   const p = mkReady();
   const hp0 = p.maxHealth, statTotal0 = Object.values(p.stats).reduce((a, b) => a + b, 0);
   let sank = 0;
-  raiseSkills(p, 500, seq(0), () => sank++);
+  raiseSkills(p, CLASSIC_GAME_START_TIME + 500, seq(0), () => sank++);
   assert.equal(sank, 1);
   assert.equal(p.readyToLevelUp, true);
   assert.equal(p.pendingLevel, 3);
@@ -37,14 +38,14 @@ test('levelup: with a sink, raiseSkills sets ready + pending, no auto-apply', ()
   assert.equal(Object.values(p.stats).reduce((a, b) => a + b, 0), statTotal0);
   // headless path (no sink) still applies immediately
   const q = mkReady();
-  raiseSkills(q, 500, seq(0));
+  raiseSkills(q, CLASSIC_GAME_START_TIME + 500, seq(0));
   assert.equal(q.level, 3);
   assert.equal(q.readyToLevelUp, false);
 });
 
 test('levelup: applyLevelUp - HP roll, hand distribution, flags cleared, idempotent', () => {
   const p = mkReady();
-  raiseSkills(p, 500, seq(0), () => {});
+  raiseSkills(p, CLASSIC_GAME_START_TIME + 500, seq(0), () => {});
   const hp0 = p.maxHealth;
   const ok = applyLevelUp(p, (stats, pool) => { stats.luck += pool; }, seq(0));
   assert.ok(ok);
@@ -57,7 +58,7 @@ test('levelup: applyLevelUp - HP roll, hand distribution, flags cleared, idempot
 
 test('levelup: the screen shares the verbatim clamps and gates confirm on pool 0', () => {
   const p = mkReady();
-  raiseSkills(p, 500, seq(0), () => {});
+  raiseSkills(p, CLASSIC_GAME_START_TIME + 500, seq(0), () => {});
   const scr = new LevelUpScreen(p, seq(0));              // pool 4
   assert.equal(scr.pool, 4);
   scr.input('confirm');

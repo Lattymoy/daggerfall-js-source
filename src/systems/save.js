@@ -34,6 +34,11 @@ const ENTITY_FIELDS = [
   // player could train every skill to its cap by saving and loading
   // between sessions. Twelve hours of a law, undone by a reload.
   'timeOfLastSkillTraining',
+  // AUDIT 23 (save-load + entity-laws lanes): timeOfLastSkillIncreaseCheck,
+  // persisted one-for-one by DFU (SerializablePlayer.cs:124, :293). Without
+  // it a backward load left a FUTURE marker that froze all skill-raise
+  // checks until the clock re-passed it.
+  'lastSkillCheckTime',
 ];
 
 /** AUDIT 17h F1: the ELEVEN social-group reputations DFU writes out
@@ -117,7 +122,14 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   snap.lightSourceIndex = entity.lightSource
     ? (entity.items ?? []).indexOf(entity.lightSource) : -1;
 
-  snap.factionRep = entity.factionRep ? snapshotFactionRep(entity.factionRep) : null;
+  // AUDIT 23 C1 (save-load lane + guilds lane, two finders): a store
+  // restored into a store-less entity is STASHED (below), and the
+  // stash must survive a re-save - writing null here erased every
+  // faction reputation in the file the first time a menu-loaded
+  // session pressed F9 before anything attached the store.
+  snap.factionRep = entity.factionRep
+    ? snapshotFactionRep(entity.factionRep)
+    : (entity.savedFactionRep ?? null);
   // GuildMembership_v1, keyed by guild GROUP exactly as DFU keys it.
   snap.guildMemberships = entity.guildMemberships
     ? Object.fromEntries(Object.entries(entity.guildMemberships).map(([k, m]) => [k, { ...m }]))
@@ -126,6 +138,10 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // DFU serialises it in SaveData_v1). Module-level world state, so
   // the snapshot reads the store, not the entity.
   snap.discovery = snapshotDiscovery();
+  // AUDIT 23 (items lane): RegionData.PriceAdjustment rides DFU's save
+  // (SerializablePlayer.cs:168); without it every load rerolled the
+  // 750..1250 band and shifted all shop prices mid-session.
+  snap.regionPrices = entity.regionPrices ? { ...entity.regionPrices } : null;
   return snap;
 }
 
@@ -210,17 +226,34 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // than replacing it. A save from before this field simply leaves the
   // freshly-read values standing - the additive-field shape the
   // fatigue default above already uses, so the envelope version holds.
-  if (snap.factionRep) restoreFactionRep(entity.factionRep, snap.factionRep);
-  if (snap.guildMemberships) {
-    entity.guildMemberships = Object.fromEntries(
-      Object.entries(snap.guildMemberships).map(([k, m]) => [k, { ...m }]));
+  // AUDIT 23 C1: the menu LOAD GAME path restores into the pre-chargen
+  // entity, which has no faction store (only chargen attaches one), and
+  // restoreFactionRep silently no-ops on a null store - DFU can never
+  // hit this because PlayerEntity is CONSTRUCTED with FactionData.
+  // Stash the columns; attachFactionRep replays them when the store is
+  // finally built (guild popup, court, chargen - whichever comes first).
+  if (snap.factionRep) {
+    if (entity.factionRep) restoreFactionRep(entity.factionRep, snap.factionRep);
+    else entity.savedFactionRep = snap.factionRep;
   }
+  // AUDIT 23 (save-load lane): GuildManager.RestoreMembershipData
+  // clears the book UNCONDITIONALLY before applying data (:321-324),
+  // so a save from before any guild contact must reset the book -
+  // keeping the live one let later-joined memberships survive a
+  // backward load.
+  entity.guildMemberships = snap.guildMemberships
+    ? Object.fromEntries(
+      Object.entries(snap.guildMemberships).map(([k, m]) => [k, { ...m }]))
+    : {};
   entity.spells = spellsByIndex
     ? snap.spells.map((i) => spellsByIndex.get(i)).filter(Boolean)
     : [];
   // T4: a load replaces the discovery store; a pre-T4 save carries no
   // field and restores an empty one (nothing was discoverable then).
   restoreDiscovery(snap.discovery);
+  // AUDIT 23: the sticky per-region price band (see snapshot side); a
+  // pre-fix save re-mints lazily, exactly as an unvisited region does.
+  entity.regionPrices = snap.regionPrices ? { ...snap.regionPrices } : {};
   return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null };
 }
 

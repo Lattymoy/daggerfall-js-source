@@ -8,6 +8,9 @@ import {
 } from '../src/systems/advancement.js';
 import { SKILLS } from '../src/systems/skills.js';
 import { createCharacter } from '../src/systems/chargen.js';
+// AUDIT 23: chargen anchors lastSkillCheckTime at the classic start
+// minute (PlayerEntity.cs:881), so the gate deltas ride the anchor.
+import { CLASSIC_GAME_START_TIME as T0 } from '../src/systems/gameDate.js';
 
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 const career = {
@@ -38,8 +41,8 @@ test('advancement: raise flow - gate, reflexes bits, cap, mastery rule', () => {
   const startLb = p.skills[lb];
   const needed = skillUsesForAdvancement(startLb, 2, 1.0, 1);
   p.skillUses[lb] = needed;                     // reflexes 2 -> mod 0x10000, calc == uses
-  assert.deepEqual(raiseSkills(p, 100), []);    // gate: <= 360 since check 0
-  const raised = raiseSkills(p, 361);
+  assert.deepEqual(raiseSkills(p, T0 + 100), []);    // gate: <= 360 since the chargen anchor
+  const raised = raiseSkills(p, T0 + 361);
   assert.deepEqual(raised, [lb]);
   assert.equal(p.skills[lb], startLb + 1);
   assert.equal(p.skillUses[lb], 0);
@@ -48,7 +51,7 @@ test('advancement: raise flow - gate, reflexes bits, cap, mastery rule', () => {
   createCharacter(q, career, 16, { rolls: seq(0) });
   const need2 = skillUsesForAdvancement(q.skills[lb], 2, 1.0, 1);
   q.skillUses[lb] = Math.ceil(need2 / 1.25);
-  assert.deepEqual(raiseSkills(q, 400), [lb]);
+  assert.deepEqual(raiseSkills(q, T0 + 400), [lb]);
   // mastery rule: a mastered primary caps the others at 94->95 boundary
   const m = { isPlayer: true, reflexes: 2, items: [] };
   createCharacter(m, career, 16, { rolls: seq(0) });
@@ -56,10 +59,10 @@ test('advancement: raise flow - gate, reflexes bits, cap, mastery rule', () => {
   assert.ok(alreadyMasteredASkill(m));
   m.skills[SKILLS.Axe] = 95;
   m.skillUses[SKILLS.Axe] = 20000;   // the verbatim tally clamp; 99999 overflows the int32 shift (the clamp is WHY the source shift is safe)
-  assert.deepEqual(raiseSkills(m, 500), []);    // 95 with a master: blocked
+  assert.deepEqual(raiseSkills(m, T0 + 500), []);    // 95 with a master: blocked
   m.skills[SKILLS.Axe] = 94;
   m.skillUses[SKILLS.Axe] = 20000;   // the verbatim tally clamp; 99999 overflows the int32 shift (the clamp is WHY the source shift is safe)
-  assert.deepEqual(raiseSkills(m, 900), [SKILLS.Axe]);   // 94 -> 95 allowed
+  assert.deepEqual(raiseSkills(m, T0 + 900), [SKILLS.Axe]);   // 94 -> 95 allowed
 });
 
 test('advancement: the level-up sum shape + headless leveling applies HP + pool', () => {
@@ -77,7 +80,7 @@ test('advancement: the level-up sum shape + headless leveling applies HP + pool'
   const before = { hp: p.maxHealth, str: { ...p.stats } };
   for (let k = 0; k < 17; k++) p.skills[SKILLS.LongBlade] += 1;
   p.skillUses[SKILLS.Axe] = 20000;              // any raise recomputes + levels
-  raiseSkills(p, 500, seq(0));
+  raiseSkills(p, T0 + 500, seq(0));
   assert.equal(p.level, 3);
   assert.ok(p.maxHealth > before.hp);           // HP applied
   const statTotal = Object.values(p.stats).reduce((a, b) => a + b, 0);

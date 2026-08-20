@@ -13,10 +13,13 @@
 //   (SerializableLootContainer: Items.Count == 0 ->
 //   RemoveLootContainer) - here the flat + target drop out the
 //   frame the last item leaves.
-// FLAGGED loud: pile persistence across saves (the quicksave arc
-// doesn't carry world loot yet - same standing gap as guard
-// corpses); StreamingWorld.TrackLooseObject across the ?world
+// FLAGGED loud: EXTERIOR pile persistence (the save arc snapshots
+// only the dungeon world - S12 scope - so ?world/exterior piles
+// still vanish on load where DFU serialises loose containers
+// everywhere); StreamingWorld.TrackLooseObject across the ?world
 // pixel destroy (piles share the corpse-batch frame doctrine).
+// The dungeon host rides piles through collectWorld/applyWorld
+// via restorePiles below (AUDIT 23).
 
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../systems/loot.js';
@@ -34,20 +37,42 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   let _nextId = 0;   // AUDIT 17e F28: stable ids - keys must survive releaseEmptied's splice
   const roll = pick ?? (() => Math.floor(Math.random() * RANDOM_TREASURE_ICONS.length));
 
-  /** Drop items as a pile at the player's feet; the flat mounts when
-   *  the archive's record is warm (the corpse-batch shape). */
+  /** The flat mounts when the archive's record is warm (the
+   *  corpse-batch shape); shared by drop and restore. */
+  function mount(pile) {
+    getTexture(RANDOM_TREASURE_ARCHIVE).then((t) => {
+      uploadRecordFrame(RANDOM_TREASURE_ARCHIVE, pile.record, 0);
+      const size = scaledBillboardSize(t.getSize(pile.record), t.getScale(pile.record));
+      pile.size = size;   // AUDIT 17e F23: kept so a recenter can rebuild
+      pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, `${pile.record}#0`, size, [[pile.pos[0], pile.pos[1], pile.pos[2]]]);
+    }).catch(() => {});
+  }
+
+  /** Drop items as a pile at the player's feet. */
   function dropPile(items, feet) {
     if (!items?.length) return null;
     const record = RANDOM_TREASURE_ICONS[roll()];
     const pile = { id: ++_nextId, items, pos: [feet[0], feet[1], feet[2]], record, batch: null };
     piles.push(pile);
-    getTexture(RANDOM_TREASURE_ARCHIVE).then((t) => {
-      uploadRecordFrame(RANDOM_TREASURE_ARCHIVE, record, 0);
-      const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
-      pile.size = size;   // AUDIT 17e F23: kept so a recenter can rebuild
-      pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, `${record}#0`, size, [[pile.pos[0], pile.pos[1], pile.pos[2]]]);
-    }).catch(() => {});
+    mount(pile);
     return pile;
+  }
+
+  /** AUDIT 23 (save-load-4): piles ride the world snapshot - pos,
+   *  record, items are the container, exactly the trio DFU's
+   *  LootContainerData_v1 carries (SerializableGameObject.cs:396-416).
+   *  Clears the live set and re-mints each saved pile with its SAVED
+   *  record - a restore must not reroll the icon. A snapshot with no
+   *  piles clears, matching DFU's rebuild-from-save. */
+  function restorePiles(saved) {
+    for (const p of piles) if (p.batch) renderer.destroyBillboardBatch(p.batch);
+    piles.length = 0;
+    for (const s of saved ?? []) {
+      if (!s.items?.length) continue;
+      const pile = { id: ++_nextId, items: s.items.map((it) => ({ ...it })), pos: [s.pos[0], s.pos[1], s.pos[2]], record: s.record, batch: null };
+      piles.push(pile);
+      mount(pile);
+    }
   }
 
   // emptied piles vanish (the verbatim removal) - both reads filter
@@ -94,5 +119,5 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     }
   }
 
-  return { dropPile, batches, lootTargets, pileFor, releaseEmptied, offsetAll, _piles: piles };
+  return { dropPile, restorePiles, batches, lootTargets, pileFor, releaseEmptied, offsetAll, _piles: piles };
 }

@@ -233,7 +233,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/cityGuards.js:23` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/cityGuards.js:205` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:357` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
-- `src/scenes/droppedLoot.js:16` - FLAGGED loud: pile persistence across saves (the quicksave arc
+- `src/scenes/droppedLoot.js:16` - FLAGGED loud: EXTERIOR pile persistence (the save arc snapshots
 - `src/scenes/dungeonContext.js:197` - the chain lives, the motion is INTERIM (loud) until flats can tween.
 - `src/scenes/dungeonContext.js:522` - index into the 18 careers) or the INTERIM default Warrior (16,
 - `src/scenes/dungeonContext.js:528` - effects FLAGGED to the effect-library slice.
@@ -265,10 +265,10 @@ combat line numbers below are refreshed with it.
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
 - `src/systems/biography.js:81` - INTERIM, loud and the same one shopStock.js:115 carries: message
-- `src/systems/chargen.js:7` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
-- `src/systems/chargen.js:22` - INTERIM (loud): the UI distributes the bonus pools by hand; the
-- `src/systems/chargen.js:130` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
-- `src/systems/chargen.js:149` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b flow replaces this path)
+- `src/systems/chargen.js:8` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
+- `src/systems/chargen.js:23` - INTERIM (loud): the UI distributes the bonus pools by hand; the
+- `src/systems/chargen.js:131` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
+- `src/systems/chargen.js:150` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b flow replaces this path)
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
 - `src/systems/court.js:7` - People-faction half-delta FLAGGED to the save-side clone).
 - `src/systems/court.js:27` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
@@ -279,7 +279,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/effects.js:610` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 - `src/systems/equip.js:170` - /** INTERIM starting equipment (chargen's starting-gear roll
-- `src/systems/factionRep.js:218` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
+- `src/systems/factionRep.js:228` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
 - `src/systems/gameDate.js:23` - FLAGGED, deliberately: the two LUNAR PHASE getters (:134-150,
 - `src/systems/guildServiceActions.js:170` - *  turning into a vampire or werebeast - FLAGGED: the port has no
 - `src/systems/guildServiceFlow.js:233` - *  other arm is FLAGGED with the window it waits on. */
@@ -311,7 +311,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/save.js:8` - (foes, loot piles, action states, doors) is FLAGGED - dungeons
-- `src/systems/save.js:66` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:71` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
 - `src/systems/shopStock.js:152` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
@@ -351,9 +351,6 @@ combat line numbers below are refreshed with it.
 - `src/ui/paperDoll.js:62` - table, the loud INTERIM the U8f/U8g records flagged.
 - `src/ui/restWindow.js:2` - text-panel idiom (backgrounds FLAGGED pending art-name
 
-<<<<<<< HEAD
-=======
->>>>>>> origin/main
 ## Audits
 
 Newest first.
