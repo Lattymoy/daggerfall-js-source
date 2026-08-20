@@ -76,7 +76,9 @@ import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../c
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
-import { removeOne } from '../systems/inventory.js';
+import { removeOne, addItem } from '../systems/inventory.js';
+import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
+import { inflictPoison } from '../systems/poisons.js';   // X2-slice: poisoned enemy arrows
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { Collider } from '../player/collider.js';
@@ -700,6 +702,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       hurtPlayer(playerEntity, dmg);
       audio.playOneShot(hitSoundFor(wpn), 1.1);
       surfacePlayer();
+    },
+    // X2-slice: the shoot frame looses a REAL arrow through the C13
+    // flight (the enemy meta hunts the player mid-capsule), ringing
+    // ArrowShoot from the archer.
+    onArrow: (from, dir, f) => {
+      arrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon });
+      audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });
     },
   });
   // The classic catch-up loop (PlayerEntity.Update:486-492): per
@@ -1548,7 +1557,28 @@ export async function bootWorld(canvas, renderer, params, status) {
     // collider (lost on geometry/terrain, as DFU misses are). Drawn
     // without a remap - the streaming pixels each carry their own,
     // and 99800's weapon archive needs none.
-    arrows.update(dt);
+    // X2-slice: ENEMY arrows hunt the player - the impact runs the
+    // same damage member the melee does (BowDamage :141), so the
+    // Dodging tally, the poison seam and the recoverable arrow all
+    // ride the hit.
+    arrows.update(dt, {
+      playerFeet: _pf,
+      onPlayerHit: (m) => {
+        const shooter = m.shooterFoe;
+        tallySkill(playerEntity, SKILLS.Dodging, 1);
+        const dmg = shooter && !shooter.dead ? calculateAttackDamage(shooter.entity, playerEntity, {
+          weapon: m.weapon,
+          onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(playerTicker.classicMinutes) }),
+          say: (l) => townTalk.say(l),
+        }) : 0;
+        if (dmg > 0) {
+          hurtPlayer(playerEntity, dmg);
+          audio.playOneShot(hitSoundFor(m.weapon), 1.1);
+          surfacePlayer();
+        }
+        addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage: the arrow is recoverable from the target
+      },
+    });
     arrows.draw(renderer);
     // C9: the exterior FP weapon - swings/sounds through the rig; the
     // open world has no action objects in melee reach (static building

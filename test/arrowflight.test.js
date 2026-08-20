@@ -45,6 +45,31 @@ test('arrowflight: flies at missile speed, dies on geometry (a miss is LOST)', (
   assert.equal(open.arrows[0].dead, true);
 });
 
+test('arrowflight X2: an ENEMY arrow hunts the player mid-capsule; a player arrow never does', () => {
+  const open = () => new ArrowFlight({ getGpuMesh: () => null, collider: new Collider(() => -100) });
+  // an enemy arrow flying +z reaches the player at z=5 and fires the
+  // impact (the dungeon missile's contact law: 0.45 + the 0.45 body)
+  const a = open();
+  const hits = [];
+  a.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 7 }, weapon: { templateIndex: 119 } });
+  for (let i = 0; i < 4; i++) a.update(0.05, { playerFeet: [0, 0, 5], onPlayerHit: (m) => hits.push(m) });
+  assert.equal(hits.length, 1, 'the impact fired once');
+  assert.equal(hits[0].shooterFoe.id, 7, 'the record carries its shooter');
+  assert.equal(a.arrows[0].dead, true, 'the landed arrow retires');
+  // the SAME flight without the enemy meta sails through the player
+  const p = open();
+  p.fire([0, 0.9, 0], [0, 0, 1]);
+  const pHits = [];
+  for (let i = 0; i < 4; i++) p.update(0.05, { playerFeet: [0, 0, 5], onPlayerHit: (m) => pHits.push(m) });
+  assert.equal(pHits.length, 0, 'player arrows resolve at the fire host, not here');
+  assert.equal(p.arrows[0].dead, false);
+  // and the bare update(dt) form still flies (the C13 hosts)
+  const bare = open();
+  bare.fire([0, 50, 0], [0, 0, 1]);
+  bare.update(0.1);
+  assert.equal(bare.arrows[0].dead, false);
+});
+
 test('arrowflight: bare terrain lands it (heightAt floor) + late collider resolve', () => {
   // heightAt = the streaming-world terrain fallback the mesh raycast
   // never sees; an arrow arcing under it has landed.

@@ -35,7 +35,8 @@ export const MAX_ACTIVE_ENCOUNTER_FOES = 8;
 export const ENCOUNTER_CULL_DISTANCE = 120;
 
 export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame,
-  playerEntity, audio, onPlayerHurt, currentMinute, say = null, rolls = Math.random }) {
+  playerEntity, audio, onPlayerHurt, currentMinute, say = null, rolls = Math.random,
+  onArrow = null }) {   // X2-slice: the host's arrow seam - (from, dir, foe) at the shoot frame
   const foes = [];        // { mobile, ai, attack, entity, batch, tex, archive, mobileType, dead, _encounter: true }
   const corpseBatches = [];
 
@@ -64,8 +65,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         playerInside: false,   // the exterior despawn band (EnemySenses.cs:269)
       });
       const attack = new EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: playerEntity.level, reflexes: playerEntity.reflexes, rolls });
-      attack.rangedAttack = false;   // RESIDUE: exterior enemy archery pends the arrow seam (hasBowAttack stays the dungeon's)
-      void hasBowAttack;
+      // X2-slice: the arrow seam exists (the host's onArrow) - bow
+      // foes read the SAME ranged-flags law the dungeon build does,
+      // and the C-slice 6..51.2 band drives them above ground.
+      attack.rangedAttack = hasBowAttack(basics);
       const archive = gender === 'female' ? basics.femaleTexture : basics.maleTexture;
       const tex = await getTexture(archive);
       const mobile = new MobileUnit(mobileType, basics, (rec) => tex.getFrameCount(rec), Math.random, gender);
@@ -130,6 +133,15 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         hurting: f.ai.hurtKnock,
         casting: false,
       }, f.ai.yaw, f.ai.feet, eye);
+      // X2-slice: the ranged -1 marker looses a REAL arrow through
+      // the host's seam, aimed at the player mid-capsule at fire
+      // time (the dungeon's shootFrame arm shape).
+      if (f.mobile.shootFrame && playerFeet && onArrow) {
+        const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
+        const d = [playerFeet[0] - from[0], playerFeet[1] + 0.9 - from[1], playerFeet[2] - from[2]];
+        const l = Math.hypot(...d) || 1;
+        onArrow(from, [d[0] / l, d[1] / l, d[2] / l], f);
+      }
       // the -1 damage marker vs the player (C16)
       if (f.mobile.hitFrame && playerFeet) {
         const hdx = playerFeet[0] - f.ai.feet[0], hdz = playerFeet[2] - f.ai.feet[2];

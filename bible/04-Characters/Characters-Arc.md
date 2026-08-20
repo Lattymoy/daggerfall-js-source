@@ -2212,3 +2212,26 @@ page's arm, RegionPower, the guard-spawn crime arms.
 sweep; the host wiring incl. the bounded catch-up, the travel
 reset, the facade routing and the melee order); 3 mutations run, 3
 killed.
+
+## CH-X2 - EXTERIOR ENEMY ARCHERY: the band fires above ground
+
+2026-08-20, the X2-slice. The encounter pool's loud rangedAttack
+residue retires: bow foes now arm by the SAME ranged-flags law the
+dungeon build reads, and the C-slice 6..51.2 band - already ported
+into the shared attack driver - simply starts firing out here. The
+ranged -1 marker looses a REAL arrow through the host's new onArrow
+seam: the C13 exterior flight gained an enemy meta that hunts the
+player mid-capsule per step (the dungeon missile's exact contact
+law), ArrowShoot rings from the archer, and the impact runs the
+shared damage member - so the Dodging tally, the C2 poison seam and
+the recoverable arrow all ride the hit, identical to the dungeon's
+arrow arm. Player arrows keep the visible-flight-only law (their
+foe impacts resolve at the fire host's own chain); the bare
+update(dt) form still serves the single-location page, which has no
+encounter pool. Exterior enemy CASTING stays the narrowed residue -
+its missile seam is the S16 decision loop the dungeon host owns.
+
+4 pins (the hunt law + the sails-through player-arrow discriminator
++ the pool/world wiring sweeps; the old residue pin rewritten to the
+live law); 4 mutations run, 4 killed. Suite 1452 across 190, green
+both modes.
