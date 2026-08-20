@@ -16,7 +16,7 @@ import { skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, worldMinutes, setWorldMinutes, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
-import { liveStat } from '../systems/statMods.js';
+import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer } from '../characters/playerEntity.js';
@@ -421,7 +421,7 @@ export function raiseAtRestEnd(entity, { say = () => {}, onLevelUp = null, rolls
   return raised;
 }
 
-export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } = {}) {
+export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, onExhausted = null } = {}) {
   // AUDIT 21 F2: a VIEW on the one world clock, not an owner. This used to
   // close over its own accumulator, so the three hosts that build a ticker -
   // world, exterior, worldModes - each counted from zero and only while
@@ -435,8 +435,16 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } 
     heal: (n) => { if (n > 0) entity.health = Math.min(entity.maxHealth ?? Infinity, (entity.health ?? 0) + n); },
     drainMagicka: (n) => { if (n > 0) entity.magicka = Math.max(0, (entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + n); },
-    drainFatigue: (n) => { if (n > 0) entity.fatigue = Math.max(0, (entity.fatigue ?? 0) - n); },
-    restoreFatigue: (n) => { if (n > 0) entity.fatigue = (entity.fatigue ?? 0) + n; },
+    drainFatigue: (n) => {
+      if (n <= 0) return;
+      entity.fatigue = Math.max(0, (entity.fatigue ?? 0) - n);
+      // AUDIT 23 (C5: hosts-5 = entity-3) - DaggerfallEntity.cs:360-366:
+      // EVERY fatigue write clamps and, at 0 with health left, raises
+      // OnExhausted - the collapse was dungeon-only; the host passes
+      // its presenter (rest-hour-or-death via exhaustionOutcome).
+      if (entity.fatigue <= 0 && (entity.health ?? 0) > 0) onExhausted?.();
+    },
+    restoreFatigue: (n) => { if (n > 0) entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + n); },   // C5: the MaxFatigue clamp
     say,
   };
   return {

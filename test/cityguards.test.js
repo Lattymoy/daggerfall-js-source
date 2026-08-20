@@ -28,6 +28,7 @@ function makeDeps(rand) {
       getScale: () => ({ width: 0, height: 0 }),
     }),
     uploadRecordFrame: () => {},
+    currentMinute: () => 523530,   // AUDIT 23 (hosts-3): the clock is REQUIRED now
     playerEntity: { level: 1, reflexes: 2, skills: 30, stats: { strength: 50, agility: 50, luck: 50 } },
     audio: null,
     onPlayerHurt: () => {},

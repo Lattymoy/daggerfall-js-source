@@ -10,7 +10,9 @@ import { requestLook } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
+import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
+import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
+import { worldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12)
 import { nearestLights } from '../world/cityLights.js';
 import { INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { lookAt, perspective } from '../world/mat4.js';
@@ -60,7 +62,7 @@ export async function bootInterior(canvas, renderer, params, status) {
 
   // R8: verbatim interior ambient; verbatim InteriorFogSettings
   // (exponential 0.001, fog color black).
-  renderer.setLighting(new Float32Array(INTERIOR_AMBIENT), 0);
+  renderer.setLighting(new Float32Array(isNight(worldMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);   // AUDIT 23 (C12): PlayerAmbientLight.cs:75-80
   renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
 
   // Camera at the Enter marker when present, else the first placement,

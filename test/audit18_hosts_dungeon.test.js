@@ -304,6 +304,7 @@ function makeDeps(rand, playerEntity, audio = null) {
       getScale: () => ({ width: 0, height: 0 }),
     }),
     uploadRecordFrame: () => {},
+    currentMinute: () => 523530,   // AUDIT 23 (hosts-3): required now
     playerEntity,
     audio,
     onPlayerHurt: () => {},
@@ -483,7 +484,10 @@ test('audit18 sweep: the swing fatigue and the tally arm are wired into the dung
 test('audit18 sweep: the Athleticism fatigue multiplier is applied and truncated AFTER the multiply', () => {
   const src = hostSrc('dungeonContext.js');
   assert.ok(/hasSpecialAbility\(playerEntity\.career, SPECIAL_ABILITY\.Athleticism\) \? 0\.9 : 1\.0/.test(src));
-  assert.ok(/drainFatigue\(Math\.trunc\(FATIGUE_LOSS\.Jumping \* fatigueLossMultiplier\(\)\)\)/.test(src), 'the jump loss');
+  // AUDIT 23 (C6): the jump drain moved INTO tickPlayerMinutes
+  // (PlayerEntity.cs:425-430 is the entity update); the host now only
+  // forwards the motor's frame edge on the activity.
+  assert.ok(/_activity\.jumped = jumped;/.test(src), 'the host forwards the jump edge');
   // The PER-MINUTE loss moved to systems/worldTick.js at AUDIT 18 so every
   // host runs it. That made it testable for the first time, so it is pinned
   // BEHAVIOURALLY here rather than by grepping the host it used to live in.
@@ -502,6 +506,10 @@ test('audit18 sweep: the Athleticism fatigue multiplier is applied and truncated
   assert.equal(runTick(0.9, { running: false, swimming: false }), 9, 'Default with Athleticism');
   assert.equal(runTick(1.0, { running: true, swimming: false }), 88, 'Running');
   assert.equal(runTick(0.9, { running: true, swimming: false }), 79, 'Running with Athleticism');
+  // AUDIT 23 (C6): the jump edge drains its own 11 x multiplier in the
+  // SAME tick (PlayerEntity.cs:427), on top of the minute's band.
+  assert.equal(runTick(1.0, { running: false, swimming: false, jumped: true }), 22, 'jump + minute');
+  assert.equal(runTick(0.9, { running: false, swimming: false, jumped: true }), 18, 'jump truncates after its multiply too');
   // PlayerEntity.cs:405 casts to int AFTER the multiply: 11 -> 9, 88 -> 79, 44 -> 39
   assert.equal(Math.trunc(11 * 0.9), 9);
   assert.equal(Math.trunc(88 * 0.9), 79);

@@ -231,8 +231,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/arrestFlow.js:158` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
 - `src/scenes/arrestFlow.js:218` - FLAGGED, still owed to their own slices: PreventEnemySpawns across the
 - `src/scenes/cityGuards.js:23` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
-- `src/scenes/cityGuards.js:207` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
-- `src/scenes/cityGuards.js:360` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
+- `src/scenes/cityGuards.js:211` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
+- `src/scenes/cityGuards.js:364` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/droppedLoot.js:16` - FLAGGED loud: EXTERIOR pile persistence (the save arc snapshots
 - `src/scenes/dungeonContext.js:197` - the chain lives, the motion is INTERIM (loud) until flats can tween.
 - `src/scenes/dungeonContext.js:524` - index into the 18 careers) or the INTERIM default Warrior (16,
@@ -240,26 +240,26 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:557` - "database FLAGGED" narrows to the skill/loot message ids).
 - `src/scenes/dungeonContext.js:994` - exterior spell paths are FLAGGED with their own hosts.
 - `src/scenes/dungeonContext.js:1179` - 129; the inventory/equip UI pends - the INTERIM dagger note
-- `src/scenes/exterior.js:398` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:404` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:553` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:665` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:784` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:449` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:455` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:605` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:717` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:850` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:153` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:501` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:522` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:528` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:708` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:995` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1206` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/worldModes.js:136` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
-- `src/scenes/worldModes.js:177` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:270` - Person placed in a dungeon is the quest machine's, FLAGGED
-- `src/scenes/worldModes.js:310` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:329` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:372` - onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToStaticNPC pends the static-NPC conversation
-- `src/scenes/worldModes.js:379` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/world.js:550` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:571` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:577` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:758` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1049` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1263` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/worldModes.js:174` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
+- `src/scenes/worldModes.js:215` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:308` - Person placed in a dungeon is the quest machine's, FLAGGED
+- `src/scenes/worldModes.js:348` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:367` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:410` - onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToStaticNPC pends the static-NPC conversation
+- `src/scenes/worldModes.js:417` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
@@ -311,7 +311,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/save.js:8` - (foes, loot piles, action states, doors) is FLAGGED - dungeons
-- `src/systems/save.js:71` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:72` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
 - `src/systems/shopStock.js:152` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)

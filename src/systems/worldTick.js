@@ -24,6 +24,7 @@ import { tickActiveEffects } from './effects.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { FATIGUE_LOSS } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
+import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 import { CLASSIC_GAME_START_TIME } from './gameDate.js';
 import { RACES } from './races.js';
 
@@ -98,6 +99,14 @@ export function tickPlayerMinutes({
     updatePoisons(entity, r + 1, sinks, rolls, say);
     tickActiveEffects(entity, sinks);
     rounds++;
+    // AUDIT 23 (C4: guilds-4 = cross-1 = entity-6) - PlayerEntity.cs
+    // :455-459: every 161280th game minute (112 days) normalizes the
+    // legal AND faction reputations toward zero, unless the prison
+    // skip set preventNormalizingReputations for its jump. The law was
+    // ported (court.normalizeReputations, AUDIT 21 F3) and never wired.
+    if ((r + 1) % NORMALIZE_INTERVAL_MINUTES === 0 && !entity.preventNormalizingReputations) {
+      normalizeReputations(entity, entity.factionRep ?? null);
+    }
   }
 
   // S20 parity: DFU applies the loss ONCE per minute-CHANGE
@@ -105,6 +114,28 @@ export function tickPlayerMinutes({
   // so a multi-minute jump costs one minute's fatigue, not one per
   // minute caught up. The (int) cast happens AFTER the multiply.
   if (nextFloor > _lastMagicRoundMinute) _lastMagicRoundMinute = nextFloor;
+
+  // AUDIT 23 (C6: hosts-10 = entity-4) - PlayerEntity.cs:425-430: the
+  // per-jump fatigue (11 x multiplier) and TallySkill(Jumping) live in
+  // the ENTITY update; activity.jumped is the motor's frame edge, so
+  // every host that feeds the tick gets the law (the dungeon's inline
+  // reportActivity arm moved here).
+  if (activity.jumped) {
+    sinks.drainFatigue?.(Math.trunc(FATIGUE_LOSS.Jumping * fatigueMultiplier));
+    tallySkill(entity, SKILLS.Jumping);
+  }
+
+  // AUDIT 23 (entity-5) - PlayerEntity.cs:309-320: TallySkill(Running, 1)
+  // every 4th classic update (4 x 0.0625s) while running. The counter
+  // rides the entity so the cadence survives host swaps; it only
+  // advances while running, exactly like runningTallyCounter.
+  if (activity.running) {
+    entity._runTallyAcc = (entity._runTallyAcc ?? 0) + dt;
+    while (entity._runTallyAcc >= 0.25) {
+      entity._runTallyAcc -= 0.25;
+      tallySkill(entity, SKILLS.Running);
+    }
+  }
 
   // The fatigue band still asks "did the minute CHANGE this frame", which is
   // DFU's `lastGameMinutes != gameMinutes` - a different marker from the

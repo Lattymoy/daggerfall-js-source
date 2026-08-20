@@ -33,7 +33,12 @@ import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
 import { getGroundArchive } from '../world/climateSwaps.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
-import { INTERIOR_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
+import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_COLOR, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
+import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
+import { worldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock
+import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
+import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
+import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
 import { routeKey, overlayAction } from '../ui/input.js';
@@ -45,7 +50,7 @@ import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
 import { SOUND, swingSoundFor } from '../systems/soundClips.js';   // AUDIT 23: the bow loose + no-enemy swing sounds
 import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
-import { setDeathPresenter } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6
+import { setDeathPresenter, hurtPlayer } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6; AUDIT 23 C5 fatal collapse
 import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying in a building
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the HUD vanished inside buildings
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
@@ -103,16 +108,49 @@ export function createWorldModes(host) {
   // hands the presenter back.
   /** AUDIT 21 (hosts lane, F8): the swing-fatigue sink, matching the dungeon's
    *  (DecreaseFatigue with the x64 assign multiplier already inside the
-   *  constant's home). Exhaustion above ground is the ticker's business, so
-   *  this only takes the points. */
+   *  constant's home). AUDIT 23 (C5): every fatigue write runs the
+   *  exhaustion law (DaggerfallEntity.cs:360-366) - the old comment
+   *  claimed the ticker owned the collapse; nothing did. */
+  let _inExhaustion = false;
+  function onExhaustedInterior() {
+    if (_inExhaustion) return;
+    _inExhaustion = true;
+    try {
+      const out = exhaustionOutcome({
+        enemiesNearby: false, swimming: false, entity: playerEntity,
+        day: false, inside: true,   // a building interior: no foes, dry feet
+      });
+      if (!interiorOverlay) interiorOverlay = new ActionTextBox(out.inWater ? [EXHAUSTED_IN_WATER] : ['You collapse from exhaustion.']);
+      if (out.kind === 'rest') {
+        interiorTicker.advance(60);
+        playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + out.health);
+        playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + out.fatigue);
+        playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + out.magicka);
+        tallySkill(playerEntity, SKILLS.Medical);
+      } else {
+        hurtPlayer(playerEntity, playerEntity.health);
+      }
+    } finally { _inExhaustion = false; }
+  }
   const drainInteriorFatigue = (n) => {
-    if (n > 0) playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - n);
+    if (n <= 0) return;
+    playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - n);
+    if (playerEntity.fatigue <= 0 && playerEntity.health > 0) onExhaustedInterior();
   };
   const presentInteriorDeath = () => {
     if (!(interiorOverlay instanceof DeathScreen)) interiorOverlay = new DeathScreen();
   };
-  setDeathPresenter(presentInteriorDeath);
+  // AUDIT 23 (hosts-1): this constructor runs AFTER the exterior host
+  // registered its presenter, and used to overwrite it for good - a
+  // death above ground presented nothing (the interior overlay only
+  // draws in interior mode). The one registration now routes by LIVE
+  // mode and hands exterior deaths back to the captured presenter.
+  const prevDeathPresenter = setDeathPresenter(() => {
+    if (mode === 'exterior' && prevDeathPresenter) return prevDeathPresenter();
+    presentInteriorDeath();
+  });
   const interiorTicker = createPlayerTicker(playerEntity, {
+    onExhausted: onExhaustedInterior,   // AUDIT 23 (C5)
     say: (msg) => console.log('[player]', msg),
     onLevelUp: () => {
       console.log('[player] You have gained a level!');
@@ -827,7 +865,14 @@ export function createWorldModes(host) {
       // and R mid-fall opened the window DFU refuses (TEXT.RSC 355).
       dungeonCtx.reportMotor?.(player.grounded, player.velY, cam.yaw);
     } else if (mode === 'interior') {
-      setDeathPresenter(presentInteriorDeath);   // AUDIT 21 hosts F6: take the presenter back from a dungeon we just left
+      // AUDIT 21 hosts F6 / AUDIT 23 (hosts-1): take the presenter back
+      // from a dungeon we just left - re-register the mode ROUTER, not
+      // the raw interior presenter, so a later walk-mode death still
+      // reaches the exterior screen.
+      setDeathPresenter(() => {
+        if (mode === 'exterior' && prevDeathPresenter) return prevDeathPresenter();
+        presentInteriorDeath();
+      });
       // AUDIT 18: interior mode had NO fall-damage seam at all, behind
       // a flag that claimed single-storey shells could never fall far
       // enough to matter. That was false - interiors carry ladder
@@ -839,7 +884,11 @@ export function createWorldModes(host) {
       // AUDIT 18: and the interior owed the same world clock the exterior
       // and dungeon hosts run - inside a building, effects, diseases,
       // poisons, fatigue and skill advancement had all stopped.
-      if (!overlayHeld) interiorTicker.tick(dt, { running: player.running, swimming: false });
+      if (!overlayHeld) interiorTicker.tick(dt, {
+        running: player.isRunning && !player.standing,   // AUDIT 23 (entity-2)
+        swimming: false,
+        jumped: player.jumped,   // C6
+      });
     }
     cam.pos = player.eye;
     const useHeld = keys.has('KeyE');
@@ -897,7 +946,9 @@ export function createWorldModes(host) {
     // the world sleeps untouched underneath (the modal frame also
     // freezes streaming - the interior-local player position must
     // never feed the recenter logic).
-    renderer.setLighting(new Float32Array(INTERIOR_AMBIENT), 0);
+    // AUDIT 23 (C12: cross-6 = wts-3) - PlayerAmbientLight.cs:75-80: a
+    // night interior takes the darker purple-tinted ambient.
+    renderer.setLighting(new Float32Array(isNight(worldMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);
     renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
     renderer.setPointLights(
       nearestLights(interiorCtx.lights, cam.pos, 16, interiorCtx.lights.map((l) => l.range)),   // per-light range (DaggerfallInterior.AddLight); a scalar drops the per-record switch

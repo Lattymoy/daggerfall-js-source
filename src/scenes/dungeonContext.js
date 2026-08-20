@@ -685,7 +685,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _motorState = '';
   let _mouseState = 'no events';
   let _inputState = '';
-  const _activity = { running: false, swimming: false, movingLessThanHalfSpeed: true };   // P11 fatigue state; P13 sneak state
+  const _activity = { running: false, swimming: false, jumped: false, movingLessThanHalfSpeed: true };   // P11 fatigue state; P13 sneak state; C6 jump edge
   const _sharedStealth = { minute: -1 };   // P13: PlayerEntity.TimeOfLastStealthCheck - one Stealth tally per classic minute across ALL foes
   let _grounded = true;   // U7: the rest gate reads the motor's live grounded flag
   // U7: the rest session's scene seams. tickVitals = one rested hour
@@ -2081,10 +2081,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       _activity.running = running;
       _activity.swimming = swimming;
       _activity.movingLessThanHalfSpeed = movingLessThanHalfSpeed;   // P13: IsMovingLessThanHalfSpeed (the motor computes it)
-      if (jumped) {
-        drainFatigue(Math.trunc(FATIGUE_LOSS.Jumping * fatigueLossMultiplier()));   // PlayerEntity.cs:427, the same multiplier
-        tallySkill(playerEntity, SKILLS.Jumping);
-      }
+      // AUDIT 23 (C6): the jump drain+tally moved into tickPlayerMinutes
+      // (PlayerEntity.cs:425-430 is the entity update) - the edge rides
+      // the activity so every host shares the one law.
+      _activity.jumped = jumped;
       // P14 fall landing (CheckFallingDamage + PlayerHealth verbatim):
       // damage = trunc(5 * (distance - 5)) past the threshold with the
       // fall-damage sound; a 2.5..5 drop is the hard-fall alert only.

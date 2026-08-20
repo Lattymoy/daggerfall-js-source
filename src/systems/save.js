@@ -9,6 +9,7 @@
 // re-derive from their location on load; the world snapshot pends
 // its slice. Versioned envelope; a mismatch refuses loudly.
 
+import { clampLegalReputations } from './court.js';   // AUDIT 23 (C4)
 import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
 import { goldStack } from './inventory.js';   // AUDIT 17f
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
@@ -178,6 +179,10 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
     return null;
   }
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
+  // AUDIT 23 (C4/guilds-4): DFU clamps every region's LegalRep right
+  // after restoring it (SerializablePlayer -> ClampLegalReputations) -
+  // a save carrying a beyond-band value loads back into the band.
+  clampLegalReputations(entity);
   entity.stats = { ...snap.stats };
   // Pre-S15 saves carry no fatigue: default to rested (MaxFatigue =
   // (Str + End) x 64) - the additive-field shape DFU's serializer

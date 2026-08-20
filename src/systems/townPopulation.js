@@ -38,9 +38,13 @@ export class TownPopulation {
    * @param opts { totalBlocks, race, makePerson(archive, guard) ->
    *   MobilePerson (the scene owns textures/collider/ground), rand }
    */
-  constructor(nav, { totalBlocks, race = 'Breton', makePerson, rand = Math.random } = {}) {
+  constructor(nav, { totalBlocks, race = 'Breton', nameBank = null, makePerson, rand = Math.random } = {}) {
     this.nav = nav;
     this.race = race;
+    // AUDIT 23 (characters-5) - MobilePersonNPC.cs:214-215: the NAME
+    // bank is the REGION's (MapsFile.RegionRaces), independent of the
+    // climate-driven billboard race; null falls back to the race bank.
+    this.nameBank = nameBank;
     this.makePerson = makePerson;
     this.rand = rand;
     this.maxPopulation = maxPopulationFor(totalBlocks);
@@ -71,7 +75,7 @@ export class TownPopulation {
    *  same split DFU has between UnityEngine.Random and DFRandom - so
    *  the RandomiseNPC roll stream is untouched. */
   _randomiseNPC(person) {
-    const bank = getNameBank(this.race);
+    const bank = this.nameBank ?? getNameBank(this.race);
     if (Math.floor(this.rand() * GUARD_CHANCE_DENOM) === 0) {
       person.setIdentity(GUARD_TEXTURE, true);
       person.gender = GENDERS.Male;

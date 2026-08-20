@@ -68,7 +68,11 @@ export const GUARD_SEEN_ANGLE = 95;            // an NPC facing the player withi
 export const GUARD_FALLBACK_MIN_DIST = 12.8;   // CreateFoeSpawner ring
 export const GUARD_FALLBACK_MAX_DIST = 51.2;
 
-export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute = () => 0, rand = Math.random }) {
+export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute, rand = Math.random }) {
+  // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
+  // let a guard's poisoned hit anchor at minute 0, and the next world
+  // tick (absolute clock ~523,530) caught the whole course up at once.
+  if (typeof currentMinute !== 'function') throw new Error('createCityGuards needs currentMinute (the classic-minute clock)');
   const guards = [];       // { mobile, ai, attack, entity, batch, tex, archive, dead, _halted }
   const corpseBatches = [];
   let _career = null;      // CLASS18.CFG, fetched once
