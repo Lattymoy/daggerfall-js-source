@@ -26,7 +26,7 @@ import { jumpSpeedMultiplier } from '../systems/skills.js';
 import {
   pickActivatable, activationTargets,
 } from '../player/activate.js';
-import { createMusicDirector, fetchBytes, motorStats, ridePlatform } from './shared.js';
+import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform } from './shared.js';
 import { routeKey } from '../ui/input.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
@@ -96,7 +96,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // P2: grounded walking is the default (?fly restores the fly cam);
   // spawn drops onto the start-marker floor.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
-  const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14); motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), climbing: climbingDeps(playerEntity) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
     const _footsteps = new FootstepMachine();   // FS-slice
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);

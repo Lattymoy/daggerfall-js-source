@@ -57,7 +57,10 @@ export const FIELD_OF_VIEW = 180;                    // deg
 export const MELEE_DISTANCE = 2.25;
 export const CLASSIC_MELEE_DISTANCE_VS_AI = 1.5;
 export const CLASSIC_TURN_DEG = 20;                  // per classic update (TurnToTarget's turnSpeed)
-export const SYSTEM_TIMER_UPDATES_DIVISOR = 0.0549254;
+// M3 / ONE DFU MEMBER ONE EXPORT: systemTimerUpdatesDivisor is a
+// PlayerMotor field in DFU (climbing divides by it too) - moved to
+// player/motor.js; re-exported so existing importers keep working.
+export { SYSTEM_TIMER_UPDATES_DIVISOR } from '../player/motor.js';
 export const SENSES_INTERVAL_UNITS = 5;              // classicTargetUpdateTimer > 5
 export const MOVE_YAW_GATE_DEG = 5.625;
 // CH4 (the senses verify pass): the STOPPED "just look at target"

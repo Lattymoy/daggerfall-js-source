@@ -147,6 +147,7 @@ export class Collider {
   raycastHit(origin, dir, maxDist) {
     let best = Infinity;
     let bestKey = null;
+    let bestTri = null;   // M3 climbing: the hit surface's normal rides the result
     for (const [bkey, bucket] of this._buckets) {
       const t = bucket.t();
       const ox = origin[0] - t[0];
@@ -173,14 +174,28 @@ export class Collider {
             visited.add(ti);
             const tri = bucket.tris[ti];
             const hit = rayTriangle(ox, oy, oz, dir, tri[0], tri[1], tri[2]);
-            if (hit !== null && hit < best && hit <= maxDist) { best = hit; bestKey = bkey; }
+            if (hit !== null && hit < best && hit <= maxDist) { best = hit; bestKey = bkey; bestTri = tri; }
           }
         }
         if (tMaxX < tMaxZ) { walked = tMaxX; tMaxX += tDeltaX; cx += stepX; }
         else { walked = tMaxZ; tMaxZ += tDeltaZ; cz += stepZ; }
       }
     }
-    return { dist: best, key: bestKey };
+    // M3 climbing (GetClimbedWallInfo :608 needs -hit.normal): the
+    // best triangle's unit normal, oriented to FACE the ray - both
+    // faces hit (as above), so the sign follows the approach side.
+    let normal = null;
+    if (bestTri) {
+      const [a, b, c] = bestTri;
+      let nx = (b[1] - a[1]) * (c[2] - a[2]) - (b[2] - a[2]) * (c[1] - a[1]);
+      let ny = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
+      let nz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+      const l = Math.hypot(nx, ny, nz) || 1;
+      nx /= l; ny /= l; nz /= l;
+      if (nx * dir[0] + ny * dir[1] + nz * dir[2] > 0) { nx = -nx; ny = -ny; nz = -nz; }
+      normal = [nx, ny, nz];
+    }
+    return { dist: best, key: bestKey, normal };
   }
 
   _resolveSphere(center, radius, out) {

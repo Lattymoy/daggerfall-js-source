@@ -33,6 +33,11 @@ export const CLASSIC_TO_UNITY_RATIO = 39.5;
 export const DF_WALK_BASE = 150;
 export const DF_CROUCH_BASE = 50;
 export const JUMP_SPEED = 4.5;
+// PlayerMotor.systemTimerUpdatesDivisor (the 0x46C memory-timer
+// divisor) - the ONE member both EnemySenses' target timer and
+// ClimbingMotor's check cadences divide by. M3: moved to its DFU
+// home (a PlayerMotor field); characters/enemyMotor.js re-exports.
+export const SYSTEM_TIMER_UPDATES_DIVISOR = 0.0549254;
 // P14 jump/fall parity (AcrobatMotor + PlayerMotor.GroundedTime,
 // verbatim): the jump fires only after 0.1 s of grounded time (the
 // bunny-hop gate), a crouched jump scales by crouchingJumpDelta 0.8,
@@ -85,6 +90,13 @@ export const CROUCH_EYE_HEIGHT = 0.8;
 export const HEIGHT_TIMER_FAST = 0.10;
 export const HEIGHT_TIMER_MEDIUM = 0.25;   // AUDIT 23 (motor-2): the forced swim-crouch clock (PlayerHeightChanger.cs:71)
 
+// M3 CLIMBING: the check machine + formulas live in climbing.js; the
+// motor owns the capsule work (the wall probe + ClimbMovement's
+// classic arm). The import is a cycle with climbing.js's divisor
+// import - both are runtime-only references, which ESM live bindings
+// resolve.
+import { ClimbingState, climbingSpeed } from './climbing.js';
+
 /** PlayerSpeedChanger.GetWalkSpeed, verbatim (audit 2026-08-16e F1):
  *  drag = 0.5 x (100 - max(30, LiveSpeed)) rides the WALK base only -
  *  the pre-audit port dropped the term and walked ~14% fast at SPD
@@ -130,10 +142,22 @@ export function swimSpeed(baseSpeed, swimmingSkill) {
  * and integrates AcrobatMotor-style vertical motion.
  */
 export class PlayerMotor {
-  constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }, { jumpBoost = null } = {}) {
+  constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }, { jumpBoost = null, climbing = null } = {}) {
     this.collider = collider;
     this.stats = stats;
     this.jumpBoost = jumpBoost;    // () => AcrobatMotor jumpSpeedMultiplier (systems/skills owns the formula)
+    // M3 CLIMBING (ClimbingMotor, classic path): the check machine -
+    // mounted ONLY when the host passes deps, exactly as the
+    // component is a mount in DFU (headless/test motors stay
+    // climbless, and the wall probe never runs on mock colliders).
+    // The water forgiveness reads the motor's own water surface -
+    // ClimbingSkillCheck :837-843's foot position collapses to
+    // feetY - 0.25 (center + 76*GS - 0.95, minus height/2 + 1.20).
+    this.climb = climbing ? new ClimbingState({
+      ...climbing,
+      waterForgiven: () => this.waterSurfaceY != null && this.pos[1] - 0.25 < this.waterSurfaceY,
+    }) : null;
+    this._climbWallDir = null;   // myLedgeDirection (latched while a wall is in reach)
     this.pos = new Float32Array(3); // FEET position
     this.velY = 0;
     this.grounded = false;
@@ -341,10 +365,101 @@ export class PlayerMotor {
     }
   }
 
+  /** M3: the wall probe - CollisionFlags.Sides + GetClimbedWallInfo's
+   *  capsule cast (:591), as two rays at 0.4h/0.8h along the wall
+   *  direction (the latched ledge direction, else the facing), reach
+   *  radius + 0.1. A hit latches myLedgeDirection = the horizontal
+   *  -normal (:608), so turning the camera mid-climb keeps the hug on
+   *  the WALL's plane, not the look. Documented departure: DFU reads
+   *  the controller's side collision flags; the probe asks the same
+   *  physical question against our collider. */
+  _climbWallProbe(yaw) {
+    // a facade collider without the ray API disables climbing rather
+    // than crashing the step
+    if (!this.collider.raycastHit) return { touching: false, wallDir: null };
+    const dir = this._climbWallDir ?? [Math.sin(yaw), 0, Math.cos(yaw)];
+    const reach = CAPSULE_RADIUS + 0.1;
+    for (const frac of [0.4, 0.8]) {
+      const o = [this.pos[0], this.pos[1] + this.height * frac, this.pos[2]];
+      const h = this.collider.raycastHit(o, dir, reach);
+      if (Number.isFinite(h.dist)) {
+        if (h.normal) {
+          const nx = -h.normal[0], nz = -h.normal[2];
+          const l = Math.hypot(nx, nz);
+          if (l > 1e-4) this._climbWallDir = [nx / l, 0, nz / l];
+        }
+        return { touching: true, wallDir: this._climbWallDir ?? dir };
+      }
+    }
+    if (!this.climb.isClimbing) this._climbWallDir = null;   // the not-climbing cleanup (:483-486)
+    return { touching: false, wallDir: null };
+  }
+
+  /** M3 CLIMBING: ClimbingCheck + the classic ClimbMovement arm
+   *  (:754-764), per fixed step - DFU calls the check from the
+   *  motor's own flow and early-returns while climbing (:319-326).
+   *  Returns true when climbing owned this step's movement. */
+  _climbStep(dt, input, yaw) {
+    const climb = this.climb;
+    if (!climb) return false;   // no deps, no ClimbingMotor component
+    const forward = input.forward > 0;
+    // the probe only runs when the machine could care (the abort
+    // ladder short-circuits it away otherwise)
+    const probe = (climb.isClimbing || forward || this.falling)
+      ? this._climbWallProbe(yaw) : { touching: false, wallDir: null };
+    const climbing = climb.step(dt, {
+      forward,
+      back: input.forward < 0,
+      anyMove: input.forward !== 0 || input.strafe !== 0,
+      falling: this.falling,
+      grounded: this.grounded,
+      levitating: this.levitating,
+      riding: false,   // TransportManager.IsOnFoot - the transport arc pends
+      touchingSides: probe.touching,
+      horizontalPos: [this.pos[0], this.pos[2]],
+      // ":318-320: ground directly below too close for climbing" -
+      // from the capsule center, height/2 + 0.12 down
+      tooCloseToGround: () => Number.isFinite(this.collider.raycast(
+        [this.pos[0], this.pos[1] + this.height / 2, this.pos[2]], [0, -1, 0], this.height / 2 + 0.12)),
+    });
+    if (!climbing) return false;
+    this.jumping = false;   // StartClimbing resets Jumping (:539)
+    if (!climb.isSlipping) {
+      // the hug: horizontal press at Speed (the STALE UpdateSpeed
+      // field - the early return sits above UpdateSpeed, the same
+      // quirk the swim path rides) + up at Speed/3. Falling stays
+      // false with the fall anchor HERE - releasing the wall starts
+      // any fall at the release height (acrobat.Falling = isSlipping).
+      this.falling = false;
+      this.fallStart = this.pos[1];
+      this.velY = 0;
+      const wd = probe.wallDir ?? [Math.sin(yaw), 0, Math.cos(yaw)];
+      const r = this.collider.move(this.pos,
+        wd[0] * this.speed * dt, climbingSpeed(this.speed) * dt, wd[2] * this.speed * dt,
+        this.height, false);
+      this.grounded = r.grounded;
+    } else {
+      // slipping: a plain gravity fall against the wall (:760-764).
+      // The fall INIT anchors at the slip start; the landing is NOT
+      // billed here - the machine sees slippedToGround next step,
+      // stops, and the normal grounded bookkeeping bills the drop.
+      if (!this.falling) { this.falling = true; this.fallStart = this.pos[1]; this.velY = 0; }
+      this.velY -= GRAVITY * dt;
+      const r = this.collider.move(this.pos, 0, this.velY * dt, 0, this.height);
+      this.grounded = r.grounded;
+      if (r.grounded) this.velY = 0;
+    }
+    return true;
+  }
+
   _step(dt, input, yaw, pitch = 0) {
     // PlayerMotor.FixedUpdate: time the grounded state FIRST, every
     // frame (the swim/levitate early-return comes after in DFU too).
     this.groundedTime = this.grounded ? this.groundedTime + dt : 0;
+    // M3 CLIMBING: the check + (while climbing) the movement - before
+    // the swim/levitate branch, exactly DFU's order (:319-326; the
+    // climb wins the step when active).
+    if (this._climbStep(dt, input, yaw)) return;
     // (P12 crouch is decided and applied by _heightAction on the
     // RENDER frame, exactly as PlayerHeightChanger is.)
     const sin = Math.sin(yaw);

@@ -982,3 +982,65 @@ unchanged). The doc-truth suite re-anchored: the breath clause is
 asserted at its new seam (dungeonContext must call breathStep,
 breath.js must own currentBreath), and the open-flags citations
 regenerated for the one-line import shift in dungeonContext.
+
+## M3 (2026-08-20): CLIMBING - the skill's consumer at last SHIPPED
+
+AUDIT 23 motor-3. The Climbing skill trained (jump tallies) with no
+mechanic reading it; ClimbingMotor.cs (905 lines) had no port. M3
+ships the CLASSIC path whole - AdvancedClimbing OFF is the port's
+law, the same doctrine as EnhancedCombatAI, so the corner wraps,
+rappel/hanging handoffs, WallEject and the overhang bumps stay with
+their setting as residue.
+
+- **player/climbing.js** - the laws: CalculateClimbingChance
+  verbatim ((int)(Lerp(base,100,skill/100) + Lerp(0,10,luck/100)),
+  skill = live Climbing +30 Khajiit x2 Climbing-effect then clamped
+  5..95 - both Unity Lerps clamp t); GetClimbingSpeed = Speed/3;
+  and the ClimbingCheck state machine, classic arms only: the
+  14-unit start countdown (x systemTimerUpdatesDivisor 0.0549254 -
+  the divisor moved to its DFU home, a PlayerMotor field, with
+  characters/enemyMotor.js re-exporting) behind the horizontal
+  tolerance 0.12, the base-70 start check whose GROUND failure
+  re-checks every frame WITHOUT resetting the timer (:430-437, the
+  verbatim tally-spam quirk) while the mid-fall grasp (base 40)
+  resets; the 15-unit continue at base 50, the 5-unit regain at
+  base 20, standing still clears a slip with no roll (:449-454);
+  the abort ladder (forward released, wall lost, levitating,
+  riding, slipped to ground, ground within height/2+0.12 while
+  descending/slipping/grasping, the non-orthogonal drift); the
+  skill tallying ONCE PER CHECK before the roll, and the underwater
+  forgiveness (:837-843 - the foot position collapses to
+  feetY - 0.25 against the block water surface).
+- **The motor's capsule work**: _climbWallProbe - two rays at
+  0.4h/0.8h along the wall direction, reach radius+0.1, standing in
+  for CollisionFlags.Sides + the GetClimbedWallInfo capsule cast
+  (documented departure); a hit latches myLedgeDirection = the
+  horizontal -normal (:608) so turning the camera mid-climb keeps
+  the hug on the WALL's plane - the collider's raycastHit grew the
+  hit surface's unit normal (oriented to face the ray) for exactly
+  this. _climbStep owns the movement: the classic ClimbMovement arm
+  (:754-758) - the wall-hug at the STALE Speed field (the early
+  return sits above UpdateSpeed, the same quirk the swim path
+  rides) + up at Speed/3, fall anchor held at the live height so a
+  release falls from the RELEASE point (acrobat.Falling =
+  isSlipping); slipping is a plain gravity fall billing from the
+  slip start through the normal landing bookkeeping.
+- **Wiring**: shared.climbingDeps (live Climbing/Luck, the Khajiit
+  race read, TallySkill(Climbing,1), the climbingMode HUD line
+  through townTalk.say where a host has one) at all three
+  PlayerMotor sites. No deps = no ClimbingMotor component - exactly
+  DFU's mount - so headless/test motors stay climbless and mock
+  colliders never see the probe.
+
+Mutations: 6 run, 6 killed (the ground-fail timer reset; the tally
+dropped; the stand-still clear dropped; the 5..95 clamp dropped;
+the water forgiveness dropped; the vertical climb component
+dropped).
+
+Pins: test/climbing.test.js x5 (the chance formula's lerps/racial/
+clamps and the speed pair; the countdown + the fail-retry quirk +
+the grasp reset; the continue/slip/regain cadences + the
+stand-still clear; the abort ladder + the water forgiveness; and a
+LIVE climb - a real Collider wall, the motor rises past 0.5, the
+skill tallies, the mode line speaks once, and the release fall
+bills from the release height).

@@ -12,7 +12,7 @@ import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackS
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
 import { hasActiveEffect } from '../systems/effects.js';
-import { skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
+import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, worldMinutes, setWorldMinutes, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
@@ -159,6 +159,25 @@ export function motorStats(entity) {
     get speed() { return entity.stats?.speed != null ? liveStat(entity, 'speed') : 50; },
     get running() { return skillValue(entity, SKILLS.Running); },
     get swimming() { return skillValue(entity, SKILLS.Swimming); },
+  };
+}
+
+/** M3 CLIMBING: the ClimbingState deps every host wires the same way.
+ *  inputs = CalculateClimbingChance's reads (live Climbing, live
+ *  Luck, the Khajiit racial arm; the Climbing effect pends - the
+ *  `enhanced` seam is here); tally = ClimbingSkillCheck's
+ *  TallySkill(Climbing, 1), once per check. The pre-chargen guard
+ *  mirrors motorStats (the INTERIM entity carries no stats). */
+export function climbingDeps(entity, say = null) {
+  return {
+    inputs: () => ({
+      climbing: skillValue(entity, SKILLS.Climbing),
+      luck: entity.stats?.luck != null ? liveStat(entity, 'luck') : 50,
+      khajiit: entity.race === 'Khajiit',
+      enhanced: false,
+    }),
+    tally: () => tallySkill(entity, SKILLS.Climbing),
+    say,
   };
 }
 
