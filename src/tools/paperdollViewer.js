@@ -23,10 +23,6 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { MISSILE_SPEED } from '../systems/spellcast.js';   // AUDIT 23: the arrow speed's one home
-import { ensureArena2, getBytes } from '../scenes/dataSource.js';
-import { DFPalette } from '../formats/dfPalette.js';
-import { ImgFile } from '../formats/imgFile.js';
-import { CifRciFile } from '../formats/cifRciFile.js';
 import { buildPaperdollPayload } from '../characters/paperdollPayload.js';
 import { makeCoreFn, buildCloth, stepCloth, articulatedCapsules } from '../characters/clothSim.js';
 import { DIRECTION_TO_STRIKE, STRIKES, sampleClip, REACTIONS } from '../characters/anims.js';
@@ -65,27 +61,47 @@ import {
 // and this page is not the place to give it one.
 /* global THREE */
 
-// ── THE USER'S OWN DATA, AT RUNTIME ──────────────────────────────
-// ensureArena2 puts up the picker if nothing can serve and persists the
-// choice, so this happens once per browser and never in the repo.
-const status = document.createElement('div');
-status.style.cssText =
-  'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;' +
-  'background:#0b0d10;color:#9fb0be;font:13px ui-monospace,monospace;z-index:50';
-status.textContent = 'reading your ARENA2...';
-document.body.append(status);
+// ── IT OPENS ON A LINK. NOTHING IS ASKED OF ANYBODY. ─────────────
+//
+// The rig is OURS — every loft row, every weapon, every pose. The only
+// things that ever came out of ARENA2 were three colour lookups, and
+// paperdollPayload now has defaults of ours for all of them. So this
+// page never puts up a picker and never blocks: it opens, and the
+// figure is there.
+//
+// If the game's data is ALREADY stored — same origin, same IndexedDB,
+// because you have played it in this browser — it is used, and you get
+// the authentic palette and the face. That is a silent upgrade, not a
+// requirement, and it is attempted with a timeout so a slow or empty
+// store cannot hold the editor shut.
+async function tryArena2() {
+  try {
+    const [{ getBytes }, { DFPalette }, { ImgFile }, { CifRciFile }] = await Promise.all([
+      import('../scenes/dataSource.js'),
+      import('../formats/dfPalette.js'),
+      import('../formats/imgFile.js'),
+      import('../formats/cifRciFile.js'),
+    ]);
+    const race = (p) => Promise.race([p, new Promise((_, no) => setTimeout(no, 4000))]);
+    const pal = new DFPalette();
+    pal.load(await race(getBytes('ART_PAL.COL')), 'ART_PAL.COL');
+    const img = new ImgFile();
+    img.load(await race(getBytes('BODY00I0.IMG')), 'BODY00I0.IMG', pal);
+    let cif = null;
+    try {
+      cif = new CifRciFile();
+      cif.load(await race(getBytes('FACE00I0.CIF')), 'FACE00I0.CIF', pal);
+    } catch {
+      cif = null; // the face is optional; the figure is not
+    }
+    return { pal, img, cif };
+  } catch {
+    return { pal: null, img: null, cif: null };
+  }
+}
 
-await ensureArena2();
-
-const pal = new DFPalette();
-pal.load(await getBytes('ART_PAL.COL'), 'ART_PAL.COL');
-const img = new ImgFile();
-img.load(await getBytes('BODY00I0.IMG'), 'BODY00I0.IMG', pal);
-const cif = new CifRciFile();
-cif.load(await getBytes('FACE00I0.CIF'), 'FACE00I0.CIF', pal);
-
+const { pal, img, cif } = await tryArena2();
 const D = buildPaperdollPayload(pal, img, cif);
-status.remove();
 
 const coreFn = makeCoreFn(D.bodyCore || [[1.5,0.2,0.1],[0,0.14,0.05]]);
 const CLOTH_RAMP = D.cloth || [[60,50,40],[210,190,155]];

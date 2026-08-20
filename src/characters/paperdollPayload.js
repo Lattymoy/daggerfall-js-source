@@ -55,15 +55,66 @@ import { buildTusks, buildBrow, IVORY_RAMP } from './pieces/orcHead.js';
  * @param {object} cif a loaded CifRciFile — FACE00I0.CIF
  * @returns {object} the editor's payload, as an OBJECT
  */
+/**
+ * OUR OWN COLOURS, so the editor never needs the game to open.
+ *
+ * The rig's GEOMETRY is ours — every loft row, every weapon, every pose.
+ * The only things that ever came out of ARENA2 were three colour
+ * lookups: the skin and boot ramps read off BODY00I0's sprite, the face
+ * bitmap, and pal.get() for the metal ramps. So they get defaults that
+ * are ours to ship, and the editor opens on a link with nothing asked
+ * of anybody.
+ *
+ * With real data present it still uses it — authentic palette,
+ * sprite-read ramps, the face. Without, it draws the same figure in our
+ * own tones and skips the face. Nothing is missing but the licence.
+ */
+const OUR_BOOT = [
+  [34, 26, 20],
+  [56, 42, 32],
+  [78, 60, 46],
+  [100, 78, 60],
+  [122, 96, 74],
+];
+
+/** A stand-in for ART_PAL: a smooth grey ramp with a warm cast. */
+function ourPalette() {
+  return {
+    get(i) {
+      const v = Math.max(0, Math.min(255, i));
+      return { r: v, g: Math.round(v * 0.97), b: Math.round(v * 0.9) };
+    },
+  };
+}
+
+/**
+ * @param {object|null} pal a loaded DFPalette, or null for ours
+ * @param {object|null} img BODY00I0.IMG, or null to use our ramps
+ * @param {object|null} cif FACE00I0.CIF, or null for no face
+ */
 export function buildPaperdollPayload(pal, img, cif) {
-  const { width: W, data } = img.getDFBitmap();
+  const haveData = !!(pal && img);
+  if (!pal) pal = ourPalette();
+  const { width: W, data } = haveData ? img.getDFBitmap() : { width: 0, data: [] };
   const lum = (i) => { const c = pal.get(i); return 0.299*c.r + 0.587*c.g + 0.114*c.b; };
   const rampOf = (r0, r1, keep) => { const m = new Map(); for (let y=r0;y<=r1;y++) for (let x=0;x<W;x++){ const i=data[y*W+x]; if(i&&(!keep||keep(x,y))) m.set(i,lum(i)); } return [...m.entries()].sort((a,b)=>a[1]-b[1]).map(e=>{const c=pal.get(e[0]);return [c.r,c.g,c.b];}); };
-  const ramps = { skin: rampOf(40, 60, (x)=>Math.abs(x-34)<14), boot: rampOf(132, 144) };
+  const ramps = haveData
+    ? { skin: rampOf(40, 60, (x) => Math.abs(x - 34) < 14), boot: rampOf(132, 144) }
+    : { skin: PALETTES.human[1].ramp, boot: OUR_BOOT };
   // Character FACE sprite (FACE00I0 record 0) projected onto the head front.
-  const fb = cif.getDFBitmap(0, 0);
-  const faceRgb = []; for (let i = 0; i < fb.data.length; i++) { const idx = fb.data[i]; if (idx) { const c = pal.get(idx); faceRgb.push([c.r, c.g, c.b]); } else faceRgb.push(null); }
-  const face = { w: fb.width, h: fb.height, rgb: faceRgb };
+  // The face is the one thing with no substitute of ours: it is a
+  // sprite, not a colour, so without ARENA2 the head simply has none.
+  // Everything else about the figure is unaffected.
+  let face = null;
+  if (cif) {
+    const fb = cif.getDFBitmap(0, 0);
+    const faceRgb = [];
+    for (let i2 = 0; i2 < fb.data.length; i2++) {
+      const idx = fb.data[i2];
+      if (idx) { const c = pal.get(idx); faceRgb.push([c.r, c.g, c.b]); } else faceRgb.push(null);
+    }
+    face = { w: fb.width, h: fb.height, rgb: faceRgb };
+  }
 
   // (The old `outfit`/`armor`/`mats` sample zones were built and never
   // passed to anything - the cloth path had no consumer until the
