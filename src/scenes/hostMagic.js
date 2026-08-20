@@ -134,6 +134,7 @@ export function createPlayerMagic({
       const r = applySpellToPlayer(sp, playerEntity.level, playerCaster());
       if (r.healed > 0) say(`You are healed ${r.healed} points.`);
       surfacePlayer();
+      readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
       return true;
     }
     if (sp.rangeType === 1) {
@@ -151,6 +152,7 @@ export function createPlayerMagic({
       tallyCastSkills(sp);
       surfacePlayer();
       applySpell(sp, playerEntity.level, t.entity, foeSinks(t), rolls, playerCaster());
+      readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
       return true;
     }
     if (sp.rangeType === 3) {
@@ -162,6 +164,7 @@ export function createPlayerMagic({
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, foes())) {
         applySpell(sp, playerEntity.level, t.entity, foeSinks(t), rolls, playerCaster());
       }
+      readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
       return true;
     }
     if (sp.rangeType !== 2 && sp.rangeType !== 4) return false;
@@ -170,6 +173,7 @@ export function createPlayerMagic({
     tallyCastSkills(sp);
     surfacePlayer();
     missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true });
+    readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
     return true;
   }
 

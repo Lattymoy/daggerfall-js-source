@@ -67,7 +67,7 @@ import { fetchBytes, ensureAudio, raiseAtRestEnd } from './shared.js';
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
-  MISSILE_LIFESPAN_S, isDamageHealthEffect,
+  MISSILE_LIFESPAN_S,
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT } from '../systems/mysticism.js';   // S27
@@ -881,7 +881,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  copy of finishChargen once; it is not going to become a third. */
   function finishChargenHere() {
     finishChargen(playerEntity, chargenFlow.result(), spellsByIndex);
-    if (playerEntity.spells.length && !magic.readied()) magic.setReadied(playerEntity.spells[0]);
     chargenFlow = null;
   }
 
@@ -920,18 +919,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     missiles.push({ spell, casterLevel: 1, pos: from, dir: null, age: 0, batch: null });
   }
 
-  // S5: player casting - the readied spell is ?spell=N or the FIRST
-  // ranged damage spell in the file (deterministic, no magic index).
-  // The spellbook readies it (toggleSpellbook's ready()), the cost
-  // comes from calculateCastCost's per-effect tables, and rangeTypes
-  // 0/1/3 are handled beside 2/4 below.
-  if (spellsByIndex) {
-    if (Number.isInteger(opts.playerSpell)) magic.setReadiedByIndex(opts.playerSpell, spellsByIndex);
-    if (!magic.readied()) {
-      for (const sp of spellsByIndex.values()) {
-        if ((sp.rangeType === 2 || sp.rangeType === 4) && sp.effects.some(isDamageHealthEffect)) { magic.setReadied(sp); break; }
-      }
-    }
+  // S5: player casting - ?spell=N readies a SPELLS.STD entry for the
+  // probes (castProbe passes it explicitly); otherwise NOTHING is
+  // readied until the spellbook does it (toggleSpellbook's ready()).
+  // The old fallthrough that readied the first ranged damage spell in
+  // the file - Wizard's Fire, index 7 - for EVERY character was an S5
+  // debug leftover: DFU's SetReadySpell fires only from explicit
+  // selection, never automatically. The cost comes from
+  // calculateCastCost's per-effect tables, and rangeTypes 0/1/3 are
+  // handled beside 2/4 below.
+  if (spellsByIndex && Number.isInteger(opts.playerSpell)) {
+    magic.setReadiedByIndex(opts.playerSpell, spellsByIndex);
   }
   // Combat bows (via S5 missiles): arrows are missiles carrying a
   // WEAPON instead of a spell - element None, model 99800 oriented
