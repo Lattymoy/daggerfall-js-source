@@ -78,6 +78,7 @@ import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../syste
 import { updatePoisons, inflictPoison } from '../systems/poisons.js';
 import { exhaustionOutcome, EXHAUSTED_IN_WATER, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { REST_TEXT } from '../systems/restSession.js';
+import { intermittentEnemySpawn, setEnemyAlert, decayEnemyAlert } from '../systems/encounters.js';   // E-slice
 import { RestWindow } from '../ui/restWindow.js';
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
@@ -399,9 +400,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      foeDeps = null;
    }
   }
-  for (const e of enemies) {
+  /** One foe from a spawn record { mobileType, gender, x, y, z,
+   *  spawnDistanceType } - the load loop's body, extracted so the
+   *  E-slice encounter spawner can mint foes at runtime (a rest
+   *  interruption builds through the SAME chain: entity, loot,
+   *  equipment, AI, attack, sprite). Load-time flat fallbacks stay
+   *  inside; a runtime caller passes fallbackFlat = false. */
+  async function buildFoeAt(e, fallbackFlat = true) {
     const basics = ENEMY_BASICS[e.mobileType];
-    if (!basics) continue;
+    if (!basics) return;
     // C17 THE HUMANOID PIVOT: class enemies (128+) render as classic
     // sprite mobiles too - the voxel foe rig goes ON ICE with the
     // voxel FP weapon (Mac's classic-visuals direction). The entity
@@ -456,7 +463,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
        // down with no signal. Skip the foe, keep the dungeon.
        console.error(`[foe] mobileType ${e.mobileType} failed to build; skipping this enemy:`, err?.message ?? err);
      }
-      continue;
+      return;
     }
     // C11 THE MONSTER PIVOT: monster types (0-42) become REAL foes -
     // the same EnemyAI/senses/stealth, EnemyAttack cadence, entity
@@ -510,18 +517,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
        // Same guard as the class branch: one bad monster must not
        // take the dungeon down - fall back to the static flat.
        console.error(`[foe] monster ${e.mobileType} failed to build; static flat fallback:`, err?.message ?? err);
-       const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
-       const key = `${archive}_0`;
-       if (!flatGroups.has(key)) flatGroups.set(key, []);
-       flatGroups.get(key).push([e.x, e.y, e.z]);
+       if (fallbackFlat) {
+         const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
+         const key = `${archive}_0`;
+         if (!flatGroups.has(key)) flatGroups.set(key, []);
+         flatGroups.get(key).push([e.x, e.y, e.z]);
+       }
      }
-      continue;
+      return;
     }
+    if (!fallbackFlat) return;
     const archive = e.gender === 'female' ? basics.femaleTexture : basics.maleTexture;
     const key = `${archive}_0`;
     if (!flatGroups.has(key)) flatGroups.set(key, []);
     flatGroups.get(key).push([e.x, e.y, e.z]);
   }
+  for (const e of enemies) await buildFoeAt(e);
 
   // S3: the REAL player entity - chargen rolls from a CLASS*.CFG
   // career before anything consumes the player. Career = ?class= (an
@@ -706,8 +717,44 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     hudText.add('You have gained a level!');
     if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
   };
+  // E-slice: a rest-interruption ENCOUNTER - one foe minted through
+  // the same chain as the load loop, at the classic minimum distance
+  // from the player (CreateFoeSpawner's placement compressed to the
+  // eight compass points, floor-landed, nearest workable first).
+  async function _spawnEncounter({ mobileType, minDistance }) {
+    const feet = lastPlayerFeet;
+    if (!feet || !foeDeps) return;
+    const basics = ENEMY_BASICS[mobileType];
+    if (!basics) return;
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI) / 4;
+      const x = feet[0] + Math.sin(a) * minDistance;
+      const z = feet[2] + Math.cos(a) * minDistance;
+      const landed = foeDeps.floorLanding(collider, [x, feet[1] + 1.5, z]);
+      if (!landed || Math.abs(landed[1] - feet[1]) > 6) continue;
+      const gender = basics.femaleTexture && Math.random() < 0.5 ? 'female' : 'male';
+      await buildFoeAt({ mobileType, gender, x: landed[0], y: landed[1], z: landed[2], spawnDistanceType: 0 }, false);
+      return;
+    }
+  }
   const _restDeps = {
-    advanceMinutes: (n) => { classicMinutesRef.value += n; },   // the round loop catches the magic rounds up
+    advanceMinutes: (n) => {
+      // E-slice: IntermittentEnemySpawn's catch-up loop across the
+      // advanced minutes (PlayerEntity.Update:486-492) - resting in
+      // a dungeon under an active enemy alert can spawn ONE foe; the
+      // hourly enemy check then breaks the rest, DFU's own flow.
+      const start = Math.floor(classicMinutesRef.value);
+      classicMinutesRef.value += n;   // the round loop catches the magic rounds up
+      for (let l = 0; l < n; l++) {
+        const hit = intermittentEnemySpawn({
+          gameMinutes: start + l + 1, inside: true, inDungeon: true, isResting: true,
+          enemyAlertActive: !!playerEntity.enemyAlertActive,
+          dungeonType: dfLocation.mapTableData.dungeonType,
+          playerLevel: playerEntity.level,
+        });
+        if (hit) { _spawnEncounter(hit); break; }
+      }
+    },
     // AUDIT 23 (entity-1): the rest-finished close raises skills - the
     // per-minute tick no longer does (DaggerfallRestWindow.cs:731).
     onRestFinished: () => raiseAtRestEnd(playerEntity, {
@@ -1353,6 +1400,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foe.entity.health -= damage;
     if (foe.entity.health <= 0) {
       foe.dead = true;
+      // E-slice: EnemyDeath:132-136 - the targeting foe's death
+      // clears the alert (survivors re-raise it next update).
+      if (foe.ai?.detected) setEnemyAlert(playerEntity, false);
       spawnCorpse(foe);
       return;
     }
@@ -1582,6 +1632,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     collisionTriggers(dt, playerFeet, moveHeld);
     updateMissiles(dt, playerFeet);
     magic.update(dt, playerFeet);   // M3: player spell missiles fly in the engine
+    decayEnemyAlert(playerEntity, classicMinutesRef.value);   // E-slice: the 8-hour alert decay (PlayerEntity.Update:380-384)
     // S19: WeaponManager's paralysis gate - weapons hide and the
     // machine holds while paralyzed (casting is NOT gated, verbatim:
     // DFU has no IsParalyzed check in the casting path).
@@ -1663,6 +1714,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // flyerFalls) - senses keep running, decisions stop, paralyzed
       // FLYERS fall out of the air, swimmers freeze.
       f.ai.update(dt, playerFeet || eye, _senses, _fParalyzed);   // E2 senses + pursuit; P13: the stealth context
+      // E-slice: EnemySenses:533-535 - a foe with the player IN SIGHT
+      // raises the enemy alert every update (the dungeon rest roll
+      // reads it; an 8-hour decay lowers it).
+      if (f.ai.inSight && f.ai.detected && !f.dead) setEnemyAlert(playerEntity, true, classicMinutesRef.value);
       // C-slice (AUDIT 23 characters-3): EnemyMotor.OpenDoors - a
       // CanOpenDoors foe whose sight ray to the player is blocked by
       // an action DOOR opens it when unlocked and within 2m. The
@@ -1969,10 +2024,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // the RESTING variant (an unaware foe blocks only within 12
       // units), same as the hourly break check. The first cut used
       // the strict variant and refused rest with any unaware foe in
-      // the whole 1024-unit spawn band. ROUTED leg: DFU also raises
-      // PlayerEntity.SetEnemyAlert(true) here - no alert state exists
-      // in this port yet (its consumers, fast travel among them, pend).
+      // the whole 1024-unit spawn band. E-slice: the alert state
+      // exists now and IS raised below - the old routed leg closed.
       if (_restDeps.enemiesNearby()) {
+        // E-slice: the ROUTED leg closes - DFU raises the alert here
+        // (DaggerfallUI:650-655), which is what arms the dungeon
+        // rest-encounter roll.
+        setEnemyAlert(playerEntity, true, classicMinutesRef.value);
         const lines = rscLines(REST_TEXT.enemiesNearby);
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;

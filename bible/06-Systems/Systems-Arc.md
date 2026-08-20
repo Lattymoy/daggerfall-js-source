@@ -1743,3 +1743,50 @@ travelmap.test.js (the typeahead, the toggles, the gold gate, the
 host's arrival-order sweep). 3 mutations run, 3 killed. The residue
 - the TRAV art, the exterior arms, transport ownership, the
 sun-averse producers, spawn prevention - is ONE ledger row.
+
+## S32 - RANDOM ENCOUNTERS: the dungeon dark answers back
+
+2026-08-20. The E-slice; entity-14's spawner half. The 45 encounter
+tables are BAKED from RandomEncounters.cs - 20 mobile ids each, 0-18
+by dungeon type, 19 underwater, 20-37 by climate x location-rect x
+day/night, 38 unused (the C# carries it), 39-44 by building type;
+the extraction strips the commented-out "DF Unity version" Cemetery
+that a naive regex swallows. ChooseRandomEnemy verbatim: the table
+pick (a town by day spawns NOTHING; unknown climates spawn nothing),
+then the classic level band - roll <= 80 reads [level-3, level+3],
+81..95 opens [0, level+1], 96+ opens [0, level+2] under level 6 and
+the whole list above, with the floor snapping to [0,5] and the
+ceiling to [14,19] - and DFU's short-list guard (not classic) kept
+for table edits.
+
+IntermittentEnemySpawn as a PURE decision: the 144-minute cadence
+((minutes/12) % 12 == 0 - twelve open minutes in every 144, pinned
+against the %6 mutant at minute 72), town-rect NIGHT at 1/24,
+wilderness 1/36 by day and 1/24 by night (the day window 360..1080
+inclusive), the dungeon arm at 1/36 ONLY while resting AND under an
+active enemy alert (RollRandomSpawn_Dungeon returns 1 otherwise),
+and the classic minimum distances 8/10/10.
+
+THE ENEMY ALERT exists now - the state toggleRest's routed leg had
+named since 2026-08-16f: a foe with the player IN SIGHT raises it
+every update (EnemySenses:533-535), opening rest with enemies
+nearby raises it (DaggerfallUI:650-655 - the routed leg closed),
+killing the foe that targets the player clears it (EnemyDeath:
+132-136; survivors re-raise next update), and it decays past 8
+hours (PlayerEntity.Update:380-384, strict >). It lives on the
+entity, one flag for every consumer.
+
+The DUNGEON REST arm is live end to end: the rest session's
+advanceMinutes runs the catch-up loop across the advanced minutes
+(PlayerEntity.Update:486-492) and breaks on the first spawn; the
+spawn mints a REAL foe through buildFoeAt - the load loop's body,
+extracted so runtime spawns ride the same chain (entity, loot,
+equipment, AI, attack, sprite) - at the classic 8 units, eight
+compass points floor-landed nearest-first; the session's hourly
+enemy check then breaks the rest, which is DFU's own flow. The
+above-ground arms are pure and pinned but their SPAWNER needs the
+exterior mobile-foe mount - the residue row's head.
+
+5 pins (the tables against the C# rows, the pick + band verbatim,
+the cadence/rolls/decision, the alert laws, the host sweep); 3
+mutations run, 3 killed. The dungeon boots and fights clean.
