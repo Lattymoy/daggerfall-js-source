@@ -1963,3 +1963,53 @@ the GL free, the key clear, health-before-reconciliation; the
 flat-follows-items pair - the empty teardown and the re-mint gated
 on the build-time size with the unrerolled record; the spawnCorpse
 key + the after-await race guard).
+
+## S37 - THE GUILD MAP REVEALS: promotion pays in places
+
+G8-slice (2026-08-20), closing AUDIT 23 guilds-8. The route note
+said it whole: TG rank-6/8 and DB every-promotion side effects -
+DiscoverRandomLocation map reveals + notebook notes.
+
+- **DiscoverRandomLocation** (PlayerGPS.cs:892-910) verbatim, as
+  the T4 discovery store's LOCATION half: candidates are the
+  current region's map-TABLE rows with the baked Discovered flag
+  false AND not already in the runtime store (keyed MapId &
+  0xfffff exactly as HasDiscoveredLocation masks, :875-882); a
+  uniform injectable pick (Ledger A) is discovered and returned;
+  a picked-clean region returns null ("there's nothing to find").
+- **The ThievesGuild gate** (ThievesGuild.cs:100-103): ranks 6/8
+  return PromotionMap1Id/PromotionMap2Id (5228/5229) when the
+  reveal SUCCEEDS, the plain 5235 otherwise - the ternary ported
+  as data (promotionReveal.mapIds) consumed in promotionTextId.
+  Ranks 2/4 never touch the reveal (pinned).
+- **The DarkBrotherhood quirk** (DarkBrotherhood.cs:105-110): the
+  reveal fires on EVERY promotion BEFORE the rank switch - an
+  even-rank promotion takes the default message and still
+  discovers a location. promotionReveal.always, verbatim.
+- **The threading**: promotionTextId/textIdFor/updateRank grew a
+  ctx; onPushEffects hands { revealLocation }; the interior host
+  threads host.revealLocation; the world host builds the seam over
+  the CURRENT pixel's region off the map TABLE (mapId + the baked
+  flag + names - no full location reads).
+- **The envelope**: snapshotDiscovery emits { buildings, locations }
+  now; restore accepts the pre-G8 FLAT building map (locationIds
+  carry a colon, so the `buildings` key can never collide). The
+  T4 envelope pin repinned to the evolved shape + the legacy arm.
+
+FOUND ON THE WAY (a new ledger row): the port's travel map searches
+the WHOLE directory - DFU draws a dungeon only when Discovered, so
+every hidden dungeon is reachable before anything reveals it. The
+G8 store is the read half; the filter + the arrival/quest reveal
+writers are the row.
+
+RESIDUE: the notebook note (readMapTG/readMapDB with %map) pends a
+notebook surface; the reveal logs loudly meanwhile.
+
+Mutations: 4 run, 4 killed (the store exclusion dropped - re-picks;
+the TG gate dropped - dry regions claim maps; the DB unconditional
+arm dropped; the locations half dropped from the envelope).
+
+Pins: test/guildreveal.test.js x4 (the candidate filter/pick/
+picked-clean-null + the envelope round trip; the TG 6/8 gate with
+the dry fall-through and the 2/4 no-reveal spy; the DB
+three-promotions-three-reveals; the host-to-law threading sweep).

@@ -84,6 +84,7 @@ import { getStaticDoors } from '../world/staticDoors.js';
 import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
+import { discoverRandomLocation } from '../systems/discovery.js';   // G8: the guild map reveals
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -1193,6 +1194,24 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
+    // G8 (guilds-8): the DiscoverRandomLocation seam for the guild
+    // promotion reveals - candidates are the CURRENT pixel's region
+    // (PlayerGPS.CurrentRegion; guild services only run inside town
+    // buildings, so the pixel always carries a location). The
+    // notebook note (readMapTG/readMapDB %map) pends a notebook
+    // surface - logged loudly so the reveal is at least traceable.
+    revealLocation: (noteKey) => {
+      const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
+      const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;
+      if (!region) return null;
+      const rows = region.mapTable.map((row, i) => ({
+        mapId: row.mapId, discovered: row.discovered,
+        name: region.mapNames[i], regionName: region.name,
+      }));
+      const picked = discoverRandomLocation(rows);
+      if (picked) console.warn(`[guilds] ${noteKey}: revealed ${picked.name} (the notebook note pends its surface)`);
+      return picked?.name ?? null;
+    },
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
     // A5b: the tavern arm needs the host's clock, and leaving one has to

@@ -389,6 +389,7 @@ export function createWorldModes(host) {
       steps: () => onPushEffects(playerEntity, guild, memberships, store, gameDate(), {
         freeHealing: freeHealing(guild, membershipOf(memberships, guild)),
         freeMagickaRecharge: freeMagickaRecharge(guild, membershipOf(memberships, guild), playerEntity),
+        revealLocation: host.revealLocation ?? null,   // G8: the TG/DB map reveals
       }),
       onJoin: () => {
         // JoinButton_OnMouseClick (:497-525). joinDecision is null for
