@@ -1695,3 +1695,51 @@ got wrong: no classic starting set carries a missile spell (the
 Mage's book is utility + touch), so the flight leg readies the
 cheapest flier off the file - the same interim list an empty book
 shows.
+
+## S31 - FAST TRAVEL: the Iliac opens up
+
+2026-08-20. The F-slice. The world host could stream the whole bay
+but the only way across it was walking. systems/travel.js now
+carries TravelTimeCalculator.cs verbatim: the classic longest-axis
+stepper (the increment compares with >, kept exactly), per-pixel
+climate through CLIMATE_INDICES and the terrain movement modifiers,
+ocean at 51 by ship / 255 without, the 102*transport>>8 fixed-point
+chain (foot/horse/cart 256/128/192), camping's 300/256 multiplier -
+inns are FASTER - and reckless as exactly the >>1 halving. The trip
+cost keeps DFU's negative-nights guard (absent from classic) and
+prices a rented ship at 25 per started 24 ocean pixels. The arrival
+clamps are pure minute math: a sun-averse traveler arriving by day
+is pushed to dusk with the minute kept; cautious night arrivals
+land at 7:10 through the literal 31-hour next-day form.
+
+The WINDOW (ui/travelMap.js) compresses DaggerfallTravelMapWindow +
+TravelPopUp into the keyed native idiom: a classic prefix-match
+typeahead over the whole map directory - buildTravelIndex walks
+every exterior location into name/region/pixel/type - replaces the
+region-map click surface (the TRAV art window is the residue row's
+head), the popup's three toggle pairs ride c/r, i/t, s with the
+popup's defaults, and Enter travels behind enoughGoldCheck.
+
+The ARRIVAL (world.js) is performFastTravel's order verbatim:
+deduct, teleport - tear down every built pixel and RE-INIT the
+streamer at the destination, which is the streamer's own verbatim
+ResetStreamingWorld, then build the destination pixel and spawn at
+its center height - cautious full health/fatigue restore with
+magicka honoring NoRegenSpellPoints, RaiseTime through the ONE
+clock (the U24 advance runs the same tick, so magic rounds and
+disease days catch up inside the jump, exactly the promise that
+record made to future callers), then the clamps off the landed
+clock.
+
+Probed LIVE end to end: V in Daggerfall city, the nearest real
+destination typed into the real window, two Enters - The Gathering
+of Evelyna, 208 minutes (exactly 2 moves x 104, the inn-mode
+woodlands fixed point), 5 gold for the one inn stay, the player
+landed on the destination pixel, zero page errors. 8 pins across
+travel.test.js (the exact fixed-point chain per mode, the cost
+boundaries, the clamps at their edges, and the real-map
+Daggerfall-to-Wayrest ordering with the exact reckless halving) and
+travelmap.test.js (the typeahead, the toggles, the gold gate, the
+host's arrival-order sweep). 3 mutations run, 3 killed. The residue
+- the TRAV art, the exterior arms, transport ownership, the
+sun-averse producers, spawn prevention - is ONE ledger row.
