@@ -51,6 +51,7 @@ export class Clock extends QuestResource {
     this.remainingTimeInSeconds = 0;
     this.clockEnabled = false;
     this.clockFinished = false;
+    this._lastWorldTimeSample = 0;
     this.travelTimePending = false;   // Q1: the flag&16 / flag&1-hack arms pend Place resolution (Q3)
     if (line !== null) this.setResource(line);
   }
@@ -99,5 +100,60 @@ export class Clock extends QuestResource {
 
     this.startingTimeInSeconds = clockTimeInSeconds;
     this.remainingTimeInSeconds = clockTimeInSeconds;
+  }
+
+  get isClock() { return true; }
+
+  /** Q2 - Clock.cs Tick: whole world-seconds since the last sample
+   *  come off the remainder; at zero the SAME-NAMED task starts and
+   *  the clock finishes. The world clock is the quest's nowSeconds
+   *  seam (classic game seconds, machine-injected). */
+  tick(caller) {
+    if (!this.clockEnabled || this.clockFinished) return;
+    const now = caller.nowSeconds?.() ?? 0;
+    const difference = now - this._lastWorldTimeSample;
+    this.remainingTimeInSeconds -= Math.trunc(difference);
+    if (this.remainingTimeInSeconds <= 0) {
+      this._triggerTask(caller);
+      this.clockEnabled = false;
+      this.clockFinished = true;
+      this.remainingTimeInSeconds = 0;
+    }
+    this._lastWorldTimeSample = now;
+  }
+
+  /** StartTimer, with the "_2place_" arm: a clock named _2X_ over a
+   *  place _X_ computes a one-way trip at start time - which needs the
+   *  Q3 travel seam (quest.travelSecondsTo); absent, the arm is
+   *  skipped loudly via travelTimePending. */
+  startTimer() {
+    if (this.clockEnabled) return;
+    if (this.symbol.original.startsWith('_2') && this.symbol.original.endsWith('_') && this.startingTimeInSeconds === 0) {
+      const inner = this.symbol.original.slice(2, -1);
+      const targetPlace = this.parentQuest.getPlace?.(new QuestSymbol(inner));
+      if (targetPlace) {
+        const travel = this.parentQuest.travelSecondsTo?.(targetPlace);
+        if (travel != null) {
+          this.startingTimeInSeconds = travel;
+          this.remainingTimeInSeconds = travel;
+        } else {
+          this.travelTimePending = true;
+        }
+      }
+    }
+    if (!this.clockFinished) {
+      this.clockEnabled = true;
+      this._lastWorldTimeSample = this.parentQuest.nowSeconds?.() ?? 0;
+    }
+  }
+
+  stopTimer() {
+    if (!this.clockFinished) this.clockEnabled = false;
+  }
+
+  _triggerTask(caller) {
+    const task = caller.getTask(this.symbol);
+    if (task) task.start();
+    else console.warn(`[quest] Clock timer ${this.symbol.name} completed but could not find a task with same name.`);
   }
 }

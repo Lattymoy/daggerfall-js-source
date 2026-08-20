@@ -44,6 +44,12 @@ export class QuestResource {
     this._parseMessageTags(line);
   }
 
+  /** Called every quest tick / after all tasks (Q2). Overridden by
+   *  resources that act (Clock); the base does nothing. */
+  tick(_caller) {}
+  postTick(_caller) {}
+  dispose() {}
+
   _parseMessageTags(line) {
     const matches = [...line.matchAll(MESSAGE_TAGS)];
     for (const match of matches) {

@@ -60,13 +60,45 @@ the 11-resource roster with table-resolved values, 27 tasks - 1
 headless triggered, 5 variables); Clock range draws seeded; the DFU
 failure modes throw verbatim.
 
+## Q2 - THE MACHINE CORE (SHIPPED 2026-08-20)
+
+- `machine.js` - QuestMachine.cs: the live quest table, the
+  brute-force GetActionTemplate registry, scheduled-invoke queue, and
+  the tick (invoke -> update -> tombstone -> one-week expiry at 604800
+  classic seconds). DFU ticks at 10Hz REAL time while clocks ride
+  WORLD time: the host paces tick() by TICKS_PER_SECOND and injects
+  nowSeconds. The 64 globals (SAVEVARS.DAT state) live on the machine
+  and reach GlobalVarLink tasks through quest.hooks.
+- `quest.js` grew the lifecycle half: the Update loop verbatim
+  (ticksToEnd countdown, resource Tick, task loop with questBreak
+  bail and pending popups between tasks, PostTick), EndQuest's
+  two-tick grace + faction rep hook (5/-2), log steps 0-9,
+  ShowMessagePopup's oncePerQuest/immediate law, the tombstone.
+  Popup DELIVERY is the machine's showPopup hook - the parchment box
+  and its 22-line chunking are Q4's UI wiring.
+- `task.js` grew Update: the trigger law whole - the FIRST always-on
+  trigger is PRIMARY (starts AND stops, S0000977), later ones
+  SECONDARY (start only, W0C00Y00); PersistUntil checks its target
+  after at least one tick and REARMS while unset (S0000011).
+- `clock.js` grew the tick half: whole-second world-time deltas,
+  TriggerTask starting the same-named task, StartTimer's "_2place_"
+  one-way-trip arm riding the Q3 travel seam (pending loudly).
+- `actions.js` - ActionTemplate + the ten world-free actions 1:1
+  (StartTask/setvar, ClearTask, UnsetTask, EndQuest, WhenTask with
+  DFU's exact eval short-circuits, StartStopTimer, Say, LogMessage,
+  RemoveLogMessage, PickOneOf on the quest's injectable roll).
+
+Gate: `test/questmachine.test.js` - a crafted quest end to end
+(clock -> questBreak -> two-tick end -> tombstone -> expiry), the
+WhenTask law, seeded PickOneOf, permanent drops, the globals store,
+and THE COVERAGE PIN: the tranche resolves exactly 3347 of 7235
+corpus action lines (46.3%) - each action slice must move it UP.
+
 ## Queue
 
-- **Q2 - THE MACHINE**: QuestMachine.cs tick (task Update loop with
-  the primary/secondary always-on trigger law), the action registry
-  (83 Actions/*.cs) consuming `pendingActionLines`, live Clocks
-  (enable/stop/TriggerTask), global vars store, quest start/tombstone
-  lifecycle, QuestListsManager over the vendored QuestList tables.
+- **Q2b - MORE ACTIONS**: the remaining 73 Actions/*.cs in
+  coverage-ordered slices (the pin names the backlog); the
+  QuestListsManager over the vendored QuestList tables.
 - **Q3 - WORLD BINDING**: Place SetupLocalSite/SetupRemoteSite/
   SetupFixedLocation against the port's world data, the Person
   Setup*NPC chain against FACTION.TXT, SiteLinks + QuestMarkers,

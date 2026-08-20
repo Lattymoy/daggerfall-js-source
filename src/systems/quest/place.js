@@ -38,6 +38,8 @@ export class Place extends QuestResource {
     if (line !== null) this.setResource(line);
   }
 
+  get isPlace() { return true; }
+
   setResource(line) {
     super.setResource(line);
     let randomSiteList = false;

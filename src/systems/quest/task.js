@@ -82,13 +82,70 @@ export class Task {
   drop() { this.dropped = true; this.setTriggerValue(false); }
 
   getTriggerValue() {
-    // The globalVarLink read rides the player's global-vars store (Q2)
+    // A GlobalVarLink task reads the shared 64-global store (classic
+    // SAVEVARS.DAT state) through the machine's hooks.
+    const globals = this.parentQuest?.hooks?.globalVars;
+    if (this.globalVarLink !== -1 && globals) {
+      this.triggered = globals.get(this.globalVarLink) ?? false;
+    }
     return this.triggered;
   }
 
   setTriggerValue(value) {
+    const globals = this.parentQuest?.hooks?.globalVars;
+    if (this.globalVarLink !== -1 && globals) globals.set(this.globalVarLink, value);
     this.triggered = value;
     if (this.dropped) this.triggered = false;
+  }
+
+  /** Q2 - Task.cs Update: the trigger law. The FIRST always-on
+   *  trigger is PRIMARY (can start AND stop the task - S0000977's
+   *  Daggerfall-city vengeance spawn); later always-on triggers are
+   *  SECONDARY (start only - W0C00Y00's dual "when" reward). Ordinary
+   *  triggers run only while untriggered. Actions tick when active,
+   *  initialising on the untriggered->triggered edge, and a
+   *  questBreak bails mid-task. A PersistUntil task checks its target
+   *  AFTER at least one tick (the classic Z.CFG start observation)
+   *  and REARMS its actions while the target stays unset (S0000011's
+   *  Barenziah click clear). */
+  update() {
+    let ranPrimaryAlwaysOnTrigger = false;
+    for (const action of this.actions) {
+      if (action.isComplete) continue;
+
+      if ((action.isTriggerCondition && !this.getTriggerValue()) || action.isAlwaysOnTriggerCondition) {
+        if (action.isAlwaysOnTriggerCondition && !ranPrimaryAlwaysOnTrigger) {
+          this.setTriggerValue(action.checkTrigger(this));
+          ranPrimaryAlwaysOnTrigger = true;
+        } else if (action.isAlwaysOnTriggerCondition && ranPrimaryAlwaysOnTrigger) {
+          if (action.checkTrigger(this)) this.setTriggerValue(true);
+        } else {
+          this.setTriggerValue(action.checkTrigger(this));
+        }
+      }
+
+      if (this.getTriggerValue() && !action.isTriggerCondition) {
+        if (!this.prevTriggered) action.initialiseOnSet();
+        action.update(this);
+        if (this.parentQuest.questBreak) return;
+      }
+    }
+
+    if (this.type === TaskType.PersistUntil) {
+      const targetTask = this.parentQuest.getTask(this.targetSymbol);
+      if (targetTask?.getTriggerValue()) this.clear();
+      else this._rearmActions();
+    }
+
+    this.prevTriggered = this.getTriggerValue();
+  }
+
+  _rearmActions() {
+    for (const action of this.actions) action.rearmAction();
+  }
+
+  disposeActions() {
+    for (const action of this.actions) action.dispose();
   }
 
   _readGlobalVarTaskHeader(line) {
