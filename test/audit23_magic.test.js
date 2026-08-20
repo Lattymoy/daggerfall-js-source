@@ -82,7 +82,9 @@ test('AUDIT 23 magic-14: readying enforces the cost and CasterOnly casts instant
   // EntityEffectManager.cs:337-343 (youDontHaveTheSpellPoints at
   // ready) and :350-351 (instantCast for CasterOnly).
   const src = hmSrc();   // M3: the ready laws live in the engine
-  const i = src.indexOf('function readySpell(sp)');
+  // L2-slice: the signature grew the { free } option (magic-8), so
+  // the needle pins the prefix.
+  const i = src.indexOf('function readySpell(sp');
   const arm = src.slice(i, src.indexOf('\n  }\n', i));
   assert.ok(arm.includes("say(\"You don't have the spell points.\")"), 'the classic refusal line at ready');
   assert.ok(arm.includes('if (sp.rangeType === 0) { castInput(null, null); return; }'), 'CasterOnly fires on ready, no click latch');

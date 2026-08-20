@@ -91,15 +91,29 @@ test('spellcast: TARGET_TYPES verbatim + resolve vs a foe-shaped entity', async 
   assert.ok(a > 0);
 });
 
-test('spellcast: cast ranges II - touch pick + area sweep (pure)', async () => {
-  const { pickTouchTarget, sweepFoes, EXPLOSION_RADIUS } = await import('../src/systems/spellcast.js');
+test('spellcast: cast ranges II - the AIM-DIRECTED touch cast + area sweep (pure)', async () => {
+  // L2-slice (AUDIT 23 magic-7): ByTouch is a 0.25-radius sphere-cast
+  // 3.0 units ALONG THE AIM (DaggerfallMissile.cs:61-62, :409-425),
+  // not a nearest-in-any-direction radius pick.
+  const { pickTouchTarget, sweepFoes, EXPLOSION_RADIUS, TOUCH_RANGE, TOUCH_SPHERE_CAST_RADIUS } = await import('../src/systems/spellcast.js');
   assert.equal(EXPLOSION_RADIUS, 4.0);
+  assert.equal(TOUCH_RANGE, 3.0);
+  assert.equal(TOUCH_SPHERE_CAST_RADIUS, 0.25);
   const mk = (x, z, dead = false) => ({ dead, ai: { feet: [x, 0, z] } });
-  const eye = [0, 0.9, 0];                      // mid-capsule height: foes' centers sit at y 0.9 too
-  const near = mk(0, 2), far = mk(0, 6), corpse = mk(0, 1, true), nearer = mk(0, 1.5);
-  assert.equal(pickTouchTarget(eye, [far], 2.5), null);                       // out of reach
-  assert.equal(pickTouchTarget(eye, [near, nearer, corpse], 2.5), nearer);    // nearest live wins, corpses skip
-  assert.equal(pickTouchTarget(eye, [near], 2.5, () => false), null);         // LOS gate holds
-  const hits = sweepFoes([0, 0.9, 0], EXPLOSION_RADIUS, [near, far, corpse, nearer]);
-  assert.deepEqual(hits, [near, nearer]);                                     // 2 and 1.5 in; 6 out; dead out
+  const eye = [0, 0.9, 0], fwd = [0, 0, 1];     // mid-capsule height: foes' centers sit at y 0.9 too
+  const ahead = mk(0, 2), far = mk(0, 6), corpse = mk(0, 1, true), nearer = mk(0, 1.5);
+  assert.equal(pickTouchTarget(eye, fwd, [far]), null, 'beyond the 3.0 range');
+  // the FIRST hit along the ray wins; corpses skip
+  assert.equal(pickTouchTarget(eye, fwd, [ahead, nearer, corpse]), nearer);
+  // THE law the old radius pick got wrong: a foe BEHIND the caster is
+  // within 2.5 units but the aim ray never touches it
+  const behind = mk(0, -1.5);
+  assert.equal(pickTouchTarget(eye, fwd, [behind]), null, 'touch reaches along the AIM only');
+  // off-axis: inside the swept cylinder (0.25 + the 0.45 body) hits,
+  // outside misses
+  assert.ok(pickTouchTarget(eye, fwd, [mk(0.5, 2)]), '0.5 off-axis sits inside 0.7');
+  assert.equal(pickTouchTarget(eye, fwd, [mk(1.0, 2)]), null, '1.0 off-axis is outside the sweep');
+  assert.equal(pickTouchTarget(eye, fwd, [ahead], () => false), null, 'LOS gate holds');
+  const hits = sweepFoes([0, 0.9, 0], EXPLOSION_RADIUS, [ahead, far, corpse, nearer]);
+  assert.deepEqual(hits, [ahead, nearer]);                                    // 2 and 1.5 in; 6 out; dead out
 });
