@@ -77,12 +77,58 @@ const OUR_BOOT = [
   [122, 96, 74],
 ];
 
-/** A stand-in for ART_PAL: a smooth grey ramp with a warm cast. */
+/**
+ * A STAND-IN FOR ART_PAL, WITH THE ART'S OWN COLOURS IN IT.
+ *
+ * The orc line, the villagers and the weapon materials do not carry
+ * colours — they carry ART_PAL INDEX RANGES. `hideGreen: [160, 172]`
+ * is "block 10, pale green to deep green", and it only becomes green
+ * when a palette resolves it. A flat grey ramp made every orc in the
+ * editor grey, which is what Mac was looking at.
+ *
+ * Daggerfall's palette is sixteen blocks of sixteen, each block a ramp
+ * within one hue, and the art documents which is which in its own
+ * comments — block 10 moss, block 12 sage, block 15 blood, block 5
+ * crude iron, and so on. So this reproduces that structure: the same
+ * blocks, the same light-to-dark direction, in our own approximations
+ * of those hues.
+ *
+ * OURS TO SHIP. These are colours we picked to match descriptions the
+ * art already carries in plain English; no ARENA2 byte is involved. Real
+ * data still overrides it whenever it is present.
+ */
+const BLOCKS = [
+  [200, 200, 200], // 0  greys
+  [186, 176, 160], // 1  bone
+  [178, 132, 84], // 2  tan -> brown
+  [214, 158, 170], // 3  pink -> mauve
+  [206, 176, 128], // 4  cream -> tan -> dark brown
+  [150, 148, 172], // 5  lavender grey -> slate (crude iron)
+  [120, 160, 214], // 6  light blue -> deep blue
+  [236, 236, 232], // 7  white -> charcoal
+  [140, 200, 200], // 8  pale cyan
+  [206, 194, 96], // 9  yellow -> olive
+  [150, 196, 120], // 10 pale green -> deep green (moss: the orc hide)
+  [176, 108, 66], // 11 rust -> dark brown
+  [190, 202, 110], // 12 pale yellow-green -> green (sage)
+  [170, 150, 200], // 13 violet
+  [236, 206, 140], // 14 cream -> orange (brass)
+  [222, 108, 66], // 15 orange-red -> dark red (blood)
+];
+
 function ourPalette() {
   return {
     get(i) {
-      const v = Math.max(0, Math.min(255, i));
-      return { r: v, g: Math.round(v * 0.97), b: Math.round(v * 0.9) };
+      const idx = Math.max(0, Math.min(255, i | 0));
+      const [r, g, b] = BLOCKS[(idx >> 4) & 15];
+      // Within a block the ramp runs light to dark, as ART_PAL's do.
+      const k = 1 - (idx & 15) / 15;
+      const f = 0.24 + k * 0.86;
+      return {
+        r: Math.min(255, Math.round(r * f)),
+        g: Math.min(255, Math.round(g * f)),
+        b: Math.min(255, Math.round(b * f)),
+      };
     },
   };
 }
