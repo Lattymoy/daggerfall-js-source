@@ -1377,6 +1377,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         health: f.entity.health, dead: !!f.dead,
         feet: [...f.ai.feet], yaw: f.ai.yaw,
         items: (f.entity.items ?? []).map((it) => ({ ...it })),
+        // CH4 (the senses verify pass): SerializableEnemy carries
+        // isHostile + hasEncounteredPlayer (:113-114, restored at
+        // :182-183) and currentMagicka (:112/:178 - a discharged
+        // caster must not refill on load). The port's halves.
+        hostile: f.ai.isHostile !== false,
+        encountered: !!f.ai.hasEncounteredPlayer,
+        magicka: f.entity.magicka ?? 0,
       })),
       piles: lootPiles.map((p) => ({ items: p.items.map((it) => ({ ...it })) })),
       // AUDIT 23 (save-load-4): player-dropped piles are containers in
@@ -1400,6 +1407,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f.entity.items = sf.items.map((it) => ({ ...it }));
       f.ai.feet[0] = sf.feet[0]; f.ai.feet[1] = sf.feet[1]; f.ai.feet[2] = sf.feet[2];
       f.ai.yaw = sf.yaw;
+      // CH4: the senses/resource halves restore when the save carries
+      // them (:182-183 motor.IsHostile / senses.HasEncounteredPlayer,
+      // :178 SetMagicka); saves from before CH4 leave the live state.
+      if (sf.hostile != null) f.ai.isHostile = !!sf.hostile;
+      if (sf.encountered != null) f.ai.hasEncounteredPlayer = !!sf.encountered;
+      if (sf.magicka != null) f.entity.magicka = sf.magicka;
       if (sf.dead && !f.dead) { f.dead = true; spawnCorpse(f); }
       // SL2 (AUDIT 23 save-load-2): the BACKWARD rewind. DFU's load
       // REBUILDS the location and RestoreSaveData SETS the saved

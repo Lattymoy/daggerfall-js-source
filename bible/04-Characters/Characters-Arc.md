@@ -2318,3 +2318,69 @@ cast at all (its tier list - Ice Bolt 2, Ice Storm 4 - is all
 ranged, and DoTouchSpell picks rangeType 0/1 only). The probe now
 spawns inside hearing and sends a second mage through the band for
 the ~11% undischarged tail.
+
+## CH4 (2026-08-20): THE SENSES VERIFY PASS - characters-9/10/12 resolved
+
+The AUDIT 23 shorthand row ("roll order + yaw gate + frame clamp")
+had lost its finding bodies; CH3 marked it unfixable without a
+dedicated pass. CH4 is that pass: EnemySenses.cs (965 lines) and
+EnemyMotor.cs's classic path re-read whole against
+characters/enemyMotor.js, member by member.
+
+VERIFIED CLEAN (the "roll order" third): the illusion die is
+classic-gated in both (EnemySenses.cs:444-449 - the source's own
+comment explains the per-classic re-roll is what makes chameleon
+matter); the stealth die is minute-gated in both with the shared
+once-per-minute player tally; CalculateStealthChance is byte-exact
+(`2 * ((int)(d/GS) * liveStealth >> 10)`); BlockedByIllusionEffect
+matches arm for arm (seesThrough, invisible-always-blocks, the
+8/4 see-through, no die for an unconcealed target); StealthCheck's
+gate ladder matches (wouldBeSpawned, the 1024-unit cap, the odd-
+minute skip for a slow player, fast+encountered auto-detect);
+EvaluateMoveInForAttack, SetChangeStateTimer and the giveUpTimer
+laws all confirm the port's classic shape (always move in, no
+timer, refill-200/decrement).
+
+FIXED (the other two thirds were real):
+
+- **The stop-branch yaw gate** (the "yaw gate" finding): DFU's
+  "Not moving, just look at target" branch turns when outside
+  TargetIsWithinYawAngle(22.5f) (EnemyMotor.cs:514); AttemptMove's
+  5.625 gate (:896) belongs to the MOVING branch only. The port
+  used 5.625 in the melee-stop branch, so stopped foes
+  micro-tracked the player's every step. STOP_YAW_GATE_DEG = 22.5
+  now - a melee foe stands up to 22.5deg off-face (the 35.156
+  attack cone still covers it), turning only past that.
+- **The senses cadence** (the "frame clamp" finding): DFU resolves
+  sight (:421/:428), the hearing gate (:433-436) and the detection
+  ladder (:451-470) EVERY FixedUpdate; only the spawn-band
+  recompute (:260-310) and the illusion re-roll are classic-gated.
+  The port ran everything at the classic rate (16Hz) - up to 62ms
+  of detection lag DFU does not have - and its own _step comment
+  even said so. The split is now DFU's exactly: _classicSenses
+  (spawn band + illusion die) per classic tick, _senses (sight/
+  hearing/ladder/encounter edge) per fixed step, decisions after
+  the resolution in DFU's senses-then-motor component order.
+- **The hearing ray origin** (found on the way): CanHearTarget
+  casts from transform.position - the capsule CENTER - along
+  directionToTarget (:942); the port cast from the EYE (feet +
+  5h/6), a third of a height too high. Center-to-center now; the
+  closed-door departure stays documented.
+
+Shipped with the pass (the SL2 residue): the dungeon foe snapshot
+carries isHostile + hasEncounteredPlayer + magicka
+(SerializableEnemy.cs:112-114 save, :178/:182-183 restore) - a
+pacified foe stays pacified across F9/F11, a discharged caster
+does not refill - restore gated on field presence so pre-CH4
+saves keep the live state.
+
+Mutations: 4 run, 4 killed (the stop gate reverted to 5.625; the
+hearing origin back at the eye; the resolution re-gated on the
+classic tick; the magicka restore dropped).
+
+Pins: test/ch4senses.test.js x4 (the 22.5/5.625 pair with a live
+15deg-stands/30deg-turns drive; the hearing origin captured off
+the mock ray; the cadence - detection on the first 1/60 step with
+zero classic ticks and exactly one illusion die per classic tick,
+the failed see-through blocking the ladder; the snapshot halves
+sweep with the presence-gated restores).
