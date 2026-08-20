@@ -565,3 +565,46 @@ pre-chargen INTERIM_WEAPON cannot be minted a condition
 swing of a fresh boot would otherwise have thrown a TypeError.
 
 4 pins (conditiondamage.test.js), 3 mutations run, 3 killed.
+
+## C19 (2026-08-20): the C2-slice - audio arms, the poison hook, roll-order parity, COMBAT VOICES - SHIPPED
+
+Five ledger rows in one pass, closing the combat family's remainder.
+
+combat-9: every enemy melee frame now RINGS its failures - the
+out-of-reach whiff and the failed-roll arm both play the attacker's
+swing clip from the foe (barehanded, the high pitch), in the dungeon
+pool, the watch and the exterior encounter pool alike; the enemy bow
+loose plays ArrowShoot from the archer.
+
+combat-10: an arrow reaching the player rides the same damage member
+the melee swing does, so the Dodging tally fires on incoming arrows
+too - one tally per attack attempt, hit roll or no.
+
+combat-11: resolveHit threads onInflictPoison, so the PLAYER's
+poisoned blade doses ITS victim in all three pools - and the player's
+poisoned arrow doses its mark. The formulas were already clearing
+the weapon's dose either way; without the hook it simply vanished.
+
+combat-12, two roll-order laws: the enemy melee DFRandom byte now
+draws on EVERY idle classic tick - it is the left operand of the
+source's pass-and-timer expression, and the attack component ticks
+even for a bow foe the band owns - where the old shape gated the
+draw behind the timer and the band, desyncing the classic stream.
+And the backstab Dice100 draws ONLY behind the level>1 gate (the old
+eager argument burned a draw on every non-backstab swing); a landed
+backstab speaks (key successfulBackstab, prose ours).
+
+combat-17 COMBAT VOICES: combat/combatVoices.js carries the decision
+tables - the 1..5 spawn voice-race roll cached once per foe, male
+attack = the race's first pain clip with pain one above it, the male
+HighElf-to-WoodElf swap, the female shared-clip forks, the 0..0.3
+pitch lift - and hostCombat's gates ride the pools: the 20%
+enemy-class attack voice at the melee frame whatever the outcome,
+the 40% pain voice on a landed player hit (heavyDamage = a quarter
+of max health), the CityWatch knight forced male, and the player's
+own 20% attack grunt at the hit frame, never for a bow, reading the
+PLAYER's race and gender. All behind the CombatVoices setting,
+shipping enabled.
+
+5 pins + 4 backstab fixtures moved to the lazy signature; 5
+mutations run, 5 killed. Suite 1444 across 189, green both modes.

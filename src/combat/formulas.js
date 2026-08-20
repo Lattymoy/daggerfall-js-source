@@ -329,8 +329,16 @@ export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = 
 }
 
 // ---- CalculateBackstabDamage ----
-export function backstabDamage(damage, backstabbingLevel, roll01 = Math.random()) {
-  if (backstabbingLevel > 1 && dice100(backstabbingLevel, roll01)) return damage * 3;
+/** C2-slice (AUDIT 23 combat-12): the Dice100 rolls ONLY behind the
+ *  level > 1 gate (the source short-circuits at :984) - the old
+ *  eager roll01 argument burned a draw on every non-backstab swing.
+ *  A landed backstab speaks (key "successfulBackstab", prose ours). */
+export const SUCCESSFUL_BACKSTAB_TEXT = 'You backstab your opponent!';
+export function backstabDamage(damage, backstabbingLevel, rolls = Math.random, say = null) {
+  if (backstabbingLevel > 1 && dice100(backstabbingLevel, rolls())) {
+    say?.(SUCCESSFUL_BACKSTAB_TEXT);
+    return damage * 3;
+  }
   return damage;
 }
 
@@ -454,7 +462,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
       damage = weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls);
     }
   }
-  damage = backstabDamage(damage, backstabChance, rolls());   // applied AFTER the damage calc, verbatim (lines 627/688)
+  damage = backstabDamage(damage, backstabChance, rolls, say);   // applied AFTER the damage calc, verbatim (lines 627/688); the roll draws only behind the >1 gate (combat-12)
   // Poisoned weapons (S19b): a damaging weapon hit inflicts the
   // poison ONCE and clears it from the weapon (the source's
   // weapon.poisonType = Poisons.None, inside the weapon branch after

@@ -9,7 +9,9 @@
 // (MIT, Daggerfall Workshop).
 
 import { SKILLS, tallySkill, skillValue } from '../systems/skills.js';
-import { ENEMY_GROUPS } from '../combat/formulas.js';
+import { ENEMY_GROUPS, dice100 } from '../combat/formulas.js';
+import { COMBAT_VOICES, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoice, rollVoiceRace, isHeavyDamage } from '../combat/combatVoices.js';   // C2-slice
+import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
 import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
 import { GLOBAL_SCALE } from '../world/meshReader.js';
@@ -154,6 +156,60 @@ export function zeroDamageHitSound({ weapon = null, arrowHit = false, parrySound
   if ((!arrowHit && !parrySounds) || !weapon) return { sound: swingSoundFor(weapon), at: 'player' };
   if (parrySounds) return { sound: PARRY_1 + Math.floor(roll * PARRY_SOUND_COUNT), at: 'enemy' };
   return null;
+}
+
+// ---- C2-slice (AUDIT 23 combat-9/17): the enemy melee frame's sound
+// tail + the combat voices, shared so every host speaks the same. ----
+
+/** EnemySounds.PlayMissSound: an attack that whiffed (out of reach)
+ *  or lost the hit roll - armed foes ring their weapon's swing clip,
+ *  barehanded the high pitch (swingSoundFor's null arm IS that). */
+export const enemyMissSound = (weapon) => swingSoundFor(weapon);
+
+/** MobileTypes.Knight_CityWatch - the one class id whose voice is
+ *  FORCED male whatever the mobile rolled (EnemyAttack.cs:220/:357). */
+export const KNIGHT_CITY_WATCH = 146;
+
+/** The foe's voice gender per the source's pick: the mobile's
+ *  gender, with the city-watch knight forced male. */
+const foeVoiceGender = (f) =>
+  (f.gender === 'female' && f.mobileType !== KNIGHT_CITY_WATCH ? 'female' : 'male');
+
+/** The foe's spawn-rolled voice race (EnemySounds:72 rolls it once
+ *  per foe); the port rolls lazily at first use and caches - one
+ *  race per foe, same as the spawn roll. */
+const foeVoiceRace = (f, rolls) => (f.voiceRace ??= rollVoiceRace(rolls));
+
+/** The 20% enemy-class ATTACK voice at the melee damage frame
+ *  (EnemyAttack.cs:217-226), behind the CombatVoices setting.
+ *  Returns { clip, pitchLift } or null. */
+export function enemyAttackVoice(f, rolls = Math.random) {
+  if (!COMBAT_VOICES || !f.entity?.isClass) return null;
+  if (!dice100(ATTACK_VOICE_CHANCE, rolls())) return null;
+  return combatVoice({ race: foeVoiceRace(f, rolls), gender: foeVoiceGender(f), isAttack: true, rolls });
+}
+
+/** The 40% enemy-class PAIN voice when the player's hit lands
+ *  (WeaponManager.cs:597-607); heavyDamage = damage >= maxHealth/4.
+ *  Returns { clip, pitchLift } or null. */
+export function enemyPainVoice(f, damage, rolls = Math.random) {
+  if (!COMBAT_VOICES || !f.entity?.isClass || damage <= 0) return null;
+  if (!dice100(PAIN_VOICE_CHANCE, rolls())) return null;
+  return combatVoice({
+    race: foeVoiceRace(f, rolls), gender: foeVoiceGender(f), isAttack: false,
+    heavyDamage: isHeavyDamage(damage, f.entity.maxHealth ?? 0), rolls,
+  });
+}
+
+/** The PLAYER's 20% attack grunt at the hit frame - never for a bow
+ *  (WeaponManager.cs:385-389; the racial-override suppression rides
+ *  the vampirism arc). Returns { clip, pitchLift } or null. */
+export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
+  if (!COMBAT_VOICES || isBow) return null;
+  if (!dice100(ATTACK_VOICE_CHANCE, rolls())) return null;
+  return combatVoice({
+    race: RACES[playerEntity.race] ?? 1, gender: playerEntity.gender ?? 'male', isAttack: true, rolls,
+  });
 }
 
 // ---- PlayerActivate.cs:85 ----

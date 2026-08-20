@@ -178,14 +178,19 @@ export class PlayerWeapon {
    * @param playerCombat the player entity
    * @returns [{foe, damage}] - one entry per foe in reach
    */
-  resolveHit(foes, playerCombat, canSee, rolls = Math.random, backstabOf = () => 0, say = null) {
+  resolveHit(foes, playerCombat, canSee, rolls = Math.random, backstabOf = () => 0, say = null, onPoison = null) {
     const results = [];
     for (const foe of foes) {
       if (foe.dead || !foe.entity) continue;
       const { dist, inView, losClear } = canSee(foe);
       if (!playerMeleeCanHit(dist, inView, losClear)) continue;
-      const damage = calculateAttackDamage(playerCombat, foe.entity,
-        { ...playerAttackOptions(this.weapon, this.machine.state, backstabOf(foe), rolls), say });   // C-slice: the break line
+      const damage = calculateAttackDamage(playerCombat, foe.entity, {
+        ...playerAttackOptions(this.weapon, this.machine.state, backstabOf(foe), rolls), say,
+        // C2-slice (AUDIT 23 combat-11): the PLAYER's poisoned blade
+        // infects ITS victim - the formulas clear the weapon's poison
+        // either way, so without this hook the dose vanished unspent.
+        onInflictPoison: onPoison ? (att, tgt, pt) => onPoison(foe, pt) : null,
+      });
       results.push({ foe, damage });
     }
     return results;
