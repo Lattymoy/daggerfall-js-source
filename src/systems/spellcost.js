@@ -107,7 +107,7 @@ export const EFFECT_COST_TABLE = Object.freeze({
   '33,1':   row(SKILLS.Thaumaturgy, { chance: costs(80, 140, 60) }),                        // Pacify-Undead
   '33,2':   row(SKILLS.Thaumaturgy, { chance: costs(80, 140, 60) }),                        // Pacify-Humanoid
   '33,3':   row(SKILLS.Thaumaturgy, { chance: costs(60, 120, 36) }),                        // Pacify-Daedra
-  '34,255': row(SKILLS.Thaumaturgy, { duration: costs(20, 8), chance: costs(40, 60) }),     // Charm
+  '34,255': row(SKILLS.Thaumaturgy, { chance: costs(40, 60) }),     // Charm - AUDIT 23 (magic-6): CharmEffect.cs:36/:42 comment DURATION out; chance alone is priced
   '39,0':   row(SKILLS.Thaumaturgy, { duration: costs(20, 8, 200) }),                       // DetectMagic
   '39,1':   row(SKILLS.Thaumaturgy, { duration: costs(20, 8, 200) }),                       // DetectEnemy
   '39,2':   row(SKILLS.Thaumaturgy, { duration: costs(20, 8, 160) }),                       // DetectTreasure

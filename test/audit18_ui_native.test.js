@@ -82,21 +82,26 @@ test('audit18 ui-native F1: the space glyph is FixedWidth - 1 and measureText ke
   assert.equal(measureText(f, 'A A') - measureText(f, 'AA'), 5);
 });
 
-test('audit18 ui-native F1b: drawText advances a space by 5, not 6', { skip: skipReal }, () => {
+test('audit18 ui-native F1b (corrected by AUDIT 23): the DRAWN space omits GlyphSpacing', { skip: skipReal }, () => {
+  // DaggerfallFont.cs:318-329: a non-space advances rect.width +
+  // GlyphSpacing; the SPACE arm advances rect.width ALONE - while
+  // CalculateTextWidth (:381 GetGlyphWidth) adds the spacing for
+  // every code, space included. The asymmetry is DFU's; this pin
+  // originally encoded draw == measure, which DFU does not have
+  // (AUDIT 23 ui-native-5 re-read the source).
   const r = recorder();
   const font = makeFont(r, realFont(), 'FONT0003');
-  // "A A" - the two 'A' quads must sit exactly 'A'-advance + 5 apart.
   drawText(r, font, 'A A', 0, 0, 1);
   const xs = r.quads.map((q) => q.x);
   assert.equal(xs.length, 2, 'the space draws no quad');
   const aw = font.fnt.glyphWidth('A'.charCodeAt(0) - 33);
   assert.equal(xs[0], 0);
-  assert.equal(xs[1], aw + 1 + 5, 'A + spacing + space(4) + spacing');
-  // and the returned advance is the measured width, the two metrics
-  // agreeing (they disagreed by the trailing spacing before)
+  assert.equal(xs[1], aw + 1 + 4, 'A + spacing + space(4), NO spacing after the space');
+  // the drawn advance is one GlyphSpacing SHORT of the measured width
+  // per space - the two metrics deliberately disagree.
   const r2 = recorder();
   const f2 = makeFont(r2, realFont(), 'FONT0003');
-  assert.equal(drawText(r2, f2, 'a b c d', 0, 0, 1), measureText(f2.fnt, 'a b c d'));
+  assert.equal(measureText(f2.fnt, 'a b c d') - drawText(r2, f2, 'a b c d', 0, 0, 1), 3);
 });
 
 // ---------------------------------------------------------------

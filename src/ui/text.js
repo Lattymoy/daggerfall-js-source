@@ -77,7 +77,14 @@ export function drawText(renderer, font, text, x, y, scale = 1, color = [1, 1, 1
   const { fnt } = font;
   for (const ch of text) {
     const code = ch.charCodeAt(0);
-    if (code < FNT_ASCII_START) { cx += (spaceGlyphWidth(fnt) + FNT_GLYPH_SPACING) * scale; continue; }
+    if (code < FNT_ASCII_START) {
+      // AUDIT 23 (ui-native-5) - DaggerfallFont.cs:328: the DRAWN space
+      // advances by the glyph width alone (no GlyphSpacing), while
+      // CalculateTextWidth (:381/:464) adds it for every glyph - the
+      // asymmetry is DFU's, so measureText keeps the spacing.
+      cx += spaceGlyphWidth(fnt) * scale;
+      continue;
+    }
     const gi = code - FNT_ASCII_START;
     const gw = fnt.glyphWidth(gi);
     if (gw > 0) {

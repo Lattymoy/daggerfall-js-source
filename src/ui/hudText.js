@@ -14,8 +14,9 @@
 // timer / popDelay, which is the classic scroll-out.
 //
 // Phrasings follow the classic strings ("Your %s skill has
-// improved."); the TEXT.RSC database itself is FLAGGED - these
-// literals swap for the real records when that reader lands.
+// improved."). The TEXT.RSC reader SHIPPED (U6) - what remains open
+// is only that the skill/loot literals here are not yet read from
+// their TEXT.RSC record ids (AUDIT 23 narrowed the stale flag).
 
 import { drawText, measureText } from './text.js';
 import { nativeMetrics, NATIVE_W, DEFAULT_TEXT_COLOR } from './nativePanel.js';

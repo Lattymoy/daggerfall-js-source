@@ -19,8 +19,9 @@
 // through verbatim (LOUD - the full MacroHelper pends).
 //
 // FLAGGED: the guild greeting indexes (records 8550..8571) pend the
-// guilds arc with static NPCs; quest greetings pend quests; the
-// tone buttons (Polite/Normal/Blunt) pend T3c topics.
+// guilds arc with static NPCs; quest greetings pend quests. (The tone
+// radios and the toned reaction law SHIPPED - AUDIT 23 dropped the
+// stale clause.)
 
 export const NO_RESPONSE_TEXT_ID = 7205;
 export const MIN_NEUTRAL_REACTION = 0;

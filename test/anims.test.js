@@ -1,7 +1,8 @@
+import { MISSILE_SPEED } from '../src/systems/spellcast.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MOUSE_DIRECTIONS, DIRECTION_TO_STRIKE, STRIKES, ATTACKS_1H, ATTACKS_2H, ATTACKS_RANGED, ATTACKS_FP, REACTIONS, sampleClip } from '../src/characters/anims.js';
-import { WEAPON_STATES, getMeleeWeaponAnimTime, getBowCooldownTime, gestureDirection, canChangeState, createWeaponMachine, machineAttack, machineStep, MELEE_NUM_FRAMES, HIT_FRAME_MELEE, HIT_FRAME_BOW, BOW_SOUND_FRAME, MAX_BOW_HELD_DRAWN_SECONDS, ATTACK_THRESHOLD, EQUIP_DELAY_TIMES, CLASSIC_FRAME_UPDATE, ARROW_MOVEMENT_SPEED, ARROW_ARM_LENGTH } from '../src/characters/weaponStates.js';
+import { WEAPON_STATES, getMeleeWeaponAnimTime, getBowCooldownTime, gestureDirection, canChangeState, createWeaponMachine, machineAttack, machineStep, MELEE_NUM_FRAMES, HIT_FRAME_MELEE, HIT_FRAME_BOW, BOW_SOUND_FRAME, MAX_BOW_HELD_DRAWN_SECONDS, ATTACK_THRESHOLD, EQUIP_DELAY_TIMES, CLASSIC_FRAME_UPDATE,  ARROW_ARM_LENGTH } from '../src/characters/weaponStates.js';
 
 // Witness against DFU: WeaponManager.MouseDirections order and
 // FPSWeapon.OnAttackDirection's switch (Up/UpLeft/UpRight -> StrikeUp).
@@ -94,7 +95,7 @@ test('anims: sampler is a continuous delta (zero at entry, null past dur)', () =
   assert.ok(sampleClip(REACTIONS.HurtRight, 0.2 * REACTIONS.HurtRight.dur).rootX < -0.02);
   for (const clip of Object.values(REACTIONS)) for (const ch of Object.keys(clip.tracks)) assert.ok(!ch.startsWith('arm'), 'reactions are shared-channel only');
   // DaggerfallMissile verbatim
-  assert.equal(ARROW_MOVEMENT_SPEED, 25.0);
+  assert.equal(MISSILE_SPEED, 25.0);   // AUDIT 23: the ONE home (DaggerfallMissile.MovementSpeed)
   assert.equal(ARROW_ARM_LENGTH, 0.9);
   assert.ok(Number.isFinite(held.twist));
   assert.equal(sampleClip(clip, clip.dur), null);

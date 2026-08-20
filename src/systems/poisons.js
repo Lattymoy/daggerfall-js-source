@@ -26,7 +26,9 @@
 // InflictPoison: the career's Poison tolerance Immune vetoes
 // outright ("in classic, AI characters' immunity to poison is
 // ignored" - DFU checks it, we port DFU); player racial immunity
-// pends race selection; then bypassResistance OR a non-zero saving
+// pends the RACIAL-OVERRIDE templates (vampire/were - no base race
+// carries Poison immunity; race selection itself shipped, AUDIT 23);
+// then bypassResistance OR a non-zero saving
 // throw (Poison flag) infects targets above level 1 (the level-1
 // check "still gives rats immunity"). Unlike diseases, ANY entity
 // can be poisoned - player poisoned weapons work on foes.
@@ -203,7 +205,7 @@ export function updatePoisons(entity, currentMinute, sinks, rolls = Math.random,
 
 /**
  * FormulaHelper.InflictPoison, verbatim: career Poison tolerance
- * Immune vetoes (racial immunity pends race selection); then
+ * Immune vetoes (racial immunity pends the racial-override templates); then
  * bypassResistance OR a non-zero saving throw infects targets above
  * level 1. Element 2 = DiseaseOrPoison.
  */

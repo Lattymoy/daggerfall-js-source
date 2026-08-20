@@ -98,7 +98,8 @@ export function createArrestFlow({
     // %pcn is the player's FULL NAME - always set post-chargen in DFU.
     // Pre-chargen (the exterior hosts today) it is unset; collapse the
     // ", %pcn," appositive so the line reads "You are accused..."
-    // instead of "You, , are..." (chargen wiring FLAGGED).
+    // instead of "You, , are..." - reachable only pre-chargen now
+    // (chargen runs in every host and writes the name; AUDIT 23).
     const name = playerEntity.name ?? '';
     if (!name) t = t.replace(/,\s*%pcn\s*,/g, '');
     return t.replaceAll('%pcn', name)

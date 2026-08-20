@@ -10,9 +10,10 @@
 //   - the strike itself rides the SHARED weaponStates machine
 //     (drag-to-swing gestureDirection + ATTACK_THRESHOLD, the combat
 //     layer's ported input)
-// INTERIM (loud): the equipped weapon is an Iron Dagger until the
-// items/inventory arc - the template index is explicit here so the
-// real item system swaps in as plumbing. Racial modifiers are LIVE
+// INTERIM_WEAPON is the PRE-CHARGEN fallback only (AUDIT 23: the
+// items/inventory arc shipped and the rig binds the entity's worn
+// weapon per frame - the old 'until the items arc' claim retired).
+// Racial modifiers are LIVE
 // (AUDIT 18 ported CalculateRacialModifiers into formulas.js, which
 // reads the raceId chargen writes); proficiency modifiers pend the
 // career proficiency flags. Backstab is threaded by the host that

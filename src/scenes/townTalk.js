@@ -14,11 +14,12 @@
 // Overlay active = the motor holds (the U3 seam shape).
 //
 // FLAGGED loud: Info mode opens the same talk window (DFU routes
-// Info/Grab/Talk on mobiles identically); guards on failed
-// pickpocket pend the crime slice; topics/tones/portrait pend T3c;
-// pickpocket gold/nothing land as HUD lines where DFU raises a
-// modal MessageBox ("not successful" IS a HUD popup in DFU too) -
-// the box swap rides the U-arc message-box rollout to these hosts.
+// Info/Grab/Talk on mobiles identically); the TFAC portrait art is
+// the one T3c piece still open (guards-on-pickpocket, topics and
+// tones all SHIPPED - AUDIT 23 retired those clauses); pickpocket
+// gold/nothing land as HUD lines where DFU raises a modal MessageBox
+// ("not successful" IS a HUD popup in DFU too) - the box swap rides
+// the U-arc message-box rollout to these hosts.
 
 import { FactionFile } from '../formats/factionFile.js';
 import { TextRsc } from '../formats/textRsc.js';
@@ -30,7 +31,7 @@ import { hudScale } from '../ui/hud.js';
 import { overlayAction } from '../ui/input.js';
 import {
   getPeopleOfCurrentRegion, getReactionToPlayer, pickpocketTownsperson, findFactions,
-  MOBILE_NPC_ACTIVATION_DISTANCE, PICKPOCKET_DISTANCE, FOUND_NOTHING_VALUABLE_TEXT_ID,
+  MOBILE_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE, PICKPOCKET_DISTANCE, FOUND_NOTHING_VALUABLE_TEXT_ID,
 } from '../systems/talk.js';
 import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorificOf, raceDisplayName } from '../systems/talkSession.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
@@ -235,7 +236,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       const d = rayPersonDistance(camPos, fwd, p.pos);
       if (d < bestDist) { best = p; bestDist = d; }
     }
-    if (!best || bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) return false;
+    // AUDIT 23 (ui-native-3) - PlayerActivate.cs:76/:771-798: the ray
+    // itself reaches RayDistance (76.8); each MODE's distance gates
+    // inside with "You are too far away." (Info/Grab/Talk 6.4, Steal
+    // 3.2 alone). The old 6.4 pre-gate answered a person down a long
+    // street with SILENCE and let E fall through to a door behind them.
+    if (!best || bestDist > RAY_DISTANCE) return false;
+    if (mode !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { hud.add('You are too far away.'); return true; }
+    if (mode === 'steal' && bestDist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return true; }
     ensureLoaded().then(() => activate(best, bestDist));
     return true;
   }

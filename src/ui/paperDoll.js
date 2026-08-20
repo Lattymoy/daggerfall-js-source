@@ -30,7 +30,8 @@
 //   chain fall to the identity None table);
 // - the click mask (GetEquipIndex): iterate the blitted item layers
 //   BACKWARDS, the first non-transparent pixel wins its equip slot.
-// INTERIM loud: Breton male face 0 until chargen fronts identity.
+// Breton/male/face 0 is only the PRE-CHARGEN default (chargen fronts
+// identity and this file reloads on identity change - AUDIT 23).
 
 import { ImgFile } from '../formats/imgFile.js';
 import { CifRciFile } from '../formats/cifRciFile.js';

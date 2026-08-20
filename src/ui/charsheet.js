@@ -19,7 +19,8 @@
 // encumbrance = carried template weight (+ gold at 0.0025/piece) /
 // floor(Str*1.5) (FormulaHelper.MaxEncumbrance). The classic skill
 // BUTTON popups ride keys 1-4 as interim text panels (primary/
-// major/minor/misc); the PORTRAIT pends chargen faces (FLAGGED);
+// major/minor/misc); the PORTRAIT DRAW is not wired (the chargen
+// face art itself shipped - AUDIT 23 reflagged the true gap);
 // art-less draws keep the old text page (never trap the motor).
 // The level-up screen stays on the text idiom (its retrofit rides
 // a later U8 slice).
@@ -81,7 +82,7 @@ export class LevelUpScreen {
     else if (action === 'confirm' && this.pool === 0) {
       // applyLevelUp rolls HP; our pre-rolled pool distributes here -
       // the distribute hook writes the hand-built stats.
-      applyLevelUp(this.entity, (stats) => Object.assign(stats, this.working), this._rolls);
+      applyLevelUp(this.entity, (stats) => Object.assign(stats, this.working), this._rolls, this._rolledPool);
       this.done = true;
     }
   }

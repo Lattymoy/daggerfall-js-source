@@ -191,7 +191,10 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
   else base = { group: 'Jewellery', templateIndex: pick(ITEM_GROUPS.Jewellery, rolls) };
   // The regular name is replaced by the magic name; enchantments ride
   // raw; condition = uses. Item VALUE from enchantment costs is
-  // FLAGGED to the economy slice (shops).
+  // FLAGGED to the ENCHANTMENT-EFFECTS slice (the shops themselves
+  // shipped at E1-E3; AUDIT 23 re-routed the stale pointer - a magic
+  // item still sells at its mundane base until the enchantment cost
+  // sum is ported).
   return {
     ...base,
     name: magicItem.name,

@@ -23,6 +23,7 @@ import { goldStack } from './inventory.js';   // AUDIT 17f: one gold mint
 
 // PlayerActivate constants, verbatim (classic units x GlobalScale).
 export const MOBILE_NPC_ACTIVATION_DISTANCE = 256 * 0.025;   // 6.4
+export const RAY_DISTANCE = 3072 * 0.025;                    // 76.8 - PlayerActivate.cs:76 RayDistance (AUDIT 23 ui-native-3)
 export const STATIC_NPC_ACTIVATION_DISTANCE = 256 * 0.025;
 export const PICKPOCKET_DISTANCE = 128 * 0.025;              // 3.2
 export const FOUND_NOTHING_VALUABLE_TEXT_ID = 8999;
@@ -89,13 +90,14 @@ export function pickpocketTownsperson(player, { rolls = Math.random, nothingText
       let stack = player.items.find((it) => it.group === 'Currency');
       if (!stack) player.items.push(stack = goldStack(0));
       stack.stackCount += gold;
-      // TallyCrimeGuildRequirements(true, 1) FLAGGED: thieves-guild
-      // membership pends the guilds arc.
+      // TallyCrimeGuildRequirements(true, 1) FLAGGED: the TG
+      // quest/invitation slice consumes the tally (guild MEMBERSHIP
+      // itself shipped at G2 - AUDIT 23 reflagged the true blocker,
+      // matching cityGuards.js's own notes).
       return { success: true, gold, message: gold === 1 ? 'You pinched 1 gold piece.' : `You pinched ${gold} gold pieces.` };
     }
     return { success: true, gold: 0, message: nothingText() };
   }
   player.crimeCommitted = 'Pickpocketing';   // PlayerEntity.Crimes, verbatim state
-  // SpawnCityGuards(true) FLAGGED: the crime/guards slice mounts the response.
   return { success: false, gold: 0, message: 'You are not successful.' };
 }

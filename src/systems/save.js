@@ -4,10 +4,12 @@
 // (stats, skills, uses, health/magicka, level sums, career by
 // index + data), items, known spells (by SPELLS.STD index),
 // active effects, the crime + per-region legal reputation, the
-// classic clock, and position. WORLD state
-// (foes, loot piles, action states, doors) is FLAGGED - dungeons
-// re-derive from their location on load; the world snapshot pends
-// its slice. Versioned envelope; a mismatch refuses loudly.
+// classic clock, and position. WORLD state SHIPPED at S12: the
+// envelope takes {world, locationKey} and the dungeon host snapshots
+// foes, piles, dropped loot, action states and door locks (AUDIT 23
+// retired the stale 'pends its slice' flag). Still open: the
+// mid-flight Move-door tween fields (Ledger C) and cross-location
+// travel-on-load. Versioned envelope; a mismatch refuses loudly.
 
 import { clampLegalReputations } from './court.js';   // AUDIT 23 (C4)
 import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1

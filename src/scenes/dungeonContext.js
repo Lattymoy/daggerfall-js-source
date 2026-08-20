@@ -1027,6 +1027,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!EFFECT_COST_TABLE[`${e.type},${e.subType & 0xff}`]) continue;
       tallySkill(playerEntity, effectSchool(e), 1);
     }
+    // AUDIT 23 (magic-13): the same release moment plays the element's
+    // cast sound at the player - the port shipped the table for enemy
+    // casts and the player cast in silence.
+    audio.playOneShot(SPELL_CAST_SOUND[sp.element] ?? SPELL_CAST_SOUND[4], 1);
   }
 
   function playerCastInput(eye, dir) {
@@ -1176,8 +1180,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const playerWeapon = weaponRig.playerWeapon;   // the dungeon-side combat consumers read it
   if (opts.playerWeapon === 'bow') {
     // Combat bows: ?weapon=bow readies a plain Short Bow (template
-    // 129; the inventory/equip UI pends - the INTERIM dagger note
-    // stands for melee).
+    // 129) for scripted demos - the native inventory/equip UI shipped
+    // at U8e/U8g (AUDIT 23 retired the stale 'pends' note).
     playerWeapon.weapon = { name: 'Short Bow', ...createWeapon(129, 0) };   // scripted demo: the rig's worn bind is off for this context (see createWeaponRig bindWorn)
   }
   const corpses = [];
