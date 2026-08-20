@@ -9,6 +9,8 @@
 // and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
+import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
+import { audio } from '../systems/audio.js';   // FS-slice: the stride plays flat 2D, as PlayerFootsteps' customAudioSource does
 import { requestLook } from '../player/pointerLock.js';
 import { playerEntity } from '../characters/playerEntity.js';   // shot-mode __hp probe
 import { attachTouch } from '../ui/touch.js';
@@ -95,6 +97,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // spawn drops onto the start-marker floor.
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity) });   // AcrobatMotor skill jump (P14); motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+    const _footsteps = new FootstepMachine();   // FS-slice
   player.spawn(spawn[0], spawn[1], spawn[2]);
   console.log(`[spawn] marker ${JSON.stringify(ctx.startMarker)} -> feet [${spawn.map((v) => v.toFixed(3)).join(', ')}] (startSpawn build)`);
   // P10 Teleport actions: player transform = the destination object's
@@ -303,6 +306,18 @@ export async function bootDungeon(canvas, renderer, params, status) {
         crouch: crouchHeld && !prevCrouch,
       }, cam.yaw, cam.pitch);
       prevCrouch = crouchHeld;
+      // FS-slice: PlayerFootsteps - the dungeon stride on stone with
+      // the water arms (shallow = capsule center 0.57 under the line).
+      {
+        const _step = _footsteps.update(player.pos, {
+          grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
+          standingStill: !moving,
+          halfSpeed: player.movingLessThanHalfSpeed,
+        }, pickFootstepSet({ inside: true, inBuilding: false,
+          dungeonSwimming: player.swimming,
+          dungeonShallow: surf != null && !player.swimming && (player.pos[1] + 0.9 - 0.57) < surf }));
+        if (_step) audio.playOneShot(_step.clip, _step.volume);
+      }
       cam.pos = player.eye;
       ctx.reportActivity?.({ running: keys.has('ShiftLeft') && moving, swimming: player.swimming, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing
       ctx.reportMotor(player.grounded, player.velY, cam.yaw);

@@ -9,7 +9,7 @@ import { requestLook } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { MapsFile } from '../formats/mapsFile.js';
+import { MapsFile, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
 import { convertTilemap } from '../world/terrainSurface.js';
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor } from '../player/motor.js';
@@ -46,6 +46,7 @@ import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS } from './hostCombat.js';  
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5): the collapse box
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
+import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
 import { seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1)
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
@@ -114,6 +115,10 @@ export async function bootExterior(canvas, renderer, params, status) {
   // UVs from the original (the SetDungeonTextures pattern).
   const season = parseSeason(params);
   const climateBase = dfLocation.climate.climateType;
+  // FS-slice: the location's raw CLIMATE.PAK index (the snow gate reads it)
+  const _locPixel = longitudeLatitudeToMapPixel(dfLocation.mapTableData.longitude, dfLocation.mapTableData.latitude);
+  const locClimateIndex = maps.getClimateIndex(_locPixel.x, _locPixel.y);
+  const footsteps = new FootstepMachine();
   const groundArchive = getGroundArchive(climateBase, season);
   const natureArchive = getNatureArchive(dfLocation.climate.natureArchive, season);
   const texRemap = new Map();
@@ -912,6 +917,15 @@ export async function bootExterior(canvas, renderer, params, status) {
       // P14 fall damage (host parity; the outdoor-water exemption is
       // FLAGGED here exactly as in world.js - no tile lookup yet).
       applyFallLanding(playerEntity, player.landedFallDistance, { sound: (id) => audio.playOneShot(id) });
+      // FS-slice: PlayerFootsteps - the exterior stride.
+      {
+        const _step = footsteps.update(player.pos, {
+          grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
+          standingStill: !keys.has('KeyW') && !keys.has('KeyS') && !keys.has('KeyA') && !keys.has('KeyD'),
+          halfSpeed: player.movingLessThanHalfSpeed,
+        }, pickFootstepSet({ inside: false, winter: season === SEASON.Winter, climateIndex: locClimateIndex }));
+        if (_step) audio.playOneShot(_step.clip, _step.volume);
+      }
       cam.pos = player.eye;
       const useHeld = keys.has('KeyE');
       if (useHeld && !latch.use && !modes.transitioning) {

@@ -42,6 +42,7 @@ import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { nearestLights } from '../world/cityLights.js';
 import { lookAt, perspective } from '../world/mat4.js';
 import { routeKey, overlayAction } from '../ui/input.js';
+import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createWeaponRig, envAttack } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible interior arrows
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
@@ -91,6 +92,7 @@ const DUNGEON_WATER_COLOR = [1, 1, 1, 0.82];
 const DUNGEON_WATER_SCROLL = 0.05;
 
 export function createWorldModes(host) {
+  const _footsteps = new FootstepMachine();   // FS-slice: the modal stride (interior wood / dungeon stone + water)
   // AUDIT 18: the interior host's share of the player world clock.
   //
   // AUDIT 21 (hosts lane, F3): onLevelUp, through this host's own overlay
@@ -857,6 +859,23 @@ export function createWorldModes(host) {
       crouch: crouchHeld && !latch.crouch,
     }, cam.yaw, cam.pitch);
     latch.crouch = crouchHeld;
+    // FS-slice: PlayerFootsteps - buildings walk on wood, dungeons on
+    // stone with the water arms (shallow = the capsule center 0.57
+    // under the block water line, DFU's own expression at the port's
+    // feet-origin convention).
+    {
+      const _surf = player.waterSurfaceY;
+      const _step = _footsteps.update(player.pos, {
+        grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
+        standingStill: !keys.has('KeyW') && !keys.has('KeyS') && !keys.has('KeyA') && !keys.has('KeyD'),
+        halfSpeed: player.movingLessThanHalfSpeed,
+      }, pickFootstepSet(mode === 'interior'
+        ? { inside: true, inBuilding: true }
+        : { inside: true, inBuilding: false,
+            dungeonSwimming: player.swimming,
+            dungeonShallow: _surf != null && !player.swimming && (player.pos[1] + 0.9 - 0.57) < _surf }));
+      if (_step) audio.playOneShot(_step.clip, _step.volume);
+    }
     if (mode === 'dungeon' && dungeonCtx) {
       // P11: the splash/jump/swim-minute fatigue feed (same seam as
       // the standalone scene); P14's fall landing rides the same call.

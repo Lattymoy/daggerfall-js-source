@@ -34,6 +34,7 @@ import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   //
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { TravelMapWindow, buildTravelIndex } from '../ui/travelMap.js';   // F-slice
+import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1)
@@ -764,6 +765,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
     return worldCoordToMapPixel(wc.x, wc.z);
   };
+  const footsteps = new FootstepMachine();   // FS-slice
   let _traveling = false;
   async function fastTravelTo(pick, opts, computed) {
     if (_traveling) return;
@@ -1194,6 +1196,18 @@ export async function bootWorld(canvas, renderer, params, status) {
         // rides the shared entity; the exterior death screen pends
         // with the world-mode UI arc.
         applyFallLanding(playerEntity, player.landedFallDistance, { sound: (id) => audio.playOneShot(id) });
+        // FS-slice: PlayerFootsteps - the exterior stride (snow by
+        // season + CLIMATE.PAK; the path/water tile arms ride the
+        // tile-under-player flag above).
+        {
+          const _p = playerTravelPixel();
+          const _step = footsteps.update(player.pos, {
+            grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
+            standingStill: !keys.has('KeyW') && !keys.has('KeyS') && !keys.has('KeyA') && !keys.has('KeyD'),
+            halfSpeed: player.movingLessThanHalfSpeed,
+          }, pickFootstepSet({ inside: false, winter: season === SEASON.Winter, climateIndex: maps.getClimateIndex(_p.x, _p.y) }));
+          if (_step) audio.playOneShot(_step.clip, _step.volume);
+        }
         cam.pos = player.eye;
         const useHeld = keys.has('KeyE');
         if (useHeld && !latch.use && !modes.transitioning) {

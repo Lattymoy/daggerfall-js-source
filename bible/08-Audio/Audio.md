@@ -165,3 +165,39 @@ they are not both ours:
 
 The audio queue is MUSIC ONLY once that clip is accounted for at its own
 mechanic (Mac's strategy call stands).
+
+## A6 (2026-08-20): PLAYER FOOTSTEPS - the world gets a floor SHIPPED
+
+The FS-slice; the wts-4 residue closes. PlayerFootsteps.cs whole, in
+two halves. systems/footsteps.js owns the LAWS pure: the sound-SET
+decision - outside walks the Outside pair, winter turns it to Snow
+unless IsSnowFreeClimate says the climate never snows (the gate
+weather.js had carried DEAD since it shipped finally has its
+consumer), buildings walk on Wood, dungeons on Stone, with DFU's
+override write order on top (exterior water Submerged, exterior
+paths ringing like the dungeon set, dungeon water Submerged
+swimming / Shallow wading at the capsule-center-0.57 line) - and
+the STRIDE machine: 2.5 units per step, walking and running alike
+("Matched to classic"), two clips alternating at 0.7 volume, halved
+when moving less than half speed; losing the ground silences the
+stride and regaining it lands ONE immediate step, except the very
+first landing after boot, which is swallowed (ignoreLostGrounding).
+The set pick is STATELESS per frame, so DFU's leave-the-water reset
+falls out for free.
+
+All FOUR hosts drive it off their live motors (grounded, swimming,
+levitating, movingLessThanHalfSpeed - the motor already carried
+every flag): world and exterior feed the season + the location's
+raw CLIMATE.PAK index into the snow gate, worldModes splits wood
+and stone by mode with the dungeon water arms off the block water
+line, and the standalone dungeon page mirrors it. Flat 2D playback,
+as PlayerFootsteps' customAudioSource is. RESIDUE on the struck
+row: the exterior path/water TILE arms (no tile-under-player lookup
+yet - the same flag the fall-damage exemption rides) and the mount
+gate (transport arc). The fall/splash/pain one-shots that share the
+C# file were already home (P14, combat).
+
+4 pins (the set decision with the gate and the override order, the
+stride at its boundaries, the ground-loss laws, the four-host
+sweep); 3 mutations run, 3 killed. Walked live in the dungeon and
+the world with zero page errors.
