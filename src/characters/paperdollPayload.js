@@ -51,7 +51,8 @@ import { UNDEAD_DESIGNS, undeadOpts } from './undeadBody.js';
 import { CLASS_DESIGNS, classOpts } from './humanClasses.js';
 import { ATRONACH_DESIGNS, atronachOpts } from './atronachs.js';
 import { BEAST_DESIGNS, beastOpts, ALL_GROUPS } from './beasts.js';
-import { buildBeastBody } from './pieces/beastBody.js';
+import { buildBeastBody, buildBeastTail } from './pieces/beastBody.js';
+import { buildBeastHead, WOLF_RAMP } from './pieces/beastHead.js';
 import { buildRibcage, buildPelvis, BONE_RAMP } from './pieces/skeletonBones.js';
 import { buildHorseBody, BAY_RAMP } from './pieces/centaurBody.js';
 import { buildTusks, buildBrow, IVORY_RAMP } from './pieces/orcHead.js';
@@ -325,11 +326,19 @@ export function buildPaperdollPayload(pal, img, cif) {
   const beastPacks = BEAST_DESIGNS.map((d) => {
     const { ramps: bramps, opts, hide, pelt } = beastOpts(d, pal);
     let bf = buildNeutralBody(bramps, { face, ...opts });
-    bf = collapseGroups(bf, ALL_GROUPS, [0, 0.4, 0]);
+    // TWO KINDS OF DESIGN IN ONE LINE. A full beast collapses ALL six
+    // groups and its piece is the whole animal. A werebeast collapses
+    // only the HEAD and keeps the man's body — it is a man with the
+    // wrong head, not a wolf on four legs, and that is the difference
+    // between the two halves of this file.
+    bf = collapseGroups(bf, d.collapse || ALL_GROUPS, [0, 1.5, 0]);
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
-      build: d.build || {}, zones: [], hide,
-      beast: packPiece(buildBeastBody(pelt, d.beast)),
+      build: d.build || {}, zones: d.zones || [], hide,
+      beast: d.beast ? packPiece(buildBeastBody(pelt, d.beast)) : null,
+      beastHead: d.beastHead ? packPiece(buildBeastHead(pelt, d.beastHead)) : null,
+      // A werebeast keeps a tail, which the human rig has no concept of.
+      beastTail: d.tail ? packPiece(buildBeastTail(pelt, d.tail)) : null,
       ...villagerDelta(faces, bf),
     };
   });
