@@ -65,6 +65,7 @@ import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
 import { fetchBytes, ensureAudio, raiseAtRestEnd } from './shared.js';
+import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
@@ -627,6 +628,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // classic shows behind the doll underground. The town hosts have
   // only ever asked for SCBG04I0, so the constant existed with no
   // caller until now.
+  preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
   preloadPaperDollForEntity({ renderer, fetchBytes, palette, getTexture }, playerEntity, 'dungeon')
     .catch(() => console.warn('[paperdoll] art unavailable in this dungeon'));
 
@@ -634,8 +636,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  F6 press and each loot target - so a hook cannot reach one and
    *  miss the others (THE ONE CONSTRUCTION SEAM, which U25's sweep
    *  found four instances of in the exterior hosts). */
+  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { activeOverlay = w; } });   // B1
   function openInventory(lootItems, onEmptied = null) {
     return new NativeInventoryWindow({
+      openBook: openBookHook,   // B1: the use-mode book arm
       items: () => (playerEntity.items ??= []),
       wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice
       // W-slice: CheckWagonAccess's dungeon arm - the wagon is

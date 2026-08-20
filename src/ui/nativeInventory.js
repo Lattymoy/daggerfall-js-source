@@ -274,6 +274,17 @@ export class NativeInventoryWindow {
   /** UseItem's outcome as a box, or nothing when the arm is silent
    *  (NextVariant on a garment repaints the doll and says nothing). */
   _useResult(r) {
+    // B1: a book opens the reader through the host's hook; failure
+    // (no id, missing/ruined file) shows the bookUnavailable box, and
+    // a host with no hook keeps the pending text.
+    if (r.kind === 'book') {
+      if (this.hooks.openBook) {
+        this.hooks.openBook(r.item, () => { this.boxes = [{ rows: [{ text: r.failText, center: true }] }]; });
+      } else {
+        this.boxes = [{ rows: [{ text: USE_PENDING.book, center: true }] }];
+      }
+      return;
+    }
     if (r.text) this.boxes = [{ rows: [{ text: r.text, center: true }] }];
     else if (r.textId && this.hooks.rows) this.boxes = [{ rows: this.hooks.rows(r.textId) ?? [] }];
     else if (r.pending) this.boxes = [{ rows: [{ text: USE_PENDING[r.kind] ?? 'Nothing happens.', center: true }] }];

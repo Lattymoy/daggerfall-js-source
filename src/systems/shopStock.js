@@ -26,6 +26,7 @@
 import { dice100 } from '../combat/formulas.js';
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
 import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition } from './itemTemplates.js';
+import { getRandomBookID } from './books.js';   // B1
 import { isLeather, isPlate } from './armorMaterials.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
@@ -157,7 +158,7 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
       for (let j = 0; j <= qualityMod; ++j) {
         // CreateRandomBook: Range(0, book.TotalVariants) = the
         // template's variant count (2), NOT the 4 Books enum names.
-        add({ group: 'Books', templateIndex: BOOK_TEMPLATE, variant: Math.floor(rolls() * (ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0)) });   // book-file pricing pends (loud)
+        add({ group: 'Books', templateIndex: BOOK_TEMPLATE, variant: Math.floor(rolls() * (ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0)), message: getRandomBookID(rolls) });   // B1: message = the book id (CreateRandomBook); book-file pricing pends (loud)
       }
       continue;
     }

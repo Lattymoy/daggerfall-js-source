@@ -49,6 +49,7 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold } from '../sy
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
@@ -575,6 +576,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
+  preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
+  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => townTalk.showOverlay(w) });   // B1
   // AUDIT 21 (hosts lane, F7): the classic HUD art. loadHud swallows a missing
   // file and answers null, and drawHud no-ops on null, so a host without the
   // art draws no HUD rather than failing to boot - the same law the title
@@ -1066,6 +1069,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // binding; same host rule as F5).
     if (e.code === 'F6' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && inventoryArtLoaded()) {
       townTalk.showOverlay(new NativeInventoryWindow({
+        openBook: openBookHook,   // B1: the use-mode book arm
         items: () => (playerEntity.items ??= []),
         wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
         entity: playerEntity,
@@ -1485,6 +1489,7 @@ export async function bootWorld(canvas, renderer, params, status) {
               // pile as the remote target (Remove defaults - the OnPush law)
               const pile = droppedLoot.pileFor(dropKey);
               townTalk.showOverlay(new NativeInventoryWindow({
+                openBook: openBookHook,   // B1: the use-mode book arm
                 items: () => (playerEntity.items ??= []),
         wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
                 onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
