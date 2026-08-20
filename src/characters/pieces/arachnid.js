@@ -94,6 +94,7 @@ export function buildArachnid(ramp = CHITIN_RAMP, s = {}) {
     arch = 0.5,
     claws = 0,
     sting = 0,
+    legPairs = 4,
   } = s;
 
   const faces = [];
@@ -120,11 +121,15 @@ export function buildArachnid(ramp = CHITIN_RAMP, s = {}) {
   // Four a side, fanned from the thorax. Each is TWO segments with a
   // knee above the body: a spider's legs go up before they come down,
   // and legs that run straight out read as a starfish.
-  const n = 4;
+  // LEGS ARE OPTIONAL, because a dreugh borrows the CLAWS and nothing
+  // else. Reusing this builder for them brought eight small spider legs
+  // along with the pair that was wanted — a crustacean standing on its
+  // own legs with a spider's underneath it.
+  const n = legPairs;
   for (const side of [-1, 1]) {
     for (let i = 0; i < n; i++) {
       // Fan from forward-ish to backward-ish along the body's side.
-      const t = i / (n - 1);
+      const t = n > 1 ? i / (n - 1) : 0.5;
       const ang = (-0.75 + t * 1.9) * side + (side < 0 ? Math.PI : 0);
       const dirX = Math.sin(ang) * (side < 0 ? -1 : 1);
       const dirZ = Math.cos(ang);

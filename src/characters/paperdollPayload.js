@@ -54,6 +54,8 @@ import { BEAST_DESIGNS, beastOpts, ALL_GROUPS } from './beasts.js';
 import { buildBeastBody, buildBeastTail } from './pieces/beastBody.js';
 import { buildBeastHead, WOLF_RAMP } from './pieces/beastHead.js';
 import { buildArachnid } from './pieces/arachnid.js';
+import { buildWings } from './pieces/wings.js';
+import { buildFishBody } from './pieces/fishBody.js';
 import { DAEDRA_DESIGNS, daedraOpts } from './daedra.js';
 import { buildHorns } from './pieces/beastHead.js';
 import { buildRibcage, buildPelvis, BONE_RAMP } from './pieces/skeletonBones.js';
@@ -343,6 +345,17 @@ export function buildPaperdollPayload(pal, img, cif) {
       // NO SPINE: an arachnid gets its own builder rather than more
       // parameters on the quadruped's. See pieces/arachnid.js.
       arachnid: d.arachnid ? packPiece(buildArachnid(pelt, d.arachnid)) : null,
+      // FLYING: the one behaviour that is neither foot nor fin. A wing
+      // is a membrane on fingers, so it is panels rather than boxes —
+      // see pieces/wings.js.
+      wings: d.wings ? packPiece(buildWings(pelt, d.wings)) : null,
+      // A FISH STANDS ON NOTHING, which is not a leg length of zero.
+      // The same builder gives a whole slaughterfish and a lamia's tail
+      // — see pieces/fishBody.js and its `from`.
+      fish: d.fish ? packPiece(buildFishBody(pelt, d.fish)) : null,
+      // The scorpion's claws, built for a body with no spine and working
+      // just as well on a dreugh that has one.
+      claws: d.claws ? packPiece(buildArachnid(pelt, d.claws)) : null,
       // A werebeast keeps a tail, which the human rig has no concept of.
       beastTail: d.tail ? packPiece(buildBeastTail(pelt, d.tail)) : null,
       ...villagerDelta(faces, bf),
