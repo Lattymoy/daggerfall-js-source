@@ -274,6 +274,7 @@ export function createPlayerMagic({
       return castInput(eye, dir);
     },
     batches: () => batches,
+    missileCount: () => missiles.length,   // M5 probe surface
     readied: () => readiedSpell,
     readiedIndex: () => readiedSpell?.index ?? null,
     setReadiedByIndex(index, spellsByIndex) {

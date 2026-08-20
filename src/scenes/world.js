@@ -997,6 +997,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
   });
   if (shotMode) { modes.installShotProbes(); installTownProbes(); }
+  if (shotMode) window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
+  window.__readyRanged = () => { const sp = knownSpells({}, spellsByIndex).map((x) => [calculateCastCost(x, playerEntity).sp, x]).sort((a, b) => a[0] - b[0])[0]?.[1]; magic.setReadied(sp); return sp ? `${sp.name}:${calculateCastCost(sp, playerEntity).sp}` : null; };   // M5: no classic starting set carries a missile spell - ready the cheapest flier for the flight leg
 
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
   let _lastPlayerPos = null, _playerStill = false;   // T2: the politeness still-tracker

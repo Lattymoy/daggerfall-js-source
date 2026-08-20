@@ -744,6 +744,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (walkMode) player.spawn(x, y, z); else cam.pos = [x, y, z];
     };
     modes.installShotProbes();
+    window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
+    window.__readyRanged = () => { const sp = knownSpells({}, spellsByIndex).map((x) => [calculateCastCost(x, playerEntity).sp, x]).sort((a, b) => a[0] - b[0])[0]?.[1]; magic.setReadied(sp); return sp ? `${sp.name}:${calculateCastCost(sp, playerEntity).sp}` : null; };   // M5: no classic starting set carries a missile spell - ready the cheapest flier for the flight leg
     // T1: the townsfolk probe surface
     window.__people = () => JSON.stringify((population?.pool ?? []).map((it, i) => ({
       i, active: it.active, visible: it.visible, pend: it.scheduleEnable, recyc: it.scheduleRecycle,
