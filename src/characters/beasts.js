@@ -69,6 +69,15 @@ export const BEAST_RAMPS = Object.freeze({
   // block 15 - orange-red -> dark red. An imp, which is the only small
   // thing in the game that wants to be noticed.
   impred: [242, 249],
+  // block 10 - pale green -> deep green. Cold water scales, and light
+  // enough to keep a silhouette at depth.
+  fishscale: [160, 168],
+  // block 6 - light blue -> deep blue. A dreugh, which is the only
+  // thing here that lives under the sea rather than in it.
+  dreughblue: [98, 106],
+  // block 3 - pink -> mauve. A lamia is a woman to the waist, and the
+  // waist is where she stops looking like one.
+  lamiaflesh: [50, 57],
 });
 
 export const BEAST_DESIGNS = [
@@ -257,6 +266,70 @@ export const BEAST_DESIGNS = [
     pelt: 'impred',
   },
 
+  {
+    id: MOBILE_TYPES.Slaughterfish,
+    name: 'Slaughterfish',
+    level: 7,
+    damage: [2, 12],
+    weaponTier: 0,
+    // AFFINITY: WATER, and the last thing in the table the existing
+    // builders cannot say. A quadruped tapers nose to rump and stands on
+    // four legs; a fish tapers the same way and stands on NOTHING — and
+    // that is not a parameter, because a leg length of zero leaves a
+    // barrel lying on the floor rather than a fish.
+    //
+    // What makes it read is the FINS, and a fin is a thin vertical sheet
+    // rather than a box. It is mostly teeth, so the gape is the design.
+    fish: { len: 0.95, girth: 0.15, at: 0.42, from: 0.45, fin: 0.18, dorsal: 0.12, jaw: 1 },
+    pelt: 'fishscale',
+  },
+  {
+    id: MOBILE_TYPES.Lamia,
+    name: 'Lamia',
+    level: 16,
+    damage: [5, 15],
+    weaponTier: 1,
+    // A WOMAN TO THE WAIST AND A FISH BELOW: the centaur's composition
+    // with a different animal on the back of it, and the same collapse —
+    // the legs go, and the tail starts where they were.
+    //
+    // Which is why the fish builder takes a `from`: it does not have to
+    // begin at its own nose, and a tail that starts at a waist is the
+    // same geometry as a fish that starts at a head.
+    build: { torso: 0.94, shoulder: 0.96, arm: 0.92, hand: 0.94, neck: 0.94, skull: 0.98, jaw: 0.94, leg: 0.6 },
+    zones: [],
+    mats: {},
+    hideRamp: 'lamiaflesh',
+    collapse: ['legL', 'legR'],
+    // at 0.86, not 0.72: her collapsed legs left the body ending near
+    // the pelvis and a tail slung at 0.72 hung BELOW it with daylight
+    // between. A lamia with a gap at the waist is two animals in a
+    // stack rather than one thing.
+    fish: { len: 0.85, girth: 0.13, at: 0.86, from: 0.0, fin: 0.16, dorsal: 0.07, jaw: 0 },
+    pelt: 'fishscale',
+  },
+  {
+    id: MOBILE_TYPES.Dreugh,
+    name: 'Dreugh',
+    level: 16,
+    damage: [5, 15],
+    weaponTier: 1,
+    // The only one of the three that walks: a crustacean that stands
+    // upright, so it keeps the whole rig and gains CLAWS — the
+    // scorpion's, which were built for a body with no spine and work
+    // just as well on one that has.
+    build: { torso: 1.18, shoulder: 1.3, arm: 1.24, hand: 1.34, neck: 1.06, skull: 1.02, jaw: 1.1, leg: 1.1 },
+    zones: [],
+    mats: {},
+    hideRamp: 'dreughblue',
+    collapse: [],
+    // legPairs 0: the CLAWS and nothing else. Without it the arachnid
+    // builder brings its eight legs along, and a dreugh stands on its
+    // own legs with a spider's underneath.
+    claws: { span: 0.2, ride: 1.24, thorax: 0.12, abdomen: 0.02, legR: 0.02, arch: 0, claws: 1.3, sting: 0, legPairs: 0 },
+    pelt: 'dreughblue',
+  },
+
 ];
 
 /** Every group of the human rig, because none of it is wanted. */
@@ -280,15 +353,19 @@ export function beastOpts(design, pal) {
     }
     return out;
   };
+  // A design may have a hide DIFFERENT from its pelt: a lamia's skin is
+  // not her scales, and using one ramp for both makes her a fish all the
+  // way up.
   const pelt = ramp(BEAST_RAMPS[design.pelt]);
+  const hide = design.hideRamp ? ramp(BEAST_RAMPS[design.hideRamp]) : pelt;
   return {
     drape: null,
-    ramps: { skin: pelt, boot: pelt },
+    ramps: { skin: hide, boot: hide },
     // A FULL BEAST HAS NO BUILD — its body is collapsed and the piece is
     // everything. A werewolf DOES: it keeps the man's body, so the build
     // is the difference between him and the man he was.
     opts: { build: design.build || {}, clothZones: design.zones || [], armorZones: [], mats: {} },
-    hide: pelt,
+    hide,
     pelt,
   };
 }

@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs';
 import { BEAST_DESIGNS, beastOpts, BEAST_RAMPS, ALL_GROUPS } from '../src/characters/beasts.js';
 import { buildBeastBody } from '../src/characters/pieces/beastBody.js';
 import * as wingsMod from '../src/characters/pieces/wings.js';
+import * as arachMod from '../src/characters/pieces/arachnid.js';
 
 const pal = { get: (i) => ({ r: (i * 7) & 255, g: (i * 5) & 255, b: (i * 3) & 255 }) };
 
@@ -31,9 +32,25 @@ test('beasts: a design collapses exactly what it does not use', () => {
     //
     // What is actually true, and was true all along: a group is
     // collapsed exactly when something replaces it. Nothing else.
-    const replacesBody = !!(d.beast || d.arachnid);
+    // FIFTH COUNTEREXAMPLE, and the rule finally generalises instead of
+    // growing another branch: a lamia replaces her LEGS with a fish
+    // tail. So the expectation is not a list of design kinds at all —
+    // it is whatever the design says it replaces, and the check is that
+    // it replaces something for everything it collapses.
+    // A `fish` is a WHOLE BODY on a slaughterfish and a TAIL on a lamia,
+    // and what tells them apart is the design's own collapse list — the
+    // lamia names her legs, the fish names nothing and takes everything.
+    const partial = Array.isArray(d.collapse) && d.collapse.length > 0 && d.collapse.length < ALL_GROUPS.length;
+    const replacesBody = !!(d.beast || d.arachnid || (d.fish && !partial));
     const replacesHead = !!d.beastHead;
-    const expected = replacesBody ? ALL_GROUPS : replacesHead ? ['head'] : [];
+    const replacesLegs = !!d.fish && !replacesBody;
+    const expected = replacesBody
+      ? ALL_GROUPS
+      : replacesHead
+        ? ['head']
+        : replacesLegs
+          ? ['legL', 'legR']
+          : [];
     assert.deepEqual(
       groups,
       expected,
@@ -97,8 +114,26 @@ test('beasts: legal ramps, and a pelt each', () => {
     const span = BEAST_RAMPS[d.pelt];
     assert.ok(span, `${d.name} has no pelt`);
     assert.ok(span[1] > span[0] && span[0] >= 0 && span[1] <= 255, `${d.name}'s pelt leaves the palette`);
-    assert.ok(!seen.has(d.pelt), `${d.name} shares a pelt — three brown animals is one animal`);
-    seen.add(d.pelt);
+    // A SHARED PELT IS ONLY A PROBLEM WHERE THE SHAPES ALSO MATCH. Three
+    // brown quadrupeds would be one animal; a slaughterfish and a
+    // lamia's tail SHOULD be the same scales, because they are the same
+    // material on two different bodies. The pin is on the pair, not on
+    // the colour.
+    const whole = !Array.isArray(d.collapse) || d.collapse.length === ALL_GROUPS.length;
+    const shape = d.beast
+      ? 'quad'
+      : d.arachnid
+        ? 'arach'
+        : d.fish
+          ? whole
+            ? 'fish'
+            : 'fishtail' // a lamia's tail is the same scales on a different animal
+          : d.wings
+            ? 'wing'
+            : 'were';
+    const key = d.pelt + ':' + shape;
+    assert.ok(!seen.has(key), `${d.name} is another ${shape} in ${d.pelt} — that is one animal twice`);
+    seen.add(key);
     const { ramps } = beastOpts(d, pal);
     assert.ok(ramps.skin.length > 2, `${d.name} resolved to no colours`);
   }
@@ -218,4 +253,42 @@ test('wings: the same piece serves a bat and an imp', () => {
   assert.deepEqual(imp.collapse, [], 'the imp collapses part of the rig — it is a person');
   assert.ok(!imp.beast && !imp.arachnid, 'the imp has a body that is not the rig');
   assert.ok(imp.build && imp.build.torso < 0.8, 'the imp is not small');
+});
+
+// ── WATER: A BODY THAT STANDS ON NOTHING ─────────────────────────
+// A quadruped tapers nose to rump and stands on four legs. A fish
+// tapers the same way and stands on NOTHING — which is not a leg length
+// of zero, because that leaves a barrel lying on the floor.
+
+test('water: the fish builder serves a whole fish and a lamia\'s tail', () => {
+  // Its `from` is why: a tail that starts at a waist is the same
+  // geometry as a fish that starts at a head, and the alternative was
+  // two builders that differ by an offset.
+  const fish = BEAST_DESIGNS.find((d) => d.name === 'Slaughterfish');
+  const lamia = BEAST_DESIGNS.find((d) => d.name === 'Lamia');
+  assert.ok(fish.fish && lamia.fish, 'the water designs do not share a builder');
+  assert.equal(lamia.fish.from, 0, 'the lamia tail is offset by from rather than by its own length');
+  assert.ok(fish.fish.jaw > 0 && !lamia.fish.jaw, 'a lamia has a fish jaw, or a slaughterfish has none');
+});
+
+test('lamia: her tail meets her waist', () => {
+  // At 0.72 the tail hung BELOW the collapsed pelvis with daylight
+  // between them — two animals in a stack rather than one thing.
+  const lamia = BEAST_DESIGNS.find((d) => d.name === 'Lamia');
+  assert.deepEqual(lamia.collapse, ['legL', 'legR'], 'the lamia keeps her legs');
+  assert.ok(lamia.fish.at > 0.8, `tail slung at ${lamia.fish.at} leaves a gap at the waist`);
+  assert.ok(lamia.hideRamp !== lamia.pelt, 'her skin is her scales — she is a fish all the way up');
+});
+
+test('dreugh: claws without a spider under it', () => {
+  // Borrowing the arachnid builder for its CLAWS brought eight small
+  // spider legs along: a crustacean standing on its own legs with a
+  // spider's underneath. legPairs is why that is now a choice.
+  const d = BEAST_DESIGNS.find((x) => x.name === 'Dreugh');
+  assert.equal(d.claws.legPairs, 0, 'the dreugh has spider legs');
+  assert.deepEqual(d.collapse, [], 'the dreugh collapses part of itself — it walks upright');
+  const { buildArachnid } = arachMod;
+  const legged = buildArachnid(undefined, { claws: 1 });
+  const clawsOnly = buildArachnid(undefined, { claws: 1, legPairs: 0 });
+  assert.ok(clawsOnly.length < legged.length / 2, 'legPairs 0 does not actually drop the legs');
 });
