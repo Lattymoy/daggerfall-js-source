@@ -2635,3 +2635,54 @@ it, the gender walk-back does not, the description box's No never
 does; the window - Escape fires onCancel once and goes dead with
 onDone untouched; the host sweep - the dungeon tickOverlay arm and
 both exterior hosts' onCancel reloads).
+
+## U28 - THE WAGON (2026-08-20)
+
+The oldest inventory residue clears: U26's button answered "You
+don't own a wagon." and nothing else. The W-slice ships
+DaggerfallInventoryWindow's whole second inventory:
+
+- **The button ladder** (:1234-1243): no Small Cart (Transportation
+  template 93) in the bag -> the noWagon box; inside a dungeon
+  without access -> exitTooFar; else ShowWagon toggles. The click
+  sound rides every arm.
+- **ShowWagon** (:1047-1080): the port's `_remote()` is computed,
+  so DFU's lastRemoteItems save/restore collapses into
+  `usingWagon ? wagonItems : loot ?? dropped` - the same truth,
+  no stored swap. The remote scroll resets on toggle.
+- **The 750kg gates**: a local Remove click INTO the wagon runs
+  WagonCanHoldAmount (:1425-1434) - ComputeCanHoldAmount over the
+  cart's load in GP-units - refusing at zero fit
+  (cannotHoldAnymore) with no click sound, split-taking a partial
+  stack exactly as the items-9 carry gate does. The drop-gold
+  field clamps to the headroom with the wagonFullGold box
+  (:1296-1303); DFU would mint a 0-gold stack when the wagon is
+  dead full - guarded, Ledger A.
+- **CheckWagonAccess** (:1082-1116): the dungeon arm - the cart in
+  the bag AND the player within 5 units of an EXIT door
+  (DungeonWagonAccessProximityCheck's radius). A no-loot open
+  lands straight ON the wagon in Remove mode - the classic
+  leave-the-haul-at-the-entrance flow; a loot open keeps the pile
+  as the remote with the button now able to toggle. The port
+  decides ON OPEN (per-window), collapsing DFU's cross-open flag
+  lifecycle into the same observable behavior.
+- **The save halves**: playerEntity.wagonItems beside items in the
+  envelope (SerializablePlayer carries wagonItems); pre-W saves
+  restore an empty cart. All five window constructions hand
+  `wagonItems`; the dungeon host hands the exit-door proximity.
+
+Prose flags: exitTooFar/cannotHoldAnymore/wagonFullGold keys cited,
+prose ours pending a string source (the established pattern).
+RESIDUE: the wagon weight label ("x / 750" on the remote icon) is a
+drawing note; DFU's on-foot gate rides the transport arc.
+
+Mutations: 4 run, 4 killed (the exitTooFar gate dropped; the wagon
+transfer gate dropped; the no-loot auto-open dropped; the gold
+clamp dropped).
+
+Pins: test/wagon.test.js x4 (the ladder incl. the dungeon refusal
+and the toggle's remote identity; CheckWagonAccess's three opens -
+no-loot-on-the-wagon-in-Remove, loot-keeps-the-pile,
+no-cart-never-grants; the 750kg gates - the 375-of-400-books
+split-take, the zero-fit refusal, the 4000-gold headroom clamp
+with its box; the save/wiring sweep).

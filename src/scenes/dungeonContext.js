@@ -52,7 +52,7 @@ import { SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
 // hosts have had since U8d - tabs, paperdoll, the real info panel and
 // point-and-click Use. The keyed InventoryWindow it used until now is
 // retired from this host.
-import { NativeInventoryWindow, preloadInventoryArt } from '../ui/nativeInventory.js';
+import { NativeInventoryWindow, preloadInventoryArt, WAGON_ACCESS_DISTANCE } from '../ui/nativeInventory.js';
 import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
@@ -637,6 +637,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function openInventory(lootItems, onEmptied = null) {
     return new NativeInventoryWindow({
       items: () => (playerEntity.items ??= []),
+      wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice
+      // W-slice: CheckWagonAccess's dungeon arm - the wagon is
+      // reachable only within 5 units of an EXIT door
+      // (DungeonWagonAccessProximityCheck :1099-1116; the classic
+      // "your cart waits at the entrance" rule).
+      dungeon: {
+        inside: true,
+        nearExit: () => !!lastPlayerFeet && exitDoors.some((d) => {
+          const p = [d.matrix[12], d.matrix[13], d.matrix[14]];
+          return Math.hypot(p[0] - lastPlayerFeet[0], p[1] - lastPlayerFeet[1], p[2] - lastPlayerFeet[2]) <= WAGON_ACCESS_DISTANCE;
+        }),
+      },
       entity: playerEntity,
       icons: { getTexture, uploadRecord, textures: renderer.textures },
       rows: (id) => textRsc?.variantLinesById(id) ?? [],   // AUDIT 22 F2

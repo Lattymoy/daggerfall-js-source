@@ -39,10 +39,11 @@
 // (name/weight/value - DFU's 1016 info text PENDS).
 // AUDIT 17e F39 / RETIRING A FLAG DELETES THE SENTENCE: this header
 // still said Equip and equip-after-transfer were FLAGGED after U8g
-// shipped both. STILL OPEN here: the WAGON (no wagon owned;
-// letter-of-credit pends). Use mode, the real 1016 info text and the
-// IsLightSource equip branch shipped at U25 (AUDIT 23 trimmed the
-// stale list).
+// shipped both. The WAGON shipped at the W-slice (ShowWagon as the
+// computed remote target, the 750kg gates, the dungeon exit rule);
+// STILL OPEN here: letter-of-credit. Use mode, the real 1016 info
+// text and the IsLightSource equip branch shipped at U25 (AUDIT 23
+// trimmed the stale list).
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25
@@ -103,14 +104,22 @@ export const USE_PENDING = Object.freeze({
 export const GOLD_TO_DROP_TEXT_ID = 25;
 /** Internal_Strings "noWagon" (:1237). */
 export const NO_WAGON_TEXT = "You don't own a wagon.";
+// W-slice: the wagon goes live.
+export const WAGON_KG_LIMIT = 750;      // ItemHelper.WagonKgLimit (:56)
+export const SMALL_CART_TEMPLATE = 93;  // ItemGroups.Transportation.Small_cart's template
+export const GOLD_PIECE_WEIGHT_KG = 0.0025;   // DaggerfallBankManager.goldPieceWeightInKg
+/** key "exitTooFar" (:1239) - prose ours pending a string source. */
+export const EXIT_TOO_FAR_TEXT = 'You are too far from the exit.';
+/** key "cannotHoldAnymore" (WagonCanHoldAmount :1431). */
+export const CANNOT_HOLD_TEXT = 'Your wagon cannot hold any more.';
+/** key "wagonFullGold" (:1303) - the drop-gold clamp's box. */
+export const wagonFullGoldText = (n) => `Your wagon can only hold ${n} more gold.`;
+/** DungeonWagonAccessProximityCheck's radius (:1102). */
+export const WAGON_ACCESS_DISTANCE = 5;
 /** L-slice (items-9): the CanCarryAmount refusal - DFU key
  *  "cannotCarryAnymore" (Unity-side localization; prose ours until a
  *  string source is decided). */
 export const CANNOT_CARRY_TEXT = 'You cannot carry any more.';
-/** The other half of the wagon button - ShowWagon swaps the REMOTE
- *  list to the cart's own 750kg collection. FLAGGED: Transportation
- *  items do not exist in the port, so nothing can reach it yet. */
-export const WAGON_PENDING_TEXT = 'Your wagon is not available yet.';
 export const TABS = ['weapons', 'magic', 'clothing', 'ingredients'];
 const TAB_RECT = { weapons: INV_RECTS.tabWeapons, magic: INV_RECTS.tabMagic, clothing: INV_RECTS.tabClothing, ingredients: INV_RECTS.tabIngredients };
 const MODES = ['wagon', 'info', 'equip', 'remove', 'use', 'gold'];
@@ -176,8 +185,30 @@ export class NativeInventoryWindow {
     this.boxes = [];               // U25: the message-box queue (info, use, wagon, gold)
     this.infoItem = null;
     this.goldEntry = null;         // the drop-gold field's live text
+    // W-slice: the wagon as the remote target. usingWagon mirrors
+    // ShowWagon's flag; the dungeon access is decided ON OPEN -
+    // CheckWagonAccess (:1082-1097) allows it only with the cart in
+    // the bag and the player within 5 units of an exit door, and
+    // DFU's no-loot arm opens STRAIGHT onto the wagon in Remove mode
+    // (the classic leave-the-haul-at-the-entrance flow).
+    this.usingWagon = false;
+    this.allowDungeonWagonAccess = !!(hooks.dungeon?.inside && this._hasCart() && hooks.dungeon?.nearExit?.());
+    if (this.allowDungeonWagonAccess && !hooks.loot) { this.usingWagon = true; this.mode = 'remove'; }
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // AUDIT 17f: icons follow the wearer's morphology
     if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
+  }
+
+  /** Items.Contains(Transportation, Small_cart) (:1236). */
+  _hasCart() {
+    return (this.hooks.items() ?? []).some((it) => it.templateIndex === SMALL_CART_TEMPLATE);
+  }
+
+  /** ShowWagon (:1047-1080): the flag flips and the remote scroll
+   *  resets; the port's _remote() derives the target, so DFU's
+   *  lastRemoteItems save/restore collapses into the computed read. */
+  _showWagon(show) {
+    this.usingWagon = show;
+    this.remoteScroll = 0;   // remoteItemListScroller.ResetScroll()
   }
 
   // AUDIT 17e F15: a list can shrink under a scrolled index (equip,
@@ -189,7 +220,10 @@ export class NativeInventoryWindow {
     this.remoteScroll = safeScrollIndex(this.remoteScroll, this._remote().length);
   }
   _filtered() { return filterByTab(this.hooks.items(), this.tab); }
-  _remote() { return this.hooks.loot ? this.hooks.loot.items() : this.dropped; }
+  _remote() {
+    if (this.usingWagon) return this.hooks.wagonItems?.() ?? (this._wagonLocal ??= []);
+    return this.hooks.loot ? this.hooks.loot.items() : this.dropped;
+  }
   _setTab(t) { audio.playOneShot(SOUND.ButtonClick, 1); this.tab = t; this.scroll = 0; }   // the four tab buttons (:1209-1227)
   _close() {
     audio.playOneShot(SOUND.ButtonClick, 1);   // exit, mouse and key alike (:2082, :2090)
@@ -253,14 +287,18 @@ export class NativeInventoryWindow {
     if (r.closesWindow) this._close();
   }
 
-  /** WagonButton_OnMouseClick (:1234-1243). The port has no
-   *  Transportation items and no wagon inventory, so the first arm is
-   *  the only reachable one - and it is the RIGHT answer, not a
-   *  placeholder: a player who owns no cart is told so. The
-   *  wagon-as-a-remote-target half lands with Transportation. */
+  /** WagonButton_OnMouseClick (:1234-1243), whole at last: no cart ->
+   *  the noWagon box; inside a dungeon away from the exit ->
+   *  exitTooFar; else ShowWagon toggles the remote target. The click
+   *  sound plays on every arm (:1242). */
   _wagon() {
-    const hasCart = (this.hooks.items() ?? []).some((it) => it.group === 'Transportation');
-    this.boxes = [{ rows: [{ text: hasCart ? WAGON_PENDING_TEXT : NO_WAGON_TEXT, center: true }] }];
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    if (!this._hasCart()) { this.boxes = [{ rows: [{ text: NO_WAGON_TEXT, center: true }] }]; return; }
+    if (this.hooks.dungeon?.inside && !this.allowDungeonWagonAccess) {
+      this.boxes = [{ rows: [{ text: EXIT_TOO_FAR_TEXT, center: true }] }];
+      return;
+    }
+    this._showWagon(!this.usingWagon);
   }
 
   /** GoldButton_OnMouseClick + DropGoldPopup_OnGotUserInput
@@ -275,8 +313,20 @@ export class NativeInventoryWindow {
       field: true,
       onInput: (text) => {
         const carried = goldAmount(this.hooks.entity ?? { items: this.hooks.items() });
-        const n = /^[0-9]+$/.test(text) ? Number(text) : 0;
+        let n = /^[0-9]+$/.test(text) ? Number(text) : 0;
         if (n < 1 || n > carried) return;
+        // W-slice: gold INTO the wagon clamps to the 750kg headroom
+        // with the wagonFullGold box (:1296-1303); a full wagon's
+        // clamp-to-zero adds nothing (DFU would mint a 0 stack -
+        // guarded, Ledger A).
+        if (this.usingWagon) {
+          const canHold = canHoldAmount(carried, GOLD_PIECE_WEIGHT_KG, WAGON_KG_LIMIT, totalWeight(this._remote()));
+          if (n > canHold) {
+            n = canHold;
+            this.boxes = [{ rows: [{ text: wagonFullGoldText(canHold), center: true }] }];
+          }
+          if (n < 1) return;
+        }
         deductGold(this.hooks.entity ?? { items: this.hooks.items() }, n);
         addItem(this._remote(), goldStack(n));
       },
@@ -303,7 +353,27 @@ export class NativeInventoryWindow {
     if (this.mode === 'info') { this._info(it); return; }
     if (this.mode === 'remove') {
       // LocalItemListScroller_OnItemClick Remove: transfer to the
-      // remote items (whole stacks - the split popup pends)
+      // remote items (whole stacks - the split popup pends).
+      // W-slice: INTO THE WAGON the 750kg cart limit gates first
+      // (:1996-1999 -> WagonCanHoldAmount :1425-1434) - zero fit
+      // refuses with cannotHoldAnymore and NO click sound (like the
+      // carry gate, the refused transfer stays silent), a partial
+      // fit split-takes exactly what fits.
+      if (this.usingWagon) {
+        const canHold = canHoldAmount(it.stackCount ?? 1, effectiveUnitWeightInKg(it),
+          WAGON_KG_LIMIT, totalWeight(this._remote()));
+        if (canHold <= 0) { this.boxes = [{ rows: [{ text: CANNOT_HOLD_TEXT, center: true }] }]; return; }
+        audio.playOneShot(SOUND.ButtonClick, 1);
+        if (canHold < (it.stackCount ?? 1)) {
+          it.stackCount -= canHold;
+          addItem(this._remote(), { ...it, stackCount: canHold });
+          return;
+        }
+        const bag0 = this.hooks.items();
+        bag0.splice(bag0.indexOf(it), 1);
+        addItem(this._remote(), it);
+        return;
+      }
       audio.playOneShot(SOUND.ButtonClick, 1);   // DoTransferItem (:1583)
       const bag = this.hooks.items();
       bag.splice(bag.indexOf(it), 1);

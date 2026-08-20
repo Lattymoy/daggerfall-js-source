@@ -1020,6 +1020,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (e.code === 'F6' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && inventoryArtLoaded()) {
       townTalk.showOverlay(new NativeInventoryWindow({
         items: () => (playerEntity.items ??= []),
+        wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
         entity: playerEntity,
         icons: { getTexture, uploadRecord, textures: renderer.textures },
         rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
@@ -1402,6 +1403,7 @@ export async function bootWorld(canvas, renderer, params, status) {
               const pile = droppedLoot.pileFor(dropKey);
               townTalk.showOverlay(new NativeInventoryWindow({
                 items: () => (playerEntity.items ??= []),
+        wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
                 onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
         entity: playerEntity,
                 loot: { items: () => pile.items },
