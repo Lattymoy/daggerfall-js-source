@@ -306,7 +306,7 @@ for (const name of ['pauldrons','helm']) if (D[name]) pieceMesh[name] = buildPie
 // pelvis. Same table, same build, same show-and-hide — a design's
 // pieces are looked up by the design, so adding a fourth kind of bone
 // to a fifth enemy means adding a key here and nothing else.
-const PIECE_KINDS = ['tusks', 'brow', 'ribcage', 'pelvis', 'horse', 'beast', 'beastHead', 'beastTail', 'arachnid', 'horns'];
+const PIECE_KINDS = ['tusks', 'brow', 'ribcage', 'pelvis', 'horse', 'beast', 'beastHead', 'beastTail', 'arachnid', 'horns', 'wings'];
 const buildPieces = (list) =>
   (list || []).map((d) => {
     const out = {};

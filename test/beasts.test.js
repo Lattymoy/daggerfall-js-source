@@ -11,6 +11,7 @@ import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { BEAST_DESIGNS, beastOpts, BEAST_RAMPS, ALL_GROUPS } from '../src/characters/beasts.js';
 import { buildBeastBody } from '../src/characters/pieces/beastBody.js';
+import * as wingsMod from '../src/characters/pieces/wings.js';
 
 const pal = { get: (i) => ({ r: (i * 7) & 255, g: (i * 5) & 255, b: (i * 3) & 255 }) };
 
@@ -22,18 +23,22 @@ test('beasts: a design collapses exactly what it does not use', () => {
   assert.deepEqual(ALL_GROUPS.sort(), ['armL', 'armR', 'body', 'head', 'legL', 'legR']);
   for (const d of BEAST_DESIGNS) {
     const groups = d.collapse || ALL_GROUPS;
-    // Three kinds of design now, and the check has been rewritten twice
-    // for the same reason: it kept naming the kinds it knew instead of
-    // stating the rule. A design that REPLACES the whole body collapses
-    // all of it, whether the replacement is a quadruped or an arachnid;
-    // a design that replaces only the head collapses only that.
-    const wholeBody = d.beast || d.arachnid;
-    if (wholeBody) {
-      assert.deepEqual(groups, ALL_GROUPS, `${d.name} is a whole animal but keeps part of a man`);
-    } else {
-      assert.ok(d.beastHead, `${d.name} collapses ${groups} and puts nothing in its place`);
-      assert.ok(groups.includes('head'), `${d.name} has a beast head over a human one`);
-    }
+    // THE RULE, FINALLY STATED PLAINLY. This has been rewritten three
+    // times because each time I described the KINDS I knew — whole
+    // beasts, then arachnids, then werebeasts — and the next design was
+    // a kind I had not thought of. The imp is the fourth: it collapses
+    // NOTHING, being a small man who happens to have wings.
+    //
+    // What is actually true, and was true all along: a group is
+    // collapsed exactly when something replaces it. Nothing else.
+    const replacesBody = !!(d.beast || d.arachnid);
+    const replacesHead = !!d.beastHead;
+    const expected = replacesBody ? ALL_GROUPS : replacesHead ? ['head'] : [];
+    assert.deepEqual(
+      groups,
+      expected,
+      `${d.name} collapses ${JSON.stringify(groups)} but replaces ${replacesBody ? 'its whole body' : replacesHead ? 'its head' : 'nothing'}`,
+    );
   }
   const src = readFileSync(new URL('../src/characters/paperdollPayload.js', import.meta.url), 'utf8');
   assert.ok(/collapseGroups\(bf, d\.collapse \|\| ALL_GROUPS/.test(src), 'the payload ignores a design\'s collapse list');
@@ -161,4 +166,56 @@ test('beasts: every pelt survives the background it stands on', () => {
     // ones.
     assert.ok(mean > 95, `${name} means ${mean.toFixed(0)} — it loses its silhouette against the dark`);
   }
+});
+
+// ── WINGS: THE LAST BODY PLAN ────────────────────────────────────
+// `behaviour: Flying` is the one category in ENEMY_BASICS that is
+// neither foot nor fin, and a wing is a MEMBRANE ON FINGERS — what the
+// eye reads is the sheet between the bones, not the bones. It cannot be
+// made out of the boxes everything else here is.
+
+test('wings: fold moves the wing back rather than shrinking it', () => {
+  const { buildWings } = wingsMod;
+  const measure = (fold) => {
+    const f = buildWings(undefined, { span: 0.6, at: 1.0, fold, fingers: 4, droop: 0.2 });
+    let lo = [9, 9, 9];
+    let hi = [-9, -9, -9];
+    for (const q of f) for (let i = 0; i < 12; i += 3) for (let k = 0; k < 3; k++) {
+      const v = q.p[i + k];
+      if (v < lo[k]) lo[k] = v;
+      if (v > hi[k]) hi[k] = v;
+    }
+    return { w: hi[0] - lo[0], d: hi[2] - lo[2] };
+  };
+  const open = measure(0.1);
+  const shut = measure(0.85);
+  assert.ok(shut.w < open.w * 0.6, 'folding does not draw the wing in');
+  assert.ok(shut.d > open.d, 'folding does not put the wing BEHIND the animal — it is being shrunk instead');
+  // And the face count must not change: it is one wing at two folds,
+  // not two wings.
+  const a = buildWings(undefined, { fold: 0.1 });
+  const b = buildWings(undefined, { fold: 0.9 });
+  assert.equal(a.length, b.length, 'a folded wing is a different piece from an open one');
+});
+
+test('wings: a giant bat is sized like a giant one', () => {
+  // My first cut used a real bat's proportions and produced a flat strip
+  // at ankle height that the viewer's own UI sat on top of. The word in
+  // the name is doing work: this is an animal a man FIGHTS.
+  const bat = BEAST_DESIGNS.find((d) => d.name === 'Giant Bat');
+  assert.ok(bat.beast.back > 0.5, `a bat whose back is at ${bat.beast.back} is not giant`);
+  assert.ok(bat.wings.span > 0.8, 'its wings do not span more than a man is wide');
+  assert.ok(bat.wings.at > 0.6, 'its wings hang below a man\'s waist');
+});
+
+test('wings: the same piece serves a bat and an imp', () => {
+  // An imp is a small man who happens to have a pair, at a fold nothing
+  // like a bat's — which is the argument for fold being a NUMBER rather
+  // than two pieces.
+  const winged = BEAST_DESIGNS.filter((d) => d.wings);
+  assert.ok(winged.length >= 2, 'only one design flies');
+  const imp = BEAST_DESIGNS.find((d) => d.name === 'Imp');
+  assert.deepEqual(imp.collapse, [], 'the imp collapses part of the rig — it is a person');
+  assert.ok(!imp.beast && !imp.arachnid, 'the imp has a body that is not the rig');
+  assert.ok(imp.build && imp.build.torso < 0.8, 'the imp is not small');
 });

@@ -62,6 +62,13 @@ export const BEAST_RAMPS = Object.freeze({
   // block 9 - yellow -> olive, bright. A scorpion's carapace, which is
   // the colour of something that wants to be seen and left alone.
   carapace: [148, 156],
+  // block 11 - rust -> dark brown, high. Bat: wing membrane and the fur
+  // that matches it, bright enough to keep a silhouette that is mostly
+  // holes.
+  batskin: [176, 183],
+  // block 15 - orange-red -> dark red. An imp, which is the only small
+  // thing in the game that wants to be noticed.
+  impred: [242, 249],
 });
 
 export const BEAST_DESIGNS = [
@@ -205,6 +212,49 @@ export const BEAST_DESIGNS = [
     // threat above it.
     arachnid: { span: 0.26, ride: 0.11, thorax: 0.1, abdomen: 0.1, legR: 0.015, arch: 0.3, claws: 1, sting: 0.5 },
     pelt: 'carapace',
+  },
+
+  {
+    id: MOBILE_TYPES.GiantBat,
+    name: 'Giant Bat',
+    level: 3,
+    damage: [2, 12],
+    weaponTier: 0,
+    // BEHAVIOUR: FLYING — the one category in ENEMY_BASICS that is
+    // neither foot nor fin, and the last body plan in the game that
+    // nothing already built can express.
+    //
+    // A wing is a MEMBRANE ON FINGERS: what the eye reads is the sheet
+    // between the bones, not the bones, which is why it cannot be made
+    // out of the boxes everything else here is. The body under it is a
+    // small quadruped with almost no legs — a bat on the ground is a
+    // bad animal, and this one is not meant to be there.
+    // SIZED LIKE A GIANT ONE, which it took a render to notice. My first
+    // cut used a real bat's proportions — body 0.34 high, wings at 0.38
+    // — and produced a flat strip at ankle height that the viewer's own
+    // UI sat on top of. The word in the name is doing work: this is an
+    // animal a man fights, so it meets him around the chest.
+    beast: { back: 0.66, len: 0.5, girth: 0.15, legs: 0.024, crouch: 0.5, head: 0.13, snout: 0.08, tail: 0.1, tailUp: 0.4 },
+    wings: { span: 0.92, at: 0.78, fold: 0.12, fingers: 4, droop: 0.26, rib: 0.014 },
+    pelt: 'batskin',
+  },
+  {
+    id: MOBILE_TYPES.Imp,
+    name: 'Imp',
+    level: 2,
+    damage: [2, 15],
+    weaponTier: 0,
+    // Also flying, and the same wing at a completely different fold —
+    // which is the argument for fold being a NUMBER rather than two
+    // pieces. An imp is a small man with a pair, so it keeps the whole
+    // rig: nothing is collapsed at all, and it is the only design in
+    // this file that is a person.
+    build: { torso: 0.68, shoulder: 0.7, arm: 0.66, hand: 0.72, neck: 0.68, skull: 0.86, jaw: 0.74, leg: 0.66 },
+    zones: [],
+    mats: {},
+    collapse: [],
+    wings: { span: 0.3, at: 1.42, fold: 0.3, fingers: 3, droop: 0.14, rib: 0.009 },
+    pelt: 'impred',
   },
 
 ];
