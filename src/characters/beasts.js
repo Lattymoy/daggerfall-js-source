@@ -78,6 +78,23 @@ export const BEAST_RAMPS = Object.freeze({
   // block 3 - pink -> mauve. A lamia is a woman to the waist, and the
   // waist is where she stops looking like one.
   lamiaflesh: [50, 57],
+  // block 4 - cream -> tan. A nymph, who is the only thing left in the
+  // table that means nobody harm until it does.
+  nymphskin: [64, 71],
+  // block 2 - tan -> brown, mid. Bark. A spriggan is a tree that has
+  // decided to walk, so it is the same wood as everything else made of
+  // wood in this game.
+  bark: [34, 42],
+  // block 12 - pale yellow-green -> green. New growth: the leaves a
+  // spriggan carries, and the only living green here.
+  leaf: [192, 200],
+  // block 5 - lavender grey -> slate. Stone, and the flattest thing in
+  // the palette, which is right for something that is pretending to be
+  // masonry until it moves.
+  stone: [82, 90],
+  // block 10 - pale green -> deep green. A dragonling's hide: the same
+  // family as the moss the orcs live in, and nothing else here uses it.
+  dragonhide: [160, 169],
 });
 
 export const BEAST_DESIGNS = [
@@ -330,6 +347,114 @@ export const BEAST_DESIGNS = [
     pelt: 'dreughblue',
   },
 
+  {
+    id: MOBILE_TYPES.Nymph,
+    name: 'Nymph',
+    level: 6,
+    damage: [1, 5],
+    weaponTier: 0,
+    // The plainest design left: a person, unarmed and unarmoured, and
+    // the only thing in the table whose threat is not its body. Nothing
+    // is collapsed and nothing is added — after five body plans and a
+    // material path, the last of the daylight creatures is the human rig
+    // exactly as it was built.
+    build: { torso: 0.9, shoulder: 0.9, arm: 0.88, hand: 0.9, neck: 0.92, skull: 0.96, jaw: 0.9, leg: 0.92 },
+    zones: [],
+    mats: {},
+    hideRamp: 'nymphskin',
+    collapse: [],
+    pelt: 'nymphskin',
+  },
+  {
+    id: MOBILE_TYPES.Spriggan,
+    name: 'Spriggan',
+    level: 3,
+    damage: [1, 8],
+    weaponTier: 0,
+    // A TREE THAT HAS DECIDED TO WALK. Broad and knotted through the
+    // trunk, thin at the limbs — the opposite proportions to everything
+    // else here, which is heavy where it is strong. A tree is heavy
+    // where it is OLD.
+    //
+    // The leaves are a drape, which is the least likely reuse in the
+    // project and the most obviously right one: a canopy hangs off a
+    // thing exactly the way a cloak does.
+    build: { torso: 1.34, shoulder: 1.12, arm: 0.78, hand: 0.86, neck: 0.8, skull: 0.88, jaw: 0.84, leg: 1.06 },
+    zones: [],
+    mats: { canopy: 'leaf' },
+    hideRamp: 'bark',
+    collapse: [],
+    drape: { name: 'Casual Cloak', mat: 'canopy' },
+    pelt: 'bark',
+  },
+  {
+    id: MOBILE_TYPES.Gargoyle,
+    name: 'Gargoyle',
+    level: 14,
+    damage: [10, 15],
+    weaponTier: 0,
+    // A WINGED STATUE, which is the bat's wings and the daedra's horns
+    // on a body made of the flattest colour in the palette. It is
+    // pretending to be masonry until it moves, so it is heavy and it is
+    // grey and it has no expression at all.
+    build: { torso: 1.28, shoulder: 1.38, arm: 1.24, hand: 1.3, neck: 1.16, skull: 1.04, jaw: 1.14, leg: 1.2 },
+    zones: [],
+    mats: {},
+    hideRamp: 'stone',
+    collapse: [],
+    wings: { span: 0.52, at: 1.4, fold: 0.55, fingers: 3, droop: 0.3, rib: 0.016 },
+    horns: { len: 0.14, thick: 0.018, sweep: 0.6, skull: 0.104 },
+    pelt: 'stone',
+  },
+  {
+    id: MOBILE_TYPES.Dragonling,
+    name: 'Dragonling',
+    level: 16,
+    damage: [5, 15],
+    weaponTier: 0,
+    // A SMALL WINGED QUADRUPED: the beast builder and the wings, and
+    // nothing new at all. Long in the neck and the tail, low to the
+    // ground — a dragonling is a lizard that got above itself.
+    beast: { back: 0.5, len: 0.8, girth: 0.13, legs: 0.036, crouch: 0.45, head: 0.11, snout: 0.14, tail: 0.6, tailUp: 0.55 },
+    wings: { span: 0.66, at: 0.56, fold: 0.25, fingers: 4, droop: 0.2, rib: 0.012 },
+    pelt: 'dragonhide',
+  },
+  {
+    id: MOBILE_TYPES.Dragonling_Alternate,
+    name: 'Dragonling (elder)',
+    level: 16,
+    damage: [5, 15],
+    weaponTier: 0,
+    // The same animal, older: the game ships two and gives them
+    // identical numbers, so the only honest difference is the one the
+    // eye can see. Longer, heavier and carrying its wings further open.
+    beast: { back: 0.6, len: 1.0, girth: 0.17, legs: 0.044, crouch: 0.4, head: 0.13, snout: 0.17, tail: 0.75, tailUp: 0.5 },
+    wings: { span: 0.86, at: 0.66, fold: 0.12, fingers: 4, droop: 0.26, rib: 0.014 },
+    pelt: 'dragonhide',
+  },
+
+  {
+    id: MOBILE_TYPES.Harpy,
+    name: 'Harpy',
+    level: 8,
+    damage: [5, 15],
+    weaponTier: 0,
+    // THE LAST ONE. A winged woman: the imp's composition at a person's
+    // size, which means the sixty-second enemy in the game costs a
+    // design and not one line of geometry.
+    //
+    // Wings carried wide rather than folded — a harpy is a thing that
+    // comes at you out of the air, and a folded wing is a thing at rest.
+    build: { torso: 0.92, shoulder: 1.02, arm: 0.9, hand: 0.94, neck: 0.9, skull: 0.94, jaw: 0.9, leg: 0.94 },
+    zones: [],
+    mats: {},
+    hideRamp: 'nymphskin',
+    collapse: [],
+    wings: { span: 0.72, at: 1.4, fold: 0.08, fingers: 4, droop: 0.3, rib: 0.013 },
+    tail: { len: 0.16, up: 0.6, thick: 0.022 },
+    pelt: 'batskin',
+  },
+
 ];
 
 /** Every group of the human rig, because none of it is wanted. */
@@ -358,13 +483,20 @@ export function beastOpts(design, pal) {
   // way up.
   const pelt = ramp(BEAST_RAMPS[design.pelt]);
   const hide = design.hideRamp ? ramp(BEAST_RAMPS[design.hideRamp]) : pelt;
+  const mats = {};
+  for (const [k, v] of Object.entries(design.mats || {})) {
+    if (typeof v === 'string') mats[k] = ramp(BEAST_RAMPS[v]);
+  }
   return {
-    drape: null,
+    // A SPRIGGAN'S CANOPY IS A DRAPE, which is the least likely reuse in
+    // the project and the most obviously right one: a canopy hangs off a
+    // thing exactly the way a cloak does.
+    drape: design.drape ? { name: design.drape.name, ramp: mats[design.drape.mat] } : null,
     ramps: { skin: hide, boot: hide },
     // A FULL BEAST HAS NO BUILD — its body is collapsed and the piece is
     // everything. A werewolf DOES: it keeps the man's body, so the build
     // is the difference between him and the man he was.
-    opts: { build: design.build || {}, clothZones: design.zones || [], armorZones: [], mats: {} },
+    opts: { build: design.build || {}, clothZones: design.zones || [], armorZones: [], mats },
     hide,
     pelt,
   };

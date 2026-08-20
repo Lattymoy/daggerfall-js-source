@@ -329,7 +329,7 @@ export function buildPaperdollPayload(pal, img, cif) {
   // ship as deltas like everything else, and an animal animates through
   // the same path a man does.
   const beastPacks = BEAST_DESIGNS.map((d) => {
-    const { ramps: bramps, opts, hide, pelt } = beastOpts(d, pal);
+    const { ramps: bramps, opts, hide, pelt, drape } = beastOpts(d, pal);
     let bf = buildNeutralBody(bramps, { face, ...opts });
     // TWO KINDS OF DESIGN IN ONE LINE. A full beast collapses ALL six
     // groups and its piece is the whole animal. A werebeast collapses
@@ -356,6 +356,11 @@ export function buildPaperdollPayload(pal, img, cif) {
       // The scorpion's claws, built for a body with no spine and working
       // just as well on a dreugh that has one.
       claws: d.claws ? packPiece(buildArachnid(pelt, d.claws)) : null,
+      // A gargoyle borrows the daedra lord's horns, and a spriggan's
+      // canopy is a drape: the last five designs in the game add no
+      // geometry at all.
+      horns: d.horns ? packPiece(buildHorns(pelt, d.horns)) : null,
+      drape,
       // A werebeast keeps a tail, which the human rig has no concept of.
       beastTail: d.tail ? packPiece(buildBeastTail(pelt, d.tail)) : null,
       ...villagerDelta(faces, bf),
