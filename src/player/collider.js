@@ -134,8 +134,20 @@ export class Collider {
    * triangle, front and back faces).
    */
   raycast(origin, dir, maxDist) {
+    return this.raycastHit(origin, dir, maxDist).dist;
+  }
+
+  /**
+   * Nearest hit WITH the bucket that produced it ({ dist, key });
+   * dist Infinity / key null on a miss. The C-slice door senses ask
+   * which surface blocked a sight line (EnemySenses.CanSeeTarget
+   * records an action door the ray strikes first, :912-918) - action
+   * doors are their own buckets keyed by the action object.
+   */
+  raycastHit(origin, dir, maxDist) {
     let best = Infinity;
-    for (const bucket of this._buckets.values()) {
+    let bestKey = null;
+    for (const [bkey, bucket] of this._buckets) {
       const t = bucket.t();
       const ox = origin[0] - t[0];
       const oy = origin[1] - t[1];
@@ -161,14 +173,14 @@ export class Collider {
             visited.add(ti);
             const tri = bucket.tris[ti];
             const hit = rayTriangle(ox, oy, oz, dir, tri[0], tri[1], tri[2]);
-            if (hit !== null && hit < best && hit <= maxDist) best = hit;
+            if (hit !== null && hit < best && hit <= maxDist) { best = hit; bestKey = bkey; }
           }
         }
         if (tMaxX < tMaxZ) { walked = tMaxX; tMaxX += tDeltaX; cx += stepX; }
         else { walked = tMaxZ; tMaxZ += tDeltaZ; cz += stepZ; }
       }
     }
-    return best;
+    return { dist: best, key: bestKey };
   }
 
   _resolveSphere(center, radius, out) {

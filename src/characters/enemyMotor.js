@@ -174,9 +174,12 @@ export function turnTowards(yaw, dx, dz, maxDeg = CLASSIC_TURN_DEG) {
 
 /**
  * Verbatim CanSeeTarget: range gate, FOV gate against facing, then an
- * eye-to-eye LOS ray against the level collider.
+ * eye-to-eye LOS ray against the level collider. C-slice: `blockerOut`
+ * (optional { key }) receives the BUCKET that blocked the ray -
+ * EnemySenses.CanSeeTarget:912-918 records an action door the sight
+ * ray strikes first, which is what OpenDoors later consumes.
  */
-export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeight = CAPSULE_HEIGHT) {
+export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeight = CAPSULE_HEIGHT, blockerOut = null) {
   const dx = targetFeet[0] - feet[0], dz = targetFeet[2] - feet[2];
   const dist = Math.hypot(dx, targetFeet[1] - feet[1], dz);
   const radius = SIGHT_RADIUS;   // P13: the S8 half-sight chameleon interim retired - concealment is the illusion gate now
@@ -186,8 +189,33 @@ export function canSeeTarget(collider, feet, yaw, height, targetFeet, targetHeig
   const tEye = [targetFeet[0], targetFeet[1] + targetHeight * EYE_FRAC, targetFeet[2]];
   const ex = tEye[0] - eye[0], ey = tEye[1] - eye[1], ez = tEye[2] - eye[2];
   const el = Math.hypot(ex, ey, ez) || 1;
+  if (blockerOut && collider.raycastHit) {
+    const h = collider.raycastHit(eye, [ex / el, ey / el, ez / el], Math.min(radius, el));
+    const seen = !Number.isFinite(h.dist) || h.dist >= el - 1e-3;
+    if (!seen) blockerOut.key = h.key;
+    return seen;
+  }
   const hit = collider.raycast(eye, [ex / el, ey / el, ez / el], Math.min(radius, el));
   return !Number.isFinite(hit) || hit >= el - 1e-3;
+}
+
+// EnemyMotor.cs:34 - the maximum distance to open a door.
+export const OPEN_DOOR_DISTANCE = 2;
+
+/** EnemyMotor.OpenDoors (:1425-1442), the classic path: a
+ *  CanOpenDoors foe whose LAST KNOWN DOOR (the sight ray's blocker)
+ *  is not open, not locked, and closer than 2m - foe to door CENTER
+ *  (EnemySenses:917) - toggles it. A MOVING door passes the IsOpen
+ *  test and ToggleDoor's own IsMoving gate refuses it, exactly as
+ *  DFU. The Enhanced-AI bash arm stays with its setting (unported).
+ *  Returns true when the toggle fired. */
+export function openDoorsStep(feet, canOpenDoors, door, toggleDoor) {
+  if (!canOpenDoors || !door) return false;
+  if (door.state === 'end') return false;                 // IsOpen
+  if ((door.currentLockValue ?? 0) > 0) return false;     // IsLocked
+  const d = Math.hypot(door.center[0] - feet[0], door.center[1] - feet[1], door.center[2] - feet[2]);
+  if (d >= OPEN_DOOR_DISTANCE) return false;
+  return !!toggleDoor(door);
 }
 
 
@@ -272,7 +300,12 @@ export class EnemyAI {
   _senses(playerFeet, senses = null) {
     const dx = playerFeet[0] - this.feet[0], dz = playerFeet[2] - this.feet[2];
     this._dist = Math.hypot(dx, playerFeet[1] - this.feet[1], dz);
-    this.inSight = canSeeTarget(this.collider, this.feet, this.yaw, this.height, playerFeet);
+    // C-slice: EnemySenses clears actionDoor at every CanSeeTarget
+    // (:879) and records the ray's blocking door; the host resolves
+    // the key against its action registry for OpenDoors.
+    const _blocker = { key: null };
+    this.inSight = canSeeTarget(this.collider, this.feet, this.yaw, this.height, playerFeet, undefined, _blocker);
+    this.doorKey = _blocker.key;
     if (!senses) {
       this.detected = this.inSight || this._dist < HEARING_RADIUS;
       return;

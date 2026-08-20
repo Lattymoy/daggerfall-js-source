@@ -16,7 +16,7 @@ import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { MobileUnit } from '../characters/mobileUnit.js';   // C11: classic sprite monsters
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
-import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, classifyPlacementAction, lookAtLockText } from '../world/actionSystem.js';
+import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter } from '../characters/playerEntity.js';
@@ -361,7 +361,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
-      { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster }] = await Promise.all([
+      { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
@@ -379,6 +379,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       generateItems: generateLootItems,   // the static import (audit 06e: the dynamic pair was double-sourcing)
 
       calculateAttackDamage: formulas.calculateAttackDamage,
+      openDoorsStep,   // C-slice: EnemyMotor.OpenDoors
       meleeHitConnects: formulas.meleeHitConnects,
       MELEE_HIT_YAW_DEG: formulas.MELEE_HIT_YAW_DEG,
       withinYaw,
@@ -1657,6 +1658,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // flyerFalls) - senses keep running, decisions stop, paralyzed
       // FLYERS fall out of the air, swimmers freeze.
       f.ai.update(dt, playerFeet || eye, _senses, _fParalyzed);   // E2 senses + pursuit; P13: the stealth context
+      // C-slice (AUDIT 23 characters-3): EnemyMotor.OpenDoors - a
+      // CanOpenDoors foe whose sight ray to the player is blocked by
+      // an action DOOR opens it when unlocked and within 2m. The
+      // senses recorded the blocking bucket key; only a door-flagged
+      // action object counts (walls block sight with the level key).
+      if (!_fParalyzed && foeDeps && f.ai.doorKey != null && ENEMY_BASICS[f.mobileType]?.canOpenDoors) {
+        const _door = actions?.objects.get(f.ai.doorKey);
+        if (_door && DOOR_VERB_FLAGS.has(_door.actionFlag)) {
+          foeDeps.openDoorsStep(f.ai.feet, true, {
+            state: _door.state, currentLockValue: _door.currentLockValue,
+            center: [_door.matrix[12], _door.matrix[13], _door.matrix[14]],
+          }, () => actions.toggleDoor(_door));
+        }
+      }
       // A1 EnemySounds verbatim: the wait counter ALWAYS steps; the
       // sound fires only inside AttractRadius 16. Delay re-rolls
       // Range(3, 9+1); 20% move / 80% bark; humans stay silent.
