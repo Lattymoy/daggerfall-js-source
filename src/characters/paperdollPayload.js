@@ -48,6 +48,7 @@ import { buildHaftedWeapon, HAFTED_SPECS } from './pieces/hafted.js';
 import { VILLAGER_DESIGNS, designOpts, designDrape, villagerDelta, RACE_TONE } from './villagerDesigns.js';
 import { ORC_DESIGNS, orcOpts } from './orcBody.js';
 import { UNDEAD_DESIGNS, undeadOpts } from './undeadBody.js';
+import { CLASS_DESIGNS, classOpts } from './humanClasses.js';
 import { buildRibcage, buildPelvis, BONE_RAMP } from './pieces/skeletonBones.js';
 import { buildHorseBody, BAY_RAMP } from './pieces/centaurBody.js';
 import { buildTusks, buildBrow, IVORY_RAMP } from './pieces/orcHead.js';
@@ -257,7 +258,7 @@ export function buildPaperdollPayload(pal, img, cif) {
     if (d.collapse) uf = collapseGroups(uf, d.collapse, [0, 0.8, -0.2]);
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
-      build: d.build, hide,
+      build: d.build, zones: d.zones, hide,
       // GEOMETRY OF ITS OWN, where a design has any. The zombie and the
       // mummy have none — they are the loft and nothing else — and the
       // skeleton is the first in this file that needs a piece to carry
@@ -272,6 +273,23 @@ export function buildPaperdollPayload(pal, img, cif) {
       // already dresses a gown.
       drape,
       ...villagerDelta(faces, uf),
+    };
+  });
+
+  // ── THE HUMAN CLASS ENEMIES ────────────────────────────────────
+  // Mage, Sorcerer, Battlemage, Bard, Thief — collectively the commonest
+  // thing in a dungeon, and the last large group with no rig. They are
+  // just PEOPLE: no geometry, no mechanism, a human build barely touched
+  // and everything said with clothing. After orcs, bone, a horse body
+  // and a composition test, the most-met enemies in the game cost a data
+  // file, which is the return on all of it.
+  const classPacks = CLASS_DESIGNS.map((d) => {
+    const { ramps: cramps, opts, hide, drape } = classOpts(d, pal);
+    const cf = buildNeutralBody(cramps, { face, ...opts });
+    return {
+      id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
+      build: d.build, zones: d.zones, hide, drape,
+      ...villagerDelta(faces, cf),
     };
   });
 
@@ -312,7 +330,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       return list;
     })(),
     swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
-    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, hairRamps: HAIR_RAMPS, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
+    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, hairRamps: HAIR_RAMPS, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 
   return payload;
 }

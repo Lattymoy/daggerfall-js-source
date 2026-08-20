@@ -650,6 +650,33 @@ function applyUndead(u) {
   applyOrc(u ? { ...u, line: 'undead' } : null);
 }
 {
+  const sel = document.getElementById('classes');
+  if (sel) {
+    const none = document.createElement('option');
+    none.value = '';
+    none.textContent = 'class: none (bare rig)';
+    sel.appendChild(none);
+    for (const c of D.classes || []) {
+      const opt = document.createElement('option');
+      opt.value = String(c.id);
+      // THEY SCALE WITH THE PLAYER, so there is no level to print. A
+      // made-up number here would be a lie about the game's own rules.
+      opt.textContent = c.name + '  (scales)';
+      sel.appendChild(opt);
+    }
+    sel.onchange = () => {
+      const c = (D.classes || []).find((x) => String(x.id) === sel.value) || null;
+      for (const other of ['orc', 'undead', 'villager']) {
+        const o = document.getElementById(other);
+        if (o) o.value = '';
+      }
+      applyOrc(c ? { ...c, line: 'class' } : null);
+      const hud = document.getElementById('hud');
+      if (hud && c) hud.textContent = c.name + ' \u00b7 scales to the player';
+    };
+  }
+}
+{
   const sel = document.getElementById('undead');
   if (sel) {
     const none = document.createElement('option');
@@ -665,7 +692,7 @@ function applyUndead(u) {
     sel.onchange = () => {
       const u = (D.undead || []).find((x) => String(x.id) === sel.value) || null;
       // The three pickers are exclusive: one body at a time.
-      for (const other of ['orc', 'villager']) {
+      for (const other of ['orc', 'villager', 'classes']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
