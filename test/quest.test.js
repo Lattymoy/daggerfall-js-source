@@ -47,6 +47,9 @@ test('quest: symbol inner names trim wrappers outside in, never inner characters
   assert.equal(getInnerSymbolName('#symbol'), 'symbol');
   assert.equal(getInnerSymbolName('_one_day_'), 'one_day');   // inner _ survives
   assert.equal(getInnerSymbolName('___mondung_'), 'mondung');
+  // AUDIT (mutation M5): the ORDER is the law - = then # then _, each
+  // only at the ends. Reversed order would strip the inner ='s here.
+  assert.equal(getInnerSymbolName('_=foo=_'), '=foo=');
   const s = new QuestSymbol('_qtime_');
   assert.equal(s.name, 'qtime');
   assert.equal(s.original, '_qtime_');
@@ -144,7 +147,7 @@ test('quest: M0B00Y16 structure - messages, resources, tasks, verbatim', () => {
   assert.equal(qtime.travelTimePending, true);
 
   // Tasks: 27 including the NextUID-named headless startup (triggered),
-  // two variables, and every body line queued for Q2's action registry
+  // five variables, and every body line queued for Q2's action registry
   assert.equal(q.tasks.size, 27);
   const types = [...q.tasks.values()].map((t) => t.type);
   assert.equal(types.filter((t) => t === TaskType.Headless).length, 1);
@@ -153,6 +156,47 @@ test('quest: M0B00Y16 structure - messages, resources, tasks, verbatim', () => {
   assert.equal(headless.triggered, true);
   assert.ok(headless.pendingActionLines.length >= 7, 'startup actions queued for the Q2 registry');
   assert.ok(q.tasks.has('map') && q.tasks.has('nomap'), 'variable tasks by inner symbol name');
+});
+
+test('quest: AUDIT pins - header brackets, <ce> trim, PersistUntil start, duplicate-task merge', () => {
+  loadTables();
+  const parser = new Parser();
+  // (M4) A fixed-type header's id comes FROM the static-messages
+  // table; the bracketed number is never read. A mismatched bracket
+  // still lands the message at the table's id.
+  const q = parser.parse([
+    'Quest: __AUD',
+    'QRC:',
+    'QuestComplete:  [9999]',
+    '<ce>   padded   ',
+    '   left   ',
+    '',
+    'QBN:',
+    'until _later_ performed:',
+    ' setvar _later_',
+    '',
+    '_t_ task:',
+    ' say 1004',
+    '',
+    '_t_ task:',
+    ' start task _later_',
+    '',
+    'variable _later_',
+  ], 0, { rolls: () => 0 });
+  assert.ok(q.messages.has(1004), 'table id wins');
+  assert.equal(q.messages.has(9999), false, 'the bracket number is never read');
+  // (M7) <ce> trims the WHOLE line; a plain line trims the end only.
+  const tokens = q.getMessage(1004).getTextTokensByVariant(0);
+  assert.equal(tokens[0].text, 'padded');
+  assert.equal(tokens[1].formatting, Formatting.JustifyCenter);
+  assert.equal(tokens[2].text, '   left');
+  // (M9) PersistUntil starts TRIGGERED, like headless.
+  const persist = [...q.tasks.values()].find((t) => t.type === TaskType.PersistUntil);
+  assert.equal(persist.triggered, true, 'until-performed tasks start triggered');
+  // (M24) A duplicate task symbol MERGES its actions into the first.
+  const t = q.getTask({ name: 't' });
+  assert.equal([...q.tasks.values()].filter((x) => x.symbol.name === 't').length, 1);
+  assert.equal(t.pendingActionLines.length + t.actions.length, 2, 'both blocks\' lines carried');
 });
 
 test('quest: a Clock with two real times takes the seeded range draw', () => {
@@ -194,10 +238,13 @@ test('quest: parse failures are DFU failures - no name, no QRC, second headless 
 
 test('quest: tables must be loaded, loudly', () => {
   resetQuestTables();
-  const parser = new Parser();
-  assert.throws(
-    () => parser.parse(['Quest: X', 'QRC:', 'Message: 1', ' x', '', 'QBN:', 'x'], 0),
-    /quest tables not loaded/,
-  );
-  loadTables();   // restore for any later test file ordering
+  try {
+    const parser = new Parser();
+    assert.throws(
+      () => parser.parse(['Quest: X', 'QRC:', 'Message: 1', ' x', '', 'QBN:', 'x'], 0),
+      /quest tables not loaded/,
+    );
+  } finally {
+    loadTables();   // restore even on failure (shared-process ordering)
+  }
 });

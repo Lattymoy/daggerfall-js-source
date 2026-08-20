@@ -11,7 +11,7 @@
 // the rest. Q1 has no registry yet, so EVERY body line lands in
 // `pendingActionLines` - the honest record Q2's registry consumes
 // (and the corpus pins count) instead of 10,000 lines of log noise.
-// setActionFactory installs the registry when it exists.
+// The registry rides quest.actionFactory (AUDIT quest-2).
 
 import { Symbol as QuestSymbol } from './symbol.js';
 import { matchFirst } from './questResource.js';
@@ -33,10 +33,6 @@ const TASK_HEADER = [
   /(?<variable>variable) (?<sym3>[a-zA-Z0-9_.]+)/,
 ];
 const GLOBAL_VAR_HEADER = /(?<globalVarName>[a-zA-Z0-9_.]+) (?<symbol>[a-zA-Z0-9_.]+)/;
-
-let _actionFactory = null;
-/** Q2 seam: fn(line, parentQuest) -> action object or null. */
-export function setActionFactory(fn) { _actionFactory = fn; }
 
 export class Task {
   constructor(parentQuest, lines = null, globalVar = -1) {
@@ -182,8 +178,12 @@ export class Task {
   }
 
   _readTaskLines(lines, startLine) {
+    // AUDIT quest-2: the factory rides the QUEST, not a module global -
+    // a global was owned by the last-constructed machine, so a second
+    // QuestMachine anywhere silently stole the first one's registry.
+    const factory = this.parentQuest?.actionFactory ?? null;
     for (let i = startLine; i < lines.length; i++) {
-      const action = _actionFactory?.(lines[i], this.parentQuest) ?? null;
+      const action = factory?.(lines[i], this.parentQuest) ?? null;
       if (action) {
         this.actions.push(action);
         if (action.isTriggerCondition) this.hasTriggerConditions = true;

@@ -20,9 +20,15 @@ const DECL = [
   /(Place|place) (?<sym2>[a-zA-Z0-9_.-]+) (?<siteType2>randompermanent) (?<siteList>[a-zA-Z0-9_.,]+)/,
 ];
 
-/** Place.CustomParseInt: 0x prefix parses hex, else decimal. */
+/** Place.CustomParseInt: 0x prefix parses hex, else decimal. AUDIT
+ *  quest-6: C# int.Parse throws on malformed input in BOTH arms; JS
+ *  parseInt would answer NaN ('0x') or silently truncate ('0x12G'). */
 export function customParseInt(value) {
-  if (/^0x/i.test(value)) return parseInt(value.replace(/0x/i, ''), 16);
+  if (/^0x/i.test(value)) {
+    const hex = value.replace(/0x/i, '');
+    if (!/^[0-9a-fA-F]+$/.test(hex)) throw new Error(`int.Parse failed on '${value}'`);
+    return parseInt(hex, 16);
+  }
   const n = parseInt(value, 10);
   if (Number.isNaN(n)) throw new Error(`int.Parse failed on '${value}'`);
   return n;

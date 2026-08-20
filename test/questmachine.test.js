@@ -73,11 +73,19 @@ test('quest machine: a crafted quest runs end to end - clock, break, end, tombst
   assert.deepEqual(q.getLogMessages().map((l) => [l.stepID, l.messageID]), [[0, 1010]]);
   assert.equal(q.getTask({ name: 'timer' }).getTriggerValue(), false, 'clock task waits');
 
+  // (M18) Clock tick consumes WHOLE seconds only - a fractional
+  // advance leaves the remainder untouched.
+  now = 0.9;
+  m.tick();
+  assert.equal(timer.remainingTimeInSeconds, 120, 'fractional world time does not tick the clock');
+
   now = 121;   // world time passes the clock
   m.tick();    // clock hits zero -> _timer_ task starts -> say breaks the task
   assert.equal(timer.clockFinished, true);
   assert.deepEqual(popups, [1011], "say's immediate popup delivered through the hook");
   assert.equal(q.getTask({ name: 'done' }).getTriggerValue(), false, 'break stopped the task before start task ran');
+  // (M11) The break bails the TASK too: start task _finish_ has not run
+  assert.equal(q.getTask({ name: 'finish' }).getTriggerValue(), false, 'the say-break stops the task mid-body');
 
   m.tick();    // the broken task resumes: start task _finish_ -> setvar + end quest
   assert.equal(q.getTask({ name: 'done' }).getTriggerValue(), true, 'the variable set');
@@ -90,9 +98,53 @@ test('quest machine: a crafted quest runs end to end - clock, break, end, tombst
   assert.equal(m.quests.size, 1, 'tombstoned quests linger');
   assert.equal(q.getLogMessages(), null, 'a complete quest has no log');
 
-  now += SECONDS_PER_WEEK + 1;
+  // (M19) The expiry is EXACTLY one week: a second short keeps it
+  const tombstonedAt = q.questTombstoneTime;
+  now = tombstonedAt + SECONDS_PER_WEEK - 1;
+  m.tick();
+  assert.equal(m.quests.size, 1, 'a tombstone younger than a week lingers');
+  now = tombstonedAt + SECONDS_PER_WEEK + 1;
   m.tick();
   assert.equal(m.quests.size, 0, 'tombstones expire after one in-game week');
+});
+
+test('quest machine: AUDIT pins - secondary always-on triggers, oncePerQuest, popup LIFO', () => {
+  // (M10) The SECOND always-on trigger is SECONDARY: it can start the
+  // task but never stop it. Primary false + secondary true -> the
+  // task holds; a mutant where every always-on is primary would let
+  // the last checkTrigger win.
+  const m = new QuestMachine({ nowSeconds: () => 0 });
+  const src = [
+    'Quest: __SEC', 'QRC:', 'Message:  1011', ' x', '', 'QBN:',
+    'variable _a_', '', 'variable _b_', '',
+    '_watch_ task:',
+    ' when _a_',
+    ' when _b_',
+    '',
+    'setvar _b_',
+  ];
+  const q = m.scheduleQuest(src, 0, { rolls: () => 0 });
+  m.tick();   // the startup setvar runs AFTER _watch_ in task order...
+  m.tick();   // ...so the secondary trigger reads _b_ on the next tick
+  assert.equal(q.getTask({ name: 'watch' }).getTriggerValue(), true,
+    'the secondary when _b_ starts the task while the primary when _a_ is false');
+
+  // (M15) oncePerQuest suppresses the second showing.
+  const popups = [];
+  q.hooks.showPopup = (_qq, msg) => popups.push(msg.id);
+  q.showMessagePopup(1011, false, true);
+  q.showMessagePopup(1011, false, true);
+  q._showPendingTaskMessages();
+  assert.deepEqual(popups, [1011], 'oncePerQuest shows exactly once');
+
+  // (M25) pendingPopups is a STACK, as DFU pushes and pops one:
+  // two queued popups deliver newest-first.
+  popups.length = 0;
+  q.showMessagePopup(1011);
+  const second = { id: 2222 };
+  q.pendingPopups.push(second);
+  q._showPendingTaskMessages();
+  assert.deepEqual(popups, [2222, 1011], 'LIFO delivery, the DFU stack order');
 });
 
 test('quest machine: WhenTask evaluates when/and/or with not, DFU short-circuits', () => {
@@ -177,7 +229,10 @@ test('quest machine: COVERAGE PIN - the ten-action tranche resolves 3347 of 7235
   const m = new QuestMachine({ nowSeconds: () => 0 });
   let resolved = 0, pending = 0;
   for (const f of readdirSync(join(VENDOR, 'Quests')).filter((f) => f.endsWith('.txt')).sort()) {
-    const q = m.parser.parse(read(join(VENDOR, 'Quests', f)).split(/\r\n|\r|\n/), 0, { rolls: () => 0.5 });
+    // AUDIT quest-2: the factory rides the parse explicitly - a
+    // machineless parse pends every line (quest.test.js pins that).
+    const q = m.parser.parse(read(join(VENDOR, 'Quests', f)).split(/\r\n|\r|\n/), 0,
+      { rolls: () => 0.5, actionFactory: m._actionFactory });
     for (const t of q.tasks.values()) {
       resolved += t.actions.length;
       pending += t.pendingActionLines.length;

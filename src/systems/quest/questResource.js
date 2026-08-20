@@ -12,7 +12,7 @@
 
 import { Symbol as QuestSymbol } from './symbol.js';
 import { staticMessagesTable } from './tables.js';
-import { parseInt as questParseInt } from './parser.js';
+import { parseInt as questParseInt } from './parseUtils.js';
 
 /** .NET-alternation matcher over an ordered pattern list. */
 export function matchFirst(line, patterns) {

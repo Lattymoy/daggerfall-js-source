@@ -28,7 +28,7 @@ export function nextUid() { return ++_uid; }
 export function resetUid() { _uid = 0; }
 
 export class Quest {
-  constructor({ rolls = Math.random, nowSeconds = null, hooks = null } = {}) {
+  constructor({ rolls = Math.random, nowSeconds = null, hooks = null, actionFactory = null } = {}) {
     this.uid = nextUid();
     this.questName = '';
     this.displayName = '';
@@ -39,6 +39,7 @@ export class Quest {
     this.rolls = rolls;
     this.nowSeconds = nowSeconds;  // () => classic game seconds (machine-injected)
     this.hooks = hooks;            // machine hooks: showPopup/changeReputation/log
+    this.actionFactory = actionFactory;   // (line, quest) -> action | null (the machine's registry)
     this.travelSeconds = null;     // Q3: Clock flag&16's 2.5x cautious travel time
     this.travelSecondsTo = null;   // Q3: Clock _2place_ one-way trip
 

@@ -14,7 +14,7 @@
 
 import { QuestResource, matchFirst } from './questResource.js';
 import { Symbol as QuestSymbol } from './symbol.js';
-import { parseInt as questParseInt } from './parser.js';
+import { parseInt as questParseInt } from './parseUtils.js';
 
 const DECL = /(Clock|clock) (?<symbol>[a-zA-Z0-9_.-]+)/;
 // C# optionsMatchStr: the time-value groups are EMPTY named groups

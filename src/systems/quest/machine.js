@@ -19,7 +19,6 @@
 // reach tasks through quest.hooks.globalVars.
 
 import { Parser } from './parser.js';
-import { setActionFactory } from './task.js';
 import { DEFAULT_ACTIONS } from './actions.js';
 
 /** QuestMachine.cs:45 - how often DFU ticks quest logic per second
@@ -37,13 +36,13 @@ export class QuestMachine {
     this.globalVars = new Map();      // link id -> bool
     this.parser = new Parser();
     for (const A of DEFAULT_ACTIONS) this.registerAction(new A(null));
-    // Task construction resolves action lines through the machine's
-    // registry from now on (the Q1 pendingActionLines seam narrows to
-    // genuinely unregistered actions).
-    setActionFactory((line, quest) => {
+    // AUDIT quest-2: the action factory travels PER QUEST (parse opt ->
+    // quest.actionFactory -> Task), never a module global - two machines
+    // can coexist and a machineless parse still pends every line.
+    this._actionFactory = (line, quest) => {
       const template = this.getActionTemplate(line);
       return template ? template.createNew(line, quest) : null;
-    });
+    };
   }
 
   registerAction(actionTemplate) { this.actionTemplates.push(actionTemplate); }
@@ -59,7 +58,7 @@ export class QuestMachine {
   /** Parse a quest from source lines and schedule it to start on the
    *  next tick (DFU's InstantiateQuest -> ScheduleQuest shape). */
   scheduleQuest(sourceLines, factionId = 0, { rolls } = {}) {
-    const quest = this.parser.parse(sourceLines, factionId, { rolls });
+    const quest = this.parser.parse(sourceLines, factionId, { rolls, actionFactory: this._actionFactory });
     quest.nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
     quest.hooks = {
       showPopup: (q, message) => this.deps.showPopup?.(q, message),

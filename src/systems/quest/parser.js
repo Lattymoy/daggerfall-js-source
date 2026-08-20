@@ -22,33 +22,14 @@ import { staticMessagesTable, globalVarsTable } from './tables.js';
 import { getInnerSymbolName } from './symbol.js';
 
 // ---- Parser statics (Parser.cs #region Static Helpers) ----
+// The bodies live in parseUtils.js (AUDIT quest-1: a leaf module, so
+// the resource classes can use them without closing an import cycle
+// through the eval-time `extends QuestResource`); re-exported here so
+// the C# shape - they are Parser statics - stays the import surface.
 
-/** C# Split(new char[0], RemoveEmptyEntries): split on whitespace. */
-export function splitLine(text, trim = true) {
-  const parts = text.split(/\s+/).filter((s) => s.length);
-  return trim ? parts.map((s) => s.trim()) : parts;
-}
-
-/** 'FieldName: Value' by ':'; throws on unexpected part count. */
-export function splitField(text, expectedCount = 2, trim = true) {
-  const parts = text.split(':');
-  if (parts.length !== expectedCount && expectedCount !== -1) {
-    throw new Error('SplitField() encountered invalid number of results.');
-  }
-  return trim ? parts.map((s) => s.trim()) : parts;
-}
-
-export const getFieldStringValue = (text) => splitField(text)[1].trim();
-export const getFieldIntValue = (text) => parseInt(splitField(text)[1].trim());
-
-/** int.Parse with a 0 default for null/empty (Parser.ParseInt). */
-export function parseInt(text) {
-  if (text == null || text === '') return 0;
-  if (!/^-?\d+$/.test(text.trim())) throw new Error(`int.Parse failed on '${text}'`);
-  return Number.parseInt(text, 10);
-}
-
+export { splitLine, splitField, getFieldStringValue, getFieldIntValue, parseInt } from './parseUtils.js';
 export { getInnerSymbolName };
+import { splitLine, splitField, getFieldStringValue, parseInt } from './parseUtils.js';
 
 // ---- The parser itself ----
 
@@ -61,8 +42,8 @@ export class Parser {
    * @param {object} [opts] partialParse skips QRC/QBN; rolls is the
    *   quest's injectable uniform roll (Ledger A).
    */
-  parse(source, factionId = 0, { partialParse = false, rolls } = {}) {
-    const quest = new Quest({ rolls });
+  parse(source, factionId = 0, { partialParse = false, rolls, actionFactory } = {}) {
+    const quest = new Quest({ rolls, actionFactory });
     quest.factionId = factionId;
     let inQRC = false, inQBN = false;
     const qrcLines = [], qbnLines = [];

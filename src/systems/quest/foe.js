@@ -7,7 +7,7 @@
 
 import { QuestResource, matchFirst } from './questResource.js';
 import { Symbol as QuestSymbol } from './symbol.js';
-import { parseInt as questParseInt } from './parser.js';
+import { parseInt as questParseInt } from './parseUtils.js';
 import { foesTable } from './tables.js';
 
 const MAX_SPAWN_COUNT = 8;

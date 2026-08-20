@@ -8,7 +8,7 @@
 
 import { QuestResource, matchFirst } from './questResource.js';
 import { Symbol as QuestSymbol } from './symbol.js';
-import { parseInt as questParseInt } from './parser.js';
+import { parseInt as questParseInt } from './parseUtils.js';
 
 const DECL = [
   /(Item|item) (?<s1>[a-zA-Z0-9_.-]+) item class (?<itemClass>\d+) subclass (?<itemSubClass>\d+)/,

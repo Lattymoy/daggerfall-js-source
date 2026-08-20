@@ -17,7 +17,7 @@
 // item/foe actions with their Q3 bindings, UI actions (Prompt) at Q4.
 
 import { Symbol as QuestSymbol } from './symbol.js';
-import { parseInt as questParseInt } from './parser.js';
+import { parseInt as questParseInt } from './parseUtils.js';
 import { staticMessagesTable } from './tables.js';
 
 export class ActionTemplate {

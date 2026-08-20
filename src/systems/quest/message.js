@@ -67,8 +67,11 @@ export class Message {
   replaceMessage(id, source) { this.loadMessage(id, source); }
 
   /** Tokens for this message; variant -1 picks a random variant
-   *  (uniform roll, injectable). Macro expansion pends the macro
-   *  slice - callers get raw tokens today, loudly documented. */
+   *  (uniform roll, injectable). QUIRK KEPT (Message.cs:161): any
+   *  EXPLICIT variant answers variant 0 - DFU's else-arm is `index =
+   *  0`, never `variant`. Use getTextTokensByVariant for real
+   *  selection, as DFU's own callers do. Macro expansion pends the
+   *  macro slice - callers get raw tokens today, loudly documented. */
   getTextTokens(variant = -1, roll = Math.random) {
     const index = variant === -1 ? Math.floor(roll() * this.variantCount) : 0;
     return [...this.variants[index].tokens];

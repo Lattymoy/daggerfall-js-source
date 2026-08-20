@@ -65,8 +65,12 @@ export class Table {
   getValue(columnName, key) {
     if (!this.hasColumn(columnName)) throw new Error(`GetValue() columnName '${columnName}' does not exist.`);
     if (typeof key === 'number') {
-      // GetValue(columnName, index) overload
-      if (key < 0 || key > this.rowCount) throw new Error(`GetValue() index '${key}' does not exist.`);
+      // GetValue(columnName, index) overload. AUDIT quest-5: C#'s guard
+      // is `> RowCount` but values[index] then throws IndexOutOfRange at
+      // index == RowCount; JS would silently answer undefined (and
+      // ParseInt would fold it to 0) - so the guard here matches the
+      // OBSERVED C# behavior: any out-of-range index throws.
+      if (key < 0 || key >= this.rowCount) throw new Error(`GetValue() index '${key}' does not exist.`);
       return this.columns[this.columnIndexDict.get(columnName)].values[key];
     }
     if (!this.hasValue(key)) throw new Error(`GetValue() key '${key}' does not exist.`);
