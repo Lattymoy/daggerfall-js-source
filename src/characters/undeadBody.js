@@ -54,6 +54,8 @@ export const UNDEAD_RAMPS = Object.freeze({
   // block 2 - tan -> brown. What is left of the clothes it was buried
   // in, which is not much.
   gravecloth: [32, 44],
+  // block 7 at its palest. Bone, and the skeleton is nothing else.
+  bone: [112, 118],
 });
 
 // ── ZONE HELPERS ─────────────────────────────────────────────────
@@ -171,6 +173,42 @@ export const UNDEAD_DESIGNS = [
     mats: { linen: UNDEAD_RAMPS.linen, stain: UNDEAD_RAMPS.oldBlood },
     hideRamp: 'curedSkin',
   },
+  {
+    id: MOBILE_TYPES.SkeletalWarrior,
+    name: 'Skeletal Warrior',
+    level: 9,
+    damage: [5, 15],
+    weaponTier: 1,
+    // THE ONE THE OTHER TWO WERE LEGWORK FOR.
+    //
+    // A zombie is a human gone wrong and a mummy is a human wrapped up;
+    // both ride the loft. A skeleton does not: ribs are separate bones
+    // with GAPS between them, and no girth multiplier will ever put a
+    // hole in a closed loft. So this is the first design whose
+    // silhouette comes from a PIECE rather than from the body.
+    //
+    // The body is scaled to the bone underneath it — everything at the
+    // floor of the clamp band — and the ribcage and pelvis are laid over
+    // the top as their own geometry. What is left of the loft is the
+    // limbs, which is right: an arm bone IS roughly a thin arm, and a
+    // ribcage is not a thin chest.
+    build: {
+      torso: 0.62,
+      shoulder: 0.7,
+      arm: 0.6,
+      hand: 0.72,
+      neck: 0.6,
+      skull: 0.94,
+      jaw: 0.78,
+      leg: 0.62,
+    },
+    zones: [],
+    mats: {},
+    hideRamp: 'bone',
+    bootRamp: 'bone', // bone all the way down: it is not wearing anything
+    // Geometry of its own, which no other design in this file has.
+    bones: { ribs: 6, gap: 0.42 },
+  },
 ];
 
 /**
@@ -195,7 +233,11 @@ export function undeadOpts(design, pal) {
   for (const [name, span] of Object.entries(design.mats)) mats[name] = ramp(span);
   const hide = ramp(UNDEAD_RAMPS[design.hideRamp]);
   return {
-    ramps: { skin: hide, boot: ramp(UNDEAD_RAMPS.gravecloth) },
+    // THE BOOT RAMP IS THE DESIGN'S TO CHOOSE. It was hardcoded to
+    // gravecloth, which is right for a corpse that was buried in shoes
+    // and wrong for a skeleton — it came out with brown feet under a
+    // bone-white body, the one part of it that had not rotted.
+    ramps: { skin: hide, boot: ramp(UNDEAD_RAMPS[design.bootRamp || 'gravecloth']) },
     opts: { build: design.build, clothZones: design.zones, armorZones: [], mats },
     hide,
   };

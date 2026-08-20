@@ -48,6 +48,7 @@ import { buildHaftedWeapon, HAFTED_SPECS } from './pieces/hafted.js';
 import { VILLAGER_DESIGNS, designOpts, designDrape, villagerDelta, RACE_TONE } from './villagerDesigns.js';
 import { ORC_DESIGNS, orcOpts } from './orcBody.js';
 import { UNDEAD_DESIGNS, undeadOpts } from './undeadBody.js';
+import { buildRibcage, buildPelvis, BONE_RAMP } from './pieces/skeletonBones.js';
 import { buildTusks, buildBrow, IVORY_RAMP } from './pieces/orcHead.js';
 
 /**
@@ -229,6 +230,13 @@ export function buildPaperdollPayload(pal, img, cif) {
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
       build: d.build, hide,
+      // GEOMETRY OF ITS OWN, where a design has any. The zombie and the
+      // mummy have none — they are the loft and nothing else — and the
+      // skeleton is the first in this file that needs a piece to carry
+      // its silhouette rather than decorate it. Packed exactly as the
+      // orc tusks are, so the viewer's one piece path serves both.
+      ribcage: d.bones ? packPiece(buildRibcage(BONE_RAMP, { torso: d.build.torso, ...d.bones })) : null,
+      pelvis: d.bones ? packPiece(buildPelvis(BONE_RAMP, { torso: d.build.torso })) : null,
       ...villagerDelta(faces, uf),
     };
   });

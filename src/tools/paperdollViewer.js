@@ -294,11 +294,29 @@ for (const name of ['pauldrons','helm']) if (D[name]) pieceMesh[name] = buildPie
 // into animTargets mid-animation, and the animator holds a base-pose
 // snapshot per target - a target that joins late has no snapshot for
 // the frame in flight and snaps to rest for one tick.
-const orcPieceMesh = (D.orcs || []).map((o) => ({
-  tusks: o.tusks ? buildPiece(o.tusks) : null,
-  brow: o.brow ? buildPiece(o.brow) : null,
-}));
-for (const m of orcPieceMesh) { if (m.tusks) m.tusks.visible = false; if (m.brow) m.brow.visible = false; }
+// ── PIECES A DESIGN CARRIES OF ITS OWN ───────────────────────────
+// The orcs have tusks and a brow; the skeleton has a ribcage and a
+// pelvis. Same table, same build, same show-and-hide — a design's
+// pieces are looked up by the design, so adding a fourth kind of bone
+// to a fifth enemy means adding a key here and nothing else.
+const PIECE_KINDS = ['tusks', 'brow', 'ribcage', 'pelvis'];
+const buildPieces = (list) =>
+  (list || []).map((d) => {
+    const out = {};
+    for (const k of PIECE_KINDS) out[k] = d[k] ? buildPiece(d[k]) : null;
+    return out;
+  });
+const hidePieces = (table) => {
+  for (const m of table) for (const k of PIECE_KINDS) if (m[k]) m[k].visible = false;
+};
+const showPieces = (table, i) => {
+  const m = table[i];
+  if (m) for (const k of PIECE_KINDS) if (m[k]) m[k].visible = true;
+};
+const orcPieceMesh = buildPieces(D.orcs);
+const undeadPieceMesh = buildPieces(D.undead);
+hidePieces(orcPieceMesh);
+hidePieces(undeadPieceMesh);
 const RACES = ['Human','Elf','Khajiit','Argonian']; let raceIx = 0;
 const raceHair = {};
 for (const R of RACES) {
@@ -533,7 +551,8 @@ const ACTX = createAnimContext({ basePos, vgrp, armX: D.armX, wristY: D.wristY, 
 // result is neither design.
 let orcOn = null;
 function applyOrc(o) {
-  for (const m of orcPieceMesh) { if (m.tusks) m.tusks.visible = false; if (m.brow) m.brow.visible = false; }
+  hidePieces(orcPieceMesh);
+  hidePieces(undeadPieceMesh);
   orcOn = o;
   if (!o) { applyVillager(null); return; }
   // Hide the human head furniture: an orc wears neither.
@@ -560,8 +579,11 @@ function applyOrc(o) {
   basePos.set(pos);
   geo.getAttribute('position').needsUpdate = true;
   geo.getAttribute('color').needsUpdate = true;
-  const pm = orcPieceMesh[(D.orcs || []).indexOf(o)];
-  if (pm) { if (pm.tusks) pm.tusks.visible = true; if (pm.brow) pm.brow.visible = true; }
+  // Whichever line this design came from, show ITS pieces.
+  const oi = (D.orcs || []).indexOf(o);
+  if (oi >= 0) showPieces(orcPieceMesh, oi);
+  const ui = (D.undead || []).findIndex((x) => x.id === o.id);
+  if (ui >= 0) showPieces(undeadPieceMesh, ui);
   if (hs) hs.textContent = 'hair: none (' + (o.line || 'orc') + ')';
 }
 
