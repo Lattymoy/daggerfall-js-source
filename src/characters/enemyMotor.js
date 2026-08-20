@@ -40,7 +40,7 @@ import { CLASSIC_UPDATE_INTERVAL } from './weaponStates.js';   // single source 
 import { CAPSULE_HEIGHT } from '../player/motor.js';           // single source
 export { CLASSIC_UPDATE_INTERVAL };
 export const GIVE_UP_TICKS = 200;   // EnemyMotor.GiveUpTimer refill (classic ticks; ~12.5s)
-import { GRAVITY, FIXED_DT, MAX_FRAME_DT, CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // the shared fall rule + the P16 fixed-timestep law
+import { GRAVITY, FIXED_DT, MAX_FRAME_DT, CLASSIC_TO_UNITY_RATIO, FALL_DAMAGE_THRESHOLD } from '../player/motor.js';   // the shared fall rule + the P16 fixed-timestep law; CH3: the fall threshold single-sources with the player's
 
 // C15 knockback (EnemyMotor.KnockbackMovement): classic units through
 // the speed ratio. Stored speed clamps at 40; motion caps at 25; the
@@ -259,6 +259,14 @@ export class EnemyAI {
     this.feet = [feet[0], feet[1], feet[2]];
     this.yaw = yawRad;
     this.height = height;
+    // CH3 (AUDIT 23 characters-8): EnemyMotor.ApplyFallDamage's
+    // tracking pair - LastGroundedY refreshes while grounded, and a
+    // landing after a past-threshold drop reports the distance for
+    // the host to bill (the enemy shares the player's formula, per
+    // the source's own comment).
+    this.lastGroundedY = feet[1];
+    this.landedFall = 0;   // > 0 for ONE host frame after a damaging landing
+    this._airborne = false;
     this.speed = enemyMoveSpeed(liveSpeed);
     this.seesThroughInvisibility = seesThroughInvisibility;
     // MobileUnit.ClassicSpawnDistanceType (the marker's SoundIndex) and
@@ -457,10 +465,12 @@ export class EnemyAI {
         this.velY -= GRAVITY * dt;   // flyerFalls: a hit knocks them out of the air
         const r = this.collider.move(this.feet, mx, myRaw + this.velY * dt, mz);
         if (r.grounded) this.velY = 0;
+        this._trackFall(r.grounded);   // CH3: a knocked-down flyer lands hard
       } else {
         this.velY -= GRAVITY * dt;   // SimpleMove: horizontal motion, gravity applies
         const r = this.collider.move(this.feet, mx, this.velY * dt, mz);
         if (r.grounded) this.velY = 0;
+        this._trackFall(r.grounded);
       }
       this.knockbackSpeed -= classicTicks * KB(KNOCKBACK_DECAY_PER_CLASSIC);
       if (this.knockbackSpeed < 0) this.knockbackSpeed = 0;
@@ -521,7 +531,28 @@ export class EnemyAI {
     const dzm = this.moving ? Math.cos(this.yaw) * this.speed * dt : 0;
     const r = this.collider.move(this.feet, dxm, dy, dzm);
     if (r.grounded) this.velY = 0;
+    this._trackFall(r.grounded);   // CH3 (characters-8): walkers and falling paralyzed flyers
     this._restGrounded = !this.moving && r.grounded;
+  }
+
+  /** ApplyFallDamage's tracking (EnemyMotor.cs:1383-1414): grounded
+   *  refreshes LastGroundedY; the grounded EDGE after airborne
+   *  measures the drop and reports a past-threshold landing through
+   *  landedFall (the host bills the damage + the clip). A flyer's
+   *  hover never touches this - only ground contacts do, so a
+   *  knocked-down flyer measures from its LAST ground height,
+   *  verbatim. */
+  _trackFall(grounded) {
+    if (grounded) {
+      if (this._airborne) {
+        const drop = this.lastGroundedY - this.feet[1];
+        if (drop > FALL_DAMAGE_THRESHOLD) this.landedFall = drop;
+        this._airborne = false;
+      }
+      this.lastGroundedY = this.feet[1];
+    } else {
+      this._airborne = true;
+    }
   }
 
   /** The 3D pursuit direction to the aim point (face for flyers +

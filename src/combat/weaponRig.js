@@ -88,13 +88,16 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
 
   return {
     playerWeapon,
-    /** Host mouse events buffer here (sheathed = no attack processing). */
+    /** Host mouse events buffer here (sheathed = no attack processing).
+     *  CH3 (characters-13): a running SWAP PAUSE blocks the attack
+     *  the same way (WeaponManager.cs:276-278 returns before the
+     *  swing while the used hand's countdown runs). */
     attackInput(dx, dy, held) {
-      if (playerWeapon.sheathed) return;
+      if (playerWeapon.sheathed || (entity?.equipCountdown ?? 0) > 0) return;
       _dx += dx; _dy += dy; _held = held;
     },
     /** ClickToAttack for the touch button. */
-    clickAttack() { if (!playerWeapon.sheathed) playerWeapon.clickAttack(); },
+    clickAttack() { if (!playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0) playerWeapon.clickAttack(); },
     /** ToggleSheath + the draw sound (78) on unsheathing a real weapon. */
     toggleSheath() {
       syncWorn();
@@ -107,6 +110,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      */
     frame(dt, { paralyzed = false } = {}) {
       syncWorn();   // AUDIT 17e F17: the rig owns the worn-weapon bind
+      // CH3 (characters-13): the swap pause drains at the classic
+      // approximation - dt x 980 units/second, clamped at 0
+      // (WeaponManager.cs:677-693).
+      if (entity && (entity.equipCountdown ?? 0) > 0) {
+        entity.equipCountdown = Math.max(0, entity.equipCountdown - dt * 980);
+      }
       const c = cv();
       if (!paralyzed && c) playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight));
       _dx = 0; _dy = 0;

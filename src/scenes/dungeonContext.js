@@ -1772,6 +1772,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // flyerFalls) - senses keep running, decisions stop, paralyzed
       // FLYERS fall out of the air, swimmers freeze.
       f.ai.update(dt, playerFeet || eye, _senses, _fParalyzed);   // E2 senses + pursuit; P13: the stealth context
+      // CH3 (characters-8): a past-threshold landing bills the
+      // player's fall formula - trunc(5 x (drop - 5)) - through the
+      // pool's damage door (no knockback), ringing FallDamage at the
+      // foe. The blood splash rides damageFoe's own art.
+      if (f.ai.landedFall > 0 && !f.dead) {
+        const dmg = Math.trunc(FALL_HP_PER_METRE * (f.ai.landedFall - FALL_DAMAGE_THRESHOLD));
+        f.ai.landedFall = 0;
+        if (dmg > 0) {
+          audio.play3d(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
+          damageFoe(f, dmg, null, null);
+        }
+      }
       // E-slice: EnemySenses:533-535 - a foe with the player IN SIGHT
       // raises the enemy alert every update (the dungeon rest roll
       // reads it; an 8-hour decay lowers it).
