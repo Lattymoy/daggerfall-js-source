@@ -231,21 +231,21 @@ combat line numbers below are refreshed with it.
 - `src/scenes/arrestFlow.js:158` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
 - `src/scenes/arrestFlow.js:218` - FLAGGED, still owed to their own slices: PreventEnemySpawns across the
 - `src/scenes/cityGuards.js:23` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
-- `src/scenes/cityGuards.js:205` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
-- `src/scenes/cityGuards.js:357` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
+- `src/scenes/cityGuards.js:207` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
+- `src/scenes/cityGuards.js:360` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/droppedLoot.js:16` - FLAGGED loud: EXTERIOR pile persistence (the save arc snapshots
 - `src/scenes/dungeonContext.js:197` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:522` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:528` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:555` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:972` - exterior spell paths are FLAGGED with their own hosts.
-- `src/scenes/dungeonContext.js:1134` - 129; the inventory/equip UI pends - the INTERIM dagger note
+- `src/scenes/dungeonContext.js:524` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:530` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:557` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:994` - exterior spell paths are FLAGGED with their own hosts.
+- `src/scenes/dungeonContext.js:1179` - 129; the inventory/equip UI pends - the INTERIM dagger note
 - `src/scenes/exterior.js:398` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:404` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:553` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/exterior.js:665` - (FLAGGED: the climate People table pends; the test city is
 - `src/scenes/exterior.js:784` - FLAGGED here exactly as in world.js - no tile lookup yet).
-- `src/scenes/shared.js:152` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
+- `src/scenes/shared.js:153` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/world.js:501` - FLAGGED loud: the People faction rides the START location's
 - `src/scenes/world.js:522` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
@@ -253,13 +253,13 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:708` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/world.js:995` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
 - `src/scenes/world.js:1206` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/worldModes.js:135` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
-- `src/scenes/worldModes.js:176` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:269` - Person placed in a dungeon is the quest machine's, FLAGGED
-- `src/scenes/worldModes.js:309` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:328` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:371` - onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToStaticNPC pends the static-NPC conversation
-- `src/scenes/worldModes.js:378` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:136` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
+- `src/scenes/worldModes.js:177` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:270` - Person placed in a dungeon is the quest machine's, FLAGGED
+- `src/scenes/worldModes.js:310` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:329` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:372` - onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToStaticNPC pends the static-NPC conversation
+- `src/scenes/worldModes.js:379` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
 - `src/systems/advancement.js:18` - INTERIM (loud): we apply immediately - level = calculated,
 - `src/systems/advancement.js:82` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
@@ -304,9 +304,9 @@ combat line numbers below are refreshed with it.
 - `src/systems/guilds.js:148` - are FLAGGED to the quest slice.
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/itemInfo.js:5` - U8e's inventory shipped an INTERIM info panel that made up its own
-- `src/systems/itemInfo.js:50` - FLAGGED (AUDIT 22 F11): `artifact` is read here, on the weapon
-- `src/systems/itemInfo.js:80` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
-- `src/systems/itemInfo.js:166` - *  FLAGGED as a group - they land with their own arcs. */
+- `src/systems/itemInfo.js:51` - FLAGGED (AUDIT 22 F11): `artifact` is read here, on the weapon
+- `src/systems/itemInfo.js:81` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
+- `src/systems/itemInfo.js:169` - *  FLAGGED as a group - they land with their own arcs. */
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:194` - FLAGGED to the economy slice (shops).
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the

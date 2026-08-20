@@ -27,7 +27,6 @@ export const BUILDING_TYPES = Object.freeze({
 export const NAMED_BUILDING_TYPES = Object.freeze([0, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
 export const isNamedBuildingType = (t) => NAMED_BUILDING_TYPES.includes(t);
 /** RMBLayout.IsResidence: House1-House4. */
-export const isResidence = (t) => t >= 17 && t <= 20;
 
 // DFU Internal_Strings (classic FALL.EXE), verbatim.
 export const STORES_A = Object.freeze(["%ef's", "%cn's Best", 'The Essential', "Lord %ef's", "The Adventurer's", 'The Odd', "%ef's Finest", 'Bargain', 'Vintage', "The Emperor's", '%cn', "%ef's General", 'The Superior', "%ef's Quality", 'First Class', "The %rt's", 'The Champion', "Doctor %ef's", "Lady %ef's"]);

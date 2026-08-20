@@ -33,7 +33,7 @@ export class GfxFile {
     const rows = new Array(rowCount);
     let o = 14;
     for (let i = 0; i < rowCount; i++, o += 4) {
-      rows[i] = { offset: v.getUint16(o, true), rle: (v.getUint16(o + 2, true) & IS_RLE_ENCODED) !== 0 };
+      rows[i] = { offset: v.getUint16(o, true), rle: v.getUint16(o + 2, true) === IS_RLE_ENCODED };
     }
 
     // Read all frames (ReadRleImage per frame).

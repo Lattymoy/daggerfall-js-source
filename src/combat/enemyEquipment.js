@@ -14,6 +14,7 @@
 //   swing, exactly as GetBaseDamageMin/Max do.
 // Unity Random slots stay uniform rolls, as in DFU itself.
 
+import { mintCondition } from '../systems/itemTemplates.js';   // AUDIT 23 (items-5)
 import { WEAPON_MIN_DAMAGE, WEAPON_MAX_DAMAGE, dice100 } from './formulas.js';
 
 // ---- Weapons enum (template indices) - the roll ranges are numeric ----
@@ -99,11 +100,11 @@ export function materialArmorValue(armorMaterial) {
  *  bug-for-bug: no port site mints the bit. */
 export function createWeapon(templateIndex, material) {
   const name = WEAPON_BY_INDEX[templateIndex];
-  return {
-    name, templateIndex, material,
+  return mintCondition({
+    name, templateIndex, group: 'Weapons', material,
     flags: 0,
     minDamage: WEAPON_MIN_DAMAGE[name], maxDamage: WEAPON_MAX_DAMAGE[name],
-  };
+  });   // AUDIT 23 (items-5): the condition mints with the item
 }
 
 /**

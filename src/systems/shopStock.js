@@ -25,7 +25,7 @@
 
 import { dice100 } from '../combat/formulas.js';
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
-import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES } from './itemTemplates.js';
+import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition } from './itemTemplates.js';
 import { isLeather, isPlate } from './armorMaterials.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
@@ -130,7 +130,7 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
   // plain item; AUDIT 18: the shelf minted rows with none, so the
   // dungeon-style item list labelled a bought Oil "UselessItems2".
   const add = (item) => {
-    items.push({ ...item, name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name, value: item.value ?? itemBaseValue(item) });
+    items.push(mintCondition({ ...item, name: item.name ?? ITEM_TEMPLATES[item.templateIndex]?.name, value: item.value ?? itemBaseValue(item) }));   // AUDIT 23 (items-5)
   };
   const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [0];
   if (buildingType === BUILDING_TYPES.Alchemist) {

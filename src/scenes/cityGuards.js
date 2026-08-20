@@ -31,6 +31,7 @@
 // one-hit Murder + the response, striking a wandering guard NPC is
 // Assault + an on-the-spot conversion (WeaponManager verbatim).
 
+import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
@@ -106,6 +107,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     const ai = new EnemyAI(collider, [pos[0], pos[1] + 0.1, pos[2]], yaw, {
       liveSpeed: entity.liveSpeed,
       seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
+      playerInside: false,   // AUDIT 23 (characters-7): EnemySenses.cs:269 - exterior despawn band
     });
     // MakeEnemyHostileToAttacker + GiveUpTimer *= 3, verbatim: a
     // crime-responding guard pursues without having seen the player.
@@ -257,6 +259,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         g._halted = true;
         audio?.play3d?.(ENEMY_BASICS[GUARD_MOBILE_TYPE].barkSound, g.ai.feet, 1.0, { maxDistance: 16 });
       }
+      g.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((g.entity.stats?.speed ?? 50) / Math.max(8, liveStat(g.entity, 'speed'))));   // AUDIT 23 (characters-11)
       const events = g.attack.update(dt, g.ai, playerFeet);
       void events;
       const mstate = g.attack.machine.state;

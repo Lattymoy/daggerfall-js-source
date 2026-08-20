@@ -22,7 +22,7 @@ import { applyCharacter, createCharacter, startingSpells, CLASS_CAREERS } from '
 import { levelUpSkillSum } from './advancement.js';   // AUDIT 18: SetCurrentLevelUpSkillSum, one home
 import { overlayAction } from '../ui/input.js';
 import { assignStartingGear } from './startingGear.js';   // S3d
-import { readSpellsStd } from '../formats/spellsStd.js';
+import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';
 import { parseBiog, biogFileName } from '../formats/biogFile.js';   // S3e
 import { applyBiographyEffects } from './biography.js';   // S3e
 import { customSpellSetIndex } from './customClass.js';   // U20a
@@ -38,7 +38,7 @@ import { attachFactionRep } from './factionRep.js';   // S25
  *  unavailable, which is the pre-existing no-magic fallback. */
 export async function loadSpellIndex(fetchBytes) {
   try {
-    return new Map(readSpellsStd(await fetchBytes('SPELLS.STD')).map((sp) => [sp.index, sp]));
+    return spellsByIndexMap(readSpellsStd(await fetchBytes('SPELLS.STD')));   // AUDIT 23 (FTD-2): FIRST record wins a duplicate index (RebuildClassicSpellsDict)
   } catch (e) {
     console.warn('[chargen] SPELLS.STD unavailable; the starting spellbook stays empty', e);
     return null;

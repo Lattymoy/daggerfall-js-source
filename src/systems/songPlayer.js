@@ -115,6 +115,7 @@ export class SongPlayer {
     this.song = song;
     this.playing = true;
     this._state = freshChannelState();
+    this._resyncChannelGains();   // audio-4: a new song starts at full channel volume
     this._cursorTick = 0;
     // Everything is scheduled relative to this, so the whole song shares
     // one origin and cannot drift against the wall clock.
@@ -192,6 +193,7 @@ export class SongPlayer {
     if (nowTick > durationTicks + 1 / secondsPerTick) {
       if (!this.loop) { this.stop(); return; }
       this._state = freshChannelState();
+      this._resyncChannelGains();   // audio-4: the seam carries no stale CC7
       this._cursorTick = 0;
       this._originTime = this.ctx.currentTime + LOOP_LEAD_SECONDS;
       this._pump();          // schedule the seam NOW, not on the next tick
@@ -304,6 +306,17 @@ export class SongPlayer {
    *  archive has 15,017 controller events landing inside a sounding note.
    *  A channel node also cannot fight the per-note envelope, which is what
    *  modulating the voice's own gain would have done. */
+  /** AUDIT 23 (audio-4): the per-channel gain nodes outlive _state -
+   *  play() and the loop rewind reset the STATE to volume 1 but the
+   *  NODES kept the last song's (or last pass's) CC7 values, so any
+   *  channel whose first CC7 lands late played at the stale gain. */
+  _resyncChannelGains() {
+    if (!this._chGains) return;
+    for (const [ch, g] of Object.entries(this._chGains)) {
+      g.gain.setValueAtTime(this._state[ch]?.volume ?? 1, this.ctx.currentTime);
+    }
+  }
+
   _channelGain(channel) {
     this._chGains ??= {};
     let g = this._chGains[channel];

@@ -142,7 +142,10 @@ test('S24: a SELF-cast cannot refund more than it cost', () => {
   assert.ok(both > 0);
 
   const selfTarget = absorber();
-  const selfOut = applySpell(spell, 1, selfTarget, {}, () => 0, selfTarget, { inside: true, selfCastCost: 3 });
+  // AUDIT 23 (magic-5): the caster rides the {entity, sinks} WRAPPER -
+  // the shape every live producer mints (playerCaster(), the foe
+  // wrappers). The old raw-entity fixture never matched in production.
+  const selfOut = applySpell(spell, 1, selfTarget, {}, () => 0, { entity: selfTarget, sinks: {} }, { inside: true, selfCastCost: 3 });
   assert.equal(selfOut.absorbed, 3, 'a self-cast is capped at what it cost');
   assert.equal(selfTarget.magicka, 3);
   // and the cap does not apply to another entity's spell

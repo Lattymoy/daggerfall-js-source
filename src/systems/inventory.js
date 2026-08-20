@@ -157,6 +157,24 @@ export function weightForMaterial(weightKg, weaponMaterial) {
  *  verbatim material function; leather through the Erisceres formula
  *  AS CODED - trunc(INT(w*4)/2)/4, the int division making Round a
  *  no-op (F13); chain unchanged (its x2 is a VALUE rule, not weight). */
+/** AUDIT 23 (items-8): DFU's weightInKg - the per-unit
+ *  MATERIAL-ADJUSTED weight (ItemBuilder bakes it at mint; the port
+ *  derives it at read). The info panel's %kg prints THIS x stack
+ *  (DaggerfallUnityItemMCP.cs:144-148) - hasNoEncumbrance does not
+ *  zero it, that flag gates only encumbrance. */
+export function unitWeightInKg(item) {
+  const t = templates[item.templateIndex];
+  let base = t ? t.baseWeight : 0;
+  if (item.group === 'Weapons' && item.name !== 'Arrow' && item.material != null) {
+    base = weightForMaterial(base, item.material);
+  }
+  if (item.group === 'Armor' && item.material != null) {
+    if (item.material === 0x0000) base = leatherWeight(base);
+    else if (item.material >= 0x0200) base = weightForMaterial(base, item.material - 0x0200); // plate
+  }
+  return base;
+}
+
 export function itemWeight(item) {
   const t = templates[item.templateIndex];
   // EffectiveUnitWeightInKg (DaggerfallUnityItem.cs:667-673) returns
@@ -166,15 +184,7 @@ export function itemWeight(item) {
   // (horse, cart, arrows, maps, quest letters) and nothing read it, so
   // a bought horse added 800 kg to the character sheet.
   if (t?.hasNoEncumbrance) return 0;
-  let base = t ? t.baseWeight : 0;
-  if (item.group === 'Weapons' && item.name !== 'Arrow' && item.material != null) {
-    base = weightForMaterial(base, item.material);
-  }
-  if (item.group === 'Armor' && item.material != null) {
-    if (item.material === 0x0000) base = leatherWeight(base);
-    else if (item.material >= 0x0200) base = weightForMaterial(base, item.material - 0x0200); // plate
-  }
-  return base * (item.stackCount ?? 1);
+  return unitWeightInKg(item) * (item.stackCount ?? 1);
 }
 
 export const totalWeight = (list) => list.reduce((a, i) => a + itemWeight(i), 0);

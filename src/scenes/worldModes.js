@@ -43,6 +43,7 @@ import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
+import { SOUND, swingSoundFor } from '../systems/soundClips.js';   // AUDIT 23: the bow loose + no-enemy swing sounds
 import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
 import { setDeathPresenter } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6
 import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying in a building
@@ -931,6 +932,8 @@ export function createWorldModes(host) {
     // tally arm in DFU (`!hitEnemy && WeaponType != Bow` is false for a bow),
     // so it is tallySwingSkills - Archery AND CriticalStrike - not one skill.
     for (const ev of interiorWeapon.frame(dt)) {
+      // AUDIT 23 (combat-2): the bow machine's frame-4 loose sound.
+      if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
       if (ev !== 'hit') continue;
       if (weaponTypeForItem(interiorWeapon.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
         if (removeOne(playerEntity.items, 131)) {
@@ -946,6 +949,10 @@ export function createWorldModes(host) {
       // what DFU does on a miss.
       drainInteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);
       envAttack(interiorCtx.actions, interiorCtx.collider, player.eye, eyeDir());
+      // AUDIT 23 (C9) - WeaponManager.cs:423-424: an interior swing
+      // never sets hitEnemy, so the no-enemy swing sound fires at the
+      // hit frame (the rig's strike-entry whoosh is gone).
+      audio.playOneShot(swingSoundFor(interiorWeapon.playerWeapon.weapon), 1.1);
     }
     interiorWeapon.draw();
     // AUDIT 21 (hosts lane, F7): THE HUD, in a building. drawHud lives inside

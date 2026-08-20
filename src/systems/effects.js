@@ -615,7 +615,10 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // apply to another entity's spell.
   if (totalAbsorbed > 0) {
     const selfCastCost = ctx.selfCastCost ?? 0;
-    if (caster === target && selfCastCost > 0 && totalAbsorbed > selfCastCost) totalAbsorbed = selfCastCost;
+    // AUDIT 23 (magic-5): the caster arrives as the {entity, sinks}
+    // WRAPPER every live producer mints - comparing the wrapper itself
+    // to the raw target entity never matched, so the cap was dead.
+    if (caster?.entity === target && selfCastCost > 0 && totalAbsorbed > selfCastCost) totalAbsorbed = selfCastCost;
     out.absorbed = totalAbsorbed;
     if (target.maxMagicka != null) {
       target.magicka = Math.min(target.maxMagicka, (target.magicka ?? 0) + totalAbsorbed);

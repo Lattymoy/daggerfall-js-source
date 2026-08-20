@@ -6,6 +6,8 @@
 // group's j-th entry is GROUP_TEMPLATE_INDICES[group][j]
 // (ItemHelper.GetEnumArray/GetItemTemplate).
 
+import { clampArmorVariant } from './armorMaterials.js';   // AUDIT 23 (items-6)
+import { conditionMultipliersByMaterial } from '../characters/weapons.js';   // AUDIT 23 (items-5)
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };
 import { playerArchiveFor } from '../characters/paperdollArt.js';   // AUDIT 17f: SetRace, one home
@@ -97,6 +99,28 @@ export function usesWorldTexture(item, template = templateByIndex(item.templateI
  *  Argonian archive whoever was wearing it - a human male's short
  *  shirt came off archive 239 instead of 241. `identity` is the
  *  wearer; it defaults to the Breton male the pre-chargen entity is. */
+
+/** AUDIT 23 (items-5): DFU mints EVERY item with condition = template
+ *  hitPoints (DaggerfallUnityItem.cs:566-567), and weapons + plate
+ *  armor scale it by material (ItemBuilder.SetItemPropertiesByMaterial
+ *  :651-652, C# int division). The port's plain-object factories
+ *  minted none, so every torch/lantern/candle read as empty and no
+ *  looted weapon carried a condition. Idempotent - an item that
+ *  already has a condition (magic uses, a save round-trip) keeps it. */
+export function mintCondition(item) {
+  if (item.maxCondition != null) return item;
+  const t = templateByIndex(item.templateIndex);
+  let max = t?.hitPoints ?? 0;
+  const mat = item.material;
+  if (mat != null && max > 0) {
+    if (item.group === 'Weapons') max = Math.trunc((max * (conditionMultipliersByMaterial[mat] ?? 4)) / 4);
+    else if (item.group === 'Armor' && mat >= 0x0200) max = Math.trunc((max * (conditionMultipliersByMaterial[mat - 0x0200] ?? 4)) / 4);
+  }
+  item.maxCondition = max;
+  item.currentCondition = max;
+  return item;
+}
+
 export function inventoryItemImage(item, identity = undefined) {
   const t = templateByIndex(item.templateIndex);
   if (!t) return null;
@@ -107,9 +131,13 @@ export function inventoryItemImage(item, identity = undefined) {
     archive = playerArchiveFor(item, t, identity);
     if ((t.variants ?? 0) > 0) {
       // GetInventoryTextureRecord: start + variant, cloaks skipping
-      // their interior-first record
-      record = t.playerTextureRecord + (CLOAK_TEMPLATES.has(item.templateIndex) ? 1 : 0)
-        + Math.min(item.variant ?? 0, t.variants - 1);
+      // their interior-first record. AUDIT 23 (items-6): armor rides
+      // ItemBuilder.SetVariant's material-family clamps exactly as the
+      // paperdoll does - chain/plate armor drew the leather-look icon.
+      const v = item.group === 'Armor'
+        ? clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0)
+        : Math.min(item.variant ?? 0, t.variants - 1);
+      record = t.playerTextureRecord + (CLOAK_TEMPLATES.has(item.templateIndex) ? 1 : 0) + v;
     } else {
       record = t.playerTextureRecord;
     }

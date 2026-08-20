@@ -2,7 +2,9 @@
 // mounts (interior mode + both exterior walk hosts). Pins mirror the
 // AUDITED dungeon laws: classic starts sheathed, DrawWeapon 78 only
 // on unsheathing a real weapon, no attack processing while sheathed,
-// the drag-to-swing strike with its swing-sound edge, the zero-arrow
+// the drag-to-swing strike (soundless at entry - AUDIT 23 C9 moved
+// the whoosh to the hosts' no-enemy hit frame, WeaponManager.cs:423),
+// the zero-arrow
 // bow auto-sheathe, and the WeaponEnvDamage ray (doors bash and
 // consume, other action objects Receive(Attack)).
 import { test } from 'node:test';
@@ -35,19 +37,21 @@ test('weaponRig: classic starts sheathed; DrawWeapon 78 on unsheathing a real we
   assert.deepEqual(r._audio.played, [SOUND.DrawWeapon]);
 });
 
-test('weaponRig: sheathed = no attack processing; a drag swings with the sound edge and reaches the hit frame', () => {
+test('weaponRig: sheathed = no attack processing; a drag swings SILENTLY and reaches the hit frame', () => {
   const r = rig();
   // Sheathed: the buffered drag must never start a strike.
   r.attackInput(900, 0, true);
   r.frame(1 / 60);
   assert.equal(r.playerWeapon.machine.state, 'Idle');
-  // Unsheathed: a right-drag past the threshold enters a Strike state
-  // and the entering edge plays the pitch-matched swing sound.
+  // Unsheathed: a right-drag past the threshold enters a Strike state.
+  // AUDIT 23 (C9): entry plays NOTHING - DFU's swing sound fires at
+  // the hit frame of a no-enemy swing, which is the HOST's arm, not
+  // the rig's.
   r.toggleSheath();
   r.attackInput(900, 0, true);
   r.frame(1 / 60);
   assert.ok(r.playerWeapon.machine.state.startsWith('Strike'), `state ${r.playerWeapon.machine.state}`);
-  assert.equal(r._audio.played.length, 2, 'DrawWeapon + the swing sound');
+  assert.equal(r._audio.played.length, 1, 'DrawWeapon only - no strike-entry whoosh');
   // The machine reaches its hit frame within the strike.
   let hit = false;
   for (let f = 0; f < 120 && !hit; f++) hit = r.frame(1 / 60).includes('hit');

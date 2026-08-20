@@ -194,12 +194,16 @@ test('services: a knight rooms free at rank 4, or anywhere in their OWN region',
   assert.equal(freeShipTravel(GUILDS.FightersGuild, at(9)), false);
 });
 
-test('services: only a temple has a library, at its own rank', () => {
+test('services: temples open their library at their own rank; the Mages Guild at 2', () => {
   assert.equal(TEMPLE_DATA.Julianos.library, 0, 'the god of wisdom opens his at rank 0');
   assert.equal(canAccessLibrary(templeOf('Julianos'), at(0)), true);
   assert.equal(TEMPLE_DATA.Dibella.library, 4);
   assert.equal(canAccessLibrary(templeOf('Dibella'), at(3)), false);
   assert.equal(canAccessLibrary(templeOf('Dibella'), at(4)), true);
-  assert.equal(canAccessLibrary(GUILDS.MagesGuild, at(9)), false,
-    'the Mages Guild library is a SERVICE NPC, not this predicate');
+  // AUDIT 23 (guilds-6): MagesGuild.CanAccessLibrary overrides the
+  // same predicate at rank >= 2 (MagesGuild.cs:129-132) - the old pin
+  // encoded the port's own gap as a law.
+  assert.equal(canAccessLibrary(GUILDS.MagesGuild, at(1)), false);
+  assert.equal(canAccessLibrary(GUILDS.MagesGuild, at(2)), true);
+  assert.equal(canAccessLibrary(GUILDS.FightersGuild, at(9)), false, 'no other guild has one');
 });

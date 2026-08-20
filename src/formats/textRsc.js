@@ -93,7 +93,14 @@ export class TextRsc {
     const n = this.variantCount(id);
     if (n <= 1) return this.linesById(id);
     const want = Math.min(n - 1, Math.floor(pick() * n));
-    return this.linesById(id, want);
+    const rows = this.linesById(id, want);
+    // AUDIT 23 (FTD-1) - TextProvider.cs:231: a record ending 0xFF 0xFE
+    // mints an empty trailing stream; DFU steps back one variant when
+    // the picked stream has zero tokens, so the roll never shows
+    // nothing. The distribution keeps DFU's shape (the last real
+    // variant is picked twice as often on such records).
+    if (!rows.length && want > 0) return this.linesById(id, want - 1);
+    return rows;
   }
 
   /** How many SubrecordSeparator-delimited variants a record has. */

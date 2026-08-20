@@ -4,11 +4,11 @@
 // outside a dungeon nothing aged. Active magic effects never ticked (a
 // spell cast in town lasted forever and Levitate never expired), diseases
 // never advanced a day, poisons never fired a round, fatigue never
-// drained, and raiseSkills never ran, so a character who stayed above
+// drained - so a character who stayed above
 // ground NEVER ADVANCED A SKILL OR GAINED A LEVEL. DFU has no such split:
 // EntityEffectBroker.Update (:200-236) raises MagicRound on a global
-// interval and PlayerEntity.Update (:263-330) runs the fatigue and
-// advancement path wherever the player is.
+// interval and PlayerEntity.Update (:347-538) runs the fatigue path
+// wherever the player is - advancement runs at REST END, never here.
 //
 // It lives here rather than in a scene because a scene cannot be tested -
 // the four hosts have zero execution coverage, which is exactly why the
@@ -21,7 +21,6 @@
 import { updateDiseases } from './diseases.js';
 import { updatePoisons } from './poisons.js';
 import { tickActiveEffects } from './effects.js';
-import { raiseSkills } from './advancement.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { FATIGUE_LOSS } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
@@ -47,7 +46,6 @@ export const CLASSIC_MINUTES_PER_SECOND = 12 / 60;
  * @param {number} [o.fatigueMultiplier] PlayerEntity.cs:388-400, 0.9 with Athleticism
  * @param {Function} [o.rolls]     injectable RNG
  * @param {Function} [o.say]       message sink for disease/skill text
- * @param {Function} [o.onLevelUp] called when raiseSkills crosses a level
  * @returns {{ classicMinutes: number, rounds: number, raised: number[] }}
  */
 export function tickPlayerMinutes({
@@ -59,7 +57,6 @@ export function tickPlayerMinutes({
   fatigueMultiplier = 1,
   rolls = Math.random,
   say = () => {},
-  onLevelUp = null,
 } = {}) {
   const next = classicMinutes + dt * CLASSIC_MINUTES_PER_SECOND;
   let rounds = 0;
@@ -137,8 +134,13 @@ export function tickPlayerMinutes({
     sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier));
   }
 
-  const raised = raiseSkills(entity, next, rolls, onLevelUp) ?? [];
-  return { classicMinutes: next, rounds, raised };
+  // AUDIT 23 (entity-1): NO advancement here. DFU's PlayerEntity.Update
+  // (:347-538) runs no RaiseSkills; the only call sites in the whole
+  // tree are DaggerfallRestWindow.cs:731 (the finished popup's close)
+  // and DaggerfallTravelPopUp.cs:380 (fast travel, unported). The
+  // per-minute raise this tick used to run leveled characters mid-walk
+  // without ever resting.
+  return { classicMinutes: next, rounds };
 }
 
 // --- THE WORLD CLOCK (AUDIT 21 F2) -----------------------------------

@@ -32,7 +32,13 @@ export class RestWindow {
   }
 
   input(action) {
-    if (this.state === 'ended') { this.done = true; return; }
+    if (this.state === 'ended') {
+      this.done = true;
+      // AUDIT 23 (entity-1) - DaggerfallRestWindow.cs:729-732: closing
+      // the finished popup is THE advancement moment (RaiseSkills).
+      this.deps.onRestFinished?.();
+      return;
+    }
     if (this.state === 'resting') {
       if (action === 'back') this._end(this.session.endEarly());
       return;

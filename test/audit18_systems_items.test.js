@@ -207,7 +207,7 @@ test('audit18 items: RandomizeArmorVariant verbatim, and the shelf takes its rol
   // the variant roll second (ApplyArmorSettings' tail).
   // .95 -> plate, .99 -> Dwarven (0x0204), .9 -> Range(1,4) = 3.
   const one = stockShopShelf({ buildingType: BUILDING_TYPES.Armorer, quality: 20 }, { level: 5, gender: 'male' }, { rolls: seq(0, 0.95, 0.99, 0.9, 0.999) });
-  assert.deepEqual(one, [{ group: 'Armor', templateIndex: 102, material: 0x0204, variant: 3, name: 'Cuirass', value: 4800 }]);
+  assert.deepEqual(one, [{ group: 'Armor', templateIndex: 102, material: 0x0204, variant: 3, name: 'Cuirass', value: 4800, maxCondition: 12288, currentCondition: 12288 }]);   // AUDIT 23 (items-5): plate scales 4096 x 12/4
 });
 
 // ---------------------------------------------------------------
@@ -221,7 +221,7 @@ test('audit18 items: shop clothing rolls the template variant, then the dye', ()
   // two rolls would give variant 1 and dye Yellow.
   assert.equal(ITEM_TEMPLATES[141].variants, 4);
   const one = stockShopShelf({ buildingType: BUILDING_TYPES.ClothingStore, quality: 20 }, { level: 5, gender: 'male' }, { rolls: seq(0, 0.875, 0.35, 0.99) });
-  assert.deepEqual(one, [{ group: 'MensClothing', templateIndex: 141, variant: 3, dye: DYE_COLORS.DarkBrown, name: 'Straps', value: 4 }]);
+  assert.deepEqual(one, [{ group: 'MensClothing', templateIndex: 141, variant: 3, dye: DYE_COLORS.DarkBrown, name: 'Straps', value: 4, maxCondition: 200, currentCondition: 200 }]);   // AUDIT 23 (items-5): conditions mint with the item
 
   // the whole shelf: every garment dyed, every variant inside its own
   // template's count, and the 8-variant Short Shirt reaches past 3
@@ -285,7 +285,7 @@ test('audit18 items: book variant is Range(0, TotalVariants) = Range(0, 2)', () 
   // loot: BK hit at roll .04, variant draw .75 -> floor(.75*2) = 1
   const k = generateRandomLoot(LOOT_MATRICES.K, { level: 1, gender: 'male' },
     seq(0, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.04, 0.75, 0.99, 0.99));
-  assert.deepEqual(k.find((i) => i.group === 'Books'), { group: 'Books', templateIndex: 277, variant: 1, name: 'Book' });
+  assert.deepEqual(k.find((i) => i.group === 'Books'), { group: 'Books', templateIndex: 277, variant: 1, name: 'Book', maxCondition: 20, currentCondition: 20 });   // AUDIT 23 (items-5)
   // shop: the same draw, five rows off a quality-20 Bookseller
   const shelf = stockShopShelf({ buildingType: BUILDING_TYPES.Bookseller, quality: 20 }, { level: 5, gender: 'male' }, { rolls: () => 0.75 });
   const books = shelf.filter((i) => i.group === 'Books');

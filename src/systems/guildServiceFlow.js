@@ -66,7 +66,7 @@ export const SERVICE_LABEL = Object.freeze({
 export const serviceLabel = (service) => SERVICE_LABEL[service] ?? '?';   // DFU's `default: "?"`
 
 /** GuildNpcServices.TG_Spymaster - the id the t=2037 escape tests. */
-export const TG_SPYMASTER_FACTION_ID = 803;
+export const TG_SPYMASTER_FACTION_ID = 806;   // AUDIT 23 (guilds-3): Services.cs:78 TG_Spymaster = 806 (803 is TG_Training)
 
 /** StaticNPCClick's routing (:1512-1607), as a decision.
  *

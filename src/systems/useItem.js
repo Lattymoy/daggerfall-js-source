@@ -49,8 +49,8 @@ export const TEMPLATES = Object.freeze({
   Candle: 253,
   Parchment: 279,
   Holy_candle: 269,        // ReligiousItems
-  Arrow: 130,              // Weapons
-  Helm: 103,               // Armor
+  Arrow: 131,              // Weapons (ItemEnums.cs:230 - AUDIT 23: was 130, the Long_Bow)
+  Helm: 107,               // Armor (ItemEnums.cs:202 - AUDIT 23: was 103, the Gauntlets)
 });
 
 /** The first drug template, and DFU's own (wrong) offset. */

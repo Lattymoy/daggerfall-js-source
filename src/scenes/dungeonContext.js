@@ -54,7 +54,7 @@ import { SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
 import { NativeInventoryWindow, preloadInventoryArt } from '../ui/nativeInventory.js';
 import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
-import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
+import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
@@ -62,7 +62,7 @@ import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio } from './shared.js';
+import { fetchBytes, ensureAudio, raiseAtRestEnd } from './shared.js';
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
@@ -71,7 +71,7 @@ import {
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT } from '../systems/mysticism.js';   // S27
 import { applySpell, tickActiveEffects, hasActiveEffect, entityIsParalyzed, maxFatigue, isInvisible, isBlending, isAShade } from '../systems/effects.js';
-import { FATIGUE_LOSS } from '../systems/statMods.js';
+import { FATIGUE_LOSS, liveStat } from '../systems/statMods.js';
 import { breathStep } from '../systems/breath.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { updatePoisons, inflictPoison } from '../systems/poisons.js';
@@ -81,7 +81,7 @@ import { RestWindow } from '../ui/restWindow.js';
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
-import { calculateCastCost } from '../systems/spellcost.js';
+import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
 import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -430,6 +430,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, {
         liveSpeed: entity.liveSpeed,
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,   // P13: the illusion-gate exemption
+        spawnDistanceType: e.spawnDistanceType ?? 0,   // AUDIT 23 (characters-7): EnemySenses.cs:231 - the marker's band row
       });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
       // Combat bows: EnemyMotor.cs:131-137 reads the MobileEnemy
@@ -488,6 +489,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         liveSpeed: entity.liveSpeed,
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         behaviour, mobileId: e.mobileType, waterSurfaceY: waterSurfaceYAt,
+        spawnDistanceType: e.spawnDistanceType ?? 0,   // AUDIT 23 (characters-7)
       });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
       // The same EnemyMotor.cs:131-137 flag test the class branch
@@ -696,8 +698,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     playerEntity.health === playerEntity.maxHealth &&
     (playerEntity.fatigue ?? 0) === maxFatigue(playerEntity) &&
     ((playerEntity.magicka ?? 0) === (playerEntity.maxMagicka ?? 0) || hasSpecialAbility(playerEntity.career, SPECIAL_ABILITY.NoRegenSpellPoints));
+  // U3: the level-up screen replaces the headless auto-apply (shared
+  // by the rest-end raise and any future travel arm).
+  const _onLevelUp = () => {
+    hudText.add('You have gained a level!');
+    if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
+  };
   const _restDeps = {
     advanceMinutes: (n) => { classicMinutesRef.value += n; },   // the round loop catches the magic rounds up
+    // AUDIT 23 (entity-1): the rest-finished close raises skills - the
+    // per-minute tick no longer does (DaggerfallRestWindow.cs:731).
+    onRestFinished: () => raiseAtRestEnd(playerEntity, {
+      say: (msg) => hudText.add(msg), onLevelUp: _onLevelUp,
+    }),
     tickVitals: () => {
       playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + healthRecoveryRate(playerEntity, { day: false, inside: true }));
       playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + fatigueRecoveryRate(maxFatigue(playerEntity)));
@@ -924,6 +937,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // against the player only - foe-vs-foe friendly fire pends the
   // missile seam's target sweep.
   function castEnemySpell(f, spell, noSpellPointCost = false) {
+    // AUDIT 23 (magic-15) - EntityEffectManager.cs:315: SetReadySpell
+    // runs SilenceCheck for ENEMIES too, gated the same way - a free
+    // rider (spider touch) bypasses it exactly as noSpellPointCost
+    // bypasses the cost.
+    if (!noSpellPointCost && silenceBlocksCast(f.entity)) return;
     // S19: SetReadySpell(spell, true) - the spider-touch rider casts
     // free; ordinary decisions spend the S10 cost (floored at 0).
     if (!noSpellPointCost) {
@@ -960,6 +978,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // S24: a dungeon is inside by definition; `day` only matters to the
   // InLight branch, which requires being OUTSIDE.
   const ABSORB_CONTEXT = Object.freeze({ inside: true, day: false });
+  // AUDIT 23 (magic-5): DFU's lastReadySpellCastingCost - set on every
+  // player cast, read by the absorption refund cap when the player's
+  // own spell lands back on them (EntityEffectManager.cs:600-604).
+  let lastCastCost = 0;
 
   /** Every spell landing ON THE PLAYER rides this: the S19 Paralyze
    *  awakeAlert ("You are paralyzed.", once per new instance) fires
@@ -970,7 +992,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // EntityEffectManager :1305), and this host is a DUNGEON - always
     // inside, so InDarkness absorbs and InLight never does. The
     // exterior spell paths are FLAGGED with their own hosts.
-    const r = applySpell(spell, casterLevel, playerEntity, playerSinks, Math.random, caster, ABSORB_CONTEXT);
+    const ctx = lastCastCost > 0 ? { ...ABSORB_CONTEXT, selfCastCost: lastCastCost } : ABSORB_CONTEXT;
+    const r = applySpell(spell, casterLevel, playerEntity, playerSinks, Math.random, caster, ctx);
     if (r.paralyzed) hudText.add('You are paralyzed.');
     // S19c: AssignBundle's failure messages, player hosts only -
     // CasterOnly chance fails say "Spell effect failed.", external
@@ -989,6 +1012,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (playerFeet) {
       const d = Math.hypot(playerFeet[0] - pos[0], playerFeet[1] + 0.9 - pos[1], playerFeet[2] - pos[2]);
       if (d <= EXPLOSION_RADIUS) applySpellToPlayer(spell, casterLevel, caster);
+    }
+  }
+
+  // AUDIT 23 (magic-4) - EntityEffectManager.cs:2106-2108: "Always
+  // tally magic skills when player physically casts a spell" -
+  // TallyPlayerReadySpellEffectSkills (:1964-1978) tallies each real
+  // effect's MagicSkill by 1. Unknown classic keys tally nothing
+  // (DFU's effect != null gate), so the cost table's presence is the
+  // gate, not effectSchool's priced-as-Destruction default.
+  function tallyCastSkills(sp) {
+    for (const e of sp.effects) {
+      if (e.type < 0) continue;
+      if (!EFFECT_COST_TABLE[`${e.type},${e.subType & 0xff}`]) continue;
+      tallySkill(playerEntity, effectSchool(e), 1);
     }
   }
 
@@ -1011,6 +1048,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
       // missile; the cost spends here.
       playerEntity.magicka -= cost;
+      lastCastCost = cost;   // magic-5: the refund cap reads the spent cost
+      tallyCastSkills(sp);
       const r = applySpellToPlayer(sp, playerEntity.level, playerCaster());
       if (r.healed > 0) hudText.add(`You are healed ${r.healed} points.`);
       surfacePlayer();
@@ -1027,6 +1066,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       });
       if (!t) return false;
       playerEntity.magicka -= cost;
+      lastCastCost = cost;   // magic-5: the refund cap reads the spent cost
+      tallyCastSkills(sp);
       surfacePlayer();
       applySpell(sp, playerEntity.level, t.entity, foeSinks(t), Math.random, playerCaster());
       return true;
@@ -1034,6 +1075,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (sp.rangeType === 3) {
       // AreaAroundCaster: every live foe within the explosion radius.
       playerEntity.magicka -= cost;
+      lastCastCost = cost;   // magic-5: the refund cap reads the spent cost
+      tallyCastSkills(sp);
       surfacePlayer();
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, foes)) {
         applySpell(sp, playerEntity.level, t.entity, foeSinks(t), Math.random, playerCaster());
@@ -1042,6 +1085,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     if (sp.rangeType !== 2 && sp.rangeType !== 4) return false;
     playerEntity.magicka -= cost;
+      lastCastCost = cost;   // magic-5: the refund cap reads the spent cost
+      tallyCastSkills(sp);
     surfacePlayer();
     missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true });
     return true;
@@ -1059,7 +1104,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const isFixed = m.archive === RANDOM_TREASURE_ARCHIVE;
         if (!isRandom && !isFixed) continue;
         const record = isFixed ? m.record : RANDOM_TREASURE_ICONS[Math.floor(Math.random() * RANDOM_TREASURE_ICONS.length)];
-        const items = generateLootItems(lootKey, { level: playerEntity.level, gender: 'male' });
+        const items = generateLootItems(lootKey, { level: playerEntity.level, gender: playerEntity.gender });   // AUDIT 23 (items-1): LootTables.cs:229/:237 pass the PLAYER's gender
         lootPiles.push({ pos: [m.x + b.originX, m.y, m.z + b.originZ], record, items, batch: null });
       }
     }
@@ -1160,18 +1205,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     weaponRig.attackInput(dx, dy, held);
   }
   function resolvePlayerHit(eye, inViewFn, playerFeet, lookDir) {
-    // Verbatim WeaponEnvDamage FIRST (audit 2026-08-16: nothing ever
-    // sent the Attack trigger and doors could not be bashed) - the
-    // shared envAttack (C10 fold): a bashed door CONSUMES the swing,
-    // Receive(Attack) lets it continue, geometry occludes.
-    if (lookDir && envAttack(actions, collider, eye, lookDir, Math.random)) return false;
-    // C10 FOLLOW-UP (live mobile crash, 2026-08-17): the weapon now
-    // exists WITHOUT foes, so a swing's hit frame reaches here with
-    // foeDeps null (no ?foes, or the async foe deps still loading) -
-    // the env attack above already ran; nothing remains to resolve.
-    // Pre-fold this path was unreachable foe-less (playerWeapon was
-    // foes-gated), which is why no probe ever caught it.
-    if (!foeDeps) return false;
+    // AUDIT 23 (combat-14): entity colliders resolve FIRST
+    // (WeaponManager.cs:1048-1056 foreach over hitColliders);
+    // WeaponEnvDamage runs only in the no-entity fallback (:1057-1064
+    // "if no hits were detected from bounds check") - env-first let a
+    // door in reach eat the swing over the foe standing at it. The
+    // C10-fold rules stand: a bashed door consumes the swing,
+    // Receive(Attack) lets it continue, geometry occludes - and the
+    // foe-less contexts (mobile, foe deps still loading - the
+    // 2026-08-17 live crash) fall straight to the fallback below.
+    if (!foeDeps) return lookDir ? (envAttack(actions, collider, eye, lookDir, Math.random), false) : false;
     // E3d: backstab facing per foe, verbatim IsBackFacing (records
     // 3/4 of the 8-orientation wheel); the chance = the player's
     // Backstabbing skill, tallied inside CalculateBackstabChance
@@ -1212,6 +1255,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, 1.1, { maxDistance: 16 });   // rides the foe's source shape
       damageFoe(foe, damage, playerFeet, lookDir);   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back)
     }
+    // combat-14: the no-entity fallback - only a swing that connected
+    // with NO foe may bash the environment.
+    if (!hitEnemy && lookDir) envAttack(actions, collider, eye, lookDir, Math.random);
     return hitEnemy;
   }
   // S3b: the classic clock for skill-raise checks - dt * TimeScale
@@ -1265,7 +1311,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (m.age > MISSILE_LIFESPAN_S) { retireMissile(m); continue; }
       const step = MISSILE_SPEED * dt;
       const hitWall = collider.raycast(m.pos, m.dir, step + MISSILE_COLLIDER_RADIUS);
-      if (Number.isFinite(hitWall) && hitWall <= step + MISSILE_COLLIDER_RADIUS) { retireMissile(m); continue; }
+      if (Number.isFinite(hitWall) && hitWall <= step + MISSILE_COLLIDER_RADIUS) {
+        // AUDIT 23 (magic-2) - DaggerfallMissile.cs:399-402 DoCollision:
+        // an AreaAtRange payload explodes AT THE IMPACT POINT whatever
+        // was struck; the port retired wall hits with no payload.
+        if (m.spell?.rangeType === 4) {
+          const impact = [m.pos[0] + m.dir[0] * hitWall, m.pos[1] + m.dir[1] * hitWall, m.pos[2] + m.dir[2] * hitWall];
+          const wCaster = m.fromPlayer ? playerCaster()
+            : m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
+          explodeAt(impact, m.spell, (m.fromPlayer ? playerEntity.level : m.casterLevel) ?? playerEntity.level, playerFeet, wCaster);
+        }
+        retireMissile(m);
+        continue;
+      }
       m.pos[0] += m.dir[0] * step; m.pos[1] += m.dir[1] * step; m.pos[2] += m.dir[2] * step;
       // The batch was built ONCE at the fire position; flight rides
       // the batch's origin uniform (zero GL churn - the same thrash
@@ -1621,14 +1679,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       fatigueMultiplier: fatigueLossMultiplier(),
       rolls: Math.random,
       say: (msg) => hudText.add(msg),
-      onLevelUp: () => {
-        // U3: the level-up screen replaces the headless auto-apply
-        hudText.add('You have gained a level!');
-        if (!activeOverlay) activeOverlay = new LevelUpScreen(playerEntity);
-      },
     });
     classicMinutesRef.value = _tick.classicMinutes;
-    const raised = _tick.raised;
     for (let r = _prevMinute; r < Math.floor(classicMinutesRef.value); r++) {
       for (const f of foes) {
         if (f.dead) continue;
@@ -1636,7 +1688,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         tickActiveEffects(f.entity, foeSinks(f));
       }
     }
-    for (const id of raised) hudText.add(`Your ${SKILL_NAMES[id]} skill has improved.`);   // classic phrasing; TEXT.RSC pends
     collisionTriggers(dt, playerFeet, moveHeld);
     updateMissiles(dt, playerFeet);
     // S19: WeaponManager's paralysis gate - weapons hide and the
@@ -1670,6 +1721,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // C10: the rig owns the gesture consume, the swing-sound edge,
       // and the machine step (paralysis holds all three, S19).
       for (const ev of weaponRig.frame(dt, { paralyzed: _pParalyzed })) {
+        // AUDIT 23 (combat-2) - WeaponManager.cs:376-380: the bow's
+        // swing sound is ArrowShoot at frame 4 of the release.
+        if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
         if (ev !== 'hit' || !playerFeet) continue;
         // AUDIT 17k / Mac's report: null weapon = fists, never a bow
         // (the ?. is load-bearing - this raw deref threw on EVERY
@@ -1700,6 +1754,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // CriticalStrike was tallied nowhere in the port at all.
         drainFatigue(SWING_WEAPON_FATIGUE_LOSS);
         if (hitEnemy) tallySwingSkills(playerEntity, playerWeapon.weapon);
+        // AUDIT 23 (C9) - WeaponManager.cs:423-424: the swing sound
+        // fires at the HIT FRAME of a swing that hit no enemy (never
+        // at strike entry, where the rig used to play it).
+        else audio.playOneShot(swingSoundFor(playerWeapon.weapon), 1.1);
       }
     }
     for (const f of foes) {
@@ -1730,6 +1788,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           }
         }
       }
+      // AUDIT 23 (characters-11) - EnemyAttack.cs:70-77: the divisor
+      // mints every update from PermanentSpeed / max(8, LiveSpeed).
+      f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
       f.events = _fParalyzed ? [] : f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine (S19: paralysis returns early)
       // C11 audit 08-17: the attack START edge (machine Idle -> swing
       // this frame) - MeleeAnimation fires ChangeEnemyState + the
@@ -2192,7 +2253,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // refused outright, so the spellbook cannot arm a spell a
           // silenced caster could never fire.
           if (silenceBlocksCast(playerEntity)) { readiedSpell = null; hudText.add(SILENCED_TEXT); return; }
-          readiedSpell = sp; clickCast.arm(); hudText.add(`${sp.name} readied.`);   // classic: the next attack-click CASTS
+          // AUDIT 23 (magic-14) - EntityEffectManager.cs:337-343:
+          // Daggerfall enforces the cost WHEN SETTING the ready spell
+          // (the cast-time gate stays as the backstop for drain).
+          if ((playerEntity.magicka ?? 0) < calculateCastCost(sp, playerEntity).sp) {
+            readiedSpell = null;
+            hudText.add("You don't have the spell points.");   // youDontHaveTheSpellPoints
+            return;
+          }
+          readiedSpell = sp;
+          // :350-351 - "caster only spells are cast instantly": no
+          // click latch, the self-cast fires on ready.
+          if (sp.rangeType === 0) { playerCastInput(null, null); return; }
+          clickCast.arm(); hudText.add(`${sp.name} readied.`);   // classic: the next attack-click CASTS
         },
         castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
       });

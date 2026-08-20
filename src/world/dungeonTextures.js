@@ -19,7 +19,7 @@ import { srand, randomRangeInclusive } from '../formats/dfRandom.js';
 export const TABLE_LENGTH = 6;
 
 // Default dungeon texture table at linear offset 0x28617C.
-export const DEFAULT_TEXTURE_TABLE = [119, 120, 122, 123, 124, 168];
+export const DEFAULT_TEXTURE_TABLE = [119, 120, 122, 123, 124, 168];   // null-table fallback mirror - the port always computes a table (AUDIT 23 wa-7)
 
 // TravelTimeCalculator.climateIndices, indexed by (climate - Ocean).
 const CLIMATE_INDICES = [0, 0, 0, 1, 2, 3, 4, 5, 5, 5];

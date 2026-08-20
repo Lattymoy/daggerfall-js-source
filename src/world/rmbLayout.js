@@ -23,7 +23,7 @@ import { trs, multiply } from './mat4.js';
 
 const PROPS_OFFSET_Y = -4;
 export const GROUND_OFFSET = -1;
-export const GROUND_TILE_SIZE = 256;
+export const GROUND_TILE_SIZE = 256;   // RMBTileSide mirror - value-pinned, no mesh consumer yet (AUDIT 23 wa-5)
 export const GROUND_TILE_DIM = 16;
 
 /**

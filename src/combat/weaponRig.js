@@ -21,7 +21,7 @@ import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
 import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 17e F17
 import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES } from './fpsWeapon.js';
 import { worldAabb, rayAabb } from '../player/activate.js';
-import { SOUND, swingSoundFor } from '../systems/soundClips.js';
+import { SOUND } from '../systems/soundClips.js';
 
 /**
  * @param deps {
@@ -52,7 +52,6 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   const cv = typeof canvas === 'function' ? canvas : () => canvas;
   const cache = new Map();   // `${type}:${material}` -> art (null while loading)
   let _dx = 0, _dy = 0, _held = false;
-  let _prevState = null;     // the swing-sound edge (A1)
 
   function artFor(item) {
     if (!palette) return null;
@@ -111,11 +110,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       const c = cv();
       if (!paralyzed && c) playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight));
       _dx = 0; _dy = 0;
-      const s = playerWeapon.machine.state;
-      if (s !== _prevState) {
-        if (s && s.startsWith('Strike')) audio.playOneShot(swingSoundFor(playerWeapon.weapon), 1.1);
-        _prevState = s;
-      }
+      // AUDIT 23 (C9): the strike-ENTRY whoosh is gone - DFU plays the
+      // swing sound at the HIT FRAME of a swing that hit no enemy
+      // (WeaponManager.cs:1059 else-arm) and at bow frame 4 (:376-380),
+      // both of which ride the machine's events at the hosts now.
       return paralyzed ? [] : playerWeapon.update(dt);
     },
     /** The overlay draw, LAST in the host's frame (composites over the

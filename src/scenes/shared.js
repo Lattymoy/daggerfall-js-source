@@ -13,6 +13,7 @@ import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
 import { hasActiveEffect } from '../systems/effects.js';
 import { skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
+import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, worldMinutes, setWorldMinutes, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { liveStat } from '../systems/statMods.js';
@@ -409,6 +410,17 @@ export function outdoorFogColor(fogSettings, skyClearColor) {
  * This is the per-host carrier: it owns the minute accumulator and the
  * sink set, so a host adds the whole tick with one call.
  */
+/** AUDIT 23 (entity-1) - DaggerfallRestWindow.cs:729-732: skills raise
+ *  when the rest-finished popup CLOSES, and only there (PlayerEntity.
+ *  Update runs no advancement; DaggerfallTravelPopUp.cs:380 is the
+ *  other site, unported). Hosts hand this to their RestWindow deps as
+ *  onRestFinished. */
+export function raiseAtRestEnd(entity, { say = () => {}, onLevelUp = null, rolls = Math.random } = {}) {
+  const raised = raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp) ?? [];
+  for (const id of raised) say(`Your ${SKILL_NAMES[id]} skill has improved.`);
+  return raised;
+}
+
 export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } = {}) {
   // AUDIT 21 F2: a VIEW on the one world clock, not an owner. This used to
   // close over its own accumulator, so the three hosts that build a ticker -
@@ -433,15 +445,14 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } 
       const r = tickPlayerMinutes({
         entity, classicMinutes: worldMinutes(), dt, sinks, activity,
         fatigueMultiplier: fatigueLossMultiplierFor(entity),
-        say, onLevelUp,
+        say,
       });
       setWorldMinutes(r.classicMinutes);
-      for (const id of r.raised) say(`Your ${SKILL_NAMES[id]} skill has improved.`);
       return r;
     },
     /** U24: DaggerfallDateTime.RaiseTime. Guild training eats three
      *  hours of the day, and a jump that only moved the counter would
-     *  skip every magic round, disease day and skill-advancement pass
+     *  skip every magic round and disease day
      *  inside it. Running the SAME tick with the equivalent dt is what
      *  makes the jump real: DFU's clock and its per-minute laws are
      *  the same loop, so a rest, a training session and a fast travel
