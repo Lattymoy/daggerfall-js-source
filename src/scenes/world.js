@@ -1159,6 +1159,24 @@ export async function bootWorld(canvas, renderer, params, status) {
       get pos() { return [...player.pos]; },
       warp: (x, y, z) => { player.spawn(x, y, z); playerSpawned = true; },
     };
+    // M3 probe surface: the live climb state (the wall probe + the
+    // check machine ride the real collider and the real skill rolls).
+    window.__climb = () => JSON.stringify({
+      climbing: !!player.climb?.isClimbing, slipping: !!player.climb?.isSlipping,
+      y: +player.pos[1].toFixed(2), grounded: !!player.grounded,
+    });
+    // M3 probe surface: building-door spots - a door IS a wall with a
+    // known outward normal, so the climb probe can stand square to
+    // real geometry (centre/normal ride the door matrix per
+    // staticDoors' own contract).
+    window.__doorSpots = () => JSON.stringify(buildingDoors.slice(0, 80).map((e) => {
+      const d = shiftedDoor(e);
+      const m = d.matrix, c = d.centre, n = d.normal;
+      const wc = [m[0] * c.x + m[4] * c.y + m[8] * c.z + m[12], m[1] * c.x + m[5] * c.y + m[9] * c.z + m[13], m[2] * c.x + m[6] * c.y + m[10] * c.z + m[14]];
+      const wn = [m[0] * n.x + m[4] * n.y + m[8] * n.z, m[1] * n.x + m[5] * n.y + m[9] * n.z, m[2] * n.x + m[6] * n.y + m[10] * n.z];
+      const l = Math.hypot(wn[0], wn[2]) || 1;
+      return { pos: wc.map((v) => +v.toFixed(2)), n: [+(wn[0] / l).toFixed(3), 0, +(wn[2] / l).toFixed(3)] };
+    }));
     window.__frame = 0;
   }
 
