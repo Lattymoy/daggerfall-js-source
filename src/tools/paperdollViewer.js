@@ -215,6 +215,33 @@ function applyVillager(v) {
   geo.getAttribute('color').needsUpdate = true;
   villagerOn = v;
   applyVillagerDrape(v);
+  // A VILLAGER WEARS WHAT THEIR DESIGN SAYS AND NOTHING ELSE.
+  //
+  // The pauldrons and the helm are separate toggleable meshes on the
+  // dress-up rig, and selecting a villager was leaving them wherever
+  // they happened to be — so a fishwife turned up in a helm because
+  // somebody had switched one on ten minutes earlier.
+  //
+  // Every garment a villager owns arrives in their DELTA, including the
+  // City watch's armour, which is the one design in twenty-five that
+  // declares any. So the loose pieces come off for all of them. The orc
+  // path already did exactly this for the same reason — 'an orc wears
+  // neither'.
+  //
+  // Only while a villager is selected: with none, this is the tuning rig
+  // again and the toggles are the whole point of it.
+  if (v) setLoosePieces(false);
+}
+
+/** Show or hide the toggleable armour, and keep the buttons honest. */
+function setLoosePieces(on) {
+  for (const name of ['pauldrons', 'helm']) {
+    const m = pieceMesh[name];
+    if (!m) continue;
+    m.visible = on;
+    const btn = document.getElementById(name);
+    if (btn) btn.classList.toggle('on', on);
+  }
 }
 function setBodyColors(Carr) {
   if (!Carr) Carr = D.C;
@@ -513,7 +540,7 @@ function applyOrc(o) {
   const hs = document.getElementById('hairstyle');
   applyVillager(null);
   for (const rr of RACES) { const h = raceHair[rr]; if (h) for (const st of h.styles) h.meshes[st].visible = false; }
-  if (pieceMesh.helm) pieceMesh.helm.visible = false;
+  setLoosePieces(false); // an orc wears neither. See applyVillager.
   // Body: repaint to the orc hide first (setBodyRamp touches EVERY body
   // face), THEN lay the delta over it - same ordering hazard the
   // villager path documents above.
