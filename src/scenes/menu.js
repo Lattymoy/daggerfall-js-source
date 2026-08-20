@@ -6,9 +6,17 @@
 // button rects (ui/startWindow.js), and it hands off to the SAME
 // classic start that used to run on boot.
 //
-// It is deliberately a thin host. It owns a renderer, a canvas and one
-// window - no motor, no world, no audio - so the menu costs nothing to
-// show and the game data only loads once a choice is made.
+// It is deliberately a thin host. It owns a renderer, a canvas, one
+// window and the title music - no motor, no world - so the menu costs
+// little to show and the game data only loads once a choice is made.
+//
+// TITLE MUSIC: DFU's start scene carries a DaggerfallSongPlayer set to
+// SongFiles.song_5strong, so the whole start flow plays under it. The
+// service's pre-gesture arm holds the request until the title screen's
+// dismiss click/key - the first gesture - so autoplay policy never
+// bites. The in-game director replaces it the moment a scene host
+// boots and feeds its own context. '03.HMI' (the classic theme
+// melody) stands in if the archive lacks a 5STRONG record.
 //
 // LOAD GAME reuses the dungeon host's own quickLoad (the F12 path)
 // rather than a second loader: the menu boots the classic start with
@@ -19,7 +27,17 @@
 import { StartWindow, loadStartArt } from '../ui/startWindow.js';
 import { TitleScreen, loadTitleArt } from '../ui/titleScreen.js';
 import { fetchBytes } from './shared.js';
+import { music } from '../systems/music.js';
 import { readQuicksave } from '../systems/save.js';
+
+const TITLE_SONGS = ['5STRONG.HMI', '03.HMI'];   // DFU start scene song, then the stand-in
+
+async function startTitleMusic() {
+  await music.ensure(fetchBytes);
+  const name = TITLE_SONGS.find((n) => (music.archive?.getSongIndex(n) ?? -1) >= 0);
+  if (name) music.playSong(name);
+  else if (music.enabled) console.warn('[menu] no title song in MIDI.BSA (tried ' + TITLE_SONGS.join(', ') + ')');
+}
 
 /**
  * Show the menu, resolve when the player picks. Returns the action.
@@ -29,6 +47,7 @@ import { readQuicksave } from '../systems/save.js';
  * chargen follow).
  */
 export async function runMenu(canvas, renderer, status) {
+  startTitleMusic();   // fire-and-forget: the menu never waits on MIDI.BSA
   await runTitle(canvas, renderer, status);
   status('main menu');
   let art = null;
