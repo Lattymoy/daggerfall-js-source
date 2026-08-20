@@ -155,29 +155,67 @@ export function buildArachnid(ramp = CHITIN_RAMP, s = {}) {
     }
   }
 
-  // ── THE STING ───────────────────────────────────────────────────
-  // A chain of shrinking segments on an arc, up and over the back. The
-  // beast tail's two boxes cannot do this: a scorpion's tail is the one
-  // part of it that is not on the ground.
-  if (sting > 0) {
-    const segs = 5;
-    let px = 0,
-      py = y + abdomen * 0.4,
-      pz = -abdomen * 1.9;
-    for (let i = 1; i <= segs; i++) {
-      const t = i / segs;
-      const a = t * Math.PI * 0.72;
-      const nx2 = 0;
-      const ny2 = py + Math.sin(a) * sting * 0.34;
-      const nz2 = pz + (1 - Math.cos(a)) * sting * 0.2 + sting * 0.06;
-      limb(quad, px, py, pz, nx2, ny2, nz2, legR * (2.1 - t * 1.2), 0.82);
-      px = nx2;
-      py = ny2;
-      pz = nz2;
-    }
-    // The barb, forward over the back.
-    box(quad, -legR * 1.4, py - legR * 1.4, pz, legR * 1.4, py + legR * 1.4, pz + sting * 0.16, 1, 0.8, 0.5);
-  }
+  // The sting is NOT built here any more. A scorpion's tail is the only
+  // part of it that moves on its own — the body rocks back and the tail
+  // comes over the top — and a piece welded into the body can only move
+  // when the body does. See buildSting below.
 
+  return faces;
+}
+
+/**
+ * THE STING, ON ITS OWN.
+ *
+ * It was part of buildArachnid, which meant the only way to animate it
+ * was to move the whole scorpion — so a sting looked like the animal
+ * rocking backwards, and the one part of it anybody actually watches did
+ * nothing.
+ *
+ * A chain of shrinking segments on an arc, up and over the back, ending
+ * in the barb. `strike` runs 0 (coiled over the back) to 1 (thrown
+ * forward past the head), which is the whole motion of a scorpion and
+ * the reason this had to come out of the body.
+ *
+ * @param {number[][]} ramp
+ * @param {object} s
+ *   sting   how far the tail reaches
+ *   abdomen where on the body it is rooted
+ *   ride    body height
+ *   legR    segment thickness
+ *   strike  0..1, coiled to thrown
+ */
+export function buildSting(ramp = CHITIN_RAMP, s = {}) {
+  const { sting = 0.5, abdomen = 0.1, ride = 0.11, legR = 0.015, strike = 0 } = s;
+  const faces = [];
+  const quad = quadder(faces, ramp);
+  const y = ride * HSCALE;
+
+  const segs = 5;
+  let px = 0,
+    py = y + abdomen * 0.4,
+    pz = -abdomen * 1.9;
+  for (let i = 1; i <= segs; i++) {
+    const t = i / segs;
+    // COILED: the arc curls up and over the back. THROWN: it straightens
+    // and drives forward, which is what puts the barb past the head.
+    const coil = t * Math.PI * 0.72;
+    const thrown = t * Math.PI * 0.16;
+    const a = coil + (thrown - coil) * strike;
+    const reach = 1 + strike * 0.5;
+    const nx = 0;
+    const ny = py + Math.sin(a) * sting * 0.34 * (1 - strike * 0.55);
+    const nz = pz + ((1 - Math.cos(a)) * sting * 0.2 + sting * 0.06) * reach + strike * sting * 0.42 * t;
+    const r = legR * (2.1 - t * 1.2);
+    quad([px - r, py, pz + r], [px + r, py, pz + r], [nx + r, ny, nz + r], [nx - r, ny, nz + r], 0.9);
+    quad([px + r, py, pz - r], [px - r, py, pz - r], [nx - r, ny, nz - r], [nx + r, ny, nz - r], 0.46);
+    quad([px + r, py, pz + r], [px + r, py, pz - r], [nx + r, ny, nz - r], [nx + r, ny, nz + r], 0.7);
+    quad([px - r, py, pz - r], [px - r, py, pz + r], [nx - r, ny, nz + r], [nx - r, ny, nz - r], 0.7);
+    px = nx;
+    py = ny;
+    pz = nz;
+  }
+  // The barb.
+  const br = legR * 1.4;
+  quad([px - br, py - br, pz], [px + br, py - br, pz], [px + br, py + br, pz + sting * 0.16], [px - br, py + br, pz + sting * 0.16], 1);
   return faces;
 }

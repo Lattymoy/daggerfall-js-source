@@ -313,14 +313,25 @@ const buildPieces = (list) =>
   (list || []).map((d) => {
     const out = {};
     for (const k of PIECE_KINDS) out[k] = d[k] ? buildPiece(d[k]) : null;
+    // A SET OF POSES, NOT A MESH. The sting ships as five frames from
+    // coiled to thrown and the attack clock picks one — a scorpion's
+    // tail is the only part of it anybody watches, and welded into the
+    // body it could only move when the body did.
+    out.stingPoses = d.sting ? d.sting.map((p) => buildPiece(p)) : null;
     return out;
   });
 const hidePieces = (table) => {
-  for (const m of table) for (const k of PIECE_KINDS) if (m[k]) m[k].visible = false;
+  for (const m of table) {
+    for (const k of PIECE_KINDS) if (m[k]) m[k].visible = false;
+    if (m.stingPoses) for (const p of m.stingPoses) p.visible = false;
+  }
 };
 const showPieces = (table, i) => {
   const m = table[i];
-  if (m) for (const k of PIECE_KINDS) if (m[k]) m[k].visible = true;
+  if (!m) return;
+  for (const k of PIECE_KINDS) if (m[k]) m[k].visible = true;
+  // Only ONE sting pose is ever visible: the coiled one, until it strikes.
+  if (m.stingPoses) m.stingPoses.forEach((p, k) => (p.visible = k === 0));
 };
 // A TABLE PER LINE, LOOKED UP BY LINE. This was two hardcoded tables —
 // orcs and undead — and adding `beast` to PIECE_KINDS was not enough:
@@ -1011,6 +1022,17 @@ function animate(dt) {
       const p = beastAtk
         ? beastAttackPose(beastAtk.kind, beastAtk.t / beastAtk.dur, beastAtk.hit)
         : { z: 0, y: 0, pitch: 0, roll: 0 };
+      // THE TAIL STRIKES WHILE THE BODY ROCKS BACK. The pose runs coiled
+      // to thrown across the clip and peaks on the hit frame, which is
+      // the whole reason the sting came out of the body: a scorpion that
+      // stings by leaning backwards is a scorpion nobody believes.
+      if (m.stingPoses) {
+        const u = beastAtk ? Math.min(1, beastAtk.t / beastAtk.dur) : 0;
+        const hitAt = beastAtk ? beastAtk.hit : 0.45;
+        const thrown = u <= hitAt ? (hitAt ? u / hitAt : 0) : 1 - (u - hitAt) / Math.max(0.05, 1 - hitAt);
+        const k = Math.max(0, Math.min(m.stingPoses.length - 1, Math.round(thrown * (m.stingPoses.length - 1))));
+        m.stingPoses.forEach((mesh, j) => (mesh.visible = j === k));
+      }
       for (const k of ['beast', 'arachnid', 'fish', 'wings', 'beastTail']) {
         const mesh = m[k];
         if (!mesh) continue;
@@ -1018,6 +1040,14 @@ function animate(dt) {
         mesh.position.y = -D.cy + p.y;
         mesh.rotation.x = p.pitch;
         mesh.rotation.z = p.roll;
+      }
+      if (m.stingPoses) {
+        for (const mesh of m.stingPoses) {
+          mesh.position.z = p.z;
+          mesh.position.y = -D.cy + p.y;
+          mesh.rotation.x = p.pitch;
+          mesh.rotation.z = p.roll;
+        }
       }
     }
   }

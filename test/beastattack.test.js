@@ -11,6 +11,7 @@ import assert from 'node:assert';
 import { BEAST_ATTACKS, beastAttackPose, hitPointOf, hitCountOf } from '../src/characters/beastAttack.js';
 import { BEAST_DESIGNS } from '../src/characters/beasts.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
+import { buildSting, buildArachnid } from '../src/characters/pieces/arachnid.js';
 
 /** Everything with no arms to swing. */
 const ARMLESS = BEAST_DESIGNS.filter((d) => d.beast || d.arachnid || (d.fish && (d.collapse || []).length === 0));
@@ -99,4 +100,47 @@ test('the kinds are actually different motions', () => {
   // And a sting must go BACKWARD as it strikes: the tail does the
   // reaching, so the body's job is to get out of its way.
   assert.ok(beastAttackPose('sting', 0.45, 0.45).z < 0, 'the scorpion lunges instead of rearing');
+});
+
+// ── THE STING MOVES ON ITS OWN ───────────────────────────────────
+// It was welded into buildArachnid, which meant the only way to animate
+// it was to move the whole scorpion — so a sting looked like the animal
+// rocking backwards, and the one part of it anybody actually watches did
+// nothing. A scorpion that stings by leaning back is a scorpion nobody
+// believes.
+
+test('sting: coiled and thrown are genuinely different shapes', () => {
+  const opts = { sting: 0.5, abdomen: 0.1, ride: 0.11, legR: 0.015 };
+  const reach = (strike) => {
+    const f = buildSting(undefined, { ...opts, strike });
+    let hi = -9;
+    let fwd = -9;
+    for (const q of f) {
+      for (let i = 1; i < 12; i += 3) hi = Math.max(hi, q.p[i]);
+      for (let i = 2; i < 12; i += 3) fwd = Math.max(fwd, q.p[i]);
+    }
+    return { hi, fwd };
+  };
+  const coiled = reach(0);
+  const thrown = reach(1);
+  // Coiled it stands UP over the back; thrown it comes DOWN and forward.
+  assert.ok(coiled.hi > thrown.hi + 0.2, 'the tail does not drop as it strikes');
+  assert.ok(thrown.fwd > coiled.fwd + 0.2, 'the tail does not reach forward as it strikes');
+});
+
+test('sting: it is a separate piece, not part of the body', () => {
+  // If it goes back into buildArachnid the animation dies silently: the
+  // body would still move, so the enemy would still look like it did
+  // something, and nobody would notice the tail had stopped.
+  const withTail = buildArachnid(undefined, { sting: 0.5 });
+  const withoutTail = buildArachnid(undefined, { sting: 0 });
+  assert.equal(withTail.length, withoutTail.length, 'buildArachnid is building the sting again');
+});
+
+test('sting: only the scorpion has one', () => {
+  for (const d of BEAST_DESIGNS) {
+    const wants = d.arachnid && d.arachnid.sting;
+    if (d.name === 'Giant Scorpion') assert.ok(wants, 'the scorpion lost its sting');
+    else assert.ok(!wants, `${d.name} has a sting`);
+  }
 });

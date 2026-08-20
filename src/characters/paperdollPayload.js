@@ -54,7 +54,7 @@ import { BEAST_DESIGNS, beastOpts, ALL_GROUPS } from './beasts.js';
 import { ENEMY_BASICS } from './enemyBasics.js';
 import { buildBeastBody, buildBeastTail } from './pieces/beastBody.js';
 import { buildBeastHead, WOLF_RAMP } from './pieces/beastHead.js';
-import { buildArachnid } from './pieces/arachnid.js';
+import { buildArachnid, buildSting } from './pieces/arachnid.js';
 import { buildWings } from './pieces/wings.js';
 import { buildFishBody } from './pieces/fishBody.js';
 import { DAEDRA_DESIGNS, daedraOpts } from './daedra.js';
@@ -443,6 +443,18 @@ export function buildPaperdollPayload(pal, img, cif) {
       // NO SPINE: an arachnid gets its own builder rather than more
       // parameters on the quadruped's. See pieces/arachnid.js.
       arachnid: d.arachnid ? packPiece(buildArachnid(pelt, d.arachnid)) : null,
+      // THE STING IS ITS OWN PIECE, and it ships as a set of poses
+      // rather than one mesh: a scorpion's tail is the only part of it
+      // anybody watches, and a piece welded into the body can only move
+      // when the body does. Five frames from coiled to thrown, picked by
+      // the attack clock — cheaper than a skeleton for one appendage,
+      // and it is how the sprites this port replaces did it.
+      sting:
+        d.arachnid && d.arachnid.sting
+          ? [0, 0.25, 0.5, 0.75, 1].map((k) =>
+              packPiece(buildSting(pelt, { ...d.arachnid, strike: k })),
+            )
+          : null,
       // FLYING: the one behaviour that is neither foot nor fin. A wing
       // is a membrane on fingers, so it is panels rather than boxes —
       // see pieces/wings.js.
