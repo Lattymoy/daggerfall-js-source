@@ -179,6 +179,91 @@ export function buildPaperdollPayload(pal, img, cif) {
   // passed to anything - the cloth path had no consumer until the
   // villager designs below became its first.)
   const faces = buildNeutralBody(ramps, { face });
+
+  // ═════════════════════════════════════════════════════════════════
+  // HOW WIDE A GARMENT HAS TO BE, MEASURED RATHER THAN GUESSED
+  //
+  // The fit was `torso * 0.75 + shoulder * 0.25`, times a margin. That
+  // is a guess from two build keys, and it ignores the thing that
+  // actually decides the answer: ARMS HANG OUTSIDE THE TORSO. Measured
+  // across every drape-wearing design, 669 rows were clipping and every
+  // one of them was an arm — a lich's stuck 111% beyond its own robe.
+  //
+  // A garment is an ellipse of rx by rz at each of its rows. A body
+  // point at (x, z) is inside it when (x/rx)^2 + (z/rz)^2 < 1. So the
+  // scale a design needs is simply the largest that ratio ever reaches
+  // over the rows the garment actually covers — computed here, where the
+  // built body and the garment grid are both in hand, and shipped with
+  // the design so the viewer does no arithmetic at all.
+  //
+  // It is done once per design at build time rather than per frame.
+  const drapeRowsOf = (name) => {
+    const g = drapedGrid(name);
+    if (!g) return null;
+    const rows = [];
+    for (let r = 0; r < g.rows; r++) {
+      let y = 0, rx = 0, rz = 0;
+      for (let c = 0; c < g.cols; c++) {
+        const i = (r * g.cols + c) * 3;
+        y = g.pos[i + 1];
+        rx = Math.max(rx, Math.abs(g.pos[i]));
+        rz = Math.max(rz, Math.abs(g.pos[i + 2]));
+      }
+      if (rx > 1e-6 && rz > 1e-6) rows.push({ y, rx, rz });
+    }
+    return rows;
+  };
+
+  /**
+   * The scale each ROW needs, not one scale for the garment.
+   *
+   * A single number is set by the widest thing the cloth must clear —
+   * the arms, always — and then applied to the hem and the collar too,
+   * which turns a robe into a cone. Measured per row, the garment widens
+   * where the arms are and is left alone everywhere else.
+   *
+   * Returned as an array the length of the grid's rows, so the viewer
+   * moves vertices rather than scaling a mesh. Y is still never touched:
+   * only the x and z of each ring move.
+   */
+  const measureDrapeFit = (bodyFaces, drapeName) => {
+    const rows = drapeRowsOf(drapeName);
+    if (!rows || !rows.length) return null;
+    const BAND = 0.05; // how far a row reaches for body it must clear
+    const MARGIN = 1.05; // cloth hangs off a body, it does not paint it
+    const per = rows.map((r) => {
+      let worst = 0;
+      for (const f of bodyFaces) {
+        for (let i = 0; i < 4; i++) {
+          if (Math.abs(f.p[i * 3 + 1] - r.y) > BAND) continue;
+          const nx = Math.abs(f.p[i * 3]) / r.rx;
+          const nz = Math.abs(f.p[i * 3 + 2]) / r.rz;
+          const need = Math.hypot(nx, nz);
+          if (need > worst) worst = need;
+        }
+      }
+      return Math.max(1, worst * MARGIN);
+    });
+    // SMOOTH IT. A row that jumps from 1.0 to 1.4 and back puts a step in
+    // the cloth — real fabric spans a bulge rather than wrapping it. Two
+    // passes of a three-tap max-then-average, so a row is never narrower
+    // than the body it is next to.
+    for (let pass = 0; pass < 2; pass++) {
+      const src = per.slice();
+      for (let i = 0; i < per.length; i++) {
+        const a = src[Math.max(0, i - 1)];
+        const b = src[i];
+        const c = src[Math.min(src.length - 1, i + 1)];
+        per[i] = Math.max(b, (a + b + c) / 3);
+      }
+    }
+    return per;
+  };
+
+  /** Attach the measured fit to a drape, or pass a missing one through. */
+  const withFit = (drape, bodyFaces) =>
+    drape ? { ...drape, fit: measureDrapeFit(bodyFaces, drape.name) } : null;
+
   let minY = 1e9, maxY = -1e9;
   for (const f of faces) for (let i=0;i<4;i++){ const y=f.p[i*3+1]; if(y<minY)minY=y; if(y>maxY)maxY=y; }
   const GI = { body:0, head:1, armL:2, armR:3, legL:4, legR:5 };
@@ -202,7 +287,9 @@ export function buildPaperdollPayload(pal, img, cif) {
     const vf = buildNeutralBody(ramps, { face, ...designOpts(d, pal) });
     return {
       archive: d.archive, race: d.race, gender: d.gender, name: d.name, build: d.build,
-      hair: d.hair, tone: RACE_TONE[d.race], drape: designDrape(d, pal), ...villagerDelta(faces, vf),
+      hair: d.hair, tone: RACE_TONE[d.race],
+      drape: withFit(designDrape(d, pal), vf),
+      ...villagerDelta(faces, vf),
     };
   });
 
@@ -280,7 +367,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       // systems that had never shared a figure. It rides the villagers'
       // own drape field, so the viewer dresses it with the code that
       // already dresses a gown.
-      drape,
+      drape: withFit(drape, uf),
       ...villagerDelta(faces, uf),
     };
   });
@@ -297,7 +384,7 @@ export function buildPaperdollPayload(pal, img, cif) {
     const cf = buildNeutralBody(cramps, { face, ...opts });
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
-      build: d.build, zones: d.zones, hide, drape,
+      build: d.build, zones: d.zones, hide, drape: withFit(drape, cf),
       ...villagerDelta(faces, cf),
     };
   });
@@ -360,7 +447,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       // canopy is a drape: the last five designs in the game add no
       // geometry at all.
       horns: d.horns ? packPiece(buildHorns(pelt, d.horns)) : null,
-      drape,
+      drape: withFit(drape, bf),
       // A werebeast keeps a tail, which the human rig has no concept of.
       beastTail: d.tail ? packPiece(buildBeastTail(pelt, d.tail)) : null,
       ...villagerDelta(faces, bf),
@@ -382,7 +469,7 @@ export function buildPaperdollPayload(pal, img, cif) {
     if (d.collapse) df = collapseGroups(df, d.collapse, [0, 1.5, 0]);
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
-      build: d.build, zones: d.zones, hide, drape, spectral: d.spectral || null,
+      build: d.build, zones: d.zones, hide, drape: withFit(drape, df), spectral: d.spectral || null,
       beastHead: d.beastHead ? packPiece(buildBeastHead(hide, d.beastHead)) : null,
       beastTail: d.tail ? packPiece(buildBeastTail(hide, d.tail)) : null,
       horns: d.horns ? packPiece(buildHorns(hide, d.horns)) : null,

@@ -420,48 +420,47 @@ function applyVillagerHair(v) {
 // ═══════════════════════════════════════════════════════════════════
 // A DRAPE HAS TO FIT WHO IS WEARING IT
 //
-// Every garment is carved ONCE, at one size, and shared by every design
-// that asks for it — one grid per name, which is why the payload stays
-// small. But the BODY under it is resized by its build spec, and nothing
-// was telling the cloth. A giant's robe was a man's robe; the ancient
-// vampire is broader across the shoulder than the vampire and wore the
-// same cloak; and where a design has ARMOUR the plate displaces further
-// out again, so the garment sat inside the breastplate and the wearer
-// came through it.
+// Every garment is carved ONCE at one size and shared by every design
+// that asks for it, which is what keeps the payload small — so the fit
+// is a scale applied to the mesh.
+//
+// THE SCALE IS MEASURED, NOT GUESSED, and it is measured where the body
+// and the garment are both in hand: at build time, in
+// characters/paperdollPayload.js, and shipped on the drape.
+//
+// It used to be computed here from `torso * 0.75 + shoulder * 0.25`,
+// which is a guess from two build keys and ignores the thing that
+// actually decides the answer — ARMS HANG OUTSIDE THE TORSO. Measured
+// across every drape-wearing design, 669 rows were clipping and every
+// single one was an arm: a lich's stuck 111% beyond its own robe, and
+// the guess had cut that robe at 0.657 where the body needed 1.404.
 //
 // GIRTH ONLY. The rig's own law is that Y is never touched — every
-// exported constant on it (WRIST_JUNCTION_Y, NECK_PIVOT_Y) and every
-// consumer that derives from them is a HEIGHT, so scaling a garment
-// vertically would drop its hem through the floor on a giant and hitch
-// it to the knee on a lich. X and Z only, exactly as the body does it.
-//
-// AND IT CLEARS WHAT IS UNDER IT. Cloth does not lie on skin; it hangs
-// off whatever it is over. A plain margin is not enough where a design
-// wears plate, so a zone thickness on the torso pushes the garment out
-// by its own depth as well.
-const DRAPE_CLEARANCE = 1.06; // cloth hangs off a body, it does not paint it
-
-function drapeFitFor(design) {
-  if (!design || !design.build) return 1;
-  const b = design.build;
-  // The torso is what a garment hangs ON; the shoulder is what holds it
-  // up. Weighted to the torso, because a robe's volume is the body.
-  const girth = (b.torso ?? 1) * 0.75 + (b.shoulder ?? 1) * 0.25;
-  // Whatever the design wears UNDER it, at its thickest on the trunk.
-  let under = 0;
-  for (const z of design.zones || []) {
-    if (!z.groups || !z.groups.includes('body')) continue;
-    under = Math.max(under, z.th || 0);
-  }
-  // A zone displaces by th in body units; the drape has to start outside
-  // that or the plate comes through the cloth.
-  return girth * DRAPE_CLEARANCE + under * 2.2;
-}
-
+// exported constant on it is a HEIGHT — so scaling a garment vertically
+// would drop its hem through the floor on a giant and hitch it to the
+// knee on a lich.
 function fitDrape(design) {
-  const k = drapeFitFor(design);
+  // THE MESH SCALE, and it has to be uniform — every garment here is
+  // VERLET CLOTH, and the simulation owns its vertices every frame. A
+  // per-row widening applied to the positions would be relaxed straight
+  // back out by the constraints, which hold the rest shape the cloth was
+  // built with. Genuinely widening a simulated garment means rebuilding
+  // it, and rebuilding sixteen cloths on every selection is not worth
+  // what it buys.
+  //
+  // So: the widest row the body needs, applied to the whole garment.
+  // That is why a robe on a design with arms comes out fuller than a
+  // tailored one would — the arms set the number and the hem wears it
+  // too. The per-row measurements are shipped on the drape and unused
+  // here, waiting for the day the cloth is rebuilt per design.
+  const fit = design && design.drape ? design.drape.fit : null;
+  const k = Array.isArray(fit) && fit.length ? Math.max(...fit) : 1;
+  // GIRTH ONLY. Every exported constant on this rig is a HEIGHT, so
+  // widening a garment vertically would drop its hem through the floor
+  // on a giant and hitch it to the knee on a lich.
   for (const nm in drapedMeshes) drapedMeshes[nm].scale.set(k, 1, k);
 }
+
 
 function applyVillagerDrape(v) {
   for (const nm in drapeBaseRamp) dyeDrape(nm, null);   // undye whatever the last villager dyed
