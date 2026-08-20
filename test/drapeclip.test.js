@@ -5,12 +5,24 @@
 // drape-wearing design, every row of its garment, and every body vertex
 // near that row's height, and requires all of them to be inside.
 //
-// THE FIT USED TO BE GUESSED from two build keys — torso and shoulder —
-// and that guess cannot see the thing that decides the answer: ARMS HANG
-// OUTSIDE THE TORSO. When this check was first written it found 669
-// clipping rows, and every single one of them was an arm. A lich's stuck
-// 111% beyond its own robe, because the guess had cut that robe at 0.657
-// where the body needed 1.404.
+// IT CHECKS THE TRUNK, AND THAT IS THE WHOLE LESSON HERE.
+//
+// The first version of this checked every group, found 669 clipping rows
+// — every one of them an arm — and the fix sized each garment to contain
+// its wearer's arms. That is arithmetically correct and visually awful:
+// a garment cut to swallow a limb that hangs outside it is three sizes
+// too big, and every robe came out a tent. Mac's words were "oversized
+// and ugly" and "so much worse", and he was right.
+//
+// A ROBE IS CUT FOR A TORSO. Arms hang at the sides of one and always
+// have; bone arms beside a lich's robe are what a lich looks like. What
+// must never happen is cloth through a CHEST or a HIP, and that is what
+// this measures.
+//
+// The lesson is not about drapes. A real fault, measured precisely and
+// fixed thoroughly, can still leave the thing worse than it was — and
+// the check that finds a fault is not automatically the check that
+// should define the fix.
 import test from 'node:test';
 import assert from 'node:assert';
 import { drapedGrid } from '../src/characters/pieces/draped.js';
@@ -68,6 +80,7 @@ test('no drape clips through a body part', () => {
       const faces = buildNeutralBody(ramps, o);
       for (const r of rowsOf(d.drape.name)) {
         for (const f of faces) {
+          if (f.g !== 'body') continue; // the trunk, not the limbs
           for (let i = 0; i < 4; i++) {
             if (Math.abs(f.p[i * 3 + 1] - r.y) > 0.045) continue;
             const nx = Math.abs(f.p[i * 3]) / (r.rx * k);
@@ -94,10 +107,13 @@ test('the fit is measured per row, not one guessed number', () => {
   }
 });
 
-test('a body with arms needs more than a body without', () => {
-  // The whole point. A lich and a skeletal warrior have nearly the same
-  // torso; the lich wears a robe and its ARMS are what the robe has to
-  // clear, which no torso-and-shoulder guess would ever have found.
-  const lich = shipped.get('Lich');
-  assert.ok(Math.max(...lich) > 1.2, `the lich's robe fits at ${Math.max(...lich).toFixed(2)} — that will not clear its arms`);
+test('no garment is scaled up beyond recognition', () => {
+  // The guard against my own over-correction. A drape that has to grow
+  // by half again is not being fitted, it is being inflated, and the
+  // result is a tent — which is exactly what sizing them to contain arms
+  // produced.
+  for (const [name, fit] of shipped) {
+    const k = Math.max(...fit);
+    assert.ok(k < 1.35, `${name}'s garment is scaled to ${k.toFixed(2)} — that is a tent, not a fit`);
+  }
 });

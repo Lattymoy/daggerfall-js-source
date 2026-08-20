@@ -440,24 +440,22 @@ function applyVillagerHair(v) {
 // would drop its hem through the floor on a giant and hitch it to the
 // knee on a lich.
 function fitDrape(design) {
-  // THE MESH SCALE, and it has to be uniform — every garment here is
-  // VERLET CLOTH, and the simulation owns its vertices every frame. A
-  // per-row widening applied to the positions would be relaxed straight
-  // back out by the constraints, which hold the rest shape the cloth was
-  // built with. Genuinely widening a simulated garment means rebuilding
-  // it, and rebuilding sixteen cloths on every selection is not worth
-  // what it buys.
+  // THE GARMENT IS SIZED FOR THE BODY, NOT FOR THE ARMS.
   //
-  // So: the widest row the body needs, applied to the whole garment.
-  // That is why a robe on a design with arms comes out fuller than a
-  // tailored one would — the arms set the number and the hem wears it
-  // too. The per-row measurements are shipped on the drape and unused
-  // here, waiting for the day the cloth is rebuilt per design.
+  // I had this scaling to the widest row the body needs, which is the
+  // arms, always — and it made every robe a tent. Mac's words: oversized
+  // and ugly, and much worse than what it replaced. He was right: I
+  // traded a subtle fault for an obvious one, which is the wrong
+  // direction even when the subtle fault is real.
+  //
+  // A robe is cut for a torso. Arms hang at the sides of it and always
+  // have; what must not happen is cloth passing through a CHEST or a
+  // HIP, and that is what the fit measures now — the trunk only, with
+  // the limbs left to hang where limbs hang.
   const fit = design && design.drape ? design.drape.fit : null;
-  const k = Array.isArray(fit) && fit.length ? Math.max(...fit) : 1;
+  const k = Array.isArray(fit) && fit.length ? Math.max(...fit) : typeof fit === 'number' ? fit : 1;
   // GIRTH ONLY. Every exported constant on this rig is a HEIGHT, so
-  // widening a garment vertically would drop its hem through the floor
-  // on a giant and hitch it to the knee on a lich.
+  // widening a garment vertically would drop its hem through the floor.
   for (const nm in drapedMeshes) drapedMeshes[nm].scale.set(k, 1, k);
 }
 

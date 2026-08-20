@@ -234,6 +234,11 @@ export function buildPaperdollPayload(pal, img, cif) {
     const per = rows.map((r) => {
       let worst = 0;
       for (const f of bodyFaces) {
+        // THE TRUNK ONLY. Measuring against the arms made every robe a
+        // tent — a garment sized to contain a limb that hangs outside it
+        // is a garment three sizes too big. A robe is cut for a torso;
+        // arms hang at the sides of one and always have.
+        if (f.g !== 'body') continue;
         for (let i = 0; i < 4; i++) {
           if (Math.abs(f.p[i * 3 + 1] - r.y) > BAND) continue;
           const nx = Math.abs(f.p[i * 3]) / r.rx;

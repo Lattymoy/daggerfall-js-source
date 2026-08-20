@@ -79,7 +79,10 @@ for (const [designs, opts] of LINES) {
     const k = fit(d);
     for (const r of rows) {
       const body = bodyAt(faces, r.y);
+      // The trunk only — see test/drapeclip.test.js for why measuring
+      // against arms produced a correct number and a terrible garment.
       for (const [group, e] of Object.entries(body)) {
+        if (group !== 'body') continue;
         // The drape is an ellipse of rx*k by rz*k. A body point at (x,z)
         // is INSIDE it when (x/rx)^2 + (z/rz)^2 < 1.
         const nx = e.x / (r.rx * k);
