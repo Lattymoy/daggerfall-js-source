@@ -1562,7 +1562,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Dodging tally, the poison seam and the recoverable arrow all
     // ride the hit.
     arrows.update(dt, {
-      playerFeet: _pf,
+      // enemy arrows hunt only a SPAWNED, WALKING player - fly/orbit
+      // camera modes have no capsule to hit
+      playerFeet: walkMode && playerSpawned ? player.pos : null,
       onPlayerHit: (m) => {
         const shooter = m.shooterFoe;
         tallySkill(playerEntity, SKILLS.Dodging, 1);
