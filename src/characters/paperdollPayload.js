@@ -54,6 +54,8 @@ import { BEAST_DESIGNS, beastOpts, ALL_GROUPS } from './beasts.js';
 import { buildBeastBody, buildBeastTail } from './pieces/beastBody.js';
 import { buildBeastHead, WOLF_RAMP } from './pieces/beastHead.js';
 import { buildArachnid } from './pieces/arachnid.js';
+import { DAEDRA_DESIGNS, daedraOpts } from './daedra.js';
+import { buildHorns } from './pieces/beastHead.js';
 import { buildRibcage, buildPelvis, BONE_RAMP } from './pieces/skeletonBones.js';
 import { buildHorseBody, BAY_RAMP } from './pieces/centaurBody.js';
 import { buildTusks, buildBrow, IVORY_RAMP } from './pieces/orcHead.js';
@@ -347,6 +349,29 @@ export function buildPaperdollPayload(pal, img, cif) {
     };
   });
 
+  // ── THE DAEDRA ─────────────────────────────────────────────────
+  // Five enemies, and the only new geometry between them is a pair of
+  // horns. A Daedroth is the werewolf's design exactly — collapse the
+  // skull, put a beast head on it; a Fire Daedra is the fire atronach's
+  // additive blend; a Frost Daedra is the ice atronach's transparency at
+  // a different density.
+  //
+  // Which is what a mechanism is for after enough of it exists: the
+  // twentieth enemy cost a file and the forty-sixth costs a line.
+  const daedraPacks = DAEDRA_DESIGNS.map((d) => {
+    const { ramps: dramps, opts, hide, drape } = daedraOpts(d, pal);
+    let df = buildNeutralBody(dramps, { face, ...opts });
+    if (d.collapse) df = collapseGroups(df, d.collapse, [0, 1.5, 0]);
+    return {
+      id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
+      build: d.build, zones: d.zones, hide, drape, spectral: d.spectral || null,
+      beastHead: d.beastHead ? packPiece(buildBeastHead(hide, d.beastHead)) : null,
+      beastTail: d.tail ? packPiece(buildBeastTail(hide, d.tail)) : null,
+      horns: d.horns ? packPiece(buildHorns(hide, d.horns)) : null,
+      ...villagerDelta(faces, df),
+    };
+  });
+
   // Per-race hairstyle packs (haired races get multiple styles).
   const HAIRSTYLES = { Human: ['short','buzz','medium','long','ponytail','topknot','mohawk','bald'], Elf: ['short','medium','long','ponytail','mohawk','bald'] };
   const hairPacks = {};
@@ -384,7 +409,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       return list;
     })(),
     swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
-    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, hairRamps: HAIR_RAMPS, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
+    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, daedra: daedraPacks, hairRamps: HAIR_RAMPS, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 
   return payload;
 }

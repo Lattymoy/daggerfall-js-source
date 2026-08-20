@@ -306,7 +306,7 @@ for (const name of ['pauldrons','helm']) if (D[name]) pieceMesh[name] = buildPie
 // pelvis. Same table, same build, same show-and-hide — a design's
 // pieces are looked up by the design, so adding a fourth kind of bone
 // to a fifth enemy means adding a key here and nothing else.
-const PIECE_KINDS = ['tusks', 'brow', 'ribcage', 'pelvis', 'horse', 'beast', 'beastHead', 'beastTail', 'arachnid'];
+const PIECE_KINDS = ['tusks', 'brow', 'ribcage', 'pelvis', 'horse', 'beast', 'beastHead', 'beastTail', 'arachnid', 'horns'];
 const buildPieces = (list) =>
   (list || []).map((d) => {
     const out = {};
@@ -334,6 +334,7 @@ const pieceTables = {
   class: buildPieces(D.classes),
   atronach: buildPieces(D.atronachs),
   beast: buildPieces(D.beasts),
+  daedra: buildPieces(D.daedra),
 };
 const orcPieceMesh = pieceTables.orc;
 const undeadPieceMesh = pieceTables.undead;
@@ -670,7 +671,7 @@ function applyOrc(o) {
   // carried on the design rather than guessed by searching every table,
   // which is what let a whole line go unbuilt without anything noticing.
   const line = o.line || 'orc';
-  const list = { orc: D.orcs, undead: D.undead, class: D.classes, atronach: D.atronachs, beast: D.beasts }[line];
+  const list = { orc: D.orcs, undead: D.undead, class: D.classes, atronach: D.atronachs, beast: D.beasts, daedra: D.daedra }[line];
   const idx = (list || []).findIndex((x) => x.id === o.id);
   if (idx >= 0 && pieceTables[line]) showPieces(pieceTables[line], idx);
   // AND IT MAY BE WEARING SOMETHING. applyVillagerDrape asks only for a
@@ -692,6 +693,31 @@ function applyUndead(u) {
   applyOrc(u ? { ...u, line: 'undead' } : null);
 }
 {
+  const sel = document.getElementById('daedra');
+  if (sel) {
+    const none = document.createElement('option');
+    none.value = '';
+    none.textContent = 'daedra: none (bare rig)';
+    sel.appendChild(none);
+    for (const dd of D.daedra || []) {
+      const opt = document.createElement('option');
+      opt.value = String(dd.id);
+      opt.textContent = dd.name + '  (lvl ' + dd.level + ')';
+      sel.appendChild(opt);
+    }
+    sel.onchange = () => {
+      const dd = (D.daedra || []).find((x) => String(x.id) === sel.value) || null;
+      for (const other of ['orc', 'undead', 'villager', 'classes', 'atronach', 'beast', 'daedra']) {
+        const o = document.getElementById(other);
+        if (o) o.value = '';
+      }
+      applyOrc(dd ? { ...dd, line: 'daedra' } : null);
+      const hud = document.getElementById('hud');
+      if (hud && dd) hud.textContent = dd.name + ' \u00b7 level ' + dd.level + ' \u00b7 ' + dd.damage[0] + '-' + dd.damage[1] + ' damage';
+    };
+  }
+}
+{
   const sel = document.getElementById('beast');
   if (sel) {
     const none = document.createElement('option');
@@ -706,7 +732,7 @@ function applyUndead(u) {
     }
     sel.onchange = () => {
       const bst = (D.beasts || []).find((x) => String(x.id) === sel.value) || null;
-      for (const other of ['orc', 'undead', 'villager', 'classes', 'atronach']) {
+      for (const other of ['orc', 'undead', 'villager', 'classes', 'atronach', 'daedra']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
@@ -731,7 +757,7 @@ function applyUndead(u) {
     }
     sel.onchange = () => {
       const a = (D.atronachs || []).find((x) => String(x.id) === sel.value) || null;
-      for (const other of ['orc', 'undead', 'villager', 'classes', 'beast']) {
+      for (const other of ['orc', 'undead', 'villager', 'classes', 'beast', 'daedra']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
@@ -760,7 +786,7 @@ function applyUndead(u) {
     }
     sel.onchange = () => {
       const c = (D.classes || []).find((x) => String(x.id) === sel.value) || null;
-      for (const other of ['orc', 'undead', 'villager', 'atronach', 'beast']) {
+      for (const other of ['orc', 'undead', 'villager', 'atronach', 'beast', 'daedra']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
@@ -786,7 +812,7 @@ function applyUndead(u) {
     sel.onchange = () => {
       const u = (D.undead || []).find((x) => String(x.id) === sel.value) || null;
       // The three pickers are exclusive: one body at a time.
-      for (const other of ['orc', 'villager', 'classes', 'atronach', 'beast']) {
+      for (const other of ['orc', 'villager', 'classes', 'atronach', 'beast', 'daedra']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
