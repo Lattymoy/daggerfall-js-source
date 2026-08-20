@@ -42,6 +42,12 @@ export const MELEE_TIMER_MIN_MS = 1500;            // ResetMeleeTimer Random.Ran
 export const MELEE_TIMER_MAX_MS = 3000;            // (inclusive)
 export const MELEE_TIMER_LEVEL_MS = 50;            // per player level above 10
 export const MELEE_TIMER_REFLEX_MS = 450;          // per reflexes step from average
+// EnemyAttack.cs:28-29 - the ranged band, 240/2048 classic units at
+// MeshReader.GlobalScale (= 6m / 51.2m), STRICT at both ends.
+export const MIN_RANGED_DISTANCE = 6;
+export const MAX_RANGED_DISTANCE = 51.2;
+// EnemyMotor.DoRangedAttack:592 - the bow cadence inside the band.
+export const BOW_SHOT_CHANCE = 1 / 32;
 
 export function resetMeleeTimer(playerLevel = 10, reflexes = 2, roll = Math.random()) {
   // Random.Range(int, int) returns an INT (DFU rolls whole ms).
@@ -60,14 +66,17 @@ export function attackRollPasses(liveSpeed, randFn = rand) {
 
 /** Per-foe attack driver over the shared machine. */
 export class EnemyAttack {
-  /** rangedAttack: set by the scene when the equipped weapon is a bow. */
-  constructor({ liveSpeed = 50, playerLevel = 10, reflexes = 2 } = {}) {
+  /** rangedAttack: set by the scene when the foe HAS A BOW ATTACK
+   *  (hasBowAttack - mobile flags, not the equipped weapon). */
+  constructor({ liveSpeed = 50, playerLevel = 10, reflexes = 2, rolls = Math.random } = {}) {
     this.machine = createWeaponMachine(false);
     this.liveSpeed = liveSpeed;
     this.playerLevel = playerLevel;
     this.reflexes = reflexes;
+    this.rolls = rolls;   // ENGINE-PRNG: DoRangedAttack's Random.value + the strike/timer picks
     this.meleeTimer = 0;
     this._classicTimer = 0;
+    this.firedRanged = false;   // C-slice: WHICH decision started the running swing
   }
 
   /**
@@ -83,16 +92,30 @@ export class EnemyAttack {
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
       if (this.machine.state !== 'Idle') continue;
+      const dx = playerFeet[0] - ai.feet[0], dz = playerFeet[2] - ai.feet[2];
+      // C-slice (AUDIT 23 combat-3): EnemyMotor.DoRangedAttack
+      // (:570-614) OWNS a bow foe inside the 6..51.2 band (strict) -
+      // its whole cadence is the 1/32 classic-update roll within the
+      // 22.5deg yaw; no melee timer, no speed roll, and the melee
+      // machine never runs from inside the band (DoRangedAttack
+      // returns true even while only turning). Outside the band the
+      // bow foe is a MELEE fighter - the fallback - so the reach
+      // gate below applies to everyone.
+      if (this.rangedAttack && ai.inSight && dist > MIN_RANGED_DISTANCE && dist < MAX_RANGED_DISTANCE) {
+        if (withinYaw(ai.yaw, dx, dz, ATTACK_YAW_DEG) && this.rolls() < BOW_SHOT_CHANCE) {
+          const strike = STRIKES[Math.floor(this.rolls() * STRIKES.length)];
+          if (machineAttack(this.machine, strike)) this.firedRanged = true;
+        }
+        continue;
+      }
       if (this.meleeTimer > 0) continue;
       if (!attackRollPasses(this.liveSpeed)) continue;
-      const dx = playerFeet[0] - ai.feet[0], dz = playerFeet[2] - ai.feet[2];
       if (!ai.inSight || !withinYaw(ai.yaw, dx, dz, ATTACK_YAW_DEG)) continue;
-      // Ranged (bow-equipped) foes attack from SIGHT - the melee
-      // distance gate is the melee path's (EnemyAttack bow branch).
-      if (!this.rangedAttack && dist > MELEE_DISTANCE) continue;
-      const strike = STRIKES[Math.floor(Math.random() * STRIKES.length)];
+      if (dist > MELEE_DISTANCE) continue;
+      const strike = STRIKES[Math.floor(this.rolls() * STRIKES.length)];
       if (machineAttack(this.machine, strike)) {
-        this.meleeTimer = resetMeleeTimer(this.playerLevel, this.reflexes);
+        this.firedRanged = false;
+        this.meleeTimer = resetMeleeTimer(this.playerLevel, this.reflexes, this.rolls());
       }
     }
     return machineStep(this.machine, dt, this.liveSpeed);

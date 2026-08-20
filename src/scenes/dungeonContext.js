@@ -16,7 +16,7 @@ import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { MobileUnit } from '../characters/mobileUnit.js';   // C11: classic sprite monsters
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
-import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, classifyPlacementAction, lookAtLockText } from '../world/actionSystem.js';
+import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter } from '../characters/playerEntity.js';
@@ -55,7 +55,7 @@ import { NativeInventoryWindow, preloadInventoryArt } from '../ui/nativeInventor
 import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
-import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
+import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
@@ -361,7 +361,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
-      { EnemyAI, withinYaw, isBackFacing }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster }] = await Promise.all([
+      { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
@@ -379,6 +379,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       generateItems: generateLootItems,   // the static import (audit 06e: the dynamic pair was double-sourcing)
 
       calculateAttackDamage: formulas.calculateAttackDamage,
+      openDoorsStep,   // C-slice: EnemyMotor.OpenDoors
+      enemyLanguageSkill: formulas.enemyLanguageSkill,           // C-slice: pacification
+      calculateEnemyPacification: formulas.calculateEnemyPacification,
       meleeHitConnects: formulas.meleeHitConnects,
       MELEE_HIT_YAW_DEG: formulas.MELEE_HIT_YAW_DEG,
       withinYaw,
@@ -1130,7 +1133,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // (the module-level playerEntity import IS foeDeps.playerEntity -
     // the old shadowing destructure was the null read that crashed)
     let hitEnemy = false;
-    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing))) {
+    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing), (l) => hudText.add(l))) {
       // WeaponDamage returns true for a CONNECTING swing even at zero
       // damage (WeaponManager.cs:617-637 falls through to
       // DecreaseHealth/HandleAttackFromSource and returns true), so
@@ -1250,6 +1253,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
                 // GetBonusOrPenaltyByEnemyType (FormulaHelper.cs:1037-1052).
                 damageMod: _swing.damage, toHitMod: _swing.toHit,
                 backstabChance: backstabChanceOf(playerEntity, _back),
+                say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
               }) : 0;
               if (dmg > 0) damageFoe(f, dmg, null, m.dir);   // C15: arrows knock along their flight
               addItem(f.entity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage verbatim: the arrow is recoverable from the target
@@ -1264,6 +1268,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             const dmg = foeDeps && shooter ? foeDeps.calculateAttackDamage(shooter.entity, playerEntity, {
               weapon: m.weapon,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
               onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),   // S19b: poisoned arrows
+              say: (l) => hudText.add(l),   // C-slice
             }) : 0;
             hurtPlayer(dmg);
             addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
@@ -1342,6 +1347,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // door (corpse + reaction). Factored in S5 so missiles do not grow
   // a second death path.
   function damageFoe(foe, damage, playerFeet = null, knockDir = null) {
+    // C-slice: MakeEnemyHostileToAttacker - damaging a PACIFIED foe
+    // re-hostiles it (and pre-loads the pursuit, the G1 shape).
+    if (foe.ai && !foe.ai.isHostile) { foe.ai.isHostile = true; foe.ai.makeHostileToPlayer?.(); }
     foe.entity.health -= damage;
     if (foe.entity.health <= 0) {
       foe.dead = true;
@@ -1405,6 +1413,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // S19b: a damaging poisoned-weapon hit infects (and the
       // formulas clear the weapon's poison)
       onInflictPoison: (att, tgt, pt) => inflictPoison(foeDeps.playerEntity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }),
+      say: (l) => hudText.add(l),   // C-slice: equipment breaks speak
     });
     if (dmg > 0) audio.playOneShot(hitSoundFor(wpn), 1.1);   // the player takes the hit (PlayerFootsteps families)
     hurtPlayer(dmg);
@@ -1654,6 +1663,41 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // flyerFalls) - senses keep running, decisions stop, paralyzed
       // FLYERS fall out of the air, swimmers freeze.
       f.ai.update(dt, playerFeet || eye, _senses, _fParalyzed);   // E2 senses + pursuit; P13: the stealth context
+      // C-slice (AUDIT 23 characters-3): EnemyMotor.OpenDoors - a
+      // CanOpenDoors foe whose sight ray to the player is blocked by
+      // an action DOOR opens it when unlocked and within 2m. The
+      // senses recorded the blocking bucket key; only a door-flagged
+      // action object counts (walls block sight with the level key).
+      if (!_fParalyzed && foeDeps && f.ai.doorKey != null && ENEMY_BASICS[f.mobileType]?.canOpenDoors) {
+        const _door = actions?.objects.get(f.ai.doorKey);
+        if (_door && DOOR_VERB_FLAGS.has(_door.actionFlag)) {
+          foeDeps.openDoorsStep(f.ai.feet, true, {
+            state: _door.state, currentLockValue: _door.currentLockValue,
+            center: [_door.matrix[12], _door.matrix[13], _door.matrix[14]],
+          }, () => actions.toggleDoor(_door));
+        }
+      }
+      // C-slice (AUDIT 23 characters-2): the FIRST-encounter language
+      // check (EnemySenses:504-528). A known tongue rolls
+      // CalculateEnemyPacification with the sheathed state; success
+      // stands the foe down (IsHostile false) and tallies the skill
+      // by 3 (DFU's BCHG over classic's 1); a FAILED roll still
+      // tallies 1 for the monster tongues - "using" the language -
+      // but not for Etiquette/Streetwise. languagePacified's prose is
+      // ours (the string table is not in the snapshot; key cited).
+      if (f.ai.justEncountered) {
+        f.ai.justEncountered = false;
+        const _lang = foeDeps ? foeDeps.enemyLanguageSkill(f.entity) : -1;
+        if (_lang !== -1) {
+          if (foeDeps.calculateEnemyPacification(playerEntity, _lang, playerWeapon.sheathed)) {
+            f.ai.isHostile = false;
+            hudText.add(`${ENEMY_BASICS[f.mobileType]?.name ?? 'The enemy'} is pacified by your ${SKILL_NAMES[_lang]} skill.`);   // languagePacified %e/%s
+            tallySkill(playerEntity, _lang, 3);
+          } else if (_lang !== SKILLS.Etiquette && _lang !== SKILLS.Streetwise) {
+            tallySkill(playerEntity, _lang, 1);
+          }
+        }
+      }
       // A1 EnemySounds verbatim: the wait counter ALWAYS steps; the
       // sound fires only inside AttractRadius 16. Delay re-rolls
       // Range(3, 9+1); 20% move / 80% bark; humans stay silent.
@@ -1674,7 +1718,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // AUDIT 23 (characters-11) - EnemyAttack.cs:70-77: the divisor
       // mints every update from PermanentSpeed / max(8, LiveSpeed).
       f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
-      f.events = _fParalyzed ? [] : f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine (S19: paralysis returns early)
+      f.events = (_fParalyzed || !f.ai.isHostile) ? [] : f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine (S19: paralysis returns early; C-slice: pacified foes stand down)
       // C11 audit 08-17: the attack START edge (machine Idle -> swing
       // this frame) - MeleeAnimation fires ChangeEnemyState + the
       // attack sound ONCE at the start, not at the hit frame, and not
@@ -1695,7 +1739,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // casts INSTANTLY. RESIDUAL (honest): DFU casters also hold at
       // range and strafe (Enhanced AI) or stand off - our motor keeps
       // the C8 pursuit; the foe casts while closing.
-      if (playerFeet && f.caster && !_fParalyzed) {
+      if (playerFeet && f.caster && !_fParalyzed && f.ai.isHostile) {
         const dec = f.caster.update(dt, f.ai, f.attack, playerFeet, playerEntity);
         if (dec) castEnemySpell(f, dec.spell);
       }
@@ -1707,11 +1751,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // half needs vampirism, which the port does not have).
       // HUD pends the UI arc: health surfaces on __player.
       if (playerFeet && f.events.includes('hit')) {
-        if (f.attack.rangedAttack) {
+        if (f.attack.firedRanged) {
           // C17: sprite archers loose on their -1 shoot marker
           // (below); the machine's hit frame stays the DECISION
           // clock only. (ON ICE with the rig path: the machine-frame
-          // loose for rig archers.)
+          // loose for rig archers.) C-slice: keyed on the SWING that
+          // fired - a bow foe inside 6m swings MELEE (DoRangedAttack's
+          // fallback) and lands damage here like anyone.
           continue;
         }
         // C16: the machine's hit frame is the RIGS' damage clock;
@@ -1729,8 +1775,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (!_fParalyzed || !f._mout) {
           f._mout = f.mobile.update(dt, {
             moving: f.ai.moving,
-            striking: _strikeEdge && !f.attack.rangedAttack,   // the START edge (paralysis eats it - FreezeAnims blocks ChangeEnemyState, verbatim)
-            rangedStriking: _strikeEdge && !!f.attack.rangedAttack,   // C17: archers draw records 20-24
+            striking: _strikeEdge && !f.attack.firedRanged,   // the START edge (paralysis eats it - FreezeAnims blocks ChangeEnemyState, verbatim)
+            rangedStriking: _strikeEdge && !!f.attack.firedRanged,   // C17: archers draw records 20-24 - keyed per SWING (the in-band bow shot), not per foe
             hurting: f.ai.hurtKnock,   // C15: the knockback threshold IS the hurt anim (KnockbackMovement)
             casting: !!f._castPending,   // C14: the cast decision's edge (Spell one-shot)
           }, f.ai.yaw, f.ai.feet, eye);

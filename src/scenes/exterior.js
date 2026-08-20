@@ -503,6 +503,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // through the same entity the fall-damage path bills.
   const cityGuards = createCityGuards({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio,
+    say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): a guard's poison anchors at NOW, not 0
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;

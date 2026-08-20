@@ -2116,3 +2116,60 @@ gap invisible: the feature demonstrably works on one side. The corpus pin
 (76 NPCs across 16 RMB blocks) pins the FUNCTION, not the game. Recorded as
 a Port-Ledger C row (static-NPC activation, exterior side) so the gap stops
 living only inside a SHIPPED heading.
+
+## CH-C (2026-08-20): the C-slice's three characters rows - SHIPPED
+
+**THE ARCHER BAND (combat-3 = characters-1).**
+EnemyMotor.DoRangedAttack (:570-614): inside the STRICT 6..51.2m
+band (240/2048 classic units at GlobalScale, EnemyAttack.cs:28-29) a
+bow foe's whole cadence is the 1/32 classic-update roll within the
+22.5deg yaw - no melee timer, no speed roll - and the melee machine
+never runs from inside the band (DFU returns true even while only
+turning). Outside it the archer is a MELEE fighter, so the reach
+gate now applies to everyone; the port used to fire bows on the
+melee cadence at any seen distance. Each swing records WHICH
+decision fired it (firedRanged), so the sprite records and the
+damage arm key per SWING: a point-blank archer plays the melee
+records and lands melee damage while an in-band shot draws 20-24
+and looses on the -1 marker. RESIDUE on the struck row:
+HasClearPathToShootProjectile's fine grain (the in-sight gate
+stands in) and the Enhanced-AI strafe.
+
+**ENEMIES OPENING DOORS (characters-3).**
+The senses half first: EnemySenses.CanSeeTarget clears its door
+every pass (:879) and records the sight ray's FIRST BLOCKER when it
+is an action door (:912-918). The port's collider grew raycastHit -
+the same DDA, now returning the bucket that produced the nearest
+hit; action doors are their own buckets keyed by action object, so
+the attribution is exact and an OPENED door (bucket removed,
+MakeTrigger) unblocks the ray. Then EnemyMotor.OpenDoors
+(:1425-1442): a CanOpenDoors foe - 52 mobile entries, matching
+DFU's 52 - whose known door is not open, not locked, and closer
+than 2m (foe to door CENTER, :917) toggles it through the
+ActionSystem's own door path, whose IsMoving gate refuses a
+swinging door exactly as DFU's ToggleDoor. The dungeon arm gates on
+DOOR_VERB_FLAGS so only real doors count. The Enhanced-AI bash arm
+stays with its setting.
+
+**PACIFICATION (characters-2).**
+CalculateEnemyPacification (:357-391): Etiquette/Streetwise read
+skill/10 + personality/5 (C# INT divisions); a monster tongue reads
+the FULL skill + personality/10 - fluency in Orcish counts for far
+more than manners; sheathed +10, drawn -25; roll Range(0,200) <
+chance. GetEnemyEntityLanguageSkill (:2808-2880): the six stealth
+classes speak Streetwise, the rest Etiquette (DFU's BCHG over
+classic's all-Etiquette - the port follows its source), 24 monster
+careers map to the nine tongues, vampires and liches hear
+Etiquette, beasts speak nothing. The hook is EnemySenses' FIRST
+detection (:504-528), an edge both senses arms now raise; success
+stands the foe down - IsHostile false gates the DECISION TICK
+itself, so a pacified foe neither pursues, TURNS, swings nor casts
+- with the languagePacified line (prose ours, key cited) and a
+tally of 3 (DFU's BCHG); a failed monster tongue still tallies 1,
+social skills tally nothing on failure. Damaging a pacified foe
+re-hostiles it (MakeEnemyHostileToAttacker) and pre-loads the
+pursuit through the G1 shape. The port's first non-hostile foe
+state; the faction/team model stays a ledger row.
+
+12 pins across arrows/enemydoors/pacification.test.js; 9 mutations
+run, 9 killed across the slice.

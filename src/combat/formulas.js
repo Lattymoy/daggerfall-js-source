@@ -24,6 +24,8 @@ import { SPECIAL_ABILITY_BITS } from '../systems/specialAdvantages.js';   // AUD
 // the temporal dead zone: the helper reads `undefined` at call time and the
 // bonus silently never applies. specialAdvantages.js is a leaf.
 import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';   // AUDIT 18: GetBaseDamageMin/Max and GetWeaponSkillIDAsShort resolve the TEMPLATE, never a baked field or a display name
+import { equipTableOf, lowerCondition, slotForBodyPart, EQUIP_SLOTS } from '../systems/equip.js';   // C-slice: DamageEquipment
+import { SHIELD_PARTS } from '../systems/armorMaterials.js';
 
 // ---- Dice100.cs verbatim ----
 export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 100) < chance;   // Random.Range(0,100) < chance
@@ -348,7 +350,37 @@ export function chooseEnemyWeapon(weapon, basics) {
   return noWeaponAvg > weaponAvg ? null : weapon;
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null } = {}) {
+/** FormulaHelper.DamageEquipment (:1080-1118) +
+ *  ApplyConditionDamageThroughPhysicalHit (:1123-1138), verbatim
+ *  (C-slice, AUDIT 23 combat-1). Runs at CalculateAttackDamage's
+ *  tail for every attack; the body gates on a WEAPON hit that dealt
+ *  damage, so hand-to-hand and monster natural attacks degrade
+ *  nothing. The attacker's weapon always takes (10*damage+50)/100
+ *  condition (int division; a 20% floor roll turns 0 into 1, rolled
+ *  PER ITEM); the struck side routes to an equipped shield COVERING
+ *  the struck part - DFU's own improvement, its comment notes
+ *  classic never damaged shields - else to the struck part's armor
+ *  slot. Breaks speak and unequip through lowerCondition. */
+export function damageEquipment(attacker, target, damage, weapon, struckBodyPart, { rolls = Math.random, say = null } = {}) {
+  if (!weapon || damage <= 0) return;
+  const hit = (item, owner) => {
+    let amount = Math.trunc((10 * damage + 50) / 100);
+    if (amount === 0 && dice100(20, rolls())) amount = 1;
+    lowerCondition(item, amount, owner, say);
+  };
+  hit(weapon, attacker);
+  const slots = equipTableOf(target);
+  const shield = slots[EQUIP_SLOTS.LeftHand];
+  const covered = shield ? SHIELD_PARTS.get(shield.templateIndex) ?? [] : [];
+  if (covered.includes(struckBodyPart)) hit(shield, target);
+  else {
+    const slot = slotForBodyPart(struckBodyPart);
+    const armor = slot !== EQUIP_SLOTS.None ? slots[slot] : null;
+    if (armor) hit(armor, target);
+  }
+}
+
+export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null } = {}) {
   if (!attacker || !target) return 0;
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) return 0;   // material too low
   // source: chanceToHitMod = skill, then player swing/proficiency/
@@ -421,7 +453,54 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
     if (onInflictPoison) onInflictPoison(attacker, target, weapon.poisonType);
     weapon.poisonType = -1;
   }
-  return Math.max(0, damage);
+  damage = Math.max(0, damage);
+  // FormulaHelper.cs:699-701: the equipment damages at the TAIL with
+  // the clamped value, whatever the hit rolled.
+  damageEquipment(attacker, target, damage, weapon, struck, { rolls, say });
+  return damage;
+}
+
+// ---- GetEnemyEntityLanguageSkill (FormulaHelper.cs:2808-2880) ----
+// Class enemies: the six stealth careers speak Streetwise, the rest
+// Etiquette (DFU's BCHG - classic used Etiquette for all; the port
+// follows its source). Monsters: the tongue table; None = -1.
+const CLASS_STREETWISE = new Set([7, 8, 9, 10, 11, 5]);   // Burglar, Rogue, Acrobat, Thief, Assassin, Nightblade
+const MONSTER_LANGUAGE = new Map([
+  [7, SKILLS.Orcish], [12, SKILLS.Orcish], [21, SKILLS.Orcish], [24, SKILLS.Orcish],
+  [13, SKILLS.Harpy],
+  [16, SKILLS.Giantish], [22, SKILLS.Giantish],
+  [34, SKILLS.Dragonish], [40, SKILLS.Dragonish],
+  [10, SKILLS.Nymph], [42, SKILLS.Nymph],
+  [25, SKILLS.Daedric], [26, SKILLS.Daedric], [27, SKILLS.Daedric], [29, SKILLS.Daedric], [31, SKILLS.Daedric],
+  [2, SKILLS.Spriggan],
+  [8, SKILLS.Centaurian],
+  [1, SKILLS.Impish], [41, SKILLS.Impish],
+  [28, SKILLS.Etiquette], [30, SKILLS.Etiquette], [32, SKILLS.Etiquette], [33, SKILLS.Etiquette],
+]);
+export function enemyLanguageSkill(entity) {
+  if (entity?.isClass) return CLASS_STREETWISE.has(entity.careerIndex) ? SKILLS.Streetwise : SKILLS.Etiquette;
+  return MONSTER_LANGUAGE.get(entity?.careerIndex) ?? -1;
+}
+
+// ---- CalculateEnemyPacification (FormulaHelper.cs:357-391) ----
+/** C-slice (AUDIT 23 characters-2). Etiquette/Streetwise read
+ *  skill/10 + personality/5 (C# INT divisions); a monster tongue
+ *  reads the FULL skill + personality/10 - fluency in Orcish counts
+ *  for far more than manners. A sheathed weapon adds 10, a drawn one
+ *  costs 25. Roll Random.Range(0, 200) < chance. The
+ *  ComprehendLanguages effect bonus rides the effect arc (no
+ *  incumbent exists yet). */
+export function calculateEnemyPacification(player, languageSkill, sheathed, roll01 = Math.random()) {
+  let chance = 0;
+  if (languageSkill === SKILLS.Etiquette || languageSkill === SKILLS.Streetwise) {
+    chance += Math.trunc(skillValue(player, languageSkill) / 10);
+    chance += Math.trunc(liveStat(player, 'personality') / 5);
+  } else {
+    chance += skillValue(player, languageSkill);
+    chance += Math.trunc(liveStat(player, 'personality') / 10);
+  }
+  chance += sheathed ? 10 : -25;
+  return Math.floor(roll01 * 200) < chance;
 }
 
 // ---- EnemyAttack.MeleeDamage hit gate, "matched to classic" ----

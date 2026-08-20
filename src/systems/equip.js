@@ -15,7 +15,7 @@
 // when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 // enchantment start/stop payloads (no enchanted items yet).
 
-import { mintCondition } from './itemTemplates.js';   // AUDIT 23
+import { mintCondition, templateByIndex } from './itemTemplates.js';   // AUDIT 23
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES } from '../characters/equipRules.js';
 import { createEquipTable, getItemHands as handsOf, ITEM_HANDS } from '../characters/equipTable.js';
@@ -234,4 +234,32 @@ export function updateEquippedArmorValues(entity, item, equipping) {
     const bonus = SHIELD_VALUES.get(item.templateIndex);
     for (const part of SHIELD_PARTS.get(item.templateIndex)) av[part] += sign * bonus * 5;
   }
+}
+
+/** GetEquipSlotForBodyPart (DaggerfallUnityItem.cs:1103-1125) - the
+ *  inverse of SLOT_BODY_PART's seven pairs; None for anything else. */
+const BODY_PART_SLOT = new Map([...SLOT_BODY_PART].map(([slot, part]) => [part, slot]));
+export const slotForBodyPart = (part) => BODY_PART_SLOT.get(part) ?? EQUIP_SLOTS.None;
+
+/** DaggerfallUnityItem.LowerCondition + ItemBreaks (:1170-1214).
+ *  C-slice (AUDIT 23 combat-1): breaking clamps at 0, speaks the
+ *  classic line - the plural variant for Gauntlets/Greaves/Boots
+ *  (itemHasBroken / itemHasBrokenPlural; the string table is not in
+ *  the source snapshot, so the prose is ours with the keys cited;
+ *  DFU notes classic said "is" where it says "has") - and unequips
+ *  from the owner, which restores the armor table through
+ *  unequipSlot. A broken MUNDANE item stays in the pack; DFU removes
+ *  only an ENCHANTED player item, and that arm rides the enchantment
+ *  arc with the rest of the payloads. Returns true on a break. */
+const PLURAL_BREAK_TEMPLATES = new Set([103, 104, 108]);   // Armor.Gauntlets, Greaves, Boots
+export function lowerCondition(item, amount, owner = null, say = null) {
+  mintCondition(item);
+  if ((item.maxCondition ?? 0) <= 0) return false;   // no condition to lower: the frozen stand-ins and 0-hitPoint templates cannot break
+  item.currentCondition -= amount;
+  if (item.currentCondition > 0) return false;
+  item.currentCondition = 0;
+  const name = item.name ?? templateByIndex(item.templateIndex)?.name ?? 'Item';
+  say?.(`${name} ${PLURAL_BREAK_TEMPLATES.has(item.templateIndex) ? 'have' : 'has'} broken.`);
+  if (owner && item.equipSlot != null) unequipSlot(owner, item.equipSlot);
+  return true;
 }
