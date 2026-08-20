@@ -13,7 +13,7 @@ import { MapsFile } from '../formats/mapsFile.js';
 import { convertTilemap } from '../world/terrainSurface.js';
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { PlayerMotor } from '../player/motor.js';
-import { jumpSpeedMultiplier, tallySkill, SKILLS, WEAPON_SKILL } from '../systems/skills.js';
+import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { createWeaponRig } from '../combat/weaponRig.js';
 import { ArrowFlight } from '../combat/arrowFlight.js';   // C13: visible exterior arrows
 import { removeOne } from '../systems/inventory.js';
@@ -39,6 +39,13 @@ import { CityNavigation } from '../world/cityNavigation.js';   // T1 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
 import { createTownTalk } from './townTalk.js';   // T3b
+import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
+import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS } from './hostCombat.js';   // AUDIT 23 (C14)
+import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
+import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5): the collapse box
+import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
+import { seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1)
+import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
@@ -55,7 +62,7 @@ import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, 
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the shop identity
-import { hitSoundFor } from '../systems/soundClips.js';
+import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs } from './shared.js';
@@ -174,11 +181,18 @@ export async function bootExterior(canvas, renderer, params, status) {
   const precip = precipMode ? new PrecipitationRenderer(renderer.gl) : null;
   const lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
-  const baseTod = parseTimeOfDay(params.get('tod')) ?? 12 * 60;
-  const timeScale = Number(params.get('timescale') || 0);
-  const bootedAt = performance.now();
-  const minuteNow = () =>
-    (baseTod + ((performance.now() - bootedAt) / 1000) * timeScale) % 1440;
+  // AUDIT 23 (C2: hosts-8 = audio-1): ONE clock. The time-of-day gates
+  // (music night, city lights, window styles, sun) used a demo clock
+  // frozen at noon by default while gameplay time advanced on
+  // worldMinutes - night never fell. ?tod now SETS the world clock's
+  // time-of-day at boot and ?timescale SCALES the world tick (DFU's
+  // TimeScale, default 12); minuteNow reads the one clock.
+  {
+    const bootTod = parseTimeOfDay(params.get('tod'));
+    if (bootTod != null) setWorldMinutes(Math.floor(worldMinutes() / 1440) * 1440 + bootTod);
+  }
+  const timeScaleMult = params.has('timescale') ? Number(params.get('timescale')) / 12 : 1;
+  const minuteNow = () => worldMinutes() % 1440;
 
   // A5b: OUTDOOR MUSIC. AssignPlaylist's City/Wilderness arms - night
   // overrides everything, and by day the weather picks the list
@@ -323,8 +337,45 @@ export async function bootExterior(canvas, renderer, params, status) {
   //
   // `townTalk` is declared further down this function and the closure only
   // runs once time has passed, so it is initialised by then.
+  // AUDIT 23 (C5: hosts-5 = entity-3): the exhaustion collapse above
+  // ground - the same exhaustionOutcome law the dungeon runs, with
+  // this host's context (guards as the nearby enemies, the one clock's
+  // day, outside). Function-hoisted: cityGuards/townTalk close later.
+  let _inExhaustion = false;
+  function onExhaustedExterior() {
+    if (_inExhaustion) return;
+    _inExhaustion = true;
+    try {
+      const out = exhaustionOutcome({
+        enemiesNearby: (cityGuards?.activeCount?.() ?? 0) > 0,
+        swimming: !!player.swimming, entity: playerEntity,
+        day: !isNight(minuteNow()), inside: false,
+      });
+      // RSC 1071/1072 pend the reader in this host; classic strings fall back.
+      const lines = out.inWater ? [EXHAUSTED_IN_WATER] : ['You collapse from exhaustion.'];
+      if (!townTalk.overlay) townTalk.showOverlay(new ActionTextBox(lines));
+      if (out.kind === 'rest') {
+        playerTicker.advance(60);   // RaiseTime(1 hour); the latch holds re-entry
+        playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + out.health);
+        playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + out.fatigue);
+        playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity, (playerEntity.magicka ?? 0) + out.magicka);
+        tallySkill(playerEntity, SKILLS.Medical);
+        surfacePlayer();
+      } else {
+        hurtPlayer(playerEntity, playerEntity.health);   // SetHealth(0) through the one damage door
+      }
+    } finally { _inExhaustion = false; }
+  }
+  // C14: the swing's own fatigue drain rides the same collapse law.
+  const drainExteriorFatigue = (n) => {
+    if (n <= 0) return;
+    playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - n);
+    surfacePlayer();
+    if (playerEntity.fatigue <= 0 && playerEntity.health > 0) onExhaustedExterior();
+  };
   const playerTicker = createPlayerTicker(playerEntity, {
     say: (msg) => console.log('[player]', msg),
+    onExhausted: onExhaustedExterior,
     onLevelUp: () => {
       console.log('[player] You have gained a level!');
       townTalk.showOverlay(new LevelUpScreen(playerEntity));
@@ -448,6 +499,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // through the same entity the fall-damage path bills.
   const cityGuards = createCityGuards({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio,
+    currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): a guard's poison anchors at NOW, not 0
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;
       const apply = () => {
@@ -672,13 +724,20 @@ export async function bootExterior(canvas, renderer, params, status) {
   // got wandering townsfolk (and the talk/crime surfaces they carry)
   // that DFU never creates there. The table now lives in shared.js.
   const populated = populatesWanderingNpcs(dfLocation.mapTableData.locationType);
-  const personArchives = [...PERSON_TEXTURES.Breton.male, ...PERSON_TEXTURES.Breton.female, GUARD_TEXTURE];
+  // AUDIT 23 (characters-4) - PopulationManager.cs:94: the wandering
+  // race is the CLIMATE's People (Redguard deserts, Nord mountains);
+  // it was hardcoded Breton. FACTION_RACES numbers -> texture keys.
+  const populationRace = ({ 0: 'Nord', 2: 'Redguard', 3: 'Breton' })[dfLocation.climate?.people] ?? 'Breton';
+  const personArchives = [...PERSON_TEXTURES[populationRace].male, ...PERSON_TEXTURES[populationRace].female, GUARD_TEXTURE];
   const personTex = new Map();
   if (populated) await Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a))));
   const personBatchOf = new Map();   // person -> batch
   const population = !populated ? null : new TownPopulation(cityNav, {
     totalBlocks: loc.width * loc.height,
-    race: 'Breton',
+    race: populationRace,
+    // AUDIT 23 (characters-5) - MobilePersonNPC.cs:214: the NAME bank
+    // is the REGION's (MapsFile.RegionRaces), not the billboard race.
+    nameBank: getNameBankOfRegion(dfLocation.regionIndex),
     makePerson: (archive, guard) => {
       const person = new MobilePerson(cityNav, {
         archive, guard,
@@ -759,7 +818,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       // fatigue, no skill advancement. Open the char sheet and the
       // motor already held here - the clock did not, so a disease
       // aged while the game was paused.
-      if (!_overlayHeld) playerTicker.tick(dt, { running: player.running, swimming: player.swimming });
+      if (!_overlayHeld) playerTicker.tick(dt * timeScaleMult, {
+        // AUDIT 23 (entity-2): playerMotor.IsRunning && !IsStandingStill
+        // (PlayerEntity.cs:408) - `player.running` never existed, so the
+        // 88/min running drain was dead above ground. C6: the jump edge.
+        running: player.isRunning && !player.standing,
+        swimming: player.swimming,
+        jumped: player.jumped,
+      });
       // AUDIT 18 HOST GAP: levitate/waterWalking/slowFall were written
       // ONLY inside worldModes' dungeon branch and never cleared, so
       // leaving a dungeon while levitating stranded the player in the
@@ -860,7 +926,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // during a flash frame); ?flashtest pins it on for shots.
     const flash = params.has('flashtest') ? 2 : (lightning ? lightning.tick(dt) : 1);
     renderer.setLighting(
-      exteriorAmbient(minute), sunScale(minute) * weatherSun * flash,
+      exteriorAmbient(minute, 1, weatherSun), sunScale(minute) * weatherSun * flash,   // AUDIT 23 (wts-2): ambient rides the weather scale too
       new Float32Array(SUN_RIG_COLOR));
     // R12: the player-following indirect point light (SunlightRig) -
     // intensity x the daylight curve, weather-dimmed with the rig,
@@ -879,7 +945,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // thunder and snow) disables the clear night sky, so the DAY sky at
     // frame 0 is drawn instead. weatherSkyOffset IS the WeatherStyle
     // (Rain1 4 / Rain2 5 / Snow1 6 / Snow2 7; Normal is 0).
-    sky.use(dfLocation.climate.skyBase + weatherSkyOffset, minute, weatherSkyOffset === 0);
+    // AUDIT 23 (wts-1) - DaggerfallSky.cs:354-357: the Normal-weather
+    // arm adds the CALENDAR season to SkyBase (Fall 0 / Spring 1 /
+    // Summer 2 / Winter 3); the rain/snow variants keep their boot
+    // roll. One clock, so the season reads the world date.
+    sky.use(dfLocation.climate.skyBase + (weatherSkyOffset === 0
+      ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0);
     // Weather fog, colored by the live sky horizon fill (fills DFU's
     // fogColor TODO); heavy fog also swallows the sky.
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);
@@ -1021,27 +1092,44 @@ export async function bootExterior(canvas, renderer, params, status) {
       // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
       // so all four hosts inherit it (the interior host was missing it).
       for (const ev of weaponRig.frame(dt)) {
+        // AUDIT 23 (combat-2): the bow machine's frame-4 loose sound.
+        if (ev === 'bowSound') { audio.playOneShot(SOUND.ArrowShoot, 1.1); continue; }
         if (ev !== 'hit') continue;
         if (weaponTypeForItem(weaponRig.playerWeapon.weapon) === WEAPON_TYPES.Bow) {
           if (removeOne(playerEntity.items, 131)) {
-            tallySkill(playerEntity, SKILLS.Archery);
+            // AUDIT 23 (C14: hosts-4 = combat-5) - WeaponManager.cs
+            // :419-436: the swing costs its fatigue whatever it hits,
+            // and a BOW always takes the FULL tally arm (Archery AND
+            // CriticalStrike) - this arm tallied Archery alone, free.
+            drainExteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);
+            tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
             arrows.fire(eye, fwd);
           }
           continue;
         }
+        // C14: the melee swing's fatigue, unconditional - it lived
+        // behind cityGuards' no-live-guards early return.
+        drainExteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);
         // G1: melee swings resolve against live guards (reach + LOS
         // inside resolveHit); a landed hit tallies the weapon skill.
         // G4: no guard hit -> WANDERING townsfolk (civilian one-hit
         // Murder + response; wandering guard NPC -> Assault +
         // conversion with the swing carried onto the fresh foe).
         const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon), g.ai.feet, 1.1, { maxDistance: 16 });
-        if (cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
-          tallySkill(playerEntity, WEAPON_SKILL[weaponRig.playerWeapon.weapon?.name] ?? SKILLS.HandToHand);
-        } else {
+        // AUDIT 23 (combat-4): the host-side WEAPON_SKILL tallies are
+        // GONE - cityGuards.resolvePlayerHit already runs DFU's tally
+        // arm (tallySwingSkills), so every connecting swing was
+        // double-counted, keyed by the display-name rot AUDIT 18
+        // removed elsewhere.
+        if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           cityGuards.resolveCivilianHit(weaponRig.playerWeapon, eye, fwd, player.pos, _guardPool(),
             { onMurder: () => _crimeResponse(), onHitSound: guardHitSound }).then((r) => {
-            if (r?.carriedHit) tallySkill(playerEntity, WEAPON_SKILL[weaponRig.playerWeapon.weapon?.name] ?? SKILLS.HandToHand);
+            if (r?.carriedHit) tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
             if (r) surfacePlayer();
+            // AUDIT 23 (C9) - WeaponManager.cs:423-424: the no-enemy
+            // swing sound at the hit frame (the rig's entry whoosh is
+            // gone); a swing that found neither guard nor civilian.
+            else audio.playOneShot(swingSoundFor(weaponRig.playerWeapon.weapon), 1.1);
           }).catch((e) => console.error('[civil]', e));
         }
       }

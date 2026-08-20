@@ -57,7 +57,7 @@ void main() {
   outColor = vec4(uColor.rgb, uColor.a * vFade);
 }`;
 
-export const PRECIP_MAX_PARTICLES = 1000; // Rain_Particles maxNumParticles
+export const PRECIP_MAX_PARTICLES = 1000; // Rain_Particles_Splash maxNumParticles (AUDIT 23: the sibling named Rain_Particles carries 10000; this cap anchors the splash object)
 
 const RAIN = {
   count: PRECIP_MAX_PARTICLES,

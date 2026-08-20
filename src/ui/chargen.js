@@ -1426,7 +1426,7 @@ export class ChargenFlow {
       if (action === 'up') this.reflexes = Math.max(0, this.reflexes - 1);
       else if (action === 'down') this.reflexes = Math.min(REFLEX_COUNT - 1, this.reflexes + 1);
       else if (action === 'confirm') this._enterSummary();   // U16: SetSummaryWindow (:551-558)
-      else if (action === 'back') { this.state = 'skills'; this.skillCursor = 0; }
+      else if (action === 'back') this.state = 'skills';   // AUDIT 23 (ui-chargen-1): the spinner cursor survives, as SkillsRollout's restore does
       return;
     }
     if (s === 'summary') {

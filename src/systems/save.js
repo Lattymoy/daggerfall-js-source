@@ -4,11 +4,14 @@
 // (stats, skills, uses, health/magicka, level sums, career by
 // index + data), items, known spells (by SPELLS.STD index),
 // active effects, the crime + per-region legal reputation, the
-// classic clock, and position. WORLD state
-// (foes, loot piles, action states, doors) is FLAGGED - dungeons
-// re-derive from their location on load; the world snapshot pends
-// its slice. Versioned envelope; a mismatch refuses loudly.
+// classic clock, and position. WORLD state SHIPPED at S12: the
+// envelope takes {world, locationKey} and the dungeon host snapshots
+// foes, piles, dropped loot, action states and door locks (AUDIT 23
+// retired the stale 'pends its slice' flag). Still open: the
+// mid-flight Move-door tween fields (Ledger C) and cross-location
+// travel-on-load. Versioned envelope; a mismatch refuses loudly.
 
+import { clampLegalReputations } from './court.js';   // AUDIT 23 (C4)
 import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
 import { goldStack } from './inventory.js';   // AUDIT 17f
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
@@ -178,6 +181,10 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
     return null;
   }
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
+  // AUDIT 23 (C4/guilds-4): DFU clamps every region's LegalRep right
+  // after restoring it (SerializablePlayer -> ClampLegalReputations) -
+  // a save carrying a beyond-band value loads back into the band.
+  clampLegalReputations(entity);
   entity.stats = { ...snap.stats };
   // Pre-S15 saves carry no fatigue: default to rested (MaxFatigue =
   // (Str + End) x 64) - the additive-field shape DFU's serializer

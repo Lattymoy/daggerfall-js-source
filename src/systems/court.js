@@ -4,7 +4,8 @@
 //
 // - Legal reputation is PER REGION (regionData[].LegalRep), init 0;
 //   each crime charges reputationLossPerCrime (FALL.EXE values; the
-//   People-faction half-delta FLAGGED to the save-side clone).
+//   People-faction half-delta SHIPPED against the S25 store in this
+//   file - AUDIT 23 retired the stale flag).
 // - Surrender: health -> 1 first; legalRep < -20 refuses an
 //   involuntary surrender; < -20 or > 0 goes straight to court; else
 //   a DFRandom coin flip refuses involuntary; voluntary always lands
@@ -110,9 +111,10 @@ export function clampLegalReputations(player) {
  * a crime the player did not answer for, and the port had none of it.
  *
  * Note the asymmetry, which is DFU's: legal reputations are nudged by
- * direct increment, faction reputations go through ChangeReputation - so
- * the faction side PROPAGATES through allies and enemies and the legal
- * side does not.
+ * direct increment, faction reputations go through ChangeReputation -
+ * NON-propagating on both sides (AUDIT 23 corrected the old claim that
+ * the faction half fanned out; DFU's call passes no propagate flag).
+ * The asymmetry is only direct-increment vs clamped ChangeReputation.
  */
 export function normalizeReputations(player, store) {
   clampLegalReputations(player);

@@ -21,8 +21,10 @@
 import { SKILLS, skillValue } from './skills.js';
 import { effectCost, effectSchool, TARGET_COST_MULT, CAST_COST_FLOOR } from './spellcost.js';
 
-/** DFCareer.SpellAbsorptionFlags (:361-368). The one home for these
- *  values - specialAdvantages.js maps the picker's rows onto it. */
+/** DFCareer.SpellAbsorptionFlags (:361-368). specialAdvantages.js
+ *  mints its own ABSORPTION_FLAGS copy of the same enum (AUDIT 23
+ *  corrected the 'one home' claim; the two are value-identical and
+ *  pinned). */
 export const SPELL_ABSORPTION = Object.freeze({ None: 0, InLight: 1, InDarkness: 2, Always: 4 });
 
 /** GetEffectCastingCost (:1238-1252): the effect's own spellpoint

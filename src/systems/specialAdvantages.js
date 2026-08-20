@@ -2,7 +2,7 @@
 // (CreateCharSpecialAdvantageWindow.cs, MIT, Daggerfall Workshop -
 // original author Numidium). The pure laws: the two primary lists,
 // the secondary lists each primary opens, the three "only one of
-// these" limits, the incompatible-pair rules, the 53-entry difficulty
+// these" limits, the incompatible-pair rules, the 50-entry difficulty
 // table, and ParseCareerData writing the picks onto a career.
 //
 // U20a shipped the builder with `difficultyPoints(hp, advantageAdjust,
@@ -109,7 +109,8 @@ export const LABELS = Object.freeze({
 export const labelFor = (key) => LABELS[key] ?? '';
 
 // ---- the difficulty table (InitializeAdjustmentDict, :1031-1085) ----
-// 53 entries. Keyed `primary + secondary` except for the eight
+// 50 entries (AUDIT 23: an earlier reading recorded 53). Keyed
+// `primary + secondary` except for the eight
 // primaries whose secondary does not change the cost.
 export const DIFFICULTY = Object.freeze({
   acuteHearing: 1, adrenalineRush: 4, athleticism: 4,

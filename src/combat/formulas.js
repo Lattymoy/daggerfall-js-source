@@ -7,10 +7,10 @@
 // Entity shape (ours): { level, health, maxHealth, armor, skills
 // (flat, per SetEnemyCareer), stats: {strength, agility, luck},
 // attackModifierFlags (career CFG byte), isPlayer }.
-// FLAGGED interims (all documented at their site): adrenaline rush
-// (career ability bitfield decode - Systems), biography adjustments
-// (chargen), per-part armor (equipment E4) - target.armor is the
-// scalar SetEnemyCareer fills every slot with, so [part] == armor.
+// FLAGGED interims (all documented at their site): proficiency
+// modifiers and the enchantment channels. (AUDIT 23: adrenaline rush,
+// biography adjustments and per-part armor SHIPPED - the first two
+// live in this very file.)
 
 import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source (EnemyAttack.cs:30)
 import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback units
@@ -438,7 +438,9 @@ export const KB_UNIT = CLASSIC_TO_UNITY_RATIO / 10;   // 3.95
 
 /** GetEnemyEntityWeightInClassicUnits, verbatim shape: monster =
  *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
- *  + Items.GetWeight()*4 term pends item weights (the items arc). */
+ *  + (int)(Items.GetWeight() * 4) term is still absent - item weights
+ *  themselves SHIPPED (AUDIT 23 corrected the stale blocker); the
+ *  term needs the call sites to hand the foe's item list through. */
 export function enemyWeightClassicUnits(isClass, gender, mobileWeight) {
   if (!isClass) return mobileWeight ?? 0;
   return gender === 'female' ? 240 : 350;

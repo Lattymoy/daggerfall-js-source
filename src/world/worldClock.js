@@ -111,9 +111,13 @@ export function sunDirection(minuteOfDay) {
   return new Float32Array([Math.cos(x), Math.sin(x), 0]);
 }
 
-/** Exterior ambient color for the time of day (nightAmbientScale default 1). */
-export function exteriorAmbient(minuteOfDay, nightAmbientScale = 1) {
-  const s = daylightScale(minuteOfDay);
+/** Exterior ambient color for the time of day (nightAmbientScale
+ *  default 1). AUDIT 23 (wts-2) - PlayerAmbientLight.cs:120-125: the
+ *  day lerp factor is daylightScale x the weather sunlight scale
+ *  (WeatherManager.SetSunlightScale's 0.25 storm / 0.45 rain-snow /
+ *  0.65 overcast-fog-winter), so a storming noon reads near-night. */
+export function exteriorAmbient(minuteOfDay, nightAmbientScale = 1, weatherScale = 1) {
+  const s = daylightScale(minuteOfDay) * weatherScale;
   const out = new Float32Array(3);
   for (let i = 0; i < 3; i++) {
     const night = EXTERIOR_NIGHT_AMBIENT[i] * nightAmbientScale;

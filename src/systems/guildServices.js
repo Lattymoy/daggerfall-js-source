@@ -218,14 +218,73 @@ function templeCanAccessService(guild, membership, service) {
   }
 }
 
-export function canAccessService(guild, membership, service) {
-  return guild.divine
-    ? templeCanAccessService(guild, membership, service)
-    : baseCanAccessService(membership, service);
+/** AUDIT 23 (guilds-1): the four subclass overrides the port had
+ *  dropped, each a verbatim switch. Note every one REPLACES the base
+ *  switch entirely - DFU's overrides do not fall through to Guild.cs,
+ *  so MagesGuild loses the base's Repair/Donate/CureDisease arms and
+ *  the Thieves/Brotherhood lose Identify, exactly as here. */
+function magesCanAccessService(membership, service) {
+  const rank = membership?.rank ?? -1;
+  switch (service) {   // MagesGuild.cs:134-161
+    case 'Training': return isMember(membership);
+    case 'Quests': return true;
+    case 'Identify': return true;
+    case 'BuySpellsMages': return true;
+    case 'MakeSpells': return isMember(membership);
+    case 'BuyMagicItems': return rank >= 3;
+    case 'MakeMagicItems': return rank >= 5;
+    case 'Teleport': return rank >= 8;
+    case 'DaedraSummoning': return rank >= 6;
+    case 'BuySoulgems': return rank >= 4;
+    default: return false;
+  }
+}
+function thievesCanAccessService(membership, service) {
+  const rank = membership?.rank ?? -1;
+  switch (service) {   // ThievesGuild.cs:146-162
+    case 'Training': return isMember(membership);
+    case 'Quests': return true;
+    case 'SellMagicItems': return rank >= 2;
+    case 'Spymaster': return rank >= 4;
+    default: return false;
+  }
+}
+function brotherhoodCanAccessService(membership, service) {
+  const rank = membership?.rank ?? -1;
+  switch (service) {   // DarkBrotherhood.cs:151-171
+    case 'Training': return isMember(membership);
+    case 'Quests': return true;
+    case 'BuyPotions': return rank >= 1;
+    case 'MakePotions': return rank >= 3;
+    case 'BuySoulgems': return rank >= 5;
+    case 'Spymaster': return rank >= 7;
+    default: return false;
+  }
+}
+function knightlyCanAccessService(membership, service) {
+  switch (service) {   // KnightlyOrder.cs:176-189
+    case 'Quests': return true;
+    case 'ReceiveArmor': return isMember(membership);
+    case 'ReceiveHouse': return true;
+    default: return false;
+  }
 }
 
-/** Temple.CanAccessLibrary (:466-469); false everywhere else. */
+export function canAccessService(guild, membership, service) {
+  if (guild.divine) return templeCanAccessService(guild, membership, service);
+  if (guild.order) return knightlyCanAccessService(membership, service);
+  switch (guild.name) {
+    case 'MagesGuild': return magesCanAccessService(membership, service);
+    case 'ThievesGuild': return thievesCanAccessService(membership, service);
+    case 'DarkBrotherhood': return brotherhoodCanAccessService(membership, service);
+    default: return baseCanAccessService(membership, service);
+  }
+}
+
+/** Temple.CanAccessLibrary (:466-469) + MagesGuild.CanAccessLibrary
+ *  (:129-132, rank >= 2 - AUDIT 23 guilds-6); false everywhere else. */
 export function canAccessLibrary(guild, membership) {
+  if (guild.name === 'MagesGuild') return (membership?.rank ?? -1) >= 2;
   if (!guild.divine) return false;
   return guild.services.library <= (membership?.rank ?? -1);
 }

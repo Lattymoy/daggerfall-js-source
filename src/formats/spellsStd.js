@@ -54,6 +54,14 @@ export function readSpellsStd(bytes) {
     const icon = v.getUint8(o++);
     const index = v.getUint8(o++);
     o = start + SPELL_RECORD_SIZE;
+    // AUDIT 23 (magic-1) - EntityEffectBroker.cs:892-900: "Fix bad Free
+    // Action spell data from SPELLS.STD at runtime". Spell index 10
+    // effect 0 says Cure Paralyzation (3,2) where classic intends Free
+    // Action; DFU patches type=26/subType=-1 and so do we.
+    if (index === 10 && effects[0].type === 3 && effects[0].subType === 2) {
+      effects[0].type = 26;
+      effects[0].subType = -1;
+    }
     if (effects[0].type > -1 || effects[1].type > -1 || effects[2].type > -1) {
       spells.push({ effects, element, rangeType, cost, name, icon, index });
     }

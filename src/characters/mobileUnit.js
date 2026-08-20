@@ -262,8 +262,14 @@ export class MobileUnit {
     // override; audit 08-17) - the table stays frozen, the clock
     // overrides.
     const a = anims[this.orientation];
-    const fps = (this.basics.behaviour === 'Flying' && (this.state === 'move' || this.state === 'idle'))
+    let fps = (this.basics.behaviour === 'Flying' && (this.state === 'move' || this.state === 'idle'))
       ? FLY_ANIM_SPEED : a.fps;
+    // AUDIT 23 (characters-11) - DaggerfallMobileUnit.cs:530-534: the
+    // anim clock divides by FrameSpeedDivisor (EnemyAttack.cs:70-77
+    // mints PermanentSpeed / max(8, LiveSpeed), so a Drain-Speed foe
+    // animates slower), floored at 4 fps when a custom divisor bites.
+    const div = this.frameSpeedDivisor ?? 1;
+    if (div > 1) { fps = fps / div; if (fps < 4) fps = 4; }
     this._timer += dt;
     const stepEvery = 1 / fps;
     while (this._timer >= stepEvery) {

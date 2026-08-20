@@ -17,6 +17,7 @@
 // line at all. MiscItems is four special templates before its
 // default. The final `default:` arm catches potions (a filled glass
 // bottle) before falling back to the misc record.
+import { unitWeightInKg } from './inventory.js';   // AUDIT 23 (items-8)
 import { templateByIndex, itemBaseValue } from './itemTemplates.js';
 import { isPotion, isPotionRecipe, TEMPLATES } from './useItem.js';
 import { materialArmorValue, isShieldTemplate } from './armorMaterials.js';
@@ -118,8 +119,10 @@ export function conditionWord(item) {
 /** Weight() (:144-148): the STACK's weight, printed with no decimals
  *  when it is whole and two when it is not. */
 export function weightString(item) {
-  const t = templateByIndex(item?.templateIndex);
-  const weight = (item?.weight ?? t?.weight ?? 0) * (item?.stackCount ?? 1);
+  // AUDIT 23 (items-8): weightInKg is MATERIAL-ADJUSTED (a daedric
+  // dagger is not an iron one) - the old read took the raw template
+  // weight off a field nothing ever wrote.
+  const weight = unitWeightInKg(item) * (item?.stackCount ?? 1);
   return weight % 1 === 0 ? String(weight) : weight.toFixed(2);
 }
 
@@ -178,7 +181,7 @@ export function expandItemInfo(text, item, { name = null, soul = null, potion = 
     .replaceAll('%mat', materialName(item))
     .replaceAll('%qua', conditionWord(item))
     .replaceAll('%kg', weightString(item))
-    .replaceAll('%wth', String(itemBaseValue(item)))
+    .replaceAll('%wth', String((item?.value ?? itemBaseValue(item)) * (item?.stackCount ?? 1)))   // AUDIT 23 (items-7): Worth() = value x stackCount
     .replaceAll('%wdm', item?.group === 'Weapons' ? weaponDamageString(item) : '')
     .replaceAll('%mod', item?.group === 'Armor' ? armourModString(item) : '');
 }

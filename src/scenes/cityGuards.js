@@ -31,6 +31,7 @@
 // one-hit Murder + the response, striking a wandering guard NPC is
 // Assault + an on-the-spot conversion (WeaponManager verbatim).
 
+import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
@@ -67,7 +68,11 @@ export const GUARD_SEEN_ANGLE = 95;            // an NPC facing the player withi
 export const GUARD_FALLBACK_MIN_DIST = 12.8;   // CreateFoeSpawner ring
 export const GUARD_FALLBACK_MAX_DIST = 51.2;
 
-export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute = () => 0, rand = Math.random }) {
+export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute, rand = Math.random }) {
+  // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
+  // let a guard's poisoned hit anchor at minute 0, and the next world
+  // tick (absolute clock ~523,530) caught the whole course up at once.
+  if (typeof currentMinute !== 'function') throw new Error('createCityGuards needs currentMinute (the classic-minute clock)');
   const guards = [];       // { mobile, ai, attack, entity, batch, tex, archive, dead, _halted }
   const corpseBatches = [];
   let _career = null;      // CLASS18.CFG, fetched once
@@ -106,6 +111,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     const ai = new EnemyAI(collider, [pos[0], pos[1] + 0.1, pos[2]], yaw, {
       liveSpeed: entity.liveSpeed,
       seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
+      playerInside: false,   // AUDIT 23 (characters-7): EnemySenses.cs:269 - exterior despawn band
     });
     // MakeEnemyHostileToAttacker + GiveUpTimer *= 3, verbatim: a
     // crime-responding guard pursues without having seen the player.
@@ -257,6 +263,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         g._halted = true;
         audio?.play3d?.(ENEMY_BASICS[GUARD_MOBILE_TYPE].barkSound, g.ai.feet, 1.0, { maxDistance: 16 });
       }
+      g.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((g.entity.stats?.speed ?? 50) / Math.max(8, liveStat(g.entity, 'speed'))));   // AUDIT 23 (characters-11)
       const events = g.attack.update(dt, g.ai, playerFeet);
       void events;
       const mstate = g.attack.machine.state;

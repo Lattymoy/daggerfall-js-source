@@ -15,7 +15,8 @@
 //     is load-bearing for RNG-stream parity: the FEMALE path never
 //     draws the 75% roll.
 //   - FullName: first + " " + surname when the surname is non-empty
-//     (Redguard/Nord-female surname paths return '').
+//     (only REDGUARD names carry no surname - Surname(Nord) has no
+//     gender arm and always mints the 0+1+'sen' form; AUDIT 23).
 //   - MonsterName (S17): the BANK pick (Monster1 or Monster2 "for
 //     now") rides UnityEngine.Random in DFU - a uniform roll here
 //     (the Ledger A engine-PRNG rule); every PART draw stays on

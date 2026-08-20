@@ -13,9 +13,10 @@ import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
 import { hasActiveEffect } from '../systems/effects.js';
 import { skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
+import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, worldMinutes, setWorldMinutes, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
-import { liveStat } from '../systems/statMods.js';
+import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer } from '../characters/playerEntity.js';
@@ -409,7 +410,18 @@ export function outdoorFogColor(fogSettings, skyClearColor) {
  * This is the per-host carrier: it owns the minute accumulator and the
  * sink set, so a host adds the whole tick with one call.
  */
-export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } = {}) {
+/** AUDIT 23 (entity-1) - DaggerfallRestWindow.cs:729-732: skills raise
+ *  when the rest-finished popup CLOSES, and only there (PlayerEntity.
+ *  Update runs no advancement; DaggerfallTravelPopUp.cs:380 is the
+ *  other site, unported). Hosts hand this to their RestWindow deps as
+ *  onRestFinished. */
+export function raiseAtRestEnd(entity, { say = () => {}, onLevelUp = null, rolls = Math.random } = {}) {
+  const raised = raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp) ?? [];
+  for (const id of raised) say(`Your ${SKILL_NAMES[id]} skill has improved.`);
+  return raised;
+}
+
+export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, onExhausted = null } = {}) {
   // AUDIT 21 F2: a VIEW on the one world clock, not an owner. This used to
   // close over its own accumulator, so the three hosts that build a ticker -
   // world, exterior, worldModes - each counted from zero and only while
@@ -423,8 +435,16 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } 
     heal: (n) => { if (n > 0) entity.health = Math.min(entity.maxHealth ?? Infinity, (entity.health ?? 0) + n); },
     drainMagicka: (n) => { if (n > 0) entity.magicka = Math.max(0, (entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + n); },
-    drainFatigue: (n) => { if (n > 0) entity.fatigue = Math.max(0, (entity.fatigue ?? 0) - n); },
-    restoreFatigue: (n) => { if (n > 0) entity.fatigue = (entity.fatigue ?? 0) + n; },
+    drainFatigue: (n) => {
+      if (n <= 0) return;
+      entity.fatigue = Math.max(0, (entity.fatigue ?? 0) - n);
+      // AUDIT 23 (C5: hosts-5 = entity-3) - DaggerfallEntity.cs:360-366:
+      // EVERY fatigue write clamps and, at 0 with health left, raises
+      // OnExhausted - the collapse was dungeon-only; the host passes
+      // its presenter (rest-hour-or-death via exhaustionOutcome).
+      if (entity.fatigue <= 0 && (entity.health ?? 0) > 0) onExhausted?.();
+    },
+    restoreFatigue: (n) => { if (n > 0) entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + n); },   // C5: the MaxFatigue clamp
     say,
   };
   return {
@@ -433,15 +453,14 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null } 
       const r = tickPlayerMinutes({
         entity, classicMinutes: worldMinutes(), dt, sinks, activity,
         fatigueMultiplier: fatigueLossMultiplierFor(entity),
-        say, onLevelUp,
+        say,
       });
       setWorldMinutes(r.classicMinutes);
-      for (const id of r.raised) say(`Your ${SKILL_NAMES[id]} skill has improved.`);
       return r;
     },
     /** U24: DaggerfallDateTime.RaiseTime. Guild training eats three
      *  hours of the day, and a jump that only moved the counter would
-     *  skip every magic round, disease day and skill-advancement pass
+     *  skip every magic round and disease day
      *  inside it. Running the SAME tick with the equivalent dt is what
      *  makes the jump real: DFU's clock and its per-minute laws are
      *  the same loop, so a rest, a training session and a fast travel

@@ -121,7 +121,7 @@ const DFU_EFFECT_COSTS = [
   ['33,1', 26, null, [80, 140, 60], null],   // Pacify-Undead
   ['33,2', 26, null, [80, 140, 60], null],   // Pacify-Humanoid
   ['33,3', 26, null, [60, 120, 36], null],   // Pacify-Daedra
-  ['34,255', 26, [20, 8, 0], [40, 60, 0], null],   // CharmEffect
+  ['34,255', 26, null, [40, 60, 0], null],   // CharmEffect - AUDIT 23 (magic-6): DurationCosts commented out in DFU (:42)
   ['35,255', 25, [28, 8, 0], null, [80, 60, 0]],   // Shield
   ['39,0', 26, [20, 8, 200], null, null],   // DetectMagic
   ['39,1', 26, [20, 8, 200], null, null],   // DetectEnemy

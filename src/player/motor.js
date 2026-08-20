@@ -83,6 +83,7 @@ export const CROUCH_EYE_HEIGHT = 0.8;
 // timerResetAction() once camTimer >= timerMax - the request RETRIES
 // every frame for 0.10 s and is only then forgotten.
 export const HEIGHT_TIMER_FAST = 0.10;
+export const HEIGHT_TIMER_MEDIUM = 0.25;   // AUDIT 23 (motor-2): the forced swim-crouch clock (PlayerHeightChanger.cs:71)
 
 /** PlayerSpeedChanger.GetWalkSpeed, verbatim (audit 2026-08-16e F1):
  *  drag = 0.5 x (100 - max(30, LiveSpeed)) rides the WALK base only -
@@ -195,7 +196,7 @@ export class PlayerMotor {
    *  holds the crouched rest: DFU's DoDismount fallback lerps stale
    *  prev/target fields there, which is the same scaffolding. */
   _eyeLevel() {
-    const t = Math.min(this.heightTimer / HEIGHT_TIMER_FAST, 1);
+    const t = Math.min(this.heightTimer / (this.heightTimerMax ?? HEIGHT_TIMER_FAST), 1);
     if (this.heightAction === 'crouch') return EYE_HEIGHT + (CROUCH_EYE_HEIGHT - EYE_HEIGHT) * t;
     if (this.heightAction === 'stand' && !this.crouching) return CROUCH_EYE_HEIGHT + (EYE_HEIGHT - CROUCH_EYE_HEIGHT) * t;
     return this.crouching ? CROUCH_EYE_HEIGHT : EYE_HEIGHT;
@@ -245,7 +246,11 @@ export class PlayerMotor {
     // `if (grounded)` and returns false otherwise (PlayerMotor.cs:
     // 113-125), so an AIRBORNE player is never "standing still" no
     // matter how empty the input is.
-    const standing = this.grounded && !input.forward && !input.strafe && !input.up && !input.down;
+    // AUDIT 23 (motor-1) - PlayerMotor.cs:121: IsStandingStill reads
+    // moveDirection.x/z only - Jump/FloatUp/FloatDown are not movement,
+    // so holding Jump in place keeps the stealth half-speed benefit.
+    const standing = this.grounded && !input.forward && !input.strafe;
+    this.standing = standing;   // the hosts' IsRunning && !IsStandingStill read
     if (standing) { this.movingLessThanHalfSpeed = true; return; }
     // Crouched compares GetWalkSpeed/2; the else compares
     // GetBaseSpeed/2, and GetBaseSpeed NOT crouched is the same
@@ -276,19 +281,35 @@ export class PlayerMotor {
    *  gets a nearly instant camera, DFU's own arithmetic. The eye path
    *  lives in _eyeLevel. */
   _heightAction(dt, input) {
-    if (input.crouch) this.heightAction = this.crouching ? 'stand' : 'crouch';
+    // DecideHeightAction's arm ORDER (:173-207). AUDIT 23 (motor-2):
+    // the crouch press only toggles out of water or on solid ground
+    // ((!swimming || IsGrounded) && pressedCrouch), and a free swim
+    // FORCES the crouched capsule on the medium clock - DFU always
+    // shrinks a swimmer; surfacing un-forces it the same way.
+    if (input.crouch && (!this.swimming || this.grounded)) {
+      this.heightAction = this.crouching ? 'stand' : 'crouch';
+      this.heightTimerMax = HEIGHT_TIMER_FAST;
+      this.forcedSwimCrouch = false;
+    } else if (this.swimming && !this.forcedSwimCrouch && !this.grounded) {
+      if (!this.crouching) { this.heightAction = 'crouch'; this.heightTimerMax = HEIGHT_TIMER_MEDIUM; }
+      this.forcedSwimCrouch = true;
+    } else if (!this.swimming && this.forcedSwimCrouch) {
+      if (this.crouching) { this.heightAction = 'stand'; this.heightTimerMax = HEIGHT_TIMER_MEDIUM; }
+      this.forcedSwimCrouch = false;
+    }
     if (!this.heightAction) return;
     this.heightTimer += dt;   // timerTick (:442-447): every pending action runs the one clock
+    const max = this.heightTimerMax ?? HEIGHT_TIMER_FAST;
     if (this.heightAction === 'crouch') {
-      if (this.heightTimer >= HEIGHT_TIMER_FAST) {
+      if (this.heightTimer >= max) {
         this.crouching = true;   // the flip IS the end of DoCrouch
         this._heightReset();
       }
     } else if (this.collider.penetrationAt(this.pos, CAPSULE_HEIGHT) < 0.03) {
       // CanStand: the STANDING capsule must fit at the current feet.
       this.crouching = false;    // DoStand flips at the START; the eye keeps lerping
-      if (this.heightTimer >= HEIGHT_TIMER_FAST) this._heightReset();
-    } else if (this.heightTimer >= HEIGHT_TIMER_FAST) {
+      if (this.heightTimer >= max) this._heightReset();
+    } else if (this.heightTimer >= max) {
       this._heightReset();       // the blocked request is forgotten past the budget
     }
   }
@@ -297,6 +318,7 @@ export class PlayerMotor {
   _heightReset() {
     this.heightAction = null;
     this.heightTimer = 0;
+    this.heightTimerMax = HEIGHT_TIMER_FAST;
   }
 
   /** The RENDER-frame entry: accumulates dt and runs fixed physics

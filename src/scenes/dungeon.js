@@ -159,6 +159,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
   addEventListener('keydown', (e) => {
     // The input map (ui/input.js) owns all bindings.
     const dir = () => ({ eye: cam.pos, dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)] });
+    // AUDIT 23 (hosts-6) - AUDIT 17e F41's own law, which only the
+    // exterior hosts carried: swallowing the browser reload is not
+    // optional. F5 under a keyed overlay (rest, level-up, chargen)
+    // fell through routeKey's overlay branch and reloaded the page.
+    if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
     if (routeKey(e, ctx, dir, (p) => player.spawn(p[0], p[1], p[2]))) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)
   });
   addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
@@ -329,6 +334,18 @@ export async function bootDungeon(canvas, renderer, params, status) {
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
     renderer.drawBillboards(ctx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    // AUDIT 23 (hosts-9 = audio-3) - SongManager.cs:193: Update() runs
+    // every frame, windows open or not - THE MUSIC CONTEXT IS FED
+    // BEFORE THE MODAL RETURN (AUDIT 21 F1's law, which this host
+    // alone skipped: the boot chargen played no music and a song
+    // ending under any window never re-picked). Fed ABOVE the gate so
+    // both the overlay and gameplay arms ride the same call.
+    musicDirector.update({
+      inside: true, insideDungeon: true, insideDungeonCastle: ctx.inCastle ?? false,
+      gameDays: Math.floor(ctx.classicMinutes / 1440),
+      dungeonKey: ctx.musicSeed,
+      locationIndex: dfLocation?.locationIndex ?? -1,
+    });
     if (ctx.uiOverlayActive) {
       ctx.tickOverlay(dt); ctx.drawOverlay(canvas);
       // U26: the shot counter advances HERE TOO. This early return
@@ -349,14 +366,6 @@ export async function bootDungeon(canvas, renderer, params, status) {
     frames++;
     if (shotMode) window.__frame = frames;
     if (shotMode && frames === 5) window.__shotReady = true;
-    musicDirector.update({
-      // AUDIT 21 (music lane, F3): the Castle arm, live off the block the
-      // player stands in - both call sites had it hardcoded false.
-      inside: true, insideDungeon: true, insideDungeonCastle: ctx.inCastle ?? false,
-      gameDays: Math.floor(ctx.classicMinutes / 1440),
-      dungeonKey: ctx.musicSeed,
-      locationIndex: dfLocation?.locationIndex ?? -1,
-    });
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

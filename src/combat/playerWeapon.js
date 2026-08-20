@@ -10,9 +10,10 @@
 //   - the strike itself rides the SHARED weaponStates machine
 //     (drag-to-swing gestureDirection + ATTACK_THRESHOLD, the combat
 //     layer's ported input)
-// INTERIM (loud): the equipped weapon is an Iron Dagger until the
-// items/inventory arc - the template index is explicit here so the
-// real item system swaps in as plumbing. Racial modifiers are LIVE
+// INTERIM_WEAPON is the PRE-CHARGEN fallback only (AUDIT 23: the
+// items/inventory arc shipped and the rig binds the entity's worn
+// weapon per frame - the old 'until the items arc' claim retired).
+// Racial modifiers are LIVE
 // (AUDIT 18 ported CalculateRacialModifiers into formulas.js, which
 // reads the raceId chargen writes); proficiency modifiers pend the
 // career proficiency flags. Backstab is threaded by the host that
@@ -93,6 +94,19 @@ export class PlayerWeapon {
    *  fire when travel crosses ATTACK_THRESHOLD of the longest screen
    *  dimension. Returns the strike state when an attack starts. */
   gesture(dx, dy, held, dt, longestDim) {
+    // AUDIT 23 (combat-2) - WeaponManager.cs:355-358: a bow never
+    // tracks a swing; the attack input itself fires, forced to
+    // StrikeDown (the BowDrawback-off classic instant shot - the
+    // machine's StrikeUp draw half is that setting's other arm) and
+    // only after the button was RELEASED since the last shot
+    // (lastAttackHand == Hand.None).
+    if (this.machine.isBow) {
+      const rise = held && !this._bowHeld;
+      this._bowHeld = held;
+      if (rise && machineAttack(this.machine, 'StrikeDown')) return 'StrikeDown';
+      return null;
+    }
+    this._bowHeld = false;
     if (!held) { this._tracking = false; this._gx = 0; this._gy = 0; this._gt = 0; return null; }
     if (!this._tracking) { this._tracking = true; this._gx = 0; this._gy = 0; this._gt = 0; }
     this._gx += dx; this._gy += dy; this._gt += dt;
@@ -113,6 +127,9 @@ export class PlayerWeapon {
    *  no drag travel, so the gesture seam alone could never swing -
    *  Mac's 2026-08-14 live report). */
   clickAttack(rolls = Math.random) {
+    // combat-2: the bow ignores the random-direction roll too - DFU's
+    // click arm is bypassed by the forced bow direction (:355-358).
+    if (this.machine.isBow) return machineAttack(this.machine, 'StrikeDown') ? 'StrikeDown' : null;
     const DIRS = ['UpRight', 'Left', 'Right', 'DownLeft', 'Down', 'DownRight'];
     const strike = DIRECTION_TO_STRIKE[DIRS[Math.floor(rolls() * DIRS.length)]];
     return machineAttack(this.machine, strike) ? strike : null;
@@ -126,6 +143,11 @@ export class PlayerWeapon {
     // per step, never frozen at construction.
     const t = weaponTypeForItem(this.weapon);
     this.machine.isUnarmed = t === WEAPON_TYPES.Melee || t === WEAPON_TYPES.Werecreature;
+    // AUDIT 23 (combat-2): the bow half of the machine (0.0625 tick,
+    // 7-frame release, bowSound frame 4, hit frame 5, GetBowCooldownTime)
+    // was shipped but nothing ever set isBow - bows swung on the melee
+    // clock. Read per step, exactly like the unarmed gate above.
+    this.machine.isBow = t === WEAPON_TYPES.Bow;
     return machineStep(this.machine, dt, this.liveSpeed);
   }
 
@@ -145,13 +167,16 @@ export class PlayerWeapon {
   }
 
   /**
-   * Resolve the hit frame against foes. Verbatim single-target rule
-   * with swing + material paths through calculateAttackDamage.
+   * Resolve the hit frame against foes. AUDIT 23 (combat-6): DFU's
+   * MeleeDamage collects EVERY entity collider in the attack box
+   * passing the FOV/LOS checks and runs WeaponDamage on each
+   * (WeaponManager.cs:917 OverlapBox + :1051-1055 foreach) - the old
+   * single-target break invented a rule DFU does not have.
    * @param foes [{entity, ai}] candidates
    * @param eye player eye position
    * @param canSee (foe) => {dist, inView, losClear}
    * @param playerCombat the player entity
-   * @returns [{foe, damage}]
+   * @returns [{foe, damage}] - one entry per foe in reach
    */
   resolveHit(foes, playerCombat, canSee, rolls = Math.random, backstabOf = () => 0) {
     const results = [];
@@ -162,7 +187,6 @@ export class PlayerWeapon {
       const damage = calculateAttackDamage(playerCombat, foe.entity,
         playerAttackOptions(this.weapon, this.machine.state, backstabOf(foe), rolls));
       results.push({ foe, damage });
-      break;   // one target per swing (the ray resolves a single center)
     }
     return results;
   }

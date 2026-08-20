@@ -85,9 +85,17 @@ test('U25: Condition walks the thresholds, and the bands are DFU\'s', () => {
 });
 
 test('U25: Weight prints the STACK, whole or to two places', () => {
-  assert.equal(weightString({ templateIndex: 0, weight: 0.25, stackCount: 4 }), '1');
-  assert.equal(weightString({ templateIndex: 0, weight: 0.25, stackCount: 3 }), '0.75');
-  assert.equal(weightString({ templateIndex: 0, weight: 2, stackCount: 1 }), '2');
+  // AUDIT 23 (items-8): %kg reads the material-adjusted weightInKg off
+  // the TEMPLATE (the old `item.weight` field had no writer anywhere).
+  // Torch (247) baseWeight 0.5.
+  assert.equal(weightString({ templateIndex: 247, stackCount: 4 }), '2');
+  assert.equal(weightString({ templateIndex: 247, stackCount: 3 }), '1.50');
+  assert.equal(weightString({ templateIndex: 247, stackCount: 1 }), '0.50');
+  // ...and the material law reaches the panel: an Iron and a Daedric
+  // dagger BOTH print 0.5 kg (Round-half-even banks 2.5 -> 2), while
+  // a Dwarven war axe is heavier than an Iron one.
+  assert.equal(weightString({ group: 'Weapons', templateIndex: 113, material: 0, stackCount: 1 }),
+    weightString({ group: 'Weapons', templateIndex: 113, material: 9, stackCount: 1 }));
 });
 
 test('U25: WeaponDamage and ArmourMod are the two computed macros', () => {

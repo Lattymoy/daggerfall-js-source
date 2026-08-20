@@ -71,6 +71,7 @@ export const ACTION_FLAGS = Object.freeze({
   Hurt25: 0x19, Poison: 0x1a, Unknown27: 0x1b, DrainMagicka: 0x1c,
   Dialogue: 0x1d, Activate: 0x1e, SetGlobalVar: 0x1f, Unknown32: 0x20,
   Unknown50: 0x32, DoorText: 0x63,   // audit 2026-08-16: DFBlock defines both; missing here broke Enum.IsDefined parity (raw 0x32/0x63 fell to None)
+  Unknown100: 0x64,   // AUDIT 23 (wa-1): DFBlock.cs:748 - defined, delegate-less (acts as None), on 2 objects
 });
 
 /** The movement family DaggerfallAction routes to Move (P2/P5). */

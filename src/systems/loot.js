@@ -21,7 +21,7 @@
 import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { dice100 } from '../combat/formulas.js';
 import { goldStack } from './inventory.js';
-import { ITEM_TEMPLATES } from './itemTemplates.js';
+import { ITEM_TEMPLATES, mintCondition } from './itemTemplates.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 
 // LootChanceMatrix rows, verbatim (21 keys).
@@ -134,7 +134,7 @@ export function generateRandomLoot(matrix, who, rolls = Math.random) {
   if (gold > 0) items.push(goldStack(gold));
   const halving = (chance, make) => {
     let c = chance;
-    while (dice100(Math.trunc(c), rolls())) { items.push(named(make())); c *= 0.5; }
+    while (dice100(Math.trunc(c), rolls())) { items.push(mintCondition(named(make()))); c *= 0.5; }   // AUDIT 23 (items-5)
   };
   halving(matrix.WP, () => createRandomWeapon(level, rolls));
   halving(matrix.AM, () => createRandomArmor(level, rolls));
@@ -191,7 +191,10 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
   else base = { group: 'Jewellery', templateIndex: pick(ITEM_GROUPS.Jewellery, rolls) };
   // The regular name is replaced by the magic name; enchantments ride
   // raw; condition = uses. Item VALUE from enchantment costs is
-  // FLAGGED to the economy slice (shops).
+  // FLAGGED to the ENCHANTMENT-EFFECTS slice (the shops themselves
+  // shipped at E1-E3; AUDIT 23 re-routed the stale pointer - a magic
+  // item still sells at its mundane base until the enchantment cost
+  // sum is ported).
   return {
     ...base,
     name: magicItem.name,

@@ -81,8 +81,10 @@ export const MYSTICISM_EFFECTS = Object.freeze({
 /** NOT ONE of the ten supports magnitude. */
 export const SUPPORTS_MAGNITUDE = false;
 
-/** Every Mysticism effect is Magic-element only (ElementFlags_MagicOnly)
- *  and casts from the Spell Maker. */
+/** Eight Mysticism effects are Magic-element only (ElementFlags_
+ *  MagicOnly); Silence and SoulTrap are ElementFlags_All in DFU
+ *  (AUDIT 23 corrected the 'every effect' claim). All cast from the
+ *  Spell Maker. */
 export const MYSTICISM_ELEMENT_FLAG = EFFECT_FLAGS.Magic;
 
 export const isMysticism = (e) => Object.values(MYSTICISM_EFFECTS)

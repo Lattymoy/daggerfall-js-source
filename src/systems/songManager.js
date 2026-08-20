@@ -485,8 +485,11 @@ export function musicEnvironment({
  *  musicEnvironment is a pure function and cannot "leave the field alone", so
  *  the HOLD lives here: null means DFU wrote nothing, and the previous
  *  environment stands. Anything else is a real answer, including the first
- *  frame's (where there is no previous and Wilderness is DFU's own default
- *  for an unset context). */
+ *  frame's. AUDIT 23 (audio-10): DFU's unset struct default is CASTLE
+ *  (the enum's first member), not Wilderness - the port's Wilderness
+ *  fallback is unreachable by construction (every frame resolves an
+ *  environment before this runs), so the difference cannot bite; it
+ *  is recorded here rather than emulated. */
 export function holdEnvironment(next, previous) {
   return next === null || next === undefined ? (previous ?? MUSIC_ENV.Wilderness) : next;
 }

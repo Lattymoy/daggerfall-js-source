@@ -39,9 +39,10 @@
 // (name/weight/value - DFU's 1016 info text PENDS).
 // AUDIT 17e F39 / RETIRING A FLAG DELETES THE SENTENCE: this header
 // still said Equip and equip-after-transfer were FLAGGED after U8g
-// shipped both. STILL OPEN here: Use mode (UseItem / the
-// IsLightSource branch of an Equip click), and wagon/gold as
-// consumed no-ops (no wagon owned; letter-of-credit pends).
+// shipped both. STILL OPEN here: the WAGON (no wagon owned;
+// letter-of-credit pends). Use mode, the real 1016 info text and the
+// IsLightSource equip branch shipped at U25 (AUDIT 23 trimmed the
+// stale list).
 
 import { loadImg, nativeMetrics, drawImg, drawImgSub, drawImgCrop, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U25

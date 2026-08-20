@@ -74,8 +74,9 @@ const CLIP_ID = Object.freeze({
  *  The CONSUMER is FormulaHelper.SavingThrow's player block
  *  (:1463-1476), which reads all four through SpellHasFlags BEFORE
  *  the career tolerance folds and ASSIGNS savingThrow = 100 for an
- *  immunity. That block lives in src/systems/spellcast.js and is not
- *  written yet - AUDIT 18 routed it to that file's owner. */
+ *  immunity. That block SHIPPED in src/systems/spellcast.js (:80-86
+ *  reads all four channels through spellHasFlags - AUDIT 23 corrected
+ *  the stale 'not written yet' routing note). */
 const RACE_EFFECT_FLAGS = Object.freeze({
   Breton: { resistanceFlags: 2 },     // EffectFlags.Magic
   Nord: { resistanceFlags: 16 },      // EffectFlags.Frost

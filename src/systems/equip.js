@@ -15,6 +15,7 @@
 // when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 // enchantment start/stop payloads (no enchanted items yet).
 
+import { mintCondition } from './itemTemplates.js';   // AUDIT 23
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES } from '../characters/equipRules.js';
 import { createEquipTable, getItemHands as handsOf, ITEM_HANDS } from '../characters/equipTable.js';
@@ -174,7 +175,7 @@ export function rebuildEquipState(entity) {
 export function seedStartingEquipment(entity) {
   if (entity.equip || (entity.items ?? []).length) return;
   entity.items = entity.items ?? [];
-  const dagger = { group: 'Weapons', templateIndex: 113, name: 'Dagger', material: 0, flags: 0x10, minDamage: 1, maxDamage: 6 };
+  const dagger = mintCondition({ group: 'Weapons', templateIndex: 113, name: 'Dagger', material: 0, flags: 0, minDamage: 1, maxDamage: 6 });   // AUDIT 23 (items-13/C13): no port site mints bit 0x10 (the claim is true again); items-5 condition
   entity.items.push(dagger);
   equipItem(entity, dagger);
 }

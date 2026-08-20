@@ -165,6 +165,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // feet on the billboard base). Facing is static until the animation
   // slice. Flag off = the C1 classic billboards, untouched.
   const charDraws = [];
+  let _raceMeshes = null;   // AUDIT 23 (hosts-16)
   let animateChars = null; // set when the voxel body builds
   const billboardBatches = [];
   const flatGroups = new Map();
@@ -189,6 +190,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     // race face list) - the pre-animate.js inline loco copy this file
     // carried is deleted; idle sway is the canonical IDLE gait.
     const raceMeshes = new Map();
+    _raceMeshes = raceMeshes;   // AUDIT 23 (hosts-16): destroy() frees these
     const rigFor = (race) => { let rg = raceMeshes.get(race); if (!rg) { rg = createCharacterRig(renderer, buildRaceCharacter(race, ramps)); raceMeshes.set(race, rg); } return rg; };
     for (const pn of people) {
       const rg = rigFor(raceOfArchive(pn.textureArchive));
@@ -279,6 +281,10 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     collider,
     destroy() {
       for (const b of billboardBatches) renderer.destroyBatch(b);
+      // AUDIT 23 (hosts-16): the ?voxelfolk per-race rigs mint real GPU
+      // meshes per context - every interior exit leaked them.
+      for (const rg of _raceMeshes?.values?.() ?? []) renderer.destroyMesh(rg.mesh);
+      _raceMeshes?.clear?.();
     },
   };
 }

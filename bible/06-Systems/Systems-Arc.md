@@ -270,8 +270,10 @@ families skip counted (the library grows one family at a time).
 BUFF_KINDS carries the classic keys verbatim - Slowfall (25,255),
 WaterWalking (31,255), ChameleonNormal (23,0) - so the starting
 spellbooks WORK: incumbent self-effects tracked by kind on
-activeEffects, a re-cast RENEWS to the fresh duration (not stacked,
-pinned), expiry clears the hasActiveEffect query. CONSUMERS THREADED
+activeEffects, a re-cast STACKS rounds onto the incumbent (the F12
+correction superseded this record's original 'renews, not stacked'
+claim - AUDIT 23 annotates it here), expiry clears the hasActiveEffect
+query. CONSUMERS THREADED
 (no globals - the first cut's function-property hook was killed for
 the same smell audits keep burying): slowfall scales the player
 motor's gravity (fallScale 0.15, fed per frame by BOTH hosts from a
@@ -1055,7 +1057,9 @@ the probe shows exactly that.
 
 Then the sources in order: the Spell Absorption EFFECT, the CAREER
 flag, and a persistent absorb state. The port has neither the effect
-nor the state yet, so both are injectable and FLAGGED; the career
+nor the state yet; the STATE alone is injectable (ctx-threaded) - the
+effect-based source has no hook in tryAbsorption at all (AUDIT 23
+magic-16 corrected the 'both are injectable' claim). The career
 branch is the live one.
 
 The career branches read `inside` and `day` - darkness is

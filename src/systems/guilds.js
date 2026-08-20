@@ -167,7 +167,10 @@ export const GUILDS = Object.freeze({
     nonMemberTitle: 'nonMember',
     femaleTitleRanks: [8],
     femaleRankTitles: { 8: 'Dark Sister' },   // DarkBrotherhood.cs:88-89
-    // DarkBrotherhood.GetPromotionMsgId - odd ranks, all pure data.
+    // DarkBrotherhood.GetPromotionMsgId - odd ranks. NOT pure data in
+    // DFU (AUDIT 23): every DB promotion first fires a
+    // DiscoverRandomLocation map reveal + a notebook note; that side
+    // effect is routed with the ThievesGuild rank-6/8 flag (Ledger C).
     promotionByRank: { 1: 6611, 3: 6612, 5: 6613, 7: 6614 },
   },
 });

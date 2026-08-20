@@ -1,8 +1,8 @@
 // The shared player entity (E3a/E3b; chargen S3 mutates it in
 // place). These initial values are the PRE-CHARGEN state only:
 // createCharacter (systems/chargen) rolls the real career the first
-// time a chargen-running context boots (dungeons today; the chargen
-// UI later fronts it everywhere). INTERIM until then, loudly: flat
+// time a chargen-running context boots (every host runs it via
+// chargenSession - AUDIT 23). INTERIM until then, loudly: flat
 // skills 30 and maxHealth 50. armor 0 until player equipment.
 // LiveSpeed lives in PlayerMotor stats.
 import { SKILL_COUNT } from '../systems/skills.js';

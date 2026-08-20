@@ -121,12 +121,15 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
 /** Apply the pending level: HP roll + the 4..6 bonus pool handed to
  *  `distribute(stats, pool)` - the U3 screen distributes by hand;
  *  the headless path uses lowest-first. */
-export function applyLevelUp(entity, distribute, rolls = Math.random) {
+export function applyLevelUp(entity, distribute, rolls = Math.random, prerolledPool = null) {
   if (!entity.readyToLevelUp || !entity.pendingLevel) return false;
   entity.level = entity.pendingLevel;
   entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT endurance, verbatim (audit F8 - DFU reads Stats.PermanentEndurance here, not the live value)
   entity.health = Math.min(entity.health, entity.maxHealth);
-  const pool = LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN));
+  // AUDIT 23 (ui-native-1): DFU rolls BonusPool() exactly ONCE, at the
+  // level-up screen's setup - the UI hands its shown pool back here so
+  // a second, discarded draw never burns a number from the stream.
+  const pool = prerolledPool ?? (LEVELUP_BONUS_POOL_MIN + Math.floor(rolls() * (LEVELUP_BONUS_POOL_MAX + 1 - LEVELUP_BONUS_POOL_MIN)));
   distribute(entity.stats, pool);
   entity.readyToLevelUp = false;
   entity.pendingLevel = null;

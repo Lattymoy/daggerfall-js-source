@@ -26,7 +26,7 @@
 
 import { addItem, goldStack } from './inventory.js';
 import { equipItem } from './equip.js';
-import { itemBaseValue, templateByIndex } from './itemTemplates.js';
+import { itemBaseValue, templateByIndex, mintCondition } from './itemTemplates.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 
 // ItemEnums template indices
@@ -57,11 +57,11 @@ export const STARTING_GOLD = 100;
  *  TEMPLATE name (AUDIT 17f: the hand-written names here were
  *  lower-cased copies - DFU's ItemName is ItemTemplate.name, so the
  *  bag read "Short shirt" where classic reads "Short Shirt"). */
-const mint = (item) => ({
+const mint = (item) => mintCondition({
   ...item,
   name: item.name ?? templateByIndex(item.templateIndex)?.name,
   value: item.value ?? itemBaseValue(item),
-});
+});   // AUDIT 23 (items-5): condition mints with the item
 
 /** AssignStartingGear verbatim. `rolls` is the RNG seam;
  *  torchesFromItems ports DFU's setting (default OFF - not classic).

@@ -369,7 +369,7 @@ test('audit18 hosts: every mode that can land bills the fall through ONE law', (
       `${host} does not bill a landing`);
   }
   const wm = src('src/scenes/worldModes.js');
-  assert.match(wm, /else if \(mode === 'interior'\)[\s\S]{0,700}?applyFallLanding\(/,
+  assert.match(wm, /else if \(mode === 'interior'\)[\s\S]{0,1400}?applyFallLanding\(/,   // window widened: AUDIT 23's death-router registration sits between the marker and the landing
     'interior mode still drops the landing entirely');
   // RETIRED FLAG: the justification was false, so the sentence is gone.
   assert.doesNotMatch(wm, /cannot fall 2\.5\+/,

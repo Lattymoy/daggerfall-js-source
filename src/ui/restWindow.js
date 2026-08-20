@@ -32,7 +32,13 @@ export class RestWindow {
   }
 
   input(action) {
-    if (this.state === 'ended') { this.done = true; return; }
+    if (this.state === 'ended') {
+      this.done = true;
+      // AUDIT 23 (entity-1) - DaggerfallRestWindow.cs:729-732: closing
+      // the finished popup is THE advancement moment (RaiseSkills).
+      this.deps.onRestFinished?.();
+      return;
+    }
     if (this.state === 'resting') {
       if (action === 'back') this._end(this.session.endEarly());
       return;
@@ -49,9 +55,12 @@ export class RestWindow {
     if (action === 'backspace') { this.value = this.value.slice(0, -1); return; }
     if (action === 'confirm') {
       // DFU's prompt: an unparseable (empty) entry does nothing; 0 IS
-      // accepted - and rests one full hour, the session's preserved
-      // quirk (audit 2026-08-16f). The 2-digit entry field enforces
-      // the 99-hour cap by construction (DFU shows TEXT 26 past 99).
+      // accepted - and the session ENDS IMMEDIATELY, passing no world
+      // time (restSession's hoursRemaining < 1 pre-check; AUDIT 23
+      // corrected the old 'rests one full hour' claim, the same
+      // backwards reading AUDIT 18 struck from Ledger B). The 2-digit
+      // entry field enforces the 99-hour cap by construction (DFU
+      // shows TEXT 26 past 99).
       if (this.value === '') return;
       const hours = Number(this.value);
       if (this.mode === 'loiter' && hours > LOITER_LIMIT_HOURS) { this.notice = CANNOT_LOITER_LINES; this.value = ''; return; }

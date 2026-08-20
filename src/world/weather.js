@@ -61,15 +61,20 @@ export function fogForWeather(weather) {
 /**
  * Sky archive offset for the weather (SkyIndex = SkyBase + offset).
  * Rain/fog/thunder pick Rain1/Rain2, snow picks Snow1/Snow2, 50/50.
+ * AUDIT 23 (wts-1) - DaggerfallSky.cs:354-357: the DEFAULT arm (sunny/
+ * cloudy/overcast = WeatherStyle.Normal) adds the SEASON VALUE to
+ * SkyBase ("Season value enum ordered same as sky indices" - Fall 0,
+ * Spring 1, Summer 2, Winter 3), so three of four seasons rendered
+ * the Fall panorama before this took `season`.
  */
-export function skyOffsetForWeather(weather, rng) {
+export function skyOffsetForWeather(weather, rng, season = 0) {
   if (weather === 'rain' || weather === 'thunder' || weather === 'fog') {
     return rng.nextFloat() > 0.5 ? 4 : 5;
   }
   if (weather === 'snow') {
     return rng.nextFloat() > 0.5 ? 6 : 7;
   }
-  return 0;
+  return season;
 }
 
 /** Verbatim SetSunlightScale: winter first, precipitation overrides. */

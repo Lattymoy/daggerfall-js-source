@@ -24,7 +24,8 @@
 // - but its exact thumb colour comes from a Panel default this port
 // has not needed anywhere else, so the bar is drawn from the same
 // palette the rest of the window uses and the drag is not implemented
-// (the two paging buttons and the mouse wheel cover the list).
+// (the two paging buttons cover the list; wheel scrolling is NOT
+// implemented - AUDIT 23 ui-native-4 corrected the old claim).
 
 import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';

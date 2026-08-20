@@ -26,10 +26,13 @@ export const MAX_BOW_HELD_DRAWN_SECONDS = 10;
 export const BOW_SWITCH_DIVISOR = 1.7;
 export const RESET_JOYSTICK_SWING_RADIUS = 0.4;
 export const ATTACK_THRESHOLD = 0.05;              // gesture travel / longest screen dim
-export const SWING_WEAPON_FATIGUE_LOSS = 11;       // per DF Chronicles, verified in classic
-// DaggerfallMissile.cs verbatim
-export const ARROW_MOVEMENT_SPEED = 25.0;   // MovementSpeed - world units/second
-export const ARROW_ARM_LENGTH = 0.9;        // ArmLength - cast-origin distance
+// AUDIT 23 (characters-14/combat-13): SWING_WEAPON_FATIGUE_LOSS and
+// ARROW_MOVEMENT_SPEED were duplicates of the live single sources
+// (hostCombat.js's constant; spellcast.js's MISSILE_SPEED = the same
+// DaggerfallMissile.MovementSpeed) - deleted per ONE DFU MEMBER, ONE
+// EXPORT. ArmLength stays as the one home for its member (no live
+// consumer yet - the arrow paths launch from the eye).
+export const ARROW_ARM_LENGTH = 0.9;        // DaggerfallMissile.ArmLength - cast-origin distance
 export const EQUIP_DELAY_TIMES = [500, 700, 1200, 900, 900, 1800, 1600, 1700, 1700, 3000, 3400, 2000, 2200, 2000, 2200, 2000, 4000, 5000];
 
 // WeaponBasics.cs verbatim: melee strikes are 5 frames, idle 1, all
