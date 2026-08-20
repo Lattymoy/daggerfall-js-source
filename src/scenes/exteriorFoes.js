@@ -19,7 +19,7 @@ import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity, loadMonsterCareer } from '../characters/enemyEntity.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { ClassFile } from '../formats/classFile.js';
-import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound } from './hostCombat.js';
+import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt } from './hostCombat.js';   // C2-slice (combat-9/17)
 import { generateItems as generateLootItems } from '../systems/loot.js';
 import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, KB_UNIT, enemyWeightClassicUnits, weaponKnockbackSpeed } from '../combat/formulas.js';
 import { tallySkill, SKILLS } from '../systems/skills.js';
@@ -133,8 +133,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // the -1 damage marker vs the player (C16)
       if (f.mobile.hitFrame && playerFeet) {
         const hdx = playerFeet[0] - f.ai.feet[0], hdz = playerFeet[2] - f.ai.feet[2];
+        const wpn = chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
+        const mid = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];
         if (meleeHitConnects(f.ai._dist, f.ai.inSight, withinYaw(f.ai.yaw, hdx, hdz, MELEE_HIT_YAW_DEG))) {
-          const wpn = chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
           tallySkill(playerEntity, SKILLS.Dodging, 1);
           const dmg = calculateAttackDamage(f.entity, playerEntity, {
             weapon: wpn,
@@ -142,7 +143,17 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
             say,
           });
           if (dmg > 0) onPlayerHurt?.(dmg, wpn);
+          // C2-slice (combat-9): a connected attack that LOST the
+          // roll rings the miss sound (ApplyDamageToPlayer's else)
+          else audio?.play3d?.(enemyMissSound(wpn), mid, 1, { maxDistance: 16 });
+        } else {
+          // C2-slice (combat-9): the out-of-reach whiff rings too
+          audio?.play3d?.(enemyMissSound(wpn), mid, 1, { maxDistance: 16 });
         }
+        // C2-slice (combat-17): the 20% enemy-class attack voice at
+        // the damage frame, whatever the outcome.
+        const v = enemyAttackVoice(f);
+        if (v && v.clip >= 0) audio?.play3d?.(v.clip, mid, 1, { maxDistance: 16 });
       }
     }
     for (let i = foes.length - 1; i >= 0; i--) if (foes[i].dead && !foes[i].corpse) foes.splice(i, 1);
@@ -161,11 +172,19 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       return { dist, inView: inViewFn ? inViewFn(c) : false, losClear: !Number.isFinite(hit) || hit >= dist - 1e-3 };
     };
     let any = false;
+    // C2-slice (combat-17): the player's 20% attack grunt, once per
+    // hit frame (this path is melee-only, never a bow).
+    const grunt = playerAttackGrunt(playerEntity, false);
+    if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1);
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rand,
-      (f) => backstabChanceOf(playerEntity, isBackFacing(f.ai.yaw, f.ai.feet, eye)), say)) {
+      (f) => backstabChanceOf(playerEntity, isBackFacing(f.ai.yaw, f.ai.feet, eye)), say,
+      (f, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(currentMinute()) }))) {   // C2-slice (combat-11)
       any = true;
       if (damage > 0) {
         onHitSound?.(foe);
+        // C2-slice (combat-17): the struck class foe cries out 40%
+        const pain = enemyPainVoice(foe, damage);
+        if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16 });
         damageFoe(foe, damage, playerFeet, lookDir);
       } else {
         const snd = zeroDamageHitSound({

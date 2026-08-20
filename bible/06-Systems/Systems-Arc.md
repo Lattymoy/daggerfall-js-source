@@ -1818,3 +1818,96 @@ back, through a full world teardown and rebuild, zero page errors.
 host sweep with the load-time guards); 3 mutations run, 3 killed.
 Still out: REST above ground and the single-location exterior
 page's arm (the narrowed row keeps both).
+
+## S34 - FOUR SMALL LAWS: the L-slice sweeps the ledger's little rows
+
+2026-08-20. Four AUDIT 23 rows closed in one pass - two fixes, one
+port, one refutation - plus the quest machine's sourcing fork raised
+as a DECIDE row.
+
+entity-7 REFUTED: the "60x magic rounds over a rest" finding misread
+TickRest. DFU's rest catch-up raises one round per game MINUTE
+through the broker's loop under a 2880-minute cap, and the port's
+worldTick already runs the identical loop under the identical
+MAX_CATCHUP_ROUNDS = 2880 (pinned since audit21_core). The row was
+the bug; nothing in src/ moved.
+
+entity-9 SHIPPED: applyLevelUp was `level = calculated` - a
+multi-threshold rest paid out in one jump. Now it is Level++, one
+step per acknowledgment, and checkForLevelUp (its own export at
+last) sits UNCONDITIONALLY at raiseSkills' tail exactly where
+RaiseSkills has it - so the overshoot re-offers on the NEXT
+360-minute check with no new skill raise needed, and converges
+quietly at par. pendingLevel survives as the banner's convenience,
+always level+1.
+
+items-9 SHIPPED, premise corrected: DFU has NO over-encumbrance
+speed penalty (PlayerSpeedChanger never reads CarriedWeight) - like
+classic it REFUSES the pickup. canHoldAmount ports the GP-unit
+integer arithmetic (kg x 400 rounded; remaining capacity int-divided
+by the unit weight), _pickRemote gates both take modes through it -
+refuse-with-the-box at zero fit, split-take exactly what fits on a
+partial stack (the DFU split popup's DEFAULT Enter; the free-entry
+field stays INTERIM), whole transfer otherwise - and itemWeight now
+routes through the named effectiveUnitWeightInKg member.
+
+combat-16 SHIPPED: the minMetalToHit refusal in calculateAttackDamage
+speaks through the say seam for the PLAYER only (enemies fail
+silently, per the source's attacker gate); prose ours, key cited.
+
+4 new pins (littlelaws) + the three old jump-law pins rewritten to
+the one-step law with the re-offer and convergence arms; 5 mutations
+run, 5 killed (the jump, the gated tail check, float division, the
+gate bypass, the always-say). The quest DECIDE row records the fork:
+the engine source is fully in the snapshot, its .txt quest inputs
+are NOT, and ARENA2's QBN/QRC binaries are a format DFU never
+parses - vendor the upstream pack, write a classic reader, or defer.
+
+## S35 - MAGIC FIDELITY: the L2-slice trues up the effect system's fine grain
+
+2026-08-20. Seven AUDIT 23 magic rows closed in one pass - the last
+open rows in the magic family.
+
+magic-3: the buff family (silence, the concealments, freeAction, the
+alteration buffs) landed unconditionally; now the landing runs the
+assign loop's exact gate order. The incumbent stack happens INSIDE
+Start, so it lands before the chance and save gates and survives
+both - the verbatim quirk the paralyze arm already carried. The
+OnCast chance rolls for SILENCE alone (the only buff class that
+supports chance; every other sets duration only), and a NEW
+non-CasterOnly instance saves against the ENTIRE effect, since no
+buff carries a magnitude to scale.
+
+magic-7: ByTouch was a nearest-in-any-direction 2.5 radius pick -
+you could touch a foe behind your shoulder. Now it is the 0.25
+sphere-cast pushed 3.0 ALONG THE AIM: closest point on the aim
+segment against each live foe's mid-capsule plus the 0.45 body the
+missile test uses, FIRST hit along the ray wins, walls block.
+
+magic-8/9: the trap CastSpell arms - a CasterOnly trap spell readies
+ON THE PLAYER FOR FREE through the engine's new readiedFree state
+(the silence gate and the cost both bypass, exactly as the source
+gates them on noSpellPointCost; the absorption refund cap stays
+unbound at zero cost); a ByTouch trap payload retargets to
+SingleTargetAtRange; a casterless AoC no-ops loudly. An ENEMY
+AreaAroundCaster no longer flies - it explodes at the caster on the
+spot with the caster itself EXCLUDED, other foes in the radius
+included.
+
+magic-10/11/12: the paralysis hard-immunity gate grew the manager's
+career/racial arms (career Immune, the Resistant-first precedence
+quirk, the player racial bit with the Low/CriticalWeakness career
+override) beside the FreeAction flag; the magic-only families -
+heal/cure/fortify/transfer/concealment/regenerate among the ported
+kinds - now SAVE AS MAGIC whatever element the bundle rode in on
+(a fire spell's concealment is stopped by magic immunity and sails
+past fire immunity); and the drain/transfer incumbency runs the
+EXISTING incumbent's like-kind test, so a DRAIN claims an incoming
+Transfer of its stat (roll stacked, caster still healed) and a
+Transfer never claims a plain Drain.
+
+5 new pins (magicfidelity) + the ranges pin rewritten to the aim law
++ the magic-14 needle repinned to the grown signature; 6 mutations
+run, 6 killed (one first-draft mutant survived by accidentally
+keeping the ray distance - rewritten to the true old radius law and
+killed). Suite 1432 across 188, green both modes.

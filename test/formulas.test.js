@@ -84,9 +84,9 @@ test('formulas: damage paths verbatim', () => {
   const skel = { isPlayer: false, careerIndex: SKELETAL_WARRIOR_INDEX, affinity: 'Undead' };
   // roll max: 12 -> /2 = 6 -> *2 (silver) = 12 -> +5 str +0 silver = 17
   assert.equal(weaponAttackDamage(A, skel, 0, mace, seq(0.999)), 17);
-  assert.equal(backstabDamage(10, 50, 0.4), 30);
-  assert.equal(backstabDamage(10, 50, 0.6), 10);
-  assert.equal(backstabDamage(10, 1, 0.0), 10);     // needs > 1
+  assert.equal(backstabDamage(10, 50, () => 0.4), 30);
+  assert.equal(backstabDamage(10, 50, () => 0.6), 10);
+  assert.equal(backstabDamage(10, 1, () => 0.0), 10);     // needs > 1
   // material gate: iron weapon vs Silver-required target -> 0
   const ghost = { minMetalToHit: 2, skills: 35, stats: { strength: 50, agility: 50, luck: 50 }, armor: 0 };
   assert.equal(calculateAttackDamage(A, ghost, { weapon: { templateIndex: WEAPONS.Dagger, material: 0, flags: 0 } }), 0);

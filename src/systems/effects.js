@@ -24,7 +24,8 @@
 // never added to liveEffects). Effects outside these keys stay
 // FLAGGED skipped (the library grows here).
 
-import { savingThrow, rollMagnitude, EFFECT_FLAGS } from './spellcast.js';
+import { savingThrow, rollMagnitude, EFFECT_FLAGS, careerTolerance } from './spellcast.js';
+import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
 import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
 import { tryAbsorption } from './absorption.js';   // S24
@@ -106,13 +107,36 @@ export const hasActiveEffect = (entity, kind) =>
   !!entity?.activeEffects?.some((a) => a.kind === kind);   // presence = active; expired entries End on the NEXT tick pass (DFU shape)
 
 // S22 FreeAction: the two DFU laws.
-// AUDIT 18 retires the "career/racial hard-immunity pends" flag that
-// stood here: it was wrong about DFU. DaggerfallEntity
-// .IsImmuneToParalysis is written by FreeAction.cs:99/109 and (when
-// vampirism ships) VampirismEffect.cs:124 and by NOTHING else - a
-// career or racial paralysis tolerance never reaches this gate, it
-// enters through FormulaHelper.SavingThrow, which carries both arms.
+// DaggerfallEntity.IsImmuneToParalysis (THE ENTITY FLAG) is written
+// by FreeAction.cs:99/109 and (when vampirism ships)
+// VampirismEffect.cs:124 and by NOTHING else - this member is that
+// flag alone. AUDIT 18's note stopped there and missed the OTHER
+// member: the ASSIGN gate calls the MANAGER's
+// IsEntityImmuneToParalysis, which adds the career/racial arms -
+// see isEntityImmuneToParalysis below (L2-slice, magic-10).
 export const isImmuneToParalysis = (entity) => hasActiveEffect(entity, 'freeAction');
+
+/** EntityEffectManager.IsEntityImmuneToParalysis (:644-660, L2-slice
+ *  AUDIT 23 magic-10) - the HARD-immunity gate AssignBundle tests
+ *  before an incoming Paralyze even starts:
+ *  1. career Paralysis tolerance Immune, or the FreeAction flag;
+ *  2. the PLAYER's racial immunity bit - unless the career overrides
+ *     with LowTolerance or CriticalWeakness;
+ *  3. otherwise not hard-immune (the saving throw still applies).
+ *  The career precedence quirk carries over: DFCareer.GetTolerance
+ *  reads Resistant BEFORE Immune, so a career flagged both is merely
+ *  Resistant here and falls through to the save. */
+export function isEntityImmuneToParalysis(entity) {
+  if (careerTolerance(entity.career ?? {}, EFFECT_FLAGS.Paralysis) === 'Immune' || isImmuneToParalysis(entity)) return true;
+  if (entity.isPlayer) {
+    const rt = entity.raceTemplate ?? raceById(entity.raceId) ?? raceByKey(entity.race) ?? null;
+    if (((rt?.immunityFlags ?? 0) & EFFECT_FLAGS.Paralysis) !== 0) {
+      const t = careerTolerance(entity.career ?? {}, EFFECT_FLAGS.Paralysis);
+      return t !== 'LowTolerance' && t !== 'CriticalWeakness';
+    }
+  }
+  return false;
+}
 /** DaggerfallEntity.IsSilenced, minted by Silence.StartSilence (Silence.cs:87)
  *  and cleared at :105. A read-time fold over the active effects, the same
  *  shape as the concealment and paralysis predicates above, so nothing has to
@@ -356,7 +380,21 @@ function pushInstantMarker(target, kind, stat = null) {
 export function applySpell(spell, casterLevel, target, sinks, rolls = Math.random, caster = null, ctx = {}) {
   const flag = ELEMENT_EFFECT_FLAG[spell.element] ?? EFFECT_FLAGS.Magic;
   const saveScaled = spell.rangeType !== 0;   // GetMagnitude's CasterOnly gate (S15)
-  const magnitude = (e) => effectMagnitude(e, casterLevel, saveScaled, spell.element, flag, target, rolls);
+  // L2-slice (AUDIT 23 magic-11) - FormulaHelper.GetElementType
+  // (:1630-1634): an effect whose AllowedElements is MAGIC-ONLY
+  // always saves as MAGIC, whatever element the parent spell rode in
+  // on. Among the ported kinds that is the heal/cure/fortify/
+  // transfer/concealment/regenerate families; damage, paralyze,
+  // silence and the alteration buffs keep the bundle's element
+  // (their classes allow all five).
+  const savesAsMagic = (e) =>
+    isHealHealth(e) || isHealFatigue(e) || isHealAttribute(e) ||
+    isCureDisease(e) || isCurePoison(e) || isCureParalyzation(e) ||
+    isFortifyAttribute(e) || isTransferAttribute(e) || isTransferHealth(e) || isTransferFatigue(e) ||
+    isRegenerate(e) || CONCEALMENT_START_TEXT[buffKind(e)] != null;
+  const saveElement = (e) => (savesAsMagic(e) ? 4 : spell.element);          // DFCareer.Elements.Magic
+  const saveFlag = (e) => (savesAsMagic(e) ? EFFECT_FLAGS.Magic : flag);
+  const magnitude = (e) => effectMagnitude(e, casterLevel, saveScaled, saveElement(e), saveFlag(e), target, rolls);
   const out = { damage: 0, healed: 0, continuous: 0, skipped: 0 };
   // S24: absorption is tested PER EFFECT, before any of them lands
   // (EntityEffectManager :507-518), and an absorbed effect is skipped
@@ -423,16 +461,27 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     }
     if (isDrainAttribute(e) || isTransferAttribute(e)) {
       // Drain{Attribute} (7, s) / Transfer{Attribute} (11, s):
-      // permanent-until-healed. IsLikeKind = same FAMILY + same stat
-      // (a Drain is never incumbent for a Transfer); Become/AddState
-      // both roll a fresh magnitude onto the incumbent's total.
-      // Transfer additionally heals the CASTER's drained stat by the
-      // PRE-CLAMP roll (lastMagnitudeIncreaseAmount), verbatim.
+      // permanent-until-healed; Become/AddState both roll a fresh
+      // magnitude onto the incumbent's total. Transfer additionally
+      // heals the CASTER's drained stat by the PRE-CLAMP roll
+      // (lastMagnitudeIncreaseAmount), verbatim.
+      // L2-slice (AUDIT 23 magic-12): the incumbent search runs the
+      // EXISTING incumbent's like-kind test against the arrival
+      // (IncumbentEffect.FindIncumbent - other.IsLikeKind(this)),
+      // and TransferEffect IS-A DrainEffect - so a DRAIN incumbent
+      // CLAIMS an incoming Transfer of its stat (the roll stacks
+      // onto the drain entry, the caster heal still fires), while a
+      // TRANSFER incumbent never claims a plain Drain (its test
+      // needs a TransferEffect). The claimed entry keeps its own
+      // kind; the old same-kind-only search split the pools.
       const kind = isDrainAttribute(e) ? 'drainAttribute' : 'transferAttribute';
       const stat = STAT_KEYS_ORDER[e.subType];
       const amt = magnitude(e);
       if (amt > 0) {
-        let entry = target.activeEffects?.find((a) => a.kind === kind && a.stat === stat && !a.ended);
+        let entry = target.activeEffects?.find((a) => !a.ended && a.stat === stat &&
+          (kind === 'transferAttribute'
+            ? (a.kind === 'drainAttribute' || a.kind === 'transferAttribute')
+            : a.kind === 'drainAttribute'));
         if (!entry) {
           entry = { kind, stat, magnitude: 0, permanent: true };
           pushPermanent(target, entry);
@@ -535,17 +584,18 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         const sKey = settingsKeyOf(e);
         const inc = target.activeEffects?.find((a) => a.kind === 'regenerate' && a.settingsKey === sKey);
         if (inc) inc.roundsRemaining += rounds;
-        else pushActive(target, { kind: 'regenerate', effect: e, casterLevel, element: spell.element, flag, saveScaled, settingsKey: sKey, roundsRemaining: rounds }, sinks, rolls);
+        else pushActive(target, { kind: 'regenerate', effect: e, casterLevel, element: saveElement(e), flag: saveFlag(e), saveScaled, settingsKey: sKey, roundsRemaining: rounds }, sinks, rolls);   // magic-11
         out.continuous++;
       }
       continue;
     }
     if (isParalyze(e)) {
       // S22: AssignBundle drops an incoming Paralyze BEFORE Start
-      // when the entity is hard-immune (FreeAction's
-      // IsImmuneToParalysis; career/racial pend) - silently, no
-      // stack, no chance roll, no message (EntityEffectManager.cs:496).
-      if (isImmuneToParalysis(target)) continue;
+      // when the entity is hard-immune - silently, no stack, no
+      // chance roll, no message (EntityEffectManager.cs:496).
+      // L2-slice (magic-10): the gate is the MANAGER's check, which
+      // carries the career/racial arms beside the FreeAction flag.
+      if (isEntityImmuneToParalysis(target)) continue;
       // Paralyze (0, 255): AssignBundle's exact gate order. The
       // chance rolls ALWAYS (SetChanceSuccess runs in Start); an
       // incumbent re-cast stacks its rounds INSIDE Start (AddState)
@@ -580,7 +630,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // the initial MagicRound cures (immediate bundle removal).
       const chanceOk = dice100(chanceValue(e, casterLevel), rolls());
       if (!chanceOk) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
-      if (saveScaled && savingThrow(spell.element, flag, target, 0, rolls) === 0) {
+      if (saveScaled && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {   // magic-11: cures save as MAGIC
         out.saved = (out.saved ?? 0) + 1;
         continue;
       }
@@ -591,11 +641,27 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     }
     const kind = buffKind(e);
     if (kind) {
+      // L2-slice (AUDIT 23 magic-3): the landing gates the paralyze
+      // and cure arms already carried apply to the whole buff family,
+      // in AssignBundle's exact order - the incumbent stack happens
+      // INSIDE Start (AddState), so it lands BEFORE the chance and
+      // save gates and survives both; a NEW instance passes the
+      // OnCast chance, then (no buff has a magnitude) the entity
+      // saves against the ENTIRE effect when the cast is not
+      // CasterOnly (:560-579). Among these kinds only SILENCE
+      // supports chance (Silence.cs:32 - every other buff class sets
+      // duration alone), on the OnCast default.
       const rounds = rollDuration(e, casterLevel);
       if (rounds > 0) {
         const inc = target.activeEffects?.find((a) => a.kind === kind);
         if (inc) inc.roundsRemaining += rounds;             // incumbent STACKS (F12; = ConcealmentEffect.AddState)
-        else {
+        const chanceOk = kind !== 'silenced' || dice100(chanceValue(e, casterLevel), rolls());
+        if (!chanceOk) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
+        if (!inc) {
+          if (saveScaled && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {   // magic-11: concealments save as MAGIC
+            out.saved = (out.saved ?? 0) + 1;
+            continue;
+          }
           pushActive(target, { kind, roundsRemaining: rounds }, sinks, rolls);
           // S21: the concealment start message fires once on NEW
           // incumbency (ConcealmentEffect awakeAlert); a stack is

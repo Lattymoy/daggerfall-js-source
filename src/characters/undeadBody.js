@@ -59,6 +59,22 @@ export const UNDEAD_RAMPS = Object.freeze({
   // block 2 - tan -> brown. A giant's weathered hide, and the centaur's
   // human half, which is the same sun-cured leather as the rest of him.
   weathered: [36, 46],
+  // block 5 - lavender grey -> slate, taken dark. A lich's robes: cold,
+  // and nearly black in the folds. Not the black of cloth dyed black —
+  // the grey of cloth that has had every other colour taken out of it.
+  graveRobe: [86, 94],
+  // block 5 at its darkest. What is left of a lich after another few
+  // centuries: the robe has gone past grey.
+  ashRobe: [90, 95],
+  // block 7 near white. A vampire keeps its skin and loses everything
+  // that was ever warm in it — this is the pallor, not bone.
+  pallor: [113, 119],
+  // block 15 - orange-red -> dark red, taken deep. Fine cloth in the
+  // only colour a vampire's finery is ever the right colour in.
+  bloodSilk: [244, 251],
+  // block 5 - slate, mid. A vampire dresses well and darkly; this is the
+  // coat under the finery rather than the finery itself.
+  darkCloth: [84, 92],
 });
 
 // ── ZONE HELPERS ─────────────────────────────────────────────────
@@ -278,6 +294,136 @@ export const UNDEAD_DESIGNS = [
     mats: { pelt: UNDEAD_RAMPS.gravecloth },
     hideRamp: 'weathered',
   },
+  {
+    id: MOBILE_TYPES.Lich,
+    name: 'Lich',
+    level: 20,
+    damage: [70, 100],
+    weaponTier: 2,
+    // THE MOST-MET ENEMY STILL UNBUILT — mapChance 4, higher than
+    // anything else in the table — and the first design here that asks
+    // whether the pieces COMPOSE.
+    //
+    // Every enemy so far carried one kind of thing: the orcs a tusk, the
+    // skeleton a cage, the centaur a body. A lich is a skeleton IN
+    // ROBES, so it needs the bones AND a drape at once, from two systems
+    // that have never been asked to share a figure. If the piece table
+    // and the drape path are as separable as they look, this costs a
+    // design and nothing else; if they are not, better to find out on
+    // the enemy the player meets most.
+    build: {
+      torso: 0.6,
+      shoulder: 0.68,
+      arm: 0.6,
+      hand: 0.7,
+      neck: 0.6,
+      skull: 0.92,
+      jaw: 0.74,
+      leg: 0.6,
+    },
+    zones: [],
+    mats: { robe: UNDEAD_RAMPS.graveRobe },
+    hideRamp: 'bone',
+    bootRamp: 'bone',
+    // Thinner than the warrior's: what is left after centuries is less.
+    bones: { ribs: 5, gap: 0.5 },
+    drape: { name: 'Plain Robes', mat: 'robe' },
+  },
+  {
+    id: MOBILE_TYPES.AncientLich,
+    name: 'Ancient Lich',
+    level: 21,
+    damage: [70, 100],
+    weaponTier: 2,
+    // mapChance 4, level of the whole table. The variant is nearly free
+    // and that is the point of a mechanism: the lich established that
+    // bones and a drape compose, so an older one is a thinner cage and a
+    // deader robe. Refusing to ship it because it is a variant would
+    // leave the most-met enemy in the game at one of its two forms.
+    build: {
+      torso: 0.6,
+      shoulder: 0.64,
+      arm: 0.6,
+      hand: 0.68,
+      neck: 0.6,
+      skull: 0.9,
+      jaw: 0.7,
+      leg: 0.6,
+    },
+    zones: [],
+    mats: { robe: UNDEAD_RAMPS.ashRobe },
+    hideRamp: 'bone',
+    bootRamp: 'bone',
+    bones: { ribs: 4, gap: 0.58 }, // fewer ribs, wider gaps: more has gone
+    drape: { name: 'Priest Robes', mat: 'robe' },
+  },
+  {
+    id: MOBILE_TYPES.Vampire,
+    name: 'Vampire',
+    level: 19,
+    damage: [20, 50],
+    weaponTier: 2,
+    // AFFINITY: DARKNESS, and the only one in this file that is neither
+    // rotted nor bone. A vampire keeps its body — that is the horror of
+    // it — so this is the villager mechanism at its most ordinary: a
+    // human build, barely touched, and everything it says it says with
+    // COLOUR. Pallor where a villager has skin, and finery where a
+    // villager has homespun.
+    build: {
+      torso: 0.96,
+      shoulder: 1.0,
+      arm: 0.94,
+      hand: 0.96,
+      neck: 0.92,
+      skull: 0.98,
+      jaw: 0.94,
+      leg: 0.96,
+    },
+    zones: [
+      torso('coat', 1.06, 1.62, 0.016),
+      arms('coat', 0.9, 1.5, 0.014),
+      pelvis('coat', 0.88, 1.1, 0.016),
+      legsTo('coat', 0.4, 0.94, 0.014),
+      feet('coat', 0.0, 0.18, 0.016),
+      torso('silk', 1.22, 1.42, 0.02), // the shirt showing at the breast
+    ],
+    mats: { coat: UNDEAD_RAMPS.darkCloth, silk: UNDEAD_RAMPS.bloodSilk },
+    hideRamp: 'pallor',
+    bootRamp: 'darkCloth',
+    drape: { name: 'Formal Cloak', mat: 'coat' },
+  },
+  {
+    id: MOBILE_TYPES.VampireAncient,
+    name: 'Ancient Vampire',
+    level: 20,
+    damage: [20, 60],
+    weaponTier: 2,
+    // Older, and it shows the way age shows on something that does not
+    // age: not decay but AUTHORITY. Broader across the shoulder, and the
+    // silk is the whole front of him rather than a glimpse at the collar.
+    build: {
+      torso: 1.02,
+      shoulder: 1.1,
+      arm: 1.0,
+      hand: 1.0,
+      neck: 0.96,
+      skull: 1.0,
+      jaw: 1.0,
+      leg: 1.0,
+    },
+    zones: [
+      torso('coat', 1.02, 1.62, 0.018),
+      arms('coat', 0.86, 1.5, 0.016),
+      pelvis('coat', 0.86, 1.1, 0.018),
+      legsTo('coat', 0.36, 0.94, 0.016),
+      feet('coat', 0.0, 0.2, 0.018),
+      torso('silk', 1.14, 1.5, 0.024),
+    ],
+    mats: { coat: UNDEAD_RAMPS.darkCloth, silk: UNDEAD_RAMPS.bloodSilk },
+    hideRamp: 'pallor',
+    bootRamp: 'darkCloth',
+    drape: { name: 'Formal Cloak', mat: 'coat' },
+  },
 ];
 
 /**
@@ -301,7 +447,13 @@ export function undeadOpts(design, pal) {
   const mats = {};
   for (const [name, span] of Object.entries(design.mats)) mats[name] = ramp(span);
   const hide = ramp(UNDEAD_RAMPS[design.hideRamp]);
+  // A DESIGN MAY WEAR SOMETHING. The villagers resolve their gown the
+  // same way — a name and a material off the design's own table — so a
+  // lich in robes goes through the drape path that already exists
+  // rather than a second one built for it.
+  const drape = design.drape ? { name: design.drape.name, ramp: mats[design.drape.mat] } : null;
   return {
+    drape,
     // THE BOOT RAMP IS THE DESIGN'S TO CHOOSE. It was hardcoded to
     // gravecloth, which is right for a corpse that was buried in shoes
     // and wrong for a skeleton — it came out with brown feet under a

@@ -42,6 +42,9 @@ export const damageModifier = (strength) => Math.floor((strength - 50) / 5);
 // entirely. They live here, beside DamageModifier, and the old sites
 // import them.
 export const maxEncumbrance = (strength) => Math.floor(strength * 1.5);
+/** L-slice (combat-16): the HUD line for a weapon whose material
+ *  cannot bite the target (key "materialIneffective"; prose ours). */
+export const MATERIAL_INEFFECTIVE_TEXT = 'Your weapon is ineffective against this creature.';
 export const spellPointsFor = (intelligence, multiplier) => Math.floor(intelligence * multiplier);
 export const magicResist = (willpower) => Math.floor(willpower / 10);
 export const toHitModifier = (agility) => Math.floor(agility / 10) - 5;
@@ -326,8 +329,16 @@ export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = 
 }
 
 // ---- CalculateBackstabDamage ----
-export function backstabDamage(damage, backstabbingLevel, roll01 = Math.random()) {
-  if (backstabbingLevel > 1 && dice100(backstabbingLevel, roll01)) return damage * 3;
+/** C2-slice (AUDIT 23 combat-12): the Dice100 rolls ONLY behind the
+ *  level > 1 gate (the source short-circuits at :984) - the old
+ *  eager roll01 argument burned a draw on every non-backstab swing.
+ *  A landed backstab speaks (key "successfulBackstab", prose ours). */
+export const SUCCESSFUL_BACKSTAB_TEXT = 'You backstab your opponent!';
+export function backstabDamage(damage, backstabbingLevel, rolls = Math.random, say = null) {
+  if (backstabbingLevel > 1 && dice100(backstabbingLevel, rolls())) {
+    say?.(SUCCESSFUL_BACKSTAB_TEXT);
+    return damage * 3;
+  }
   return damage;
 }
 
@@ -382,7 +393,14 @@ export function damageEquipment(attacker, target, damage, weapon, struckBodyPart
 
 export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null } = {}) {
   if (!attacker || !target) return 0;
-  if (weapon && (target.minMetalToHit ?? -1) > weapon.material) return 0;   // material too low
+  if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {
+    // L-slice (AUDIT 23 combat-16): FormulaHelper.cs:576-583 - a
+    // too-low weapon material returns 0, and when the attacker is
+    // the PLAYER the HUD says so (key "materialIneffective";
+    // Unity-side localization, prose ours). Enemies fail silently.
+    if (attacker.isPlayer) say?.(MATERIAL_INEFFECTIVE_TEXT);
+    return 0;
+  }
   // source: chanceToHitMod = skill, then player swing/proficiency/
   // racial toHit mods add on; damageModifiers ride INTO the damage
   // calls (before the skeletal rules and the <1 floor)
@@ -444,7 +462,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
       damage = weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls);
     }
   }
-  damage = backstabDamage(damage, backstabChance, rolls());   // applied AFTER the damage calc, verbatim (lines 627/688)
+  damage = backstabDamage(damage, backstabChance, rolls, say);   // applied AFTER the damage calc, verbatim (lines 627/688); the roll draws only behind the >1 gate (combat-12)
   // Poisoned weapons (S19b): a damaging weapon hit inflicts the
   // poison ONCE and clears it from the weapon (the source's
   // weapon.poisonType = Poisons.None, inside the weapon branch after

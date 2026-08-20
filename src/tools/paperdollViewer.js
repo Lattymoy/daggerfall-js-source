@@ -395,12 +395,59 @@ function applyVillagerHair(v) {
 }
 // Selecting a villager DRIVES the drape control: their gown is part of
 // the design, not a separate toggle the reader has to find.
+// ═══════════════════════════════════════════════════════════════════
+// A DRAPE HAS TO FIT WHO IS WEARING IT
+//
+// Every garment is carved ONCE, at one size, and shared by every design
+// that asks for it — one grid per name, which is why the payload stays
+// small. But the BODY under it is resized by its build spec, and nothing
+// was telling the cloth. A giant's robe was a man's robe; the ancient
+// vampire is broader across the shoulder than the vampire and wore the
+// same cloak; and where a design has ARMOUR the plate displaces further
+// out again, so the garment sat inside the breastplate and the wearer
+// came through it.
+//
+// GIRTH ONLY. The rig's own law is that Y is never touched — every
+// exported constant on it (WRIST_JUNCTION_Y, NECK_PIVOT_Y) and every
+// consumer that derives from them is a HEIGHT, so scaling a garment
+// vertically would drop its hem through the floor on a giant and hitch
+// it to the knee on a lich. X and Z only, exactly as the body does it.
+//
+// AND IT CLEARS WHAT IS UNDER IT. Cloth does not lie on skin; it hangs
+// off whatever it is over. A plain margin is not enough where a design
+// wears plate, so a zone thickness on the torso pushes the garment out
+// by its own depth as well.
+const DRAPE_CLEARANCE = 1.06; // cloth hangs off a body, it does not paint it
+
+function drapeFitFor(design) {
+  if (!design || !design.build) return 1;
+  const b = design.build;
+  // The torso is what a garment hangs ON; the shoulder is what holds it
+  // up. Weighted to the torso, because a robe's volume is the body.
+  const girth = (b.torso ?? 1) * 0.75 + (b.shoulder ?? 1) * 0.25;
+  // Whatever the design wears UNDER it, at its thickest on the trunk.
+  let under = 0;
+  for (const z of design.zones || []) {
+    if (!z.groups || !z.groups.includes('body')) continue;
+    under = Math.max(under, z.th || 0);
+  }
+  // A zone displaces by th in body units; the drape has to start outside
+  // that or the plate comes through the cloth.
+  return girth * DRAPE_CLEARANCE + under * 2.2;
+}
+
+function fitDrape(design) {
+  const k = drapeFitFor(design);
+  for (const nm in drapedMeshes) drapedMeshes[nm].scale.set(k, 1, k);
+}
+
 function applyVillagerDrape(v) {
   for (const nm in drapeBaseRamp) dyeDrape(nm, null);   // undye whatever the last villager dyed
   const want = v && v.drape ? DRAPES.indexOf(v.drape.name) : (v ? 0 : drapeIx);
   if (want >= 0) drapeIx = want;
   setDrape();
   if (v && v.drape && want >= 0) dyeDrape(v.drape.name, v.drape.ramp);
+  fitDrape(v);
   const btn = document.getElementById('drape');
   if (btn) btn.textContent = 'drape: ' + DRAPES[drapeIx];
 }
@@ -584,6 +631,11 @@ function applyOrc(o) {
   if (oi >= 0) showPieces(orcPieceMesh, oi);
   const ui = (D.undead || []).findIndex((x) => x.id === o.id);
   if (ui >= 0) showPieces(undeadPieceMesh, ui);
+  // AND IT MAY BE WEARING SOMETHING. applyVillagerDrape asks only for a
+  // `.drape`, so a lich in robes goes through the code that already
+  // dresses a villager's gown — the composition costs nothing because
+  // the two systems never actually needed to know about each other.
+  applyVillagerDrape(o.drape ? o : null);
   if (hs) hs.textContent = 'hair: none (' + (o.line || 'orc') + ')';
 }
 
@@ -596,6 +648,33 @@ function applyOrc(o) {
 // case: an undead simply has no pieces.
 function applyUndead(u) {
   applyOrc(u ? { ...u, line: 'undead' } : null);
+}
+{
+  const sel = document.getElementById('classes');
+  if (sel) {
+    const none = document.createElement('option');
+    none.value = '';
+    none.textContent = 'class: none (bare rig)';
+    sel.appendChild(none);
+    for (const c of D.classes || []) {
+      const opt = document.createElement('option');
+      opt.value = String(c.id);
+      // THEY SCALE WITH THE PLAYER, so there is no level to print. A
+      // made-up number here would be a lie about the game's own rules.
+      opt.textContent = c.name + '  (scales)';
+      sel.appendChild(opt);
+    }
+    sel.onchange = () => {
+      const c = (D.classes || []).find((x) => String(x.id) === sel.value) || null;
+      for (const other of ['orc', 'undead', 'villager']) {
+        const o = document.getElementById(other);
+        if (o) o.value = '';
+      }
+      applyOrc(c ? { ...c, line: 'class' } : null);
+      const hud = document.getElementById('hud');
+      if (hud && c) hud.textContent = c.name + ' \u00b7 scales to the player';
+    };
+  }
 }
 {
   const sel = document.getElementById('undead');
@@ -613,7 +692,7 @@ function applyUndead(u) {
     sel.onchange = () => {
       const u = (D.undead || []).find((x) => String(x.id) === sel.value) || null;
       // The three pickers are exclusive: one body at a time.
-      for (const other of ['orc', 'villager']) {
+      for (const other of ['orc', 'villager', 'classes']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }

@@ -92,6 +92,14 @@ export class EnemyAttack {
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
       if (this.machine.state !== 'Idle') continue;
+      // C2-slice (AUDIT 23 combat-12): the DFRandom byte DRAWS on
+      // every idle classic tick - it is the LEFT operand of the
+      // source's `rand-pass && MeleeTimer == 0` (FixedUpdate :81),
+      // and the attack component draws even for a bow foe the band
+      // owns (the band is the MOTOR's; the components both tick).
+      // The old shape gated the draw behind the timer and the band,
+      // desyncing the classic byte stream.
+      const meleePass = attackRollPasses(this.liveSpeed) && this.meleeTimer === 0;
       const dx = playerFeet[0] - ai.feet[0], dz = playerFeet[2] - ai.feet[2];
       // C-slice (AUDIT 23 combat-3): EnemyMotor.DoRangedAttack
       // (:570-614) OWNS a bow foe inside the 6..51.2 band (strict) -
@@ -108,8 +116,7 @@ export class EnemyAttack {
         }
         continue;
       }
-      if (this.meleeTimer > 0) continue;
-      if (!attackRollPasses(this.liveSpeed)) continue;
+      if (!meleePass) continue;
       if (!ai.inSight || !withinYaw(ai.yaw, dx, dz, ATTACK_YAW_DEG)) continue;
       if (dist > MELEE_DISTANCE) continue;
       const strike = STRIKES[Math.floor(this.rolls() * STRIKES.length)];

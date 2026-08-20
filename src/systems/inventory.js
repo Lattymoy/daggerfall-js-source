@@ -175,16 +175,46 @@ export function unitWeightInKg(item) {
   return base;
 }
 
-export function itemWeight(item) {
+/** EffectiveUnitWeightInKg (DaggerfallUnityItem.cs:667-673): 0f for a
+ *  hasNoEncumbrance template, else the per-unit material-adjusted
+ *  weight. AUDIT 18: the flag ships in itemTemplates.json (horse,
+ *  cart, arrows, maps, quest letters) and nothing read it, so a
+ *  bought horse added 800 kg to the character sheet. L-slice: named
+ *  to DFU's member so the encumbrance gate reads the same value the
+ *  weight sum does. */
+export function effectiveUnitWeightInKg(item) {
   const t = templates[item.templateIndex];
-  // EffectiveUnitWeightInKg (DaggerfallUnityItem.cs:667-673) returns
-  // 0f for a hasNoEncumbrance template, and ItemCollection.GetWeight
-  // (:94-101) multiplies the stack by THAT - so the zero survives the
-  // stack multiply. AUDIT 18: the flag ships in itemTemplates.json
-  // (horse, cart, arrows, maps, quest letters) and nothing read it, so
-  // a bought horse added 800 kg to the character sheet.
   if (t?.hasNoEncumbrance) return 0;
-  return unitWeightInKg(item) * (item.stackCount ?? 1);
+  return unitWeightInKg(item);
+}
+
+// ItemCollection.GetWeight (:94-101) multiplies the stack by the
+// EFFECTIVE unit weight - so the hasNoEncumbrance zero survives the
+// stack multiply.
+export function itemWeight(item) {
+  return effectiveUnitWeightInKg(item) * (item.stackCount ?? 1);
 }
 
 export const totalWeight = (list) => list.reduce((a, i) => a + itemWeight(i), 0);
+
+/** WeightInGPUnits (DaggerfallInventoryWindow.cs:1439-1442): classic
+ *  stores weight in quarter-kg... x100 - a GOLD-PIECE unit is 0.0025
+ *  kg, so kg x 400 lands every legal weight on an integer (Unity's
+ *  RoundToInt banker's tie cannot arise on multiples of 1/400). */
+export const weightInGPUnits = (kg) => Math.round(kg * 400);
+
+/** ComputeCanHoldAmount (DaggerfallInventoryWindow.cs:1444-1455,
+ *  L-slice AUDIT 23 items-9): how many units of an item fit under a
+ *  capacity, in GP-unit INTEGER arithmetic - `(roundCapacity -
+ *  roundLoad) / roundUnitWeight` is C# integer division, so an
+ *  over-capacity load yields a negative quotient and the caller's
+ *  <=0 refusal reads it. A weightless unit (round weight 0) never
+ *  binds - the whole stack fits. */
+export function canHoldAmount(unitsAvailable, unitWeightKg, capacityKg, loadKg) {
+  let canHold = unitsAvailable;
+  const roundUnitWeight = weightInGPUnits(unitWeightKg);
+  if (roundUnitWeight > 0) {
+    canHold = Math.min(canHold, Math.trunc((weightInGPUnits(capacityKg) - weightInGPUnits(loadKg)) / roundUnitWeight));
+  }
+  return canHold;
+}
