@@ -251,7 +251,7 @@ export function buildPaperdollPayload(pal, img, cif) {
   };
 
   const undeadPacks = UNDEAD_DESIGNS.map((d) => {
-    const { ramps: uramps, opts, hide } = undeadOpts(d, pal);
+    const { ramps: uramps, opts, hide, drape } = undeadOpts(d, pal);
     let uf = buildNeutralBody(uramps, { face, ...opts });
     // A design with a body of its own has no use for the rig's legs.
     if (d.collapse) uf = collapseGroups(uf, d.collapse, [0, 0.8, -0.2]);
@@ -266,6 +266,11 @@ export function buildPaperdollPayload(pal, img, cif) {
       ribcage: d.bones ? packPiece(buildRibcage(BONE_RAMP, { torso: d.build.torso, ...d.bones })) : null,
       pelvis: d.bones ? packPiece(buildPelvis(BONE_RAMP, { torso: d.build.torso })) : null,
       horse: d.horse ? packPiece(buildHorseBody(BAY_RAMP, d.horse)) : null,
+      // A LICH IS A SKELETON IN ROBES: bones AND a drape, from two
+      // systems that had never shared a figure. It rides the villagers'
+      // own drape field, so the viewer dresses it with the code that
+      // already dresses a gown.
+      drape,
       ...villagerDelta(faces, uf),
     };
   });

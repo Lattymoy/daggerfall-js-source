@@ -68,10 +68,29 @@ test('undead: the ramps are index spans into ART_PAL, light to dark', () => {
 // the skeleton is the first design here whose silhouette comes from a
 // piece rather than from the body.
 
-test('skeleton: it is the only design carrying geometry of its own', () => {
-  const withBones = UNDEAD_DESIGNS.filter((d) => d.bones);
-  assert.equal(withBones.length, 1, 'only the skeleton should need a piece');
-  assert.equal(withBones[0].name, 'Skeletal Warrior');
+test('bones go to the bone-bodied, and to nobody else', () => {
+  // This read "only the skeleton" until the lich arrived and it failed
+  // correctly. A lich IS a skeleton — in robes — so it carries a cage
+  // too; what must stay true is that nothing with flesh on it does.
+  const withBones = UNDEAD_DESIGNS.filter((d) => d.bones).map((d) => d.name);
+  assert.deepEqual(withBones.sort(), ['Lich', 'Skeletal Warrior']);
+  for (const d of UNDEAD_DESIGNS) {
+    if (d.bones) assert.equal(d.hideRamp, 'bone', `${d.name} has ribs over something that is not bone`);
+  }
+});
+
+test('lich: bones AND a drape, which is the composition test', () => {
+  // Every enemy before it carried one kind of thing: a tusk, a cage, a
+  // body. A lich needs the piece table and the drape path to share a
+  // figure, and they had never been asked to.
+  const l = UNDEAD_DESIGNS.find((d) => d.name === 'Lich');
+  assert.ok(l.bones, 'a lich without a ribcage is a wizard');
+  assert.ok(l.drape, 'a lich without robes is a skeleton');
+  assert.ok(l.mats[l.drape.mat], 'its robe material is not declared');
+  // And the drape has to survive undeadOpts, or the viewer never sees it.
+  const { drape } = undeadOpts(l, pal);
+  assert.equal(drape.name, l.drape.name);
+  assert.ok(drape.ramp.length > 2, 'the robe resolved to no colours');
 });
 
 test('skeleton: the body is scaled away so the bones ARE the silhouette', () => {

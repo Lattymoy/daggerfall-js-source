@@ -584,6 +584,11 @@ function applyOrc(o) {
   if (oi >= 0) showPieces(orcPieceMesh, oi);
   const ui = (D.undead || []).findIndex((x) => x.id === o.id);
   if (ui >= 0) showPieces(undeadPieceMesh, ui);
+  // AND IT MAY BE WEARING SOMETHING. applyVillagerDrape asks only for a
+  // `.drape`, so a lich in robes goes through the code that already
+  // dresses a villager's gown — the composition costs nothing because
+  // the two systems never actually needed to know about each other.
+  applyVillagerDrape(o.drape ? o : null);
   if (hs) hs.textContent = 'hair: none (' + (o.line || 'orc') + ')';
 }
 

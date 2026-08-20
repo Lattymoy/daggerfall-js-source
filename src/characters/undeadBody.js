@@ -59,6 +59,10 @@ export const UNDEAD_RAMPS = Object.freeze({
   // block 2 - tan -> brown. A giant's weathered hide, and the centaur's
   // human half, which is the same sun-cured leather as the rest of him.
   weathered: [36, 46],
+  // block 5 - lavender grey -> slate, taken dark. A lich's robes: cold,
+  // and nearly black in the folds. Not the black of cloth dyed black —
+  // the grey of cloth that has had every other colour taken out of it.
+  graveRobe: [86, 94],
 });
 
 // ── ZONE HELPERS ─────────────────────────────────────────────────
@@ -278,6 +282,41 @@ export const UNDEAD_DESIGNS = [
     mats: { pelt: UNDEAD_RAMPS.gravecloth },
     hideRamp: 'weathered',
   },
+  {
+    id: MOBILE_TYPES.Lich,
+    name: 'Lich',
+    level: 20,
+    damage: [70, 100],
+    weaponTier: 2,
+    // THE MOST-MET ENEMY STILL UNBUILT — mapChance 4, higher than
+    // anything else in the table — and the first design here that asks
+    // whether the pieces COMPOSE.
+    //
+    // Every enemy so far carried one kind of thing: the orcs a tusk, the
+    // skeleton a cage, the centaur a body. A lich is a skeleton IN
+    // ROBES, so it needs the bones AND a drape at once, from two systems
+    // that have never been asked to share a figure. If the piece table
+    // and the drape path are as separable as they look, this costs a
+    // design and nothing else; if they are not, better to find out on
+    // the enemy the player meets most.
+    build: {
+      torso: 0.6,
+      shoulder: 0.68,
+      arm: 0.6,
+      hand: 0.7,
+      neck: 0.6,
+      skull: 0.92,
+      jaw: 0.74,
+      leg: 0.6,
+    },
+    zones: [],
+    mats: { robe: UNDEAD_RAMPS.graveRobe },
+    hideRamp: 'bone',
+    bootRamp: 'bone',
+    // Thinner than the warrior's: what is left after centuries is less.
+    bones: { ribs: 5, gap: 0.5 },
+    drape: { name: 'Plain Robes', mat: 'robe' },
+  },
 ];
 
 /**
@@ -301,7 +340,13 @@ export function undeadOpts(design, pal) {
   const mats = {};
   for (const [name, span] of Object.entries(design.mats)) mats[name] = ramp(span);
   const hide = ramp(UNDEAD_RAMPS[design.hideRamp]);
+  // A DESIGN MAY WEAR SOMETHING. The villagers resolve their gown the
+  // same way — a name and a material off the design's own table — so a
+  // lich in robes goes through the drape path that already exists
+  // rather than a second one built for it.
+  const drape = design.drape ? { name: design.drape.name, ramp: mats[design.drape.mat] } : null;
   return {
+    drape,
     // THE BOOT RAMP IS THE DESIGN'S TO CHOOSE. It was hardcoded to
     // gravecloth, which is right for a corpse that was buried in shoes
     // and wrong for a skeleton — it came out with brown feet under a
