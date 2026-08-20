@@ -27,8 +27,11 @@ test('exteriorfoes: the pool laws - cull AFTER fresh senses, the alert raise, th
   assert.ok(ENCOUNTER_CULL_DISTANCE > 60, 'the relevance band outlives the senses radius');
   // no crime machinery: killing a wilderness wolf is not Murder
   assert.equal(s.includes('crimeCommitted'), false, 'the watch keeps the crime arms; this pool has none');
-  // the archery/casting residue is explicit, not accidental
-  assert.ok(s.includes('attack.rangedAttack = false;   // RESIDUE'), 'exterior enemy archery pends its arrow seam, loudly');
+  // X2-slice: the archery residue RETIRED - bow foes read the same
+  // ranged-flags law the dungeon build does, and the shoot frame
+  // looses a real arrow through the host's seam
+  assert.ok(s.includes('attack.rangedAttack = hasBowAttack(basics)'), 'exterior bow foes arm like the dungeon');
+  assert.ok(s.includes('f.mobile.shootFrame && playerFeet && onArrow'), 'the ranged -1 marker fires the arrow seam');
 });
 
 test('exteriorfoes: the world host - the cadence loop, the travel reset, the facade and the melee order', () => {
@@ -53,4 +56,17 @@ test('exteriorfoes: the world host - the cadence loop, the travel reset, the fac
   assert.ok(watch > 0 && enc > watch && civ > enc, 'watch -> encounters -> civilians');
   // the pool follows the floating origin
   assert.ok(s.includes('exteriorFoes.offsetAll(r.offset)'), 'a recenter shifts the pool');
+  // X2-slice: the arrow seam - the loose rides the C13 flight with
+  // the enemy meta + ArrowShoot from the archer, and the impact runs
+  // the shared damage member with the tally/poison/recoverable-arrow
+  assert.ok(s.includes("arrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon })"),
+    'the shoot frame looses a real hunting arrow');
+  assert.ok(s.includes('audio.play3d(SOUND.ArrowShoot, from'), 'the loose rings from the archer');
+  const imp = s.indexOf('onPlayerHit: (m) =>');
+  assert.ok(imp > 0, 'the world host handles the enemy-arrow impact');
+  const impFn = s.slice(imp, imp + 900);
+  assert.ok(impFn.includes('tallySkill(playerEntity, SKILLS.Dodging, 1)'), 'the arrow tallies Dodging (BowDamage :141)');
+  assert.ok(impFn.includes('calculateAttackDamage(shooter.entity, playerEntity'), 'the shared damage member');
+  assert.ok(impFn.includes('inflictPoison(playerEntity, pt, false'), 'poisoned enemy arrows dose');
+  assert.ok(impFn.includes("templateIndex: 131"), 'the arrow is recoverable from the target');
 });
