@@ -35,6 +35,8 @@ import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { TravelMapWindow, buildTravelIndex } from '../ui/travelMap.js';   // F-slice
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
+import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
+import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE } from '../systems/encounters.js';   // X-slice
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1)
@@ -686,6 +688,52 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!arrestFlow.onGuardHit(dmg, apply)) apply();
     },
   });
+  // X-slice: the encounter-foe pool - S32's above-ground arms go
+  // LIVE. Same damage door shape as the guards; no crime machinery.
+  const exteriorFoes = createExteriorFoes({
+    renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio,
+    currentMinute: () => Math.floor(playerTicker.classicMinutes),
+    say: (l) => townTalk.say(l),
+    onPlayerHurt: (dmg, wpn) => {
+      if (dmg <= 0) return;
+      hurtPlayer(playerEntity, dmg);
+      audio.playOneShot(hitSoundFor(wpn), 1.1);
+      surfacePlayer();
+    },
+  });
+  // The classic catch-up loop (PlayerEntity.Update:486-492): per
+  // elapsed game minute, one intermittent roll; break on a spawn.
+  // Fast travel resets the anchor (PreventEnemySpawns parity - DFU
+  // suppresses the whole post-travel window).
+  let _lastEncMinutes = null;
+  function runEncounterTick(playerFeet) {
+    const now = Math.floor(playerTicker.classicMinutes);
+    if (_lastEncMinutes == null) _lastEncMinutes = now;
+    const span = Math.min(now - _lastEncMinutes, 1440);
+    for (let l = 0; l < span; l++) {
+      const key = `${playerTravelPixel().x},${playerTravelPixel().y}`;
+      const hit = intermittentEnemySpawn({
+        gameMinutes: _lastEncMinutes + l + 1, inside: false,
+        inLocationRect: locationIndex.has(key),
+        climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
+        playerLevel: playerEntity.level,
+      });
+      if (hit) {
+        // eight compass points at the classic distance, terrain-landed
+        for (let d = 0; d < 8; d++) {
+          const a = (d * Math.PI) / 4;
+          const x = playerFeet[0] + Math.sin(a) * hit.minDistance;
+          const z = playerFeet[2] + Math.cos(a) * hit.minDistance;
+          const down = collider.raycast([x, playerFeet[1] + 20, z], [0, -1, 0], 60);
+          if (!Number.isFinite(down)) continue;
+          exteriorFoes.spawnFoe(hit.mobileType, [x, playerFeet[1] + 20 - down, z]).catch(() => {});
+          break;
+        }
+        break;
+      }
+    }
+    _lastEncMinutes = now;
+  }
   const _guardPool = () => _livePersons.map(({ person, pos }) => ({
     pos, fwdYaw: person.facingYaw, guard: person.guard,
     disable: () => {
@@ -732,9 +780,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     say: (l) => townTalk.say(l),
     surfacePlayer,
-    foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? cityGuards.guards : [],
+    foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : [],   // X-slice: encounter foes are spell targets too
     foeSinks: (g) => ({
-      hurt: (n) => { if (n > 0) cityGuards.hurtGuard(g, n, player.pos); },
+      hurt: (n) => { if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos) : cityGuards.hurtGuard(g, n, player.pos)); },   // X-slice: route by pool
       heal: (n) => { if (n > 0) g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },
       drainMagicka: (n) => { if (n > 0) g.entity.magicka = Math.max(0, (g.entity.magicka ?? 0) - n); },
       restoreMagicka: (n) => { if (n > 0) g.entity.magicka = Math.min(g.entity.maxMagicka ?? Infinity, (g.entity.magicka ?? 0) + n); },
@@ -802,6 +850,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         sunAverse: false,   // vampirism / DamageFromSunlight ride their arcs
       });
       if (clamp > 0) playerTicker.advance(clamp);
+      _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // X-slice: PreventEnemySpawns parity - no spawn catch-up for the traveled window
       townTalk.say(`You arrive at ${pick.name}.`);
     } finally {
       _traveling = false;
@@ -1077,6 +1126,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // destination at least two pixels out (the live probe types its
     // name into the real window).
     window.__travelProbe = () => JSON.stringify({ pixel: playerTravelPixel(), minutes: Math.floor(playerTicker.classicMinutes), gold: goldAmount(playerEntity) });
+    window.__encounters = () => JSON.stringify({ active: exteriorFoes.activeCount(), foes: exteriorFoes.foes.filter((f) => !f.dead).map((f) => ({ type: f.mobileType, dist: +f.ai._dist.toFixed(1), detected: f.ai.detected })) });
+    window.__spawnEncounter = (type, dist = 10) => {
+      const pf = walkMode && playerSpawned ? player.pos : cam.pos;
+      return exteriorFoes.spawnFoe(type, [pf[0] + dist, pf[1] + 1, pf[2]]).then((f) => (f ? f.mobileType : null));
+    };
     window.__travelNearest = () => {
       const p0 = playerTravelPixel();
       let best = null, bd = Infinity;
@@ -1261,6 +1315,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // AUDIT 17e F23: everything else holding a WORLD position must
       // follow the origin too, or it strands 819.2 units behind.
       cityGuards.offsetAll(r.offset);
+      exteriorFoes.offsetAll(r.offset);   // X-slice
       droppedLoot.offsetAll(r.offset);
       // AUDIT 18: this line used to be an optional call to a method
       // ArrowFlight has never had, so it was swallowed every time and
@@ -1404,6 +1459,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // freezes with the population under the talk overlay.
     livePersonBatches.push(...cityGuards.update(townTalk.overlayActive ? 0 : dt,
       walkMode && playerSpawned ? player.pos : cam.pos, cam.pos, { playerInvisible: isInvisible(playerEntity) }));
+    // X-slice: the encounter pool drives + draws beside the watch;
+    // the cadence loop rolls the elapsed minutes (exterior mode only).
+    if ((modes?.mode ?? 'exterior') === 'exterior') {
+      const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
+      if (!townTalk.overlayActive) runEncounterTick(_pf);
+      exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, { playerInvisible: isInvisible(playerEntity) });
+      livePersonBatches.push(...exteriorFoes.batches());
+    }
     livePersonBatches.push(...droppedLoot.batches());   // U8e: the ground piles
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, new Float32Array([0, 1, 0]));
     if (precip) {
@@ -1457,6 +1520,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // AUDIT 23 (combat-4): the host-side double tallies are gone -
         // resolvePlayerHit runs DFU's tally arm itself.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
+          // X-slice: encounter foes resolve after the watch, before civilians
+          if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
+            tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
+            surfacePlayer();
+          } else
           cityGuards.resolveCivilianHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, _guardPool(),
             { onMurder: () => _crimeResponse(), onHitSound: guardHitSound }).then((r) => {
             if (r?.carriedHit) tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);

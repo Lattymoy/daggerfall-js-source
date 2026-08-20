@@ -46,8 +46,8 @@ test('M5: the exterior pages cast through MODE FACADES - collider, foes and abso
     const s = src(f);
     assert.ok(s.includes("(modes?.mode === 'interior' && modes.interiorCollider) ? modes.interiorCollider : collider"),
       `${f}: missiles hit the walls of the mode the player is in`);
-    assert.ok(s.includes("foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? cityGuards.guards : []"),
-      `${f}: guards are targets only outside`);
+    assert.ok(/foes: \(\) => \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? (cityGuards\.guards|\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]) : \[\]/.test(s),
+      `${f}: guards (and, in the world host, the X-slice encounter pool) are targets only outside`);
     const i = s.indexOf('absorbCtx: () =>');
     const arm = s.slice(i, i + 300);
     assert.ok(arm.includes("=== 'exterior'") && arm.includes('inside: false') && arm.includes('inside: true'),
@@ -63,8 +63,8 @@ test('M5: spell damage reaches guards through the ONE damage door', () => {
   assert.ok(src('cityGuards.js').includes('hurtGuard: (g, dmg, playerFeet) => damageGuard(g, dmg, playerFeet, null)'),
     'cityGuards exports the door');
   for (const f of HOSTS) {
-    assert.ok(src(f).includes('hurt: (n) => { if (n > 0) cityGuards.hurtGuard(g, n, player.pos); }'),
-      `${f}: the engine sink uses it`);
+    assert.ok(/hurt: \(n\) => \{ if \(n > 0\) (cityGuards\.hurtGuard\(g, n, player\.pos\)|\(g\._encounter \? exteriorFoes\.damageFoe\(g, n, player\.pos\) : cityGuards\.hurtGuard\(g, n, player\.pos\)\))/.test(src(f)),
+      `${f}: the engine sink routes through the pool's own damage door`);
   }
 });
 
