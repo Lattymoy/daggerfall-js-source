@@ -33,11 +33,14 @@ import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS } from './hostCombat.js';  
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
+import { TravelMapWindow, buildTravelIndex } from '../ui/travelMap.js';   // F-slice
+import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
+import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1)
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
-import { clearCrimeOnLocationExit, addGold } from '../systems/court.js';   // AUDIT 17e F6   // G2
+import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
@@ -55,7 +58,7 @@ import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the sho
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { StreamingWorldState } from '../world/streamingWorld.js';
+import { StreamingWorldState, worldCoordToMapPixel } from '../world/streamingWorld.js';   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
@@ -750,6 +753,69 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let playerSpawned = false;
+  // F-slice: FAST TRAVEL. The window collects the popup's choices;
+  // the LAWS live in systems/travel.js; arrival is
+  // performFastTravel's order (DaggerfallTravelPopUp:324-385):
+  // deduct, teleport, cautious restores, RaiseTime, the clamps. The
+  // teleport is the streamer's OWN re-init (verbatim
+  // ResetStreamingWorld) after tearing the built pixels down.
+  const travelIndex = buildTravelIndex(maps, longitudeLatitudeToMapPixel);
+  const playerTravelPixel = () => {
+    const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
+    return worldCoordToMapPixel(wc.x, wc.z);
+  };
+  let _traveling = false;
+  async function fastTravelTo(pick, opts, computed) {
+    if (_traveling) return;
+    _traveling = true;
+    try {
+      deductGold(playerEntity, computed.totalCost);
+      // teleport: destroy every built pixel, re-origin the streamer at
+      // the destination, and build its pixel before the frame resumes
+      for (const key of [...built.keys()]) {
+        const [px, py] = key.split(',').map(Number);
+        destroyPixel(px, py);
+        state.release(px, py);
+      }
+      queue.length = 0;
+      queue.push(...state.init(pick.pixel.x, pick.pixel.y));
+      const first = queue.shift();
+      const dest = await buildPixel(first.px, first.py);
+      const y = dest.centerHeight + state.compensation[1] + 2;
+      if (walkMode) { player.spawn(TERRAIN_SIZE / 2, y, TERRAIN_SIZE / 2); playerSpawned = true; }
+      cam.pos = [TERRAIN_SIZE / 2, y + (walkMode ? 0 : 40), TERRAIN_SIZE / 2];
+      // cautious arrival heals in full; magicka honors NoRegenSpellPoints
+      if (opts.speedCautious) {
+        playerEntity.health = playerEntity.maxHealth;
+        playerEntity.fatigue = maxFatigue(playerEntity);
+        if (!hasSpecialAbility(playerEntity.career, SPECIAL_ABILITY.NoRegenSpellPoints)) {
+          playerEntity.magicka = playerEntity.maxMagicka;
+        }
+      }
+      // RaiseTime through the ONE clock: the U24 advance runs the same
+      // tick, so magic rounds and disease days catch up inside the jump.
+      playerTicker.advance(computed.minutes);
+      const clamp = arrivalClampMinutes(playerTicker.classicMinutes, {
+        speedCautious: opts.speedCautious,
+        sunAverse: false,   // vampirism / DamageFromSunlight ride their arcs
+      });
+      if (clamp > 0) playerTicker.advance(clamp);
+      townTalk.say(`You arrive at ${pick.name}.`);
+    } finally {
+      _traveling = false;
+    }
+  }
+  const toggleTravelMap = () => {
+    if (townTalk.overlayActive) return;
+    townTalk.showOverlay(new TravelMapWindow(travelIndex, {
+      getPlayerPixel: playerTravelPixel,
+      getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
+      gold: () => goldAmount(playerEntity),
+      // transport ownership rides the transport arc; on foot for now
+      hasHorse: false, hasCart: false, hasShip: false,
+      onTravel: (pick, opts, computed) => { fastTravelTo(pick, opts, computed); },
+    }));
+  };
   // Edge-detect latch shared with the mode machine: a held key must not
   // re-trigger across a mode switch.
   const latch = { use: false, crouch: false };   // audit 16f: jump is HELD since P14 - the latch slot was dead
@@ -820,6 +886,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (e.key === 'Backspace' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
       e.preventDefault();
       toggleSpellbook();
+      return;
+    }
+    // F-slice: the travel map on V (InputManager.SetupDefaults:1028).
+    if (e.code === 'KeyV' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      toggleTravelMap();
       return;
     }
     if (e.code === 'KeyC' && walkMode && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
@@ -999,6 +1070,21 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   if (shotMode) { modes.installShotProbes(); installTownProbes(); }
   if (shotMode) window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
+  if (shotMode) {
+    // F-slice probe surface: the travel state + the nearest real
+    // destination at least two pixels out (the live probe types its
+    // name into the real window).
+    window.__travelProbe = () => JSON.stringify({ pixel: playerTravelPixel(), minutes: Math.floor(playerTicker.classicMinutes), gold: goldAmount(playerEntity) });
+    window.__travelNearest = () => {
+      const p0 = playerTravelPixel();
+      let best = null, bd = Infinity;
+      for (const e of travelIndex) {
+        const d = Math.max(Math.abs(e.pixel.x - p0.x), Math.abs(e.pixel.y - p0.y));
+        if (d >= 2 && d < bd) { bd = d; best = e; }
+      }
+      return JSON.stringify(best);
+    };
+  }
   window.__readyRanged = () => { const sp = knownSpells({}, spellsByIndex).map((x) => [calculateCastCost(x, playerEntity).sp, x]).sort((a, b) => a[0] - b[0])[0]?.[1]; magic.setReadied(sp); return sp ? `${sp.name}:${calculateCastCost(sp, playerEntity).sp}` : null; };   // M5: no classic starting set carries a missile spell - ready the cheapest flier for the flight leg
 
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
