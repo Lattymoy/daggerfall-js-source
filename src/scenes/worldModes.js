@@ -48,6 +48,8 @@ import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
+import { SpellbookWindow, knownSpells } from '../ui/inventory.js';   // M2
+import { calculateCastCost } from '../systems/spellcost.js';   // M2
 import { SOUND, swingSoundFor } from '../systems/soundClips.js';   // AUDIT 23: the bow loose + no-enemy swing sounds
 import { fetchBytes, applyMotorEffectFlags, applyFallLanding, ridePlatform } from './shared.js';
 import { setDeathPresenter, hurtPlayer } from '../characters/playerEntity.js';   // AUDIT 21 hosts F6; AUDIT 23 C5 fatal collapse
@@ -157,7 +159,7 @@ export function createWorldModes(host) {
       if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
     },
   });
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null } = host;   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null } = host;   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
   // AUDIT 21 (hosts lane, F7): the HUD art for interior mode. A missing file
   // answers null and drawHud no-ops, so this host draws no HUD rather than
@@ -173,6 +175,7 @@ export function createWorldModes(host) {
   // own audited copy; the host rule wants the weapon in every mode).
   // say -> console FLAGGED: the interior HUD-text layer pends its arc.
   const interiorWeapon = createWeaponRig({
+    spellArmed: () => magic?.spellArmed() ?? false,   // M2
     renderer, canvas, fetchBytes, palette, audio, entity: playerEntity,
     say: (l) => console.warn('[interior]', l),
   });
@@ -963,6 +966,13 @@ export function createWorldModes(host) {
     interiorArrows.update(dt);
     interiorArrows.draw(renderer, interiorCtx.texRemap);
     renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
+    if (magic) {
+      // M2: the armed click's cast + missile flight, on the interior's
+      // own collider (the engine's mode-aware raycast reads it).
+      magic.firePending([...cam.pos], eyeDir());
+      magic.update(dt, player.pos);
+      if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));
+    }
     if (interiorCtx.animateChars) interiorCtx.animateChars((performance.now() - _charT0) / 1000, _charAnimMode);
     for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
     // C9: the interior FP weapon - gesture/swing/sounds through the
@@ -1111,7 +1121,7 @@ export function createWorldModes(host) {
   // C9: interior mode routes the same RMB seam to its weapon rig.
   const modalAttackSink = () =>
     (mode === 'dungeon' && dungeonCtx) ? dungeonCtx.playerAttackInput
-      : mode === 'interior' ? interiorWeapon.attackInput
+      : mode === 'interior' ? ((dx, dy, held) => { if (held && magic?.interceptAttack(true)) return; interiorWeapon.attackInput(dx, dy, held); })   // M2: an armed cast eats the click
         : null;
   addEventListener('mousemove', (e) => {
     const sink = modalAttackSink();
@@ -1144,6 +1154,25 @@ export function createWorldModes(host) {
       if (w.done && interiorOverlay === w) interiorOverlay = null;
       e.preventDefault();
       return;
+    }
+    // M2: casting INSIDE a building - the spellbook (Backspace) and
+    // the cast key, riding the interior overlay channel.
+    if (mode === 'interior' && magic) {
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        const sbi = typeof spellsByIndex === 'function' ? spellsByIndex() : spellsByIndex;
+        if (!interiorOverlay && sbi) {
+          interiorOverlay = new SpellbookWindow(knownSpells(playerEntity, sbi), playerEntity, {
+            ready: (sp) => magic.readySpell(sp),
+            castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
+          });
+        }
+        return;
+      }
+      if (e.code === 'KeyC') {
+        magic.castInput([...cam.pos], eyeDir());
+        return;
+      }
     }
     // The input map (ui/input.js) owns all bindings.
     if (mode !== 'dungeon' || !dungeonCtx) return;
@@ -1183,6 +1212,9 @@ export function createWorldModes(host) {
 
   return {
     get mode() { return mode; },
+    // M2: the cast engine's mode-aware raycast reads the INTERIOR's
+    // collider while a building is mounted.
+    get interiorCollider() { return interiorCtx?.collider ?? null; },
     /** AUDIT 19 / 1:1: what THIS host contributes to the music context.
      *  The outer host owns the clock, the weather and the location; the
      *  mode host owns whether the player is inside, in a dungeon, and

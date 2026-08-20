@@ -524,7 +524,9 @@ test('audit18: the three retired flags are DELETED, not rewritten', () => {
   assert.equal(/the spellbook UI pends/.test(src), false);
   // and they were false: all three features are live below them
   assert.ok(/calculateCastCost\(sp, playerEntity\)/.test(src), 'the cost really is computed');
-  assert.ok(/sp\.rangeType === 1/.test(src) && /sp\.rangeType === 3/.test(src), 'rangeTypes 1 and 3 really are handled');
+  // M3: the range arms live in the ONE engine (scenes/hostMagic.js).
+  const engineSrc = hostSrc('hostMagic.js');
+  assert.ok(/sp\.rangeType === 1/.test(engineSrc) && /sp\.rangeType === 3/.test(engineSrc), 'rangeTypes 1 and 3 really are handled');
   assert.ok(/ready: \(sp\) =>/.test(src), 'the spellbook really does ready a spell');
   // the truncated "INTERIM (loud): the" sentence with no predicate
   assert.equal(/INTERIM \(loud\): the\n/.test(src), false);

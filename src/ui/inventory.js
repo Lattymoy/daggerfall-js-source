@@ -11,7 +11,17 @@
 //   Enter readies one (retires ?spell). INTERIM loud: with no
 //   starting-spells data yet, an empty book lists the file's ranged
 //   damage spells as known - the classic starting-spell sets replace
-//   this when their data lands.
+//   this when their data lands. Management (M4): d deletes (YesNo
+//   confirm; the curse-spell tags refuse first), u/j swap the
+//   selection up/down, s sorts (confirm; alpha, then point cost when
+//   already alphabetical) - DaggerfallSpellBookWindow's delete/swap/
+//   sort buttons keyed. All ops mutate entity.spells IN PLACE, so the
+//   save envelope's index array (save.js:79) carries the new order.
+//   Rename is a ledger row: entity.spells hold SHARED SPELLS.STD
+//   records and the envelope stores bare indexes, so a rename needs
+//   per-entity copies + name persistence first. DFU's edit sound
+//   (SoundClips.PageTurn) and open sound (OpenBook) are unwired -
+//   the window has no audio seam; ledger residue with Rename.
 //   Death: health 0 opens it through the ONE hurtPlayer door; Enter
 //   restarts (a page reload), and the screen's F11 hint is the real
 //   quickload binding (InputManager.SetupDefaults: F9 save, F11 load).
@@ -25,6 +35,20 @@ const panel = (renderer, canvas) =>
 const GOLD = [0.85, 0.72, 0.35, 1], WHITE = [0.9, 0.9, 0.85, 1], HOT = [1, 0.95, 0.6, 1], DIM = [0.5, 0.5, 0.45, 1];
 const ARROW_TEMPLATE_INDEX = 131;   // Weapons.Arrow (DaggerfallInventoryWindow.EquipItem's one exclusion)
 
+// PlayerEntity.cs:41-42 - the curse-spell tags the book refuses to
+// delete ("no way to get them back"; curing the curse cleans them
+// up). INERT until vampirism/lycanthropy land - no producer mints a
+// tagged spell yet - but the gate is DeleteButton_OnMouseClick's law.
+export const VAMPIRE_SPELL_TAG = 'vampire';
+export const LYCANTHROPY_SPELL_TAG = 'lycanthrope';
+// TextManager keys (comments) with our prose: the classic en string
+// table is not in the source snapshot, so the VALUES are FLAGGED
+// pending a string source; the keys and the gate order are the law.
+export const CANNOT_DELETE_VAMP_TEXT = 'You cannot delete vampiric powers.';       // cannotDeleteVamp
+export const CANNOT_DELETE_WERE_TEXT = 'You cannot delete lycanthropic powers.';   // cannotDeleteWere
+export const DELETE_SPELL_PROMPT = 'Delete this spell?';                           // deleteSpell
+export const SORT_SPELLS_PROMPT = 'Sort your spellbook?';                          // sortSpells
+
 export class SpellbookWindow {
   /** spells: [{ index, name, cost, ... }]; ready(spell) from the scene. */
   constructor(spells, entity, { ready = null, castCost = null } = {}) {
@@ -34,14 +58,71 @@ export class SpellbookWindow {
     this.castCost = castCost;   // S10: live skill-scaled cost
     this.cursor = 0;
     this.done = false;
+    this.confirm = null;   // 'delete' | 'sort' - the DaggerfallMessageBox YesNo, keyed
+    this.notice = null;    // the curse-tag refusal line
   }
   input(action) {
+    const ch = typeof action === 'string' && action.startsWith('char:') ? action.slice(5).toLowerCase() : null;
+    if (this.confirm) {
+      // The YesNo box swallows everything except its own answers; No
+      // and Escape close the BOX, not the book (DFU's CloseWindow()
+      // in the confirm handlers pops the box off the stack).
+      if (ch === 'y') {
+        const which = this.confirm;
+        this.confirm = null;
+        if (which === 'delete') this.deleteSelected();
+        else this.sortSpells();
+      } else if (ch === 'n' || action === 'back') this.confirm = null;
+      return;
+    }
+    this.notice = null;
     if (action === 'up' && this.spells.length) this.cursor = (this.cursor + this.spells.length - 1) % this.spells.length;
     else if (action === 'down' && this.spells.length) this.cursor = (this.cursor + 1) % this.spells.length;
     else if (action === 'confirm') {
       const sp = this.spells[this.cursor];
       if (sp && this.ready) { this.ready(sp); this.done = true; }
-    } else if (action === 'back' || action === 'spellbook') this.done = true;
+    } else if (ch === 'd' && this.spells[this.cursor]) {
+      // DeleteButton_OnMouseClick:811-838 - the curse tags refuse
+      // BEFORE the prompt; otherwise arm the YesNo.
+      const tag = this.spells[this.cursor].tag;
+      if (tag === VAMPIRE_SPELL_TAG) this.notice = CANNOT_DELETE_VAMP_TEXT;
+      else if (tag === LYCANTHROPY_SPELL_TAG) this.notice = CANNOT_DELETE_WERE_TEXT;
+      else this.confirm = 'delete';
+    } else if (ch === 's' && this.spells.length) this.confirm = 'sort';   // SortButton_OnMouseClick:900-905
+    else if (ch === 'u') this.swap(-1);
+    else if (ch === 'j') this.swap(+1);
+    else if (action === 'back' || action === 'spellbook') this.done = true;
+  }
+  /** DeleteSpellConfirm_OnButtonClick:840-852 + DaggerfallEntity.
+   *  DeleteSpell (:767-773): RemoveAt, then the selection clamps
+   *  (UpdateSelection). The book stays open. */
+  deleteSelected() {
+    this.spells.splice(this.cursor, 1);
+    if (this.cursor >= this.spells.length) this.cursor = Math.max(0, this.spells.length - 1);
+  }
+  /** SwapButton_OnMouseClick:872-897 + SwapSpells (:725-732): both
+   *  ends bounds-guarded, and the CURSOR FOLLOWS the moved spell
+   *  (SelectNext/SelectPrevious after the swap). */
+  swap(d) {
+    const i = this.cursor, j = i + d;
+    if (j < 0 || j >= this.spells.length) return;
+    const t = this.spells[i]; this.spells[i] = this.spells[j]; this.spells[j] = t;
+    this.cursor = j;
+  }
+  /** SortSpellsConfirm_OnButtonClick:907-925: alpha first
+   *  (SortSpellsAlpha - OrderBy Name, a stable sort, as
+   *  Array.prototype.sort is since ES2019); if the sequence did not
+   *  change, point cost (SortSpellsPointCost). DFU's cost key runs
+   *  CalculateTotalEffectCosts with a NULL caster, which
+   *  FormulaHelper resolves to the PLAYER's live skills - for the
+   *  player's own book that is exactly the window's castCost hook. */
+  sortSpells() {
+    const before = this.spells.slice();
+    this.spells.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+    if (this.spells.every((sp, i) => sp === before[i])) {
+      const cost = new Map(this.spells.map((sp) => [sp, this.castCost ? this.castCost(sp) : (sp.cost ?? 0)]));
+      this.spells.sort((a, b) => cost.get(a) - cost.get(b));
+    }
   }
   draw(renderer, canvas, font, s) {
     panel(renderer, canvas);
@@ -51,7 +132,13 @@ export class SpellbookWindow {
     this.spells.forEach((sp, i) => drawText(renderer, font,
       `${i === this.cursor ? '> ' : '  '}${sp.name}  (${this.castCost ? this.castCost(sp) : sp.cost})`,
       20 * s, (36 + i * 10) * s, s, i === this.cursor ? HOT : WHITE));
-    drawText(renderer, font, 'ENTER ready   ESC close', 20 * s, canvas.height - 20 * s, s, DIM);
+    if (this.confirm) {
+      const q = `${this.confirm === 'delete' ? DELETE_SPELL_PROMPT : SORT_SPELLS_PROMPT}  (y/n)`;
+      drawText(renderer, font, q, (canvas.width - measureText(font.fnt, q) * s) / 2, canvas.height / 2, s, HOT);
+    } else if (this.notice) {
+      drawText(renderer, font, this.notice, 20 * s, canvas.height - 32 * s, s, HOT);
+    }
+    drawText(renderer, font, 'ENTER ready   u/j move   d delete   s sort   ESC close', 20 * s, canvas.height - 20 * s, s, DIM);
   }
 }
 

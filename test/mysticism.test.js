@@ -175,41 +175,39 @@ test('S27: silence gates BOTH the ready and the cast, in the host that casts', (
   // DFU checks SilenceCheck in two places and both clear the readied
   // spell, so a silence landing mid-aim disarms you rather than
   // waiting for the click.
-  const dc = read('src/scenes/dungeonContext.js');
-  assert.ok(/import \{[^}]*silenceBlocksCast[^}]*\} from '\.\.\/systems\/mysticism\.js'/.test(dc),
-    'dungeonContext imports the gate');
+  // M3: the gates moved with the cast stack into the ONE engine
+  // (scenes/hostMagic.js) - the behavioral halves are pinned in
+  // hostmagic.test.js; this sweep holds the source shape.
+  const hm = read('src/scenes/hostMagic.js');
+  assert.ok(/import \{[^}]*silenceBlocksCast[^}]*\} from '\.\.\/systems\/mysticism\.js'/.test(hm),
+    'the engine imports the gate');
 
-  const castFn = dc.slice(dc.indexOf('function playerCastInput'));
+  const castFn = hm.slice(hm.indexOf('function castInput'));
   const castBody = castFn.slice(0, castFn.indexOf('\n  }\n'));
   assert.ok(/silenceBlocksCast\(playerEntity\)/.test(castBody), 'the CAST gate');
   assert.ok(/readiedSpell = null/.test(castBody), 'and it clears the readied spell');
 
-  const readyFn = dc.slice(dc.indexOf('ready: (sp) =>'));
-  const readyBody = readyFn.slice(0, readyFn.indexOf('},'));
+  const readyFn = hm.slice(hm.indexOf('function readySpell'));
+  const readyBody = readyFn.slice(0, readyFn.indexOf('\n  }\n'));
   assert.ok(/silenceBlocksCast\(playerEntity\)/.test(readyBody), 'the READY gate');
   assert.ok(/readiedSpell = null/.test(readyBody), 'and it clears too');
 });
 
-test('S27: THE FOUR HOSTS - casting is dungeon-only, and that is why', () => {
-  // Not three hosts forgetting to wire something: readiedSpell,
-  // applySpell and the spellbook live in dungeonContext and nowhere
-  // else, so there is no exterior or interior cast for a silence to
-  // block. If an exterior host EVER grows a cast path, this fails and
-  // sends the author to the gate.
-  const dc = read('src/scenes/dungeonContext.js');
-  assert.ok(/readiedSpell/.test(dc) && /applySpell\(/.test(dc),
-    'dungeonContext is the casting host');
-
-  for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/worldModes.js']) {
+test('S27: THE FOUR HOSTS - every host mounts the ONE cast engine', () => {
+  // This pin used to assert the OPPOSITE ("casting is dungeon-only...
+  // if an exterior host EVER grows a cast path, this fails and sends
+  // the author to the gate"). The M slice is that author: spellcasting
+  // went above ground THROUGH the shared engine, so the silence gates
+  // ride along by construction - one implementation, four hosts.
+  for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/dungeonContext.js']) {
     const src = read(host);
-    assert.ok(!/\breadiedSpell\b/.test(src),
-      `${host} has no readied spell - if it grows one, wire silenceBlocksCast`);
-    assert.ok(!/applySpell\(/.test(src),
-      `${host} casts nothing - if it starts, wire silenceBlocksCast`);
+    assert.ok(/createPlayerMagic\(\{/.test(src), `${host} mounts the engine`);
   }
-  // and worldModes is the ROUTER: it mounts the context that does cast
   const wm = read('src/scenes/worldModes.js');
-  assert.ok(/buildDungeonContext/.test(wm), 'worldModes mounts the casting context');
+  assert.ok(/magic\.readySpell\(sp\)/.test(wm), 'the interior arm readies through the engine');
+  assert.ok(/magic\.castInput\(/.test(wm), 'and casts through it');
+  // and worldModes is still the ROUTER for the dungeon context
+  assert.ok(/buildDungeonContext/.test(wm), 'worldModes mounts the dungeon context');
 });
 
 test('S27: Open and Lock are NOT wired, and the seams are named', () => {

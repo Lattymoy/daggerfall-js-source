@@ -1067,7 +1067,9 @@ inside-OR-night, light is outside-AND-day - which is the same law
 rest.js's RapidHealing already uses, and DFU takes both from the
 PLAYER for every entity ("everything is where the player is",
 :1305). The dungeon host passes `inside: true` because a dungeon is;
-the exterior spell paths are FLAGGED with their own hosts.
+the exterior spell paths shipped at S30 - their absorbCtx answers
+`inside` by mode and `day` off the one clock, so the InLight and
+InDarkness careers finally read a live sky.
 
 An absorbed effect is SKIPPED, not reduced - DFU `continue`s past it,
 so no damage is dealt at all. The tally is credited after the loop with
@@ -1435,6 +1437,10 @@ interior cast for a silence to block. A source sweep pins it BOTH
 ways - the gate is present in the casting host, and absent from the
 other three because they cast nothing. If an exterior host ever grows
 a cast path the sweep fails and sends its author to the gate.
+(S30: it fired exactly as designed - the exterior hosts grew THE
+cast path, the author was sent here, and the sweep was inverted:
+it now pins every host onto the ONE engine, whose two gates carry
+this record's silence law for all four.)
 
 **Open and Lock are still not wired, and the record now names their
 seams** rather than saying "pending". Their payload is an ARMED effect
@@ -1619,3 +1625,73 @@ the temple's cure and a Cure Disease spell are one implementation; and
 RaiseTime for the hosts: it runs the SAME per-minute tick over the
 jump, so a three-hour training session owes the world its magic rounds,
 disease days and skill-advancement passes.
+
+## S30 - SPELLCASTING ABOVE GROUND: the one engine and the whole book
+
+2026-08-20. The AUDIT 23 hosts-2 priority row said a Mage cannot cast
+in town. The fix is not three copies of the dungeon's stack - it is
+scenes/hostMagic.js, the dungeon's audited casting stack EXTRACTED
+verbatim behind injected deps, and then every host mounted on it. ONE
+DFU MEMBER, ONE EXPORT at host scale: readySpell's two gates, the four
+range arms, the school tallies + cast sound, the absorb refund cap,
+applySpellToPlayer's message arms, explodeAt, and the player missiles
+(flight, wall explode with the AreaAtRange impact arm, foe seek,
+billboard batches, and PRUNING - retired missiles now leave the list,
+a leak the old host-local loop tolerated). Saving throws roll through
+an injectable `rolls` slot (ENGINE-PRNG RULE).
+
+**One engine per PAGE, not per mode.** exterior.js and world.js each
+mount one engine whose deps are mode-FACADES: the collider raycast
+follows the door (modes.interiorCollider when inside), foes() answers
+the live guards only in exterior mode, and absorbCtx() answers
+`{inside, day}` from the mode and the one clock - so S24's InLight and
+InDarkness careers finally read a real sky, and a spell readied in the
+street stays readied through a tavern door. worldModes' interior arm
+drives the same engine through the host bag; dungeonContext swapped
+its local stack for the engine and DELETED it (121 lines), keeping
+only enemy missiles and both sides' arrows host-side - different DFU
+owners - which land through the engine's explodeAt/applySpellToPlayer.
+Guards take spell damage through cityGuards' ONE damage door, so a
+killing bolt raises the corpse and the Murder record exactly like a
+sword.
+
+**The classic input chain, everywhere.** Backspace opens the book
+(DFU's default), Enter readies; readying a CasterOnly spell casts
+INSTANTLY at ready; a ranged ready ARMS the click latch, and the
+attack click casts instead of swinging - interceptAttack consumes the
+latch in every host's attack path, firePending fires on the next
+frame with the live eye. KeyC stays the port's direct-cast key
+(flagged as ours in ui/input.js). The readied spell rides the dungeon
+save as its SPELLS.STD index, so book reorders cannot corrupt it.
+
+**The spellbook manages itself now (ui-native-2).** d deletes behind
+the classic YesNo - the vampire/lycanthrope tags refuse BEFORE the
+prompt ("no way to get them back"; inert until a curse mints a tagged
+spell, but the gate is DeleteButton_OnMouseClick's law) - u/j swap
+with the CURSOR FOLLOWING the moved spell, s sorts alpha first and by
+point cost when the sequence did not change (SortSpellsConfirm's
+SequenceEqual arm; the cost key is the window's castCost, which is
+DFU's null-caster cost because FormulaHelper resolves a null caster
+to the player). Every mutation is IN PLACE on entity.spells, so the
+save envelope's index array carries membership and order. RESIDUE on
+the ledger row: Rename (needs per-entity spell copies + name
+persistence), the prompt PROSE (keys cited, values pending a classic
+string source), and the window's OpenBook/PageTurn sounds.
+
+**Verification.** 11 engine pins run the laws behaviorally
+(hostmagic.test.js); 5 wiring pins sweep every host's mount, click
+seam, frame drive, facades and save seam (hostmagic_wiring.test.js);
+5 spellbook pins run delete/swap/sort against the real window
+(inventoryui.test.js); S27's dungeon-only sweep INVERTED into the
+four-hosts-one-engine sweep. 5 mutations run, 5 killed. And because
+these hosts have no node coverage, tools/castProbe.mjs drives the
+LIVE pages frame-synced: the sort in a real book, the instant
+ready-cast, the click-to-cast whiff aborting BEFORE the spend with
+the latch consumed, a missile's spawn/flight/lifespan retirement
+with no leak, a real door transition with the book carried inside,
+and the dungeon regression - exterior, world and dungeon all green
+with zero page errors. The probe surfaced one truth the first draft
+got wrong: no classic starting set carries a missile spell (the
+Mage's book is utility + touch), so the flight leg readies the
+cheapest flier off the file - the same interim list an empty book
+shows.
