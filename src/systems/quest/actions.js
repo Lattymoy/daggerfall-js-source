@@ -288,5 +288,54 @@ export class PickOneOf extends ActionTemplate {
   }
 }
 
-/** The Q2 tranche, in DFU's trigger-first registration spirit. */
-export const DEFAULT_ACTIONS = [WhenTask, EndQuest, Say, StartTask, ClearTask, UnsetTask, StartStopTimer, LogMessage, RemoveLogMessage, PickOneOf];
+/** AUDIT quest-P2: the registry is first-match-wins over UNANCHORED
+ *  patterns, so the un-ported actions that sit before (or between)
+ *  the tranche in DFU's RegisterActionTemplates order need GUARDS at
+ *  their positions - without them Say hijacked "clicked npc _x_ say
+ *  1011" into an unconditional popup and WhenTask built bogus evals
+ *  from "when repute with ..." lines. A guard's createNew answers
+ *  null, so the line lands in pendingActionLines (the Q2b queue),
+ *  exactly where an unregistered action's line belongs. Patterns are
+ *  the DFU originals' match surface, group-free. */
+class PendingTrigger extends ActionTemplate {
+  constructor(parentQuest, pattern) { super(parentQuest); this._pattern = pattern; }
+  get pattern() { return this._pattern; }
+  createNew() { return null; }
+}
+
+const GUARD_PATTERNS = Object.freeze({
+  WhenPcEntersExits: /when pc (enters|exits) \w+/,
+  WhenNpcIsAvailable: /when [a-zA-Z0-9_.-]+ is available/,
+  WhenReputeWith: /when repute with [a-zA-Z0-9_.-]+ is at least \d+/,
+  WhenSkillLevel: /when skill \w+ is at least \d+/,
+  WhenAttributeLevel: /when attribute \w+ is at least \d+/,
+  ClickedNpc: /clicked [a-zA-Z0-9_.-]+ and at least \d+ gold otherwise do [a-zA-Z0-9_.]+|clicked npc [a-zA-Z0-9_.-]+/,
+  ClickedItem: /clicked item [a-zA-Z0-9_.-]+/,
+});
+const guard = (name) => new PendingTrigger(null, GUARD_PATTERNS[name]);
+
+/** The default registry, instances in DFU's RegisterActionTemplates
+ *  RELATIVE order (QuestMachine.cs:339-391) with guards standing in
+ *  for the not-yet-ported actions whose lines the tranche would
+ *  otherwise claim (AUDIT quest-P12 adopted the C# order outright). */
+export function defaultActionTemplates() {
+  return [
+    guard('WhenPcEntersExits'),
+    guard('WhenNpcIsAvailable'),
+    guard('WhenReputeWith'),
+    guard('WhenSkillLevel'),
+    guard('WhenAttributeLevel'),
+    new WhenTask(null),
+    guard('ClickedNpc'),
+    guard('ClickedItem'),
+    new EndQuest(null),
+    new Say(null),
+    new StartTask(null),
+    new ClearTask(null),
+    new LogMessage(null),
+    new PickOneOf(null),
+    new RemoveLogMessage(null),
+    new StartStopTimer(null),
+    new UnsetTask(null),
+  ];
+}

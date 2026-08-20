@@ -239,7 +239,50 @@ test('quest machine: COVERAGE PIN - the ten-action tranche resolves 3347 of 7235
     }
   }
   // Exact against the pinned vendor commit. New action slices move
-  // resolved UP and pending DOWN - never the reverse.
-  assert.equal(resolved, 3347);
-  assert.equal(pending, 3888);
+  // resolved UP and pending DOWN - never the reverse. (AUDIT quest-P2
+  // moved 50 lines BACK to pending: the guards stopped Say/WhenTask
+  // hijacking lines owned by not-yet-ported DFU triggers.)
+  assert.equal(resolved, 3297);
+  assert.equal(pending, 3938);
+});
+
+test('quest machine: AUDIT parity pins - guards pend hijackable lines, clear rearms actions', () => {
+  const m = new QuestMachine({ nowSeconds: () => 0 });
+  // (P2) "clicked npc _x_ say 1011" belongs to the un-ported ClickedNpc
+  // trigger - the guard sends it to pendingActionLines instead of
+  // letting Say claim it as an unconditional popup. Same for the
+  // when-shapes owned by WhenReputeWith/WhenNpcIsAvailable.
+  const src = [
+    'Quest: __GRD', 'QRC:', 'Message:  1011', ' x', '', 'QBN:',
+    'Person _qgiver_ group Questor', '',
+    '_t_ task:',
+    ' clicked npc _qgiver_ say 1011',
+    ' when repute with _qgiver_ is at least 20',
+    ' when _qgiver_ is available',
+    '',
+    'variable _a_',
+  ];
+  const q = m.scheduleQuest(src, 0, { rolls: () => 0 });
+  const t = q.getTask({ name: 't' });
+  assert.equal(t.actions.length, 0, 'no tranche action claimed the guarded lines');
+  assert.equal(t.pendingActionLines.length, 3, 'all three lines queued for Q2b');
+
+  // (P1) Clearing a task REARMS its completed actions: a restarted
+  // task runs them again (Task.cs SetTriggerValue's rearm-on-false).
+  const src2 = [
+    'Quest: __RRM', 'QRC:', 'Message:  1011', ' x', '', 'QBN:',
+    'variable _x_', '',
+    '_t_ task:',
+    ' setvar _x_',
+    '',
+    'variable _a_',
+  ];
+  const q2 = m.scheduleQuest(src2, 0, { rolls: () => 0 });
+  m.tick();
+  const t2 = q2.getTask({ name: 't' }), x = q2.getTask({ name: 'x' });
+  t2.start(); m.tick();
+  assert.equal(x.getTriggerValue(), true, 'first run sets the variable');
+  x.clear(); t2.clear();          // clear BOTH; the clear rearms t2's setvar action
+  t2.start(); m.tick();
+  assert.equal(x.getTriggerValue(), true, 'the restarted task runs its rearmed action again');
 });

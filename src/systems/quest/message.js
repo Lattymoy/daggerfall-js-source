@@ -74,10 +74,10 @@ export class Message {
    *  macro slice - callers get raw tokens today, loudly documented. */
   getTextTokens(variant = -1, roll = Math.random) {
     const index = variant === -1 ? Math.floor(roll() * this.variantCount) : 0;
-    return [...this.variants[index].tokens];
+    return this.variants[index].tokens.map((t) => ({ ...t }));   // C# Token is a STRUCT - callers get copies (AUDIT quest-P17)
   }
 
   getTextTokensByVariant(variant = 0) {
-    return [...this.variants[variant].tokens];
+    return this.variants[variant].tokens.map((t) => ({ ...t }));
   }
 }

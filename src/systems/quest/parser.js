@@ -103,7 +103,7 @@ export class Parser {
         const messageLines = [];
         for (;;) {
           if (i + 1 >= lines.length) break;
-          const text = lines[++i].replace(/\r$/, '');
+          const text = lines[++i].replace(/\r+$/, '');   // C# TrimEnd('\r') strips ALL trailing CRs (AUDIT quest-P10)
           if (!text) {
             if (!this._peekMessageEnd(lines, i)) { messageLines.push(' '); continue; }
             break;

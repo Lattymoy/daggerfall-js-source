@@ -25,9 +25,12 @@ export function splitField(text, expectedCount = 2, trim = true) {
 export const getFieldStringValue = (text) => splitField(text)[1].trim();
 export const getFieldIntValue = (text) => parseInt(splitField(text)[1].trim());
 
-/** int.Parse with a 0 default for null/empty (Parser.ParseInt). */
+/** int.Parse with a 0 default for null/empty (Parser.ParseInt).
+ *  AUDIT quest-P10: C# accepts a leading '+' and THROWS past int32. */
 export function parseInt(text) {
   if (text == null || text === '') return 0;
-  if (!/^-?\d+$/.test(text.trim())) throw new Error(`int.Parse failed on '${text}'`);
-  return Number.parseInt(text, 10);
+  if (!/^[+-]?\d+$/.test(text.trim())) throw new Error(`int.Parse failed on '${text}'`);
+  const n = Number.parseInt(text, 10);
+  if (n > 2147483647 || n < -2147483648) throw new Error(`int.Parse overflow on '${text}'`);
+  return n;
 }

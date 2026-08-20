@@ -91,7 +91,13 @@ export class Task {
     const globals = this.parentQuest?.hooks?.globalVars;
     if (this.globalVarLink !== -1 && globals) globals.set(this.globalVarLink, value);
     this.triggered = value;
-    if (this.dropped) this.triggered = false;
+    // AUDIT quest-P1 (Task.cs SetTriggerValue): a dropped task can
+    // never change state - and CLEARING a live task REARMS its
+    // completed actions so a restart runs them again ("clear" exists
+    // exactly so tasks can re-trigger; without this, a cleared task's
+    // second activation ran zero actions).
+    if (this.dropped) { this.triggered = false; return; }
+    if (value === false) this._rearmActions();
   }
 
   /** Q2 - Task.cs Update: the trigger law. The FIRST always-on
@@ -128,8 +134,10 @@ export class Task {
     }
 
     if (this.type === TaskType.PersistUntil) {
+      // AUDIT quest-P11: a missing target THROWS (C# NREs and the
+      // machine error-terminates the quest) - never a silent rearm.
       const targetTask = this.parentQuest.getTask(this.targetSymbol);
-      if (targetTask?.getTriggerValue()) this.clear();
+      if (targetTask.getTriggerValue()) this.clear();
       else this._rearmActions();
     }
 

@@ -135,7 +135,11 @@ export class Quest {
   }
 
   tombstone() {
+    // Quest.cs TombstoneQuest: tombstoning COMPLETES the quest too, so
+    // a directly-tombstoned live quest (error termination) stops
+    // updating its disposed actions (AUDIT quest-P4).
     this.questTombstoned = true;
+    this.questComplete = true;
     this.questTombstoneTime = this.nowSeconds?.() ?? 0;
   }
 
@@ -160,6 +164,9 @@ export class Quest {
   showMessagePopup(id, immediate = false, oncePerQuest = false) {
     const message = this.getMessage(id);
     if (!message) return;
+    // C# returns before queueing (and before recording oncePerQuest)
+    // when the message has no tokens (AUDIT quest-P8).
+    if (!message.variants.some((v) => v.tokens.length)) return;
     if (oncePerQuest && this.oneTimeDisplayedMessages.has(id)) return;
     this.pendingPopups.push(message);
     if (oncePerQuest) this.oneTimeDisplayedMessages.add(id);

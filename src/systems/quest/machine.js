@@ -19,13 +19,17 @@
 // reach tasks through quest.hooks.globalVars.
 
 import { Parser } from './parser.js';
-import { DEFAULT_ACTIONS } from './actions.js';
+import { defaultActionTemplates } from './actions.js';
 
 /** QuestMachine.cs:45 - how often DFU ticks quest logic per second
  *  of real time. The host paces tick() by this. */
 export const TICKS_PER_SECOND = 10;
 /** DaggerfallDateTime: tombstoned quests expire after one week. */
 export const SECONDS_PER_WEEK = 7 * 86400;
+/** QuestMachine.IsProtectedQuest: the main-quest spine never
+ *  error-terminates (case-insensitive, as C#). */
+export const PROTECTED_QUESTS = Object.freeze(['S0000999', 'S0000977', '_BRISIEN']);
+const isProtectedQuest = (quest) => PROTECTED_QUESTS.some((n) => n.toLowerCase() === (quest.questName ?? '').toLowerCase());
 
 export class QuestMachine {
   constructor(deps = {}) {
@@ -35,7 +39,7 @@ export class QuestMachine {
     this.actionTemplates = [];
     this.globalVars = new Map();      // link id -> bool
     this.parser = new Parser();
-    for (const A of DEFAULT_ACTIONS) this.registerAction(new A(null));
+    for (const template of defaultActionTemplates()) this.registerAction(template);
     // AUDIT quest-2: the action factory travels PER QUEST (parse opt ->
     // quest.actionFactory -> Task), never a module global - two machines
     // can coexist and a machineless parse still pends every line.
@@ -91,18 +95,28 @@ export class QuestMachine {
     }
     this.questsToInvoke.length = 0;
 
-    // Update quests; collect completed for tombstoning and expired for removal
+    // Update quests; collect completed for tombstoning and expired for
+    // removal. AUDIT quest-P3: an exception in a quest's update ERROR-
+    // TERMINATES it (tombstone + remove) unless the quest is protected
+    // (the main-quest spine) - C# removes faulting quests rather than
+    // letting them throw every tick forever. The tombstone/expiry
+    // checks sit OUTSIDE the try, as in C#.
     const questsToTombstone = [], questsToRemove = [];
     for (const quest of this.quests.values()) {
       try {
         if (!quest.questComplete) quest.update();
-        if (quest.questComplete && !quest.questTombstoned) questsToTombstone.push(quest);
-        if (quest.questTombstoned
-          && (this.deps.nowSeconds?.() ?? 0) - quest.questTombstoneTime > SECONDS_PER_WEEK) {
-          questsToRemove.push(quest);
-        }
       } catch (e) {
         console.warn(`[quest] QuestMachine encountered an exception in quest ${quest.questName}: ${e?.message ?? e}`);
+        if (!isProtectedQuest(quest)) {
+          this.tombstoneQuest(quest);
+          questsToRemove.push(quest);
+          continue;
+        }
+      }
+      if (quest.questComplete && !quest.questTombstoned) questsToTombstone.push(quest);
+      if (quest.questTombstoned
+        && (this.deps.nowSeconds?.() ?? 0) - quest.questTombstoneTime > SECONDS_PER_WEEK) {
+        questsToRemove.push(quest);
       }
     }
 
@@ -110,10 +124,11 @@ export class QuestMachine {
     for (const quest of questsToRemove) this.quests.delete(quest.uid);
   }
 
-  /** Dispose actions, mark tombstoned (site-link scrub rides Q3). */
+  /** Dispose resources then task actions (Quest.cs Dispose order,
+   *  AUDIT quest-P5), mark tombstoned (site-link scrub rides Q3). */
   tombstoneQuest(quest) {
-    for (const task of quest.tasks.values()) task.disposeActions();
     for (const resource of quest.resources.values()) resource.dispose();
+    for (const task of quest.tasks.values()) task.disposeActions();
     quest.tombstone();
   }
 }

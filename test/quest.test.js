@@ -40,15 +40,16 @@ function loadTables() {
 }
 loadTables();
 
-test('quest: symbol inner names trim wrappers outside in, never inner characters', () => {
+test('quest: symbol inner names net to Trim(_) alone - the C# dead-assignment quirk', () => {
   assert.equal(getInnerSymbolName('_symbol_'), 'symbol');
-  assert.equal(getInnerSymbolName('==symbol_'), 'symbol');
-  assert.equal(getInnerSymbolName('=symbol_'), 'symbol');
-  assert.equal(getInnerSymbolName('#symbol'), 'symbol');
   assert.equal(getInnerSymbolName('_one_day_'), 'one_day');   // inner _ survives
   assert.equal(getInnerSymbolName('___mondung_'), 'mondung');
-  // AUDIT (mutation M5): the ORDER is the law - = then # then _, each
-  // only at the ends. Reversed order would strip the inner ='s here.
+  // AUDIT quest-P7 / BUG-FOR-BUG: C#'s = and # trims are DEAD (each
+  // Trim reads `symbol`, not the previous result), so wrappers other
+  // than _ SURVIVE. A "fixed" chained trim would strip them.
+  assert.equal(getInnerSymbolName('==symbol_'), '==symbol');
+  assert.equal(getInnerSymbolName('=symbol_'), '=symbol');
+  assert.equal(getInnerSymbolName('#symbol'), '#symbol');
   assert.equal(getInnerSymbolName('_=foo=_'), '=foo=');
   const s = new QuestSymbol('_qtime_');
   assert.equal(s.name, 'qtime');

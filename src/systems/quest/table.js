@@ -13,7 +13,12 @@ const INLINE_COMMENT = '//';
 const LITERAL = '"';
 const SEPARATOR = ',';
 
-const isIntString = (s) => /^-?\d+$/.test(s?.trim() ?? '');
+// int.TryParse's surface: optional sign, int32 range (AUDIT quest-P9)
+const isIntString = (s) => {
+  if (!/^[+-]?\d+$/.test(s?.trim() ?? '')) return false;
+  const n = Number.parseInt(s, 10);
+  return n <= 2147483647 && n >= -2147483648;
+};
 
 export class Table {
   /** @param {string[]|string} source lines array, or whole text. */
@@ -114,6 +119,7 @@ export class Table {
       if (name.startsWith('$')) { isStringLiteral = true; name = name.slice(1); }
       this.columns.push({ name, values: [], keyIndexDict: new Map(), isStringLiteral });
       if (isStringLiteral) this.hasStringLiteralInSchema = true;
+      if (this.columnIndexDict.has(name)) throw new Error(`Duplicate schema column: ${name}`);   // C# Dictionary.Add throws (AUDIT quest-P9)
       this.columnIndexDict.set(name, i);
     }
     if (this.primaryColumnIndex === -1) throw new Error('Table must tag at least one column as primary using *.');

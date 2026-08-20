@@ -44,7 +44,7 @@ export class Person extends QuestResource {
       if (g.careerAlliance != null) this.careerAllianceName = g.careerAlliance;
       if (g.gender != null) this.genderName = g.gender;
       if (g.locationScope != null) this.locationScopeName = g.locationScope;
-      this.atHome = this.atHome || g.atHome != null;
+      this.atHome = g.atHome != null;   // AUDIT quest-P6: C# assigns UNCONDITIONALLY per option - last one wins, a later option resets it
     }
 
     // DFU's identification ladder: named > group > factionType > faction,

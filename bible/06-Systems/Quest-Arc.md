@@ -94,6 +94,51 @@ WhenTask law, seeded PickOneOf, permanent drops, the globals store,
 and THE COVERAGE PIN: the tranche resolves exactly 3347 of 7235
 corpus action lines (46.3%) - each action slice must move it UP.
 
+## QUEST AUDIT I (2026-08-20, pre-merge)
+
+Three lanes: DFU parity line-by-line, JS correctness + vendor
+integrity, and a 27-mutation campaign. Everything found is FIXED or
+recorded; the corpus gate and all pins stayed green after.
+
+- MUTATIONS: 17/27 killed at first run; every survivor was an
+  unpinned law and now has a pin (11 added - header brackets, symbol
+  law, <ce> trim, PersistUntil start, secondary always-on, questBreak
+  mid-task, oncePerQuest, clock truncation, week expiry, duplicate-
+  task merge, popup LIFO). No mutation was killed only by the
+  coverage numbers.
+- PARITY HIGH 1: Task.SetTriggerValue's REARM-ON-CLEAR was missing -
+  a cleared-then-restarted task ran zero actions the second time
+  ("clear" exists exactly so tasks re-trigger). Fixed + pinned.
+- PARITY HIGH 2: the registry is first-match-wins over UNANCHORED
+  patterns, and DFU registers the un-ported When*/Clicked* triggers
+  BEFORE the tranche - so Say hijacked "clicked npc _x_ say 1011" (27
+  corpus lines) into an unconditional popup and WhenTask built bogus
+  evals from "when repute with ..." (S0000999!). GUARDS now stand at
+  the C# registry positions and send those lines to
+  pendingActionLines; the registry adopted C#'s relative order; the
+  coverage pin moved 3347->3297 (the 50 protected lines) and is
+  documented as the honest number.
+- CORRECTNESS HIGH: the parser<->resource import cycle closed through
+  an eval-time `extends` - 7 of 15 modules crashed if imported first;
+  Parser statics moved to leaf parseUtils.js, every module now
+  imports standalone.
+- Also fixed: the action factory rides the parse (was a module global
+  owned by the last-constructed machine); machine error-termination
+  with the protected-quest spine (S0000999/S0000977/_BRISIEN);
+  tombstone completes the quest; C# disposal order; Person atHome
+  last-option-wins; symbol Trim nets to '_' alone (the C# DEAD
+  Trim('=')/Trim('#') assignments replicated bug-for-bug + repinned);
+  popup empty-token early-out; Table dup-column throw, int.TryParse
+  sign/int32 surface, index-overload loud throw; parseInt '+'/int32;
+  customParseInt malformed-hex throw; TrimEnd('\r') strips all;
+  token struct-copies; PersistUntil missing target throws (C# NRE ->
+  error termination); a pending-travel clock is HELD, never an
+  instant 0s fire. Vendor pack verified byte-identical to upstream
+  (265+11 files), no .meta, no ARENA2-shaped content.
+- KEPT (recorded, not fixed): getTextTokens' explicit-variant-
+  answers-0 quirk (Message.cs:161); WhenTask's Contains-ladder
+  operator misclassification; Person's whole-line options scan.
+
 ## Queue
 
 - **Q2b - MORE ACTIONS**: the remaining 73 Actions/*.cs in

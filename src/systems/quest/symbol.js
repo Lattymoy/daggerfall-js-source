@@ -1,16 +1,21 @@
 // THE QUEST SYMBOL (Q1) - Symbol.cs + Parser.GetInnerSymbolName.
 // Symbols name resources, tasks and text replacements. `original` is
 // the source text ("_symbol_", "==symbol_", "#symbol"); `name` is the
-// inner name the quest system keys on. GetInnerSymbolName trims the
-// wrappers OUTSIDE IN (= then # then _) and deliberately not inner
+// inner name the quest system keys on. GetInnerSymbolName nets to
+// Trim('_') alone (the C# quirk below) and deliberately not inner
 // characters - "_one_day_" becomes "one_day" (Parser.cs).
 
 export function getInnerSymbolName(symbol) {
   if (!symbol) return '';
-  let result = symbol;
-  result = trimChar(result, '=');   // Outer =
-  result = trimChar(result, '#');   // Outer # (custom, gets binding)
-  result = trimChar(result, '_');   // Outer _
+  // AUDIT quest-P7 / BUG-FOR-BUG: C#'s three Trims each operate on
+  // `symbol`, not on the previous result - the first two assignments
+  // are DEAD and the net effect is Trim('_') alone ("=sym_" keeps its
+  // '='). Replicated exactly; the macro slice inherits DFU's own
+  // behavior here, not a fixed-up version.
+  let result;
+  result = trimChar(symbol, '=');   // Outer = (dead in C#, kept for shape)
+  result = trimChar(symbol, '#');   // Outer # (dead in C#, kept for shape)
+  result = trimChar(symbol, '_');   // Outer _ - the only one that lands
   return result;
 }
 

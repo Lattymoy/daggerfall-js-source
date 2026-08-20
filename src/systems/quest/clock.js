@@ -141,6 +141,15 @@ export class Clock extends QuestResource {
         }
       }
     }
+    // AUDIT quest-P15: a flag&16 / hack clock whose travel time pends
+    // Q3 would otherwise arm at 0s and fire on the FIRST tick - the
+    // exact instant-end symptom the C# hack exists to prevent. HELD
+    // (disabled, loud) until the travel seam lands; never a made-up
+    // number, never an instant quest end.
+    if (this.travelTimePending && this.startingTimeInSeconds === 0) {
+      console.warn(`[quest] clock ${this.symbol?.name}: travel-time arm pends Q3; timer held`);
+      return;
+    }
     if (!this.clockFinished) {
       this.clockEnabled = true;
       this._lastWorldTimeSample = this.parentQuest.nowSeconds?.() ?? 0;
