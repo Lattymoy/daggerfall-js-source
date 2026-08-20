@@ -2244,6 +2244,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     tickOverlay(dt) {
       if (!activeOverlay) return;
       if (activeOverlay.isRestWindow) activeOverlay.tickRest(dt);
+      // ui-chargen-4: backing out of the race screen cancels the
+      // wizard - DFU unwinds the UI stack to the start screen
+      // (RaceSelectWindow_OnClose :299-302). The port's front door is
+      // the boot flow, so the unwind is a reload: the bare URL lands
+      // back on title -> main menu; a dev-scene URL re-offers the
+      // wizard fresh (SetRaceSelectWindow Resets on re-entry).
+      if (activeOverlay === chargenFlow && chargenFlow?.cancelled) { location.reload(); return; }
       if (activeOverlay.done) {
         if (activeOverlay === chargenFlow) finishChargenHere();
         surfacePlayer();

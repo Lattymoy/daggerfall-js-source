@@ -613,6 +613,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     createChargenFlow(fetchBytes).then(({ flow, spellsByIndex: sbi }) => {
       spellsByIndex = sbi;   // M2
       townTalk.showOverlay(createChargenWindow(flow, {
+        // ui-chargen-4: the race screen's back cancels the wizard to
+        // the front door (DFU unwinds to the start screen); the
+        // reload re-runs the boot flow.
+        onCancel: () => location.reload(),
         onDone: (r) => {
           finishChargen(playerEntity, r, sbi);
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },

@@ -1221,7 +1221,16 @@ export class ChargenFlow {
         const rows = this.describeRace?.(this.race) ?? null;
         if (rows?.length) this.raceConfirm = rows;
         else this.state = 'gender';
-      } else if (action === 'back') return;   // race is the FIRST screen now
+      } else if (action === 'back') {
+        // U-cancel (AUDIT 23 ui-chargen-4): backing out of the FIRST
+        // screen cancels the whole wizard - RaceSelectWindow_OnClose's
+        // Cancelled arm nulls the race template and re-pushes nothing
+        // (DaggerfallStartNewGameWizard.cs:299-302), unwinding the UI
+        // stack to the start screen. The flow only FLAGS it; the host
+        // owns the unwind (its front door differs per host).
+        this.cancelled = true;
+        return;
+      }
       return;
     }
     if (s === 'gender') {

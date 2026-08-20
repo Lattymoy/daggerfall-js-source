@@ -2605,3 +2605,33 @@ Broadsword | 1 - 12 points of damage | Condition: Used | Weight: 5
 kilograms"; an equip-click lights the torch; Remove drops the sword,
 the pile mints with its flat, and activating it reopens the window
 with the pile as the remote target.
+
+## U27 - THE WIZARD'S BACK DOOR (2026-08-20)
+
+AUDIT 23 ui-chargen-4. Backing out of the race screen - the wizard's
+first - was a silent no-op; DFU cancels the WHOLE wizard there:
+RaceSelectWindow_OnClose's Cancelled arm nulls the race template and
+re-pushes nothing (DaggerfallStartNewGameWizard.cs:299-302), so the
+UI stack unwinds to the start screen.
+
+The port's split: the FLOW flags it (`cancelled` - set only by the
+race screen's back with no description box open; the box's No still
+just closes the box, and deeper backs still walk the wizard),
+createChargenWindow fires `onCancel` exactly once on the same
+modal-contract latch onDone rides, and each HOST owns its unwind -
+a `location.reload()` to the boot flow's front door. On the bare URL
+that lands back on title -> main menu, DFU's unwind exactly; on a
+dev-scene URL (?world with no ?class) it re-offers the wizard fresh,
+which is what SetRaceSelectWindow's Reset() does on re-entry anyway.
+The dungeon host's arm rides tickOverlay (it drives the RAW flow,
+not the window), so the classic-start path cancels too.
+
+Mutations: 3 run, 3 killed (the flag dropped back to the no-op; the
+once-latch dropped so onCancel refires; the modal back cancelling
+the wizard).
+
+Pins: test/uicancel.test.js x3 (the flag - first-screen back sets
+it, the gender walk-back does not, the description box's No never
+does; the window - Escape fires onCancel once and goes dead with
+onDone untouched; the host sweep - the dungeon tickOverlay arm and
+both exterior hosts' onCancel reloads).
