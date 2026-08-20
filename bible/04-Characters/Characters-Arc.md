@@ -2235,3 +2235,33 @@ its missile seam is the S16 decision loop the dungeon host owns.
 + the pool/world wiring sweeps; the old residue pin rewritten to the
 live law); 4 mutations run, 4 killed. Suite 1452 across 190, green
 both modes.
+
+## CH3 - FALL DAMAGE AND THE SWAP PAUSE: two small laws land
+
+2026-08-20. Two AUDIT 23 rows closed; the senses fine-grain trio
+(characters-9/10/12) is NOT among them - its shorthand no longer
+resolves to concrete findings and the row now says so, pending the
+original finding bodies or a dedicated senses pass.
+
+characters-8, enemy FALL DAMAGE: the foe motor tracks its grounded
+height on every ground contact, and the grounded edge after airborne
+reports a past-threshold drop. Both pools bill the PLAYER's own
+formula - trunc(5 x (drop - 5)), constants single-sourced from
+motor.js - through their damage doors, no knockback, with the
+FallDamage clip at the foe. A knocked-down flyer measures from its
+LAST ground height, verbatim: hovering never touches the anchor.
+The double-math trunc is pinned exactly as the C# cast computes it
+(an 8.2 drop bills 15, not 16).
+
+characters-13, the SWAP PAUSE (the row's name corrected - this is
+the PLAYER's equip delay): both halves bill onto the entity's
+countdown - the leaver at the one unequip door, the arriver in
+equipItem, accumulating across a swap exactly as the writer sums
+both sides per hand - and the weapon rig blocks the attack while it
+runs, draining at the classic 980 units/second. The table quirk
+carries verbatim: the delay table indexes by the item's index
+WITHIN ITS OWN GROUP, so a shield swap bills the low armor indexes
+against the weapon delay table.
+
+3 pins; 4 mutations run, 4 killed. Suite 1460 across 192, green
+both modes.

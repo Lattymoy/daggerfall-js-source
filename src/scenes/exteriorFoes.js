@@ -15,6 +15,8 @@
 
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // CH3: the shared fall formula
+import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity, loadMonsterCareer } from '../characters/enemyEntity.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
@@ -117,6 +119,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     for (const f of foes) {
       if (f.dead) continue;
       f.ai.update(dt, playerFeet, senses, false);
+      // CH3 (characters-8): a past-threshold landing bills the fall
+      // formula through the pool's damage door - no knockback.
+      if (f.ai.landedFall > 0 && !f.dead) {
+        const fdmg = Math.trunc(FALL_HP_PER_METRE * (f.ai.landedFall - FALL_DAMAGE_THRESHOLD));
+        f.ai.landedFall = 0;
+        if (fdmg > 0) {
+          audio?.play3d?.(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
+          damageFoe(f, fdmg, null, null);
+        }
+      }
       // out of relevance (fresh senses, so a just-spawned foe's
       // Infinity placeholder never culls): gone, no corpse
       if (f.ai._dist > ENCOUNTER_CULL_DISTANCE && !f.ai.detected) { f.dead = true; continue; }
