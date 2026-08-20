@@ -19,8 +19,8 @@
 // encumbrance = carried template weight (+ gold at 0.0025/piece) /
 // floor(Str*1.5) (FormulaHelper.MaxEncumbrance). The classic skill
 // BUTTON popups ride keys 1-4 as interim text panels (primary/
-// major/minor/misc); the PORTRAIT DRAW is not wired (the chargen
-// face art itself shipped - AUDIT 23 reflagged the true gap);
+// major/minor/misc); the portrait slot draws the shared paperdoll
+// at DFU's (200,8) origin, refreshed on open like the inventory;
 // art-less draws keep the old text page (never trap the motor).
 // The level-up screen stays on the text idiom (its retrofit rides
 // a later U8 slice).
@@ -34,6 +34,7 @@ import { applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '..
 import { drawText, measureText } from './text.js';
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
+import { drawPaperDoll, refreshPaperDoll, PAPERDOLL_ORIGIN } from './paperDoll.js';
 import { maxFatigue, liveStat } from '../systems/statMods.js';
 import { templateByIndex } from '../systems/itemTemplates.js';
 
@@ -127,6 +128,7 @@ export class CharSheet {
   constructor(entity) {
     this.entity = entity; this.done = false; this.page = 0;
     this.isChoiceWindow = true;   // U8a: receive RAW codes through townTalk (digit pages + F5 toggle)
+    refreshPaperDoll(entity);     // compose fresh on open, as the inventory does
   }
   input(action) {
     // Both vocabularies: input.js actions (dungeon routing) and raw
@@ -181,7 +183,7 @@ export class CharSheet {
     label(`${Math.trunc(carriedWeight(e))}/${maxEncumbrance(liveStat(e, 'strength'))}`, 90, 74);   // U10: the FormulaHelper home
     STAT_KEYS_ORDER.forEach((k, i) =>
       label(liveStat(e, k), 141, 17 + i * 24, { align: 'center', w: 28 }));
-    // portrait (200,8) pends chargen faces - the art's frame shows
+    drawPaperDoll(renderer, m, e, PAPERDOLL_ORIGIN[0], PAPERDOLL_ORIGIN[1]);
     if (this.page) this._drawSkillPage(renderer, font, m);
     return undefined;
   }
