@@ -52,9 +52,16 @@ export class Foe extends QuestResource {
   /** QueueItem (Foe.cs:246-252): items added to this Foe by the quest
    *  system; Q2b-ii - GiveItem's consumer. Q3's spawner clones the
    *  queue onto every instance (GetClonedItemQueue keeps the
-   *  originals here, as C# does). */
+   *  originals here, as C# does). The queue rides ItemCollection in
+   *  C#, whose AddItem REFUSES a second add of the same item
+   *  (ItemCollection.cs:233-237, keyed by UID; here by identity) -
+   *  a rearmed "give item" cannot double-queue (Q2b-ii VERIFY). */
   queueItem(dfItem) {
     if (!this.itemQueue) this.itemQueue = [];
+    if (this.itemQueue.includes(dfItem)) {
+      console.warn('[quest] Duplicate item added to foe item queue.');
+      return;
+    }
     this.itemQueue.push(dfItem);
   }
 

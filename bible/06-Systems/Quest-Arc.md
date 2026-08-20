@@ -311,11 +311,55 @@ the coverage backlog's 63 was that script's own artifact).
   scheduleParsedQuest (C#'s own ScheduleQuest(quest) signature) and
   parseQuestForLists.
 
-Gate: `test/questitems.test.js` (19 pins - the mint arms against DFU
+Gate: `test/questitems.test.js` (33 pins - the mint arms against DFU
 template literals, the gold formula hand-computed through the C#
 integer math, the seven action laws, the list laws over both the
 vendored and crafted tables) + the moved coverage/ownership pins +
 the retired-F11 producer pins in iteminfo.test.js.
+
+## QUEST AUDIT IV (2026-08-20, the Q2b-ii verify pass)
+
+The same two lanes as III over the frozen tree: a five-lane
+adversarial parity re-read (21 raw findings, two refuters each, 13
+confirmed = 9 distinct) and a 448-mutant campaign (261 caught, 148
+subset survivors) with full-suite confirmation - the git-less
+sandbox's uniform-baseline trap struck AGAIN and is now a named
+hazard: fails == baseline IS survival, only fails > baseline kills.
+
+- FIXED (parity, all pinned): "coins" (class 28) THREW where C# mints
+  gold pieces - the Currency enum row joins the hand-added tables
+  (the QuestItems gap's twin); quest-minted template items carried NO
+  CONDITION (SetItem's hitPoints law; the mint now rides the AUDIT 23
+  mintCondition door) and Paintings lost their message identity roll
+  (Range(0, 65536), DaggerfallUnityItem.cs:571); createArtifact
+  dropped the artifact's own MAGIC.DEF VALUE (it priced at the
+  mundane base); the modded "class N template M" form was quest-
+  LINKED where C# leaves it unlinked (it must survive quest end);
+  foe.queueItem lacked ItemCollection.AddItem's duplicate refusal;
+  alterReward applied the FightersGuild bonus to NON-MEMBER records
+  (C#'s virtual dispatch = base identity - now gated on the flag);
+  InitAtGameStart quests were SCHEDULED where C# STARTS them
+  (machine grew startQuestImmediate - QuestMachine.cs:719's own arm -
+  and the lists call it); a malformed quest list destroyed the whole
+  manager where C# contains failures per list; GUILD_GROUPS gained
+  the sixteen GGroupN placeholder names Enum.IsDefined matches.
+- QUIRK KEPT + pinned: the Tick invoke loop raises OnQuestStarted
+  AGAIN after StartQuest already raised it (QuestMachine.cs:450-451)
+  - every SCHEDULED quest fires the event twice and a scheduled
+  one-time quest records twice in the accepted list (save state);
+  direct starts raise once.
+- MUTATIONS: the new-code survivors are pinned (audit commits part
+  1/1b - the enum-literal vacuous-pin trap again, the boundary laws,
+  the social one-time gate, WhenTask's mid-chain and-or short-
+  circuit, Say's name form, DestroyNpc's npc form, Toting's missing-
+  person refusal); equivalent mutants recorded (WhenTask's
+  isTriggerCondition flip inert while update() is a no-op, the gold
+  range gate's || twin); the pre-existing loot/guilds table
+  survivors are logged in the campaign JSONL for the next audit.
+- REFUTED (recorded): parse-failure folding, minReq int-range,
+  selectQuest's null guard, the artifact out-of-range throw shape,
+  and the non-member AlterReward HIGH framing (the LOW glue version
+  was the accurate one and is fixed above).
 
 ## Queue
 

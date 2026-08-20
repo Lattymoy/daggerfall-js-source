@@ -8,7 +8,8 @@
 // carries the classic level/guild/region reward formula with integer
 // division at every step, artifacts expand their MAGIC.DEF template,
 // clothing takes a random dye, and every minted item is quest-linked
-// (uid + symbol). Draws ride the quest's injectable roll (Ledger A
+// (uid + symbol) EXCEPT the modded "class N template M" form, which
+// C# leaves unlinked (Item.cs:221-222 - it survives quest end). Draws ride the quest's injectable roll (Ledger A
 // engine-PRNG rule; DFU uses UnityEngine.Random throughout). Player /
 // guild / region facts come through quest.hooks, which the machine
 // now builds BEFORE the parse. The MagicItems/Artifacts arms need the
@@ -30,7 +31,7 @@ import {
   createRegularMagicItem, createArtifact, getMagicItemTemplates,
   ITEM_GROUP_NAME_BY_CLASS, BOOK_TEMPLATE,
 } from '../loot.js';
-import { GROUP_TEMPLATE_INDICES, ITEM_TEMPLATES } from '../itemTemplates.js';
+import { GROUP_TEMPLATE_INDICES, ITEM_TEMPLATES, mintCondition } from '../itemTemplates.js';
 import { goldStack } from '../inventory.js';
 import { alterReward } from '../guilds.js';
 import { CLOTHING_DYES } from '../../characters/dyes.js';
@@ -108,11 +109,12 @@ export class Item extends QuestResource {
     } else if (this.itemClass !== -1 && this.itemTemplate > 0 && !this.isGold) {
       // ItemBuilder.CreateItem(group, TEMPLATE index) - the modded-item
       // form; classic templates resolve straight off the table.
-      const groupName = ITEM_GROUP_NAME_BY_CLASS[this.itemClass];
-      this.daggerfallUnityItem = this._link({
-        group: groupName, templateIndex: this.itemTemplate,
-        name: ITEM_TEMPLATES[this.itemTemplate]?.name,
-      });
+      // Q2b-ii VERIFY: C# does NOT LinkQuestItem on this arm
+      // (Item.cs:221-222 assigns the builder's item raw; only the
+      // class/subclass mint at :370 and CreateGold at :430 link) - a
+      // template-form item survives quest end and no sweep matches it.
+      this.daggerfallUnityItem = this._templateItem(
+        ITEM_GROUP_NAME_BY_CLASS[this.itemClass], this.itemTemplate, this._rolls());
     } else if (this.itemName && !this.isGold) {
       this.daggerfallUnityItem = this._createItemByName(this.itemName, this.itemKey);
     } else if (this.isGold) {
@@ -150,6 +152,21 @@ export class Item extends QuestResource {
     dfItem.questUID = this.parentQuest?.uid ?? 0;
     dfItem.questSymbol = this.symbol?.clone() ?? null;
     return dfItem;
+  }
+
+  /** The SetItem laws every template-backed mint carries
+   *  (DaggerfallUnityItem.cs:538-573): condition = the template's
+   *  hitPoints (the port's AUDIT 23 items-5 mintCondition law), and a
+   *  Paintings item draws its message identity from
+   *  Random.Range(0, 65536) (:571) - both were skipped by the first
+   *  draft (Q2b-ii VERIFY). */
+  _templateItem(groupName, templateIndex, rolls) {
+    const item = mintCondition({
+      group: groupName, templateIndex,
+      name: ITEM_TEMPLATES[templateIndex]?.name,
+    });
+    if (groupName === 'Paintings') item.message = Math.floor(rolls() * 65536);
+    return item;
   }
 
   /** CreateItem(name, key): class/subclass from the Quests-Items
@@ -196,20 +213,19 @@ export class Item extends QuestResource {
       // key-form and catalog draw are corpus-dead today.
       const variants = ITEM_TEMPLATES[BOOK_TEMPLATE]?.variants ?? 0;
       result = itemKey !== -1
-        ? { group: 'Books', templateIndex: BOOK_TEMPLATE, message: itemKey }
-        : { group: 'Books', templateIndex: BOOK_TEMPLATE, variant: Math.floor(rolls() * variants) };
+        ? mintCondition({ group: 'Books', templateIndex: BOOK_TEMPLATE, message: itemKey })
+        : mintCondition({ group: 'Books', templateIndex: BOOK_TEMPLATE, variant: Math.floor(rolls() * variants) });
     } else if (itemClass === 1 && itemSubClass === 1) {
       // Potions: CreatePotion(key)/CreateRandomPotion - the recipe
       // registry is the potion maker's slice; corpus-dead, minimal.
-      result = { group: 'UselessItems1', templateIndex: GROUP_TEMPLATE_INDICES.UselessItems1[1], potionRecipeKey: itemKey };
+      result = mintCondition({ group: 'UselessItems1', templateIndex: GROUP_TEMPLATE_INDICES.UselessItems1[1], potionRecipeKey: itemKey });
     } else {
       // Random subclass, then the generic template item
       const groupName = ITEM_GROUP_NAME_BY_CLASS[itemClass];
       const groupIndices = GROUP_TEMPLATE_INDICES[groupName];
       if (!groupIndices) throw new Error(`Tried to create Item with unknown class ${itemClass}`);
       if (itemSubClass === -1) itemSubClass = Math.floor(rolls() * groupIndices.length);
-      const templateIndex = groupIndices[itemSubClass];
-      result = { group: groupName, templateIndex, name: ITEM_TEMPLATES[templateIndex]?.name };
+      result = this._templateItem(groupName, groupIndices[itemSubClass], rolls);
     }
     // Randomise clothing dye (ItemBuilder.RandomClothingDye)
     if (result.group === 'MensClothing' || result.group === 'WomensClothing') {
@@ -244,7 +260,11 @@ export class Item extends QuestResource {
       const lo = 150 * playerMod, hi = 200 * playerMod + 1;
       const draw = lo + Math.floor(rolls() * (hi - lo));   // Random.Range(lo, hi)
       amount = Math.trunc(Math.trunc(draw * (regionPriceMod + 500) / 1000) * (factionMod + 50) / 100);
-      if (guild) amount = alterReward(guild.guildGroup, guild.rank, amount);
+      // C# dispatches guild.AlterReward VIRTUALLY - a NonMemberGuild
+      // carries the base identity whatever its group, so the group-
+      // keyed port must gate on the flag (Q2b-ii VERIFY: an FG
+      // non-member record with a rank would have taken the bonus).
+      if (guild && !guild.isNonMember) amount = alterReward(guild.guildGroup, guild.rank, amount);
     } else {
       amount = rangeLow + Math.floor(rolls() * (rangeHigh + 1 - rangeLow));
     }

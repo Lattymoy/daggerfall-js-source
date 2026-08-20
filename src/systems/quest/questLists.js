@@ -61,7 +61,14 @@ export class QuestListsManager {
   _loadQuestList(name) {
     const text = this.deps.readListTable?.(name);
     if (text == null) { console.warn(`[quest] Quest list ${name} not found`); return; }
-    this._parseQuestList(new Table(text));
+    // LoadQuestList (:194-202) contains failures PER LIST: a
+    // malformed table logs and the other lists survive (Q2b-ii
+    // VERIFY: a throw here used to destroy the whole manager).
+    try {
+      this._parseQuestList(new Table(text));
+    } catch (e) {
+      console.warn(`[quest] Unable to parse quest list table ${name}: ${e?.message ?? e}`);
+    }
   }
 
   /** ParseQuestList (:204-254): a row whose minReq fails int.TryParse
@@ -200,13 +207,16 @@ export class QuestListsManager {
     return quest;
   }
 
-  /** InitAtGameStartQuests (:263-273): parse and schedule every
-   *  game-start row; the caller hands in the machine's scheduler. */
-  initAtGameStartQuests(scheduleParsedQuest) {
+  /** InitAtGameStartQuests (:263-273): parse and START every
+   *  game-start row IMMEDIATELY - C# calls QuestMachine.StartQuest,
+   *  not ScheduleQuest, so the quest is live before this returns
+   *  (Q2b-ii VERIFY: the first draft deferred them a tick). The
+   *  caller hands in the machine's startQuestImmediate. */
+  initAtGameStartQuests(startQuestImmediate) {
     for (const questData of this.init) {
       const quest = this.loadQuest(questData, 0);
       if (!quest) continue;
-      scheduleParsedQuest(quest);
+      startQuestImmediate(quest);
     }
   }
 

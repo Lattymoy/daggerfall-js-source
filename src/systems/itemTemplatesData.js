@@ -43,4 +43,9 @@ export const GROUP_TEMPLATE_INDICES = Object.freeze({
   // :580-590 `enum QuestItems`): Telescope, Scales, Globe, Skeleton,
   // Totem, Dead_body, Mantella, Finger.
   QuestItems: Object.freeze([254, 255, 256, 257, 280, 281, 282, 283]),
+  // Hand-added at the Q2b-ii audit (same generator gap): the 1-entry
+  // Currency enum (ItemEnums.cs:605-608, Gold_pieces = 276) - the
+  // quest mint's "coins" (Quests-Items 28,0) resolves through it
+  // where the port used to throw and C# mints gold pieces.
+  Currency: Object.freeze([276]),
 });

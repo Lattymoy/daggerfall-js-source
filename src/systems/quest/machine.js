@@ -207,10 +207,26 @@ export class QuestMachine {
   }
 
   /** ScheduleQuest(quest) - the parsed-quest arm (QuestMachine.cs's
-   *  own ScheduleQuest signature; the QuestListsManager parses via
-   *  the machine's parse glue and schedules here, Q2b-ii). */
+   *  own ScheduleQuest signature): starts on the NEXT tick. The
+   *  offer-accept flow schedules here (Q4). */
   scheduleParsedQuest(quest) {
     this.questsToInvoke.push(quest);
+    return quest;
+  }
+
+  /** StartQuest(quest) (QuestMachine.cs:719-735) - the IMMEDIATE arm:
+   *  Start, the talk-topic registration, the live table, then
+   *  OnQuestStarted, synchronously; exceptions PROPAGATE to the
+   *  caller (the Tick invoke loop wraps its own try). InitAtGameStart
+   *  quests come through here, as C#'s do (Q2b-ii VERIFY: the first
+   *  draft only scheduled them, so they were absent from the live
+   *  table until the next tick). The questor-behaviour relink that
+   *  follows in C# is scene work (Q3). */
+  startQuestImmediate(quest) {
+    quest.start();
+    this.deps.addQuestTopics?.(quest);
+    this.quests.set(quest.uid, quest);
+    this.deps.onQuestStarted?.(quest);
     return quest;
   }
 
@@ -234,11 +250,13 @@ export class QuestMachine {
     // have deleted topics no one ever added.
     for (const quest of this.questsToInvoke) {
       try {
-        quest.start();
-        this.deps.addQuestTopics?.(quest);
-        this.quests.set(quest.uid, quest);
-        // RaiseOnQuestStartedEvent - the QuestListsManager's one-time
-        // recording listens here (Q2b-ii; Q4 wires the two together).
+        this.startQuestImmediate(quest);
+        // QUIRK KEPT (QuestMachine.cs:450-451): Tick raises
+        // OnQuestStarted AGAIN after StartQuest already raised it -
+        // every SCHEDULED quest fires the event twice, and a one-time
+        // quest is recorded twice in the lists' accepted array (a
+        // Contains gate, so offers are unaffected - but the recorded
+        // list is save state). Direct starts raise once.
         this.deps.onQuestStarted?.(quest);
       } catch (e) {
         console.warn(`[quest] QuestMachine failed to start quest ${quest.questName}: ${e?.message ?? e}`);

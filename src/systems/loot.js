@@ -259,6 +259,9 @@ export function createArtifact(templates, artifactIndex) {
     enchantments: magicItem.enchantments.filter((e) => e.type !== -1),
     maxCondition: magicItem.uses,
     currentCondition: magicItem.uses,
+    // SetArtifact's own price (:615) - the MAGIC.DEF row's value, not
+    // the mundane base template's (Q2b-ii VERIFY: it was dropped).
+    value: magicItem.value,
   };
 }
 

@@ -52,6 +52,7 @@ function makeMachine(deps = {}) {
     makeHeldQuestItemsPermanent: capture('makeHeldQuestItemsPermanent'),
     offerReward: capture('offerReward'),
     onQuestStarted: capture('onQuestStarted'),
+    addQuestTopics: capture('addQuestTopics'),
   });
   m.now = 12 * 3600;   // noon - inside GivePc's 07:00..18:00 window
   m.inTown = false;
@@ -87,12 +88,21 @@ test('mint: the named/class/template/random arms resolve through the tables to D
   assert.equal(df('a').templateIndex, 131, 'class 3 template 131 is Arrow, by template index');
   // random subclass: floor(0.5 * 19 weapons) = 9 -> Claymore (122)
   assert.equal(df('w').templateIndex, 122);
-  // every minted item is quest-linked
-  for (const n of ['l', 's', 'a', 'w']) {
+  // every minted item is quest-linked - EXCEPT the modded template
+  // form, which C# leaves unlinked (Item.cs:221-222): it survives
+  // quest end and no quest-symbol sweep matches it.
+  for (const n of ['l', 's', 'w']) {
     assert.equal(df(n).questItem, true);
     assert.equal(df(n).questUID, q.uid);
     assert.equal(df(n).questSymbol.name, n);
   }
+  assert.equal(df('a').questItem, undefined, 'the template form is NOT a quest item');
+  // ...and every template-backed mint carries SetItem's condition law
+  // (currentCondition = maxCondition = template hitPoints)
+  assert.equal(df('s').maxCondition, 2000, "Saint's Hair hitPoints");
+  assert.equal(df('s').currentCondition, 2000);
+  assert.equal(df('w').maxCondition, 1400, 'Claymore hitPoints');
+  assert.equal(df('a').maxCondition, 1, 'Arrow hitPoints, on the unlinked form too');
 });
 
 test('mint: clothing draws subclass THEN dye, in that roll order', () => {
@@ -422,10 +432,13 @@ test('quest lists: the social law (level-or-rep gate, N/M/F rows), SelectQuest a
   assert.throws(() => lists.loadQuest({ name: 'SB' }, 0), /Quest file SB not found/);
 
   // the machine's onQuestStarted event feeds noteQuestStarted (Q4
-  // wires them; here the dep captures)
+  // wires them; here the dep captures). QUIRK KEPT: the SCHEDULED
+  // path raises TWICE (QuestMachine.cs:450-451 raises again after
+  // StartQuest's own raise), so a scheduled one-time quest records
+  // twice in the accepted list - save-state parity.
   const scheduled = m.scheduleParsedQuest(quest);
   m.tick();
-  assert.deepEqual(m.of('onQuestStarted').map((c) => c[1]), [scheduled]);
+  assert.deepEqual(m.of('onQuestStarted').map((c) => c[1]), [scheduled, scheduled]);
 });
 
 // ---------------------------------------------------------------
@@ -589,4 +602,90 @@ test('MUTATION-2: a one-time SOCIAL quest is offered before acceptance and spent
   lists.noteQuestStarted({ oneTime: true, questName: 'SO' });
   lists.getSocialQuest(SOCIAL_GROUPS.Commoners, 0, 'male', 0, 1);
   assert.deepEqual(seen[1], ['SB'], 'a started one-time social quest never re-offers');
+});
+
+// ---------------------------------------------------------------
+// Q2b-ii VERIFY (the adversarial-review fixes, each pinned)
+// ---------------------------------------------------------------
+
+test('VERIFY: "coins" (class 28) mints gold pieces through the Currency enum instead of throwing', () => {
+  const m = makeMachine();
+  const q = schedule(m, ['Item _c_ coins', '', 'variable _pad_']);
+  const df = q.getResource({ name: 'c' }).daggerfallUnityItem;
+  assert.equal(df.group, 'Currency');
+  assert.equal(df.templateIndex, 276, 'the 1-entry Currency enum (ItemEnums.cs:605-608)');
+  assert.equal(df.questItem, true);
+});
+
+test('VERIFY: a minted Painting draws its message identity from Range(0, 65536) after the subclass roll', () => {
+  const m = makeMachine();
+  const draws = [0.5, 0.25];
+  const q = schedule(m, ['Item _p_ painting', '', 'variable _pad_'],
+    { rolls: () => draws.shift() ?? 0 });
+  const df = q.getResource({ name: 'p' }).daggerfallUnityItem;
+  assert.equal(df.templateIndex, 284);
+  assert.equal(df.message, 16384, 'floor(0.25 * 65536) on the SECOND roll (DaggerfallUnityItem.cs:571)');
+  assert.equal(df.maxCondition, 10, 'Painting hitPoints');
+});
+
+test('VERIFY: the foe item queue refuses a duplicate add, as ItemCollection.AddItem does', () => {
+  const m = makeMachine();
+  m.playerHas = false;
+  const q = schedule(m, [
+    'Foe _crook_ is Thief', '',
+    'Item _l_ letter', '',
+    '_g_ task:', ' give item _l_ to _crook_', '',
+    'variable _pad_',
+  ]);
+  m.tick();
+  const foe = q.getResource({ name: 'crook' });
+  const g = q.getTask({ name: 'g' });
+  g.start(); m.tick();
+  assert.equal(foe.itemQueueCount, 1);
+  g.clear(); g.start(); m.tick();   // the rearmed action re-runs
+  assert.equal(foe.itemQueueCount, 1, 'the duplicate add is refused (ItemCollection.cs:233-237)');
+});
+
+test('VERIFY: alterReward never applies to a NON-MEMBER guild record, whatever its group', () => {
+  // C# dispatches virtually: NonMemberGuild carries the base identity.
+  // An FG non-member record with a real rank must NOT take the bonus:
+  // level 0 -> playerMod 1; draw at 0.5 = 175; 175*500/1000=87; *100/100=87.
+  const m = makeMachine({ guild: { guildGroup: GUILD_GROUPS.FightersGuild, rank: 4, power: 30, isNonMember: true } });
+  const q = schedule(m, ['Item _g_ gold', '', 'variable _pad_'], { rolls: () => 0.5, factionId: 40 });
+  assert.equal(q.getResource({ name: 'g' }).daggerfallUnityItem.stackCount, 87);
+});
+
+test('VERIFY: InitAtGameStart quests START immediately - live table, topics, event, before the call returns', () => {
+  const CRAFTED = [
+    'schema: *name, group, membership, minReq, flag, notes',
+    'IG, InitAtGameStart, N, 0, 0, x',
+  ].join('\n');
+  const CHILD = ['Quest: __IG', 'QRC:', 'Message:  1011', ' c', '', 'QBN:', 'variable _x_'];
+  const m = makeMachine();
+  const lists = new QuestListsManager({
+    readListTable: (name) => (name === 'Classic' ? CRAFTED : null),
+    getQuestSourceLines: () => CHILD,
+    parseQuest: (lines, factionId) => m.parseQuestForLists(lines, factionId, { rolls: () => 0 }),
+  });
+  lists.initAtGameStartQuests((quest) => m.startQuestImmediate(quest));
+  const live = [...m.quests.values()];
+  assert.equal(live.length, 1, 'in the live table with NO tick');
+  assert.equal(live[0].questName, '__IG');
+  assert.equal(m.of('addQuestTopics').length, 1);
+  assert.deepEqual(m.of('onQuestStarted').map((c) => c[1]), [live[0]], 'a DIRECT start raises once');
+});
+
+test('VERIFY: a GGroupN row files under guilds (the enum placeholders are real names), and a bad list is contained', () => {
+  const CRAFTED = [
+    'schema: *name, group, membership, minReq, flag, notes',
+    'QG, GGroup12, M, 0, 0, x',
+  ].join('\n');
+  const lists = new QuestListsManager({
+    readListTable: (name) => (name === 'Classic' ? CRAFTED : 'this is not a table at all'),
+  });
+  assert.deepEqual((lists.guilds.get(GUILD_GROUPS.GGroup12) ?? []).map((qd) => qd.name), ['QG'],
+    'Enum.IsDefined matches GGroup12 in DFU, so the mirror files it too');
+  // ...and the malformed DFU list threw INSIDE its own load: the
+  // Classic list survived (QuestListsManager.cs:194-202).
+  assert.equal(lists.guilds.size, 1);
 });
