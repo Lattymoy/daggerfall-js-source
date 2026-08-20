@@ -94,6 +94,11 @@ export class Quest {
       throw new Error(`Duplicate QuestResource symbol name found: ${resource.symbol.original}`);
     }
     this.resources.set(resource.symbol.name, resource);
+    // Quest.cs:879-881 - an incoming Person already flagged questor
+    // auto-tracks. Dead until Q3's SetupQuestorNPC mints isQuestor at
+    // create for "group Questor" persons (Q2b-VERIFY: the omission
+    // was silent and would have starved the questor registry then).
+    if (resource.isPerson && resource.isQuestor) this.addQuestor(resource.symbol);
   }
 
   addTask(task) {
@@ -210,7 +215,9 @@ export class Quest {
     this.hooks?.removeQuestorPostMessage?.(this.uid);
     if (this.factionId > 0) {
       const repChange = this.questSuccess ? QUEST_SUCCESS_REP : QUEST_FAILURE_REP;
-      this.hooks?.changeReputation?.(this.factionId, repChange);
+      // Quest.cs:385 passes propagate=TRUE - the ally/enemy/tree
+      // spread, not the flat write (Q2b-VERIFY: the flag was dropped).
+      this.hooks?.changeReputation?.(this.factionId, repChange, true);
     }
     // The notebook's finished-quest entry (Quest.cs:388-399) lands
     // with its system (Q4) - routed, not silent.

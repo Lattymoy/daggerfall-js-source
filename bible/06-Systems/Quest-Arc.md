@@ -200,11 +200,59 @@ corpus action lines (66.6%).
   the C# patterns in C# order - any future hijack shifts a bucket
   and fails.
 
-Gate: `test/questactions.test.js` (26 pins - the click laws, the gold
+Gate: `test/questactions.test.js` (38 pins - the click laws, the gold
 gate, the foe tracking, the questor quirks, the DailyFrom window, the
 Prompt fork, the PlaySound cadence incl. the busy-source no-restamp,
-the DialogLink empty-namePlace quirk, the tombstone talk halves) +
-the moved coverage/ownership pins.
+the DialogLink empty-namePlace quirk, the tombstone talk halves, and
+the VERIFY block below) + the moved coverage/ownership pins.
+
+## QUEST AUDIT III (2026-08-20, the Q2b-i verify pass)
+
+Two lanes over the frozen tree: a six-lane adversarial parity re-read
+against the DFU C# (every finding tried by TWO independent refuters),
+and a 575-mutant automated campaign over src/systems/quest with
+survivors re-confirmed against the FULL suite (the coverage-subset
+confirm caught three of sixteen suspects being subset artifacts - and
+the sandbox's git-less baseline failures nearly inverted the reading:
+uniform fails=N is the baseline, only fails>N is a kill).
+
+- FIXED (parity, all now pinned): EndQuest's reputation call dropped
+  C#'s propagate=TRUE (Quest.cs:385 - allies +amount/2, enemies
+  -amount/2, the faction-tree spread; the hook contract now carries
+  the flag and factionRep.js's own default-false signature is the
+  documented wiring target); quest-start TALK TOPICS were never
+  registered while their tombstone-side scrub WAS wired (the
+  addQuestTopics dep now fires between start() and the live table,
+  QuestMachine.cs:723); a FAULTING quest tombstoned mid-update-loop
+  where C# only collects and removes AFTER every other quest's update
+  (the catch now collects; removeQuest tombstones-if-needed then
+  deletes, QuestMachine.cs:486,509-512 - hook-call order pinned);
+  addResource silently omitted the incoming-questor auto-track
+  (Quest.cs:879-881 - dead until Q3's SetupQuestorNPC, live and
+  pinned now).
+- MUTATIONS: 575 run - 302 caught, 202 survived the subset, 71 on
+  lines no test executes. Sixteen suspects confirmed against the full
+  suite: three were subset artifacts (really caught), THIRTEEN were
+  real unpinned laws and each now has a pin that its one-character
+  mutant fails: the two hook ENUMS pinned as literals (the first
+  drafts compared against the imported constants - vacuous), the
+  allowRearm-false clear law, WhenTask's one-eval guard, the
+  secondary-cannot-STOP half of the trigger law, DailyFrom's
+  inclusive minutes-bearing lower bound, Prompt's name form, the
+  DialogLink/AddDialog triple forms, KilledFoe's saying popping once
+  (a triggered task never re-runs plain trigger conditions), the
+  GlobalVarLink unset-global default, the week-expiry boundary in
+  LITERAL seconds at the strict >, the destroyed-AND-behaviour hide
+  gate, fresh-resource cold state, parseInt's int32 rails, and the
+  Clock travel-arm operand set.
+- KEPT (recorded, not pinned): ClickedNpc's caller-triggered
+  short-circuit is DFU's own dead defense (trigger conditions never
+  run on a triggered task); Task.hasTriggerConditions has NO consumer
+  until Q4's offer flow (test-the-shape says don't pin it);
+  the remaining subset survivors are dominated by default-initializer
+  and defensive-guard equivalents in Q1 code (parser/table/place) -
+  logged in the campaign JSONL for the next audit, not silently
+  blessed.
 
 ## Queue
 

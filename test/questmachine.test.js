@@ -99,12 +99,16 @@ test('quest machine: a crafted quest runs end to end - clock, break, end, tombst
   assert.equal(m.quests.size, 1, 'tombstoned quests linger');
   assert.equal(q.getLogMessages(), null, 'a complete quest has no log');
 
-  // (M19) The expiry is EXACTLY one week: a second short keeps it
+  // (M19, strengthened at Q2b-VERIFY) The expiry is EXACTLY one week,
+  // pinned in LITERAL seconds - importing the constant back would let
+  // a constant mutation move both sides. The comparison is STRICT >:
+  // at exactly one week the tombstone still lingers.
+  assert.equal(SECONDS_PER_WEEK, 604800);
   const tombstonedAt = q.questTombstoneTime;
-  now = tombstonedAt + SECONDS_PER_WEEK - 1;
+  now = tombstonedAt + 604800;
   m.tick();
-  assert.equal(m.quests.size, 1, 'a tombstone younger than a week lingers');
-  now = tombstonedAt + SECONDS_PER_WEEK + 1;
+  assert.equal(m.quests.size, 1, 'at exactly one week the tombstone still lingers (strict >)');
+  now = tombstonedAt + 604801;
   m.tick();
   assert.equal(m.quests.size, 0, 'tombstones expire after one in-game week');
 });
@@ -219,6 +223,9 @@ test('quest machine: a GlobalVarLink task reads and writes the shared store', ()
   const lift = q.getTask({ name: 'lift' });
   assert.equal(lift.type, TaskType.GlobalVarLink);
   assert.equal(lift.globalVarLink, 0);
+  // Q2b-VERIFY: an UNSET global reads false - the store's default,
+  // not a pre-lit flag (Task.cs GetTriggerValue's missing-key arm).
+  assert.equal(lift.getTriggerValue(), false);
   m.tick();
   assert.equal(m.globalVars.get(0), true, 'the 64-global store carries the state');
   assert.equal(lift.getTriggerValue(), true);

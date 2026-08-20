@@ -24,7 +24,20 @@
 //                                real message box; tests capture)
 //   showPrompt(quest, message, respond) - Prompt's yes/no box (Q4
 //                                wires; respond(true) = Yes)
-//   changeReputation(factionId, amount) - factionRep (Q4 wires)
+//   changeReputation(factionId, amount, propagate) - factionRep's
+//                                ChangeReputation (Q4 wires). The
+//                                quest lane passes propagate=TRUE
+//                                (Quest.cs:385): allies +amount/2,
+//                                enemies -amount/2 and the faction-
+//                                tree spread per PersistentFactionData
+//                                - factionRep.js carries the same
+//                                default-false flag, so dropping the
+//                                argument silently loses the spread
+//                                (Q2b-VERIFY finding)
+//   addQuestTopics(quest)      - TalkManager.AddQuestTopicWithInfoAndRumors,
+//                                fired between quest.start() and the
+//                                live table (Q4 wires; the tombstone's
+//                                removeQuestInfoTopics is its scrub)
 //   changeLegalRep(amount)     - LegalRepute: current region's
 //                                LegalRep += amount then the clamp
 //                                (the G2 court system owns both)
@@ -105,7 +118,7 @@ export class QuestMachine {
     quest.hooks = {
       showPopup: (q, message) => this.deps.showPopup?.(q, message),
       showPrompt: (q, message, respond) => this.deps.showPrompt?.(q, message, respond),
-      changeReputation: (fid, amount) => this.deps.changeReputation?.(fid, amount),
+      changeReputation: (fid, amount, propagate) => this.deps.changeReputation?.(fid, amount, propagate),
       changeLegalRep: (amount) => this.deps.changeLegalRep?.(amount),
       playerLevel: () => this.deps.playerLevel?.() ?? 0,
       getGold: () => this.deps.getGold?.() ?? 0,
@@ -143,10 +156,16 @@ export class QuestMachine {
 
   /** One machine tick (QuestMachine.cs Tick). */
   tick() {
-    // Invoke scheduled quests
+    // Invoke scheduled quests (QuestMachine.cs StartQuest:719-725):
+    // Start, then the talk-topic registration, then the live table.
+    // The questor-behaviour relink that follows in C# is scene work
+    // (Q3). Q2b-VERIFY: the addQuestTopics half was silently absent
+    // while its tombstone-side removal was wired - the scrub would
+    // have deleted topics no one ever added.
     for (const quest of this.questsToInvoke) {
       try {
         quest.start();
+        this.deps.addQuestTopics?.(quest);
         this.quests.set(quest.uid, quest);
       } catch (e) {
         console.warn(`[quest] QuestMachine failed to start quest ${quest.questName}: ${e?.message ?? e}`);
@@ -154,23 +173,23 @@ export class QuestMachine {
     }
     this.questsToInvoke.length = 0;
 
-    // Update quests; collect completed for tombstoning and expired for
-    // removal. AUDIT quest-P3: an exception in a quest's update ERROR-
-    // TERMINATES it (tombstone + remove) unless the quest is protected
-    // (the main-quest spine) - C# removes faulting quests rather than
-    // letting them throw every tick forever. The tombstone/expiry
-    // checks sit OUTSIDE the try, as in C#.
+    // Update quests; collect completed for tombstoning and expired or
+    // faulting for removal. AUDIT quest-P3: an exception in a quest's
+    // update ERROR-TERMINATES it unless the quest is protected (the
+    // main-quest spine) - C# removes faulting quests rather than
+    // letting them throw every tick forever. Q2b-VERIFY: the catch
+    // only COLLECTS (QuestMachine.cs:486) - the faulting quest is
+    // tombstoned by removeQuest AFTER every other quest's update and
+    // after the regular tombstone pass, so its tombstone talk hooks
+    // fire in C#'s order. The tombstone/expiry checks sit OUTSIDE the
+    // try, as in C#.
     const questsToTombstone = [], questsToRemove = [];
     for (const quest of this.quests.values()) {
       try {
         if (!quest.questComplete) quest.update();
       } catch (e) {
         console.warn(`[quest] QuestMachine encountered an exception in quest ${quest.questName}: ${e?.message ?? e}`);
-        if (!isProtectedQuest(quest)) {
-          this.tombstoneQuest(quest);
-          questsToRemove.push(quest);
-          continue;
-        }
+        if (!isProtectedQuest(quest)) questsToRemove.push(quest);
       }
       if (quest.questComplete && !quest.questTombstoned) questsToTombstone.push(quest);
       if (quest.questTombstoned
@@ -180,7 +199,7 @@ export class QuestMachine {
     }
 
     for (const quest of questsToTombstone) this.tombstoneQuest(quest);
-    for (const quest of questsToRemove) this.quests.delete(quest.uid);
+    for (const quest of questsToRemove) this.removeQuest(quest);
   }
 
   /** Dispose resources then task actions (Quest.cs Dispose order,
@@ -189,5 +208,15 @@ export class QuestMachine {
     for (const resource of quest.resources.values()) resource.dispose();
     for (const task of quest.tasks.values()) task.disposeActions();
     quest.tombstone();
+  }
+
+  /** RemoveQuest (QuestMachine.cs): tombstones first if the quest is
+   *  not already - the error-termination path lands here - then drops
+   *  it from the live table. */
+  removeQuest(quest) {
+    if (!quest) return false;
+    if (!quest.questTombstoned) this.tombstoneQuest(quest);
+    this.quests.delete(quest.uid);
+    return true;
   }
 }

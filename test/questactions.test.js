@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { loadQuestTables } from '../src/systems/quest/tables.js';
 import { QuestMachine, QUEST_MESSAGES } from '../src/systems/quest/machine.js';
 import { KilledFoe, PlayVideo, QUEST_INFO_RESOURCE_TYPE } from '../src/systems/quest/actions.js';
+import { Person } from '../src/systems/quest/person.js';
 
 const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', 'vendor', 'dfu-quests');
 const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');
@@ -37,6 +38,8 @@ function makeMachine(deps = {}) {
     nowSeconds: () => m.now,
     showPopup: (q, message) => calls.push(['showPopup', message]),
     showPrompt: (q, message, respond) => calls.push(['showPrompt', message, respond]),
+    changeReputation: capture('changeReputation'),
+    addQuestTopics: capture('addQuestTopics'),
     changeLegalRep: capture('changeLegalRep'),
     playerLevel: () => deps.level ?? 0,
     getGold: () => m.gold,
@@ -195,6 +198,9 @@ test('KilledFoe: fires at the kill count with its saying; a zero count clamps to
   assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true);
   assert.equal(m.of('showPopup').length, 1, 'the saying showed');
   assert.equal(foe.killCount, 2, 'kill counts never rearm');
+  m.tick();
+  assert.equal(m.of('showPopup').length, 1,
+    'a TRIGGERED task never re-runs its plain trigger conditions - the saying pops once (Task.cs:218 gate)');
 
   // "Kills required must be 1 or more" (KilledFoe.cs CreateNew)
   const action = new KilledFoe(null).createNew('killed 0 _crook_', q);
@@ -264,21 +270,31 @@ test('HideNpc/RestoreNpc: the hidden flag flips; a MISSING person keeps the acti
   assert.equal(startup.actions[0].isComplete, false, 'still trying');
 });
 
-test('DestroyNpc: destroys the person; the Tick destroyed->hidden law is GATED on a scene behaviour', () => {
+test('DestroyNpc: destroys the person; the Tick destroyed->hidden law is GATED on a scene behaviour AND on destroyed', () => {
   const m = makeMachine();
   const q = schedule(m, [
     'Person _pp_ group Questor', '',
-    ' destroy _pp_',
+    '_d_ task:', ' destroy _pp_', '',
+    'variable _pad_',
   ]);
   m.tick();
   const person = q.getResource({ name: 'pp' });
-  assert.equal(person.isDestroyed, true);
-  // No QuestResourceBehaviour in scene -> Tick's whole body is inert
-  // (QuestResource.cs:158 gates on the behaviour) - NOT auto-hidden.
-  assert.equal(person.isHidden, false);
   person.questResourceBehaviour = {};   // Q3 will stand a real one
   m.tick();
+  assert.equal(person.isHidden, false, 'destroyed-ONLY: a live person with a behaviour stays visible');
+  q.getTask({ name: 'd' }).start(); m.tick();
+  assert.equal(person.isDestroyed, true);
+  m.tick();   // resources Tick BEFORE tasks (Quest.cs:308), so the hide lands next tick
   assert.equal(person.isHidden, true, 'with a behaviour the destroyed NPC is always hidden');
+
+  // No QuestResourceBehaviour in scene -> Tick's whole body is inert
+  // (QuestResource.cs:158 gates on the behaviour) - NOT auto-hidden.
+  const m2 = makeMachine();
+  const q2 = schedule(m2, ['Person _pp_ group Questor', '', ' destroy _pp_']);
+  m2.tick(); m2.tick();
+  const p2 = q2.getResource({ name: 'pp' });
+  assert.equal(p2.isDestroyed, true);
+  assert.equal(p2.isHidden, false, 'no scene link, no auto-hide');
 });
 
 // ---------------------------------------------------------------
@@ -456,11 +472,15 @@ test('AddFace/DropFace: the HUD hook receives the resource; the saying pops IMME
     '_d_ task:', ' drop _pp_ face', ' drop foe _crook_ face', '',
     'variable _pad_',
   ]);
-  m.tick(); m.tick();   // the immediate popup questBreaks mid-task; the rest runs next tick
+  m.tick();
   const person = q.getResource({ name: 'pp' });
   const foe = q.getResource({ name: 'crook' });
-  assert.deepEqual(m.of('addFace').map((c) => c[1]), [person, foe]);
+  // The saying pops IMMEDIATE: the questBreak defers the SECOND
+  // add-face to the next tick (ShowMessagePopup's immediate=true arm).
+  assert.deepEqual(m.of('addFace').map((c) => c[1]), [person], 'the break held the foe face back');
   assert.equal(m.of('showPopup').length, 1, 'the saying showed');
+  m.tick();
+  assert.deepEqual(m.of('addFace').map((c) => c[1]), [person, foe]);
   q.getTask({ name: 'd' }).start(); m.tick();
   assert.deepEqual(m.of('dropFace').map((c) => c[1]), [person, foe]);
 });
@@ -577,4 +597,191 @@ test('tombstone talk: the post-quest messages post by outcome and the rumor/topi
   assert.equal(q2.questTombstoned, true);
   assert.deepEqual(m2.of('addProgressRumor'), [['addProgressRumor', q2.uid, q2.getMessage(QUEST_MESSAGES.RumorsPostFailure)]]);
   assert.deepEqual(m2.of('addQuestorPostMessage'), [], 'no QuestorPostFailure message in the quest');
+});
+
+// ---------------------------------------------------------------
+// Q2b-VERIFY - the adversarial-review fixes and the mutation-campaign
+// survivors, each now a pin that fails under its one-character mutant.
+// ---------------------------------------------------------------
+
+test('VERIFY: the enum literals are DFU\'s own values, pinned as literals', () => {
+  // The first drafts compared hook calls against the imported enums -
+  // vacuous under an enum mutation. deepEqual against LITERALS.
+  assert.deepEqual(QUEST_INFO_RESOURCE_TYPE, { NotSet: 0, Location: 1, Person: 2, Thing: 3 });
+  assert.deepEqual(QUEST_MESSAGES, {
+    QuestorOffer: 1000, RefuseQuest: 1001, AcceptQuest: 1002, QuestFail: 1003,
+    QuestComplete: 1004, RumorsDuringQuest: 1005, RumorsPostFailure: 1006,
+    RumorsPostSuccess: 1007, QuestorPostSuccess: 1008, QuestorPostFailure: 1009,
+  });
+});
+
+test('VERIFY: a cleared and restarted task does NOT re-run its allowRearm=false actions', () => {
+  const m = makeMachine();
+  const q = schedule(m, [
+    'variable _a_', '', 'variable _b_', '',
+    '_t_ task:', ' prompt 1011 yes _a_ no _b_', '',
+    'variable _pad_',
+  ]);
+  m.tick();
+  q.getTask({ name: 't' }).start(); m.tick();
+  assert.equal(m.of('showPrompt').length, 1);
+  q.getTask({ name: 't' }).clear();
+  q.getTask({ name: 't' }).start(); m.tick();
+  assert.equal(m.of('showPrompt').length, 1, 'allowRearm=false survives the clear (QuestAction.cs RearmAction)');
+});
+
+test('VERIFY: WhenTask\'s single "when _x_" with _x_ unset reads FALSE (the one-eval guard)', () => {
+  const m = makeMachine();
+  const q = schedule(m, [
+    'variable _x_', '',
+    '_t_ task:', ' when _x_', '',
+    'variable _pad_',
+  ]);
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false);
+});
+
+test('VERIFY: a SECONDARY always-on trigger can start but never STOP the task', () => {
+  const m = makeMachine();
+  const q = schedule(m, [
+    'variable _a_', '', 'variable _b_', '',
+    '_t_ task:', ' when _a_', ' when _b_', '',
+    'variable _pad_',
+  ]);
+  m.tick();
+  q.getTask({ name: 'a' }).start();
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, 'the primary started the task');
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true,
+    'the false secondary (_b_ unset) cannot stop it (Task.cs Update\'s ranPrimary law)');
+});
+
+test('VERIFY: DailyFrom\'s minutes-bearing LOWER boundary is inclusive', () => {
+  const m = makeMachine();
+  m.now = 16 * 3600 + 60;   // 16:01
+  const q = schedule(m, [
+    '_t_ task:', ' daily from 16:02 to 23:59', '',
+    'variable _pad_',
+  ]);
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false, '16:01 is outside');
+  m.now = 16 * 3600 + 120;  // 16:02 exactly
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, '>= min: 16:02 exactly fires');
+});
+
+test('VERIFY: Prompt\'s static-message NAME form resolves through Quests-StaticMessages', () => {
+  const m = makeMachine();
+  const q = m.scheduleQuest([
+    'Quest: __PN', 'QRC:', 'Message:  1011', ' x', '',
+    'QuestComplete:  [1004]', ' done', '',
+    'QBN:',
+    'variable _a_', '', 'variable _b_', '',
+    ' prompt QuestComplete yes _a_ no _b_',
+  ], 0, { rolls: () => 0 });
+  m.tick();
+  const prompts = m.of('showPrompt');
+  assert.equal(prompts.length, 1);
+  assert.equal(prompts[0][1], q.getMessage(1004), 'QuestComplete resolved to id 1004');
+});
+
+test('VERIFY: DialogLink/AddDialog triple forms fire every link in the C# order', () => {
+  const m = makeMachine();
+  const q = schedule(m, [
+    'Person _pp_ group Questor', '',
+    'Place _house_ remote house2', '',
+    'Item _it_ letter', '',
+    ' dialog link for location _house_ person _pp_ item _it_',
+    ' add dialog for location _house_ person _pp_ item _it_',
+  ]);
+  m.tick();
+  const T = QUEST_INFO_RESOURCE_TYPE;
+  const uid = q.uid;
+  const dn = q.getResource({ name: 'pp' }).displayName;   // '' until Q3 binds
+  assert.deepEqual(m.of('dialogLink'), [
+    ['dialogLink', uid, 'house', T.Location],
+    ['dialogLink', uid, 'pp', T.Person],
+    ['dialogLink', uid, 'it', T.Thing],
+    ['dialogLink', uid, '', T.Location, dn, T.Person],
+    ['dialogLink', uid, dn, T.Person, '', T.Location],
+    ['dialogLink', uid, '', T.Location, '', T.Thing],
+    ['dialogLink', uid, '', T.Thing, '', T.Location],
+    ['dialogLink', uid, dn, T.Person, '', T.Thing],
+    ['dialogLink', uid, '', T.Thing, dn, T.Person],
+  ]);
+  assert.deepEqual(m.of('addDialog'), [
+    ['addDialog', uid, 'house', T.Location, false],
+    ['addDialog', uid, 'pp', T.Person, false],
+    ['addDialog', uid, 'it', T.Thing, false],
+  ]);
+});
+
+test('VERIFY: fresh resources start cold - the tracking state has no pre-lit flags', () => {
+  const m = makeMachine();
+  const q = schedule(m, [
+    'Person _pp_ group Questor', '', 'Foe _crook_ is Thief', '', 'Item _it_ letter', '',
+    'variable _pad_',
+  ]);
+  const foe = q.getResource({ name: 'crook' });
+  const item = q.getResource({ name: 'it' });
+  const person = q.getResource({ name: 'pp' });
+  assert.deepEqual(
+    [foe.injuredTrigger, foe.isRestrained, foe.killCount, foe.hasPlayerClicked,
+      item.useClicked, item.actionWatching, item.daggerfallUnityItem,
+      person.isMuted, person.isDestroyed, person.isQuestor],
+    [false, false, 0, false, false, false, null, false, false, false]);
+});
+
+test('VERIFY: addResource auto-tracks an incoming Person already flagged questor (Quest.cs:879-881)', () => {
+  const m = makeMachine();
+  const q = schedule(m, ['variable _pad_']);
+  const person = new Person(q, 'Person _qq_ group Questor');
+  person.isQuestor = true;   // Q3's SetupQuestorNPC mints this at create
+  q.addResource(person);
+  assert.equal(q.questors.has('qq'), true, 'the auto-track registered it');
+});
+
+test('VERIFY: endQuest reputation goes through the PROPAGATING overload, and factionId 0 stays silent', () => {
+  const src = ['Quest: __RP', 'QRC:', 'Message:  1011', ' x', '', 'QBN:', ' end quest'];
+  const m = makeMachine();
+  const q = m.scheduleQuest(src, 77, { rolls: () => 0 });
+  q.questSuccess = true;
+  m.tick();
+  assert.deepEqual(m.of('changeReputation'), [['changeReputation', 77, 5, true]],
+    'Quest.cs:385: QuestSuccessRep with propagate=TRUE (allies/enemies/tree spread)');
+
+  const m2 = makeMachine();
+  m2.scheduleQuest(src.map((l) => l.replace('__RP', '__RF')), 42, { rolls: () => 0 });
+  m2.tick();
+  assert.deepEqual(m2.of('changeReputation'), [['changeReputation', 42, -2, true]],
+    'the failure path pays QuestFailureRep, still propagating');
+
+  const m3 = makeMachine();
+  m3.scheduleQuest(src.map((l) => l.replace('__RP', '__R0')), 0, { rolls: () => 0 });
+  m3.tick();
+  assert.equal(m3.of('changeReputation').length, 0, 'factionId 0 never touches reputation');
+});
+
+test('VERIFY: quest start registers its talk topics between start and the live table (QuestMachine.cs:723)', () => {
+  const m = makeMachine();
+  const q = schedule(m, ['variable _pad_']);
+  assert.equal(m.of('addQuestTopics').length, 0, 'not before the invoke tick');
+  m.tick();
+  assert.deepEqual(m.of('addQuestTopics'), [['addQuestTopics', q]]);
+  m.tick();
+  assert.equal(m.of('addQuestTopics').length, 1, 'once per quest');
+});
+
+test('VERIFY: a faulting quest tombstones AFTER the surviving quests update (C# collect-then-remove)', () => {
+  const m = makeMachine();
+  const bad = schedule(m, [' remove foe _ghost_']);
+  const good = schedule(m, [' say 1011']);
+  m.tick();
+  assert.equal(bad.questTombstoned, true, 'error termination still lands');
+  assert.equal(m.quests.has(bad.uid), false);
+  assert.equal(good.questTombstoned, false);
+  const order = m.calls.map((c) => c[0]).filter((n) => n === 'showPopup' || n === 'removeQuestRumors');
+  assert.deepEqual(order, ['showPopup', 'removeQuestRumors'],
+    'the good quest\'s same-tick popup lands BEFORE the faulting quest\'s tombstone scrub (QuestMachine.cs:486,509-512)');
 });
