@@ -50,6 +50,8 @@ import { ORC_DESIGNS, orcOpts } from './orcBody.js';
 import { UNDEAD_DESIGNS, undeadOpts } from './undeadBody.js';
 import { CLASS_DESIGNS, classOpts } from './humanClasses.js';
 import { ATRONACH_DESIGNS, atronachOpts } from './atronachs.js';
+import { BEAST_DESIGNS, beastOpts, ALL_GROUPS } from './beasts.js';
+import { buildBeastBody } from './pieces/beastBody.js';
 import { buildRibcage, buildPelvis, BONE_RAMP } from './pieces/skeletonBones.js';
 import { buildHorseBody, BAY_RAMP } from './pieces/centaurBody.js';
 import { buildTusks, buildBrow, IVORY_RAMP } from './pieces/orcHead.js';
@@ -310,6 +312,28 @@ export function buildPaperdollPayload(pal, img, cif) {
     };
   });
 
+  // ── THE BEASTS ─────────────────────────────────────────────────
+  // The first enemies here with no human in them at all. Every other
+  // design is a person underneath — scaled, stripped, robed, or with a
+  // horse hung off him. These collapse the rig's WHOLE body, all six
+  // groups, using the mechanism the centaur needed for two, and what the
+  // player sees is entirely the piece.
+  //
+  // The rig still earns its keep: it holds the face list at 2136 so they
+  // ship as deltas like everything else, and an animal animates through
+  // the same path a man does.
+  const beastPacks = BEAST_DESIGNS.map((d) => {
+    const { ramps: bramps, opts, hide, pelt } = beastOpts(d, pal);
+    let bf = buildNeutralBody(bramps, { face, ...opts });
+    bf = collapseGroups(bf, ALL_GROUPS, [0, 0.4, 0]);
+    return {
+      id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
+      build: d.build || {}, zones: [], hide,
+      beast: packPiece(buildBeastBody(pelt, d.beast)),
+      ...villagerDelta(faces, bf),
+    };
+  });
+
   // Per-race hairstyle packs (haired races get multiple styles).
   const HAIRSTYLES = { Human: ['short','buzz','medium','long','ponytail','topknot','mohawk','bald'], Elf: ['short','medium','long','ponytail','mohawk','bald'] };
   const hairPacks = {};
@@ -347,7 +371,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       return list;
     })(),
     swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
-    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, hairRamps: HAIR_RAMPS, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
+    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, hairRamps: HAIR_RAMPS, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 
   return payload;
 }

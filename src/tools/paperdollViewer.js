@@ -306,7 +306,7 @@ for (const name of ['pauldrons','helm']) if (D[name]) pieceMesh[name] = buildPie
 // pelvis. Same table, same build, same show-and-hide — a design's
 // pieces are looked up by the design, so adding a fourth kind of bone
 // to a fifth enemy means adding a key here and nothing else.
-const PIECE_KINDS = ['tusks', 'brow', 'ribcage', 'pelvis', 'horse'];
+const PIECE_KINDS = ['tusks', 'brow', 'ribcage', 'pelvis', 'horse', 'beast'];
 const buildPieces = (list) =>
   (list || []).map((d) => {
     const out = {};
@@ -320,10 +320,24 @@ const showPieces = (table, i) => {
   const m = table[i];
   if (m) for (const k of PIECE_KINDS) if (m[k]) m[k].visible = true;
 };
-const orcPieceMesh = buildPieces(D.orcs);
-const undeadPieceMesh = buildPieces(D.undead);
-hidePieces(orcPieceMesh);
-hidePieces(undeadPieceMesh);
+// A TABLE PER LINE, LOOKED UP BY LINE. This was two hardcoded tables —
+// orcs and undead — and adding `beast` to PIECE_KINDS was not enough:
+// the beasts' piece was never BUILT, so three animals whose entire body
+// is a piece rendered as nothing at all. The rig under them is
+// collapsed, so there was not even a man left to see.
+//
+// Keyed now, so a new line gets its pieces by existing rather than by
+// being remembered here.
+const pieceTables = {
+  orc: buildPieces(D.orcs),
+  undead: buildPieces(D.undead),
+  class: buildPieces(D.classes),
+  atronach: buildPieces(D.atronachs),
+  beast: buildPieces(D.beasts),
+};
+const orcPieceMesh = pieceTables.orc;
+const undeadPieceMesh = pieceTables.undead;
+for (const t of Object.values(pieceTables)) hidePieces(t);
 const RACES = ['Human','Elf','Khajiit','Argonian']; let raceIx = 0;
 const raceHair = {};
 for (const R of RACES) {
@@ -605,8 +619,7 @@ const ACTX = createAnimContext({ basePos, vgrp, armX: D.armX, wristY: D.wristY, 
 // result is neither design.
 let orcOn = null;
 function applyOrc(o) {
-  hidePieces(orcPieceMesh);
-  hidePieces(undeadPieceMesh);
+  for (const t of Object.values(pieceTables)) hidePieces(t);
   orcOn = o;
   if (!o) { applyVillager(null); return; }
   // Hide the human head furniture: an orc wears neither.
@@ -653,11 +666,13 @@ function applyOrc(o) {
   mat.blending = spec && spec.additive ? THREE.AdditiveBlending : THREE.NormalBlending;
   mat.needsUpdate = true;
 
-  // Whichever line this design came from, show ITS pieces.
-  const oi = (D.orcs || []).indexOf(o);
-  if (oi >= 0) showPieces(orcPieceMesh, oi);
-  const ui = (D.undead || []).findIndex((x) => x.id === o.id);
-  if (ui >= 0) showPieces(undeadPieceMesh, ui);
+  // Whichever line this design came from, show ITS pieces. The line is
+  // carried on the design rather than guessed by searching every table,
+  // which is what let a whole line go unbuilt without anything noticing.
+  const line = o.line || 'orc';
+  const list = { orc: D.orcs, undead: D.undead, class: D.classes, atronach: D.atronachs, beast: D.beasts }[line];
+  const idx = (list || []).findIndex((x) => x.id === o.id);
+  if (idx >= 0 && pieceTables[line]) showPieces(pieceTables[line], idx);
   // AND IT MAY BE WEARING SOMETHING. applyVillagerDrape asks only for a
   // `.drape`, so a lich in robes goes through the code that already
   // dresses a villager's gown — the composition costs nothing because
@@ -677,6 +692,31 @@ function applyUndead(u) {
   applyOrc(u ? { ...u, line: 'undead' } : null);
 }
 {
+  const sel = document.getElementById('beast');
+  if (sel) {
+    const none = document.createElement('option');
+    none.value = '';
+    none.textContent = 'beast: none (bare rig)';
+    sel.appendChild(none);
+    for (const bst of D.beasts || []) {
+      const opt = document.createElement('option');
+      opt.value = String(bst.id);
+      opt.textContent = bst.name + '  (lvl ' + bst.level + ')';
+      sel.appendChild(opt);
+    }
+    sel.onchange = () => {
+      const bst = (D.beasts || []).find((x) => String(x.id) === sel.value) || null;
+      for (const other of ['orc', 'undead', 'villager', 'classes', 'atronach']) {
+        const o = document.getElementById(other);
+        if (o) o.value = '';
+      }
+      applyOrc(bst ? { ...bst, line: 'beast' } : null);
+      const hud = document.getElementById('hud');
+      if (hud && bst) hud.textContent = bst.name + ' \u00b7 level ' + bst.level + ' \u00b7 ' + bst.damage[0] + '-' + bst.damage[1] + ' damage';
+    };
+  }
+}
+{
   const sel = document.getElementById('atronach');
   if (sel) {
     const none = document.createElement('option');
@@ -691,7 +731,7 @@ function applyUndead(u) {
     }
     sel.onchange = () => {
       const a = (D.atronachs || []).find((x) => String(x.id) === sel.value) || null;
-      for (const other of ['orc', 'undead', 'villager', 'classes']) {
+      for (const other of ['orc', 'undead', 'villager', 'classes', 'beast']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
@@ -720,7 +760,7 @@ function applyUndead(u) {
     }
     sel.onchange = () => {
       const c = (D.classes || []).find((x) => String(x.id) === sel.value) || null;
-      for (const other of ['orc', 'undead', 'villager', 'atronach']) {
+      for (const other of ['orc', 'undead', 'villager', 'atronach', 'beast']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
@@ -746,7 +786,7 @@ function applyUndead(u) {
     sel.onchange = () => {
       const u = (D.undead || []).find((x) => String(x.id) === sel.value) || null;
       // The three pickers are exclusive: one body at a time.
-      for (const other of ['orc', 'villager', 'classes', 'atronach']) {
+      for (const other of ['orc', 'villager', 'classes', 'atronach', 'beast']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
