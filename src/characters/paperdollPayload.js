@@ -51,6 +51,7 @@ import { UNDEAD_DESIGNS, undeadOpts } from './undeadBody.js';
 import { CLASS_DESIGNS, classOpts } from './humanClasses.js';
 import { ATRONACH_DESIGNS, atronachOpts } from './atronachs.js';
 import { BEAST_DESIGNS, beastOpts, ALL_GROUPS } from './beasts.js';
+import { ENEMY_BASICS } from './enemyBasics.js';
 import { buildBeastBody, buildBeastTail } from './pieces/beastBody.js';
 import { buildBeastHead, WOLF_RAMP } from './pieces/beastHead.js';
 import { buildArachnid } from './pieces/arachnid.js';
@@ -432,6 +433,11 @@ export function buildPaperdollPayload(pal, img, cif) {
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
       build: d.build || {}, zones: d.zones || [], hide,
+      // HOW IT REACHES YOU, and WHEN. The kind is the design's; the
+      // timing is the game's own primaryAttackAnimFrames, where -1 marks
+      // the frame the blow lands on.
+      attack: d.attack || null,
+      attackFrames: (ENEMY_BASICS[d.id] || {}).primaryAttackAnimFrames || null,
       beast: d.beast ? packPiece(buildBeastBody(pelt, d.beast)) : null,
       beastHead: d.beastHead ? packPiece(buildBeastHead(pelt, d.beastHead)) : null,
       // NO SPINE: an arachnid gets its own builder rather than more

@@ -101,6 +101,7 @@ export const BEAST_DESIGNS = [
   {
     id: MOBILE_TYPES.Rat,
     name: 'Giant Rat',
+    attack: 'lunge',
     level: 1,
     damage: [1, 4],
     weaponTier: 0,
@@ -122,6 +123,7 @@ export const BEAST_DESIGNS = [
   {
     id: MOBILE_TYPES.GrizzlyBear,
     name: 'Grizzly Bear',
+    attack: 'maul',
     level: 8,
     damage: [1, 20],
     weaponTier: 0,
@@ -143,6 +145,7 @@ export const BEAST_DESIGNS = [
   {
     id: MOBILE_TYPES.SabertoothTiger,
     name: 'Sabertooth Tiger',
+    attack: 'lunge',
     level: 10,
     damage: [1, 25],
     weaponTier: 0,
@@ -209,6 +212,7 @@ export const BEAST_DESIGNS = [
   {
     id: MOBILE_TYPES.Spider,
     name: 'Giant Spider',
+    attack: 'lunge',
     level: 3,
     damage: [1, 8],
     weaponTier: 0,
@@ -229,6 +233,7 @@ export const BEAST_DESIGNS = [
   {
     id: MOBILE_TYPES.GiantScorpion,
     name: 'Giant Scorpion',
+    attack: 'sting',
     level: 9,
     damage: [1, 20],
     weaponTier: 0,
@@ -243,6 +248,7 @@ export const BEAST_DESIGNS = [
   {
     id: MOBILE_TYPES.GiantBat,
     name: 'Giant Bat',
+    attack: 'swoop',
     level: 3,
     damage: [2, 12],
     weaponTier: 0,
@@ -286,6 +292,7 @@ export const BEAST_DESIGNS = [
   {
     id: MOBILE_TYPES.Slaughterfish,
     name: 'Slaughterfish',
+    attack: 'bite',
     level: 7,
     damage: [2, 12],
     weaponTier: 0,
@@ -409,6 +416,7 @@ export const BEAST_DESIGNS = [
   {
     id: MOBILE_TYPES.Dragonling,
     name: 'Dragonling',
+    attack: 'swoop',
     level: 16,
     damage: [5, 15],
     weaponTier: 0,
@@ -422,6 +430,7 @@ export const BEAST_DESIGNS = [
   {
     id: MOBILE_TYPES.Dragonling_Alternate,
     name: 'Dragonling (elder)',
+    attack: 'swoop',
     level: 16,
     damage: [5, 15],
     weaponTier: 0,

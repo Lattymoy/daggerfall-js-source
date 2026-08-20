@@ -315,7 +315,10 @@ test('the last five add no geometry of their own', () => {
     const d = BEAST_DESIGNS.find((x) => x.name === name);
     assert.ok(d, `${name} is missing`);
     // Everything they use was built for something else.
-    const borrowed = ['beast', 'wings', 'horns', 'drape', 'fish', 'arachnid'];
+    // `attack` joined the allowed set when the armless enemies got motion
+    // of their own: it is a NAME, not geometry, which is exactly what this
+    // check is about.
+    const borrowed = ['beast', 'wings', 'horns', 'drape', 'fish', 'arachnid', 'attack'];
     for (const k of Object.keys(d)) {
       if (['id', 'name', 'level', 'damage', 'weaponTier', 'build', 'zones', 'mats', 'hideRamp', 'bootRamp', 'pelt', 'collapse', 'tail', 'beastHead', 'claws'].includes(k)) continue;
       assert.ok(borrowed.includes(k), `${name} introduces "${k}" — the last five were supposed to cost data`);

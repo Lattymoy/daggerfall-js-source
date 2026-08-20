@@ -25,6 +25,7 @@
 import { MISSILE_SPEED } from '../systems/spellcast.js';   // AUDIT 23: the arrow speed's one home
 import { buildPaperdollPayload } from '../characters/paperdollPayload.js';
 import { makeCoreFn, buildCloth, stepCloth, articulatedCapsules } from '../characters/clothSim.js';
+import { beastAttackPose, hitPointOf } from '../characters/beastAttack.js';
 import { DIRECTION_TO_STRIKE, STRIKES, sampleClip, REACTIONS } from '../characters/anims.js';
 import {
   CLASSIC_UPDATE_INTERVAL,
@@ -214,6 +215,7 @@ function applyVillager(v) {
   geo.getAttribute('position').needsUpdate = true;
   geo.getAttribute('color').needsUpdate = true;
   villagerOn = v;
+  if (!v) { shownLine = null; shownIdx = -1; shownDesign = null; beastAtk = null; }
   // Anything that is not spectral is solid — including the bare rig, or
   // the ghost's transparency outlives the ghost.
   mat.transparent = false;
@@ -671,6 +673,12 @@ function applyOrc(o) {
   const list = { orc: D.orcs, undead: D.undead, class: D.classes, atronach: D.atronachs, beast: D.beasts, daedra: D.daedra }[line];
   const idx = (list || []).findIndex((x) => x.id === o.id);
   if (idx >= 0 && pieceTables[line]) showPieces(pieceTables[line], idx);
+  // Remembered so the frame loop can move THIS design's pieces when it
+  // attacks — an armless enemy moves its whole body, and the body is a
+  // piece.
+  shownLine = idx >= 0 ? line : null;
+  shownIdx = idx;
+  shownDesign = o;
   // AND IT MAY BE WEARING SOMETHING. applyVillagerDrape asks only for a
   // `.drape`, so a lich in robes goes through the code that already
   // dresses a villager's gown — the composition costs nothing because
@@ -921,6 +929,22 @@ const curPose = () => (poseIx ? D.poses[POSE_NAMES[poseIx]] : null);
 // pose (arms fully owned by the clip - gait pump + runElbow suppressed
 // mid-strike), twist/lean/headPitch add on. Legs stay with the gait.
 let atk = null;   // { clip, t }
+
+// ── AN ATTACK FOR A BODY WITH NO ARMS ────────────────────────────
+// The nine armless enemies collapse their arm groups to a POINT, so the
+// authored 1H strike clips animate nothing: the timer fires, the hit
+// lands, the damage applies, and the bear does not move. For these the
+// motion belongs to the whole animal, because there are no joints to
+// turn — see characters/beastAttack.js.
+let shownLine = null;
+let shownIdx = -1;
+let shownDesign = null;
+let beastAtk = null; // { kind, t, dur, hit }
+const fireBeastAttack = (design) => {
+  if (!design || !design.attack) return false;
+  beastAtk = { kind: design.attack, t: 0, dur: 0.62, hit: hitPointOf(design.attackFrames) };
+  return true;
+};
 // DFU-VERBATIM TIMING: the weapon machine owns WHEN (frames, ticks,
 // hit moments, bow draw-hold, cooldown); the rig clips are the
 // VISUAL. Clip time = machine progress mapped onto clip duration.
@@ -971,6 +995,32 @@ function animate(dt) {
     if (atk && !atk.free) { const u = machineClipU(); if (u === null) atk = null; else atk.t = u * atk.clip.dur; }
     if (atk && atk.free) { atk.t += dt; if (atk.t >= atk.clip.dur) atk = null; }
   } else if (atk) { atk.t += dt; if (atk.t >= atk.clip.dur) atk = null; }
+
+  // THE WHOLE ANIMAL MOVES. Applied to the piece rather than the rig,
+  // because for these designs the piece IS the body.
+  if (beastAtk) {
+    beastAtk.t += dt;
+    if (beastAtk.t >= beastAtk.dur) beastAtk = null;
+  }
+  {
+    const line = shownLine;
+    const table = line && pieceTables[line];
+    const idx = shownIdx;
+    const m = table && idx >= 0 ? table[idx] : null;
+    if (m) {
+      const p = beastAtk
+        ? beastAttackPose(beastAtk.kind, beastAtk.t / beastAtk.dur, beastAtk.hit)
+        : { z: 0, y: 0, pitch: 0, roll: 0 };
+      for (const k of ['beast', 'arachnid', 'fish', 'wings', 'beastTail']) {
+        const mesh = m[k];
+        if (!mesh) continue;
+        mesh.position.z = p.z;
+        mesh.position.y = -D.cy + p.y;
+        mesh.rotation.x = p.pitch;
+        mesh.rotation.z = p.roll;
+      }
+    }
+  }
   if (arrowFlight) {   // straight flight at the DFU missile speed
     arrowFlight.d += MISSILE_SPEED * dt;
     const { dir, d, snap } = arrowFlight;
@@ -1193,7 +1243,18 @@ const fireHurt = (name) => { const clip = D.reactions[name || HURT_DIRS[hurtIx]]
 window.__hurt = fireHurt;
 window.__bowCancel = () => { if (wm && machineCancelBowDraw(wm)) { atk = null; swordInfo.textContent = 'un-drawn'; } };
 window.__setSpeed = (v) => { liveSpeed = v; document.getElementById('spdv').textContent = 'SPD ' + v; };
-document.getElementById('strike').onclick = () => { if (POSE_NAMES[poseIx] === 'rangedAim') return; fireAttack(ATK_DIRS[atkDirIx]); };   // bows are owned by the pointer pair (press=draw, release=loose); click would double-path
+document.getElementById('strike').onclick = () => {
+  // AN ARMLESS DESIGN PLAYS ITS OWN MOTION. Nine enemies have no arms to
+  // swing, so the authored strike clips animate a collapsed point and
+  // nothing happens. Their whole body moves instead.
+  if (fireBeastAttack(shownDesign)) {
+    const si = document.getElementById('swordinfo');
+    if (si) si.textContent = shownDesign.name + ' \u00b7 ' + shownDesign.attack;
+    return;
+  }
+  return oldStrike();
+};
+const oldStrike = () => { if (POSE_NAMES[poseIx] === 'rangedAim') return; fireAttack(ATK_DIRS[atkDirIx]); };   // bows are owned by the pointer pair (press=draw, release=loose); click would double-path
 window.__attack = fireAttack;
 document.getElementById('spd').oninput = (e) => window.__setSpeed(+e.target.value);
 { const sb = document.getElementById('strike');
