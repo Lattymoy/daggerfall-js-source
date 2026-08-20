@@ -669,6 +669,9 @@ test('VERIFY: DailyFrom\'s minutes-bearing LOWER boundary is inclusive', () => {
   m.now = 16 * 3600 + 120;  // 16:02 exactly
   m.tick();
   assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, '>= min: 16:02 exactly fires');
+  m.now = 23 * 3600 + 59 * 60;  // 23:59 exactly - the minute-bearing UPPER bound
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, '<= max: 23:59 exactly fires');
 });
 
 test('VERIFY: Prompt\'s static-message NAME form resolves through Quests-StaticMessages', () => {

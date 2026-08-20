@@ -220,6 +220,10 @@ test('AUDIT 22 F11 retired at Q2b-ii: createArtifact is the producer of the thre
   const armor = createArtifact(templates, 3);
   assert.equal(armor.material, 0x200 + 3);
   assert.equal(armor.artifactIndexBitfield, (3 << 1) | 1);
+  // empty enchantment slots (type -1) filter out, real ones ride raw
+  const enchanted = createArtifact(
+    templates.map((t, i) => (i === 0 ? { ...t, enchantments: [{ type: -1, param: 0 }, { type: 3, param: 7 }] } : t)), 0);
+  assert.deepEqual(enchanted.enchantments, [{ type: 3, param: 7 }]);
   // ...and the itemInfo branches those flags feed are LIVE now
   assert.equal(armorShouldShowMaterial(armor), false, 'an artifact never shows material');
 });

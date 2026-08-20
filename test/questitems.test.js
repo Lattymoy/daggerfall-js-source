@@ -427,3 +427,142 @@ test('quest lists: the social law (level-or-rep gate, N/M/F rows), SelectQuest a
   m.tick();
   assert.deepEqual(m.of('onQuestStarted').map((c) => c[1]), [scheduled]);
 });
+
+// ---------------------------------------------------------------
+// Q2b-ii MUTATION PINS - campaign survivors, each a law the first
+// draft left unpinned; every pin fails under its one-character mutant.
+// ---------------------------------------------------------------
+
+test('MUTATION: the artifact/book/potion-adjacent arms hold their shapes', () => {
+  const m = makeMachine();
+  const q = schedule(m, [
+    'Item _art_ artifact Chrysamere', '',
+    'Item _b_ book2', '',                       // (7,2) - the Books arm, not the generic
+    'Item _u_ item class 1 subclass 8', '',     // UselessItems1 NON-potion subclass
+    'Item _l_ letter', '',
+    'variable _pad_',
+  ], { rolls: () => 0.5 });
+  assert.equal(q.getResource({ name: 'art' }).artifact, true, 'the declaration flag survives the parse');
+  const book = q.getResource({ name: 'b' }).daggerfallUnityItem;
+  assert.equal(book.templateIndex, 277);
+  assert.notEqual(book.variant, undefined, 'the Books arm rolls a variant - the generic arm would not');
+  const u = q.getResource({ name: 'u' }).daggerfallUnityItem;
+  assert.equal(u.templateIndex, 90, 'class 1 subclass 8 is the GENERIC arm - only subclass 1 is the potion');
+  assert.equal(q.getResource({ name: 'l' }).daggerfallUnityItem.dye, undefined,
+    'only clothing takes a dye roll');
+});
+
+test('MUTATION: gold formula odd corners - the odd PriceAdjustment truncates, level 20 clamps at 11... no, at 10', () => {
+  // PriceAdjustment 401 -> 401/2 = 200.5 truncates to 200 (a rounding
+  // mutant reads 201): draw at 0.5 with level 10 -> 1050*700/1000=735.
+  const m = makeMachine({ level: 10, priceAdjustment: 401 });
+  const q = schedule(m, ['Item _g_ gold', '', 'variable _pad_'], { rolls: () => 0.5 });
+  assert.equal(q.getResource({ name: 'g' }).daggerfallUnityItem.stackCount, 735);
+  // level 20 -> trunc(20/2)+1 = 11 - JUST past the clamp: 10.
+  // draw at 0 = 1500; *500/1000 = 750.
+  const m2 = makeMachine({ level: 20 });
+  const q2 = schedule(m2, ['Item _g_ gold', '', 'variable _pad_'], { rolls: () => 0 });
+  assert.equal(q2.getResource({ name: 'g' }).daggerfallUnityItem.stackCount, 750);
+});
+
+test('MUTATION: FightersGuild AlterReward at rank 1 - the fixed-point trunc is not a round', async () => {
+  // (trunc((11<<8)/10) * 1000) >> 8 = (281 * 1000) >> 8 = 1097; a
+  // Math.round mutant reads 282 -> 1101.
+  const { alterReward } = await import('../src/systems/guilds.js');
+  assert.equal(alterReward(GUILD_GROUPS.FightersGuild, 1, 1000), 1097);
+  assert.equal(alterReward(GUILD_GROUPS.MagesGuild, 1, 1000), 1000, 'every other guild is the identity');
+});
+
+test('MUTATION: GivePc gives at the 07:00 and 18:00 hour bounds exactly', () => {
+  for (const hour of [7, 18]) {
+    const m = makeMachine();
+    const q = schedule(m, ['Item _l_ letter', '', ' give pc _l_ silently']);
+    m.inTown = true;
+    m.now = hour * 3600;
+    for (let i = 0; i < 42; i++) m.tick();
+    assert.equal(m.of('giveItemToPlayer').length, 1, `${hour}:00 exactly is inside the window`);
+    assert.equal(q.getResource({ name: 'l' }).daggerfallUnityItem.questItem, true);
+  }
+});
+
+test('MUTATION: the empty foe item queue counts zero', () => {
+  const m = makeMachine();
+  const q = schedule(m, ['Foe _crook_ is Thief', '', 'variable _pad_']);
+  assert.equal(q.getResource({ name: 'crook' }).itemQueueCount, 0);
+});
+
+test('MUTATION: quest-list boundaries - minReq 10 is a REPUTATION gate, radix-10, HolyOrder nonmembers, empty pools', () => {
+  const CRAFTED = [
+    'schema: *name, group, membership, minReq, flag, notes',
+    'QA, FightersGuild, N, 0, 0, x',
+    'QTEN, FightersGuild, M, 10, 0, x',
+    'QREP, FightersGuild, M, 20, 0, x',
+    'QTN, HolyOrder, N, 0, 0, x',
+    'QTM, HolyOrder, M, 0, 0, x',
+    'IG, InitAtGameStart, N, 0, 0, x',
+    'ZZ, NotAGroupAnyoneKnows, N, 0, 0, dropped - the C# TODO arm',
+  ].join('\n');
+  const lists = new QuestListsManager({ readListTable: (name) => (name === 'Classic' ? CRAFTED : null) });
+  const names = (pool) => (pool ?? []).map((qd) => qd.name);
+  const FG = GUILD_GROUPS.FightersGuild;
+
+  // minReq 10 sits on the REP side of the boundary: rank 10 alone
+  // cannot open it, rep 10 can.
+  assert.deepEqual(names(lists.getGuildQuestPool(FG, MEMBERSHIP_STATUS.Member, 0, 0, 10)), []);
+  assert.deepEqual(names(lists.getGuildQuestPool(FG, MEMBERSHIP_STATUS.Member, 0, 10, 0)), ['QTEN']);
+  // ...and '20' parses base-10: rep exactly 20 admits QREP (a radix
+  // mutant reads 22 and refuses).
+  assert.deepEqual(names(lists.getGuildQuestPool(FG, MEMBERSHIP_STATUS.Member, 0, 20, 0)), ['QTEN', 'QREP']);
+
+  // the HolyOrder fold lifts MEMBER statuses only - a NONMEMBER still
+  // sees just the N row.
+  assert.deepEqual(names(lists.getGuildQuestPool(GUILD_GROUPS.HolyOrder, MEMBERSHIP_STATUS.Nonmember, 0, 0, 0)), ['QTN']);
+
+  // InitAtGameStart routes to init; an unknown group is dropped.
+  assert.deepEqual(lists.init.map((qd) => qd.name), ['IG']);
+
+  // a group with no quests answers a null pool, and selecting from an
+  // EMPTY pool answers null without a crash
+  assert.equal(lists.getGuildQuest(GUILD_GROUPS.Witches, MEMBERSHIP_STATUS.Member, 0, 0, 0), null);
+  assert.equal(lists.selectQuest([], 0), null);
+
+  // noteQuestStarted before any pool call (accepted list unarmed) and
+  // for a non-one-time quest are both inert
+  const fresh = new QuestListsManager({ readListTable: (name) => (name === 'Classic' ? CRAFTED : null) });
+  fresh.noteQuestStarted({ oneTime: true, questName: 'QA' });
+  assert.equal(fresh.oneTimeQuestsAccepted, null);
+  fresh.getGuildQuestPool(FG, MEMBERSHIP_STATUS.Member, 0, 0, 0);
+  fresh.noteQuestStarted({ oneTime: false, questName: 'QA' });
+  assert.deepEqual(fresh.oneTimeQuestsAccepted, []);
+});
+
+test('MUTATION: social gates at the boundaries, the female rows, and the top-of-pool pick', () => {
+  const CRAFTED = [
+    'schema: *name, group, membership, minReq, flag, notes',
+    'SA, Commoners, N, 0, 0, x',
+    'SC, Commoners, F, 0, 0, x',
+    'SD, Commoners, N, 5, 0, x',
+  ].join('\n');
+  const CHILD = ['Quest: __LS2', 'QRC:', 'Message:  1011', ' c', '', 'QBN:', 'variable _x_'];
+  const m = makeMachine();
+  const seen = [];
+  const lists = new QuestListsManager({
+    readListTable: (name) => (name === 'Classic' ? CRAFTED : null),
+    getQuestSourceLines: () => CHILD,
+    parseQuest: (lines, factionId) => m.parseQuestForLists(lines, factionId, { rolls: () => 0 }),
+    rolls: () => 0.9999,   // the TOP of the pool - a rounding mutant walks off the end
+  });
+  const origSelect = lists.selectQuest.bind(lists);
+  lists.selectQuest = (p, f) => { seen.push(p.map((qd) => qd.name)); return origSelect(p, f); };
+  // level 5 exactly opens the minReq-5 level gate; a female player
+  // sees the F row; the 0.9999 roll picks the LAST pool entry.
+  const quest = lists.getSocialQuest(SOCIAL_GROUPS.Commoners, 0, 'female', 0, 5);
+  assert.deepEqual(seen, [['SA', 'SC', 'SD']]);
+  assert.equal(quest.questName, '__LS2');
+  // rep covers minReq when the level does not: level 1, rep 5.
+  const q2 = lists.getSocialQuest(SOCIAL_GROUPS.Commoners, 0, 'male', 5, 1);
+  assert.deepEqual(seen[1], ['SA', 'SD']);
+  assert.ok(q2);
+  // getQuest keeps factionId 0 by default
+  assert.equal(lists.getQuest('SA').factionId, 0);
+});
