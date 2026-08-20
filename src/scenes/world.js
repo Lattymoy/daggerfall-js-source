@@ -710,6 +710,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       arrows.fire(from, dir, { enemy: true, shooterFoe: f, weapon: f.entity.weapon });
       audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });
     },
+    // X3-slice: casters - the S16 lists assign once the SPELLS.STD
+    // map lands, and the release seams ride the ONE engine: the AoC
+    // explosion and the enemy missile (aimed at the walking player's
+    // mid-capsule at fire time, the dungeon shape).
+    spellsByIndex: () => spellsByIndex,
+    magicHooks: {
+      explodeAt: (...a) => magic.explodeAt(...a),
+      fireMissile: (from, spell, casterLevel, foe) => {
+        if (!(walkMode && playerSpawned)) return;
+        const d = [player.pos[0] - from[0], player.pos[1] + 0.9 - from[1], player.pos[2] - from[2]];
+        const l = Math.hypot(...d) || 1;
+        magic.fireEnemyMissile(from, [d[0] / l, d[1] / l, d[2] / l], spell, casterLevel, foe);
+      },
+    },
   });
   // The classic catch-up loop (PlayerEntity.Update:486-492): per
   // elapsed game minute, one intermittent roll; break on a spawn.

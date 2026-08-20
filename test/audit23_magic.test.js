@@ -94,9 +94,11 @@ test('AUDIT 23 magic-14: readying enforces the cost and CasterOnly casts instant
 test('AUDIT 23 magic-15: a silenced enemy cannot spend a cast; the free rider bypasses', () => {
   // EntityEffectManager.cs:315 - SetReadySpell's SilenceCheck runs for
   // enemies, gated on !noSpellPointCost exactly like the cost.
-  const src = dcSrc();
-  const i = src.indexOf('function castEnemySpell');
-  const fn = src.slice(i, src.indexOf('async function ensureArrowModel', i));
-  assert.ok(fn.includes('if (!noSpellPointCost && silenceBlocksCast(f.entity)) return;'));
+  // X3: the executor is SHARED (characters/enemyCasting.js) - the
+  // gate law lives there; both hosts bind it.
+  const src = readFileSync(join(root, 'src/characters/enemyCasting.js'), 'utf8');
+  const i = src.indexOf('export function castEnemySpell');
+  const fn = src.slice(i);
+  assert.ok(fn.includes('if (!noSpellPointCost && silenceBlocksCast(f.entity)) return false;'));
   assert.ok(fn.indexOf('silenceBlocksCast') < fn.indexOf('magicka'), 'the gate sits before the spend');
 });

@@ -17,6 +17,11 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
+import { EnemyCaster, castEnemySpell } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
+import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // X3
+import { applySpell, maxFatigue } from '../systems/effects.js';   // X3: self-casts land through the effect spine
+import { calculateCastCost } from '../systems/spellcost.js';   // X3: costs priced off the player (magic-15 note)
+import { silenceBlocksCast } from '../systems/mysticism.js';   // X3: the enemy silence gate
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity, loadMonsterCareer } from '../characters/enemyEntity.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
@@ -38,7 +43,9 @@ export const ENCOUNTER_CULL_DISTANCE = 120;
 
 export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame,
   playerEntity, audio, onPlayerHurt, currentMinute, say = null, rolls = Math.random,
-  onArrow = null }) {   // X2-slice: the host's arrow seam - (from, dir, foe) at the shoot frame
+  onArrow = null,   // X2-slice: the host's arrow seam - (from, dir, foe) at the shoot frame
+  spellsByIndex = null,   // X3-slice: () => the SPELLS.STD map (null until loaded) - casters need it
+  magicHooks = null }) {  // X3-slice: { explodeAt, fireMissile } - the host's spell release seams
   const foes = [];        // { mobile, ai, attack, entity, batch, tex, archive, mobileType, dead, _encounter: true }
   const corpseBatches = [];
 
@@ -71,11 +78,18 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // foes read the SAME ranged-flags law the dungeon build does,
       // and the C-slice 6..51.2 band drives them above ground.
       attack.rangedAttack = hasBowAttack(basics);
+      // X3-slice: the S16 spell lists ride the same assignment the
+      // dungeon build runs; a listed caster gets the shared decision
+      // driver. No SPELLS.STD yet (the map loads async) = no lists,
+      // exactly like a degraded dungeon boot.
+      const sbi = spellsByIndex?.();
+      if (sbi) assignEnemySpells(entity, sbi);
+      const caster = entity.spells?.length ? new EnemyCaster(entity, rolls) : null;
       const archive = gender === 'female' ? basics.femaleTexture : basics.maleTexture;
       const tex = await getTexture(archive);
       const mobile = new MobileUnit(mobileType, basics, (rec) => tex.getFrameCount(rec), Math.random, gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const f = { mobile, ai, attack, entity, batch, tex, archive, mobileType, gender, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null };
+      const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null };
       foes.push(f);
       return f;
     } catch (err) {
@@ -86,6 +100,17 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
 
   /** The one damage door: corpse + loot on death (no crime - these
    *  are monsters and brigands, not the watch). */
+  /** X3-slice: the per-foe sinks the cast executor feeds (the
+   *  dungeon's foeSinks shape - self-casts heal/buff through these). */
+  const foeSinks = (f) => ({
+    hurt: (n) => damageFoe(f, n, null, null),
+    heal: (n) => { f.entity.health = Math.min(f.entity.maxHealth ?? Infinity, f.entity.health + n); },
+    drainMagicka: (n) => { if (n > 0) f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - n); },
+    restoreMagicka: (n) => { if (n > 0) f.entity.magicka = Math.min(f.entity.maxMagicka ?? Infinity, (f.entity.magicka ?? 0) + n); },
+    drainFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.max(0, (f.entity.fatigue ?? 0) - n); },
+    restoreFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.min(maxFatigue(f.entity), (f.entity.fatigue ?? 0) + n); },
+  });
+
   function damageFoe(f, damage, playerFeet, knockDir = null) {
     if (f.ai && !f.ai.isHostile) { f.ai.isHostile = true; f.ai.makeHostileToPlayer?.(); }
     f.entity.health -= damage;
@@ -135,6 +160,23 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());   // EnemySenses:533-535
       f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
       f.attack.update(dt, f.ai, playerFeet);
+      // X3-slice: the S16 casting decision rides beside the attack
+      // machine, the dungeon's exact shape - the decision casts
+      // INSTANTLY through the ONE shared executor.
+      f._castPending = false;
+      if (playerFeet && f.caster && f.ai.isHostile) {
+        const dec = f.caster.update(dt, f.ai, f.attack, playerFeet, playerEntity);
+        if (dec) {
+          castEnemySpell(f, dec.spell, {
+            playerEntity, playerFeet,
+            applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
+            playCastSound: (element, from) => audio?.play3d?.(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
+            explodeAt: magicHooks?.explodeAt,
+            fireMissile: magicHooks?.fireMissile,
+            rolls,
+          });
+        }
+      }
       const mstate = f.attack.machine.state;
       const strikeEdge = mstate !== 'Idle' && (f._prevMState ?? 'Idle') === 'Idle';
       f._prevMState = mstate;
@@ -143,7 +185,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         striking: strikeEdge && !f.attack.firedRanged,
         rangedStriking: strikeEdge && !!f.attack.firedRanged,
         hurting: f.ai.hurtKnock,
-        casting: false,
+        casting: !!f._castPending,
       }, f.ai.yaw, f.ai.feet, eye);
       // X2-slice: the ranged -1 marker looses a REAL arrow through
       // the host's seam, aimed at the player mid-capsule at fire

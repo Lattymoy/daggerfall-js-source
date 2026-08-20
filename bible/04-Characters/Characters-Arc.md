@@ -2265,3 +2265,35 @@ against the weapon delay table.
 
 3 pins; 4 mutations run, 4 killed. Suite 1460 across 192, green
 both modes.
+
+## CH-X3 - EXTERIOR ENEMY CASTING: the one executor
+
+2026-08-20, the X3-slice. The above-ground combat arms COMPLETE:
+after X2's archery, the casters go live in the streaming world.
+
+The extraction first: the dungeon host's castEnemySpell body - the
+magic-15 silence gate, the player-priced cost floored at 0, the
+element cast sound, the CasterOnly self-assign, the magic-9
+at-caster AoC with the caster excluded, and the missile loose -
+moves whole into characters/enemyCasting.js beside the EnemyCaster
+decision driver it always served, behind injected deps (the M3
+one-engine doctrine). The dungeon rebinds through foeDeps and its
+local copy is gone; three pins that anchored on the old body
+repinned to the shared member.
+
+Then the exterior mount: spawnFoe assigns the S16 spell lists once
+the SPELLS.STD map lands and mints the shared decision driver; the
+pool's update runs the decision beside the attack machine and
+releases through the one executor with the world host's seams - the
+AoC through the engine's explodeAt, and missiles through the
+engine's NEW enemy arm (fireEnemyMissile + the player-hunting
+impact at the CASTER's level, the caster wrapper carrying the
+transfer heal-back sinks). The sprite Spell one-shot rides the cast
+edge, the same C14 pulse the dungeon plays.
+
+Shared residual, honest in both hosts: enemy missiles resolve
+against the player only - foe-vs-foe friendly fire pends the
+missile seam's target sweep.
+
+3 pins + 3 repins; 5 mutations run, 5 killed. Suite 1466 across
+193, green both modes.

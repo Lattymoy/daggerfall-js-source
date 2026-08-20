@@ -363,7 +363,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
-      { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster }] = await Promise.all([
+      { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster, castEnemySpell: castShared }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
@@ -391,6 +391,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       createCharacterRig: engineRig.createCharacterRig,
       bodyRamps: engineRig.deriveClassicRamps(palette, bodyImg.getDFBitmap()),
       buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, loadMonsterCareer, EnemyCaster, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
+      castEnemySpell: castShared,   // X3: the ONE cast executor (characters/enemyCasting.js)
     };
    } catch (err) {
      // The foe SUBSYSTEM failing to initialize (a dynamic import, the
@@ -1008,41 +1009,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // trap-missile shape). RESIDUAL (honest): enemy missiles resolve
   // against the player only - foe-vs-foe friendly fire pends the
   // missile seam's target sweep.
+  // X3-slice: the cast EXECUTOR is the shared castEnemySpellShared
+  // (characters/enemyCasting.js) - one release for both foe pools;
+  // this host binds its deps once. The magic-15 silence gate, the
+  // player-priced cost, the magic-9 AoC arm and the missile shape
+  // all live in the shared member now.
   function castEnemySpell(f, spell, noSpellPointCost = false) {
-    // AUDIT 23 (magic-15) - EntityEffectManager.cs:315: SetReadySpell
-    // runs SilenceCheck for ENEMIES too, gated the same way - a free
-    // rider (spider touch) bypasses it exactly as noSpellPointCost
-    // bypasses the cost.
-    if (!noSpellPointCost && silenceBlocksCast(f.entity)) return;
-    // S19: SetReadySpell(spell, true) - the spider-touch rider casts
-    // free; ordinary decisions spend the S10 cost (floored at 0).
-    if (!noSpellPointCost) {
-      // EntityEffectManager.cs:322-327 passes a NULL caster when
-      // UsePlayerCharacterSkillsForEnemyMagicCost (default true at
-      // :148), and CalculateEffectCosts reads GameManager.PlayerEntity
-      // .Skills for a null caster - enemy spell costs are priced off
-      // the PLAYER's magic skills, not the foe's.
-      const cost = calculateCastCost(spell, playerEntity).sp;
-      f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - cost);
-    }
-    const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
-    f._castPending = true;   // C14: the sprite Spell one-shot (ChangeEnemyState(Spell) at the cast decision)
-    audio.play3d(SPELL_CAST_SOUND[spell.element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 });
-    if (spell.rangeType === 0) {
-      applySpell(spell, f.entity.level, f.entity, foeSinks(f), Math.random, { entity: f.entity, sinks: foeSinks(f) });
-      return;
-    }
-    // L2-slice (AUDIT 23 magic-9) - the missile's AreaAroundCaster
-    // arm (DaggerfallMissile.cs:279-282 + DoAreaOfEffect :477): with
-    // a caster the AoE fires AT THE CASTER'S POSITION on the first
-    // update - no flight - and the caster itself is EXCLUDED
-    // (ignoreCaster: true). Other foes in the radius are hit too.
-    if (spell.rangeType === 3) {
-      magic.explodeAt([f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], spell, f.entity.level, lastPlayerFeet,
-        { entity: f.entity, sinks: foeSinks(f) }, { excludeFoe: f });   // caster transform = mid-capsule
-      return;
-    }
-    missiles.push({ spell, casterLevel: f.entity.level, casterFoe: f, pos: from, dir: null, age: 0, batch: null, fromPlayer: false });
+    if (!foeDeps?.castEnemySpell) return;   // the foe subsystem degraded (its loud boot warning already fired)
+    foeDeps.castEnemySpell(f, spell, {
+      noSpellPointCost, playerEntity, playerFeet: lastPlayerFeet,
+      applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
+      playCastSound: (element, from) => audio.play3d(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
+      explodeAt: magic.explodeAt,
+      fireMissile: (from, spell2, casterLevel, foe) =>
+        missiles.push({ spell: spell2, casterLevel, casterFoe: foe, pos: from, dir: null, age: 0, batch: null, fromPlayer: false }),
+    });
   }
   async function ensureArrowModel(m) {
     if (m.draw !== null) return;

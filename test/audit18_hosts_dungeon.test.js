@@ -462,9 +462,13 @@ test('audit18 sweep: enemy cast cost is priced off the PLAYER skills', () => {
   // EntityEffectManager.cs:322-327 + :148 (UsePlayerCharacterSkillsFor
   // EnemyMagicCost defaults true) -> CalculateEffectCosts reads
   // GameManager.PlayerEntity.Skills for a null caster.
-  const src = hostSrc('dungeonContext.js');
+  // X3: the cast EXECUTOR moved to the shared enemyCasting.js - the
+  // law lives there now, and the dungeon binds it through foeDeps.
+  const src = readFileSync(new URL('../src/characters/enemyCasting.js', import.meta.url), 'utf8');
   assert.ok(/const cost = calculateCastCost\(spell, playerEntity\)\.sp;/.test(src));
   assert.equal(/calculateCastCost\(spell, f\.entity\)/.test(src), false);
+  const dc = hostSrc('dungeonContext.js');
+  assert.ok(dc.includes('castEnemySpell: castShared'), 'the dungeon rides the ONE executor');
 });
 
 test('audit18 sweep: enemy loot rolls the PLAYER gender at both dungeon spawn sites', () => {

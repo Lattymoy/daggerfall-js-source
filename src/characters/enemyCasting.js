@@ -102,3 +102,47 @@ export class EnemyCaster {
     return decision;
   }
 }
+
+/** X3-slice: THE ONE CAST EXECUTOR - "enemies always cast ready
+ *  spell instantly once queued", extracted from the dungeon host so
+ *  both foe pools release through the same arms (the M3 one-engine
+ *  doctrine). The gates ride the deps:
+ *  - the silence gate runs for enemies too, bypassed by a free
+ *    rider exactly as the cost is (magic-15);
+ *  - an ordinary cast spends the cost PRICED OFF THE PLAYER's magic
+ *    skills (a null caster reads the player's skills in the source,
+ *    the default setting), floored at 0 - selection only gates
+ *    magicka > 0;
+ *  - the element cast sound rings from the caster;
+ *  - CasterOnly assigns to SELF; AreaAroundCaster explodes AT THE
+ *    CASTER instantly with the caster excluded (magic-9); everything
+ *    else looses a missile through the host's fire seam.
+ *  RESIDUAL (both hosts, honest): enemy missiles resolve against
+ *  the player only - foe-vs-foe friendly fire pends the missile
+ *  seam's target sweep. */
+export function castEnemySpell(f, spell, {
+  noSpellPointCost = false, playerEntity, playerFeet = null,
+  applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
+  playCastSound = null, explodeAt = null, fireMissile = null,
+  rolls = Math.random,
+} = {}) {
+  if (!noSpellPointCost && silenceBlocksCast(f.entity)) return false;
+  if (!noSpellPointCost) {
+    const cost = calculateCastCost(spell, playerEntity).sp;
+    f.entity.magicka = Math.max(0, (f.entity.magicka ?? 0) - cost);
+  }
+  const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
+  f._castPending = true;   // C14: the sprite Spell one-shot
+  playCastSound?.(spell.element, from);
+  if (spell.rangeType === 0) {
+    applySpell(spell, f.entity.level, f.entity, foeSinks(f), rolls, { entity: f.entity, sinks: foeSinks(f) });
+    return true;
+  }
+  if (spell.rangeType === 3) {
+    explodeAt?.([f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], spell, f.entity.level, playerFeet,
+      { entity: f.entity, sinks: foeSinks(f) }, { excludeFoe: f });   // caster transform = mid-capsule
+    return true;
+  }
+  fireMissile?.(from, spell, f.entity.level, f);
+  return true;
+}

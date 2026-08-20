@@ -11,10 +11,11 @@
 // The engine owns: the readied spell + the click-to-cast latch, the
 // four range arms, the school tallies + cast sound, the self-cast
 // cost for the absorption refund cap, applySpellToPlayer's message
-// arms, explodeAt, and PLAYER spell missiles (flight, wall explode,
-// foe seek, billboard batches). Enemy missiles and arrows stay with
-// the dungeon host - different owners (EnemyAttack / the bow) and no
-// exterior producer yet.
+// arms, explodeAt, and spell missiles (flight, wall explode, foe
+// seek, billboard batches) - PLAYER missiles since M1, and X3 added
+// the ENEMY arm (fireEnemyMissile + the player-hunting impact), so
+// the exterior casters release through the one engine. Arrows stay
+// host-side (EnemyAttack / the bow own them).
 //
 // deps:
 //   renderer, audio           - batches + the cast/element sounds
@@ -252,6 +253,21 @@ export function createPlayerMagic({
       // The batch was built ONCE at the fire position; flight rides
       // the batch's origin uniform (zero GL churn).
       if (m.batch) m.batch.origin = [m.pos[0] - m.firePos[0], m.pos[1] - m.firePos[1], m.pos[2] - m.firePos[2]];
+      // X3-slice: an ENEMY missile hunts the PLAYER (the dungeon's
+      // arm: the caster wrapper rides the impact; foe-vs-foe
+      // friendly fire pends the target sweep, the shared residual).
+      if (m.fromPlayer === false) {
+        if (playerFeet) {
+          const px = playerFeet[0] - m.pos[0], py = playerFeet[1] + 0.9 - m.pos[1], pz = playerFeet[2] - m.pos[2];
+          if (Math.hypot(px, py, pz) <= MISSILE_COLLIDER_RADIUS + 0.45) {
+            const mCaster = m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null;
+            if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, m.casterLevel ?? 1, playerFeet, mCaster);
+            else applySpellToPlayer(m.spell, m.casterLevel ?? 1, mCaster);
+            retireMissile(m);
+          }
+        }
+        continue;
+      }
       for (const f of foes()) {
         if (f.dead) continue;
         const fx = f.ai.feet[0] - m.pos[0], fy = f.ai.feet[1] + 0.9 - m.pos[1], fz = f.ai.feet[2] - m.pos[2];
@@ -298,5 +314,11 @@ export function createPlayerMagic({
       readiedFree = false;   // every writer of readiedSpell declares its freeness (magic-8)
     },
     setReadied(sp) { readiedSpell = sp ?? null; readiedFree = false; },
+    /** X3-slice: an enemy spell missile joins the engine's pool -
+     *  aimed by the caller (the host aims at the player mid-capsule
+     *  at fire time, the trap/dungeon shape). */
+    fireEnemyMissile(from, dir, spell, casterLevel, casterFoe) {
+      missiles.push({ spell, casterLevel, casterFoe, pos: [...from], dir: [...dir], age: 0, batch: null, fromPlayer: false });
+    },
   };
 }
