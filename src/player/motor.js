@@ -485,7 +485,10 @@ export class PlayerMotor {
     } else this.velY = Math.min(this.velY, 0);
     const dy = this.velY * dt;
 
-    const r = this.collider.move(this.pos, vx * dt, dy, vz * dt, this.height);
+    // Snap is withheld while `jumping` (AcrobatMotor's Jumping: set at
+    // takeoff, cleared on the next grounded frame) so the ballistic
+    // descent integrates instead of teleporting onto the floor probe.
+    const r = this.collider.move(this.pos, vx * dt, dy, vz * dt, this.height, !this.jumping);
     this.groundKey = r.grounded ? (r.groundKey ?? null) : null;   // platform riding: what holds us up
     this.grounded = r.grounded;
     if (r.grounded && this.velY < 0) this.velY = 0;

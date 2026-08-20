@@ -313,21 +313,21 @@ export class Collider {
    * surfaced by starved-frame dt spikes in the headless harness).
    * @returns {{grounded:boolean, hitCeiling:boolean}}
    */
-  move(feet, dx, dy, dz, height = CAPSULE_HEIGHT) {
+  move(feet, dx, dy, dz, height = CAPSULE_HEIGHT, snap = true) {
     const maxComp = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
     const maxStep = CAPSULE_RADIUS * 0.75;
     if (maxComp > maxStep) {
       const n = Math.ceil(maxComp / maxStep);
       const out = { grounded: false, hitCeiling: false, pushedDown: false, groundKey: null };
       for (let i = 0; i < n; i++) {
-        const r = this._moveStep(feet, dx / n, dy / n, dz / n, height);
+        const r = this._moveStep(feet, dx / n, dy / n, dz / n, height, snap);
         out.grounded = r.grounded;
         out.groundKey = r.groundKey ?? null;
         out.hitCeiling = out.hitCeiling || r.hitCeiling;
       }
       return out;
     }
-    return this._moveStep(feet, dx, dy, dz, height);
+    return this._moveStep(feet, dx, dy, dz, height, snap);
   }
 
   /**
@@ -361,7 +361,7 @@ export class Collider {
     return feet;
   }
 
-  _moveStep(feet, dx, dy, dz, height = CAPSULE_HEIGHT) {
+  _moveStep(feet, dx, dy, dz, height = CAPSULE_HEIGHT, snap = true) {
     // Unity CharacterController semantics (the P14 stairs/jump audit,
     // re-deriving the reverted b9e9aa6 on the crouch-height tree;
     // numeric traces in motorStairs.test.js):
@@ -432,8 +432,14 @@ export class Collider {
     feet[1] += dy;
     this._resolveCapsule(feet, out, height);
 
-    // Ground snap when moving down: pulls onto steps/slopes.
-    if (dy <= 0 && !out.grounded) {
+    // Ground snap when moving down: pulls onto steps/slopes. The
+    // caller withholds it mid-JUMP (`snap = false`): the probe's
+    // STEP_OFFSET reach (0.5) exceeds the discrete jump apex (0.469
+    // at 60Hz), so an ungated snap swallowed every jump's entire
+    // descent in one frame - rise 200ms, "fall" 33ms, the launch-era
+    // snap-down bug. Walking down stairs keeps the snap and is
+    // bit-identical either way.
+    if (snap && dy <= 0 && !out.grounded) {
       const probe = [feet[0], feet[1] - STEP_OFFSET, feet[2]];
       const probeOut = { grounded: false, hitCeiling: false, pushedDown: false };
       this._resolveCapsule(probe, probeOut, height);

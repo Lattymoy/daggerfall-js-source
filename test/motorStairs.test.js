@@ -213,6 +213,34 @@ test('motor: the grounded-time gate (0.1 s) blocks the instant re-jump', () => {
   assert.equal(GROUNDED_JUMP_GATE_S, 0.1);
 });
 
+test('motor: the jump DESCENDS on an arc - the mesh ground snap never swallows it', () => {
+  // The launch-era snap-down: the snap probe reaches STEP_OFFSET (0.5)
+  // below the feet and the discrete un-boosted apex is 0.469, so on a
+  // MESH floor an ungated snap caught the first descending frame of
+  // every jump and teleported the whole descent in one step (rise
+  // 200ms, "fall" 33ms). The apex-only pins above never saw it. Snap
+  // is withheld while `jumping`, so the descent integrates: about as
+  // many falling frames as rising ones, and no arc frame teleports.
+  const col = floored();
+  const m = new PlayerMotor(col);
+  m.spawn(0, 0, 0);
+  for (let f = 0; f < 30; f++) m.update(1 / 60, still(), 0);
+  m.update(1 / 60, still(true), 0);
+  assert.equal(m.jumping, true, 'the jump fired');
+  let prevY = m.pos[1], rise = 1, fall = 0, maxDrop = 0;
+  for (let f = 0; f < 240 && !m.grounded; f++) {
+    m.update(1 / 60, still(), 0);
+    const dy = m.pos[1] - prevY;
+    prevY = m.pos[1];
+    if (dy > 1e-9) rise++;
+    else if (dy < -1e-9) { fall++; maxDrop = Math.max(maxDrop, -dy); }
+  }
+  assert.equal(m.grounded, true, 'the jump landed');
+  assert.ok(rise >= 10, `a real ascent (${rise} rising frames)`);
+  assert.ok(fall >= rise - 2, `the descent rides the arc (${fall} falling frames vs ${rise} rising - a snap gives 1)`);
+  assert.ok(maxDrop < 0.1, `no arc frame teleports (max one-frame drop ${maxDrop.toFixed(3)}, a snap gives ~0.47)`);
+});
+
 test('motor: crouched jump x0.8, moving jump +forward boost, airborne momentum FROZEN', () => {
   // Crouched apex = (4.5 * 0.8)^2 / 40 (crouchingJumpDelta).
   const col = floored();
