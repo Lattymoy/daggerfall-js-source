@@ -74,7 +74,13 @@ async function boot() {
       // gesture rule, which is not what was stopping it. The context still
       // only starts on a gesture; this makes sure there IS one to start,
       // and on a first run the ARENA2 folder pick is itself a gesture.
-      await ensureAudio(getBytes);
+      //
+      // NOT awaited: audio.ensure creates the context in its synchronous
+      // prefix, which is all the splash needs - awaiting the whole call
+      // parked the splash on black while DAGGER.SND and MIDI.BSA read in
+      // (DFU's splash plays immediately). The archives keep loading
+      // underneath; every later consumer awaits its own ensure.
+      ensureAudio(getBytes);
       await playVideo(canvas, renderer, await getBytes('ANIM0001.VID'));
     } catch (e) {
       console.warn('[boot] ANIM0001.VID unavailable - skipping the splash:', e?.message ?? e);

@@ -80,10 +80,20 @@ export class VideoPlayer {
     // gesture". That was the wrong culprit. Nothing had booted an
     // AudioEngine by splash time AT ALL, so there was no context to
     // resolve, gesture or no gesture - the audio path was fully ported and
-    // unconditionally dead. main.js awaits ensureAudio before playing now.
-    // The gesture rule is real and still applies to STARTING the context;
-    // it was simply not what was stopping this.
-    this._ctx = (audioContext ?? (() => audio.ctx))();
+    // unconditionally dead. main.js boots audio before playing now.
+    // The gesture rule is real and still applies to STARTING the context.
+    //
+    // And it bites HERE: a context that exists but is SUSPENDED (autoplay
+    // policy - the repeat visit with ARENA2 cached, no gesture yet) has
+    // currentTime pinned at 0, and pacing on a frozen clock closed the
+    // gate after one frame - which for ANIM0001 is solid black, so the
+    // splash "played" as an indefinite black screen. Only a RUNNING
+    // context can be the clock; anything else is treated as no context
+    // (wall clock, silent), resolved once like the context itself so the
+    // clock's origin can never move under a running stream. A stub with
+    // no state field counts as running (the test seam).
+    const ctx = (audioContext ?? (() => audio.ctx))();
+    this._ctx = (ctx == null || (ctx.state ?? 'running') === 'running') ? ctx : null;
     this._now = now ?? (() => (this._ctx
       ? this._ctx.currentTime
       : (typeof performance !== 'undefined' ? performance.now() / 1000 : Date.now() / 1000)));

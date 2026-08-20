@@ -488,6 +488,27 @@ test('video player: audio clips are padded, signed and scheduled at nextEventTim
   assert.deepEqual(ctx.started, [0, 740 / 11025]);
 });
 
+test('video player: a suspended AudioContext is not the clock and gets no clips', () => {
+  // Autoplay policy: a repeat visit boots with the context created but
+  // SUSPENDED (no gesture yet), and its currentTime is pinned at 0.
+  // Pacing on that frozen clock closed the gate after one frame - and
+  // ANIM0001's first frame is solid black, so the splash froze black
+  // until the dismiss click. A non-running context is treated as absent:
+  // wall clock, silent playback. A stub with no state field still counts
+  // as running (every other test in this file).
+  const renderer = stubRenderer();
+  const ctx = stubAudioContext();
+  ctx.state = 'suspended';
+  let clock = 0;
+  const p = new VideoPlayer({ renderer, now: () => clock, audioContext: () => ctx });
+  assert.equal(p._ctx, null, 'a non-running context is treated as absent');
+  p.play(playerVid());
+  for (let i = 0; i < 10; i++) { p.update(); clock += 740 / 11025; }
+  assert.equal(p.endOfFile, true, 'playback runs to EOF on the injected clock');
+  assert.equal(ctx.started.length, 0, 'no clip is scheduled against a frozen clock');
+  assert.equal(renderer.uploads.length, 3, 'every video frame still draws');
+});
+
 test('video player: shouldClose follows DaggerfallVidPlayerWindow', () => {
   const p = new VideoPlayer({ renderer: stubRenderer(), now: () => 0, audioContext: () => null });
   p.play(buildVid({ blocks: [audioStart(silence(740)), eof()] }));
@@ -829,16 +850,30 @@ test('U22/AUDIT 19: AudioEngine.ensure leaves a context to resolve', async () =>
   }
 });
 
-test('U22/AUDIT 19: the boot awaits audio BEFORE it plays the splash', () => {
+test('U22/AUDIT 19: the boot starts audio BEFORE it plays the splash', () => {
   // Ordering, and it is the whole bug: the player resolves its context at
   // construction, so booting audio after playVideo would be exactly as
   // silent as not booting it.
+  //
+  // NOT awaited anymore, deliberately: audio.ensure creates the context in
+  // its SYNCHRONOUS prefix (pinned below), which is all the splash needs -
+  // awaiting the whole call parked the splash on black while DAGGER.SND
+  // and MIDI.BSA read in. The old pin demanded `await ensureAudio` to
+  // close the no-context race; the sync-prefix pin closes it now.
   const main = readFileSync('src/main.js', 'utf8');
   const boot = main.indexOf('ensureAudio(getBytes)');
   const play = main.indexOf('playVideo(canvas, renderer');
   assert.ok(boot > 0, 'main.js must boot audio for the splash');
   assert.ok(play > 0, 'main.js must play the splash');
   assert.ok(boot < play, 'audio must be booted BEFORE the video is constructed');
-  assert.match(main.slice(boot - 10, boot + 30), /await ensureAudio/,
-    'and awaited - a floating promise leaves the same race');
+  assert.doesNotMatch(main.slice(boot - 10, boot + 30), /await ensureAudio/,
+    'and NOT awaited - the await parked the splash behind two archive loads');
+  // The sync prefix: the context is created before ensure()'s first await,
+  // so an un-awaited caller still has a clock by the next statement.
+  const audioSrc = readFileSync('src/systems/audio.js', 'utf8');
+  const ensureBody = audioSrc.slice(audioSrc.indexOf('async ensure('));
+  const ctxAt = ensureBody.indexOf('this._ensureCtx()');
+  const awaitAt = ensureBody.indexOf('await ');
+  assert.ok(ctxAt > 0 && awaitAt > 0 && ctxAt < awaitAt,
+    'audio.ensure must create the context in its synchronous prefix, before any await');
 });

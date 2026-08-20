@@ -50,7 +50,6 @@ export class AudioEngine {
   async ensure(fetchBytes) {
     if (this._booted) return;
     this._booted = true;
-    await this.init(fetchBytes);
     if (typeof window !== 'undefined') {
       // AUDIT 19 F2(vid): create the context EAGERLY, suspended. A browser
       // will not let it RUN before a gesture, but it will let it exist -
@@ -58,9 +57,16 @@ export class AudioEngine {
       // player does, deliberately, so its clock cannot move mid-stream)
       // needs it to exist by then or it plays silently forever. The
       // gesture still gates audibility; this only gates existence.
+      //
+      // BEFORE the await, deliberately: the context needs no archive, and
+      // sitting behind the DAGGER.SND fetch meant a caller had to await
+      // the whole load to get a clock - which parked the boot splash on a
+      // black screen while the sound and music archives read in. The sync
+      // prefix hands the context to an un-awaited caller immediately.
       this._ensureCtx();
       this.attachGestureResume();
     }
+    await this.init(fetchBytes);
   }
 
   /** Load DAGGER.SND through the data seam. Safe to call before any
