@@ -566,3 +566,27 @@ test('MUTATION: social gates at the boundaries, the female rows, and the top-of-
   // getQuest keeps factionId 0 by default
   assert.equal(lists.getQuest('SA').factionId, 0);
 });
+
+test('MUTATION-2: a one-time SOCIAL quest is offered before acceptance and spent after', () => {
+  const CRAFTED = [
+    'schema: *name, group, membership, minReq, flag, notes',
+    'SO, Commoners, N, 0, 1, one-time',
+    'SB, Commoners, N, 0, 0, x',
+  ].join('\n');
+  const CHILD = ['Quest: __OT', 'QRC:', 'Message:  1011', ' c', '', 'QBN:', 'variable _x_'];
+  const m = makeMachine();
+  const seen = [];
+  const lists = new QuestListsManager({
+    readListTable: (name) => (name === 'Classic' ? CRAFTED : null),
+    getQuestSourceLines: () => CHILD,
+    parseQuest: (lines, factionId) => m.parseQuestForLists(lines, factionId, { rolls: () => 0 }),
+    rolls: () => 0,
+  });
+  const origSelect = lists.selectQuest.bind(lists);
+  lists.selectQuest = (p, f) => { seen.push(p.map((qd) => qd.name)); return origSelect(p, f); };
+  lists.getSocialQuest(SOCIAL_GROUPS.Commoners, 0, 'male', 0, 1);
+  assert.deepEqual(seen[0], ['SO', 'SB'], 'one-time quests offer BEFORE acceptance');
+  lists.noteQuestStarted({ oneTime: true, questName: 'SO' });
+  lists.getSocialQuest(SOCIAL_GROUPS.Commoners, 0, 'male', 0, 1);
+  assert.deepEqual(seen[1], ['SB'], 'a started one-time social quest never re-offers');
+});

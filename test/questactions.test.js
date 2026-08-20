@@ -795,3 +795,55 @@ test('VERIFY: a faulting quest tombstones AFTER the surviving quests update (C# 
   assert.deepEqual(order, ['showPopup', 'removeQuestRumors'],
     'the good quest\'s same-tick popup lands BEFORE the faulting quest\'s tombstone scrub (QuestMachine.cs:486,509-512)');
 });
+
+test('VERIFY-2: WhenTask "when A and B or C" with only A set stays FALSE (the mid-chain short-circuit)', () => {
+  // WhenTask.cs's and-arm peeks at the NEXT op only when right is
+  // TRUE; a mutant that peeks on false returns true here.
+  const m = makeMachine();
+  const q = schedule(m, [
+    'variable _a_', '', 'variable _b_', '', 'variable _c_', '',
+    '_t_ task:', ' when _a_ and _b_ or _c_', '',
+    'variable _pad_',
+  ]);
+  m.tick();
+  q.getTask({ name: 'a' }).start();
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false, 'A alone satisfies neither A-and-B nor C');
+  q.getTask({ name: 'c' }).start();
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, 'C opens the or');
+});
+
+test('VERIFY-2: DestroyNpc\'s "destroy npc X" first alternative destroys too', () => {
+  const m = makeMachine();
+  const q = schedule(m, [
+    'Person _pp_ group Questor', '',
+    ' destroy npc _pp_',
+  ]);
+  m.tick();
+  assert.equal(q.getResource({ name: 'pp' }).isDestroyed, true);
+});
+
+test('VERIFY-2: Toting with an UNDECLARED person refuses, it does not trigger', () => {
+  const m = makeMachine();
+  const q = schedule(m, [
+    'Item _it_ letter', '',
+    '_t_ task:', ' toting _it_ and _ghost_ clicked', '',
+    'variable _pad_',
+  ]);
+  m.tick(); m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false, 'a missing Person reads false, never true');
+});
+
+test('VERIFY-2: Say\'s static-message NAME form resolves through Quests-StaticMessages', () => {
+  const m = makeMachine();
+  const q = m.scheduleQuest([
+    'Quest: __SN', 'QRC:', 'Message:  1011', ' x', '',
+    'QuestComplete:  [1004]', ' done', '',
+    'QBN:', ' say QuestComplete',
+  ], 0, { rolls: () => 0 });
+  m.tick();
+  const popups = m.of('showPopup');
+  assert.equal(popups.length, 1);
+  assert.equal(popups[0][1], q.getMessage(1004), 'QuestComplete resolved to id 1004');
+});
