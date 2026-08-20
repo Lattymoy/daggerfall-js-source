@@ -14,11 +14,12 @@
 //   levelUpSkillSum = sum(primary) + sum(major) - min(major)
 //                     + max(minor)
 //   level check: floor((current - starting + 28) / 15) > level ->
-//   readyToLevelUp; the char-sheet applies it in DFU. HEADLESS
-//   INTERIM (loud): we apply immediately - level = calculated,
+//   readyToLevelUp; the char-sheet applies ONE Level++ per visit and
+//   the next 360-minute check re-raises the flag while still behind
+//   (entity-9). The headless path applies the same single step -
 //   maxHealth += hitPointsPerLevelUp, and the level-up BonusPool
-//   (Range(4, 6+1)) spends by the same lowest-first policy the
-//   chargen UI will replace.
+//   (Range(4, 6+1)) spends by the lowest-first policy where no UI
+//   is mounted.
 
 import { SKILLS } from './skills.js';
 import { hitPointsPerLevelUp, spendPoolLowest } from './chargen.js';
@@ -101,29 +102,46 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
       raised.push(i);
     }
   }
-  if (raised.length) {
-    entity.currentLevelUpSkillSum = levelUpSkillSum(entity);
-    const calculated = calculatePlayerLevel(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum);
-    if (calculated > entity.level) {
-      // DFU sets readyToLevelUp and the char sheet applies (U3).
-      entity.readyToLevelUp = true;
-      entity.pendingLevel = calculated;
-      if (!onLevelUp) {
-        applyLevelUp(entity, (stats, pool) => spendPoolLowest(stats, Object.keys(stats), pool), rolls);   // headless path (tests, ?class runs without the UI arc active)
-      } else {
-        onLevelUp(entity);
-      }
+  if (raised.length) entity.currentLevelUpSkillSum = levelUpSkillSum(entity);
+  // L-slice (AUDIT 23 entity-9): the tail check runs on EVERY pass
+  // that clears the 360-minute gate, raise or no raise (RaiseSkills
+  // :1413 sits outside the skill loop) - which is what re-offers the
+  // sheet after a one-level acknowledgment left `level` still below
+  // the calculated level. DFU posts dfuiOpenCharacterSheetWindow; the
+  // hosts' onLevelUp hook is that message.
+  if (checkForLevelUp(entity)) {
+    if (!onLevelUp) {
+      applyLevelUp(entity, (stats, pool) => spendPoolLowest(stats, Object.keys(stats), pool), rolls);   // headless path (tests, ?class runs without the UI arc active)
+    } else {
+      onLevelUp(entity);
     }
   }
   return raised;
+}
+
+/** PlayerEntity.CheckForLevelUp (:1493-1501) verbatim: compare the
+ *  stored sums' calculated level against the CURRENT level and raise
+ *  readyToLevelUp while behind - however the gap opened (a fresh
+ *  raise, or a multi-threshold overshoot the sheet only paid one
+ *  Level++ against). pendingLevel is the port's display convenience
+ *  for the U3 banner (DFU's sheet prints Level after the ++). */
+export function checkForLevelUp(entity) {
+  const calculated = calculatePlayerLevel(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum);
+  const levelUp = entity.level < calculated;
+  if (levelUp) {
+    entity.readyToLevelUp = true;
+    entity.pendingLevel = entity.level + 1;
+  }
+  return levelUp;
 }
 
 /** Apply the pending level: HP roll + the 4..6 bonus pool handed to
  *  `distribute(stats, pool)` - the U3 screen distributes by hand;
  *  the headless path uses lowest-first. */
 export function applyLevelUp(entity, distribute, rolls = Math.random, prerolledPool = null) {
-  if (!entity.readyToLevelUp || !entity.pendingLevel) return false;
-  entity.level = entity.pendingLevel;
+  // The sheet gates on ReadyToLevelUp alone (UpdatePlayerValues :370)
+  if (!entity.readyToLevelUp) return false;
+  entity.level += 1;   // L-slice (entity-9): Level++, never a jump to the calculated level
   entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT endurance, verbatim (audit F8 - DFU reads Stats.PermanentEndurance here, not the live value)
   entity.health = Math.min(entity.health, entity.maxHealth);
   // AUDIT 23 (ui-native-1): DFU rolls BonusPool() exactly ONCE, at the

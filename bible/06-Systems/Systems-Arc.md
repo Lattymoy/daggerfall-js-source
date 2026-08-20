@@ -1818,3 +1818,47 @@ back, through a full world teardown and rebuild, zero page errors.
 host sweep with the load-time guards); 3 mutations run, 3 killed.
 Still out: REST above ground and the single-location exterior
 page's arm (the narrowed row keeps both).
+
+## S34 - FOUR SMALL LAWS: the L-slice sweeps the ledger's little rows
+
+2026-08-20. Four AUDIT 23 rows closed in one pass - two fixes, one
+port, one refutation - plus the quest machine's sourcing fork raised
+as a DECIDE row.
+
+entity-7 REFUTED: the "60x magic rounds over a rest" finding misread
+TickRest. DFU's rest catch-up raises one round per game MINUTE
+through the broker's loop under a 2880-minute cap, and the port's
+worldTick already runs the identical loop under the identical
+MAX_CATCHUP_ROUNDS = 2880 (pinned since audit21_core). The row was
+the bug; nothing in src/ moved.
+
+entity-9 SHIPPED: applyLevelUp was `level = calculated` - a
+multi-threshold rest paid out in one jump. Now it is Level++, one
+step per acknowledgment, and checkForLevelUp (its own export at
+last) sits UNCONDITIONALLY at raiseSkills' tail exactly where
+RaiseSkills has it - so the overshoot re-offers on the NEXT
+360-minute check with no new skill raise needed, and converges
+quietly at par. pendingLevel survives as the banner's convenience,
+always level+1.
+
+items-9 SHIPPED, premise corrected: DFU has NO over-encumbrance
+speed penalty (PlayerSpeedChanger never reads CarriedWeight) - like
+classic it REFUSES the pickup. canHoldAmount ports the GP-unit
+integer arithmetic (kg x 400 rounded; remaining capacity int-divided
+by the unit weight), _pickRemote gates both take modes through it -
+refuse-with-the-box at zero fit, split-take exactly what fits on a
+partial stack (the DFU split popup's DEFAULT Enter; the free-entry
+field stays INTERIM), whole transfer otherwise - and itemWeight now
+routes through the named effectiveUnitWeightInKg member.
+
+combat-16 SHIPPED: the minMetalToHit refusal in calculateAttackDamage
+speaks through the say seam for the PLAYER only (enemies fail
+silently, per the source's attacker gate); prose ours, key cited.
+
+4 new pins (littlelaws) + the three old jump-law pins rewritten to
+the one-step law with the re-offer and convergence arms; 5 mutations
+run, 5 killed (the jump, the gated tail check, float division, the
+gate bypass, the always-say). The quest DECIDE row records the fork:
+the engine source is fully in the snapshot, its .txt quest inputs
+are NOT, and ARENA2's QBN/QRC binaries are a format DFU never
+parses - vendor the upstream pack, write a classic reader, or defer.
