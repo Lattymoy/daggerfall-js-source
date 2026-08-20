@@ -230,3 +230,44 @@ test('drape: girth only — a garment is never scaled in height', () => {
   assert.equal(y, '1', `the drape is scaled in Y (${y}) — heights are not ours to touch`);
   assert.equal(x, z, 'the drape is scaled unevenly across the body');
 });
+
+// ── SPECTRAL: THE FIRST DESIGN THAT IS NOT A SHAPE ───────────────
+// Every enemy before these said what it was with geometry and colour —
+// a tusk, a rib, a horse, a robe. A ghost has nothing to ADD to the
+// figure and everything to take away: what makes it a ghost is that you
+// see the wall through it, which is a material property, and the
+// character path had never been asked for one.
+
+test('spectral: only the spectral are, and they say how much', () => {
+  const ghosts = UNDEAD_DESIGNS.filter((d) => d.spectral);
+  assert.ok(ghosts.length >= 2, 'the spectral pair is not there');
+  for (const d of ghosts) {
+    assert.ok(d.spectral.opacity > 0.15, `${d.name} at ${d.spectral.opacity} is a smear, not a figure`);
+    assert.ok(d.spectral.opacity < 0.7, `${d.name} at ${d.spectral.opacity} is not see-through`);
+  }
+});
+
+test('spectral: a wraith is LESS there than a ghost', () => {
+  // They are the same absence at different depths. At equal opacity a
+  // wraith is just a blue ghost, and the difference between them has to
+  // be the difference the eye actually sees.
+  const g = UNDEAD_DESIGNS.find((d) => d.name === 'Ghost');
+  const w = UNDEAD_DESIGNS.find((d) => d.name === 'Wraith');
+  assert.ok(w.spectral.opacity < g.spectral.opacity, 'the wraith is no fainter than the ghost');
+  assert.ok(w.build.torso < g.build.torso, 'the wraith is no thinner than the ghost');
+});
+
+test('spectral: the transparency does not outlive the ghost', () => {
+  // The body material is SHARED by every design. Set it transparent for
+  // a ghost and forget to set it back, and the next orc you pick is a
+  // see-through orc.
+  const src = readFileSync(new URL('../src/tools/paperdollViewer.js', import.meta.url), 'utf8');
+  const sets = src.match(/mat\.transparent = [^;]+;/g) || [];
+  assert.ok(sets.length >= 2, 'transparency is set but never cleared');
+  assert.ok(
+    sets.some((t) => /= false/.test(t)),
+    'nothing ever sets the body back to solid',
+  );
+  // And a translucent body must not occlude its own far side.
+  assert.ok(/mat\.depthWrite = !spec/.test(src), 'a see-through body still writes depth');
+});

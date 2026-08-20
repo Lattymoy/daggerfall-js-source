@@ -75,6 +75,14 @@ export const UNDEAD_RAMPS = Object.freeze({
   // block 5 - slate, mid. A vampire dresses well and darkly; this is the
   // coat under the finery rather than the finery itself.
   darkCloth: [84, 92],
+  // block 6 - light blue -> deep blue, taken pale. A ghost is not white:
+  // white is a sheet. It is the colour of cold air with a light behind
+  // it, and it has to be BRIGHT because half of it is about to be
+  // thrown away by the transparency.
+  spectral: [96, 103],
+  // block 6 darker. A wraith is the same thing gone further: older,
+  // colder, and with more malice than light in it.
+  wraithBlue: [102, 109],
 });
 
 // ── ZONE HELPERS ─────────────────────────────────────────────────
@@ -423,6 +431,52 @@ export const UNDEAD_DESIGNS = [
     hideRamp: 'pallor',
     bootRamp: 'darkCloth',
     drape: { name: 'Formal Cloak', mat: 'coat' },
+  },
+  {
+    id: MOBILE_TYPES.Ghost,
+    name: 'Ghost',
+    level: 11,
+    damage: [10, 35],
+    weaponTier: 0,
+    // BEHAVIOUR: SPECTRAL — and the first design in this project that is
+    // not a shape problem at all.
+    //
+    // Every enemy so far said what it was with geometry and colour: a
+    // tusk, a rib, a horse, a robe. A ghost has nothing to add to the
+    // figure and everything to take away from it. What makes it a ghost
+    // is that you can see the wall through it, which is a MATERIAL
+    // property, and the character path has never been asked for one.
+    //
+    // So the body is nearly untouched — a person's build, faded at the
+    // edges — and the design carries `spectral` instead. The viewer
+    // turns the body translucent for it. Nothing else changes.
+    build: { torso: 0.94, shoulder: 0.96, arm: 0.92, hand: 0.92, neck: 0.9, skull: 0.96, jaw: 0.92, leg: 0.94 },
+    zones: [],
+    mats: {},
+    hideRamp: 'spectral',
+    bootRamp: 'spectral',
+    // How much of it is there. Low enough to see through, high enough
+    // to be a figure rather than a smear.
+    spectral: { opacity: 0.42 },
+    drape: null,
+  },
+  {
+    id: MOBILE_TYPES.Wraith,
+    name: 'Wraith',
+    level: 15,
+    damage: [10, 45],
+    weaponTier: 0,
+    // The same absence, gone further: colder, thinner, and LESS there.
+    // A wraith at the ghost's opacity is just a blue ghost — the
+    // difference between them has to be the same difference the eye
+    // sees, which is how much of it is missing.
+    build: { torso: 0.82, shoulder: 0.86, arm: 0.8, hand: 0.84, neck: 0.8, skull: 0.94, jaw: 0.86, leg: 0.84 },
+    zones: [],
+    mats: { shroud: UNDEAD_RAMPS.wraithBlue },
+    hideRamp: 'wraithBlue',
+    bootRamp: 'wraithBlue',
+    spectral: { opacity: 0.3 },
+    drape: { name: 'Plain Robes', mat: 'shroud' },
   },
 ];
 

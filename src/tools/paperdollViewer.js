@@ -214,6 +214,12 @@ function applyVillager(v) {
   geo.getAttribute('position').needsUpdate = true;
   geo.getAttribute('color').needsUpdate = true;
   villagerOn = v;
+  // Anything that is not spectral is solid — including the bare rig, or
+  // the ghost's transparency outlives the ghost.
+  mat.transparent = false;
+  mat.opacity = 1;
+  mat.depthWrite = true;
+  mat.needsUpdate = true;
   applyVillagerDrape(v);
   // A VILLAGER WEARS WHAT THEIR DESIGN SAYS AND NOTHING ELSE.
   //
@@ -626,6 +632,21 @@ function applyOrc(o) {
   basePos.set(pos);
   geo.getAttribute('position').needsUpdate = true;
   geo.getAttribute('color').needsUpdate = true;
+  // ── SPECTRAL ────────────────────────────────────────────────────
+  // A ghost is not a shape, it is an ABSENCE, and the character path had
+  // never been asked for a material property before — every enemy until now
+  // said what it was with geometry and colour. This is the one that
+  // cannot: what makes a ghost a ghost is that you see through it.
+  //
+  // The body material is shared by every design, so it is switched here
+  // rather than rebuilt, and switched BACK for everything else — leave
+  // it transparent and the next orc you pick is a see-through orc.
+  const spec = o && o.spectral;
+  mat.transparent = !!spec;
+  mat.opacity = spec ? spec.opacity : 1;
+  mat.depthWrite = !spec; // a translucent body must not occlude its own far side
+  mat.needsUpdate = true;
+
   // Whichever line this design came from, show ITS pieces.
   const oi = (D.orcs || []).indexOf(o);
   if (oi >= 0) showPieces(orcPieceMesh, oi);

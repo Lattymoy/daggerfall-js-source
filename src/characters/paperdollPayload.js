@@ -258,7 +258,7 @@ export function buildPaperdollPayload(pal, img, cif) {
     if (d.collapse) uf = collapseGroups(uf, d.collapse, [0, 0.8, -0.2]);
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
-      build: d.build, zones: d.zones, hide,
+      build: d.build, zones: d.zones, hide, spectral: d.spectral || null,
       // GEOMETRY OF ITS OWN, where a design has any. The zombie and the
       // mummy have none — they are the loft and nothing else — and the
       // skeleton is the first in this file that needs a piece to carry
