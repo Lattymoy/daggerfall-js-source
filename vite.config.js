@@ -34,6 +34,12 @@ export default defineConfig({
   base: './',
   build: {
     target: 'es2022',
+    // TWO PAGES. The game, and the voxel editor — which is a real route
+    // now rather than a standalone file you have to build yourself.
+    // Neither carries game data: the editor asks for the user's ARENA2
+    // through the same dataSource door the game uses. See
+    // src/tools/paperdollViewer.js.
+    rollupOptions: { input: { main: 'index.html', viewer: 'viewer.html' } },
   },
   plugins: [arena2DevServer()],
 });

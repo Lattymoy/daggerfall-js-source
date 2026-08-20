@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Paperdoll Viewer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #14141a; overflow: hidden; touch-action: none; font-family: -apple-system, system-ui, sans-serif; }
+  #c { display: block; width: 100vw; height: 100vh; }
+  #hud { position: fixed; top: env(safe-area-inset-top, 8px); left: 0; right: 0; text-align: center; color: #8a8a99; font-size: 12px; pointer-events: none; padding-top: 8px; }
+  #swordinfo { position: fixed; top: calc(env(safe-area-inset-top, 8px) + 26px); left: 0; right: 0; text-align: center; color: #b8b8c8; font-size: 12px; pointer-events: none; }
+  #bar { position: fixed; bottom: env(safe-area-inset-bottom, 0); left: 0; right: 0; display: flex; gap: 8px; padding: 12px; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  #bar::-webkit-scrollbar { display: none; }
+  #bar button { flex: 0 0 auto; }
+  button { background: #23232e; color: #cfcfda; border: 1px solid #34343f; border-radius: 999px; padding: 12px 18px; font-size: 14px; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+  button:active { background: #2e2e3a; }
+  #tunertab { pointer-events: auto; padding: 8px 16px; font-size: 12px; }
+  #tunerbody { display: flex; flex-direction: column; gap: 8px; align-items: center; width: 100%; max-height: 0; overflow: hidden; transition: max-height .25s ease; }
+  #pxrow.open #tunerbody { max-height: 55vh; overflow-y: auto; pointer-events: auto; touch-action: pan-y; }
+  button.on { background: #3a3a48; color: #fff; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">NEUTRAL POSE prototype &middot; drag to rotate &middot; pinch to zoom</div>
+<div id="swordinfo"></div>
+<div id="bar">
+  <button id="spin" class="on">auto-spin</button>
+  <button id="reset">reset view</button>
+  <button id="wire">wireframe</button>
+  <button id="bg">bg</button>
+  <button id="walk">walk</button>
+  <button id="pose">pose: none</button>
+  <select id="wpn"></select>\n  <button id="fpv">view: orbit</button>
+  <button id="hurt">hurt</button>
+  <button id="sword">sword: off</button>
+  <button id="atkdir">dir: Down</button>
+  <button id="strike">strike</button>
+  <span id="spdv">SPD 50</span><input id="spd" type="range" min="10" max="100" value="50" style="width:70px">
+  <button id="pauldrons" class="on">pauldrons</button>
+  <button id="helm" class="on">helm</button>
+  <button id="race">race: Human</button>
+  <button id="tone">tone: Pale</button>
+  <button id="hairstyle">hair: short</button>
+  <button id="drape">drape: None</button>
+  <select id="villager" title="villager design (editor only - no game wiring)"></select>
+  <select id="orc" title="orc line (editor only - no game wiring)"></select>
+</div>
+<div id="pxrow" style="position:fixed; bottom:calc(env(safe-area-inset-bottom,0) + 72px); left:0; right:0; display:flex; flex-direction:column; gap:8px; align-items:center; color:#8a8a99; font-size:12px; pointer-events:none;">
+  <button id="tunertab">tuners &#9650;</button>
+  <div id="tunerbody">
+  <div style="display:flex; gap:8px; align-items:center;"><span id="pxlab" style="width:120px; text-align:right;">pixelize: 7x</span><input id="px" type="range" min="1" max="16" step="1" value="7" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="cdlab" style="width:120px; text-align:right;">color: full</span><input id="cd" type="range" min="1" max="9" step="1" value="9" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="ap_lab" style="width:120px; text-align:right;">arm pitch: 0</span><input id="ap" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="as_lab" style="width:120px; text-align:right;">arm spread: 0</span><input id="as" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="ae_lab" style="width:120px; text-align:right;">elbow: 0</span><input id="ae" type="range" min="0" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="ah_lab" style="width:120px; text-align:right;">hand roll: 0</span><input id="ah" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="ahp_lab" style="width:120px; text-align:right;">hand pitch: 0</span><input id="ahp" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="ahy_lab" style="width:120px; text-align:right;">hand yaw: 0</span><input id="ahy" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="sp_lab" style="width:120px; text-align:right;">swd pitch: 0&deg;</span><input id="sp" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="sf_lab" style="width:120px; text-align:right;">swd fwd: 0</span><input id="sf" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  <div style="display:flex; gap:8px; align-items:center;"><span id="su_lab" style="width:120px; text-align:right;">swd up: 0</span><input id="su" type="range" min="-100" max="100" step="1" value="0" style="touch-action:pan-x; pointer-events:auto; width:min(46vw,300px);"></div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="module" src="/src/tools/paperdollViewer.js"></script>
+</body>
+</html>
