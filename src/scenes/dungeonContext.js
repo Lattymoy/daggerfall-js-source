@@ -1138,6 +1138,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!ct) return;
     const t = await getTexture(ct.archive);
     if (!t || ct.record >= t.recordCount) return;
+    // SL2 (save-load-2): a backward load can RESURRECT this foe while
+    // the texture warms - a corpse must never mint for a live foe.
+    if (!f.dead) return;
     uploadRecord(ct.archive, ct.record);
     const size = scaledBillboardSize(t.getSize(ct.record), t.getScale(ct.record));
     // The billboard shader BOTTOM-anchors (position = base): the old
@@ -1145,6 +1148,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // half its height (C11 audit 08-17; the static-flat path shifts
     // DOWN for the same reason).
     const batch = renderer.createBillboardBatch(ct.archive, ct.record, size, [[p[0], p[1], p[2]]]);
+    f.corpseBatch = batch;   // SL2: the rewind frees a corpse BY ITS FOE
     corpses.push(batch);
     billboardBatches.push(batch);   // hosts draw + destroy() frees
   }
@@ -1397,8 +1401,43 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f.ai.feet[0] = sf.feet[0]; f.ai.feet[1] = sf.feet[1]; f.ai.feet[2] = sf.feet[2];
       f.ai.yaw = sf.yaw;
       if (sf.dead && !f.dead) { f.dead = true; spawnCorpse(f); }
+      // SL2 (AUDIT 23 save-load-2): the BACKWARD rewind. DFU's load
+      // REBUILDS the location and RestoreSaveData SETS the saved
+      // truth per LoadID (SerializableEnemy.cs:176 SetHealth; only
+      // data.isDead disables, :200-203) - a foe killed AFTER the
+      // save stands alive again and its corpse container, absent
+      // from the save, leaves with the rebuild. The port patches in
+      // place: un-kill and free the corpse flat by its foe.
+      else if (!sf.dead && f.dead) {
+        f.dead = false;
+        if (f.corpseBatch) {
+          const ci = corpses.indexOf(f.corpseBatch); if (ci >= 0) corpses.splice(ci, 1);
+          const bi = billboardBatches.indexOf(f.corpseBatch); if (bi >= 0) billboardBatches.splice(bi, 1);
+          renderer.destroyBillboardBatch(f.corpseBatch);
+          f.corpseBatch = null;
+        }
+      }
     });
-    w.piles?.forEach((sp, i) => { if (lootPiles[i]) lootPiles[i].items = sp.items.map((it) => ({ ...it })); });
+    // SL2: pile items rewind BOTH ways and the flat FOLLOWS the
+    // items, exactly where a rebuild-then-restore lands: an
+    // emptied-in-save pile loses its flat (SerializableLootContainer
+    // .cs:158-160 - Items.Count == 0 -> RemoveLootContainer on
+    // restore) and a refilled-by-rewind pile gets the rebuild's own
+    // mint back (p.half is the build-time size; a pile the build
+    // never mounted stays unmounted).
+    w.piles?.forEach((sp, i) => {
+      const p = lootPiles[i];
+      if (!p) return;
+      p.items = sp.items.map((it) => ({ ...it }));
+      if (!p.items.length && p.batch) {
+        const bi = billboardBatches.indexOf(p.batch); if (bi >= 0) billboardBatches.splice(bi, 1);
+        renderer.destroyBillboardBatch(p.batch);
+        p.batch = null;
+      } else if (p.items.length && !p.batch && p.half) {
+        p.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, p.record, { w: p.half[0] * 2, h: p.half[1] * 2 }, [[p.pos[0], p.pos[1], p.pos[2]]]);
+        billboardBatches.push(p.batch);
+      }
+    });
     droppedLoot.restorePiles(w.droppedLoot);   // AUDIT 23: absent list clears, per rebuild-from-save
     w.actions?.forEach((sa) => {
       const o = actions.objects.get(sa.key);
