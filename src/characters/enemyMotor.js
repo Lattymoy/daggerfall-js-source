@@ -277,6 +277,8 @@ export class EnemyAI {
     this.velY = 0;
     this.detected = false;
     this.inSight = false;
+    this.isHostile = true;        // EnemyMotor.IsHostile - pacification (C-slice) clears it; damage restores it
+    this.justEncountered = false; // the first-detection EDGE (EnemySenses:504) - the host's pacify check consumes it
     this.moving = false;
     this._classicTimer = 0;
     this._acc = 0;           // P17: the fixed-step accumulator (render dt in, 1/60 steps out)
@@ -308,6 +310,7 @@ export class EnemyAI {
     this.doorKey = _blocker.key;
     if (!senses) {
       this.detected = this.inSight || this._dist < HEARING_RADIUS;
+      if (this.detected && !this.hasEncounteredPlayer) { this.hasEncounteredPlayer = true; this.justEncountered = true; }
       return;
     }
     const rolls = senses.rolls ?? Math.random;
@@ -327,7 +330,7 @@ export class EnemyAI {
     if (!this._blocked && (this.inSight || inEarshot)) this.detected = true;
     else if (!this._blocked && this._stealthCheck(senses)) this.detected = true;
     else this.detected = false;
-    if (this.detected && !this.hasEncounteredPlayer) this.hasEncounteredPlayer = true;
+    if (this.detected && !this.hasEncounteredPlayer) { this.hasEncounteredPlayer = true; this.justEncountered = true; }
   }
 
   /** EnemyMotor.MakeEnemyHostileToAttacker (G1): pre-load the give-up
@@ -421,9 +424,11 @@ export class EnemyAI {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
       classicTicks++;
       this._senses(playerFeet, senses);
-      if (!paralyzed && !knocked) this._classicTick(playerFeet);
+      // C-slice: a pacified foe (IsHostile false) keeps its senses
+      // but takes no action - DFU's motor only pursues hostiles.
+      if (!paralyzed && !knocked && this.isHostile) this._classicTick(playerFeet);
     }
-    if (paralyzed) this.moving = false;
+    if (paralyzed || !this.isHostile) this.moving = false;
 
     // C15 KnockbackMovement, verbatim: runs INSTEAD of pursuit (and
     // regardless of paralysis - DFU calls it before the CanAct

@@ -460,6 +460,49 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   return damage;
 }
 
+// ---- GetEnemyEntityLanguageSkill (FormulaHelper.cs:2808-2880) ----
+// Class enemies: the six stealth careers speak Streetwise, the rest
+// Etiquette (DFU's BCHG - classic used Etiquette for all; the port
+// follows its source). Monsters: the tongue table; None = -1.
+const CLASS_STREETWISE = new Set([7, 8, 9, 10, 11, 5]);   // Burglar, Rogue, Acrobat, Thief, Assassin, Nightblade
+const MONSTER_LANGUAGE = new Map([
+  [7, SKILLS.Orcish], [12, SKILLS.Orcish], [21, SKILLS.Orcish], [24, SKILLS.Orcish],
+  [13, SKILLS.Harpy],
+  [16, SKILLS.Giantish], [22, SKILLS.Giantish],
+  [34, SKILLS.Dragonish], [40, SKILLS.Dragonish],
+  [10, SKILLS.Nymph], [42, SKILLS.Nymph],
+  [25, SKILLS.Daedric], [26, SKILLS.Daedric], [27, SKILLS.Daedric], [29, SKILLS.Daedric], [31, SKILLS.Daedric],
+  [2, SKILLS.Spriggan],
+  [8, SKILLS.Centaurian],
+  [1, SKILLS.Impish], [41, SKILLS.Impish],
+  [28, SKILLS.Etiquette], [30, SKILLS.Etiquette], [32, SKILLS.Etiquette], [33, SKILLS.Etiquette],
+]);
+export function enemyLanguageSkill(entity) {
+  if (entity?.isClass) return CLASS_STREETWISE.has(entity.careerIndex) ? SKILLS.Streetwise : SKILLS.Etiquette;
+  return MONSTER_LANGUAGE.get(entity?.careerIndex) ?? -1;
+}
+
+// ---- CalculateEnemyPacification (FormulaHelper.cs:357-391) ----
+/** C-slice (AUDIT 23 characters-2). Etiquette/Streetwise read
+ *  skill/10 + personality/5 (C# INT divisions); a monster tongue
+ *  reads the FULL skill + personality/10 - fluency in Orcish counts
+ *  for far more than manners. A sheathed weapon adds 10, a drawn one
+ *  costs 25. Roll Random.Range(0, 200) < chance. The
+ *  ComprehendLanguages effect bonus rides the effect arc (no
+ *  incumbent exists yet). */
+export function calculateEnemyPacification(player, languageSkill, sheathed, roll01 = Math.random()) {
+  let chance = 0;
+  if (languageSkill === SKILLS.Etiquette || languageSkill === SKILLS.Streetwise) {
+    chance += Math.trunc(skillValue(player, languageSkill) / 10);
+    chance += Math.trunc(liveStat(player, 'personality') / 5);
+  } else {
+    chance += skillValue(player, languageSkill);
+    chance += Math.trunc(liveStat(player, 'personality') / 10);
+  }
+  chance += sheathed ? 10 : -25;
+  return Math.floor(roll01 * 200) < chance;
+}
+
 // ---- EnemyAttack.MeleeDamage hit gate, "matched to classic" ----
 export const MELEE_HIT_YAW_DEG = 35.156;
 export function meleeHitConnects(dist, inSight, withinHitYaw) {

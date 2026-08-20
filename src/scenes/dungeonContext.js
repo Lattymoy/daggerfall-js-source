@@ -55,7 +55,7 @@ import { NativeInventoryWindow, preloadInventoryArt } from '../ui/nativeInventor
 import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
-import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
+import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
 import { applyLevelUp } from '../systems/advancement.js';
 import { tickPlayerMinutes } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
@@ -380,6 +380,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
       calculateAttackDamage: formulas.calculateAttackDamage,
       openDoorsStep,   // C-slice: EnemyMotor.OpenDoors
+      enemyLanguageSkill: formulas.enemyLanguageSkill,           // C-slice: pacification
+      calculateEnemyPacification: formulas.calculateEnemyPacification,
       meleeHitConnects: formulas.meleeHitConnects,
       MELEE_HIT_YAW_DEG: formulas.MELEE_HIT_YAW_DEG,
       withinYaw,
@@ -1345,6 +1347,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // door (corpse + reaction). Factored in S5 so missiles do not grow
   // a second death path.
   function damageFoe(foe, damage, playerFeet = null, knockDir = null) {
+    // C-slice: MakeEnemyHostileToAttacker - damaging a PACIFIED foe
+    // re-hostiles it (and pre-loads the pursuit, the G1 shape).
+    if (foe.ai && !foe.ai.isHostile) { foe.ai.isHostile = true; foe.ai.makeHostileToPlayer?.(); }
     foe.entity.health -= damage;
     if (foe.entity.health <= 0) {
       foe.dead = true;
@@ -1672,6 +1677,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           }, () => actions.toggleDoor(_door));
         }
       }
+      // C-slice (AUDIT 23 characters-2): the FIRST-encounter language
+      // check (EnemySenses:504-528). A known tongue rolls
+      // CalculateEnemyPacification with the sheathed state; success
+      // stands the foe down (IsHostile false) and tallies the skill
+      // by 3 (DFU's BCHG over classic's 1); a FAILED roll still
+      // tallies 1 for the monster tongues - "using" the language -
+      // but not for Etiquette/Streetwise. languagePacified's prose is
+      // ours (the string table is not in the snapshot; key cited).
+      if (f.ai.justEncountered) {
+        f.ai.justEncountered = false;
+        const _lang = foeDeps ? foeDeps.enemyLanguageSkill(f.entity) : -1;
+        if (_lang !== -1) {
+          if (foeDeps.calculateEnemyPacification(playerEntity, _lang, playerWeapon.sheathed)) {
+            f.ai.isHostile = false;
+            hudText.add(`${ENEMY_BASICS[f.mobileType]?.name ?? 'The enemy'} is pacified by your ${SKILL_NAMES[_lang]} skill.`);   // languagePacified %e/%s
+            tallySkill(playerEntity, _lang, 3);
+          } else if (_lang !== SKILLS.Etiquette && _lang !== SKILLS.Streetwise) {
+            tallySkill(playerEntity, _lang, 1);
+          }
+        }
+      }
       // A1 EnemySounds verbatim: the wait counter ALWAYS steps; the
       // sound fires only inside AttractRadius 16. Delay re-rolls
       // Range(3, 9+1); 20% move / 80% bark; humans stay silent.
@@ -1692,7 +1718,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // AUDIT 23 (characters-11) - EnemyAttack.cs:70-77: the divisor
       // mints every update from PermanentSpeed / max(8, LiveSpeed).
       f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
-      f.events = _fParalyzed ? [] : f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine (S19: paralysis returns early)
+      f.events = (_fParalyzed || !f.ai.isHostile) ? [] : f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine (S19: paralysis returns early; C-slice: pacified foes stand down)
       // C11 audit 08-17: the attack START edge (machine Idle -> swing
       // this frame) - MeleeAnimation fires ChangeEnemyState + the
       // attack sound ONCE at the start, not at the hit frame, and not
@@ -1713,7 +1739,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // casts INSTANTLY. RESIDUAL (honest): DFU casters also hold at
       // range and strafe (Enhanced AI) or stand off - our motor keeps
       // the C8 pursuit; the foe casts while closing.
-      if (playerFeet && f.caster && !_fParalyzed) {
+      if (playerFeet && f.caster && !_fParalyzed && f.ai.isHostile) {
         const dec = f.caster.update(dt, f.ai, f.attack, playerFeet, playerEntity);
         if (dec) castEnemySpell(f, dec.spell);
       }
