@@ -1790,3 +1790,31 @@ exterior mobile-foe mount - the residue row's head.
 5 pins (the tables against the C# rows, the pick + band verbatim,
 the cadence/rolls/decision, the alert laws, the host sweep); 3
 mutations run, 3 killed. The dungeon boots and fights clean.
+
+## S33 - THE ABOVE-GROUND QUICKSAVE: the overworld keeps your place
+
+2026-08-20. The P-slice; the AUDIT 18 dungeon-only-save row narrows.
+The world host binds the classic F9/F11 (InputManager.SetupDefaults)
+to the dungeon's own envelope - snapshotPlayer already carried the
+entity, items, spells, conditions, faction rep and the T4 discovery
+store - plus the world half this host needed: the map pixel and the
+NATIVE Daggerfall world coordinates with the compensation-free
+height, because a local scene position dies at the first
+floating-origin recenter. The streamer grew localFromWorld, the
+exact inverse of worldCoords under the CURRENT origin/compensation
+(pinned through a recentered state - the zero-compensation fixture
+let the mutation live). The load teleports through the travel
+core (_teleportToPixel, the F-slice extraction shared) and lands on
+the exact native spot; the encounter anchor resets across a load
+(DFU's LoadInProgress parity - no spawn catch-up for time that never
+passed). One classic slot, the dungeon's key: a save from the other
+side restores the CHARACTER and says where it was; travel-on-load
+pends on both sides with the dungeon's own note.
+
+Probed live: F9 at (409.6, 379.1, 818.2), a 60-unit warp across a
+pixel boundary, F11 - the exact position, pixel, clock and gold
+back, through a full world teardown and rebuild, zero page errors.
+2 pins (the envelope + inverse round-trip incl. compensation, the
+host sweep with the load-time guards); 3 mutations run, 3 killed.
+Still out: REST above ground and the single-location exterior
+page's arm (the narrowed row keeps both).

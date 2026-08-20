@@ -37,6 +37,7 @@ import { TravelMapWindow, buildTravelIndex } from '../ui/travelMap.js';   // F-s
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE } from '../systems/encounters.js';   // X-slice
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';   // P-slice: the above-ground quicksave
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1)
@@ -814,26 +815,31 @@ export async function bootWorld(canvas, renderer, params, status) {
     return worldCoordToMapPixel(wc.x, wc.z);
   };
   const footsteps = new FootstepMachine();   // FS-slice
+  /** The teleport core fast travel and the quickload share: destroy
+   *  every built pixel, re-origin the streamer (its own verbatim
+   *  ResetStreamingWorld), build the destination pixel, and land the
+   *  player - at the pixel centre, or at an exact local position. */
+  async function _teleportToPixel(px, py, localPos = null) {
+    for (const key of [...built.keys()]) {
+      const [bx, by] = key.split(',').map(Number);
+      destroyPixel(bx, by);
+      state.release(bx, by);
+    }
+    queue.length = 0;
+    queue.push(...state.init(px, py));
+    const first = queue.shift();
+    const dest = await buildPixel(first.px, first.py);
+    const pos = localPos ?? [TERRAIN_SIZE / 2, dest.centerHeight + state.compensation[1] + 2, TERRAIN_SIZE / 2];
+    if (walkMode) { player.spawn(pos[0], pos[1], pos[2]); playerSpawned = true; }
+    cam.pos = [pos[0], pos[1] + (walkMode ? 0 : 40), pos[2]];
+  }
   let _traveling = false;
   async function fastTravelTo(pick, opts, computed) {
     if (_traveling) return;
     _traveling = true;
     try {
       deductGold(playerEntity, computed.totalCost);
-      // teleport: destroy every built pixel, re-origin the streamer at
-      // the destination, and build its pixel before the frame resumes
-      for (const key of [...built.keys()]) {
-        const [px, py] = key.split(',').map(Number);
-        destroyPixel(px, py);
-        state.release(px, py);
-      }
-      queue.length = 0;
-      queue.push(...state.init(pick.pixel.x, pick.pixel.y));
-      const first = queue.shift();
-      const dest = await buildPixel(first.px, first.py);
-      const y = dest.centerHeight + state.compensation[1] + 2;
-      if (walkMode) { player.spawn(TERRAIN_SIZE / 2, y, TERRAIN_SIZE / 2); playerSpawned = true; }
-      cam.pos = [TERRAIN_SIZE / 2, y + (walkMode ? 0 : 40), TERRAIN_SIZE / 2];
+      await _teleportToPixel(pick.pixel.x, pick.pixel.y);
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
       if (opts.speedCautious) {
         playerEntity.health = playerEntity.maxHealth;
@@ -854,6 +860,54 @@ export async function bootWorld(canvas, renderer, params, status) {
       townTalk.say(`You arrive at ${pick.name}.`);
     } finally {
       _traveling = false;
+    }
+  }
+  // P-slice: the ABOVE-GROUND QUICKSAVE (F9/F11, the dungeon's
+  // bindings). The envelope is the dungeon's snapshotPlayer - entity,
+  // items, spells, conditions, faction rep, the T4 discovery store -
+  // plus this host's world half: the map pixel and the NATIVE world
+  // coordinates (stable across every floating-origin recenter) with
+  // the compensation-free height. One classic slot, shared with the
+  // dungeon key: loading a save from the other side restores the
+  // CHARACTER and says so (cross-side travel-on-load pends with the
+  // dungeon's own note).
+  function worldQuickSave() {
+    const pf = walkMode && playerSpawned ? player.pos : cam.pos;
+    const wc = state.worldCoords(pf);
+    const snap = snapshotPlayer(playerEntity, {
+      classicMinutes: Math.floor(playerTicker.classicMinutes),
+      readiedSpellIndex: magic.readiedIndex(),
+      locationKey: 'world',
+      world: { pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1] },
+    });
+    townTalk.say(writeQuicksave(snap) ? 'Game saved.' : 'Save failed (storage full or disabled).');
+  }
+  let _loading = false;
+  async function worldQuickLoad() {
+    if (_loading) return;
+    const snap = readQuicksave();
+    if (!snap) { townTalk.say('No saved game.'); return; }
+    const extras = restorePlayer(playerEntity, snap, spellsByIndex);
+    if (!extras) { townTalk.say('Save version mismatch.'); return; }
+    _loading = true;
+    try {
+      setWorldMinutes(extras.classicMinutes ?? worldMinutes());
+      magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
+      if (extras.locationKey === 'world' && extras.world?.pixel) {
+        const w = extras.world;
+        await _teleportToPixel(w.pixel.x, w.pixel.y);
+        const [lx, lz] = state.localFromWorld(w.nativeX, w.nativeZ);
+        const ly = (w.y ?? 2) + state.compensation[1];
+        if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
+        cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+      } else if (extras.locationKey && extras.locationKey !== 'world') {
+        townTalk.say('(saved elsewhere - character restored; travel there yourself)');
+      }
+      _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // no spawn catch-up across a load (DFU LoadInProgress)
+      surfacePlayer();
+      townTalk.say('Game loaded.');
+    } finally {
+      _loading = false;
     }
   }
   const toggleTravelMap = () => {
@@ -937,6 +991,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (e.key === 'Backspace' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
       e.preventDefault();
       toggleSpellbook();
+      return;
+    }
+    // P-slice: the classic quicksave bindings (F9 save, F11 load -
+    // InputManager.SetupDefaults), above ground at last.
+    if (e.key === 'F9' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
+      e.preventDefault();
+      worldQuickSave();
+      return;
+    }
+    if (e.key === 'F11' && (modes?.mode ?? 'exterior') === 'exterior') {
+      e.preventDefault();
+      worldQuickLoad();
       return;
     }
     // F-slice: the travel map on V (InputManager.SetupDefaults:1028).
