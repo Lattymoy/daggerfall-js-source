@@ -87,7 +87,7 @@ import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4: the shared PlayRandomlyIfPlayerNear pass
 import {
-  SOUND, hitSoundFor,
+  SOUND, hitSoundFor, swingSoundFor,
   TORCH_ARCHIVE, TORCH_RECORDS, TORCH_MAX_DISTANCE, TORCH_VOLUME,
   ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD,
 } from '../systems/soundClips.js';
