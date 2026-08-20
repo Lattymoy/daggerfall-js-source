@@ -72,8 +72,13 @@ test('bones go to the bone-bodied, and to nobody else', () => {
   // This read "only the skeleton" until the lich arrived and it failed
   // correctly. A lich IS a skeleton — in robes — so it carries a cage
   // too; what must stay true is that nothing with flesh on it does.
-  const withBones = UNDEAD_DESIGNS.filter((d) => d.bones).map((d) => d.name);
-  assert.deepEqual(withBones.sort(), ['Lich', 'Skeletal Warrior']);
+  // THE RULE, NOT THE ROSTER. This listed its members by name and broke
+  // twice — once when the lich arrived, once when the ancient lich did.
+  // A gate that has to be edited every time a design is added is not
+  // guarding a rule, it is keeping a register. What matters is the
+  // relationship: ribs belong on bone and nowhere else.
+  const withBones = UNDEAD_DESIGNS.filter((d) => d.bones);
+  assert.ok(withBones.length > 0, 'nothing carries bones at all');
   for (const d of UNDEAD_DESIGNS) {
     if (d.bones) assert.equal(d.hideRamp, 'bone', `${d.name} has ribs over something that is not bone`);
   }
@@ -122,5 +127,53 @@ test('skeleton: the pelvis is two blades, not a block', () => {
 test('skeleton: its bones are tagged body, so they ride the torso', () => {
   for (const f of [...buildRibcage(), ...buildPelvis()]) {
     assert.equal(f.g, 'body', 'a bone tagged anything else hangs in the air through a swing');
+  }
+});
+
+// ── THE VAMPIRES: THE FIRST HERE THAT KEEP THEIR BODY ────────────
+// Every other design in this file is rotted, wrapped, bone or beast. A
+// vampire keeps its body — that is the horror of it — so it says
+// everything it says with COLOUR, and colour that does not separate
+// says nothing at all.
+
+test('vampire: the pallor reads against the coat', () => {
+  const pal = {
+    get: (i) => {
+      const B = [[200,200,200],[186,176,160],[178,132,84],[214,158,170],[206,176,128],[150,148,172],
+                 [120,160,214],[236,236,232],[140,200,200],[206,194,96],[150,196,120],[176,108,66],
+                 [190,202,110],[170,150,200],[236,206,140],[222,108,66]];
+      const idx = Math.max(0, Math.min(255, i | 0));
+      const [r, g, b] = B[(idx >> 4) & 15];
+      const k = 1 - (idx & 15) / 15;
+      const f = 0.24 + k * 0.86;
+      return { r: Math.round(r * f), g: Math.round(g * f), b: Math.round(b * f) };
+    },
+  };
+  const mean = (ramp) => ramp.reduce((a, c) => a + (c[0] + c[1] + c[2]) / 3, 0) / ramp.length;
+  for (const name of ['Vampire', 'Ancient Vampire']) {
+    const d = UNDEAD_DESIGNS.find((x) => x.name === name);
+    const { ramps } = undeadOpts(d, pal);
+    const skin = mean(ramps.skin);
+    const coat = mean(undeadOpts(d, pal).drape.ramp);
+    // A pale face on a dark coat, or the whole figure is a silhouette
+    // and the design has said nothing.
+    assert.ok(skin > coat * 1.8, `${name}: skin ${skin.toFixed(0)} against coat ${coat.toFixed(0)} — too close to read`);
+  }
+});
+
+test('vampires keep their body: no bones, and a near-human build', () => {
+  for (const name of ['Vampire', 'Ancient Vampire']) {
+    const d = UNDEAD_DESIGNS.find((x) => x.name === name);
+    assert.ok(!d.bones, `${name} has a ribcage — it is not that kind of undead`);
+    for (const [k, v] of Object.entries(d.build)) {
+      assert.ok(v > 0.85 && v < 1.2, `${name} ${k}=${v} is not a body it kept`);
+    }
+  }
+});
+
+test('every design that wears something declares the material', () => {
+  for (const d of UNDEAD_DESIGNS) {
+    if (!d.drape) continue;
+    assert.ok(d.mats[d.drape.mat], `${d.name} wears "${d.drape.mat}" without declaring it`);
   }
 });
