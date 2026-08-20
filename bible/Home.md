@@ -248,8 +248,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:583` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/world.js:589` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:994` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1342` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1601` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:1352` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1611` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:178` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:220` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
 - `src/scenes/worldModes.js:313` - Person placed in a dungeon is the quest machine's, FLAGGED

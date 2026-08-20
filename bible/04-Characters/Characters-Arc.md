@@ -2297,3 +2297,24 @@ missile seam's target sweep.
 
 3 pins + 3 repins; 5 mutations run, 5 killed. Suite 1466 across
 193, green both modes.
+
+### CH-X2/CH-X3 addendum: the live probe (tools/x23Probe.mjs)
+
+2026-08-20, after the merges. The exterior combat stack proved out
+in a real browser, frame-synced on the world host: an Archer (141)
+spawned at 15 armed as a bow foe and a REAL enemy arrow flew
+(enemyArrows=1 in the live pool); a Mage (128) spawned at 20 minted
+its caster with the tier list and RELEASED an Ice Bolt missile
+through the engine. Zero page errors (the one CURSOR.IMG 404 is a
+guarded miss - the file is absent from this ARENA2 set and
+cursor.js's own header says NEVER TRAPS; the probe filters exactly
+that line).
+
+Two probe drafts died on FAITHFUL behavior, which is its own
+verification: a mage spawned at 40 stood permanently blind (outside
+the 25-unit hearing radius with an away-facing spawn yaw - the P13
+stealth flow), and a mage that reaches melee undischarged can never
+cast at all (its tier list - Ice Bolt 2, Ice Storm 4 - is all
+ranged, and DoTouchSpell picks rangeType 0/1 only). The probe now
+spawns inside hearing and sends a second mage through the band for
+the ~11% undischarged tail.

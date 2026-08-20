@@ -1224,6 +1224,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       const pf = walkMode && playerSpawned ? player.pos : cam.pos;
       return exteriorFoes.spawnFoe(type, [pf[0] + dist, pf[1] + 1, pf[2]]).then((f) => (f ? f.mobileType : null));
     };
+    // X2/X3 probe surface: the live exterior-combat state
+    window.__x23 = () => JSON.stringify({
+      hp: playerEntity.health,
+      enemyArrows: arrows.arrows.filter((a) => !a.dead && a.enemy).length,
+      missiles: magic.missileCount(),
+      foes: exteriorFoes.foes.filter((f) => !f.dead).map((f) => ({
+        type: f.mobileType, dist: +f.ai._dist.toFixed(1), detected: f.ai.detected,
+        bow: !!f.attack.rangedAttack, caster: !!f.caster, spells: f.entity.spells?.length ?? 0, mp: f.entity.magicka ?? 0,
+      })),
+    });
     window.__travelNearest = () => {
       const p0 = playerTravelPixel();
       let best = null, bd = Infinity;
