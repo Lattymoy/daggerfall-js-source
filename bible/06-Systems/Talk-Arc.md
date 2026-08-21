@@ -255,6 +255,68 @@ but idle live; GetBuildingList's questor-populate half (npcsWithWork,
 the 25% work roll) and the BuildingInfo `position` the compass wants
 ride TK-iii/TK-iv; isPlayerInsideCastle is Q4-v's standing false.
 
+## TALK AUDIT II (2026-08-21, the TK-ii verify pass)
+
+The tree's adversarial pass, again in the MAIN LOOP against the raw
+C# (the multi-agent retry trigger stands).
+
+**The parity re-read.** TalkManager.cs :127-173 (ListItem), :285-339
+(the quest bookkeeping), :401-476 (the properties - plain accessors,
+the port's public fields cover them), :2064-2285 (the pipeline),
+:2287-2421 (the lookups + IsBuildingQuestResource), :2426-2549 (the
+save/restore), :2752-2882 (GetBuildingList - the building half
+ported, the questor-populate half deferred to TK-iv and recorded),
+:2884-3083 (the gates), :3086-3500 (the assemblers), plus
+RMBLayout.IsResidence, Person.cs :112-125/:523-569 and
+QuestResource.cs :283-296 for the supporting ports. No behavioural
+deltas found; the five kept quirks are recorded in the SHIPPED
+section by line, and ONE structural delta surfaced and is recorded
+there too (the Dictionary-vs-Map iteration order after a removal -
+unspecified in .NET, so recorded rather than emulated).
+
+**The campaign.** 143 single-instance mutants over the TK-ii surface
+(topicTree 140, buildingNames' isResidence 3; the questResource,
+person and rumorMill additions reported noTestExecutesLine and were
+covered by the tree's own pins), three rounds:
+
+- Round 1: 95/143 caught, 47 survivors, and NO equivalents in the
+  batch - unusual, and the tell was accurate: every one was a real
+  gap. Two mattered beyond their line. THE TABLES were spot-checked
+  rather than pinned, so a mutant flipping faction 84->85 or
+  building 0x1d->0x1e sailed through; those tables ARE the law, and
+  a wrong id silently mis-captions an organization row or mis-gates
+  a regional building forever with nothing else failing. And
+  isResidence was pinned at House4/House5 - the UPPER edge - leaving
+  its lower `>=` free to become `>`. All three tables now deepEqual
+  element for element; both residence edges are pinned.
+- Round 2 (same seed, 22 new pins): 136/140 caught. The rest of
+  round 1's gaps were masked arms - addDialog's Person and Thing
+  flags (only Location had been exercised), the EXACT
+  ReceivedDirectionalHints level where `>=` and `>` diverge, the
+  castle-questor arm, the availableForDialog/hasEntryInWhereIs AND,
+  a non-matching faction leaving regional rows standing, and the
+  keyless-place skip, which needed a residence seated AT key 0
+  before the mutant became distinguishable at all (without it both
+  arms reached the same continue through a thrown lookup).
+- Round 3: the last four pinned - the CONSTRUCTOR's field
+  initializers (C# :234-240; line 208 was the initial
+  rebuildTopicLists, never the add path I had assumed), the
+  recursion's load-bearing TYPE guard, and two headless defaults.
+
+**THE BASELINE TRAP, sprung and caught.** The first confirm of the
+`isPlayerInside ?? false -> ?? true` mutant reported
+CAUGHT_BY_FULL_SUITE at fails=4 - which IS the sandbox baseline, so
+it was a survivor wearing a kill's label. The pin gave the partner a
+buildingKey that failed the arm's own compare, so the arm answered
+false whichever way the default read. Re-pinned with the partner's
+key set to the absent-seam default (-1) ON PURPOSE, leaving
+isPlayerInside's false as the only thing holding the arm shut:
+re-confirmed at fails=5. The verdict string means nothing; only the
+count against the CURRENT baseline decides.
+
+Final: **143 kills of 143, 0 survivors, 0 equivalents** - the first
+campaign in either arc to close with nothing left to argue.
+
 ## TALK AUDIT I (2026-08-21, the TK-i verify pass)
 
 The mill's adversarial pass, run in the MAIN LOOP against the raw C#

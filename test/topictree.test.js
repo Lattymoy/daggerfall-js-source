@@ -104,6 +104,17 @@ test('the enums and the C# field defaults', () => {
   });
 });
 
+test('a fresh tree starts with C#s field initializers (:234-240) - rebuild PENDING, no instant flags', () => {
+  const bare = new TopicTree({});
+  assert.equal(bare.rebuildTopicLists, true, 'the window rebuilds on its first open, never showing an empty tree');
+  assert.deepEqual([bare.instantRebuildTopicListTellMeAbout, bare.instantRebuildTopicListLocation,
+    bare.instantRebuildTopicListPerson, bare.instantRebuildTopicListThing], [false, false, false, false]);
+  assert.equal(bare.listBuildings, null, 'the building list is LAZY (GetBuildingList mints it)');
+  assert.equal(bare.dictQuestInfo.size, 0);
+  assert.deepEqual([bare.listTopicTellMeAbout, bare.listTopicLocation, bare.listTopicPerson, bare.listTopicThing],
+    [[], [], [], []]);
+});
+
 test('QUEST_INFO_RESOURCE_TYPE agrees with the copy actions.js sends over the seam', () => {
   // the machine's dialogLink/addDialog calls carry actions.js's enum;
   // a drift between the two would silently mis-route every link
@@ -628,6 +639,15 @@ test('the same-person test: the building arm, the CASTLE questor arm, and every 
   // no partner at all (the TK-iv seam absent) reads false
   const { tree: tn } = makeTree();
   assert.equal(tn._dialogPartnerIsSamePerson(person, 'Sirien'), false);
+  // A partner present but the LOCATION seams absent. The partner's
+  // key is set to the absent-currentBuildingKey default (-1) ON
+  // PURPOSE: with that arm's compare satisfied, the ONLY thing left
+  // holding the arm shut is isPlayerInside's headless FALSE. A
+  // partner with any other key would answer false whatever that
+  // default read, and prove nothing.
+  const seamless = new TopicTree({ talkPartner: () => ({ isStatic: true, nameNPC: 'Sirien', buildingKey: -1 }) });
+  assert.equal(seamless._dialogPartnerIsSamePerson(person, 'Sirien'), false,
+    'an absent isPlayerInside reads FALSE - the arm stays shut even with its key compare satisfied');
   // THE CASTLE ARM: inside a castle, a QUESTOR whose QuestorData
   // context is the dungeon matches whatever the building key is
   const castle = { isPlayerInside: () => true, isPlayerInsideCastle: () => true, currentBuildingKey: () => 999, talkPartner: () => partner };
@@ -650,6 +670,17 @@ test('the headless charter: absent gate seams read the C# defaults', () => {
   assert.equal(bare.checkNPCisInSameBuildingAsTopic(newListItem({ questionType: QUESTION_TYPE.LocalBuilding })), false,
     'an absent isPlayerInside reads FALSE - the bail, never the walk');
   assert.equal(bare.doesBuildingExistLocally(0x1a, false), false, 'an absent building seam answers false');
+  // an absent currentMapId reads ZERO, so a mapId-0 place is IN the
+  // player's location and its General entry builds
+  const zeroMap = new TopicTree({
+    getBuildingList: () => [{ name: 'Zero Map House', buildingKey: 7, buildingType: BUILDING_TYPES.House2 }],
+  });
+  zeroMap.addQuestTopicWithInfoAndRumors(1, mkPlace('_z_', { mapId: 0, buildingKey: 7, buildingName: 'Zero Map House' }),
+    '_z_', QUEST_INFO_RESOURCE_TYPE.Location, null, null);
+  zeroMap.assembleTopicListLocation();
+  const zg = zeroMap.listTopicLocation.find((g) => g.caption === EN.general);
+  assert.deepEqual(zg?.listChildItems.map((i) => i.caption), [EN.previousList, 'Zero Map House'],
+    'the absent-map default is 0, matching a mapId-0 place');
   // and an absent isPlayerInsideBuilding takes the PALACE branch
   const { tree } = makeTree({
     isPlayerInsideBuilding: undefined,
@@ -715,6 +746,16 @@ test('resetNPCKnowledgeInTopicListRecursively walks into item groups', () => {
   const emptyGroup = newListItem({ type: LIST_ITEM_TYPE.ItemGroup, listChildItems: null, npcKnowledgeAboutItem: NPC_KNOWLEDGE.KnowsAboutItem });
   assert.doesNotThrow(() => tree.resetNPCKnowledgeInTopicListRecursively([emptyGroup]));
   assert.equal(emptyGroup.npcKnowledgeAboutItem, NPC_KNOWLEDGE.NotSet);
+  // the TYPE half of the guard is load-bearing: only a GROUP is
+  // walked into. C#'s own comment makes this an invariant
+  // (listChildItems is null unless type == ItemGroup), so an Item
+  // carrying children is malformed - and the walk must not descend
+  // into it whatever it carries.
+  const stray = newListItem({ npcKnowledgeAboutItem: NPC_KNOWLEDGE.KnowsAboutItem });
+  const malformed = newListItem({ type: LIST_ITEM_TYPE.Item, listChildItems: [stray] });
+  tree.resetNPCKnowledgeInTopicListRecursively([malformed]);
+  assert.equal(malformed.npcKnowledgeAboutItem, NPC_KNOWLEDGE.NotSet, 'the item itself resets');
+  assert.equal(stray.npcKnowledgeAboutItem, NPC_KNOWLEDGE.KnowsAboutItem, 'but its children are NOT walked - the type decides');
   tree.resetNPCKnowledgeInTopicListRecursively([group, flat]);
   assert.equal(child.npcKnowledgeAboutItem, NPC_KNOWLEDGE.NotSet);
   assert.equal(child.npcInSameBuildingAsTopic, false);
