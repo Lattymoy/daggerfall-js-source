@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { loadQuestTables } from '../src/systems/quest/tables.js';
 import { QuestMachine } from '../src/systems/quest/machine.js';
 import { GENDERS } from '../src/characters/nameHelper.js';
+import { srand } from '../src/formats/dfRandom.js';
 
 const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', 'vendor', 'dfu-quests');
 const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');
@@ -315,6 +316,107 @@ test('SetFoeName: a humanoid rolls gender at 55% MALE and draws from the region 
   assert.equal(q2.getResource({ name: 'mage' }).humanoidGender, GENDERS.Female);
 });
 
+// ---- the Q3-iii VERIFY pins (the mutation campaign's boundaries) ----
+
+test('the Dice100 boundary: a roll landing EXACTLY on the chance fails; Range(0,100) tops at 99', () => {
+  // chance 20, chance roll 0.20 -> floor(20) >= 20 -> FailedRoll
+  const w1 = makeWorld();
+  const m1 = makeMachine(w1);
+  schedule(m1, [
+    'Foe _rat_ is Giant_rat', '',
+    ' create foe _rat_ every 1 minutes 5 times with 20% success',
+  ], seq([0.1, 0.1, 0.999, 0.20]));
+  m1.tick(); m1.clock.t = 100001; m1.tick();
+  assert.equal(w1.created.length, 0, '20 >= 20 is a FAILED roll - the >= law');
+  // chance 100 NEVER fails: the highest draw is 99
+  const w2 = makeWorld();
+  const m2 = makeMachine(w2);
+  schedule(m2, [
+    'Foe _rat_ is Giant_rat', '',
+    ' create foe _rat_ every 1 minutes 5 times with 100% success',
+  ], seq([0.1, 0.1, 0.999, 0.9999]));
+  m2.tick(); m2.clock.t = 100001; m2.tick();
+  assert.equal(w2.created.length, 1, 'floor(.9999*100)=99 < 100 - Range(0,100) exclusive');
+});
+
+test('indefinitely spawns FOREVER: the -1 escape on the max gate', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  schedule(m, [
+    'Foe _rat_ is Giant_rat', '',
+    ' create foe _rat_ every 1 minutes indefinitely with 100% success',
+  ], seq([0.1, 0.1, 0.999]));
+  m.tick();
+  for (let w = 1; w <= 3; w++) {
+    m.clock.t = 100001 + (w - 1) * 60;
+    m.tick(); m.tick();   // spawn + wave-complete
+  }
+  assert.equal(world.created.length, 3, 'the counter never gates an infinite action');
+});
+
+test('a SHORT wave from the mint error-terminates exactly like a null one', () => {
+  const world = makeWorld();
+  world.createFoeGameObjects = (foe, count) => Array.from({ length: count - 1 }, (_, i) => ({ i }));
+  const m = makeMachine(world);
+  const q = schedule(m, [
+    'Foe _rats_ is 2 Giant_rat', '',
+    ' create foe _rats_ every 1 minutes 1 times with 100% success',
+  ], seq([0.1, 0.1, 0.999]));
+  m.tick(); m.clock.t = 100001; m.tick();
+  assert.equal(m.quests.has(q.uid), false, 'length !== spawnCount throws, the quest is removed');
+});
+
+test('the msg-once law holds ACROSS actions: oncePerQuest suppresses a second action sharing the id', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  schedule(m, [
+    'Foe _rat_ is Giant_rat', '',
+    ' create foe _rat_ every 1 minutes 1 times with 100% success msg 1011',
+    ' create foe _rat_ every 1 minutes 1 times with 100% success msg 1011',
+  ], seq([0.1, 0.1, 0.999, 0.999]));
+  m.tick();
+  m.clock.t = 100001;
+  for (let i = 0; i < 8; i++) m.tick();
+  assert.ok(world.placed.length >= 2, 'both actions placed a foe');
+  assert.equal(m.of('showPopup').length, 1, 'the second 1011 is suppressed by oneTimeDisplayedMessages');
+});
+
+test('the spawn count clamps at C#\'s 8 even when the script asks for more', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, ['Foe _horde_ is 20 Giant_rat', '', 'variable _pad_']);
+  assert.equal(q.getResource({ name: 'horde' }).spawnCount, 8, 'Mathf.Clamp(20, 1, 8)');
+});
+
+test('IsClassEnemyId is the 128 BIT: monsters never take the humanoid branch', () => {
+  // a female-side roll would flip humanoidGender IF the monster
+  // misrouted through the humanoid arm - it must stay the Male default
+  const m1 = makeMachine(makeWorld());
+  const q1 = schedule(m1, ['Foe _rat_ is Giant_rat', '', 'variable _pad_'], () => 0.9);
+  assert.equal(q1.getResource({ name: 'rat' }).humanoidGender, GENDERS.Male, 'Giant_rat (0) is a monster');
+  const m2 = makeMachine(makeWorld());
+  const q2 = schedule(m2, ['Foe _imp_ is Imp', '', 'variable _pad_'], () => 0.9);
+  assert.equal(q2.getResource({ name: 'imp' }).humanoidGender, GENDERS.Male, 'Imp (1) is a monster - the low bit is not the class bit');
+});
+
+test('the humanoid gender boundary: a roll EXACTLY at 0.55 is Female (strict <)', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, ['Foe _mage_ is Mage', '', 'variable _pad_'], () => 0.55);
+  assert.equal(q.getResource({ name: 'mage' }).humanoidGender, GENDERS.Female);
+});
+
+test('name determinism: the srand chains draw the exact classic names', () => {
+  // humanoid: seed floor(.9995*1000)=999 -> srand(999) -> fullName
+  const m1 = makeMachine(makeWorld());
+  const q1 = schedule(m1, ['Foe _mage_ is Mage', '', 'variable _pad_'], () => 0.9995);
+  assert.equal(q1.getResource({ name: 'mage' }).displayName, 'Chird-e', 'srand(999) + the Breton bank, verbatim');
+  // monster: srand(999 + randomRange(1,1000000) drawn from a KNOWN
+  // DFRandom state) -> monsterName on the reseeded chain
+  srand(4242);
+  const m2 = makeMachine(makeWorld());
+  const q2 = schedule(m2, ['Foe _rat_ is Giant_rat', '', 'variable _pad_'], () => 0.9995);
+  assert.equal(q2.getResource({ name: 'rat' }).displayName, 'Baaliblex', 'the monster seed composition, verbatim');
+});
+
 test('the Foe state bits: kill sets deathTrigger; the cloned item queue keeps the originals', () => {
   const m = makeMachine(makeWorld());
   const q = schedule(m, ['Foe _rat_ is Giant_rat', '', 'variable _pad_']);
@@ -322,6 +424,11 @@ test('the Foe state bits: kill sets deathTrigger; the cloned item queue keeps th
   assert.equal(rat.deathTrigger, false);
   rat.kill();
   assert.equal(rat.deathTrigger, true);
+  assert.equal(rat.spellQueueCount, 0, 'an empty queue counts 0');
+  rat.setInjured(); rat.rearmInjured();
+  assert.equal(rat.injuredTrigger, false, 'RearmInjured clears the wave trigger');
+  rat.setRestrained(); rat.clearRestrained();
+  assert.equal(rat.isRestrained, false, 'ClearRestrained releases');
   assert.equal(rat.getClonedItemQueue(), null, 'null when empty');
   const item = { name: 'a dagger', uid: 7 };
   rat.queueItem(item);

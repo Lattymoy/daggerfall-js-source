@@ -1791,7 +1791,10 @@ export class CreateFoe extends ActionTemplate {
       const foe = this.parentQuest.getFoe(this.foeSymbol);
       if (!foe) {
         this.setComplete();
-        throw new Error(`create foe could not find Foe with symbol name ${this.foeSymbol?.name}`);
+        // C# formats the action's own never-assigned Symbol (NREs
+        // before the message renders) - the same quirk as
+        // CastSpellOnFoe; either way the quest error-terminates
+        throw new Error(`create foe could not find Foe with symbol name ${this.symbol?.name}`);
       }
       if (foe.isHidden) return;   // hidden blocks the spawn; the interval is already spent
       this._createPendingFoeSpawn(world, foe);
