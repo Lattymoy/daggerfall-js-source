@@ -867,3 +867,33 @@ test('VERIFY: customParseInt - int.Parse strictness and the case-sensitive Repla
   assert.throws(() => customParseInt('0X1A'), /int.Parse failed/,
     "the C# quirk: StartsWith ignores case but Replace('0x') does not - an uppercase prefix throws");
 });
+
+test('TeleportPc marker boundaries: an INDEXED marker lands its own position; an index at EXACTLY the marker count falls to [0]', () => {
+  // learn the fixture's spawn-marker count first
+  const probeWorld = makeWorld();
+  const probeM = makeMachine(probeWorld);
+  const probeQ = schedule(probeM, ['Place _lair_ remote dungeon2', '', 'variable _pad_']);
+  const markers = probeQ.getResource({ name: 'lair' }).siteDetails.questSpawnMarkers;
+  assert.ok(markers.length >= 2, 'the fixture carries a marker per block');
+
+  // marker 1 must land marker ONE, not the [0] fallback (usingMarker)
+  const w1 = makeWorld();
+  const m1 = makeMachine(w1);
+  const q1 = schedule(m1, ['Place _lair_ remote dungeon2', '', ` transfer pc inside _lair_ marker 1`, '', 'variable _pad_']);
+  m1.tick(); m1.tick();
+  const land1 = w1._calls.filter((c) => c[0] === 'setPlayerScenePosition');
+  const mk = q1.getResource({ name: 'lair' }).siteDetails.questSpawnMarkers;
+  assert.equal(land1.length, 1);
+  assert.equal(land1[0][1].x, mk[1].dungeonX * RDB_SIDE + mk[1].flatPosition.x, 'the indexed arm held (usingMarker)');
+
+  // marker <count> is OUT of range: the < gate is strict, the [0] fallback lands
+  const w2 = makeWorld();
+  const m2 = makeMachine(w2);
+  const q2 = schedule(m2, ['Place _lair_ remote dungeon2', '', ` transfer pc inside _lair_ marker ${markers.length}`, '', 'variable _pad_']);
+  m2.tick(); m2.tick();
+  const land2 = w2._calls.filter((c) => c[0] === 'setPlayerScenePosition');
+  const mk2 = q2.getResource({ name: 'lair' }).siteDetails.questSpawnMarkers;
+  assert.equal(land2.length, 1);
+  assert.equal(land2[0][1].x, mk2[0].dungeonX * RDB_SIDE + mk2[0].flatPosition.x,
+    'index == length misses the strict < and falls to spawn marker 0');
+});

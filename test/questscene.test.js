@@ -675,3 +675,233 @@ test('the ring refusals: grazing normals, short slack, no floor, occupied space'
   assert.equal(PLACE_FOE_DEFAULTS.wildernessMinDistance, 8);
   assert.equal(PLACE_FOE_DEFAULTS.wildernessMaxDistance, 25);
 });
+
+// ---------------------------------------------------------------
+// AUDIT XI boundary pins (the campaign's survivors)
+// ---------------------------------------------------------------
+
+test('behaviour defaults and cacheTarget faces: the save shape starts clean, every miss answers false, success answers true', () => {
+  const m = new QuestMachine();
+  const q = makeQuest(m);
+  assert.equal(new QuestResourceBehaviour(m).getSaveData().isAttackableByAI, false, 'never set in core, C#');
+
+  const unknownQuest = new QuestResourceBehaviour(m);
+  unknownQuest.questUID = 424242;
+  unknownQuest.targetSymbol = { name: 'x' };
+  assert.equal(unknownQuest.cacheTarget(), false, 'a dangling quest UID resolves nothing');
+  assert.equal(unknownQuest.targetQuest, null);
+
+  const nullSymbol = new QuestResourceBehaviour(m);
+  nullSymbol.questUID = q.uid;
+  assert.equal(nullSymbol.cacheTarget(), false);
+  assert.equal(nullSymbol.targetQuest, null, 'the identity gate returns BEFORE touching the quest');
+
+  const missingResource = new QuestResourceBehaviour(m);
+  missingResource.questUID = q.uid;
+  missingResource.targetSymbol = { name: 'nothing' };
+  assert.equal(missingResource.cacheTarget(), false);
+  assert.equal(missingResource.cacheTarget(), false, 'a half-cached quest never fakes a hit on the second call');
+
+  const { b } = bindFoe(m, q);
+  const fresh = new QuestResourceBehaviour(m, b.host);
+  fresh.questUID = b.questUID;
+  fresh.targetSymbol = b.targetSymbol;
+  assert.equal(fresh.cacheTarget(), true, 'the resolve face answers true, not just the cached face');
+});
+
+test('an unbound behaviour is inert: update() never throws, doClick() answers false', () => {
+  const m = new QuestMachine();
+  const bare = new QuestResourceBehaviour(m);
+  bare.update();
+  assert.equal(bare.doClick(), false, 'nothing found in any active quest');
+});
+
+test('a full-health foe never trips the injured latch; health EXACTLY 1 is not a death', () => {
+  const m = new QuestMachine();
+  const q = makeQuest(m);
+  const { foe, enemy, b } = bindFoe(m, q);
+  b.update();
+  assert.equal(foe.injuredTrigger, false, 'the injury gate is strictly BELOW max');
+  enemy.currentHealth = 1;
+  b.update();          // injures and returns
+  b.update();          // the death tick
+  assert.equal(foe.killCount, 0, 'the death gate is <= 0, not <= 1');
+  assert.equal(b.isFoeDead, false);
+});
+
+test('a hidden foe destroys WITHOUT a person-arm deactivation first', () => {
+  const m = new QuestMachine();
+  const q = makeQuest(m);
+  const { foe, host, b } = bindFoe(m, q);
+  foe.questResourceBehaviour = b;
+  foe.isHidden = true;
+  b.update();
+  assert.equal(host.of('setActive').length, 0, 'the person arm is && - a foe never takes SetActive here');
+  assert.deepEqual(host.of('destroy'), [['destroy']]);
+});
+
+test('the queue drains guard EVERY validate arm - a null enemy or foe is a plain park, never a throw', () => {
+  const m = new QuestMachine();
+  const q = makeQuest(m);
+  const { foe, enemy, b } = bindFoe(m, q);
+  foe.spellQueue = [{ classicID: 1 }];
+  b.castSpellQueue(foe, null);
+  assert.equal(b.foeSpellQueuePosition, 0, 'no enemy surface, no advance');
+  b.castSpellQueue(null, enemy);
+  assert.equal(b.foeSpellQueuePosition, 0);
+  foe.itemQueue = ['sword'];
+  b.addItemQueue(foe, null);
+  assert.equal(b.foeItemQueuePosition, 0);
+  b.addItemQueue(null, enemy);
+  assert.equal(b.foeItemQueuePosition, 0);
+  assert.equal(enemy.of('addItemsToEntity').length + enemy.of('addItemsToCorpse').length, 0);
+});
+
+test('the destroy handlers: a fired handler unsubscribes (index 0 included) and never strands a RECOUPLED resource', () => {
+  const m = new QuestMachine();
+  const q = makeQuest(m);
+  const r = new QuestResource(q);
+  r.symbol = { name: 'rr', original: '_rr_' };
+  const a = new QuestResourceBehaviour(m);
+  r.questResourceBehaviour = a;
+  a.notifyDestroyed();
+  assert.equal(r.questResourceBehaviour, null);
+  const b = new QuestResourceBehaviour(m);
+  r.questResourceBehaviour = b;
+  a.notifyDestroyed();   // the OLD behaviour fires again
+  assert.equal(r.questResourceBehaviour, b, "a stale handler must not null the NEW coupling - it unsubscribed");
+
+  // offDestroy removes exactly ONE handler
+  const c = new QuestResourceBehaviour(m);
+  const hits = [];
+  const h1 = () => hits.push(1);
+  const h2 = () => hits.push(2);
+  c.onDestroy(h1); c.onDestroy(h2);
+  c.offDestroy(h1);
+  c.notifyDestroyed();
+  assert.deepEqual(hits, [2], 'splice(i, 1) - the neighbour survives');
+});
+
+test('the individual broadcast clicks ONLY individuals - a same-faction plain person never rides it', () => {
+  const m = new QuestMachine({ world: { getFactionData: () => ({ id: 305, type: FACTION_TYPES.Individual }) } });
+  const q = makeQuest(m);
+  q.resources.set('plain', {
+    isPerson: true, symbol: { name: 'plain', original: '_plain_' }, parentQuest: q,
+    isIndividualNPC: false, factionData: { id: 305 },
+    hasPlayerClicked: false, setPlayerClicked() { this.hasPlayerClicked = true; },
+  });
+  q.resources.set('ind', {
+    isPerson: true, symbol: { name: 'ind', original: '_ind_' }, parentQuest: q,
+    isIndividualNPC: true, factionData: { id: 305 },
+    hasPlayerClicked: false, setPlayerClicked() { this.hasPlayerClicked = true; },
+  });
+  const b = new QuestResourceBehaviour(m, makeHost({ staticNpcFactionId: 305 }));
+  assert.equal(b.doClick(), true);
+  assert.equal(q.resources.get('ind').hasPlayerClicked, true);
+  assert.equal(q.resources.get('plain').hasPlayerClicked, false, 'the && gate needs BOTH individual and faction match');
+});
+
+test('the mount defaults: no buildingKey queries the wildcard, and the option defaults stand everything', () => {
+  const { m, person, foe, item, adapter } = makeMountRig();
+  m.siteLinks[0].buildingKey = 5;   // a keyed link still matches the wildcard query
+  addQuestResourceObjects(m, adapter, SITE_TYPES.Dungeon);
+  assert.equal(adapter.stands.length, 3, 'the omitted buildingKey defaults to the 0 wildcard');
+  assert.ok(person.questResourceBehaviour && foe.questResourceBehaviour && item.questResourceBehaviour);
+});
+
+test('the ring constants are the C# literals and the probes ride them', () => {
+  assert.equal(PLACE_FOE_DEFAULTS.minDistance, 5);
+  assert.equal(PLACE_FOE_DEFAULTS.maxDistance, 20);
+  assert.equal(PLACE_FOE_DEFAULTS.separationDistance, 1.25);
+  assert.equal(PLACE_FOE_DEFAULTS.maxFloorDistance, 4);
+  let radius = null;
+  const env = ringEnv({
+    raycast: (o, dir) => (dir.y === -1 ? { point: { x: 0, y: 0, z: 0 }, normal: { x: 0, y: 1, z: 0 }, distance: 1 } : null),
+    overlapSphere: (p, r) => { radius = r; return false; },
+  });
+  placeFoeFreely(env);
+  assert.equal(radius, 0.65, 'the overlap veto probes at the C# radius');
+});
+
+test('the side coin at EXACTLY 0.5 swings RIGHT (positive angle), the C# strict >', () => {
+  const rolls = [0, 0.5, 0];   // no jitter, the boundary coin, distance roll
+  let i = 0;
+  let spawnDir = null;
+  const env = ringEnv({
+    rolls: () => rolls[i++],
+    raycast: (o, dir, max) => {
+      if (dir.y === -1) return { point: { x: o.x, y: -1, z: o.z }, normal: { x: 0, y: 1, z: 0 }, distance: 1 };
+      spawnDir = dir; return null;
+    },
+  });
+  placeFoeFreely(env);
+  assert.ok(spawnDir.x > 0, '0.5 > 0.5 is false - the positive (right) arm');
+});
+
+test('a wall at EXACTLY separation + minDistance still places (slack zero passes the strict < 0 gate)', () => {
+  const rolls = [0, 0, 0.99];   // extra = 0.99 * min(2, 0) = 0
+  let i = 0;
+  const env = ringEnv({
+    rolls: () => rolls[i++],
+    raycast: (o, dir) => {
+      if (dir.y === -1) return { point: { x: o.x, y: -1, z: o.z }, normal: { x: 0, y: 1, z: 0 }, distance: 1 };
+      return { point: { x: dir.x * 6.25, y: 0, z: dir.z * 6.25 }, normal: { x: -dir.x, y: 0, z: -dir.z }, distance: 6.25 };
+    },
+  });
+  const pos = placeFoeFreely(env);
+  assert.ok(pos, 'distance 6.25 = 1.25 + 5: slack is exactly zero and zero is NOT < 0');
+  const yaw = 60 * Math.PI / 180;
+  assert.ok(Math.abs(pos.x - Math.sin(yaw) * 5) < 1e-9, 'backed off to exactly minDistance');
+});
+
+test('the floor probe drops STRAIGHT down and the wall normal normalizes before the cosine', () => {
+  const rolls = [0, 0, 0];
+  let i = 0;
+  let floorDir = null;
+  const env = ringEnv({
+    rolls: () => rolls[i++],
+    raycast: (o, dir) => {
+      if (dir.y < 0) { floorDir = dir; return { point: { x: o.x, y: -1, z: o.z }, normal: { x: 0, y: 1, z: 0 }, distance: 1 }; }
+      // an UNNORMALIZED wall normal, length 2 - the math must not tilt
+      return { point: { x: dir.x * 10, y: 0, z: dir.z * 10 }, normal: { x: -dir.x * 2, y: 0, z: -dir.z * 2 }, distance: 10 };
+    },
+  });
+  const pos = placeFoeFreely(env);
+  assert.deepEqual(floorDir, { x: 0, y: -1, z: 0 });
+  const yaw = 60 * Math.PI / 180;
+  const along = 10 - 1.25;   // cos_normal 1 off the NORMALIZED normal, extra 0
+  assert.ok(Math.abs(pos.x - Math.sin(yaw) * along) < 1e-9, 'a length-2 normal still yields cos 1');
+});
+
+test('assignQuestResource defaults: the omitted marker index draws a REAL marker; a markerless site still throws', () => {
+  const m = new QuestMachine();
+  const quest = makeQuest(m);
+  quest.hooks = { world: {}, cullResourceTarget: () => {} };
+  const place = new Place(quest);
+  place.symbol = { name: 'pub' };
+  place.isPlayerHere = () => false;
+  place.siteDetails = {
+    selectedMarker: { targetResources: null },
+    questSpawnMarkers: [{ dungeonX: 1, dungeonZ: 1, flatPosition: { x: 9, y: 0, z: 9 }, markerID: 5, targetResources: null }],
+    questItemMarkers: null,
+  };
+  const resource = makeFoeStub({ isFoe: false, isPerson: true, symbol: { name: 'pp', original: '_pp_' } });
+  resource.parentQuest = quest;
+  quest.resources.set('pp', resource);
+  place.assignQuestResource({ name: 'pp', clone() { return { name: 'pp' }; } });
+  assert.equal(place.siteDetails.selectedMarker.flatPosition.x, 9, 'the default -1 index drew the real marker, not [-2]');
+
+  const bare = new Place(quest);
+  bare.symbol = { name: 'void' };
+  bare.siteDetails = { selectedMarker: { targetResources: null }, questSpawnMarkers: null, questItemMarkers: null };
+  assert.throws(() => bare.assignQuestResource({ name: 'pp', clone() { return { name: 'pp' }; } }),
+    /Tried to assign resource pp to Place without at least a spawn or item marker/);
+});
+
+test('configureFromPlayerLocation answers FALSE when no location is loaded', () => {
+  const m = new QuestMachine();
+  const quest = makeQuest(m);
+  const place = new Place(quest);
+  assert.equal(place.configureFromPlayerLocation({ currentLocation: () => null }, 'home'), false);
+  assert.equal(place.configureFromPlayerLocation({ currentLocation: () => ({ loaded: false }) }, 'home'), false);
+});
