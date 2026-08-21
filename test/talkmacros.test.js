@@ -236,3 +236,39 @@ test('THE MAP-REVEAL SLOT is up while %hnt expands, which is the only moment it 
   assert.deepEqual(seen, [[7332, true]], 'the reveal record expands with the flag UP');
   assert.equal(pipeline.markLocationOnMap, false, 'and it is down again immediately');
 });
+
+test('the quest-type test is an OR of THREE: each of the three reaches the dialog hint alone', () => {
+  const ctx = makeCtx();
+  const h = talkMacroHandlers(ctx);
+  ctx.tree.addQuestTopicWithInfoAndRumors(1, { isPlace: true, symbol: { name: 'l' } }, 'l',
+    QUEST_INFO_RESOURCE_TYPE.Location, [[t('any-info')]], [[t('rumor')]]);
+  for (const qt of [QUESTION_TYPE.QuestLocation, QUESTION_TYPE.QuestPerson, QUESTION_TYPE.QuestItem]) {
+    ctx.pipeline.currentQuestionListItem = newListItem({ questionType: qt, questID: 1, key: 'l' });
+    assert.match(h['%hnt'](), /any-info/, `question type ${qt} reaches GetDialogHint alone`);
+    assert.match(h['%hnt2'](), /rumor/, `question type ${qt} reaches GetDialogHint2 alone`);
+  }
+});
+
+test('an absent factionRaceId seam is race 0 - the Nord oath, not the Khajiit one', () => {
+  const ctx = makeCtx({ factionRaceId: undefined });
+  const h = talkMacroHandlers(ctx);
+  assert.equal(h['%oth'](), 'text:201', 'no seam reads faction race 0, which is Nord');
+});
+
+test('a token with NO text is skipped rather than scanned - C#s `tokenText != null` guard', () => {
+  // the two halves of the skip are ORed: not a string, OR no % in it.
+  // A null-text token must not reach indexOf at all.
+  const tokens = [{ text: null }, { text: undefined }, {}, t('plain'), t('%n')];
+  expandTalkMacros(tokens, { '%n': () => 'Sirien' });
+  assert.equal(tokens[0].text, null, 'a null text is left exactly as it was');
+  assert.equal(tokens[1].text, undefined);
+  assert.equal(tokens[3].text, 'plain', 'and a string with no % is left alone too');
+  assert.equal(tokens[4].text, 'Sirien');
+});
+
+test('the scan starts ONE past the %, so a bare % followed by a terminator consumes only itself', () => {
+  const tokens = [t('a %. b'), t('50%, and %n')];
+  expandTalkMacros(tokens, { '%n': () => 'Sirien' });
+  assert.equal(tokens[0].text, 'a . b', 'the % goes, the full stop stays - it TERMINATED the name');
+  assert.equal(tokens[1].text, '50, and Sirien', 'and a percent sign in prose eats only itself');
+});

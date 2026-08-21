@@ -180,6 +180,9 @@ export function expandTalkMacros(tokens, handlers) {
     let currentPos = 0;
     let macroPos;
     while ((macroPos = text.indexOf('%', currentPos)) >= 0) {
+      // the scan starts ONE past the %, so `%.` names `%` and leaves
+      // the full stop; and it stops AT the end of the string, which is
+      // the guard that makes a trailing macro terminate at all
       let endPos = macroPos + 1;
       while (endPos < text.length && !MACRO_TERMINATORS.includes(text[endPos])) endPos++;
       out += text.slice(currentPos, macroPos);

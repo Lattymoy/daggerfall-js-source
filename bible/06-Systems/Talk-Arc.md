@@ -596,6 +596,47 @@ than MCP overrides, so they remain the host's. The browser half is
 probe-verified only where a machine with game data exists - this one
 has none, and the quest arc's standing caveat applies.
 
+## TALK AUDIT V (2026-08-21, the TK-v verify pass)
+
+The MCP's adversarial pass, in the MAIN LOOP against the raw C#.
+
+**The re-read caught the expansion ALGORITHM.** I had written a
+plausible one - substring replacement, longest token first - rather
+than MacroHelper's. It scans from each `%` to the next
+MACRO_TERMINATOR (:412), which is what tells %hnt2 from %hnt and %g4
+from %g with no ordering at all; mine got those right by accident.
+Two behaviours fell out of the mistake, both now the algorithm rather
+than an approximation of it:
+
+- **THE MACRO CACHE** (:428): one dictionary per ExpandMacros CALL,
+  with C#'s own comment on why - "some macros evaluate differently
+  each time (e.g. macros with random generated names)". A record
+  naming %fn in two tokens names the SAME woman twice; the port would
+  have named two.
+- **THE PIPE IS EATEN** (:472-475): `|` terminates a macro AND is
+  swallowed, which is how `%di|ern` becomes "southern". The port left
+  it in the text.
+
+**The campaign** swept 43 mutants over the module: 36 caught, 7
+survived, 0 uncovered. Four were real gaps - the quest-type test being
+an OR of three (each type reaching the dialog hint alone), the absent
+factionRaceId seam reading race 0, a null-text token skipped rather
+than scanned, and the scan starting one past the `%`. Two are proven
+equivalents:
+
+- `:184` (`endPos < text.length` -> `<=`) and `:188`
+  (`currentPos < text.length` -> `<=`): at the end of the string the
+  read is `undefined`, which is neither a terminator nor `'|'`, and
+  `slice` clamps its end - so the extra iteration changes neither the
+  name scanned nor the text emitted.
+
+The seventh is not a survivor but a HANG: `:184`'s `&&` -> `||` makes
+the terminator scan run past the end of the string forever, because
+`undefined` is never a terminator. The existing pins reach it - a
+trailing macro like `%n` walks the scan to the string's end on every
+one of them - and the runner records a timeout rather than a failure.
+Recorded as caught-by-hanging rather than claimed as a kill.
+
 ## TALK AUDIT IV (2026-08-21, the TK-iv verify pass)
 
 The NPC session's adversarial pass, again in the MAIN LOOP against the
