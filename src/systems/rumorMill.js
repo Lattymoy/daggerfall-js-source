@@ -106,6 +106,9 @@ export class RumorMill {
     this.deps = deps;
     this.listRumorMill = [];
     this.dictQuestorPostQuestMessage = new Map();
+    // C#'s npcData field (TalkManager.cs:189), for a caller who passes
+    // no session of their own
+    this.defaultSession = { numAnswersGivenTellMeAboutOrRumors: 0, isSpyMaster: false };
   }
 
   _rolls() { return this.deps.rolls ?? Math.random; }
@@ -240,8 +243,14 @@ export class RumorMill {
   /** GetNewsOrRumors (:1388-1440). `npcSession` is the per-
    *  conversation NPC state the caller owns
    *  ({ numAnswersGivenTellMeAboutOrRumors, isSpyMaster }) - the
-   *  method spends one answer exactly as C# mutates npcData. */
-  getNewsOrRumors(npcSession = { numAnswersGivenTellMeAboutOrRumors: 0, isSpyMaster: false }) {
+   *  method spends one answer exactly as C# mutates npcData.
+   *
+   *  C# reads no argument at all: npcData is a FIELD (:189) whose
+   *  counter survives from one answer to the next. A caller who omits
+   *  the seam falls back to a field here for the same reason - a
+   *  default rebuilt per call would discard the increment on :261 and
+   *  the gate could never close. */
+  getNewsOrRumors(npcSession = this.defaultSession) {
     if (npcSession.numAnswersGivenTellMeAboutOrRumors < MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS
       || npcSession.isSpyMaster || (this.deps.npcsKnowEverything?.() ?? false)) {
       let news = this.deps.resolvingError?.() ?? RESOLVING_ERROR;

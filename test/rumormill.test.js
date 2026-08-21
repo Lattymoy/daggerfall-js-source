@@ -382,6 +382,24 @@ test('getNewsOrRumors: the one-answer gate, the bypasses, and the 1457 out-of-ne
   void calls;
 });
 
+test('THE HEADLESS SESSION is a FIELD: a caller who passes none still spends, and still runs dry', () => {
+  // C# takes no argument at all - GetNewsOrRumors reads npcData
+  // (TalkManager.cs:189), whose counter survives from one answer to
+  // the next. A default rebuilt per call would throw the increment
+  // away and the gate could never close, so an NPC with no session
+  // seam would answer forever.
+  const { mill } = makeMill();
+  mill.listRumorMill.push(commonEntry({ listRumorVariants: [[t('word'), { formatting: 2, text: '', x: 0, y: 0 }, t('up')]] }));
+  assert.equal(mill.getNewsOrRumors(), 'wordup', 'the first ask is answered');
+  assert.equal(mill.defaultSession.numAnswersGivenTellMeAboutOrRumors, 1, 'and the field remembers it');
+  assert.equal(mill.getNewsOrRumors(), 'record:1457', 'the second ask runs dry - the SAME session, not a new one');
+  assert.equal(mill.defaultSession.isSpyMaster, false, 'the standing session is nobody special');
+  // and the field belongs to the mill, not to the class
+  const { mill: other } = makeMill();
+  other.listRumorMill.push(commonEntry());
+  assert.equal(other.getNewsOrRumors(), 'x', 'a different mill starts fresh');
+});
+
 test('getNewsOrRumors: the quest arm expands through the quest seam at a rolled variant; null variants answer resolvingError AND spend the answer', () => {
   const { mill, calls } = makeMill({ rolls: () => 0.5 });
   mill.addQuestRumorTokensToRumorMill(77, [[t('v0')], [t('v1')], [t('v2')], [t('v3')]]);
