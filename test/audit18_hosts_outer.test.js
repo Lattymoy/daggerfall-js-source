@@ -15,6 +15,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -688,4 +689,24 @@ test('audit18 hosts: no host re-implements an extracted seam privately', () => {
       assert.doesNotMatch(s, re, `${host} keeps a private copy of ${what} - extract it instead`);
     }
   }
+});
+
+// ---------------------------------------------------------------------
+// AUDIT F2-T4. The diet and the manifest version are ONE decision.
+// ---------------------------------------------------------------------
+test('audit F2: editing the diet without bumping MANIFEST_V fails HERE', () => {
+  // The bump was pinned as a floor (>= 3), which passes forever once
+  // it has been bumped once - so the NEXT slice to widen KEEP would
+  // ship a diet no existing install ever re-ingests, and the file it
+  // added would be silently missing in the field for everyone who had
+  // played before. The two are coupled by checksum instead: touch the
+  // diet, this fails, and the only way to green is to bump the
+  // version (which every stale store checks) and re-pin the pair.
+  const text = src('src/scenes/dataSource.js');
+  const keep = text.match(/export const KEEP = [\s\S]*?;\n/)?.[0];
+  assert.ok(keep, 'the diet is still one expression');
+  const version = Number(text.match(/const MANIFEST_V = (\d+);/)[1]);
+  const sum = createHash('sha256').update(keep).digest('hex').slice(0, 16);
+  assert.deepEqual([version, sum], [6, 'cab127b468c47e75'],
+    'THE DIET CHANGED: bump MANIFEST_V so stale stores re-ingest, then re-pin [version, sum] here');
 });

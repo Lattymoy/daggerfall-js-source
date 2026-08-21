@@ -292,7 +292,7 @@ let _deps = null;
  *  indexed by the WEIGHT index an answer resolves to - 0 warrior,
  *  1 rogue, 2 mage - at DFU's verbatim panel positions. The
  *  transparent colour is (0,0,10) and Loop is false. */
-const CEL_FILES = Object.freeze([
+export const CEL_FILES = Object.freeze([
   Object.freeze({ name: 'WARRIOR.CEL', x: 110, y: 1 }),
   Object.freeze({ name: 'ROGUE.CEL', x: 1, y: 1 }),
   Object.freeze({ name: 'MAGE.CEL', x: 79, y: 1 }),
@@ -916,7 +916,13 @@ export function startConstellationAnim(index) {
   cel.player.flc.bufferNextFrame(0);
   if (!cel.player.start()) return 0;
   _celActive = index;
-  return cel.player.flc.header.numOfFrames * cel.player.flc.frameDelay;   // frameDelay is SECONDS
+  // AUDIT F2-P3: the duration must never read as "nothing to play"
+  // once the player IS playing - a zero-frame or zero-delay CEL would
+  // otherwise leave _celActive latched while the flow ran its end body
+  // inline. A started animation always reports a positive length; the
+  // flow's deadline is what bounds it.
+  const secs = cel.player.flc.header.numOfFrames * cel.player.flc.frameDelay;   // frameDelay is SECONDS
+  return secs > 0 ? secs : Number.MIN_VALUE;
 }
 
 /** One FLCPlayer.Update(). True while still playing; false on the
@@ -938,6 +944,7 @@ export function stopConstellationAnim() {
     if (cel.texKey && _deps?.renderer) _deps.renderer.releaseTexture('img', cel.texKey);
     cel.tex = null;
     cel.texKey = null;
+    cel.frameRef = null;
   }
   _celActive = -1;
 }
@@ -966,19 +973,27 @@ function ensureChgnTexture(renderer, flow) {
  *  (F2). An answer lights ROGUE/MAGE/WARRIOR.CEL over the chart and
  *  the next question waits it out, as DFU does; the palette
  *  brightening lands when the animation ENDS. */
-/** F2: the playing constellation, over the chart and UNDER the
- *  scroll - DFU adds the three anim panels to the NativePanel before
- *  the scroll, so the parchment covers them. Uploads only when the
- *  frame actually changed (the videoPlayer's release-then-upload
- *  law, so a frame cannot leak a texture per tick). */
+/** F2: the playing constellation, over the chart AND over the scroll.
+ *  AUDIT F2-P1 corrected this: DFU adds textArea and questionScroll to
+ *  NativePanel.Components FIRST (:128-129) and the three FLCPlayer
+ *  panels LAST (:164-166), and Panel.Draw walks the children in
+ *  ascending index order - so the constellations paint over the
+ *  parchment, and over the question label, which is a child of the
+ *  scroll (:276). The comment here used to claim the exact inverse.
+ *  Uploads only when the frame CHANGED (the videoPlayer's
+ *  release-then-upload law, so a frame cannot leak a texture per
+ *  tick) - AUDIT F2-P2: the body had no such check either. */
 function drawConstellationAnim(renderer, m) {
   const cel = _art?.questions?.cels?.[_celActive];
   const frame = cel?.player?.frame;
   if (!cel || !frame) return;
   const key = `chargen:cel:${cel.name}`;
-  if (cel.texKey) renderer.releaseTexture('img', cel.texKey);
-  cel.tex = renderer.uploadTexture('img', key, frame);
-  cel.texKey = key;
+  if (cel.frameRef !== frame) {   // FlcPlayer hands a NEW object per decoded frame
+    if (cel.texKey) renderer.releaseTexture('img', cel.texKey);
+    cel.tex = renderer.uploadTexture('img', key, frame);
+    cel.texKey = key;
+    cel.frameRef = frame;
+  }
   drawImg(renderer, { tex: cel.tex, w: frame.width, h: frame.height }, m, cel.x, cel.y);
 }
 
@@ -997,7 +1012,6 @@ function drawClassQuestions(renderer, m, font, flow) {
   if (!q || !flow.qDisplay) return false;
   ensureChgnTexture(renderer, flow);
   drawImg(renderer, { tex: q.tex, w: q.bmp.width, h: q.bmp.height }, m, 0, 0);
-  drawConstellationAnim(renderer, m);
   const frame = q.scroll[flow.qScrollFrame % q.scroll.length];
   drawImg(renderer, frame, m, 0, QSCROLL_Y);
   // the question label: black, unshadowed (:262-263), rows at the
@@ -1011,6 +1025,7 @@ function drawClassQuestions(renderer, m, font, flow) {
     if (vy < top || vy + QUESTION_ROW_H > bottom) continue;
     drawText(renderer, font, flow.qDisplay.lines[i], m.ox + QSCROLL_TEXT_LEFT * m.s, m.oy + vy * m.s, m.s, QUESTION_TEXT_COLOR);
   }
+  drawConstellationAnim(renderer, m);   // LAST: DFU's anim panels are the last children (F2-P1)
   return true;
 }
 

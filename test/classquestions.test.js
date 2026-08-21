@@ -15,8 +15,11 @@ import {
 import { GfxFile } from '../src/formats/gfxFile.js';
 import { TextRsc } from '../src/formats/textRsc.js';
 import { ChargenFlow } from '../src/ui/chargen.js';
-import { chargenHit, METHOD_PANEL, METHOD_CHOOSE_CLASS, METHOD_CHOOSE_QUESTIONS, QSCROLL_Y, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES, QUESTION_ROW_H } from '../src/ui/chargenArt.js';
+import { CEL_FILES, preloadChargenArt, drawChargenNative, startConstellationAnim, tickConstellationAnim, stopConstellationAnim, chargenHit, METHOD_PANEL, METHOD_CHOOSE_CLASS, METHOD_CHOOSE_QUESTIONS, QSCROLL_Y, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES, QUESTION_ROW_H } from '../src/ui/chargenArt.js';
 import { SKILLS } from '../src/systems/skills.js';
+import { DFPalette } from '../src/formats/dfPalette.js';
+import { FntFile } from '../src/formats/fntFile.js';
+import { makeFont } from '../src/ui/text.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
 
@@ -379,6 +382,8 @@ test('U18: the GFX row RLE - runs, raws, and uncompressed rows byte-exact', () =
 // ---- F2: the constellation animations gate the next question ----
 // The flow's `constellationAnim` is injectable exactly as describeClass
 // is, so the whole law drives headless with no renderer and no CEL.
+const f2Blues = (weights) => weights.map((w) => 8 + 24 * w);
+
 const fakeAnim = (secs = 1) => {
   let left = 0;
   return {
@@ -481,4 +486,170 @@ test('F2: the overlay wrapper forwards the clock (the four-hosts seam)', async (
   f.tick = (dt) => { ticked += dt; };
   createChargenWindow(f, {}).tick(0.25);
   assert.equal(ticked, 0.25);
+});
+
+test('F2: the weight index picks the RIGHT constellation (the mapping is otherwise unpinned)', () => {
+  // AUDIT F2-T2: the mapping is correct as shipped but nothing guarded
+  // it, and a swap is invisible to every behavioural test - it would
+  // simply light the wrong constellation. DFU: weights[0] Warrior,
+  // [1] Rogue, [2] Mage (CreateCharClassQuestions.cs:317) and the
+  // switch starts warriorAnim/rogueAnim/mageAnim for 0/1/2 (:335-350),
+  // at panel positions rogue (1,1) mage (79,1) warrior (110,1).
+  assert.deepEqual(CEL_FILES.map((c) => c.name), ['WARRIOR.CEL', 'ROGUE.CEL', 'MAGE.CEL']);
+  assert.deepEqual(CEL_FILES.map((c) => [c.x, c.y]), [[110, 1], [1, 1], [79, 1]]);
+  // and the chart's palette slots are indexed the SAME way, so the
+  // constellation that lights is the one that brightens
+  // (CONSTELLATION_INDICES is module-private; constellationPalette's
+  // write order is pinned in audit17k.test.js - this asserts the
+  // pairing that makes lit == brightened.)
+  assert.deepEqual(f2Blues([1, 0, 0]), [32, 8, 8]);   // a warrior answer brightens slot 0
+});
+
+test('F2: the ORDERING law holds in both directions', () => {
+  // The answer commits its weight and (on the tenth) its class
+  // SYNCHRONOUSLY; only the display half waits. Pinned both ways so a
+  // future refactor cannot quietly move either half.
+  const f = flowWithQuestions();
+  f._enterClassQuestions();
+  f.constellationAnim = fakeAnim(1);
+  const before = f.qWeights.slice();
+  const shown = f.qDisplay;
+  f.answerClassQuestion(0);
+  assert.notDeepEqual(f.qWeights, before, 'the WEIGHT landed with the answer');
+  assert.equal(f.qAnswered, 1, 'and so did the count');
+  assert.equal(f.qDisplay, shown, 'while the DISPLAY waited');
+  f.tick(2);
+  assert.notEqual(f.qDisplay, shown, 'and moved only when the animation ended');
+});
+
+test('F2: every exit arm drops an in-flight animation', () => {
+  // AUDIT F2-T3: only re-entry was pinned; the accept/cancel/end and
+  // keyboard-back arms all call _stopQuestionAnim and none was covered.
+  for (const exit of [
+    (f) => f._acceptQuestionClass(),
+    (f) => f._cancelQuestionClass(),
+    (f) => f.input('back'),
+  ]) {
+    const f = flowWithQuestions();
+    f._enterClassQuestions();
+    const anim = fakeAnim(5);
+    f.constellationAnim = anim;
+    f.answerClassQuestion(0);
+    assert.equal(f.qAnimIndex, 0, 'an animation is in flight');
+    exit(f);
+    assert.equal(f.qAnimIndex, -1, 'the exit arm stopped it');
+    assert.ok(anim.stops > 0);
+  }
+});
+
+test('F2: a hidden tab does not kill a healthy animation (ticked time, not wall time)', () => {
+  // AUDIT F2-C1: requestAnimationFrame freezes in a hidden tab, so the
+  // animation stops advancing while the WALL clock runs on. The tick
+  // watchdog spends TICKED seconds; only the input gate uses the wall
+  // clock, where it guards a host that never ticks at all.
+  const f = flowWithQuestions();
+  f._enterClassQuestions();
+  f.constellationAnim = fakeAnim(0.4);
+  let clock = 0;
+  f._now = () => clock;
+  f.answerClassQuestion(0);
+  clock += 60_000;              // a minute passes with the tab hidden
+  f.tick(0.1);                  // the first resumed frame, dt clamped by the host
+  assert.equal(f.qAnimIndex, 0, 'the animation survived the wall-clock gap');
+  f.tick(0.4);
+  assert.equal(f.qAnimIndex, -1, 'and ends on its own ticked time');
+});
+
+// ---------------------------------------------------------------
+// F2 real-seam: the pins above all drive the INJECTED animation, so
+// the whole chargenArt half - the CEL load, the player, the upload
+// gate, the chart repaint - could be dead code and the suite would
+// stay green. This one drives the REAL functions over the REAL files.
+// ---------------------------------------------------------------
+test('F2 real seam: the constellation loads, animates, repaints and releases for real', { skip: ARENA2 ? false : 'ARENA2_PATH not set' }, async () => {
+  const uploads = [], releases = [];
+  const renderer = {
+    uploadTexture: (g, name) => { uploads.push(name); return `tex:${name}`; },
+    releaseTexture: (g, key) => releases.push(key),
+    drawScreenQuad: () => {},
+  };
+  const palette = new DFPalette();
+  palette.load(new Uint8Array(readFileSync(join(ARENA2, 'ART_PAL.COL'))), 'ART_PAL.COL');
+  await preloadChargenArt({ renderer, palette, fetchBytes: async (n) => new Uint8Array(readFileSync(join(ARENA2, n))) });
+  const font = makeFont(renderer, new FntFile().load(new Uint8Array(readFileSync(join(ARENA2, 'FONT0003.FNT')))), 'FONT0003');
+  const m = { ox: 0, oy: 0, s: 1 };
+
+  const f = flowWithQuestions();
+  f._enterClassQuestions();
+  const flush = () => { uploads.length = 0; releases.length = 0; };
+
+  // 1. the REAL start returns the CEL's own length and reports playing
+  const secs = startConstellationAnim(0);
+  assert.ok(secs > 0 && secs < 60, `WARRIOR.CEL runs for ${secs}s`);
+  assert.equal(tickConstellationAnim(0), true, 'a started CEL is playing');
+
+  // 2. the draw uploads THAT cel's frame - the whole path, art to quad
+  flush();
+  assert.equal(drawChargenNative(renderer, m, font, f), true);
+  assert.ok(uploads.includes('chargen:cel:WARRIOR.CEL'), `the frame reached the renderer: ${uploads}`);
+
+  // 3. a SECOND draw with no tick re-uploads NOTHING (the F2-P2 gate)
+  flush();
+  drawChargenNative(renderer, m, font, f);
+  assert.deepEqual(uploads, [], 'a still frame costs no upload');
+
+  // 4. ticking past a frame delay decodes a new one, and THAT uploads
+  //    - releasing the old key first, so the gate cannot leak
+  const budget = Math.max(2, Math.min(20, Math.floor(secs / 0.1)));   // never tick past the CEL's own end
+  for (let i = 0; i < budget && !uploads.length; i++) { tickConstellationAnim(0.1); drawChargenNative(renderer, m, font, f); }
+  assert.deepEqual(uploads, ['chargen:cel:WARRIOR.CEL'], 'a new frame uploads once');
+  assert.deepEqual(releases, ['chargen:cel:WARRIOR.CEL'], 'and the old texture is released');
+
+  // 5. the CHART repaints when the blues change, and not before
+  flush();
+  drawChargenNative(renderer, m, font, f);
+  assert.ok(!uploads.some((u) => u.startsWith('CHGN00I0')), 'the pristine chart is already up');
+  f.qPaintBlues = f2Blues([1, 0, 0]);            // one warrior answer
+  drawChargenNative(renderer, m, font, f);
+  assert.ok(uploads.includes('CHGN00I0:32,8,8'), `the chart repainted for the new blues: ${uploads}`);
+
+  // 6. stop RELEASES the frame texture and the anim stops drawing
+  flush();
+  stopConstellationAnim();
+  assert.deepEqual(releases, ['chargen:cel:WARRIOR.CEL']);
+  assert.equal(tickConstellationAnim(0.1), false);
+  flush();
+  drawChargenNative(renderer, m, font, f);
+  assert.ok(!uploads.includes('chargen:cel:WARRIOR.CEL'), 'a stopped constellation draws nothing');
+
+  // 7. and a REPLAY starts clean rather than flashing the last end
+  //    frame (the bufferNextFrame(0) re-arm, Ledger A)
+  assert.ok(startConstellationAnim(1) > 0, 'ROGUE.CEL replays');
+  stopConstellationAnim();
+});
+
+test('F2: the four ART-side laws the headless suite cannot otherwise reach', () => {
+  // Mutation testing left four survivors here (M10-M13), all of them
+  // inside chargenArt's draw half, which needs loaded art to execute -
+  // so the behavioural pins for them are in the real-seam test above,
+  // and that one is corpus-gated. These are SOURCE pins, the same
+  // shape as the host pins in audit18_hosts_outer: they cannot prove
+  // the behaviour, they can only refuse the edit that breaks it.
+  const art = readFileSync(new URL('../src/ui/chargenArt.js', import.meta.url), 'utf8');
+  const chart = art.match(/function ensureChgnTexture[\s\S]*?\n}/)[0];
+  // M10: the chart's blues come from the flow's PAINTED value, which
+  // CEL_OnAnimEnd writes - never re-derived from the answer count,
+  // which would brighten it at the answer as the pre-F2 port did.
+  assert.match(chart, /flow\.qPaintBlues/);
+  assert.ok(!/qAnswered|constellationBlues|qWeights/.test(chart),
+    'the chart must not re-derive the blues from the answer state');
+  // M11: the replay re-arm (Ledger A) - without it every answer after
+  // the first flashes the previous run's END frame for one frame.
+  assert.match(art, /bufferNextFrame\(0\);\n {2}if \(!cel\.player\.start\(\)\)/);
+  // M12: a started player never reports "nothing to play", or the
+  // flow runs its end body inline with _celActive still latched.
+  assert.match(art, /return secs > 0 \? secs : Number\.MIN_VALUE;/);
+  // M13: the per-frame upload gate - without it every DRAWN frame
+  // uploads a texture, sixty a second, for the same decoded frame.
+  assert.match(art, /if \(cel\.frameRef !== frame\) {/);
 });

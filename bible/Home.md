@@ -243,7 +243,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:573` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:668` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/exterior.js:801` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:936` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:943` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:153` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:170` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
@@ -251,8 +251,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:594` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/world.js:600` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:1064` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1460` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1721` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:1467` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1728` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:178` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:220` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
 - `src/scenes/worldModes.js:313` - Person placed in a dungeon is the quest machine's, FLAGGED

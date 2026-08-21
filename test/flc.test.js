@@ -301,3 +301,41 @@ test('flc: ARENA2 corpus sweep - every .CEL decodes (gated)', (t) => {
     }
   }
 });
+
+test('flcPlayer: the END CHECK RUNS FIRST, and the frame shown is the PREVIOUSLY decoded one', () => {
+  // AUDIT F2-T1: the old 20-tick loop proved "it ends eventually" and
+  // hid both halves of Update()'s order. Step it one tick at a time.
+  const pages = (i) => [1, 1, i];
+  const f = new FlcFile();
+  f.load(buildFlc({
+    width: 1, height: 1, frames: 2,
+    chunks: [
+      { type: CHUNK_TYPE.COLOR_256, payload: colorChunk(PALETTE) },
+      { type: CHUNK_TYPE.BYTE_RUN, payload: pages(1) },
+    ],
+  }), 'X.CEL');
+  const ends = [];
+  const p = new FlcPlayer(f, { onAnimEnd: () => ends.push(f.currentFrame) });
+  p.start();
+  assert.equal(f.currentFrame, 0, 'Start() rewinds to frame 0');
+
+  // Tick 1: the clock opens, the CURRENT buffer is displayed, and only
+  // THEN is the next frame decoded - so currentFrame moves to 1.
+  p.tick(f.frameDelay);
+  const first = p.frame;
+  assert.ok(first, 'a frame is displayed');
+  assert.equal(f.currentFrame, 1, 'display-then-decode: the counter advanced after showing');
+
+  // Tick 2 reaches currentFrame === numOfFrames(2)... via one more decode
+  p.tick(f.frameDelay);
+  assert.equal(f.currentFrame, 2);
+  assert.equal(ends.length, 0, 'the end has NOT fired on the tick that reached it');
+
+  // Tick 3: the END CHECK RUNS FIRST, so it ends BEFORE any further
+  // decode or display - the ring frame is never shown.
+  const shown = p.frame;
+  p.tick(f.frameDelay);
+  assert.deepEqual(ends, [2], 'the end fires on the NEXT tick, from the check at the top');
+  assert.equal(p.frame, shown, 'and nothing new was displayed on that tick');
+  assert.equal(p.playing, false);
+});

@@ -43,7 +43,7 @@ import {
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
-import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
+import { preloadChargenArt, stopConstellationAnim } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
@@ -2247,6 +2247,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // Four later sites test `activeOverlay === chargenFlow`, and with
       // both null that comparison is TRUE - which would fire
       // finishChargen on the very character the load just restored.
+      // AUDIT F2-I2: quickLoad drops the wizard by clearing the slot and
+      // deliberately keeps chargenFlow, so the flow can never reach its
+      // own exit arm again - a constellation still playing would latch
+      // the module's active index and its texture for ever. The host
+      // releases it, since the host is what tore the overlay down.
+      if (activeOverlay === chargenFlow) stopConstellationAnim();
       if (activeOverlay instanceof DeathScreen || activeOverlay === chargenFlow) activeOverlay = null;
       hudText.add('Game loaded.');
     },

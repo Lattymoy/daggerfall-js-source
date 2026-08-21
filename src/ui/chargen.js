@@ -207,7 +207,8 @@ export class ChargenFlow {
     // written at the animation's END, never at the answer, which is
     // CEL_OnAnimEnd's law.
     this.qAnimIndex = -1;
-    this.qAnimDeadline = 0;
+    this.qAnimDeadline = 0;   // WALL clock: the gate against a host that never ticks at all
+    this.qAnimBudget = 0;     // TICKED seconds: the clock the animation itself runs on
     this.qPaintBlues = null;
     /** The CEL seam, injectable exactly as describeClass is, so the
      *  headless suite drives an animation with no renderer. */
@@ -519,8 +520,15 @@ export class ChargenFlow {
     // The screen moved on underneath a playing animation: drop it.
     if (this.state !== 'classQuestions' || this.qConfirm) { this._stopQuestionAnim(); return; }
     if (!this.constellationAnim.tick(dt)) { this._celAnimEnd(); return; }
-    if (this._now() >= this.qAnimDeadline) {
-      console.warn('[chargen] constellation animation overran its deadline; releasing the screen');
+    // AUDIT F2-C1: spend the budget in TICKED time, not wall time. A
+    // hidden tab freezes requestAnimationFrame - the animation stops
+    // advancing while the wall clock runs on - so a wall-clock
+    // watchdog here would kill a perfectly healthy constellation on
+    // the first resumed frame. The wall-clock deadline stays on the
+    // INPUT path, where it guards a host that never ticks at all.
+    this.qAnimBudget -= (dt > 0 ? dt : 0);
+    if (this.qAnimBudget <= 0) {
+      console.warn('[chargen] constellation animation overran its budget; releasing the screen');
       this._celAnimEnd();
     }
   }
@@ -555,7 +563,9 @@ export class ChargenFlow {
     audio.playOneShot(SOUND.Ignite, 1);   // AnswerAndPlayAnim (:353) - the brazier lights with the answer
     if (secs > 0) {
       this.qAnimIndex = weightIndex;
-      this.qAnimDeadline = this._now() + Math.max(QANIM_STUCK_MIN_MS, secs * 2000) + QANIM_STUCK_PAD_MS;
+      const budgetMs = Math.max(QANIM_STUCK_MIN_MS, secs * 2000) + QANIM_STUCK_PAD_MS;
+      this.qAnimDeadline = this._now() + budgetMs;
+      this.qAnimBudget = budgetMs / 1000;
     } else {
       this._celAnimEnd();   // nothing to wait out: the end body, at once
     }
