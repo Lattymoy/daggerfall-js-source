@@ -243,8 +243,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:470` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:575` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:670` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:803` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:945` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:810` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:952` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:153` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:170` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
@@ -256,8 +256,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:1442` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
 - `src/scenes/world.js:1619` - FLAGGED: the QuestComplete loot window pends the UI arc - the
 - `src/scenes/world.js:1638` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:1865` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2126` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:1872` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2133` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:189` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:230` - FLAGGED (Port-Ledger Q4-v): quest FOES pend the interior enemy
 - `src/scenes/worldModes.js:325` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)

@@ -1682,7 +1682,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     playerWeapon: params.get('weapon') ?? undefined,
     paint: params.has('paint'),
     piece: params.has('piece') ? Number(params.get('piece') || 102) || 102 : 0,
-    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette },
+    // uploadRecordFrame rides here too: worldModes hands this bag
+    // straight to buildDungeonContext and buildInteriorContext, and
+    // BOTH destructure it for their mobile-sprite draw. Leaving it
+    // out did not fail loudly - it arrived as undefined and threw
+    // `is not a function` on the first enemy frame in a dungeon
+    // entered from this host, while the standalone ?dungeon scene
+    // (which spreads the whole pipeline) was fine.
+    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette },
     doorTargets: () => buildingDoors.map((e) => ({
       ...e, door: shiftedDoor(e),
       dfLocation: locationIndex.get(e.pixelKey), group: e.pixelKey,

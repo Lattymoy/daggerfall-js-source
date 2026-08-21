@@ -740,7 +740,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // A5b: the tavern arm needs the host's clock, and leaving one has to
     // hand the street back its own song - the host owns both, so both
     // ride in as closures rather than worldModes reaching for a global.
-    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette },
+    // uploadRecordFrame rides here too: worldModes hands this bag
+    // straight to buildDungeonContext and buildInteriorContext, and
+    // BOTH destructure it for their mobile-sprite draw. Leaving it
+    // out did not fail loudly - it arrived as undefined and threw
+    // `is not a function` on the first enemy frame in a dungeon
+    // entered from this host, while the standalone ?dungeon scene
+    // (which spreads the whole pipeline) was fine.
+    pipeline: { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette },
     foes: !params.has('nofoes'),   // C11: foes are the DEFAULT now (monsters live; ?nofoes for the empty-dungeon dev view)
     playerClass: params.has('class') ? Number(params.get('class')) : undefined,
     playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined,
