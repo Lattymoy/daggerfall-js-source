@@ -777,6 +777,41 @@ if any, will amend these sections.
   the pattern digit class has no corpus witness.
 
 ## Queue
+
+THE Q4 CARVE (scouted 2026-08-21, sources sized): four slices, in
+dependency order.
+
+- **Q4-i - THE MACRO ENGINE**: QuestMacroHelper.cs (381 -
+  ExpandQuestMessage over the message token stream: the _symbol_/
+  __symbol_/=symbol_/=qsymbol_ resource macros and the %-macro
+  routing), QuestMCP.cs (294 - Quest's MacroDataSource: %n/%fn/%mn
+  seeded by DFRandom off the quest UID, %kno, %qdt off the log
+  step), the four resource ExpandMacro overrides (Person/Place/
+  Item/Foe name-and-site answers + LastResourceReferenced), and the
+  MacroHelper.cs subset the quest path routes through. Closes
+  message.js's "macro expansion pends the macro slice" charter;
+  corpus-gateable headless (expand EVERY corpus message with
+  pending-safe fallbacks) + pinned expansions under the mock world.
+  Everything visual downstream needs this first.
+- **Q4-ii - THE OFFER FLOW**: DaggerfallQuestOfferWindow's offer/
+  accept/decline message law, guildServiceFlow's FLAGGED Quests arm
+  (SERVICE_DESTINATION), the TalkManager questor-click half over
+  the machine's lastNPCClicked/questor tables, the
+  QuestListsManager guild draw going live end to end.
+- **Q4-iii - THE SCENE MOUNT**: SiteLinks/QuestMarkers standing
+  placed NPCs/items/foes in the running hosts (the layout builders
+  walking getSiteLinks at build + onResourceAssigned hot-place),
+  the QuestResourceBehaviour half (click routing into
+  setPlayerClicked, injured/death tracking into the Foe triggers,
+  the spell/item queue drains per instance), the REAL
+  createFoeGameObjects/tryPlaceFoe over buildFoeAt + the raycast
+  ring, the WhenPcEntersExits live feed, TeleportPc's arrival, and
+  the deferred CreateFoe wave-invalidation events.
+- **Q4-iv - JOURNAL + SAVE**: the quest journal window over
+  getLogMessages + macros, and the quest save envelope
+  (machine/quest/resource/action state through the port's save
+  system - the v1/v2 SaveData shapes the C# carries).
+
 - **Q4 also picks up**: the hot-place/hot-remove halves of
   AssignQuestResource (world.onResourceAssigned), TeleportPc's
   save-resume, the layout builders walking SiteLinks/QuestMarkers to
