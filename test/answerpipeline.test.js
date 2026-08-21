@@ -145,16 +145,48 @@ test('the tone gate reads an ABSENT toneIndex as -1, matching the fresh lastTone
   assert.equal(pipe.lastToneIndex, -1);
 });
 
+// greetingNameNPC is the %n slot, live only while the greeting record
+// expands - so every pin on it reads it from INSIDE the expansion.
+function greetSeen(reactionToPlayer, toneIndex = 0, nameNPC = 'Sirien') {
+  const seen = [];
+  const pipe = new AnswerPipeline({
+    expandRandomTextRecord: (id) => { seen.push([id, pipe.greetingNameNPC]); return `record:${id}`; },
+  });
+  const opening = pipe.getPCGreetingOrFollowUpText(toneIndex, reactionToPlayer, nameNPC);
+  return { seen, pipe, opening };
+}
+
 test('the greeting name boundary: reaction 0 is a stranger, 1 is a name', () => {
-  const { pipe } = makePipe();
-  pipe.getPCGreetingOrFollowUpText(0, 1, 'Sirien');
-  assert.equal(pipe.lastGreetingNameNPC, 'Sirien', 'reaction 1 is ABOVE the <= 0 bar');
-  const { pipe: p0 } = makePipe();
-  p0.getPCGreetingOrFollowUpText(0, 0, 'Sirien');
-  assert.equal(p0.lastGreetingNameNPC, 'record:7221', 'reaction 0 is ON the bar - a stranger');
-  const { pipe: pn } = makePipe();
-  pn.getPCGreetingOrFollowUpText(0, -1, 'Sirien');
-  assert.equal(pn.lastGreetingNameNPC, 'record:7221');
+  const warm = greetSeen(1);
+  assert.deepEqual(warm.seen, [[PC_GREETING_RECORD + 0, 'Sirien']], 'reaction 1 is ABOVE the <= 0 bar');
+  // reaction 0 is ON the bar: the stranger record is drawn FIRST, with
+  // the slot still empty, and its text becomes the name the greeting
+  // then expands with
+  const cold = greetSeen(0);
+  assert.deepEqual(cold.seen, [[PC_STRANGER_RECORD + 0, ''], [PC_GREETING_RECORD + 0, 'record:7221']]);
+  const hated = greetSeen(-1);
+  assert.deepEqual(hated.seen, [[PC_STRANGER_RECORD + 0, ''], [PC_GREETING_RECORD + 0, 'record:7221']]);
+});
+
+test('THE %n SLOT is cleared the moment the greeting is expanded, and a follow-up never fills it', () => {
+  // C# empties greetingNameNPC right after the greeting record
+  // (:1140) so that no LATER expansion resolves %n to this NPC. A
+  // field left standing would name the last NPC greeted in every
+  // message the rest of the session preprocesses.
+  const warm = greetSeen(1);
+  assert.equal(warm.pipe.greetingNameNPC, '', 'empty again the instant the greeting is in hand');
+  assert.equal(warm.opening, `record:${PC_GREETING_RECORD}`);
+  const cold = greetSeen(0);
+  assert.equal(cold.pipe.greetingNameNPC, '', 'the stranger text is cleared too - it is not kept as a name');
+  // and the follow-up arm never touches the slot at all
+  const seen = [];
+  const pipe = new AnswerPipeline({
+    expandRandomTextRecord: (id) => { seen.push([id, pipe.greetingNameNPC]); return `record:${id}`; },
+  });
+  pipe.numQuestionsAsked = 3;
+  pipe.getPCGreetingOrFollowUpText(2, 1, 'Sirien');
+  assert.deepEqual(seen, [[PC_FOLLOWUP_RECORD + 2, '']], 'a follow-up is nobody-s greeting');
+  assert.equal(pipe.greetingNameNPC, '');
 });
 
 test('a fresh pipeline starts at C#s field initializers', () => {
@@ -289,10 +321,11 @@ test('getQuestionText: the record ladder and the key-subject state each arm leav
 test('the PC opening: a greeting on the FIRST question, a follow-up after; the name only when liked', () => {
   const { pipe } = makePipe();
   assert.equal(pipe.getPCGreetingOrFollowUpText(1, 5, 'Sirien'), `record:${PC_GREETING_RECORD + 1}`);
-  assert.equal(pipe.lastGreetingNameNPC, 'Sirien', 'a positive reaction is addressed BY NAME');
-  const { pipe: cold } = makePipe();
-  cold.getPCGreetingOrFollowUpText(2, 0, 'Sirien');
-  assert.equal(cold.lastGreetingNameNPC, `record:${PC_STRANGER_RECORD + 2}`, 'reaction 0 draws the stranger record - the <= boundary');
+  const warm = greetSeen(5, 1);
+  assert.deepEqual(warm.seen, [[PC_GREETING_RECORD + 1, 'Sirien']], 'a positive reaction is addressed BY NAME');
+  const cold = greetSeen(0, 2);
+  assert.deepEqual(cold.seen, [[PC_STRANGER_RECORD + 2, ''], [PC_GREETING_RECORD + 2, `record:${PC_STRANGER_RECORD + 2}`]],
+    'reaction 0 draws the stranger record - the <= boundary - and greets with THAT');
   // after a question has been asked, the follow-up
   pipe.numQuestionsAsked = 1;
   assert.equal(pipe.getPCGreetingOrFollowUpText(0, 5, 'Sirien'), `record:${PC_FOLLOWUP_RECORD}`);
@@ -864,6 +897,18 @@ test('getAnswerWhereIsRegionalBuilding: record 10 when a location carries it, 11
   assert.equal(pipe.getAnswerWhereIsRegionalBuilding(library), `record:${REGIONAL_NOT_FOUND_RECORD}`);
   // and through the full dispatch
   assert.equal(pipe.getAnswerText(tavern), `record:${REGIONAL_FOUND_RECORD}`);
+  // C# stores the LOCALIZED name, keyed by the location's map id; the
+  // raw name is what that call answers with no override, so the seam
+  // must receive both and its answer must win
+  const seen = [];
+  const { pipe: loc } = makePipe({
+    currentRegion: () => region, currentRegionIndex: () => 17,
+    getLocation: () => ({ name: 'Tulune', mapTableData: { mapId: 91234 } }), rolls: () => 0,
+    localizedLocationName: (mapId, name) => { seen.push([mapId, name]); return 'Tulûne'; },
+  });
+  loc.getAnswerWhereIsRegionalBuilding(tavern);
+  assert.deepEqual(seen, [[91234, 'Tulune']], 'the map id AND the raw name ride the lookup');
+  assert.equal(loc.locationOfRegionalBuilding, 'Tulûne');
 });
 
 test('getHonoric and getOldLeaderFateString read their localized keys', () => {

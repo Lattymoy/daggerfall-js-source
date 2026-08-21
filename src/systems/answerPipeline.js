@@ -203,6 +203,9 @@ export class AnswerPipeline {
     // this stands in for that field, so the headless gate can still
     // close after the first successful answer.
     this.defaultSession = { socialGroup: 0, isSpyMaster: false, numAnswersGivenTellMeAboutOrRumors: 0 };
+    // C#'s greetingNameNPC (:230) - "used only for PC first question",
+    // and empty at every other moment
+    this.greetingNameNPC = '';
   }
 
   /** The tone gate C# spells inline at the head of GetAnswerText
@@ -275,12 +278,21 @@ export class AnswerPipeline {
   /** GetPCGreetingText / GetPCFollowUpText / GetPCGreetingOrFollowUpText
    *  (:1133-1156): the first question opens with a greeting, later
    *  ones with a follow-up; the NPC is addressed by name only when
-   *  they like the player (reaction > 0). */
+   *  they like the player (reaction > 0).
+   *
+   *  `greetingNameNPC` is not a record of what was said - it is a live
+   *  macro slot, exactly like markLocationOnMap. C# fills the field
+   *  BEFORE expanding the greeting record and clears it immediately
+   *  after (:1136-1140), because TalkManagerMCP's Name() reads it to
+   *  resolve %n and falls back to a random full name when it is empty
+   *  (TalkManagerMCP.cs:54). Set it late and the greeting draws a
+   *  stranger's name; leave it set and every later expansion inherits
+   *  this NPC's. */
   getPCGreetingOrFollowUpText(toneIndex = 1, reactionToPlayer = 0, nameNPC = '') {
     if (this.numQuestionsAsked === 0) {
-      const greetingNameNPC = reactionToPlayer <= 0 ? this._record(PC_STRANGER_RECORD + toneIndex) : nameNPC;
+      this.greetingNameNPC = reactionToPlayer <= 0 ? this._record(PC_STRANGER_RECORD + toneIndex) : nameNPC;
       this.questionOpeningText = this._record(PC_GREETING_RECORD + toneIndex);
-      this.lastGreetingNameNPC = greetingNameNPC;   // the %n the record expands
+      this.greetingNameNPC = '';
     } else {
       this.questionOpeningText = this._record(PC_FOLLOWUP_RECORD + toneIndex);
     }
@@ -467,7 +479,11 @@ export class AnswerPipeline {
   getRegionalLocationCityName(listItem) {
     const location = this.getLocationWithRegionalBuilding(REGIONAL_LOOKUP_INDEXES[listItem.index], FACTIONS_AND_BUILDINGS[listItem.index]);
     if (location) {
-      this.locationOfRegionalBuilding = location.name;
+      // C# stores GetLocalizedLocationName(MapTableData.MapId, Name)
+      // (:1885), which answers the raw name whenever no override
+      // exists for that map id - so the raw name IS the default here,
+      // and the seam is what a localized build overrides.
+      this.locationOfRegionalBuilding = this.deps.localizedLocationName?.(location.mapTableData?.mapId, location.name) ?? location.name;
       return true;
     }
     return false;
