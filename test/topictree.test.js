@@ -119,11 +119,37 @@ test('getQuestInfoResourceType dispatches on the is-flags, NotSet for anything e
 });
 
 test('the info-faction list, the regional tables and the skip list are verbatim', () => {
+  // THE WHOLE TABLES, element for element - a spot check lets a
+  // single wrong id through, and a wrong id silently mis-captions an
+  // org row or mis-gates a regional building forever
+  assert.deepEqual([...INFO_FACTION_IDS], [
+    42, 40, 108, 129, 306, 353, 41, 67, 82, 84, 88, 92, 94, 106, 36, 83,
+    85, 89, 93, 95, 99, 107, 37, 368, 408, 409, 410, 411, 413, 414, 415, 416, 417, 98,
+  ]);
   assert.equal(INFO_FACTION_IDS.length, 34);
-  assert.deepEqual(INFO_FACTION_IDS.slice(0, 6), [42, 40, 108, 129, 306, 353]);
-  assert.equal(INFO_FACTION_IDS.at(-1), 98);
+  assert.deepEqual([...FACTIONS_AND_BUILDINGS], [
+    0x1a, 0x15, 0x1d, 0x1b, 0x23, 0x18, 0x21, 0x16,
+    0x19e, 0x170, 0x19d, 0x198, 0x19a, 0x19b, 0x199, 0x19f, 0x1a0, 0x1a1,
+    0x28, 0x29,
+    0x0f, 0x0a, 0x0d, 0x2, 0x0, 0x3, 0x5, 0x6, 0x8, 0xc,
+  ]);
+  assert.deepEqual([...REGIONAL_BUILDING_NAMES], [
+    'Temple of Akatosh', 'Temple of Arkay', 'Temple of Dibella', 'Temple of Julianos',
+    'Temple of Kynareth', 'Temple of Mara', 'Temple of Stendarr', 'Temple of Zen',
+    'Order of the Raven', 'Knights of the Dragon', 'Knights of the Owl', 'Order of the Candle',
+    'Knights of the Flame', 'Host of the Horn', 'Knights of the Rose', 'Knights of the Wheel',
+    'Order of the Scarab', 'Knights of the Hawk',
+    'Mages Guild', 'Fighters Guild',
+    'Tavern', 'Library', 'Weapon Smith', 'Armorer', 'Alchemist', 'Bank',
+    'Bookstore', 'Clothing store', 'Gem store', 'Pawn shop',
+  ]);
   assert.equal(FACTIONS_AND_BUILDINGS.length, 30);
   assert.equal(REGIONAL_BUILDING_NAMES.length, 30, 'one caption per FactionsAndBuildings row');
+  assert.deepEqual({ ...QUESTION_TYPE }, {
+    NoQuestion: 0, News: 1, WhereAmI: 2, OrganizationInfo: 3, Work: 4,
+    LocalBuilding: 5, Regional: 6, Person: 7, Thing: 8,
+    QuestLocation: 9, QuestPerson: 10, QuestItem: 11,
+  });
   assert.deepEqual([...KNIGHTLY_ORDER_REGIONS], [0x05, 0x11, 0x12, 0x14, 0x15, 0x16, 0x17, 0x2b, 0x33, 0x37]);
   assert.equal(REGIONAL_BUILDING_NAMES[8], 'Order of the Raven', 'row 8 starts the knightly orders');
   assert.equal(REGIONAL_BUILDING_NAMES[18], 'Mages Guild');
@@ -138,8 +164,12 @@ test('the info-faction list, the regional tables and the skip list are verbatim'
   assert.equal(buildingTypeToGroupString(BUILDING_TYPES.Tavern), 'Taverns');
   assert.equal(buildingTypeToGroupString(BUILDING_TYPES.Temple), 'Local temples');
   assert.equal(buildingTypeToGroupString(BUILDING_TYPES.Palace), '', 'an ungrouped type answers the empty string');
-  assert.equal(isResidence(BUILDING_TYPES.House4), true);
+  // the residence BAND, both edges (RMBLayout.cs:753-760)
+  assert.equal(isResidence(BUILDING_TYPES.House1), true, 'House1 is the inclusive LOWER edge');
+  assert.equal(isResidence(BUILDING_TYPES.House2), true);
+  assert.equal(isResidence(BUILDING_TYPES.House4), true, 'House4 is the inclusive upper edge');
   assert.equal(isResidence(BUILDING_TYPES.House5), false, 'only House1-House4 are residences');
+  assert.equal(isResidence(BUILDING_TYPES.Tavern), false);
 });
 
 // ---------------------------------------------------------------
@@ -178,7 +208,9 @@ test('THE DISCARDED FIRST ADD: an empty resourceName on a NEW questID leaves no 
 
 test('THE STICKY FLAG: hasEntryInTellMeAbout only ever sets; hasEntryInWhereIs writes both ways', () => {
   const { tree } = makeTree();
+  tree.rebuildTopicLists = false;
   tree.addQuestTopicWithInfoAndRumors(1, mkPerson('p'), 'p', QUEST_INFO_RESOURCE_TYPE.Person, [tok('a')], null);
+  assert.equal(tree.rebuildTopicLists, true, 'the add flags a rebuild (:2157)');
   const info = tree.dictQuestInfo.get(1).resourceInfo.get('p');
   assert.equal(info.hasEntryInTellMeAbout, true);
   assert.equal(info.hasEntryInWhereIs, true);
@@ -257,6 +289,24 @@ test('addDialog: un-hides, raises the matching instant flags, and the null name 
   assert.equal(tree.instantRebuildTopicListTellMeAbout, true);
   assert.equal(tree.instantRebuildTopicListLocation, true);
   assert.equal(tree.rebuildTopicLists, true);
+  // the PERSON and THING arms raise their own flags (:2259-2266)
+  const { tree: tp } = makeTree();
+  tp.addQuestTopicWithInfoAndRumors(1, mkPerson('p'), 'p', QUEST_INFO_RESOURCE_TYPE.Person, null, null);
+  tp.addDialogForQuestInfoResource(1, 'p', QUEST_INFO_RESOURCE_TYPE.Person, false);
+  assert.equal(tp.instantRebuildTopicListPerson, true);
+  assert.equal(tp.instantRebuildTopicListLocation, false, 'only the matching type flags');
+  assert.equal(tp.instantRebuildTopicListThing, false);
+  const { tree: tt } = makeTree();
+  tt.addQuestTopicWithInfoAndRumors(1, mkItem('i', 'Ring'), 'i', QUEST_INFO_RESOURCE_TYPE.Thing, null, null);
+  tt.addDialogForQuestInfoResource(1, 'i', QUEST_INFO_RESOURCE_TYPE.Thing, false);
+  assert.equal(tt.instantRebuildTopicListThing, true);
+  assert.equal(tt.instantRebuildTopicListPerson, false);
+  // ...and the instant pass clears EVERY flag, not just the one it ran
+  tt.instantRebuildTopicListPerson = true;
+  tt.instantRebuildTopicListLocation = true;
+  tt.assembleTopicLists(true);
+  assert.deepEqual([tt.instantRebuildTopicListTellMeAbout, tt.instantRebuildTopicListLocation,
+    tt.instantRebuildTopicListPerson, tt.instantRebuildTopicListThing], [false, false, false, false]);
   // a null resourceName skips the body but STILL rebuilds (:2270)
   const { tree: t2, calls: c2 } = makeTree();
   t2.addQuestTopicWithInfoAndRumors(1, mkPlace('l'), 'l', QUEST_INFO_RESOURCE_TYPE.Location, null, null);
@@ -345,6 +395,12 @@ test('isBuildingQuestResource: the flags, the override name, and the map/key dou
   assert.equal(tree.isBuildingQuestResource(101, 42).isQuestResource, false, 'a different mapId never matches');
   assert.equal(tree.isBuildingQuestResource(100, 43).isQuestResource, false, 'nor a different building key');
   const info = tree.dictQuestInfo.get(3).resourceInfo.get('_site_');
+  // the EXACT ReceivedDirectionalHints level: >= is true here where a
+  // strict > would be false, and the marked-on-map flag stays down
+  info.questPlaceResourceHintTypeReceived = BUILDING_HINT_TYPE.ReceivedDirectionalHints;
+  r = tree.isBuildingQuestResource(100, 42);
+  assert.equal(r.receivedDirectionalHints, true, 'the >= catches its own level, not just the one above');
+  assert.equal(r.locationWasMarkedOnMapByNPC, false, 'and the === comparison stays down at this level');
   info.questPlaceResourceHintTypeReceived = BUILDING_HINT_TYPE.LocationWasMarkedOnMap;
   info.availableForDialog = false;
   r = tree.isBuildingQuestResource(100, 42);
@@ -438,6 +494,9 @@ test('assembleTopicListLocation: type groups in enum order, each with a Previous
   assert.ok(captions.indexOf('Weapon smiths') < captions.indexOf('Taverns'));
   // Regional is ALWAYS last
   assert.equal(groups.at(-1).caption, EN.regional);
+  // ...and with NO palace and NO quest residence there is NO General
+  // group at all (the palace arm's own `length > 0` guard)
+  assert.equal(captions.includes(EN.general), false);
 });
 
 test('assembleTopicListLocation: the quest General section, its residence gates, and the palace arm', () => {
@@ -460,6 +519,30 @@ test('assembleTopicListLocation: the quest General section, its residence gates,
   assert.ok(general, 'the General group exists');
   assert.deepEqual(general.listChildItems.map((i) => i.caption), [EN.previousList, 'The Rat House'],
     'only the same-map, keyed, RESIDENCE place lands - the shop, the far house and the keyless one drop');
+  // THE KEYLESS SKIP, distinguishable: a residence DOES sit at key 0
+  // in the building list, so a mutant that stopped skipping key 0
+  // would find it and add an entry
+  const { tree: tk } = makeTree({
+    getBuildingList: () => [{ name: 'Zero House', buildingKey: 0, buildingType: BUILDING_TYPES.House1 }],
+  });
+  tk.addQuestTopicWithInfoAndRumors(1, mkPlace('_k0_', { mapId: 100, buildingKey: 0, buildingName: 'Zero House' }),
+    '_k0_', QUEST_INFO_RESOURCE_TYPE.Location, null, null);
+  tk.assembleTopicListLocation();
+  assert.equal(tk.listTopicLocation.some((g) => g.caption === EN.general), false,
+    'buildingKey 0 skips BEFORE the type lookup - never an entry, even when key 0 resolves');
+  // the availableForDialog / hasEntryInWhereIs pair is an AND
+  const { tree: ta } = makeTree({
+    getBuildingList: () => [{ name: 'The Rat House', buildingKey: 7, buildingType: BUILDING_TYPES.House2 }],
+  });
+  ta.addQuestTopicWithInfoAndRumors(1, house, '_house_', QUEST_INFO_RESOURCE_TYPE.Location, null, null);
+  const hInfo = ta.dictQuestInfo.get(1).resourceInfo.get('_house_');
+  hInfo.availableForDialog = false;   // hasEntryInWhereIs stays true
+  ta.assembleTopicListLocation();
+  assert.equal(ta.listTopicLocation.some((g) => g.caption === EN.general), false, 'hidden by a dialog link: no entry');
+  hInfo.availableForDialog = true;
+  hInfo.hasEntryInWhereIs = false;
+  ta.assembleTopicListLocation();
+  assert.equal(ta.listTopicLocation.some((g) => g.caption === EN.general), false, 'no where-is entry: no entry');
   assert.equal(general.listChildItems[1].key, '_house_');
   assert.equal(general.listChildItems[1].questID, 1);
   // with a palace and NO quest residence, the palace makes its own General
@@ -508,11 +591,76 @@ test('the regional group: knightly orders gate on region, stores search by TYPE,
   assert.equal(c2.includes('Any Temple of Akatosh'), false, 'the local temple faction removes its regional row');
   assert.equal(c2.includes('Any Tavern'), false, 'and the local tavern TYPE removes its row');
   assert.ok(c2.includes('Any Library'), 'a store type with no local building stays');
+  // a NON-matching faction/type must not remove anything (the search
+  // compares for equality, and a flipped test would strip every row)
+  const { tree: t4 } = makeTree({
+    currentRegionIndex: () => 0,
+    exteriorBuildings: () => [{ factionId: 999, buildingType: 998 }],
+  });
+  t4.assembleTopicListLocation();
+  const c4 = t4.listTopicLocation.at(-1).listChildItems.slice(1).map((i) => i.caption);
+  assert.ok(c4.includes('Any Temple of Akatosh'), 'an unrelated faction leaves the temple row standing');
+  assert.ok(c4.includes('Any Tavern'), 'and an unrelated building type leaves the store row standing');
   // an unloaded location (null rows) keeps everything
   const { tree: t3 } = makeTree({ currentRegionIndex: () => 0, exteriorBuildings: () => null });
   t3.assembleTopicListLocation();
   assert.ok(t3.listTopicLocation.at(-1).listChildItems.length > 20);
   assert.throws(() => tree.addRegionalBuildingTalkItem(99, regional), { message: 'buildingNames array text not found or idex out of range.' });
+  assert.throws(() => tree.addRegionalBuildingTalkItem(-1, regional), { message: 'buildingNames array text not found or idex out of range.' });
+});
+
+test('the same-person test: the building arm, the CASTLE questor arm, and every way it answers false', () => {
+  const partner = { isStatic: true, nameNPC: 'Sirien', buildingKey: 55 };
+  const person = mkPerson('_p_', { displayName: 'Sirien' });
+  const inBuilding = { isPlayerInside: () => true, isPlayerInsideCastle: () => false, currentBuildingKey: () => 55, talkPartner: () => partner };
+  const { tree } = makeTree(inBuilding);
+  assert.equal(tree._dialogPartnerIsSamePerson(person, 'Sirien'), true);
+  // a DIFFERENT building key: not the same person
+  const { tree: tk } = makeTree({ ...inBuilding, currentBuildingKey: () => 56 });
+  assert.equal(tk._dialogPartnerIsSamePerson(person, 'Sirien'), false);
+  // outside entirely
+  const { tree: to } = makeTree({ ...inBuilding, isPlayerInside: () => false });
+  assert.equal(to._dialogPartnerIsSamePerson(person, 'Sirien'), false);
+  // a mobile partner or a name mismatch never matches
+  const { tree: tm } = makeTree({ ...inBuilding, talkPartner: () => ({ ...partner, isStatic: false }) });
+  assert.equal(tm._dialogPartnerIsSamePerson(person, 'Sirien'), false);
+  assert.equal(tree._dialogPartnerIsSamePerson(person, 'Someone Else'), false);
+  // no partner at all (the TK-iv seam absent) reads false
+  const { tree: tn } = makeTree();
+  assert.equal(tn._dialogPartnerIsSamePerson(person, 'Sirien'), false);
+  // THE CASTLE ARM: inside a castle, a QUESTOR whose QuestorData
+  // context is the dungeon matches whatever the building key is
+  const castle = { isPlayerInside: () => true, isPlayerInsideCastle: () => true, currentBuildingKey: () => 999, talkPartner: () => partner };
+  const castleQuestor = mkPerson('_q_', { displayName: 'Sirien', isQuestor: true, questorData: { mapID: 0, buildingKey: 0, context: 'dungeon' } });
+  const { tree: tc } = makeTree(castle);
+  assert.equal(tc._dialogPartnerIsSamePerson(castleQuestor, 'Sirien'), true);
+  // ...but NOT a non-questor, and not a questor from a building context
+  assert.equal(tc._dialogPartnerIsSamePerson(person, 'Sirien'), false, 'a castle non-questor never matches');
+  const buildingQuestor = mkPerson('_q2_', { displayName: 'Sirien', isQuestor: true, questorData: { mapID: 0, buildingKey: 0, context: 'building' } });
+  assert.equal(tc._dialogPartnerIsSamePerson(buildingQuestor, 'Sirien'), false, 'the context must be the dungeon');
+});
+
+test('the headless charter: absent gate seams read the C# defaults', () => {
+  // a tree with NO host seams at all - the assemblers must still run
+  const bare = new TopicTree({});
+  assert.doesNotThrow(() => bare.assembleTopicLists());
+  assert.equal(bare.listTopicTellMeAbout.length, 36, 'two heads + 34 orgs, with empty faction names');
+  assert.equal(bare.listTopicTellMeAbout[2].caption, '', 'an absent factionName seam answers empty');
+  assert.equal(bare.listTopicLocation.at(-1).caption, EN.regional);
+  assert.equal(bare.checkNPCisInSameBuildingAsTopic(newListItem({ questionType: QUESTION_TYPE.LocalBuilding })), false,
+    'an absent isPlayerInside reads FALSE - the bail, never the walk');
+  assert.equal(bare.doesBuildingExistLocally(0x1a, false), false, 'an absent building seam answers false');
+  // and an absent isPlayerInsideBuilding takes the PALACE branch
+  const { tree } = makeTree({
+    isPlayerInsideBuilding: undefined,
+    getBuildingList: () => [
+      { name: 'A Shop', buildingKey: 8, buildingType: BUILDING_TYPES.GeneralStore },
+      { name: 'Castle Daggerfall', buildingKey: 20, buildingType: BUILDING_TYPES.Palace },
+    ],
+  });
+  tree.getBuildingList();
+  assert.equal(tree.getBuildingInfoCurrentBuildingOrPalace().name, 'Castle Daggerfall',
+    'the default is FALSE, so the castle-by-type lookup runs');
 });
 
 test('assembleTopicListPerson: the questor mapID gate, the assigned-place gate, and Thing stays empty', () => {
@@ -563,6 +711,10 @@ test('resetNPCKnowledgeInTopicListRecursively walks into item groups', () => {
   const child = newListItem({ npcKnowledgeAboutItem: NPC_KNOWLEDGE.KnowsAboutItem, npcInSameBuildingAsTopic: true });
   const group = newListItem({ type: LIST_ITEM_TYPE.ItemGroup, listChildItems: [child], npcKnowledgeAboutItem: NPC_KNOWLEDGE.KnowsAboutItem });
   const flat = newListItem({ npcKnowledgeAboutItem: NPC_KNOWLEDGE.DoesNotKnowAboutItem });
+  // a childless GROUP must reset itself and not walk into null
+  const emptyGroup = newListItem({ type: LIST_ITEM_TYPE.ItemGroup, listChildItems: null, npcKnowledgeAboutItem: NPC_KNOWLEDGE.KnowsAboutItem });
+  assert.doesNotThrow(() => tree.resetNPCKnowledgeInTopicListRecursively([emptyGroup]));
+  assert.equal(emptyGroup.npcKnowledgeAboutItem, NPC_KNOWLEDGE.NotSet);
   tree.resetNPCKnowledgeInTopicListRecursively([group, flat]);
   assert.equal(child.npcKnowledgeAboutItem, NPC_KNOWLEDGE.NotSet);
   assert.equal(child.npcInSameBuildingAsTopic, false);
@@ -609,7 +761,34 @@ test('checkNPCisInSameBuildingAsTopic: the outside bail, the local-building comp
     currentBuildingKey: () => 55, getBuildingList: () => buildings, getQuest: () => quest,
   });
   t2.getBuildingList();
-  assert.equal(t2.checkNPCisInSameBuildingAsTopic(newListItem({ questionType: QUESTION_TYPE.QuestPerson, key: '_p_', questID: 1 })), true);
+  const questItem = newListItem({ questionType: QUESTION_TYPE.QuestPerson, key: '_p_', questID: 1 });
+  assert.equal(t2.checkNPCisInSameBuildingAsTopic(questItem), true);
+  assert.equal(questItem.npcInSameBuildingAsTopic, true, 'the quest-person path stamps the item too');
+  // ...and a person whose place is a DIFFERENT building answers false
+  const elsewhere = mkPlace('_other_', { buildingKey: 77, locationName: 'Daggerfall', regionName: 'Daggerfall' });
+  const away = mkPerson('_a_', { assignedPlaceSymbol: { name: '_other_' } });
+  const qAway = mkQuest(1, [elsewhere, away]);
+  const { tree: tAway } = makeTree({
+    isPlayerInside: () => true, isPlayerInsideBuilding: () => true,
+    currentBuildingKey: () => 55, getBuildingList: () => buildings, getQuest: () => qAway,
+  });
+  tAway.getBuildingList();
+  const awayItem = newListItem({ questionType: QUESTION_TYPE.QuestPerson, key: '_a_', questID: 1 });
+  assert.equal(tAway.checkNPCisInSameBuildingAsTopic(awayItem), false, 'a different building key fails the compare');
+  assert.equal(awayItem.npcInSameBuildingAsTopic, false, 'and the item is never stamped');
+  // a place in another LOCATION or REGION fails before the key compare
+  for (const over of [{ locationName: 'Tulune' }, { regionName: 'Wayrest' }]) {
+    const far = mkPlace('_far_', { buildingKey: 55, locationName: 'Daggerfall', regionName: 'Daggerfall', ...over });
+    const farPerson = mkPerson('_fp_', { assignedPlaceSymbol: { name: '_far_' } });
+    const { tree: tf } = makeTree({
+      isPlayerInside: () => true, isPlayerInsideBuilding: () => true,
+      currentBuildingKey: () => 55, getBuildingList: () => buildings,
+      getQuest: () => mkQuest(1, [far, farPerson]),
+    });
+    tf.getBuildingList();
+    assert.equal(tf.checkNPCisInSameBuildingAsTopic(newListItem({ questionType: QUESTION_TYPE.QuestPerson, key: '_fp_', questID: 1 })), false,
+      `the ${Object.keys(over)[0]} gate rejects before the building compare`);
+  }
   // a person with NO place at all (The Underking) answers false
   const nowhere = mkPerson('_u_');
   const q3 = mkQuest(1, [nowhere]);
