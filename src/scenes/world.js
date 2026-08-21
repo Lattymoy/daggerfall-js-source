@@ -6,6 +6,7 @@
 // locations appear on their pixels, and crossing a pixel boundary
 // recenters the world (streamingWorld.js).
 
+import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, makeLookGate } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
@@ -50,6 +51,7 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold } from '../sy
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
@@ -65,7 +67,8 @@ import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the sho
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { StreamingWorldState, worldCoordToMapPixel } from '../world/streamingWorld.js';   // F-slice: worldCoordToMapPixel for the travel start pixel
+import { StreamingWorldState, worldCoordToMapPixel } from '../world/streamingWorld.js';
+import { getBool, getInt } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
@@ -172,7 +175,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
   }
 
-  const startLoc = maps.getLocationByName(regionName, locationName);
+  // U31 / THE CLASSIC START. StartGameBehaviour (:371-401) does not
+  // resolve the start by NAME - it reads a map pixel out of settings
+  // (StartCellX/StartCellY, 109/158 = Privateer's Hold) and asks the
+  // world what location is there. ?classic takes that path so the new
+  // game begins where Daggerfall begins; every dev boot keeps the
+  // region/loc names it has always used.
+  //
+  // NEVER TRAPS: a start cell with no location falls back to the named
+  // location rather than throwing the player at a black screen.
+  let startLoc = null;
+  if (params.has('classic')) {
+    const cell = `${getInt('Startup', 'StartCellX')},${getInt('Startup', 'StartCellY')}`;
+    startLoc = locationIndex.get(cell) ?? null;
+    if (!startLoc) console.warn(`[world] start cell ${cell} holds no location; falling back to ${regionName}/${locationName}`);
+  }
+  if (!startLoc) startLoc = maps.getLocationByName(regionName, locationName);
   if (!startLoc) throw new Error(`location not found: ${regionName}/${locationName}`);
   const startPixel = longitudeLatitudeToMapPixel(
     startLoc.mapTableData.longitude, startLoc.mapTableData.latitude);
@@ -446,6 +464,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     for (const f of nature) addFlat(natureArchive, f.record, f.x, f.y, f.z);
 
+    const flatAnims = new FlatAnimator();   // FA1
     const batches = [];
     for (const [k, centers] of groups) {
       const [archive, record] = k.split('_').map(Number);
@@ -453,11 +472,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (record >= t.recordCount) continue;
       uploadRecord(archive, record);
       const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
-      batches.push(renderer.createBillboardBatch(archive, record, size, centers));
+      const batch = renderer.createBillboardBatch(archive, record, size, centers);
+      armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
+      batches.push(batch);
     }
 
     built.set(key, {
-      px, py, terrain, tilemapTex, groundArchive, models, batches, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      px, py, terrain, tilemapTex, groundArchive, models, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       population, locOrigin, personBatches,   // T2 towns
       locBlocks,   // T3d: the Where-is directory's block scan
 
@@ -866,7 +887,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.
   const magic = createPlayerMagic({
-    renderer, audio, getTexture, uploadRecord,
+    renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes.interiorCollider) ? modes.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
     playerSinks: {
@@ -929,12 +950,27 @@ export async function bootWorld(canvas, renderer, params, status) {
       }));
     },
   });
-  const toggleSpellbook = () => {
-    if (townTalk.overlayActive || !spellsByIndex) return;
-    townTalk.showOverlay(new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
+  // U32: ONE construction for the world inventory and spellbook - F6
+  // and Backspace open them, and so do the character sheet's buttons.
+  const makeInventoryWindow = () => new NativeInventoryWindow({
+    openBook: openBookHook,   // B1: the use-mode book arm
+    items: () => (playerEntity.items ??= []),
+    wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
+    entity: playerEntity,
+    icons: { getTexture, uploadRecord, textures: renderer.textures },
+    rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
+    nowMinute: () => Math.floor(playerTicker.classicMinutes),
+    onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
+  });
+  const makeSpellbookWindow = () => (spellsByIndex
+    ? new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
       ready: (sp) => magic.readySpell(sp),
       castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-    }));
+    })
+    : null);
+  const toggleSpellbook = () => {
+    if (townTalk.overlayActive || !spellsByIndex) return;
+    townTalk.showOverlay(makeSpellbookWindow());
   };
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let playerSpawned = false;
@@ -1146,22 +1182,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (FLAGGED); swallowing the browser reload is not optional.
     if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
     if (e.code === 'F5' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      townTalk.showOverlay(new CharSheet(playerEntity));
+      townTalk.showOverlay(new CharSheet(playerEntity, charSheetHooks({
+        entity: playerEntity,
+        artDeps: { renderer, fetchBytes, palette },
+        inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
+        spellbook: makeSpellbookWindow,
+        // Q4-v: the live machine's log walk and the player's notebook
+        questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
+        notebook: () => questBridge?.notebook ?? null,
+      })));
       return;
     }
     // U8d: F6 opens the classic inventory (DFU's default Inventory
     // binding; same host rule as F5).
     if (e.code === 'F6' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && inventoryArtLoaded()) {
-      townTalk.showOverlay(new NativeInventoryWindow({
-        openBook: openBookHook,   // B1: the use-mode book arm
-        items: () => (playerEntity.items ??= []),
-        wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
-        entity: playerEntity,
-        icons: { getTexture, uploadRecord, textures: renderer.textures },
-        rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
-        nowMinute: () => Math.floor(playerTicker.classicMinutes),
-        onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
-      }));
+      townTalk.showOverlay(makeInventoryWindow());
       return;
     }
     // M2: the spellbook (Backspace, the DFU default) + the cast key.
@@ -1368,6 +1403,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const questWorld = {
     maps,
     getBlock: (name) => blocks.getBlockByName(name),
+    // NPC1: the =symbol_ macro's flat caption. The quest machine has
+    // declared this seam since Q2 and nothing production-side answered
+    // it - every =person_ expanded to nothing. FLATS.CFG answers it now.
+    flatCaption: (archive, record) => pipeline.flatCaption(archive, record),
     // PlayerGPS.CurrentLocation is the location of the CURRENT MAP
     // PIXEL (in or out of the walls); IsPlayerInLocationRect is the
     // music director's own live rect flag.
@@ -1715,6 +1754,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       return { ...d, regionIndex: dfLoc.regionIndex, name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };
     },
   });
+  // U31 / StartGameBehaviour :392-401. The streamer is already at the
+  // start pixel; put the player INSIDE that location's dungeon, which
+  // is where a new Daggerfall character opens their eyes. DFU gates
+  // this on the same two things: the setting, and the location really
+  // having a dungeon.
+  //
+  // NEVER TRAPS: if the entrance cannot be found the player is left
+  // standing on the exterior at the dungeon's door rather than in a
+  // half-built mode, and the reason is said out loud.
+  if (params.has('classic') && getBool('Startup', 'StartInDungeon') && startLoc.hasDungeon) {
+    status('entering the dungeon');
+    const entered = await modes.startInDungeon();
+    if (!entered) console.warn('[world] no dungeon entrance at the start cell; starting outside');
+  }
   if (shotMode) { modes.installShotProbes(); installTownProbes(); }
   if (shotMode) window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
   if (shotMode) {
@@ -2032,6 +2085,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.drawTerrain(p.terrain, pixelMatrix,
         renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
       for (const m of p.models) renderer.drawMesh(m.gpu, multiply(pixelMatrix, m.local), p.texRemap);
+      // FA1: the flats that move. The animator is PER PIXEL because
+      // the batches are - a pixel evicted takes its clocks with it -
+      // so the tick rides the same walk that collects the batches.
+      p.flatAnims.tick(dt);
       for (const b of p.batches) {
         b.origin = t;
         allBatches.push(b);
@@ -2094,6 +2151,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, { playerInvisible: isInvisible(playerEntity) });
       livePersonBatches.push(...exteriorFoes.batches());
     }
+    droppedLoot.tickFlats(dt);   // FA1 slice 3
     livePersonBatches.push(...droppedLoot.batches());   // U8e: the ground piles
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, new Float32Array([0, 1, 0]));
     if (precip) {

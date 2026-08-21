@@ -4,6 +4,7 @@
 // selectable with ?region=<name>&loc=<name>. Ground archive comes from the
 // location's climate (CLIMATE.PAK -> GetWorldClimateSettings).
 
+import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, makeLookGate } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
@@ -55,6 +56,7 @@ import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
@@ -322,6 +324,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     [...flatGroups.keys()].map((k) => Number(k.split('_')[0]))
   );
   await Promise.all([...flatArchives].map((a) => getTexture(a)));
+  const flatAnims = new FlatAnimator();   // FA1
   const billboardBatches = [];
   let flatCount = 0;
   for (const [key, centers] of flatGroups) {
@@ -330,7 +333,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (!t || record >= t.recordCount) continue;
     uploadRecord(archive, record);
     const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
-    billboardBatches.push(renderer.createBillboardBatch(archive, record, size, centers));
+    const batch = renderer.createBillboardBatch(archive, record, size, centers);
+    armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
+    billboardBatches.push(batch);
     flatCount += centers.length;
   }
 
@@ -573,7 +578,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // the S24 InLight/InDarkness arms go live here.
   const magic = createPlayerMagic({
     onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-    renderer, audio, getTexture, uploadRecord,
+    renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes.interiorCollider) ? modes.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
     playerSinks: {
@@ -600,12 +605,28 @@ export async function bootExterior(canvas, renderer, params, status) {
       ? { inside: false, day: !isNight(minuteNow()) }
       : { inside: true, day: false }),
   });
-  const toggleSpellbook = () => {
-    if (townTalk.overlayActive || !spellsByIndex) return;
-    townTalk.showOverlay(new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
+  // U32: ONE construction for the town inventory - F6 opens it, and so
+  // does the character sheet's INVENTORY button. Two `new` sites would
+  // be two things to keep in step.
+  const makeInventoryWindow = () => new NativeInventoryWindow({
+    openBook: openBookHook,   // B1: the use-mode book arm
+    items: () => (playerEntity.items ??= []),
+    wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
+    entity: playerEntity,
+    icons: { getTexture, uploadRecord, textures: renderer.textures },
+    rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
+    nowMinute: () => Math.floor(playerTicker.classicMinutes),
+    onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
+  });
+  const makeSpellbookWindow = () => (spellsByIndex
+    ? new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
       ready: (sp) => magic.readySpell(sp),
       castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-    }));
+    })
+    : null);
+  const toggleSpellbook = () => {
+    if (townTalk.overlayActive || !spellsByIndex) return;
+    townTalk.showOverlay(makeSpellbookWindow());
   };
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let zPrevW = false;   // the ReadyWeapon (Z) edge
@@ -670,22 +691,18 @@ export async function bootExterior(canvas, renderer, params, status) {
     // (FLAGGED); swallowing the browser reload is not optional.
     if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
     if (e.code === 'F5' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      townTalk.showOverlay(new CharSheet(playerEntity));
+      townTalk.showOverlay(new CharSheet(playerEntity, charSheetHooks({
+        entity: playerEntity,
+        artDeps: { renderer, fetchBytes, palette },
+        inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
+        spellbook: makeSpellbookWindow,
+      })));
       return;
     }
     // U8d: F6 opens the classic inventory (DFU's default Inventory
     // binding; same host rule as F5).
     if (e.code === 'F6' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && inventoryArtLoaded()) {
-      townTalk.showOverlay(new NativeInventoryWindow({
-        openBook: openBookHook,   // B1: the use-mode book arm
-        items: () => (playerEntity.items ??= []),
-        wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
-        entity: playerEntity,
-        icons: { getTexture, uploadRecord, textures: renderer.textures },
-        rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
-        nowMinute: () => Math.floor(playerTicker.classicMinutes),
-        onDrop: (items) => droppedLoot.dropPile(items, dropFeet()),   // U8e: OnPop mints the world pile
-      }));
+      townTalk.showOverlay(makeInventoryWindow());
       return;
     }
     // M2: the DFU spellbook binding (Backspace) and our cast key -
@@ -1155,6 +1172,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // geometry, as DFU misses are).
     arrows.update(dt);
     arrows.draw(renderer, texRemap);
+    flatAnims.tick(dt);   // FA1: the town's fires and braziers
     renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));   // M2: spell missiles in flight
     // T1: the wandering townsfolk - population ticks at 10Hz, the
@@ -1192,6 +1210,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       const guardBatches = cityGuards.update(townTalk.overlayActive ? 0 : dt,
         walkMode ? player.pos : cam.pos, eye, { playerInvisible: isInvisible(playerEntity) });
       personBatches.push(...guardBatches);
+      droppedLoot.tickFlats(dt);   // FA1 slice 3
       personBatches.push(...droppedLoot.batches());   // U8e: the ground piles
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, new Float32Array([0, 1, 0]));
     }

@@ -20,6 +20,7 @@
 // The dungeon host rides piles through collectWorld/applyWorld
 // via restorePiles below (AUDIT 23).
 
+import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1 slice 3
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../systems/loot.js';
 
@@ -33,6 +34,7 @@ export { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS };
  *  is the icon roll seam - UnityEngine.Random.Range over the list). */
 export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pick }) {
   const piles = [];
+  const flatAnims = new FlatAnimator();   // FA1 slice 3: the rule lives in ONE place
   let _nextId = 0;   // AUDIT 17e F28: stable ids - keys must survive releaseEmptied's splice
   const roll = pick ?? (() => Math.floor(Math.random() * RANDOM_TREASURE_ICONS.length));
 
@@ -43,7 +45,14 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
       uploadRecordFrame(RANDOM_TREASURE_ARCHIVE, pile.record, 0);
       const size = scaledBillboardSize(t.getSize(pile.record), t.getScale(pile.record));
       pile.size = size;   // AUDIT 17e F23: kept so a recenter can rebuild
-      pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, `${pile.record}#0`, size, [[pile.pos[0], pile.pos[1], pile.pos[2]]]);
+      // FA1 slice 3: the record is BARE and the frame is a field, so
+      // the draw builds `record#frame` the one way. Hand-writing the
+      // `#0` into the record was why these sites could not be armed at
+      // slice 2 - a frame index appended to a record that already ends
+      // in one reads `5#0#2`.
+      pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, pile.record, size, [[pile.pos[0], pile.pos[1], pile.pos[2]]]);
+      pile.batch.frame = 0;
+      armFlatAnim(pile.batch, t, RANDOM_TREASURE_ARCHIVE, pile.record, flatAnims, uploadRecordFrame);
     }).catch(() => {});
   }
 
@@ -71,7 +80,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     for (let i = piles.length - 1; i >= 0; i--) {
       const p = piles[i];
       if (p.pixelKey !== pixelKey) continue;
-      if (p.batch) renderer.destroyBillboardBatch(p.batch);
+      if (p.batch) { flatAnims.remove(p.batch); renderer.destroyBillboardBatch(p.batch); }   // FA1: the clock goes with the batch
       piles.splice(i, 1);
     }
   }
@@ -117,6 +126,10 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   }
 
   // emptied piles vanish (the verbatim removal) - both reads filter
+  /** FA1 slice 3: `tick` is separate from `batches` on purpose - a
+   *  getter that also advanced a clock would run at whatever rate its
+   *  callers happened to ask, and two hosts ask twice in one frame. */
+  const tickFlats = (dt) => flatAnims.tick(dt);
   const batches = () => piles.filter((p) => p.items.length && p.batch).map((p) => p.batch);
   function lootTargets() {
     const out = [];
@@ -155,10 +168,11 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
       // the centers are baked into a STATIC_DRAW buffer - rebuild
       if (p.batch) {
         renderer.destroyBillboardBatch(p.batch);
-        p.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, `${p.record}#0`, p.size, [[p.pos[0], p.pos[1], p.pos[2]]]);
+        p.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, p.record, p.size, [[p.pos[0], p.pos[1], p.pos[2]]]);
+        p.batch.frame = 0;
       }
     }
   }
 
-  return { dropPile, restorePiles, collectPixel, snapshotWorld, restoreWorld, batches, lootTargets, pileFor, releaseEmptied, offsetAll, _piles: piles };
+  return { dropPile, restorePiles, collectPixel, snapshotWorld, restoreWorld, batches, tickFlats, lootTargets, pileFor, releaseEmptied, offsetAll, _piles: piles };
 }

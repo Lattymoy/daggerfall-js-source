@@ -125,8 +125,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           uploadRecordFrame(ct.archive, ct.record, 0);
           const sz = scaledBillboardSize(t.getSize(ct.record), t.getScale(ct.record));
           const pos = [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]];
-          const batch = renderer.createBillboardBatch(ct.archive, `${ct.record}#0`, sz ?? size, [pos]);
-          corpseBatches.push({ batch, archive: ct.archive, record: `${ct.record}#0`, size: sz ?? size, pos });
+          const batch = renderer.createBillboardBatch(ct.archive, ct.record, sz ?? size, [pos]);
+          batch.frame = 0;   // FA1 slice 3: bare record + a frame FIELD, one key rule
+          corpseBatches.push({ batch, archive: ct.archive, record: ct.record, size: sz ?? size, pos });
         }).catch(() => {});
       }
       return;
@@ -292,6 +293,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       c.pos[0] += offset[0]; c.pos[1] += offset[1]; c.pos[2] += offset[2];
       renderer.destroyBatch(c.batch);
       c.batch = renderer.createBillboardBatch(c.archive, c.record, c.size, [c.pos]);
+      c.batch.frame = 0;   // FA1 slice 3: a REBUILT batch is a new object - it needs the frame too
     }
   }
 

@@ -17,6 +17,16 @@ Reference source: Daggerfall Unity `DaggerfallConnect` namespace (C#), plus dfwo
 | 7 | MAPS | regions, locations | **complete** (`src/formats/mapsFile.js`, `pakFile.js`) |
 | 8 | SND / music | audio containers | **complete** for SFX (`src/formats/sndFile.js`); music (HMI/XMI) routed to Audio arc (approved, Port-Ledger A) |
 
+Post-close additions, each with a gate of its own (the arc is COMPLETE for
+the eight it was scoped to; a slice that needs a new format adds it here):
+
+| # | Reader | Source files | Status |
+|---|---|---|---|
+| 9 | SKY | painted skies | **complete** (`src/formats/skyFile.js`, R4) |
+| 10 | GFX | the chargen scroll frames | **complete** (`src/formats/gfxFile.js`, U18) |
+| 11 | FLIC | .CEL/.FLC animations - Daggerfall's flats are Autodesk FLICs, a different format from the .VID movies | **complete** (`src/formats/flcFile.js`, F1) |
+| 12 | FLATS.CFG | per-billboard caption + TFAC00I0.RCI face index | **complete** (`src/formats/flatsFile.js`, NPC1) |
+
 ## Validation gate (every reader)
 
 - Node test file per reader in `test/`, run against real ARENA2 data via a local uncommitted `data/` path (env var `ARENA2_PATH`).

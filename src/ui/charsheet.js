@@ -124,16 +124,71 @@ export const CHARSHEET_RECTS = Object.freeze({
 });
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
+/** The four buttons that lead somewhere (:134-204). */
+export const NAV_BUTTONS = Object.freeze(['inventory', 'spellbook', 'logbook', 'history']);
+
+/** What the sheet says when a host cannot open one. NEVER a silent
+ *  swallow, and never a word about the port's own gaps - the same rule
+ *  the settings screen follows. */
+const NO_WINDOW_HERE = Object.freeze({
+  inventory: 'Your pack is out of reach here.',
+  spellbook: 'Your spellbook is out of reach here.',
+  logbook: 'Your logbook is out of reach here.',
+  history: 'Your history is out of reach here.',
+});
+
 /** The classic read-only sheet (F5). Toggle-closed by the same key
  *  or Escape; keys 1-4 pop the skill groups (interim text panels
  *  over the classic button rects' function). */
 export class CharSheet {
-  constructor(entity) {
+  /** U32: the four NAVIGATION buttons finally lead somewhere.
+   *
+   *  DFU PUSHES those windows onto the UI stack, so the sheet stays
+   *  underneath and closing the child returns to it. The port's hosts
+   *  each hold ONE activeOverlay slot, so rather than teach four hosts
+   *  a stack - and risk them drifting apart, which is exactly what the
+   *  FOUR HOSTS rule exists to stop - the sheet OWNS its child and
+   *  delegates to it. The host still sees one window; the player gets
+   *  DFU's push and pop.
+   *
+   *  The factories come from the host because only the host knows how
+   *  to build each window (a dungeon's inventory can carry a loot
+   *  target; a town's cannot). A hook the host does not pass is a
+   *  window that host cannot open, and the sheet SAYS SO rather than
+   *  eating the click - which is what it did for all four until now. */
+  constructor(entity, hooks = {}) {
     this.entity = entity; this.done = false; this.page = 0;
+    this.hooks = hooks;
+    this.child = null;      // the pushed window, or null
+    this.notice = null;     // why a button did nothing, when it could not
     this.isChoiceWindow = true;   // U8a: receive RAW codes through townTalk (digit pages + F5 toggle)
     refreshPaperDoll(entity);     // compose fresh on open, as the inventory does
   }
-  input(action) {
+
+  /** The pushed window's lifetime: a finished child pops, revealing
+   *  the sheet again. Returns true while one is still up. */
+  _stepChild() {
+    if (this.child?.done) this.child = null;
+    return !!this.child;
+  }
+
+  /** PushWindow. A missing or refused hook is REPORTED, never
+   *  swallowed. */
+  _open(which) {
+    this.notice = null;
+    const w = this.hooks[which]?.();
+    if (!w) { this.notice = NO_WINDOW_HERE[which]; return false; }
+    this.child = w;
+    return true;
+  }
+
+  tick(dt) { if (this.child) { this.child.tick?.(dt); this._stepChild(); } }
+  wheel(dir) { if (this.child) { this.child.wheel?.(dir); this._stepChild(); return true; } return false; }
+
+  input(action, e = null) {
+    // A pushed window owns the keyboard until it closes.
+    if (this.child) { this.child.input?.(action, e); this._stepChild(); return; }
+    this.notice = null;
     // Both vocabularies: input.js actions (dungeon routing) and raw
     // codes (the exterior hosts' overlay seam).
     const pages = { 1: 1, 2: 2, 3: 3, 4: 4, Digit1: 1, Digit2: 2, Digit3: 3, Digit4: 4 };
@@ -148,17 +203,29 @@ export class CharSheet {
    *  button was inert and the pointerdown fell through to the host's
    *  requestLook. Every DFU button rect is answered or consumed. */
   click(vx, vy) {
+    if (this.child) {
+      if (this.child.clickNative) this.child.clickNative(vx, vy);
+      else this.child.click?.(vx, vy);
+      this._stepChild();
+      return true;
+    }
     const R = CHARSHEET_RECTS;
     if (inRect(R.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; return true; }
     const skills = [R.primarySkills, R.majorSkills, R.minorSkills, R.miscSkills];
     for (let i = 0; i < skills.length; i++) {
       if (inRect(skills[i], vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.input(i + 1); return true; }
     }
-    // The remaining DFU buttons (name/level/gold/health/affiliations,
-    // inventory/spellbook/logbook/history) pend their popups; consume
-    // the click so it never escapes the window. They still CLICK -
-    // every DaggerfallCharacterSheetWindow button assigns ButtonClick
-    // (:772-952).
+    // U32: THE FOUR NAVIGATION BUTTONS. These were hit-tested,
+    // consumed, and did NOTHING - the reported bug. Each one pushes its
+    // window now, and two of them (inventory, spellbook) were built and
+    // working the whole time with no caller.
+    for (const which of NAV_BUTTONS) {
+      if (inRect(R[which], vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._open(which); return true; }
+    }
+    // The remaining DFU buttons (name/level/gold/health/affiliations)
+    // pend their popups; consume the click so it never escapes the
+    // window. They still CLICK - every DaggerfallCharacterSheetWindow
+    // button assigns ButtonClick (:772-952).
     if (Object.values(R).some((r) => inRect(r, vx, vy))) {
       audio.playOneShot(SOUND.ButtonClick, 1);
       return true;
@@ -167,6 +234,10 @@ export class CharSheet {
   }
 
   draw(renderer, canvas, font, s) {
+    // A pushed window draws INSTEAD of the sheet - DFU's stack puts it
+    // on top, and the sheet's own art would show through a window that
+    // does not cover the whole panel otherwise.
+    if (this.child) return this.child.draw(renderer, canvas, font, s);
     if (!_art) return this._drawFallback(renderer, canvas, font, s);
     const e = this.entity;
     const m = nativeMetrics(canvas);
@@ -182,6 +253,9 @@ export class CharSheet {
     drawImg(renderer, _art, m, 0, 0);
     // The verbatim label geometry (DaggerfallCharacterSheetWindow)
     const label = (text, x, y, opts) => shadowText(renderer, font, String(text), m, x, y, opts);
+    // U32: why a button did nothing, when it could not. Drawn over the
+    // sheet's own art, cleared by the next key or click.
+    if (this.notice) label(this.notice, 8, 190, { color: [1, 0.5, 0.4, 1] });
     label(e.name ?? '', 41, 4);
     label(e.race ?? 'Breton', 41, 14);
     label(e.career?.name ?? '', 46, 24);

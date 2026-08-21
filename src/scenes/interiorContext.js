@@ -16,6 +16,7 @@
 //   - a fresh Collider over every placement and action-door mesh,
 //   - enter markers and interior static doors for the landing math.
 
+import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { layoutInterior, INTERIOR_MARKER } from '../world/interiorLayout.js';
 import { multiply, transformPoint } from '../world/mat4.js';
 import { collectInteriorLights } from '../world/interiorLights.js';
@@ -66,7 +67,7 @@ export function attachInteriorDoorSounds(actions, sfx = audio) {
  *   enterMarkers, doors, collider, destroy()}}
  */
 export async function buildInteriorContext(deps, dfBlock, blockIndex, recordIndex, climateBase, season, origin = null, opts = {}) {
-  const { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord, palette } = deps;
+  const { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette } = deps;
   // P8: verbatim PlayerEnterExit.TransitionInterior parenting - the
   // interior sits at ownerPosition + buildingMatrix (the entered
   // building model's WORLD matrix), so every coordinate the context
@@ -198,6 +199,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const charDraws = [];
   let _raceMeshes = null;   // AUDIT 23 (hosts-16)
   let animateChars = null; // set when the voxel body builds
+  const flatAnims = new FlatAnimator();   // FA1
   const billboardBatches = [];
   const flatGroups = new Map();
   if (opts.voxelfolk && people.length) {
@@ -252,7 +254,9 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     if (!t || record >= t.recordCount) continue;
     uploadRecord(archive, record);
     const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
-    billboardBatches.push(renderer.createBillboardBatch(archive, record, size, centers));
+    const batch = renderer.createBillboardBatch(archive, record, size, centers);
+    armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
+    billboardBatches.push(batch);
   }
 
   // U23: the STATIC NPC's own billboard extent, which the activation
@@ -297,8 +301,8 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     actions,
     dynamicDraws,
     billboardBatches,
+    flatAnims,   // FA1: the host ticks the flats it draws
     parentPt,   // Q4-v: the quest mount parents marker positions through the same transform
-
     lights,
     texRemap,
     markers,

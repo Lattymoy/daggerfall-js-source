@@ -5,6 +5,7 @@
 // Caches are per-scene and never destroyed (the world's contract).
 
 import { TextureFile } from '../formats/textureFile.js';
+import { FlatsFile } from '../formats/flatsFile.js';   // NPC1: captions + portrait indices
 import { isExteriorWindow } from '../world/climateSwaps.js';
 import { dfMeshToModel } from '../world/meshReader.js';
 import { fetchBytes, texName } from './shared.js';
@@ -13,6 +14,27 @@ import { fetchBytes, texName } from './shared.js';
 export function createDataPipeline({ renderer, arch, palette }) {
   const textureFiles = new Map();
   const texturePromises = new Map();
+
+  // NPC1: FLATS.CFG, warmed once and shared. It answers two questions
+  // about any billboard in the world - what the flat is CALLED (the
+  // quest macro =symbol_ resolves through `flatCaption`, a seam the
+  // quest machine declared with no production provider until now) and
+  // which TFAC00I0.RCI face belongs to it, which is the portrait the
+  // talk window draws. NEVER TRAPS: a missing or malformed CFG costs
+  // captions and portraits, not the scene.
+  let flats = null;
+  let flatsPromise = null;
+  const loadFlats = () => (flatsPromise ??= (async () => {
+    try {
+      flats = new FlatsFile().load(await fetchBytes('FLATS.CFG'), 'FLATS.CFG');
+    } catch (e) {
+      console.warn('[flats] FLATS.CFG unavailable; flats keep no caption and people no portrait', e);
+      flats = new FlatsFile();
+    }
+    return flats;
+  })());
+  const flatCaption = (archive, record) => flats?.caption(archive, record) ?? null;
+  const flatFaceIndex = (archive, record) => flats?.faceIndex(archive, record) ?? -1;
   async function getTexture(archive) {
     if (textureFiles.has(archive)) return textureFiles.get(archive);
     if (!texturePromises.has(archive)) {
@@ -92,5 +114,7 @@ export function createDataPipeline({ renderer, arch, palette }) {
     gpuMeshes.set(modelIdNum, gpu);
     return gpu;
   }
-  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, gpuMeshes, cpuModels, palette };
+  loadFlats();   // warm it with the scene; the getters answer null until it lands
+  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, gpuMeshes, cpuModels, palette,
+    loadFlats, flatCaption, flatFaceIndex, flatsFile: () => flats };
 }
