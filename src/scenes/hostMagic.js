@@ -19,7 +19,9 @@
 //
 // deps:
 //   renderer, audio           - batches + the cast/element sounds
-//   getTexture, uploadRecord  - the missile billboard mount
+//   getTexture, uploadRecord, uploadRecordFrame  - the missile billboard
+//     mount and its animation frames (FA1); a host that passes no frame
+//     uploader gets a still missile rather than a crash
 //   collider                  - raycast for walls + touch LOS
 //   playerEntity, playerSinks - the one player + its effect sinks
 //   say(line)                 - the host's HUD text
@@ -33,6 +35,7 @@
 //                               so exteriors answer day/night live
 //                               where the dungeon answers a constant.
 
+import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
   MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
@@ -46,7 +49,7 @@ import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { OneShotLatch } from '../ui/input.js';
 
 export function createPlayerMagic({
-  renderer, audio, getTexture, uploadRecord, collider,
+  renderer, audio, getTexture, uploadRecord, uploadRecordFrame = null, collider,
   playerEntity, playerSinks, say, surfacePlayer,
   foes, foeSinks, absorbCtx,
   onTeleport = null,   // TP-slice: the Teleport effect's prompt seam (the host owns the box)
@@ -62,6 +65,7 @@ export function createPlayerMagic({
   // own spell lands back on them (EntityEffectManager.cs:600-604).
   let lastCastCost = 0;
   const missiles = [];
+  const flatAnims = new FlatAnimator();   // FA1: the missile flats
   const batches = [];
 
   /** Every spell landing ON THE PLAYER rides this: the S19 Paralyze
@@ -218,15 +222,28 @@ export function createPlayerMagic({
     const archive = missileArchive(m.spell.element);
     const t = await getTexture(archive);
     if (!t) return;
+    // The arrow's bug, twice more: this is async and `m.batch = false`
+    // is the in-flight guard, so a missile that retires while its
+    // texture warms leaves retireMissile's splice nothing to find -
+    // and then the microtask pushes a batch for a DEAD missile that
+    // nothing ever removes, drawn at its fire position for the rest of
+    // the scene. Check before publishing.
+    if (m.dead) { m.batch = null; return; }
     uploadRecord(archive, 0);
     const size = scaledBillboardSize(t.getSize(0), t.getScale(0));
     m.firePos = [...m.pos];
     m.batch = renderer.createBillboardBatch(archive, 0, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
+    // FA1 slice 2: the missile flat ANIMATES while it flies -
+    // DaggerfallMissile.cs:605 sets BillboardFramesPerSecond (5) on the
+    // billboard it makes at :601. Frozen on frame 0, a fireball was a
+    // photograph of a fireball.
+    armFlatAnim(m.batch, t, archive, 0, flatAnims, uploadRecordFrame, { fps: MISSILE_FPS });
     batches.push(m.batch);
   }
 
   function retireMissile(m) {
     if (m.batch) {
+      flatAnims.remove(m.batch);   // FA1
       const bi = batches.indexOf(m.batch);
       if (bi >= 0) batches.splice(bi, 1);
       renderer.destroyBillboardBatch(m.batch);
@@ -239,6 +256,10 @@ export function createPlayerMagic({
    *  magic-2, DaggerfallMissile.cs:399-402), advance, and the
    *  mid-capsule foe contact (rangeType 4 explodes, 2 applies). */
   function update(dt, playerFeet) {
+    // FA1: the missile flats' clock rides the module's OWN update, not
+    // each host's frame - hostMagic is shared by three of them and a
+    // per-host tick is the four-hosts shape waiting to happen.
+    flatAnims.tick(dt);
     for (const m of missiles) {
       if (m.dead) continue;
       ensureMissileBatch(m);

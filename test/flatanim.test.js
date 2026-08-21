@@ -10,7 +10,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   FlatAnim, FlatAnimator, armFlatAnim, flatFps, isAnimatedFlat,
-  GENERAL_FPS, ANIMAL_FPS, LIGHT_FPS, ANIMALS_TEXTURE_ARCHIVE, LIGHTS_TEXTURE_ARCHIVE,
+  GENERAL_FPS, ANIMAL_FPS, LIGHT_FPS, MISSILE_FPS, IMPACT_FPS,
+  ANIMALS_TEXTURE_ARCHIVE, LIGHTS_TEXTURE_ARCHIVE,
 } from '../src/render/flatAnimation.js';
 
 test('FA1: the three speeds and the two archives that claim them', () => {
@@ -173,4 +174,49 @@ test('FA1: all FOUR static-flat sites arm, and every host that DRAWS them ticks'
   assert.match(read('render/renderer.js'),
     /b\.frame == null \? `\$\{b\.archive\}_\$\{b\.record\}` : `\$\{b\.archive\}_\$\{b\.record\}#\$\{b\.frame\}`/,
     'the draw ignores the frame');
+});
+
+// ---------------------------------------------------------------
+// FA1 slice 2: the missile flats, and the FPS override's precedence
+// ---------------------------------------------------------------
+test('FA1: a missile carries its OWN speed, and the named archives still beat it', () => {
+  // DaggerfallMissile.cs:44-45 - BillboardFramesPerSecond 5 for the
+  // missile in flight, ImpactBillboardFramesPerSecond 15 for the
+  // contact flash (:367-368, record 1 and ONE SHOT at :591-607).
+  assert.deepEqual([MISSILE_FPS, IMPACT_FPS], [5, 15]);
+  // AnimateBillboard reads `speed = FramesPerSecond` FIRST and then
+  // lets the two named archives overwrite it, so the precedence runs
+  // archive-over-billboard, not the other way round. A missile flat
+  // that happened to live in the lights archive would take 12.
+  assert.equal(flatFps(376, IMPACT_FPS), 15, 'an ordinary archive takes the billboard rate');
+  assert.equal(flatFps(LIGHTS_TEXTURE_ARCHIVE, IMPACT_FPS), LIGHT_FPS, 'LIGHTS overrides it');
+  assert.equal(flatFps(ANIMALS_TEXTURE_ARCHIVE, IMPACT_FPS), ANIMAL_FPS, 'and so does ANIMALS');
+  assert.equal(flatFps(376), GENERAL_FPS, 'and with no rate given, the general one');
+  // the rate reaches the clock
+  const impact = new FlatAnim(376, 4, true, IMPACT_FPS);
+  assert.equal(impact.fps, 15);
+  assert.equal(impact.tick(1 / 15), 1, 'one tick at fifteen is one frame');
+});
+
+test('FA1: every host that MOUNTS a missile arms it and drops its clock on retire', () => {
+  // Missile flats froze on frame 0 - a fireball was a photograph of a
+  // fireball. Both mount sites are the same six lines in two files,
+  // which is exactly how one of them gets fixed and the other does not.
+  const read = (f) => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8');
+  for (const host of ['scenes/dungeonContext.js', 'scenes/hostMagic.js']) {
+    const src = read(host);
+    assert.match(src, /armFlatAnim\(m\.batch, t, archive, 0, flatAnims, uploadRecordFrame, \{ fps: MISSILE_FPS \}\)/,
+      `${host} mounts a missile flat it never animates`);
+    assert.match(src, /flatAnims\.remove\(m\.batch\)/,
+      `${host} destroys a missile batch and leaves its clock running`);
+    // and the ORPHAN window the arrow taught us about: the mount is
+    // async, so a missile that retires while its texture warms must
+    // not publish a batch afterwards.
+    assert.match(src, /if \(m\.dead\) \{ m\.batch = null; return; \}/,
+      `${host} can still publish a batch for a dead missile`);
+  }
+  // hostMagic is shared by three hosts, so its clock rides its OWN
+  // update rather than each host's frame.
+  assert.match(read('scenes/hostMagic.js'), /function update\(dt, playerFeet\) \{\n(?:.*\n)*?\s*flatAnims\.tick\(dt\);/,
+    'the shared magic module ticks its own flats');
 });

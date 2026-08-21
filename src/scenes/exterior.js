@@ -577,7 +577,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // the S24 InLight/InDarkness arms go live here.
   const magic = createPlayerMagic({
     onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-    renderer, audio, getTexture, uploadRecord,
+    renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes.interiorCollider) ? modes.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
     playerSinks: {

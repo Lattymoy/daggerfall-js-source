@@ -26,11 +26,28 @@ export const LIGHT_FPS = 12;       // lightFps (:39)
 export const ANIMALS_TEXTURE_ARCHIVE = 201;
 export const LIGHTS_TEXTURE_ARCHIVE = 210;
 
-/** AnimateBillboard's speed pick (:119-121), verbatim. */
-export function flatFps(archive) {
+/** Missile billboards override the general speed - the flying missile
+ *  at 5 and the impact flash at 15 (DaggerfallMissile.cs:44-45), the
+ *  impact being record 1 and ONE SHOT (:367-368, :591-607). */
+export const MISSILE_FPS = 5;
+export const IMPACT_FPS = 15;
+
+/**
+ * AnimateBillboard's speed pick (:119-121), verbatim including its
+ * PRECEDENCE:
+ *     float speed = FramesPerSecond;
+ *     if (Archive == Animals) speed = animalFps;
+ *     else if (Archive == Lights) speed = lightFps;
+ * The per-billboard FramesPerSecond is the DEFAULT and the two named
+ * archives OVERRIDE it - so a missile flat that happened to live in
+ * the lights archive would take 12, not its own 5. That ordering is
+ * the reason this takes the rate as an argument rather than picking
+ * one and letting callers overwrite it afterwards.
+ */
+export function flatFps(archive, framesPerSecond = GENERAL_FPS) {
   if (archive === ANIMALS_TEXTURE_ARCHIVE) return ANIMAL_FPS;
   if (archive === LIGHTS_TEXTURE_ARCHIVE) return LIGHT_FPS;
-  return GENERAL_FPS;
+  return framesPerSecond;
 }
 
 /** SetMaterial (:282-285): a record with more than one frame animates,
@@ -55,11 +72,11 @@ export class FlatAnim {
    * @param {number} frameCount  the record's frame count
    * @param {boolean} [oneShot]  DFU's OneShot: stop at the wrap instead of looping
    */
-  constructor(archive, frameCount, oneShot = false) {
+  constructor(archive, frameCount, oneShot = false, framesPerSecond = GENERAL_FPS) {
     this.archive = archive;
     this.frameCount = frameCount;
     this.oneShot = oneShot;
-    this.fps = flatFps(archive);
+    this.fps = flatFps(archive, framesPerSecond);
     this.currentFrame = 0;
     this.frame = 0;        // what the renderer should draw RIGHT NOW
     this.done = false;
@@ -107,9 +124,9 @@ export class FlatAnimator {
   constructor() { this.entries = []; }
 
   /** @param {object} batch a renderer billboard batch (its `frame` is written each tick) */
-  add(batch, archive, frameCount, oneShot = false) {
+  add(batch, archive, frameCount, oneShot = false, framesPerSecond = GENERAL_FPS) {
     if (!isAnimatedFlat(frameCount)) return null;
-    const anim = new FlatAnim(archive, frameCount, oneShot);
+    const anim = new FlatAnim(archive, frameCount, oneShot, framesPerSecond);
     batch.frame = anim.frame;
     const entry = { batch, anim };
     this.entries.push(entry);
@@ -146,7 +163,7 @@ export class FlatAnimator {
  * @param {function(number,number,number):void} uploadRecordFrame
  * @returns {boolean} true if the flat animates
  */
-export function armFlatAnim(batch, textureFile, archive, record, animator, uploadRecordFrame) {
+export function armFlatAnim(batch, textureFile, archive, record, animator, uploadRecordFrame, opts = {}) {
   const frameCount = textureFile?.getFrameCount?.(record) ?? 1;
   if (!isAnimatedFlat(frameCount) || !animator || !uploadRecordFrame) return false;
   // Every frame is uploaded up front. Counts are small (the lights
@@ -155,6 +172,6 @@ export function armFlatAnim(batch, textureFile, archive, record, animator, uploa
   // frame loop, which is the churn class this renderer's audits keep
   // deleting.
   for (let f = 0; f < frameCount; f++) uploadRecordFrame(archive, record, f);
-  animator.add(batch, archive, frameCount);
+  animator.add(batch, archive, frameCount, opts.oneShot ?? false, opts.fps ?? GENERAL_FPS);
   return true;
 }

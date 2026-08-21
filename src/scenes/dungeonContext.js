@@ -8,7 +8,7 @@
 // original-archive sizes while pixels come from the table archive,
 // which is exactly the dungeon convention already on record.
 
-import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
+import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { applyTextureTable } from '../world/dungeonTextures.js';
 import { collectDungeonLights } from '../world/dungeonLights.js';
@@ -928,7 +928,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // line in this file speaks through hudText, including the one four
     // below it.
     onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-    renderer, audio, getTexture, uploadRecord,
+    renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     collider,
     playerEntity, playerSinks,
     say: (l) => hudText.add(l),
@@ -1164,6 +1164,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // Bottom-anchored shader: the base IS the ground point (the +h/2
     // center-anchor holdover floated piles - C11 audit 08-17).
     pile.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, pile.record, size, [[g[0], g[1], g[2]]]);
+    // FA1 slice 2: the SAME rule decides, and the data answers. DFU
+    // gives every billboard the one AnimateBillboard loop and lets
+    // frameCount settle it - a single-frame treasure pile arms nothing
+    // and costs nothing, and a record that does carry frames moves.
+    armFlatAnim(pile.batch, t, RANDOM_TREASURE_ARCHIVE, pile.record, flatAnims, uploadRecordFrame);
     billboardBatches.push(pile.batch);
   }
 
@@ -1214,6 +1219,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // half its height (C11 audit 08-17; the static-flat path shifts
     // DOWN for the same reason).
     const batch = renderer.createBillboardBatch(ct.archive, ct.record, size, [[p[0], p[1], p[2]]]);
+    // Same rule, same seam: a corpse record is single-frame in classic
+    // so this arms nothing today, but DFU gives corpses the same
+    // billboard and lets the data decide, and so does this.
+    armFlatAnim(batch, t, ct.archive, ct.record, flatAnims, uploadRecordFrame);
     f.corpseBatch = batch;   // SL2: the rewind frees a corpse BY ITS FOE
     corpses.push(batch);
     billboardBatches.push(batch);   // hosts draw + destroy() frees
@@ -1305,10 +1314,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const archive = missileArchive(m.spell.element);
     const t = await getTexture(archive);
     if (!t) return;
+    // The arrow's bug, twice more: this is async and `m.batch = false`
+    // is the in-flight guard, so a missile that retires while its
+    // texture warms leaves retireMissile's splice nothing to find -
+    // and then the microtask pushes a batch for a DEAD missile that
+    // nothing ever removes, drawn at its fire position for the rest of
+    // the scene. Check before publishing.
+    if (m.dead) { m.batch = null; return; }
     uploadRecord(archive, 0);
     const size = scaledBillboardSize(t.getSize(0), t.getScale(0));
     m.firePos = [...m.pos];
     m.batch = renderer.createBillboardBatch(archive, 0, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
+    // FA1 slice 2: the missile flat ANIMATES while it flies -
+    // DaggerfallMissile.cs:605 sets BillboardFramesPerSecond (5) on the
+    // billboard it makes at :601. Frozen on frame 0, a fireball was a
+    // photograph of a fireball.
+    armFlatAnim(m.batch, t, archive, 0, flatAnims, uploadRecordFrame, { fps: MISSILE_FPS });
     billboardBatches.push(m.batch);
   }
   function retireMissile(m) {
@@ -1317,6 +1338,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (di >= 0) dynamicDraws.splice(di, 1);
     }
     if (m.batch) {
+      flatAnims.remove(m.batch);   // FA1: a destroyed batch must not keep a clock
       const bi = billboardBatches.indexOf(m.batch);
       if (bi >= 0) billboardBatches.splice(bi, 1);
       renderer.destroyBillboardBatch(m.batch);

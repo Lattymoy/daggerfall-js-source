@@ -820,7 +820,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.
   const magic = createPlayerMagic({
-    renderer, audio, getTexture, uploadRecord,
+    renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes.interiorCollider) ? modes.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
     playerSinks: {
