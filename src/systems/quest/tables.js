@@ -51,6 +51,7 @@ export const placesTable = () => need('places', 'Quests-Places');
 export const itemsTable = () => need('items', 'Quests-Items');
 export const foesTable = () => need('foes', 'Quests-Foes');
 export const soundsTable = () => need('sounds', 'Quests-Sounds');
+export const factionsTable = () => need('factions', 'Quests-Factions');
 
 /** Test seam. */
 export function resetQuestTables() {

@@ -656,6 +656,43 @@ export class Place extends QuestResource {
     this.parentQuest.hooks?.world?.onResourceAssigned?.(this, resource);
   }
 
+  /** ConfigureFromPlayerLocation (Place.cs:296-360, Q3-ii): a Place
+   *  minted directly from wherever the player stands - the questor /
+   *  at-home-individual home. Dungeon and Building sites carry the
+   *  current context's name/key; NO markers enumerate here, verbatim
+   *  (a questor's hall hosts clicks and dialog, not placements). */
+  configureFromPlayerLocation(world, symbolName) {
+    const location = world.currentLocation?.();
+    if (!location?.loaded) return false;
+    const inside = world.playerInside?.() ?? null;
+    let siteType, buildingKey = 0, buildingName = '';
+    if (inside?.dungeon) {
+      siteType = SITE_TYPES.Dungeon;
+      buildingName = inside.dungeon.name ?? '';
+    } else if (inside?.building) {
+      siteType = SITE_TYPES.Building;
+      buildingKey = inside.building.buildingKey;
+      buildingName = inside.building.name ?? '';
+    } else {
+      siteType = SITE_TYPES.Town;
+    }
+    this.siteDetails = {
+      questUID: this.parentQuest?.uid ?? 0,
+      siteType,
+      mapId: location.mapTableData.mapId,
+      locationId: location.exterior.exteriorData.locationId,
+      regionIndex: location.regionIndex,
+      regionName: location.regionName,
+      locationName: location.name,
+      buildingKey, buildingName, magicNumberIndex: 0,
+      questSpawnMarkers: null, questItemMarkers: null,
+      selectedMarker: { targetResources: null },
+    };
+    this.symbol = new QuestSymbol(symbolName);
+    this.sitePending = false;
+    return true;
+  }
+
   // ---- player checks (Place.cs:545-560, 1590-1656) ----
 
   /** IsPlayerHere: building compares the entered building's key, town

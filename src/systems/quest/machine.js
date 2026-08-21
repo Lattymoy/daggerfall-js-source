@@ -65,6 +65,24 @@
 //   teleportPc(place, marker)  - TeleportPc's transport (scene half)
 //   onResourceAssigned(place, resource) - the hot-place/hot-remove
 //                                layout half (Q4 wires)
+//
+// Q3-ii, the Person chain's facts (all over the PERSISTENT faction
+// store - PlayerEntity.FactionData, the mutable copy factionRep
+// owns - not the raw file):
+//   getFactionData(id)         - the store record | null
+//   findFactionsOfType(type)   - FactionData.FindFactions(type)
+//   currentRegionFaction()     - PlayerGPS.GetCurrentRegionFaction
+//                                (the Province faction of the region)
+//   currentRegionCourt()       - GetCourtOfCurrentRegion
+//   currentRegionPeople()      - GetPeopleOfCurrentRegion
+//   currentRegionVampireClan() - GetCurrentRegionVampireClan
+//   playerVampireClan()        - the vampirism racial effect's clan
+//                                (P0/$CUREVAM quests)
+//   currentRegionRace()        - GetRaceOfCurrentRegion (a
+//                                FactionRaces number)
+//   playerInside().building.name / .dungeon.name - the current
+//                                context's display name
+//                                (ConfigureFromPlayerLocation)
 //   changeLegalRep(amount)     - LegalRepute: current region's
 //                                LegalRep += amount then the clamp
 //                                (the G2 court system owns both)
@@ -218,6 +236,12 @@ export class QuestMachine {
       // world-data/player-state surface a running host wires (contract
       // below); the SiteLink halves are the machine's own.
       world: this.deps.world ?? null,
+      // Q3-ii: the questor click context (QuestMachine.LastNPCClicked
+      // - { factionID, nameSeed, gender } | null) and factionRep's
+      // GetReputation (ReputeExceedsDo reads it; an unknown faction
+      // reads 0, factionRep's own law).
+      lastNPCClicked: () => this.deps.lastNPCClicked?.() ?? null,
+      getReputation: (factionId) => this.deps.getReputation?.(factionId) ?? 0,
       forceTopicListsUpdate: () => this.deps.forceTopicListsUpdate?.(),
       getAllActiveQuestSites: () => this.getAllActiveQuestSites(),
       cullResourceTarget: (resource, newPlaceSymbol) => this.cullResourceTarget(resource, newPlaceSymbol),

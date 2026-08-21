@@ -459,17 +459,73 @@ survivors) with baseline-aware full-suite confirmation.
   gating, the residence-undiscover note, the float32 multiplier, the
   clock options-slice quirk claim.
 
+## Q3-ii - PERSON WORLD BINDING (SHIPPED 2026-08-21)
+
+The Setup*NPC chain whole. Coverage moved 6616 -> 6912 of 7235
+corpus action lines (95.5%); the three buckets match the DFU-order
+derivation exactly (ChangeReputeWith 207, CreateNpc 48,
+ReputeExceedsDo 41). Pending 323: CreateFoe 241, CastSpellOnFoe 41,
+~41 misc.
+
+- THE IDENTIFICATION LADDER (person.js, Person.cs whole): named
+  individuals (Quests-Factions p3 -> the persistent faction record;
+  a non-Individual/non-Daedra named target THROWS as C# does; a
+  FAILED lookup binds the ZERO-FACTION record after Debug.LogError),
+  group Questor off the machine's lastNPCClicked seam (factionID +
+  nameSeed + gender carried from the click; no click leaves a
+  VIRTUAL questor that falls through the career table), careers
+  through _getCareerFactionID (p2, p3 when p2<0, the 10000->0
+  player-faction fold, the career switch: 0-15 minus 11/14 ->
+  Merchants 510, 11 -> Mages 40, 14 -> GenericTemple 450, 16 ->
+  Nobles 242, default -> the regional People), factionType through
+  _getFactionTypeFactionID with EVERY arm - and C#'s -1 QUIRK KEPT:
+  an unstated type assigns Range(0,4), a raw INDEX, as the type.
+  _getRandomFactionOfType excludes 450 from Temple draws and THROWS
+  on an empty pool.
+- THE ASSIGN CHAIN in C#'s order: race from the faction record
+  (nameBank = the REGION's bank), gender (questors keep the clicked
+  gender - AssignGender skips them; else a 50/50 roll on the
+  quest's injectable rolls), the HUD-FACE QUIRK KEPT (the parsed
+  face N is IGNORED - AssignHUDFace always rolls Range(0,10)),
+  DisplayName (witches/coven 512 force Female; Individual|Daedra
+  read the faction record's NAME; else nameSeed -1 draws the
+  engine roll per Ledger A, then srand(nameSeed) ->
+  fullName(nameBank, gender) - the classic determinism law), and
+  AssignHomeTown: questors and at-home individuals configure from
+  the PLAYER's location (configureFromPlayerLocation - a Place with
+  NO markers), plain individuals get NO home, everyone else builds
+  a `Place _N_home_ <scope> <type>` declaration - scope a 50/50
+  roll when unstated, the type from the faction row (p1===0 &&
+  p2 0..20 && p3===0 -> placesTable getKeyForValue('p2', p2) - the
+  Table.cs FIRST-ROW law, so p2=11 answers guildhall not magery),
+  the try/catch falling back to 'house'. BOTH arms can throw when
+  the town runs dry - real DFU behavior, kept.
+- THE SEAM ADDITIONS (deps.world, contract in machine.js):
+  getFactionData(id)/findFactionsOfType(type) (the persistent
+  faction store), currentRegionFaction/Court/People (the regional
+  triple), playerVampireClan/currentRegionRace, plus machine deps
+  lastNPCClicked/changeReputation/getReputation. HEADLESS, the
+  chain pends LOUDLY (npcPending) - the corpus gate's charter.
+- THE THREE ACTIONS: ChangeReputeWith (the PROPAGATING
+  changeReputation overload - true as C# passes it; a missing
+  person completes silently), ReputeExceedsDo (getReputation <
+  min returns without completing; at/above starts the task AND
+  completes), CreateNpc (person.placeAtHome() - Person.cs:414:
+  sitelink + assignQuestResource + assignedToHome; questors and
+  individuals REFUSE; a missing person completes THEN throws).
+- The AUDIT-III auto-track went LIVE: an incoming Questor person
+  now lands in quest.questors at addResource (Quest.cs:879-881),
+  observable at last through the clicked-questor path.
+
+Gate: `test/questpersons.test.js` (12 pins over the crafted world
+seam + a persistent-faction-store mock) + the moved coverage/
+ownership pins.
+
 ## Queue
 
-- **Q3-ii - PERSON WORLD BINDING**: the Setup*NPC chain against
-  FACTION.TXT (SetupQuestorNPC/SetupIndividualNPC/
-  SetupCareerAllianceNPC - factionData, DisplayName through the name
-  banks, home Place generation for CreateNpc's PlaceAtHome (48)) -
-  ChangeReputeWith (207) and ReputeExceedsDo (41) wait on it; the
-  addResource questor auto-track goes live.
 - **Q3-iii - FOE SPAWNING**: CreateFoe's tick-driven spawn law (241)
   through the host enemy seams, CastSpellOnFoe's spell queue (41),
-  the WhenPcEntersExits trigger, the remaining ~80 pending lines.
+  the WhenPcEntersExits trigger, the remaining ~41 pending lines.
 - **Q4 also picks up**: the hot-place/hot-remove halves of
   AssignQuestResource (world.onResourceAssigned), TeleportPc's
   save-resume, the layout builders walking SiteLinks/QuestMarkers to

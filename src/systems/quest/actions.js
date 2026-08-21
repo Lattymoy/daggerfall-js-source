@@ -1615,6 +1615,77 @@ export class DroppedItemAtPlace extends ActionTemplate {
   }
 }
 
+/** ChangeReputeWith.cs (Q3-ii): the player's reputation with the
+ *  Person's FACTION moves by the signed amount, through the
+ *  PROPAGATING overload (allies/enemies/tree spread - the same
+ *  propagate=TRUE law Quest.cs:385 carries). A missing person is a
+ *  silent complete. */
+export class ChangeReputeWith extends ActionTemplate {
+  get pattern() { return /change repute with (?<target>[a-zA-Z0-9_.-]+) by (?<sign>[+-])(?<amount>\d+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new ChangeReputeWith(parentQuest);
+    action.target = new QuestSymbol(g.target);
+    action.amount = (g.sign === '-' ? -1 : 1) * questParseInt(g.amount);
+    return action;
+  }
+  update(_caller) {
+    const person = this.parentQuest.getPerson(this.target);
+    if (!person) { this.setComplete(); return; }
+    this.parentQuest.hooks?.changeReputation?.(person.factionId, this.amount, true);
+    this.setComplete();
+  }
+}
+
+/** ReputeExceedsDo.cs (Q3-ii): starts the task once the player's
+ *  reputation with the Person's faction reaches the bar - checked
+ *  every tick until it does (no complete before then). */
+export class ReputeExceedsDo extends ActionTemplate {
+  get pattern() { return /repute with (?<npcSymbol>[a-zA-Z0-9_.-]+) exceeds (?<minReputation>\d+) do (?<taskSymbol>[a-zA-Z0-9_.]+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new ReputeExceedsDo(parentQuest);
+    action.npcSymbol = new QuestSymbol(g.npcSymbol);
+    action.minReputation = questParseInt(g.minReputation);
+    action.taskSymbol = new QuestSymbol(g.taskSymbol);
+    return action;
+  }
+  update(_caller) {
+    const person = this.parentQuest.getPerson(this.npcSymbol);
+    if (!person) return;
+    if ((this.parentQuest.hooks?.getReputation?.(person.factionId) ?? 0) < this.minReputation) return;
+    this.parentQuest.startTask(this.taskSymbol);
+    this.setComplete();
+  }
+}
+
+/** CreateNpc.cs (Q3-ii): places the person at their generated home
+ *  Place (Person.PlaceAtHome); a missing person completes then
+ *  THROWS; a person with no home just logs. */
+export class CreateNpc extends ActionTemplate {
+  get pattern() { return /create npc (?<anNPC>[a-zA-Z0-9_.-]+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new CreateNpc(parentQuest);
+    action.npcSymbol = new QuestSymbol(match.groups.anNPC);
+    return action;
+  }
+  update(_caller) {
+    const person = this.parentQuest.getPerson(this.npcSymbol);
+    if (!person) {
+      this.setComplete();
+      throw new Error(`Could not find Person resource symbol ${this.npcSymbol?.name}`);
+    }
+    person.placeAtHome();
+    this.setComplete();
+  }
+}
+
 /** CreateNpcAt.cs: a DOCUMENTED no-op - legacy TEMPLATE scripts
  *  "reserve" a site before placing; DFU creates SiteLinks in the
  *  placement actions either way, so this only completes. */
@@ -1663,11 +1734,8 @@ const GUARD_PATTERNS = Object.freeze({
   Weather: /weather (sunny|cloudy|overcast|fog|rain|thunder|snow)/,
   Climate: /climate (desert|desert2|mountain|mountainwoods|rainforest|ocean|swamp|subtropical|woodlands|hauntedwoodlands)|climate (base) (desert|mountain|temperate|swamp)/,
   // Default actions
-  CreateNpc: /create npc ([a-zA-Z0-9_.-]+)/,
   CreateFoe: /create foe ([a-zA-Z0-9_.-]+) every (\d+) minutes (indefinitely) with (\d+)% success|create foe ([a-zA-Z0-9_.-]+) every (\d+) minutes (\d+) times with (\d+)% success|(send) ([a-zA-Z0-9_.-]+) every (\d+) minutes (\d+) times with (\d+)% success|(send) ([a-zA-Z0-9_.-]+) every (\d+) minutes with (\d+)% success/,
   RunQuest: /run quest (\w+) then ([a-zA-Z0-9_.]+) or ([a-zA-Z0-9_.]+)/,
-  ChangeReputeWith: /change repute with ([a-zA-Z0-9_.-]+) by ([+-])(\d+)/,
-  ReputeExceedsDo: /repute with ([a-zA-Z0-9_.-]+) exceeds (\d+) do ([a-zA-Z0-9_.]+)/,
   MakePcDiseased: /make pc ill with ([a-zA-Z0-9_.']+)/,
   CurePcDisease: /cure vampirism|cure lycanthropy|cure ([a-zA-Z0-9_.']+)/,
   CastSpellDo: /cast ([a-zA-Z0-9'_.-]+) spell do ([a-zA-Z0-9_.-]+)/,
@@ -1728,7 +1796,7 @@ export function defaultActionTemplates() {
     new PlayVideo(null),
     new PcAt(null),
     new CreateNpcAt(null),
-    guard('CreateNpc'),
+    new CreateNpc(null),
     new PlaceNpc(null),
     new PlaceItem(null),
     new GivePc(null),
@@ -1744,8 +1812,8 @@ export function defaultActionTemplates() {
     new StartQuest(null),
     guard('RunQuest'),
     new UnsetTask(null),
-    guard('ChangeReputeWith'),
-    guard('ReputeExceedsDo'),
+    new ChangeReputeWith(null),
+    new ReputeExceedsDo(null),
     new RevealLocation(null),
     new RestrainFoe(null),
     new MakePermanent(null),
