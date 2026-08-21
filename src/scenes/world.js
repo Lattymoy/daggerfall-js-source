@@ -26,6 +26,7 @@ import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
 import { createTownTalk } from './townTalk.js';
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
+import { ChoiceWindow } from '../ui/talkWindow.js';   // TP-slice: the anchor/teleport prompt
 import { SpellbookWindow, knownSpells } from '../ui/inventory.js';   // M2
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
@@ -49,6 +50,7 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold } from '../sy
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
@@ -70,7 +72,7 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, 
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs , endRunToTitleMenu } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
@@ -95,12 +97,15 @@ import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
 import { guildOfFaction, membershipOf, guildFactionIdOfGroup } from '../systems/guilds.js';
 import { resolveVariantGuild } from '../systems/guildVariants.js';
+import { discoverRandomLocation, discoverLocation } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
+import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
+import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 
 // Milestone 9 scene: floating-origin streaming world. Terrain pixels
 // stream in nearest-first around the camera within TERRAIN_DISTANCE,
@@ -542,7 +547,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // door in playerEntity.js; the door calls this. Registered here rather than
   // passed down four call chains, because there is one player and one death.
   setDeathPresenter(() => {
-    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen());
+    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) }));   // D1
   });
 
   // AUDIT 19 F4: the CUMULATIVE game-day count, for the music seed. The
@@ -584,6 +589,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
+  preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
+  // B1 + AUDIT B-C2: an async open must not clobber a window the
+  // player opened while the book was loading.
+  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { if (!townTalk.overlayActive) townTalk.showOverlay(w); } });
   // AUDIT 21 (hosts lane, F7): the classic HUD art. loadHud swallows a missing
   // file and answers null, and drawHud no-ops on null, so a host without the
   // art draws no HUD rather than failing to boot - the same law the title
@@ -640,6 +649,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     createChargenFlow(fetchBytes).then(({ flow, spellsByIndex: sbi }) => {
       spellsByIndex = sbi;   // M2
       townTalk.showOverlay(createChargenWindow(flow, {
+        // ui-chargen-4: the race screen's back cancels the wizard to
+        // the front door (DFU unwinds to the start screen); the
+        // reload re-runs the boot flow.
+        onCancel: () => location.reload(),
         onDone: (r) => {
           finishChargen(playerEntity, r, sbi);
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
@@ -683,6 +696,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     _topicsKey = key;
     const dfLocation = key ? locationIndex.get(key) : null;
     _musicLoc = dfLocation ?? null;   // AUDIT 19: the music context's location half
+    // TV-slice: entering a location's pixel DISCOVERS it (PlayerGPS
+    // DiscoverCurrentLocation on the location-rect entry) - the write
+    // half of the travel map's visibility law; fast-travel arrivals
+    // land here too, so one writer covers both.
+    if (dfLocation) {
+      discoverLocation(dfLocation.mapTableData.mapId, {
+        regionName: maps.getRegionName(dfLocation.regionIndex), locationName: dfLocation.name,
+      });
+    }
     if (!cur || !dfLocation || !cur.locBlocks) { townTalk.setTopics(null); return; }
     const { px, py } = cur;
     const lo = cur.locOrigin;
@@ -848,6 +870,42 @@ export async function bootWorld(canvas, renderer, params, status) {
     absorbCtx: () => ((modes?.mode ?? 'exterior') === 'exterior'
       ? { inside: false, day: !isNight(minuteNow()) }
       : { inside: true, day: false }),
+    // TP-slice: the Teleport effect's prompt (Teleport.cs:81-98, the
+    // 4000 anchor/teleport box; AllowCancel is DFU's own QoL).
+    // Anchor = the S33 native shape; Teleport = the quickload warp,
+    // the anchor CONSUMED on arrival (:133/:255 both null it). A cast
+    // inside a mode leaves it first (:151's immediate transition).
+    onTeleport: () => {
+      townTalk.showOverlay(new ChoiceWindow({
+        lines: ['Teleport, or set anchor?'],   // key teleportOrSetAnchor (4000), prose ours
+        options: [
+          { code: 'KeyA', label: 'A - set anchor', action: () => {
+            const pf = walkMode && playerSpawned ? player.pos : cam.pos;
+            const wc = state.worldCoords(pf);
+            playerEntity.anchorPosition = {
+              mode: 'world-exterior', pixel: playerTravelPixel(),
+              nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
+            };
+          } },
+          { code: 'KeyT', label: 'T - teleport', action: () => {
+            const a = playerEntity.anchorPosition;
+            if (!a) { townTalk.say('You must set an anchor first.'); return; }   // key achorMustBeSet (4001), prose ours
+            if (a.mode !== 'world-exterior') { townTalk.say('(the anchor was set in another host - cross-host recall pends)'); return; }
+            (async () => {
+              if ((modes?.mode ?? 'exterior') !== 'exterior') modes.forceExitToExterior();
+              await _teleportToPixel(a.pixel.x, a.pixel.y);
+              const [lx, lz] = state.localFromWorld(a.nativeX, a.nativeZ);
+              const ly = (a.y ?? 2) + state.compensation[1];
+              if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
+              cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+              playerEntity.anchorPosition = null;   // consumed on arrival, both DFU arms
+              surfacePlayer();
+            })();
+          } },
+          { code: 'Escape', label: 'Esc - cancel', action: () => {} },
+        ],
+      }));
+    },
   });
   const toggleSpellbook = () => {
     if (townTalk.overlayActive || !spellsByIndex) return;
@@ -1054,7 +1112,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // binding; same host rule as F5).
     if (e.code === 'F6' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && inventoryArtLoaded()) {
       townTalk.showOverlay(new NativeInventoryWindow({
+        openBook: openBookHook,   // B1: the use-mode book arm
         items: () => (playerEntity.items ??= []),
+        wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
         entity: playerEntity,
         icons: { getTexture, uploadRecord, textures: renderer.textures },
         rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
@@ -1106,15 +1166,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
     if (walkMode && (e.buttons & 2) && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(e.movementX, e.movementY, true); return; }   // M2
-    cam.yaw -= e.movementX * 0.0025;
-    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
+    cam.yaw -= e.movementX * lookScale();
+    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
   });
   addEventListener('mousedown', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
   addEventListener('mouseup', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
-      cam.yaw -= dx * 0.0025;
-      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * 0.0025));
+      cam.yaw -= dx * lookScale();
+      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * lookScale() * lookInvert()));
     },
     attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') { if (held && magic.interceptAttack(true)) return; weaponRig.attackInput(dx, dy, held); } },   // M2
     attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },   // M2
@@ -1146,6 +1206,24 @@ export async function bootWorld(canvas, renderer, params, status) {
       get pos() { return [...player.pos]; },
       warp: (x, y, z) => { player.spawn(x, y, z); playerSpawned = true; },
     };
+    // M3 probe surface: the live climb state (the wall probe + the
+    // check machine ride the real collider and the real skill rolls).
+    window.__climb = () => JSON.stringify({
+      climbing: !!player.climb?.isClimbing, slipping: !!player.climb?.isSlipping,
+      y: +player.pos[1].toFixed(2), grounded: !!player.grounded,
+    });
+    // M3 probe surface: building-door spots - a door IS a wall with a
+    // known outward normal, so the climb probe can stand square to
+    // real geometry (centre/normal ride the door matrix per
+    // staticDoors' own contract).
+    window.__doorSpots = () => JSON.stringify(buildingDoors.slice(0, 80).map((e) => {
+      const d = shiftedDoor(e);
+      const m = d.matrix, c = d.centre, n = d.normal;
+      const wc = [m[0] * c.x + m[4] * c.y + m[8] * c.z + m[12], m[1] * c.x + m[5] * c.y + m[9] * c.z + m[13], m[2] * c.x + m[6] * c.y + m[10] * c.z + m[14]];
+      const wn = [m[0] * n.x + m[4] * n.y + m[8] * n.z, m[1] * n.x + m[5] * n.y + m[9] * n.z, m[2] * n.x + m[6] * n.y + m[10] * n.z];
+      const l = Math.hypot(wn[0], wn[2]) || 1;
+      return { pos: wc.map((v) => +v.toFixed(2)), n: [+(wn[0] / l).toFixed(3), 0, +(wn[2] / l).toFixed(3)] };
+    }));
     window.__frame = 0;
   }
 
@@ -1361,6 +1439,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Q4-v: the quest bridge + the scene context the NPC-data law needs
     questBridge,
     questSceneCtx: () => ({ mapId: _questLoc()?.mapTableData?.mapId ?? 0, locationIndex: _questLoc()?.locationIndex ?? 0 }),
+    // G8 (guilds-8): the DiscoverRandomLocation seam for the guild
+    // promotion reveals - candidates are the CURRENT pixel's region
+    // (PlayerGPS.CurrentRegion; guild services only run inside town
+    // buildings, so the pixel always carries a location). The
+    // notebook note (readMapTG/readMapDB %map) pends a notebook
+    // surface - logged loudly so the reveal is at least traceable.
+    revealLocation: (noteKey) => {
+      const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
+      const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;
+      if (!region) return null;
+      const rows = region.mapTable.map((row, i) => ({
+        mapId: row.mapId, discovered: row.discovered,
+        name: region.mapNames[i], regionName: region.name,
+      }));
+      const picked = discoverRandomLocation(rows);
+      if (picked) console.warn(`[guilds] ${noteKey}: revealed ${picked.name} (the notebook note pends its surface)`);
+      return picked?.name ?? null;
+    },
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
     // A5b: the tavern arm needs the host's clock, and leaving one has to
@@ -1482,6 +1578,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     }, modes?.musicContext?.() ?? null);
 
     if (modes.frame(dt, now)) {
+      // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
+      // townTalk slot got neither its clock nor its draw while the
+      // player was inside a building or a dungeon - chargen mounts
+      // there from an un-awaited load, so a constellation started on
+      // the way in would hang until its deadline. Ticked and drawn
+      // ABOVE the modal render, which is where townTalk always draws.
+      if (townTalk.overlayActive) townTalk.frame(dt);
       requestAnimationFrame(frame);
       return;
     }
@@ -1580,7 +1683,9 @@ export async function bootWorld(canvas, renderer, params, status) {
               // pile as the remote target (Remove defaults - the OnPush law)
               const pile = droppedLoot.pileFor(dropKey);
               townTalk.showOverlay(new NativeInventoryWindow({
+                openBook: openBookHook,   // B1: the use-mode book arm
                 items: () => (playerEntity.items ??= []),
+        wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
                 onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
         entity: playerEntity,
                 loot: { items: () => pile.items },
@@ -1634,7 +1739,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     pump();
 
-    const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.2, 6000);
+    const proj = perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.2, 6000);
     const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
     // World clock (R5): sun, ambient, window style, sky frame by time.
     const minute = minuteNow();
@@ -1698,7 +1803,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.setPointLights(new Float32Array(0));
     }
     renderer.beginFrame(proj, view, sunDirection(minute));
-    sky.draw(cam.yaw, cam.pitch, Math.PI / 3, canvas.clientWidth / canvas.clientHeight);
+    sky.draw(cam.yaw, cam.pitch, fieldOfView(), canvas.clientWidth / canvas.clientHeight);
 
     const allBatches = [];
     for (const p of built.values()) {

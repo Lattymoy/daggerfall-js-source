@@ -28,18 +28,25 @@
 // loiter requests above the classic 3-hour cap are refused with the
 // cannot-loiter lines. Building trespass/rent rules pend towns.
 
+import { getInt } from './settings.js';   // SETT: LoiterLimitInHours
+
 export const MINUTES_PER_TICK = 10;          // classic minutes per sub-tick
 export const REST_WAIT_PER_HOUR = 0.75;      // real seconds per rested hour
 export const LOITER_WAIT_PER_HOUR = 1.25;    // loiter runs slower
-export const LOITER_LIMIT_HOURS = 3;         // classic's cap (DFU LoiterLimitInHours default)
+/** DFU LoiterLimitInHours (ships 3, classic's cap). SETT made it a
+ *  real setting, so this is a point-of-use read; the refusal lines
+ *  quote it and are a FUNCTION for the same reason. The 3..12 range is
+ *  DFU's own slider (DaggerfallAdvancedSettingsWindow.cs:354) - the
+ *  MENU range-equals-clamp pin caught an invented 1..24 here. */
+export const loiterLimitHours = () => getInt('Enhancements', 'LoiterLimitInHours', 3, 12);
 
 export const REST_TEXT = Object.freeze({
   loiterDone: 349, healed: 350, wakeUp: 353, enemiesNearby: 354, cannotRestNow: 355,
 });
 export const REST_PROMPT = 'Rest how many hours : ';
 export const LOITER_PROMPT = 'Loiter how many hours : ';
-export const CANNOT_LOITER_LINES = Object.freeze([
-  'You cannot loiter more', `than ${LOITER_LIMIT_HOURS} hours at a time.`,
+export const cannotLoiterLines = () => Object.freeze([
+  'You cannot loiter more', `than ${loiterLimitHours()} hours at a time.`,
 ]);
 
 /**

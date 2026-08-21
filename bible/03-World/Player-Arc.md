@@ -1044,3 +1044,19 @@ stand-still clear; the abort ladder + the water forgiveness; and a
 LIVE climb - a real Collider wall, the motor rises past 0.5, the
 skill tallies, the mode line speaks once, and the release fall
 bills from the release height).
+
+### M3 addendum (2026-08-20): the climb PROBED LIVE
+
+tools/climbProbe.mjs - frame-synced, the ?world boot. The blind
+compass walk taught the first lesson: an angled wall contact SLIDES,
+and the 0.12 horizontal-stationarity gate faithfully refuses the
+drift (nonOrthogonalStart) - a real player squares up to a wall, so
+the probe does too: the new __doorSpots surface hands building-door
+positions with their outward normals (centre/normal through the door
+matrix, staticDoors' own contract), and the probe stands 1.2 out,
+faces square in, and holds W through the real key path. ALL GREEN:
+the countdown + the live-skill check started the climb, the capsule
+ROSE 1.1 up real city geometry (y 390.23 -> 391.34), releasing W
+aborted through the classic abort key, and the drop landed grounded.
+The __climb probe surface (climbing/slipping/y/grounded) ships with
+it.

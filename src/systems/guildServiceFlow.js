@@ -198,12 +198,14 @@ export function cureAllAttributes(entity) {
  *  imported-and-called so the caller keeps guildServices.js's exact
  *  argument list (the magicka one needs the entity's career). */
 export function onPushEffects(entity, guild, memberships, store, now, {
-  freeHealing = false, freeMagickaRecharge = false,
+  freeHealing = false, freeMagickaRecharge = false, revealLocation = null,
 } = {}) {
   const steps = [];
   // Check guild advancement. UpdateRank returns tokens only when the
   // rank actually MOVED; the port's returns the outcome + new rank.
-  const moved = updateRank(memberships, guild, entity, store, now);
+  // G8: revealLocation is the host's DiscoverRandomLocation seam -
+  // the TG rank-6/8 map gates and the DB every-promotion reveal.
+  const moved = updateRank(memberships, guild, entity, store, now, { revealLocation });
   if (moved) steps.push({ textId: moved.textId, clickAnywhere: true, rankChange: moved });
   if (freeHealing) {
     if ((entity.health ?? 0) < (entity.maxHealth ?? 0)) {

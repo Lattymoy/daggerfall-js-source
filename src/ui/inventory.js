@@ -22,13 +22,19 @@
 //   per-entity copies + name persistence first. DFU's edit sound
 //   (SoundClips.PageTurn) and open sound (OpenBook) play through the
 //   audio singleton (the videoPlayer import pattern).
-//   Death: health 0 opens it through the ONE hurtPlayer door; Enter
-//   restarts (a page reload), and the screen's F11 hint is the real
-//   quickload binding (InputManager.SetupDefaults: F9 save, F11 load).
+//   Death (D1): health 0 opens it through the ONE hurtPlayer door and
+//   it drives PlayerDeath's whole sequence - the camera sinks a
+//   quarter-capsule below the feet, the HUD fades black over two
+//   seconds, the classic death sound plays, and three seconds in the
+//   host runs ANIM0012.VID and returns to the title menu (DFU's
+//   TitleMenuFromDeath). ENTER skips to that end; the F11 hint is the
+//   real quickload binding (InputManager.SetupDefaults: F9/F11).
 
 import { drawText, measureText } from './text.js';
 import { itemWeight, totalWeight } from '../systems/inventory.js';
 import { isDamageHealthEffect } from '../systems/spellcast.js';
+import { PlayerDeathSequence, DEATH_TIME_BEFORE_RESET } from '../systems/playerDeath.js';   // D1
+import { playerEntity } from '../characters/playerEntity.js';   // D1: the death clip's race/gender
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -159,15 +165,42 @@ export function knownSpells(entity, spellsByIndex) {
   return out;
 }
 
+/** D1: the death screen DRIVES PlayerDeath's sequence - the camera
+ *  sinks, the HUD fades to black over two seconds, the classic death
+ *  sound plays once, and three seconds in the host's onReset runs
+ *  (the death video, then the title menu: DFU's
+ *  StartMethods.TitleMenuFromDeath). ENTER skips straight to that
+ *  reset rather than reloading the same scene, which is where DFU's
+ *  death lands you; F11 still quickloads, the port's own affordance
+ *  and the reason the hint is drawn. `drop` is read by each host's
+ *  frame to sink its camera - one player, one death, one law. */
 export class DeathScreen {
-  constructor() { this.done = false; }
+  constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity } = {}) {
+    this.done = false;
+    // MERGE AUDIT: the death clip is the character's OWN race/gender
+    // Pain3 whenever CombatVoices is on (it ships on), so the sequence
+    // needs an identity. It reads the shared player entity here - ONE
+    // seam, the way onReset is one seam - rather than making all four
+    // hosts remember to pass a race they all already import.
+    this.sequence = new PlayerDeathSequence({
+      eyeHeight, capsuleHeight, onReset,
+      race: entity?.raceId ?? null, gender: entity?.gender ?? null,
+      playSound: (clip) => audio.playOneShot(clip, 1),
+    });
+  }
+  get drop() { return this.sequence.drop; }
+  tick(dt) { this.sequence.tick(dt); }
   input(action) {
-    if (action === 'confirm' && typeof location !== 'undefined') location.reload();
+    // ENTER ends the run now; the sequence's own reset is the timer.
+    if (action === 'confirm') this.sequence.tick(DEATH_TIME_BEFORE_RESET + 1);
   }
   draw(renderer, canvas, font, s) {
-    renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.15, 0.01, 0.01, 0.94]);
+    // FadeHUDToBlack over the death: the world dims to black behind
+    // the text rather than sitting under a fixed red wash.
+    const fade = this.sequence.fade;
+    renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.05, 0.01, 0.01, 0.35 + 0.6 * fade]);
     const t = 'YOU HAVE DIED';
     drawText(renderer, font, t, (canvas.width - measureText(font.fnt, t) * s) / 2, canvas.height / 2 - 10 * s, s, [0.9, 0.2, 0.15, 1]);
-    drawText(renderer, font, 'ENTER restart   F11 load', (canvas.width - measureText(font.fnt, 'ENTER restart   F11 load') * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
+    drawText(renderer, font, 'ENTER end   F11 load', (canvas.width - measureText(font.fnt, 'ENTER end   F11 load') * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
   }
 }

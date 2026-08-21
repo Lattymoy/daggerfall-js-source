@@ -51,7 +51,14 @@ import { UNDEAD_DESIGNS, undeadOpts } from './undeadBody.js';
 import { CLASS_DESIGNS, classOpts } from './humanClasses.js';
 import { ATRONACH_DESIGNS, atronachOpts } from './atronachs.js';
 import { BEAST_DESIGNS, beastOpts, ALL_GROUPS } from './beasts.js';
-import { buildBeastBody } from './pieces/beastBody.js';
+import { ENEMY_BASICS } from './enemyBasics.js';
+import { buildBeastBody, buildBeastTail } from './pieces/beastBody.js';
+import { buildBeastHead, WOLF_RAMP } from './pieces/beastHead.js';
+import { buildArachnid, buildSting } from './pieces/arachnid.js';
+import { buildWings } from './pieces/wings.js';
+import { buildFishBody } from './pieces/fishBody.js';
+import { DAEDRA_DESIGNS, daedraOpts } from './daedra.js';
+import { buildHorns } from './pieces/beastHead.js';
 import { buildRibcage, buildPelvis, BONE_RAMP } from './pieces/skeletonBones.js';
 import { buildHorseBody, BAY_RAMP } from './pieces/centaurBody.js';
 import { buildTusks, buildBrow, IVORY_RAMP } from './pieces/orcHead.js';
@@ -173,6 +180,96 @@ export function buildPaperdollPayload(pal, img, cif) {
   // passed to anything - the cloth path had no consumer until the
   // villager designs below became its first.)
   const faces = buildNeutralBody(ramps, { face });
+
+  // ═════════════════════════════════════════════════════════════════
+  // HOW WIDE A GARMENT HAS TO BE, MEASURED RATHER THAN GUESSED
+  //
+  // The fit was `torso * 0.75 + shoulder * 0.25`, times a margin. That
+  // is a guess from two build keys, and it ignores the thing that
+  // actually decides the answer: ARMS HANG OUTSIDE THE TORSO. Measured
+  // across every drape-wearing design, 669 rows were clipping and every
+  // one of them was an arm — a lich's stuck 111% beyond its own robe.
+  //
+  // A garment is an ellipse of rx by rz at each of its rows. A body
+  // point at (x, z) is inside it when (x/rx)^2 + (z/rz)^2 < 1. So the
+  // scale a design needs is simply the largest that ratio ever reaches
+  // over the rows the garment actually covers — computed here, where the
+  // built body and the garment grid are both in hand, and shipped with
+  // the design so the viewer does no arithmetic at all.
+  //
+  // It is done once per design at build time rather than per frame.
+  const drapeRowsOf = (name) => {
+    const g = drapedGrid(name);
+    if (!g) return null;
+    const rows = [];
+    for (let r = 0; r < g.rows; r++) {
+      let y = 0, rx = 0, rz = 0;
+      for (let c = 0; c < g.cols; c++) {
+        const i = (r * g.cols + c) * 3;
+        y = g.pos[i + 1];
+        rx = Math.max(rx, Math.abs(g.pos[i]));
+        rz = Math.max(rz, Math.abs(g.pos[i + 2]));
+      }
+      if (rx > 1e-6 && rz > 1e-6) rows.push({ y, rx, rz });
+    }
+    return rows;
+  };
+
+  /**
+   * The scale each ROW needs, not one scale for the garment.
+   *
+   * A single number is set by the widest thing the cloth must clear —
+   * the arms, always — and then applied to the hem and the collar too,
+   * which turns a robe into a cone. Measured per row, the garment widens
+   * where the arms are and is left alone everywhere else.
+   *
+   * Returned as an array the length of the grid's rows, so the viewer
+   * moves vertices rather than scaling a mesh. Y is still never touched:
+   * only the x and z of each ring move.
+   */
+  const measureDrapeFit = (bodyFaces, drapeName) => {
+    const rows = drapeRowsOf(drapeName);
+    if (!rows || !rows.length) return null;
+    const BAND = 0.05; // how far a row reaches for body it must clear
+    const MARGIN = 1.05; // cloth hangs off a body, it does not paint it
+    const per = rows.map((r) => {
+      let worst = 0;
+      for (const f of bodyFaces) {
+        // THE TRUNK ONLY. Measuring against the arms made every robe a
+        // tent — a garment sized to contain a limb that hangs outside it
+        // is a garment three sizes too big. A robe is cut for a torso;
+        // arms hang at the sides of one and always have.
+        if (f.g !== 'body') continue;
+        for (let i = 0; i < 4; i++) {
+          if (Math.abs(f.p[i * 3 + 1] - r.y) > BAND) continue;
+          const nx = Math.abs(f.p[i * 3]) / r.rx;
+          const nz = Math.abs(f.p[i * 3 + 2]) / r.rz;
+          const need = Math.hypot(nx, nz);
+          if (need > worst) worst = need;
+        }
+      }
+      return Math.max(1, worst * MARGIN);
+    });
+    // SMOOTH IT. A row that jumps from 1.0 to 1.4 and back puts a step in
+    // the cloth — real fabric spans a bulge rather than wrapping it. Two
+    // passes of a three-tap max-then-average, so a row is never narrower
+    // than the body it is next to.
+    for (let pass = 0; pass < 2; pass++) {
+      const src = per.slice();
+      for (let i = 0; i < per.length; i++) {
+        const a = src[Math.max(0, i - 1)];
+        const b = src[i];
+        const c = src[Math.min(src.length - 1, i + 1)];
+        per[i] = Math.max(b, (a + b + c) / 3);
+      }
+    }
+    return per;
+  };
+
+  /** Attach the measured fit to a drape, or pass a missing one through. */
+  const withFit = (drape, bodyFaces) =>
+    drape ? { ...drape, fit: measureDrapeFit(bodyFaces, drape.name) } : null;
+
   let minY = 1e9, maxY = -1e9;
   for (const f of faces) for (let i=0;i<4;i++){ const y=f.p[i*3+1]; if(y<minY)minY=y; if(y>maxY)maxY=y; }
   const GI = { body:0, head:1, armL:2, armR:3, legL:4, legR:5 };
@@ -196,7 +293,9 @@ export function buildPaperdollPayload(pal, img, cif) {
     const vf = buildNeutralBody(ramps, { face, ...designOpts(d, pal) });
     return {
       archive: d.archive, race: d.race, gender: d.gender, name: d.name, build: d.build,
-      hair: d.hair, tone: RACE_TONE[d.race], drape: designDrape(d, pal), ...villagerDelta(faces, vf),
+      hair: d.hair, tone: RACE_TONE[d.race],
+      drape: withFit(designDrape(d, pal), vf),
+      ...villagerDelta(faces, vf),
     };
   });
 
@@ -274,7 +373,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       // systems that had never shared a figure. It rides the villagers'
       // own drape field, so the viewer dresses it with the code that
       // already dresses a gown.
-      drape,
+      drape: withFit(drape, uf),
       ...villagerDelta(faces, uf),
     };
   });
@@ -291,7 +390,7 @@ export function buildPaperdollPayload(pal, img, cif) {
     const cf = buildNeutralBody(cramps, { face, ...opts });
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
-      build: d.build, zones: d.zones, hide, drape,
+      build: d.build, zones: d.zones, hide, drape: withFit(drape, cf),
       ...villagerDelta(faces, cf),
     };
   });
@@ -323,14 +422,81 @@ export function buildPaperdollPayload(pal, img, cif) {
   // ship as deltas like everything else, and an animal animates through
   // the same path a man does.
   const beastPacks = BEAST_DESIGNS.map((d) => {
-    const { ramps: bramps, opts, hide, pelt } = beastOpts(d, pal);
+    const { ramps: bramps, opts, hide, pelt, drape } = beastOpts(d, pal);
     let bf = buildNeutralBody(bramps, { face, ...opts });
-    bf = collapseGroups(bf, ALL_GROUPS, [0, 0.4, 0]);
+    // TWO KINDS OF DESIGN IN ONE LINE. A full beast collapses ALL six
+    // groups and its piece is the whole animal. A werebeast collapses
+    // only the HEAD and keeps the man's body — it is a man with the
+    // wrong head, not a wolf on four legs, and that is the difference
+    // between the two halves of this file.
+    bf = collapseGroups(bf, d.collapse || ALL_GROUPS, [0, 1.5, 0]);
     return {
       id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
-      build: d.build || {}, zones: [], hide,
-      beast: packPiece(buildBeastBody(pelt, d.beast)),
+      build: d.build || {}, zones: d.zones || [], hide,
+      // HOW IT REACHES YOU, and WHEN. The kind is the design's; the
+      // timing is the game's own primaryAttackAnimFrames, where -1 marks
+      // the frame the blow lands on.
+      attack: d.attack || null,
+      attackFrames: (ENEMY_BASICS[d.id] || {}).primaryAttackAnimFrames || null,
+      beast: d.beast ? packPiece(buildBeastBody(pelt, d.beast)) : null,
+      beastHead: d.beastHead ? packPiece(buildBeastHead(pelt, d.beastHead)) : null,
+      // NO SPINE: an arachnid gets its own builder rather than more
+      // parameters on the quadruped's. See pieces/arachnid.js.
+      arachnid: d.arachnid ? packPiece(buildArachnid(pelt, d.arachnid)) : null,
+      // THE STING IS ITS OWN PIECE, and it ships as a set of poses
+      // rather than one mesh: a scorpion's tail is the only part of it
+      // anybody watches, and a piece welded into the body can only move
+      // when the body does. Five frames from coiled to thrown, picked by
+      // the attack clock — cheaper than a skeleton for one appendage,
+      // and it is how the sprites this port replaces did it.
+      sting:
+        d.arachnid && d.arachnid.sting
+          ? [0, 0.25, 0.5, 0.75, 1].map((k) =>
+              packPiece(buildSting(pelt, { ...d.arachnid, strike: k })),
+            )
+          : null,
+      // FLYING: the one behaviour that is neither foot nor fin. A wing
+      // is a membrane on fingers, so it is panels rather than boxes —
+      // see pieces/wings.js.
+      wings: d.wings ? packPiece(buildWings(pelt, d.wings)) : null,
+      // A FISH STANDS ON NOTHING, which is not a leg length of zero.
+      // The same builder gives a whole slaughterfish and a lamia's tail
+      // — see pieces/fishBody.js and its `from`.
+      fish: d.fish ? packPiece(buildFishBody(pelt, d.fish)) : null,
+      // The scorpion's claws, built for a body with no spine and working
+      // just as well on a dreugh that has one.
+      claws: d.claws ? packPiece(buildArachnid(pelt, d.claws)) : null,
+      // A gargoyle borrows the daedra lord's horns, and a spriggan's
+      // canopy is a drape: the last five designs in the game add no
+      // geometry at all.
+      horns: d.horns ? packPiece(buildHorns(pelt, d.horns)) : null,
+      drape: withFit(drape, bf),
+      // A werebeast keeps a tail, which the human rig has no concept of.
+      beastTail: d.tail ? packPiece(buildBeastTail(pelt, d.tail)) : null,
       ...villagerDelta(faces, bf),
+    };
+  });
+
+  // ── THE DAEDRA ─────────────────────────────────────────────────
+  // Five enemies, and the only new geometry between them is a pair of
+  // horns. A Daedroth is the werewolf's design exactly — collapse the
+  // skull, put a beast head on it; a Fire Daedra is the fire atronach's
+  // additive blend; a Frost Daedra is the ice atronach's transparency at
+  // a different density.
+  //
+  // Which is what a mechanism is for after enough of it exists: the
+  // twentieth enemy cost a file and the forty-sixth costs a line.
+  const daedraPacks = DAEDRA_DESIGNS.map((d) => {
+    const { ramps: dramps, opts, hide, drape } = daedraOpts(d, pal);
+    let df = buildNeutralBody(dramps, { face, ...opts });
+    if (d.collapse) df = collapseGroups(df, d.collapse, [0, 1.5, 0]);
+    return {
+      id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
+      build: d.build, zones: d.zones, hide, drape: withFit(drape, df), spectral: d.spectral || null,
+      beastHead: d.beastHead ? packPiece(buildBeastHead(hide, d.beastHead)) : null,
+      beastTail: d.tail ? packPiece(buildBeastTail(hide, d.tail)) : null,
+      horns: d.horns ? packPiece(buildHorns(hide, d.horns)) : null,
+      ...villagerDelta(faces, df),
     };
   });
 
@@ -371,7 +537,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       return list;
     })(),
     swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
-    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, hairRamps: HAIR_RAMPS, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
+    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_D, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, daedra: daedraPacks, hairRamps: HAIR_RAMPS, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), hair: hairPacks, tail: packPiece(buildTail(ramps.skin,'argonian')), tailCat: packPiece(buildTail(KHAJIIT_FUR,'khajiit')), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
 
   return payload;
 }

@@ -246,7 +246,7 @@ export async function createChargenFlow(fetchBytes, { rolls = Math.random } = {}
 
 /** An overlay-shaped chargen window for the exterior hosts.
  *  onDone(result) fires once, after the flow reaches 'done'. */
-export function createChargenWindow(flow, { onDone, hudScale = 2 } = {}) {
+export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
   let _fired = false;
   return {
     flow,
@@ -263,6 +263,9 @@ export function createChargenWindow(flow, { onDone, hudScale = 2 } = {}) {
       // the SHARED overlay table (ui/input.js) - not a second copy
       const a = overlayAction(ev ?? { key: codeToKey(code) });
       if (a) flow.input(a);
+      // ui-chargen-4: backing out of the race screen cancels the
+      // wizard (the flow flags it; the host unwinds) - once, like done
+      if (flow.cancelled) { _fired = true; onCancel?.(); return; }
       if (flow.done) { _fired = true; onDone?.(flow.result()); }
     },
     // U10: the shared overlay pointer seam hands NATIVE coords; the
@@ -270,11 +273,16 @@ export function createChargenWindow(flow, { onDone, hudScale = 2 } = {}) {
     click(vx, vy) {
       if (_fired) return;
       flow.clickNative(vx, vy);
+      if (flow.cancelled) { _fired = true; onCancel?.(); return; }
       if (flow.done) { _fired = true; onDone?.(flow.result()); }
     },
     // U-scroll: the hosts' wheel seam (scroll never advances the flow,
     // so no done check).
     wheel(dir) { if (!_fired) flow.wheel?.(dir); },
+    // F2 / THE FOUR-HOSTS RULE: the townTalk hosts drive the overlay's
+    // clock through this wrapper; dungeonContext holds the RAW flow and
+    // reaches flow.tick directly.
+    tick(dt) { flow.tick?.(dt); },
     draw(renderer, canvas, font) { flow.draw(renderer, canvas, font, hudScale); },
   };
 }

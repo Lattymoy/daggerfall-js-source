@@ -2605,3 +2605,351 @@ Broadsword | 1 - 12 points of damage | Condition: Used | Weight: 5
 kilograms"; an equip-click lights the torch; Remove drops the sword,
 the pile mints with its flat, and activating it reopens the window
 with the pile as the remote target.
+
+## U27 - THE WIZARD'S BACK DOOR (2026-08-20)
+
+AUDIT 23 ui-chargen-4. Backing out of the race screen - the wizard's
+first - was a silent no-op; DFU cancels the WHOLE wizard there:
+RaceSelectWindow_OnClose's Cancelled arm nulls the race template and
+re-pushes nothing (DaggerfallStartNewGameWizard.cs:299-302), so the
+UI stack unwinds to the start screen.
+
+The port's split: the FLOW flags it (`cancelled` - set only by the
+race screen's back with no description box open; the box's No still
+just closes the box, and deeper backs still walk the wizard),
+createChargenWindow fires `onCancel` exactly once on the same
+modal-contract latch onDone rides, and each HOST owns its unwind -
+a `location.reload()` to the boot flow's front door. On the bare URL
+that lands back on title -> main menu, DFU's unwind exactly; on a
+dev-scene URL (?world with no ?class) it re-offers the wizard fresh,
+which is what SetRaceSelectWindow's Reset() does on re-entry anyway.
+The dungeon host's arm rides tickOverlay (it drives the RAW flow,
+not the window), so the classic-start path cancels too.
+
+Mutations: 3 run, 3 killed (the flag dropped back to the no-op; the
+once-latch dropped so onCancel refires; the modal back cancelling
+the wizard).
+
+Pins: test/uicancel.test.js x3 (the flag - first-screen back sets
+it, the gender walk-back does not, the description box's No never
+does; the window - Escape fires onCancel once and goes dead with
+onDone untouched; the host sweep - the dungeon tickOverlay arm and
+both exterior hosts' onCancel reloads).
+
+## U28 - THE WAGON (2026-08-20)
+
+The oldest inventory residue clears: U26's button answered "You
+don't own a wagon." and nothing else. The W-slice ships
+DaggerfallInventoryWindow's whole second inventory:
+
+- **The button ladder** (:1234-1243): no Small Cart (Transportation
+  template 93) in the bag -> the noWagon box; inside a dungeon
+  without access -> exitTooFar; else ShowWagon toggles. The click
+  sound rides every arm.
+- **ShowWagon** (:1047-1080): the port's `_remote()` is computed,
+  so DFU's lastRemoteItems save/restore collapses into
+  `usingWagon ? wagonItems : loot ?? dropped` - the same truth,
+  no stored swap. The remote scroll resets on toggle.
+- **The 750kg gates**: a local Remove click INTO the wagon runs
+  WagonCanHoldAmount (:1425-1434) - ComputeCanHoldAmount over the
+  cart's load in GP-units - refusing at zero fit
+  (cannotHoldAnymore) with no click sound, split-taking a partial
+  stack exactly as the items-9 carry gate does. The drop-gold
+  field clamps to the headroom with the wagonFullGold box
+  (:1296-1303); DFU would mint a 0-gold stack when the wagon is
+  dead full - guarded, Ledger A.
+- **CheckWagonAccess** (:1082-1116): the dungeon arm - the cart in
+  the bag AND the player within 5 units of an EXIT door
+  (DungeonWagonAccessProximityCheck's radius). A no-loot open
+  lands straight ON the wagon in Remove mode - the classic
+  leave-the-haul-at-the-entrance flow; a loot open keeps the pile
+  as the remote with the button now able to toggle. The port
+  decides ON OPEN (per-window), collapsing DFU's cross-open flag
+  lifecycle into the same observable behavior.
+- **The save halves**: playerEntity.wagonItems beside items in the
+  envelope (SerializablePlayer carries wagonItems); pre-W saves
+  restore an empty cart. All five window constructions hand
+  `wagonItems`; the dungeon host hands the exit-door proximity.
+
+Prose flags: exitTooFar/cannotHoldAnymore/wagonFullGold keys cited,
+prose ours pending a string source (the established pattern).
+RESIDUE: the wagon weight label ("x / 750" on the remote icon) is a
+drawing note; DFU's on-foot gate rides the transport arc.
+
+Mutations: 4 run, 4 killed (the exitTooFar gate dropped; the wagon
+transfer gate dropped; the no-loot auto-open dropped; the gold
+clamp dropped).
+
+Pins: test/wagon.test.js x4 (the ladder incl. the dungeon refusal
+and the toggle's remote identity; CheckWagonAccess's three opens -
+no-loot-on-the-wagon-in-Remove, loot-keeps-the-pile,
+no-cart-never-grants; the 750kg gates - the 375-of-400-books
+split-take, the zero-fit refusal, the 4000-gold headroom clamp
+with its box; the save/wiring sweep).
+
+## U29 - THE LAUNCHER, and settings that are actually settings (2026-08-21)
+
+The SETT-slice. Mac asked what DFU's pre-splash screen is called; the
+answer (`DaggerfallUnitySetupGameWizard`, not the classic start menu)
+exposed that the port had no settings at all - every value it branched
+on was a constant, recorded that morning as a Ledger row saying so.
+The row lasted a few hours.
+
+**The store** (`systems/settings.js`) is DFU's SettingsManager. The 13
+sections, 171 keys and every default come from the VENDORED
+`defaults.ini.txt` (`vendor/dfu-settings`, MIT, the same route the
+quest pack took) baked by `scripts/bakeSettings.mjs` - hand-copying
+171 defaults is the lossy-second-copy shape AUDIT 17e F9 caught in the
+item templates, so the bake reads the real bytes and a pin asserts
+baked === vendored. The typed getters are verbatim INCLUDING their
+failure modes, which are quirks rather than accidents: `GetBool` reads
+FALSE on an unparseable value (not the default, :921-936); `GetInt`
+with a range clamps and reads MIN on failure (:952-964); `GetFloat`
+likewise; `GetString` is raw.
+
+**Ours** (the Ledger-A split): where the values live - DFU writes an
+ini beside the executable, a browser has none, so the store keeps a
+DELTA against the defaults in localStorage, which also means a later
+DFU default still reaches a player who never touched that key. And
+the TIERS, which are a claim about this port rather than about DFU:
+`live`, `stored`, `unavailable`.
+
+**Seven settings went LIVE** - each one a real consumer, because a
+toggle that changes nothing is a lie: CombatVoices (the three voice
+gates), PlayerTorchFromItems (the kit seam), LoiterLimitInHours (the
+cap AND the refusal line that quotes it), SoundVolume (a new master
+bus in audio.js - one gain node every source routes through, rather
+than four call-site multiplies), MusicVolume (songPlayer's master,
+under the port's own MUSIC_GAIN headroom), MouseLookSensitivity and
+InvertMouseVertical (`ui/lookSettings.js`, ONE home for the three
+hosts that each carried a bare 0.0025). All are read AT THE POINT OF
+USE, as DFU reads them, so a change lands on the next swing rather
+than the next reload.
+
+**The launcher** (`ui/launcher.js`, DELETED at MENU - see U30 - + `scenes/launcherScene.js`) was one
+keyed native screen over all 171: `[`/`]` for sections, arrows to
+change, R to reset, Enter to play. It lists settings it will NOT let
+you change, with their reason, rather than hiding them - the same
+doctrine as the port's INTERIM flags, and the only honest way to show
+a player why Daggerfall's enhanced AI is missing here. The boot gate
+is verbatim (`SceneControl.cs:46` / wizard `:154`): the ARENA2 pick is
+our GameFolder stage, then `GUI/ShowOptionsAtStart` - which DFU ships
+TRUE, so the launcher appears every boot until turned off - with
+`?launcher` as the held-key analogue.
+
+THE DIVERGENCE SURVIVES AND IS NOW ENFORCED: EnhancedCombatAI ships
+True in DFU and is False here (the classic AI). It is tiered
+`unavailable` with that reason on screen, not offered as a toggle.
+
+Pins: test/settings.test.js x5 (the bake against the vendored bytes;
+the getters' failure modes; the delta/reset behaviour; the LIVE tier
+proven by driving each consumer; and the tier map's honesty - which
+caught TWO lies in the map while this slice was being written, naming
+music.js and input.js for consumers that live in songPlayer.js and
+lookSettings.js). Two pins repinned to the evolved truth (c2combat's
+COMBAT_VOICES constant, restwindow's LOITER_LIMIT_HOURS).
+
+PROBED LIVE (tools/launcherProbe.mjs): the launcher comes up BEFORE the
+game, lists real settings with all three tiers on screen, a keypress
+flips PlayerTorchFromItems False -> True with the store agreeing and
+the change persisted, an unavailable setting REFUSES with its reason
+printed, and Enter launches past it - zero page errors. The first
+draft of that probe asserted on document.body.innerText, which is
+empty for a canvas app, so three of its four checks were meaningless;
+it was rewritten against a new window.__launcher surface (the
+__talk/__climb house pattern) that reports the screen's own state.
+
+## AUDIT 24 (2026-08-21): the settings/launcher pass
+
+A comprehensive audit run over the newest code - the SETT slice was
+hours old and had never been read adversarially. Five findings, one
+severe; one suspicion refuted by measurement; one parity claim
+verified.
+
+**F1 - THE FOURTH HOST.** The mouse-look settings reached
+world/exterior/dungeon and missed `scenes/interior.js`, which is a
+real reachable host (`?interior=`, fly camera): sensitivity and invert
+were live in three hosts and dead in the fourth. The FOUR HOSTS rule,
+caught again, this time on code a few hours old. Fixed; pinned across
+all four with a no-raw-constant assertion.
+
+**F2 - THE LAUNCHER TRAPPED EVERY TOUCH DEVICE (severe).**
+`launcherScene.js` registered only `keydown`, while every other
+pre-game screen takes `pointerdown` (menu.js:95, :143) and every
+playable scene calls `attachTouch`. With `ShowOptionsAtStart` shipping
+True, a phone booted straight into a screen it could not dismiss - the
+game was unreachable. PROVEN on an emulated Pixel 5 before the fix
+(taps and clicks did nothing) and after (dismissable). The file's own
+header carries the NEVER TRAPS law it was breaking.
+  The first fix was itself wrong and the check caught it: `PLAY` sat at
+  a fixed `x + 200 * s`, which falls off a narrow canvas - the button
+  was drawn where no finger could reach. The layout is canvas-relative
+  now, and the pin asserts every control lands inside a 393px canvas.
+
+**F3 - A TIER THAT LIED.** `GUI/ShowOptionsAtStart` has a real consumer
+(main.js reads it as the launcher gate) but was tiered `stored`, so
+the launcher told the player "no consumer in this port yet" about the
+single setting that controls the launcher.
+
+**F4 - THE PIN THAT LET F3 SHIP.** The tier-honesty pin was
+ONE-DIRECTIONAL: it proved every LIVE key has a consumer, and nothing
+proved the reverse. That is exactly AUDIT 18's open-flags idiom
+("agree BOTH ways") left half-applied. The missing half now re-derives
+every settings read under `src/` - walking the tree at test time, never
+from a checked-in list - and fails on any key read but not tiered
+live. Re-introducing F3 makes it fail by name.
+
+**F5 - NO WAY BACK.** DFU reaches settings in-game from
+DaggerfallPauseOptionsWindow; this port has no pause menu, so turning
+ShowOptionsAtStart off hides settings for good. Routed as a Ledger row
+and MITIGATED: the launcher warns at the moment of the choice and
+names `?launcher`. Found unpinned by the audit's own mutation run (m4
+survived), which is what the warning's pin now closes.
+
+**REFUTED by measurement.** The suspicion that CH4's senses cadence
+change (16Hz -> 60Hz detection) had regressed the C11 lag fix:
+tools/colliderBench.mjs on the real Privateer's Hold collider reports
+IDLE 60fps 0.63 ms/frame against a ~0.7 baseline and NEAR 10fps 57.31
+against ~65. No regression - the FOV and range gates short-circuit
+before the raycast for most foes. Recorded because a refuted suspicion
+is a finding.
+
+**VERIFIED.** SoundVolume's composition: DFU applies it as a linear
+multiply on the source volume (`volumeScale * Settings.SoundVolume` -
+EnemySounds.cs:112, AmbientEffectsPlayer.cs:190), which is exactly
+what the SETT master bus does (per-source gain upstream of one master
+gain). Parity confirmed rather than assumed.
+
+Mutations: 4 run, 3 killed on the first pass and m4 (the lock-out
+warning) SURVIVED unpinned - pinned, re-run, killed. Pins: 4 added to
+settings.test.js; the touch guard folded into tools/launcherProbe.mjs
+so the trap cannot come back silently.
+
+## U30 - THE SETTINGS MENU: a home for every setting (2026-08-21)
+
+U29 gave the port a launcher and a real 171-key store. It was still a
+*list*: one flat column of ini keys, tier-filtered, readable by someone
+who already knew what `LypyL_GameConsole` meant. The ask was the other
+half - "game settings need a home, audio needs a home, graphics needs
+a home, the future mod manager needs a home", organised and readable
+for a casual player. This is that screen.
+
+**The shape.** Seven categories (`settingsMap.js`), TOTAL and DISJOINT
+over all 171 keys: Game, Controls, Audio, Video, Interface,
+Accessibility, Mods (21/16/5/66/37/19/7). A key with no home would
+simply vanish from the screen, so the totality is pinned, and so is the
+count vector - a re-bake that renames a key fails the build instead of
+silently dropping a row.
+
+**DEPARTURE (declared in the map itself).** DFU's own settings UI has
+five pages (`DaggerfallAdvancedSettingsWindow.cs`), with audio living
+inside gamePlay's right column and the mod system inside enhancements.
+This port promotes **Audio** and **Mods** to their own categories. The
+reason is the ask, not taste: audio is the first thing a player looks
+for and the second thing this port can actually honour, and the mod
+manager is a room that must exist before it has furniture. Everything
+else follows DFU's grouping. The `.ini` sections are untouched - this
+is a presentation map over a verbatim store, which is exactly the line
+the port draws between logic and presentation.
+
+**TIER IS A GROUP, NOT A FILTER.** The store's three tiers (8 live,
+145 stored, 18 unavailable) are three collapsible groups per category
+with computed headings - "WORKS NOW (2)", "SAVED FOR LATER (17)",
+"NOT AVAILABLE HERE (2)" - and the header sentence is built from the
+same tally. Nothing is hidden: a folded group still states its count,
+because a setting a player cannot find is worse than one that says it
+is waiting. An unavailable row never offers a control that cannot
+move, and never prints its stored value - `EnhancedCombatAI` holds
+DFU's shipped `True` while this port runs the classic path, so drawing
+"On" would be a lie. It reads `classic`, with a sentence saying what
+runs instead. All four properties are pinned.
+
+**The words are DFU's.** Labels and help text come from the vendored
+`GameSettings.txt` where DFU has them (`settingsText.js`, ~64 of 171
+keys - the honest measure of how much of the store DFU's own UI
+exposes at all), and from `settingsCopy.js` where it does not. The pin
+is negative and total: no label may carry camelCase or an underscore,
+and no copy anywhere may call this port's own gaps broken, missing or
+unsupported.
+
+**THE RANGE-EQUALS-CLAMP LAW.** A slider offers exactly the travel its
+consumer honours - no more. `NUMBER_LAW` states a range and its
+source, and the pin re-derives each live consumer's own
+`getInt/getFloat` bounds at test time and compares. This caught a real
+parity bug on its first run: `LoiterLimitInHours` had been given an
+invented 1..24, where DFU's own slider is `AddSlider("loiterLimit
+InHours", 3, 12)` (`DaggerfallAdvancedSettingsWindow.cs:354`). The
+consumer in `restSession.js` was wrong, not the screen; both now read
+3..12. `MouseLookSensitivity` runs to 4.0 here rather than DFU's 16.0
+for the same reason in the other direction - `lookSettings.js` clamps
+at 4.0, and a slider whose last three quarters did nothing is the same
+lie as an inoperable control.
+
+**The phone.** `settingsMetrics.js` exists because `nativeMetrics`
+gives scale 1 - seven-pixel text - on every phone the design workflow
+measured. It keeps the classic 320-wide page wherever it fits at scale
+2+, and falls back to an elastic COMFORT page (a real phone lands at
+196x363, scale 2, 14px text) rather than shrinking the type. Then
+`tools/settingsProbe.mjs` drives the real screen in a real browser at
+1280x800 **and** at phone size with touch emulation, tapping only the
+rects the screen itself reports through `window.__settings` - the same
+`layout()` that `draw()` and `click()` read. It found a defect on its
+first run that eight viewports of unit tests had not: rows were a
+44px tap tall, but the control *pill* inside was inset by four, so the
+thing a finger actually aims at was 36 CSS px. Drawn size and target
+size are two rects now (`ctrlRect` and `ctrlHit`), and both the probe
+and a new offline pin hold them apart. The probe also converts canvas
+pixels to CSS pixels through the element's real box before judging a
+finger, because a DPR-scaled canvas would make a 44-canvas-px target a
+16-CSS-px one and the check would pass while the screen stayed
+untappable.
+
+`src/ui/launcher.js` is DELETED; `SettingsWindow` replaces it whole,
+and `launcherScene.js` routes pointer, wheel and key input to it.
+
+Mutations: 5 run, 5 killed (two needed re-running - the first attempt
+edited text that was not there, which is itself the reason a mutation
+run reports its own match count now). Pins: 8 in `settingsUI.test.js`,
+plus the live probe.
+
+### U30 addendum - what the merge with the F2 lane cost, and found
+
+Two things came back from `origin/main` that this slice had to answer
+rather than absorb.
+
+**Carried, not lost.** The launcher's own merge audit had fixed a
+defect this rewrite deletes the code for: `stepFor` read the step off
+the CURRENT value (`0.1` only while the string contained a `.`), so
+stepping `0.9` up stored `"1"`, which has no `.`, and the next press
+stepped by ONE - a player who muted SoundVolume could never reach a
+fraction again, and the row displayed a `2` the audio bus clamps to 1.
+`NUMBER_LAW` kills the first half structurally: the step is declared
+per key and never inferred from a value. The second half was still
+live here - `formatValue` printed the STORED number, so a store
+holding 2 would read "200%" while the bus ran 1. It now shows the
+value IN EFFECT, clamped to the same range the consumer's
+`getFloat/getInt` clamps to. Both halves are pinned (T15), and the
+retired launcher test's end-to-end walk is re-driven through the new
+screen's own key input (T16). A defect fixed in deleted code stays
+fixed.
+
+**FOUND: the F2 real-seam test was RED, and had never run.** The
+incoming lane's `F2 real seam` test is gated on `ARENA2_PATH`, so a
+bare `npm test` skips it and reports green - it went in unexecuted.
+Run with ARENA2 it failed twice over. First a `TypeError`: its fake
+renderer had no `gl`, and `drawMenuBackdrop` measures the live context
+when no canvas is passed (`chargenArt.js:82`). With that stubbed, the
+real assertion failed - and the assertion was WRONG. It ticked the
+player by zero and expected a frame, but `FLCPlayer.cs`'s Update order
+displays the current buffer only once a frame delay has ELAPSED, and
+`start()` clears the displayed frame; DFU shows its cleared texture
+until the first delay passes. Asserting a frame on a zero-length tick
+would have pinned the pacing law inside out, and the next person to
+keep the law faithfully would have "broken" the suite. The engine was
+right; the test is fixed to walk the clock, and it now proves the
+whole path (nothing before the first delay, the frame after it, no
+upload for a still frame, a new frame releasing the old key).
+
+The lesson is the gate, not the lane: an ARENA2-only test that has
+never been run with ARENA2 present is not a pin, it is a claim. Both
+modes ran green before this merged.

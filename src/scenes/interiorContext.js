@@ -81,7 +81,12 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const collect = async (id) => {
     if (!pending.has(id)) {
       await getGpuMesh(id);
-      pending.set(id, cpuModels.get(id));
+      const cpu = cpuModels.get(id);
+      // LOUDLY, ONCE, AT THE SEAM. A null from getGpuMesh used to
+      // become a silent `undefined` here and surface three statements
+      // later as a TypeError on someone else's line.
+      if (!cpu) console.warn(`[interior] model ${id} is not in this ARCH3D - every placement of it is skipped`);
+      pending.set(id, cpu);
     }
     return pending.get(id);
   };
@@ -98,8 +103,13 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // standalone scene when the swapped archive lacks the record.
   const texRemap = new Map();
   for (const id of pending.keys()) {
+    // `?? []` guards the VALUE, never the RECEIVER: an id whose model
+    // is absent lands in `pending` as undefined (collect writes
+    // cpuModels.get(id) and getGpuMesh only fills cpuModels on
+    // success), so this line threw before the placement guard below
+    // could ever run.
     const cpu = cpuModels.get(id);
-    for (const sm of cpu.subMeshes ?? []) {
+    for (const sm of cpu?.subMeshes ?? []) {
       const swapped = applyClimate(sm.textureArchive, sm.textureRecord, climateBase, season);
       if (swapped === sm.textureArchive) continue;
       const key = `${sm.textureArchive}_${sm.textureRecord}`;
@@ -128,8 +138,21 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const collider = new Collider(() => -Infinity);
   for (const p of interior.placements) {
     const matrix = parent(p.matrix);
-    drawList.push({ mesh: await getGpuMesh(p.modelIdNum), matrix });
+    // NEVER TRAPS: getGpuMesh returns NULL for a model id this data set
+    // does not carry (dataPipeline.js:82, and it CACHES the null), and
+    // cpuModels is written only on its success path - so an absent
+    // model used to push a {mesh: null} draw entry AND then read
+    // `cpu.positions` off undefined one line later. Every other builder
+    // in the port skips the placement; this one did not, and it is the
+    // only interior arm, which is why a single missing model could take
+    // the whole building. Skip the placement, loudly.
+    const gpu = await getGpuMesh(p.modelIdNum);
     const cpu = cpuModels.get(p.modelIdNum);
+    if (!gpu || !cpu) {
+      console.warn(`[interior] model ${p.modelIdNum} is not in this ARCH3D - the placement is skipped`);
+      continue;
+    }
+    drawList.push({ mesh: gpu, matrix });
     collider.addMesh('interior', cpu.positions, cpu.indices, matrix);
     if (p.modelIdNum === LADDER_MODEL_ID) ladders.push({ cpu, matrix });
     if (isShopShelfModel(p.modelIdNum)) {
@@ -147,9 +170,17 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   attachInteriorDoorSounds(actions);
   const dynamicDraws = [];
   for (const d of interior.actionDoors) {
+    // The same seam as the placements above: addDoor reads
+    // `cpu.positions`, and the push would otherwise hand the frame
+    // loop a {gpu: null} entry. A door model this data set lacks costs
+    // the door, not the building.
+    const gpu = await getGpuMesh(d.modelIdNum);
     const cpu = cpuModels.get(d.modelIdNum);
-    const o = actions.addDoor(cpu, parent(d.matrix));
-    dynamicDraws.push({ gpu: await getGpuMesh(d.modelIdNum), object: o });
+    if (!gpu || !cpu) {
+      console.warn(`[interior] action-door model ${d.modelIdNum} is not in this ARCH3D - the door is skipped`);
+      continue;
+    }
+    dynamicDraws.push({ gpu, object: actions.addDoor(cpu, parent(d.matrix)) });
   }
 
   // People (C1): AddPeople's data layer - base positions batch through

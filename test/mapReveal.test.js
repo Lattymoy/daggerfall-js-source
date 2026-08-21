@@ -66,14 +66,19 @@ test('T4: discovery rides the save envelope, and a pre-T4 save restores empty', 
   discoverBuilding('17:Daggerfall', { name: 'Vintage Elixirs', buildingKey: 7, factionId: 0, quality: 8, buildingType: 2 });
   const entity = { stats: { endurance: 50 }, skills: [], skillUses: [], items: [], spells: [] };
   const snap = snapshotPlayer(entity, {});
-  assert.equal(snap.discovery['17:Daggerfall'][7].displayName, 'Vintage Elixirs');
+  // G8: the envelope grew the locations half - buildings nest now.
+  assert.equal(snap.discovery.buildings['17:Daggerfall'][7].displayName, 'Vintage Elixirs');
   // The snapshot is a COPY, not an alias into the live store.
   discoverBuilding('17:Daggerfall', { name: 'Second Shop', buildingKey: 8, buildingType: 2 });
-  assert.equal(snap.discovery['17:Daggerfall'][8], undefined);
+  assert.equal(snap.discovery.buildings['17:Daggerfall'][8], undefined);
   // A load REPLACES the store with the envelope's state...
   restorePlayer({ stats: {} }, snap);
   assert.equal(hasDiscoveredBuilding('17:Daggerfall', 7), true);
   assert.equal(hasDiscoveredBuilding('17:Daggerfall', 8), false, 'the post-snapshot discovery is gone after the load');
+  // ...a PRE-G8 flat snapshot (buildings at the top level) still
+  // restores as buildings...
+  restorePlayer({ stats: {} }, { ...snap, discovery: { '17:Daggerfall': { 7: { buildingKey: 7, displayName: 'Vintage Elixirs' } } } });
+  assert.equal(hasDiscoveredBuilding('17:Daggerfall', 7), true, 'the legacy flat shape reads as buildings');
   // ...and a save from before this field restores an empty store.
   delete snap.discovery;
   restorePlayer({ stats: {} }, snap);

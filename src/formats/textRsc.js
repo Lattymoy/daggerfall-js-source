@@ -23,6 +23,52 @@ export const RSC = Object.freeze({
   FirstCharacter: 0x20, LastCharacter: 0x7f,
 });
 
+/** TextFile.ReadTokens (TextFile.cs:421-441), the byte-token stream
+ *  reader the BOOK files ride (B1). Reads {formatting, text, x, y}
+ *  tokens from `position` until `endToken` (e.g. RSC.EndOfPage).
+ *  Printable bytes 0x20-0x7f gather into Text tokens (formatting -1
+ *  in DFU; the byte-named RSC members name the rest); FontPrefix and
+ *  PositionPrefix consume their argument byte exactly as the C# -
+ *  including PositionPrefix's PEEK that survives a truncated tail. */
+export const TOKEN_TEXT = -1;   // TextFile.Formatting.Text
+export function readTokens(buffer, position, endToken) {
+  if (!buffer || buffer.length === 0) return null;
+  const tokens = [];
+  while (position < buffer.length) {
+    const nextByte = buffer[position];
+    if (nextByte === endToken) break;
+    if (nextByte >= RSC.FirstCharacter && nextByte <= RSC.LastCharacter) {
+      // ReadTextToken: gather printable run
+      const start = position;
+      let count = 0;
+      while (position < buffer.length) {
+        const b = buffer[position++];
+        if (b >= RSC.FirstCharacter && b <= RSC.LastCharacter) count++;
+        else break;
+      }
+      tokens.push({ formatting: TOKEN_TEXT, text: latin1(buffer, start, count), x: 0, y: 0 });
+      position = start + count;
+    } else {
+      // ReadFormattingToken
+      const formatting = buffer[position++];
+      let x = 0;
+      if (formatting === RSC.FontPrefix) {
+        x = buffer[position++];
+      } else if (formatting === RSC.PositionPrefix) {
+        if (position < buffer.length) { x = buffer[position]; position++; }
+      }
+      tokens.push({ formatting, text: '', x, y: 0 });
+    }
+  }
+  return tokens;
+}
+
+const latin1 = (buf, start, count) => {
+  let s = '';
+  for (let i = 0; i < count; i++) s += String.fromCharCode(buf[start + i]);
+  return s;
+};
+
 export class TextRsc {
   load(bytes) {
     const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);

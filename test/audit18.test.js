@@ -136,7 +136,7 @@ test('AUDIT 18 F2: every ARENA2 name live code fetches survives the ingest diet'
   //
   // The stronger rule: if src/ NAMES an ARENA2 file anywhere in code, the
   // diet must keep it. That needs no guess about the call shape.
-  const ARENA2_NAME = /'([A-Z0-9_$][A-Z0-9_.$]*\.(?:BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX|VID|DAT))'/g;
+  const ARENA2_NAME = /'([A-Z0-9_$][A-Z0-9_.$]*\.(?:BSA|COL|PAL|PAK|CFG|FNT|WLD|DEF|STD|IMG|CIF|RSC|RCI|SND|TXT|GFX|VID|DAT|CEL))'/g;
   const stripComments = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
   const named = new Set();
   for (const file of walk(SRC)) {

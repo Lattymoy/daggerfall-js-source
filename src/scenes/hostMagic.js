@@ -49,6 +49,7 @@ export function createPlayerMagic({
   renderer, audio, getTexture, uploadRecord, collider,
   playerEntity, playerSinks, say, surfacePlayer,
   foes, foeSinks, absorbCtx,
+  onTeleport = null,   // TP-slice: the Teleport effect's prompt seam (the host owns the box)
   rolls = Math.random,   // ENGINE-PRNG RULE: the saving-throw/magnitude roll slot (uniform; sequence-free)
 }) {
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
@@ -77,6 +78,10 @@ export function createPlayerMagic({
     // contact fails and full saves say "Save versus spell made."
     if (r.chanceFailed) say(spell.rangeType === 0 ? 'Spell effect failed.' : 'Save versus spell made.');
     if (r.saved) say('Save versus spell made.');
+    // TP-slice: a landed Teleport effect prompts (Teleport.cs Start
+    // :63-68); the marker only rises on CasterOnly arrivals and this
+    // is the PLAYER seam - :88-90's player gate, structurally.
+    if (r.teleport) onTeleport?.();
     return r;
   }
 

@@ -43,7 +43,7 @@ import {
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
-import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
+import { preloadChargenArt, stopConstellationAnim } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
@@ -52,7 +52,7 @@ import { SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
 // hosts have had since U8d - tabs, paperdoll, the real info panel and
 // point-and-click Use. The keyed InventoryWindow it used until now is
 // retired from this host.
-import { NativeInventoryWindow, preloadInventoryArt } from '../ui/nativeInventory.js';
+import { NativeInventoryWindow, preloadInventoryArt, WAGON_ACCESS_DISTANCE } from '../ui/nativeInventory.js';
 import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
 import { createDroppedLoot } from './droppedLoot.js';   // U8e, mounted here at U26
 import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
@@ -64,7 +64,8 @@ import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, raiseAtRestEnd } from './shared.js';
+import { fetchBytes, ensureAudio, raiseAtRestEnd , endRunToTitleMenu } from './shared.js';
+import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
@@ -179,8 +180,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let colliderTris = 0;
 
   const ensureRemap = async (id) => {
+    // NEVER TRAPS: cpuModels is written only on getGpuMesh's SUCCESS
+    // path, so a model id this ARCH3D lacks arrives here as undefined.
+    // `?? []` guards the VALUE and not the RECEIVER - this was safe at
+    // its placement call site only because `if (!gpu) continue` runs
+    // one line before it, and the action-door arm below had no such
+    // guard, so a missing door model threw here at LOAD.
     const cpu = cpuModels.get(id);
-    for (const sm of cpu.subMeshes ?? []) {
+    for (const sm of cpu?.subMeshes ?? []) {
       const swapped = remap(sm.textureArchive);
       if (swapped === sm.textureArchive) continue;
       const key = `${sm.textureArchive}_${sm.textureRecord}`;
@@ -284,12 +291,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (d.disabled) continue;
       const matrix = multiply(originMatrix, d.matrix);
       const gpu = await getGpuMesh(d.modelIdNum);
+      // THE FOURTH SEAM. The placement loop fifty lines above has
+      // `if (!gpu) continue`; this arm did not, and a door model
+      // absent from the player's ARCH3D trapped it three ways over -
+      // ensureRemap's undefined receiver, then addDoor's cpu.positions,
+      // and then a {gpu: null} entry the frame loop draws unguarded.
+      const cpu = cpuModels.get(d.modelIdNum);
+      if (!gpu || !cpu) {
+        console.warn(`[dungeon] action-door model ${d.modelIdNum} is not in this ARCH3D - the door is skipped`);
+        continue;
+      }
       await ensureRemap(d.modelIdNum);
       // Chain key + own action record + the starting lock (audit
       // 2026-08-16 + P10: chained doors were unreachable and locks
       // had no state to gate on; the P10 player-toggle lock gate now
       // reads currentLockValue).
-      const o = actions.addDoor(cpuModels.get(d.modelIdNum), matrix, {
+      const o = actions.addDoor(cpu, matrix, {
         ns: bi, positionKey: d.position, action: d.action, startingLockValue: d.startingLockValue,
       });
       dynamicDraws.push({ gpu, object: o });
@@ -627,6 +644,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // classic shows behind the doll underground. The town hosts have
   // only ever asked for SCBG04I0, so the constant existed with no
   // caller until now.
+  preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
   preloadPaperDollForEntity({ renderer, fetchBytes, palette, getTexture }, playerEntity, 'dungeon')
     .catch(() => console.warn('[paperdoll] art unavailable in this dungeon'));
 
@@ -634,9 +652,26 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  F6 press and each loot target - so a hook cannot reach one and
    *  miss the others (THE ONE CONSTRUCTION SEAM, which U25's sweep
    *  found four instances of in the exterior hosts). */
+  // B1 + AUDIT B-C2: the fetch is ASYNC, so by the time it resolves
+  // the player may have opened something else - the reader takes the
+  // slot only if it is still free (never clobbers a live window).
+  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { if (!activeOverlay) activeOverlay = w; } });
   function openInventory(lootItems, onEmptied = null) {
     return new NativeInventoryWindow({
+      openBook: openBookHook,   // B1: the use-mode book arm
       items: () => (playerEntity.items ??= []),
+      wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice
+      // W-slice: CheckWagonAccess's dungeon arm - the wagon is
+      // reachable only within 5 units of an EXIT door
+      // (DungeonWagonAccessProximityCheck :1099-1116; the classic
+      // "your cart waits at the entrance" rule).
+      dungeon: {
+        inside: true,
+        nearExit: () => !!lastPlayerFeet && exitDoors.some((d) => {
+          const p = [d.matrix[12], d.matrix[13], d.matrix[14]];
+          return Math.hypot(p[0] - lastPlayerFeet[0], p[1] - lastPlayerFeet[1], p[2] - lastPlayerFeet[2]) <= WAGON_ACCESS_DISTANCE;
+        }),
+      },
       entity: playerEntity,
       icons: { getTexture, uploadRecord, textures: renderer.textures },
       rows: (id) => textRsc?.variantLinesById(id) ?? [],   // AUDIT 22 F2
@@ -795,7 +830,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the four writers that checked for death, which is exactly why the other
   // three could go on writing health raw and nobody noticed.
   setDeathPresenter(() => {
-    if (!(activeOverlay instanceof DeathScreen)) activeOverlay = new DeathScreen();
+    if (!(activeOverlay instanceof DeathScreen)) activeOverlay = new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) });   // D1
   });
   function hurtPlayer(dmg) {
     hurtEntity(playerEntity, dmg);
@@ -885,6 +920,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // below and reuse the engine's explodeAt/applySpellToPlayer. The
   // absorb context is the dungeon constant (inside, no daylight).
   const magic = createPlayerMagic({
+    // hudText.add, not `say?.()`. There is no `say` in this scope — the
+    // optional-call syntax made an undefined identifier look like a
+    // guarded one, so it read as safe and was a ReferenceError waiting
+    // for the first Recall cast in a standalone dungeon. Every other
+    // line in this file speaks through hudText, including the one four
+    // below it.
+    onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
     renderer, audio, getTexture, uploadRecord,
     collider,
     playerEntity, playerSinks,
@@ -1029,8 +1071,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (m.draw !== null) return;
     m.draw = false;
     const gpu = await getGpuMesh(99800);
-    if (!gpu) return;
-    m.draw = { gpu, object: { matrix: null } };
+    // THE CRASH FROM THE FIELD (2026-08-21). This used to push
+    // `{ gpu, object: { matrix: null } }` and leave the matrix for the
+    // NEXT updateMissiles pass to fill. But the push lands in a
+    // MICROTASK - this is async and its one caller does not await it -
+    // and both hosts draw dynamicDraws BEFORE they call drawFoes
+    // (dungeon.js:365 against :391; worldModes.js:951 against :959).
+    // So the very next frame drew the arrow with a NULL matrix, and
+    // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
+    // a non-nullable WebIDL union. Firing a bow killed the frame loop,
+    // one frame later, with a stack of drawMesh and its caller and
+    // nothing else. The matrix is built HERE, so an entry in the list
+    // is always drawable.
+    //
+    // The dead check is the other half: a point-blank hit retires the
+    // arrow while this await is still pending, and retireMissile's
+    // splice has already run and found nothing - so the microtask
+    // would push an ORPHAN that updateMissiles skips for ever
+    // (`if (m.dead) continue`), leaving a null-matrix entry that threw
+    // on EVERY frame rather than one. Its sibling in arrowFlight.js
+    // has had this check all along.
+    if (!gpu || m.dead) return;
+    m.draw = { gpu, object: { matrix: arrowMatrix(m) } };
     dynamicDraws.push(m.draw);
   }
   function arrowMatrix(m) {
@@ -1187,7 +1249,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     let hitEnemy = false;
     // C2-slice (combat-17): the player's 20% attack grunt fires once
     // per hit frame, never for a bow (this path is melee-only).
-    const grunt = playerAttackGrunt(playerEntity, false);
+    const grunt = playerAttackGrunt(playerEntity, false, Math.random);   // explicit: this path's resolveHit rides Math.random too (no injected seam here)
     if (grunt && grunt.clip >= 0) audio.playOneShot(grunt.clip, 1);
     for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, Math.random, (f) => backstabChanceOf(playerEntity, !!f._backFacing), (l) => hudText.add(l),
       (f, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(classicMinutesRef.value) }))) {   // C2-slice (combat-11): the player's poisoned blade infects its victim
@@ -2221,6 +2283,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // Four later sites test `activeOverlay === chargenFlow`, and with
       // both null that comparison is TRUE - which would fire
       // finishChargen on the very character the load just restored.
+      // AUDIT F2-I2: quickLoad drops the wizard by clearing the slot and
+      // deliberately keeps chargenFlow, so the flow can never reach its
+      // own exit arm again - a constellation still playing would latch
+      // the module's active index and its texture for ever. The host
+      // releases it, since the host is what tore the overlay down.
+      if (activeOverlay === chargenFlow) stopConstellationAnim();
       if (activeOverlay instanceof DeathScreen || activeOverlay === chargenFlow) activeOverlay = null;
       hudText.add('Game loaded.');
     },
@@ -2243,7 +2311,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  rest that ended itself would latch a dead window on screen. */
     tickOverlay(dt) {
       if (!activeOverlay) return;
+      activeOverlay.tick?.(dt);   // D1: the death sequence's clock
       if (activeOverlay.isRestWindow) activeOverlay.tickRest(dt);
+      // ui-chargen-4: backing out of the race screen cancels the
+      // wizard - DFU unwinds the UI stack to the start screen
+      // (RaceSelectWindow_OnClose :299-302). The port's front door is
+      // the boot flow, so the unwind is a reload: the bare URL lands
+      // back on title -> main menu; a dev-scene URL re-offers the
+      // wizard fresh (SetRaceSelectWindow Resets on re-entry).
+      if (activeOverlay === chargenFlow && chargenFlow?.cancelled) { location.reload(); return; }
       if (activeOverlay.done) {
         if (activeOverlay === chargenFlow) finishChargenHere();
         surfacePlayer();

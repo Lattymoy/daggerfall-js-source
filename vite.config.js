@@ -13,7 +13,10 @@ function arena2DevServer() {
         const name = decodeURIComponent(req.url.slice(1).split('?')[0]);
         // Flat directory only - no separators, no traversal.
         if (!/^[A-Za-z0-9._-]+$/.test(name)) return next();
-        const path = join(root, name);
+        let path = join(root, name);
+        // B1: books live in ARENA2/BOOKS/ - a flat BOK*.TXT name falls
+        // back to the subfolder (still no separators in the URL name).
+        if (!existsSync(path) && /^BOK\d+\.TXT$/i.test(name)) path = join(root, 'BOOKS', name);
         if (!existsSync(path)) {
           res.statusCode = 404;
           return res.end('not found');
@@ -39,7 +42,15 @@ export default defineConfig({
     // Neither carries game data: the editor asks for the user's ARENA2
     // through the same dataSource door the game uses. See
     // src/tools/paperdollViewer.js.
-    rollupOptions: { input: { main: 'index.html', viewer: 'viewer.html' } },
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        viewer: 'viewer.html',
+        // A PROTOTYPE, and deployed on purpose: a design that claims to
+        // adapt to a phone has to be opened on one.
+        enhanced: 'enhanced.html',
+      },
+    },
   },
   plugins: [arena2DevServer()],
 });

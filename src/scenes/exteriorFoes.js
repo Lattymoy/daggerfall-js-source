@@ -240,9 +240,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     let any = false;
     // C2-slice (combat-17): the player's 20% attack grunt, once per
     // hit frame (this path is melee-only, never a bow).
-    const grunt = playerAttackGrunt(playerEntity, false);
+    const grunt = playerAttackGrunt(playerEntity, false, rolls);   // ENGINE-PRNG RULE: the pool's uniform seam
     if (grunt && grunt.clip >= 0) audio?.playOneShot?.(grunt.clip, 1);
-    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rand,
+    for (const { foe, damage } of playerWeapon.resolveHit(live, playerEntity, canSee, rolls,
       (f) => backstabChanceOf(playerEntity, isBackFacing(f.ai.yaw, f.ai.feet, eye)), say,
       (f, pt) => inflictPoison(f.entity, pt, false, { currentMinute: Math.floor(currentMinute()) }))) {   // C2-slice (combat-11)
       any = true;
@@ -255,9 +255,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       } else {
         const snd = zeroDamageHitSound({
           weapon: playerWeapon.weapon, arrowHit: false,
-          parrySounds: !!ENEMY_BASICS[foe.mobileType]?.parrySounds, roll: rand(),
+          parrySounds: !!ENEMY_BASICS[foe.mobileType]?.parrySounds, roll: rolls(),
         });
-        if (snd != null) audio?.playOneShot?.(snd, 1.1);
+        if (snd?.at === 'enemy') audio?.play3d?.(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
+        else if (snd) audio?.playOneShot?.(snd.sound, 1.1);
       }
     }
     return any;

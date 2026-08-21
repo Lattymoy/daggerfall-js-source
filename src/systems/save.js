@@ -78,6 +78,12 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   snap.skillUses = [...(entity.skillUses ?? [])];
   snap.career = entity.career ? { ...entity.career } : null;   // plain CFG data
   snap.items = (entity.items ?? []).map((it) => ({ ...it }));
+  // W-slice: the cart's own 750kg collection (PlayerEntity.WagonItems
+  // - SerializablePlayer carries wagonItems beside items).
+  snap.wagonItems = (entity.wagonItems ?? []).map((it) => ({ ...it }));
+  // TP-slice: the Recall anchor (PlayerEntity.AnchorPosition - the
+  // Teleport effect stores it on the entity, Teleport.cs:35).
+  snap.anchorPosition = entity.anchorPosition ? { ...entity.anchorPosition } : null;
   snap.spells = (entity.spells ?? []).map((sp) => sp.index);   // resolve against SPELLS.STD on load
   snap.activeEffects = (entity.activeEffects ?? []).map(copyEffectEntry);
   for (const k of REP_ARRAYS) snap[k] = entity[k] ? [...entity[k]] : null;
@@ -196,6 +202,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.skillUses = [...snap.skillUses];
   entity.career = snap.career ? { ...snap.career } : entity.career;
   entity.items = snap.items.map((it) => ({ ...it }));
+  entity.wagonItems = (snap.wagonItems ?? []).map((it) => ({ ...it }));   // W-slice (pre-W saves restore empty)
+  entity.anchorPosition = snap.anchorPosition ? { ...snap.anchorPosition } : null;   // TP-slice
   // AUDIT 17f: a Currency stack saved before gold gained its template
   // index carries none, and stacksWith compares templateIndex - a
   // restored save would grow a SECOND gold stack the next time gold

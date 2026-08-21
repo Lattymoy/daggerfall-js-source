@@ -414,6 +414,14 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         continue;
       }
     }
+    if (e.type === 43) {
+      // TP-slice: Teleport-Effect (43,255) - Start PROMPTS rather
+      // than assigning anything (Teleport.cs:63-68); the HOST owns
+      // the anchor/teleport box. TargetFlags_Self is the property
+      // gate (:52), so only a CasterOnly arrival raises the marker.
+      if ((spell.rangeType ?? 0) === 0) out.teleport = true;
+      continue;
+    }
     if (isHealHealth(e)) {
       const n = magnitude(e);
       out.healed += n;

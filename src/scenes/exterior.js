@@ -55,6 +55,7 @@ import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
 import { ImgFile } from '../formats/imgFile.js';   // AUDIT 21 hosts F7: loadHud's reader
@@ -69,7 +70,7 @@ import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the sho
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs , endRunToTitleMenu } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -78,6 +79,8 @@ import {
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { addGold } from '../systems/court.js';   // U10 probe surface
+import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
+import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 
 export async function bootExterior(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
@@ -394,7 +397,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // door in playerEntity.js; the door calls this. Registered here rather than
   // passed down four call chains, because there is one player and one death.
   setDeathPresenter(() => {
-    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen());
+    if (!(townTalk.overlay instanceof DeathScreen)) townTalk.showOverlay(new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) }));   // D1
   });
 
   // AUDIT 19 F4: the CUMULATIVE game-day count, for the music seed. The
@@ -443,6 +446,10 @@ export async function bootExterior(canvas, renderer, params, status) {
   });
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
+  preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
+  // B1 + AUDIT B-C2: an async open must not clobber a window the
+  // player opened while the book was loading.
+  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { if (!townTalk.overlayActive) townTalk.showOverlay(w); } });
   // AUDIT 21 (hosts lane, F7): the classic HUD art. loadHud swallows a missing
   // file and answers null, and drawHud no-ops on null, so a host without the
   // art draws no HUD rather than failing to boot - the same law the title
@@ -483,6 +490,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     createChargenFlow(fetchBytes).then(({ flow, spellsByIndex: sbi }) => {
       spellsByIndex = sbi;   // M2
       townTalk.showOverlay(createChargenWindow(flow, {
+        // ui-chargen-4: the race screen's back cancels the wizard to
+        // the front door (DFU unwinds to the start screen); the
+        // reload re-runs the boot flow.
+        onCancel: () => location.reload(),
         onDone: (r) => {
           finishChargen(playerEntity, r, sbi);
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
@@ -561,6 +572,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // answers the exterior truth (inside false, day from the one clock) -
   // the S24 InLight/InDarkness arms go live here.
   const magic = createPlayerMagic({
+    onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
     renderer, audio, getTexture, uploadRecord,
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes.interiorCollider) ? modes.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
@@ -665,7 +677,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     // binding; same host rule as F5).
     if (e.code === 'F6' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && inventoryArtLoaded()) {
       townTalk.showOverlay(new NativeInventoryWindow({
+        openBook: openBookHook,   // B1: the use-mode book arm
         items: () => (playerEntity.items ??= []),
+        wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
         entity: playerEntity,
         icons: { getTexture, uploadRecord, textures: renderer.textures },
         rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
@@ -701,15 +715,15 @@ export async function bootExterior(canvas, renderer, params, status) {
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
     if (walkMode && (e.buttons & 2) && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(e.movementX, e.movementY, true); return; }   // M2: an armed cast eats the click
-    cam.yaw -= e.movementX * 0.0025;
-    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
+    cam.yaw -= e.movementX * lookScale();
+    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
   });
   addEventListener('mousedown', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
   addEventListener('mouseup', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
-      cam.yaw -= dx * 0.0025;
-      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * 0.0025));
+      cam.yaw -= dx * lookScale();
+      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * lookScale() * lookInvert()));
     },
     attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') { if (held && magic.interceptAttack(true)) return; weaponRig.attackInput(dx, dy, held); } },   // M2
     attackTap: () => { if (walkMode && modeNow() === 'exterior') weaponRig.clickAttack(); },
@@ -869,6 +883,13 @@ export async function bootExterior(canvas, renderer, params, status) {
     }, modes?.musicContext?.() ?? null);
 
     if (modes.frame(dt, now)) {
+      // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
+      // townTalk slot got neither its clock nor its draw while the
+      // player was inside a building or a dungeon - chargen mounts
+      // there from an un-awaited load, so a constellation started on
+      // the way in would hang until its deadline. Ticked and drawn
+      // ABOVE the modal render, which is where townTalk always draws.
+      if (townTalk.overlayActive) townTalk.frame(dt);
       requestAnimationFrame(frame);
       return;
     }
@@ -948,7 +969,9 @@ export async function bootExterior(canvas, renderer, params, status) {
             // pile as the remote target (Remove defaults - the OnPush law)
             const pile = droppedLoot.pileFor(dropKey);
             townTalk.showOverlay(new NativeInventoryWindow({
+              openBook: openBookHook,   // B1: the use-mode book arm
               items: () => (playerEntity.items ??= []),
+        wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
               onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
         entity: playerEntity,
               loot: { items: () => pile.items },
@@ -990,7 +1013,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         ? [cam.pos[0] - fwd[0] * TP_DIST, cam.pos[1] - fwd[1] * TP_DIST, cam.pos[2] - fwd[2] * TP_DIST]
         : cam.pos;
     const proj = perspective(
-      Math.PI / 3,
+      fieldOfView(),
       canvas.clientWidth / canvas.clientHeight,
       0.1,
       Math.max(2000, extentX * 4)
@@ -1060,7 +1083,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     {
       const dx = target[0] - eye[0], dy = target[1] - eye[1], dz = target[2] - eye[2];
       const horiz = Math.hypot(dx, dz) || 1e-6;
-      sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), Math.PI / 3,
+      sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), fieldOfView(),
         canvas.clientWidth / canvas.clientHeight);
     }
     renderer.drawTerrain(groundSurface, identityMatrix,

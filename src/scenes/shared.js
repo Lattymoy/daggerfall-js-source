@@ -537,6 +537,27 @@ export function fatigueLossMultiplierFor(entity) {
  * `music` module singleton needing an AudioContext, so the sinks default to it
  * and can be replaced. Nothing in the hosts passes them.
  */
+/** D1 - THE END OF A RUN. DFU's death lands on
+ *  StartMethods.TitleMenuFromDeath, which DaggerfallUI turns into
+ *  InitGame(deathVideo): ANIM0012.VID plays and the START MENU comes
+ *  up behind it. The port's front door is the boot flow, so the menu
+ *  is the bare URL - the same unwind chargen's cancel already uses.
+ *  ONE seam, because all four hosts die (the four-hosts rule): each
+ *  passes this to its DeathScreen as onReset.
+ *
+ *  NEVER TRAPS: a missing or undecodable video costs the video, not
+ *  the return to the menu. */
+export async function endRunToTitleMenu(renderer) {
+  try {
+    const { playVideo } = await import('../ui/videoPlayer.js');
+    const { getBytes } = await import('./dataSource.js');
+    await playVideo(renderer.canvas, renderer, await getBytes('ANIM0012.VID'));
+  } catch (e) {
+    console.warn('[death] ANIM0012.VID unavailable - skipping the death video:', e?.message ?? e);
+  }
+  if (typeof location !== 'undefined') location.href = location.pathname;
+}
+
 export function createMusicDirector({ fm = false, play = null, stop = null, playing = null } = {}) {
   const isPlaying = playing ?? (() => music.playing);
   let _lastEnvironment = null;

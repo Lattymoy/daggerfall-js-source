@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   RestSession, MINUTES_PER_TICK, REST_WAIT_PER_HOUR, LOITER_WAIT_PER_HOUR,
-  LOITER_LIMIT_HOURS, REST_TEXT,
+  loiterLimitHours, REST_TEXT,
 } from '../src/systems/restSession.js';
 
 const deps = (over = {}) => {
@@ -67,7 +67,9 @@ test('rest: completions - timed wakes on 353, full ends healed on 350 (instantly
   const r4 = s4.tick(LOITER_WAIT_PER_HOUR + 0.01);
   assert.equal(r4.textId, REST_TEXT.loiterDone);
   assert.equal(d4.minutes, 60);
-  assert.equal(LOITER_LIMIT_HOURS, 3);   // the classic cap the window enforces (DFU settings default/min)
+  // SETT: a live store read now; with no override it reports DFU's
+  // shipped LoiterLimitInHours=3, the classic cap the window enforces
+  assert.equal(loiterLimitHours(), 3);
   // AUDIT 18: a 0-hour timed request ends on the FIRST frame with no
   // time passing - DaggerfallRestWindow.Update tests
   // `hoursRemaining < 1` BEFORE calling TickRest (:225-226). The

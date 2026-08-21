@@ -15,8 +15,11 @@ import {
 import { GfxFile } from '../src/formats/gfxFile.js';
 import { TextRsc } from '../src/formats/textRsc.js';
 import { ChargenFlow } from '../src/ui/chargen.js';
-import { chargenHit, METHOD_PANEL, METHOD_CHOOSE_CLASS, METHOD_CHOOSE_QUESTIONS, QSCROLL_Y, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES, QUESTION_ROW_H } from '../src/ui/chargenArt.js';
+import { CEL_FILES, preloadChargenArt, drawChargenNative, startConstellationAnim, tickConstellationAnim, stopConstellationAnim, chargenHit, METHOD_PANEL, METHOD_CHOOSE_CLASS, METHOD_CHOOSE_QUESTIONS, QSCROLL_Y, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES, QUESTION_ROW_H } from '../src/ui/chargenArt.js';
 import { SKILLS } from '../src/systems/skills.js';
+import { DFPalette } from '../src/formats/dfPalette.js';
+import { FntFile } from '../src/formats/fntFile.js';
+import { makeFont } from '../src/ui/text.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
 
@@ -374,4 +377,298 @@ test('U18: the GFX row RLE - runs, raws, and uncompressed rows byte-exact', () =
   assert.deepEqual([...gfx.getDFBitmap(0, 0).data], [7, 7, 7, 7, 8, 9, 1, 2, 3, 4, 5, 6]);
   assert.deepEqual([...gfx.getDFBitmap(0, 1).data], [9, 8, 7, 6, 5, 4, 11, 12, 13, 14, 15, 16]);
   assert.equal(gfx.load(bytes, 'CRAFT.IMG'), false, 'the extension gate');
+});
+
+// ---- F2: the constellation animations gate the next question ----
+// The flow's `constellationAnim` is injectable exactly as describeClass
+// is, so the whole law drives headless with no renderer and no CEL.
+const f2Blues = (weights) => weights.map((w) => 8 + 24 * w);
+
+const fakeAnim = (secs = 1) => {
+  let left = 0;
+  return {
+    started: [],
+    stops: 0,
+    start(i) { this.started.push(i); left = secs; return secs; },
+    tick(dt) { left -= dt; return left > 0; },
+    stop() { this.stops++; left = 0; },
+  };
+};
+
+test('F2: an answer LIGHTS its constellation and the next question waits it out', () => {
+  const f = flowWithQuestions();
+  f._enterClassQuestions();
+  const anim = fakeAnim(1);
+  f.constellationAnim = anim;
+  const shown = f.qDisplay;
+
+  assert.equal(f.answerClassQuestion(0), true);
+  assert.equal(f.qAnswered, 1, 'the weight and the count land SYNCHRONOUSLY');
+  assert.deepEqual(anim.started, [0], 'the answered constellation started');
+  assert.equal(f.qDisplay, shown, 'the next question has NOT shown yet');
+  assert.equal(f.answerClassQuestion(0), false, 'input is locked while it plays');
+
+  f.tick(0.5);
+  assert.equal(f.qDisplay, shown, 'still playing, still waiting');
+  f.tick(0.6);
+  assert.notEqual(f.qDisplay, shown, 'the animation ended and the next question showed');
+  assert.equal(f.qAnimIndex, -1);
+  assert.equal(f.answerClassQuestion(0), true, 'and the screen answers again');
+});
+
+test('F2: the chart repaints at the animation END, never at the answer', () => {
+  // CEL_OnAnimEnd (:504-513) writes the brightened slots; the ANSWER
+  // only increments the weight. Before F2 the port painted at the
+  // answer, which is what the old comment claimed DFU did.
+  const f = flowWithQuestions();
+  f._enterClassQuestions();
+  f.constellationAnim = fakeAnim(1);
+  assert.equal(f.qPaintBlues, null, 'a fresh screen paints the PRISTINE chart');
+  f.answerClassQuestion(0);
+  assert.equal(f.qPaintBlues, null, 'the answer alone does not repaint');
+  f.tick(2);
+  assert.deepEqual(f.qPaintBlues, f.constellationBlues(), 'the END repaints');
+});
+
+test('F2: the tenth answer ENDS the screen only when its animation ends', () => {
+  // EndQuestions runs from CEL_OnAnimEnd, so the last constellation
+  // plays out before the screen resolves. (This fixture has no
+  // describeClass art, so EndQuestions falls straight through to the
+  // accept arm - the existing ten-answer pin above asserts that.)
+  const f = flowWithQuestions();
+  f._enterClassQuestions();
+  f.constellationAnim = fakeAnim(1);
+  for (let i = 0; i < QUESTION_COUNT - 1; i++) { f.answerClassQuestion(0); f.tick(2); }
+  f.answerClassQuestion(0);
+  assert.equal(f.qAnswered, QUESTION_COUNT);
+  assert.equal(f.state, 'classQuestions', 'the screen waits for the last constellation');
+  f.tick(2);
+  assert.notEqual(f.state, 'classQuestions', 'and resolves when it ends');
+});
+
+test('F2: a STUCK animation can never make a character uncreatable', () => {
+  // The catastrophic case: a host that never ticks the flow, or a CEL
+  // that stalls. The deadline releases the lock and the screen
+  // degrades to the pre-F2 instant advance rather than dying.
+  const f = flowWithQuestions();
+  f._enterClassQuestions();
+  f.constellationAnim = { start: () => 1, tick: () => true, stop: () => {} };   // never ends
+  let clock = 0;
+  f._now = () => clock;
+  assert.equal(f.answerClassQuestion(0), true);
+  assert.equal(f.answerClassQuestion(0), false, 'locked while inside the deadline');
+  clock += 60_000;   // a minute later, nothing has ticked
+  assert.equal(f.answerClassQuestion(0), true, 'the deadline releases the screen');
+  assert.equal(f.qAnswered, 2, 'and the answer counted');
+});
+
+test('F2: re-entering the screen drops an in-flight animation', () => {
+  const f = flowWithQuestions();
+  f._enterClassQuestions();
+  const anim = fakeAnim(5);
+  f.constellationAnim = anim;
+  f.answerClassQuestion(0);
+  assert.equal(f.qAnimIndex, 0);
+  f._enterClassQuestions();
+  assert.equal(f.qAnimIndex, -1, 'no stale animation end can land on the new run');
+  assert.equal(f.qPaintBlues, null, 'and it draws the PRISTINE chart again');
+  assert.equal(f.qAnswered, 0);
+  assert.ok(anim.stops > 0);
+});
+
+test('F2: the overlay wrapper forwards the clock (the four-hosts seam)', async () => {
+  // dungeonContext holds the RAW flow; the townTalk hosts hold this
+  // wrapper - so the wrapper must pass dt through or chargen animates
+  // in one host and hangs on its deadline in the other two.
+  const { createChargenWindow } = await import('../src/systems/chargenSession.js');
+  const f = flowWithQuestions();
+  let ticked = 0;
+  f.tick = (dt) => { ticked += dt; };
+  createChargenWindow(f, {}).tick(0.25);
+  assert.equal(ticked, 0.25);
+});
+
+test('F2: the weight index picks the RIGHT constellation (the mapping is otherwise unpinned)', () => {
+  // AUDIT F2-T2: the mapping is correct as shipped but nothing guarded
+  // it, and a swap is invisible to every behavioural test - it would
+  // simply light the wrong constellation. DFU: weights[0] Warrior,
+  // [1] Rogue, [2] Mage (CreateCharClassQuestions.cs:317) and the
+  // switch starts warriorAnim/rogueAnim/mageAnim for 0/1/2 (:335-350),
+  // at panel positions rogue (1,1) mage (79,1) warrior (110,1).
+  assert.deepEqual(CEL_FILES.map((c) => c.name), ['WARRIOR.CEL', 'ROGUE.CEL', 'MAGE.CEL']);
+  assert.deepEqual(CEL_FILES.map((c) => [c.x, c.y]), [[110, 1], [1, 1], [79, 1]]);
+  // and the chart's palette slots are indexed the SAME way, so the
+  // constellation that lights is the one that brightens
+  // (CONSTELLATION_INDICES is module-private; constellationPalette's
+  // write order is pinned in audit17k.test.js - this asserts the
+  // pairing that makes lit == brightened.)
+  assert.deepEqual(f2Blues([1, 0, 0]), [32, 8, 8]);   // a warrior answer brightens slot 0
+});
+
+test('F2: the ORDERING law holds in both directions', () => {
+  // The answer commits its weight and (on the tenth) its class
+  // SYNCHRONOUSLY; only the display half waits. Pinned both ways so a
+  // future refactor cannot quietly move either half.
+  const f = flowWithQuestions();
+  f._enterClassQuestions();
+  f.constellationAnim = fakeAnim(1);
+  const before = f.qWeights.slice();
+  const shown = f.qDisplay;
+  f.answerClassQuestion(0);
+  assert.notDeepEqual(f.qWeights, before, 'the WEIGHT landed with the answer');
+  assert.equal(f.qAnswered, 1, 'and so did the count');
+  assert.equal(f.qDisplay, shown, 'while the DISPLAY waited');
+  f.tick(2);
+  assert.notEqual(f.qDisplay, shown, 'and moved only when the animation ended');
+});
+
+test('F2: every exit arm drops an in-flight animation', () => {
+  // AUDIT F2-T3: only re-entry was pinned; the accept/cancel/end and
+  // keyboard-back arms all call _stopQuestionAnim and none was covered.
+  for (const exit of [
+    (f) => f._acceptQuestionClass(),
+    (f) => f._cancelQuestionClass(),
+    (f) => f.input('back'),
+  ]) {
+    const f = flowWithQuestions();
+    f._enterClassQuestions();
+    const anim = fakeAnim(5);
+    f.constellationAnim = anim;
+    f.answerClassQuestion(0);
+    assert.equal(f.qAnimIndex, 0, 'an animation is in flight');
+    exit(f);
+    assert.equal(f.qAnimIndex, -1, 'the exit arm stopped it');
+    assert.ok(anim.stops > 0);
+  }
+});
+
+test('F2: a hidden tab does not kill a healthy animation (ticked time, not wall time)', () => {
+  // AUDIT F2-C1: requestAnimationFrame freezes in a hidden tab, so the
+  // animation stops advancing while the WALL clock runs on. The tick
+  // watchdog spends TICKED seconds; only the input gate uses the wall
+  // clock, where it guards a host that never ticks at all.
+  const f = flowWithQuestions();
+  f._enterClassQuestions();
+  f.constellationAnim = fakeAnim(0.4);
+  let clock = 0;
+  f._now = () => clock;
+  f.answerClassQuestion(0);
+  clock += 60_000;              // a minute passes with the tab hidden
+  f.tick(0.1);                  // the first resumed frame, dt clamped by the host
+  assert.equal(f.qAnimIndex, 0, 'the animation survived the wall-clock gap');
+  f.tick(0.4);
+  assert.equal(f.qAnimIndex, -1, 'and ends on its own ticked time');
+});
+
+// ---------------------------------------------------------------
+// F2 real-seam: the pins above all drive the INJECTED animation, so
+// the whole chargenArt half - the CEL load, the player, the upload
+// gate, the chart repaint - could be dead code and the suite would
+// stay green. This one drives the REAL functions over the REAL files.
+// ---------------------------------------------------------------
+test('F2 real seam: the constellation loads, animates, repaints and releases for real', { skip: ARENA2 ? false : 'ARENA2_PATH not set' }, async () => {
+  const uploads = [], releases = [];
+  const renderer = {
+    uploadTexture: (g, name) => { uploads.push(name); return `tex:${name}`; },
+    releaseTexture: (g, key) => releases.push(key),
+    drawScreenQuad: () => {},
+    // drawMenuBackdrop measures the LIVE context when no canvas is
+    // passed (chargenArt.js:82), which is the path drawChargenNative
+    // takes. A fake renderer with no gl made this test throw the moment
+    // it ran for real - and because it is ARENA2-only, a bare run never
+    // saw it. The stub is the 320x200 the native page is drawn in.
+    gl: { drawingBufferWidth: 320, drawingBufferHeight: 200 },
+  };
+  const palette = new DFPalette();
+  palette.load(new Uint8Array(readFileSync(join(ARENA2, 'ART_PAL.COL'))), 'ART_PAL.COL');
+  await preloadChargenArt({ renderer, palette, fetchBytes: async (n) => new Uint8Array(readFileSync(join(ARENA2, n))) });
+  const font = makeFont(renderer, new FntFile().load(new Uint8Array(readFileSync(join(ARENA2, 'FONT0003.FNT')))), 'FONT0003');
+  const m = { ox: 0, oy: 0, s: 1 };
+
+  const f = flowWithQuestions();
+  f._enterClassQuestions();
+  const flush = () => { uploads.length = 0; releases.length = 0; };
+
+  // 1. the REAL start returns the CEL's own length and reports playing
+  const secs = startConstellationAnim(0);
+  assert.ok(secs > 0 && secs < 60, `WARRIOR.CEL runs for ${secs}s`);
+  assert.equal(tickConstellationAnim(0), true, 'a started CEL is playing');
+
+  // 2. a started CEL shows NOTHING until a frame delay has actually
+  //    elapsed. That is FLCPlayer.cs's Update order kept exactly -
+  //    the current buffer is displayed, and only then is the next
+  //    frame decoded - so the clock has to move before anything is
+  //    drawable, and DFU shows its cleared texture until it does.
+  //    (This test asserted the opposite on a zero-length tick, which
+  //    would have pinned the pacing law inside out; it is ARENA2-only,
+  //    so a bare run never executed the line.)
+  const budget = Math.max(2, Math.min(20, Math.floor(secs / 0.1)));   // never tick past the CEL's own end
+  flush();
+  assert.equal(drawChargenNative(renderer, m, font, f), true);
+  assert.ok(!uploads.includes('chargen:cel:WARRIOR.CEL'), 'nothing is drawable before the first delay');
+
+  // 3. move the clock, and THAT frame reaches the renderer - the whole
+  //    path, art to quad
+  flush();
+  for (let i = 0; i < budget && !uploads.length; i++) { tickConstellationAnim(0.1); drawChargenNative(renderer, m, font, f); }
+  assert.ok(uploads.includes('chargen:cel:WARRIOR.CEL'), `the frame reached the renderer: ${uploads}`);
+
+  // 4. a SECOND draw with no tick re-uploads NOTHING (the F2-P2 gate)
+  flush();
+  drawChargenNative(renderer, m, font, f);
+  assert.deepEqual(uploads, [], 'a still frame costs no upload');
+
+  // 5. ticking past another frame delay decodes a new one, and THAT
+  //    uploads - releasing the old key first, so the gate cannot leak
+  for (let i = 0; i < budget && !uploads.length; i++) { tickConstellationAnim(0.1); drawChargenNative(renderer, m, font, f); }
+  assert.deepEqual(uploads, ['chargen:cel:WARRIOR.CEL'], 'a new frame uploads once');
+  assert.deepEqual(releases, ['chargen:cel:WARRIOR.CEL'], 'and the old texture is released');
+
+  // 6. the CHART repaints when the blues change, and not before
+  flush();
+  drawChargenNative(renderer, m, font, f);
+  assert.ok(!uploads.some((u) => u.startsWith('CHGN00I0')), 'the pristine chart is already up');
+  f.qPaintBlues = f2Blues([1, 0, 0]);            // one warrior answer
+  drawChargenNative(renderer, m, font, f);
+  assert.ok(uploads.includes('CHGN00I0:32,8,8'), `the chart repainted for the new blues: ${uploads}`);
+
+  // 7. stop RELEASES the frame texture and the anim stops drawing
+  flush();
+  stopConstellationAnim();
+  assert.deepEqual(releases, ['chargen:cel:WARRIOR.CEL']);
+  assert.equal(tickConstellationAnim(0.1), false);
+  flush();
+  drawChargenNative(renderer, m, font, f);
+  assert.ok(!uploads.includes('chargen:cel:WARRIOR.CEL'), 'a stopped constellation draws nothing');
+
+  // 8. and a REPLAY starts clean rather than flashing the last end
+  //    frame (the bufferNextFrame(0) re-arm, Ledger A)
+  assert.ok(startConstellationAnim(1) > 0, 'ROGUE.CEL replays');
+  stopConstellationAnim();
+});
+
+test('F2: the four ART-side laws the headless suite cannot otherwise reach', () => {
+  // Mutation testing left four survivors here (M10-M13), all of them
+  // inside chargenArt's draw half, which needs loaded art to execute -
+  // so the behavioural pins for them are in the real-seam test above,
+  // and that one is corpus-gated. These are SOURCE pins, the same
+  // shape as the host pins in audit18_hosts_outer: they cannot prove
+  // the behaviour, they can only refuse the edit that breaks it.
+  const art = readFileSync(new URL('../src/ui/chargenArt.js', import.meta.url), 'utf8');
+  const chart = art.match(/function ensureChgnTexture[\s\S]*?\n}/)[0];
+  // M10: the chart's blues come from the flow's PAINTED value, which
+  // CEL_OnAnimEnd writes - never re-derived from the answer count,
+  // which would brighten it at the answer as the pre-F2 port did.
+  assert.match(chart, /flow\.qPaintBlues/);
+  assert.ok(!/qAnswered|constellationBlues|qWeights/.test(chart),
+    'the chart must not re-derive the blues from the answer state');
+  // M11: the replay re-arm (Ledger A) - without it every answer after
+  // the first flashes the previous run's END frame for one frame.
+  assert.match(art, /bufferNextFrame\(0\);\n {2}if \(!cel\.player\.start\(\)\)/);
+  // M12: a started player never reports "nothing to play", or the
+  // flow runs its end body inline with _celActive still latched.
+  assert.match(art, /return secs > 0 \? secs : Number\.MIN_VALUE;/);
+  // M13: the per-frame upload gate - without it every DRAWN frame
+  // uploads a texture, sixty a second, for the same decoded frame.
+  assert.match(art, /if \(cel\.frameRef !== frame\) {/);
 });

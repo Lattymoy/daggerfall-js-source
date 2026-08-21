@@ -43,6 +43,7 @@
 //     Open lets it escape; the READER still throws verbatim, and next()/draw()
 //     are inert until a file has opened.
 
+import { getFloat } from '../systems/settings.js';   // SETT: DaggerfallVideo reads SoundVolume per clip
 import { VidFile, VID_BLOCK_TYPES } from '../formats/vidFile.js';
 import { NATIVE_W, NATIVE_H, drawImg, nativeMetrics } from './nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
@@ -64,10 +65,12 @@ export class VideoPlayer {
    * @param {object} deps.renderer      uploadTexture/releaseTexture/drawScreenQuad host.
    * @param {function():number} [deps.now]          seconds on the audio clock.
    * @param {function():AudioContext} [deps.audioContext]  null when sound is not up yet.
-   * @param {number} [deps.soundVolume] DFU Settings.SoundVolume.
+   * @param {number} [deps.soundVolume] an OVERRIDE for DFU
+   *   Settings.SoundVolume; null (the default) reads the live setting
+   *   at each clip, which is what DaggerfallVideo.cs:117 does.
    * @param {string} [deps.textureKey]  renderer key the frame is uploaded under.
    */
-  constructor({ renderer, now, audioContext, soundVolume = 1, textureKey = 'vid:frame' } = {}) {
+  constructor({ renderer, now, audioContext, soundVolume = null, textureKey = 'vid:frame' } = {}) {
     this.renderer = renderer;
     // The context is resolved ONCE, here: nextEventTime and the clip
     // schedule have to live on the same clock for the whole video, and an
@@ -190,7 +193,14 @@ export class VideoPlayer {
     const source = ctx.createBufferSource();
     source.buffer = clip;
     const gain = ctx.createGain();
-    gain.gain.value = this.soundVolume;
+    // MERGE AUDIT: DaggerfallVideo.cs:117 assigns
+    // `audioSources[flip].volume = DaggerfallUnity.Settings.SoundVolume`
+    // as each clip is scheduled - read at the point of use, like every
+    // other live setting. The port had the parameter and never fed it,
+    // so the splash and the death video were the two sounds in the
+    // build the volume slider could not touch: they played at 1.0
+    // while the shipped default is 0.5 and a muted game is 0.
+    gain.gain.value = this.soundVolume ?? getFloat('Controls', 'SoundVolume', 0, 1);
     source.connect(gain).connect(ctx.destination);
     source.start(this._nextEventTime);
     // Probe hook: tools/splashProbe.mjs counts scheduled clips, because a
@@ -254,7 +264,7 @@ function defaultListen(onAnyKey) {
  * `raf`/`listen`/`now` exist so the loop can be driven headlessly.
  */
 export function playVideo(canvas, renderer, bytes, {
-  endOnAnyKey = true, soundVolume = 1, audioContext, now,
+  endOnAnyKey = true, soundVolume = null, audioContext, now,
   raf = (fn) => requestAnimationFrame(fn),
   listen = defaultListen,
 } = {}) {

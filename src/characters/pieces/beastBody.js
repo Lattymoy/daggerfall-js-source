@@ -168,3 +168,45 @@ export function buildBeastBody(ramp = PELT_RAMP, s = {}) {
 
   return faces;
 }
+
+/**
+ * A TAIL ON ITS OWN, for a body that is otherwise human.
+ *
+ * The first cut of this reused buildBeastBody with everything but the
+ * tail set near zero — which still built a barrel, a head and four legs
+ * to get one appendage: 84 faces for something that needs six, and all
+ * of them somewhere behind the wearer's knees.
+ *
+ * Tagged 'body' so it rides the hips rather than the skull.
+ *
+ * @param {number[][]} ramp
+ * @param {{len?:number, up?:number, thick?:number, at?:number}} s
+ *   at — height of the root, in the rig's own (uncompressed) units
+ */
+// NAMED beastTail, NOT buildTail. pieces/tail.js already exports a
+// buildTail — the Khajiit and Argonian tails, which are part of a race
+// rather than a piece bolted onto one — and two of that name in the
+// payload is a SyntaxError that takes the whole module down.
+export function buildBeastTail(ramp = PELT_RAMP, s = {}) {
+  const { len = 0.3, up = 0.3, thick = 0.03, at = 0.98 } = s;
+  const faces = [];
+  const quad = quadder(faces, ramp);
+  const y = at * HSCALE;
+  // Two segments, the second thinner and lower: a tail that is one box
+  // is a plank, and a tail that does not droop is a broom handle.
+  const drop = (1 - up) * len * 0.5;
+  box(quad, -thick, y - thick, -len * 0.55, thick, y + thick, -0.01, 0.7, 0.55, 0.34);
+  box(
+    quad,
+    -thick * 0.7,
+    y - thick * 0.7 - drop,
+    -len,
+    thick * 0.7,
+    y + thick * 0.7 - drop,
+    -len * 0.5,
+    0.62,
+    0.48,
+    0.3,
+  );
+  return faces;
+}

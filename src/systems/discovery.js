@@ -46,20 +46,66 @@ export function discoveredBuildings(locationId) {
   return [..._discovered.get(locationId)?.values() ?? []].map((r) => ({ ...r }));
 }
 
-/** The save envelope's shape: plain nested objects, keyed as stored. */
-export function snapshotDiscovery() {
-  const out = {};
-  for (const [locId, buildings] of _discovered) {
-    out[locId] = Object.fromEntries([...buildings].map(([k, r]) => [k, { ...r }]));
-  }
-  return out;
+// G8-slice (guilds-8): the LOCATION half - PlayerGPS
+// discoveredLocations, keyed by MapId & 0xfffff exactly as
+// HasDiscoveredLocation masks it (:875-882). The guild map reveals
+// write it; the travel map's hidden-dungeon law will read it (its own
+// ledger row).
+let _locations = new Map();   // (mapId & 0xfffff) -> { regionName, locationName }
+
+/** DiscoverLocation's store write (:869-890, the summary columns). */
+export function discoverLocation(mapId, info = {}) {
+  const key = mapId & 0xfffff;
+  if (_locations.has(key)) return false;
+  _locations.set(key, { regionName: info.regionName ?? '', locationName: info.locationName ?? '' });
+  return true;
 }
 
-/** A load REPLACES the store (missing on old saves = nothing found). */
+/** HasDiscoveredLocation (:875-882). */
+export function hasDiscoveredLocationId(mapId) {
+  return _locations.has(mapId & 0xfffff);
+}
+
+/** DiscoverRandomLocation (PlayerGPS.cs:892-910), the pure law:
+ *  candidates are the CURRENT region's rows with the BAKED MapTable
+ *  Discovered flag false AND not already in the store; none left ->
+ *  null ("there's nothing to find"); else a uniform pick
+ *  (UnityEngine.Random.Range - injectable, Ledger A) is discovered
+ *  and returned. regionLocations: [{ mapId, discovered, name,
+ *  regionName }]. */
+export function discoverRandomLocation(regionLocations, rolls = Math.random) {
+  const candidates = (regionLocations ?? []).filter(
+    (l) => !l.discovered && !hasDiscoveredLocationId(l.mapId));
+  if (!candidates.length) return null;
+  const pick = candidates[Math.floor(rolls() * candidates.length)];
+  discoverLocation(pick.mapId, { regionName: pick.regionName, locationName: pick.name });
+  return pick;
+}
+
+/** The save envelope's shape. G8: grew the `locations` half - the
+ *  envelope is `{ buildings, locations }` now; restore still accepts
+ *  the pre-G8 FLAT building map (locationIds carry a colon, so the
+ *  key `buildings` can never collide with one). */
+export function snapshotDiscovery() {
+  const buildings = {};
+  for (const [locId, b] of _discovered) {
+    buildings[locId] = Object.fromEntries([...b].map(([k, r]) => [k, { ...r }]));
+  }
+  return { buildings, locations: Object.fromEntries([..._locations].map(([k, r]) => [k, { ...r }])) };
+}
+
+/** A load REPLACES both stores (missing on old saves = nothing found). */
 export function restoreDiscovery(snap) {
   _discovered = new Map();
-  for (const [locId, buildings] of Object.entries(snap ?? {})) {
+  _locations = new Map();
+  if (!snap) return;
+  const legacy = !snap.buildings && !snap.locations;
+  const buildings = legacy ? snap : (snap.buildings ?? {});
+  for (const [locId, b] of Object.entries(buildings)) {
     _discovered.set(locId, new Map(
-      Object.entries(buildings).map(([k, r]) => [Number(k), { ...r }])));
+      Object.entries(b).map(([k, r]) => [Number(k), { ...r }])));
+  }
+  for (const [k, r] of Object.entries(snap.locations ?? {})) {
+    _locations.set(Number(k), { ...r });
   }
 }

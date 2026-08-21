@@ -988,3 +988,32 @@ under a moved origin + y shift with empties skipped and the record
 unrerolled under a poisoned roll seam; the world-host wiring sweep -
 collect at teardown, stamps at both drop sites, both envelope
 halves).
+
+## TV (2026-08-20): TRAVEL-MAP DUNGEON VISIBILITY - hidden means hidden SHIPPED
+
+The row G8 opened, closed the same night. DFU's travel map draws
+and finds a location only when checkLocationDiscovered passes
+(DaggerfallTravelMapWindow.cs:1121-1131): the BAKED MapTable
+Discovered flag OR the runtime discoveredLocations store - ONE
+uniform test, no type distinction, because the DATA carries it
+(MAPS.BSA ships towns discovered and hidden dungeons not).
+CanFindPlace (:1135-1147) runs the same test for the find box,
+which is exactly what the port's typeahead is - so the filter
+landed there: an undiscovered dungeon's name simply does not match
+until something reveals it (a guild promotion, an entry on foot).
+
+The write half: entering a location's pixel discovers it
+(PlayerGPS.DiscoverCurrentLocation on the location-rect entry) -
+wired at the world host's pixel-crossing tracker, so foot entries
+and fast-travel arrivals ride ONE writer. The index rows grew
+mapId + the baked flag, read off the map TABLE.
+
+RESIDUE: quest reveals ride the quest machine; the standalone
+?exterior dev host has no streaming tracker and skips the writer.
+
+Mutations: 3 run, 3 killed (the filter dropped; the entry writer
+dropped; every row claiming baked-discovered).
+
+Pins: test/travelvisibility.test.js x2 (the hidden barrow absent
+from matches until discoverLocation learns it, the baked town
+findable from the first key; the law-inputs/writer source sweep).

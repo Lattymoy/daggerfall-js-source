@@ -141,12 +141,13 @@ export const GUILDS = Object.freeze({
     text: { welcome: 5225, promotion: 5235, bribesJudge: 550 },
     // ThievesGuild.cs:24 - the ONLY way in. See INVITATION_ONLY below.
     initiationQuest: 'O0A0AL00',
-    // ThievesGuild.GetPromotionMsgId (:92-106). Ranks 6 and 8 are
-    // RevealLocation()-gated in DFU (map1/map2 vs the plain message);
-    // that reads quest/map state the port has no source for, so those
-    // two ranks take the plain promotion message and the map variants
-    // are FLAGGED to the quest slice.
+    // ThievesGuild.GetPromotionMsgId (:92-106). G8: ranks 6 and 8
+    // gate their map messages (5228/5229) on RevealLocation - a
+    // DiscoverRandomLocation in the current region + the readMapTG
+    // note; a region with nothing left to find falls to the plain
+    // message, DFU's own ternary.
     promotionByRank: { 2: 5226, 4: 5227 },
+    promotionReveal: { mapIds: { 6: 5228, 8: 5229 }, noteKey: 'readMapTG' },
   },
   DarkBrotherhood: {
     name: 'DarkBrotherhood',
@@ -167,11 +168,12 @@ export const GUILDS = Object.freeze({
     nonMemberTitle: 'nonMember',
     femaleTitleRanks: [8],
     femaleRankTitles: { 8: 'Dark Sister' },   // DarkBrotherhood.cs:88-89
-    // DarkBrotherhood.GetPromotionMsgId - odd ranks. NOT pure data in
-    // DFU (AUDIT 23): every DB promotion first fires a
-    // DiscoverRandomLocation map reveal + a notebook note; that side
-    // effect is routed with the ThievesGuild rank-6/8 flag (Ledger C).
+    // DarkBrotherhood.GetPromotionMsgId - odd ranks. G8: every DB
+    // promotion fires the DiscoverRandomLocation reveal + the
+    // readMapDB note BEFORE its switch (:105-110), whatever the rank
+    // - the verbatim unconditional arm.
     promotionByRank: { 1: 6611, 3: 6612, 5: 6613, 7: 6614 },
+    promotionReveal: { always: true, noteKey: 'readMapDB' },
   },
 });
 
@@ -242,7 +244,7 @@ function baseCalculateNewRank(entity, guild, store) {
  *  caller; a mutation run caught it, because that lets the port hold a
  *  state DFU never has - a keyed membership sitting at rank -1, which
  *  hasJoined would answer true for. */
-export function updateRank(memberships, guild, entity, store, now) {
+export function updateRank(memberships, guild, entity, store, now, ctx = null) {
   const m = membershipOf(memberships, guild);
   if (!m) return null;
   const today = daySinceZero(now);
@@ -257,7 +259,7 @@ export function updateRank(memberships, guild, entity, store, now) {
   m.rank = newRank;
   m.lastRankChange = today;
   if (outcome === 'expulsion') leaveGuild(memberships, guild);
-  return { outcome, rank: newRank, textId: textIdFor(guild, outcome, newRank) };
+  return { outcome, rank: newRank, textId: textIdFor(guild, outcome, newRank, ctx) };
 }
 
 /** TokensPromotion is NOT one record per guild - AUDIT 20 found the
@@ -272,7 +274,19 @@ export function updateRank(memberships, guild, entity, store, now) {
  *  `promotionForRank(rank)` function (the Temple's is computed from
  *  its own service-rank columns). Falling through to text.promotion is
  *  DFU's own `default:`. */
-export function promotionTextId(guild, rank) {
+export function promotionTextId(guild, rank, ctx = null) {
+  // G8 (guilds-8): the SIDE-EFFECT arms - NOT pure data in DFU. The
+  // DarkBrotherhood fires the map reveal on EVERY promotion before
+  // its switch (DarkBrotherhood.cs:105-110); the ThievesGuild's
+  // ranks 6/8 gate their map messages on the reveal succeeding
+  // (ThievesGuild.cs:100-103). ctx.revealLocation(noteKey) is the
+  // host's DiscoverRandomLocation + note seam, returning the
+  // revealed name or null when the region is picked clean.
+  const pr = guild.promotionReveal;
+  if (pr?.always) ctx?.revealLocation?.(pr.noteKey);
+  if (pr?.mapIds?.[rank] != null) {
+    return ctx?.revealLocation?.(pr.noteKey) ? pr.mapIds[rank] : guild.text.promotion;
+  }
   if (guild.promotionForRank) {
     const id = guild.promotionForRank(rank);
     if (id != null) return id;
@@ -280,8 +294,8 @@ export function promotionTextId(guild, rank) {
   return guild.promotionByRank?.[rank] ?? guild.text.promotion;
 }
 
-const textIdFor = (guild, outcome, rank) => (
-  outcome === 'promotion' ? promotionTextId(guild, rank)
+const textIdFor = (guild, outcome, rank, ctx = null) => (
+  outcome === 'promotion' ? promotionTextId(guild, rank, ctx)
     : outcome === 'demotion' ? DEMOTION_TEXT_ID
       : EXPULSION_TEXT_ID
 );

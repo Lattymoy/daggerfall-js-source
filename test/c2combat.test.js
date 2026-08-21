@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  COMBAT_VOICES, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE,
+  combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE,
   rollVoiceRace, raceGenderAttackSound, raceGenderPainSound, combatVoice, isHeavyDamage,
 } from '../src/combat/combatVoices.js';
 import { enemyAttackVoice, enemyPainVoice, playerAttackGrunt, enemyMissSound, KNIGHT_CITY_WATCH } from '../src/scenes/hostCombat.js';
@@ -20,7 +20,9 @@ const src = (f) => readFileSync(join(root, f), 'utf8');
 const seq = (...vals) => { let i = 0; return () => vals[Math.min(i++, vals.length - 1)]; };
 
 test('c2combat combat-17: the voice tables - race roll, clip picks, the HighElf swap, heavy damage', () => {
-  assert.equal(COMBAT_VOICES, true, 'the setting ships enabled');
+  // SETT: no longer a constant - a point-of-use read of the store,
+  // which with no override reports DFU's shipped CombatVoices=True
+  assert.equal(combatVoicesEnabled(), true, 'the setting ships enabled');
   assert.equal(ATTACK_VOICE_CHANCE, 20);
   assert.equal(PAIN_VOICE_CHANCE, 40);
   // the spawn roll lands Breton..HighElf only
@@ -120,7 +122,7 @@ test('c2combat combat-9/10/11: the host wiring sweep', () => {
   // combat-17: the grunt + pain voice ride all three player-hit paths
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js']) {
     const t = src(f);
-    assert.ok(t.includes('playerAttackGrunt(playerEntity, false)'), `${f}: the 20% grunt at the hit frame`);
+    assert.ok(t.includes('playerAttackGrunt(playerEntity, false,'), `${f}: the 20% grunt at the hit frame (X4: each site threads its roll seam)`);
     assert.ok(t.includes('enemyPainVoice(foe'), `${f}: the 40% pain voice on a landed hit`);
     assert.ok(t.includes('enemyAttackVoice('), `${f}: the 20% attack voice at the enemy frame`);
   }

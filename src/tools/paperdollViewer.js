@@ -25,6 +25,7 @@
 import { MISSILE_SPEED } from '../systems/spellcast.js';   // AUDIT 23: the arrow speed's one home
 import { buildPaperdollPayload } from '../characters/paperdollPayload.js';
 import { makeCoreFn, buildCloth, stepCloth, articulatedCapsules } from '../characters/clothSim.js';
+import { beastAttackPose, hitPointOf } from '../characters/beastAttack.js';
 import { DIRECTION_TO_STRIKE, STRIKES, sampleClip, REACTIONS } from '../characters/anims.js';
 import {
   CLASSIC_UPDATE_INTERVAL,
@@ -133,7 +134,7 @@ const setFP = (on) => { fpMode = on; camera.fov = on ? 62 : 35; camera.near = on
 // ── pixelize post-pipeline: render the scene to a low-res target, then
 // a fullscreen quad upscales it (nearest) and quantizes colour depth
 // with a 4x4 ordered-dither so bands don't posterize flat.
-let pixel = 12, levels = 0; // PIXELIZE STANDARD (Mac 2026-07-06, revised same day 9 -> 7; raised to 12 on 2026-08-18): 12x for the character and everything character-side; the WORLD is excluded (engine renders the character pass at CHAR_PIXEL, world untouched). The engine's constant moves WITH this one - a viewer that pixelates differently from the game is a viewer you cannot trust to show you the game.
+let pixel = 9, levels = 0; // PIXELIZE STANDARD (Mac 2026-07-06, revised same day 9 -> 7; raised to 12 and then tried at 9 on 2026-08-18): 9x for the character and everything character-side; the WORLD is excluded (engine renders the character pass at CHAR_PIXEL, world untouched). The engine's constant moves WITH this one - a viewer that pixelates differently from the game is a viewer you cannot trust to show you the game.
 const rt = new THREE.WebGLRenderTarget(2, 2, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
 const postScene = new THREE.Scene();
 const postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -214,6 +215,7 @@ function applyVillager(v) {
   geo.getAttribute('position').needsUpdate = true;
   geo.getAttribute('color').needsUpdate = true;
   villagerOn = v;
+  if (!v) { shownLine = null; shownIdx = -1; shownDesign = null; beastAtk = null; }
   // Anything that is not spectral is solid — including the bare rig, or
   // the ghost's transparency outlives the ghost.
   mat.transparent = false;
@@ -306,19 +308,30 @@ for (const name of ['pauldrons','helm']) if (D[name]) pieceMesh[name] = buildPie
 // pelvis. Same table, same build, same show-and-hide — a design's
 // pieces are looked up by the design, so adding a fourth kind of bone
 // to a fifth enemy means adding a key here and nothing else.
-const PIECE_KINDS = ['tusks', 'brow', 'ribcage', 'pelvis', 'horse', 'beast'];
+const PIECE_KINDS = ['tusks', 'brow', 'ribcage', 'pelvis', 'horse', 'beast', 'beastHead', 'beastTail', 'arachnid', 'horns', 'wings', 'fish', 'claws'];
 const buildPieces = (list) =>
   (list || []).map((d) => {
     const out = {};
     for (const k of PIECE_KINDS) out[k] = d[k] ? buildPiece(d[k]) : null;
+    // A SET OF POSES, NOT A MESH. The sting ships as five frames from
+    // coiled to thrown and the attack clock picks one — a scorpion's
+    // tail is the only part of it anybody watches, and welded into the
+    // body it could only move when the body did.
+    out.stingPoses = d.sting ? d.sting.map((p) => buildPiece(p)) : null;
     return out;
   });
 const hidePieces = (table) => {
-  for (const m of table) for (const k of PIECE_KINDS) if (m[k]) m[k].visible = false;
+  for (const m of table) {
+    for (const k of PIECE_KINDS) if (m[k]) m[k].visible = false;
+    if (m.stingPoses) for (const p of m.stingPoses) p.visible = false;
+  }
 };
 const showPieces = (table, i) => {
   const m = table[i];
-  if (m) for (const k of PIECE_KINDS) if (m[k]) m[k].visible = true;
+  if (!m) return;
+  for (const k of PIECE_KINDS) if (m[k]) m[k].visible = true;
+  // Only ONE sting pose is ever visible: the coiled one, until it strikes.
+  if (m.stingPoses) m.stingPoses.forEach((p, k) => (p.visible = k === 0));
 };
 // A TABLE PER LINE, LOOKED UP BY LINE. This was two hardcoded tables —
 // orcs and undead — and adding `beast` to PIECE_KINDS was not enough:
@@ -334,6 +347,7 @@ const pieceTables = {
   class: buildPieces(D.classes),
   atronach: buildPieces(D.atronachs),
   beast: buildPieces(D.beasts),
+  daedra: buildPieces(D.daedra),
 };
 const orcPieceMesh = pieceTables.orc;
 const undeadPieceMesh = pieceTables.undead;
@@ -419,48 +433,45 @@ function applyVillagerHair(v) {
 // ═══════════════════════════════════════════════════════════════════
 // A DRAPE HAS TO FIT WHO IS WEARING IT
 //
-// Every garment is carved ONCE, at one size, and shared by every design
-// that asks for it — one grid per name, which is why the payload stays
-// small. But the BODY under it is resized by its build spec, and nothing
-// was telling the cloth. A giant's robe was a man's robe; the ancient
-// vampire is broader across the shoulder than the vampire and wore the
-// same cloak; and where a design has ARMOUR the plate displaces further
-// out again, so the garment sat inside the breastplate and the wearer
-// came through it.
+// Every garment is carved ONCE at one size and shared by every design
+// that asks for it, which is what keeps the payload small — so the fit
+// is a scale applied to the mesh.
+//
+// THE SCALE IS MEASURED, NOT GUESSED, and it is measured where the body
+// and the garment are both in hand: at build time, in
+// characters/paperdollPayload.js, and shipped on the drape.
+//
+// It used to be computed here from `torso * 0.75 + shoulder * 0.25`,
+// which is a guess from two build keys and ignores the thing that
+// actually decides the answer — ARMS HANG OUTSIDE THE TORSO. Measured
+// across every drape-wearing design, 669 rows were clipping and every
+// single one was an arm: a lich's stuck 111% beyond its own robe, and
+// the guess had cut that robe at 0.657 where the body needed 1.404.
 //
 // GIRTH ONLY. The rig's own law is that Y is never touched — every
-// exported constant on it (WRIST_JUNCTION_Y, NECK_PIVOT_Y) and every
-// consumer that derives from them is a HEIGHT, so scaling a garment
-// vertically would drop its hem through the floor on a giant and hitch
-// it to the knee on a lich. X and Z only, exactly as the body does it.
-//
-// AND IT CLEARS WHAT IS UNDER IT. Cloth does not lie on skin; it hangs
-// off whatever it is over. A plain margin is not enough where a design
-// wears plate, so a zone thickness on the torso pushes the garment out
-// by its own depth as well.
-const DRAPE_CLEARANCE = 1.06; // cloth hangs off a body, it does not paint it
-
-function drapeFitFor(design) {
-  if (!design || !design.build) return 1;
-  const b = design.build;
-  // The torso is what a garment hangs ON; the shoulder is what holds it
-  // up. Weighted to the torso, because a robe's volume is the body.
-  const girth = (b.torso ?? 1) * 0.75 + (b.shoulder ?? 1) * 0.25;
-  // Whatever the design wears UNDER it, at its thickest on the trunk.
-  let under = 0;
-  for (const z of design.zones || []) {
-    if (!z.groups || !z.groups.includes('body')) continue;
-    under = Math.max(under, z.th || 0);
-  }
-  // A zone displaces by th in body units; the drape has to start outside
-  // that or the plate comes through the cloth.
-  return girth * DRAPE_CLEARANCE + under * 2.2;
-}
-
+// exported constant on it is a HEIGHT — so scaling a garment vertically
+// would drop its hem through the floor on a giant and hitch it to the
+// knee on a lich.
 function fitDrape(design) {
-  const k = drapeFitFor(design);
+  // THE GARMENT IS SIZED FOR THE BODY, NOT FOR THE ARMS.
+  //
+  // I had this scaling to the widest row the body needs, which is the
+  // arms, always — and it made every robe a tent. Mac's words: oversized
+  // and ugly, and much worse than what it replaced. He was right: I
+  // traded a subtle fault for an obvious one, which is the wrong
+  // direction even when the subtle fault is real.
+  //
+  // A robe is cut for a torso. Arms hang at the sides of it and always
+  // have; what must not happen is cloth passing through a CHEST or a
+  // HIP, and that is what the fit measures now — the trunk only, with
+  // the limbs left to hang where limbs hang.
+  const fit = design && design.drape ? design.drape.fit : null;
+  const k = Array.isArray(fit) && fit.length ? Math.max(...fit) : typeof fit === 'number' ? fit : 1;
+  // GIRTH ONLY. Every exported constant on this rig is a HEIGHT, so
+  // widening a garment vertically would drop its hem through the floor.
   for (const nm in drapedMeshes) drapedMeshes[nm].scale.set(k, 1, k);
 }
+
 
 function applyVillagerDrape(v) {
   for (const nm in drapeBaseRamp) dyeDrape(nm, null);   // undye whatever the last villager dyed
@@ -670,14 +681,31 @@ function applyOrc(o) {
   // carried on the design rather than guessed by searching every table,
   // which is what let a whole line go unbuilt without anything noticing.
   const line = o.line || 'orc';
-  const list = { orc: D.orcs, undead: D.undead, class: D.classes, atronach: D.atronachs, beast: D.beasts }[line];
+  const list = { orc: D.orcs, undead: D.undead, class: D.classes, atronach: D.atronachs, beast: D.beasts, daedra: D.daedra }[line];
   const idx = (list || []).findIndex((x) => x.id === o.id);
   if (idx >= 0 && pieceTables[line]) showPieces(pieceTables[line], idx);
+  // Remembered so the frame loop can move THIS design's pieces when it
+  // attacks — an armless enemy moves its whole body, and the body is a
+  // piece.
+  shownLine = idx >= 0 ? line : null;
+  shownIdx = idx;
+  shownDesign = o;
   // AND IT MAY BE WEARING SOMETHING. applyVillagerDrape asks only for a
   // `.drape`, so a lich in robes goes through the code that already
   // dresses a villager's gown — the composition costs nothing because
   // the two systems never actually needed to know about each other.
-  applyVillagerDrape(o.drape ? o : null);
+  // PASS THE DESIGN, NOT NULL. `applyVillagerDrape(null)` means "no
+  // design is selected, so leave the drape control where the user put
+  // it" — which is right for the bare rig, where cycling garments is the
+  // whole point, and absurd for an enemy. Handing it null for every
+  // design that has no drape meant a bat wore whatever garment happened
+  // to be showing: cycle the control to a skirt, pick an animal, and the
+  // animal is in a skirt.
+  //
+  // Passing the design makes it say NONE, because a design with no drape
+  // is a design that wears nothing. Same rule the loose armour pieces
+  // got: what a design wears is what its design says and nothing else.
+  applyVillagerDrape(o);
   if (hs) hs.textContent = 'hair: none (' + (o.line || 'orc') + ')';
 }
 
@@ -690,6 +718,31 @@ function applyOrc(o) {
 // case: an undead simply has no pieces.
 function applyUndead(u) {
   applyOrc(u ? { ...u, line: 'undead' } : null);
+}
+{
+  const sel = document.getElementById('daedra');
+  if (sel) {
+    const none = document.createElement('option');
+    none.value = '';
+    none.textContent = 'daedra: none (bare rig)';
+    sel.appendChild(none);
+    for (const dd of D.daedra || []) {
+      const opt = document.createElement('option');
+      opt.value = String(dd.id);
+      opt.textContent = dd.name + '  (lvl ' + dd.level + ')';
+      sel.appendChild(opt);
+    }
+    sel.onchange = () => {
+      const dd = (D.daedra || []).find((x) => String(x.id) === sel.value) || null;
+      for (const other of ['orc', 'undead', 'villager', 'classes', 'atronach', 'beast', 'daedra']) {
+        const o = document.getElementById(other);
+        if (o) o.value = '';
+      }
+      applyOrc(dd ? { ...dd, line: 'daedra' } : null);
+      const hud = document.getElementById('hud');
+      if (hud && dd) hud.textContent = dd.name + ' \u00b7 level ' + dd.level + ' \u00b7 ' + dd.damage[0] + '-' + dd.damage[1] + ' damage';
+    };
+  }
 }
 {
   const sel = document.getElementById('beast');
@@ -706,7 +759,7 @@ function applyUndead(u) {
     }
     sel.onchange = () => {
       const bst = (D.beasts || []).find((x) => String(x.id) === sel.value) || null;
-      for (const other of ['orc', 'undead', 'villager', 'classes', 'atronach']) {
+      for (const other of ['orc', 'undead', 'villager', 'classes', 'atronach', 'daedra']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
@@ -731,7 +784,7 @@ function applyUndead(u) {
     }
     sel.onchange = () => {
       const a = (D.atronachs || []).find((x) => String(x.id) === sel.value) || null;
-      for (const other of ['orc', 'undead', 'villager', 'classes', 'beast']) {
+      for (const other of ['orc', 'undead', 'villager', 'classes', 'beast', 'daedra']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
@@ -760,7 +813,7 @@ function applyUndead(u) {
     }
     sel.onchange = () => {
       const c = (D.classes || []).find((x) => String(x.id) === sel.value) || null;
-      for (const other of ['orc', 'undead', 'villager', 'atronach', 'beast']) {
+      for (const other of ['orc', 'undead', 'villager', 'atronach', 'beast', 'daedra']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
@@ -786,7 +839,7 @@ function applyUndead(u) {
     sel.onchange = () => {
       const u = (D.undead || []).find((x) => String(x.id) === sel.value) || null;
       // The three pickers are exclusive: one body at a time.
-      for (const other of ['orc', 'villager', 'classes', 'atronach', 'beast']) {
+      for (const other of ['orc', 'villager', 'classes', 'atronach', 'beast', 'daedra']) {
         const o = document.getElementById(other);
         if (o) o.value = '';
       }
@@ -887,6 +940,22 @@ const curPose = () => (poseIx ? D.poses[POSE_NAMES[poseIx]] : null);
 // pose (arms fully owned by the clip - gait pump + runElbow suppressed
 // mid-strike), twist/lean/headPitch add on. Legs stay with the gait.
 let atk = null;   // { clip, t }
+
+// ── AN ATTACK FOR A BODY WITH NO ARMS ────────────────────────────
+// The nine armless enemies collapse their arm groups to a POINT, so the
+// authored 1H strike clips animate nothing: the timer fires, the hit
+// lands, the damage applies, and the bear does not move. For these the
+// motion belongs to the whole animal, because there are no joints to
+// turn — see characters/beastAttack.js.
+let shownLine = null;
+let shownIdx = -1;
+let shownDesign = null;
+let beastAtk = null; // { kind, t, dur, hit }
+const fireBeastAttack = (design) => {
+  if (!design || !design.attack) return false;
+  beastAtk = { kind: design.attack, t: 0, dur: 0.62, hit: hitPointOf(design.attackFrames) };
+  return true;
+};
 // DFU-VERBATIM TIMING: the weapon machine owns WHEN (frames, ticks,
 // hit moments, bow draw-hold, cooldown); the rig clips are the
 // VISUAL. Clip time = machine progress mapped onto clip duration.
@@ -937,6 +1006,51 @@ function animate(dt) {
     if (atk && !atk.free) { const u = machineClipU(); if (u === null) atk = null; else atk.t = u * atk.clip.dur; }
     if (atk && atk.free) { atk.t += dt; if (atk.t >= atk.clip.dur) atk = null; }
   } else if (atk) { atk.t += dt; if (atk.t >= atk.clip.dur) atk = null; }
+
+  // THE WHOLE ANIMAL MOVES. Applied to the piece rather than the rig,
+  // because for these designs the piece IS the body.
+  if (beastAtk) {
+    beastAtk.t += dt;
+    if (beastAtk.t >= beastAtk.dur) beastAtk = null;
+  }
+  {
+    const line = shownLine;
+    const table = line && pieceTables[line];
+    const idx = shownIdx;
+    const m = table && idx >= 0 ? table[idx] : null;
+    if (m) {
+      const p = beastAtk
+        ? beastAttackPose(beastAtk.kind, beastAtk.t / beastAtk.dur, beastAtk.hit)
+        : { z: 0, y: 0, pitch: 0, roll: 0 };
+      // THE TAIL STRIKES WHILE THE BODY ROCKS BACK. The pose runs coiled
+      // to thrown across the clip and peaks on the hit frame, which is
+      // the whole reason the sting came out of the body: a scorpion that
+      // stings by leaning backwards is a scorpion nobody believes.
+      if (m.stingPoses) {
+        const u = beastAtk ? Math.min(1, beastAtk.t / beastAtk.dur) : 0;
+        const hitAt = beastAtk ? beastAtk.hit : 0.45;
+        const thrown = u <= hitAt ? (hitAt ? u / hitAt : 0) : 1 - (u - hitAt) / Math.max(0.05, 1 - hitAt);
+        const k = Math.max(0, Math.min(m.stingPoses.length - 1, Math.round(thrown * (m.stingPoses.length - 1))));
+        m.stingPoses.forEach((mesh, j) => (mesh.visible = j === k));
+      }
+      for (const k of ['beast', 'arachnid', 'fish', 'wings', 'beastTail']) {
+        const mesh = m[k];
+        if (!mesh) continue;
+        mesh.position.z = p.z;
+        mesh.position.y = -D.cy + p.y;
+        mesh.rotation.x = p.pitch;
+        mesh.rotation.z = p.roll;
+      }
+      if (m.stingPoses) {
+        for (const mesh of m.stingPoses) {
+          mesh.position.z = p.z;
+          mesh.position.y = -D.cy + p.y;
+          mesh.rotation.x = p.pitch;
+          mesh.rotation.z = p.roll;
+        }
+      }
+    }
+  }
   if (arrowFlight) {   // straight flight at the DFU missile speed
     arrowFlight.d += MISSILE_SPEED * dt;
     const { dir, d, snap } = arrowFlight;
@@ -1159,7 +1273,18 @@ const fireHurt = (name) => { const clip = D.reactions[name || HURT_DIRS[hurtIx]]
 window.__hurt = fireHurt;
 window.__bowCancel = () => { if (wm && machineCancelBowDraw(wm)) { atk = null; swordInfo.textContent = 'un-drawn'; } };
 window.__setSpeed = (v) => { liveSpeed = v; document.getElementById('spdv').textContent = 'SPD ' + v; };
-document.getElementById('strike').onclick = () => { if (POSE_NAMES[poseIx] === 'rangedAim') return; fireAttack(ATK_DIRS[atkDirIx]); };   // bows are owned by the pointer pair (press=draw, release=loose); click would double-path
+document.getElementById('strike').onclick = () => {
+  // AN ARMLESS DESIGN PLAYS ITS OWN MOTION. Nine enemies have no arms to
+  // swing, so the authored strike clips animate a collapsed point and
+  // nothing happens. Their whole body moves instead.
+  if (fireBeastAttack(shownDesign)) {
+    const si = document.getElementById('swordinfo');
+    if (si) si.textContent = shownDesign.name + ' \u00b7 ' + shownDesign.attack;
+    return;
+  }
+  return oldStrike();
+};
+const oldStrike = () => { if (POSE_NAMES[poseIx] === 'rangedAim') return; fireAttack(ATK_DIRS[atkDirIx]); };   // bows are owned by the pointer pair (press=draw, release=loose); click would double-path
 window.__attack = fireAttack;
 document.getElementById('spd').oninput = (e) => window.__setSpeed(+e.target.value);
 { const sb = document.getElementById('strike');

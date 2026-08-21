@@ -27,7 +27,7 @@ import { pickActivatable, worldAabb, activationTargets } from '../player/activat
 import { transferAll, removeOne, addItem } from '../systems/inventory.js';
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { createPlayerTicker } from './shared.js';   // AUDIT 18: the interior host's world clock
+import { createPlayerTicker , endRunToTitleMenu } from './shared.js';   // AUDIT 18: the interior host's world clock
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
@@ -94,6 +94,7 @@ import { SITE_TYPES } from '../systems/quest/place.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { positionHash } from './questBridge.js';
 import { GENDERS } from '../characters/nameHelper.js';
+import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -152,7 +153,7 @@ export function createWorldModes(host) {
     if (playerEntity.fatigue <= 0 && playerEntity.health > 0) onExhaustedInterior();
   };
   const presentInteriorDeath = () => {
-    if (!(interiorOverlay instanceof DeathScreen)) interiorOverlay = new DeathScreen();
+    if (!(interiorOverlay instanceof DeathScreen)) interiorOverlay = new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) });   // D1
   };
   // AUDIT 23 (hosts-1): this constructor runs AFTER the exterior host
   // registered its presenter, and used to overwrite it for good - a
@@ -502,6 +503,7 @@ export function createWorldModes(host) {
       steps: () => onPushEffects(playerEntity, guild, memberships, store, gameDate(), {
         freeHealing: freeHealing(guild, membershipOf(memberships, guild)),
         freeMagickaRecharge: freeMagickaRecharge(guild, membershipOf(memberships, guild), playerEntity),
+        revealLocation: host.revealLocation ?? null,   // G8: the TG/DB map reveals
       }),
       onJoin: () => {
         // JoinButton_OnMouseClick (:497-525). joinDecision is null for
@@ -1115,7 +1117,7 @@ export function createWorldModes(host) {
     // loop, so P3/P8 verification never exercised the in-frame path.)
     if (mode === 'exterior') return true;
 
-    const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.05, 500);
+    const proj = perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.05, 500);
     const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
 
@@ -1227,9 +1229,23 @@ export function createWorldModes(host) {
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1);
     }
+    // MERGE AUDIT: the interior arm SAYS things - the static-NPC and
+    // guild fallthroughs at :362/:368/:416 all speak through
+    // townTalk.say - and this frame is the one that has to show them.
+    // Without this the line was queued into a HudText no interior
+    // frame ticked: invisible inside, and still queued when the player
+    // stepped back out, where the street's frame popped it two seconds
+    // late attached to nothing.
+    townTalk?.hudFrame?.(dt, _shopFont);
     // E2: the shop browse overlay draws above everything; font-less
     // never traps the motor (the townTalk law).
     if (interiorOverlay) {
+      // AUDIT D-C1: this arm DREW the overlay and never TICKED it, so
+      // an overlay with a clock stalled here alone - dying inside a
+      // building left the death sequence frozen and the run never
+      // ended. The other three hosts tick through townTalk.frame and
+      // dungeonContext.tickOverlay; this is the fourth.
+      interiorOverlay.tick?.(dt);
       if (_shopFont) interiorOverlay.draw(renderer, canvas, _shopFont, hudScale(canvas.width, canvas.height));
       else interiorOverlay = null;
     }
@@ -1425,6 +1441,16 @@ export function createWorldModes(host) {
 
   return {
     get mode() { return mode; },
+    /** TP-slice: the Teleport effect leaves ANY mode - the exit
+     *  cores of the door flows minus the landing (the caller owns
+     *  the spawn; DFU's cross-scene arm transitions immediately,
+     *  TransitionDungeonExteriorImmediate at Teleport.cs:151). */
+    forceExitToExterior() {
+      if (interiorCtx) { interiorCtx.destroy(); interiorCtx = null; interiorBuilding = null; interiorOverlay = null; }
+      if (dungeonCtx) { dungeonCtx.destroy(); dungeonCtx = null; }
+      player.collider = baseCollider();
+      mode = 'exterior';
+    },
     // M2: the cast engine's mode-aware raycast reads the INTERIOR's
     // collider while a building is mounted.
     get interiorCollider() { return interiorCtx?.collider ?? null; },

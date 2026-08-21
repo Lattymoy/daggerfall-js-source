@@ -9,6 +9,7 @@ import {
   VID_MIN_FRAME_DELAY,
 } from '../src/formats/vidFile.js';
 import { VideoPlayer, playVideo } from '../src/ui/videoPlayer.js';
+import { setValue, resetToDefaults } from '../src/systems/settings.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
@@ -368,7 +369,7 @@ function stubRenderer() {
 
 function stubAudioContext() {
   const ctx = {
-    currentTime: 0, started: [], buffers: [],
+    currentTime: 0, started: [], buffers: [], gains: [],
     createBuffer(channels, length, rate) {
       const data = new Float32Array(length);
       const buf = { channels, length, rate, getChannelData: () => data };
@@ -379,7 +380,7 @@ function stubAudioContext() {
       const src = { buffer: null, connect: (n) => n, start: (when) => ctx.started.push(when) };
       return src;
     },
-    createGain() { return { gain: { value: 0 }, connect: (n) => n }; },
+    createGain() { const g = { gain: { value: 0 }, connect: (n) => n }; ctx.gains.push(g); return g; },
     destination: {},
   };
   return ctx;
@@ -876,4 +877,35 @@ test('U22/AUDIT 19: the boot starts audio BEFORE it plays the splash', () => {
   const awaitAt = ensureBody.indexOf('await ');
   assert.ok(ctxAt > 0 && awaitAt > 0 && ctxAt < awaitAt,
     'audio.ensure must create the context in its synchronous prefix, before any await');
+});
+
+test('merge audit: video audio rides the LIVE SoundVolume, read at each clip', () => {
+  // DaggerfallVideo.cs:117 assigns
+  // `audioSources[flip].volume = DaggerfallUnity.Settings.SoundVolume`
+  // as each clip is scheduled. The port had the parameter and never
+  // fed it (both call sites - the boot splash at main.js and the D1
+  // death video at shared.js - pass no options), so the two videos
+  // were the only sounds in the build the volume slider could not
+  // touch: gain 1.0 while the shipped default is 0.5 and a muted game
+  // is 0.
+  const bytes = buildVid({
+    w: 4, h: 2,
+    blocks: [audioStart([0, 128, 255, ...silence(737)]), videoStart(1, [0x80 + 8, 1]), eof()],
+  });
+  const play = (opts) => {
+    const ctx = stubAudioContext();
+    const p = new VideoPlayer({ renderer: stubRenderer(), now: () => 0, audioContext: () => ctx, ...opts });
+    p.play(bytes);
+    p.update();
+    return ctx;
+  };
+  setValue('Controls', 'SoundVolume', '0.25');
+  assert.equal(play({}).gains[0].gain.value, 0.25, 'the setting reaches the clip');
+  setValue('Controls', 'SoundVolume', '0');
+  assert.equal(play({}).gains[0].gain.value, 0, 'a muted game mutes the video too');
+  // An EXPLICIT volume still wins - the parameter is an override, not
+  // a default, so the corpus probes and the pins above keep working.
+  assert.equal(play({ soundVolume: 1 }).gains[0].gain.value, 1);
+  resetToDefaults();
+  assert.equal(play({}).gains[0].gain.value, 0.5, 'and the shipped default is 0.5, not 1');
 });

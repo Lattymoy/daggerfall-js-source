@@ -3,8 +3,9 @@
 // GetRaceGenderPainSound (:1054-1110) + EnemySounds.PlayCombatVoice
 // (:158-175) and the per-foe voice race roll (:72), ported as data
 // (MIT, Daggerfall Workshop). Everything rides DFU's CombatVoices
-// SETTING, which ships enabled - COMBAT_VOICES is that default; a
-// settings surface can own it later.
+// SETTING, which ships enabled and is LIVE in the launcher (SETT);
+// combatVoicesEnabled() reads the store at the point of use, as DFU
+// does. Formerly a pinned constant; the SETT-slice gave it a store.
 //
 // The gates the callers roll (Dice100):
 //   enemy-class ATTACK voice: 20% at the melee damage frame
@@ -16,8 +17,14 @@
 //     bow (WeaponManager.cs:385-389)
 
 import { RACES } from '../systems/races.js';
+import { getBool } from '../systems/settings.js';   // SETT: CombatVoices is a real setting now
 
-export const COMBAT_VOICES = true;   // DaggerfallUnity.Settings.CombatVoices default
+/** DaggerfallUnity.Settings.CombatVoices, read AT THE POINT OF USE as
+ *  DFU reads it (EnemyAttack.cs:217, WeaponManager.cs:385) - not
+ *  latched at import, so changing it in the launcher takes effect on
+ *  the next swing rather than the next reload. The SETT-slice made
+ *  this a real setting; it was a pinned constant before. */
+export const combatVoicesEnabled = () => getBool('Enhancements', 'CombatVoices');
 
 export const ATTACK_VOICE_CHANCE = 20;   // enemy class + player grunt
 export const PAIN_VOICE_CHANCE = 40;

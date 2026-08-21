@@ -175,7 +175,11 @@ export function useItem(item, collection, {
   const questItem = !!item.questItem;
 
   let out = null;
-  if (isBook(item)) out = { kind: 'book', pending: true, text: named('bookUnavailable') };
+  // B1: the book arm hands the ITEM to the window's openBook hook
+  // (DaggerfallInventoryWindow pushes the reader; a failed open shows
+  // the ruined-book box - failText - which the WINDOW shows on the
+  // hook's failure callback, not immediately).
+  if (isBook(item)) out = { kind: 'book', item, failText: named('bookUnavailable') };
 
   else if (isPotion(item)) {
     // DrinkPotion + RemoveOne. AUDIT 22 F5: RemoveOne takes THIS

@@ -29,22 +29,79 @@ import { MOBILE_TYPES } from './mobileTypes.js';
 /** ART_PAL spans, same convention as the other lines. */
 export const BEAST_RAMPS = Object.freeze({
   // block 2 - tan -> brown. Rat: the colour of something that lives in
-  // a wall.
-  vermin: [36, 46],
-  // block 11 - rust -> dark brown. A grizzly, and darker than anything
-  // else on four legs here.
-  grizzly: [178, 188],
+  // a wall — but taken high enough to have a silhouette. At [36,46] it
+  // meant 77 and would have been the same invisible animal the wereboar
+  // and the spider both were.
+  vermin: [32, 40],
+  // block 11 - rust -> dark brown. A grizzly: still the darkest thing on
+  // four legs here, and now light enough to be one.
+  grizzly: [176, 184],
   // block 9 - yellow -> olive. A sabertooth's coat, which has to be
   // BRIGHT or it reads as another bear in the dark.
   tawny: [146, 155],
   // block 4 - cream -> tan. Underbelly, and the pale of a muzzle.
   pale: [64, 72],
+  // block 7 - white -> charcoal, taken dark. A werewolf's coat: grey
+  // going to black, and nothing warm anywhere in it.
+  wolfGrey: [116, 124],
+  // block 2, and NOT its dark end. A wereboar's bristle was [40,47] and
+  // resolved to a mean of 58 against a background of about 20 — the only
+  // pelt in this line dark enough to lose its own silhouette. It read
+  // narrower than a werewolf despite being measurably WIDER, because the
+  // edges went into the dark. Coarse and brown, but a boar you can see.
+  bristle: [34, 42],
+  // block 5 - lavender grey -> slate, taken HIGH. Chitin: the only thing
+  // in this file that is neither fur nor skin.
+  //
+  // It was [84,91], mean 100, which cleared the contrast gate at 70 and
+  // was still lost against the dark — a spider is a small body on thin
+  // legs, so it has far less area to be seen with than a wereboar and
+  // needs more brightness for the same read. The gate's floor was set
+  // by the thing that failed rather than by the thing that has to pass.
+  chitin: [80, 86],
+  // block 9 - yellow -> olive, bright. A scorpion's carapace, which is
+  // the colour of something that wants to be seen and left alone.
+  carapace: [148, 156],
+  // block 11 - rust -> dark brown, high. Bat: wing membrane and the fur
+  // that matches it, bright enough to keep a silhouette that is mostly
+  // holes.
+  batskin: [176, 183],
+  // block 15 - orange-red -> dark red. An imp, which is the only small
+  // thing in the game that wants to be noticed.
+  impred: [242, 249],
+  // block 10 - pale green -> deep green. Cold water scales, and light
+  // enough to keep a silhouette at depth.
+  fishscale: [160, 168],
+  // block 6 - light blue -> deep blue. A dreugh, which is the only
+  // thing here that lives under the sea rather than in it.
+  dreughblue: [98, 106],
+  // block 3 - pink -> mauve. A lamia is a woman to the waist, and the
+  // waist is where she stops looking like one.
+  lamiaflesh: [50, 57],
+  // block 4 - cream -> tan. A nymph, who is the only thing left in the
+  // table that means nobody harm until it does.
+  nymphskin: [64, 71],
+  // block 2 - tan -> brown, mid. Bark. A spriggan is a tree that has
+  // decided to walk, so it is the same wood as everything else made of
+  // wood in this game.
+  bark: [34, 42],
+  // block 12 - pale yellow-green -> green. New growth: the leaves a
+  // spriggan carries, and the only living green here.
+  leaf: [192, 200],
+  // block 5 - lavender grey -> slate. Stone, and the flattest thing in
+  // the palette, which is right for something that is pretending to be
+  // masonry until it moves.
+  stone: [82, 90],
+  // block 10 - pale green -> deep green. A dragonling's hide: the same
+  // family as the moss the orcs live in, and nothing else here uses it.
+  dragonhide: [160, 169],
 });
 
 export const BEAST_DESIGNS = [
   {
     id: MOBILE_TYPES.Rat,
     name: 'Giant Rat',
+    attack: 'lunge',
     level: 1,
     damage: [1, 4],
     weaponTier: 0,
@@ -66,6 +123,7 @@ export const BEAST_DESIGNS = [
   {
     id: MOBILE_TYPES.GrizzlyBear,
     name: 'Grizzly Bear',
+    attack: 'maul',
     level: 8,
     damage: [1, 20],
     weaponTier: 0,
@@ -87,6 +145,7 @@ export const BEAST_DESIGNS = [
   {
     id: MOBILE_TYPES.SabertoothTiger,
     name: 'Sabertooth Tiger',
+    attack: 'lunge',
     level: 10,
     damage: [1, 25],
     weaponTier: 0,
@@ -105,6 +164,306 @@ export const BEAST_DESIGNS = [
     },
     pelt: 'tawny',
   },
+  {
+    id: MOBILE_TYPES.Werewolf,
+    name: 'Werewolf',
+    level: 6,
+    damage: [1, 10],
+    weaponTier: 0,
+    // A DAGGERFALL WEREWOLF IS NOT A WOLF ON FOUR LEGS. It is a man with
+    // the wrong head, and that is the whole design: the rig keeps its
+    // arms, its legs and its stance, and only the SKULL is replaced.
+    //
+    // Which makes this the narrowest collapse in the project — one group
+    // of six, where the beasts take all of them — and the first design
+    // that is human and animal at the same time rather than one or the
+    // other. Two systems on one figure, which is the lich's question
+    // asked of geometry instead of cloth.
+    //
+    // Heavier than a man through the chest and arms, because whatever it
+    // is now was not built by exercise.
+    build: { torso: 1.16, shoulder: 1.24, arm: 1.2, hand: 1.28, neck: 1.18, skull: 1, jaw: 1, leg: 1.12 },
+    zones: [],
+    mats: {},
+    pelt: 'wolfGrey',
+    // Only the head goes. Everything else is the man it used to be.
+    collapse: ['head'],
+    beastHead: { skull: 0.1, snout: 0.15, depth: 0.55, ears: 1, tusks: 0 },
+    tail: { len: 0.34, up: 0.25 },
+  },
+  {
+    id: MOBILE_TYPES.Wereboar,
+    name: 'Wereboar',
+    level: 8,
+    damage: [2, 12],
+    weaponTier: 0,
+    // The same affliction on a different animal: blunter, broader, and
+    // with the tusks that are the only reason anyone can tell a wereboar
+    // from a very bad man in the dark.
+    build: { torso: 1.3, shoulder: 1.3, arm: 1.24, hand: 1.3, neck: 1.3, skull: 1, jaw: 1, leg: 1.18 },
+    zones: [],
+    mats: {},
+    pelt: 'bristle',
+    collapse: ['head'],
+    beastHead: { skull: 0.11, snout: 0.11, depth: 0.95, ears: 0.5, tusks: 1 },
+    tail: { len: 0.12, up: 0.5 },
+  },
+
+  {
+    id: MOBILE_TYPES.Spider,
+    name: 'Giant Spider',
+    attack: 'lunge',
+    level: 3,
+    damage: [1, 8],
+    weaponTier: 0,
+    // NO SPINE AT ALL, which is why it has its own builder rather than
+    // more numbers on the quadruped's. That builder assumes a backbone
+    // with a leg near each corner, and every animal it makes is a
+    // variation on that; a spider's legs radiate from one joint in a
+    // ring and its body is two lumps rather than a tube.
+    //
+    // The test of whether a mechanism is right is what happens to the
+    // thing that does not fit it. The beasts stretched from a rat to a
+    // bear on numbers alone. This does not stretch at all, so it gets a
+    // builder, and that is the mechanism telling the truth about its own
+    // edges rather than being forced past them.
+    arachnid: { span: 0.36, ride: 0.16, thorax: 0.11, abdomen: 0.15, legR: 0.024, arch: 0.6 },
+    pelt: 'chitin',
+  },
+  {
+    id: MOBILE_TYPES.GiantScorpion,
+    name: 'Giant Scorpion',
+    attack: 'sting',
+    level: 9,
+    damage: [1, 20],
+    weaponTier: 0,
+    // The same plan with things added: claws forward, and a tail that
+    // arches UP AND OVER rather than dragging. Lower and flatter than
+    // the spider — a scorpion keeps its body near the ground and its
+    // threat above it.
+    arachnid: { span: 0.26, ride: 0.11, thorax: 0.1, abdomen: 0.1, legR: 0.015, arch: 0.3, claws: 1, sting: 0.5 },
+    pelt: 'carapace',
+  },
+
+  {
+    id: MOBILE_TYPES.GiantBat,
+    name: 'Giant Bat',
+    attack: 'swoop',
+    level: 3,
+    damage: [2, 12],
+    weaponTier: 0,
+    // BEHAVIOUR: FLYING — the one category in ENEMY_BASICS that is
+    // neither foot nor fin, and the last body plan in the game that
+    // nothing already built can express.
+    //
+    // A wing is a MEMBRANE ON FINGERS: what the eye reads is the sheet
+    // between the bones, not the bones, which is why it cannot be made
+    // out of the boxes everything else here is. The body under it is a
+    // small quadruped with almost no legs — a bat on the ground is a
+    // bad animal, and this one is not meant to be there.
+    // SIZED LIKE A GIANT ONE, which it took a render to notice. My first
+    // cut used a real bat's proportions — body 0.34 high, wings at 0.38
+    // — and produced a flat strip at ankle height that the viewer's own
+    // UI sat on top of. The word in the name is doing work: this is an
+    // animal a man fights, so it meets him around the chest.
+    beast: { back: 0.66, len: 0.5, girth: 0.15, legs: 0.024, crouch: 0.5, head: 0.13, snout: 0.08, tail: 0.1, tailUp: 0.4 },
+    wings: { span: 0.92, at: 0.78, fold: 0.12, fingers: 4, droop: 0.26, rib: 0.014 },
+    pelt: 'batskin',
+  },
+  {
+    id: MOBILE_TYPES.Imp,
+    name: 'Imp',
+    level: 2,
+    damage: [2, 15],
+    weaponTier: 0,
+    // Also flying, and the same wing at a completely different fold —
+    // which is the argument for fold being a NUMBER rather than two
+    // pieces. An imp is a small man with a pair, so it keeps the whole
+    // rig: nothing is collapsed at all, and it is the only design in
+    // this file that is a person.
+    build: { torso: 0.68, shoulder: 0.7, arm: 0.66, hand: 0.72, neck: 0.68, skull: 0.86, jaw: 0.74, leg: 0.66 },
+    zones: [],
+    mats: {},
+    collapse: [],
+    wings: { span: 0.3, at: 1.42, fold: 0.3, fingers: 3, droop: 0.14, rib: 0.009 },
+    pelt: 'impred',
+  },
+
+  {
+    id: MOBILE_TYPES.Slaughterfish,
+    name: 'Slaughterfish',
+    attack: 'bite',
+    level: 7,
+    damage: [2, 12],
+    weaponTier: 0,
+    // AFFINITY: WATER, and the last thing in the table the existing
+    // builders cannot say. A quadruped tapers nose to rump and stands on
+    // four legs; a fish tapers the same way and stands on NOTHING — and
+    // that is not a parameter, because a leg length of zero leaves a
+    // barrel lying on the floor rather than a fish.
+    //
+    // What makes it read is the FINS, and a fin is a thin vertical sheet
+    // rather than a box. It is mostly teeth, so the gape is the design.
+    fish: { len: 0.95, girth: 0.15, at: 0.42, from: 0.45, fin: 0.18, dorsal: 0.12, jaw: 1 },
+    pelt: 'fishscale',
+  },
+  {
+    id: MOBILE_TYPES.Lamia,
+    name: 'Lamia',
+    level: 16,
+    damage: [5, 15],
+    weaponTier: 1,
+    // A WOMAN TO THE WAIST AND A FISH BELOW: the centaur's composition
+    // with a different animal on the back of it, and the same collapse —
+    // the legs go, and the tail starts where they were.
+    //
+    // Which is why the fish builder takes a `from`: it does not have to
+    // begin at its own nose, and a tail that starts at a waist is the
+    // same geometry as a fish that starts at a head.
+    build: { torso: 0.94, shoulder: 0.96, arm: 0.92, hand: 0.94, neck: 0.94, skull: 0.98, jaw: 0.94, leg: 0.6 },
+    zones: [],
+    mats: {},
+    hideRamp: 'lamiaflesh',
+    collapse: ['legL', 'legR'],
+    // at 0.86, not 0.72: her collapsed legs left the body ending near
+    // the pelvis and a tail slung at 0.72 hung BELOW it with daylight
+    // between. A lamia with a gap at the waist is two animals in a
+    // stack rather than one thing.
+    fish: { len: 0.85, girth: 0.13, at: 0.86, from: 0.0, fin: 0.16, dorsal: 0.07, jaw: 0 },
+    pelt: 'fishscale',
+  },
+  {
+    id: MOBILE_TYPES.Dreugh,
+    name: 'Dreugh',
+    level: 16,
+    damage: [5, 15],
+    weaponTier: 1,
+    // The only one of the three that walks: a crustacean that stands
+    // upright, so it keeps the whole rig and gains CLAWS — the
+    // scorpion's, which were built for a body with no spine and work
+    // just as well on one that has.
+    build: { torso: 1.18, shoulder: 1.3, arm: 1.24, hand: 1.34, neck: 1.06, skull: 1.02, jaw: 1.1, leg: 1.1 },
+    zones: [],
+    mats: {},
+    hideRamp: 'dreughblue',
+    collapse: [],
+    // legPairs 0: the CLAWS and nothing else. Without it the arachnid
+    // builder brings its eight legs along, and a dreugh stands on its
+    // own legs with a spider's underneath.
+    claws: { span: 0.2, ride: 1.24, thorax: 0.12, abdomen: 0.02, legR: 0.02, arch: 0, claws: 1.3, sting: 0, legPairs: 0 },
+    pelt: 'dreughblue',
+  },
+
+  {
+    id: MOBILE_TYPES.Nymph,
+    name: 'Nymph',
+    level: 6,
+    damage: [1, 5],
+    weaponTier: 0,
+    // The plainest design left: a person, unarmed and unarmoured, and
+    // the only thing in the table whose threat is not its body. Nothing
+    // is collapsed and nothing is added — after five body plans and a
+    // material path, the last of the daylight creatures is the human rig
+    // exactly as it was built.
+    build: { torso: 0.9, shoulder: 0.9, arm: 0.88, hand: 0.9, neck: 0.92, skull: 0.96, jaw: 0.9, leg: 0.92 },
+    zones: [],
+    mats: {},
+    hideRamp: 'nymphskin',
+    collapse: [],
+    pelt: 'nymphskin',
+  },
+  {
+    id: MOBILE_TYPES.Spriggan,
+    name: 'Spriggan',
+    level: 3,
+    damage: [1, 8],
+    weaponTier: 0,
+    // A TREE THAT HAS DECIDED TO WALK. Broad and knotted through the
+    // trunk, thin at the limbs — the opposite proportions to everything
+    // else here, which is heavy where it is strong. A tree is heavy
+    // where it is OLD.
+    //
+    // The leaves are a drape, which is the least likely reuse in the
+    // project and the most obviously right one: a canopy hangs off a
+    // thing exactly the way a cloak does.
+    build: { torso: 1.34, shoulder: 1.12, arm: 0.78, hand: 0.86, neck: 0.8, skull: 0.88, jaw: 0.84, leg: 1.06 },
+    zones: [],
+    mats: { canopy: 'leaf' },
+    hideRamp: 'bark',
+    collapse: [],
+    drape: { name: 'Casual Cloak', mat: 'canopy' },
+    pelt: 'bark',
+  },
+  {
+    id: MOBILE_TYPES.Gargoyle,
+    name: 'Gargoyle',
+    level: 14,
+    damage: [10, 15],
+    weaponTier: 0,
+    // A WINGED STATUE, which is the bat's wings and the daedra's horns
+    // on a body made of the flattest colour in the palette. It is
+    // pretending to be masonry until it moves, so it is heavy and it is
+    // grey and it has no expression at all.
+    build: { torso: 1.28, shoulder: 1.38, arm: 1.24, hand: 1.3, neck: 1.16, skull: 1.04, jaw: 1.14, leg: 1.2 },
+    zones: [],
+    mats: {},
+    hideRamp: 'stone',
+    collapse: [],
+    wings: { span: 0.52, at: 1.4, fold: 0.55, fingers: 3, droop: 0.3, rib: 0.016 },
+    horns: { len: 0.14, thick: 0.018, sweep: 0.6, skull: 0.104 },
+    pelt: 'stone',
+  },
+  {
+    id: MOBILE_TYPES.Dragonling,
+    name: 'Dragonling',
+    attack: 'swoop',
+    level: 16,
+    damage: [5, 15],
+    weaponTier: 0,
+    // A SMALL WINGED QUADRUPED: the beast builder and the wings, and
+    // nothing new at all. Long in the neck and the tail, low to the
+    // ground — a dragonling is a lizard that got above itself.
+    beast: { back: 0.5, len: 0.8, girth: 0.13, legs: 0.036, crouch: 0.45, head: 0.11, snout: 0.14, tail: 0.6, tailUp: 0.55 },
+    wings: { span: 0.66, at: 0.56, fold: 0.25, fingers: 4, droop: 0.2, rib: 0.012 },
+    pelt: 'dragonhide',
+  },
+  {
+    id: MOBILE_TYPES.Dragonling_Alternate,
+    name: 'Dragonling (elder)',
+    attack: 'swoop',
+    level: 16,
+    damage: [5, 15],
+    weaponTier: 0,
+    // The same animal, older: the game ships two and gives them
+    // identical numbers, so the only honest difference is the one the
+    // eye can see. Longer, heavier and carrying its wings further open.
+    beast: { back: 0.6, len: 1.0, girth: 0.17, legs: 0.044, crouch: 0.4, head: 0.13, snout: 0.17, tail: 0.75, tailUp: 0.5 },
+    wings: { span: 0.86, at: 0.66, fold: 0.12, fingers: 4, droop: 0.26, rib: 0.014 },
+    pelt: 'dragonhide',
+  },
+
+  {
+    id: MOBILE_TYPES.Harpy,
+    name: 'Harpy',
+    level: 8,
+    damage: [5, 15],
+    weaponTier: 0,
+    // THE LAST ONE. A winged woman: the imp's composition at a person's
+    // size, which means the sixty-second enemy in the game costs a
+    // design and not one line of geometry.
+    //
+    // Wings carried wide rather than folded — a harpy is a thing that
+    // comes at you out of the air, and a folded wing is a thing at rest.
+    build: { torso: 0.92, shoulder: 1.02, arm: 0.9, hand: 0.94, neck: 0.9, skull: 0.94, jaw: 0.9, leg: 0.94 },
+    zones: [],
+    mats: {},
+    hideRamp: 'nymphskin',
+    collapse: [],
+    wings: { span: 0.72, at: 1.4, fold: 0.08, fingers: 4, droop: 0.3, rib: 0.013 },
+    tail: { len: 0.16, up: 0.6, thick: 0.022 },
+    pelt: 'batskin',
+  },
+
 ];
 
 /** Every group of the human rig, because none of it is wanted. */
@@ -128,12 +487,26 @@ export function beastOpts(design, pal) {
     }
     return out;
   };
+  // A design may have a hide DIFFERENT from its pelt: a lamia's skin is
+  // not her scales, and using one ramp for both makes her a fish all the
+  // way up.
   const pelt = ramp(BEAST_RAMPS[design.pelt]);
+  const hide = design.hideRamp ? ramp(BEAST_RAMPS[design.hideRamp]) : pelt;
+  const mats = {};
+  for (const [k, v] of Object.entries(design.mats || {})) {
+    if (typeof v === 'string') mats[k] = ramp(BEAST_RAMPS[v]);
+  }
   return {
-    drape: null,
-    ramps: { skin: pelt, boot: pelt },
-    opts: { build: {}, clothZones: [], armorZones: [], mats: {} },
-    hide: pelt,
+    // A SPRIGGAN'S CANOPY IS A DRAPE, which is the least likely reuse in
+    // the project and the most obviously right one: a canopy hangs off a
+    // thing exactly the way a cloak does.
+    drape: design.drape ? { name: design.drape.name, ramp: mats[design.drape.mat] } : null,
+    ramps: { skin: hide, boot: hide },
+    // A FULL BEAST HAS NO BUILD — its body is collapsed and the piece is
+    // everything. A werewolf DOES: it keeps the man's body, so the build
+    // is the difference between him and the man he was.
+    opts: { build: design.build || {}, clothZones: design.zones || [], armorZones: [], mats },
+    hide,
     pelt,
   };
 }

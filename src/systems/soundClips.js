@@ -24,6 +24,32 @@ export const SOUND = {
   SwingMediumPitch: 347,
   Burning: 420,
   Parry6: 433,
+  WoodElfMalePain1: 405,   // D1: PlayerDeath.classicPlayerDeathSound - EVERY race/gender in classic
+  // ---- D1 / merge audit: the race/gender PAIN3 set ----
+  // PlayerDeath.GetRaceGenderPain3Sound (:179-201) - DFU's own
+  // comment: "There are 3 pain-like sounds for each race/gender. The
+  // third one, used here, sounds like it may have been meant for when
+  // the player dies." Verbatim from SoundClips.cs; note ARGONIAN MALE
+  // PAIN3 IS 42, not 413 - the male block runs 390..412 and stops, and
+  // the eighth male Pain3 sits alone down in the low block with the
+  // source's own "// See 390-412" beside it. Deriving it as Pain1 + 2,
+  // which every other race allows, would be off by 371.
+  BretonMalePain3: 392,
+  RedguardMalePain3: 395,
+  NordMalePain3: 398,
+  DarkElfMalePain3: 401,
+  HighElfMalePain3: 404,
+  WoodElfMalePain3: 407,
+  KhajiitMalePain3: 410,
+  ArgonianMalePain3: 42,
+  BretonFemalePain3: 45,
+  RedguardFemalePain3: 48,
+  NordFemalePain3: 51,
+  DarkElfFemalePain3: 54,
+  HighElfFemalePain3: 57,
+  WoodElfFemalePain3: 60,
+  KhajiitFemalePain3: 424,
+  ArgonianFemalePain3: 427,
   // ---- The UI one-shots (the windows' own calls, per DFU window) ----
   Ignite: 16,               // CreateCharClassQuestions.AnswerAndPlayAnim
   LevelUp: 96,              // DaggerfallCharacterSheetWindow.UpdatePlayerValues

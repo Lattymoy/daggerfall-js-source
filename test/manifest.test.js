@@ -36,8 +36,24 @@ test('manifest: Testing.md pins the real suite', () => {
 
   // Per-file table rows: "| name.test.js | N | ..."
   for (const [f, count] of perFile) {
-    const row = doc.match(new RegExp(`\\| ${f.replace('.', '\\.')} \\| (\\d+) \\|`));
-    assert.ok(row, `Testing.md table is missing a row for ${f}`);
-    assert.equal(Number(row[1]), count, `Testing.md count for ${f} drifted`);
+    const rows = [...doc.matchAll(new RegExp(`^\\| ${f.replace('.', '\\.')} \\| (\\d+) \\|`, 'gm'))];
+    assert.ok(rows.length, `Testing.md table is missing a row for ${f}`);
+    // MERGE AUDIT: matchAll, not match. `String.match` without /g
+    // returns the FIRST hit only, so a SECOND, retired row for the
+    // same file sat in this table describing a suite that no longer
+    // existed and the guard read straight past it - green doc, wrong
+    // doc. A subject gets ONE row (the project's own "retiring a row
+    // strikes the row" rule); a struck row is prose, not a table row.
+    assert.equal(rows.length, 1, `Testing.md has ${rows.length} rows for ${f} - one subject, one row`);
+    assert.equal(Number(rows[0][1]), count, `Testing.md count for ${f} drifted`);
   }
+
+  // ... and the rows must account for every file and no others: a row
+  // for a DELETED suite is the same drift from the other side, and it
+  // is invisible to the loop above, which only ever asks about files
+  // that still exist.
+  const rowNames = [...doc.matchAll(/^\| ([a-zA-Z0-9_]+\.test\.js) \| \d+ \|/gm)].map((m) => m[1]);
+  const orphans = rowNames.filter((n) => !perFile.has(n));
+  assert.deepEqual(orphans, [], 'Testing.md has rows for suites that no longer exist');
+  assert.equal(rowNames.length, files.length, 'Testing.md row count drifted from the real file count');
 });
