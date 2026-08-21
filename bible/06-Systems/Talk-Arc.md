@@ -313,6 +313,42 @@ KEPT QUIRKS, each by C# line:
   ABOVE 0.35 **or** the player is indoors (:1713), so the 0.35
   boundary itself belongs to the map arm.
 
+**THE LIVE MACRO SLOTS** are the shape this slice got wrong twice, so
+they are law now. Two TalkManager fields exist only for the duration
+of a single ExpandRandomTextRecord call, because the macro layer reads
+them while the record expands and nothing else ever does:
+
+- `markLocationOnMap` (:1694, :1700-1702): set immediately before the
+  expansion and cleared immediately after, so that a later
+  message-preprocessing pass resolving `%loc` cannot reveal a location
+  by accident. C#'s own comments say exactly that.
+- `greetingNameNPC` (:1136-1140): filled before the greeting record
+  (7215-7217) expands and emptied the instant it returns, because
+  TalkManagerMCP's `Name()` resolves `%n` through it and falls back to
+  a random full name when it reads empty (TalkManagerMCP.cs:54).
+
+The port had the first right and the second inside out - it stored the
+name AFTER the expansion, under a name (`lastGreetingNameNPC`) that
+described a record of what happened rather than a slot that is live for
+one call, and never cleared it. Both halves were wrong: the greeting
+expanded with the slot still empty, so `%n` drew a stranger's name
+every time, and the value left standing would have named the last NPC
+greeted in every message the session preprocessed afterwards. A grep of
+TalkManager.cs for a clear-after-expansion assignment finds exactly
+these two fields, and both are now faithful.
+
+**THE HEADLESS SESSION IS A FIELD, NOT A LITERAL.** C#'s `npcData`
+(:189) is a field of TalkManager; the counter it carries
+(`numAnswersGivenTellMeAboutOrRumors`) survives from one answer to the
+next and is zeroed only when a new NPC is set (:742, :798). The port
+routes the session through a seam, which is right - but its absent-seam
+default was an object literal rebuilt on every call, so headless the
+increment was thrown away and the one-answer gate could never close: an
+NPC with no session seam answered every tell-me-about correctly,
+forever. The default is now a single object created with the pipeline,
+which is what the C# field is. The rumor mill carried the same bug in
+`getNewsOrRumors`'s default parameter and is fixed with it.
+
 TWO OF THE FIRST PINS WERE MINE BEING WRONG, not the port's, and
 both are worth recording as a method note: I tabulated the temple
 arm's SHIFT AMOUNTS as if they were bit numbers, and I guessed a
@@ -321,12 +357,20 @@ was right both times; the pins now derive from the real values. A
 pin asserting a number you reasoned out is a pin asserting your
 reasoning - read the table.
 
+THE TONE GATE WAS THE THIRD OF THE SAME MISTAKE, found by the same
+re-read: C# recomputes the reaction tier inside `GetAnswerText` itself
+(:1994-1995) and stamps `lastToneIndex` inside
+`GetReactionToPlayer_0_1_2` (:682). The port had moved it to the
+caller, under a comment claiming C# did the same - so a host that
+forgot the call would answer at a stale tier forever. It lives in
+`_refreshReactionTier`, called at the head of `getAnswerText`, where a
+host cannot forget it.
+
 RECORDED pending: the pipeline is engine-complete but not yet
-MOUNTED - the talk window's question/answer routing, the live
-reaction-tier recompute gate (the caller owns it exactly as C#
-does), the npcSession itself (TK-iv), the automap coordinates the
-building compass wants, and GetAnswerWhereAmI's live building /
-dungeon seams all ride TK-iv and TK-v. The greeting arms
+MOUNTED - the talk window's question/answer routing, the npcSession
+itself (TK-iv), the automap coordinates the building compass wants,
+and GetAnswerWhereAmI's live building / dungeon seams all ride TK-iv
+and TK-v. The greeting arms
 (GetNPCGreeting/GetNPCQuestGreeting/GetGreetingIndex) belong with
 the NPC session and moved to TK-iv with it.
 
