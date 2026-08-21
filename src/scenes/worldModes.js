@@ -1047,6 +1047,14 @@ export function createWorldModes(host) {
       drawHud(renderer, canvas, hudArt, playerEntity,
         ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1);
     }
+    // MERGE AUDIT: the interior arm SAYS things - the static-NPC and
+    // guild fallthroughs at :362/:368/:416 all speak through
+    // townTalk.say - and this frame is the one that has to show them.
+    // Without this the line was queued into a HudText no interior
+    // frame ticked: invisible inside, and still queued when the player
+    // stepped back out, where the street's frame popped it two seconds
+    // late attached to nothing.
+    townTalk?.hudFrame?.(dt, _shopFont);
     // E2: the shop browse overlay draws above everything; font-less
     // never traps the motor (the townTalk law).
     if (interiorOverlay) {

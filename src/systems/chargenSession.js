@@ -279,6 +279,10 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
     // U-scroll: the hosts' wheel seam (scroll never advances the flow,
     // so no done check).
     wheel(dir) { if (!_fired) flow.wheel?.(dir); },
+    // F2 / THE FOUR-HOSTS RULE: the townTalk hosts drive the overlay's
+    // clock through this wrapper; dungeonContext holds the RAW flow and
+    // reaches flow.tick directly.
+    tick(dt) { flow.tick?.(dt); },
     draw(renderer, canvas, font) { flow.draw(renderer, canvas, font, hudScale); },
   };
 }

@@ -34,6 +34,7 @@ import { drawText, measureText } from './text.js';
 import { itemWeight, totalWeight } from '../systems/inventory.js';
 import { isDamageHealthEffect } from '../systems/spellcast.js';
 import { PlayerDeathSequence, DEATH_TIME_BEFORE_RESET } from '../systems/playerDeath.js';   // D1
+import { playerEntity } from '../characters/playerEntity.js';   // D1: the death clip's race/gender
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -174,10 +175,16 @@ export function knownSpells(entity, spellsByIndex) {
  *  and the reason the hint is drawn. `drop` is read by each host's
  *  frame to sink its camera - one player, one death, one law. */
 export class DeathScreen {
-  constructor({ eyeHeight, capsuleHeight, onReset = null } = {}) {
+  constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity } = {}) {
     this.done = false;
+    // MERGE AUDIT: the death clip is the character's OWN race/gender
+    // Pain3 whenever CombatVoices is on (it ships on), so the sequence
+    // needs an identity. It reads the shared player entity here - ONE
+    // seam, the way onReset is one seam - rather than making all four
+    // hosts remember to pass a race they all already import.
     this.sequence = new PlayerDeathSequence({
       eyeHeight, capsuleHeight, onReset,
+      race: entity?.raceId ?? null, gender: entity?.gender ?? null,
       playSound: (clip) => audio.playOneShot(clip, 1),
     });
   }

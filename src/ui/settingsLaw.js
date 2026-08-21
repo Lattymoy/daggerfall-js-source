@@ -101,7 +101,15 @@ export function formatValue(key, raw) {
   if (w === 'number') {
     const law = NUMBER_LAW[key];
     const n = Number(raw);
-    return Number.isFinite(n) ? fmtNumber(n, law) : String(raw ?? '');
+    // MERGE AUDIT (the launcher's own finding, carried into the screen
+    // that replaced it): show the value IN EFFECT, not the stored one.
+    // The consumer's getFloat/getInt clamps to this same range, so a
+    // store holding 2 for SoundVolume is a bus running 1 - printing
+    // "200%" would be a row describing a volume nobody can hear. The
+    // launcher could MINT such a value by stepping; stepValue cannot,
+    // but an older build's store or a hand-edited delta still can.
+    const eff = Math.min(law.max, Math.max(law.min, n));
+    return Number.isFinite(n) ? fmtNumber(eff, law) : String(raw ?? '');
   }
   if (w === 'blocked') return READOUT[key] ?? 'not here';   // never the stored value: EnhancedCombatAI holds True while the port runs the classic path
   if (w === 'colour') return String(raw ?? '').toUpperCase();

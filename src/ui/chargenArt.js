@@ -33,6 +33,8 @@
 import { ImgFile } from '../formats/imgFile.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { GfxFile } from '../formats/gfxFile.js';   // U18: the question scroll
+import { FlcFile } from '../formats/flcFile.js';   // F2: the constellation CELs
+import { FlcPlayer } from './flcPlayer.js';
 import { DFPalette } from '../formats/dfPalette.js';   // U18: CHGN00I0's own palette
 import { TextRsc } from '../formats/textRsc.js';   // U11: the race description
 import { generateBackstory } from '../systems/biography.js';   // U13
@@ -286,6 +288,18 @@ let _faces = null;        // { key, tex[] } - the loaded race/gender face set
 let _facePending = null;  // ASYNC NEVER DROPS: the coalesced follow-up
 let _deps = null;
 
+/** F2: the three FLCPlayer panels (CreateCharClassQuestions :141-165),
+ *  indexed by the WEIGHT index an answer resolves to - 0 warrior,
+ *  1 rogue, 2 mage - at DFU's verbatim panel positions. The
+ *  transparent colour is (0,0,10) and Loop is false. */
+export const CEL_FILES = Object.freeze([
+  Object.freeze({ name: 'WARRIOR.CEL', x: 110, y: 1 }),
+  Object.freeze({ name: 'ROGUE.CEL', x: 1, y: 1 }),
+  Object.freeze({ name: 'MAGE.CEL', x: 79, y: 1 }),
+]);
+const CEL_TRANSPARENT = Object.freeze([0, 0, 10]);
+let _celActive = -1;   // the weight index playing, or -1 (DFU's animPlaying)
+
 /** Load one IMG as a texture (the nativePanel loader shape) plus,
  *  for TAMRIEL2, the RAW indexed bitmap the click law reads. */
 async function loadOne(deps, name) {
@@ -339,7 +353,28 @@ export async function preloadChargenArt(deps) {
       // second run's un-answered screen re-uploads the LAST run's
       // constellation blues under the 'pristine' key.
       const pristine = [192, 160, 128].map((i) => chgnPalette.get(i));
-      questions = { bmp: chgnBmp, palette: chgnPalette, pristine, scroll, texKey: null, tex: null };
+      // F2: the three constellation animations. Their own try, so a
+      // missing CEL costs the ANIMATION and not the chart and scroll
+      // (this block's own never-traps law), and ALL THREE OR NONE - a
+      // half set would animate two answer paths and silently not the
+      // third.
+      let cels = [];
+      try {
+        for (const c of CEL_FILES) {
+          const flc = new FlcFile();
+          // the transparency switch must be set BEFORE load(): load()
+          // decodes frame 0, and with it the COLOR_256 palette.
+          flc.transparency = true;
+          [flc.transparentRed, flc.transparentGreen, flc.transparentBlue] = CEL_TRANSPARENT;
+          flc.load(await deps.fetchBytes(c.name), c.name);
+          if (!flc.readyToPlay) throw new Error(`${c.name} did not decode`);
+          cels.push({ ...c, player: new FlcPlayer(flc, { loop: false }), tex: null, texKey: null });
+        }
+      } catch (e) {
+        cels = [];
+        console.warn('[chargen] ROGUE/MAGE/WARRIOR.CEL unavailable; the constellations do not animate', e);
+      }
+      questions = { bmp: chgnBmp, palette: chgnPalette, pristine, scroll, texKey: null, tex: null, cels };
     } catch (e) { console.warn('[chargen] CHGN00I0/SCRL0*I0 unavailable; the class questions keep the text panel', e); }
     // AUDIT 18: DaggerfallUI.SmallFont is FONT0002 (DaggerfallUI.cs:155),
     // and the special advantage/disadvantage window draws its labels
@@ -865,13 +900,66 @@ export function constellationPalette(palette, pristine, blues) {
   else for (let i = 0; i < 3; i++) palette.set(CONSTELLATION_INDICES[i], pristine[i].r, pristine[i].g, pristine[i].b);
 }
 
+/** F2 - FLCPlayer.Start() for the constellation an answer lit.
+ *  Returns the animation's length in SECONDS, or 0 when there is
+ *  nothing to play (no art, no CELs, a reader that will not start) -
+ *  which is the flow's signal to run the anim-end body AT ONCE, i.e.
+ *  exactly the behaviour this screen had before F2. */
+export function startConstellationAnim(index) {
+  const cels = _art?.questions?.cels;
+  if (!cels?.length || !cels[index]) return 0;
+  stopConstellationAnim();
+  const cel = cels[index];
+  // Re-arm: the frame buffer still holds the LAST run's final frame,
+  // and Update() displays the CURRENT buffer before decoding the next
+  // - without this, replays 2..10 would flash the previous run's end.
+  cel.player.flc.bufferNextFrame(0);
+  if (!cel.player.start()) return 0;
+  _celActive = index;
+  // AUDIT F2-P3: the duration must never read as "nothing to play"
+  // once the player IS playing - a zero-frame or zero-delay CEL would
+  // otherwise leave _celActive latched while the flow ran its end body
+  // inline. A started animation always reports a positive length; the
+  // flow's deadline is what bounds it.
+  const secs = cel.player.flc.header.numOfFrames * cel.player.flc.frameDelay;   // frameDelay is SECONDS
+  return secs > 0 ? secs : Number.MIN_VALUE;
+}
+
+/** One FLCPlayer.Update(). True while still playing; false on the
+ *  tick it ended (which is the flow's cue to run the end body). */
+export function tickConstellationAnim(dt) {
+  if (_celActive < 0) return false;
+  const cel = _art?.questions?.cels?.[_celActive];
+  if (!cel) { _celActive = -1; return false; }
+  cel.player.tick(dt > 0 ? dt : 0);
+  return cel.player.playing;
+}
+
+/** FLCPlayer.Stop() + CEL_OnAnimEnd's texture clear. Idempotent, and
+ *  safe with no art at all. */
+export function stopConstellationAnim() {
+  const cel = _art?.questions?.cels?.[_celActive];
+  if (cel) {
+    cel.player.stop();
+    if (cel.texKey && _deps?.renderer) _deps.renderer.releaseTexture('img', cel.texKey);
+    cel.tex = null;
+    cel.texKey = null;
+    cel.frameRef = null;
+  }
+  _celActive = -1;
+}
+
+/** Test/diagnostic seam: which constellation is playing, or -1. */
+export const constellationAnimIndex = () => _celActive;
+
 /** The CHGN00I0 background: the palette law above, textures versioned
  *  by the blues and the stale one released (the paperdoll ownership
- *  law). The PRISTINE palette shows until the first answer, exactly
- *  as DFU only writes the slots at the first anim's end. */
+ *  law). The PRISTINE palette shows until an animation ENDS - DFU
+ *  writes the slots in CEL_OnAnimEnd (:504-513), never at the answer,
+ *  which is what the flow's qPaintBlues carries (F2). */
 function ensureChgnTexture(renderer, flow) {
   const q = _art.questions;
-  const blues = flow.qAnswered > 0 ? flow.constellationBlues() : null;
+  const blues = flow.qPaintBlues ?? null;
   const rec = `CHGN00I0:${blues ? blues.join(',') : 'pristine'}`;
   if (q.texKey === rec) return;
   constellationPalette(q.palette, q.pristine, blues);
@@ -881,12 +969,34 @@ function ensureChgnTexture(renderer, flow) {
 }
 
 /** U18 - CreateCharClassQuestions: the question scroll over the
- *  constellation chart. FLAGGED loud: the three FLC constellation
- *  animations (ROGUE/MAGE/WARRIOR.CEL, an Autodesk FLIC decoder the
- *  port does not have) do not play, so the next question shows
- *  immediately where DFU waits out the CEL - and the Ignite one-shot
- *  that rides the answer (:353) waits with them. The palette
- *  brightening the anims reveal IS live. */
+ *  constellation chart, with the three constellation animations
+ *  (F2). An answer lights ROGUE/MAGE/WARRIOR.CEL over the chart and
+ *  the next question waits it out, as DFU does; the palette
+ *  brightening lands when the animation ENDS. */
+/** F2: the playing constellation, over the chart AND over the scroll.
+ *  AUDIT F2-P1 corrected this: DFU adds textArea and questionScroll to
+ *  NativePanel.Components FIRST (:128-129) and the three FLCPlayer
+ *  panels LAST (:164-166), and Panel.Draw walks the children in
+ *  ascending index order - so the constellations paint over the
+ *  parchment, and over the question label, which is a child of the
+ *  scroll (:276). The comment here used to claim the exact inverse.
+ *  Uploads only when the frame CHANGED (the videoPlayer's
+ *  release-then-upload law, so a frame cannot leak a texture per
+ *  tick) - AUDIT F2-P2: the body had no such check either. */
+function drawConstellationAnim(renderer, m) {
+  const cel = _art?.questions?.cels?.[_celActive];
+  const frame = cel?.player?.frame;
+  if (!cel || !frame) return;
+  const key = `chargen:cel:${cel.name}`;
+  if (cel.frameRef !== frame) {   // FlcPlayer hands a NEW object per decoded frame
+    if (cel.texKey) renderer.releaseTexture('img', cel.texKey);
+    cel.tex = renderer.uploadTexture('img', key, frame);
+    cel.texKey = key;
+    cel.frameRef = frame;
+  }
+  drawImg(renderer, { tex: cel.tex, w: frame.width, h: frame.height }, m, cel.x, cel.y);
+}
+
 function drawClassQuestions(renderer, m, font, flow) {
   // EndQuestions (:400-413) blanks the background and the scroll
   // before the confirm box shows - only the box draws, over the
@@ -915,6 +1025,7 @@ function drawClassQuestions(renderer, m, font, flow) {
     if (vy < top || vy + QUESTION_ROW_H > bottom) continue;
     drawText(renderer, font, flow.qDisplay.lines[i], m.ox + QSCROLL_TEXT_LEFT * m.s, m.oy + vy * m.s, m.s, QUESTION_TEXT_COLOR);
   }
+  drawConstellationAnim(renderer, m);   // LAST: DFU's anim panels are the last children (F2-P1)
   return true;
 }
 

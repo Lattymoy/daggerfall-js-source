@@ -878,7 +878,7 @@ This single test would have caught the phone text halving, the 8‑px picker row
 
 **T15 — ASCII sweep.** Every string reachable by `drawText` from `settingsCopy.js` + `settingsLaw.js` + the window's own literals is ASCII 32..126.
 
-**T16 — the probe taps what a finger taps.** `tools/settingsProbe.mjs` (Playwright, the `launcherProbe.mjs` shape) at 1280×800 **and** with `page.setViewportSize({width:390,height:844})` + touch emulation: assert the screen is up; assert every category is reachable; `page.tap()` the reported screen rect of a `WORKS NOW` row, then of its control, and assert the value changed and persisted through a reload; `page.tap()` the reported PLAY rect and assert the launcher closes. No coordinate is ever guessed.
+**T16 — the probe taps what a finger taps.** `tools/settingsProbe.mjs` (Playwright, in the shape of the launcher probe it replaces) at 1280×800 **and** with `page.setViewportSize({width:390,height:844})` + touch emulation: assert the screen is up; assert every category is reachable; `page.tap()` the reported screen rect of a `WORKS NOW` row, then of its control, and assert the value changed and persisted through a reload; `page.tap()` the reported PLAY rect and assert the launcher closes. No coordinate is ever guessed.
 
 ---
 

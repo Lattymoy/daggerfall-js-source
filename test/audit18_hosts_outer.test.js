@@ -15,6 +15,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -688,4 +689,51 @@ test('audit18 hosts: no host re-implements an extracted seam privately', () => {
       assert.doesNotMatch(s, re, `${host} keeps a private copy of ${what} - extract it instead`);
     }
   }
+});
+
+// ---------------------------------------------------------------------
+// AUDIT F2-T4. The diet and the manifest version are ONE decision.
+// ---------------------------------------------------------------------
+test('audit F2: editing the diet without bumping MANIFEST_V fails HERE', () => {
+  // The bump was pinned as a floor (>= 3), which passes forever once
+  // it has been bumped once - so the NEXT slice to widen KEEP would
+  // ship a diet no existing install ever re-ingests, and the file it
+  // added would be silently missing in the field for everyone who had
+  // played before. The two are coupled by checksum instead: touch the
+  // diet, this fails, and the only way to green is to bump the
+  // version (which every stale store checks) and re-pin the pair.
+  const text = src('src/scenes/dataSource.js');
+  const keep = text.match(/export const KEEP = [\s\S]*?;\n/)?.[0];
+  assert.ok(keep, 'the diet is still one expression');
+  const version = Number(text.match(/const MANIFEST_V = (\d+);/)[1]);
+  const sum = createHash('sha256').update(keep).digest('hex').slice(0, 16);
+  assert.deepEqual([version, sum], [6, 'cab127b468c47e75'],
+    'THE DIET CHANGED: bump MANIFEST_V so stale stores re-ingest, then re-pin [version, sum] here');
+});
+
+// ---------------------------------------------------------------------
+// MERGE AUDIT. Everything that SPEAKS must have a frame that SHOWS it.
+// ---------------------------------------------------------------------
+test('merge audit: all four hosts drive the HUD-TEXT layer they speak into', () => {
+  // worldModes' interior arm calls townTalk.say at three sites (the
+  // static-NPC fallthrough, the guild with no faction record, and the
+  // guild popup's Talk button) and its frame CONSUMES the frame and
+  // returns - so the line went into a HudText nothing ticked or drew.
+  // Invisible inside the building, and still queued on the way out,
+  // where the street's frame popped it two seconds late against
+  // nothing the player had just done. The fourth host again.
+  const hosts = {
+    'src/scenes/world.js': /townTalk\.frame\(dt\)/,
+    'src/scenes/exterior.js': /townTalk\.frame\(dt\)/,
+    'src/scenes/worldModes.js': /townTalk\?\.hudFrame\?\.\(dt/,
+    'src/scenes/dungeonContext.js': /hudText\.tick\(dt\)/,
+  };
+  for (const [host, drive] of Object.entries(hosts)) {
+    assert.match(src(host), drive, `${host} never drives its HUD text`);
+  }
+  // and the interior arm's say sites are the reason: if they move to
+  // another channel this pin should be revisited, not deleted.
+  const modes = src('src/scenes/worldModes.js');
+  assert.ok((modes.match(/townTalk\?\.say\?\.\(/g) || []).length >= 3,
+    'the interior arm still speaks through townTalk.say');
 });

@@ -27,9 +27,8 @@
 //    Color32[] indexer throws where a JS typed array drops the write
 //    and lets a malformed chunk "succeed" - the same emulation the
 //    VID reader already carries.
-//  - a missing frame header answers false instead of indexing null
-//    (C# would throw); a truncated file still surfaces as a thrown
-//    RangeError from the cursor, as C#'s EndOfStreamException does.
+//  - a truncated file surfaces as a thrown RangeError from the
+//    cursor, as C#'s EndOfStreamException does.
 //
 // The reader is data-only: it decodes into an RGBA frame buffer the
 // caller uploads. Palette entries are packed RGBA words, as every
@@ -108,7 +107,15 @@ export class FlcFile {
     this.colorCount = 2 ** this.header.pixelDepth;
     this.palette = new Uint32Array(this.colorCount);
     this.frameBuffer = new Uint32Array(this.header.width * this.header.height);
-    this.frameHeaders = new Array(this.header.numOfFrames + 1);   // + the ring frame
+    // C#'s FrameHeader[] is a VALUE-TYPE array: slots the walk never
+    // fills are DEFAULT structs, not null - and BufferNextFrame on a
+    // default decodes an empty frame and still ADVANCES CurrentFrame.
+    // Pre-filling matches that exactly, and matters: a guard that
+    // refused a missing header instead STALLED the frame counter, so
+    // a non-looping player could never reach NumOfFrames and its
+    // OnAnimEnd never fired (AUDIT F-P2 - caught by the player pin).
+    this.frameHeaders = Array.from({ length: this.header.numOfFrames + 1 },
+      () => ({ posInFile: 0, size: 0, type: CHUNK_TYPE.None, numSubChunks: 0 }));
     if (!this._readFrameHeaders()) {
       console.warn('[flc] Incompatible format, cannot read');
       this.readyToPlay = false;
@@ -199,7 +206,6 @@ export class FlcFile {
     if (!this.readyToPlay) return false;
     let n = (frameNum >= 0 && frameNum <= this.header.numOfFrames) ? frameNum : this.currentFrame;
     const fh = this.frameHeaders[n];
-    if (!fh) return false;
     const c = this._c;
     c.seek(fh.posInFile + FRAME_HEADER_SIZE);   // skip over the frame header
     for (let i = 0; i < fh.numSubChunks; i++) {

@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ALL_KEYS, tierOf, LIVE, DEFAULTS, _resetForTests } from '../src/systems/settings.js';
+import { ALL_KEYS, tierOf, LIVE, DEFAULTS, effectiveSettings, _resetForTests } from '../src/systems/settings.js';
 import { CATEGORIES, CATEGORY_IDS, keysOf, categoryOf } from '../src/ui/settingsMap.js';
 import { LABELS, labelOf, helpOf, READOUT, INSTEAD } from '../src/ui/settingsCopy.js';
 import { widgetFor, formatValue, stepValue, NUMBER_LAW, ENUM_LAW, COLOUR_KEYS } from '../src/ui/settingsLaw.js';
@@ -233,4 +233,63 @@ test('MENU T14: on a TOUCH device every control is a 44px finger target, pill or
   } finally {
     if (hadWindow) globalThis.window = saved; else delete globalThis.window;
   }
+});
+
+test('MENU T15: a number row shows the value IN EFFECT, and stepping cannot mint one that is not', () => {
+  // The launcher this screen replaced had a defect its own merge audit
+  // caught: the step came from the CURRENT value ('.' present -> 0.1),
+  // so stepping 0.9 up stored "1", which has no '.', and the next press
+  // stepped by ONE. A player who muted SoundVolume could never get back
+  // to a fraction, and the row showed a "2" the audio bus clamps to 1.
+  // The rewrite kills the first half structurally - the step is declared
+  // per key, never read off the value - and this pin holds both halves.
+  const step = stepValue('Controls/SoundVolume', '0', +1);
+  assert.equal(step, '0.05', 'the step is the LAW\'s, not one inferred from the stored string');
+  let v = '0';
+  for (let i = 0; i < 60; i++) v = stepValue('Controls/SoundVolume', v, +1);
+  assert.equal(v, '1', 'stepping up cannot escape the max');
+  assert.equal(formatValue('Controls/SoundVolume', v), '100%');
+  for (let i = 0; i < 60; i++) v = stepValue('Controls/SoundVolume', v, -1);
+  assert.equal(v, '0', 'stepping down cannot escape the min');
+  // and a value that is already out of range READS as what is in effect
+  assert.equal(formatValue('Controls/SoundVolume', '2'), '100%', 'the bus runs 1, so the row says 100%');
+  assert.equal(formatValue('Controls/SoundVolume', '-3'), '0%');
+  // the same law for every numeric key, both ends, against the same
+  // bounds its consumer clamps to
+  for (const [key, law] of Object.entries(NUMBER_LAW)) {
+    const hi = formatValue(key, String(law.max + Math.max(1, law.step)));
+    assert.equal(hi, formatValue(key, String(law.max)), `${key}: over-max must read as the max in effect`);
+    const lo = formatValue(key, String(law.min - Math.max(1, law.step)));
+    assert.equal(lo, formatValue(key, String(law.min)), `${key}: under-min must read as the min in effect`);
+    assert.equal(stepValue(key, String(law.max), +1), String(law.max === Math.round(law.max) && !String(law.step).includes('.') ? Math.round(law.max) : Number(law.max.toFixed(String(law.step).split('.')[1]?.length ?? 0))), `${key}: stepping past the max`);
+  }
+});
+
+test('MENU T16: driving the screen by KEY, a muted volume comes back by fractions', () => {
+  // Carried verbatim in intent from the launcher's merge-audit test
+  // (test/settings.test.js, retired with LauncherWindow): the same
+  // player action, driven end to end through the window that replaced
+  // it. T15 pins the law at the unit; this pins that the SCREEN really
+  // routes to it, which is where the original defect actually bit.
+  _resetForTests();
+  const canvas = { width: 1280, height: 800 };
+  const w = new SettingsWindow({});
+  w.category = 'audio';
+  const L0 = w.layout(canvas);
+  const idx = L0.list.items.findIndex((i) => i.kind === 'row' && i.key === 'Controls/SoundVolume');
+  assert.ok(idx >= 0, 'Sound Volume must be reachable in Audio');
+  w.focus = idx;
+  const vol = () => Number(effectiveSettings().Controls.SoundVolume);
+  const press = (dir) => w.input(dir < 0 ? 'ArrowLeft' : 'ArrowRight', { key: dir < 0 ? 'ArrowLeft' : 'ArrowRight' }, canvas);
+  assert.equal(vol(), 0.5, 'DFU ships it at a half');
+  for (let i = 0; i < 10; i++) press(-1);
+  assert.equal(vol(), 0, 'ten presses mute it');
+  press(-1);
+  assert.equal(vol(), 0, 'and 0 is the floor');
+  press(+1);
+  assert.equal(vol(), 0.05, 'ONE press back up is a step, not the whole scale');
+  for (let i = 0; i < 40; i++) press(+1);
+  assert.equal(vol(), 1, 'and the top is 1 - never a 2 the audio bus would clamp away');
+  assert.equal(w.layout(canvas).list.placed.find((r) => r.key === 'Controls/SoundVolume').display, '100%');
+  _resetForTests();
 });

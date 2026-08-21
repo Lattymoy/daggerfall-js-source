@@ -2911,3 +2911,45 @@ Mutations: 5 run, 5 killed (two needed re-running - the first attempt
 edited text that was not there, which is itself the reason a mutation
 run reports its own match count now). Pins: 8 in `settingsUI.test.js`,
 plus the live probe.
+
+### U30 addendum - what the merge with the F2 lane cost, and found
+
+Two things came back from `origin/main` that this slice had to answer
+rather than absorb.
+
+**Carried, not lost.** The launcher's own merge audit had fixed a
+defect this rewrite deletes the code for: `stepFor` read the step off
+the CURRENT value (`0.1` only while the string contained a `.`), so
+stepping `0.9` up stored `"1"`, which has no `.`, and the next press
+stepped by ONE - a player who muted SoundVolume could never reach a
+fraction again, and the row displayed a `2` the audio bus clamps to 1.
+`NUMBER_LAW` kills the first half structurally: the step is declared
+per key and never inferred from a value. The second half was still
+live here - `formatValue` printed the STORED number, so a store
+holding 2 would read "200%" while the bus ran 1. It now shows the
+value IN EFFECT, clamped to the same range the consumer's
+`getFloat/getInt` clamps to. Both halves are pinned (T15), and the
+retired launcher test's end-to-end walk is re-driven through the new
+screen's own key input (T16). A defect fixed in deleted code stays
+fixed.
+
+**FOUND: the F2 real-seam test was RED, and had never run.** The
+incoming lane's `F2 real seam` test is gated on `ARENA2_PATH`, so a
+bare `npm test` skips it and reports green - it went in unexecuted.
+Run with ARENA2 it failed twice over. First a `TypeError`: its fake
+renderer had no `gl`, and `drawMenuBackdrop` measures the live context
+when no canvas is passed (`chargenArt.js:82`). With that stubbed, the
+real assertion failed - and the assertion was WRONG. It ticked the
+player by zero and expected a frame, but `FLCPlayer.cs`'s Update order
+displays the current buffer only once a frame delay has ELAPSED, and
+`start()` clears the displayed frame; DFU shows its cleared texture
+until the first delay passes. Asserting a frame on a zero-length tick
+would have pinned the pacing law inside out, and the next person to
+keep the law faithfully would have "broken" the suite. The engine was
+right; the test is fixed to walk the clock, and it now proves the
+whole path (nothing before the first delay, the frame after it, no
+upload for a still frame, a new frame releasing the old key).
+
+The lesson is the gate, not the lane: an ARENA2-only test that has
+never been run with ARENA2 present is not a pin, it is a claim. Both
+modes ran green before this merged.

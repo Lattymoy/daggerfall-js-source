@@ -883,6 +883,13 @@ export async function bootExterior(canvas, renderer, params, status) {
     }, modes?.musicContext?.() ?? null);
 
     if (modes.frame(dt, now)) {
+      // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
+      // townTalk slot got neither its clock nor its draw while the
+      // player was inside a building or a dungeon - chargen mounts
+      // there from an un-awaited load, so a constellation started on
+      // the way in would hang until its deadline. Ticked and drawn
+      // ABOVE the modal render, which is where townTalk always draws.
+      if (townTalk.overlayActive) townTalk.frame(dt);
       requestAnimationFrame(frame);
       return;
     }
