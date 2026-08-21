@@ -24,6 +24,7 @@ export const SOUND = {
   SwingMediumPitch: 347,
   Burning: 420,
   Parry6: 433,
+  WoodElfMalePain1: 405,   // D1: PlayerDeath.classicPlayerDeathSound - EVERY race/gender in classic
   // ---- The UI one-shots (the windows' own calls, per DFU window) ----
   Ignite: 16,               // CreateCharClassQuestions.AnswerAndPlayAnim
   LevelUp: 96,              // DaggerfallCharacterSheetWindow.UpdatePlayerValues

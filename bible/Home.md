@@ -327,8 +327,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/inventory.js:2` - overlay-seam windows in classic text (backgrounds FLAGGED pending
 - `src/ui/inventory.js:11` - Enter readies one (retires ?spell). INTERIM loud: with no
-- `src/ui/inventory.js:47` - table is not in the source snapshot, so the VALUES are FLAGGED
-- `src/ui/inventory.js:149` - /** The known list: entity.spells when it exists; the INTERIM fallback
+- `src/ui/inventory.js:52` - table is not in the source snapshot, so the VALUES are FLAGGED
+- `src/ui/inventory.js:154` - /** The known list: entity.spells when it exists; the INTERIM fallback
 - `src/ui/listPicker.js:22` - FLAGGED: the scroll bar draws as DFU's plain thumb rect rather than
 - `src/ui/messageBox.js:35` - FLAGGED: the scrolling variant (a label taller than MaxTextHeight
 - `src/ui/messageBox.js:155` - so the strip never rides higher than that. FLAGGED as a

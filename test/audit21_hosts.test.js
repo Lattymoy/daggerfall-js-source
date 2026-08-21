@@ -260,7 +260,12 @@ test('AUDIT 21 hosts F6: no host writes player health raw any more', () => {
   // and every gameplay host registers a presenter, or the door has nobody to call
   for (const h of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js']) {
     assert.match(code(h), /(?<![\w$])setDeathPresenter\(/, `${h} must register a death presenter`);
-    assert.match(code(h), /new DeathScreen\(\)/, `${h} must actually raise the screen`);
+    assert.match(code(h), /new DeathScreen\(/, `${h} must actually raise the screen`);
+    // D1: raising it is half the law - the run has to END, or death is
+    // a screen you sit on for ever. Every host hands the screen the
+    // one shared onReset (the death video, then the title menu).
+    assert.match(code(h), /new DeathScreen\(\{ onReset: \(\) => endRunToTitleMenu\(renderer\) \}\)/,
+      `${h} must wire the death screen to the shared end-of-run seam`);
   }
 });
 

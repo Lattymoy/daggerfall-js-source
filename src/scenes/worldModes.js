@@ -27,7 +27,7 @@ import { pickActivatable, worldAabb, activationTargets } from '../player/activat
 import { transferAll, removeOne, addItem } from '../systems/inventory.js';
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { createPlayerTicker } from './shared.js';   // AUDIT 18: the interior host's world clock
+import { createPlayerTicker , endRunToTitleMenu } from './shared.js';   // AUDIT 18: the interior host's world clock
 import { buildInteriorContext } from './interiorContext.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { DOOR_TYPE } from '../world/meshReader.js';
@@ -142,7 +142,7 @@ export function createWorldModes(host) {
     if (playerEntity.fatigue <= 0 && playerEntity.health > 0) onExhaustedInterior();
   };
   const presentInteriorDeath = () => {
-    if (!(interiorOverlay instanceof DeathScreen)) interiorOverlay = new DeathScreen();
+    if (!(interiorOverlay instanceof DeathScreen)) interiorOverlay = new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) });   // D1
   };
   // AUDIT 23 (hosts-1): this constructor runs AFTER the exterior host
   // registered its presenter, and used to overwrite it for good - a

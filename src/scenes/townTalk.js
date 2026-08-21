@@ -440,6 +440,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
 
   function frame(dt) {
     hud.tick(dt);
+    overlay?.tick?.(dt);   // D1: the death sequence's clock (any overlay may want one)
     const s = hudScale(canvas.width, canvas.height);
     if (font) hud.draw(renderer, canvas, font, s);
     if (overlay && font) overlay.draw(renderer, canvas, font, s);

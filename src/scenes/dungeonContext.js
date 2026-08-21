@@ -64,7 +64,7 @@ import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, raiseAtRestEnd } from './shared.js';
+import { fetchBytes, ensureAudio, raiseAtRestEnd , endRunToTitleMenu } from './shared.js';
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import {
@@ -814,7 +814,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the four writers that checked for death, which is exactly why the other
   // three could go on writing health raw and nobody noticed.
   setDeathPresenter(() => {
-    if (!(activeOverlay instanceof DeathScreen)) activeOverlay = new DeathScreen();
+    if (!(activeOverlay instanceof DeathScreen)) activeOverlay = new DeathScreen({ onReset: () => endRunToTitleMenu(renderer) });   // D1
   });
   function hurtPlayer(dmg) {
     hurtEntity(playerEntity, dmg);
@@ -2269,6 +2269,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  rest that ended itself would latch a dead window on screen. */
     tickOverlay(dt) {
       if (!activeOverlay) return;
+      activeOverlay.tick?.(dt);   // D1: the death sequence's clock
       if (activeOverlay.isRestWindow) activeOverlay.tickRest(dt);
       // ui-chargen-4: backing out of the race screen cancels the
       // wizard - DFU unwinds the UI stack to the start screen
