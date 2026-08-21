@@ -1049,6 +1049,12 @@ export function createWorldModes(host) {
     // E2: the shop browse overlay draws above everything; font-less
     // never traps the motor (the townTalk law).
     if (interiorOverlay) {
+      // AUDIT D-C1: this arm DREW the overlay and never TICKED it, so
+      // an overlay with a clock stalled here alone - dying inside a
+      // building left the death sequence frozen and the run never
+      // ended. The other three hosts tick through townTalk.frame and
+      // dungeonContext.tickOverlay; this is the fourth.
+      interiorOverlay.tick?.(dt);
       if (_shopFont) interiorOverlay.draw(renderer, canvas, _shopFont, hudScale(canvas.width, canvas.height));
       else interiorOverlay = null;
     }

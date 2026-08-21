@@ -16,11 +16,20 @@
 //  - THE FRAME BUFFER IS BOTTOM-UP. Every write lands at
 //    `x + (Height-1)*Width - y*Width`, so FLIC row 0 is the LAST row
 //    of the buffer. That is Unity's texture origin, not the format's,
-//    and callers must know it (see `flipRows` for a top-down copy).
+//    and callers must know it (getFrame() answers a top-down copy).
 //  - the unsupported-chunk skip computes an ABSOLUTE position and
 //    then seeks RELATIVE to the current one, double-advancing. It is
 //    unreachable on the shipping files (their chunk types are all
 //    handled) and is preserved rather than quietly corrected.
+//
+// TWO DEFENSIVE PORT ADDITIONS, both recorded rather than silent:
+//  - out-of-range pixel writes THROW (see _put), because C#'s
+//    Color32[] indexer throws where a JS typed array drops the write
+//    and lets a malformed chunk "succeed" - the same emulation the
+//    VID reader already carries.
+//  - a missing frame header answers false instead of indexing null
+//    (C# would throw); a truncated file still surfaces as a thrown
+//    RangeError from the cursor, as C#'s EndOfStreamException does.
 //
 // The reader is data-only: it decodes into an RGBA frame buffer the
 // caller uploads. Palette entries are packed RGBA words, as every
@@ -313,23 +322,35 @@ export class FlcFile {
   /** The BOTTOM-UP address (see the header). */
   _pos(x, y) { return x + (this.header.height - 1) * this.header.width - y * this.header.width; }
 
+  /** Writes one pixel, THROWING past the frame buffer as C#'s
+   *  Color32[] indexer does (IndexOutOfRangeException). AUDIT F-P1:
+   *  without this a JS typed array DROPS the write silently and the
+   *  malformed chunk decodes "successfully" - the exact hazard the
+   *  VID reader already emulates (vidFile.js _putPixel). */
+  _put(pos, color) {
+    if (pos < 0 || pos >= this.frameBuffer.length) {
+      throw new Error('FlcFile: frame buffer index out of range.');
+    }
+    this.frameBuffer[pos] = color;
+  }
+
   _screenCopySeg(x, y, count) {
     let pos = this._pos(x, y);
-    for (let i = 0; i < count; i++) this.frameBuffer[pos++] = this.palette[this._c.u8()];
+    for (let i = 0; i < count; i++) this._put(pos++, this.palette[this._c.u8()]);
   }
 
   _screenRepeatOne(x, y, count) {
     const color = this.palette[this._c.u8()];
     let pos = this._pos(x, y);
-    for (let i = 0; i < count; i++) this.frameBuffer[pos++] = color;
+    for (let i = 0; i < count; i++) this._put(pos++, color);
   }
 
   _screenRepeatTwo(x, y, count) {
     const c1 = this.palette[this._c.u8()], c2 = this.palette[this._c.u8()];
     let pos = this._pos(x, y);
     for (let i = 0; i < count; i++) {
-      this.frameBuffer[pos] = c1;
-      this.frameBuffer[pos + 1] = c2;
+      this._put(pos, c1);
+      this._put(pos + 1, c2);
       pos += 2;
     }
   }
@@ -337,8 +358,8 @@ export class FlcFile {
   _screenCopyTwoSeg(x, y, count) {
     let pos = this._pos(x, y);
     for (let i = 0; i < count; i++) {
-      this.frameBuffer[pos] = this.palette[this._c.u8()];
-      this.frameBuffer[pos + 1] = this.palette[this._c.u8()];
+      this._put(pos, this.palette[this._c.u8()]);
+      this._put(pos + 1, this.palette[this._c.u8()]);
       pos += 2;
     }
   }

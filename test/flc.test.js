@@ -168,6 +168,55 @@ test('flc: a PSTAMP is skipped, and a bad frame type refuses to play', () => {
   assert.equal(g.readyToPlay, false);
 });
 
+test('flc: DELTA_FLC advances x by PAIRS, so the next packet lands right', () => {
+  // AUDIT F-M10: the single-packet pin above could not see the pair
+  // advance (`x += size_type * 2`) - nothing followed it. Two packets
+  // on one line: the second's position is the first's advance.
+  const byteRun = [1, 8, 0, 1, 8, 0];          // an 8x2 field of index 0
+  const delta = [
+    1, 0,                 // lineCount = 1
+    2, 0,                 // packetCount = 2
+    0, 1, 1, 2,           // colSkip 0, +1 pair -> indices 1,2 at x=0,1
+    0, 1, 3, 1,           // colSkip 0, +1 pair -> indices 3,1 at x=2,3
+  ];
+  const f = new FlcFile();
+  f.load(buildFlc({
+    width: 8,
+    chunks: [
+      { type: CHUNK_TYPE.COLOR_256, payload: colorChunk(PALETTE) },
+      { type: CHUNK_TYPE.BYTE_RUN, payload: byteRun },
+      { type: CHUNK_TYPE.DELTA_FLC, payload: delta },
+    ],
+  }), 'X.CEL');
+  const RED = rgba(255, 0, 0), GREEN = rgba(0, 255, 0), BLUE = rgba(0, 0, 255), GREY = rgba(8, 8, 8);
+  // FLIC row 0 is the buffer's LAST row (8 wide, 2 tall)
+  assert.deepEqual([...f.frameBuffer.slice(8)], [GREEN, BLUE, GREY, GREEN, RED, RED, RED, RED]);
+});
+
+test('flc: an out-of-range pixel write THROWS rather than vanishing', () => {
+  // AUDIT F-P1: C#'s Color32[] indexer throws IndexOutOfRangeException;
+  // a JS typed array DROPS the write and lets a malformed chunk decode
+  // "successfully". The VID reader already emulates this - so does the
+  // FLIC reader now. Row 0 repeats 6 pixels across a 4-wide image.
+  const f = new FlcFile();
+  assert.throws(() => f.load(buildFlc({
+    chunks: [
+      { type: CHUNK_TYPE.COLOR_256, payload: colorChunk(PALETTE) },
+      { type: CHUNK_TYPE.BYTE_RUN, payload: [1, 6, 0, 1, 4, 0] },
+    ],
+  }), 'X.CEL'), /frame buffer index out of range/);
+});
+
+test('flc: a frame index with no header answers false rather than indexing null', () => {
+  const f = new FlcFile();
+  f.load(buildFlc({ chunks: [{ type: CHUNK_TYPE.COLOR_256, payload: colorChunk(PALETTE) }] }), 'X.CEL');
+  // The walk breaks when a frame body would run past the file, so the
+  // ring slot can be empty; C# would throw on the null, the port says
+  // false (the defensive addition named in the reader's header).
+  assert.equal(f.bufferNextFrame(99), false, 'out of range falls back to the current frame');
+  assert.equal(f.readyToPlay, true, 'and the reader stays usable');
+});
+
 test('flc: ARENA2 corpus sweep - every .CEL decodes (gated)', (t) => {
   const arena2 = process.env.ARENA2_PATH;
   if (!arena2 || !existsSync(arena2)) { t.skip('ARENA2_PATH not set'); return; }

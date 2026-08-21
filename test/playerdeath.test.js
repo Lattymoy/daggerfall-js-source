@@ -104,3 +104,18 @@ test('death: the video is in the ingest diet and the hosts share ONE end-of-run 
     assert.match(code(h), /endRunToTitleMenu\(renderer\)/, `${h} ends the run through the shared seam`);
   }
 });
+
+test('death: every overlay slot TICKS, or the sequence stalls in that host alone', () => {
+  // AUDIT D-C1: raising the screen and ending the run are not enough -
+  // the sequence needs a clock, and each host owns its own overlay
+  // slot. worldModes' interior arm DREW its overlay and never ticked
+  // it, so dying inside a building froze the death sequence and the
+  // run never ended. One pin over all three slots (world and exterior
+  // share townTalk's).
+  assert.match(code('scenes/townTalk.js'), /overlay\?\.tick\?\.\(dt\)/,
+    'townTalk (world + exterior) must tick its overlay');
+  assert.match(code('scenes/dungeonContext.js'), /activeOverlay\.tick\?\.\(dt\)/,
+    'the dungeon context must tick its overlay');
+  assert.match(code('scenes/worldModes.js'), /interiorOverlay\.tick\?\.\(dt\)/,
+    'the interior arm must tick its overlay');
+});
