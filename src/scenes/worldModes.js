@@ -172,7 +172,7 @@ export function createWorldModes(host) {
       if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
     },
   });
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null } = host;   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null } = host;   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
   // AUDIT 21 (hosts lane, F7): the HUD art for interior mode. A missing file
   // answers null and drawHud no-ops, so this host draws no HUD rather than
@@ -464,6 +464,32 @@ export function createWorldModes(host) {
       isTavern: (t) => t === BUILDING_TYPES.Tavern,
     });
     if (route.kind === 'guildService') { openGuildService(pn, route); return; }
+    // TK-iv: THE QUESTOR DOOR. TalkToStaticNPC's first act, before the
+    // NPC type is even set (:758-770): an NPC the work pool is
+    // carrying, or a castle NPC who wins its one 25% roll, opens the
+    // quest OFFER instead of the conversation. Children are excluded
+    // from both arms.
+    const talk = npcSession?.talkToStaticNPC(
+      { data: pn, isChildNPC: !!pn.isChildNPC, displayName: pn.displayName ?? '' },
+      { menu: true });
+    if (talk?.kind === 'questOffer' && questBridge) {
+      const step = questBridge.offerSocialQuest(talk.npc ?? pn, talk.socialGroup, talk.menu);
+      const boxes = questBridge.offerBoxes(step, (id) => townTalk?.lines?.(id) ?? []);
+      if (boxes.length && guildServiceArtLoaded() && _shopFont) {
+        // the U24 identity guard: a window that dispatches to another
+        // must not be nulled by its OWN onClose
+        let offerWin = null;
+        offerWin = new ServiceFlowWindow(boxes, {
+          onClose: () => { if (interiorOverlay === offerWin) interiorOverlay = null; },
+        });
+        interiorOverlay = offerWin;
+      }
+      return;
+    }
+    // the three doors that close before a conversation: a racial
+    // override, a reaction below -20, and a standing rejection - each
+    // already said its piece through the session's messageBox seam
+    if (talk && talk.kind !== 'talk') return;
     // FLAGGED, each with the slice it waits on:
     //   merchant  - DaggerfallMerchantServicePopupWindow (sell /
     //               banking / repair / tavern rooms). The tavern and

@@ -180,6 +180,32 @@ export function checkLocationKeyForRegionalBuilding(key, index, faction) {
   }
 }
 
+
+/** The Internal_Strings en values this slice speaks, joined from
+ *  DFU's own string tables (Internal_Strings Shared Data.asset for the
+ *  keys, Internal_Strings_en.asset for the values) - so a host with no
+ *  localization layer of its own still answers in English rather than
+ *  in empty strings. A localized build overrides them through the
+ *  `localizedText` seam, which is what C#'s TextManager is. */
+export const TALK_STRINGS = Object.freeze({
+  WhereAmI: 'Where am I?',                                    // id 393
+  AnswerTextWhereAmI: 'You are in {0} in {1}.',               // id 394
+  YouAreInSameBuilding: 'You have found {0}. You are in it.',  // id 395
+  NpcInSameBuilding: "'{0} is around here in {1}.'",          // id 396
+  Sir: 'Sir',                                                  // id 414
+  "Ma'am": "Ma'am",                                            // id 415
+  toBeReplacedStringRegional: 'Any',                           // id 422
+  replacementStringRegional: 'any',                            // id 423
+  resolvingError: '...never mind...',                          // id 425
+  residence: 'Residence',                                      // id 50
+  oldLeaderFate0: 'died of heart failure',
+  oldLeaderFate1: 'fell and struck his head',
+  oldLeaderFate2: 'died of the plague',
+  oldLeaderFate3: 'stepped down under pressure',
+  oldLeaderFate4: 'was overthrown',
+  oldLeaderFate5: 'was found murdered in his bed',
+});
+
 export class AnswerPipeline {
   constructor(deps = {}) {
     this.deps = deps;

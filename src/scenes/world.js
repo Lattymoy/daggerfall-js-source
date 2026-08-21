@@ -102,7 +102,11 @@ import { RumorMill, tokensToString } from '../systems/rumorMill.js';
 import { expandQuestMessage } from '../systems/quest/questMacros.js';
 // TK-ii: THE TOPIC TREE - the quest topic/dialog-link seams land.
 import { TopicTree, QUEST_INFO_RESOURCE_TYPE } from '../systems/topicTree.js';
-import { discoverRandomLocation, discoverLocation, undiscoverBuilding } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
+import { NPCSession } from '../systems/npcSession.js';
+import { getPeopleOfCurrentRegion, getReactionToPlayer } from '../systems/talk.js';
+import { BUILDING_TYPES as TALK_BUILDING_TYPES } from '../world/buildingNames.js';
+import { AnswerPipeline, TALK_STRINGS } from '../systems/answerPipeline.js';
+import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -1403,8 +1407,81 @@ export async function bootWorld(canvas, renderer, params, status) {
     factionName: (id) => townTalk.factionDict?.get(id)?.name ?? '',
     addOrReplaceQuestProgressRumor: (uid, m) => rumorMill.addOrReplaceQuestProgressRumor(uid, m),
     undiscoverBuilding: (buildingKey) => undiscoverBuilding(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`, buildingKey),
-    talkPartner: () => null,   // the NPC session is TK-iv's (recorded)
+    talkPartner: () => npcSession.lastTargetStaticNPC ?? npcSession.lastTargetMobileNPC ?? null,
     onTopicListsUpdated: () => {},   // the talk window's refresh is TK-v's
+  });
+  // TK-iv: THE NPC SESSION - the module that chooses the NPC the mill,
+  // the tree and the pipeline all answer for. Its questor door is what
+  // finally opens a quest offer from a plain static-NPC click.
+  const npcSession = new NPCSession({
+    factionData: (id) => _questStore()?.dict.get(id) ?? null,
+    factionName: (id) => _questStore()?.dict.get(id)?.name ?? '',
+    peopleOfCurrentRegion: () => getPeopleOfCurrentRegion(_questStore()?.dict ?? null, _questLoc()?.regionIndex ?? -1)?.id ?? 0,
+    // PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+    // Court-of lookup yet, so a faction id of 0 inside a palace and
+    // the three generic Random_* factions still resolve to nothing.
+    // The people arm is live; the court arm rides the automap/region
+    // slice that brings the rest of PlayerGPS.
+    courtOfCurrentRegion: () => 0,
+    currentLocationIndex: () => _questLoc()?.locationIndex ?? 0,
+    nameBankOfCurrentRegion: () => getNameBankOfRegion(_questLoc()?.regionIndex ?? -1),
+    buildingType: () => (modes?.interiorBuilding?.buildingType === TALK_BUILDING_TYPES.Palace ? 'Palace' : null),
+    isPlayerInsideCastle: () => false,   // the Q4-v caveat rides here too
+    guildMemberships: () => Object.entries(playerEntity.guildMemberships ?? {})
+      .map(([factionId]) => ({ factionId: Number(factionId) })),
+    guildOfBuildingFaction: () => null,   // TK-v wires the guild MCP
+    sgroupReputation: (sgroup) => playerEntity.sGroupReputations?.[sgroup] ?? 0,
+    reactionToPlayer: (faction) => (faction ? getReactionToPlayer(faction, playerEntity) : 0),
+    expandRandomTextRecord: (id) => townTalk.lines(id).map((r) => r.text ?? r).join(' '),
+    randomTokens: (id) => townTalk.variantTokens(id),
+    questorPostMessages: () => rumorMill.dictQuestorPostQuestMessage,
+    getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
+    isNPCDataEqual: (a, b) => !!questBridge?.machine.isNPCDataEqual(a, b),
+    isLastNPCClickedAnActiveQuestor: () => !!questBridge?.machine.isLastNPCClickedAnActiveQuestor(),
+    expandQuestMessage: (quest, tokens, reveal) => expandQuestMessage(quest, tokens, reveal),
+    assembleTopicListPerson: () => topicTree.assembleTopicListPerson(),
+    assembleTopicLists: () => topicTree.assembleTopicLists(),
+    // `rebuildTopicLists` is ONE TalkManager field: the tree raises it
+    // and StartNewConversation spends it
+    needsTopicListRebuild: () => topicTree.rebuildTopicLists,
+    clearTopicListRebuild: () => { topicTree.rebuildTopicLists = false; },
+    setupRumorMill: () => {},   // the mill's list is never null in JS - TK-i recorded the no-op
+    resetNPCKnowledge: () => topicTree.resetNPCKnowledge(),
+    resetToneSession: () => answerPipeline.resetToneSession(),
+    resetQuestionSession: () => answerPipeline.startNewConversation(),
+    messageBox: (x) => townTalk.say(typeof x === 'number'
+      ? (townTalk.lines(x).map((r) => r.text ?? r).join(' ') || 'You get no response.')
+      : (Array.isArray(x) ? tokensToString(x) : String(x ?? ''))),
+    pushTalkWindow: () => {},   // TK-v opens the window
+    onTargetChanged: () => {},  // TK-v repaints the portrait and name
+    rolls: Math.random,
+  });
+  // TK-iii: THE ANSWER PIPELINE over the tree, the mill and the
+  // session. Its window consumers mount with TK-v; what is live here
+  // is the ladder every answer already runs through.
+  const answerPipeline = new AnswerPipeline({
+    tree: topicTree,
+    npcSession: () => npcSession.npcData,
+    npcsKnowEverything: () => false,
+    localizedText: (key) => TALK_STRINGS[key] ?? '',
+    expandRandomTextRecord: (id) => townTalk.lines(id).map((r) => r.text ?? r).join(' '),
+    getNewsOrRumors: (session) => rumorMill.getNewsOrRumors(session),
+    isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
+    isPlayerInsideCastle: () => false,
+    isPlayerInsideDungeon: () => (modes?.mode ?? 'exterior') === 'dungeon',
+    currentLocationName: () => _questLoc()?.name ?? '',
+    currentRegionName: () => questWorld.currentRegionName(),
+    currentRegion: () => null,          // the region walk rides the automap slice
+    currentRegionIndex: () => _questLoc()?.regionIndex ?? -1,
+    currentExteriorDoorBuildingKey: () => modes?.interiorBuilding?.buildingKey ?? null,
+    getAnyBuilding: (buildingKey) => discoveredBuildings(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`)
+      .find((b) => b.buildingKey === buildingKey) ?? null,
+    discoverBuilding: (buildingKey) => discoverBuilding(
+      `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,
+      (topicTree.listBuildings ?? []).find((b) => b.buildingKey === buildingKey) ?? { buildingKey }),
+    isFaction2RelatedToFaction1: () => false,   // the faction-relation walk rides TK-v
+    setRandomQuestor: () => npcSession.setRandomQuestor(),
+    rolls: Math.random,
   });
   questBridge = createQuestBridge({
     data: questPack,
@@ -1515,6 +1592,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Q4-v: the quest bridge + the scene context the NPC-data law needs
     questBridge,
     questSceneCtx: () => ({ mapId: _questLoc()?.mapTableData?.mapId ?? 0, locationIndex: _questLoc()?.locationIndex ?? 0 }),
+    npcSession,   // TK-iv: the questor door on a static-NPC click
     // G8 (guilds-8): the DiscoverRandomLocation seam for the guild
     // promotion reveals - candidates are the CURRENT pixel's region
     // (PlayerGPS.CurrentRegion; guild services only run inside town

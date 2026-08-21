@@ -210,6 +210,15 @@ export function createQuestBridge(ctx) {
       return data;
     },
 
+    /** TK-iv: the SOCIAL door - a plain static-NPC click that the NPC
+     *  session's questor pool answered for. TalkToStaticNPC opens
+     *  DaggerfallQuestOfferWindow instead of the talk window when the
+     *  clicked NPC is carrying work (:758-770), so this is the arm
+     *  that finally makes a townsperson a questor. */
+    offerSocialQuest(npcData, socialGroup, menu = false) {
+      return offerFlow.offerSocialQuest(npcData, socialGroup, menu);
+    },
+
     /** The guild popup's Quests service (guildServiceFlow's questOffer
      *  destination): compose the offer-flow guild surface and run the
      *  guild door. */

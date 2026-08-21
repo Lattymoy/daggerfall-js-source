@@ -774,8 +774,11 @@ test('startNewConversation: the question reset goes THROUGH the seam, and the re
   // here. Keeping copies on this object would be a reset that never
   // reaches the thing doing the answering, so it rides a seam.
   const calls2 = [];
+  let needsRebuild = false;
   const { s, calls } = makeSession({
     resetQuestionSession: () => calls2.push('questionReset'),
+    needsTopicListRebuild: () => needsRebuild,
+    clearTopicListRebuild: () => { needsRebuild = false; },
     assembleTopicLists: () => calls.push(['rebuild']),
     setupRumorMill: () => calls.push(['mill']),
   });
@@ -784,11 +787,15 @@ test('startNewConversation: the question reset goes THROUGH the seam, and the re
   assert.equal(s.numQuestionsAsked, undefined, 'and no second copy is kept here');
   assert.ok(!calls.some((c) => c[0] === 'rebuild'), 'no rebuild unless one was ASKED for');
   assert.ok(calls.some((c) => c[0] === 'mill'), 'the mill is set up every time');
+  // the rebuild flag is ONE field in C#, raised by the topic
+  // machinery and spent here - a copy on this object would be a flag
+  // nothing ever raises
   calls.length = 0;
-  s.rebuildTopicLists = true;
+  needsRebuild = true;
   s.startNewConversation();
   assert.ok(calls.some((c) => c[0] === 'rebuild'));
-  assert.equal(s.rebuildTopicLists, false, 'and the flag is cleared, so it happens once');
+  assert.equal(needsRebuild, false, 'and it is cleared, so the rebuild happens once');
+  assert.equal(s.rebuildTopicLists, undefined, 'no shadow copy here either');
 });
 
 test('THE NAMES NOBODY READS are still written correctly by every arm', () => {

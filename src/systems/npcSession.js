@@ -41,6 +41,8 @@
 //   assembleTopicListPerson()   - TK-ii's tree
 //   setupRumorMill()            - TK-i's mill
 //   assembleTopicLists()        - TK-ii's tree
+//   needsTopicListRebuild()     - the tree's rebuildTopicLists flag
+//   clearTopicListRebuild()     - and its reset
 //   resetNPCKnowledge()         - TK-ii's tree
 //   resetToneSession()          - TK-iii's pipeline
 import { srand } from '../formats/dfRandom.js';
@@ -139,7 +141,6 @@ export class NPCSession {
     this.lastTargetMobileNPC = null;
     this.targetStaticNPC = null;
     this.npcGreetingText = '';
-    this.rebuildTopicLists = false;
     // TalkManager's toneReactionForTalkSession (:2660-2662) - T3f's
     // per-session reaction cache, which reactionTier012 reads and
     // fills. It is TalkManager's FIELD and TalkToNpc's to clear, so it
@@ -416,9 +417,14 @@ export class NPCSession {
    *  never reaches the thing doing the answering. */
   startNewConversation() {
     this.deps.resetQuestionSession?.();
-    if (this.rebuildTopicLists) {
+    // `rebuildTopicLists` is ONE TalkManager field in C#: the topic
+    // machinery raises it (ResetNPCKnowledge, the add/remove sweeps)
+    // and this is where it is spent. It lives with the lists in the
+    // port, so it is read and cleared through seams - a copy here
+    // would be a flag nothing ever raises.
+    if (this.deps.needsTopicListRebuild?.() ?? false) {
       this.deps.assembleTopicLists?.();
-      this.rebuildTopicLists = false;
+      this.deps.clearTopicListRebuild?.();
     }
     this.deps.setupRumorMill?.();
   }

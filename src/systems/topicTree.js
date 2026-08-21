@@ -419,6 +419,19 @@ export class TopicTree {
     }
   }
 
+  /** ResetNPCKnowledge (:546-553): all FOUR topic lists forgotten, and
+   *  a rebuild ASKED FOR - the deferred kind StartNewConversation
+   *  spends, not an instant one. TalkToNpc calls this whenever the
+   *  target is not the same NPC as before (:2652-2654), which is why
+   *  a repeat click keeps what the last NPC knew. */
+  resetNPCKnowledge() {
+    this.resetNPCKnowledgeInTopicListRecursively(this.listTopicLocation);
+    this.resetNPCKnowledgeInTopicListRecursively(this.listTopicPerson);
+    this.resetNPCKnowledgeInTopicListRecursively(this.listTopicThing);
+    this.resetNPCKnowledgeInTopicListRecursively(this.listTopicTellMeAbout);
+    this.rebuildTopicLists = true;
+  }
+
   /** ResetNPCKnowledgeInTopicListRecursively (:2963-2975). */
   resetNPCKnowledgeInTopicListRecursively(list) {
     if (list == null) return;

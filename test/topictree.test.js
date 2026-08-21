@@ -895,3 +895,26 @@ test('the save halves round-trip as a fixed point, with the orphan sweep and the
   assert.equal(t2.dictQuestInfo.size, 0);
   assert.equal(t2.listTopicTellMeAbout.length, 36, 'two heads + 34 orgs');
 });
+
+test('resetNPCKnowledge forgets all FOUR lists and ASKS for a rebuild', () => {
+  // TalkToNpc calls this whenever the target is not the same NPC as
+  // before (:2652-2654), which is exactly why a repeat click keeps
+  // what the last NPC knew. The rebuild it asks for is the DEFERRED
+  // kind StartNewConversation spends, not an instant one.
+  const tree = new TopicTree({ getQuest: () => null });
+  const item = (over = {}) => newListItem({ npcKnowledgeAboutItem: NPC_KNOWLEDGE.KnowsAboutItem, npcInSameBuildingAsTopic: true, ...over });
+  const child = item();
+  tree.listTopicLocation = [item({ type: LIST_ITEM_TYPE.ItemGroup, listChildItems: [child] })];
+  tree.listTopicPerson = [item()];
+  tree.listTopicThing = [item()];
+  tree.listTopicTellMeAbout = [item()];
+  tree.rebuildTopicLists = false;
+  tree.resetNPCKnowledge();
+  for (const [name, list] of [['location', tree.listTopicLocation], ['person', tree.listTopicPerson],
+    ['thing', tree.listTopicThing], ['tellMeAbout', tree.listTopicTellMeAbout]]) {
+    assert.equal(list[0].npcKnowledgeAboutItem, NPC_KNOWLEDGE.NotSet, `${name} forgotten`);
+    assert.equal(list[0].npcInSameBuildingAsTopic, false, `${name} un-co-located`);
+  }
+  assert.equal(child.npcKnowledgeAboutItem, NPC_KNOWLEDGE.NotSet, 'and a GROUP is walked into');
+  assert.equal(tree.rebuildTopicLists, true, 'the rebuild is asked for, not performed');
+});
