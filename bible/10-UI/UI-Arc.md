@@ -2686,3 +2686,75 @@ no-loot-on-the-wagon-in-Remove, loot-keeps-the-pile,
 no-cart-never-grants; the 750kg gates - the 375-of-400-books
 split-take, the zero-fit refusal, the 4000-gold headroom clamp
 with its box; the save/wiring sweep).
+
+## U29 - THE LAUNCHER, and settings that are actually settings (2026-08-21)
+
+The SETT-slice. Mac asked what DFU's pre-splash screen is called; the
+answer (`DaggerfallUnitySetupGameWizard`, not the classic start menu)
+exposed that the port had no settings at all - every value it branched
+on was a constant, recorded that morning as a Ledger row saying so.
+The row lasted a few hours.
+
+**The store** (`systems/settings.js`) is DFU's SettingsManager. The 13
+sections, 171 keys and every default come from the VENDORED
+`defaults.ini.txt` (`vendor/dfu-settings`, MIT, the same route the
+quest pack took) baked by `scripts/bakeSettings.mjs` - hand-copying
+171 defaults is the lossy-second-copy shape AUDIT 17e F9 caught in the
+item templates, so the bake reads the real bytes and a pin asserts
+baked === vendored. The typed getters are verbatim INCLUDING their
+failure modes, which are quirks rather than accidents: `GetBool` reads
+FALSE on an unparseable value (not the default, :921-936); `GetInt`
+with a range clamps and reads MIN on failure (:952-964); `GetFloat`
+likewise; `GetString` is raw.
+
+**Ours** (the Ledger-A split): where the values live - DFU writes an
+ini beside the executable, a browser has none, so the store keeps a
+DELTA against the defaults in localStorage, which also means a later
+DFU default still reaches a player who never touched that key. And
+the TIERS, which are a claim about this port rather than about DFU:
+`live`, `stored`, `unavailable`.
+
+**Seven settings went LIVE** - each one a real consumer, because a
+toggle that changes nothing is a lie: CombatVoices (the three voice
+gates), PlayerTorchFromItems (the kit seam), LoiterLimitInHours (the
+cap AND the refusal line that quotes it), SoundVolume (a new master
+bus in audio.js - one gain node every source routes through, rather
+than four call-site multiplies), MusicVolume (songPlayer's master,
+under the port's own MUSIC_GAIN headroom), MouseLookSensitivity and
+InvertMouseVertical (`ui/lookSettings.js`, ONE home for the three
+hosts that each carried a bare 0.0025). All are read AT THE POINT OF
+USE, as DFU reads them, so a change lands on the next swing rather
+than the next reload.
+
+**The launcher** (`ui/launcher.js` + `scenes/launcherScene.js`) is one
+keyed native screen over all 171: `[`/`]` for sections, arrows to
+change, R to reset, Enter to play. It lists settings it will NOT let
+you change, with their reason, rather than hiding them - the same
+doctrine as the port's INTERIM flags, and the only honest way to show
+a player why Daggerfall's enhanced AI is missing here. The boot gate
+is verbatim (`SceneControl.cs:46` / wizard `:154`): the ARENA2 pick is
+our GameFolder stage, then `GUI/ShowOptionsAtStart` - which DFU ships
+TRUE, so the launcher appears every boot until turned off - with
+`?launcher` as the held-key analogue.
+
+THE DIVERGENCE SURVIVES AND IS NOW ENFORCED: EnhancedCombatAI ships
+True in DFU and is False here (the classic AI). It is tiered
+`unavailable` with that reason on screen, not offered as a toggle.
+
+Pins: test/settings.test.js x5 (the bake against the vendored bytes;
+the getters' failure modes; the delta/reset behaviour; the LIVE tier
+proven by driving each consumer; and the tier map's honesty - which
+caught TWO lies in the map while this slice was being written, naming
+music.js and input.js for consumers that live in songPlayer.js and
+lookSettings.js). Two pins repinned to the evolved truth (c2combat's
+COMBAT_VOICES constant, restwindow's LOITER_LIMIT_HOURS).
+
+PROBED LIVE (tools/launcherProbe.mjs): the launcher comes up BEFORE the
+game, lists real settings with all three tiers on screen, a keypress
+flips PlayerTorchFromItems False -> True with the store agreeing and
+the change persisted, an unavailable setting REFUSES with its reason
+printed, and Enter launches past it - zero page errors. The first
+draft of that probe asserted on document.body.innerText, which is
+empty for a canvas app, so three of its four checks were meaningless;
+it was rewritten against a new window.__launcher surface (the
+__talk/__climb house pattern) that reports the screen's own state.

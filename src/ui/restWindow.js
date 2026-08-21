@@ -10,7 +10,7 @@
 // the end page is click/key-to-close.
 
 import { drawText, measureText } from './text.js';
-import { RestSession, REST_PROMPT, LOITER_PROMPT, LOITER_LIMIT_HOURS, CANNOT_LOITER_LINES } from '../systems/restSession.js';
+import { RestSession, REST_PROMPT, LOITER_PROMPT, loiterLimitHours, cannotLoiterLines } from '../systems/restSession.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
@@ -67,7 +67,7 @@ export class RestWindow {
       // shows TEXT 26 past 99).
       if (this.value === '') return;
       const hours = Number(this.value);
-      if (this.mode === 'loiter' && hours > LOITER_LIMIT_HOURS) { this.notice = CANNOT_LOITER_LINES; this.value = ''; return; }
+      if (this.mode === 'loiter' && hours > loiterLimitHours()) { this.notice = cannotLoiterLines(); this.value = ''; return; }
       this._start(this.mode, hours);
       return;
     }

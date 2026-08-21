@@ -93,6 +93,7 @@ import {
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
+import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 
 // Milestone 9 scene: floating-origin streaming world. Terrain pixels
 // stream in nearest-first around the camera within TERRAIN_DISTANCE,
@@ -1125,15 +1126,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
     if (walkMode && (e.buttons & 2) && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(e.movementX, e.movementY, true); return; }   // M2
-    cam.yaw -= e.movementX * 0.0025;
-    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
+    cam.yaw -= e.movementX * lookScale();
+    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
   });
   addEventListener('mousedown', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
   addEventListener('mouseup', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
-      cam.yaw -= dx * 0.0025;
-      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * 0.0025));
+      cam.yaw -= dx * lookScale();
+      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * lookScale() * lookInvert()));
     },
     attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') { if (held && magic.interceptAttack(true)) return; weaponRig.attackInput(dx, dy, held); } },   // M2
     attackTap: () => { if (walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.clickAttack(); } },   // M2

@@ -1,93 +1,139 @@
-// THE SETTINGS SURFACE (Ledger section A, recorded 2026-08-21): the
-// port has no settings store and no settings UI, so every
-// DaggerfallUnity.Settings.* value our code branches on is a PINNED
-// CONSTANT with a citation. These pins make that row enforceable:
-// flipping a value in code without moving the Ledger fails here, and
-// so does dropping a setting out of the row.
+// THE SETTINGS STORE (SETT-slice): DFU's SettingsManager, 1:1 on the
+// parts that have a law - the vendored defaults, the typed getters
+// and their failure modes - plus the tiers, which are a CLAIM about
+// this port and so are re-derived from the code on every run.
 //
-// DFU's shipped defaults are read from Assets/Resources/defaults.ini.txt
-// and quoted in the row; the ONE deliberate divergence is
-// EnhancedCombatAI (DFU ships True, we implement the classic False
-// path), which the row states and the third test holds to.
+// This file replaces the pins written when the Ledger row still said
+// "there isn't one". The row and these pins moved together.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { COMBAT_VOICES } from '../src/combat/combatVoices.js';
-import { FIELD_OF_VIEW } from '../src/characters/enemyMotor.js';
+import {
+  DEFAULTS, ALL_KEYS, LIVE, UNAVAILABLE, tierOf,
+  getBool, getInt, getFloat, getString, setValue, resetToDefaults,
+  effectiveSettings, _resetForTests,
+} from '../src/systems/settings.js';
+import { parseIni } from '../scripts/bakeSettings.mjs';
+import { combatVoicesEnabled } from '../src/combat/combatVoices.js';
+import { loiterLimitHours, cannotLoiterLines } from '../src/systems/restSession.js';
 import { assignStartingGear } from '../src/systems/startingGear.js';
+import { lookScale, lookInvert, LOOK_BASE } from '../src/ui/lookSettings.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const ledger = () => readFileSync(join(root, 'bible/01-Overview/Port-Ledger.md'), 'utf8');
+const vendored = () => readFileSync(join(root, 'vendor/dfu-settings/defaults.ini.txt'), 'utf8');
 const src = (f) => readFileSync(join(root, 'src', f), 'utf8');
 
-/** The eight settings the port branches on: DFU's shipped default and
- *  the value we pin. Seven match; EnhancedCombatAI is the divergence. */
-const PINNED = Object.freeze([
-  { name: 'CombatVoices', dfuDefault: true, ours: true },
-  { name: 'AdvancedClimbing', dfuDefault: false, ours: false },
-  { name: 'PlayerTorchFromItems', dfuDefault: false, ours: false },
-  { name: 'BowDrawback', dfuDefault: false, ours: false },
-  { name: 'MeleeAttackDetection', dfuDefault: 0, ours: 0 },
-  { name: 'WeaponSwingMode', dfuDefault: 0, ours: 0 },
-  { name: 'SmallerDungeons', dfuDefault: false, ours: false },
-  { name: 'LargeHUD', dfuDefault: false, ours: false },
-  { name: 'EnhancedCombatAI', dfuDefault: true, ours: false },   // THE divergence
-]);
+test('settings: the BAKE is the vendored file - a stale bake fails here', () => {
+  // scripts/bakeSettings.mjs generates settingsDefaults.js from the
+  // vendored bytes; nothing hand-edits it (AUDIT 17e F9's lesson).
+  const fresh = parseIni(vendored());
+  assert.deepEqual(JSON.parse(JSON.stringify(DEFAULTS)), fresh,
+    'run: node scripts/bakeSettings.mjs');
+  assert.equal(Object.keys(DEFAULTS).length, 13, "DFU's 13 sections");
+  assert.equal(ALL_KEYS.length, 171, "DFU's 171 defaults");
+  // spot-check the values the Ledger row quotes, straight off the file
+  assert.equal(DEFAULTS.Enhancements.EnhancedCombatAI, 'True');
+  assert.equal(DEFAULTS.Enhancements.CombatVoices, 'True');
+  assert.equal(DEFAULTS.Enhancements.AdvancedClimbing, 'False');
+  assert.equal(DEFAULTS.Controls.SoundVolume, '0.5');
+});
 
-test('settings: the pinned VALUES are what the code actually does', () => {
-  // CombatVoices ships enabled and we match it
-  assert.equal(COMBAT_VOICES, true, 'COMBAT_VOICES is DFU CombatVoices=True');
-  // EnhancedCombatAI=false is observable: the classic 180 FOV, not 190
-  // (EnemySenses.cs:239-241 widens it only on the enhanced path)
-  assert.equal(FIELD_OF_VIEW, 180, 'the classic FOV - 190 would mean EnhancedCombatAI');
-  // PlayerTorchFromItems defaults OFF: a fresh kit carries no torch
+test('settings: the typed getters are DFU-verbatim, FAILURE MODES included', () => {
+  _resetForTests();
+  // GetBool (:921-936): bool.Parse, and a value that will not parse
+  // reads FALSE - not the default
+  assert.equal(getBool('Enhancements', 'CombatVoices'), true, 'ships True');
+  assert.equal(getBool('Enhancements', 'AdvancedClimbing'), false);
+  setValue('Enhancements', 'CombatVoices', 'banana');
+  assert.equal(getBool('Enhancements', 'CombatVoices'), false,
+    'an unparseable bool reads False, NOT the True default');
+  // GetInt(min,max) (:952-964): parse then Mathf.Clamp; MIN on failure
+  setValue('Enhancements', 'LoiterLimitInHours', '99');
+  assert.equal(getInt('Enhancements', 'LoiterLimitInHours', 1, 24), 24, 'clamped to max');
+  setValue('Enhancements', 'LoiterLimitInHours', '0');
+  assert.equal(getInt('Enhancements', 'LoiterLimitInHours', 1, 24), 1, 'clamped to min');
+  setValue('Enhancements', 'LoiterLimitInHours', 'nope');
+  assert.equal(getInt('Enhancements', 'LoiterLimitInHours', 1, 24), 1,
+    'an unparseable clamped int reads MIN, not the default');
+  // GetFloat (:971-996), the same shape
+  setValue('Controls', 'SoundVolume', '5');
+  assert.equal(getFloat('Controls', 'SoundVolume', 0, 1), 1);
+  setValue('Controls', 'SoundVolume', 'loud');
+  assert.equal(getFloat('Controls', 'SoundVolume', 0, 1), 0, 'min on failure');
+  // GetString: raw, no parse, no fallback
+  assert.equal(getString('Daggerfall', 'MyDaggerfallPath'), '');
+  _resetForTests();
+});
+
+test('settings: overrides are a DELTA, and reset drops them', () => {
+  _resetForTests();
+  assert.equal(getBool('Enhancements', 'CombatVoices'), true);
+  setValue('Enhancements', 'CombatVoices', false);
+  assert.equal(getBool('Enhancements', 'CombatVoices'), false, 'the override wins');
+  assert.equal(effectiveSettings().Enhancements.CombatVoices, 'False',
+    'and stringifies capitalised, as C# value.ToString() does');
+  // setting a value BACK to the default drops the override rather than
+  // pinning today's value - so a later DFU default reaches the player
+  setValue('Enhancements', 'CombatVoices', true);
+  assert.equal(getBool('Enhancements', 'CombatVoices'), true);
+  setValue('Enhancements', 'CombatVoices', false);
+  resetToDefaults();
+  assert.equal(getBool('Enhancements', 'CombatVoices'), true, 'reset restores the shipped value');
+  _resetForTests();
+});
+
+test('settings: the LIVE tier does not lie - each consumer really reads the store', () => {
+  _resetForTests();
+  // CombatVoices
+  setValue('Enhancements', 'CombatVoices', false);
+  assert.equal(combatVoicesEnabled(), false, 'the voice gate follows the setting');
+  setValue('Enhancements', 'CombatVoices', true);
+  assert.equal(combatVoicesEnabled(), true);
+  // LoiterLimitInHours - the number AND the refusal line that quotes it
+  setValue('Enhancements', 'LoiterLimitInHours', 8);
+  assert.equal(loiterLimitHours(), 8);
+  assert.ok(cannotLoiterLines()[1].includes('8'), 'the refusal line quotes the live cap');
+  // PlayerTorchFromItems - the kit seam
+  setValue('Enhancements', 'PlayerTorchFromItems', true);
   const e = { items: [], stats: {}, skills: [] };
   assignStartingGear(e, { classIndex: 0, rolls: () => 0 });
-  const torches = e.items.filter((it) => it.group === 'UselessItems2');
-  assert.equal(torches.length, 0, 'no torches without the setting (DFU default False)');
-  // ...and the seam still exists, so turning it on is one argument
+  assert.ok(e.items.some((it) => it.group === 'UselessItems2'), 'torches arrive with the setting on');
+  setValue('Enhancements', 'PlayerTorchFromItems', false);
   const e2 = { items: [], stats: {}, skills: [] };
-  assignStartingGear(e2, { classIndex: 0, rolls: () => 0, torchesFromItems: true });
-  assert.ok(e2.items.some((it) => it.group === 'UselessItems2'), 'the setting is a seam, not a deletion');
+  assignStartingGear(e2, { classIndex: 0, rolls: () => 0 });
+  assert.equal(e2.items.filter((it) => it.group === 'UselessItems2').length, 0, 'and not with it off');
+  // MouseLookSensitivity + InvertMouseVertical
+  setValue('Controls', 'MouseLookSensitivity', 1.0);
+  assert.equal(lookScale(), LOOK_BASE, 'sensitivity 1.0 IS the port feel constant');
+  setValue('Controls', 'MouseLookSensitivity', 2.0);
+  assert.equal(lookScale(), LOOK_BASE * 2, 'and the shipped 2.0 is twice that');
+  assert.equal(lookInvert(), 1);
+  setValue('Controls', 'InvertMouseVertical', true);
+  assert.equal(lookInvert(), -1, 'inverting flips the pitch term');
+  _resetForTests();
 });
 
-test('settings: every pinned setting is NAMED in the Ledger row', () => {
-  const l = ledger();
-  const i = l.indexOf('THE SETTINGS SURFACE');
-  assert.ok(i > 0, 'the section A settings row exists');
-  const row = l.slice(i, l.indexOf('\n', i));
-  for (const { name } of PINNED) {
-    assert.ok(row.includes(name), `the Ledger row must name ${name}`);
+test('settings: the tier map is complete and honest', () => {
+  // every key has a tier, and the tiers partition the key space
+  for (const k of ALL_KEYS) {
+    assert.ok(['live', 'stored', 'unavailable'].includes(tierOf(k)), `${k} has a tier`);
   }
-  // the row must carry DFU's own default for the divergence, or the
-  // reader cannot tell it IS one
-  assert.ok(/EnhancedCombatAI[^|]*SHIPS TRUE/i.test(row), "the row states DFU's shipped value");
-  assert.ok(row.includes('defaults.ini.txt'), 'and cites where the defaults come from');
-});
-
-test('settings: no NEW setting citation appears in src/ without a Ledger row', () => {
-  // The audit18_bible_docs idiom, applied to settings: re-derive the
-  // list of DaggerfallUnity.Settings.* names cited under src/ and
-  // require each to be named in the row. A new branch on a setting
-  // that nobody ledgered fails here rather than at a playtest.
-  const files = [
-    'combat/combatVoices.js', 'combat/playerWeapon.js', 'characters/enemyAttack.js',
-    'characters/enemyCasting.js', 'characters/enemyMotor.js', 'scenes/hostCombat.js',
-    'systems/playerDeath.js', 'systems/startingGear.js', 'player/cameraView.js',
-    'player/climbing.js',
-  ];
-  const cited = new Set();
-  for (const f of files) {
-    for (const m of src(f).matchAll(/(?:Settings\.|DFU's |the )([A-Z][A-Za-z]{5,})\s+(?:SETTING|setting)/g)) {
-      cited.add(m[1]);
-    }
-    for (const m of src(f).matchAll(/Settings\.([A-Za-z]+)/g)) cited.add(m[1]);
+  // LIVE names a real file, and that file really imports the store
+  for (const [key, file] of Object.entries(LIVE)) {
+    assert.ok(ALL_KEYS.includes(key), `${key} is a real DFU setting`);
+    const rel = file.replace(/^src\//, '');
+    assert.ok(/from '\.\.?\/(systems\/)?settings\.js'/.test(src(rel)) || /settings\.js'/.test(src(rel)),
+      `${file} must read the settings store to claim ${key} is live`);
   }
-  assert.ok(cited.size > 0, 'the sweep finds citations at all (it is a RULE, not a tautology)');
-  const row = ledger().slice(ledger().indexOf('THE SETTINGS SURFACE'));
-  const rowText = row.slice(0, row.indexOf('\n'));
-  const unledgered = [...cited].filter((n) => !rowText.includes(n));
-  assert.deepEqual(unledgered, [], `settings cited in src/ but absent from the Ledger row: ${unledgered.join(', ')}`);
+  // UNAVAILABLE keys are real settings with a stated reason
+  for (const [key, why] of Object.entries(UNAVAILABLE)) {
+    assert.ok(ALL_KEYS.includes(key), `${key} is a real DFU setting`);
+    assert.ok(why && why.length > 10, `${key} states WHY it is unavailable`);
+  }
+  // the two the Ledger calls out by name are unavailable for the
+  // documented reason - the port implements one side of each branch
+  assert.equal(tierOf('Enhancements/EnhancedCombatAI'), 'unavailable');
+  assert.equal(tierOf('Enhancements/AdvancedClimbing'), 'unavailable');
 });
