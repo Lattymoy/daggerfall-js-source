@@ -73,13 +73,18 @@ export const THE_NAMED_RESIDENCE = 'The %s Residence';
  *  parseInt would answer NaN ('0x') or silently truncate ('0x12G'). */
 export function customParseInt(value) {
   if (/^0x/i.test(value)) {
-    const hex = value.replace(/0x/i, '');
+    // C# QUIRK KEPT (Q3-i VERIFY): the prefix CHECK ignores case but
+    // the Replace("0x","") is case-SENSITIVE, so '0X1A' keeps its
+    // prefix and int.Parse(NumberStyles.HexNumber) throws on the X.
+    const hex = value.replace('0x', '');
     if (!/^[0-9a-fA-F]+$/.test(hex)) throw new Error(`int.Parse failed on '${value}'`);
     return parseInt(hex, 16);
   }
-  const n = parseInt(value, 10);
-  if (Number.isNaN(n)) throw new Error(`int.Parse failed on '${value}'`);
-  return n;
+  // int.Parse rejects trailing garbage outright; parseInt would
+  // truncate '12abc' to 12 (Q3-i VERIFY - the comment claimed the
+  // both-arms throw law, the decimal arm now delivers it).
+  if (!/^\s*[+-]?\d+\s*$/.test(value)) throw new Error(`int.Parse failed on '${value}'`);
+  return parseInt(value, 10);
 }
 
 /** RMBLayout.IsResidence (:753): only House1-House4. */
@@ -599,8 +604,14 @@ export class Place extends QuestResource {
       return true;
     }
     if (markerIndexPreference === MARKER_PREFERENCE.AnyMarker) {
-      const all = [...(sd.questSpawnMarkers ?? []), ...(sd.questItemMarkers ?? [])];
-      if (all.length > 0) { sd.selectedMarker = all[this._range(all.length)]; return true; }
+      // C# AddRanges BOTH arrays unguarded (Place.cs:384-385): a site
+      // holding only one marker type throws ArgumentNullException and
+      // the quest error-terminates - kept (Q3-i VERIFY).
+      if (!sd.questSpawnMarkers || !sd.questItemMarkers) {
+        throw new Error('Value cannot be null. (AnyMarker pool AddRange on a null marker array)');
+      }
+      const all = [...sd.questSpawnMarkers, ...sd.questItemMarkers];
+      if (all.length > 0) { sd.selectedMarker = { ...all[this._range(all.length)] }; return true; }
       return false;
     }
     let preferred = MARKER_TYPES.None;
@@ -609,14 +620,19 @@ export class Place extends QuestResource {
 
     const hasSpawn = !!sd.questSpawnMarkers?.length;
     const hasItem = !!sd.questItemMarkers?.length;
+    // Q3-i VERIFY: QuestMarker is a C# STRUCT - selecting COPIES it,
+    // so the normal path builds targetResources on the COPY and the
+    // array slots stay null; only the direct-index arm writes into an
+    // array slot. A shallow spread is the exact struct-copy: it
+    // shares an already-created list reference, as C# does.
     if (preferred === MARKER_TYPES.QuestSpawn && hasSpawn) {
-      sd.selectedMarker = markerIndex === -1 ? sd.questSpawnMarkers[this._range(sd.questSpawnMarkers.length)] : sd.questSpawnMarkers[markerIndex];
+      sd.selectedMarker = { ...(markerIndex === -1 ? sd.questSpawnMarkers[this._range(sd.questSpawnMarkers.length)] : sd.questSpawnMarkers[markerIndex]) };
     } else if (preferred === MARKER_TYPES.QuestItem && hasItem) {
-      sd.selectedMarker = markerIndex === -1 ? sd.questItemMarkers[this._range(sd.questItemMarkers.length)] : sd.questItemMarkers[markerIndex];
+      sd.selectedMarker = { ...(markerIndex === -1 ? sd.questItemMarkers[this._range(sd.questItemMarkers.length)] : sd.questItemMarkers[markerIndex]) };
     } else if (hasSpawn) {
-      sd.selectedMarker = sd.questSpawnMarkers[this._range(sd.questSpawnMarkers.length)];
+      sd.selectedMarker = { ...sd.questSpawnMarkers[this._range(sd.questSpawnMarkers.length)] };
     } else if (hasItem) {
-      sd.selectedMarker = sd.questItemMarkers[this._range(sd.questItemMarkers.length)];
+      sd.selectedMarker = { ...sd.questItemMarkers[this._range(sd.questItemMarkers.length)] };
     }
     return true;
   }

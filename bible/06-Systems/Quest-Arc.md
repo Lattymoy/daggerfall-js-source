@@ -414,9 +414,50 @@ exactly (PlaceFoe 224, RevealLocation 193, PlaceNpc 125, PlaceItem
   parse under a world and stay HELD headless. DFU's parse-order
   sensitivity (a clock sees only EARLIER places) is kept and pinned.
 
-Gate: `test/questplaces.test.js` (15 pins over a CRAFTED world
+Gate: `test/questplaces.test.js` (32 pins over a CRAFTED world
 speaking the port's own MapsFile/BlocksFile shapes) + the moved
 coverage/ownership pins.
+
+## QUEST AUDIT V (2026-08-21, the Q3-i verify pass)
+
+The two lanes over the frozen tree: a four-lane adversarial parity
+re-read (20 raw findings, two refuters each, 13 confirmed = 6
+distinct) and a 451-mutant campaign (198 caught, 135 subset
+survivors) with baseline-aware full-suite confirmation.
+
+- FIXED (parity, all pinned): the MARKER STRUCT-COPY law - C#'s
+  QuestMarker is a struct, so selecting COPIES it and the normal
+  path builds targetResources on the COPY while the pool slots stay
+  null; the port aliased the array element and every placement bled
+  into the pool (selection now shallow-copies, sharing an
+  already-created list reference exactly as a struct copy does);
+  SITELINKS NEVER DIED - TombstoneQuest's RemoveAllQuestSiteLinks
+  was missing, so a dead quest's link made hasSiteLink lie to the
+  next quest at the same site (the sequential-guild-hall case);
+  DroppedItemAtPlace lost IsAlwaysOnTriggerCondition (it is the
+  PRIMARY always-on when first - a co-resident when/daily demotes to
+  start-only); TeleportPc dropped the first-spawn-marker fallback
+  (EVERY plain "teleport pc to" lands on spawn[0], and a markerless
+  site error-terminates as C#'s NRE does); the AnyMarker pool
+  swallowed C#'s AddRange ArgumentNullException at one-type sites
+  (a quest DFU kills now dies here too); customParseInt's decimal
+  arm truncated trailing garbage and the hex arm missed C#'s
+  case-SENSITIVE Replace quirk ('0X1A' throws) - the both-arms
+  int.Parse law now holds; the seam contract documented a dead
+  travelTimeMinutes dep and omitted the live playerPixel.
+- MUTATIONS: 451 run, the survivors triaged in parts 1/1b - the
+  enum/wildcard-set literals, the shop/store/house6/fixed-gate/
+  DB-ban/dungeon-retry/collector-unit laws, direct marker-index
+  assignment, the unhide and transfer tails, the SiteLink
+  zero-wildcard law, the two-resource cull, the bare-clock draw, the
+  _2place_ arm, the FAR travel literals, PlaceFoe's marker form and
+  the zero-clock instant-arm. One drafted pin FAILED against the
+  faithful port and caught the AUDITOR's own misreading (WhenTask's
+  and-arm peek is provably redundant - left carries true into any
+  or-arm); recorded as the equivalent mutant it is.
+- REFUTED (recorded): the block-skip silence, TeleportPc's sitelink
+  gating, the residence-undiscover note, the float32 multiplier, the
+  clock options-slice quirk claim.
 
 ## Queue
 

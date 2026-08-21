@@ -1549,9 +1549,15 @@ export class TeleportPc extends ActionTemplate {
     }
     const place = this.parentQuest.getPlace(this.targetPlace);
     if (!place) return;
-    let marker = null;
+    // The usingMarker=false path still positions at spawn marker 0
+    // (TeleportPc.cs:120-129) - EVERY plain "teleport pc to" lands on
+    // the site's first spawn marker, and a site without one NREs in
+    // C# (the quest error-terminates; the natural throw here matches).
+    let marker;
     if (this.targetMarker >= 0 && this.targetMarker < (place.siteDetails?.questSpawnMarkers?.length ?? 0)) {
       marker = place.siteDetails.questSpawnMarkers[this.targetMarker];
+    } else {
+      marker = place.siteDetails.questSpawnMarkers[0];
     }
     world.teleportPc(place, marker);
     this.setComplete();
@@ -1562,7 +1568,14 @@ export class TeleportPc extends ActionTemplate {
  *  gates allowDrop on the player being AT the place, and fires when
  *  the player drops it there, saying once. */
 export class DroppedItemAtPlace extends ActionTemplate {
-  constructor(parentQuest) { super(parentQuest); this.isTriggerCondition = true; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    // DroppedItemAtPlace.cs:34-35 - an ALWAYS-ON trigger: first in a
+    // task it claims the primary slot and demotes later always-ons to
+    // start-only (Q3-i VERIFY: the flag was dropped).
+    this.isTriggerCondition = true;
+    this.isAlwaysOnTriggerCondition = true;
+  }
   get pattern() {
     return /dropped (?<anItem>[a-zA-Z0-9_.-]+) at (?<aPlace>[a-zA-Z0-9_.-]+) saying (?<id>\d+)|dropped (?<anItem2>[a-zA-Z0-9_.-]+) at (?<aPlace2>[a-zA-Z0-9_.-]+)/;
   }

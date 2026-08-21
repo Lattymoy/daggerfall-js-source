@@ -56,8 +56,10 @@
 //   isHouseOwned(buildingKey)  - DaggerfallBankManager (default false)
 //   buildingNameOpts()         - generateBuildingName's resolver
 //                                bundle (nameBank/ruler/faction...)
-//   travelTimeMinutes(mapPixel, cautious) - TravelTimeCalculator
-//                                (the quest clock's arm)
+//   playerPixel()              - the player's current MAP PIXEL
+//                                (TravelTimeCalculator.GetPlayerTravel-
+//                                Position incl. its on-ship arm; the
+//                                quest clock's travel arm starts here)
 //   discoverLocation(regionName, locationName) - PlayerGPS.DiscoverLocation
 //   addNote(text)              - the notebook (RevealLocation readmap)
 //   teleportPc(place, marker)  - TeleportPc's transport (scene half)
@@ -335,6 +337,11 @@ export class QuestMachine {
   tombstoneQuest(quest) {
     for (const resource of quest.resources.values()) resource.dispose();
     for (const task of quest.tasks.values()) task.disposeActions();
+    // RemoveAllQuestSiteLinks (QuestMachine.cs:1042-1048): a
+    // tombstoned quest's SiteLinks die with it - stale links would
+    // make hasSiteLink lie to the NEXT quest at the same site (the
+    // sequential-guild-hall case; Q3-i VERIFY: the scrub was missing).
+    this.siteLinks = this.siteLinks.filter((link) => link.questUID !== quest.uid);
     quest.tombstone();
   }
 

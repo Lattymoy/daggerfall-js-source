@@ -475,7 +475,8 @@ test('TeleportPc carries the marker through the world seam; CreateNpcAt is the d
   const tp = world._calls.filter((c) => c[0] === 'teleportPc');
   assert.equal(tp.length, 1);
   assert.equal(tp[0][1], q.getResource({ name: 'lair' }));
-  assert.equal(tp[0][2], null, 'the plain form names no marker');
+  assert.equal(tp[0][2], q.getResource({ name: 'lair' }).siteDetails.questSpawnMarkers[0],
+    'the plain form still lands on spawn marker 0 (TeleportPc.cs:126-129)');
   assert.equal(m.siteLinks.length, 1, 'TeleportPc reserved the SiteLink; CreateNpcAt reserves nothing');
 });
 
@@ -731,4 +732,86 @@ test('MUTATION-2: a plain zero clock arms and fires instantly - only PENDING tra
   assert.equal(z.clockEnabled, true, 'armed - the HELD arm is for PENDING travel only');
   m.tick();   // the clock resource ticks at zero remaining and fires
   assert.equal(z.clockFinished, true, 'a zero clock fires immediately');
+});
+
+// ---------------------------------------------------------------
+// Q3-i VERIFY (the adversarial-review fixes, each pinned)
+// ---------------------------------------------------------------
+
+test('VERIFY: marker STRUCT-COPY law - the normal path builds the list on the COPY, array slots stay null', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, [
+    'Person _pp_ group Questor', '',
+    'Place _pub_ local tavern', '',
+    ' place npc _pp_ at _pub_',
+  ]);
+  m.tick();
+  const sd = q.getResource({ name: 'pub' }).siteDetails;
+  assert.deepEqual(sd.selectedMarker.targetResources.map((s) => s.name), ['pp']);
+  assert.equal(sd.questSpawnMarkers[0].targetResources, null,
+    'QuestMarker is a C# struct: selection COPIES, so the pool slot never sees the normal-path list');
+});
+
+test('VERIFY: a tombstoned quest takes its SiteLinks with it (RemoveAllQuestSiteLinks)', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, [
+    'Person _pp_ group Questor', '',
+    'Place _pub_ local tavern', '',
+    ' place npc _pp_ at _pub_',
+    ' end quest',
+  ]);
+  m.tick();
+  assert.equal(m.siteLinks.length, 1);
+  m.tick(); m.tick();   // the end-quest grace elapses; the machine tombstones
+  assert.equal(q.questTombstoned, true);
+  assert.equal(m.siteLinks.length, 0, 'the dead quest cannot make hasSiteLink lie to the next one');
+});
+
+test('VERIFY: DroppedItemAtPlace is the PRIMARY always-on trigger - a co-resident when is start-only', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, [
+    'Item _l_ letter', '',
+    'Place _pub_ local tavern', '',
+    'variable _x_', '',
+    '_t_ task:',
+    ' dropped _l_ at _pub_',
+    ' when _x_', '',
+    'variable _pad_',
+  ]);
+  m.tick();
+  q.getTask({ name: 'x' }).start();
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, 'the SECONDARY when can START the task');
+  q.getTask({ name: 'x' }).clear();
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true,
+    'but never STOP it - dropped holds the primary slot (DroppedItemAtPlace.cs:34-35)');
+});
+
+test('VERIFY: anymarker at a one-type site error-terminates the quest, as C#\'s AddRange NRE does', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  // the house (record 1) has ONLY a spawn marker
+  const q = schedule(m, [
+    'Item _l_ letter', '',
+    'Place _home_ local house', '',
+    ' place item _l_ at _home_ anymarker',
+  ]);
+  m.tick();
+  assert.equal(q.questTombstoned, true, 'the AddRange throw error-terminates through the machine catch');
+  assert.equal(m.quests.has(q.uid), false);
+});
+
+test('VERIFY: customParseInt - int.Parse strictness and the case-sensitive Replace quirk', async () => {
+  const { customParseInt } = await import('../src/systems/quest/place.js');
+  assert.equal(customParseInt('0xc352'), 0xc352);
+  assert.equal(customParseInt(' 42 '), 42, 'int.Parse tolerates surrounding whitespace');
+  assert.equal(customParseInt('-7'), -7);
+  assert.throws(() => customParseInt('12abc'), /int.Parse failed/, 'trailing garbage throws, never truncates');
+  assert.throws(() => customParseInt('12.5'), /int.Parse failed/);
+  assert.throws(() => customParseInt('0X1A'), /int.Parse failed/,
+    "the C# quirk: StartsWith ignores case but Replace('0x') does not - an uppercase prefix throws");
 });
