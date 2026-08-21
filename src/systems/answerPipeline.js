@@ -223,7 +223,13 @@ export class AnswerPipeline {
     this.lastToneIndex = toneIndex;
   }
 
-  /** StartNewConversation's half of the reset (:2659). */
+  /** The tone half of TalkToNpc's session reset (:2657-2662) - NOT
+   *  StartNewConversation, which resets the question counter and the
+   *  opening text instead (:867-878). TalkToNpc runs on the CLICK,
+   *  after the greeting and before the window is pushed, and clears
+   *  lastToneIndex alongside toneReactionForTalkSession[0..2] (that
+   *  triple lives with the reaction tier in talkTopics.js) - so the
+   *  host must call both resets, at their two different moments. */
   resetToneSession() { this.lastToneIndex = -1; }
 
   _rolls() { return this.deps.rolls ?? Math.random; }

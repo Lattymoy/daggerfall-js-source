@@ -168,6 +168,20 @@ test('the greeting name boundary: reaction 0 is a stranger, 1 is a name', () => 
   assert.deepEqual(hated.seen, [[PC_STRANGER_RECORD + 0, ''], [PC_GREETING_RECORD + 0, 'record:7221']]);
 });
 
+test('the greeting arm read with NO arguments at all: tone 1, a stranger, nameless', () => {
+  // C# takes no arguments here - it reads currentTalkTone and
+  // reactionToPlayer off the manager. The port's defaults stand in for
+  // those fields, so they are pinned to their values: tone 1 is the
+  // middle (Normal) button, and a reaction of 0 is on the wrong side
+  // of the <= bar.
+  const seen = [];
+  const pipe = new AnswerPipeline({
+    expandRandomTextRecord: (id) => { seen.push([id, pipe.greetingNameNPC]); return `record:${id}`; },
+  });
+  assert.equal(pipe.getPCGreetingOrFollowUpText(), 'record:7216');
+  assert.deepEqual(seen, [[7222, ''], [7216, 'record:7222']], 'the NORMAL stranger record, then the NORMAL greeting');
+});
+
 test('THE %n SLOT is cleared the moment the greeting is expanded, and a follow-up never fills it', () => {
   // C# empties greetingNameNPC right after the greeting record
   // (:1140) so that no LATER expansion resolves %n to this NPC. A
@@ -377,7 +391,8 @@ test('THE TONE GATE lives in getAnswerText: recompute only on a tone CHANGE, sta
   pipe.getAnswerText(newListItem({ questionType: QUESTION_TYPE.News }));
   assert.equal(computes, 2, 'a changed tone recomputes');
   assert.equal(pipe.lastToneIndex, 2);
-  // StartNewConversation's reset forces the next question to recompute
+  // TalkToNpc's session reset (:2659) forces the next question to
+  // recompute - it runs on the CLICK, not when the window opens
   pipe.resetToneSession();
   assert.equal(pipe.lastToneIndex, -1);
   pipe.getAnswerText(newListItem({ questionType: QUESTION_TYPE.News }));
@@ -623,8 +638,13 @@ test('the quest-person BUILDING dependency: an NPC who cannot place the building
   // subject building, or a question that is not about a Person, and
   // the arm is skipped entirely even with the building unknown
   buildingItem.npcKnowledgeAboutItem = NPC_KNOWLEDGE.DoesNotKnowAboutItem;
+  // -1 is the NO-BUILDING sentinel, and the arm tests that exact
+  // value: a topic list carrying a -1 item would otherwise be walked
+  // and would refuse
+  buildingItem.buildingKey = -1;
   pipe.currentKeySubjectBuildingKey = -1;
   assert.equal(pipe.getNPCKnowledgeAboutItem(ask()), NPC_KNOWLEDGE.KnowsAboutItem, 'no key subject building, no dependency');
+  buildingItem.buildingKey = 42;
   pipe.currentKeySubjectBuildingKey = 42;
   assert.equal(pipe.getNPCKnowledgeAboutItem(newListItem({ questionType: QUESTION_TYPE.QuestPerson, key: 'q' })),
     NPC_KNOWLEDGE.KnowsAboutItem, 'a QUEST person is not the classic Person topic - the arm does not apply');
@@ -659,6 +679,85 @@ test('THE HEADLESS SEEDS: an omitted npcSeed is 0, and an omitted faction relati
   const org = newListItem({ questionType: QUESTION_TYPE.OrganizationInfo, factionID: 42, caption: 'The Thieves' });
   assert.equal(mk().getNPCKnowledgeAboutItem(org), NPC_KNOWLEDGE.DoesNotKnowAboutItem,
     'no relation seam, no membership - the roll decides');
+});
+
+test('THE KNOWLEDGE SEED IS THE WHOLE SEED: the die is 1..20 and the identity is never shifted', () => {
+  const mk = () => {
+    const { pipe, tree } = makePipe();
+    tree.checkNPCcanKnowAboutTellMeAboutTopic = () => true;
+    tree.checkNPCisInSameBuildingAsTopic = () => false;
+    return pipe;
+  };
+  const ask = (buildingKey, seed) => mk().getNPCKnowledgeAboutItem(
+    newListItem({ questionType: QUESTION_TYPE.QuestLocation, buildingKey }), seed);
+  // buildingKey 1 with NPC 0 seeds srand(1). Halve either half of that
+  // sum and it seeds srand(0) instead, which answers the other way -
+  // so the seed arithmetic is pinned to the value, not to its shape.
+  assert.equal(ask(1, 0), NPC_KNOWLEDGE.DoesNotKnowAboutItem, 'seed 1 refuses');
+  assert.equal(ask(0, 0), NPC_KNOWLEDGE.KnowsAboutItem, 'seed 0 knows - the two are distinguishable');
+  // C# rolls Random.Range(1, 21) - inclusive 1..20. buildingKey 5
+  // draws 16 from a 20-sided die and 8 from a 21-sided one, and the
+  // row-20 modifier puts the bar at 10, so widening the die by one
+  // face turns this refusal into a yes.
+  assert.equal(KNOWLEDGE_MODIFIERS[20] + 10, 10, 'row 20 needs 10 or under');
+  assert.equal(ask(5, 0), NPC_KNOWLEDGE.DoesNotKnowAboutItem, 'a 16 on a TWENTY-sided die misses the bar');
+});
+
+test('THE ABSENT-NPC DEFAULTS on the answer arms are 0 too, and the region index falls to -1', () => {
+  const mk = () => {
+    const { pipe, tree } = makePipe();
+    tree.checkNPCcanKnowAboutTellMeAboutTopic = () => true;
+    tree.checkNPCisInSameBuildingAsTopic = () => false;
+    return pipe;
+  };
+  // key 'p' rolls DoesNotKnow as NPC 0 and Knows as NPC 1, so the
+  // table half each arm answers from names the seed it used
+  const topic = () => newListItem({ questionType: QUESTION_TYPE.QuestLocation, key: 'p' });
+  assert.equal(mk().getAnswerTellMeAboutTopic(topic()), `record:${ANSWERS_TO_NON_DIRECTIONS[0]}`, 'tell-me-about defaults to NPC 0');
+  assert.equal(mk().getAnswerTellMeAboutTopic(topic(), 1), `record:${ANSWERS_TO_NON_DIRECTIONS[15]}`, 'and NPC 1 is someone else');
+  const person = () => newListItem({ questionType: QUESTION_TYPE.Person, key: 'p' });
+  assert.equal(mk().getAnswerWhereIs(person()), `record:${ANSWERS_TO_DIRECTIONS[0]}`, 'where-is defaults to NPC 0');
+  assert.equal(mk().getAnswerWhereIs(person(), 1), `record:${ANSWERS_TO_DIRECTIONS[15]}`);
+  // and the regional walk's absent region-index seam is -1
+  const seen = [];
+  const { pipe: r } = makePipe({
+    currentRegion: () => ({ locationCount: 1, mapTable: [{ key: 1 << 8 }] }),
+    currentRegionIndex: undefined,
+    getLocation: (idx, i) => { seen.push([idx, i]); return { name: 'x' }; },
+    rolls: () => 0,
+  });
+  r.getLocationWithRegionalBuilding(0, 0);
+  assert.deepEqual(seen, [[-1, 0]], 'no region-index seam answers -1, C#s no-such-region');
+});
+
+test('THE ALWAYS-KNOWS ARMS are an OR of three: any one alone opens it', () => {
+  // key 'b' rolls DoesNotKnow at NPC 0, so the roll underneath can
+  // never be mistaken for one of the arms firing
+  const item = () => newListItem({ questionType: QUESTION_TYPE.QuestLocation, key: 'b' });
+  const mk = (over, sessionOver) => {
+    const { pipe, tree, session } = makePipe(over);
+    tree.checkNPCcanKnowAboutTellMeAboutTopic = () => true;
+    tree.checkNPCisInSameBuildingAsTopic = () => false;
+    Object.assign(session, sessionOver ?? {});
+    return { pipe, tree };
+  };
+  assert.equal(mk().pipe.getNPCKnowledgeAboutItem(item()), NPC_KNOWLEDGE.DoesNotKnowAboutItem, 'no arm, no knowledge');
+  const same = mk();
+  same.tree.checkNPCisInSameBuildingAsTopic = () => true;
+  assert.equal(same.pipe.getNPCKnowledgeAboutItem(item()), NPC_KNOWLEDGE.KnowsAboutItem, 'the same building ALONE');
+  assert.equal(mk(undefined, { isSpyMaster: true }).pipe.getNPCKnowledgeAboutItem(item()), NPC_KNOWLEDGE.KnowsAboutItem,
+    'the spymaster ALONE - not needing the building too');
+  assert.equal(mk({ npcsKnowEverything: () => true }).pipe.getNPCKnowledgeAboutItem(item()), NPC_KNOWLEDGE.KnowsAboutItem,
+    'the debug flag ALONE');
+  // the organization arm reads the session's OWN faction id, and an
+  // absent one is 0
+  const seen = [];
+  const { pipe: org, tree: to, session: os } = makePipe({ isFaction2RelatedToFaction1: (a, b) => { seen.push([a, b]); return false; } });
+  to.checkNPCcanKnowAboutTellMeAboutTopic = () => true;
+  to.checkNPCisInSameBuildingAsTopic = () => false;
+  delete os.factionData;
+  org.getNPCKnowledgeAboutItem(newListItem({ questionType: QUESTION_TYPE.OrganizationInfo, factionID: 42, caption: 'The Thieves' }));
+  assert.deepEqual(seen, [[0, 42]], 'a session with no faction data is faction 0, not faction 1');
 });
 
 test('getAnswerWhereIs: a Person NOT in the same building answers from the TABLE, never the here-I-am line', () => {
@@ -825,6 +924,17 @@ test('THE COMPASS MARK: asking directions stamps ReceivedDirectionalHints, never
   // an unknown resource still answers the compass without throwing
   pipe.currentQuestionListItem = newListItem({ questID: 999, key: 'x' });
   assert.equal(pipe.getKeySubjectLocationCompassDirection(), 'north:42');
+  // C#'s currentQuestionListItem is never null when these run, so the
+  // port's null guard is a JS-only floor - and it stands in for quest
+  // 0 with an empty key, the identity a default ListItem would carry.
+  // Registering exactly that resource proves which one it looks up.
+  tree.addQuestTopicWithInfoAndRumors(0, { isPlace: true, symbol: { name: '' } }, ' ', QUEST_INFO_RESOURCE_TYPE.Location, null, null);
+  const zero = tree.dictQuestInfo.get(0).resourceInfo.get(' ');
+  tree.dictQuestInfo.get(0).resourceInfo.set('', zero);
+  pipe.currentQuestionListItem = null;
+  assert.equal(pipe.getKeySubjectLocationCompassDirection(), 'north:42', 'a null current item still answers');
+  assert.equal(zero.questPlaceResourceHintTypeReceived, BUILDING_HINT_TYPE.ReceivedDirectionalHints,
+    'and it stamps quest 0 key "" - the default-ListItem identity, not quest 1');
 });
 
 test('markKeySubjectLocationOnMap: discovers the building and stamps the map mark; key 0 marks NOTHING', () => {
