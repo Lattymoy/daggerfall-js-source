@@ -572,6 +572,12 @@ test('F2 real seam: the constellation loads, animates, repaints and releases for
     uploadTexture: (g, name) => { uploads.push(name); return `tex:${name}`; },
     releaseTexture: (g, key) => releases.push(key),
     drawScreenQuad: () => {},
+    // drawMenuBackdrop measures the LIVE context when no canvas is
+    // passed (chargenArt.js:82), which is the path drawChargenNative
+    // takes. A fake renderer with no gl made this test throw the moment
+    // it ran for real - and because it is ARENA2-only, a bare run never
+    // saw it. The stub is the 320x200 the native page is drawn in.
+    gl: { drawingBufferWidth: 320, drawingBufferHeight: 200 },
   };
   const palette = new DFPalette();
   palette.load(new Uint8Array(readFileSync(join(ARENA2, 'ART_PAL.COL'))), 'ART_PAL.COL');
@@ -588,24 +594,37 @@ test('F2 real seam: the constellation loads, animates, repaints and releases for
   assert.ok(secs > 0 && secs < 60, `WARRIOR.CEL runs for ${secs}s`);
   assert.equal(tickConstellationAnim(0), true, 'a started CEL is playing');
 
-  // 2. the draw uploads THAT cel's frame - the whole path, art to quad
+  // 2. a started CEL shows NOTHING until a frame delay has actually
+  //    elapsed. That is FLCPlayer.cs's Update order kept exactly -
+  //    the current buffer is displayed, and only then is the next
+  //    frame decoded - so the clock has to move before anything is
+  //    drawable, and DFU shows its cleared texture until it does.
+  //    (This test asserted the opposite on a zero-length tick, which
+  //    would have pinned the pacing law inside out; it is ARENA2-only,
+  //    so a bare run never executed the line.)
+  const budget = Math.max(2, Math.min(20, Math.floor(secs / 0.1)));   // never tick past the CEL's own end
   flush();
   assert.equal(drawChargenNative(renderer, m, font, f), true);
+  assert.ok(!uploads.includes('chargen:cel:WARRIOR.CEL'), 'nothing is drawable before the first delay');
+
+  // 3. move the clock, and THAT frame reaches the renderer - the whole
+  //    path, art to quad
+  flush();
+  for (let i = 0; i < budget && !uploads.length; i++) { tickConstellationAnim(0.1); drawChargenNative(renderer, m, font, f); }
   assert.ok(uploads.includes('chargen:cel:WARRIOR.CEL'), `the frame reached the renderer: ${uploads}`);
 
-  // 3. a SECOND draw with no tick re-uploads NOTHING (the F2-P2 gate)
+  // 4. a SECOND draw with no tick re-uploads NOTHING (the F2-P2 gate)
   flush();
   drawChargenNative(renderer, m, font, f);
   assert.deepEqual(uploads, [], 'a still frame costs no upload');
 
-  // 4. ticking past a frame delay decodes a new one, and THAT uploads
-  //    - releasing the old key first, so the gate cannot leak
-  const budget = Math.max(2, Math.min(20, Math.floor(secs / 0.1)));   // never tick past the CEL's own end
+  // 5. ticking past another frame delay decodes a new one, and THAT
+  //    uploads - releasing the old key first, so the gate cannot leak
   for (let i = 0; i < budget && !uploads.length; i++) { tickConstellationAnim(0.1); drawChargenNative(renderer, m, font, f); }
   assert.deepEqual(uploads, ['chargen:cel:WARRIOR.CEL'], 'a new frame uploads once');
   assert.deepEqual(releases, ['chargen:cel:WARRIOR.CEL'], 'and the old texture is released');
 
-  // 5. the CHART repaints when the blues change, and not before
+  // 6. the CHART repaints when the blues change, and not before
   flush();
   drawChargenNative(renderer, m, font, f);
   assert.ok(!uploads.some((u) => u.startsWith('CHGN00I0')), 'the pristine chart is already up');
@@ -613,7 +632,7 @@ test('F2 real seam: the constellation loads, animates, repaints and releases for
   drawChargenNative(renderer, m, font, f);
   assert.ok(uploads.includes('CHGN00I0:32,8,8'), `the chart repainted for the new blues: ${uploads}`);
 
-  // 6. stop RELEASES the frame texture and the anim stops drawing
+  // 7. stop RELEASES the frame texture and the anim stops drawing
   flush();
   stopConstellationAnim();
   assert.deepEqual(releases, ['chargen:cel:WARRIOR.CEL']);
@@ -622,7 +641,7 @@ test('F2 real seam: the constellation loads, animates, repaints and releases for
   drawChargenNative(renderer, m, font, f);
   assert.ok(!uploads.includes('chargen:cel:WARRIOR.CEL'), 'a stopped constellation draws nothing');
 
-  // 7. and a REPLAY starts clean rather than flashing the last end
+  // 8. and a REPLAY starts clean rather than flashing the last end
   //    frame (the bufferNextFrame(0) re-arm, Ledger A)
   assert.ok(startConstellationAnim(1) > 0, 'ROGUE.CEL replays');
   stopConstellationAnim();

@@ -2726,7 +2726,7 @@ hosts that each carried a bare 0.0025). All are read AT THE POINT OF
 USE, as DFU reads them, so a change lands on the next swing rather
 than the next reload.
 
-**The launcher** (`ui/launcher.js` + `scenes/launcherScene.js`) is one
+**The launcher** (`ui/launcher.js`, DELETED at MENU - see U30 - + `scenes/launcherScene.js`) was one
 keyed native screen over all 171: `[`/`]` for sections, arrows to
 change, R to reset, Enter to play. It lists settings it will NOT let
 you change, with their reason, rather than hiding them - the same
@@ -2824,3 +2824,132 @@ Mutations: 4 run, 3 killed on the first pass and m4 (the lock-out
 warning) SURVIVED unpinned - pinned, re-run, killed. Pins: 4 added to
 settings.test.js; the touch guard folded into tools/launcherProbe.mjs
 so the trap cannot come back silently.
+
+## U30 - THE SETTINGS MENU: a home for every setting (2026-08-21)
+
+U29 gave the port a launcher and a real 171-key store. It was still a
+*list*: one flat column of ini keys, tier-filtered, readable by someone
+who already knew what `LypyL_GameConsole` meant. The ask was the other
+half - "game settings need a home, audio needs a home, graphics needs
+a home, the future mod manager needs a home", organised and readable
+for a casual player. This is that screen.
+
+**The shape.** Seven categories (`settingsMap.js`), TOTAL and DISJOINT
+over all 171 keys: Game, Controls, Audio, Video, Interface,
+Accessibility, Mods (21/16/5/66/37/19/7). A key with no home would
+simply vanish from the screen, so the totality is pinned, and so is the
+count vector - a re-bake that renames a key fails the build instead of
+silently dropping a row.
+
+**DEPARTURE (declared in the map itself).** DFU's own settings UI has
+five pages (`DaggerfallAdvancedSettingsWindow.cs`), with audio living
+inside gamePlay's right column and the mod system inside enhancements.
+This port promotes **Audio** and **Mods** to their own categories. The
+reason is the ask, not taste: audio is the first thing a player looks
+for and the second thing this port can actually honour, and the mod
+manager is a room that must exist before it has furniture. Everything
+else follows DFU's grouping. The `.ini` sections are untouched - this
+is a presentation map over a verbatim store, which is exactly the line
+the port draws between logic and presentation.
+
+**TIER IS A GROUP, NOT A FILTER.** The store's three tiers (8 live,
+145 stored, 18 unavailable) are three collapsible groups per category
+with computed headings - "WORKS NOW (2)", "SAVED FOR LATER (17)",
+"NOT AVAILABLE HERE (2)" - and the header sentence is built from the
+same tally. Nothing is hidden: a folded group still states its count,
+because a setting a player cannot find is worse than one that says it
+is waiting. An unavailable row never offers a control that cannot
+move, and never prints its stored value - `EnhancedCombatAI` holds
+DFU's shipped `True` while this port runs the classic path, so drawing
+"On" would be a lie. It reads `classic`, with a sentence saying what
+runs instead. All four properties are pinned.
+
+**The words are DFU's.** Labels and help text come from the vendored
+`GameSettings.txt` where DFU has them (`settingsText.js`, ~64 of 171
+keys - the honest measure of how much of the store DFU's own UI
+exposes at all), and from `settingsCopy.js` where it does not. The pin
+is negative and total: no label may carry camelCase or an underscore,
+and no copy anywhere may call this port's own gaps broken, missing or
+unsupported.
+
+**THE RANGE-EQUALS-CLAMP LAW.** A slider offers exactly the travel its
+consumer honours - no more. `NUMBER_LAW` states a range and its
+source, and the pin re-derives each live consumer's own
+`getInt/getFloat` bounds at test time and compares. This caught a real
+parity bug on its first run: `LoiterLimitInHours` had been given an
+invented 1..24, where DFU's own slider is `AddSlider("loiterLimit
+InHours", 3, 12)` (`DaggerfallAdvancedSettingsWindow.cs:354`). The
+consumer in `restSession.js` was wrong, not the screen; both now read
+3..12. `MouseLookSensitivity` runs to 4.0 here rather than DFU's 16.0
+for the same reason in the other direction - `lookSettings.js` clamps
+at 4.0, and a slider whose last three quarters did nothing is the same
+lie as an inoperable control.
+
+**The phone.** `settingsMetrics.js` exists because `nativeMetrics`
+gives scale 1 - seven-pixel text - on every phone the design workflow
+measured. It keeps the classic 320-wide page wherever it fits at scale
+2+, and falls back to an elastic COMFORT page (a real phone lands at
+196x363, scale 2, 14px text) rather than shrinking the type. Then
+`tools/settingsProbe.mjs` drives the real screen in a real browser at
+1280x800 **and** at phone size with touch emulation, tapping only the
+rects the screen itself reports through `window.__settings` - the same
+`layout()` that `draw()` and `click()` read. It found a defect on its
+first run that eight viewports of unit tests had not: rows were a
+44px tap tall, but the control *pill* inside was inset by four, so the
+thing a finger actually aims at was 36 CSS px. Drawn size and target
+size are two rects now (`ctrlRect` and `ctrlHit`), and both the probe
+and a new offline pin hold them apart. The probe also converts canvas
+pixels to CSS pixels through the element's real box before judging a
+finger, because a DPR-scaled canvas would make a 44-canvas-px target a
+16-CSS-px one and the check would pass while the screen stayed
+untappable.
+
+`src/ui/launcher.js` is DELETED; `SettingsWindow` replaces it whole,
+and `launcherScene.js` routes pointer, wheel and key input to it.
+
+Mutations: 5 run, 5 killed (two needed re-running - the first attempt
+edited text that was not there, which is itself the reason a mutation
+run reports its own match count now). Pins: 8 in `settingsUI.test.js`,
+plus the live probe.
+
+### U30 addendum - what the merge with the F2 lane cost, and found
+
+Two things came back from `origin/main` that this slice had to answer
+rather than absorb.
+
+**Carried, not lost.** The launcher's own merge audit had fixed a
+defect this rewrite deletes the code for: `stepFor` read the step off
+the CURRENT value (`0.1` only while the string contained a `.`), so
+stepping `0.9` up stored `"1"`, which has no `.`, and the next press
+stepped by ONE - a player who muted SoundVolume could never reach a
+fraction again, and the row displayed a `2` the audio bus clamps to 1.
+`NUMBER_LAW` kills the first half structurally: the step is declared
+per key and never inferred from a value. The second half was still
+live here - `formatValue` printed the STORED number, so a store
+holding 2 would read "200%" while the bus ran 1. It now shows the
+value IN EFFECT, clamped to the same range the consumer's
+`getFloat/getInt` clamps to. Both halves are pinned (T15), and the
+retired launcher test's end-to-end walk is re-driven through the new
+screen's own key input (T16). A defect fixed in deleted code stays
+fixed.
+
+**FOUND: the F2 real-seam test was RED, and had never run.** The
+incoming lane's `F2 real seam` test is gated on `ARENA2_PATH`, so a
+bare `npm test` skips it and reports green - it went in unexecuted.
+Run with ARENA2 it failed twice over. First a `TypeError`: its fake
+renderer had no `gl`, and `drawMenuBackdrop` measures the live context
+when no canvas is passed (`chargenArt.js:82`). With that stubbed, the
+real assertion failed - and the assertion was WRONG. It ticked the
+player by zero and expected a frame, but `FLCPlayer.cs`'s Update order
+displays the current buffer only once a frame delay has ELAPSED, and
+`start()` clears the displayed frame; DFU shows its cleared texture
+until the first delay passes. Asserting a frame on a zero-length tick
+would have pinned the pacing law inside out, and the next person to
+keep the law faithfully would have "broken" the suite. The engine was
+right; the test is fixed to walk the clock, and it now proves the
+whole path (nothing before the first delay, the frame after it, no
+upload for a still frame, a new frame releasing the old key).
+
+The lesson is the gate, not the lane: an ARENA2-only test that has
+never been run with ARENA2 present is not a pin, it is a claim. Both
+modes ran green before this merged.
