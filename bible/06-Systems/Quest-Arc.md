@@ -645,6 +645,51 @@ floor (vestigial corpus lines no DFU template matches either).
 Gate: `test/questfoes.test.js` (15 pins over the crafted foe seam)
 + the moved coverage/ownership pins (55 actions, 7194/41).
 
+## QUEST AUDIT VII (2026-08-21, the Q3-iii verify pass)
+
+Two lanes, one of them re-routed: the adversarial parity WORKFLOW
+was blocked whole by the subagent session limit (all three finder
+lanes failed before reading a line), so the parity re-read ran in
+the MAIN LOOP against the raw C# - Foe.cs SetResource/SetFoeName,
+CreateFoe.cs Update/CreatePendingFoeSpawn/TryPlacement, and
+CastSpellOnFoe.cs, each verified arm for arm against the port - with
+the multi-agent adversarial pass re-armed for after the limit reset
+(a scheduled retry; its findings, if any, will amend this section).
+
+- PARITY (the main-loop re-read): one alignment - CreateFoe's
+  missing-foe throw formats the action's own never-assigned Symbol
+  in C# (an NRE before the message renders), the same quirk
+  CastSpellOnFoe carries; the port's foeSymbol message was tidier
+  than the bug and now mirrors it. Everything else held: the Update
+  control flow arm for arm, the backdate bounds, the
+  interval-before-chance order, Dice100's comparison, the
+  SetFoeName branch order and seed composition, the clamp, the
+  regex alternation with C#'s duplicate group names split into the
+  port's suffixed pairs.
+- MUTATIONS: round 1 ran 102 mutants over foe.js whole + the exact
+  new action lines - 32 unique subset survivors, and the full-suite
+  confirm proved ALL 32 real (the fails=4 output read correctly as
+  baseline this time - the trap's third appearance). Eight boundary
+  pins followed: the Dice100 equality law (a roll EXACTLY on the
+  chance fails; Range(0,100) tops at 99 so 100% never fails),
+  indefinitely running forever past the counter, the short-mint
+  error-termination, msg-once holding ACROSS actions, the clamp at
+  8, the 128-BIT class routing (Imp id 1 stays a monster), the 0.55
+  gender boundary, and exact-name determinism through both srand
+  chains (Chird-e / Baaliblex). Round 2 same-seed: 104 mutants, the
+  14 targeted kills confirmed, 18 survivors RECORDED with proofs:
+  the six ctor inits are DEAD STORES (traced live: InitialiseOnSet
+  fires on the untriggered->triggered edge BEFORE the first update
+  and overwrites lastSpawnTime/spawnCounter - C#'s field
+  initializers are equally dead), the msg -1 sentinels are masked
+  by ShowMessagePopup's missing-message early return (itself C#
+  law), the _range call-site bounds, the setResource overwrites,
+  the 1..8 clamp folding count 0 and 1 alike, the pattern digit
+  class no corpus spell name exercises, and the monster-seed
+  modulus 1000000 UNOBSERVABLE by construction - classic rand() is
+  15-bit (max 32767), so rand() % 999999 and % 1000000 are both
+  identity.
+
 ## Queue
 
 - **Q3-iv - THE REMAINDER SWEEP** (41 lines): WhenPcEntersExits (8,
