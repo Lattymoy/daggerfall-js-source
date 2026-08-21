@@ -24,7 +24,16 @@ test('droppedLoot: the verbatim treasure flat + empty-pile removal', async () =>
   const pile = dl.dropPile([{ templateIndex: 277, name: 'Book' }], [10, 2, 30]);
   await Promise.resolve(); await Promise.resolve();   // the warm settles
   assert.deepEqual(uploads, [[216, 20, 0]]);
-  assert.equal(pile.batch.record, '20#0');
+  // FA1 slice 3: the record is BARE and the frame is a field. This
+  // used to pin the hand-written '20#0', which is the same texture key
+  // by a different route - and it was exactly what stopped these
+  // batches being armed, since appending a frame to a record that
+  // already ends in one reads '20#0#2'. Pin the KEY the draw builds,
+  // which is the thing that has to stay true.
+  assert.equal(pile.batch.record, 20);
+  assert.equal(pile.batch.frame, 0);
+  assert.equal(`${pile.batch.archive}_${pile.batch.record}#${pile.batch.frame}`, '216_20#0',
+    'the same texture key as before, built by the one rule');
   assert.deepEqual(pile.batch.centers, [[10, 2, 30]]);
   // the activation box wraps the drop position (the corpse shape)
   const t = dl.lootTargets();

@@ -219,11 +219,12 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         uploadRecordFrame(ct.archive, ct.record, 0);
         const sz = scaledBillboardSize(t.getSize(ct.record), t.getScale(ct.record));
         const pos = [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]];
-        const batch = renderer.createBillboardBatch(ct.archive, `${ct.record}#0`, sz ?? size, [pos]);
+        const batch = renderer.createBillboardBatch(ct.archive, ct.record, sz ?? size, [pos]);
+        batch.frame = 0;   // FA1 slice 3: bare record + a frame FIELD, one key rule
         // AUDIT 17e F23: keep the creation params - a floating-origin
         // recenter has to REBUILD the batch (the centers are baked into
         // a STATIC_DRAW buffer, so they cannot be shifted in place).
-        corpseBatches.push({ batch, archive: ct.archive, record: `${ct.record}#0`, size: sz ?? size, pos });
+        corpseBatches.push({ batch, archive: ct.archive, record: ct.record, size: sz ?? size, pos });
       }).catch(() => {});
       return;
     }
@@ -457,6 +458,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       c.pos[0] += dx; c.pos[1] += dy; c.pos[2] += dz;
       renderer.destroyBillboardBatch(c.batch);
       c.batch = renderer.createBillboardBatch(c.archive, c.record, c.size, [c.pos]);
+      c.batch.frame = 0;   // FA1 slice 3: a REBUILT batch is a new object - it needs the frame too
     }
   }
 

@@ -2086,6 +2086,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // U26: the player's own dropped piles ride the SAME pass as the
     // sprite mobiles - they are billboards at a world position with
     // no animation, exactly like a corpse.
+    droppedLoot.tickFlats(dt);   // FA1 slice 3
     const _dropBatches = droppedLoot.batches();
     const _spellBatches = magic.batches();   // M3: player spell missiles
     if (_mobileBatches.length || _dropBatches.length || _spellBatches.length) {

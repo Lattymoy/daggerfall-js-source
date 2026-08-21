@@ -1882,6 +1882,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, { playerInvisible: isInvisible(playerEntity) });
       livePersonBatches.push(...exteriorFoes.batches());
     }
+    droppedLoot.tickFlats(dt);   // FA1 slice 3
     livePersonBatches.push(...droppedLoot.batches());   // U8e: the ground piles
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, new Float32Array([0, 1, 0]));
     if (precip) {

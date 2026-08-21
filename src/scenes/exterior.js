@@ -1190,6 +1190,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       const guardBatches = cityGuards.update(townTalk.overlayActive ? 0 : dt,
         walkMode ? player.pos : cam.pos, eye, { playerInvisible: isInvisible(playerEntity) });
       personBatches.push(...guardBatches);
+      droppedLoot.tickFlats(dt);   // FA1 slice 3
       personBatches.push(...droppedLoot.batches());   // U8e: the ground piles
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, new Float32Array([0, 1, 0]));
     }

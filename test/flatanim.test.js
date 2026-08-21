@@ -220,3 +220,31 @@ test('FA1: every host that MOUNTS a missile arms it and drops its clock on retir
   assert.match(read('scenes/hostMagic.js'), /function update\(dt, playerFeet\) \{\n(?:.*\n)*?\s*flatAnims\.tick\(dt\);/,
     'the shared magic module ticks its own flats');
 });
+
+test('FA1 slice 3: no site hand-writes a frame into a record any more', () => {
+  // The `#0` written INTO the record was the reason the loot and corpse
+  // batches could not be armed at slice 2: appending a frame index to a
+  // record that already ends in one reads `20#0#2`. The record is bare
+  // and the frame is a field everywhere now, so the draw builds the key
+  // exactly one way - and a REBUILT batch (the floating-origin
+  // recenter destroys and recreates them) needs the frame carried too,
+  // which is the half a refactor like this forgets.
+  const read = (f) => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8');
+  for (const host of ['scenes/droppedLoot.js', 'scenes/cityGuards.js', 'scenes/exteriorFoes.js']) {
+    const src = read(host);
+    assert.ok(!/createBillboardBatch\([^,]+, `\$\{[^}]+\}#0`/.test(src),
+      `${host} still writes a frame into the record it passes`);
+    assert.match(src, /\.frame = 0;/, `${host} mounts a frame-keyed batch without saying which frame`);
+  }
+  // the recenter rebuilds
+  for (const host of ['scenes/cityGuards.js', 'scenes/exteriorFoes.js']) {
+    const src = read(host);
+    const rebuild = src.match(/for \(const c of corpseBatches\)[\s\S]*?\n {4}}/)[0];
+    assert.match(rebuild, /c\.batch\.frame = 0;/, `${host} rebuilds a corpse batch and loses its frame`);
+  }
+  // and the loot module drops the clock with the batch
+  assert.match(read('scenes/droppedLoot.js'), /flatAnims\.remove\(p\.batch\);/);
+  for (const host of ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeonContext.js']) {
+    assert.match(read(host), /droppedLoot\.tickFlats\(dt\)/, `${host} draws loot flats it never ticks`);
+  }
+});
