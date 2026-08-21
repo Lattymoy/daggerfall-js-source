@@ -602,13 +602,20 @@ test('setRandomQuestor / getQuestor*: the pick, the SEEDED name, and the empty-p
 });
 
 test('buildQuestorPool: the 25% roll, the three social groups, and the named-building drop', () => {
-  const npc = (nameSeed, over = {}) => ({ nameSeed, socialGroup: SOCIAL_GROUP.Merchants, gender: 'male', isChild: false, ...over });
+  // the candidate's social group is RESOLVED from its faction id, not
+  // taken as given - so the fixture hands out faction ids and the
+  // table decides
+  const npc = (nameSeed, over = {}) => ({ nameSeed, factionID: 1, gender: 'male', isChild: false, ...over });
   const building = (over = {}) => ({
-    buildingKey: 5, buildingName: 'The Inn', isNamedBuilding: true, npcs: [], ...over,
+    buildingKey: 5, buildingName: 'The Inn', buildingType: 'Tavern', isNamedBuilding: true, npcs: [], ...over,
   });
+  const TABLE = {};
+  for (let g = 0; g <= 7; g++) TABLE[g + 1] = faction({ id: g + 1, sgroup: g });
   // Range(0,4) with `< 3` CONTINUING: only a roll of 3 offers work
   const mk = (roll, buildings, over = {}) => {
-    const { s } = makeSession({ rolls: () => roll, currentLocationIndex: () => 1, nameBankOfCurrentRegion: () => 'Breton', ...over });
+    const { s } = makeSession(
+      { rolls: () => roll, currentLocationIndex: () => 1, nameBankOfCurrentRegion: () => 'Breton', ...over },
+      TABLE);
     s.buildQuestorPool(buildings);
     return s;
   };
@@ -616,10 +623,22 @@ test('buildQuestorPool: the 25% roll, the three social groups, and the named-bui
   assert.equal(mk(0.5, [building({ npcs: [npc(1)] })]).npcsWithWork.size, 0, 'a roll of 2 does not');
   assert.equal(mk(0.0, [building({ npcs: [npc(1)] })]).npcsWithWork.size, 0, 'nor a roll of 0');
   // only three social groups are candidates at all
-  for (const [group, allowed] of [[0, true], [1, true], [2, false], [3, true], [4, false], [5, false]]) {
-    const s = mk(0.9, [building({ npcs: [npc(1, { socialGroup: group })] })]);
+  for (const [group, allowed] of [[0, true], [1, true], [2, false], [3, true], [4, false], [5, false], [7, false]]) {
+    const s = mk(0.9, [building({ npcs: [npc(1, { factionID: group + 1 })] })]);
     assert.equal(s.npcsWithWork.size, allowed ? 1 : 0, `social group ${group}`);
   }
+  // the sgroup is read UNCLAMPED here - a group-5 faction is NOT
+  // folded to Merchants the way SetTargetNPC folds it
+  assert.equal(mk(0.9, [building({ npcs: [npc(1, { factionID: 6 })] })]).npcsWithWork.size, 0,
+    'group 5 is simply not a candidate, not a Merchant');
+  // and a candidate with faction id 0 is resolved through the same
+  // court/people redirect a click uses
+  const viaPeople = mk(0.9, [building({ npcs: [npc(1, { factionID: 0 })] })],
+    { peopleOfCurrentRegion: () => 2, courtOfCurrentRegion: () => 3 });
+  assert.equal(viaPeople.npcsWithWork.size, 1, 'faction 0 in a tavern reads the PEOPLE, social group 1');
+  const viaCourt = mk(0.9, [building({ buildingType: 'Palace', npcs: [npc(1, { factionID: 0 })] })],
+    { peopleOfCurrentRegion: () => 2, courtOfCurrentRegion: () => 6 });
+  assert.equal(viaCourt.npcsWithWork.size, 0, 'and in a PALACE the court - here a group-5 faction, so no work');
   // a child is dropped AFTER the roll is spent
   assert.equal(mk(0.9, [building({ npcs: [npc(1, { isChild: true })] })]).npcsWithWork.size, 0);
   // an UNNAMED building's candidate is built and then dropped
@@ -629,17 +648,19 @@ test('buildQuestorPool: the 25% roll, the three social groups, and the named-bui
   const full = mk(0.9, [building({ npcs: [npc(1), npc(2)] })]);
   assert.equal(full.selectedNpcWorkKey, 2, 'the last questor added is silently selected');
   assert.deepEqual(full.npcsWithWork.get(1), {
-    npc: { nameSeed: 1, socialGroup: SOCIAL_GROUP.Merchants, gender: 'male', isChild: false, buildingKey: 5, nameBank: 'Breton' },
-    socialGroup: SOCIAL_GROUP.Merchants,
+    npc: { nameSeed: 1, factionID: 1, gender: 'male', isChild: false, buildingKey: 5, nameBank: 'Breton' },
+    socialGroup: SOCIAL_GROUP.Commoners,
     buildingName: 'The Inn',
   });
 });
 
 test('buildQuestorPool: the location gate rebuilds ONCE, and an empty walk never claims the location', () => {
-  const npc = (nameSeed) => ({ nameSeed, socialGroup: SOCIAL_GROUP.Merchants, gender: 'male', isChild: false });
-  const buildings = [{ buildingKey: 5, buildingName: 'The Inn', isNamedBuilding: true, npcs: [npc(1)] }];
+  const npc = (nameSeed) => ({ nameSeed, factionID: 1, gender: 'male', isChild: false });
+  const buildings = [{ buildingKey: 5, buildingName: 'The Inn', buildingType: 'Tavern', isNamedBuilding: true, npcs: [npc(1)] }];
   let where = 1;
-  const { s } = makeSession({ rolls: () => 0.9, currentLocationIndex: () => where, nameBankOfCurrentRegion: () => 'Breton' });
+  const { s } = makeSession(
+    { rolls: () => 0.9, currentLocationIndex: () => where, nameBankOfCurrentRegion: () => 'Breton' },
+    { 1: faction({ id: 1, sgroup: SOCIAL_GROUP.Merchants }) });
   assert.equal(s.buildQuestorPool(buildings), true, 'the first walk builds');
   assert.equal(s.npcsWithWork.size, 1);
   s.removeNpcQuestor(1);
@@ -668,7 +689,8 @@ test('getNPCQuestGreeting: a STATIC questor with a post-quest message greets wit
     questorPostMessages: () => new Map([[1n, [{ text: 'well done' }]]]),
     getQuest: () => quest,
     isNPCDataEqual: (a, b) => a?.nameSeed === b?.nameSeed,
-    expandQuestMessage: (q, tokens, reveal) => { expanded.push(reveal); return 'Well done.'; },
+    // ExpandQuestMessage writes back INTO the token it came from
+    expandQuestMessage: (q, tokens, reveal) => { expanded.push(reveal); tokens[0].text = 'Well done.'; },
   };
   const { s } = makeSession(deps);
   s.currentNPCType = NPC_TYPE.Static;
@@ -702,7 +724,7 @@ test('the quest greeting SHORT-CIRCUITS the faction one, and rides through talkT
     questorPostMessages: () => new Map([[1n, [{ text: 'x' }]]]),
     getQuest: () => ({ resources: new Map([['_qgiver_', person]]) }),
     isNPCDataEqual: (a, b) => a?.nameSeed === b?.nameSeed,
-    expandQuestMessage: () => 'Thank you again.',
+    expandQuestMessage: (q, tokens) => { tokens[0].text = 'Thank you again.'; },
   });
   s.currentNPCType = NPC_TYPE.Static;
   s.lastTargetStaticNPC = { data: { nameSeed: 77 } };
@@ -786,4 +808,53 @@ test('THE NAMES NOBODY READS are still written correctly by every arm', () => {
   assert.equal(s.npcData.pcFactionName, 'Mages Guild', 'the PC-s guild');
   assert.equal(s.npcData.enemyFactionName, 'The Common Enemy');
   assert.equal(s.npcData.allyFactionName, '', 'untouched by an arm that has no ally to name');
+});
+
+test('TalkToNpc clears BOTH halves of the tone session - the cache is this object-s own field', () => {
+  // C# clears lastToneIndex AND toneReactionForTalkSession[0..2] in
+  // the same four lines (:2659-2662). The first lives on TK-iii's
+  // pipeline and rides a seam; the second is TalkManager's field, so
+  // it is owned here. A host left to clear it would answer for the
+  // next NPC with the last one's cached reaction - the same shape of
+  // bug as the tone gate TK-iii's re-read caught.
+  const { s, calls } = makeSession();
+  assert.deepEqual(s.toneReactionForTalkSession, [0, 0, 0], 'a fresh session starts empty');
+  s.toneReactionForTalkSession[0] = 17;
+  s.toneReactionForTalkSession[2] = -4;
+  assert.equal(s.talkToNpc().kind, 'talk');
+  assert.deepEqual(s.toneReactionForTalkSession, [0, 0, 0], 'all three tones forgotten');
+  assert.ok(calls.some((c) => c[0] === 'resetTone'), 'and the pipeline-s half is told too');
+  // a door that CLOSES leaves the cache alone - C# returns before the
+  // reset in every one of the three
+  const { s: hated } = makeSession();
+  hated.reactionToPlayer = -21;
+  hated.toneReactionForTalkSession[1] = 9;
+  assert.equal(hated.talkToNpc().kind, 'noResponse');
+  assert.deepEqual(hated.toneReactionForTalkSession, [0, 9, 0], 'no window, no reset');
+});
+
+test('THE UNCLONED QUESTOR POST: the expansion writes back into the STORED message, and keeps the default separator', () => {
+  // ExpandQuestMessage stores each expanded string back into the token
+  // it came from (QuestMacroHelper.cs:157), and C# hands it the array
+  // straight out of dictQuestorPostQuestMessage (:927) - no clone.
+  // GetAnswerFromTokensArray DOES clone, with DFU's own comment naming
+  // the altering macros that must re-evaluate on every ask; this arm
+  // does not, so an altering macro here freezes at its first value.
+  const person = { isPerson: true, isQuestor: true, isIndividualNPC: false, questorData: { nameSeed: 77 } };
+  const stored = [{ text: '%di' }, { text: '' }, { text: 'again' }];
+  let n = 0;
+  const { s } = makeSession({
+    questorPostMessages: () => new Map([[1n, stored]]),
+    getQuest: () => ({ resources: new Map([['_q_', person]]) }),
+    isNPCDataEqual: (a, b) => a?.nameSeed === b?.nameSeed,
+    expandQuestMessage: (q, tokens) => { tokens[0].text = `north${++n}`; },
+  });
+  s.currentNPCType = NPC_TYPE.Static;
+  s.lastTargetStaticNPC = { data: { nameSeed: 77 } };
+  assert.equal(s.getNPCQuestGreeting(), 'north1 again', 'the EMPTY token contributes the default separator');
+  assert.equal(stored[0].text, 'north1', 'and the STORED message is expanded in place - the macro is gone');
+  // asking again re-expands what is already expanded, which is exactly
+  // what the clone elsewhere exists to prevent
+  assert.equal(s.getNPCQuestGreeting(), 'north2 again');
+  assert.equal(stored[0].text, 'north2', 'the stored tokens keep being overwritten');
 });

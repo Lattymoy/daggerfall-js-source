@@ -46,6 +46,7 @@
 import { srand } from '../formats/dfRandom.js';
 import { randomRangeInclusive } from '../formats/dfRandom.js';
 import { isAlly, isEnemy } from '../formats/factionFile.js';
+import { tokensToString } from './rumorMill.js';
 import {
   NO_RESPONSE_TEXT_ID, MIN_NEUTRAL_REACTION, MIN_LIKE_REACTION,
   MIN_VERY_LIKE_REACTION, REFUSE_TALK_REACTION,
@@ -139,6 +140,13 @@ export class NPCSession {
     this.targetStaticNPC = null;
     this.npcGreetingText = '';
     this.rebuildTopicLists = false;
+    // TalkManager's toneReactionForTalkSession (:2660-2662) - T3f's
+    // per-session reaction cache, which reactionTier012 reads and
+    // fills. It is TalkManager's FIELD and TalkToNpc's to clear, so it
+    // is owned here rather than left with the host: the caller passes
+    // this array into the tier, and a host that forgot to clear it
+    // would answer for the next NPC with the last one's reaction.
+    this.toneReactionForTalkSession = [0, 0, 0];
     // numQuestionsAsked / questionOpeningText / currentQuestionListItem
     // are TalkManager fields in C# but live on TK-iii's AnswerPipeline
     // here - see startNewConversation. Deliberately absent.
@@ -513,9 +521,13 @@ export class NPCSession {
     }
     if (!this.sameTalkTargetAsBefore) this.deps.resetNPCKnowledge?.();
     this.deps.pushTalkWindow?.();
-    // the tone half of the session reset (:2658-2662) - the reaction
-    // tier's own cache lives with T3f
+    // the tone half of the session reset (:2658-2662), BOTH parts of
+    // it: lastToneIndex lives on TK-iii's pipeline and rides a seam,
+    // the three-tone reaction cache is this object's own field
     this.deps.resetToneSession?.();
+    this.toneReactionForTalkSession[0] = 0;
+    this.toneReactionForTalkSession[1] = 0;
+    this.toneReactionForTalkSession[2] = 0;
     return { kind: 'talk', greeting: this.npcGreetingText };
   }
 
@@ -582,8 +594,13 @@ export class NPCSession {
    *  itself is the host's (it already feeds TK-ii's getBuildingList);
    *  what rides here is the pool policy over the candidates it finds:
    *  `buildings` is [{buildingType, buildingKey, buildingName,
-   *  isNamedBuilding, npcs: [{nameSeed, factionID, gender, socialGroup,
-   *  isChild, ...}]}].
+   *  isNamedBuilding, npcs: [{nameSeed, factionID, gender, isChild,
+   *  ...}]}] - the NPC's social group is NOT taken as given: C#
+   *  resolves each candidate's faction through GetStaticNPCFactionData
+   *  with the BUILDING's own type (:2814-2816), so the id-0 court /
+   *  people redirect and the three generic Random_* redirects apply
+   *  here exactly as they do at a click, and the sgroup is read
+   *  UNCLAMPED (the Merchants clamp belongs to SetTargetNPC alone).
    *
    *  KEPT, in C#'s own order:
    *  - the pool is cleared and rebuilt only when the location CHANGED
@@ -606,7 +623,8 @@ export class NPCSession {
     const nameBank = this.deps.nameBankOfCurrentRegion?.() ?? 0;
     for (const building of buildings) {
       for (const npc of (building.npcs ?? [])) {
-        const socialGroup = npc.socialGroup;
+        const factionData = this.getStaticNPCFactionData(npc.factionID ?? 0, building.buildingType);
+        const socialGroup = (factionData ?? EMPTY_FACTION).sgroup;
         if (socialGroup !== SOCIAL_GROUP.Merchants
           && socialGroup !== SOCIAL_GROUP.Commoners
           && socialGroup !== SOCIAL_GROUP.Nobility) continue;
@@ -641,8 +659,10 @@ export class NPCSession {
    *  and the tokens are expanded with reveal TRUE, so greeting a
    *  finished questor can still reveal dialog-linked resources. */
   getNPCQuestGreeting() {
-    if (this.currentNPCType !== NPC_TYPE.Static) return '';
+    // the guild is looked up BEFORE the type gate in C# (:911-913),
+    // for a mobile as much as a static
     const guild = this.deps.guildOfBuildingFaction?.() ?? null;
+    if (this.currentNPCType !== NPC_TYPE.Static) return '';
     const posts = this.deps.questorPostMessages?.() ?? new Map();
     for (const [questID, tokens] of posts) {
       const quest = this.deps.getQuest?.(questID) ?? null;
@@ -653,7 +673,20 @@ export class NPCSession {
           || (person.isIndividualNPC && person.factionData?.id === (this.lastTargetStaticNPC?.data?.factionID ?? null));
         if (!person.isQuestor || !matches) continue;
         if (guild?.isMember?.()) quest.externalMCP = guild;
-        return this.deps.expandQuestMessage?.(quest, tokens, true) ?? '';
+        // KEPT: **THE UNCLONED QUESTOR POST.** ExpandQuestMessage
+        // writes each expanded string back into the token it came
+        // from (QuestMacroHelper.cs:157), and C# hands it the array
+        // straight out of dictQuestorPostQuestMessage (:927) - so the
+        // STORED message is permanently expanded by the first
+        // greeting. GetAnswerFromTokensArray clones before expanding
+        // for exactly this reason, with DFU's own comment naming the
+        // altering macros that must re-evaluate; this arm does not,
+        // so an altering macro in a post-quest message freezes at its
+        // first value. Kept: the tokens are passed through uncloned,
+        // and the conversion uses the DEFAULT separator (:936), not
+        // the mill's `false`.
+        this.deps.expandQuestMessage?.(quest, tokens, true);
+        return tokensToString(tokens);
       }
     }
     return '';

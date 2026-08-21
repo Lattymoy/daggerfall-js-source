@@ -464,10 +464,40 @@ Also RECORDED (Ledger A): SetRandomQuestor uses `new System.Random()`
 unseeded and wall-clock dependent. Unspecified, so the port's own roll
 is as faithful.
 
-**The re-read caught a bug in my own port before the pins did.**
-StartNewConversation reset `numQuestionsAsked`, `questionOpeningText`
-and `currentQuestionListItem` on this object, where nothing reads
-them: those three are TalkManager fields in C# but live on TK-iii's
+**THE UNCLONED QUESTOR POST** (:927 vs :3552). ExpandQuestMessage
+writes each expanded string back into the token it came from
+(QuestMacroHelper.cs:157), and GetNPCQuestGreeting hands it the array
+straight out of `dictQuestorPostQuestMessage` - no clone. So the
+STORED message is permanently expanded by the first greeting, and
+greeting the same questor again re-expands what is already expanded.
+GetAnswerFromTokensArray DOES clone before expanding, with DFU's own
+comment naming the altering macros that must re-evaluate on every ask
+and citing the Missing Prince quest; this arm does not, so an altering
+macro in a post-quest message freezes at its first value. Kept, along
+with the conversion's DEFAULT separator (:936) where the mill's common
+arm passes `false`.
+
+**The re-read caught three bugs in my own port before the pins did**,
+and the first two are the same shape as TK-iii's - a law left with the
+host that C# keeps in the method:
+
+1. **Half of TalkToNpc's tone reset was the host's.** C# clears
+   `lastToneIndex` AND `toneReactionForTalkSession[0..2]` in the same
+   four lines (:2659-2662). The first lives on TK-iii's pipeline and
+   rightly rides a seam; the second is TalkManager's own field, and I
+   had left it with the host. A host that cleared only the seam would
+   answer for the next NPC with the last one's cached reaction. The
+   array is now this object's field, cleared here.
+2. **The questor pool took each candidate's social group as given.**
+   C# resolves it through GetStaticNPCFactionData with the BUILDING's
+   own type (:2814-2816), so the id-0 court/people redirect and the
+   three generic Random_* redirects apply in the pool exactly as they
+   do at a click - and the sgroup is read UNCLAMPED, the Merchants
+   fold belonging to SetTargetNPC alone. The port now resolves it.
+3. **StartNewConversation reset three fields that live elsewhere.**
+   `numQuestionsAsked`, `questionOpeningText` and
+   `currentQuestionListItem` were reset on this object, where nothing
+   reads them: those three are TalkManager fields in C# but live on TK-iii's
 AnswerPipeline in the port. A second copy here would have been a reset
 that never reaches the thing doing the answering. It now goes through
 a `resetQuestionSession` seam, and the pipeline gained the matching
@@ -477,7 +507,8 @@ different moment.
 
 RECORDED pending: the pool build's block walk is the host's (it
 already feeds TK-ii's getBuildingList), so `buildQuestorPool` takes
-the candidates rather than the blocks; GetPortraitIndexFromStaticNPCBillboard
+the candidates rather than the blocks - but it resolves their factions
+itself; GetPortraitIndexFromStaticNPCBillboard
 rides the `portraitForBillboard` seam; and the window routing, the
 event rebuilds and the save threading land with TK-v.
 
