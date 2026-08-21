@@ -145,6 +145,33 @@ test('variantTokensById: the pick law, the operand skip, and the FTD-1 step-back
   assert.deepEqual(rsc.variantTokensById(1, () => 0), [], 'a missing record answers empty');
 });
 
+test('variantTokensById: the walk classifies EVERY byte - odd lengths, leading prefixes, two-variant records, the step-back edges', () => {
+  const rsc = new TextRsc();
+  const bytes = (arr) => new Uint8Array(arr);
+  const T = (s) => [...s].map((c) => c.charCodeAt(0));
+  const text = (tokens) => tokens.filter((x) => x.formatting === TOKEN_TEXT).map((x) => x.text).join('');
+  // ODD-length variants: a walk that double-steps text bytes misses
+  // the separator at an odd index and fuses the variants
+  rsc.bytesById = () => bytes([...T('abc'), RSC.SubrecordSeparator, ...T('d'), RSC.EndOfRecord]);
+  assert.equal(text(rsc.variantTokensById(1, () => 0.999)), 'd', 'the separator at index 3 splits - two variants, the top pick is d');
+  assert.equal(text(rsc.variantTokensById(1, () => 0)), 'abc');
+  // a LEADING FontPrefix whose operand is 0xFF: the operand skip must
+  // fire at index 0, and the count must stay TWO
+  rsc.bytesById = () => bytes([RSC.FontPrefix, 0xff, ...T('b'), RSC.SubrecordSeparator, ...T('cc'), RSC.EndOfRecord]);
+  assert.equal(text(rsc.variantTokensById(1, () => 0.5)), 'cc', 'n=2: floor(0.5*2)=1 - the 0xFF operand did not mint a third variant');
+  assert.equal(text(rsc.variantTokensById(1, () => 0)), 'b');
+  // a plain TWO-variant record honours the pick (no n<=2 shortcut)
+  rsc.bytesById = () => bytes([...T('aa'), RSC.SubrecordSeparator, ...T('bb'), RSC.EndOfRecord]);
+  assert.equal(text(rsc.variantTokensById(1, () => 0.999)), 'bb');
+  // a LEADING empty variant at pick 0 answers empty - the step-back
+  // only fires for want > 0, never off the front
+  rsc.bytesById = () => bytes([RSC.SubrecordSeparator, ...T('b'), RSC.EndOfRecord]);
+  assert.deepEqual(rsc.variantTokensById(1, () => 0), [], 'want 0 never steps to ranges[-1]');
+  // an empty SECOND variant of two steps back exactly one
+  rsc.bytesById = () => bytes([...T('aa'), RSC.SubrecordSeparator, RSC.EndOfRecord]);
+  assert.equal(text(rsc.variantTokensById(1, () => 0.999)), 'aa', 'want 1 empty steps back to variant 0');
+});
+
 // ---------------------------------------------------------------
 // TokensToString (:3561-3578)
 // ---------------------------------------------------------------
@@ -283,9 +310,10 @@ test('the suppression boundaries: faction id 1 passes the zero gate, the faction
   m3.listRumorMill.push(commonEntry({ faction1: 41 }));
   assert.equal(m3.getValidRumors().length, 1, '75 >= 75: the suppression roll fails at its own boundary');
   // faction2 = 1 through the OUTER gate (the !== 0 test, never !== 1)
+  // - at TYPE 100, so the type arm cannot mask the faction2 arm
   const { mill: m4 } = makeMill({ getFactionData: flagged, rolls: () => 0 });
-  m4.listRumorMill.push(commonEntry({ faction1: 0, faction2: 1, type: 26 }));
-  assert.equal(m4.getValidRumors().length, 0, 'faction2 id 1 enters the clause and suppresses');
+  m4.listRumorMill.push(commonEntry({ faction1: 0, faction2: 1, type: 100 }));
+  assert.equal(m4.getValidRumors().length, 0, 'faction2 id 1 enters the clause alone and suppresses');
   // faction2 alone at TYPE 100 - the clause is a three-way OR, so a
   // lone faction2 enters whatever the type
   const { mill: m5 } = makeMill({ getFactionData: flagged, rolls: () => 0 });
