@@ -17,7 +17,8 @@ import { fileURLToPath } from 'node:url';
 
 import { loadQuestTables } from '../src/systems/quest/tables.js';
 import { QuestMachine } from '../src/systems/quest/machine.js';
-import { SITE_TYPES } from '../src/systems/quest/place.js';
+import { SITE_TYPES, Scopes } from '../src/systems/quest/place.js';
+import { Table } from '../src/systems/quest/table.js';
 import { GENDERS } from '../src/characters/nameHelper.js';
 import { mapPixelToWorldCoord } from '../src/formats/mapsFile.js';
 
@@ -42,19 +43,26 @@ const building = (buildingType, { factionId = 0, nameSeed = 777 } = {}) =>
 const FACTIONS = new Map([
   [364, { id: 364, type: 4, name: 'King Gothryd', race: 3, region: 17 }],   // Individual
   [9, { id: 9, type: 0, name: 'Sheogorath', race: -1 }],                     // Daedra
+  [26, { id: 26, type: 1, name: 'Akatosh the God', race: -1 }],              // God
   [510, { id: 510, type: 2, name: 'The Merchants', race: -1 }],
   [40, { id: 40, type: 2, name: 'The Mages Guild', race: -1 }],
+  [42, { id: 42, type: 13, name: 'The Thieves Guild', race: -1 }],
   [82, { id: 82, type: 9, name: 'Akatosh', race: -1 }],
+  [158, { id: 158, type: 6, name: 'The Selenu', race: -1 }],                 // VampireClan
+  [411, { id: 411, type: 10, name: 'The Host of the Horn', race: -1 }],      // KnightlyGuard
+  [429, { id: 429, type: 8, name: 'The Beldama', race: -1 }],                // WitchesCoven
   [450, { id: 450, type: 9, name: 'Generic Temple', race: -1 }],
+  [512, { id: 512, type: 2, name: 'The Prostitutes', race: -1 }],
   [242, { id: 242, type: 2, name: 'Nobles', race: -1 }],
+  [844, { id: 844, type: 12, name: 'Generic Knightly Order', race: -1 }],
   [201, { id: 201, type: 15, name: 'People of Testshire', race: -1 }],
   [867, { id: 867, type: 14, name: 'Court of Testshire', race: -1 }],
 ]);
 
-function makeWorld() {
-  const townBuildings = [building(15), building(17), building(9)];
-  const townInteriors = [[flat(11), flat(18)], [flat(11)], [flat(18)]];
-  const townExterior = [building(15), building(9)];
+function makeWorld({ buildings = null, interiors = null, unloadedCurrent = false } = {}) {
+  const townBuildings = buildings ?? [building(15), building(17), building(9)];
+  const townInteriors = interiors ?? [[flat(11), flat(18)], [flat(11)], [flat(18)]];
+  const townExterior = buildings ? townBuildings : [building(15), building(9)];
   const block = {
     position: 5000,
     rmbBlock: {
@@ -98,9 +106,11 @@ function makeWorld() {
     currentRegionPeople: () => 201,
     currentRegionCourt: () => 867,
     currentRegionFaction: () => 201,
+    currentRegionVampireClan: () => 158,
     currentRegionRace: () => 3,
     _inside: null,
   };
+  if (unloadedCurrent) world.currentLocation = () => ({ ...town, loaded: false });
   return world;
 }
 
@@ -166,6 +176,11 @@ test('group Questor + a clicked NPC: the questor binds and the audit-III auto-tr
   const home = q.getPlace(p.homePlaceSymbol);
   assert.equal(home.siteDetails.siteType, SITE_TYPES.Town);
   assert.equal(home.siteDetails.locationName, 'Bigtown');
+  // the player-context site carries no building and no markers
+  assert.equal(home.siteDetails.buildingKey, 0);
+  assert.equal(home.siteDetails.magicNumberIndex, 0);
+  assert.equal(home.siteDetails.questSpawnMarkers, null);
+  assert.equal(home.sitePending, false);
 });
 
 test('group Questor with NOTHING clicked: the virtual-NPC fallback goes through the career table to the regional people', () => {
@@ -261,12 +276,33 @@ test('CreateNpc places the person at home (SiteLink + marker); questors refuse P
   assert.deepEqual(home.siteDetails.selectedMarker.targetResources.map((s) => s.name), ['shop']);
   assert.equal(m.siteLinks.length, 1);
 
-  // a questor never places at home
+  // a questor never places at home - and the refusal is CLEAN: the
+  // quest survives the tick (a mutant that lets the questor through
+  // either assigns the home or faults the quest on the markerless
+  // player-context site, and a faulting quest is REMOVED)
   const m2 = makeMachine(makeWorld());
   m2.clicked = { factionID: 510, nameSeed: 1, gender: GENDERS.Male };
   const q2 = schedule(m2, ['Person _qg_ group Questor', '', ' create npc _qg_']);
   m2.tick();
   assert.equal(q2.getResource({ name: 'qg' }).assignedToHome, false);
+  assert.equal(m2.quests.has(q2.uid), true, 'the refusing quest stays alive');
+
+  // an individual atHome refuses the same way (Person.cs:414 guards
+  // questor AND individual before any sitelink work)
+  const m3 = makeMachine(makeWorld());
+  const q3 = schedule(m3, ['Person _king_ named King_Gothryd atHome', '', ' create npc _king_']);
+  m3.tick();
+  assert.equal(q3.getResource({ name: 'king' }).assignedToHome, false);
+  assert.equal(m3.quests.has(q3.uid), true);
+
+  // HEADLESS create npc: no home place exists, PlaceAtHome refuses
+  // without touching the null - the action still completes
+  const m4 = new QuestMachine({ nowSeconds: () => 0 });
+  const q4 = m4.scheduleQuest([...HEADER, 'Person _pp_ group Chemist', '', ' create npc _pp_'], 0, { rolls: () => 0.4 });
+  m4.tick();
+  assert.equal(m4.quests.has(q4.uid), true, 'the null-home refusal does not fault the quest');
+  const startup4 = [...q4.tasks.values()][0];
+  assert.equal(startup4.actions.every((a) => a.isComplete), true);
 });
 
 test('HEADLESS: with no world seam the chain pends LOUDLY and the corpus parse stands', () => {
@@ -276,4 +312,219 @@ test('HEADLESS: with no world seam the chain pends LOUDLY and the corpus parse s
   assert.equal(p.npcPending, true);
   assert.equal(p.displayName, '');
   assert.equal(p.factionData, null);
+  // the pending fields hold their C# defaults untouched
+  assert.equal(p.factionId, 0, 'the getter answers the zero faction');
+  assert.equal(p.faceIndex, -1);
+  assert.equal(p.nameSeed, -1);
+  assert.equal(p.factionRace, -1);
+  assert.equal(p.isIndividualAtHome, false);
+  assert.equal(p.homePlaceSymbol, null);
+});
+
+// ---- the Q3-ii VERIFY pins (QUEST AUDIT VI's mutation campaign) ----
+
+test('a FAILED faction lookup binds the exact zero record; the Chemist row walks the p2 gate to the alchemist', () => {
+  // faction Chemist -> Quests-Factions p3 = 0 -> the persistent store
+  // has no faction 0 -> C#'s default struct stands in whole
+  const world = makeWorld({
+    buildings: [building(0), building(17)],            // an alchemist + a house
+    interiors: [[flat(11), flat(18)], [flat(11)]],
+  });
+  const m = makeMachine(world);
+  const q = schedule(m, ['Person _z_ faction Chemist', '', 'variable _pad_']);
+  const p = q.getResource({ name: 'z' });
+  assert.equal(p.factionId, 0);
+  assert.deepEqual(p.factionData, {
+    id: 0, parent: 0, type: 0, name: '', rep: 0, region: -1, power: 0,
+    ally1: 0, ally2: 0, ally3: 0, enemy1: 0, enemy2: 0, enemy3: 0,
+    face: -1, race: -1, flat1: 0, flat2: 0, sgroup: 0, ggroup: 0,
+  }, "C#'s default FactionData struct, field for field");
+  // id 0 blocks the Individual/Daedra record-name arm (type 0 IS
+  // Daedra) - the display name draws from the bank instead
+  assert.ok(p.displayName.length > 0, 'the id!==0 gate keeps the name-bank draw');
+  assert.equal(p.factionRace, 3, 'race -1 falls to the regional race');
+  // Chemist (0,0,0) passes the home gate: p2=0 -> placesTable key
+  // 'alchemist' -> the type-0 building at block index 0 (the packed
+  // key 0 reads as the 1<<24 directory sentinel)
+  const home = q.getPlace(p.homePlaceSymbol);
+  assert.equal(home.siteDetails.buildingKey, 1 << 24, 'the alchemist, not the house fallback');
+});
+
+test('the WHOLE career table: every Quests-Factions career row lands on its C# switch arm', () => {
+  const CAREERS = {
+    Chemist: 510, Group_1: 510, Armorer: 510, Banker: 510,
+    Group_4: 201,   // C#'s switch SKIPS careerID 4 (case 3 jumps to case 5) - Group_4 falls to the region's People
+    Bookseller: 510, Tailor: 510, Carpenter: 510, Jeweler: 510, Shopkeeper: 510,
+    Librarian: 510, Spellcaster: 40, Pawnbroker: 510, Smith: 510, Cleric: 450,
+    Innkeeper: 510, Noble: 242,
+    Resident1: 201, Resident2: 201, Resident3: 201, Resident4: 201,   // 17-20 fall to the region's People
+    Questor: 201,                                                     // 21 (virtual, nothing clicked)
+  };
+  for (const [career, factionId] of Object.entries(CAREERS)) {
+    const m = makeMachine(makeWorld());
+    const q = schedule(m, [`Person _a_ group ${career}`, '', 'variable _pad_']);
+    assert.equal(q.getResource({ name: 'a' }).factionId, factionId, career);
+  }
+});
+
+test('the factionType switch, arm by arm, over the persistent-store mock', () => {
+  const one = (decl, rolls = () => 0.4) => {
+    const m = makeMachine(makeWorld());
+    return schedule(m, [`Person _x_ ${decl}`, '', 'variable _pad_']).getResource({ name: 'x' });
+  };
+  const at = (decl, roll) => {
+    const m = makeMachine(makeWorld());
+    return schedule(m, [`Person _x_ ${decl}`, '', 'variable _pad_'], { rolls: () => roll }).getResource({ name: 'x' });
+  };
+  assert.equal(one('factionType Daedra').factionId, 9, 'random Daedra draw');
+  assert.equal(one('factionType God').factionId, 26, 'random God draw');
+  assert.equal(one('factionType Person').factionId, 364, 'random Individual draw');
+  const witch = one('factionType Witches_Coven');
+  assert.equal(witch.factionId, 429, 'random WitchesCoven draw');
+  assert.equal(witch.npcGender, GENDERS.Female, 'covens force Female');
+  assert.equal(one('factionType Vampire_Clan').factionId, 158, "the region's vampire clan");
+  assert.equal(one('factionType Province').factionId, 201, 'the region faction');
+  assert.equal(one('factionType Knightly_Guard').factionId, 411, 'ORDERS sorted ascending, index 4 at roll 0.4');
+  assert.equal(one('factionType Magic_User').factionId, 40, 'the Mages Guild hardcode');
+  assert.equal(one('factionType Generic_Group').factionId, 450, 'roll < 0.5 answers 450');
+  assert.equal(at('factionType Generic_Group local', 0.9).factionId, 844, 'roll >= 0.5 answers 844');
+  assert.equal(one('factionType Thieves_Den').factionId, 42, 'the Thieves Guild hardcode');
+  assert.equal(one('factionType People').factionId, 201, "the region's People");
+  // the Faction row carries p3 = -1: C#'s KEPT BUG assigns the raw
+  // Range(0,4) INDEX as the type - roll 0.4 draws 1 = God
+  assert.equal(one('factionType Faction').factionId, 26, 'the -1 quirk lands on the God pool');
+});
+
+test('the negative-p2 careers read p3, and 10000 folds to 0 (the player-faction fold)', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, ['Person _a_ group Local_4.10k', '', 'variable _pad_']);
+  assert.equal(q.getResource({ name: 'a' }).factionId, 510, 'p2=-4 -> p3=10000 -> 0 -> Merchants');
+});
+
+test('missing table rows warn and fall through to the zero binding, never a throw', () => {
+  for (const decl of ['named No_Such_Person', 'faction No_Such_Faction', 'factionType No_Such_Type', 'group No_Such_Career']) {
+    const m = makeMachine(makeWorld());
+    const q = schedule(m, [`Person _x_ ${decl}`, '', 'variable _pad_']);
+    const p = q.getResource({ name: 'x' });
+    assert.equal(p.factionId, 0, decl);
+    assert.equal(p.npcPending, false, `${decl} still binds the rest of the chain`);
+    assert.ok(p.displayName.length > 0, `${decl} draws a bank name`);
+    assert.equal(p.factionRace, 3, `${decl} race falls to the region`);
+  }
+  // and with NO regional race on the seam, the -1 default stands
+  const bare = makeWorld();
+  delete bare.currentRegionRace;
+  const m2 = makeMachine(bare);
+  const q2 = schedule(m2, ['Person _x_ named No_Such_Person', '', 'variable _pad_']);
+  assert.equal(q2.getResource({ name: 'x' }).factionRace, -1);
+});
+
+test('faction 512 forces Female through the display-name arm', () => {
+  const m = makeMachine(makeWorld());
+  // The_Prostitutes -> p3 512; the mock record is type Group (2), so
+  // only the id===512 half of the OR can fire
+  const q = schedule(m, ['Person _w_ faction The_Prostitutes', '', 'variable _pad_'], { rolls: () => 0.4 });
+  const p = q.getResource({ name: 'w' });
+  assert.equal(p.factionId, 512);
+  assert.equal(p.npcGender, GENDERS.Female, 'roll 0.4 would be Male - the 512 arm overrode it');
+});
+
+test('the gender roll: >= 0.5 is Female, exactly 0.5 is Female, the explicit token wins', () => {
+  const at = (decl, roll) => {
+    const m = makeMachine(makeWorld());
+    return schedule(m, [`Person _x_ ${decl}`, '', 'variable _pad_'], { rolls: () => roll }).getResource({ name: 'x' });
+  };
+  assert.equal(at('group Chemist local', 0.6).npcGender, GENDERS.Female);
+  assert.equal(at('group Chemist local', 0.5).npcGender, GENDERS.Female, 'the strict < 0.5 boundary');
+  assert.equal(at('male group Chemist local', 0.6).npcGender, GENDERS.Male, 'the parsed token skips the roll');
+  assert.equal(at('female group Chemist', 0.4).npcGender, GENDERS.Female);
+});
+
+test('AssignHUDFace rolls Range(0,10) exactly: roll 0.95 answers face 9', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, ['Person _x_ face 3 group Chemist local', '', 'variable _pad_'], { rolls: () => 0.95 });
+  assert.equal(q.getResource({ name: 'x' }).faceIndex, 9, 'floor(0.95*10), the parsed 3 ignored');
+});
+
+test('the Temple draw at roll 0.9 still answers 82: 450 is truly OUT of the pool', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, ['Person _t_ factionType Temple local', '', 'variable _pad_'], { rolls: () => 0.9 });
+  assert.equal(q.getResource({ name: 't' }).factionId, 82, 'a high roll would land on 450 were it pooled');
+});
+
+test('nameSeed -1 draws the injectable engine roll 0..999 verbatim', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, ['Person _x_ group Chemist local', '', 'variable _pad_'], { rolls: () => 0.9995 });
+  const p = q.getResource({ name: 'x' });
+  assert.equal(p.nameSeed, 999, 'floor(0.9995*1000) - the Range(0,1000) surface');
+  assert.ok(p.displayName.length > 0);
+});
+
+test('the home scope law: unstated scope rolls ONLY over a loaded town with buildings', () => {
+  // one building is enough for the roll (the > 0 gate)
+  const m1 = makeMachine(makeWorld({ buildings: [building(17)], interiors: [[flat(11)]] }));
+  const q1 = schedule(m1, ['Person _x_ group Shopkeeper', '', 'variable _pad_'], { rolls: () => 0.4 });
+  const home1 = q1.getPlace(q1.getResource({ name: 'x' }).homePlaceSymbol);
+  assert.equal(home1.scope, Scopes.Local, 'roll 0.4 under a loaded, built town goes local');
+
+  // an UNLOADED current location forces remote - and the one-town
+  // region's dart board excludes the player's own town, so the remote
+  // search fails with ITS message, proving the local arm never ran
+  const m2 = makeMachine(makeWorld({ unloadedCurrent: true }));
+  assert.throws(
+    () => schedule(m2, ['Person _x_ group Shopkeeper', '', 'variable _pad_'], { rolls: () => 0.4 }),
+    /remote site/, 'forced remote, not a 0.4 local roll');
+
+  // a loaded town with ZERO buildings forces remote the same way
+  const m3 = makeMachine(makeWorld({ buildings: [], interiors: [] }));
+  assert.throws(
+    () => schedule(m3, ['Person _x_ group Shopkeeper', '', 'variable _pad_'], { rolls: () => 0.4 }),
+    /remote site/, 'the buildings.length > 0 gate');
+});
+
+test('residence homes: Resident4 takes house4 by ROW; a Questor home is a plain house even beside a house5', () => {
+  // house1 (17) first, house4 (20) second: the Resident4 row (0,20,0)
+  // passes the gate and names house4 - the wildcard would have taken
+  // the FIRST house at roll 0.4
+  const m1 = makeMachine(makeWorld({ buildings: [building(17), building(20)], interiors: [[flat(11)], [flat(11)]] }));
+  const q1 = schedule(m1, ['Person _x_ group Resident4', '', 'variable _pad_'], { rolls: () => 0.4 });
+  const home1 = q1.getPlace(q1.getResource({ name: 'x' }).homePlaceSymbol);
+  assert.equal(home1.siteDetails.buildingKey, 1, 'the type-20 house at index 1');
+
+  // Questor (0,21,0) FAILS the p2<=20 gate -> 'house' -> the type-21
+  // house5 next door is invisible to the wildcard set
+  const m2 = makeMachine(makeWorld({ buildings: [building(21), building(17)], interiors: [[flat(11)], [flat(11)]] }));
+  const q2 = schedule(m2, ['Person _x_ group Questor', '', 'variable _pad_'], { rolls: () => 0.4 });
+  const home2 = q2.getPlace(q2.getResource({ name: 'x' }).homePlaceSymbol);
+  assert.equal(home2.siteDetails.buildingKey, 1, 'the type-17 house at index 1, never the house5');
+});
+
+test('Table.getKeyForValue answers the FIRST matching row (Table.cs:285-297)', () => {
+  const t = new Table(['schema: *key,v', 'a, 1', 'b, 1', 'c, 2']);
+  assert.equal(t.getKeyForValue('v', '1'), 'a', 'row 0 wins');
+  assert.equal(t.getKeyForValue('v', '2'), 'c');
+  assert.equal(t.getKeyForValue('v', '9'), null, 'no match answers null');
+  assert.throws(() => t.getKeyForValue('nope', '1'), /does not exist/);
+});
+
+test('ChangeReputeWith carries the SIGN: a positive amount moves reputation up', () => {
+  const m = makeMachine(makeWorld());
+  schedule(m, [
+    'Person _pp_ group Chemist', '',
+    ' change repute with _pp_ by +22', '',
+    'variable _pad_',
+  ]);
+  m.tick();
+  assert.deepEqual(m.of('changeReputation'), [['changeReputation', 510, 22, true]]);
+});
+
+test('an absent getReputation dep reads 0 (the unknown-faction law), holding ReputeExceedsDo shut', () => {
+  const m = new QuestMachine({ nowSeconds: () => 0, world: makeWorld() });
+  const q = m.scheduleQuest([...HEADER,
+    'Person _pp_ group Chemist', '',
+    ' repute with _pp_ exceeds 1 do _liked_', '',
+    'variable _liked_',
+  ], 0, { rolls: () => 0.4 });
+  m.tick(); m.tick();
+  assert.equal(q.getTask({ name: 'liked' }).getTriggerValue(), false, '0 < 1 keeps waiting');
 });
