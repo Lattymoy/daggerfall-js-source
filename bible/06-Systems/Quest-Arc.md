@@ -836,6 +836,51 @@ Gate: `test/questmacros.test.js` - 16 pins: the 3,817-message corpus
 expansion with the exact NRE trio and error-shape counts, and the
 crafted-world law pins above.
 
+## QUEST AUDIT IX (2026-08-21, the Q4-i verify pass)
+
+The parity lane ran raw-C# in the main loop DURING implementation
+(the subagent limit still held): QuestMacroHelper.cs whole,
+QuestMCP.cs whole, every handler body extracted verbatim before
+porting, GetFlatData/GetRulerTitle/GetLordNameForFaction/
+GetRandomFullName read at source. The multi-agent adversarial retry
+covers this slice with Q3-iii/Q3-iv when the limit lifts.
+
+- THE CAMPAIGN, with an operational lesson first: a stop that never
+  landed left the first run alive while its "recovery" relaunch
+  raced the same sandbox - both were wiped and a clean
+  single-instance run re-measured from baseline (its numbers then
+  matched the first run exactly, proving the first had finished
+  before the race; the caution stands anyway - one campaign per
+  sandbox, verified stopped before relaunching).
+- 180 mutants over the engine + the override ranges: 88 subset
+  survivors. The REAL holes: the ENTIRE Item override unpinned
+  (18/18 survived - no test had ever expanded an item macro), the
+  message DEFAULT arms untested (every pin passed explicit args),
+  and the exact Place answers unasserted - which let MACRO_TYPES
+  enum drift hide behind reference-based deepEquals, and Place's
+  shared case 2/case 3 answer masked it further (only a PERSON
+  building-vs-town assert distinguishes). Three pin rounds closed
+  them: 12 pins (part 1), 7 sharpened fixtures for MASKED kills
+  (part 2 - the reveal message finally carrying a resource macro,
+  the undefined-arg variant default, arg-EXACT stubs for
+  %oth/%reg/NM4, exact literals Raithi/Baos-i/Cauvin/F'orcten and
+  King Gothryd/Saalpki/D'eght-si/Rirhtun pinning both sides of BOTH
+  gender coins), and 2 micro-pins (the two-entry %qdt id-match, the
+  male %rn seed), the last three full-suite-confirmed. 88 -> 39 ->
+  fixture-final.
+- RECORDED EQUIVALENTS (36, each with a proof): the STRING-GATE
+  family - a non-string expandMacro return is never substituted, so
+  every `return false`->true mutant is inert (C#'s bool-out
+  contract); the item gold disjunct redundant to the port's own
+  Currency-group mint; the clock 86400->86401 ceiling UNREACHABLE -
+  no multiple-of-60 clock lands in a distinguishing window (the
+  divisibility proof); the ?? -1 -> -2 seam-contract family; the
+  out-of-slice quest inits the sweep range grazed; the baked
+  FACTION_RACE_KEYS literals (representative killed; key 3 provably
+  masked by the Breton default); the fall-through and no-call-site
+  tails; place 716's ||-variant save-shape-bounded (the workaround
+  round-trips on faithful maps - Q4-iv's envelope revisits).
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

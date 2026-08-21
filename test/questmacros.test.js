@@ -562,18 +562,23 @@ test('%qdt renders the SELECTED log entry once the journal points at it', () => 
   const q = schedule(m, [
     'Quest: __QM', 'QRC:',
     'Message:  1050', ' step', '',
+    'Message:  1051', ' later', '',
     'Message:  1011', ' %qdt', '',
     'QBN:',
-    ' log 1050 step 0', '',
+    ' log 1050 step 0',
+    ' log 1051 step 1', '',
     'variable _pad_',
   ]);
-  m.tick();   // the quest starts at 100000 and logs step 0
+  m.tick();   // the quest starts at 100000 and logs both steps
   const before = expandOne(q, 1011);
   q.currentLogMessageId = 1050;
   assert.equal(expandOne(q, 1011), before, 'the entry was logged AT start - same date, through the MATCH arm');
-  // move the entry's stamp: the MATCH arm must read IT, not the start
-  [...q.activeLogMessages.values()][0].time = 100000 + 5 * 86400;
-  assert.notEqual(expandOne(q, 1011), before, 'the matched entry time wins over quest start');
+  // move the SECOND entry's stamp and point at it: the match arm must
+  // read the entry whose messageID MATCHES, never just the first timed one
+  q.currentLogMessageId = 1051;
+  const second = [...q.activeLogMessages.values()].find((l) => l.messageID === 1051);
+  second.time = 100000 + 5 * 86400;
+  assert.notEqual(expandOne(q, 1011), before, 'the id-matched entry time wins over quest start AND the first entry');
 });
 
 test('%rn falls to a seeded random full name when the province has no Individual child', () => {
@@ -583,7 +588,10 @@ test('%rn falls to a seeded random full name when the province has no Individual
   const hooks = { world };
     srand(9001);
   assert.equal(getContextValue('%rn', { uid: 1, hooks }, hooks), "D'eght-si",
-    'the fallback draws on the live DFRandom chain - exact from srand(9001)');
+    'the fallback draws on the live DFRandom chain - exact from srand(9001), the FEMALE coin');
+  srand(9003);
+  assert.equal(getContextValue('%rn', { uid: 1, hooks }, hooks), 'Rirhtun',
+    'srand(9003) lands the MALE coin - the pair pins the coin itself');
 });
 
 test('expandQuestString expands ONE context macro in a bare string; getMessageResources enumerates', () => {
