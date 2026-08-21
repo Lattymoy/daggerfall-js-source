@@ -107,6 +107,20 @@ export class QuestResource {
    *  resources override. Returns a string or false. */
   expandMacro(_macroType) { return false; }
 
+  /** GetMessage (QuestResource.cs:283-296): every variant's
+   *  UNEXPANDED tokens as a list, null when the id resolves to no
+   *  message (the -1 defaults fall out here). TK-ii's topic answers
+   *  ride this - TalkManager expands just in time, never at store. */
+  getMessage(messageId) {
+    const message = this.parentQuest?.getMessage(messageId);
+    if (!message) return null;
+    const tokenList = [];
+    for (let i = 0; i < message.variants.length; i++) {
+      tokenList.push(message.getTextTokensByVariant(i, false));
+    }
+    return tokenList;
+  }
+
   /** Gender (QuestResource.cs:100-103): Male unless overridden
    *  (Person -> npcGender, Foe -> humanoidGender); the pronoun
    *  macros read it off lastResourceReferenced. */

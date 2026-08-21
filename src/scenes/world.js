@@ -100,7 +100,9 @@ import { resolveVariantGuild } from '../systems/guildVariants.js';
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
 import { expandQuestMessage } from '../systems/quest/questMacros.js';
-import { discoverRandomLocation, discoverLocation } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer
+// TK-ii: THE TOPIC TREE - the quest topic/dialog-link seams land.
+import { TopicTree, QUEST_INFO_RESOURCE_TYPE } from '../systems/topicTree.js';
+import { discoverRandomLocation, discoverLocation, undiscoverBuilding } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -998,7 +1000,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       classicMinutes: Math.floor(playerTicker.classicMinutes),
       readiedSpellIndex: magic.readiedIndex(),
       quest: questBridge.snapshot(),   // Q4-v: the machine + notebook + one-time list
-      talk: rumorMill.getSaveData(),   // TK-i: SaveDataConversation's rumor halves
+      // TK-i/TK-ii: SaveDataConversation's shipped halves (the mill +
+      // the questor-post dict + dictQuestInfo; npcsWithWork and
+      // castleNPCsSpokenTo ride TK-iv)
+      talk: { ...rumorMill.getSaveData(), ...topicTree.getSaveData() },
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -1027,7 +1032,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // game, whatever the chargen flow later reports.
       questBridge.restore(extras.quest ?? null);
       if (extras.quest) _questStarted = true;
-      rumorMill.restoreSaveData(extras.talk ?? null);   // TK-i: pre-TK saves restore(null) as a no-op
+      if (extras.talk) {   // TK-i/TK-ii: a pre-TK save leaves the live session standing (recorded)
+        rumorMill.restoreSaveData(extras.talk);
+        topicTree.restoreSaveData(extras.talk);   // the orphan sweep + relink + TellMeAbout tail run inside
+        // RestoreConversationData's mill-orphan sweep (:2522-2533)
+        rumorMill.removeOrphanedQuestRumors((id) => !!questBridge.machine.getQuest(id));
+      }
       if (extras.locationKey === 'world' && extras.world?.pixel) {
         const w = extras.world;
         await _teleportToPixel(w.pixel.x, w.pixel.y);
@@ -1373,9 +1383,40 @@ export async function bootWorld(canvas, renderer, params, status) {
     expandRandomTextRecord: (id) => townTalk.lines(id).map((r) => r.text ?? r).join(' '),
     rolls: Math.random,
   });
+  // TK-ii: THE TOPIC TREE beside the mill. The quest topic/dialog-link
+  // seams land here; the tree's WINDOW consumers (the Tell-me-about
+  // page, the quest Where-is entries) mount with TK-v; the position
+  // half of BuildingInfo (the compass) rides TK-iii.
+  const topicTree = new TopicTree({
+    getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
+    getAllActiveQuestIds: () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned).map((q) => q.uid),
+    currentRegionIndex: () => _questLoc()?.regionIndex ?? -1,
+    currentRegionName: () => questWorld.currentRegionName(),
+    currentLocationName: () => _questLoc()?.name ?? '',
+    currentMapId: () => _questLoc()?.mapTableData?.mapId ?? 0,
+    isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
+    isPlayerInsideBuilding: () => (modes?.mode ?? 'exterior') === 'interior',
+    isPlayerInsideCastle: () => false,   // the Q4-v caveat rides here too
+    currentBuildingKey: () => modes?.interiorBuilding?.buildingKey ?? -1,
+    getBuildingList: () => townTalk.directory,
+    exteriorBuildings: () => _questLoc()?.exterior?.buildings ?? null,
+    factionName: (id) => townTalk.factionDict?.get(id)?.name ?? '',
+    addOrReplaceQuestProgressRumor: (uid, m) => rumorMill.addOrReplaceQuestProgressRumor(uid, m),
+    undiscoverBuilding: (buildingKey) => undiscoverBuilding(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`, buildingKey),
+    talkPartner: () => null,   // the NPC session is TK-iv's (recorded)
+    onTopicListsUpdated: () => {},   // the talk window's refresh is TK-v's
+  });
   questBridge = createQuestBridge({
     data: questPack,
     world: questWorld,
+    // TK-ii: the topic/dialog seams land in the tree (TalkManager's
+    // own methods, 1:1; the machine's dialogLink/addDialog arg shapes
+    // are already the C# ones)
+    addQuestTopics: (quest) => topicTree.addQuestTopicsForQuest(quest),
+    dialogLink: (uid, name, type, name2, type2) => topicTree.dialogLinkForQuestInfoResource(uid, name, type, name2 ?? null, type2 ?? QUEST_INFO_RESOURCE_TYPE.NotSet),
+    addDialog: (uid, name, type, instantRebuild) => topicTree.addDialogForQuestInfoResource(uid, name, type, instantRebuild),
+    removeQuestInfoTopics: (uid) => topicTree.removeQuestInfoTopicsForSpecificQuest(uid),
+    forceTopicListsUpdate: () => topicTree.forceTopicListsUpdate(),
     // TK-i: the six rumor seams land in the mill (TalkManager's own
     // methods, 1:1)
     addQuestRumor: (uid, m) => rumorMill.addQuestRumorToRumorMill(uid, m),

@@ -41,6 +41,14 @@ export function hasDiscoveredBuilding(locationId, buildingKey) {
   return _discovered.get(locationId)?.has(buildingKey) ?? false;
 }
 
+/** PlayerGPS.UndiscoverBuilding (:980-1010)'s store half: drop one
+ *  building from a location's discovered set. TK-ii undiscovers quest
+ *  RESIDENCES at topic-add so a previously discovered house does not
+ *  pre-reveal on the automap when a quest names it. */
+export function undiscoverBuilding(locationId, buildingKey) {
+  _discovered.get(locationId)?.delete(buildingKey);
+}
+
 /** The location's discovered records, for the map that will draw them. */
 export function discoveredBuildings(locationId) {
   return [..._discovered.get(locationId)?.values() ?? []].map((r) => ({ ...r }));

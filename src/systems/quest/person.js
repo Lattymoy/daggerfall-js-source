@@ -104,6 +104,28 @@ export class Person extends QuestResource {
 
   get gender() { return this.npcGender; }
 
+  /** HomeRegionName / HomeRegionIndex / HomeBuildingName
+   *  (Person.cs:112-125 -> :523-569): all derive from the HOME Place -
+   *  BLANK / -1 when the person has none. The index resolves the home
+   *  region NAME back through the map reader, exactly C#'s
+   *  GetRegionIndex walk. TK-ii's topic tree reads these. */
+  get homeRegionName() {
+    const place = this.getHomePlace();
+    return place ? place.siteDetails.regionName : 'BLANK';
+  }
+
+  get homeRegionIndex() {
+    const place = this.getHomePlace();
+    if (!place) return -1;
+    const maps = this.parentQuest?.hooks?.world?.maps;
+    return maps?.getRegionIndex?.(place.siteDetails.regionName) ?? -1;
+  }
+
+  get homeBuildingName() {
+    const place = this.getHomePlace();
+    return place ? place.siteDetails.buildingName : 'BLANK';
+  }
+
   /** GetDialogPlace (Person.cs): the assigned Place, else home. */
   getDialogPlace() {
     if (this.assignedPlaceSymbol) return this.parentQuest.getPlace(this.assignedPlaceSymbol);

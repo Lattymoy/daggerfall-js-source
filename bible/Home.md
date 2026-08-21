@@ -248,15 +248,15 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:153` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:170` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:585` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:610` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:616` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1110` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1324` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1442` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:1461` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:1687` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1948` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:587` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:612` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:618` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1120` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1334` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1483` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:1502` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:1728` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1989` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:189` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:230` - FLAGGED (Port-Ledger Q4-v): quest FOES pend the interior enemy
 - `src/scenes/worldModes.js:325` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)

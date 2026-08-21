@@ -355,6 +355,22 @@ export class RumorMill {
     return this.dictQuestorPostQuestMessage.get(questID) ?? null;
   }
 
+  /** RestoreConversationData's mill-orphan sweep (:2522-2533): quest
+   *  rumors whose quest no longer exists in the machine drop on load,
+   *  with the verbatim log line. TK-ii's host restore calls this after
+   *  the mill restores. */
+  removeOrphanedQuestRumors(hasQuest) {
+    for (let i = this.listRumorMill.length - 1; i >= 0; i--) {
+      const entry = this.listRumorMill[i];
+      if (entry.rumorType === RUMOR_TYPE.QuestRumorMill || entry.rumorType === RUMOR_TYPE.QuestProgressRumor) {
+        if (!hasQuest(entry.questID)) {
+          console.log(`Save data contains orphaned rumors for quest with id ${entry.questID}. Removing these rumors...`);
+          this.listRumorMill.splice(i, 1);
+        }
+      }
+    }
+  }
+
   // ---- the SaveDataConversation halves this slice owns ----
 
   /** listRumorMill + dictQuestorPostQuestMessage, plain data (the

@@ -26,6 +26,9 @@ export const BUILDING_TYPES = Object.freeze({
 
 export const NAMED_BUILDING_TYPES = Object.freeze([0, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
 export const isNamedBuildingType = (t) => NAMED_BUILDING_TYPES.includes(t);
+/** RMBLayout.IsResidence (:753-760): only House1-House4 ID as a
+ *  "Residence" (TK-ii's quest-residence General section reads it). */
+export const isResidence = (t) => t >= BUILDING_TYPES.House1 && t <= BUILDING_TYPES.House4;
 /** RMBLayout.IsResidence: House1-House4. */
 
 // DFU Internal_Strings (classic FALL.EXE), verbatim.
