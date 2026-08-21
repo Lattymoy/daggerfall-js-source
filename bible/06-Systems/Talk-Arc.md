@@ -405,7 +405,11 @@ faithful when it was not:
    rumor mill carried the same bug in `getNewsOrRumors`'s default
    parameter, and **TALK AUDIT I had recorded its symptom as a proven
    equivalence** - "the discarded object is never read again" was true,
-   and it was the bug talking. That equivalence is withdrawn.
+   and it was the bug talking. That equivalence is withdrawn, and its
+   line is live: all three mutants on the mill's new field re-confirm
+   dead against the full suite (fails=6, 5, 5 on a baseline of 4),
+   including the one that reverts the fix by putting the object literal
+   back in the parameter default.
 
 A grep of TalkManager.cs for a clear-after-expansion assignment finds
 exactly the two live macro slots, and both are now faithful. The rest
