@@ -374,6 +374,113 @@ and TK-v. The greeting arms
 (GetNPCGreeting/GetNPCQuestGreeting/GetGreetingIndex) belong with
 the NPC session and moved to TK-iv with it.
 
+## TK-iv - THE NPC SESSION (SHIPPED 2026-08-21)
+
+`systems/npcSession.js` is TalkManager's NPC-session half, 1:1. The
+three slices before it answer questions for an NPC that nothing has
+yet chosen; this is the module that chooses one, and decides whether
+the conversation happens at all.
+
+Ported: the click arms (TalkToMobileNPC :726-744, TalkToStaticNPC
+:746-803), the target chain (SetTargetNPC's two overloads :805-865),
+GetStaticNPCFactionData (:884-907), the two parent walks
+(PersistentFactionData's GetParentGroupFaction and TalkToStaticNPC's
+own six-type one), GetGreetingIndex whole (:1002-1063),
+GetNPCGreetingRecord (:943-993), TalkToNpc's three doors (:2615-2663),
+GetNPCQuestGreeting (:909-941), the questor pool with its build policy
+(:2762-2876) and the tracking family (:2551-2610),
+StartNewConversation (:867-878), and the SaveDataConversation halves
+this slice owns (npcsWithWork, castleNPCsSpokenTo).
+
+KEPT QUIRKS, each by C# line:
+
+- **THE UNGUARDED FIRST ARM** (:1035, :1046). The ally and enemy tests
+  read `IsAlly(a, b) || IsAlly(b, a) && greetingIndex > 2`. `&&` binds
+  tighter than `||`, so the greetingIndex guard applies only to the
+  second, REVERSED test - a forward match overwrites an index that is
+  already better, while the reversed one cannot. The same-parent test
+  directly above parenthesises correctly, and the four loops below
+  guard properly, which is exactly what makes these two stand out as
+  a slip rather than a style. Pinned in both directions on both tests.
+- **THE STRANGER FLOOR** (:967-976). DFU's improvement over classic:
+  at greeting index 8, classic always answered 8570 ("Well met,
+  stranger.") however well liked you were. Here `rep >= 30` takes the
+  warm face only when the index is NOT 8, and the ordinary face needs
+  `rep <= 5` OR a non-8 index. An NPC at index 8 liked a little - rep
+  6 to 29 - therefore satisfies neither test and falls all the way
+  through to the plain reaction ladder.
+- **THE REJECTION FOUND MID-GREETING** (:2630 vs :2641).
+  `alreadyRejectedOnce` is tested at the top of TalkToNpc AND again
+  after GetNPCGreetingRecord - which SETS it (:978) when the
+  reputation roll goes against the player. So a rejection the greeting
+  lookup itself just decided answers with the RAW tokens of that
+  greeting record in a message box, and the window never opens.
+- **THE NAMES NOBODY READS** (:185-188). npcFactionName,
+  pcFactionName, allyFactionName and enemyFactionName are commented
+  "kept for guild related greetings" and are written by every arm of
+  GetGreetingIndex - and a grep of the whole DFU tree finds no reader,
+  inside TalkManager or out of it. The guild-flavoured greeting macros
+  that would spend them are unimplemented. Ported as written, because
+  the day those macros land the values have to already be right.
+- the social group is **CLAMPED to Merchants at 5 and above** for
+  statics (:848, matched to classic), while every mobile is a
+  Commoner of no guild whatever its faction says (:826-827) - C#'s own
+  literals, not the faction's sgroup.
+- a **REPEAT click is a no-op** (:809-813, :837-841): the NPCData
+  survives, and with it the one-answer counter, the faction and any
+  standing rejection. Which is precisely why both click arms reset
+  `numAnswersGivenTellMeAboutOrRumors` AFTER the target chain rather
+  than inside it (:742, :798).
+- **the questor pool's roll is spent early** (:2823-2827): the 25%
+  `Range(0, 4)` with `< 3` continuing is rolled BEFORE the child test
+  and before the already-in-pool test, so those NPCs consume a roll
+  they can never use. An unnamed building's candidate is built in full
+  and then dropped (:2861-2865), and `selectedNpcWorkKey` is left
+  pointing at the LAST NPC added (:2869), so a pool build silently
+  reselects the questor.
+- the parent walk in TalkToStaticNPC stops on **six** types, three of
+  them DFU's own additions (:781-789) "since they have their own
+  reputation" - People, Courts and Individual on top of classic's
+  Group, Province and Temple.
+- `allowGuildResponse = !(!menu && isSpyMaster)` (:800): only a
+  spymaster clicked from OUTSIDE the guild menu loses the guild
+  response. The double negative is C#'s.
+- DFU's **fixed -20** on the enemy arm (:1050-1052), where its own
+  comment records that classic SET the reputation to 20 instead of
+  decreasing it.
+
+RECORDED, not emulated: **THE ZERO-FACTION MATCH.** C#'s
+GetFactionData leaves its out param as a default struct on a miss, so
+an unresolvable guild reads as faction id 0. Two tests then answer
+true for reasons that are really "both sides are empty": the sibling
+arm's `npcGroupFaction.parent == guildFactionData.id` matches any
+parentless faction, and IsAlly/IsEnemy compare an unset allyN or
+enemyN slot (0) against that same id. A real guild always resolves, so
+this is unreachable in a running game - but it IS the headless
+ladder's behaviour, so it is pinned rather than papered over.
+
+Also RECORDED (Ledger A): SetRandomQuestor uses `new System.Random()`
+(:2580), a different generator from every other roll in TalkManager -
+unseeded and wall-clock dependent. Unspecified, so the port's own roll
+is as faithful.
+
+**The re-read caught a bug in my own port before the pins did.**
+StartNewConversation reset `numQuestionsAsked`, `questionOpeningText`
+and `currentQuestionListItem` on this object, where nothing reads
+them: those three are TalkManager fields in C# but live on TK-iii's
+AnswerPipeline in the port. A second copy here would have been a reset
+that never reaches the thing doing the answering. It now goes through
+a `resetQuestionSession` seam, and the pipeline gained the matching
+`startNewConversation()` half - which deliberately does NOT touch
+`lastToneIndex`, because that half belongs to TalkToNpc and fires at a
+different moment.
+
+RECORDED pending: the pool build's block walk is the host's (it
+already feeds TK-ii's getBuildingList), so `buildQuestorPool` takes
+the candidates rather than the blocks; GetPortraitIndexFromStaticNPCBillboard
+rides the `portraitForBillboard` seam; and the window routing, the
+event rebuilds and the save threading land with TK-v.
+
 ## TALK AUDIT III (2026-08-21, the TK-iii verify pass)
 
 The pipeline's adversarial pass, again in the MAIN LOOP against the
