@@ -41,13 +41,28 @@ const ROWS = 12;   // rows of settings visible at once
 /** Bool-ish values render as a toggle; everything else as its text. */
 const isBoolValue = (v) => v === 'True' || v === 'False';
 
-/** The step for a numeric setting - a tenth for the 0..1 volumes, one
- *  otherwise. Enough to be useful without a text-entry field, which
- *  the port has only for gold amounts. */
-function stepFor(raw) {
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return null;
-  return (n <= 1 && String(raw).includes('.')) ? 0.1 : 1;
+/** The step and the range for a numeric setting - a tenth for the
+ *  0..1 volumes, one otherwise. Enough to be useful without a
+ *  text-entry field, which the port has only for gold amounts.
+ *
+ *  MERGE AUDIT: both come from the setting's DEFAULT, never from its
+ *  CURRENT value. Reading the current one made the control eat itself:
+ *  the step was 0.1 only while the stored string contained a '.', and
+ *  stepping 0.9 up stores "1" and 0.1 down stores "0" - neither has a
+ *  '.', so the very next press stepped by ONE. A player who muted
+ *  SoundVolume could never get back to any fraction: 0 -> 1 -> 2 on
+ *  the way up, and the row displayed a "2" the audio bus clamps to 1.
+ *  The default is stable, so the step is too. */
+function stepFor(raw, dflt = raw) {
+  if (!Number.isFinite(Number(raw))) return null;
+  const fractional = String(dflt).includes('.');
+  return {
+    step: fractional ? 0.1 : 1,
+    // the 0..1 settings are the fractional ones; getFloat clamps them
+    // to 1 anyway, so the row must never SHOW a value that is not in
+    // effect (settings.js getFloat(min,max)).
+    max: fractional && Number(dflt) <= 1 ? 1 : null,
+  };
 }
 
 export class LauncherWindow {
@@ -91,10 +106,12 @@ export class LauncherWindow {
       setValue(this.section, key, raw !== 'True');
       audio.playOneShot(SOUND.ButtonClick, 1);
     } else {
-      const step = stepFor(raw);
-      if (step === null) { this.notice = 'this setting is text - edit it in a later build'; return; }
-      const next = Math.round((Number(raw) + dir * step) * 100) / 100;
-      setValue(this.section, key, next < 0 ? 0 : next);
+      const range = stepFor(raw, DEFAULTS[this.section][key]);
+      if (range === null) { this.notice = 'this setting is text - edit it in a later build'; return; }
+      let next = Math.round((Number(raw) + dir * range.step) * 100) / 100;
+      if (next < 0) next = 0;
+      if (range.max !== null && next > range.max) next = range.max;
+      setValue(this.section, key, next);
       audio.playOneShot(SOUND.ButtonClick, 1);
     }
     saveSettings();

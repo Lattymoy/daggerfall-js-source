@@ -13,9 +13,11 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  PlayerDeathSequence, deathCameraTarget,
+  PlayerDeathSequence, deathCameraTarget, playerDeathSound, raceGenderPain3Sound,
   DEATH_FALL_SPEED, DEATH_TIME_BEFORE_RESET, DEATH_FADE_DURATION, CLASSIC_PLAYER_DEATH_SOUND,
 } from '../src/systems/playerDeath.js';
+import { RACES } from '../src/systems/races.js';
+import { combatVoicesEnabled } from '../src/combat/combatVoices.js';
 import { DeathScreen } from '../src/ui/inventory.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { EYE_HEIGHT, CAPSULE_HEIGHT } from '../src/player/motor.js';
@@ -118,4 +120,60 @@ test('death: every overlay slot TICKS, or the sequence stalls in that host alone
     'the dungeon context must tick its overlay');
   assert.match(code('scenes/worldModes.js'), /interiorOverlay\.tick\?\.\(dt\)/,
     'the interior arm must tick its overlay');
+});
+
+// ---------------------------------------------------------------
+// MERGE AUDIT: the CombatVoices arm of the death sound
+// ---------------------------------------------------------------
+test('merge audit: CombatVoices picks the character OWN race/gender Pain3, and it ships ON', () => {
+  // PlayerEntity_OnDeath (:164-170): the classic clip is the arm DFU
+  // takes when the setting is OFF; with it on - which is how it ships
+  // - the clip is GetRaceGenderPain3Sound(race, gender). The port
+  // played the classic clip for every character, which is DFU's
+  // MINORITY path, not its default.
+  const on = () => true, off = () => false;
+  assert.equal(playerDeathSound(RACES.Breton, 'female', off), CLASSIC_PLAYER_DEATH_SOUND);
+  assert.equal(playerDeathSound(RACES.Breton, 'female', on), 45);
+  assert.equal(playerDeathSound(RACES.Nord, 'male', on), 398);
+  // The whole switch, verbatim from SoundClips.cs. ARGONIAN MALE
+  // PAIN3 IS 42 - the male block runs 390..412 and STOPS, and the
+  // eighth male Pain3 sits alone in the low block ("// See 390-412").
+  // Every other race allows Pain1 + 2; deriving this one that way is
+  // off by 371, which is why the table is pinned whole.
+  assert.deepEqual(
+    [RACES.Breton, RACES.Redguard, RACES.Nord, RACES.DarkElf, RACES.HighElf, RACES.WoodElf, RACES.Khajiit, RACES.Argonian]
+      .map((r) => [raceGenderPain3Sound(r, 'male'), raceGenderPain3Sound(r, 'female')]),
+    [[392, 45], [395, 48], [398, 51], [401, 54], [404, 57], [407, 60], [410, 424], [42, 427]],
+  );
+  // NEVER TRAPS: an unknown race yields None in DFU; the port falls to
+  // the classic clip rather than dying in silence.
+  assert.equal(raceGenderPain3Sound(999, 'male'), -1);
+  assert.equal(playerDeathSound(999, 'male', on), CLASSIC_PLAYER_DEATH_SOUND);
+});
+
+test('merge audit: the sequence plays the identity clip, and no identity keeps the classic one', () => {
+  const played = [];
+  const seq = new PlayerDeathSequence({
+    race: RACES.Khajiit, gender: 'female', voices: () => true,
+    playSound: (c) => played.push(c),
+  });
+  assert.deepEqual(played, [424], 'KhajiitFemalePain3');
+  assert.equal(seq.deathSound, 424);
+  // A host that dies before chargen wrote an identity: DFU cannot be
+  // in that state, so there is no law to port - the classic clip is
+  // the safe read, and it must not become silence.
+  const bare = [];
+  new PlayerDeathSequence({ playSound: (c) => bare.push(c), voices: () => true });
+  assert.deepEqual(bare, [CLASSIC_PLAYER_DEATH_SOUND]);
+});
+
+test('merge audit: the death screen reads the LIVE character, not a host argument', () => {
+  // Four hosts construct DeathScreen and none of them passes an
+  // identity; the seam reads the shared player entity so the clip is
+  // right in all four rather than in whichever one got edited.
+  const played = [];
+  const screen = new DeathScreen({ entity: { raceId: RACES.Argonian, gender: 'male' } });
+  assert.equal(screen.sequence.deathSound,
+    combatVoicesEnabled() ? 42 : CLASSIC_PLAYER_DEATH_SOUND);
+  assert.ok(played.length === 0);
 });

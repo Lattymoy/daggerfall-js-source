@@ -488,6 +488,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     lines: (id) => textRsc?.variantLinesById(id, rolls) ?? [],
     ensureFactions: () => ensureLoaded(),
     say: (line) => hud.add(line),
+    /** MERGE AUDIT: the HUD TEXT LAYER on its own, for a host whose
+     *  frame is not this one. worldModes' interior arm consumes the
+     *  frame and returns, so a line said inside a building was queued
+     *  into a HudText nothing ticked or drew - invisible where it was
+     *  said, and then popping in the street on the first non-modal
+     *  frame after the player walked out. It drives this directly. */
+    hudFrame: (dt, font_ = font) => {
+      hud.tick(dt);
+      if (font_) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height));
+    },
     get overlayActive() { return !!overlay; },
     /** AUDIT 21 (hosts lane, F6): the live overlay, so a death presenter can
      *  refuse to stack a second death screen on the first. */

@@ -52,12 +52,15 @@ const mem = new Map(); // NAME -> Uint8Array
 // U22: the VIDs are the same trap and CANNOT ride wholesale - the set is
 // 86MB and \.VID$ would undo the diet's single biggest saving. So they
 // are named one at a time, and ONLY when something actually plays them:
-// ANIM0001 is the splash (1.4MB) and is wired in main.js. DFU names five
-// more - ANIM0012 the death video (DaggerfallUI.cs:50), ANIM0000/
-// ANIM0011/DAG2 the new-game cinematics (DaggerfallStartNewGameWizard.cs
-// :33-35, 26.6MB between them), ANIM0002/ANIM0004 the lycanthropy and
-// vampire dreams - and none of those is wired here yet, so none is
-// ingested. Adding a file nobody plays costs every user the bytes for
+// ANIM0001 is the splash (1.4MB) and is wired in main.js; ANIM0012 is
+// the death video (DaggerfallUI.cs:50), wired by D1 and ingested below.
+// DFU names four more - ANIM0000/ANIM0011/DAG2 the new-game cinematics
+// (DaggerfallStartNewGameWizard.cs:33-35, 26.6MB between them),
+// ANIM0002/ANIM0004 the lycanthropy and vampire dreams - and none of
+// THOSE is wired here yet, so none is ingested. (The merge audit found
+// this comment and the Ledger row it mirrors both still saying the
+// diet held ANIM0001 alone, fourteen lines above the KEEP that names
+// ANIM0012 - the exact drift the rule below exists to prevent.) Adding a file nobody plays costs every user the bytes for
 // nothing; forgetting one that IS played is the F2 silent degradation.
 // Which is why the rule is ENFORCED, not remembered - and the enforcement
 // was already here: AUDIT 18 F2's pin re-derives the fetch list from the

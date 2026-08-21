@@ -14,19 +14,54 @@
 //     -> the start menu. The video and the menu are the HOST's half
 //     (onReset); the timing, the sink and the fade are here.
 //
-// The sound: classicPlayerDeathSound is WoodElfMalePain1 for every
-// race and gender - DFU only picks a race/gender Pain3 when its
-// CombatVoices setting is on, and that setting is a DFU-modern
-// addition, so the classic clip is what this port plays (the
-// race/gender table rides the combat-voices row if it ever lands).
+// The sound (MERGE AUDIT): PlayerEntity_OnDeath picks it in two
+// arms - classicPlayerDeathSound (WoodElfMalePain1, every race and
+// gender in classic) unless CombatVoices is on, in which case it is
+// the character's own race/gender PAIN3 (:164-170). This header used
+// to justify playing the classic clip unconditionally on the grounds
+// that CombatVoices "is a DFU-modern addition" with no store here.
+// The SETT-slice built the store on the other side of this merge and
+// the setting SHIPS TRUE, so the unconditional arm was DFU's minority
+// path, not its default: the branch is live now, and the race/gender
+// table it needs is in soundClips.js.
 
 import { EYE_HEIGHT, CAPSULE_HEIGHT } from '../player/motor.js';
 import { SOUND } from './soundClips.js';
+import { RACES } from './races.js';
+import { combatVoicesEnabled } from '../combat/combatVoices.js';   // SETT: reads the store at the point of use
 
 export const DEATH_FALL_SPEED = 2.5;        // PlayerDeath.fallSpeed
 export const DEATH_TIME_BEFORE_RESET = 3;   // PlayerDeath.TimeBeforeReset
 export const DEATH_FADE_DURATION = 2;       // PlayerDeath.FadeDuration
 export const CLASSIC_PLAYER_DEATH_SOUND = SOUND.WoodElfMalePain1;
+
+/** GetRaceGenderPain3Sound (PlayerDeath.cs:179-201), verbatim - the
+ *  switch's eight arms, each forking on gender. DFU returns
+ *  SoundClips.None (-1) for a race outside the eight, which the
+ *  playSound sink drops. */
+const PAIN3 = Object.freeze({
+  [RACES.Breton]: [SOUND.BretonMalePain3, SOUND.BretonFemalePain3],
+  [RACES.Redguard]: [SOUND.RedguardMalePain3, SOUND.RedguardFemalePain3],
+  [RACES.Nord]: [SOUND.NordMalePain3, SOUND.NordFemalePain3],
+  [RACES.DarkElf]: [SOUND.DarkElfMalePain3, SOUND.DarkElfFemalePain3],
+  [RACES.HighElf]: [SOUND.HighElfMalePain3, SOUND.HighElfFemalePain3],
+  [RACES.WoodElf]: [SOUND.WoodElfMalePain3, SOUND.WoodElfFemalePain3],
+  [RACES.Khajiit]: [SOUND.KhajiitMalePain3, SOUND.KhajiitFemalePain3],
+  [RACES.Argonian]: [SOUND.ArgonianMalePain3, SOUND.ArgonianFemalePain3],
+});
+export const raceGenderPain3Sound = (race, gender) =>
+  PAIN3[race]?.[gender === 'male' ? 0 : 1] ?? -1;
+
+/** PlayerEntity_OnDeath's two arms (:164-170). The setting is read
+ *  HERE, at the death, exactly where DFU reads it. */
+export function playerDeathSound(race, gender, voices = combatVoicesEnabled) {
+  if (!voices()) return CLASSIC_PLAYER_DEATH_SOUND;
+  const clip = raceGenderPain3Sound(race, gender);
+  // NEVER TRAPS: an unknown race yields None in DFU too; fall to the
+  // classic clip rather than playing silence at the one moment the
+  // player needs to hear something happened.
+  return clip >= 0 ? clip : CLASSIC_PLAYER_DEATH_SOUND;
+}
 
 /** targetCameraHeight (PlayerEntity_OnDeath): height - height * 1.25,
  *  i.e. a quarter of the capsule BELOW the feet. */
@@ -40,15 +75,24 @@ export class PlayerDeathSequence {
    * @param {number} [deps.capsuleHeight]  the live capsule height
    * @param {function(number):void} [deps.playSound]  one-shot sink
    * @param {function():void} [deps.onReset]  the host's video + menu half
+   * @param {number} [deps.race]    the dying character's race (Races enum)
+   * @param {string} [deps.gender]  'male' | 'female'
+   * @param {function():boolean} [deps.voices]  the CombatVoices seam, injectable for the pins
    */
-  constructor({ eyeHeight = EYE_HEIGHT, capsuleHeight = CAPSULE_HEIGHT, playSound = null, onReset = null } = {}) {
+  constructor({ eyeHeight = EYE_HEIGHT, capsuleHeight = CAPSULE_HEIGHT, playSound = null, onReset = null,
+    race = null, gender = null, voices = combatVoicesEnabled } = {}) {
     this.startCameraHeight = eyeHeight;
     this.targetCameraHeight = deathCameraTarget(capsuleHeight);
     this.currentCameraHeight = eyeHeight;
     this.elapsed = 0;
     this.reset = false;
     this._onReset = onReset;
-    playSound?.(CLASSIC_PLAYER_DEATH_SOUND);
+    // The race/gender arm needs an identity; without one (a host that
+    // dies before chargen wrote it) DFU's classic clip stands.
+    this.deathSound = race == null
+      ? CLASSIC_PLAYER_DEATH_SOUND
+      : playerDeathSound(race, gender, voices);
+    playSound?.(this.deathSound);
   }
 
   /** One frame of the death Update. */

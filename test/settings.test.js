@@ -19,6 +19,7 @@ import { parseIni } from '../scripts/bakeSettings.mjs';
 import { combatVoicesEnabled } from '../src/combat/combatVoices.js';
 import { loiterLimitHours, cannotLoiterLines } from '../src/systems/restSession.js';
 import { assignStartingGear } from '../src/systems/startingGear.js';
+import { LauncherWindow } from '../src/ui/launcher.js';
 import { lookScale, lookInvert, LOOK_BASE } from '../src/ui/lookSettings.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -230,4 +231,30 @@ test('settings AUDIT: turning ShowOptionsAtStart off WARNS about the lock-out', 
   assert.equal(getBool('GUI', 'ShowOptionsAtStart'), true);
   assert.ok(!/\?launcher/.test(w.notice ?? ''), 'no lock-out warning when it is back on');
   _resetForTests();
+});
+
+test('merge audit: the launcher volume step cannot strand the player off the fractional scale', () => {
+  // stepFor read the CURRENT value's string, so the step was 0.1 only
+  // while it contained a '.': stepping 0.9 up stores "1" and 0.1 down
+  // stores "0", and the NEXT press stepped by ONE. A player who muted
+  // SoundVolume could never reach any fraction again - 0 -> 1 -> 2 -
+  // and the row displayed a 2 that getFloat clamps to 1. The step now
+  // comes from the DEFAULT, which does not move.
+  resetToDefaults();
+  const w = new LauncherWindow();
+  w.sectionIndex = w.sections.indexOf('Controls');
+  w.cursor = w.keys.indexOf('SoundVolume');
+  assert.equal(effectiveSettings().Controls.SoundVolume, '0.5');
+  const vol = () => Number(effectiveSettings().Controls.SoundVolume);
+  const press = (dir) => w.input(dir < 0 ? 'ArrowLeft' : 'ArrowRight');
+
+  for (let i = 0; i < 5; i++) press(-1);
+  assert.equal(vol(), 0, 'five presses mute it');
+  press(-1);
+  assert.equal(vol(), 0, 'and 0 is the floor');
+  press(1);
+  assert.equal(vol(), 0.1, 'ONE press back up is a TENTH, not the whole scale');
+  for (let i = 0; i < 20; i++) press(1);
+  assert.equal(vol(), 1, 'and the top is 1 - never a 2 the audio bus would clamp away');
+  resetToDefaults();
 });

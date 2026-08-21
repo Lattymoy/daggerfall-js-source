@@ -710,3 +710,30 @@ test('audit F2: editing the diet without bumping MANIFEST_V fails HERE', () => {
   assert.deepEqual([version, sum], [6, 'cab127b468c47e75'],
     'THE DIET CHANGED: bump MANIFEST_V so stale stores re-ingest, then re-pin [version, sum] here');
 });
+
+// ---------------------------------------------------------------------
+// MERGE AUDIT. Everything that SPEAKS must have a frame that SHOWS it.
+// ---------------------------------------------------------------------
+test('merge audit: all four hosts drive the HUD-TEXT layer they speak into', () => {
+  // worldModes' interior arm calls townTalk.say at three sites (the
+  // static-NPC fallthrough, the guild with no faction record, and the
+  // guild popup's Talk button) and its frame CONSUMES the frame and
+  // returns - so the line went into a HudText nothing ticked or drew.
+  // Invisible inside the building, and still queued on the way out,
+  // where the street's frame popped it two seconds late against
+  // nothing the player had just done. The fourth host again.
+  const hosts = {
+    'src/scenes/world.js': /townTalk\.frame\(dt\)/,
+    'src/scenes/exterior.js': /townTalk\.frame\(dt\)/,
+    'src/scenes/worldModes.js': /townTalk\?\.hudFrame\?\.\(dt/,
+    'src/scenes/dungeonContext.js': /hudText\.tick\(dt\)/,
+  };
+  for (const [host, drive] of Object.entries(hosts)) {
+    assert.match(src(host), drive, `${host} never drives its HUD text`);
+  }
+  // and the interior arm's say sites are the reason: if they move to
+  // another channel this pin should be revisited, not deleted.
+  const modes = src('src/scenes/worldModes.js');
+  assert.ok((modes.match(/townTalk\?\.say\?\.\(/g) || []).length >= 3,
+    'the interior arm still speaks through townTalk.say');
+});
