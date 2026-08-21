@@ -231,6 +231,22 @@ properties (:112-125 -> :523-569), `RMBLayout.IsResidence`,
 the tree beside the mill and composes both halves into the talk
 envelope.
 
+RECORDED DELTA (Ledger A, collection semantics - found in the TK-ii
+parity re-read): the assemblers walk `dictQuestInfo` in iteration
+order, and the two languages disagree about what that is after a
+REMOVAL. .NET's `Dictionary<K,V>` stores entries in an array and
+enumerates it by index; a Remove frees its slot onto a freelist, and
+the NEXT Add reuses that slot - so a quest started after another
+ended can enumerate BEFORE quests added earlier. A JS `Map` always
+appends. The port therefore lists quest topics in strict start
+order where DFU's order is slot-dependent. Microsoft documents
+Dictionary ordering as unspecified, so there is no "correct" order
+to copy here and emulating the freelist would be fidelity to an
+implementation detail rather than to Daggerfall; the divergence is
+cosmetic (the ORDER of entries in the Tell-me-about and Where-is
+lists after a quest churn, never their contents or gating).
+Recorded, not emulated.
+
 RECORDED pending: the tree's WINDOW consumers (the Tell-me-about
 page, the quest Where-is entries, the knowledge marks the gates
 compute) mount with TK-v; the talkPartner seam reads null until
