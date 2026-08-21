@@ -96,14 +96,18 @@ function makeWorld() {
     building(17),                          // house1       - spawn marker
     building(11, { factionId: 40 }),       // guildhall    - spawn marker
     building(15, { factionId: 108 }),      // DB tavern    - excluded by faction
-    building(9),                           // generalstore - NO markers, excluded
+    building(9),                           // generalstore - item marker (the shop wildcards find it)
+    building(18),                          // house2       - NO markers, excluded
+    building(11, { factionId: 99 }),       // guildhall    - wrong faction for magery
   ];
   const townInteriors = [
     [flat(11), flat(18), flat(18, 41, 8, 61)],
     [flat(11)],
     [flat(11)],
     [flat(11), flat(18)],
+    [flat(18)],
     [],
+    [flat(11)],
   ];
   // the exterior directory pool for named types (tavern, guildhall,
   // tavern, shop - house types are not pool-named)
@@ -112,6 +116,7 @@ function makeWorld() {
     building(11, { factionId: 40, nameSeed: 778 }),
     building(15, { factionId: 108, nameSeed: 779 }),
     building(9, { nameSeed: 780 }),
+    building(11, { factionId: 99, nameSeed: 781 }),
   ];
   const blocks = {
     'TESTAA00.RMB': rmbBlock(townBuildings, townInteriors),
@@ -126,6 +131,9 @@ function makeWorld() {
     makeLocation({ index: 3, name: 'Llugwych', mapId: 444, locationId: 0xc352, locationType: 0, blockNames: [], pixel: { x: 103, y: 100 } }),
     // Castle_Faallem: p1 = 0x5d6c resolves only as p1-1 -> DUNGEON
     makeLocation({ index: 4, name: 'Faallem', mapId: 555, locationId: 0x5d6b, locationType: 7, dungeonType: 1, dungeonBlocks: [{ x: 0, z: 0, blockName: 'TESTDA00.RDB' }], pixel: { x: 104, y: 100 } }),
+    // Farfort: 200 map pixels out - the travel literal's target
+    // Farfort answers the FIXED row Castle_Necromoghan (p1 0x4587)
+    makeLocation({ index: 5, name: 'Farfort', mapId: 666, locationId: 0x4587, locationType: 1, blockNames: [], pixel: { x: 300, y: 100 } }),
   ];
   const region = {
     name: 'Testshire',
@@ -490,4 +498,199 @@ test('clock travel arm: flag&16 clocks arm from the REAL calculator - the one-da
   // trunc(86400 * 2.5) = 216000
   assert.equal(clock.startingTimeInSeconds, 216000);
   assert.equal(q.travelSecondsTo(q.getResource({ name: 'lair' })), 86400, 'the _2place_ arm is one-way');
+});
+
+// ---------------------------------------------------------------
+// Q3-i MUTATION PINS - campaign survivors, each now a law with a pin
+// that fails under its one-character mutant.
+// ---------------------------------------------------------------
+
+test('MUTATION: the site enums and wildcard sets are DFU literals', async () => {
+  const { SITE_TYPES: ST, MARKER_TYPES: MT, MARKER_PREFERENCE: MP,
+    VALID_BUILDING_TYPES, VALID_HOUSE_TYPES, VALID_SHOP_TYPES } = await import('../src/systems/quest/place.js');
+  assert.deepEqual({ ...ST }, { None: 0, Town: 1, Dungeon: 2, Building: 3 });
+  assert.deepEqual({ ...MT }, { None: -1, QuestSpawn: 11, QuestItem: 18 });
+  assert.deepEqual({ ...MP }, { Default: 0, UseQuestMarker: 1, AnyMarker: 2 });
+  assert.deepEqual([...VALID_BUILDING_TYPES], [0, 2, 3, 5, 6, 8, 9, 11, 12, 13, 14, 15, 17, 18, 19, 20]);
+  assert.deepEqual([...VALID_HOUSE_TYPES], [17, 18, 19, 20]);
+  assert.deepEqual([...VALID_SHOP_TYPES], [0, 2, 5, 6, 7, 8, 9, 12, 13]);
+});
+
+test('MUTATION: the shop wildcard and the SPECIFIC store form both land on the store, not the ALL_VALID pool', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, ['Place _s_ local shop', '', 'variable _pad_']);
+  assert.equal(q.getResource({ name: 's' }).siteDetails.buildingKey, 4, 'ANY_SHOP finds the store record');
+  // a SECOND quest (the same-quest exclusion would bar a second claim)
+  const m2 = makeMachine(makeWorld());
+  const q2 = schedule(m2, ['Place _st_ local generalstore', '', 'variable _pad_']);
+  assert.equal(q2.getResource({ name: 'st' }).siteDetails.buildingKey, 4, 'the specific form must NOT widen to AllValid');
+});
+
+test('MUTATION: a missing house6 falls back to ANY house; a Fixed place with p1 <= 0x300 still throws', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, ['Place _h6_ local house6', '', 'variable _pad_']);
+  assert.equal(q.getResource({ name: 'h6' }).siteDetails.buildingKey, 1, 'the House1..House6 fallback');
+  const m2 = makeMachine(makeWorld());
+  assert.throws(() => schedule(m2, ['Place _bad_ permanent tavern', '', 'variable _pad_']),
+    /Invalid placeType/, "the Fixed gate needs p1 > 0x300 - 'tavern' p1=0 fails it even with a world");
+});
+
+test('MUTATION: a location whose ONLY tavern is Dark Brotherhood cannot host a local tavern', () => {
+  const world = makeWorld();
+  // rebuild Bigtown's block with JUST the DB tavern
+  const dbOnly = {
+    position: 5000,
+    rmbBlock: {
+      fldHeader: { buildingDataList: [building(15, { factionId: 108 })], otherNames: null },
+      subRecords: [{ interior: { blockFlatObjectRecords: [flat(11), flat(18)] } }],
+    },
+  };
+  world.getBlock = () => dbOnly;
+  world._locations[0].exterior.buildings = [building(15, { factionId: 108 })];
+  const m = makeMachine(world);
+  assert.throws(() => schedule(m, ['Place _pub_ local tavern', '', 'variable _pad_']),
+    /Could not find local site/, 'faction 108 is banned however good its markers');
+});
+
+test('MUTATION: a missing numbered dungeon type retries as ANY dungeon', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, ['Place _lair_ remote dungeon9', '', 'variable _pad_']);
+  const sd = q.getResource({ name: 'lair' }).siteDetails;
+  assert.equal(sd.siteType, SITE_TYPES.Dungeon);
+  assert.equal(sd.locationName, 'Darkhole', 'no type-9 dungeons: the -1 retry finds the first by roll 0');
+});
+
+test('MUTATION: the dungeon-type collector - graveyards and ruins count, types past 16 never', async () => {
+  const { Place } = await import('../src/systems/quest/place.js');
+  const region = {
+    locationCount: 5,
+    mapTable: [
+      { mapId: 1, locationType: 7, dungeonType: 2 },    // keep
+      { mapId: 2, locationType: 12, dungeonType: 5 },   // graveyard - IS a dungeon type
+      { mapId: 3, locationType: 10, dungeonType: 3 },   // ruin - IS a dungeon type
+      { mapId: 4, locationType: 7, dungeonType: 17 },   // type 17 - NEVER for quests
+      { mapId: 5, locationType: 0, dungeonType: 2 },    // a town - not a dungeon location
+    ],
+  };
+  const stub = Object.create(Place.prototype);
+  stub.parentQuest = { hooks: {}, resources: new Map() };
+  assert.deepEqual(stub._collectDungeonIndicesOfType(region, -1), [0, 1, 2], 'types 0-16 from dungeon-typed locations only');
+  assert.deepEqual(stub._collectDungeonIndicesOfType(region, 5), [1], 'the graveyard by its type');
+  assert.deepEqual(stub._collectDungeonIndicesOfType(region, 17), [3], 'a SPECIFIC 17 request still honors it - only the -1 range caps at 16');
+});
+
+test('MUTATION: a direct marker index assigns the person to THAT spawn marker slot', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, [
+    'Person _pp_ group Questor', '',
+    'Item _l_ letter', '',
+    'Place _pub_ local tavern', '',
+    ' place item _l_ at _pub_',
+    '',
+    '_re_ task:',
+    ' place npc _pp_ at _pub_ marker 0',
+    '',
+    'variable _pad_',
+  ]);
+  m.tick();
+  const sd = q.getResource({ name: 'pub' }).siteDetails;
+  q.getTask({ name: 're' }).start();
+  m.tick();
+  assert.deepEqual(sd.questSpawnMarkers[0].targetResources?.map((s) => s.name) ?? [], ['pp'],
+    'selected-marker already set + explicit index -> DIRECT assignment to the spawn slot');
+  assert.deepEqual(sd.selectedMarker.targetResources.map((s) => s.name), ['l'],
+    'the selected marker keeps only the item');
+});
+
+test('MUTATION: PlaceNpc UNHIDES a hidden person; "transfer pc inside X marker 0" carries the marker', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, [
+    'Person _pp_ group Questor', '',
+    'Place _pub_ local tavern', '',
+    'Place _lair_ remote dungeon2', '',
+    ' hide npc _pp_',
+    ' place npc _pp_ at _pub_',
+    ' transfer pc inside _lair_ marker 0',
+  ]);
+  m.tick();
+  assert.equal(q.getResource({ name: 'pp' }).isHidden, false, 'placing unhides');
+  const tp = world._calls.filter((c) => c[0] === 'teleportPc');
+  assert.equal(tp.length, 1);
+  assert.equal(tp[0][2], q.getResource({ name: 'lair' }).siteDetails.questSpawnMarkers[0],
+    'the transfer form passes spawn marker 0');
+});
+
+test('MUTATION: getSiteLinks zero-wildcards and the two-resource cull', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  m.addSiteLink({ questUID: 1, placeSymbol: null, siteType: SITE_TYPES.Building, mapId: 111, buildingKey: 5, magicNumberIndex: 0 });
+  m.addSiteLink({ questUID: 1, placeSymbol: null, siteType: SITE_TYPES.Dungeon, mapId: 222, buildingKey: 0, magicNumberIndex: 2 });
+  assert.equal(m.getSiteLinks(SITE_TYPES.Building, 111, 0, 0).length, 1, 'buildingKey 0 is a wildcard');
+  assert.equal(m.getSiteLinks(SITE_TYPES.Building, 111, 5, 0).length, 1, 'exact key matches');
+  assert.equal(m.getSiteLinks(SITE_TYPES.Building, 111, 7, 0).length, 0, 'a wrong key filters');
+  assert.equal(m.getSiteLinks(SITE_TYPES.Dungeon, 222, 0, 9).length, 0, 'a wrong magic number filters');
+  assert.equal(m.getSiteLinks(SITE_TYPES.Dungeon, 222, 0, 2).length, 1, 'the exact magic number matches');
+  assert.equal(m.getSiteLinks(SITE_TYPES.Dungeon, 111, 0, 0).length, 0, 'siteType+mapId always gate');
+
+  // two resources on one marker: the cull removes ONLY the moved one
+  const m2 = makeMachine(makeWorld());
+  const q2 = schedule(m2, [
+    'Person _pp_ group Questor', '',
+    'Item _l_ letter', '',
+    'Place _pub_ local tavern', '',
+    'Place _lair_ remote dungeon2', '',
+    ' place npc _pp_ at _pub_',
+    ' place item _l_ at _pub_',
+    '',
+    '_mv_ task:',
+    ' place item _l_ at _lair_',
+    '',
+    'variable _pad_',
+  ]);
+  m2.tick();
+  q2.getTask({ name: 'mv' }).start();
+  m2.tick();
+  const pub2 = q2.getResource({ name: 'pub' }).siteDetails;
+  assert.deepEqual(pub2.selectedMarker.targetResources.map((s) => s.name), ['pp'],
+    'the person stays; only the moved item leaves');
+});
+
+test('MUTATION: the bare clock draw, the _2place_ start arm, and the FAR travel literals', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  // bare "Clock _c_": Random.Range(1 minute, 1 week + 1) at roll 0.5
+  const q = schedule(m, [
+    'Clock _c_', '',
+    '_c_ task:', ' end quest', '',
+    'variable _pad_',
+  ], { rolls: () => 0.5 });
+  assert.equal(q.getResource({ name: 'c' }).startingTimeInSeconds, 60 + Math.floor(0.5 * (604800 + 1 - 60)),
+    'fromRange(1 minute, 7 days) seeded');
+
+  // _2place_ arm: a clock named _2lair_ takes the ONE-WAY trip at start
+  const m2 = makeMachine(makeWorld());
+  const q2 = schedule(m2, [
+    'Place _lair_ remote dungeon2', '',
+    'Clock _2lair_ 0.0:00', '',
+    '_2lair_ task:', ' end quest', '',
+    'start timer _2lair_',
+  ]);
+  m2.tick();
+  const c2 = q2.getResource({ name: '2lair' });
+  assert.equal(c2.startingTimeInSeconds, 86400, 'the one-way near trip floors to a day');
+  assert.equal(c2.clockEnabled, true);
+
+  // FAR: 200 map pixels over uniform climate 231 = 18000 cautious
+  // minutes one-way (the REAL calculator); pinned as LITERALS so the
+  // argument row, the 2.5x, the floor and the trunc all bite.
+  const world3 = makeWorld();
+  const m3 = makeMachine(world3);
+  const q3 = schedule(m3, ['Place _far_ permanent Castle_Necromoghan', '', 'variable _pad_']);
+  assert.equal(q3.travelSecondsTo(q3.getResource({ name: 'far' })), 1080000, 'one-way: 18000 minutes');
+  assert.equal(q3.travelSeconds(), 2700000, 'the all-places return trip: trunc(18000*60 * 2.5)');
 });

@@ -44,10 +44,11 @@ const EDITOR_FLAT_ARCHIVE = 199;
 const SPAWN_MARKER_RECORD = 11;
 const ITEM_MARKER_RECORD = 18;
 
-// Place.cs:621-623 - the wildcard building-type sets.
-const VALID_BUILDING_TYPES = Object.freeze([0, 2, 3, 5, 6, 8, 9, 11, 12, 13, 14, 15, 17, 18, 19, 20]);
-const VALID_HOUSE_TYPES = Object.freeze([17, 18, 19, 20]);
-const VALID_SHOP_TYPES = Object.freeze([0, 2, 5, 6, 7, 8, 9, 12, 13]);   // not including bank and library
+// Place.cs:621-623 - the wildcard building-type sets (exported so the
+// gate can pin them as literals).
+export const VALID_BUILDING_TYPES = Object.freeze([0, 2, 3, 5, 6, 8, 9, 11, 12, 13, 14, 15, 17, 18, 19, 20]);
+export const VALID_HOUSE_TYPES = Object.freeze([17, 18, 19, 20]);
+export const VALID_SHOP_TYPES = Object.freeze([0, 2, 5, 6, 7, 8, 9, 12, 13]);   // not including bank and library
 
 // DFLocation.BuildingTypes sentinels (DFLocation.cs:138-140) and the
 // members the laws name (values shared with DFRegion.BuildingTypes).
