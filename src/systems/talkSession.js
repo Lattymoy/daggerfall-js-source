@@ -30,8 +30,17 @@ export const MIN_VERY_LIKE_REACTION = 30;
 export const REFUSE_TALK_REACTION = -20;   // TalkToNpc: reaction < -20 -> 7205
 export const OATH_BASE_TEXT_ID = 201;
 
-// FactionRaces (FACTION.TXT race column) - the oath index space.
-export const OATH_RACE_INDEX = Object.freeze({ Nord: 0, Khajiit: 1, Redguard: 2, Breton: 3 });
+// FactionRaces (FACTION.TXT race column, FactionFile.cs:609-623) - the
+// oath index space. TK-v widened this from the four the mobile ladder
+// needed to the eight RaceTemplate.GetFactionRaceFromRace can answer,
+// because TalkManagerMCP's %oth reads it for a STATIC NPC of any race.
+// The tail of the enum (Skakmat 11, Orc 17, Vampire 18, Fey 19) is
+// not reachable from a player race, and GetFactionRaceFromRace answers
+// None for anything it does not list.
+export const OATH_RACE_INDEX = Object.freeze({
+  Nord: 0, Khajiit: 1, Redguard: 2, Breton: 3,
+  Argonian: 4, WoodElf: 5, HighElf: 6, DarkElf: 7,
+});
 
 /** GetNPCGreetingRecord's reaction tail (the Province-parent path). */
 export function greetingTextId(reactionToPlayer) {

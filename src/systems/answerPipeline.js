@@ -198,6 +198,13 @@ export const TALK_STRINGS = Object.freeze({
   replacementStringRegional: 'any',                            // id 423
   resolvingError: '...never mind...',                          // id 425
   residence: 'Residence',                                      // id 50
+  // the four pronoun pairs TalkManagerMCP resolves for %g..%g4, all
+  // of them the POTENTIAL QUESTOR's gender rather than the talk
+  // partner's (Internal_Strings, the same rows questMacros.js reads)
+  pronounHe: 'he', pronounShe: 'she',
+  pronounHim: 'him', pronounHer: 'her',
+  pronounHis: 'his', pronounHer2: 'her',
+  pronounHis2: 'his', pronounHers: 'hers',
   oldLeaderFate0: 'died of heart failure',
   oldLeaderFate1: 'fell and struck his head',
   oldLeaderFate2: 'died of the plague',

@@ -17,6 +17,15 @@ export function srand(seed) {
   next = BigInt(seed >>> 0);
 }
 
+/** DFRandom.Seed, C#'s settable uint property over the same state.
+ *  TalkManagerMCP's MaleName nudges it by +3547 across a name draw and
+ *  puts it back (TalkManagerMCP.cs:68-72), so the accessor pair has to
+ *  exist for that quirk to be portable at all. */
+export function getSeed() { return Number(next & 0xffffffffn); }
+export function setSeed(seed) { next = BigInt(seed >>> 0); }
+/** `DFRandom.Seed += delta`, wrapping through uint as C# does. */
+export function bumpSeed(delta) { setSeed((getSeed() + delta) | 0); }
+
 /** Next random value in [0, 0x7FFF]. */
 export function rand() {
   next = (next * MULT + INC) & MASK64;

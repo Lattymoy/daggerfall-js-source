@@ -106,6 +106,14 @@ import { NPCSession } from '../systems/npcSession.js';
 import { getPeopleOfCurrentRegion, getReactionToPlayer } from '../systems/talk.js';
 import { BUILDING_TYPES as TALK_BUILDING_TYPES } from '../world/buildingNames.js';
 import { AnswerPipeline, TALK_STRINGS } from '../systems/answerPipeline.js';
+import { expandRandomTextRecord as expandTalkRecord } from '../systems/talkMacros.js';
+import { OATH_RACE_INDEX } from '../systems/talkSession.js';
+import { bumpSeed } from '../formats/dfRandom.js';
+import { fullName as nameHelperFullName, GENDERS, BANK_TYPES } from '../characters/nameHelper.js';
+
+// NameHelper.BankTypes -> the Races name TalkManagerMCP's Oath reads
+const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
+  Object.entries(BANK_TYPES).map(([race, bank]) => [bank, race])));
 import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
@@ -1474,6 +1482,29 @@ export async function bootWorld(canvas, renderer, params, status) {
     onTargetChanged: () => {},  // TK-v repaints the portrait and name
     rolls: Math.random,
   });
+  /** NameHelper.FullName for the current region's bank - the two name
+   *  macros (%fn, %mn) and %n's random-name fallback all draw it. */
+  const talkFullName = (gender) => nameHelperFullName(getNameBankOfRegion(_questLoc()?.regionIndex ?? -1), gender);
+
+  /** TalkManagerMCP's context: the two engine objects plus the host
+   *  data the thirteen handlers read. Built lazily because the
+   *  pipeline it names is constructed on the next statement. */
+  const talkMcp = () => ({
+    pipeline: answerPipeline,
+    session: npcSession,
+    randomTokens: (id) => townTalk.variantTokens(id),
+    randomText: (id) => townTalk.lines(id).map((r) => r.text ?? r).join(' '),
+    randomFullName: () => talkFullName(GENDERS.Male),
+    fullName: (gender) => talkFullName(gender === 'female' ? GENDERS.Female : GENDERS.Male),
+    localizedText: (key) => TALK_STRINGS[key] ?? '',
+    // PlayerGPS.GetRaceOfCurrentRegion, through the same REGION_RACES
+    // table getNameBankOfRegion reads
+    raceOfCurrentRegion: () => (RACE_BY_NAME_BANK[getNameBankOfRegion(_questLoc()?.regionIndex ?? -1)] ?? 'Breton'),
+    factionRaceId: (race) => (OATH_RACE_INDEX[race] ?? 0),
+    questorGender: () => npcSession.getQuestorGender(),
+    bumpSeed: (delta) => bumpSeed(delta),
+  });
+
   // TK-iii: THE ANSWER PIPELINE over the tree, the mill and the
   // session. Its window consumers mount with TK-v; what is live here
   // is the ladder every answer already runs through.
@@ -1482,7 +1513,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     npcSession: () => npcSession.npcData,
     npcsKnowEverything: () => false,
     localizedText: (key) => TALK_STRINGS[key] ?? '',
-    expandRandomTextRecord: (id) => townTalk.lines(id).map((r) => r.text ?? r).join(' '),
+    // TK-v: ExpandRandomTextRecord (:3580-3587) whole - a random
+    // variant as TOKENS, the talk MCP over them, and TokensToString
+    // with NO separator. This is what makes %n and the %hnt fork real.
+    expandRandomTextRecord: (id) => expandTalkRecord(id, talkMcp()),
     getNewsOrRumors: (session) => rumorMill.getNewsOrRumors(session),
     isPlayerInside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     isPlayerInsideCastle: () => false,
