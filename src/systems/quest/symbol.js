@@ -53,3 +53,9 @@ export class Symbol {
     return other.name === this.name && other.original === this.original;
   }
 }
+
+/** The save envelope's Symbol shape (Q4-iv): the ORIGINAL alone -
+ *  name re-derives deterministically in the ctor, so the C# habit of
+ *  serializing both fields folds to one. Null stays null. */
+export const symbolToSaveData = (sym) => (sym ? { original: sym.original } : null);
+export const symbolFromSaveData = (data) => (data ? new Symbol(data.original) : null);

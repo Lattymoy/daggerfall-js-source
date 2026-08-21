@@ -7,9 +7,11 @@
 // the completed quest and expires the tombstone after one in-game
 // week. Plus the WhenTask evaluation law, PickOneOf's seeded draw,
 // UnsetTask's permanent drop, the GlobalVarLink store, and THE
-// COVERAGE PIN: with the ten-action tranche the corpus resolves
-// exactly 3347 of 7235 action lines (46.3%) - the number the next
-// action slices must move UP, never silently down.
+// COVERAGE PIN: the registry resolves 7231 of 7235 corpus action
+// lines (Q3-iv closed the sweep; the 4 left are DFU's own 'Action
+// not found. Ignoring' floor), every line to the action the full DFU
+// registry order owns it with - a future change must never move
+// resolved silently down, and a pattern hijack shifts a bucket.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -98,12 +100,16 @@ test('quest machine: a crafted quest runs end to end - clock, break, end, tombst
   assert.equal(m.quests.size, 1, 'tombstoned quests linger');
   assert.equal(q.getLogMessages(), null, 'a complete quest has no log');
 
-  // (M19) The expiry is EXACTLY one week: a second short keeps it
+  // (M19, strengthened at Q2b-VERIFY) The expiry is EXACTLY one week,
+  // pinned in LITERAL seconds - importing the constant back would let
+  // a constant mutation move both sides. The comparison is STRICT >:
+  // at exactly one week the tombstone still lingers.
+  assert.equal(SECONDS_PER_WEEK, 604800);
   const tombstonedAt = q.questTombstoneTime;
-  now = tombstonedAt + SECONDS_PER_WEEK - 1;
+  now = tombstonedAt + 604800;
   m.tick();
-  assert.equal(m.quests.size, 1, 'a tombstone younger than a week lingers');
-  now = tombstonedAt + SECONDS_PER_WEEK + 1;
+  assert.equal(m.quests.size, 1, 'at exactly one week the tombstone still lingers (strict >)');
+  now = tombstonedAt + 604801;
   m.tick();
   assert.equal(m.quests.size, 0, 'tombstones expire after one in-game week');
 });
@@ -218,6 +224,9 @@ test('quest machine: a GlobalVarLink task reads and writes the shared store', ()
   const lift = q.getTask({ name: 'lift' });
   assert.equal(lift.type, TaskType.GlobalVarLink);
   assert.equal(lift.globalVarLink, 0);
+  // Q2b-VERIFY: an UNSET global reads false - the store's default,
+  // not a pre-lit flag (Task.cs GetTriggerValue's missing-key arm).
+  assert.equal(lift.getTriggerValue(), false);
   m.tick();
   assert.equal(m.globalVars.get(0), true, 'the 64-global store carries the state');
   assert.equal(lift.getTriggerValue(), true);
@@ -225,9 +234,10 @@ test('quest machine: a GlobalVarLink task reads and writes the shared store', ()
   assert.equal(lift.getTriggerValue(), false, 'the store is the truth, not the local flag');
 });
 
-test('quest machine: COVERAGE PIN - the ten-action tranche resolves 3347 of 7235 corpus action lines', () => {
+test('quest machine: COVERAGE PIN - the 61-action registry resolves 7231 of 7235 corpus action lines, each to its DFU owner', () => {
   const m = new QuestMachine({ nowSeconds: () => 0 });
   let resolved = 0, pending = 0;
+  const tally = new Map();
   for (const f of readdirSync(join(VENDOR, 'Quests')).filter((f) => f.endsWith('.txt')).sort()) {
     // AUDIT quest-2: the factory rides the parse explicitly - a
     // machineless parse pends every line (quest.test.js pins that).
@@ -236,22 +246,100 @@ test('quest machine: COVERAGE PIN - the ten-action tranche resolves 3347 of 7235
     for (const t of q.tasks.values()) {
       resolved += t.actions.length;
       pending += t.pendingActionLines.length;
+      for (const a of t.actions) tally.set(a.constructor.name, (tally.get(a.constructor.name) ?? 0) + 1);
     }
   }
   // Exact against the pinned vendor commit. New action slices move
   // resolved UP and pending DOWN - never the reverse. (AUDIT quest-P2
   // moved 50 lines BACK to pending: the guards stopped Say/WhenTask
-  // hijacking lines owned by not-yet-ported DFU triggers.)
-  assert.equal(resolved, 3297);
-  assert.equal(pending, 3938);
+  // hijacking lines owned by not-yet-ported DFU triggers; Q2b-i's
+  // full-registry mirror then made ownership structural.)
+  // The 4 still pending are DFU's OWN floor: vestigial corpus lines
+  // no template in RegisterActionTemplates matches either ('Action
+  // not found. Ignoring') - permanent by parity.
+  assert.equal(resolved, 7231);
+  assert.equal(pending, 4);
+  // THE OWNERSHIP PIN: per-action resolved counts, each equal to the
+  // line count the FULL DFU RegisterActionTemplates order assigns
+  // that action over this corpus (independently derived by running
+  // the C# patterns in C# order). Any hijack - a pattern claiming a
+  // line owned by another action or by a pending guard - shifts a
+  // bucket and fails here.
+  assert.deepEqual(Object.fromEntries([...tally.entries()].sort((a, b) => a[0].localeCompare(b[0]))), {
+    AddAsQuestor: 21,
+    AddDialog: 77,
+    AddFace: 35,
+    CastSpellDo: 3,
+    CastSpellOnFoe: 41,
+    ChangeReputeWith: 207,
+    ClearTask: 209,
+    CreateFoe: 241,
+    CreateNpc: 48,
+    CreateNpcAt: 26,
+    ClickedItem: 66,
+    ClickedNpc: 268,
+    CurePcDisease: 6,
+    DailyFrom: 25,
+    DestroyNpc: 4,
+    DialogLink: 120,
+    DroppedItemAtPlace: 8,
+    DropAsQuestor: 36,
+    DropFace: 37,
+    EndQuest: 543,
+    // Q2b-ii: GiveItem's 64 was re-derived from the RAW corpus (all 64
+    // lines matching its pattern are first-match-owned by GiveItem
+    // under the full C# order) - the coverage backlog's 63 was that
+    // script's own artifact.
+    GetItem: 203,
+    GiveItem: 64,
+    GivePc: 296,
+    HaveItem: 59,
+    HideNpc: 89,
+    InjuredFoe: 172,
+    ItemUsedDo: 80,
+    KilledFoe: 222,
+    LegalRepute: 14,
+    LevelCompleted: 12,
+    LogMessage: 409,
+    MakePcDiseased: 5,
+    MakePermanent: 136,
+    MuteNpc: 9,
+    PcAt: 95,
+    PlaceFoe: 224,
+    PlaceItem: 106,
+    PlaceNpc: 125,
+    PickOneOf: 96,
+    PlaySound: 3,
+    PlayVideo: 10,
+    Prompt: 102,
+    RemoveFoe: 22,
+    ReputeExceedsDo: 41,
+    RevealLocation: 193,
+    RemoveLogMessage: 16,
+    RestoreNpc: 14,
+    RestrainFoe: 33,
+    RumorMill: 10,
+    Say: 731,
+    StartQuest: 40,
+    StartStopTimer: 420,
+    StartTask: 49,
+    TakeItem: 44,
+    TeleportPc: 8,
+    TotingItemAndClickedNpc: 211,
+    UnsetTask: 30,
+    WhenNpcIsAvailable: 7,
+    WhenPcEntersExits: 8,
+    WhenReputeWith: 8,
+    WhenTask: 794,
+  });
 });
 
 test('quest machine: AUDIT parity pins - guards pend hijackable lines, clear rearms actions', () => {
   const m = new QuestMachine({ nowSeconds: () => 0 });
-  // (P2) "clicked npc _x_ say 1011" belongs to the un-ported ClickedNpc
-  // trigger - the guard sends it to pendingActionLines instead of
-  // letting Say claim it as an unconditional popup. Same for the
-  // when-shapes owned by WhenReputeWith/WhenNpcIsAvailable.
+  // (P2, closed at Q3-iv) the when-shapes once pended behind guards
+  // so WhenTask could not hijack them; their REAL owners now stand at
+  // the same registry positions and claim the same lines - the
+  // ownership transfer the guard charter promised.
   const src = [
     'Quest: __GRD', 'QRC:', 'Message:  1011', ' x', '', 'QBN:',
     'Person _qgiver_ group Questor', '',
@@ -264,8 +352,10 @@ test('quest machine: AUDIT parity pins - guards pend hijackable lines, clear rea
   ];
   const q = m.scheduleQuest(src, 0, { rolls: () => 0 });
   const t = q.getTask({ name: 't' });
-  assert.equal(t.actions.length, 0, 'no tranche action claimed the guarded lines');
-  assert.equal(t.pendingActionLines.length, 3, 'all three lines queued for Q2b');
+  assert.equal(t.actions.length, 3, 'every line claimed by its own action');
+  assert.deepEqual(t.actions.map((a) => a.constructor.name),
+    ['ClickedNpc', 'WhenReputeWith', 'WhenNpcIsAvailable']);
+  assert.equal(t.pendingActionLines.length, 0, 'nothing left behind a guard here');
 
   // (P1) Clearing a task REARMS its completed actions: a restarted
   // task runs them again (Task.cs SetTriggerValue's rearm-on-false).

@@ -231,13 +231,15 @@ export function onPushEffects(entity, guild, memberships, store, now, {
  *  here rather than silently doing nothing, so the popup can say
  *  "not yet" the way DFU's own `default:` arm does.
  *
- *  SHIPPED lands in U24 (training, donation, cure disease). Every
- *  other arm is FLAGGED with the window it waits on. */
+ *  SHIPPED lands in U24 (training, donation, cure disease) and Q4-ii
+ *  (Quests -> quest/offerFlow.js's offerGuildQuest, the GetQuest
+ *  override's law). Every other arm is FLAGGED with the window it
+ *  waits on. */
 export const SERVICE_DESTINATION = Object.freeze({
   Training: 'guildServiceTraining',
   Donate: 'guildServiceDonation',
   CureDisease: 'guildServiceCureDisease',
-  Quests: null,            // FLAGGED: the quest machine
+  Quests: 'questOffer',    // Q4-ii: QuestOfferFlow.offerGuildQuest
   Identify: null,          // FLAGGED: DaggerfallTradeWindow Identify mode
   Repair: null,            // FLAGGED: DaggerfallTradeWindow Repair mode
   BuyPotions: null,        // FLAGGED: trade Buy + CreateRandomPotion

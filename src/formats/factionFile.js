@@ -32,6 +32,15 @@ export const GUILD_GROUPS = Object.freeze({
   Bards: 5, TheFey: 6, Prostitutes: 7, KnightlyOrder: 9, MagesGuild: 10,
   FightersGuild: 11, Necromancers: 14, Region: 15, HolyOrder: 17,
   Witches: 22, Vampires: 23, Orsinium: 24,
+  // The placeholder members are REAL enum names in FactionFile.cs
+  // :568-602 and Enum.IsDefined matches them - the quest-list router
+  // (QuestListsManager.ParseQuestList) files a "GGroup12" row under
+  // guilds in DFU, so the mirror carries them too (Q2b-ii VERIFY; no
+  // shipped row uses one).
+  GGroup0: 0, GGroup1: 1, GGroup8: 8, GGroup12: 12, GGroup13: 13,
+  GGroup16: 16, GGroup18: 18, GGroup19: 19, GGroup20: 20, GGroup21: 21,
+  GGroup25: 25, GGroup26: 26, GGroup27: 27, GGroup28: 28, GGroup29: 29,
+  GGroup30: 30,
 });
 
 const countPrecedingTabs = (line) => {

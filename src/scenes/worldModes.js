@@ -84,6 +84,16 @@ import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
 import { goldAmount, deductGold, addGold } from '../systems/court.js';
+// Q4-v: the quest layer's host wiring. The BRIDGE (scenes/questBridge.js)
+// is created by the outer host (world.js) and rides in; this machine owns
+// the interior half - the click stamp, the Quests service arm, the scene
+// mount adapter and the modal tick.
+import { getReputation } from '../systems/factionRep.js';
+import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
+import { SITE_TYPES } from '../systems/quest/place.js';
+import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { positionHash } from './questBridge.js';
+import { GENDERS } from '../characters/nameHelper.js';
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
@@ -162,7 +172,7 @@ export function createWorldModes(host) {
       if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
     },
   });
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null } = host;   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null } = host;   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
   // AUDIT 21 (hosts lane, F7): the HUD art for interior mode. A missing file
   // answers null and drawHud no-ops, so this host draws no HUD rather than
@@ -207,6 +217,100 @@ export function createWorldModes(host) {
     preloadMessageBoxArt({ renderer, fetchBytes, palette });   // U11 parchment for its boxes
     preloadListPickerArt({ renderer, fetchBytes, palette });   // U24: PICK00I0 for the training skill list
   };
+
+  // ---- Q4-v: THE QUEST LAYER'S INTERIOR MOUNT -----------------------
+  // Q4-iii's addQuestResourceObjects walk runs over this adapter when a
+  // building interior is entered (and again on the machine's hot-place
+  // callback), standing quest Persons and Items as billboard batches in
+  // the LIVE interior context - the flats idiom, async-filled off the
+  // texture cache. Each stand carries its QuestResourceBehaviour: the
+  // behaviours drive every modal frame (Unity Update), an E-click
+  // routes DoClick, and the interior teardown notifies destruction
+  // exactly as Unity's OnDestroy does on a scene transition.
+  // FLAGGED (Port-Ledger Q4-v): quest FOES pend the interior enemy
+  // host - standFoe is absent, so the walk skips the stand and the law
+  // modules idle; the dungeon context's own mount pends with it.
+  let questFlats = [];
+  function standQuestFlat(archive, record, position, behaviour, staticNpcFactionId = null) {
+    const ctx = interiorCtx;   // capture: an async fill must not cross interiors
+    if (!ctx) return null;
+    // flatPosition is already scene units with -y (the Place marker
+    // law); parent it exactly as the interior's own flats are.
+    const [x, y, z] = ctx.parentPt(position.x, position.y, position.z);
+    const stand = { ctx, archive, record, x, y, z, marker: position, width: 0, height: 0, batch: null, active: true, dead: false, behaviour };
+    (async () => {
+      const t = await getTexture(archive);
+      if (!t || record >= t.recordCount || stand.dead || interiorCtx !== ctx) return;
+      uploadRecord(archive, record);
+      const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
+      stand.width = size.w; stand.height = size.h;
+      stand.batch = renderer.createBillboardBatch(archive, record, size, [[x, y, z]]);
+      if (stand.active) ctx.billboardBatches.push(stand.batch);
+    })().catch((e) => console.error('[quest] stand fill failed:', e));
+    const unhook = () => {
+      if (!stand.batch) return;
+      const i = ctx.billboardBatches.indexOf(stand.batch);
+      if (i >= 0) ctx.billboardBatches.splice(i, 1);
+    };
+    stand.host = {
+      staticNpcFactionId,   // DoClick's individual broadcast reads this
+      setActive(active) {
+        active = !!active;
+        if (stand.active === active || stand.dead) return;
+        stand.active = active;
+        if (!active) unhook();
+        else if (stand.batch && interiorCtx === ctx) ctx.billboardBatches.push(stand.batch);
+      },
+      destroy() {
+        if (stand.dead) return;
+        stand.dead = true;
+        unhook();
+        if (stand.batch) { renderer.destroyBatch(stand.batch); stand.batch = null; }
+        const i = questFlats.indexOf(stand);
+        if (i >= 0) questFlats.splice(i, 1);
+      },
+    };
+    questFlats.push(stand);
+    return stand.host;
+  }
+  const questAdapter = {
+    // PlayerGPS.CurrentMapID through the host's scene-context closure.
+    currentMapId: () => questSceneCtx?.()?.mapId ?? 0,
+    findBehaviours: () => questFlats.map((s) => s.behaviour),
+    loadInProgress: () => false,   // the modal host builds after a restore completes
+    standNPC: ({ person, flatData, position, behaviour }) =>
+      standQuestFlat(flatData.archive, flatData.record, position, behaviour, person?.factionId ?? null),
+    standItem: ({ item, position, behaviour }) => {
+      // AddQuestItem draws the item's WORLD texture (the ground sprite).
+      const t = templateByIndex(item.daggerfallUnityItem?.templateIndex);
+      if (!t) return null;
+      return standQuestFlat(t.worldTextureArchive, t.worldTextureRecord, position, behaviour);
+    },
+    // standFoe absent - see the FLAG above.
+  };
+  /** The building-interior mount; also the machine's hot-place callback
+   *  (deps.world.mountCurrentSiteQuestResources - Place.AssignQuest-
+   *  Resource's isPlayerHere tail re-runs the walk mid-scene). */
+  function mountQuestResources() {
+    if (!questBridge || !interiorCtx || !interiorBuilding?.buildingKey) return;
+    questBridge.mountScene(questAdapter, SITE_TYPES.Building, interiorBuilding.buildingKey);
+  }
+  function teardownQuestFlats() {
+    // Unity's OnDestroy on scene transition: notify each behaviour (the
+    // resource-side handler decouples), then free the batches - pulled
+    // out of the context's list FIRST so ctx.destroy() cannot free them
+    // a second time.
+    for (const s of [...questFlats]) s.behaviour?.notifyDestroyed?.();
+    for (const s of questFlats) {
+      s.dead = true;
+      if (!s.batch) continue;
+      const i = s.ctx.billboardBatches.indexOf(s.batch);
+      if (i >= 0) s.ctx.billboardBatches.splice(i, 1);
+      renderer.destroyBatch(s.batch);
+      s.batch = null;
+    }
+    questFlats = [];
+  }
 
   // E2: the shelf browse/buy chain (DFU's trade window collapsed to
   // our keyed-window idiom; haggling is the fixed CalculateTradePrice
@@ -336,6 +440,15 @@ export function createWorldModes(host) {
   }
 
   function openStaticNpc(pn) {
+    // Q4-v: PlayerActivate's questor half - EVERY static-NPC click
+    // stamps LastNPCClicked before the routing decides what opens (the
+    // Person questor sweep rides machine.setLastNPCClicked).
+    questBridge?.clickNpc(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0 });
+    // PlayerActivate.cs:1530-1535: a quest actively LISTENING on this
+    // NPC's faction (WhenNpcIsAvailable) shuts down all further
+    // routing - no talk, no service popup, nothing (C#'s own TODO
+    // about releasing listeners rides with it).
+    if (questBridge?.machine.factionListeners.has(pn.factionID)) return;
     const dict = townTalk?.factionDict ?? null;
     const npcFaction = dict?.get(pn.factionID) ?? null;
     const buildingFactionId = interiorBuilding?.factionId ?? 0;
@@ -471,6 +584,23 @@ export function createWorldModes(host) {
         rows, now, onClose: () => closeSelf(), godName,
         quality: b?.quality ?? 0, regionIndex: b?.regionIndex ?? 0,
       });
+    } else if (destination === 'questOffer' && questBridge && store) {
+      // Q4-v: the guild Quests service - the Q4-ii offer flow through
+      // the bridge, boxed for the ServiceFlowWindow. The surface's
+      // reputation is the guild's OWN faction rep (Guild.GetReputation
+      // reads FactionData for guild.factionId); the two variant groups
+      // fall back to the hall's building faction.
+      const step = questBridge.offerGuildQuest({
+        guildGroup: route.guildGroup,
+        guild,
+        membership,
+        reputation: getReputation(store, guild.factionId ?? route.buildingFactionId),
+        buildingFactionId: route.buildingFactionId,
+      });
+      const boxes = questBridge.offerBoxes(step, rows);
+      // A guild offer's first step is 'offer' or 'fail' - both box; an
+      // empty chain is the silent-close face and opens nothing.
+      if (boxes.length) flow = new ServiceFlowWindow(boxes, { onClose: () => closeSelf() });
     }
     return flow;
   }
@@ -581,6 +711,10 @@ export function createWorldModes(host) {
       // host's merge closure; shops warm the browse font.
       interiorBuilding = buildingDataForDoor?.(hit) ?? null;
       ensureInteriorWindowArt();   // U23: every interior can open a window now
+      // Q4-v: the quest layer mounts with the interior (RMBLayout's
+      // AddQuestResourceObjects moment - the walk runs once the site's
+      // buildingKey is known).
+      mountQuestResources();
       // Music is NOT started here any more. AUDIT 19's 1:1 pass moved it
       // to the SongManager: the host feeds a context every frame and the
       // manager decides when the song changes, which is the only way to
@@ -642,6 +776,17 @@ export function createWorldModes(host) {
       if (!pn.width) return;
       targets.push({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE });
     });
+    // Q4-v: quest stands activate like StaticNPCs (PlayerActivate's
+    // quest-resource arm; the same 256-unit reach) - a click routes
+    // QuestResourceBehaviour.DoClick.
+    questFlats.forEach((s, i) => {
+      if (!s.width || !s.active || s.dead) return;
+      targets.push({
+        key: `questflat:${i}`,
+        aabb: { min: [s.x - s.width / 2, s.y, s.z - s.width / 2], max: [s.x + s.width / 2, s.y + s.height, s.z + s.width / 2] },
+        distance: STATIC_NPC_ACTIVATION_DISTANCE,
+      });
+    });
     const key = pickActivatable(eye, dir, targets, interiorCtx.collider);
     if (key === null) return false;
     if (key.startsWith('ladder:')) {
@@ -671,6 +816,33 @@ export function createWorldModes(host) {
         activateStaticNpc(interiorCtx.people[Number(key.split(':')[1])]);   // U23
         return true;
       }
+      if (key.startsWith('questflat:')) {
+        const s = questFlats[Number(key.split(':')[1])];
+        if (s) {
+          // PlayerActivate.StaticNPCClick:1521 stamps LastNPCClicked
+          // BEFORE the behaviour click - the quest NPC's StaticNPC peer
+          // carries SetLayoutData(marker position, person)
+          // (GameObjectHelper:1062 -> StaticNPC.cs:245-255): the hash
+          // from the SCALED marker ints truncated, flags/nameSeed from
+          // the Person (-1 falls back to the hash), buildingKey from
+          // the runtime data (:299-306), mapID never written (0).
+          const person = s.behaviour?.targetResource;
+          if (questBridge && person?.isPerson) {
+            const hash = positionHash(Math.trunc(s.marker.x), Math.trunc(s.marker.y), Math.trunc(s.marker.z));
+            questBridge.machine.setLastNPCClicked({
+              hash,
+              flags: person.gender === GENDERS.Female ? 32 : 0,
+              factionID: person.factionId ?? 0,
+              nameSeed: (person.nameSeed ?? -1) === -1 ? hash : person.nameSeed,
+              gender: person.gender,
+              buildingKey: interiorBuilding?.buildingKey ?? 0,
+              mapID: 0,
+            });
+          }
+          s.behaviour?.doClick();
+        }
+        return true;
+      }
       if (key.startsWith('container:')) {
         // S2b: open the house container - synchronous transfer through
         // the shared inventory (private furniture starts EMPTY; shops/
@@ -694,6 +866,7 @@ export function createWorldModes(host) {
       [player.pos[0], player.pos[1] + 1.8 * 0.65, player.pos[2]],
       exitReturn.siblings.map((e) => e.door));
     if (!landing) { console.error('exit: no exterior landing (empty sibling doors)'); return false; }   // tryEnter guards its landing; this path was unguarded - a null here killed the frame loop
+    teardownQuestFlats();   // Q4-v: OnDestroy for the quest stands, before the batch teardown
     interiorCtx.destroy();
     interiorCtx = null;
     interiorBuilding = null;   // E2: the identity + overlay leave with the interior
@@ -701,6 +874,7 @@ export function createWorldModes(host) {
     player.collider = baseCollider();
     player.spawn(landing[0], landing[1], landing[2]);
     mode = 'exterior';
+    questBridge?.onExteriorTransition();   // Q4-v: CreateFoe's pending-wave invalidation
     console.log('exterior: returned at door');
     return true;
   }
@@ -769,6 +943,7 @@ export function createWorldModes(host) {
     dungeonCtx.destroy();
     dungeonCtx = null;
     mode = 'exterior';
+    questBridge?.onExteriorTransition();   // Q4-v: the same invalidation on the dungeon door
     player.collider = baseCollider();
     if (landing) {
       player.spawn(landing.pos[0], landing.pos[1], landing.pos[2]);
@@ -841,6 +1016,13 @@ export function createWorldModes(host) {
     // which is what dungeon.js:218's `held` already implements.
     const overlayHeld = (mode === 'interior' && !!interiorOverlay) ||
       (mode === 'dungeon' && !!dungeonCtx?.uiOverlayActive);
+    // Q4-v: the quest layer's modal frame. Behaviours update every
+    // frame (Unity Update runs whatever Time.timeScale is); the
+    // machine's OWN tick freezes under a paused window - PauseGame
+    // sets timeScale 0 and QuestMachine.Update accumulates
+    // Time.deltaTime, which is 0 there - so the overlay gates it.
+    if (mode === 'interior') for (const s of [...questFlats]) s.behaviour?.update();
+    if (!overlayHeld) questBridge?.tick(dt);
     const inputHeld = paralyzed || overlayHeld;
     const crouchHeld = keys.has('KeyX');
     const moving = !inputHeld && (keys.has('KeyW') || keys.has('KeyS') || keys.has('KeyA') || keys.has('KeyD'));
@@ -1311,6 +1493,14 @@ export function createWorldModes(host) {
     get transitioning() { return transitioning; },
     get interiorCtx() { return interiorCtx; },
     get dungeonCtx() { return dungeonCtx; },
+    // Q4-v: the world seam's playerInside half + the machine's
+    // hot-place callback (deps.world.mountCurrentSiteQuestResources).
+    get interiorBuilding() { return interiorBuilding; },
+    mountQuestResources,
+    /** Q4-v: a quest parchment box lands in the interior overlay slot
+     *  while a building is mounted (the host routes exterior popups to
+     *  its own overlay). */
+    showQuestOverlay(win) { if (mode === 'interior') { interiorOverlay = win; return true; } return false; },
     tryEnter,
     frame,
     installShotProbes,

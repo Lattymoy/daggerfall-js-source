@@ -297,6 +297,8 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     actions,
     dynamicDraws,
     billboardBatches,
+    parentPt,   // Q4-v: the quest mount parents marker positions through the same transform
+
     lights,
     texRemap,
     markers,
