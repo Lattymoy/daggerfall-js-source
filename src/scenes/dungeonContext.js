@@ -636,7 +636,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  F6 press and each loot target - so a hook cannot reach one and
    *  miss the others (THE ONE CONSTRUCTION SEAM, which U25's sweep
    *  found four instances of in the exterior hosts). */
-  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { activeOverlay = w; } });   // B1
+  // B1 + AUDIT B-C2: the fetch is ASYNC, so by the time it resolves
+  // the player may have opened something else - the reader takes the
+  // slot only if it is still free (never clobbers a live window).
+  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { if (!activeOverlay) activeOverlay = w; } });
   function openInventory(lootItems, onEmptied = null) {
     return new NativeInventoryWindow({
       openBook: openBookHook,   // B1: the use-mode book arm

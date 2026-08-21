@@ -237,22 +237,22 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:542` - index into the 18 careers) or the INTERIM default Warrior (16,
 - `src/scenes/dungeonContext.js:548` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:575` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:910` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:460` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:466` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:571` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:666` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:799` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:934` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/dungeonContext.js:913` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:462` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:468` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:573` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:668` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:801` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:936` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:153` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:170` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
 - `src/scenes/world.js:569` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:592` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:598` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1062` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1458` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1719` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:594` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:600` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1064` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1460` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1721` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:178` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:220` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
 - `src/scenes/worldModes.js:313` - Person placed in a dungeon is the quest machine's, FLAGGED
@@ -319,7 +319,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/talk.js:93` - TallyCrimeGuildRequirements(true, 1) FLAGGED: the TG
 - `src/systems/talkSession.js:21` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 - `src/systems/useItem.js:234` - lantern's and refuses when it would overflow. FLAGGED: DFU
-- `src/ui/bookReader.js:15` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
+- `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargen.js:472` - *  (FLAGGED - the port has no FLIC decoder yet, so the next question
 - `src/ui/chargenArt.js:662` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/chargenArt.js:794` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
@@ -334,9 +334,9 @@ combat line numbers below are refreshed with it.
 - `src/ui/messageBox.js:155` - so the strip never rides higher than that. FLAGGED as a
 - `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
 - `src/ui/nativeInventory.js:134` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
-- `src/ui/nativeInventory.js:237` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-- `src/ui/nativeInventory.js:450` - field is INTERIM-pending with the local Remove split.
-- `src/ui/nativeInventory.js:591` - FLAGGED: the hover fill is the mouse-move seam's, not this
+- `src/ui/nativeInventory.js:247` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
+- `src/ui/nativeInventory.js:466` - field is INTERIM-pending with the local Remove split.
+- `src/ui/nativeInventory.js:607` - FLAGGED: the hover fill is the mouse-move seam's, not this
 - `src/ui/nativeTalk.js:29` - INTERIM no-ops (their topic sources pend quests/work).
 - `src/ui/nativeTalk.js:182` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/nativeTalk.js:196` - Tell me about / People / Things / Work: INTERIM no-ops (pend)

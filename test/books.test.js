@@ -102,6 +102,14 @@ test('books: BookFile reads the header and the CLASSIC PRICE LAW seeds DFRandom 
   assert.equal(modded.price, 123);
   // truncation throws, as the C# EndOfStream path reports
   assert.throws(() => new BookFile().load(bytes.slice(0, 100)), /truncated/);
+  // AUDIT B-M1: the FIELD WIDTHS are 64 each - a long title must come
+  // back whole and must not bleed into the author's field.
+  const long = new BookFile();
+  const t40 = 'A Title Of Precisely Forty Characters!!!';
+  const a40 = 'An Author Of Exactly Forty Characters!!!';
+  long.load(buildBook({ title: t40, author: a40, pages: [PAGE1] }), 'BOK00007.TXT');
+  assert.equal(long.title, t40);
+  assert.equal(long.author, a40);
 });
 
 test('books: the token reader - text runs, newline, centre, position/font prefixes, end of page', () => {
@@ -117,17 +125,86 @@ test('books: the token reader - text runs, newline, centre, position/font prefix
   // PositionPrefix at the buffer's end survives (the C# peek)
   const tail = readTokens(new Uint8Array([RSC.PositionPrefix]), 0, RSC.EndOfPage);
   assert.equal(tail.length, 1);
+  // AUDIT B-M8: the printable run is 0x20..0x7f INCLUSIVE - 0x7f is a
+  // text byte, not a formatting byte (IsFormattingToken's bounds).
+  const edge = readTokens(new Uint8Array([0x20, 0x7f, 0x41, RSC.EndOfPage]), 0, RSC.EndOfPage);
+  assert.equal(edge.length, 1);
+  assert.equal(edge[0].formatting, TOKEN_TEXT);
+  assert.equal(edge[0].text, ' \u007fA');
 
   const bf = new BookFile();
   bf.load(buildBook({ pages: [PAGE1, PAGE2] }), 'BOK00000.TXT');
-  const lines = layoutBookLines(bf);
-  assert.deepEqual(lines.map((l) => [l.text, l.x, l.center]), [
-    ['First line', 0, false],
-    ['Centered', 0, true],
-    ['Offset line', 40, false],
-    ['After font', 0, false],
-  ]);
   assert.throws(() => bf.getPageTokens(2), /Invalid page index/);
+});
+
+test('books: the layout law is ConvertTokensToString - NewLine breaks, justify is STICKY, pages CONCATENATE', () => {
+  // AUDIT B-P1: this was ported wrong at first (justify closed the row,
+  // pages flushed at their boundary). DFU converts every page's tokens
+  // into ONE content string and splits on newline alone: a justify
+  // token sets alignment for everything that follows, a page not
+  // ending in NewLine MERGES with the next page's first line, and
+  // PositionPrefix is "Unused" for books.
+  const bf = new BookFile();
+  bf.load(buildBook({ pages: [PAGE1, PAGE2] }), 'BOK00000.TXT');
+  assert.deepEqual(layoutBookLines(bf).map((l) => [l.text, l.center]), [
+    ['First line', false],
+    ['CenteredOffset line', true],   // page 1's tail merges; PositionPrefix dropped
+    ['After font', true],            // centring is STICKY past the newline
+  ]);
+
+  // JustifyLeft turns the sticky centring back off
+  const left = new BookFile();
+  left.load(buildBook({ pages: [new Uint8Array([
+    ...text('c'), RSC.JustifyCenter, RSC.NewLine,
+    ...text('still centred'), RSC.NewLine,
+    RSC.JustifyLeft, ...text('left again'), RSC.NewLine,
+    ...text('still left'), RSC.NewLine, RSC.EndOfPage,
+  ])] }), 'BOK00000.TXT');
+  assert.deepEqual(layoutBookLines(left).map((l) => [l.text, l.center]), [
+    ['c', true], ['still centred', true],
+    ['left again', false],
+    ['still left', false],   // AUDIT B-M17: un-centring is STICKY too
+  ]);
+});
+
+test('books: an empty book scrolls nowhere and a corrupt page offset reads empty, never throws', () => {
+  const bf = new BookFile();
+  bf.load(buildBook({ pages: [] }), 'BOK00002.TXT');
+  const w = new BookReaderWindow(bf);
+  assert.equal(w.maxHeight, 0);
+  w.scrollBook(-SCROLL_AMOUNT);
+  assert.equal(w.scrollPosition, 0, 'the down clamp holds with no content');
+  // A page offset past the buffer answers an empty token list (C#'s
+  // ReadTokens walks from a position already past the end).
+  const bad = new BookFile();
+  bad.load(buildBook({ pages: [new Uint8Array([...text('x'), RSC.EndOfPage])] }), 'BOK00004.TXT');
+  bad.pageOffsets[0] = 99999;
+  assert.deepEqual(bad.getPageTokens(0), []);
+});
+
+test('books: handing off to the reader RUNS the inventory close law (the dropped pile survives)', async () => {
+  // AUDIT B-C1: the port has ONE overlay slot, so showing the reader
+  // REPLACES the inventory without closing it - and the world pile
+  // only mints on close, so a session drop was silently lost.
+  const { NativeInventoryWindow } = await import('../src/ui/nativeInventory.js');
+  const dropped = [];
+  let closed = false, asked = null;
+  const bag = [{ group: 'Books', templateIndex: 92, message: 42 }];
+  const w = new NativeInventoryWindow({
+    items: () => bag,
+    entity: { items: bag },
+    openBook: (item) => { asked = item; },
+    onDrop: (items) => dropped.push(...items),
+    onClose: () => { closed = true; },
+  });
+  w.dropped.push({ group: 'Weapons', templateIndex: 1 });   // a session drop, pending its pile
+  w.tab = 'clothing';   // AddLocalItem puts a book in ClothingAndMisc
+  w.mode = 'use';
+  w._pick(0);
+  assert.equal(asked, bag[0], 'the book reached the hook');
+  assert.equal(w.done, true, 'the inventory closed');
+  assert.equal(dropped.length, 1, 'the dropped pile minted');
+  assert.equal(closed, true, 'the loot container released');
 });
 
 test('books: the reader window - open sound, the verbatim scroll clamps, page-turn boundaries, exit', () => {

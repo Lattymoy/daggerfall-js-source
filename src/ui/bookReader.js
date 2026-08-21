@@ -1,5 +1,15 @@
-// THE BOOK READER WINDOW (B1) - DaggerfallBookReaderWindow on the
-// port's native-window idiom. BOOK00I0.IMG background; the verbatim
+// THE BOOK READER WINDOW (B1) - DaggerfallBookReaderWindow's CHROME
+// and scroll law on the port's native-window idiom, over the CLASSIC
+// book path. Naming the two halves honestly (AUDIT B-P1): DFU's
+// window lays out LocalizedBook.Content, a markup STRING; for a
+// classic BOK file that string comes from
+// LocalizedBook.OpenClassicBookFile -> ConvertTokensToString over
+// BookFile.GetPageTokens, which is the path this port takes directly.
+// So the layout law ported here is ConvertTokensToString +
+// CreateBookLabels (see layoutBookLines), not the localized
+// string-table branch the port has no counterpart for.
+//
+// BOOK00I0.IMG background; the verbatim
 // button rects - next page (208,188,14,8), previous (181,188,14,48 -
 // the odd 48-height is DFU's own quirk, kept), exit (277,187,32,10
 // with ButtonClick); the page panel at (10,21) 300x159 (the CLASSIC
@@ -45,31 +55,48 @@ export async function preloadBookArt(deps) {
 }
 export const bookArtLoaded = () => !!_art;
 
-/** Token stream -> layout lines: {text, x, center}. NewLine breaks,
- *  PositionPrefix carries the x offset, JustifyCenter centres the
- *  line it closes, FontPrefix is recorded-and-ignored (interim). */
+/** Token stream -> layout lines, LocalizedBook.ConvertTokensToString +
+ *  CreateBookLabels' law (AUDIT B-P1, which corrected this):
+ *   - a row is closed by NewLine ALONE. Justify tokens do NOT break
+ *     the row; they set STICKY alignment that holds until the next
+ *     justify token, so a centred passage stays centred across lines.
+ *   - PAGES CONCATENATE: DFU appends every page's converted text into
+ *     one Content string, so a page not ending in NewLine merges with
+ *     the next page's first line rather than closing a row.
+ *   - PositionPrefix and SameLineOffset are "Unused" for books in
+ *     DFU's own converter - dropped here too, bug-for-bug.
+ *   - FontPrefix is sticky font state in DFU (currentFont); the port
+ *     has one book face, so it is recorded and not yet applied (the
+ *     loud interim in this file's header). */
 export function layoutBookLines(bookFile) {
   const lines = [];
+  let current = { text: '', center: false, font: 0 };
+  let alignCenter = false, font = 0;
+  const flush = () => {
+    lines.push(current);
+    current = { text: '', center: alignCenter, font };
+  };
   for (let page = 0; page < bookFile.pageCount; page++) {
-    let current = { text: '', x: 0, center: false };
-    const flush = () => { lines.push(current); current = { text: '', x: 0, center: false }; };
-    for (const token of bookFile.getPageTokens(page)) {
+    for (const token of bookFile.getPageTokens(page) ?? []) {
       if (token.formatting === TOKEN_TEXT) {
         current.text += token.text;
       } else if (token.formatting === RSC.NewLine) {
         flush();
       } else if (token.formatting === RSC.JustifyCenter) {
+        alignCenter = true;
         current.center = true;
-        flush();
       } else if (token.formatting === RSC.JustifyLeft) {
-        flush();
-      } else if (token.formatting === RSC.PositionPrefix) {
-        current.x = token.x;
+        alignCenter = false;
+        current.center = false;
+      } else if (token.formatting === RSC.FontPrefix) {
+        font = token.x ?? 0;
+        current.font = font;
       }
-      // FontPrefix and the rest: recorded by the reader, no layout yet
+      // PositionPrefix / SameLineOffset: unused for books (DFU)
     }
-    if (current.text) flush();
   }
+  // The trailing partial line closes the book (DFU's final split entry)
+  if (current.text) lines.push(current);
   return lines;
 }
 
@@ -154,7 +181,7 @@ export class BookReaderWindow {
       if (line.center) {
         shadowText(renderer, font, line.text, m, PAGE_PANEL.x, y, { align: 'center', w: PAGE_PANEL.w });
       } else {
-        shadowText(renderer, font, line.text, m, PAGE_PANEL.x + line.x, y);
+        shadowText(renderer, font, line.text, m, PAGE_PANEL.x, y);
       }
     }
   }

@@ -227,6 +227,16 @@ export class NativeInventoryWindow {
   _setTab(t) { audio.playOneShot(SOUND.ButtonClick, 1); this.tab = t; this.scroll = 0; }   // the four tab buttons (:1209-1227)
   _close() {
     audio.playOneShot(SOUND.ButtonClick, 1);   // exit, mouse and key alike (:2082, :2090)
+    this._closeSilently();
+  }
+
+  /** The close LAW without the exit click - the window ends, the
+   *  session's dropped items mint their world pile (OnPop) and the
+   *  loot container releases. AUDIT B-C1 split this out: handing off
+   *  to another window (the book reader) replaces the port's single
+   *  overlay slot WITHOUT closing this one, so those two effects were
+   *  skipped and a session drop was silently LOST. */
+  _closeSilently() {
     this.done = true;
     if (this.dropped.length) this.hooks.onDrop?.(this.dropped);   // the world pile mints on close (OnPop)
     this.hooks.onClose?.();
@@ -279,7 +289,13 @@ export class NativeInventoryWindow {
     // a host with no hook keeps the pending text.
     if (r.kind === 'book') {
       if (this.hooks.openBook) {
+        // AUDIT B-C1: DFU PUSHES the reader over the inventory (a
+        // window stack); the port has ONE overlay slot, so the
+        // inventory must run its close law here or its dropped pile
+        // never mints. A failed open still reports on this window -
+        // it is the live overlay until the reader actually shows.
         this.hooks.openBook(r.item, () => { this.boxes = [{ rows: [{ text: r.failText, center: true }] }]; });
+        this._closeSilently();
       } else {
         this.boxes = [{ rows: [{ text: USE_PENDING.book, center: true }] }];
       }

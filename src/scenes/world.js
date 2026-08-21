@@ -577,7 +577,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   townTalk.ensureLoaded();
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   preloadBookArt({ renderer, fetchBytes, palette });   // B1: BOOK00I0 warms at boot
-  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => townTalk.showOverlay(w) });   // B1
+  // B1 + AUDIT B-C2: an async open must not clobber a window the
+  // player opened while the book was loading.
+  const openBookHook = makeOpenBookHook({ fetchBytes, showReader: (w) => { if (!townTalk.overlayActive) townTalk.showOverlay(w); } });
   // AUDIT 21 (hosts lane, F7): the classic HUD art. loadHud swallows a missing
   // file and answers null, and drawHud no-ops on null, so a host without the
   // art draws no HUD rather than failing to boot - the same law the title
