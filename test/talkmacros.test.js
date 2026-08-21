@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 
 import {
   talkMacroHandlers, expandTalkMacros, expandRandomTextRecord,
-  TALK_MACROS, OATH_BASE_TEXT_ID,
+  TALK_MACROS, OATH_BASE_TEXT_ID, MACRO_TERMINATORS,
 } from '../src/systems/talkMacros.js';
 import { AnswerPipeline, TALK_STRINGS } from '../src/systems/answerPipeline.js';
 import { NPCSession } from '../src/systems/npcSession.js';
@@ -158,16 +158,53 @@ test('%pqn and %pql read the questor pool, and answer empty when it is bare', ()
   assert.equal(h['%pql'](), 'The Inn');
 });
 
-test('expandTalkMacros rewrites IN PLACE, longest token first, and leaves plain text alone', () => {
+test('expandTalkMacros is a TERMINATOR SCAN, in place, and leaves plain text alone', () => {
   const ctx = makeCtx();
   ctx.pipeline.currentQuestionListItem = newListItem({ questionType: QUESTION_TYPE.LocalBuilding });
   const tokens = [t('%n says: %g4 and %g.'), t(''), t('no macros here')];
   const out = expandTalkMacros(tokens, talkMacroHandlers(ctx));
   assert.equal(out, tokens, 'the SAME array, as C#s ref is');
   assert.equal(tokens[0].text, 'A Stranger says: his and he.',
-    '%g4 is resolved before %g, so the longer token is never eaten by the shorter');
-  assert.equal(tokens[1].text, '', 'an empty token is skipped');
+    '%g4 and %g are told apart by the terminator scan, not by any ordering');
+  assert.equal(tokens[1].text, '', 'a token with no % is skipped');
   assert.equal(tokens[2].text, 'no macros here');
+  // the terminator set, from MacroHelper.cs:412
+  assert.deepEqual([...MACRO_TERMINATORS], [
+    ' ', '%', '.', ',', "'", '?', '!', '/', '(', ')', '{', '}', '[', ']', '"', ';', ':', '|',
+  ]);
+});
+
+test('THE MACRO CACHE: a macro is evaluated ONCE per call, however often it appears', () => {
+  // C#'s own comment: "used to ensure macros are only evaluated once
+  // per ExpandMacros() call. Important since some macros evaluate
+  // differently each time (e.g. macros with random generated names)".
+  // A record naming %fn twice names the SAME woman twice.
+  let n = 0;
+  const handlers = { '%fn': () => `woman${++n}`, '%mn': () => `man${++n}` };
+  const tokens = [t('%fn and %fn'), t('and %fn again, with %mn')];
+  expandTalkMacros(tokens, handlers);
+  assert.equal(tokens[0].text, 'woman1 and woman1', 'twice in one token is one draw');
+  assert.equal(tokens[1].text, 'and woman1 again, with man2',
+    'and ACROSS tokens too - the cache is per CALL, not per token');
+  // a second call starts a fresh cache
+  const more = [t('%fn')];
+  expandTalkMacros(more, handlers);
+  assert.equal(more[0].text, 'woman3', 'a new expansion draws again');
+});
+
+test('THE PIPE IS EATEN: %di|ern becomes southern, and every other terminator survives', () => {
+  const handlers = { '%di': () => 'south', '%n': () => 'Sirien' };
+  const tokens = [t('%di|ern of here'), t('%di, %n. %n! (%n)')];
+  expandTalkMacros(tokens, handlers);
+  assert.equal(tokens[0].text, 'southern of here', 'the | terminates the macro AND is swallowed');
+  assert.equal(tokens[1].text, 'south, Sirien. Sirien! (Sirien)',
+    'a comma, a full stop, a bang and a bracket all terminate and all survive');
+});
+
+test('an unknown macro resolves to the empty string, as MacroHelpers missing-handler path does', () => {
+  const tokens = [t('a %nosuchmacro b')];
+  expandTalkMacros(tokens, { '%n': () => 'x' });
+  assert.equal(tokens[0].text, 'a  b', 'the symbol goes, the surrounding text stays');
 });
 
 test('expandRandomTextRecord: draw, expand, and convert with NO separator', () => {

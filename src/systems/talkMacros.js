@@ -137,22 +137,57 @@ export function talkMacroHandlers(ctx) {
   };
 }
 
-/** MacroHelper.ExpandMacros over the talk MCP: every token's text is
- *  scanned for the handlers' tokens, longest first so %hnt2 is not
- *  eaten by %hnt and %g4 not by %g. C# resolves in GetMacro's
- *  alternation order, which is the same intent. The tokens are
- *  rewritten IN PLACE, as C#'s `ref` array is. */
+/** MacroHelper's macro terminators (:412). Any non-alpha character
+ *  that can end a macro symbol lives here - which is what separates
+ *  `%hnt2` from `%hnt` and `%g4` from `%g` WITHOUT any longest-first
+ *  ordering: the scan simply runs to the next terminator. */
+export const MACRO_TERMINATORS = Object.freeze([
+  ' ', '%', '.', ',', "'", '?', '!', '/', '(', ')', '{', '}', '[', ']', '"', ';', ':', '|',
+]);
+
+/** MacroHelper.ExpandMacros (:419-494) over the talk MCP, verbatim.
+ *
+ *  THE MACRO CACHE is the piece worth reading twice. C# builds one
+ *  dictionary per ExpandMacros CALL, with its own comment saying why:
+ *  "used to ensure macros are only evaluated once per ExpandMacros()
+ *  call. Important since some macros evaluate differently each time
+ *  (e.g. macros with random generated names)". So a record naming
+ *  `%fn` in two places names the SAME woman twice - and a port that
+ *  re-evaluated per occurrence would introduce two.
+ *
+ *  THE PIPE IS EATEN (:472-475): `|` terminates a macro AND is
+ *  swallowed, which is how `%di|ern` becomes "southern". Every other
+ *  terminator is left in the text.
+ *
+ *  Unknown macros resolve through the same path and answer whatever
+ *  the handler table has for them - here, nothing, which leaves the
+ *  symbol replaced by the empty string exactly as MacroHelper's own
+ *  missing-handler path does.
+ *
+ *  The tokens are rewritten IN PLACE, as C#'s `ref` array is. */
 export function expandTalkMacros(tokens, handlers) {
-  const names = Object.keys(handlers).sort((a, b) => b.length - a.length);
+  const cache = new Map();
+  const valueOf = (name) => {
+    if (cache.has(name)) return cache.get(name);
+    const v = String(handlers[name]?.() ?? '');
+    cache.set(name, v);
+    return v;
+  };
   for (const token of tokens ?? []) {
-    if (!token || typeof token.text !== 'string' || token.text === '') continue;
-    let out = token.text;
-    for (const name of names) {
-      if (!out.includes(name)) continue;
-      // resolved ONCE per record, as MacroHelper resolves per token
-      const value = String(handlers[name]() ?? '');
-      out = out.split(name).join(value);
+    const text = token?.text;
+    if (typeof text !== 'string' || text.indexOf('%') < 0) continue;
+    let out = '';
+    let currentPos = 0;
+    let macroPos;
+    while ((macroPos = text.indexOf('%', currentPos)) >= 0) {
+      let endPos = macroPos + 1;
+      while (endPos < text.length && !MACRO_TERMINATORS.includes(text[endPos])) endPos++;
+      out += text.slice(currentPos, macroPos);
+      out += valueOf(text.slice(macroPos, endPos));
+      currentPos = endPos;
+      if (currentPos < text.length && text[currentPos] === '|') currentPos++;
     }
+    out += text.slice(currentPos);
     token.text = out;
   }
   return tokens;
