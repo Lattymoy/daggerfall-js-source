@@ -512,6 +512,91 @@ itself; GetPortraitIndexFromStaticNPCBillboard
 rides the `portraitForBillboard` seam; and the window routing, the
 event rebuilds and the save threading land with TK-v.
 
+## TALK AUDIT IV (2026-08-21, the TK-iv verify pass)
+
+The NPC session's adversarial pass, again in the MAIN LOOP against the
+raw C# (the multi-agent retry trigger stands).
+
+**The re-read found three port bugs, and two were the same mistake
+TK-iii's re-read had already caught once** - a law left with the host
+that C# keeps inside the method. That it recurred immediately, in the
+next slice, is why both are now standing law rather than findings:
+
+1. **Half of TalkToNpc's tone reset was the host's.** C# clears
+   `lastToneIndex` AND `toneReactionForTalkSession[0..2]` in the same
+   four lines (:2659-2662). The first lives on TK-iii's pipeline and
+   rightly rides a seam; the second is TalkManager's own field, and it
+   had been left outside. A host clearing only the seam would answer
+   for the next NPC with the last one's cached reaction.
+2. **`rebuildTopicLists` was shadowed.** It is ONE TalkManager field:
+   the topic machinery raises it, StartNewConversation spends it. The
+   session carried its own copy, which nothing would ever have raised,
+   so the deferred rebuild could never happen. It reads and clears the
+   tree's through seams now.
+3. **The questor pool took each candidate's social group as given.**
+   C# resolves it through GetStaticNPCFactionData with the BUILDING's
+   own type (:2814-2816), so the id-0 court/people redirect and the
+   three generic Random_* redirects apply in the pool exactly as they
+   do at a click - and the sgroup is read UNCLAMPED, the Merchants
+   fold belonging to SetTargetNPC alone.
+
+And one of DFU's own, kept: **THE UNCLONED QUESTOR POST** (:927 vs
+:3552). ExpandQuestMessage writes each expanded string back into the
+token it came from (QuestMacroHelper.cs:157), and GetNPCQuestGreeting
+hands it the array straight out of `dictQuestorPostQuestMessage`. The
+stored message is therefore permanently expanded by the first
+greeting. GetAnswerFromTokensArray clones before expanding for exactly
+this reason, with DFU's own comment naming the altering macros that
+must re-evaluate; this arm does not, so an altering macro in a
+post-quest message freezes at its first value.
+
+The mount exposed one more gap, in TK-ii: TopicTree had
+ResetNPCKnowledgeInTopicListRecursively but not **ResetNPCKnowledge**
+(:546-553), which walks all four lists AND asks for a rebuild. It is
+what TalkToNpc calls whenever the target is not the same NPC as
+before, which is precisely why a repeat click keeps what the last NPC
+knew.
+
+**The campaign** ran three rounds against a re-measured baseline.
+Round 1 swept 180 mutants over the whole file on a fresh coverage map:
+123 caught, 57 survived, 0 `noTestExecutesLine`. Round 2, at a
+different seed after those 57 were pinned, ran 190: 166 caught, 24
+survived - a kill rate of 68% then 87%.
+
+**The lesson recorded: a guard is invisible on the index that does not
+reach it.** Every `> N` test in GetGreetingIndex differs from `>= N` -
+or from `> N+1` - only when the index is EXACTLY N at that moment, and
+no single membership can arrange that, because the arm that sets N is
+the one being guarded. Nine of round 2's survivors were guards that
+had looked thoroughly pinned. Six two-membership fixtures now walk the
+index onto each bar in turn (the ally arm at 2, the enemy arm at 3 and
+again from 4, enemies in common at 4 from 5, allies in common at 5
+from 6, the guild-allied-to-their-enemy arm at 6 from 7), each
+asserting the exact index AND the exact accumulated reputation - so a
+guard that fires twice is as visible as one that never fires. This is
+the sibling of TK-ii's spot-checked-table lesson and TK-iii's
+self-referential pin: a fixture that cannot reach the state a line
+guards is not a test of that line.
+
+Six proven equivalents, all the same shape:
+
+- `:262`, `:263`, `:276`, `:277`, `:288`, `:299` (the in-common loops'
+  `i < 3` -> `<= 3`, and the identical `3` -> `4`): the four arrays are
+  three-element literals built from `enemy1..3` / `ally1..3`, and
+  every FACTION.TXT record carries all six as NUMBERS (factionFile.js
+  initialises them to 0 before parsing). A fourth read is therefore
+  `undefined`, and `undefined === <number>` is false for every slot on
+  the other side - so the extra iteration can never match. The last
+  two loops go further: they feed the out-of-range read to the faction
+  seam, which answers null for `undefined`, and the `enemy &&` /
+  `ally &&` guard drops it. Killing these would need BOTH loop bounds
+  mutated at once, and a faction record with a missing slot.
+
+**Kept quirks** are recorded with the slice in TK-iv above - THE
+UNGUARDED FIRST ARM, THE STRANGER FLOOR, THE REJECTION FOUND
+MID-GREETING, THE NAMES NOBODY READS, and THE ZERO-FACTION MATCH,
+which is recorded rather than emulated.
+
 ## TALK AUDIT III (2026-08-21, the TK-iii verify pass)
 
 The pipeline's adversarial pass, again in the MAIN LOOP against the
@@ -737,6 +822,23 @@ found a crash. Fixture the real module under any seam a slice
 introduces, in the same round that introduces it.
 
 ## Standing law
+
+Two of this arc's own, both learned the hard way:
+
+- **A LAW LEFT WITH THE HOST IS A LAW BROKEN.** If C# keeps something
+  inside a method, the port keeps it inside that method - the tone
+  gate, the %n slot, the tone-reaction cache, the topic-rebuild flag.
+  Every one of these was caught by a re-read AFTER the pins were
+  written and green, because a seam a host forgets to wire is a seam
+  no pin exercises. When a field is C#'s, own it; when it lives in
+  another module of the port, reach it through a seam and call it
+  from the same place C# does - never keep a second copy.
+- **A FIXTURE THAT CANNOT REACH THE STATE A LINE GUARDS IS NOT A TEST
+  OF THAT LINE.** TK-ii spot-checked a table and missed its rows;
+  TK-iii wrote a pin that read the same constant the code read;
+  TK-iv pinned nine guards with fixtures whose index could never sit
+  on the bar. The mutation campaign is what finds these, every time,
+  which is why the campaign is not optional.
 
 The Quest-Arc doctrines carry over whole: DFU literals in every pin;
 kept quirks recorded by C# line; absent seams idle LOUDLY (the
