@@ -1129,6 +1129,76 @@ adapter seams and forced the Q4-v re-carve.
   any in-contract hit distance, so the slack gate re-rejects); and
   the zero-vector-only || divisor.
 
+## Q4-iv - JOURNAL + SAVE (SHIPPED 2026-08-21)
+
+The quest save envelope whole (QuestMachine -> Quest -> Message /
+Resource / Task / Action v1 shapes, each in its C# home), the
+journal's ACTIVE-page walk (GetAllQuestLogMessages), EndQuest's
+notebook filing, and PlayerNotebook.cs whole (systems/notebook.js).
+The journal WINDOW's geometry (layout, scrolling, click hit-testing,
+the find-place dialog) is the UI arc's; the notebook and the walk
+are its whole law half.
+
+- THE ENVELOPE: plain-JSON shapes with C#'s field names, riding the
+  port's save.js conventions. Type identities are explicit - the
+  resource type derives from the is* flags, every action carries a
+  static typeName - because vite's minifier would rename
+  constructor.name. Symbols round-trip as {original} (name
+  re-derives); SiteDetails/SiteLinks/marker targets round-trip as
+  plain data, the shape C#'s serializer writes. The port's SECONDS
+  clock stands in for DaggerfallDateTime fields (Ledger A);
+  smallerDungeonsState/compiledByVersion serialize at defaults (no
+  port counterparts, recorded).
+- THE ACTION WALK: a declarative saveShape per class ([[portField,
+  kind, savedName?]], kinds raw/sym/symArray) with ONE generic
+  implementation - every shipped action's C# GetSaveData/
+  RestoreSaveData is a pure field copy (spot-verified: PlaySound,
+  WhenTask, DroppedItemAtPlace, CreateFoe), so the walk IS the law;
+  one alias (port soundId <-> C# soundIndex). Transients stay out
+  exactly where C# leaves them: CreateFoe's in-flight wave,
+  TeleportPc's resume, GivePc's offer latch, WhenNpcIsAvailable's
+  click memory all reset on load, verbatim.
+- KEPT HOLES (C#'s own): rumorsMessageID sits in the resource
+  struct, never saved, never restored - loads reset it to the ctor's
+  -1; currentLogMessageId/lastResourceReferenced/externalMCP are not
+  in the quest shape, so the journal's %qdt context falls to quest
+  start after a load; Quest.OneTime is not in the shape either (the
+  one-time law survives via oneTimeQuestsAccepted, which C# persists
+  in the PLAYER save - a Q4-v wiring row for save.js); the task
+  restore ORDER is itself law - IsTriggered restores through
+  SetTriggerValue while globalVarLink still holds -1 and dropped
+  false, so a load never re-writes the global store and the rearm
+  arm fires over an empty action list.
+- THE FAILURE LAWS: each quest restores under a per-quest catch -
+  an unknown action/resource type (the removed-mod law) warns with
+  C#'s message, adds the HUD line, and the load continues; a
+  duplicate UID throws into the same catch as Dictionary.Add;
+  Person's faction record re-derives from the live store with the
+  deserialize throw; RemoveStaleSiteLinks scrubs orphaned links
+  after. The uid allocator advances past restored uids (C# persists
+  its global NextUID; the port derives from what it loads).
+  ReassignLegacyQuestMarkers and the Foe v1->v2 upgrade arm are
+  legacy-save migrations with no port-side legacy saves (recorded).
+- THE NOTEBOOK (PlayerNotebook.cs whole): notes / finished quests /
+  the 50-slot message ring over deps dateTimeString/
+  midDateTimeString/cityName; the 70-column wrap breaking at the
+  LAST space with C#'s leading-space prefix on EVERY line; the
+  noteHeader '{0} in {1}:' and finishQuestHeader '{0} {1} at {2}:'
+  literals with completed/ended and the 'Quest' fallback; moveNote's
+  destIdx-- law; the page splits at maxLinesSmall*2 / maxLinesQuests*2
+  with the finished-quest OVERFLOW QUIRK kept whole (the current
+  message refiles HEADERLESS and the final push is unguarded, so an
+  empty entry can land); Clear() spares the ring; the ring is NOT in
+  the save shape and empties on load; the D:/Q:/A: line encoding
+  with the one-joins-two-breaks newline law. EndQuest resolves the
+  active log to Message objects and files through the machine's new
+  addFinishedQuest hook.
+
+Gate: `test/questsave.test.js` - 17 pins, led by THE CORPUS
+ROUND-TRIP GATE (all 265 quests save -> restore -> save to a fixed
+point) and the LOCKSTEP TWIN (a restored started quest ticks
+identically to its original).
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
@@ -1158,11 +1228,11 @@ slices, in dependency order.
   engine is machine LAW (pinnable in node, campaignable), the bridge
   is browser-host geometry (probe-verified) - fusing them would have
   shipped an unverified sprawl.
-- **Q4-iv - JOURNAL + SAVE**: the quest journal window over
-  getLogMessages + macros, and the quest save envelope
-  (machine/quest/resource/action state through the port's save
-  system - the v1/v2 SaveData shapes the C# carries; the behaviour's
-  v1 shape from Q4-iii rides in).
+- **Q4-iv - JOURNAL + SAVE** (SHIPPED above): the quest save
+  envelope whole, the journal's law half (the active-page walk +
+  PlayerNotebook), EndQuest's notebook filing; the journal WINDOW
+  geometry rides the UI arc, the behaviour v1 shape and
+  oneTimeQuestsAccepted persistence ride Q4-v's wiring.
 - **Q4-v - THE HOST BRIDGE**: the machine goes LIVE in scenes/* -
   instantiate + tick it in the world/dungeon/interior hosts, wire
   deps.world off the streaming world (the Q3-i..Q4-iii seam
