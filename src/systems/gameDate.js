@@ -144,3 +144,27 @@ export const seasonName = (date) => SEASON_NAMES[seasonValue(date)];
  *  the port needs the short form its windows show. */
 export const dateString = (date) =>
   `${dayName(date)}, ${dayOfMonth(date)} ${monthName(date)}, 3E ${date.year}`;
+
+/** GetSuffix (:641-652): st on 1/21, nd on 2/22, rd on 3/23, else th
+ *  (a 30-day month never reaches 31, so DFU never wrote that arm). */
+export function daySuffix(dayOfMonth1) {
+  if (dayOfMonth1 === 1 || dayOfMonth1 === 21) return 'st';
+  if (dayOfMonth1 === 2 || dayOfMonth1 === 22) return 'nd';
+  if (dayOfMonth1 === 3 || dayOfMonth1 === 23) return 'rd';
+  return 'th';
+}
+const pad2 = (n) => String(Math.floor(n)).padStart(2, '0');
+/** DateTimeString (:409-414) over the en table's dateTimeFormatString
+ *  '{0:00}:{1:00}:{2:00} on {3}{4} of {5:00}, 3E{6}'. QUIRK KEPT: the
+ *  {5:00} spec lands on the STRING MonthName - System.String is not
+ *  IFormattable, string.Format drops the spec and the name prints
+ *  plainly - and the day ({3}) is UNPADDED here. The notebook's D:
+ *  note headers read this shape (Q4-v). */
+export const dateTimeString = (d) =>
+  `${pad2(d.hour)}:${pad2(d.minute)}:${pad2(d.second)} on ${d.day + 1}${daySuffix(d.day + 1)} of ${monthName(d)}, 3E${d.year}`;
+/** MidDateTimeString (:390-394) over midDateTimeFormatString
+ *  '{0:00}:{1:00}:{2:00} {3:00} {4:00} 3E{5}' - HERE the day IS padded
+ *  ({3:00} lands on the int) and the month-name spec drops again. The
+ *  notebook's finished-quest headers read this shape (Q4-v). */
+export const midDateTimeString = (d) =>
+  `${pad2(d.hour)}:${pad2(d.minute)}:${pad2(d.second)} ${pad2(d.day + 1)} ${monthName(d)} 3E${d.year}`;

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -191,27 +191,39 @@ test('AUDIT 22 F2: a multi-variant record reads ANY of its variants, with alignm
   assert.deepEqual(rsc.variantLinesById(3100, () => 0), rsc.linesById(3100, 0));
 });
 
-test('AUDIT 22 F11: three item flags no producer mints yet', () => {
-  // itemInfo reads `artifact`, `azurasStar` and `oghmaInfinium`, all
-  // verbatim DFU branches - and NOTHING in src/ writes any of them, so
-  // the branches are unreachable in the running game and any test that
-  // hand-builds one describes a shape no producer makes (TEST THE
-  // SHAPE THE PRODUCER MINTS). Flagged at their sites rather than
-  // deleted: they are correct the moment artifacts are minted. This
-  // pin goes red on that day and sends its author to the flag.
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-  const producers = walkSrc(root).filter((f) => !/systems\/(itemInfo|useItem|mysticism)\.js$/.test(f));
-  for (const flag of ['artifact', 'azurasStar', 'oghmaInfinium']) {
-    const writer = producers.find((f) => new RegExp(`${flag}\\s*:`).test(readFileSync(f, 'utf8')));
-    assert.equal(writer, undefined, `${flag} now has a producer (${writer}) - retire its flag`);
-  }
-});
+test('AUDIT 22 F11 retired at Q2b-ii: createArtifact is the producer of the three artifact flags', async () => {
+  // The pin that guarded these as producerless went red the day the
+  // quest Item mint's artifact arm landed - as designed. The flags now
+  // pin THE SHAPE THE PRODUCER MINTS: identity flags derive from the
+  // artifact index (ArtifactsSubTypes - Oghma_Infinium 5, Azuras_Star
+  // 9, ItemEnums.cs:246,250), the base item expands from the MAGIC.DEF
+  // template, armor material moves to the plate band.
+  const { createArtifact } = await import('../src/systems/loot.js');
+  const T = (i, over = {}) => ({ index: i, name: `A${i}`, type: 1, group: 14, groupIndex: 0, enchantments: [], uses: 100, value: 0, material: 0, ...over });
+  const templates = Array.from({ length: 12 }, (_, i) => T(i));
+  templates[5] = T(5, { group: 7, groupIndex: 0 });    // Oghma Infinium is a book
+  templates[9] = T(9, { group: 14, groupIndex: 2 });   // Azura's Star, a gem
+  templates[3] = T(3, { group: 2, groupIndex: 4, material: 3 });   // an armor artifact
 
-function walkSrc(root, dir = 'src', out = []) {
-  for (const e of readdirSync(join(root, dir))) {
-    const rel = `${dir}/${e}`;
-    if (statSync(join(root, rel)).isDirectory()) walkSrc(root, rel, out);
-    else if (e.endsWith('.js')) out.push(join(root, rel));
-  }
-  return out;
-}
+  const oghma = createArtifact(templates, 5);
+  assert.equal(oghma.oghmaInfinium, true);
+  assert.equal(oghma.azurasStar, undefined);
+  assert.equal(oghma.artifact, true);
+  const star = createArtifact(templates, 9);
+  assert.equal(star.azurasStar, true);
+  assert.equal(star.oghmaInfinium, undefined);
+  const plain = createArtifact(templates, 0);
+  assert.equal(plain.azurasStar, undefined);
+  assert.equal(plain.oghmaInfinium, undefined);
+  assert.equal(plain.artifact, true);
+  // the armor artifact's material lands in the plate band
+  const armor = createArtifact(templates, 3);
+  assert.equal(armor.material, 0x200 + 3);
+  assert.equal(armor.artifactIndexBitfield, (3 << 1) | 1);
+  // empty enchantment slots (type -1) filter out, real ones ride raw
+  const enchanted = createArtifact(
+    templates.map((t, i) => (i === 0 ? { ...t, enchantments: [{ type: -1, param: 0 }, { type: 3, param: 7 }] } : t)), 0);
+  assert.deepEqual(enchanted.enchantments, [{ type: 3, param: 7 }]);
+  // ...and the itemInfo branches those flags feed are LIVE now
+  assert.equal(armorShouldShowMaterial(armor), false, 'an artifact never shows material');
+});

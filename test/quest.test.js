@@ -249,3 +249,24 @@ test('quest: tables must be loaded, loudly', () => {
     loadTables();   // restore even on failure (shared-process ordering)
   }
 });
+
+test('parseInt: the int32 rails sit exactly at +/-2^31 (Q2b-VERIFY mutation pin)', () => {
+  assert.equal(questParseInt('2147483647'), 2147483647);
+  assert.equal(questParseInt('-2147483648'), -2147483648);
+  assert.throws(() => questParseInt('2147483648'), /overflow/);
+  assert.throws(() => questParseInt('-2147483649'), /overflow/);
+});
+
+test('clock: the flag&16 and flag&1-hack travel arms discriminate exactly (Q2b-VERIFY mutation pin)', async () => {
+  const { Clock } = await import('../src/systems/quest/clock.js');
+  const stub = { rolls: () => 0 };   // no travelSeconds -> the arm PENDS
+  // flag bit 4 alone forces the travel arm, whatever the time says
+  assert.equal(new Clock(stub, 'Clock _c_ 1.00:00 flag 16').travelTimePending, true);
+  // bit 4 among others still forces it (flag & 16, not flag === 16)
+  assert.equal(new Clock(stub, 'Clock _c_ 1.00:00 flag 17').travelTimePending, true);
+  // the flag&1 HACK needs all three: bit 0, maxRange > 0, drawn time 0
+  assert.equal(new Clock(stub, 'Clock _c_ 0.00:00 flag 1 range 0 2').travelTimePending, true);
+  assert.equal(new Clock(stub, 'Clock _c_ 00:01 flag 1 range 0 2').travelTimePending, false, 'a nonzero time defeats the hack');
+  assert.equal(new Clock(stub, 'Clock _c_ 0.00:00 flag 1').travelTimePending, false, 'no range, no hack');
+  assert.equal(new Clock(stub, 'Clock _c_ 0.00:00 flag 2 range 0 2').travelTimePending, false, 'bit 1 is not bit 0');
+});

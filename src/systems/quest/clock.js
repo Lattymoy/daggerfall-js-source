@@ -13,6 +13,8 @@
 // machine (Q2).
 
 import { QuestResource, matchFirst } from './questResource.js';
+import { calculateTravelTime } from '../travel.js';
+import { worldCoordToMapPixel } from '../../formats/mapsFile.js';
 import { Symbol as QuestSymbol } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
 
@@ -30,6 +32,45 @@ const TIME_VALUE = [
 ];
 
 const getTimeInSeconds = (days, hours, minutes) => days * 86400 + hours * 3600 + minutes * 60;
+
+/** Clock.cs GetTravelTimeInSeconds (:422-460), Q3-i: the flag&16 /
+ *  _2place_ travel arm over the world seam. A single place routes the
+ *  port's own TravelTimeCalculator - CAUTIOUS speed WITH CART, no
+ *  inn/ship/horse, exactly C#'s argument row - from the player's
+ *  current map pixel to the place's exterior world coords, floors at
+ *  one day (1440 minutes), and multiplies 2.5x for the return trip
+ *  (int-truncated). The no-place overload SUMS one-way times over
+ *  every Place resource and applies the multiplier once. A place
+ *  whose location cannot resolve logs and counts 0, as C#. */
+export function travelTimeSeconds(quest, place = null, returnTrip = true) {
+  const world = quest?.hooks?.world;
+  if (!world) return null;
+  if (place === null) {
+    const places = [...quest.resources.values()].filter((r) => r.isPlace);
+    if (!places.length) {
+      console.warn('[quest] Clock wants a travel time but quest has no Place resources.');
+      return 0;
+    }
+    let total = 0;
+    for (const p of places) total += travelTimeSeconds(quest, p, false) ?? 0;
+    if (returnTrip) total = Math.trunc(total * 2.5);
+    return total;
+  }
+  const sd = place.siteDetails;
+  const location = sd ? world.maps.getLocationByName(sd.regionName, sd.locationName) : null;
+  if (!location) {
+    console.warn(`[quest] Could not find Quest Place ${sd?.regionName}/${sd?.locationName}`);
+    return 0;
+  }
+  const endPos = worldCoordToMapPixel(location.exterior.recordElement.header.x, location.exterior.recordElement.header.y);
+  const { minutes } = calculateTravelTime(world.playerPixel(), endPos,
+    { speedCautious: true, sleepModeInn: false, travelShip: false, hasHorse: false, hasCart: true },
+    (x, y) => world.maps.getClimateIndex(x, y));
+  let travelTimeMinutes = minutes;
+  if (returnTrip) travelTimeMinutes = Math.trunc(travelTimeMinutes * 2.5);
+  if (travelTimeMinutes < 1440) travelTimeMinutes = 1440;
+  return getTimeInSeconds(0, 0, travelTimeMinutes);
+}
 
 export function matchTimeValue(text) {
   const m = matchFirst(text, TIME_VALUE);
@@ -108,6 +149,17 @@ export class Clock extends QuestResource {
    *  come off the remainder; at zero the SAME-NAMED task starts and
    *  the clock finishes. The world clock is the quest's nowSeconds
    *  seam (classic game seconds, machine-injected). */
+  /** ExpandMacro (Clock.cs): =symbol_ answers days remaining (the
+   *  ShowQuestJournalClocksAsCountdown setting picks remaining vs
+   *  starting; DFU default false = the STARTING time), Ceiling of
+   *  seconds/86400. */
+  expandMacro(macroType) {
+    if (macroType !== 5) return false;   // DetailsMacro
+    const secs = this.parentQuest?.hooks?.world?.showClocksAsCountdown?.()
+      ? this.remainingTimeInSeconds : this.startingTimeInSeconds;
+    return String(Math.ceil(secs / 86400));
+  }
+
   tick(caller) {
     if (!this.clockEnabled || this.clockFinished) return;
     const now = caller.nowSeconds?.() ?? 0;
@@ -164,5 +216,36 @@ export class Clock extends QuestResource {
     const task = caller.getTask(this.symbol);
     if (task) task.start();
     else console.warn(`[quest] Clock timer ${this.symbol.name} completed but could not find a task with same name.`);
+  }
+
+  // ---- the save envelope (Q4-iv; Clock.cs:490-530) ----
+
+  getSaveData() {
+    return {
+      lastWorldTimeSample: this._lastWorldTimeSample,
+      startingTimeInSeconds: this.startingTimeInSeconds,
+      remainingTimeInSeconds: this.remainingTimeInSeconds,
+      flag: this.flag,
+      minRange: this.minRange,
+      maxRange: this.maxRange,
+      clockEnabled: this.clockEnabled,
+      clockFinished: this.clockFinished,
+    };
+  }
+
+  /** RestoreSaveData: plain assigns; the saved starting time is
+   *  authoritative, so the port's travelTimePending (headless-only)
+   *  clears. */
+  restoreSaveData(dataIn) {
+    if (dataIn == null) return;
+    this._lastWorldTimeSample = dataIn.lastWorldTimeSample;
+    this.startingTimeInSeconds = dataIn.startingTimeInSeconds;
+    this.remainingTimeInSeconds = dataIn.remainingTimeInSeconds;
+    this.flag = dataIn.flag;
+    this.minRange = dataIn.minRange;
+    this.maxRange = dataIn.maxRange;
+    this.clockEnabled = dataIn.clockEnabled;
+    this.clockFinished = dataIn.clockFinished;
+    this.travelTimePending = false;
   }
 }
