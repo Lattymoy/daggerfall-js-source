@@ -225,6 +225,45 @@ test('getAnswerText: the dispatch, the question counter and the opening-text res
   assert.equal(pipe.numQuestionsAsked, 3);
 });
 
+test('THE TONE GATE lives in getAnswerText: recompute only on a tone CHANGE, stamped as it goes', () => {
+  let tone = 1;
+  let computes = 0;
+  const { pipe } = makePipe({
+    toneIndex: () => tone,
+    reactionTier: (questionType, socialGroup) => { computes++; return 2; },
+  });
+  assert.equal(pipe.lastToneIndex, -1, 'a fresh session has no tone on record');
+  pipe.getAnswerText(newListItem({ questionType: QUESTION_TYPE.News }));
+  assert.equal(computes, 1, 'the first question computes');
+  assert.equal(pipe.reactionToPlayer012, 2);
+  assert.equal(pipe.lastToneIndex, 1, 'and the recompute STAMPS the tone');
+  pipe.getAnswerText(newListItem({ questionType: QUESTION_TYPE.News }));
+  assert.equal(computes, 1, 'the same tone does NOT recompute - the session reaction holds');
+  tone = 2;
+  pipe.getAnswerText(newListItem({ questionType: QUESTION_TYPE.News }));
+  assert.equal(computes, 2, 'a changed tone recomputes');
+  assert.equal(pipe.lastToneIndex, 2);
+  // StartNewConversation's reset forces the next question to recompute
+  pipe.resetToneSession();
+  assert.equal(pipe.lastToneIndex, -1);
+  pipe.getAnswerText(newListItem({ questionType: QUESTION_TYPE.News }));
+  assert.equal(computes, 3);
+  // the QUESTION TYPE rides the recompute (the tier's own table is
+  // indexed by classic question)
+  const seen = [];
+  const { pipe: p2, session: s2 } = makePipe({ toneIndex: () => 0, reactionTier: (qt, sg) => { seen.push([qt, sg]); return 1; } });
+  s2.socialGroup = 3;
+  // WhereAmI needs no tree walk, so this isolates the gate's own args
+  p2.getAnswerText(newListItem({ questionType: QUESTION_TYPE.WhereAmI }));
+  assert.deepEqual(seen, [[QUESTION_TYPE.WhereAmI, 3]], 'the question type AND the social group ride the recompute');
+  // headless: no seam, no recompute, and the standing tier survives
+  const { pipe: bare } = makePipe();
+  bare.reactionToPlayer012 = 2;
+  bare.getAnswerText(newListItem({ questionType: QUESTION_TYPE.News }));
+  assert.equal(bare.reactionToPlayer012, 2, 'an absent tier seam leaves the tier standing');
+  assert.equal(bare.lastToneIndex, -1, 'and never stamps a tone it did not compute');
+});
+
 test('the Work arm: no work, then the three reaction tiers, and only a real offer picks a questor', () => {
   let questors = 0;
   const { pipe } = makePipe({ setRandomQuestor: () => { questors++; } });

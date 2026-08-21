@@ -192,7 +192,29 @@ export class AnswerPipeline {
     this.markLocationOnMap = false;
     this.locationOfRegionalBuilding = '';
     this.reactionToPlayer012 = 0;
+    // GetReactionToPlayer_0_1_2 stamps this as part of its own
+    // recompute (:682); GetAnswerText's gate reads it (:1994) and
+    // StartNewConversation resets it to -1 (:2659).
+    this.lastToneIndex = -1;
   }
+
+  /** The tone gate C# spells inline at the head of GetAnswerText
+   *  (:1994-1995): the reaction tier is recomputed only when the tone
+   *  CHANGED since the last question, and the recompute stamps
+   *  lastToneIndex on its way through (C# does that inside
+   *  GetReactionToPlayer_0_1_2 itself). Held HERE rather than in the
+   *  caller so a host cannot forget it. */
+  _refreshReactionTier(questionType) {
+    const toneIndex = this.deps.toneIndex?.() ?? -1;
+    if (this.lastToneIndex === toneIndex) return;
+    const tier = this.deps.reactionTier?.(questionType, this._session().socialGroup);
+    if (tier == null) return;   // no seam: the standing tier holds (headless)
+    this.reactionToPlayer012 = tier;
+    this.lastToneIndex = toneIndex;
+  }
+
+  /** StartNewConversation's half of the reset (:2659). */
+  resetToneSession() { this.lastToneIndex = -1; }
 
   _rolls() { return this.deps.rolls ?? Math.random; }
   _record(id) { return this.deps.expandRandomTextRecord?.(id) ?? ''; }
@@ -322,6 +344,7 @@ export class AnswerPipeline {
    *  GetReactionToPlayer_0_1_2, recomputed only when the tone
    *  changed (the caller owns that gate, exactly as C# does). */
   getAnswerText(listItem, { npcSeed = 0, workAvailable = false } = {}) {
+    this._refreshReactionTier(listItem.questionType);
     this.currentQuestionListItem = listItem;
     let answer = '';
     switch (listItem.questionType) {
