@@ -1,7 +1,7 @@
 # Testing
 
 Runner: `node --test` (bare - a trailing `test/` path breaks discovery on
-Node 22). Suite: 1581 tests across 211 files.
+Node 22). Suite: 1587 tests across 212 files.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -133,6 +133,7 @@ Node 22). Suite: 1581 tests across 211 files.
 | effectactions.test.js | 4 | Hurt21 every-20th gate + verbatim exclusive Range * level (min<=max guard), Hurt22-25 flat/axis every activation + Poison as DFU's own empty delegate, chain cascade lever->spike (ActivateNext-first order, activationCount), the verbatim Receive trigger gate (Collision03 blocks Direct/passes WalkInto, chains always valid, MultiTrigger's exact trio, undefined flags never fire) |
 | enemyattack.test.js | 3 | verbatim reset-timer arithmetic (Range/level/reflex terms, /980, 0-floor), the floored-speed >>3 roll gate, strike gating (range+sight+22.5deg yaw) + hit event at HIT_FRAME_MELEE |
 | enemyentity.test.js | 3 | ClassFile verbatim 74-byte parse (incl the (a<<16)|(c<<8)|b shuffle) on a crafted record, class entity rules (level, HP roll bounds, skills clamp, career Speed, city-watch +3..6), monster rules (predefined level, inclusive HP range, armor*5) |
+| flc.test.js | 6 | F1 - THE FLIC READER (FlcFile.cs), the port's ELEVENTH format reader: Daggerfall's .CEL animations are Autodesk FLICs, a different format from the .VID movies, which is why the U22 video reader could not stand in for the chargen constellations. No ARENA2 in CI, so the decoders are pinned over SYNTHETIC FLIC bytes built to the spec (the book reader's method): the 128-byte header with its SIGNED magic and the 1/1000s frame delay, NumOfFrames+1 frame slots (the extra is the RING frame that loops back), the .FLC/.CEL extension gate; COLOR_256 including the count-byte-0-means-256 quirk and the transparency switch blanking only a matching entry; BYTE_RUN's runs and literals; DELTA_FLC's paired-pixel packets; a PSTAMP thumbnail skipped whole with the chunk after it still decoding; and a bad frame type refusing to play. THE BOTTOM-UP QUIRK is pinned both ways - FLIC row 0 lands in the buffer's LAST row (Unity's texture origin, not the format's) and getFrame() flips it to the top-down shape every other reader here produces. Plus the ARENA2-gated sweep: every .CEL decodes and every frame including the ring frame buffers |
 | fnt.test.js | 2 | verbatim FNT layout on crafted bytes (header, 240-entry table, the L/R half SWAP with MSB-first expansion - x0 from the odd byte, x15 from the even, bounds null), the white atlas (256x240, pixel spot-checks) + measure (space rule, 1px classic spacing) + row-1 cell UVs |
 | hudtext.test.js | 2 | the popup queue (4-line cap dropping oldest, per-line 2s life with independent lifetimes across a late add, expiry, empty ticks safe) | (AUDIT 18: the popup now draws from the TOP as DFU does)
 | hud.test.js | 3 | compass scroll verbatim (trunc(258 x heading), wrap both directions, the 64 window never exceeds the 322 strip), bottom-anchored bar fill (v-window + clamps + max-0 guard) + integer scale flooring at 1, indexed->RGBA with the classic index-0 transparency |
