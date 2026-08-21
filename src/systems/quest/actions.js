@@ -40,11 +40,12 @@
 
 import { Symbol as QuestSymbol } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
-import { staticMessagesTable, soundsTable, placesTable, spellsTable } from './tables.js';
+import { staticMessagesTable, soundsTable, placesTable, spellsTable, diseasesTable } from './tables.js';
 import { dateFromSeconds } from '../gameDate.js';
 import { makeItemPermanent } from './item.js';
 import { QUEST_MESSAGES } from './quest.js';
 import { customParseInt, isPlayerAtBuildingType, isPlayerAtDungeonType, MARKER_PREFERENCE } from './place.js';
+import { getIndividualFactionID } from './person.js';
 
 /** TalkManager.cs:285-291 - the dialog-link resource types. */
 export const QUEST_INFO_RESOURCE_TYPE = Object.freeze({
@@ -1874,6 +1875,298 @@ export class CastSpellOnFoe extends ActionTemplate {
   }
 }
 
+// ---- Q3-iv, THE REMAINDER SWEEP: the last six template owners ----
+
+const LOCATION_TYPE_NONE = -1;   // DFRegion.LocationTypes.None
+
+/** WhenPcEntersExits.cs: the exterior-type trigger. C# rides
+ *  PlayerGPS's OnEnter/OnExitLocationRect events; the port POLLS the
+ *  same state each checkTrigger - previous shifts on every observed
+ *  change, so enter (None -> type) and exit (type -> None) read
+ *  identically at tick granularity. Only p1=2 rows of Quests-Places
+ *  are legal exterior types; 'anywhere' carries p2=-1, the wildcard
+ *  arm. HEADLESS the poll observes None forever and the trigger
+ *  stays false - the parse (and the p1 throw) runs whole. */
+export class WhenPcEntersExits extends ActionTemplate {
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.isTriggerCondition = true;
+    this.onEnter = true;
+    this.sourceExteriorType = '';
+    this.indexExteriorType = -1;
+    this.currentLocationType = LOCATION_TYPE_NONE;
+    this.previousLocationType = LOCATION_TYPE_NONE;
+  }
+  get pattern() { return /when pc (?<enters>enters) (?<exteriorType>\w+)|when pc (?<exits>exits) (?<exteriorType2>\w+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new WhenPcEntersExits(parentQuest);
+    if (g.enters != null) action.onEnter = true;
+    else if (g.exits != null) action.onEnter = false;
+    else throw new Error("WhenPcEntersExits: Syntax is 'when pc enters exteriorType | when pc exits exteriorType");
+    action.sourceExteriorType = g.exteriorType ?? g.exteriorType2;
+    const table = placesTable();
+    if (table.getInt('p1', action.sourceExteriorType) !== 2) {
+      throw new Error('WhenPcEntersExits: This trigger condition can only be used with exterior types of p1=2 in Quests-Places table.');
+    }
+    action.indexExteriorType = table.getInt('p2', action.sourceExteriorType);
+    // seed the current type from the player's location at create
+    const world = parentQuest?.hooks?.world;
+    const loc = world?.currentLocation?.();
+    if (world?.isPlayerInLocationRect?.() && loc?.loaded) {
+      action.currentLocationType = loc.mapTableData.locationType;
+    }
+    return action;
+  }
+  _poll() {
+    const world = this.parentQuest?.hooks?.world;
+    const loc = world?.currentLocation?.();
+    const now = (world?.isPlayerInLocationRect?.() && loc?.loaded)
+      ? loc.mapTableData.locationType : LOCATION_TYPE_NONE;
+    if (now !== this.currentLocationType) {
+      this.previousLocationType = this.currentLocationType;
+      this.currentLocationType = now;
+    }
+  }
+  _hasEnteredTarget() {
+    if (!this.onEnter || this.currentLocationType === LOCATION_TYPE_NONE) return false;
+    if (this.indexExteriorType === -1) return true;   // 'anywhere'
+    return this.indexExteriorType === this.currentLocationType;
+  }
+  _hasExitedTarget() {
+    if (this.onEnter || this.previousLocationType === LOCATION_TYPE_NONE) return false;
+    if (this.indexExteriorType === -1) return true;
+    return this.indexExteriorType === this.previousLocationType;
+  }
+  checkTrigger(_caller) {
+    this._poll();
+    return this._hasEnteredTarget() || this._hasExitedTarget();
+  }
+}
+
+/** WhenNpcIsAvailable.cs: the individual NPC is "available" when the
+ *  player clicks them while NO active quest binds a Person of that
+ *  faction. The clickMemory holds the SAME click from re-triggering
+ *  (identity), and every check claims the machine's faction-listener
+ *  slot (TalkManager's Q4 signal). The parse-time individual check
+ *  runs only under a world; C#'s throw here is preceded by the
+ *  TEMPLATE SetComplete - the same no-op quirk as CastSpellOnFoe. */
+export class WhenNpcIsAvailable extends ActionTemplate {
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.isTriggerCondition = true;
+    this.isAlwaysOnTriggerCondition = true;
+    this.npcName = '';
+    this.npcFactionID = -1;
+    this.clickMemory = null;
+  }
+  get pattern() { return /when (?<individualNPCName>[a-zA-Z0-9_.-]+) is available/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new WhenNpcIsAvailable(parentQuest);
+    const name = match.groups.individualNPCName;
+    const factionID = getIndividualFactionID(name);
+    const world = parentQuest?.hooks?.world;
+    if (factionID !== -1 && world) {
+      const factionData = world.getFactionData?.(factionID);
+      if (factionData && factionData.type !== 4) {   // FactionTypes.Individual
+        this.setComplete();   // C#: the TEMPLATE completes - kept
+        throw new Error(`WhenNpcIsAvailable: NPC ${name} with FactionID ${factionID} is not an individual NPC`);
+      }
+    }
+    action.npcName = name;
+    action.npcFactionID = factionID;
+    return action;
+  }
+  checkTrigger(_caller) {
+    const hooks = this.parentQuest?.hooks;
+    hooks?.addFactionListener?.(this.npcFactionID, this);
+    const lastClicked = hooks?.lastNPCClicked?.() ?? null;
+    if (!lastClicked) return false;
+    if (lastClicked === this.clickMemory) return false;
+    this.clickMemory = null;
+    if (lastClicked.factionID !== this.npcFactionID) return false;
+    const foundActive = hooks?.activeFactionPersons?.(this.npcFactionID) ?? [];
+    if (foundActive.length === 0) {
+      this.clickMemory = lastClicked;
+      return true;
+    }
+    return false;
+  }
+  dispose() {
+    super.dispose();
+    this.parentQuest?.hooks?.removeFactionListener?.(this.npcFactionID);
+  }
+}
+
+/** WhenReputeWith.cs: the always-on reputation bar over the
+ *  persistent faction store - the record's LIVE rep field, read each
+ *  check. An unknown faction (no record) answers false, even at a
+ *  bar of 0. The parse-time individual check runs only under a
+ *  world; C#'s throw here has NO SetComplete, unlike its sibling. */
+export class WhenReputeWith extends ActionTemplate {
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.isTriggerCondition = true;
+    this.isAlwaysOnTriggerCondition = true;
+    this.npcName = '';
+    this.npcFactionID = -1;
+    this.minRepValue = 0;
+  }
+  get pattern() { return /when repute with (?<individualNPCName>[a-zA-Z0-9_.-]+) is at least (?<minRepValue>\d+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new WhenReputeWith(parentQuest);
+    const name = match.groups.individualNPCName;
+    const factionID = getIndividualFactionID(name);
+    const world = parentQuest?.hooks?.world;
+    if (factionID !== -1 && world) {
+      const factionData = world.getFactionData?.(factionID);
+      if (factionData && factionData.type !== 4) {   // FactionTypes.Individual
+        throw new Error(`WhenReputeWith: NPC ${name} with FactionID ${factionID} is not an individual NPC`);
+      }
+    }
+    action.npcName = name;
+    action.npcFactionID = factionID;
+    action.minRepValue = questParseInt(match.groups.minRepValue);
+    return action;
+  }
+  checkTrigger(_caller) {
+    const record = this.parentQuest?.hooks?.world?.getFactionData?.(this.npcFactionID);
+    if (!record) return false;
+    return record.rep >= this.minRepValue;
+  }
+}
+
+/** MakePcDiseased.cs: the Quests-Diseases id at parse (a miss
+ *  THROWS), CreateDisease + AssignBundle(BypassSavingThrows) through
+ *  the makePcDiseased seam at update. The corpus's one "saying N"
+ *  tail is NOT in C#'s pattern - the tail is silently dropped and no
+ *  popup fires, verbatim. */
+export class MakePcDiseased extends ActionTemplate {
+  get pattern() { return /make pc ill with (?<aDisease>[a-zA-Z0-9_.']+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const name = match.groups.aDisease;
+    const table = diseasesTable();
+    if (!table.hasValue(name)) {
+      throw new Error(`make pc ill with <aDisease> could not find disease matching '${name}'. See 'Quests-Diseases' table for valid disease names.`);
+    }
+    const action = new MakePcDiseased(parentQuest);
+    action.diseaseType = questParseInt(table.getValue('id', name));
+    return action;
+  }
+  update(_caller) {
+    if (this.diseaseType !== -1) {
+      this.parentQuest.hooks?.makePcDiseased?.(this.diseaseType);
+    }
+    this.setComplete();
+  }
+}
+
+/** CurePcDisease.cs: three arms - vampirism and lycanthropy ride
+ *  their own enders, everything else the Quests-Diseases id (a miss
+ *  THROWS). C# re-tests the matched text CASE-INSENSITIVELY, so
+ *  'cure Vampirism' falls through the third alternate and still
+ *  lands on the vampirism arm. */
+export class CurePcDisease extends ActionTemplate {
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.diseaseType = -1;   // Diseases.None
+    this.isCureVampirism = false;
+    this.isCureLycanthropy = false;
+  }
+  get pattern() { return /cure vampirism|cure lycanthropy|cure (?<aDisease>[a-zA-Z0-9_.']+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new CurePcDisease(parentQuest);
+    const matched = match[0].toLowerCase();
+    if (matched === 'cure vampirism') action.isCureVampirism = true;
+    else if (matched === 'cure lycanthropy') action.isCureLycanthropy = true;
+    else {
+      const name = match.groups.aDisease;
+      const table = diseasesTable();
+      if (!table.hasValue(name)) {
+        throw new Error(`cure <aDisease> could not find disease matching '${name}'. See 'Quests-Diseases' table for valid disease names.`);
+      }
+      action.diseaseType = questParseInt(table.getValue('id', name));
+    }
+    return action;
+  }
+  update(_caller) {
+    const hooks = this.parentQuest.hooks;
+    if (this.diseaseType !== -1) hooks?.cureDisease?.(this.diseaseType);
+    else if (this.isCureVampirism) hooks?.endVampirism?.();
+    else if (this.isCureLycanthropy) hooks?.endLycanthropy?.();
+    this.setComplete();
+  }
+}
+
+/** CastSpellDo.cs: starts a task when the player READIES a spell
+ *  whose bundle matches EVERY classic effect of the named spell. C#
+ *  latches the bundle on OnNewReadySpell and clears it on cast; the
+ *  port polls world.readiedSpell() each update - the readied state
+ *  IS the window, so the gate reads identically per tick (the event
+ *  latch itself rides Q4's host mount). BOTH miss arms carry the
+ *  template-SetComplete quirk (CastSpellOnFoe's sibling): the minted
+ *  action stands with spellID -1 or null effects and idles forever,
+ *  never completing - which is also exactly the HEADLESS stance,
+ *  since the classic spell records need ARENA2. */
+export class CastSpellDo extends ActionTemplate {
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.spellID = -1;
+    this.classicEffects = null;
+    this.taskSymbol = null;
+  }
+  get pattern() { return /cast (?<aSpell>[a-zA-Z0-9'_.-]+) spell do (?<aTask>[a-zA-Z0-9_.-]+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new CastSpellDo(parentQuest);
+    const sourceSpellName = match.groups.aSpell;
+    action.taskSymbol = new QuestSymbol(match.groups.aTask);
+    const table = spellsTable();
+    if (table.hasValue(sourceSpellName)) {
+      action.spellID = questParseInt(table.getValue('id', sourceSpellName));
+      const effects = parentQuest?.hooks?.world?.getClassicSpellEffects?.(action.spellID) ?? null;
+      if (effects) {
+        action.classicEffects = effects;
+      } else {
+        console.warn(`[quest] CastSpellDo could not find spell matching spellID '${action.spellID}' from spell '${sourceSpellName}'`);
+        this.setComplete();   // C#: the TEMPLATE completes - kept
+      }
+    } else {
+      console.warn(`[quest] CastSpellDo could not resolve spell '${sourceSpellName}' in Quests-Spells data table`);
+      this.setComplete();   // C#: the TEMPLATE completes - kept
+    }
+    return action;
+  }
+  update(_caller) {
+    const world = this.parentQuest.hooks?.world;
+    const ready = world?.readiedSpell?.() ?? null;
+    if (this.spellID === -1 || !this.classicEffects?.length || !this.taskSymbol || !ready) return;
+    let foundEffects = 0;
+    for (const effect of this.classicEffects) {
+      if (effect.type === -1) continue;
+      foundEffects++;
+      if (!world.readiedSpellHasMatchForClassicEffect?.(effect)) return;
+    }
+    if (foundEffects === 0) {
+      this.setComplete();
+      return;
+    }
+    this.parentQuest.startTask(this.taskSymbol);
+    this.setComplete();
+  }
+}
+
 /** CreateNpcAt.cs: a DOCUMENTED no-op - legacy TEMPLATE scripts
  *  "reserve" a site before placing; DFU creates SiteLinks in the
  *  placement actions either way, so this only completes. */
@@ -1913,9 +2206,6 @@ class PendingTrigger extends ActionTemplate {
 
 const GUARD_PATTERNS = Object.freeze({
   // Trigger conditions ahead of the tranche
-  WhenPcEntersExits: /when pc (enters) (\w+)|when pc (exits) (\w+)/,
-  WhenNpcIsAvailable: /when ([a-zA-Z0-9_.-]+) is available/,
-  WhenReputeWith: /when repute with ([a-zA-Z0-9_.-]+) is at least (\d+)/,
   WhenSkillLevel: /when skill (\w+) is at least (\d+)/,
   WhenAttributeLevel: /when attribute (\w+) is at least (\d+)/,
   Season: /season (fall|summer|spring|winter)/,
@@ -1923,9 +2213,6 @@ const GUARD_PATTERNS = Object.freeze({
   Climate: /climate (desert|desert2|mountain|mountainwoods|rainforest|ocean|swamp|subtropical|woodlands|hauntedwoodlands)|climate (base) (desert|mountain|temperate|swamp)/,
   // Default actions
   RunQuest: /run quest (\w+) then ([a-zA-Z0-9_.]+) or ([a-zA-Z0-9_.]+)/,
-  MakePcDiseased: /make pc ill with ([a-zA-Z0-9_.']+)/,
-  CurePcDisease: /cure vampirism|cure lycanthropy|cure ([a-zA-Z0-9_.']+)/,
-  CastSpellDo: /cast ([a-zA-Z0-9'_.-]+) spell do ([a-zA-Z0-9_.-]+)/,
   CastEffectDo: /cast ([a-zA-Z0-9_.-]+) effect do ([a-zA-Z0-9_.-]+)/,
   WorldUpdate: /worldupdate (location) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (locationnew) named (.+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (block) ([a-zA-Z0-9_.-]+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (blockAll) ([a-zA-Z0-9_.-]+) variant ([a-zA-Z0-9_.-]+)|worldupdate (building) ([a-zA-Z0-9_.-]+) (\d+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (buildingAll) ([a-zA-Z0-9_.-]+) (\d+) variant ([a-zA-Z0-9_.-]+)/,
   Enemies: /enemies (makehostile|clear)/,
@@ -1952,9 +2239,9 @@ const guard = (name) => new PendingTrigger(null, GUARD_PATTERNS[name]);
 export function defaultActionTemplates() {
   return [
     // Trigger conditions
-    guard('WhenPcEntersExits'),
-    guard('WhenNpcIsAvailable'),
-    guard('WhenReputeWith'),
+    new WhenPcEntersExits(null),
+    new WhenNpcIsAvailable(null),
+    new WhenReputeWith(null),
     guard('WhenSkillLevel'),
     guard('WhenAttributeLevel'),
     new WhenTask(null),
@@ -2012,9 +2299,9 @@ export function defaultActionTemplates() {
     new DialogLink(null),
     new AddDialog(null),
     new RumorMill(null),
-    guard('MakePcDiseased'),
-    guard('CurePcDisease'),
-    guard('CastSpellDo'),
+    new MakePcDiseased(null),
+    new CurePcDisease(null),
+    new CastSpellDo(null),
     guard('CastEffectDo'),
     new CastSpellOnFoe(null),
     new RemoveFoe(null),

@@ -690,14 +690,62 @@ the multi-agent adversarial pass re-armed for after the limit reset
   15-bit (max 32767), so rand() % 999999 and % 1000000 are both
   identity.
 
-## Queue
+## Q3-iv - THE REMAINDER SWEEP (SHIPPED 2026-08-21)
 
-- **Q3-iv - THE REMAINDER SWEEP** (41 lines): WhenPcEntersExits (8,
-  the p1=2 exterior-type trigger over location-rect state),
-  WhenReputeWith (8, trivial over getReputation),
-  WhenNpcIsAvailable (7), CurePcDisease (6) and MakePcDiseased (5)
-  over the S18 disease seams, CastSpellDo (3), and the 4 'Action
-  not found' lines recorded as DFU's own permanent floor.
+THE CORPUS CLOSES: 7194 -> 7231 of 7235 action lines (99.94%); the
+six buckets match the DFU-order derivation exactly
+(WhenPcEntersExits 8, WhenReputeWith 8, WhenNpcIsAvailable 7,
+CurePcDisease 6, MakePcDiseased 5, CastSpellDo 3). The 4 lines left
+are DFU's OWN floor - vestigial corpus lines no template in
+RegisterActionTemplates matches either ('Action not found.
+Ignoring') - permanent by parity, recorded in the coverage pin.
+
+- WHENPCENTERSEXITS: the exterior-type trigger. Only p1=2 rows of
+  Quests-Places are legal (else THROW, headless too); 'anywhere'
+  carries p2=-1, the wildcard. C# rides PlayerGPS's location-rect
+  EVENTS; the port POLLS the same state per checkTrigger - previous
+  shifts on each observed change, so enter (None->type) and exit
+  (type->None) read identically at tick granularity. The current
+  type seeds from the player location at CREATE, so "enters city"
+  fires on the STANDING state - DFU behavior, pinned. Headless the
+  poll observes None forever.
+- WHENNPCISAVAILABLE: the click PULSE - available when the player
+  clicks the individual while NO active quest binds a Person of
+  that faction; the clickMemory holds the SAME click (identity) from
+  re-firing, and every check claims the machine's NEW
+  faction-listener slot (addFactionListener first-claim-wins /
+  removeFactionListener at dispose; TalkManager reads the map at
+  Q4). activeFactionPersons walks NON-COMPLETE quests only -
+  completed quests must not lock an NPC out (QuestMachine.cs:1085).
+  The non-individual parse throw carries the TEMPLATE-SetComplete
+  quirk; its sibling's does not.
+- WHENREPUTEWITH: the always-on rep bar over the persistent store's
+  LIVE rep field, INCLUSIVE >=; an unknown faction (no record)
+  answers false even at a bar of 0 - never 0>=0 (the S0000999
+  at-least-0 lines wait for the record, verbatim).
+- MAKEPCDISEASED / CUREPCDISEASE over the S18 seams
+  (makePcDiseased/cureDisease/endVampirism/endLycanthropy; Q4 wires
+  the real system): the Quests-Diseases ids (a miss THROWS,
+  headless too), the corpus's one 'saying 1027' tail DROPPED
+  verbatim (C#'s pattern has no such group - no popup), and C#'s
+  case-insensitive re-test landing 'cure Vampirism' on the
+  vampirism arm through the third alternate.
+- CASTSPELLDO: starts a task when the player READIES a spell
+  matching EVERY classic effect of the named spell (type -1
+  skipped; zero real effects completes without firing). C# latches
+  the bundle on OnNewReadySpell; the port polls
+  world.readiedSpell() - the readied state IS the window. BOTH miss
+  arms carry the TEMPLATE-SetComplete quirk (CastSpellOnFoe's
+  sibling): the minted action idles forever with spellID -1 or null
+  effects - which is also exactly the HEADLESS stance, since the
+  classic records (world.getClassicSpellEffects) need ARENA2.
+
+Gate: `test/questremainder.test.js` (10 pins) + the coverage/
+ownership pin at 7231/4 and the P2 guard pin CLOSED (the when-shapes
+now resolve to their real owners at the same registry positions -
+the ownership transfer the guard charter promised).
+
+## Queue
 - **Q4 also picks up**: the hot-place/hot-remove halves of
   AssignQuestResource (world.onResourceAssigned), TeleportPc's
   save-resume, the layout builders walking SiteLinks/QuestMarkers to

@@ -7,10 +7,11 @@
 // the completed quest and expires the tombstone after one in-game
 // week. Plus the WhenTask evaluation law, PickOneOf's seeded draw,
 // UnsetTask's permanent drop, the GlobalVarLink store, and THE
-// COVERAGE PIN: with the Q2 tranche + the Q2b-i state tranche the
-// corpus resolves exactly 4818 of 7235 action lines (66.6%), every
-// line to the action the full DFU registry order owns it with - the
-// numbers the next action slices must move UP, never silently down.
+// COVERAGE PIN: the registry resolves 7231 of 7235 corpus action
+// lines (Q3-iv closed the sweep; the 4 left are DFU's own 'Action
+// not found. Ignoring' floor), every line to the action the full DFU
+// registry order owns it with - a future change must never move
+// resolved silently down, and a pattern hijack shifts a bucket.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -233,7 +234,7 @@ test('quest machine: a GlobalVarLink task reads and writes the shared store', ()
   assert.equal(lift.getTriggerValue(), false, 'the store is the truth, not the local flag');
 });
 
-test('quest machine: COVERAGE PIN - the 55-action registry resolves 7194 of 7235 corpus action lines, each to its DFU owner', () => {
+test('quest machine: COVERAGE PIN - the 61-action registry resolves 7231 of 7235 corpus action lines, each to its DFU owner', () => {
   const m = new QuestMachine({ nowSeconds: () => 0 });
   let resolved = 0, pending = 0;
   const tally = new Map();
@@ -253,8 +254,11 @@ test('quest machine: COVERAGE PIN - the 55-action registry resolves 7194 of 7235
   // moved 50 lines BACK to pending: the guards stopped Say/WhenTask
   // hijacking lines owned by not-yet-ported DFU triggers; Q2b-i's
   // full-registry mirror then made ownership structural.)
-  assert.equal(resolved, 7194);
-  assert.equal(pending, 41);
+  // The 4 still pending are DFU's OWN floor: vestigial corpus lines
+  // no template in RegisterActionTemplates matches either ('Action
+  // not found. Ignoring') - permanent by parity.
+  assert.equal(resolved, 7231);
+  assert.equal(pending, 4);
   // THE OWNERSHIP PIN: per-action resolved counts, each equal to the
   // line count the FULL DFU RegisterActionTemplates order assigns
   // that action over this corpus (independently derived by running
@@ -265,6 +269,7 @@ test('quest machine: COVERAGE PIN - the 55-action registry resolves 7194 of 7235
     AddAsQuestor: 21,
     AddDialog: 77,
     AddFace: 35,
+    CastSpellDo: 3,
     CastSpellOnFoe: 41,
     ChangeReputeWith: 207,
     ClearTask: 209,
@@ -273,6 +278,7 @@ test('quest machine: COVERAGE PIN - the 55-action registry resolves 7194 of 7235
     CreateNpcAt: 26,
     ClickedItem: 66,
     ClickedNpc: 268,
+    CurePcDisease: 6,
     DailyFrom: 25,
     DestroyNpc: 4,
     DialogLink: 120,
@@ -295,6 +301,7 @@ test('quest machine: COVERAGE PIN - the 55-action registry resolves 7194 of 7235
     LegalRepute: 14,
     LevelCompleted: 12,
     LogMessage: 409,
+    MakePcDiseased: 5,
     MakePermanent: 136,
     MuteNpc: 9,
     PcAt: 95,
@@ -320,17 +327,19 @@ test('quest machine: COVERAGE PIN - the 55-action registry resolves 7194 of 7235
     TeleportPc: 8,
     TotingItemAndClickedNpc: 211,
     UnsetTask: 30,
+    WhenNpcIsAvailable: 7,
+    WhenPcEntersExits: 8,
+    WhenReputeWith: 8,
     WhenTask: 794,
   });
 });
 
 test('quest machine: AUDIT parity pins - guards pend hijackable lines, clear rearms actions', () => {
   const m = new QuestMachine({ nowSeconds: () => 0 });
-  // (P2) the when-shapes owned by WhenReputeWith/WhenNpcIsAvailable
-  // pend behind their guards instead of feeding WhenTask bogus evals.
-  // "clicked npc _x_ say 1011" resolved to the REAL ClickedNpc at
-  // Q2b-i - the guard's job passed to the action at the same registry
-  // position.
+  // (P2, closed at Q3-iv) the when-shapes once pended behind guards
+  // so WhenTask could not hijack them; their REAL owners now stand at
+  // the same registry positions and claim the same lines - the
+  // ownership transfer the guard charter promised.
   const src = [
     'Quest: __GRD', 'QRC:', 'Message:  1011', ' x', '', 'QBN:',
     'Person _qgiver_ group Questor', '',
@@ -343,9 +352,10 @@ test('quest machine: AUDIT parity pins - guards pend hijackable lines, clear rea
   ];
   const q = m.scheduleQuest(src, 0, { rolls: () => 0 });
   const t = q.getTask({ name: 't' });
-  assert.equal(t.actions.length, 1, 'ClickedNpc claimed its own line');
-  assert.equal(t.actions[0].constructor.name, 'ClickedNpc');
-  assert.equal(t.pendingActionLines.length, 2, 'the two when-shapes still queue for their slices');
+  assert.equal(t.actions.length, 3, 'every line claimed by its own action');
+  assert.deepEqual(t.actions.map((a) => a.constructor.name),
+    ['ClickedNpc', 'WhenReputeWith', 'WhenNpcIsAvailable']);
+  assert.equal(t.pendingActionLines.length, 0, 'nothing left behind a guard here');
 
   // (P1) Clearing a task REARMS its completed actions: a restarted
   // task runs them again (Task.cs SetTriggerValue's rearm-on-false).

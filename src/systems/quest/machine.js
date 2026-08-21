@@ -150,6 +150,25 @@
 //   Q4's host mount: the exterior-transition/init-world pending-wave
 //   invalidation (CreateFoe.cs:366-378) and the save envelope.
 //
+// Q3-iv, the remainder sweep's seams:
+//   deps makePcDiseased(diseaseType) - PlayerEffectManager
+//                                CreateDisease + AssignBundle
+//                                (BypassSavingThrows); cureDisease
+//                                (diseaseType), endVampirism(),
+//                                endLycanthropy() (Q4 wires the S18
+//                                system; tests capture)
+//   deps.world getClassicSpellEffects(spellID) - the classic
+//                                SPELLS.STD record's effects array
+//                                (headless null: CastSpellDo idles,
+//                                exactly C#'s missing-record arm);
+//                                readiedSpell() - the player's
+//                                readied bundle | null;
+//                                readiedSpellHasMatchForClassicEffect
+//                                (effect) - HasMatchForClassicEffect
+//   the machine's factionListeners map + addFactionListener/
+//   removeFactionListener/activeFactionPersons ride the hooks for
+//   WhenNpcIsAvailable (TalkManager reads the map at Q4)
+//
 // The 64 global variables (classic SAVEVARS.DAT state) live here and
 // reach tasks through quest.hooks.globalVars.
 
@@ -176,6 +195,7 @@ export class QuestMachine {
     this.actionTemplates = [];
     this.globalVars = new Map();      // link id -> bool
     this.siteLinks = [];              // QuestMachine.cs siteLinks - the world<->marker bridge (Q3-i)
+    this.factionListeners = new Map();  // factionID -> action (Q3-iv; TalkManager's Q4 signal)
     this.parser = new Parser();
     for (const template of defaultActionTemplates()) this.registerAction(template);
     // AUDIT quest-2: the action factory travels PER QUEST (parse opt ->
@@ -260,6 +280,13 @@ export class QuestMachine {
       // GetReputation (ReputeExceedsDo reads it; an unknown faction
       // reads 0, factionRep's own law).
       lastNPCClicked: () => this.deps.lastNPCClicked?.() ?? null,
+      addFactionListener: (factionID, owner) => this.addFactionListener(factionID, owner),
+      removeFactionListener: (factionID) => this.removeFactionListener(factionID),
+      activeFactionPersons: (factionID) => this.activeFactionPersons(factionID),
+      makePcDiseased: (diseaseType) => this.deps.makePcDiseased?.(diseaseType),
+      cureDisease: (diseaseType) => this.deps.cureDisease?.(diseaseType),
+      endVampirism: () => this.deps.endVampirism?.(),
+      endLycanthropy: () => this.deps.endLycanthropy?.(),
       getReputation: (factionId) => this.deps.getReputation?.(factionId) ?? 0,
       forceTopicListsUpdate: () => this.deps.forceTopicListsUpdate?.(),
       getAllActiveQuestSites: () => this.getAllActiveQuestSites(),
@@ -449,6 +476,31 @@ export class QuestMachine {
       }
     }
     return sites;
+  }
+
+  /** ActiveFactionPersons (QuestMachine.cs:1085-1107): Person
+   *  resources of the faction across all NON-COMPLETE quests -
+   *  completed/tombstoned quests must not lock an NPC out. */
+  activeFactionPersons(factionID) {
+    const found = [];
+    for (const quest of this.quests.values()) {
+      if (quest.questComplete) continue;
+      for (const resource of quest.resources.values()) {
+        if (resource.isPerson && resource.factionId === factionID) found.push(resource);
+      }
+    }
+    return found;
+  }
+
+  /** Add/RemoveFactionListener (QuestMachine.cs:1183-1200): first
+   *  claim wins, a missing claim is a no-op. TalkManager reads the
+   *  map to know a quest wants that individual (Q4 wires). */
+  addFactionListener(factionID, owner) {
+    if (!this.factionListeners.has(factionID)) this.factionListeners.set(factionID, owner);
+  }
+
+  removeFactionListener(factionID) {
+    this.factionListeners.delete(factionID);
   }
 
   /** CullResourceTarget (QuestMachine.cs:1496): removes a resource
