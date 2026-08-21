@@ -54,8 +54,10 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   const fn = s.slice(i, i + 800);
   assert.ok(fn.includes('state.worldCoords(pf)'), 'the save stores NATIVES, not local scene positions');
   assert.ok(fn.includes('pf[1] - state.compensation[1]'), 'the height sheds the vertical compensation');
+  assert.ok(fn.includes('quest: questBridge.snapshot()'), 'Q4-v: the quest envelope rides the quicksave');
   const j = s.indexOf('async function worldQuickLoad');
-  const lf = s.slice(j, j + 1600);
+  const lf = s.slice(j, j + 2400);   // Q4-v widened the function (the quest envelope restore rides the same slot)
+  assert.ok(lf.includes('questBridge.restore(extras.quest ?? null)'), 'Q4-v: the quest envelope restores through the bridge');
   assert.ok(lf.includes('await _teleportToPixel(w.pixel.x, w.pixel.y)'), 'the load teleports through the travel core');
   assert.ok(lf.includes('state.localFromWorld(w.nativeX, w.nativeZ)'), 'and lands at the exact native spot');
   assert.ok(lf.includes('_lastEncMinutes = Math.floor(playerTicker.classicMinutes)'), 'no encounter catch-up across a load (LoadInProgress parity)');

@@ -100,6 +100,17 @@ export class Table {
     return this.columns.map((c) => c.values[index]);
   }
 
+  /** GetKeyForValue (Table.cs:285-297): the primary key of the FIRST
+   *  row whose column holds the value; null when none does. */
+  getKeyForValue(columnName, value) {
+    if (!this.hasColumn(columnName)) throw new Error(`GetKeyForValue() columnName '${columnName}' does not exist.`);
+    const column = this.columns[this.columnIndexDict.get(columnName)];
+    for (let i = 0; i < this.rowCount; i++) {
+      if (column.values[i] === value) return this.columns[this.primaryColumnIndex].values[i];
+    }
+    return null;
+  }
+
   getColumnIndex(name) { return this.hasColumn(name) ? this.columnIndexDict.get(name) : -1; }
   getColumnName(index) { return (this.columnCount < 1 || index >= this.columnCount) ? '' : this.columns[index].name; }
 

@@ -13,7 +13,7 @@
 // (and the corpus pins count) instead of 10,000 lines of log noise.
 // The registry rides quest.actionFactory (AUDIT quest-2).
 
-import { Symbol as QuestSymbol } from './symbol.js';
+import { Symbol as QuestSymbol, symbolToSaveData, symbolFromSaveData } from './symbol.js';
 import { matchFirst } from './questResource.js';
 import { nextUid } from './quest.js';
 
@@ -205,5 +205,50 @@ export class Task {
   copyQuestActions(other) {
     this.actions.push(...other.actions);
     this.pendingActionLines.push(...other.pendingActionLines);
+  }
+
+  // ---- the save envelope (Q4-iv; Task.cs:485-553) ----
+
+  getSaveData() {
+    return {
+      symbol: symbolToSaveData(this.symbol),
+      targetSymbol: symbolToSaveData(this.targetSymbol),
+      triggered: this.triggered,
+      prevTriggered: this.prevTriggered,
+      type: this.type,
+      dropped: this.dropped,
+      globalVarName: this.globalVarName,
+      globalVarLink: this.globalVarLink,
+      hasTriggerConditions: this.hasTriggerConditions,
+      actions: this.actions.map((a) => a.getActionSaveData()),
+    };
+  }
+
+  /** RestoreSaveData: C#'s EXACT sequence is law - IsTriggered runs
+   *  through SetTriggerValue while globalVarLink still holds the
+   *  fresh -1 and dropped holds false, so a load never re-writes the
+   *  global var and never trips the dropped guard; the action rearm
+   *  arm fires over an EMPTY action list (actions restore LAST).
+   *  Actions reconstruct through the machine's type registry (C#'s
+   *  reflection ctor); an unknown type throws out to the machine's
+   *  per-quest catch - the removed-mod law. */
+  restoreSaveData(data, resolveActionType) {
+    this.symbol = symbolFromSaveData(data.symbol);
+    this.targetSymbol = symbolFromSaveData(data.targetSymbol);
+    this.setTriggerValue(data.triggered);
+    this.prevTriggered = data.prevTriggered;
+    this.type = data.type;
+    this.dropped = data.dropped;
+    this.globalVarName = data.globalVarName;
+    this.globalVarLink = data.globalVarLink;
+    this.hasTriggerConditions = data.hasTriggerConditions;
+    this.actions.length = 0;
+    for (const actionData of data.actions) {
+      const ActionCtor = resolveActionType?.(actionData.type);
+      if (!ActionCtor) throw new Error(`Could not restore action type ${actionData.type}`);
+      const action = new ActionCtor(this.parentQuest);
+      action.restoreActionSaveData(actionData);
+      this.actions.push(action);
+    }
   }
 }

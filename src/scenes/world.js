@@ -42,7 +42,8 @@ import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE } from '../system
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';   // P-slice: the above-ground quicksave
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
-import { seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1)
+import { seasonValue, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
+import { regionPriceAdjustment } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer)
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
@@ -87,6 +88,16 @@ import { getStaticDoors } from '../world/staticDoors.js';
 import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
+// Q4-v: THE QUEST BRIDGE - the machine goes live in this host.
+import { createQuestBridge, tokensToRows } from './questBridge.js';
+import { loadQuestPack } from './questData.js';
+import { ensureFactionRep, getReputation, changeReputation } from '../systems/factionRep.js';
+import { changeLegalRep } from '../systems/court.js';
+import { isEquipped, unequipSlot } from '../systems/equip.js';
+import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
+import { makeItemPermanent } from '../systems/quest/item.js';
+import { guildOfFaction, membershipOf, guildFactionIdOfGroup } from '../systems/guilds.js';
+import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { discoverRandomLocation, discoverLocation } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
@@ -607,6 +618,21 @@ export async function bootWorld(canvas, renderer, params, status) {
   // whole session. Both exterior hosts now run it through the shared
   // session, and the paperdoll reloads on the chosen identity.
   let spellsByIndex = null;   // M2: the host-level SPELLS.STD map
+  // Q4-v: InitAtGameStart runs ONCE when a NEW character finishes
+  // chargen (DFU's OnStartGame path into QuestListsManager). Chargen
+  // resolves asynchronously and the bridge is composed further down
+  // the boot, so the moment is recorded and fired by whichever side is
+  // ready LAST. An already-made character (chargenDone at boot) is a
+  // continuing session, not a new game - no init, exactly as DFU only
+  // raises OnStartGame from the starting flows.
+  let questBridge = null;
+  let _questStartPending = false, _questStarted = false;
+  const questInitAtGameStart = () => {
+    if (_questStarted) return;
+    if (!questBridge) { _questStartPending = true; return; }
+    _questStarted = true;
+    questBridge.initAtGameStart();
+  };
   if (!playerEntity.chargenDone && params.has('class')) {
     // AUDIT 17f: ?class=N is the headless skip - parsed here for the
     // DUNGEON the host might build, but never honoured for the host's
@@ -616,6 +642,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
           { race: playerEntity.race, gender: playerEntity.gender, faceIndex: playerEntity.faceIndex });
         surfacePlayer();
+        questInitAtGameStart();   // Q4-v: OnStartGame for the headless character
       })
       .catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
   } else if (!playerEntity.chargenDone) {
@@ -635,6 +662,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
             { race: r.race, gender: r.gender, faceIndex: r.faceIndex });
           surfacePlayer();
+          questInitAtGameStart();   // Q4-v: OnStartGame for the new character
         },
       }));
     }).catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
@@ -921,6 +949,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const pos = localPos ?? [TERRAIN_SIZE / 2, dest.centerHeight + state.compensation[1] + 2, TERRAIN_SIZE / 2];
     if (walkMode) { player.spawn(pos[0], pos[1], pos[2]); playerSpawned = true; }
     cam.pos = [pos[0], pos[1] + (walkMode ? 0 : 40), pos[2]];
+    // Q4-v: StreamingWorld.OnInitWorld - the world re-initialised at a
+    // new origin (fast travel, quickload); CreateFoe's pending waves
+    // invalidate across live AND scheduled quests.
+    questBridge?.onInitWorld();
   }
   let _traveling = false;
   async function fastTravelTo(pick, opts, computed) {
@@ -966,6 +998,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const snap = snapshotPlayer(playerEntity, {
       classicMinutes: Math.floor(playerTicker.classicMinutes),
       readiedSpellIndex: magic.readiedIndex(),
+      quest: questBridge.snapshot(),   // Q4-v: the machine + notebook + one-time list
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -988,6 +1021,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     try {
       setWorldMinutes(extras.classicMinutes ?? worldMinutes());
       magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
+      // Q4-v: the quest envelope rides the same slot. A pre-Q4-v save
+      // has no quest key - restore(null) is a no-op and the live
+      // machine stands (recorded). A restored session is never a NEW
+      // game, whatever the chargen flow later reports.
+      questBridge.restore(extras.quest ?? null);
+      if (extras.quest) _questStarted = true;
       if (extras.locationKey === 'world' && extras.world?.pixel) {
         const w = extras.world;
         await _teleportToPixel(w.pixel.x, w.pixel.y);
@@ -1268,8 +1307,142 @@ export async function bootWorld(canvas, renderer, params, status) {
     matrix[14] = m[14] + t[2];
     return { ...entry.door, matrix };
   };
+  // ---- Q4-v: THE QUEST BRIDGE - the machine goes live in this host ----
+  // The world seam is composed from the host's REAL objects (MapsFile,
+  // BlocksFile, the faction store, the one clock, the inventory, the
+  // overlay slots); members the host cannot honestly answer yet stay
+  // ABSENT and the law modules idle loudly - the headless charter.
+  // Port-Ledger Q4-v records the pending list (talk seams, videos,
+  // faces, the disease seams, dungeon-mode popups, quest foes).
+  const questPack = await loadQuestPack();
+  console.log(`[quest] pack loaded: ${questPack.questCount} quests`);
+  const _questStore = () => townTalk.factionDict ? ensureFactionRep(playerEntity, townTalk.factionDict) : null;
+  const _questLoc = () => locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`) ?? null;
+  // Quest parchment boxes land in whichever overlay slot is LIVE:
+  // exterior -> the townTalk overlay, interior -> the mode machine's
+  // slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+  // logged loudly rather than lost silently).
+  const showQuestBox = (box) => {
+    const win = new ServiceFlowWindow([box]);
+    if (modes?.showQuestOverlay?.(win)) return;
+    if ((modes?.mode ?? 'exterior') === 'exterior') { townTalk.showOverlay(win); return; }
+    console.warn('[quest] popup in dungeon mode pends the dungeon overlay seam:', box.rows?.[0] ?? '');
+  };
+  const questWorld = {
+    maps,
+    getBlock: (name) => blocks.getBlockByName(name),
+    // PlayerGPS.CurrentLocation is the location of the CURRENT MAP
+    // PIXEL (in or out of the walls); IsPlayerInLocationRect is the
+    // music director's own live rect flag.
+    currentLocation: () => _questLoc(),
+    currentRegionIndex: () => _questLoc()?.regionIndex ?? -1,
+    currentLocationIndex: () => _questLoc()?.locationIndex ?? -1,
+    currentRegionName: () => maps.getRegion(_questLoc()?.regionIndex ?? -1)?.name ?? '',
+    isPlayerInLocationRect: () => _musicInLocationRect(),
+    playerPixel: () => playerTravelPixel(),
+    playerInside: () => {
+      const b = modes?.interiorBuilding;
+      if (!b) return null;
+      return { building: { buildingKey: b.buildingKey, buildingType: b.buildingType, factionId: b.factionId, name: b.name ?? '' } };
+    },
+    getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
+    findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
+    changeLegalRep: (amount) => changeLegalRep(playerEntity, _questLoc()?.regionIndex ?? 0, amount),
+    mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
+  };
+  questBridge = createQuestBridge({
+    data: questPack,
+    world: questWorld,
+    classicSeconds: () => playerTicker.classicMinutes * 60,
+    playerEntity,
+    playerRaceName: () => playerEntity.race ?? null,
+    getReputation: (fid) => { const s = _questStore(); return s ? getReputation(s, fid) : 0; },
+    changeReputation: (fid, amount, propagate) => { const s = _questStore(); if (s) changeReputation(s, fid, amount, propagate); },
+    changeLegalRep: (amount) => questWorld.changeLegalRep(amount),
+    getGold: () => goldAmount(playerEntity),
+    deductGold: (n) => deductGold(playerEntity, n),
+    addGold: (n) => addGold(playerEntity, n),
+    addHUDText: (t) => townTalk.say(t),
+    showPopup: (q, message) => {
+      const rows = tokensToRows(message.getTextTokens(-1, q.rolls));
+      if (rows.length) showQuestBox({ rows });
+    },
+    showPrompt: (q, message, respond) => showQuestBox({
+      rows: tokensToRows(message.getTextTokens(-1, q.rolls)),
+      buttons: 'YesNo',
+      onYes: () => { respond(true); return []; },
+      onNo: () => { respond(false); return []; },
+    }),
+    playVideo: (name) => console.warn('[quest] video playback pends:', name),
+    // DELTA (recorded): C# skips while the audio source is BUSY and
+    // only a real play re-stamps PlaySound's timer; the port's one-shot
+    // engine has no busy state, so every call reports played.
+    playSound: (id) => { audio.playOneShot(id); return true; },
+    giveItemToPlayer: (dfItem) => { playerEntity.items = playerEntity.items || []; addItem(playerEntity.items, dfItem); surfacePlayer(); },
+    removeItemFromPlayer: (dfItem) => {
+      const items = playerEntity.items ?? [];
+      const i = items.indexOf(dfItem);
+      if (i < 0) return;
+      if (isEquipped(items[i])) unequipSlot(playerEntity, items[i].equipSlot);
+      items.splice(i, 1);
+      surfacePlayer();
+    },
+    playerHasItem: (dfItem) => (playerEntity.items ?? []).includes(dfItem),
+    carriesQuestItem: (res) => (playerEntity.items ?? []).some((it) =>
+      it.questItem && it.questUID === res.parentQuest?.uid && it.questSymbol?.name === res.symbol?.name),
+    releaseQuestItem: (uid, res) => {
+      // ReleaseQuestItemForReoffer's player-side sweep: unequip + drop
+      // every held copy of the quest item.
+      const items = playerEntity.items ?? [];
+      for (let i = items.length - 1; i >= 0; i--) {
+        const it = items[i];
+        if (!(it.questItem && it.questUID === uid && it.questSymbol?.name === res.symbol?.name)) continue;
+        if (isEquipped(it)) unequipSlot(playerEntity, it.equipSlot);
+        items.splice(i, 1);
+      }
+      surfacePlayer();
+    },
+    makeHeldQuestItemsPermanent: (uid, sym) => {
+      for (const it of playerEntity.items ?? []) {
+        if (it.questItem && it.questUID === uid && it.questSymbol?.name === sym?.name) makeItemPermanent(it);
+      }
+    },
+    offerReward: (q, dfItem) => {
+      // FLAGGED: the QuestComplete loot window pends the UI arc - the
+      // reward lands directly with a HUD line, never silently.
+      playerEntity.items = playerEntity.items || [];
+      addItem(playerEntity.items, dfItem);
+      townTalk.say(`You have been given ${dfItem.name ?? 'an item'}.`);
+      surfacePlayer();
+    },
+    // IsPlayerInTown(true, true): inside the rect of a City/Hamlet/
+    // Village location (LocationTypes 0/1/2).
+    isPlayerInTown: () => _musicInLocationRect() && _musicLocationType() <= 2,
+    getGuild: (fid) => {
+      const dict = townTalk.factionDict ?? null;
+      const g = guildOfFaction(fid, resolveVariantGuild(dict), dict);
+      if (!g) return null;
+      const m = membershipOf(playerEntity.guildMemberships ?? {}, g);
+      return { guildGroup: g.guildGroup, rank: m?.rank ?? 0, power: _questStore()?.dict.get(g.factionId)?.power ?? 0, isNonMember: !m };
+    },
+    regionPriceAdjustment: () => regionPriceAdjustment(playerEntity, _questLoc()?.regionIndex ?? 0),
+    // the offer flow's own seams: this host never stands inside a
+    // castle interior (FLAGGED with the palace blocks).
+    isPlayerInsideCastle: () => false,
+    getGuildFactionId: (g) => guildFactionIdOfGroup(g),
+    // the notebook's headers (DaggerfallDateTime's two shapes, the
+    // gameDate laws; CityName is the current location's name with the
+    // region as DFU's no-location fallback)
+    dateTimeString: () => dateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
+    midDateTimeString: () => midDateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
+    cityName: () => _questLoc()?.name ?? questWorld.currentRegionName(),
+  });
+  if (_questStartPending) questInitAtGameStart();
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
+    // Q4-v: the quest bridge + the scene context the NPC-data law needs
+    questBridge,
+    questSceneCtx: () => ({ mapId: _questLoc()?.mapTableData?.mapId ?? 0, locationIndex: _questLoc()?.locationIndex ?? 0 }),
     // G8 (guilds-8): the DiscoverRandomLocation seam for the guild
     // promotion reveals - candidates are the CURRENT pixel's region
     // (PlayerGPS.CurrentRegion; guild services only run inside town
@@ -1419,6 +1592,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       requestAnimationFrame(frame);
       return;
     }
+
+    // Q4-v: the quest machine's EXTERIOR tick (the modal arms tick
+    // inside modes.frame). REAL seconds - QuestMachine.Update
+    // accumulates Time.deltaTime, and DFU's TimeScale setting scales
+    // the calendar, never Unity time, so ?timescale does not touch
+    // this - held by the pause law (PauseGame -> timeScale 0 ->
+    // deltaTime 0) through the same overlay gate as the clock, and by
+    // the load gate (QuestMachine.cs:310-316 refuses to tick while
+    // SaveLoadManager.LoadInProgress - no popups mid-restore).
+    if (!townTalk.overlayActive && !_loading) questBridge.tick(dt);
 
 
     if (walkMode) {

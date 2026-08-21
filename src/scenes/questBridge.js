@@ -1,0 +1,277 @@
+// THE QUEST BRIDGE (Q4-v) - the machine goes LIVE in the hosts. One
+// module owns the wiring: it builds the QuestMachine over the world
+// seam the host composes, the QuestListsManager over the vendored
+// pack (scenes/questData.js loads it in the browser; tests feed fs),
+// the offer flow, and the player notebook - and hands the scenes a
+// small verb set: tick with the frame, click an NPC, open the Quests
+// service, mount a scene's quest resources, snapshot/restore the
+// whole envelope. Everything here is PURE WIRING over the pinned
+// Q1-Q4 law modules - node-testable with a mock ctx; the scenes pass
+// their live objects.
+//
+// ctx (the host's contract; every member optional unless noted):
+//   data: { readListTable(name), getQuestSourceLines(name) }  REQUIRED
+//   world                       - the machine's deps.world, composed by
+//                                 the host per machine.js's contract
+//                                 (maps/getBlock/player state/...);
+//                                 absent members idle LOUDLY, the
+//                                 headless charter
+//   classicSeconds()            - the classic game clock in seconds
+//                                 (the ticker's minutes * 60)
+//   playerEntity                - { name, level, gender, ... }
+//   playerRaceName()            - the birth race name (%ra)
+//   getReputation(factionId)    - factionRep.getReputation over the
+//                                 player's store
+//   getGold()/deductGold(n)/addGold(n), giveItemToPlayer(dfItem),
+//   removeItemFromPlayer, playerHasItem, carriesQuestItem,
+//   releaseQuestItem, makeHeldQuestItemsPermanent, offerReward,
+//   isPlayerInTown()            - the item/click seams (Q2b)
+//   showPopup(quest, message)   - the parchment popup (tokens ride the
+//                                 message; the host chunks)
+//   addHUDText(text), playVideo(name), playSound(id)
+//   the talk seams              - addQuestTopics/dialogLink/addDialog/
+//                                 rumor + scrub family (TalkManager's
+//                                 consumers pend the talk arc; absent
+//                                 is silent, recorded)
+//   isPlayerInsideCastle(), removeNpcQuestor(nameSeed),
+//   getGuildFactionId(guildGroup) - the offer flow's own seams
+//   dateTimeString()/midDateTimeString()/cityName() - the notebook's
+//   onQuestStarted(quest)       - extra listener beside the one-time
+//                                 recording (optional)
+//
+// THE NPC-DATA LAW (StaticNPC.cs:210-224, :331-337) lives here too:
+// the hash is x ^ y<<2 ^ z>>2 over the RAW layout ints; the nameSeed
+// is position ^ (buildingKey + locationIndex) - C#'s + binds TIGHTER
+// than ^, the famous precedence, kept; gender is flags & 32; the
+// billboard indices ride along for the questor flat-pick (Q4-iii).
+
+import { QuestMachine, TICKS_PER_SECOND } from '../systems/quest/machine.js';
+import { QuestListsManager } from '../systems/quest/questLists.js';
+import { QuestOfferFlow } from '../systems/quest/offerFlow.js';
+import { PlayerNotebook } from '../systems/notebook.js';
+import { GENDERS } from '../characters/nameHelper.js';
+import { GUILD_GROUPS } from '../formats/factionFile.js';
+import { addQuestResourceObjects } from '../systems/quest/sceneMount.js';
+
+/** GetPositionHash (StaticNPC.cs:333-336): int32 semantics via |0. */
+export const positionHash = (x, y, z) => ((x ^ (y << 2) ^ (z >> 2)) | 0);
+
+/** SetLayoutData (StaticNPC.cs:210-224): the NPCData record from a
+ *  block person record + the scene context. */
+export function staticNpcData(pn, { mapId = 0, locationIndex = 0, buildingKey = 0 } = {}) {
+  return {
+    hash: positionHash(pn.rawX ?? 0, pn.rawY ?? 0, pn.rawZ ?? 0),
+    flags: pn.flags ?? 0,
+    factionID: pn.factionID ?? 0,
+    billboardArchiveIndex: pn.textureArchive ?? 0,
+    billboardRecordIndex: pn.textureRecord ?? 0,
+    // C# precedence kept: position ^ (buildingKey + locationIndex)
+    nameSeed: (((pn.position ?? 0) ^ (buildingKey + locationIndex)) | 0),
+    gender: ((pn.flags ?? 0) & 32) === 32 ? GENDERS.Female : GENDERS.Male,
+    buildingKey,
+    mapID: mapId,
+  };
+}
+
+/** Guild.IsSatisfyQuestReqByLevel: base FALSE; the two overrides are
+ *  MagesGuild.cs:67 and KnightlyOrder.cs:83 - player level stands in
+ *  for rank on their quest gates. */
+export const SATISFY_QUEST_BY_LEVEL_GROUPS = Object.freeze([GUILD_GROUPS.MagesGuild, GUILD_GROUPS.KnightlyOrder]);
+
+/** The offer flow's Guild surface composed from the port's pieces:
+ *  the U-series guild object (divine name), the membership record
+ *  (rank), and the faction store (reputation on the guild's own
+ *  faction). */
+export function offerGuildSurface({ guildGroup, guild, membership, reputation }) {
+  return {
+    isMember: () => membership != null,
+    rank: membership?.rank ?? 0,
+    deity: guild?.divine ?? '',
+    getReputation: () => reputation ?? 0,
+    isSatisfyQuestReqByLevel: () => SATISFY_QUEST_BY_LEVEL_GROUPS.includes(guildGroup),
+  };
+}
+
+/** Message tokens -> parchment rows (the ServiceFlowWindow shape):
+ *  text tokens append to the line, every formatting token breaks it -
+ *  the same pairing loadMessage emits. */
+export function tokensToRows(tokens) {
+  const rows = [];
+  let line = '';
+  let sawText = false;
+  for (const token of tokens ?? []) {
+    if (token.formatting === 'text') { line += token.text; sawText = true; continue; }
+    rows.push(line);
+    line = '';
+    sawText = false;
+  }
+  if (sawText) rows.push(line);
+  return rows;
+}
+
+export function createQuestBridge(ctx) {
+  const notebook = new PlayerNotebook({
+    dateTimeString: () => ctx.dateTimeString?.() ?? '',
+    midDateTimeString: () => ctx.midDateTimeString?.() ?? '',
+    cityName: () => ctx.cityName?.() ?? '',
+  });
+
+  let questLists = null;
+  const machine = new QuestMachine({
+    world: ctx.world ?? null,
+    nowSeconds: () => ctx.classicSeconds?.() ?? 0,
+    getQuestSourceLines: (name) => ctx.data.getQuestSourceLines(name),
+    playerLevel: () => ctx.playerEntity?.level ?? 0,
+    playerGender: () => ctx.playerEntity?.gender ?? 'male',
+    playerName: () => ctx.playerEntity?.name ?? null,
+    playerRaceName: () => ctx.playerRaceName?.() ?? null,
+    getReputation: (fid) => ctx.getReputation?.(fid) ?? 0,
+    getGold: () => ctx.getGold?.() ?? 0,
+    deductGold: (n) => ctx.deductGold?.(n),
+    addGold: (n) => ctx.addGold?.(n),
+    addHUDText: (t) => ctx.addHUDText?.(t),
+    showPopup: (q, message) => ctx.showPopup?.(q, message),
+    showPrompt: (q, message, respond) => ctx.showPrompt?.(q, message, respond),
+    playVideo: (name) => ctx.playVideo?.(name),
+    playSound: (id) => ctx.playSound?.(id),
+    giveItemToPlayer: (item, front) => ctx.giveItemToPlayer?.(item, front),
+    removeItemFromPlayer: (item) => ctx.removeItemFromPlayer?.(item),
+    playerHasItem: (item) => ctx.playerHasItem?.(item) ?? false,
+    carriesQuestItem: (item) => ctx.carriesQuestItem?.(item) ?? false,
+    releaseQuestItem: (uid, item) => ctx.releaseQuestItem?.(uid, item),
+    makeHeldQuestItemsPermanent: (uid, sym) => ctx.makeHeldQuestItemsPermanent?.(uid, sym),
+    offerReward: (q, item) => ctx.offerReward?.(q, item),
+    isPlayerInTown: () => ctx.isPlayerInTown?.() ?? false,
+    getGuild: (fid) => ctx.getGuild?.(fid) ?? null,
+    regionPriceAdjustment: () => ctx.regionPriceAdjustment?.() ?? 0,
+    changeReputation: (fid, amount, propagate) => ctx.changeReputation?.(fid, amount, propagate),
+    changeLegalRep: (amount) => ctx.changeLegalRep?.(amount),
+    makePcDiseased: (t) => ctx.makePcDiseased?.(t),
+    cureDisease: (t) => ctx.cureDisease?.(t),
+    endVampirism: () => ctx.endVampirism?.(),
+    endLycanthropy: () => ctx.endLycanthropy?.(),
+    // the talk seams (the talk arc's consumers; silent while absent)
+    addQuestTopics: (q) => ctx.addQuestTopics?.(q),
+    dialogLink: (...a) => ctx.dialogLink?.(...a),
+    addDialog: (...a) => ctx.addDialog?.(...a),
+    addQuestRumor: (uid, m) => ctx.addQuestRumor?.(uid, m),
+    addProgressRumor: (uid, m) => ctx.addProgressRumor?.(uid, m),
+    addQuestorPostMessage: (uid, m) => ctx.addQuestorPostMessage?.(uid, m),
+    removeProgressRumors: (uid) => ctx.removeProgressRumors?.(uid),
+    removeQuestorPostMessage: (uid) => ctx.removeQuestorPostMessage?.(uid),
+    removeQuestRumors: (uid) => ctx.removeQuestRumors?.(uid),
+    removeQuestInfoTopics: (uid) => ctx.removeQuestInfoTopics?.(uid),
+    forceTopicListsUpdate: () => ctx.forceTopicListsUpdate?.(),
+    addFace: (r) => ctx.addFace?.(r),
+    dropFace: (r) => ctx.dropFace?.(r),
+    // Q4-iv: the tombstone filing lands in the notebook here
+    addFinishedQuest: (messages) => notebook.addFinishedQuest(messages),
+    // the one-time recording IS the OnQuestStarted subscription
+    onQuestStarted: (q) => { questLists.noteQuestStarted(q); ctx.onQuestStarted?.(q); },
+  });
+
+  questLists = new QuestListsManager({
+    readListTable: (name) => ctx.data.readListTable(name),
+    getQuestSourceLines: (name) => ctx.data.getQuestSourceLines(name),
+    parseQuest: (lines, factionId, partialParse) =>
+      machine.parseQuestForLists(lines, factionId, { partialParse }),
+    playerNudity: false,
+  });
+
+  const offerFlow = new QuestOfferFlow(machine, questLists, {
+    isPlayerInsideCastle: () => ctx.isPlayerInsideCastle?.() ?? false,
+    removeNpcQuestor: (seed) => ctx.removeNpcQuestor?.(seed),
+    getGuildFactionId: (g) => ctx.getGuildFactionId?.(g) ?? 0,
+    guildQuestListBox: false,   // the classic random draw (the DFU setting defaults off)
+  });
+
+  // QuestMachine.Update's pacing (QuestMachine.cs:305-320): tick at
+  // ticksPerSecond of REAL time; the timer resets to ZERO on fire,
+  // dropping the excess, verbatim.
+  let updateTimer = 0;
+  function tick(dtSeconds) {
+    updateTimer += dtSeconds;
+    if (updateTimer < 1 / TICKS_PER_SECOND) return false;
+    machine.tick();
+    updateTimer = 0;
+    return true;
+  }
+
+  return {
+    machine, questLists, offerFlow, notebook,
+    tick,
+
+    /** PlayerActivate's questor half: derive the NPCData and store the
+     *  click (the Person sweep rides setLastNPCClicked). Answers the
+     *  data for the caller's own use. */
+    clickNpc(pn, sceneCtx) {
+      const data = staticNpcData(pn, sceneCtx);
+      machine.setLastNPCClicked(data);
+      return data;
+    },
+
+    /** The guild popup's Quests service (guildServiceFlow's questOffer
+     *  destination): compose the offer-flow guild surface and run the
+     *  guild door. */
+    offerGuildQuest({ guildGroup, guild, membership, reputation, buildingFactionId = 0 }) {
+      return offerFlow.offerGuildQuest({
+        guildGroup,
+        guild: offerGuildSurface({ guildGroup, guild, membership, reputation }),
+        buildingFactionId,
+      });
+    },
+
+    /** An offer-flow step as a ServiceFlowWindow box chain. C#'s
+     *  silent faces ('close', a null step) show nothing. rows(id) is
+     *  the host's TEXT.RSC record reader (townTalk.lines). */
+    offerBoxes(step, rows) {
+      if (!step) return [];
+      switch (step.kind) {
+        case 'close': return [];
+        case 'fail': return [{ rows: rows?.(step.textId) ?? [] }];
+        case 'offer': return [{
+          rows: tokensToRows(step.prompt.tokens),
+          buttons: 'YesNo',
+          onYes: () => this.offerBoxes(step.respond(true), rows),
+          onNo: () => this.offerBoxes(step.respond(false), rows),
+        }];
+        case 'accepted':
+        case 'refused':
+          return step.popup ? [{ rows: tokensToRows(step.popup.tokens) }] : [];
+        default: return [];
+      }
+    },
+
+    /** The scene mount (Q4-iii's walk) over the host's adapter. */
+    mountScene(adapter, siteType, buildingKey = 0) {
+      addQuestResourceObjects(machine, adapter, siteType, buildingKey);
+    },
+
+    /** InitAtGameStart (QuestListsManager.cs:263-273): the host calls
+     *  ONCE on a new game. */
+    initAtGameStart() {
+      questLists.initAtGameStartQuests((q) => machine.startQuestImmediate(q));
+    },
+
+    onExteriorTransition() { machine.notifyExteriorTransition(); },
+    onInitWorld() { machine.notifyInitWorld(); },
+
+    /** The save envelope: the machine's shape + the notebook's + the
+     *  one-time list (C# carries the last two on SerializablePlayer -
+     *  :196/:434 - the port keeps them beside the machine's). */
+    snapshot() {
+      return {
+        machine: machine.getSaveData(),
+        notebook: notebook.getSaveData(),
+        oneTimeQuestsAccepted: questLists.oneTimeQuestsAccepted ? [...questLists.oneTimeQuestsAccepted] : null,
+      };
+    },
+    restore(data) {
+      if (!data) return;
+      machine.clearState();   // C#'s load path: ClearState before RestoreSaveData
+      machine.restoreSaveData(data.machine ?? { siteLinks: [], quests: [] });
+      notebook.restoreSaveData(data.notebook ?? { notebookEntries: [], finishedQuestEntries: [] });
+      questLists.oneTimeQuestsAccepted = data.oneTimeQuestsAccepted ? [...data.oneTimeQuestsAccepted] : null;
+    },
+  };
+}

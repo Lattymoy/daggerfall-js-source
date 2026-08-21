@@ -21,7 +21,7 @@
 import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { dice100 } from '../combat/formulas.js';
 import { goldStack } from './inventory.js';
-import { ITEM_TEMPLATES, mintCondition } from './itemTemplates.js';
+import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES } from './itemTemplates.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 
 // LootChanceMatrix rows, verbatim (21 keys).
@@ -173,9 +173,15 @@ export function setMagicItemTemplates(templates) { _magicItemTemplates = templat
 const MAGIC_GROUPS_0 = Object.freeze([2, 3, 6, 10, 12, 14, 25]);
 const MAGIC_GROUPS_1 = Object.freeze([2, 3, 6, 12, 25]);
 
-export function createRegularMagicItem(templates, playerLevel, gender, rolls = Math.random) {
+export function createRegularMagicItem(templates, playerLevel, gender, rolls = Math.random, chosenItem = -1) {
   const regular = templates.filter((t) => t.type === 0);   // RegularMagicItem
-  const magicItem = regular[Math.floor(rolls() * regular.length)];
+  // Q2b-ii: the quest mint's "item class 4 subclass N" passes a CHOSEN
+  // index (-1 = random, as every earlier caller). C#'s guard is `>`
+  // Length - chosenItem == Length walks off the array and crashes
+  // there too (kept: regular[length] is undefined and throws below).
+  if (chosenItem > regular.length) throw new Error(`Magic item subclass ${chosenItem} does not exist`);
+  if (chosenItem === -1) chosenItem = Math.floor(rolls() * regular.length);
+  const magicItem = regular[chosenItem];
   let groupId;
   if (magicItem.group === 0) groupId = MAGIC_GROUPS_0[Math.floor(rolls() * 7)];
   else if (magicItem.group === 1) groupId = MAGIC_GROUPS_1[Math.floor(rolls() * 5)];
@@ -204,6 +210,66 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
     currentCondition: magicItem.uses,
   };
 }
+
+// The ItemGroups NUMBER -> the port's group NAME, in ItemEnums.cs:27-59
+// order. The quest mint (Q2b-ii) resolves "item class N" through it;
+// MagicItems/Artifacts/Books never reach the generic arm (their
+// CreateItem branches run first, as in Item.cs).
+export const ITEM_GROUP_NAME_BY_CLASS = Object.freeze([
+  'Drugs', 'UselessItems1', 'Armor', 'Weapons', 'MagicItems', 'Artifacts',
+  'MensClothing', 'Books', 'Furniture', 'UselessItems2', 'ReligiousItems',
+  'Maps', 'WomensClothing', 'Paintings', 'Gems', 'PlantIngredients1',
+  'PlantIngredients2', 'CreatureIngredients1', 'CreatureIngredients2',
+  'CreatureIngredients3', 'MiscellaneousIngredients1', 'MetalIngredients',
+  'MiscellaneousIngredients2', 'Transportation', 'Deeds', 'Jewellery',
+  'QuestItems', 'MiscItems', 'Currency',
+]);
+
+/** DaggerfallUnityItem.SetArtifact (DaggerfallUnityItem.cs:580-612)
+ *  over the MAGIC.DEF registry: the artifact template (rows with type
+ *  ArtifactClass1/2, file order - ItemHelper.cs:1511-1517) expands to
+ *  its base group/groupIndex, armor material moves to the plate band
+ *  (0x200+), the magic name replaces the base name and the
+ *  enchantments ride raw. The artifact texture-index half is the
+ *  inventory art's concern (the icons resolve at Q4's quest-item UI).
+ *  ArtifactIndexBitfield (index << 1 | 1) is carried for save parity. */
+export function createArtifact(templates, artifactIndex) {
+  const artifacts = templates.filter((t) => t.type === 1 || t.type === 2);
+  const magicItem = artifacts[artifactIndex];
+  if (!magicItem) throw new Error(`Artifact template index out of range: ArtifactIndex=${artifactIndex}`);
+  const groupName = ITEM_GROUP_NAME_BY_CLASS[magicItem.group];
+  const templateIndex = GROUP_TEMPLATE_INDICES[groupName]?.[magicItem.groupIndex];
+  let material = magicItem.material;
+  if (magicItem.group === 2) material = 0x200 + material;   // Armor -> plate band
+  // The two identity flags itemInfo reads (DFU checks ArtifactsSubTypes
+  // - ItemEnums.cs:246,250: Oghma_Infinium = 5, Azuras_Star = 9).
+  // AUDIT 22 F11's producerless flags gain their producer here.
+  const identity = {};
+  if (artifactIndex === 5) identity.oghmaInfinium = true;
+  if (artifactIndex === 9) identity.azurasStar = true;
+  return {
+    ...identity,
+    group: groupName,
+    templateIndex,
+    name: magicItem.name,
+    magic: true,
+    artifact: true,
+    artifactIndexBitfield: (artifactIndex << 1) | 1,
+    material,
+    enchantments: magicItem.enchantments.filter((e) => e.type !== -1),
+    maxCondition: magicItem.uses,
+    currentCondition: magicItem.uses,
+    // SetArtifact's own price (:615) - the MAGIC.DEF row's value, not
+    // the mundane base template's (Q2b-ii VERIFY: it was dropped).
+    value: magicItem.value,
+  };
+}
+
+/** The MAGIC.DEF registry, readable by the quest mint (Q2b-ii): the
+ *  mint builds real magic items and artifacts when a host has
+ *  registered the file, and pends LOUDLY when not (the headless
+ *  corpus gate runs with no ARENA2 - Ledger row). */
+export function getMagicItemTemplates() { return _magicItemTemplates; }
 
 /** DaggerfallLoot.GenerateItems: key -> matrix -> loot. Unknown keys
  *  fall to '-' (empty), matching GetMatrix's null-safe use. */

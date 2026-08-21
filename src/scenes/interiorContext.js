@@ -302,6 +302,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     dynamicDraws,
     billboardBatches,
     flatAnims,   // FA1: the host ticks the flats it draws
+    parentPt,   // Q4-v: the quest mount parents marker positions through the same transform
     lights,
     texRemap,
     markers,

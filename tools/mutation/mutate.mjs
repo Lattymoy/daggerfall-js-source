@@ -20,6 +20,11 @@ const flag = (name) => argv.includes('--' + name);
 
 const filesSel = (arg('files', '') || '').split(',').filter(Boolean);
 const opsSel = new Set((arg('ops', '') || '').split(',').filter(Boolean));
+// --lines A-B[,C-D,...]: restrict mutation sites to line ranges (slice
+// campaigns sweep only the lines the slice touched).
+const linesSel = (arg('lines', '') || '').split(',').filter(Boolean)
+  .map((r) => r.split('-').map(Number));
+const inLines = (line) => !linesSel.length || linesSel.some(([a, b]) => line >= a && line <= (b ?? a));
 const perFile = Number(arg('per-file', '40'));
 const OUTLOG = path.join(ROOT, '.mutaudit', arg('out', 'log.jsonl'));
 const MAXSUBSET = Number(arg("max-subset", "126"));
@@ -187,7 +192,7 @@ let nRun = 0, nCaught = 0, nSurv = 0, nDead = 0, nSkip = 0;
 for (const rel of targets) {
   const abs = path.join(ROOT, rel);
   const orig = fs.readFileSync(abs, 'utf8');
-  let cand = sites(orig, rel).filter(s => !opsSel.size || opsSel.has(s.op));
+  let cand = sites(orig, rel).filter(s => (!opsSel.size || opsSel.has(s.op)) && inLines(s.line));
   // prefer covered lines, then sample
   const covered = [], uncovered = [];
   for (const s of cand) {

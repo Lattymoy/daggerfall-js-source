@@ -36,6 +36,9 @@ export function collectInteriorPeople(recordData) {
       factionID: obj.factionID,
       flags: obj.flags,
       rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos,
+      // Q4-v: the record's stream position - DFU's obj.Position, the
+      // StaticNPC nameSeed's identity component.
+      position: obj.position,
     });
   }
   return out;
