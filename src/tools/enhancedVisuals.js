@@ -35,9 +35,8 @@
 // apology. The screen says what it has; it does not pretend, and it does
 // not nag.
 
-import { buildPaperdollPayload } from '../characters/paperdollPayload.js';
 import { ITEM_TEMPLATES } from '../systems/itemTemplates.js';
-import { buildNeutralBody } from '../characters/neutralBody.js';
+import { buildNeutralBody, NECK_PIVOT_Y } from '../characters/neutralBody.js';
 
 /** Our own palette, the same one paperdollPayload falls back to. */
 const BLOCKS = [
@@ -57,7 +56,7 @@ const OUR_PAL = {
 };
 
 /** Rebuild the body with equipment zones on it, packed like the payload. */
-function buildDressed(D, zones, matSpans) {
+function buildDressed(zones, matSpans) {
   const ramp = ([a, b]) => {
     const out = [];
     for (let i = b; i >= a; i--) {
@@ -84,6 +83,11 @@ function buildDressed(D, zones, matSpans) {
 }
 
 /* global THREE */
+
+// The engine's own constant, imported rather than copied: the day
+// CHAR_PIXEL moves, this moves with it. It has moved once already —
+// 9 to 7 in 2026, then 7 to 12.
+import { CHAR_PIXEL } from '../render/renderer.js';
 
 /** Real item templates, by name, so the prototype's bag is the game's. */
 const BY_NAME = new Map(ITEM_TEMPLATES.map((t) => [t.name.toLowerCase(), t]));
@@ -126,27 +130,33 @@ export function mountFigure(mount, opts = {}) {
   const H = mount.clientHeight || 400;
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(28, W / H, 0.1, 40);
+  // ── CHAR_PIXEL: TWELVE ──────────────────────────────────────────
+  // The engine renders its character pass at screen size / CHAR_PIXEL
+  // with NEAREST, and the weapon bench's default matches. A portrait of
+  // the same figure that renders smooth is a portrait of a different
+  // game, so this draws at a TWELFTH and is scaled back up by the
+  // browser with pixelated filtering — which is the same operation and
+  // costs a hundred and forty-fourth of the fragments.
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setSize(W, H, false);
-  renderer.domElement.style.cssText = 'width:100%;height:100%;display:block';
+  renderer.setPixelRatio(1);
+  renderer.setSize(Math.max(1, Math.round(W / CHAR_PIXEL)), Math.max(1, Math.round(H / CHAR_PIXEL)), false);
+  renderer.domElement.style.cssText =
+    'width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges';
   mount.append(renderer.domElement);
 
-  // NO ARENA2 REQUIRED. The rig is ours; only the authentic palette is
-  // Bethesda's, and the payload has our own colours to fall back on.
-  const D = buildPaperdollPayload(null, null, null);
-
-  // ── IT HAS TO BE WEARING SOMETHING ──────────────────────────────
-  // The first cut rendered the BARE rig, which is the one thing a
-  // paperdoll may not do: the whole job of the screen is showing what is
-  // on the character, and a nude figure beside a list of worn armour is
-  // a picture arguing with its own caption.
+  // ── ONE BODY, NOT THE WHOLE ROSTER ──────────────────────────────
+  // This called buildPaperdollPayload, which builds EVERY design in the
+  // project — 25 villagers, 4 orcs, 11 undead, 19 classes, 4 atronachs,
+  // 18 beasts, 5 daedra — plus every weapon, hairstyle and drape. That
+  // is 26.6 SECONDS and 10.6 MB to draw one figure that costs 261 ms on
+  // its own. A hundredfold waste, and the load Mac was waiting on.
   //
-  // The delta mechanism every enemy in this project uses does exactly
-  // this — clothZones displace the body's own faces outward and recolour
-  // them — so equipment goes on through the path that already exists
-  // rather than a second one built for the UI.
-  const worn = (opts.equipped || {});
+  // The payload exists so the weapon bench can switch between designs
+  // without rebuilding. This screen shows one character. It calls
+  // buildNeutralBody directly, which is what buildDressed was already
+  // doing two lines further down — I had the cheap path in hand and
+  // called the expensive one anyway.
+  const worn = opts.equipped || {};
   const zones = [];
   const mats = {};
   const put = (mat, span, z) => {
@@ -154,9 +164,8 @@ export function mountFigure(mount, opts = {}) {
     zones.push({ ...z, mat });
   };
   const B = 'body', AL = 'armL', AR = 'armR', LL = 'legL', LR = 'legR';
-  // Slot to silhouette. Only the slots that CHANGE a silhouette are
-  // here: a ring does not alter how a figure reads at portrait size, and
-  // pretending otherwise would be decoration.
+  // Only the slots that CHANGE a silhouette: a ring does not alter how a
+  // figure reads at portrait size, and pretending otherwise is decoration.
   if (worn.ChestArmor) put('plate', [86, 93], { groups: [B], yLo: 1.1, yHi: 1.58, th: 0.03 });
   else if (worn.ChestClothes) put('cloth', [34, 44], { groups: [B], yLo: 1.12, yHi: 1.56, th: 0.016 });
   if (worn.Gloves) put('leather', [70, 79], { groups: [AL, AR], yLo: 0.6, yHi: 0.86, th: 0.018, arm: true });
@@ -166,13 +175,13 @@ export function mountFigure(mount, opts = {}) {
   if (worn.Feet) put('leather', [70, 79], { groups: [LL, LR], yLo: 0, yHi: 0.22, th: 0.02, leg: true });
   if (worn.Head) put('plate', [86, 93], { groups: ['head'], yLo: 1.62, yHi: 1.9, th: 0.02 });
 
-  const dressed = zones.length ? buildDressed(D, zones, mats) : null;
+  const src = buildDressed(zones, mats);
+  const cy = NECK_PIVOT_Y * 0.5;
 
   const geo = new THREE.BufferGeometry();
   const pos = [];
   const col = [];
   const TRI = [0, 1, 2, 0, 2, 3];
-  const src = dressed || { P: D.P, C: D.C, n: D.n };
   for (let f = 0; f < src.n; f++) {
     const pb = f * 12;
     const cb = f * 3;
@@ -190,7 +199,7 @@ export function mountFigure(mount, opts = {}) {
 
   const pivot = new THREE.Group();
   pivot.add(mesh);
-  mesh.position.y = -D.cy;
+  mesh.position.y = -cy;
   scene.add(pivot);
 
   cam.position.set(0, 0, 3.15);
@@ -218,14 +227,14 @@ export function mountFigure(mount, opts = {}) {
     const h = mount.clientHeight || H;
     cam.aspect = w / h;
     cam.updateProjectionMatrix();
-    renderer.setSize(w, h, false);
+    renderer.setSize(Math.max(1, Math.round(w / CHAR_PIXEL)), Math.max(1, Math.round(h / CHAR_PIXEL)), false);
   };
   window.addEventListener('resize', resize);
 
-  if (opts.onReady) opts.onReady({ faces: D.n });
+  if (opts.onReady) opts.onReady({ faces: src.n });
 
   return {
-    faces: D.n,
+    faces: src.n,
     dispose() {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
