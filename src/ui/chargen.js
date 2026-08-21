@@ -16,6 +16,15 @@
 
 import { rollStats, rollSkills, STAT_KEYS_ORDER, spellPoints, spellPointMultiplier } from '../systems/chargen.js';
 import { QUESTION_COUNT, NO_CLASS_INDEX, displayQuestion, pickQuestionIndices, answerWeightIndex, resolveClassIndex } from '../systems/classQuestions.js';   // U18
+
+// F2 / THE NEVER-UNFINISHABLE GATE. An answer locks the questions
+// screen while its constellation plays, so a host that never ticked
+// the flow - or a CEL that stalled - would make a character
+// UNCREATABLE. Both the tick and the next answer release the lock
+// past this deadline, so the worst case degrades to the pre-F2
+// instant advance rather than a dead screen.
+const QANIM_STUCK_MIN_MS = 2000;
+const QANIM_STUCK_PAD_MS = 1000;
 import { ADVANTAGE_KEYS, DISADVANTAGE_KEYS, ONLY_ONE_KEYS, MAX_ITEMS, secondaryListFor, advDisAdjustment, cannotAdd, totalAdjust, parseCareerData } from '../systems/specialAdvantages.js';   // U20b
 import { HP_MIN, HP_MAX, HP_DEFAULT, DIFFICULTY_MIN, DIFFICULTY_MAX, FREE_EDIT_MIN, FREE_EDIT_MAX, STAT_DEFAULT, difficultyPoints, availableSkills, buildCustomCareer, classAffinityIndex, repClick, repPointsToDistribute, HELP_TOPICS } from '../systems/customClass.js';   // U20a
 import { damageModifier, maxEncumbrance, magicResist, toHitModifier, hitPointsModifier, healingRateModifier } from '../combat/formulas.js';   // U10: the derived block
@@ -29,7 +38,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
-import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, classDescriptionLines, textRecordLines, DOUBLE_CLICK_DELAY_MS, CLASS_LIST_ROWS, ADV_PICKER_ITEM_COUNT, PLAYER_REFLEXES, REFLEX_COUNT, QUESTION_ROW_H, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES } from './chargenArt.js';   // U10 / U17 / U18 / U20a
+import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, classDescriptionLines, textRecordLines, DOUBLE_CLICK_DELAY_MS, CLASS_LIST_ROWS, ADV_PICKER_ITEM_COUNT, PLAYER_REFLEXES, REFLEX_COUNT, QUESTION_ROW_H, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES, startConstellationAnim, tickConstellationAnim, stopConstellationAnim } from './chargenArt.js';   // U10 / U17 / U18 / U20a
 
 export const MAX_STAT_VALUE = 100;   // FormulaHelper.MaxStatValue
 
@@ -193,6 +202,18 @@ export class ChargenFlow {
     this.qWeights = [0, 0, 0]; // [warrior, rogue, mage] (:66)
     this.qClassIndex = NO_CLASS_INDEX;
     this.qConfirm = null;      // the open class-description Yes/No box
+    // F2: the constellation an answer started (DFU's animPlaying), its
+    // release deadline, and the blues the CHART is painted with -
+    // written at the animation's END, never at the answer, which is
+    // CEL_OnAnimEnd's law.
+    this.qAnimIndex = -1;
+    this.qAnimDeadline = 0;
+    this.qPaintBlues = null;
+    /** The CEL seam, injectable exactly as describeClass is, so the
+     *  headless suite drives an animation with no renderer. */
+    this.constellationAnim = {
+      start: startConstellationAnim, tick: tickConstellationAnim, stop: stopConstellationAnim,
+    };
     this.qDisplay = null;      // displayQuestion() of the question on screen
     this.qLabelY = QSCROLL_TEXT_OFFSET;   // questionLabel.Position.y within the scroll
     this.qScrollFrame = 0;     // which SCRL frame the parchment shows
@@ -425,6 +446,8 @@ export class ChargenFlow {
     this.qWeights = [0, 0, 0];
     this.qClassIndex = NO_CLASS_INDEX;
     this.qConfirm = null;
+    this._stopQuestionAnim();   // F2: re-entry news the window - no stale animation end lands on it
+    this.qPaintBlues = null;    // AUDIT 17k F1: a fresh run draws the PRISTINE chart
     this._displayClassQuestion();
     this.state = 'classQuestions';
   }
@@ -468,16 +491,57 @@ export class ChargenFlow {
     if (this.state === 'classQuestions' && !this.qConfirm) this.scrollQuestionRow(dir);
   }
 
-  /** AnswerAndPlayAnim (:310-354), minus the FLC constellation anims
-   *  (FLAGGED - the port has no FLIC decoder yet, so the next question
-   *  shows immediately where DFU waits for the CEL to finish; the
-   *  palette brightening itself is live, see constellationBlues).
-   *  choice: 0 a, 1 b, 2 c. */
+  /** F2: drop an in-flight constellation WITHOUT running its end body
+   *  (re-entry and every exit arm). Idempotent, safe with no art. */
+  _stopQuestionAnim() {
+    if (this.qAnimIndex >= 0) this.constellationAnim.stop();
+    this.qAnimIndex = -1;
+  }
+
+  /** CEL_OnAnimEnd (:496-513): the animation's texture clears,
+   *  animPlaying falls, the chart REPAINTS with the brightened slots,
+   *  and either EndQuestions runs or the next question shows. With no
+   *  CEL to wait out this runs inline from the answer, which is the
+   *  behaviour this screen had before F2. */
+  _celAnimEnd() {
+    this._stopQuestionAnim();
+    this.qPaintBlues = this.constellationBlues();
+    if (this.qAnswered === QUESTION_COUNT) this._endClassQuestions();
+    else this._displayClassQuestion();
+  }
+
+  /** F2: the overlay clock. Every host that mounts chargen reaches
+   *  this through its own `tick?.(dt)` seam (the four-hosts rule);
+   *  the flow times nothing else, so it returns at once when no
+   *  constellation is playing. */
+  tick(dt) {
+    if (this.qAnimIndex < 0) return;
+    // The screen moved on underneath a playing animation: drop it.
+    if (this.state !== 'classQuestions' || this.qConfirm) { this._stopQuestionAnim(); return; }
+    if (!this.constellationAnim.tick(dt)) { this._celAnimEnd(); return; }
+    if (this._now() >= this.qAnimDeadline) {
+      console.warn('[chargen] constellation animation overran its deadline; releasing the screen');
+      this._celAnimEnd();
+    }
+  }
+
+  /** AnswerAndPlayAnim (:310-354) whole, constellations included:
+   *  the weight lands and the class resolves SYNCHRONOUSLY, then the
+   *  answered constellation lights and the NEXT QUESTION WAITS IT OUT
+   *  (DFU's animPlaying lock). choice: 0 a, 1 b, 2 c. */
   answerClassQuestion(choice) {
     if (this.state !== 'classQuestions' || this.qConfirm || this.qAnswered === QUESTION_COUNT) return false;
-    audio.playOneShot(SOUND.Ignite, 1);   // AnswerAndPlayAnim (:353) - the brazier lights with the answer
+    // Input is LOCKED while a constellation plays - but only until the
+    // deadline, or a host that never ticks would make the character
+    // un-creatable (see the QANIM_STUCK constants).
+    if (this.qAnimIndex >= 0) {
+      if (this._now() < this.qAnimDeadline) return false;
+      console.warn('[chargen] constellation animation overran; releasing the questions screen');
+      this._celAnimEnd();
+      if (this.qConfirm || this.qAnswered === QUESTION_COUNT || this.state !== 'classQuestions') return false;
+    }
     const weightIndex = answerWeightIndex(this.qIndices[this.qAnswered], choice);
-    this.qWeights[weightIndex]++;
+    this.qWeights[weightIndex]++;   // the constellation's blue increment IS this
     if (this.qAnswered === QUESTION_COUNT - 1) {   // final question answered
       const idx = resolveClassIndex(this.classesData, this.qWeights);
       if (idx === null) {
@@ -487,8 +551,14 @@ export class ChargenFlow {
       } else this.qClassIndex = idx;
     }
     this.qAnswered++;
-    if (this.qAnswered === QUESTION_COUNT) this._endClassQuestions();
-    else this._displayClassQuestion();
+    const secs = this.constellationAnim.start(weightIndex);   // 0 = no art, no CEL
+    audio.playOneShot(SOUND.Ignite, 1);   // AnswerAndPlayAnim (:353) - the brazier lights with the answer
+    if (secs > 0) {
+      this.qAnimIndex = weightIndex;
+      this.qAnimDeadline = this._now() + Math.max(QANIM_STUCK_MIN_MS, secs * 2000) + QANIM_STUCK_PAD_MS;
+    } else {
+      this._celAnimEnd();   // nothing to wait out: the end body, at once
+    }
     return true;
   }
 
@@ -498,6 +568,7 @@ export class ChargenFlow {
    *  failed results walk, or artless describeClass, closes the screen
    *  the way its box would. */
   _endClassQuestions() {
+    this._stopQuestionAnim();   // F2: every way out of the screen drops the animation
     if (this.qClassIndex === NO_CLASS_INDEX) { this.state = 'class'; return; }
     this.qConfirm = this.describeClass?.(this.qClassIndex) ?? null;
     if (!this.qConfirm) this._acceptQuestionClass();   // no description available: the pick stands
@@ -509,6 +580,7 @@ export class ChargenFlow {
    *  exactly the "CLASS" + classIndex + ".CFG" load - and the flow
    *  moves to the biography, as SetChooseBioWindow does. */
   _acceptQuestionClass() {
+    this._stopQuestionAnim();   // F2: every way out of the screen drops the animation
     this.qConfirm = null;
     // AUDIT 17m: the DOCUMENT only (:343). This used to scroll the
     // class LIST to the generated class as well, which DFU does not
@@ -519,6 +591,7 @@ export class ChargenFlow {
   /** ConfirmDialog No: classIndex = noClassIndex, both windows close,
    *  and the wizard's OnClose falls to SetClassSelectWindow. */
   _cancelQuestionClass() {
+    this._stopQuestionAnim();   // F2: every way out of the screen drops the animation
     this.qConfirm = null;
     this.qClassIndex = NO_CLASS_INDEX;
     this.state = 'class';
@@ -1273,7 +1346,7 @@ export class ChargenFlow {
       else if (action === 'up') this.scrollQuestionRow(-1);
       // Escape cancels the popup with classIndex still noClassIndex,
       // and the wizard's OnClose falls to SetClassSelectWindow
-      else if (action === 'back') this.state = 'class';
+      else if (action === 'back') { this._stopQuestionAnim(); this.state = 'class'; }
       return;
     }
     if (s === 'face') {
