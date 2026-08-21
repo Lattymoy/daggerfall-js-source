@@ -51,6 +51,7 @@ import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold } from '../sy
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { pickActivatable } from '../player/activate.js';   // G3: corpse loot
 import { CharSheet, LevelUpScreen, preloadCharSheetArt, charSheetArtLoaded } from '../ui/charsheet.js';   // U8a: the native char sheet (LevelUpScreen: AUDIT 21 hosts F3)
+import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { DeathScreen } from '../ui/inventory.js';   // AUDIT 21 hosts F6: dying above ground
 import { loadHud, drawHud } from '../ui/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw
@@ -927,12 +928,27 @@ export async function bootWorld(canvas, renderer, params, status) {
       }));
     },
   });
-  const toggleSpellbook = () => {
-    if (townTalk.overlayActive || !spellsByIndex) return;
-    townTalk.showOverlay(new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
+  // U32: ONE construction for the world inventory and spellbook - F6
+  // and Backspace open them, and so do the character sheet's buttons.
+  const makeInventoryWindow = () => new NativeInventoryWindow({
+    openBook: openBookHook,   // B1: the use-mode book arm
+    items: () => (playerEntity.items ??= []),
+    wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
+    entity: playerEntity,
+    icons: { getTexture, uploadRecord, textures: renderer.textures },
+    rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
+    nowMinute: () => Math.floor(playerTicker.classicMinutes),
+    onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
+  });
+  const makeSpellbookWindow = () => (spellsByIndex
+    ? new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
       ready: (sp) => magic.readySpell(sp),
       castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-    }));
+    })
+    : null);
+  const toggleSpellbook = () => {
+    if (townTalk.overlayActive || !spellsByIndex) return;
+    townTalk.showOverlay(makeSpellbookWindow());
   };
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider });   // C13
   let playerSpawned = false;
@@ -1125,22 +1141,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (FLAGGED); swallowing the browser reload is not optional.
     if (e.code === 'F5' || e.code === 'F6') e.preventDefault();
     if (e.code === 'F5' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior') {
-      townTalk.showOverlay(new CharSheet(playerEntity));
+      townTalk.showOverlay(new CharSheet(playerEntity, charSheetHooks({
+        entity: playerEntity,
+        artDeps: { renderer, fetchBytes, palette },
+        inventory: () => (inventoryArtLoaded() ? makeInventoryWindow() : null),
+        spellbook: makeSpellbookWindow,
+        // Q4-v: the live machine's log walk and the player's notebook
+        questMessages: () => questBridge?.machine.getAllQuestLogMessages() ?? [],
+        notebook: () => questBridge?.notebook ?? null,
+      })));
       return;
     }
     // U8d: F6 opens the classic inventory (DFU's default Inventory
     // binding; same host rule as F5).
     if (e.code === 'F6' && !townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && inventoryArtLoaded()) {
-      townTalk.showOverlay(new NativeInventoryWindow({
-        openBook: openBookHook,   // B1: the use-mode book arm
-        items: () => (playerEntity.items ??= []),
-        wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
-        entity: playerEntity,
-        icons: { getTexture, uploadRecord, textures: renderer.textures },
-        rows: (id) => townTalk.lines(id),   // U25: the real item info + use text (TEXT.RSC)
-        nowMinute: () => Math.floor(playerTicker.classicMinutes),
-        onDrop: (items) => droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`),   // U8e: OnPop mints the world pile; P2: stamped with its map pixel
-      }));
+      townTalk.showOverlay(makeInventoryWindow());
       return;
     }
     // M2: the spellbook (Backspace, the DFU default) + the cast key.

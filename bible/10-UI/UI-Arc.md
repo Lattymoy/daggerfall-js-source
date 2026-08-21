@@ -2953,3 +2953,81 @@ upload for a still frame, a new frame releasing the old key).
 The lesson is the gate, not the lane: an ARENA2-only test that has
 never been run with ARENA2 present is not a pin, it is a claim. Both
 modes ran green before this merged.
+
+## U32 - THE SHEET'S FOUR BUTTONS LEAD SOMEWHERE (2026-08-21)
+
+Reported from play, alongside the sealed dungeon: *"the F5 menu, the
+ones that have buttons that lead to other UI elements, doesn't
+work."* Exactly right, and the code said so in as many words:
+
+```js
+// The remaining DFU buttons (... inventory/spellbook/logbook/
+// history) pend their popups; consume the click so it never
+// escapes the window.
+return Object.values(R).some((r) => inRect(r, vx, vy));
+```
+
+Hit-tested, consumed, no action - for all four. AUDIT 18 had given
+the sheet a `click()` so its EXIT button would stop falling through to
+the host's pointer lock, and answered the rest by swallowing them. The
+swallow was the right call then and became the bug.
+
+**Two of the four were already built.** `NativeInventoryWindow` has
+been the real inventory since U8d/U26, and `SpellbookWindow` has
+carried DaggerfallSpellBookWindow's delete/swap/sort since U4/M4. They
+were reachable by F6 and Backspace and by nothing else. Wiring them
+was finding the caller, not writing a window - and ONE DFU MEMBER, ONE
+EXPORT means the spellbook button opens THAT spellbook. A pin asserts
+`SpellbookWindow` is declared exactly once, in the file it already
+lived in.
+
+**Two were new.** `playerHistory.js` (DaggerfallPlayerHistoryWindow)
+and `questJournal.js` (DaggerfallQuestJournalWindow), both on
+LGBK00I0.IMG - DFU's own choice: in classic your history and your log
+are the same book. Neither needed new state. History reads
+`playerEntity.backStory`, which chargen has composed since U13 and
+`save.js` has round-tripped since; `chargenSession.js:170` names this
+window in its own comment. The journal reads
+`QuestMachine.getAllQuestLogMessages()` (already verbatim) and
+`PlayerNotebook`, whose module has carried `MAX_LINES_QUESTS` /
+`MAX_LINES_SMALL` all along, citing THIS window's `:34-35` for them.
+The notebook was ported against a screen that did not exist yet; it
+exists now and imports those constants from their one home.
+
+**THE SHEET OWNS ITS CHILD.** DFU pushes these onto the UI stack, so
+the sheet stays underneath and closing the child returns to it. The
+port's hosts each hold one `activeOverlay` slot. Teaching four hosts a
+stack is exactly the shape that produced the FOUR HOSTS rule - chargen
+lived in one host once and a town boot ran a whole session on a
+pre-chargen entity. So the sheet holds `this.child` and delegates
+input, click, draw, tick and wheel to it while it is up; a finished
+child pops and the sheet is there again. The host still sees one
+window. Zero host divergence, and it is DFU's semantics rather than an
+approximation of them.
+
+**THE ANTI-LIE LAW.** The dungeon host has no quest bridge, so it
+cannot see the quest log. It does not get an empty logbook - it gets a
+refusal. "You have no active quests" told to a player who has three is
+a lie, and the port does not report a thing empty when the truth is
+that this screen cannot reach it. `charSheetHooks` withholds the
+window entirely when there is no quest source, and the sheet says the
+logbook is out of reach. Same for any host that cannot build a window:
+a stated sentence, never the silent swallow that started this.
+
+Verbatim geometry both ways, including DFU's own oddity: the history
+window's previous-page button really is `14x48` at y 188
+(`:64`), which runs 36px past a 200-tall panel. Almost certainly a typo
+for 8. It is DFU's typo, the panel clips it to the same reachable
+strip, and it is ported as written rather than silently corrected.
+
+The journal steps by ONE ENTRY per arrow (`:271-283`), not one page -
+the detail most likely to be "tidied" into paging by the next reader,
+so it is pinned by name. History pages by whole 21-line pages, and its
+exit REWINDS to the first page before closing (`:127`), so reopening
+the book opens it at the start.
+
+Not done here: the spellbook's native-art retrofit (SPBK00I0.IMG over
+its text idiom), which rides its own slice the way the level-up
+screen's does.
+
+Pins: 7 in `charsheetnav.test.js`; 5 mutations, 5 killed.

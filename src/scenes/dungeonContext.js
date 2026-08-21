@@ -48,6 +48,7 @@ import { preloadChargenArt, stopConstellationAnim } from '../ui/chargenArt.js'; 
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
 import { ChargenFlow } from '../ui/chargen.js';
 import { LevelUpScreen, CharSheet, preloadCharSheetArt } from '../ui/charsheet.js';
+import { charSheetHooks } from '../ui/charSheetNav.js';   // U32: the sheet's four navigation buttons
 import { SpellbookWindow, DeathScreen, knownSpells } from '../ui/inventory.js';
 // U26: the dungeon finally gets the SAME inventory window the exterior
 // hosts have had since U8d - tabs, paperdoll, the real info panel and
@@ -2433,7 +2434,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleCharSheet() {
       if (activeOverlay) return;
       preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: lazy - ready by the next open at worst
-      activeOverlay = new CharSheet(playerEntity);
+      // U32: the sheet's navigation buttons. This host has no quest
+      // bridge, so charSheetHooks withholds the logbook and the sheet
+      // says so - rather than opening an empty book and implying the
+      // player has no quests when it simply cannot see them here.
+      activeOverlay = new CharSheet(playerEntity, charSheetHooks({
+        entity: playerEntity,
+        artDeps: { renderer, fetchBytes, palette },
+        inventory: () => openInventory(null),
+        spellbook: () => (spellsByIndex
+          ? new SpellbookWindow(knownSpells(playerEntity, spellsByIndex), playerEntity, {
+            ready: (sp) => magic.readySpell(sp),
+            castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
+          })
+          : null),
+      }));
     },
     toggleInventory() {
       if (activeOverlay) return;
