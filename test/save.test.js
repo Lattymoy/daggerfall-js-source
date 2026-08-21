@@ -24,7 +24,7 @@ test('save: round-trip restores everything; extras carried; deep copies', () => 
   const dst = {};
   const byIndex = new Map([[97, { index: 97, name: 'Balyna\'s Balm' }]]);
   const extras = restorePlayer(dst, snap, byIndex);
-  assert.deepEqual(extras, { position: [1, 2, 3], classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42' });   // S12: the world rides the envelope
+  assert.deepEqual(extras, { position: [1, 2, 3], classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42', quest: null });   // S12: the world rides the envelope; Q4-v: the quest slot (null when the host passed none)
   assert.equal(dst.name, 'Mac');
   assert.equal(dst.stats.luck, 60);
   assert.equal(dst.items[0].name, 'Short Bow');
@@ -46,6 +46,13 @@ test('save: round-trip restores everything; extras carried; deep copies', () => 
   const throwing = { setItem: () => { throw new Error('QuotaExceededError'); }, getItem: () => null };
   assert.equal(writeQuicksave(snap, throwing), false);
   assert.doesNotThrow(() => writeQuicksave(snap, throwing));
+});
+
+test('save: the Q4-v quest envelope rides the extras verbatim (opaque, like world)', () => {
+  const quest = { machine: { siteLinks: [], quests: [] }, notebook: { notebookEntries: [] }, oneTimeQuestsAccepted: ['__ONCE'] };
+  const snap = snapshotPlayer(mkEntity(), { quest });
+  const extras = restorePlayer({}, snap);
+  assert.deepEqual(extras.quest, quest);
 });
 
 test('save: F11 pierces overlays (the death hint is true)', () => {

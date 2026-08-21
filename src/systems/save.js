@@ -66,8 +66,10 @@ const copyEffectEntry = (a) => {
 };
 
 /** A plain-object snapshot of the player + scene extras. */
-export function snapshotPlayer(entity, { position = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null } = {}) {
-  const snap = { v: SAVE_VERSION, position, classicMinutes, readiedSpellIndex, world, locationKey };
+export function snapshotPlayer(entity, { position = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null } = {}) {
+  // Q4-v: `quest` is the bridge's whole envelope (machine + notebook +
+  // the one-time list) - opaque here, exactly like `world`.
+  const snap = { v: SAVE_VERSION, position, classicMinutes, readiedSpellIndex, world, locationKey, quest };
   for (const k of ENTITY_FIELDS) snap[k] = entity[k];
   snap.stats = { ...entity.stats };
   // AUDIT 17e: pre-chargen the entity carries a flat NUMBER here
@@ -261,7 +263,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // AUDIT 23: the sticky per-region price band (see snapshot side); a
   // pre-fix save re-mints lazily, exactly as an unvisited region does.
   entity.regionPrices = snap.regionPrices ? { ...snap.regionPrices } : {};
-  return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null };
+  return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null };
 }
 
 /** localStorage backend (absent in headless - callers gate).

@@ -619,6 +619,20 @@ export class QuestMachine {
    *  re-injected). ReassignLegacyQuestMarkers is legacy-save marker
    *  migration with no port-side legacy saves (recorded). Stale
    *  SiteLinks scrub after. */
+  /** ClearState (QuestMachine.cs:533-546): the load path wipes the
+   *  live state before RestoreSaveData lands the envelope. C#'s
+   *  questsToTombstone/questsToRemove queues are the port's inline
+   *  sweeps (nothing standing to clear), and the HUD place-marker
+   *  debugger has no port surface; factionListeners survive exactly as
+   *  C#'s dictionary does. Q4-v: the host's quickload calls this
+   *  through the bridge. */
+  clearState() {
+    this.quests.clear();
+    this.siteLinks = [];
+    this.questsToInvoke = [];
+    this.lastNPCClicked = null;
+  }
+
   restoreSaveData(data) {
     this.siteLinks = (data.siteLinks ?? []).map((l) => structuredClone(l));
     const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
