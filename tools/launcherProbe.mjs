@@ -99,6 +99,17 @@ for (let s = 0; s < 13; s++) {
   await page.waitForTimeout(150);
 }
 
+// AUDIT: THE TOUCH PATH. The launcher shipped keyboard-only while
+// ShowOptionsAtStart ships True, so a phone booted into a screen it
+// could never dismiss. This half of the probe is the regression guard:
+// it taps the rects the screen itself reports (guessing coordinates is
+// how the audit's first check read "trapped" after the fix landed).
+const L = (await page.evaluate(() => JSON.parse(window.__launcher()))).layout;
+check(!!L?.play, 'the screen reports its hit rects');
+const cw = (await page.evaluate(() => JSON.parse(window.__launcher()))).canvas;
+check(L.play[0] >= 0 && L.play[0] + L.play[2] <= cw.w,
+  `PLAY is ON the canvas (x ${L.play[0]}..${L.play[0] + L.play[2]} of ${cw.w})`);
+
 // Enter launches
 await page.keyboard.press('Enter');
 await page.waitForTimeout(2500);

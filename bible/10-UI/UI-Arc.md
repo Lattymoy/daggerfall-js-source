@@ -2758,3 +2758,69 @@ draft of that probe asserted on document.body.innerText, which is
 empty for a canvas app, so three of its four checks were meaningless;
 it was rewritten against a new window.__launcher surface (the
 __talk/__climb house pattern) that reports the screen's own state.
+
+## AUDIT 24 (2026-08-21): the settings/launcher pass
+
+A comprehensive audit run over the newest code - the SETT slice was
+hours old and had never been read adversarially. Five findings, one
+severe; one suspicion refuted by measurement; one parity claim
+verified.
+
+**F1 - THE FOURTH HOST.** The mouse-look settings reached
+world/exterior/dungeon and missed `scenes/interior.js`, which is a
+real reachable host (`?interior=`, fly camera): sensitivity and invert
+were live in three hosts and dead in the fourth. The FOUR HOSTS rule,
+caught again, this time on code a few hours old. Fixed; pinned across
+all four with a no-raw-constant assertion.
+
+**F2 - THE LAUNCHER TRAPPED EVERY TOUCH DEVICE (severe).**
+`launcherScene.js` registered only `keydown`, while every other
+pre-game screen takes `pointerdown` (menu.js:95, :143) and every
+playable scene calls `attachTouch`. With `ShowOptionsAtStart` shipping
+True, a phone booted straight into a screen it could not dismiss - the
+game was unreachable. PROVEN on an emulated Pixel 5 before the fix
+(taps and clicks did nothing) and after (dismissable). The file's own
+header carries the NEVER TRAPS law it was breaking.
+  The first fix was itself wrong and the check caught it: `PLAY` sat at
+  a fixed `x + 200 * s`, which falls off a narrow canvas - the button
+  was drawn where no finger could reach. The layout is canvas-relative
+  now, and the pin asserts every control lands inside a 393px canvas.
+
+**F3 - A TIER THAT LIED.** `GUI/ShowOptionsAtStart` has a real consumer
+(main.js reads it as the launcher gate) but was tiered `stored`, so
+the launcher told the player "no consumer in this port yet" about the
+single setting that controls the launcher.
+
+**F4 - THE PIN THAT LET F3 SHIP.** The tier-honesty pin was
+ONE-DIRECTIONAL: it proved every LIVE key has a consumer, and nothing
+proved the reverse. That is exactly AUDIT 18's open-flags idiom
+("agree BOTH ways") left half-applied. The missing half now re-derives
+every settings read under `src/` - walking the tree at test time, never
+from a checked-in list - and fails on any key read but not tiered
+live. Re-introducing F3 makes it fail by name.
+
+**F5 - NO WAY BACK.** DFU reaches settings in-game from
+DaggerfallPauseOptionsWindow; this port has no pause menu, so turning
+ShowOptionsAtStart off hides settings for good. Routed as a Ledger row
+and MITIGATED: the launcher warns at the moment of the choice and
+names `?launcher`. Found unpinned by the audit's own mutation run (m4
+survived), which is what the warning's pin now closes.
+
+**REFUTED by measurement.** The suspicion that CH4's senses cadence
+change (16Hz -> 60Hz detection) had regressed the C11 lag fix:
+tools/colliderBench.mjs on the real Privateer's Hold collider reports
+IDLE 60fps 0.63 ms/frame against a ~0.7 baseline and NEAR 10fps 57.31
+against ~65. No regression - the FOV and range gates short-circuit
+before the raycast for most foes. Recorded because a refuted suspicion
+is a finding.
+
+**VERIFIED.** SoundVolume's composition: DFU applies it as a linear
+multiply on the source volume (`volumeScale * Settings.SoundVolume` -
+EnemySounds.cs:112, AmbientEffectsPlayer.cs:190), which is exactly
+what the SETT master bus does (per-source gain upstream of one master
+gain). Parity confirmed rather than assumed.
+
+Mutations: 4 run, 3 killed on the first pass and m4 (the lock-out
+warning) SURVIVED unpinned - pinned, re-run, killed. Pins: 4 added to
+settings.test.js; the touch guard folded into tools/launcherProbe.mjs
+so the trap cannot come back silently.

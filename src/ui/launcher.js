@@ -28,7 +28,7 @@ import { drawText, measureText } from './text.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import {
-  DEFAULTS, tierOf, UNAVAILABLE, effectiveSettings, setValue, saveSettings, resetToDefaults,
+  DEFAULTS, tierOf, UNAVAILABLE, effectiveSettings, setValue, saveSettings, resetToDefaults, getBool,
 } from '../systems/settings.js';
 
 const PANEL = [0.06, 0.05, 0.04, 0.96];
@@ -98,6 +98,15 @@ export class LauncherWindow {
       audio.playOneShot(SOUND.ButtonClick, 1);
     }
     saveSettings();
+    // AUDIT: turning ShowOptionsAtStart off hides this screen for good
+    // - the port has no in-game route to settings (DFU reaches them
+    // from DaggerfallPauseOptionsWindow; that is a routed Ledger row).
+    // Say so at the moment of the choice rather than leaving the
+    // player to discover it by never seeing the launcher again.
+    if (full === 'GUI/ShowOptionsAtStart' && !getBool('GUI', 'ShowOptionsAtStart')) {
+      this.notice = 'the launcher will not open again - reach it with ?launcher';
+      return;
+    }
     // a STORED setting changed nothing yet - say so once, here, rather
     // than letting the player wonder later
     if (tier === 'stored') this.notice = 'stored - no consumer in this port yet';
@@ -141,25 +150,80 @@ export class LauncherWindow {
     });
   }
 
-  draw(renderer, canvas, font, s = 2) {
-    renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, PANEL);
+  /** AUDIT: the draw and the hit-test read ONE layout, because the
+   *  launcher shipped keyboard-only and trapped every touch device -
+   *  a second copy of these coordinates is how that gets rebuilt. All
+   *  rects are screen-space at the draw's own scale. */
+  layout(canvas, s = 2) {
     const x = 24 * s;
-    let y = 18 * s;
-    drawText(renderer, font, 'DAGGERFALL - SETTINGS', x, y, s, HOT); y += 18 * s;
-    drawText(renderer, font, `[ ${this.section} ]   ( [ ] section   arrows change   R reset   Enter play )`, x, y, s, DIM);
-    y += 16 * s;
-    for (const row of this.rows()) {
+    const headY = 18 * s;
+    const hintY = headY + 18 * s;
+    const firstRowY = hintY + 16 * s;
+    const rowH = 11 * s;
+    const rows = this.rows().map((r, i) => ({
+      ...r, index: this.scroll + i,
+      rect: [x, firstRowY + i * rowH, Math.max(60 * s, canvas.width - x - 12 * s), rowH],
+    }));
+    // AUDIT: anchored to the CANVAS, not to fixed offsets. The first
+    // cut put PLAY at x + 200*s, which on a phone's narrow canvas is
+    // off the right edge - the button was drawn where no finger could
+    // reach it, so the touch fix "worked" and the screen still
+    // trapped. The value column is clamped for the same reason.
+    const right = Math.max(x + 120 * s, canvas.width - 12 * s);
+    return {
+      x, headY, hintY, firstRowY, rowH, rows, right,
+      valueRight: right,
+      prevSection: [x, hintY - 2 * s, 12 * s, 12 * s],
+      nextSection: [x + 16 * s, hintY - 2 * s, 12 * s, 12 * s],
+      play: [right - 46 * s, hintY - 2 * s, 46 * s, 12 * s],
+      noticeY: firstRowY + (ROWS + 1) * rowH,
+    };
+  }
+
+  /** A tap/click in screen pixels. Tapping a row SELECTS it; tapping
+   *  the row you already have selected CHANGES it (one finger, no
+   *  modifier - the phone equivalent of Right); the three buttons do
+   *  what their labels say. Returns true when the click was consumed. */
+  clickAt(canvas, px, py, s = 2) {
+    const L = this.layout(canvas, s);
+    const inRect = ([rx, ry, rw, rh]) => px >= rx && py >= ry && px < rx + rw && py < ry + rh;
+    if (inRect(L.play)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      saveSettings();
+      this.done = true;
+      this.deps.onLaunch?.();
+      return true;
+    }
+    if (inRect(L.prevSection)) { this.sectionIndex = (this.sectionIndex + this.sections.length - 1) % this.sections.length; this.cursor = 0; this.scroll = 0; this.notice = null; return true; }
+    if (inRect(L.nextSection)) { this.sectionIndex = (this.sectionIndex + 1) % this.sections.length; this.cursor = 0; this.scroll = 0; this.notice = null; return true; }
+    for (const r of L.rows) {
+      if (!inRect(r.rect)) continue;
+      if (this.cursor === r.index) this._change(+1);
+      else { this.cursor = r.index; this.notice = null; }
+      return true;
+    }
+    return false;
+  }
+
+  draw(renderer, canvas, font, s = 2) {
+    const L = this.layout(canvas, s);
+    renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, PANEL);
+    drawText(renderer, font, 'DAGGERFALL - SETTINGS', L.x, L.headY, s, HOT);
+    // the three TAPPABLE controls, drawn where clickAt tests for them
+    drawText(renderer, font, '<', L.prevSection[0] + 3 * s, L.hintY, s, HOT);
+    drawText(renderer, font, '>', L.nextSection[0] + 3 * s, L.hintY, s, HOT);
+    drawText(renderer, font, `[ ${this.section} ]`, L.x + 34 * s, L.hintY, s, TEXT);
+    drawText(renderer, font, '[ PLAY ]', L.play[0], L.hintY, s, HOT);
+    for (const row of L.rows) {
       const colour = row.selected ? HOT : (row.tier === 'unavailable' ? DIM : (row.tier === 'live' ? LIVE_C : TEXT));
       const mark = row.selected ? '>' : ' ';
       const flag = row.tier === 'live' ? '' : (row.tier === 'unavailable' ? '  (unavailable)' : '  (stored)');
-      const label = `${mark} ${row.key}${flag}`;
-      drawText(renderer, font, label, x, y, s, colour);
-      const vx = x + 250 * s - measureText(font.fnt, String(row.value)) * s;
-      drawText(renderer, font, String(row.value) + (row.changed ? ' *' : ''), vx, y, s, colour);
-      y += 11 * s;
+      drawText(renderer, font, `${mark} ${row.key}${flag}`, L.x, row.rect[1], s, colour);
+      const vx = L.valueRight - measureText(font.fnt, String(row.value)) * s;
+      drawText(renderer, font, String(row.value) + (row.changed ? ' *' : ''), vx, row.rect[1], s, colour);
     }
-    if (this.notice) {
-      drawText(renderer, font, this.notice, x, 18 * s + 16 * s + (ROWS + 1) * 11 * s, s, HOT);
-    }
+    drawText(renderer, font, 'arrows / tap a row to change   R reset   Enter or PLAY to start',
+      L.x, L.noticeY, s, DIM);
+    if (this.notice) drawText(renderer, font, this.notice, L.x, L.noticeY + 11 * s, s, HOT);
   }
 }

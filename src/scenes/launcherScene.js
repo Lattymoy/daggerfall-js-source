@@ -34,6 +34,7 @@ export async function runLauncher(canvas, renderer, status) {
       if (done) return;
       done = true;
       window.removeEventListener('keydown', onKey);
+      canvas.removeEventListener('pointerdown', onPointer);
       window.__launcher = () => JSON.stringify({ up: false });
       resolve();
     };
@@ -46,11 +47,33 @@ export async function runLauncher(canvas, renderer, status) {
       if (win.done) finish();
     };
     window.addEventListener('keydown', onKey);
+    // AUDIT: the launcher shipped KEYBOARD-ONLY and ShowOptionsAtStart
+    // ships True, so a touch device booted straight into a screen it
+    // could never dismiss - the game was unreachable on a phone
+    // (proven on a Pixel 5: taps and clicks did nothing). Every other
+    // pre-game screen here takes pointerdown (menu.js:95, :143) and
+    // every playable scene calls attachTouch; this one took neither.
+    // NEVER TRAPS is this file's own header law.
+    const onPointer = (ev) => {
+      if (done) return;
+      const r = canvas.getBoundingClientRect();
+      const px = (ev.clientX - r.left) * (canvas.width / r.width);
+      const py = (ev.clientY - r.top) * (canvas.height / r.height);
+      win.clickAt(canvas, px, py, 2);
+      if (win.done) finish();
+    };
+    canvas.addEventListener('pointerdown', onPointer);
     // the house probe surface (__talk / __climb / __x23's shape): the
     // screen's live state, so tools/launcherProbe.mjs can assert what
     // is ON SCREEN rather than guessing from a canvas
     window.__launcher = () => JSON.stringify({
       up: !done, section: win.section, cursor: win.cursor,
+      // the real hit rects, so a probe taps what a finger would tap
+      // rather than guessing coordinates (the audit's touch check
+      // missed every control on its first run and read as "trapped"
+      // when the fix was already in)
+      layout: (() => { const L = win.layout(canvas, 2); return { play: L.play, prevSection: L.prevSection, nextSection: L.nextSection, rows: L.rows.map((r) => ({ key: r.key, rect: r.rect })) }; })(),
+      canvas: { w: canvas.width, h: canvas.height },
       rows: win.rows().map((r) => ({ key: r.key, value: r.value, tier: r.tier, selected: r.selected, changed: r.changed })),
       notice: win.notice,
     });

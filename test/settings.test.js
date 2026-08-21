@@ -7,7 +7,7 @@
 // "there isn't one". The row and these pins moved together.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -136,4 +136,98 @@ test('settings: the tier map is complete and honest', () => {
   // documented reason - the port implements one side of each branch
   assert.equal(tierOf('Enhancements/EnhancedCombatAI'), 'unavailable');
   assert.equal(tierOf('Enhancements/AdvancedClimbing'), 'unavailable');
+});
+
+test('settings AUDIT: the tier map agrees BOTH ways - no unlisted consumer', () => {
+  // The one-directional gap this audit found. The tier pin above proves
+  // every LIVE key HAS a consumer; nothing proved the reverse, so
+  // GUI/ShowOptionsAtStart sat tiered `stored` while main.js read it as
+  // the launcher gate - and the launcher told the player it did
+  // nothing. This is AUDIT 18's open-flags idiom ("agree BOTH ways")
+  // applied to settings: re-derive every key READ under src/ and
+  // require each to be tiered live.
+  // the file list is DERIVED on every run, never checked in - a stored
+  // list is the stale-second-copy shape AUDIT 17e F9 caught
+  const walk = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((d) => (
+    d.isDirectory() ? walk(join(dir, d.name)) : (d.name.endsWith('.js') ? [join(dir, d.name)] : [])));
+  const read = new Set();
+  for (const f of walk(join(root, 'src'))) {
+    for (const m of readFileSync(f, 'utf8').matchAll(/get(?:Bool|Int|Float|String)\('([A-Za-z]+)',\s*'([A-Za-z_]+)'/g)) {
+      read.add(`${m[1]}/${m[2]}`);
+    }
+  }
+  assert.ok(read.size > 0, 'the sweep finds real reads (a RULE, not a tautology)');
+  const mistiered = [...read].filter((k) => tierOf(k) !== 'live');
+  assert.deepEqual(mistiered, [],
+    `settings READ in src/ but not tiered live: ${mistiered.join(', ')}`);
+});
+
+test('settings AUDIT: the launcher takes POINTER input and its controls are on-canvas', async () => {
+  // The audit's severe finding: the launcher shipped keyboard-only
+  // while ShowOptionsAtStart ships True, so a touch device booted into
+  // a screen it could never dismiss (proven on a Pixel 5). The first
+  // fix then put PLAY at a fixed offset that fell off a narrow canvas
+  // - drawn where no finger could reach. Both are pinned here.
+  const { LauncherWindow } = await import('../src/ui/launcher.js');
+  const scene = readFileSync(join(root, 'src/scenes/launcherScene.js'), 'utf8');
+  assert.ok(/canvas\.addEventListener\('pointerdown'/.test(scene),
+    'the launcher host must route pointerdown - keyboard-only TRAPS a phone');
+  assert.ok(/removeEventListener\('pointerdown'/.test(scene), 'and release it on exit');
+
+  // every control lands INSIDE a narrow (phone-shaped) canvas
+  const phone = { width: 393, height: 851 };
+  const w = new LauncherWindow({});
+  const L = w.layout(phone, 2);
+  for (const [name, rect] of Object.entries({ play: L.play, prev: L.prevSection, next: L.nextSection })) {
+    assert.ok(rect[0] >= 0 && rect[0] + rect[2] <= phone.width,
+      `${name} must be reachable on a ${phone.width}px canvas (got x=${rect[0]}..${rect[0] + rect[2]})`);
+  }
+  for (const r of L.rows) {
+    assert.ok(r.rect[0] + r.rect[2] <= phone.width, `row ${r.key} overruns a narrow canvas`);
+  }
+  // a tap on PLAY finishes; a tap on a row selects, a second changes
+  let launched = 0;
+  const w2 = new LauncherWindow({ onLaunch: () => launched++ });
+  const L2 = w2.layout(phone, 2);
+  const row = L2.rows[3];
+  w2.clickAt(phone, row.rect[0] + 4, row.rect[1] + 2, 2);
+  assert.equal(w2.cursor, row.index, 'a tap selects the row');
+  const before = w2.layout(phone, 2).rows.find((r) => r.key === row.key).value;
+  w2.clickAt(phone, row.rect[0] + 4, row.rect[1] + 2, 2);
+  const after = w2.layout(phone, 2).rows.find((r) => r.key === row.key).value;
+  assert.ok(before !== after || !!w2.notice, 'a second tap changes it, or says why it cannot');
+  w2.clickAt(phone, L2.play[0] + 2, L2.play[1] + 2, 2);
+  assert.equal(w2.done, true, 'tapping PLAY launches');
+  assert.equal(launched, 1, 'and fires onLaunch exactly once');
+});
+
+test('settings AUDIT: the mouse-look settings reach ALL FOUR hosts', () => {
+  // The FOUR HOSTS rule. The SETT slice wired world/exterior/dungeon
+  // and missed scenes/interior.js, so sensitivity and invert were live
+  // in three hosts and dead in the fourth.
+  for (const host of ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeon.js', 'scenes/interior.js']) {
+    const t = src(host);
+    assert.ok(t.includes('lookScale()'), `${host} must read the shared look settings`);
+    assert.ok(!/\* 0\.0025/.test(t), `${host} still carries a raw look constant`);
+  }
+});
+
+test('settings AUDIT: turning ShowOptionsAtStart off WARNS about the lock-out', async () => {
+  // The port has no in-game route to settings (DFU reaches them from
+  // DaggerfallPauseOptionsWindow - a routed Ledger row), so switching
+  // this one off hides the launcher for good. Say so at the moment of
+  // the choice. Found unpinned by the audit's own mutation run.
+  const { LauncherWindow } = await import('../src/ui/launcher.js');
+  _resetForTests();
+  const w = new LauncherWindow({});
+  w.sectionIndex = w.sections.indexOf('GUI');
+  w.cursor = w.keys.indexOf('ShowOptionsAtStart');
+  w.input('ArrowRight');
+  assert.equal(getBool('GUI', 'ShowOptionsAtStart'), false, 'it really turned off');
+  assert.match(w.notice ?? '', /\?launcher/, 'and the notice names the way back');
+  // turning it back ON needs no warning
+  w.input('ArrowRight');
+  assert.equal(getBool('GUI', 'ShowOptionsAtStart'), true);
+  assert.ok(!/\?launcher/.test(w.notice ?? ''), 'no lock-out warning when it is back on');
+  _resetForTests();
 });

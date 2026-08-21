@@ -69,6 +69,11 @@ export const LIVE = Object.freeze({
   'Controls/MusicVolume': 'src/systems/songPlayer.js',
   'Controls/MouseLookSensitivity': 'src/ui/lookSettings.js',
   'Controls/InvertMouseVertical': 'src/ui/lookSettings.js',
+  // AUDIT: this one was tiered `stored` while main.js read it as
+  // the launcher gate - the launcher misreported the single
+  // setting that controls the launcher. The reverse-direction
+  // pin below now makes that shape a test failure.
+  'GUI/ShowOptionsAtStart': 'src/main.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the
