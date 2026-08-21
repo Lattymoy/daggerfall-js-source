@@ -162,41 +162,34 @@ test('settings AUDIT: the tier map agrees BOTH ways - no unlisted consumer', () 
     `settings READ in src/ but not tiered live: ${mistiered.join(', ')}`);
 });
 
-test('settings AUDIT: the launcher takes POINTER input and its controls are on-canvas', async () => {
-  // The audit's severe finding: the launcher shipped keyboard-only
-  // while ShowOptionsAtStart ships True, so a touch device booted into
-  // a screen it could never dismiss (proven on a Pixel 5). The first
-  // fix then put PLAY at a fixed offset that fell off a narrow canvas
-  // - drawn where no finger could reach. Both are pinned here.
-  const { LauncherWindow } = await import('../src/ui/launcher.js');
+test('settings AUDIT: the screen takes POINTER input and its controls are on-canvas', async () => {
+  // The audit's severe finding, carried onto the MENU rewrite: the
+  // first launcher shipped keyboard-only while ShowOptionsAtStart
+  // ships True, so a touch device booted into a screen it could never
+  // dismiss (proven on a Pixel 5). Its first fix then put PLAY at a
+  // fixed offset that fell off a narrow canvas. Both laws survive the
+  // rewrite and are pinned against the new window's ONE layout.
+  const { SettingsWindow } = await import('../src/ui/settingsWindow.js');
   const scene = readFileSync(join(root, 'src/scenes/launcherScene.js'), 'utf8');
-  assert.ok(/canvas\.addEventListener\('pointerdown'/.test(scene),
-    'the launcher host must route pointerdown - keyboard-only TRAPS a phone');
-  assert.ok(/removeEventListener\('pointerdown'/.test(scene), 'and release it on exit');
-
-  // every control lands INSIDE a narrow (phone-shaped) canvas
-  const phone = { width: 393, height: 851 };
-  const w = new LauncherWindow({});
-  const L = w.layout(phone, 2);
-  for (const [name, rect] of Object.entries({ play: L.play, prev: L.prevSection, next: L.nextSection })) {
-    assert.ok(rect[0] >= 0 && rect[0] + rect[2] <= phone.width,
-      `${name} must be reachable on a ${phone.width}px canvas (got x=${rect[0]}..${rect[0] + rect[2]})`);
+  for (const ev of ['pointerdown', 'pointerup', 'pointercancel', 'wheel']) {
+    assert.ok(scene.includes(`addEventListener('${ev}'`), `the host must route ${ev} - keyboard-only TRAPS a phone`);
+    assert.ok(scene.includes(`removeEventListener('${ev}'`), `and release ${ev} on exit`);
   }
-  for (const r of L.rows) {
-    assert.ok(r.rect[0] + r.rect[2] <= phone.width, `row ${r.key} overruns a narrow canvas`);
+  const phone = { width: 390, height: 844 };
+  const w = new SettingsWindow({});
+  const L = w.layout(phone);
+  for (const h of L.hit) {
+    assert.ok(h.rect[0] >= 0 && h.rect[0] + h.rect[2] <= L.page[2],
+      `${h.id} must be reachable on a ${L.page[2]}-unit page (x ${h.rect[0]}..${h.rect[0] + h.rect[2]})`);
+    assert.ok(h.rect[1] >= 0 && h.rect[1] + h.rect[3] <= L.page[3], `${h.id} runs off the page vertically`);
   }
-  // a tap on PLAY finishes; a tap on a row selects, a second changes
+  assert.ok(L.hit.some((h) => h.id === 'btn:play'), 'PLAY exists on a phone page');
+  // a tap on PLAY launches, exactly once
   let launched = 0;
-  const w2 = new LauncherWindow({ onLaunch: () => launched++ });
-  const L2 = w2.layout(phone, 2);
-  const row = L2.rows[3];
-  w2.clickAt(phone, row.rect[0] + 4, row.rect[1] + 2, 2);
-  assert.equal(w2.cursor, row.index, 'a tap selects the row');
-  const before = w2.layout(phone, 2).rows.find((r) => r.key === row.key).value;
-  w2.clickAt(phone, row.rect[0] + 4, row.rect[1] + 2, 2);
-  const after = w2.layout(phone, 2).rows.find((r) => r.key === row.key).value;
-  assert.ok(before !== after || !!w2.notice, 'a second tap changes it, or says why it cannot');
-  w2.clickAt(phone, L2.play[0] + 2, L2.play[1] + 2, 2);
+  const w2 = new SettingsWindow({ onLaunch: () => launched++ });
+  const L2 = w2.layout(phone);
+  const play = L2.hit.find((h) => h.id === 'btn:play').rect;
+  w2.click(play[0] + 2, play[1] + 2, phone);
   assert.equal(w2.done, true, 'tapping PLAY launches');
   assert.equal(launched, 1, 'and fires onLaunch exactly once');
 });
@@ -212,23 +205,26 @@ test('settings AUDIT: the mouse-look settings reach ALL FOUR hosts', () => {
   }
 });
 
-test('settings AUDIT: turning ShowOptionsAtStart off WARNS about the lock-out', async () => {
-  // The port has no in-game route to settings (DFU reaches them from
-  // DaggerfallPauseOptionsWindow - a routed Ledger row), so switching
-  // this one off hides the launcher for good. Say so at the moment of
-  // the choice. Found unpinned by the audit's own mutation run.
-  const { LauncherWindow } = await import('../src/ui/launcher.js');
+test('settings AUDIT: turning ShowOptionsAtStart off asks first', async () => {
+  // The port has no in-game route to settings (a routed Ledger row),
+  // so switching this off hides the screen for good. The MENU rewrite
+  // promotes the old passive notice into a DECISION: a confirm that
+  // names the way back. Found unpinned by an earlier mutation run.
+  const { SettingsWindow } = await import('../src/ui/settingsWindow.js');
   _resetForTests();
-  const w = new LauncherWindow({});
-  w.sectionIndex = w.sections.indexOf('GUI');
-  w.cursor = w.keys.indexOf('ShowOptionsAtStart');
-  w.input('ArrowRight');
-  assert.equal(getBool('GUI', 'ShowOptionsAtStart'), false, 'it really turned off');
-  assert.match(w.notice ?? '', /\?launcher/, 'and the notice names the way back');
-  // turning it back ON needs no warning
-  w.input('ArrowRight');
-  assert.equal(getBool('GUI', 'ShowOptionsAtStart'), true);
-  assert.ok(!/\?launcher/.test(w.notice ?? ''), 'no lock-out warning when it is back on');
+  const canvas = { width: 1280, height: 800 };
+  const w = new SettingsWindow({});
+  w.category = 'interface';
+  const L = w.layout(canvas);
+  const idx = L.list.items.findIndex((i) => i.kind === 'row' && i.key === 'GUI/ShowOptionsAtStart');
+  assert.ok(idx >= 0, 'the setting is on the Interface page');
+  w.focus = idx;
+  w.input('ArrowLeft', {}, canvas);
+  assert.ok(w.dialog, 'a confirm opens rather than the value silently flipping');
+  assert.match(w.dialog.lines.join(' '), /\?launcher/, 'and it names the way back');
+  assert.equal(getBool('GUI', 'ShowOptionsAtStart'), true, 'nothing changed yet');
+  w.click(0, 0, canvas);   // any click resolves the dialog's default (Turn Off)
+  assert.equal(getBool('GUI', 'ShowOptionsAtStart'), false, 'confirming turns it off');
   _resetForTests();
 });
 

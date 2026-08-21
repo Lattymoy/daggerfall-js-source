@@ -35,8 +35,10 @@ export const REST_WAIT_PER_HOUR = 0.75;      // real seconds per rested hour
 export const LOITER_WAIT_PER_HOUR = 1.25;    // loiter runs slower
 /** DFU LoiterLimitInHours (ships 3, classic's cap). SETT made it a
  *  real setting, so this is a point-of-use read; the refusal lines
- *  quote it and are a FUNCTION for the same reason. */
-export const loiterLimitHours = () => getInt('Enhancements', 'LoiterLimitInHours', 1, 24);
+ *  quote it and are a FUNCTION for the same reason. The 3..12 range is
+ *  DFU's own slider (DaggerfallAdvancedSettingsWindow.cs:354) - the
+ *  MENU range-equals-clamp pin caught an invented 1..24 here. */
+export const loiterLimitHours = () => getInt('Enhancements', 'LoiterLimitInHours', 3, 12);
 
 export const REST_TEXT = Object.freeze({
   loiterDone: 349, healed: 350, wakeUp: 353, enemiesNearby: 354, cannotRestNow: 355,
