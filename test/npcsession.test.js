@@ -1137,9 +1137,12 @@ test('the pool resolves an ABSENT factionID as 0, through the same redirect', ()
   const { s } = makeSession(
     { rolls: () => 0.9, currentLocationIndex: () => 1, nameBankOfCurrentRegion: () => 'B',
       peopleOfCurrentRegion: () => 2 },
-    { 2: faction({ id: 2, sgroup: SOCIAL_GROUP.Merchants }) });
+    // faction 1 is a NON-candidate group, so a fallback of 1 rather
+    // than 0 would be visible as an empty pool
+    { 1: faction({ id: 1, sgroup: SOCIAL_GROUP.Scholars }),
+      2: faction({ id: 2, sgroup: SOCIAL_GROUP.Merchants }) });
   s.buildQuestorPool(buildings);
-  assert.equal(s.npcsWithWork.size, 1, 'no faction id is faction 0, which reads the region PEOPLE');
+  assert.equal(s.npcsWithWork.size, 1, 'no faction id is faction 0, which reads the region PEOPLE - never faction 1');
 });
 
 test('the quest greeting needs a REAL match: no comparison seam is no greeting', () => {
@@ -1161,4 +1164,165 @@ test('the offer flow spends the pool entry only OUTSIDE a castle - and the seam 
   // attached the castle arm cannot fire at all
   const { s } = makeSession({ isPlayerInsideCastle: undefined, rolls: () => 0 });
   assert.equal(s.isCastleNpcOfferingQuest(1), false, 'no seam is NOT inside a castle');
+});
+
+// ---------------------------------------------------------------
+// The ladder's INTERACTION: every guard, on the index that makes it
+// visible. A `> N` test only differs from `>= N` (or from `> N+1`)
+// when the index is EXACTLY N at that moment - which no single
+// membership can arrange, because the arm that sets N is the one
+// being guarded. Each of these walks two memberships to sit the index
+// on the bar before the arm under test runs.
+// ---------------------------------------------------------------
+
+const twoGuilds = (a, b, npcF, extra = {}) => {
+  const { s } = makeSession(
+    { guildMemberships: () => [{ factionId: a.id }, { factionId: b.id }] },
+    { [a.id]: a, [b.id]: b, ...extra });
+  return s.getGreetingIndex(0, npcF);
+};
+
+test('the ally arm-s reversed guard is STRICTLY greater: at index 2 it cannot fire again', () => {
+  const a = faction({ id: 40, name: 'a' });
+  const b = faction({ id: 50, name: 'b' });
+  const npcF = faction({ id: 41, name: 'n', ally1: 40, ally2: 50 });
+  assert.deepEqual(twoGuilds(a, b, npcF), { greetingIndex: 2, reputation: 10 },
+    'ONE +10 - the second reversed-ally match is guarded out at exactly 2');
+});
+
+test('the enemy arm-s reversed guard is STRICTLY greater, and reads 3 rather than 4', () => {
+  const a = faction({ id: 40, name: 'a' });
+  const b = faction({ id: 50, name: 'b' });
+  const npcF = faction({ id: 41, name: 'n', enemy1: 40, enemy2: 50 });
+  assert.deepEqual(twoGuilds(a, b, npcF), { greetingIndex: 3, reputation: -20 },
+    'ONE -20 - the second reversed-enemy match is guarded out at exactly 3');
+  // ...and from index 4 it DOES fire, which is what pins the bar at 3
+  const a2 = faction({ id: 40, name: 'a', enemy1: 99 });
+  const b2 = faction({ id: 50, name: 'b' });
+  const npc2 = faction({ id: 41, name: 'n', enemy1: 50, enemy3: 99 });
+  assert.deepEqual(twoGuilds(a2, b2, npc2, { 99: faction({ id: 99, name: 'e' }) }),
+    { greetingIndex: 3, reputation: -15 },
+    'an enemy in common first (4, +5), then the direct enemy takes it to 3 (-20)');
+});
+
+test('enemies in common read the bar at 4: from index 5 they fire, and they set 4', () => {
+  const a = faction({ id: 40, name: 'a', ally1: 88 });
+  const b = faction({ id: 50, name: 'b', enemy1: 99 });
+  const npcF = faction({ id: 41, name: 'n', ally1: 88, enemy1: 99 });
+  assert.deepEqual(twoGuilds(a, b, npcF, { 88: faction({ id: 88, name: 'x' }), 99: faction({ id: 99, name: 'y' }) }),
+    { greetingIndex: 4, reputation: 10 },
+    'an ally in common first (5, +5), then an enemy in common improves it to 4 (+5)');
+});
+
+test('allies in common read the bar at 5, from an index of 6', () => {
+  const a = faction({ id: 40, name: 'a', ally1: 99 });
+  const b = faction({ id: 50, name: 'b', ally1: 88 });
+  const npcF = faction({ id: 41, name: 'n', enemy1: 99, ally1: 88 });
+  assert.deepEqual(twoGuilds(a, b, npcF, { 88: faction({ id: 88, name: 'x' }), 99: faction({ id: 99, name: 'y' }) }),
+    { greetingIndex: 5, reputation: 0 },
+    'the guild allied to their enemy first (6, -5), then an ally in common improves it to 5 (+5)');
+});
+
+test('the guild-allied-to-their-enemy arm reads the bar at 6, from an index of 7', () => {
+  const a = faction({ id: 40, name: 'a', enemy1: 88 });
+  const b = faction({ id: 50, name: 'b', ally1: 99 });
+  const npcF = faction({ id: 41, name: 'n', ally1: 88, enemy1: 99 });
+  assert.deepEqual(twoGuilds(a, b, npcF, { 88: faction({ id: 88, name: 'x' }), 99: faction({ id: 99, name: 'y' }) }),
+    { greetingIndex: 6, reputation: -10 },
+    'the guild hated by their ally first (7, -5), then allied to their enemy improves it to 6 (-5)');
+});
+
+test('the sibling test compares the parents to ZERO, not to any other id', () => {
+  const g = faction({ id: 40, parent: 1, name: 'g' });
+  const npcF = faction({ id: 41, parent: 1, name: 'n' });
+  const { s } = makeSession({ guildMemberships: () => [{ factionId: 40 }] }, { 40: g });
+  assert.deepEqual(s.getGreetingIndex(0, npcF), { greetingIndex: 1, reputation: 15 },
+    'a shared parent of 1 is a real sibling - only a parent of 0 is "no parent"');
+});
+
+test('the absent COURT seam is faction 0, not faction 1', () => {
+  // a table that carries faction 1, so a `?? 1` fallback would be
+  // visible as a real faction rather than as another null
+  const { s } = makeSession({ courtOfCurrentRegion: undefined, peopleOfCurrentRegion: undefined },
+    { 1: faction({ id: 1, name: 'Somebody' }) });
+  assert.equal(s.getStaticNPCFactionData(0, 'Palace'), null, 'no court seam resolves to nobody');
+  assert.equal(s.getStaticNPCFactionData(0, 'Tavern'), null, 'and no people seam likewise');
+  assert.equal(s.getStaticNPCFactionData(852, 'Tavern'), null, 'Random_Ruler with no court seam too');
+});
+
+test('the parent walk in TalkToStaticNPC compares the parent to ZERO', () => {
+  // a faction whose parent is 1: the walk must follow it, not stop
+  const table = {
+    1: faction({ id: 1, parent: 1, type: FACTION_TYPE.Subgroup }),
+    2: faction({ id: 2, parent: 0, type: FACTION_TYPE.Group, name: 'stops here' }),
+  };
+  table[1].parent = 2;
+  const seen = [];
+  const { s } = makeSession({ reactionToPlayer: (f) => { seen.push(f?.id); return 0; } }, table);
+  s.talkToStaticNPC({ data: { factionID: 1 } });
+  assert.deepEqual(seen, [2], 'parent 2 is a real parent, and the walk follows it to the Group');
+  // ...and a parent of exactly 1 is followed too
+  const t2 = {
+    1: faction({ id: 1, parent: 1, type: FACTION_TYPE.Group, name: 'self-parented group' }),
+    5: faction({ id: 5, parent: 1, type: FACTION_TYPE.Subgroup }),
+  };
+  const hits = [];
+  const { s: p } = makeSession({ reactionToPlayer: (f) => { hits.push(f?.id); return 0; } }, t2);
+  p.talkToStaticNPC({ data: { factionID: 5 } });
+  assert.deepEqual(hits, [1], 'a parent of 1 is walked, not treated as "no parent"');
+});
+
+test('the static click reads an absent factionID as 0, and a NEW target is never the same as before', () => {
+  const seen = [];
+  const { s } = makeSession({ peopleOfCurrentRegion: () => 7, reactionToPlayer: (f) => { seen.push(f?.id ?? null); return 0; } },
+    { 1: faction({ id: 1, name: 'One' }), 7: faction({ id: 7, name: 'People' }) });
+  s.talkToStaticNPC({ data: {} });
+  assert.deepEqual(seen, [7], 'no faction id is faction 0, which reads the region PEOPLE - never faction 1');
+  assert.equal(s.sameTalkTargetAsBefore, false, 'and a first click is a NEW target');
+  const { s: m } = makeSession();
+  m.talkToMobileNPC({ nameNPC: 'A' });
+  assert.equal(m.sameTalkTargetAsBefore, false);
+  assert.equal(m.npcData.isSpyMaster, false, 'a mobile is never a spymaster');
+});
+
+test('startNewConversation with NO rebuild seam does not rebuild', () => {
+  const calls = [];
+  const { s } = makeSession({
+    needsTopicListRebuild: undefined,
+    assembleTopicLists: () => calls.push('rebuild'),
+  });
+  s.startNewConversation();
+  assert.deepEqual(calls, [], 'an absent flag reads FALSE - a rebuild is asked for, never assumed');
+});
+
+test('the castle roll is Range(0, FOUR) too - only a zero offers', () => {
+  const at = (roll) => {
+    const { s } = makeSession({ isPlayerInsideCastle: () => true, rolls: () => roll });
+    return s.isCastleNpcOfferingQuest(1);
+  };
+  // floor(r*4) === 0 for r < 0.25; a five-sided roll would stop at 0.2
+  assert.equal(at(0.0), true);
+  assert.equal(at(0.22), true, 'still a zero of FOUR');
+  assert.equal(at(0.24), true);
+  assert.equal(at(0.25), false, 'and one of four is not');
+});
+
+test('THE INDIVIDUAL ARM needs BOTH halves: an individual whose faction does not match is no match', () => {
+  const mk = (person, clicked) => {
+    const { s } = makeSession({
+      questorPostMessages: () => new Map([[1n, [{ text: 'x' }]]]),
+      getQuest: () => ({ resources: new Map([['_q_', person]]) }),
+      isNPCDataEqual: () => false,   // never matches on the questor data
+      expandQuestMessage: (q, tokens) => { tokens[0].text = 'GREETED'; },
+    });
+    s.currentNPCType = NPC_TYPE.Static;
+    s.lastTargetStaticNPC = { data: clicked };
+    return s.getNPCQuestGreeting();
+  };
+  const base = { isPerson: true, isQuestor: true, questorData: {}, factionData: { id: 300 } };
+  assert.equal(mk({ ...base, isIndividualNPC: true }, { factionID: 300 }), 'GREETED', 'both halves true');
+  assert.equal(mk({ ...base, isIndividualNPC: true }, { factionID: 301 }), '',
+    'an INDIVIDUAL whose faction differs is not a match');
+  assert.equal(mk({ ...base, isIndividualNPC: false }, { factionID: 300 }), '',
+    'and a matching faction on a NON-individual is not one either');
 });
