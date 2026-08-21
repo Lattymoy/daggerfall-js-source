@@ -333,6 +333,7 @@ test("the Temple deity folds into MembershipStatus: the deity's rows AND plain M
   lists.selectQuest = (pool, f) => { seen.push(...pool.map((qd) => qd.name)); return orig(pool, f); };
   flow.offerGuildQuest({ guildGroup: GUILD_GROUPS.HolyOrder, guild: makeGuild({ deity: 'Arkay' }) });
   assert.deepEqual(seen, ['__ARK', '__MEM'], "Arkay admits 'A' rows plus the tplMemb Member fold - never Dibella's");
+  assert.equal(flow.offeredQuest.factionId, 0, 'an unpassed buildingFactionId homes the order at faction 0');
   assert.throws(() => flow.offerGuildQuest({ guildGroup: GUILD_GROUPS.HolyOrder, guild: makeGuild({ deity: 'Nocturnal' }) }),
     /Requested value 'Nocturnal' was not found\./);
 });
@@ -475,4 +476,139 @@ test('the walk really is last-to-first with a one-line break: earlier lines neve
 
 test("an empty message signs off as bare 'Letter: '", () => {
   assert.equal(expandLetterSignoff(makeLetterQuest(), [{ text: '' }]), 'Letter: ');
+});
+
+// ---------------------------------------------------------------
+// AUDIT X boundary pins (the campaign's survivors)
+// ---------------------------------------------------------------
+
+test('the questor scan compares ONLY questors: a non-questor person never matches, even on a never-clicked machine', () => {
+  // The mutant `!isPerson && !isQuestor` slips a non-questor person
+  // into the compare, where its null questorData equals the null
+  // click as two zero structs. C# gates on IsQuestor first.
+  const { m } = makeRig();
+  const quest = m.parseQuestForLists(MUTE_SRC, 0, { rolls: () => 0 });
+  quest.resources.set('bystander', {
+    isPerson: true, isQuestor: false, questorData: null,
+    symbol: { name: 'bystander', original: '_bystander_' },
+  });
+  m.startQuestImmediate(quest);
+  assert.equal(m.isLastNPCClickedAnActiveQuestor(), false);
+});
+
+test('a signoff line whose FIRST word is a macro expands from word zero', () => {
+  const quest = makeLetterQuest({
+    npc: { isPerson: true, expandMacro: (t) => (t === MACRO_TYPES.NameMacro1 ? 'Baron Snide' : false) },
+  }, { addDialog: () => {} });
+  assert.equal(expandLetterSignoff(quest, [{ text: '_npc_ sends regards' }]),
+    'Letter: Baron Snide sends regards ');
+});
+
+test('letter reveals type every resource: Place -> Location and Item -> Thing, isSpecial false', () => {
+  const reveals = [];
+  const quest = makeLetterQuest({
+    house: { isPlace: true, expandMacro: () => 'The Rusty Ogre' },
+    ring: { isItem: true, expandMacro: () => 'a ruby ring' },
+  }, { addDialog: (...args) => reveals.push(args) });
+  assert.equal(expandLetterSignoff(quest, [{ text: 'leave _ring_ at _house_' }]),
+    'Letter: leave a ruby ring at The Rusty Ogre ');
+  assert.deepEqual(reveals, [[9, 'ring', 'Thing', false], [9, 'house', 'Location', false]]);
+});
+
+test('a ONE-character line still counts as the signoff (the emptiness gate is length > 0)', () => {
+  assert.equal(expandLetterSignoff(makeLetterQuest(), [{ text: 'never read' }, { text: 'X' }]),
+    'Letter: X ');
+});
+
+test("the social gender fold: a male NPC draws 'M' rows, never 'F' rows", () => {
+  const rows = rowsOf(
+    '__MUTE, Commoners, F, 0, 0, x',
+    '__OFR, Commoners, M, 0, 0, x',
+  );
+  const { flow } = makeRig({ rows, sources: { __OFR: OFFER_SRC, __MUTE: MUTE_SRC } });
+  const step = flow.offerSocialQuest({ ...NPC, gender: GENDERS.Male }, SOCIAL_GROUPS.Commoners);
+  assert.equal(step.kind, 'offer');
+  assert.equal(flow.offeredQuest.questName, '__OFR', "GENDERS.Male landed on the 'M' row");
+});
+
+test('the absent player-fact seams read ZERO - rep and level, not any other default', () => {
+  // A machine with NO deps: GetReputation of nothing is 0 (the
+  // factionRep law) and a level-0 player misses a minReq-1 row on
+  // BOTH social gates.
+  const m = new QuestMachine();
+  const lists = new QuestListsManager({
+    readListTable: (name) => (name === 'Classic' ? rowsOf('__OFR, Commoners, N, 1, 0, x') : null),
+    getQuestSourceLines: (name) => (name === '__OFR' ? OFFER_SRC : null),
+    parseQuest: (l, f, p) => m.parseQuestForLists(l, f, { rolls: () => 0, partialParse: p }),
+    rolls: () => 0,
+  });
+  const flow = new QuestOfferFlow(m, lists, {});
+  const step = flow.offerSocialQuest({ ...NPC }, SOCIAL_GROUPS.Commoners);
+  assert.equal(step.kind, 'fail', 'rep 0 < minReq 1 and level 0 < minReq 1');
+});
+
+test('the absent guild seams read ZERO: no level override fuel, and the guild-manager faction id falls to 0', () => {
+  const m = new QuestMachine();
+  const lists = new QuestListsManager({
+    readListTable: (name) => (name === 'Classic' ? rowsOf(
+      '__GATED, FightersGuild, M, 1, 0, x',
+      '__OFR, FightersGuild, N, 0, 0, x',
+    ) : null),
+    // __GATED must be LOADABLE: a sourceless row would answer the
+    // same fail step under a levelful mutant and mask the seam.
+    getQuestSourceLines: (name) => (name === '__OFR' || name === '__GATED' ? OFFER_SRC : null),
+    parseQuest: (l, f, p) => m.parseQuestForLists(l, f, { rolls: () => 0, partialParse: p }),
+    rolls: () => 0,
+  });
+  const flow = new QuestOfferFlow(m, lists, {});
+  const gated = flow.offerGuildQuest({
+    guildGroup: GUILD_GROUPS.FightersGuild,
+    guild: makeGuild({ rank: 0, isSatisfyQuestReqByLevel: () => true }),
+  });
+  assert.equal(gated.kind, 'fail', 'a levelless machine lends rank 0 no override');
+  const open = flow.offerGuildQuest({
+    guildGroup: GUILD_GROUPS.FightersGuild,
+    guild: makeGuild({ isMember: () => false }),
+  });
+  assert.equal(open.kind, 'offer');
+  assert.equal(flow.offeredQuest.factionId, 0, 'no getGuildFactionId seam reads faction 0');
+});
+
+test('the menu flag is FALSE everywhere but a menu-borne social offer', () => {
+  const { flow } = makeRig();
+  assert.equal(flow.menu, false, 'the ctor default');
+  flow.offerSocialQuest({ ...NPC }, SOCIAL_GROUPS.Commoners, true);
+  assert.equal(flow.menu, true, 'a talk-menu offer records it');
+  flow.offerSocialQuest({ ...NPC }, SOCIAL_GROUPS.Commoners);
+  assert.equal(flow.menu, false, 'the social default');
+  flow.offerGuildQuest({ guildGroup: GUILD_GROUPS.FightersGuild, guild: makeGuild({ isMember: () => false }) });
+  assert.equal(flow.menu, false, 'the guild door never rides a menu');
+});
+
+test('the popup variant draw is -1 (random via quest.rolls), not the explicit-variant zero arm', () => {
+  const TWO_REFUSE = [
+    'Quest: __OFR', 'QRC:',
+    `QuestorOffer:  [${QUEST_MESSAGES.QuestorOffer}]`, '<ce> take it?', '',
+    `RefuseQuest:  [${QUEST_MESSAGES.RefuseQuest}]`,
+    '<ce> refuse a', '<--->', '<ce> refuse b', '',
+    'QBN:', 'variable _done_',
+  ];
+  const m = new QuestMachine();
+  const lists = new QuestListsManager({
+    readListTable: (name) => (name === 'Classic' ? rowsOf('__OFR, Commoners, N, 0, 0, x') : null),
+    getQuestSourceLines: (name) => (name === '__OFR' ? TWO_REFUSE : null),
+    parseQuest: (l, f, p) => m.parseQuestForLists(l, f, { rolls: () => 0.75, partialParse: p }),
+    rolls: () => 0,
+  });
+  const flow = new QuestOfferFlow(m, lists, {});
+  const step = flow.offerSocialQuest({ ...NPC }, SOCIAL_GROUPS.Commoners);
+  const res = step.respond(false);
+  assert.equal(res.popup.tokens[0].text, 'refuse b', 'quest.rolls 0.75 over 2 variants picks the second');
+});
+
+test('picking the index exactly one past the pool answers null, not an undefined load', () => {
+  const rows = rowsOf('__OFR, FightersGuild, M, 0, 0, x');
+  const { flow } = makeRig({ rows, deps: { guildQuestListBox: true } });
+  const pick = flow.offerGuildQuest({ guildGroup: GUILD_GROUPS.FightersGuild, guild: makeGuild() }).onClose();
+  assert.equal(pick.onPick(flow.questPool.length), null, 'the < boundary is strict');
 });

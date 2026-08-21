@@ -881,6 +881,132 @@ covers this slice with Q3-iii/Q3-iv when the limit lifts.
   tails; place 716's ||-variant save-shape-bounded (the workaround
   round-trips on faithful maps - Q4-iv's envelope revisits).
 
+## Q4-ii - THE OFFER FLOW (SHIPPED 2026-08-21)
+
+DaggerfallQuestOfferWindow.cs whole + DaggerfallQuestPopupWindow.cs's
+offer/accept/refuse half + DaggerfallGuildServicePopupWindow.cs's
+Quests service (:546-667), headless (offerFlow.js), over the
+QuestMachine's own questor-click halves (machine.js) - the
+QuestListsManager's draw half goes LIVE end to end, and
+guildServiceFlow's FLAGGED Quests arm closes.
+
+- THE QUESTOR CLICK (QuestMachine.cs:888-985, in machine.js):
+  setLastNPCClicked stores the click and sweeps EVERY quest's
+  Persons - no IsQuestor gate, no QuestComplete skip, both are the
+  scan's filters, not the sweep's; isNPCDataEqual is the four-field
+  STRUCT identity (hash/mapID/nameSeed/buildingKey; null reads as
+  the zero struct, so two unassigned sides ARE equal);
+  isLastNPCClickedAnActiveQuestor scans INCOMPLETE quests for a
+  questor match and stamps the passed mcp on the ACTIVE quest -
+  the guild rides in here, %pct's second provider. The machine's
+  own field beats the Q3-ii deps seam, which stays the fallback.
+  DELTA (recorded): a never-clicked machine compares the zero
+  struct where C# NREs on lastNPCClicked.Data - unreachable
+  through the windows, which only open off a click.
+- THE PROMPT (CreateMessagePrompt): a YesNo descriptor - tokens at
+  default expansion with the variant draw riding quest.rolls
+  (Ledger A), no click-anywhere, no cancel; a missing message
+  answers null and the offer silently shows NOTHING while the
+  drawn quest leaks unstarted, verbatim.
+- THE SOCIAL DOOR (offerSocialQuest): the ctor's questor-pool
+  removal (deps.removeNpcQuestor) runs BEFORE the active-questor
+  bail and is castle-gated; the draw is GetSocialQuest over the
+  clicked NPC's factionID/gender + GetReputation + player level;
+  NO external MCP (C#'s own `TODO - need to provide an mcp?`); a
+  failed draw shows the TEXT.RSC 600 flavour - silenced inside
+  castles, as classic.
+- THE GUILD DOOR (offerGuildQuest): the Temple deity folds into
+  MembershipStatus by NAME (Enum.Parse's throw mirrored:
+  `Requested value 'X' was not found.`); the orders home
+  reputation on the BUILDING faction, everyone else on
+  GetGuildFactionId; rank rides player level under
+  IsSatisfyQuestReqByLevel; the member's guild lands as
+  quest.externalMCP; questPool.Clear() after ONE offer, whatever
+  happened. An unknown guild group's null pool flows through the
+  port's null-guarded selectQuest where C# NREs first (recorded
+  Q2b-ii).
+- THE ANSWER HALF (OfferQuest_OnButtonClick): Yes draws the
+  AcceptQuest popup tokens FIRST (pre-start state under them),
+  then StartQuest runs immediately; No scrubs the TalkManager
+  three ways in C#'s order - info topics, quest rumors, progress
+  rumors - then RefuseQuest with exitOnClose FALSE. The popups
+  read this.offeredQuest.externalMCP - the FIELD, never the quest
+  argument - and carry it as `mcp` for the message box's generic
+  second pass (the UI text arc's).
+- THE QUEST PICKER (GuildQuestListBox, default off): the
+  gettingQuests wait box (the two Internal_Strings literals; %pcf
+  rides the generic pass), labels from HEADER-ONLY parses
+  (partialParse threads Parser.cs:144 through
+  QuestListsManager.loadQuest), the localization override, the
+  full parse on pick throwing out uncaught - and C#'s RemoveAt
+  BUG replayed exactly: failure pruning walks ORIGINAL indices
+  over a shifting list, so a second failure prunes the WRONG row,
+  and past the end throws the ArgumentOutOfRangeException mirror.
+- ExpandLetterSignoff (QuestMacroHelper.cs:176-264, in
+  questMacros.js - Q4-i's deferral closes): the letter item's
+  label walks tokens LAST to FIRST and keeps exactly ONE
+  non-empty line ("last 2 lines" says the caller's comment; the
+  code takes one, bug-for-bug) under `'Letter: '` with C#'s
+  trailing space; name/details/faction/context/binding macros
+  expand as the message pass does, NameMacro1 ALWAYS reveals (no
+  gate), and a location macro swallows its WHOLE word into "..."
+  - attached punctuation included. The ItemHelper caller half
+  (the parchment long-name arm) rides the inventory arc.
+- OUT OF SLICE: the DaedraSummoningService (a separately flagged
+  guildServiceFlow arm), the Spymaster arm (a talk-window door -
+  TalkToStaticNPC), and the message box's generic MacroHelper
+  pass.
+
+Gate: `test/questoffers.test.js` - 25 pins: the click laws, the
+prompt shape, both doors with their gates and fold, the scrub
+order, the picker with both RemoveAt-bug faces, the destination
+flip, and the letter signoff family.
+
+## QUEST AUDIT X (2026-08-21, the Q4-ii verify pass)
+
+The parity lane ran raw-C# in the main loop DURING implementation
+(the subagent limit still held; the multi-agent retry covers Q3-iii/
+Q3-iv/Q4-i and folds this slice in): DaggerfallQuestOfferWindow.cs
+whole, DaggerfallQuestPopupWindow.cs whole (the Daedra half read and
+bounded out), the guild popup's Quests region, QuestMachine.cs's
+click/prompt region, the QuestListsManager draw half re-read against
+the shipped port, ExpandLetterSignoff + Parser.partialParse at
+source. One parity refinement landed from the re-read: the accept
+popup call rides C#'s exitOnClose DEFAULT (two args), not an
+explicit true. One delta recorded in place: the never-clicked
+questor scan compares the zero struct where C# NREs - unreachable
+through the windows.
+
+- THE CAMPAIGN (one instance, baseline re-measured at 4 before and
+  after the sync): 82 mutants over offerFlow.js + the machine's
+  Q4-ii region (the new --lines filter, now a committed mutate.mjs
+  flag) + the letter signoff + the lists partialParse thread. 63
+  died in coverage subsets; 18 subset survivors + 1 uncovered line
+  triaged to 12 REAL HOLES, all pinned in round 2: the questor
+  scan's isQuestor gate (whose mutant only shows on the null-click
+  zero-struct face), first-word letter macros (the w=0 init), the
+  Place AND Item letter reveals (the Item arm was the uncovered
+  line - no letter test had ever revealed one), the one-character
+  signoff line, the social GENDER FOLD (no test had used an M/F
+  social row - the === inversion survived untouched), the absent
+  player-fact/guild seams all reading ZERO (rep, level twice,
+  buildingFactionId, getGuildFactionId - C#'s own defaults), the
+  menu-flag ledger, the popup variant draw's -1 (a -2 would fall
+  into the explicit-variant zero arm), and the strict past-the-pool
+  pick boundary.
+- Full-suite confirmation: 17 verified kills at fails=5. One
+  round-2 pin needed sharpening first - the guild level-seam row
+  had NO quest source, so the levelful mutant's draw THREW into
+  selectQuest's catch and answered the same fail step (the
+  masked-kill family again: a fixture that cannot tell the arms
+  apart pins nothing); loadable, it kills at fails=5.
+- RECORDED EQUIVALENTS (2, each with a proof): the letter walk's
+  `<`→`<=` - the one-past-end word is undefined, getMacro coerces
+  it to the STRING 'undefined' which matches no macro pattern, so
+  the extra iteration is a no-op; the rank override's `>`→`>=` -
+  the only added case is level === rank, where `rank = level`
+  assigns the value it already holds.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
@@ -898,9 +1024,9 @@ slices, in dependency order.
   corpus-gateable headless (expand EVERY corpus message with
   pending-safe fallbacks) + pinned expansions under the mock world.
   Everything visual downstream needs this first.
-- **Q4-ii - THE OFFER FLOW**: DaggerfallQuestOfferWindow's offer/
-  accept/decline message law, guildServiceFlow's FLAGGED Quests arm
-  (SERVICE_DESTINATION), the TalkManager questor-click half over
+- **Q4-ii - THE OFFER FLOW** (SHIPPED above): DaggerfallQuestOfferWindow's
+  offer/accept/decline message law, guildServiceFlow's FLAGGED Quests
+  arm (SERVICE_DESTINATION), the TalkManager questor-click half over
   the machine's lastNPCClicked/questor tables, the
   QuestListsManager guild draw going live end to end.
 - **Q4-iii - THE SCENE MOUNT**: SiteLinks/QuestMarkers standing

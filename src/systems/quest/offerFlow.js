@@ -230,7 +230,8 @@ export class QuestOfferFlow {
    *  progress rumors - then RefuseQuest with exitOnClose false. */
   _offerResponse(yes) {
     if (yes) {
-      const popup = this._showQuestPopupMessage(this.offeredQuest, QUEST_MESSAGES.AcceptQuest, true);
+      // C#'s accept call rides the exitOnClose DEFAULT (two args)
+      const popup = this._showQuestPopupMessage(this.offeredQuest, QUEST_MESSAGES.AcceptQuest);
       this.machine.startQuestImmediate(this.offeredQuest);
       return { kind: 'accepted', popup };
     }
