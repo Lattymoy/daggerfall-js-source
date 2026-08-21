@@ -1,10 +1,16 @@
 # DFU settings defaults (vendored)
 
-`defaults.ini.txt` from **Daggerfall Unity** (MIT License, Interkarma
-and contributors), vendored verbatim.
+Two files from **Daggerfall Unity** (MIT License, Interkarma and
+contributors), vendored verbatim:
+
+- `defaults.ini.txt` - the shipped default value for all 171 settings.
+- `GameSettings.txt` - DFU's own settings text table: the human LABEL
+  and the tooltip (`<key>Info`) for each setting, plus the titles of
+  its settings pages and section headings.
 
 Provenance: https://github.com/Interkarma/daggerfall-unity
-`Assets/Resources/defaults.ini.txt` at commit
+`Assets/Resources/defaults.ini.txt` and
+`Assets/StreamingAssets/Text/GameSettings.txt` at commit
 `81e89e90c27bc3c1a7a61871e545fad129174dec`.
 
 ## Why this is committed
@@ -24,7 +30,12 @@ own DATA, not ARENA2 and not the C# we translate.
   Vendoring it means `systems/settings.js` parses the real bytes and a
   pin can assert the parse against them.
 
-## What reads it
+The label table matters as much as the defaults: it means the words a
+player reads are DFU's OWN words, ported like any other law, rather
+than 171 labels invented here. `LypyL_GameConsole` becomes DFU's
+"Game Console", not our guess at one.
+
+## What reads them
 
 `src/systems/settings.js` parses this file into the settings store's
 sections, keys and default values. The port implements DFU's typed
