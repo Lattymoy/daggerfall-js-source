@@ -80,6 +80,7 @@ import { PrecipitationRenderer } from '../render/precipitation.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { addGold } from '../systems/court.js';   // U10 probe surface
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
+import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 
 export async function bootExterior(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
@@ -1005,7 +1006,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         ? [cam.pos[0] - fwd[0] * TP_DIST, cam.pos[1] - fwd[1] * TP_DIST, cam.pos[2] - fwd[2] * TP_DIST]
         : cam.pos;
     const proj = perspective(
-      Math.PI / 3,
+      fieldOfView(),
       canvas.clientWidth / canvas.clientHeight,
       0.1,
       Math.max(2000, extentX * 4)
@@ -1075,7 +1076,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     {
       const dx = target[0] - eye[0], dy = target[1] - eye[1], dz = target[2] - eye[2];
       const horiz = Math.hypot(dx, dz) || 1e-6;
-      sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), Math.PI / 3,
+      sky.draw(Math.atan2(dx, dz), Math.atan2(dy, horiz), fieldOfView(),
         canvas.clientWidth / canvas.clientHeight);
     }
     renderer.drawTerrain(groundSurface, identityMatrix,

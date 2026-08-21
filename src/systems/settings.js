@@ -74,6 +74,10 @@ export const LIVE = Object.freeze({
   // setting that controls the launcher. The reverse-direction
   // pin below now makes that shape a test failure.
   'GUI/ShowOptionsAtStart': 'src/main.js',
+  // MENU: the first VIDEO setting to become real - five hosts drew
+  // their projection at a hardcoded Math.PI/3, which is DFU's
+  // MINIMUM (60) rather than its default (65).
+  'Video/FieldOfView': 'src/ui/viewSettings.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the

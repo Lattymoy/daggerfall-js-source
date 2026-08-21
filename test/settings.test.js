@@ -231,3 +231,32 @@ test('settings AUDIT: turning ShowOptionsAtStart off WARNS about the lock-out', 
   assert.ok(!/\?launcher/.test(w.notice ?? ''), 'no lock-out warning when it is back on');
   _resetForTests();
 });
+
+test('settings MENU: Video/FieldOfView is DFU law, and reaches ALL FIVE projection hosts', async () => {
+  // DFU: SettingsManager.cs:418 GetInt(sectionVideo,"FieldOfView",60,120),
+  // defaults.ini ships 65. Every host drew at a hardcoded Math.PI/3 -
+  // exactly 60, DFU's MINIMUM rather than its default - so wiring the
+  // setting also corrects a view that shipped five degrees narrow.
+  const { fieldOfView, FOV_MIN, FOV_MAX } = await import('../src/ui/viewSettings.js');
+  _resetForTests();
+  assert.equal(FOV_MIN, 60);
+  assert.equal(FOV_MAX, 120);
+  assert.equal(DEFAULTS.Video.FieldOfView, '65', "DFU's shipped default");
+  assert.ok(Math.abs(fieldOfView() - (65 * Math.PI) / 180) < 1e-9, 'the default reads as 65 degrees');
+  // DFU's clamp, both ends
+  setValue('Video', 'FieldOfView', 200);
+  assert.ok(Math.abs(fieldOfView() - (120 * Math.PI) / 180) < 1e-9, 'clamped to 120');
+  setValue('Video', 'FieldOfView', 5);
+  assert.ok(Math.abs(fieldOfView() - (60 * Math.PI) / 180) < 1e-9, 'clamped to 60');
+  _resetForTests();
+
+  // FIVE hosts draw a projection; none may keep a private constant.
+  // The sky takes its OWN fov argument in two of them - leaving that at
+  // 60 while the camera moved would tear the horizon off the world.
+  for (const host of ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeon.js',
+    'scenes/interior.js', 'scenes/worldModes.js']) {
+    const t = src(host);
+    assert.ok(t.includes('fieldOfView()'), `${host} must read the shared field of view`);
+    assert.ok(!/Math\.PI \/ 3/.test(t), `${host} still carries a hardcoded 60-degree view`);
+  }
+});

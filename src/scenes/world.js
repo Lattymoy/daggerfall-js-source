@@ -94,6 +94,7 @@ import {
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
+import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 
 // Milestone 9 scene: floating-origin streaming world. Terrain pixels
 // stream in nearest-first around the camera within TERRAIN_DISTANCE,
@@ -1548,7 +1549,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     pump();
 
-    const proj = perspective(Math.PI / 3, canvas.clientWidth / canvas.clientHeight, 0.2, 6000);
+    const proj = perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.2, 6000);
     const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
     // World clock (R5): sun, ambient, window style, sky frame by time.
     const minute = minuteNow();
@@ -1612,7 +1613,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.setPointLights(new Float32Array(0));
     }
     renderer.beginFrame(proj, view, sunDirection(minute));
-    sky.draw(cam.yaw, cam.pitch, Math.PI / 3, canvas.clientWidth / canvas.clientHeight);
+    sky.draw(cam.yaw, cam.pitch, fieldOfView(), canvas.clientWidth / canvas.clientHeight);
 
     const allBatches = [];
     for (const p of built.values()) {

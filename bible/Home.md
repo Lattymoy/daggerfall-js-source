@@ -238,28 +238,28 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:548` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:575` - "database FLAGGED" narrows to the skill/loot message ids).
 - `src/scenes/dungeonContext.js:913` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:463` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:469` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:574` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:669` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:802` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:937` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:464` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:470` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:575` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:670` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:803` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:938` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:153` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:170` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:570` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:595` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:601` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1065` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1461` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1722` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/worldModes.js:178` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
-- `src/scenes/worldModes.js:220` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:313` - Person placed in a dungeon is the quest machine's, FLAGGED
-- `src/scenes/worldModes.js:353` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:372` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:416` - onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToStaticNPC pends the static-NPC conversation
-- `src/scenes/worldModes.js:423` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/world.js:571` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:596` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:602` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1066` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1462` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1723` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/worldModes.js:179` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
+- `src/scenes/worldModes.js:221` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:314` - Person placed in a dungeon is the quest machine's, FLAGGED
+- `src/scenes/worldModes.js:354` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:373` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:417` - onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToStaticNPC pends the static-NPC conversation
+- `src/scenes/worldModes.js:424` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
