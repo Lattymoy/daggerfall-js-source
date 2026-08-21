@@ -158,6 +158,87 @@ and the live REFRESH CULL rides with it; the classic-rumor import
 waits on a RUMOR.DAT fetch in the host (game data, loaded when
 present).
 
+## TK-ii - THE TOPIC TREE (SHIPPED 2026-08-21)
+
+`systems/topicTree.js` is TalkManager.cs's topic-list core, 1:1: the
+ListItem model (:127-173) with its C# field defaults, the
+QuestResources/QuestResourceInfo bookkeeping (:285-339), the quest
+topic pipeline (:2064-2285), the person/building lookups
+(:2287-2374), IsBuildingQuestResource (:2376-2421), the assembly
+engine (:3086-3500) and its gate helpers (:2940-3083), and the
+dictQuestInfo half of SaveDataConversation (:2426-2549). Five more
+of the bridge's silent seams land: addQuestTopics, dialogLink,
+addDialog, removeQuestInfoTopics, forceTopicListsUpdate.
+
+The law, pinned (topictree.test.js, 27):
+
+- **The tables, verbatim**: the 34-entry infoFactionIDs, the 30-row
+  FactionsAndBuildings with its matching localized caption list and
+  the ten KnightlyOrderRegions, BuildingTypeToGroupString's thirteen
+  captions with the empty-string default, and the FULL 17-entry skip
+  predicate - which includes AllValid and Special1-4, the five the
+  T3c where-is list omitted. A CROSS-MODULE pin holds actions.js's
+  QUEST_INFO_RESOURCE_TYPE copy against the tree's: a drift there
+  would silently mis-route every dialog link the machine emits.
+- **The assembly**: enum-ordered type groups each headed by a
+  Previous List item pointing at the parent list; the quest General
+  section behind its same-map / keyed / RMBLayout.IsResidence gates;
+  the regional group's three arms (rows 8-17 the knightly orders
+  gated on region, rows 20+ stores searched by TYPE, everything else
+  by FACTION) with local buildings removing their rows and an
+  unloaded location keeping all of them; the person list's
+  questor-mapID and assigned-place gates; the always-empty Thing
+  list, as classic never implemented it either; and the instant pass
+  rebuilding only flagged lists before refreshing the window.
+- **The gates**: the recursive knowledge reset walking into item
+  groups, the tell-me-about region gates with the -1 home-index
+  bypass (a homeless individual is knowable anywhere), and the
+  same-building compare with its palace arm - a castle resolves by
+  building TYPE and then compares by NAME, because a palace place
+  carries buildingKey 0.
+
+KEPT QUIRKS, each by C# line:
+
+- **THE DISCARDED FIRST ADD** (:2104-2115): the QuestResources bag is
+  fetched-or-created BEFORE the empty-name bail and written to
+  dictQuestInfo only at the tail - so an empty resourceName on a NEW
+  questID leaves no entry behind at all.
+- **THE STICKY TELL-ME-ABOUT FLAG** (:2135): hasEntryInTellMeAbout is
+  only ever SET; a re-add with null answers keeps a previous true,
+  while hasEntryInWhereIs beside it is written both ways.
+- **THE SHARED GROUP VARIABLE** (:3206-3352): one local threads
+  through the type groups, the quest General section and the palace
+  arm - so a palace joins an existing General group rather than
+  minting a second, and the palace arm's own creation branch never
+  sets alreadyCreatedGeneralSubSection (dead - it is the last use).
+- **THE MISNAMED THROWS** (:2291-2333): every person-lookup throw
+  carries the copy-pasted "GetBuildingKeyForPersonResource()"
+  literal, including the null-symbol arm's wrong "Resource is not of
+  type Person but was expected to be" - the wrong words ARE the
+  words.
+- dialogLink's unknown linked type logs and RETURNS before the hide
+  (:2201-2203), while a NotSet type falls through TO it; addDialog
+  with a null resourceName skips the body but still runs the rebuild
+  tail (:2235, :2270); and the caption test at :3146 is a NULL test,
+  so an EMPTY buildingName is taken as the caption rather than
+  falling to the location name.
+
+Supporting ports this slice needed: `QuestResource.getMessage`
+(:283-296, the variant token list), Person's three home-place
+properties (:112-125 -> :523-569), `RMBLayout.IsResidence`,
+`PlayerGPS.UndiscoverBuilding`'s store half, and the mill's
+`RestoreConversationData` orphan sweep (:2522-2533). world.js mounts
+the tree beside the mill and composes both halves into the talk
+envelope.
+
+RECORDED pending: the tree's WINDOW consumers (the Tell-me-about
+page, the quest Where-is entries, the knowledge marks the gates
+compute) mount with TK-v; the talkPartner seam reads null until
+TK-iv brings the NPC session, so the same-person checks are pinned
+but idle live; GetBuildingList's questor-populate half (npcsWithWork,
+the 25% work roll) and the BuildingInfo `position` the compass wants
+ride TK-iii/TK-iv; isPlayerInsideCastle is Q4-v's standing false.
+
 ## TALK AUDIT I (2026-08-21, the TK-i verify pass)
 
 The mill's adversarial pass, run in the MAIN LOOP against the raw C#
