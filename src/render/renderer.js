@@ -1211,7 +1211,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
     gl.bindVertexArray(null);
 
-    return { vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null };
+    // FA1: `frame` is null for a still flat and a frame INDEX for an
+    // animated one, which the draw folds into the texture key. Still
+    // flats keep the exact key they have always had, so nothing that
+    // uploaded through uploadRecord has to change.
+    return { vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null };
   }
 
   /** Free one billboard batch's GL objects (S2 pickup removes piles;
@@ -1411,7 +1415,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // V^1.9 body glow). Rendering's last queue row, classic-visuals
     // direction (Mac).
     const drawOne = (b) => {
-      const key = `${b.archive}_${b.record}`;
+      // FA1: an animated flat's frames are uploaded under `record#frame`
+      // (the key uploadRecordFrame already mints for enemy sprites);
+      // a still flat is `record` alone, as before.
+      const key = b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`;
       const tex = this.textures.get(key);
       if (!tex) return;
       gl.activeTexture(gl.TEXTURE0);

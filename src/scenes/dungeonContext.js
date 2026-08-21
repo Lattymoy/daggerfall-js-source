@@ -8,6 +8,7 @@
 // original-archive sizes while pixels come from the table archive,
 // which is exactly the dungeon convention already on record.
 
+import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { applyTextureTable } from '../world/dungeonTextures.js';
 import { collectDungeonLights } from '../world/dungeonLights.js';
@@ -1121,6 +1122,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
+  const flatAnims = new FlatAnimator();   // FA1
   const billboardBatches = [];
   for (const [key, centers] of flatGroups) {
     const [archive, record] = key.split('_').map(Number);
@@ -1131,7 +1133,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     uploadRecord(archive, record);
     const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
     const based = centers.map(([x, y, z]) => [x, y - size.h / 2, z]);
-    billboardBatches.push(renderer.createBillboardBatch(archive, record, size, based));
+    const batch = renderer.createBillboardBatch(archive, record, size, based);
+    armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
+    billboardBatches.push(batch);
   }
 
   const flicker = new CityLightAnimator(lights.length, lights.map((l) => l.range));
@@ -2134,6 +2138,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     collider,
     texRemap,
     billboardBatches,
+    flatAnims,   // FA1: the host ticks the flats it draws
     lights,
     flicker,
     waterQuads,

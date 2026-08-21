@@ -4,6 +4,7 @@
 // selectable with ?region=<name>&loc=<name>. Ground archive comes from the
 // location's climate (CLIMATE.PAK -> GetWorldClimateSettings).
 
+import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, makeLookGate } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
@@ -322,6 +323,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     [...flatGroups.keys()].map((k) => Number(k.split('_')[0]))
   );
   await Promise.all([...flatArchives].map((a) => getTexture(a)));
+  const flatAnims = new FlatAnimator();   // FA1
   const billboardBatches = [];
   let flatCount = 0;
   for (const [key, centers] of flatGroups) {
@@ -330,7 +332,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (!t || record >= t.recordCount) continue;
     uploadRecord(archive, record);
     const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
-    billboardBatches.push(renderer.createBillboardBatch(archive, record, size, centers));
+    const batch = renderer.createBillboardBatch(archive, record, size, centers);
+    armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
+    billboardBatches.push(batch);
     flatCount += centers.length;
   }
 
@@ -1148,6 +1152,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // geometry, as DFU misses are).
     arrows.update(dt);
     arrows.draw(renderer, texRemap);
+    flatAnims.tick(dt);   // FA1: the town's fires and braziers
     renderer.drawBillboards(billboardBatches, camRight, new Float32Array([0, 1, 0]));
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, new Float32Array([0, 1, 0]));   // M2: spell missiles in flight
     // T1: the wandering townsfolk - population ticks at 10Hz, the

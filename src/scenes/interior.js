@@ -140,6 +140,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // the standalone scene has no activation path, so they stay closed.
     for (const d of ctx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, ctx.texRemap);
     const camRight = new Float32Array([Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)]);
+    ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock
     renderer.drawBillboards(ctx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
 
     frames++;

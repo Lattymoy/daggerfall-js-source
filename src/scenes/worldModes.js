@@ -163,7 +163,7 @@ export function createWorldModes(host) {
     },
   });
   const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null } = host;   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
-  const { getGpuMesh, cpuModels, getTexture, uploadRecord, arch, palette } = pipeline;
+  const { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette } = pipeline;
   // AUDIT 21 (hosts lane, F7): the HUD art for interior mode. A missing file
   // answers null and drawHud no-ops, so this host draws no HUD rather than
   // failing to mount.
@@ -561,7 +561,7 @@ export function createWorldModes(host) {
       // come back world-frame, landings run in one frame, and the walk
       // through the door is coordinate-seamless.
       const ctx = await buildInteriorContext(
-        { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord, palette },
+        { renderer, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette },
         // DaggerfallInterior.IsBadInteriorModel (:530-548) keys the
         // 31000-overlap repair on EntryDoor.blockIndex, which
         // RMBLayout.cs:848 mints as blockData.Index. The literal 0 is
@@ -711,7 +711,7 @@ export function createWorldModes(host) {
     transitioning = true;
     try {
       const ctx = await buildDungeonContext(
-        { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, palette },
+        { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette },
         dfLocation, blocks, dfLocation.climate.climateType, { foes: host.foes, playerClass: host.playerClass, playerSpell: host.playerSpell, playerWeapon: host.playerWeapon });
       dungeonCtx = ctx;
       // P10 host parity (2026-08-16 audit: only the standalone scene
@@ -950,6 +950,7 @@ export function createWorldModes(host) {
       renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR);
       for (const d of dungeonCtx.drawList) renderer.drawMesh(d.mesh, d.matrix, dungeonCtx.texRemap);
       for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(d.gpu, d.object.matrix, dungeonCtx.texRemap);
+      dungeonCtx.flatAnims.tick(dt);   // FA1
       renderer.drawBillboards(dungeonCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
       // AUDIT 17e F1: this MUST return true like every other exit of
       // the dungeon branch. Returning undefined let the host fall
@@ -986,6 +987,7 @@ export function createWorldModes(host) {
     if (_arrowsCtx !== interiorCtx) { interiorArrows.arrows.length = 0; _arrowsCtx = interiorCtx; }
     interiorArrows.update(dt);
     interiorArrows.draw(renderer, interiorCtx.texRemap);
+    interiorCtx.flatAnims.tick(dt);   // FA1
     renderer.drawBillboards(interiorCtx.billboardBatches, camRight, new Float32Array([0, 1, 0]));
     if (magic) {
       // M2: the armed click's cast + missile flight, on the interior's

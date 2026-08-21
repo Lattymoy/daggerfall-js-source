@@ -6,6 +6,7 @@
 // locations appear on their pixels, and crossing a pixel boundary
 // recenters the world (streamingWorld.js).
 
+import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, makeLookGate } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
@@ -418,6 +419,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     for (const f of nature) addFlat(natureArchive, f.record, f.x, f.y, f.z);
 
+    const flatAnims = new FlatAnimator();   // FA1
     const batches = [];
     for (const [k, centers] of groups) {
       const [archive, record] = k.split('_').map(Number);
@@ -425,11 +427,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (record >= t.recordCount) continue;
       uploadRecord(archive, record);
       const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
-      batches.push(renderer.createBillboardBatch(archive, record, size, centers));
+      const batch = renderer.createBillboardBatch(archive, record, size, centers);
+      armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
+      batches.push(batch);
     }
 
     built.set(key, {
-      px, py, terrain, tilemapTex, groundArchive, models, batches, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
+      px, py, terrain, tilemapTex, groundArchive, models, batches, flatAnims, texRemap, lights: pixelLights, animals: pixelAnimals, skyBase: climate.skyBase, samples, natureCount: nature.length,
       population, locOrigin, personBatches,   // T2 towns
       locBlocks,   // T3d: the Where-is directory's block scan
 
@@ -1629,6 +1633,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       renderer.drawTerrain(p.terrain, pixelMatrix,
         renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
       for (const m of p.models) renderer.drawMesh(m.gpu, multiply(pixelMatrix, m.local), p.texRemap);
+      // FA1: the flats that move. The animator is PER PIXEL because
+      // the batches are - a pixel evicted takes its clocks with it -
+      // so the tick rides the same walk that collects the batches.
+      p.flatAnims.tick(dt);
       for (const b of p.batches) {
         b.origin = t;
         allBatches.push(b);

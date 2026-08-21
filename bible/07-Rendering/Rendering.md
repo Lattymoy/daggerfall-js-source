@@ -17,6 +17,11 @@ directory by `test/audit18_bible_docs.test.js`:
 - `skyRenderer.js` - painted skies (R4) + the night sky.
 - `windowEmission.js` - R2 window emission.
 - `precipitation.js` - R13 rain/snow + storm lightning.
+- `flatAnimation.js` - FA1 the ANIMATED FLATS: DaggerfallBillboard's
+  AnimateBillboard loop verbatim (the wrap test before the draw, the increment
+  after it) on a FIXED 1/fps step, the three speeds (general 5, ANIMALS 5,
+  LIGHTS 12), and the one arming seam all four static-flat batch sites call so
+  the four hosts cannot drift.
 
 AUDIT 18 deleted a `groundMesh.js` bullet from this list: R10 had already
 deleted that module, and the bullet tagged it "(ledgered departure)" when
