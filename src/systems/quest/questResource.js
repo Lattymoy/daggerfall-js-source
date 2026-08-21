@@ -44,13 +44,31 @@ export class QuestResource {
     this.rumorsMessageID = -1;
     this._isHidden = false;
     this.hasPlayerClicked = false;
-    // The scene link (QuestResourceBehaviour). Null until Q3 spawns
-    // world objects - Tick's show/hide half is inert until then.
-    this.questResourceBehaviour = null;
+    // The scene link (QuestResourceBehaviour). Null until the scene
+    // mount stands an object - Tick's show/hide half is inert until
+    // then. The destroy handler carries its own identity so the
+    // accessor's subscribe/unsubscribe pair matches (Q4-iii).
+    this._questResourceBehaviour = null;
+    this._onBehaviourDestroyed = (behaviour) => {
+      // Clean up when target GameObject being destroyed (:373-377)
+      behaviour.offDestroy(this._onBehaviourDestroyed);
+      this._questResourceBehaviour = null;
+    };
   }
 
   get Symbol() { return this.symbol; }
   set Symbol(v) { this.symbol = v; }
+
+  /** QuestResourceBehaviour (QuestResource.cs:105-117): setting the
+   *  scene link SUBSCRIBES the destroy uncoupling, so a torn-down
+   *  object never strands a stale link. C#'s setter dereferences the
+   *  value - a null assignment throws, kept: only real behaviours
+   *  are ever assigned. */
+  get questResourceBehaviour() { return this._questResourceBehaviour; }
+  set questResourceBehaviour(value) {
+    this._questResourceBehaviour = value;
+    value.onDestroy(this._onBehaviourDestroyed);
+  }
 
   /** IsHidden get/set -> SetHidden (QuestResource.cs:90,362). NOTE
    *  from the C#: Foes are a one-to-many resource - hiding a Foe
@@ -73,7 +91,10 @@ export class QuestResource {
     if (this.isFoe) return;
     // A destroyed NPC is always hidden
     if (this.isPerson && this.isDestroyed) this.isHidden = true;
-    // Q3 wires the world half: gameObject.SetActive(!IsHidden).
+    // Show or hide the mapped GameObject off the hidden flag
+    // (Q4-iii closes the Q3 pend; C# notes this can conflict with
+    // other code disabling the object for its own reasons)
+    this.questResourceBehaviour.setGameObjectActive(!this.isHidden);
   }
 
   /** PostTick (QuestResource.cs:176-182): the click rearms every

@@ -639,9 +639,15 @@ export class Place extends QuestResource {
 
   /** AssignQuestResource (:448-540): validate markers, resolve the
    *  resource, cull it from other sites, and pin its symbol to the
-   *  selected (or indexed) marker. The scene halves (hot-place when
-   *  the player is already inside, hot-remove of a stood behaviour)
-   *  ride the world seam's layout wiring (Q4). */
+   *  selected (or indexed) marker - then the SCENE halves (Q4-iii):
+   *  hot-place when the player is already at this Place at assign
+   *  time (PlayerEnterExit could not have run layout for it - the
+   *  M0B30Y08 after-7pm zombie), and hot-remove of a behaviour stood
+   *  somewhere the player is not. world.mountCurrentSiteQuestResources
+   *  is the host's AddQuestResourceObjects over the player's current
+   *  interior/dungeon; its ABSENCE mirrors C#'s missing
+   *  PlayerEnterExit, whose `return` also skips the hot-remove,
+   *  verbatim. */
   assignQuestResource(targetSymbol, markerIndex = -1, markerIndexPreference = MARKER_PREFERENCE.Default, cullExisting = true) {
     const sd = this.siteDetails;
     if (!sd || !validateQuestMarkers(sd.questSpawnMarkers, sd.questItemMarkers)) {
@@ -653,7 +659,14 @@ export class Place extends QuestResource {
     if (this._getSiteMarker(resource, markerIndex, markerIndexPreference)) {
       assignResourceToMarker(targetSymbol.clone(), sd.selectedMarker);
     }
-    this.parentQuest.hooks?.world?.onResourceAssigned?.(this, resource);
+    const world = this.parentQuest.hooks?.world;
+    if (this.isPlayerHere()) {
+      if (!world?.mountCurrentSiteQuestResources) return;
+      world.mountCurrentSiteQuestResources();
+    }
+    if (!this.isPlayerHere() && resource.questResourceBehaviour) {
+      resource.questResourceBehaviour.destroyGameObject();
+    }
   }
 
   /** ConfigureFromPlayerLocation (Place.cs:296-360, Q3-ii): a Place

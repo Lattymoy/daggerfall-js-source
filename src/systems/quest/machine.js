@@ -62,9 +62,20 @@
 //                                quest clock's travel arm starts here)
 //   discoverLocation(regionName, locationName) - PlayerGPS.DiscoverLocation
 //   addNote(text)              - the notebook (RevealLocation readmap)
-//   teleportPc(place, marker)  - TeleportPc's transport (scene half)
-//   onResourceAssigned(place, resource) - the hot-place/hot-remove
-//                                layout half (Q4 wires)
+//   respawnPlayerAtSite(place) - TeleportPc's transport: resolve the
+//                                site's location and begin the
+//                                respawn (C# GetLocation +
+//                                RespawnPlayer); false = unresolved,
+//                                the action retries (Q4-iii)
+//   isRespawning()             - PlayerEnterExit.IsRespawning
+//   setPlayerScenePosition(position) - the arrival tick's marker
+//                                landing ({x,y,z} scene units)
+//   mountCurrentSiteQuestResources() - the hot-place half: the host
+//                                runs sceneMount.addQuestResourceObjects
+//                                over the player's current interior/
+//                                dungeon (Place.AssignQuestResource's
+//                                tail drives it; absent ≙ C#'s
+//                                missing PlayerEnterExit)
 //
 // Q3-ii, the Person chain's facts (all over the PERSISTENT faction
 // store - PlayerEntity.FactionData, the mutable copy factionRep
@@ -204,6 +215,8 @@
 
 import { Parser } from './parser.js';
 import { defaultActionTemplates } from './actions.js';
+import { QuestResourceBehaviour } from './resourceBehaviour.js';
+import { FACTION_TYPES } from '../../formats/factionFile.js';
 
 export { QUEST_MESSAGES } from './quest.js';   // QuestMachine.cs:260's enum, defined leaf-side
 
@@ -461,6 +474,96 @@ export class QuestMachine {
       clickAnywhereToClose: false,
       allowCancel: false,
     };
+  }
+
+  // ---- Q4-iii: the individual-NPC scene halves + the world signals ----
+  // (QuestMachine.cs:1310-1421; sceneMount.js drives the marker walk.)
+
+  /** IsIndividualNPC (:1310-1321): the faction record's type is
+   *  Individual. C#'s PlayerEntity-null guard maps to the absent
+   *  world seam - both answer false. */
+  isIndividualNPC(factionID) {
+    const factionData = this.deps.world?.getFactionData?.(factionID) ?? null;
+    return factionData != null && factionData.type === FACTION_TYPES.Individual;
+  }
+
+  /** IsIndividualQuestNPCAtSiteLink (:1368-1421): walks SiteLink >
+   *  Quest > Place > selectedMarker targets for an individual Person
+   *  placed AWAY from home - layout builders disable the home copy
+   *  when true. A link whose selected marker carries no targets logs
+   *  and walks on, verbatim. */
+  isIndividualQuestNPCAtSiteLink(factionID) {
+    if (!this.isIndividualNPC(factionID)) return false;
+    for (const link of this.siteLinks) {
+      const quest = this.getQuest(link.questUID);
+      if (!quest) continue;
+      const place = quest.getPlace(link.placeSymbol);
+      if (!place) continue;
+      const marker = place.siteDetails.selectedMarker;
+      if (!marker?.targetResources) {
+        console.log('[quest] IsIndividualQuestNPCAtSiteLink() found a SiteLink with no targetResources assigned.');
+        continue;
+      }
+      for (const target of marker.targetResources) {
+        const resource = quest.getResource(target);
+        if (!resource) continue;
+        if (!resource.isPerson) continue;
+        if (!resource.isIndividualNPC || resource.isIndividualAtHome) continue;
+        if (resource.factionData?.id === factionID) return true;
+      }
+    }
+    return false;
+  }
+
+  /** SetupIndividualStaticNPC (:1331-1358): the layout builders call
+   *  this for every individual StaticNPC they stand. Placed elsewhere
+   *  on a quest -> the home copy deactivates, answers false. Else an
+   *  individual ALWAYS gets a behaviour - the follow-up-quest
+   *  bootstrap click needs one even before any quest uses the NPC -
+   *  assigned to the first active Person of that faction when one
+   *  exists; answers the behaviour. A non-individual answers true
+   *  with nothing attached, C#'s own shape. */
+  setupIndividualStaticNPC(host, factionID) {
+    if (this.isIndividualNPC(factionID)) {
+      if (this.isIndividualQuestNPCAtSiteLink(factionID)) {
+        host?.setActive?.(false);
+        return false;
+      }
+      const behaviour = new QuestResourceBehaviour(this, host);
+      const activePersonResources = this.activeFactionPersons(factionID);
+      if (activePersonResources && activePersonResources.length > 0) {
+        const person = activePersonResources[0];
+        behaviour.assignResource(person);
+        person.questResourceBehaviour = behaviour;
+      }
+      return behaviour;
+    }
+    return true;
+  }
+
+  /** PlayerEnterExit.OnTransitionExterior + OnTransitionDungeonExterior
+   *  (CreateFoe.cs:56-57): every action holding pending scene state
+   *  drops it - foes pending placement into an interior are invalid
+   *  outside. The port walks live AND scheduled quests where C#
+   *  subscribes each action instance; same population, one door. */
+  notifyExteriorTransition() {
+    this._forEachAction((action) => action.onTransitionExterior?.());
+  }
+
+  /** StreamingWorld.OnInitWorld (CreateFoe.cs:58): a world rebuild
+   *  invalidates pending placements the same way. */
+  notifyInitWorld() {
+    this._forEachAction((action) => action.onInitWorld?.());
+  }
+
+  _forEachAction(fn) {
+    for (const list of [this.quests.values(), this.questsToInvoke]) {
+      for (const quest of list) {
+        for (const task of quest.tasks?.values?.() ?? []) {
+          for (const action of task.actions) fn(action);
+        }
+      }
+    }
   }
 
   /** One machine tick (QuestMachine.cs Tick). */

@@ -279,7 +279,9 @@ test('DestroyNpc: destroys the person; the Tick destroyed->hidden law is GATED o
   ]);
   m.tick();
   const person = q.getResource({ name: 'pp' });
-  person.questResourceBehaviour = {};   // Q3 will stand a real one
+  person.questResourceBehaviour = {    // a minimal scene-link stub (the accessor subscribes destroy - Q4-iii)
+    onDestroy() {}, offDestroy() {}, setGameObjectActive() {},
+  };
   m.tick();
   assert.equal(person.isHidden, false, 'destroyed-ONLY: a live person with a behaviour stays visible');
   q.getTask({ name: 'd' }).start(); m.tick();

@@ -18,6 +18,7 @@ import { loadQuestTables } from '../src/systems/quest/tables.js';
 import { QuestMachine } from '../src/systems/quest/machine.js';
 import { SITE_TYPES, MARKER_TYPES, THE_NAMED_RESIDENCE } from '../src/systems/quest/place.js';
 import { READ_MAP_NOTE } from '../src/systems/quest/actions.js';
+import { RDB_SIDE } from '../src/world/rdbLayout.js';
 import { mapPixelToWorldCoord } from '../src/formats/mapsFile.js';
 
 const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', 'vendor', 'dfu-quests');
@@ -164,7 +165,12 @@ function makeWorld() {
     buildingNameOpts: () => ({}),
     discoverLocation: capture('discoverLocation'),
     addNote: capture('addNote'),
-    teleportPc: capture('teleportPc'),
+    // Q4-iii: TeleportPc's two-phase transport seams
+    respawnPlayerAtSite: (place) => { calls.push(['respawnPlayerAtSite', place]); return world._respawnOk; },
+    isRespawning: () => world._respawning,
+    setPlayerScenePosition: capture('setPlayerScenePosition'),
+    _respawnOk: true,
+    _respawning: false,
     _current: locations[0],
     _currentIndex: 0,
     _inRect: true,
@@ -463,7 +469,7 @@ test('DroppedItemAtPlace: watches the item, gates allowDrop on presence, fires o
   assert.equal(m.of('showPopup').length, 1);
 });
 
-test('TeleportPc carries the marker through the world seam; CreateNpcAt is the documented no-op', () => {
+test('TeleportPc is TWO-PHASE: respawn first, the marker landing on the tick after the respawn settles', () => {
   const world = makeWorld();
   const m = makeMachine(world);
   const q = schedule(m, [
@@ -471,13 +477,56 @@ test('TeleportPc carries the marker through the world seam; CreateNpcAt is the d
     ' teleport pc to _lair_',
     ' create npc at _lair_',
   ]);
+  world._respawning = false;
   m.tick();
-  const tp = world._calls.filter((c) => c[0] === 'teleportPc');
-  assert.equal(tp.length, 1);
-  assert.equal(tp[0][1], q.getResource({ name: 'lair' }));
-  assert.equal(tp[0][2], q.getResource({ name: 'lair' }).siteDetails.questSpawnMarkers[0],
-    'the plain form still lands on spawn marker 0 (TeleportPc.cs:126-129)');
+  const lair = q.getResource({ name: 'lair' });
+  const rp = world._calls.filter((c) => c[0] === 'respawnPlayerAtSite');
+  assert.equal(rp.length, 1);
+  assert.equal(rp[0][1], lair, 'the respawn resolves the Place itself (GetLocation + RespawnPlayer)');
+  assert.equal(world._calls.filter((c) => c[0] === 'setPlayerScenePosition').length, 0,
+    'no landing on the respawn tick');
   assert.equal(m.siteLinks.length, 1, 'TeleportPc reserved the SiteLink; CreateNpcAt reserves nothing');
+
+  // While the respawn runs the action idles - and does NOT re-respawn
+  world._respawning = true;
+  m.tick();
+  assert.equal(world._calls.filter((c) => c[0] === 'respawnPlayerAtSite').length, 1, 'the IsRespawning gate holds everything');
+
+  // The respawn settles: the next tick lands the player on spawn
+  // marker 0 (the plain form's [0] law, TeleportPc.cs:126-135) at the
+  // classic scene position (block origin + flat position) & completes
+  world._respawning = false;
+  m.tick();
+  const land = world._calls.filter((c) => c[0] === 'setPlayerScenePosition');
+  assert.equal(land.length, 1);
+  const marker0 = lair.siteDetails.questSpawnMarkers[0];
+  assert.deepEqual(land[0][1], {
+    x: marker0.dungeonX * RDB_SIDE + marker0.flatPosition.x,
+    y: marker0.flatPosition.y,
+    z: marker0.dungeonZ * RDB_SIDE + marker0.flatPosition.z,
+  });
+  m.tick();
+  assert.equal(world._calls.filter((c) => c[0] === 'setPlayerScenePosition').length, 1, 'landed once - the action completed');
+});
+
+test('TeleportPc: an unresolvable location retries without landing; a rearm drops a pending resume', () => {
+  const world = makeWorld();
+  world._respawnOk = false;   // GetLocation fails - return before any respawn
+  const m = makeMachine(world);
+  schedule(m, ['Place _lair_ remote dungeon2', '', ' teleport pc to _lair_', '', 'variable _pad_']);
+  m.tick(); m.tick();
+  assert.equal(world._calls.filter((c) => c[0] === 'respawnPlayerAtSite').length, 2, 'retried, never pending');
+  assert.equal(world._calls.filter((c) => c[0] === 'setPlayerScenePosition').length, 0);
+
+  // rearmAction lowers resumePending (the desync note in C#)
+  const world2 = makeWorld();
+  const m2 = makeMachine(world2);
+  const q2 = schedule(m2, ['Place _lair_ remote dungeon2', '', ' teleport pc to _lair_', '', 'variable _pad_']);
+  m2.tick();   // respawn began, resumePending raised
+  const action = [...q2.tasks.values()].flatMap((t) => t.actions).find((a) => a.resumePending !== undefined);
+  assert.equal(action.resumePending, true);
+  action.rearmAction();
+  assert.equal(action.resumePending, false, 'a rearmed teleport must not land a stale position');
 });
 
 test('clock travel arm: flag&16 clocks arm from the REAL calculator - the one-day floor and the 2.5x return trip', () => {
@@ -620,10 +669,13 @@ test('MUTATION: PlaceNpc UNHIDES a hidden person; "transfer pc inside X marker 0
   ]);
   m.tick();
   assert.equal(q.getResource({ name: 'pp' }).isHidden, false, 'placing unhides');
-  const tp = world._calls.filter((c) => c[0] === 'teleportPc');
-  assert.equal(tp.length, 1);
-  assert.equal(tp[0][2], q.getResource({ name: 'lair' }).siteDetails.questSpawnMarkers[0],
-    'the transfer form passes spawn marker 0');
+  assert.equal(world._calls.filter((c) => c[0] === 'respawnPlayerAtSite').length, 1);
+  m.tick();   // the respawn settled - the landing tick
+  const land = world._calls.filter((c) => c[0] === 'setPlayerScenePosition');
+  const marker0 = q.getResource({ name: 'lair' }).siteDetails.questSpawnMarkers[0];
+  assert.equal(land.length, 1);
+  assert.equal(land[0][1].x, marker0.dungeonX * RDB_SIDE + marker0.flatPosition.x,
+    'the transfer form landed on its INDEXED marker 0');
 });
 
 test('MUTATION: getSiteLinks zero-wildcards and the two-resource cull', () => {

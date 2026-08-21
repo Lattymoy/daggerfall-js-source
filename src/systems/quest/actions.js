@@ -46,6 +46,7 @@ import { makeItemPermanent } from './item.js';
 import { QUEST_MESSAGES } from './quest.js';
 import { customParseInt, isPlayerAtBuildingType, isPlayerAtDungeonType, MARKER_PREFERENCE } from './place.js';
 import { getIndividualFactionID } from './person.js';
+import { markerScenePosition } from './sceneMount.js';
 
 /** TalkManager.cs:285-291 - the dialog-link resource types. */
 export const QUEST_INFO_RESOURCE_TYPE = Object.freeze({
@@ -1524,11 +1525,24 @@ export class RevealLocation extends ActionTemplate {
 }
 
 /** TeleportPc.cs: move the player to the Place (optionally a specific
- *  spawn marker). The transport itself is the scene's - the world
- *  seam carries it; with no world the action keeps trying, exactly a
- *  not-in-scene target. The save-resume half rides the session
- *  restore (recorded, Q4). */
+ *  spawn marker), TWO-PHASE (Q4-iii, the arrival law): the first live
+ *  tick starts the site respawn (world.respawnPlayerAtSite - C#'s
+ *  GetLocation + RespawnPlayer; false = unresolvable location, retry);
+ *  while world.isRespawning() the action idles; the tick AFTER the
+ *  respawn completes lands the player on the marker position
+ *  (world.setPlayerScenePosition) and completes. RearmAction lowers
+ *  resumePending - a rearmed teleport is a NEW instance and must not
+ *  land a stale position (C#'s desync note). With no world seam the
+ *  action keeps trying, exactly a not-in-scene target. The
+ *  save-resume half rides the session restore (recorded, Q4-iv:
+ *  resumePending/resumePosition are NOT in C#'s save shape, so a
+ *  mid-flight teleport re-runs whole after load). */
 export class TeleportPc extends ActionTemplate {
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.resumePending = false;
+    this.resumePosition = null;
+  }
   get pattern() {
     return /teleport pc to (?<aPlace>[a-zA-Z0-9_.-]+)|transfer pc inside (?<aPlace2>[a-zA-Z0-9_.-]+) marker (?<marker>\d+)/;
   }
@@ -1541,27 +1555,45 @@ export class TeleportPc extends ActionTemplate {
     action.targetMarker = g.marker != null ? questParseInt(g.marker) : -1;
     return action;
   }
+  rearmAction() {
+    super.rearmAction();
+    this.resumePending = false;
+  }
   update(_caller) {
     const hooks = this.parentQuest.hooks;
     const world = hooks?.world;
-    if (!world?.teleportPc) return;   // no transport - keep trying
+    if (!world?.respawnPlayerAtSite) return;   // no transport - keep trying
+    // Do nothing while player respawning
+    if (world.isRespawning?.()) return;
+    // Handle resume on the next tick after the respawn completes
+    if (this.resumePending) {
+      world.setPlayerScenePosition?.(this.resumePosition);
+      this.resumePending = false;
+      this.setComplete();
+      return;
+    }
     if (!hooks?.hasSiteLink?.(this.parentQuest, this.targetPlace)) {
       hooks?.createSiteLink?.(this.parentQuest, this.targetPlace);
     }
     const place = this.parentQuest.getPlace(this.targetPlace);
     if (!place) return;
-    // The usingMarker=false path still positions at spawn marker 0
-    // (TeleportPc.cs:120-129) - EVERY plain "teleport pc to" lands on
-    // the site's first spawn marker, and a site without one NREs in
-    // C# (the quest error-terminates; the natural throw here matches).
-    let marker;
+    // The indexed marker is picked BEFORE the respawn, the [0]
+    // fallback AFTER (C#'s order); an unresolvable location returns
+    // before any respawn begins.
+    let usingMarker = false;
+    let marker = null;
     if (this.targetMarker >= 0 && this.targetMarker < (place.siteDetails?.questSpawnMarkers?.length ?? 0)) {
       marker = place.siteDetails.questSpawnMarkers[this.targetMarker];
-    } else {
-      marker = place.siteDetails.questSpawnMarkers[0];
+      usingMarker = true;
     }
-    world.teleportPc(place, marker);
-    this.setComplete();
+    if (!world.respawnPlayerAtSite(place)) return;
+    // The usingMarker=false path still positions at spawn marker 0
+    // (TeleportPc.cs:120-135) - EVERY plain "teleport pc to" lands on
+    // the site's first spawn marker, and a site without one NREs in
+    // C# (the quest error-terminates; the natural throw here matches).
+    if (!usingMarker) marker = place.siteDetails.questSpawnMarkers[0];
+    this.resumePosition = markerScenePosition(marker);
+    this.resumePending = true;
   }
 }
 
@@ -1700,10 +1732,11 @@ export class CreateNpc extends ActionTemplate {
  *  view, answering true when THIS handle stood (a false is retried
  *  next tick, verbatim). world.raiseOnEncounterEvent rides along.
  *  HEADLESS (or a world without the spawn seam) the update returns
- *  before any progress - the corpus charter. DEFERRED, one row: the
- *  exterior-transition/init-world invalidation events
- *  (CreateFoe.cs:366-378) and the save envelope's in-flight-wave
- *  loss ride Q4's host mount. */
+ *  before any progress - the corpus charter. Q4-iii: the exterior-
+ *  transition/init-world invalidations land below (the machine's
+ *  notifyExteriorTransition/notifyInitWorld fan them out where C#
+ *  subscribes each instance in its ctor); the save envelope's
+ *  in-flight-wave loss stays Q4-iv's row. */
 export class CreateFoe extends ActionTemplate {
   constructor(parentQuest) {
     super(parentQuest);
@@ -1736,6 +1769,21 @@ export class CreateFoe extends ActionTemplate {
   initialiseOnSet() {
     this.lastSpawnTime = 0;
     this.spawnCounter = 0;
+  }
+
+  /** PlayerEnterExit_OnTransitionExterior (CreateFoe.cs:366-371):
+   *  foes pending placement into a dungeon or building interior are
+   *  invalid once the player steps outside. */
+  onTransitionExterior() {
+    this.pendingFoes = null;
+    this.spawnInProgress = false;
+  }
+
+  /** StreamingWorld_OnInitWorld (CreateFoe.cs:373-377): a streaming-
+   *  world rebuild orphans the loose-object container the same way. */
+  onInitWorld() {
+    this.pendingFoes = null;
+    this.spawnInProgress = false;
   }
 
   createNew(source, parentQuest) {
