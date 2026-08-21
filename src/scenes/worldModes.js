@@ -901,6 +901,7 @@ export function createWorldModes(host) {
     player.spawn(landing[0], landing[1], landing[2]);
     mode = 'exterior';
     questBridge?.onExteriorTransition();   // Q4-v: CreateFoe's pending-wave invalidation
+    npcSession?.onWorldChanged();          // TK-v: OnTransitionToExterior (:3599-3603)
     console.log('exterior: returned at door');
     return true;
   }
@@ -970,6 +971,7 @@ export function createWorldModes(host) {
     dungeonCtx = null;
     mode = 'exterior';
     questBridge?.onExteriorTransition();   // Q4-v: the same invalidation on the dungeon door
+    npcSession?.onWorldChanged();          // TK-v: OnTransitionToDungeonExterior (:3605-3609)
     player.collider = baseCollider();
     if (landing) {
       player.spawn(landing.pos[0], landing.pos[1], landing.pos[2]);

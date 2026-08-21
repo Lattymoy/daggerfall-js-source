@@ -12,6 +12,7 @@ import {
   NPC_TYPE, RANDOM_RULER, RANDOM_NOBLE, RANDOM_KNIGHT,
   DISLIKE_GREETING, NEUTRAL_GREETING, LIKE_GREETING, VERY_LIKE_GREETING,
 } from '../src/systems/npcSession.js';
+import { srand, randomRangeInclusive } from '../src/formats/dfRandom.js';
 
 const faction = (over = {}) => ({
   id: 0, parent: 0, type: 0, rep: 0, sgroup: 0, ggroup: 0, name: '',
@@ -68,20 +69,54 @@ test('the FALL.EXE greeting table is the C# one, entry for entry', () => {
   assert.equal(VERY_LIKE_GREETING, 7209);
 });
 
-test('the faction enums are FactionFile.cs values, not positions', () => {
-  assert.equal(FACTION_TYPE.Group, 2);
-  assert.equal(FACTION_TYPE.Individual, 4);
-  assert.equal(FACTION_TYPE.Province, 7);
-  assert.equal(FACTION_TYPE.Temple, 9);
-  assert.equal(FACTION_TYPE.Courts, 14);
-  assert.equal(FACTION_TYPE.People, 15);
-  assert.equal(SOCIAL_GROUP.Commoners, 0);
-  assert.equal(SOCIAL_GROUP.Merchants, 1);
-  assert.equal(SOCIAL_GROUP.Nobility, 3);
-  assert.equal(SOCIAL_GROUP.SGroup5, 5, 'the clamp bar');
+test('the faction enums are FactionFile.cs values, not positions - every member, not just the used ones', () => {
+  // A table pinned only where the code reads it is a table half
+  // pinned: the unused members are exactly the ones a later slice
+  // will reach for. Both are asserted whole, against FactionFile.cs.
+  assert.deepEqual({ ...FACTION_TYPE }, {
+    None: -1, Daedra: 0, God: 1, Group: 2, Subgroup: 3, Individual: 4,
+    Official: 5, VampireClan: 6, Province: 7, WitchesCoven: 8, Temple: 9,
+    KnightlyGuard: 10, MagicUser: 11, Generic: 12, Thieves: 13,
+    Courts: 14, People: 15,
+  });
+  assert.deepEqual({ ...SOCIAL_GROUP }, {
+    None: -1, Commoners: 0, Merchants: 1, Scholars: 2, Nobility: 3,
+    Underworld: 4, SGroup5: 5, SupernaturalBeings: 6, GuildMembers: 7,
+  });
+  assert.equal(SOCIAL_GROUP.SGroup5, 5, 'and 5 is the clamp bar SetTargetNPC folds at');
   assert.equal(RANDOM_NOBLE, 242);
   assert.equal(RANDOM_RULER, 852);
   assert.equal(RANDOM_KNIGHT, 853);
+});
+
+test('a fresh session starts at C#s field initializers', () => {
+  const { s } = makeSession();
+  assert.equal(s.currentNPCType, NPC_TYPE.Unset);
+  assert.equal(s.nameNPC, '');
+  assert.equal(s.reactionToPlayer, 0);
+  assert.equal(s.alreadyRejectedOnce, false);
+  assert.equal(s.sameTalkTargetAsBefore, false);
+  assert.equal(s.lastTargetStaticNPC, null);
+  assert.equal(s.lastTargetMobileNPC, null);
+  assert.equal(s.targetStaticNPC, null);
+  assert.equal(s.npcGreetingText, '');
+  assert.equal(s.selectedNpcWorkKey, 0, 'the questor key nobody has picked yet');
+  assert.equal(s.exteriorUsedForQuestors, 0);
+  assert.equal(s.npcsWithWork.size, 0);
+  assert.equal(s.castleNPCsSpokenTo.size, 0);
+  assert.deepEqual(s.toneReactionForTalkSession, [0, 0, 0]);
+  assert.deepEqual({ ...s.npcData }, { ...newNPCData() }, 'and the NPCData is a fresh one');
+});
+
+test('THE EMPTY FACTION is all zeros - every field of C#s default struct', () => {
+  // A faction the table cannot resolve reads as C#'s default struct,
+  // and the greeting ladder compares against every one of these
+  // fields. Pinned whole, because "id is 0" is not the same claim.
+  const { s } = makeSession({ factionData: () => null });
+  assert.deepEqual({ ...s.getParentGroupFaction(null) }, {
+    id: 0, parent: 0, type: 0, rep: 0, sgroup: 0, ggroup: 0, name: '',
+    ally1: 0, ally2: 0, ally3: 0, enemy1: 0, enemy2: 0, enemy3: 0,
+  });
 });
 
 test('newNPCData starts at C#s field initializers - allowGuildResponse alone is TRUE', () => {
@@ -827,6 +862,7 @@ test('TalkToNpc clears BOTH halves of the tone session - the cache is this objec
   const { s, calls } = makeSession();
   assert.deepEqual(s.toneReactionForTalkSession, [0, 0, 0], 'a fresh session starts empty');
   s.toneReactionForTalkSession[0] = 17;
+  s.toneReactionForTalkSession[1] = 8;
   s.toneReactionForTalkSession[2] = -4;
   assert.equal(s.talkToNpc().kind, 'talk');
   assert.deepEqual(s.toneReactionForTalkSession, [0, 0, 0], 'all three tones forgotten');
@@ -864,4 +900,265 @@ test('THE UNCLONED QUESTOR POST: the expansion writes back into the STORED messa
   // what the clone elsewhere exists to prevent
   assert.equal(s.getNPCQuestGreeting(), 'north2 again');
   assert.equal(stored[0].text, 'north2', 'the stored tokens keep being overwritten');
+});
+
+// ---------------------------------------------------------------
+// The event handlers (:3593-3629)
+// ---------------------------------------------------------------
+
+test('the six subscriptions do only THREE things, and one of them is the odd one out', () => {
+  const calls = [];
+  const { s } = makeSession({
+    raiseTopicListRebuild: () => calls.push('raise'),
+    getBuildingList: () => calls.push('buildings'),
+    clearQuestInfo: () => calls.push('questInfo'),
+    clearRumorMill: () => calls.push('mill'),
+  });
+  // the four that share two lines: map pixel changed, transition to
+  // exterior, transition to dungeon EXTERIOR, and load
+  s.onWorldChanged();
+  assert.deepEqual(calls, ['raise', 'buildings'], 'ask for a rebuild, then refresh the buildings NOW');
+  // the dungeon INTERIOR is the odd one out: it forgets the castle
+  // pool and asks for nothing
+  calls.length = 0;
+  s.castleNPCsSpokenTo.set(1, true);
+  s.castleNPCsSpokenTo.set(2, true);
+  s.onEnterDungeonInterior();
+  assert.equal(s.castleNPCsSpokenTo.size, 0, 'every castle NPC gets a fresh roll on each visit');
+  assert.deepEqual(calls, [], 'and this transition alone asks for no rebuild');
+  // a new game inherits neither quest topics nor rumors - C#s own
+  // comment says why: the classic save import
+  calls.length = 0;
+  s.onStartGame();
+  assert.deepEqual(calls, ['questInfo', 'mill']);
+  // ...and the work pool is NOT cleared by any of them: it is the
+  // location gate in buildQuestorPool that owns that
+  s.npcsWithWork.set(9, { npc: { nameSeed: 9 }, socialGroup: 1, buildingName: 'x' });
+  s.onWorldChanged();
+  s.onEnterDungeonInterior();
+  s.onStartGame();
+  assert.equal(s.npcsWithWork.size, 1, 'the work pool survives every one of them');
+});
+
+test('the greeting ladder walks EVERY membership: a second guild can beat the first', () => {
+  // The guards read `greetingIndex > N`, so they only bite once an
+  // earlier membership has already set the index - which needs TWO
+  // memberships to see at all. Guild 40 is an enemy (3); guild 50
+  // shares a parent (1), and reaches it only because 3 > 1.
+  const g40 = faction({ id: 40, name: 'Enemies', enemy1: 41 });
+  const g50 = faction({ id: 50, parent: 7, name: 'Cousins' });
+  const npcF = faction({ id: 41, parent: 7, name: 'NPCs' });
+  const { s } = makeSession(
+    { guildMemberships: () => [{ factionId: 40 }, { factionId: 50 }] },
+    { 40: g40, 50: g50 });
+  assert.deepEqual(s.getGreetingIndex(0, npcF), { greetingIndex: 1, reputation: -5 },
+    'the enemy arm fires first (-20), then the sibling arm improves it to 1 (+15)');
+  assert.equal(s.npcData.pcFactionName, 'Cousins', 'and the LAST arm to fire names the PC faction');
+  // reversed order, the guards hold: once the index is 1, the enemy
+  // arm-s reversed test cannot drag it back
+  const g40b = faction({ id: 40, name: 'Enemies', enemy1: 41 });
+  const npcRev = faction({ id: 41, parent: 7, name: 'NPCs', enemy1: 40 });
+  const { s: r } = makeSession(
+    { guildMemberships: () => [{ factionId: 50 }, { factionId: 40 }] },
+    { 40: g40b, 50: g50 });
+  assert.equal(r.getGreetingIndex(0, npcRev).greetingIndex, 3,
+    'the FORWARD enemy test is unguarded, so it wins even from index 1 - THE UNGUARDED FIRST ARM again');
+});
+
+test('the greeting ladder guards are STRICTLY greater - an equal index never re-fires', () => {
+  const shared = (id, over = {}) => faction({ id, parent: 7, name: `f${id}`, ...over });
+  // two memberships that BOTH match the same way: the second must not
+  // adjust the reputation again
+  const g1 = shared(40);
+  const g2 = shared(50);
+  const npcF = shared(41);
+  const { s } = makeSession(
+    { guildMemberships: () => [{ factionId: 40 }, { factionId: 50 }] },
+    { 40: g1, 50: g2 });
+  assert.deepEqual(s.getGreetingIndex(0, npcF), { greetingIndex: 1, reputation: 15 },
+    'ONE +15, not two - the guard is > and not >=');
+  // the same for the two in-common loops
+  const e1 = faction({ id: 40, name: 'a', enemy1: 99 });
+  const e2 = faction({ id: 50, name: 'b', enemy1: 99 });
+  const npcE = faction({ id: 41, name: 'n', enemy1: 99 });
+  const { s: e } = makeSession(
+    { guildMemberships: () => [{ factionId: 40 }, { factionId: 50 }] },
+    { 40: e1, 50: e2, 99: faction({ id: 99, name: 'shared' }) });
+  // 99 is neither faction's id, so the DIRECT enemy test never fires -
+  // this is the in-common loop alone, and only once
+  assert.deepEqual(e.getGreetingIndex(0, npcE), { greetingIndex: 4, reputation: 5 },
+    'ONE +5, however many memberships share that enemy');
+  const a1 = faction({ id: 40, name: 'a', ally1: 88 });
+  const a2 = faction({ id: 50, name: 'b', ally1: 88 });
+  const npcA = faction({ id: 41, name: 'n', ally2: 88 });
+  const { s: a } = makeSession(
+    { guildMemberships: () => [{ factionId: 40 }, { factionId: 50 }] },
+    { 40: a1, 50: a2, 88: faction({ id: 88, name: 'shared' }) });
+  assert.deepEqual(a.getGreetingIndex(0, npcA), { greetingIndex: 5, reputation: 5 },
+    'and ONE +5 from the allies-in-common loop, however many memberships share it');
+});
+
+test('the in-common loops read EXACTLY three slots each, from the first', () => {
+  // `for (i = 0; i < 3)` - a fourth slot does not exist, and reading
+  // one would compare undefined to undefined and match everything;
+  // starting at 1 would blind the arm to slot 1.
+  const only1 = faction({ id: 40, name: 'g', enemy1: 99 });
+  const npc1 = faction({ id: 41, name: 'n', enemy1: 99 });
+  const { s: first } = makeSession(
+    { guildMemberships: () => [{ factionId: 40 }] },
+    { 40: only1, 99: faction({ id: 99, name: 'e' }) });
+  assert.equal(first.getGreetingIndex(0, npc1).greetingIndex, 4, 'slot 1 on BOTH sides is read');
+  const only3 = faction({ id: 40, name: 'g', ally3: 88 });
+  const npc3 = faction({ id: 41, name: 'n', ally3: 88 });
+  const { s: third } = makeSession(
+    { guildMemberships: () => [{ factionId: 40 }] },
+    { 40: only3, 88: faction({ id: 88, name: 'a' }) });
+  assert.equal(third.getGreetingIndex(0, npc3).greetingIndex, 5, 'and slot 3 on both sides');
+  // two factions sharing NOTHING match nothing - which is only true
+  // because the loops stop at three
+  const none = faction({ id: 40, name: 'g', ally1: 1, ally2: 2, ally3: 3, enemy1: 4, enemy2: 5, enemy3: 6 });
+  const npcN = faction({ id: 41, parent: 7, name: 'n', ally1: 11, ally2: 12, ally3: 13, enemy1: 14, enemy2: 15, enemy3: 16 });
+  const { s: n } = makeSession({ guildMemberships: () => [{ factionId: 40 }] }, { 40: none });
+  assert.equal(n.getGreetingIndex(0, npcN).greetingIndex, 8, 'no fourth slot to match on');
+});
+
+test('the sibling test needs BOTH parents non-zero for its first arm', () => {
+  // `g.parent !== 0 && npcF.parent !== 0 && g.parent === npcF.parent`
+  // - the two guards are ANDed, so a guild with no parent cannot be
+  // a sibling of anything through this arm
+  const orphanGuild = faction({ id: 40, parent: 0, name: 'g' });
+  const rooted = faction({ id: 41, parent: 7, name: 'n' });
+  const { s } = makeSession({ guildMemberships: () => [{ factionId: 40 }] }, { 40: orphanGuild });
+  assert.equal(s.getGreetingIndex(0, rooted).greetingIndex, 8,
+    'a parentless guild is nobodys sibling - and 41s parent 7 is not the guilds id 40 either');
+});
+
+test('THE HEADLESS CHARTER: every absent seam on this module reads its C# default', () => {
+  const bare = new NPCSession({});
+  // the faction resolution with no PlayerGPS at all: id 0 either way
+  assert.equal(bare.getStaticNPCFactionData(0, 'Palace'), null, 'no court seam, no faction');
+  assert.equal(bare.getStaticNPCFactionData(0, 'Tavern'), null, 'no people seam either');
+  // the click arms still answer, on a reaction of 0
+  const out = bare.talkToMobileNPC({ nameNPC: 'A Passerby' });
+  assert.equal(bare.reactionToPlayer, 0, 'no reaction seam is a reaction of ZERO, not a refusal');
+  assert.equal(out.kind, 'talk', 'so the window road is open');
+  assert.equal(bare.npcData.factionData, null);
+  // a static click with no nameSeed reads seed 0
+  const bare2 = new NPCSession({});
+  bare2.npcsWithWork.set(0, { npc: { nameSeed: 0 }, socialGroup: 1, buildingName: 'x' });
+  assert.equal(bare2.talkToStaticNPC({ data: {} }).kind, 'questOffer',
+    'an absent nameSeed is SEED 0, and seed 0 is a real pool key');
+  // the castle arm with no seam is not in a castle
+  const bare3 = new NPCSession({});
+  assert.equal(bare3.isCastleNpcOfferingQuest(1), false, 'no castle seam, no castle');
+  assert.equal(bare3.castleNPCsSpokenTo.size, 0);
+  // the pool gate with no location seam reads 0, which the fresh
+  // exteriorUsedForQuestors already is - so the walk is skipped
+  const bare4 = new NPCSession({});
+  assert.equal(bare4.buildQuestorPool([{ buildingKey: 1, isNamedBuilding: true, npcs: [] }]), false,
+    'location 0 is where we already are');
+});
+
+test('the mobile portrait record and the static name fall to their C# defaults', () => {
+  const { s, calls } = makeSession();
+  s.setTargetMobileNPC({}, faction({ id: 1 }));
+  assert.deepEqual(calls.filter((c) => c[0] === 'target')[0][1].portrait, { archive: 'CommonFaces', record: 0 },
+    'no face id is record ZERO');
+  assert.equal(s.nameNPC, '', 'and no name is the empty string');
+});
+
+test('THE REPUTATION ROLL: Range(0,15) - 10, and equality PASSES', () => {
+  // C# rolls `DFRandom.random_range_inclusive(0, 15) - 10`, so the bar
+  // is -10..5. Seeding the shared stream makes the roll knowable, and
+  // the pin then sits exactly on it: reputation === reaction must take
+  // the greeting, not the rejection.
+  const probe = (rep, seed) => {
+    const f = faction({ id: 5, parent: 0, type: FACTION_TYPE.Group, rep: 0 });
+    const { s } = makeSession({ sgroupReputation: () => rep }, { 5: f });
+    s.npcData = newNPCData({ factionData: f });
+    srand(seed);
+    return { record: s.getNPCGreetingRecord(), rejected: s.alreadyRejectedOnce };
+  };
+  // find the roll this seed produces, then sit on it
+  srand(12345);
+  const reaction = randomRangeInclusive(0, 15) - 10;
+  assert.ok(reaction >= -10 && reaction <= 5, 'the bar is always within -10..5');
+  const onTheBar = probe(reaction, 12345);
+  assert.equal(onTheBar.rejected, false, 'reputation EQUAL to the reaction is not a rejection');
+  assert.equal(onTheBar.record, GREETINGS[1 + 24], 'it takes the ordinary stranger face');
+  const under = probe(reaction - 1, 12345);
+  assert.equal(under.rejected, true, 'one below IS');
+  assert.equal(under.record, GREETINGS[2 + 24]);
+});
+
+test('the castle door is shut to CHILDREN, and open with no castle seam only when one says so', () => {
+  const { s } = makeSession({ isPlayerInsideCastle: () => true, rolls: () => 0 });
+  assert.equal(s.talkToStaticNPC({ isChildNPC: true, data: { nameSeed: 5, factionID: 0 } }).kind, 'talk',
+    'a child in a castle is never offered work');
+  assert.equal(s.castleNPCsSpokenTo.size, 0, 'and is not even marked as spoken to');
+  assert.equal(s.talkToStaticNPC({ data: { nameSeed: 6, factionID: 0 } }).kind, 'questOffer',
+    'an adult beside them is');
+});
+
+test('the static click resets the one-answer counter too, on a repeat click', () => {
+  const npc = { displayName: 'Sirien', data: { nameSeed: 3, factionID: 0 } };
+  const { s } = makeSession();
+  s.talkToStaticNPC(npc);
+  s.npcData.numAnswersGivenTellMeAboutOrRumors = 1;
+  s.talkToStaticNPC(npc);
+  assert.equal(s.sameTalkTargetAsBefore, true);
+  assert.equal(s.npcData.numAnswersGivenTellMeAboutOrRumors, 0,
+    'one correct answer per talk session, even for the same NPC (:798)');
+});
+
+test('the 25% questor roll is Range(0, FOUR) - the denominator decides who is offered work', () => {
+  const npc = (nameSeed) => ({ nameSeed, factionID: 1, gender: 'male', isChild: false });
+  const buildings = [{ buildingKey: 5, buildingName: 'The Inn', buildingType: 'Tavern', isNamedBuilding: true, npcs: [npc(1)] }];
+  const at = (roll) => {
+    const { s } = makeSession(
+      { rolls: () => roll, currentLocationIndex: () => 1, nameBankOfCurrentRegion: () => 'B' },
+      { 1: faction({ id: 1, sgroup: SOCIAL_GROUP.Merchants }) });
+    s.buildQuestorPool(buildings);
+    return s.npcsWithWork.size;
+  };
+  // floor(0.7 * 4) = 2, which is BELOW 3 and continues; a five-sided
+  // roll would make it 3 and offer
+  assert.equal(at(0.7), 0, 'a roll of 2 of four gets no work');
+  assert.equal(at(0.9), 1, 'a roll of 3 of four does');
+  assert.equal(at(0.74), 0, 'and the boundary sits between them');
+  assert.equal(at(0.75), 1);
+});
+
+test('the pool resolves an ABSENT factionID as 0, through the same redirect', () => {
+  const buildings = [{
+    buildingKey: 5, buildingName: 'The Inn', buildingType: 'Tavern', isNamedBuilding: true,
+    npcs: [{ nameSeed: 1, gender: 'male', isChild: false }],   // no factionID at all
+  }];
+  const { s } = makeSession(
+    { rolls: () => 0.9, currentLocationIndex: () => 1, nameBankOfCurrentRegion: () => 'B',
+      peopleOfCurrentRegion: () => 2 },
+    { 2: faction({ id: 2, sgroup: SOCIAL_GROUP.Merchants }) });
+  s.buildQuestorPool(buildings);
+  assert.equal(s.npcsWithWork.size, 1, 'no faction id is faction 0, which reads the region PEOPLE');
+});
+
+test('the quest greeting needs a REAL match: no comparison seam is no greeting', () => {
+  const person = { isPerson: true, isQuestor: true, isIndividualNPC: false, questorData: { nameSeed: 77 } };
+  const { s } = makeSession({
+    questorPostMessages: () => new Map([[1n, [{ text: 'x' }]]]),
+    getQuest: () => ({ resources: new Map([['_q_', person]]) }),
+    isNPCDataEqual: undefined,   // no comparison seam
+    expandQuestMessage: (q, tokens) => { tokens[0].text = 'WRONG'; },
+  });
+  s.currentNPCType = NPC_TYPE.Static;
+  s.lastTargetStaticNPC = { data: { nameSeed: 78 } };
+  assert.equal(s.getNPCQuestGreeting(), '',
+    'an unproven match is NOT a match - the default is false, not true');
+});
+
+test('the offer flow spends the pool entry only OUTSIDE a castle - and the seam defaults to outside', () => {
+  // isCastleNpcOfferingQuest reads the same seam, so with none
+  // attached the castle arm cannot fire at all
+  const { s } = makeSession({ isPlayerInsideCastle: undefined, rolls: () => 0 });
+  assert.equal(s.isCastleNpcOfferingQuest(1), false, 'no seam is NOT inside a castle');
 });

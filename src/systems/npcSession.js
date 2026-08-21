@@ -42,6 +42,9 @@
 //   setupRumorMill()            - TK-i's mill
 //   assembleTopicLists()        - TK-ii's tree
 //   needsTopicListRebuild()     - the tree's rebuildTopicLists flag
+//   raiseTopicListRebuild()     - and the event handlers' raise
+//   getBuildingList()           - the tree's building refresh
+//   clearQuestInfo() / clearRumorMill() - OnStartGame's two
 //   clearTopicListRebuild()     - and its reset
 //   resetNPCKnowledge()         - TK-ii's tree
 //   resetToneSession()          - TK-iii's pipeline
@@ -716,5 +719,39 @@ export class NPCSession {
       this.npcsWithWork = new Map(d.npcsWithWork.map(([k, v]) => [k, { ...v, npc: { ...v.npc } }]));
     }
     if (d.castleNPCsSpokenTo != null) this.castleNPCsSpokenTo = new Map(d.castleNPCsSpokenTo);
+  }
+
+  // ---- the event handlers (:3593-3629) ----
+  //
+  // Six subscriptions (:506-511), and between them they do only three
+  // things. Ported here because TalkToDungeonInterior's is the ONLY
+  // reader of castleNPCsSpokenTo's reset, and because a host that
+  // wires four of the six has a topic list that quietly goes stale.
+
+  /** OnMapPixelChanged (:3593-3597) / OnTransitionToExterior
+   *  (:3599-3603) / OnTransitionToDungeonExterior (:3605-3609) /
+   *  OnLoadEvent (:3616-3620) - all four are the SAME two lines: ask
+   *  for a rebuild, and refresh the building list now. */
+  onWorldChanged() {
+    this.deps.raiseTopicListRebuild?.();
+    this.deps.getBuildingList?.();
+  }
+
+  /** OnTransitionToDungeonInterior (:3611-3614). Entering a dungeon
+   *  interior - which is what a castle is - forgets who has already
+   *  been spoken to, so every castle NPC gets a fresh 25% roll on
+   *  each visit. Note it does NOT ask for a rebuild: this is the one
+   *  transition that does not. */
+  onEnterDungeonInterior() {
+    this.castleNPCsSpokenTo.clear();
+  }
+
+  /** OnStartGame (:3625-3629). C#'s comment: "important when starting
+   *  from classic save import" - a new game inherits neither quest
+   *  topics nor rumors. Both live elsewhere in the port, so both ride
+   *  seams. */
+  onStartGame() {
+    this.deps.clearQuestInfo?.();
+    this.deps.clearRumorMill?.();
   }
 }

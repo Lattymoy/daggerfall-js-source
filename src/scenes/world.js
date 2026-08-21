@@ -958,6 +958,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // new origin (fast travel, quickload); CreateFoe's pending waves
     // invalidate across live AND scheduled quests.
     questBridge?.onInitWorld();
+    // TK-v: TalkManager's OnMapPixelChanged / OnLoadEvent (:3593-3597,
+    // :3616-3620) - a new world origin means a new building list and a
+    // stale topic list
+    npcSession.onWorldChanged();
   }
   let _traveling = false;
   async function fastTravelTo(pick, opts, computed) {
@@ -1450,6 +1454,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // and StartNewConversation spends it
     needsTopicListRebuild: () => topicTree.rebuildTopicLists,
     clearTopicListRebuild: () => { topicTree.rebuildTopicLists = false; },
+    raiseTopicListRebuild: () => { topicTree.rebuildTopicLists = true; },
+    getBuildingList: () => topicTree.getBuildingList(),
+    clearQuestInfo: () => topicTree.dictQuestInfo.clear(),
+    clearRumorMill: () => { rumorMill.listRumorMill.length = 0; },
     setupRumorMill: () => {},   // the mill's list is never null in JS - TK-i recorded the no-op
     resetNPCKnowledge: () => topicTree.resetNPCKnowledge(),
     resetToneSession: () => answerPipeline.resetToneSession(),
