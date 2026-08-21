@@ -42,7 +42,15 @@ export default defineConfig({
     // Neither carries game data: the editor asks for the user's ARENA2
     // through the same dataSource door the game uses. See
     // src/tools/paperdollViewer.js.
-    rollupOptions: { input: { main: 'index.html', viewer: 'viewer.html' } },
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        viewer: 'viewer.html',
+        // A PROTOTYPE, and deployed on purpose: a design that claims to
+        // adapt to a phone has to be opened on one.
+        enhanced: 'enhanced.html',
+      },
+    },
   },
   plugins: [arena2DevServer()],
 });
