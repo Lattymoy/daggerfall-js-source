@@ -28,6 +28,7 @@ import { addItem, goldStack } from './inventory.js';
 import { equipItem } from './equip.js';
 import { itemBaseValue, templateByIndex, mintCondition } from './itemTemplates.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
+import { getBool } from './settings.js';   // SETT: PlayerTorchFromItems
 
 // ItemEnums template indices
 const SHORT_SHIRT_M = 165, CASUAL_PANTS_M = 151;
@@ -64,9 +65,11 @@ const mint = (item) => mintCondition({
 });   // AUDIT 23 (items-5): condition mints with the item
 
 /** AssignStartingGear verbatim. `rolls` is the RNG seam;
- *  torchesFromItems ports DFU's setting (default OFF - not classic).
+ *  torchesFromItems ports DFU's setting (ships OFF - not classic);
+ *  SETT made it LIVE, so the default is a point-of-use store read and
+ *  an explicit argument still overrides it (the tests do).
  *  Returns the items added, newest last. */
-export function assignStartingGear(entity, { classIndex = 0, isCustom = false, rolls = Math.random, torchesFromItems = false } = {}) {
+export function assignStartingGear(entity, { classIndex = 0, isCustom = false, rolls = Math.random, torchesFromItems = getBool('Enhancements', 'PlayerTorchFromItems') } = {}) {
   entity.items = entity.items ?? [];
   const female = entity.gender === 'female';
   const added = [];

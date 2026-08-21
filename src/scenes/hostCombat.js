@@ -10,7 +10,7 @@
 
 import { SKILLS, tallySkill, skillValue } from '../systems/skills.js';
 import { ENEMY_GROUPS, dice100 } from '../combat/formulas.js';
-import { COMBAT_VOICES, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoice, rollVoiceRace, isHeavyDamage } from '../combat/combatVoices.js';   // C2-slice
+import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoice, rollVoiceRace, isHeavyDamage } from '../combat/combatVoices.js';   // C2-slice
 import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
 import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
@@ -184,7 +184,7 @@ const foeVoiceRace = (f, rolls) => (f.voiceRace ??= rollVoiceRace(rolls));
  *  (EnemyAttack.cs:217-226), behind the CombatVoices setting.
  *  Returns { clip, pitchLift } or null. */
 export function enemyAttackVoice(f, rolls = Math.random) {
-  if (!COMBAT_VOICES || !f.entity?.isClass) return null;
+  if (!combatVoicesEnabled() || !f.entity?.isClass) return null;
   if (!dice100(ATTACK_VOICE_CHANCE, rolls())) return null;
   return combatVoice({ race: foeVoiceRace(f, rolls), gender: foeVoiceGender(f), isAttack: true, rolls });
 }
@@ -193,7 +193,7 @@ export function enemyAttackVoice(f, rolls = Math.random) {
  *  (WeaponManager.cs:597-607); heavyDamage = damage >= maxHealth/4.
  *  Returns { clip, pitchLift } or null. */
 export function enemyPainVoice(f, damage, rolls = Math.random) {
-  if (!COMBAT_VOICES || !f.entity?.isClass || damage <= 0) return null;
+  if (!combatVoicesEnabled() || !f.entity?.isClass || damage <= 0) return null;
   if (!dice100(PAIN_VOICE_CHANCE, rolls())) return null;
   return combatVoice({
     race: foeVoiceRace(f, rolls), gender: foeVoiceGender(f), isAttack: false,
@@ -205,7 +205,7 @@ export function enemyPainVoice(f, damage, rolls = Math.random) {
  *  (WeaponManager.cs:385-389; the racial-override suppression rides
  *  the vampirism arc). Returns { clip, pitchLift } or null. */
 export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
-  if (!COMBAT_VOICES || isBow) return null;
+  if (!combatVoicesEnabled() || isBow) return null;
   if (!dice100(ATTACK_VOICE_CHANCE, rolls())) return null;
   return combatVoice({
     race: RACES[playerEntity.race] ?? 1, gender: playerEntity.gender ?? 'male', isAttack: true, rolls,

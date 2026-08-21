@@ -27,15 +27,20 @@ import {
   noteToHz, fmSpec, percussionSpec, velocityGain, volumeGain,
   panPosition, bendCents, PERCUSSION_CHANNEL,
 } from './gmSynth.js';
+import { getFloat } from './settings.js';   // SETT: MusicVolume
 
 /** How far ahead each wake-up schedules, and how often it wakes. The
  *  window must exceed the interval or notes fall through the gap. */
 export const LOOKAHEAD_SECONDS = 0.25;
 export const TICK_INTERVAL_MS = 100;
 
-/** Master gain for music, under the sound effects so speech and swings
- *  stay legible over it. */
+/** Master gain for music, under the sound effects so speech and
+ *  swings stay legible over it. SETT: DFU's MusicVolume scales it
+ *  (DaggerfallSongPlayer sets AudioSource.volume from the setting);
+ *  MUSIC_GAIN stays the port's own headroom against the effects bus,
+ *  which DFU gets from Unity's mixer and we do not have. */
 export const MUSIC_GAIN = 0.22;
+export const musicGain = () => MUSIC_GAIN * getFloat('Controls', 'MusicVolume', 0, 1);
 
 /** Lead given to a loop's new origin. It must be SMALLER than the
  *  lookahead: the re-pump schedules [now, now + lookahead), so a lead of a
@@ -102,7 +107,7 @@ export class SongPlayer {
   _ensureMaster() {
     if (this._master || !this.ctx) return;
     this._master = this.ctx.createGain();
-    this._master.gain.value = MUSIC_GAIN;
+    this._master.gain.value = musicGain();
     this._master.connect(this._destination ?? this.ctx.destination);
   }
 

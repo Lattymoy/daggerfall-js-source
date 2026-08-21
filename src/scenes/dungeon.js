@@ -31,6 +31,7 @@ import { routeKey } from '../ui/input.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { buildDungeonContext } from './dungeonContext.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U14: the overlay pointer seam
+import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 
 // Water surface color: presentation choice (see renderer WATER_VS note).
 // R11: the surface is the classic water tile (climate ground archive
@@ -185,8 +186,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
   addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; look/attack ride the same seams as mouse
     look: (dx, dy) => {
-      cam.yaw -= dx * 0.0025;
-      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * 0.0025));
+      cam.yaw -= dx * lookScale();
+      cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * lookScale() * lookInvert()));
     },
     attack: (dx, dy, held) => ctx.playerAttackInput(dx, dy, held),
     attackTap: () => ctx.playerClickAttack(),
@@ -195,8 +196,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
     ctx.reportMouse?.(e.movementX, e.movementY, document.pointerLockElement === canvas);   // raw input truth for F8
     if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }
     if (document.pointerLockElement !== canvas) return;
-    cam.yaw -= e.movementX * 0.0025;
-    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * 0.0025));
+    cam.yaw -= e.movementX * lookScale();
+    cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
   });
 
   status(`${dungeonName} - ${ctx.blockCount} blocks, ${ctx.drawList.length} draws`);

@@ -20,6 +20,7 @@ import { bootWorld } from './scenes/world.js';
 
 import { ensureArena2, getBytes } from './scenes/dataSource.js';
 import { installCursor } from './ui/cursor.js';
+import { getBool } from './systems/settings.js';   // SETT: the launcher gate
 
 async function boot() {
   const canvas = document.getElementById('c');
@@ -49,6 +50,24 @@ async function boot() {
   // in front of it would block every one of them. ?nomenu is the same
   // escape hatch for a human.
   if (params.has('shot') || params.has('nomenu')) return bootDungeon(canvas, renderer, params, status);
+  // SETT: THE LAUNCHER, before everything - DFU's setup wizard is the
+  // first screen of a DFU session, and its gate is verbatim here:
+  // SceneControl.cs:46 shows the wizard when the path is unvalidated
+  // OR ShowOptionsAtStart is set OR any key is held, and the wizard
+  // itself (:154) skips straight to the OPTIONS stage when the path is
+  // already good. Our GameFolder stage is the ARENA2 pick, which has
+  // already run by now (getBytes above), so a launch that gets here
+  // has a validated path - which leaves ShowOptionsAtStart (DFU ships
+  // it TRUE, which is why you see the wizard every launch until you
+  // turn it off) and ?launcher as the held-key analogue.
+  //
+  // ?shot/?nomenu return above, so no probe in tools/ reaches this.
+  if (params.has('launcher') || getBool('GUI', 'ShowOptionsAtStart')) {
+    const { runLauncher } = await import('./scenes/launcherScene.js');
+    status('settings');
+    await runLauncher(canvas, renderer, status);
+  }
+
   // U22: THE SPLASH. DaggerfallUI.InitGame pushes the Start window and
   // THEN pushes the VidPlayer on top of it, so ANIM0001.VID (splashVideo,
   // DaggerfallUI.cs:49) plays first and reveals the menu when it ends -

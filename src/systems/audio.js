@@ -12,6 +12,7 @@
 // (byte - 128) / 128) and cache by index.
 
 import { SndFile, SAMPLE_RATE } from '../formats/sndFile.js';
+import { getFloat } from './settings.js';   // SETT: SoundVolume
 
 /** Unsigned 8-bit PCM -> Float32 samples, verbatim (b - 128) / 128. */
 export function pcm8ToFloat32(bytes) {
@@ -28,6 +29,24 @@ export class AudioEngine {
     this.enabled = false;
     this._booted = false;
     this._listener = { x: 0, y: 0, z: 0, fx: 0, fy: 0, fz: -1 };
+    this._master = null;   // SETT: the SoundVolume bus (see _out)
+  }
+
+  /** SETT-slice: the master bus. DFU scales every clip by
+   *  DaggerfallUnity.Settings.SoundVolume (DaggerfallAudioSource sets
+   *  AudioSource.volume from it); a WebAudio graph does it once with
+   *  a gain node every source connects through, so the setting is one
+   *  multiply rather than one per call site. Re-read on each
+   *  connection so a launcher change lands on the next sound. */
+  _out() {
+    if (!this.ctx) return null;
+    // minted once per context (a re-created context invalidates it)
+    if (!this._master || this._master.context !== this.ctx) {
+      this._master = this.ctx.createGain();
+      this._master.connect(this.ctx.destination);
+    }
+    this._master.gain.value = getFloat('Controls', 'SoundVolume', 0, 1);
+    return this._master;
   }
 
   /** AUDIT 18 F6: the one bootstrap every host calls.
@@ -136,7 +155,7 @@ export class AudioEngine {
     src.buffer = buf;
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
-    src.connect(gain).connect(this.ctx.destination);
+    src.connect(gain).connect(this._out());
     src.start();
     return buf.duration;
   }
@@ -152,7 +171,7 @@ export class AudioEngine {
     src.loop = true;
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
-    src.connect(gain).connect(this.ctx.destination);
+    src.connect(gain).connect(this._out());
     src.start();
     return {
       stop() {
@@ -181,7 +200,7 @@ export class AudioEngine {
     pan.positionX.value = pos[0]; pan.positionY.value = pos[1]; pan.positionZ.value = pos[2];
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
-    src.connect(gain).connect(pan).connect(this.ctx.destination);
+    src.connect(gain).connect(pan).connect(this._out());
     src.start();
     return buf.duration;   // A3: the ambient channel's busy clock
   }
@@ -206,7 +225,7 @@ export class AudioEngine {
     pan.positionX.value = pos[0]; pan.positionY.value = pos[1]; pan.positionZ.value = pos[2];
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
-    src.connect(gain).connect(pan).connect(this.ctx.destination);
+    src.connect(gain).connect(pan).connect(this._out());
     src.start();
     return {
       stop() {
