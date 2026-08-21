@@ -56,7 +56,28 @@ test('the motion peaks on the frame the game says the blow lands', () => {
       Math.abs(at - hit) < 0.08,
       `${d.name}: hit lands at ${hit.toFixed(2)} but the motion peaks at ${at.toFixed(2)}`,
     );
-    assert.ok(best > 0.1, `${d.name}'s attack barely moves it — that is the bug this file exists for`);
+
+    // EVERY CHANNEL A KIND DEPENDS ON, SEPARATELY.
+    //
+    // This was `best > 0.1` on |z| + |pitch| * 0.4 — a SUM, so one
+    // channel could die while the other carried the total past the
+    // threshold. Found by mutation: cutting the bear's maul travel to a
+    // hundredth left the check passing 9 of 9, because the pitch was
+    // untouched and 0.32 * 0.4 clears 0.1 on its own.
+    //
+    // A summed metric is a metric that cannot tell you WHICH thing
+    // broke, and therefore cannot tell you that anything did.
+    const peak = (ch) => {
+      let m = 0;
+      for (let t = 0; t <= 1; t += 0.01) m = Math.max(m, Math.abs(beastAttackPose(d.attack, t, hit)[ch]));
+      return m;
+    };
+    const z = peak('z');
+    const pitch = peak('pitch');
+    // Every kind travels AND turns. A sting travels backward, which is
+    // still travel — the sign is checked separately below.
+    assert.ok(z > 0.05, `${d.name} (${d.attack}) barely travels: peak z ${z.toFixed(3)}`);
+    assert.ok(pitch > 0.1, `${d.name} (${d.attack}) barely turns: peak pitch ${pitch.toFixed(3)}`);
   }
 });
 
