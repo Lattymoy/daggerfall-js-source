@@ -15,6 +15,8 @@ import { loadQuestTables } from '../src/systems/quest/tables.js';
 import { QuestMachine } from '../src/systems/quest/machine.js';
 import { resetUid, nextUid } from '../src/systems/quest/quest.js';
 import { PlayerNotebook, MAX_MESSAGE_COUNT, MAX_LINES_QUESTS } from '../src/systems/notebook.js';
+import { Person } from '../src/systems/quest/person.js';
+import { Place } from '../src/systems/quest/place.js';
 
 const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', 'vendor', 'dfu-quests');
 const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');
@@ -305,4 +307,184 @@ test('the notebook save round-trips D:/Q:/A: prefixes and the double-newline law
   assert.deepEqual(nb2.getSaveData(), data, 'a fixed point through the line encoding');
   assert.equal(nb2.getNote(0)[0].formatting, 'highlight');
   assert.equal(nb2.getMessages().length, 0, 'the ring is not in the shape - lost on load, C#');
+});
+
+// ---------------------------------------------------------------
+// AUDIT XII boundary pins (the campaign's survivors)
+// ---------------------------------------------------------------
+
+test('the action walk saves REAL shapes with COPIES - no nulls, no aliasing either direction', () => {
+  resetUid();
+  const m = makeMachine();
+  const quest = m.parseQuestForLists(RICH_SRC, 0, { rolls: () => 0 });
+  const logAction = [...quest.tasks.values()].flatMap((t) => t.actions).find((a) => a.saveShape.some(([f]) => f === 'messageID'));
+  assert.deepEqual(logAction.getSaveData(), { messageID: 1011, stepID: 2 },
+    'a shaped action serializes its C#-named fields, never null');
+
+  const WT_SRC = ['Quest: __WT', 'QRC:', 'Message:  1011', ' x', '', 'QBN:',
+    '_a_ task:', ' when _b_ and _c_', '', '_b_ task:', ' say 1011', '', '_c_ task:', ' say 1011', '', 'variable _pad_'];
+  const q2 = m.parseQuestForLists(WT_SRC, 0, { rolls: () => 0 });
+  const whenTask = [...q2.tasks.values()].flatMap((t) => t.actions).find((a) => a.evaluations);
+  const data = whenTask.getSaveData();
+  const savedLen = data.evaluations.length;
+  whenTask.evaluations.push({ op: 'and', task: 'zz' });
+  assert.equal(data.evaluations.length, savedLen, 'the save is a COPY - live mutation never reaches it');
+  const fresh = [...q2.tasks.values()].flatMap((t) => t.actions).find((a) => a.evaluations);
+  fresh.restoreSaveData(data);
+  fresh.evaluations.push({ op: 'or', task: 'ww' });
+  assert.equal(data.evaluations.length, savedLen, 'the restore is a COPY too');
+});
+
+test("the walk's null-shape arm answers null, and a sym field serializes as {original}", () => {
+  resetUid();
+  const m = makeMachine();
+  const quest = m.parseQuestForLists(RICH_SRC, 0, { rolls: () => 0 });
+  const SRC = ['Quest: __ST', 'QRC:', 'Message:  1011', ' x', '', 'QBN:',
+    ' start task _tt_', '', '_tt_ task:', ' say 1011', '', 'variable _pad_'];
+  const q2 = m.parseQuestForLists(SRC, 0, { rolls: () => 0 });
+  const startTask = [...q2.tasks.values()].flatMap((t) => t.actions).find((a) => a.taskSymbol);
+  assert.deepEqual(startTask.getSaveData(), { taskSymbol: { original: '_tt_' } });
+  void quest;
+});
+
+test('EndQuest gates: factionId EXACTLY 1 still changes reputation; no log means NO filing; a complete quest re-ended never throws', () => {
+  resetUid();
+  const reps = [];
+  const filed = [];
+  const m = makeMachine({ addFinishedQuest: (msgs) => filed.push(msgs) });
+  const quest = m.parseQuestForLists(RICH_SRC, 1, { rolls: () => 0 });
+  quest.hooks = { ...quest.hooks, changeReputation: (fid, amt, prop) => reps.push([fid, amt, prop]) };
+  quest.endQuest();   // never started - no log entries
+  assert.deepEqual(reps, [[1, -2, true]], 'factionId > 0 is the gate - 1 qualifies');
+  assert.equal(filed.length, 0, 'an EMPTY log never files');
+  quest.questComplete = true;
+  quest.endQuest();   // getLogMessages answers null - the && gate holds
+  assert.equal(filed.length, 0);
+});
+
+test('envelope literals: smallerDungeonsState 0, person race -1 and undiscovered false, restored clocks and places stand resolved', () => {
+  resetUid();
+  const m = makeMachine();
+  const quest = m.parseQuestForLists(RICH_SRC, 0, { rolls: () => 0 });
+  assert.equal(quest.getSaveData().smallerDungeonsState, 0);
+
+  const p = new Person(quest);
+  assert.equal(p.getSaveData().race, -1, 'the port stores no race - the C# default serializes');
+  assert.equal(p.getSaveData().discoveredThroughTalkManager, false);
+
+  const clock = quest.getResource({ name: 'c' });
+  clock.travelTimePending = true;
+  clock.restoreSaveData(clock.getSaveData());
+  assert.strictEqual(clock.travelTimePending, false, 'a restored clock is resolved');
+
+  const pl = new Place(quest);
+  pl.restoreSaveData({ scope: 'local', name: 'x', p1: 0, p2: 0, p3: 0, siteDetails: { siteType: 1 } });
+  assert.strictEqual(pl.sitePending, false, 'a restored site is a BOOLEAN false, not the details object');
+});
+
+test('a restored quest with no clock seam reads time ZERO; the stale-link scrub removes EXACTLY the stale one', () => {
+  resetUid();
+  const m = makeMachine();
+  const data = m.parseQuestForLists(RICH_SRC, 0, { rolls: () => 0 }).getSaveData();
+  const m2 = new QuestMachine();   // NO nowSeconds dep
+  m2.restoreSaveData({
+    siteLinks: [
+      { questUID: 424242, placeSymbol: { original: '_gone_', name: 'gone' }, siteType: 2, mapId: 1, buildingKey: 0, magicNumberIndex: 0 },
+      { questUID: data.uid, placeSymbol: { original: '_kept_', name: 'kept' }, siteType: 2, mapId: 1, buildingKey: 0, magicNumberIndex: 0 },
+    ],
+    quests: [data],
+  });
+  assert.equal(m2.getQuest(data.uid).nowSeconds(), 0, 'the seam default is zero');
+  assert.deepEqual(m2.siteLinks.map((l) => l.placeSymbol.name), ['kept'], 'splice(i, 1) - the neighbour survives');
+});
+
+// ---------------------------------------------------------------
+// The notebook boundaries
+// ---------------------------------------------------------------
+
+test('the notebook literals: 70 / 50 / 20 / 28', async () => {
+  const nbmod = await import('../src/systems/notebook.js');
+  assert.equal(nbmod.MAX_LINE_LENGTH, 70);
+  assert.equal(nbmod.MAX_MESSAGE_COUNT, 50);
+  assert.equal(nbmod.MAX_LINES_QUESTS, 20);
+  assert.equal(nbmod.MAX_LINES_SMALL, 28);
+});
+
+test('the wrap column is EXACT: 70 chars stay one line, 71 wrap; the remainder starts one past the space', () => {
+  const nb = new PlayerNotebook(nbDeps);
+  nb.addNote('b'.repeat(35) + ' ' + 'c'.repeat(34));   // 70 exactly
+  assert.equal(nb.getNote(0).filter((t) => t.formatting === 'text').length, 1, '70 is NOT > 70');
+  nb.addNote('b'.repeat(35) + ' ' + 'c'.repeat(35));   // 71
+  const body = nb.getNote(1).filter((t) => t.formatting === 'text').map((t) => t.text);
+  assert.equal(body.length, 2);
+  assert.equal(body[1], ' ' + 'c'.repeat(35), 'the remainder starts at pos + 1 - the space itself drops');
+});
+
+test('index boundaries answer STRICT null; moveNote to the SAME slot is the identity', () => {
+  const nb = new PlayerNotebook(nbDeps);
+  nb.addNote('one'); nb.addNote('two');
+  assert.strictEqual(nb.getNote(2), null, 'index == count is out');
+  assert.strictEqual(nb.getFinishedQuest(0), null);
+  nb.moveNote(1, 1);
+  assert.deepEqual(nb.getNotes().map((n) => n[2].text), [' one', ' two'], 'destIdx == srcIdx never decrements');
+  nb.addFinishedQuestTokens([{ formatting: 'text', text: 'fq1' }]);
+  nb.addFinishedQuestTokens([{ formatting: 'text', text: 'fq2' }]);
+  nb.moveFinishedQuest(0, 2);
+  assert.deepEqual(nb.getFinishedQuests().map((e) => e[0].text), ['fq2', 'fq1'], 'the finished-quest move corrects DOWN too');
+});
+
+test('the guards hold their exact arms: null/empty inputs park, single entries file', () => {
+  const nb = new PlayerNotebook(nbDeps);
+  nb.addNoteTokens(null);
+  nb.addNoteTokens([]);
+  nb.addNoteTokens([{ formatting: 'text', text: 'solo' }]);
+  assert.equal(nb.getNotes().length, 1, 'ONE token files one note - the length gate is === 0');
+  nb.addFinishedQuestTokens(null);
+  nb.addFinishedQuestTokens([]);
+  nb.addFinishedQuestTokens([{ formatting: 'text', text: 'x' }]);
+  assert.equal(nb.getFinishedQuests().length, 1, 'the > 0 gate: empty stays out, one goes in');
+  nb.addFinishedQuest(null);
+  nb.addFinishedQuest([]);
+  assert.equal(nb.getFinishedQuests().length, 1, 'the filing guard parks null and empty without a throw');
+});
+
+test('the page splits fire at their EXACT token boundaries', () => {
+  // notes: 28 one-line tokens land 2+56 entries - (58-2) >= 56 splits;
+  // the continuation carries its own header and nothing else
+  const nb = new PlayerNotebook(nbDeps);
+  nb.addNoteTokens(Array.from({ length: 28 }, (_, i) => ({ formatting: 'text', text: `t${i}` })));
+  assert.equal(nb.getNotes().length, 2, 'the split fired exactly at maxLinesSmall*2');
+  assert.equal(nb.getNotes()[1].length, 2, 'the continuation is header-only');
+
+  // finished quests: 39 tokens + the newline make (42-2) == 40 - the
+  // >= boundary fires; 38 do not
+  const quest = { displayName: 'B', questSuccess: true };
+  const nb2 = new PlayerNotebook(nbDeps);
+  nb2.addFinishedQuest([{ parentQuest: quest, getTextTokens: () => Array.from({ length: 39 }, (_, i) => ({ formatting: 'text', text: `l${i}` })) }]);
+  assert.equal(nb2.getFinishedQuests().length, 3, '(entry - 2) >= 40 EXACTLY splits');
+  const nb3 = new PlayerNotebook(nbDeps);
+  nb3.addFinishedQuest([{ parentQuest: quest, getTextTokens: () => Array.from({ length: 38 }, (_, i) => ({ formatting: 'text', text: `l${i}` })) }]);
+  assert.equal(nb3.getFinishedQuests().length, 1, 'one under the boundary stays whole');
+});
+
+test('clear() empties BOTH lists completely', () => {
+  const nb = new PlayerNotebook(nbDeps);
+  nb.addNote('one'); nb.addNote('two');
+  nb.addFinishedQuestTokens([{ formatting: 'text', text: 'fq' }]);
+  nb.clear();
+  assert.equal(nb.getNotes().length, 0);
+  assert.equal(nb.getFinishedQuests().length, 0);
+});
+
+test('remove and insert touch EXACTLY one entry', () => {
+  const nb = new PlayerNotebook(nbDeps);
+  nb.addNote('one'); nb.addNote('two'); nb.addNote('three');
+  nb.removeNote(1);
+  assert.deepEqual(nb.getNotes().map((n) => n[2].text), [' one', ' three'], 'removeNote splices ONE');
+  nb.addNote('zero', 0);
+  assert.deepEqual(nb.getNotes().map((n) => n[2].text), [' zero', ' one', ' three'], 'an indexed insert deletes NOTHING');
+  nb.addFinishedQuestTokens([{ formatting: 'text', text: 'a' }]);
+  nb.addFinishedQuestTokens([{ formatting: 'text', text: 'b' }]);
+  nb.removeFinishedQuest(0);
+  assert.deepEqual(nb.getFinishedQuests().map((e) => e[0].text), ['b']);
 });

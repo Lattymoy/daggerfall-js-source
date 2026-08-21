@@ -897,3 +897,26 @@ test('TeleportPc marker boundaries: an INDEXED marker lands its own position; an
   assert.equal(land2[0][1].x, mk2[0].dungeonX * RDB_SIDE + mk2[0].flatPosition.x,
     'index == length misses the strict < and falls to spawn marker 0');
 });
+
+test('isPlayerAtBuildingType: the wildcard sets, the guildhall faction arms, and the plain type equality (a Q4-iv sweep found these arms unpinned)', async () => {
+  const { isPlayerAtBuildingType, isPlayerAtDungeonType } = await import('../src/systems/quest/place.js');
+  const at = (building) => ({ playerInside: () => ({ building }) });
+  assert.equal(isPlayerAtBuildingType({ playerInside: () => null }, -1, 0), false, 'outside answers false');
+  assert.equal(isPlayerAtBuildingType(at({ buildingType: 15 }), -1, 0), true, 'p3 0: any valid building');
+  assert.equal(isPlayerAtBuildingType(at({ buildingType: 17 }), -1, 1), true, 'p3 1: houses');
+  assert.equal(isPlayerAtBuildingType(at({ buildingType: 15 }), -1, 1), false, 'a tavern is not a house');
+  assert.equal(isPlayerAtBuildingType(at({ buildingType: 9 }), -1, 2), true, 'p3 2: shops');
+  assert.equal(isPlayerAtBuildingType(at({ buildingType: 15 }), -1, 9), false, 'an unhandled p3 warns and answers false');
+  assert.equal(isPlayerAtBuildingType(at({ buildingType: 15 }), 11, 0), false, 'guildhall asked, tavern found');
+  assert.equal(isPlayerAtBuildingType(at({ buildingType: 11, factionId: 40 }), 11, 0), true, 'p3 0: any guildhall');
+  assert.equal(isPlayerAtBuildingType(at({ buildingType: 11, factionId: 40 }), 11, 40), true, 'the faction matches');
+  assert.equal(isPlayerAtBuildingType(at({ buildingType: 11, factionId: 40 }), 11, 99), false, 'the faction gates');
+  assert.equal(isPlayerAtBuildingType(at({ buildingType: 15 }), 15, 0), true, 'a named type compares directly');
+  assert.equal(isPlayerAtBuildingType(at({ buildingType: 15 }), 12, 0), false);
+
+  const inDungeon = (dungeonType) => ({ playerInside: () => ({ dungeon: { dungeonType } }) });
+  assert.equal(isPlayerAtDungeonType({ playerInside: () => null }, -1), false);
+  assert.equal(isPlayerAtDungeonType(inDungeon(5), -1), true, '-1 is the any-dungeon wildcard');
+  assert.equal(isPlayerAtDungeonType(inDungeon(5), 5), true);
+  assert.equal(isPlayerAtDungeonType(inDungeon(5), 6), false);
+});
