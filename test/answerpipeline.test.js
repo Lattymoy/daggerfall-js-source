@@ -1027,3 +1027,22 @@ test('getHonoric and getOldLeaderFateString read their localized keys', () => {
   assert.equal(pipe.getHonoric('female'), "Ma'am");
   assert.equal(pipe.getOldLeaderFateString(0), 'died of heart failure');
 });
+
+test('startNewConversation resets the QUESTION half - the counter, the opening and the standing item', () => {
+  // C# resets these three in StartNewConversation (:869-871), which
+  // runs when the window opens; the TONE half is TalkToNpc's, at a
+  // different moment. Both halves have to exist for the NPC session to
+  // call them.
+  const { pipe } = makePipe();
+  pipe.getPCGreetingOrFollowUpText(1, 5, 'Sirien');
+  pipe.getAnswerText(newListItem({ questionType: QUESTION_TYPE.WhereAmI }));
+  pipe.questionOpeningText = 'stale';
+  pipe.lastToneIndex = 2;
+  assert.equal(pipe.numQuestionsAsked, 1);
+  assert.notEqual(pipe.currentQuestionListItem, null);
+  pipe.startNewConversation();
+  assert.equal(pipe.numQuestionsAsked, 0, 'so the next question opens with a GREETING, not a follow-up');
+  assert.equal(pipe.questionOpeningText, '');
+  assert.equal(pipe.currentQuestionListItem, null);
+  assert.equal(pipe.lastToneIndex, 2, 'and the tone half is NOT touched here - it belongs to the click');
+});

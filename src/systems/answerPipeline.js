@@ -223,6 +223,18 @@ export class AnswerPipeline {
     this.lastToneIndex = toneIndex;
   }
 
+  /** StartNewConversation's half of the reset (:869-871): the
+   *  question counter, the opening text and the standing list item.
+   *  These are TalkManager fields in C#, so the NPC session calls this
+   *  through its resetQuestionSession seam rather than keeping copies
+   *  of its own. The TONE half is TalkToNpc's, below, at a different
+   *  moment. */
+  startNewConversation() {
+    this.numQuestionsAsked = 0;
+    this.questionOpeningText = '';
+    this.currentQuestionListItem = null;
+  }
+
   /** The tone half of TalkToNpc's session reset (:2657-2662) - NOT
    *  StartNewConversation, which resets the question counter and the
    *  opening text instead (:867-878). TalkToNpc runs on the CLICK,
