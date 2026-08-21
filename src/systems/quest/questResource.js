@@ -82,6 +82,15 @@ export class QuestResource {
     this.rearmPlayerClick();
   }
 
+  /** ExpandMacro (QuestResource.cs): the base answers nothing; the
+   *  resources override. Returns a string or false. */
+  expandMacro(_macroType) { return false; }
+
+  /** Gender (QuestResource.cs:100-103): Male unless overridden
+   *  (Person -> npcGender, Foe -> humanoidGender); the pronoun
+   *  macros read it off lastResourceReferenced. */
+  get gender() { return 0; }   // GENDERS.Male
+
   dispose() {}
 
   /** SetPlayerClicked (QuestResource.cs:264-272): a muted or

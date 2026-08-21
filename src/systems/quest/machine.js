@@ -169,6 +169,27 @@
 //   removeFactionListener/activeFactionPersons ride the hooks for
 //   WhenNpcIsAvailable (TalkManager reads the map at Q4)
 //
+// Q4-i, the macro engine's seams (questMacros.js; every one optional
+// - a missing seam surfaces C#'s own error shapes LOUDLY):
+//   deps playerName()          - PlayerEntity.Name (%pcn/%pcf, and
+//                                %pct's null-MCP fall-through)
+//   deps playerRaceName()      - BirthRaceTemplate.Name (%ra)
+//   deps.world getRandomText(id) - TEXT.RSC random records (%jok 200,
+//                                %oth 201+oathId)
+//   deps.world flatCaption(archive, record) - FLATS.CFG caption
+//                                ("young lady in green"; =person_)
+//   deps.world playerVampireClanName() - %vam (null = the C# error
+//                                literal); regionVampireClanName(
+//                                regionIndex) - %vcn
+//   deps.world divineOfTempleFaction(factionId) - %god's temple arm
+//   deps.world locationCompassDirection(place) /
+//              buildingCompassDirection(buildingKey) - %di through
+//                                TalkManager's compass
+//   deps.world findFactionByTypeAndRegion(type, regionIndex) - the
+//                                %rn/%rt/%t Province walk
+//   deps.world showClocksAsCountdown() - the journal clock setting
+//                                (=clock_; DFU default false)
+//
 // The 64 global variables (classic SAVEVARS.DAT state) live here and
 // reach tasks through quest.hooks.globalVars.
 
@@ -280,6 +301,8 @@ export class QuestMachine {
       // GetReputation (ReputeExceedsDo reads it; an unknown faction
       // reads 0, factionRep's own law).
       lastNPCClicked: () => this.deps.lastNPCClicked?.() ?? null,
+      playerName: () => this.deps.playerName?.() ?? null,
+      playerRaceName: () => this.deps.playerRaceName?.() ?? null,
       addFactionListener: (factionID, owner) => this.addFactionListener(factionID, owner),
       removeFactionListener: (factionID) => this.removeFactionListener(factionID),
       activeFactionPersons: (factionID) => this.activeFactionPersons(factionID),

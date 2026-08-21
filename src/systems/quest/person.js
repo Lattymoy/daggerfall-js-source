@@ -102,8 +102,58 @@ export class Person extends QuestResource {
     return this.homePlaceSymbol ? this.parentQuest.getPlace(this.homePlaceSymbol) : null;
   }
 
-  /** PlaceAtHome (Person.cs:414-429): pins this person to their
-   *  generated home Place - never questors or individuals. */
+  get gender() { return this.npcGender; }
+
+  /** GetDialogPlace (Person.cs): the assigned Place, else home. */
+  getDialogPlace() {
+    if (this.assignedPlaceSymbol) return this.parentQuest.getPlace(this.assignedPlaceSymbol);
+    return this.getHomePlace();
+  }
+
+  /** ExpandMacro (Person.cs:295-350): stores this person (and their
+   *  dialog place) as the quest's last-referenced for pronouns/%di.
+   *  _symbol_ display name; __symbol_ building, ___symbol_ town,
+   *  ____symbol_ region - all off the DIALOG place, the literal
+   *  "BLANK" when the person stands nowhere; =symbol_ the flat
+   *  caption through the world's FLATS.CFG seam (C#'s
+   *  IsIndividualNPC flat1 arm is a DEAD STORE - the gender if-else
+   *  overwrites it unconditionally, kept as written); ==symbol_ the
+   *  faction name (a questor answers the QUEST's faction - the
+   *  guild - not their own). */
+  expandMacro(macroType) {
+    const quest = this.parentQuest;
+    quest.lastResourceReferenced = this;
+    const dialogPlace = this.getDialogPlace();
+    if (dialogPlace) quest.lastPlaceReferenced = dialogPlace;
+    const world = quest.hooks?.world;
+    switch (macroType) {
+      case 1:   // NameMacro1 - display name
+        return this.displayName;
+      case 2:   // NameMacro2 - building name
+        return dialogPlace ? dialogPlace.siteDetails.buildingName : 'BLANK';
+      case 3:   // NameMacro3 - town name
+        return dialogPlace ? dialogPlace.siteDetails.locationName : 'BLANK';
+      case 4:   // NameMacro4 - region name
+        return dialogPlace
+          ? (world?.maps?.getRegion?.(dialogPlace.siteDetails.regionIndex)?.name ?? 'BLANK')
+          : 'BLANK';
+      case 5: {   // DetailsMacro - the flat caption ("young lady in green")
+        // FactionFile.GetFlatData: archive = flat >> 7, record = flat & 0x7f
+        const flat = (this.npcGender === GENDERS.Male ? this.factionData?.flat1 : this.factionData?.flat2) ?? 0;
+        return world?.flatCaption?.(flat >> 7, flat & 0x7f) ?? false;
+      }
+      case 6: {   // FactionMacro
+        if (this.isQuestor) {
+          const guild = world?.getFactionData?.(quest.factionId);
+          return guild ? guild.name : false;
+        }
+        return this.factionData?.name ?? false;
+      }
+      default:
+        return false;
+    }
+  }
+
   /** Tick (Person.cs:385-404): the auto-home hot-place (AUDIT VI).
    *  A generated home stands dormant until the PLAYER ENTERS it -
    *  then the NPC is placed exactly as "place npc at home" would,
@@ -118,6 +168,8 @@ export class Person extends QuestResource {
     }
   }
 
+  /** PlaceAtHome (Person.cs:414-429): pins this person to their
+   *  generated home Place - never questors or individuals. */
   placeAtHome() {
     const homePlace = this.parentQuest.getPlace(this.homePlaceSymbol);
     if (!homePlace || this.isQuestor || this.isIndividualNPC) return false;

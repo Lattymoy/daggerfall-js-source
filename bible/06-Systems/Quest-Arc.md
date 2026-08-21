@@ -776,12 +776,72 @@ if any, will amend these sections.
   always-on flag (the triggered-update path is the base no-op), and
   the pattern digit class has no corpus witness.
 
+## Q4-i - THE MACRO ENGINE (SHIPPED 2026-08-21)
+
+QuestMacroHelper.cs + QuestMCP.cs + the four resource ExpandMacro
+overrides + the MacroHelper subset the quest path routes through
+(questMacros.js). Message.getTextTokens now EXPANDS BY DEFAULT, as
+DFU's does - message.js's "macro expansion pends the macro slice"
+charter CLOSES.
+
+- THE MACRO GRAMMAR: the ordered alternation (____/___/__/_ name
+  macros, == faction, =# binding, = details, % context), one macro
+  per word, the token being the exact prefix..suffix substring so
+  adjacent punctuation survives. KEPT QUIRK: the inner class
+  [a-zA-Z0-9.]+ has no underscore - `_one_day_` truncates to
+  `_one_` and misses its resource, the raw text stands.
+- THE ERROR SHAPES are C#'s own GetValue ladder: table miss ->
+  %x[undefined] (the corpus's 14 %G3 + 1 %G1 REALLY render that way
+  in DFU - only %G has a capitalized handler), null entry ->
+  [unhandled], null answer -> [nullMCP], a NotImplemented source
+  falling past the second provider -> [srcDataUnknown]. Headless the
+  world-backed handlers answer null and the shapes surface LOUDLY.
+- THE QUEST DATA SOURCE (QuestMCP): UID-seeded %n/%fn/%mn (the
+  +3457 male offset), %kno's The-trim, the pronoun family off
+  lastResourceReferenced (Male default; %G capitalizes; %G2/%G3
+  uppercase DO NOT EXIST in DFU's table), %vcn by the person's home
+  region, %qdt off the journal's currentLogMessageId (falling to
+  quest start), %oth by the questor's FACTION race over TEXT.RSC
+  201+id, %god's temple arm and the Range(0,9) divine switch on the
+  quest rolls, and %di with C#'s NRE KEPT - LastPlaceReferenced
+  .Scope is read BEFORE the null check, and EXACTLY THREE corpus
+  messages crash on it (P0B00L01:1014, R0C10Y12:1012,
+  R0C11Y03:1011), pinned by id.
+- THE STATIC HANDLERS over new seams: %pcn/%pcf (deps.playerName),
+  %ra (deps.playerRaceName), %pct falling through the null-MCP arm
+  to the PLAYER's name (the C# chain, kept whole), %reg/%crn/%cn
+  off the map, the %rn/%rt/%t Province walk
+  (findFactionByTypeAndRegion + the ruler-title table 1..12), %nrn
+  seeded by rulerNameSeed & 0xffff, %vam's error literal, %jok
+  (TEXT.RSC 200), %dat, %pg3.
+- THE RESOURCE OVERRIDES: Person (display name; building/town/
+  region off the DIALOG place - assigned else home - with the
+  literal "BLANK"; the FLATS.CFG caption through world.flatCaption
+  with C#'s dead individual-flat arm kept as written; the questor
+  FactionMacro answers the QUEST's guild), Place (building/location/
+  region names + the older-save regionIndex-0 workaround arm), Item
+  (artifact short name, gold stack count, else the long name -
+  ResolveItemLongName's material-prefix half rides the inventory
+  arc, one convention with the port's shop labels), Foe (the
+  INVERSION: _sym_ = TYPE name, =sym_ = display name), Clock
+  (ceiling days of starting time; the countdown setting seam).
+  Every expansion latches lastResourceReferenced/lastPlaceReferenced
+  for the pronoun/%di context, verbatim.
+- revealDialogLinks (talk answers + quest popups ONLY) feeds
+  hooks.addDialog per resource type on NameMacro1; the grammar pass
+  is DefaultGrammarRules' identity, skipped whole. ExpandLetterSignoff
+  rides Q4-ii with its consumer (the offer letter).
+
+Gate: `test/questmacros.test.js` - 16 pins: the 3,817-message corpus
+expansion with the exact NRE trio and error-shape counts, and the
+crafted-world law pins above.
+
 ## Queue
 
-THE Q4 CARVE (scouted 2026-08-21, sources sized): four slices, in
-dependency order.
+THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
+slices, in dependency order.
 
-- **Q4-i - THE MACRO ENGINE**: QuestMacroHelper.cs (381 -
+- **Q4-i - THE MACRO ENGINE** (SHIPPED above): QuestMacroHelper.cs (381 -
   ExpandQuestMessage over the message token stream: the _symbol_/
   __symbol_/=symbol_/=qsymbol_ resource macros and the %-macro
   routing), QuestMCP.cs (294 - Quest's MacroDataSource: %n/%fn/%mn

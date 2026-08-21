@@ -149,6 +149,17 @@ export class Clock extends QuestResource {
    *  come off the remainder; at zero the SAME-NAMED task starts and
    *  the clock finishes. The world clock is the quest's nowSeconds
    *  seam (classic game seconds, machine-injected). */
+  /** ExpandMacro (Clock.cs): =symbol_ answers days remaining (the
+   *  ShowQuestJournalClocksAsCountdown setting picks remaining vs
+   *  starting; DFU default false = the STARTING time), Ceiling of
+   *  seconds/86400. */
+  expandMacro(macroType) {
+    if (macroType !== 5) return false;   // DetailsMacro
+    const secs = this.parentQuest?.hooks?.world?.showClocksAsCountdown?.()
+      ? this.remainingTimeInSeconds : this.startingTimeInSeconds;
+    return String(Math.ceil(secs / 86400));
+  }
+
   tick(caller) {
     if (!this.clockEnabled || this.clockFinished) return;
     const now = caller.nowSeconds?.() ?? 0;

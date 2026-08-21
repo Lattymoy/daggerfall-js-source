@@ -79,6 +79,11 @@ export class Quest {
     this.ticksToEnd = 0;
     this.activeLogMessages = new Map();      // stepID -> { stepID, messageID, time }
     this.oneTimeDisplayedMessages = new Set();
+    // Q4-i macro context (Quest.cs/QuestMCP)
+    this.lastResourceReferenced = null;   // pronouns/%vcn read it
+    this.lastPlaceReferenced = null;      // %di reads it (the NRE quirk lives there)
+    this.externalMCP = null;              // the offer/talk window's second provider (Q4-ii)
+    this.currentLogMessageId = -1;        // the journal sets it while rendering (%qdt)
     this.pendingPopups = [];                 // the pendingMessageBoxStack, hook-delivered
     this.pendingClickRearms = [];            // Quest.cs:48 - resources whose click clears after the current task
     this.questors = new Map();               // Quest.cs:47 - symbol name -> QuestorData { symbol, name }
@@ -227,6 +232,15 @@ export class Quest {
     }
     // The notebook's finished-quest entry (Quest.cs:388-399) lands
     // with its system (Q4) - routed, not silent.
+  }
+
+  /** GetCurrentLogMessageTime (Quest.cs:606-615): the time of the
+   *  log entry the journal is rendering, else the quest start. */
+  getCurrentLogMessageTime() {
+    for (const log of this.activeLogMessages.values()) {
+      if (log.messageID === this.currentLogMessageId && log.time != null) return log.time;
+    }
+    return this.questStartTime;
   }
 
   tombstone() {

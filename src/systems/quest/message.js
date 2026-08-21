@@ -10,6 +10,8 @@
 // GetTextTokens' random variant is a UnityEngine.Random draw ->
 // injectable uniform roll (THE ENGINE-PRNG RULE, Ledger A).
 
+import { expandQuestMessage } from './questMacros.js';
+
 const CENTER_TOKEN = '<ce>';
 const SPLIT_TOKEN = '<--->';
 
@@ -70,14 +72,21 @@ export class Message {
    *  (uniform roll, injectable). QUIRK KEPT (Message.cs:161): any
    *  EXPLICIT variant answers variant 0 - DFU's else-arm is `index =
    *  0`, never `variant`. Use getTextTokensByVariant for real
-   *  selection, as DFU's own callers do. Macro expansion pends the
-   *  macro slice - callers get raw tokens today, loudly documented. */
-  getTextTokens(variant = -1, roll = Math.random) {
+   *  selection, as DFU's own callers do. Q4-i: macro expansion runs at
+   *  token read, DFU's default. */
+  getTextTokens(variant = -1, roll = Math.random, expandMacros = true, revealDialogLinks = false) {
     const index = variant === -1 ? Math.floor(roll() * this.variantCount) : 0;
-    return this.variants[index].tokens.map((t) => ({ ...t }));   // C# Token is a STRUCT - callers get copies (AUDIT quest-P17)
+    const tokens = this.variants[index].tokens.map((t) => ({ ...t }));   // C# Token is a STRUCT - callers get copies (AUDIT quest-P17)
+    // Q4-i: DFU expands macros by default at token read (Message.cs:
+    // 170-183); revealDialogLinks is TRUE only for talk answers and
+    // quest popups, feeding the dialog table on NameMacro1.
+    if (expandMacros) expandQuestMessage(this.parentQuest, tokens, revealDialogLinks);
+    return tokens;
   }
 
-  getTextTokensByVariant(variant = 0) {
-    return this.variants[variant].tokens.map((t) => ({ ...t }));
+  getTextTokensByVariant(variant = 0, expandMacros = true) {
+    const tokens = this.variants[variant].tokens.map((t) => ({ ...t }));
+    if (expandMacros) expandQuestMessage(this.parentQuest, tokens, false);
+    return tokens;
   }
 }

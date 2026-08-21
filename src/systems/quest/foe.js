@@ -78,6 +78,18 @@ export class Foe extends QuestResource {
   _rolls() { return this.parentQuest?.rolls ?? Math.random; }
   _range(n) { return n > 0 ? Math.floor(this._rolls()() * n) : 0; }
 
+  get gender() { return this.humanoidGender; }
+
+  /** ExpandMacro (Foe.cs:153-177): _symbol_ answers the TYPE name,
+   *  =symbol_ the display name - the inversion is C#'s own. Stores
+   *  this foe as the quest's last resource for pronouns. */
+  expandMacro(macroType) {
+    this.parentQuest.lastResourceReferenced = this;
+    if (macroType === 1) return this.typeName;      // NameMacro1
+    if (macroType === 5) return this.displayName;   // DetailsMacro
+    return false;
+  }
+
   /** SetInjured / RearmInjured (Foe.cs:186-196). */
   setInjured() { this.injuredTrigger = true; }
   rearmInjured() { this.injuredTrigger = false; }

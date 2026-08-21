@@ -83,6 +83,23 @@ export class Item extends QuestResource {
 
   get isItem() { return true; }
 
+  /** ExpandMacro (Item.cs:236-260): _symbol_ and =symbol_ both
+   *  answer the item's name - an artifact its SHORT name, gold its
+   *  STACK COUNT, everything else the long name.
+   *  ResolveItemLongName's material/condition prefix half is the
+   *  inventory arc's label maker; the port's shop windows speak the
+   *  same plain template name today (worldModes._itemLabel), so the
+   *  long name here is name ?? template name - one convention. */
+  expandMacro(macroType) {
+    if (macroType !== 1 && macroType !== 5) return false;   // NameMacro1/DetailsMacro
+    const it = this.daggerfallUnityItem;
+    if (!it) return false;
+    if (this.artifact) return it.shortName ?? it.name ?? false;
+    const isGold = it.group === 'Currency' || (it.groupIndex === 7 && it.templateIndex === 230);
+    if (isGold) return String(it.stackCount ?? 0);
+    return it.name ?? it.shortName ?? false;
+  }
+
   setResource(line) {
     super.setResource(line);
     const match = matchFirst(line, DECL);

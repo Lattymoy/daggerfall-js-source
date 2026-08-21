@@ -697,6 +697,32 @@ export class Place extends QuestResource {
 
   /** IsPlayerHere: building compares the entered building's key, town
    *  needs outside + the location rect, dungeon compares mapId. */
+  /** ExpandMacro (Place.cs): stores this place as the quest's last
+   *  referenced (%di reads it). _symbol_ building name, __symbol_
+   *  and ___symbol_ the location name, ____symbol_ the region name
+   *  with the OLDER-SAVE workaround arm (regionIndex 0 that is not
+   *  Alik'r Desert re-derives the index from the legacy name). */
+  expandMacro(macroType) {
+    const quest = this.parentQuest;
+    quest.lastResourceReferenced = this;
+    quest.lastPlaceReferenced = this;
+    const sd = this.siteDetails;
+    if (!sd) return false;
+    const world = quest.hooks?.world;
+    switch (macroType) {
+      case 1: return sd.buildingName;           // NameMacro1
+      case 2: case 3: return sd.locationName;   // NameMacro2/3
+      case 4: {                                 // NameMacro4
+        if (sd.regionIndex === 0 && sd.regionName !== "Alik'r Desert") {
+          const index = world?.maps?.getRegionIndex?.(sd.regionName);
+          return world?.maps?.getRegion?.(index)?.name ?? sd.regionName;
+        }
+        return world?.maps?.getRegion?.(sd.regionIndex)?.name ?? sd.regionName;
+      }
+      default: return false;
+    }
+  }
+
   isPlayerHere() {
     const world = this.parentQuest?.hooks?.world;
     const sd = this.siteDetails;
