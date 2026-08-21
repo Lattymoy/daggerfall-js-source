@@ -1076,8 +1076,58 @@ the real adapters, click/combat routing - re-carves as Q4-v below.
   hot-removes; the missing seam RETURNS and skips both, mirroring
   C#'s missing PlayerEnterExit.
 
-Gate: `test/questscene.test.js` - 25 pins; the TeleportPc pins in
+Gate: `test/questscene.test.js` - 39 pins; the TeleportPc pins in
 questplaces.test.js rewrite to the two-phase law.
+
+## QUEST AUDIT XI (2026-08-21, the Q4-iii verify pass)
+
+The parity lane ran raw-C# in the main loop DURING implementation
+(the subagent limit still held; the multi-agent retry now covers
+five slices): QuestResourceBehaviour.cs whole, GameObjectHelper's
+quest region whole, CreateFoe's placement half + invalidation
+events, TeleportPc.cs whole, QuestMachine's individual region, the
+QuestResource property/tick/handler bodies, the Place assign tail -
+plus the PORT-side host survey (scenes/dungeonContext's foe chain,
+hostCombat, worldModes, the missing machine wiring) that shaped the
+adapter seams and forced the Q4-v re-carve.
+
+- THE CAMPAIGN (one instance; baseline re-measured at 4 before and
+  after both syncs): 185 mutants over the behaviour, the mount +
+  ring, the machine's Q4-iii region, the TeleportPc/CreateFoe-hook
+  action lines, the QuestResource accessor/tick, and the Place
+  tail. 142 died in coverage subsets; the machine and accessor
+  sweeps came back CLEAN. The 43 subset survivors triaged to 33
+  REAL HOLES, all pinned in round 2: the cacheTarget miss faces
+  (the half-cached second call faking a hit, the poisoned success
+  return, the untouched-targetQuest identity gate), the unbound
+  behaviour's inert update/false doClick, the strictly-below-max
+  injury gate and the <=0-not-<=1 death gate, the foe-never-takes-
+  SetActive face of the person arm's &&, the queue drains' FOUR
+  null-guard validate arms (each || flip lands on a TypeError), the
+  destroy-handler ledger (a stale handler must not null a RECOUPLED
+  resource; splice removes exactly one), the individuals-only
+  broadcast &&, the save shape's clean isAttackableByAI, the
+  mount's wildcard buildingKey default, the ring's constant pins
+  (5/20 defaults, the probed 0.65 radius), the side coin's strict >
+  at exactly 0.5, zero slack placing at exactly minDistance, the
+  straight-down floor probe, the pre-cosine normal normalization,
+  the assign default drawing a real marker (a -2 default spreads
+  UNDEFINED into selectedMarker, silently), the markerless-site
+  throw, configureFromPlayerLocation's unloaded false, and the
+  TeleportPc marker boundaries (usingMarker holding the indexed
+  arm; index == length falling to [0] through the strict <).
+- Full-suite confirmation: 43 mutants re-run against the whole
+  suite - 33 kills at fails=5, and the 10 baseline-survivors are
+  EXACTLY the 10 argued equivalents, each with a proof: the -1/-2
+  negative-sentinel pair (the only consumer is >= 0); the resume
+  flag's post-completion deadness (read only before completion or
+  after the rearm rewrite); the marker-0 boundary folding both
+  arms to spawn marker [0]; the ?? arms reachable only on
+  marker-less sites where both faces throw the same mirrored NRE;
+  the unsigned-data >>/>>>; the always-array getSiteLinks guard;
+  the cos-threshold pair killed by AMPLIFICATION (1.25/cos exceeds
+  any in-contract hit distance, so the slack gate re-rejects); and
+  the zero-vector-only || divisor.
 
 ## Queue
 
