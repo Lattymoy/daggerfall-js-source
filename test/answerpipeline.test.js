@@ -23,7 +23,7 @@ import {
   QUESTION_RECORDS, WORK_RECORDS, WORK_STRING_RECORD, PC_GREETING_RECORD,
   PC_FOLLOWUP_RECORD, PC_STRANGER_RECORD, organizationInfoRecord,
   REGIONAL_FOUND_RECORD, REGIONAL_NOT_FOUND_RECORD, REGIONAL_LOOKUP_INDEXES,
-  stringHash,
+  ORGANIZATION_INFO_BASE, stringHash,
 } from '../src/systems/answerPipeline.js';
 import {
   TopicTree, QUESTION_TYPE, NPC_KNOWLEDGE, QUEST_INFO_RESOURCE_TYPE,
@@ -67,6 +67,51 @@ function makePipe(over = {}, treeOver = {}) {
   });
   return { pipe, tree, calls, session };
 }
+
+// ---------------------------------------------------------------
+// THE RECORD LITERALS, asserted as NUMBERS
+// ---------------------------------------------------------------
+// A pin written as `record:${QUESTION_RECORDS.whereIs + 1}` reads the
+// same constant the code reads, so it holds however the constant
+// moves - it asserts nothing at all about the value. Every TEXT.RSC
+// record id this slice draws is therefore pinned to its literal here,
+// against the C# lines that name it.
+
+test('the TEXT.RSC record literals are the C# ones, by number', () => {
+  assert.equal(QUESTION_RECORDS.news, 7231, 'GetQuestionText News (:1312)');
+  assert.equal(QUESTION_RECORDS.tellMeAbout, 7212, 'orgs/quest topics/work (:1319, :1345, :1349)');
+  assert.equal(QUESTION_RECORDS.whereIs, 7225, 'buildings/persons/regional (:1324, :1328, :1339)');
+  assert.deepEqual({ ...WORK_RECORDS }, { noWork: 8078, tier0: 8075, tier1: 8076, tier2: 8077 }, 'the Work arm (:2024-2035)');
+  assert.equal(WORK_STRING_RECORD, 7211, 'GetWorkString (:1160)');
+  assert.equal(PC_GREETING_RECORD, 7215, 'GetPCGreetingText (:1139)');
+  assert.equal(PC_FOLLOWUP_RECORD, 7218, 'GetPCFollowUpText (:1146)');
+  assert.equal(PC_STRANGER_RECORD, 7221, 'the friend/stranger name (:1136)');
+  assert.equal(REGIONAL_FOUND_RECORD, 10, 'GetAnswerWhereIsRegionalBuilding (:1871)');
+  assert.equal(REGIONAL_NOT_FOUND_RECORD, 11, '...and its not-found twin (:1873)');
+  assert.equal(ORGANIZATION_INFO_BASE, 860, 'GetOrganizationInfo (:1555)');
+  assert.equal(DIRECTION_TEXT_ID, 7333, 'GetKeySubjectBuildingDirection (:1695)');
+  assert.equal(MAP_REVEAL_TEXT_ID, 7332, 'GetKeySubjectBuildingOnMap (:1701)');
+  assert.equal(CHANCE_TO_REVEAL_LOCATION_ON_MAP, 0.35, 'ChanceToRevealLocationOnMap (:123)');
+  // ...and the drawn records land on those numbers through the code
+  const { pipe } = makePipe();
+  assert.equal(pipe.getQuestionText(newListItem({ questionType: QUESTION_TYPE.News }), 2), 'record:7233');
+  assert.equal(pipe.getQuestionText(newListItem({ questionType: QUESTION_TYPE.LocalBuilding }), 1), 'record:7226');
+  assert.equal(pipe.getQuestionText(newListItem({ questionType: QUESTION_TYPE.OrganizationInfo }), 0), 'record:7212');
+  assert.equal(pipe.getWorkString(), 'record:7211');
+  assert.equal(pipe.getAnswerText(newListItem({ questionType: QUESTION_TYPE.Work }), { workAvailable: false }), 'record:8078');
+});
+
+test('a fresh pipeline starts at C#s field initializers', () => {
+  const bare = new AnswerPipeline({});
+  assert.equal(bare.currentKeySubjectBuildingKey, -1, 'the key -1 is what the knowledge ladder tests against (:585)');
+  assert.equal(bare.lastToneIndex, -1, ':249');
+  assert.equal(bare.numQuestionsAsked, 0);
+  assert.equal(bare.reactionToPlayer012, 0);
+  assert.equal(bare.markLocationOnMap, false, 'never revealing a location by accident (:260)');
+  assert.equal(bare.currentKeySubject, '');
+  assert.equal(bare.currentQuestionListItem, null);
+  assert.equal(bare.locationOfRegionalBuilding, '');
+});
 
 // ---------------------------------------------------------------
 // GetClassicQuestionIndex (:691-724)
