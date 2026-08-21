@@ -1194,10 +1194,59 @@ are its whole law half.
   active log to Message objects and files through the machine's new
   addFinishedQuest hook.
 
-Gate: `test/questsave.test.js` - 17 pins, led by THE CORPUS
+Gate: `test/questsave.test.js` - 29 pins, led by THE CORPUS
 ROUND-TRIP GATE (all 265 quests save -> restore -> save to a fixed
 point) and the LOCKSTEP TWIN (a restored started quest ticks
 identically to its original).
+
+## QUEST AUDIT XII (2026-08-21, the Q4-iv verify pass)
+
+The parity lane ran raw-C# in the main loop DURING implementation
+(the multi-agent retry now folds in every main-loop-only slice):
+the Quest/QuestMachine/Message/QuestResource/Task serialization
+regions whole, the five resource save bodies, QuestAction's envelope
+halves, spot-verification that the action restores really are pure
+field copies (PlaySound, WhenTask, DroppedItemAtPlace, CreateFoe),
+PlayerNotebook.cs whole, and the oneTimeQuestsAccepted persistence
+traced to SerializablePlayer (the Q4-v wiring row).
+
+- THE CAMPAIGN (one instance; baseline 4 verified at every sync):
+  112 mutants over the notebook, the envelope regions of machine/
+  quest/task/message/questResource, the five resource envelopes, and
+  the action walk. 49 died in coverage subsets (the task and
+  questResource sweeps clean); 63 survivors + uncovered lines
+  triaged. THE SWEEP-FIND: the --lines range over place.js grazed
+  isPlayerAtBuildingType/isPlayerAtDungeonType (Q3-i surface) and
+  exposed their wildcard/guildhall/faction arms as WHOLLY unpinned -
+  16 uncovered lines now under direct law pins in questplaces. The
+  real holes pinned: the action walk's copy-not-alias law in both
+  directions (an !== flip shares live objects with the envelope) and
+  its never-null shapes, EndQuest's exact gates (factionId 1
+  qualifies; an empty log never files; a re-ended complete quest
+  survives the null log), the envelope literals, restored clocks/
+  places standing RESOLVED as booleans, the no-clock seam zero, the
+  stale-link scrub sparing the neighbour, the notebook literal
+  quartet with the exact wrap column (70 stays, 71 breaks, the
+  remainder starts one past the space), strict-null index
+  boundaries, same-slot and to-the-front moves, the guard arms, the
+  page splits at their exact token boundaries, clear() emptying both
+  lists, and remove/insert touching exactly one entry.
+- Full-suite confirmation: 58 kills at fails=5 across two rounds.
+  THE COMPENSATED COUNT (an operational lesson for the masked-kill
+  family): the addNoteTokens `=== 0 -> === 1` mutant survived a
+  COUNT assert because a second wrong arm compensated - the mutated
+  guard let the EMPTY-array call file a spurious header note,
+  restoring the count the lone-token call lost; the kill needed a
+  CONTENT assert. Counts can be conserved by paired defects;
+  contents cannot.
+- RECORDED EQUIVALENTS (6, each with a proof): the raw arm's
+  `&& -> ||` pair in both walk directions (structuredClone is the
+  identity on primitives, so the object-gate flip changes nothing);
+  Message's consecutive-text flush arm pair (unreachable through
+  loadMessage's strict text/format alternation - the documented C#
+  quirk arm); convertEntry's lineBreak init (every entry begins
+  with a header or text token); ensureUidAtLeast's `> -> >=` (the
+  identity assignment at equality).
 
 ## Queue
 

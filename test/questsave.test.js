@@ -431,6 +431,12 @@ test('index boundaries answer STRICT null; moveNote to the SAME slot is the iden
   nb.addFinishedQuestTokens([{ formatting: 'text', text: 'fq2' }]);
   nb.moveFinishedQuest(0, 2);
   assert.deepEqual(nb.getFinishedQuests().map((e) => e[0].text), ['fq2', 'fq1'], 'the finished-quest move corrects DOWN too');
+  nb.moveFinishedQuest(1, 1);
+  assert.deepEqual(nb.getFinishedQuests().map((e) => e[0].text), ['fq2', 'fq1'], 'the same-slot move is the identity (strict >)');
+  nb.addFinishedQuestTokens([{ formatting: 'text', text: 'fq3' }]);
+  nb.moveFinishedQuest(2, 0);
+  assert.deepEqual(nb.getFinishedQuests().map((e) => e[0].text), ['fq3', 'fq2', 'fq1'],
+    'a move to the FRONT inserts without deleting (splice deleteCount 0)');
 });
 
 test('the guards hold their exact arms: null/empty inputs park, single entries file', () => {
@@ -446,6 +452,12 @@ test('the guards hold their exact arms: null/empty inputs park, single entries f
   nb.addFinishedQuest(null);
   nb.addFinishedQuest([]);
   assert.equal(nb.getFinishedQuests().length, 1, 'the filing guard parks null and empty without a throw');
+  // the === 0 gate must not be === 1: a LONE token's CONTENT files
+  // (a count assert alone is compensable - an empty-array call that
+  // wrongly filed a header note would restore the count)
+  const solo = new PlayerNotebook(nbDeps);
+  solo.addNoteTokens([{ formatting: 'text', text: 'lone' }]);
+  assert.equal(solo.getNotes()[0]?.[2]?.text, ' lone', 'the single token really landed');
 });
 
 test('the page splits fire at their EXACT token boundaries', () => {
