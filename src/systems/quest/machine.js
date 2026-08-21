@@ -38,6 +38,31 @@
 //                                fired between quest.start() and the
 //                                live table (Q4 wires; the tombstone's
 //                                removeQuestInfoTopics is its scrub)
+//
+// Q3-i, THE WORLD SEAM (deps.world - a running host wires it from its
+// MapsFile/BlocksFile instances and player state; absent = headless,
+// every Place pends its site LOUDLY and the corpus gate stands):
+//   maps                       - the MapsFile instance (getRegion /
+//                                getLocation / getRmbBlockName /
+//                                readLocationIdFast / regionCount)
+//   getBlock(blockName)        - BlocksFile.getBlockByName
+//   currentLocation()          - the player's loaded dfLocation | null
+//   currentRegionIndex() / currentLocationIndex()
+//   currentRegionName()        - (error text only)
+//   isPlayerInLocationRect()   - PlayerGPS.IsPlayerInLocationRect
+//   playerInside()             - { building: {buildingKey,
+//                                buildingType, factionId} } |
+//                                { dungeon: {dungeonType} } | null
+//   isHouseOwned(buildingKey)  - DaggerfallBankManager (default false)
+//   buildingNameOpts()         - generateBuildingName's resolver
+//                                bundle (nameBank/ruler/faction...)
+//   travelTimeMinutes(mapPixel, cautious) - TravelTimeCalculator
+//                                (the quest clock's arm)
+//   discoverLocation(regionName, locationName) - PlayerGPS.DiscoverLocation
+//   addNote(text)              - the notebook (RevealLocation readmap)
+//   teleportPc(place, marker)  - TeleportPc's transport (scene half)
+//   onResourceAssigned(place, resource) - the hot-place/hot-remove
+//                                layout half (Q4 wires)
 //   changeLegalRep(amount)     - LegalRepute: current region's
 //                                LegalRep += amount then the clamp
 //                                (the G2 court system owns both)
@@ -63,6 +88,8 @@
 //   onQuestStarted(quest)      - RaiseOnQuestStartedEvent; the
 //                                QuestListsManager's one-time
 //                                recording listens (Q4 wires)
+//   forceTopicListsUpdate()    - TalkManager.ForceTopicListsUpdate
+//                                (PlaceNpc nudges it; Q4 wires)
 //
 // Q2b-ii, the item tranche's facts and seams (Q4 wires the real
 // inventory; tests capture):
@@ -109,6 +136,7 @@ export class QuestMachine {
     this.questsToInvoke = [];
     this.actionTemplates = [];
     this.globalVars = new Map();      // link id -> bool
+    this.siteLinks = [];              // QuestMachine.cs siteLinks - the world<->marker bridge (Q3-i)
     this.parser = new Parser();
     for (const template of defaultActionTemplates()) this.registerAction(template);
     // AUDIT quest-2: the action factory travels PER QUEST (parse opt ->
@@ -184,6 +212,15 @@ export class QuestMachine {
       // data seam (QuestListsManager.GetQuest -> ScheduleQuest).
       startQuest: (questName) => this.scheduleQuestByName(questName),
       globalVars: this.globalVars,
+      // The Q3-i world seam + site machinery. deps.world is the
+      // world-data/player-state surface a running host wires (contract
+      // below); the SiteLink halves are the machine's own.
+      world: this.deps.world ?? null,
+      forceTopicListsUpdate: () => this.deps.forceTopicListsUpdate?.(),
+      getAllActiveQuestSites: () => this.getAllActiveQuestSites(),
+      cullResourceTarget: (resource, newPlaceSymbol) => this.cullResourceTarget(resource, newPlaceSymbol),
+      hasSiteLink: (quest, placeSymbol) => this.hasSiteLink(quest, placeSymbol),
+      createSiteLink: (quest, placeSymbol) => this.createSiteLink(quest, placeSymbol),
     };
   }
 
@@ -309,5 +346,84 @@ export class QuestMachine {
     if (!quest.questTombstoned) this.tombstoneQuest(quest);
     this.quests.delete(quest.uid);
     return true;
+  }
+
+  // ---- SiteLinks (Q3-i): "reserved by 'create npc at'" and every
+  // placement action - the bridge layout builders walk to discover
+  // which quest resources stand at a site. ----
+
+  /** AddSiteLink (QuestMachine.cs). */
+  addSiteLink(siteLink) { this.siteLinks.push(siteLink); }
+
+  /** GetSiteLinks(siteType, mapId, buildingKey, magicNumberIndex) -
+   *  the layout builders' query. buildingKey/magicNumberIndex of 0
+   *  match any, as in C# (the callers pass 0 when not applicable). */
+  getSiteLinks(siteType, mapId, buildingKey = 0, magicNumberIndex = 0) {
+    return this.siteLinks.filter((link) =>
+      link.siteType === siteType && link.mapId === mapId
+      && (buildingKey === 0 || link.buildingKey === buildingKey)
+      && (magicNumberIndex === 0 || link.magicNumberIndex === magicNumberIndex));
+  }
+
+  /** HasSiteLink(parentQuest, placeSymbol) (QuestMachine.cs:1739). */
+  hasSiteLink(parentQuest, placeSymbol) {
+    const place = parentQuest.getPlace(placeSymbol);
+    if (!place) throw new Error(`HasSiteLink() could not find Place symbol ${placeSymbol?.name}`);
+    return this.getSiteLinks(place.siteDetails?.siteType, place.siteDetails?.mapId,
+      place.siteDetails?.buildingKey ?? 0, place.siteDetails?.magicNumberIndex ?? 0).length > 0;
+  }
+
+  /** CreateSiteLink(parentQuest, placeSymbol) (QuestMachine.cs:1757). */
+  createSiteLink(parentQuest, placeSymbol) {
+    const place = parentQuest.getPlace(placeSymbol);
+    if (!place) throw new Error(`Attempted to add SiteLink for invalid Place symbol ${placeSymbol?.name}`);
+    this.addSiteLink({
+      questUID: parentQuest.uid,
+      placeSymbol: placeSymbol.clone(),
+      siteType: place.siteDetails?.siteType,
+      mapId: place.siteDetails?.mapId,
+      buildingKey: place.siteDetails?.buildingKey ?? 0,
+      magicNumberIndex: place.siteDetails?.magicNumberIndex ?? 0,
+    });
+  }
+
+  /** GetAllActiveQuestSites (QuestMachine.cs:769): every Place's site
+   *  across INCOMPLETE quests - the already-assigned exclusions in
+   *  the site collectors read it. */
+  getAllActiveQuestSites() {
+    const sites = [];
+    for (const quest of this.quests.values()) {
+      if (quest.questComplete) continue;
+      for (const resource of quest.resources.values()) {
+        if (resource.isPlace && resource.siteDetails) sites.push(resource.siteDetails);
+      }
+    }
+    return sites;
+  }
+
+  /** CullResourceTarget (QuestMachine.cs:1496): removes a resource
+   *  from the SELECTED marker of every linked Place of its quest
+   *  before it lands at a new one - a moved resource must not stand
+   *  in two sites. QUIRKS KEPT: the newPlace parameter is DEAD in C#
+   *  (the arriving place is pruned too, then re-added); a stale link
+   *  whose quest or place cannot resolve ABORTS the whole cull
+   *  (return, not continue); a marker symbol that no longer resolves
+   *  to a resource is skipped. */
+  cullResourceTarget(resource, _newPlaceSymbol) {
+    if (!resource) return;
+    for (const link of this.siteLinks) {
+      if (link.questUID !== resource.parentQuest.uid) continue;
+      const quest = this.quests.get(link.questUID);
+      if (!quest) { console.warn(`[quest] CullResourceTarget() could not find active quest for UID ${link.questUID}`); return; }
+      const place = quest.getPlace(link.placeSymbol);
+      if (!place) { console.warn(`[quest] CullResourceTarget() could not find Place symbol ${link.placeSymbol?.name} in quest UID ${link.questUID}`); return; }
+      const selected = place.siteDetails?.selectedMarker;
+      if (selected?.targetResources) {
+        const i = selected.targetResources.findIndex((s) =>
+          quest.getResource(s) != null
+          && s.name === resource.symbol.name && s.original === resource.symbol.original);
+        if (i !== -1) selected.targetResources.splice(i, 1);
+      }
+    }
   }
 }

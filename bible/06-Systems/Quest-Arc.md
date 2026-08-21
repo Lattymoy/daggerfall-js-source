@@ -361,18 +361,78 @@ hazard: fails == baseline IS survival, only fails > baseline kills.
   and the non-member AlterReward HIGH framing (the LOW glue version
   was the accurate one and is fixed above).
 
+## Q3-i - THE PLACE TRANCHE (SHIPPED 2026-08-21)
+
+Site binding whole. Coverage moved 5831 -> 6616 of 7235 corpus action
+lines (91.4%); the eight buckets match the DFU-order derivation
+exactly (PlaceFoe 224, RevealLocation 193, PlaceNpc 125, PlaceItem
+106, PcAt 95, CreateNpcAt 26, DroppedItemAtPlace 8, TeleportPc 8).
+
+- THE SITE LAWS (place.js, Place.cs whole): local collection (the
+  block walk over mergeNamedBuildings/makeBuildingKey - the port's
+  own RMBLayout laws - with the three wildcard sets, the owned-house
+  / guild-faction / Thieves-Guild-42 + Dark-Brotherhood-108 /
+  already-assigned exclusions, marker validation, and building names
+  - residences draw "The %s Residence" through the name banks with
+  C#'s Range(0,1) always-Male fallback quirk kept), remote towns (the
+  250/500 dart-throw law), remote dungeons (types 0-16, the
+  machine-wide assigned exclusion), remote exteriors, fixed sites
+  (p1/p1-1, the 50000 MantellanCrux hardcode, the building block
+  walk, the 0xfa magic number), QUEST-MARKER ENUMERATION - the two
+  editor-flat records (199.11 spawn / 199.18 item) the world layer
+  read but never named, positions (x,-y,z) * GlobalScale, the classic
+  markerID = blockPosition + objectPosition - the marker
+  selection/assignment law (selected-marker reuse, direct-index
+  assignment, the anymarker pool, preference/fallback), and the
+  player-at-place checks including PcAt's type forms.
+- THE WORLD SEAM (deps.world, contract in machine.js): MapsFile/
+  BlocksFile instances + player state; a running host wires it; a
+  HEADLESS parse (the corpus gate's charter) leaves sitePending true
+  LOUDLY - the travelTimePending precedent, now the place precedent
+  too. findQuestLocation lazily indexes locationIds over
+  readLocationIdFast (ContentReader.GetQuestLocation's semantics).
+- SITELINKS (machine.js): addSiteLink/getSiteLinks (the buildingKey/
+  magicNumberIndex zero-wildcard law), hasSiteLink/createSiteLink,
+  getAllActiveQuestSites (INCOMPLETE quests only), cullResourceTarget
+  with C#'s QUIRKS KEPT: the newPlace parameter is dead (the arriving
+  place is pruned then re-added), and a stale link ABORTS the whole
+  cull.
+- THE EIGHT ACTIONS: PlaceNpc (sitelink + assign + unhide +
+  ForceTopicListsUpdate; the individual-atHome ERROR-LOG arm),
+  PlaceItem (marker/questmarker/anymarker -> MarkerPreference),
+  PlaceFoe, PcAt (the continuous set/clear toggle that NEVER
+  completes, the saying once, the "pc at any TYPE" placesTable arm
+  with the p1 0/1 gate), RevealLocation (discover + the grounded
+  "Discovered the location of %map after studying a map." note),
+  TeleportPc (the marker through the seam; the save-resume half is a
+  recorded deferral), DroppedItemAtPlace (actionWatching/allowDrop/
+  playerDropped), CreateNpcAt (DFU's own documented no-op).
+- THE TRAVEL ARM (clock.js travelTimeSeconds over the port's real
+  TravelTimeCalculator): cautious-with-cart, the per-place 1440-
+  minute floor, the 2.5x return multiplier, the all-places sum; wired
+  as quest.travelSeconds/travelSecondsTo, so flag&16 clocks arm at
+  parse under a world and stay HELD headless. DFU's parse-order
+  sensitivity (a clock sees only EARLIER places) is kept and pinned.
+
+Gate: `test/questplaces.test.js` (15 pins over a CRAFTED world
+speaking the port's own MapsFile/BlocksFile shapes) + the moved
+coverage/ownership pins.
+
 ## Queue
 
-- **Q3 - WORLD BINDING**: Place SetupLocalSite/SetupRemoteSite/
-  SetupFixedLocation against the port's world data, the Person
-  Setup*NPC chain against FACTION.TXT (factionData/DisplayName -
-  ChangeReputeWith (207) and ReputeExceedsDo (41) wait on it),
-  SiteLinks + QuestMarkers, Foe spawning through the host enemy
-  seams (CreateFoe 241 / PlaceFoe 224 / the click+kill+injury world
-  wiring), PcAt (95) / PlaceNpc (125) / PlaceItem (106) /
-  CreateNpc(At) / RevealLocation (193) / TeleportPc /
-  DroppedItemAtPlace / the When* triggers, Clock travel time (2.5x
-  cautious, the F-slice calculator).
+- **Q3-ii - PERSON WORLD BINDING**: the Setup*NPC chain against
+  FACTION.TXT (SetupQuestorNPC/SetupIndividualNPC/
+  SetupCareerAllianceNPC - factionData, DisplayName through the name
+  banks, home Place generation for CreateNpc's PlaceAtHome (48)) -
+  ChangeReputeWith (207) and ReputeExceedsDo (41) wait on it; the
+  addResource questor auto-track goes live.
+- **Q3-iii - FOE SPAWNING**: CreateFoe's tick-driven spawn law (241)
+  through the host enemy seams, CastSpellOnFoe's spell queue (41),
+  the WhenPcEntersExits trigger, the remaining ~80 pending lines.
+- **Q4 also picks up**: the hot-place/hot-remove halves of
+  AssignQuestResource (world.onResourceAssigned), TeleportPc's
+  save-resume, the layout builders walking SiteLinks/QuestMarkers to
+  stand resources in scenes.
 - **Q4 - SURFACES**: the offer flow (guild questors + TalkManager
   rumours - the rumor/dialog-link/questor-message hooks now carry
   the data), the journal/log UI, the parchment popup/prompt windows,

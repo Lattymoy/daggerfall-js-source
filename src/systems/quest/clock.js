@@ -13,6 +13,8 @@
 // machine (Q2).
 
 import { QuestResource, matchFirst } from './questResource.js';
+import { calculateTravelTime } from '../travel.js';
+import { worldCoordToMapPixel } from '../../formats/mapsFile.js';
 import { Symbol as QuestSymbol } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
 
@@ -30,6 +32,45 @@ const TIME_VALUE = [
 ];
 
 const getTimeInSeconds = (days, hours, minutes) => days * 86400 + hours * 3600 + minutes * 60;
+
+/** Clock.cs GetTravelTimeInSeconds (:422-460), Q3-i: the flag&16 /
+ *  _2place_ travel arm over the world seam. A single place routes the
+ *  port's own TravelTimeCalculator - CAUTIOUS speed WITH CART, no
+ *  inn/ship/horse, exactly C#'s argument row - from the player's
+ *  current map pixel to the place's exterior world coords, floors at
+ *  one day (1440 minutes), and multiplies 2.5x for the return trip
+ *  (int-truncated). The no-place overload SUMS one-way times over
+ *  every Place resource and applies the multiplier once. A place
+ *  whose location cannot resolve logs and counts 0, as C#. */
+export function travelTimeSeconds(quest, place = null, returnTrip = true) {
+  const world = quest?.hooks?.world;
+  if (!world) return null;
+  if (place === null) {
+    const places = [...quest.resources.values()].filter((r) => r.isPlace);
+    if (!places.length) {
+      console.warn('[quest] Clock wants a travel time but quest has no Place resources.');
+      return 0;
+    }
+    let total = 0;
+    for (const p of places) total += travelTimeSeconds(quest, p, false) ?? 0;
+    if (returnTrip) total = Math.trunc(total * 2.5);
+    return total;
+  }
+  const sd = place.siteDetails;
+  const location = sd ? world.maps.getLocationByName(sd.regionName, sd.locationName) : null;
+  if (!location) {
+    console.warn(`[quest] Could not find Quest Place ${sd?.regionName}/${sd?.locationName}`);
+    return 0;
+  }
+  const endPos = worldCoordToMapPixel(location.exterior.recordElement.header.x, location.exterior.recordElement.header.y);
+  const { minutes } = calculateTravelTime(world.playerPixel(), endPos,
+    { speedCautious: true, sleepModeInn: false, travelShip: false, hasHorse: false, hasCart: true },
+    (x, y) => world.maps.getClimateIndex(x, y));
+  let travelTimeMinutes = minutes;
+  if (returnTrip) travelTimeMinutes = Math.trunc(travelTimeMinutes * 2.5);
+  if (travelTimeMinutes < 1440) travelTimeMinutes = 1440;
+  return getTimeInSeconds(0, 0, travelTimeMinutes);
+}
 
 export function matchTimeValue(text) {
   const m = matchFirst(text, TIME_VALUE);

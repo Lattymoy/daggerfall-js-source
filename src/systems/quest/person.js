@@ -25,6 +25,13 @@ export class Person extends QuestResource {
     this.genderName = '';
     this.locationScopeName = '';
     this.atHome = false;
+    // Q3-ii FLAG: isIndividualNPC/isIndividualAtHome are minted by the
+    // Setup*NPC chain (a named individual whose faction record flags
+    // at-home); false until then - the PlaceNpc at-home error arm
+    // reads them (Person.cs:92-101).
+    this.isIndividualNPC = false;
+    this.isIndividualAtHome = false;
+    this.assignedPlaceSymbol = null;   // SetAssignedPlaceSymbol (Person.cs) - the Place this person stands at
     this.npcPending = true;   // Q1: the Setup*NPC chain (faction/world binding) ships at Q3
     // Q2b lifecycle flags (Person.cs:42,86,143,149). displayName is
     // assigned by the Q3 Setup*NPC chain - '' pends until then, and
@@ -37,6 +44,11 @@ export class Person extends QuestResource {
   }
 
   get isPerson() { return true; }
+
+  /** SetAssignedPlaceSymbol / GetAssignedPlaceSymbol (Person.cs):
+   *  the Place this person was last placed at (PlaceNpc writes it). */
+  setAssignedPlaceSymbol(placeSymbol) { this.assignedPlaceSymbol = placeSymbol?.clone() ?? null; }
+  getAssignedPlaceSymbol() { return this.assignedPlaceSymbol; }
 
   /** DestroyNPC (Person.cs:507-511). The Tick law then keeps a
    *  destroyed NPC hidden while it stands in a scene. */

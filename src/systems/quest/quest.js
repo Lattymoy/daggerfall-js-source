@@ -22,6 +22,8 @@
 // `nowSeconds` is the world-time seam the machine injects (classic
 // game seconds) - clocks and log entries read it.
 
+import { travelTimeSeconds } from './clock.js';
+
 export const QUEST_SUCCESS_REP = 5;     // Quest.cs:36
 export const QUEST_FAILURE_REP = -2;    // Quest.cs:37
 
@@ -61,8 +63,11 @@ export class Quest {
     this.nowSeconds = nowSeconds;  // () => classic game seconds (machine-injected)
     this.hooks = hooks;            // machine hooks: showPopup/changeReputation/log
     this.actionFactory = actionFactory;   // (line, quest) -> action | null (the machine's registry)
-    this.travelSeconds = null;     // Q3: Clock flag&16's 2.5x cautious travel time
-    this.travelSecondsTo = null;   // Q3: Clock _2place_ one-way trip
+    // Q3-i: Clock's travel arms over the world seam - flag&16's 2.5x
+    // cautious ALL-places trip and _2place_'s one-way. null with no
+    // world (headless), so the clock's HELD arm still pends loudly.
+    this.travelSeconds = () => (this.hooks?.world ? travelTimeSeconds(this) : null);
+    this.travelSecondsTo = (place) => (this.hooks?.world ? travelTimeSeconds(this, place, false) : null);
 
     // Q2 lifecycle state
     this.questComplete = false;

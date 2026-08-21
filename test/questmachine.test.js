@@ -233,7 +233,7 @@ test('quest machine: a GlobalVarLink task reads and writes the shared store', ()
   assert.equal(lift.getTriggerValue(), false, 'the store is the truth, not the local flag');
 });
 
-test('quest machine: COVERAGE PIN - the 42-action registry resolves 5831 of 7235 corpus action lines, each to its DFU owner', () => {
+test('quest machine: COVERAGE PIN - the 50-action registry resolves 6616 of 7235 corpus action lines, each to its DFU owner', () => {
   const m = new QuestMachine({ nowSeconds: () => 0 });
   let resolved = 0, pending = 0;
   const tally = new Map();
@@ -253,8 +253,8 @@ test('quest machine: COVERAGE PIN - the 42-action registry resolves 5831 of 7235
   // moved 50 lines BACK to pending: the guards stopped Say/WhenTask
   // hijacking lines owned by not-yet-ported DFU triggers; Q2b-i's
   // full-registry mirror then made ownership structural.)
-  assert.equal(resolved, 5831);
-  assert.equal(pending, 1404);
+  assert.equal(resolved, 6616);
+  assert.equal(pending, 619);
   // THE OWNERSHIP PIN: per-action resolved counts, each equal to the
   // line count the FULL DFU RegisterActionTemplates order assigns
   // that action over this corpus (independently derived by running
@@ -266,11 +266,13 @@ test('quest machine: COVERAGE PIN - the 42-action registry resolves 5831 of 7235
     AddDialog: 77,
     AddFace: 35,
     ClearTask: 209,
+    CreateNpcAt: 26,
     ClickedItem: 66,
     ClickedNpc: 268,
     DailyFrom: 25,
     DestroyNpc: 4,
     DialogLink: 120,
+    DroppedItemAtPlace: 8,
     DropAsQuestor: 36,
     DropFace: 37,
     EndQuest: 543,
@@ -291,11 +293,16 @@ test('quest machine: COVERAGE PIN - the 42-action registry resolves 5831 of 7235
     LogMessage: 409,
     MakePermanent: 136,
     MuteNpc: 9,
+    PcAt: 95,
+    PlaceFoe: 224,
+    PlaceItem: 106,
+    PlaceNpc: 125,
     PickOneOf: 96,
     PlaySound: 3,
     PlayVideo: 10,
     Prompt: 102,
     RemoveFoe: 22,
+    RevealLocation: 193,
     RemoveLogMessage: 16,
     RestoreNpc: 14,
     RestrainFoe: 33,
@@ -305,6 +312,7 @@ test('quest machine: COVERAGE PIN - the 42-action registry resolves 5831 of 7235
     StartStopTimer: 420,
     StartTask: 49,
     TakeItem: 44,
+    TeleportPc: 8,
     TotingItemAndClickedNpc: 211,
     UnsetTask: 30,
     WhenTask: 794,

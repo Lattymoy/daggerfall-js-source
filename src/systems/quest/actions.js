@@ -40,10 +40,11 @@
 
 import { Symbol as QuestSymbol } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
-import { staticMessagesTable, soundsTable } from './tables.js';
+import { staticMessagesTable, soundsTable, placesTable } from './tables.js';
 import { dateFromSeconds } from '../gameDate.js';
 import { makeItemPermanent } from './item.js';
 import { QUEST_MESSAGES } from './quest.js';
+import { customParseInt, isPlayerAtBuildingType, isPlayerAtDungeonType, MARKER_PREFERENCE } from './place.js';
 
 /** TalkManager.cs:285-291 - the dialog-link resource types. */
 export const QUEST_INFO_RESOURCE_TYPE = Object.freeze({
@@ -1311,6 +1312,315 @@ export class MakePermanent extends ActionTemplate {
   }
 }
 
+// ---------------------------------------------------------------
+// Q3-i - THE PLACE TRANCHE (site binding lives in place.js; these
+// consume it through the SiteLink machinery and the world seam)
+// ---------------------------------------------------------------
+
+/** PlaceNpc.cs: reserve the SiteLink, then pin the Person to the
+ *  Place's marker; a destroyed person is a silent complete; an
+ *  individual who is supposed to be atHome is an ERROR LOG, not a
+ *  throw. Placing also unhides. */
+export class PlaceNpc extends ActionTemplate {
+  get pattern() {
+    return /place npc (?<anNPC>[a-zA-Z0-9_.-]+) at (?<aPlace>\w+) marker (?<marker>\d+)|place npc (?<anNPC2>[a-zA-Z0-9_.-]+) at (?<aPlace2>\w+)/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new PlaceNpc(parentQuest);
+    action.npcSymbol = new QuestSymbol(g.anNPC ?? g.anNPC2);
+    action.placeSymbol = new QuestSymbol(g.aPlace ?? g.aPlace2);
+    action.marker = g.marker != null ? questParseInt(g.marker) : -1;
+    return action;
+  }
+  update(_caller) {
+    const hooks = this.parentQuest.hooks;
+    if (!hooks?.hasSiteLink?.(this.parentQuest, this.placeSymbol)) {
+      hooks?.createSiteLink?.(this.parentQuest, this.placeSymbol);
+    }
+    const person = this.parentQuest.getPerson(this.npcSymbol);
+    if (!person) {
+      this.setComplete();
+      throw new Error(`Could not find Person resource symbol ${this.npcSymbol?.name}`);
+    }
+    if (person.isDestroyed) { this.setComplete(); return; }
+    const place = this.parentQuest.getPlace(this.placeSymbol);
+    if (!place) {
+      this.setComplete();
+      throw new Error(`Could not find Place resource symbol ${this.placeSymbol?.name}`);
+    }
+    if (person.isIndividualNPC && person.isIndividualAtHome) {
+      console.warn(`[quest] Quest tried to place Person ${person.displayName} [_${person.symbol.name}_] at Place _${place.symbol.name}_ but they are supposed to be atHome`);
+      this.setComplete();
+      return;
+    }
+    place.assignQuestResource(person.symbol, this.marker);
+    person.setAssignedPlaceSymbol(this.placeSymbol);
+    person.isHidden = false;
+    hooks?.forceTopicListsUpdate?.();
+    this.setComplete();
+  }
+}
+
+/** PlaceItem.cs: the marker/questmarker/anymarker forms map to
+ *  MarkerPreference verbatim. */
+export class PlaceItem extends ActionTemplate {
+  get pattern() {
+    return /place item (?<anItem>[a-zA-Z0-9_.-]+) at (?<aPlace>[a-zA-Z0-9_.-]+) marker (?<marker>\d+)|place item (?<anItem2>[a-zA-Z0-9_.-]+) at (?<aPlace2>[a-zA-Z0-9_.-]+) questmarker (?<questmarker>\d+)|place item (?<anItem3>[a-zA-Z0-9_.-]+) at (?<aPlace3>[a-zA-Z0-9_.-]+) (?<anymarker>anymarker)|place item (?<anItem4>[a-zA-Z0-9_.-]+) at (?<aPlace4>[a-zA-Z0-9_.-]+)/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new PlaceItem(parentQuest);
+    action.itemSymbol = new QuestSymbol(g.anItem ?? g.anItem2 ?? g.anItem3 ?? g.anItem4);
+    action.placeSymbol = new QuestSymbol(g.aPlace ?? g.aPlace2 ?? g.aPlace3 ?? g.aPlace4);
+    action.marker = -1;
+    action.markerPreference = MARKER_PREFERENCE.Default;
+    if (g.marker != null) action.marker = questParseInt(g.marker);
+    if (g.questmarker != null) {
+      action.marker = questParseInt(g.questmarker);
+      action.markerPreference = MARKER_PREFERENCE.UseQuestMarker;
+    }
+    if (g.anymarker != null) action.markerPreference = MARKER_PREFERENCE.AnyMarker;
+    return action;
+  }
+  update(_caller) {
+    const hooks = this.parentQuest.hooks;
+    if (!hooks?.hasSiteLink?.(this.parentQuest, this.placeSymbol)) {
+      hooks?.createSiteLink?.(this.parentQuest, this.placeSymbol);
+    }
+    const item = this.parentQuest.getItem(this.itemSymbol);
+    if (!item) {
+      this.setComplete();
+      throw new Error(`Could not find Item resource symbol ${this.itemSymbol?.name}`);
+    }
+    const place = this.parentQuest.getPlace(this.placeSymbol);
+    if (!place) {
+      this.setComplete();
+      throw new Error(`Could not find Place resource symbol ${this.placeSymbol?.name}`);
+    }
+    place.assignQuestResource(item.symbol, this.marker, this.markerPreference);
+    this.setComplete();
+  }
+}
+
+/** PlaceFoe.cs. */
+export class PlaceFoe extends ActionTemplate {
+  get pattern() {
+    return /place foe (?<aFoe>[a-zA-Z0-9_.-]+) at (?<aPlace>[a-zA-Z0-9_.-]+) marker (?<marker>\d+)|place foe (?<aFoe2>[a-zA-Z0-9_.-]+) at (?<aPlace2>[a-zA-Z0-9_.-]+)/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new PlaceFoe(parentQuest);
+    action.foeSymbol = new QuestSymbol(g.aFoe ?? g.aFoe2);
+    action.placeSymbol = new QuestSymbol(g.aPlace ?? g.aPlace2);
+    action.marker = g.marker != null ? questParseInt(g.marker) : -1;
+    return action;
+  }
+  update(_caller) {
+    const hooks = this.parentQuest.hooks;
+    if (!hooks?.hasSiteLink?.(this.parentQuest, this.placeSymbol)) {
+      hooks?.createSiteLink?.(this.parentQuest, this.placeSymbol);
+    }
+    const foe = this.parentQuest.getFoe(this.foeSymbol);
+    if (!foe) {
+      this.setComplete();
+      throw new Error(`Could not find Foe resource symbol ${this.foeSymbol?.name}`);
+    }
+    const place = this.parentQuest.getPlace(this.placeSymbol);
+    if (!place) {
+      this.setComplete();
+      throw new Error(`Could not find Place resource symbol ${this.placeSymbol?.name}`);
+    }
+    place.assignQuestResource(foe.symbol, this.marker);
+    this.setComplete();
+  }
+}
+
+/** PcAt.cs: a CONTINUOUS set/clear toggle - never completes. The
+ *  place-symbol form asks the Place; the "pc at any TYPE" form goes
+ *  through Quests-Places as a placeType, which must be a building
+ *  (p1=0) or dungeon (p1=1) row. The saying shows ONCE. */
+export class PcAt extends ActionTemplate {
+  get pattern() {
+    return /pc at (?<aPlace>\w+) set (?<aTask>[a-zA-Z0-9_.]+) saying (?<id>\d+)|pc at (?<aPlace2>\w+) set (?<aTask2>[a-zA-Z0-9_.]+)|pc at (?<aPlace3>\w+) do (?<aTask3>[a-zA-Z0-9_.]+) saying (?<id2>\d+)|pc at (?<aPlace4>\w+) do (?<aTask4>[a-zA-Z0-9_.]+)|pc at any (?<placeType>\w+) set (?<aTask5>[a-zA-Z0-9_.]+) saying (?<id3>\d+)|pc at any (?<placeType2>\w+) set (?<aTask6>[a-zA-Z0-9_.]+)|pc at any (?<placeType3>\w+) do (?<aTask7>[a-zA-Z0-9_.]+) saying (?<id4>\d+)|pc at any (?<placeType4>\w+) do (?<aTask8>[a-zA-Z0-9_.]+)/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new PcAt(parentQuest);
+    const placeType = g.placeType ?? g.placeType2 ?? g.placeType3 ?? g.placeType4;
+    if (!placeType) {
+      action.placeSymbol = new QuestSymbol(g.aPlace ?? g.aPlace2 ?? g.aPlace3 ?? g.aPlace4);
+    } else {
+      const table = placesTable();
+      if (!table.hasValue(placeType)) throw new Error(`PcAt: Could not find place type name in data table: '${placeType}'`);
+      const p1 = customParseInt(table.getValue('p1', placeType));
+      if (p1 !== 0 && p1 !== 1) {
+        throw new Error('PcAt: This trigger condition can only be used with building types (p1=0) and dungeon types (p1=1) in Quests-Places table.');
+      }
+      action.p1 = p1;
+      action.p2 = customParseInt(table.getValue('p2', placeType));
+      action.p3 = customParseInt(table.getValue('p3', placeType));
+      action.placeSymbol = null;
+    }
+    action.taskSymbol = new QuestSymbol(g.aTask ?? g.aTask2 ?? g.aTask3 ?? g.aTask4 ?? g.aTask5 ?? g.aTask6 ?? g.aTask7 ?? g.aTask8);
+    action.textId = questParseInt(g.id ?? g.id2 ?? g.id3 ?? g.id4 ?? '');
+    action.textShown = false;
+    return action;
+  }
+  update(_caller) {
+    let result;
+    if (this.placeSymbol !== null) {
+      const place = this.parentQuest.getPlace(this.placeSymbol);
+      if (!place) return;
+      result = place.isPlayerHere();
+    } else {
+      const world = this.parentQuest.hooks?.world;
+      result = this.p1 === 1 ? isPlayerAtDungeonType(world, this.p2) : isPlayerAtBuildingType(world, this.p2, this.p3);
+    }
+    if (result) {
+      if (this.textId !== 0 && !this.textShown) {
+        this.parentQuest.showMessagePopup(this.textId);
+        this.textShown = true;
+      }
+      this.parentQuest.startTask(this.taskSymbol);
+    } else {
+      this.parentQuest.clearTask(this.taskSymbol);
+    }
+  }
+}
+
+/** RevealLocation.cs: discover the Place's location on the travel
+ *  map; the readmap form also notes it in the journal. */
+export class RevealLocation extends ActionTemplate {
+  get pattern() { return /reveal (?<aPlace>\w+) (?<readMap>readmap)|reveal (?<aPlace2>\w+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new RevealLocation(parentQuest);
+    action.placeSymbol = new QuestSymbol(g.aPlace ?? g.aPlace2);
+    action.readMap = !!g.readMap;
+    return action;
+  }
+  update(_caller) {
+    const place = this.parentQuest.getPlace(this.placeSymbol);
+    if (!place) return;
+    const world = this.parentQuest.hooks?.world;
+    world?.discoverLocation?.(place.siteDetails?.regionName, place.siteDetails?.locationName);
+    if (this.readMap) {
+      world?.addNote?.(READ_MAP_NOTE.replace('%map', place.siteDetails?.locationName ?? ''));
+    }
+    this.setComplete();
+  }
+}
+
+/** TeleportPc.cs: move the player to the Place (optionally a specific
+ *  spawn marker). The transport itself is the scene's - the world
+ *  seam carries it; with no world the action keeps trying, exactly a
+ *  not-in-scene target. The save-resume half rides the session
+ *  restore (recorded, Q4). */
+export class TeleportPc extends ActionTemplate {
+  get pattern() {
+    return /teleport pc to (?<aPlace>[a-zA-Z0-9_.-]+)|transfer pc inside (?<aPlace2>[a-zA-Z0-9_.-]+) marker (?<marker>\d+)/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new TeleportPc(parentQuest);
+    action.targetPlace = new QuestSymbol(g.aPlace ?? g.aPlace2);
+    action.targetMarker = g.marker != null ? questParseInt(g.marker) : -1;
+    return action;
+  }
+  update(_caller) {
+    const hooks = this.parentQuest.hooks;
+    const world = hooks?.world;
+    if (!world?.teleportPc) return;   // no transport - keep trying
+    if (!hooks?.hasSiteLink?.(this.parentQuest, this.targetPlace)) {
+      hooks?.createSiteLink?.(this.parentQuest, this.targetPlace);
+    }
+    const place = this.parentQuest.getPlace(this.targetPlace);
+    if (!place) return;
+    let marker = null;
+    if (this.targetMarker >= 0 && this.targetMarker < (place.siteDetails?.questSpawnMarkers?.length ?? 0)) {
+      marker = place.siteDetails.questSpawnMarkers[this.targetMarker];
+    }
+    world.teleportPc(place, marker);
+    this.setComplete();
+  }
+}
+
+/** DroppedItemAtPlace.cs: the trigger arms the item's actionWatching,
+ *  gates allowDrop on the player being AT the place, and fires when
+ *  the player drops it there, saying once. */
+export class DroppedItemAtPlace extends ActionTemplate {
+  constructor(parentQuest) { super(parentQuest); this.isTriggerCondition = true; }
+  get pattern() {
+    return /dropped (?<anItem>[a-zA-Z0-9_.-]+) at (?<aPlace>[a-zA-Z0-9_.-]+) saying (?<id>\d+)|dropped (?<anItem2>[a-zA-Z0-9_.-]+) at (?<aPlace2>[a-zA-Z0-9_.-]+)/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new DroppedItemAtPlace(parentQuest);
+    action.itemSymbol = new QuestSymbol(g.anItem ?? g.anItem2);
+    action.placeSymbol = new QuestSymbol(g.aPlace ?? g.aPlace2);
+    action.textId = questParseInt(g.id ?? '');
+    action.textShown = false;
+    return action;
+  }
+  checkTrigger(caller) {
+    if (caller.getTriggerValue()) return true;
+    const item = this.parentQuest.getItem(this.itemSymbol);
+    if (!item) return false;
+    const place = this.parentQuest.getPlace(this.placeSymbol);
+    if (!place) return false;
+    item.actionWatching = true;
+    if (place.isPlayerHere()) {
+      item.allowDrop = true;
+    } else {
+      item.allowDrop = false;
+      return false;
+    }
+    if (item.playerDropped) {
+      if (this.textId !== 0 && !this.textShown) {
+        this.parentQuest.showMessagePopup(this.textId);
+        this.textShown = true;
+      }
+      this.setComplete();
+      return true;
+    }
+    return false;
+  }
+}
+
+/** CreateNpcAt.cs: a DOCUMENTED no-op - legacy TEMPLATE scripts
+ *  "reserve" a site before placing; DFU creates SiteLinks in the
+ *  placement actions either way, so this only completes. */
+export class CreateNpcAt extends ActionTemplate {
+  get pattern() { return /create npc at (?<aPlace>\w+)/; }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const action = new CreateNpcAt(parentQuest);
+    action.placeSymbol = new QuestSymbol(match.groups.aPlace);
+    return action;
+  }
+  update(_caller) { this.setComplete(); }
+}
+
+/** Internal_Strings "readMap" (en id 653) - RevealLocation's journal
+ *  note, %map replaced by the location name, as TextManager does. */
+export const READ_MAP_NOTE = 'Discovered the location of %map after studying a map.';
+
 /** AUDIT quest-P2: the registry is first-match-wins over UNANCHORED
  *  patterns, so the un-ported actions that sit before (or between)
  *  the tranche in DFU's RegisterActionTemplates order need GUARDS at
@@ -1336,23 +1646,15 @@ const GUARD_PATTERNS = Object.freeze({
   WhenReputeWith: /when repute with ([a-zA-Z0-9_.-]+) is at least (\d+)/,
   WhenSkillLevel: /when skill (\w+) is at least (\d+)/,
   WhenAttributeLevel: /when attribute (\w+) is at least (\d+)/,
-  DroppedItemAtPlace: /dropped ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+) saying (\d+)|dropped ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+)/,
   Season: /season (fall|summer|spring|winter)/,
   Weather: /weather (sunny|cloudy|overcast|fog|rain|thunder|snow)/,
   Climate: /climate (desert|desert2|mountain|mountainwoods|rainforest|ocean|swamp|subtropical|woodlands|hauntedwoodlands)|climate (base) (desert|mountain|temperate|swamp)/,
   // Default actions
-  PcAt: /pc at (\w+) set ([a-zA-Z0-9_.]+) saying (\d+)|pc at (\w+) set ([a-zA-Z0-9_.]+)|pc at (\w+) do ([a-zA-Z0-9_.]+) saying (\d+)|pc at (\w+) do ([a-zA-Z0-9_.]+)|pc at any (\w+) set ([a-zA-Z0-9_.]+) saying (\d+)|pc at any (\w+) set ([a-zA-Z0-9_.]+)|pc at any (\w+) do ([a-zA-Z0-9_.]+) saying (\d+)|pc at any (\w+) do ([a-zA-Z0-9_.]+)/,
-  CreateNpcAt: /create npc at (\w+)/,
   CreateNpc: /create npc ([a-zA-Z0-9_.-]+)/,
-  PlaceNpc: /place npc ([a-zA-Z0-9_.-]+) at (\w+) marker (\d+)|place npc ([a-zA-Z0-9_.-]+) at (\w+)/,
-  PlaceItem: /place item ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+) marker (\d+)|place item ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+) questmarker (\d+)|place item ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+) (anymarker)|place item ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+)/,
   CreateFoe: /create foe ([a-zA-Z0-9_.-]+) every (\d+) minutes (indefinitely) with (\d+)% success|create foe ([a-zA-Z0-9_.-]+) every (\d+) minutes (\d+) times with (\d+)% success|(send) ([a-zA-Z0-9_.-]+) every (\d+) minutes (\d+) times with (\d+)% success|(send) ([a-zA-Z0-9_.-]+) every (\d+) minutes with (\d+)% success/,
-  PlaceFoe: /place foe ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+) marker (\d+)|place foe ([a-zA-Z0-9_.-]+) at ([a-zA-Z0-9_.-]+)/,
   RunQuest: /run quest (\w+) then ([a-zA-Z0-9_.]+) or ([a-zA-Z0-9_.]+)/,
   ChangeReputeWith: /change repute with ([a-zA-Z0-9_.-]+) by ([+-])(\d+)/,
   ReputeExceedsDo: /repute with ([a-zA-Z0-9_.-]+) exceeds (\d+) do ([a-zA-Z0-9_.]+)/,
-  RevealLocation: /reveal (\w+) (readmap)|reveal (\w+)/,
-  TeleportPc: /teleport pc to ([a-zA-Z0-9_.-]+)|transfer pc inside ([a-zA-Z0-9_.-]+) marker (\d+)/,
   MakePcDiseased: /make pc ill with ([a-zA-Z0-9_.']+)/,
   CurePcDisease: /cure vampirism|cure lycanthropy|cure ([a-zA-Z0-9_.']+)/,
   CastSpellDo: /cast ([a-zA-Z0-9'_.-]+) spell do ([a-zA-Z0-9_.-]+)/,
@@ -1396,7 +1698,7 @@ export function defaultActionTemplates() {
     new KilledFoe(null),
     new TotingItemAndClickedNpc(null),
     new DailyFrom(null),
-    guard('DroppedItemAtPlace'),
+    new DroppedItemAtPlace(null),
     guard('Season'),
     guard('Weather'),
     guard('Climate'),
@@ -1411,16 +1713,16 @@ export function defaultActionTemplates() {
     new PickOneOf(null),
     new RemoveLogMessage(null),
     new PlayVideo(null),
-    guard('PcAt'),
-    guard('CreateNpcAt'),
+    new PcAt(null),
+    new CreateNpcAt(null),
     guard('CreateNpc'),
-    guard('PlaceNpc'),
-    guard('PlaceItem'),
+    new PlaceNpc(null),
+    new PlaceItem(null),
     new GivePc(null),
     new GiveItem(null),
     new StartStopTimer(null),
     guard('CreateFoe'),
-    guard('PlaceFoe'),
+    new PlaceFoe(null),
     new HideNpc(null),
     new RestoreNpc(null),
     new AddFace(null),
@@ -1431,7 +1733,7 @@ export function defaultActionTemplates() {
     new UnsetTask(null),
     guard('ChangeReputeWith'),
     guard('ReputeExceedsDo'),
-    guard('RevealLocation'),
+    new RevealLocation(null),
     new RestrainFoe(null),
     new MakePermanent(null),
     new HaveItem(null),
@@ -1439,7 +1741,7 @@ export function defaultActionTemplates() {
     new DropAsQuestor(null),
     new ItemUsedDo(null),
     new TakeItem(null),
-    guard('TeleportPc'),
+    new TeleportPc(null),
     new DialogLink(null),
     new AddDialog(null),
     new RumorMill(null),
