@@ -374,6 +374,94 @@ and TK-v. The greeting arms
 (GetNPCGreeting/GetNPCQuestGreeting/GetGreetingIndex) belong with
 the NPC session and moved to TK-iv with it.
 
+## TALK AUDIT III (2026-08-21, the TK-iii verify pass)
+
+The pipeline's adversarial pass, again in the MAIN LOOP against the
+raw C# (the multi-agent retry trigger stands).
+
+**The re-read found THREE port bugs, all the same mistake.** Each was
+state whose only observer runs somewhere the port had stopped
+thinking about, and in each case a comment asserted the port was
+faithful when it was not:
+
+1. **The tone gate.** C# recomputes the reaction tier inside
+   `GetAnswerText` (:1994-1995) and stamps `lastToneIndex` inside
+   `GetReactionToPlayer_0_1_2` (:682). The port had moved the gate to
+   the caller under a comment claiming C# did the same. A host that
+   forgot the call would answer at a stale tier forever. Moved into
+   `_refreshReactionTier` at the head of `getAnswerText`.
+2. **The %n slot.** `greetingNameNPC` is filled before the greeting
+   record expands and emptied the instant it returns (:1136-1140),
+   because TalkManagerMCP's `Name()` resolves `%n` through it
+   (TalkManagerMCP.cs:54). The port set it AFTER the expansion and
+   never cleared it - so `%n` drew a random full name every time, and
+   the value left standing would have named the last NPC greeted in
+   every message the session preprocessed afterwards.
+3. **The headless session.** C#'s `npcData` is a FIELD (:189) whose
+   one-answer counter survives from answer to answer. The port's
+   absent-seam default was an object literal rebuilt per call, so the
+   increment was discarded and the gate could never close: a
+   seam-less NPC answered every tell-me-about correctly, forever. The
+   rumor mill carried the same bug in `getNewsOrRumors`'s default
+   parameter, and **TALK AUDIT I had recorded its symptom as a proven
+   equivalence** - "the discarded object is never read again" was true,
+   and it was the bug talking. That equivalence is withdrawn.
+
+A grep of TalkManager.cs for a clear-after-expansion assignment finds
+exactly the two live macro slots, and both are now faithful. The rest
+of the slice re-read clean: MarkKeySubjectLocationOnMap's
+default-struct key-0 guard, GetKeySubjectLocationCompassDirection's
+never-downgrade stamp, GetLocationWithRegionalBuilding's
+count-then-walk, GetDialogHint2's spymaster inversion. One seam was
+missing rather than wrong: GetRegionalLocationCityName stores
+`GetLocalizedLocationName(MapTableData.MapId, Name)` (:1885), which
+answers the raw name when no override exists - so the port's behaviour
+was right by accident with nothing to override. Added.
+
+One comment was re-sited for the host that has to read it:
+`lastToneIndex` is cleared in **TalkToNpc** (:2657-2662), which runs on
+the CLICK and clears `toneReactionForTalkSession[0..2]` with it - NOT
+in StartNewConversation, which resets the question counter and the
+opening text instead (:867-878). The host must call both, at their two
+different moments.
+
+**The campaign** ran four rounds against a re-measured baseline of 4
+(the git-less doctrine tests). Round 3 swept 170 mutants over the whole
+file against a freshly regenerated coverage map: 147 caught, 23
+survived, and **0 `noTestExecutesLine`** - where round 2, on a stale
+map, had reported 26 lines with no test on them at all. Eleven of the
+23 were real gaps and are now pinned; all eleven re-confirmed dead
+against the FULL suite at `fails=5` on a baseline of 4. Twelve are
+proven equivalents:
+
+- `:144`, `:159` (`>> 7` -> `>>> 7`): both operands are already masked
+  to 0..255 (`& 0xff` on the left, `(key >> 8) & 0xff` for storeFlags),
+  so the sign bit can never be set and the two shifts agree.
+- `:148` (`(key >> 8) & 0xff` -> `>>>`): the mask takes bits 8..15 of
+  the key, which sign extension cannot reach.
+- `:150` (`index > 0x27` -> `> 0x28`): no switch case exists above
+  0x27, so index 0x28 reaches the same `default: return 0` either way.
+- `:350`, `:351`, `:352` (`>>> 0` -> `>> 0`, five mutants): `srand`
+  does `BigInt(seed >>> 0)` internally, so the normalisation is
+  applied again downstream regardless.
+- `:502` (`count <= 0` -> `< 0`): the count is a sum of 0-or-positive
+  bit reads, and at count 0 the walk subtracts 0 from a
+  `locationToChoose` of 1 at every step, so it can never reach 0 -
+  both return null.
+- `:547` (`if (item.key !== '') key = item.key` -> `===`): THE DEAD KEY
+  OVERRIDE, C#'s own dead branch - both sides assign the same value.
+- `:563` (`markLocationOnMap = true` before the hint fork -> false):
+  a dead store in C# too. `GetKeySubjectBuildingHint` routes
+  unconditionally into one of two functions, and BOTH assign the flag
+  as their first statement, before any expansion can observe it.
+
+**The lesson recorded**: an equivalence proof is only as good as the
+code it is proved against. AUDIT I's `rumorMill:244` equivalence was
+correctly argued and still wrong, because the thing that made the
+mutant invisible - a default object nobody ever read again - was
+itself the divergence. When a proof's reasoning is "this value is
+discarded", ask why it is discarded before recording it as fine.
+
 ## TALK AUDIT II (2026-08-21, the TK-ii verify pass)
 
 The tree's adversarial pass, again in the MAIN LOOP against the raw
