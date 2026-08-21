@@ -21,6 +21,7 @@ import {
   offerGuildSurface, tokensToRows, createQuestBridge,
 } from '../src/scenes/questBridge.js';
 import { TICKS_PER_SECOND, QUEST_MESSAGES } from '../src/systems/quest/machine.js';
+import { FAIL_QUEST_FLAVOUR_ID } from '../src/systems/quest/offerFlow.js';
 import { GUILD_GROUPS } from '../src/formats/factionFile.js';
 import { GENDERS } from '../src/characters/nameHelper.js';
 import { daySuffix, dateTimeString, midDateTimeString } from '../src/systems/gameDate.js';
@@ -61,10 +62,10 @@ const rowsOf = (...rows) => [LIST_HEAD, ...rows].join('\n');
 
 /** A bridge over controlled data seams; extra ctx merges over the
  *  deterministic base. */
-function makeBridge(over = {}) {
+function makeBridge(over = {}, listRow = '__OFR, FightersGuild, M, 0, 0, x') {
   return createQuestBridge({
     data: {
-      readListTable: (name) => (name === 'Classic' ? rowsOf('__OFR, FightersGuild, M, 0, 0, x') : null),
+      readListTable: (name) => (name === 'Classic' ? rowsOf(listRow) : null),
       getQuestSourceLines: (name) => (name === '__OFR' ? OFFER_SRC : null),
     },
     classicSeconds: () => 0,
@@ -112,6 +113,15 @@ test('staticNpcData gender: flags & 32 exactly - 32 female, 0 male, other bits i
   assert.equal(at(32), GENDERS.Female);
   assert.equal(at(33), GENDERS.Female, 'bit 32 decides whatever rides beside it');
   assert.equal(at(31), GENDERS.Male, 'all lower bits set is still male');
+});
+
+test('staticNpcData: the empty record in the empty context is the all-zeros struct (C# defaults)', () => {
+  const zero = {
+    hash: 0, flags: 0, factionID: 0, billboardArchiveIndex: 0, billboardRecordIndex: 0,
+    nameSeed: 0, gender: GENDERS.Male, buildingKey: 0, mapID: 0,
+  };
+  assert.deepEqual(staticNpcData({}, {}), zero);
+  assert.deepEqual(staticNpcData({}), zero, 'the context itself defaults to the zero scene');
 });
 
 // ---------------------------------------------------------------
@@ -185,6 +195,25 @@ test('offerBoxes: the step-kind mapping - silent faces show nothing, offers carr
   assert.deepEqual(box.onNo(), [], 'a popupless refuse closes silently');
 });
 
+test('the bare bridge: absent ctx seams answer the headless charter values', () => {
+  const bridge = createQuestBridge({ data: { readListTable: () => null, getQuestSourceLines: () => null } });
+  const d = bridge.machine.deps;
+  assert.equal(d.nowSeconds(), 0);
+  assert.equal(d.playerLevel(), 0);
+  assert.equal(d.playerGender(), 'male');
+  assert.equal(d.playerName(), null);
+  assert.equal(d.playerRaceName(), null);
+  assert.equal(d.getReputation(1), 0);
+  assert.equal(d.getGold(), 0);
+  assert.equal(d.playerHasItem({}), false);
+  assert.equal(d.carriesQuestItem({}), false);
+  assert.equal(d.isPlayerInTown(), false);
+  assert.equal(d.regionPriceAdjustment(), 0);
+  assert.equal(d.getGuild(41), null);
+  assert.equal(bridge.offerFlow.deps.isPlayerInsideCastle(), false, 'the castle gate reads open by default');
+  assert.equal(bridge.offerFlow.deps.getGuildFactionId(5), 0, 'GetGuildFactionId falls to 0 with no seam');
+});
+
 // ---------------------------------------------------------------
 // The end-to-end guild offer over the data seams
 // ---------------------------------------------------------------
@@ -204,6 +233,24 @@ test('offerGuildQuest end-to-end: list table -> pool -> offer step -> accept sta
   const quests = [...bridge.machine.quests.values()];
   assert.equal(quests.length, 1, 'the accepted quest is LIVE in the machine');
   assert.equal(quests[0].questName, '__OFR');
+});
+
+test('the lists ride DFU PlayerNudity OFF - an adult (X) row never pools, the offer fails', () => {
+  const bridge = makeBridge({}, '__OFR, FightersGuild, M, 0, X, x');
+  const step = bridge.offerGuildQuest({ guildGroup: GUILD_GROUPS.FightersGuild, guild: { divine: '' }, membership: { rank: 0 }, reputation: 0 });
+  assert.equal(step.kind, 'fail');
+  assert.equal(step.textId, FAIL_QUEST_FLAVOUR_ID);
+});
+
+test('offerGuildQuest: buildingFactionId defaults to 0 - the variant groups home there', () => {
+  // HolyOrder/KnightlyOrder home the quest's factionId on the BUILDING
+  // faction (Q4-ii); with none passed, the C# zero rides through to
+  // the started quest.
+  const bridge = makeBridge({}, '__OFR, KnightlyOrder, M, 0, 0, x');
+  const step = bridge.offerGuildQuest({ guildGroup: GUILD_GROUPS.KnightlyOrder, guild: { divine: '' }, membership: { rank: 0 }, reputation: 0 });
+  assert.equal(step.kind, 'offer');
+  step.respond(true);
+  assert.equal([...bridge.machine.quests.values()][0].factionId, 0);
 });
 
 test('the vendored pack answers the bridge data contract from disk (the questData shape)', () => {
@@ -326,4 +373,12 @@ test('MidDateTimeString: the day IS padded ({3:00} on the int), no suffix, no co
   const late = { year: 405, month: 11, day: 24, hour: 9, minute: 5, second: 59 };
   assert.equal(midDateTimeString(late), '09:05:59 25 Evening Star 3E405');
   assert.equal(dateTimeString(late), '09:05:59 on 25th of Evening Star, 3E405');
+});
+
+test('the pad TRUNCATES fractional components (the live clock hands fractional minutes through)', () => {
+  // C#'s Hour/Minute/Second are ints; the port's dateFromClassicMinutes
+  // can carry a fractional second off the ticker - {0:00} must floor,
+  // never round 59.9 up to the impossible '60'.
+  const d = { year: 405, month: 0, day: 0, hour: 13, minute: 30, second: 59.9 };
+  assert.equal(dateTimeString(d), '13:30:59 on 1st of Morning Star, 3E405');
 });

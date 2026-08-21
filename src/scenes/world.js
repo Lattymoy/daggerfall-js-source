@@ -1491,8 +1491,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // accumulates Time.deltaTime, and DFU's TimeScale setting scales
     // the calendar, never Unity time, so ?timescale does not touch
     // this - held by the pause law (PauseGame -> timeScale 0 ->
-    // deltaTime 0) through the same overlay gate as the clock.
-    if (!townTalk.overlayActive) questBridge.tick(dt);
+    // deltaTime 0) through the same overlay gate as the clock, and by
+    // the load gate (QuestMachine.cs:310-316 refuses to tick while
+    // SaveLoadManager.LoadInProgress - no popups mid-restore).
+    if (!townTalk.overlayActive && !_loading) questBridge.tick(dt);
 
 
     if (walkMode) {

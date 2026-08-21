@@ -53,6 +53,7 @@ test('save: the Q4-v quest envelope rides the extras verbatim (opaque, like worl
   const snap = snapshotPlayer(mkEntity(), { quest });
   const extras = restorePlayer({}, snap);
   assert.deepEqual(extras.quest, quest);
+  assert.equal(extras.classicMinutes, 0, 'the unset clock defaults to minute ZERO, never a phantom tick');
 });
 
 test('save: F11 pierces overlays (the death hint is true)', () => {

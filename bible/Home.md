@@ -252,16 +252,16 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:1241` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
 - `src/scenes/world.js:1329` - FLAGGED: the QuestComplete loot window pends the UI arc - the
 - `src/scenes/world.js:1348` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:1547` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1806` - doors are the E-enter seam, not bashables - FLAGGED with the
-- `src/scenes/worldModes.js:186` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
-- `src/scenes/worldModes.js:227` - FLAGGED (Port-Ledger Q4-v): quest FOES pend the interior enemy
-- `src/scenes/worldModes.js:322` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:415` - Person placed in a dungeon is the quest machine's, FLAGGED
-- `src/scenes/worldModes.js:459` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:478` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:521` - onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToStaticNPC pends the static-NPC conversation
-- `src/scenes/worldModes.js:528` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/world.js:1549` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1808` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/worldModes.js:188` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
+- `src/scenes/worldModes.js:229` - FLAGGED (Port-Ledger Q4-v): quest FOES pend the interior enemy
+- `src/scenes/worldModes.js:324` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:417` - Person placed in a dungeon is the quest machine's, FLAGGED
+- `src/scenes/worldModes.js:466` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:485` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:528` - onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToStaticNPC pends the static-NPC conversation
+- `src/scenes/worldModes.js:535` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and

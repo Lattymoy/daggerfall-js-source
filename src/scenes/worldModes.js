@@ -92,6 +92,8 @@ import { getReputation } from '../systems/factionRep.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
+import { positionHash } from './questBridge.js';
+import { GENDERS } from '../characters/nameHelper.js';
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -234,7 +236,7 @@ export function createWorldModes(host) {
     // flatPosition is already scene units with -y (the Place marker
     // law); parent it exactly as the interior's own flats are.
     const [x, y, z] = ctx.parentPt(position.x, position.y, position.z);
-    const stand = { ctx, archive, record, x, y, z, width: 0, height: 0, batch: null, active: true, dead: false, behaviour };
+    const stand = { ctx, archive, record, x, y, z, marker: position, width: 0, height: 0, batch: null, active: true, dead: false, behaviour };
     (async () => {
       const t = await getTexture(archive);
       if (!t || record >= t.recordCount || stand.dead || interiorCtx !== ctx) return;
@@ -441,6 +443,11 @@ export function createWorldModes(host) {
     // stamps LastNPCClicked before the routing decides what opens (the
     // Person questor sweep rides machine.setLastNPCClicked).
     questBridge?.clickNpc(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0 });
+    // PlayerActivate.cs:1530-1535: a quest actively LISTENING on this
+    // NPC's faction (WhenNpcIsAvailable) shuts down all further
+    // routing - no talk, no service popup, nothing (C#'s own TODO
+    // about releasing listeners rides with it).
+    if (questBridge?.machine.factionListeners.has(pn.factionID)) return;
     const dict = townTalk?.factionDict ?? null;
     const npcFaction = dict?.get(pn.factionID) ?? null;
     const buildingFactionId = interiorBuilding?.factionId ?? 0;
@@ -808,7 +815,30 @@ export function createWorldModes(host) {
         return true;
       }
       if (key.startsWith('questflat:')) {
-        questFlats[Number(key.split(':')[1])]?.behaviour?.doClick();   // Q4-v
+        const s = questFlats[Number(key.split(':')[1])];
+        if (s) {
+          // PlayerActivate.StaticNPCClick:1521 stamps LastNPCClicked
+          // BEFORE the behaviour click - the quest NPC's StaticNPC peer
+          // carries SetLayoutData(marker position, person)
+          // (GameObjectHelper:1062 -> StaticNPC.cs:245-255): the hash
+          // from the SCALED marker ints truncated, flags/nameSeed from
+          // the Person (-1 falls back to the hash), buildingKey from
+          // the runtime data (:299-306), mapID never written (0).
+          const person = s.behaviour?.targetResource;
+          if (questBridge && person?.isPerson) {
+            const hash = positionHash(Math.trunc(s.marker.x), Math.trunc(s.marker.y), Math.trunc(s.marker.z));
+            questBridge.machine.setLastNPCClicked({
+              hash,
+              flags: person.gender === GENDERS.Female ? 32 : 0,
+              factionID: person.factionId ?? 0,
+              nameSeed: (person.nameSeed ?? -1) === -1 ? hash : person.nameSeed,
+              gender: person.gender,
+              buildingKey: interiorBuilding?.buildingKey ?? 0,
+              mapID: 0,
+            });
+          }
+          s.behaviour?.doClick();
+        }
         return true;
       }
       if (key.startsWith('container:')) {
