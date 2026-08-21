@@ -1248,6 +1248,113 @@ traced to SerializablePlayer (the Q4-v wiring row).
   with a header or text token); ensureUidAtLeast's `> -> >=` (the
   identity assignment at equality).
 
+## Q4-v - THE HOST BRIDGE (SHIPPED 2026-08-21)
+
+The machine goes LIVE in the hosts - the arc's last slice. One new
+module owns the wiring (`scenes/questBridge.js`): it builds the
+QuestMachine over the world seam the host composes, the
+QuestListsManager over the vendored pack, the offer flow and the
+PlayerNotebook, and hands the scenes a small verb set - tick with the
+frame, click an NPC, open the Quests service, mount a scene's quest
+resources, snapshot/restore the whole envelope. Everything in it is
+PURE WIRING over the pinned Q1-Q4 law modules, node-testable with a
+mock ctx; `scenes/questData.js` is the browser half of the data seams
+(vite raw-glob over vendor/dfu-quests, preloaded once so the machine's
+reads stay synchronous - node tests feed fs instead and never import
+it).
+
+The law that lives IN the bridge, pinned (questbridge.test.js, 19):
+
+- **The NPC-data law** (StaticNPC.cs:210-224, :333-336).
+  GetPositionHash is `x ^ y << 2 ^ z >> 2` - the shifts bind tighter
+  than the xor, int32 semantics via `|0` (the negative-z arithmetic
+  shift and the `y << 2` int32 wrap both pinned). And StaticNPC.cs:218's
+  famous precedence quirk kept whole: `nameSeed = (int)position ^
+  buildingKey + locationIndex` - C#'s `+` binds TIGHTER than `^`, so
+  the seed is position xor the SUM, proven against the
+  wrong-precedence value. Gender is `flags & 32` exactly; the
+  billboard indices ride along for Q4-iii's questor flat-pick. The
+  `position` identity is the block person record's STREAM OFFSET
+  (DFU's obj.Position) - `characters/interiorPeople.js` now carries it
+  through (the one data-layer touch).
+- **QuestMachine.Update's pacing** (QuestMachine.cs:305-320): tick at
+  ticksPerSecond=10 of REAL time; the timer resets to ZERO on fire,
+  DROPPING the excess - pinned by a fresh sub-interval not firing
+  after a cross.
+- **IsSatisfyQuestReqByLevel**: base false with EXACTLY two overrides
+  - MagesGuild.cs:67 and KnightlyOrder.cs:83 (the offer surface
+  composes it from the guild group).
+- **ClearState** (QuestMachine.cs:533-546), the missing C# member the
+  live load path needed: quests/siteLinks/questsToInvoke/
+  lastNPCClicked wipe; the bridge's restore runs it FIRST, which is
+  what stands between a quickload and the duplicate-UID
+  Dictionary.Add throw. factionListeners survive exactly as C#'s
+  dictionary does.
+- **The DaggerfallDateTime header strings** (gameDate.js):
+  DateTimeString/MidDateTimeString over the en-table literals, format
+  quirks kept - the `{5:00}`/`{4:00}` spec lands on the STRING
+  MonthName and is dropped (System.String is not IFormattable), the
+  day is UNPADDED in DateTimeString but PADDED in MidDateTimeString
+  (`{3:00}` on the int), GetSuffix has no teens rule (11 takes 'th').
+  The notebook's D: and finished-quest headers read these.
+- **The window faces**: tokensToRows (text appends, every formatting
+  token breaks - loadMessage's own pairing) and offerBoxes (C#'s
+  silent faces - 'close', a null step, a popupless answer - show
+  NOTHING; 'fail' boxes the TEXT.RSC record; 'offer' carries YesNo
+  with the answer steps recursing through respond). THE END-TO-END
+  DOOR pinned over fs-backed seams: list table -> pool -> QuestorOffer
+  prompt -> respond(true) -> AcceptQuest popup with the quest LIVE in
+  the machine.
+
+The HOST wiring (browser-side, the probe half):
+
+- **world.js** composes the bridge over its REAL objects: the world
+  seam (maps/getBlock/currentLocation off the pixel index/the faction
+  STORE via ensureFactionRep - never the raw file/playerPixel/
+  playerInside off the mode router/changeLegalRep through court.js),
+  the item seams over the live inventory (quest-item stamps
+  questItem/questUID/questSymbol; releaseQuestItem unequips before
+  the sweep), CreateGold's guild surface (guildOfFaction + membership
+  + the faction record's power), regionPriceAdjustment through the
+  shops' own producer, popups routed to whichever overlay slot is
+  LIVE (exterior townTalk / interior mode slot). InitAtGameStart
+  fires ONCE when a NEW character finishes chargen - recorded and
+  fired by whichever side (chargen, bridge) is ready last;
+  OnInitWorld rides the teleport core (fast travel + quickload); the
+  quest envelope rides F9/F11 beside `world` in snapshotPlayer (an
+  opaque slot; pre-Q4-v saves restore(null) as a no-op).
+- **worldModes.js** owns the interior half: EVERY static-NPC click
+  stamps LastNPCClicked before the routing decides what opens; the
+  `questOffer` service arm boxes the offer flow for the
+  ServiceFlowWindow (reputation on the guild's OWN faction, variant
+  groups falling back to the hall's building faction); the interior
+  mount runs Q4-iii's walk over a host adapter standing quest Persons
+  and Items as billboard batches async-filled into the live interior
+  context (parented through the same transform as the interior's own
+  flats), each stand an activation target routing DoClick at the
+  static-NPC reach; behaviours update every modal frame (Unity
+  Update runs whatever timeScale is) while the machine's own tick
+  freezes under a paused window (PauseGame -> timeScale 0 ->
+  deltaTime 0 - the overlay gate reproduces it); teardown notifies
+  destruction exactly as OnDestroy does on transition; both exits
+  fire notifyExteriorTransition.
+
+RECORDED (the pending seams - each idles LOUDLY, the headless
+charter): quest FOES in interiors (standFoe absent - the walk skips
+the stand) and the dungeon context's own mount; dungeon-mode popups
+(the dungeon overlay slot is not pluggable yet - logged, never lost
+silently); the talk seams (rumor/dialog-link/topics - the talk arc);
+playVideo; the HUD faces panel; the disease seams; the QuestComplete
+loot window (offerReward lands the item directly with a HUD line);
+playSound's busy-skip (the one-shot engine has no busy state - every
+call reports played); isPlayerInsideCastle false (this host never
+stands inside a palace interior). AND THE STANDING CAVEAT: this
+environment has no ARENA2, so the browser half is build-verified
+(vite clean, the quest chunks emit) but NOT probe-verified - the live
+geometry pass (stand positions, the click ray, the offer window over
+real art) needs a machine with game data, recorded as the arc's one
+open verification.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
@@ -1282,26 +1389,19 @@ slices, in dependency order.
   PlayerNotebook), EndQuest's notebook filing; the journal WINDOW
   geometry rides the UI arc, the behaviour v1 shape and
   oneTimeQuestsAccepted persistence ride Q4-v's wiring.
-- **Q4-v - THE HOST BRIDGE**: the machine goes LIVE in scenes/* -
-  instantiate + tick it in the world/dungeon/interior hosts, wire
-  deps.world off the streaming world (the Q3-i..Q4-iii seam
-  contracts), the real scene adapters (standNPC/standFoe/standItem
-  over the billboard + foe chains, findBehaviours), the real
-  createFoeGameObjects/tryPlaceFoe over buildFoeAt + placeFoeFreely
-  with real raycasts, click routing (PlayerActivate -> doClick /
-  setLastNPCClicked), hostCombat's entity surface as the enemy
-  handle, the offer flow mounted on guildServiceFlow's questOffer
-  destination, WhenPcEntersExits' transition feed, and
-  notifyExteriorTransition/notifyInitWorld off the mode router.
-  Probe-verified (tools/ probes + screenshot vantages), not
-  node-pinned.
+- **Q4-v - THE HOST BRIDGE** (SHIPPED above): the machine LIVE in the
+  world host - the bridge module + the questOffer service arm + the
+  interior mount + the save/init/transition wiring, node-pinned where
+  it is law and RECORDED where it pends (the section lists both).
 
-- **Q4 also picks up**: the hot-place/hot-remove halves of
-  AssignQuestResource (world.onResourceAssigned), TeleportPc's
-  save-resume, the layout builders walking SiteLinks/QuestMarkers to
-  stand resources in scenes.
-- **Q4 - SURFACES**: the offer flow (guild questors + TalkManager
-  rumours - the rumor/dialog-link/questor-message hooks now carry
-  the data), the journal/log UI, the parchment popup/prompt windows,
-  the HUD escorting-faces panel, quest items through the inventory,
-  the quest save envelope.
+THE ARC'S REMAINDER (after Q4-v, all recorded in its SHIPPED
+section): the LIVE PROBE PASS on a machine with ARENA2 (stand
+geometry, the click ray, the offer window over real art - this
+environment has no game data, so the browser half is build-verified
+only); quest foes in interiors + the dungeon host's own mount over
+createFoeGameObjects/tryPlaceFoe/hostCombat's enemy handle;
+dungeon-mode popups; the talk seams (the talk arc's charter);
+playVideo, the HUD faces panel, the disease seams, the QuestComplete
+loot window; WhenPcEntersExits' interior-transition feed beyond the
+polled rect. Each is a seam the law modules already speak - absent
+members idle loudly, never silently.
