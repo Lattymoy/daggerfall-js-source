@@ -591,7 +591,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // FLAGGED loud: the People faction rides the START location's
   // region - cross-region streaming keeps the boot region's people
   // until the current-pixel region wiring lands with travel.
+  // TK-v: the talk ENGINE the host window draws through. Assigned
+  // after all four are built (they reference each other), so townTalk
+  // reads it lazily through the getter below.
+  let talkEngineRef = null;
   const townTalk = createTownTalk({
+    talkEngine: () => talkEngineRef,
     renderer, canvas, fetchBytes, playerEntity, palette,
     regionIndex: startLoc.regionIndex,
     onCrime: () => _crimeResponse(),   // G1: late-bound - the guards mount below
@@ -1494,8 +1499,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       (topicTree.listBuildings ?? []).find((b) => b.buildingKey === buildingKey) ?? { buildingKey }),
     isFaction2RelatedToFaction1: () => false,   // the faction-relation walk rides TK-v
     setRandomQuestor: () => npcSession.setRandomQuestor(),
+    // TK-v: THE TONE GATE's two seams. C# recomputes the reaction tier
+    // inside GetAnswerText when the tone CHANGED (:1994-1995), so the
+    // pipeline owns the gate and the host owns only the tone itself
+    // and the computation - which is the whole point of TK-iii's fix.
+    toneIndex: () => townTalk.toneIndex(),
+    reactionTier: (questionType, socialGroup) => townTalk.computeTier(questionType, socialGroup),
     rolls: Math.random,
   });
+  talkEngineRef = { session: npcSession, pipeline: answerPipeline, tree: topicTree, mill: rumorMill };
   questBridge = createQuestBridge({
     data: questPack,
     world: questWorld,

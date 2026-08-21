@@ -73,7 +73,11 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random }) {
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null }) {
+  /** TK-v: the talk engine, or null before it is built / with no
+   *  game data. A getter, because world.js wires the four modules to
+   *  each other and can only hand them over once all four exist. */
+  const engine = () => (typeof talkEngine === 'function' ? talkEngine() : talkEngine);
   const hud = new HudText();
   let font = null, factions = null, textRsc = null, people = null;
   let mode = 'grab';   // PlayerActivate default
@@ -81,8 +85,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   let loaded = false, loading = null;
   let directory = [];   // T3c: the location's named buildings
   // T3f: the talk tone (persists across sessions, as DFU's window
-  // selection does); the reaction cache + tier recompute-on-change
-  // reset per session (TalkToNpc's toneReactionForTalkSession).
+  // selection does). Everything else that used to live here is the
+  // ENGINE's: TK-iv's session owns toneReactionForTalkSession and
+  // TK-iii's pipeline owns lastToneIndex and numQuestionsAsked, both
+  // because C# keeps them on TalkManager and resets them from inside
+  // its own methods. A host copy of any of them is a law left with
+  // the host - this arc's first standing law, learned by breaking it
+  // three times. The locals below are the pre-engine fallbacks, used
+  // only when no talkEngine is mounted (no game data, no window).
   let tone = 1;                      // 0 Polite / 1 Normal / 2 Blunt
   let toneSession = [0, 0, 0];
   let lastToneIndex = -1;
@@ -276,6 +286,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // uniform seed stands in, Ledger A).
     target.person._talkSeed ??= Math.floor(rolls() * 0x7fffffff);
     _talkNpc = target.person;
+    // TK-v: TalkToNpc's session reset is the ENGINE's - both halves of
+    // it - so a host cannot clear one and forget the other. Without an
+    // engine the local fallbacks stand in.
+    const eng = engine();
+    if (eng?.session) {
+      eng.session.toneReactionForTalkSession[0] = 0;
+      eng.session.toneReactionForTalkSession[1] = 0;
+      eng.session.toneReactionForTalkSession[2] = 0;
+      eng.pipeline?.resetToneSession();
+    }
     toneSession = [0, 0, 0];   // T3f: per talk session (DFU TalkToNpc)
     lastToneIndex = -1;
     // AUDIT 18 F4 - StartNewConversation (TalkManager.cs:867-871),
@@ -284,6 +304,11 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // reset the counter only ever climbed, so 7215+tone (the greeting
     // opening) was reachable at most ONCE per play session and every
     // later conversation opened on the follow-up (7218+tone).
+    // TK-v: the counter is the PIPELINE's now, and the whole of
+    // StartNewConversation is the SESSION's - the deferred topic-list
+    // rebuild and the mill setup ride with it, which the local
+    // fallback never had.
+    engine()?.session?.startNewConversation();
     _questionsAsked = 0;
     // U8b: the native TALK01I0 window when the art is up (clicks/taps
     // through the verbatim hit rects; the keyed chain is the fallback)
@@ -294,7 +319,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
           .filter((c) => c.buildings.length)
           .map((c) => ({ label: c.label, buildings: c.buildings.map((b) => ({ label: b.name, ...b })) })),
         answer: (b) => answerText(b),
-        question: (b) => { const q = questionText(b); _questionsAsked++; return q; },   // AUDIT 17e F13
+        question: (b) => { const q = questionText(b); _questionsAsked++; return q; },   // AUDIT 17e F13 (the engine's counter climbs in getAnswerText)
         tone: () => tone,
         setTone: (t2) => { tone = t2; },
         npcName: _talkNpc?.nameNPC ?? '',   // AUDIT 18 F5: the NPC's OWN name, not the People faction
@@ -306,21 +331,33 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
 
   let _talkNpc = null;
 
-  // T3f: GetAnswerText's gate - the tier recomputes only when the
-  // tone CHANGED since the last question (lastToneIndex); the
-  // session cache keeps each tone's reaction (skill roll included)
-  // fixed for the whole conversation.
+  /** GetReactionToPlayer_0_1_2 (:632-690) for the CURRENT tone and
+   *  question. TK-iii's pipeline owns the gate that decides WHEN this
+   *  runs (`lastToneIndex`) and TK-iv's session owns the per-session
+   *  cache it fills - so this is the tier computation alone, handed
+   *  to the pipeline as its `reactionTier` seam. */
+  function computeTier(questionType, socialGroup) {
+    void questionType;
+    return reactionTier012({
+      personality: playerEntity.stats?.personality ?? 50,
+      npcSeed: _talkNpc?._talkSeed ?? 0,
+      socialGroup: socialGroup ?? 0,
+      questionIndex: 0, toneIndex: tone,
+      skillValue: tone === 0 ? skillValue(playerEntity, SKILLS.Etiquette)
+        : tone === 2 ? skillValue(playerEntity, SKILLS.Streetwise) : 0,
+      session: engine()?.session?.toneReactionForTalkSession ?? toneSession,
+      rolls,
+      onTally: (sk) => tallySkill(playerEntity, SKILLS[sk], 1),
+    });
+  }
+
+  // The pre-engine fallback: the same gate, kept locally, for a host
+  // with no engine mounted.
   function tierNow() {
+    const e = engine();
+    if (e?.pipeline) return e.pipeline.reactionToPlayer012;
     if (lastToneIndex !== tone) {
-      currentTier = reactionTier012({
-        personality: playerEntity.stats?.personality ?? 50,
-        npcSeed: _talkNpc?._talkSeed ?? 0,
-        socialGroup: 0, questionIndex: 0, toneIndex: tone,
-        skillValue: tone === 0 ? skillValue(playerEntity, SKILLS.Etiquette)
-          : tone === 2 ? skillValue(playerEntity, SKILLS.Streetwise) : 0,
-        session: toneSession, rolls,
-        onTally: (s) => tallySkill(playerEntity, SKILLS[s], 1),
-      });
+      currentTier = computeTier(null, 0);
       lastToneIndex = tone;
     }
     return currentTier;
@@ -385,7 +422,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // tone or record could reach - the three tone records carry real
   // classic flavour ("Where the hell is %key?" at Blunt).
   function questionText(building) {
-    const opening = randomVariant((_questionsAsked === 0 ? 7215 : 7218) + tone, 'Hail to thee');
+    const asked = engine()?.pipeline?.numQuestionsAsked ?? _questionsAsked;
+    const opening = randomVariant((asked === 0 ? 7215 : 7218) + tone, 'Hail to thee');
     const rp = people ? getReactionToPlayer(people, playerEntity) : 0;
     const npcName = (rp <= 0 ? randomVariant(7221 + tone, 'stranger') : (_talkNpc?.nameNPC || 'stranger'));
     const q = randomVariant(7225 + tone, '%1com. Where can I find %key?');
@@ -474,6 +512,12 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
 
   return {
     keydown, tryActivate, frame, ensureLoaded, nextMode, showOverlay, setTopics, pointerdown, wheel,
+    /** TK-v: the two halves of the tone the ENGINE asks the host for -
+     *  which tone button is selected, and the tier computation for a
+     *  given question. The GATE that decides when to recompute is the
+     *  pipeline's, exactly as C# keeps it inside GetAnswerText. */
+    toneIndex: () => tone,
+    computeTier,
     texts: (id) => textVariants(id),
     // U23: the interior host's static-NPC seam needs both of these -
     // FACTION.TXT to route a click (PlayerActivate.StaticNPCClick reads
