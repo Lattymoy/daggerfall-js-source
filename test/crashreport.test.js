@@ -149,3 +149,83 @@ test('interior placements skip a model this ARCH3D does not carry', () => {
     assert.match(readFileSync(new URL(file, import.meta.url), 'utf8'), re, `${file} lost its guard`);
   }
 });
+
+// ---------------------------------------------------------------
+// THE PRODUCER THE HUNT FOUND: a null MATRIX, not a null mesh
+// ---------------------------------------------------------------
+test('drawMesh: a null MATRIX is skipped too - the argument that actually threw', () => {
+  // The first version of the guard checked only the mesh, and the
+  // crash from the field was `uniformMatrix4fv(uModel, false, null)`:
+  // Float32List is a NON-NULLABLE WebIDL union, so null throws. It is
+  // one statement below the mesh check, inside the same function, so
+  // the minified frame is identical - the guard read as though it
+  // covered the reported crash while the real producer walked past it.
+  const calls = [];
+  const gl = new Proxy({}, {
+    get: (_, prop) => (['TRIANGLES', 'UNSIGNED_INT', 'TEXTURE_2D', 'TEXTURE0', 'TEXTURE1'].includes(prop)
+      ? prop
+      : (...args) => calls.push([prop, ...args])),
+  });
+  const self = Object.assign(Object.create(Renderer.prototype), {
+    gl, program: 'P', uModel: 'M', _blackTex: 'black',
+    textures: new Map([['100_2', 'tex']]), emissionTextures: new Map(),
+  });
+  const mesh = { vao: 'VAO', subMeshes: [{ textureArchive: 100, textureRecord: 2, primitiveCount: 4, startIndex: 6 }] };
+  const realWarn = console.warn; console.warn = () => {};
+  try {
+    for (const bad of [null, undefined]) {
+      calls.length = 0;
+      assert.doesNotThrow(() => Renderer.prototype.drawMesh.call(self, mesh, bad, null));
+      assert.deepEqual(calls, [], 'a good mesh with no matrix still touches no GL state');
+    }
+  } finally { console.warn = realWarn; }
+});
+
+test('the dungeon arrow never enters the draw list without a matrix', () => {
+  // ensureArrowModel is async and its ONE caller does not await it, so
+  // the push lands in a microtask - after the frame that called it has
+  // returned. The host draws dynamicDraws BEFORE it calls drawFoes
+  // (dungeon.js:365 against :391; worldModes.js:951 against :959), so
+  // an entry pushed with `matrix: null` was drawn with that null on
+  // the very next frame. Firing a bow killed the frame loop.
+  const src = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
+  const fn = src.match(/async function ensureArrowModel[\s\S]*?\n {2}}/)[0];
+  // the CODE, not the comment that quotes the old shape
+  const code = fn.split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  assert.match(code, /matrix: arrowMatrix\(m\)/, 'the matrix is built at PUSH time, not left for the next pass');
+  assert.ok(!/matrix: null/.test(code), 'no entry is ever pushed with a null matrix');
+  // and a point-blank hit must not leave an ORPHAN: retireMissile has
+  // already run its splice by the time the microtask lands, so it
+  // would never see the entry and its matrix would stay null for ever
+  // - an every-frame throw rather than a one-frame window.
+  assert.match(code, /if \(!gpu \|\| m\.dead\) return;/, 'a dead arrow does not push');
+  // the ordering this depends on, pinned so a host reshuffle re-reads
+  // this test rather than resurrecting the bug
+  for (const host of ['../src/scenes/dungeon.js', '../src/scenes/worldModes.js']) {
+    const h = readFileSync(new URL(host, import.meta.url), 'utf8');
+    const draw = h.search(/for \(const d of \w+\.dynamicDraws\)/);
+    const foes = h.search(/\.drawFoes\(/);
+    assert.ok(draw > 0 && foes > 0 && draw < foes,
+      `${host}: the mesh pass still runs BEFORE drawFoes, so the matrix must exist at push time`);
+  }
+});
+
+test('a model missing from ARCH3D costs the placement, never the building', () => {
+  // The interior build died THIRTY-SEVEN LINES before the placement
+  // guard: collect() stores `cpuModels.get(id)` (undefined for an
+  // absent model), layoutInterior dereferences it on both arms, and
+  // the climate pass reads `cpu.subMeshes` off the same undefined -
+  // `?? []` guards the value, not the receiver. So pressing E on that
+  // door did nothing at all, for ever, with a raw TypeError in the
+  // console instead of the doctrine's loud warn.
+  const layout = readFileSync(new URL('../src/world/interiorLayout.js', import.meta.url), 'utf8');
+  assert.match(layout, /if \(!model\) \{[\s\S]*?continue;/, 'the layout drops a placement it has no model for');
+  const ctx = readFileSync(new URL('../src/scenes/interiorContext.js', import.meta.url), 'utf8');
+  assert.match(ctx, /for \(const sm of cpu\?\.subMeshes \?\? \[\]\)/, 'the RECEIVER is guarded, not just the value');
+  assert.match(ctx, /if \(!cpu\) console\.warn/, 'and the seam says so once, where it is discovered');
+  // the dungeon's action-door arm had the same three traps
+  const dungeon = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
+  assert.match(dungeon, /for \(const sm of cpu\?\.subMeshes \?\? \[\]\)/, 'ensureRemap guards its receiver');
+  const doorArm = dungeon.match(/for \(const d of b\.layout\.actionDoors\)[\s\S]*?\n {4}}/)[0];
+  assert.match(doorArm, /if \(!gpu \|\| !cpu\) \{/, 'the dungeon door arm skips a missing model');
+});

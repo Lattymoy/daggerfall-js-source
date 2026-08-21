@@ -1450,13 +1450,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *   swaps; UVs stay original-archive, the SetDungeonTextures pattern).
    */
   /** One warning per distinct shape, not one per frame. */
-  _warnMissingMesh(mesh) {
+  _warnMissingMesh(mesh, modelMatrix = undefined) {
     this._missingMeshes ??= new Set();
-    const why = mesh == null ? 'no mesh' : !mesh.vao ? 'no vao' : 'no subMeshes';
+    const why = mesh == null ? 'no mesh' : !mesh.vao ? 'no vao'
+      : !mesh.subMeshes?.length ? 'no subMeshes' : 'no matrix';
     const key = `${why}:${mesh?.name ?? mesh?.modelId ?? '?'}`;
     if (this._missingMeshes.has(key)) return;
     this._missingMeshes.add(key);
-    console.warn(`[renderer] drawMesh skipped a mesh with ${why} - a model is missing from this scene, not from the frame loop`, mesh);
+    console.warn(`[renderer] drawMesh skipped a draw with ${why} - a model is missing from this scene, not from the frame loop`, mesh, modelMatrix);
   }
 
   drawMesh(mesh, modelMatrix, texRemap = null) {
@@ -1470,8 +1471,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // that ("drawMesh@... / re@...", Firefox, no message). Warn ONCE
     // per key so a broken data set says so without filling the console
     // sixty times a second.
-    if (!mesh?.vao || !mesh.subMeshes?.length) {
-      this._warnMissingMesh(mesh);
+    if (!mesh?.vao || !mesh.subMeshes?.length || modelMatrix == null) {
+      // THE MATRIX BELONGS IN THIS GUARD TOO, and the first version of
+      // it did not have it: the crash from the field was a null
+      // MATRIX, not a null mesh. `uniformMatrix4fv(uModel, false,
+      // null)` throws because Float32List is a non-nullable WebIDL
+      // union - one statement below the mesh check, inside the same
+      // function, so the minified frame is identical and the guard
+      // read as though it covered the reported crash while the real
+      // producer walked straight past it.
+      this._warnMissingMesh(mesh, modelMatrix);
       return;
     }
     const gl = this.gl;

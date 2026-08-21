@@ -116,6 +116,17 @@ export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
     if (isBadInteriorModel(blockIndex, recordIndex, obj.modelIdNum)) continue;
 
     const model = getModel(obj.modelIdNum);
+    // NEVER TRAPS: getModel resolves through getGpuMesh, which returns
+    // NOTHING for a model id the player's own ARCH3D does not carry.
+    // Both arms below dereference it - `model.positions` for a prop and
+    // getStaticDoors(model) for everything else - so ONE absent model
+    // rejected the whole interior build and the door simply never
+    // opened, with a raw TypeError in the console. The three sibling
+    // builders all drop the placement instead; this one now does too.
+    if (!model) {
+      console.warn(`[interior] model ${obj.modelIdNum} is not in this ARCH3D - the placement is skipped`);
+      continue;
+    }
 
     // Get model position by type (3 seems to indicate props/clutter).
     let px, py, pz;

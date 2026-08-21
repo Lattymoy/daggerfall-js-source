@@ -180,8 +180,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let colliderTris = 0;
 
   const ensureRemap = async (id) => {
+    // NEVER TRAPS: cpuModels is written only on getGpuMesh's SUCCESS
+    // path, so a model id this ARCH3D lacks arrives here as undefined.
+    // `?? []` guards the VALUE and not the RECEIVER - this was safe at
+    // its placement call site only because `if (!gpu) continue` runs
+    // one line before it, and the action-door arm below had no such
+    // guard, so a missing door model threw here at LOAD.
     const cpu = cpuModels.get(id);
-    for (const sm of cpu.subMeshes ?? []) {
+    for (const sm of cpu?.subMeshes ?? []) {
       const swapped = remap(sm.textureArchive);
       if (swapped === sm.textureArchive) continue;
       const key = `${sm.textureArchive}_${sm.textureRecord}`;
@@ -285,12 +291,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (d.disabled) continue;
       const matrix = multiply(originMatrix, d.matrix);
       const gpu = await getGpuMesh(d.modelIdNum);
+      // THE FOURTH SEAM. The placement loop fifty lines above has
+      // `if (!gpu) continue`; this arm did not, and a door model
+      // absent from the player's ARCH3D trapped it three ways over -
+      // ensureRemap's undefined receiver, then addDoor's cpu.positions,
+      // and then a {gpu: null} entry the frame loop draws unguarded.
+      const cpu = cpuModels.get(d.modelIdNum);
+      if (!gpu || !cpu) {
+        console.warn(`[dungeon] action-door model ${d.modelIdNum} is not in this ARCH3D - the door is skipped`);
+        continue;
+      }
       await ensureRemap(d.modelIdNum);
       // Chain key + own action record + the starting lock (audit
       // 2026-08-16 + P10: chained doors were unreachable and locks
       // had no state to gate on; the P10 player-toggle lock gate now
       // reads currentLockValue).
-      const o = actions.addDoor(cpuModels.get(d.modelIdNum), matrix, {
+      const o = actions.addDoor(cpu, matrix, {
         ns: bi, positionKey: d.position, action: d.action, startingLockValue: d.startingLockValue,
       });
       dynamicDraws.push({ gpu, object: o });
@@ -1055,8 +1071,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (m.draw !== null) return;
     m.draw = false;
     const gpu = await getGpuMesh(99800);
-    if (!gpu) return;
-    m.draw = { gpu, object: { matrix: null } };
+    // THE CRASH FROM THE FIELD (2026-08-21). This used to push
+    // `{ gpu, object: { matrix: null } }` and leave the matrix for the
+    // NEXT updateMissiles pass to fill. But the push lands in a
+    // MICROTASK - this is async and its one caller does not await it -
+    // and both hosts draw dynamicDraws BEFORE they call drawFoes
+    // (dungeon.js:365 against :391; worldModes.js:951 against :959).
+    // So the very next frame drew the arrow with a NULL matrix, and
+    // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
+    // a non-nullable WebIDL union. Firing a bow killed the frame loop,
+    // one frame later, with a stack of drawMesh and its caller and
+    // nothing else. The matrix is built HERE, so an entry in the list
+    // is always drawable.
+    //
+    // The dead check is the other half: a point-blank hit retires the
+    // arrow while this await is still pending, and retireMissile's
+    // splice has already run and found nothing - so the microtask
+    // would push an ORPHAN that updateMissiles skips for ever
+    // (`if (m.dead) continue`), leaving a null-matrix entry that threw
+    // on EVERY frame rather than one. Its sibling in arrowFlight.js
+    // has had this check all along.
+    if (!gpu || m.dead) return;
+    m.draw = { gpu, object: { matrix: arrowMatrix(m) } };
     dynamicDraws.push(m.draw);
   }
   function arrowMatrix(m) {
