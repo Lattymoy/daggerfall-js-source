@@ -920,6 +920,24 @@ export function createWorldModes(host) {
     return true;
   }
 
+  /** StartGameBehaviour's StartDungeonInterior (:392-401), which is
+   *  how a NEW GAME begins: the streamer is already teleported to the
+   *  start map pixel, and the player is put inside that location's
+   *  dungeon without ever walking through the door.
+   *
+   *  It routes through tryEnterDungeon rather than repeating its body,
+   *  because the thing that makes the dungeon EXITABLE is the
+   *  dungeonReturn record built in there - the entrance-door
+   *  candidates the exit landing is computed from. The classic start
+   *  used to boot scenes/dungeon.js, which has no exit path at all, so
+   *  Privateer's Hold was a sealed box: the whole reason this exists. */
+  async function startInDungeon() {
+    const entries = doorTargets();
+    const hit = entries.find((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE);
+    if (!hit) return false;
+    return tryEnterDungeon(hit, entries);
+  }
+
   function tryExitDungeon() {
     const eye = player.eye;
     const dir = eyeDir();
@@ -1281,6 +1299,18 @@ export function createWorldModes(host) {
       actions: dungeonCtx.actions.objects.size,
     }) : null;
     window.__dungeonExit = () => tryExitDungeon();
+    // U31: probe-only warp. The dungeon EXIT is a raycast pick against
+    // the real exit door (tryExitDungeon), so proving the classic start
+    // can get out means standing the player at that door the way a
+    // player who walked there would - not calling a shortcut that
+    // bypasses the pick. Lives inside installShotProbes, so it exists
+    // only under ?shot and never in a played build.
+    window.__warpTo = (pos, yaw) => {
+      player.spawn(pos[0], pos[1], pos[2]);
+      cam.pos = [...player.eye];
+      if (yaw !== undefined) cam.yaw = yaw;
+      return JSON.stringify({ pos: player.eye.map((v) => +v.toFixed(2)), yaw: +cam.yaw.toFixed(3) });
+    };
     window.__pickInterior = () => {
       if (!interiorCtx) return null;
       const dir = eyeDir();
@@ -1443,6 +1473,7 @@ export function createWorldModes(host) {
 
   return {
     get mode() { return mode; },
+    startInDungeon,
     /** TP-slice: the Teleport effect leaves ANY mode - the exit
      *  cores of the door flows minus the landing (the caller owns
      *  the spawn; DFU's cross-scene arm transitions immediately,

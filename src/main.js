@@ -117,7 +117,16 @@ async function boot() {
   // not to.
   if (action === 'load') params.set('load', '1');
   else params.delete('load');
-  return bootDungeon(canvas, renderer, params, status);
+  // U31: THE CLASSIC START IS THE WORLD, not the standalone dungeon
+  // scene. scenes/dungeon.js has no exit path at all - its only
+  // activation arm is ctx.actions.activate - so booting it left
+  // Privateer's Hold a sealed box with no way back to Tamriel. The
+  // world host owns both modes and the tested dungeon->exterior
+  // transition (worldModes.tryExitDungeon), so the classic start goes
+  // there and ?classic tells it to read StartCellX/StartCellY and
+  // StartInDungeon, exactly as StartGameBehaviour does.
+  params.set('classic', '1');
+  return bootWorld(canvas, renderer, params, status);
 }
 
 boot().catch((e) => {

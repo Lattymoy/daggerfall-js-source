@@ -66,7 +66,8 @@ import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the sho
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { StreamingWorldState, worldCoordToMapPixel } from '../world/streamingWorld.js';   // F-slice: worldCoordToMapPixel for the travel start pixel
+import { StreamingWorldState, worldCoordToMapPixel } from '../world/streamingWorld.js';
+import { getBool, getInt } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
@@ -156,7 +157,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
   }
 
-  const startLoc = maps.getLocationByName(regionName, locationName);
+  // U31 / THE CLASSIC START. StartGameBehaviour (:371-401) does not
+  // resolve the start by NAME - it reads a map pixel out of settings
+  // (StartCellX/StartCellY, 109/158 = Privateer's Hold) and asks the
+  // world what location is there. ?classic takes that path so the new
+  // game begins where Daggerfall begins; every dev boot keeps the
+  // region/loc names it has always used.
+  //
+  // NEVER TRAPS: a start cell with no location falls back to the named
+  // location rather than throwing the player at a black screen.
+  let startLoc = null;
+  if (params.has('classic')) {
+    const cell = `${getInt('Startup', 'StartCellX')},${getInt('Startup', 'StartCellY')}`;
+    startLoc = locationIndex.get(cell) ?? null;
+    if (!startLoc) console.warn(`[world] start cell ${cell} holds no location; falling back to ${regionName}/${locationName}`);
+  }
+  if (!startLoc) startLoc = maps.getLocationByName(regionName, locationName);
   if (!startLoc) throw new Error(`location not found: ${regionName}/${locationName}`);
   const startPixel = longitudeLatitudeToMapPixel(
     startLoc.mapTableData.longitude, startLoc.mapTableData.latitude);
@@ -1503,6 +1519,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       return { ...d, regionIndex: dfLoc.regionIndex, name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };
     },
   });
+  // U31 / StartGameBehaviour :392-401. The streamer is already at the
+  // start pixel; put the player INSIDE that location's dungeon, which
+  // is where a new Daggerfall character opens their eyes. DFU gates
+  // this on the same two things: the setting, and the location really
+  // having a dungeon.
+  //
+  // NEVER TRAPS: if the entrance cannot be found the player is left
+  // standing on the exterior at the dungeon's door rather than in a
+  // half-built mode, and the reason is said out loud.
+  if (params.has('classic') && getBool('Startup', 'StartInDungeon') && startLoc.hasDungeon) {
+    status('entering the dungeon');
+    const entered = await modes.startInDungeon();
+    if (!entered) console.warn('[world] no dungeon entrance at the start cell; starting outside');
+  }
   if (shotMode) { modes.installShotProbes(); installTownProbes(); }
   if (shotMode) window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
   if (shotMode) {

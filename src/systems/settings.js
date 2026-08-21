@@ -74,6 +74,16 @@ export const LIVE = Object.freeze({
   // setting that controls the launcher. The reverse-direction
   // pin below now makes that shape a test failure.
   'GUI/ShowOptionsAtStart': 'src/main.js',
+  // U31: THE START CELL. These three were `stored` while the classic
+  // start ignored them entirely and booted a fixed dev scene, which is
+  // why Privateer's Hold had no way out. The world host now reads all
+  // three exactly as StartGameBehaviour does (:371-401): the cell says
+  // WHERE the game begins, StartInDungeon says whether it begins
+  // inside. Changing StartCellX/Y in the settings screen really does
+  // start a new character somewhere else.
+  'Startup/StartCellX': 'src/scenes/world.js',
+  'Startup/StartCellY': 'src/scenes/world.js',
+  'Startup/StartInDungeon': 'src/scenes/world.js',
   // MENU: the first VIDEO setting to become real - five hosts drew
   // their projection at a hardcoded Math.PI/3, which is DFU's
   // MINIMUM (60) rather than its default (65).

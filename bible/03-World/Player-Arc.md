@@ -1060,3 +1060,68 @@ ROSE 1.1 up real city geometry (y 390.23 -> 391.34), releasing W
 aborted through the classic abort key, and the drop landed grounded.
 The __climb probe surface (climbing/slipping/y/grounded) ships with
 it.
+
+## U31 (2026-08-21): THE FIRST DUNGEON HAS A DOOR OUT SHIPPED
+
+Reported from play: *"you cannot currently exit the first dungeon."*
+It was true, and it was structural rather than a broken door.
+
+**What was wrong.** The bare URL - the classic start, the thing a new
+character actually boots - handed off to `scenes/dungeon.js`. That
+scene is a standalone dev host: it builds one named dungeon, spawns at
+its start marker, and its ONLY activation arm is
+`ctx.actions.activate` (`:132`, `:309`). There is no exit branch in
+the file. Privateer's Hold was a sealed box, and every new game began
+inside it.
+
+The complete dungeon->exterior transition existed the whole time, and
+was already tested - `worldModes.tryExitDungeon`, with the verbatim
+`PositionPlayerToDungeonExit` landing. It lives in the WORLD host,
+which the classic start never booted. So this was not a missing
+mechanic; it was a routing mistake that hid a finished one.
+
+**What it does now**, and it is DFU's own shape rather than a
+convenience. `StartGameBehaviour` (:371-401) does not resolve the
+start by name. It reads a MAP PIXEL out of settings - `StartCellX` /
+`StartCellY` - asks the world what location sits there, and if
+`StartInDungeon` is set and that location `HasDungeon`, teleports the
+streamer to the pixel and starts the dungeon interior. The classic
+start now takes exactly that path: `main.js` boots the world host with
+`?classic`, `world.js` resolves the start cell out of the store, and
+`worldModes.startInDungeon()` puts the player inside.
+
+**The one thing that mattered in the wiring.** `startInDungeon` routes
+through `tryEnterDungeon` rather than repeating its body. That is not
+tidiness: `tryEnterDungeon` is what records `dungeonReturn`, the
+entrance-door candidates the exit landing is computed from. A copied
+body that entered the dungeon directly would have started the game
+correctly and stranded the player exactly as before - the same bug
+wearing a new hat. The pin holds the call, not just the behaviour.
+
+**VERIFIED against the data, not assumed.** `StartCellX/Y` ship as
+109/158 in the vendored `defaults.ini`. Resolving that pixel against
+the real `MAPS.BSA` returns `Privateer's Hold`, region 17,
+`hasDungeon: true` - so DFU's shipped start cell and the port's own
+map reader agree on where Daggerfall begins. Those three keys were
+tiered `stored` while nothing read them; they are LIVE now, which
+means changing the start cell on the settings screen really does start
+a new character somewhere else.
+
+**PROVED LIVE** (`tools/classicStartProbe.mjs`): the classic start
+comes up in `mode: dungeon`, the start location reports 1 exit door,
+and standing at that door and making the same activation a player
+makes returns `mode: exterior`. Nothing is shortcut - the probe drives
+the real raycast pick, from a stand position that had to be MEASURED:
+the first draft stood at the door's own height, put the eye ~2.3 above
+the door box, sailed the ray over it, and reported the exit broken
+when it was not. The probe-only `__warpTo` exists for that stand and
+lives inside `installShotProbes`, so it is absent from any played
+build.
+
+`scenes/dungeon.js` keeps its dev routes (`?dungeon=<name>`, and the
+`?shot`/`?nomenu` path 25 probes in `tools/` drive). A pin fails if it
+ever gains an exit, so that decision gets made deliberately rather
+than drifting.
+
+Pins: 4 in `classicstart.test.js` + the live probe; 4 mutations, 4
+killed.
