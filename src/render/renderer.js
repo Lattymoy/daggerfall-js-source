@@ -1449,7 +1449,31 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *   "archive_record" -> "archive_record" texture substitution (climate
    *   swaps; UVs stay original-archive, the SetDungeonTextures pattern).
    */
+  /** One warning per distinct shape, not one per frame. */
+  _warnMissingMesh(mesh) {
+    this._missingMeshes ??= new Set();
+    const why = mesh == null ? 'no mesh' : !mesh.vao ? 'no vao' : 'no subMeshes';
+    const key = `${why}:${mesh?.name ?? mesh?.modelId ?? '?'}`;
+    if (this._missingMeshes.has(key)) return;
+    this._missingMeshes.add(key);
+    console.warn(`[renderer] drawMesh skipped a mesh with ${why} - a model is missing from this scene, not from the frame loop`, mesh);
+  }
+
   drawMesh(mesh, modelMatrix, texRemap = null) {
+    // NEVER TRAPS. A mesh that is absent, or one whose subMeshes never
+    // arrived, is game DATA missing - a model id the player's ARCH3D
+    // does not carry, a record the ingest diet dropped - and the rule
+    // for missing data in this port is that it costs the thing that is
+    // missing, never the run. Before this, `mesh.vao` on a null threw
+    // out of the frame loop, requestAnimationFrame stopped, and the
+    // whole scene died for one absent model: a real player hit exactly
+    // that ("drawMesh@... / re@...", Firefox, no message). Warn ONCE
+    // per key so a broken data set says so without filling the console
+    // sixty times a second.
+    if (!mesh?.vao || !mesh.subMeshes?.length) {
+      this._warnMissingMesh(mesh);
+      return;
+    }
     const gl = this.gl;
     // Every draw entry point owns its program binding (drawTerrain /
     // drawBillboards / drawWater already do) - R9 interleaved terrain

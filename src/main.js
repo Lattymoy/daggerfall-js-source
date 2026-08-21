@@ -11,6 +11,7 @@
 // the cursor (DFU shape); WASD + mouse, Shift for speed.
 // ?shot raises window.__shotReady at a fixed vantage for tools/screenshot.mjs.
 
+import { crashText } from './ui/crashText.js';   // the crash line, pinned in its own module
 import { Renderer } from './render/renderer.js';
 import { windowEmissionRGB } from './render/windowEmission.js';
 import { bootExterior } from './scenes/exterior.js';
@@ -142,15 +143,24 @@ boot().catch((e) => {
 // "the game crashed" with no signal. Surface the stack on screen so
 // playtest reports pinpoint the throw.
 function crashOverlay(msg) {
-  if (document.getElementById('crash')) return;
+  const prior = document.getElementById('crash');
+  if (prior) {
+    // A SECOND crash used to be dropped on the floor. The frame loop
+    // is dead after the first, but a later rejection is often the one
+    // that names the cause - keep a count and the newest text.
+    prior._count = (prior._count ?? 1) + 1;
+    prior.textContent = `CRASH (${prior._count})\n${msg}`;
+    return;
+  }
   const el = document.createElement('pre');
   el.id = 'crash';
   el.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;max-height:45%;overflow:auto;background:#300;color:#f88;font:12px monospace;padding:8px;border:1px solid #f66;z-index:20;white-space:pre-wrap';
   el.textContent = `CRASH\n${msg}`;
   document.body.appendChild(el);
 }
-addEventListener('error', (e) => crashOverlay(e.error?.stack || e.message));
-addEventListener('unhandledrejection', (e) => crashOverlay(`unhandled rejection\n${e.reason?.stack || e.reason}`));
+
+addEventListener('error', (e) => crashOverlay(crashText(e.error, e) || e.message));
+addEventListener('unhandledrejection', (e) => crashOverlay(`unhandled rejection\n${crashText(e.reason)}`));
 
 // A lost WebGL context is the classic MOBILE black screen: the page
 // lives, the canvas goes permanently black, nothing throws. Surface
@@ -162,4 +172,3 @@ document.getElementById('c')?.addEventListener('webglcontextlost', (e) => {
   crashOverlay('graphics context lost (usually memory pressure on phones)\n\ntap here to reload');
   document.getElementById('crash')?.addEventListener('click', () => location.reload());
 });
-addEventListener('unhandledrejection', (e) => crashOverlay(e.reason?.stack || String(e.reason)));

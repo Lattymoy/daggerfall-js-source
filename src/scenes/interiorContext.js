@@ -128,8 +128,21 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const collider = new Collider(() => -Infinity);
   for (const p of interior.placements) {
     const matrix = parent(p.matrix);
-    drawList.push({ mesh: await getGpuMesh(p.modelIdNum), matrix });
+    // NEVER TRAPS: getGpuMesh returns NULL for a model id this data set
+    // does not carry (dataPipeline.js:82, and it CACHES the null), and
+    // cpuModels is written only on its success path - so an absent
+    // model used to push a {mesh: null} draw entry AND then read
+    // `cpu.positions` off undefined one line later. Every other builder
+    // in the port skips the placement; this one did not, and it is the
+    // only interior arm, which is why a single missing model could take
+    // the whole building. Skip the placement, loudly.
+    const gpu = await getGpuMesh(p.modelIdNum);
     const cpu = cpuModels.get(p.modelIdNum);
+    if (!gpu || !cpu) {
+      console.warn(`[interior] model ${p.modelIdNum} is not in this ARCH3D - the placement is skipped`);
+      continue;
+    }
+    drawList.push({ mesh: gpu, matrix });
     collider.addMesh('interior', cpu.positions, cpu.indices, matrix);
     if (p.modelIdNum === LADDER_MODEL_ID) ladders.push({ cpu, matrix });
     if (isShopShelfModel(p.modelIdNum)) {
