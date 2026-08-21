@@ -1331,6 +1331,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const questWorld = {
     maps,
     getBlock: (name) => blocks.getBlockByName(name),
+    // NPC1: the =symbol_ macro's flat caption. The quest machine has
+    // declared this seam since Q2 and nothing production-side answered
+    // it - every =person_ expanded to nothing. FLATS.CFG answers it now.
+    flatCaption: (archive, record) => pipeline.flatCaption(archive, record),
     // PlayerGPS.CurrentLocation is the location of the CURRENT MAP
     // PIXEL (in or out of the walls); IsPlayerInLocationRect is the
     // music director's own live rect flag.

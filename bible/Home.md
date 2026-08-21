@@ -252,10 +252,10 @@ combat line numbers below are refreshed with it.
 - `src/scenes/world.js:617` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/world.js:1109` - (FLAGGED); swallowing the browser reload is not optional.
 - `src/scenes/world.js:1323` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1411` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:1430` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:1656` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1922` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:1415` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:1434` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:1660` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1926` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:189` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:230` - FLAGGED (Port-Ledger Q4-v): quest FOES pend the interior enemy
 - `src/scenes/worldModes.js:325` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
