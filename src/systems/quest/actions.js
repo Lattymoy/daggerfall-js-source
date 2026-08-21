@@ -1621,6 +1621,9 @@ export class DroppedItemAtPlace extends ActionTemplate {
  *  propagate=TRUE law Quest.cs:385 carries). A missing person is a
  *  silent complete. */
 export class ChangeReputeWith extends ActionTemplate {
+  // ChangeReputeWith.cs:33 - the reputation move fires ONCE ever; a
+  // task rearm must not repeat it (AUDIT VI)
+  constructor(parentQuest) { super(parentQuest); this.allowRearm = false; }
   get pattern() { return /change repute with (?<target>[a-zA-Z0-9_.-]+) by (?<sign>[+-])(?<amount>\d+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);

@@ -39,12 +39,16 @@ const OPTIONS = /named (?<individualNPCName>[a-zA-Z0-9'_.-]+)|face (?<faceIndex>
 
 const FACE_COUNT = 10;   // Person.cs:35
 
-/** The zero faction record a failed lookup leaves behind (C#'s
- *  default struct - the chain continues over it, bug-for-bug). */
+/** The zero faction record a failed lookup leaves behind: C#'s
+ *  default(FactionData) is EVERY int field 0 (FactionFile.cs:640-672)
+ *  - race 0 reads as FactionRaces.Nord, so a failed lookup yields a
+ *  NORD, not the region race (AUDIT VI: the -1s here were wrong). */
 const ZERO_FACTION = Object.freeze({
-  id: 0, parent: 0, type: 0, name: '', rep: 0, region: -1, power: 0,
+  id: 0, parent: 0, type: 0, name: '', rep: 0, summon: 0, region: 0,
+  power: 0, flags: 0, ruler: 0,
   ally1: 0, ally2: 0, ally3: 0, enemy1: 0, enemy2: 0, enemy3: 0,
-  face: -1, race: -1, flat1: 0, flat2: 0, sgroup: 0, ggroup: 0,
+  face: 0, race: 0, flat1: 0, flat2: 0, sgroup: 0, ggroup: 0,
+  minf: 0, maxf: 0, vam: 0, rank: 0,
 });
 
 /** KnightlyOrder.Orders in C# Enum.GetValues order - sorted by VALUE
@@ -100,6 +104,20 @@ export class Person extends QuestResource {
 
   /** PlaceAtHome (Person.cs:414-429): pins this person to their
    *  generated home Place - never questors or individuals. */
+  /** Tick (Person.cs:385-404): the auto-home hot-place (AUDIT VI).
+   *  A generated home stands dormant until the PLAYER ENTERS it -
+   *  then the NPC is placed exactly as "place npc at home" would,
+   *  but only while nothing else has placed them. Never re-fires:
+   *  the assignment is permanent for the quest's duration. */
+  tick(caller) {
+    super.tick(caller);
+    if (this.assignedPlaceSymbol === null && this.homePlaceSymbol !== null && !this.assignedToHome) {
+      const home = this.parentQuest.getPlace(this.homePlaceSymbol);
+      if (!home) return;
+      if (home.isPlayerHere()) this.placeAtHome();
+    }
+  }
+
   placeAtHome() {
     const homePlace = this.parentQuest.getPlace(this.homePlaceSymbol);
     if (!homePlace || this.isQuestor || this.isIndividualNPC) return false;
@@ -332,11 +350,14 @@ export class Person extends QuestResource {
   // ---- the Assign* chain (Person.cs:571-663) ----
 
   _assignRace(world) {
-    // GetRaceFromFactionRace: the record's race, or the current
-    // region's when None. Stored as the FactionRaces NUMBER - the
+    // GetRaceFromFactionRace (RaceTemplate.cs:109-133) maps ONLY
+    // FactionRaces -1..7; the oddballs (Skakmat 11, Orc 17, Vampire
+    // 18, Fey 19) fall through to Races.None, and AssignRace folds
+    // None to the region's race - so anything outside 0..7 reads
+    // regional (AUDIT VI). Stored as the FactionRaces NUMBER - the
     // Races-enum expansion rides Q4's flat art (test-the-shape).
-    this.factionRace = this.factionData?.race ?? -1;
-    if (this.factionRace === -1) this.factionRace = world.currentRegionRace?.() ?? -1;
+    const raw = this.factionData?.race ?? -1;
+    this.factionRace = (raw >= 0 && raw <= 7) ? raw : (world.currentRegionRace?.() ?? -1);
     this.nameBank = getNameBankOfRegion(world.currentRegionIndex());
   }
 
@@ -371,16 +392,22 @@ export class Person extends QuestResource {
     this.displayName = fullName(this.nameBank, this.npcGender);
   }
 
-  /** AssignHomeTown (Person.cs:631-663): questors and at-home
-   *  individuals configure from the player's location; individuals
-   *  otherwise have no generated home; everyone else gets a Place
-   *  declaration built from the faction row's building type (or
-   *  house), scoped local/remote by a 50/50 roll when unstated. */
+  /** AssignHomeTown (Person.cs:631-663): questors configure from the
+   *  player's location; individuals have NO generated home; everyone
+   *  else gets a Place declaration built from the faction row's
+   *  building type (or house), scoped local/remote by a 50/50 roll
+   *  when unstated.
+   *  C# DEAD ARM KEPT (AUDIT VI): the condition reads the
+   *  isIndividualAtHome FIELD, which SetResource assigns only AFTER
+   *  AssignHomeTown returns (Person.cs:275 vs :278) - so the
+   *  individual half can never fire during setup and an at-home
+   *  individual falls to the IsIndividualNPC return like any other.
+   *  Reading the live atHome local here would resurrect the arm. */
   _assignHomeTown(world, scopeString) {
     const HOUSE = 'house';
     const symbolName = `_${this.symbol.name}_home_`;
 
-    if (this.isQuestor || (this.isIndividualNPC && this.atHome)) {
+    if (this.isQuestor || (this.isIndividualNPC && this.isIndividualAtHome)) {
       const homePlace = new Place(this.parentQuest);
       if (world.currentLocation?.()?.loaded) {
         if (!homePlace.configureFromPlayerLocation(world, symbolName)) {

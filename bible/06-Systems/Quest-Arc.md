@@ -521,6 +521,67 @@ Gate: `test/questpersons.test.js` (12 pins over the crafted world
 seam + a persistent-faction-store mock) + the moved coverage/
 ownership pins.
 
+## QUEST AUDIT VI (2026-08-21, the Q3-ii verify pass)
+
+The two lanes over the frozen tree: a four-lane adversarial parity
+re-read (14 raw findings, two refuters each, 10 confirmed = 4
+distinct) and a targeted two-round mutation campaign (round 1: 188
+mutants over person.js whole + the exact changed line ranges, 89
+subset survivors -> 15 pins; round 2 same-seed: 208 mutants, 27
+survivors -> 4 boundary pins + 23 recorded equivalents, the four
+kills and two equivalents full-suite-confirmed).
+
+- FIXED (parity, all pinned): C#'s DEAD AssignHomeTown ARM - the
+  condition reads the isIndividualAtHome FIELD, which SetResource
+  assigns only AFTER AssignHomeTown returns (Person.cs:275 vs :278),
+  so an atHome individual NEVER gets a player-location home in DFU;
+  the port read the live atHome local and resurrected the arm,
+  handing King_of_Worms-class NPCs a home Place DFU never builds
+  (now reads the field - the dead arm kept bug-for-bug, questors
+  only); the ZERO-FACTION record was wrong - C#'s default struct is
+  EVERY int 0, not -1s, so a failed lookup's race 0 reads as
+  FactionRaces.Nord and does NOT fall to the region (record
+  rebuilt field-for-field, minf/maxf/vam/rank et al included); the
+  RACE FOLD was too narrow - GetRaceFromFactionRace maps ONLY -1..7
+  and the oddballs (Skakmat 11, Orc 17, Vampire 18, Fey 19) fall
+  through to None -> regional (the port folded only -1);
+  Person.Tick's AUTO-HOME HOT-PLACE was missing whole - a generated
+  home stands dormant until the PLAYER ENTERS it, then the NPC
+  places as if "place npc at home" ran, permanently (ported with
+  its lastAssignedPlaceSymbol/assignedToHome gates); ChangeReputeWith
+  lost allowRearm=false (ChangeReputeWith.cs:33) - a task rearm
+  re-fired the reputation move.
+- SELF-CATCHES, both directions: the career-table pin draft expected
+  Group_4 -> Merchants and FAILED against the port - DFU's own
+  switch SKIPS careerID 4 (case 3 jumps to case 5), Group_4 falls to
+  the regional People, and the PORT was right; the refuter pairs
+  split across lanes on the race fold (one lane confirmed, another
+  refuted the same claim) - settled by hand against
+  RaceTemplate.cs:109-133, the CONFIRMING lane was right.
+- THE BASELINE TRAP, in reverse: the round-2 confirms read fails=5
+  as caught until the sandbox baseline was re-measured - the stale
+  sandbox Testing.md made the manifest pin a FIFTH baseline failure,
+  so fails=5 WAS survival and fails=6 the kill. Re-measure the
+  baseline after every sandbox sync, before reading any confirm.
+- MUTATIONS: the pins from the campaign - the exact zero record
+  (deep-equal), the WHOLE 22-row career table, every factionType arm
+  incl. the p3=-1 Range(0,4) quirk exercised LIVE and the P0
+  player-vampire-clan arm, the Local_4.10k fold, missing-row
+  fallthroughs, faction-512 Female, the gender/scope rolls' strict
+  <0.5 boundaries, face Range(0,10), nameSeed Range(0,1000), the
+  home-scope forcing law, residence rows vs the house wildcard,
+  Table.getKeyForValue's first-row law, the signed repute amount,
+  the getReputation 0 default, the three CreateNpc refusals.
+  Recorded equivalents: dead stores (ctor atHome), unconsumed
+  returns (placeAtHome's bool), the cosmetic case-17..20 fall-through
+  labels, corpus-unreachable arms (p2=0 rows all carry p3=0; both
+  10000-fold targets land Merchants; the factionType default with
+  all 16 types armed), seam-contract ?? fallbacks, and the
+  _range(n>1) call-site bound.
+- REFUTED (recorded): the vampire-arm NRE claim, the loud-fail
+  demand on partial worlds (the seam contract owns it), and the two
+  race-fold refutations that lost to the source.
+
 ## Queue
 
 - **Q3-iii - FOE SPAWNING**: CreateFoe's tick-driven spawn law (241)

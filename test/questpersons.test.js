@@ -42,6 +42,7 @@ const building = (buildingType, { factionId = 0, nameSeed = 777 } = {}) =>
 
 const FACTIONS = new Map([
   [364, { id: 364, type: 4, name: 'King Gothryd', race: 3, region: 17 }],   // Individual
+  [304, { id: 304, type: 4, name: 'Skakmat', race: 11 }],                    // Individual with the oddball race
   [9, { id: 9, type: 0, name: 'Sheogorath', race: -1 }],                     // Daedra
   [26, { id: 26, type: 1, name: 'Akatosh the God', race: -1 }],              // God
   [510, { id: 510, type: 2, name: 'The Merchants', race: -1 }],
@@ -290,10 +291,12 @@ test('CreateNpc places the person at home (SiteLink + marker); questors refuse P
   assert.equal(m2.quests.has(q2.uid), true, 'the refusing quest stays alive');
 
   // an individual atHome refuses the same way (Person.cs:414 guards
-  // questor AND individual before any sitelink work)
+  // questor AND individual before any sitelink work; the dead
+  // AssignHomeTown arm means there is no home place to refuse over)
   const m3 = makeMachine(makeWorld());
   const q3 = schedule(m3, ['Person _king_ named King_Gothryd atHome', '', ' create npc _king_']);
   m3.tick();
+  assert.equal(q3.getResource({ name: 'king' }).homePlaceSymbol, null);
   assert.equal(q3.getResource({ name: 'king' }).assignedToHome, false);
   assert.equal(m3.quests.has(q3.uid), true);
 
@@ -337,14 +340,16 @@ test('a FAILED faction lookup binds the exact zero record; the Chemist row walks
   const p = q.getResource({ name: 'z' });
   assert.equal(p.factionId, 0);
   assert.deepEqual(p.factionData, {
-    id: 0, parent: 0, type: 0, name: '', rep: 0, region: -1, power: 0,
+    id: 0, parent: 0, type: 0, name: '', rep: 0, summon: 0, region: 0,
+    power: 0, flags: 0, ruler: 0,
     ally1: 0, ally2: 0, ally3: 0, enemy1: 0, enemy2: 0, enemy3: 0,
-    face: -1, race: -1, flat1: 0, flat2: 0, sgroup: 0, ggroup: 0,
-  }, "C#'s default FactionData struct, field for field");
+    face: 0, race: 0, flat1: 0, flat2: 0, sgroup: 0, ggroup: 0,
+    minf: 0, maxf: 0, vam: 0, rank: 0,
+  }, "C#'s default FactionData struct, field for field - every int 0");
   // id 0 blocks the Individual/Daedra record-name arm (type 0 IS
   // Daedra) - the display name draws from the bank instead
   assert.ok(p.displayName.length > 0, 'the id!==0 gate keeps the name-bank draw');
-  assert.equal(p.factionRace, 3, 'race -1 falls to the regional race');
+  assert.equal(p.factionRace, 0, 'race 0 IS FactionRaces.Nord - a failed lookup yields a Nord, NOT the region race');
   // Chemist (0,0,0) passes the home gate: p2=0 -> placesTable key
   // 'alchemist' -> the type-0 building at block index 0 (the packed
   // key 0 reads as the 1<<24 directory sentinel)
@@ -411,14 +416,23 @@ test('missing table rows warn and fall through to the zero binding, never a thro
     assert.equal(p.factionId, 0, decl);
     assert.equal(p.npcPending, false, `${decl} still binds the rest of the chain`);
     assert.ok(p.displayName.length > 0, `${decl} draws a bank name`);
-    assert.equal(p.factionRace, 3, `${decl} race falls to the region`);
+    assert.equal(p.factionRace, 0, `${decl} zero record race 0 = Nord, kept`);
   }
+});
+
+test('the race fold: only FactionRaces 0..7 map; Skakmat 11 falls through to the region', () => {
+  // GetRaceFromFactionRace's switch has no arm for 11/17/18/19 - the
+  // fall-through Races.None folds to the region race
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, ['Person _sk_ named Skakmat', '', 'variable _pad_']);
+  assert.equal(q.getResource({ name: 'sk' }).factionId, 304);
+  assert.equal(q.getResource({ name: 'sk' }).factionRace, 3, 'race 11 is unmapped - regional');
   // and with NO regional race on the seam, the -1 default stands
   const bare = makeWorld();
   delete bare.currentRegionRace;
   const m2 = makeMachine(bare);
-  const q2 = schedule(m2, ['Person _x_ named No_Such_Person', '', 'variable _pad_']);
-  assert.equal(q2.getResource({ name: 'x' }).factionRace, -1);
+  const q2 = schedule(m2, ['Person _sk_ named Skakmat', '', 'variable _pad_']);
+  assert.equal(q2.getResource({ name: 'sk' }).factionRace, -1);
 });
 
 test('faction 512 forces Female through the display-name arm', () => {
@@ -518,6 +532,49 @@ test('ChangeReputeWith carries the SIGN: a positive amount moves reputation up',
   ]);
   m.tick();
   assert.deepEqual(m.of('changeReputation'), [['changeReputation', 510, 22, true]]);
+});
+
+test("C#'s DEAD ARM: an atHome individual gets NO home - isIndividualAtHome is assigned AFTER AssignHomeTown", () => {
+  // Person.cs:275 runs AssignHomeTown, :278 assigns the field the
+  // arm reads - so the individual half can never fire during setup
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, ['Person _king_ named King_Gothryd atHome', '', 'variable _pad_']);
+  const p = q.getResource({ name: 'king' });
+  assert.equal(p.homePlaceSymbol, null, 'no player-location home place is built');
+  assert.equal(p.isIndividualAtHome, true, 'the post-hoc field assignment still lands');
+  assert.equal([...q.resources.values()].filter((r) => r.isPlace).length, 0, 'no Place resource joined the quest');
+});
+
+test("Person.Tick's auto-home hot-place: entering the home building places the NPC, once, permanently", () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, ['Person _shop_ group Shopkeeper', '', 'variable _pad_'], { rolls: () => 0.4 });
+  const p = q.getResource({ name: 'shop' });
+  const home = q.getPlace(p.homePlaceSymbol);
+  m.tick();
+  assert.equal(p.assignedToHome, false, 'dormant while the player is elsewhere');
+  world._inside = { building: { buildingKey: home.siteDetails.buildingKey } };
+  m.tick();
+  assert.equal(p.assignedToHome, true, 'the player entered - hot-placed');
+  assert.equal(p.assignedPlaceSymbol.name, home.symbol.name);
+  assert.deepEqual(home.siteDetails.selectedMarker.targetResources.map((s) => s.name), ['shop']);
+  assert.equal(m.siteLinks.length, 1);
+  m.tick();
+  assert.equal(m.siteLinks.length, 1, 'permanent - never re-fires');
+});
+
+test('ChangeReputeWith fires ONCE ever: a task rearm must not repeat the reputation move', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, [
+    'Person _pp_ group Chemist', '',
+    '_t_ task:', ' change repute with _pp_ by -5', '',
+    'variable _pad_',
+  ]);
+  const t = q.getTask({ name: 't' });
+  t.start(); m.tick();
+  assert.equal(m.of('changeReputation').length, 1);
+  t.clear(); t.start(); m.tick();
+  assert.equal(m.of('changeReputation').length, 1, 'allowRearm=false held the action complete');
 });
 
 test('a P0 quest reads the PLAYER vampire clan; every other quest the region clan', () => {
