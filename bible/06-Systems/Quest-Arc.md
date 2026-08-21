@@ -582,11 +582,77 @@ kills and two equivalents full-suite-confirmed).
   demand on partial worlds (the seam contract owns it), and the two
   race-fold refutations that lost to the source.
 
+## Q3-iii - FOE SPAWNING (SHIPPED 2026-08-21)
+
+The spawn law whole. Coverage moved 6912 -> 7194 of 7235 corpus
+action lines (99.4%); the two buckets match the DFU-order derivation
+exactly (CreateFoe 241, CastSpellOnFoe 41). Pending 41 - the Q3-iv
+remainder: WhenPcEntersExits 8, WhenReputeWith 8,
+WhenNpcIsAvailable 7, CurePcDisease 6, MakePcDiseased 5,
+CastSpellDo 3, and DFU's OWN 4-line 'Action not found. Ignoring'
+floor (vestigial corpus lines no DFU template matches either).
+
+- THE FOE COMPLETED (foe.js, Foe.cs whole): deathTrigger/kill (the
+  behaviour mount zeroes entity health per instance - Q4), the spell
+  queue (a plain Add, NO duplicate refusal unlike the item queue;
+  never cleared, so future instances of the 1-to-many Foe receive
+  every spell queued so far - the per-instance cursor is Q4's),
+  getClonedItemQueue (originals stay on the Foe), and SETFOENAME -
+  the world half: typeName from the GROUNDED 62-entry enemyNames
+  list (Internal_Strings en id 183; index = id for monsters,
+  43+id-128 for classes; IsClassEnemyId = the 128 bit), monsters
+  drawing a random monster name through classic srand (the
+  wall-clock ms seed rides the quest's injectable roll per Ledger A,
+  PLUS DFRandom.random_range(1,1000000) from DFRandom's own state,
+  verbatim), humanoids rolling gender at 55% MALE then drawing from
+  the REGION's name bank. HEADLESS the name half pends LOUDLY
+  (namePending) - the npcPending precedent; the table half still
+  resolves.
+- CREATEFOE (the tick-driven spawn law, CreateFoe.cs whole): four
+  parse forms (create-indefinitely / create-N-times / send-N-times /
+  send, minutes*60, "send" without a count implies infinite +
+  isSendAction, the msg option riding C#'s Substring(match.Length)
+  slice - by the match LENGTH regardless of where it began,
+  verbatim), the first-update random BACKDATE (Range(0, interval)
+  on the injectable rolls - the first spawn lands anywhere within
+  one cycle), the interval consumed BEFORE the Dice100 chance roll
+  (a failed roll waits out a full cycle), the hidden-foe block
+  spending the interval too, missing-Foe and creation-failure
+  error-termination, the wave lifecycle (one placement attempt per
+  quest tick, a failed placement retried without losing the handle,
+  spawnCounter incrementing only after the WHOLE wave deploys, only
+  one wave in flight), the send-variant placement gate on
+  isPlayerInLocationRect, the msg popup oncePerQuest on the FIRST
+  placed foe only, InitialiseOnSet restarting the cycle whole on
+  the task-rearm edge, and RaiseOnEncounterEvent riding the pending
+  ticks.
+- THE SEAM (deps.world, contract in machine.js):
+  createFoeGameObjects(foe, count) - GameObjectHelper's mint, one
+  opaque handle per pending instance - and tryPlaceFoe(handle) -
+  TryPlacement's dispatch + PlaceFoeFreely's raycast ring, true when
+  THIS handle stood - plus the optional raiseOnEncounterEvent.
+  ABSENT, the law idles (the corpus charter). DEFERRED, one row: the
+  exterior-transition/init-world pending-wave invalidation
+  (CreateFoe.cs:366-378) and the save envelope's in-flight-wave loss
+  ride Q4's host mount.
+- CASTSPELLONFOE: the classic id from Quests-Spells at CREATE, the
+  custom-key form, and TWO C# QUIRKS KEPT: a table miss LOGS and
+  completes the TEMPLATE (a no-op - the minted action still queues
+  its all-default spell, classic id 0), and the missing-foe throw
+  reads the action's own never-assigned Symbol (C# NREs before the
+  format; either way the quest error-terminates).
+
+Gate: `test/questfoes.test.js` (15 pins over the crafted foe seam)
++ the moved coverage/ownership pins (55 actions, 7194/41).
+
 ## Queue
 
-- **Q3-iii - FOE SPAWNING**: CreateFoe's tick-driven spawn law (241)
-  through the host enemy seams, CastSpellOnFoe's spell queue (41),
-  the WhenPcEntersExits trigger, the remaining ~41 pending lines.
+- **Q3-iv - THE REMAINDER SWEEP** (41 lines): WhenPcEntersExits (8,
+  the p1=2 exterior-type trigger over location-rect state),
+  WhenReputeWith (8, trivial over getReputation),
+  WhenNpcIsAvailable (7), CurePcDisease (6) and MakePcDiseased (5)
+  over the S18 disease seams, CastSpellDo (3), and the 4 'Action
+  not found' lines recorded as DFU's own permanent floor.
 - **Q4 also picks up**: the hot-place/hot-remove halves of
   AssignQuestResource (world.onResourceAssigned), TeleportPc's
   save-resume, the layout builders walking SiteLinks/QuestMarkers to

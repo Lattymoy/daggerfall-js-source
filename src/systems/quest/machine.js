@@ -131,6 +131,25 @@
 //                                held-copy sync
 //   offerReward(quest, dfItem) - GivePc's QuestComplete loot window
 //
+// Q3-iii, the foe-spawn seam on deps.world (Q4 mounts the scene
+// halves through the host's buildFoeAt chain; tests mock):
+//   createFoeGameObjects(foeResource, count)
+//                              - GameObjectHelper.CreateFoeGameObjects:
+//                                mint `count` inactive enemy handles
+//                                for the Foe resource (opaque to the
+//                                machine); null/short = creation
+//                                failure, CreateFoe error-terminates
+//   tryPlaceFoe(handle)        - TryPlacement + PlaceFoeFreely: the
+//                                raycast placement just outside the
+//                                player's view; true = THIS handle
+//                                stood, false = retry next tick
+//   raiseOnEncounterEvent()    - GameManager.RaiseOnEncounterEvent,
+//                                once per pending tick (optional)
+//   ABSENT createFoeGameObjects = the spawn law idles (headless
+//   charter); Foe name halves pend via foe.namePending. DEFERRED to
+//   Q4's host mount: the exterior-transition/init-world pending-wave
+//   invalidation (CreateFoe.cs:366-378) and the save envelope.
+//
 // The 64 global variables (classic SAVEVARS.DAT state) live here and
 // reach tasks through quest.hooks.globalVars.
 

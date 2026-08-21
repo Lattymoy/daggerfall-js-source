@@ -40,7 +40,7 @@
 
 import { Symbol as QuestSymbol } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
-import { staticMessagesTable, soundsTable, placesTable } from './tables.js';
+import { staticMessagesTable, soundsTable, placesTable, spellsTable } from './tables.js';
 import { dateFromSeconds } from '../gameDate.js';
 import { makeItemPermanent } from './item.js';
 import { QUEST_MESSAGES } from './quest.js';
@@ -1689,6 +1689,188 @@ export class CreateNpc extends ActionTemplate {
   }
 }
 
+/** CreateFoe.cs (Q3-iii) - the tick-driven spawn law. The parse and
+ *  the interval/chance/counter/msg-once law are machine state; the
+ *  scene halves ride two seam members (contract in machine.js):
+ *  world.createFoeGameObjects(foe, count) - GameObjectHelper's mint,
+ *  one opaque handle per pending instance, inactive until placed -
+ *  and world.tryPlaceFoe(handle) - TryPlacement's dispatch +
+ *  PlaceFoeFreely's raycast placement just outside the player's
+ *  view, answering true when THIS handle stood (a false is retried
+ *  next tick, verbatim). world.raiseOnEncounterEvent rides along.
+ *  HEADLESS (or a world without the spawn seam) the update returns
+ *  before any progress - the corpus charter. DEFERRED, one row: the
+ *  exterior-transition/init-world invalidation events
+ *  (CreateFoe.cs:366-378) and the save envelope's in-flight-wave
+ *  loss ride Q4's host mount. */
+export class CreateFoe extends ActionTemplate {
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.foeSymbol = null;
+    this.spawnInterval = 0;      // seconds
+    this.spawnMaxTimes = -1;     // -1 = infinite
+    this.spawnChance = 0;
+    this.msgMessageID = -1;
+    this.lastSpawnTime = 0;
+    this.spawnCounter = 0;
+    this.isSendAction = false;
+    // transient scene state (CreateFoe.cs:37-39) - NOT save state:
+    // an in-flight wave is lost on save/load, as in DFU
+    this.spawnInProgress = false;
+    this.pendingFoes = null;
+    this.pendingFoesSpawned = 0;
+  }
+
+  get pattern() {
+    // C# reuses group names across alternates; JS suffixes and coalesces
+    return new RegExp(
+      'create foe (?<symbol>[a-zA-Z0-9_.-]+) every (?<minutes>\\d+) minutes (?<infinite>indefinitely) with (?<percent>\\d+)% success'
+      + '|create foe (?<symbol2>[a-zA-Z0-9_.-]+) every (?<minutes2>\\d+) minutes (?<count>\\d+) times with (?<percent2>\\d+)% success'
+      + '|(?<send>send) (?<symbol3>[a-zA-Z0-9_.-]+) every (?<minutes3>\\d+) minutes (?<count2>\\d+) times with (?<percent3>\\d+)% success'
+      + '|(?<send2>send) (?<symbol4>[a-zA-Z0-9_.-]+) every (?<minutes4>\\d+) minutes with (?<percent4>\\d+)% success');
+  }
+
+  /** InitialiseOnSet (CreateFoe.cs:61-65): a task rearm restarts the
+   *  spawn cycle whole. */
+  initialiseOnSet() {
+    this.lastSpawnTime = 0;
+    this.spawnCounter = 0;
+  }
+
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new CreateFoe(parentQuest);
+    action.foeSymbol = new QuestSymbol(g.symbol ?? g.symbol2 ?? g.symbol3 ?? g.symbol4);
+    action.spawnInterval = questParseInt(g.minutes ?? g.minutes2 ?? g.minutes3 ?? g.minutes4) * 60;
+    const count = g.count ?? g.count2;
+    action.spawnMaxTimes = count != null ? questParseInt(count) : 0;
+    action.spawnChance = questParseInt(g.percent ?? g.percent2 ?? g.percent3 ?? g.percent4);
+    if (g.infinite != null) action.spawnMaxTimes = -1;
+    if ((g.send ?? g.send2) != null) {
+      action.isSendAction = true;
+      // "send" without a count implies infinite
+      if (action.spawnMaxTimes === 0) action.spawnMaxTimes = -1;
+    }
+    // options ride source.Substring(match.Length) - C# slices by the
+    // match LENGTH regardless of where the match began, verbatim
+    const msg = /msg (?<msgId>\d+)/.exec(source.slice(match[0].length));
+    if (msg) action.msgMessageID = questParseInt(msg.groups.msgId);
+    return action;
+  }
+
+  _range(n) { return n > 0 ? Math.floor((this.parentQuest?.rolls ?? Math.random)() * n) : 0; }
+
+  update(_caller) {
+    const world = this.parentQuest.hooks?.world;
+    if (!world?.createFoeGameObjects) return;   // headless / spawn seam absent - the charter
+
+    const gameSeconds = this.parentQuest.nowSeconds?.() ?? 0;
+    // First update: backdate the timer a random distance into the
+    // interval so the first spawn lands anywhere within one cycle
+    // (Range(0, interval) exclusive, on the quest's injectable rolls)
+    if (this.lastSpawnTime === 0) this.lastSpawnTime = gameSeconds - this._range(this.spawnInterval);
+
+    // Max spawns reached - cleared only by a set/rearm
+    if (this.spawnCounter >= this.spawnMaxTimes && this.spawnMaxTimes !== -1) return;
+
+    // The wave finished deploying: count it and end this cycle
+    if (this.spawnInProgress && this.pendingFoesSpawned >= this.pendingFoes.length) {
+      this.spawnInProgress = false;
+      this.spawnCounter++;
+      return;
+    }
+
+    // A new spawn event - only one can be in flight at a time
+    if (gameSeconds >= this.lastSpawnTime + this.spawnInterval && !this.spawnInProgress) {
+      // the interval is consumed BEFORE the chance roll - a failed
+      // roll still waits out a full cycle
+      this.lastSpawnTime = gameSeconds;
+      if (this._range(100) >= this.spawnChance) return;   // Dice100.FailedRoll
+      const foe = this.parentQuest.getFoe(this.foeSymbol);
+      if (!foe) {
+        this.setComplete();
+        throw new Error(`create foe could not find Foe with symbol name ${this.foeSymbol?.name}`);
+      }
+      if (foe.isHidden) return;   // hidden blocks the spawn; the interval is already spent
+      this._createPendingFoeSpawn(world, foe);
+    }
+
+    // One placement attempt per tick while a wave is pending
+    if (this.spawnInProgress) {
+      this._tryPlacement(world);
+      world.raiseOnEncounterEvent?.();
+    }
+  }
+
+  /** CreatePendingFoeSpawn (CreateFoe.cs:166-181). */
+  _createPendingFoeSpawn(world, foe) {
+    this.pendingFoes = world.createFoeGameObjects(foe, foe.spawnCount) ?? null;
+    if (!this.pendingFoes || this.pendingFoes.length !== foe.spawnCount) {
+      this.setComplete();
+      throw new Error(`create foe attempted to create ${foe.spawnCount}x${foe.foeType} GameObjects and failed.`);
+    }
+    this.spawnInProgress = true;
+    this.pendingFoesSpawned = 0;
+  }
+
+  /** TryPlacement (CreateFoe.cs:183-212) minus the physics: the
+   *  "send" variant waits for the player inside a location rect; the
+   *  dispatch (building/dungeon/exterior/wilderness) and the raycast
+   *  ring live host-side behind tryPlaceFoe. The msg fires on the
+   *  FIRST placed foe only, oncePerQuest. */
+  _tryPlacement(world) {
+    if (this.isSendAction && !world.isPlayerInLocationRect?.()) return;
+    if (!world.tryPlaceFoe?.(this.pendingFoes[this.pendingFoesSpawned])) return;
+    if (this.msgMessageID !== -1) {
+      this.parentQuest.showMessagePopup(this.msgMessageID, false, true);
+      this.msgMessageID = -1;
+    }
+    this.pendingFoesSpawned++;
+  }
+}
+
+/** CastSpellOnFoe.cs (Q3-iii): queues a spell on a Foe resource -
+ *  delivery is the behaviour mount's per-instance cursor (Q4). Two
+ *  C# QUIRKS KEPT: a Quests-Spells miss LOGS and calls SetComplete
+ *  on the TEMPLATE (a no-op - the minted action still queues its
+ *  all-default spell, classic id 0); and the missing-foe throw reads
+ *  the action's own never-assigned Symbol, so C# NREs before the
+ *  format - either way the quest error-terminates. */
+export class CastSpellOnFoe extends ActionTemplate {
+  get pattern() {
+    return /cast (?<aSpell>[a-zA-Z0-9'_.-]+) spell on (?<aFoe>[a-zA-Z0-9_.-]+)|cast (?<aCustomSpell>[a-zA-Z0-9_.-]+) custom spell on (?<aFoe2>[a-zA-Z0-9_.-]+)/;
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const action = new CastSpellOnFoe(parentQuest);
+    action.foeSymbol = new QuestSymbol(g.aFoe ?? g.aFoe2 ?? '');
+    action.spell = { classicId: 0, customKey: g.aCustomSpell ?? '' };
+    if (!action.spell.customKey) {
+      const table = spellsTable();
+      if (table.hasValue(g.aSpell)) {
+        action.spell.classicId = questParseInt(table.getValue('id', g.aSpell));
+      } else {
+        console.warn(`[quest] CastSpellOnFoe could not resolve classic spell '${g.aSpell}' in Quests-Spells data table`);
+        this.setComplete();   // C#: the TEMPLATE completes, not the action - kept
+      }
+    }
+    return action;
+  }
+  update(_caller) {
+    const foe = this.parentQuest.getFoe(this.foeSymbol);
+    if (!foe) {
+      this.setComplete();
+      throw new Error(`CastSpellOnFoe could not find Foe with symbol name ${this.symbol?.name}`);
+    }
+    foe.queueSpell(this.spell);
+    this.setComplete();
+  }
+}
+
 /** CreateNpcAt.cs: a DOCUMENTED no-op - legacy TEMPLATE scripts
  *  "reserve" a site before placing; DFU creates SiteLinks in the
  *  placement actions either way, so this only completes. */
@@ -1737,13 +1919,11 @@ const GUARD_PATTERNS = Object.freeze({
   Weather: /weather (sunny|cloudy|overcast|fog|rain|thunder|snow)/,
   Climate: /climate (desert|desert2|mountain|mountainwoods|rainforest|ocean|swamp|subtropical|woodlands|hauntedwoodlands)|climate (base) (desert|mountain|temperate|swamp)/,
   // Default actions
-  CreateFoe: /create foe ([a-zA-Z0-9_.-]+) every (\d+) minutes (indefinitely) with (\d+)% success|create foe ([a-zA-Z0-9_.-]+) every (\d+) minutes (\d+) times with (\d+)% success|(send) ([a-zA-Z0-9_.-]+) every (\d+) minutes (\d+) times with (\d+)% success|(send) ([a-zA-Z0-9_.-]+) every (\d+) minutes with (\d+)% success/,
   RunQuest: /run quest (\w+) then ([a-zA-Z0-9_.]+) or ([a-zA-Z0-9_.]+)/,
   MakePcDiseased: /make pc ill with ([a-zA-Z0-9_.']+)/,
   CurePcDisease: /cure vampirism|cure lycanthropy|cure ([a-zA-Z0-9_.']+)/,
   CastSpellDo: /cast ([a-zA-Z0-9'_.-]+) spell do ([a-zA-Z0-9_.-]+)/,
   CastEffectDo: /cast ([a-zA-Z0-9_.-]+) effect do ([a-zA-Z0-9_.-]+)/,
-  CastSpellOnFoe: /cast ([a-zA-Z0-9'_.-]+) spell on ([a-zA-Z0-9_.-]+)|cast ([a-zA-Z0-9_.-]+) custom spell on ([a-zA-Z0-9_.-]+)/,
   WorldUpdate: /worldupdate (location) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (locationnew) named (.+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (block) ([a-zA-Z0-9_.-]+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (blockAll) ([a-zA-Z0-9_.-]+) variant ([a-zA-Z0-9_.-]+)|worldupdate (building) ([a-zA-Z0-9_.-]+) (\d+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (buildingAll) ([a-zA-Z0-9_.-]+) (\d+) variant ([a-zA-Z0-9_.-]+)/,
   Enemies: /enemies (makehostile|clear)/,
   ClickedFoe: /clicked foe ([a-zA-Z0-9_.-]+) and at least (\d+) gold otherwise do ([a-zA-Z0-9_.]+)|clicked foe ([a-zA-Z0-9_.-]+) say (\d+)|clicked foe ([a-zA-Z0-9_.-]+) say (\w+)|clicked foe ([a-zA-Z0-9_.-]+)/,
@@ -1805,7 +1985,7 @@ export function defaultActionTemplates() {
     new GivePc(null),
     new GiveItem(null),
     new StartStopTimer(null),
-    guard('CreateFoe'),
+    new CreateFoe(null),
     new PlaceFoe(null),
     new HideNpc(null),
     new RestoreNpc(null),
@@ -1833,7 +2013,7 @@ export function defaultActionTemplates() {
     guard('CurePcDisease'),
     guard('CastSpellDo'),
     guard('CastEffectDo'),
-    guard('CastSpellOnFoe'),
+    new CastSpellOnFoe(null),
     new RemoveFoe(null),
     new LegalRepute(null),
     new MuteNpc(null),

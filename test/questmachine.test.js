@@ -233,7 +233,7 @@ test('quest machine: a GlobalVarLink task reads and writes the shared store', ()
   assert.equal(lift.getTriggerValue(), false, 'the store is the truth, not the local flag');
 });
 
-test('quest machine: COVERAGE PIN - the 53-action registry resolves 6912 of 7235 corpus action lines, each to its DFU owner', () => {
+test('quest machine: COVERAGE PIN - the 55-action registry resolves 7194 of 7235 corpus action lines, each to its DFU owner', () => {
   const m = new QuestMachine({ nowSeconds: () => 0 });
   let resolved = 0, pending = 0;
   const tally = new Map();
@@ -253,8 +253,8 @@ test('quest machine: COVERAGE PIN - the 53-action registry resolves 6912 of 7235
   // moved 50 lines BACK to pending: the guards stopped Say/WhenTask
   // hijacking lines owned by not-yet-ported DFU triggers; Q2b-i's
   // full-registry mirror then made ownership structural.)
-  assert.equal(resolved, 6912);
-  assert.equal(pending, 323);
+  assert.equal(resolved, 7194);
+  assert.equal(pending, 41);
   // THE OWNERSHIP PIN: per-action resolved counts, each equal to the
   // line count the FULL DFU RegisterActionTemplates order assigns
   // that action over this corpus (independently derived by running
@@ -265,8 +265,10 @@ test('quest machine: COVERAGE PIN - the 53-action registry resolves 6912 of 7235
     AddAsQuestor: 21,
     AddDialog: 77,
     AddFace: 35,
+    CastSpellOnFoe: 41,
     ChangeReputeWith: 207,
     ClearTask: 209,
+    CreateFoe: 241,
     CreateNpc: 48,
     CreateNpcAt: 26,
     ClickedItem: 66,
