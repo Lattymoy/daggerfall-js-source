@@ -269,6 +269,15 @@ test('the vendored pack answers the bridge data contract from disk (the questDat
 // clickNpc + ClearState + the save envelope
 // ---------------------------------------------------------------
 
+test('mountScene rides the Q4-iii walk: siteType/mapId/buildingKey reach getSiteLinks (default 0)', () => {
+  const bridge = makeBridge();
+  const calls = [];
+  bridge.machine.getSiteLinks = (...a) => { calls.push(a); return []; };
+  bridge.mountScene({ currentMapId: () => 77 }, 3, 40);
+  bridge.mountScene({ currentMapId: () => 77 }, 3);
+  assert.deepEqual(calls, [[3, 77, 40], [3, 77, 0]], 'the C# zero default rides when the host passes none');
+});
+
 test('clickNpc derives the NPCData and stamps LastNPCClicked on the machine', () => {
   const bridge = makeBridge();
   const pn = { rawX: 1, rawY: 2, rawZ: 3, flags: 32, factionID: 510, textureArchive: 182, textureRecord: 15, position: 777 };

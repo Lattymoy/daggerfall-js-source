@@ -1263,7 +1263,8 @@ mock ctx; `scenes/questData.js` is the browser half of the data seams
 reads stay synchronous - node tests feed fs instead and never import
 it).
 
-The law that lives IN the bridge, pinned (questbridge.test.js, 19):
+The law that lives IN the bridge, pinned (questbridge.test.js, 25
+after AUDIT XIII's rounds):
 
 - **The NPC-data law** (StaticNPC.cs:210-224, :333-336).
   GetPositionHash is `x ^ y << 2 ^ z >> 2` - the shifts bind tighter
@@ -1354,6 +1355,84 @@ environment has no ARENA2, so the browser half is build-verified
 geometry pass (stand positions, the click ray, the offer window over
 real art) needs a machine with game data, recorded as the arc's one
 open verification.
+
+## QUEST AUDIT XIII (2026-08-21, the Q4-v verify pass)
+
+The bridge slice's adversarial pass, run - like VII through XII - in
+the MAIN LOOP against the raw C# (the subagent limit still holds; the
+armed trigger's multi-agent retry now lists all seven slices).
+
+**The parity re-read.** Regions walked line-against-line:
+StaticNPC.cs (the whole SetLayoutData family, GetPositionHash,
+SetRuntimeData's buildingKey), QuestMachine.cs Update + ClearState,
+PlayerActivate.cs StaticNPCClick (:1501-1570), GameObjectHelper.cs
+AddQuestNPC (:995-1063), Guild.GetReputation, DaggerfallDateTime.cs
+(:374-424, :641-652) with the format literals dug out of the
+Internal_Strings_en localization asset itself, and
+QuestListsManager.InitAtGameStart. THREE findings, fixed and shipped
+mid-audit (commit f03f3dc):
+
+1. **The faction-listener shutdown arm** (PlayerActivate.cs
+   :1530-1535). A quest actively LISTENING on the clicked NPC's
+   faction (WhenNpcIsAvailable) shuts down ALL further routing - no
+   talk, no service popup. The first wiring stamped the click and
+   routed anyway; openStaticNpc now returns after the stamp when
+   `machine.factionListeners` holds the faction, C#'s own TODO about
+   releasing listeners riding along.
+2. **The quest-stand click's LastNPCClicked stamp** (:1521 before the
+   behaviour click, with StaticNPC.cs:245-255's peer layout law). A
+   quest NPC in DFU is BOTH components - its click stamps the machine
+   before DoClick runs. The port's questflat click now stamps the
+   derived peer record: the hash from the SCALED marker ints
+   truncated ((int) casts), flags 0/32 from the Person's gender, the
+   nameSeed with the -1-falls-to-hash arm, buildingKey from the
+   runtime data, and mapID never written (this overload leaves it 0).
+3. **The load gate on the machine tick** (QuestMachine.cs:310-316).
+   Update refuses to tick while SaveLoadManager.LoadInProgress - no
+   quest popups while the world is unavailable. The world host's
+   exterior tick now holds behind its `_loading` flag.
+
+And one CONFIRMATION the geometry needed: AddQuestNPC positions the
+billboard at the marker scene position and raises by HALF THE
+BILLBOARD HEIGHT for non-dungeon sites (:1033-1037) - the marker IS
+the base in buildings, exactly the convention the port's billboard
+batches take, so the adapter passes positions through untouched.
+AlignBillboardToGround's 4-unit floor probe stays with the recorded
+probe pass.
+
+**The campaign.** 68 single-instance mutants over the node-covered
+Q4-v surface - questBridge.js whole, gameDate.js's new header-string
+lines, machine.js's clearState, save.js's quest slot (the
+worldModes/world host halves are browser-only and belong to the
+probe pass; clearState's four statements carry no sites for the
+operator set and are held by the direct wipe pins). Round 1: 41
+caught, 26 survivors + 1 uncovered site. Round 2 wrote 6 pins - the
+all-zeros NPCData struct over empty record AND empty context, the
+bare bridge's headless-charter defaults (every `?? 0`/`?? false` ctx
+seam in one sweep), the PlayerNudity-off adult row failing the
+offer, buildingFactionId's C# zero riding to the variant-group
+quest, the pad law truncating fractional clock components, the
+mountScene delegation with its zero default (the uncovered site,
+closed) - and the full-suite confirmation landed EXACTLY on the
+triage: 25 kills at fails=5+ (one at fails=7 - the `| 0` int32 rail
+broke three pins at once), 2 survivors at the baseline 4, both
+PROVEN equivalents:
+
+- questBridge.js:63 `rawZ ?? 0 -> ?? 1`: the hash's only read of
+  rawZ is `z >> 2`, and `1 >> 2 === 0 === 0 >> 2` - for any record
+  LACKING rawZ the mutated default is arithmetically invisible.
+- questBridge.js:70 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
+  gender reads bit 5 alone, and `1 & 32 === 0 === 0 & 32` - Male
+  either way, every path.
+
+Final: 66 kills of 68, 2 equivalents with proofs, 0 unexplained.
+save.test additionally pins the quest slot riding the extras
+verbatim and the unset clock's minute-zero default.
+
+**Recorded, not widened:** 12 pre-existing eslint `structuredClone`
+no-undef errors across the Q4-iv quest files (the lint env lacks the
+ES2022 global) - tooling debt from before this slice, left for a
+tooling pass rather than smuggled into the arc's last diff.
 
 ## Queue
 
