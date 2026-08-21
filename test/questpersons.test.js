@@ -48,7 +48,8 @@ const FACTIONS = new Map([
   [40, { id: 40, type: 2, name: 'The Mages Guild', race: -1 }],
   [42, { id: 42, type: 13, name: 'The Thieves Guild', race: -1 }],
   [82, { id: 82, type: 9, name: 'Akatosh', race: -1 }],
-  [158, { id: 158, type: 6, name: 'The Selenu', race: -1 }],                 // VampireClan
+  [150, { id: 150, type: 6, name: 'The Vraseth', race: -1 }],                // VampireClan (the player's)
+  [158, { id: 158, type: 6, name: 'The Selenu', race: -1 }],                 // VampireClan (the region's)
   [411, { id: 411, type: 10, name: 'The Host of the Horn', race: -1 }],      // KnightlyGuard
   [429, { id: 429, type: 8, name: 'The Beldama', race: -1 }],                // WitchesCoven
   [450, { id: 450, type: 9, name: 'Generic Temple', race: -1 }],
@@ -107,6 +108,7 @@ function makeWorld({ buildings = null, interiors = null, unloadedCurrent = false
     currentRegionCourt: () => 867,
     currentRegionFaction: () => 201,
     currentRegionVampireClan: () => 158,
+    playerVampireClan: () => 150,
     currentRegionRace: () => 3,
     _inside: null,
   };
@@ -516,6 +518,31 @@ test('ChangeReputeWith carries the SIGN: a positive amount moves reputation up',
   ]);
   m.tick();
   assert.deepEqual(m.of('changeReputation'), [['changeReputation', 510, 22, true]]);
+});
+
+test('a P0 quest reads the PLAYER vampire clan; every other quest the region clan', () => {
+  const m = makeMachine(makeWorld());
+  const q = m.scheduleQuest(['Quest: P0TEST00', 'QRC:', 'Message:  1011', ' x', '', 'QBN:',
+    'Person _v_ factionType Vampire_Clan', '', 'variable _pad_'], 0, { rolls: () => 0.4 });
+  assert.equal(q.getResource({ name: 'v' }).factionId, 150, "the $CUREVAM/P0 arm reads the player's clan");
+});
+
+test('the Generic split at exactly 0.5 answers 844 (the strict < boundary)', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, ['Person _g_ factionType Generic_Group local', '', 'variable _pad_'], { rolls: () => 0.5 });
+  assert.equal(q.getResource({ name: 'g' }).factionId, 844);
+});
+
+test('the home scope roll: >= 0.5 goes REMOTE on a loaded, built town', () => {
+  // the one-town dart board makes remote fail loudly, proving the arm
+  const m1 = makeMachine(makeWorld());
+  assert.throws(
+    () => schedule(m1, ['Person _x_ group Shopkeeper', '', 'variable _pad_'], { rolls: () => 0.6 }),
+    /remote site/, 'roll 0.6 is remote');
+  const m2 = makeMachine(makeWorld());
+  assert.throws(
+    () => schedule(m2, ['Person _x_ group Shopkeeper', '', 'variable _pad_'], { rolls: () => 0.5 }),
+    /remote site/, 'exactly 0.5 is remote - the strict < boundary');
 });
 
 test('an absent getReputation dep reads 0 (the unknown-faction law), holding ReputeExceedsDo shut', () => {
