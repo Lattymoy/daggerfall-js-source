@@ -55,6 +55,7 @@
 import { SKILL_NAMES } from '../systems/skills.js';
 import { ITEM_GROUPS } from '../characters/equipRules.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
+import { mountFigure, itemTile, templateFor } from './enhancedVisuals.js';
 
 const skills = Array.isArray(SKILL_NAMES) ? SKILL_NAMES : Object.values(SKILL_NAMES);
 const groups = Object.keys(ITEM_GROUPS).filter((g) => g !== 'None');
@@ -111,15 +112,23 @@ const HERO = {
   },
 };
 
+// THE BAG IS BUILT FROM REAL TEMPLATES, not from names I made up.
+//
+// My first cut invented them — "Daedra Heart", "Potion of Healing" —
+// and only two of eight resolved to anything the game has. The game
+// calls it "Daedra's Heart" and has no healing potion template at all,
+// which is the sort of thing a prototype full of plausible nouns will
+// never tell you. Every row here names a template that exists, so every
+// row can show its own classic sprite the moment ARENA2 is present.
 const BAG = [
-  { name: 'Silver Longsword', group: 'Weapons', w: 6, v: 1200, note: 'Silver · 42 / 48 condition' },
-  { name: 'Elven Cuirass', group: 'Armor', w: 22, v: 3400, note: 'Elven · worn' },
-  { name: 'Ring of Feather', group: 'Jewellery', w: 0, v: 5200, note: 'Feather · 14 charges' },
-  { name: 'Potion of Healing', group: 'MiscItems', w: 1, v: 90, note: '×3' },
-  { name: 'Chronicles of Nchuleft', group: 'Books', w: 2, v: 150, note: 'Unread' },
-  { name: "Wayrest Harbour Deed", group: 'Deeds', w: 0, v: 0, note: 'Ship berth' },
-  { name: 'Daedra Heart', group: 'CreatureIngredients1', w: 1, v: 400, note: 'Reagent' },
-  { name: 'Map of the Wrothgarians', group: 'Maps', w: 1, v: 60, note: '3 dungeons marked' },
+  { base: 'Longsword', name: 'Silver Longsword', group: 'Weapons', w: 6, v: 1200, note: 'Silver · 42 / 48 condition' },
+  { base: 'Cuirass', name: 'Elven Cuirass', group: 'Armor', w: 22, v: 3400, note: 'Elven · worn' },
+  { base: 'Ring', name: 'Ring of Feather', group: 'Jewellery', w: 0, v: 5200, note: 'Feather · 14 charges' },
+  { base: 'Buckler', name: 'Steel Buckler', group: 'Armor', w: 4, v: 180, note: 'Steel · equipped' },
+  { base: 'Spellbook', name: 'Spellbook', group: 'Books', w: 2, v: 0, note: '11 spells' },
+  { base: "Daedra's Heart", name: "Daedra's Heart", group: 'CreatureIngredients1', w: 1, v: 400, note: 'Reagent' },
+  { base: 'Map', name: 'Map of the Wrothgarians', group: 'Maps', w: 1, v: 60, note: '3 dungeons marked' },
+  { base: 'Tall Boots', name: 'Leather Boots', group: 'Armor', w: 3, v: 65, note: 'Leather · worn' },
 ];
 
 // ── THE SLOT MAP ─────────────────────────────────────────────────
@@ -190,39 +199,90 @@ function bar(label, [now, max], tone) {
   return w;
 }
 
-function slotMap() {
-  const wrap = el('div', 'slotmap');
-  const fig = el('div', 'figure');
-  // The schematic: a spine and a shoulder line, and nothing else. It is
-  // a diagram of where things GO, not a drawing of a person.
-  fig.innerHTML =
-    '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' +
-    '<line x1="50" y1="6" x2="50" y2="96" /><line x1="26" y1="30" x2="74" y2="30" />' +
-    '<line x1="26" y1="30" x2="24" y2="64" /><line x1="74" y1="30" x2="76" y2="64" />' +
-    '<line x1="42" y1="70" x2="40" y2="94" /><line x1="58" y1="70" x2="60" y2="94" />' +
-    '</svg>';
-  for (const [slot, [x, y]] of Object.entries(SLOT_MAP)) {
-    const filled = HERO.equipped[slot];
-    const node = el('button', `node${filled ? ' on' : ''}`);
-    node.style.left = `${x}%`;
-    node.style.top = `${y}%`;
-    node.title = `${pretty(slot)}${filled ? ' — ' + filled : ' — empty'}`;
-    node.setAttribute('aria-label', node.title);
-    node.onclick = () => {
-      const found = BAG.find((i) => i.name === filled);
-      if (found) {
-        picked = found;
-        render();
-      }
-    };
-    fig.append(node);
+let figure = null;
+
+/**
+ * THE FIGURE, AND WHAT IT CANNOT TELL YOU.
+ *
+ * The voxel paperdoll is the picture now — it is the project's own asset
+ * and it says how the character looks, which an abstract diagram never
+ * could. But a figure cannot tell you that your SECOND amulet slot is
+ * empty, and with twenty-eight of them that is a real question.
+ *
+ * So the slot readout survives, demoted from hero to strip: the figure
+ * is the portrait, the strip is the inventory of what is on it. Paired
+ * slots sit together, which is what makes "two of everything" legible
+ * rather than confusing.
+ */
+function figurePane() {
+  const wrap = el('div', 'figpane');
+
+  const stage = el('div', 'stage');
+  wrap.append(stage);
+
+  // Paired slots on one line, singles on their own: the pairing is real
+  // and the eye should not have to discover it.
+  const PAIRS = [
+    ['Head'],
+    ['Amulet0', 'Amulet1'],
+    ['Cloak1', 'Cloak2'],
+    ['ChestArmor', 'ChestClothes'],
+    ['RightArm', 'LeftArm'],
+    ['RightHand', 'LeftHand'],
+    ['Gloves'],
+    ['Bracer0', 'Bracer1'],
+    ['Bracelet0', 'Bracelet1'],
+    ['Ring0', 'Ring1'],
+    ['Mark0', 'Mark1'],
+    ['Crystal0', 'Crystal1'],
+    ['LegsArmor', 'LegsClothes'],
+    ['Feet'],
+  ];
+  const strip = el('div', 'slots');
+  for (const pair of PAIRS) {
+    const line = el('div', 'slotline');
+    const label = pretty(pair[0]).replace(/ ?[01]$/, '').replace(/^Right |^Left /, '');
+    line.append(el('span', 'slot-k', label));
+    const pips = el('span', 'pips');
+    for (const slot of pair) {
+      const worn = HERO.equipped[slot];
+      const pip = el('button', `pip${worn ? ' on' : ''}`);
+      pip.title = `${pretty(slot)} — ${worn || 'empty'}`;
+      pip.setAttribute('aria-label', pip.title);
+      pip.onclick = () => {
+        const found = BAG.find((i) => i.name === worn);
+        if (found) {
+          picked = found;
+          sheetOpen = true;
+          render();
+        }
+      };
+      pips.append(pip);
+    }
+    line.append(pips);
+    wrapText(line, pair);
+    strip.append(line);
   }
+  wrap.append(strip);
+
   const count = Object.keys(HERO.equipped).length;
-  wrap.append(fig);
   const cap = el('div', 'slotcap');
   cap.append(el('span', 'k', `${count} of ${slots.length}`), el('span', 'v', 'slots filled'));
   wrap.append(cap);
+
+  // Mounted after the node is in the document, or it measures zero.
+  requestAnimationFrame(() => {
+    if (figure) figure.dispose();
+    figure = mountFigure(stage, { equipped: HERO.equipped });
+  });
   return wrap;
+}
+
+/** The worn item's name, where there is room for it. */
+function wrapText(line, pair) {
+  const worn = pair.map((s) => HERO.equipped[s]).filter(Boolean);
+  if (worn.length === 1) line.append(el('span', 'slot-v', worn[0]));
+  else if (worn.length > 1) line.append(el('span', 'slot-v', `${worn.length} worn`));
 }
 
 function inventory() {
@@ -254,6 +314,7 @@ function inventory() {
   }
   for (const it of shown) {
     const row = el('button', `row${it === picked ? ' on' : ''}`);
+    row.append(itemTile(it));
     const main = el('div', 'row-main');
     main.append(el('div', 'row-name', it.name), el('div', 'row-note', it.note));
     const side = el('div', 'row-side');
@@ -279,6 +340,13 @@ function inventory() {
     d.append(el('div', 'card-kicker', pretty(picked.group)));
     d.append(el('h2', null, picked.name));
     d.append(el('p', 'card-note', picked.note));
+    const t = templateFor(picked);
+    if (t) {
+      const src = el('p', 'card-src');
+      const archive = t.playerTextureArchive ?? t.worldTextureArchive;
+      src.textContent = `${t.name} · TEXTURE.${archive}/${t.playerTextureRecord ?? t.worldTextureRecord} · ${t.baseWeight} kg base`;
+      d.append(src);
+    }
     const stats = el('dl', 'stats');
     for (const [k, v] of [
       ['Value', picked.v ? `${picked.v} gold` : 'Not for sale'],
@@ -293,7 +361,7 @@ function inventory() {
     d.append(acts);
     detail.append(d);
   }
-  detail.append(slotMap());
+  detail.append(figurePane());
 
   if (sheetOpen) detail.classList.add('open');
   const close = el('button', 'sheet-close', 'Close');
@@ -358,7 +426,7 @@ function character() {
     bar('Fatigue', HERO.fatigue, 'brass'),
   );
   right.append(vit);
-  right.append(slotMap());
+  right.append(figurePane());
 
   pane.append(left, mid, right);
   return pane;
