@@ -694,3 +694,41 @@ test('MUTATION: the bare clock draw, the _2place_ start arm, and the FAR travel 
   assert.equal(q3.travelSecondsTo(q3.getResource({ name: 'far' })), 1080000, 'one-way: 18000 minutes');
   assert.equal(q3.travelSeconds(), 2700000, 'the all-places return trip: trunc(18000*60 * 2.5)');
 });
+
+test('MUTATION-2: PlaceFoe "marker N" assigns DIRECTLY to the spawn slot, not the selected marker', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, [
+    'Item _l_ letter', '',
+    'Foe _crook_ is Thief', '',
+    'Place _pub_ local tavern', '',
+    ' place item _l_ at _pub_',
+    '',
+    '_f_ task:',
+    ' place foe _crook_ at _pub_ marker 0',
+    '',
+    'variable _pad_',
+  ]);
+  m.tick();
+  q.getTask({ name: 'f' }).start();
+  m.tick();
+  const sd = q.getResource({ name: 'pub' }).siteDetails;
+  assert.deepEqual(sd.questSpawnMarkers[0].targetResources?.map((s) => s.name) ?? [], ['crook'],
+    'the marker form must survive the alternation - a lost index would dump the foe on the selected ITEM marker');
+  assert.deepEqual(sd.selectedMarker.targetResources.map((s) => s.name), ['l']);
+});
+
+test('MUTATION-2: a plain zero clock arms and fires instantly - only PENDING travel holds a timer', () => {
+  const m = new QuestMachine({ nowSeconds: () => 0 });
+  const q = m.scheduleQuest([...HEADER,
+    'Clock _z_ 0.0:00', '',
+    '_z_ task:', ' end quest', '',
+    'start timer _z_',
+  ], 0, { rolls: () => 0 });
+  m.tick();   // the startup's start-timer arms it (resources tick before tasks)
+  const z = q.getResource({ name: 'z' });
+  assert.equal(z.travelTimePending, false);
+  assert.equal(z.clockEnabled, true, 'armed - the HELD arm is for PENDING travel only');
+  m.tick();   // the clock resource ticks at zero remaining and fires
+  assert.equal(z.clockFinished, true, 'a zero clock fires immediately');
+});
