@@ -15,7 +15,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { RumorFile } from '../src/formats/rumorFile.js';
+import { RumorFile, CLASSIC_RUMOR_TYPES } from '../src/formats/rumorFile.js';
+import { TextRsc } from '../src/formats/textRsc.js';
 import {
   RumorMill, RUMOR_TYPE, ALLOWED_BULLETIN_TEXT_IDS, OUT_OF_NEWS_RECORD_INDEX,
   MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS, NON_QUEST_RUMOR_TTL_MINUTES,
@@ -95,6 +96,53 @@ test('RumorFile: the exact record layout, the 9-byte CString advance, multi-reco
   assert.equal(f.rumors[1].faction1, 1, 'the cursor advanced the FULL 9 name bytes - record 2 aligns');
 });
 
+test('RumorFile: a NUL-less 9-char questName reads all 9 and stops there; the tail stays little-endian', () => {
+  const r = rumorRecord({ questName: '', unknown: 0x0102, text: 'z' });
+  // overwrite the name field with 9 printable bytes and NO NUL
+  for (let i = 0; i < 9; i++) r[11 + i] = 65 + i;   // 'ABCDEFGHI'
+  const f = new RumorFile().load(r);
+  assert.equal(f.rumors[0].questName, 'ABCDEFGHI', 'ReadCString caps at 9, never bleeding into unknown');
+  assert.equal(f.rumors[0].unknown, 258, '0x0102 read little-endian');
+  assert.equal(String.fromCharCode(...f.rumors[0].rumorText), 'z');
+});
+
+test('CLASSIC_RUMOR_TYPES: RumorFile.RumorTypes verbatim', () => {
+  assert.deepEqual({ ...CLASSIC_RUMOR_TYPES }, {
+    Plague: 4, Famine: 7, WitchBurnings: 10, CrimeWave: 11, NewRuler: 12,
+    PersecutedTemple: 18, AllianceSignMessage: 26, EnemySignMessage: 27,
+    WarSignMessage: 28, FactionRumor: 100,
+  });
+});
+
+// ---------------------------------------------------------------
+// TextProvider.GetRandomTokens' token face (textRsc.variantTokensById)
+// ---------------------------------------------------------------
+
+test('variantTokensById: the pick law, the operand skip, and the FTD-1 step-back', () => {
+  const rsc = new TextRsc();
+  const bytes = (arr) => new Uint8Array(arr);
+  const T = (s) => [...s].map((c) => c.charCodeAt(0));
+  // three variants: 'aa' | 'bb' (with a PositionPrefix whose operand
+  // is 0xFF - it must NOT split the variant) | 'cc'
+  rsc.bytesById = () => bytes([...T('aa'), RSC.SubrecordSeparator, RSC.PositionPrefix, 0xff, ...T('bb'), RSC.SubrecordSeparator, ...T('cc'), RSC.EndOfRecord]);
+  const text = (tokens) => tokens.filter((x) => x.formatting === TOKEN_TEXT).map((x) => x.text).join('');
+  assert.equal(text(rsc.variantTokensById(1, () => 0)), 'aa', 'pick 0 takes the first variant');
+  assert.equal(text(rsc.variantTokensById(1, () => 0.5)), 'bb', 'floor(0.5*3)=1 - and the 0xFF operand did not split it');
+  assert.equal(text(rsc.variantTokensById(1, () => 0.999)), 'cc', 'the top pick clamps to the last variant');
+  // a record ending 0xFF 0xFE mints an empty trailing variant - the
+  // top pick steps BACK one (TextProvider.cs:231)
+  rsc.bytesById = () => bytes([...T('aa'), RSC.SubrecordSeparator, ...T('bb'), RSC.SubrecordSeparator, RSC.EndOfRecord]);
+  assert.equal(text(rsc.variantTokensById(1, () => 0.999)), 'bb', 'the empty stream steps back to the last real variant');
+  // a single-variant record ignores the pick entirely
+  rsc.bytesById = () => bytes([...T('solo'), RSC.EndOfRecord]);
+  assert.equal(text(rsc.variantTokensById(1, () => 0.999)), 'solo');
+  // bytes AFTER EndOfRecord never parse
+  rsc.bytesById = () => bytes([...T('in'), RSC.EndOfRecord, ...T('out')]);
+  assert.equal(text(rsc.variantTokensById(1, () => 0)), 'in');
+  rsc.bytesById = () => null;
+  assert.deepEqual(rsc.variantTokensById(1, () => 0), [], 'a missing record answers empty');
+});
+
 // ---------------------------------------------------------------
 // TokensToString (:3561-3578)
 // ---------------------------------------------------------------
@@ -128,6 +176,7 @@ test('importClassicRumor: the three skip gates, the carried fields, THE BULLETIN
   assert.equal(e.regionID, 17);
   assert.equal(e.timeLimit, 500000);
   assert.equal(e.textID, 0, 'imports never set textID...');
+  assert.equal(e.questID, 0, 'and carry no quest id - ambient weight 1 in the news draw');
   assert.equal(mill.getNewsOrRumorsForBulletinBoard(), null, '...so a board can never show one (flags 8 is spoken anyway; textID 0 fails first)');
 });
 
@@ -140,6 +189,11 @@ test('addNonQuestRumor: ONE variant frozen at add, the 43140 TTL literal, the st
   assert.equal(NON_QUEST_RUMOR_TTL_MINUTES, 43140, 'the literal is 43140, a hair under 30 days - not 43200');
   assert.equal(e.textID, 1400);
   assert.equal(e.flags, 8, 'type 100 is a spoken rumor');
+  assert.equal(e.questID, 0);
+  // a mill with NO clock seam stamps the headless zero + the TTL
+  const bare = new RumorMill({ getRandomTokens: () => [t('x')] });
+  bare.addNonQuestRumor(0, 0, -1, 100, 1400);
+  assert.equal(bare.listRumorMill[0].timeLimit, NON_QUEST_RUMOR_TTL_MINUTES, 'the absent clock reads 0, never a phantom minute');
 });
 
 test('getFlagsForNewRumor: EXACTLY the seven sign types answer 1, everything else 8', () => {
@@ -211,6 +265,23 @@ test('getValidRumors: the 75% faction-flag suppression rolls ONLY when a flagged
   assert.equal(mill.getValidRumors().length, 1);
 });
 
+test('the suppression boundaries: faction id 1 passes the zero gate, the faction2 side rolls too, and 75 fails at its own value', () => {
+  const flagged = (id) => ({ flags: id === 1 || id === 41 ? 1 : 0, region: -1 });
+  // faction1 = 1 is a REAL id - the clause gate is !== 0, never !== 1
+  const { mill } = makeMill({ getFactionData: flagged, rolls: () => 0 });
+  mill.listRumorMill.push(commonEntry({ faction1: 1 }));
+  assert.equal(mill.getValidRumors().length, 0, 'faction id 1 suppresses like any other');
+  // the faction2 side is checked on its own
+  const { mill: m2 } = makeMill({ getFactionData: flagged, rolls: () => 0 });
+  m2.listRumorMill.push(commonEntry({ faction1: 0, faction2: 41, type: 26 }));
+  assert.equal(m2.getValidRumors().length, 0, 'a flagged faction2 suppresses alone');
+  // Dice100.SuccessRoll(75): floor(roll*100) < 75 - a roll landing
+  // exactly ON 75 FAILS, the rumor stays
+  const { mill: m3 } = makeMill({ getFactionData: flagged, rolls: () => 0.75 });
+  m3.listRumorMill.push(commonEntry({ faction1: 41 }));
+  assert.equal(m3.getValidRumors().length, 1, '75 >= 75: the suppression roll fails at its own boundary');
+});
+
 test('the bulletin textID gate matches the allowed ids exactly', () => {
   assert.deepEqual([...ALLOWED_BULLETIN_TEXT_IDS], [1475, 1476, 1477, 1478, 1479, 1482, 1483]);
   const { mill } = makeMill();
@@ -278,6 +349,41 @@ test('getNewsOrRumors: the quest arm expands through the quest seam at a rolled 
   const s3 = { numAnswersGivenTellMeAboutOrRumors: 0 };
   assert.equal(m3.getNewsOrRumors(s3), RESOLVING_ERROR, "'...never mind...' - the C# init literal surfaces");
   assert.equal(s3.numAnswersGivenTellMeAboutOrRumors, 1, 'and the NPC still spent its one answer (kept quirk)');
+});
+
+test('the variant pick FLOORS (Random.Range int law) and the bare default session is fresh', () => {
+  const { mill } = makeMill({ rolls: () => 0.4 });
+  mill.addQuestRumorTokensToRumorMill(77, [[t('v0')], [t('v1')], [t('v2')], [t('v3')]]);
+  const session = { numAnswersGivenTellMeAboutOrRumors: 0 };
+  assert.equal(mill.getNewsOrRumors(session), 'v1', 'floor(0.4*4)=1, never round');
+  // the parameterless call carries C#'s fresh npcData shape: zero
+  // answers given, not a spymaster - the gate passes
+  assert.equal(mill.getNewsOrRumors(), 'v1', 'the default session answers, never out-of-news');
+});
+
+test('the bulletin face refuses a null-variant sign entry with the C# && guard, never a throw', () => {
+  const { mill } = makeMill();
+  mill.listRumorMill.push(commonEntry({ flags: 1, textID: 1475, listRumorVariants: null }));
+  assert.equal(mill.getNewsOrRumorsForBulletinBoard(), null);
+});
+
+test('the three quest creators stamp the EXACT zero-filled envelope shape (the save-file law)', () => {
+  const { mill } = makeMill();
+  mill.addQuestRumorTokensToRumorMill(5, [[t('a')]]);
+  assert.deepEqual(mill.listRumorMill[0], {
+    rumorType: RUMOR_TYPE.QuestRumorMill, questID: 5, listRumorVariants: [[t('a')]],
+    timeLimit: 0, faction1: 0, faction2: 0, regionID: 0, flags: 0, type: 0, textID: 0,
+  });
+  mill.addQuestRumorToRumorMill(6, mockMessage([[t('b')]]));
+  assert.deepEqual(mill.listRumorMill[1], {
+    rumorType: RUMOR_TYPE.QuestRumorMill, questID: 6, listRumorVariants: [[t('b')]],
+    timeLimit: 0, faction1: 0, faction2: 0, regionID: 0, flags: 0, type: 0, textID: 0,
+  });
+  mill.addOrReplaceQuestProgressRumor(7, mockMessage([[t('c')]]));
+  assert.deepEqual(mill.listRumorMill[2], {
+    rumorType: RUMOR_TYPE.QuestProgressRumor, questID: 7, listRumorVariants: [[t('c')]],
+    timeLimit: 0, faction1: 0, faction2: 0, regionID: 0, flags: 0, type: 0, textID: 0,
+  });
 });
 
 test('weightedRandomRumor: the running choice - rolls at 0 keep the first, rolls at the top take the last; quest weight defaults 50', () => {

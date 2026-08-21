@@ -184,8 +184,10 @@ export class TextRsc {
     ranges.push([start, i]);
     const n = ranges.length;
     const want = n <= 1 ? 0 : Math.min(n - 1, Math.floor(pick() * n));
-    let tokens = readTokens(raw.slice(ranges[want][0], ranges[want][1]), 0, RSC.EndOfRecord);
-    if (!tokens.length && want > 0) tokens = readTokens(raw.slice(ranges[want - 1][0], ranges[want - 1][1]), 0, RSC.EndOfRecord);
+    // readTokens answers NULL on an empty stream (the 0xFF 0xFE tail
+    // variant) - exactly the case the FTD-1 step-back exists for
+    let tokens = readTokens(raw.slice(ranges[want][0], ranges[want][1]), 0, RSC.EndOfRecord) ?? [];
+    if (!tokens.length && want > 0) tokens = readTokens(raw.slice(ranges[want - 1][0], ranges[want - 1][1]), 0, RSC.EndOfRecord) ?? [];
     return tokens;
   }
 
