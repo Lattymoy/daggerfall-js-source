@@ -200,6 +200,8 @@ test('the Person macros: name, dialog-place names, BLANK, the flat caption, the 
   // the shopkeeper's home is the generalstore - the dialog place
   const line = expandOne(q, 1011);
   assert.ok(line.startsWith(` ${p.displayName} of `), 'NameMacro1 is the display name');
+  const home = q.getPlace(p.homePlaceSymbol);
+  assert.ok(line.includes(`of ${home.siteDetails.buildingName} in `), '__npc_ is the BUILDING, never the town');
   assert.ok(line.includes('in Bigtown of Testshire'), 'town and region ride the dialog place');
   assert.equal(q.lastResourceReferenced, p, 'the person latched for pronouns');
   const line2 = expandOne(q, 1012);
@@ -412,14 +414,17 @@ test('the message DEFAULTS are DFU: bare reads expand, reveal nothing, and an ex
   const m = makeMachine(makeWorld());
   const q = schedule(m, [
     'Quest: __QM', 'QRC:',
-    'Message:  1011', ' hail %pcn', '<--->', ' well met %pcn', '',
+    'Message:  1011', ' hail %pcn from _npc_', '<--->', ' well met %pcn', '',
     'QBN:',
     'Person _npc_ group Shopkeeper', '',
     'variable _pad_',
   ]);
   const bare = q.getMessage(1011).getTextTokens();
   assert.ok(bare.some((t) => t.text?.includes('Ada Lovelace')), 'no-arg reads EXPAND (the DFU default)');
-  assert.equal(m.of('addDialog').length, 0, 'and reveal NOTHING');
+  assert.equal(m.of('addDialog').length, 0, 'and reveal NOTHING - even with a Person macro present');
+  // an UNDEFINED variant hits the -1 default: the random draw, not 0
+  const undef = q.getMessage(1011).getTextTokens(undefined, () => 0.99, false);
+  assert.ok(undef.some((t) => t.text?.includes('well met')), 'the default variant is -1 = the roll');
   // the KEPT variant quirk: any explicit variant answers variant 0
   const v3 = q.getMessage(1011).getTextTokens(3, () => 0.99);
   assert.ok(v3.some((t) => t.text?.includes('hail')), 'explicit variant -> index 0, never variant');
@@ -441,6 +446,16 @@ test('the Place macros exact: the BUILDING name, the town, and the regionIndex-0
   assert.equal(expandOne(q, 1011),
     ` ${shop.siteDetails.buildingName} / Bigtown / Bigtown / Testshire`,
     'the exact per-type answers; regionIndex 0 + a non-Alik\'r name takes the workaround arm');
+  // the workaround must RE-DERIVE the index from the legacy name -
+  // an arg-exact map proves which arm ran
+  const regions = { 0: { name: 'Testshire' }, 7: { name: 'WorkaroundLand' } };
+  m.deps.world.maps = {
+    ...m.deps.world.maps,
+    getRegion: (i) => regions[i] ?? null,
+    getRegionIndex: (name) => (name === 'Testshire' ? 7 : -1),
+  };
+  assert.equal(expandOne(q, 1011).endsWith('WorkaroundLand'), true,
+    'regionIndex 0 + Testshire re-derives index 7, never reads region 0');
 });
 
 test("the Person questor FactionMacro answers the QUEST's guild; a binding macro stays raw", () => {
@@ -482,6 +497,8 @@ test('the UID-seeded name sources are exact: %n gender coin, %fn, and the +3457 
   assert.equal(src.name(), 'Raithi', 'srand(4242) + the DFRandom gender coin');
   assert.equal(src.femaleName(), 'Baos-i');
   assert.equal(src.maleName(), 'Cauvin', 'the +3457 offset');
+  // uid 7's coin lands MALE - the pair pins the coin itself
+  assert.equal(questMacroSource({ uid: 7, hooks: stub.hooks }).name(), "F'orcten");
 });
 
 test('%vcn succeeds for a VampireClan person by home region; the region miss falls to the faction name', () => {
@@ -502,7 +519,7 @@ test("%oth reads the QUESTOR's faction race first, then the clicked NPC, then th
   const stub = {
     uid: 1, hooks: { world },
     questors: new Map([['qg', {}]]),
-    getPerson: () => ({ factionRace: 5 }),
+    getPerson: (sym) => (sym?.name === 'qg' ? { factionRace: 5 } : null),
   };
   const src = questMacroSource(stub);
   assert.equal(src.oath(), 'TEXT.RSC#206', 'the questor arm: 201 + race 5');
@@ -554,6 +571,9 @@ test('%qdt renders the SELECTED log entry once the journal points at it', () => 
   const before = expandOne(q, 1011);
   q.currentLogMessageId = 1050;
   assert.equal(expandOne(q, 1011), before, 'the entry was logged AT start - same date, through the MATCH arm');
+  // move the entry's stamp: the MATCH arm must read IT, not the start
+  [...q.activeLogMessages.values()][0].time = 100000 + 5 * 86400;
+  assert.notEqual(expandOne(q, 1011), before, 'the matched entry time wins over quest start');
 });
 
 test('%rn falls to a seeded random full name when the province has no Individual child', () => {
@@ -562,11 +582,8 @@ test('%rn falls to a seeded random full name when the province has no Individual
   world.getFactionData = () => null;
   const hooks = { world };
     srand(9001);
-  const drawn = getContextValue('%rn', { uid: 1, hooks }, hooks);
-  srand(9001);
-  const again = getContextValue('%rn', { uid: 1, hooks }, hooks);
-  assert.equal(drawn, again, 'the fallback draws on the live DFRandom chain, deterministic per state');
-  assert.ok(drawn.length > 0);
+  assert.equal(getContextValue('%rn', { uid: 1, hooks }, hooks), "D'eght-si",
+    'the fallback draws on the live DFRandom chain - exact from srand(9001)');
 });
 
 test('expandQuestString expands ONE context macro in a bare string; getMessageResources enumerates', () => {
