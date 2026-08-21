@@ -158,6 +158,76 @@ and the live REFRESH CULL rides with it; the classic-rumor import
 waits on a RUMOR.DAT fetch in the host (game data, loaded when
 present).
 
+## TALK AUDIT I (2026-08-21, the TK-i verify pass)
+
+The mill's adversarial pass, run in the MAIN LOOP against the raw C#
+(the multi-agent retry trigger stands for the quest slices; this arc
+starts under the same constraint).
+
+**The parity re-read.** Every ported region walked at implementation
+time: RumorFile.cs whole, TalkManager.cs :89-125 (the constant
+tables), :341-399 (the entry + save shapes), :1355-1519 (the news
+faces + filters), :1552-1691 (the quest seams), :2665-2749 (the
+import/add/refresh family), :3561-3578 (TokensToString), and the
+PlayerEntity caller of RefreshRumorMill/AddNonQuestRumor (:1626-1901
+- the regional sim, the Systems lane's pending producer). The
+Message accessor mapping verified against Message.cs :161/:196 (the
+port's extra `roll` slot threaded correctly). No parity deltas
+found; the two kept quirks (THE REFRESH CULL, THE BULLETIN HOLE)
+recorded in the SHIPPED section with their C# lines.
+
+**The campaign.** 154 single-instance mutants over the TK-i surface
+(rumorMill 90, rumorFile 36, textRsc's variantTokensById 28), four
+rounds to a complete triage:
+
+- Round 1: 84/126 caught over the mill+reader; the textRsc sweep ran
+  ZERO - the coverage map predated the pins, and the method proved
+  wholly untested (the mill pins had mocked getRandomTokens). The
+  direct pins written for it caught a REAL CRASH: readTokens answers
+  NULL on an empty stream, so the FTD-1 step-back path (the 0xFF
+  0xFE tail variant) threw instead of stepping back. Fixed, pinned.
+- Round 2 (same-seed re-sweep under the new pins): 118/126 caught.
+- Round 3: the eight survivors triaged - five real gaps pinned (the
+  outer suppression gate at faction2 id 1, the three-way OR's
+  lone-faction2 arm, the ladder's both-factions-at--1 fall-through,
+  a PROGRESS rumor drawn through the news face - previously never
+  exercised - and the reader's npcID endianness); the 12-row
+  full-suite confirm landed 9 kills (one at fails=12) and exposed
+  that the faction2-id-1 pin was MASKED by its own type-26 arm -
+  moved to type 100 and re-confirmed killed.
+- Round 4: the textRsc sweep (coverage regenerated) left 10
+  survivors; five more pins (odd-length variants exposing a
+  double-stepping walk, the leading FontPrefix operand, the plain
+  two-variant pick, the leading-empty pick-0 edge, the
+  empty-second step-back) plus one TOKEN-EXACT deepEqual - the
+  `ranges[want-1][2]` mutant sliced to end-of-record on the
+  step-back, adding a stray separator token invisible to text-only
+  asserts; the token shape is the law, so the pin compares shapes.
+  14-row + 1-row confirms: 13 kills.
+
+Final: **150 kills of 154, 4 PROVEN equivalents, 0 unexplained**:
+
+- rumorMill:188 (the headless `?? -1` region fallback -> -2):
+  observable only if an entry's regionID equalled -2, and regionIDs
+  are -1 or RUMOR.DAT bytes.
+- rumorMill:212 (`selected = validRumors[0]` -> `[1]`): a dead
+  initializer - the first iteration's `r = Range(0, w) >= 0 =
+  totalWeight` ALWAYS selects, so the seed value never survives
+  (C#'s own initializer is equally dead).
+- rumorMill:244 (the default session's `isSpyMaster: false` ->
+  true): the fresh default's counter arm (0 < 1) passes first, and
+  the discarded object is never read again.
+- textRsc:178 (`i < raw.length` -> `<=`): the extra iteration reads
+  undefined (classifies as nothing) and the final range's
+  one-past-end bound is CLAMPED by Uint8Array.slice - byte-identical
+  output on every record.
+
+**The lesson recorded**: a mocked seam is an untested seam - the
+mill's getRandomTokens mock left the real token face invisible to
+the sweep until coverage caught up, and the very first direct pin
+found a crash. Fixture the real module under any seam a slice
+introduces, in the same round that introduces it.
+
 ## Standing law
 
 The Quest-Arc doctrines carry over whole: DFU literals in every pin;

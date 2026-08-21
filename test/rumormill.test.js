@@ -167,9 +167,13 @@ test('variantTokensById: the walk classifies EVERY byte - odd lengths, leading p
   // only fires for want > 0, never off the front
   rsc.bytesById = () => bytes([RSC.SubrecordSeparator, ...T('b'), RSC.EndOfRecord]);
   assert.deepEqual(rsc.variantTokensById(1, () => 0), [], 'want 0 never steps to ranges[-1]');
-  // an empty SECOND variant of two steps back exactly one
+  // an empty SECOND variant of two steps back exactly one - and the
+  // re-read is the EXACT previous range: one text token, no stray
+  // separator/EndOfRecord tokens bleeding in from a loose slice
   rsc.bytesById = () => bytes([...T('aa'), RSC.SubrecordSeparator, RSC.EndOfRecord]);
-  assert.equal(text(rsc.variantTokensById(1, () => 0.999)), 'aa', 'want 1 empty steps back to variant 0');
+  assert.deepEqual(rsc.variantTokensById(1, () => 0.999),
+    [{ formatting: TOKEN_TEXT, text: 'aa', x: 0, y: 0 }],
+    'want 1 empty steps back to variant 0, token-exact');
 });
 
 // ---------------------------------------------------------------
