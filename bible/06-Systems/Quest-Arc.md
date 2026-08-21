@@ -1007,6 +1007,78 @@ through the windows.
   the only added case is level === rank, where `rank = level`
   assigns the value it already holds.
 
+## Q4-iii - THE SCENE MOUNT (SHIPPED 2026-08-21)
+
+QuestResourceBehaviour.cs whole + GameObjectHelper.cs's quest half
+(AddQuestResourceObjects :903-1163) + PlaceFoeFreely's raycast ring
+(CreateFoe.cs:260-345) + the machine's individual-NPC trio
+(QuestMachine.cs:1310-1421) + the deferred CreateFoe invalidations +
+TeleportPc's two-phase arrival + the Place hot-place/hot-remove tail
+- the ENGINE half, headless over adapter seams shaped against the
+real hosts (scenes/dungeonContext's foe chain, hostCombat's entity
+surface). The LIVE BRIDGE - instantiating the machine in scenes/*,
+the real adapters, click/combat routing - re-carves as Q4-v below.
+
+- THE BEHAVIOUR (resourceBehaviour.js): a plain object the host
+  drives (update/doClick/notifyDestroyed) instead of a MonoBehaviour,
+  with the host handle contract in the header. The Update order
+  verbatim: the reload recouple; person hidden/destroyed ->
+  SetActive(false) THROUGH the resource's own behaviour; foe hidden
+  -> self-destroy; the queues; restrain (setNonHostile once,
+  restraintApplied latching even with no motor); the injured check
+  BEFORE death with its held-tick RETURN; DeathTrigger's zeroing;
+  the isFoeDead kill latch. CastSpellQueue parks on a missing
+  effect manager and on EXACT zero health (negative casts), then
+  jumps the position to the END - an unresolvable spell is the
+  seam's own skip, never retried. AddItemQueue lands clones on the
+  corpse container over the live entity. DoClick: the item
+  transfer+hide; the individual broadcast ASSIGNS its result (a
+  matchless individual OVERWRITES the direct click's true, the
+  follow-up-quest bootstrap door) and walks EVERY quest, completed
+  ones included. The v1 save shape excludes restraintApplied -
+  restraint re-applies after load, C#'s own hole.
+- THE MOUNT WALK (sceneMount.js): SiteLinks -> quest -> Place ->
+  markers over a scene adapter; the behaviours SNAPSHOT taken once
+  per link guards double-injection (safe with the Q3-i struct-copy
+  marker law); the dangling quest/Place THROWS verbatim; enableItems
+  is C#'s DEAD parameter; foes gate on killCount < spawnCount and
+  never stand during a load; placement REARMS the injured trigger
+  (the per-wave law). The flat pick: individuals ALWAYS flat1
+  whatever the gender, questors wear the clicked NPC's saved
+  billboard indices (the NPCData contract grows
+  billboardArchiveIndex/billboardRecordIndex), else male flat1 /
+  female flat2, split archive = flat >> 7, record = flat & 0x7f.
+  The classic marker position: dungeonX/Z * RDB_SIDE + flatPosition.
+- THE RING (placeFoeFreely): the FOV + Range(0,4) jitter with the
+  side coin (>0.5 = LEFT), the wall-hit arm's cos_normal separation
+  (1.25/cos) with the slack gate and Range(0,min(2,slack)) backoff,
+  the open-area distance roll, the 4-unit floor probe, the 0.65
+  overlap veto at +1.25 - pure math over raycast/overlapSphere
+  probe seams; 8/25 wilderness constants published for the bridge.
+- THE MACHINE HALVES: isIndividualNPC (faction type; no world seam
+  ≙ C#'s null PlayerEntity), isIndividualQuestNPCAtSiteLink (the
+  away-from-home walk, log-and-continue on bare links),
+  setupIndividualStaticNPC (away -> home copy disabled; else the
+  bootstrap behaviour ALWAYS attaches, assigned to the first active
+  faction Person); notifyExteriorTransition/notifyInitWorld fan the
+  CreateFoe wave invalidations across live AND scheduled quests
+  (C# subscribes each action ctor; same population, one door).
+- TeleportPc goes TWO-PHASE: respawnPlayerAtSite (GetLocation +
+  RespawnPlayer; false retries), the IsRespawning idle, the marker
+  landing on the settle tick (indexed marker picked BEFORE the
+  respawn, the [0] fallback AFTER, C#'s order), RearmAction
+  dropping a pending resume (the desync note). QuestResource's
+  behaviour accessor subscribes the destroy uncoupling (C#'s
+  property setter law) and the base Tick now drives
+  SetActive(!IsHidden) - the Q3 pend closes. Place's assign tail:
+  hot-place mounts via world.mountCurrentSiteQuestResources when
+  the player is HERE; a behaviour stood where they are NOT
+  hot-removes; the missing seam RETURNS and skips both, mirroring
+  C#'s missing PlayerEnterExit.
+
+Gate: `test/questscene.test.js` - 25 pins; the TeleportPc pins in
+questplaces.test.js rewrite to the two-phase law.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
@@ -1029,19 +1101,31 @@ slices, in dependency order.
   arm (SERVICE_DESTINATION), the TalkManager questor-click half over
   the machine's lastNPCClicked/questor tables, the
   QuestListsManager guild draw going live end to end.
-- **Q4-iii - THE SCENE MOUNT**: SiteLinks/QuestMarkers standing
-  placed NPCs/items/foes in the running hosts (the layout builders
-  walking getSiteLinks at build + onResourceAssigned hot-place),
-  the QuestResourceBehaviour half (click routing into
-  setPlayerClicked, injured/death tracking into the Foe triggers,
-  the spell/item queue drains per instance), the REAL
-  createFoeGameObjects/tryPlaceFoe over buildFoeAt + the raycast
-  ring, the WhenPcEntersExits live feed, TeleportPc's arrival, and
-  the deferred CreateFoe wave-invalidation events.
+- **Q4-iii - THE SCENE MOUNT** (SHIPPED above, RE-CARVED): the
+  ENGINE half shipped headless - the behaviour law, the mount walk,
+  the individual trio, the wave invalidations, two-phase TeleportPc,
+  the placement ring math. The LIVE BRIDGE split out as Q4-v: the
+  engine is machine LAW (pinnable in node, campaignable), the bridge
+  is browser-host geometry (probe-verified) - fusing them would have
+  shipped an unverified sprawl.
 - **Q4-iv - JOURNAL + SAVE**: the quest journal window over
   getLogMessages + macros, and the quest save envelope
   (machine/quest/resource/action state through the port's save
-  system - the v1/v2 SaveData shapes the C# carries).
+  system - the v1/v2 SaveData shapes the C# carries; the behaviour's
+  v1 shape from Q4-iii rides in).
+- **Q4-v - THE HOST BRIDGE**: the machine goes LIVE in scenes/* -
+  instantiate + tick it in the world/dungeon/interior hosts, wire
+  deps.world off the streaming world (the Q3-i..Q4-iii seam
+  contracts), the real scene adapters (standNPC/standFoe/standItem
+  over the billboard + foe chains, findBehaviours), the real
+  createFoeGameObjects/tryPlaceFoe over buildFoeAt + placeFoeFreely
+  with real raycasts, click routing (PlayerActivate -> doClick /
+  setLastNPCClicked), hostCombat's entity surface as the enemy
+  handle, the offer flow mounted on guildServiceFlow's questOffer
+  destination, WhenPcEntersExits' transition feed, and
+  notifyExteriorTransition/notifyInitWorld off the mode router.
+  Probe-verified (tools/ probes + screenshot vantages), not
+  node-pinned.
 
 - **Q4 also picks up**: the hot-place/hot-remove halves of
   AssignQuestResource (world.onResourceAssigned), TeleportPc's
