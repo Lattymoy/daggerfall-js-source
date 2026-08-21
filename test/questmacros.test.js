@@ -15,7 +15,8 @@ import { fileURLToPath } from 'node:url';
 
 import { loadQuestTables } from '../src/systems/quest/tables.js';
 import { QuestMachine } from '../src/systems/quest/machine.js';
-import { getMacro, MACRO_TYPES, expandQuestString, getMessageResources } from '../src/systems/quest/questMacros.js';
+import { getMacro, MACRO_TYPES, expandQuestString, getMessageResources, questMacroSource, getContextValue, setIdRegion } from '../src/systems/quest/questMacros.js';
+import { srand } from '../src/formats/dfRandom.js';
 import { GENDERS } from '../src/characters/nameHelper.js';
 import { mapPixelToWorldCoord } from '../src/formats/mapsFile.js';
 
@@ -117,7 +118,9 @@ function makeMachine(world) {
     playerRaceName: () => 'Breton',
     playerGender: () => 'female',
     addDialog: (...args) => calls.push(['addDialog', ...args]),
+    lastNPCClicked: () => m.clicked,
   });
+  m.clicked = null;
   m.calls = calls;
   m.of = (name) => calls.filter((c) => c[0] === name);
   return m;
@@ -383,6 +386,187 @@ test('revealDialogLinks feeds the dialog table on NameMacro1 only, typed per res
   m.calls.length = 0;
   q.getMessage(1011).getTextTokens(-1, () => 0, true, false);
   assert.equal(m.of('addDialog').length, 0, 'the default reveals nothing');
+});
+
+// ---- the Q4-i VERIFY pins (AUDIT IX's mutation campaign) ----
+
+test('the Item macros: template name, the GOLD stack count, and a wrong-type macro staying raw', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, [
+    'Quest: __QM', 'QRC:',
+    'Message:  1011', ' take _map_ and _gp_ but ==map_', '',
+    'QBN:',
+    'Item _map_ map', '',
+    'Item _gp_ gold', '',
+    'variable _pad_',
+  ]);
+  const map = q.getResource({ name: 'map' });
+  const gp = q.getResource({ name: 'gp' });
+  const out = expandOne(q, 1011);
+  assert.ok(out.includes(`take ${map.daggerfallUnityItem.name} and `), 'the template name');
+  assert.ok(out.includes(` and ${gp.daggerfallUnityItem.stackCount} but `), 'gold answers the STACK COUNT');
+  assert.ok(out.endsWith('==map_'), 'FactionMacro is not an Item macro - the raw token stands');
+});
+
+test('the message DEFAULTS are DFU: bare reads expand, reveal nothing, and an explicit variant answers 0', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, [
+    'Quest: __QM', 'QRC:',
+    'Message:  1011', ' hail %pcn', '<--->', ' well met %pcn', '',
+    'QBN:',
+    'Person _npc_ group Shopkeeper', '',
+    'variable _pad_',
+  ]);
+  const bare = q.getMessage(1011).getTextTokens();
+  assert.ok(bare.some((t) => t.text?.includes('Ada Lovelace')), 'no-arg reads EXPAND (the DFU default)');
+  assert.equal(m.of('addDialog').length, 0, 'and reveal NOTHING');
+  // the KEPT variant quirk: any explicit variant answers variant 0
+  const v3 = q.getMessage(1011).getTextTokens(3, () => 0.99);
+  assert.ok(v3.some((t) => t.text?.includes('hail')), 'explicit variant -> index 0, never variant');
+  const byv = q.getMessage(1011).getTextTokensByVariant();
+  assert.ok(byv.some((t) => t.text?.includes('hail Ada Lovelace')), 'byVariant defaults to 0 and expands');
+  assert.equal(m.of('addDialog').length, 0, 'byVariant never reveals');
+});
+
+test('the Place macros exact: the BUILDING name, the town, and the regionIndex-0 workaround arm', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, [
+    'Quest: __QM', 'QRC:',
+    'Message:  1011', ' _shop_ / __shop_ / ___shop_ / ____shop_', '',
+    'QBN:',
+    'Place _shop_ local generalstore', '',
+    'variable _pad_',
+  ]);
+  const shop = q.getResource({ name: 'shop' });
+  assert.equal(expandOne(q, 1011),
+    ` ${shop.siteDetails.buildingName} / Bigtown / Bigtown / Testshire`,
+    'the exact per-type answers; regionIndex 0 + a non-Alik\'r name takes the workaround arm');
+});
+
+test("the Person questor FactionMacro answers the QUEST's guild; a binding macro stays raw", () => {
+  const m = makeMachine(makeWorld());
+  m.clicked = { factionID: 510, nameSeed: 7, gender: GENDERS.Male };
+  const q = schedule(m, [
+    'Quest: __QM', 'QRC:',
+    'Message:  1011', ' ==qg_ / =#qg_', '',
+    'QBN:',
+    'Person _qg_ group Questor', '',
+    'variable _pad_',
+  ]);
+  q.factionId = 40;
+  assert.equal(expandOne(q, 1011), ' The Mages Guild / =#qg_',
+    'the questor swap reads quest.factionId; BindingMacro has no Person arm');
+});
+
+test('%nrn: the Individual first child wins, else the rulerNameSeed & 0xffff draw on the faction race bank', () => {
+  const world = makeWorld();
+  const hooks = { world, playerName: () => 'Ada Lovelace' };
+  // arm 1: the first child is an Individual - their name
+  world.getFactionData = (id) => (id === 201
+    ? { id: 201, children: [364], ruler: 2, rulerNameSeed: 0x12345678, race: 2 }
+    : FACTIONS.get(id) ?? null);
+  assert.equal(getContextValue('%nrn', { hooks, uid: 1 }, hooks), 'King Gothryd');
+  // arm 2: no individual child - the SEEDED lord (Queen -> Female,
+  // seed 0x5678, the Redguard bank)
+  world.getFactionData = (id) => (id === 201
+    ? { id: 201, children: [], ruler: 2, rulerNameSeed: 0x12345678, race: 2 }
+    : FACTIONS.get(id) ?? null);
+  const seeded = getContextValue('%nrn', { hooks, uid: 1 }, hooks);
+  assert.equal(seeded, 'Saalpki', 'srand(0x5678) on the Redguard female bank, verbatim');
+});
+
+test('the UID-seeded name sources are exact: %n gender coin, %fn, and the +3457 male offset', () => {
+  const world = makeWorld();
+  const stub = { uid: 4242, hooks: { world } };
+  const src = questMacroSource(stub);
+  assert.equal(src.name(), 'Raithi', 'srand(4242) + the DFRandom gender coin');
+  assert.equal(src.femaleName(), 'Baos-i');
+  assert.equal(src.maleName(), 'Cauvin', 'the +3457 offset');
+});
+
+test('%vcn succeeds for a VampireClan person by home region; the region miss falls to the faction name', () => {
+  const world = makeWorld();
+  world.regionVampireClanName = (i) => (i === 0 ? 'the Vraseth' : null);
+  const stub = {
+    uid: 1, hooks: { world },
+    lastResourceReferenced: { isPerson: true, factionData: { type: 6, name: 'The Selenu' }, homeRegionIndex: -1 },
+  };
+  const src = questMacroSource(stub);
+  assert.equal(src.vampireNpcClan(), 'the Vraseth', 'home -1 falls to the CURRENT region (0)');
+  stub.lastResourceReferenced.homeRegionIndex = 5;
+  assert.equal(src.vampireNpcClan(), 'The Selenu', 'an unmapped region answers the faction name');
+});
+
+test("%oth reads the QUESTOR's faction race first, then the clicked NPC, then the region", () => {
+  const world = makeWorld();
+  const stub = {
+    uid: 1, hooks: { world },
+    questors: new Map([['qg', {}]]),
+    getPerson: () => ({ factionRace: 5 }),
+  };
+  const src = questMacroSource(stub);
+  assert.equal(src.oath(), 'TEXT.RSC#206', 'the questor arm: 201 + race 5');
+  const stub2 = {
+    uid: 1, hooks: { world, lastNPCClicked: () => ({ race: 4 }) },
+    questors: new Map(),
+  };
+  assert.equal(questMacroSource(stub2).oath(), 'TEXT.RSC#205', 'the clicked arm');
+});
+
+test('%reg honors the static idRegion override, arg-exact against the map', () => {
+  const world = makeWorld();
+  const regions = { 0: { name: 'Testshire' }, 1: { name: 'Otherland' } };
+  world.maps = { ...world.maps, getRegion: (i) => regions[i] ?? null };
+  const hooks = { world };
+    assert.equal(getContextValue('%reg', { uid: 1, hooks }, hooks), 'Testshire');
+  setIdRegion(1);
+  assert.equal(getContextValue('%reg', { uid: 1, hooks }, hooks), 'Otherland', 'the talk-window override');
+  setIdRegion(-1);
+});
+
+test('revealDialogLinks types every resource - Person/Location/Thing - with isSpecial FALSE', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, [
+    'Quest: __QM', 'QRC:',
+    'Message:  1011', ' _npc_ at _shop_ with _map_', '',
+    'QBN:',
+    'Person _npc_ group Shopkeeper', '',
+    'Place _shop_ local tavern', '',
+    'Item _map_ map', '',
+    'variable _pad_',
+  ]);
+  q.getMessage(1011).getTextTokens(-1, () => 0, true, true);
+  assert.deepEqual(m.of('addDialog').map((c) => [c[2], c[3], c[4]]),
+    [['npc', 'Person', false], ['shop', 'Location', false], ['map', 'Thing', false]]);
+});
+
+test('%qdt renders the SELECTED log entry once the journal points at it', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, [
+    'Quest: __QM', 'QRC:',
+    'Message:  1050', ' step', '',
+    'Message:  1011', ' %qdt', '',
+    'QBN:',
+    ' log 1050 step 0', '',
+    'variable _pad_',
+  ]);
+  m.tick();   // the quest starts at 100000 and logs step 0
+  const before = expandOne(q, 1011);
+  q.currentLogMessageId = 1050;
+  assert.equal(expandOne(q, 1011), before, 'the entry was logged AT start - same date, through the MATCH arm');
+});
+
+test('%rn falls to a seeded random full name when the province has no Individual child', () => {
+  const world = makeWorld();
+  world._province = { ruler: 1, children: [] };
+  world.getFactionData = () => null;
+  const hooks = { world };
+    srand(9001);
+  const drawn = getContextValue('%rn', { uid: 1, hooks }, hooks);
+  srand(9001);
+  const again = getContextValue('%rn', { uid: 1, hooks }, hooks);
+  assert.equal(drawn, again, 'the fallback draws on the live DFRandom chain, deterministic per state');
+  assert.ok(drawn.length > 0);
 });
 
 test('expandQuestString expands ONE context macro in a bare string; getMessageResources enumerates', () => {
