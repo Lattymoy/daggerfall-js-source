@@ -255,6 +255,81 @@ but idle live; GetBuildingList's questor-populate half (npcsWithWork,
 the 25% work roll) and the BuildingInfo `position` the compass wants
 ride TK-iii/TK-iv; isPlayerInsideCastle is Q4-v's standing false.
 
+## TK-iii - THE ANSWER PIPELINE (SHIPPED 2026-08-21)
+
+`systems/answerPipeline.js` is TalkManager's question/answer half,
+1:1 - the LADDER on top of the tables T3c-T3f already shipped
+(answersToDirections/answersToNonDirections, knowledgeModifiers, the
+reaction tier, the compass bands, the 0.35 fork). What it adds is
+which record a question draws, which arm an answer takes, and what
+each arm marks on the way through: GetQuestionText (:1298-1353),
+GetAnswerText's dispatch (:1992-2043), GetAnswerTellMeAboutTopic
+(:2045-2062), GetAnswerWhereIs (:1839-1866), the regional building
+family (:1868-1990), GetNPCKnowledgeAboutItem (:567-627),
+GetClassicQuestionIndex (:691-724), the hints (:1692-1793), the
+compass and map marks (:1189-1296), and the PC opening / work /
+organization / honorific records.
+
+**THE REGIONAL LOCATION-KEY DECODER** is the dense piece and the one
+worth reading twice. A classic location's key packs three flag bytes
+- temples in byte 0, stores in byte 1, guilds in byte 2 - and each
+building asks for a single bit through C#'s
+`(byte)(flags << n) >> 7`. That idiom truncates to 8 bits BEFORE the
+unsigned shift, so it reads bit **(7 - n)**: the shift amount is not
+the bit number. Every store, guild and divine is pinned to its own
+bit with the complement proving it reads no other; all ten knightly
+orders share one bit; 0x1c is pinned as the HOLE in that run; and
+the byte lanes are proven not to bleed into each other.
+
+KEPT QUIRKS, each by C# line:
+
+- **THE KNOWS-BUT-SILENT ARM** (:2050): a topic the NPC KNOWS still
+  answers the doesn't-know record once the one-answer gate has
+  closed. The gate is ORed against the knowledge, so knowledge alone
+  never beats it - only being in the same building, a spymaster, or
+  the debug flag reopens it.
+- **THE ASYMMETRIC WHERE-IS GATE** (:1844): the directions arm
+  honours NPCsKnowEverything but NOT isSpyMaster, where the
+  tell-me-about arm honours both. A spymaster who fails the
+  knowledge roll still refuses to give directions.
+- **Directions are free**: the where-is answers never touch
+  numAnswersGivenTellMeAboutOrRumors. An NPC gives directions all
+  day and discusses exactly one topic.
+- **THE DEAD KEY OVERRIDE** (:1729-1731): GetKeySubjectPersonHint
+  assigns `key = item.key`, then tests that same field for
+  non-emptiness and assigns it again. The branch cannot change
+  anything.
+- **GetDialogHint2's inversion** (:1783): the spymaster reads
+  anyInfo where everyone else reads rumors, and NPCsKnowEverything
+  deliberately does NOT apply - C#'s own parenthetical says so.
+- **The token CLONE** (:3552): answers are cloned before expansion
+  so altering macros (%di and its kin) re-evaluate on every ask -
+  DFU names the Missing Prince quest in its comment.
+- **THE COMPASS MARK** (:1192-1198) stamps ReceivedDirectionalHints
+  but never downgrades a resource already marked on the map; and
+  MarkKeySubjectLocationOnMap's buildingKey-0 guard (:1286) marks
+  nothing at all.
+- GetKeySubjectBuildingHint takes the DIRECTION arm when the roll is
+  ABOVE 0.35 **or** the player is indoors (:1713), so the 0.35
+  boundary itself belongs to the map arm.
+
+TWO OF THE FIRST PINS WERE MINE BEING WRONG, not the port's, and
+both are worth recording as a method note: I tabulated the temple
+arm's SHIFT AMOUNTS as if they were bit numbers, and I guessed a
+knowledge modifier's sign rather than reading the table. The port
+was right both times; the pins now derive from the real values. A
+pin asserting a number you reasoned out is a pin asserting your
+reasoning - read the table.
+
+RECORDED pending: the pipeline is engine-complete but not yet
+MOUNTED - the talk window's question/answer routing, the live
+reaction-tier recompute gate (the caller owns it exactly as C#
+does), the npcSession itself (TK-iv), the automap coordinates the
+building compass wants, and GetAnswerWhereAmI's live building /
+dungeon seams all ride TK-iv and TK-v. The greeting arms
+(GetNPCGreeting/GetNPCQuestGreeting/GetGreetingIndex) belong with
+the NPC session and moved to TK-iv with it.
+
 ## TALK AUDIT II (2026-08-21, the TK-ii verify pass)
 
 The tree's adversarial pass, again in the MAIN LOOP against the raw
