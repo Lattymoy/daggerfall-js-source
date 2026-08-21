@@ -101,6 +101,62 @@ test('the TEXT.RSC record literals are the C# ones, by number', () => {
   assert.equal(pipe.getAnswerText(newListItem({ questionType: QUESTION_TYPE.Work }), { workAvailable: false }), 'record:8078');
 });
 
+test('the headless charter: every absent seam reads its C# default', () => {
+  // NO deps at all - the answer arms must still run, on the
+  // zero-social-group, not-a-spymaster, knows-nothing session
+  const bare = new AnswerPipeline({});
+  const item = () => newListItem({ questionType: QUESTION_TYPE.QuestLocation, npcKnowledgeAboutItem: NPC_KNOWLEDGE.KnowsAboutItem });
+  assert.equal(bare.getAnswerTellMeAboutTopic(item()), '', 'no record seam: the empty string, never a throw');
+  // the absent session is socialGroup 0 / not a spymaster: with a
+  // record seam attached, the table index proves both
+  const withRecord = new AnswerPipeline({ expandRandomTextRecord: (id) => `record:${id}` });
+  assert.equal(withRecord.getAnswerTellMeAboutTopic(item()), `record:${ANSWERS_TO_NON_DIRECTIONS[15]}`,
+    'socialGroup 0 and tier 0 index the FIRST knows-row');
+  // ...and the absent isSpyMaster is FALSE, so a second ask is gated
+  withRecord.getAnswerTellMeAboutTopic(item());
+  const third = withRecord.getAnswerTellMeAboutTopic(item());
+  assert.equal(third, `record:${ANSWERS_TO_NON_DIRECTIONS[0]}`, 'the gate closed - the absent spymaster default is false');
+  // the absent npcsKnowEverything is FALSE too: a doesn-t-know
+  // where-is stays refused
+  const dunno = newListItem({ questionType: QUESTION_TYPE.LocalBuilding, npcKnowledgeAboutItem: NPC_KNOWLEDGE.DoesNotKnowAboutItem });
+  assert.equal(withRecord.getAnswerWhereIs(dunno), `record:${ANSWERS_TO_DIRECTIONS[0]}`);
+  // getQuestionText's tone defaults to 1 (Normal)
+  assert.equal(withRecord.getQuestionText(newListItem({ questionType: QUESTION_TYPE.News })), 'record:7232',
+    'the default tone is 1 - Normal, the middle button');
+  // an absent isPlayerInside reads FALSE in both consumers. The
+  // template itself comes from the localized seam, so attach that one
+  // and nothing else: the OUTDOORS arm is then the only arm that can
+  // produce a filled template at all (inside answers with the dungeon
+  // names or the resolving error), and its two name seams are absent,
+  // so both slots come back empty.
+  const outdoors = new AnswerPipeline({ localizedText: (k) => EN_TEXT[k] ?? '' });
+  assert.equal(outdoors.getAnswerWhereAmI(), 'You are in  in .', 'the outdoors arm, with empty names');
+  assert.equal(outdoors.getAnswerText(newListItem({ questionType: QUESTION_TYPE.WhereAmI })), 'You are in  in .',
+    'and the ladder reaches it with no tone, no tier and no session');
+});
+
+test('the tone gate reads an ABSENT toneIndex as -1, matching the fresh lastToneIndex', () => {
+  let computes = 0;
+  // reactionTier present, toneIndex ABSENT: the default must equal
+  // the initial lastToneIndex, or every question would recompute
+  const { pipe } = makePipe({ toneIndex: undefined, reactionTier: () => { computes++; return 1; } });
+  pipe.getAnswerText(newListItem({ questionType: QUESTION_TYPE.News }));
+  assert.equal(computes, 0, 'no tone seam, no tone CHANGE - the tier is left alone');
+  assert.equal(pipe.lastToneIndex, -1);
+});
+
+test('the greeting name boundary: reaction 0 is a stranger, 1 is a name', () => {
+  const { pipe } = makePipe();
+  pipe.getPCGreetingOrFollowUpText(0, 1, 'Sirien');
+  assert.equal(pipe.lastGreetingNameNPC, 'Sirien', 'reaction 1 is ABOVE the <= 0 bar');
+  const { pipe: p0 } = makePipe();
+  p0.getPCGreetingOrFollowUpText(0, 0, 'Sirien');
+  assert.equal(p0.lastGreetingNameNPC, 'record:7221', 'reaction 0 is ON the bar - a stranger');
+  const { pipe: pn } = makePipe();
+  pn.getPCGreetingOrFollowUpText(0, -1, 'Sirien');
+  assert.equal(pn.lastGreetingNameNPC, 'record:7221');
+});
+
 test('a fresh pipeline starts at C#s field initializers', () => {
   const bare = new AnswerPipeline({});
   assert.equal(bare.currentKeySubjectBuildingKey, -1, 'the key -1 is what the knowledge ladder tests against (:585)');
@@ -517,25 +573,112 @@ test('the quest-person BUILDING dependency: an NPC who cannot place the building
   const { pipe, tree } = makePipe();
   tree.checkNPCcanKnowAboutTellMeAboutTopic = () => true;
   tree.checkNPCisInSameBuildingAsTopic = () => false;
+  // key 'q' is chosen so the seeded roll BENEATH the arm answers
+  // KnowsAboutItem: every refusal below is therefore the building
+  // dependency speaking, and never the dice
+  const ask = () => newListItem({ questionType: QUESTION_TYPE.Person, key: 'q' });
   const buildingItem = newListItem({ questionType: QUESTION_TYPE.LocalBuilding, buildingKey: 42, npcKnowledgeAboutItem: NPC_KNOWLEDGE.DoesNotKnowAboutItem });
   tree.listTopicLocation = [newListItem({ listChildItems: [buildingItem] })];
   pipe.currentKeySubjectBuildingKey = 42;
-  assert.equal(pipe.getNPCKnowledgeAboutItem(newListItem({ questionType: QUESTION_TYPE.Person, key: 'p' })), NPC_KNOWLEDGE.DoesNotKnowAboutItem);
-  // a KNOWN building lets the person question fall through to its
-  // own roll (which may answer either way - the point is it is not
-  // short-circuited)
+  assert.equal(pipe.getNPCKnowledgeAboutItem(ask()), NPC_KNOWLEDGE.DoesNotKnowAboutItem,
+    'the unknown building shuts the person down over a roll that would have said yes');
+  // a KNOWN building lets the person question fall through to that
+  // roll, which then answers
   buildingItem.npcKnowledgeAboutItem = NPC_KNOWLEDGE.KnowsAboutItem;
-  const answer = pipe.getNPCKnowledgeAboutItem(newListItem({ questionType: QUESTION_TYPE.Person, key: 'p', buildingKey: -1 }));
-  assert.ok(answer === NPC_KNOWLEDGE.KnowsAboutItem || answer === NPC_KNOWLEDGE.DoesNotKnowAboutItem);
+  assert.equal(pipe.getNPCKnowledgeAboutItem(ask()), NPC_KNOWLEDGE.KnowsAboutItem, 'a known building lets the dice through');
+  // ...and BOTH of the arm's own guards are load-bearing: no key
+  // subject building, or a question that is not about a Person, and
+  // the arm is skipped entirely even with the building unknown
+  buildingItem.npcKnowledgeAboutItem = NPC_KNOWLEDGE.DoesNotKnowAboutItem;
+  pipe.currentKeySubjectBuildingKey = -1;
+  assert.equal(pipe.getNPCKnowledgeAboutItem(ask()), NPC_KNOWLEDGE.KnowsAboutItem, 'no key subject building, no dependency');
+  pipe.currentKeySubjectBuildingKey = 42;
+  assert.equal(pipe.getNPCKnowledgeAboutItem(newListItem({ questionType: QUESTION_TYPE.QuestPerson, key: 'q' })),
+    NPC_KNOWLEDGE.KnowsAboutItem, 'a QUEST person is not the classic Person topic - the arm does not apply');
   // an UNSET building knowledge is computed on the way through
   buildingItem.npcKnowledgeAboutItem = NPC_KNOWLEDGE.NotSet;
-  pipe.getNPCKnowledgeAboutItem(newListItem({ questionType: QUESTION_TYPE.Person, key: 'p' }));
+  pipe.getNPCKnowledgeAboutItem(ask());
   assert.notEqual(buildingItem.npcKnowledgeAboutItem, NPC_KNOWLEDGE.NotSet, 'the building item is resolved and STAMPED');
+});
+
+test('THE HEADLESS SEEDS: an omitted npcSeed is 0, and an omitted faction relation is a REFUSAL', () => {
+  // Key 'p' splits: it rolls DoesNotKnow under seed 0 and Knows under
+  // seed 1, so the default is pinned to the value and not merely to
+  // "some number".
+  const mk = () => {
+    const { pipe, tree } = makePipe();
+    tree.checkNPCcanKnowAboutTellMeAboutTopic = () => true;
+    tree.checkNPCisInSameBuildingAsTopic = () => false;
+    return pipe;
+  };
+  const item = () => newListItem({ questionType: QUESTION_TYPE.QuestLocation, key: 'p' });
+  assert.equal(mk().getNPCKnowledgeAboutItem(item()), NPC_KNOWLEDGE.DoesNotKnowAboutItem, 'the default identity is 0');
+  assert.equal(mk().getNPCKnowledgeAboutItem(item(), 0), NPC_KNOWLEDGE.DoesNotKnowAboutItem);
+  assert.equal(mk().getNPCKnowledgeAboutItem(item(), 1), NPC_KNOWLEDGE.KnowsAboutItem, 'and identity 1 is a DIFFERENT NPC');
+  // getAnswerText's own npcSeed default rides the same road: the
+  // knowledge stamp it leaves on the item must be the seed-0 one
+  const asked = newListItem({ questionType: QUESTION_TYPE.QuestLocation, key: 'p' });
+  mk().getAnswerText(asked);
+  assert.equal(asked.npcKnowledgeAboutItem, NPC_KNOWLEDGE.DoesNotKnowAboutItem, 'the dispatch defaults to NPC 0 too');
+  // ...and with NO isFaction2RelatedToFaction1 seam, an organization
+  // question is not waved through: caption 'The Thieves' rolls a
+  // refusal, so the arm's default has to be false to be visible
+  const org = newListItem({ questionType: QUESTION_TYPE.OrganizationInfo, factionID: 42, caption: 'The Thieves' });
+  assert.equal(mk().getNPCKnowledgeAboutItem(org), NPC_KNOWLEDGE.DoesNotKnowAboutItem,
+    'no relation seam, no membership - the roll decides');
+});
+
+test('getAnswerWhereIs: a Person NOT in the same building answers from the TABLE, never the here-I-am line', () => {
+  const { pipe, tree, session } = makePipe();
+  tree.listBuildings = [{ name: 'The Inn', buildingKey: 55, buildingType: BUILDING_TYPES.Tavern }];
+  tree.deps.isPlayerInsideBuilding = () => true;
+  tree.deps.currentBuildingKey = () => 55;
+  session.socialGroup = 1;
+  pipe.reactionToPlayer012 = 2;
+  const away = newListItem({ questionType: QUESTION_TYPE.Person, caption: 'Sirien', npcKnowledgeAboutItem: NPC_KNOWLEDGE.KnowsAboutItem, npcInSameBuildingAsTopic: false });
+  assert.equal(pipe.getAnswerWhereIs(away), `record:${ANSWERS_TO_DIRECTIONS[15 + 3 * 1 + 2]}`,
+    'both halves of the same-building test are load-bearing');
+  // and the mirror: a LocalBuilding topic the NPC is not standing in
+  const elsewhere = newListItem({ questionType: QUESTION_TYPE.LocalBuilding, caption: 'The Inn', npcKnowledgeAboutItem: NPC_KNOWLEDGE.KnowsAboutItem, npcInSameBuildingAsTopic: false });
+  assert.equal(pipe.getAnswerWhereIs(elsewhere), `record:${ANSWERS_TO_DIRECTIONS[15 + 3 * 1 + 2]}`);
 });
 
 // ---------------------------------------------------------------
 // The hints (:1692-1793)
 // ---------------------------------------------------------------
+
+test('THE MARK FLAG is up only WHILE the map record expands - the macro layer is the observer', () => {
+  // C#'s comment on both assignments says exactly why the flag
+  // exists: ExpandRandomTextRecord resolves %loc, and it must not
+  // reveal a location by accident. So the only moment the flag is
+  // observable is DURING the expansion - pin it there.
+  const seen = [];
+  const mk = () => {
+    const pipe = new AnswerPipeline({
+      expandRandomTextRecord: (id) => { seen.push([id, pipe.markLocationOnMap]); return `record:${id}`; },
+      rolls: () => 0.1,
+    });
+    return pipe;
+  };
+  const map = mk();
+  map.getKeySubjectBuildingOnMap();
+  assert.deepEqual(seen, [[MAP_REVEAL_TEXT_ID, true]], 'the map record expands with the flag UP');
+  assert.equal(map.markLocationOnMap, false, 'and it is down again the instant the answer is in hand');
+  seen.length = 0;
+  const dir = mk();
+  dir.markLocationOnMap = true;   // as GetKeySubjectPersonHint leaves it
+  dir.getKeySubjectBuildingDirection();
+  assert.deepEqual(seen, [[DIRECTION_TEXT_ID, false]], 'the direction record expands with the flag DOWN, whatever it was');
+  // through the fork, with an ABSENT isPlayerInside seam: a low roll
+  // still reaches the map arm, so the missing seam reads false
+  seen.length = 0;
+  const forked = new AnswerPipeline({
+    expandRandomTextRecord: (id) => { seen.push([id, forked.markLocationOnMap]); return `record:${id}`; },
+    rolls: () => 0.1,
+  });
+  forked.getKeySubjectBuildingHint();
+  assert.deepEqual(seen, [[MAP_REVEAL_TEXT_ID, true]], 'no isPlayerInside seam means not inside');
+});
 
 test('the building-hint fork: above 0.35 gives directions, below marks the map, INDOORS always directions', () => {
   const { pipe } = makePipe({ rolls: () => 0.9 });

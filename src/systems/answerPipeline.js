@@ -196,6 +196,13 @@ export class AnswerPipeline {
     // recompute (:682); GetAnswerText's gate reads it (:1994) and
     // StartNewConversation resets it to -1 (:2659).
     this.lastToneIndex = -1;
+    // C#'s npcData is a FIELD of TalkManager (:189), not a value
+    // fetched per question: the tell-me-about counter it carries
+    // survives from one answer to the next and is zeroed only when a
+    // new NPC is set (:742, :798). With no npcSession seam attached
+    // this stands in for that field, so the headless gate can still
+    // close after the first successful answer.
+    this.defaultSession = { socialGroup: 0, isSpyMaster: false, numAnswersGivenTellMeAboutOrRumors: 0 };
   }
 
   /** The tone gate C# spells inline at the head of GetAnswerText
@@ -219,7 +226,7 @@ export class AnswerPipeline {
   _rolls() { return this.deps.rolls ?? Math.random; }
   _record(id) { return this.deps.expandRandomTextRecord?.(id) ?? ''; }
   _text(key) { return this.deps.localizedText?.(key) ?? ''; }
-  _session() { return this.deps.npcSession?.() ?? { socialGroup: 0, isSpyMaster: false, numAnswersGivenTellMeAboutOrRumors: 0 }; }
+  _session() { return this.deps.npcSession?.() ?? this.defaultSession; }
   _knowsEverything() { return this.deps.npcsKnowEverything?.() ?? false; }
 
   // ---- the question half (:1298-1353) ----
