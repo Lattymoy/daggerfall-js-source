@@ -104,6 +104,8 @@ test('RumorFile: a NUL-less 9-char questName reads all 9 and stops there; the ta
   assert.equal(f.rumors[0].questName, 'ABCDEFGHI', 'ReadCString caps at 9, never bleeding into unknown');
   assert.equal(f.rumors[0].unknown, 258, '0x0102 read little-endian');
   assert.equal(String.fromCharCode(...f.rumors[0].rumorText), 'z');
+  const g = new RumorFile().load(rumorRecord({ npcID: 0x0102, text: 'z' }));
+  assert.equal(g.rumors[0].npcID, 258, 'npcID reads little-endian too');
 });
 
 test('CLASSIC_RUMOR_TYPES: RumorFile.RumorTypes verbatim', () => {
@@ -280,6 +282,15 @@ test('the suppression boundaries: faction id 1 passes the zero gate, the faction
   const { mill: m3 } = makeMill({ getFactionData: flagged, rolls: () => 0.75 });
   m3.listRumorMill.push(commonEntry({ faction1: 41 }));
   assert.equal(m3.getValidRumors().length, 1, '75 >= 75: the suppression roll fails at its own boundary');
+  // faction2 = 1 through the OUTER gate (the !== 0 test, never !== 1)
+  const { mill: m4 } = makeMill({ getFactionData: flagged, rolls: () => 0 });
+  m4.listRumorMill.push(commonEntry({ faction1: 0, faction2: 1, type: 26 }));
+  assert.equal(m4.getValidRumors().length, 0, 'faction2 id 1 enters the clause and suppresses');
+  // faction2 alone at TYPE 100 - the clause is a three-way OR, so a
+  // lone faction2 enters whatever the type
+  const { mill: m5 } = makeMill({ getFactionData: flagged, rolls: () => 0 });
+  m5.listRumorMill.push(commonEntry({ faction1: 0, faction2: 41, type: 100 }));
+  assert.equal(m5.getValidRumors().length, 0, 'faction2 at type 100 still suppresses (each OR arm stands alone)');
 });
 
 test('the bulletin textID gate matches the allowed ids exactly', () => {
@@ -306,6 +317,7 @@ test('the region ladder: entry region, else faction1 region, else faction2, else
   assert.equal(mill._resolveRegionID({ regionID: -1, faction1: 41, faction2: 42 }), 5, 'faction1 next');
   assert.equal(mill._resolveRegionID({ regionID: -1, faction1: 43, faction2: 42 }), 9, 'a -1 faction1 region falls to faction2');
   assert.equal(mill._resolveRegionID({ regionID: -1, faction1: 0, faction2: 0 }), 17, 'nothing resolves: the CURRENT region (DFU dropped classic random)');
+  assert.equal(mill._resolveRegionID({ regionID: -1, faction1: 43, faction2: 43 }), 17, 'BOTH factions at region -1 fall through to current, never returning the -1');
   // ...and the bulletin face threads the resolved region into the
   // macro context
   mill.listRumorMill = [commonEntry({ flags: 1, regionID: -1, faction1: 41 })];
@@ -349,6 +361,11 @@ test('getNewsOrRumors: the quest arm expands through the quest seam at a rolled 
   const s3 = { numAnswersGivenTellMeAboutOrRumors: 0 };
   assert.equal(m3.getNewsOrRumors(s3), RESOLVING_ERROR, "'...never mind...' - the C# init literal surfaces");
   assert.equal(s3.numAnswersGivenTellMeAboutOrRumors, 1, 'and the NPC still spent its one answer (kept quirk)');
+  // a PROGRESS rumor draws through the same quest arm (the :1423 OR)
+  const { mill: m4, calls: c4 } = makeMill();
+  m4.addOrReplaceQuestProgressRumor(88, mockMessage([[t('going well')]]));
+  assert.equal(m4.getNewsOrRumors({ numAnswersGivenTellMeAboutOrRumors: 0 }), 'going well');
+  assert.deepEqual(c4.filter((c) => c[0] === 'expandQuest'), [['expandQuest', 88]], 'QuestProgressRumor rides the quest expansion too');
 });
 
 test('the variant pick FLOORS (Random.Range int law) and the bare default session is fresh', () => {
