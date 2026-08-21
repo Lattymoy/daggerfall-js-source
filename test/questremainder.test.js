@@ -33,6 +33,7 @@ loadTables();
 // records carry LIVE rep - WhenReputeWith reads the field directly
 const FACTIONS = new Map([
   [364, { id: 364, type: 4, name: 'King Gothryd', race: 3, rep: 10 }],
+  [365, { id: 365, type: 4, name: 'Queen Aubk-i', race: 3, rep: 0 }],
   [40, { id: 40, type: 2, name: 'The Mages Guild', race: -1, rep: 0 }],
 ]);
 
@@ -227,6 +228,75 @@ test('CastSpellDo QUIRK: an unresolved spell completes the TEMPLATE - the minted
   const act = startup.actions.find((a) => a.constructor.name === 'CastSpellDo');
   assert.equal(act.isComplete, false, 'the action never completes and never fires');
   assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false);
+});
+
+// ---- the Q3-iv VERIFY pins (the mutation campaign's boundaries) ----
+
+test('WhenPcEntersExits: the create seed needs rect AND loaded - an out-of-rect create seeds None', () => {
+  const world = makeWorld();
+  world._inRect = false;   // loaded location, player outside the rect
+  const m = makeMachine(world);
+  const q = schedule(m, ['_t_ task:', ' when pc exits city', '', 'variable _pad_']);
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false,
+    'nothing was seeded - no phantom exit on the first poll');
+  world._inRect = true;
+  m.tick();   // the poll observes None -> city
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false, 'entering is not exiting');
+  world._inRect = false;
+  m.tick();   // city -> None
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, 'the real exit fires');
+});
+
+test('WhenPcEntersExits: an ENTERS trigger never fires on an exit transition', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, ['_t_ task:', ' when pc enters city', '', 'variable _pad_']);
+  world._inRect = false;   // leave BEFORE the first check ever runs
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false,
+    'the seeded city slid to previous - the enters arm must not read it');
+});
+
+test("WhenPcEntersExits: 'exits anywhere' fires on any observed departure", () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, ['_t_ task:', ' when pc exits anywhere', '', 'variable _pad_']);
+  world._inRect = false;
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, 'the p2=-1 wildcard on the exit arm');
+});
+
+test('WhenNpcIsAvailable: a click on the WRONG faction stays unavailable', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, ['_t_ task:', ' when King_Gothryd is available', '', 'variable _pad_']);
+  m.clicked = { factionID: 999 };
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false);
+});
+
+test('WhenReputeWith is ALWAYS-ON: the bar dropping back UN-triggers the task', () => {
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, ['_t_ task:', ' when repute with King_Gothryd is at least 10', '', 'variable _pad_']);
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, 'rep 10 meets the bar');
+  FACTIONS.get(364).rep = 5;
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false,
+    'the always-on PRIMARY reads the live field both ways');
+  FACTIONS.get(364).rep = 10;
+});
+
+test('activeFactionPersons matches faction AND person-ness: an unrelated Person never locks out', () => {
+  const m = makeMachine(makeWorld());
+  // a bound Queen (365) must not block the King (364)
+  m.scheduleQuest(['Quest: __QX', 'QRC:', 'Message:  1011', ' x', '', 'QBN:',
+    'Person _p_ named Queen_Aubk-i', '', 'variable _pad_'], 0, { rolls: () => 0.4 });
+  const q = schedule(m, ['_t_ task:', ' when King_Gothryd is available', '', 'variable _pad_']);
+  m.clicked = { factionID: 364 };
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, 'only a 364 Person could lock the King out');
+  assert.equal(m.activeFactionPersons(365).length, 1, 'the Queen IS bound - the filter is the faction');
 });
 
 test('HEADLESS: every Q3-iv form parses; the world-free throws still fire', () => {

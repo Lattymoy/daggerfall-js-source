@@ -745,6 +745,37 @@ ownership pin at 7231/4 and the P2 guard pin CLOSED (the when-shapes
 now resolve to their real owners at the same registry positions -
 the ownership transfer the guard charter promised).
 
+## QUEST AUDIT VIII (2026-08-21, the Q3-iv verify pass)
+
+The parity lane ran in the MAIN LOOP by construction this time - the
+subagent limit still held, so all five C# action files were read raw
+DURING implementation (WhenReputeWith.cs, WhenNpcIsAvailable.cs,
+CurePcDisease.cs, MakePcDiseased.cs, CastSpellDo.cs whole, plus
+QuestMachine.cs ActiveFactionPersons/AddFactionListener), every arm
+ported from source, not summary. The multi-agent adversarial pass
+for Q3-iii AND Q3-iv is armed for after the limit reset; findings,
+if any, will amend these sections.
+
+- MUTATIONS: 98 mutants over the six new classes + the machine
+  surfaces, 24 subset survivors. SIX were real holes, two of them
+  genuine DFU laws the first pins missed: the always-on rep bar
+  UN-TRIGGERS when reputation drops back below the bar (the primary
+  always-on reads the live field BOTH ways), and an ENTERS trigger
+  must never fire on an exit transition (the ||-guard in
+  HasExitedTarget); plus the create-seed rect-AND-loaded gate, the
+  exits-anywhere wildcard arm, the wrong-faction click, and
+  activeFactionPersons' faction-AND-person filter. Six pins landed;
+  the same-seed round 2 confirmed all six kills and the machine lane
+  clean. The 15 remaining survivors are recorded equivalents: FOUR
+  are comment-text mutants (the masker mis-scanned a doc block - a
+  campaign artifact, behavior-free by definition, noted for the
+  tooling), the ctor inits are dead stores (createNew always
+  assigns or throws first), the -1 gates are masked by their inner
+  null-guards (getFactionData(-1) is null; CastSpellDo's effects
+  null-guard), isTriggerCondition-false is dominated by the
+  always-on flag (the triggered-update path is the base no-op), and
+  the pattern digit class has no corpus witness.
+
 ## Queue
 - **Q4 also picks up**: the hot-place/hot-remove halves of
   AssignQuestResource (world.onResourceAssigned), TeleportPc's
