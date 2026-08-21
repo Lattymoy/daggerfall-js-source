@@ -22,7 +22,7 @@ import {
 } from '../src/scenes/questBridge.js';
 import { TICKS_PER_SECOND, QUEST_MESSAGES } from '../src/systems/quest/machine.js';
 import { FAIL_QUEST_FLAVOUR_ID } from '../src/systems/quest/offerFlow.js';
-import { GUILD_GROUPS } from '../src/formats/factionFile.js';
+import { GUILD_GROUPS, SOCIAL_GROUPS } from '../src/formats/factionFile.js';
 import { GENDERS } from '../src/characters/nameHelper.js';
 import { daySuffix, dateTimeString, midDateTimeString } from '../src/systems/gameDate.js';
 
@@ -390,4 +390,44 @@ test('the pad TRUNCATES fractional components (the live clock hands fractional m
   // never round 59.9 up to the impossible '60'.
   const d = { year: 405, month: 0, day: 0, hour: 13, minute: 30, second: 59.9 };
   assert.equal(dateTimeString(d), '13:30:59 on 1st of Morning Star, 3E405');
+});
+
+// ---------------------------------------------------------------
+// TK-iv/TK-v: THE QUESTOR DOOR through the bridge
+// ---------------------------------------------------------------
+
+test('offerSocialQuest: the questor door lands on Q4-iis social arm, and spends the pool entry', () => {
+  // TalkToStaticNPC opens DaggerfallQuestOfferWindow instead of the
+  // talk window when the clicked NPC is carrying work (:758-770). The
+  // bridge is the wire between the NPC session's pool and the offer
+  // flow that has been waiting for it since Q4-ii.
+  const spent = [];
+  // a MERCHANTS row, not a guild one - the social pool is keyed by
+  // FactionFile's SocialGroups names
+  const bridge = makeBridge({ removeNpcQuestor: (seed) => spent.push(seed) },
+    '__OFR, Merchants, M, 0, 0, x');
+  const step = bridge.offerSocialQuest({ factionID: 41, nameSeed: 77, gender: GENDERS.Male }, SOCIAL_GROUPS.Merchants, true);
+  assert.equal(step.kind, 'offer', 'a social questor offers from the Classic pool');
+  assert.deepEqual(spent, [77], 'and the potential questor leaves the work pool BEFORE the offer resolves');
+  const answer = step.respond(true);
+  assert.equal(answer.kind, 'accepted');
+  assert.equal([...bridge.machine.quests.values()].length, 1, 'the accepted quest is LIVE');
+});
+
+test('the questor door stays SHUT for an NPC already questoring an active quest', () => {
+  const spent = [];
+  const bridge = makeBridge({ removeNpcQuestor: (seed) => spent.push(seed) },
+    '__OFR, Merchants, M, 0, 0, x');
+  // an active questor: the machine's last-clicked NPC IS a running
+  // quest's questor
+  const step0 = bridge.offerSocialQuest({ factionID: 41, nameSeed: 77, gender: GENDERS.Male }, SOCIAL_GROUPS.Merchants, true);
+  step0.respond(true);
+  const quest = [...bridge.machine.quests.values()][0];
+  const questor = [...quest.resources.values()].find((r) => r.isPerson && r.isQuestor);
+  if (questor) {
+    bridge.machine.setLastNPCClicked(questor.questorData);
+    const step = bridge.offerSocialQuest({ factionID: 41, nameSeed: 78, gender: GENDERS.Male }, SOCIAL_GROUPS.Merchants, true);
+    assert.equal(step.kind, 'close', 'the door closes silently on an active questor');
+    assert.deepEqual(spent, [77, 78], 'but the pool entry is spent FIRST, either way - C#s ctor half');
+  }
 });
