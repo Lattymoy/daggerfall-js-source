@@ -512,6 +512,90 @@ itself; GetPortraitIndexFromStaticNPCBillboard
 rides the `portraitForBillboard` seam; and the window routing, the
 event rebuilds and the save threading land with TK-v.
 
+## TK-v - THE HOST MOUNT (SHIPPING 2026-08-21)
+
+The arc's last slice: the four engine modules live in the running
+hosts, and the one module that was still missing between them.
+
+**`systems/talkMacros.js` is TalkManagerMCP.cs whole** (207 lines, 13
+handlers) plus MacroHelper.ExpandMacros and
+TalkManager.ExpandRandomTextRecord (:3580-3587). This is the module
+the arc had been waiting for without knowing it: TK-iii found two
+TalkManager fields that exist only for the duration of a single
+expansion - `markLocationOnMap` for %loc and `greetingNameNPC` for %n -
+and fixed the port to fill and clear them at C#'s moments. Nothing
+read them, because nothing had ported the reader. Both are now pinned
+from inside an actual expansion.
+
+Ported with them: %di's two-arm compass; %hnt and %hnt2, which share
+every arm but the quest one, where they part into anyInfo and rumors;
+**THE MALE-NAME SEED NUDGE** (+3547 before the draw and -3547 after, so
+a male and a female name drawn in one breath differ and the stream is
+left exactly where it was found - and the female name does not nudge at
+all); %oth reading the NPC's FACTION race with the region as fallback,
+which is DFU's own fix for classic having every High Rock NPC swear
+Nord oaths; the four pronouns as the POTENTIAL QUESTOR's gender, with
+C#'s `default:` sharing the Male case; and %pqn/%pql over the questor
+pool.
+
+**The re-read caught the expansion algorithm itself.** I had written a
+plausible one - substring replacement, longest token first - rather
+than C#'s. MacroHelper scans from each `%` to the next
+MACRO_TERMINATOR, which is what tells %hnt2 from %hnt and %g4 from %g
+with no ordering at all. Two behaviours fell out of that mistake:
+
+- **THE MACRO CACHE** (:428): one dictionary per ExpandMacros CALL,
+  with C#'s own comment on why - "some macros evaluate differently each
+  time (e.g. macros with random generated names)". A record naming %fn
+  in two tokens names the SAME woman twice; the port would have named
+  two.
+- **THE PIPE IS EATEN** (:472-475): `|` terminates a macro and is
+  swallowed, which is how `%di|ern` becomes "southern". The port left
+  it in the text.
+
+THE HOST WIRING, in world.js and worldModes.js:
+
+- the NPC session and the answer pipeline built beside the mill and the
+  tree, wired to each other the way TalkManager's fields are wired -
+  the tree's `rebuildTopicLists` read and spent by the session's
+  StartNewConversation, the session's `npcData` what the pipeline reads
+  for the social group and the one-answer counter, the mill answering
+  the News arm through the session it is handed;
+- **THE QUESTOR DOOR OPEN**: a static-NPC click runs TalkToStaticNPC,
+  so an NPC the work pool is carrying opens the quest offer through
+  Q4-ii's `offerSocialQuest` - the arm that had been waiting since the
+  offer flow shipped - instead of the conversation;
+- the pipeline's `expandRandomTextRecord` running the real MCP;
+- **the tone gate moved off the host.** townTalk kept its own
+  `lastToneIndex`, its own `toneReactionForTalkSession` and its own
+  `numQuestionsAsked` - three TalkManager fields, reset by hand. They
+  are the engine's now, and what stays with the host is what belongs
+  to it: which tone button is selected, and the tier COMPUTATION;
+- SaveDataConversation whole in the quicksave (:368-375), one envelope
+  written by three owners and read back by three;
+- the six event subscriptions (:3593-3629) wired into the world's
+  teleport and both exterior transitions.
+
+Two supporting corrections the mount needed: `talkSession`'s
+OATH_RACE_INDEX widened from the four races the mobile ladder needed to
+the eight GetFactionRaceFromRace can answer (the MCP reads it for a
+static NPC of any race), and `dfRandom` gained the Seed accessor pair
+C#'s settable property is - without which the male-name nudge is not
+portable at all.
+
+**test/talkengine.test.js** builds all four modules exactly as world.js
+builds them and drives a conversation through the assembly - the click,
+the greeting, the tone gate, the mill's news, the tree's knowledge
+reset, the questor door and the envelope. All six passed on the first
+run, which is the answer to whether the mount is sound.
+
+RECORDED pending: the talk WINDOW still draws its Where-is list from
+T3c's building directory rather than from the tree's assembled
+`listTopicLocation`, and %loc and %key are MacroHelper globals rather
+than MCP overrides, so they remain the host's. The browser half is
+probe-verified only where a machine with game data exists - this one
+has none, and the quest arc's standing caveat applies.
+
 ## TALK AUDIT IV (2026-08-21, the TK-iv verify pass)
 
 The NPC session's adversarial pass, again in the MAIN LOOP against the
