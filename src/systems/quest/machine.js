@@ -190,6 +190,15 @@
 //   deps.world showClocksAsCountdown() - the journal clock setting
 //                                (=clock_; DFU default false)
 //
+// Q4-ii, the offer flow (offerFlow.js drives; QuestMachine.cs's own
+// halves live HERE): setLastNPCClicked + getLastNPCClicked +
+// isNPCDataEqual + isLastNPCClickedAnActiveQuestor (the questor
+// click law) and createMessagePrompt (the Yes/No offer descriptor).
+// The TalkManager scrubs and player facts the flow reads already
+// ride the deps above; the flow's OWN seams (the castle gate,
+// RemoveNpcQuestor, GetGuildFactionId, the picker setting) live on
+// offerFlow.js.
+//
 // The 64 global variables (classic SAVEVARS.DAT state) live here and
 // reach tasks through quest.hooks.globalVars.
 
@@ -217,6 +226,7 @@ export class QuestMachine {
     this.globalVars = new Map();      // link id -> bool
     this.siteLinks = [];              // QuestMachine.cs siteLinks - the world<->marker bridge (Q3-i)
     this.factionListeners = new Map();  // factionID -> action (Q3-iv; TalkManager's Q4 signal)
+    this.lastNPCClicked = null;       // QuestMachine.lastNPCClicked - the questor click (Q4-ii)
     this.parser = new Parser();
     for (const template of defaultActionTemplates()) this.registerAction(template);
     // AUDIT quest-2: the action factory travels PER QUEST (parse opt ->
@@ -300,7 +310,7 @@ export class QuestMachine {
       // - { factionID, nameSeed, gender } | null) and factionRep's
       // GetReputation (ReputeExceedsDo reads it; an unknown faction
       // reads 0, factionRep's own law).
-      lastNPCClicked: () => this.deps.lastNPCClicked?.() ?? null,
+      lastNPCClicked: () => this.getLastNPCClicked(),
       playerName: () => this.deps.playerName?.() ?? null,
       playerRaceName: () => this.deps.playerRaceName?.() ?? null,
       addFactionListener: (factionID, owner) => this.addFactionListener(factionID, owner),
@@ -363,14 +373,95 @@ export class QuestMachine {
   }
 
   /** The QuestListsManager's parseQuest dep: parse with THIS
-   *  machine's registry, clock and hooks, without scheduling. */
-  parseQuestForLists(lines, factionId = 0, { rolls } = {}) {
+   *  machine's registry, clock and hooks, without scheduling. The
+   *  lists dep is positional - parseQuest(lines, factionId,
+   *  partialParse) - so a host wires
+   *  `(l, f, p) => machine.parseQuestForLists(l, f, { partialParse: p })`. */
+  parseQuestForLists(lines, factionId = 0, { rolls, partialParse = false } = {}) {
     const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
     return this.parser.parse(lines, factionId,
-      { rolls, actionFactory: this._actionFactory, nowSeconds, hooks: this._buildHooks() });
+      { partialParse, rolls, actionFactory: this._actionFactory, nowSeconds, hooks: this._buildHooks() });
   }
 
   getQuest(uid) { return this.quests.get(uid) ?? null; }
+
+  // ---- Q4-ii: the questor click + the offer prompt ----
+  // (QuestMachine.cs:888-985; offerFlow.js drives these.)
+
+  /** LastNPCClicked: the machine's own field once setLastNPCClicked
+   *  ran; the deps seam stays for hosts/tests that inject the click
+   *  context directly (Q3-ii's door). */
+  getLastNPCClicked() { return this.lastNPCClicked ?? this.deps.lastNPCClicked?.() ?? null; }
+
+  /** SetLastNPCClicked (:948-966): stores the click, then sweeps
+   *  EVERY quest's Persons for a QuestorData match and marks them
+   *  clicked. No IsQuestor gate and no QuestComplete skip here - both
+   *  are IsLastNPCClickedAnActiveQuestor's filters, not this sweep's,
+   *  verbatim. npcData is StaticNPC.NPCData's identity: { hash,
+   *  mapID, nameSeed, buildingKey, factionID, gender } (equality
+   *  reads the first four; the offer flow reads the last three). */
+  setLastNPCClicked(npcData) {
+    this.lastNPCClicked = npcData;
+    for (const quest of this.quests.values()) {
+      for (const resource of quest.resources.values()) {
+        if (resource.isPerson && this.isNPCDataEqual(resource.questorData, npcData)) {
+          resource.setPlayerClicked();
+        }
+      }
+    }
+  }
+
+  /** IsNPCDataEqual (:973-985): the four-field identity. C#'s NPCData
+   *  is a STRUCT - a never-assigned QuestorData is the default struct
+   *  (all zeros), so null reads as zero fields here to keep the
+   *  struct semantics (two unassigned sides ARE equal). */
+  isNPCDataEqual(person1, person2) {
+    return (person1?.hash ?? 0) === (person2?.hash ?? 0)
+      && (person1?.mapID ?? 0) === (person2?.mapID ?? 0)
+      && (person1?.nameSeed ?? 0) === (person2?.nameSeed ?? 0)
+      && (person1?.buildingKey ?? 0) === (person2?.buildingKey ?? 0);
+  }
+
+  /** IsLastNPCClickedAnActiveQuestor (:918-941): scans INCOMPLETE
+   *  quests for a questor Person matching the last click; a match
+   *  stamps quest.externalMCP with the passed provider (the offer
+   *  window hands the guild in - %pct's context) and answers true.
+   *  C#'s log line formats only its {1} arg, dropping the UID.
+   *  DELTA (recorded): a never-clicked machine compares the zero
+   *  struct here where C# NREs on lastNPCClicked.Data - unreachable
+   *  through the windows, which only open off a click. */
+  isLastNPCClickedAnActiveQuestor(mcp = null) {
+    const clicked = this.getLastNPCClicked();
+    for (const quest of this.quests.values()) {
+      if (quest.questComplete) continue;
+      for (const resource of quest.resources.values()) {
+        if (!resource.isPerson || !resource.isQuestor) continue;
+        if (this.isNPCDataEqual(resource.questorData, clicked)) {
+          console.log(`[quest] This person is used in quest as Person ${resource.symbol?.original}`);
+          if (mcp != null) quest.externalMCP = mcp;
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /** CreateMessagePrompt (:888-910): a Yes/No prompt descriptor from
+   *  a quest message - tokens at DEFAULT expansion (the macro pass,
+   *  no dialog reveal; the variant draw rides quest.rolls, Ledger A),
+   *  YesNo buttons, no click-anywhere, no cancel. The UI host draws
+   *  it and routes the answer; a missing message answers null and
+   *  the offer silently shows nothing, verbatim. */
+  createMessagePrompt(quest, id) {
+    const message = quest.getMessage(id);
+    if (!message) return null;
+    return {
+      tokens: message.getTextTokens(-1, quest.rolls),
+      buttons: 'YesNo',
+      clickAnywhereToClose: false,
+      allowCancel: false,
+    };
+  }
 
   /** One machine tick (QuestMachine.cs Tick). */
   tick() {

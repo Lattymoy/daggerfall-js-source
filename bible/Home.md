@@ -278,24 +278,23 @@ combat line numbers below are refreshed with it.
 - `src/systems/factionRep.js:228` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
 - `src/systems/gameDate.js:23` - FLAGGED, deliberately: the two LUNAR PHASE getters (:134-150,
 - `src/systems/guildServiceActions.js:170` - *  turning into a vampire or werebeast - FLAGGED: the port has no
-- `src/systems/guildServiceFlow.js:233` - *  other arm is FLAGGED with the window it waits on. */
-- `src/systems/guildServiceFlow.js:238` - Quests: null,            // FLAGGED: the quest machine
-- `src/systems/guildServiceFlow.js:239` - Identify: null,          // FLAGGED: DaggerfallTradeWindow Identify mode
-- `src/systems/guildServiceFlow.js:240` - Repair: null,            // FLAGGED: DaggerfallTradeWindow Repair mode
-- `src/systems/guildServiceFlow.js:241` - BuyPotions: null,        // FLAGGED: trade Buy + CreateRandomPotion
-- `src/systems/guildServiceFlow.js:242` - MakePotions: null,       // FLAGGED: the potion maker
-- `src/systems/guildServiceFlow.js:243` - BuySpells: null,         // FLAGGED: the spellbook's buy mode
-- `src/systems/guildServiceFlow.js:244` - BuySpellsMages: null,    // FLAGGED: the spellbook's buy mode
-- `src/systems/guildServiceFlow.js:245` - MakeSpells: null,        // FLAGGED: the spell maker
-- `src/systems/guildServiceFlow.js:246` - BuyMagicItems: null,     // FLAGGED: trade Buy + CreateRandomMagicItem
-- `src/systems/guildServiceFlow.js:247` - MakeMagicItems: null,    // FLAGGED: the item maker
-- `src/systems/guildServiceFlow.js:248` - SellMagicItems: null,    // FLAGGED: trade SellMagic mode
-- `src/systems/guildServiceFlow.js:249` - BuySoulgems: null,       // FLAGGED: trade Buy + the soul-trap stock
-- `src/systems/guildServiceFlow.js:250` - Teleport: null,          // FLAGGED: the travel map's teleport mode
-- `src/systems/guildServiceFlow.js:251` - DaedraSummoning: null,   // FLAGGED: the daedra summoning flow
-- `src/systems/guildServiceFlow.js:252` - Spymaster: null,         // FLAGGED: 402 then the quest offer
-- `src/systems/guildServiceFlow.js:253` - ReceiveArmor: null,      // FLAGGED: the knightly armor gift
-- `src/systems/guildServiceFlow.js:254` - ReceiveHouse: null,      // FLAGGED: banking / house ownership
+- `src/systems/guildServiceFlow.js:234` - *  override's law). Every other arm is FLAGGED with the window it
+- `src/systems/guildServiceFlow.js:241` - Identify: null,          // FLAGGED: DaggerfallTradeWindow Identify mode
+- `src/systems/guildServiceFlow.js:242` - Repair: null,            // FLAGGED: DaggerfallTradeWindow Repair mode
+- `src/systems/guildServiceFlow.js:243` - BuyPotions: null,        // FLAGGED: trade Buy + CreateRandomPotion
+- `src/systems/guildServiceFlow.js:244` - MakePotions: null,       // FLAGGED: the potion maker
+- `src/systems/guildServiceFlow.js:245` - BuySpells: null,         // FLAGGED: the spellbook's buy mode
+- `src/systems/guildServiceFlow.js:246` - BuySpellsMages: null,    // FLAGGED: the spellbook's buy mode
+- `src/systems/guildServiceFlow.js:247` - MakeSpells: null,        // FLAGGED: the spell maker
+- `src/systems/guildServiceFlow.js:248` - BuyMagicItems: null,     // FLAGGED: trade Buy + CreateRandomMagicItem
+- `src/systems/guildServiceFlow.js:249` - MakeMagicItems: null,    // FLAGGED: the item maker
+- `src/systems/guildServiceFlow.js:250` - SellMagicItems: null,    // FLAGGED: trade SellMagic mode
+- `src/systems/guildServiceFlow.js:251` - BuySoulgems: null,       // FLAGGED: trade Buy + the soul-trap stock
+- `src/systems/guildServiceFlow.js:252` - Teleport: null,          // FLAGGED: the travel map's teleport mode
+- `src/systems/guildServiceFlow.js:253` - DaedraSummoning: null,   // FLAGGED: the daedra summoning flow
+- `src/systems/guildServiceFlow.js:254` - Spymaster: null,         // FLAGGED: 402 then the quest offer
+- `src/systems/guildServiceFlow.js:255` - ReceiveArmor: null,      // FLAGGED: the knightly armor gift
+- `src/systems/guildServiceFlow.js:256` - ReceiveHouse: null,      // FLAGGED: banking / house ownership
 - `src/systems/guildVariants.js:191` - Banking does not exist yet, so WHICH of the two is FLAGGED to the
 - `src/systems/guilds.js:148` - are FLAGGED to the quest slice.
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter

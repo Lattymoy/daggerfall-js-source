@@ -16,9 +16,11 @@
 //   getQuestSourceLines(name)  - quest source by name (the machine's
 //                                own seam; GetQuest checks it FIRST,
 //                                as C# checks QuestSourceFolder)
-//   parseQuest(lines, factionId) - parse WITHOUT scheduling (the
-//                                machine's parse glue; the caller
-//                                schedules via scheduleParsedQuest)
+//   parseQuest(lines, factionId, partialParse) - parse WITHOUT
+//                                scheduling (the machine's parse
+//                                glue; the caller schedules via
+//                                scheduleParsedQuest; partialParse
+//                                skips QRC/QBN for the quest picker)
 //   rolls()                    - SelectQuest's pool draw
 //                                (UnityEngine.Random - Ledger A)
 //   playerNudity               - DaggerfallUnity.Settings.PlayerNudity
@@ -197,11 +199,13 @@ export class QuestListsManager {
 
   /** LoadQuest (:422-455): the source seam stands in for the file
    *  read; a missing source THROWS, as C#'s missing file does. The
-   *  loaded quest carries the row's OneTime flag. */
-  loadQuest(questData, factionId) {
+   *  loaded quest carries the row's OneTime flag. partialParse skips
+   *  the QRC/QBN halves (Parser.cs:144) - the guild quest picker
+   *  reads DisplayName from header-only parses (Q4-ii). */
+  loadQuest(questData, factionId, partialParse = false) {
     const lines = this.deps.getQuestSourceLines?.(questData.name);
     if (!lines) throw new Error(`Quest file ${questData.name} not found.`);
-    const quest = this.deps.parseQuest?.(lines, factionId);
+    const quest = this.deps.parseQuest?.(lines, factionId, partialParse);
     if (!quest) return null;
     quest.oneTime = !!questData.oneTime;
     return quest;

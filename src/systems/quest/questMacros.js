@@ -58,6 +58,7 @@ const EN = Object.freeze({
   pronounHis2: 'his', pronounHers: 'hers',
   comma: ', ',
   resolvingError: 'Resolving Error',
+  letterPrefix: 'Letter: ',
 });
 
 // GetRulerTitle (MacroHelper.cs): ruler 1..12, default Lord.
@@ -380,6 +381,67 @@ export function expandQuestMessage(parentQuest, tokens, revealDialogLinks = fals
     }
     token.text = words.join(' ');
   }
+}
+
+/** ExpandLetterSignoff (QuestMacroHelper.cs:176-264): names a quest
+ *  LETTER item from its message - the inventory arc's parchment
+ *  label rides this (ItemHelper.ResolveItemLongName's quest-letter
+ *  arm feeds tokens from getTextTokens(-1, roll, false)). Walks the
+ *  tokens LAST to FIRST and keeps exactly ONE non-empty line (C#'s
+ *  own `lines >= 1` break - its caller's comment says two, the code
+ *  takes one, bug-for-bug). Name/details/faction/context/binding
+ *  macros expand as the message pass does - NameMacro1 ALWAYS
+ *  reveals the dialog link here (no revealDialogLinks gate) - but a
+ *  location macro (__x_/___x_/____x_) replaces its WHOLE word with
+ *  "...", swallowing any attached punctuation, verbatim. The
+ *  accumulated line lands as `'Letter: ' + line + ' '` - the
+ *  trailing space is C#'s `final.Trim() + " " + signoff` over the
+ *  empty seed. A null quest throws out, as C#'s NRE does. */
+export function expandLetterSignoff(parentQuest, tokens) {
+  let signoff = '';
+  let lines = 0;
+  for (let t = tokens.length - 1; t >= 0; t--) {
+    const words = (tokens[t].text ?? '').split(' ');
+    for (let w = 0; w < words.length; w++) {
+      const macro = getMacro(words[w]);
+      switch (macro.type) {
+        case MACRO_TYPES.NameMacro1:
+        case MACRO_TYPES.DetailsMacro:
+        case MACRO_TYPES.FactionMacro:
+        case MACRO_TYPES.ContextMacro:
+        case MACRO_TYPES.BindingMacro: {
+          if (macro.type === MACRO_TYPES.ContextMacro) {
+            words[w] = words[w].replace(macro.token, getContextValue(macro.token, parentQuest, parentQuest.hooks));
+          } else {
+            const resource = parentQuest.getResource({ name: macro.symbol });
+            if (resource) {
+              const result = resource.expandMacro?.(macro.type);
+              if (typeof result === 'string') words[w] = words[w].replace(macro.token, result);
+              if (macro.type === MACRO_TYPES.NameMacro1) {
+                const hooks = parentQuest.hooks;
+                if (resource.isPlace) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Location', false);
+                else if (resource.isPerson) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Person', false);
+                else if (resource.isItem) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Thing', false);
+              }
+            }
+          }
+          break;
+        }
+        case MACRO_TYPES.NameMacro2:
+        case MACRO_TYPES.NameMacro3:
+        case MACRO_TYPES.NameMacro4:
+          words[w] = '...';
+          break;
+      }
+    }
+    const final = words.join(' ');
+    if (final.length > 0) {
+      signoff = final.trim() + ' ' + signoff;
+      lines++;
+    }
+    if (lines >= 1) break;
+  }
+  return EN.letterPrefix + signoff;
 }
 
 /** ExpandQuestString (QuestMacroHelper.cs:162-169): one context
