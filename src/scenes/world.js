@@ -1004,10 +1004,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       classicMinutes: Math.floor(playerTicker.classicMinutes),
       readiedSpellIndex: magic.readiedIndex(),
       quest: questBridge.snapshot(),   // Q4-v: the machine + notebook + one-time list
-      // TK-i/TK-ii: SaveDataConversation's shipped halves (the mill +
-      // the questor-post dict + dictQuestInfo; npcsWithWork and
-      // castleNPCsSpokenTo ride TK-iv)
-      talk: { ...rumorMill.getSaveData(), ...topicTree.getSaveData() },
+      // SaveDataConversation WHOLE (:368-375): the mill + the
+      // questor-post dict (TK-i), dictQuestInfo (TK-ii), and
+      // npcsWithWork + castleNPCsSpokenTo (TK-iv). One envelope, as
+      // C# has one class.
+      talk: { ...rumorMill.getSaveData(), ...topicTree.getSaveData(), ...npcSession.getSaveData() },
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -1039,6 +1040,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (extras.talk) {   // TK-i/TK-ii: a pre-TK save leaves the live session standing (recorded)
         rumorMill.restoreSaveData(extras.talk);
         topicTree.restoreSaveData(extras.talk);   // the orphan sweep + relink + TellMeAbout tail run inside
+        // TK-iv: each of these two is restored only when the save
+        // CARRIES it (:2541-2546), so a pre-TK-iv save leaves the
+        // running pools standing rather than emptying them
+        npcSession.restoreSaveData(extras.talk);
         // RestoreConversationData's mill-orphan sweep (:2522-2533)
         rumorMill.removeOrphanedQuestRumors((id) => !!questBridge.machine.getQuest(id));
       }
