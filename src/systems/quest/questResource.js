@@ -19,7 +19,7 @@
 // winner is the match at the LEFTMOST position, ties broken by
 // pattern order. That is exactly .NET's alternation semantics.
 
-import { Symbol as QuestSymbol } from './symbol.js';
+import { Symbol as QuestSymbol, symbolToSaveData, symbolFromSaveData } from './symbol.js';
 import { staticMessagesTable } from './tables.js';
 import { parseInt as questParseInt } from './parseUtils.js';
 
@@ -113,6 +113,52 @@ export class QuestResource {
   get gender() { return 0; }   // GENDERS.Male
 
   dispose() {}
+
+  // ---- the save envelope (Q4-iv; QuestResource.cs:300-357) ----
+
+  /** The envelope's type identity (C# GetType()); derived from the
+   *  is* flags so a minifying build cannot rename it. */
+  get resourceTypeName() {
+    if (this.isPerson) return 'Person';
+    if (this.isPlace) return 'Place';
+    if (this.isItem) return 'Item';
+    if (this.isFoe) return 'Foe';
+    if (this.isClock) return 'Clock';
+    return 'QuestResource';
+  }
+
+  /** GetResourceSaveData (:319-331): the base fields + the
+   *  resource-specific inner shape. QUIRK KEPT: rumorsMessageID sits
+   *  in C#'s struct but is never written and never restored - it
+   *  serializes as the default and a loaded resource's rumors id
+   *  resets to the ctor's -1. */
+  getResourceSaveData() {
+    return {
+      type: this.resourceTypeName,
+      symbol: symbolToSaveData(this.symbol),
+      infoMessageID: this.infoMessageID,
+      usedMessageID: this.usedMessageID,
+      rumorsMessageID: 0,
+      hasPlayerClicked: this.hasPlayerClicked,
+      isHidden: this.isHidden,
+      resourceSpecific: this.getSaveData(),
+    };
+  }
+
+  /** RestoreResourceSaveData (:336-344). */
+  restoreResourceSaveData(data) {
+    this.symbol = symbolFromSaveData(data.symbol);
+    this.infoMessageID = data.infoMessageID;
+    this.usedMessageID = data.usedMessageID;
+    this.hasPlayerClicked = data.hasPlayerClicked;
+    this.isHidden = data.isHidden;
+    this.restoreSaveData(data.resourceSpecific);
+  }
+
+  /** The resource-specific halves - abstract in C#, overridden by the
+   *  five resources; the base answers nothing. */
+  getSaveData() { return null; }
+  restoreSaveData(_dataIn) {}
 
   /** SetPlayerClicked (QuestResource.cs:264-272): a muted or
    *  destroyed Person refuses the click, loudly. */

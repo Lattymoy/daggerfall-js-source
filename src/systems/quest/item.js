@@ -288,4 +288,32 @@ export class Item extends QuestResource {
     if (amount < 1) amount = 1;
     return this._link(goldStack(amount));
   }
+
+  // ---- the save envelope (Q4-iv; Item.cs:440-486) ----
+
+  getSaveData() {
+    return {
+      artifact: this.artifact,
+      useClicked: this.useClicked,
+      actionWatching: this.actionWatching,
+      allowDrop: this.allowDrop,
+      playerDropped: this.playerDropped,
+      madePermanent: this.madePermanent,
+      item: this.daggerfallUnityItem ? structuredClone(this.daggerfallUnityItem) : null,
+    };
+  }
+
+  /** RestoreSaveData: C# reconstructs via new DaggerfallUnityItem
+   *  (ItemData_v1); the port's minted items are plain data, so the
+   *  clone IS the reconstruction. */
+  restoreSaveData(dataIn) {
+    if (dataIn == null) return;
+    this.artifact = dataIn.artifact;
+    this.useClicked = dataIn.useClicked;
+    this.actionWatching = dataIn.actionWatching;
+    this.allowDrop = dataIn.allowDrop;
+    this.playerDropped = dataIn.playerDropped;
+    this.madePermanent = dataIn.madePermanent;
+    this.daggerfallUnityItem = dataIn.item ? structuredClone(dataIn.item) : null;
+  }
 }

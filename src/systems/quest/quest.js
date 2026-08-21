@@ -23,6 +23,8 @@
 // game seconds) - clocks and log entries read it.
 
 import { travelTimeSeconds } from './clock.js';
+import { Message } from './message.js';
+import { symbolToSaveData, symbolFromSaveData } from './symbol.js';
 
 export const QUEST_SUCCESS_REP = 5;     // Quest.cs:36
 export const QUEST_FAILURE_REP = -2;    // Quest.cs:37
@@ -47,6 +49,9 @@ export const QUEST_MESSAGES = Object.freeze({
 let _uid = 0;
 /** DaggerfallUnity.NextUID - the global allocator. */
 export function nextUid() { return ++_uid; }
+/** The allocator advances past restored uids (Q4-iv): C# persists
+ *  its global NextUID; the port derives it from what it loads. */
+export function ensureUidAtLeast(uid) { if (uid > _uid) _uid = uid; }
 /** Test seam. */
 export function resetUid() { _uid = 0; }
 
@@ -230,8 +235,19 @@ export class Quest {
       // spread, not the flat write (Q2b-VERIFY: the flag was dropped).
       this.hooks?.changeReputation?.(this.factionId, repChange, true);
     }
-    // The notebook's finished-quest entry (Quest.cs:388-399) lands
-    // with its system (Q4) - routed, not silent.
+    // The notebook's finished-quest entry (Quest.cs:388-399, Q4-iv):
+    // the ACTIVE log's messages file to the notebook through the
+    // machine's hook - resolved here exactly as C# resolves them,
+    // and only when the log holds any.
+    const logEntries = this.getLogMessages();
+    if (logEntries && logEntries.length > 0) {
+      const questMessages = [];
+      for (const logEntry of logEntries) {
+        const message = this.getMessage(logEntry.messageID);
+        if (message) questMessages.push(message);
+      }
+      this.hooks?.addFinishedQuest?.(questMessages);
+    }
   }
 
   /** GetCurrentLogMessageTime (Quest.cs:606-615): the time of the
@@ -306,4 +322,86 @@ export class Quest {
       this.hooks?.showPopup?.(this, message);
     }
   }
+
+  // ---- the save envelope (Q4-iv; Quest.cs:899-1046) ----
+
+  /** GetSaveData: the C# field set. The port's clock is SECONDS
+   *  (Ledger A) where C# carries DaggerfallDateTime objects; the
+   *  smaller-dungeons setting and the compile version have no port
+   *  counterparts and serialize at their defaults (recorded).
+   *  Questors flatten the Map to {name, symbol, displayName} rows -
+   *  the Dictionary<string, QuestorData> shape in plain data. */
+  getSaveData() {
+    return {
+      uid: this.uid,
+      questComplete: this.questComplete,
+      questSuccess: this.questSuccess,
+      questName: this.questName,
+      displayName: this.displayName,
+      factionId: this.factionId,
+      questStartTime: this.questStartTime,
+      questTombstoned: this.questTombstoned,
+      questTombstoneTime: this.questTombstoneTime,
+      smallerDungeonsState: 0,
+      compiledByVersion: '',
+      activeLogMessages: [...this.activeLogMessages.values()].map((e) => ({ ...e })),
+      messages: [...this.messages.values()].map((m) => m.getSaveData()),
+      resources: [...this.resources.values()].map((r) => r.getResourceSaveData()),
+      questors: [...this.questors.entries()].map(([name, q]) => ({ name, symbol: symbolToSaveData(q.symbol), displayName: q.name })),
+      tasks: [...this.tasks.values()].map((t) => t.getSaveData()),
+      oneTimeDisplayedMessages: [...this.oneTimeDisplayedMessages],
+    };
+  }
+
+  /** RestoreSaveData (Quest.cs:978-1046): C#'s clear-and-reconstruct
+   *  order with the resource/task/action ctors riding the machine's
+   *  resolvers (C#'s reflection ctor walk). The localized-message
+   *  re-restore is localization infra with no port counterpart. NOT
+   *  restored, exactly as C# leaves them: currentLogMessageId,
+   *  lastResourceReferenced/lastPlaceReferenced, externalMCP - the
+   *  journal's %qdt context falls to quest start after a load until
+   *  the next log step lands. */
+  restoreSaveData(data, resolvers = {}) {
+    this.uid = data.uid;
+    ensureUidAtLeast(data.uid);
+    this.questComplete = data.questComplete;
+    this.questSuccess = data.questSuccess;
+    this.questName = data.questName;
+    this.displayName = data.displayName;
+    this.factionId = data.factionId;
+    this.questStartTime = data.questStartTime;
+    this.questTombstoned = data.questTombstoned;
+    this.questTombstoneTime = data.questTombstoneTime;
+    this.activeLogMessages.clear();
+    for (const logEntry of data.activeLogMessages) {
+      this.activeLogMessages.set(logEntry.stepID, { ...logEntry });
+    }
+    this.messages.clear();
+    for (const messageData of data.messages) {
+      const message = new Message(this);
+      message.restoreSaveData(messageData);
+      this.messages.set(message.id, message);
+    }
+    this.resources.clear();
+    for (const resourceData of data.resources) {
+      const ResourceCtor = resolvers.resolveResourceType?.(resourceData.type);
+      if (!ResourceCtor) throw new Error(`Could not restore resource type ${resourceData.type}`);
+      const resource = new ResourceCtor(this);
+      resource.restoreResourceSaveData(resourceData);
+      this.resources.set(resource.symbol.name, resource);
+    }
+    this.questors.clear();
+    for (const q of data.questors ?? []) {
+      this.questors.set(q.name, { symbol: symbolFromSaveData(q.symbol), name: q.displayName });
+    }
+    this.tasks.clear();
+    for (const taskData of data.tasks) {
+      const task = new resolvers.Task(this);
+      task.restoreSaveData(taskData, resolvers.resolveActionType);
+      this.tasks.set(task.symbol.name, task);
+    }
+    this.oneTimeDisplayedMessages.clear();
+    for (const id of data.oneTimeDisplayedMessages ?? []) this.oneTimeDisplayedMessages.add(id);
+  }
+
 }

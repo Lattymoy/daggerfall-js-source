@@ -217,6 +217,17 @@ import { Parser } from './parser.js';
 import { defaultActionTemplates } from './actions.js';
 import { QuestResourceBehaviour } from './resourceBehaviour.js';
 import { FACTION_TYPES } from '../../formats/factionFile.js';
+import { Quest } from './quest.js';
+import { Task } from './task.js';
+import { Person } from './person.js';
+import { Place } from './place.js';
+import { Item } from './item.js';
+import { Foe } from './foe.js';
+import { Clock } from './clock.js';
+
+/** The restore registry (Q4-iv): the envelope's type strings map to
+ *  ctors here instead of C#'s reflection walk. */
+const RESOURCE_TYPES = Object.freeze({ Person, Place, Item, Foe, Clock });
 
 export { QUEST_MESSAGES } from './quest.js';   // QuestMachine.cs:260's enum, defined leaf-side
 
@@ -290,6 +301,9 @@ export class QuestMachine {
       removeQuestInfoTopics: (uid) => this.deps.removeQuestInfoTopics?.(uid),
       addFace: (resource) => this.deps.addFace?.(resource),
       dropFace: (resource) => this.deps.dropFace?.(resource),
+      // Q4-iv: EndQuest's notebook filing - the host wires
+      // PlayerNotebook.addFinishedQuest (systems/notebook.js).
+      addFinishedQuest: (messages) => this.deps.addFinishedQuest?.(messages),
       // The item-mint facts (Q2b-ii): the guild record for the quest's
       // faction ({ guildGroup, rank, power, isNonMember } or null) and
       // the current region's PriceAdjustment.
@@ -564,6 +578,83 @@ export class QuestMachine {
         }
       }
     }
+  }
+
+  // ---- Q4-iv: the journal walk + the save envelope ----
+
+  /** GetAllQuestLogMessages (QuestMachine.cs:616-635): the journal's
+   *  ACTIVE page - every live quest's log entries resolved to their
+   *  Message objects. Insertion order, NO sort; a completed quest's
+   *  null log skips whole. */
+  getAllQuestLogMessages() {
+    const questMessages = [];
+    for (const quest of this.quests.values()) {
+      const logEntries = quest.getLogMessages();
+      if (!logEntries || logEntries.length === 0) continue;
+      for (const logEntry of logEntries) {
+        const message = quest.getMessage(logEntry.messageID);
+        if (message) questMessages.push(message);
+      }
+    }
+    return questMessages;
+  }
+
+  /** GetSaveData (QuestMachine.cs:1900-1916): SiteLinks + every live
+   *  quest. SiteLink placeSymbols round-trip as plain {original,
+   *  name} data - the shape C#'s serializer writes for Symbol, and
+   *  every consumer reads by .name. */
+  getSaveData() {
+    return {
+      siteLinks: this.siteLinks.map((l) => structuredClone(l)),
+      quests: [...this.quests.values()].map((q) => q.getSaveData()),
+    };
+  }
+
+  /** RestoreSaveData (QuestMachine.cs:1918-1944): each quest restores
+   *  under a per-quest catch - a quest that cannot reconstruct (the
+   *  removed-mod law: an unknown action or resource type) warns, adds
+   *  the HUD line, and the load continues; a duplicate UID throws
+   *  into the same catch, as Dictionary.Add does. Restored quests
+   *  ride THIS machine's hooks and clock (C#'s ambient singletons
+   *  re-injected). ReassignLegacyQuestMarkers is legacy-save marker
+   *  migration with no port-side legacy saves (recorded). Stale
+   *  SiteLinks scrub after. */
+  restoreSaveData(data) {
+    this.siteLinks = (data.siteLinks ?? []).map((l) => structuredClone(l));
+    const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
+    for (const questData of data.quests ?? []) {
+      try {
+        const quest = new Quest({ nowSeconds, actionFactory: this._actionFactory, hooks: this._buildHooks() });
+        quest.restoreSaveData(questData, this._saveResolvers());
+        if (this.quests.has(quest.uid)) throw new Error('An item with the same key has already been added.');
+        this.quests.set(quest.uid, quest);
+      } catch (e) {
+        console.warn(`[quest] Failed to load quest data for '${questData.displayName} [${questData.questName}]' with UID ${questData.uid}. This is expected after removing a mod with custom quest actions. Exception message is '${e?.message ?? e}'`);
+        this.deps.addHUDText?.(`Failed to load quest '${questData.displayName} [${questData.questName}]'. This is expected if quest mod removed.`);
+      }
+    }
+    this.removeStaleSiteLinks();
+  }
+
+  /** RemoveStaleSiteLinks (:1946-1970). */
+  removeStaleSiteLinks() {
+    const stale = this.siteLinks.filter((link) => !this.getQuest(link.questUID));
+    for (const link of stale) {
+      console.warn(`[quest] Removing stale SiteLink ${link.placeSymbol?.original}. Quest UID ${link.questUID} not present.`);
+      this.siteLinks.splice(this.siteLinks.indexOf(link), 1);
+    }
+  }
+
+  /** The reflection stand-in: the resource registry and the ACTION
+   *  registry keyed by each template's explicit typeName (built
+   *  fresh so late registerAction calls are honored). */
+  _saveResolvers() {
+    const actionTypeMap = new Map(this.actionTemplates.map((t) => [t.typeName, t.constructor]));
+    return {
+      Task,
+      resolveResourceType: (name) => RESOURCE_TYPES[name] ?? null,
+      resolveActionType: (name) => actionTypeMap.get(name) ?? null,
+    };
   }
 
   /** One machine tick (QuestMachine.cs Tick). */

@@ -38,7 +38,7 @@
 // right and try alternatives in order, so a single renamed regex
 // keeps .NET semantics. Guards strip group names entirely.
 
-import { Symbol as QuestSymbol } from './symbol.js';
+import { Symbol as QuestSymbol, symbolToSaveData, symbolFromSaveData } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
 import { staticMessagesTable, soundsTable, placesTable, spellsTable, diseasesTable } from './tables.js';
 import { dateFromSeconds } from '../gameDate.js';
@@ -74,10 +74,71 @@ export class ActionTemplate {
   setComplete() { this.isComplete = true; }
   rearmAction() { if (this.isComplete && this.allowRearm) this.isComplete = false; }
   dispose() {}
+  // ---- the save envelope (Q4-iv; QuestAction.cs:182-219) ----
+
+  /** The envelope's type identity - explicit per class so a
+   *  minifying build cannot rename it. */
+  get typeName() { return this.constructor.typeName ?? this.constructor.name; }
+
+  /** The declarative save shape: [[portField, kind, savedName?]] with
+   *  kinds 'raw' (JSON-safe copy) and 'sym'/'symArray' (Symbol <->
+   *  {original}). Every shipped action's C# GetSaveData/RestoreSaveData
+   *  is a pure field copy (spot-verified), so ONE walk implements all
+   *  of them; savedName keeps the C# field name where the port's
+   *  differs (PlaySound soundId <-> soundIndex). Transient fields C#
+   *  leaves out stay out - CreateFoe's in-flight wave, TeleportPc's
+   *  resume, GivePc's offer latch all reset on load, verbatim. */
+  get saveShape() { return []; }
+
+  getSaveData() {
+    const shape = this.saveShape;
+    if (!shape.length) return null;
+    const data = {};
+    for (const [field, kind = 'raw', savedName = field] of shape) {
+      const v = this[field];
+      if (kind === 'sym') data[savedName] = symbolToSaveData(v);
+      else if (kind === 'symArray') data[savedName] = v ? v.map(symbolToSaveData) : null;
+      else data[savedName] = (v && typeof v === 'object') ? structuredClone(v) : v;
+    }
+    return data;
+  }
+
+  restoreSaveData(dataIn) {
+    if (dataIn == null) return;
+    for (const [field, kind = 'raw', savedName = field] of this.saveShape) {
+      const v = dataIn[savedName];
+      if (kind === 'sym') this[field] = symbolFromSaveData(v);
+      else if (kind === 'symArray') this[field] = v ? v.map(symbolFromSaveData) : null;
+      else this[field] = (v && typeof v === 'object') ? structuredClone(v) : v;
+    }
+  }
+
+  /** GetActionSaveData (:195-206). */
+  getActionSaveData() {
+    return {
+      type: this.typeName,
+      isComplete: this.isComplete,
+      isTriggerCondition: this.isTriggerCondition,
+      isAlwaysOnTriggerCondition: this.isAlwaysOnTriggerCondition,
+      debugSource: this.debugSource,
+      actionSpecific: this.getSaveData(),
+    };
+  }
+
+  /** RestoreActionSaveData (:211-218). */
+  restoreActionSaveData(data) {
+    this.isComplete = data.isComplete;
+    this.isTriggerCondition = data.isTriggerCondition;
+    this.isAlwaysOnTriggerCondition = data.isAlwaysOnTriggerCondition;
+    this.debugSource = data.debugSource;
+    this.restoreSaveData(data.actionSpecific);
+  }
 }
 
 /** StartTask.cs: "start task X" / "setvar X". */
 export class StartTask extends ActionTemplate {
+  static typeName = 'StartTask';
+  get saveShape() { return [['taskSymbol', 'sym']]; }
   get pattern() { return /start task (?<taskName>[a-zA-Z0-9_.]+)|setvar (?<setvarName>[a-zA-Z0-9_.]+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -94,6 +155,8 @@ export class StartTask extends ActionTemplate {
 
 /** ClearTask.cs: "clear A B C..." - every named task un-triggers. */
 export class ClearTask extends ActionTemplate {
+  static typeName = 'ClearTask';
+  get saveShape() { return [['taskSymbols', 'symArray']]; }
   get pattern() { return /clear [a-zA-Z0-9_.]+/; }
   createNew(source, parentQuest) {
     if (!this.test(source)) return null;
@@ -109,6 +172,8 @@ export class ClearTask extends ActionTemplate {
 
 /** UnsetTask.cs: "unset A B..." - permanently DROPS the tasks. */
 export class UnsetTask extends ActionTemplate {
+  static typeName = 'UnsetTask';
+  get saveShape() { return [['taskSymbols', 'symArray']]; }
   get pattern() { return /unset [a-zA-Z0-9_.]+/; }
   createNew(source, parentQuest) {
     if (!this.test(source)) return null;
@@ -124,6 +189,8 @@ export class UnsetTask extends ActionTemplate {
 
 /** EndQuest.cs: "end quest [saying N]" - questBreak + the two-tick end. */
 export class EndQuest extends ActionTemplate {
+  static typeName = 'EndQuest';
+  get saveShape() { return [['textId']]; }
   constructor(parentQuest) { super(parentQuest); this.allowRearm = false; }
   get pattern() { return /end quest saying (?<id>\d+)|end quest/; }
   createNew(source, parentQuest) {
@@ -145,6 +212,8 @@ export class EndQuest extends ActionTemplate {
  *  always-on, evaluated left to right with DFU's exact
  *  short-circuits. An unknown task name reads FALSE, loudly. */
 export class WhenTask extends ActionTemplate {
+  static typeName = 'WhenTask';
+  get saveShape() { return [['evaluations']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.isTriggerCondition = true;
@@ -223,6 +292,8 @@ export class WhenTask extends ActionTemplate {
 
 /** StartStopTimer.cs: "start timer _x_" / "stop timer _x_". */
 export class StartStopTimer extends ActionTemplate {
+  static typeName = 'StartStopTimer';
+  get saveShape() { return [['isStartTimer'], ['targetSymbol', 'sym']]; }
   get pattern() { return /(?<start>start) timer (?<symbol>[a-zA-Z0-9_.-]+)|stop timer (?<sym2>[a-zA-Z0-9_.-]+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -246,6 +317,8 @@ export class StartStopTimer extends ActionTemplate {
 
 /** Say.cs: "say N" / "say Name" - an IMMEDIATE oncePerQuest popup. */
 export class Say extends ActionTemplate {
+  static typeName = 'Say';
+  get saveShape() { return [['id']]; }
   constructor(parentQuest) { super(parentQuest); this.allowRearm = false; }
   get pattern() { return /say (?<id>\d+)|say (?<idName>\w+)/; }
   createNew(source, parentQuest) {
@@ -267,6 +340,8 @@ export class Say extends ActionTemplate {
 
 /** LogMessage.cs: "log N [step] M" - sets the journal step. */
 export class LogMessage extends ActionTemplate {
+  static typeName = 'LogMessage';
+  get saveShape() { return [['messageID'], ['stepID']]; }
   get pattern() { return /log (?<id>\d+)( step)? (?<step>\d+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -284,6 +359,8 @@ export class LogMessage extends ActionTemplate {
 
 /** RemoveLogMessage.cs: "remove log step N". */
 export class RemoveLogMessage extends ActionTemplate {
+  static typeName = 'RemoveLogMessage';
+  get saveShape() { return [['stepID']]; }
   get pattern() { return /remove log step (?<step>\d+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -300,6 +377,8 @@ export class RemoveLogMessage extends ActionTemplate {
 
 /** PickOneOf.cs: "pick one of _a_ _b_ ..." - starts one at random. */
 export class PickOneOf extends ActionTemplate {
+  static typeName = 'PickOneOf';
+  get saveShape() { return [['taskSymbols', 'symArray']]; }
   get pattern() { return /pick one of [a-zA-Z0-9_.]+/; }
   createNew(source, parentQuest) {
     if (!this.test(source)) return null;
@@ -332,6 +411,8 @@ export class PickOneOf extends ActionTemplate {
  *  ScheduleClickRearm so a second task in the same tick cannot see
  *  it. */
 export class ClickedNpc extends ActionTemplate {
+  static typeName = 'ClickedNpc';
+  get saveShape() { return [['npcSymbol', 'sym'], ['id'], ['goldAmount'], ['taskSymbol', 'sym']]; }
   constructor(parentQuest) { super(parentQuest); this.isTriggerCondition = true; }
   get pattern() {
     return /clicked (?<anNPC>[a-zA-Z0-9_.-]+) and at least (?<goldAmount>\d+) gold otherwise do (?<taskName>[a-zA-Z0-9_.]+)|clicked npc (?<anNPC2>[a-zA-Z0-9_.-]+) say (?<id>\d+)|clicked npc (?<anNPC3>[a-zA-Z0-9_.-]+) say (?<idName>\w+)|clicked npc (?<anNPC4>[a-zA-Z0-9_.-]+)/;
@@ -377,6 +458,8 @@ export class ClickedNpc extends ActionTemplate {
  *  RearmPlayerClick call commented out - no rearm is scheduled; the
  *  PostTick law clears the click anyway. */
 export class ClickedItem extends ActionTemplate {
+  static typeName = 'ClickedItem';
+  get saveShape() { return [['itemSymbol', 'sym'], ['id']]; }
   constructor(parentQuest) { super(parentQuest); this.isTriggerCondition = true; }
   get pattern() {
     return /clicked item (?<anItem>[a-zA-Z0-9_.-]+) say (?<id>\d+)|clicked item (?<anItem2>[a-zA-Z0-9_.-]+) say (?<idName>\w+)|clicked item (?<anItem3>[a-zA-Z0-9_.-]+)/;
@@ -408,6 +491,8 @@ export class ClickedItem extends ActionTemplate {
 /** KilledFoe.cs: fires when the Foe's kill count reaches the target
  *  (a missing count parses 0 and is raised to 1). */
 export class KilledFoe extends ActionTemplate {
+  static typeName = 'KilledFoe';
+  get saveShape() { return [['foeSymbol', 'sym'], ['killsRequired'], ['sayingID']]; }
   constructor(parentQuest) { super(parentQuest); this.isTriggerCondition = true; }
   get pattern() {
     return /killed (?<kills>\d+) (?<aFoe>[a-zA-Z0-9_.-]+) (saying (?<sayingID>\d+))|killed (?<kills2>\d+) (?<aFoe2>[a-zA-Z0-9_.-]+)|killed (?<aFoe3>[a-zA-Z0-9_.-]+)/;
@@ -437,6 +522,8 @@ export class KilledFoe extends ActionTemplate {
 /** InjuredFoe.cs: fires on the Foe's injured flag ("will not fire if
  *  Foe dies immediately", e.g. a one-shot). */
 export class InjuredFoe extends ActionTemplate {
+  static typeName = 'InjuredFoe';
+  get saveShape() { return [['foeSymbol', 'sym'], ['textID']]; }
   constructor(parentQuest) { super(parentQuest); this.isTriggerCondition = true; }
   get pattern() {
     return /injured (?<aFoe>[a-zA-Z0-9_.-]+) saying (?<textID>\d+)|injured (?<aFoe2>[a-zA-Z0-9_.-]+)/;
@@ -464,6 +551,8 @@ export class InjuredFoe extends ActionTemplate {
 /** LevelCompleted.cs: despite the classic name, DFU implements
  *  "level N completed" as player level >= N. */
 export class LevelCompleted extends ActionTemplate {
+  static typeName = 'LevelCompleted';
+  get saveShape() { return [['minLevelValue']]; }
   constructor(parentQuest) { super(parentQuest); this.isTriggerCondition = true; }
   get pattern() { return /level (?<minLevelValue>\d+) completed/; }
   createNew(source, parentQuest) {
@@ -483,6 +572,8 @@ export class LevelCompleted extends ActionTemplate {
  *  outside the window. Hour/minute come off the same calendar as
  *  DFU's WorldTime.Now (the machine's nowSeconds contract). */
 export class DailyFrom extends ActionTemplate {
+  static typeName = 'DailyFrom';
+  get saveShape() { return [['minDailySeconds'], ['maxDailySeconds']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.isTriggerCondition = true;
@@ -511,6 +602,8 @@ export class DailyFrom extends ActionTemplate {
  *  a missing message shows nothing, and SetComplete runs either
  *  way. */
 export class Prompt extends ActionTemplate {
+  static typeName = 'Prompt';
+  get saveShape() { return [['id'], ['yesTaskSymbol', 'sym'], ['noTaskSymbol', 'sym']]; }
   constructor(parentQuest) { super(parentQuest); this.allowRearm = false; }
   get pattern() {
     return /prompt (?<id>\d+) yes (?<yesTaskName>[a-zA-Z0-9_.]+) no (?<noTaskName>[a-zA-Z0-9_.]+)|prompt (?<idName>\w+) yes (?<yesTaskName2>[a-zA-Z0-9_.]+) no (?<noTaskName2>[a-zA-Z0-9_.]+)/;
@@ -552,6 +645,8 @@ export class Prompt extends ActionTemplate {
  *  failure; the port keeps SND resolution host-side behind the
  *  playSound hook, so create succeeds on the table hit alone. */
 export class PlaySound extends ActionTemplate {
+  static typeName = 'PlaySound';
+  get saveShape() { return [['soundName'], ['soundId', 'raw', 'soundIndex'], ['interval'], ['count'], ['unknown'], ['lastTimePlayed']]; }
   get pattern() {
     return /play sound (?<sound>\w+) every (?<n1>\d+) minutes (?<count>\d+) times|play sound (?<sound2>\w+) (?<n1b>\d+) (?<n2>\d+)/;
   }
@@ -597,6 +692,8 @@ export class PlaySound extends ActionTemplate {
  *  line pends (the C# try/catch shape). Playback is the machine's
  *  playVideo hook (Q4 UI). */
 export class PlayVideo extends ActionTemplate {
+  static typeName = 'PlayVideo';
+  get saveShape() { return [['videoName']]; }
   get pattern() { return /play video (?<vidNum>\d+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -616,6 +713,8 @@ export class PlayVideo extends ActionTemplate {
 /** HideNpc.cs: raises the Person's hidden flag. A missing Person
  *  returns WITHOUT completing - the action keeps trying. */
 export class HideNpc extends ActionTemplate {
+  static typeName = 'HideNpc';
+  get saveShape() { return [['npcSymbol', 'sym']]; }
   get pattern() { return /hide npc (?<anNPC>[a-zA-Z0-9_.-]+)|hide (?<anNPC2>[a-zA-Z0-9_.-]+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -635,6 +734,8 @@ export class HideNpc extends ActionTemplate {
 /** RestoreNpc.cs: clears the hidden flag; same keep-trying law as
  *  HideNpc. */
 export class RestoreNpc extends ActionTemplate {
+  static typeName = 'RestoreNpc';
+  get saveShape() { return [['npcSymbol', 'sym']]; }
   get pattern() { return /restore npc (?<anNPC>[a-zA-Z0-9_.-]+)|restore (?<anNPC2>[a-zA-Z0-9_.-]+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -655,6 +756,8 @@ export class RestoreNpc extends ActionTemplate {
  *  unlike every other flag action - UNMUTES on rearm. A missing
  *  Person completes immediately, in update AND in rearm. */
 export class MuteNpc extends ActionTemplate {
+  static typeName = 'MuteNpc';
+  get saveShape() { return [['npcSymbol', 'sym']]; }
   get pattern() { return /mute npc (?<anNPC>[a-zA-Z0-9_.-]+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -680,6 +783,8 @@ export class MuteNpc extends ActionTemplate {
 /** DestroyNpc.cs: marks the Person destroyed - the Tick law then
  *  keeps it hidden while it stands in a scene, and clicks refuse. */
 export class DestroyNpc extends ActionTemplate {
+  static typeName = 'DestroyNpc';
+  get saveShape() { return [['npcSymbol', 'sym']]; }
   get pattern() { return /destroy npc (?<anNPC>[a-zA-Z0-9_.-]+)|destroy (?<anNPC2>[a-zA-Z0-9_.-]+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -699,6 +804,8 @@ export class DestroyNpc extends ActionTemplate {
 /** RestrainFoe.cs: raises the restrained flag (the Q3 foe motor
  *  reads it); a missing Foe keeps trying. */
 export class RestrainFoe extends ActionTemplate {
+  static typeName = 'RestrainFoe';
+  get saveShape() { return [['foeSymbol', 'sym']]; }
   get pattern() { return /restrain foe (?<aFoe>[a-zA-Z0-9_.-]+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -719,6 +826,8 @@ export class RestrainFoe extends ActionTemplate {
  *  the SetHidden note); a missing Foe completes then THROWS - the
  *  machine error-terminates the quest. */
 export class RemoveFoe extends ActionTemplate {
+  static typeName = 'RemoveFoe';
+  get saveShape() { return [['foeSymbol', 'sym']]; }
   get pattern() { return /remove foe (?<aFoe>[a-zA-Z0-9_.-]+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -741,6 +850,8 @@ export class RemoveFoe extends ActionTemplate {
 /** AddAsQuestor.cs / DropAsQuestor.cs: the quest's questor registry
  *  (Quest.AddQuestor/DropQuestor carry the laws). */
 export class AddAsQuestor extends ActionTemplate {
+  static typeName = 'AddAsQuestor';
+  get saveShape() { return [['target', 'sym']]; }
   get pattern() { return /add (?<target>[a-zA-Z0-9_.-]+) as questor/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -756,6 +867,8 @@ export class AddAsQuestor extends ActionTemplate {
 }
 
 export class DropAsQuestor extends ActionTemplate {
+  static typeName = 'DropAsQuestor';
+  get saveShape() { return [['target', 'sym']]; }
   get pattern() { return /drop (?<target>[a-zA-Z0-9_.-]+) as questor/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -773,6 +886,8 @@ export class DropAsQuestor extends ActionTemplate {
 /** AddFace.cs: puts the Person's (or Foe's) face on the HUD escort
  *  panel via the addFace hook; an optional saying pops IMMEDIATE. */
 export class AddFace extends ActionTemplate {
+  static typeName = 'AddFace';
+  get saveShape() { return [['personSymbol', 'sym'], ['foeSymbol', 'sym'], ['sayingID']]; }
   constructor(parentQuest) { super(parentQuest); this.allowRearm = false; }
   get pattern() {
     return /add (?<anNPC>[a-zA-Z0-9_.-]+) face saying (?<sayingID>\d+)|add (?<anNPC2>[a-zA-Z0-9_.-]+) face|add foe (?<aFoe>[a-zA-Z0-9_.-]+) face saying (?<sayingID2>\d+)|add foe (?<aFoe2>[a-zA-Z0-9_.-]+) face/;
@@ -802,6 +917,8 @@ export class AddFace extends ActionTemplate {
 
 /** DropFace.cs: removes the face from the HUD escort panel. */
 export class DropFace extends ActionTemplate {
+  static typeName = 'DropFace';
+  get saveShape() { return [['personSymbol', 'sym'], ['foeSymbol', 'sym']]; }
   get pattern() {
     return /drop (?<anNPC>[a-zA-Z0-9_.-]+) face|drop foe (?<aFoe>[a-zA-Z0-9_.-]+) face/;
   }
@@ -830,6 +947,8 @@ export class DropFace extends ActionTemplate {
  *  from the inventory - then says, starts the task, stops watching
  *  and completes. Until then every tick re-raises actionWatching. */
 export class ItemUsedDo extends ActionTemplate {
+  static typeName = 'ItemUsedDo';
+  get saveShape() { return [['itemSymbol', 'sym'], ['taskSymbol', 'sym'], ['textID']]; }
   get pattern() {
     return /(?<anItem>[a-zA-Z0-9_.-]+) used do (?<aTask>[a-zA-Z0-9_.-]+)|(?<anItem2>[a-zA-Z0-9_.-]+) used saying (?<textID>\d+) do (?<aTask2>[a-zA-Z0-9_.-]+)/;
   }
@@ -864,6 +983,8 @@ export class ItemUsedDo extends ActionTemplate {
  *  Setup chain and the item name pends the Q2b-ii mint (both '' until
  *  their slices land - in DFU they are live strings). */
 export class DialogLink extends ActionTemplate {
+  static typeName = 'DialogLink';
+  get saveShape() { return [['placeSymbol', 'sym'], ['npcSymbol', 'sym'], ['itemSymbol', 'sym']]; }
   get pattern() {
     return /dialog link for location (?<aSite>\w+) person (?<anNPC>\w+) item (?<anItem>\w+)|dialog link for location (?<aSite2>\w+) person (?<anNPC2>\w+)|dialog link for location (?<aSite3>\w+) item (?<anItem3>\w+)|dialog link for location (?<aSite4>\w+)|dialog link for person (?<anNPC5>\w+) item (?<anItem5>\w+)|dialog link for person (?<anNPC6>\w+)|dialog link for item (?<anItem7>\w+)/;
   }
@@ -921,6 +1042,8 @@ export class DialogLink extends ActionTemplate {
 /** AddDialog.cs: re-enables dialog for resources by SYMBOL name (its
  *  alternation order differs from DialogLink's - kept verbatim). */
 export class AddDialog extends ActionTemplate {
+  static typeName = 'AddDialog';
+  get saveShape() { return [['placeSymbol', 'sym'], ['npcSymbol', 'sym'], ['itemSymbol', 'sym']]; }
   get pattern() {
     return /add dialog for location (?<aPlace>\w+) person (?<anNPC>\w+) item (?<anItem>\w+)|add dialog for person (?<anNPC2>\w+) item (?<anItem2>\w+)|add dialog for location (?<aPlace3>\w+) person (?<anNPC3>\w+)|add dialog for location (?<aPlace4>\w+) item (?<anItem4>\w+)|add dialog for location (?<aPlace5>\w+)|add dialog for person (?<anNPC6>\w+)|add dialog for item (?<anItem7>\w+)/;
   }
@@ -955,6 +1078,8 @@ export class AddDialog extends ActionTemplate {
  *  missing message goes through (the hook receives null, as
  *  TalkManager does). */
 export class RumorMill extends ActionTemplate {
+  static typeName = 'RumorMill';
+  get saveShape() { return [['id']]; }
   get pattern() { return /rumor mill (?<id>\d+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -974,6 +1099,8 @@ export class RumorMill extends ActionTemplate {
  *  clamp - both live with the G2 court system behind the
  *  changeLegalRep hook. ParseInt carries the sign. */
 export class LegalRepute extends ActionTemplate {
+  static typeName = 'LegalRepute';
+  get saveShape() { return [['amount']]; }
   get pattern() { return /legal repute (?<amount>[+-]?\d+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -994,6 +1121,8 @@ export class LegalRepute extends ActionTemplate {
  *  missing quest schedules nothing. The second index is unused, as in
  *  DFU. */
 export class StartQuest extends ActionTemplate {
+  static typeName = 'StartQuest';
+  get saveShape() { return [['questIndex1'], ['questIndex2'], ['questName']]; }
   constructor(parentQuest) { super(parentQuest); this.allowRearm = false; }
   get pattern() { return /start quest (?<questIndex1>\d+) (?<questIndex2>\d+)|start quest (?<questName>\w+)/; }
   createNew(source, parentQuest) {
@@ -1033,6 +1162,8 @@ export const YOU_RECEIVE_GOLD_PIECES = 'You receive %s gold pieces.';
  *  random delay (the Ledger A roll; DFU's OnOfferPending event has no
  *  port-side consumer yet - the guild questor UI is Q4). */
 export class GivePc extends ActionTemplate {
+  static typeName = 'GivePc';
+  get saveShape() { return [['itemSymbol', 'sym'], ['textId'], ['isNothing'], ['silently']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.allowRearm = false;
@@ -1122,6 +1253,8 @@ export class GivePc extends ActionTemplate {
  *  inventory at the front. "get item from" is the same action in DFU
  *  ("appears to behave identically"). */
 export class GetItem extends ActionTemplate {
+  static typeName = 'GetItem';
+  get saveShape() { return [['itemSymbol', 'sym'], ['textId']]; }
   get pattern() {
     return /get item (?<anItem>[a-zA-Z0-9_.]+) saying (?<id>\d+)|get item (?<anItem2>[a-zA-Z0-9_.]+)/;
   }
@@ -1158,6 +1291,8 @@ export class GetItem extends ActionTemplate {
 /** TakeItem.cs: releases the quest item from the player (unequip +
  *  remove, the host sweep) - the item just stops being carried. */
 export class TakeItem extends ActionTemplate {
+  static typeName = 'TakeItem';
+  get saveShape() { return [['itemSymbol', 'sym'], ['textId']]; }
   get pattern() {
     return /take (?<anItem>[a-zA-Z0-9_.]+) from pc saying (?<id>\d+)|take (?<anItem2>[a-zA-Z0-9_.]+) from pc/;
   }
@@ -1186,6 +1321,8 @@ export class TakeItem extends ActionTemplate {
  *  quest item - NO SetComplete on the carry branch, so it keeps
  *  checking (and keeps re-starting) every tick, verbatim. */
 export class HaveItem extends ActionTemplate {
+  static typeName = 'HaveItem';
+  get saveShape() { return [['targetItem', 'sym'], ['targetTask', 'sym']]; }
   get pattern() { return /have (?<targetItem>[a-zA-Z0-9_.-]+) set (?<targetTask>[a-zA-Z0-9_.-]+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -1212,6 +1349,8 @@ export class HaveItem extends ActionTemplate {
  *  passes through and shows nothing, as C#), and the item releases
  *  for re-offer. */
 export class TotingItemAndClickedNpc extends ActionTemplate {
+  static typeName = 'TotingItemAndClickedNpc';
+  get saveShape() { return [['itemSymbol', 'sym'], ['npcSymbol', 'sym'], ['id']]; }
   constructor(parentQuest) { super(parentQuest); this.isTriggerCondition = true; }
   get pattern() {
     return /toting (?<anItem>[a-zA-Z0-9_.]+) and (?<anNPC>[a-zA-Z0-9_.-]+) clicked saying (?<id>\d+)|toting (?<anItem2>[a-zA-Z0-9_.]+) and (?<anNPC2>[a-zA-Z0-9_.-]+) clicked saying (?<idName>\w+)|toting (?<anItem3>[a-zA-Z0-9_.]+) and (?<anNPC3>[a-zA-Z0-9_.-]+) clicked/;
@@ -1254,6 +1393,8 @@ export class TotingItemAndClickedNpc extends ActionTemplate {
  *  corpse-container halves ride Q3's behaviours. If the player holds
  *  the item it leaves their inventory. */
 export class GiveItem extends ActionTemplate {
+  static typeName = 'GiveItem';
+  get saveShape() { return [['itemSymbol', 'sym'], ['targetSymbol', 'sym']]; }
   get pattern() { return /give item (?<anItem>[a-zA-Z0-9_.]+) to (?<aResource>[a-zA-Z0-9_.]+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -1295,6 +1436,8 @@ export class GiveItem extends ActionTemplate {
  *  resource method syncs the virtual item, the current instance, and
  *  every held copy); a missing Item completes then THROWS. */
 export class MakePermanent extends ActionTemplate {
+  static typeName = 'MakePermanent';
+  get saveShape() { return [['target', 'sym']]; }
   get pattern() { return /make (?<target>[a-zA-Z0-9_.-]+) permanent/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -1324,6 +1467,8 @@ export class MakePermanent extends ActionTemplate {
  *  individual who is supposed to be atHome is an ERROR LOG, not a
  *  throw. Placing also unhides. */
 export class PlaceNpc extends ActionTemplate {
+  static typeName = 'PlaceNpc';
+  get saveShape() { return [['npcSymbol', 'sym'], ['placeSymbol', 'sym'], ['marker']]; }
   get pattern() {
     return /place npc (?<anNPC>[a-zA-Z0-9_.-]+) at (?<aPlace>\w+) marker (?<marker>\d+)|place npc (?<anNPC2>[a-zA-Z0-9_.-]+) at (?<aPlace2>\w+)/;
   }
@@ -1369,6 +1514,8 @@ export class PlaceNpc extends ActionTemplate {
 /** PlaceItem.cs: the marker/questmarker/anymarker forms map to
  *  MarkerPreference verbatim. */
 export class PlaceItem extends ActionTemplate {
+  static typeName = 'PlaceItem';
+  get saveShape() { return [['itemSymbol', 'sym'], ['placeSymbol', 'sym'], ['marker'], ['markerPreference']]; }
   get pattern() {
     return /place item (?<anItem>[a-zA-Z0-9_.-]+) at (?<aPlace>[a-zA-Z0-9_.-]+) marker (?<marker>\d+)|place item (?<anItem2>[a-zA-Z0-9_.-]+) at (?<aPlace2>[a-zA-Z0-9_.-]+) questmarker (?<questmarker>\d+)|place item (?<anItem3>[a-zA-Z0-9_.-]+) at (?<aPlace3>[a-zA-Z0-9_.-]+) (?<anymarker>anymarker)|place item (?<anItem4>[a-zA-Z0-9_.-]+) at (?<aPlace4>[a-zA-Z0-9_.-]+)/;
   }
@@ -1411,6 +1558,8 @@ export class PlaceItem extends ActionTemplate {
 
 /** PlaceFoe.cs. */
 export class PlaceFoe extends ActionTemplate {
+  static typeName = 'PlaceFoe';
+  get saveShape() { return [['foeSymbol', 'sym'], ['placeSymbol', 'sym'], ['marker']]; }
   get pattern() {
     return /place foe (?<aFoe>[a-zA-Z0-9_.-]+) at (?<aPlace>[a-zA-Z0-9_.-]+) marker (?<marker>\d+)|place foe (?<aFoe2>[a-zA-Z0-9_.-]+) at (?<aPlace2>[a-zA-Z0-9_.-]+)/;
   }
@@ -1449,6 +1598,8 @@ export class PlaceFoe extends ActionTemplate {
  *  through Quests-Places as a placeType, which must be a building
  *  (p1=0) or dungeon (p1=1) row. The saying shows ONCE. */
 export class PcAt extends ActionTemplate {
+  static typeName = 'PcAt';
+  get saveShape() { return [['placeSymbol', 'sym'], ['taskSymbol', 'sym'], ['textId'], ['textShown'], ['p1'], ['p2'], ['p3']]; }
   get pattern() {
     return /pc at (?<aPlace>\w+) set (?<aTask>[a-zA-Z0-9_.]+) saying (?<id>\d+)|pc at (?<aPlace2>\w+) set (?<aTask2>[a-zA-Z0-9_.]+)|pc at (?<aPlace3>\w+) do (?<aTask3>[a-zA-Z0-9_.]+) saying (?<id2>\d+)|pc at (?<aPlace4>\w+) do (?<aTask4>[a-zA-Z0-9_.]+)|pc at any (?<placeType>\w+) set (?<aTask5>[a-zA-Z0-9_.]+) saying (?<id3>\d+)|pc at any (?<placeType2>\w+) set (?<aTask6>[a-zA-Z0-9_.]+)|pc at any (?<placeType3>\w+) do (?<aTask7>[a-zA-Z0-9_.]+) saying (?<id4>\d+)|pc at any (?<placeType4>\w+) do (?<aTask8>[a-zA-Z0-9_.]+)/;
   }
@@ -1502,6 +1653,8 @@ export class PcAt extends ActionTemplate {
 /** RevealLocation.cs: discover the Place's location on the travel
  *  map; the readmap form also notes it in the journal. */
 export class RevealLocation extends ActionTemplate {
+  static typeName = 'RevealLocation';
+  get saveShape() { return [['placeSymbol', 'sym'], ['readMap']]; }
   get pattern() { return /reveal (?<aPlace>\w+) (?<readMap>readmap)|reveal (?<aPlace2>\w+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -1538,6 +1691,8 @@ export class RevealLocation extends ActionTemplate {
  *  resumePending/resumePosition are NOT in C#'s save shape, so a
  *  mid-flight teleport re-runs whole after load). */
 export class TeleportPc extends ActionTemplate {
+  static typeName = 'TeleportPc';
+  get saveShape() { return [['targetPlace', 'sym'], ['targetMarker']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.resumePending = false;
@@ -1601,6 +1756,8 @@ export class TeleportPc extends ActionTemplate {
  *  gates allowDrop on the player being AT the place, and fires when
  *  the player drops it there, saying once. */
 export class DroppedItemAtPlace extends ActionTemplate {
+  static typeName = 'DroppedItemAtPlace';
+  get saveShape() { return [['itemSymbol', 'sym'], ['placeSymbol', 'sym'], ['textId'], ['textShown']]; }
   constructor(parentQuest) {
     super(parentQuest);
     // DroppedItemAtPlace.cs:34-35 - an ALWAYS-ON trigger: first in a
@@ -1654,6 +1811,8 @@ export class DroppedItemAtPlace extends ActionTemplate {
  *  propagate=TRUE law Quest.cs:385 carries). A missing person is a
  *  silent complete. */
 export class ChangeReputeWith extends ActionTemplate {
+  static typeName = 'ChangeReputeWith';
+  get saveShape() { return [['target', 'sym'], ['amount']]; }
   // ChangeReputeWith.cs:33 - the reputation move fires ONCE ever; a
   // task rearm must not repeat it (AUDIT VI)
   constructor(parentQuest) { super(parentQuest); this.allowRearm = false; }
@@ -1679,6 +1838,8 @@ export class ChangeReputeWith extends ActionTemplate {
  *  reputation with the Person's faction reaches the bar - checked
  *  every tick until it does (no complete before then). */
 export class ReputeExceedsDo extends ActionTemplate {
+  static typeName = 'ReputeExceedsDo';
+  get saveShape() { return [['npcSymbol', 'sym'], ['taskSymbol', 'sym'], ['minReputation']]; }
   get pattern() { return /repute with (?<npcSymbol>[a-zA-Z0-9_.-]+) exceeds (?<minReputation>\d+) do (?<taskSymbol>[a-zA-Z0-9_.]+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -1703,6 +1864,8 @@ export class ReputeExceedsDo extends ActionTemplate {
  *  Place (Person.PlaceAtHome); a missing person completes then
  *  THROWS; a person with no home just logs. */
 export class CreateNpc extends ActionTemplate {
+  static typeName = 'CreateNpc';
+  get saveShape() { return [['npcSymbol', 'sym']]; }
   get pattern() { return /create npc (?<anNPC>[a-zA-Z0-9_.-]+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -1738,6 +1901,8 @@ export class CreateNpc extends ActionTemplate {
  *  subscribes each instance in its ctor); the save envelope's
  *  in-flight-wave loss stays Q4-iv's row. */
 export class CreateFoe extends ActionTemplate {
+  static typeName = 'CreateFoe';
+  get saveShape() { return [['foeSymbol', 'sym'], ['lastSpawnTime'], ['spawnInterval'], ['spawnMaxTimes'], ['spawnChance'], ['spawnCounter'], ['isSendAction'], ['msgMessageID']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.foeSymbol = null;
@@ -1891,6 +2056,8 @@ export class CreateFoe extends ActionTemplate {
  *  the action's own never-assigned Symbol, so C# NREs before the
  *  format - either way the quest error-terminates. */
 export class CastSpellOnFoe extends ActionTemplate {
+  static typeName = 'CastSpellOnFoe';
+  get saveShape() { return [['spell'], ['foeSymbol', 'sym']]; }
   get pattern() {
     return /cast (?<aSpell>[a-zA-Z0-9'_.-]+) spell on (?<aFoe>[a-zA-Z0-9_.-]+)|cast (?<aCustomSpell>[a-zA-Z0-9_.-]+) custom spell on (?<aFoe2>[a-zA-Z0-9_.-]+)/;
   }
@@ -1936,6 +2103,8 @@ const LOCATION_TYPE_NONE = -1;   // DFRegion.LocationTypes.None
  *  arm. HEADLESS the poll observes None forever and the trigger
  *  stays false - the parse (and the p1 throw) runs whole. */
 export class WhenPcEntersExits extends ActionTemplate {
+  static typeName = 'WhenPcEntersExits';
+  get saveShape() { return [['onEnter'], ['sourceExteriorType'], ['indexExteriorType'], ['currentLocationType'], ['previousLocationType']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.isTriggerCondition = true;
@@ -2002,6 +2171,8 @@ export class WhenPcEntersExits extends ActionTemplate {
  *  runs only under a world; C#'s throw here is preceded by the
  *  TEMPLATE SetComplete - the same no-op quirk as CastSpellOnFoe. */
 export class WhenNpcIsAvailable extends ActionTemplate {
+  static typeName = 'WhenNpcIsAvailable';
+  get saveShape() { return [['npcName'], ['npcFactionID']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.isTriggerCondition = true;
@@ -2056,6 +2227,8 @@ export class WhenNpcIsAvailable extends ActionTemplate {
  *  bar of 0. The parse-time individual check runs only under a
  *  world; C#'s throw here has NO SetComplete, unlike its sibling. */
 export class WhenReputeWith extends ActionTemplate {
+  static typeName = 'WhenReputeWith';
+  get saveShape() { return [['npcName'], ['npcFactionID'], ['minRepValue']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.isTriggerCondition = true;
@@ -2096,6 +2269,8 @@ export class WhenReputeWith extends ActionTemplate {
  *  tail is NOT in C#'s pattern - the tail is silently dropped and no
  *  popup fires, verbatim. */
 export class MakePcDiseased extends ActionTemplate {
+  static typeName = 'MakePcDiseased';
+  get saveShape() { return [['diseaseType']]; }
   get pattern() { return /make pc ill with (?<aDisease>[a-zA-Z0-9_.']+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);
@@ -2123,6 +2298,8 @@ export class MakePcDiseased extends ActionTemplate {
  *  'cure Vampirism' falls through the third alternate and still
  *  lands on the vampirism arm. */
 export class CurePcDisease extends ActionTemplate {
+  static typeName = 'CurePcDisease';
+  get saveShape() { return [['diseaseType'], ['isCureVampirism'], ['isCureLycanthropy']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.diseaseType = -1;   // Diseases.None
@@ -2167,6 +2344,8 @@ export class CurePcDisease extends ActionTemplate {
  *  never completing - which is also exactly the HEADLESS stance,
  *  since the classic spell records need ARENA2. */
 export class CastSpellDo extends ActionTemplate {
+  static typeName = 'CastSpellDo';
+  get saveShape() { return [['spellID'], ['classicEffects'], ['taskSymbol', 'sym']]; }
   constructor(parentQuest) {
     super(parentQuest);
     this.spellID = -1;
@@ -2219,6 +2398,8 @@ export class CastSpellDo extends ActionTemplate {
  *  "reserve" a site before placing; DFU creates SiteLinks in the
  *  placement actions either way, so this only completes. */
 export class CreateNpcAt extends ActionTemplate {
+  static typeName = 'CreateNpcAt';
+  get saveShape() { return [['placeSymbol', 'sym']]; }
   get pattern() { return /create npc at (?<aPlace>\w+)/; }
   createNew(source, parentQuest) {
     const match = this.test(source);

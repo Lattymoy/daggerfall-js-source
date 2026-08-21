@@ -25,7 +25,7 @@
 // zero faction record, it does not throw.
 
 import { QuestResource } from './questResource.js';
-import { Symbol as QuestSymbol } from './symbol.js';
+import { Symbol as QuestSymbol, symbolToSaveData, symbolFromSaveData } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
 import { factionsTable, placesTable } from './tables.js';
 import { Place } from './place.js';
@@ -500,6 +500,66 @@ export class Person extends QuestResource {
     }
     this.homePlaceSymbol = homePlace.symbol.clone();
     this.parentQuest.addResource(homePlace);
+  }
+
+  // ---- the save envelope (Q4-iv; Person.cs:1108-1190) ----
+
+  /** GetSaveData: the C# field set verbatim. The port stores no
+   *  separate `race` (nothing downstream reads it - names ride
+   *  nameBank) and the talk-arc discovery flag pends its arc; both
+   *  serialize at their defaults so the envelope keeps C#'s shape. */
+  getSaveData() {
+    return {
+      race: this.race ?? -1,
+      nameBank: this.nameBank,
+      npcGender: this.npcGender,
+      faceIndex: this.faceIndex,
+      nameSeed: this.nameSeed,
+      isQuestor: this.isQuestor,
+      isIndividualNPC: this.isIndividualNPC,
+      isIndividualAtHome: this.isIndividualAtHome,
+      displayName: this.displayName,
+      homePlaceSymbol: symbolToSaveData(this.homePlaceSymbol),
+      lastAssignedPlaceSymbol: symbolToSaveData(this.assignedPlaceSymbol),
+      assignedToHome: this.assignedToHome,
+      factionID: this.factionData?.id ?? 0,
+      factionTableKey: this.factionTableKey,
+      questorData: this.questorData ? { ...this.questorData } : null,
+      discoveredThroughTalkManager: this.discoveredThroughTalkManager ?? false,
+      isMuted: this.isMuted,
+      isDestroyed: this.isDestroyed,
+    };
+  }
+
+  /** RestoreSaveData: the faction record re-derives from the LIVE
+   *  store (C# reads PlayerEntity.FactionData); an unknown non-zero
+   *  id throws C#'s deserialize error; id 0 lands the all-zeros
+   *  record (default struct = ZERO_FACTION, the Q3-ii law). */
+  restoreSaveData(dataIn) {
+    if (dataIn == null) return;
+    const world = this.parentQuest.hooks?.world;
+    const record = world?.getFactionData?.(dataIn.factionID) ?? null;
+    if (!record && dataIn.factionID !== 0) {
+      throw new Error('Could not deserialize Person resource FactionID to FactionData');
+    }
+    this.race = dataIn.race;
+    this.nameBank = dataIn.nameBank;
+    this.npcGender = dataIn.npcGender;
+    this.faceIndex = dataIn.faceIndex;
+    this.nameSeed = dataIn.nameSeed;
+    this.isQuestor = dataIn.isQuestor;
+    this.isIndividualNPC = dataIn.isIndividualNPC;
+    this.isIndividualAtHome = dataIn.isIndividualAtHome;
+    this.displayName = dataIn.displayName;
+    this.homePlaceSymbol = symbolFromSaveData(dataIn.homePlaceSymbol);
+    this.assignedPlaceSymbol = symbolFromSaveData(dataIn.lastAssignedPlaceSymbol);
+    this.assignedToHome = dataIn.assignedToHome;
+    this.factionData = record ?? ZERO_FACTION;
+    this.factionTableKey = dataIn.factionTableKey;
+    this.questorData = dataIn.questorData ? { ...dataIn.questorData } : null;
+    this.discoveredThroughTalkManager = dataIn.discoveredThroughTalkManager;
+    this.isMuted = dataIn.isMuted;
+    this.isDestroyed = dataIn.isDestroyed;
   }
 }
 

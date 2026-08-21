@@ -189,4 +189,38 @@ export class Foe extends QuestResource {
     srand(this._range(1000));
     this.displayName = fullName(getNameBankOfRegion(world.currentRegionIndex()), this.humanoidGender);
   }
+
+  // ---- the save envelope (Q4-iv; Foe.cs SaveData_v2) ----
+
+  /** GetSaveData: the v2 shape (foeId as int). The v1->v2 upgrade
+   *  arm is legacy-save migration with no port-side v1 saves in the
+   *  wild - recorded, not ported. */
+  getSaveData() {
+    return {
+      spawnCount: this.spawnCount,
+      foeId: this.foeType,
+      humanoidGender: this.humanoidGender,
+      injuredTrigger: this.injuredTrigger,
+      restrained: this.isRestrained,
+      killCount: this.killCount,
+      displayName: this.displayName,
+      typeName: this.typeName,
+      spellQueue: this.spellQueue ? structuredClone(this.spellQueue) : null,
+      itemQueue: this.itemQueue ? structuredClone(this.itemQueue) : null,
+    };
+  }
+
+  restoreSaveData(dataIn) {
+    if (dataIn == null) return;
+    this.spawnCount = dataIn.spawnCount;
+    this.foeType = dataIn.foeId;
+    this.humanoidGender = dataIn.humanoidGender;
+    this.injuredTrigger = dataIn.injuredTrigger;
+    this.isRestrained = dataIn.restrained;
+    this.killCount = dataIn.killCount;
+    this.displayName = dataIn.displayName;
+    this.typeName = dataIn.typeName;
+    this.spellQueue = dataIn.spellQueue ? structuredClone(dataIn.spellQueue) : null;
+    this.itemQueue = dataIn.itemQueue ? structuredClone(dataIn.itemQueue) : null;
+  }
 }

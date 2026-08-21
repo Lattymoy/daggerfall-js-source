@@ -217,4 +217,35 @@ export class Clock extends QuestResource {
     if (task) task.start();
     else console.warn(`[quest] Clock timer ${this.symbol.name} completed but could not find a task with same name.`);
   }
+
+  // ---- the save envelope (Q4-iv; Clock.cs:490-530) ----
+
+  getSaveData() {
+    return {
+      lastWorldTimeSample: this._lastWorldTimeSample,
+      startingTimeInSeconds: this.startingTimeInSeconds,
+      remainingTimeInSeconds: this.remainingTimeInSeconds,
+      flag: this.flag,
+      minRange: this.minRange,
+      maxRange: this.maxRange,
+      clockEnabled: this.clockEnabled,
+      clockFinished: this.clockFinished,
+    };
+  }
+
+  /** RestoreSaveData: plain assigns; the saved starting time is
+   *  authoritative, so the port's travelTimePending (headless-only)
+   *  clears. */
+  restoreSaveData(dataIn) {
+    if (dataIn == null) return;
+    this._lastWorldTimeSample = dataIn.lastWorldTimeSample;
+    this.startingTimeInSeconds = dataIn.startingTimeInSeconds;
+    this.remainingTimeInSeconds = dataIn.remainingTimeInSeconds;
+    this.flag = dataIn.flag;
+    this.minRange = dataIn.minRange;
+    this.maxRange = dataIn.maxRange;
+    this.clockEnabled = dataIn.clockEnabled;
+    this.clockFinished = dataIn.clockFinished;
+    this.travelTimePending = false;
+  }
 }

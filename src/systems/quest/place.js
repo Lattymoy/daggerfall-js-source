@@ -759,6 +759,33 @@ export class Place extends QuestResource {
     }
     return false;
   }
+
+  // ---- the save envelope (Q4-iv; Place.cs:1668-1706) ----
+
+  /** GetSaveData: scope, the parse triple, and the WHOLE SiteDetails
+   *  (markers, targets, names) as plain data - marker targetResources
+   *  round-trip as {original, name} records, exactly the shape C#'s
+   *  serializer writes for Symbol. */
+  getSaveData() {
+    return {
+      scope: this.scope,
+      name: this.name,
+      p1: this.p1, p2: this.p2, p3: this.p3,
+      siteDetails: this.siteDetails ? structuredClone(this.siteDetails) : null,
+    };
+  }
+
+  /** RestoreSaveData: plain assigns; a restored site is RESOLVED, so
+   *  the port's sitePending flag (headless-only, no C# counterpart)
+   *  clears when details landed. */
+  restoreSaveData(dataIn) {
+    if (dataIn == null) return;
+    this.scope = dataIn.scope;
+    this.name = dataIn.name;
+    this.p1 = dataIn.p1; this.p2 = dataIn.p2; this.p3 = dataIn.p3;
+    this.siteDetails = dataIn.siteDetails ? structuredClone(dataIn.siteDetails) : null;
+    this.sitePending = !this.siteDetails;
+  }
 }
 
 /** ValidateQuestMarkers (Place.cs:1462). */

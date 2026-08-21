@@ -89,4 +89,52 @@ export class Message {
     if (expandMacros) expandQuestMessage(this.parentQuest, tokens, false);
     return tokens;
   }
+
+  /** GetSaveData (Message.cs:221-280): reconstruct SOURCE lines from
+   *  the (unexpanded) variant tokens - later variants re-prefix the
+   *  split token, centered lines re-prefix <ce>, and an unexpected
+   *  formatting THROWS, verbatim. QUIRK KEPT: a second consecutive
+   *  Text token flushes the line and DROPS ITSELF (C#'s continue) -
+   *  unreachable through loadMessage's strict alternation. */
+  getSaveData() {
+    const lines = [];
+    for (let variant = 0; variant < this.variants.length; variant++) {
+      if (variant > 0) lines.push(SPLIT_TOKEN);
+      let foundText = false;
+      let currentLine = '';
+      for (const token of this.variants[variant].tokens) {
+        switch (token.formatting) {
+          case Formatting.Text:
+            if (foundText) {
+              lines.push(currentLine);
+              currentLine = '';
+              foundText = false;
+              continue;
+            }
+            currentLine += token.text;
+            foundText = true;
+            break;
+          case Formatting.JustifyCenter:
+            currentLine = CENTER_TOKEN + currentLine;
+            lines.push(currentLine);
+            currentLine = '';
+            foundText = false;
+            break;
+          case Formatting.Nothing:
+            lines.push(currentLine);
+            currentLine = '';
+            foundText = false;
+            continue;
+          default:
+            throw new Error(`Message.GetSaveData() encountered unexpected formatting token ${token.formatting}`);
+        }
+      }
+    }
+    return { id: this.id, lines };
+  }
+
+  /** RestoreSaveData (Message.cs:282-285). */
+  restoreSaveData(data) {
+    this.loadMessage(data.id, data.lines);
+  }
 }
