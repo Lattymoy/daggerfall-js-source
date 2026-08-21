@@ -66,10 +66,13 @@ const copyEffectEntry = (a) => {
 };
 
 /** A plain-object snapshot of the player + scene extras. */
-export function snapshotPlayer(entity, { position = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null } = {}) {
+export function snapshotPlayer(entity, { position = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null } = {}) {
   // Q4-v: `quest` is the bridge's whole envelope (machine + notebook +
   // the one-time list) - opaque here, exactly like `world`.
-  const snap = { v: SAVE_VERSION, position, classicMinutes, readiedSpellIndex, world, locationKey, quest };
+  // TK-i: `talk` is TalkManager's SaveDataConversation (the rumor
+  // mill's halves for now; TK-ii/TK-iv grow it) - the same shape of
+  // slot.
+  const snap = { v: SAVE_VERSION, position, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk };
   for (const k of ENTITY_FIELDS) snap[k] = entity[k];
   snap.stats = { ...entity.stats };
   // AUDIT 17e: pre-chargen the entity carries a flat NUMBER here
@@ -271,7 +274,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // AUDIT 23: the sticky per-region price band (see snapshot side); a
   // pre-fix save re-mints lazily, exactly as an unvisited region does.
   entity.regionPrices = snap.regionPrices ? { ...snap.regionPrices } : {};
-  return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null };
+  return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null };
 }
 
 /** localStorage backend (absent in headless - callers gate).

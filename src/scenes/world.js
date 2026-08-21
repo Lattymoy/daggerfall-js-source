@@ -97,6 +97,9 @@ import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { makeItemPermanent } from '../systems/quest/item.js';
 import { guildOfFaction, membershipOf, guildFactionIdOfGroup } from '../systems/guilds.js';
 import { resolveVariantGuild } from '../systems/guildVariants.js';
+// TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
+import { RumorMill, tokensToString } from '../systems/rumorMill.js';
+import { expandQuestMessage } from '../systems/quest/questMacros.js';
 import { discoverRandomLocation, discoverLocation } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
@@ -995,6 +998,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       classicMinutes: Math.floor(playerTicker.classicMinutes),
       readiedSpellIndex: magic.readiedIndex(),
       quest: questBridge.snapshot(),   // Q4-v: the machine + notebook + one-time list
+      talk: rumorMill.getSaveData(),   // TK-i: SaveDataConversation's rumor halves
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -1023,6 +1027,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // game, whatever the chargen flow later reports.
       questBridge.restore(extras.quest ?? null);
       if (extras.quest) _questStarted = true;
+      rumorMill.restoreSaveData(extras.talk ?? null);   // TK-i: pre-TK saves restore(null) as a no-op
       if (extras.locationKey === 'world' && extras.world?.pixel) {
         const w = extras.world;
         await _teleportToPixel(w.pixel.x, w.pixel.y);
@@ -1346,9 +1351,39 @@ export async function bootWorld(canvas, renderer, params, status) {
     changeLegalRep: (amount) => changeLegalRep(playerEntity, _questLoc()?.regionIndex ?? 0, amount),
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
   };
+  // TK-i: THE RUMOR MILL beside the bridge. The mill's own consumers
+  // (Any news?, bulletin boards, the questor-post greeting) mount
+  // with TK-v; the classic-rumor import waits on a RUMOR.DAT fetch
+  // (game data, loaded when present); ExpandRandomTextRecord's full
+  // macro pass is TK-iii's - the interim joins the record's rows
+  // plainly, recorded. AddNonQuestRumor's PRODUCER (the regional
+  // faction sim, PlayerEntity.RegionPowerAndConditionsUpdate) pends
+  // the Systems lane, and THE REFRESH CULL rides with it.
+  const rumorMill = new RumorMill({
+    nowClassicMinutes: () => playerTicker.classicMinutes,
+    getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
+    currentRegionIndex: () => _questLoc()?.regionIndex ?? -1,
+    getRandomTokens: (textId) => townTalk.variantTokens(textId),
+    expandQuestTokens: (questID, tokens) => {
+      const quest = questBridge?.machine.getQuest(questID);
+      const copy = tokens.map((t) => ({ ...t }));   // expandQuestMessage mutates; the mill's stored variants must not
+      if (quest) expandQuestMessage(quest, copy, true);
+      return tokensToString(copy);
+    },
+    expandRandomTextRecord: (id) => townTalk.lines(id).map((r) => r.text ?? r).join(' '),
+    rolls: Math.random,
+  });
   questBridge = createQuestBridge({
     data: questPack,
     world: questWorld,
+    // TK-i: the six rumor seams land in the mill (TalkManager's own
+    // methods, 1:1)
+    addQuestRumor: (uid, m) => rumorMill.addQuestRumorToRumorMill(uid, m),
+    addProgressRumor: (uid, m) => rumorMill.addOrReplaceQuestProgressRumor(uid, m),
+    addQuestorPostMessage: (uid, m) => rumorMill.addQuestorPostQuestMessage(uid, m),
+    removeProgressRumors: (uid) => rumorMill.removeQuestProgressRumorsFromRumorMill(uid),
+    removeQuestorPostMessage: (uid) => rumorMill.removeQuestorPostQuestMessage(uid),
+    removeQuestRumors: (uid) => rumorMill.removeQuestRumorsFromRumorMill(uid),
     classicSeconds: () => playerTicker.classicMinutes * 60,
     playerEntity,
     playerRaceName: () => playerEntity.race ?? null,

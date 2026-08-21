@@ -486,6 +486,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // one of these with GetRandomTokens - the rank refusal alone has
     // eight, and the port drew the same one forever.
     lines: (id) => textRsc?.variantLinesById(id, rolls) ?? [],
+    /** TK-i: GetRandomTokens for the rumor mill (a random variant as
+     *  TOKENS - AddNonQuestRumor freezes one per add). */
+    variantTokens: (id) => textRsc?.variantTokensById(id, rolls) ?? [],
     ensureFactions: () => ensureLoaded(),
     say: (line) => hud.add(line),
     /** MERGE AUDIT: the HUD TEXT LAYER on its own, for a host whose

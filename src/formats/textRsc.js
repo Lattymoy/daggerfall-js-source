@@ -162,6 +162,33 @@ export class TextRsc {
     return n;
   }
 
+  /** TextProvider.GetRandomTokens' law over one record: a random
+   *  variant's TOKENS (readTokens' shape), with the FTD-1 step-back
+   *  when the picked stream is empty (TextProvider.cs:231 - the last
+   *  real variant is picked twice as often on 0xFF 0xFE records).
+   *  TK-i: the rumor mill freezes one of these per AddNonQuestRumor. */
+  variantTokensById(id, pick = Math.random) {
+    const raw = this.bytesById(id);
+    if (!raw) return [];
+    // variant byte ranges, operand bytes skipped so a 0xFF payload
+    // cannot masquerade as a separator (variantCount's own law)
+    const ranges = [];
+    let start = 0;
+    let i = 0;
+    for (; i < raw.length; i++) {
+      const b = raw[i];
+      if (b === RSC.EndOfRecord) break;
+      if (b === RSC.SubrecordSeparator) { ranges.push([start, i]); start = i + 1; continue; }
+      if (b === RSC.FontPrefix || b === RSC.PositionPrefix) i++;
+    }
+    ranges.push([start, i]);
+    const n = ranges.length;
+    const want = n <= 1 ? 0 : Math.min(n - 1, Math.floor(pick() * n));
+    let tokens = readTokens(raw.slice(ranges[want][0], ranges[want][1]), 0, RSC.EndOfRecord);
+    if (!tokens.length && want > 0) tokens = readTokens(raw.slice(ranges[want - 1][0], ranges[want - 1][1]), 0, RSC.EndOfRecord);
+    return tokens;
+  }
+
   /** The first variant as ROWS, with the per-row alignment the record
    *  asks for: a row closed by JustifyCenter is centred, one closed by
    *  JustifyLeft or a bare NewLine is left (MultiFormatTextLabel.cs

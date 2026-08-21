@@ -248,15 +248,15 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:153` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:170` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:582` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:607` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:613` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1105` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1319` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1407` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:1426` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:1652` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:1913` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:585` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:610` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:616` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1110` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1324` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1442` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:1461` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:1687` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:1948` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:189` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:230` - FLAGGED (Port-Ledger Q4-v): quest FOES pend the interior enemy
 - `src/scenes/worldModes.js:325` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
@@ -311,7 +311,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:200` - FLAGGED to the ENCHANTMENT-EFFECTS slice (the shops themselves
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
-- `src/systems/save.js:76` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:79` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
 - `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
