@@ -14,6 +14,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { FlcFile, FLIC_FORMAT, CINEMATIC_SPEED, CHUNK_TYPE } from '../src/formats/flcFile.js';
+import { FlcPlayer } from '../src/ui/flcPlayer.js';
 
 const HEADER_SIZE = 128, FRAME_HEADER_SIZE = 16, CHUNK_HEADER_SIZE = 6;
 const rgba = (r, g, b, a = 255) => ((a << 24) | (b << 16) | (g << 8) | r) >>> 0;
@@ -207,14 +208,81 @@ test('flc: an out-of-range pixel write THROWS rather than vanishing', () => {
   }), 'X.CEL'), /frame buffer index out of range/);
 });
 
-test('flc: a frame index with no header answers false rather than indexing null', () => {
+test('flc: an unfilled frame slot decodes EMPTY and still ADVANCES (C# value-type array)', () => {
+  // AUDIT F-P2: C#'s FrameHeader[] is a VALUE-TYPE array, so a slot
+  // the walk never filled is a DEFAULT struct - BufferNextFrame reads
+  // zero sub-chunks from it and still advances CurrentFrame. A guard
+  // that refused the slot instead STALLED the counter, so a
+  // non-looping player never reached NumOfFrames and its OnAnimEnd
+  // never fired - an animation that gates input would hang for ever.
   const f = new FlcFile();
-  f.load(buildFlc({ chunks: [{ type: CHUNK_TYPE.COLOR_256, payload: colorChunk(PALETTE) }] }), 'X.CEL');
-  // The walk breaks when a frame body would run past the file, so the
-  // ring slot can be empty; C# would throw on the null, the port says
-  // false (the defensive addition named in the reader's header).
-  assert.equal(f.bufferNextFrame(99), false, 'out of range falls back to the current frame');
-  assert.equal(f.readyToPlay, true, 'and the reader stays usable');
+  f.load(buildFlc({ frames: 3, chunks: [{ type: CHUNK_TYPE.COLOR_256, payload: colorChunk(PALETTE) }] }), 'X.CEL');
+  assert.equal(f.frameHeaders.length, 4, 'NumOfFrames + the ring slot');
+  const before = f.currentFrame;
+  assert.equal(f.bufferNextFrame(), true, 'an unfilled slot still decodes');
+  assert.equal(f.currentFrame, before + 1, 'and ADVANCES the counter');
+  // Out of range falls back to the current frame rather than throwing
+  assert.equal(f.bufferNextFrame(99), true);
+  assert.equal(f.readyToPlay, true, 'the reader stays usable');
+});
+
+test('flcPlayer: the Update ORDER - end check first, display-then-decode, ring frame unseen', () => {
+  // Three frames of one pixel each so the walk is countable.
+  const px = (i) => [1, 1, i];   // packets, size_type +1 (repeat), palette index
+  const f = new FlcFile();
+  f.load(buildFlc({
+    width: 1, height: 1, frames: 3,
+    chunks: [
+      { type: CHUNK_TYPE.COLOR_256, payload: colorChunk(PALETTE) },
+      { type: CHUNK_TYPE.BYTE_RUN, payload: px(0) },
+    ],
+  }), 'X.CEL');
+  // The synthetic file carries ONE frame body, so the walk stops
+  // early - what matters here is the PLAYER's law, which reads
+  // currentFrame against numOfFrames.
+  let ended = 0;
+  const p = new FlcPlayer(f, { onAnimEnd: () => ended++ });
+  assert.equal(p.frame, null, 'nothing is displayed before the first frame lands');
+  assert.equal(p.start(), true);
+  assert.equal(p.playing, true);
+
+  // The clock gates: below the frame delay nothing is displayed
+  p.tick(f.frameDelay / 2);
+  assert.equal(p.frame, null, 'the frame clock gates the first frame');
+  p.tick(f.frameDelay / 2);
+  assert.ok(p.frame, 'the frame lands once the delay elapses');
+  assert.equal(p.frame.width, 1);
+
+  // Run it out: the END CHECK fires once currentFrame reaches
+  // numOfFrames, and it raises exactly once.
+  for (let i = 0; i < 20; i++) p.tick(f.frameDelay);
+  assert.equal(ended, 1, 'OnAnimEnd raises exactly once');
+  assert.equal(p.playing, false);
+
+  // A stopped player displays nothing (DFU drops the texture)
+  p.stop();
+  assert.equal(p.frame, null);
+});
+
+test('flcPlayer: a looping player never ends, and start() rewinds', () => {
+  const f = new FlcFile();
+  f.load(buildFlc({
+    width: 1, height: 1, frames: 3,
+    chunks: [
+      { type: CHUNK_TYPE.COLOR_256, payload: colorChunk(PALETTE) },
+      { type: CHUNK_TYPE.BYTE_RUN, payload: [1, 1, 0] },
+    ],
+  }), 'X.CEL');
+  let ended = 0;
+  const p = new FlcPlayer(f, { loop: true, onAnimEnd: () => ended++ });
+  p.start();
+  for (let i = 0; i < 30; i++) p.tick(f.frameDelay);
+  assert.equal(ended, 0, 'Loop = true never raises the end');
+  assert.equal(p.playing, true);
+  // start() rewinds to frame 0 and clears what was displayed
+  p.start();
+  assert.equal(f.currentFrame, 0);
+  assert.equal(p.frame, null);
 });
 
 test('flc: ARENA2 corpus sweep - every .CEL decodes (gated)', (t) => {
