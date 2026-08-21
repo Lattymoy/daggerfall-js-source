@@ -578,7 +578,25 @@ the sibling of TK-ii's spot-checked-table lesson and TK-iii's
 self-referential pin: a fixture that cannot reach the state a line
 guards is not a test of that line.
 
-Six proven equivalents, all the same shape:
+Round 2's 24 survivors resolve as 16 real gaps - all pinned, all
+re-confirmed dead against the FULL suite (`fails` of 6 and 7 against a
+baseline of 5; THE BASELINE TRAP sprung again here, and caught, since
+two rows came back at exactly 5) - and EIGHT proven equivalents, in
+two families.
+
+The first family is DFU's own redundancy, and it is why those two rows
+read as caught when they were not:
+
+- `:444`, `:491` (`sameTalkTargetAsBefore = false` at the head of
+  TalkToMobileNPC and TalkToStaticNPC): C# writes
+  `sameTalkTargetAsBefore = false;` and then immediately passes the
+  same field to SetTargetNPC **by ref** (:740, :796), whose own first
+  line assigns it false again (:807, :835). The caller's write is
+  therefore dead in C# as much as in the port - the callee always
+  overwrites it before anything can read it. Only SetTargetNPC's own
+  assignment is live, and that one (`:388`) dies to a pin.
+
+The second family is the loop bounds:
 
 - `:262`, `:263`, `:276`, `:277`, `:288`, `:299` (the in-common loops'
   `i < 3` -> `<= 3`, and the identical `3` -> `4`): the four arrays are
