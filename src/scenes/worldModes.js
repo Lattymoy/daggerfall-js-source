@@ -276,7 +276,7 @@ export function createWorldModes(host) {
   const questAdapter = {
     // PlayerGPS.CurrentMapID through the host's scene-context closure.
     currentMapId: () => questSceneCtx?.()?.mapId ?? 0,
-    findBehaviours: () => questFlats.map((s) => s.behaviour),
+    findBehaviours: () => sceneBehaviours(),
     loadInProgress: () => false,   // the modal host builds after a restore completes
     standNPC: ({ person, flatData, position, behaviour }) =>
       standQuestFlat(flatData.archive, flatData.record, position, behaviour, person?.factionId ?? null),
@@ -287,6 +287,27 @@ export function createWorldModes(host) {
       return standQuestFlat(t.worldTextureArchive, t.worldTextureRecord, position, behaviour);
     },
     // standFoe absent - see the FLAG above.
+  };
+  /** SetupIndividualStaticNPC's call site (DaggerfallInterior.cs:1224),
+   *  handed to buildInteriorContext so it runs at AddPeople's own
+   *  moment - per person, at the GameObject, before the quest walk.
+   *  An individual the quest moved elsewhere is deactivated (the away
+   *  arm's SetActive(false)); an individual at home ALWAYS gets a
+   *  behaviour, which is what makes the follow-up-quest bootstrap
+   *  click land. A machine-less host answers nothing and every person
+   *  stays as it was. */
+  const setupStaticNpc = (pn, host) =>
+    questBridge?.machine.setupIndividualStaticNPC(host, pn.factionID) ?? true;
+  /** Every QuestResourceBehaviour standing in this scene:
+   *  Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>()
+   *  (GameObjectHelper.cs:917) sees the ones on static NPCs too, and
+   *  IsAlreadyPlaced reads exactly this list - miss them and a Person
+   *  the bootstrap behaviour already holds gets stood a SECOND time by
+   *  the marker walk. */
+  const sceneBehaviours = () => {
+    const out = questFlats.map((s) => s.behaviour);
+    for (const pn of interiorCtx?.people ?? []) if (pn.questBehaviour) out.push(pn.questBehaviour);
+    return out;
   };
   /** The building-interior mount; also the machine's hot-place callback
    *  (deps.world.mountCurrentSiteQuestResources - Place.AssignQuest-
@@ -301,6 +322,13 @@ export function createWorldModes(host) {
     // out of the context's list FIRST so ctx.destroy() cannot free them
     // a second time.
     for (const s of [...questFlats]) s.behaviour?.notifyDestroyed?.();
+    // the bootstrap behaviours ride their StaticNPC's GameObject, so
+    // the scene transition destroys them on the same frame
+    for (const pn of interiorCtx?.people ?? []) {
+      if (!pn.questBehaviour) continue;
+      pn.questBehaviour.notifyDestroyed?.();
+      pn.questBehaviour = null;
+    }
     for (const s of questFlats) {
       s.dead = true;
       if (!s.batch) continue;
@@ -444,6 +472,14 @@ export function createWorldModes(host) {
     // stamps LastNPCClicked before the routing decides what opens (the
     // Person questor sweep rides machine.setLastNPCClicked).
     questBridge?.clickNpc(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0 });
+    // AUDIT 24 (wave 20): PlayerActivate.cs:1523-1528, the return the
+    // port never had. A clicked NPC whose GameObject carries a
+    // QuestResourceBehaviour goes through DoClick FIRST, and a click
+    // that landed on a live quest resource ENDS the activation - no
+    // talk window, no guild service popup. The port stamped
+    // LastNPCClicked and walked straight on to the routing, so handing
+    // a questor their letter also opened their shop.
+    if (pn.questBehaviour?.doClick()) return;
     // PlayerActivate.cs:1530-1535: a quest actively LISTENING on this
     // NPC's faction (WhenNpcIsAvailable) shuts down all further
     // routing - no talk, no service popup, nothing (C#'s own TODO
@@ -725,7 +761,7 @@ export function createWorldModes(host) {
         // a building was entered from ?world / ?exterior - the same
         // building reached through ?interior=NAME:REC omitted it.
         hit.dfBlock, hit.dfBlock.index, hit.recordIndex, hit.climateBase, hit.season,
-        hit.door.matrix, { voxelfolk, piece, paint });
+        hit.door.matrix, { voxelfolk, piece, paint, setupStaticNpc });
       const siblings = entries.filter((e) =>
         e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
       const landing = interiorLanding(
@@ -799,7 +835,7 @@ export function createWorldModes(host) {
     // (PlayerActivate.cs:87), twice a door's, and a person with no
     // billboard size resolved is not a target at all.
     interiorCtx.people.forEach((pn, i) => {
-      if (!pn.width) return;
+      if (!pn.width || pn.active === false) return;   // SetActive(false) takes the collider too
       targets.push({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE });
     });
     // Q4-v: quest stands activate like StaticNPCs (PlayerActivate's

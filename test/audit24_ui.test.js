@@ -139,3 +139,23 @@ test('audit24 ui: the history wheel pages in silence', () => {
   assert.equal(w.wheel(1), true, 'the wheel still pages');
   assert.notEqual(w.pageStartLine, before);
 });
+
+test('audit24 ui: the empty-page fallback survived the row-shape change', () => {
+  // Wave 11 turned page rows from bare strings into { text, color } so
+  // the highlight/question/answer colours could ride with them - and
+  // `lines.some((l) => l)` is true for every OBJECT, so the
+  // "Nothing is written here yet." fallback went unreachable the same
+  // day it was written. The audit's own regression, caught by the
+  // audit.
+  const src = rd('src/ui/questJournal.js');
+  assert.match(src, /if \(!lines\.some\(\(l\) => l\.text\)\)/,
+    'the emptiness test reads the row\'s TEXT, not the row');
+  assert.doesNotMatch(src, /if \(!lines\.some\(\(l\) => l\)\)/, 'and not the object');
+  // and the rows really are objects, which is what makes that matter
+  const w = new QuestJournalWindow({ questMessages: () => [], notebook: () => ({ getNotes: () => [] }) });
+  w.mode = 'notebook';
+  for (const row of w.pageLines()) {
+    assert.equal(typeof row, 'object', 'every page row is a { text, color } pair');
+    assert.ok('text' in row && 'color' in row);
+  }
+});

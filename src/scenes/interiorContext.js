@@ -189,8 +189,27 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // returned people list (parent-frame, like everything else here).
   const people = collectInteriorPeople(recordData).map((pn) => {
     const [x, y, z] = parentPt(pn.x, pn.y, pn.z);
-    return { ...pn, x, y, z };
+    return { ...pn, x, y, z, active: true, questBehaviour: null };
   });
+  // AUDIT 24 (wave 20): AddPeople's LAST act on every person it stands
+  // is `QuestMachine.Instance.SetupIndividualStaticNPC(go, obj.FactionID)`
+  // (DaggerfallInterior.cs:1224) - inline, at the GameObject, BEFORE
+  // PlayerEnterExit reaches AddQuestResourceObjects (:800). The port
+  // had the machine half written and NOBODY calling it, so no building
+  // NPC ever carried a QuestResourceBehaviour: the follow-up-quest
+  // bootstrap click had nothing to click, and an individual the quest
+  // had moved somewhere else went on standing at home beside their own
+  // copy. The hook runs HERE, at DFU's own moment, so the away arm's
+  // SetActive(false) can still take the person out of the batch.
+  for (const pn of people) {
+    pn.host = {
+      staticNpcFactionId: pn.factionID,   // DoClick's individual broadcast reads this
+      setActive(active) { pn.active = !!active; },
+      destroy() { pn.active = false; },
+    };
+    const setup = opts.setupStaticNpc?.(pn, pn.host);
+    if (setup && setup !== true) pn.questBehaviour = setup;
+  }
 
   // C4c (?voxelfolk): people stand as the bare Rewrite humanoid - one
   // packed mesh, per-person matrices (uniform scale to CLASSIC_HEIGHT,
@@ -226,6 +245,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     _raceMeshes = raceMeshes;   // AUDIT 23 (hosts-16): destroy() frees these
     const rigFor = (race) => { let rg = raceMeshes.get(race); if (!rg) { rg = createCharacterRig(renderer, buildRaceCharacter(race, ramps)); raceMeshes.set(race, rg); } return rg; };
     for (const pn of people) {
+      if (!pn.active) continue;   // SetActive(false): the away copy does not draw
       const rg = rigFor(raceOfArchive(pn.textureArchive));
       charDraws.push({ mesh: rg.mesh, matrix: trs(pn.x, pn.y - rg.footY * rg.scale, pn.z, 0, 0, 0, rg.scale, rg.scale, rg.scale) });
     }
@@ -238,6 +258,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     };
   } else {
     for (const pn of people) {
+      if (!pn.active) continue;   // SetActive(false): the away copy does not draw
       const key = `${pn.textureArchive}_${pn.textureRecord}`;
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([pn.x, pn.y, pn.z]);
@@ -271,6 +292,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // The voxelfolk branch never fills flatGroups for people, so the
   // size is read here, off the archive, either way.
   for (const pn of people) {
+    if (!pn.active) continue;   // SetActive(false) takes the BoxCollider with it
     const t = await getTexture(pn.textureArchive);
     if (!t || pn.textureRecord >= t.recordCount) continue;
     const size = scaledBillboardSize(t.getSize(pn.textureRecord), t.getScale(pn.textureRecord));

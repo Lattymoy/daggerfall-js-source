@@ -2274,6 +2274,117 @@ them wholesale), and an old save does not blank them.
 
 Four mutants, four kills.
 
+### Wave 20
+
+**The click that never reached the quest, and the behaviour that was
+never there to reach.**
+
+`PlayerActivate.StaticNPCClick` (:1512-1570) does exactly three things
+before it will consider routing a click anywhere:
+
+```csharp
+QuestMachine.Instance.LastNPCClicked = npc;
+
+QuestResourceBehaviour questResourceBehaviour = npc.gameObject.GetComponent<QuestResourceBehaviour>();
+if (questResourceBehaviour && TriggerQuestResourceBehaviourClick(questResourceBehaviour))
+    return;
+
+if (QuestMachine.Instance.HasFactionListener(npc.Data.factionID))
+    return;
+```
+
+The port had the first line and the third. The middle one - the one
+that ends the activation when the click landed on a live quest
+resource - was not there, so a clicked questor got their quest
+progressed AND their shop opened, their guild service popup pushed,
+their conversation started. DFU stops dead.
+
+The order matters twice over. `DoClick` has to see the stamp already
+in the machine, and the resource click has to beat the listener
+return, or a questor who is also a `WhenNpcIsAvailable` target never
+gets clicked at all.
+
+That was the finding. What made it interesting is that the missing
+return could not have fired even if I had written it, because the
+thing it tests never existed:
+
+```csharp
+// DaggerfallInterior.AddPeople, :1224 - the last act on every person it stands
+QuestMachine.Instance.SetupIndividualStaticNPC(go, obj.FactionID);
+```
+
+`setupIndividualStaticNPC` shipped in Q4-iii. It is a careful port -
+it has the away-copy `SetActive(false)`, it has the
+always-attach-a-behaviour bootstrap arm with C#'s own comment about
+the questor not being set until after the player clicks, and wave 12
+even fixed its missing `start()`. It had **no caller**. Nothing in
+`src/` ever invoked it. `grep -rn setupIndividualStaticNPC src/`
+returned the definition and nothing else; every other hit was a test
+driving it directly.
+
+So: no building NPC in the entire game carried a
+`QuestResourceBehaviour`. The follow-up-quest bootstrap click - the
+whole reason C# attaches one unconditionally - had nothing to click.
+And `IsIndividualQuestNPCAtSiteLink`, which exists so that a quest
+that moved King Gothryd to a tavern takes his palace copy off the
+board, never ran: both copies stood, both drawn, both clickable.
+
+*A PORTED FUNCTION WITH NO CALLER IS A COMMENT.* The tests were green
+because the tests called it themselves. `questscene.test.js:520`
+drives every arm of it faithfully, and the arc's own coverage sweep
+counted those lines as covered. A fixture that reaches a line the
+game cannot reach is the same failure as a fixture that cannot reach
+the line at all - it tells you the function works, not that it runs.
+
+The hook now runs where C# runs it: inside `buildInteriorContext`,
+per person, during layout. `PlayerEnterExit` does not reach
+`AddQuestResourceObjects` until `DoLayout` has returned (:800), so
+the bootstrap behaviours exist before the marker walk asks
+`IsAlreadyPlaced` - which was the other half of the repair.
+`findBehaviours` fed that check `questFlats.map(s => s.behaviour)`,
+the quest stands only, where C# opens with
+`Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>()`
+(GameObjectHelper.cs:917) - every behaviour alive in the scene. Miss
+the static-NPC ones and a Person the bootstrap behaviour already
+holds gets stood a second time by the marker walk, which is a
+duplicate NPC arriving by a different door than the one I had just
+closed.
+
+`SetActive(false)` on a Unity GameObject takes the renderer and the
+collider with it, so the away copy had to leave both draw paths (the
+classic billboard batch and `?voxelfolk`'s rig) and the activation
+ray. And Unity destroys those behaviours with their GameObjects on a
+scene transition, so the interior teardown notifies them exactly as
+it already notified the quest stands.
+
+**The pin that could not see a deletion.** The first draft of the
+draw-path assertion was `assert.match(ic, /if \(!pn\.active\) continue;
+\/\/ ...the away copy does not draw/)`. Both draw paths carry that
+same line. Deleting either one left the other, and the pin passed. It
+is now an occurrence *count*, and each deletion is a separate
+verified kill.
+
+*A PIN THAT ASKS WHETHER A LINE EXISTS SOMEWHERE CANNOT SEE IT
+DELETED FROM ONE OF THE TWO PLACES IT BELONGS.*
+
+Six mutants, six kills: the DoClick return removed; the DoClick
+return moved below the listener; the hook unwired from
+`buildInteriorContext`; `findBehaviours` narrowed back to the quest
+stands; and the away copy restored to each draw path in turn. Plus
+the earlier one - `questJournal`'s empty-page fallback, the
+regression this audit wrote itself in wave 11, where turning page rows
+from bare strings into `{ text, color }` made `!lines.some((l) => l)`
+unreachable on the same day the colours landed. An object is always
+truthy.
+
+**Still open, unchanged by this wave:** the port stands every interior
+person, where DFU disables them for an owned house, a closed shop, or
+a TG/DB house the player is not a member of - and calls
+`SetupIndividualStaticNPC` only on the ones that survive those gates.
+The gates are a pending of their own; when they land, the hook moves
+inside them.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

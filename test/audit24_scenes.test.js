@@ -77,3 +77,81 @@ test('audit24 render: the two citations point at the lines they quote', () => {
   assert.match(flat, /framesPerSecond \(:46\)/);
   assert.equal(/:110-165|framesPerSecond \(:45\)/.test(flat), false);
 });
+
+// ---- AUDIT 24, wave 20: the StaticNPC click chain ------------------
+// PlayerActivate.StaticNPCClick (:1512-1570) runs three things in a
+// fixed order before any routing happens, and the port had the first
+// and the third.
+
+test('audit24 wave20: StaticNPCClick runs stamp -> DoClick return -> listener return, in that order', () => {
+  const s = rd('src/scenes/worldModes.js');
+  const i = s.indexOf('function openStaticNpc(pn) {');
+  assert.ok(i > 0, 'openStaticNpc must exist');
+  const body = s.slice(i, s.indexOf('const route = staticNpcRoute(', i));
+
+  const stamp = body.indexOf('questBridge?.clickNpc(pn,');
+  const click = body.indexOf('if (pn.questBehaviour?.doClick()) return;');
+  const listen = body.indexOf('factionListeners.has(pn.factionID)) return;');
+  assert.ok(stamp >= 0, 'LastNPCClicked is stamped first (:1521)');
+  assert.ok(click >= 0, 'the quest-resource DoClick early return (:1523-1528)');
+  assert.ok(listen >= 0, 'the faction-listener early return (:1530-1535)');
+  // C# order is load-bearing twice over: DoClick must see the stamp
+  // already in the machine, and a resource click must beat the
+  // listener return, or a questor who is ALSO a listener target never
+  // gets clicked.
+  assert.ok(stamp < click, 'the stamp lands before DoClick');
+  assert.ok(click < listen, 'DoClick returns before the faction listener is even asked');
+});
+
+test('audit24 wave20: SetupIndividualStaticNPC is wired at AddPeople, not merely written', () => {
+  // DaggerfallInterior.cs:1224 - the LAST act of AddPeople on every
+  // person it stands. The machine half shipped in Q4-iii with no
+  // caller at all, so no building NPC carried a QuestResourceBehaviour
+  // and the away copy never stood down.
+  const wm = rd('src/scenes/worldModes.js');
+  assert.match(wm, /const setupStaticNpc = \(pn, host\) =>\s*\n\s*questBridge\?\.machine\.setupIndividualStaticNPC\(host, pn\.factionID\) \?\? true;/,
+    'worldModes mints the hook');
+  assert.match(wm, /\{ voxelfolk, piece, paint, setupStaticNpc \}\)/,
+    'and hands it to buildInteriorContext');
+
+  const ic = rd('src/scenes/interiorContext.js');
+  const call = ic.indexOf('opts.setupStaticNpc?.(pn, pn.host)');
+  assert.ok(call > 0, 'interiorContext runs it per person');
+  // PlayerEnterExit.cs:800 reaches AddQuestResourceObjects only AFTER
+  // DoLayout returns, so the bootstrap behaviours exist before the
+  // marker walk asks IsAlreadyPlaced.
+  assert.ok(call < ic.indexOf('for (const flat of interior.flats)'),
+    'and does it during layout, before the flats batch');
+  assert.match(ic, /setActive\(active\) \{ pn\.active = !!active; \}/,
+    'the host wires SetActive to the person');
+  // SetActive(false) on a GameObject takes the renderer AND the
+  // collider: the away copy must not draw and must not be clickable.
+  // BOTH draw paths - the classic billboard batch and ?voxelfolk's rig -
+  // or the away copy still stands in one of them.
+  assert.equal(ic.match(/if \(!pn\.active\) continue;\s*\/\/ SetActive\(false\): the away copy does not draw/g)?.length, 2,
+    'the flat batch AND the voxelfolk rig both skip an inactive person');
+  assert.match(ic, /if \(!pn\.active\) continue;\s*\/\/ SetActive\(false\) takes the BoxCollider with it/);
+  assert.match(wm, /if \(!pn\.width \|\| pn\.active === false\) return;/,
+    'and the activation ray skips it');
+});
+
+test('audit24 wave20: findBehaviours sees the static-NPC behaviours too', () => {
+  // GameObjectHelper.cs:917 opens with
+  // Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>(), which is
+  // every behaviour alive in the scene - the bootstrap ones on static
+  // NPCs included. IsAlreadyPlaced reads that list, so a Person the
+  // bootstrap behaviour already holds would otherwise be stood a
+  // second time by the marker walk.
+  const s = rd('src/scenes/worldModes.js');
+  assert.match(s, /findBehaviours: \(\) => sceneBehaviours\(\),/);
+  const i = s.indexOf('const sceneBehaviours = () => {');
+  assert.ok(i > 0);
+  const fn = s.slice(i, s.indexOf('};', i));
+  assert.match(fn, /questFlats\.map\(\(s\) => s\.behaviour\)/, 'the quest stands');
+  assert.match(fn, /for \(const pn of interiorCtx\?\.people \?\? \[\]\) if \(pn\.questBehaviour\) out\.push\(pn\.questBehaviour\);/,
+    'and the people');
+  // Unity destroys those behaviours with their GameObjects on the
+  // scene transition, so the interior teardown must notify them.
+  const t = s.slice(s.indexOf('function teardownQuestFlats() {'));
+  assert.match(t.slice(0, 900), /for \(const pn of interiorCtx\?\.people \?\? \[\]\) \{[\s\S]*?pn\.questBehaviour\.notifyDestroyed\?\.\(\);/);
+});

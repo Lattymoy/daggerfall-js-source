@@ -248,7 +248,12 @@ export class QuestJournalWindow {
     }
     // An empty page says so rather than showing a blank book - the same
     // honesty the settings screen owes a setting that does nothing.
-    if (!lines.some((l) => l)) {
+    // AUDIT 24: `l.text`, not `l`. Wave 11 turned page rows from bare
+    // strings into { text, color } so the highlight/question/answer
+    // colours could ride with them - and an OBJECT is always truthy,
+    // so this fallback went unreachable the same day it was written.
+    // A page of nothing but empty rows drew a blank book again.
+    if (!lines.some((l) => l.text)) {
       shadowText(renderer, font, this.mode === 'activeQuests' ? 'You have no active quests.' : 'Nothing is written here yet.', m, lx, ly);
     }
     return true;
