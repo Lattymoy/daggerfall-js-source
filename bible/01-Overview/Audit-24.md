@@ -542,6 +542,7 @@ the non-quest systems. Each wave is written up in full in
 | 24 | *One DFU member, one export* as a standing gate. Under a stale `SetLayoutData` twin: `GetDisplayName` ported and never called, so **every static NPC in the game was nameless** |
 | 25 | `StartQuest` dropped its tail (the questor carried no behaviour, so `hide npc` at startup did nothing); the rumour mill cloned where DFU freezes in place |
 | 26 | The seam gate's **alias hole** - it scanned for `world.` and `questMacros.js` writes `const w = hooks?.world`, hiding three unmounted seams |
+| 27 | Wave 26's own scout, landing after it, found two bugs IN wave 26 - a misread C# loop pinned as law, and a third copy of the compass law written two waves after the gate against duplicates |
 
 THE STANDING LESSON HELD, and grew a second half. "A pin that restates
 the port instead of the source is not a pin" was caught four more

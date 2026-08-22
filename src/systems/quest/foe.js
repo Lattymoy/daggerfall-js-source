@@ -66,6 +66,19 @@ export class Foe extends QuestResource {
     this.isRestrained = false;     // true if enemy restrained by quest
     this.killCount = 0;            // kills of this spawn; does NOT rearm
     // Q3-iii name state (Foe.cs:45-46, SetFoeName)
+    //
+    // AUDIT 24 (wave 27), EXAMINED AND NOT A DIVERGENCE - recorded so
+    // the next sweep does not raise it again. Foe.cs:45-46 declares
+    // both of these with NO initialiser, so they are NULL in C# where
+    // these are '' - the same shape as Quest.displayName, which wave 26
+    // had to fix. The difference is the CONSUMER. Quest.displayName is
+    // read through `displayName ?? quest.QuestName`, where '' and null
+    // part company. These two are read through Foe.ExpandMacro
+    // (Foe.cs:160-174) into `words[word].Replace(macro.token, result)`
+    // (QuestMacroHelper.cs:122), and .NET's String.Replace documents a
+    // null newValue as "all occurrences of oldValue are removed" -
+    // exactly what '' does. Unobservable, so the port keeps '' and its
+    // own namePending convention below.
     this.humanoidGender = GENDERS.Male;
     this.displayName = '';
     this.typeName = '';

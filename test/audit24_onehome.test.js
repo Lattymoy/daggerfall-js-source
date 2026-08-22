@@ -90,6 +90,53 @@ test('audit24 wave24: no symbol is DECLARED in two modules without a reason', as
   assert.deepEqual(stale, [], `HOMONYMS lists names that are no longer declared twice: ${stale.join(', ')}`);
 });
 
+test('audit24 wave27: the compass law has ONE implementation', async () => {
+  // THE GATE'S BOUNDARY, found the hard way. This file's gate keys on
+  // the exported NAME, so two implementations of one DFU member under
+  // DIFFERENT names are invisible to it. talkTopics.js had carried
+  // `compassHint` since the talk arc, and wave 26 walked past it and
+  // wrote `directionHintString` in talk.js - two waves after this gate
+  // was built against exactly that.
+  //
+  // Worse, the older copy was WRONG in the one place they differ: it
+  // guarded the magnitude with `|| 1e-9`, so a coincident target gave
+  // acos(0) = 90 = NORTH where C#'s 0/0 = NaN falls through to
+  // '...never mind...', and its else answered 'east' rather than the
+  // never-mind.
+  const tt = await import('../src/systems/talkTopics.js');
+  const talk = await import('../src/systems/talk.js');
+  assert.equal(tt.compassHint, talk.directionHintString, 'the same function object');
+  assert.equal(tt.compassHint(0, 0), '...never mind...', 'not north');
+  const src = readFileSync(new URL('../src/systems/talkTopics.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(src, /Math\.hypot\(dx, dz\) \|\| 1e-9/, 'the magnitude guard is gone with it');
+  assert.doesNotMatch(src, /angle >= 337\.5/, 'and no second band table');
+});
+
+test('audit24 wave27: the gate BOUNDARY is written down, not assumed away', () => {
+  // Three mechanisms were tried for catching same-member-different-name
+  // duplicates automatically, and none has a usable signal:
+  //
+  //   by C# citation   - only 4 cross-module hits in the whole tree,
+  //                      all of them a helper and its caller citing one
+  //                      line; and it would NOT have caught compassHint,
+  //                      whose doc comment carried no line citation.
+  //   by shared literals, all numbers      - 961 file pairs. Small
+  //                      integers are ids and indices; they are shared
+  //                      everywhere.
+  //   by shared FRACTIONAL literals only   - still 637 pairs. The port
+  //                      is full of 0.05/0.1/0.2 tuning constants.
+  //
+  // So the boundary is documented instead of gated, which is the honest
+  // outcome: a noisy gate gets suppressed and then protects nothing.
+  // What DOES work is the wave-23e scan for a bracketed run of six or
+  // more numbers on one line - distinctive enough to be signal, and it
+  // is what found the armour ladder. It only catches TABLE-shaped
+  // duplicates; function-shaped ones need a reader.
+  const self = readFileSync(new URL('./audit24_onehome.test.js', import.meta.url), 'utf8');
+  assert.match(self, /THE GATE'S BOUNDARY, found the hard way/);
+  assert.match(self, /keys on\s*\n\s*\/\/ the exported NAME/);
+});
+
 test('audit24 wave24: the duplicate-declaration count does not grow', () => {
   // The pairs that AGREE today are not bugs, they are drift waiting to
   // happen, and collapsing all of them is a bigger refactor than this

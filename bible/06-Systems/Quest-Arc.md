@@ -3021,6 +3021,112 @@ with `region === -1` when the query is also -1, and the exact-match
 return fires either way.
 
 
+### Wave 27
+
+**The scout landed after the wave it was scouting, and found two bugs
+in it.**
+
+Wave 26 shipped without its scout: the box has four CPUs, so each
+workflow runs two agents at a time, and waiting was slower than reading
+the C# myself. That was the right call for throughput and it cost
+something. When the scout finished it had a checker on every answer,
+and between them they found **two defects in what wave 26 had already
+pushed**.
+
+**The one I got wrong.** `GetLocationCompassDirection` looks like a
+last-match-wins loop, and I read it that way:
+
+```csharp
+for (int i = 0; i < locations.Length; i++)
+{
+    if (locations[i].ToLower() == name)
+    {
+        if (currentDFRegion.MapNameLookup.ContainsKey(locations[i]))
+        {
+            int index = currentDFRegion.MapNameLookup[locations[i]];
+            locationInfo = currentDFRegion.MapTable[index];
+```
+
+The loop does not break - that part is true. But the row is fetched by
+`MapNameLookup[locations[i]]`, **not by `i`**, and `MapNameLookup` is
+built first-wins (`if (!ContainsKey(name)) Add(name, i)`,
+`MapsFile.cs:1082-1083`). So every iteration for a duplicated name
+resolves the *same first row*; the repeats are wasted work, not a rule.
+I had written `mapTable[i]`, which really is last-wins, and then
+**pinned my misreading as the law**.
+
+That is the ninth catch of *a pin that restates the port instead of the
+source* - except this one restated a misreading of the source, which is
+a worse failure and one only a second reader was ever going to find.
+The port carries `mapNameLookup` already, built first-wins at
+`mapsFile.js:519`, so the fix is to use it. Two names differing only in
+CASE still take the last, because the `ToLower` compare matches both
+while the dictionary keys stay exact-case - so the lookup is
+per-iteration, not hoisted.
+
+**The one I walked past.** `talkTopics.js` has carried `compassHint`
+since the talk arc: a complete second implementation of
+`DirectionVector2DirectionHintString`. Wave 26 wrote a third.
+
+Two waves after wave 24 built a gate against exactly this.
+
+The gate keys on the exported **name**, and `compassHint` and
+`directionHintString` are different names for the same DFU member. It
+saw nothing. And the older copy was wrong in the one place the two
+differ:
+
+```js
+const mag = Math.hypot(dx, dz) || 1e-9;
+```
+
+C# divides by the raw magnitude, so a coincident target gives
+`0/0 = NaN`, every band comparison fails, and the chain falls to
+`...never mind...`. That guard turns it into `acos(0) = 90` - **north**.
+So "where is the shop I am standing in?" got a confident wrong
+direction, and its `else` answered `east` rather than the never-mind.
+One implementation now.
+
+**I tried to gate the class and could not.** Three mechanisms:
+
+| mechanism | result |
+|---|---|
+| group exports by the C# member their doc cites | 4 cross-module hits, every one a helper and its caller sharing a line - and it would **not** have caught `compassHint`, whose doc carried no citation at all |
+| file pairs sharing distinctive numeric literals | 961 pairs. Small integers are ids and indices; they are shared everywhere |
+| the same, restricted to FRACTIONAL literals | still 637. The port is full of 0.05/0.1/0.2 tuning constants |
+
+So the boundary is **written down** in the gate rather than gated. A
+noisy gate gets suppressed and then protects nothing, and claiming
+coverage you do not have is worse than naming the gap. What does work
+is wave 23e's scan for a bracketed run of six or more numbers on one
+line - distinctive enough to be signal, and it is what found the armour
+ladder. It catches TABLE-shaped duplicates only; function-shaped ones
+under different names still need a reader.
+
+**Examined and not a divergence,** recorded so the next sweep does not
+raise it: `Foe.cs:45-46` declares `displayName` and `typeName` with no
+initialiser, exactly the shape wave 26 had to fix on `Quest`. The
+consumer is what differs. `Quest.displayName` is read through
+`displayName ?? quest.QuestName`, where `''` and null part company;
+the Foe pair is read through `words[word].Replace(macro.token, result)`
+(`QuestMacroHelper.cs:122`), and .NET documents a null `newValue` as
+"all occurrences of oldValue are removed" - which is what `''` does.
+Unobservable, so the port keeps `''`.
+
+Three mutants, three kills, and one that survived and should not have:
+dropping the `lookup?.has` guard passed every pin, because every
+fixture supplied a lookup. It is not equivalent - it turns a
+partially-built region record into a TypeError that takes the whole
+macro expansion down - so the fixture that has no lookup at all is
+pinned now.
+
+**Still open, for the next wave:** `answerPipeline`'s
+`buildingCompassDirection` dep is not supplied by world.js's
+construction, so `%di`'s local arm is dark on the talk path too - and
+the seam gate scans `src/systems/quest/` only, so that whole dep
+surface has no gate at all. The seam itself is legitimately PENDING;
+the missing gate is not.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

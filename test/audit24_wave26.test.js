@@ -172,10 +172,18 @@ test('audit24 wave26: locationCompassDirection keeps the last-match and (0,0) sh
     getPoliticIndex: () => 128 + 17,          // region 17
     getRegion: (i) => (i === 17 ? region : null),
   };
-  const region = {
-    mapNames: ['Privys', 'Elsewhere'],
-    mapTable: [{ longitude: 400 * 128, latitude: (499 - 300) * 128 }, { longitude: 1 * 128, latitude: 498 * 128 }],
+  const mkRegion = (mapNames, mapTable) => {
+    // MapsFile.cs:1082-1083 builds MapNameLookup FIRST-WINS, and
+    // mapsFile.js:519 does the same; the fixture must too or it is
+    // not the shape under test.
+    const mapNameLookup = new Map();
+    mapNames.forEach((n, i) => { if (!mapNameLookup.has(n)) mapNameLookup.set(n, i); });
+    return { mapNames, mapTable, mapNameLookup };
   };
+  const region = mkRegion(
+    ['Privys', 'Elsewhere'],
+    [{ longitude: 400 * 128, latitude: (499 - 300) * 128 }, { longitude: 1 * 128, latitude: 498 * 128 }],
+  );
   const at = (x, y) => locationCompassDirection({ playerMapPixel: () => ({ x, y }), maps }, 'Privys');
   assert.equal(at(300, 300), 'east', 'the target is at pixel x=400, y=300');
   assert.equal(at(500, 300), 'west');
@@ -189,15 +197,47 @@ test('audit24 wave26: locationCompassDirection keeps the last-match and (0,0) sh
   assert.equal(locationCompassDirection({ playerMapPixel: () => ({ x: 300, y: 300 }), maps }, 'privys'), 'east');
   assert.equal(locationCompassDirection({ playerMapPixel: () => ({ x: 300, y: 300 }), maps }, 'Nowhere'), '...never mind...');
 
-  // C# QUIRK: the loop does NOT break, so the LAST location of that
-  // name in the region wins.
-  const twice = {
-    mapNames: ['Privys', 'Privys'],
-    mapTable: [{ longitude: 400 * 128, latitude: (499 - 300) * 128 }, { longitude: 100 * 128, latitude: (499 - 300) * 128 }],
-  };
+  // THE SHAPE WAVE 26 GOT WRONG AND THE SCOUT CAUGHT. The loop does not
+  // break - but the row is looked up BY NAME
+  // (`MapTable[MapNameLookup[locations[i]]]`, TalkManager.cs:1263-1266),
+  // and MapNameLookup is first-wins, so every iteration for a duplicated
+  // name resolves the SAME first row. Wave 26 indexed mapTable by the
+  // loop counter, which really is last-wins, and pinned that as the law.
+  const twice = mkRegion(
+    ['Privys', 'Privys'],
+    [{ longitude: 400 * 128, latitude: (499 - 300) * 128 }, { longitude: 100 * 128, latitude: (499 - 300) * 128 }],
+  );
   const mapsTwice = { ...maps, getRegion: () => twice };
   assert.equal(locationCompassDirection({ playerMapPixel: () => ({ x: 300, y: 300 }), maps: mapsTwice }, 'Privys'),
-    'west', 'the SECOND Privys (x=100) wins, not the first (x=400)');
+    'east', 'the FIRST Privys (x=400) wins - MapNameLookup is first-wins');
+
+  // and two names differing only in CASE still take the last, because
+  // the ToLower compare matches both while the dictionary keys stay
+  // exact-case, so the lookup really is per-iteration
+  const cased = mkRegion(
+    ['Privys', 'privys'],
+    [{ longitude: 400 * 128, latitude: (499 - 300) * 128 }, { longitude: 100 * 128, latitude: (499 - 300) * 128 }],
+  );
+  assert.equal(locationCompassDirection({ playerMapPixel: () => ({ x: 300, y: 300 }), maps: { ...maps, getRegion: () => cased } }, 'PRIVYS'),
+    'west', 'the second, differently-cased Privys wins');
+
+  // a name the lookup does not hold is SKIPPED, not defaulted to row 0
+  const orphan = { ...mkRegion(['Privys'], [{ longitude: 400 * 128, latitude: (499 - 300) * 128 }]), mapNameLookup: new Map() };
+  assert.equal(locationCompassDirection({ playerMapPixel: () => ({ x: 300, y: 300 }), maps: { ...maps, getRegion: () => orphan } }, 'Privys'),
+    '...never mind...');
+
+  // and a region record with NO lookup at all answers never-mind rather
+  // than throwing. C# always builds MapNameLookup at load
+  // (MapsFile.cs:1063), but the port's getRegion can hand back a
+  // partially-built record, and `lookup.get` on a missing one is a
+  // TypeError that would take the whole macro expansion down. Dropping
+  // the `lookup?.has` guard survived every other pin here.
+  const noLookup = { mapNames: ['Privys'], mapTable: [{ longitude: 400 * 128, latitude: (499 - 300) * 128 }] };
+  assert.equal(locationCompassDirection({ playerMapPixel: () => ({ x: 300, y: 300 }), maps: { ...maps, getRegion: () => noLookup } }, 'Privys'),
+    '...never mind...');
+  // and no region at all, which is the out-of-range politic case
+  assert.equal(locationCompassDirection({ playerMapPixel: () => ({ x: 1, y: 1 }), maps: { ...maps, getRegion: () => null } }, 'Privys'),
+    '...never mind...');
 
   // an out-of-range politic index reads region -1, which has no map
   const bad = { ...maps, getPoliticIndex: () => 128 + 999 };

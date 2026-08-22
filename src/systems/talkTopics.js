@@ -30,6 +30,7 @@
 import { generateBuildingName, isNamedBuildingType, BUILDING_TYPES } from '../world/buildingNames.js';
 import { randomRangeInclusive, srand } from '../formats/dfRandom.js';
 import { RMB_SIDE } from '../world/locationLayout.js';
+import { directionHintString } from './talk.js';   // wave 27: one compass law
 
 // TalkManager.knowledgeModifiers (verbatim, 8 question rows x 5
 // social groups).
@@ -217,21 +218,25 @@ export function buildBuildingDirectory(exteriorBuildings, blocks, doors, nameOpt
   return dirs;
 }
 
-/** DirectionVector2DirectionHintString, verbatim over (east, north). */
-export function compassHint(dx, dz) {
-  const mag = Math.hypot(dx, dz) || 1e-9;
-  let angle = Math.acos(dx / mag) / Math.PI * 180;
-  if (dz < 0) angle = 180 + (180 - angle);
-  if ((angle >= 0 && angle < 22.5) || (angle >= 337.5 && angle <= 360)) return 'east';
-  if (angle < 67.5) return 'northeast';
-  if (angle < 112.5) return 'north';
-  if (angle < 157.5) return 'northwest';
-  if (angle < 202.5) return 'west';
-  if (angle < 247.5) return 'southwest';
-  if (angle < 292.5) return 'south';
-  if (angle < 337.5) return 'southeast';
-  return 'east';
-}
+/** DirectionVector2DirectionHintString over (east, north).
+ *
+ *  AUDIT 24 (wave 27): this was a SECOND implementation of
+ *  TalkManager.cs:1163-1187, and wave 26 walked straight past it and
+ *  wrote a THIRD in systems/talk.js - two waves after wave 24 built a
+ *  gate against exactly this. The gate keys on the exported NAME, and
+ *  `compassHint` and `directionHintString` are different names for the
+ *  same DFU member, so it saw nothing.
+ *
+ *  This copy was also WRONG in the one place the two differ. C# divides
+ *  by the raw magnitude, so a coincident target gives 0/0 = NaN, every
+ *  band comparison fails and the chain falls to its `else` -
+ *  '...never mind...'. This one guarded the magnitude with `|| 1e-9`,
+ *  turning that into acos(0) = 90 = NORTH, and its final `else`
+ *  answered 'east' rather than the never-mind. So "where is the shop
+ *  I am standing in?" got a confident wrong direction.
+ *
+ *  One implementation now, in talk.js beside the rest of TalkManager. */
+export { directionHintString as compassHint } from './talk.js';
 
 // T3f: the tone tables (TalkManager, verbatim; sgroup >= 5 folds to
 // Merchants before indexing).
@@ -282,7 +287,7 @@ export function whereIsAnswer(playerPos, building, personality, npcSeed, socialG
   const tier = opts.tier ?? reactionTier(personality, npcSeed);   // T3f: the host passes the toned tier
   const knows = npcKnowsAboutItem(npcSeed, building.buildingKey ?? 0, socialGroup, 0);
   const textId = ANSWERS_TO_DIRECTIONS[(knows ? 15 : 0) + 3 * socialGroup + tier];
-  const direction = compassHint(building.position[0] - playerPos[0], building.position[2] - playerPos[2]);
+  const direction = directionHintString(building.position[0] - playerPos[0], building.position[2] - playerPos[2]);
   return { textId, direction, tier, knows };
 }
 

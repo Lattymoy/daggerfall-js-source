@@ -90,12 +90,26 @@ export function directionHintString(x, y) {
  *  128, and out-of-range reads -1), and the location is found by
  *  case-insensitive NAME within that region's map names.
  *
- *  THREE C# SHAPES KEPT: the name loop does NOT break on a match, so
- *  the LAST location of that name in the region wins; the "did we find
- *  it" test is `positionLocation != Vector2.zero`, so a location whose
- *  map pixel really is (0,0) reads as not-found; and the y axis is
- *  INVERTED before the hint, because map pixels grow southwards while
- *  the hint's bands are drawn on a normal y-up plane.
+ *  THREE C# SHAPES KEPT. The row is looked up BY NAME, not by the loop
+ *  index:
+ *
+ *      int index = currentDFRegion.MapNameLookup[locations[i]];
+ *      locationInfo = currentDFRegion.MapTable[index];
+ *
+ *  and MapNameLookup is built FIRST-WINS (`if (!ContainsKey(name))
+ *  Add(name, i)`, MapsFile.cs:1082-1083). So although the loop does not
+ *  break, every iteration for a duplicated name resolves the SAME first
+ *  row - the repeats are wasted work, not a last-wins rule. (Wave 26
+ *  shipped `mapTable[i]` here, which really is last-wins, and pinned
+ *  that as the law; the wave-26 scout caught it. Two names differing
+ *  only in CASE still take the last, because the ToLower compare
+ *  matches both while the dictionary keys stay exact-case - so the
+ *  lookup is per-iteration, not hoisted.)
+ *
+ *  The "did we find it" test is `positionLocation != Vector2.zero`, so
+ *  a location whose map pixel really is (0,0) reads as not-found; and
+ *  the y axis is INVERTED before the hint, because map pixels grow
+ *  southwards while the hint's bands are drawn on a normal y-up plane.
  *
  *  @param {object} deps
  *  @param {function():{x:number,y:number}} deps.playerMapPixel
@@ -109,10 +123,14 @@ export function locationCompassDirection({ playerMapPixel, maps }, locationName)
   const dfRegion = maps?.getRegion?.(region) ?? null;
   const names = dfRegion?.mapNames ?? [];
   const wanted = String(locationName ?? '').toLowerCase();
+  const lookup = dfRegion?.mapNameLookup ?? null;
   let loc = { x: 0, y: 0 };
   for (let i = 0; i < names.length; i++) {
-    if (String(names[i]).toLowerCase() !== wanted) continue;   // no break: the LAST match wins
-    const row = dfRegion.mapTable?.[i];
+    if (String(names[i]).toLowerCase() !== wanted) continue;
+    // `if (MapNameLookup.ContainsKey(locations[i]))` - a name the
+    // dictionary does not hold is skipped, not defaulted
+    if (!lookup?.has(names[i])) continue;
+    const row = dfRegion.mapTable?.[lookup.get(names[i])];
     if (!row) continue;
     loc = longitudeLatitudeToMapPixel(Math.trunc(row.longitude), Math.trunc(row.latitude));
   }
