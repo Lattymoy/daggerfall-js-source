@@ -20,6 +20,7 @@ import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES } from '../characters/equipRules.js';
 import { createEquipTable, getItemHands as handsOf, ITEM_HANDS } from '../characters/equipTable.js';
 import { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, SHIELD_VALUES, SHIELD_PARTS, isShieldTemplate } from './armorMaterials.js';
+import { weaponSkillUsed } from '../characters/weapons.js';   // wave 29: GetWeaponSkillUsed keys on the TEMPLATE
 import { SKILLS, WEAPON_SKILL } from './skills.js';   // S23: the weapon partition, single-sourced
 import { EQUIP_DELAY_TIMES } from '../characters/weaponStates.js';   // CH3 (characters-13): the swap-pause table gains its consumer
 
@@ -119,13 +120,23 @@ export function isForbiddenEquip(career, item) {
   return false;
 }
 
-/** GetWeaponSkillUsed (:910-940) as a ProficiencyFlag. DFU switches on
- *  the template index; the port already single-sources that partition
- *  as WEAPON_SKILL (name -> skill), so this maps the SKILL across
- *  rather than minting a second weapon table (ONE DFU MEMBER, ONE
- *  EXPORT). The -1 default is DFU's Skills.None, quirk included. */
+/** GetWeaponSkillUsed (:910-941) as a ProficiencyFlag. DFU switches on
+ *  the TEMPLATE INDEX, and its `default:` really does return
+ *  `(int)Skills.None`, which is -1 - so an unmatched template is all
+ *  bits set, and `-1 & ForbiddenProficiencies` is non-zero for any
+ *  career with any restriction at all. That quirk is kept.
+ *
+ *  AUDIT 24 (wave 29): this keyed on `item.name`, and a name is not the
+ *  template. itemTemplates.json spells 117 "Wakizashi" and 123
+ *  "Dai-katana" where the weapon table has Wakazashi / Dai_Katana, and
+ *  loot.createRegularMagicItem RENAMES an enchanted weapon to its
+ *  MAGIC.DEF name - so all three fell to the unmatched -1 and were
+ *  REFUSED by every restricted career. characters/weapons.js already
+ *  carried the correct template-index map, with a comment describing
+ *  this exact trap, and this was a second copy that had not been
+ *  fixed with it. */
 export function weaponProficiencyFlag(item) {
-  const flag = PROFICIENCY_OF_SKILL[WEAPON_SKILL[item?.name]];
+  const flag = PROFICIENCY_OF_SKILL[weaponSkillUsed(item?.templateIndex)];
   return flag ?? -1;
 }
 const PROFICIENCY_OF_SKILL = Object.freeze({
@@ -137,6 +148,12 @@ const SHIELD_TEMPLATE_START = 109;
 
 /** The message DFU pops on a refused equip (:1325, :1372-1379). */
 export const FORBIDDEN_EQUIPMENT_TEXT_ID = 1068;
+/** ...and on a BROKEN one (:1324, :1330-1341), which is checked FIRST. */
+export const ITEM_BROKEN_TEXT_ID = 29;
+/** `if (item.currentCondition < 1)` - strictly less than one, so a
+ *  condition of exactly 1 still equips. An item with no condition
+ *  recorded is not broken (the port mints many without one). */
+export const isBrokenItem = (item) => item?.currentCondition != null && item.currentCondition < 1;
 
 /** EquipItem verbatim: the unequipped list, or null when the item
  *  cannot equip. */
@@ -145,6 +162,11 @@ export function equipItem(entity, item) {
   const slot = getEquipSlot(entity, item);   // computed ONCE up front (the DFU order)
   if (slot === EQUIP_SLOTS.None) return null;
   if (item.group === 'Weapons' && item.templateIndex === ARROW) return null;   // cannot equip arrows
+  // AUDIT 24 (wave 29): DaggerfallInventoryWindow.cs:1330-1341 - a
+  // BROKEN item pops TEXT.RSC 29 and returns, before the prohibition
+  // chain is even reached. The port had no such gate, so an item worn
+  // down to 0 condition could be taken off and put straight back on.
+  if (isBrokenItem(item)) return null;
   if ((item.stackCount ?? 1) > 1) {
     // SplitStack(item, 1): the worn single is its own record
     item.stackCount--;

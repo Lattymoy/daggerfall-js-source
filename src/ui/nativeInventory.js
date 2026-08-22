@@ -54,7 +54,7 @@ import { drawScreenDimBackdrop } from './chargenArt.js';
 import { addItem, isEnchanted, goldStack, canHoldAmount, effectiveUnitWeightInKg, totalWeight } from '../systems/inventory.js';   // L-slice (items-9)
 import { maxEncumbrance } from '../combat/formulas.js';   // L-slice (items-9)
 import { liveStat } from '../systems/statMods.js';   // L-slice (items-9)
-import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, FORBIDDEN_EQUIPMENT_TEXT_ID } from '../systems/equip.js';   // S23
+import { isEquipped, equipItem, unequipSlot, isForbiddenEquip, isBrokenItem, FORBIDDEN_EQUIPMENT_TEXT_ID, ITEM_BROKEN_TEXT_ID } from '../systems/equip.js';   // S23
 import { drawPaperDoll, refreshPaperDoll, slotAtPaperDoll, ARMOR_LABEL_POS } from './paperDoll.js';
 import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, safeScrollIndex } from './itemScroller.js';
 import { templateByIndex, itemBaseValue } from '../systems/itemTemplates.js';
@@ -250,6 +250,16 @@ export class NativeInventoryWindow {
    *  interim popup. The REFUSAL ITSELF is verbatim - the item does not
    *  equip, which is the half that changes play. */
   _refuseForbidden(it) {
+    // AUDIT 24 (wave 29): the BROKEN gate runs first
+    // (DaggerfallInventoryWindow.cs:1330-1341) - before the
+    // prohibition chain, and with its own TEXT.RSC record.
+    if (isBrokenItem(it)) {
+      this.boxes = [{
+        rows: this.hooks.rows?.(ITEM_BROKEN_TEXT_ID)
+          ?? [{ text: 'This item is broken.', center: true }],
+      }];
+      return true;
+    }
     if (!isForbiddenEquip(this.hooks.entity?.career, it)) return false;
     // U25: the record itself now draws, on the U11 parchment, through
     // the host's TEXT.RSC reader - the interim two lines are gone.

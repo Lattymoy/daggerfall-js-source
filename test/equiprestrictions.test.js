@@ -26,7 +26,22 @@ const bare = () => buildCustomCareer({
 });
 const armor = (material, templateIndex = 102) => ({ group: 'Armor', templateIndex, material, name: 'Cuirass' });
 const shield = (templateIndex) => ({ group: 'Armor', templateIndex, material: ARMOR_MATERIAL.Iron, name: 'Shield' });
-const weapon = (name, material = 0) => ({ group: 'Weapons', templateIndex: 0, material, name });
+// wave 29: a weapon is its TEMPLATE INDEX. This helper used to mint
+// `templateIndex: 0` and rely on the name, which is what
+// GetWeaponSkillUsed does NOT key on - and a name is not immutable:
+// itemTemplates.json spells 117 "Wakizashi" and 123 "Dai-katana"
+// against the weapon table's Wakazashi/Dai_Katana, and an enchanted
+// weapon is renamed to its MAGIC.DEF name.
+const WEAPON_TEMPLATE = {
+  Dagger: 113, Tanto: 114, Staff: 115, Shortsword: 116, Wakizashi: 117,
+  Broadsword: 118, Saber: 119, Longsword: 120, Katana: 121, Claymore: 122,
+  'Dai-katana': 123, Mace: 124, Flail: 125, Warhammer: 126,
+  'Battle Axe': 127, 'War Axe': 128, 'Short Bow': 129, 'Long Bow': 130,
+  Arrow: 131,
+};
+const weapon = (name, material = 0) => ({
+  group: 'Weapons', templateIndex: WEAPON_TEMPLATE[name] ?? 0, material, name,
+});
 
 test('S23: forbidden ARMOR TYPE blocks by the material\'s high byte', () => {
   // :1352 - `1 << (NativeMaterialValue >> 8) & ForbiddenArmors`, and
@@ -98,6 +113,14 @@ test('S23: GetWeaponSkillUsed maps the port\'s own weapon partition', () => {
   assert.equal(weaponProficiencyFlag(weapon('War Axe')), 8, 'Axes');
   assert.equal(weaponProficiencyFlag(weapon('Warhammer')), 16, 'BluntWeapons');
   assert.equal(weaponProficiencyFlag(weapon('Long Bow')), 32, 'MissileWeapons');
+  // wave 29: the two templates whose JSON spelling differs from the
+  // weapon table's, and a renamed enchanted weapon. All three used to
+  // fall to the -1 unmatched quirk and be refused by any restricted
+  // career; they key on the template now.
+  assert.equal(weaponProficiencyFlag(weapon('Wakizashi')), 1, 'ShortBlades - template 117');
+  assert.equal(weaponProficiencyFlag(weapon('Dai-katana')), 2, 'LongBlades - template 123');
+  assert.equal(weaponProficiencyFlag({ group: 'Weapons', templateIndex: 121, material: 0, name: 'Wabbajack' }), 2,
+    'a MAGIC.DEF rename is still a Katana');
   // Skills.None = -1 for a template DFU does not name (:938). -1 masks
   // against every bit, so an unnamed weapon-group item reads as
   // forbidden to any career with any forbidden proficiency at all.

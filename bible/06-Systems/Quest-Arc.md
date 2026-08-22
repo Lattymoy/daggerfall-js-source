@@ -3208,6 +3208,92 @@ wave 27's: the agent's citation is a lead, not a finding, until I have
 opened both files myself.
 
 
+### Wave 29
+
+**Two item highs - and the container took the findings with it.**
+
+Between waves the container was reclaimed again. The local clone rolled
+back to `aee02a3`, `git reset --hard origin/...` restored everything to
+`bfc74f0`, and the vendored C# survived (it is large but it is on disk,
+not in `/tmp`). What did **not** survive was the workflow journal and
+the task output - so the thirty-five remaining findings lost their
+`csBehaviour`/`portBehaviour`/`reachable` prose. Their titles, slices
+and port line numbers are still in the conversation.
+
+That turns out not to matter, because wave 27's rule already said the
+agent's prose is a lead and not a finding. A title with a file:line is
+exactly as much as I am allowed to trust anyway.
+
+**A name is not a template.**
+
+```csharp
+public virtual int GetWeaponSkillUsed()
+{
+    switch (TemplateIndex)
+    {
+        case (int)Weapons.Dagger:
+        ...
+        default:
+            return (int)Skills.None;
+    }
+}
+```
+
+`equip.js` keyed that on `item.name`. Three populations miss:
+`itemTemplates.json` spells 117 **"Wakizashi"** and 123
+**"Dai-katana"** where the weapon table has `Wakazashi` and
+`Dai_Katana`, and `createRegularMagicItem` renames an enchanted weapon
+to its MAGIC.DEF name.
+
+They fall to the `default:`, and `Skills.None` is **-1**
+(`DFCareer.cs:450`) - all bits set. `-1 & ForbiddenProficiencies` is
+non-zero for any career with any restriction at all, so a Wakizashi, a
+Dai-katana and every renamed magic weapon were **refused outright** by
+every restricted class.
+
+The -1 is not the bug. It is a real DFU quirk, ported deliberately, and
+it stays. The bug was *reaching* it.
+
+And the port already knew. `characters/weapons.js` carries the correct
+template-index map, under a comment that spells out this exact trap -
+"a name is not immutable... an enchanted broadsword swung with
+LongBlade 70 was scored on HandToHand 20". An earlier audit found it on
+the damage path and fixed it there. `equip.js` was the second copy, and
+it did not get fixed with it. *ONE DFU MEMBER, ONE EXPORT*, again -
+and the gate cannot see it, because the two are named
+`weaponSkillUsed` and `weaponProficiencyFlag`, which is precisely the
+boundary wave 27 wrote down.
+
+The fixture pinning it built weapons with `templateIndex: 0` and a
+name, so it restated the keying that was the bug.
+
+**And a broken item could be put straight back on.**
+
+```csharp
+if (item.currentCondition < 1)
+{
+    ... GetRSCTokens(itemBrokenTextId) ...
+    return;
+}
+```
+
+`DaggerfallInventoryWindow.EquipItem` checks that **first**, ahead of
+the whole prohibition chain, with its own TEXT.RSC record (29, not the
+forbidden 1068). The port had no such gate anywhere, so an item worn
+down to zero condition unequipped and re-equipped freely. Strictly less
+than one - a condition of exactly 1 still equips - and an item with no
+condition recorded is not broken, because the port mints many without
+one.
+
+Five mutants, five kills. A sixth *looked* like a survivor and was not:
+weakening `< 1` to `< 0` passed, and the reason was that my mutation
+string matched the doc comment quoting the expression before it reached
+the expression. *A MUTANT THAT EDITS A COMMENT TESTS NOTHING* - re-run
+against the code, it died at once, and so did `<= 1`.
+
+**Thirty-three findings remain.**
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

@@ -283,7 +283,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/effects.js:442` - enchantment bundles are FLAGGED to their own arc.
 - `src/systems/effects.js:718` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
-- `src/systems/equip.js:199` - /** INTERIM starting equipment (chargen's starting-gear roll
+- `src/systems/equip.js:221` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/factionRep.js:228` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
 - `src/systems/gameDate.js:23` - FLAGGED, deliberately: the two LUNAR PHASE getters (:134-150,
 - `src/systems/guildServiceActions.js:170` - *  turning into a vampire or werebeast - FLAGGED: the port has no
@@ -340,8 +340,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
 - `src/ui/nativeInventory.js:134` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
 - `src/ui/nativeInventory.js:247` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-- `src/ui/nativeInventory.js:481` - field is INTERIM-pending with the local Remove split.
-- `src/ui/nativeInventory.js:635` - FLAGGED: the hover fill is the mouse-move seam's, not this
+- `src/ui/nativeInventory.js:491` - field is INTERIM-pending with the local Remove split.
+- `src/ui/nativeInventory.js:645` - FLAGGED: the hover fill is the mouse-move seam's, not this
 - `src/ui/nativeTalk.js:29` - INTERIM no-ops (their topic sources pend quests/work).
 - `src/ui/nativeTalk.js:182` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/nativeTalk.js:196` - Tell me about / People / Things / Work: INTERIM no-ops (pend)

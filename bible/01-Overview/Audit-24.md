@@ -544,6 +544,7 @@ the non-quest systems. Each wave is written up in full in
 | 26 | The seam gate's **alias hole** - it scanned for `world.` and `questMacros.js` writes `const w = hooks?.world`, hiding three unmounted seams |
 | 27 | Wave 26's own scout, landing after it, found two bugs IN wave 26 - a misread C# loop pinned as law, and a third copy of the compass law written two waves after the gate against duplicates |
 | 28 | The twelve-slice non-quest sweep lands (60 agents, 37 confirmed, 16 high). First two: an unarmoured character contributed **0** to CalculateArmorToHit where DFU contributes **100**, so enemies essentially could not hit a fresh character; and MaxMagicka was a chargen snapshot where DFU recomputes it from LiveIntelligence on every read |
+| 29 | GetWeaponSkillUsed keyed on the item NAME, so a Wakizashi, a Dai-katana and every renamed magic weapon hit the `Skills.None = -1` default and were refused by every restricted career; and the broken-item equip gate (`currentCondition < 1`) was missing entirely |
 
 THE STANDING LESSON HELD, and grew a second half. "A pin that restates
 the port instead of the source is not a pin" was caught four more
