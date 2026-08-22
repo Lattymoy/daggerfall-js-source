@@ -3707,6 +3707,97 @@ of machinery and it gets its own wave.
 **Twenty-eight findings remain**, plus that one.
 
 
+### Wave 33
+
+**A paralysed enemy is not a photograph.**
+
+Wave 32 closed with a finding it refused to fix in the same breath.
+This is it.
+
+```csharp
+void HandleParalysis()
+{
+    // Freezing anims also prevents the attack from triggering until paralysis cleared
+    if (entityBehaviour.Entity.IsParalyzed)
+    {
+        mobile.FreezeAnims = true;
+        CanAct = false;
+        flyerFalls = true;
+    }
+    mobile.FreezeAnims = false;
+}
+```
+
+`:259` is outside the brace at `:258`. Two plain field assignments sit
+between the write and the overwrite - no call, no yield, no event.
+`FreezeAnims` is a plain `bool` behind a plain getter and setter,
+there are exactly five references to it in the entire tree, and the
+only two writers are those two lines. It is a **dead store**, and the
+comment three lines above it is describing a law the code cancels.
+
+So in DFU a paralysed enemy keeps animating. `UpdateToIdleOrMoveAnim`
+is called *after* the `if (CanAct)` gate, unconditionally, and puts a
+stationary one into `Idle`, which plays; `UpdateOrientation` has no
+`FreezeAnims` check at all, so the sprite keeps turning to face you as
+you circle it. What stops the blow is `EnemyAttack`, which returns at
+the top of `Update` while paralysed.
+
+The port's dungeon host skipped the whole mobile update and redrew a
+cached output - and it quoted that comment while doing it, in the
+source and in `Combat.md` twice. It froze the **facing** as well as
+the frame, which DFU would not do under any reading, mistaken or
+otherwise.
+
+The verification is the part worth recording. This was a claim about
+DFU that would reverse shipped, pinned behaviour, so it went to an
+independent refuter with a list of six specific ways it could be
+wrong - a second writer, a side-effecting setter, a partial class, a
+`#if`, some other mechanism in the animation layer, and the awkward
+one: *if `Idle` is a single-frame sprite for most enemies, "keeps
+animating" and "holds its frame" are the same picture and the finding
+is empty.* It came back CONFIRMED on the first five, and on the sixth
+it did what a good refuter does - it conceded the point as far as the
+evidence went (~48 enemies have a static idle and no ARENA2 data is on
+this machine to check the frame counts), and then showed the finding
+survives anyway: the thirteen enemies with `HasIdle = false` fall back
+to the **move** cycle for their idle, and those thirteen are every
+flyer, every spectral and every aquatic in the game. A paralysed bat
+keeps flapping while it falls. It also volunteered the orientation
+freeze, which nobody had asked about.
+
+**And the blow is not dropped. It waits.**
+
+```csharp
+if (mobile.DoMeleeDamage)
+{
+    MeleeDamage();
+    mobile.DoMeleeDamage = false;
+}
+```
+
+`EnemyAttack.Update:97-100`, and that clear is the **only** writer of
+`false` in the tree. The animation coroutine sets the flag when the
+sequence reaches its `-1` marker; the paralysis return at `:93`
+happens *before* the clear. So a swing that reaches its damage frame
+during paralysis stays armed and lands on the first unparalysed frame.
+
+The port's flags were per-frame edges, cleared at the top of every
+`update()`. Under the dungeon's freeze the marker was never reached at
+all; under wave 32's exterior gate it was reached and thrown away.
+Both dropped a blow DFU delivers. They are latches now, named
+`doMeleeDamage` and `shootArrow` after the members they are - a name
+that says "frame" for something that persists across frames is the
+same hazard as a comment for a line that is not there - and all three
+pools consume-and-clear exactly as `EnemyAttack.Update` does. The gate
+asserts the pairing: every latch read in a host has a clear, counted.
+
+Seven mutants, seven kills - including reinstating the freeze and
+removing any one of the three clears, which is the failure mode a
+latch invites.
+
+**Twenty-eight findings remain.**
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

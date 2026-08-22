@@ -16,9 +16,20 @@
 // (AUDIT 18). RangedAttack1/2 are N/A
 // for monsters (HasRangedAttack1 is class-enemy-only in EnemyBasics
 // - the rigs' bow path owns it).
-// C16: the -1 frame IS the damage moment (hitFrame -> the scene's
+// C16: the -1 frame IS the damage moment (doMeleeDamage -> the scene's
 // MeleeDamage resolution; the machine's hit frame stays the RIGS'
 // clock). DEFERRED (FLAGGED): the Seducer transform pair.
+//
+// AUDIT 24 (wave 33): these two are LATCHES, not per-frame edges, and
+// the names are DFU's for that reason. AnimateEnemy sets
+// doMeleeDamage/shootArrow when the sequence reaches its -1 marker
+// (DaggerfallMobileUnit.cs:303, :555-560) and the ONLY writer of false
+// is the consumer, EnemyAttack.Update (:97-105), which is also the
+// method that returns early while the entity is paralysed (:91-94). So
+// a swing that reaches its damage frame during paralysis does not
+// vanish - it waits, and lands the instant the paralysis clears. The
+// port cleared both flags at the top of every update, which made them
+// edges: a blow the player should have taken on waking was dropped.
 
 // Speeds in frames-per-second (EnemyBasics).
 export const MOVE_ANIM_SPEED = 6;
@@ -170,7 +181,8 @@ export class MobileUnit {
     this._reversed = false;
     this._attackFrames = null;
     this._iter = 0;
-    this.hitFrame = false;   // set on the -1 marker; the scene resolves MeleeDamage on it (C16)
+    this.doMeleeDamage = false;   // LATCHED on the -1 marker; the consumer clears it (C16)
+    this.shootArrow = false;      // C17: the ranged -1
   }
 
   _anims() {
@@ -193,7 +205,7 @@ export class MobileUnit {
       // attack variants STARTS with the hit frame (-1) - flag damage
       // now and advance to the next frame (audit 08-17).
       if (this.frame === -1) {
-        this.hitFrame = true;
+        this.doMeleeDamage = true;
         this.frame = this._iter < this._attackFrames.length ? this._attackFrames[this._iter++] : 0;
       }
     }
@@ -226,8 +238,8 @@ export class MobileUnit {
    * a level signal would replay the sequence inside one swing.
    */
   update(dt, { moving = false, striking = false, hurting = false, casting = false, rangedStriking = false } = {}, yaw, feet, cameraPos) {
-    this.hitFrame = false;
-    this.shootFrame = false;   // C17: the ranged -1 (shootArrow)
+    // NO RESET HERE (wave 33). DoMeleeDamage/ShootArrow are latches that
+    // only EnemyAttack.Update clears, after it has used them.
     // The DFU priority (audit 08-17): the attack edge overrides ANY
     // state - hurt included (ChangeEnemyState is unconditional at
     // MeleeAnimation); knockback-hurt never interrupts PrimaryAttack
@@ -289,8 +301,8 @@ export class MobileUnit {
       if (this._iter >= this._attackFrames.length) { this._change('idle'); return; }
       let f = this._attackFrames[this._iter++];
       if (f === -1) {
-        if (this.state === 'ranged') this.shootFrame = true;   // shootArrow (AnimateEnemy)
-        else this.hitFrame = true;   // doMeleeDamage (C16: the scene resolves on it)
+        if (this.state === 'ranged') this.shootArrow = true;   // AnimateEnemy
+        else this.doMeleeDamage = true;   // C16: the scene resolves on it, then clears it
         if (this._iter < this._attackFrames.length) f = this._attackFrames[this._iter++];
         else { this._change('idle'); return; }
       }

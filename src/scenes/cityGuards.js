@@ -320,7 +320,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // C16: the -1 damage marker resolves the melee vs the player
       // EnemyAttack.Update returns at the top while paralysed (:91-94), so no
       // damage frame resolves - the swing may still be drawn, nothing lands.
-      if (!_gParalyzed && g.mobile.hitFrame) {
+      if (!_gParalyzed && g.mobile.doMeleeDamage) {
+        g.mobile.doMeleeDamage = false;
         const hdx = playerFeet[0] - g.ai.feet[0], hdz = playerFeet[2] - g.ai.feet[2];
         const wpn = chooseEnemyWeapon(g.entity.weapon, ENEMY_BASICS[GUARD_MOBILE_TYPE]);
         const gmid = [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]];

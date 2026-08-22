@@ -2086,10 +2086,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // unit consumes the frame's intent: attack while the shared
         // machine swings, hurt on the damage trigger, move/idle by
         // pursuit. The frame texture uploads lazily per record#frame.
-        if (!_fParalyzed || !f._mout) {
+        // AUDIT 24 (wave 33): NO ANIMATION FREEZE. This used to skip the
+        // whole mobile update while paralysed and redraw the cached
+        // output, on the strength of EnemyMotor.HandleParalysis's
+        // `mobile.FreezeAnims = true` - but :259 sets it back to false on
+        // the line after the closing brace, with nothing reading it in
+        // between and no other writer in the tree, so a paralysed enemy's
+        // animation is NEVER frozen in DFU. UpdateToIdleOrMoveAnim runs
+        // after the `if (CanAct)` gate and puts a stationary one into
+        // Idle, which keeps playing; UpdateOrientation has no FreezeAnims
+        // check at all, so the sprite keeps turning to face the player
+        // too - and the port's cache froze the FACING as well as the
+        // frame. What stops the blow is EnemyAttack's early return, which
+        // is the consume-and-clear below.
+        {
           f._mout = f.mobile.update(dt, {
             moving: f.ai.moving,
-            striking: _strikeEdge && !f.attack.firedRanged,   // the START edge (paralysis eats it - FreezeAnims blocks ChangeEnemyState, verbatim)
+            striking: _strikeEdge && !f.attack.firedRanged,   // the START edge (paralysis eats it - the attack machine above is gated, so ChangeEnemyState never fires: EnemyAttack.Update's early return, NOT FreezeAnims - wave 33)
             rangedStriking: _strikeEdge && !!f.attack.firedRanged,   // C17: archers draw records 20-24 - keyed per SWING (the in-band bow shot), not per foe
             hurting: f.ai.hurtKnock,   // C15: the knockback threshold IS the hurt anim (KnockbackMovement)
             casting: !!f._castPending,   // C14: the cast decision's edge (Spell one-shot)
@@ -2098,7 +2111,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // C17: the ranged -1 (shootArrow) looses the arrow at the
           // player - the machine's hit event no longer fires it for
           // sprite archers.
-          if (playerFeet && f.mobile.shootFrame) {
+          // EnemyAttack.Update (:91-105): the early return while paralysed
+          // leaves the latch SET, so the swing lands when it clears.
+          if (playerFeet && !_fParalyzed && f.mobile.shootArrow) {
+            f.mobile.shootArrow = false;
             const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
             const d = [playerFeet[0] - from[0], playerFeet[1] + 0.9 - from[1], playerFeet[2] - from[2]];
             const l = Math.hypot(...d) || 1;
@@ -2106,10 +2122,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });   // C2-slice (combat-9): the loose rings from the archer (EnemyAttack Update)
           }
           // C16: the -1 damage marker IS the damage moment
-          // (AnimateEnemy doMeleeDamage -> MeleeDamage) - paralysis
-          // never reaches here (FreezeAnims "prevents the attack
-          // from triggering", verbatim).
-          if (playerFeet && f.mobile.hitFrame) resolveFoeMelee(f, playerFeet);
+          // (AnimateEnemy doMeleeDamage -> MeleeDamage). Paralysis does
+          // not reach it because EnemyAttack.Update returns at the top
+          // (:91-94) - and because that return happens BEFORE the clear
+          // at :100, the latch survives and the blow lands on the first
+          // unparalysed frame. The comment here used to credit
+          // FreezeAnims, which is a dead store.
+          if (playerFeet && !_fParalyzed && f.mobile.doMeleeDamage) { f.mobile.doMeleeDamage = false; resolveFoeMelee(f, playerFeet); }
         }
         const out = f._mout;
         const rkey = `${out.record}#${out.frame}`;

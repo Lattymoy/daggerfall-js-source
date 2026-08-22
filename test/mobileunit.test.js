@@ -58,8 +58,10 @@ test('mobile: attack frames - the chance ladder, the -1 damage marker, the one-s
   assert.deepEqual(rollAttackFrames(basics, 15), [9, 9]);
   assert.deepEqual(rollAttackFrames(basics, 45), [7, 7]);     // 45-20=25 <= 30
   assert.deepEqual(rollAttackFrames(basics, 95), [0, 1, -1, 2]);
-  // The unit: strike -> the sequence steps, -1 flags hitFrame and
-  // skips, the iterator's end reverts to idle.
+  // The unit: strike -> the sequence steps, -1 latches doMeleeDamage and
+  // skips, the iterator's end reverts to idle. The flag is a LATCH
+  // (wave 33): EnemyAttack.Update is the only writer of false, so every
+  // reader here consumes it exactly as that method does.
   const m = new MobileUnit(4, basics, () => 8, () => 0.99);   // roll 100 -> base frames
   m.update(1 / 60, { striking: true }, 0, [0, 0, 0], [0, 0, 5]);
   assert.equal(m.state, 'attack');
@@ -69,7 +71,7 @@ test('mobile: attack frames - the chance ladder, the -1 damage marker, the one-s
   for (let i = 0; i < 6 && m.state === 'attack'; i++) {
     m.update(1 / PRIMARY_ATTACK_ANIM_SPEED, {}, 0, [0, 0, 0], [0, 0, 5]);
     if (m.state === 'attack') seen.push(m.frame);
-    if (m.hitFrame) hits++;
+    if (m.doMeleeDamage) { hits++; m.doMeleeDamage = false; }
   }
   assert.equal(hits, 1);
   assert.deepEqual(seen, [1, 2]);   // -1 skipped straight to 2
@@ -117,12 +119,13 @@ test('mobile: the leading -1 marker + the attack/hurt priority (audit 08-17)', (
   const m = new MobileUnit(25, fd, () => 8, () => 0.3);   // roll 31 <= 50 -> frames2
   m.update(1 / 60, { striking: true }, 0, [0, 0, 0], [0, 0, 5]);
   assert.equal(m.state, 'attack');
-  assert.equal(m.hitFrame, true);    // the leading -1 lands NOW
+  assert.equal(m.doMeleeDamage, true);    // the leading -1 lands NOW
   assert.equal(m.frame, 4);          // displayed = the second entry
   let hits = 1;
+  m.doMeleeDamage = false;   // the consumer took it
   for (let i = 0; i < 5 && m.state === 'attack'; i++) {
     m.update(1 / PRIMARY_ATTACK_ANIM_SPEED, {}, 0, [0, 0, 0], [0, 0, 5]);
-    if (m.hitFrame) hits++;
+    if (m.doMeleeDamage) { hits++; m.doMeleeDamage = false; }
   }
   assert.equal(hits, 1);             // one damage moment per swing
   assert.equal(m.state, 'idle');
@@ -130,10 +133,11 @@ test('mobile: the leading -1 marker + the attack/hurt priority (audit 08-17)', (
   // swing - each -1 is a damage moment (doMeleeDamage, verbatim).
   const m2 = new MobileUnit(25, fd, () => 8, () => 0.99);   // roll 100 -> base frames
   m2.update(1 / 60, { striking: true }, 0, [0, 0, 0], [0, 0, 5]);
-  let hits2 = m2.hitFrame ? 1 : 0;
+  let hits2 = 0;
+  if (m2.doMeleeDamage) { hits2++; m2.doMeleeDamage = false; }
   for (let i = 0; i < 12 && m2.state === 'attack'; i++) {
     m2.update(1 / PRIMARY_ATTACK_ANIM_SPEED, {}, 0, [0, 0, 0], [0, 0, 5]);
-    if (m2.hitFrame) hits2++;
+    if (m2.doMeleeDamage) { hits2++; m2.doMeleeDamage = false; }
   }
   assert.equal(hits2, 2, 'the Frost Daedra base swing lands two damage moments');
   // The DFU priority: the attack edge overrides hurt (ChangeEnemyState
@@ -244,7 +248,7 @@ test('C17 humanoids: the female-thief idle, the ranged one-shot, the class field
   assert.equal(stateAnims('idle', 138, true, false, false), IDLE_ANIMS);
   // The ranged state: records 20-24, the shared class sequence
   // [3,2,0,0,0,-1,1,1,2,3] - the -1 is the shootArrow moment
-  // (shootFrame, NOT hitFrame), one loose per draw, exhaust -> idle.
+  // (shootArrow, NOT doMeleeDamage), one loose per draw, exhaust -> idle.
   const basics = { hasIdle: true, primaryAttackAnimFrames: [0], rangedAttackAnimFrames: [3, 2, 0, 0, 0, -1, 1, 1, 2, 3] };
   const m = new MobileUnit(135, basics, () => 8, () => 0.5);
   m.update(1 / 60, { rangedStriking: true }, 0, [0, 0, 0], [0, 0, 5]);
@@ -253,8 +257,8 @@ test('C17 humanoids: the female-thief idle, the ranged one-shot, the class field
   let shoots = 0, melees = 0;
   for (let i = 0; i < 12 && m.state === 'ranged'; i++) {
     m.update(1 / 10, {}, 0, [0, 0, 0], [0, 0, 5]);
-    if (m.shootFrame) shoots++;
-    if (m.hitFrame) melees++;
+    if (m.shootArrow) { shoots++; m.shootArrow = false; }
+    if (m.doMeleeDamage) { melees++; m.doMeleeDamage = false; }
   }
   assert.equal(shoots, 1, 'one arrow per draw');
   assert.equal(melees, 0, 'the ranged -1 is a SHOOT marker, not melee');

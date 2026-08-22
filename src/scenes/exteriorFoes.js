@@ -231,21 +231,23 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       }, f.ai.yaw, f.ai.feet, eye);
       // X2-slice: the ranged -1 marker looses a REAL arrow through
       // the host's seam, aimed at the player mid-capsule at fire
-      // time (the dungeon's shootFrame arm shape).
+      // time (the dungeon's shootArrow arm shape).
       // ...and the damage frames are gated too (wave 32). EnemyAttack.Update
       // returns at the top while paralysed (:91-94), so MeleeDamage and
       // BowDamage never run - the animation may still be mid-swing, but
       // nothing lands. The dungeon host gets this by suppressing the whole
       // mobile update; this pool resolves off the mobile's own frames, so it
       // needs the gate written out.
-      if (!_fParalyzed && f.mobile.shootFrame && playerFeet && onArrow) {
+      if (!_fParalyzed && f.mobile.shootArrow && playerFeet && onArrow) {
+        f.mobile.shootArrow = false;
         const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
         const d = [playerFeet[0] - from[0], playerFeet[1] + 0.9 - from[1], playerFeet[2] - from[2]];
         const l = Math.hypot(...d) || 1;
         onArrow(from, [d[0] / l, d[1] / l, d[2] / l], f);
       }
       // the -1 damage marker vs the player (C16)
-      if (!_fParalyzed && f.mobile.hitFrame && playerFeet) {
+      if (!_fParalyzed && f.mobile.doMeleeDamage && playerFeet) {
+        f.mobile.doMeleeDamage = false;
         const hdx = playerFeet[0] - f.ai.feet[0], hdz = playerFeet[2] - f.ai.feet[2];
         const wpn = chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
         const mid = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];

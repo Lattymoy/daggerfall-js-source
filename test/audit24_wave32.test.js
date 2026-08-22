@@ -150,15 +150,15 @@ test('audit24 wave32: paralysis reaches the exterior pools', () => {
   // free by suppressing the whole mobile update; these pools resolve off the
   // mobile's own frames, so without the gate freezing the attack MACHINE would
   // still have let a mid-swing animation land its blow.
-  assert.ok(xf.includes('if (!_fParalyzed && f.mobile.hitFrame && playerFeet) {'), 'no melee lands');
-  assert.ok(xf.includes('if (!_fParalyzed && f.mobile.shootFrame && playerFeet && onArrow) {'), 'no arrow looses');
+  assert.ok(xf.includes('if (!_fParalyzed && f.mobile.doMeleeDamage && playerFeet) {'), 'no melee lands');
+  assert.ok(xf.includes('if (!_fParalyzed && f.mobile.shootArrow && playerFeet && onArrow) {'), 'no arrow looses');
   assert.equal(xf.includes('senses, false)'), false, 'no literal false left behind');
 
   const cg = rd('src/scenes/cityGuards.js');
   assert.ok(cg.includes('const _gParalyzed = entityIsParalyzed(g.entity);'), 'cityGuards reads it');
   assert.ok(cg.includes('g.ai.update(dt, playerFeet, senses, _gParalyzed);'), 'the motor is told');
   assert.ok(cg.includes('const events = _gParalyzed ? [] : g.attack.update(dt, g.ai, playerFeet);'), 'the attack machine holds');
-  assert.ok(cg.includes('if (!_gParalyzed && g.mobile.hitFrame) {'), 'and no blow lands');
+  assert.ok(cg.includes('if (!_gParalyzed && g.mobile.doMeleeDamage) {'), 'and no blow lands');
   assert.equal(cg.includes('senses, false)'), false, 'no literal false left behind');
 });
 

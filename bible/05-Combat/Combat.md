@@ -285,8 +285,11 @@ deviations found and fixed (five in code, one recorded):
    speed 50) outlasts the sprite sequence (~0.6s), so
    `machine.state != Idle` REPLAYED the attack anim (+ re-rolled the
    variant) inside one swing. Now an EDGE (Idle -> swing), computed
-   beside the machine update; paralysis eats the edge exactly as
-   FreezeAnims blocks ChangeEnemyState. The attack SOUND moved to
+   beside the machine update; paralysis eats the edge because the
+   attack MACHINE is gated (EnemyAttack.Update returns at the top while
+   paralysed, so MeleeAnimation never fires ChangeEnemyState). AUDIT 24
+   wave 33 corrected the attribution: it is NOT FreezeAnims, which is a
+   dead store. The attack SOUND moved to
    the same edge - DFU plays it at MeleeAnimation START, not at the
    hit frame, and not gated on the hit connecting.
 5. CORPSES + LOOT PILES FLOATED h/2: both passed base + h/2 to the
@@ -394,7 +397,8 @@ exact roster) stop casting frozen. Verbatim DaggerfallMobileUnit:
   a cast never interrupts an attack in progress.
 - The trigger: castEnemySpell sets the cast edge (the decision IS
   DFU's ChangeEnemyState(Spell) moment); paralysis eats the edge
-  exactly as FreezeAnims blocks ChangeEnemyState. Extraction grew
+  because the cast decision is gated, not because of FreezeAnims (wave
+  33: dead store). Extraction grew
   HasSpellAnimation + SpellAnimFrames (13 monster casters carry
   frames; C3 parity asserted).
 - RangedAttack1/2 close as N/A for monsters: HasRangedAttack1 is
@@ -461,8 +465,10 @@ extracted once - resolveFoeMelee - and both clocks call it.
 
 Consequences, verbatim: the Frost Daedra's base sequence
 [0,1,-1,2,3,-1,4,5,0] strikes TWICE per swing (pinned); paralysis
-never lands a mobile damage frame (FreezeAnims "prevents the attack
-from triggering", the DFU comment); damage timing now tracks the
+never lands a mobile damage frame - but it LATCHES one (AUDIT 24 wave
+33: EnemyAttack.Update returns before the `DoMeleeDamage = false` at
+:100, so the blow waits and lands on the first unparalysed frame);
+damage timing now tracks the
 VISIBLE animation (10 fps sequence position) instead of the
 machine's SPD-scaled clock.
 
@@ -487,9 +493,17 @@ verified against the DFU source line by line where not already:
 - C13 arrows: DaggerfallMissile.MovementSpeed = 25.0 confirmed =
   MISSILE_SPEED (the S5 single source).
 - C12/C14/S22/A4/P17: previously line-verified in their slices; no
-  new findings. The C16 hitFrame flows re-checked (paralysis skips
-  the mobile update entirely - no damage frames, verbatim
-  FreezeAnims).
+  new findings. The C16 damage-frame flows re-checked - and AUDIT 24
+  wave 33 overturned the conclusion recorded here. "Paralysis skips the
+  mobile update entirely, verbatim FreezeAnims" was wrong twice:
+  EnemyMotor.HandleParalysis (:253-259) sets `mobile.FreezeAnims = true`
+  inside its guard and `false` on the line after the closing brace, with
+  no reader in between and no other writer in the tree, so a paralysed
+  enemy's animation is never frozen in DFU and its sprite keeps turning
+  to face the player (UpdateOrientation has no FreezeAnims check at
+  all). What stops the blow is EnemyAttack's early return - and because
+  that return precedes the flag clear, the swing is latched, not
+  dropped.
 
 C17 THE HUMANOID PIVOT: class enemies (128+) render as classic
 sprite mobiles; the voxel foe rig goes ON ICE beside the voxel FP

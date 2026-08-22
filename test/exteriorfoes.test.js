@@ -31,7 +31,7 @@ test('exteriorfoes: the pool laws - cull AFTER fresh senses, the alert raise, th
   // ranged-flags law the dungeon build does, and the shoot frame
   // looses a real arrow through the host's seam
   assert.ok(s.includes('attack.rangedAttack = hasBowAttack(basics)'), 'exterior bow foes arm like the dungeon');
-  assert.ok(s.includes('f.mobile.shootFrame && playerFeet && onArrow'), 'the ranged -1 marker fires the arrow seam');
+  assert.ok(s.includes('f.mobile.shootArrow && playerFeet && onArrow'), 'the ranged -1 marker fires the arrow seam');
 });
 
 test('exteriorfoes: the world host - the cadence loop, the travel reset, the facade and the melee order', () => {
