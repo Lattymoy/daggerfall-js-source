@@ -50,22 +50,22 @@ export const LOOT_MATRICES = Object.freeze({
   U: { MinGold: 7, MaxGold: 30, P1: 5, P2: 5, C1: 5, C2: 5, C3: 5, M1: 10, AM: 10, WP: 10, MI: 2, CL: 0, BK: 2, M2: 2, RL: 10 },
 });
 
-// ItemGroups template-index lists (ItemEnums.cs, brace-bounded
-// extraction, counts asserted at generation time).
-export const ITEM_GROUPS = Object.freeze({
-  PlantIngredients1: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 25],
-  PlantIngredients2: [8, 9, 10, 11, 12, 13, 15, 16, 17, 21, 22, 24, 26, 27, 28, 29, 30, 31, 32],
-  CreatureIngredients1: [33, 35, 38, 39, 40, 41, 42, 43, 44, 45, 50, 51, 53, 54, 61],
-  CreatureIngredients2: [46, 47, 48, 49, 52],
-  CreatureIngredients3: [34, 36, 37],
-  MiscellaneousIngredients1: [55, 56, 57, 58, 59, 60, 62, 63, 64],
-  MiscellaneousIngredients2: [76, 77],
-  ReligiousItems: [258, 259, 260, 261, 262, 263, 264, 265, 267, 268, 269, 270, 271],
-  Gems: [0, 1, 2, 3, 4, 5, 6, 7],
-  Jewellery: [133, 134, 135, 136, 137, 138, 139, 140],
-  MensClothing: [141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181],
-  WomensClothing: [182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216],
-});
+// ItemGroups template-index lists.
+//
+// AUDIT 24 (wave 23): these twelve rows were a SECOND copy of twelve
+// of GROUP_TEMPLATE_INDICES' rows - the same numbers, extracted from
+// the same ItemEnums.cs, sitting in a file that already imports the
+// first copy two lines above. Identical the day it was found. They
+// are a view onto the one table now, so a regenerated enum cannot
+// move one and leave the other.
+const LOOT_GROUP_KEYS = Object.freeze([
+  'PlantIngredients1', 'PlantIngredients2',
+  'CreatureIngredients1', 'CreatureIngredients2', 'CreatureIngredients3',
+  'MiscellaneousIngredients1', 'MiscellaneousIngredients2',
+  'ReligiousItems', 'Gems', 'Jewellery', 'MensClothing', 'WomensClothing',
+]);
+export const ITEM_GROUPS = Object.freeze(Object.fromEntries(
+  LOOT_GROUP_KEYS.map((k) => [k, GROUP_TEMPLATE_INDICES[k]])));
 export const BOOK_TEMPLATE = 277;
 
 // DaggerfallLootDataTables + LootTables.GenerateLoot verbatim data

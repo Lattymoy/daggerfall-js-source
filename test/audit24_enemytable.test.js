@@ -26,6 +26,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { ENCOUNTER_TABLES } from '../src/systems/encounters.js';
 import { RACE_TEMPLATES } from '../src/systems/races.js';
+import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplatesData.js';
+import { ITEM_GROUPS } from '../src/systems/loot.js';
 import { ENCOUNTER_TABLES as ENCOUNTER_TABLES_SRC } from '../src/characters/encounterTables.js';
 import { extractEnemyBasics, sliceEnemyTable } from '../tools/extractEnemyBasics.lib.mjs';
 
@@ -254,4 +256,62 @@ test('audit24 wave23: RACE_TEMPLATES is REBUILT from RaceTemplate.cs, filename f
     assert.equal(r.criticalWeaknessFlags, cs_.criticalWeaknessFlags, `${r.key} CriticalWeaknessFlags`);
   }
   assert.equal(RACE_TEMPLATES.length, 8, 'the eight playable races');
+});
+
+// ---- the ITEM GROUP -> TEMPLATE INDEX lists ------------------------
+// GROUP_TEMPLATE_INDICES is extracted from ItemEnums.cs, and two of
+// its rows are hand-added because the generator predates them. These
+// lists decide what loot generation and shop stock can mint at all.
+
+const ITEM_ENUMS_CS = new URL('../tools/parity/dfu/Assets/Scripts/Game/Items/ItemEnums.cs', import.meta.url);
+const noItemEnums = !existsSync(ITEM_ENUMS_CS);
+
+test('audit24 wave23: GROUP_TEMPLATE_INDICES is REBUILT from ItemEnums.cs', { skip: noItemEnums }, () => {
+  const cs = readFileSync(ITEM_ENUMS_CS, 'utf8');
+  // Every `public enum X { ... }` in the file, members resolved the
+  // way C# resolves them: an explicit `= n` sets the value, a bare
+  // member takes the previous plus one. `Deeds` is the reason - it is
+  // implicit (0, 1, 2) where every other item group is explicit, and
+  // the first draft of this gate skipped implicit enums outright and
+  // then asserted Deeds must be present.
+  const enums = new Map();
+  for (const [, name, body] of cs.matchAll(/public enum (\w+)[^\n]*\n\s*\{([\s\S]*?)\n\s*\}/g)) {
+    const members = [];
+    let next = 0;
+    for (const line of body.split('\n')) {
+      const m = /^\s*([A-Za-z_]\w*)\s*(?:=\s*(-?(?:0x[0-9a-fA-F]+|\d+)))?\s*,/.exec(line);
+      if (!m) continue;
+      const v = m[2] !== undefined ? Number(m[2]) : next;
+      members.push(v);
+      next = v + 1;
+    }
+    if (members.length) enums.set(name, members);
+  }
+  assert.ok(enums.size >= 20, `found ${enums.size} enums in ItemEnums.cs`);
+
+  for (const [group, list] of Object.entries(GROUP_TEMPLATE_INDICES)) {
+    const src = enums.get(group);
+    assert.ok(src, `ItemEnums.cs still declares enum ${group}`);
+    assert.deepEqual([...list], src, `${group} template indices match ItemEnums.cs`);
+  }
+  // The two rows added by hand after the generator ran - the whole
+  // reason this gate matters. Both are real enums in the source.
+  assert.ok(enums.has('QuestItems'), 'QuestItems is an enum, not an invention');
+  assert.ok(enums.has('Currency'), 'and so is Currency');
+  // Books repeats one template index four times: the enum names four
+  // Book0..3 members that all resolve to 277. Kept verbatim.
+  assert.deepEqual([...GROUP_TEMPLATE_INDICES.Books], [277, 277, 277, 277]);
+});
+
+test('audit24 wave23: loot.js views the one item-group table, it does not copy it', () => {
+  // Twelve of these rows used to be a second literal inside loot.js -
+  // the same numbers, extracted from the same ItemEnums.cs, in a file
+  // that already imported the first copy two lines above.
+  for (const [k, row] of Object.entries(ITEM_GROUPS)) {
+    assert.equal(row, GROUP_TEMPLATE_INDICES[k],
+      `loot's ${k} is the SAME frozen array, not one that happens to agree`);
+  }
+  assert.equal(Object.keys(ITEM_GROUPS).length, 12);
+  assert.doesNotMatch(readFileSync(new URL('../src/systems/loot.js', import.meta.url), 'utf8'),
+    /PlantIngredients1: \[8, 9/, 'and no literal has grown back');
 });

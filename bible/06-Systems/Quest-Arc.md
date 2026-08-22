@@ -2632,13 +2632,15 @@ Both gates read the library's slicer now, and gate 2 asserts it found
 at least 25 columns before it will believe a clean result. *A PIN THAT
 FINDS NOTHING MUST PROVE IT LOOKED.*
 
-Eleven mutants, eleven kills - one cell edited by hand in the checked-in
+Fifteen mutants, fifteen kills - one cell edited by hand in the checked-in
 enemy table, the `SoulPts` column dropped from the extraction again,
 the `=== -1` guard removed, the glow alpha forced to 1, a whole enemy
 deleted; then one cell edited in encounter table 22, the comment strip
 removed, and a divergent second copy of the encounter table grown
 back; then the Nord's description id, the Nord's frost resistance
-turned to fire, and the female clothed/unclothed body art swapped.
+turned to fire, and the female clothed/unclothed body art swapped;
+then a Drugs index, the hand-added Currency row, the implicit-enum
+Deeds row truncated, and the hand-added QuestItems row.
 
 Also corrected: `loot.js`'s "21 keys" comment over a 22-row matrix
 (`-` plus A..U), and the same off-by-one in the LootTables gate's
@@ -2676,6 +2678,34 @@ now - filename for filename, plus `DescriptionID`, `ClipID` and all
 four `DFCareer.EffectFlags` channels. The scheme holds today; the
 point is that it will be told to stop holding rather than quietly
 stopping.
+
+**Two more tables, and a third twin.** `GROUP_TEMPLATE_INDICES` - the
+group-to-template-index lists that decide what loot generation and
+shop stock can mint at all - is extracted from `ItemEnums.cs`, and
+**two of its rows were added by hand** because the generator predates
+the quest mint. Nothing could check those two. Now the whole table is
+rebuilt from every enum in the file, resolved the way C# resolves
+them: an explicit `= n` sets the value, a bare member takes the
+previous plus one.
+
+`Deeds` is the reason that last clause matters. It is the only item
+group DFU declares implicitly (`Deed_to_townhouse, Deed_to_house,
+Deed_to_manor` → 0, 1, 2), and the gate's first draft skipped
+implicit-value enums as "not group lists" and then asserted `Deeds`
+must be present. It failed on the first run, which is the correct
+behaviour for a draft that wrong.
+
+And `loot.js` declared twelve of those rows *again* - the same
+numbers, from the same enum file, in a module that already imports
+`GROUP_TEMPLATE_INDICES` two lines above the copy. Identical the day
+it was found. It is a view onto the one table now, pinned by object
+identity per row.
+
+That is three duplicated tables in one wave: the encounter tables, the
+item groups, and (in effect) the enemy stat blocks, whose second copy
+was the generator's output diverging from a generator nobody ran.
+*IF A TABLE IS WORTH WRITING ONCE, THE SECOND COPY IS A BUG THAT HAS
+NOT HAPPENED YET.*
 
 FLAGGED: none of the eight new columns has a port consumer yet -
 there is no blood splash, no enemy point light, no Seducer transform,
