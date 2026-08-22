@@ -367,3 +367,40 @@ test('18: playerAttackOptions carries the swing mods a bow release also gets', (
   const barren = calculateAttackDamage(player, foe, { weapon, toHitMod: 1000, rolls: () => 0 });
   assert.equal(withBag - barren, 4);
 });
+
+test('THE BACKSTAB IS INSIDE THE HIT: a miss draws no roll and says nothing', () => {
+  // Both C# call sites - FormulaHelper.cs:627 (hand to hand) and :688
+  // (weapons) - sit inside their own `if (CalculateSuccessfulHit(...))`
+  // block, so a MISS never reaches CalculateBackstabDamage. The port
+  // ran it after both branches on the reading that the roll was gated
+  // by the DAMAGE; the gate is `backstabbingLevel > 1`, the attacker's
+  // SKILL. A missing thief therefore drew a roll C# never draws -
+  // desyncing every later roll in the shared stream - and on a success
+  // printed the backstab line over an attack that did nothing.
+  const player = { isPlayer: true, level: 10, skills: 50, stats: STATS };
+  const foe = { isPlayer: false, careerIndex: 3, affinity: 'Animal', armor: 0, skills: 0, stats: STATS };
+  const weapon = { templateIndex: WEAPONS.Short_Bow, material: 0 };
+  // the to-hit chance is CLAMPED to 3..97 (FormulaHelper.cs's own
+  // floor), so a miss is forced by the ROLL, not by the modifier: 0.99
+  // fails a 97 and still passes a backstabChance of 100, which is
+  // exactly the discriminator this needs.
+  for (const [label, w] of [['a weapon', weapon], ['hand to hand', null]]) {
+    const said = [];
+    let draws = 0;
+    const miss = calculateAttackDamage(player, foe,
+      { weapon: w, toHitMod: -100000, backstabChance: 100,
+        rolls: () => { draws++; return 0.99; }, say: (m) => said.push(m) });
+    assert.equal(miss, 0, `${label}: a miss does no damage`);
+    assert.deepEqual(said, [], `${label}: and says NOTHING - no backstab line on a miss`);
+    const missDraws = draws;
+    // the SAME attack that lands does reach the backstab
+    const said2 = [];
+    let draws2 = 0;
+    const hit = calculateAttackDamage(player, foe,
+      { weapon: w, toHitMod: 100000, backstabChance: 100,
+        rolls: () => { draws2++; return 0.5; }, say: (m) => said2.push(m) });
+    assert.ok(hit > 0, `${label}: the hit lands`);
+    assert.deepEqual(said2, ['You backstab your opponent!'], `${label}: and announces the backstab`);
+    assert.ok(draws2 > missDraws, `${label}: the hit spends more rolls than the miss`);
+  }
+});

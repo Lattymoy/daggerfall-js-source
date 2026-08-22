@@ -456,13 +456,25 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
       }
     } else if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls)) {
       damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls);
+      // INSIDE the hit, exactly as :627 - see the note below
+      damage = backstabDamage(damage, backstabChance, rolls, say);
     }
   } else {
     if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls)) {
       damage = weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls);
+      damage = backstabDamage(damage, backstabChance, rolls, say);   // :688
     }
   }
-  damage = backstabDamage(damage, backstabChance, rolls, say);   // applied AFTER the damage calc, verbatim (lines 627/688); the roll draws only behind the >1 gate (combat-12)
+  // THE BACKSTAB IS INSIDE THE HIT. Both C# call sites (:627 for hand
+  // to hand, :688 for weapons) sit within their own
+  // `if (CalculateSuccessfulHit(...))` block, so a MISS never reaches
+  // the backstab at all. This used to run unconditionally after both
+  // branches, on the reading that the roll was gated by the damage -
+  // but backstabDamage's gate is `backstabbingLevel > 1`, the
+  // attacker's SKILL, not the damage. So a missing thief with any
+  // Backstabbing skill drew a roll C# never draws (desyncing every
+  // later roll in the shared stream) and, on a success, printed "You
+  // backstab your opponent!" over an attack that did nothing.
   // Poisoned weapons (S19b): a damaging weapon hit inflicts the
   // poison ONCE and clears it from the weapon (the source's
   // weapon.poisonType = Poisons.None, inside the weapon branch after
