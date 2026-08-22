@@ -23,7 +23,7 @@ import {
   QUESTION_RECORDS, WORK_RECORDS, WORK_STRING_RECORD, PC_GREETING_RECORD,
   PC_FOLLOWUP_RECORD, PC_STRANGER_RECORD, organizationInfoRecord,
   REGIONAL_FOUND_RECORD, REGIONAL_NOT_FOUND_RECORD, REGIONAL_LOOKUP_INDEXES,
-  ORGANIZATION_INFO_BASE, stringHash,
+  ORGANIZATION_INFO_BASE, stringHash, TALK_STRINGS,
 } from '../src/systems/answerPipeline.js';
 import {
   TopicTree, QUESTION_TYPE, NPC_KNOWLEDGE, QUEST_INFO_RESOURCE_TYPE,
@@ -38,7 +38,7 @@ import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 const EN_TEXT = {
   AnswerTextWhereAmI: 'You are in {0} in {1}.',
   YouAreInSameBuilding: 'You have found {0}. You are in it.',
-  NpcInSameBuilding: "'{0} is around here in {1}.'",
+  NpcInSameBuilding: '{0} is around here in {1}.',
   residence: 'Residence',
   resolvingError: '...never mind...',
   WhereAmI: 'Where am I?',
@@ -527,7 +527,7 @@ test('getAnswerWhereIs: the table halves, the same-building answers, and its ASY
   tree.deps.isPlayerInsideBuilding = () => true;
   tree.deps.currentBuildingKey = () => 55;
   const person = newListItem({ questionType: QUESTION_TYPE.Person, caption: 'Sirien', npcKnowledgeAboutItem: NPC_KNOWLEDGE.KnowsAboutItem, npcInSameBuildingAsTopic: true });
-  assert.equal(pp.getAnswerWhereIs(person), "'Sirien is around here in The Inn.'");
+  assert.equal(pp.getAnswerWhereIs(person), 'Sirien is around here in The Inn.');
   // ...and a nameless building falls to resolvingError
   const { pipe: pn, tree: tn } = makePipe();
   tn.listBuildings = [{ name: '', buildingKey: 55, buildingType: BUILDING_TYPES.Tavern }];
@@ -1045,4 +1045,22 @@ test('startNewConversation resets the QUESTION half - the counter, the opening a
   assert.equal(pipe.questionOpeningText, '');
   assert.equal(pipe.currentQuestionListItem, null);
   assert.equal(pipe.lastToneIndex, 2, 'and the tone half is NOT touched here - it belongs to the click');
+});
+
+test('THE TALK STRINGS are the .asset values with YAML quoting REMOVED, not carried across', () => {
+  // Internal_Strings_en.asset is YAML. A scalar that begins with `{`
+  // has to be quoted there or the parser reads it as a flow mapping,
+  // so NpcInSameBuilding - and only NpcInSameBuilding - arrives
+  // wrapped in apostrophes that are the FILE's syntax, not the
+  // string's. Carried across whole, it answered
+  // "'Sirien is around here in The Inn.'" with literal quotes.
+  for (const [key, value] of Object.entries(TALK_STRINGS)) {
+    assert.ok(!(value.startsWith("'") && value.endsWith("'")),
+      `${key} still carries the .asset's YAML quoting: ${value}`);
+    assert.ok(!(value.startsWith('"') && value.endsWith('"')), `${key} likewise`);
+  }
+  assert.equal(TALK_STRINGS.NpcInSameBuilding, '{0} is around here in {1}.',
+    'the one row that needed unquoting');
+  assert.equal(TALK_STRINGS.YouAreInSameBuilding, 'You have found {0}. You are in it.',
+    'and the neighbours that never did');
 });

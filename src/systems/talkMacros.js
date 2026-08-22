@@ -24,7 +24,7 @@ import { TALK_STRINGS } from './answerPipeline.js';
  *  the order GetMacro's alternation reaches them. */
 export const TALK_MACROS = Object.freeze([
   '%n', '%fn', '%mn', '%di', '%hnt2', '%hnt', '%oth',
-  '%g4', '%g3', '%g2', '%g', '%pqn', '%pql',
+  '%g4', '%g3', '%g2', '%g', '%pqn', '%pqp',
 ]);
 
 /** MacroHelper's oath base (:201 + the faction race id), the same
@@ -131,9 +131,13 @@ export function talkMacroHandlers(ctx) {
     '%g3': () => text(ctx.questorGender?.() === 'female' ? 'pronounHer2' : 'pronounHis'),
     '%g4': () => text(ctx.questorGender?.() === 'female' ? 'pronounHers' : 'pronounHis2'),
 
-    /** PotentialQuestorName / PotentialQuestorLocation (:197-205). */
+    /** PotentialQuestorName / PotentialQuestorLocation (:197-205).
+     *  The location's key is **%pqp** - MacroHelper.cs:163, "Potential
+     *  Quest Giver's Location". Not %pql, which is not a macro at all
+     *  and would have left every record carrying the real one
+     *  unresolved. */
     '%pqn': () => ctx.session?.getQuestorName() ?? '',
-    '%pql': () => ctx.session?.getQuestorLocation() ?? '',
+    '%pqp': () => ctx.session?.getQuestorLocation() ?? '',
   };
 }
 

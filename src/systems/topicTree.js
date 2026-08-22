@@ -63,6 +63,7 @@
 //                                .UpdateListboxTopic (the instant tail)
 
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';
+import { QUEST_MESSAGES } from './quest/quest.js';   // the message-id enum (QuestMachine.cs:260-270)
 
 /** ListItemType (:128-133). */
 export const LIST_ITEM_TYPE = Object.freeze({ Item: 0, ItemGroup: 1, NavigationBack: 2 });
@@ -217,10 +218,15 @@ export class TopicTree {
 
   /** AddQuestTopicWithInfoAndRumors(Quest) (:2069-2085): the
    *  RumorsDuringQuest progress rumor into the MILL, then a topic per
-   *  resource off its info/rumors message ids. QuestMessages
-   *  .RumorsDuringQuest = 1007. */
+   *  resource off its info/rumors message ids.
+   *
+   *  The id is QuestMessages.RumorsDuringQuest = **1005**
+   *  (QuestMachine.cs:267). This read 1007 - RumorsPostSuccess - so
+   *  ACCEPTING a quest seeded the mill with the rumor that belongs to
+   *  finishing it, and the town gossiped about a success that had not
+   *  happened. Taken from the enum now rather than written out. */
   addQuestTopicsForQuest(quest) {
-    const message = quest.getMessage(1007);
+    const message = quest.getMessage(QUEST_MESSAGES.RumorsDuringQuest);
     if (message != null) this.deps.addOrReplaceQuestProgressRumor?.(quest.uid, message);
     for (const resource of quest.resources.values()) {
       const type = getQuestInfoResourceType(resource);

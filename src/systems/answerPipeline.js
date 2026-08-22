@@ -191,7 +191,13 @@ export const TALK_STRINGS = Object.freeze({
   WhereAmI: 'Where am I?',                                    // id 393
   AnswerTextWhereAmI: 'You are in {0} in {1}.',               // id 394
   YouAreInSameBuilding: 'You have found {0}. You are in it.',  // id 395
-  NpcInSameBuilding: "'{0} is around here in {1}.'",          // id 396
+  // id 396. The .asset stores this one YAML-QUOTED - a scalar that
+  // begins with `{` has to be, or YAML reads it as a flow mapping - so
+  // the surrounding apostrophes are the file's syntax and not part of
+  // the string. Every other row here is unquoted and needed no such
+  // care; this one was carried across with the quotes still on and
+  // answered "'Sirien is around here in The Inn.'".
+  NpcInSameBuilding: '{0} is around here in {1}.',
   Sir: 'Sir',                                                  // id 414
   "Ma'am": "Ma'am",                                            // id 415
   toBeReplacedStringRegional: 'Any',                           // id 422

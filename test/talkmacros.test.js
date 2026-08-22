@@ -46,7 +46,7 @@ function makeCtx(over = {}) {
 
 test('the macro token set is the talk MCP-s thirteen overrides', () => {
   assert.deepEqual([...TALK_MACROS].sort(), [
-    '%di', '%fn', '%g', '%g2', '%g3', '%g4', '%hnt', '%hnt2', '%mn', '%n', '%oth', '%pql', '%pqn',
+    '%di', '%fn', '%g', '%g2', '%g3', '%g4', '%hnt', '%hnt2', '%mn', '%n', '%oth', '%pqn', '%pqp',
   ].sort());
   assert.equal(OATH_BASE_TEXT_ID, 201);
 });
@@ -146,16 +146,18 @@ test('the four pronouns are the POTENTIAL QUESTORs gender, and anything but fema
     'C#s `default:` shares the Male case');
 });
 
-test('%pqn and %pql read the questor pool, and answer empty when it is bare', () => {
+test('%pqn and %pqp read the questor pool, and answer empty when it is bare', () => {
   const ctx = makeCtx();
   const h = talkMacroHandlers(ctx);
   assert.equal(h['%pqn'](), '', 'no questor, no name');
-  assert.equal(h['%pql'](), '');
+  assert.equal(h['%pqp'](), '', 'no questor, no location');
   ctx.session.deps.fullName = (bank, gender) => `${bank}/${gender}`;
   ctx.session.npcsWithWork.set(7, { npc: { nameSeed: 7, nameBank: 'Breton', gender: 'female' }, socialGroup: 1, buildingName: 'The Inn' });
   ctx.session.selectedNpcWorkKey = 7;
   assert.equal(h['%pqn'](), 'Breton/female');
-  assert.equal(h['%pql'](), 'The Inn');
+  assert.equal(h['%pqp'](), 'The Inn');
+  // MacroHelper.cs:162-163 - the questor LOCATION is %pqp, not %pql
+  assert.equal(Object.hasOwn(h, '%pql'), false, '%pql is not a DFU macro at all');
 });
 
 test('expandTalkMacros is a TERMINATOR SCAN, in place, and leaves plain text alone', () => {

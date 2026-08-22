@@ -21,6 +21,7 @@ import {
 } from '../src/systems/topicTree.js';
 import { QUEST_INFO_RESOURCE_TYPE as ACTIONS_QIRT } from '../src/systems/quest/actions.js';
 import { BUILDING_TYPES, isResidence } from '../src/world/buildingNames.js';
+import { QUEST_MESSAGES } from '../src/systems/quest/quest.js';
 
 const tok = (text) => [{ formatting: -1, text, x: 0, y: 0 }];
 
@@ -190,15 +191,19 @@ test('the info-faction list, the regional tables and the skip list are verbatim'
 test('addQuestTopicsForQuest: the RumorsDuringQuest progress rumor + one topic per resource', () => {
   const place = mkPlace('_home_');
   const person = mkPerson('_qgiver_');
-  const msg = { id: 1007 };
-  const quest = mkQuest(7, [place, person], { getMessage: (id) => (id === 1007 ? msg : null) });
+  // 1005 is RumorsDuringQuest. This fixture used to say 1007 on both
+  // sides, which is RumorsPostSuccess - so the pin agreed with the
+  // bug it was meant to hold, and passed for a fortnight.
+  const msg = { id: QUEST_MESSAGES.RumorsDuringQuest };
+  const quest = mkQuest(7, [place, person],
+    { getMessage: (id) => (id === QUEST_MESSAGES.RumorsDuringQuest ? msg : null) });
   for (const r of [place, person]) {
     r.infoMessageID = 1010; r.rumorsMessageID = 1011;
     r.getMessage = (id) => (id === 1010 ? [tok('info')] : id === 1011 ? [tok('rumor')] : null);
   }
   const { tree, calls } = makeTree({ getQuest: () => quest });
   tree.addQuestTopicsForQuest(quest);
-  assert.deepEqual(calls.filter((c) => c[0] === 'progressRumor'), [['progressRumor', 7, msg]], 'message 1007 goes to the mill');
+  assert.deepEqual(calls.filter((c) => c[0] === 'progressRumor'), [['progressRumor', 7, msg]], 'the DURING-quest message, 1005, goes to the mill');
   const info = tree.dictQuestInfo.get(7);
   assert.equal(info.resourceInfo.size, 2);
   assert.equal(info.resourceInfo.get('_home_').resourceType, QUEST_INFO_RESOURCE_TYPE.Location);
@@ -917,4 +922,28 @@ test('resetNPCKnowledge forgets all FOUR lists and ASKS for a rebuild', () => {
   }
   assert.equal(child.npcKnowledgeAboutItem, NPC_KNOWLEDGE.NotSet, 'and a GROUP is walked into');
   assert.equal(tree.rebuildTopicLists, true, 'the rebuild is asked for, not performed');
+});
+
+test('the quest-start rumor is RumorsDuringQuest (1005), not the post-success one', () => {
+  // QuestMachine.cs:267 - RumorsDuringQuest = 1005, RumorsPostFailure
+  // = 1006, RumorsPostSuccess = 1007. Reading 1007 here seeded the
+  // mill, on ACCEPTING a quest, with the rumor that belongs to
+  // finishing it: the town gossiped about a success that had not
+  // happened.
+  assert.equal(QUEST_MESSAGES.RumorsDuringQuest, 1005);
+  assert.equal(QUEST_MESSAGES.RumorsPostSuccess, 1007, 'the one it must NOT be');
+  const asked = [];
+  const added = [];
+  const tree = new TopicTree({
+    getQuest: () => null,
+    addOrReplaceQuestProgressRumor: (uid, m) => added.push([uid, m]),
+  });
+  const quest = {
+    uid: 7n,
+    resources: new Map(),
+    getMessage: (id) => { asked.push(id); return id === QUEST_MESSAGES.RumorsDuringQuest ? { tokens: ['during'] } : { tokens: ['WRONG'] }; },
+  };
+  tree.addQuestTopicsForQuest(quest);
+  assert.deepEqual(asked, [1005], 'the DURING-quest message is the one fetched');
+  assert.deepEqual(added, [[7n, { tokens: ['during'] }]], 'and it is what reaches the mill');
 });
