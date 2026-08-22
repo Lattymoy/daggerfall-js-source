@@ -526,7 +526,7 @@ single fix in it.
 
 ## Reopened
 
-The audit did not stay closed. Seven more waves ran after the section
+The audit did not stay closed. Eleven more waves ran after the section
 above was written, driven by two multi-agent sweeps: the SEVEN-SLICE
 adversarial re-read of the quest slices (151 agents, three lenses per
 slice, two independent refuters per claim) and a twelve-slice sweep of
@@ -545,6 +545,7 @@ the non-quest systems. Each wave is written up in full in
 | 27 | Wave 26's own scout, landing after it, found two bugs IN wave 26 - a misread C# loop pinned as law, and a third copy of the compass law written two waves after the gate against duplicates |
 | 28 | The twelve-slice non-quest sweep lands (60 agents, 37 confirmed, 16 high). First two: an unarmoured character contributed **0** to CalculateArmorToHit where DFU contributes **100**, so enemies essentially could not hit a fresh character; and MaxMagicka was a chargen snapshot where DFU recomputes it from LiveIntelligence on every read |
 | 29 | GetWeaponSkillUsed keyed on the item NAME, so a Wakizashi, a Dai-katana and every renamed magic weapon hit the `Skills.None = -1` default and were refused by every restricted career; and the broken-item equip gate (`currentCondition < 1`) was missing entirely |
+| 30 | The rest window moved the clock and fired **no magic rounds** - `dungeon.js` returns at the overlay gate before the tick, so a rested night froze every disease, poison and effect and dumped the backlog in one burst after the healing had landed; and `OnMonsterHit` was never passed above ground, so no exterior encounter could infect, paralyse or drain the player |
 
 THE STANDING LESSON HELD, and grew a second half. "A pin that restates
 the port instead of the source is not a pin" was caught four more

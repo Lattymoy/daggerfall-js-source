@@ -821,6 +821,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const exteriorFoes = createExteriorFoes({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio,
     currentMinute: () => Math.floor(playerTicker.classicMinutes),
+    playerSinks: playerTicker.sinks,   // AUDIT 24 (wave 30): OnMonsterHit's fatigue rider drains through the host's one set of doors
     say: (l) => townTalk.say(l),
     onPlayerHurt: (dmg, wpn) => {
       if (dmg <= 0) return;

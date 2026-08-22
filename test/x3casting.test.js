@@ -86,7 +86,11 @@ test('x3 wiring: the pool spawns casters, the decision drives the shared executo
   assert.ok(xf.includes('assignEnemySpells(entity, sbi)'), 'exterior spawns assign the S16 lists');
   assert.ok(xf.includes('new EnemyCaster(entity, rolls)'), 'a listed caster gets the shared decision driver');
   assert.ok(xf.includes('f.caster.update(dt, f.ai, f.attack, playerFeet, playerEntity)'), 'the decision rides beside the attack machine');
-  assert.ok(xf.includes('castEnemySpell(f, dec.spell, {'), 'and releases through the ONE executor');
+  assert.ok(xf.includes('castSpellFrom(f, dec.spell, playerFeet);'), 'and releases through the ONE executor');
+  // wave 30: the deps of that executor are bound ONCE for this pool - the
+  // decision and the spider/scorpion paralyze rider share the binding.
+  assert.ok(xf.includes('function castSpellFrom(f, spell, playerFeet, noSpellPointCost = false) {'), 'the pool binds the executor once');
+  assert.equal(xf.split('castEnemySpell(f,').length - 1, 1, 'exactly one call to the shared executor in this file');
   assert.ok(xf.includes('casting: !!f._castPending'), 'the sprite Spell one-shot rides the cast edge');
   const w = src('src/scenes/world.js');
   assert.ok(w.includes('spellsByIndex: () => spellsByIndex'), 'the world hands the SPELLS.STD map');

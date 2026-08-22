@@ -3294,6 +3294,123 @@ against the code, it died at once, and so did `<= 1`.
 **Thirty-three findings remain.**
 
 
+### Wave 30
+
+**Time passed and nothing happened.**
+
+`DaggerfallRestWindow.TickRest` raises the clock ten classic minutes at
+a sub-tick and counts off an hour at a time, and the port does exactly
+that. Raising the clock is only half the machine. The other half is a
+component that has nothing to do with the rest window at all:
+
+```csharp
+// Note: Effect system must be able to update while game is paused but
+// game time still passes, e.g. rest or fast travel
+...
+int catchupRounds = Mathf.Min(maxCatchupDays * DaggerfallDateTime.MinutesPerDay, (int)minutesPassed);
+for (int i = 0; i < catchupRounds; i++)
+    RaiseOnNewMagicRoundEvent();
+```
+
+`EntityEffectBroker.Update` is a MonoBehaviour update, and
+`Time.timeScale = 0` - which is precisely what `PauseGame` sets when a
+window opens - does not stop one. The comment says so in as many words.
+
+The port's equivalent is `tickPlayerMinutes`, and it runs in the host's
+frame body. `dungeon.js` returns thirty lines before it:
+
+```js
+if (ctx.uiOverlayActive) {
+  ctx.tickOverlay(dt); ctx.drawOverlay(canvas);
+  ...
+  return;   // U2b/U3: hold gameplay, keep the loop
+}
+```
+
+So through a whole rested night nothing ticked a disease, a poison or
+an active effect. The rest deps said otherwise, in a comment that had
+been wrong since the day it was written:
+
+```js
+classicMinutesRef.value += n;   // the round loop catches the magic rounds up
+```
+
+It does not catch up *during*. AUDIT 21 F4 gave the port the broker's
+own marker, so it catches up **after** - the entire backlog fires on
+the first ordinary frame once the window closes, by which time
+`tickVitals` has already applied every hour of healing. Rest off a
+Continuous Damage Health for free, sleep through a poison and meet it
+in the doorway, wake with eight hours of Levitate still on the clock.
+
+DFU interleaves: sixty rounds, one heal, sixty rounds, one heal. A
+poison **can** kill you in your sleep, and when it does the rest ends
+`youNeverAwaken` rather than "You wake up."
+
+So the broker came out of the entity tick. `runMagicRounds` is its own
+exported member now, on its own marker, and both callers use it - the
+frame tick and the rest advance. The behavioural pin runs a real
+`RestSession` twice over the same fixture, once with each shape: a
+100-health sleeper with a one-point-per-minute bleed and five health
+back an hour dies 110 minutes in with the broker wired, and wakes at
+full health with 600 untouched rounds without it.
+
+And the foe half, which is the same event. `OnNewMagicRound` is global
+- every `EntityEffectManager` in the scene subscribes - while the
+dungeon's foe round loop anchors on the clock at the top of the current
+frame. Those minutes were not merely late for the foes; they were
+**lost**.
+
+*A COMMENT THAT DESCRIBES A LINE THAT IS NOT THERE IS A BUG WITH A
+WITNESS*, and this is the clearest case the arc has produced. "The
+round loop catches the magic rounds up" reads as a note about *where* a
+law lives, so three audits went past it without looking for the law.
+The pin now asserts the sentence is gone.
+
+**And nothing above ground could infect you.**
+
+```csharp
+int hitDamage = 0;
+if (DFRandom.rand() % 100 < reflexesChance && minBaseDamage > 0 && CalculateSuccessfulHit(...))
+{
+    hitDamage = UnityEngine.Random.Range(minBaseDamage, maxBaseDamage + 1);
+    // Apply special monster attack effects
+    if (hitDamage > 0)
+        OnMonsterHit(AIAttacker, target, hitDamage);
+```
+
+`OnMonsterHit` is the only door in the game to rat, giant bat, zombie
+and mummy disease, to spider and giant scorpion paralysis, and to the
+nymph and lamia fatigue drain. The dungeon host has passed it since
+S18. `exteriorFoes.js` - the pool behind every wilderness encounter and
+every night-in-town spawn - passed `onInflictPoison` and `say`, and not
+the rider.
+
+The exterior climate tables are indexes 20-37, and they are full of
+exactly those monsters: rats in nine of the eighteen, giant bats in
+eleven, wereboars in eleven, werewolves and vampires in nine each,
+giant scorpions in seven, spiders in six, zombies in four, nymphs in
+four. Above ground, none of them could do anything but hit you.
+
+The gate looks from both sides. Every `calculateAttackDamage` call in
+`src/` is sliced by paren-matching and classified: the two monster-melee
+doors must carry the rider, and the other five must not - DFU calls it
+only in the weaponless branch and only when the attacker is not an
+`EnemyClass`, so the two arrow paths and the city watch are *right* to
+omit it, and a one-directional gate would invite a later hand to
+"fix" them. The count is pinned too, so an eighth damage door has to be
+classified rather than quietly added.
+
+Wiring it needed the pool's fatigue door, and `FatigueDamage` is
+`DaggerfallEntity.SetFatigue`, not a field write: at zero with health
+left it raises `OnExhausted`. So `createPlayerTicker` exposes its
+`sinks` rather than letting the pool mint a second set that would have
+written the number and missed the collapse.
+
+Twelve mutants, twelve kills.
+
+**Thirty-one findings remain.**
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

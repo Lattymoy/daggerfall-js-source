@@ -489,6 +489,12 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
   };
   return {
     get classicMinutes() { return worldMinutes(); },
+    /** AUDIT 24 (wave 30): the host's ONE set of player sinks, exposed
+     *  because the tick is not their only consumer - a monster's
+     *  special-attack rider (OnMonsterHit's nymph/lamia FatigueDamage)
+     *  drains through exactly these doors, exhaustion presenter and
+     *  all, and a pool that built its own would miss the collapse. */
+    get sinks() { return sinks; },
     tick(dt, activity = { running: false, swimming: false }) {
       const r = tickPlayerMinutes({
         entity, classicMinutes: worldMinutes(), dt, sinks, activity,

@@ -61,7 +61,7 @@ import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
 import { applyLevelUp } from '../systems/advancement.js';
-import { tickPlayerMinutes } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
+import { tickPlayerMinutes, runMagicRounds } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
@@ -786,7 +786,36 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // a dungeon under an active enemy alert can spawn ONE foe; the
       // hourly enemy check then breaks the rest, DFU's own flow.
       const start = Math.floor(classicMinutesRef.value);
-      classicMinutesRef.value += n;   // the round loop catches the magic rounds up
+      classicMinutesRef.value += n;
+      // AUDIT 24 (wave 30) - THE BROKER RUNS UNDER THE REST WINDOW.
+      // The old line here said "the round loop catches the magic
+      // rounds up", and it does not: dungeon.js returns at the
+      // overlay gate (:385-396) before this host's frame body, so
+      // through a whole rested night nothing ticked a disease, a
+      // poison or an active effect - and the marker then fired the
+      // entire backlog in ONE burst on the first frame after the
+      // window closed, after tickVitals had already healed every
+      // hour of it. In DFU the broker's Update runs under
+      // Time.timeScale = 0 and interleaves, minute by minute, with
+      // TickRest's hourly heal; a poison can kill you in your sleep
+      // and the rest ends "You never awaken."
+      runMagicRounds({
+        entity: playerEntity, fromMinute: start, toMinute: classicMinutesRef.value,
+        sinks: playerSinks, say: (msg) => hudText.add(msg),
+      });
+      // ...and the FOE half of the same broker event. OnNewMagicRound
+      // is global - every EntityEffectManager in the scene subscribes
+      // - so a foe's poisons and effects age through the rest too.
+      // The frame body's own foe loop anchors on the clock at the top
+      // of THIS frame, so these minutes were not merely late for the
+      // foes, they were lost.
+      for (let r = start; r < Math.floor(classicMinutesRef.value); r++) {
+        for (const f of foes) {
+          if (f.dead) continue;
+          updatePoisons(f.entity, r + 1, foeSinks(f), Math.random);
+          tickActiveEffects(f.entity, foeSinks(f));
+        }
+      }
       for (let l = 0; l < n; l++) {
         const hit = intermittentEnemySpawn({
           gameMinutes: start + l + 1, inside: true, inDungeon: true, isResting: true,

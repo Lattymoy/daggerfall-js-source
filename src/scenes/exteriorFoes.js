@@ -35,6 +35,8 @@ import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { rand } from '../formats/dfRandom.js';
 import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
+import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';   // AUDIT 24 (wave 30): the monster special-attack rider, above ground
+import { MINUTES_PER_DAY } from '../systems/worldTick.js';
 
 // The port's allocation-owner guards (classic self-limits through the
 // 144-minute cadence; these keep a long session bounded).
@@ -43,6 +45,7 @@ export const ENCOUNTER_CULL_DISTANCE = 120;
 
 export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame,
   playerEntity, audio, onPlayerHurt, currentMinute, say = null, rolls = Math.random,
+  playerSinks = null,   // AUDIT 24 (wave 30): the player's damage/drain doors - the nymph and lamia riders need drainFatigue
   onArrow = null,   // X2-slice: the host's arrow seam - (from, dir, foe) at the shoot frame
   spellsByIndex = null,   // X3-slice: () => the SPELLS.STD map (null until loaded) - casters need it
   magicHooks = null }) {  // X3-slice: { explodeAt, fireMissile } - the host's spell release seams
@@ -110,6 +113,21 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     drainFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.max(0, (f.entity.fatigue ?? 0) - n); },
     restoreFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.min(maxFatigue(f.entity), (f.entity.fatigue ?? 0) + n); },
   });
+
+  /** X3-slice: this pool's binding of the ONE shared cast executor
+   *  (characters/enemyCasting.js), the dungeon host's shape. Both
+   *  callers go through here - the S16 casting decision and wave 30's
+   *  spider/scorpion paralyze rider - so the deps are written once. */
+  function castSpellFrom(f, spell, playerFeet, noSpellPointCost = false) {
+    castEnemySpell(f, spell, {
+      noSpellPointCost, playerEntity, playerFeet,
+      applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
+      playCastSound: (element, from) => audio?.play3d?.(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
+      explodeAt: magicHooks?.explodeAt,
+      fireMissile: magicHooks?.fireMissile,
+      rolls,
+    });
+  }
 
   /** Free a foe's live billboard batch once nothing will draw it. */
   function releaseFoeBatch(f) {
@@ -190,14 +208,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (playerFeet && f.caster && f.ai.isHostile) {
         const dec = f.caster.update(dt, f.ai, f.attack, playerFeet, playerEntity);
         if (dec) {
-          castEnemySpell(f, dec.spell, {
-            playerEntity, playerFeet,
-            applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
-            playCastSound: (element, from) => audio?.play3d?.(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
-            explodeAt: magicHooks?.explodeAt,
-            fireMissile: magicHooks?.fireMissile,
-            rolls,
-          });
+          castSpellFrom(f, dec.spell, playerFeet);
         }
       }
       const mstate = f.attack.machine.state;
@@ -228,6 +239,27 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           tallySkill(playerEntity, SKILLS.Dodging, 1);
           const dmg = calculateAttackDamage(f.entity, playerEntity, {
             weapon: wpn,
+            // AUDIT 24 (wave 30): THE SPECIAL-ATTACK RIDER, which this
+            // pool never passed. FormulaHelper's monster branch calls
+            // OnMonsterHit on every hit that lands damage
+            // (FormulaHelper.cs:660-662), and it is the ONLY door to
+            // rat/bat/zombie/mummy disease, spider and giant scorpion
+            // paralysis, and the nymph/lamia fatigue drain. The
+            // dungeon host has passed it since S18; above ground the
+            // whole table was inert, so no exterior encounter could
+            // infect, paralyse or drain the player - the encounter
+            // tables mint rats, giant bats, spiders, scorpions,
+            // zombies, mummies, nymphs and lamias by day and by
+            // night. (The arrow and city-watch paths correctly do NOT
+            // pass it: DFU calls it only in the weaponless MONSTER
+            // arm, never for a weapon hit or an EnemyClass attacker.)
+            onMonsterHit: (att, tgt, hit) => onMonsterHit(att, tgt, hit, {
+              currentDay: Math.floor(currentMinute() / MINUTES_PER_DAY), sinks: playerSinks, rolls,
+              castParalyze: () => {   // S19: the spider/scorpion free-cast of classic spell 66
+                const sp = spellsByIndex?.()?.get(SPIDER_TOUCH_SPELL_INDEX);
+                if (sp) castSpellFrom(f, sp, playerFeet, true);
+              },
+            }),
             onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(currentMinute()) }),
             say,
           });

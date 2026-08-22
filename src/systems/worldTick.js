@@ -37,54 +37,52 @@ export { MINUTES_PER_DAY };
 /** Classic minutes advance 12x real seconds (one classic minute per 5s). */
 export const CLASSIC_MINUTES_PER_SECOND = 12 / 60;
 
+// AUDIT 21 F4: THE BROKER'S OWN MARKER, which the port did not have.
+//
+// This used to anchor on `Math.floor(classicMinutes)` - whatever the clock
+// read at the START of this frame - so minutes added by anyone ELSE
+// produced ZERO magic rounds. Rest, a court sentence, a RaiseTime: the
+// clock jumped and the round loop began at the far side of the jump.
+// Diseases and poisons survived that by accident (they carry their own
+// lastDay/lastMinute and catch up on the next ordinary tick); active spell
+// effects did not, because roundsRemaining is only decremented in here.
+// Cast Levitate, rest eight hours, wake still levitating with the full
+// duration intact - and rest off a Continuous Damage Health for free.
+//
+// EntityEffectBroker.Update (:202-240) keeps its OWN lastGameMinute for
+// exactly this reason, and says so: "Effect system must be able to update
+// while game is paused but game time still passes, e.g. rest or fast
+// travel". The 2880 cap is its too - maxCatchupDays = 2 - and it is not
+// optional: prison time steps the clock by 30,240 minutes and a load by
+// millions.
 /**
- * Advance the player's world clock by `dt` real seconds and run every
- * per-minute law DFU runs, in DFU's order.
+ * ONE MAGIC ROUND PER GAME MINUTE CROSSED - EntityEffectBroker.Update
+ * (:202-240), on the broker's own marker.
+ *
+ * AUDIT 24 (wave 30) pulled this out of tickPlayerMinutes, because the entity
+ * tick is not the only thing that crosses a game minute. The rest window
+ * advances world time with the whole gameplay frame HELD - dungeon.js returns
+ * at the overlay gate, before ctx.drawFoes and before the tick - so a rested
+ * night fired zero rounds and the entire backlog landed in one burst on the
+ * first frame after the window closed, AFTER every hour of healing had already
+ * been applied. DFU has no such gap: MonoBehaviour.Update runs under
+ * Time.timeScale = 0, which is exactly what the broker's own comment is about
+ * ("Effect system must be able to update while game is paused but game time
+ * still passes, e.g. rest or fast travel"). Resting off a Continuous Damage
+ * Health was free, a poison could not kill you in your sleep, and eight hours
+ * of Levitate came back with its duration intact.
  *
  * @param {object} o
- * @param {object} o.entity        the player entity
- * @param {number} o.classicMinutes the clock BEFORE this step
- * @param {number} o.dt            real seconds elapsed
- * @param {object} o.sinks         { hurt, heal, drainMagicka, drainFatigue, restoreFatigue, restoreMagicka, say }
- * @param {object} [o.activity]    { running, swimming } - the fatigue band
- * @param {number} [o.fatigueMultiplier] PlayerEntity.cs:388-400, 0.9 with Athleticism
- * @param {Function} [o.rolls]     injectable RNG
- * @param {Function} [o.say]       message sink for disease/skill text
- * @returns {{ classicMinutes: number, rounds: number, raised: number[] }}
+ * @param {object} o.entity      the entity whose diseases/poisons/effects tick
+ * @param {number} o.fromMinute  the clock BEFORE this step (the load re-anchor reads it)
+ * @param {number} o.toMinute    the clock AFTER it
+ * @param {object} o.sinks       that entity's { hurt, heal, drainFatigue, ... }
+ * @returns {number} rounds actually run (0 to MAX_CATCHUP_ROUNDS)
  */
-export function tickPlayerMinutes({
-  entity,
-  classicMinutes,
-  dt,
-  sinks,
-  activity = { running: false, swimming: false },
-  fatigueMultiplier = 1,
-  rolls = Math.random,
-  say = () => {},
-} = {}) {
-  const next = classicMinutes + dt * CLASSIC_MINUTES_PER_SECOND;
+export function runMagicRounds({ entity, fromMinute, toMinute, sinks, rolls = Math.random, say = () => {} } = {}) {
   let rounds = 0;
-
-  // AUDIT 21 F4: THE BROKER'S OWN MARKER, which the port did not have.
-  //
-  // This used to anchor on `Math.floor(classicMinutes)` - whatever the clock
-  // read at the START of this frame - so minutes added by anyone ELSE
-  // produced ZERO magic rounds. Rest, a court sentence, a RaiseTime: the
-  // clock jumped and the round loop began at the far side of the jump.
-  // Diseases and poisons survived that by accident (they carry their own
-  // lastDay/lastMinute and catch up on the next ordinary tick); active spell
-  // effects did not, because roundsRemaining is only decremented in here.
-  // Cast Levitate, rest eight hours, wake still levitating with the full
-  // duration intact - and rest off a Continuous Damage Health for free.
-  //
-  // EntityEffectBroker.Update (:202-240) keeps its OWN lastGameMinute for
-  // exactly this reason, and says so: "Effect system must be able to update
-  // while game is paused but game time still passes, e.g. rest or fast
-  // travel". The 2880 cap is its too - maxCatchupDays = 2 - and it is not
-  // optional: prison time steps the clock by 30,240 minutes and a load by
-  // millions.
-  const nextFloor = Math.floor(next);
-  const here = Math.floor(classicMinutes);
+  const nextFloor = Math.floor(toMinute);
+  const here = Math.floor(fromMinute);
   // Anchor on first use, and RE-anchor whenever the clock has moved BACKWARDS
   // relative to the marker - that is a load, and DFU sits it out through
   // `SaveLoadManager.Instance.LoadInProgress` (:206-207). Re-anchoring here
@@ -112,21 +110,52 @@ export function tickPlayerMinutes({
     }
   }
 
+  // The broker's own lastGameMinute advance (:237). It never moves BACKWARDS
+  // here: a rewind is a load, and the re-anchor above owns that case.
+  if (nextFloor > _lastMagicRoundMinute) _lastMagicRoundMinute = nextFloor;
+  return rounds;
+}
+
+/**
+ * Advance the player's world clock by `dt` real seconds and run every
+ * per-minute law DFU runs, in DFU's order.
+ *
+ * @param {object} o
+ * @param {object} o.entity        the player entity
+ * @param {number} o.classicMinutes the clock BEFORE this step
+ * @param {number} o.dt            real seconds elapsed
+ * @param {object} o.sinks         { hurt, heal, drainMagicka, drainFatigue, restoreFatigue, restoreMagicka, say }
+ * @param {object} [o.activity]    { running, swimming } - the fatigue band
+ * @param {number} [o.fatigueMultiplier] PlayerEntity.cs:388-400, 0.9 with Athleticism
+ * @param {Function} [o.rolls]     injectable RNG
+ * @param {Function} [o.say]       message sink for disease/skill text
+ * @returns {{ classicMinutes: number, rounds: number, raised: number[] }}
+ */
+export function tickPlayerMinutes({
+  entity,
+  classicMinutes,
+  dt,
+  sinks,
+  activity = { running: false, swimming: false },
+  fatigueMultiplier = 1,
+  rolls = Math.random,
+  say = () => {},
+} = {}) {
+  const next = classicMinutes + dt * CLASSIC_MINUTES_PER_SECOND;
+
+  // The broker's catch-up, on the broker's own marker (see runMagicRounds).
+  const rounds = runMagicRounds({ entity, fromMinute: classicMinutes, toMinute: next, sinks, rolls, say });
+
   // PlayerEntity.cs:528-530, the tail of the SAME update: the flag is
   // a ONE-JUMP shield, cleared the moment the jump it covered is over.
   // AUDIT 24 (the seven-slice sweep): nothing set it and nothing
-  // cleared it, so both halves of the rule were dead - the read above
-  // was a constant `true`, and the prison arm's own comment ("it sets
+  // cleared it, so both halves of the rule were dead - the read (in
+  // runMagicRounds' loop, wave 30) was a constant `true`, and the
+  // prison arm's own comment ("it sets
   // PreventNormalizingReputations across the skip precisely so the
   // elapsed days cannot decay what it just credited... not harmless
   // now that it is [ported]") described a line that was not there.
   if (entity.preventNormalizingReputations) entity.preventNormalizingReputations = false;
-
-  // S20 parity: DFU applies the loss ONCE per minute-CHANGE
-  // (`lastGameMinutes != gameMinutes` guards a single DecreaseFatigue),
-  // so a multi-minute jump costs one minute's fatigue, not one per
-  // minute caught up. The (int) cast happens AFTER the multiply.
-  if (nextFloor > _lastMagicRoundMinute) _lastMagicRoundMinute = nextFloor;
 
   // AUDIT 23 (C6: hosts-10 = entity-4) - PlayerEntity.cs:425-430: the
   // per-jump fatigue (11 x multiplier) and TallySkill(Jumping) live in
@@ -154,7 +183,7 @@ export function tickPlayerMinutes({
   // DFU's `lastGameMinutes != gameMinutes` - a different marker from the
   // broker's, and deliberately so: a multi-minute jump costs ONE minute's
   // fatigue (S20) while it costs many magic rounds.
-  if (nextFloor !== Math.floor(classicMinutes)) {
+  if (Math.floor(next) !== Math.floor(classicMinutes)) {
     let loss = FATIGUE_LOSS.Default;
     if (activity.running) loss = FATIGUE_LOSS.Running;
     else if (activity.swimming) {
