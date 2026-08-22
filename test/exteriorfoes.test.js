@@ -13,6 +13,18 @@ import { MAX_ACTIVE_ENCOUNTER_FOES, ENCOUNTER_CULL_DISTANCE } from '../src/scene
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = (f) => readFileSync(join(root, 'src/scenes', f), 'utf8');
 
+/** The `{ ... }` block containing index `i`, matched rather than
+ *  guessed at by character count. */
+function braceBlock(text, i) {
+  const open = text.indexOf('{', i);
+  let depth = 0;
+  for (let k = open; k < text.length; k++) {
+    if (text[k] === '{') depth++;
+    else if (text[k] === '}' && --depth === 0) return text.slice(open, k + 1);
+  }
+  return text.slice(open);
+}
+
 test('exteriorfoes: the pool laws - cull AFTER fresh senses, the alert raise, the pooled caps', () => {
   const s = src('exteriorFoes.js');
   // the cull runs after ai.update so a just-spawned foe's Infinity
@@ -64,7 +76,10 @@ test('exteriorfoes: the world host - the cadence loop, the travel reset, the fac
   assert.ok(s.includes('audio.play3d(SOUND.ArrowShoot, from'), 'the loose rings from the archer');
   const imp = s.indexOf('onPlayerHit: (m) =>');
   assert.ok(imp > 0, 'the world host handles the enemy-arrow impact');
-  const impFn = s.slice(imp, imp + 900);
+  // AUDIT 24 (wave 46): brace-matched, not a fixed 900 characters. The
+  // window was a window, not a block, and the wave's added lines
+  // pushed the recoverable-arrow assert straight out of it.
+  const impFn = braceBlock(s, imp);
   assert.ok(impFn.includes('tallySkill(playerEntity, SKILLS.Dodging, 1)'), 'the arrow tallies Dodging (BowDamage :141)');
   assert.ok(impFn.includes('calculateAttackDamage(shooter.entity, playerEntity'), 'the shared damage member');
   assert.ok(impFn.includes('inflictPoison(playerEntity, pt, false'), 'poisoned enemy arrows dose');

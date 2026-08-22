@@ -88,6 +88,19 @@ export function raceGenderPainSound(race, gender, heavyDamage, rolls = Math.rand
  *  clip -1 = nothing to play. */
 export function combatVoice({ race, gender, isAttack, heavyDamage = false, rolls = Math.random }) {
   let r = race;
+  // AUDIT 24 (wave 46): the swap below is EnemySounds.PlayCombatVoice's
+  // alone, and its comment says why - "Male high elf sounds sound odd
+  // when coming from NPCs". The PLAYER's two voices do not route
+  // through it: FPSWeapon.PlayAttackVoice (:315) and
+  // PlayerFootsteps.RemoveHealth (:358) both call
+  // GetRaceGender*Sound DIRECTLY. So a male High Elf player grunts
+  // and screams as a High Elf, and a male High Elf ENEMY as a Wood
+  // Elf - use playerVoice() for the player, never this.
+  //
+  // (DFU's swap also WRITES the field - `RaceForSounds = WoodElf` -
+  // so an enemy's voice race changes permanently on the first male
+  // call. Not observable: an enemy's gender is fixed per entity, so
+  // every later call would swap again anyway. Recorded, not chased.)
   if (gender === 'male' && r === RACES.HighElf) r = RACES.WoodElf;
   const clip = isAttack
     ? raceGenderAttackSound(r, gender, rolls)
@@ -97,3 +110,24 @@ export function combatVoice({ race, gender, isAttack, heavyDamage = false, rolls
 
 /** WeaponManager.cs:597: heavyDamage = damage >= maxHealth / 4. */
 export const isHeavyDamage = (damage, maxHealth) => damage >= Math.trunc(maxHealth / 4);
+
+/**
+ * The PLAYER's voice - the same clip tables, none of PlayCombatVoice's
+ * NPC handling. FPSWeapon.PlayAttackVoice:308-320 and
+ * PlayerFootsteps.RemoveHealth:347-364 are the two call sites, and
+ * both read the player's OWN race and gender, roll the same 0..0.3
+ * pitch lift, and skip the High Elf swap entirely.
+ *
+ * FLAGGED, both sites: DFU consults the racial override first -
+ * `GetCustomRaceGenderAttackSoundData` for the grunt (vampire and
+ * lycanthrope voices) and `SuppressOptionalCombatVoices` for the pain
+ * - and the port has no racial-override effect to ask yet. Both arms
+ * idle here rather than silently: when the vampirism arc lands, this
+ * is the one function that has to learn about it.
+ */
+export function playerVoice({ race, gender, isAttack, heavyDamage = false, rolls = Math.random }) {
+  const clip = isAttack
+    ? raceGenderAttackSound(race, gender, rolls)
+    : raceGenderPainSound(race, gender, heavyDamage, rolls);
+  return { clip, pitchLift: rolls() * 0.3 };
+}

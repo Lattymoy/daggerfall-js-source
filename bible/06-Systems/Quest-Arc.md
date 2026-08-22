@@ -4903,6 +4903,83 @@ TEXT PIN IS USUALLY A FUNCTION WORTH CALLING.**
 plus six the wave-38 scout confirmed that these waves have not closed.
 
 
+### Wave 46 - the player's side of being hit
+
+The C2 slice ported the race/gender voice tables whole and wired the
+**enemy** side of them. The player side was never wired at all: you
+took every hit in the game in silence. And the one player voice that
+did exist - the attack grunt - was routed through the wrong function.
+
+**The High Elf swap is the enemy's handling.**
+`EnemySounds.PlayCombatVoice:159-161` swaps a male High Elf's voice for
+a Wood Elf's, and its comment says why: *"Male high elf sounds sound
+odd when coming from NPCs."* The player's two voices never reach it -
+`FPSWeapon.PlayAttackVoice:315` and `PlayerFootsteps.RemoveHealth:358`
+both call `GetRaceGender*Sound` **directly**. So a male High Elf
+*player* grunts and screams as a High Elf, and a male High Elf *enemy*
+as a Wood Elf. `playerAttackGrunt` had been going through
+`combatVoice()` since C2, so a male High Elf player has been grunting
+as a Wood Elf for the whole arc. There is a `playerVoice()` now, and
+the swap lives only where DFU puts it.
+
+**A fall flashes the screen and does not make you cry out.** Both the
+flash and the pain voice hang off `RemoveHealth`, but Unity's
+`SendMessage` reaches every component and a direct C# call reaches one:
+
+| site | how | flash | cry |
+|---|---|---|---|
+| `EnemyAttack:406` - a blow, or an arrow through `BowDamage` | SENDS | yes | yes |
+| `DaggerfallAction:739/:768` - the damage traps | SENDS | yes | yes |
+| `PlayerHealth:57` - fall damage | calls its OWN method | yes | **no** |
+
+`PlayerFootsteps` has its own fall arm (`:306-311`) and it plays the
+`FallDamage` clip and nothing else. That is a real distinction in the
+source, not an oversight to tidy away, and it is pinned as one.
+
+**And the arrows owed everything.** `BowDamage:140-141` routes an enemy
+arrow through the same `ApplyDamageToPlayer` a melee blow takes, so an
+arrow owes the hit sound, the flash and the cry. `world.js` had the
+sound only; the dungeon's arrow arm had **none of the three** and was
+completely silent.
+
+**`PlayArrowSound` is dead and stays unported.** `PlayerFootsteps.cs`
+:366-372 defines it - *"Capture this message so we can play enemies'
+arrow sounds on player"* - and `grep SendMessage("PlayArrowSound")`
+over the whole tree returns nothing, while every sibling has a sender.
+So an enemy arrow in DFU makes the **weapon** hit sound and no arrow
+sound at all. The scout's finding had it as "the dungeon is silent
+where the exterior plays a sound"; the truth is narrower and the fix
+is the weapon family, not a clip nothing plays.
+
+**Twenty mutants, twenty kills, zero equivalents** - after two rounds,
+and the first round found more about the pins than about the code.
+
+- the heavy/light fork was pinned on a **male** player, and
+  `GetRaceGenderPainSound`'s male arm returns the race's Pain2 whatever
+  the damage. So `heavyDamage: true` hardcoded, and heavyDamage read
+  off *current* health, both sailed through. Pinned on a female now,
+  where the table actually forks.
+- "the blow cries" was `assert.ok(...some(line))`, and two hosts have
+  **two** cry sites each now. Deleting the blow's line left the
+  arrow's. Counted per file.
+- `!(damage > 0)` -> `damage <= 0` was filed as an equivalent and is
+  **not** one: they part company on a NaN. Pinned, and it is a kill.
+- and the campaign *script* was wrong about one. Replacing the first
+  `dice100(PAIN_VOICE_CHANCE, ...)` in `hostCombat.js` hits
+  `enemyPainVoice`, which this file does not cover. **A MUTANT AIMED AT
+  THE FIRST MATCH OF A SHAPE THAT APPEARS TWICE TESTS THE OTHER ONE.**
+
+One more, and it cost the file: a mutation script that does
+`open(path, 'w').write(build())` truncates the target the moment
+`build()` throws, because the open happens first. `hostCombat.js` went
+to zero bytes mid-campaign. It came back from the `.bak` the same
+script had just made, but the lesson is cheap to keep: **build the
+content, then open.**
+
+**Twenty-six findings remain**, plus seven from the host-parity sweep;
+the wave-38 scout's confirmed list is now closed out.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

@@ -221,6 +221,7 @@ combat line numbers below are refreshed with it.
 - `src/characters/playerEntity.js:20` - maxHealth: 50,    // INTERIM until chargen rolls career HP
 - `src/characters/playerEntity.js:27` - skills: 30,       // INTERIM flat skills until chargen
 - `src/characters/playerEntity.js:29` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-derives from the rolled stats (S15)
+- `src/combat/combatVoices.js:121` - * FLAGGED, both sites: DFU consults the racial override first -
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): proficiency
 - `src/combat/formulas.js:82` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
 - `src/combat/formulas.js:159` - *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
@@ -236,30 +237,30 @@ combat line numbers below are refreshed with it.
 - `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 - `src/scenes/cityGuards.js:272` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:522` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
-- `src/scenes/dungeonContext.js:214` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:591` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:597` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:624` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:988` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:215` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:592` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:598` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:625` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:989` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:470` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:476` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:598` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:717` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:887` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1029` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:602` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:721` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:891` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1033` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:177` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:194` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:646` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:676` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:682` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1248` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1498` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1665` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:1898` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:1917` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2193` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2481` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:647` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:677` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:683` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1253` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1503` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1670` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:1903` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:1922` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2198` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2492` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:190` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:231` - FLAGGED (Port-Ledger Q4-v): quest FOES pend the interior enemy
 - `src/scenes/worldModes.js:361` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)

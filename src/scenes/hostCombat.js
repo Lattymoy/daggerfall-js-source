@@ -10,7 +10,7 @@
 
 import { SKILLS, tallySkill, skillValue, SKILL_NAMES } from '../systems/skills.js';
 import { ENEMY_GROUPS, dice100 } from '../combat/formulas.js';
-import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoice, rollVoiceRace, isHeavyDamage } from '../combat/combatVoices.js';   // C2-slice
+import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoice, playerVoice, rollVoiceRace, isHeavyDamage } from '../combat/combatVoices.js';   // C2-slice; playerVoice AUDIT 24 (wave 46)
 import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
 import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
@@ -210,9 +210,65 @@ export function enemyPainVoice(f, damage, rolls = Math.random) {
 export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
   if (!combatVoicesEnabled() || isBow) return null;
   if (!dice100(ATTACK_VOICE_CHANCE, rolls())) return null;
-  return combatVoice({
+  // AUDIT 24 (wave 46): playerVoice, not combatVoice. FPSWeapon
+  // .PlayAttackVoice:315 calls GetRaceGenderAttackSound DIRECTLY and
+  // never touches PlayCombatVoice, so the male High Elf -> Wood Elf
+  // swap does NOT apply to the player - it is EnemySounds' handling
+  // of NPCs, by its own comment. A male High Elf player has been
+  // grunting as a Wood Elf since the C2 slice.
+  return playerVoice({
     race: RACES[playerEntity.race] ?? 1, gender: playerEntity.gender ?? 'male', isAttack: true, rolls,
   });
+}
+
+/**
+ * PlayerFootsteps.RemoveHealth (:347-364) - the player's pain voice,
+ * which the port had never played. The clip tables were ported with
+ * the C2 slice and the ENEMY side has used them since; the player
+ * took every hit in the game in silence.
+ *
+ * Forty percent, the player's own race and gender, heavyDamage at a
+ * quarter of MAX health, and the same 0..0.3 pitch lift. Returns
+ * `{ clip, pitchLift }` or null - the host owns the audio device.
+ *
+ * WHICH HITS SCREAM is narrower than "the player was damaged", and it
+ * is not the same set the damage FLASH rides. Both hang off the
+ * `RemoveHealth` message, but Unity's SendMessage reaches every
+ * component and a direct C# call reaches one:
+ *
+ *   - EnemyAttack.cs:406 SENDS it -> PlayerHealth (flash) AND
+ *     PlayerFootsteps (voice). A blow, or an arrow through BowDamage.
+ *   - DaggerfallAction.cs:739/:768 SEND it -> both. The damage traps.
+ *   - PlayerHealth.cs:57 CALLS ITS OWN RemoveHealth for fall damage
+ *     -> the flash only. PlayerFootsteps never hears it; its own
+ *     ApplyPlayerFallDamage arm (:306-311) plays the FallDamage clip
+ *     and nothing else.
+ *
+ * So a fall flashes the screen and does not make you cry out, and
+ * that is a real distinction in the source rather than an oversight
+ * in the port.
+ */
+export function playerPainVoice(playerEntity, damage, rolls = Math.random) {
+  if (!combatVoicesEnabled() || !(damage > 0)) return null;
+  if (!dice100(PAIN_VOICE_CHANCE, rolls())) return null;
+  return playerVoice({
+    race: RACES[playerEntity.race] ?? 1,
+    gender: playerEntity.gender ?? 'male',
+    isAttack: false,
+    heavyDamage: isHeavyDamage(damage, playerEntity.maxHealth ?? 0),
+    rolls,
+  });
+}
+
+/** The two player-voice sites play the same way - one shot, at the
+ *  listener, pitch-lifted. `audio.playOneShot` takes no pitch yet, so
+ *  the lift is RECORDED on the returned object and dropped here; when
+ *  the audio seam grows a pitch argument this is the one place that
+ *  has to learn it. */
+export function playPlayerVoice(audio, voice) {
+  if (!voice || !(voice.clip >= 0)) return null;
+  audio?.playOneShot?.(voice.clip, 1);
+  return voice.clip;
 }
 
 // ---- PlayerActivate.cs:85 ----

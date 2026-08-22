@@ -31,7 +31,8 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // TP-slice: the anchor/te
 import { SpellbookWindow, knownSpells } from '../ui/inventory.js';   // M2
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
-import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS } from './hostCombat.js';   // AUDIT 23 (C14)
+import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice } from './hostCombat.js';
+import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
@@ -816,6 +817,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       const apply = () => {
         hurtPlayer(playerEntity, dmg);   // AUDIT 21 hosts F6: the one damage door - this used to write health raw and never check for death
         audio.playOneShot(hitSoundFor(wpn), 1.1);
+        // AUDIT 24 (wave 46): PlayerFootsteps hears the same
+        // RemoveHealth the flash does - a 40% cry in the player's own
+        // race and gender.
+        playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
         surfacePlayer();
       };
       // G2: the verbatim arrest interception - a guard hit on an
@@ -2470,6 +2475,12 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (dmg > 0) {
           hurtPlayer(playerEntity, dmg);
           audio.playOneShot(hitSoundFor(m.weapon), 1.1);
+          // AUDIT 24 (wave 46): an arrow reaches the player through
+          // BowDamage -> ApplyDamageToPlayer -> SendDamageToPlayer,
+          // the same door as a blow, so it owes the flash and the cry
+          // too. This site had the sound and neither of the others.
+          flashPlayerDamage();
+          playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
           surfacePlayer();
         }
         addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });   // BowDamage: the arrow is recoverable from the target

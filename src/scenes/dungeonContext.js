@@ -43,6 +43,7 @@ import {
   enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt,   // C2-slice (combat-9/17)
   tickEnemySound, playEnemyClip,   // AUDIT 24 (wave 41): EnemySounds through the host's devices
   tryLanguagePacification,         // AUDIT 24 (wave 42): EnemySenses:504-527
+  playerPainVoice, playPlayerVoice,   // AUDIT 24 (wave 46): PlayerFootsteps.RemoveHealth's 40% cry
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
@@ -1513,6 +1514,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               say: (l) => hudText.add(l),   // C-slice
             }) : 0;
             hurtPlayer(dmg);
+            // AUDIT 24 (wave 46): an enemy ARROW reaches the player
+            // through BowDamage -> ApplyDamageToPlayer ->
+            // SendDamageToPlayer, exactly as a melee blow does - so it
+            // owes the same three things. This site did NONE of them:
+            // no hit sound (world.js's equivalent has always played
+            // one), no flash, no cry. The weapon is a bow, so it is
+            // PlayWeaponHitSound's family, NOT PlayArrowSound - which
+            // has no sender anywhere in the DFU tree and is dead.
+            if (dmg > 0) {
+              audio.playOneShot(hitSoundFor(m.weapon), 1.1);
+              flashPlayerDamage();
+              playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
+            }
             addItem(playerEntity.items, { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 });
             surfacePlayer();
             retireMissile(m);
@@ -1747,10 +1761,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // rings the miss sound too (ApplyDamageToPlayer's else arm).
     else audio.play3d(enemyMissSound(wpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
     hurtPlayer(dmg);
-    // AUDIT 24 (wave 39): EnemyAttack.cs:406 sends RemoveHealth, which
-    // is what ShowPlayerDamage listens to. Guarded on a LANDED blow -
-    // DFU's SendDamageToPlayer is only reached from the hit arm.
-    if (dmg > 0) flashPlayerDamage();
+    // AUDIT 24 (wave 39/46): EnemyAttack.cs:406 SENDS RemoveHealth, and
+    // Unity's SendMessage reaches every component - so the same blow
+    // drives ShowPlayerDamage's flash AND PlayerFootsteps' 40% cry.
+    // Guarded on a LANDED blow: SendDamageToPlayer is only reached
+    // from the hit arm.
+    if (dmg > 0) {
+      flashPlayerDamage();
+      playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
+    }
     foeAttackVoice(f);   // C2-slice (combat-17): after the fork, hit or miss
   }
 

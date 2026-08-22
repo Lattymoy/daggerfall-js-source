@@ -43,7 +43,7 @@ import { createTownTalk } from './townTalk.js';   // T3b
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
 import { SpellbookWindow, knownSpells } from '../ui/inventory.js';   // M2
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C2): the ONE clock
-import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS } from './hostCombat.js';   // AUDIT 23 (C14)
+import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice } from './hostCombat.js';   // AUDIT 23 (C14)
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5): the collapse box
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
@@ -538,6 +538,10 @@ export async function bootExterior(canvas, renderer, params, status) {
       const apply = () => {
         hurtPlayer(playerEntity, dmg);   // AUDIT 21 hosts F6: the one damage door - this used to write health raw and never check for death
         audio.playOneShot(hitSoundFor(wpn), 1.1);
+        // AUDIT 24 (wave 46): PlayerFootsteps hears the same
+        // RemoveHealth the flash does - a 40% cry in the player's own
+        // race and gender.
+        playPlayerVoice(audio, playerPainVoice(playerEntity, dmg));
         surfacePlayer();
       };
       // G2: the verbatim arrest interception - a guard hit on an
