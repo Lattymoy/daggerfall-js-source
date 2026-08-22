@@ -26,6 +26,7 @@ import { SKILLS, WEAPON_SKILL } from '../src/systems/skills.js';
 import { ENEMY_GROUPS, bonusOrPenaltyByEnemyType } from '../src/combat/formulas.js';
 import { tickPlayerMinutes } from '../src/systems/worldTick.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
+import { corpseLootTargets } from '../src/scenes/corpseMarker.js';   // AUDIT 24 wave 38: the shared corpse seam
 import { makeEnemyEntity, loadMonsterCareer } from '../src/characters/enemyEntity.js';
 import { swingSoundFor, SOUND } from '../src/systems/soundClips.js';
 import { readSpellsStd } from '../src/formats/spellsStd.js';
@@ -284,9 +285,18 @@ test('audit18 sweep: no host plays the wall pair on a connected swing', () => {
 
 test('audit18: corpses reach 150 * GlobalScale, not the 128-unit default', () => {
   assert.equal(CORPSE_ACTIVATION_DISTANCE, 3.75);
-  for (const n of ['dungeonContext.js', 'cityGuards.js']) {
-    assert.ok(/distance: CORPSE_ACTIVATION_DISTANCE/.test(hostSrc(n)), `${n} corpse targets carry the reach`);
-  }
+  // The dungeon still builds its own targets inline. AUDIT 24 (wave 38)
+  // moved the two exterior pools onto the shared builder, so the reach
+  // is asserted where each one now writes it - and for the shared one,
+  // by CALLING it rather than grepping for the constant's name.
+  assert.ok(/distance: CORPSE_ACTIVATION_DISTANCE/.test(hostSrc('dungeonContext.js')), 'dungeonContext.js corpse targets carry the reach');
+  const built = corpseLootTargets(
+    [{ corpse: true, entity: { items: [] } }],
+    'x', { isCorpse: (e) => !!e.corpse, feetOf: () => [1, 2, 3] },
+  );
+  assert.equal(built.length, 1);
+  assert.equal(built[0].distance, CORPSE_ACTIVATION_DISTANCE, 'the shared builder carries it too');
+  assert.equal(built[0].key, 'x:0');
 });
 
 // ---------------------------------------------------------------

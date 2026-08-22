@@ -28,7 +28,7 @@ import { MobileUnit } from '../characters/mobileUnit.js';
 import { ClassFile } from '../formats/classFile.js';
 import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt } from './hostCombat.js';   // C2-slice (combat-9/17)
 import { generateItems as generateLootItems } from '../systems/loot.js';
-import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, KB_UNIT, enemyWeightClassicUnits, weaponKnockbackSpeed } from '../combat/formulas.js';
+import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies } from '../combat/formulas.js';
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
@@ -37,6 +37,7 @@ import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';   // AUDIT 24 (wave 30): the monster special-attack rider, above ground
 import { MINUTES_PER_DAY } from '../systems/worldTick.js';
+import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied } from './corpseMarker.js';   // AUDIT 24 (wave 38): EnemyDeath's one home
 
 // The port's allocation-owner guards (classic self-limits through the
 // 144-minute cadence; these keep a long session bounded).
@@ -153,22 +154,44 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // corpses), so the batch was unreachable and undead at once.
       releaseFoeBatch(f);
       if (f.ai?.detected) setEnemyAlert(playerEntity, false);   // EnemyDeath:132-136
-      const ct = ENEMY_BASICS[f.mobileType]?.corpseTexture;
-      if (ct) {
-        const size = scaledBillboardSize(f.tex.getSize(0), f.tex.getScale(0));
-        getTexture(ct.archive).then((t) => {
-          uploadRecordFrame(ct.archive, ct.record, 0);
-          const sz = scaledBillboardSize(t.getSize(ct.record), t.getScale(ct.record));
-          const pos = [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]];
-          const batch = renderer.createBillboardBatch(ct.archive, ct.record, sz ?? size, [pos]);
-          batch.frame = 0;   // FA1 slice 3: bare record + a frame FIELD, one key rule
-          corpseBatches.push({ batch, archive: ct.archive, record: ct.record, size: sz ?? size, pos });
-        }).catch(() => {});
-      }
+      sayEnemyDied(say, f.mobileType);   // EnemyDeath:79-83, the kill notice
+      // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
+      // home. This pool minted the marker inline at f.ai.feet - so a
+      // flying encounter foe left its corpse hanging in the air where
+      // it died, where DFU drops it at FindGroundPosition (:817) - and
+      // nothing ever played BodyFall (:126-129).
+      mintCorpseMarker({
+        renderer, getTexture, uploadRecordFrame, collider,
+        corpseTexture: ENEMY_BASICS[f.mobileType]?.corpseTexture,
+        feet: f.ai.feet,
+        fallbackSize: scaledBillboardSize(f.tex.getSize(0), f.tex.getScale(0)),
+        stillDead: () => f.dead,
+      }).then((c) => {
+        if (!c) return;
+        f.corpseMarker = c;   // the loot seam reads the GROUND position from here
+        corpseBatches.push(c);
+        playBodyFall(audio, c.pos);
+      }).catch(() => {});
       return;
     }
-    if (knockDir && f.ai.knockbackSpeed <= 5 / KB_UNIT) {
-      const w = enemyWeightClassicUnits(f.mobileType >= 128, f.gender, ENEMY_BASICS[f.mobileType]?.weight ?? 0);
+    // C15 knockback, WeaponManager.cs:578-581. AUDIT 24 (wave 38): this
+    // pool carried only the re-knock half of the gate. C# writes
+    //     if (speed <= 5/ratio && EntityType == EnemyClass || Weight > 0)
+    // and `&&` binds tighter than `||`, so a monster with any weight
+    // re-knocks on EVERY hit while a class enemy must wait for the
+    // current shove to decay. Dropping the Weight arm cost both ends:
+    // a weighted monster could not be chain-knocked (the second hit
+    // inside one shove found speed above the threshold and did
+    // nothing), and Ghost (18) and Wraith (23) - the only two rows in
+    // the table at Weight 0, which is precisely why DFU's gate spares
+    // them - reached the formula and got (10d/0) * (2d - 2d), an
+    // Infinity times a zero: NaN. That NaN then sat in knockbackSpeed
+    // for the life of the foe, and every later `NaN <= threshold`
+    // being false meant it could never be knocked again either.
+    const isClass = f.mobileType >= 128;
+    const mobileWeight = ENEMY_BASICS[f.mobileType]?.weight ?? 0;
+    if (knockDir && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {
+      const w = enemyWeightClassicUnits(isClass, f.gender, mobileWeight);
       f.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);
       f.ai.knockbackDir = [knockDir[0], knockDir[1], knockDir[2]];
     }
@@ -342,6 +365,26 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     return any;
   }
 
+  // AUDIT 24 (wave 38): the corpses this pool has always minted were
+  // never reachable. spawnFoe rolls the loot table into entity.items
+  // and equipEnemy hangs gear on the foe; damageFoe drew a corpse and
+  // stopped there, and the pool exported no activation seam - so every
+  // encounter kill's loot existed, was drawn, and could not be opened.
+  // The watch has had this since G3; it is the same shape, and now the
+  // same code (PlayerActivate's CorpseMarker arm lives in
+  // corpseMarker.js for both).
+  function lootTargets() {
+    return corpseLootTargets(foes, 'foeCorpse', {
+      isCorpse: (f) => !!f.corpse && !!f.entity,
+      // the GROUND position the marker landed on, not where the foe
+      // died - a flyer's body is metres below its last feet.
+      feetOf: (f) => f.corpseMarker?.pos ?? f.ai?.feet ?? null,
+    });
+  }
+  function takeLoot(key, say2 = () => {}) {
+    return takeCorpseLoot(foes[Number(key.split(':')[1])], playerEntity, say2);
+  }
+
   /** Live sprite + corpse batches for the draw - the guard shape:
    *  record/size/origin mutate per frame, frames upload lazily. */
   function batches() {
@@ -374,5 +417,5 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     }
   }
 
-  return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount };
+  return { foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches, offsetAll, activeCount, lootTargets, takeLoot };
 }

@@ -85,7 +85,7 @@ import { REST_TEXT } from '../systems/restSession.js';
 import { intermittentEnemySpawn, setEnemyAlert } from '../systems/encounters.js';   // E-slice
 import { RestWindow } from '../ui/restWindow.js';
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
-import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
+import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
@@ -109,7 +109,7 @@ import { trs, multiply } from '../world/mat4.js';
 import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
 import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 
 
 
@@ -1651,8 +1651,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // every class row leaves Weight at its struct 0 - but it is not
       // what the source says, and the day a class row carries a weight
       // the two would part.
-      const reKnockOk = foe.ai.knockbackSpeed <= 5 / KB_UNIT && isClass;
-      if (reKnockOk || mobileWeight > 0) {
+      // AUDIT 24 (wave 38): through the shared gate now - this was the
+      // only pool that had the precedence right, and one home means the
+      // other two cannot drift away from it again.
+      if (weaponKnockbackApplies(foe.ai.knockbackSpeed, isClass, mobileWeight)) {
         const w = enemyWeightClassicUnits(isClass, foe.gender, mobileWeight);
         foe.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);
         foe.ai.knockbackDir = [knockDir[0], knockDir[1], knockDir[2]];
@@ -2014,7 +2016,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (_lang !== -1) {
           if (foeDeps.calculateEnemyPacification(playerEntity, _lang, playerWeapon.sheathed)) {
             f.ai.isHostile = false;
-            hudText.add(`${ENEMY_BASICS[f.mobileType]?.name ?? 'The enemy'} is pacified by your ${SKILL_NAMES[_lang]} skill.`);   // languagePacified %e/%s
+            // AUDIT 24 (wave 38): this read ENEMY_BASICS[...].name, and no row
+            // in the table has ever carried a `name` - so %e resolved to
+            // undefined and every pacification in the game said "The
+            // enemy". GetLocalizedEnemyName is enemyDisplayName now.
+            hudText.add(`${enemyDisplayName(f.mobileType) ?? 'The enemy'} is pacified by your ${SKILL_NAMES[_lang]} skill.`);   // languagePacified %e/%s
             tallySkill(playerEntity, _lang, 3);
           } else if (_lang !== SKILLS.Etiquette && _lang !== SKILLS.Streetwise) {
             tallySkill(playerEntity, _lang, 1);

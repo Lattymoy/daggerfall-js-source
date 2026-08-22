@@ -597,6 +597,31 @@ export function calculatePickpocketingChance(pickpocketSkill, playerLevel, targe
   return Math.max(5, Math.min(95, chance));
 }
 
+/**
+ * WeaponManager.cs:578-581's GATE, which is a precedence trap:
+ *
+ *     if (enemyMotor.KnockbackSpeed <= (5 / ratio) &&
+ *         entityBehaviour.EntityType == EntityTypes.EnemyClass ||
+ *         enemyEntity.MobileEnemy.Weight > 0)
+ *
+ * `&&` binds tighter than `||` in C#, so this reads
+ * `(speed <= 5/ratio && isClass) || Weight > 0` - a monster with ANY
+ * weight is knocked back by every hit that lands, while a class enemy
+ * (whose MobileEnemy.Weight is 0 for every row in the table) must wait
+ * for the current shove to decay under the threshold first.
+ *
+ * The `Weight > 0` arm is also what keeps the formula defined. It is
+ * undefined at zero - (10d/0) * (2d - 2d) is an Infinity times a zero
+ * - and Ghost (18) and Wraith (23) are the only two rows that carry
+ * Weight 0, which is exactly why DFU never reaches it for them.
+ *
+ * AUDIT 24 (wave 38): three pools wrote three different subsets of
+ * this. One home.
+ */
+export function weaponKnockbackApplies(knockbackSpeed, isClass, mobileWeight) {
+  return (knockbackSpeed <= 5 / KB_UNIT && !!isClass) || (mobileWeight ?? 0) > 0;
+}
+
 /** The WeaponManager player-hit knockback speed, verbatim:
  *  kb = ((10d - w) * 256) / (w + 10d) * 2d;
  *  speed = (10d / w) * (2d - kb/256), through the ratio, floored at

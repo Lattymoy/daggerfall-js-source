@@ -47,19 +47,18 @@ import { generateItems } from '../systems/loot.js';
 import { inflictPoison } from '../systems/poisons.js';
 import {
   calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon,
-  KB_UNIT, enemyWeightClassicUnits, weaponKnockbackSpeed,
+  enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies,
 } from '../combat/formulas.js';
 import {
   equipEnemy, backstabChanceOf, tallySwingSkills,
   zeroDamageHitSound, SWING_WEAPON_FATIGUE_LOSS,
-  CORPSE_ACTIVATION_DISTANCE,
   enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt,   // C2-slice (combat-9/17)
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { tallySkill, SKILLS } from '../systems/skills.js';
-import { addItem } from '../systems/inventory.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { rayPersonDistance } from './townTalk.js';
+import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied } from './corpseMarker.js';   // AUDIT 24 (wave 38): EnemyDeath's one home
 
 // PlayerEntity.Crimes (the two this module levies - the enum lives
 // whole in systems/court.js).
@@ -253,29 +252,40 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       g.corpse = true;   // G3: only a KILLED guard is lootable (walk-aways vanish with their items)
       releaseGuardBatch(g);
       if (g.ai?.detected) setEnemyAlert(playerEntity, false);   // EnemyDeath:131-136 (wave 36)
+      sayEnemyDied(say, GUARD_MOBILE_TYPE);   // EnemyDeath:79-83, the kill notice
       // G4 (HandleAttackFromSource, verbatim): killing the city watch
       // IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
       // the thieves-guild arc.
       playerEntity.crimeCommitted = CRIME_MURDER;
-      const ct = ENEMY_BASICS[GUARD_MOBILE_TYPE].corpseTexture;
-      const size = scaledBillboardSize(g.tex.getSize(0), g.tex.getScale(0));
-      // corpse archive differs from the live one; upload its record
-      getTexture(ct.archive).then((t) => {
-        uploadRecordFrame(ct.archive, ct.record, 0);
-        const sz = scaledBillboardSize(t.getSize(ct.record), t.getScale(ct.record));
-        const pos = [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]];
-        const batch = renderer.createBillboardBatch(ct.archive, ct.record, sz ?? size, [pos]);
-        batch.frame = 0;   // FA1 slice 3: bare record + a frame FIELD, one key rule
-        // AUDIT 17e F23: keep the creation params - a floating-origin
-        // recenter has to REBUILD the batch (the centers are baked into
-        // a STATIC_DRAW buffer, so they cannot be shifted in place).
-        corpseBatches.push({ batch, archive: ct.archive, record: ct.record, size: sz ?? size, pos });
+      // AUDIT 24 (wave 38): EnemyDeath.CompleteDeath, through the one
+      // home (this was the second copy of exteriorFoes' mint, to the
+      // line). It gains FindGroundPosition (:817) - the watch walks, so
+      // the ground is usually its feet, but a guard killed on a stair
+      // or a rooftop no longer leaves its body on the slope - and
+      // BodyFall (:126-129), which no pool in the port ever played.
+      mintCorpseMarker({
+        renderer, getTexture, uploadRecordFrame, collider,
+        corpseTexture: ENEMY_BASICS[GUARD_MOBILE_TYPE].corpseTexture,
+        feet: g.ai.feet,
+        fallbackSize: scaledBillboardSize(g.tex.getSize(0), g.tex.getScale(0)),
+        stillDead: () => g.dead,
+      }).then((c) => {
+        if (!c) return;
+        g.corpseMarker = c;
+        corpseBatches.push(c);
+        playBodyFall(audio, c.pos);
       }).catch(() => {});
       return;
     }
-    // C15 knockback: class enemies re-knock under the hurt threshold
-    if (knockDir && g.ai.knockbackSpeed <= 5 / KB_UNIT) {
-      const w = enemyWeightClassicUnits(true, 'male', 0);
+    // C15 knockback: the watch is a CLASS enemy (Knight_CityWatch) and
+    // every class row leaves MobileEnemy.Weight at 0, so only the first
+    // arm of WeaponManager's gate can ever fire here - it re-knocks
+    // once the current shove decays under the threshold. Written
+    // through the shared gate anyway (AUDIT 24 wave 38): the pool
+    // should not be the place that remembers which arm applies to it.
+    const guardWeight = ENEMY_BASICS[GUARD_MOBILE_TYPE]?.weight ?? 0;
+    if (knockDir && weaponKnockbackApplies(g.ai.knockbackSpeed, true, guardWeight)) {
+      const w = enemyWeightClassicUnits(true, 'male', guardWeight);
       g.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);
       g.ai.knockbackDir = [knockDir[0], knockDir[1], knockDir[2]];
     }
@@ -495,26 +505,20 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // transfers into the player entity (the corpse billboard stays, as
   // dungeon corpses do; 'You take N items.' - TEXT.RSC pends with the
   // dungeon's).
+  // AUDIT 24 (wave 38): the same seam as exteriorFoes now, in
+  // corpseMarker.js. Two corrections came with the fold: an EMPTY body
+  // is still a target (DFU tells you it has no treasure and only THEN
+  // disables the container, :942-947 - this skipped it silently), and
+  // a body holding nothing but arrows is collected whole (:948-952),
+  // which is the ordinary outcome of killing a guard with a bow.
   function lootTargets() {
-    const targets = [];
-    guards.forEach((g, i) => {
-      if (!g.corpse || !g.entity?.items?.length) return;
-      const p = g.ai.feet;
-      // PlayerActivate.cs:85/:938 - corpses reach 150 * GlobalScale,
-      // not the 128-unit default.
-      targets.push({ key: `guardCorpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: CORPSE_ACTIVATION_DISTANCE });
+    return corpseLootTargets(guards, 'guardCorpse', {
+      isCorpse: (g) => !!g.corpse && !!g.entity,
+      feetOf: (g) => g.corpseMarker?.pos ?? g.ai?.feet ?? null,
     });
-    return targets;
   }
-  function takeLoot(key, say = () => {}) {
-    const g = guards[Number(key.split(':')[1])];
-    if (!g?.corpse || !g.entity?.items?.length) return 0;
-    let n = 0;
-    playerEntity.items = playerEntity.items || [];
-    for (const item of g.entity.items) { addItem(playerEntity.items, item); n++; }
-    g.entity.items.length = 0;
-    if (n > 0) say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);
-    return n;
+  function takeLoot(key, say2 = () => {}) {
+    return takeCorpseLoot(guards[Number(key.split(':')[1])], playerEntity, say2);
   }
 
   /** AUDIT 17e F23 / THE FOUR HOSTS RULE: the ?world host recenters

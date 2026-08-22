@@ -4236,6 +4236,129 @@ is why: it looked like the check had already been made.
 **Twenty-six findings remain**, plus seven from the host-parity sweep.
 
 
+### Wave 38 - EnemyDeath, and the corpse nobody could open
+
+`EnemyDeath.CompleteDeath` (:62-141) runs for every enemy in
+Daggerfall. It does five things. The port's two above-ground pools did
+one of them.
+
+```csharp
+DaggerfallLoot loot = GameObjectHelper.CreateLootableCorpseMarker(...);
+...
+loot.Items.TransferAll(entityBehaviour.Entity.Items);
+DaggerfallUI.Instance.DaggerfallAudioSource.PlayClipAtPoint(
+    SoundClips.BodyFall, loot.transform.position, 1f);
+```
+
+**The corpse nobody could open.** `exteriorFoes` rolls the loot table
+into `entity.items` when it spawns a foe, equips it, and on death mints
+a corpse billboard. Then it stops. The pool exported
+`{ foes, spawnFoe, damageFoe, update, resolvePlayerHit, batches,
+offsetAll, activeCount }` - no activation seam at all - so every
+encounter kill's loot and equipment were generated, drawn on the
+ground, and unreachable for the life of the session. The watch has had
+the seam since G3. The encounter pool never got it, and nothing ever
+noticed because a corpse you cannot open looks exactly like a corpse
+you have already emptied.
+
+**The corpse in mid-air.** `CreateLootableCorpseMarker` asks the motor
+where the ground is (:817, `enemyMotor.FindGroundPosition()`). The
+dungeon does this - it has a `C12` comment about flyers dying on the
+wing. Both exterior pools passed the foe's last feet straight through,
+so a bat or a harpy left its body hanging where it was killed.
+
+**The sound of a kill.** :126-129 plays `SoundClips.BodyFall` at the
+corpse, unconditionally, in every context. No pool in the port played
+it, the dungeon included.
+
+**The kill notice.** :79-83 pops `"%s just died."` The port never said
+it - and could not have, easily, because the name it needs
+(`GetLocalizedEnemyName`) lived in `systems/quest/foe.js`, behind the
+quest machinery, where nothing outside a quest could reach it without
+risking the import cycle this arc has now hit three times.
+`ENEMY_NAMES` and `isClassEnemyId` moved down to
+`characters/enemyBasics.js` - a true leaf with zero imports, which
+`quest/foe.js` already imports anyway - and `quest/foe.js` re-exports
+them, so the edge got shorter rather than longer.
+
+That move turned up its own bug. The dungeon's pacification line reads
+
+```js
+`${ENEMY_BASICS[f.mobileType]?.name ?? 'The enemy'} is pacified by ...`
+```
+
+and **no row in `ENEMY_BASICS` has ever carried a `name` field** - all
+62 of them leave it undefined. So every pacification in the game, since
+the C-slice shipped it, has said "The enemy is pacified by your Orcish
+skill." The `?? 'The enemy'` fallback is what hid it: it made a lookup
+that always failed look like a lookup that sometimes did.
+
+**One home.** All of the above lives in `scenes/corpseMarker.js` now,
+because the two exterior mints were the same code to the line - the
+second copy of a thing worth writing once. PlayerActivate's
+`CorpseMarker` arm (:936-955) came with it, and it has arms the port
+did not have: an EMPTY body is told to you and the container is then
+DISABLED (:942-947 - the watch pool skipped empty corpses silently, so
+the line was unreachable), and a body holding nothing but arrows is
+collected whole with no window (:948-952 - which is the ordinary
+outcome of killing anything with a bow, since the landed arrow joins
+the target's inventory). Neither taking arm disables the corpse:
+DFU disables on the activation that *finds* it empty, which is the
+next one, so the player is still owed the line.
+
+**The knockback gate, which is a precedence trap.**
+
+```csharp
+if (enemyMotor.KnockbackSpeed <= (5 / ratio) &&
+    entityBehaviour.EntityType == EntityTypes.EnemyClass ||
+    enemyEntity.MobileEnemy.Weight > 0)
+```
+
+`&&` binds tighter than `||`, so this is
+`(speed <= 5/ratio && isClass) || Weight > 0`. The encounter pool had
+written only the first *half* of the first arm - `speed <= 5/ratio`,
+no `isClass`, no Weight - and that broke it at both ends. A weighted
+monster could not be chain-knocked, because one hit leaves the speed at
+5.63 against a threshold of 1.27 and the second hit inside that shove
+found the gate shut, where DFU knocks it again without asking. And
+Ghost (18) and Wraith (23) - the only two rows in the table at Weight
+0, which is *precisely why* DFU's gate spares them - reached the
+formula and got `(10d / 0) * (2d - 2d)`: an Infinity times a zero,
+which is **NaN**. That NaN then sat in `knockbackSpeed` for the rest of
+the foe's life, and since every comparison with a NaN is false, no
+later hit could ever write the field again either. The gate is one
+exported function now (`weaponKnockbackApplies`), asked by all three
+pools; the dungeon was the only one that had the precedence right, and
+one home is what stops the other two drifting off it a second time.
+
+**Twenty-four mutants, twenty-four kills**, and two equivalents
+recorded rather than dressed up: the `?? 0` inside the gate (every
+caller already defaults the weight) and `Array.from(feet)` for the
+no-collider position both survive, correctly.
+
+**And an accident worth recording.** A four-slice scout ran alongside
+this wave - 30 agents, 2.2M tokens, 26 claims - and its verify phase
+overlapped the implementation. Five of its seven refutations are
+refutations of *this wave's own fixes*: it went looking for the
+unlootable corpse, the mid-air corpse, the missing BodyFall, the
+unreachable empty-corpse line and the dropped knockback gate, and found
+all five already there. One verifier wrote that the port "reproduces
+DFU's precedence bug exactly", which is the nicest thing anyone has
+said about this repo.
+
+That is not independent verification that the fixes are *right* - the
+agents confirmed the code is present, not that it matches, and the
+mutation campaign is what speaks to correctness. But it is a clean
+demonstration of something the arc keeps relearning: **the scout and
+the wave must not read the same tree at the same time.** The findings
+are real; the verdicts on them were stale before they were written.
+
+Its other twenty-one claims stand, and are the queue below.
+
+**Twenty-six findings remain**, plus seven from the host-parity sweep,
+plus the seventeen this scout confirmed that this wave did not close.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

@@ -22,32 +22,15 @@ import { parseInt as questParseInt } from './parseUtils.js';
 import { foesTable } from './tables.js';
 import { GENDERS, getNameBankOfRegion, fullName, monsterName } from '../../characters/nameHelper.js';
 import { srand, randomRange } from '../../formats/dfRandom.js';
-import { ENEMY_BASICS } from '../../characters/enemyBasics.js';
+import { ENEMY_BASICS, ENEMY_NAMES, isClassEnemyId } from '../../characters/enemyBasics.js';
 
 const MAX_SPAWN_COUNT = 8;
 
-// TextManager.GetLocalizedEnemyName's en list (Internal_Strings en id
-// 183, 62 entries): index = id for monsters 0..42, 43 + id - 128 for
-// the class enemies.
-export const ENEMY_NAMES = Object.freeze([
-  'Rat', 'Imp', 'Spriggan', 'Giant Bat', 'Grizzly Bear',
-  'Sabretooth Tiger', 'Spider', 'Orc', 'Centaur', 'Werewolf', 'Nymph',
-  'Slaughterfish', 'Orc Sergeant', 'Harpy', 'Wereboar',
-  'Skeletal Warrior', 'Giant', 'Zombie', 'Ghost', 'Mummy',
-  'Giant Scorpion', 'Orc Shaman', 'Gargoyle', 'Wraith', 'Orc Warlord',
-  'Frost Daedra', 'Fire Daedra', 'Daedroth', 'Vampire',
-  'Daedra Seducer', 'Ancient Vampire', 'Daedra Lord', 'Lich',
-  'Ancient Lich', 'Dragonling', 'Fire Atronach', 'Iron Atronach',
-  'Flesh Atronach', 'Ice Atronach', 'Horse', 'Dragonling', 'Dreugh',
-  'Lamia',
-  'Mage', 'Spellsword', 'Battlemage', 'Sorcerer', 'Healer',
-  'Nightblade', 'Bard', 'Burglar', 'Rogue', 'Acrobat', 'Thief',
-  'Assassin', 'Monk', 'Archer', 'Ranger', 'Barbarian', 'Warrior',
-  'Knight', 'City Watch',
-]);
-
-/** EnemyBasics.IsClassEnemyId: the 128 bit. */
-export const isClassEnemyId = (id) => (id & 128) !== 0;
+// AUDIT 24 (wave 38): ENEMY_NAMES and isClassEnemyId moved to
+// characters/enemyBasics.js - the leaf that holds the rows they name,
+// which this file already imports. Re-exported so every existing
+// importer keeps working (ONE DFU MEMBER, ONE EXPORT).
+export { ENEMY_NAMES, isClassEnemyId } from '../../characters/enemyBasics.js';
 
 const DECL = [
   /(Foe|foe) (?<symbol>[a-zA-Z0-9_.-]+) is (?<count>\d+) (?<aFoe>\w+)/,

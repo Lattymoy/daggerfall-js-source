@@ -8,6 +8,44 @@
 // Class entries (128+) carry no health/level/damage - those come
 // from the career (CLASS*.CFG) + FormulaHelper, per SetEnemyCareer.
 // Do not hand-edit; regenerate: node tools/extract-enemy-basics.mjs
+// TextManager.GetLocalizedEnemyName's en list (Internal_Strings en id
+// 183, 62 entries): index = id for monsters 0..42, 43 + id - 128 for
+// the class enemies.
+//
+// AUDIT 24 (wave 38): this table lived in systems/quest/foe.js, which
+// already imports ENEMY_BASICS from here - so anything outside the
+// quest machinery that wanted an enemy's NAME had to reach through it.
+// EnemyDeath's "%s just died." and the pacification line both do, and
+// neither is a quest. ONE DFU MEMBER, ONE EXPORT: the names live with
+// the rows they name, and quest/foe.js re-exports them.
+export const ENEMY_NAMES = Object.freeze([
+  'Rat', 'Imp', 'Spriggan', 'Giant Bat', 'Grizzly Bear',
+  'Sabretooth Tiger', 'Spider', 'Orc', 'Centaur', 'Werewolf', 'Nymph',
+  'Slaughterfish', 'Orc Sergeant', 'Harpy', 'Wereboar',
+  'Skeletal Warrior', 'Giant', 'Zombie', 'Ghost', 'Mummy',
+  'Giant Scorpion', 'Orc Shaman', 'Gargoyle', 'Wraith', 'Orc Warlord',
+  'Frost Daedra', 'Fire Daedra', 'Daedroth', 'Vampire',
+  'Daedra Seducer', 'Ancient Vampire', 'Daedra Lord', 'Lich',
+  'Ancient Lich', 'Dragonling', 'Fire Atronach', 'Iron Atronach',
+  'Flesh Atronach', 'Ice Atronach', 'Horse', 'Dragonling', 'Dreugh',
+  'Lamia',
+  'Mage', 'Spellsword', 'Battlemage', 'Sorcerer', 'Healer',
+  'Nightblade', 'Bard', 'Burglar', 'Rogue', 'Acrobat', 'Thief',
+  'Assassin', 'Monk', 'Archer', 'Ranger', 'Barbarian', 'Warrior',
+  'Knight', 'City Watch',
+]);
+
+/** EnemyBasics.IsClassEnemyId: the 128 bit. */
+export const isClassEnemyId = (id) => (id & 128) !== 0;
+
+/** GetLocalizedEnemyName, with the index law in one place. Rows carry
+ *  no `name` field - reading one returns undefined, which is how the
+ *  pacification line came to say "The enemy" to everybody. */
+export function enemyDisplayName(mobileType) {
+  const i = mobileType < 128 ? mobileType : 43 + mobileType - 128;
+  return ENEMY_NAMES[i] ?? null;
+}
+
 export const ENEMY_BASICS = Object.freeze({
  '0': {
   'maleTexture': 255,

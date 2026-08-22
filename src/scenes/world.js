@@ -2196,9 +2196,20 @@ export async function bootWorld(canvas, renderer, params, status) {
           // (loot pickup on the dungeon's S2 shape); doors otherwise.
           const useFwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
           if (!townTalk.tryActivate(cam.pos, useFwd, _livePersons)) {
-            const lootKey = pickActivatable(cam.pos, useFwd, cityGuards.lootTargets(), collider);
+            // AUDIT 24 (wave 38): BOTH corpse pools go into ONE pick.
+            // The watch and the encounter foes leave the same container
+            // type, so which body you open is PlayerActivate's nearest
+            // hit, not which pool the host happens to ask first - and
+            // until this wave the host never asked the encounter pool
+            // at all, so its corpses could not be opened by anyone.
+            const corpseTargets = [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()];
+            const lootKey = pickActivatable(cam.pos, useFwd, corpseTargets, collider);
             const dropKey = lootKey ? null : pickActivatable(cam.pos, useFwd, droppedLoot.lootTargets(), collider);
-            if (lootKey) { cityGuards.takeLoot(lootKey, (l) => townTalk.say(l)); surfacePlayer(); }
+            if (lootKey) {
+              const pool = lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards;
+              pool.takeLoot(lootKey, (l) => townTalk.say(l));
+              surfacePlayer();
+            }
             else if (dropKey && inventoryArtLoaded()) {
               // U8e: a pile under the ray opens the inventory WITH the
               // pile as the remote target (Remove defaults - the OnPush law)
