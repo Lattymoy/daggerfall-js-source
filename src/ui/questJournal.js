@@ -15,19 +15,34 @@
 // against a screen that did not exist yet. It exists now, and imports
 // those constants from their one home rather than restating them.
 import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR } from './nativePanel.js';
-import { drawText, measureText } from './text.js';
+import { drawText, measureText, makeFont } from './text.js';
+import { FntFile } from '../formats/fntFile.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { MAX_LINES_QUESTS, MAX_LINES_SMALL } from '../systems/notebook.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 
 let _art = null;
+// AUDIT 24 (wave 40): DaggerfallQuestJournalWindow.cs:161-163 builds
+// the title label with `Font = DaggerfallUI.LargeFont`, and
+// DaggerfallUI.cs:153 is `LargeFont => GetFont(FontName.FONT0000)`.
+// The port had the law written as a `largeFont` DRAW PARAMETER that no
+// caller had ever passed - see the note on draw() below for what that
+// cost - so the title has always drawn in the host font. It is a
+// module-level warm now, beside the art it belongs with: one load, one
+// home, and no signature carrying it.
+let _largeFont = null;
 export async function preloadQuestJournalArt(deps) {
+  if (!_largeFont) {
+    try { _largeFont = makeFont(deps.renderer, new FntFile().load(await deps.fetchBytes('FONT0000.FNT')), 'FONT0000'); }
+    catch { console.warn('[journal] FONT0000.FNT unavailable; the title falls back to the host font'); }
+  }
   if (_art) return;
   try { _art = await loadImg(deps, 'LGBK00I0.IMG'); }
   catch { console.warn('[journal] LGBK00I0.IMG unavailable; the logbook falls back to text'); }
 }
 export const questJournalArtLoaded = () => !!_art;
+export const questJournalLargeFont = () => _largeFont;
 
 // :36 - the notebook and message pages draw smaller so more fits.
 // drawText takes a float scale, so this is DFU's number, not an
@@ -204,7 +219,28 @@ export class QuestJournalWindow {
     return out;
   }
 
-  draw(renderer, canvas, font, largeFont = null) {
+  // AUDIT 24 (wave 40) - THE LIVE CRASH.
+  //     TypeError: can't access property "glyphWidth", s is undefined
+  // This took a fourth parameter called `largeFont`. Every OTHER window
+  // in src/ui takes `(renderer, canvas, font, s)` where s is the HUD
+  // scale, and that is what the one caller passes: CharSheet.draw
+  // forwards its own four arguments straight through to `this.child`
+  // (charsheet.js:240). So the logbook received the SCALE - a number -
+  // in its font slot, `largeFont ?? font` picked it because a number is
+  // not nullish, and `measureText(3.fnt, title)` reached measureText
+  // with undefined. Opening the character sheet and pressing LOGBOOK
+  // crashed the scene, every time, on every host with quests.
+  //
+  // Nothing had ever passed a real font here, so the parameter had
+  // never once done its job - it existed only to be filled by mistake.
+  // The signature takes THREE now, like every other native-panel
+  // window in here (nativeInventory, nativeTalk, nativeTrade,
+  // playerHistory) - this window scales through nativeMetrics(canvas)
+  // and never needed a fourth. A parameter it does not declare is a
+  // parameter nothing can fill by mistake. The large font is a module
+  // warm instead; test/audit24_wave40.test.js holds the whole family
+  // to the one shape.
+  draw(renderer, canvas, font) {
     const m = nativeMetrics(canvas);
     // AUDIT 24 ui: this window's Setup assigns
     // `ParentPanel.BackgroundColor = ScreenDimColor` (DaggerfallQuestJournalWindow.cs:95),
@@ -215,7 +251,7 @@ export class QuestJournalWindow {
     // The title, centred in its panel, in the LARGE font when the host
     // has one (:203-210).
     const [tx, ty, tw] = JOURNAL_RECTS.title;
-    const tf = largeFont ?? font;
+    const tf = _largeFont ?? font;   // :163 Font = DaggerfallUI.LargeFont (FONT0000)
     const title = TITLES[this.mode];
     const titleW = measureText(tf.fnt, title);
     drawText(renderer, tf, title, m.ox + (tx + (tw - titleW) / 2 + 1) * m.s, m.oy + (ty + 1) * m.s, m.s, TITLE_SHADOW);

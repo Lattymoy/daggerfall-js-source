@@ -4456,6 +4456,86 @@ plus fifteen the wave-38 scout confirmed that these two waves have not
 closed.
 
 
+### Wave 40 - the fourth argument
+
+A second crash screenshot from the deployed build:
+
+```
+TypeError: can't access property "glyphWidth", s is undefined
+```
+
+The stack mapped exactly - the local build is byte-identical to the
+deployed bundle, so the five minified frames could be read straight
+off:
+
+```
+us   (text.js measureText)  <- s.glyphWidth
+draw (questJournal)         <- const tf = largeFont ?? font
+draw (charsheet)            <- return this.child.draw(renderer, canvas, font, s)
+ys   (townTalk.frame)       <- overlay.draw(renderer, canvas, font, hudScale)
+is   (the host frame body)
+```
+
+**Open the character sheet, press LOGBOOK, and the scene died.** Every
+time, on every host that has quests.
+
+Every window in `src/ui` takes `draw(renderer, canvas, font, s)`, where
+`s` is the HUD scale - that is townTalk's contract, and `CharSheet.draw`
+forwards its own four arguments straight through to a pushed child.
+`QuestJournalWindow` alone declared its fourth parameter as
+`largeFont = null`. A number is not nullish, so `largeFont ?? font`
+picked the *scale*, and `measureText` was handed `3 .fnt`.
+
+The part that makes it more than a typo: **nothing in the tree had ever
+passed a real font there.** The parameter had never once received what
+it was declared for. It existed only to be filled by mistake - and the
+one caller that could reach it filled it with a number on every frame
+the window was open.
+
+This is the wave-37 shape again, one layer up. There the guard was on
+the wrong half of an expression; here the contract is on the wrong half
+of a signature. Both are cases of a thing that *looks* considered:
+`modes.pointerdown?.(e)` looks guarded, and `largeFont = null` looks
+like an optional dependency. Neither was.
+
+**The law was real; only its delivery was wrong.**
+`DaggerfallQuestJournalWindow.cs:161-163` builds the title label with
+`Font = DaggerfallUI.LargeFont`, and `DaggerfallUI.cs:153` is
+`LargeFont => GetFont(FontName.FONT0000)`. So the port SHOULD draw that
+title in a larger font - it simply never has, because the parameter
+carrying the law was never filled. FONT0000 is a module warm now,
+loaded inside `preloadQuestJournalArt` beside the art it belongs with,
+and the signature drops to three arguments like every other
+native-panel window in the file. **A parameter a function does not
+declare is a parameter nothing can fill by mistake.**
+
+`test/audit24_wave40.test.js` holds three separate lines of defence:
+the crashing shape reintroduced (and shown to throw the reported
+`TypeError`, and shown to be *fine* when the fourth argument is absent,
+which is why every direct test of this window passed); a behavioural
+sweep that pushes each window the character sheet can open and makes
+the sheet's real forward against it; and a signature rule over all of
+`src/ui` - a `draw` may take three and ignore the rest, or four where
+the fourth is the scale, and nothing else.
+
+**Thirteen mutants, thirteen kills**, one equivalent. Two of those
+thirteen only became kills after the pins were rebuilt, and both
+failures were the same mistake wearing different clothes:
+
+- `assert.match(src, /FONT0000\.FNT/)` was satisfied by the *warning
+  string*, so a mutant that fetched FONT0003 left the pin green. The
+  pin drives the preload and reads what it actually asked for now.
+- the fallback pin ran after a successful warm, so `if (!_largeFont)`
+  skipped the fetch and the throwing path was never reached. It imports
+  a fresh module instance now.
+
+*A PIN SATISFIED BY THE PROSE BESIDE THE LINE IS NOT A PIN.*
+
+**Twenty-six findings remain**, plus seven from the host-parity sweep,
+plus fifteen the wave-38 scout confirmed that these waves have not
+closed.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
