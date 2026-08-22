@@ -67,3 +67,13 @@ export const MOBILE_TYPES = Object.freeze({
   'Knight_CityWatch': 146,
   'None': 65535
 });
+
+// AUDIT 24 (wave 41) / ONE DFU MEMBER, ONE EXPORT. This id is special-
+// cased by name in five places - the human-sound mute carves it out
+// (EnemySounds.cs:222), the combat voice forces it male
+// (WeaponManager.cs:600), the equipment roll caps it at iron/steel
+// (EnemyEntity.cs), the class level roll adds 3-7 to it, and the watch
+// pool IS it - and each of those had written 146 out for itself. The
+// number lives once, here, with the table it comes from.
+export const KNIGHT_CITY_WATCH = MOBILE_TYPES.Knight_CityWatch;
+

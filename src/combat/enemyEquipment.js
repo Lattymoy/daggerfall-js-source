@@ -17,6 +17,7 @@
 import { mintCondition } from '../systems/itemTemplates.js';   // AUDIT 23 (items-5)
 import { WEAPON_MIN_DAMAGE, WEAPON_MAX_DAMAGE, dice100 } from './formulas.js';
 import { materialArmorValue } from '../systems/armorMaterials.js';
+import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // AUDIT 24 (wave 41): one home
 
 export { materialArmorValue };
 
@@ -127,7 +128,7 @@ export function createWeapon(templateIndex, material) {
 export function assignEnemyEquipment(entity, variant, playerLevel, rolls = Math.random) {
   const range = (lo, hi) => lo + Math.floor(rolls() * (hi + 1 - lo));   // Range(lo, hi+1)
   let itemLevel = playerLevel;
-  if (entity.isClass && entity.mobileType === 146) itemLevel = 1;       // city watch: iron/steel only
+  if (entity.isClass && entity.mobileType === KNIGHT_CITY_WATCH) itemLevel = 1;   // city watch: iron/steel only
   let rightHand = null, leftHand = null;
   const armorPieces = [];
   let chance = 0;

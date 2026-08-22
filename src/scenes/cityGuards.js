@@ -17,8 +17,12 @@
 //    on the spot; seen by civilians only -> guards arrive after a
 //    Random.Range(5,11)-second countdown (re-fired as immediate).
 //  - hostility: classic does nothing special - our guards acquire
-//    through the ordinary senses (they spawn close with LOS); the
-//    HALT bark (barkSound 456) fires on the detection rising edge.
+//    through the ordinary senses (they spawn close with LOS).
+//    AUDIT 24 (wave 41): the "HALT bark on the detection rising edge"
+//    this used to describe was an invention - DFU has no such edge.
+//    EnemySounds runs a 3-9 second ATTRACT cadence while the player is
+//    within 16m, and the watch is the one class enemy its human mute
+//    spares. Same clip, continuously, instead of once and never again.
 //
 // FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
 // "guard archers forced melee" flag retired in AUDIT 18: DFU's
@@ -38,6 +42,7 @@ import { setEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // AUDIT 24 (wave 36): ApplyFallDamage, for the watch too
 import { SOUND } from '../systems/soundClips.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
 import { EnemyAttack } from '../characters/enemyAttack.js';
@@ -53,6 +58,7 @@ import {
   equipEnemy, backstabChanceOf, tallySwingSkills,
   zeroDamageHitSound, SWING_WEAPON_FATIGUE_LOSS,
   enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt,   // C2-slice (combat-9/17)
+  tickEnemySound, playEnemyClip,   // AUDIT 24 (wave 41)
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { tallySkill, SKILLS } from '../systems/skills.js';
@@ -60,6 +66,7 @@ import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { rayPersonDistance } from './townTalk.js';
 import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied } from './corpseMarker.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { EnemySoundSource } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 
 // PlayerEntity.Crimes (the two this module levies - the enum lives
@@ -67,7 +74,7 @@ import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39
 const CRIME_ASSAULT = 4;
 const CRIME_MURDER = 5;
 
-export const GUARD_MOBILE_TYPE = 146;          // MobileTypes.Knight_CityWatch
+export const GUARD_MOBILE_TYPE = KNIGHT_CITY_WATCH;   // AUDIT 24 (wave 41): one home
 export const MAX_ACTIVE_GUARD_SPAWNS = 5;
 export const GUARD_NPC_SPAWN_RANGE = 77.5;
 export const GUARD_BEHIND_ANGLE = 105.469;     // convert non-guards this far behind the player
@@ -81,7 +88,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // let a guard's poisoned hit anchor at minute 0, and the next world
   // tick (absolute clock ~523,530) caught the whole course up at once.
   if (typeof currentMinute !== 'function') throw new Error('createCityGuards needs currentMinute (the classic-minute clock)');
-  const guards = [];       // { mobile, ai, attack, entity, batch, tex, archive, dead, _halted }
+  const guards = [];       // { mobile, ai, attack, entity, batch, tex, archive, dead, sounds }
   const corpseBatches = [];
   let _career = null;      // CLASS18.CFG, fetched once
   let countdown = 0;       // guardsArriveCountdown (seconds)
@@ -145,7 +152,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     const tex = await getTexture(archive);
     const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
     const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-    guards.push({ mobile, ai, attack, entity, batch, tex, archive, dead: false, _halted: false, _prevMState: 'Idle', _mout: null });
+    guards.push({ mobile, ai, attack, entity, batch, tex, archive, dead: false, _prevMState: 'Idle', _mout: null,
+      sounds: new EnemySoundSource(GUARD_MOBILE_TYPE, rand) });   // AUDIT 24 (wave 41)
   }
 
   /** The verbatim SpawnCityGuards law. pool = live persons as
@@ -350,17 +358,21 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           if (g.dead) continue;
         }
       }
-      // HALT! on the detection rising edge (barkSound, EnemySounds)
-      if (g.ai.detected && !g._halted) {
-        g._halted = true;
-        audio?.play3d?.(ENEMY_BASICS[GUARD_MOBILE_TYPE].barkSound, g.ai.feet, 1.0, { maxDistance: 16 });
-      }
+      // AUDIT 24 (wave 41): EnemySounds.FixedUpdate. This used to be a
+      // single HALT on the detection rising edge and nothing ever
+      // again - DFU has no detection-edge bark at all. It runs the
+      // 3-9 second attract cadence for as long as the watchman is
+      // within 16m, and the watch is the ONE class enemy the human
+      // mute spares (:222), which is why you hear it and not a
+      // brigand.
+      tickEnemySound(g.sounds, g.ai.feet, playerFeet, dt, { audio, collider });
       g.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((g.entity.stats?.speed ?? 50) / Math.max(8, liveStat(g.entity, 'speed'))));   // AUDIT 23 (characters-11)
       const events = _gParalyzed ? [] : g.attack.update(dt, g.ai, playerFeet);
       void events;
       const mstate = g.attack.machine.state;
       const strikeEdge = mstate !== 'Idle' && (g._prevMState ?? 'Idle') === 'Idle';
       g._prevMState = mstate;
+      if (strikeEdge) playEnemyClip(audio, g.sounds.attack(), g.ai.feet);   // AUDIT 24 (wave 41)
       g._mout = g.mobile.update(dt, {
         moving: g.ai.moving,
         striking: strikeEdge,

@@ -41,6 +41,7 @@ import {
   tallySwingSkills, zeroDamageHitSound, SWING_WEAPON_FATIGUE_LOSS,
   CORPSE_ACTIVATION_DISTANCE,
   enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt,   // C2-slice (combat-9/17)
+  tickEnemySound, playEnemyClip,   // AUDIT 24 (wave 41): EnemySounds through the host's devices
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
@@ -111,6 +112,7 @@ import { ActionSystem } from '../world/actionSystem.js';
 import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { createHitEffects, bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { EnemySoundSource } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 
 
@@ -2053,23 +2055,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           }
         }
       }
-      // A1 EnemySounds verbatim: the wait counter ALWAYS steps; the
-      // sound fires only inside AttractRadius 16. Delay re-rolls
-      // Range(3, 9+1); 20% move / 80% bark; humans stay silent.
-      if (!f.entity.isClass) {
-        const bx = ENEMY_BASICS[f.mobileType];
-        if (bx?.barkSound != null) {
-          f._attractWait ??= 3 + Math.floor(Math.random() * 7);
-          f._attractT = (f._attractT ?? 0) + dt;
-          const pp = playerFeet || eye;
-          const adx = pp[0] - f.ai.feet[0], ady = pp[1] - f.ai.feet[1], adz = pp[2] - f.ai.feet[2];
-          if (f._attractT > f._attractWait && (adx * adx + ady * ady + adz * adz) < 16 * 16) {
-            audio.play3d(Math.random() > 0.8 ? bx.moveSound : bx.barkSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]], 1, { maxDistance: 16 });
-            f._attractWait = 3 + Math.floor(Math.random() * 7);
-            f._attractT = 0;
-          }
-        }
-      }
+      // A1 EnemySounds. AUDIT 24 (wave 41): this was the tree's ONLY
+      // copy, written inline here, and it had drifted three ways - its
+      // mute gate was `!entity.isClass` where DFU carves the city
+      // watch out (:222), it never ran SetVolumeScale so a bark came
+      // through a dungeon wall at full volume, and it played on an
+      // INVERSE rolloff where DFU pins linear to the attract radius.
+      // One home now, and the two exterior pools (which had nothing at
+      // all) ask the same object the same way.
+      f.sounds ??= new EnemySoundSource(f.mobileType);
+      tickEnemySound(f.sounds, f.ai.feet, playerFeet || eye, dt, { audio, collider });
       // AUDIT 23 (characters-11) - EnemyAttack.cs:70-77: the divisor
       // mints every update from PermanentSpeed / max(8, LiveSpeed).
       f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
@@ -2091,12 +2086,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const _mstate = f.attack.machine.state;
       const _strikeEdge = _mstate !== 'Idle' && (f._prevMState ?? 'Idle') === 'Idle';
       f._prevMState = _mstate;
-      if (_strikeEdge && !f.entity.isClass) {
-        const sx = ENEMY_BASICS[f.mobileType];
-        // PlayAttackSound: half the time, humans stay silent
-        if (sx?.attackSound != null && Math.random() <= 0.5) {
-          audio.play3d(sx.attackSound, [f.ai.feet[0], f.ai.feet[1] + 1, f.ai.feet[2]], 1, { maxDistance: 16 });
-        }
+      // PlayAttackSound (:100-113) - half the time, humans silent
+      // except the watch, at whatever volumeScale the last attract
+      // sound left behind. Through the one home (AUDIT 24 wave 41):
+      // this arm's own `!f.entity.isClass` gate was the same drift.
+      if (_strikeEdge) {
+        f.sounds ??= new EnemySoundSource(f.mobileType);
+        playEnemyClip(audio, f.sounds.attack(), f.ai.feet);
       }
       // S16: the casting decision rides beside the attack machine
       // (DoRangedAttack's spell branch + DoTouchSpell); the decision

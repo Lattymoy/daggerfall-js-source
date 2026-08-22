@@ -16,6 +16,8 @@ import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../co
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { swingSoundFor } from '../systems/soundClips.js';
+import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
+import { ATTRACT_RADIUS } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41)
 
 // ---- DaggerfallUnityItem.GetWeaponSkillUsed / GetWeaponSkillIDAsShort ----
 /** The attack skill is a property of the weapon TEMPLATE, never of its
@@ -168,7 +170,7 @@ export const enemyMissSound = (weapon) => swingSoundFor(weapon);
 
 /** MobileTypes.Knight_CityWatch - the one class id whose voice is
  *  FORCED male whatever the mobile rolled (EnemyAttack.cs:220/:357). */
-export const KNIGHT_CITY_WATCH = 146;
+export { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // AUDIT 24 (wave 41): one home
 
 /** The foe's voice gender per the source's pick: the mobile's
  *  gender, with the city-watch knight forced male. */
@@ -219,3 +221,56 @@ export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
 // AUDIT 24 (wave 24): PlayerActivate.cs's reach constants have one
 // home in player/activate.js.
 export { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';
+
+// ---- EnemySounds through the host's devices (AUDIT 24, wave 41) ----
+// The decisions and the clock live in characters/enemySounds.js; these
+// two are the seam where a pool's collider and audio device meet them,
+// so all three pools cast the same ray and play at the same rolloff.
+
+/** SetVolumeScale's probe (:236-251) - the port's collider holds
+ *  static geometry and action doors and nothing else, which is
+ *  precisely the two things DFU dampens for, so a clear cast to the
+ *  player IS "nothing between". DFU's ray is unbounded and returns
+ *  first-hit, then ignores a hit on the player; bounding it at the
+ *  player's distance is the same test with the same answer. */
+export function enemySoundOccluded(collider, feet, playerFeet) {
+  if (!collider?.raycast || !playerFeet) return false;
+  const dx = playerFeet[0] - feet[0], dy = playerFeet[1] - feet[1], dz = playerFeet[2] - feet[2];
+  const d = Math.hypot(dx, dy, dz);
+  if (!(d > 1e-6)) return false;
+  const hit = collider.raycast(feet, [dx / d, dy / d, dz / d], d);
+  return Number.isFinite(hit) && hit < d - 1e-3;
+}
+
+/**
+ * One foe's FixedUpdate (:79-98) plus the play. Returns the clip
+ * played, or null.
+ *
+ * The source sits a metre above the feet - the port's established
+ * enemy-sound height, which the dungeon's inline copy already used -
+ * and rolls off LINEARLY to the attract radius, because that is what
+ * `LinearRolloff = true` with `maxDistance = AttractRadius` (:57-60)
+ * means and DFU's own comment says why: an inverse curve leaves the
+ * sound "audible almost everywhere".
+ */
+export function tickEnemySound(source, feet, playerFeet, dt, { audio = null, collider = null } = {}) {
+  if (!source || !feet) return null;
+  const dx = (playerFeet?.[0] ?? 0) - feet[0];
+  const dy = (playerFeet?.[1] ?? 0) - feet[1];
+  const dz = (playerFeet?.[2] ?? 0) - feet[2];
+  // No player position yet: the counter still steps, exactly as DFU's
+  // does with playerInAttractRadius false.
+  const dist = playerFeet ? Math.hypot(dx, dy, dz) : Infinity;
+  const out = source.tick(dt, dist, () => enemySoundOccluded(collider, feet, playerFeet));
+  if (out) playEnemyClip(audio, out, feet);
+  return out;
+}
+
+/** PlayAttackSound's play, and the attract one's - the same device
+ *  settings, because in DFU they are the same AudioSource. */
+export function playEnemyClip(audio, out, feet) {
+  if (!out || out.clip == null) return null;
+  audio?.play3d?.(out.clip, [feet[0], feet[1] + 1, feet[2]], out.volume,
+    { maxDistance: ATTRACT_RADIUS, distanceModel: 'linear' });
+  return out.clip;
+}

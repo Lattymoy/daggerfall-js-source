@@ -15,7 +15,9 @@
 // Unity Random.Range slots are uniform rolls, as in DFU itself.
 // Equipment (SetEnemyEquipment) and loot generation: E3b/E4.
 
-export const KNIGHT_CITYWATCH_ID = 146;
+import { KNIGHT_CITY_WATCH as KNIGHT_CITYWATCH_ID } from './mobileTypes.js';
+
+export { KNIGHT_CITY_WATCH as KNIGHT_CITYWATCH_ID } from './mobileTypes.js';   // AUDIT 24 (wave 41): one home
 
 /** Monster careers (E4a): ENEMY{nnn}.CFG records inside MONSTER.BSA,
  *  the SAME 74-byte ClassFile format (verbatim

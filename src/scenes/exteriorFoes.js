@@ -26,7 +26,7 @@ import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity, loadMonsterCareer } from '../characters/enemyEntity.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { ClassFile } from '../formats/classFile.js';
-import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt } from './hostCombat.js';   // C2-slice (combat-9/17)
+import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt, tickEnemySound, playEnemyClip } from './hostCombat.js';   // C2-slice (combat-9/17)
 import { generateItems as generateLootItems } from '../systems/loot.js';
 import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies } from '../combat/formulas.js';
 import { tallySkill, SKILLS } from '../systems/skills.js';
@@ -39,6 +39,7 @@ import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/worldTick.js';
 import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied } from './corpseMarker.js';
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { EnemySoundSource } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 
 // The port's allocation-owner guards (classic self-limits through the
@@ -100,7 +101,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const tex = await getTexture(archive);
       const mobile = new MobileUnit(mobileType, basics, (rec) => tex.getFrameCount(rec), Math.random, gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null };
+      const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null,
+        sounds: new EnemySoundSource(mobileType, rolls) };   // AUDIT 24 (wave 41): this pool made no sound at all
       foes.push(f);
       return f;
     } catch (err) {
@@ -256,9 +258,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           castSpellFrom(f, dec.spell, playerFeet);
         }
       }
+      // AUDIT 24 (wave 41): EnemySounds.FixedUpdate - the attract
+      // cadence this pool never had. The counter steps every frame and
+      // the sound fires only inside the 16m radius.
+      tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider });
       const mstate = f.attack.machine.state;
       const strikeEdge = mstate !== 'Idle' && (f._prevMState ?? 'Idle') === 'Idle';
       f._prevMState = mstate;
+      // PlayAttackSound at the START of the swing, as the dungeon does
+      // (MeleeAnimation fires it once on the edge, not at the hit).
+      if (strikeEdge) playEnemyClip(audio, f.sounds.attack(), f.ai.feet);
       f._mout = f.mobile.update(dt, {
         moving: f.ai.moving,
         striking: strikeEdge && !f.attack.firedRanged,

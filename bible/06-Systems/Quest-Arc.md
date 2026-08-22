@@ -4536,6 +4536,80 @@ plus fifteen the wave-38 scout confirmed that these waves have not
 closed.
 
 
+### Wave 41 - the sound of nothing
+
+`moveSound` and `barkSound` sit in all sixty-two rows of
+`ENEMY_BASICS`. `grep -rn moveSound src/` returned sixty-two data lines
+and nothing else. `attackSound` had exactly one consumer, written
+inline in the dungeon's frame body.
+
+So: above ground, nothing barked, nothing moved audibly, and nothing
+made a noise when it swung at you. A watchman's entire vocabulary was a
+single HALT on the detection rising edge - and **DFU has no
+detection-edge bark at all.** That was an invention, faithfully
+commented, sitting in the file header as if it were a citation. What
+DFU does is run a three-to-nine second *attract* cadence for as long as
+the enemy is within sixteen metres of you.
+
+**And the dungeon's copy had drifted**, which is what a law living in a
+frame body does. Three ways:
+
+- its mute gate was `!entity.isClass`, where DFU carves the **city
+  watch** out of the human mute (`:219-226`) - the one class enemy you
+  are meant to hear;
+- it never ran `SetVolumeScale`, so a bark came through a dungeon wall
+  at full volume;
+- it played on an **inverse** distance model, where DFU sets
+  `LinearRolloff = true` with `maxDistance = AttractRadius` (`:57-60`).
+  `loop3d` already carried that note for torches - "or the burning
+  sound is audible almost everywhere" - and `play3d` hardcoded inverse,
+  so the option did not exist to ask for.
+
+One home now (`characters/enemySounds.js`), three pools, and the drift
+closed on the way in.
+
+**Two DFU quirks are kept because they are DFU's.**
+
+The counter steps whether or not you are in range, and the source says
+why: *"Keep stepping even when player not in attract radius. This means
+the player will get audio feedback the moment an enemy is near."* Walk
+up on a quiet dungeon and it greets you at once rather than after a
+polite pause.
+
+And `volumeScale` is a **field**, written only by `SetVolumeScale`,
+which runs only inside `PlayAttractSound` - while `PlayAttackSound`
+then multiplies by it (`:110`). So a foe whose last bark was muffled by
+a wall keeps *swinging* quietly after it steps into the open, and one
+that has never barked swings at full volume. That is not a bug the port
+should fix.
+
+The occlusion probe is passed as a **thunk**, because DFU makes a point
+of its cost - *"Only checks when enemy plays attract sound, so not very
+expensive"* - and because the order matters: `IgnoreHumanSounds`
+returns *before* `SetVolumeScale`, so a muted enemy that is due and in
+range casts no ray at all.
+
+**Twenty-nine mutants, twenty-nine kills**, two equivalents. One of the
+twenty-nine survived its first campaign and is worth writing down:
+hoisting the occlusion probe out of the thunk and calling it eagerly is
+invisible on any unmuted foe, which is all the pin was testing. It
+differs on exactly one case - and that case is the one DFU's ordering
+encodes. **A LAZY CALL AND AN EAGER ONE DIFFER ONLY WHERE SOMETHING
+RETURNS EARLY, SO THAT IS WHERE THE PIN GOES.**
+
+**ONE DFU MEMBER, ONE EXPORT, again.** `146` -
+`MobileTypes.Knight_CityWatch` - was written out in **five** places:
+the human-sound mute carves it out, the combat voice forces it male,
+the equipment roll caps it at iron and steel, the class level roll adds
+3-7 to it, and the watch pool *is* it. Each had its own literal. The
+number lives once now, in `mobileTypes.js`, with the table it came
+from.
+
+**Twenty-six findings remain**, plus seven from the host-parity sweep,
+plus eleven the wave-38 scout confirmed that these waves have not
+closed.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

@@ -186,7 +186,12 @@ export class AudioEngine {
    *  shape (min 1 / max 500, logarithmic - WebAudio 'inverse' is the
    *  analog); per-source callers override maxDistance, e.g. enemy
    *  sources clamp at AttractRadius 16 (2026-08-14 audit AU2). */
-  play3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 500 } = {}) {
+  /** AUDIT 24 (wave 41): `distanceModel` is a parameter now. DFU sets
+   *  it per source and EnemySounds sets `LinearRolloff = true` with
+   *  `maxDistance = AttractRadius` (:57-60), with its own reason -
+   *  loop3d already carried that note for torches. Inverse stays the
+   *  default so no existing caller changes. */
+  play3d(index, pos, volume = 1, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse' } = {}) {
     if (!this._ready()) return undefined;
     const buf = this._buffer(index);
     if (!buf) return undefined;
@@ -194,7 +199,7 @@ export class AudioEngine {
     src.buffer = buf;
     const pan = this.ctx.createPanner();
     pan.panningModel = 'equalpower';
-    pan.distanceModel = 'inverse';
+    pan.distanceModel = distanceModel;
     pan.refDistance = refDistance;
     pan.maxDistance = maxDistance;
     pan.positionX.value = pos[0]; pan.positionY.value = pos[1]; pan.positionZ.value = pos[2];

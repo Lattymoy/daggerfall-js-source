@@ -233,14 +233,14 @@ combat line numbers below are refreshed with it.
 - `src/combat/weaponRig.js:34` - *                     (FLAGGED at the call sites - their HUD pends),
 - `src/scenes/arrestFlow.js:159` - SeverePunishmentFlags |= 1 consequences pend (FLAGGED)
 - `src/scenes/arrestFlow.js:227` - FLAGGED, still owed to their own slices: PreventEnemySpawns across the
-- `src/scenes/cityGuards.js:23` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
-- `src/scenes/cityGuards.js:260` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
-- `src/scenes/cityGuards.js:488` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
-- `src/scenes/dungeonContext.js:211` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:586` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:592` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:619` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:983` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/cityGuards.js:27` - FLAGGED loud: enemy-vs-enemy stays out (C15 residual). (The
+- `src/scenes/cityGuards.js:268` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
+- `src/scenes/cityGuards.js:500` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
+- `src/scenes/dungeonContext.js:213` - the chain lives, the motion is INTERIM (loud) until flats can tween.
+- `src/scenes/dungeonContext.js:588` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:594` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:621` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:985` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:470` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:476` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:597` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
