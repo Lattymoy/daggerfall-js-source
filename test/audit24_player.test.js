@@ -38,6 +38,36 @@ test('audit24 player: the swim surface clamp reads the LIVE capsule centre', () 
   p.update(DT, floatUp, 0, 0);
   assert.ok(moves[0][1] > 0,
     'below it he still rises - the old feet+0.9 line stopped him 0.45 short of the surface');
+
+  // AUDIT 24, the mutation campaign: the two constants in that line
+  // were both live mutants, because 99.30 and 99.10 sit far enough
+  // either side of the float point that a small shift moves nothing.
+  // The boundary is derived, not guessed:
+  //     feet + height/2 + 50 * GlobalScale - 0.93 >= surface
+  const surface = 100;
+  const boundary = surface - CROUCH_HEIGHT / 2 - 50 * 0.025 + 0.93;   // 99.23
+  const rises = (feet) => {
+    moves.length = 0;
+    p.pos[1] = feet;
+    p.update(DT, floatUp, 0, 0);
+    return moves[0][1] > 0;
+  };
+  assert.equal(rises(boundary), false, 'AT the float point the rise is refused');
+  assert.equal(rises(boundary - 0.01), true, 'and a centimetre below it he rises');
+  // AN HONEST NON-KILL: the campaign also flips that `>=` to `>`, and
+  // this harness cannot witness it. The two differ only when the sum
+  // lands EXACTLY on the surface - one float wide - and at that point
+  // the rise measures zero either way through the motor's public
+  // update. The constant above is the mutant that mattered and it
+  // dies; this one is recorded rather than chased.
+  assert.equal(boundary + CROUCH_HEIGHT / 2 + 50 * 0.025 - 0.93, surface,
+    'the derived boundary really is exact - the >= arm is reachable, just not distinguishable here');
+  // 50 is GlobalScale's own multiplier: at 51 the float point moves
+  // 0.025 DOWN, and this is the band that separates them
+  const at51 = surface - CROUCH_HEIGHT / 2 - 51 * 0.025 + 0.93;      // 99.205
+  assert.ok(at51 < boundary);
+  assert.equal(rises((at51 + boundary) / 2), true,
+    'between the two float points he still rises - a 51 here would have stopped him early');
 });
 
 test('audit24 player: every water line in the hosts measures the same live centre', () => {

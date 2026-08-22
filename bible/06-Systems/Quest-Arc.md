@@ -2133,6 +2133,30 @@ will. Recorded in the pin, not papered over.
 
 Four mutants, four kills, one equivalent.
 
+### Wave 16 - a pin that tested far enough either side to feel nothing
+
+The swim surface clamp had a pin - AUDIT 24 wrote it - and the campaign
+left BOTH of that line's constants alive anyway. The reason is worth
+naming: the pin tested feet 99.30 (refused) and 99.10 (rises), and the
+float point is 99.23. Shift the point by a centimetre and both
+assertions still pass. **A pin that brackets a boundary loosely does not
+pin the boundary.**
+
+The boundary is DERIVED now, from the rule itself -
+`feet + height/2 + 50 * GlobalScale - 0.93 >= surface`, which for a
+force-crouched swimmer under a surface at 100 is exactly 99.23 - and the
+band that separates the 50 constant from a 51 is tested directly. That
+mutant dies.
+
+The `>=`-to-`>` flip is recorded as an honest **NON-KILL**. The two
+differ only where the sum lands exactly on the surface, one float wide,
+and at that point the rise measures zero either way through the motor's
+public update. The pin says so and asserts the derived boundary really
+is exact, so the next reader knows the arm is reachable and simply not
+distinguishable from outside.
+
+One mutant, one kill, one recorded non-kill.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
