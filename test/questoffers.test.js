@@ -382,12 +382,29 @@ test('the picker arm: the wait-box literals, header-only labels, the localizatio
   assert.deepEqual(pick.entries, ['The Broken Errand', 'Der Auftrag'],
     'the header-only parse labels even a broken QBN; the localized name overrides DisplayName');
 
-  assert.throws(() => pick.onPick(0), /Unknown line signature/,
-    "the pick's FULL parse throws out, as C#'s uncaught LoadQuest");
   const offered = pick.onPick(1);
   assert.equal(offered.kind, 'offer');
   assert.equal(flow.offeredQuest.questName, '__OFR');
+  // ONE pick per picker: OnItemPicked pops the window, and _offerQuest
+  // empties the pool to model that, so a second pick answers nothing -
+  // which is also what an index past the pool answers.
   assert.equal(pick.onPick(9), null, 'past the pool answers nothing');
+
+  // AUDIT 24 (the seven-slice sweep): the pick's LoadQuest call IS
+  // uncaught, but LoadQuest reaches ParseQuest, which swallows every
+  // exception and answers null (:670-687) - so a broken QBN lands
+  // offeredQuest = null and OfferQuest APOLOGISES. It does not throw.
+  // The port's parse had no catch and this pin recorded that; one bad
+  // row took the whole guild list with it where DFU offers the rest.
+  const { flow: flow2 } = makeRig({
+    rows,
+    sources: { __OFR: OFFER_SRC, __BADQBN: BADQBN_SRC },
+    deps: { guildQuestListBox: true, getLocalizedQuestDisplayName: () => null },
+  });
+  const pick2 = flow2.offerGuildQuest({ guildGroup: GUILD_GROUPS.FightersGuild, guild: makeGuild() }).onClose();
+  const failStep = pick2.onPick(0);
+  assert.equal(failStep.kind, 'fail', 'a broken QBN reaches the failure message, not an exception');
+  assert.equal(flow2.offeredQuest, null, 'and nothing is offered');
 });
 
 test("the picker prune replays C#'s RemoveAt bug: original indices over a shifting list prune the WRONG row", () => {

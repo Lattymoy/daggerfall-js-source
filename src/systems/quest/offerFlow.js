@@ -219,9 +219,16 @@ export class QuestOfferFlow {
     return { kind: 'pickQuest', entries, onPick: (index) => this._questPicked(index) };
   }
 
-  /** QuestPicker_OnItemPicked (:655-664): a FULL parse this time; a
-   *  load failure throws out, as C#'s uncaught LoadQuest does. An
-   *  index past the pool answers nothing. */
+  /** QuestPicker_OnItemPicked (:655-664): a FULL parse this time, and
+   *  the LoadQuest call is uncaught - but that is not the same as
+   *  throwing. AUDIT 24 (the seven-slice sweep): LoadQuest reaches
+   *  QuestMachine.ParseQuest, which swallows EVERY exception and
+   *  answers null (:670-687), so a quest whose QBN the parser chokes
+   *  on lands `offeredQuest = null` and OfferQuest shows its
+   *  failure message. Only a missing FILE throws out. The port's
+   *  parse had no catch, so this arm threw where DFU apologises, and
+   *  the pin here recorded that. An index past the pool answers
+   *  nothing. */
   _questPicked(index) {
     if (index < this.questPool.length) {
       this.offeredQuest = this.questLists.loadQuest(this.questPool[index], this._getFactionIdForGuild());

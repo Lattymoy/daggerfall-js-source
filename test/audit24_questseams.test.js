@@ -149,3 +149,81 @@ test('audit24: `add X as questor` leaves the ZERO struct, and the three unguarde
   restored.restoreSaveData({ ...restored.getSaveData(), questorData: null });
   assert.deepEqual(restored.questorData, ZERO_NPC_DATA, 'an old null envelope restores to zeros');
 });
+
+// ---- wave 10: the parity sweep's tail ----
+
+test('audit24: ParseQuest swallows every exception and answers null', async () => {
+  // QuestMachine.ParseQuest wraps the whole parse in
+  // `try { ... } catch (Exception ex) { LogFormat("Parsing quest {0}
+  // FAILED!..."); return null; }` (:670-687). The port had no catch,
+  // so a quest whose QBN the parser chokes on threw out of the guild
+  // picker instead of answering null - and questLists.loadQuest already
+  // carried the `if (!quest) return null;` arm C# feeds it, sitting
+  // unreachable. One broken row took the whole list with it.
+  const { QuestMachine } = await import('../src/systems/quest/machine.js');
+  const { loadQuestTables } = await import('../src/systems/quest/tables.js');
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const sources = {};
+  for (const f of readdirSync(join(ROOT, 'vendor/dfu-quests/Tables'))) {
+    if (f.endsWith('.txt')) {
+      sources[f.replace('.txt', '')] = readFileSync(join(ROOT, 'vendor/dfu-quests/Tables', f), 'utf8').replace(/^﻿/, '');
+    }
+  }
+  loadQuestTables(sources);
+  const m = new QuestMachine({ nowSeconds: () => 0 });
+  const good = m.parseQuestForLists(['Quest: __OK', 'QRC:', 'Message:  1011', ' x', '', 'QBN:', 'variable _pad_'], 0, { rolls: () => 0 });
+  assert.ok(good, 'a good source parses');
+  const bad = m.parseQuestForLists(['Quest: __BAD', 'QRC:', 'QBN:', 'this is not a line signature at all'], 0, { rolls: () => 0 });
+  assert.equal(bad, null, 'and a broken one answers NULL rather than throwing');
+});
+
+test("audit24: TeleportPc writes its SiteLink before the transport, and reads the marker array unguarded", () => {
+  // C#'s order (TeleportPc.cs:72-135): respawning check, resume,
+  // CreateSiteLink, GetPlace, marker pick, respawn. The port's
+  // transport-seam guard sat at the TOP, above the SiteLink write - so
+  // on a host that has not mounted respawnPlayerAtSite (which is
+  // today's port) the link was never created, where C# writes it every
+  // tick regardless. The SiteLink is machine state other actions read;
+  // it is not the transport's to withhold.
+  const src = read('src/systems/quest/actions.js');
+  const i = src.indexOf('export class TeleportPc');
+  assert.ok(i > 0);
+  const body = src.slice(i, i + 4200);
+  const link = body.indexOf('createSiteLink?.(');
+  const guard = body.indexOf('if (!world?.respawnPlayerAtSite) return;');
+  assert.ok(link > 0 && guard > 0);
+  assert.ok(link < guard, 'the SiteLink write comes FIRST');
+  // and the marker-array read is unguarded, so a null array NREs where
+  // C# does - before any respawn, rather than after a half-done one
+  assert.match(body, /this\.targetMarker < place\.siteDetails\.questSpawnMarkers\.length/,
+    'no `?? 0`: a null array throws here, as C#:102 does');
+});
+
+test('audit24: a late destroy event cannot null a RECOUPLED resource link', async () => {
+  // C#'s handler writes `questResourceBehaviour = null;` and its
+  // PARAMETER shadows the field of that name, so the assignment lands
+  // on the local and the field is never cleared. It READS as cleared
+  // under Unity's fake-null, which is why the port clears it - but the
+  // port cleared it blindly, so an OLD behaviour's late destroy event
+  // nulled a link that had already been recoupled to a new one. C#
+  // cannot do that; its assignment never reaches the field.
+  const { QuestResource } = await import('../src/systems/quest/questResource.js');
+  const r = Object.create(QuestResource.prototype);
+  const mk = () => ({ offDestroy() {} });
+  const oldB = mk();
+  const newB = mk();
+  r._questResourceBehaviour = oldB;
+  r._onBehaviourDestroyed = (behaviour) => {
+    behaviour.offDestroy(r._onBehaviourDestroyed);
+    if (r._questResourceBehaviour === behaviour) r._questResourceBehaviour = null;
+  };
+  // the shape the SOURCE has:
+  assert.match(read('src/systems/quest/questResource.js'),
+    /if \(this\._questResourceBehaviour === behaviour\) this\._questResourceBehaviour = null;/,
+    'the clear is guarded on identity');
+  r._questResourceBehaviour = newB;      // recoupled
+  r._onBehaviourDestroyed(oldB);         // the OLD one finally dies
+  assert.equal(r._questResourceBehaviour, newB, 'the live link survives');
+  r._onBehaviourDestroyed(newB);
+  assert.equal(r._questResourceBehaviour, null, 'and its own destroy still clears it');
+});

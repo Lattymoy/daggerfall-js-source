@@ -80,6 +80,10 @@ test('every corpus quest round-trips the envelope: save -> restore -> save is a 
   for (const f of files) {
     resetUid();
     const quest = m.parseQuestForLists(readLines(join(VENDOR, 'Quests', f)), 0, { rolls: () => 0.5 });
+    // AUDIT 24: parseQuestForLists answers NULL on a parse failure now
+    // (ParseQuest's swallow-all catch), so the gate says so out loud
+    // rather than dying on a TypeError three lines down
+    assert.ok(quest, `${f} parses at all`);
     const data1 = quest.getSaveData();
     const m2 = makeMachine();
     resetUid();

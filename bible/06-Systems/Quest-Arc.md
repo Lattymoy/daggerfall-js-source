@@ -1926,6 +1926,48 @@ what DFU's UID lookup resolves; object identity is still tried first.
 
 Four mutants, four kills.
 
+### Wave 10 - the parity sweep's tail
+
+**PARSEQUEST HAD NO CATCH.** `QuestMachine.ParseQuest` wraps the whole
+parse in `try { ... } catch (Exception ex) { LogFormat("Parsing quest
+{0} FAILED!..."); return null; }` (:670-687). The port's had none - so a
+quest whose QBN the parser chokes on threw out of the guild picker
+instead of answering null, and `questLists.loadQuest` already carried
+the `if (!quest) return null;` arm C# feeds it, sitting unreachable. One
+broken row took the whole guild quest list with it where DFU drops that
+row and offers the rest. The pin that had recorded the throw is the
+SEVENTH in this audit to describe the port instead of the source: the
+pick's `LoadQuest` call IS uncaught, but LoadQuest reaches ParseQuest,
+so a broken QBN lands `offeredQuest = null` and OfferQuest apologises.
+Only a missing FILE throws.
+
+**TELEPORTPC WITHHELD ITS SITELINK.** C#'s order is: respawning check,
+resume, CreateSiteLink, GetPlace, marker pick, respawn. The port's
+transport-seam guard sat at the TOP, above the SiteLink write - so on a
+host that has not mounted `respawnPlayerAtSite` (which is today's port,
+a declared pending) the link was never created, where C# writes it every
+tick regardless of what the transport does. The SiteLink is machine
+state other actions read; it is not the transport's to withhold. And the
+marker-array read lost its `?? 0`: C# reads
+`place.SiteDetails.questSpawnMarkers.Length` unguarded, so a null array
+NREs before any respawn - the port's guard sent it down the
+usingMarker=false path, respawned the player, and only then threw on
+`[0]`, leaving a teleport half-done.
+
+**A LATE DESTROY EVENT COULD NULL A RECOUPLED LINK.** C#'s
+`QuestResourceBehaviour_OnGameObjectDestroy` writes
+`questResourceBehaviour = null;` - and its PARAMETER is named
+`questResourceBehaviour` too, so the assignment lands on the shadowing
+local and the FIELD IS NEVER CLEARED. It reads as cleared anyway,
+because a destroyed MonoBehaviour compares `== null` under Unity's
+fake-null, which is why the port clears it and why that stays. What does
+not stay is clearing it BLINDLY: a resource already recoupled to a new
+behaviour had its live link nulled by the old one's late destroy event,
+and C# cannot do that because its assignment never reaches the field.
+Guarded on identity.
+
+Three mutants, three kills.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

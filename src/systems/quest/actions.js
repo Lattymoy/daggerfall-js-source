@@ -1717,9 +1717,8 @@ export class TeleportPc extends ActionTemplate {
   update(_caller) {
     const hooks = this.parentQuest.hooks;
     const world = hooks?.world;
-    if (!world?.respawnPlayerAtSite) return;   // no transport - keep trying
     // Do nothing while player respawning
-    if (world.isRespawning?.()) return;
+    if (world?.isRespawning?.()) return;
     // Handle resume on the next tick after the respawn completes
     if (this.resumePending) {
       world.setPlayerScenePosition?.(this.resumePosition);
@@ -1727,6 +1726,13 @@ export class TeleportPc extends ActionTemplate {
       this.setComplete();
       return;
     }
+    // AUDIT 24 (the seven-slice sweep): the transport-seam guard used
+    // to sit at the TOP of this method, above the SiteLink write - so
+    // on a host that has not mounted respawnPlayerAtSite (which is
+    // today's port; it is a declared pending) the link was never
+    // created at all, where C# writes it every tick regardless of what
+    // the transport does. The SiteLink is machine state other actions
+    // read; it is not the transport's to withhold.
     if (!hooks?.hasSiteLink?.(this.parentQuest, this.targetPlace)) {
       hooks?.createSiteLink?.(this.parentQuest, this.targetPlace);
     }
@@ -1735,12 +1741,19 @@ export class TeleportPc extends ActionTemplate {
     // The indexed marker is picked BEFORE the respawn, the [0]
     // fallback AFTER (C#'s order); an unresolvable location returns
     // before any respawn begins.
+    //
+    // AUDIT 24: `.questSpawnMarkers.length` UNGUARDED, as C# reads it
+    // (:102). A site whose marker array is null NREs right here, before
+    // any respawn begins; the port's `?? 0` sent it down the
+    // usingMarker=false path instead, which respawned the player and
+    // THEN threw on the [0] below - a teleport half-done.
     let usingMarker = false;
     let marker = null;
-    if (this.targetMarker >= 0 && this.targetMarker < (place.siteDetails?.questSpawnMarkers?.length ?? 0)) {
+    if (this.targetMarker >= 0 && this.targetMarker < place.siteDetails.questSpawnMarkers.length) {
       marker = place.siteDetails.questSpawnMarkers[this.targetMarker];
       usingMarker = true;
     }
+    if (!world?.respawnPlayerAtSite) return;   // no transport - keep trying
     if (!world.respawnPlayerAtSite(place)) return;
     // The usingMarker=false path still positions at spawn marker 0
     // (TeleportPc.cs:120-135) - EVERY plain "teleport pc to" lands on

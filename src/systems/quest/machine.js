@@ -419,8 +419,21 @@ export class QuestMachine {
    *  `(l, f, p) => machine.parseQuestForLists(l, f, { partialParse: p })`. */
   parseQuestForLists(lines, factionId = 0, { rolls, partialParse = false } = {}) {
     const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
-    return this.parser.parse(lines, factionId,
-      { partialParse, rolls, actionFactory: this._actionFactory, nowSeconds, hooks: this._buildHooks() });
+    // AUDIT 24 (the seven-slice sweep): ParseQuest wraps the WHOLE
+    // parse in `try { ... } catch (Exception ex) { LogFormat("Parsing
+    // quest {0} FAILED!..."); return null; }` (:670-687). The port had
+    // no catch, so a quest whose source the parser chokes on threw out
+    // of the picker instead of answering null - and questLists.loadQuest
+    // already had the `if (!quest) return null;` arm C# feeds, sitting
+    // unreachable. One broken row took the whole guild quest list with
+    // it where DFU drops that row and offers the rest.
+    try {
+      return this.parser.parse(lines, factionId,
+        { partialParse, rolls, actionFactory: this._actionFactory, nowSeconds, hooks: this._buildHooks() });
+    } catch (ex) {
+      console.warn(`[quest] Parsing quest FAILED!\r\n${ex?.message ?? ex}`);
+      return null;
+    }
   }
 
   getQuest(uid) { return this.quests.get(uid) ?? null; }
@@ -487,8 +500,11 @@ export class QuestMachine {
   }
 
   /** CreateMessagePrompt (:888-910): a Yes/No prompt descriptor from
-   *  a quest message - tokens at DEFAULT expansion (the macro pass,
-   *  no dialog reveal; the variant draw rides quest.rolls, Ledger A),
+   *  a quest message - tokens at DEFAULT expansion (the macro pass AND
+   *  the dialog reveal, which GetTextTokens does unconditionally; the
+   *  earlier "no dialog reveal" here was written against a
+   *  fourth-parameter the port had invented and AUDIT 24 removed. The
+   *  variant draw rides quest.rolls, Ledger A),
    *  YesNo buttons, no click-anywhere, no cancel. The UI host draws
    *  it and routes the answer; a missing message answers null and
    *  the offer silently shows nothing, verbatim. */

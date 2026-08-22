@@ -50,9 +50,23 @@ export class QuestResource {
     // accessor's subscribe/unsubscribe pair matches (Q4-iii).
     this._questResourceBehaviour = null;
     this._onBehaviourDestroyed = (behaviour) => {
-      // Clean up when target GameObject being destroyed (:373-377)
+      // Clean up when target GameObject being destroyed (:373-377).
+      //
+      // AUDIT 24 (the seven-slice sweep): C#'s handler writes
+      // `questResourceBehaviour = null;` - and its PARAMETER is named
+      // `questResourceBehaviour` too, so that assignment lands on the
+      // shadowing local and the FIELD is never cleared. It reads as
+      // cleared anyway, because a destroyed MonoBehaviour compares
+      // == null under Unity's fake-null; the port has no fake-null, so
+      // clearing the field is the faithful EFFECT and stays.
+      //
+      // What does NOT stay is clearing it blindly. A resource that has
+      // already been RECOUPLED to a new behaviour would have its live
+      // link nulled by the old one's late destroy event - and C#
+      // cannot do that, because its assignment never reaches the field
+      // at all. So the clear is guarded on identity.
       behaviour.offDestroy(this._onBehaviourDestroyed);
-      this._questResourceBehaviour = null;
+      if (this._questResourceBehaviour === behaviour) this._questResourceBehaviour = null;
     };
   }
 
