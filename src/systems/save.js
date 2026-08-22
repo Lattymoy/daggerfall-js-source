@@ -63,6 +63,16 @@ const copyEffectEntry = (a) => {
   const c = { ...a };
   if (a.effect) c.effect = { ...a.effect };
   if (a.statMods) c.statMods = { ...a.statMods };
+  // AUDIT 24 (wave 31): the continuous-damage entries carry their CASTER
+  // (IEntityEffect.Caster - HandleAttackFromSource needs it to break the
+  // caster's normal-power concealment). It is a live scene reference, not
+  // state: DFU does not serialize it either - SerializablePlayer writes
+  // the bundle settings and RestoreInstancedBundleSaveData re-resolves the
+  // caster on load, so a restored effect whose caster is gone simply has
+  // none, and HandleAttackFromSource(null) is DFU's own no-op case.
+  // Leaving it in would put the whole player entity - and, through the
+  // foes, the scene - inside the save envelope.
+  delete c.caster;
   return c;
 };
 

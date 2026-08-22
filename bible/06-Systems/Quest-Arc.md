@@ -3411,6 +3411,149 @@ Twelve mutants, twelve kills.
 **Thirty-one findings remain.**
 
 
+### Wave 31
+
+**You could kill a dungeon without ever being seen.**
+
+```csharp
+public static void BreakNormalPowerConcealmentEffects(DaggerfallEntityBehaviour entityBehaviour)
+{
+    if (entityBehaviour.Entity.HasConcealment(MagicalConcealmentFlags.BlendingNormal))
+        manager.EndIncumbentEffect<ChameleonNormal>();
+    if (entityBehaviour.Entity.HasConcealment(MagicalConcealmentFlags.InvisibleNormal))
+        manager.EndIncumbentEffect<InvisibilityNormal>();
+    if (entityBehaviour.Entity.HasConcealment(MagicalConcealmentFlags.ShadeNormal))
+        manager.EndIncumbentEffect<ShadowNormal>();
+}
+```
+
+Unported. Not at one door - at every door, all four of them, and the
+member itself did not exist.
+
+S21 shipped the concealments and wired the senses gate that reads
+them, which is what made this expensive: cast the *cheap*
+Invisibility, walk into a dungeon and nothing can see you for the
+whole duration, however many things you kill. Or meet a Nightblade who
+has done the same, and be beaten to death by something that never
+becomes visible. The normal/true split exists precisely so the cheap
+spell can be taken away when you attack and the expensive one cannot,
+and the port had built the split and then never used it.
+
+DFU calls the break from three places:
+
+```csharp
+if (playerEntity.IsMagicallyConcealedNormalPower && damage > 0)
+    EntityEffectManager.BreakNormalPowerConcealmentEffects(...);
+```
+
+`WeaponManager.cs:549-552` (the player's swing - and the player's
+arrow, because `DaggerfallMissile.AssignBowDamageToTarget` routes a bow
+hit straight back through `WeaponDamage`), and `EnemyAttack.cs:255-257`
+and `:316-318`. Those three are **the entire caller set of
+`CalculateAttackDamage` in the DFU tree**, and all three carry the same
+two lines. So the law is not "these three sites"; the law is *any
+attack that lands damage*, and the port puts it at the tail of the
+formula - one home instead of the seven doors the port has. Wave 30 is
+the receipt for why: two hosts had already forgotten `OnMonsterHit`
+exactly that way.
+
+That is a claim about the C#, so the pin reads the C#. It counts the
+`FormulaHelper.CalculateAttackDamage(` call sites in the vendored tree,
+requires the guarded break within six lines of each, and checks that
+the break ends exactly `ChameleonNormal`, `InvisibilityNormal`,
+`ShadowNormal` in that order. If a future DFU grows a fourth caller
+without the guard, the port's shortcut stops being equivalent and the
+pin says so.
+
+The fourth door is `DaggerfallEntityBehaviour.HandleAttackFromSource`,
+which every `Damage{Health,Magicka,Fatigue}FromSource` runs on the
+SOURCE - and for an effect the source is `IEntityEffect.Caster`. So the
+port's continuous-damage entries now carry their caster. That has one
+consequence worth writing down: `activeEffects` rides the save
+envelope, and a live entity reference inside it would drag the player -
+and through a foe, the scene - into the snapshot. `copyEffectEntry`
+drops it, which is also what DFU does: `SerializablePlayer` writes
+bundle settings and `RestoreInstancedBundleSaveData` re-resolves the
+caster on load, so a restored effect whose caster is gone simply has
+none, and `HandleAttackFromSource(null)` is DFU's own no-op case.
+
+**A cycle, and a leaf.**
+
+The first cut imported the break into `combat/formulas.js` from
+`systems/effects.js`, and twenty-seven test files died at once on
+
+```
+ReferenceError: Cannot access 'EFFECT_FLAGS' before initialization
+```
+
+`effects.js` imports `spellcast.js`, `spellcast.js` imports
+`formulas.js`, and the new edge closed the ring - so `effects.js`
+evaluated its top-level `ELEMENT_EFFECT_FLAG` while `spellcast.js` was
+still mid-evaluation. The break lives in its own leaf,
+`systems/concealment.js`, with no imports at all; `effects.js`
+re-exports it for the readers that already speak to that module. The
+leaf is small enough not to need `hasActiveEffect`: DFU's three
+`HasConcealment` guards are exactly what the call-site
+`IsMagicallyConcealedNormalPower` check already established, and ending
+an effect that is not there is a no-op, so the guards fold into the
+filter. Which is also why the port has no
+`IsMagicallyConcealedNormalPower` member - it would be a ported
+function with no caller.
+
+**And a stat drained to zero did not kill you.**
+
+```csharp
+// Kill host if any stat is reduced to 0 live total
+for (int i = 0; i < DaggerfallStats.Count; i++)
+{
+    if (entityBehaviour.Entity.Stats.GetLiveStatValue(i) == 0)
+    {
+        entityBehaviour.Entity.CurrentHealth = 0;
+        return;
+    }
+}
+```
+
+The tail of `UpdateEntityMods`, and it is not a magic round: it runs
+out of `Update()` on a 0.2-real-second timer that resets to zero rather
+than subtracting. The port has no AssignMods moment - `liveStat` is
+computed on read - so the check rides the host tick's `dt` on that same
+cadence, with the accumulator on the entity so it survives a host swap.
+Putting it on the real-time timer rather than the magic round has a
+consequence that is DFU's, not the port's: `Time.deltaTime` is zero
+under a paused UI, so **a rest cannot kill you this way** however long
+it runs, and the pin says so from both sides.
+
+Every entity has an `EntityEffectManager`, so the foes get it too: a
+drained-to-zero Strength kills the thing you drained.
+
+One guard is the port's own, and it is load-bearing. `liveStat` reads
+`entity.stats?.[statName] ?? 0`, and DFU's `DaggerfallStats` always
+carries all eight permanent values while the port's foes and fixtures
+routinely carry a partial block. Without `if (entity.stats?.[stat] ==
+null) continue`, the check killed every entity in the game on its first
+frame - twenty-seven test files again, which is how it was found.
+
+Sixteen mutants. Fourteen died first time; two survived and were real
+misses, not equivalents. The cadence pin only ever probed a *killing*
+firing, so deleting the timer reset changed nothing it looked at - and
+the reset matters on a firing that finds nothing, which is the common
+case. And the kill pin asserted the resulting health rather than the
+call, so writing `entity.health = 0` in place of `sinks.hurt(...)`
+passed - while in the real port that is the difference between the one
+damage door running the death presenter and a corpse walking around
+with the HUD still up. Both pins rebuilt; both mutants died.
+
+**A new one, on the way past.** `tickActiveEffects` and
+`updatePoisons` are called for foes in exactly one place in `src/` -
+`dungeonContext`. Neither `exteriorFoes` nor `cityGuards` ticks its
+pool's effects at all, so above ground a foe's Continuous Damage never
+takes a round, its poison never fires, and a paralysed encounter foe
+stays paralysed forever. Same shape as wave 30's gap, one layer down.
+
+**Twenty-nine findings remain**, plus that one.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

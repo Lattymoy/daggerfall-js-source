@@ -26,6 +26,7 @@ import { SPECIAL_ABILITY_BITS } from '../systems/specialAdvantages.js';   // AUD
 import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';   // AUDIT 18: GetBaseDamageMin/Max and GetWeaponSkillIDAsShort resolve the TEMPLATE, never a baked field or a display name
 import { equipTableOf, lowerCondition, slotForBodyPart, EQUIP_SLOTS } from '../systems/equip.js';   // C-slice: DamageEquipment
 import { SHIELD_PARTS } from '../systems/armorMaterials.js';
+import { breakNormalPowerConcealment } from '../systems/concealment.js';   // wave 31: BreakNormalPowerConcealmentEffects, in its own leaf so this import cannot cycle
 
 // ---- Dice100.cs verbatim ----
 export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 100) < chance;   // Random.Range(0,100) < chance
@@ -494,6 +495,30 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // FormulaHelper.cs:699-701: the equipment damages at the TAIL with
   // the clamped value, whatever the hit rolled.
   damageEquipment(attacker, target, damage, weapon, struck, { rolls, say });
+  // AUDIT 24 (wave 31) - A LANDED HIT ENDS THE ATTACKER'S NORMAL-POWER
+  // CONCEALMENT, and it was unported at every door.
+  //
+  // DFU writes this in the CALLERS, not here:
+  //     if (playerEntity.IsMagicallyConcealedNormalPower && damage > 0)
+  //         EntityEffectManager.BreakNormalPowerConcealmentEffects(...)
+  // - WeaponManager.cs:549-552 for the player's swing AND the player's
+  // arrow (DaggerfallMissile.AssignBowDamageToTarget routes a bow hit
+  // back through WeaponDamage), EnemyAttack.cs:255-257 for a foe hitting
+  // the player and :316-318 for a foe hitting anything else. Those three
+  // are the ENTIRE caller set of CalculateAttackDamage in the DFU tree
+  // and all three carry the same two-line guard, so the law is "any
+  // attack that lands damage" - and the tail of the formula is ONE home
+  // for it instead of seven a later door can forget. Two hosts had
+  // already forgotten OnMonsterHit exactly that way; wave 30 is the
+  // receipt. audit24_wave31 pins the equivalence against the C# rather
+  // than against this comment.
+  //
+  // Without it the concealments - live since S21, and read by the S21
+  // senses gate - survived a whole fight: cast the cheap Invisibility
+  // and clear a dungeon without ever being seen, or be beaten to death
+  // by a Nightblade you can never see. The TRUE powers are untouched,
+  // which is what the normal/true split exists for.
+  if (damage > 0) breakNormalPowerConcealment(attacker);
   return damage;
 }
 

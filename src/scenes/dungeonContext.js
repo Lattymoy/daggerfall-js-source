@@ -76,7 +76,7 @@ import {
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT } from '../systems/mysticism.js';   // S27
 import { applySpell, tickActiveEffects, hasActiveEffect, entityIsParalyzed, maxFatigue, isInvisible, isBlending, isAShade } from '../systems/effects.js';
-import { FATIGUE_LOSS, liveStat } from '../systems/statMods.js';
+import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
 import { breathStep } from '../systems/breath.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { updatePoisons, inflictPoison } from '../systems/poisons.js';
@@ -1866,6 +1866,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         tickActiveEffects(f.entity, foeSinks(f));
       }
     }
+    // AUDIT 24 (wave 31): every entity has an EntityEffectManager, so the
+    // stat-zero kill is a FOE law too - a drained-to-zero Strength kills
+    // the thing you drained. Off the frame's dt, not the minute loop.
+    for (const f of foes) if (!f.dead) killIfAnyLiveStatZero(f.entity, foeSinks(f), dt);
     collisionTriggers(dt, playerFeet, moveHeld);
     updateMissiles(dt, playerFeet);
     magic.update(dt, playerFeet);   // M3: player spell missiles fly in the engine

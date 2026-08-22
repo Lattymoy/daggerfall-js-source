@@ -22,7 +22,7 @@ import { updateDiseases } from './diseases.js';
 import { updatePoisons } from './poisons.js';
 import { tickActiveEffects } from './effects.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
-import { FATIGUE_LOSS } from './statMods.js';
+import { FATIGUE_LOSS, killIfAnyLiveStatZero } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 import { CLASSIC_GAME_START_TIME } from './gameDate.js';
@@ -206,6 +206,13 @@ export function tickPlayerMinutes({
     }
     sinks.drainFatigue?.(Math.trunc(loss * fatigueMultiplier));
   }
+
+  // EntityEffectManager.UpdateEntityMods' tail (:1855-1866), on its own
+  // 0.2s real-time cadence: a live stat at zero kills the host. It sits
+  // here rather than in runMagicRounds because DFU's is not a magic
+  // round - it is Update()'s refreshMods timer, and Time.deltaTime is
+  // zero under a paused UI, which is why a rest cannot kill you this way.
+  killIfAnyLiveStatZero(entity, sinks, dt);
 
   // AUDIT 23 (entity-1): NO advancement here. DFU's PlayerEntity.Update
   // (:347-538) runs no RaiseSkills; the only call sites in the whole

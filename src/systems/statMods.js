@@ -50,6 +50,60 @@ export function liveStat(entity, statName) {
   return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE);
 }
 
+/** EntityEffectManager.refreshModsDelay (:79) - UpdateEntityMods runs
+ *  on a REAL-TIME timer out of Update(), "more frequently than magic
+ *  rounds, but not too frequently", and the reset is to zero rather
+ *  than a subtract (:213-217). */
+export const REFRESH_MODS_DELAY = 0.2;
+
+/** The tail of EntityEffectManager.UpdateEntityMods (:1855-1866):
+ *
+ *      // Kill host if any stat is reduced to 0 live total
+ *      for (int i = 0; i < DaggerfallStats.Count; i++)
+ *          if (entityBehaviour.Entity.Stats.GetLiveStatValue(i) == 0)
+ *          { entityBehaviour.Entity.CurrentHealth = 0; return; }
+ *
+ *  AUDIT 24 (wave 31): unported. A stat drained to zero was merely a
+ *  stat at zero - Drain Strength held long enough, a Transfer, or a
+ *  disease with a heavy per-day stat cost left the character alive at
+ *  Strength 0 (and, because the fatigue ceiling is
+ *  (LiveStrength + LiveEndurance) x 64, at a max fatigue of zero and
+ *  therefore permanently collapsing). DFU kills outright.
+ *
+ *  The port has no AssignMods moment - liveStat is computed on read -
+ *  so the check rides the same real-time cadence DFU gives it, off the
+ *  host tick's dt. The accumulator lives on the entity so it survives a
+ *  host swap, exactly like the Running tally's.
+ *
+ *  @param {object} entity
+ *  @param {object} sinks   the entity's own doors - the kill goes through
+ *                          `hurt`, which is the one damage door, so the
+ *                          death presenter runs (DFU's CurrentHealth
+ *                          setter raises OnDeath the same way)
+ *  @param {number} dt      real seconds since the last host tick
+ *  @returns {boolean} true if the host was killed this call
+ */
+export function killIfAnyLiveStatZero(entity, sinks, dt = 0) {
+  if (!entity) return false;
+  entity._refreshModsTimer = (entity._refreshModsTimer ?? 0) + (Number(dt) || 0);
+  if (!(entity._refreshModsTimer > REFRESH_MODS_DELAY)) return false;
+  entity._refreshModsTimer = 0;
+  if ((entity.health ?? 0) <= 0) return false;   // already dead: DecreaseHealth has nothing to take
+  for (const stat of STAT_KEYS_ORDER) {
+    // A stat the port has never recorded is not a stat at zero. DFU's
+    // DaggerfallStats always carries all eight permanent values, so
+    // GetLiveStatValue is never answering about a stat that does not
+    // exist; here foes and fixtures routinely carry a partial block, and
+    // reading the ?? 0 default as "drained to death" would kill every one
+    // of them on their first frame.
+    if (entity.stats?.[stat] == null) continue;
+    if (liveStat(entity, stat) !== 0) continue;
+    sinks?.hurt?.(entity.health);
+    return true;
+  }
+  return false;
+}
+
 // ---- The fatigue stat (S15), DaggerfallEntity verbatim ----
 // Classic fatigue is stored x64: FatigueMultiplier = 64,
 // MaxFatigue = (LiveStrength + LiveEndurance) * 64. Spell effects

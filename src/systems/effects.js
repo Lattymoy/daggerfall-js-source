@@ -29,6 +29,13 @@ import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the 
 import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
 import { tryAbsorption } from './absorption.js';   // S24
+// AUDIT 24 (wave 31): the concealment BREAK lives in its own leaf so that
+// combat/formulas.js can reach it without the effects -> spellcast ->
+// formulas cycle. Re-exported here because this is the module its readers
+// already speak to.
+import { breakNormalPowerConcealment, handleAttackFromSource } from './concealment.js';
+
+export { breakNormalPowerConcealment, handleAttackFromSource, NORMAL_POWER_CONCEALMENTS } from './concealment.js';
 
 /** "Spell was absorbed." - the HUD line DFU prints on every absorbed
  *  effect (:515). FLAGGED: DFU pulls it from the localised string
@@ -339,13 +346,16 @@ function runEffectRound(a, target, sinks, rolls) {
   if (a.kind === 'continuousDamage') {
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
     if (n > 0 && sinks.hurt) sinks.hurt(n);
+    handleAttackFromSource(a.caster);   // DamageHealthFromSource's tail, wave 31
   } else if (a.kind === 'continuousDamageSpellPoints') {
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
     if (n > 0 && sinks.drainMagicka) sinks.drainMagicka(n);
+    handleAttackFromSource(a.caster);
   } else if (a.kind === 'continuousDamageFatigue') {
     // DamageFatigueFromSource(..., assignMultiplier: true) - x64
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? true, a.element, a.flag, target, rolls);
     if (n > 0 && sinks.drainFatigue) sinks.drainFatigue(n * FATIGUE_MULTIPLIER);
+    handleAttackFromSource(a.caster);
   } else if (a.kind === 'regenerate') {
     // Regenerate.MagicRound: IncreaseHealth(GetMagnitude) every round
     const n = effectMagnitude(a.effect, a.casterLevel, a.saveScaled ?? false, a.element, a.flag, target, rolls);
@@ -467,6 +477,10 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       const n = magnitude(e);
       out.damage += n;
       if (n > 0 && sinks.hurt) sinks.hurt(n);
+      // DamageHealthFromSource runs HandleAttackFromSource whatever the
+      // amount - the `n > 0` guard above is the port's sink contract, not
+      // DFU's, and the concealment break is NOT behind it (:162-169).
+      handleAttackFromSource(caster?.entity ?? null);
       pushInstantMarker(target, 'damageHealth');
       continue;
     }
@@ -478,7 +492,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       if (rounds > 0) {
         const inc = target.activeEffects?.find((a) => a.kind === 'continuousDamage');
         if (inc) inc.roundsRemaining += rounds;
-        else pushActive(target, { kind: 'continuousDamage', effect: e, casterLevel, element: spell.element, flag, saveScaled, roundsRemaining: rounds }, sinks, rolls);
+        else pushActive(target, { kind: 'continuousDamage', effect: e, casterLevel, caster: caster?.entity ?? null, element: spell.element, flag, saveScaled, roundsRemaining: rounds }, sinks, rolls);
         out.continuous++;
       }
       continue;
@@ -585,6 +599,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // DamageFatigue (4, 1): instant DamageFatigueFromSource(mag, x64).
       const n = magnitude(e);
       if (n > 0 && sinks.drainFatigue) sinks.drainFatigue(n * FATIGUE_MULTIPLIER);
+      handleAttackFromSource(caster?.entity ?? null);
       pushInstantMarker(target, 'damageFatigue');
       out.fatigueDrained = (out.fatigueDrained ?? 0) + 1;
       continue;
@@ -594,7 +609,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       if (rounds > 0) {
         const inc = target.activeEffects?.find((a) => a.kind === 'continuousDamageFatigue');
         if (inc) inc.roundsRemaining += rounds;   // settings-blind incumbent (F12)
-        else pushActive(target, { kind: 'continuousDamageFatigue', effect: e, casterLevel, element: spell.element, flag, saveScaled, roundsRemaining: rounds }, sinks, rolls);
+        else pushActive(target, { kind: 'continuousDamageFatigue', effect: e, casterLevel, caster: caster?.entity ?? null, element: spell.element, flag, saveScaled, roundsRemaining: rounds }, sinks, rolls);
         out.continuous++;
       }
       continue;
@@ -605,6 +620,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       const n = magnitude(e);
       out.magickaDrained = (out.magickaDrained ?? 0) + n;
       if (n > 0 && sinks.drainMagicka) sinks.drainMagicka(n);
+      handleAttackFromSource(caster?.entity ?? null);
       pushInstantMarker(target, 'damageSpellPoints');
       continue;
     }
@@ -613,7 +629,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       if (rounds > 0) {
         const inc = target.activeEffects?.find((a) => a.kind === 'continuousDamageSpellPoints');
         if (inc) inc.roundsRemaining += rounds;   // settings-blind incumbent (F12)
-        else pushActive(target, { kind: 'continuousDamageSpellPoints', effect: e, casterLevel, element: spell.element, flag, saveScaled, roundsRemaining: rounds }, sinks, rolls);
+        else pushActive(target, { kind: 'continuousDamageSpellPoints', effect: e, casterLevel, caster: caster?.entity ?? null, element: spell.element, flag, saveScaled, roundsRemaining: rounds }, sinks, rolls);
         out.continuous++;
       }
       continue;
