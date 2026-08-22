@@ -4140,6 +4140,102 @@ gate turns the foe in place and the pin measures the wrong law.
 **Twenty-six findings remain**, plus seven from the host-parity sweep.
 
 
+### Wave 37 - the guard that guarded the wrong thing
+
+A screenshot from the deployed build, not an audit finding:
+
+```
+CRASH
+TypeError: can't access property "pointerdown", it is undefined
+```
+
+Both browser hosts install their pointer and wheel listeners about six
+hundred lines above the mode machine those listeners talk to:
+
+```js
+canvas.addEventListener('pointerdown', (e) => {
+  if (townTalk.pointerdown(e)) return;
+  if (modes.pointerdown?.(e)) return;      // <- here
+  requestLook(canvas);
+});
+...
+var modes = createWorldModes({ ... });     // ~600 lines below
+```
+
+The `var` is deliberate and correct. It hoists, so the closures reach a
+binding that *exists* and reads `undefined` until the assignment runs,
+rather than a `const` whose every earlier reference is a
+`ReferenceError` out of the temporal dead zone. What was missing is the
+other half of that bargain: if the binding can read `undefined`, the
+guard has to be on the **object**. `modes.pointerdown?.(e)` optional-
+calls the *method*. It reads like a guard, it satisfies the eye, and it
+dereferences `modes` unconditionally before the `?.` is ever consulted.
+
+The window is not theoretical. `?world` has exactly one `await` between
+the registration and the assignment - `const questPack = await
+loadQuestPack();` - and a quest pack is a network fetch. Click the
+canvas while it is in flight and the listener runs against `undefined`,
+throws, and takes the whole scene down. That is what the screenshot is.
+
+`?exterior` carries the identical shape with no `await` in its window,
+so the crash is latent there rather than live. It is fixed the same
+way, because a single added `await` is all that stands between the two.
+
+**The cure is mechanical, and deliberately so.** Every reference above
+either declaration is now `modes?.`, including the five that were
+already safe by short-circuit:
+
+```js
+collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? ...
+if ((modes?.mode ?? 'exterior') !== 'exterior') modes?.forceExitToExterior();
+```
+
+Those two could not throw - `modes?.mode` is `undefined`, the `&&`
+short-circuits, the `!==` is false and the call is never reached. But a
+rule with an exception list is a rule nobody can check, and the
+exceptions are exactly the lines a later edit rearranges. All or
+nothing is a gate; "safe by inspection" is a comment.
+
+`test/audit24_wave37.test.js` holds both halves, over both hosts. It
+takes the shipped listener line out of the file, runs it through a
+`new Function` harness whose only local state is a hoisted, unassigned
+`var modes` - the precise state the crash happened in - and fires the
+handler. The guarded line falls through to `requestLook`; the one-
+character mutation back to `modes.pointerdown?.(` throws the reported
+`TypeError` verbatim. Then it strips comments (prose says "modes"
+constantly), finds the declaration, and asserts no plain `modes.` or
+`modes[` survives above it. Then it asserts the declaration is still a
+`var` - and demonstrates why, by running the same guarded closure in
+front of a `const` and catching the `ReferenceError`, because `?.` does
+not reach into a dead zone. Then it asserts the crash shape
+(`modes.method?.(`) is gone from the scene layer entirely, and that no
+second hoisted binding has appeared to repeat the trick.
+
+**Thirteen mutants, thirteen kills**, and two equivalents recorded
+rather than dressed up: putting a `?.` on `modes.frame(dt, now)`, or
+turning `modes.installShotProbes()` into an optional call, both survive.
+They are *below* the declaration, where the binding is assigned and the
+two forms are the same program. The gate is about reachability, not
+style, and it says nothing about them - correctly.
+
+Two existing pins had to be edited to take the fix -
+`hostmagic_wiring` quoted `modes.interiorCollider` and `teleport`
+quoted `modes.forceExitToExterior();`, both verbatim, both as the
+correct text. That is the sharpest thing in the wave. Those lines were
+not merely unreviewed; they were *pinned in their unguarded form*, and
+the pins passed, because the law each one was written to protect - the
+mode facade, the forced exit - was never the law that was broken. A pin
+quotes the line it cares about and inherits everything else in it.
+
+The lesson generalises past this binding. **AN OPTIONAL CALL IS NOT AN
+OPTIONAL DEREFERENCE.** `a.b?.()` promises only that `b` may be absent;
+it asserts that `a` is not. Every one of the four listener lines had
+been read and reviewed repeatedly across the arc, and the `?.` in them
+is why: it looked like the check had already been made.
+
+**Twenty-six findings remain**, plus seven from the host-parity sweep.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

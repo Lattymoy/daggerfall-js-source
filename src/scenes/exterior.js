@@ -590,7 +590,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const magic = createPlayerMagic({
     onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
-    collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes.interiorCollider) ? modes.interiorCollider : collider).raycast(o, d, m) },
+    collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
     playerSinks: {
       hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
@@ -743,8 +743,25 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (!townTalk.overlayActive && !(modes?.overlayHeld ?? false) && document.pointerLockElement !== canvas) requestLook(canvas);
   });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
-  canvas.addEventListener('pointerdown', (e) => { if (townTalk.pointerdown(e)) return; if (modes.pointerdown?.(e)) return; requestLook(canvas); });   // U8b/U8c: native windows own the pointer
-  canvas.addEventListener('wheel', (e) => { if (townTalk.wheel(e) || modes.wheel?.(e)) e.preventDefault(); }, { passive: false });   // U-scroll: an open window owns the wheel
+  // AUDIT 24 (wave 37) - THE LIVE CRASH. `modes` is a VAR, deliberately
+  // hoisted so these two listeners can be installed HERE and still reach
+  // the mode machine that is not built until ~600 lines below. `var`
+  // means the binding exists and reads undefined until then; `const`
+  // would make every reference above the assignment a TDZ
+  // ReferenceError instead. But undefined is only survivable if the
+  // guard is on the OBJECT, and the shipped line optional-CALLED the
+  // method - `modes.pointerdown?.(e)` - which reads like a guard and is
+  // not one.
+  // ?world crashed on exactly this - a click during its
+  // `await loadQuestPack()` threw
+  //     TypeError: can't access property "pointerdown", it is undefined
+  // out of the deployed build. This host's window is synchronous today,
+  // so the same shape is LATENT here rather than live; one added await
+  // between here and the declaration reopens it, which is why the cure
+  // is the same. test/audit24_wave37.test.js holds both halves of it:
+  // `modes?.` on every reference above the declaration, and `var` at it.
+  canvas.addEventListener('pointerdown', (e) => { if (townTalk.pointerdown(e)) return; if (modes?.pointerdown?.(e)) return; requestLook(canvas); });   // U8b/U8c: native windows own the pointer
+  canvas.addEventListener('wheel', (e) => { if (townTalk.wheel(e) || modes?.wheel?.(e)) e.preventDefault(); }, { passive: false });   // U-scroll: an open window owns the wheel
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -769,6 +786,11 @@ export async function bootExterior(canvas, renderer, params, status) {
   // P7: the exterior scene hosts the same mode machine as ?world -
   // E on a building door enters its interior, E on a DUNGEON_ENTRANCE
   // door drops into the location's crawl, exits land verbatim.
+  // VAR, not const: the pointer and wheel listeners far above close over
+  // this binding and are live before it is assigned, so it must exist
+  // and read undefined rather than throw a TDZ ReferenceError. Every
+  // reference BEFORE this line must therefore be `modes?.` - which is
+  // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm

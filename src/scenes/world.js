@@ -928,7 +928,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   const magic = createPlayerMagic({
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
-    collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes.interiorCollider) ? modes.interiorCollider : collider).raycast(o, d, m) },
+    collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
     playerSinks: {
       hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
@@ -968,7 +968,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             if (!a) { townTalk.say('You must set an anchor first.'); return; }   // key achorMustBeSet (4001), prose ours
             if (a.mode !== 'world-exterior') { townTalk.say('(the anchor was set in another host - cross-host recall pends)'); return; }
             (async () => {
-              if ((modes?.mode ?? 'exterior') !== 'exterior') modes.forceExitToExterior();
+              if ((modes?.mode ?? 'exterior') !== 'exterior') modes?.forceExitToExterior();
               await _teleportToPixel(a.pixel.x, a.pixel.y);
               const [lx, lz] = state.localFromWorld(a.nativeX, a.nativeZ);
               const ly = (a.y ?? 2) + state.compensation[1];
@@ -1292,8 +1292,23 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!townTalk.overlayActive && !(modes?.overlayHeld ?? false) && document.pointerLockElement !== canvas) requestLook(canvas);
   });
   addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'AltLeft') e.preventDefault(); });
-  canvas.addEventListener('pointerdown', (e) => { if (townTalk.pointerdown(e)) return; if (modes.pointerdown?.(e)) return; requestLook(canvas); });   // U8b/U8c: native windows own the pointer
-  canvas.addEventListener('wheel', (e) => { if (townTalk.wheel(e) || modes.wheel?.(e)) e.preventDefault(); }, { passive: false });   // U-scroll: an open window owns the wheel
+  // AUDIT 24 (wave 37) - THE LIVE CRASH. `modes` is a VAR, deliberately
+  // hoisted so these two listeners can be installed HERE and still reach
+  // the mode machine that is not built until ~600 lines below. `var`
+  // means the binding exists and reads undefined until then; `const`
+  // would make every reference above the assignment a TDZ
+  // ReferenceError instead. But undefined is only survivable if the
+  // guard is on the OBJECT, and the shipped line optional-CALLED the
+  // method - `modes.pointerdown?.(e)` - which reads like a guard and is
+  // not one.
+  // A click during the one await in that window
+  // (`await loadQuestPack()`) threw
+  //     TypeError: can't access property "pointerdown", it is undefined
+  // and took the whole scene down. Reported from the deployed build.
+  // test/audit24_wave37.test.js holds both halves of the cure: `modes?.`
+  // on every reference above the declaration, and `var` at it.
+  canvas.addEventListener('pointerdown', (e) => { if (townTalk.pointerdown(e)) return; if (modes?.pointerdown?.(e)) return; requestLook(canvas); });   // U8b/U8c: native windows own the pointer
+  canvas.addEventListener('wheel', (e) => { if (townTalk.wheel(e) || modes?.wheel?.(e)) e.preventDefault(); }, { passive: false });   // U-scroll: an open window owns the wheel
   // C9: RMB is a weapon control (drag-to-swing) exactly as the
   // dungeon host - the drag feeds the rig INSTEAD of the look.
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -1895,6 +1910,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // handed down here.
   townTalk.hudMessageSink = (t) => questBridge?.notebook?.addMessage(t);
   if (_questStartPending) questInitAtGameStart();
+  // VAR, not const: the pointer and wheel listeners far above close over
+  // this binding and are live before it is assigned, so it must exist
+  // and read undefined rather than throw a TDZ ReferenceError. Every
+  // reference BEFORE this line must therefore be `modes?.` - which is
+  // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
     // Q4-v: the quest bridge + the scene context the NPC-data law needs

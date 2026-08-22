@@ -55,7 +55,9 @@ test('TP: the engine seam, the world prompt, the consume, the mode exit', () => 
   assert.ok(w.includes("townTalk.say('You must set an anchor first.')"), 'the 4001 refusal');
   assert.ok(w.includes('playerEntity.anchorPosition = null;   // consumed on arrival, both DFU arms'),
     'the arrival consumes the anchor (:133/:255)');
-  assert.ok(w.includes("!== 'exterior') modes.forceExitToExterior();"), 'a cast inside a mode leaves it first (:151)');
+  // wave 37: `modes?.` - the binding is hoisted and this line is above
+  // its assignment, so the guard belongs on the OBJECT (audit24_wave37).
+  assert.ok(w.includes("!== 'exterior') modes?.forceExitToExterior();"), 'a cast inside a mode leaves it first (:151)');
   const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
   const i = wm.indexOf('forceExitToExterior()');
   const fn = wm.slice(i, wm.indexOf('},', i));

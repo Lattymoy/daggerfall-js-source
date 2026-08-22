@@ -44,7 +44,9 @@ test('M5: the exterior pages cast through MODE FACADES - collider, foes and abso
   // leave spells colliding with the town outside.
   for (const f of HOSTS) {
     const s = src(f);
-    assert.ok(s.includes("(modes?.mode === 'interior' && modes.interiorCollider) ? modes.interiorCollider : collider"),
+    // wave 37: every `modes` deref above the declaration is `modes?.`
+    // now, short-circuit-safe ones included - see audit24_wave37.
+    assert.ok(s.includes("(modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider"),
       `${f}: missiles hit the walls of the mode the player is in`);
     assert.ok(/foes: \(\) => \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? (cityGuards\.guards|\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]) : \[\]/.test(s),
       `${f}: guards (and, in the world host, the X-slice encounter pool) are targets only outside`);
