@@ -289,3 +289,120 @@ export function generateItems(lootTableKey, who, rolls = Math.random) {
   const matrix = LOOT_MATRICES[lootTableKey] ?? LOOT_MATRICES['-'];
   return generateRandomLoot(matrix, who, rolls);
 }
+
+// ---- The three rolls nobody ran (AUDIT 24, wave 43) ----------------
+// SetEnemyCareer does not stop at the loot table. EnemyEntity.cs:388-397:
+//
+//     DaggerfallLoot.RandomlyAddMap(mobileEnemy.MapChance, items);
+//     if (!string.IsNullOrEmpty(mobileEnemy.LootTableKey))
+//     {
+//         DaggerfallLoot.RandomlyAddPotion(3, items);
+//         DaggerfallLoot.RandomlyAddPotionRecipe(2, items);
+//     }
+//
+// `mapChance` is in all sixty-two rows of ENEMY_BASICS and had zero
+// readers, so no enemy in the game has ever dropped a dungeon map -
+// which in classic is a main way the player finds new dungeons at all.
+// No enemy dropped a potion or a recipe either.
+//
+// The map arm is UNCONDITIONAL; the potion pair is gated on the enemy
+// having a loot table. So a Ghost (mapChance 3, no table) can carry a
+// map and never a potion, and that asymmetry is DFU's.
+
+/** PotionRecipe.cs:28-29 - classicRecipeKeys, the twenty recipe hashes
+ *  of the unmodded game.
+ *
+ *  RandomlyAddPotionRecipe picks from exactly this list.
+ *  CreateRandomPotion instead asks the broker for every REGISTERED
+ *  potion recipe (EntityEffectBroker.cs:476-479), which is built from
+ *  the effects that define one - and the vendored tree defines twenty,
+ *  across fifteen effect files, against this list of twenty. So in the
+ *  unmodded game the two sets are the same set, and the port uses this
+ *  one for both. The day the port registers a potion effect of its
+ *  own, CreateRandomPotion's source moves to that registry and this
+ *  list stays where it is: DFU keeps them separate for that reason. */
+export const CLASSIC_RECIPE_KEYS = Object.freeze([
+  221871, 239524, 4975678, 5017404, 5188896, 111516185, 4826108, 216843, 224588, 220192,
+  240081, 4937012, 228890, 221117, 4870452, 5361377, 112080144, 4842851, 4815872, 2031019196,
+]);
+
+/** MiscItems.Map (template 287) - ItemBuilder has no maker for it;
+ *  DaggerfallLoot news it up inline (:92). */
+export const MAP_TEMPLATE_INDEX = 287;
+/** MiscItems index 4 = Potion recipe (template 278). */
+export const POTION_RECIPE_TEMPLATE_INDEX = 278;
+/** UselessItems1 index 1 = the glass bottle a potion IS (:754). */
+export const POTION_TEMPLATE_INDEX = GROUP_TEMPLATE_INDICES.UselessItems1[1];
+
+/** ItemBuilder.CreatePotion (:752-755) - a bottle carrying a key. */
+export function createPotion(recipeKey) {
+  return mintCondition({ group: 'UselessItems1', templateIndex: POTION_TEMPLATE_INDEX, potionRecipeKey: recipeKey });
+}
+
+/** ItemBuilder.CreateRandomPotion (:761-766). */
+export function createRandomPotion(rolls = Math.random) {
+  return createPotion(CLASSIC_RECIPE_KEYS[Math.floor(rolls() * CLASSIC_RECIPE_KEYS.length)]);
+}
+
+/** DaggerfallLoot.RandomlyAddMap (:88-96). Dice100.SuccessRoll, so a
+ *  chance of 0 never fires and no roll is wasted deciding that. */
+export function randomlyAddMap(chance, items, rolls = Math.random) {
+  if (!dice100(chance, rolls())) return null;
+  const map = mintCondition({ group: 'MiscItems', templateIndex: MAP_TEMPLATE_INDEX });
+  items.push(map);
+  return map;
+}
+
+/** DaggerfallLoot.RandomlyAddPotion (:100-105). */
+export function randomlyAddPotion(chance, items, rolls = Math.random) {
+  if (!dice100(chance, rolls())) return null;
+  const potion = createRandomPotion(rolls);
+  items.push(potion);
+  return potion;
+}
+
+/** DaggerfallLoot.RandomlyAddPotionRecipe (:109-118). */
+export function randomlyAddPotionRecipe(chance, items, rolls = Math.random) {
+  if (!dice100(chance, rolls())) return null;
+  const key = CLASSIC_RECIPE_KEYS[Math.floor(rolls() * CLASSIC_RECIPE_KEYS.length)];
+  const recipe = mintCondition({ group: 'MiscItems', templateIndex: POTION_RECIPE_TEMPLATE_INDEX, potionRecipeKey: key });
+  items.push(recipe);
+  return recipe;
+}
+
+/** EnemyEntity.cs:388-397's tail, for all four spawn sites. Runs
+ *  AFTER the equipment, as DFU does - AssignEnemyStartingEquipment
+ *  has already pushed the gear into `items` by :388, so a map lands
+ *  after a helmet in the list and not before it. */
+export function addEnemyLootExtras(items, basics, rolls = Math.random) {
+  if (!items || !basics) return items;
+  randomlyAddMap(basics.mapChance ?? 0, items, rolls);
+  // "if (!string.IsNullOrEmpty(mobileEnemy.LootTableKey))" - the port
+  // spells an absent table '-' at its call sites, and DFU's own rows
+  // leave it null, so both are "no table".
+  const key = basics.lootTableKey;
+  if (key && key !== '-') {
+    randomlyAddPotion(3, items, rolls);
+    randomlyAddPotionRecipe(2, items, rolls);
+  }
+  return items;
+}
+
+/** LootTables.GenerateLoot (:145-160) - the DUNGEON PILE half, which
+ *  is a different trio: the map chance comes from a six-entry table
+ *  indexed by the loot key, and only keys J through O roll at all.
+ *  The potion chance is FOUR here, not three. */
+export const PILE_MAP_CHANCES = Object.freeze([2, 1, 1, 2, 2, 15]);   // J, K, L, M, N, O
+
+export function addPileLootExtras(items, lootTableKey, rolls = Math.random) {
+  if (!items || !lootTableKey) return items;
+  // `int alphabetIndex = key - 64` on the FIRST character: 'A' is 1,
+  // so J is 10 and O is 15.
+  const alphabetIndex = lootTableKey.charCodeAt(0) - 64;
+  if (alphabetIndex < 10 || alphabetIndex > 15) return items;
+  randomlyAddMap(PILE_MAP_CHANCES[alphabetIndex - 10], items, rolls);
+  randomlyAddPotion(4, items, rolls);
+  randomlyAddPotionRecipe(2, items, rolls);
+  return items;
+}
+

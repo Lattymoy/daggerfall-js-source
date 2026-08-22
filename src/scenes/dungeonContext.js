@@ -102,7 +102,7 @@ import {
 import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
 import { BUILD_TAG } from '../buildTag.js';
 import {
-  generateItems as generateLootItems, setMagicItemTemplates,
+  generateItems as generateLootItems, addEnemyLootExtras, addPileLootExtras, setMagicItemTemplates,   // AUDIT 24 (wave 43)
   RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS,
   RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS,
 } from '../systems/loot.js';
@@ -476,6 +476,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // whole block moved to hostCombat.equipEnemy so the monster
       // branch and the city watch run the same chain.
       equipEnemy(entity, e.mobileType, D.playerEntity.level);
+      addEnemyLootExtras(entity.items, basics, Math.random);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
       const ai = new D.EnemyAI(collider, pos, yawDeg * Math.PI / 180, {
         liveSpeed: entity.liveSpeed,
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,   // P13: the illusion-gate exemption
@@ -537,6 +538,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // the AI, so five equipment-using monsters spawned naked - no
       // weapon, no armorValues, no equipment on the corpse.
       equipEnemy(entity, e.mobileType, D.playerEntity.level);
+      addEnemyLootExtras(entity.items, basics, Math.random);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
       // C12: the behaviour motors - flying/spectral pursue in 3D at
       // the face with no gravity, aquatic ride WaterMove against the
       // block water surface (beached = frozen, verbatim).
@@ -1176,6 +1178,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (!isRandom && !isFixed) continue;
         const record = isFixed ? m.record : RANDOM_TREASURE_ICONS[Math.floor(Math.random() * RANDOM_TREASURE_ICONS.length)];
         const items = generateLootItems(lootKey, { level: playerEntity.level, gender: playerEntity.gender });   // AUDIT 23 (items-1): LootTables.cs:229/:237 pass the PLAYER's gender
+        // AUDIT 24 (wave 43): LootTables.GenerateLoot:147-159 - the
+        // PILE trio, which is a different one from the enemy's: the
+        // map chance comes from a six-entry table indexed by the loot
+        // key, only J..O roll at all, and the potion chance is FOUR.
+        addPileLootExtras(items, lootKey);
         lootPiles.push({ pos: [m.x + b.originX, m.y, m.z + b.originZ], record, items, batch: null });
       }
     }

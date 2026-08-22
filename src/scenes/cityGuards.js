@@ -48,7 +48,7 @@ import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
 import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity } from '../characters/enemyEntity.js';
 import { ClassFile } from '../formats/classFile.js';
-import { generateItems } from '../systems/loot.js';
+import { generateItems, addEnemyLootExtras } from '../systems/loot.js';   // AUDIT 24 (wave 43)
 import { inflictPoison } from '../systems/poisons.js';
 import {
   calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon,
@@ -126,6 +126,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // AUDIT 18: the whole SetEnemyEquipment chain is now shared with
     // the dungeon host's two spawn branches (hostCombat.equipEnemy).
     equipEnemy(entity, GUARD_MOBILE_TYPE, playerEntity.level);
+    addEnemyLootExtras(entity.items, basics, rand);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397
     const ai = new EnemyAI(collider, [pos[0], pos[1] + 0.1, pos[2]], yaw, {
       liveSpeed: entity.liveSpeed,
       seesThroughInvisibility: basics.seesThroughInvisibility ?? false,

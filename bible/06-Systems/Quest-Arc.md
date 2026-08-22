@@ -4686,6 +4686,79 @@ catch a disabled call, and a text pin too tight to allow a synonym.
 plus nine the wave-38 scout confirmed that these waves have not closed.
 
 
+### Wave 43 - the three rolls nobody ran
+
+`SetEnemyCareer` does not stop at the loot table
+(`EnemyEntity.cs:388-397`):
+
+```csharp
+DaggerfallLoot.RandomlyAddMap(mobileEnemy.MapChance, items);
+
+if (!string.IsNullOrEmpty(mobileEnemy.LootTableKey))
+{
+    DaggerfallLoot.RandomlyAddPotion(3, items);
+    DaggerfallLoot.RandomlyAddPotionRecipe(2, items);
+}
+```
+
+`mapChance` sits in all sixty-two rows of `ENEMY_BASICS`, **thirty of
+them non-zero**, and had zero readers. So no enemy in the game had ever
+dropped a dungeon map - which in classic is one of the main ways a
+player finds new dungeons at all - nor a potion, nor a recipe.
+
+**The asymmetry is DFU's and it is kept.** The map arm is
+unconditional; the potion pair is gated on the enemy having a loot
+table. So a Ghost (mapChance 1, table "I") can carry either, and the
+city watch (mapChance 0, no table at all) carries neither - and would
+not even if you handed it a hundred percent chance, because the gate is
+about the table, not the luck.
+
+**The pile trio is a different trio.** `LootTables.GenerateLoot:147-159`
+runs its own, and every number in it differs: the map chance comes from
+a six-entry table indexed by the loot key rather than from the enemy
+row, only keys **J through O** roll at all, and the potion chance is
+**four** where the enemy's is three. Fourteen of the port's nineteen
+dungeon types fall in that window; the Coven, the Laboratory, the Harpy
+Nest, the Giant Stronghold and the Dragon's Den do not, so their piles
+never hold a map. That is DFU's window, not an omission.
+
+`CreateRandomPotion` needed the potion mint that had never been built.
+DFU draws its recipe from `EntityEffectBroker.GetPotionRecipeKeys()` -
+every registered potion effect - while `RandomlyAddPotionRecipe` draws
+from the hardcoded `classicRecipeKeys`. Those are two different
+sources, deliberately. The vendored effect tree defines **twenty**
+`PotionRecipe`s across fifteen files, and `classicRecipeKeys` has
+**twenty** entries, so unmodded they are the same set and the port uses
+the one list for both - with the note that the day the port registers a
+potion effect of its own, `CreateRandomPotion`'s source moves and this
+list stays put.
+
+**Twenty-three mutants, twenty-three kills** - after two rounds, and
+both corrections were mine, and one of them I had already written down.
+
+The enemy **recipe** chance had no boundary pin at all, so changing 2
+to 3 survived. The three chances are one apart, which makes a 2% roll
+the thing that separates them.
+
+And `basics.mapChance ?? 0` rewritten as `|| 0` was reported as a
+**kill**. It is the same program. It died on
+`assert.match(src, /mapChance \?\? 0/)` - which is exactly the false
+kill wave 42 recorded one wave ago, made again in the next wave, by
+the same hand, for the same reason. Writing a law down is not the same
+as having learned it. The spelling assertion is gone, `mapChance` is
+asserted by *use*, and the mutant survives now as the equivalent it
+always was.
+
+**A pin that quotes a spelling tests the spelling.** Twice is a
+pattern; the rule is that a pin asserts what a line DOES, and reaches
+for the source text only when the thing being protected really is the
+text - a citation, a comment that carries a law, a signature.
+
+**Twenty-six findings remain**, plus seven from the host-parity sweep,
+plus seven the wave-38 scout confirmed that these waves have not
+closed.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

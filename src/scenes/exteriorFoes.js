@@ -27,7 +27,7 @@ import { makeEnemyEntity, loadMonsterCareer } from '../characters/enemyEntity.js
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { ClassFile } from '../formats/classFile.js';
 import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt, tickEnemySound, playEnemyClip, tryLanguagePacification } from './hostCombat.js';   // C2-slice (combat-9/17)
-import { generateItems as generateLootItems } from '../systems/loot.js';
+import { generateItems as generateLootItems, addEnemyLootExtras } from '../systems/loot.js';   // AUDIT 24 (wave 43)
 import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, enemyLanguageSkill, calculateEnemyPacification } from '../combat/formulas.js';   // AUDIT 24 (wave 42): pacification
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
@@ -74,6 +74,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const entity = makeEnemyEntity(mobileType, basics, await career, playerEntity.level);
       entity.items = generateLootItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: playerEntity.gender });
       equipEnemy(entity, mobileType, playerEntity.level);
+      addEnemyLootExtras(entity.items, basics, rolls);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397, after the equipment as DFU has it
       const gender = basics.femaleTexture && rolls() < 0.5 ? 'female' : 'male';
       const behaviour = basics.behaviour ?? 'General';
       const ai = new EnemyAI(collider, [pos[0], pos[1] + 0.1, pos[2]], rolls() * Math.PI * 2, {
