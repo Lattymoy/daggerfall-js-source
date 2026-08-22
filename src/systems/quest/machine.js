@@ -192,7 +192,9 @@
 //   deps.world playerVampireClanName() - %vam (null = the C# error
 //                                literal); regionVampireClanName(
 //                                regionIndex) - %vcn
-//   deps.world divineOfTempleFaction(factionId) - %god's temple arm
+//   (AUDIT 24: divineOfTempleFaction is gone - QuestMCP.God resolves
+//    the region temple and Temple.GetDivine itself, off REGION_TEMPLES
+//    and the faction store, exactly as the C# does)
 //   deps.world locationCompassDirection(place) /
 //              buildingCompassDirection(buildingKey) - %di through
 //                                TalkManager's compass

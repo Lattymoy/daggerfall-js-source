@@ -88,6 +88,32 @@ export const isAShade = (en) => hasActiveEffect(en, 'shadeNormal') || hasActiveE
 /** ConcealmentEffect start messages (Internal_Strings verbatim),
  *  shown ONCE when the effect becomes incumbent on the player host
  *  (awakeAlert) - a stacking re-cast stays silent. */
+/** Every effect class whose `properties.AllowedElements` is
+ *  ElementFlags_MagicOnly, by classic (type, subType) key - the set
+ *  FormulaHelper.GetElementType (:1630-1634) answers Magic for,
+ *  whatever element the parent bundle rode in on. Read off the effect
+ *  classes under Game/MagicAndEffects/Effects, not inferred: cures,
+ *  dispels, elemental resistances, fortifies, heals, transfers, the
+ *  concealments, light, lock/open, regenerate, absorption/reflection/
+ *  resistance, morph, shield, pacify, the detects, identify, teleport,
+ *  comprehend languages, create item - and the alteration/thaumaturgy
+ *  buffs the port's old family list missed: levitate (14), slowfall
+ *  (25), free action (26), jumping (27), climbing (28), water
+ *  breathing (30), water walking (31). */
+const MAGIC_ONLY_KEYS = new Set([
+  '2,255', '3,0', '3,1', '3,2', '6,0', '6,1', '6,2',
+  '8,0', '8,1', '8,2', '8,3', '8,4', '9,0', '9,1',
+  '9,2', '9,3', '9,4', '9,5', '9,6', '9,7', '10,0',
+  '10,1', '10,2', '10,3', '10,4', '10,5', '10,6', '10,7',
+  '10,8', '10,9', '11,0', '11,1', '11,2', '11,3', '11,4',
+  '11,5', '11,6', '11,7', '11,8', '11,9', '13,0', '13,1',
+  '14,255', '15,255', '16,255', '17,255', '18,255', '20,255', '21,255',
+  '22,255', '23,0', '23,1', '24,0', '24,1', '25,255', '26,255',
+  '27,255', '28,255', '29,255', '30,255', '31,255', '33,0', '33,1',
+  '33,2', '33,3', '35,255', '39,0', '39,1', '39,2', '40,255',
+  '43,255', '44,255',
+]);
+
 export const CONCEALMENT_START_TEXT = Object.freeze({
   invisNormal: 'You are invisible.', invisTrue: 'You are invisible.',
   chameleonNormal: 'You are blending.', chameleonTrue: 'You are blending.',
@@ -383,17 +409,25 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // L2-slice (AUDIT 23 magic-11) - FormulaHelper.GetElementType
   // (:1630-1634): an effect whose AllowedElements is MAGIC-ONLY
   // always saves as MAGIC, whatever element the parent spell rode in
-  // on. Among the ported kinds that is the heal/cure/fortify/
-  // transfer/concealment/regenerate families; damage, paralyze,
-  // silence and the alteration buffs keep the bundle's element
-  // (their classes allow all five).
-  const savesAsMagic = (e) =>
-    isHealHealth(e) || isHealFatigue(e) || isHealAttribute(e) ||
-    isCureDisease(e) || isCurePoison(e) || isCureParalyzation(e) ||
-    isFortifyAttribute(e) || isTransferAttribute(e) || isTransferHealth(e) || isTransferFatigue(e) ||
-    isRegenerate(e) || CONCEALMENT_START_TEXT[buffKind(e)] != null;
+  // on. AUDIT 24 systems: the port's predicate was a hand-picked list
+  // of families and it missed the alteration/thaumaturgy buffs -
+  // Levitate, Slowfall, WaterWalking, WaterBreathing, FreeAction,
+  // Jumping, Climbing and the detects all set
+  // ElementFlags_MagicOnly too, and three of them are
+  // TargetFlags_All, so touch and ranged casts of them really exist.
+  // MAGIC_ONLY_KEYS below is the whole set, read off the effect
+  // classes rather than guessed at.
+  const savesAsMagic = (e) => MAGIC_ONLY_KEYS.has(`${e.type},${classicSub(e)}`);
   const saveElement = (e) => (savesAsMagic(e) ? 4 : spell.element);          // DFCareer.Elements.Magic
-  const saveFlag = (e) => (savesAsMagic(e) ? EFFECT_FLAGS.Magic : flag);
+  // AUDIT 24 systems: the FLAG is NOT overridden. SavingThrow computes
+  // its two arguments from different sources (FormulaHelper.cs:
+  // 1568-1569): GetEffectFlags (:1592-1623) looks only at
+  // Paralyze/DiseaseEffect and then switches on the PARENT BUNDLE's
+  // element - it never consults AllowedElements. Only GetElementType
+  // applies the magic-only override. The port had driven both off the
+  // same predicate, folding in Career.Magic tolerance and
+  // BiographyResistMagicMod where DFU folds in Career.Fire.
+  const saveFlag = () => flag;
   const magnitude = (e) => effectMagnitude(e, casterLevel, saveScaled, saveElement(e), saveFlag(e), target, rolls);
   const out = { damage: 0, healed: 0, continuous: 0, skipped: 0 };
   // S24: absorption is tested PER EFFECT, before any of them lands

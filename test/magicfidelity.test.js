@@ -48,18 +48,35 @@ test('magicfidelity magic-3: the buff landing gates - silence chance, the full s
   assert.ok(hasActiveEffect(t5, 'invisNormal'), 'only Silence supports chance among the buffs');
 });
 
-test('magicfidelity magic-11: the magic-only families SAVE AS MAGIC, whatever the spell element', () => {
-  // a FIRE-element hostile spell carrying a concealment: the target
-  // immune to MAGIC saves it in full (GetElementType returns Magic
-  // for magic-only effects)...
-  const t1 = mkTarget({ career: { immunityFlags: EFFECT_FLAGS.Magic } });
+test('magicfidelity magic-11 / AUDIT 24: the ELEMENT goes Magic, the FLAG stays the bundle\'s', () => {
+  // SavingThrow(IEntityEffect, target) computes its two arguments from
+  // DIFFERENT sources (FormulaHelper.cs:1568-1569). GetEffectFlags
+  // (:1592-1623) looks only at Paralyze/DiseaseEffect and then
+  // switches on the PARENT BUNDLE's element - it never consults
+  // AllowedElements. Only GetElementType (:1630-1634) applies the
+  // magic-only override. The port had driven both off one predicate.
+  //
+  // A FIRE-element hostile spell carrying a concealment: the CAREER
+  // tolerance consulted is Fire, because effectFlags is Fire.
+  const t1 = mkTarget({ career: { immunityFlags: EFFECT_FLAGS.Fire } });
   const r1 = applySpell({ rangeType: 2, element: 0, effects: [invis()] }, 1, t1, {}, seq(0.1));
-  assert.equal(r1.saved, 1, 'the concealment saved as MAGIC inside a fire spell');
-  // ...while a FIRE immunity does NOT cover it (the element the save
-  // reads is the effect's, not the bundle's)
-  const t2 = mkTarget({ career: { immunityFlags: EFFECT_FLAGS.Fire } });
+  assert.equal(r1.saved, 1, 'Career.Fire folds in - GetEffectFlags read the bundle');
+  // ...and a MAGIC career immunity does NOT, because Career.Magic is
+  // never reached for a Fire bundle.
+  const t2 = mkTarget({ career: { immunityFlags: EFFECT_FLAGS.Magic } });
   applySpell({ rangeType: 2, element: 0, effects: [invis()] }, 1, t2, {}, seq(0.999));
-  assert.ok(hasActiveEffect(t2, 'invisNormal'), 'fire immunity is blind to a Magic-element save');
+  assert.ok(hasActiveEffect(t2, 'invisNormal'), 'the magic-only override is the ELEMENT, not the flag');
+  // The ELEMENT is still Magic, and the player's RACIAL arm is where
+  // that shows: spellHasFlags(Magic, raceImmunity, effectFlags).
+  const t3 = mkTarget({ isPlayer: true, raceTemplate: { immunityFlags: EFFECT_FLAGS.Magic }, career: {} });
+  const r3 = applySpell({ rangeType: 2, element: 0, effects: [invis()] }, 1, t3, {}, seq(0.1));
+  assert.equal(r3.saved, 1, 'a Magic-immune race saves a concealment inside a FIRE spell');
+  // ...where a plain damage effect in the same fire bundle does not -
+  // its element is the bundle's, so the racial Magic bit is blind.
+  const t4 = mkTarget({ isPlayer: true, raceTemplate: { immunityFlags: EFFECT_FLAGS.Magic }, career: {}, health: 50, maxHealth: 50 });
+  const dmg = { type: 4, subType: 8, magnitudeBaseMin: 5, magnitudeBaseMax: 5, magnitudePerLevel: 0, magnitudePlusMin: 0, magnitudePlusMax: 0, durationBase: 0, durationMod: 0, durationPerLevel: 0 };
+  const r4 = applySpell({ rangeType: 2, element: 0, effects: [dmg] }, 1, t4, {}, seq(0.1));
+  assert.equal(r4.saved ?? 0, 0, 'DamageHealth allows all five elements - it saves as FIRE here');
 });
 
 test('magicfidelity magic-10: the manager paralysis gate - career, racial, the override, the flag', () => {

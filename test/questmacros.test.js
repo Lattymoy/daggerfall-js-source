@@ -45,6 +45,13 @@ const FACTIONS = new Map([
   [201, { id: 201, type: 15, name: 'People of Testshire', race: -1, ruler: 2, rulerNameSeed: 0x12345678, race: 3, children: [] }],
   [867, { id: 867, type: 14, name: 'Court of Testshire', race: -1 }],
   [40, { id: 40, type: 2, name: 'The Mages Guild', race: -1 }],
+  // the two templar ORDERS the %god arms resolve through: Temple
+  // .GetDivine answers by the record's PARENT for an order
+  // (Temple.cs:312-319). 82 = The_Order_of_Arkay (parent 21),
+  // 106 = The_Temple_of_Stendarr (parent 33), which is what
+  // MapsFile.RegionTemples[0] names.
+  [82, { id: 82, type: 2, parent: 21, name: 'The Order of Arkay', race: -1 }],
+  [106, { id: 106, type: 2, parent: 33, name: 'The Temple of Stendarr', race: -1 }],
 ]);
 
 function makeWorld() {
@@ -332,25 +339,40 @@ test('%qdt reads the CURRENT log step time (falling to quest start); %dat the wo
   const out = expandOne(q, 1011);
   const [qdt, dat] = out.slice(1).split(' / ');
   assert.equal(qdt, dat, 'no journal entry selected - quest start IS now here');
-  assert.match(dat, /, 3E \d+$/, 'the DFU date string shape');
+  assert.match(dat, / the \d+(st|nd|rd|th) of \w/, 'the DFU date string shape (AUDIT 24: no year)');
+  assert.equal(/, 3E \d+$/.test(dat), false, 'DateString has no year slot');
 });
 
-test('%god: the temple arm reads the building faction; outside, the random divine on the quest rolls', () => {
-  const world = makeWorld();
-  world._inside = { building: { buildingType: 14, factionId: 82 } };
-  const m = makeMachine(world);
-  const q = schedule(m, [
-    'Quest: __QM', 'QRC:', 'Message:  1011', ' %god', '',
-    'QBN:', 'variable _pad_',
-  ]);
-  assert.equal(expandOne(q, 1011), ' Akatosh');
-  const w2 = makeWorld();
-  const m2 = makeMachine(w2);
-  const q2 = schedule(m2, [
-    'Quest: __QM', 'QRC:', 'Message:  1011', ' %god', '',
-    'QBN:', 'variable _pad_',
-  ], () => 0.5);
-  assert.equal(expandOne(q2, 1011), ' Akatosh', 'Range(0,9) at roll 0.5 -> index 4 = Akatosh');
+test('%god: the temple arm, the REGION temple fallback, and the random roll only when neither answers', () => {
+  // QuestMCP.God (:217-243). AUDIT 24 systems: the port had only the
+  // first arm and rolled a random divine everywhere else, so %god named
+  // a different god on every expansion outside a temple.
+  const godOf = (world, rolls) => {
+    const m = makeMachine(world);
+    const q = schedule(m, [
+      'Quest: __QM', 'QRC:', 'Message:  1011', ' %god', '',
+      'QBN:', 'variable _pad_',
+    ], rolls);
+    return expandOne(q, 1011);
+  };
+  // inside a temple: its own faction. 82 is an ORDER, so GetDivine
+  // resolves it through the record's parent (21 = Arkay).
+  const inTemple = makeWorld();
+  inTemple._inside = { building: { buildingType: 14, factionId: 82 } };
+  assert.equal(godOf(inTemple), ' Arkay');
+  // OUTSIDE: MapsFile.RegionTemples[region 0] = 106, The Temple of
+  // Stendarr - and it is STABLE, not a fresh roll each expansion.
+  const outside = makeWorld();
+  assert.equal(godOf(outside, () => 0.5), ' Stendarr');
+  assert.equal(godOf(outside, () => 0.9), ' Stendarr', 'no roll is taken at all');
+  // a region with NO temple (a 0 entry) falls to the random divine
+  const noTemple = makeWorld();
+  noTemple.currentRegionIndex = () => 2;   // RegionTemples[2] === 0
+  assert.equal(godOf(noTemple, () => 0.5), ' Akatosh', 'Range(0,9) at 0.5 -> index 4');
+  // ...and so does a Fighters Guild hall, "considered temples in some areas"
+  const fg = makeWorld();
+  fg._inside = { building: { buildingType: 14, factionId: 41 } };
+  assert.equal(godOf(fg, () => 0.5), ' Akatosh');
 });
 
 test('%rn/%rt/%t walk the Province faction; %oth and %jok ride TEXT.RSC; %reg/%cn the map', () => {

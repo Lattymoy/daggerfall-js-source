@@ -280,8 +280,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/court.js:178` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:34` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:408` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:684` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:442` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:718` - out.skipped++;   // FLAGGED: the library grows one family at a time
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
 - `src/systems/equip.js:199` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/factionRep.js:228` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
@@ -311,9 +311,9 @@ combat line numbers below are refreshed with it.
 - `src/systems/itemInfo.js:167` - *  FLAGGED as a group - they land with their own arcs. */
 - `src/systems/itemTemplates.js:112` - if (!Object.isExtensible(item)) return item;   // C-slice: the frozen pre-chargen stand-ins (INTERIM_WEAPON) carry no condition
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
-- `src/systems/loot.js:200` - FLAGGED to the ENCHANTMENT-EFFECTS slice (the shops themselves
+- `src/systems/loot.js:212` - FLAGGED to the ENCHANTMENT-EFFECTS slice (the shops themselves
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
-- `src/systems/save.js:79` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:80` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
 - `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);

@@ -35,7 +35,10 @@ test('S28: SetClassicGameStartTime is 13:30 4th Morning Star 3E405 - DFU says so
   assert.equal(monthOfYear(d), 1);
   assert.equal(monthName(d), 'Morning Star');
   assert.equal(minuteOfDay(d), 13 * 60 + 30);
-  assert.equal(dateString(d), 'Middas, 4 Morning Star, 3E 405');
+  // AUDIT 24 systems: DateString is dateFormatString
+  // '{0} the {1}{2} of {3:00}' - DayName, day, ordinal suffix,
+  // MonthName, and NO year (DaggerfallDateTime.cs:417-422).
+  assert.equal(dateString(d), 'Middas the 4th of Morning Star');
 });
 
 test('S28: the class field defaults (:57-62) are NOT the game start', () => {

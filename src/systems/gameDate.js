@@ -140,10 +140,16 @@ export function seasonValue(date) {
 }
 export const seasonName = (date) => SEASON_NAMES[seasonValue(date)];
 
-/** DateTimeString-style rendering is DFU's ToString (:527-534 region);
- *  the port needs the short form its windows show. */
+/** DateString (DaggerfallDateTime.cs:417-422) over the en table's
+ *  dateFormatString '{0} the {1}{2} of {3:00}' - DayName, the day, its
+ *  ordinal suffix, MonthName. The {3:00} spec lands on the STRING
+ *  MonthName and string.Format drops it, exactly as it does in
+ *  DateTimeString below. There is NO year in this one.
+ *  AUDIT 24 systems: the port had invented "Loredas, 4 Morning Star,
+ *  3E 405" where DFU renders "Loredas the 4th of Morning Star" - and
+ *  every %dat, %qdt and %qdat macro reads this. */
 export const dateString = (date) =>
-  `${dayName(date)}, ${dayOfMonth(date)} ${monthName(date)}, 3E ${date.year}`;
+  `${dayName(date)} the ${dayOfMonth(date)}${daySuffix(dayOfMonth(date))} of ${monthName(date)}`;
 
 /** GetSuffix (:641-652): st on 1/21, nd on 2/22, rd on 3/23, else th
  *  (a 30-day month never reaches 31, so DFU never wrote that arm). */

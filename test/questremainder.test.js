@@ -136,23 +136,33 @@ test('WhenNpcIsAvailable: the click PULSES the task once, the memory holds the s
   assert.equal(q2.getTask({ name: 't' }).getTriggerValue(), false, 'another quest binds the King');
 });
 
-test('WhenReputeWith: the live rep bar is INCLUSIVE; an unknown faction is false even at a bar of 0', () => {
+test('WhenReputeWith: the live rep bar is INCLUSIVE; a faction with NO record throws at parse', () => {
   const m = makeMachine(makeWorld());
   const q = schedule(m, [
     '_lo_ task:', ' when repute with King_Gothryd is at least 10', '',
     '_hi_ task:', ' when repute with King_Gothryd is at least 11', '',
-    '_gone_ task:', ' when repute with Cyndassa is at least 0', '',
     'variable _pad_',
   ]);
   m.tick();
   assert.equal(q.getTask({ name: 'lo' }).getTriggerValue(), true, 'rep 10 >= 10');
   assert.equal(q.getTask({ name: 'hi' }).getTriggerValue(), false, 'rep 10 < 11');
-  assert.equal(q.getTask({ name: 'gone' }).getTriggerValue(), false,
-    'no store record answers false, NOT 0 >= 0');
   FACTIONS.get(364).rep = 11;
   m.tick();
   assert.equal(q.getTask({ name: 'hi' }).getTriggerValue(), true, 'the bar reads the LIVE field');
   FACTIONS.get(364).rep = 10;
+  // AUDIT 24 systems: Person.GetFactionData (Person.cs:848-856) THROWS
+  // on a missing record, and both actions call it (WhenReputeWith.cs:57,
+  // WhenNpcIsAvailable.cs:58). The port's `factionData &&` guard let an
+  // unknown individual fall through and mint a task that quietly read
+  // false forever; DFU error-terminates the quest at parse.
+  const m2 = makeMachine(makeWorld());
+  assert.throws(
+    () => schedule(m2, ['_gone_ task:', ' when repute with Cyndassa is at least 0', '', 'variable _pad_']),
+    /Could not find faction data for FactionID/);
+  const m3 = makeMachine(makeWorld());
+  assert.throws(
+    () => schedule(m3, ['_gone_ task:', ' when Cyndassa is available', '', 'variable _pad_']),
+    /Could not find faction data for FactionID/);
 });
 
 test('WhenReputeWith/WhenNpcIsAvailable: a named NON-individual throws at parse under a world', () => {

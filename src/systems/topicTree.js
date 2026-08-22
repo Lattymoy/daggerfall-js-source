@@ -143,9 +143,11 @@ const GROUP_STRING_BY_TYPE = Object.freeze({
 });
 export const buildingTypeToGroupString = (buildingType) => GROUP_STRING_BY_TYPE[buildingType] ?? '';
 
-/** CheckBuildingTypeInSkipList (:2919-2938) - the FULL 17-entry set
- *  (the T3c list omitted AllValid + Special1-4, which never appear in
- *  real building lists; this one is the verbatim predicate). */
+/** CheckBuildingTypeInSkipList (:2919-2938) - the FULL 17-entry set.
+ *  AUDIT 24 systems: five of these names did not exist on
+ *  BUILDING_TYPES, so the Set really held twelve values and one
+ *  `undefined` - and answered TRUE for undefined, which C# has no
+ *  equivalent for. The enum tail is ported now. */
 const SKIP_LIST = new Set([
   BUILDING_TYPES.AllValid, BUILDING_TYPES.FurnitureStore,
   BUILDING_TYPES.House1, BUILDING_TYPES.House2, BUILDING_TYPES.House3,
@@ -370,12 +372,17 @@ export class TopicTree {
     return matching[0].buildingType;
   }
 
-  /** GetBuildingNameForBuildingKey (:2364-2374's shape - the same
-   *  walk answering the name; a miss answers the empty string). */
+  /** GetBuildingNameForBuildingKey (:2364-2374) - the SAME two-throw
+   *  shape as its sibling above, which the port already reproduces.
+   *  AUDIT 24 systems: this one had swallowed both and answered the
+   *  empty string, so a stale quest site key rendered a nameless
+   *  building where DFU surfaces the error. */
   getBuildingNameForBuildingKey(buildingKey) {
     if (this.listBuildings == null) this.getBuildingList();
     const matching = this.listBuildings.filter((x) => x.buildingKey === buildingKey);
-    return matching.length === 1 ? matching[0].name : '';
+    if (matching.length === 0) throw new Error('GetBuildingNameForBuildingKey(): No building with the queried key found');
+    if (matching.length > 1) throw new Error('GetBuildingNameForBuildingKey(): More than one building with the queried key found');
+    return matching[0].name;
   }
 
   /** IsBuildingQuestResource (:2376-2421): the automap's override

@@ -22,6 +22,14 @@ export const BUILDING_TYPES = Object.freeze({
   WeaponSmith: 13, Temple: 14, Tavern: 15, Palace: 16,
   House1: 17, House2: 18, House3: 19, House4: 20, House5: 21, House6: 22,
   Town23: 23, Ship: 24,
+  // AUDIT 24 systems: the tail of DFLocation.BuildingTypes
+  // (DFLocation.cs:133-139). Special1-4 "never displayed on automap";
+  // AnyShop/AnyHouse/AllValid are DaggerfallUnity's own wildcards.
+  // TalkManager.CheckBuildingTypeInSkipList names AllValid and
+  // Special1-4 by hand, and without them here five of its seventeen
+  // entries were `undefined`.
+  Special1: 0x74, Special2: 0xdf, Special3: 0xf9, Special4: 0xfa,
+  AnyShop: 0xfffd, AnyHouse: 0xfffe, AllValid: 0xffff,
 });
 
 export const NAMED_BUILDING_TYPES = Object.freeze([0, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);

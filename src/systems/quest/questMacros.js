@@ -43,6 +43,7 @@ const FACTION_RACE_KEYS = Object.freeze({
   4: 'Argonian', 5: 'WoodElf', 6: 'HighElf', 7: 'DarkElf',
 });
 import { dateFromSeconds, dateString } from '../gameDate.js';
+import { REGION_TEMPLES } from '../../formats/mapsFile.js';
 
 export const MACRO_TYPES = Object.freeze({
   None: 0, NameMacro1: 1, NameMacro2: 2, NameMacro3: 3, NameMacro4: 4,
@@ -56,7 +57,7 @@ const EN = Object.freeze({
   pronounHimself: 'himself', pronounHerself: 'herself',
   pronounHis: 'his', pronounHer2: 'her',
   pronounHis2: 'his', pronounHers: 'hers',
-  comma: ', ',
+  comma: ',  ',   // Internal_Strings id 424 is a comma and TWO spaces (AUDIT 24)
   resolvingError: 'Resolving Error',
   letterPrefix: 'Letter: ',
 });
@@ -73,6 +74,26 @@ const DIVINES = Object.freeze([
   'Arkay', 'Zen', 'Mara', 'Ebonarm', 'Akatosh', 'Julianos', 'Dibella',
   'Stendarr', 'Kynareth',
 ]);
+
+// Temple.Divines (Temple.cs:49-59) - the enum's VALUE is the factionId,
+// and note the spelling: this arm says "Zenithar" where GetRandomDivine
+// above says "Zen", because one stringifies Temple.Divines and the
+// other FactionFile.FactionIDs. DFU's own inconsistency, kept.
+const DIVINE_BY_FACTION = Object.freeze({
+  21: 'Arkay', 22: 'Zenithar', 24: 'Mara', 26: 'Akatosh',
+  27: 'Julianos', 29: 'Dibella', 33: 'Stendarr', 35: 'Kynareth',
+});
+const THE_FIGHTERS_GUILD = 41;   // FactionFile.FactionIDs (:90)
+
+/** Temple.GetDivine (Temple.cs:306-321): the temple hall answers by its
+ *  own factionId; a TEMPLAR ORDER answers by its faction record's
+ *  parent; anything else throws. */
+function templeDivine(w, factionId) {
+  if (DIVINE_BY_FACTION[factionId]) return DIVINE_BY_FACTION[factionId];
+  const rec = w?.getFactionData?.(factionId);
+  if (rec && DIVINE_BY_FACTION[rec.parent]) return DIVINE_BY_FACTION[rec.parent];
+  throw new Error(`There is no Divine that matches the factionId: ${factionId}`);
+}
 
 /** GetMacro (QuestMacroHelper.cs:285-377): the ordered alternation -
  *  longest name-prefix first, then ==, =#, =, %. One macro per word;
@@ -187,13 +208,28 @@ export function questMacroSource(quest) {
     },
     // %god - the temple the player stands in, else a random divine
     god() {
+      // QuestMCP.God (:217-243), whole. AUDIT 24 systems: the port had
+      // only the temple-building arm and rolled a random divine
+      // everywhere else, so %god named a different god on every
+      // expansion outside a temple. DFU falls back to the REGION's
+      // dominant temple - GetTempleOfCurrentRegion (PlayerGPS.cs:495-
+      // 498) is `MapsFile.RegionTemples[CurrentRegionIndex]` - and
+      // only rolls when that answers 0, or the Fighters Guild (whose
+      // halls "are considered temples in some areas").
       const w = world();
       const inside = w?.playerInside?.();
-      if (inside?.building?.buildingType === 14 && inside.building.factionId) {   // Temple
-        const name = w?.divineOfTempleFaction?.(inside.building.factionId);
-        if (name) return name;
+      let factionId = 0;
+      if (inside?.building?.buildingType === 14) {   // Temple
+        factionId = inside.building.factionId ?? 0;
+      } else {
+        // C# indexes the table directly and would throw out of range;
+        // headless (no region) falls to the random arm instead.
+        factionId = REGION_TEMPLES[w?.currentRegionIndex?.()] ?? 0;
       }
-      return DIVINES[Math.floor((quest.rolls ?? Math.random)() * 9)];   // Range(0,9) on the quest's rolls
+      if (factionId === 0 || factionId === THE_FIGHTERS_GUILD) {
+        return DIVINES[Math.floor((quest.rolls ?? Math.random)() * 9)];   // Range(0,9) on the quest's rolls
+      }
+      return templeDivine(w, factionId);
     },
     // %di - C# QUIRK KEPT: LastPlaceReferenced.Scope is read BEFORE
     // the null check, so an unreferenced place THROWS (the NRE)

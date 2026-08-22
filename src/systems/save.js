@@ -15,6 +15,7 @@ import { clampLegalReputations } from './court.js';   // AUDIT 23 (C4)
 import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
 import { goldStack } from './inventory.js';   // AUDIT 17f
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
+import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 
 export const SAVE_VERSION = 1;
 export const QUICKSAVE_KEY = 'dagger.quicksave';
@@ -226,7 +227,21 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // Missing on a pre-17h save: leave whatever the entity carries (a
   // fresh entity starts every group at zero, which is classic's own
   // starting state), the additive-field shape DFU's serializer gives.
-  for (const k of REP_ARRAYS) if (snap[k]) entity[k] = [...snap[k]];
+  // AUDIT 24 systems: GetSaveData writes ALL ELEVEN social-group
+  // reputations (SerializablePlayer.cs:158 included
+  // reputationSupernaturalBeings), but RestoreSaveData assigns
+  // 0,1,2,3,4,5,7,8,9,10 and never index 6 (:321-330) - the saved
+  // SupernaturalBeings value is written to disk and silently dropped
+  // on load. talk.js reads sGroupReputations[sgroup] on every
+  // greeting, so a supernatural NPC's reaction really does reset over
+  // a reload in DFU. A bug of DFU's, reproduced rather than fixed.
+  const SUPERNATURAL_BEINGS = SOCIAL_GROUPS.SupernaturalBeings;
+  for (const k of REP_ARRAYS) {
+    if (!snap[k]) continue;
+    const kept = entity[k]?.[SUPERNATURAL_BEINGS];
+    entity[k] = [...snap[k]];
+    if (k === 'sGroupReputations') entity[k][SUPERNATURAL_BEINGS] = kept ?? 0;
+  }
   // AUDIT 18 F3. A snapshot older than this field carries no member,
   // which C#'s deserializer would leave at the type default - 0/false,
   // NOT undefined (SerializablePlayer.cs:317-318 then assigns it).

@@ -51,6 +51,17 @@ const ZERO_FACTION = Object.freeze({
   minf: 0, maxf: 0, vam: 0, rank: 0,
 });
 
+/** Person.GetFactionData (Person.cs:848-856), the STATIC one - the
+ *  quest actions call it too (WhenNpcIsAvailable.cs:58,
+ *  WhenReputeWith.cs:57). A missing record is a hard THROW; only
+ *  factionID 0 answers the zero record, whose type is 0 and so fails
+ *  every `type != Individual` test that follows. */
+export function getFactionDataOrThrow(world, factionID) {
+  const record = world?.getFactionData?.(factionID) ?? null;
+  if (!record && factionID !== 0) throw new Error(`Could not find faction data for FactionID ${factionID}`);
+  return record ?? ZERO_FACTION;
+}
+
 /** KnightlyOrder.Orders in C# Enum.GetValues order - sorted by VALUE
  *  (KnightlyOrder.cs:49-61). */
 const KNIGHTLY_ORDER_IDS = Object.freeze([...Object.values(ORDERS)].sort((a, b) => a - b));
@@ -259,9 +270,7 @@ export class Person extends QuestResource {
   /** GetFactionData (Person.cs:848-856): the PERSISTENT store; a miss
    *  throws unless the id is 0 (the zero record). */
   _getFactionData(world, factionID) {
-    const record = world.getFactionData?.(factionID) ?? null;
-    if (!record && factionID !== 0) throw new Error(`Could not find faction data for FactionID ${factionID}`);
-    return record ?? ZERO_FACTION;
+    return getFactionDataOrThrow(world, factionID);
   }
 
   _setupIndividualNPC(world, individualNPCName) {

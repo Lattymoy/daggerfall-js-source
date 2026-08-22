@@ -45,7 +45,7 @@ import { dateFromSeconds } from '../gameDate.js';
 import { makeItemPermanent } from './item.js';
 import { QUEST_MESSAGES } from './quest.js';
 import { customParseInt, isPlayerAtBuildingType, isPlayerAtDungeonType, MARKER_PREFERENCE } from './place.js';
-import { getIndividualFactionID } from './person.js';
+import { getIndividualFactionID, getFactionDataOrThrow } from './person.js';
 import { markerScenePosition } from './sceneMount.js';
 
 /** TalkManager.cs:285-291 - the dialog-link resource types. */
@@ -2190,8 +2190,14 @@ export class WhenNpcIsAvailable extends ActionTemplate {
     const factionID = getIndividualFactionID(name);
     const world = parentQuest?.hooks?.world;
     if (factionID !== -1 && world) {
-      const factionData = world.getFactionData?.(factionID);
-      if (factionData && factionData.type !== 4) {   // FactionTypes.Individual
+      // AUDIT 24 systems: Person.GetFactionData THROWS on a missing
+      // record (Person.cs:848-856) - the port's `factionData &&` guard
+      // let an unknown faction fall straight through and mint the
+      // action, where DFU error-terminates the quest at parse. And
+      // factionID 0 answers the zero record, whose type is 0, so the
+      // `!= Individual` test below fires rather than being skipped.
+      const factionData = getFactionDataOrThrow(world, factionID);
+      if (factionData.type !== 4) {   // FactionTypes.Individual
         this.setComplete();   // C#: the TEMPLATE completes - kept
         throw new Error(`WhenNpcIsAvailable: NPC ${name} with FactionID ${factionID} is not an individual NPC`);
       }
@@ -2246,8 +2252,10 @@ export class WhenReputeWith extends ActionTemplate {
     const factionID = getIndividualFactionID(name);
     const world = parentQuest?.hooks?.world;
     if (factionID !== -1 && world) {
-      const factionData = world.getFactionData?.(factionID);
-      if (factionData && factionData.type !== 4) {   // FactionTypes.Individual
+      // AUDIT 24 systems: the same throw as WhenNpcIsAvailable above
+      // (WhenReputeWith.cs:57 is the identical line).
+      const factionData = getFactionDataOrThrow(world, factionID);
+      if (factionData.type !== 4) {   // FactionTypes.Individual
         throw new Error(`WhenReputeWith: NPC ${name} with FactionID ${factionID} is not an individual NPC`);
       }
     }

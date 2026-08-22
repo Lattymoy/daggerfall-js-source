@@ -21,7 +21,7 @@
 import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { dice100 } from '../combat/formulas.js';
 import { goldStack } from './inventory.js';
-import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES } from './itemTemplates.js';
+import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex } from './itemTemplates.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 
 // LootChanceMatrix rows, verbatim (21 keys).
@@ -85,7 +85,19 @@ const ARMOR_PIECES = Object.values(ARMOR_ENUM);   // 11 pieces incl shields
 export function createRandomWeapon(playerLevel, rolls = Math.random) {
   const groupIndex = Math.floor(rolls() * 19);
   if (groupIndex === 18) {
-    return { group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0, stackCount: 1 + Math.floor(rolls() * 20) };
+    // AUDIT 24 systems: the arrow branch makes THREE writes
+    // (ItemBuilder.cs:395-398) - the stack, `currentCondition = 0`
+    // ("not sure if this is necessary, but classic does it") and
+    // `nativeMaterialValue = 0`. maxCondition stays the template's
+    // hitPoints, since the arrow branch never runs
+    // ApplyWeaponMaterial. The port dropped the zero and then let
+    // mintCondition fill the stack in at 100%.
+    return {
+      group: 'Weapons', name: 'Arrow', templateIndex: 131, material: 0,
+      stackCount: 1 + Math.floor(rolls() * 20),
+      maxCondition: templateByIndex(131)?.hitPoints ?? 0,
+      currentCondition: 0,
+    };
   }
   const name = WEAPON_NAMES[groupIndex];
   return { group: 'Weapons', ...createWeapon(WEAPONS_ENUM[name], randomMaterial(playerLevel, rolls)) };

@@ -322,6 +322,72 @@ runtime difference; in a port whose comments are the parity ledger, a
 citation that lands on a brace costs the next reader the whole
 derivation again.
 
+## Wave 4 - the systems tail (2026-08-22)
+
+**DateString was invented.** DaggerfallDateTime.DateString (:417-422)
+formats the en table's `dateFormatString`, '{0} the {1}{2} of {3:00}' -
+DayName, the day, its ordinal suffix, MonthName, and NO year. The
+{3:00} spec lands on the STRING MonthName and string.Format drops it,
+the same quirk the port already documents for DateTimeString. The port
+wrote "Middas, 4 Morning Star, 3E 405" where DFU writes "Middas the 4th
+of Morning Star", and every %dat, %qdt and %qdat macro reads it.
+
+**SupernaturalBeings reputation survived a reload.** GetSaveData writes
+all eleven social-group reputations (SerializablePlayer.cs:158), but
+RestoreSaveData assigns 0,1,2,3,4,5,7,8,9,10 and never index 6
+(:321-330) - the saved value goes to disk and is silently discarded on
+load. talk.js reads it on every greeting, so a supernatural NPC's
+reaction really does reset over a reload in DFU. This is the port
+failing to reproduce a DFU BUG rather than introducing one, and it is
+reproduced now.
+
+**A looted arrow arrived at full condition.** CreateRandomWeapon's arrow
+branch makes three writes (ItemBuilder.cs:395-398): the stack,
+`currentCondition = 0` ("not sure if this is necessary, but classic does
+it") and `nativeMaterialValue = 0`. maxCondition stays the template's
+hitPoints because the branch never runs ApplyWeaponMaterial. The port
+kept the stack and the material and dropped the zero, then let the loot
+pile's mintCondition fill the stack in at 100%.
+
+**Five members of BuildingTypes did not exist.**
+CheckBuildingTypeInSkipList (TalkManager.cs:2919-2938) names AllValid
+and Special1-4 by hand, and the port's BUILDING_TYPES stopped at Ship.
+All five expressions were `undefined`, so the Set really held twelve
+values and one `undefined` - and the predicate answered TRUE for
+undefined, which C# has no equivalent for. The enum tail
+(DFLocation.cs:133-139) is ported now.
+
+**The saving throw drove its element and its flag off one predicate.**
+SavingThrow(IEntityEffect, target) computes them from DIFFERENT sources
+(FormulaHelper.cs:1568-1569). GetEffectFlags (:1592-1623) looks only at
+Paralyze/DiseaseEffect and then switches on the PARENT BUNDLE's element;
+it never consults AllowedElements. Only GetElementType (:1630-1634)
+applies the magic-only override. So a concealment inside a Fire bundle
+folds in `Career.Fire` tolerance while resisting as element Magic - the
+port folded in `Career.Magic` plus BiographyResistMagicMod instead.
+
+And the predicate itself was a hand-picked list of families that missed
+the alteration and thaumaturgy buffs: Levitate, Slowfall, WaterWalking,
+WaterBreathing, FreeAction, Jumping, Climbing and the detects all set
+ElementFlags_MagicOnly, and three of them are TargetFlags_All, so touch
+and ranged casts of them really exist. MAGIC_ONLY_KEYS is now the whole
+72-key set, read off the effect classes.
+
+**Four smaller ones.** The %di local-place separator is a comma and TWO
+spaces (Internal_Strings id 424, verified with cat -A), not one.
+GetBuildingNameForBuildingKey swallowed both of the throws its sibling
+reproduces. WhenNpcIsAvailable and WhenReputeWith swallowed
+Person.GetFactionData's missing-record throw behind a `factionData &&`
+guard, so a quest naming an individual with no faction record minted a
+task that read false forever where DFU error-terminates at parse. And
+%god had no region-temple fallback: DFU reads
+`MapsFile.RegionTemples[CurrentRegionIndex]` (PlayerGPS.cs:495-498) and
+rolls a random divine only when that answers 0 or the Fighters Guild, so
+the port named a DIFFERENT god on every expansion outside a temple.
+Temple.GetDivine's templar-order arm (resolve through the faction
+record's parent) came with it, and the unwired `divineOfTempleFaction`
+host seam is gone.
+
 ## Pins
 
 Four pins were written per finding-group and each was verified by

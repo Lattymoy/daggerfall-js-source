@@ -380,7 +380,7 @@ test('getPersonBuildingKey: the questor key, the name fallback, the assigned pla
   assert.throws(() => tree.getPersonSiteDetails(mkPerson('p3')), { message: 'GetBuildingKeyForPersonResource(): Resource is not of type Person but was expected to be' });
 });
 
-test('getBuildingTypeForBuildingKey: the zero and duplicate throws; the name lookup answers empty on a miss', () => {
+test('getBuildingTypeForBuildingKey: the zero and duplicate throws - and the NAME lookup throws the same pair', () => {
   const { tree } = makeTree({
     getBuildingList: () => [
       { name: 'Tavern A', buildingKey: 1, buildingType: BUILDING_TYPES.Tavern },
@@ -392,8 +392,10 @@ test('getBuildingTypeForBuildingKey: the zero and duplicate throws; the name loo
   assert.throws(() => tree.getBuildingTypeForBuildingKey(9), { message: 'GetBuildingTypeForBuildingKey(): No building with the queried key found' });
   assert.throws(() => tree.getBuildingTypeForBuildingKey(2), { message: 'GetBuildingTypeForBuildingKey(): More than one building with the queried key found' });
   assert.equal(tree.getBuildingNameForBuildingKey(1), 'Tavern A');
-  assert.equal(tree.getBuildingNameForBuildingKey(9), '');
-  assert.equal(tree.getBuildingNameForBuildingKey(2), '', 'an ambiguous key answers empty rather than guessing');
+  // AUDIT 24 systems: GetBuildingNameForBuildingKey (:2364-2374) has
+  // the SAME two throws as its sibling; the port had swallowed both.
+  assert.throws(() => tree.getBuildingNameForBuildingKey(9), { message: 'GetBuildingNameForBuildingKey(): No building with the queried key found' });
+  assert.throws(() => tree.getBuildingNameForBuildingKey(2), { message: 'GetBuildingNameForBuildingKey(): More than one building with the queried key found' });
 });
 
 test('isBuildingQuestResource: the flags, the override name, and the map/key double gate', () => {
