@@ -31,6 +31,7 @@ import { effectsAlreadyOnTarget } from '../systems/effects.js';
 // enemyAttack.js already imports from the motor) - enemyAttack.js
 // re-exports, so this import still reads from the module it belongs to.
 import { MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE } from './enemyAttack.js';
+import { bloodCentre as sparkleCentre } from '../scenes/hitEffects.js';   // AUDIT 24 (wave 44): the same centre+height/8 point
 
 export { MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE };
 export const RANGED_SPELL_CHANCE = 1 / 40; // DoRangedAttack: Random.value < 1/40f
@@ -152,6 +153,7 @@ export function castEnemySpell(f, spell, {
   noSpellPointCost = false, playerEntity, playerFeet = null,
   applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
   playCastSound = null, explodeAt = null, fireMissile = null,
+  hitEffects = null,   // AUDIT 24 (wave 44): ShowMagicSparkles
   rolls = Math.random,
 } = {}) {
   if (!noSpellPointCost && silenceBlocksCast(f.entity)) return false;
@@ -162,6 +164,20 @@ export function castEnemySpell(f, spell, {
   const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
   f._castPending = true;   // C14: the sprite Spell one-shot
   playCastSound?.(spell.element, from);
+  // AUDIT 24 (wave 44) - EntityEffectManager.cs:2055-2068, right after
+  // the cast sound and BEFORE the bundle is assigned. The gate is on
+  // the target type: anything that is not SingleTargetAtRange (2) or
+  // AreaAtRange (4) sparkles - so a self cast, a touch and an
+  // area-around-caster do, and the two ranged ones do not, because
+  // their visual is the missile.
+  //
+  // The sparkles bloom on the CASTER. `entityBehaviour` there is the
+  // manager's own entity and an EntityEffectManager sits on the
+  // caster, so `position + controller.center` with `y += height/8` is
+  // this foe's own five-eighths point, not its target's.
+  if (spell.rangeType !== 2 && spell.rangeType !== 4) {
+    hitEffects?.showMagicSparkles(sparkleCentre(f.ai.feet, f.ai.height));
+  }
   if (spell.rangeType === 0) {
     applySpell(spell, f.entity.level, f.entity, foeSinks(f), rolls, { entity: f.entity, sinks: foeSinks(f) });
     return true;

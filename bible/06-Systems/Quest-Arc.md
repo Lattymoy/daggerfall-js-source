@@ -4759,6 +4759,77 @@ plus seven the wave-38 scout confirmed that these waves have not
 closed.
 
 
+### Wave 44 - the sparkles, and a reading that was wrong
+
+Wave 39 ported `EnemyBlood.ShowBloodSplash` and deliberately **cut**
+`ShowMagicSparkles`, writing:
+
+> two of the three arms have a target foe to hang it on, but the
+> CasterOnly arm needs the player's feet and `createPlayerMagic` is
+> handed an eye, not a body.
+
+That reading was wrong twice over, and the source says so plainly.
+
+**It is not a player path.** The one call site sits inside
+`EnemyCastReadySpell()`, whose own comment reads *"For enemies this is
+equivalent to PlayerSpellCasting_OnReleaseFrame()"*. There is no
+sparkle on the player's release path at all - `grep ShowMagicSparkles`
+over the whole DFU tree returns exactly one hit. So no player position
+was ever needed.
+
+**And it is not the target's position either.** `entityBehaviour` in
+that block is the manager's own entity (`:158`), and an
+`EntityEffectManager` sits on the caster - so
+`entityBehaviour.transform.position + controller.center` with
+`y += height/8` is the **enemy blooming on itself**. Which is what a
+self, touch or area-around-caster spell going off ought to look like,
+and which every pool has had the position for since it had a foe.
+
+The gate is the target type: anything that is not
+`SingleTargetAtRange` or `AreaAtRange` sparkles - rangeType 0, 1 and 3
+- because the two ranged ones already have a visual, and it is the
+missile.
+
+Cutting it was still the right call; the *reason* was wrong. A
+half-wired function would have shipped sparkles on the wrong entity in
+two arms out of three and been much harder to notice than an absent
+one. **A WRONG READING THAT LEADS YOU TO LEAVE SOMETHING OUT COSTS A
+WAVE. THE SAME READING WIRED IN COSTS AN AUDIT.**
+
+**Thirteen mutants, thirteen kills**, one equivalent - after two
+rounds, and the second round is why this wave has a rule at the end of
+it.
+
+One pin scanned the whole *file* for a `hitEffects,` line, and
+`dungeonContext` also exposes one on its returned object - so deleting
+the dep from the cast call left the pin green. Scoped to the call now.
+
+And a regex over the gate's spelling false-killed
+`f.ai.height` -> `f.ai.height ?? 1.8`.
+
+**That is the third consecutive wave with a false kill off a spelling
+assertion.** Wave 42 found one and wrote the law. Wave 43 made the same
+mistake and wrote that writing the law down is not the same as having
+learned it. Wave 44 made it again. So here is the procedure instead of
+another paragraph:
+
+> **When a mutant dies, ask what killed it.** If the only failing
+> assertion is one that quotes source text, the mutant is a suspect,
+> not a kill - re-run it against the behavioural pins alone. A text pin
+> is legitimate only when the TEXT IS THE DELIVERABLE: a citation, a
+> comment carrying a law, a signature, a "this must stay a `var`". Wave
+> 37's `modes?.` pins are the good case - the spelling *is* the fix.
+> Everywhere else, a pin asserts what a line DOES.
+
+The reason this keeps happening is worth naming too: a text pin is the
+cheapest thing to write and it always passes when you write it. It
+gives the same green as a real one and costs a tenth as much, so it is
+what the hand reaches for when the interesting work is already done.
+
+**Twenty-six findings remain**, plus seven from the host-parity sweep,
+plus six the wave-38 scout confirmed that these waves have not closed.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

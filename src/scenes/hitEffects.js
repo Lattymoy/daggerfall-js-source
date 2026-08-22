@@ -1,4 +1,4 @@
-// HIT EFFECTS (AUDIT 24, wave 39) - EnemyBlood.ShowBloodSplash.
+// HIT EFFECTS (AUDIT 24, waves 39 and 44) - EnemyBlood.cs, whole.
 //
 // The port generated `bloodIndex` into ENEMY_BASICS correctly - the
 // same six ids DFU gives a 2, everything else left at the struct
@@ -48,16 +48,23 @@ export const BLOOD_FPS = 10;
 /** :35 - `+ transform.forward * 0.02f`. */
 export const FORWARD_NUDGE = 0.02;
 
-// QUEUED, not ported: ShowMagicSparkles (:41-54) is the same billboard
-// at record 3 (`sparklesIndex`), fired from
-// EntityEffectManager.cs:2056-2065 whenever the cast's TargetType is
-// neither SingleTargetAtRange nor AreaAtRange - so rangeType 0, 1 and
-// 3, at the TARGET'S centre + height/8, from the CASTER'S component.
-// It is left out rather than half-wired: two of the three arms have a
-// target foe to hang it on, but the CasterOnly arm needs the player's
-// feet and createPlayerMagic is handed an eye, not a body. A function
-// with no caller is a comment, and a function with two callers out of
-// three is worse.
+/** :41-54 - ShowMagicSparkles, the same one-shot billboard at record
+ *  3 (`sparklesIndex`).
+ *
+ *  AUDIT 24 (wave 44). Wave 39 cut this rather than half-wire it, on
+ *  the reading that it needed the PLAYER's feet - and that reading was
+ *  wrong. The one call site is EntityEffectManager.cs:2056-2068, and
+ *  it lives inside `EnemyCastReadySpell()`, whose own comment is "For
+ *  enemies this is equivalent to PlayerSpellCasting_OnReleaseFrame()".
+ *  There is no sparkle on the player's release path at all.
+ *
+ *  And the position is the CASTER'S, not the target's: `entityBehaviour`
+ *  is the manager's own entity (:158) and an EntityEffectManager sits
+ *  on the caster, so `entityBehaviour.transform.position +
+ *  controller.center` with `y += height/8` is the enemy blooming on
+ *  itself. Which is what a self, touch or area-around-caster spell
+ *  going off ought to look like. */
+export const SPARKLES_RECORD = 3;
 
 /**
  * Where a body bleeds when the hit carries no contact point:
@@ -133,6 +140,8 @@ export function createHitEffects({ renderer, getTexture, uploadRecordFrame, onSp
     /** ShowBloodSplash (:26-39). `bloodIndex` picks the record, so the
      *  six rows DFU gives a 2 splash differently from everything else. */
     showBloodSplash: (bloodIndex, pos, facing = null) => spawn(bloodIndex ?? 0, pos, facing),
+    /** ShowMagicSparkles (:41-54), record 3. */
+    showMagicSparkles: (pos, facing = null) => spawn(SPARKLES_RECORD, pos, facing),
     tick(dt) {
       for (let i = live.length - 1; i >= 0; i--) {
         const e = live[i];

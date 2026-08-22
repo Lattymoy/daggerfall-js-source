@@ -271,10 +271,14 @@ test('audit24 wave39: the two DFU call sites deliberately NOT ported, and why', 
   const m = rd('src/scenes/hitEffects.js');
   assert.match(m, /DaggerfallEntityBehaviour\.cs:173-176/);
   assert.match(m, /EnemyHealth\.cs:52/);
-  assert.match(m, /ShowMagicSparkles/, 'and the queued one is written down with its gate');
-  // a function with no caller is a comment: sparkles is not exported
-  assert.doesNotMatch(m, /showMagicSparkles:/);
-  assert.doesNotMatch(m, /export const SPARKLES_RECORD/);
+  // AUDIT 24 (wave 44): sparkles WAS the queued one here, cut rather
+  // than half-wired on the reading that it needed the player's feet.
+  // That reading was wrong - its one call site is inside
+  // EnemyCastReadySpell and it blooms on the CASTER - so it shipped in
+  // wave 44 and audit24_wave44 owns it now. The two DEAD sites above
+  // stay unported, which is what this test is about.
+  assert.match(m, /ShowMagicSparkles/);
+  assert.match(m, /export const SPARKLES_RECORD = 3;/, 'ported in wave 44');
 
   // the four sites that ARE live
   assert.match(rd('src/scenes/cityGuards.js'), /hitEffects\?\.showBloodSplash\(ENEMY_BASICS\[GUARD_MOBILE_TYPE\]\?\.bloodIndex \?\? 0/);

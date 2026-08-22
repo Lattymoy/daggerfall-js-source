@@ -211,7 +211,7 @@ DFU-numbered raceId, so CalculateRacialModifiers is ported and LIVE
 alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
 
-- `src/characters/enemyCasting.js:65` - * the magicka and a ranged spell at all. FLAGGED, and narrow: in DFU
+- `src/characters/enemyCasting.js:66` - * the magicka and a ranged spell at all. FLAGGED, and narrow: in DFU
 - `src/characters/enemyMotor.js:915` - FLAGGED, until target prediction ships). At zero the foe stops.
 - `src/characters/mobilePerson.js:8` - while the scene's politeness gate holds. FLAGGED (AUDIT 18):
 - `src/characters/mobilePerson.js:176` - *        the FLAGGED note in this file's header)

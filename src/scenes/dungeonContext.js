@@ -1125,6 +1125,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
       playCastSound: (element, from) => audio.play3d(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
       explodeAt: magic.explodeAt,
+      hitEffects,   // AUDIT 24 (wave 44): ShowMagicSparkles on the caster
       fireMissile: (from, spell2, casterLevel, foe) =>
         missiles.push({ spell: spell2, casterLevel, casterFoe: foe, pos: from, dir: null, age: 0, batch: null, fromPlayer: false }),
     });

@@ -135,6 +135,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       noSpellPointCost, playerEntity, playerFeet,
       applySpell, foeSinks, calculateCastCost, silenceBlocksCast,
       playCastSound: (element, from) => audio?.play3d?.(SPELL_CAST_SOUND[element] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }),
+      hitEffects,   // AUDIT 24 (wave 44): ShowMagicSparkles on the caster
       explodeAt: magicHooks?.explodeAt,
       fireMissile: magicHooks?.fireMissile,
       rolls,
