@@ -2632,15 +2632,39 @@ Both gates read the library's slicer now, and gate 2 asserts it found
 at least 25 columns before it will believe a clean result. *A PIN THAT
 FINDS NOTHING MUST PROVE IT LOOKED.*
 
-Five mutants, five kills - one cell edited by hand in the checked-in
-table, the `SoulPts` column dropped from the extraction again, the
-`=== -1` guard removed, the glow alpha forced to 1, and a whole enemy
-deleted from the table.
+Eight mutants, eight kills - one cell edited by hand in the checked-in
+enemy table, the `SoulPts` column dropped from the extraction again,
+the `=== -1` guard removed, the glow alpha forced to 1, a whole enemy
+deleted; then one cell edited in encounter table 22, the comment strip
+removed, and a divergent second copy of the encounter table grown
+back.
 
 Also corrected: `loot.js`'s "21 keys" comment over a 22-row matrix
 (`-` plus A..U), and the same off-by-one in the LootTables gate's
 message, which had been asserting `rows.length >= 21` where an exact
 22 is what the source has.
+
+**Then the same law over the encounter tables.** `encounters.test.js`
+spot-checks maybe eight cells out of 45 x 20. All 900 are rebuilt from
+`RandomEncounters.cs` now, with `MobileTypes` resolved by *counting*
+the implicit-value enum rather than trusting a literal.
+
+That rebuild has to strip C# block comments, and finding out why was
+the useful part: the source carries a dead
+`/* Cemetery - DF Unity version */` table between index 18 and
+Underwater (Ledger B). Leave it in and every table from 19 on shifts
+by one - which is exactly what the first run reported, twenty-seven
+"differences" that were all the same off-by-one. The port was right;
+my throwaway parser was wrong. *WHEN A REBUILD DISAGREES WITH THE PORT
+IN A PERFECTLY REGULAR WAY, SUSPECT THE REBUILD.*
+
+And it turned up **two copies of those 900 cells**:
+`systems/encounters.js` carried its own hand-maintained literal beside
+the generated one in `characters/encounterTables.js`. Character for
+character identical the day it was found, which is the only day that
+was ever guaranteed - and only one of them could ever be gated. One
+table now, imported and re-exported, pinned by object identity rather
+than by deep-equality so a future copy cannot pass by agreeing.
 
 FLAGGED: none of the eight new columns has a port consumer yet -
 there is no blood splash, no enemy point light, no Seducer transform,

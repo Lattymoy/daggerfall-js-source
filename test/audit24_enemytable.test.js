@@ -24,11 +24,16 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
+import { ENCOUNTER_TABLES } from '../src/systems/encounters.js';
+import { ENCOUNTER_TABLES as ENCOUNTER_TABLES_SRC } from '../src/characters/encounterTables.js';
 import { extractEnemyBasics, sliceEnemyTable } from '../tools/extractEnemyBasics.lib.mjs';
 
 const ENEMY_CS = new URL('../tools/parity/dfu/Assets/Scripts/Utility/EnemyBasics.cs', import.meta.url);
 const SOUND_CS = new URL('../tools/parity/dfu/Assets/Scripts/SoundClips.cs', import.meta.url);
+const ENCOUNTERS_CS = new URL('../tools/parity/dfu/Assets/Scripts/Utility/RandomEncounters.cs', import.meta.url);
+const ENUMS_CS = new URL('../tools/parity/dfu/Assets/Scripts/DaggerfallUnityEnums.cs', import.meta.url);
 const noDfu = !existsSync(ENEMY_CS) || !existsSync(SOUND_CS);
+const noEnc = !existsSync(ENCOUNTERS_CS) || !existsSync(ENUMS_CS);
 
 test('audit24 wave23: ENEMY_BASICS is what the extractor produces from EnemyBasics.cs TODAY', { skip: noDfu }, () => {
   const fresh = extractEnemyBasics(readFileSync(ENEMY_CS, 'utf8'), readFileSync(SOUND_CS, 'utf8'));
@@ -125,4 +130,71 @@ test('audit24 wave23: the eight columns the extraction had never looked at', { s
   assert.deepEqual(daedroth.glowColor, { r: 18 * 0.1, g: 68 * 0.1, b: 88 * 0.1, a: 0.1 },
     'new Color(18, 68, 88) * 0.1f, alpha included');
   assert.equal(Object.values(ENEMY_BASICS).filter((e) => e.glowColor).length, 3, 'three enemies glow');
+});
+
+test('audit24 wave23: ENCOUNTER_TABLES is REBUILT from RandomEncounters.cs, all 900 cells', { skip: noEnc }, () => {
+  // encounters.test.js spot-checks a handful of cells out of 45 x 20.
+  // A wrong id in the middle of table 27 produces encounters, just the
+  // wrong ones, for ever - the shape the LootTables and EnemyBasics
+  // gates exist for.
+  //
+  // MobileTypes is an implicit-value enum, so the ids come from
+  // counting members, not from literals.
+  const enums = readFileSync(ENUMS_CS, 'utf8');
+  const i = enums.indexOf('public enum MobileTypes');
+  assert.ok(i > 0, 'MobileTypes must be findable');
+  const body = enums.slice(enums.indexOf('{', i) + 1, enums.indexOf('}', i));
+  const MT = {};
+  let next = 0;
+  for (const line of body.split('\n')) {
+    const m = /^\s*([A-Za-z_]\w*)\s*(?:=\s*(-?\d+))?\s*,/.exec(line);
+    if (!m) continue;
+    const v = m[2] !== undefined ? Number(m[2]) : next;
+    MT[m[1]] = v;
+    next = v + 1;
+  }
+  assert.equal(Object.keys(MT).length, 62, 'the enum still names 62 mobiles');
+  assert.equal(MT.Rat, 0);
+  assert.equal(MT.Thief, 138, 'and the class block still starts at 128');
+
+  const re = readFileSync(ENCOUNTERS_CS, 'utf8');
+  const start = re.indexOf('public static RandomEncounterTable[] EncounterTables');
+  assert.ok(start > 0);
+  // LEDGER B, and the reason this gate must strip comments: the source
+  // carries a commented-out `/* Cemetery - DF Unity version */` table
+  // between index 18 and Underwater. Leave it in and every table from
+  // 19 on shifts by one - which is exactly what the first run of this
+  // rebuild reported, before the strip went in.
+  const table = re.slice(start, re.indexOf('\n        };', start)).replace(/\/\*[\s\S]*?\*\//g, '');
+  const fromSource = table.split('new RandomEncounterTable()').slice(1).map((b) => {
+    const m = b.match(/Enemies = new MobileTypes\[\]\s*\{([\s\S]*?)\}/);
+    assert.ok(m, 'every table block carries an Enemies array');
+    return m[1].split(',').map((x) => x.trim()).filter(Boolean).map((x) => {
+      const name = x.replace('MobileTypes.', '');
+      assert.ok(name in MT, `unknown MobileTypes member ${name}`);
+      return MT[name];
+    });
+  });
+
+  assert.equal(fromSource.length, 45, '45 live tables once the dead Cemetery block is stripped');
+  assert.equal(ENCOUNTER_TABLES.length, fromSource.length);
+  for (let t = 0; t < fromSource.length; t++) {
+    assert.equal(fromSource[t].length, 20, `table ${t} is a classic list of 20`);
+    assert.deepEqual([...ENCOUNTER_TABLES[t]], fromSource[t], `encounter table ${t} matches the source`);
+  }
+});
+
+test('audit24 wave23: there is exactly ONE encounter table', () => {
+  // systems/encounters.js used to carry a second, hand-maintained copy
+  // of all 900 cells beside the generated one in
+  // characters/encounterTables.js. They were identical the day this
+  // was found, which is the only day that was ever guaranteed - and
+  // only one of them could be gated.
+  assert.equal(ENCOUNTER_TABLES, ENCOUNTER_TABLES_SRC,
+    'the same frozen array object, not two arrays that happen to agree');
+  const src = readFileSync(new URL('../src/systems/encounters.js', import.meta.url), 'utf8');
+  assert.match(src, /import \{ ENCOUNTER_TABLES \} from '\.\.\/characters\/encounterTables\.js';/);
+  assert.match(src, /^export \{ ENCOUNTER_TABLES \};$/m);
+  assert.doesNotMatch(src, /export const ENCOUNTER_TABLES = Object\.freeze\(\[/,
+    'and no second literal has grown back');
 });
