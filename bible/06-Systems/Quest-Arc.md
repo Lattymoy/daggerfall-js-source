@@ -2632,7 +2632,7 @@ Both gates read the library's slicer now, and gate 2 asserts it found
 at least 25 columns before it will believe a clean result. *A PIN THAT
 FINDS NOTHING MUST PROVE IT LOOKED.*
 
-Eighteen mutants, eighteen kills - one cell edited by hand in the checked-in
+Twenty-two mutants, twenty-two kills - one cell edited by hand in the checked-in
 enemy table, the `SoulPts` column dropped from the extraction again,
 the `=== -1` guard removed, the glow alpha forced to 1, a whole enemy
 deleted; then one cell edited in encounter table 22, the comment strip
@@ -2642,7 +2642,9 @@ turned to fire, and the female clothed/unclothed body art swapped;
 then a Drugs index, the hand-added Currency row, the implicit-enum
 Deeds row truncated, and the hand-added QuestItems row; then isChain
 widened to the whole 0x01xx band, a rung of the plate ladder, and the
-second GetMaterialArmorValue grown back.
+second GetMaterialArmorValue grown back; then the corpse reach
+returned to the 128 default, the static-NPC reach halved, talk.js's
+second declaration grown back, and a second GlobalScale.
 
 Also corrected: `loot.js`'s "21 keys" comment over a 22-row matrix
 (`-` plus A..U), and the same off-by-one in the LootTables gate's
@@ -2727,11 +2729,33 @@ duplicate ever offers. One implementation now, pinned by function
 identity - and the survivor is the C# switch verbatim, including that
 `0x0101` and `0x0102` are not chain at all.
 
-That is four duplicated tables in one wave: the encounter tables, the
-item groups, the armour ladder, and (in effect) the enemy stat blocks,
-whose second copy was a generator's output drifting from a generator
-nobody ran. *IF A TABLE IS WORTH WRITING ONCE, THE SECOND COPY IS A
-BUG THAT HAS NOT HAPPENED YET.*
+**And a fifth, which is mine.** The numeric scan only sees literals on
+one line, so I ran a second one: every symbol *declared* (not
+re-exported) in more than one module. Forty-three. Most are honest
+homonyms - two different `LABELS`, two different `ROW_SPACING`. Nine
+disagreed in value, and eight of those nine are different things that
+happen to share a name.
+
+The ninth was `DEFAULT_ACTIVATION_DISTANCE`, and **wave 22 of this
+audit added it**. `player/activate.js` has been the home of
+`PlayerActivate.cs:76-88` since the activation ray landed;
+`systems/talk.js` had a second set written out as bare `256 * 0.025`
+literals; and I added a fourth constant to the copy without noticing
+the first three. That is how a duplicate set gets built - one honest
+commit at a time, each of which looks local and correct.
+
+All eight are rebuilt from `PlayerActivate.cs` now: the gate reads the
+classic unit count out of the source and multiplies by
+`MeshReader.GlobalScale` - which `activate.js` had *also* redeclared
+as its own `0.025`, so that is one home now too. `talk.js` re-exports.
+And the commented-out `TouchSpellActivationDistance` is asserted
+**absent**, because it is commented out on the C# side.
+
+That is five duplicated tables in one wave: the encounter tables, the
+item groups, the armour ladder, the activation reaches, and (in
+effect) the enemy stat blocks, whose second copy was a generator's
+output drifting from a generator nobody ran. *IF A TABLE IS WORTH
+WRITING ONCE, THE SECOND COPY IS A BUG THAT HAS NOT HAPPENED YET.*
 
 FLAGGED: none of the eight new columns has a port consumer yet -
 there is no blood splash, no enemy point light, no Seducer transform,

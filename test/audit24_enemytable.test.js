@@ -30,6 +30,9 @@ import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplatesData.js';
 import { ITEM_GROUPS } from '../src/systems/loot.js';
 import { materialArmorValue } from '../src/systems/armorMaterials.js';
 import { materialArmorValue as eeMaterialArmorValue } from '../src/combat/enemyEquipment.js';
+import * as ACTIVATE from '../src/player/activate.js';
+import * as TALK from '../src/systems/talk.js';
+import { GLOBAL_SCALE } from '../src/world/meshReader.js';
 import { ENCOUNTER_TABLES as ENCOUNTER_TABLES_SRC } from '../src/characters/encounterTables.js';
 import { extractEnemyBasics, sliceEnemyTable } from '../tools/extractEnemyBasics.lib.mjs';
 
@@ -341,4 +344,59 @@ test('audit24 wave23: GetMaterialArmorValue has ONE implementation', () => {
     .map(materialArmorValue), [7, 9, 9, 11, 13, 15, 15, 17, 19, 21]);
   assert.equal(materialArmorValue(0x020a), 0, 'past Daedric is nothing');
   assert.equal(materialArmorValue(-1), 0, 'and so is None');
+});
+
+// ---- the PlayerActivate reach constants ---------------------------
+
+const PLAYER_ACTIVATE_CS = new URL('../tools/parity/dfu/Assets/Scripts/Game/PlayerActivate.cs', import.meta.url);
+const noActivate = !existsSync(PLAYER_ACTIVATE_CS);
+
+test('audit24 wave23: the activation distances are REBUILT from PlayerActivate.cs', { skip: noActivate }, () => {
+  // PlayerActivate.cs:76-88. Every one is `<classic units> *
+  // MeshReader.GlobalScale`, so the gate reads the classic unit count
+  // out of the source and multiplies here.
+  const cs = readFileSync(PLAYER_ACTIVATE_CS, 'utf8');
+  const units = {};
+  for (const [, name, n] of cs.matchAll(/(?:public )?const float (\w+) = (\d+) \* MeshReader\.GlobalScale;/g)) {
+    units[name] = Number(n);
+  }
+  assert.ok(Object.keys(units).length >= 7, `found ${Object.keys(units).length} scaled distance constants`);
+  assert.equal(GLOBAL_SCALE, 0.025, 'MeshReader.GlobalScale');
+
+  const expect = {
+    RAY_DISTANCE: 'RayDistance',
+    DEFAULT_ACTIVATION_DISTANCE: 'DefaultActivationDistance',
+    DOOR_ACTIVATION_DISTANCE: 'DoorActivationDistance',
+    TREASURE_ACTIVATION_DISTANCE: 'TreasureActivationDistance',
+    PICKPOCKET_DISTANCE: 'PickpocketDistance',
+    CORPSE_ACTIVATION_DISTANCE: 'CorpseActivationDistance',
+    STATIC_NPC_ACTIVATION_DISTANCE: 'StaticNPCActivationDistance',
+    MOBILE_NPC_ACTIVATION_DISTANCE: 'MobileNPCActivationDistance',
+  };
+  for (const [ours, theirs] of Object.entries(expect)) {
+    assert.ok(theirs in units, `PlayerActivate.cs still declares ${theirs}`);
+    assert.equal(ACTIVATE[ours], units[theirs] * GLOBAL_SCALE, `${ours} = ${theirs}`);
+  }
+  // The commented-out TouchSpellActivationDistance is NOT ported, and
+  // must not be: it is commented out on the C# side too.
+  assert.equal(ACTIVATE.TOUCH_SPELL_ACTIVATION_DISTANCE, undefined);
+});
+
+test('audit24 wave23: the activation distances have ONE home', () => {
+  // systems/talk.js declared a second set as bare `256 * 0.025`
+  // literals, and wave 22 of this audit added a fourth constant to the
+  // COPY rather than the original - which is how a duplicate set gets
+  // built one honest commit at a time.
+  for (const k of ['RAY_DISTANCE', 'DEFAULT_ACTIVATION_DISTANCE',
+    'STATIC_NPC_ACTIVATION_DISTANCE', 'MOBILE_NPC_ACTIVATION_DISTANCE', 'PICKPOCKET_DISTANCE']) {
+    assert.equal(TALK[k], ACTIVATE[k], `talk.js re-exports ${k}`);
+  }
+  const talkSrc = readFileSync(new URL('../src/systems/talk.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(talkSrc, /export const \w*ACTIVATION_DISTANCE = /, 'no second declaration');
+  assert.doesNotMatch(talkSrc, /export const RAY_DISTANCE = /);
+  assert.doesNotMatch(talkSrc, /export const PICKPOCKET_DISTANCE = /);
+  // and GlobalScale itself comes from MeshReader, not a second 0.025
+  assert.equal(ACTIVATE.GLOBAL_SCALE, GLOBAL_SCALE);
+  assert.doesNotMatch(readFileSync(new URL('../src/player/activate.js', import.meta.url), 'utf8'),
+    /export const GLOBAL_SCALE = /);
 });

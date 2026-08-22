@@ -7,10 +7,26 @@
 // nearest in-reach hit wins, and a collider raycast rejects targets
 // occluded by closer world geometry.
 
-export const GLOBAL_SCALE = 0.025;
+// AUDIT 24 (wave 23): MeshReader.GlobalScale has one home
+// (world/meshReader.js), which every other module in the port already
+// imports it from. This file declared a second 0.025 - agreeing, as
+// duplicates do until they do not.
+import { GLOBAL_SCALE } from '../world/meshReader.js';
+
+export { GLOBAL_SCALE };
+
+// PlayerActivate.cs:76-88, the WHOLE set. Three of these used to live
+// in systems/talk.js instead, and wave 22 of this audit added a fourth
+// there without noticing the first three - which is how a duplicate
+// set gets built one honest commit at a time. talk.js re-exports these
+// now.
 export const RAY_DISTANCE = 3072 * GLOBAL_SCALE; // 76.8
 export const DEFAULT_ACTIVATION_DISTANCE = 128 * GLOBAL_SCALE; // 3.2
 export const DOOR_ACTIVATION_DISTANCE = 128 * GLOBAL_SCALE;
+export const TREASURE_ACTIVATION_DISTANCE = 128 * GLOBAL_SCALE;
+export const PICKPOCKET_DISTANCE = 128 * GLOBAL_SCALE;
+export const STATIC_NPC_ACTIVATION_DISTANCE = 256 * GLOBAL_SCALE;
+export const MOBILE_NPC_ACTIVATION_DISTANCE = 256 * GLOBAL_SCALE;
 // PlayerActivate.cs:85 - corpses reach FURTHER than everything else
 // (150 classic units, not 128). It is deliberate, not incidental:
 // ActivateLootContainer (:866-874) exempts CorpseMarker from the
