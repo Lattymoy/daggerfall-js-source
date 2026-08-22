@@ -2632,7 +2632,7 @@ Both gates read the library's slicer now, and gate 2 asserts it found
 at least 25 columns before it will believe a clean result. *A PIN THAT
 FINDS NOTHING MUST PROVE IT LOOKED.*
 
-Fifteen mutants, fifteen kills - one cell edited by hand in the checked-in
+Eighteen mutants, eighteen kills - one cell edited by hand in the checked-in
 enemy table, the `SoulPts` column dropped from the extraction again,
 the `=== -1` guard removed, the glow alpha forced to 1, a whole enemy
 deleted; then one cell edited in encounter table 22, the comment strip
@@ -2640,7 +2640,9 @@ removed, and a divergent second copy of the encounter table grown
 back; then the Nord's description id, the Nord's frost resistance
 turned to fire, and the female clothed/unclothed body art swapped;
 then a Drugs index, the hand-added Currency row, the implicit-enum
-Deeds row truncated, and the hand-added QuestItems row.
+Deeds row truncated, and the hand-added QuestItems row; then isChain
+widened to the whole 0x01xx band, a rung of the plate ladder, and the
+second GetMaterialArmorValue grown back.
 
 Also corrected: `loot.js`'s "21 keys" comment over a 22-row matrix
 (`-` plus A..U), and the same off-by-one in the LootTables gate's
@@ -2701,11 +2703,35 @@ numbers, from the same enum file, in a module that already imports
 it was found. It is a view onto the one table now, pinned by object
 identity per row.
 
-That is three duplicated tables in one wave: the encounter tables, the
-item groups, and (in effect) the enemy stat blocks, whose second copy
-was the generator's output diverging from a generator nobody ran.
-*IF A TABLE IS WORTH WRITING ONCE, THE SECOND COPY IS A BUG THAT HAS
-NOT HAPPENED YET.*
+**A fourth twin, found by looking for them on purpose.** Having hit
+three by accident, I wrote a ten-line scan for the same numeric
+literal appearing in two different files. Six hits; five were
+coincidence (an identity matrix, powers of two, `[0,1,2,...]`). The
+sixth was the ten-step plate ladder `[7, 9, 9, 11, 13, 15, 15, 17,
+19, 21]` in both `systems/armorMaterials.js` and
+`combat/enemyEquipment.js` - two live implementations of
+`DaggerfallUnityItem.GetMaterialArmorValue`, both exported under that
+name, both used.
+
+`armorMaterials.js`'s own header, written by an earlier audit, says
+this:
+
+> These were ported TWICE - systems/equip.js and ui/paperDoll.js each
+> carried a copy - and the copies drifted: both invented Chain2 =
+> 0x0101 where DFU has 0x0103.
+
+The module that exists *because* this function was duplicated twice
+had a third copy sitting next to it. The two agreed over every input
+from -2 to 0x0300 on the day I checked, which is the only guarantee a
+duplicate ever offers. One implementation now, pinned by function
+identity - and the survivor is the C# switch verbatim, including that
+`0x0101` and `0x0102` are not chain at all.
+
+That is four duplicated tables in one wave: the encounter tables, the
+item groups, the armour ladder, and (in effect) the enemy stat blocks,
+whose second copy was a generator's output drifting from a generator
+nobody ran. *IF A TABLE IS WORTH WRITING ONCE, THE SECOND COPY IS A
+BUG THAT HAS NOT HAPPENED YET.*
 
 FLAGGED: none of the eight new columns has a port consumer yet -
 there is no blood splash, no enemy point light, no Seducer transform,

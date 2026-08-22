@@ -16,6 +16,9 @@
 
 import { mintCondition } from '../systems/itemTemplates.js';   // AUDIT 23 (items-5)
 import { WEAPON_MIN_DAMAGE, WEAPON_MAX_DAMAGE, dice100 } from './formulas.js';
+import { materialArmorValue } from '../systems/armorMaterials.js';
+
+export { materialArmorValue };
 
 // ---- Weapons enum (template indices) - the roll ranges are numeric ----
 export const WEAPONS_ENUM = Object.freeze({
@@ -83,12 +86,15 @@ export function randomArmorMaterial(playerLevel, rolls = Math.random) {
 }
 
 // ---- GetMaterialArmorValue (non-shield) ----
-export function materialArmorValue(armorMaterial) {
-  if (armorMaterial === ARMOR_MATERIAL.Leather) return 3;
-  if (armorMaterial === ARMOR_MATERIAL.Chain || armorMaterial === 0x0103) return 6;
-  const plate = armorMaterial - ARMOR_MATERIAL.PLATE_BASE;   // Iron..Daedric
-  return [7, 9, 9, 11, 13, 15, 15, 17, 19, 21][plate] ?? 0;
-}
+// AUDIT 24 (wave 23): a SECOND implementation of
+// DaggerfallUnityItem.GetMaterialArmorValue lived here, with its own
+// copy of the ten-step plate ladder (iron 7 through daedric 21),
+// next to the one in systems/armorMaterials.js - the module whose own
+// header records that this exact function had ALREADY been ported
+// twice once before, and that the two copies drifted (both inventing
+// Chain2 = 0x0101 where DFU has 0x0103). The two agreed over every
+// input from -2 to 0x0300 the day this was found. Re-exported now,
+// so the next drift cannot happen at all.
 
 /** ItemBuilder mints every weapon through DaggerfallUnityItem.SetItem,
  *  which sets `flags = 0` (DaggerfallUnityItem.cs:565); the only other

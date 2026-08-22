@@ -28,6 +28,8 @@ import { ENCOUNTER_TABLES } from '../src/systems/encounters.js';
 import { RACE_TEMPLATES } from '../src/systems/races.js';
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplatesData.js';
 import { ITEM_GROUPS } from '../src/systems/loot.js';
+import { materialArmorValue } from '../src/systems/armorMaterials.js';
+import { materialArmorValue as eeMaterialArmorValue } from '../src/combat/enemyEquipment.js';
 import { ENCOUNTER_TABLES as ENCOUNTER_TABLES_SRC } from '../src/characters/encounterTables.js';
 import { extractEnemyBasics, sliceEnemyTable } from '../tools/extractEnemyBasics.lib.mjs';
 
@@ -314,4 +316,29 @@ test('audit24 wave23: loot.js views the one item-group table, it does not copy i
   assert.equal(Object.keys(ITEM_GROUPS).length, 12);
   assert.doesNotMatch(readFileSync(new URL('../src/systems/loot.js', import.meta.url), 'utf8'),
     /PlantIngredients1: \[8, 9/, 'and no literal has grown back');
+});
+
+test('audit24 wave23: GetMaterialArmorValue has ONE implementation', () => {
+  // combat/enemyEquipment.js carried a second one with its own copy of
+  // the [7,9,9,11,13,15,15,17,19,21] plate ladder, beside the one in
+  // systems/armorMaterials.js - the module whose own header records
+  // that this exact function had already been ported twice before,
+  // and that the two copies drifted (both inventing Chain2 = 0x0101
+  // where DFU has 0x0103).
+  assert.equal(eeMaterialArmorValue, materialArmorValue, 'the same function object');
+  const ee = readFileSync(new URL('../src/combat/enemyEquipment.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(ee, /\[7, 9, 9, 11, 13, 15, 15, 17, 19, 21\]/, 'no second plate ladder');
+
+  // and the one that survived is DaggerfallUnityItem.cs:1007-1050's
+  // switch, verbatim - including that Chain2 is 0x0103 and that
+  // 0x0101/0x0102 are NOT chain at all
+  assert.equal(materialArmorValue(0x0000), 3, 'Leather');
+  assert.equal(materialArmorValue(0x0100), 6, 'Chain');
+  assert.equal(materialArmorValue(0x0103), 6, 'Chain2 - 0x0103, not 0x0101');
+  assert.equal(materialArmorValue(0x0101), 0, 'and 0x0101 falls off the switch');
+  assert.equal(materialArmorValue(0x0102), 0);
+  assert.deepEqual([0x0200, 0x0201, 0x0202, 0x0203, 0x0204, 0x0205, 0x0206, 0x0207, 0x0208, 0x0209]
+    .map(materialArmorValue), [7, 9, 9, 11, 13, 15, 15, 17, 19, 21]);
+  assert.equal(materialArmorValue(0x020a), 0, 'past Daedric is nothing');
+  assert.equal(materialArmorValue(-1), 0, 'and so is None');
 });
