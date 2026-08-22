@@ -1,7 +1,7 @@
 // AUDIT 24 (the full-codebase parity sweep), the second systems wave.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { SOCIAL_GROUPS, SOCIAL_GROUP_COUNT } from '../src/formats/factionFile.js';
 import { createRandomWeapon } from '../src/systems/loot.js';
@@ -9,6 +9,7 @@ import { mintCondition } from '../src/systems/itemTemplates.js';
 import { dateString, daySuffix } from '../src/systems/gameDate.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { checkBuildingTypeInSkipList } from '../src/systems/topicTree.js';
+import { MAGIC_ONLY_KEYS } from '../src/systems/effects.js';
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 
@@ -130,4 +131,54 @@ test('audit24 systems: %god falls back to the REGION temple before it rolls', ()
   assert.match(qm, /factionId === 0 \|\| factionId === THE_FIGHTERS_GUILD/);
   assert.match(qm, /function templeDivine/);
   assert.equal(/divineOfTempleFaction/.test(qm), false, 'the unwired host seam is gone');
+});
+
+// The vendored DFU tree is gitignored, so this gate skips wherever it is
+// absent - the same charter the ARENA2-backed pins run under.
+const DFU_EFFECTS = new URL('../tools/parity/dfu/Assets/Scripts/Game/MagicAndEffects/Effects/', import.meta.url);
+const noDfu = !existsSync(DFU_EFFECTS);
+
+test('audit24 systems: MAGIC_ONLY_KEYS is REGENERATED from the effect classes, not guessed', { skip: noDfu }, () => {
+  // The original defect was not a wrong key - it was a hand-picked list
+  // of FAMILIES that missed seven buffs. The only pin that catches that
+  // class of error is one that rebuilds the set from the source, so
+  // this walks every effect class under Game/MagicAndEffects/Effects,
+  // reads its `properties.AllowedElements`, and compares the whole set
+  // both ways. ElementFlags_MagicOnly IS ElementTypes.Magic
+  // (EntityEffectBroker.cs:47), so both spellings count.
+  const files = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p2 = new URL(`${e.name}${e.isDirectory() ? '/' : ''}`, dir);
+      if (e.isDirectory()) walk(p2);
+      else if (e.name.endsWith('.cs')) files.push(p2);
+    }
+  };
+  walk(DFU_EFFECTS);
+  assert.ok(files.length > 100, `found ${files.length} effect classes`);
+
+  const magicOnly = new Set();
+  const keyed = new Set();
+  // the two variant families key themselves in a loop over variantIndex
+  const VARIANTS = { 'ElementalResistance.cs': [8, 5], 'PacifyEffect.cs': [33, 4] };
+  for (const f of files) {
+    const src = readFileSync(f, 'utf8');
+    const ae = /AllowedElements\s*=\s*([\w.]+)\s*;/.exec(src);
+    const isMagicOnly = !!ae && (ae[1] === 'EntityEffectBroker.ElementFlags_MagicOnly' || ae[1] === 'ElementTypes.Magic');
+    const name = f.pathname.split('/').pop();
+    const add2 = (k) => { keyed.add(k); if (isMagicOnly) magicOnly.add(k); };
+    for (const m of src.matchAll(/MakeClassicKey\((\d+),\s*(?:\(byte\))?(\d+)\)/g)) add2(`${m[1]},${m[2]}`);
+    const v = VARIANTS[name];
+    if (v) for (let i = 0; i < v[1]; i++) add2(`${v[0]},${i}`);
+  }
+  assert.ok(keyed.size > 80, `found ${keyed.size} classic-keyed effects`);
+  const port = new Set(MAGIC_ONLY_KEYS);
+  const extra = [...port].filter((k) => !magicOnly.has(k)).sort();
+  const missing = [...magicOnly].filter((k) => !port.has(k)).sort();
+  assert.deepEqual(extra, [], 'the port claims magic-only for effects whose AllowedElements is not Magic');
+  assert.deepEqual(missing, [], 'the port misses effects whose AllowedElements IS Magic');
+  // ...and the seven the hand-picked list had missed are in it
+  for (const k of ['14,255', '25,255', '26,255', '27,255', '28,255', '30,255', '31,255']) {
+    assert.ok(port.has(k), `${k} is magic-only`);
+  }
 });

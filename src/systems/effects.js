@@ -100,7 +100,7 @@ export const isAShade = (en) => hasActiveEffect(en, 'shadeNormal') || hasActiveE
  *  buffs the port's old family list missed: levitate (14), slowfall
  *  (25), free action (26), jumping (27), climbing (28), water
  *  breathing (30), water walking (31). */
-const MAGIC_ONLY_KEYS = new Set([
+export const MAGIC_ONLY_KEYS = new Set([
   '2,255', '3,0', '3,1', '3,2', '6,0', '6,1', '6,2',
   '8,0', '8,1', '8,2', '8,3', '8,4', '9,0', '9,1',
   '9,2', '9,3', '9,4', '9,5', '9,6', '9,7', '10,0',

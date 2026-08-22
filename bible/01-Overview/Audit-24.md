@@ -479,6 +479,26 @@ MOTOR's TakeAction, behind CanAct, which HandleNoAction:357-364 drops
 the moment the target is null - so a pacified foe really does take no
 spell rolls.
 
+## The regeneration gate
+
+The magic-only defect was not a wrong key. It was a hand-picked list of
+FAMILIES - heal, cure, fortify, transfer, regenerate, the concealments -
+which missed levitate, slowfall, free action, jumping, climbing and both
+water buffs. No spot-check pin catches that: every key the list DOES
+contain is right.
+
+So the pin rebuilds the set from the source. It walks every effect class
+under Game/MagicAndEffects/Effects, reads each
+`properties.AllowedElements` (ElementFlags_MagicOnly IS
+ElementTypes.Magic, EntityEffectBroker.cs:47), and compares the whole
+set both ways against the port's 72 keys. Ninety-one classic-keyed
+classes; none extra, none missing. Drop a single key and it names it.
+
+That is the shape any table ported from a source tree wants, and it is
+the same discipline as the quest CORPUS GATE. Where the source is
+gitignored the gate skips, under the headless charter the ARENA2-backed
+pins already run under.
+
 ## Closed
 
 All 54 confirmed findings are fixed and pinned, in four waves
