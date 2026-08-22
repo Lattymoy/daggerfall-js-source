@@ -49,6 +49,60 @@ const PENDING = new Map([
   ['playerVampireClanName', 'rides the vampirism arc above'],
 ]);
 
+/** Bridge-ctx seams the HOST cannot answer yet. Same rule as PENDING
+ *  above: removing a row means mounting it. */
+const CTX_PENDING = new Map([
+  ['endVampirism', 'the vampirism arc - no racial-effect system yet'],
+  ['endLycanthropy', 'the lycanthropy arc - likewise'],
+  ['addFace', 'the HUD escorting faces (AddFace/DropFace)'],
+  ['dropFace', 'rides the faces seam above'],
+  ['onQuestStarted', "an OPTIONAL host listener - the bridge already fans RaiseOnQuestStartedEvent to the QuestListsManager's one-time recording itself"],
+]);
+
+/** Every `ctx.<name>` the bridge reaches for, and what world.js gives
+ *  it. The bridge's ctx surface has the same trapdoor questWorld had:
+ *  every read is `ctx.x?.()`, so an unmounted seam evaporates in
+ *  silence. RemoveNpcQuestor was one - npcSession has carried it since
+ *  TK-iv and nothing called it, so an offered townsperson never left
+ *  npcsWithWork and was re-offered the same quest for ever. */
+function bridgeCtxSeams() {
+  return new Set([...read('src/scenes/questBridge.js').matchAll(/\bctx\.(\w+)/g)].map((m) => m[1]));
+}
+
+function bridgeCtxSupplied() {
+  const src = read('src/scenes/world.js');
+  const i = src.indexOf('questBridge = createQuestBridge({');
+  assert.ok(i > 0);
+  let depth = 0;
+  let j = src.indexOf('{', i);
+  const start = j;
+  for (; j < src.length; j++) {
+    if (src[j] === '{') depth++;
+    else if (src[j] === '}' && --depth === 0) break;
+  }
+  const body = src.slice(start, j + 1);
+  return new Set([
+    ...[...body.matchAll(/^ {4}(\w+)\s*[:(]/gm)].map((m) => m[1]),
+    ...[...body.matchAll(/^ {4}(\w+),\s*$/gm)].map((m) => m[1]),
+  ]);
+}
+
+test('audit24 seams: every bridge ctx seam is SUPPLIED or declared PENDING', () => {
+  const used = bridgeCtxSeams();
+  const supplied = bridgeCtxSupplied();
+  assert.ok(supplied.size >= 40, `world.js supplies ${supplied.size} bridge seams`);
+  const orphans = [...used].filter((n) => !supplied.has(n) && !CTX_PENDING.has(n)).sort();
+  assert.deepEqual(orphans, [], 'a bridge seam nothing answers and nobody declared pending');
+  for (const [seam, why] of CTX_PENDING) {
+    assert.ok(!supplied.has(seam), `${seam} is supplied now - drop its PENDING row (${why})`);
+    assert.ok(used.has(seam), `nothing reads ${seam} any more - drop its PENDING row (${why})`);
+  }
+  // the three AUDIT 24 mounts
+  for (const seam of ['removeNpcQuestor', 'makePcDiseased', 'cureDisease']) {
+    assert.ok(supplied.has(seam), `${seam} is mounted`);
+  }
+});
+
 /** Every `world.<name>` the quest system reaches for. */
 function calledSeams() {
   const dir = 'src/systems/quest';

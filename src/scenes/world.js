@@ -117,6 +117,7 @@ import { fullName as nameHelperFullName, GENDERS, BANK_TYPES } from '../characte
 // NameHelper.BankTypes -> the Races name TalkManagerMCP's Oath reads
 const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
   Object.entries(BANK_TYPES).map(([race, bank]) => [bank, race])));
+import { startDisease, endDisease } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams
 import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
@@ -1699,6 +1700,26 @@ export async function bootWorld(canvas, renderer, params, status) {
     removeQuestRumors: (uid) => rumorMill.removeQuestRumorsFromRumorMill(uid),
     classicSeconds: () => playerTicker.classicMinutes * 60,
     playerEntity,
+    // AUDIT 24 (the seven-slice sweep): three more seams the bridge has
+    // declared since Q2/Q3 that this host never answered. The bridge's
+    // ctx surface has the same trapdoor questWorld had - every read is
+    // `ctx.x?.()`, so an unmounted one evaporates in silence.
+    //
+    // TalkManager.RemoveNpcQuestor (:2602-2605): the offer window's ONE
+    // constructor side effect. npcSession has carried it since TK-iv
+    // and nothing called it, so a townsperson who was offered work
+    // stayed in npcsWithWork for ever - re-offering the same quest
+    // every time the player talked to them.
+    removeNpcQuestor: (seed) => npcSession.removeNpcQuestor(seed),
+    // MakePcDiseased / CurePcDisease over the S18 system, which has
+    // been ported since its own slice and wired to nothing here.
+    makePcDiseased: (diseaseType) => { startDisease(playerEntity, diseaseType, gameDaysNow()); surfacePlayer(); },
+    cureDisease: (diseaseType) => {
+      for (const a of playerEntity.activeEffects ?? []) {
+        if (a.kind === 'disease' && a.disease === diseaseType && !a.ended) endDisease(a);
+      }
+      surfacePlayer();
+    },
     playerRaceName: () => playerEntity.race ?? null,
     getReputation: (fid) => { const s = _questStore(); return s ? getReputation(s, fid) : 0; },
     changeReputation: (fid, amount, propagate) => { const s = _questStore(); if (s) changeReputation(s, fid, amount, propagate); },

@@ -2011,6 +2011,37 @@ title-cases both words.
 Three mutants, three kills; the title change is a string the gate reads
 rather than a behaviour a mutant can flip.
 
+### Wave 12 - the same trapdoor, one seam surface over
+
+Wave 4's seam gate covered `deps.world`. The BRIDGE's own `ctx` surface
+has the identical shape - every read is `ctx.x?.()` - and the identical
+hole.
+
+**REMOVENPCQUESTOR WAS NEVER CALLED.** It is the offer window's ONE
+constructor side effect (DaggerfallQuestOfferWindow.cs:35), and
+`npcSession.removeNpcQuestor` has carried it since TK-iv. Nothing
+called it. So a townsperson who was offered work stayed in
+`npcsWithWork` for ever, and re-offered the same quest every time the
+player talked to them - the offer flow's own header says the potential
+questor "leaves the work pool BEFORE the offer resolves", and it never
+left.
+
+**AND THE TWO DISEASE SEAMS.** `makePcDiseased` and `cureDisease` were
+declared in Q3-iv over an S18 system that shipped in its own slice, and
+mounted to nothing - so `make pc diseased` and `cure <disease>` were
+silent for every quest that used them.
+
+The gate now reads both surfaces, both ways: every `ctx.x` the bridge
+reaches for must be SUPPLIED or named in a PENDING table with a reason,
+and a stale row (the seam got mounted) or a dead one (nothing reads it)
+fails too. Five rows stand, honestly: the two vampirism/lycanthropy ends
+have no racial-effect system to reach, the HUD escorting faces have no
+surface, and `onQuestStarted` is an OPTIONAL host listener - the bridge
+already fans RaiseOnQuestStartedEvent to the QuestListsManager's
+one-time recording itself.
+
+One mutant, one kill.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
