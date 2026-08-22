@@ -2068,6 +2068,40 @@ Three cell mutants, three kills.
 **Standing law:** A TABLE TRANSCRIBED BY HAND NEEDS A PIN THAT READS THE
 SOURCE, NOT A PIN THAT READS THE TABLE.
 
+### Wave 14 - the save file's own survivors
+
+The campaign left five live mutants in `src/systems/save.js` - the file
+that decides whether a loaded character is the character who was saved.
+Every one is a law with a comment above it and no test under it:
+
+- `restoreFactionRep`'s TWO RETURNS. They are the caller's only signal
+  that the rep half of a load happened at all; a restore that quietly
+  answered `true` on a missing store would lose every faction standing
+  in the save with nothing said. (And an id the rebuilt store no longer
+  has is SKIPPED, not invented - the store comes from FACTION.TXT.)
+- The pre-S15 FATIGUE DEFAULT, `(Str + End) x 64`. 64 is MaxFatigue's
+  own multiplier: at 65 a loaded character opens over-rested and the
+  first tick clamps them back, at 63 under. And it applies only to a
+  MISSING field - a save that carries fatigue keeps its own number.
+- The pre-17f GOLD-STACK UPGRADE, gated on an AND of two conditions.
+  Both matter: an OR would rewrite an already-indexed stack (losing a
+  real index) and every index-less item of any group. Without the
+  upgrade at all, a restored index-less stack grows a SECOND gold stack
+  the next time gold is added, and `goldAmount` only ever finds the
+  first.
+- The LIGHT-SOURCE relink, to the RESTORED record rather than a
+  reference into the array the load just discarded - with a missing
+  index reading as NOTHING lit, not as `items[0]`.
+
+The fifth is recorded as an **EQUIVALENT MUTANT** rather than dressed
+up. Flipping `?? -1` to `?? -2` changes nothing any test can see: the
+only reader is `li >= 0`, so every negative behaves identically. -1 is
+the value because it is the sentinel the rest of the port writes, not
+because anything can tell. The pin says so, and asserts -99 reads the
+same, so a future reader does not go hunting for the missing coverage.
+
+Four mutants, four kills, one honest equivalent.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
