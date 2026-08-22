@@ -446,7 +446,7 @@ test("the signoff is the LAST non-empty line only, prefixed 'Letter: ' and trail
     { text: '' },
   ];
   assert.equal(expandLetterSignoff(quest, tokens), 'Letter: yours truly, Baron Snide ');
-  assert.deepEqual(reveals, [[9, 'npc', 'Person', false]], 'NameMacro1 ALWAYS reveals here - no gate');
+  assert.deepEqual(reveals, [[9, 'npc', 'Person']], 'NameMacro1 ALWAYS reveals here - no gate, and instantly (AUDIT 24)');
 });
 
 test('location macros swallow their WHOLE word into "..." - attached punctuation included', () => {
@@ -504,7 +504,7 @@ test('a signoff line whose FIRST word is a macro expands from word zero', () => 
     'Letter: Baron Snide sends regards ');
 });
 
-test('letter reveals type every resource: Place -> Location and Item -> Thing, isSpecial false', () => {
+test('letter reveals type every resource: Place -> Location and Item -> Thing, on the INSTANT rebuild', () => {
   const reveals = [];
   const quest = makeLetterQuest({
     house: { isPlace: true, expandMacro: () => 'The Rusty Ogre' },
@@ -512,7 +512,9 @@ test('letter reveals type every resource: Place -> Location and Item -> Thing, i
   }, { addDialog: (...args) => reveals.push(args) });
   assert.equal(expandLetterSignoff(quest, [{ text: 'leave _ring_ at _house_' }]),
     'Letter: leave a ruby ring at The Rusty Ogre ');
-  assert.deepEqual(reveals, [[9, 'ring', 'Thing', false], [9, 'house', 'Location', false]]);
+  // AUDIT 24 systems: the signoff reveal arms are C#'s THREE-arg
+  // overload too (QuestMacroHelper.cs:218/:222/:226) - instant.
+  assert.deepEqual(reveals, [[9, 'ring', 'Thing'], [9, 'house', 'Location']]);
 });
 
 test('a ONE-character line still counts as the signoff (the emptiness gate is length > 0)', () => {

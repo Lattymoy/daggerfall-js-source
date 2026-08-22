@@ -717,7 +717,14 @@ export class Place extends QuestResource {
    *  Alik'r Desert re-derives the index from the legacy name). */
   expandMacro(macroType) {
     const quest = this.parentQuest;
-    quest.lastResourceReferenced = this;
+    // AUDIT 24 systems: Place.ExpandMacro (Place.cs:250) latches
+    // LastPlaceReferenced and NOTHING else. LastResourceReferenced is
+    // written in exactly two places in the whole DFU tree -
+    // Person.cs:295 and Foe.cs:157 - so a place symbol expanded
+    // earlier in a message must NOT steal the pronoun context from
+    // the questor: `_qgiver_ ... visit _house_. Bring %g3 the book.`
+    // renders "her" for a female questor, not the Place's inherited
+    // male default.
     quest.lastPlaceReferenced = this;
     const sd = this.siteDetails;
     if (!sd) return false;

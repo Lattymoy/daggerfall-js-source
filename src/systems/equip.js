@@ -98,11 +98,18 @@ export function isForbiddenEquip(career, item) {
   const forbiddenProficiencies = career.weaponArmorShieldsBitfield & 0x3f;
   const forbiddenMaterials = career.forbiddenMaterialsFlags ?? 0;
   if (item.group === 'Armor') {
-    if (isShieldTemplate(item.templateIndex)) {
-      return ((1 << (item.templateIndex - SHIELD_TEMPLATE_START)) & forbiddenShields) !== 0;
-    }
-    if (((1 << (item.material >> 8)) & forbiddenArmors) !== 0) return true;
-    // the plate-only gate on the material test
+    // AUDIT 24 systems: DFU's armor branch is a THREE-arm chain
+    // (DaggerfallInventoryWindow.cs:1345-1359). Arms 1 and 2 split on
+    // IsShield - `if (item.IsShield && shield-bit)` then
+    // `else if (!item.IsShield && armor-type-bit)` - but arm 3, the
+    // plate-MATERIAL test, carries no shield guard at all. So a shield
+    // whose TYPE bit is clear falls through to it, and a career that
+    // forbids (say) Daedric refuses a Daedric tower shield. The port
+    // returned at the shield arm and never reached the material test.
+    const shield = isShieldTemplate(item.templateIndex);
+    if (shield && ((1 << (item.templateIndex - SHIELD_TEMPLATE_START)) & forbiddenShields) !== 0) return true;
+    if (!shield && ((1 << (item.material >> 8)) & forbiddenArmors) !== 0) return true;
+    // the plate-only gate on the material test - shields included
     return (item.material >> 8) === 2 && ((1 << (item.material & 0xff)) & forbiddenMaterials) !== 0;
   }
   if (item.group === 'Weapons') {

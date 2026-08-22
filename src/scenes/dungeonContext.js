@@ -1728,12 +1728,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the geometry, and the SetHealth(0).
   let _breathTimer = 0;
   const _breathState = { tally: 0 };
-  function breathTick(dt, playerFeet) {
+  // AUDIT 24 player: `player.transform.position.y` in
+  // PlayerEnterExit.cs:382/:407 is the LIVE capsule's centre, and a
+  // swimmer is force-crouched to 0.9 - so the half-height rides in
+  // from the host rather than being hardcoded at the standing 0.9.
+  function breathTick(dt, playerFeet, playerHeight = CAPSULE_HEIGHT) {
     _breathTimer += dt;
     while (_breathTimer >= CLASSIC_UPDATE_INTERVAL) {
       _breathTimer -= CLASSIC_UPDATE_INTERVAL;
       const surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
-      const submerged = surf != null && playerFeet[1] + 0.9 + 76 * 0.025 - 0.95 < surf;
+      const submerged = surf != null && playerFeet[1] + playerHeight / 2 + 76 * 0.025 - 0.95 < surf;
       if (breathStep(playerEntity, submerged, _breathState) === 'drowned') {
         hurtPlayer(playerEntity.health);   // SetHealth(0): drowned
       }
@@ -1744,7 +1748,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // water sounds. Castle-block detection (doNotPlayInCastle) pends.
   const sceneAmbience = new AmbientEffects(DUNGEON_AMBIENT_WAITS);
   sceneAmbience.setPreset('dungeon');
-  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false) {
+  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT) {
     _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) lastPlayerFeet = [...playerFeet];
@@ -1754,12 +1758,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // by the hosts' overlay branch. Left as a marker so the seam is
     // not re-added to the wrong side of the gate.
     if (playerFeet) {
-      breathTick(dt, playerFeet);
+      breathTick(dt, playerFeet, playerHeight);
       const _surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
       sceneAmbience.update(dt, {
-        playerPos: [playerFeet[0], playerFeet[1] + 0.9, playerFeet[2]],   // the controller center (DFU transform.position)
+        playerPos: [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]],   // the controller center (DFU transform.position)
         waterSurfaceY: _surf,
-        submerged: _surf != null && playerFeet[1] + 0.9 + 76 * 0.025 - 0.95 < _surf,
+        submerged: _surf != null && playerFeet[1] + playerHeight / 2 + 76 * 0.025 - 0.95 < _surf,
         // AUDIT 21 (music lane, F3): doNotPlayInCastle
         // (AmbientEffectsPlayer.cs:291-299). ambientEffects READ deps.inCastle
         // and nothing in src/ ever WROTE it, so the suppression was inert and

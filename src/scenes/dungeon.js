@@ -291,14 +291,17 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const jumpHeld = keys.has('Space');
       player.slowFalling = ctx.playerSlowFalling;   // S8 slowfall (P14: the verbatim constant-speed law lives in the motor)
       // P11: the swim toggle (PlayerEnterExit verbatim - the CENTER
-      // (feet + 0.9) + 50*GlobalScale - 0.95 below the block water
-      // surface swims) + the Levitate/waterWalking effect consumers.
+      // + 50*GlobalScale - 0.95 below the block water surface swims)
+      // + the Levitate/waterWalking effect consumers. AUDIT 24 player:
+      // the centre is the LIVE capsule's (feet + height/2), and a
+      // swimmer is force-crouched, so the toggle and the motor's
+      // surface clamp track each other exactly as DFU's do.
       // Float keys: Jump/FloatUp = Space/PageUp; FloatDown = PageDown
       // (DFU's default binding; DFU's Crouch alternative is C, which
       // this port binds to castSpell - crouch itself pends).
       const surf = ctx.waterSurfaceYAt(player.pos[0], player.pos[2]);
       player.waterSurfaceY = surf;
-      player.swimming = surf != null && player.pos[1] + 0.9 + 50 * 0.025 - 0.95 < surf;
+      player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;
       player.levitating = ctx.playerLevitating();
       player.waterWalking = ctx.playerWaterWalking();
       // S19 paralysis: FrictionMotor cancels ALL movement input (the
@@ -391,7 +394,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       requestAnimationFrame(frame);
       return;   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
     }
-    ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD'));   // moveHeld: the collision-trigger input gate (verbatim)   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
+    ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD'), player.height);   // moveHeld: the collision-trigger input gate (verbatim)   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
     renderer.drawWater(ctx.waterQuads, WATER_COLOR,
       renderer.textures.get(`${waterArchive}_0`),
       (now / 1000) * WATER_SCROLL_TILES_PER_SEC);

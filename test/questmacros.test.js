@@ -4,8 +4,9 @@
 // quests expand HEADLESS - exactly 3 throw, the %di NRE trio
 // (LastPlaceReferenced.Scope read before the null check, DFU's own
 // crash surface), and the error shapes land exactly where C#'s
-// GetValue ladder puts them ([undefined] 15 = the corpus's 14 %G3 +
-// 1 %G1, which really do render that way in DFU).
+// GetValue ladder puts them - and NOTHING lands on [undefined], the
+// missing-handler arm, now that the capitalized pronoun family is
+// registered as MacroHelper.cs:240-245 registers it (AUDIT 24).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -162,9 +163,12 @@ test('CORPUS GATE: all 3,817 messages of 265 quests expand headless; exactly the
   // the %di quirk: LastPlaceReferenced.Scope before the null check -
   // these three messages crash in DFU too
   assert.deepEqual(throwers, ['P0B00L01.txt:1014', 'R0C10Y12.txt:1012', 'R0C11Y03.txt:1011']);
-  // C#'s GetValue error shapes, exactly: [undefined] 15 = 14 %G3 + 1
-  // %G1 (only %G has a capitalized handler - DFU renders these raw)
-  assert.equal(shapes.get('undefined'), 15);
+  // C#'s GetValue error shapes, exactly. AUDIT 24 systems: the old
+  // count here was 15 - the corpus's 14 %G3 lines plus its 1 %G1 -
+  // on the false premise that "only %G has a capitalized handler".
+  // MacroHelper.cs:240-245 registers all six (%G %G1 %G2 %G2self %G3
+  // %G4), so NOTHING in the corpus reaches the [undefined] arm.
+  assert.equal(shapes.get('undefined'), undefined, 'no corpus macro is missing a handler');
   assert.equal(shapes.get('srcDataUnknown'), 69);
   assert.ok(shapes.get('nullMCP') > 1000, 'the world-backed handlers pend LOUDLY headless');
 });
@@ -247,7 +251,7 @@ test('the Clock macro: =symbol_ answers CEILING days of the STARTING time (the D
   assert.equal(expandOne(q, 1011), ' 2 days', 'Ceiling(1.5 days) = 2');
 });
 
-test('the %-macros over the seams: player facts, %pct falling to the player name, %G3 undefined', () => {
+test('the %-macros over the seams: player facts, %pct falling to the player name, %G3 capitalized', () => {
   const m = makeMachine(makeWorld());
   const q = schedule(m, [
     'Quest: __QM', 'QRC:',
@@ -255,8 +259,8 @@ test('the %-macros over the seams: player facts, %pct falling to the player name
     'QBN:', 'variable _pad_',
   ]);
   assert.equal(expandOne(q, 1011),
-    ' Ada Lovelace / Ada / Breton / Ada Lovelace / her / %G3[undefined]',
-    "the %pct chain lands on the PLAYER's name; %G3 has NO handler in DFU");
+    ' Ada Lovelace / Ada / Breton / Ada Lovelace / her / His',
+    "the %pct chain lands on the PLAYER's name; %G3 is Pronoun3Cap over the null-LastResourceReferenced default");
 });
 
 test('the pronoun family reads the LAST-REFERENCED resource, %G capitalizes', () => {
@@ -278,6 +282,30 @@ test('the pronoun family reads the LAST-REFERENCED resource, %G capitalizes', ()
     'QBN:', 'variable _pad_',
   ]);
   assert.equal(expandOne(q2, 1011), ' he his', 'no resource referenced defaults MALE');
+});
+
+test('AUDIT 24: a Place expansion does NOT steal the pronoun context from the Person', () => {
+  // Place.ExpandMacro (Place.cs:250) latches ParentQuest
+  // .LastPlaceReferenced and nothing else - LastResourceReferenced is
+  // written in exactly two places in the DFU tree, Person.cs:295 and
+  // Foe.cs:157. The port latched BOTH from the Place, so any place
+  // symbol standing earlier in a message re-pointed every later
+  // pronoun at it, and QuestResource's base Gender (Male) answered.
+  const m = makeMachine(makeWorld());
+  const q = schedule(m, [
+    'Quest: __QM', 'QRC:',
+    'Message:  1011', ' _npc_ wants you to visit _shop_. Bring %g3 the book.', '',
+    'QBN:',
+    'Person _npc_ female group Shopkeeper', '',
+    'Place _shop_ local tavern', '',
+    'variable _pad_',
+  ]);
+  const out = expandOne(q, 1011);
+  assert.ok(out.endsWith('Bring her the book.'), out);
+  // ...and the Place latch itself still happens - %di reads it.
+  assert.ok(q.lastPlaceReferenced, 'LastPlaceReferenced is still set by the same call');
+  assert.equal(q.lastResourceReferenced?.symbol?.name ?? q.lastResourceReferenced?.symbol, 'npc',
+    'the last RESOURCE stayed the Person');
 });
 
 test('%n/%fn/%mn are SEEDED by the quest UID - deterministic per quest, %mn offset by 3457', () => {
@@ -382,12 +410,19 @@ test('revealDialogLinks feeds the dialog table on NameMacro1 only, typed per res
     'Place _shop_ local tavern', '',
     'variable _pad_',
   ]);
-  q.getMessage(1011).getTextTokens(-1, () => 0, true, true);
+  // AUDIT 24 systems: GetTextTokens has no reveal PARAMETER - it
+  // passes the literal true (Message.cs:181, Nystul's comment: "quest
+  // popups should reveal them"). GetTextTokensByVariant is the arm
+  // that takes QuestMacroHelper.cs:91's false default.
+  q.getMessage(1011).getTextTokens(-1, () => 0, true);
   assert.deepEqual(m.of('addDialog').map((c) => [c[2], c[3]]),
     [['npc', 'Person'], ['shop', 'Location']]);
   m.calls.length = 0;
-  q.getMessage(1011).getTextTokens(-1, () => 0, true, false);
-  assert.equal(m.of('addDialog').length, 0, 'the default reveals nothing');
+  q.getMessage(1011).getTextTokensByVariant(0);
+  assert.equal(m.of('addDialog').length, 0, 'byVariant reveals nothing');
+  m.calls.length = 0;
+  q.getMessage(1011).getTextTokens(-1, () => 0, false);
+  assert.equal(m.of('addDialog').length, 0, 'and no expansion means no reveal at all');
 });
 
 // ---- the Q4-i VERIFY pins (AUDIT IX's mutation campaign) ----
@@ -421,13 +456,22 @@ test('the message DEFAULTS are DFU: bare reads expand, reveal nothing, and an ex
   ]);
   const bare = q.getMessage(1011).getTextTokens();
   assert.ok(bare.some((t) => t.text?.includes('Ada Lovelace')), 'no-arg reads EXPAND (the DFU default)');
-  assert.equal(m.of('addDialog').length, 0, 'and reveal NOTHING - even with a Person macro present');
+  // AUDIT 24 systems: ...and REVEAL, which the port had backwards -
+  // Message.cs:181 hardcodes the reveal for every GetTextTokens read.
+  // (Pinned on variant 0, the one that carries the _npc_ macro; the
+  // no-arg read above rolls a variant and only sometimes names him.)
+  m.calls.length = 0;
+  q.getMessage(1011).getTextTokens(-1, () => 0);
+  assert.deepEqual(m.of('addDialog').map((c) => c[2]), ['npc'],
+    'a plain read reveals the Person it names');
+  m.calls.length = 0;
   // an UNDEFINED variant hits the -1 default: the random draw, not 0
   const undef = q.getMessage(1011).getTextTokens(undefined, () => 0.99, false);
   assert.ok(undef.some((t) => t.text?.includes('well met')), 'the default variant is -1 = the roll');
   // the KEPT variant quirk: any explicit variant answers variant 0
   const v3 = q.getMessage(1011).getTextTokens(3, () => 0.99);
   assert.ok(v3.some((t) => t.text?.includes('hail')), 'explicit variant -> index 0, never variant');
+  m.calls.length = 0;
   const byv = q.getMessage(1011).getTextTokensByVariant();
   assert.ok(byv.some((t) => t.text?.includes('hail Ada Lovelace')), 'byVariant defaults to 0 and expands');
   assert.equal(m.of('addDialog').length, 0, 'byVariant never reveals');
@@ -541,7 +585,7 @@ test('%reg honors the static idRegion override, arg-exact against the map', () =
   setIdRegion(-1);
 });
 
-test('revealDialogLinks types every resource - Person/Location/Thing - with isSpecial FALSE', () => {
+test('revealDialogLinks types every resource - Person/Location/Thing - on the INSTANT rebuild', () => {
   const m = makeMachine(makeWorld());
   const q = schedule(m, [
     'Quest: __QM', 'QRC:',
@@ -552,33 +596,45 @@ test('revealDialogLinks types every resource - Person/Location/Thing - with isSp
     'Item _map_ map', '',
     'variable _pad_',
   ]);
-  q.getMessage(1011).getTextTokens(-1, () => 0, true, true);
+  q.getMessage(1011).getTextTokens(-1, () => 0, true);
+  // AUDIT 24 systems: the 4th argument is instantRebuildTopicLists,
+  // and these arms use C#'s THREE-argument overload - the default is
+  // TRUE, so the open listbox refreshes. The port passed false and
+  // left the rebuild flags stranded.
   assert.deepEqual(m.of('addDialog').map((c) => [c[2], c[3], c[4]]),
-    [['npc', 'Person', false], ['shop', 'Location', false], ['map', 'Thing', false]]);
+    [['npc', 'Person', undefined], ['shop', 'Location', undefined], ['map', 'Thing', undefined]]);
 });
 
-test('%qdt renders the SELECTED log entry once the journal points at it', () => {
+test('%qdt renders the log entry BEING READ - Message.cs latches its own id', () => {
+  // AUDIT 24 systems: GetTextTokens brackets the expansion with
+  // `ParentQuest.CurrentLogMessageId = this.id;` ... `= -1;`
+  // (Message.cs:178/:183, the only assignment to that field in DFU).
+  // The port never wrote it, so getCurrentLogMessageTime always fell
+  // through to questStartTime and every %qdt printed the accept date.
   const m = makeMachine(makeWorld());
   const q = schedule(m, [
     'Quest: __QM', 'QRC:',
-    'Message:  1050', ' step', '',
-    'Message:  1051', ' later', '',
-    'Message:  1011', ' %qdt', '',
+    'Message:  1050', ' logged %qdt', '',
+    'Message:  1051', ' logged %qdt', '',
+    'Message:  1011', ' unlogged %qdt', '',
     'QBN:',
     ' log 1050 step 0',
     ' log 1051 step 1', '',
     'variable _pad_',
   ]);
   m.tick();   // the quest starts at 100000 and logs both steps
-  const before = expandOne(q, 1011);
-  q.currentLogMessageId = 1050;
-  assert.equal(expandOne(q, 1011), before, 'the entry was logged AT start - same date, through the MATCH arm');
-  // move the SECOND entry's stamp and point at it: the match arm must
-  // read the entry whose messageID MATCHES, never just the first timed one
-  q.currentLogMessageId = 1051;
+  const atStart = expandOne(q, 1050);
+  // a message that is not a log entry at all falls through to the
+  // quest start, as C#'s no-match arm does
+  assert.equal(expandOne(q, 1011).replace('unlogged', 'logged'), atStart);
+  // move the SECOND entry's stamp: reading THAT message must answer
+  // the moved date, and reading the first must not
   const second = [...q.activeLogMessages.values()].find((l) => l.messageID === 1051);
   second.time = 100000 + 5 * 86400;
-  assert.notEqual(expandOne(q, 1011), before, 'the id-matched entry time wins over quest start AND the first entry');
+  assert.notEqual(expandOne(q, 1051), atStart, 'the id-matched entry time wins over the quest start');
+  assert.equal(expandOne(q, 1050), atStart, 'and the OTHER entry is untouched by it');
+  // the latch is released again, exactly as C#'s trailing `= -1`
+  assert.equal(q.currentLogMessageId, -1);
 });
 
 test('%rn falls to a seeded random full name when the province has no Individual child', () => {

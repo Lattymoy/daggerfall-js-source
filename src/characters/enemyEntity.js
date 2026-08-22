@@ -119,7 +119,11 @@ export function makeEnemyEntity(mobileType, basics, career, playerLevel, rollFn 
     career,
     attackModifierFlags: career ? career.attackModifierFlags : null,
     minMetalToHit: basics.minMetalToHit,
-    team: basics.team ?? 'None',
+    // AUDIT 24 characters-0: EnemyEntity.cs:316 is a bare
+    // `team = mobileEnemy.Team;` over a STRUCT - an omitted Team is
+    // MobileTeams' zero member, PlayerEnemy, never a "None" that the
+    // enum does not even have.
+    team: basics.team ?? 'PlayerEnemy',
     affinity: basics.affinity,
     name: isClass ? career.name : undefined,
   };

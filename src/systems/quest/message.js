@@ -74,13 +74,33 @@ export class Message {
    *  0`, never `variant`. Use getTextTokensByVariant for real
    *  selection, as DFU's own callers do. Q4-i: macro expansion runs at
    *  token read, DFU's default. */
-  getTextTokens(variant = -1, roll = Math.random, expandMacros = true, revealDialogLinks = false) {
+  getTextTokens(variant = -1, roll = Math.random, expandMacros = true) {
     const index = variant === -1 ? Math.floor(roll() * this.variantCount) : 0;
     const tokens = this.variants[index].tokens.map((t) => ({ ...t }));   // C# Token is a STRUCT - callers get copies (AUDIT quest-P17)
     // Q4-i: DFU expands macros by default at token read (Message.cs:
-    // 170-183); revealDialogLinks is TRUE only for talk answers and
-    // quest popups, feeding the dialog table on NameMacro1.
-    if (expandMacros) expandQuestMessage(this.parentQuest, tokens, revealDialogLinks);
+    // 170-183).
+    // AUDIT 24 systems, TWO halves of Message.cs:174-183 the port left
+    // out. (1) The reveal flag is not a parameter at all - C# passes
+    // the LITERAL true, under Nystul's comment "reveal dialog linked
+    // resources here on purpose (quest popups should reveal them)".
+    // The port defaulted it to false and no caller ever passed true,
+    // so a quest popup naming a Place or Person added no talk topic.
+    // (GetTextTokensByVariant is the one that takes the false default
+    // - QuestMacroHelper.cs:91 - and it still does, below.)
+    // (2) The expansion is BRACKETED by
+    // `ParentQuest.CurrentLogMessageId = this.id;` ... `= -1;`, the
+    // only assignment to that field in the whole DFU tree. It is what
+    // makes %qdt inside a log message answer the date THAT step was
+    // written; without it getCurrentLogMessageTime never matched and
+    // every %qdt printed the quest start.
+    if (expandMacros) {
+      const quest = this.parentQuest;
+      // No try/finally: C# has none either, so a throwing expansion
+      // (the %di NRE trio) really does leave the id latched.
+      if (quest) quest.currentLogMessageId = this.id;
+      expandQuestMessage(quest, tokens, true);
+      if (quest) quest.currentLogMessageId = -1;
+    }
     return tokens;
   }
 

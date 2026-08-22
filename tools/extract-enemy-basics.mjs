@@ -71,8 +71,12 @@ for (const b of blocks) {
     const m = b.match(new RegExp(`\\b${k} = new int\\[\\] \\{([^}]+)\\}`));
     if (m) e[k[0].toLowerCase() + k.slice(1)] = m[1].split(',').map((s) => animFrame(s, id, k));
   }
+  // AUDIT 24 characters-0: an entry that omits Team takes the STRUCT
+  // default, and MobileTeams' zero member is PlayerEnemy
+  // (DaggerfallUnityEnums.cs:262-264) - not "none". Only the Horse
+  // (ID 39, `new MobileEnemy() { ID = 39, }`) leaves it out.
   const team = field(b, 'Team');
-  if (team) e.team = team.replace('MobileTeams.', '');
+  e.team = team ? team.replace('MobileTeams.', '') : 'PlayerEnemy';
   const loot = b.match(/LootTableKey = "(.)"/);
   if (loot) e.lootTableKey = loot[1];
   if (/CanOpenDoors = true/.test(b)) e.canOpenDoors = true;

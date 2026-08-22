@@ -481,9 +481,17 @@ export class PlayerMotor {
       else if (input.down) my -= 1;
       // Cannot swim up out of the water ("he would immediately be
       // pulled back in"): rising stops when the controller CENTER
-      // (feet + 0.9) + 50*GlobalScale - 0.93 reaches the surface.
+      // + 50*GlobalScale - 0.93 reaches the surface.
+      // AUDIT 24 player: LevitateMotor.cs:126 reads
+      // `controller.transform.position.y`, the centre of the LIVE
+      // capsule - and ControllerHeightChange (PlayerHeightChanger.cs
+      // :477-478) keeps the feet planted while the height changes, so
+      // the centre is feet + controller.height/2. A free swimmer is
+      // force-crouched (:192-198), so that is feet + 0.45, not the
+      // standing feet + 0.9 this line used to hardcode: the swimmer
+      // was pinned 0.45 below DFU's float height, eyes under water.
       if (this.swimming && !this.levitating && my > 0 && this.waterSurfaceY != null
-          && this.pos[1] + 0.9 + 50 * 0.025 - 0.93 >= this.waterSurfaceY) {
+          && this.pos[1] + this.height / 2 + 50 * 0.025 - 0.93 >= this.waterSurfaceY) {
         my = 0;
       }
       let speed;

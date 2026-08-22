@@ -91,12 +91,21 @@ test('c2combat combat-12: the backstab roll draws ONLY behind the >1 gate; a lan
 
 test('c2combat combat-12: the enemy melee DFRandom byte draws on every idle classic tick', () => {
   const s = src('src/characters/enemyAttack.js');
+  const tick = s.indexOf('this._classicTimer -= CLASSIC_UPDATE_INTERVAL;');
   const draw = s.indexOf('const meleePass = attackRollPasses(this.liveSpeed) && this.meleeTimer === 0;');
-  const band = s.indexOf('if (this.rangedAttack && ai.inSight && dist > MIN_RANGED_DISTANCE');
+  const oneShot = s.indexOf("const oneShot = this.machine.state !== 'Idle';");
+  const band = s.indexOf('if (this.rangedAttack && ai.inSight && ai.detected && ai.giveUpTimer > 0');
   const gate = s.indexOf('if (!meleePass) continue;');
   assert.ok(draw > 0, 'the draw is the LEFT operand of the && (FixedUpdate :81)');
   assert.ok(band > draw, 'the draw precedes the band arm - the attack component ticks even for a banded bow foe');
   assert.ok(gate > band, 'the gate consumes the ALREADY-DRAWN pass after the band');
+  // AUDIT 24 characters-2: and NOTHING stands between the tick and the
+  // draw. FixedUpdate's only early return above :81 is the
+  // SeducerTransform one-shot; a swing in flight does not hold the byte.
+  assert.ok(tick > 0 && draw > tick, 'the draw is inside the classic tick');
+  assert.equal(/continue;/.test(s.slice(tick, draw)), false,
+    'no early-out sits between the classic tick and the DFRandom draw');
+  assert.ok(oneShot > draw, 'the one-shot test is READ after the byte is already drawn');
 });
 
 test('c2combat combat-9/10/11: the host wiring sweep', () => {

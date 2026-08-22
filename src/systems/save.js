@@ -192,10 +192,6 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
     return null;
   }
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
-  // AUDIT 23 (C4/guilds-4): DFU clamps every region's LegalRep right
-  // after restoring it (SerializablePlayer -> ClampLegalReputations) -
-  // a save carrying a beyond-band value loads back into the band.
-  clampLegalReputations(entity);
   entity.stats = { ...snap.stats };
   // Pre-S15 saves carry no fatigue: default to rested (MaxFatigue =
   // (Str + End) x 64) - the additive-field shape DFU's serializer
@@ -239,6 +235,15 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.crimeCommitted = snap.crimeCommitted ?? 0;
   entity.haveShownSurrenderDialogue = snap.haveShownSurrenderDialogue ?? false;
   entity.legalRep = snap.legalRep ? { ...snap.legalRep } : {};
+  // AUDIT 23 (C4/guilds-4): DFU clamps every region's LegalRep right
+  // after restoring it (SerializablePlayer -> ClampLegalReputations) -
+  // a save carrying a beyond-band value loads back into the band.
+  // AUDIT 24 systems: and AFTER, not before. SaveLoadManager.cs:1545
+  // is the last line of RestoreSaveData, long past
+  // SerializablePlayer.cs:343-347's RegionData write - so the clamp
+  // pins the RESTORED values. Standing above the assignment it clamped
+  // the pre-load map and then had it overwritten, unclamped.
+  clampLegalReputations(entity);
   if (snap.pendingFactionRep) entity.pendingFactionRep = snap.pendingFactionRep.map((r) => ({ ...r }));
   if (snap.backStory) entity.backStory = [...snap.backStory];
   // AUDIT 20: the faction store is rebuilt from FACTION.TXT at

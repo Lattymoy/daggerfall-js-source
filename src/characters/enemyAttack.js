@@ -91,15 +91,22 @@ export class EnemyAttack {
     this._classicTimer += dt;
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
       this._classicTimer -= CLASSIC_UPDATE_INTERVAL;
-      if (this.machine.state !== 'Idle') continue;
       // C2-slice (AUDIT 23 combat-12): the DFRandom byte DRAWS on
-      // every idle classic tick - it is the LEFT operand of the
-      // source's `rand-pass && MeleeTimer == 0` (FixedUpdate :81),
-      // and the attack component draws even for a bow foe the band
-      // owns (the band is the MOTOR's; the components both tick).
-      // The old shape gated the draw behind the timer and the band,
-      // desyncing the classic byte stream.
+      // every classic tick - it is the LEFT operand of the source's
+      // `rand-pass && MeleeTimer == 0` (FixedUpdate :81), and the
+      // attack component draws even for a bow foe the band owns (the
+      // band is the MOTOR's; the components both tick).
+      // AUDIT 24 characters-2: and it draws MID-SWING too. The only
+      // early return above the draw is the SeducerTransform one-shot
+      // (:59-60 -> MobileUnit.OneShotPauseActionsWhilePlaying
+      // :174-183), which is NOT the attack anims - so an enemy with a
+      // strike in flight still burns one rand() per tick. The old
+      // `machine.state !== 'Idle'` gate above this line held the draw
+      // for the whole ~1s swing, and DFRandom is one shared global
+      // stream: every later consumer read a different value.
       const meleePass = attackRollPasses(this.liveSpeed) && this.meleeTimer === 0;
+      // mobile.IsPlayingOneShot() - true for any attack anim in flight.
+      const oneShot = this.machine.state !== 'Idle';
       const dx = playerFeet[0] - ai.feet[0], dz = playerFeet[2] - ai.feet[2];
       // C-slice (AUDIT 23 combat-3): EnemyMotor.DoRangedAttack
       // (:570-614) OWNS a bow foe inside the 6..51.2 band (strict) -
@@ -109,8 +116,18 @@ export class EnemyAttack {
       // returns true even while only turning). Outside the band the
       // bow foe is a MELEE fighter - the fallback - so the reach
       // gate below applies to everyone.
-      if (this.rangedAttack && ai.inSight && dist > MIN_RANGED_DISTANCE && dist < MAX_RANGED_DISTANCE) {
-        if (withinYaw(ai.yaw, dx, dz, ATTACK_YAW_DEG) && this.rolls() < BOW_SHOT_CHANCE) {
+      // AUDIT 24 characters-3: the band arm carries DoRangedAttack's
+      // FULL gate - `inRange && TargetInSight && DetectedTarget`
+      // (:573) - plus the CanAct chain that owns the call at all
+      // (FixedUpdate :171 `if (CanAct) TakeAction()` -> HandleNoAction
+      // :357-364 drops CanAct the moment GiveUpTimer hits 0). Sight
+      // alone let a Chameleoned player be shot at, and let a foe that
+      // had given up keep firing.
+      if (this.rangedAttack && ai.inSight && ai.detected && ai.giveUpTimer > 0
+          && dist > MIN_RANGED_DISTANCE && dist < MAX_RANGED_DISTANCE) {
+        // ...and the 1/32 roll itself sits behind `if (!isPlayingOneShot)`
+        // (:587), so a swing in flight DOES hold the bow roll.
+        if (!oneShot && withinYaw(ai.yaw, dx, dz, ATTACK_YAW_DEG) && this.rolls() < BOW_SHOT_CHANCE) {
           const strike = STRIKES[Math.floor(this.rolls() * STRIKES.length)];
           if (machineAttack(this.machine, strike)) this.firedRanged = true;
         }
@@ -119,11 +136,21 @@ export class EnemyAttack {
       if (!meleePass) continue;
       if (!ai.inSight || !withinYaw(ai.yaw, dx, dz, ATTACK_YAW_DEG)) continue;
       if (dist > MELEE_DISTANCE) continue;
-      const strike = STRIKES[Math.floor(this.rolls() * STRIKES.length)];
-      if (machineAttack(this.machine, strike)) {
-        this.firedRanged = false;
-        this.meleeTimer = resetMeleeTimer(this.playerLevel, this.reflexes, this.rolls());
+      // MeleeAnimation (:151-176) has now returned TRUE, so FixedUpdate
+      // :85 calls ResetMeleeTimer UNCONDITIONALLY - even when the state
+      // change it just asked for did nothing. Classic mobiles have ONE
+      // PrimaryAttack and ChangeEnemyState (MobileUnit :143-146) "only
+      // changes if in a different state", so a melee decision landing
+      // mid-melee-swing re-arms the timer and nothing else; landing
+      // mid-BOW-release cuts the release short and starts the strike
+      // (FPSWeapon's no-interrupt rule in machineAttack is the
+      // PLAYER's screen weapon, not the mobile's).
+      if (!oneShot || this.firedRanged) {
+        if (oneShot) { this.machine.state = 'Idle'; this.machine.acc = 0; }
+        const strike = STRIKES[Math.floor(this.rolls() * STRIKES.length)];
+        if (machineAttack(this.machine, strike)) this.firedRanged = false;
       }
+      this.meleeTimer = resetMeleeTimer(this.playerLevel, this.reflexes, this.rolls());
     }
     return machineStep(this.machine, dt, this.liveSpeed);
   }

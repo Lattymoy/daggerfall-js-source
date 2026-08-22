@@ -11,13 +11,19 @@ test('bows: the 6..51.2 band owns the archer - 1/32 cadence inside, melee fallba
   // C-slice (AUDIT 23 combat-3): EnemyMotor.DoRangedAttack:570-614.
   // At liveSpeed 200 a full strike completes INSIDE one 66ms tick -
   // state snapshots miss it, so the pins are the EVENTS.
-  const mkAi = (dist, yaw = 0) => ({ _dist: dist, feet: [0, 0, 0], yaw, inSight: true });
+  // AUDIT 24 characters-3: DoRangedAttack's gate is
+  // `inRange && TargetInSight && DetectedTarget` (EnemyMotor.cs:573)
+  // and the call only happens while CanAct holds, which HandleNoAction
+  // (:357-364) drops the moment GiveUpTimer reaches 0 - so a sound
+  // archer fixture must carry BOTH.
+  const mkAi = (dist, yaw = 0, extra = {}) =>
+    ({ _dist: dist, feet: [0, 0, 0], yaw, inSight: true, detected: true, giveUpTimer: 200, ...extra });
   const player = [0, 0, 10];   // straight ahead (yaw 0 faces +z)
-  const run = (ranged, dist, { yaw = 0, rolls = () => 0.0 } = {}) => {
+  const run = (ranged, dist, { yaw = 0, rolls = () => 0.0, ai: aiOver = {} } = {}) => {
     const a = new EnemyAttack({ liveSpeed: 200, playerLevel: 1, reflexes: 2, rolls });
     a.rangedAttack = ranged;
     a.meleeTimer = 0;
-    const ai = mkAi(dist, yaw);
+    const ai = mkAi(dist, yaw, aiOver);
     const events = [];
     for (let i = 0; i < 120; i++) events.push(...a.update(1 / 15, ai, player));
     return { a, events, fired: events.includes('hit') };
@@ -38,6 +44,15 @@ test('bows: the 6..51.2 band owns the archer - 1/32 cadence inside, melee fallba
   assert.equal(run(true, 4).fired, false, 'inside 6m the bow is silent; 4m is beyond melee reach');
   // beyond 51.2m: silent
   assert.equal(run(true, 60).fired, false, 'beyond the band the bow is silent');
+  // AUDIT 24 characters-3: the two gates the band arm used to be missing.
+  // UNDETECTED (a Chameleoned player is in sight but not detected):
+  // DetectedTarget is false, so DFU's archer holds fire.
+  assert.equal(run(true, 10, { ai: { detected: false } }).fired, false,
+    'in sight but undetected: DoRangedAttack:573 refuses');
+  // GIVEN UP (200 undetected classic ticks): CanAct is false, so
+  // TakeAction - and DoRangedAttack with it - never runs at all.
+  assert.equal(run(true, 10, { ai: { giveUpTimer: 0 } }).fired, false,
+    'GiveUpTimer at 0: HandleNoAction has dropped CanAct');
   // the MELEE FALLBACK: an archer at reach swings like anyone
   const close = run(true, 2.0);
   assert.equal(close.fired, true, 'an archer at 2m fights melee');

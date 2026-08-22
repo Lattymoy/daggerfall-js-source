@@ -1029,11 +1029,12 @@ export function createWorldModes(host) {
       // P11 host parity (2026-08-16 audit: the standalone ?dungeon
       // scene wired swim/levitate but THIS host never did - a
       // world-mode dungeon sank the player under water at walk
-      // speed): the swim toggle (center + 50*GS - 0.95 below the
-      // block water surface), the Levitate/waterWalking consumers.
+      // speed): the swim toggle (the LIVE capsule centre + 50*GS -
+      // 0.95 below the block water surface - AUDIT 24 player), the
+      // Levitate/waterWalking consumers.
       const surf = dungeonCtx.waterSurfaceYAt(player.pos[0], player.pos[2]);
       player.waterSurfaceY = surf;
-      player.swimming = surf != null && player.pos[1] + 0.9 + 50 * 0.025 - 0.95 < surf;
+      player.swimming = surf != null && player.pos[1] + player.height / 2 + 50 * 0.025 - 0.95 < surf;
       player.levitating = dungeonCtx.playerLevitating();
       player.waterWalking = dungeonCtx.playerWaterWalking();
     } else {
@@ -1186,7 +1187,7 @@ export function createWorldModes(host) {
       // drawn over the dungeon, and in ?world the streaming recenter
       // fed dungeon-local coordinates.
       if (dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)
-      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD'));   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
+      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, keys.has('KeyW') || keys.has('KeyA') || keys.has('KeyS') || keys.has('KeyD'), player.height);   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       if (dungeonCtx.waterQuads.length) {
         renderer.drawWater(dungeonCtx.waterQuads, DUNGEON_WATER_COLOR,
           renderer.textures.get(`${dungeonReturn.waterArchive}_0`),

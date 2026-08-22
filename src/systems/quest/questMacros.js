@@ -230,6 +230,11 @@ const capFirst = (s) => s.substring(0, 1).toUpperCase() + s.substring(1);
 let idRegion = -1;
 export const setIdRegion = (v) => { idRegion = v; };
 
+/** CapFirst over a source method's answer, leaving a null/non-string
+ *  miss alone - MacroHelper's *Cap handlers all read
+ *  `if (mcp == null) return null; return CapFirst(...)`. */
+const cap = (p) => (typeof p === 'string' ? capFirst(p) : p);
+
 const HANDLERS = {
   '%pcn': (mcp, hooks) => hooks?.playerName?.() ?? null,
   '%pcf': (mcp, hooks) => {
@@ -308,7 +313,18 @@ const HANDLERS = {
   },
   '%pg3': (mcp, hooks) =>
     (hooks?.playerGender?.() === 'female') ? EN.pronounHer2 : EN.pronounHis,
-  '%G': (mcp) => { const p = call(mcp, 'pronoun'); return typeof p === 'string' ? capFirst(p) : p; },
+  // AUDIT 24 systems: MacroHelper.cs:240-245 registers ALL SIX
+  // capitalized forms, each CapFirst over the same source method as
+  // its lowercase twin (Pronoun3Cap :1355-1359 and friends). The port
+  // carried only %G, so the corpus's fourteen %G3 lines and one %G1
+  // line rendered the literal "%G3[undefined]" / "%G1[undefined]"
+  // through the getContextValue miss arm.
+  '%G': (mcp) => cap(call(mcp, 'pronoun')),
+  '%G1': (mcp) => cap(call(mcp, 'pronoun')),
+  '%G2': (mcp) => cap(call(mcp, 'pronoun2')),
+  '%G2self': (mcp) => cap(call(mcp, 'pronoun2self')),
+  '%G3': (mcp) => cap(call(mcp, 'pronoun3')),
+  '%G4': (mcp) => cap(call(mcp, 'pronoun4')),
   '%g': (mcp) => call(mcp, 'pronoun'),
   '%g1': (mcp) => call(mcp, 'pronoun'),
   '%g2': (mcp) => call(mcp, 'pronoun2'),
@@ -374,9 +390,15 @@ export function expandQuestMessage(parentQuest, tokens, revealDialogLinks = fals
       if (typeof result === 'string') words[w] = words[w].replace(macro.token, result);
       if (revealDialogLinks && macro.type === MACRO_TYPES.NameMacro1) {
         const hooks = parentQuest.hooks;
-        if (resource.isPlace) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Location', false);
-        else if (resource.isPerson) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Person', false);
-        else if (resource.isItem) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Thing', false);
+        // AUDIT 24 systems: the reveal arms take the THREE-argument
+        // overload (QuestMacroHelper.cs:131/:135/:139 and :218/:222/
+        // :226), whose instantRebuildTopicLists defaults to TRUE
+        // (TalkManager.cs:2222) - so the open talk window's listbox
+        // refreshes on the spot. Only the AddDialog quest ACTION
+        // passes false (AddDialog.cs:73), and actions.js still does.
+        if (resource.isPlace) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Location');
+        else if (resource.isPerson) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Person');
+        else if (resource.isItem) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Thing');
       }
     }
     token.text = words.join(' ');
@@ -419,9 +441,9 @@ export function expandLetterSignoff(parentQuest, tokens) {
               if (typeof result === 'string') words[w] = words[w].replace(macro.token, result);
               if (macro.type === MACRO_TYPES.NameMacro1) {
                 const hooks = parentQuest.hooks;
-                if (resource.isPlace) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Location', false);
-                else if (resource.isPerson) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Person', false);
-                else if (resource.isItem) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Thing', false);
+                if (resource.isPlace) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Location');
+                else if (resource.isPerson) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Person');
+                else if (resource.isItem) hooks?.addDialog?.(parentQuest.uid, macro.symbol, 'Thing');
               }
             }
           }

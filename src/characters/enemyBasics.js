@@ -1679,7 +1679,8 @@ export const ENEMY_BASICS = Object.freeze({
   'femaleTexture': 0,
   'behaviour': 'General',
   'affinity': 'None',
-  'minMetalToHit': 0
+  'minMetalToHit': 0,
+  'team': 'PlayerEnemy'
  },
  '40': {
   'maleTexture': 295,

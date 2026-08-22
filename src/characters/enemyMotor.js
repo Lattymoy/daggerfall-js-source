@@ -537,7 +537,19 @@ export class EnemyAI {
     // NO gravity - except flyerFalls (paralysis) which drops them.
     if (this.flies && !paralyzed) {
       this.velY = 0;
-      if (!this.moving) return;   // hover in place (turning included)
+      // CH3 (AUDIT 24 characters-1): ApplyFallDamage's SECOND arm -
+      // `else if ((flies && !flyerFalls) || IsLevitating ||
+      // IsSlowFalling) LastGroundedY = transform.position.y`
+      // (EnemyMotor.cs:1414-1417), with the source's own note "for
+      // flying enemies, lastGroundedY is really lastAltitudeControlY".
+      // A HOVERING flyer re-anchors to its current altitude every
+      // FixedUpdate, so the drop a knocked or paralyzed flyer is
+      // billed for measures from the altitude at the instant flight
+      // stopped - never from the last floor it happened to stand on.
+      // The arm runs after TakeAction, so the anchor is the POST-move
+      // altitude; `flies && !flyerFalls` is exactly this branch,
+      // knockback and paralysis both having returned above.
+      if (!this.moving) { this.lastGroundedY = this.feet[1]; return; }   // hover in place (turning included)
       const d = this._dir3(playerFeet);
       // "Stop fliers from moving too near the floor during combat":
       // descending with ground inside (height/2 + 1) below the center
@@ -549,6 +561,7 @@ export class EnemyAI {
         if (Number.isFinite(hit)) d[1] = FLYER_FLOOR_LIFT;
       }
       this.collider.move(this.feet, d[0] * this.speed * dt, d[1] * this.speed * dt, d[2] * this.speed * dt);
+      this.lastGroundedY = this.feet[1];   // the altitude-control anchor, post-move
       return;
     }
 
@@ -577,9 +590,10 @@ export class EnemyAI {
    *  refreshes LastGroundedY; the grounded EDGE after airborne
    *  measures the drop and reports a past-threshold landing through
    *  landedFall (the host bills the damage + the clip). A flyer's
-   *  hover never touches this - only ground contacts do, so a
-   *  knocked-down flyer measures from its LAST ground height,
-   *  verbatim. */
+   *  hover does not come through here - the hover branch re-anchors
+   *  lastGroundedY itself, per ApplyFallDamage's second arm, so a
+   *  knocked-down flyer measures from the altitude it was FLYING at,
+   *  not from the last floor it stood on. */
   _trackFall(grounded) {
     if (grounded) {
       if (this._airborne) {
