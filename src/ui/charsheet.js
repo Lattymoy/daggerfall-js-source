@@ -33,7 +33,7 @@ import { SKILL_NAMES } from '../systems/skills.js';
 import { applyLevelUp, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../systems/advancement.js';
 import { drawText, measureText } from './text.js';
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
-import { drawMenuBackdrop } from './chargenArt.js';
+import { drawScreenDimBackdrop } from './chargenArt.js';
 import { drawPaperDoll, refreshPaperDoll, PAPERDOLL_ORIGIN } from './paperDoll.js';
 import { maxFatigue, liveStat } from '../systems/statMods.js';
 import { templateByIndex } from '../systems/itemTemplates.js';
@@ -249,7 +249,10 @@ export class CharSheet {
     // brightness around the panel, which is the SAME defect U21 fixed for
     // the menu, U21b for chargen and U22 for the splash. Fourth, fifth and
     // sixth instance; one shared helper now.
-    drawMenuBackdrop(renderer, canvas);
+    // AUDIT 24 ui: this window's Setup assigns
+    // `ParentPanel.BackgroundColor = ScreenDimColor` (DaggerfallCharacterSheetWindow.cs:105),
+    // which is Color.clear - the letterbox is NOT painted.
+    drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, 0, 0);
     // The verbatim label geometry (DaggerfallCharacterSheetWindow)
     const label = (text, x, y, opts) => shadowText(renderer, font, String(text), m, x, y, opts);

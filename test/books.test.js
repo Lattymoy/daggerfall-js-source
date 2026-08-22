@@ -167,6 +167,38 @@ test('books: the layout law is ConvertTokensToString - NewLine breaks, justify i
   ]);
 });
 
+test('AUDIT 24: a BLANK LINE resets the sticky alignment to Left', () => {
+  // CreateBookLabels splits Content on newline and converts each line;
+  // an empty line converts to null (DaggerfallStringTableImporter.cs:
+  // 180-181), and that arm adds a Left-aligned empty label and then
+  // "also resets alignment, color, scale" - DFU's own comment
+  // (DaggerfallBookReaderWindow.cs:221-228). The port carried the
+  // centring straight across the blank line, so a centred title
+  // centred the whole rest of the book.
+  const bf = new BookFile();
+  bf.load(buildBook({ pages: [new Uint8Array([
+    ...text('A TITLE'), RSC.JustifyCenter, RSC.NewLine,
+    RSC.NewLine,
+    ...text('the body'), RSC.NewLine,
+    ...text('still left'), RSC.NewLine, RSC.EndOfPage,
+  ])] }), 'BOK00000.TXT');
+  assert.deepEqual(layoutBookLines(bf).map((l) => [l.text, l.center]), [
+    ['A TITLE', true],
+    ['', false],
+    ['the body', false],
+    ['still left', false],
+  ]);
+  // ...and a line that carries a token is NOT an empty line: the
+  // centring survives a bare justify token, as C#'s else-arm does.
+  const keep = new BookFile();
+  keep.load(buildBook({ pages: [new Uint8Array([
+    ...text('T'), RSC.JustifyCenter, RSC.NewLine,
+    RSC.JustifyCenter, RSC.NewLine,
+    ...text('body'), RSC.NewLine, RSC.EndOfPage,
+  ])] }), 'BOK00000.TXT');
+  assert.deepEqual(layoutBookLines(keep).map((l) => l.center), [true, true, true]);
+});
+
 test('books: an empty book scrolls nowhere and a corrupt page offset reads empty, never throws', () => {
   const bf = new BookFile();
   bf.load(buildBook({ pages: [] }), 'BOK00002.TXT');

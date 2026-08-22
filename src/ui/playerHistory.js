@@ -58,20 +58,20 @@ export class PlayerHistoryWindow {
 
   /** MoveNextPage (:183-192). Paging is by WHOLE pages, and the last
    *  page will not advance - there is no wrap. */
-  nextPage() {
+  nextPage(sound = true) {
     if (this.pageStartLine + MAX_PAGE_LINES < this.lines.length) {
       this.pageStartLine += MAX_PAGE_LINES;
-      audio.playOneShot(SOUND.OpenBook, 1);
+      if (sound) audio.playOneShot(SOUND.OpenBook, 1);
       return true;
     }
     return false;
   }
 
   /** MovePreviousPage (:194-203). */
-  prevPage() {
+  prevPage(sound = true) {
     if (this.pageStartLine !== 0) {
       this.pageStartLine -= MAX_PAGE_LINES;
-      audio.playOneShot(SOUND.OpenBook, 1);
+      if (sound) audio.playOneShot(SOUND.OpenBook, 1);
       return true;
     }
     return false;
@@ -96,7 +96,10 @@ export class PlayerHistoryWindow {
     return false;
   }
 
-  wheel(dy) { return dy > 0 ? this.nextPage() : this.prevPage(); }
+  // AUDIT 24 ui: the OpenBook one-shot belongs to the two BUTTON
+  // handlers (:83, :92); NativePanel_OnMouseScrollDown/Up (:97-111)
+  // just page and re-layout, silently.
+  wheel(dy) { return dy > 0 ? this.nextPage(false) : this.prevPage(false); }
 
   /** Every DFU button rect is answered or consumed, so a click can
    *  never fall through to the host's pointer-lock request - the same

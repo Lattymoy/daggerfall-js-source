@@ -145,6 +145,79 @@ spot. The port passed false at all six sites, stranding the rebuild flags
 for whatever instant rebuild came next. Only the AddDialog quest ACTION
 passes false (AddDialog.cs:73) - and actions.js still does.
 
+## Wave 2 - the UI group (2026-08-22)
+
+**A horse or cart could be Removed out of the pack.** The Remove arm's
+call is `TransferItem(item, localItems, remoteItems, canHold, true)`
+(DaggerfallInventoryWindow.cs:1999) - the fifth positional is
+blockTransport, and TransferItem's first statement returns silently for
+any ItemGroups.Transportation item (:1460-1462). The port had no group
+test at all, so a Small_cart could be dropped on the ground, into a loot
+pile, or into the wagon it is the key to - and `_hasCart()` reads the
+bag, so that last one locked the player out of the wagon now holding it.
+
+**The journal filtered on formatting names nothing emits.**
+SetTextWithListEntries counts five formattings (:658-662); the port
+spelled three of them with C#'s enum names - `textHighlight`,
+`textAnswer`, `textQuestion` - while the notebook files
+`highlight`/`question`/`answer` (notebook.js:8-9). Every note and every
+finished-quest entry silently lost its date/city header: not drawn, and
+not counted against the page's line budget.
+
+**The journal body drew a black shadow at a fractional row pitch.**
+questLogLabel never sets ShadowColor, so it keeps
+DaggerfallDefaultShadowColor = Color32(93, 77, 12)
+(MultiFormatTextLabel.cs:37, handed to every child at :232) - the port
+hard-coded opaque black. And MultiFormatTextLabel.NewLine advances by
+`lastLabel.TextHeight`, which is `(int)(totalHeight * textScale)`
+(TextLabel.cs:146-148): at textScaleSmall 0.8 that is 5, not 5.6. The
+float pitch drifted the 28th small row about 17px down, past the bottom
+of the 238x138 log panel.
+
+**Eighteen windows do not paint their letterbox at all, and there is no
+dim.** ScreenDimColor lives on DaggerfallPopupWindow, not DaggerfallUI,
+and it is Color.clear: the old `new Color32(0, 0, 0, 128)` is commented
+out one line above the field (:26-27), the property setter DISCARDS its
+argument (`set { screenDimColor = Color.clear;/*value*/; }`, :34), and
+the constructor forces `a = 0` (:57). Eighteen windows assign it to
+their parent panel in Setup, among them the inventory (:294), the
+character sheet (:105), the talk window (:398), the journal (:95) and
+the trade window (:199) - so the game view behind them shows through.
+The port painted all five opaque black on a comment asserting the
+inverse of what those files say, and dimmed three chargen screens 50%
+where DFU dims by nothing.
+
+This is the SECOND correction to the same law. AUDIT 19 F2 found the
+port drawing a 50% dim where the base window is Color.black and made a
+RULE of it, whose comment read "ScreenDimColor is used only by the few
+windows that explicitly override it, and none of these is one". Those
+four windows are exactly the ones that override it. The rule survives -
+the backdrop goes through one shared helper - but which colour the
+helper paints is each window's own C# to answer, and the pin now says
+so on both sides.
+
+**Three smaller ones.** The wagon button played two overlapping
+ButtonClicks, because `_wagon()` played one of its own on top of the
+click loop's - WagonButton_OnMouseClick plays exactly one, at the end
+(:1242). It also never lit: ShowWagon(true) sets
+`wagonButton.BackgroundTexture = wagonSelected` (:1051), a selected
+state of its own, so nothing on screen distinguished wagon mode from the
+ground pile. And a special-advantage label's clickable band is the
+label's own Rectangle - font.GlyphHeight, and SmallFont is FONT0002,
+whose FixedHeight is 5. The port used the 6px tandem row PITCH, so a
+click in the 1px gap below a row removed the advantage above it.
+
+**The book reader kept centring across a blank line.** CreateBookLabels
+splits Content on newline; a line that converts to no tokens takes the
+empty-line arm, which adds a Left-aligned label and then resets
+alignment, colour and scale - DFU's own comment says so
+(DaggerfallBookReaderWindow.cs:221-228). Stickiness holds only to the
+next blank line. Without it, a centred title centred the whole book.
+
+**The history wheel sounded.** The OpenBook one-shot belongs to the two
+button handlers (:83, :92); NativePanel_OnMouseScrollDown/Up (:97-111)
+page and re-layout in silence.
+
 ## Pins
 
 Four pins were written per finding-group and each was verified by

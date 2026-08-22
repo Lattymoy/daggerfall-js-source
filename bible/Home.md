@@ -326,8 +326,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/talkSession.js:21` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 - `src/systems/useItem.js:234` - lantern's and refuses when it would overflow. FLAGGED: DFU
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
-- `src/ui/chargenArt.js:697` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
-- `src/ui/chargenArt.js:829` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
+- `src/ui/chargenArt.js:710` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
+- `src/ui/chargenArt.js:842` - *  from the difficulty law). FLAGGED: the dagger's one-second fading
 - `src/ui/guildServiceWindow.js:33` - FLAGGED: DFU binds each button to a DaggerfallShortcut hotkey
 - `src/ui/inventory.js:2` - overlay-seam windows in classic text (backgrounds FLAGGED pending
 - `src/ui/inventory.js:11` - Enter readies one (retires ?spell). INTERIM loud: with no
@@ -339,8 +339,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/nativeInventory.js:41` - still said Equip and equip-after-transfer were FLAGGED after U8g
 - `src/ui/nativeInventory.js:134` - *  is 0 until those effect channels exist (FLAGGED). Exported so the
 - `src/ui/nativeInventory.js:247` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
-- `src/ui/nativeInventory.js:466` - field is INTERIM-pending with the local Remove split.
-- `src/ui/nativeInventory.js:607` - FLAGGED: the hover fill is the mouse-move seam's, not this
+- `src/ui/nativeInventory.js:481` - field is INTERIM-pending with the local Remove split.
+- `src/ui/nativeInventory.js:635` - FLAGGED: the hover fill is the mouse-move seam's, not this
 - `src/ui/nativeTalk.js:29` - INTERIM no-ops (their topic sources pend quests/work).
 - `src/ui/nativeTalk.js:182` - lands with the Tell-me-about slice (FLAGGED).
 - `src/ui/nativeTalk.js:196` - Tell me about / People / Things / Work: INTERIM no-ops (pend)

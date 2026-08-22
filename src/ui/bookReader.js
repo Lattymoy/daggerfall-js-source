@@ -71,13 +71,29 @@ export const bookArtLoaded = () => !!_art;
 export function layoutBookLines(bookFile) {
   const lines = [];
   let current = { text: '', center: false, font: 0 };
-  let alignCenter = false, font = 0;
+  let alignCenter = false, font = 0, lineTokens = 0;
+  // AUDIT 24 ui: the stickiness holds only until an EMPTY LINE.
+  // CreateBookLabels splits Content on '\n' and runs
+  // ConvertStringToRSCTokens per line; an empty string converts to null
+  // (DaggerfallStringTableImporter.cs:180-181), and that arm adds a
+  // Left-aligned empty label and then resets alignment, colour and
+  // scale - DFU's own comment says so
+  // (DaggerfallBookReaderWindow.cs:221-228). A line that produced NO
+  // tokens at all is that line; one carrying only a justify token is
+  // not. Without the reset a centred heading followed by a blank line
+  // centred the whole rest of the book.
   const flush = () => {
+    if (lineTokens === 0) {
+      current.center = false; current.font = 0;
+      alignCenter = false; font = 0;
+    }
     lines.push(current);
     current = { text: '', center: alignCenter, font };
+    lineTokens = 0;
   };
   for (let page = 0; page < bookFile.pageCount; page++) {
     for (const token of bookFile.getPageTokens(page) ?? []) {
+      if (token.formatting !== RSC.NewLine) lineTokens++;
       if (token.formatting === TOKEN_TEXT) {
         current.text += token.text;
       } else if (token.formatting === RSC.NewLine) {

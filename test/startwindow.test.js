@@ -6,7 +6,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { StartWindow, START_BUTTONS, START_IMG } from '../src/ui/startWindow.js';
-import { NATIVE_W, NATIVE_H, nativeMetrics } from '../src/ui/nativePanel.js';
+import { NATIVE_W, NATIVE_H, nativeMetrics, SCREEN_DIM } from '../src/ui/nativePanel.js';
 import { ImgFile } from '../src/formats/imgFile.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
 
@@ -480,31 +480,48 @@ test('AUDIT 19 F5: the MENU blacks its own letterbox', () => {
   assert.deepEqual(quads[0].color, [0, 0, 0, 1], 'and it is OPAQUE black, not a dim');
 });
 
-test('AUDIT 19 F2: EVERY native window blacks its letterbox - the rule, not a list', () => {
-  // This defect has now been found FOUR times: the menu (U21), chargen
-  // (U21b), the splash (U22) and finally the char sheet, inventory, talk
-  // and trade windows - which drew DaggerfallUI.ScreenDimColor (a 50% dim)
-  // where DaggerfallBaseWindow.cs:40 sets `parentPanel.BackgroundColor =
-  // Color.black`, OPAQUE. ScreenDimColor is used only by the few windows
-  // that explicitly override it, and none of these is one.
+test('AUDIT 19 F2 / AUDIT 24: the letterbox rule, and the windows C# exempts from it', () => {
+  // AUDIT 19 F2 found this defect four times (the menu, chargen, the
+  // splash, and the four native windows) and made it a RULE: a window
+  // that draws the native panel must first cover the WHOLE canvas,
+  // through the one shared helper, because DaggerfallBaseWindow.cs:40
+  // sets `parentPanel.BackgroundColor = Color.black`.
   //
-  // So this is a RULE, not four more spot checks: a window that draws the
-  // native panel must first cover the WHOLE canvas in opaque black, and
-  // the only sanctioned way to do that is the one shared helper.
-  const WINDOWS = [
+  // AUDIT 24 corrected the second half of that reasoning. F2's comment
+  // said "ScreenDimColor is used only by the few windows that
+  // explicitly override it, and none of these is one" - but the char
+  // sheet (:105), the talk window (:398), the trade window (:199), the
+  // inventory (:294) and the journal (:95) are EXACTLY those windows:
+  // each assigns `ParentPanel.BackgroundColor = ScreenDimColor` in its
+  // own Setup, and ScreenDimColor is Color.clear (DaggerfallPopupWindow
+  // .cs:27 field, :34 setter discarding its argument, :57 ctor forcing
+  // a=0, with the old Color32(0,0,0,128) commented out on :26). They
+  // paint no letterbox at all; the game view shows through.
+  //
+  // So the rule still holds - the backdrop goes through the one helper -
+  // but which COLOUR the helper paints is the window's own C# to answer.
+  const BLACK_PANEL = ['src/ui/startWindow.js', 'src/ui/titleScreen.js', 'src/ui/videoPlayer.js'];
+  const CLEAR_PANEL = [
     'src/ui/charsheet.js', 'src/ui/nativeTalk.js',
-    'src/ui/nativeTrade.js', 'src/ui/nativeInventory.js',
-    'src/ui/startWindow.js', 'src/ui/titleScreen.js', 'src/ui/videoPlayer.js',
+    'src/ui/nativeTrade.js', 'src/ui/nativeInventory.js', 'src/ui/questJournal.js',
   ];
-  for (const f of WINDOWS) {
+  for (const f of BLACK_PANEL) {
     const text = readFileSync(f, 'utf8');
     const backdrop = /drawMenuBackdrop\(renderer/.test(text)
       || /drawScreenQuad\(null, \{ x: 0, y: 0, w: canvas\.width, h: canvas\.height \}, undefined, \[0, 0, 0, 1\]\)/.test(text);
     assert.ok(backdrop, `${f} draws the native panel with no opaque backdrop`);
-    // And nobody may go back to the dim for a PARENT panel.
-    assert.ok(!/undefined, SCREEN_DIM\)/.test(text),
-      `${f}: ScreenDimColor is not DaggerfallBaseWindow's parent panel - that is Color.black`);
+    assert.ok(!/drawScreenDimBackdrop/.test(text),
+      `${f}: a plain DaggerfallBaseWindow keeps Color.black`);
   }
+  for (const f of CLEAR_PANEL) {
+    const text = readFileSync(f, 'utf8');
+    assert.ok(/drawScreenDimBackdrop\(renderer/.test(text),
+      `${f}: this window's Setup assigns ScreenDimColor - the letterbox is Color.clear`);
+    assert.ok(!/drawMenuBackdrop\(renderer/.test(text),
+      `${f}: and must NOT paint the black parent panel over it`);
+  }
+  // ...and the constant itself is Color.clear, not the commented-out dim.
+  assert.deepEqual(SCREEN_DIM, [0, 0, 0, 0]);
 });
 
 test('AUDIT 19 F10: the texture cache is keyed by SAMPLING MODE, and frees both', async () => {

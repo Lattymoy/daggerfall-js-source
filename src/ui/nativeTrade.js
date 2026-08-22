@@ -18,7 +18,7 @@
 // no-ops), the material-dye icon variants, scroll-arrow art.
 
 import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
-import { drawMenuBackdrop } from './chargenArt.js';
+import { drawScreenDimBackdrop } from './chargenArt.js';
 import { LIST_SLOTS, CELL_X, CELL_W, SLOT_H, ARROW_H, DOWN_ARROW_Y, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel } from './itemScroller.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from './text.js';
@@ -131,7 +131,10 @@ export class NativeTradeWindow {
     // brightness around the panel, which is the SAME defect U21 fixed for
     // the menu, U21b for chargen and U22 for the splash. Fourth, fifth and
     // sixth instance; one shared helper now.
-    drawMenuBackdrop(renderer, canvas);
+    // AUDIT 24 ui: this window's Setup assigns
+    // `ParentPanel.BackgroundColor = ScreenDimColor` (DaggerfallTradeWindow.cs:199),
+    // which is Color.clear - the letterbox is NOT painted.
+    drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art.base, m, 0, 0);
     const R = TRADE_RECTS;
     drawImg(renderer, _art.action, m, R.actionPanel[0], R.actionPanel[1]);

@@ -304,6 +304,14 @@ export function parseCareerData(career, list) {
 export const LABEL_ORIGIN = Object.freeze([8, 35]);
 export const LABEL_SPACING = 8;
 export const TANDEM_SPACING = 6;
+// AUDIT 24 ui: labelSpacing (8) and tandemLabelSpacing (6) are ROW
+// PITCHES, not label heights. The removal handler hangs off each
+// TextLabel (CreateCharSpecialAdvantageWindow.cs:264), so the clickable
+// band is the label's own Rectangle - TextLabel.cs:543/588 size it at
+// font.GlyphHeight, and DaggerfallUI.SmallFont is FONT0002, whose
+// FixedHeight is 5. A click in the 1px gap below a row hits nothing in
+// DFU; the port was removing the advantage.
+export const LABEL_HIT_HEIGHT = 5;
 export const MAX_LABELS = MAX_ITEMS * 2;
 
 /** DFU rebuilds the whole label block on every change: each item's

@@ -29,7 +29,7 @@
 // INTERIM no-ops (their topic sources pend quests/work).
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR } from './nativePanel.js';
-import { drawMenuBackdrop } from './chargenArt.js';
+import { drawScreenDimBackdrop } from './chargenArt.js';
 import { wrapText } from './talkWindow.js';
 import { measureText } from './text.js';
 import { audio } from '../systems/audio.js';
@@ -209,7 +209,10 @@ export class NativeTalkWindow {
     // brightness around the panel, which is the SAME defect U21 fixed for
     // the menu, U21b for chargen and U22 for the splash. Fourth, fifth and
     // sixth instance; one shared helper now.
-    drawMenuBackdrop(renderer, canvas);
+    // AUDIT 24 ui: this window's Setup assigns
+    // `ParentPanel.BackgroundColor = ScreenDimColor` (DaggerfallTalkWindow.cs:398),
+    // which is Color.clear - the letterbox is NOT painted.
+    drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, 0, 0);
     const R = TALK_RECTS;
     // NPC name CENTRED in its 197-wide panel (labelNameNPC

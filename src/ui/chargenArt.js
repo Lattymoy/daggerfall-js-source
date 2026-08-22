@@ -46,7 +46,7 @@ import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './m
 import { FACES_PER_RACE, raceById, raceArt } from '../systems/races.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { daggerY, REP_GREEN, REP_RED, REP_EXIT, REP_BAR_TOP, REP_BAR_BOTTOM, REP_GROUPS, HELP_TOPICS } from '../systems/customClass.js';   // U20a
-import { labelRows, labelFor, LABEL_ORIGIN, TANDEM_SPACING } from '../systems/specialAdvantages.js';   // U20b
+import { labelRows, labelFor, LABEL_ORIGIN, LABEL_HIT_HEIGHT } from '../systems/specialAdvantages.js';   // U20b
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 
 // DaggerfallUI.cs:52-62 - the colours these windows actually use.
@@ -77,7 +77,20 @@ export const MENU_BACKDROP = [0, 0, 0, 1];
  *  still subtracted, which is a no-op at top level and correct anywhere
  *  else. Without this the helper cannot be shared with a host that draws
  *  before the world does, and a fourth copy of the idiom gets written. */
-export function drawMenuBackdrop(renderer, canvas = null) {
+/** The eighteen windows that assign `ParentPanel.BackgroundColor =
+ *  ScreenDimColor` in their own Setup - the inventory (:294), the
+ *  character sheet (:105), the talk window (:398), the journal (:95),
+ *  the trade window (:199) and the rest - REPLACE
+ *  DaggerfallBaseWindow's black parent panel with Color.clear, so the
+ *  game view behind them shows through the letterbox. AUDIT 24 ui: the
+ *  port painted all of them opaque black on a comment asserting the
+ *  inverse of what those files say. Alpha 0 blends to nothing, so this
+ *  is the same call with the colour DFU actually uses. */
+export function drawScreenDimBackdrop(renderer, canvas = null) {
+  drawMenuBackdrop(renderer, canvas, SCREEN_DIM);
+}
+
+export function drawMenuBackdrop(renderer, canvas = null, color = MENU_BACKDROP) {
   const [ox, oy] = renderer.screenOffset ?? [0, 0];
   const w = canvas ? canvas.width : renderer.gl.drawingBufferWidth;
   const h = canvas ? canvas.height : renderer.gl.drawingBufferHeight;
@@ -85,7 +98,7 @@ export function drawMenuBackdrop(renderer, canvas = null) {
     // `0 - ox` rather than `-ox`: unary negation on 0 yields -0, which is
     // the same pixel but a different value to anything comparing rects.
     { x: 0 - ox, y: 0 - oy, w, h },
-    undefined, MENU_BACKDROP);
+    undefined, color);
 }
 export const ALT_SHADOW_1 = [44 / 255, 60 / 255, 60 / 255, 1];        // DaggerfallAlternateShadowColor1
 export const SELECTED_TEXT = [162 / 255, 36 / 255, 12 / 255, 1];      // DaggerfallDefaultSelectedTextColor
@@ -1300,7 +1313,7 @@ export function chargenHit(flow, vx, vy) {
         && lx < SPECIAL_ADV_EXIT[0] + SPECIAL_ADV_EXIT[2] && ly < SPECIAL_ADV_EXIT[1] + SPECIAL_ADV_EXIT[3]) return { advExit: true };
       for (const row of c._advRows ?? []) {
         if (lx >= LABEL_ORIGIN[0] && lx < LABEL_ORIGIN[0] + (row.w ?? 0)
-          && ly >= row.y && ly < row.y + TANDEM_SPACING) return { advRemove: row.index };
+          && ly >= row.y && ly < row.y + LABEL_HIT_HEIGHT) return { advRemove: row.index };
       }
       return null;
     }

@@ -14,9 +14,9 @@
 // and cites THIS window's :34-35 for them - the notebook was ported
 // against a screen that did not exist yet. It exists now, and imports
 // those constants from their one home rather than restating them.
-import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR } from './nativePanel.js';
 import { drawText, measureText } from './text.js';
-import { drawMenuBackdrop } from './chargenArt.js';
+import { drawScreenDimBackdrop } from './chargenArt.js';
 import { MAX_LINES_QUESTS, MAX_LINES_SMALL } from '../systems/notebook.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -162,7 +162,14 @@ export class QuestJournalWindow {
       for (const token of entries[i] ?? []) {
         if (out.length >= this.maxLines) break;
         const f = token?.formatting;
-        if (f === 'text' || f === 'newline' || f === 'textHighlight' || f === 'textAnswer' || f === 'textQuestion') {
+        // SetTextWithListEntries' five counted formattings
+        // (DaggerfallQuestJournalWindow.cs:658-662). AUDIT 24 ui: the
+        // last three were spelled with C#'s enum names, which the
+        // notebook never emits - it files 'highlight'/'question'/
+        // 'answer' (notebook.js:8-9), so every note and every
+        // finished-quest entry silently lost its date/city header,
+        // uncounted and undrawn, where DFU draws it in HighlightColor.
+        if (f === 'text' || f === 'newline' || f === 'highlight' || f === 'answer' || f === 'question') {
           out.push(String(token.text ?? ''));
         }
       }
@@ -174,7 +181,10 @@ export class QuestJournalWindow {
 
   draw(renderer, canvas, font, largeFont = null) {
     const m = nativeMetrics(canvas);
-    drawMenuBackdrop(renderer, canvas);
+    // AUDIT 24 ui: this window's Setup assigns
+    // `ParentPanel.BackgroundColor = ScreenDimColor` (DaggerfallQuestJournalWindow.cs:95),
+    // which is Color.clear - the letterbox is NOT painted.
+    drawScreenDimBackdrop(renderer, canvas);
     if (_art) drawImg(renderer, _art, m, 0, 0);
 
     // The title, centred in its panel, in the LARGE font when the host
@@ -189,12 +199,22 @@ export class QuestJournalWindow {
     // The log body.
     const [lx, ly] = JOURNAL_RECTS.log;
     const scale = this.textScale;
-    const rowH = font.fnt.fixedHeight * scale;
+    // AUDIT 24 ui: MultiFormatTextLabel.NewLine advances
+    // `cursorY += lastLabel.TextHeight + rowLeading` (:259, rowLeading
+    // 0), and TextLabel.TextHeight is `(int)(totalHeight * textScale)`
+    // (:146-148) over font.GlyphHeight - an INT. At textScaleSmall 0.8
+    // that is (int)(7 * 0.8) = 5, not 5.6: the float pitch drifted the
+    // 28th small row 17px down, past the bottom of the log panel.
+    const rowH = Math.trunc(font.fnt.fixedHeight * scale);
     const lines = this.pageLines();
     let y = ly;
     for (const line of lines) {
       if (line) {
-        drawText(renderer, font, line, m.ox + (lx + 1) * m.s, m.oy + (y + 1) * m.s, m.s * scale, [0, 0, 0, 1]);
+        // AUDIT 24 ui: questLogLabel never sets ShadowColor, so it keeps
+        // MultiFormatTextLabel.cs:37's `DaggerfallUI
+        // .DaggerfallDefaultShadowColor` = Color32(93, 77, 12) and
+        // hands it to every child label (:232) - not opaque black.
+        drawText(renderer, font, line, m.ox + (lx + 1) * m.s, m.oy + (y + 1) * m.s, m.s * scale, DEFAULT_SHADOW_COLOR);
         drawText(renderer, font, line, m.ox + lx * m.s, m.oy + y * m.s, m.s * scale, DEFAULT_TEXT_COLOR);
       }
       y += rowH;

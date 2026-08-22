@@ -50,7 +50,7 @@ import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './m
 import { useItem, isLightSource } from '../systems/useItem.js';   // U25
 import { itemInfoRows, INFO_TEXT } from '../systems/itemInfo.js';   // U25
 import { goldAmount, deductGold } from '../systems/court.js';
-import { drawMenuBackdrop } from './chargenArt.js';
+import { drawScreenDimBackdrop } from './chargenArt.js';
 import { addItem, isEnchanted, goldStack, canHoldAmount, effectiveUnitWeightInKg, totalWeight } from '../systems/inventory.js';   // L-slice (items-9)
 import { maxEncumbrance } from '../combat/formulas.js';   // L-slice (items-9)
 import { liveStat } from '../systems/statMods.js';   // L-slice (items-9)
@@ -317,9 +317,13 @@ export class NativeInventoryWindow {
   /** WagonButton_OnMouseClick (:1234-1243), whole at last: no cart ->
    *  the noWagon box; inside a dungeon away from the exit ->
    *  exitTooFar; else ShowWagon toggles the remote target. The click
-   *  sound plays on every arm (:1242). */
+   *  sound plays on every arm (:1242) - from the caller, once. */
   _wagon() {
-    audio.playOneShot(SOUND.ButtonClick, 1);
+    // AUDIT 24 ui: the sound is the click LOOP's (:1242, played once at
+    // the end of WagonButton_OnMouseClick, whichever arm ran). This
+    // method used to play a second one of its own, so the wagon button
+    // fired two overlapping ButtonClicks where every other button
+    // fires one.
     if (!this._hasCart()) { this.boxes = [{ rows: [{ text: NO_WAGON_TEXT, center: true }] }]; return; }
     if (this.hooks.dungeon?.inside && !this.allowDungeonWagonAccess) {
       this.boxes = [{ rows: [{ text: EXIT_TOO_FAR_TEXT, center: true }] }];
@@ -379,6 +383,17 @@ export class NativeInventoryWindow {
     if (!it) return;
     if (this.mode === 'info') { this._info(it); return; }
     if (this.mode === 'remove') {
+      // AUDIT 24 ui: the Remove arm's call is
+      // `TransferItem(item, localItems, remoteItems, canHold, true)`
+      // (DaggerfallInventoryWindow.cs:1999) - the 5th positional is
+      // blockTransport, and TransferItem's FIRST statement is
+      // `if (blockTransport && item.ItemGroup == Transportation)
+      // return;` (:1460-1462). Silently: above the click sound, which
+      // DoTransferItem plays further down. A horse or cart can never
+      // leave the pack this way - and the port's own _hasCart() reads
+      // the bag, so dropping the cart into its own wagon locked the
+      // player out of the wagon now holding it.
+      if (it.group === 'Transportation') return;
       // LocalItemListScroller_OnItemClick Remove: transfer to the
       // remote items (whole stacks - the split popup pends).
       // W-slice: INTO THE WAGON the 750kg cart limit gates first
@@ -572,7 +587,10 @@ export class NativeInventoryWindow {
     // brightness around the panel, which is the SAME defect U21 fixed for
     // the menu, U21b for chargen and U22 for the splash. Fourth, fifth and
     // sixth instance; one shared helper now.
-    drawMenuBackdrop(renderer, canvas);
+    // AUDIT 24 ui: this window's Setup assigns
+    // `ParentPanel.BackgroundColor = ScreenDimColor` (DaggerfallInventoryWindow.cs:294),
+    // which is Color.clear - the letterbox is NOT painted.
+    drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art.base, m, 0, 0);
     // the selected tab + action mode: the INVE01I0 subrect back over
     // the base (DFU's GetSubTexture highlight)
@@ -580,6 +598,16 @@ export class NativeInventoryWindow {
     drawImgSub(renderer, _art.gold, m, tr[0], tr[1], tr[2], tr[3]);
     const mr = INV_RECTS[this.mode];
     drawImgSub(renderer, _art.gold, m, mr[0], mr[1], mr[2], mr[3]);
+    // AUDIT 24 ui: the wagon button carries its OWN selected state,
+    // independent of the action mode - ShowWagon(true) sets
+    // `wagonButton.BackgroundTexture = wagonSelected` (:1051) and the
+    // hide arm (:1062) / OnPush (:640) put it back. Without it nothing
+    // on screen distinguished wagon mode from the ground pile, even
+    // after CheckWagonAccess auto-opened onto the wagon.
+    if (this.usingWagon) {
+      const wr = INV_RECTS.wagon;
+      drawImgSub(renderer, _art.gold, m, wr[0], wr[1], wr[2], wr[3]);
+    }
     // U8f/U8g: the paperdoll at (49,13); U8h: the armor value labels
     // (RefreshArmourValues - (100 - av)/5 per body part; the
     // drained/increased colors pend their effect channels)

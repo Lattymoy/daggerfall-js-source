@@ -23,7 +23,16 @@ export const NATIVE_W = 320;
 export const NATIVE_H = 200;
 export const DEFAULT_TEXT_COLOR = [243 / 255, 239 / 255, 44 / 255, 1];
 export const DEFAULT_SHADOW_COLOR = [93 / 255, 77 / 255, 12 / 255, 1];
-export const SCREEN_DIM = [0, 0, 0, 0.5];   // DaggerfallUI.ScreenDimColor
+// AUDIT 24 ui: there is no DaggerfallUI.ScreenDimColor - the field lives
+// on DaggerfallPopupWindow (:27) and it is Color.clear. The old
+// `new Color32(0, 0, 0, 128)` is COMMENTED OUT one line above it, the
+// property setter discards whatever it is handed (`set { screenDimColor
+// = Color.clear;/*value*/; }`, :34), and the constructor forces
+// `screenDimColor.a = 0` (:57). So every `parentPanel.BackgroundColor =
+// ScreenDimColor` in DFU means "paint nothing at all": the window under
+// a popup is NOT dimmed, and the eighteen windows that assign it to
+// their parent panel do not paint their letterbox either.
+export const SCREEN_DIM = [0, 0, 0, 0];   // DaggerfallPopupWindow.ScreenDimColor = Color.clear
 
 export function nativeMetrics(canvas) {
   const s = Math.max(1, Math.floor(Math.min(canvas.width / NATIVE_W, canvas.height / NATIVE_H)));
