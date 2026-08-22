@@ -529,12 +529,23 @@ test('setupIndividualStaticNPC: away disables the home copy; at home a behaviour
   assert.ok(behaviour instanceof QuestResourceBehaviour);
   assert.equal(behaviour.targetSymbol?.name, 'ind', 'assigned to the first active faction Person');
   assert.equal(home.person.questResourceBehaviour, behaviour, 'coupled back');
+  // AUDIT 24 (the seven-slice sweep): and CACHED. C# gets Start() for
+  // free - AddComponent schedules it and Unity runs it on the next
+  // frame, after the AssignResource - which is why
+  // QuestResourceBehaviour.Start warns "This will fail if targetQuest
+  // and targetSymbol are not set before Start()". The port's stand-in
+  // is an explicit start(), which sceneMount calls at all three of its
+  // mints and this one did not, so the bootstrap behaviour came back
+  // permanently uncoupled with targetResource null - and it exists
+  // precisely to carry the follow-up-quest bootstrap CLICK.
+  assert.equal(behaviour.targetResource, home.person, 'CacheTarget ran - the link is live');
 
   // no active persons: the bare bootstrap behaviour still attaches
   const m2 = new QuestMachine({ world: { getFactionData: () => ({ id: 305, type: FACTION_TYPES.Individual }) } });
   const bare = m2.setupIndividualStaticNPC(makeHost(), 305);
   assert.ok(bare instanceof QuestResourceBehaviour);
   assert.equal(bare.questUID, 0, 'unassigned until a quest uses the NPC');
+  assert.equal(bare.targetResource, null, 'and start() on an unassigned one is its own no-op, as C#\'s deferred Start is');
 
   assert.equal(away.m.setupIndividualStaticNPC(makeHost(), 510), true, 'a non-individual answers plain true');
 });

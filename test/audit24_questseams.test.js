@@ -227,3 +227,37 @@ test('audit24: a late destroy event cannot null a RECOUPLED resource link', asyn
   r._onBehaviourDestroyed(newB);
   assert.equal(r._questResourceBehaviour, null, 'and its own destroy still clears it');
 });
+
+test('audit24: no action carries a createNew-only field that a RESTORE leaves undefined', async () => {
+  // A restore mints the action through its (Quest) constructor and then
+  // walks saveShape. A field that is set ONLY in createNew and is not
+  // in the shape therefore comes back UNDEFINED - and in C# it comes
+  // back 0, because it is a struct-defaulted field. PlaySound was the
+  // one: `this.timesPlayed++` ran on undefined, NaN failed
+  // `NaN <= count`, and the sound never played again for the rest of
+  // the save.
+  const src = read('src/systems/quest/actions.js');
+  const parts = src.split(/\nexport class (\w+) extends ActionTemplate \{/);
+  const offenders = [];
+  for (let i = 1; i < parts.length; i += 2) {
+    const name = parts[i];
+    let body = parts[i + 1];
+    const end = body.indexOf('\n}\n');
+    if (end > 0) body = body.slice(0, end);
+    const ctor = /constructor\([^)]*\)\s*\{([\s\S]*?)\n {2}\}/.exec(body);
+    const declared = new Set([...(ctor ? ctor[1] : '').matchAll(/this\.(\w+)\s*=/g)].map((m) => m[1]));
+    const shape = /get saveShape\(\)\s*\{ return \[([\s\S]*?)\]; \}/.exec(body);
+    const saved = new Set([...(shape ? shape[1] : '').matchAll(/\['(\w+)'/g)].map((m) => m[1]));
+    const assigned = new Set([...body.matchAll(/action\.(\w+)\s*=/g)].map((m) => m[1]));
+    const reads = new Set([...body.matchAll(/this\.(\w+)(?!\s*=)/g)].map((m) => m[1]));
+    for (const f of assigned) {
+      if (f.startsWith('_') || declared.has(f) || saved.has(f) || !reads.has(f)) continue;
+      offenders.push(`${name}.${f}`);
+    }
+  }
+  assert.deepEqual(offenders.sort(), [],
+    'a field set only in createNew must be declared in the ctor (C# gets 0 for free; JS gets undefined)');
+  // and the rule really has teeth - the sweep must be finding fields
+  assert.ok(/class PlaySound extends ActionTemplate \{[\s\S]{0,1600}this\.timesPlayed = 0;/.test(src),
+    'PlaySound, the one that had it, declares it now');
+});

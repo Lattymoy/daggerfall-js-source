@@ -1968,6 +1968,49 @@ Guarded on identity.
 
 Three mutants, three kills.
 
+### Wave 11 - a field C# gets for free, a lifecycle Unity gets for free
+
+**A RESTORED PLAYSOUND WENT NaN AND NEVER PLAYED AGAIN.** `int
+timesPlayed;` is a C# FIELD, so it is 0 before anything touches it - and
+C# is right not to save it (SaveData_v1 carries the other six). The port
+set it only in `createNew` and `rearmAction`, and a restore mints the
+action through its `(Quest)` constructor and then walks `saveShape`,
+which correctly omits it. So `this.timesPlayed++` ran on `undefined`,
+`NaN <= count` was false, and the sound went silent for the rest of the
+save. A gate now sweeps every action class for the same shape - a field
+assigned in createNew, read elsewhere, in neither the constructor nor
+the save shape. PlaySound was the only one, and it is declared now.
+
+**THE BOOTSTRAP BEHAVIOUR WAS NEVER STARTED.**
+`SetupIndividualStaticNPC` mints a QuestResourceBehaviour for EVERY
+individual NPC - "required to bootstrap quest as often questor is not
+set until after player clicks resource". C# gets `Start()` for free:
+AddComponent schedules it and Unity runs it on the next frame, AFTER
+the AssignResource, which is exactly why
+`QuestResourceBehaviour.Start` warns *"This will fail if targetQuest and
+targetSymbol are not set before Start()"*. The port's stand-in for that
+lifecycle is an explicit `start()`, which sceneMount calls at all three
+of its mints and this one did not - so the behaviour came back
+permanently uncached, `targetResource` null, and the bootstrap click it
+exists to carry could not resolve.
+
+**THE JOURNAL DREW EVERYTHING IN ONE COLOUR.**
+`MultiFormatTextLabel.SetText` (:355-371) gives each token's label its
+own colour by formatting: TextHighlight takes HighlightColor
+(219,130,40), TextQuestion and TextAnswer their own two - and Answer is
+`DaggerfallDefaultInputTextColor` (227,223,0), *not* the default text
+colour, so a naive "highlight is just brighter" would have collapsed
+them. `pageLines` flattened all five to bare strings, so the notebook's
+date/city headers, the finished-quest headers and the whole talk-arc
+Q&A drew in the default yellow. Rows carry their colour now.
+
+And the four page TITLES are Internal_Strings_en's own (ids 628, 630,
+632, 634) - two of them were the port's sentence case where the table
+title-cases both words.
+
+Three mutants, three kills; the title change is a string the gate reads
+rather than a behaviour a mutant can flip.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

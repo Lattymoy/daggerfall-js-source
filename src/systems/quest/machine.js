@@ -579,6 +579,18 @@ export class QuestMachine {
         behaviour.assignResource(person);
         person.questResourceBehaviour = behaviour;
       }
+      // AUDIT 24 (the seven-slice sweep): C# gets Start() for free -
+      // AddComponent schedules it and Unity runs it on the next frame,
+      // AFTER the AssignResource above, which is exactly why
+      // QuestResourceBehaviour.Start warns "This will fail if
+      // targetQuest and targetSymbol are not set before Start()"
+      // (:127). The port's stand-in for that lifecycle is an explicit
+      // start(), which sceneMount calls at all three of its mints and
+      // this one did not - so the bootstrap behaviour came back
+      // permanently uncached, with targetResource null. Its own guard
+      // handles the no-person case (questUID 0 returns false), which
+      // is what C#'s deferred Start does there too.
+      behaviour.start();
       return behaviour;
     }
     return true;

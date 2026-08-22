@@ -51,9 +51,26 @@ export const JOURNAL_MODES = Object.freeze(['activeQuests', 'finishedQuests', 'n
 /** The page titles. DFU pulls these through TextManager; the port has
  *  no localisation table, so the English literals live here - the same
  *  call the rest of the port's native windows make. */
+/** MultiFormatTextLabel.SetText (:355-371): one colour per formatting.
+ *  TextHighlight takes the label's HighlightColor, which defaults to
+ *  DaggerfallUI.DaggerfallHighlightTextColor (:36); TextQuestion and
+ *  TextAnswer take their own two - and Answer is
+ *  DaggerfallDefaultInputTextColor, not the default text colour. */
+export const JOURNAL_COLORS = Object.freeze({
+  text: DEFAULT_TEXT_COLOR,
+  newline: DEFAULT_TEXT_COLOR,
+  highlight: [219 / 255, 130 / 255, 40 / 255, 1],   // DaggerfallHighlightTextColor
+  question: [0.698, 0.812, 1.0, 1],                 // DaggerfallQuestionTextColor
+  answer: [227 / 255, 223 / 255, 0, 1],             // DaggerfallDefaultInputTextColor
+});
+
+/** The four page titles, verbatim from Internal_Strings_en (ids 628,
+ *  630, 632, 634) - AUDIT 24 (the seven-slice sweep): two of them were
+ *  the port's own sentence case where the table title-cases both
+ *  words. */
 const TITLES = Object.freeze({
-  activeQuests: 'Active quests',
-  finishedQuests: 'Finished quests',
+  activeQuests: 'Active Quests',
+  finishedQuests: 'Finished Quests',
   notebook: 'Notebook',
   messages: 'Messages',
 });
@@ -169,12 +186,20 @@ export class QuestJournalWindow {
         // 'answer' (notebook.js:8-9), so every note and every
         // finished-quest entry silently lost its date/city header,
         // uncounted and undrawn, where DFU draws it in HighlightColor.
+        // AUDIT 24 (the seven-slice sweep): the COLOUR rides with the
+        // line. MultiFormatTextLabel.SetText (:355-371) gives each
+        // token's label its own colour by formatting - TextHighlight
+        // takes HighlightColor, TextQuestion and TextAnswer their own
+        // two - and pageLines used to flatten all five to bare
+        // strings, so the date/city headers, the finished-quest
+        // headers and the whole talk-arc Q&A drew in the default
+        // yellow. Rows are { text, color } now; the draw reads it.
         if (f === 'text' || f === 'newline' || f === 'highlight' || f === 'answer' || f === 'question') {
-          out.push(String(token.text ?? ''));
+          out.push({ text: String(token.text ?? ''), color: JOURNAL_COLORS[f] ?? DEFAULT_TEXT_COLOR });
         }
       }
       if (out.length >= this.maxLines) break;
-      out.push('');   // the NewLineToken between entries (:602, :672)
+      out.push({ text: '', color: DEFAULT_TEXT_COLOR });   // the NewLineToken between entries (:602, :672)
     }
     return out;
   }
@@ -208,14 +233,16 @@ export class QuestJournalWindow {
     const rowH = Math.trunc(font.fnt.fixedHeight * scale);
     const lines = this.pageLines();
     let y = ly;
-    for (const line of lines) {
+    for (const row of lines) {
+      const line = row.text;
+      const color = row.color;
       if (line) {
         // AUDIT 24 ui: questLogLabel never sets ShadowColor, so it keeps
         // MultiFormatTextLabel.cs:37's `DaggerfallUI
         // .DaggerfallDefaultShadowColor` = Color32(93, 77, 12) and
         // hands it to every child label (:232) - not opaque black.
         drawText(renderer, font, line, m.ox + (lx + 1) * m.s, m.oy + (y + 1) * m.s, m.s * scale, DEFAULT_SHADOW_COLOR);
-        drawText(renderer, font, line, m.ox + lx * m.s, m.oy + y * m.s, m.s * scale, DEFAULT_TEXT_COLOR);
+        drawText(renderer, font, line, m.ox + lx * m.s, m.oy + y * m.s, m.s * scale, color);
       }
       y += rowH;
     }

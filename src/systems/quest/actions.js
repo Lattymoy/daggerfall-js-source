@@ -647,6 +647,20 @@ export class Prompt extends ActionTemplate {
 export class PlaySound extends ActionTemplate {
   static typeName = 'PlaySound';
   get saveShape() { return [['soundName'], ['soundId', 'raw', 'soundIndex'], ['interval'], ['count'], ['unknown'], ['lastTimePlayed']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    // AUDIT 24 (the seven-slice sweep): A RESTORED PlaySound WENT NaN.
+    // `int timesPlayed;` is a C# FIELD, so it is 0 before anything
+    // touches it - and C# is right not to save it (SaveData_v1 carries
+    // the other six). The port set it only in createNew and
+    // rearmAction, and a restore mints the action through the (Quest)
+    // constructor and then walks saveShape - which correctly omits it.
+    // So `this.timesPlayed++` ran on undefined, NaN failed
+    // `NaN <= count`, and the sound never played again for the rest of
+    // the save. Every other action's createNew-only field is either
+    // declared here or in its shape; a gate now keeps it that way.
+    this.timesPlayed = 0;
+  }
   get pattern() {
     return /play sound (?<sound>\w+) every (?<n1>\d+) minutes (?<count>\d+) times|play sound (?<sound2>\w+) (?<n1b>\d+) (?<n2>\d+)/;
   }

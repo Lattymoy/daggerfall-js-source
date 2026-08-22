@@ -3,7 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { NativeInventoryWindow, INV_RECTS } from '../src/ui/nativeInventory.js';
-import { QuestJournalWindow } from '../src/ui/questJournal.js';
+import { QuestJournalWindow, JOURNAL_COLORS } from '../src/ui/questJournal.js';
+import { DEFAULT_TEXT_COLOR } from '../src/ui/nativePanel.js';
 import { PlayerHistoryWindow } from '../src/ui/playerHistory.js';
 import { LABEL_HIT_HEIGHT, TANDEM_SPACING, LABEL_SPACING } from '../src/systems/specialAdvantages.js';
 import { SCREEN_DIM, DEFAULT_SHADOW_COLOR } from '../src/ui/nativePanel.js';
@@ -51,8 +52,33 @@ test('audit24 ui: the journal counts the formattings the notebook actually emits
   const w = new QuestJournalWindow({ questMessages: () => [], notebook: () => ({ getNotes: () => [entry] }) });
   w.mode = 'notebook';
   const lines = w.pageLines();
-  assert.deepEqual(lines.slice(0, 4),
+  assert.deepEqual(lines.slice(0, 4).map((r) => r.text),
     ['13 Hearthfire in Daggerfall:', 'a note', 'Q?', 'A.']);
+  // AUDIT 24: and the COLOUR rides with the row.
+  // MultiFormatTextLabel.SetText (:355-371) gives each token's label
+  // its own colour by formatting - the port flattened all five to
+  // bare strings, so the date/city headers, the finished-quest
+  // headers and the whole talk-arc Q&A drew in the default yellow.
+  assert.deepEqual(lines[0].color, JOURNAL_COLORS.highlight, 'the header is HighlightColor');
+  assert.deepEqual(lines[1].color, DEFAULT_TEXT_COLOR, 'a plain line is the default');
+  assert.deepEqual(lines[2].color, JOURNAL_COLORS.question);
+  assert.deepEqual(lines[3].color, JOURNAL_COLORS.answer);
+  // the three are DISTINCT, and answer is the INPUT colour, not the
+  // default text one - a naive "highlight is just brighter" would have
+  // collapsed them
+  const set = new Set([JOURNAL_COLORS.highlight, JOURNAL_COLORS.question,
+    JOURNAL_COLORS.answer, DEFAULT_TEXT_COLOR].map((c) => c.join(',')));
+  assert.equal(set.size, 4, 'four distinct colours');
+  assert.deepEqual(JOURNAL_COLORS.highlight, [219 / 255, 130 / 255, 40 / 255, 1]);
+  assert.deepEqual(JOURNAL_COLORS.answer, [227 / 255, 223 / 255, 0, 1]);
+  // and the four page TITLES are Internal_Strings_en's own, ids 628 /
+  // 630 / 632 / 634 - two of them were the port's sentence case where
+  // the table title-cases both words
+  const src = rd('src/ui/questJournal.js');
+  assert.match(src, /activeQuests: 'Active Quests',/);
+  assert.match(src, /finishedQuests: 'Finished Quests',/);
+  assert.match(src, /notebook: 'Notebook',/);
+  assert.match(src, /messages: 'Messages',/);
 });
 
 test('audit24 ui: the journal body shadow is the olive default, and rows advance by an INT', () => {
