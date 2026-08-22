@@ -66,7 +66,7 @@ import { isShop, isRepairShop, stockShopShelf, calculateCost, calculateTradePric
 import { LevelUpScreen } from '../ui/charsheet.js';   // AUDIT 21 hosts F3: levelling in a building
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from '../ui/nativeTrade.js';   // U8c
 // U23: the static-NPC seam and the guild service popup.
-import { STATIC_NPC_ACTIVATION_DISTANCE } from '../systems/talk.js';
+import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../systems/talk.js';
 import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects } from '../systems/guildServiceFlow.js';
 import { npcServiceKind, freeHealing, freeMagickaRecharge } from '../systems/guildServices.js';
 import { createGuildForGroup } from '../systems/guildVariants.js';
@@ -231,13 +231,20 @@ export function createWorldModes(host) {
   // host - standFoe is absent, so the walk skips the stand and the law
   // modules idle; the dungeon context's own mount pends with it.
   let questFlats = [];
-  function standQuestFlat(archive, record, position, behaviour, staticNpcFactionId = null) {
+  function standQuestFlat(archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null) {
     const ctx = interiorCtx;   // capture: an async fill must not cross interiors
     if (!ctx) return null;
     // flatPosition is already scene units with -y (the Place marker
     // law); parent it exactly as the interior's own flats are.
     const [x, y, z] = ctx.parentPt(position.x, position.y, position.z);
-    const stand = { ctx, archive, record, x, y, z, marker: position, width: 0, height: 0, batch: null, active: true, dead: false, behaviour };
+    // AUDIT 24 (wave 22): `hashPosition` is marker.flatPosition, which
+    // is what GameObjectHelper.cs:1062 hands SetLayoutData - NOT the
+    // target position it stood the billboard at. The two are the same
+    // inside a building (dungeonX/dungeonZ are 0), and differ by a
+    // whole RDB block once the dungeon mount lands, which would have
+    // given the NPC a different hash - and therefore a different
+    // nameSeed fallback and a different generated NAME - than DFU.
+    const stand = { ctx, archive, record, x, y, z, marker: hashPosition ?? position, width: 0, height: 0, batch: null, active: true, dead: false, behaviour };
     (async () => {
       const t = await getTexture(archive);
       if (!t || record >= t.recordCount || stand.dead || interiorCtx !== ctx) return;
@@ -278,8 +285,8 @@ export function createWorldModes(host) {
     currentMapId: () => questSceneCtx?.()?.mapId ?? 0,
     findBehaviours: () => sceneBehaviours(),
     loadInProgress: () => false,   // the modal host builds after a restore completes
-    standNPC: ({ person, flatData, position, behaviour }) =>
-      standQuestFlat(flatData.archive, flatData.record, position, behaviour, person?.factionId ?? null),
+    standNPC: ({ marker, person, flatData, position, behaviour }) =>
+      standQuestFlat(flatData.archive, flatData.record, position, behaviour, person?.factionId ?? null, marker?.flatPosition ?? null),
     standItem: ({ item, position, behaviour }) => {
       // AddQuestItem draws the item's WORLD texture (the ground sprite).
       const t = templateByIndex(item.daggerfallUnityItem?.templateIndex);
@@ -505,9 +512,19 @@ export function createWorldModes(host) {
     // carrying, or a castle NPC who wins its one 25% roll, opens the
     // quest OFFER instead of the conversation. Children are excluded
     // from both arms.
+    // AUDIT 24 (wave 22): EVERY TalkToStaticNPC call inside
+    // StaticNPCClick passes menu:FALSE (:1633, :1591, :1601, :1636) -
+    // this talk was not started from a popup menu, so the quest-offer
+    // window must NOT close itself when its message box closes
+    // (DaggerfallQuestOfferWindow.cs:94-97). The port passed true.
+    // And the third argument: the HolyOrder/spymaster escape hands
+    // `factionData.id == TG_Spymaster` in (:1633), which is the flag
+    // that disables the guild greeting for a spymaster reached outside
+    // the guild menu. staticNpcRoute has computed it since G8 and the
+    // call site dropped it on the floor.
     const talk = npcSession?.talkToStaticNPC(
       { data: pn, isChildNPC: !!pn.isChildNPC, displayName: pn.displayName ?? '' },
-      { menu: true });
+      { menu: false, isSpyMaster: route.spymaster === true });
     if (talk?.kind === 'questOffer' && questBridge) {
       const step = questBridge.offerSocialQuest(talk.npc ?? pn, talk.socialGroup, talk.menu);
       const boxes = questBridge.offerBoxes(step, (id) => townTalk?.lines?.(id) ?? []);
@@ -838,15 +855,26 @@ export function createWorldModes(host) {
       if (!pn.width || pn.active === false) return;   // SetActive(false) takes the collider too
       targets.push({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE });
     });
-    // Q4-v: quest stands activate like StaticNPCs (PlayerActivate's
-    // quest-resource arm; the same 256-unit reach) - a click routes
+    // Q4-v: quest stands activate like StaticNPCs - a click routes
     // QuestResourceBehaviour.DoClick.
+    // AUDIT 24 (wave 22): but only a PERSON gets the static-NPC reach.
+    // PlayerActivate.cs:326-332 gates the quest-resource arm on
+    // `!(questResourceBehaviour.TargetResource is Person)` and then
+    // measures against DefaultActivationDistance (128), half a static
+    // NPC's 256 - so a quest ITEM on the floor had twice DFU's reach.
+    // A behaviour with NO target resource takes the 128 arm too
+    // (`!(null is Person)` is true), which the ?? below preserves.
+    // DELTA (recorded): C# prints "You are too far away." and aborts
+    // the whole activation when the resource is hit beyond 128; the
+    // port's picker simply does not select it, so a too-far click
+    // falls through to whatever is behind it and says nothing.
     questFlats.forEach((s, i) => {
       if (!s.width || !s.active || s.dead) return;
+      const isPerson = s.behaviour?.targetResource?.isPerson === true;
       targets.push({
         key: `questflat:${i}`,
         aabb: { min: [s.x - s.width / 2, s.y, s.z - s.width / 2], max: [s.x + s.width / 2, s.y + s.height, s.z + s.width / 2] },
-        distance: STATIC_NPC_ACTIVATION_DISTANCE,
+        distance: isPerson ? STATIC_NPC_ACTIVATION_DISTANCE : DEFAULT_ACTIVATION_DISTANCE,
       });
     });
     const key = pickActivatable(eye, dir, targets, interiorCtx.collider);
@@ -969,6 +997,8 @@ export function createWorldModes(host) {
           // The classic-start probe never caught it because it boots
           // with &class, which takes the headless branch in both.
           chargen: false,
+          // wave 22: PopupText.AddText files into the notebook ring
+          hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
         });
       dungeonCtx = ctx;
       // P10 host parity (2026-08-16 audit: only the standalone scene

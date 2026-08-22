@@ -159,7 +159,16 @@ export function daySuffix(dayOfMonth1) {
   if (dayOfMonth1 === 3 || dayOfMonth1 === 23) return 'rd';
   return 'th';
 }
-const pad2 = (n) => String(Math.floor(n)).padStart(2, '0');
+/** AUDIT 24 (wave 22): the `{0:00}` in every one of these format
+ *  strings. .NET's custom numeric format ROUNDS (away from zero) - it
+ *  does not truncate - and DaggerfallDateTime.Second is a `float`
+ *  (:63), not an int. So at 59.5 seconds DFU really does print
+ *  `13:29:60`, and the port's Math.floor quietly corrected it to
+ *  `:59`. Hour, Minute and the day are ints on both sides, where
+ *  rounding and flooring are the same thing. Math.round is half-UP
+ *  where .NET's is half-AWAY-FROM-ZERO; a clock component is never
+ *  negative, so the two agree everywhere this is reachable. */
+const pad2 = (n) => String(Math.round(n)).padStart(2, '0');
 /** DateTimeString (:409-414) over the en table's dateTimeFormatString
  *  '{0:00}:{1:00}:{2:00} on {3}{4} of {5:00}, 3E{6}'. QUIRK KEPT: the
  *  {5:00} spec lands on the STRING MonthName - System.String is not

@@ -128,6 +128,14 @@ import { PrecipitationRenderer } from '../render/precipitation.js';
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 
+/** Internal_Strings_en 654 / 655, the two guild map-reveal notes
+ *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
+ *  DiscoverRandomLocation name. */
+const REVEAL_NOTE_TEXT = Object.freeze({
+  readMapTG: 'The Thieves Guild have revealed the closely-guarded whereabouts of a treasure trove called %map.',
+  readMapDB: 'The Dark Brotherhood revealed the secret of some treasure-laden crypts located somewhere called %map.',
+});
+
 // Milestone 9 scene: floating-origin streaming world. Terrain pixels
 // stream in nearest-first around the camera within TERRAIN_DISTANCE,
 // locations appear on their pixels, and crossing a pixel boundary
@@ -1828,6 +1836,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     midDateTimeString: () => midDateTimeString(dateFromClassicMinutes(playerTicker.classicMinutes)),
     cityName: () => _questLoc()?.name ?? questWorld.currentRegionName(),
   });
+  // AUDIT 24 (wave 22): PopupText.AddText's last line files the popup
+  // in the notebook ring (:123), which is the journal's Messages page.
+  // The notebook only exists once the bridge is built, so the sink is
+  // handed down here.
+  townTalk.hudMessageSink = (t) => questBridge?.notebook?.addMessage(t);
   if (_questStartPending) questInitAtGameStart();
   var modes = createWorldModes({
     canvas, renderer, player, cam, keys, latch, blocks,
@@ -1839,8 +1852,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // promotion reveals - candidates are the CURRENT pixel's region
     // (PlayerGPS.CurrentRegion; guild services only run inside town
     // buildings, so the pixel always carries a location). The
-    // notebook note (readMapTG/readMapDB %map) pends a notebook
-    // surface - logged loudly so the reveal is at least traceable.
+    // notebook note (readMapTG/readMapDB %map) - AUDIT 24 (wave 22):
+    // the seam it "pended" is the notebook's own addNote, which wave 4
+    // wired 340 lines above this. So the reveal has been happening and
+    // the player has had no record of WHICH dungeon was revealed since
+    // the day the guild promotions landed.
     revealLocation: (noteKey) => {
       const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
       const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;
@@ -1850,7 +1866,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         name: region.mapNames[i], regionName: region.name,
       }));
       const picked = discoverRandomLocation(rows);
-      if (picked) console.warn(`[guilds] ${noteKey}: revealed ${picked.name} (the notebook note pends its surface)`);
+      // ThievesGuild.cs:114-116 / DarkBrotherhood.cs:107-109 -
+      // `GetLocalizedText(noteKey).Replace("%map", name)`, verbatim.
+      if (picked) questBridge?.notebook?.addNote(REVEAL_NOTE_TEXT[noteKey]?.replace('%map', picked.name) ?? '');
       return picked?.name ?? null;
     },
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm

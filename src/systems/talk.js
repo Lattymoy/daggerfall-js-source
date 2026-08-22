@@ -26,6 +26,7 @@ export const MOBILE_NPC_ACTIVATION_DISTANCE = 256 * 0.025;   // 6.4
 export const RAY_DISTANCE = 3072 * 0.025;                    // 76.8 - PlayerActivate.cs:76 RayDistance (AUDIT 23 ui-native-3)
 export const STATIC_NPC_ACTIVATION_DISTANCE = 256 * 0.025;
 export const PICKPOCKET_DISTANCE = 128 * 0.025;              // 3.2
+export const DEFAULT_ACTIVATION_DISTANCE = 128 * 0.025;      // 3.2 - PlayerActivate.cs:81, the reach for everything that is not an NPC
 export const FOUND_NOTHING_VALUABLE_TEXT_ID = 8999;
 
 /** PersistentFactionData.FindFactions, verbatim (-1 = any). */

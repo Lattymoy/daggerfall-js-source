@@ -239,7 +239,7 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:560` - index into the 18 careers) or the INTERIM default Warrior (16,
 - `src/scenes/dungeonContext.js:566` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:593` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:931` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:934` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:469` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:475` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:580` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
@@ -249,24 +249,24 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:174` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:191` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:636` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:666` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:672` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1211` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1434` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1569` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:1802` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:1821` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2082` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2353` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:644` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:674` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:680` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1219` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1442` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1577` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:1810` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:1829` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2100` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2371` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:189` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:230` - FLAGGED (Port-Ledger Q4-v): quest FOES pend the interior enemy
-- `src/scenes/worldModes.js:353` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
-- `src/scenes/worldModes.js:446` - Person placed in a dungeon is the quest machine's, FLAGGED
-- `src/scenes/worldModes.js:529` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:548` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:592` - onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToStaticNPC pends the static-NPC conversation
-- `src/scenes/worldModes.js:599` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:360` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
+- `src/scenes/worldModes.js:453` - Person placed in a dungeon is the quest machine's, FLAGGED
+- `src/scenes/worldModes.js:546` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:565` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:609` - onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToStaticNPC pends the static-NPC conversation
+- `src/scenes/worldModes.js:616` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
@@ -322,8 +322,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/skills.js:83` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
-- `src/systems/talk.js:80` - *  FLAGGED to the crime slice - the state lands now, verbatim).
-- `src/systems/talk.js:93` - TallyCrimeGuildRequirements(true, 1) FLAGGED: the TG
+- `src/systems/talk.js:81` - *  FLAGGED to the crime slice - the state lands now, verbatim).
+- `src/systems/talk.js:94` - TallyCrimeGuildRequirements(true, 1) FLAGGED: the TG
 - `src/systems/talkSession.js:21` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 - `src/systems/useItem.js:234` - lantern's and refuses when it would overflow. FLAGGED: DFU
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -

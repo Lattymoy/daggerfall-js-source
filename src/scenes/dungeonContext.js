@@ -690,6 +690,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
 
   const hudText = new HudText();   // U5: classic popup messages
+  // wave 22: this host has a HudText of its own, so it needs the same
+  // notebook sink PopupText.AddText carries (:123).
+  hudText.onMessage = (t) => opts.hudMessageSink?.(t);
   // P10 action seams: teleport destination resolution (the scene
   // installs onTeleport to warp its motor) + the classic look-at-lock
   // text on a refused locked door (LookAtInteriorLock, chance-tiered

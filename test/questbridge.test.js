@@ -435,12 +435,27 @@ test('MidDateTimeString: the day IS padded ({3:00} on the int), no suffix, no co
   assert.equal(dateTimeString(late), '09:05:59 on 25th of Evening Star, 3E405');
 });
 
-test('the pad TRUNCATES fractional components (the live clock hands fractional minutes through)', () => {
-  // C#'s Hour/Minute/Second are ints; the port's dateFromClassicMinutes
-  // can carry a fractional second off the ticker - {0:00} must floor,
-  // never round 59.9 up to the impossible '60'.
+test("the pad ROUNDS, and DFU really does print the impossible ':60'", () => {
+  // AUDIT 24 (wave 22). This pin used to assert the OPPOSITE, on a
+  // premise that is simply not true of the source: "C#'s Hour/Minute/
+  // Second are ints". DaggerfallDateTime.cs:61-63 is
+  //
+  //     public int Hour = 12;
+  //     public int Minute = 0;
+  //     public float Second = 0;
+  //
+  // Second is a FLOAT, and .NET's `{0:00}` custom numeric format
+  // rounds away from zero rather than truncating. So at 59.9 seconds
+  // DaggerfallDateTime.DateTimeString() prints 13:30:60 - an
+  // impossible clock reading that the game shows anyway, and the port
+  // was quietly correcting. The port's own ticker hands fractional
+  // seconds through dateFromClassicMinutes, so this is reachable.
   const d = { year: 405, month: 0, day: 0, hour: 13, minute: 30, second: 59.9 };
-  assert.equal(dateTimeString(d), '13:30:59 on 1st of Morning Star, 3E405');
+  assert.equal(dateTimeString(d), '13:30:60 on 1st of Morning Star, 3E405');
+  // and it is a round, not a ceiling: below the half it still goes down
+  assert.match(dateTimeString({ ...d, second: 59.4 }), /^13:30:59 /);
+  assert.match(dateTimeString({ ...d, second: 0.6 }), /^13:30:01 /);
+  assert.match(dateTimeString({ ...d, second: 0.4 }), /^13:30:00 /);
 });
 
 // ---------------------------------------------------------------

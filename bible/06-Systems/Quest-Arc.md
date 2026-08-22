@@ -2465,6 +2465,111 @@ to asserting the text the player actually reads, which is a better pin
 than the one it replaced.
 
 
+### Wave 22
+
+**Six things that were ported and then never reached.**
+
+This wave has one shape. Every finding is a piece of DFU that the port
+already contains, correctly written, sitting behind a call that nobody
+makes - or behind a call that hands it the wrong argument. None of it
+would show up in a diff against the C#. All of it shows up the moment
+you ask *who calls this*.
+
+**The journal's fourth page.** `PopupText.AddText`'s last line, after
+it has queued the label:
+
+```csharp
+GameManager.Instance.PlayerEntity.Notebook.AddMessage(pgText);
+```
+
+and `DaggerfallHUD.SetMidScreenText` (:371) does the same. Every HUD
+popup the player ever sees - every skill-up, every "You are too far
+away.", every "Game saved." - is filed in the notebook's 50-slot ring,
+and the journal's **Messages** page is that ring. The port has the
+ring. It has `getMessages` with the rotation. It has `addMessage` with
+the wrap. Nothing called `addMessage`. The page was blank from the day
+it was written, and would have stayed blank for ever.
+
+**The map the guild revealed.** A Thieves Guild promotion at rank 6 or
+8, and *every* Dark Brotherhood promotion, calls
+`PlayerGPS.DiscoverRandomLocation()` and then
+
+```csharp
+GameManager.Instance.PlayerEntity.Notebook.AddNote(
+    TextManager.Instance.GetLocalizedText("readMapTG").Replace("%map", revealedDungeon.Name));
+```
+
+The port's `revealLocation` discovered the dungeon, and then logged
+`(the notebook note pends its surface)`. The surface it was waiting
+for is `notebook.addNote`, which wave 4 of this same audit wired **340
+lines above it in the same file**. A pending comment outlives the
+thing it was pending on, and nothing tells you.
+
+**Twice the reach.** `PlayerActivate` splits quest resources in two:
+
+```csharp
+if (QuestResourceBehaviourCheck(hit, out questResourceBehaviour) && !(questResourceBehaviour.TargetResource is Person))
+{
+    if (hit.distance > DefaultActivationDistance)   // 128
+```
+
+A Person goes through `StaticNPCClick` at 256. Everything else - the
+quest item on the floor, and a behaviour with no target resource at
+all, because `!(null is Person)` is true - is 128. The port gave every
+quest stand the static-NPC 256, so a quest item could be picked up
+from twice as far away as in DFU. (Recorded delta: C# also prints "You
+are too far away." and aborts the whole activation; the port's picker
+just does not select the target, so a too-far click falls through in
+silence.)
+
+**A hash that will be wrong later.** `AddQuestNPC` stands the
+billboard at `dungeonBlockPosition + marker.flatPosition` (:1022) and
+then hands `SetLayoutData` **`marker.flatPosition` alone** (:1062).
+The port hashed the stand position. Inside a building `dungeonX` and
+`dungeonZ` are zero and the two are identical, which is why nothing
+caught it; in a dungeon they are a whole RDB block apart, which is a
+different hash, a different `nameSeed` fallback and therefore a
+different generated *name* than DFU gives the same NPC. Fixed now, so
+it is right on the day the dungeon mount lands rather than a bug that
+arrives with it.
+
+**The menu flag, and the flag the route computed for nobody.** All
+four `TalkToStaticNPC` calls inside `StaticNPCClick` pass
+`menu: false` - the talk did not come from a popup menu, so
+`DaggerfallQuestOfferWindow` must not close itself when its message
+box closes (:94-97). The port passed `true`. And the
+HolyOrder/spymaster escape passes a third argument:
+
+```csharp
+talkManager.TalkToStaticNPC(npc, false, factionData.id == (int)GuildNpcServices.TG_Spymaster);
+```
+
+`staticNpcRoute` has returned `{ kind: 'talk', spymaster }` since G8.
+`npcSession.talkToStaticNPC` has accepted `isSpyMaster` and threaded
+it into `allowGuildResponse` since then too. The call site between
+them read `route.kind` and dropped `route.spymaster` on the floor.
+
+**And `:60`.** The last one is the eighth time this audit has caught a
+pin that restates the port instead of the source, and the first time
+the pin argued its case:
+
+```js
+// C#'s Hour/Minute/Second are ints; the port's dateFromClassicMinutes
+// can carry a fractional second off the ticker - {0:00} must floor,
+// never round 59.9 up to the impossible '60'.
+```
+
+Two of the three are ints. `DaggerfallDateTime.cs:63` is
+`public float Second = 0;`, and .NET's `{0:00}` custom numeric format
+rounds away from zero. So DFU really does print `13:30:60`, and the
+port was quietly correcting the game it is a port of. *THE PORT MUST
+NOT BE MORE ACCURATE THAN THE THING IT IS A PORT OF* has been an arc
+law since the seasons table; this is the first time it was broken by a
+test rather than by code.
+
+Seven mutants, seven kills.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

@@ -577,6 +577,12 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     randomText: (id) => textRsc?.randomTextById(id, rolls) ?? '',
     ensureFactions: () => ensureLoaded(),
     say: (line) => hud.add(line),
+    /** AUDIT 24 (wave 22): PopupText.AddText files every line it queues
+     *  in the notebook's message ring (:123). The notebook is built by
+     *  the quest bridge, which is built after this host, so the host
+     *  hands the sink back down once it exists. */
+    set hudMessageSink(fn) { hud.onMessage = fn; },
+    get hudMessageSink() { return hud.onMessage; },
     /** MERGE AUDIT: the HUD TEXT LAYER on its own, for a host whose
      *  frame is not this one. worldModes' interior arm consumes the
      *  frame and returns, so a line said inside a building was queued

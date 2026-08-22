@@ -32,6 +32,15 @@ export class HudText {
     this.lines = [];
     this.timer = 0;
     this.nextPopDelay = HUD_TEXT_POP_DELAY;
+    // AUDIT 24 (wave 22): PopupText.AddText's LAST line is
+    // `GameManager.Instance.PlayerEntity.Notebook.AddMessage(pgText)`
+    // (:123) - every HUD popup the player ever sees is filed in the
+    // notebook's 50-slot message ring, and the journal's Messages page
+    // is that ring. The port had the ring, GetMessages and AddMessage
+    // all ported and NOTHING calling AddMessage, so the fourth page of
+    // the journal was permanently blank. The host wires this to the
+    // notebook.
+    this.onMessage = null;
   }
 
   /** PopupText.AddText verbatim - the row is queued unconditionally;
@@ -41,6 +50,7 @@ export class HudText {
     else if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);
     else this.nextPopDelay = Math.max(this.nextPopDelay, delayInSeconds);
     this.lines.push({ text });
+    this.onMessage?.(text);
   }
 
   /** PopupText.Update verbatim. */
