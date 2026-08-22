@@ -89,6 +89,19 @@ the clamp alone and a surfacing swimmer un-swims, stands, sinks, and swims
 again. All five sites now read the live half-height, and the two hosts
 thread `player.height` into the dungeon context for the breath pass.
 
+**AddMovement's three arms were in the wrong order.**
+LevitateMotor.cs:116-140 tests `playerSwimming && IsWaterWalking` FIRST,
+unconditionally on levitation, and that arm RETURNS - so it takes no
+surface clamp and it beats the levitate constant. Its speed is
+`PlayerMotor.Speed`, the FIELD, which FixedUpdate's swim/levitate return
+(:322-326) leaves frozen at its last GROUNDED value because UpdateSpeed
+(:335) sits below it - crouch, sneak and the grounded-only run latch are
+all baked in. The port tested levitation first, so a levitating
+water-walker moved at the flat 4.0 constant, and it recomputed the
+water-walking speed from the raw run input every step, so a sneaking
+water-walker swam at full walk speed and the run key changed his speed
+mid-swim.
+
 ### systems
 
 **The legal-rep clamp ran BEFORE the restore.** SaveLoadManager.cs:1545 is
@@ -388,6 +401,41 @@ Temple.GetDivine's templar-order arm (resolve through the faction
 record's parent) came with it, and the unwired `divineOfTempleFaction`
 host seam is gone.
 
+## The eight that did not survive
+
+Refuted by one or both lenses, and recorded so the same claim is not
+re-filed later:
+
+- formats: Unknown block type: C# LoadBlock still succeeds, port returns failure -- Both sides read and confirmed. The quoted C# is verbatim: ReadBlock (BlocksFile.cs:659-693) is `void` and its final else at :688-692 is `{ DiscardBlock(block); return; }`; Read (:637-652) only catches exceptions and so returns true at :651; LoadBlock therefore skips the `if (!Read(block))` discard (:327-331), stores in the lookup, sets lastBlock, and returns true (:340). DiscardBlock (:354-355) blanks BlockRecord.Name and sets DFBlock.Type=Unknown but leaves DFBlock.Name/Position/Index set from :317/323/324, so GetBlock (:381-397) hands back a populated-header DFBlock (DFBlock is a struct, so the C# failure sentinel is `new DFBlock()`, never null). BsaFile.GetRecordProxy (BsaFile.cs:332-343) cannot return null for a valid index, so there is no earlier escape. The port's `_read` default arm (blocksFile.js:300-301) returns false, loadBlock discards and returns false (:191-194), and getBlock returns null (:213-216). The divergence is real and not marked RECORDED/FLAGGED/PENDING anywhere — on the contrary, test/blocks.test.js:63-67 and bible/02-Formats/Readers-Arc.md:46 assert this is what DFU does. Two details of the claim are wrong (see correctedClaim): there is no ArgumentException, and the path IS reachable with vanilla data.
+- formats: FixRdbData's synthesized objects get actionResource -1 sentinels the C# leaves at 0 -- Both quoted sides are accurate on their face — I confirmed BlocksFile.cs:563-573/586-596/613-623 are plain struct initializers (DFBlock.cs:925 `struct RdbObject`, :1070 `struct RdbActionResource`, PreviousObjectOffset :1094 / NextObjectIndex :1101, so the synthesized objects keep the 0 default), that the -1s appear only at BlocksFile.cs:1213-1214 (link-back at :1295-1296), and that blocksFile.js:901/926/955 use defaultResources() whose defaultActionResource() (:56-67) hard-codes previousObjectOffset:-1 / nextObjectIndex:-1. But the divergence is already RECORDED in the port's own ledger: /home/user/project-dagger/bible/01-Overview/Port-Ledger.md:94-104, under "BLOCKS vs the C#, MEASURED at AUDIT 18 ... 5,411,170 values compared, NINE differ, and all nine are inert and accounted for", item (b) states it verbatim — "FixRdbData's three SYNTHESIZED objects in blocks 1025/1034/1036 - C# leaves ActionResource.PreviousObjectOffset and NextObjectIndex at the struct default 0 where the port's defaultActionResource() uses -1. Dead data: those objects carry Flags = 0, so HasAction is false and RDBLayout.AddActionModelHelper - the only reader of PreviousObjectOffset - never runs for them." The finding, including its own inertness rationale, restates an already-measured and accepted ledger entry rather than surfacing anything new. (I independently confirmed the gating: rdbLayout.js:137 hasAction = flags !== 0, matching RDBLayout.cs:769-774; the only prevKey read is rdbLayout.js:308 / RDBLayout.cs:886.)
+- formats: FntFile.glyphWidth returns 0 on out-of-range index where C# returns -1 -- Read both sides. C# FntFile.cs:170-177 is quoted verbatim — GetGlyphWidth returns -1 for !IsLoaded and -1 for index<0||index>=MaxGlyphCount (MaxGlyphCount=240, FntFile.cs:27), and its XML doc states "Pixel width of glyph or -1 on error." JS fntFile.js:54-56 is quoted verbatim — out-of-range yields 0 and there is no not-loaded arm. They genuinely differ. It is not a deliberate seam: the sibling getGlyphPixels (fntFile.js:36) faithfully preserves C#'s null sentinel from FntFile.cs:203-209 and test/fnt.test.js:36 pins it, so the port is internally inconsistent rather than making an architectural choice. No RECORDED/FLAGGED/PENDING marker on the line; the file header calls itself a verbatim port. Cited DFU callers verified (DaggerfallFont.cs:644 inside CreateGlyph, driven by the 0..MaxGlyphCount loop at :606-609; ImageProcessing.cs:924 and :945) — all pass 0..239, so the sentinel is unreachable in DFU. Real but cosmetic today; one factual detail in the consequence paragraph needs correcting.
+- systems: CreateFoe spawn-failure throw formats foe.foeType where C# formats the action's own (null) Symbol -- Both quotes are textually accurate and my lens (the C# side) checks out: CreateFoe.cs:169-174 reads `pendingFoeGameObjects = GameObjectHelper.CreateFoeGameObjects(...); if (... .Length != foe.SpawnCount) { SetComplete(); throw new Exception(string.Format("create foe attempted to create {0}x{1} GameObjects and failed.", foe.SpawnCount, Symbol.Name)); }`, and `Symbol` really is the inherited QuestResource.Symbol (QuestResource.cs:20/33, protected setter) which CreateFoe never assigns — it only sets `foeSymbol` (CreateFoe.cs:28/76); ActionTemplate (QuestAction.cs:120+) never assigns it, and the action save envelope (ActionSaveData_v1: type/isComplete/flags/debugSource/actionSpecific) does not carry QuestResource's symbol. So C# does NRE while evaluating the format argument. The finding still fails, on two grounds.
+
+(1) Its load-bearing premise is false. The claim says the port "deliberately preserves the identical C# quirk 25 lines above" at the foe==null throw, making 2029 inconsistent with the port's own doctrine. It does not preserve it: actions.js:2011 is `throw new Error(\`create foe could not find Foe with symbol name ${this.symbol?.name}\`)` — optional chaining, so the port renders "...symbol name undefined" and throws a normal Error. It never reproduces C#'s NullReferenceException (JS would have thrown a TypeError there anyway, a different failure). Same shape at CastSpellOnFoe (actions.js:2086, `this.symbol?.name`). So NEITHER port throw site reproduces the C# NRE — both render a message where C# blows up on the null argument. Line 2029 is not inconsistent with 2011; it is the same choice with different filler text.
+
+(2) The port RECORDS the quirk and states the doctrine covering both sites. actions.js:2008-2010: "C# formats the action's own never-assigned Symbol (NREs before the message renders) - the same quirk as CastSpellOnFoe; either way the quest error-terminates", and the CastSpellOnFoe class docstring lists it among "Two C# QUIRKS KEPT". The recorded position is that these throws are equivalent because the quest error-terminates regardless of exception text/type — which is precisely the finding's own admitted consequence ("Message-text only"). The branch also sits behind the injected `world.createFoeGameObjects` seam and is reachable only when a host adapter mints the wrong count.
+- systems: Quest-start rumor reads message 1007 (RumorsPostSuccess) instead of 1005 (RumorsDuringQuest) -- The C# half of the claim is accurate, but the JS half is not — the port does not contain the code the finding quotes, so the two sides already agree.
+
+C# (tools/parity/dfu/Assets/Scripts/Game/TalkManager.cs:2069-2074) is exactly as quoted:
+  public void AddQuestTopicWithInfoAndRumors(Quest quest)
+  {
+      // Add RumorsDuringQuest rumor to rumor mill
+      Message message = quest.GetMessage((int)QuestMachine.QuestMessages.RumorsDuringQuest);
+      if (message != null)
+          AddOrReplaceQuestProgressRumor(quest.UID, message);
+and QuestMachine.cs:260-271 does define RumorsDuringQuest = 1005 / RumorsPostSuccess = 1007.
+
+The port at src/systems/topicTree.js:229 reads:
+  const message = quest.getMessage(QUEST_MESSAGES.RumorsDuringQuest);
+It does not use a literal 1007. QUEST_MESSAGES is imported at src/systems/topicTree.js:66 from ./quest/quest.js, whose frozen enum (src/systems/quest/quest.js:36-47) has RumorsDuringQuest: 1005 and RumorsPostSuccess: 1007 — matching the C# enum one-for-one. So the port resolves 1005, same as DFU.
+
+The claim also misreads the doc comment on src/systems/topicTree.js:221-227. It does not assert "RumorsDuringQuest = 1007"; it says the opposite, in the past tense, as a record of the fix: "The id is QuestMessages.RumorsDuringQuest = **1005** (QuestMachine.cs:267). This read 1007 - RumorsPostSuccess - so ACCEPTING a quest seeded the mill with the rumor that belongs to finishing it... Taken from the enum now rather than written out." The finding appears to have been written against a pre-fix revision of the file.
+
+Grep over src/ confirms only two RumorsPostSuccess uses remain and both are legitimate: src/systems/quest/quest.js:274 (the tombstone success/failure rumor pick) and the prose in the topicTree comment. Nothing in src/ reads a bare 1007 at quest start, so the claimed consequences (post-success text seeded at accept time, missing during-quest rumor, double-write with tombstone) do not occur.
+- systems: TALK_STRINGS.NpcInSameBuilding carries stray YAML quote characters -- The C# half of the claim is accurate (TalkManager.cs:1859 does string.Format the "NpcInSameBuilding" localized text with caption and building.name, and Internal_Strings_en.asset:1937-1938 holds id 396 = '{0} is around here in {1}.' with YAML-syntax quotes). But the JS half is not what the file says. src/systems/answerPipeline.js:200 reads `NpcInSameBuilding: '{0} is around here in {1}.',` — a single-quoted JS literal whose contents contain NO apostrophes. Lines 194-199 (the line the claim cites) are a comment that already states the exact YAML-quoting reasoning and describes the quoted form in the past tense as a bug that was removed. The consequence is false too: test/answerpipeline.test.js:530 pins `getAnswerWhereIs(person) === 'Sirien is around here in The Inn.'` (unquoted), and test/answerpipeline.test.js:1050-1065 is a dedicated test that rejects any TALK_STRINGS value wrapped in ' or " and asserts NpcInSameBuilding equals '{0} is around here in {1}.'. Port and DFU therefore agree exactly; the defect was fixed in commit 19a414b and is guarded by a regression test.
+- systems: Potential-questor-location macro is registered as %pql; DFU's key is %pqp -- The C# half of the claim is accurate — MacroHelper.cs:163 really is `{ "%pqp", PotentialQuestorLocation }, // Potential Quest Giver's Location`, with %pqn on :162 — but the JS half is not what the file says, so the two sides already agree. src/systems/talkMacros.js:140 reads `'%pqp': () => ctx.session?.getQuestorLocation() ?? '',` and TALK_MACROS at line 27 lists `'%pqn', '%pqp'`. The claim's grep is inverted: the sole occurrence of '%pql' in all of src/ is line 136, inside the handler's own doc comment, which exists to warn against exactly this error — "The location's key is **%pqp** - MacroHelper.cs:163 ... Not %pql, which is not a macro at all and would have left every record carrying the real one unresolved." `git log -S'%pql' -- src/systems/talkMacros.js` shows %pql was introduced in c026765 (TK-v) and removed in 19a414b ("AUDIT: three real bugs in the talk arc, every one of them mine"), so the finding is stale against HEAD. There is no dead handler and no "You can find him in ." output: Work answers expand %pqp through a live handler.
+- ui: Journal page drops the trailing blank line when the entry filled the page -- Both quotes are literally accurate — C# :601-603 and :672-674 do emit the separator NewLineToken unconditionally (guards only at :579/:586 and :648/:654, maxLinesQuests=20 :34, maxLinesSmall=28 :35), and src/ui/questJournal.js:169 does add `if (out.length >= this.maxLines) break;` before `out.push('')`. But the divergence has no observable effect, so the two agree in behaviour. The suppressed element is always the LAST one (the break also ends the outer loop in C# on the next iteration), and it is the empty string. pageLines() has exactly one consumer, draw() at :193, whose loop does `if (line) { drawText… }` then `y += rowH` — a trailing '' paints nothing and displaces no preceding row; the other reader, `lines.some((l) => l)`, is likewise unaffected by a trailing ''. Nothing in the port measures off lines.length. On the DFU side nothing shifts either: questLogLabel is top-anchored at Position (30,38) (:150) and SetTextWithListEntries force-sets questLogLabel.Size = (x, 138) immediately after SetText (:678), so the three list pages have a fixed height regardless of the extra row. The only real thing DFU's trailing token buys is the extra entryLineMap slot consumed by HandleClick (:387-396) for line→entry hit-testing — and the port implements no entryLineMap at all (click() handles only the arrow/dialog/exit rects), which is a separate architectural seam rather than this finding. The stated consequence ("one row of vertical offset for anything measured off the page height") is false on both sides.
+
 ## Pins
 
 Four pins were written per finding-group and each was verified by
@@ -401,3 +449,28 @@ Three existing pins had to be corrected rather than added to, because they
 had recorded the bug as the law: the CORPUS GATE's `[undefined] 15`, the
 "reveal nothing" default, and the `%qdt` fixture that hand-set
 `currentLogMessageId` for a journal that was never going to set it.
+
+## Closed
+
+All 54 confirmed findings are fixed and pinned, in four waves
+(`25079ed`, `70da995`, `e8c83a5`, `4db7769` and this one). Each pin was
+verified by REINTRODUCING its bug and watching the pin fail - the only
+proof a pin is a pin.
+
+FOUR EXISTING PINS HAD RECORDED THE BUG AS THE LAW and had to be
+corrected rather than extended:
+
+- the CORPUS GATE's `[undefined] 15`, which counted the corpus's %G3
+  and %G1 lines and called DFU's error shape what was really a missing
+  handler table;
+- the "reveal nothing" default on Message.GetTextTokens;
+- the %qdt fixture that hand-set `currentLogMessageId` for a journal
+  that was never going to set it;
+- AUDIT 19 F2's letterbox rule, whose comment asserted that the char
+  sheet, talk, trade and inventory windows do not override
+  ScreenDimColor. They are exactly the ones that do - and F2 had
+  "corrected" that line in the wrong direction a fortnight earlier.
+
+A pin that restates the port instead of the source is not a pin. That
+is the standing lesson of this audit, and it is worth more than any
+single fix in it.

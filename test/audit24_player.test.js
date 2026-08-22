@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PlayerMotor, CAPSULE_HEIGHT, CROUCH_HEIGHT } from '../src/player/motor.js';
+import { PlayerMotor, CAPSULE_HEIGHT, CROUCH_HEIGHT, LEVITATE_MOVE_SPEED } from '../src/player/motor.js';
 
 const DT = 1 / 60;
 const noInput = { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false };
@@ -59,4 +59,53 @@ test('audit24 player: every water line in the hosts measures the same live centr
   assert.equal((dc.match(/playerHeight \/ 2 \+ 76 \* 0\.025 - 0\.95/g) ?? []).length, 2,
     'both submerged tests read the threaded height');
   assert.equal(/\+ 0\.9 \+ 76 \* 0\.025/.test(dc), false, 'and no standing constant is left behind');
+});
+
+test('audit24 player: AddMovement\'s three arms, in DFU\'s order', () => {
+  // LevitateMotor.cs:116-140. The water-walking arm is FIRST and
+  // unconditional on levitation, and it RETURNS - no surface clamp.
+  // The swim arm is `playerSwimming && !playerLevitating`. Levitate
+  // speed is only what moveSpeed falls back to when neither arm ran.
+  const mk = () => {
+    const moves = [];
+    const rec = { move(pos, dx, dy, dz) { pos[0] += dx; pos[1] += dy; pos[2] += dz; moves.push([dx, dy, dz]); return { grounded: false }; } };
+    const p = new PlayerMotor(rec, { speed: 50, running: 30, swimming: 30 });
+    p.spawn(0, 0, 0);
+    return { p, moves };
+  };
+  const fwd = { ...noInput, forward: 1 };
+  const horiz = (m) => Math.hypot(m[0], m[2]);
+  // 1. swimming + water walking: PlayerMotor.Speed, the STALE field -
+  //    NOT a recomputation from this frame's run key.
+  const a = mk();
+  a.p.swimming = true; a.p.waterWalking = true;
+  a.p.speed = 2.5;                      // whatever the last grounded frame wrote
+  a.p.update(DT, fwd, 0, 0);
+  assert.ok(Math.abs(horiz(a.moves[0]) - 2.5 * DT) < 1e-6, 'the frozen field, not walkSpeed');
+  // ...and pressing run mid-swim changes nothing, because the field is
+  // only written on a grounded frame.
+  a.moves.length = 0;
+  a.p.update(DT, { ...fwd, run: true }, 0, 0);
+  assert.ok(Math.abs(horiz(a.moves[0]) - 2.5 * DT) < 1e-6, 'the run key cannot reach it');
+  // 2. water walking WINS over levitation - DFU tests it first
+  const b = mk();
+  b.p.swimming = true; b.p.waterWalking = true; b.p.levitating = true;
+  b.p.speed = 3.0;
+  b.p.update(DT, fwd, 0, 0);
+  assert.ok(Math.abs(horiz(b.moves[0]) - 3.0 * DT) < 1e-6,
+    'not the 4.0 levitate constant - the port used to short-circuit here');
+  // 3. levitating, not swimming: the levitate constant
+  const c = mk();
+  c.p.levitating = true;
+  c.p.speed = 3.0;
+  c.p.update(DT, fwd, 0, 0);
+  assert.ok(Math.abs(horiz(c.moves[0]) - LEVITATE_MOVE_SPEED * DT) < 1e-6);
+  // ...and the water-walking arm takes NO surface clamp: it returns
+  // above it, so a water-walking swimmer can rise past the float point.
+  const d = mk();
+  d.p.swimming = true; d.p.waterWalking = true; d.p.speed = 3.0;
+  d.p.waterSurfaceY = 1;
+  d.p.pos[1] = 0.9;                     // well past the clamp threshold
+  d.p.update(DT, floatUp, 0, 0);
+  assert.ok(d.moves[0][1] > 0, 'the clamp lives inside the OTHER arm');
 });

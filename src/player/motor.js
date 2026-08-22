@@ -479,28 +479,43 @@ export class PlayerMotor {
       if (this.swimming && !this.levitating) my = 0;
       if (input.up) my += 1;
       else if (input.down) my -= 1;
-      // Cannot swim up out of the water ("he would immediately be
-      // pulled back in"): rising stops when the controller CENTER
-      // + 50*GlobalScale - 0.93 reaches the surface.
-      // AUDIT 24 player: LevitateMotor.cs:126 reads
-      // `controller.transform.position.y`, the centre of the LIVE
-      // capsule - and ControllerHeightChange (PlayerHeightChanger.cs
-      // :477-478) keeps the feet planted while the height changes, so
-      // the centre is feet + controller.height/2. A free swimmer is
-      // force-crouched (:192-198), so that is feet + 0.45, not the
-      // standing feet + 0.9 this line used to hardcode: the swimmer
-      // was pinned 0.45 below DFU's float height, eyes under water.
-      if (this.swimming && !this.levitating && my > 0 && this.waterSurfaceY != null
-          && this.pos[1] + this.height / 2 + 50 * 0.025 - 0.93 >= this.waterSurfaceY) {
-        my = 0;
-      }
+      // AddMovement's THREE arms, in DFU's own order (LevitateMotor.cs
+      // :116-140). AUDIT 24 player: the port had a different ladder -
+      // levitation short-circuited the water-walking arm, and the
+      // surface clamp was applied to a water-walking swimmer that DFU
+      // returns above.
       let speed;
-      if (this.levitating) speed = LEVITATE_MOVE_SPEED;
-      else if (this.waterWalking) {
-        // S8 waterWalking consumer: normal speed in water.
-        speed = input.run ? runSpeed(this.stats.speed, this.stats.running) : walkSpeed(this.stats.speed);
-      } else {
+      if (this.swimming && this.waterWalking) {
+        // ":116-122 - "Swimming with water walking on makes player move
+        // at normal speed in water": moveSpeed is PlayerMotor.Speed,
+        // the FIELD, and this arm RETURNS - no surface clamp, and it
+        // wins over levitation. AUDIT 24 player: the port recomputed
+        // the speed from the raw run input every step; the field is
+        // frozen at its last GROUNDED value because FixedUpdate's
+        // swim/levitate return (:322-326) sits above UpdateSpeed
+        // (:335), so crouch, sneak and the grounded-only run latch are
+        // all baked into it.
+        speed = this.speed;
+      } else if (this.swimming && !this.levitating) {
+        // Cannot swim up out of the water ("he would immediately be
+        // pulled back in"): rising stops when the controller CENTER
+        // + 50*GlobalScale - 0.93 reaches the surface.
+        // AUDIT 24 player: LevitateMotor.cs:126 reads
+        // `controller.transform.position.y`, the centre of the LIVE
+        // capsule - and ControllerHeightChange (PlayerHeightChanger.cs
+        // :477-478) keeps the feet planted while the height changes, so
+        // the centre is feet + controller.height/2. A free swimmer is
+        // force-crouched (:192-198), so that is feet + 0.45, not the
+        // standing feet + 0.9 this line used to hardcode: the swimmer
+        // was pinned 0.45 below DFU's float height, eyes under water.
+        if (my > 0 && this.waterSurfaceY != null
+            && this.pos[1] + this.height / 2 + 50 * 0.025 - 0.93 >= this.waterSurfaceY) {
+          my = 0;
+        }
         speed = swimSpeed(walkSpeed(this.stats.speed), this.stats.swimming ?? 0);
+      } else {
+        // neither swim arm: the field's resting value, levitateMoveSpeed
+        speed = LEVITATE_MOVE_SPEED;
       }
       // IsMovingLessThanHalfSpeed while swimming/levitating: DFU's
       // FixedUpdate zeroes moveDirection and RETURNS at :322-326,
