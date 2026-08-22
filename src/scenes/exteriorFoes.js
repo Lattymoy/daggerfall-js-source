@@ -26,9 +26,9 @@ import { EnemyAttack } from '../characters/enemyAttack.js';
 import { makeEnemyEntity, loadMonsterCareer } from '../characters/enemyEntity.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { ClassFile } from '../formats/classFile.js';
-import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt, tickEnemySound, playEnemyClip } from './hostCombat.js';   // C2-slice (combat-9/17)
+import { equipEnemy, hasBowAttack, backstabChanceOf, zeroDamageHitSound, enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt, tickEnemySound, playEnemyClip, tryLanguagePacification } from './hostCombat.js';   // C2-slice (combat-9/17)
 import { generateItems as generateLootItems } from '../systems/loot.js';
-import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies } from '../combat/formulas.js';
+import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, enemyLanguageSkill, calculateEnemyPacification } from '../combat/formulas.js';   // AUDIT 24 (wave 42): pacification
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
@@ -53,6 +53,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   onArrow = null,   // X2-slice: the host's arrow seam - (from, dir, foe) at the shoot frame
   spellsByIndex = null,   // X3-slice: () => the SPELLS.STD map (null until loaded) - casters need it
   hitEffects = null,   // AUDIT 24 (wave 39): the host's one blood/effect pool
+  playerWeaponSheathed = () => false,   // AUDIT 24 (wave 42): CalculateEnemyPacification's -25 / +10 arm
   magicHooks = null }) {  // X3-slice: { explodeAt, fireMissile } - the host's spell release seams
   const foes = [];        // { mobile, ai, attack, entity, batch, tex, archive, mobileType, dead, _encounter: true }
   const corpseBatches = [];
@@ -258,6 +259,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           castSpellFrom(f, dec.spell, playerFeet);
         }
       }
+      // AUDIT 24 (wave 42): EnemySenses:504-527 - the first-encounter
+      // language roll, which only the dungeon ran. An Orc that speaks
+      // Orcish is as talkable-down in a field as in a crypt.
+      tryLanguagePacification(f.ai, f.entity, f.mobileType, playerEntity, {
+        sheathed: playerWeaponSheathed(),
+        enemyLanguageSkill, calculateEnemyPacification,
+        say: say ?? (() => {}),
+      });
       // AUDIT 24 (wave 41): EnemySounds.FixedUpdate - the attract
       // cadence this pool never had. The counter steps every frame and
       // the sound fires only inside the 16m radius.

@@ -21,6 +21,16 @@ import { KNIGHT_CITY_WATCH, MOBILE_TYPES } from '../src/characters/mobileTypes.j
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 
+/** Does `fn(` appear as a STATEMENT in this source - a line that
+ *  starts with the call - rather than merely appearing somewhere?
+ *  A bare `src.includes('fn(')` is satisfied by `if (false) fn(...)`
+ *  and by a commented-out call, which is how three mutants walked
+ *  through the first campaign. */
+function callsAsStatement(src, fn) {
+  return src.split('\n').some((l) => l.trim().startsWith(`${fn}(`));
+}
+
+
 // Mutation campaign: 29 reintroductions, 29 killed. The attract radius
 // and both delay bounds; the `+1` that makes 9 reachable; the human
 // mute losing its city-watch carve-out (the dungeon's actual drift)
@@ -222,7 +232,10 @@ test('audit24 wave41: the host seam - the occlusion cast and the LINEAR rolloff'
 test('audit24 wave41: all three pools ask the one home, and nobody keeps a copy', () => {
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js']) {
     const src = rd(f);
-    assert.match(src, /tickEnemySound\(/, `${f}: runs the attract cadence`);
+    // as STATEMENTS: `assert.match(src, /tickEnemySound\(/)` is
+    // satisfied by `if (false) tickEnemySound(...)`, which is exactly
+    // how three of wave 42's mutants survived their first campaign.
+    assert.ok(callsAsStatement(src, 'tickEnemySound'), `${f}: runs the attract cadence`);
     assert.match(src, /playEnemyClip\(audio, [a-z]\.sounds\.attack\(\)/, `${f}: and the attack sound`);
     assert.match(src, /EnemySoundSource/, `${f}: through the shared source`);
     // no pool re-derives the cadence for itself any more

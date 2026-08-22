@@ -8,7 +8,7 @@
 // FormulaHelper.cs, DaggerfallUnityItem.cs, PlayerActivate.cs
 // (MIT, Daggerfall Workshop).
 
-import { SKILLS, tallySkill, skillValue } from '../systems/skills.js';
+import { SKILLS, tallySkill, skillValue, SKILL_NAMES } from '../systems/skills.js';
 import { ENEMY_GROUPS, dice100 } from '../combat/formulas.js';
 import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoice, rollVoiceRace, isHeavyDamage } from '../combat/combatVoices.js';   // C2-slice
 import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
@@ -18,6 +18,7 @@ import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { swingSoundFor } from '../systems/soundClips.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
 import { ATTRACT_RADIUS } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41)
+import { enemyDisplayName } from '../characters/enemyBasics.js';   // AUDIT 24 (wave 42)
 
 // ---- DaggerfallUnityItem.GetWeaponSkillUsed / GetWeaponSkillIDAsShort ----
 /** The attack skill is a property of the weapon TEMPLATE, never of its
@@ -274,3 +275,44 @@ export function playEnemyClip(audio, out, feet) {
     { maxDistance: ATTRACT_RADIUS, distanceModel: 'linear' });
   return out.clip;
 }
+
+// ---- First-encounter language pacification (AUDIT 24, wave 42) ----
+/**
+ * EnemySenses.cs:504-527. On the FIRST time an enemy detects the
+ * player, its language skill is rolled: a success stands it down
+ * (`motor.IsHostile = false`) and tallies the skill by THREE - DFU's
+ * BCHG over classic's one, "to make raising language skills easier" -
+ * and a failure tallies ONE, except for Etiquette and Streetwise,
+ * which get nothing for failing.
+ *
+ * The port had the formulas (`enemyLanguageSkill`,
+ * `calculateEnemyPacification`) and the motor raised `justEncountered`
+ * for every pool - and exactly one caller consumed it, inline in the
+ * dungeon frame body. Above ground no monster and no watchman was ever
+ * talked down, in a game where language skills are a third of the
+ * stealth build.
+ *
+ * DFU's guards: `!questBehaviour` (a quest foe cannot be pacified) and
+ * the entity being EnemyMonster or EnemyClass. `isQuestFoe` carries
+ * the first; the pools only ever hold the second.
+ */
+export function tryLanguagePacification(ai, entity, mobileType, playerEntity, {
+  sheathed = false, enemyLanguageSkill, calculateEnemyPacification, say = () => {}, isQuestFoe = false,
+} = {}) {
+  if (!ai?.justEncountered) return null;
+  ai.justEncountered = false;   // the EDGE is consumed whatever happens next
+  if (isQuestFoe) return null;
+  const lang = enemyLanguageSkill(entity);
+  if (lang === -1) return null;   // Skills.None - most monsters have no tongue
+  if (calculateEnemyPacification(playerEntity, lang, sheathed)) {
+    ai.isHostile = false;
+    say(`${enemyDisplayName(mobileType) ?? 'The enemy'} is pacified by your ${SKILL_NAMES[lang]} skill.`);   // languagePacified %e/%s
+    tallySkill(playerEntity, lang, 3);
+    return { pacified: true, lang };
+  }
+  // :525-526 - a failed roll still counts as USING a monster tongue,
+  // but Etiquette and Streetwise get nothing for being ignored.
+  if (lang !== SKILLS.Etiquette && lang !== SKILLS.Streetwise) tallySkill(playerEntity, lang, 1);
+  return { pacified: false, lang };
+}
+

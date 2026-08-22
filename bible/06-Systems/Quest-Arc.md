@@ -4610,6 +4610,82 @@ plus eleven the wave-38 scout confirmed that these waves have not
 closed.
 
 
+### Wave 42 - one they never did, and one they did twice
+
+**The roll nobody above ground ever made.** `EnemySenses.cs:504-527`
+rolls the player's language skill the first time an enemy detects
+them: a success stands it down and tallies the skill by **three**
+(DFU's BCHG over classic's one, "to make raising language skills
+easier"); a failure tallies one, except for Etiquette and Streetwise,
+which get nothing for being ignored.
+
+The port had all of it. `enemyLanguageSkill` and
+`calculateEnemyPacification` were ported verbatim; `EnemyAI` raises
+`justEncountered` for **every** pool. And `grep -rn justEncountered
+src/` found exactly one consumer: sixteen lines inline in the dungeon's
+frame body. So no monster in a field and no watchman in a street has
+ever been talked down, in a game where the language skills are a third
+of a stealth build. An Orc that speaks Orcish is as talkable-down in a
+meadow as in a crypt.
+
+One home now, with the two guards DFU puts on it that the inline copy
+had no reason to carry: `!questBehaviour` (a quest foe is never
+pacified) and the entity-type test. And the drawn-weapon arm reaches
+the exterior pools for the first time - sheathed adds 10, drawn costs
+25, a thirty-five point swing that decides most rolls - which meant
+adding a `playerWeaponSheathed` thunk to both pools, read **live**,
+because drawing your sword as you approach has to change the next
+foe's roll.
+
+**And the charge they made twice.** `WeaponManager.cs:420` -
+
+```csharp
+// Fatigue loss
+playerEntity.DecreaseFatigue(swingWeaponFatigueLoss);
+```
+
+- sits in the single `isDamageFinished` block. It is a property of
+*swinging*, not of what you swung at. Both exterior hosts drain it in
+their melee arm, and `cityGuards.resolvePlayerHit` drained it **again**
+on the way past. Worse than a flat doubling: the resolver opens with
+`if (!live.length) return false`, so the second charge landed only
+while a guard was **alive**. Eleven fatigue a swing in an empty street,
+twenty-two the moment the watch turned up. The dungeon never had it,
+which is the shape this was corrected to.
+
+**Eighteen mutants, eighteen kills** - after two rounds, and both
+rounds are worth writing down.
+
+Three survived the first campaign, all for one reason. The pin was
+`assert.match(src, /tryLanguagePacification\(/)`, and
+
+```js
+if (false) tryLanguagePacification(...)
+```
+
+still matches it. So would a commented-out call. A grep for a function
+name proves the name is in the file, not that anything calls it.
+`callsAsStatement` reads the *line* now - and the same hole was open in
+wave 41's pool gate, so it is closed there too.
+
+The other correction runs the opposite way. The campaign reported a
+**kill** on rewriting `!ai?.justEncountered` as
+`!ai || !ai.justEncountered` - which is the same program. It died only
+because `pacification.test.js` quoted the spelling. That is a false
+kill, and a campaign that rewards a pin for noticing a rename has
+stopped measuring anything. The spelling assertion is gone, the edge is
+pinned by behaviour, and the mutant survives now, correctly, recorded
+as the equivalent it always was.
+
+**A GREP FOR A NAME PROVES THE NAME IS THERE. A PIN THAT DIES ON A
+RENAME WAS NEVER WATCHING THE BEHAVIOUR.** The two failures are the
+same mistake pointing in opposite directions: a text pin too loose to
+catch a disabled call, and a text pin too tight to allow a synonym.
+
+**Twenty-six findings remain**, plus seven from the host-parity sweep,
+plus nine the wave-38 scout confirmed that these waves have not closed.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

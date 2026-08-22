@@ -808,6 +808,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const hitEffects = createHitEffects({ renderer, getTexture, uploadRecordFrame });
   const cityGuards = createCityGuards({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
+    playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): the poison clock
     onPlayerHurt: (dmg, wpn) => {
@@ -826,6 +827,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // LIVE. Same damage door shape as the guards; no crime machinery.
   const exteriorFoes = createExteriorFoes({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
+    playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
     currentMinute: () => Math.floor(playerTicker.classicMinutes),
     playerSinks: playerTicker.sinks,   // AUDIT 24 (wave 30): OnMonsterHit's fatigue rider drains through the host's one set of doors
     say: (l) => townTalk.say(l),

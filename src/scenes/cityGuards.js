@@ -53,12 +53,14 @@ import { inflictPoison } from '../systems/poisons.js';
 import {
   calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon,
   enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies,
+  enemyLanguageSkill, calculateEnemyPacification,   // AUDIT 24 (wave 42)
 } from '../combat/formulas.js';
 import {
   equipEnemy, backstabChanceOf, tallySwingSkills,
-  zeroDamageHitSound, SWING_WEAPON_FATIGUE_LOSS,
+  zeroDamageHitSound,
   enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt,   // C2-slice (combat-9/17)
   tickEnemySound, playEnemyClip,   // AUDIT 24 (wave 41)
+  tryLanguagePacification,         // AUDIT 24 (wave 42)
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { tallySkill, SKILLS } from '../systems/skills.js';
@@ -83,7 +85,8 @@ export const GUARD_FALLBACK_MIN_DIST = 12.8;   // CreateFoeSpawner ring
 export const GUARD_FALLBACK_MAX_DIST = 51.2;
 
 export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute, rand = Math.random, say = null,
-  hitEffects = null }) {   // AUDIT 24 (wave 39): the host's one blood/effect pool
+  hitEffects = null,   // AUDIT 24 (wave 39): the host's one blood/effect pool
+  playerWeaponSheathed = () => false }) {   // AUDIT 24 (wave 42): CalculateEnemyPacification's -25 / +10 arm
   // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
   // let a guard's poisoned hit anchor at minute 0, and the next world
   // tick (absolute clock ~523,530) caught the whole course up at once.
@@ -358,6 +361,15 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           if (g.dead) continue;
         }
       }
+      // AUDIT 24 (wave 42): the watch is a CLASS enemy, so its tongue
+      // is Etiquette (or Streetwise for the stealth careers) - which
+      // means a courteous player can stand a guard down on sight, and
+      // could not before because only the dungeon ran the roll.
+      tryLanguagePacification(g.ai, g.entity, GUARD_MOBILE_TYPE, playerEntity, {
+        sheathed: playerWeaponSheathed(),
+        enemyLanguageSkill, calculateEnemyPacification,
+        say: say ?? (() => {}),
+      });
       // AUDIT 24 (wave 41): EnemySounds.FixedUpdate. This used to be a
       // single HALT on the detection rising edge and nothing ever
       // again - DFU has no detection-edge bark at all. It runs the
@@ -487,10 +499,19 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         else if (snd) audio?.playOneShot?.(snd.sound, 1.1);
       }
     }
-    // WeaponManager.cs:419-436: the swing costs fatigue whatever it
-    // hits, and a connecting swing tallies the weapon skill AND
-    // CriticalStrike. Neither ran in the exterior hosts.
-    playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - SWING_WEAPON_FATIGUE_LOSS);
+    // WeaponManager.cs:419-436: a connecting swing tallies the weapon
+    // skill AND CriticalStrike.
+    //
+    // AUDIT 24 (wave 42): the FATIGUE drain that used to sit here was
+    // a SECOND one. DFU charges swingWeaponFatigueLoss exactly once
+    // per swing, at :420, inside WeaponManager's single
+    // `isDamageFinished` block - it is a property of swinging, not of
+    // what you swung at. Both exterior hosts already drain it in their
+    // melee arm before calling this, and the early `if (!live.length)
+    // return false` above meant the extra charge landed only while a
+    // guard was ALIVE: 22 fatigue a swing near the watch, 11
+    // everywhere else. The dungeon never had it, which is what the
+    // shape should have been all along.
     if (any) tallySwingSkills(playerEntity, playerWeapon.weapon);
     return any;
   }

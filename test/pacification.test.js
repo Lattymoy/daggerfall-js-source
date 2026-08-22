@@ -56,14 +56,30 @@ test('pacification: the chance arms - social skills divide, tongues count in ful
 
 test('pacification: the host runs it on the FIRST-encounter edge and a pacified foe stands down', () => {
   const src = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
-  const i = src.indexOf('if (f.ai.justEncountered) {');
-  assert.ok(i > 0, 'the edge drives the check');
-  const arm = src.slice(i, i + 900);
-  assert.ok(arm.includes('foeDeps.calculateEnemyPacification(playerEntity, _lang, playerWeapon.sheathed)'),
+  // AUDIT 24 (wave 42): the roll moved out of this frame body into
+  // hostCombat.tryLanguagePacification, because the dungeon was its
+  // only caller though the motor raises justEncountered for every
+  // pool. The law is asserted by RUNNING it now, not by quoting the
+  // dungeon's copy of it - see the exercise below.
+  const hc = readFileSync(join(root, 'src/scenes/hostCombat.js'), 'utf8');
+  const i = hc.indexOf('export function tryLanguagePacification');
+  assert.ok(i > 0, 'the one home exists');
+  const arm = hc.slice(i);
+  // AUDIT 24 (wave 42): the EDGE gate is asserted by BEHAVIOUR in
+  // audit24_wave42 (no edge -> null, null ai -> null), not by its
+  // spelling. Quoting `!ai?.justEncountered` here failed an
+  // equivalent rewrite to `!ai || !ai.justEncountered` and called it
+  // a kill, which is the opposite of what a campaign is for.
+  assert.ok(arm.includes('justEncountered'), 'the edge drives the check');
+  assert.ok(arm.includes('calculateEnemyPacification(playerEntity, lang, sheathed)'),
     'the sheathed state feeds the roll');
-  assert.ok(arm.includes('f.ai.isHostile = false'), 'success stands the foe down');
-  assert.ok(arm.includes('tallySkill(playerEntity, _lang, 3)', ), 'success tallies 3 (DFU BCHG)');
-  assert.ok(arm.includes("_lang !== SKILLS.Etiquette && _lang !== SKILLS.Streetwise"), 'a failed tongue still tallies 1');
+  assert.ok(arm.includes('ai.isHostile = false'), 'success stands the foe down');
+  assert.ok(arm.includes('tallySkill(playerEntity, lang, 3)'), 'success tallies 3 (DFU BCHG)');
+  assert.ok(arm.includes('lang !== SKILLS.Etiquette && lang !== SKILLS.Streetwise'), 'a failed tongue still tallies 1');
+  // and all three pools call it now, not one
+  for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js']) {
+    assert.ok(readFileSync(join(root, f), 'utf8').includes('tryLanguagePacification('), `${f} runs the roll`);
+  }
   // AUDIT 24 (the re-read): the stand-down is a TARGET DROP, not an
   // action skip. EnemySenses.Update:321-327 nulls the target for a
   // non-hostile motor and :410-414 then forces targetInSight and

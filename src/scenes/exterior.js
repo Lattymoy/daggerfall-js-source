@@ -530,6 +530,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const hitEffects = createHitEffects({ renderer, getTexture, uploadRecordFrame });
   const cityGuards = createCityGuards({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
+    playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): a guard's poison anchors at NOW, not 0
     onPlayerHurt: (dmg, wpn) => {

@@ -42,6 +42,7 @@ import {
   CORPSE_ACTIVATION_DISTANCE,
   enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt,   // C2-slice (combat-9/17)
   tickEnemySound, playEnemyClip,   // AUDIT 24 (wave 41): EnemySounds through the host's devices
+  tryLanguagePacification,         // AUDIT 24 (wave 42): EnemySenses:504-527
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { createCharacter, CLASS_CAREERS } from '../systems/chargen.js';
 import { createChargenFlow, finishChargen, applyHeadlessChargen, applyCreationExtras } from '../systems/chargenSession.js';   // S3c/U9 + 17i: one construction seam
@@ -2038,22 +2039,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // tallies 1 for the monster tongues - "using" the language -
       // but not for Etiquette/Streetwise. languagePacified's prose is
       // ours (the string table is not in the snapshot; key cited).
-      if (f.ai.justEncountered) {
-        f.ai.justEncountered = false;
-        const _lang = foeDeps ? foeDeps.enemyLanguageSkill(f.entity) : -1;
-        if (_lang !== -1) {
-          if (foeDeps.calculateEnemyPacification(playerEntity, _lang, playerWeapon.sheathed)) {
-            f.ai.isHostile = false;
-            // AUDIT 24 (wave 38): this read ENEMY_BASICS[...].name, and no row
-            // in the table has ever carried a `name` - so %e resolved to
-            // undefined and every pacification in the game said "The
-            // enemy". GetLocalizedEnemyName is enemyDisplayName now.
-            hudText.add(`${enemyDisplayName(f.mobileType) ?? 'The enemy'} is pacified by your ${SKILL_NAMES[_lang]} skill.`);   // languagePacified %e/%s
-            tallySkill(playerEntity, _lang, 3);
-          } else if (_lang !== SKILLS.Etiquette && _lang !== SKILLS.Streetwise) {
-            tallySkill(playerEntity, _lang, 1);
-          }
-        }
+      // AUDIT 24 (wave 42): through the one home. This was the tree's
+      // only consumer of justEncountered, though the motor raises it
+      // for every pool - so no monster and no watchman above ground
+      // was ever talked down.
+      if (foeDeps) {
+        tryLanguagePacification(f.ai, f.entity, f.mobileType, playerEntity, {
+          sheathed: playerWeapon.sheathed,
+          enemyLanguageSkill: foeDeps.enemyLanguageSkill,
+          calculateEnemyPacification: foeDeps.calculateEnemyPacification,
+          say: (l) => hudText.add(l),
+        });
       }
       // A1 EnemySounds. AUDIT 24 (wave 41): this was the tree's ONLY
       // copy, written inline here, and it had drifted three ways - its

@@ -198,9 +198,11 @@ test('audit24 wave38: the kill notice, and the name table that was out of reach'
   // so the dungeon's pacification line called everything "The enemy".
   assert.equal(Object.values(ENEMY_BASICS).filter((r) => r.name !== undefined).length, 0,
     'ENEMY_BASICS rows have no name field');
-  const d = rd('src/scenes/dungeonContext.js');
-  assert.match(d, /enemyDisplayName\(f\.mobileType\) \?\? 'The enemy'/);
-  assert.doesNotMatch(d, /ENEMY_BASICS\[f\.mobileType\]\?\.name/, 'the field that never existed');
+  // AUDIT 24 (wave 42): the line moved into hostCombat's shared
+  // pacification, which is where all three pools reach it now.
+  const hc = rd('src/scenes/hostCombat.js');
+  assert.match(hc, /enemyDisplayName\(mobileType\) \?\? 'The enemy'/);
+  assert.doesNotMatch(rd('src/scenes/dungeonContext.js'), /ENEMY_BASICS\[f\.mobileType\]\?\.name/, 'the field that never existed');
 
   // both pools announce their kills
   for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js']) {
