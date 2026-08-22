@@ -328,3 +328,112 @@ test('stealth: the chameleon illusion gate blocks SIGHT (the dead S8 half-sight 
   });
   assert.ok(ai2.detected);
 });
+
+test('AUDIT 24: the knockback caps, and the SWIMMER arm the campaign left alive', async () => {
+  // The mutation campaign over the AUDIT 24 line ranges left five live
+  // mutants in this file, and four of them sit in the swimmer
+  // knockback arm - a foe that swims, in water, being shoved. Nothing
+  // exercised it. The two caps above it were bare too.
+  const { KNOCKBACK_STORE_CAP, KNOCKBACK_MOTION_CAP, KNOCKBACK_HURT_THRESHOLD,
+    WATER_HEAD_MARGIN } = await import('../src/characters/enemyMotor.js');
+  const { KB_UNIT } = await import('../src/combat/formulas.js');
+  const mkC = () => {
+    const c = new Collider(() => -100);
+    c.addMesh('floor', new Float32Array([-40, 0, -40, 40, 0, -40, 40, 0, 40, -40, 0, 40]), quadIdx, I);
+    return c;
+  };
+  const KB = (v) => v / KB_UNIT;
+
+  // THE STORE CAP clamps on the way IN: anything above 40 classic is
+  // written down to 40, so the decay always ends in the same 8 ticks.
+  const hard = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
+  hard.knockbackSpeed = KB(500);
+  hard.knockbackDir = [0, 0, -1];
+  hard.update(1 / 60, [0, 0, 10]);
+  assert.ok(hard.knockbackSpeed <= KB(KNOCKBACK_STORE_CAP),
+    `stored speed is clamped to ${KNOCKBACK_STORE_CAP} classic, not carried at 500`);
+
+  // THE MOTION CAP is a separate Math.MIN on the way OUT - a stored 40
+  // still MOVES at 25, so a huge hit does not teleport the foe.
+  const capped = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
+  capped.knockbackSpeed = KB(KNOCKBACK_STORE_CAP);
+  capped.knockbackDir = [0, 0, -1];
+  capped.update(1 / 60, [0, 0, 10]);
+  const moved = Math.abs(capped.feet[2]);
+  assert.ok(moved <= KB(KNOCKBACK_MOTION_CAP) * (1 / 60) + 1e-6,
+    `one frame moves at most the MOTION cap: ${moved}`);
+  assert.ok(moved > 0, 'and it really moved');
+
+  // THE HURT FLAG rides its own threshold, strictly above
+  const soft = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
+  soft.knockbackSpeed = KB(KNOCKBACK_HURT_THRESHOLD);
+  soft.knockbackDir = [0, 0, -1];
+  soft.update(1 / 60, [0, 0, 10]);
+  assert.equal(soft.hurtKnock, false, 'exactly AT the threshold is not hurt');
+
+  // THE SWIMMER ARM. A knocked swimmer moves only while its CENTRE is
+  // below the surface, and an upward ray is cut to zero once the head
+  // would break it (WaterMove keeps 2.5 under).
+  const surface = 6;
+  const under = new EnemyAI(mkC(), [0, 1, 0], 0,
+    { liveSpeed: 50, behaviour: 'Aquatic', mobileId: 11, waterSurfaceY: () => surface });
+  under.knockbackSpeed = KB(20);
+  under.knockbackDir = [0, 0, -1];   // level, so the head gate cannot bite
+  const z0 = under.feet[2];
+  for (let i = 0; i < 6; i++) under.update(1 / 60, [0, 1, 10]);
+  assert.ok(under.feet[2] < z0 - 0.05, `a submerged swimmer is shoved: ${under.feet[2]}`);
+
+  // straight UP from the bottom: the rise is CUT once the head would
+  // break the surface. WaterMove keeps WATER_HEAD_MARGIN under, so the
+  // centre stops at waterY - 2.5 and goes no higher, however hard the
+  // shove.
+  // start just BELOW the gate (centre 3.5 = surface - 2.5, so feet
+  // 2.6 for a 1.8-tall swimmer) so the cut really has to bite within
+  // the knockback's own lifetime
+  const rising = new EnemyAI(mkC(), [0, 2.2, 0], 0,
+    { liveSpeed: 50, behaviour: 'Aquatic', mobileId: 11, waterSurfaceY: () => surface });
+  rising.knockbackSpeed = KB(20);
+  rising.knockbackDir = [0, 1, 0];
+  const yStart = rising.feet[1];
+  for (let i = 0; i < 40; i++) rising.update(1 / 60, [0, 1, 10]);
+  const centre = rising.feet[1] + rising.height / 2;
+  assert.ok(rising.feet[1] > yStart, `it did rise: ${yStart} -> ${rising.feet[1]}`);
+  // the gate is read BEFORE the move, so the last permitted step still
+  // lands a full frame's rise past it - C#'s own WaterMove shape. One
+  // frame at the motion cap is the bound.
+  const oneFrame = KB(KNOCKBACK_MOTION_CAP) / 60;
+  assert.ok(centre <= surface - WATER_HEAD_MARGIN + oneFrame,
+    `the head stays ${WATER_HEAD_MARGIN} under (within one frame): centre ${centre} vs surface ${surface}`);
+  assert.ok(centre < surface, 'and it never breaks the surface');
+
+  // OUT of the water entirely (no surface under it): the swimmer arm
+  // moves it NOT AT ALL - the whole block is inside `center < waterY`
+  const beached = new EnemyAI(mkC(), [0, 1, 0], 0,
+    { liveSpeed: 50, behaviour: 'Aquatic', mobileId: 11, waterSurfaceY: () => null });
+  beached.knockbackSpeed = KB(20);
+  beached.knockbackDir = [0, 0, -1];
+  const bz = beached.feet[2];
+  for (let i = 0; i < 6; i++) beached.update(1 / 60, [0, 1, 10]);
+  assert.equal(beached.feet[2], bz, 'a swimmer with no water takes no knockback motion at all');
+
+  // and ABOVE a real surface: the gate is an AND of two conditions and
+  // this is the half the no-water case cannot reach - a swimmer that
+  // has been shoved clear of the water is still not moved by this arm.
+  const above = new EnemyAI(mkC(), [0, surface + 4, 0], 0,
+    { liveSpeed: 50, behaviour: 'Aquatic', mobileId: 11, waterSurfaceY: () => surface });
+  above.knockbackSpeed = KB(20);
+  above.knockbackDir = [0, 0, -1];
+  const az = above.feet[2];
+  for (let i = 0; i < 6; i++) above.update(1 / 60, [0, surface + 4, 10]);
+  assert.equal(above.feet[2], az, 'centre above the surface: the whole swimmer arm is skipped');
+
+  // AN HONEST NON-KILL: the store cap's `>` survives a flip to `>=`,
+  // and always will - at exactly the cap both arms assign the same
+  // value. An equivalent mutant, recorded rather than papered over.
+  const atCap = new EnemyAI(mkC(), [0, 0, 0], 0, { liveSpeed: 50 });
+  atCap.knockbackSpeed = KB(KNOCKBACK_STORE_CAP);
+  atCap.knockbackDir = [0, 0, -1];
+  atCap.update(1 / 60, [0, 0, 10]);
+  assert.ok(atCap.knockbackSpeed <= KB(KNOCKBACK_STORE_CAP),
+    'exactly at the cap reads the same either way - the comparison is not observable there');
+});

@@ -2102,6 +2102,37 @@ same, so a future reader does not go hunting for the missing coverage.
 
 Four mutants, four kills, one honest equivalent.
 
+### Wave 15 - the knockback arm nobody had ever swum through
+
+Four of `enemyMotor.js`'s five surviving mutants sat in one place: the
+KNOCKBACK SWIMMER ARM - a foe that swims, in water, being shoved. The
+suite had a knocked walker, a knocked flyer, and a swimming fish, and
+never once a knocked swimmer.
+
+Pinned now, and each half of it matters:
+
+- the STORE cap clamps on the way IN (500 classic is written down to
+  40, so the decay always ends in the same eight ticks) and the MOTION
+  cap is a SEPARATE `Math.min` on the way out - a stored 40 still moves
+  at 25, which is what stops a huge hit teleporting the foe. Flipping
+  that `Math.min` to `Math.max` was a live mutant.
+- a submerged swimmer is shoved along the ray, and an UPWARD ray is cut
+  to zero once the head would break the surface. The gate is read
+  BEFORE the move, so the last permitted step still lands a full
+  frame's rise past it - C#'s own WaterMove shape, and the pin bounds
+  the overshoot at one frame at the motion cap rather than pretending
+  it does not happen.
+- the arm is skipped entirely with no water AND with the centre above a
+  real surface. That second case is the half of the `&&` the no-water
+  fixture cannot reach, and it took a second fixture to kill the
+  `|| ` mutant.
+
+The fifth is another honest **EQUIVALENT MUTANT**: the store cap's `>`
+flipped to `>=` assigns the same value at exactly the cap, and always
+will. Recorded in the pin, not papered over.
+
+Four mutants, four kills, one equivalent.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
