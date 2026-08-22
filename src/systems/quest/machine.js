@@ -381,6 +381,20 @@ export class QuestMachine {
     return quest;
   }
 
+  /** StartQuest(questName, factionId) (QuestMachine.cs:705-713): parse
+   *  by name and start IMMEDIATELY - the arm StartGameBehaviour uses
+   *  for the two hard-coded main-quest starts. A quest that will not
+   *  parse answers null and nothing starts, which is ParseQuest's own
+   *  swallow-all contract. AUDIT 24 (the seven-slice sweep). */
+  startQuestByName(questName, factionId = 0, opts = {}) {
+    const lines = this.deps.getQuestSourceLines?.(questName);
+    if (!lines) { console.warn(`[quest] no source for quest ${questName}`); return null; }
+    const quest = this.parseQuestForLists(lines, factionId, opts);
+    if (!quest) return null;
+    this.startQuestImmediate(quest);
+    return quest;
+  }
+
   /** Schedule by quest name through the data seam. */
   scheduleQuestByName(questName, factionId = 0, opts = {}) {
     const lines = this.deps.getQuestSourceLines?.(questName);

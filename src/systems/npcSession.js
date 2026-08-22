@@ -625,6 +625,17 @@ export class NPCSession {
    *    it never enters the pool;
    *  - selectedNpcWorkKey is left pointing at the LAST NPC added, so
    *    a pool build silently reselects the questor. */
+  // FLAGGED: no host calls this. C# populates the pool INSIDE
+  // GetBuildingList (:2751-2876), and the port split the policy out
+  // here while the host's building-list seam answers only
+  // {name, buildingType, buildingKey, position} - it has no per-building
+  // NPC records to hand in. So npcsWithWork is ALWAYS empty, WorkAvailable
+  // is always false, and worldModes' questOffer arm is unreachable: no
+  // townsperson ever has "any work". The missing half is the exterior
+  // block walk's person records grouped by building
+  // ({nameSeed, factionID, gender, isChild}), which is a host slice,
+  // not a policy change here. AUDIT 24 (the seven-slice sweep) found
+  // it dead and silent; this flag is so it is dead and LOUD.
   buildQuestorPool(buildings = []) {
     const locationIndex = this.deps.currentLocationIndex?.() ?? 0;
     if (this.exteriorUsedForQuestors === locationIndex) return false;

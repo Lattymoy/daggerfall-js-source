@@ -166,6 +166,10 @@ export function tokensToRows(tokens) {
   return rows;
 }
 
+/** StartGameBehaviour.cs:445-447 - the two quests a new character
+ *  always starts, in this order. _BRISIEN is the main quest's first. */
+export const GAME_START_QUESTS = Object.freeze(['_TUTOR__', '_BRISIEN']);
+
 export function createQuestBridge(ctx) {
   const notebook = new PlayerNotebook({
     dateTimeString: () => ctx.dateTimeString?.() ?? '',
@@ -336,9 +340,20 @@ export function createQuestBridge(ctx) {
       addQuestResourceObjects(machine, adapter, siteType, buildingKey);
     },
 
-    /** InitAtGameStart (QuestListsManager.cs:263-273): the host calls
-     *  ONCE on a new game. */
+    /** The NEW-GAME quest start, whole (StartGameBehaviour.cs:444-456).
+     *
+     *  AUDIT 24 (the seven-slice sweep): the port called only the
+     *  InitAtGameStart half - and with vanilla tables that list is
+     *  EMPTY, so a new character started no quests at all. The two
+     *  lines above it in C# are hard-coded:
+     *      QuestMachine.Instance.StartQuest("_TUTOR__");
+     *      QuestMachine.Instance.StartQuest("_BRISIEN");
+     *  _BRISIEN is the MAIN QUEST's first quest. Both files are
+     *  vendored; neither had ever been parsed. The optional
+     *  LaunchQuest arm between them has no port-side setter and is
+     *  recorded rather than invented. */
     initAtGameStart() {
+      for (const name of GAME_START_QUESTS) machine.startQuestByName(name);
       questLists.initAtGameStartQuests((q) => machine.startQuestImmediate(q));
     },
 

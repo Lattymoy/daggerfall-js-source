@@ -312,6 +312,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/itemTemplates.js:112` - if (!Object.isExtensible(item)) return item;   // C-slice: the frozen pre-chargen stand-ins (INTERIM_WEAPON) carry no condition
 - `src/systems/loot.js:17` - INTERIM (loud): MI (magic items) rolls need the MAGIC.DEF registry
 - `src/systems/loot.js:212` - FLAGGED to the ENCHANTMENT-EFFECTS slice (the shops themselves
+- `src/systems/npcSession.js:628` - FLAGGED: no host calls this. C# populates the pool INSIDE
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
 - `src/systems/save.js:80` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)

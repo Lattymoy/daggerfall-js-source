@@ -1549,7 +1549,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // slice that brings the rest of PlayerGPS.
     courtOfCurrentRegion: () => 0,
     currentLocationIndex: () => _questLoc()?.locationIndex ?? 0,
-    nameBankOfCurrentRegion: () => getNameBankOfRegion(_questLoc()?.regionIndex ?? -1),
+    nameBankOfCurrentRegion: () => getNameBankOfRegion(_questRegionIndex()),   // AUDIT 24: the POLITIC-derived index, like every other region read - the location's is -1 across the whole wilderness
     buildingType: () => (modes?.interiorBuilding?.buildingType === TALK_BUILDING_TYPES.Palace ? 'Palace' : null),
     isPlayerInsideCastle: () => false,   // the Q4-v caveat rides here too
     guildMemberships: () => Object.entries(playerEntity.guildMemberships ?? {})

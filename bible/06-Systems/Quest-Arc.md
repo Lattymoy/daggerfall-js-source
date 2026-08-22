@@ -2186,6 +2186,45 @@ OF A BAND TELLS YOU NOTHING ABOUT ITS EDGE.
 
 Three mutants, three kills, one recorded non-kill.
 
+### Wave 18 - a new character started no quests at all
+
+**THE MAIN QUEST NEVER BEGAN.** StartGameBehaviour.cs:444-456 starts
+THREE things on a new character:
+
+```
+QuestMachine.Instance.StartQuest("_TUTOR__");
+QuestMachine.Instance.StartQuest("_BRISIEN");
+...
+GameManager.Instance.QuestListsManager.InitAtGameStartQuests();
+```
+
+The port called only the third. And with vanilla tables the
+InitAtGameStart list is EMPTY - so a new character started no quests
+whatsoever: no tutorial, and `_BRISIEN`, the main quest's first quest,
+never ran. Both files have been sitting in `vendor/dfu-quests/Quests/`
+the whole time and neither had ever been parsed. `startQuestByName` is
+QuestMachine.cs:705-713's own arm, and the pin drives the real bridge
+over the real pack and asserts both start, in order, live in the
+machine. (The optional `LaunchQuest` between them has no port-side
+setter and is recorded rather than invented.)
+
+**AND THE SOCIAL QUESTOR POOL IS DEAD, LOUDLY NOW.** C# populates
+`npcsWithWork` inside `GetBuildingList` (:2751-2876). The port split the
+POLICY into `buildQuestorPool` and the host's building-list seam answers
+only `{name, buildingType, buildingKey, position}` - it has no
+per-building NPC records to hand in, so nothing calls it. `npcsWithWork`
+is always empty, `WorkAvailable` is always false, and worldModes'
+questOffer arm is unreachable: no townsperson ever has "any work". The
+missing half is a HOST slice (the exterior block walk's person records
+grouped by building), not a policy change, so it is FLAGGED rather than
+guessed at - dead and loud instead of dead and silent.
+
+**One more region read fixed:** `nameBankOfCurrentRegion` was still on
+`currentLocation().regionIndex`, the -1-across-the-wilderness value
+waves 2 and 4 chased out of every other region seam.
+
+One mutant, one kill.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

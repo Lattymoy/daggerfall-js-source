@@ -315,3 +315,50 @@ test('audit24: no action carries a createNew-only field that a RESTORE leaves un
   assert.ok(/class PlaySound extends ActionTemplate \{[\s\S]{0,1600}this\.timesPlayed = 0;/.test(src),
     'PlaySound, the one that had it, declares it now');
 });
+
+test('audit24: a NEW CHARACTER starts the two hard-coded quests, main quest included', async () => {
+  // StartGameBehaviour.cs:444-456 starts THREE things on a new
+  // character: "_TUTOR__", "_BRISIEN", and then the InitAtGameStart
+  // list. The port called only the third - and with vanilla tables
+  // that list is EMPTY, so a new character started no quests at all
+  // and the MAIN QUEST never began. Both files are vendored; neither
+  // had ever been parsed.
+  const { GAME_START_QUESTS, createQuestBridge } = await import('../src/scenes/questBridge.js');
+  const { loadQuestTables } = await import('../src/systems/quest/tables.js');
+  const { readFileSync, readdirSync, existsSync } = await import('node:fs');
+
+  assert.deepEqual([...GAME_START_QUESTS], ['_TUTOR__', '_BRISIEN'],
+    'in C#\'s order - _BRISIEN is the main quest\'s first quest');
+
+  const QUESTS = join(ROOT, 'vendor/dfu-quests/Quests');
+  const TABLES = join(ROOT, 'vendor/dfu-quests/Tables');
+  if (!existsSync(QUESTS)) return;   // the vendored pack is the gate's data
+  const sources = {};
+  for (const f of readdirSync(TABLES)) {
+    if (f.endsWith('.txt')) sources[f.replace('.txt', '')] = readFileSync(join(TABLES, f), 'utf8').replace(/^﻿/, '');
+  }
+  loadQuestTables(sources);
+
+  for (const name of GAME_START_QUESTS) {
+    assert.ok(existsSync(join(QUESTS, `${name}.txt`)), `${name}.txt is vendored`);
+  }
+
+  const started = [];
+  const bridge = createQuestBridge({
+    data: {
+      readListTable: (n) => (existsSync(join(TABLES, `${n}.txt`)) ? readFileSync(join(TABLES, `${n}.txt`), 'utf8') : ''),
+      getQuestSourceLines: (n) => {
+        const f = join(QUESTS, `${n}.txt`);
+        return existsSync(f) ? readFileSync(f, 'utf8').replace(/^﻿/, '').split(/\r?\n/) : null;
+      },
+    },
+    world: null,
+    classicSeconds: () => 0,
+    playerEntity: { level: 1, name: 'Tester' },
+    onQuestStarted: (q) => started.push(q.questName),
+  });
+  bridge.initAtGameStart();
+  assert.deepEqual(started.slice(0, 2), ['_TUTOR__', '_BRISIEN'],
+    'both hard-coded quests really start, in order');
+  assert.equal(bridge.machine.quests.size >= 2, true, 'and they are LIVE in the machine');
+});
