@@ -182,6 +182,14 @@ export function createArrestFlow({
       // Harmless while NormalizeReputations was unported; not harmless now
       // that it is.
       raiseRepForSentence(playerEntity, court);
+      // AUDIT 24 (the seven-slice sweep): and here is the line the
+      // comment above has been describing. UpdatePrisonScreen
+      // (DaggerfallCourtWindow.cs:473-474) sets BOTH prevent flags
+      // immediately before RaiseTime; worldTick clears this one at the
+      // end of the same update, exactly as PlayerEntity.cs:528-530
+      // does. Without it a sentence long enough to cross a 112-day
+      // boundary normalized away the reputation it had just credited.
+      playerEntity.preventNormalizingReputations = true;
       advanceDays(result.days);
       release();
       townTalk.showOverlay(new ChoiceWindow({ lines: [`You serve ${result.days} days in prison.`] }));

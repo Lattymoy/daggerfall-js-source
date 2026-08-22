@@ -88,6 +88,15 @@ export const LIVE = Object.freeze({
   // their projection at a hardcoded Math.PI/3, which is DFU's
   // MINIMUM (60) rather than its default (65).
   'Video/FieldOfView': 'src/ui/viewSettings.js',
+  // AUDIT 24 (the seven-slice sweep): three the quest arc had been
+  // reading as HARDCODED falses. Every one has a live consumer and a
+  // launcher toggle, so the player could flip a switch that reached
+  // nothing: adult quests were filtered out whatever ChildGuard said,
+  // the guild list-box arm was unreachable, and the journal's clocks
+  // never counted down.
+  'ChildGuard/PlayerNudity': 'src/scenes/questBridge.js',
+  'Enhancements/GuildQuestListBox': 'src/scenes/questBridge.js',
+  'GUI/ShowQuestJournalClocksAsCountdown': 'src/scenes/world.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the

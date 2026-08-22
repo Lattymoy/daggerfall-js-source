@@ -42,6 +42,16 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
    *  corpse-batch shape); shared by drop and restore. */
   function mount(pile) {
     getTexture(RANDOM_TREASURE_ARCHIVE).then((t) => {
+      // AUDIT 24 (the seven-slice sweep): the pile can be removed while
+      // this texture is in flight - collectPixel with its map pixel,
+      // releaseEmptied when the loot window closes, or either restore
+      // clearing the set. Every one of those guards on `p.batch`,
+      // which is still null for the whole of this window, so all four
+      // free nothing and splice the pile away - and then this
+      // continuation mints a batch onto an orphan that nothing holds.
+      // The dungeon's missile mount has carried exactly this check
+      // since its own audit; retire() marks, the continuation reads.
+      if (pile.dead) return;
       uploadRecordFrame(RANDOM_TREASURE_ARCHIVE, pile.record, 0);
       const size = scaledBillboardSize(t.getSize(pile.record), t.getScale(pile.record));
       pile.size = size;   // AUDIT 17e F23: kept so a recenter can rebuild
@@ -80,6 +90,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     for (let i = piles.length - 1; i >= 0; i--) {
       const p = piles[i];
       if (p.pixelKey !== pixelKey) continue;
+      p.dead = true;   // AUDIT 24: an in-flight mount must not publish onto this
       if (p.batch) { flatAnims.remove(p.batch); renderer.destroyBillboardBatch(p.batch); }   // FA1: the clock goes with the batch
       piles.splice(i, 1);
     }
@@ -97,7 +108,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     });
   }
   function restoreWorld(saved, fromNative, yOffset = 0) {
-    for (const p of piles) if (p.batch) renderer.destroyBillboardBatch(p.batch);
+    for (const p of piles) { p.dead = true; if (p.batch) renderer.destroyBillboardBatch(p.batch); }   // AUDIT 24: mark first - an in-flight mount reads it
     piles.length = 0;
     for (const s of saved ?? []) {
       if (!s.items?.length) continue;
@@ -115,7 +126,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
    *  record - a restore must not reroll the icon. A snapshot with no
    *  piles clears, matching DFU's rebuild-from-save. */
   function restorePiles(saved) {
-    for (const p of piles) if (p.batch) renderer.destroyBillboardBatch(p.batch);
+    for (const p of piles) { p.dead = true; if (p.batch) renderer.destroyBillboardBatch(p.batch); }   // AUDIT 24: mark first - an in-flight mount reads it
     piles.length = 0;
     for (const s of saved ?? []) {
       if (!s.items?.length) continue;
@@ -153,6 +164,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     for (let i = piles.length - 1; i >= 0; i--) {
       const p = piles[i];
       if (p.items.length) continue;
+      p.dead = true;   // AUDIT 24: an in-flight mount must not publish onto this
       if (p.batch) renderer.destroyBillboardBatch(p.batch);
       piles.splice(i, 1);
     }

@@ -40,7 +40,6 @@ const PENDING = new Map([
   ['spellHasMatchForClassicEffect', 'rides the readied-bundle seam above'],
   ['readiedSpell', 'RETIRED by AUDIT 24 - the latch is the action\'s now; the name survives only in a comment'],
   ['isHouseOwned', 'the residence-ownership half of the Place arc'],
-  ['showClocksAsCountdown', 'a settings read the launcher does not expose yet'],
   ['buildingNameOpts', 'the building-name option bag'],
   ['currentRegionCourt', 'GetCourtOfCurrentRegion - the region faction trio'],
   ['currentRegionFaction', 'GetCurrentRegionFaction - the region faction trio'],

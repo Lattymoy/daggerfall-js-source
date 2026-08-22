@@ -1763,6 +1763,57 @@ a source-shape pin is a weak pin: these modules need a live WebGL
 context to construct and the defect is an ABSENCE. Six mutants, six
 kills.
 
+### Wave 7 - two async races, and four switches wired to nothing
+
+**THE ABANDONED PIXEL BUILD PUBLISHED ITSELF.** `buildPixel` awaits a
+dozen textures and publishes into `built` only at its very end. If the
+player walks far enough during those awaits, the frame loop's streaming
+step calls `destroyPixel` for that key - which finds no entry, because
+there is none yet - and `state.release`s it. Then the build finishes and
+`built.set` publishes a pixel nobody wants: a terrain mesh, a tilemap
+texture, its billboard batches, a collider bucket and its doors, with no
+unload left to come for them. Walking back rebuilds the key and
+OVERWRITES the orphan, leaking all of it. `pump` re-checks
+`state.loaded` after the await and tears down what it just built.
+
+**AND THE LOOT PILE HAD THE SAME SHAPE.** `mount(pile)` sets
+`pile.batch` in a `.then()`, and all four removal paths - `collectPixel`
+with the map pixel, `releaseEmptied` when the loot window closes, and
+both restores clearing the set - guard on `p.batch`, which is null for
+the whole in-flight window. So all four free nothing, splice the pile
+away, and the continuation mints a batch onto an orphan. The dungeon's
+missile mount has carried exactly this check since its own audit; the
+pile now marks `dead` on removal and the continuation reads it.
+
+**FOUR SWITCHES REACHED NOTHING.**
+`ChildGuard/PlayerNudity`, `Enhancements/GuildQuestListBox` and
+`GUI/ShowQuestJournalClocksAsCountdown` were hardcoded `false` at the
+bridge and absent from the world seam - every one with a live consumer
+(questLists' adult filter, offerFlow's list-box arm, clock.js's
+countdown) and a launcher toggle the player could flip for nothing.
+They are LIVE reads now, GETTERS because C# reads the setting at the
+point of use, and the settings tier map's own both-ways gate covers
+them from here.
+
+The fourth is `preventNormalizingReputations`, and it is the sharpest.
+PlayerEntity.cs:458 reads it, :528-530 clears it,
+DaggerfallCourtWindow.cs:474 is the only setter - and the port had
+ported the READ alone, so the guard was a constant `true` in one
+direction and dead in the other. The prison arm's own comment described
+the missing line in as many words: *"it sets
+PreventNormalizingReputations across the skip precisely so the elapsed
+days cannot decay what it just credited. Harmless while
+NormalizeReputations was unported; not harmless now that it is."* A
+sentence long enough to cross a 112-day boundary normalized away the
+reputation the court had just credited. Both halves are wired, and the
+pin drives a real 112-day crossing both ways rather than reading the
+source.
+
+**Standing law, restated one more time:** A COMMENT THAT DESCRIBES A
+LINE THAT IS NOT THERE IS A BUG WITH A WITNESS.
+
+Six mutants, six kills.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

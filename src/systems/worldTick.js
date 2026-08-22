@@ -109,6 +109,16 @@ export function tickPlayerMinutes({
     }
   }
 
+  // PlayerEntity.cs:528-530, the tail of the SAME update: the flag is
+  // a ONE-JUMP shield, cleared the moment the jump it covered is over.
+  // AUDIT 24 (the seven-slice sweep): nothing set it and nothing
+  // cleared it, so both halves of the rule were dead - the read above
+  // was a constant `true`, and the prison arm's own comment ("it sets
+  // PreventNormalizingReputations across the skip precisely so the
+  // elapsed days cannot decay what it just credited... not harmless
+  // now that it is [ported]") described a line that was not there.
+  if (entity.preventNormalizingReputations) entity.preventNormalizingReputations = false;
+
   // S20 parity: DFU applies the loss ONCE per minute-CHANGE
   // (`lastGameMinutes != gameMinutes` guards a single DecreaseFatigue),
   // so a multi-minute jump costs one minute's fatigue, not one per

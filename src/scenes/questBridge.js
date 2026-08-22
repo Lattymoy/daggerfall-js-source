@@ -52,6 +52,7 @@ import { PlayerNotebook } from '../systems/notebook.js';
 import { GENDERS } from '../characters/nameHelper.js';
 import { ZERO_NPC_DATA, NPC_CONTEXT, raceFromFaction } from '../characters/staticNpc.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
+import { getBool } from '../systems/settings.js';
 import { addQuestResourceObjects } from '../systems/quest/sceneMount.js';
 
 /** GetPositionHash (StaticNPC.cs:333-336): int32 semantics via |0. */
@@ -214,14 +215,24 @@ export function createQuestBridge(ctx) {
     getQuestSourceLines: (name) => ctx.data.getQuestSourceLines(name),
     parseQuest: (lines, factionId, partialParse) =>
       machine.parseQuestForLists(lines, factionId, { partialParse }),
-    playerNudity: false,
+    // AUDIT 24 (the seven-slice sweep): a LIVE read, not a hardcoded
+    // false. DaggerfallUnity.Settings.PlayerNudity is a real setting
+    // the port already stores and the launcher already renders as a
+    // toggle - and questLists.js:154 gates adult quests on it, so
+    // flipping it did nothing at all. A GETTER because C# reads the
+    // setting at the point of use, and the consumer reads
+    // `deps.playerNudity` as a value.
+    get playerNudity() { return getBool('ChildGuard', 'PlayerNudity'); },
   });
 
   const offerFlow = new QuestOfferFlow(machine, questLists, {
     isPlayerInsideCastle: () => ctx.isPlayerInsideCastle?.() ?? false,
     removeNpcQuestor: (seed) => ctx.removeNpcQuestor?.(seed),
     getGuildFactionId: (g) => ctx.getGuildFactionId?.(g) ?? 0,
-    guildQuestListBox: false,   // the classic random draw (the DFU setting defaults off)
+    // likewise: offerFlow.js:144 branches on this and the launcher
+    // offers it, so the list-box arm was unreachable. Defaults off,
+    // which is the classic random draw.
+    get guildQuestListBox() { return getBool('Enhancements', 'GuildQuestListBox'); },
   });
 
   // QuestMachine.Update's pacing (QuestMachine.cs:305-320): tick at

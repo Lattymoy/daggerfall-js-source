@@ -1170,6 +1170,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     const next = queue.shift();
     try {
       await buildPixel(next.px, next.py);
+      // AUDIT 24 (the seven-slice sweep): the streamer can unload this
+      // pixel while our textures are in flight. When it does,
+      // destroyPixel runs against a `built` that has no entry yet -
+      // buildPixel publishes only at its very end - so it returns
+      // having freed nothing, and then the finished build publishes a
+      // pixel nobody wants: a terrain mesh, a tilemap texture, its
+      // billboard batches, a collider bucket and its doors, with no
+      // unload left to come for them. Walking back rebuilds the key
+      // and OVERWRITES the orphan, leaking every one of them.
+      if (!state.loaded.has(`${next.px},${next.py}`)) destroyPixel(next.px, next.py);
     } catch (e) {
       console.error(`pixel ${next.px},${next.py} failed:`, e);
       state.release(next.px, next.py);
@@ -1467,6 +1477,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     /** TextProvider.GetRandomText (:250-268) - the flat Text-token
      *  pool over one TEXT.RSC record. */
     getRandomText: (id) => townTalk.randomText(id),
+    /** The journal clock's countdown toggle. AUDIT 24: clock.js has
+     *  read this seam since Q4-iv and nothing answered it, so the
+     *  port's own "Journal Countdowns" switch did nothing. */
+    showClocksAsCountdown: () => getBool('GUI', 'ShowQuestJournalClocksAsCountdown'),
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     changeLegalRep: (amount) => changeLegalRep(playerEntity, _questLoc()?.regionIndex ?? 0, amount),

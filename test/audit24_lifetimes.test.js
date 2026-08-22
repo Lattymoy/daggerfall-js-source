@@ -17,6 +17,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -107,4 +108,82 @@ test('audit24 lifetimes: forceExitToExterior tears the quest stands down like th
   assert.match(read('src/scenes/worldModes.js'),
     /pulled\s*\n\s*\/\/ out of the context's list FIRST so ctx\.destroy\(\) cannot free them\s*\n\s*\/\/ a second time/,
     'the rule is written down where it is enforced');
+});
+
+// ---- the DEAD FLAGS: a read with no writer, a write with no reader ----
+
+test('audit24: preventNormalizingReputations is set by the prison jump and cleared by the tick', async () => {
+  // PlayerEntity.cs:458 reads it, :528-530 clears it, and
+  // DaggerfallCourtWindow.cs:474 is the ONLY setter. The port ported
+  // the read and neither of the other two, so the guard was a constant
+  // `true` - and the prison arm's own comment described the missing
+  // line in as many words ("not harmless now that it is [ported]").
+  const arrest = read('src/scenes/arrestFlow.js');
+  assert.match(arrest, /playerEntity\.preventNormalizingReputations = true;\s*\n\s*advanceDays\(result\.days\)/,
+    'set BEFORE the day skip, as UpdatePrisonScreen sets it before RaiseTime');
+  const tick = read('src/systems/worldTick.js');
+  assert.match(tick, /if \(entity\.preventNormalizingReputations\) entity\.preventNormalizingReputations = false;/,
+    'and cleared at the tail of the same update - it is a ONE-JUMP shield');
+
+  // and the shield really shields: a 112-day boundary crossed with the
+  // flag up must not normalize, and must clear the flag on the way out
+  const { tickPlayerMinutes, resetMagicRoundMarker } = await import('../src/systems/worldTick.js');
+  const NORMALIZE = 161280;   // 112 days
+  const run = (prevent, legalRep) => {
+    const entity = {
+      stats: {}, skills: [], factionRep: null, level: 1,
+      legalRep, preventNormalizingReputations: prevent,
+    };
+    // sit one minute short of the 112-day boundary and step over it
+    resetMagicRoundMarker(NORMALIZE - 1);
+    tickPlayerMinutes({
+      entity, classicMinutes: NORMALIZE - 1, dt: 1 / CLASSIC_MINUTES_PER_SECOND,
+      sinks: {}, activity: {},
+    });
+    return entity;
+  };
+  const shielded = run(true, [40]);
+  assert.equal(shielded.legalRep[0], 40, 'the shield holds the credited reputation across the jump');
+  assert.equal(shielded.preventNormalizingReputations, false, 'and the flag clears itself, one jump only');
+  const bare = run(false, [40]);
+  assert.notEqual(bare.legalRep[0], 40, 'and without it the boundary really does decay - a RULE, not a tautology');
+});
+
+test('audit24: the three quest settings are LIVE reads, not hardcoded falses', async () => {
+  // Every one had a live consumer and a launcher toggle, so the player
+  // could flip a switch that reached nothing: adult quests were
+  // filtered out whatever ChildGuard said (questLists.js:154), the
+  // guild list-box arm was unreachable (offerFlow.js:144), and the
+  // journal's clocks never counted down (clock.js:158). The settings
+  // tier map's own both-ways gate now covers them; this pins the
+  // BEHAVIOUR the tier map cannot see.
+  const { setValue, _resetForTests } = await import('../src/systems/settings.js');
+  const bridge = read('src/scenes/questBridge.js');
+  assert.match(bridge, /get playerNudity\(\) \{ return getBool\('ChildGuard', 'PlayerNudity'\); \}/,
+    'a GETTER, because C# reads the setting at the point of use');
+  assert.match(bridge, /get guildQuestListBox\(\) \{ return getBool\('Enhancements', 'GuildQuestListBox'\); \}/);
+  assert.match(read('src/scenes/world.js'),
+    /showClocksAsCountdown: \(\) => getBool\('GUI', 'ShowQuestJournalClocksAsCountdown'\)/);
+
+  // and the getters really follow the store
+  const { QuestListsManager } = await import('../src/systems/quest/questLists.js');
+  _resetForTests();
+  const deps = { get playerNudity() { return true; } };
+  assert.equal(deps.playerNudity, true, 'the shape the consumer reads is a plain property');
+  assert.ok(typeof QuestListsManager === 'function');
+  _resetForTests();
+});
+
+test('audit24: two async races - an abandoned pixel build and an in-flight loot mount', () => {
+  // Both are the same shape: an await, a removal during it, and a
+  // continuation that publishes onto something nobody holds.
+  const world = read('src/scenes/world.js');
+  assert.match(world, /await buildPixel\(next\.px, next\.py\);[\s\S]{0,900}if \(!state\.loaded\.has\(`\$\{next\.px\},\$\{next\.py\}`\)\) destroyPixel\(next\.px, next\.py\);/,
+    'pump re-checks after the await - destroyPixel ran against an empty `built` back when the unload happened');
+  const loot = read('src/scenes/droppedLoot.js');
+  assert.match(loot, /function mount\(pile\) \{[\s\S]{0,900}if \(pile\.dead\) return;/,
+    'the loot mount checks its flag before publishing');
+  // and every removal path raises that flag - four of them
+  assert.equal((loot.match(/\.dead = true;/g) || []).length, 4,
+    'collectPixel, releaseEmptied, restoreWorld and restorePiles all mark');
 });
