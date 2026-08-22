@@ -1512,11 +1512,27 @@ export function createWorldModes(host) {
      *  cores of the door flows minus the landing (the caller owns
      *  the spawn; DFU's cross-scene arm transitions immediately,
      *  TransitionDungeonExteriorImmediate at Teleport.cs:151). */
+    /** The anchor-recall door out of any mode. AUDIT 24 (the
+     *  seven-slice sweep): it used to destroy the interior context
+     *  RAW - no teardownQuestFlats, no bridge notification - where
+     *  tryExit does both, and its comment says why: the stands must
+     *  leave the context's batch list FIRST "so ctx.destroy() cannot
+     *  free them a second time". Skipping it left questFlats holding
+     *  live-looking entries (`dead` false, `batch` set) over batches
+     *  the context had already freed, so the NEXT building's teardown
+     *  double-freed them - and every quest behaviour missed its
+     *  OnDestroy, so the resource side never decoupled. */
     forceExitToExterior() {
-      if (interiorCtx) { interiorCtx.destroy(); interiorCtx = null; interiorBuilding = null; interiorOverlay = null; }
+      const wasInside = mode !== 'exterior';
+      if (interiorCtx) {
+        teardownQuestFlats();
+        interiorCtx.destroy();
+        interiorCtx = null; interiorBuilding = null; interiorOverlay = null;
+      }
       if (dungeonCtx) { dungeonCtx.destroy(); dungeonCtx = null; }
       player.collider = baseCollider();
       mode = 'exterior';
+      if (wasInside) questBridge?.onExteriorTransition();   // CreateFoe's pending-wave invalidation, as both real doors do
     },
     // M2: the cast engine's mode-aware raycast reads the INTERIOR's
     // collider while a building is mounted.

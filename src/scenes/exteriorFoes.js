@@ -111,12 +111,25 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     restoreFatigue: (n) => { if (n > 0) f.entity.fatigue = Math.min(maxFatigue(f.entity), (f.entity.fatigue ?? 0) + n); },
   });
 
+  /** Free a foe's live billboard batch once nothing will draw it. */
+  function releaseFoeBatch(f) {
+    if (!f.batch) return;
+    renderer.destroyBillboardBatch(f.batch);
+    f.batch = null;
+  }
+
   function damageFoe(f, damage, playerFeet, knockDir = null) {
     if (f.ai && !f.ai.isHostile) { f.ai.isHostile = true; f.ai.makeHostileToPlayer?.(); }
     f.entity.health -= damage;
     if (f.entity.health <= 0) {
       f.dead = true;
       f.corpse = true;
+      // the LIVE batch is finished the moment the foe is - batches()
+      // skips every dead foe, and the corpse draws from its own batch
+      // below. AUDIT 24: this one was never freed either, and unlike
+      // the cull the record STAYS in `foes` (the tail splice spares
+      // corpses), so the batch was unreachable and undead at once.
+      releaseFoeBatch(f);
       if (f.ai?.detected) setEnemyAlert(playerEntity, false);   // EnemyDeath:132-136
       const ct = ENEMY_BASICS[f.mobileType]?.corpseTexture;
       if (ct) {
@@ -156,8 +169,17 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         }
       }
       // out of relevance (fresh senses, so a just-spawned foe's
-      // Infinity placeholder never culls): gone, no corpse
-      if (f.ai._dist > ENCOUNTER_CULL_DISTANCE && !f.ai.detected) { f.dead = true; continue; }
+      // Infinity placeholder never culls): gone, no corpse.
+      // AUDIT 24 (the seven-slice sweep): EVERY ALLOCATION HAS AN
+      // OWNER. The tail splice below drops a culled foe - and with it
+      // the only reference to its billboard batch, a VAO and two GL
+      // buffers, which nothing freed. Encounters respawn on a timer
+      // forever, so this bled for the whole session.
+      if (f.ai._dist > ENCOUNTER_CULL_DISTANCE && !f.ai.detected) {
+        releaseFoeBatch(f);
+        f.dead = true;
+        continue;
+      }
       if (f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());   // EnemySenses:533-535
       f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
       f.attack.update(dt, f.ai, playerFeet);

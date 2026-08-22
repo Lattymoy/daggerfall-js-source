@@ -217,11 +217,27 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     return Math.acos(Math.max(-1, Math.min(1, cos))) * 180 / Math.PI;
   }
 
+  /** AUDIT 24 (the seven-slice sweep): free a guard's LIVE billboard
+   *  batch the moment nothing will draw it again. `batches()` skips
+   *  every dead guard and a corpse draws from its own entry in
+   *  corpseBatches, so the live batch - a VAO and two GL buffers - was
+   *  simply abandoned, on both death paths, for every guard the watch
+   *  ever spawned. The `guards` ARRAY cannot be pruned alongside it:
+   *  lootTargets keys corpses by their array INDEX (`guardCorpse:${i}`)
+   *  and takeLoot reads guards[i] back, so a splice would hand the
+   *  player someone else's purse. */
+  function releaseGuardBatch(g) {
+    if (!g.batch) return;
+    renderer.destroyBillboardBatch(g.batch);
+    g.batch = null;
+  }
+
   function damageGuard(g, damage, playerFeet, knockDir) {
     g.entity.health -= damage;
     if (g.entity.health <= 0) {
       g.dead = true;
       g.corpse = true;   // G3: only a KILLED guard is lootable (walk-aways vanish with their items)
+      releaseGuardBatch(g);
       // G4 (HandleAttackFromSource, verbatim): killing the city watch
       // IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
       // the thieves-guild arc.
@@ -256,7 +272,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // EnemyEntity verbatim: the city watch DESPAWNS when the active
     // crime returns to None (court release, death, region exit).
     if (!playerEntity.crimeCommitted) {
-      for (const g of guards) if (!g.dead) g.dead = true;   // no corpse - they walk away
+      for (const g of guards) if (!g.dead) { g.dead = true; releaseGuardBatch(g); }   // no corpse - they walk away
     }
     // AUDIT 17e F7 - PlayerEntity.cs:533-537 verbatim: the surrender
     // dialogue flag resets once no city watch is alive. It only ever

@@ -1452,6 +1452,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         retireMissile(m);
       }
     }
+    // AUDIT 24 (the seven-slice sweep): EVERY ALLOCATION HAS AN OWNER,
+    // and so does every LIST ENTRY. retireMissile frees the batch and
+    // sets m.dead, but nothing removed the entry - so `missiles` grew
+    // for the whole dungeon session and this loop walked every corpse
+    // of every arrow and trap bolt, every frame, for ever. hostMagic
+    // has had exactly this line all along (:318-320); the dungeon's
+    // sibling loop never got it. Safe against the in-flight batch
+    // microtask, which publishes only `if (!gpu || m.dead) return`
+    // against the object it closed over, not against this list.
+    for (let i = missiles.length - 1; i >= 0; i--) if (missiles[i].dead) missiles.splice(i, 1);
   }
 
   // S12: the dungeon world snapshot. Foes persist by SPAWN ORDER
@@ -1580,8 +1590,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (knockDir && foe.ai) {
       const isClass = !!foe.entity.isClass;
       const mobileWeight = ENEMY_BASICS[foe.mobileType]?.weight ?? 0;
+      // WeaponManager.cs:578-581, verbatim precedence: `&&` binds
+      // tighter than `||`, so the gate is
+      // (speed <= 5/ratio && isEnemyClass) || Weight > 0. AUDIT 24 (the
+      // seven-slice sweep): the port had `!isClass &&` on the second
+      // arm, which C# does not write. It is a no-op on today's data -
+      // every class row leaves Weight at its struct 0 - but it is not
+      // what the source says, and the day a class row carries a weight
+      // the two would part.
       const reKnockOk = foe.ai.knockbackSpeed <= 5 / KB_UNIT && isClass;
-      if (reKnockOk || (!isClass && mobileWeight > 0)) {
+      if (reKnockOk || mobileWeight > 0) {
         const w = enemyWeightClassicUnits(isClass, foe.gender, mobileWeight);
         foe.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w);
         foe.ai.knockbackDir = [knockDir[0], knockDir[1], knockDir[2]];

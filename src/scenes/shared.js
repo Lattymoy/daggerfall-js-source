@@ -63,7 +63,22 @@ export function skyFrameForWeatherTime(minuteOfDay, showNightSky = true) {
 // (R2/R4 demo compatibility); otherwise the world clock decides.
 export function createSkyController(gl, params) {
   const sky = new SkyRenderer(gl);
-  const panoramas = new Map(); // "index:frame" | "index:night" -> panorama
+  // "index:frame" | "index:night" -> panorama, LRU-BOUNDED.
+  //
+  // AUDIT 24 (the seven-slice sweep): this Map had no eviction at all.
+  // Each entry's `colors` is the full CPU pixel buffer -
+  // SKY_FRAME_WIDTH 512 doubled by SKY_FRAME_HEIGHT 220 at RGBA, i.e.
+  // 1024 * 220 * 4 = 901,120 bytes - and the key space is 32 day
+  // frames plus night PER SKY INDEX, so one region's sky alone reaches
+  // ~29 MB as the day advances and every weather or region change
+  // starts another. DFU holds no such cache: DaggerfallSky rebuilds
+  // its texture on each frame change and keeps only the current one.
+  // The cache is the port's own speed trade, so it keeps a bound
+  // instead of the source's zero - the day advances one frame at a
+  // time and never revisits, so the only hits that matter are the
+  // immediate neighbours and the night/day toggle.
+  const PANORAMA_CACHE_MAX = 4;
+  const panoramas = new Map();
   const skyFiles = new Map();
   let activeKey = '';
   let pending = null;
@@ -117,7 +132,13 @@ export function createSkyController(gl, params) {
       const cached = panoramas.get(key);
       const apply = (pano) => {
         if (pending !== key) return;
+        // delete-then-set refreshes the entry's place in the Map's
+        // insertion order, which is the LRU order we evict from
+        panoramas.delete(key);
         panoramas.set(key, pano);
+        while (panoramas.size > PANORAMA_CACHE_MAX) {
+          panoramas.delete(panoramas.keys().next().value);
+        }
         sky.setPanorama(pano);
         activeKey = key;
         pending = null;

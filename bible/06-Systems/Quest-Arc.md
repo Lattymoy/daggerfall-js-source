@@ -1709,6 +1709,60 @@ dressed up: `context: Context.Custom` is 0, which is the struct's zero
 too, so the line documents SetLayoutData's intent without changing a
 value, and the pin says so.
 
+### Wave 6 - EVERY ALLOCATION HAS AN OWNER, five times over
+
+The bug-hunt half of the sweep read the port as JavaScript rather than
+against the C#, and the law it broke most was the port's own.
+
+- **Encounter foes leaked their billboard batch on BOTH ends.** The
+  distance cull sets `dead` and the tail splice drops the record -
+  taking the only reference to a VAO and two GL buffers with it. Death
+  is worse: the record STAYS in `foes` (the splice spares corpses) and
+  the live batch sits there unreachable and undead while the corpse
+  draws from its own. Encounters respawn on a timer for the whole
+  session.
+- **City guards, both death paths.** Killed or walked away when the
+  crime clears, the live batch was abandoned either way. The `guards`
+  ARRAY still cannot be pruned - lootTargets keys corpses by their
+  array INDEX and takeLoot reads `guards[i]` straight back, so a splice
+  would hand the player someone else's purse - and the pin says so, so
+  nobody "fixes" that next.
+- **Retired dungeon missiles never left the list.** `retireMissile`
+  frees the batch and sets `dead`, and nothing spliced; `updateMissiles`
+  then walked the corpse of every arrow and trap bolt, every frame, for
+  the whole dungeon. hostMagic has had exactly this line since its own
+  slice - the dungeon's sibling loop never got it.
+- **The sky panorama cache had no eviction at all.** Each entry's
+  `colors` is 1024 x 220 x 4 = 901,120 bytes and the key space is 32 day
+  frames plus night PER SKY INDEX, so one region reaches ~29 MB as the
+  day turns and every weather or region change starts another. DFU
+  keeps no such cache - DaggerfallSky rebuilds on each frame change and
+  holds only the current one - so the cache is the port's own speed
+  trade and now carries a bound (4, LRU) instead of the source's zero.
+- **`forceExitToExterior` destroyed the interior context raw.** No
+  `teardownQuestFlats`, no bridge notification, where `tryExit` does
+  both and its comment says why: the stands must leave the context's
+  batch list FIRST "so ctx.destroy() cannot free them a second time".
+  Skipping it left questFlats holding live-looking entries over batches
+  the context had already freed, so the next building's teardown
+  double-freed them - and every quest behaviour missed its OnDestroy.
+
+**One transliteration, one refutation.** The knockback gate read
+`reKnockOk || (!isClass && weight > 0)` where WeaponManager.cs:578-581
+writes `(speed <= 5/ratio && isEnemyClass) || Weight > 0` - the
+`!isClass` is the port's, a no-op on today's data (every class row
+leaves Weight at its struct 0) but not what the source says. And the
+NaN reported in `weaponKnockbackSpeed` at weight 0 is **refuted**: C#
+produces exactly the same NaN by exactly the same route (float division
+by an int zero, `Infinity * 0`, and `NaN < floor` false), and the
+caller's gate cannot deliver a zero weight anyway - a class enemy
+weighs 240 or 350, and a monster only passes on `weight > 0`.
+
+`test/audit24_lifetimes.test.js` gates all five, and says out loud that
+a source-shape pin is a weak pin: these modules need a live WebGL
+context to construct and the defect is an ABSENCE. Six mutants, six
+kills.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
