@@ -19,7 +19,7 @@ import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';  
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
 import { EnemyCaster, castEnemySpell } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // X3
-import { applySpell, maxFatigue } from '../systems/effects.js';   // X3: self-casts land through the effect spine
+import { applySpell, maxFatigue, entityIsParalyzed } from '../systems/effects.js';   // X3: self-casts land through the effect spine
 import { calculateCastCost } from '../systems/spellcost.js';   // X3: costs priced off the player (magic-15 note)
 import { silenceBlocksCast } from '../systems/mysticism.js';   // X3: the enemy silence gate
 import { EnemyAttack } from '../characters/enemyAttack.js';
@@ -175,7 +175,15 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   function update(dt, playerFeet, eye, senses = {}) {
     for (const f of foes) {
       if (f.dead) continue;
-      f.ai.update(dt, playerFeet, senses, false);
+      // AUDIT 24 (wave 32): PARALYSIS. This pool passed the literal `false`
+      // for the motor's paralyzed argument and ran the attack machine
+      // unconditionally, so a paralysed encounter foe kept walking and kept
+      // swinging - and, until wave 32 gave the pool its magic rounds, the
+      // paralysis never expired either. EnemyMotor.HandleParalysis
+      // (:247-260) drops CanAct, and EnemyAttack returns at the top of both
+      // its Update (:91-94) and its FixedUpdate (:55-57).
+      const _fParalyzed = entityIsParalyzed(f.entity);   // S22: the FreeAction read-time fold
+      f.ai.update(dt, playerFeet, senses, _fParalyzed);
       // CH3 (characters-8): a past-threshold landing bills the fall
       // formula through the pool's damage door - no knockback.
       if (f.ai.landedFall > 0 && !f.dead) {
@@ -200,12 +208,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       }
       if (f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());   // EnemySenses:533-535
       f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
-      f.attack.update(dt, f.ai, playerFeet);
+      if (!_fParalyzed) f.attack.update(dt, f.ai, playerFeet);
       // X3-slice: the S16 casting decision rides beside the attack
       // machine, the dungeon's exact shape - the decision casts
       // INSTANTLY through the ONE shared executor.
       f._castPending = false;
-      if (playerFeet && f.caster && f.ai.isHostile) {
+      if (playerFeet && f.caster && !_fParalyzed && f.ai.isHostile) {
         const dec = f.caster.update(dt, f.ai, f.attack, playerFeet, playerEntity);
         if (dec) {
           castSpellFrom(f, dec.spell, playerFeet);
@@ -224,14 +232,20 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // X2-slice: the ranged -1 marker looses a REAL arrow through
       // the host's seam, aimed at the player mid-capsule at fire
       // time (the dungeon's shootFrame arm shape).
-      if (f.mobile.shootFrame && playerFeet && onArrow) {
+      // ...and the damage frames are gated too (wave 32). EnemyAttack.Update
+      // returns at the top while paralysed (:91-94), so MeleeDamage and
+      // BowDamage never run - the animation may still be mid-swing, but
+      // nothing lands. The dungeon host gets this by suppressing the whole
+      // mobile update; this pool resolves off the mobile's own frames, so it
+      // needs the gate written out.
+      if (!_fParalyzed && f.mobile.shootFrame && playerFeet && onArrow) {
         const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
         const d = [playerFeet[0] - from[0], playerFeet[1] + 0.9 - from[1], playerFeet[2] - from[2]];
         const l = Math.hypot(...d) || 1;
         onArrow(from, [d[0] / l, d[1] / l, d[2] / l], f);
       }
       // the -1 damage marker vs the player (C16)
-      if (f.mobile.hitFrame && playerFeet) {
+      if (!_fParalyzed && f.mobile.hitFrame && playerFeet) {
         const hdx = playerFeet[0] - f.ai.feet[0], hdz = playerFeet[2] - f.ai.feet[2];
         const wpn = chooseEnemyWeapon(f.entity.weapon, ENEMY_BASICS[f.mobileType]);
         const mid = [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]];

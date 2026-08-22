@@ -14,7 +14,8 @@ import { skyFrameForTime } from '../world/worldClock.js';
 import { hasActiveEffect } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
-import { tickPlayerMinutes, worldMinutes, setWorldMinutes, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
+import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
+import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
@@ -487,8 +488,23 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
     restoreFatigue: (n) => { if (n > 0) entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + n); },   // C5: the MaxFatigue clamp
     say,
   };
+  // AUDIT 24 (wave 32) - THE BROKER'S SUBSCRIBERS. EntityEffectBroker raises
+  // OnNewMagicRound and EVERY EntityEffectManager in the scene handles it, one
+  // per entity; the port had a subscriber for the player and, in the dungeon
+  // only, an ad-hoc loop for the foes. Above ground nothing ticked a foe's
+  // effects at all. The ticker claims the window once (that is the broker) and
+  // fans it out here, so a pool cannot be forgotten by a host that forgot to
+  // add a line to its frame body.
+  const subscribers = [];
+
   return {
     get classicMinutes() { return worldMinutes(); },
+    /** Register a foe pool. fn(from, to, dt) - the claimed magic-round window
+     *  and the real seconds this tick covered. Returns an unsubscribe. */
+    subscribe(fn) {
+      subscribers.push(fn);
+      return () => { const i = subscribers.indexOf(fn); if (i >= 0) subscribers.splice(i, 1); };
+    },
     /** AUDIT 24 (wave 30): the host's ONE set of player sinks, exposed
      *  because the tick is not their only consumer - a monster's
      *  special-attack rider (OnMonsterHit's nymph/lamia FatigueDamage)
@@ -502,6 +518,7 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
         say,
       });
       setWorldMinutes(r.classicMinutes);
+      for (const fn of subscribers) fn(r.magicRoundWindow.from, r.magicRoundWindow.to, dt);
       return r;
     },
     /** U24: DaggerfallDateTime.RaiseTime. Guild training eats three
@@ -519,6 +536,37 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
       return this.tick(minutes / CLASSIC_MINUTES_PER_SECOND);
     },
   };
+}
+
+/**
+ * Hand a ticker one or more foe pools, so every entity in them gets the
+ * per-entity laws DFU gives it through its own EntityEffectManager:
+ * the magic round (diseases, poisons, active effects) on the window the
+ * broker claimed, and UpdateEntityMods' stat-zero kill on its own real-time
+ * cadence.
+ *
+ * AUDIT 24 (wave 32). Before this, `tickActiveEffects` and `updatePoisons`
+ * were called for foes in exactly ONE place in src/ - the dungeon host - so
+ * above ground a foe's Continuous Damage never took a round, its poison never
+ * fired, and a paralysed encounter foe stayed paralysed for good. The dungeon
+ * host keeps its own inline arm because it owns its foe list inside a closure
+ * that is not built by createPlayerTicker.
+ *
+ * @param {object} ticker      a createPlayerTicker
+ * @param {Function[]} pools   each returns the pool's live list of foes
+ * @param {Function} sinksFor  (foe) => that foe's damage/drain doors
+ */
+export function subscribeFoePools(ticker, pools, sinksFor) {
+  return ticker.subscribe((from, to, dt) => {
+    for (const pool of pools) {
+      for (const f of pool() ?? []) {
+        if (!f || f.dead || !f.entity) continue;
+        const sinks = sinksFor(f);
+        runMagicRoundsFor(f.entity, from, to, { sinks });
+        killIfAnyLiveStatZero(f.entity, sinks, dt);
+      }
+    }
+  });
 }
 
 /** PlayerEntity.cs:388-400 - Athleticism loses fatigue 10% slower. */

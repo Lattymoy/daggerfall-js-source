@@ -129,24 +129,41 @@ test('audit24: preventNormalizingReputations is set by the prison jump and clear
   // flag up must not normalize, and must clear the flag on the way out
   const { tickPlayerMinutes, resetMagicRoundMarker } = await import('../src/systems/worldTick.js');
   const NORMALIZE = 161280;   // 112 days
-  const run = (prevent, legalRep) => {
+  const run = (prevent, legalRep, from) => {
     const entity = {
       stats: {}, skills: [], factionRep: null, level: 1,
       legalRep, preventNormalizingReputations: prevent,
     };
-    // sit one minute short of the 112-day boundary and step over it
-    resetMagicRoundMarker(NORMALIZE - 1);
+    resetMagicRoundMarker(from);
     tickPlayerMinutes({
-      entity, classicMinutes: NORMALIZE - 1, dt: 1 / CLASSIC_MINUTES_PER_SECOND,
+      entity, classicMinutes: from, dt: 1 / CLASSIC_MINUTES_PER_SECOND,
       sinks: {}, activity: {},
     });
     return entity;
   };
-  const shielded = run(true, [40]);
+  // THE EDGE, both sides of it. DFU's loop is
+  //     for (i = 0; i < minutesPassed; ++i)
+  //         if (((i + lastGameMinutes) % 161280) == 0 && !preventNormalizing...)
+  // so the minute VALUES tested are [last, now) with NO +1, and the one that
+  // fires is the minute numbered 161280 itself. AUDIT 24 (wave 32) moved this
+  // loop out of the broker's round loop, where AUDIT 23 had written it with
+  // the round loop's `r + 1` - so the port normalised one game minute late,
+  // and the fixture below pinned the port's own off-by-one by probing the
+  // minute AFTER the boundary. A pin aimed at the middle of a band tells you
+  // nothing about its edge.
+  assert.equal(run(false, [40], NORMALIZE - 1).legalRep[0], 40,
+    'stepping ONTO minute 161280 tests 161279, which is not the boundary');
+  const bare = run(false, [40], NORMALIZE);
+  assert.notEqual(bare.legalRep[0], 40, 'stepping OFF it tests 161280, which is - a RULE, not a tautology');
+
+  const shielded = run(true, [40], NORMALIZE);
   assert.equal(shielded.legalRep[0], 40, 'the shield holds the credited reputation across the jump');
   assert.equal(shielded.preventNormalizingReputations, false, 'and the flag clears itself, one jump only');
-  const bare = run(false, [40]);
-  assert.notEqual(bare.legalRep[0], 40, 'and without it the boundary really does decay - a RULE, not a tautology');
+
+  // ...and the loop is PlayerEntity's, not the broker's: no 2880-minute cap.
+  // A 21-day prison sentence steps every one of its 30,240 minutes here.
+  assert.match(tick, /for \(let i = lastMinutes; i < nowMinutes; i\+\+\)/, 'over the whole elapsed window');
+  assert.match(tick, /i % NORMALIZE_INTERVAL_MINUTES === 0/, 'on the minute VALUE, no \+1');
 });
 
 test('audit24: the three quest settings are LIVE reads, not hardcoded falses', async () => {

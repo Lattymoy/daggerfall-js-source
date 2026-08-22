@@ -72,7 +72,7 @@ import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the sho
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs , endRunToTitleMenu } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, subscribeFoePools } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -576,6 +576,17 @@ export async function bootExterior(canvas, renderer, params, status) {
   // keeps its integrated stack until M3. The absorb context finally
   // answers the exterior truth (inside false, day from the one clock) -
   // the S24 InLight/InDarkness arms go live here.
+  /** The per-foe doors, hoisted (AUDIT 24 wave 32): the cast engine takes
+   *  them, and so does the broker fan-out below - one set of doors per
+   *  entity, exactly as one EntityEffectManager per entity. */
+  const foeSinks = (g) => ({
+    hurt: (n) => { if (n > 0) cityGuards.hurtGuard(g, n, player.pos); },
+    heal: (n) => { if (n > 0) g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },
+    drainMagicka: (n) => { if (n > 0) g.entity.magicka = Math.max(0, (g.entity.magicka ?? 0) - n); },
+    restoreMagicka: (n) => { if (n > 0) g.entity.magicka = Math.min(g.entity.maxMagicka ?? Infinity, (g.entity.magicka ?? 0) + n); },
+    drainFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.max(0, (g.entity.fatigue ?? 0) - n); },
+    restoreFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.min(maxFatigue(g.entity), (g.entity.fatigue ?? 0) + n); },
+  });
   const magic = createPlayerMagic({
     onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
@@ -593,18 +604,17 @@ export async function bootExterior(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l),
     surfacePlayer,
     foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? cityGuards.guards : [],
-    foeSinks: (g) => ({
-      hurt: (n) => { if (n > 0) cityGuards.hurtGuard(g, n, player.pos); },
-      heal: (n) => { if (n > 0) g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },
-      drainMagicka: (n) => { if (n > 0) g.entity.magicka = Math.max(0, (g.entity.magicka ?? 0) - n); },
-      restoreMagicka: (n) => { if (n > 0) g.entity.magicka = Math.min(g.entity.maxMagicka ?? Infinity, (g.entity.magicka ?? 0) + n); },
-      drainFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.max(0, (g.entity.fatigue ?? 0) - n); },
-      restoreFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.min(maxFatigue(g.entity), (g.entity.fatigue ?? 0) + n); },
-    }),
+    foeSinks,
     absorbCtx: () => ((modes?.mode ?? 'exterior') === 'exterior'
       ? { inside: false, day: !isNight(minuteNow()) }
       : { inside: true, day: false }),
   });
+  // AUDIT 24 (wave 32): the broker's foe subscribers - the watch (this host mints no encounter foes).
+  // OnNewMagicRound is global and every EntityEffectManager handles it, so
+  // these entities owe the same per-minute laws the player does. They got
+  // none of them: above ground a foe's Continuous Damage never took a
+  // round, its poison never fired, and a paralysed foe stayed paralysed.
+  subscribeFoePools(playerTicker, [() => cityGuards.guards], foeSinks);
   // U32: ONE construction for the town inventory - F6 opens it, and so
   // does the character sheet's INVENTORY button. Two `new` sites would
   // be two things to keep in step.

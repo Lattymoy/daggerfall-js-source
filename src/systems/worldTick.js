@@ -55,32 +55,40 @@ export const CLASSIC_MINUTES_PER_SECOND = 12 / 60;
 // travel". The 2880 cap is its too - maxCatchupDays = 2 - and it is not
 // optional: prison time steps the clock by 30,240 minutes and a load by
 // millions.
+//
+// AUDIT 24 (wave 30) pulled the loop out of tickPlayerMinutes, because the
+// entity tick is not the only thing that crosses a game minute. The rest
+// window advances world time with the whole gameplay frame HELD - dungeon.js
+// returns at the overlay gate, before ctx.drawFoes and before the tick - so a
+// rested night fired zero rounds and the entire backlog landed in one burst on
+// the first frame after the window closed, AFTER every hour of healing had
+// already been applied. MonoBehaviour.Update runs under Time.timeScale = 0,
+// which is what the broker's own comment is about. Resting off a Continuous
+// Damage Health was free, a poison could not kill you in your sleep, and eight
+// hours of Levitate came back with its duration intact.
+//
+// AUDIT 24 (wave 32) then split the MARKER from the ROUND. There is one broker
+// and one marker, but there is an EntityEffectManager on every entity in the
+// scene, and all of them handle every raised round - so claimMagicRounds()
+// answers the window once per frame and runMagicRoundsFor() runs it on each
+// subscriber. Above ground the port had no foe subscriber at all.
+
 /**
- * ONE MAGIC ROUND PER GAME MINUTE CROSSED - EntityEffectBroker.Update
- * (:202-240), on the broker's own marker.
+ * EntityEffectBroker.Update's OWN bookkeeping (:210-237), and nothing else:
+ * how many game minutes have passed since the marker, capped, and the marker
+ * advance. It answers `[from, to)` - the window every subscriber then runs.
  *
- * AUDIT 24 (wave 30) pulled this out of tickPlayerMinutes, because the entity
- * tick is not the only thing that crosses a game minute. The rest window
- * advances world time with the whole gameplay frame HELD - dungeon.js returns
- * at the overlay gate, before ctx.drawFoes and before the tick - so a rested
- * night fired zero rounds and the entire backlog landed in one burst on the
- * first frame after the window closed, AFTER every hour of healing had already
- * been applied. DFU has no such gap: MonoBehaviour.Update runs under
- * Time.timeScale = 0, which is exactly what the broker's own comment is about
- * ("Effect system must be able to update while game is paused but game time
- * still passes, e.g. rest or fast travel"). Resting off a Continuous Damage
- * Health was free, a poison could not kill you in your sleep, and eight hours
- * of Levitate came back with its duration intact.
+ * AUDIT 24 (wave 32) split this out of runMagicRounds. The broker raises ONE
+ * event per elapsed minute and EVERY EntityEffectManager in the scene handles
+ * it - one manager per entity, player and foes alike. A per-entity function
+ * that also owned the marker could only ever serve the first caller: the
+ * second would find the marker already advanced and run nothing. So the claim
+ * happens once per frame and the window is handed to each subscriber.
  *
- * @param {object} o
- * @param {object} o.entity      the entity whose diseases/poisons/effects tick
- * @param {number} o.fromMinute  the clock BEFORE this step (the load re-anchor reads it)
- * @param {number} o.toMinute    the clock AFTER it
- * @param {object} o.sinks       that entity's { hurt, heal, drainFatigue, ... }
- * @returns {number} rounds actually run (0 to MAX_CATCHUP_ROUNDS)
+ * @returns {{from: number, to: number, rounds: number}} half-open, DFU's own
+ *          `for (int i = 0; i < catchupRounds; i++)`
  */
-export function runMagicRounds({ entity, fromMinute, toMinute, sinks, rolls = Math.random, say = () => {} } = {}) {
-  let rounds = 0;
+export function claimMagicRounds(fromMinute, toMinute) {
   const nextFloor = Math.floor(toMinute);
   const here = Math.floor(fromMinute);
   // Anchor on first use, and RE-anchor whenever the clock has moved BACKWARDS
@@ -90,30 +98,48 @@ export function runMagicRounds({ entity, fromMinute, toMinute, sinks, rolls = Ma
   // function total: a restored save cannot fire the cap's worth of rounds
   // against effects that already expired in the saved game.
   if (_lastMagicRoundMinute === null || here < _lastMagicRoundMinute) _lastMagicRoundMinute = here;
-  const prevMinute = Math.max(_lastMagicRoundMinute, nextFloor - MAX_CATCHUP_ROUNDS);
+  const from = Math.max(_lastMagicRoundMinute, nextFloor - MAX_CATCHUP_ROUNDS);
+  // The broker's own lastGameMinute advance (:237). It never moves BACKWARDS
+  // here: a rewind is a load, and the re-anchor above owns that case.
+  if (nextFloor > _lastMagicRoundMinute) _lastMagicRoundMinute = nextFloor;
+  return { from, to: nextFloor, rounds: Math.max(0, nextFloor - from) };
+}
 
+/**
+ * ONE SUBSCRIBER'S OnNewMagicRound HANDLER across a claimed window -
+ * EntityEffectManager.DoMagicRound, which every entity in the scene has one of.
+ *
+ * Diseases, poisons and active effects, and NOTHING player-specific: the
+ * reputation normalisation that used to live in this loop is PlayerEntity's,
+ * not the broker's, and moved back to the entity tick in wave 32.
+ *
+ * @returns {number} rounds run
+ */
+export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random, say = () => {} } = {}) {
+  if (!entity || !(to > from)) return 0;
+  let rounds = 0;
   // S7/S18/S19b, verbatim order: diseases update FIRST so an ending
   // disease's final day lands and the same round's tick removes the
   // expired entry (DFU removes at the end of the same DoMagicRound).
-  for (let r = prevMinute; r < nextFloor; r++) {
+  for (let r = from; r < to; r++) {
     updateDiseases(entity, Math.floor((r + 1) / MINUTES_PER_DAY), sinks, rolls, say);
     updatePoisons(entity, r + 1, sinks, rolls, say);
     tickActiveEffects(entity, sinks);
     rounds++;
-    // AUDIT 23 (C4: guilds-4 = cross-1 = entity-6) - PlayerEntity.cs
-    // :455-459: every 161280th game minute (112 days) normalizes the
-    // legal AND faction reputations toward zero, unless the prison
-    // skip set preventNormalizingReputations for its jump. The law was
-    // ported (court.normalizeReputations, AUDIT 21 F3) and never wired.
-    if ((r + 1) % NORMALIZE_INTERVAL_MINUTES === 0 && !entity.preventNormalizingReputations) {
-      normalizeReputations(entity, entity.factionRep ?? null);
-    }
   }
-
-  // The broker's own lastGameMinute advance (:237). It never moves BACKWARDS
-  // here: a rewind is a load, and the re-anchor above owns that case.
-  if (nextFloor > _lastMagicRoundMinute) _lastMagicRoundMinute = nextFloor;
   return rounds;
+}
+
+/**
+ * Claim a window and run it on ONE subscriber - the common case, and the
+ * shape wave 30 shipped. A caller with foes as well as a player claims once
+ * with claimMagicRounds and calls runMagicRoundsFor per entity instead.
+ *
+ * @returns {number} rounds run
+ */
+export function runMagicRounds({ entity, fromMinute, toMinute, sinks, rolls = Math.random, say = () => {} } = {}) {
+  const { from, to } = claimMagicRounds(fromMinute, toMinute);
+  return runMagicRoundsFor(entity, from, to, { sinks, rolls, say });
 }
 
 /**
@@ -129,7 +155,9 @@ export function runMagicRounds({ entity, fromMinute, toMinute, sinks, rolls = Ma
  * @param {number} [o.fatigueMultiplier] PlayerEntity.cs:388-400, 0.9 with Athleticism
  * @param {Function} [o.rolls]     injectable RNG
  * @param {Function} [o.say]       message sink for disease/skill text
- * @returns {{ classicMinutes: number, rounds: number, raised: number[] }}
+ * @returns {{ classicMinutes: number, rounds: number, magicRoundWindow: {from:number,to:number,rounds:number} }}
+ *          magicRoundWindow is the window the broker CLAIMED this tick - the host
+ *          runs it on its own foes with runMagicRoundsFor (wave 32).
  */
 export function tickPlayerMinutes({
   entity,
@@ -143,15 +171,49 @@ export function tickPlayerMinutes({
 } = {}) {
   const next = classicMinutes + dt * CLASSIC_MINUTES_PER_SECOND;
 
-  // The broker's catch-up, on the broker's own marker (see runMagicRounds).
-  const rounds = runMagicRounds({ entity, fromMinute: classicMinutes, toMinute: next, sinks, rolls, say });
+  // THE BROKER, claimed once. The window comes back out in the result so the
+  // host can run it on ITS foes - one raise, every manager (wave 32).
+  const magicRoundWindow = claimMagicRounds(classicMinutes, next);
+  const rounds = runMagicRoundsFor(entity, magicRoundWindow.from, magicRoundWindow.to, { sinks, rolls, say });
+
+  // PlayerEntity.cs:452-475, and NOT the broker's: the per-minute loop in
+  // PlayerEntity.Update runs on PLAYERENTITY'S OWN lastGameMinutes, which is a
+  // different marker from the broker's and - this is the part wave 30 got
+  // wrong by folding it into the round loop - has NO 2880-minute cap. DFU
+  // steps a 21-day prison sentence through all 30,240 of its minutes here
+  // while the broker sees only the last 2,880.
+  //
+  // AUDIT 23 (C4: guilds-4 = cross-1 = entity-6) - :455-459: every 161280th
+  // game minute (112 days) normalizes the legal AND faction reputations toward
+  // zero, unless the prison skip set preventNormalizingReputations for its
+  // jump. (The other three arms of that loop - faction powers at 7 days,
+  // regional conditions at 38, the racial override quest at 84 - are
+  // unported.)
+  // ...and it is OFF BY ONE from the broker's, which is why moving it here
+  // mattered. DFU tests `(i + lastGameMinutes) % 161280 == 0` for i in
+  // [0, minutesPassed), i.e. the minute VALUES [last, now) with no +1, while
+  // the broker's rounds represent the minutes [last+1, now]. AUDIT 23 wrote
+  // this loop inside the broker's and inherited its `r + 1`, so the port
+  // normalised one game minute late. DFU's own inconsistency, reproduced.
+  //
+  // A rewound clock re-anchors instead of looping backwards, which is exactly
+  // what SerializablePlayer.cs:339 does on restore ("entity.LastGameMinutes =
+  // ...ToClassicDaggerfallTime()") - so the field is deliberately NOT in the
+  // save envelope.
+  const lastMinutes = Number.isFinite(entity.lastGameMinutes) ? entity.lastGameMinutes : Math.floor(classicMinutes);
+  const nowMinutes = Math.floor(next);
+  for (let i = lastMinutes; i < nowMinutes; i++) {
+    if (i % NORMALIZE_INTERVAL_MINUTES === 0 && !entity.preventNormalizingReputations) {
+      normalizeReputations(entity, entity.factionRep ?? null);
+    }
+  }
+  entity.lastGameMinutes = nowMinutes;   // :521, the tail of the same update
 
   // PlayerEntity.cs:528-530, the tail of the SAME update: the flag is
   // a ONE-JUMP shield, cleared the moment the jump it covered is over.
   // AUDIT 24 (the seven-slice sweep): nothing set it and nothing
-  // cleared it, so both halves of the rule were dead - the read (in
-  // runMagicRounds' loop, wave 30) was a constant `true`, and the
-  // prison arm's own comment ("it sets
+  // cleared it, so both halves of the rule were dead - the read above
+  // was a constant `true`, and the prison arm's own comment ("it sets
   // PreventNormalizingReputations across the skip precisely so the
   // elapsed days cannot decay what it just credited... not harmless
   // now that it is [ported]") described a line that was not there.
@@ -220,7 +282,7 @@ export function tickPlayerMinutes({
   // and DaggerfallTravelPopUp.cs:380 (fast travel, unported). The
   // per-minute raise this tick used to run leveled characters mid-walk
   // without ever resting.
-  return { classicMinutes: next, rounds };
+  return { classicMinutes: next, rounds, magicRoundWindow };
 }
 
 // --- THE WORLD CLOCK (AUDIT 21 F2) -----------------------------------

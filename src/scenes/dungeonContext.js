@@ -61,7 +61,7 @@ import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
 import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';
 import { applyLevelUp } from '../systems/advancement.js';
-import { tickPlayerMinutes, runMagicRounds } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
+import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
 import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
@@ -75,11 +75,11 @@ import {
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT } from '../systems/mysticism.js';   // S27
-import { applySpell, tickActiveEffects, hasActiveEffect, entityIsParalyzed, maxFatigue, isInvisible, isBlending, isAShade } from '../systems/effects.js';
+import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue, isInvisible, isBlending, isAShade } from '../systems/effects.js';
 import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
 import { breathStep } from '../systems/breath.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
-import { updatePoisons, inflictPoison } from '../systems/poisons.js';
+import { inflictPoison } from '../systems/poisons.js';
 import { exhaustionOutcome, EXHAUSTED_IN_WATER, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { REST_TEXT } from '../systems/restSession.js';
 import { intermittentEnemySpawn, setEnemyAlert, decayEnemyAlert } from '../systems/encounters.js';   // E-slice
@@ -799,22 +799,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // Time.timeScale = 0 and interleaves, minute by minute, with
       // TickRest's hourly heal; a poison can kill you in your sleep
       // and the rest ends "You never awaken."
-      runMagicRounds({
-        entity: playerEntity, fromMinute: start, toMinute: classicMinutesRef.value,
-        sinks: playerSinks, say: (msg) => hudText.add(msg),
-      });
+      const _w = claimMagicRounds(start, classicMinutesRef.value);
+      runMagicRoundsFor(playerEntity, _w.from, _w.to, { sinks: playerSinks, say: (msg) => hudText.add(msg) });
       // ...and the FOE half of the same broker event. OnNewMagicRound
       // is global - every EntityEffectManager in the scene subscribes
       // - so a foe's poisons and effects age through the rest too.
       // The frame body's own foe loop anchors on the clock at the top
       // of THIS frame, so these minutes were not merely late for the
       // foes, they were lost.
-      for (let r = start; r < Math.floor(classicMinutesRef.value); r++) {
-        for (const f of foes) {
-          if (f.dead) continue;
-          updatePoisons(f.entity, r + 1, foeSinks(f), Math.random);
-          tickActiveEffects(f.entity, foeSinks(f));
-        }
+      for (const f of foes) {
+        if (f.dead) continue;
+        runMagicRoundsFor(f.entity, _w.from, _w.to, { sinks: foeSinks(f) });
       }
       for (let l = 0; l < n; l++) {
         const hit = intermittentEnemySpawn({
@@ -1847,7 +1842,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // character who stayed above ground never aged an effect, never
     // progressed a disease, never drained fatigue and NEVER GAINED A
     // LEVEL. The FOE half stays here: it walks this host's foe list.
-    const _prevMinute = Math.floor(classicMinutesRef.value);
     const _tick = tickPlayerMinutes({
       entity: playerEntity,
       classicMinutes: classicMinutesRef.value,
@@ -1859,12 +1853,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       say: (msg) => hudText.add(msg),
     });
     classicMinutesRef.value = _tick.classicMinutes;
-    for (let r = _prevMinute; r < Math.floor(classicMinutesRef.value); r++) {
-      for (const f of foes) {
-        if (f.dead) continue;
-        updatePoisons(f.entity, r + 1, foeSinks(f), Math.random);
-        tickActiveEffects(f.entity, foeSinks(f));
-      }
+    // AUDIT 24 (wave 32): the FOE half of the same broker event, on the
+    // window the tick CLAIMED - one raise, every manager. This loop used to
+    // run [floor(clock at frame start), floor(clock now)) off its own
+    // arithmetic, so it had neither the broker's catch-up nor its 2880 cap:
+    // any minute added by someone else (the rest window, a court sentence)
+    // was simply lost for the foes, and diseases never ran on them at all.
+    for (const f of foes) {
+      if (f.dead) continue;
+      runMagicRoundsFor(f.entity, _tick.magicRoundWindow.from, _tick.magicRoundWindow.to, { sinks: foeSinks(f) });
     }
     // AUDIT 24 (wave 31): every entity has an EntityEffectManager, so the
     // stat-zero kill is a FOE law too - a drained-to-zero Strength kills

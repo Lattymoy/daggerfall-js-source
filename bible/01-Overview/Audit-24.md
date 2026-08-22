@@ -526,7 +526,7 @@ single fix in it.
 
 ## Reopened
 
-The audit did not stay closed. Twelve more waves ran after the section
+The audit did not stay closed. Thirteen more waves ran after the section
 above was written, driven by two multi-agent sweeps: the SEVEN-SLICE
 adversarial re-read of the quest slices (151 agents, three lenses per
 slice, two independent refuters per claim) and a twelve-slice sweep of
@@ -547,6 +547,7 @@ the non-quest systems. Each wave is written up in full in
 | 29 | GetWeaponSkillUsed keyed on the item NAME, so a Wakizashi, a Dai-katana and every renamed magic weapon hit the `Skills.None = -1` default and were refused by every restricted career; and the broken-item equip gate (`currentCondition < 1`) was missing entirely |
 | 30 | The rest window moved the clock and fired **no magic rounds** - `dungeon.js` returns at the overlay gate before the tick, so a rested night froze every disease, poison and effect and dumped the backlog in one burst after the healing had landed; and `OnMonsterHit` was never passed above ground, so no exterior encounter could infect, paralyse or drain the player |
 | 31 | `BreakNormalPowerConcealmentEffects` unported at all four of its doors, so the cheap Invisibility/Chameleon/Shadow survived every hit you landed - clear a dungeon unseen, or be killed by a Nightblade you never see; and `UpdateEntityMods`' "kill host if any stat is reduced to 0 live total" was missing, so a stat drained to zero was merely a stat at zero |
+| 32 | ONE BROKER, MANY SUBSCRIBERS - and above ground there were none. Neither exterior foe pool ran a magic round, a poison round or the stat-zero kill, and both passed a literal `false` for the motor's paralyzed argument, so a paralysed watchman kept chasing and swinging and the paralysis never expired to boot; the dungeon's own foe loop had neither the broker's catch-up nor its 2880 cap; and PlayerEntity's uncapped per-minute loop, filed inside the broker's by AUDIT 23, had inherited its `+1` and normalised a minute late |
 
 THE STANDING LESSON HELD, and grew a second half. "A pin that restates
 the port instead of the source is not a pin" was caught four more

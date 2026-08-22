@@ -76,7 +76,7 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, 
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs , endRunToTitleMenu } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, subscribeFoePools } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
@@ -915,6 +915,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     spellArmed: () => magic.spellArmed(),   // M2
   });
   // M2: SPELLCASTING ABOVE GROUND - exterior.js's twin note applies.
+  /** The per-foe doors, hoisted (AUDIT 24 wave 32): the cast engine takes
+   *  them, and so does the broker fan-out below - one set of doors per
+   *  entity, exactly as one EntityEffectManager per entity. */
+  const foeSinks = (g) => ({
+    hurt: (n) => { if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos) : cityGuards.hurtGuard(g, n, player.pos)); },   // X-slice: route by pool
+    heal: (n) => { if (n > 0) g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },
+    drainMagicka: (n) => { if (n > 0) g.entity.magicka = Math.max(0, (g.entity.magicka ?? 0) - n); },
+    restoreMagicka: (n) => { if (n > 0) g.entity.magicka = Math.min(g.entity.maxMagicka ?? Infinity, (g.entity.magicka ?? 0) + n); },
+    drainFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.max(0, (g.entity.fatigue ?? 0) - n); },
+    restoreFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.min(maxFatigue(g.entity), (g.entity.fatigue ?? 0) + n); },
+  });
   const magic = createPlayerMagic({
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes.interiorCollider) ? modes.interiorCollider : collider).raycast(o, d, m) },
@@ -931,14 +942,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l),
     surfacePlayer,
     foes: () => (modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : [],   // X-slice: encounter foes are spell targets too
-    foeSinks: (g) => ({
-      hurt: (n) => { if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos) : cityGuards.hurtGuard(g, n, player.pos)); },   // X-slice: route by pool
-      heal: (n) => { if (n > 0) g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },
-      drainMagicka: (n) => { if (n > 0) g.entity.magicka = Math.max(0, (g.entity.magicka ?? 0) - n); },
-      restoreMagicka: (n) => { if (n > 0) g.entity.magicka = Math.min(g.entity.maxMagicka ?? Infinity, (g.entity.magicka ?? 0) + n); },
-      drainFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.max(0, (g.entity.fatigue ?? 0) - n); },
-      restoreFatigue: (n) => { if (n > 0) g.entity.fatigue = Math.min(maxFatigue(g.entity), (g.entity.fatigue ?? 0) + n); },
-    }),
+    foeSinks,
     absorbCtx: () => ((modes?.mode ?? 'exterior') === 'exterior'
       ? { inside: false, day: !isNight(minuteNow()) }
       : { inside: true, day: false }),
@@ -979,6 +983,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       }));
     },
   });
+  // AUDIT 24 (wave 32): the broker's foe subscribers - the watch and the encounter pool.
+  // OnNewMagicRound is global and every EntityEffectManager handles it, so
+  // these entities owe the same per-minute laws the player does. They got
+  // none of them: above ground a foe's Continuous Damage never took a
+  // round, its poison never fired, and a paralysed foe stayed paralysed.
+  subscribeFoePools(playerTicker, [() => cityGuards.guards, () => exteriorFoes.foes], foeSinks);
   // U32: ONE construction for the world inventory and spellbook - F6
   // and Backspace open them, and so do the character sheet's buttons.
   const makeInventoryWindow = () => new NativeInventoryWindow({

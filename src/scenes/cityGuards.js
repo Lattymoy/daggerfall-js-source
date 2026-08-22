@@ -32,6 +32,7 @@
 // Assault + an on-the-spot conversion (WeaponManager verbatim).
 
 import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
+import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
@@ -289,14 +290,22 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     const out = [];
     for (const g of guards) {
       if (g.dead) continue;
-      g.ai.update(dt, playerFeet, senses, false);
+      // AUDIT 24 (wave 32): PARALYSIS. This pool passed the literal `false`
+      // for the motor's paralyzed argument and ran the attack machine
+      // unconditionally, so a paralysed watchman kept chasing and kept
+      // swinging. EnemyMotor.HandleParalysis (:247-260) drops CanAct, and
+      // EnemyAttack returns at the top of Update (:91-94) and FixedUpdate
+      // (:55-57) - a city guard is an ordinary EnemyClass entity with no
+      // exemption from either.
+      const _gParalyzed = entityIsParalyzed(g.entity);   // S22: the FreeAction read-time fold
+      g.ai.update(dt, playerFeet, senses, _gParalyzed);
       // HALT! on the detection rising edge (barkSound, EnemySounds)
       if (g.ai.detected && !g._halted) {
         g._halted = true;
         audio?.play3d?.(ENEMY_BASICS[GUARD_MOBILE_TYPE].barkSound, g.ai.feet, 1.0, { maxDistance: 16 });
       }
       g.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((g.entity.stats?.speed ?? 50) / Math.max(8, liveStat(g.entity, 'speed'))));   // AUDIT 23 (characters-11)
-      const events = g.attack.update(dt, g.ai, playerFeet);
+      const events = _gParalyzed ? [] : g.attack.update(dt, g.ai, playerFeet);
       void events;
       const mstate = g.attack.machine.state;
       const strikeEdge = mstate !== 'Idle' && (g._prevMState ?? 'Idle') === 'Idle';
@@ -309,7 +318,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         rangedStriking: false,
       }, g.ai.yaw, g.ai.feet, eye);
       // C16: the -1 damage marker resolves the melee vs the player
-      if (g.mobile.hitFrame) {
+      // EnemyAttack.Update returns at the top while paralysed (:91-94), so no
+      // damage frame resolves - the swing may still be drawn, nothing lands.
+      if (!_gParalyzed && g.mobile.hitFrame) {
         const hdx = playerFeet[0] - g.ai.feet[0], hdz = playerFeet[2] - g.ai.feet[2];
         const wpn = chooseEnemyWeapon(g.entity.weapon, ENEMY_BASICS[GUARD_MOBILE_TYPE]);
         const gmid = [g.ai.feet[0], g.ai.feet[1] + 0.9, g.ai.feet[2]];

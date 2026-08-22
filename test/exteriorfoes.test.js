@@ -17,7 +17,7 @@ test('exteriorfoes: the pool laws - cull AFTER fresh senses, the alert raise, th
   const s = src('exteriorFoes.js');
   // the cull runs after ai.update so a just-spawned foe's Infinity
   // placeholder never culls it (the live probe caught the inversion)
-  const upd = s.indexOf('f.ai.update(dt, playerFeet, senses, false);');
+  const upd = s.indexOf('f.ai.update(dt, playerFeet, senses, _fParalyzed);');
   const cull = s.indexOf('f.ai._dist > ENCOUNTER_CULL_DISTANCE');
   assert.ok(upd > 0 && cull > upd, 'senses first, cull second');
   assert.ok(s.includes('if (f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true'),

@@ -143,15 +143,17 @@ test('audit24 wave30: the dungeon rest advance runs BOTH halves of the broker ev
   const i = src.indexOf('advanceMinutes: (n) => {');
   const arm = src.slice(i, src.indexOf('onRestFinished:', i));
   assert.ok(i > 0 && arm.length > 200, 'the rest advance arm was found');
-  assert.ok(/runMagicRounds\(\{\s*\n\s*entity: playerEntity, fromMinute: start, toMinute: classicMinutesRef\.value,/.test(arm),
-    'the PLAYER half runs across the advanced window');
-  assert.ok(arm.includes('sinks: playerSinks'), 'through this host\'s one set of doors');
+  // wave 32 reshaped this: the window is CLAIMED once (that is the broker) and
+  // then run on the player and on every foe - one raise, every manager.
+  assert.ok(arm.includes('const _w = claimMagicRounds(start, classicMinutesRef.value);'),
+    'the window is claimed once for the advance');
+  assert.ok(arm.includes("runMagicRoundsFor(playerEntity, _w.from, _w.to, { sinks: playerSinks,"),
+    'the PLAYER half runs across it, through this host\'s one set of doors');
   // OnNewMagicRound is a GLOBAL event - every EntityEffectManager in the scene
   // subscribes - and the frame body's foe loop anchors on the clock at the top
   // of the frame, so these minutes were lost rather than merely late.
-  assert.ok(arm.includes('updatePoisons(f.entity, r + 1, foeSinks(f), Math.random)')
-    && arm.includes('tickActiveEffects(f.entity, foeSinks(f))'), 'the FOE half runs too');
-  assert.ok(arm.indexOf('runMagicRounds') < arm.indexOf('intermittentEnemySpawn'),
+  assert.ok(arm.includes('runMagicRoundsFor(f.entity, _w.from, _w.to, { sinks: foeSinks(f) });'), 'the FOE half runs too');
+  assert.ok(arm.indexOf('claimMagicRounds') < arm.indexOf('intermittentEnemySpawn'),
     'the broker before the spawn catch-up, as the two Updates run');
   // the comment that said the round loop would catch up is GONE - it described
   // a line that was not there (dungeon.js returns at the overlay gate first).

@@ -3554,6 +3554,159 @@ stays paralysed forever. Same shape as wave 30's gap, one layer down.
 **Twenty-nine findings remain**, plus that one.
 
 
+### Wave 32
+
+**One broker, many subscribers - and above ground there were no
+subscribers at all.**
+
+Wave 31 ended with a note found on the way past: `tickActiveEffects`
+and `updatePoisons` were called for foes in exactly one file in
+`src/`. This wave is that note, and it turned out to be the shallow end
+of it.
+
+DFU's shape is one `EntityEffectBroker`, which owns a single
+`lastGameMinute` and raises `OnNewMagicRound` once per elapsed game
+minute, and one `EntityEffectManager` **per entity**, every one of them
+subscribed. The player is not special; a rat is not special. The port
+had the broker (AUDIT 21 F4 gave it the marker, wave 30 pulled it out
+of the entity tick) and exactly one subscriber, plus an ad-hoc loop in
+the dungeon host.
+
+So above ground: a foe's Continuous Damage never took a round, its
+poison never fired, a drained-to-zero attribute never killed it, and a
+paralysed encounter foe stayed paralysed **for the rest of the
+session** - because the thing that would have expired the paralysis is
+the same round that never ran.
+
+Except it did not even stay still, which is the second half.
+
+```js
+f.ai.update(dt, playerFeet, senses, false);
+```
+
+That fourth argument is `paralyzed`. Both exterior pools passed the
+literal `false`, and both ran their attack machine unconditionally. So
+a paralysed watchman kept chasing you and kept swinging, and a
+paralysed wolf kept biting. `EnemyMotor.HandleParalysis` (:247-260)
+drops `CanAct`; `EnemyAttack` returns at the top of both its `Update`
+(:91-94) and its `FixedUpdate` (:55-57). The dungeon host has had all
+of that since S19. The motor even took the argument.
+
+**The fix is the shape, not the lines.** `runMagicRounds` split into
+`claimMagicRounds` - the broker's bookkeeping, the marker, the cap -
+and `runMagicRoundsFor`, one subscriber's handler over a claimed
+window. The window is claimed once per frame and handed out; a
+per-entity function that also owned the marker could only ever serve
+its first caller, and the second would find the marker already
+advanced and run nothing. The ticker grew a `subscribe`, and each host
+registers its pools beside the cast engine, through the same
+`foeSinks` the cast engine already takes - one set of doors per entity,
+exactly as one manager per entity.
+
+Gating the damage frames needed care in the two pools that do not have
+the dungeon's shape. The dungeon suppresses the whole mobile update
+under paralysis, so its hit and shoot frames never resolve; the
+exterior pools resolve off the mobile's own frames, so freezing only
+the attack MACHINE would have let a swing already in flight land its
+blow. `EnemyAttack.Update`'s early return is what makes that not
+happen in DFU, and the gate is now written out in both.
+
+**And the dungeon's own loop was not the broker's either.**
+
+```js
+for (let r = _prevMinute; r < Math.floor(classicMinutesRef.value); r++)
+```
+
+Its own arithmetic, from the clock at the top of the frame - so it had
+neither the broker's catch-up nor its 2880-minute cap, and any minute
+added by somebody else (the rest window, a court sentence) was simply
+lost for the foes rather than merely late. It rides the claimed window
+now, like everything else.
+
+**A loop in the wrong place, off by one.**
+
+Moving the fan-out exposed a passenger. PlayerEntity's per-minute loop
+- the 112-day reputation normalisation - had been written *inside* the
+broker's round loop by AUDIT 23, and it does not belong there:
+
+```csharp
+uint minutesPassed = gameMinutes - lastGameMinutes;
+for (int i = 0; i < minutesPassed; ++i)
+    if (((i + lastGameMinutes) % 161280) == 0 && !preventNormalizingReputations)
+        NormalizeReputations();
+```
+
+That is `PlayerEntity.Update` (:452-459), on **PlayerEntity's own**
+`lastGameMinutes`, with **no cap** - DFU steps a 21-day prison sentence
+through all 30,240 of its minutes while the broker sees only the last
+2,880. And the minute values it tests are `[last, now)` with no `+1`,
+while the broker's rounds represent `[last+1, now]`. Living inside the
+broker's loop, the port had inherited its `r + 1` and normalised one
+game minute late.
+
+Two off-by-ones, then: the cap, and the minute. Neither is
+world-ending, and both are exactly the kind of thing that survives
+forever once a law is filed under the wrong owner. The pin that
+covered the boundary had probed the minute *after* it, so it certified
+the port's own error - *a pin aimed at the middle of a band tells you
+nothing about its edge*, one more time.
+
+**Twenty-two mutants: twenty dead, two recorded as equivalent.**
+
+Making `runMagicRoundsFor` advance the marker as well survives
+everything, and genuinely cannot be observed: the next claim's
+`fromMinute` is the clock before that frame's step, which can never
+exceed the previous claim's `to`, so an overshot marker always trips
+the load re-anchor and is corrected before it can skip a round. The
+split still matters - a subscriber that owns the marker is a
+subscriber that only works when it is called first - but that is a
+reason a test cannot reach, and it is written into the test as such
+rather than dressed up as a kill. The second is the `Number.isFinite`
+guard on the entity marker: no caller can put a non-finite value
+there, and if one did the loop would decline to run either way.
+
+**Found, verified, and deliberately NOT fixed here.**
+
+```csharp
+if (entityBehaviour.Entity.IsParalyzed)
+{
+    mobile.FreezeAnims = true;
+    CanAct = false;
+    flyerFalls = true;
+}
+mobile.FreezeAnims = false;
+```
+
+`:259` is outside the brace. `FreezeAnims` is a plain field with a
+plain setter, there are exactly five references to it in the whole
+tree, and nothing reads it between the two writes - so a paralysed
+enemy's animation is **never** frozen in DFU, and
+`UpdateToIdleOrMoveAnim` (called after the `if (CanAct)` gate) puts a
+stationary one into Idle, which keeps playing. The comment on :252
+says the freeze "also prevents the attack from triggering", and that
+is done by `EnemyAttack`'s early return instead.
+
+The port's dungeon host freezes the sprite, and quotes that comment
+while doing it. An independent verifier chased every refutation - a
+second writer, a side-effecting setter, a partial class, a `#if`, some
+other mechanism in the animation layer - and found none, then went
+further than asked: the port freezes the **orientation** too, so a
+paralysed foe never turns to face you, and `UpdateOrientation` has no
+`FreezeAnims` check at all even under the port's own mistaken model.
+It also flagged, unprompted, that for the ~48 enemies with a static
+idle sprite the difference may be invisible, while the 13 with
+`HasIdle = false` - every flyer, every spectral, every aquatic - fall
+back to the **move** cycle for their idle and would visibly keep
+animating.
+
+It is not in this wave because undoing that freeze reopens the damage
+frame it currently suppresses, and DFU latches `doMeleeDamage` through
+the paralysis and lands the blow when it clears. That is its own piece
+of machinery and it gets its own wave.
+
+**Twenty-eight findings remain**, plus that one.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
