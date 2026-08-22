@@ -225,7 +225,14 @@ export class CifRciFile extends BaseImageFile {
       pos += 2;
 
       this._records.push({
-        header: { frameCount },
+        // AUDIT 24 formats: ReadWeaponCif sets only
+        // `records[count].Header.FrameCount = FrameCount;`
+        // (CifRciFile.cs:456) over a default-initialised
+        // ImgFileHeader STRUCT, so the other fields are 0, not
+        // absent. A single-frame record takes GetSize/GetOffset's
+        // else-arm (:223-226, :240-243) and answers (0,0) there -
+        // where the port answered undefined, and any arithmetic NaN.
+        header: { frameCount, width: 0, height: 0, xOffset: 0, yOffset: 0 },
         animHeader,
         fileType: RECORD_TYPES.WeaponAnim,
         animPixelDataPosition: pos,

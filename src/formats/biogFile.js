@@ -39,6 +39,19 @@ export const DEFAULT_BACKSTORIES_START = 4116;
  *  JavaScript's second argument is a LIMIT that DISCARDS it, so a
  *  question containing another '.' would lose everything after it.
  *  This is the C# semantic. */
+/** int.TryParse's grammar: optional sign, digits, nothing else, and
+ *  the result must fit a 32-bit int. Returns null where C# returns
+ *  false. Leading/trailing WHITESPACE is allowed (NumberStyles.Integer
+ *  includes AllowLeadingWhite/AllowTrailingWhite), an embedded space is
+ *  not. */
+function tryParseInt(str) {
+  const m = /^[ \t\n\r\f\v]*([+-]?[0-9]+)[ \t\n\r\f\v]*$/.exec(str);
+  if (!m) return null;
+  const v = Number(m[1]);
+  if (!Number.isSafeInteger(v) || v < -2147483648 || v > 2147483647) return null;
+  return v;
+}
+
 function splitFirst(line, sep) {
   const i = line.indexOf(sep);
   return i < 0 ? [line] : [line.slice(0, i), line.slice(i + 1)];
@@ -63,8 +76,12 @@ export function parseBiog(text, classIndex = 0) {
     if (cur === null) break;
 
     if (i === 0 && cur[0] === '#') {
-      const v = Number.parseInt(cur.slice(1), 10);
-      backstoryId = Number.isFinite(v) ? v : DEFAULT_BACKSTORIES_START + classIndex;
+      // AUDIT 24 formats: int.TryParse (BiogFile.cs:74) rejects the
+      // WHOLE string unless it parses cleanly - "4116abc", "0x10" and
+      // "12.5" all fail and fall to the default. parseInt takes the
+      // leading digits and answers 4116 / 0 / 12 instead.
+      const v = tryParseInt(cur.slice(1));
+      backstoryId = v !== null ? v : DEFAULT_BACKSTORIES_START + classIndex;
       do { cur = next(); } while (cur !== null && cur.length <= 1);
       if (cur === null) break;
     }

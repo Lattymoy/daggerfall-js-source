@@ -45,11 +45,18 @@ export class RumorFile {
       const regionID = bytes[pos]; pos += 1;
       const flags = bytes[pos]; pos += 1;
       const questID = bytes[pos]; pos += 1;
-      // ReadCString(position, 9): read to the NUL (or the 9-byte cap);
-      // the reader's cursor advances the full 9 regardless.
-      let nul = pos;
-      while (nul < pos + 9 && bytes[nul] !== 0) nul++;
-      const questName = latin1(bytes, pos, nul);
+      // ReadCString(position, 9). AUDIT 24 formats: a NON-ZERO
+      // readLength SKIPS the null-terminator scan entirely - the arm
+      // is `if (readLength == 0) { ...find the NUL... }` and then
+      // `Encoding.UTF8.GetString(reader.ReadBytes(readLength))
+      // .TrimEnd('\0')` (FileProxy.cs:380-391). So all nine bytes are
+      // decoded and only TRAILING NULs come off: an embedded NUL and
+      // the stale tail behind it (classic fixed-size records leave
+      // one whenever a longer name was overwritten) stay in the
+      // string. The port stopped at the FIRST NUL.
+      let end = pos + 9;
+      while (end > pos && bytes[end - 1] === 0) end--;
+      const questName = latin1(bytes, pos, end);
       pos += 9;
       const unknown = v.getUint16(pos, true); pos += 2;
       const npcID = v.getUint32(pos, true); pos += 4;

@@ -5,9 +5,9 @@
 // a pixel mirror - PromoteToTexture:266-286 only crosses west/east over);
 // at night the NITE0?I0.IMG matching the sky group replaces both halves
 // (0-7 -> 3, 8-15 -> 1, 16-23 -> 2, else 0), with the right-edge seam fix
-// of LoadVanillaNightSky:605-610.
+// of LoadVanillaNightSky:606-611.
 // Two DISTINCT colors come out of a panorama and must not be confused:
-//   - clearColor: verbatim DaggerfallSky.cs:554/:611 `colors.west[0]`.
+//   - clearColor: verbatim DaggerfallSky.cs:554/:617 `colors.west[0]`.
 //     GetColor32 emits bottom-up (BaseImageFile.cs:246-250), so element 0
 //     is the source image's BOTTOM row = the HORIZON. This is DFU's
 //     cameraClearColor and, via SetSkyFogColor:325/:329, its fogColor.
@@ -87,7 +87,7 @@ export function buildDaySkyPanorama(skyFile, frame) {
 
 /**
  * Duplicate a night IMG (512x219) across both halves, with the right-edge
- * seam fix of LoadVanillaNightSky (DaggerfallSky.cs:605-610):
+ * seam fix of LoadVanillaNightSky (DaggerfallSky.cs:606-611):
  *   for (y...) { pos = y*width + width-2; colors[pos+1] = colors[pos]; }
  * i.e. the last column is overwritten by its neighbour. Sourcing column
  * w-2 for x == w-1 is the same output without mutating the caller's array
@@ -108,7 +108,7 @@ export function buildNightSkyPanorama(color32) {
       out[d + 3] = 255;
     }
   }
-  // Verbatim DaggerfallSky.cs:611 `skyColors.clearColor = skyColors.west[0]`.
+  // Verbatim DaggerfallSky.cs:617 `skyColors.clearColor = skyColors.west[0]`.
   const clearColor = [src[0] / 255, src[1] / 255, src[2] / 255];
   const top = ((h - 1) * w) * 4;
   const fillColor = [src[top] / 255, src[top + 1] / 255, src[top + 2] / 255];

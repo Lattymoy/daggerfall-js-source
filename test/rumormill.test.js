@@ -75,6 +75,27 @@ const mockMessage = (variantTokens, calls = []) => ({
 // The RUMOR.DAT reader (RumorFile.cs:137-160)
 // ---------------------------------------------------------------
 
+test('AUDIT 24: ReadCString with a LENGTH keeps the embedded NUL and its tail', () => {
+  // ReadCString(position, 9) passes a non-zero readLength, which SKIPS
+  // the null-terminator scan entirely: the arm is `if (readLength ==
+  // 0) { ...find the NUL... }` and the return is
+  // `Encoding.UTF8.GetString(reader.ReadBytes(readLength))
+  // .TrimEnd('\0')` (FileProxy.cs:380-391). Only TRAILING NULs come
+  // off. Classic fixed-size records leave a stale tail whenever a
+  // longer name was overwritten, and DFU carries it.
+  const withTail = rumorRecord({ questName: 'QUEST', text: 'x' });
+  // the fixture writes 0xaa after the NUL - exactly that stale tail
+  const rf = new RumorFile();
+  rf.load(withTail);
+  assert.equal(rf.rumors[0].questName, 'QUEST\u0000\u00aa\u00aa\u00aa',
+    'the embedded NUL and the bytes behind it stay in the string');
+  // an all-zero tail still trims to the bare name
+  const clean = rumorRecord({ questName: 'S0000011', text: 'x' });
+  const rf2 = new RumorFile();
+  rf2.load(clean);
+  assert.equal(rf2.rumors[0].questName, 'S0000011');
+});
+
 test('RumorFile: the exact record layout, the 9-byte CString advance, multi-record streams', () => {
   const r1 = rumorRecord({ faction1: 41, faction2: 42, type: 11, regionID: 17, flags: 8, questID: 3, questName: 'S0000011', unknown: 7, npcID: 0, timeLimit: 999, text: 'crime wave' });
   const r2 = rumorRecord({ faction1: 1, text: 'x' });

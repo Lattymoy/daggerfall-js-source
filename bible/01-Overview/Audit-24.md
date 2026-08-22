@@ -218,6 +218,110 @@ next blank line. Without it, a centred title centred the whole book.
 button handlers (:83, :92); NativePanel_OnMouseScrollDown/Up (:97-111)
 page and re-layout in silence.
 
+## Wave 3 - combat, formats, scenes, render (2026-08-22)
+
+### combat
+
+**The swing gate compared the wrong quantity.** DFU's Gesture keeps two
+numbers: `_sum`, the vector sum, which gives the swing's ANGLE, and
+`TravelDist`, the length of the trail. The field's own comment says why
+they differ - "This isn't equal to the magnitude of the sum because the
+trail may bend" (WeaponManager.cs:99-100) - and the attack gate at :808
+compares `_gesture.TravelDist/_longestDim`. The port kept only the sum
+and used it for both, i.e. the one quantity DFU explicitly says is not
+the threshold. Drag 55px right then 50px left on a 1200px screen: DFU
+sees a 105px trail and swings Right; the port saw 5 and refused.
+
+**MaxGestureSeconds is a sliding window, not a hard reset.** TrimOld
+(:111-123, called first by Add at :133) drops only the points older than
+the window and subtracts each from the sum and the travel, so motion
+from 0.9s ago still counts at t=1.0s. The port had no trail at all - it
+zeroed the whole accumulator whenever the elapsed hold crossed 1s,
+discarding the current frame's motion with it. A drag that quickened
+after a slow first second had to earn the entire 60px again from
+nothing: 40 frames where DFU takes 10.
+
+**A cancelled bow draw was free.** Un-drawing calls
+`ChangeWeaponState(Idle)` and leaves isAttacking TRUE (:355-357), so on
+the next Update `IsWeaponAttacking()` is false and the reset block
+charges the full bow cooldown (:220-222) - 1.327s at LiveSpeed 50. The
+port let the next draw start on the following frame.
+
+### formats
+
+**The FLC frame delay had a branch DFU does not have.** Read() is a bare
+`FrameDelay = (float)(header.FrameDelay / (float)CinematicSpeed.FLIC);`
+(FlcFile.cs:135). `CinematicSpeed.FLI = 70` is declared at :588 and
+referenced NOWHERE in the DFU tree; the port had wired the dead constant
+up behind a fileID test, running any true .FLI 14.3x fast.
+
+**A palette index past ColorCount now throws**, as C#'s `Color32[]`
+indexer does - the same reason the port's `_put` already throws for the
+frame buffer. colorInd runs across ALL packets of a COLOR chunk and C#
+never bounds it, so an over-long chunk raises out of Load where a JS
+typed array would drop the write and report readyToPlay.
+
+**RumorFile.questName kept only the head.** `ReadCString(position, 9)`
+passes a non-zero readLength, and that SKIPS the null-terminator scan
+entirely: the return is `Encoding.UTF8.GetString(reader.ReadBytes(9))
+.TrimEnd('\0')` (FileProxy.cs:380-391). Only trailing NULs come off, so
+an embedded NUL and the stale tail behind it - which classic fixed-size
+records leave whenever a longer name was overwritten - stay in the
+string. The port truncated at the first NUL.
+
+**A one-frame weapon-anim record answered undefined.** ReadWeaponCif
+sets only `Header.FrameCount` over a default ImgFileHeader STRUCT
+(CifRciFile.cs:456), so Width/Height/XOffset/YOffset are zeros, and
+GetSize/GetOffset's `frameCount <= 1` arms hand those zeros back. The
+port's record object carried no such keys, so the arms answered
+undefined and any arithmetic on them NaN.
+
+**The BIOG '#id' line parsed like parseInt, not int.TryParse.** TryParse
+(BiogFile.cs:74) rejects the WHOLE string unless it parses cleanly:
+"#4116abc", "#0x10" and "#12.5" all fall back to
+defaultBackstoriesStart + classIndex, where parseInt answered 4116, 0
+and 12.
+
+### scenes
+
+**seenByGuard was gated on a clear line of sight.** In
+SpawnCityGuards(false), only `seen` sits behind the ray actually
+reaching the player; `seenByGuard` is inside `if (Physics.Raycast(...))`
+alone (PlayerEntity.cs:722-728), and a ray aimed at the player's eye
+from at most 77.5m essentially always hits something. So a guard NPC in
+range and facing a crime raises the whole watch from behind a market
+stall - which, through the mass-conversion quirk the port already keeps,
+turns every remaining pool NPC hostile. The port quietly downgraded that
+to the civilian-witness path.
+
+**guardsArriveCountdown drew the wrong distribution.**
+`Random.Range(5, 10 + 1)` with two int literals is the INT overload -
+one of {5,6,7,8,9,10}. The port drew a continuous [5,10), which is never
+integral and can never reach 10.
+
+**The ready-spell HUD line was invented.** SetReadySpell prints
+GetLocalizedText("pressButtonToFireSpell") =
+"Press button to fire spell." (EntityEffectManager.cs:355). Every other
+message on that path is transcribed verbatim; this one said
+"<spell> readied."
+
+**lastCastCost was stamped too early.** OnReleaseFrame assigns the
+CasterOnly bundle at :2117 and stamps `lastReadySpellCastingCost` only
+at :2138, so AssignBundle's absorption cap (:603, gated on
+`lastReadySpellCastingCost > 0`) reads the PREVIOUS player cast's cost -
+and on the session's first self-cast the gate fails outright and nothing
+is capped. The port stamped before the payload, capping every self-cast
+by its own cost.
+
+### render
+
+Two citations pointed at the wrong line - `DaggerfallSky.cs:611` is the
+seam loop's closing brace (the statement is at :617), and
+`DaggerfallBillboard.cs:45` is blank (framesPerSecond is :46). No
+runtime difference; in a port whose comments are the parity ledger, a
+citation that lands on a brace costs the next reader the whole
+derivation again.
+
 ## Pins
 
 Four pins were written per finding-group and each was verified by

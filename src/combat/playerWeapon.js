@@ -86,7 +86,10 @@ export class PlayerWeapon {
     this.liveSpeed = liveSpeed;
     this.weapon = weapon;
     this.sheathed = true;   // classic starts sheathed; Z readies (WeaponManager.Sheathed)
-    this._gx = 0; this._gy = 0; this._gt = 0; this._tracking = false;
+    // DFU's Gesture: the timestamped trail, its vector sum and its
+    // TRAVEL length (WeaponManager.cs:93-155).
+    this._gpoints = [];
+    this._gx = 0; this._gy = 0; this._gtravel = 0; this._gnow = 0; this._tracking = false;
   }
 
   /** Drag-to-swing (WeaponManager.TrackMouseAttack over the ported
@@ -107,17 +110,55 @@ export class PlayerWeapon {
       return null;
     }
     this._bowHeld = false;
-    if (!held) { this._tracking = false; this._gx = 0; this._gy = 0; this._gt = 0; return null; }
-    if (!this._tracking) { this._tracking = true; this._gx = 0; this._gy = 0; this._gt = 0; }
-    this._gx += dx; this._gy += dy; this._gt += dt;
-    if (this._gt > MAX_GESTURE_SECONDS) { this._gx = 0; this._gy = 0; this._gt = 0; return null; }
-    const travel = Math.hypot(this._gx, this._gy);
-    if (travel / longestDim < ATTACK_THRESHOLD) return null;
-    const angle = Math.atan2(-this._gy, this._gx) * 180 / Math.PI;   // screen-up positive
+    // Gesture.Clear (:149-154) on release, and on the frame tracking
+    // starts (:312, :328 - "Reset tracking if user not holding down").
+    if (!held) { this._tracking = false; this._gestureClear(); return null; }
+    if (!this._tracking) { this._tracking = true; this._gestureClear(); }
+    const sum = this._gestureAdd(dx, dy, dt);
+    // AUDIT 24 combat: the gate is TravelDist, the length of the TRAIL,
+    // not the magnitude of the sum. DFU's Gesture keeps both and its
+    // own comment says why - "This isn't equal to the magnitude of the
+    // sum because the trail may bend" (:99-100) - and :808 compares
+    // `_gesture.TravelDist/_longestDim`. The port had collapsed the two
+    // into the one quantity DFU says is not the threshold: drag 60px
+    // right then 50px left and DFU swings on a trail of 110 while the
+    // port saw 10 and refused.
+    if (this._gtravel / longestDim < ATTACK_THRESHOLD) return null;
+    const angle = Math.atan2(-sum[1], sum[0]) * 180 / Math.PI;   // screen-up positive
     const strike = DIRECTION_TO_STRIKE[gestureDirection(angle)];
-    this._gx = 0; this._gy = 0; this._gt = 0;
+    this._gestureClear();
     if (strike && machineAttack(this.machine, strike)) return strike;
     return null;
+  }
+
+  /** Gesture.Clear (WeaponManager.cs:149-154). */
+  _gestureClear() {
+    this._gpoints.length = 0;
+    this._gx = 0; this._gy = 0; this._gtravel = 0;
+  }
+
+  /** Gesture.Add (:132-146), TrimOld (:111-123) first. AUDIT 24 combat:
+   *  MaxGestureSeconds is a SLIDING WINDOW over a timestamped trail,
+   *  not a hard reset - TrimOld drops only the points older than the
+   *  window and subtracts each from the sum and the travel, so motion
+   *  from 0.9s ago still counts at t=1.0s. The port zeroed the whole
+   *  accumulator at every 1s boundary, throwing away the current
+   *  frame's motion with it and roughly doubling the swing threshold
+   *  for any drag that ran past a second. */
+  _gestureAdd(dx, dy, dt) {
+    this._gnow += dt;
+    let old = 0;
+    for (const p of this._gpoints) {
+      if (this._gnow - p.t <= MAX_GESTURE_SECONDS) continue;
+      old++;
+      this._gx -= p.dx; this._gy -= p.dy;
+      this._gtravel -= p.mag;
+    }
+    if (old) this._gpoints.splice(0, old);
+    const mag = Math.hypot(dx, dy);
+    this._gpoints.push({ t: this._gnow, dx, dy, mag });
+    this._gx += dx; this._gy += dy; this._gtravel += mag;
+    return [this._gx, this._gy];
   }
 
   /** ClickToAttack verbatim (WeaponManager): a click fires an attack

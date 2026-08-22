@@ -227,3 +227,7 @@ export function silenceBlocksCast(entity, { costsSpellPoints = true } = {}) {
   return costsSpellPoints && isSilenced(entity);
 }
 export const SILENCED_TEXT = 'You are silenced.';
+// SetReadySpell's HUD line (EntityEffectManager.cs:355) -
+// GetLocalizedText('pressButtonToFireSpell'), Internal_Strings_en
+// m_Id 211. AUDIT 24: the port had invented "<spell> readied."
+export const PRESS_BUTTON_TO_FIRE_SPELL = 'Press button to fire spell.';

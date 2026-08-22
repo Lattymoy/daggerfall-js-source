@@ -60,8 +60,12 @@ test('AUDIT 23 magic-4: every spending cast arm tallies the effect schools', () 
   // EntityEffectManager.cs:2106-2108 + TallyPlayerReadySpellEffectSkills
   // (:1964-1978): the four playerCastInput arms that spend all tally.
   const src = hmSrc();   // M3: the arms live in the engine
-  const spends = src.match(/playerEntity\.magicka -= cost;\n\s*lastCastCost = cost;\n\s*tallyCastSkills\(sp\);/g) ?? [];
+  // AUDIT 24 scenes moved the CasterOnly arm's lastCastCost stamp below
+  // its payload (EntityEffectManager.cs:2117 vs :2138), so the tally is
+  // matched on its own - it is what this pin is about.
+  const spends = src.match(/playerEntity\.magicka -= cost;\n(?:\s*lastCastCost = cost;\n)?\s*tallyCastSkills\(sp\);/g) ?? [];
   assert.equal(spends.length, 4, 'CasterOnly, ByTouch, AreaAroundCaster and the missile arm all tally');
+  assert.equal((src.match(/lastCastCost = cost;/g) ?? []).length, 4, 'and all four still record the cost');
   // the tally gates on the cost table (DFU's effect != null), not the
   // priced-as-Destruction default
   assert.ok(/function tallyCastSkills\(sp\) \{[\s\S]*?EFFECT_COST_TABLE\[`\$\{e\.type\},\$\{e\.subType & 0xff\}`\]/.test(src));

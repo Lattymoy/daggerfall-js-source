@@ -122,8 +122,12 @@ export class FlcFile {
       return false;
     }
     this.readyToPlay = true;
-    const speed = this.header.fileID === FLIC_FORMAT.FLI ? CINEMATIC_SPEED.FLI : CINEMATIC_SPEED.FLIC;
-    this.frameDelay = this.header.frameDelay / speed;
+    // AUDIT 24 formats: no format branch. Read() is a bare
+    // `FrameDelay = (float)(header.FrameDelay / (float)CinematicSpeed
+    // .FLIC);` (FlcFile.cs:135). CinematicSpeed.FLI = 70 is declared
+    // (:588) and referenced NOWHERE in the DFU tree - the port wired
+    // the dead constant up, running any true .FLI 14.3x fast.
+    this.frameDelay = this.header.frameDelay / CINEMATIC_SPEED.FLIC;
     this.bufferNextFrame();
     return this.readyToPlay;
   }
@@ -250,6 +254,13 @@ export class FlcFile {
       if (numOfColorsToChange === 0) numOfColorsToChange = 256;
       for (let cc = 0; cc < numOfColorsToChange; cc++) {
         const r = c.u8() * scale, g = c.u8() * scale, b = c.u8() * scale;
+        // AUDIT 24 formats: colorInd runs across ALL packets and C#
+        // never bounds it, so a chunk carrying more entries than
+        // ColorCount raises IndexOutOfRangeException out of Load
+        // (Palette is `new Color32[ColorCount]`, FlcFile.cs:118). The
+        // same reason _put throws: a typed array would drop the write
+        // and let the malformed chunk "succeed".
+        this._palIndex(colorInd);
         this.palette[colorInd] = (this.transparency
           && r === this.transparentRed && g === this.transparentGreen && b === this.transparentBlue)
           ? rgba(0, 0, 0, 0)
@@ -333,6 +344,18 @@ export class FlcFile {
    *  without this a JS typed array DROPS the write silently and the
    *  malformed chunk decodes "successfully" - the exact hazard the
    *  VID reader already emulates (vidFile.js _putPixel). */
+  /** C#'s Color32[] indexer, for the palette: an out-of-range colour
+   *  index throws where a JS typed array answers undefined and the
+   *  frame decodes to black. */
+  _palIndex(i) {
+    if (i < 0 || i >= this.palette.length) {
+      throw new Error('FlcFile: palette index out of range.');
+    }
+    return i;
+  }
+
+  _pal(i) { return this.palette[this._palIndex(i)]; }
+
   _put(pos, color) {
     if (pos < 0 || pos >= this.frameBuffer.length) {
       throw new Error('FlcFile: frame buffer index out of range.');
@@ -342,17 +365,17 @@ export class FlcFile {
 
   _screenCopySeg(x, y, count) {
     let pos = this._pos(x, y);
-    for (let i = 0; i < count; i++) this._put(pos++, this.palette[this._c.u8()]);
+    for (let i = 0; i < count; i++) this._put(pos++, this._pal(this._c.u8()));
   }
 
   _screenRepeatOne(x, y, count) {
-    const color = this.palette[this._c.u8()];
+    const color = this._pal(this._c.u8());
     let pos = this._pos(x, y);
     for (let i = 0; i < count; i++) this._put(pos++, color);
   }
 
   _screenRepeatTwo(x, y, count) {
-    const c1 = this.palette[this._c.u8()], c2 = this.palette[this._c.u8()];
+    const c1 = this._pal(this._c.u8()), c2 = this._pal(this._c.u8());
     let pos = this._pos(x, y);
     for (let i = 0; i < count; i++) {
       this._put(pos, c1);
@@ -364,8 +387,8 @@ export class FlcFile {
   _screenCopyTwoSeg(x, y, count) {
     let pos = this._pos(x, y);
     for (let i = 0; i < count; i++) {
-      this._put(pos, this.palette[this._c.u8()]);
-      this._put(pos + 1, this.palette[this._c.u8()]);
+      this._put(pos, this._pal(this._c.u8()));
+      this._put(pos + 1, this._pal(this._c.u8()));
       pos += 2;
     }
   }

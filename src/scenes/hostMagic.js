@@ -40,7 +40,7 @@ import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS,
   MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
-import { silenceBlocksCast, SILENCED_TEXT } from '../systems/mysticism.js';
+import { silenceBlocksCast, SILENCED_TEXT, PRESS_BUTTON_TO_FIRE_SPELL } from '../systems/mysticism.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
 import { applySpell } from '../systems/effects.js';
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
@@ -145,9 +145,16 @@ export function createPlayerMagic({
       // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
       // missile; the cost spends here.
       playerEntity.magicka -= cost;
-      lastCastCost = cost;
       tallyCastSkills(sp);
       const r = applySpellToPlayer(sp, playerEntity.level, playerCaster());
+      // AUDIT 24 scenes: PlayerSpellCasting_OnReleaseFrame assigns the
+      // CasterOnly bundle at :2117 and only stamps
+      // `lastReadySpellCastingCost = readySpellCastingCost` at :2138 -
+      // AFTER it. So AssignBundle's absorption cap (:603, gated on
+      // `lastReadySpellCastingCost > 0`) reads the PREVIOUS player
+      // cast's cost, not this one's; on the session's first self-cast
+      // the gate fails outright and nothing is capped.
+      lastCastCost = cost;
       if (r.healed > 0) say(`You are healed ${r.healed} points.`);
       surfacePlayer();
       readiedSpell = null;   // DFU OnReleaseFrame: a cast consumes the ready
@@ -213,7 +220,10 @@ export function createPlayerMagic({
     readiedFree = free;
     if (sp.rangeType === 0) { castInput(null, null); return; }
     clickCast.arm();
-    say(`${sp.name} readied.`);   // classic: the next attack-click CASTS
+    // AUDIT 24 scenes: SetReadySpell's own line, verbatim -
+    // GetLocalizedText("pressButtonToFireSpell") = "Press button to
+    // fire spell." (Internal_Strings_en, EntityEffectManager.cs:355).
+    say(PRESS_BUTTON_TO_FIRE_SPELL);   // classic: the next attack-click CASTS
   }
 
   async function ensureMissileBatch(m) {

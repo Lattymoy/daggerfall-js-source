@@ -62,6 +62,37 @@ const colorChunk = (colors) => {
 
 const PALETTE = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [8, 8, 8]];
 
+test('AUDIT 24: the frame delay divides by 1000 for EVERY flic, FLI included', () => {
+  // Read() is a bare `FrameDelay = (float)(header.FrameDelay /
+  // (float)CinematicSpeed.FLIC);` (FlcFile.cs:135). CinematicSpeed.FLI
+  // = 70 is declared at :588 and referenced NOWHERE in the DFU tree -
+  // the port had wired the dead constant up behind a fileID branch,
+  // running a true .FLI 14.3x fast.
+  const fli = new FlcFile();
+  // (the extension gate takes only .FLC/.CEL - FlcFile.cs:86-88 - so
+  // an FLI-magic file still has to arrive under one of those names)
+  assert.equal(fli.load(buildFlc({ frameDelay: 100, fileID: FLIC_FORMAT.FLI }), 'X.CEL'), true);
+  assert.equal(fli.frameDelay, 100 / CINEMATIC_SPEED.FLIC, 'the FLI divides by 1000 too');
+  assert.equal(CINEMATIC_SPEED.FLI, 70, 'the constant is still declared, as C# declares it');
+  assert.notEqual(100 / CINEMATIC_SPEED.FLI, 100 / CINEMATIC_SPEED.FLIC, 'and it really would differ');
+});
+
+test('AUDIT 24: a palette index past ColorCount THROWS, as C#\'s Color32[] does', () => {
+  // colorInd runs across ALL packets of a COLOR chunk and C# never
+  // bounds it (Palette is `new Color32[ColorCount]`, FlcFile.cs:118),
+  // so an over-long chunk raises IndexOutOfRangeException out of
+  // Load - where a JS typed array would drop the write and let the
+  // malformed file report readyToPlay.
+  const over = [0x02, 0x00];                       // TWO packets
+  for (let pkt = 0; pkt < 2; pkt++) {
+    over.push(0, 0);                               // skip 0, count 0 -> 256
+    for (let i = 0; i < 256; i++) over.push(1, 2, 3);
+  }
+  assert.throws(
+    () => new FlcFile().load(buildFlc({ chunks: [{ type: CHUNK_TYPE.COLOR_256, payload: over }] }), 'X.CEL'),
+    /palette index out of range/);
+});
+
 test('flc: the header, the format magic and the frame delay', () => {
   const f = new FlcFile();
   assert.equal(f.load(buildFlc({ frameDelay: 250, chunks: [{ type: CHUNK_TYPE.COLOR_256, payload: colorChunk(PALETTE) }] }), 'ROGUE.CEL'), true);

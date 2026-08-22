@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createPlayerMagic } from '../src/scenes/hostMagic.js';
-import { SILENCED_TEXT } from '../src/systems/mysticism.js';
+import { SILENCED_TEXT, PRESS_BUTTON_TO_FIRE_SPELL } from '../src/systems/mysticism.js';
 import { SPELL_ABSORPTION } from '../src/systems/absorption.js';
 import { calculateCastCost } from '../src/systems/spellcost.js';
 import { SKILLS } from '../src/systems/skills.js';
@@ -93,7 +93,10 @@ test('hostMagic ready: silence refuses and clears; the cost gate speaks; ranged 
   ok.magic.readySpell(sp);
   assert.equal(ok.magic.readied(), sp);
   assert.equal(ok.magic.spellArmed(), true, 'the click latch armed');
-  assert.deepEqual(ok.world.said, ['Test Spell readied.']);
+  // AUDIT 24 scenes: SetReadySpell's own HUD line
+  // (EntityEffectManager.cs:355, Internal_Strings_en
+  // 'pressButtonToFireSpell') - not the invented "<spell> readied."
+  assert.deepEqual(ok.world.said, [PRESS_BUTTON_TO_FIRE_SPELL]);
 });
 
 test('hostMagic ready: a CasterOnly spell casts INSTANTLY on ready (no click latch)', () => {

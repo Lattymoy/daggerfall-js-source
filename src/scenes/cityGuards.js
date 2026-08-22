@@ -181,11 +181,17 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           // line of sight from the NPC's eye to the player's chest
           const eye = [p.pos[0], p.pos[1] + 0.7, p.pos[2]];
           const dir = [toPlayer[0] / (dist || 1), (toPlayer[1] + 0.6) / (dist || 1), toPlayer[2] / (dist || 1)];
+          // AUDIT 24 scenes: PlayerEntity.cs:722-728 puts only `seen`
+          // behind the ray actually reaching the player. `seenByGuard`
+          // sits inside `if (Physics.Raycast(...))` alone - ANY hit,
+          // wall or player - so a guard NPC in range and facing the
+          // crime raises the watch even from behind a market stall.
           const hit = collider.raycast(eye, dir, dist);
-          if (!Number.isFinite(hit) || hit >= dist - 1e-3) {
-            seen = true;
-            if (p.guard) seenByGuard = true;
-          }
+          const clear = !Number.isFinite(hit) || hit >= dist - 1e-3;
+          if (clear) seen = true;
+          // the ray is aimed at the player's eye from at most 77.5m, so
+          // "hit anything" is all but always true - a clear line counts.
+          if (p.guard && (clear || Number.isFinite(hit))) seenByGuard = true;
         }
       }
       if (seenByGuard) {
@@ -193,7 +199,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         p.disable();
       }
     }
-    if (!seenByGuard && seen) countdown = 5 + rand() * 5;   // Random.Range(5, 11) seconds
+    // AUDIT 24 scenes: `Random.Range(5, 10 + 1)` is the INT overload -
+    // one of {5,6,7,8,9,10}, never 7.3 and never short of 10.
+    if (!seenByGuard && seen) countdown = 5 + Math.floor(rand() * 6);   // Random.Range(5, 11) seconds
   }
 
   function angleDeg(v, fwd) {

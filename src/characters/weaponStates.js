@@ -103,8 +103,20 @@ export function machineAttack(m, strikeState) {
   return true;
 }
 
-export function machineCancelBowDraw(m) {   // ActivateCenterObject / hold-cap path
-  if (m.isBow && m.state === 'StrikeUp') { m.state = 'Idle'; m.frame = 0; m.ticks = 0; m.acc = 0; return true; }
+/** ActivateCenterObject / the hold cap: un-draw WITHOUT releasing an
+ *  arrow (WeaponManager.cs:355-357). AUDIT 24 combat: the un-draw
+ *  leaves isAttacking TRUE, so the very next Update takes the
+ *  not-attacking reset block and charges the FULL bow cooldown -
+ *  `if (WeaponType == Bow && isAttacking) cooldownTime = Time.time +
+ *  GetBowCooldownTime(playerEntity)` (:220-222). A cancelled draw
+ *  costs exactly what a loosed arrow costs; the port let the next draw
+ *  start on the following frame. */
+export function machineCancelBowDraw(m, liveSpeed = 50) {
+  if (m.isBow && m.state === 'StrikeUp') {
+    m.state = 'Idle'; m.frame = 0; m.ticks = 0; m.acc = 0;
+    m.cooldownUntil = m.now + getBowCooldownTime(liveSpeed);
+    return true;
+  }
   return false;
 }
 
@@ -133,7 +145,7 @@ export function machineStep(m, dt, liveSpeed) {
     } else if (m.isBow && m.state === 'StrikeUp') {
       if (m.frame < frames - 1) m.frame++;             // draw to the hold frame, then hold
       m.ticks++;                                        // held-time keeps counting (GetAnimTime)
-      if (m.ticks * tick > MAX_BOW_HELD_DRAWN_SECONDS) { machineCancelBowDraw(m); events.push('undraw'); break; }
+      if (m.ticks * tick > MAX_BOW_HELD_DRAWN_SECONDS) { machineCancelBowDraw(m, liveSpeed); events.push('undraw'); break; }
     } else {
       m.frame++;
       if (m.frame === (m.isBow ? BOW_SOUND_FRAME : -1)) events.push('bowSound');

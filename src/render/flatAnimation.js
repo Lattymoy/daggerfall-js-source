@@ -1,5 +1,5 @@
 // ANIMATED FLATS (FA1) - DaggerfallBillboard.cs's AnimateBillboard
-// (:110-165) and the AnimatedMaterial decision at :282-285, ported
+// (:115-166) and the AnimatedMaterial decision at :282-285, ported
 // whole. Every fire, brazier, candle flame, tavern hearth and magic
 // effect flat in the world had been drawing frame 0 for ever: the
 // records carry their frames (TextureFile decodes them lazily and the
@@ -15,10 +15,10 @@
 // at the same speed, and a long stall (a tab restored, an interior
 // loaded) catches up instead of drifting.
 
-/** The three speeds, verbatim (DaggerfallBillboard.cs:38-39, :45).
+/** The three speeds, verbatim (DaggerfallBillboard.cs:38-39, :46).
  *  Everything runs at the general 5 FPS except the two archives DFU
  *  names: ANIMALS also 5, LIGHTS 12 - the flames are the fast ones. */
-export const GENERAL_FPS = 5;      // framesPerSecond (:45)
+export const GENERAL_FPS = 5;      // framesPerSecond (:46)
 export const ANIMAL_FPS = 5;       // animalFps (:38)
 export const LIGHT_FPS = 12;       // lightFps (:39)
 
