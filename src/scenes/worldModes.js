@@ -1635,6 +1635,9 @@ export function createWorldModes(host) {
      *  while a building is mounted (the host routes exterior popups to
      *  its own overlay). */
     showQuestOverlay(win) { if (mode === 'interior') { interiorOverlay = win; return true; } return false; },
+    // wave 21: the host asks whether the box it pushed is still the
+    // one in the slot before it stacks another onto it
+    get questOverlay() { return mode === 'interior' ? interiorOverlay : null; },
     tryEnter,
     frame,
     installShotProbes,

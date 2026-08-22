@@ -187,7 +187,7 @@ function makeMachine(world, deps = {}) {
   const m = new QuestMachine({
     nowSeconds: () => m.now,
     world,
-    showPopup: (q, message) => calls.push(['showPopup', message]),
+    showPopup: (q, tokens) => calls.push(['showPopup', tokens]),
     forceTopicListsUpdate: () => calls.push(['forceTopicListsUpdate']),
     ...deps,
   });

@@ -36,7 +36,7 @@ function makeMachine(deps = {}) {
   const capture = (name) => (...args) => { calls.push([name, ...args]); return deps[`${name}Result`]; };
   const m = new QuestMachine({
     nowSeconds: () => m.now,
-    showPopup: (q, message) => calls.push(['showPopup', message]),
+    showPopup: (q, tokens) => calls.push(['showPopup', tokens]),
     showPrompt: (q, message, respond) => calls.push(['showPrompt', message, respond]),
     changeReputation: capture('changeReputation'),
     addQuestTopics: capture('addQuestTopics'),
@@ -847,5 +847,8 @@ test('VERIFY-2: Say\'s static-message NAME form resolves through Quests-StaticMe
   m.tick();
   const popups = m.of('showPopup');
   assert.equal(popups.length, 1);
-  assert.equal(popups[0][1], q.getMessage(1004), 'QuestComplete resolved to id 1004');
+  // wave 21: the hook takes the expanded TOKENS of one box now, so the
+  // pin reads the text the message actually carries.
+  assert.equal(popups[0][1].map((t) => t.text ?? '').join('').trim(), 'done',
+    'QuestComplete resolved to id 1004');
 });

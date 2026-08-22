@@ -26,7 +26,8 @@
 //   removeItemFromPlayer, playerHasItem, carriesQuestItem,
 //   releaseQuestItem, makeHeldQuestItemsPermanent, offerReward,
 //   isPlayerInTown()            - the item/click seams (Q2b)
-//   showPopup(quest, message)   - the parchment popup (tokens ride the
+//   showPopup(quest, tokens)    - ONE already-expanded message box
+//                               (tokens ride the
 //                                 message; the host chunks)
 //   addHUDText(text), playVideo(name), playSound(id)
 //   the talk seams              - addQuestTopics/dialogLink/addDialog/
@@ -200,7 +201,7 @@ export function createQuestBridge(ctx) {
     deductGold: (n) => ctx.deductGold?.(n),
     addGold: (n) => ctx.addGold?.(n),
     addHUDText: (t) => ctx.addHUDText?.(t),
-    showPopup: (q, message) => ctx.showPopup?.(q, message),
+    showPopup: (q, tokens) => ctx.showPopup?.(q, tokens),
     showPrompt: (q, message, respond) => ctx.showPrompt?.(q, message, respond),
     playVideo: (name) => ctx.playVideo?.(name),
     playSound: (id) => ctx.playSound?.(id),

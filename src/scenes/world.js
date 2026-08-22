@@ -1433,12 +1433,36 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior -> the mode machine's
   // slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
   // logged loudly rather than lost silently).
+  // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
+  // uiManager.PushWindow - a STACK. ShowPendingTaskMessages pops the
+  // whole pending stack and Shows each one, so a drain of several
+  // boxes leaves them layered, newest in FRONT, and the player clicks
+  // down through them. The port minted a FRESH ServiceFlowWindow per
+  // call and dropped it into the overlay slot, so every box after the
+  // first threw the previous one away: a task that showed two messages
+  // showed one, and a message long enough to chunk would have shown
+  // only its tail. `push()` unshifts to the front, which is exactly
+  // PushWindow.
+  let _questBoxWin = null;
   const showQuestBox = (box) => {
-    const win = new ServiceFlowWindow([box]);
+    if (_questBoxWin && !_questBoxWin.done && _liveQuestOverlay(_questBoxWin)) {
+      _questBoxWin.push([box]);
+      return;
+    }
+    const win = new ServiceFlowWindow([box], {
+      onClose: () => { if (_questBoxWin === win) _questBoxWin = null; },
+    });
+    _questBoxWin = win;
     if (modes?.showQuestOverlay?.(win)) return;
     if ((modes?.mode ?? 'exterior') === 'exterior') { townTalk.showOverlay(win); return; }
+    _questBoxWin = null;
     console.warn('[quest] popup in dungeon mode pends the dungeon overlay seam:', box.rows?.[0] ?? '');
   };
+  /** A window is only still "the top of the stack" while the overlay
+   *  slot it went into is still showing it - the player may have
+   *  closed it, or another surface may have taken the slot. */
+  const _liveQuestOverlay = (win) =>
+    (modes?.questOverlay ?? null) === win || (townTalk?.overlay ?? null) === win;
   const questWorld = {
     maps,
     getBlock: (name) => blocks.getBlockByName(name),
@@ -1728,8 +1752,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     deductGold: (n) => deductGold(playerEntity, n),
     addGold: (n) => addGold(playerEntity, n),
     addHUDText: (t) => townTalk.say(t),
-    showPopup: (q, message) => {
-      const rows = tokensToRows(message.getTextTokens(-1, q.rolls));
+    // The tokens arrive ALREADY expanded and already chunked - the
+    // read moved back to queue time where Quest.cs:785 does it.
+    showPopup: (_q, tokens) => {
+      const rows = tokensToRows(tokens);
       if (rows.length) showQuestBox({ rows });
     },
     showPrompt: (q, message, respond) => showQuestBox({

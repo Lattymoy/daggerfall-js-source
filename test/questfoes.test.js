@@ -58,7 +58,7 @@ function makeMachine(world) {
   const m = new QuestMachine({
     nowSeconds: () => clock.t,
     world,
-    showPopup: (_q, message) => calls.push(['showPopup', message]),
+    showPopup: (_q, tokens) => calls.push(['showPopup', tokens]),
   });
   m.clock = clock;
   m.calls = calls;

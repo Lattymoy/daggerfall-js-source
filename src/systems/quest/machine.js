@@ -20,7 +20,10 @@
 //                                pack through the host's data seam;
 //                                the QuestListsManager stand-in that
 //                                StartQuest schedules through)
-//   showPopup(quest, message)  - the parchment popup (Q4 wires the
+//   showPopup(quest, tokens)   - ONE message box: the already-
+//                              expanded token array of one chunk. The
+//                              host stacks them (PushWindow), newest
+//                              in front. (Q4 wires the
 //                                real message box; tests capture)
 //   showPrompt(quest, message, respond) - Prompt's yes/no box (Q4
 //                                wires; respond(true) = Yes)
@@ -283,7 +286,7 @@ export class QuestMachine {
    *  world (PlaySound's nowSeconds went through this door first). */
   _buildHooks() {
     return {
-      showPopup: (q, message) => this.deps.showPopup?.(q, message),
+      showPopup: (q, tokens) => this.deps.showPopup?.(q, tokens),
       showPrompt: (q, message, respond) => this.deps.showPrompt?.(q, message, respond),
       changeReputation: (fid, amount, propagate) => this.deps.changeReputation?.(fid, amount, propagate),
       changeLegalRep: (amount) => this.deps.changeLegalRep?.(amount),

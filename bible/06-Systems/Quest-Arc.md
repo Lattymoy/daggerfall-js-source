@@ -2385,6 +2385,86 @@ The gates are a pending of their own; when they land, the hook moves
 inside them.
 
 
+### Wave 21
+
+**Where the tokens get read.**
+
+`Quest.ShowMessagePopup` (:775-844) reads the message once, at the top,
+and everything after that works on the array it got:
+
+```csharp
+TextFile.Token[] tokens = message.GetTextTokens();
+if (tokens == null || tokens.Length == 0)
+    return null;
+```
+
+The port pushed the `Message` object onto the pending stack and let
+the host call `getTextTokens` when the box finally opened. One line
+of difference, and it moves three things at once:
+
+- **the variant draw.** `GetTextTokens(-1)` picks a variant off the
+  quest's roll. Drawing it at pop time takes the roll out of order
+  against every other draw in the tick (Ledger A), and a box that is
+  queued and drained across a break draws against a different state.
+- **the macro expansion.** `%qdt`, the clicked NPC, `%pcn`,
+  `lastResourceReferenced` - all of them answered with the world as it
+  was when the box *opened*, not when the task said to show it. The
+  gap is not theoretical: `say` queues, then the task keeps running,
+  and `_showPendingTaskMessages` drains after.
+- **the dialog reveal.** Wave 6 established that quest popups reveal
+  the Places and Persons they name, "on purpose" per Nystul's comment.
+  That reveal fired at pop time too.
+
+The emptiness check was wrong in a way that only reads wrong once you
+know what C# is testing. C# tests the array it just read - the CHOSEN
+variant, expanded. The port tested
+`message.variants.some((v) => v.tokens.length)`: *any* variant, *raw*.
+So a message whose drawn variant expands to nothing still queued a box
+**and still burned its `oncePerQuest` record**, because C# returns
+above the line that records it.
+
+And the chunker was simply absent:
+
+```csharp
+const int chunkSize = 22;
+...
+if (++lineCount > chunkSize) { chunks.Add(...); currentChunk.Clear(); lineCount = 0; }
+```
+
+`++lineCount > 22` breaks on the twenty-**third** counted line, which
+has already been added to the chunk being closed. A full chunk holds
+23 lines, not 22. Kept verbatim, with the off-by-one named in the
+comment so nobody "fixes" it.
+
+**The stack that wasn't.** `DaggerfallMessageBox.Show()` is
+`uiManager.PushWindow`. `ShowPendingTaskMessages` pops the whole
+pending stack and Shows each one, so the boxes end up layered and the
+player clicks down through them. Work the double reversal out and it
+lands exactly where you would want it to: push chunks 0..n, pop n..0,
+each landing on top, so chunk 0 of the first-queued message is what
+the player sees first, then chunk 1, then the next message.
+
+The port's host minted a **fresh** `ServiceFlowWindow` per call and
+dropped it into the overlay slot. Every box after the first threw the
+previous one away. A task that showed two messages showed one. It only
+looked harmless because the survivor happened to be the right one -
+the last popped is the first queued - and because nothing chunked yet,
+so there was rarely more than one box in flight.
+
+`ServiceFlowWindow.push()` already unshifts to the front, which is
+`PushWindow` exactly. The host now holds the live window and stacks
+onto it while the overlay slot is still showing it.
+
+Six mutants, six kills: the read moved back to pop time; the empty
+check back onto raw variants; `>` weakened to `>=`; the final chunk
+pushed unconditionally; the chunker bypassed; and the host restored to
+replacing. The hook's contract changed with it - `showPopup(quest,
+tokens)` takes one box's already-expanded tokens now, not a Message -
+so five fixtures across four files moved from asserting a message id
+to asserting the text the player actually reads, which is a better pin
+than the one it replaced.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

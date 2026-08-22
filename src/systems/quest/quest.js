@@ -23,8 +23,40 @@
 // game seconds) - clocks and log entries read it.
 
 import { travelTimeSeconds } from './clock.js';
-import { Message } from './message.js';
+import { Message, Formatting } from './message.js';
 import { symbolToSaveData, symbolFromSaveData } from './symbol.js';
+
+/** ShowMessagePopup's chunker (Quest.cs:777, 793-819): a message
+ *  longer than 22 LINES becomes several click-through boxes. A line
+ *  is any token whose formatting is JustifyCenter, JustifyLeft or
+ *  Nothing; the counter resets per chunk. C#'s `++lineCount > 22`
+ *  means the break lands on the TWENTY-THIRD line, which therefore
+ *  opens the next chunk having already been added to the previous one
+ *  - so a chunk holds 23 counted lines, not 22. Kept verbatim.
+ *  The final chunk is added only when it is non-empty. */
+export function chunkMessageTokens(tokens, chunkSize = 22) {
+  const chunks = [];
+  let currentChunk = [];
+  let lineCount = 0;
+  for (const token of tokens) {
+    currentChunk.push(token);
+    // C# also counts JustifyLeft. The port's quest-message layer never
+    // mints one - loadMessage produces exactly Nothing / Text /
+    // JustifyCenter (message.js:22-26) - and Formatting has no such
+    // member, so naming it here would compare against `undefined` and
+    // count every token that carries no formatting at all.
+    if (token.formatting === Formatting.JustifyCenter
+      || token.formatting === Formatting.Nothing) {
+      if (++lineCount > chunkSize) {
+        chunks.push(currentChunk);
+        currentChunk = [];
+        lineCount = 0;
+      }
+    }
+  }
+  if (currentChunk.length > 0) chunks.push(currentChunk);
+  return chunks;
+}
 
 export const QUEST_SUCCESS_REP = 5;     // Quest.cs:36
 export const QUEST_FAILURE_REP = -2;    // Quest.cs:37
@@ -303,23 +335,41 @@ export class Quest {
    *  it now, oncePerQuest suppresses repeats (the Say action opts in). */
   showMessagePopup(id, immediate = false, oncePerQuest = false) {
     const message = this.getMessage(id);
-    if (!message) return;
+    if (!message) return null;
+    // AUDIT 24 (wave 21): Quest.cs:785 reads the tokens HERE, at queue
+    // time, and it is that array the boxes carry. The port pushed the
+    // Message object and let the host read tokens at POP time, which
+    // moved three things: the variant draw (so quest.rolls came out in
+    // a different order), the macro expansion (so %qdt, the clicked
+    // NPC, lastResourceReferenced and friends answered with whatever
+    // the state was when the box finally opened, not when the task
+    // said to show it) and the dialog reveal that rides it.
+    const tokens = message.getTextTokens(-1, this.rolls);
     // C# returns before queueing (and before recording oncePerQuest)
-    // when the message has no tokens (AUDIT quest-P8).
-    if (!message.variants.some((v) => v.tokens.length)) return;
-    if (oncePerQuest && this.oneTimeDisplayedMessages.has(id)) return;
-    this.pendingPopups.push(message);
+    // when the message has no tokens (AUDIT quest-P8). Note WHICH
+    // tokens: the chosen variant's, expanded - not "some variant has
+    // raw tokens", which is what the port asked.
+    if (!tokens || tokens.length === 0) return null;
+    if (oncePerQuest && this.oneTimeDisplayedMessages.has(id)) return null;
+    for (const chunk of chunkMessageTokens(tokens)) this.pendingPopups.push(chunk);
     if (oncePerQuest) this.oneTimeDisplayedMessages.add(id);
     if (immediate) {
       this.questBreak = true;
       this._showPendingTaskMessages();
+      return null;
     }
+    return this.pendingPopups[this.pendingPopups.length - 1] ?? null;   // Peek
   }
 
   _showPendingTaskMessages() {
     while (this.pendingPopups.length) {
-      const message = this.pendingPopups.pop();   // a STACK, as DFU pushes/pops
-      this.hooks?.showPopup?.(this, message);
+      const tokens = this.pendingPopups.pop();   // a STACK, as DFU pushes/pops
+      // Each pop is a DaggerfallMessageBox.Show(), i.e. a
+      // uiManager.PushWindow - so the host must STACK these, newest in
+      // front. The double reversal (push 0..n, pop n..0, each landing
+      // on top) is what puts chunk 0 of the FIRST-queued message in
+      // front of the player.
+      this.hooks?.showPopup?.(this, tokens);
     }
   }
 

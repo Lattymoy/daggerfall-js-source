@@ -63,7 +63,10 @@ test('quest machine: a crafted quest runs end to end - clock, break, end, tombst
   assert.equal(TICKS_PER_SECOND, 10);   // QuestMachine.cs:45, the host pacing law
   let now = 0;
   const popups = [];
-  const m = new QuestMachine({ nowSeconds: () => now, showPopup: (q, msg) => popups.push(msg.id) });
+  // wave 21: the hook takes ONE box's already-expanded tokens, not the
+  // Message - Quest.cs:785 reads them at queue time.
+  const text = (tokens) => tokens.map((t) => t.text ?? '').join('').trim();
+  const m = new QuestMachine({ nowSeconds: () => now, showPopup: (q, tk) => popups.push(text(tk)) });
   const q = m.scheduleQuest(CRAFTED, 0, { rolls: () => 0 });
   assert.equal(m.quests.size, 0, 'scheduled, not yet invoked');
 
@@ -84,7 +87,8 @@ test('quest machine: a crafted quest runs end to end - clock, break, end, tombst
   now = 121;   // world time passes the clock
   m.tick();    // clock hits zero -> _timer_ task starts -> say breaks the task
   assert.equal(timer.clockFinished, true);
-  assert.deepEqual(popups, [1011], "say's immediate popup delivered through the hook");
+  assert.deepEqual(popups, ['The clock rang.'],
+    "say's immediate popup delivered through the hook, ALREADY EXPANDED");
   assert.equal(q.getTask({ name: 'done' }).getTriggerValue(), false, 'break stopped the task before start task ran');
   // (M11) The break bails the TASK too: start task _finish_ has not run
   assert.equal(q.getTask({ name: 'finish' }).getTriggerValue(), false, 'the say-break stops the task mid-body');
@@ -137,20 +141,20 @@ test('quest machine: AUDIT pins - secondary always-on triggers, oncePerQuest, po
 
   // (M15) oncePerQuest suppresses the second showing.
   const popups = [];
-  q.hooks.showPopup = (_qq, msg) => popups.push(msg.id);
+  const text = (tokens) => tokens.map((t) => t.text ?? '').join('').trim();
+  q.hooks.showPopup = (_qq, tk) => popups.push(text(tk));
   q.showMessagePopup(1011, false, true);
   q.showMessagePopup(1011, false, true);
   q._showPendingTaskMessages();
-  assert.deepEqual(popups, [1011], 'oncePerQuest shows exactly once');
+  assert.deepEqual(popups, ['x'], 'oncePerQuest shows exactly once');
 
   // (M25) pendingPopups is a STACK, as DFU pushes and pops one:
   // two queued popups deliver newest-first.
   popups.length = 0;
   q.showMessagePopup(1011);
-  const second = { id: 2222 };
-  q.pendingPopups.push(second);
+  q.pendingPopups.push([{ formatting: 'text', text: 'SECOND' }]);
   q._showPendingTaskMessages();
-  assert.deepEqual(popups, [2222, 1011], 'LIFO delivery, the DFU stack order');
+  assert.deepEqual(popups, ['SECOND', 'x'], 'LIFO delivery, the DFU stack order');
 });
 
 test('quest machine: WhenTask evaluates when/and/or with not, DFU short-circuits', () => {
