@@ -2042,6 +2042,32 @@ one-time recording itself.
 
 One mutant, one kill.
 
+### Wave 13 - the one file the mutation campaign could not kill
+
+The campaign over every line range AUDIT 24 touched came back with 44
+files and exactly one at **0 of 8 caught**: `src/systems/loot.js`. Every
+survivor was a DATA TABLE constant flipped by one - a LootChanceMatrix
+cell, an ingredient template index.
+
+That is the shape a transcription typo takes, and no behavioural test
+finds it. A wrong 10 for an 11 still produces loot; it just produces the
+wrong loot, silently, for ever. Twenty-one rows of fifteen cells is 315
+chances to have mistyped one, and nothing in the suite would have said
+so.
+
+The only pin that catches that class is one that REBUILDS the table from
+the source, which is the idiom `audit24_systems2.test.js` already uses
+for MAGIC_ONLY_KEYS. `test/audit24_loottables.test.js` parses all 21
+`new LootChanceMatrix()` rows out of LootTables.cs and compares them
+cell for cell, and parses the nine ingredient enums out of ItemEnums.cs
+and compares them in order. It skips wherever the gitignored DFU tree is
+absent - the same charter the ARENA2-backed pins run under.
+
+Three cell mutants, three kills.
+
+**Standing law:** A TABLE TRANSCRIBED BY HAND NEEDS A PIN THAT READS THE
+SOURCE, NOT A PIN THAT READS THE TABLE.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
