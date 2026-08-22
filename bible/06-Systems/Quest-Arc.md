@@ -2157,6 +2157,35 @@ distinguishable from outside.
 
 One mutant, one kill, one recorded non-kill.
 
+### Wave 17 - three pins that had to be aimed at the seam
+
+`playerWeapon.js`'s gesture door had four survivors, and the first pass
+at all four missed - which is the lesson, so it is written down.
+
+- **The bow's RISE edge.** `held && !this._bowHeld` is what makes one
+  press one arrow. A first pin held the button for thirty frames and
+  saw nothing extra - because the ~1.33s BOW COOLDOWN masks a missing
+  edge for the first second all by itself. Held past the cooldown, an
+  `||` there is a machine gun.
+- **The direction angle.** `atan2 * 180 / Math.PI`. A 181 rotates every
+  band by half a percent, which is invisible at a cardinal and decisive
+  at a SEAM - and the bands are 15-degree sectors, so the pin aims at
+  14.95 degrees, just under the Right/Up boundary, where 180 says Right
+  and 181 says Up.
+- **The gesture clear.** A clear that left 1 behind fires every swing
+  one pixel early, for ever. Pinned at 59.5px of trail against the 60px
+  gate, so the leftover decides.
+
+The fourth is an honest **NON-KILL**: the tracking-start clear's `!`
+cannot be witnessed, because the un-held branch one line above already
+clears on every frame the button is up. It is kept because C# keeps it,
+and the pin says exactly that.
+
+**Standing law, third time in three waves:** A PIN AIMED AT THE MIDDLE
+OF A BAND TELLS YOU NOTHING ABOUT ITS EDGE.
+
+Three mutants, three kills, one recorded non-kill.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
