@@ -1600,6 +1600,78 @@ Both pinned, both verified by putting the old code back - the value
 poll fires the phantom exit, and dropping the seed fires a phantom
 enter that takes a second existing pin down with it.
 
+### Wave 4 - four dead seams, and two enums the port had been adding together
+
+**THE SEAM GATE, first**, because it is what makes the rest not happen
+again. Every action, resource and macro reaches the host through
+`world?.x?.()`. That shape is the port's charter - a seam the host
+cannot honestly answer stays ABSENT and the law idles - and it is also
+a trapdoor: a seam nobody mounts is a ported law that evaporates in
+silence, with a green suite. `test/audit24_questseams.test.js` now
+reads the source both ways: every `world.x` the quest system calls must
+be MOUNTED on questWorld or named in a PENDING table with the reason.
+A stale PENDING row (the seam got mounted) and a dead one (nothing
+calls it any more) both fail too.
+
+It caught four laws that had never once run:
+
+- **`discoverLocation`** - the corpus carries 193 `reveal` lines. Every
+  one of them discovered nothing. Now
+  PlayerGPS.DiscoverLocation (:872-890) over
+  `maps.getLocationByName`, C#'s own throw included when the pair names
+  nothing.
+- **`addNote`** - `reveal <place> readmap`'s journal note. The
+  notebook has been mounted on the bridge since Q4-iv; the seam just
+  never reached it.
+- **`currentRegionRace`** - declared in Q3-ii, answered by nobody, so
+  every Person whose faction race does not map to a FactionRaces
+  0..7 fell to -1 rather than the region's race.
+- **`getRandomText`** - %oth's TEXT.RSC read. Nothing answered it, so
+  the oath macro expanded to nothing at all.
+
+**AND THE TWO RACE ENUMS WERE BEING ADDED TOGETHER.** `Races`
+(EntityEnums: Breton 1, Redguard 2, Nord 3, DarkElf 4 ...) and
+`FactionFile.FactionRaces` (Nord 0, Khajiit 1, Redguard 2, Breton 3
+... DarkElf 7) disagree in ORDER as well as base. The port already knew
+this - `raceFromFactionRace` says so in a comment that ends "*and every
+NPC in the game would have taken the wrong race with the suite green*"
+- and then three places did it anyway:
+
+- Person had no `race` at all. It kept only `factionRace`, and
+  `AssignRace`'s region fallback is `GetRaceOfCurrentRegion()`, a
+  RACES - written straight into the FactionRaces field. A region of
+  Nords (Races 3) produced FactionRaces 3, which is Breton. And
+  `getSaveData` has always written `race: this.race ?? -1`, so the
+  envelope's race column has been -1 for every Person ever saved.
+  `race` is C#'s own field now and `factionRace` derives from it
+  through the new `factionRaceFromRace` (RaceTemplate.cs:142-167,
+  written out case by case like its inverse).
+- `%oth` mixed all three of its branches - a FactionRaces questor
+  field, a Races off NPCData, and whatever the region seam felt like -
+  and added each to 201 alike. All three carry a Races now and ONE
+  conversion runs at the end, as QuestMCP.Oath (:182-202) does it.
+- the talk bundle's `randomText` seam answered
+  `lines(id).map(...).join(' ')`. TextProvider.GetRandomText (:250-268)
+  picks ONE Text token out of the record's flat pool - it is not a
+  variant pick and it is certainly not every line of every variant in
+  one breath. `TextRsc.randomTextById` is the real law.
+
+**Two more from the same sweep.** `%di`'s fall-through answered
+`'Resolving Error'` - the Internal_Strings KEY, not its value.
+Id 425's en text is `...never mind...`, which is what DFU actually
+prints when a place will not resolve. And Person's `=symbol_` detail
+macro dropped `GetFlatDetailsString`'s fallback: when FLATS.CFG has no
+caption for the flat id, DFU answers the RACE NAME, where the port
+returned false and left `=symbol_` standing in the sentence. (Its
+individual-NPC arm carries a C# quirk worth naming: "Individuals are
+always flat1 no matter gender" has no `else`, so the gender branch
+overwrites it immediately and an individual female still takes flat2.
+The comment is a lie about C#'s own dead assignment; the port writes
+what runs.)
+
+Five mutants, five kills, including the naive-offset
+`factionRaceFromRace` - which takes six pins down at once.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

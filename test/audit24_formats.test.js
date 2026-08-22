@@ -6,6 +6,9 @@ import { readFileSync } from 'node:fs';
 import { parseBiog, DEFAULT_BACKSTORIES_START } from '../src/formats/biogFile.js';
 import { CifRciFile } from '../src/formats/cifRciFile.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
+import { TextRsc } from '../src/formats/textRsc.js';
+import { factionRaceFromRace, raceFromFactionRace } from '../src/characters/staticNpc.js';
+import { RACES } from '../src/systems/races.js';
 
 test('audit24 formats: the BIOG # id parses like int.TryParse, all-or-nothing', () => {
   // BiogFile.cs:74 - `if (!int.TryParse(value, out backstoryId))` falls
@@ -68,5 +71,46 @@ test('audit24 formats: MapsFile.getRegionIndex is PlayerGPS\'s politic derivatio
     politic = p;
     const r = m.getRegionIndex(0, 0);
     assert.ok(r >= 0 && r < 62, `politic ${p} -> ${r} stays in range`);
+  }
+});
+
+test('audit24 formats: TextRsc.randomTextById is GetRandomText - a FLAT pool, not a variant pick', () => {
+  // TextProvider.GetRandomText (:250-268) walks the WHOLE record's
+  // tokens, collects every Text one, and picks ONE. It is not
+  // GetRandomTokens' variant pick, and it is certainly not "join every
+  // line with a space", which is what the talk seam had been doing -
+  // %oth read all of a record's oaths in one breath.
+  const r = Object.create(TextRsc.prototype);
+  //  "one" \n "two" 0xFF(subrecord) "three" 0xFE(end)
+  const enc = (s) => [...s].map((c) => c.charCodeAt(0));
+  r.bytesById = () => Uint8Array.from([...enc('one'), 0x00, ...enc('two'), 0xff, ...enc('three'), 0xfe]);
+  assert.deepEqual([0, 0.34, 0.67, 0.999].map((v) => r.randomTextById(0, () => v)),
+    ['one', 'two', 'three', 'three'], 'all three land in ONE pool, across the subrecord break');
+  const empty = Object.create(TextRsc.prototype);
+  empty.bytesById = () => null;
+  assert.equal(empty.randomTextById(0), '', 'a missing record answers the empty string');
+  const blank = Object.create(TextRsc.prototype);
+  blank.bytesById = () => Uint8Array.from([0xfe]);
+  assert.equal(blank.randomTextById(0), '', 'and so does a record with no Text tokens');
+});
+
+test('audit24 formats: GetFactionRaceFromRace is not an offset of its inverse', () => {
+  // The two enums disagree in ORDER as well as base: Nord is Races 3
+  // and FactionRaces 0; DarkElf is Races 4 and FactionRaces 7. Every
+  // place the port added a race to a base id without converting was
+  // naming a different race.
+  assert.equal(factionRaceFromRace(RACES.Nord), 0);
+  assert.equal(factionRaceFromRace(RACES.Khajiit), 1);
+  assert.equal(factionRaceFromRace(RACES.Redguard), 2);
+  assert.equal(factionRaceFromRace(RACES.Breton), 3);
+  assert.equal(factionRaceFromRace(RACES.Argonian), 4);
+  assert.equal(factionRaceFromRace(RACES.WoodElf), 5);
+  assert.equal(factionRaceFromRace(RACES.HighElf), 6);
+  assert.equal(factionRaceFromRace(RACES.DarkElf), 7);
+  assert.equal(factionRaceFromRace(-1), -1, 'None');
+  assert.equal(factionRaceFromRace(9), -1, 'Vampire has no FactionRaces counterpart, nor do 10/11');
+  // and it round-trips its inverse on every mapped value
+  for (let fr = 0; fr <= 7; fr++) {
+    assert.equal(factionRaceFromRace(raceFromFactionRace(fr)), fr, `FactionRaces ${fr} round-trips`);
   }
 });

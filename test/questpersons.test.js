@@ -110,7 +110,7 @@ function makeWorld({ buildings = null, interiors = null, unloadedCurrent = false
     currentRegionFaction: () => 201,
     currentRegionVampireClan: () => 158,
     playerVampireClan: () => 150,
-    currentRegionRace: () => 3,
+    currentRegionRace: () => 3,   // GetRaceOfCurrentRegion is a RACES value - 3 is Nord
     _inside: null,
   };
   if (unloadedCurrent) world.currentLocation = () => ({ ...town, loaded: false });
@@ -149,7 +149,8 @@ test('named individual: faction identity, display name from the record, NO gener
   assert.equal(p.factionId, 364, 'Quests-Factions p3 for King_Gothryd');
   assert.equal(p.displayName, 'King Gothryd', 'an Individual reads the faction record NAME');
   assert.equal(p.homePlaceSymbol, null, 'individuals get no generated home');
-  assert.equal(p.factionRace, 3, "the record's race rides through");
+  assert.equal(p.race, 1, "the record's race rides through - FactionRaces 3 is Races.Breton");
+  assert.equal(p.factionRace, 3, 'and derives back to the record value for every mapped race');
 });
 
 test('a Daedra named NPC binds like an individual; a non-individual named target THROWS', () => {
@@ -416,23 +417,35 @@ test('missing table rows warn and fall through to the zero binding, never a thro
     assert.equal(p.factionId, 0, decl);
     assert.equal(p.npcPending, false, `${decl} still binds the rest of the chain`);
     assert.ok(p.displayName.length > 0, `${decl} draws a bank name`);
-    assert.equal(p.factionRace, 0, `${decl} zero record race 0 = Nord, kept`);
+    assert.equal(p.race, 3, `${decl} zero record race 0 = Races.Nord, kept`);
+    assert.equal(p.factionRace, 0, `${decl} and back to FactionRaces.Nord`);
   }
 });
 
 test('the race fold: only FactionRaces 0..7 map; Skakmat 11 falls through to the region', () => {
   // GetRaceFromFactionRace's switch has no arm for 11/17/18/19 - the
-  // fall-through Races.None folds to the region race
+  // fall-through Races.None folds to the region race.
+  //
+  // AUDIT 24 (the seven-slice sweep): THE TWO ENUMS ARE NOT THE SAME
+  // NUMBERS. AssignRace's fallback is GetRaceOfCurrentRegion(), a
+  // RACES value, and the port used to store it straight into
+  // factionRace, a FACTIONRACES field - so a region of Nords (Races 3)
+  // produced FactionRaces 3, which is Breton. Every regionally-folded
+  // Person carried a race that named someone else. `race` is C#'s own
+  // field now and factionRace is derived from it.
   const m = makeMachine(makeWorld());
   const q = schedule(m, ['Person _sk_ named Skakmat', '', 'variable _pad_']);
   assert.equal(q.getResource({ name: 'sk' }).factionId, 304);
-  assert.equal(q.getResource({ name: 'sk' }).factionRace, 3, 'race 11 is unmapped - regional');
+  assert.equal(q.getResource({ name: 'sk' }).race, 3, 'race 11 is unmapped - the region Races, Nord');
+  assert.equal(q.getResource({ name: 'sk' }).factionRace, 0,
+    'and Nord is FactionRaces 0, not 3 - 3 would have been Breton');
   // and with NO regional race on the seam, the -1 default stands
   const bare = makeWorld();
   delete bare.currentRegionRace;
   const m2 = makeMachine(bare);
   const q2 = schedule(m2, ['Person _sk_ named Skakmat', '', 'variable _pad_']);
-  assert.equal(q2.getResource({ name: 'sk' }).factionRace, -1);
+  assert.equal(q2.getResource({ name: 'sk' }).race, -1);
+  assert.equal(q2.getResource({ name: 'sk' }).factionRace, -1, 'None both ways');
 });
 
 test('faction 512 forces Female through the display-name arm', () => {

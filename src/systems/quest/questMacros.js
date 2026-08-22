@@ -44,6 +44,7 @@ const FACTION_RACE_KEYS = Object.freeze({
 });
 import { dateFromSeconds, dateString } from '../gameDate.js';
 import { REGION_TEMPLES } from '../../formats/mapsFile.js';
+import { factionRaceFromRace } from '../../characters/staticNpc.js';
 
 export const MACRO_TYPES = Object.freeze({
   None: 0, NameMacro1: 1, NameMacro2: 2, NameMacro3: 3, NameMacro4: 4,
@@ -58,7 +59,10 @@ const EN = Object.freeze({
   pronounHis: 'his', pronounHer2: 'her',
   pronounHis2: 'his', pronounHers: 'hers',
   comma: ',  ',   // Internal_Strings id 424 is a comma and TWO spaces (AUDIT 24)
-  resolvingError: 'Resolving Error',
+  // Internal_Strings id 425 - AUDIT 24: the en value is '...never mind...',
+  // NOT the key name. This is what DFU prints when a place will not
+  // resolve, and the port had been printing 'Resolving Error'.
+  resolvingError: '...never mind...',
   letterPrefix: 'Letter: ',
 });
 
@@ -189,18 +193,29 @@ export function questMacroSource(quest) {
     questDate() {
       return dateString(dateFromSeconds(quest.getCurrentLogMessageTime()));
     },
-    // %oth - by the questor's FACTION race (DFU's fix over classic's
-    // region race); the seam speaks TEXT.RSC 201+oathId
+    // %oth - by the questor's race (DFU's fix over classic's region
+    // race); the seam speaks TEXT.RSC 201+oathId.
+    //
+    // AUDIT 24 (the seven-slice sweep): every branch here now carries a
+    // RACES value and ONE GetFactionRaceFromRace runs at the end,
+    // exactly as QuestMCP.Oath (:182-202) does it. It used to mix the
+    // two enums - the questor branch read a FactionRaces field, the
+    // clicked branch read a Races off NPCData, and the region fallback
+    // read whatever currentRegionRace() felt like - and then added all
+    // three to 201 as if they were one numbering.
     oath() {
-      let race = -1;   // FactionRaces number, the port's carrier
+      let race = -1;   // Races (EntityEnums), -1 = None
       const questors = [...(quest.questors?.keys() ?? [])];
-      if (questors.length > 0) race = quest.getPerson({ name: questors[0] })?.factionRace ?? -1;
+      if (questors.length > 0) race = quest.getPerson({ name: questors[0] })?.race ?? -1;
       else {
+        // "%oth is used in some of the main quests before the questor
+        // is actually set. In this case try to use the data from the
+        // last clicked NPC, which should be the questor." (:191-193)
         const clicked = quest.hooks?.lastNPCClicked?.();
         if (clicked) race = clicked.race ?? -1;
       }
       if (race === -1) race = world()?.currentRegionRace?.() ?? -1;
-      return world()?.getRandomText?.(201 + race) ?? null;
+      return world()?.getRandomText?.(201 + factionRaceFromRace(race)) ?? null;
     },
     homeRegion() {
       const last = quest.lastResourceReferenced;

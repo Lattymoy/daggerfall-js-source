@@ -28,6 +28,8 @@ import { QuestResource } from './questResource.js';
 import { Symbol as QuestSymbol, symbolToSaveData, symbolFromSaveData } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
 import { factionsTable, placesTable } from './tables.js';
+import { raceFromFactionRace, factionRaceFromRace } from '../../characters/staticNpc.js';
+import { raceById } from '../races.js';
 import { Place } from './place.js';
 import { FACTION_TYPES } from '../../formats/factionFile.js';
 import { getNameBankOfRegion, fullName, GENDERS } from '../../characters/nameHelper.js';
@@ -89,7 +91,17 @@ export class Person extends QuestResource {
     // Q3-ii world-bound state (Person.cs:36-56)
     this.factionData = null;      // the persistent faction record (null while pending)
     this.factionTableKey = '';
-    this.factionRace = -1;        // FactionFile.FactionRaces number; the Races-enum expansion rides Q4's flat art
+    // AUDIT 24 (the seven-slice sweep): `race` is a RACES value, C#'s
+    // own field, and it was never real here - the port kept only
+    // factionRace and getSaveData wrote `race: this.race ?? -1`, so the
+    // envelope's race column has been -1 for every Person ever saved.
+    // Worse, the region FOLD conflated the two enums: AssignRace's
+    // fallback is GetRaceOfCurrentRegion(), a Races, and it was being
+    // stored straight into a FactionRaces field. `factionRace` is now
+    // DERIVED from race through the same GetFactionRaceFromRace the
+    // oath reads, so there is one truth.
+    this.race = -1;               // Races (EntityEnums), -1 = None
+    this.factionRace = -1;        // FactionFile.FactionRaces number, derived from race
     this.nameBank = null;
     this.npcGender = GENDERS.Male;
     this.nameSeed = -1;
@@ -171,9 +183,23 @@ export class Person extends QuestResource {
           ? (world?.maps?.getRegion?.(dialogPlace.siteDetails.regionIndex)?.name ?? 'BLANK')
           : 'BLANK';
       case 5: {   // DetailsMacro - the flat caption ("young lady in green")
-        // FactionFile.GetFlatData: archive = flat >> 7, record = flat & 0x7f
+        // GetFlatDetailsString (Person.cs:354-383). FactionFile.GetFlatData:
+        // archive = flat >> 7, record = flat & 0x7f.
+        //
+        // C# QUIRK KEPT: the IsIndividualNPC arm ("Individuals are
+        // always flat1 no matter gender") has NO else, so the gender
+        // branch immediately overwrites it and an individual FEMALE
+        // still takes flat2. The comment is a lie about C#'s own dead
+        // assignment; the port writes what actually runs.
+        //
+        // AUDIT 24 (the seven-slice sweep): the FALLBACK was missing.
+        // When FLATS.CFG has no caption for the flat id, DFU answers
+        // the RACE NAME - `GetRaceDictionary()[(int)race].Name` - not
+        // an unexpanded macro. The port returned false and left
+        // "=symbol_" standing in the text.
         const flat = (this.npcGender === GENDERS.Male ? this.factionData?.flat1 : this.factionData?.flat2) ?? 0;
-        return world?.flatCaption?.(flat >> 7, flat & 0x7f) ?? false;
+        return world?.flatCaption?.(flat >> 7, flat & 0x7f)
+          ?? raceById(this.race)?.name ?? false;
       }
       case 6: {   // FactionMacro
         if (this.isQuestor) {
@@ -432,15 +458,22 @@ export class Person extends QuestResource {
 
   // ---- the Assign* chain (Person.cs:571-663) ----
 
+  /** AssignRace (Person.cs:571-580), verbatim now. GetRaceFromFactionRace
+   *  (RaceTemplate.cs:109-133) maps ONLY FactionRaces -1..7; the
+   *  oddballs (Skakmat 11, Orc 17, Vampire 18, Fey 19) fall through to
+   *  Races.None, and AssignRace folds None to the region's race - so
+   *  anything outside 0..7 reads regional (AUDIT VI).
+   *
+   *  AUDIT 24 (the seven-slice sweep): the fold used to write
+   *  currentRegionRace() - a Races - into factionRace, a FactionRaces
+   *  field. The two enums are not an offset of each other (Nord is 3
+   *  as a Races and 0 as a FactionRaces), so every regionally-folded
+   *  Person carried a race that named someone else. The port now holds
+   *  C#'s own `race` and derives factionRace from it. */
   _assignRace(world) {
-    // GetRaceFromFactionRace (RaceTemplate.cs:109-133) maps ONLY
-    // FactionRaces -1..7; the oddballs (Skakmat 11, Orc 17, Vampire
-    // 18, Fey 19) fall through to Races.None, and AssignRace folds
-    // None to the region's race - so anything outside 0..7 reads
-    // regional (AUDIT VI). Stored as the FactionRaces NUMBER - the
-    // Races-enum expansion rides Q4's flat art (test-the-shape).
     const raw = this.factionData?.race ?? -1;
-    this.factionRace = (raw >= 0 && raw <= 7) ? raw : (world.currentRegionRace?.() ?? -1);
+    this.race = raceFromFactionRace(raw) ?? (world.currentRegionRace?.() ?? -1);
+    this.factionRace = factionRaceFromRace(this.race);
     this.nameBank = getNameBankOfRegion(world.currentRegionIndex());
   }
 
@@ -574,6 +607,7 @@ export class Person extends QuestResource {
       throw new Error('Could not deserialize Person resource FactionID to FactionData');
     }
     this.race = dataIn.race;
+    this.factionRace = factionRaceFromRace(this.race);   // derived, as at assign
     this.nameBank = dataIn.nameBank;
     this.npcGender = dataIn.npcGender;
     this.faceIndex = dataIn.faceIndex;

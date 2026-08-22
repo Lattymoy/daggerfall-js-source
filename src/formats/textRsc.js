@@ -124,6 +124,23 @@ export class TextRsc {
     return variants;
   }
 
+  /** TextProvider.GetRandomText (TextProvider.cs:250-268), which is a
+   *  DIFFERENT law from GetRandomTokens: it does not pick a variant at
+   *  all. It walks the WHOLE record's tokens, collects every one whose
+   *  formatting is Text, and returns a uniformly-picked single one -
+   *  so a record's variants and its individual lines are all one flat
+   *  pool. Empty pool answers the empty string. This is what %oth
+   *  reads over TEXT.RSC 201+oathId, where one record holds several
+   *  one-line oaths. */
+  randomTextById(id, pick = Math.random) {
+    const raw = this.bytesById(id);
+    if (!raw) return '';
+    const tokens = readTokens(raw, 0, RSC.EndOfRecord) ?? [];
+    const items = tokens.filter((t) => t.formatting === TOKEN_TEXT).map((t) => t.text);
+    if (items.length === 0) return '';
+    return items[Math.floor(pick() * items.length)];
+  }
+
   /** ROWS of ONE VARIANT, chosen by `pick` (GetRandomTokens's
    *  Random.Range over the record's subrecords). AUDIT 22 F2: the
    *  windows all read linesById, which is variant 0 forever - and

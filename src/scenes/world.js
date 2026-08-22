@@ -12,7 +12,7 @@ import { requestLook, makeLookGate } from '../player/pointerLock.js';
 import { attachTouch } from '../ui/touch.js';
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
-import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
+import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, REGION_RACES } from '../formats/mapsFile.js';
 import { WoodsFile } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { windowEmissionRGB } from '../render/windowEmission.js';
@@ -1446,6 +1446,27 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!b) return null;
       return { building: { buildingKey: b.buildingKey, buildingType: b.buildingType, factionId: b.factionId, name: b.name ?? '' } };
     },
+    // AUDIT 24 (the seven-slice sweep): FOUR SEAMS THE MACHINE HAS
+    // DECLARED SINCE Q3 AND NOTHING ANSWERED. Every one of them was a
+    // ported law running into `world?.x?.()` and evaporating - the
+    // corpus's 193 `reveal` lines discovered nothing and filed no
+    // note, %oth had no text to read, and every Person whose faction
+    // race does not map fell to -1 instead of the region's race.
+    /** PlayerGPS.DiscoverLocation (:872-890): resolve by name and file
+     *  it, THROWING when the pair names nothing - C#'s own throw. */
+    discoverLocation: (regionName, locationName) => {
+      const loc = maps.getLocationByName(regionName, locationName);
+      if (!loc?.loaded) throw new Error(`Error finding location ${regionName} : ${locationName}`);
+      discoverLocation(loc.mapTableData.mapId, { regionName: loc.regionName, locationName: loc.name });
+    },
+    /** RevealLocation's readmap note - PlayerNotebook.AddNote. */
+    addNote: (text) => questBridge?.notebook?.addNote(text),
+    /** PlayerGPS.GetRaceOfCurrentRegion (:432-435): a RACES value,
+     *  RegionRaces[index] + 1 - NOT a FactionRaces one. */
+    currentRegionRace: () => REGION_RACES[_questRegionIndex()] + 1,
+    /** TextProvider.GetRandomText (:250-268) - the flat Text-token
+     *  pool over one TEXT.RSC record. */
+    getRandomText: (id) => townTalk.randomText(id),
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     changeLegalRep: (amount) => changeLegalRep(playerEntity, _questLoc()?.regionIndex ?? 0, amount),
@@ -1557,13 +1578,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     pipeline: answerPipeline,
     session: npcSession,
     randomTokens: (id) => townTalk.variantTokens(id),
-    randomText: (id) => townTalk.lines(id).map((r) => r.text ?? r).join(' '),
+    // AUDIT 24: TextProvider.GetRandomText picks ONE Text token out of
+    // the record's flat pool (:250-268). Joining every line of every
+    // variant with a space is not that - %oth read all eight oaths at
+    // once, in one breath.
+    randomText: (id) => townTalk.randomText(id),
     randomFullName: () => talkFullName(GENDERS.Male),
     fullName: (gender) => talkFullName(gender === 'female' ? GENDERS.Female : GENDERS.Male),
     localizedText: (key) => TALK_STRINGS[key] ?? '',
     // PlayerGPS.GetRaceOfCurrentRegion, through the same REGION_RACES
     // table getNameBankOfRegion reads
-    raceOfCurrentRegion: () => (RACE_BY_NAME_BANK[getNameBankOfRegion(_questLoc()?.regionIndex ?? -1)] ?? 'Breton'),
+    // AUDIT 24: over the POLITIC-derived region index, like every
+    // other region read - the location's regionIndex is -1 across the
+    // whole wilderness and sent this to Breton everywhere outdoors.
+    raceOfCurrentRegion: () => (RACE_BY_NAME_BANK[getNameBankOfRegion(_questRegionIndex())] ?? 'Breton'),
     factionRaceId: (race) => (OATH_RACE_INDEX[race] ?? 0),
     questorGender: () => npcSession.getQuestorGender(),
     bumpSeed: (delta) => bumpSeed(delta),

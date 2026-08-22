@@ -572,6 +572,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     /** TK-i: GetRandomTokens for the rumor mill (a random variant as
      *  TOKENS - AddNonQuestRumor freezes one per add). */
     variantTokens: (id) => textRsc?.variantTokensById(id, rolls) ?? [],
+    /** AUDIT 24: TextProvider.GetRandomText - a flat pool of every Text
+     *  token in the record, NOT a variant pick. %oth's seam. */
+    randomText: (id) => textRsc?.randomTextById(id, rolls) ?? '',
     ensureFactions: () => ensureLoaded(),
     say: (line) => hud.add(line),
     /** MERGE AUDIT: the HUD TEXT LAYER on its own, for a host whose

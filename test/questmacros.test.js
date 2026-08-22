@@ -100,7 +100,7 @@ function makeWorld() {
     currentRegionPeople: () => 201,
     currentRegionCourt: () => 867,
     currentRegionFaction: () => 201,
-    currentRegionRace: () => 3,
+    currentRegionRace: () => 3,   // GetRaceOfCurrentRegion is a RACES value - 3 is Nord
     // the Q4-i macro seams
     getRandomText: (id) => `TEXT.RSC#${id}`,
     flatCaption: (archive, record) => `flat ${archive}.${record}`,
@@ -384,8 +384,8 @@ test('%rn/%rt/%t walk the Province faction; %oth and %jok ride TEXT.RSC; %reg/%c
     'QBN:', 'variable _pad_',
   ]);
   assert.equal(expandOne(q, 1011),
-    ' King Gothryd the King of Testshire, Bigtown / TEXT.RSC#204 / TEXT.RSC#200',
-    'the Individual child is the ruler; oath 201+race(3); joke 200');
+    ' King Gothryd the King of Testshire, Bigtown / TEXT.RSC#201 / TEXT.RSC#200',
+    'the Individual child is the ruler; oath 201+FactionRaces(Races 3 = Nord = 0); joke 200');
 });
 
 test('%vam answers the clan or the C# ERROR LITERAL; %kno trims the The-prefix', () => {
@@ -580,20 +580,30 @@ test('%vcn succeeds for a VampireClan person by home region; the region miss fal
   assert.equal(src.vampireNpcClan(), 'The Selenu', 'an unmapped region answers the faction name');
 });
 
-test("%oth reads the QUESTOR's faction race first, then the clicked NPC, then the region", () => {
+test("%oth reads the QUESTOR's race first, then the clicked NPC, then the region", () => {
+  // AUDIT 24 (the seven-slice sweep): every branch carries a RACES
+  // value and ONE GetFactionRaceFromRace runs at the end, as
+  // QuestMCP.Oath does it. The port used to mix the enums - a
+  // FactionRaces questor field, a Races off NPCData, and whatever the
+  // region seam felt like - and add all three to 201 alike.
   const world = makeWorld();
   const stub = {
     uid: 1, hooks: { world },
     questors: new Map([['qg', {}]]),
-    getPerson: (sym) => (sym?.name === 'qg' ? { factionRace: 5 } : null),
+    getPerson: (sym) => (sym?.name === 'qg' ? { race: 6 } : null),   // Races.WoodElf
   };
   const src = questMacroSource(stub);
-  assert.equal(src.oath(), 'TEXT.RSC#206', 'the questor arm: 201 + race 5');
+  assert.equal(src.oath(), 'TEXT.RSC#206', 'WoodElf is FactionRaces 5, so 201 + 5');
   const stub2 = {
-    uid: 1, hooks: { world, lastNPCClicked: () => ({ race: 4 }) },
+    uid: 1, hooks: { world, lastNPCClicked: () => ({ race: 4 }) },   // Races.DarkElf
     questors: new Map(),
   };
-  assert.equal(questMacroSource(stub2).oath(), 'TEXT.RSC#205', 'the clicked arm');
+  assert.equal(questMacroSource(stub2).oath(), 'TEXT.RSC#208',
+    'the clicked arm: DarkElf is FactionRaces 7, not 4 - the naive add read HighElf');
+  // and the region fallback, the same conversion
+  const stub3 = { uid: 1, hooks: { world }, questors: new Map() };
+  assert.equal(questMacroSource(stub3).oath(), 'TEXT.RSC#201',
+    'the fixture region is Races.Nord (3), which is FactionRaces 0');
 });
 
 test('%reg honors the static idRegion override, arg-exact against the map', () => {

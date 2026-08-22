@@ -96,6 +96,26 @@ export function raceFromFaction(factionId, getFaction, raceOfCurrentRegion) {
  *  (Skakmat 11, Orc 17, Vampire 18, Fey 19); DFU's switch has no case
  *  for them, so they fall out as None like -1 does and send
  *  GetRaceFromFaction to its region fallback. */
+/** RaceTemplate.GetFactionRaceFromRace (:142-167), the INVERSE of the
+ *  map below - Races back to FACTION.TXT's own race numbering. Written
+ *  out case by case for the same reason: the two orders disagree, and
+ *  computing it would be wrong in a way a green suite would not catch.
+ *  Races with no FactionRaces counterpart (Vampire 9, Werewolf 10,
+ *  Wereboar 11) have no case in C#'s switch either and fall out None. */
+export function factionRaceFromRace(race) {
+  switch (race) {
+    case RACES.Nord: return 0;
+    case RACES.Khajiit: return 1;
+    case RACES.Redguard: return 2;
+    case RACES.Breton: return 3;
+    case RACES.Argonian: return 4;
+    case RACES.WoodElf: return 5;
+    case RACES.HighElf: return 6;
+    case RACES.DarkElf: return 7;
+    default: return -1;   // FactionRaces.None
+  }
+}
+
 export function raceFromFactionRace(factionRace) {
   switch (factionRace) {
     case 0: return RACES.Nord;
