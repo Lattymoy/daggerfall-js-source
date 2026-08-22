@@ -77,7 +77,7 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, 
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, subscribeFoePools, sensesContext } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
@@ -1322,7 +1322,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
-    if (walkMode && (e.buttons & 2) && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(e.movementX, e.movementY, true); return; }   // M2
+    // AUDIT 24 (wave 45): RMB in walk mode ALWAYS ends here - it is a
+    // weapon control, and whether this host or worldModes owns the
+    // swing, it is never a look. The old line gated the whole thing on
+    // `modeNow() === 'exterior'`, so indoors worldModes fed the modal
+    // rig (:1517) and this fell through to the camera: every swing
+    // inside a building or a dungeon turned the view with it.
+    const drag = routeMouseDrag({ walkMode, buttons: e.buttons, mode: modeNow() });
+    if (drag !== 'look') {
+      if (drag === 'swing' && !magic.interceptAttack(true)) {   // M2: an armed cast eats the click
+        weaponRig.attackInput(e.movementX, e.movementY, true);
+      }
+      return;
+    }
     cam.yaw -= e.movementX * lookScale();
     cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
   });

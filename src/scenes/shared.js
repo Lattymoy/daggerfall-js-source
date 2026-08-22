@@ -733,3 +733,34 @@ export function createMusicDirector({ fm = false, play = null, stop = null, play
     },
   };
 }
+
+// ---- The RMB drag (AUDIT 24, wave 45) -----------------------------
+/** The right button is a WEAPON control, not a look control - classic
+ *  Daggerfall swings by dragging it, and `contextmenu` is suppressed
+ *  in every host for exactly that reason.
+ *
+ *  Three answers, because the two STREAMING hosts are not the only
+ *  thing listening. `world.js` and `exterior.js` each register a
+ *  global `mousemove`, and so does `worldModes.js` (:1517) for the
+ *  interior and dungeon modes they own. Both fire on every move.
+ *
+ *  The bug this replaces: the streaming hosts gated the whole swing
+ *  line on `modeNow() === 'exterior'`, which READS as "am I outdoors"
+ *  when its actual job is "is anybody else eating this drag". Indoors,
+ *  worldModes fed the modal weapon rig and the streaming host fell
+ *  through to `cam.yaw -= movementX` - so every swing inside a
+ *  building or a dungeon turned the camera with it.
+ *
+ *  `dungeon.js:198`, the standalone host, has always had the right
+ *  shape: attack, then return. It has no modal sibling to share the
+ *  drag with, which is why it never needed a mode in the test at all.
+ *
+ *  @returns 'swing'  - this host owns the drag; feed its own rig
+ *           'modal'  - a mode host owns it; do nothing, and DO NOT LOOK
+ *           'look'   - nobody is swinging; the drag is a look
+ */
+export function routeMouseDrag({ walkMode, buttons, mode = 'exterior' }) {
+  if (!walkMode || !(buttons & 2)) return 'look';
+  return mode === 'exterior' ? 'swing' : 'modal';
+}
+

@@ -4830,6 +4830,79 @@ what the hand reaches for when the interesting work is already done.
 plus six the wave-38 scout confirmed that these waves have not closed.
 
 
+### Wave 45 - the swing that turned the camera
+
+Reported from play: *"whenever attempting to attack, it swings your
+entire screen."*
+
+The right button is a **weapon** control in Daggerfall - every host in
+the port suppresses `contextmenu` for exactly that reason. But the two
+streaming hosts are not the only thing listening for the drag.
+`world.js` and `exterior.js` each register a global `mousemove`, and so
+does `worldModes.js` (`:1517`), for the interior and dungeon modes it
+owns. Both fire on every move.
+
+And the streaming hosts gated their whole swing line on
+`modeNow() === 'exterior'`:
+
+```js
+if (walkMode && (e.buttons & 2) && modeNow() === 'exterior') { ...swing...; return; }
+cam.yaw -= e.movementX * lookScale();
+```
+
+That test *reads* as "am I outdoors". Its actual job is **"is anybody
+else eating this drag"**. Outdoors the two happen to agree. Indoors
+they come apart: `worldModes` fed the modal weapon rig, this line
+found `mode !== 'exterior'`, fell through, and turned the camera. So
+you swung and the view swung with you - every time, in every building
+and every dungeon reached from the town.
+
+`dungeon.js:198`, the standalone host, has always had the right shape:
+attack, then `return`, with no mode in the test at all. It has no modal
+sibling to share the drag with, which is precisely why it never needed
+one - and why the difference between the three files never looked like
+a bug.
+
+The fix is a router with **three** answers rather than a boolean with
+two, because "swing" and "look" were never the whole space:
+
+```js
+routeMouseDrag({ walkMode, buttons, mode })
+  -> 'swing'  this host owns the drag; feed its own rig
+  -> 'modal'  a mode host owns it; do nothing, and DO NOT LOOK
+  -> 'look'   nobody is swinging
+```
+
+Both hosts return on anything that is not `'look'`. Naming the third
+state is the fix; the old code had no word for "somebody else is
+handling this", so it used the nearest word it had, and the nearest
+word was wrong.
+
+**Sixteen mutants, sixteen kills**, one equivalent - and the first
+mutant is the reported bug itself, restored one character at a time
+(`'modal'` -> `'look'`).
+
+**Two things worth recording about the report.** The user said "restore
+whatever you did to the swing combat", and I did not do anything to it:
+`git log -- src/combat/fpsWeapon.js src/combat/weaponRig.js
+src/combat/playerWeapon.js` last touches wave 24, and waves 30-44
+changed no weapon file. What changed is that **wave 37 fixed the boot
+crash**, so the player could reach an interior at all for the first
+time in a while. A fix that restores access to a subsystem will look
+exactly like a fix that broke it. The right response is to check the
+history, say so in one line, and then go and fix the thing anyway -
+because the symptom was real and the bug was ours.
+
+And the equivalent mutant here was confirmed the way wave 44's
+procedure says to: re-run it against the behavioural table alone. The
+table is nine rows of `routeMouseDrag` answers, so there was nothing
+for a spelling assertion to do in the first place. **THE CURE FOR A
+TEXT PIN IS USUALLY A FUNCTION WORTH CALLING.**
+
+**Twenty-six findings remain**, plus seven from the host-parity sweep,
+plus six the wave-38 scout confirmed that these waves have not closed.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
