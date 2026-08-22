@@ -2133,12 +2133,25 @@ const LOCATION_TYPE_NONE = 0xffff;
 
 /** WhenPcEntersExits.cs: the exterior-type trigger. C# rides
  *  PlayerGPS's OnEnter/OnExitLocationRect events; the port POLLS the
- *  same state each checkTrigger - previous shifts on every observed
- *  change, so enter (None -> type) and exit (type -> None) read
- *  identically at tick granularity. Only p1=2 rows of Quests-Places
- *  are legal exterior types; 'anywhere' carries p2=-1, the wildcard
- *  arm. HEADLESS the poll observes None forever and the trigger
- *  stays false - the parse (and the p1 throw) runs whole. */
+ *  rect flag each checkTrigger and writes previous/current on ITS
+ *  EDGE, which is what the two handlers do.
+ *
+ *  AUDIT 24 (the seven-slice sweep): the poll used to shift previous
+ *  on every observed change of the TYPE VALUE, and record that as
+ *  equivalent. It is not. Walk from one town's rect straight into an
+ *  adjacent town's rect of the same type and C# raises exit-then-enter
+ *  - previous becomes the type, current becomes None, then the other
+ *  way round, and an `exits city` fires; the value poll saw city then
+ *  city and never moved. The edge is what C# writes on, so the edge is
+ *  what the port holds (_wasInRect, seeded at create from the live
+ *  flag exactly as PlayerGPS's flag is already true when a quest
+ *  starts inside a town - a transient, out of the save shape as it is
+ *  out of C#'s).
+ *
+ *  Only p1=2 rows of Quests-Places are legal exterior types;
+ *  'anywhere' carries p2=-1, the wildcard arm. HEADLESS the flag reads
+ *  false forever and the trigger stays false - the parse (and the p1
+ *  throw) runs whole. */
 export class WhenPcEntersExits extends ActionTemplate {
   static typeName = 'WhenPcEntersExits';
   get saveShape() { return [['onEnter'], ['sourceExteriorType'], ['indexExteriorType'], ['currentLocationType'], ['previousLocationType']]; }
@@ -2150,6 +2163,9 @@ export class WhenPcEntersExits extends ActionTemplate {
     this.indexExteriorType = -1;
     this.currentLocationType = LOCATION_TYPE_NONE;
     this.previousLocationType = LOCATION_TYPE_NONE;
+    // transient - PlayerGPS owns this flag in C#, so it is no more part
+    // of the action's SaveData_v1 than it is of the port's saveShape
+    this._wasInRect = false;
   }
   get pattern() { return /when pc (?<enters>enters) (?<exteriorType>\w+)|when pc (?<exits>exits) (?<exteriorType2>\w+)/; }
   createNew(source, parentQuest) {
@@ -2167,22 +2183,34 @@ export class WhenPcEntersExits extends ActionTemplate {
     }
     action.indexExteriorType = table.getInt('p2', action.sourceExteriorType);
     // seed the current type from the player's location at create
+    // (WhenPcEntersExits.cs:73-76), and with it the rect flag PlayerGPS
+    // is already holding - otherwise the first poll reads a phantom
+    // enter edge for a quest that started inside a town
     const world = parentQuest?.hooks?.world;
     const loc = world?.currentLocation?.();
-    if (world?.isPlayerInLocationRect?.() && loc?.loaded) {
+    action._wasInRect = Boolean(world?.isPlayerInLocationRect?.());
+    if (action._wasInRect && loc?.loaded) {
       action.currentLocationType = loc.mapTableData.locationType;
     }
     return action;
   }
+  /** The two handlers, on the rect flag's edge.
+   *  PlayerGPS_OnEnterLocationRect (:157-164): previous takes current,
+   *  then current takes the location's type - or None when the
+   *  location is not Loaded. PlayerGPS_OnExitLocationRect (:166-170):
+   *  previous takes current, current becomes None. */
   _poll() {
     const world = this.parentQuest?.hooks?.world;
-    const loc = world?.currentLocation?.();
-    const now = (world?.isPlayerInLocationRect?.() && loc?.loaded)
-      ? loc.mapTableData.locationType : LOCATION_TYPE_NONE;
-    if (now !== this.currentLocationType) {
-      this.previousLocationType = this.currentLocationType;
-      this.currentLocationType = now;
+    const inRect = Boolean(world?.isPlayerInLocationRect?.());
+    if (inRect === this._wasInRect) return;
+    this._wasInRect = inRect;
+    this.previousLocationType = this.currentLocationType;
+    if (!inRect) {
+      this.currentLocationType = LOCATION_TYPE_NONE;
+      return;
     }
+    const loc = world?.currentLocation?.();
+    this.currentLocationType = loc?.loaded ? loc.mapTableData.locationType : LOCATION_TYPE_NONE;
   }
   _hasEnteredTarget() {
     if (!this.onEnter || this.currentLocationType === LOCATION_TYPE_NONE) return false;

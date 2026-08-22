@@ -1565,6 +1565,41 @@ Ten mutants, ten kills: every pin was verified by putting its bug back,
 including reverting CastSpellDo to the old poll, which takes four of
 them down at once.
 
+### Wave 3 - the location rect, and the edge it is read on
+
+**ISPLAYERINLOCATIONRECT WAS "THIS MAP PIXEL HAS A LOCATION".** The
+host answered `_musicLoc !== null` and the comment beside it called
+that DFU's flag. C#'s own comment at PlayerGPS.cs:687 says otherwise in
+as many words: *"Player can be inside a map pixel with location but not
+inside location rect"*. The real test (`PlayerLocationRectCheck`,
+:668-716) is a WORLD-COORDINATE one against the town's footprint -
+the pixel corner shifted by the terrain tile origin, sized by the
+exterior's RMB block count - widened by `extraRect = 4096`, one full
+city block on every side, "to better match classic". A map pixel is
+32768 units across; a 1x1 town plus its slack is 12288. The port was
+answering an area up to seven times too large, and every consumer read
+it: `when pc enters/exits`, CreateFoe's `send` gate, isPlayerInTown, and
+the music director's location context. Ported as
+`locationWorldRect` + `isInLocationRect` in streamingWorld.js, over the
+`getLocationTerrainTileOrigin` the port already had.
+
+**AND THE TRIGGER READ THE WRONG EDGE.** WhenPcEntersExits polled the
+derived location TYPE and shifted `previous` whenever the VALUE moved.
+C# writes those two fields from PlayerGPS's OnEnter/OnExitLocationRect
+handlers only - on the RECT FLAG's edge. The difference bites when the
+flag stands and the type moves under it: the map pixel rolls over to a
+neighbouring location whose rect the player is already inside, or the
+location stops being Loaded. The value poll invented an exit DFU never
+raises. The port now holds `_wasInRect` and runs the two handlers
+verbatim - a transient, out of the save shape exactly as
+`isPlayerInLocationRect` is out of C#'s SaveData_v1, and SEEDED at
+create from the live flag, because a quest that starts inside a town
+must not read an enter edge on its first poll.
+
+Both pinned, both verified by putting the old code back - the value
+poll fires the phantom exit, and dropping the seed fires a phantom
+enter that takes a second existing pin down with it.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

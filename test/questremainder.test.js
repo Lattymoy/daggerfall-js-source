@@ -368,6 +368,49 @@ test('WhenPcEntersExits: the create seed needs rect AND loaded - an out-of-rect 
   assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, 'the real exit fires');
 });
 
+test('AUDIT 24: the edge is the RECT FLAG, not the type value - no phantom exit when the type shifts under a standing flag', () => {
+  // C# writes previous/current ONLY from PlayerGPS's
+  // OnEnter/OnExitLocationRect handlers, i.e. on the rect flag's EDGE.
+  // The port used to shift previous whenever the derived TYPE VALUE
+  // moved - so a type change with the flag standing (the map pixel
+  // rolls over to a neighbouring location whose rect the player is
+  // already inside, or the location stops being Loaded) invented an
+  // exit DFU never raises.
+  const world = makeWorld();
+  world._locType = 0;   // city
+  const m = makeMachine(world);
+  const q = schedule(m, ['_t_ task:', ' when pc exits city', '', 'variable _pad_']);
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false, 'standing inside the city');
+  world._locType = 4;   // still in a rect, but a different exterior type
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false,
+    'the flag never dropped, so DFU raised nothing and nobody exited the city');
+  const act = [...q.tasks.values()].flatMap((t) => t.actions)
+    .find((a) => a.constructor.name === 'WhenPcEntersExits');
+  assert.equal(act.previousLocationType, 0xffff, 'previous never moved off None');
+  assert.equal(act.currentLocationType, 0, 'and current still holds what the enter edge wrote');
+  // and the REAL exit still works: drop the flag, and previous takes
+  // the type the ENTER edge latched - city - so the trigger fires
+  world._inRect = false;
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, 'the real exit fires');
+});
+
+test('AUDIT 24: the create seeds the rect FLAG too - no phantom enter for a quest started in town', () => {
+  // without the seed, a quest created inside a town reads an enter edge
+  // on its very first poll, which shifts previous to the seeded type -
+  // and an `exits` trigger then fires on nothing at all.
+  const world = makeWorld();   // _inRect true, _locType 0
+  const m = makeMachine(world);
+  const q = schedule(m, ['_t_ task:', ' when pc exits city', '', 'variable _pad_']);
+  const act = [...q.tasks.values()].flatMap((t) => t.actions)
+    .find((a) => a.constructor.name === 'WhenPcEntersExits');
+  assert.equal(act._wasInRect, true, 'the flag is seeded from PlayerGPS, not assumed false');
+  m.tick(); m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false, 'nobody exited anything');
+});
+
 test('WhenPcEntersExits: an ENTERS trigger never fires on an exit transition', () => {
   const world = makeWorld();
   const m = makeMachine(world);

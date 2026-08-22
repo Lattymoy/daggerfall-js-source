@@ -249,16 +249,16 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:153` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:170` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:620` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:650` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:656` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1182` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1405` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1491` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:1668` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:1687` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:1935` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2201` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:635` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:665` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:671` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1197` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1420` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1506` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:1683` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:1702` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:1950` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2216` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:189` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:230` - FLAGGED (Port-Ledger Q4-v): quest FOES pend the interior enemy
 - `src/scenes/worldModes.js:325` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)

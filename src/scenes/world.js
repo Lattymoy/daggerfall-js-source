@@ -67,7 +67,7 @@ import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the sho
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { StreamingWorldState, worldCoordToMapPixel } from '../world/streamingWorld.js';
+import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect } from '../world/streamingWorld.js';
 import { getBool, getInt } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { layoutNature } from '../world/terrainNature.js';
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, generateSamples } from '../world/terrainSampler.js';
@@ -604,7 +604,22 @@ export async function bootWorld(canvas, renderer, params, status) {
   // topics - outside any location rect it is null, which is DFU's
   // IsPlayerInLocationRect == false and its locationIndex == -1.
   let _musicLoc = null;
-  const _musicInLocationRect = () => _musicLoc !== null;
+  // AUDIT 24 (the seven-slice sweep): the seam above USED to answer
+  // `_musicLoc !== null` - "this map pixel carries a location" - and
+  // called that DFU's IsPlayerInLocationRect. It is not. C#'s own
+  // comment at PlayerGPS.cs:687 says so in as many words: "Player can
+  // be inside a map pixel with location but not inside location rect".
+  // The real test is a WORLD-COORDINATE one against the town's
+  // footprint widened by one full city block, and a map pixel is up to
+  // seven times that area. Every consumer read the widened answer: the
+  // quest machine's `when pc enters/exits`, CreateFoe's `send` gate,
+  // isPlayerInTown, and the music director's location context.
+  const _musicInLocationRect = () => {
+    if (!_musicLoc) return false;
+    const px = playerTravelPixel();
+    const wc = state.worldCoords(walkMode ? player.pos : cam.pos);
+    return isInLocationRect(wc.x, wc.z, locationWorldRect(_musicLoc, px.x, px.y));
+  };
   const _musicLocationType = () => _musicLoc?.mapTableData?.locationType ?? 0xffff;
   const _musicLocationIndex = () => _musicLoc?.locationIndex ?? -1;
   const musicDirector = createMusicDirector();

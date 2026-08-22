@@ -24,6 +24,7 @@
 
 import { TERRAIN_SIZE } from './terrainSampler.js';
 import { GLOBAL_SCALE } from './meshReader.js';
+import { WORLD_MAP_TILE_DIM, getLocationTerrainTileOrigin } from './terrainTiles.js';
 
 export const TERRAIN_DISTANCE = 3;
 const VERTICAL_THRESHOLD = 500;
@@ -44,6 +45,45 @@ export function worldCoordToMapPixel(worldX, worldZ) {
 /** Verbatim MapsFile.MapPixelToWorldCoords (pixel corner). */
 export function mapPixelToWorldCoords(mapPixelX, mapPixelY) {
   return { x: mapPixelX * NATIVE_PIXEL, z: (499 - mapPixelY) * NATIVE_PIXEL };
+}
+
+/** MapsFile.WorldMapRMBDim - world units per RMB block. */
+export const WORLD_MAP_RMB_DIM = 4096;
+
+/** PlayerGPS.SetWorldLocationRect (PlayerGPS.cs:636-659): the
+ *  location's footprint in WORLD units - the pixel corner, shifted by
+ *  the terrain tile origin (x2, in tile units), sized by the exterior's
+ *  RMB block count. */
+export function locationWorldRect(dfLocation, mapPixelX, mapPixelY) {
+  const origin = mapPixelToWorldCoords(mapPixelX, mapPixelY);
+  const tileOrigin = getLocationTerrainTileOrigin(dfLocation);
+  const minX = origin.x + tileOrigin.x * 2 * WORLD_MAP_TILE_DIM;
+  const minZ = origin.z + tileOrigin.y * 2 * WORLD_MAP_TILE_DIM;
+  return {
+    minX,
+    maxX: minX + dfLocation.exterior.exteriorData.width * WORLD_MAP_RMB_DIM,
+    minZ,
+    maxZ: minZ + dfLocation.exterior.exteriorData.height * WORLD_MAP_RMB_DIM,
+  };
+}
+
+/** PlayerGPS.PlayerLocationRectCheck (:668-716). AUDIT 24 (the
+ *  seven-slice sweep): IsPlayerInLocationRect is NOT "this map pixel
+ *  carries a location" - C#'s own comment says so in as many words
+ *  ("Player can be inside a map pixel with location but not inside
+ *  location rect"). It is a world-coordinate test against the town's
+ *  actual footprint, widened by one full city block on every side "to
+ *  better match classic". A map pixel is 32768 units across; a
+ *  1x1 town plus its slack is 12288. The port had been answering the
+ *  pixel, which is up to seven times the area, and every consumer of
+ *  the seam - the quest machine's `when pc enters/exits`, CreateFoe's
+ *  `send` gate, the music director's location context - read that
+ *  widened answer. */
+export function isInLocationRect(worldX, worldZ, rect) {
+  if (!rect) return false;
+  const extraRect = WORLD_MAP_RMB_DIM;   // size of a full city block
+  return worldX >= rect.minX - extraRect && worldX <= rect.maxX + extraRect
+    && worldZ >= rect.minZ - extraRect && worldZ <= rect.maxZ + extraRect;
 }
 
 export class StreamingWorldState {
