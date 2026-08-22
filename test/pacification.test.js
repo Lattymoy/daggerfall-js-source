@@ -64,8 +64,24 @@ test('pacification: the host runs it on the FIRST-encounter edge and a pacified 
   assert.ok(arm.includes('f.ai.isHostile = false'), 'success stands the foe down');
   assert.ok(arm.includes('tallySkill(playerEntity, _lang, 3)', ), 'success tallies 3 (DFU BCHG)');
   assert.ok(arm.includes("_lang !== SKILLS.Etiquette && _lang !== SKILLS.Streetwise"), 'a failed tongue still tallies 1');
-  // stand-down consumers: no attack decisions, no casts; damage re-hostiles
-  assert.ok(src.includes('(_fParalyzed || !f.ai.isHostile) ? [] : f.attack.update'), 'no attack decisions while pacified');
+  // AUDIT 24 (the re-read): the stand-down is a TARGET DROP, not an
+  // action skip. EnemySenses.Update:321-327 nulls the target for a
+  // non-hostile motor and :410-414 then forces targetInSight and
+  // detectedTarget false - so the foe reads BLIND and every gate that
+  // asks about sight refuses. EnemyAttack.FixedUpdate has no hostility
+  // test of its own (:55-56 gates on DisableAI/IsParalyzed alone), so
+  // the component keeps ticking and keeps burning its DFRandom byte;
+  // holding it at the host desynced the one shared global stream for
+  // as long as the foe stood pacified.
+  assert.ok(src.includes('f.events = _fParalyzed ? [] : f.attack.update'),
+    'only paralysis skips the attack component - DFU has no hostility gate there');
+  assert.equal(/_fParalyzed \|\| !f\.ai\.isHostile/.test(src), false, 'the host gate is gone');
+  const motor = readFileSync(join(root, 'src/characters/enemyMotor.js'), 'utf8');
+  assert.ok(motor.includes('if (!this.isHostile) {\n      this.inSight = false;\n      this.detected = false;'),
+    'the senses read blind instead');
+  // the CASTING gate stays: DFU's spell paths hang off the MOTOR's
+  // TakeAction, behind CanAct, which HandleNoAction:357-364 drops the
+  // moment the target is null.
   assert.ok(src.includes('!_fParalyzed && f.ai.isHostile) {'), 'no casts while pacified');
   assert.ok(src.includes('if (foe.ai && !foe.ai.isHostile) { foe.ai.isHostile = true;'), 'damage re-hostiles (MakeEnemyHostileToAttacker)');
 });

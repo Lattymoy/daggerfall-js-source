@@ -450,6 +450,35 @@ had recorded the bug as the law: the CORPUS GATE's `[undefined] 15`, the
 "reveal nothing" default, and the `%qdt` fixture that hand-set
 `currentLogMessageId` for a journal that was never going to set it.
 
+## The re-read (2026-08-22): one more, found by reading the fix
+
+The arc's own rule - the real bugs surface AFTER the pins are green -
+paid once more. Re-reading characters-2's fix turned up the same defect
+one layer up.
+
+**A pacified foe still burns its byte.** DFU's non-hostile mode is a
+TARGET DROP, not an action skip: EnemySenses.Update:321-327 nulls
+`target` (and secondaryTarget) whenever
+`NoTargetMode || !motor.IsHostile` and the player is it, and a null
+target takes :410-414 - `targetInSight = false; detectedTarget = false;
+return;`. The foe reads BLIND, and that is what refuses it every gate
+that asks about sight. EnemyAttack.FixedUpdate itself has no hostility
+test at all (:55-56 gates on `DisableAI || IsParalyzed` and nothing
+else), so the component keeps ticking and keeps drawing its DFRandom
+byte.
+
+The port had held the whole component at the host
+(`(_fParalyzed || !f.ai.isHostile) ? [] : f.attack.update(...)`) and
+left the senses at their geometric values. Same consequence as
+characters-2 and the same cause: a law left with the host. Every classic
+tick a foe stood pacified dropped a draw off the one shared global
+stream.
+
+The CASTING gate stays where it is: DFU's spell paths hang off the
+MOTOR's TakeAction, behind CanAct, which HandleNoAction:357-364 drops
+the moment the target is null - so a pacified foe really does take no
+spell rolls.
+
 ## Closed
 
 All 54 confirmed findings are fixed and pinned, in four waves

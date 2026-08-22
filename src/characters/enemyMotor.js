@@ -352,6 +352,21 @@ export class EnemyAI {
     const _blocker = { key: null };
     this.inSight = canSeeTarget(this.collider, this.feet, this.yaw, this.height, playerFeet, undefined, _blocker);
     this.doorKey = _blocker.key;
+    // AUDIT 24 (the re-read): DFU's NON-HOSTILE MODE is a TARGET drop,
+    // not an action skip. EnemySenses.Update:321-327 nulls `target`
+    // (and secondaryTarget) whenever `NoTargetMode || !motor.IsHostile`
+    // and the player is it, and a null target takes :410-414 -
+    // `targetInSight = false; detectedTarget = false; return;`. So a
+    // pacified foe reads BLIND, which is what stops it attacking; the
+    // components all keep ticking. The port had left both flags at
+    // their geometric values and stopped the attack component at the
+    // host instead, which dropped that foe's DFRandom draw off the one
+    // shared global stream every classic tick it stood pacified.
+    if (!this.isHostile) {
+      this.inSight = false;
+      this.detected = false;
+      return;
+    }
     if (!senses) {
       this.detected = this.inSight || this._dist < HEARING_RADIUS;
       if (this.detected && !this.hasEncounteredPlayer) { this.hasEncounteredPlayer = true; this.justEncountered = true; }

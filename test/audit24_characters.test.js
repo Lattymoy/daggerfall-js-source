@@ -123,3 +123,36 @@ test('audit24 characters-0: entry 39 (Horse) carries the MobileTeams struct defa
   assert.match(readFileSync(new URL('../src/characters/enemyEntity.js', import.meta.url), 'utf8'),
     /team: basics\.team \?\? 'PlayerEnemy'/);
 });
+
+test('audit24 characters-2b: a PACIFIED foe still burns its byte, and reads blind instead', () => {
+  // EnemyAttack.FixedUpdate gates on `DisableAI || IsParalyzed`
+  // (:55-56) and nothing else - a non-hostile foe still draws. What
+  // stops it swinging is EnemySenses: :321-327 nulls the target for a
+  // non-hostile motor and :410-414 forces targetInSight and
+  // detectedTarget false.
+  const c = mkC();
+  const ai = new EnemyAI(c, [0, 0, 0], 0, { liveSpeed: 50 });
+  const player = [0, 0, 2];
+  ai.update(1 / 4, player);
+  assert.equal(ai.inSight, true, 'hostile and looking straight at him');
+  assert.equal(ai.detected, true);
+  ai.isHostile = false;
+  ai.update(1 / 4, player);
+  assert.equal(ai.inSight, false, 'the target drop reads blind...');
+  assert.equal(ai.detected, false, '...on both flags');
+  // ...and the attack component, ticked with those blind senses, draws
+  // its byte every classic tick and lands nothing.
+  const a = new EnemyAttack({ liveSpeed: 50, playerLevel: 10, reflexes: 2, rolls: () => 0.0 });
+  a.meleeTimer = 0;
+  const blind = { _dist: 1.0, feet: [0, 0, 0], yaw: 0, inSight: false, detected: false, giveUpTimer: 200 };
+  setSeed(4242);
+  const before = getSeed();
+  const TICKS = 8;
+  const events = a.update(TICKS / 16, blind, player);
+  const after = getSeed();
+  setSeed(before);
+  for (let i = 0; i < TICKS; i++) rand();
+  assert.equal(getSeed(), after, 'eight ticks, eight draws - the stream keeps its place');
+  assert.equal(a.machine.state, 'Idle', 'and nothing swung');
+  assert.deepEqual(events, []);
+});

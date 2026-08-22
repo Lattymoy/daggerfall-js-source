@@ -1969,7 +1969,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // AUDIT 23 (characters-11) - EnemyAttack.cs:70-77: the divisor
       // mints every update from PermanentSpeed / max(8, LiveSpeed).
       f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
-      f.events = (_fParalyzed || !f.ai.isHostile) ? [] : f.attack.update(dt, f.ai, playerFeet || eye);   // E2b: verbatim attack decision on the shared machine (S19: paralysis returns early; C-slice: pacified foes stand down)
+      // E2b: verbatim attack decision on the shared machine. S19:
+      // paralysis returns early, and that is DFU's own gate
+      // (EnemyAttack.cs:55-56 `DisableAI || IsParalyzed`).
+      // AUDIT 24 (the re-read): a PACIFIED foe is NOT a second gate
+      // here - EnemyAttack.FixedUpdate has no hostility test at all, so
+      // it still burns its DFRandom byte every classic tick. What stops
+      // it swinging is the senses' target drop, which now reads blind
+      // in the motor. Skipping the component was a law left with the
+      // host, and it desynced the shared stream.
+      f.events = _fParalyzed ? [] : f.attack.update(dt, f.ai, playerFeet || eye);
       // C11 audit 08-17: the attack START edge (machine Idle -> swing
       // this frame) - MeleeAnimation fires ChangeEnemyState + the
       // attack sound ONCE at the start, not at the hit frame, and not
