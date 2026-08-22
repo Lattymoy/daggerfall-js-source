@@ -46,7 +46,10 @@ test('formulas: career attack-modifier bits + enemy-type bonus', () => {
 
 test('formulas: to-hit chain (dodging/4 bug, the -50/+40 adjustments, clamp 3..97)', () => {
   const A = { skills: 40, stats: { strength: 50, agility: 60, luck: 50 } };
-  const T = { skills: 40, stats: { strength: 50, agility: 50, luck: 50 }, armor: 0 };
+  // wave 28: the per-part table, which is what CalculateArmorToHit
+  // reads. The old `armor: 0` scalar was the port's invention, and 0
+  // is not even the unarmoured value - DFU's is 100.
+  const T = { skills: 40, stats: { strength: 50, agility: 50, luck: 50 }, armorValues: new Array(7).fill(0) };
   assert.equal(statsToHit(A, T), 1);                // (60-50)/10
   assert.equal(skillsToHit(A, T, 0.99), -10);       // -40/4, crit roll fails
   assert.equal(skillsToHit(A, T, 0.0), -10 + 4);    // crit passes: +40/10
@@ -62,9 +65,20 @@ test('formulas: to-hit chain (dodging/4 bug, the -50/+40 adjustments, clamp 3..9
   assert.equal(calculateSuccessfulHit(A, M, 40, 0, seq(0.99, 0.20)), true);
   assert.equal(calculateSuccessfulHit(A, M, 40, 0, seq(0.99, 0.21)), false);
   // clamp ceiling 97: 40 + 200 armor-ish -> only a 0.97+ roll misses
-  const T3 = { ...T, armor: 200 };
+  const T3 = { ...T, armorValues: new Array(7).fill(200) };
   assert.equal(calculateSuccessfulHit(A, T3, 40, 0, seq(0.99, 0.96)), true);
   assert.equal(calculateSuccessfulHit(A, T3, 40, 0, seq(0.99, 0.97)), false);
+
+  // AND THE UNARMOURED BASELINE (wave 28). CharacterDocument.cs:86-88
+  // fills the player's seven parts with 100, so an unarmoured target
+  // ADDS a hundred points to the attacker's chance - the single
+  // largest term in the formula. 40 + 100 + 1 - 10 - 50 = 81.
+  const U = { ...T, armorValues: new Array(7).fill(100) };
+  assert.equal(calculateSuccessfulHit(A, U, 40, 0, seq(0.99, 0.80)), true);
+  assert.equal(calculateSuccessfulHit(A, U, 40, 0, seq(0.99, 0.81)), false);
+  // there is no scalar fallback: a target carrying only the old
+  // `armor` field contributes NOTHING, because DFU has no such path
+  assert.equal(calculateSuccessfulHit(A, { ...T, armorValues: undefined, armor: 200 }, 40, 0, seq(0.99, 0.03)), false);
 });
 
 test('formulas: damage paths verbatim', () => {

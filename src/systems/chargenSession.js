@@ -22,6 +22,7 @@ import { applyCharacter, createCharacter, startingSpells, CLASS_CAREERS } from '
 import { levelUpSkillSum } from './advancement.js';   // AUDIT 18: SetCurrentLevelUpSkillSum, one home
 import { overlayAction } from '../ui/input.js';
 import { assignStartingGear } from './startingGear.js';   // S3d
+import { NUMBER_BODY_PARTS } from './armorMaterials.js';   // wave 28: CharacterDocument's 7-part table
 import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';
 import { parseBiog, biogFileName } from '../formats/biogFile.js';   // S3e
 import { applyBiographyEffects } from './biography.js';   // S3e
@@ -110,7 +111,21 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // S3d: the same kit every other creation path gets
   playerEntity.items = [];
   playerEntity.equip = null;
-  playerEntity.armorValues = null;
+  // AUDIT 24 (wave 28): [100 x 7], not null. CharacterDocument.cs:86-88
+  // fills the seven parts with 100 ("no armor") at creation and
+  // PlayerEntity.AssignCharacter copies it wholesale (:853), so a fresh
+  // DFU character carries the array from the first frame.
+  //
+  // The null was a lazy-rebuild trick that never fired:
+  // updateEquippedArmorValues (equip.js:250) early-returns for a
+  // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
+  // the starting kit is a shirt and pants. So the array stayed null
+  // until the first armour equip or a save-and-reload, and
+  // CalculateArmorToHit fell through to the scalar `armor: 0` - where
+  // DFU reads 100. A rat at chance-to-hit 30 computes 30+100-50 = 80%
+  // in DFU and 30+0-50 = -20 in the port, clamped to the 3% floor.
+  // Enemies essentially could not hit a new character.
+  playerEntity.armorValues = new Array(NUMBER_BODY_PARTS).fill(100);
   assignStartingGear(playerEntity, { classIndex });
   // AUDIT 20 / THE ONE CONSTRUCTION SEAM, again. This path is a SECOND
   // copy of the construction - it hand-rolls the kit rather than going
@@ -146,7 +161,21 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   }
   playerEntity.items = [];
   playerEntity.equip = null;
-  playerEntity.armorValues = null;
+  // AUDIT 24 (wave 28): [100 x 7], not null. CharacterDocument.cs:86-88
+  // fills the seven parts with 100 ("no armor") at creation and
+  // PlayerEntity.AssignCharacter copies it wholesale (:853), so a fresh
+  // DFU character carries the array from the first frame.
+  //
+  // The null was a lazy-rebuild trick that never fired:
+  // updateEquippedArmorValues (equip.js:250) early-returns for a
+  // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
+  // the starting kit is a shirt and pants. So the array stayed null
+  // until the first armour equip or a save-and-reload, and
+  // CalculateArmorToHit fell through to the scalar `armor: 0` - where
+  // DFU reads 100. A rat at chance-to-hit 30 computes 30+100-50 = 80%
+  // in DFU and 30+0-50 = -20 in the port, clamped to the 3% floor.
+  // Enemies essentially could not hit a new character.
+  playerEntity.armorValues = new Array(NUMBER_BODY_PARTS).fill(100);
   assignStartingGear(playerEntity, { classIndex: result.careerIndex, isCustom: result.isCustom ?? false, rolls });
   if (result.customReps) {
     if (!playerEntity.sGroupReputations) playerEntity.sGroupReputations = new Array(SOCIAL_GROUP_COUNT).fill(0);

@@ -83,6 +83,11 @@ export function makeEnemyEntity(mobileType, basics, career, playerLevel, rollFn 
     maxHealth = basics.minHealth + Math.floor(rollFn() * (basics.maxHealth + 1 - basics.minHealth));   // Range(min, max+1)
     liveSpeed = career ? career.speed : 50;   // the ENEMY{nnn}.CFG career's Speed (E4a); 50 only when a caller skips the load
     armor = (basics.armorValue ?? 0) * 5;
+    // AUDIT 24 (wave 28): EnemyEntity.cs:264-267 / :286-291 fills the
+    // seven-part ArmorValues with exactly this, so the scalar is an
+    // alias for a uniform array, not a different representation. It is
+    // emitted below so CalculateArmorToHit never needs a fallback -
+    // equipEnemy overwrites it for anything that carries equipment.
   }
   return {
     mobileType,
@@ -94,6 +99,7 @@ export function makeEnemyEntity(mobileType, basics, career, playerLevel, rollFn 
     health: maxHealth,
     liveSpeed,
     armor,
+    armorValues: new Array(7).fill(isClass ? 100 : armor),   // EnemyEntity.cs:264-267 (monster), :409-413 (class starts at 100 "no armor")
     skills: skillsLevel(level),           // every skill, per SetEnemyCareer
     basics,                               // MobileEnemy reference (multi-attack damage spans - audit F2)
     // stats.SetPermanentFromCareer: ALL EIGHT attributes ride the

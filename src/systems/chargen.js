@@ -1,6 +1,7 @@
 import { SKILLS, SKILL_COUNT } from './skills.js';
 import { spellPointsFor } from '../combat/formulas.js';   // U10
 import { CLASSIC_GAME_START_TIME } from './gameDate.js';   // AUDIT 23: the skill-check anchor
+import { liveStat } from './statMods.js';   // wave 28: MaxMagicka reads LiveIntelligence
 
 // Character creation (Systems S3). Verbatim ports from DFU
 // StatsRollout.cs / SkillsRollout.cs / DaggerfallSkills.cs /
@@ -196,6 +197,51 @@ export function applyCharacter(playerEntity, career, careerIndex, { name = caree
   for (const id of career.minorSkills) if (skills[id] > hiMin) hiMin = skills[id];
   playerEntity.startingLevelUpSkillSum = sum - lowMaj + hiMin;
   playerEntity.currentLevelUpSkillSum = playerEntity.startingLevelUpSkillSum;
+  defineLiveMaxMagicka(playerEntity);
   return playerEntity;
+}
+
+/** DaggerfallEntity.MaxMagicka (:264) is a GETTER over GetMaxMagicka
+ *  (:475-482) over GetRawMaxMagicka (:484-491):
+ *
+ *      if (career != null && this == PlayerEntity)
+ *          return FormulaHelper.SpellPoints(stats.LiveIntelligence, career.SpellPointMultiplierValue);
+ *      else
+ *          return maxMagicka;
+ *
+ *  ...plus MaxMagickaModifier, floored at 0.
+ *
+ *  AUDIT 24 (wave 28): the port stored a SNAPSHOT taken at chargen from
+ *  the BASE intelligence, so the ceiling never moved again. LiveIntelligence
+ *  is permanent + effect mods (DaggerfallStats.cs:155-163), and the port
+ *  already tracks those - statMods.liveStat reflects every
+ *  fortify/drain/transfer for all eight attributes - so a Drain
+ *  Intelligence moved every OTHER consumer and left the magicka ceiling,
+ *  the rest-recovery rate (maxMagicka/8) and the absorption headroom
+ *  frozen at their chargen values.
+ *
+ *  Installed as a real accessor rather than a helper function because
+ *  eleven call sites across four hosts read `entity.maxMagicka` as a
+ *  property, exactly as C#'s do. The SETTER keeps the stored value for
+ *  the non-player arm (enemies are "set by level elsewhere", :487). */
+export function defineLiveMaxMagicka(entity) {
+  const desc = Object.getOwnPropertyDescriptor(entity, 'maxMagicka');
+  if (desc && desc.get) return entity;   // already live
+  let stored = desc ? desc.value : 0;
+  Object.defineProperty(entity, 'maxMagicka', {
+    configurable: true,
+    enumerable: true,
+    get() {
+      const career = this.career;
+      const raw = career
+        ? spellPoints(liveStat(this, 'intelligence'),
+          spellPointMultiplier(career.abilityFlagsAndSpellPointsBitfield ?? 0x1000))
+        : stored;
+      const effective = raw + (this.maxMagickaModifier ?? 0);
+      return effective < 0 ? 0 : effective;
+    },
+    set(v) { stored = v; },
+  });
+  return entity;
 }
 

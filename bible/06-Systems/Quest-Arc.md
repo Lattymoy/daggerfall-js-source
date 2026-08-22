@@ -3127,6 +3127,87 @@ surface has no gate at all. The seam itself is legitimately PENDING;
 the missing gate is not.
 
 
+### Wave 28
+
+**The twelve-slice sweep lands: 60 agents, 37 confirmed, 16 of them
+high.**
+
+The non-quest sweep - combat formulas, player entity, the effects
+engine, items, survival, the talk stack, guilds, format readers, world
+tick, enemy AI, save/load and chargen - finished after six and a
+quarter million subagent tokens. Wave 27's lesson governs the triage:
+**verify each against the C# myself**, because an agent caught me
+trusting my own reading and the seven-slice refuters were wrong about
+as often as they were right. This wave takes the first two.
+
+**Enemies could not hit a new character.**
+
+```csharp
+int armorValue = 0;
+if (struckBodyPart <= target.ArmorValues.Length)
+    armorValue = target.ArmorValues[struckBodyPart] + IncreasedArmorValueModifier + DecreasedArmorValueModifier;
+return armorValue;
+```
+
+`CalculateArmorToHit` reads the seven-part table and DFU has **no
+scalar-armour path anywhere**, because every entity carries that array
+from the moment it exists: `CharacterDocument.cs:86-88` fills the
+player's with 100 - "no armor" - and `AssignCharacter` copies it
+wholesale; `EnemyEntity.cs:264-267` fills a monster's with
+`ArmorValue * 5`; `:409-413` starts a class enemy at 100 before its
+equipment subtracts.
+
+Higher is *easier to hit*. 100 is the largest single term in the
+formula.
+
+The port nulled the player's array in both chargen paths, as a
+lazy-rebuild trick - `armorValuesOf` has a `??=` that would refill it.
+The trick never fired: `updateEquippedArmorValues` early-returns for a
+non-Armor, non-footwear item **before** it reaches `armorValuesOf`, and
+the starting kit is a shirt and a pair of pants. So the array stayed
+null until the first armour equip or a save-and-reload, and the read
+fell through to an invented `armor: 0` scalar.
+
+A rat at chance-to-hit 30 computes `30 + 100 - 50 = 80%` in DFU and
+`30 + 0 - 50 = -20` in the port - clamped to the 3% floor. A fresh
+character was very nearly unhittable.
+
+The fixture that pinned the to-hit chain used `armor: 0` too. It was
+the invention's own shape, and 0 is not even the unarmoured value.
+
+**And the magicka ceiling never moved.** `MaxMagicka` is a getter:
+
+```csharp
+public int MaxMagicka { get { return GetMaxMagicka(); } set { maxMagicka = value; } }
+...
+if (career != null && this == GameManager.Instance.PlayerEntity)
+    return FormulaHelper.SpellPoints(stats.LiveIntelligence, career.SpellPointMultiplierValue);
+```
+
+recomputed on every read, plus `MaxMagickaModifier`, floored at zero.
+The port wrote it once in `applyCharacter`, from the **base**
+intelligence. Everything downstream - the bar, the rest-recovery rate
+of `maxMagicka/8`, the absorption headroom - read a number frozen at
+chargen, while `liveStat` already reflected every Fortify, Drain and
+Transfer for all eight attributes on every *other* consumer.
+
+It is a real accessor now rather than a helper function, because
+eleven call sites across four hosts read `entity.maxMagicka` as a
+property, exactly as C#'s do. The setter keeps the stored value for the
+non-player arm - "enemies are set by level elsewhere".
+
+Eight mutants, eight kills, and two of them only after the pin was
+rebuilt. Dropping the `already live` guard from the accessor survived
+everything, because on the player path `career` is set and the stored
+value is never read - it is the *enemy* path where a second install
+would drop the ceiling to NaN. And the class-enemy 100 needed its own
+fixture; the monster arm alone did not reach it.
+
+**Thirty-five findings remain**, and the standing rule for them is
+wave 27's: the agent's citation is a lead, not a finding, until I have
+opened both files myself.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

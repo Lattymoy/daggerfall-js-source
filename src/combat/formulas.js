@@ -273,10 +273,17 @@ export function adrenalineRushToHit(attacker, target) {
 // ---- CalculateSuccessfulHit (clamp 3..97) ----
 export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckBodyPart, rolls = Math.random) {
   let chance = chanceToHitMod;
-  // CalculateArmorToHit: per-part when equipped (E4b), the
-  // SetEnemyCareer scalar otherwise. Increased/DecreasedArmorValueModifier
-  // channels pend their effects (none exist yet) - 0 (audit F5).
-  chance += target.armorValues ? target.armorValues[struckBodyPart] ?? 0 : (target.armor ?? 0);
+  // CalculateArmorToHit (FormulaHelper.cs:1149-1161): the per-part
+  // table, always. Increased/DecreasedArmorValueModifier channels pend
+  // their effects (none exist yet) - 0 (audit F5).
+  //
+  // AUDIT 24 (wave 28): the old scalar-armour fallback was an
+  // INVENTION - DFU has no scalar-armour path, because every entity
+  // carries ArmorValues from creation (CharacterDocument.cs:86-88 for
+  // the player, EnemyEntity.cs:264-267/:409-413 for enemies). It read
+  // 0 for a fresh character whose chargen had nulled the array, and 0
+  // is a hundred points of chance-to-hit below DFU's unarmoured 100.
+  chance += target.armorValues?.[struckBodyPart] ?? 0;
   // AUDIT 21 F2: the adrenaline rush is APPLIED now, in DFU's own slot
   // (FormulaHelper.cs:811, between the armour term and the stats term).
   chance += adrenalineRushToHit(attacker, target);

@@ -223,8 +223,8 @@ combat line numbers below are refreshed with it.
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): proficiency
 - `src/combat/formulas.js:81` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
 - `src/combat/formulas.js:158` - *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
-- `src/combat/formulas.js:417` - FLAGGED: CalculateProficiencyModifiers pends the career
-- `src/combat/formulas.js:549` - *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
+- `src/combat/formulas.js:424` - FLAGGED: CalculateProficiencyModifiers pends the career
+- `src/combat/formulas.js:556` - *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
 - `src/combat/playerWeapon.js:13` - INTERIM_WEAPON is the PRE-CHARGEN fallback only (AUDIT 23: the
 - `src/combat/playerWeapon.js:47` - /** INTERIM starting weapon (items arc replaces): Iron Dagger.
 - `src/combat/playerWeapon.js:57` - export const INTERIM_WEAPON = Object.freeze({
@@ -271,10 +271,10 @@ combat line numbers below are refreshed with it.
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
 - `src/systems/biography.js:81` - INTERIM, loud and the same one shopStock.js:115 carries: message
-- `src/systems/chargen.js:8` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
-- `src/systems/chargen.js:23` - INTERIM (loud): the UI distributes the bonus pools by hand; the
-- `src/systems/chargen.js:131` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
-- `src/systems/chargen.js:150` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b flow replaces this path)
+- `src/systems/chargen.js:9` - the pre-chargen INTERIM player (maxHealth 50, flat skills 30,
+- `src/systems/chargen.js:24` - INTERIM (loud): the UI distributes the bonus pools by hand; the
+- `src/systems/chargen.js:132` - /** INTERIM headless pool policy (loud; the chargen UI replaces it):
+- `src/systems/chargen.js:151` - spendPoolLowest(stats, STAT_KEYS, bonusPool);                        // INTERIM policy (the U2b flow replaces this path)
 - `src/systems/chargenSession.js:7` - played the pre-chargen INTERIM entity (flat skills 30, maxHealth
 - `src/systems/court.js:28` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
 - `src/systems/court.js:178` - *  daysInPrison } (guild rescues FLAGGED). */
