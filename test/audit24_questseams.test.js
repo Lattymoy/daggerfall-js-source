@@ -102,3 +102,51 @@ test('audit24 seams: the four AUDIT 24 mounts are live, and PENDING carries no d
     assert.ok(called.has(seam), `nothing calls ${seam} any more - drop its PENDING row (${why})`);
   }
 });
+
+// ---- the questorData STRUCT ----
+
+test('audit24: `add X as questor` leaves the ZERO struct, and the three unguarded reads survive it', async () => {
+  // StaticNPC.NPCData is a C# STRUCT (StaticNPC.cs:88-107): there is no
+  // null for it, and an un-setup questor holds all zeros. The port used
+  // null, and three reads dereference it WITHOUT a guard - topicTree's
+  // GetPersonBuildingKey (:350) and its quest-topic rebuild (:773), and
+  // sceneMount's questor billboard pick (:63). Every one is reachable:
+  // the OTHER route to isQuestor is `add <sym> as questor`
+  // (Quest.addQuestor), which sets the flag and never calls
+  // SetupQuestorNPC - exactly as C#'s Quest.cs:472 does, because there
+  // the struct is already sitting in the field.
+  const { ZERO_NPC_DATA } = await import('../src/characters/staticNpc.js');
+  const { Person } = await import('../src/systems/quest/person.js');
+  const { questNpcFlatData } = await import('../src/systems/quest/sceneMount.js');
+  const { TopicTree } = await import('../src/systems/topicTree.js');
+
+  // a Person straight out of the CONSTRUCTOR - nothing has set up a
+  // questor NPC, which is precisely the `add X as questor` state
+  const p = new Person(null);
+  p.isQuestor = true;
+  assert.deepEqual(p.questorData, ZERO_NPC_DATA, 'the ctor holds the struct, not null');
+  for (const [k, v] of Object.entries(ZERO_NPC_DATA)) assert.equal(v, 0, `${k} is its zero`);
+
+  // sceneMount's billboard pick - an unguarded .billboardArchiveIndex
+  assert.deepEqual(questNpcFlatData(p), { archive: 0, record: 0 },
+    'the zero struct answers zeros, where null threw');
+
+  // topicTree's building key - an unguarded .buildingKey. The zero key
+  // falls through to the home-building name lookup, which is the whole
+  // point of C#'s `!== 0`.
+  const tree = Object.create(TopicTree.prototype);
+  tree.deps = {};
+  tree.listBuildings = [{ name: 'BLANK', buildingKey: 4242 }];   // a home-less Person's name
+  assert.equal(tree.getPersonBuildingKey(p), 4242, 'buildingKey 0 means "look me up by name"');
+  tree.listBuildings = [];
+  assert.equal(tree.getPersonBuildingKey(p), 0, 'and a miss reads the struct default, 0');
+
+  // and the quest-topic rebuild's unguarded .mapID
+  assert.equal(p.questorData.mapID, 0, 'the third read');
+
+  // the save envelope carries the struct, and a pre-AUDIT-24 save whose
+  // questorData is null restores to the struct rather than to null
+  const restored = new Person({ hooks: {} });
+  restored.restoreSaveData({ ...restored.getSaveData(), questorData: null });
+  assert.deepEqual(restored.questorData, ZERO_NPC_DATA, 'an old null envelope restores to zeros');
+});

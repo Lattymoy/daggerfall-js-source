@@ -855,15 +855,20 @@ export function createWorldModes(host) {
           const person = s.behaviour?.targetResource;
           if (questBridge && person?.isPerson) {
             const hash = positionHash(Math.trunc(s.marker.x), Math.trunc(s.marker.y), Math.trunc(s.marker.z));
-            questBridge.machine.setLastNPCClicked({
+            // AUDIT 24 (the seven-slice sweep): through the bridge's
+            // SetLayoutData now, not a hand-rolled literal. The literal
+            // carried eight of NPCData's thirteen fields - no race (so
+            // QuestMCP.Oath's clicked-NPC arm, the one the main quests
+            // lean on before a questor is set, read undefined every
+            // time) and no context.
+            questBridge.machine.setLastNPCClicked(questBridge.layoutNpcData({
               hash,
-              flags: person.gender === GENDERS.Female ? 32 : 0,
-              factionID: person.factionId ?? 0,
-              nameSeed: (person.nameSeed ?? -1) === -1 ? hash : person.nameSeed,
               gender: person.gender,
+              factionID: person.factionId ?? 0,
+              nameSeed: person.nameSeed ?? -1,
               buildingKey: interiorBuilding?.buildingKey ?? 0,
               mapID: 0,
-            });
+            }));
           }
           s.behaviour?.doClick();
         }

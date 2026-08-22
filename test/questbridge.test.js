@@ -18,8 +18,9 @@ import { fileURLToPath } from 'node:url';
 import { loadQuestTables } from '../src/systems/quest/tables.js';
 import {
   positionHash, staticNpcData, SATISFY_QUEST_BY_LEVEL_GROUPS,
-  offerGuildSurface, tokensToRows, createQuestBridge,
+  offerGuildSurface, tokensToRows, createQuestBridge, layoutNpcData,
 } from '../src/scenes/questBridge.js';
+import { ZERO_NPC_DATA, NPC_CONTEXT } from '../src/characters/staticNpc.js';
 import { TICKS_PER_SECOND, QUEST_MESSAGES } from '../src/systems/quest/machine.js';
 import { FAIL_QUEST_FLAVOUR_ID } from '../src/systems/quest/offerFlow.js';
 import { GUILD_GROUPS, SOCIAL_GROUPS } from '../src/formats/factionFile.js';
@@ -116,12 +117,54 @@ test('staticNpcData gender: flags & 32 exactly - 32 female, 0 male, other bits i
 });
 
 test('staticNpcData: the empty record in the empty context is the all-zeros struct (C# defaults)', () => {
+  // AUDIT 24 (the seven-slice sweep): all THIRTEEN fields now, because
+  // NPCData is a struct and C# has no partial one. The port's literal
+  // carried nine, and the four it dropped were not decoration - `race`
+  // is what QuestMCP.Oath's clicked-NPC arm reads, and `context` is
+  // what the castle-questor topic gate reads.
   const zero = {
     hash: 0, flags: 0, factionID: 0, billboardArchiveIndex: 0, billboardRecordIndex: 0,
-    nameSeed: 0, gender: GENDERS.Male, buildingKey: 0, mapID: 0,
+    nameSeed: 0, gender: GENDERS.Male, race: 0, context: 0, mapID: 0,
+    locationID: 0, buildingKey: 0, nameBank: 0,
   };
   assert.deepEqual(staticNpcData({}, {}), zero);
   assert.deepEqual(staticNpcData({}), zero, 'the context itself defaults to the zero scene');
+  assert.deepEqual(Object.keys(staticNpcData({})).sort(), Object.keys(ZERO_NPC_DATA).sort(),
+    'and the mint answers exactly the struct - no field can be quietly dropped again');
+  // and `race` is DERIVED, not left at the struct zero: a named faction
+  // lends its own, which is what QuestMCP.Oath's clicked-NPC arm reads
+  const named = staticNpcData({ factionID: 42 }, {
+    getFaction: () => ({ race: 7 }),        // FactionRaces.DarkElf
+    raceOfCurrentRegion: () => 3,           // Races.Nord
+  });
+  assert.equal(named.race, 4, 'FactionRaces 7 is Races.DarkElf (4)');
+  const unfactioned = staticNpcData({ factionID: 0 }, { raceOfCurrentRegion: () => 3 });
+  assert.equal(unfactioned.race, 3, 'and faction 0 takes the region, as GetRaceFromFaction does');
+});
+
+test('AUDIT 24: layoutNpcData is SetLayoutData\'s direct overload - race, context, and the nameSeed fallback', () => {
+  // StaticNPC.cs:245-255. Nine fields; it writes NEITHER buildingKey
+  // NOR mapID, and it is the only overload that stamps Context.Custom.
+  const d = layoutNpcData({
+    hash: 77, gender: GENDERS.Female, factionID: 0, nameSeed: -1,
+    raceOfCurrentRegion: () => 3,   // Races.Nord
+  });
+  assert.equal(d.flags, 32, 'female is flags 32, derived from the gender - not carried in');
+  assert.equal(d.nameSeed, 77, 'nameSeed -1 falls back to the HASH');
+  assert.equal(d.race, 3, 'faction 0 sends GetRaceFromFaction to the region');
+  assert.equal(d.context, NPC_CONTEXT.Custom, 'the only overload that stamps one - though Custom is the struct zero anyway');
+  assert.equal(d.buildingKey, 0);
+  assert.equal(d.mapID, 0);
+  const male = layoutNpcData({ hash: 5, gender: GENDERS.Male, nameSeed: 900 });
+  assert.equal(male.flags, 0);
+  assert.equal(male.nameSeed, 900, 'a real seed stands');
+  // a NAMED faction lends its race instead
+  const named = layoutNpcData({
+    hash: 5, gender: GENDERS.Male, factionID: 42,
+    getFaction: () => ({ race: 7 }),          // FactionRaces.DarkElf
+    raceOfCurrentRegion: () => 3,
+  });
+  assert.equal(named.race, 4, 'FactionRaces 7 is Races.DarkElf (4), not the region');
 });
 
 // ---------------------------------------------------------------

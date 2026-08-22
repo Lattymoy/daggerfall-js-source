@@ -15,6 +15,39 @@ import { srand } from '../formats/dfRandom.js';
 import { fullName, getNameBank, getNameBankOfRegion, GENDERS } from './nameHelper.js';
 import { RACES } from '../systems/races.js';
 
+/** StaticNPC.Context (:113-118). */
+export const NPC_CONTEXT = Object.freeze({ Custom: 0, Dungeon: 1, Building: 2 });
+
+/** StaticNPC.NPCData (:88-107) is a STRUCT, so C# has no null for it -
+ *  an unassigned one is the all-zero value, and every field reads its
+ *  enum's zero (Genders.Male, Context.Custom, BankTypes.Breton, and
+ *  `(Races)0`, which is not even a member).
+ *
+ *  AUDIT 24 (the seven-slice sweep): the port used `null`, and three
+ *  reads dereferenced it without a guard - topicTree's
+ *  GetPersonBuildingKey and its quest-topic rebuild, and sceneMount's
+ *  questor billboard pick. Every one of them is reachable: the OTHER
+ *  route to isQuestor is `add <sym> as questor` (Quest.addQuestor),
+ *  which sets the flag and never touches questorData - exactly as
+ *  C#'s Quest.cs:472 does, because there the struct is already there.
+ *  So a quest that names its own questor crashed the talk topic
+ *  rebuild. The zero struct is the value C# actually holds. */
+export const ZERO_NPC_DATA = Object.freeze({
+  hash: 0,
+  flags: 0,
+  factionID: 0,
+  nameSeed: 0,
+  gender: 0,            // Genders.Male
+  race: 0,              // (Races)0 - C#'s struct default, no member
+  context: NPC_CONTEXT.Custom,
+  mapID: 0,
+  locationID: 0,
+  buildingKey: 0,
+  nameBank: 0,          // BankTypes.Breton
+  billboardArchiveIndex: 0,
+  billboardRecordIndex: 0,
+});
+
 /** GetPositionHash, verbatim: `x ^ y << 2 ^ z >> 2`. C# binds << and
  *  >> TIGHTER than ^, and so does JS, so the shape is the same one -
  *  but it is written with the parens here because the reader should

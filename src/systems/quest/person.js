@@ -28,7 +28,7 @@ import { QuestResource } from './questResource.js';
 import { Symbol as QuestSymbol, symbolToSaveData, symbolFromSaveData } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
 import { factionsTable, placesTable } from './tables.js';
-import { raceFromFactionRace, factionRaceFromRace } from '../../characters/staticNpc.js';
+import { raceFromFactionRace, factionRaceFromRace, ZERO_NPC_DATA } from '../../characters/staticNpc.js';
 import { raceById } from '../races.js';
 import { Place } from './place.js';
 import { FACTION_TYPES } from '../../formats/factionFile.js';
@@ -107,7 +107,15 @@ export class Person extends QuestResource {
     this.nameSeed = -1;
     this.homePlaceSymbol = null;
     this.assignedToHome = false;
-    this.questorData = null;      // StaticNPC.NPCData of the clicked questor
+    // StaticNPC.NPCData of the clicked questor. AUDIT 24 (the
+    // seven-slice sweep): C#'s field is a STRUCT, so it is never null -
+    // an un-setup questor holds the ZERO struct, and topicTree's
+    // GetPersonBuildingKey / quest-topic rebuild and sceneMount's
+    // billboard pick all read it WITHOUT a guard, exactly as C# can.
+    // The port had null here, and `add <sym> as questor` (the other
+    // route to isQuestor, which never calls SetupQuestorNPC) crashed
+    // all three.
+    this.questorData = { ...ZERO_NPC_DATA };
     if (line !== null) this.setResource(line);
   }
 
@@ -588,7 +596,7 @@ export class Person extends QuestResource {
       assignedToHome: this.assignedToHome,
       factionID: this.factionData?.id ?? 0,
       factionTableKey: this.factionTableKey,
-      questorData: this.questorData ? { ...this.questorData } : null,
+      questorData: { ...this.questorData },   // the struct always rides, zeros and all
       discoveredThroughTalkManager: this.discoveredThroughTalkManager ?? false,
       isMuted: this.isMuted,
       isDestroyed: this.isDestroyed,
@@ -621,7 +629,7 @@ export class Person extends QuestResource {
     this.assignedToHome = dataIn.assignedToHome;
     this.factionData = record ?? ZERO_FACTION;
     this.factionTableKey = dataIn.factionTableKey;
-    this.questorData = dataIn.questorData ? { ...dataIn.questorData } : null;
+    this.questorData = { ...ZERO_NPC_DATA, ...(dataIn.questorData ?? {}) };   // a struct, never null
     this.discoveredThroughTalkManager = dataIn.discoveredThroughTalkManager;
     this.isMuted = dataIn.isMuted;
     this.isDestroyed = dataIn.isDestroyed;

@@ -50,6 +50,7 @@ import { QuestListsManager } from '../systems/quest/questLists.js';
 import { QuestOfferFlow } from '../systems/quest/offerFlow.js';
 import { PlayerNotebook } from '../systems/notebook.js';
 import { GENDERS } from '../characters/nameHelper.js';
+import { ZERO_NPC_DATA, NPC_CONTEXT, raceFromFaction } from '../characters/staticNpc.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
 import { addQuestResourceObjects } from '../systems/quest/sceneMount.js';
 
@@ -58,18 +59,56 @@ export const positionHash = (x, y, z) => ((x ^ (y << 2) ^ (z >> 2)) | 0);
 
 /** SetLayoutData (StaticNPC.cs:210-224): the NPCData record from a
  *  block person record + the scene context. */
-export function staticNpcData(pn, { mapId = 0, locationIndex = 0, buildingKey = 0 } = {}) {
+export function staticNpcData(pn, {
+  mapId = 0, locationIndex = 0, buildingKey = 0,
+  getFaction = null, raceOfCurrentRegion = null,
+} = {}) {
+  const factionID = pn.factionID ?? 0;
   return {
+    // AUDIT 24 (the seven-slice sweep): over the ZERO STRUCT, because
+    // that is what C# starts from - the layout overload writes nine of
+    // the thirteen fields and leaves the rest at their struct zeros.
+    ...ZERO_NPC_DATA,
     hash: positionHash(pn.rawX ?? 0, pn.rawY ?? 0, pn.rawZ ?? 0),
     flags: pn.flags ?? 0,
-    factionID: pn.factionID ?? 0,
+    factionID,
     billboardArchiveIndex: pn.textureArchive ?? 0,
     billboardRecordIndex: pn.textureRecord ?? 0,
     // C# precedence kept: position ^ (buildingKey + locationIndex)
     nameSeed: (((pn.position ?? 0) ^ (buildingKey + locationIndex)) | 0),
     gender: ((pn.flags ?? 0) & 32) === 32 ? GENDERS.Female : GENDERS.Male,
+    // SetLayoutData's own line (:220). AUDIT 24: the port left `race`
+    // off entirely, so QuestMCP.Oath's clicked-NPC arm - the one the
+    // main quests lean on before a questor is set - read undefined and
+    // fell through to the region every time.
+    race: raceFromFaction(factionID, getFaction, raceOfCurrentRegion ?? (() => 0)),
     buildingKey,
     mapID: mapId,
+  };
+}
+
+/** SetLayoutData(hash, gender, factionID, nameSeed) (StaticNPC.cs:245-255)
+ *  - the DIRECT overload, the one a quest Person's click runs through.
+ *  Nine fields; note it writes NEITHER buildingKey NOR mapID (the
+ *  runtime pass at :299-306 fills the key), and it is the only
+ *  overload that stamps Context.Custom. */
+export function layoutNpcData({
+  hash, gender, factionID = 0, nameSeed = -1,
+  getFaction = null, raceOfCurrentRegion = null, ...rest
+}) {
+  return {
+    ...ZERO_NPC_DATA,
+    hash,
+    flags: gender === GENDERS.Male ? 0 : 32,
+    factionID,
+    nameSeed: nameSeed === -1 ? hash : nameSeed,
+    gender,
+    race: raceFromFaction(factionID, getFaction, raceOfCurrentRegion ?? (() => 0)),
+    // Context.Custom is 0, which is also the struct's zero - this line
+    // changes nothing and is here because SetLayoutData writes it
+    // deliberately and the reader should see that it did
+    context: NPC_CONTEXT.Custom,
+    ...rest,
   };
 }
 
@@ -197,15 +236,28 @@ export function createQuestBridge(ctx) {
     return true;
   }
 
+  /** GetRaceFromFaction's two inputs, off the machine's own world. */
+  const npcRaceLookups = () => ({
+    getFaction: (id) => ctx.world?.getFactionData?.(id) ?? null,
+    raceOfCurrentRegion: () => ctx.world?.currentRegionRace?.() ?? 0,
+  });
+
   return {
     machine, questLists, offerFlow, notebook,
     tick,
+
+    /** SetLayoutData's direct overload for a host that has a quest
+     *  Person rather than a block record (worldModes' quest-flat
+     *  click). AUDIT 24: it is a bridge method now so the race lookup
+     *  rides along - the host used to hand-roll the object literal and
+     *  leave race and context off it. */
+    layoutNpcData(fields) { return layoutNpcData({ ...fields, ...npcRaceLookups() }); },
 
     /** PlayerActivate's questor half: derive the NPCData and store the
      *  click (the Person sweep rides setLastNPCClicked). Answers the
      *  data for the caller's own use. */
     clickNpc(pn, sceneCtx) {
-      const data = staticNpcData(pn, sceneCtx);
+      const data = staticNpcData(pn, { ...sceneCtx, ...npcRaceLookups() });
       machine.setLastNPCClicked(data);
       return data;
     },

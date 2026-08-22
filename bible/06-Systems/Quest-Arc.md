@@ -1672,6 +1672,43 @@ what runs.)
 Five mutants, five kills, including the naive-offset
 `factionRaceFromRace` - which takes six pins down at once.
 
+### Wave 5 - a struct is not a nullable, and the NPCData the hosts mint
+
+**`add <sym> as questor` CRASHED THE TALK TOPIC REBUILD.**
+`StaticNPC.NPCData questorData` is a C# **struct field**
+(StaticNPC.cs:88-107). There is no null for it: an un-setup questor
+holds the all-zero value, every field its type's zero (Genders.Male,
+Context.Custom, BankTypes.Breton, and `(Races)0`, which is not even a
+member). So C# reads it without a guard, and three port sites copied
+that shape faithfully onto a field the port had made nullable -
+topicTree's `GetPersonBuildingKey` (:350) and its quest-topic rebuild
+(:773), and sceneMount's questor billboard pick (:63).
+
+Every one of them is reachable. `SetupQuestorNPC` is not the only route
+to `isQuestor`: `Quest.addQuestor` - the `add <sym> as questor` action -
+sets the flag and never touches questorData, exactly as C#'s
+Quest.cs:472 does, because there the struct is already in the field. A
+quest that names its own questor took a TypeError on the next topic
+rebuild. `ZERO_NPC_DATA` is the value C# actually holds, and the ctor,
+the restore (including an old envelope carrying null), and both mints
+start from it.
+
+**AND THE MINTS CARRIED EIGHT OF THIRTEEN FIELDS.** Both hosts built
+their NPCData by hand. `race` was not among them - so
+QuestMCP.Oath's clicked-NPC arm, *"used in some of the main quests
+before the questor is actually set"* in C#'s own comment, read
+undefined and fell through to the region on every main-quest line that
+needs it. `SetLayoutData`'s two overloads are ported properly now:
+`staticNpcData` for the block-record path and a new `layoutNpcData` for
+the direct one, both over the zero struct, both running
+`GetRaceFromFaction` with the machine's own faction lookup. worldModes'
+hand-rolled literal is gone.
+
+Two mutants, two kills - and one honest non-kill recorded rather than
+dressed up: `context: Context.Custom` is 0, which is the struct's zero
+too, so the line documents SetLayoutData's intent without changing a
+value, and the pin says so.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining
