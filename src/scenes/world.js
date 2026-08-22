@@ -76,7 +76,7 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, 
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
-import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, subscribeFoePools } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, subscribeFoePools, sensesContext } from './shared.js';
 import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier, tallySkill, SKILLS } from '../systems/skills.js';
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter } from '../characters/playerEntity.js';
@@ -989,6 +989,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   // none of them: above ground a foe's Continuous Damage never took a
   // round, its poison never fired, and a paralysed foe stayed paralysed.
   subscribeFoePools(playerTicker, [() => cityGuards.guards, () => exteriorFoes.foes], foeSinks);
+  /** AUDIT 24 (wave 36): the senses context every foe pool owes its
+   *  foes, built ONCE per frame for all of them. This host used to pass
+   *  `{ playerInvisible }` alone, which left Chameleon and Shade inert,
+   *  read the player's Stealth as 0, tallied it never, and - because
+   *  gameMinutes defaulted to 0 - froze each foe's detection on its
+   *  first roll for the rest of its life. */
+  const _foeSenses = () => sensesContext(playerEntity, playerTicker.classicMinutes, {
+    movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true,
+  });
   // U32: ONE construction for the world inventory and spellbook - F6
   // and Backspace open them, and so do the character sheet's buttons.
   const makeInventoryWindow = () => new NativeInventoryWindow({
@@ -2366,13 +2375,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // G1: the guards drive + draw on the same flats' axis; the sim
     // freezes with the population under the talk overlay.
     livePersonBatches.push(...cityGuards.update(townTalk.overlayActive ? 0 : dt,
-      walkMode && playerSpawned ? player.pos : cam.pos, cam.pos, { playerInvisible: isInvisible(playerEntity) }));
+      walkMode && playerSpawned ? player.pos : cam.pos, cam.pos, _foeSenses()));
     // X-slice: the encounter pool drives + draws beside the watch;
     // the cadence loop rolls the elapsed minutes (exterior mode only).
     if ((modes?.mode ?? 'exterior') === 'exterior') {
       const _pf = walkMode && playerSpawned ? player.pos : cam.pos;
       if (!townTalk.overlayActive) runEncounterTick(_pf);
-      exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, { playerInvisible: isInvisible(playerEntity) });
+      exteriorFoes.update(townTalk.overlayActive ? 0 : dt, _pf, cam.pos, _foeSenses());
       livePersonBatches.push(...exteriorFoes.batches());
     }
     droppedLoot.tickFlats(dt);   // FA1 slice 3

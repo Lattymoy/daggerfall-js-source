@@ -4045,6 +4045,101 @@ be.
 **Twenty-six findings remain**, plus ten the host-parity sweep added.
 
 
+### Wave 36
+
+**One object, three bugs.**
+
+```js
+{ playerInvisible: isInvisible(playerEntity) }
+```
+
+That is the senses context all three exterior call sites handed their
+foes. The dungeon built eight fields; above ground seven were missing,
+and each absence was its own failure:
+
+- `playerBlending` and `playerShade` read `false`, so **Chameleon and
+  Shade did nothing at all outside a dungeon**. S21 shipped all three
+  illusion branches and two of them were unreachable in two thirds of
+  the game.
+- `playerStealth` defaulted to 0, so `Dice100.FailedRoll` was computed
+  from a Stealth of zero whatever the character's actually was - and no
+  Stealth tally ever fired outdoors, so the skill could not advance
+  there either.
+- And the quiet one. `_stealthCheck`'s per-minute gate is
+  `gameMinutes === this._lastStealthMinute`, and `gameMinutes`
+  defaulted to 0. After the first check the equality held **forever**,
+  and every later call returned the cached `detected`. Detection froze
+  on its first roll for the life of the foe.
+
+None of it is a dungeon law in DFU. `StealthCheck`'s three guards are
+the dungeon-castle non-hostile exclusion, `wouldBeSpawnedInClassic` -
+which `classicSpawnDespawnExterior` sets outdoors - and a range test.
+There is one builder now, in `scenes/shared.js`, and the dungeon uses
+it too.
+
+The shared-stealth box moved onto the **player entity** on the way,
+because that is where DFU keeps it: `PlayerEntity.TimeOfLastStealthCheck`
+is one field on one player, so the tally fires once per classic minute
+across every foe in the game. The dungeon's private per-host box was a
+smaller version of the same mistake - two hosts could tally the same
+minute twice.
+
+**The flag the watch never touched.**
+
+`EnemySenses:531-535` raises the enemy alert from any enemy that is
+targeting and seeing the player - the last statement of FixedUpdate, at
+method-body indent, not inside a conditional. `cityGuards.js` had
+`g.ai.detected` and `g.ai.inSight` in hand and never called it, and
+never lowered it on death either.
+
+Worse, `decayEnemyAlert` had exactly one caller in all of `src/`: the
+dungeon frame body. The decay is `PlayerEntity.Update:380-384` - the
+entity update, context-free - and the encounter pool has been RAISING
+the flag since the X-slice. So an alert raised in the wilderness never
+decayed, and permanently armed the dungeon's random-spawn roll. It
+lives in `createPlayerTicker` now, which every host already calls, and
+the dungeon's own call is gone so it cannot tick twice.
+
+And the watch took no fall damage. `ApplyFallDamage` runs
+unconditionally for every enemy (:173), the port's motor has always
+produced `landedFall` for guards, and the value was read by nobody.
+
+**And a freeze wave 35 could have shipped.**
+
+The wave-35 scout landed after the wave, as the wave-26 scout did, and
+found one thing in it worth the whole run:
+
+```csharp
+senses.OldLastKnownTargetPos = attacker.transform.position;
+senses.LastKnownTargetPos = attacker.transform.position;
+senses.PredictedTargetPos = attacker.transform.position;
+GiveUpTimer = 200;
+```
+
+`MakeEnemyHostileToAttacker` seeds the remembered position as well as
+refilling the timer. The port's `makeHostileToPlayer` set only the
+timer - harmless for as long as nothing read a remembered position, and
+wave 35 made `HandleNoAction` refuse to act without one. A watchman
+spawned hostile out of sight, which is exactly how the watch arrives,
+would have had a full give-up timer and nowhere to spend it. DFU hands
+it the attacker's position precisely so it walks to where the attack
+came from.
+
+That is the second time in this arc that a scout running alongside a
+wave caught a bug the wave itself introduced, and the second time the
+bug was invisible to the wave's own pins because the pins tested the
+law the wave was adding rather than the state it was assuming.
+
+**Sixteen mutants, sixteen kills.** Two of the pins had to be built
+carefully rather than obviously: the frozen-detection one has to
+demonstrate that the *cached* answer comes back, which means changing
+`detected` behind the check and showing it does not matter; and the
+seeded-hostility one has to place the attacker dead ahead, or the yaw
+gate turns the foe in place and the pin measures the wrong law.
+
+**Twenty-six findings remain**, plus seven from the host-parity sweep.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

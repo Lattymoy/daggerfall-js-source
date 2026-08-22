@@ -11,11 +11,12 @@ import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime } from '../world/worldClock.js';
-import { hasActiveEffect } from '../systems/effects.js';
+import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, CLASSIC_MINUTES_PER_SECOND } from '../systems/worldTick.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
+import { decayEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): PlayerEntity.Update's 8-hour decay, in every context
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
@@ -518,6 +519,13 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
         say,
       });
       setWorldMinutes(r.classicMinutes);
+      // AUDIT 24 (wave 36): PlayerEntity.Update:380-384 lowers the enemy
+      // alert eight hours after it was raised, in EVERY context - it is
+      // the entity update, not a dungeon law. The port called it from
+      // the dungeon frame body alone, so an alert raised above ground
+      // (exteriorFoes has raised one since the X-slice) never decayed,
+      // and permanently armed the dungeon's random-spawn roll.
+      decayEnemyAlert(entity, r.classicMinutes);
       for (const fn of subscribers) fn(r.magicRoundWindow.from, r.magicRoundWindow.to, dt);
       return r;
     },
@@ -567,6 +575,51 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
       }
     }
   });
+}
+
+/**
+ * THE SENSES CONTEXT every foe pool owes its foes - EnemySenses'
+ * StealthCheck (:618-657) and BlockedByIllusionEffect (:659-684), which
+ * are not dungeon laws and have no dungeon gate in DFU.
+ *
+ * AUDIT 24 (wave 36). The dungeon host built all eight fields; the three
+ * exterior call sites passed `{ playerInvisible }` and nothing else, and
+ * that one object was three separate failures above ground:
+ *   - `playerBlending` and `playerShade` read false, so Chameleon and
+ *     Shade did nothing at all outside a dungeon;
+ *   - `playerStealth` defaulted to 0, so `Dice100.FailedRoll(chance)`
+ *     computed from skill 0 detected you whatever your Stealth, and no
+ *     Stealth tally ever fired outdoors;
+ *   - and `gameMinutes` defaulted to 0, so the per-minute equality
+ *     `gameMinutes === this._lastStealthMinute` held FOREVER after the
+ *     first check and every later call returned the cached `detected`.
+ *     Detection froze on its first roll for the life of the foe.
+ *
+ * The shared-stealth box rides the PLAYER ENTITY, because that is where
+ * DFU keeps it: `PlayerEntity.TimeOfLastStealthCheck` is one field on
+ * one player, so the Stealth tally fires once per classic minute across
+ * every foe in the game. A per-host box - which is what the dungeon had
+ * - lets two hosts tally the same minute twice.
+ *
+ * @param {object} entity   the player
+ * @param {number} gameMinutes the classic clock
+ * @param {object} [activity]  { movingLessThanHalfSpeed }
+ */
+export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = true } = {}) {
+  entity.stealthCheckBox = entity.stealthCheckBox ?? { minute: -1 };
+  return {
+    gameMinutes: Math.floor(gameMinutes),
+    playerStealth: skillValue(entity, SKILLS.Stealth),
+    movingLessThanHalfSpeed,
+    // S21: all three illusion branches - invisible always blocks (the 13
+    // seers exempt), blending 8% see-through, shade 4% - each folding
+    // the normal and true powers, as DaggerfallEntity does.
+    playerBlending: isBlending(entity),
+    playerInvisible: isInvisible(entity),
+    playerShade: isAShade(entity),
+    sharedStealth: entity.stealthCheckBox,
+    tallyStealth: () => tallySkill(entity, SKILLS.Stealth),
+  };
 }
 
 /** PlayerEntity.cs:388-400 - Athleticism loses fatigue 10% slower. */

@@ -34,6 +34,9 @@
 import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
 import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too
 import { hasRangedSpell } from '../characters/enemyCasting.js';   // AUDIT 24 (wave 35): the stand-off band
+import { setEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 36): EnemySenses:531-535 / EnemyDeath:131-136
+import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // AUDIT 24 (wave 36): ApplyFallDamage, for the watch too
+import { SOUND } from '../systems/soundClips.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
@@ -98,7 +101,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   const activeCount = () => guards.filter((g) => !g.dead).length;
 
   /** SpawnCityGuard: the C17 class-foe recipe at a position/facing. */
-  async function spawnGuardAt(pos, yaw) {
+  async function spawnGuardAt(pos, yaw, attackerFeet = null) {
     const basics = ENEMY_BASICS[GUARD_MOBILE_TYPE];
     const career = await ensureCareer();
     const entity = makeEnemyEntity(GUARD_MOBILE_TYPE, basics, career, playerEntity.level);
@@ -127,7 +130,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     });
     // MakeEnemyHostileToAttacker + GiveUpTimer *= 3, verbatim: a
     // crime-responding guard pursues without having seen the player.
-    ai.makeHostileToPlayer(600);
+    ai.makeHostileToPlayer(600, attackerFeet);   // wave 36: MakeEnemyHostileToAttacker seeds the remembered position too
     const attack = new EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: playerEntity.level, reflexes: playerEntity.reflexes });
     // EnemyMotor.cs:131-137 computes hasBowAttack from the MobileEnemy
     // FLAGS, and EnemyBasics.cs:2197-2212 gives Knight_CityWatch
@@ -154,11 +157,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         const d = [p.pos[0] - playerFeet[0], p.pos[1] - playerFeet[1], p.pos[2] - playerFeet[2]];
         if (Math.hypot(...d) > GUARD_NPC_SPAWN_RANGE) continue;
         if (p.guard) {
-          await spawnGuardAt(p.pos, p.fwdYaw);
+          await spawnGuardAt(p.pos, p.fwdYaw, playerFeet ?? null);
           p.disable();   // classic disables the NPC the guard spawns from
           spawned++;
         } else if (angleDeg(d, playerFwd) >= GUARD_BEHIND_ANGLE && Math.floor(rand() * 4) === 0) {
-          await spawnGuardAt(p.pos, p.fwdYaw);
+          await spawnGuardAt(p.pos, p.fwdYaw, playerFeet ?? null);
           spawned++;
         }
       }
@@ -171,7 +174,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           const dist = GUARD_FALLBACK_MIN_DIST + rand() * (GUARD_FALLBACK_MAX_DIST - GUARD_FALLBACK_MIN_DIST);
           const x = playerFeet[0] + Math.sin(a) * dist, z = playerFeet[2] + Math.cos(a) * dist;
           const y = collider.heightAt ? collider.heightAt(x, z) : playerFeet[1];
-          await spawnGuardAt([x, Number.isFinite(y) ? y : playerFeet[1], z], a + Math.PI);
+          await spawnGuardAt([x, Number.isFinite(y) ? y : playerFeet[1], z], a + Math.PI, playerFeet ?? null);
         }
       }
       return;
@@ -212,7 +215,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         }
       }
       if (seenByGuard) {
-        await spawnGuardAt(p.pos, p.fwdYaw);
+        await spawnGuardAt(p.pos, p.fwdYaw, playerFeet ?? null);
         p.disable();
       }
     }
@@ -249,6 +252,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       g.dead = true;
       g.corpse = true;   // G3: only a KILLED guard is lootable (walk-aways vanish with their items)
       releaseGuardBatch(g);
+      if (g.ai?.detected) setEnemyAlert(playerEntity, false);   // EnemyDeath:131-136 (wave 36)
       // G4 (HandleAttackFromSource, verbatim): killing the city watch
       // IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
       // the thieves-guild arc.
@@ -309,6 +313,30 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // exemption from either.
       const _gParalyzed = entityIsParalyzed(g.entity);   // S22: the FreeAction read-time fold
       g.ai.update(dt, playerFeet, senses, _gParalyzed);
+      // AUDIT 24 (wave 36): EnemySenses.cs:531-535 - ANY enemy that is
+      // targeting and seeing the player raises the alert, as the last
+      // statement of FixedUpdate at method-body indent, not inside a
+      // conditional. The watch is an ordinary EnemyClass entity and
+      // MakeEnemyHostileToAttacker (PlayerEntity.cs:755) clears the one
+      // gate in GetTargets that would exclude it. This pool never
+      // touched the flag, while exteriorFoes has raised it since the
+      // X-slice - so the alert the watch should raise never armed the
+      // dungeon spawn roll, and one it inherited never cleared.
+      if (g.ai.inSight && g.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());
+      // CH3 (characters-8): a past-threshold landing bills the fall
+      // formula through the pool's damage door. EnemyMotor.ApplyFallDamage
+      // (:173, :1384-1418) runs unconditionally for every enemy and the
+      // motor has always produced landedFall for guards too - the value
+      // was simply read by nobody, and discarded.
+      if (g.ai.landedFall > 0 && !g.dead) {
+        const gdmg = Math.trunc(FALL_HP_PER_METRE * (g.ai.landedFall - FALL_DAMAGE_THRESHOLD));
+        g.ai.landedFall = 0;
+        if (gdmg > 0) {
+          audio?.play3d?.(SOUND.FallDamage, [g.ai.feet[0], g.ai.feet[1], g.ai.feet[2]], 1, { maxDistance: 16 });
+          damageGuard(g, gdmg, null, null);
+          if (g.dead) continue;
+        }
+      }
       // HALT! on the detection rising edge (barkSound, EnemySounds)
       if (g.ai.detected && !g._halted) {
         g._halted = true;
@@ -456,7 +484,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       return { crime: 'murder' };
     }
     playerEntity.crimeCommitted = CRIME_ASSAULT;
-    await spawnGuardAt(best.pos, best.fwdYaw);
+    await spawnGuardAt(best.pos, best.fwdYaw, playerFeet ?? null);
     best.disable();
     const carriedHit = resolvePlayerHit(playerWeapon, eye, lookDir, playerFeet, inViewFn ?? _lastInView, onHitSound);
     return { crime: 'assault', carriedHit };

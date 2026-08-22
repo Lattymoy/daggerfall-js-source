@@ -542,7 +542,31 @@ export class EnemyAI {
   /** EnemyMotor.MakeEnemyHostileToAttacker (G1): pre-load the give-up
    *  timer so a crime-responding guard pursues without having seen the
    *  player yet (guards get 200 * 3 classic ticks, verbatim). */
-  makeHostileToPlayer(ticks = GIVE_UP_TICKS) { this.giveUpTimer = ticks; }
+  /**
+   * EnemyMotor.MakeEnemyHostileToAttacker (:186-211), the part that is
+   * not target bookkeeping: refill the give-up timer AND SEED THE
+   * REMEMBERED POSITION.
+   *
+   * AUDIT 24 (wave 36): the seed was missing, and wave 35 turned that
+   * from harmless into a freeze. HandleNoAction (:357-366) refuses to
+   * act at all while PredictedTargetPos is the ResetPlayerPos sentinel,
+   * so a watchman spawned hostile out of sight - which is how the watch
+   * arrives - now had a full give-up timer and nowhere to spend it. DFU
+   * hands it the attacker's position precisely so it walks to where the
+   * attack came from. (Found by the wave-35 scout, in wave 35.)
+   *
+   * `attackerFeet` is in the port's feet space, like everything else on
+   * this class; DFU stores a controller centre and the aim offset in
+   * GetDestination carries the difference.
+   */
+  makeHostileToPlayer(ticks = GIVE_UP_TICKS, attackerFeet = null) {
+    this.giveUpTimer = ticks;
+    if (!attackerFeet) return;
+    const at = [attackerFeet[0], attackerFeet[1], attackerFeet[2]];
+    this.lastKnownTargetPos = at;
+    this.oldLastKnownTargetPos = [...at];
+    this.predictedTargetPos = at;
+  }
 
   /** EnemySenses.StealthCheck, verbatim: the castle-non-hostile gate
    *  is inert here (no castle detection; foes are hostile-on-sight);

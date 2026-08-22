@@ -526,7 +526,7 @@ single fix in it.
 
 ## Reopened
 
-The audit did not stay closed. Sixteen more waves ran after the section
+The audit did not stay closed. Seventeen more waves ran after the section
 above was written, driven by two multi-agent sweeps: the SEVEN-SLICE
 adversarial re-read of the quest slices (151 agents, three lenses per
 slice, two independent refuters per claim) and a twelve-slice sweep of
@@ -551,6 +551,7 @@ the non-quest systems. Each wave is written up in full in
 | 33 | `EnemyMotor.HandleParalysis` sets `mobile.FreezeAnims = true` inside its guard and `false` on the line after the closing brace - a dead store with no other writer in the tree - so a paralysed enemy is never frozen in DFU and keeps turning to face you; the port froze frame AND facing, quoting the cancelled comment. And the damage marker is a LATCH cleared only by `EnemyAttack.Update`, which returns before the clear while paralysed - so DFU delays the blow to the moment paralysis breaks where the port dropped it |
 | 34 | The twelve-agent host-parity sweep lands (61 agents; its synthesist voids three of its own confirmed findings because waves 32-33 closed them). Its number one: DFU's whole `AttemptMove` probe/detour machine unported - the translation is the ELSE arm of `if (fallDetected || ObstacleDetected)`, so the port's foes pressed into walls and walked off ledges. ObstacleCheck, FallCheck and FindDetour ported into `EnemyAI` so all three pools inherit them, on a new `collider.capsuleCast`; and a module-level constant exposed a second import cycle (`motor` <-> `enemyMotor`) that had been latent since wave 24 |
 | 35 | `DoRangedAttack`'s `return true` unported, so archers and ranged casters closed to melee and the port's own 6-51.2m band never fired outside the charge; and `GetDestination`'s other two arms - the `ClearPathToPosition` gate and the `LastKnownTargetPos + LastPositionDiff * searchMult` search, with the LOS-timer guard that keeps a stealth detection from overwriting the memory. A scout run alongside the wave re-read waves 32-34 and found **four real defects in them**: the aim offset applied twice (and to the detour destination), a door recorded with no 22.5-degree yaw gate, the stop distance measured to the player rather than the destination, and the damage-frame consumers written arrow-first as two independent ifs |
+| 36 | The senses context the exterior pools never got - all three call sites passed `{ playerInvisible }` alone, which left Chameleon and Shade inert outdoors, read the player's Stealth as 0, tallied it never, and (because `gameMinutes` defaulted to 0) froze each foe's detection on its FIRST roll for the rest of its life. One builder now, with the shared-stealth box on the player entity where `TimeOfLastStealthCheck` lives. Plus: the watch never raised or lowered the enemy alert and `decayEnemyAlert` had one caller in all of src/ (the dungeon frame body) though the decay is PlayerEntity.Update's; the watch took no fall damage; and `makeHostileToPlayer` never seeded the remembered position, which wave 35 had just turned into a freeze |
 
 THE STANDING LESSON HELD, and grew a second half. "A pin that restates
 the port instead of the source is not a pin" was caught four more

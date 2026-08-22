@@ -72,7 +72,7 @@ import { buildingDataForDoor } from '../systems/talkTopics.js';   // E2: the sho
 import { hitSoundFor, swingSoundFor } from '../systems/soundClips.js';
 import { isInvisible } from '../systems/effects.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, subscribeFoePools } from './shared.js';
+import { fetchBytes, parseSeason, createSkyController, createPlayerTicker, createMusicDirector, motorStats, climbingDeps, applyFallLanding, ensureAudio, outdoorFogColor, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, subscribeFoePools, sensesContext } from './shared.js';
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
   windowStyleForWeather, weatherRng, fogFactor, precipitationForWeather,
@@ -615,6 +615,15 @@ export async function bootExterior(canvas, renderer, params, status) {
   // none of them: above ground a foe's Continuous Damage never took a
   // round, its poison never fired, and a paralysed foe stayed paralysed.
   subscribeFoePools(playerTicker, [() => cityGuards.guards], foeSinks);
+  /** AUDIT 24 (wave 36): the senses context every foe pool owes its
+   *  foes, built ONCE per frame for all of them. This host used to pass
+   *  `{ playerInvisible }` alone, which left Chameleon and Shade inert,
+   *  read the player's Stealth as 0, tallied it never, and - because
+   *  gameMinutes defaulted to 0 - froze each foe's detection on its
+   *  first roll for the rest of its life. */
+  const _foeSenses = () => sensesContext(playerEntity, playerTicker.classicMinutes, {
+    movingLessThanHalfSpeed: player.movingLessThanHalfSpeed ?? true,
+  });
   // U32: ONE construction for the town inventory - F6 opens it, and so
   // does the character sheet's INVENTORY button. Two `new` sites would
   // be two things to keep in step.
@@ -1218,7 +1227,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // G1: the guards drive + draw on the same flats' axis; the sim
       // freezes with the population under the talk overlay.
       const guardBatches = cityGuards.update(townTalk.overlayActive ? 0 : dt,
-        walkMode ? player.pos : cam.pos, eye, { playerInvisible: isInvisible(playerEntity) });
+        walkMode ? player.pos : cam.pos, eye, _foeSenses());
       personBatches.push(...guardBatches);
       droppedLoot.tickFlats(dt);   // FA1 slice 3
       personBatches.push(...droppedLoot.batches());   // U8e: the ground piles

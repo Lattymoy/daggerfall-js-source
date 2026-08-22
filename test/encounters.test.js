@@ -128,6 +128,15 @@ test('encounters: the dungeon host arm - the rest loop, the sight raise, the kil
   assert.ok(src.includes("if (foe.ai?.detected) setEnemyAlert(playerEntity, false)"), 'the targeting kill clears');
   assert.ok(src.includes('setEnemyAlert(playerEntity, true, classicMinutesRef.value);\n        const lines = rscLines(REST_TEXT.enemiesNearby)'),
     'the rest refusal raises (the old routed leg closed)');
-  assert.ok(src.includes('decayEnemyAlert(playerEntity, classicMinutesRef.value)'), 'the frame decays');
+  // AUDIT 24 (wave 36): the 8-hour decay MOVED. PlayerEntity.Update
+  // :380-384 runs it in every context, and the dungeon frame body was
+  // its only caller - so an alert raised above ground (exteriorFoes has
+  // raised one since the X-slice) never decayed and permanently armed
+  // this very roll. It lives in createPlayerTicker now, which every
+  // host already calls, and the dungeon's own call is gone so it
+  // cannot tick twice.
+  assert.equal(src.includes('decayEnemyAlert('), false, 'the dungeon no longer decays it itself');
+  const shared = readFileSync(join(root, 'src/scenes/shared.js'), 'utf8');
+  assert.ok(shared.includes('decayEnemyAlert(entity, r.classicMinutes);'), 'the entity tick does, for every host');
   assert.ok(src.includes('await buildFoeAt({ mobileType, gender'), 'the spawner mints through the load chain');
 });

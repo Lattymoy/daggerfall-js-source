@@ -66,7 +66,7 @@ import { spendPoolLowest } from '../systems/chargen.js';
 import { readSpellsStd } from '../formats/spellsStd.js';
 import { readMagicDef } from '../formats/magicDef.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, raiseAtRestEnd , endRunToTitleMenu } from './shared.js';
+import { fetchBytes, ensureAudio, raiseAtRestEnd, endRunToTitleMenu, sensesContext } from './shared.js';
 import { makeOpenBookHook, preloadBookArt } from '../ui/bookReader.js';   // B1
 import { worldMinutes, setWorldMinutes } from '../systems/worldTick.js';
 import {
@@ -75,14 +75,14 @@ import {
   EXPLOSION_RADIUS, pickTouchTarget, sweepFoes,
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, SILENCED_TEXT } from '../systems/mysticism.js';   // S27
-import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue, isInvisible, isBlending, isAShade } from '../systems/effects.js';
+import { applySpell, hasActiveEffect, entityIsParalyzed, maxFatigue } from '../systems/effects.js';
 import { FATIGUE_LOSS, liveStat, killIfAnyLiveStatZero } from '../systems/statMods.js';
 import { breathStep } from '../systems/breath.js';
 import { updateDiseases, onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { exhaustionOutcome, EXHAUSTED_IN_WATER, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { REST_TEXT } from '../systems/restSession.js';
-import { intermittentEnemySpawn, setEnemyAlert, decayEnemyAlert } from '../systems/encounters.js';   // E-slice
+import { intermittentEnemySpawn, setEnemyAlert } from '../systems/encounters.js';   // E-slice
 import { RestWindow } from '../ui/restWindow.js';
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
@@ -765,7 +765,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _mouseState = 'no events';
   let _inputState = '';
   const _activity = { running: false, swimming: false, jumped: false, movingLessThanHalfSpeed: true };   // P11 fatigue state; P13 sneak state; C6 jump edge
-  const _sharedStealth = { minute: -1 };   // P13: PlayerEntity.TimeOfLastStealthCheck - one Stealth tally per classic minute across ALL foes
   let _grounded = true;   // U7: the rest gate reads the motor's live grounded flag
   // U7: the rest session's scene seams. tickVitals = one rested hour
   // (the S20 rates + the Medical tally, clamped); enemiesNearby is
@@ -1622,7 +1621,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function damageFoe(foe, damage, playerFeet = null, knockDir = null) {
     // C-slice: MakeEnemyHostileToAttacker - damaging a PACIFIED foe
     // re-hostiles it (and pre-loads the pursuit, the G1 shape).
-    if (foe.ai && !foe.ai.isHostile) { foe.ai.isHostile = true; foe.ai.makeHostileToPlayer?.(); }
+    if (foe.ai && !foe.ai.isHostile) { foe.ai.isHostile = true; foe.ai.makeHostileToPlayer?.(undefined, lastPlayerFeet); }   // wave 36: seeded with where the attack came from
     foe.entity.health -= damage;
     if (foe.entity.health <= 0) {
       foe.dead = true;
@@ -1851,16 +1850,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // (DaggerfallEntity.IsInvisible/IsBlending/IsAShade, verbatim).
     // sharedStealthMinute = PlayerEntity.TimeOfLastStealthCheck: the
     // Stealth tally fires once per classic minute ACROSS all foes.
-    const _senses = {
-      gameMinutes: Math.floor(classicMinutesRef.value),
-      playerStealth: skillValue(playerEntity, SKILLS.Stealth),
-      movingLessThanHalfSpeed: _activity.movingLessThanHalfSpeed ?? true,
-      playerBlending: isBlending(playerEntity),
-      playerInvisible: isInvisible(playerEntity),
-      playerShade: isAShade(playerEntity),
-      sharedStealth: _sharedStealth,
-      tallyStealth: () => tallySkill(playerEntity, SKILLS.Stealth),
-    };
+    // AUDIT 24 (wave 36): ONE BUILDER, in scenes/shared.js - the three
+    // exterior call sites passed `{ playerInvisible }` alone, and the
+    // difference between the two objects was three live bugs above
+    // ground. The shared-stealth box moved onto the player entity with
+    // it, which is where PlayerEntity.TimeOfLastStealthCheck lives.
+    const _senses = sensesContext(playerEntity, classicMinutesRef.value, _activity);
     // AUDIT 18: the PLAYER half of this tick moved to systems/worldTick.js
     // and is now called by every host - it used to run only here, so a
     // character who stayed above ground never aged an effect, never
@@ -1894,7 +1889,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     collisionTriggers(dt, playerFeet, moveHeld);
     updateMissiles(dt, playerFeet);
     magic.update(dt, playerFeet);   // M3: player spell missiles fly in the engine
-    decayEnemyAlert(playerEntity, classicMinutesRef.value);   // E-slice: the 8-hour alert decay (PlayerEntity.Update:380-384)
     // S19: WeaponManager's paralysis gate - weapons hide and the
     // machine holds while paralyzed (casting is NOT gated, verbatim:
     // DFU has no IsParalyzed check in the casting path).
