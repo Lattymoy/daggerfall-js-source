@@ -211,7 +211,8 @@ DFU-numbered raceId, so CalculateRacialModifiers is ported and LIVE
 alone, flagged at its new site inside calculateAttackDamage. The
 combat line numbers below are refreshed with it.
 
-- `src/characters/enemyMotor.js:424` - FLAGGED, until target prediction ships). At zero the foe stops.
+- `src/characters/enemyMotor.js:667` - FLAGGED, until target prediction ships). At zero the foe stops.
+- `src/characters/enemyMotor.js:673` - the detour machine needs. FLAGGED: the other two arms are the
 - `src/characters/mobilePerson.js:8` - while the scene's politeness gate holds. FLAGGED (AUDIT 18):
 - `src/characters/mobilePerson.js:176` - *        the FLAGGED note in this file's header)
 - `src/characters/mobileUnit.js:21` - clock). DEFERRED (FLAGGED): the Seducer transform pair.
@@ -236,10 +237,10 @@ combat line numbers below are refreshed with it.
 - `src/scenes/cityGuards.js:243` - IS Murder; TallyCrimeGuildRequirements(false, 1) FLAGGED to
 - `src/scenes/cityGuards.js:428` - motor disables, TallyCrimeGuildRequirements(false, 5) FLAGGED,
 - `src/scenes/dungeonContext.js:209` - the chain lives, the motion is INTERIM (loud) until flats can tween.
-- `src/scenes/dungeonContext.js:560` - index into the 18 careers) or the INTERIM default Warrior (16,
-- `src/scenes/dungeonContext.js:566` - effects FLAGGED to the effect-library slice.
-- `src/scenes/dungeonContext.js:593` - "database FLAGGED" narrows to the skill/loot message ids).
-- `src/scenes/dungeonContext.js:958` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/dungeonContext.js:573` - index into the 18 careers) or the INTERIM default Warrior (16,
+- `src/scenes/dungeonContext.js:579` - effects FLAGGED to the effect-library slice.
+- `src/scenes/dungeonContext.js:606` - "database FLAGGED" narrows to the skill/loot message ids).
+- `src/scenes/dungeonContext.js:971` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:469` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
 - `src/scenes/exterior.js:475` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:591` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM

@@ -198,6 +198,67 @@ export class Collider {
     return { dist: best, key: bestKey, normal };
   }
 
+  /**
+   * Swept-capsule query - the contract Unity's `Physics.CapsuleCast`
+   * honors, which DFU's EnemyMotor.ObstacleCheck is written against
+   * (EnemyMotor.cs:1154). Sweep a capsule of `radius` whose axis runs
+   * p1..p2 along `dir` for `maxDist`; answer the nearest hit distance
+   * and the bucket that produced it, Infinity/null on a clear sweep.
+   *
+   * ENGINE-SIDE, like everything else in this file: the capsule is
+   * sampled as a bundle of rays - `axisSamples` points along the axis,
+   * each casting from the axis point and from four points at `radius`
+   * on the cross-section perpendicular to `dir`. That is an
+   * approximation of the true swept volume and it is the same kind of
+   * approximation the two-sphere capsule above already is. It is sized
+   * for its one caller: the enemy obstacle probe casts 0.175 over
+   * 0.247, where the bundle's widest gap between rays is smaller than
+   * the wall thickness of anything in an RMB or RDB block.
+   *
+   * A note on what it CANNOT see, which matters for the parity of the
+   * caller rather than of this method: entities are not in the
+   * collider at all (canSeeTarget's comment says so), so DFU's
+   * "the obstacle is my combat target" and "the obstacle is a loot
+   * pile" exemptions can never fire here. Action doors CAN: they are
+   * their own buckets, keyed by the action object, which is what the
+   * returned `key` is for.
+   */
+  capsuleCast(p1, p2, radius, dir, maxDist, axisSamples = 3) {
+    const ax = p2[0] - p1[0], ay = p2[1] - p1[1], az = p2[2] - p1[2];
+    // A perpendicular basis for the cross-section. `dir` is normalized
+    // by the caller; cross with world up unless dir IS world up.
+    let ux = -dir[2], uy = 0, uz = dir[0];
+    let ul = Math.hypot(ux, uy, uz);
+    if (ul < 1e-6) { ux = 1; uy = 0; uz = 0; ul = 1; }
+    ux /= ul; uy /= ul; uz /= ul;
+    const vx = dir[1] * uz - dir[2] * uy;
+    const vy = dir[2] * ux - dir[0] * uz;
+    const vz = dir[0] * uy - dir[1] * ux;
+    // The rays start on the AXIS, but a real CapsuleCast leads with the
+    // capsule's cap: it touches an obstacle `radius` before the axis
+    // reaches it, and reports the distance TRAVELLED. So cast
+    // maxDist + radius and subtract the cap back off.
+    const reach = maxDist + radius;
+    let best = Infinity;
+    let bestKey = null;
+    const n = Math.max(1, axisSamples);
+    for (let i = 0; i < n; i++) {
+      const t = n === 1 ? 0 : i / (n - 1);
+      const bx = p1[0] + ax * t, by = p1[1] + ay * t, bz = p1[2] + az * t;
+      for (const [ox, oy, oz] of [
+        [0, 0, 0],
+        [ux * radius, uy * radius, uz * radius],
+        [-ux * radius, -uy * radius, -uz * radius],
+        [vx * radius, vy * radius, vz * radius],
+        [-vx * radius, -vy * radius, -vz * radius],
+      ]) {
+        const h = this.raycastHit([bx + ox, by + oy, bz + oz], dir, reach);
+        if (h.dist < best) { best = h.dist; bestKey = h.key; }
+      }
+    }
+    return { dist: Number.isFinite(best) ? Math.max(0, best - radius) : Infinity, key: bestKey };
+  }
+
   _resolveSphere(center, radius, out) {
     // Push a sphere out of every nearby triangle; returns strongest
     // ground-ness and whether any ceiling-ish contact happened.

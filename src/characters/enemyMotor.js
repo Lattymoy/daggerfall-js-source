@@ -37,7 +37,7 @@
 
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { CLASSIC_UPDATE_INTERVAL } from './weaponStates.js';   // single source (GameManager.cs:42)
-import { CAPSULE_HEIGHT } from '../player/motor.js';           // single source
+import { CAPSULE_HEIGHT, CAPSULE_RADIUS, DF_WALK_BASE } from '../player/motor.js';           // single source
 export { CLASSIC_UPDATE_INTERVAL };
 export const GIVE_UP_TICKS = 200;   // EnemyMotor.GiveUpTimer refill (classic ticks; ~12.5s)
 import { GRAVITY, FIXED_DT, MAX_FRAME_DT, CLASSIC_TO_UNITY_RATIO, FALL_DAMAGE_THRESHOLD } from '../player/motor.js';   // the shared fall rule + the P16 fixed-timestep law; CH3: the fall threshold single-sources with the player's
@@ -69,7 +69,7 @@ export const MOVE_YAW_GATE_DEG = 5.625;
 // up to 22.5deg off-face (the attack cone is 35.156, so it still
 // swings); the old 5.625 here made stopped foes micro-track.
 export const STOP_YAW_GATE_DEG = 22.5;
-export const DF_WALK_BASE = 150;
+export { DF_WALK_BASE };   // ONE HOME: player/motor.js, beside DF_CROUCH_BASE (wave 34 turned the import round)
 export const EYE_FRAC = 5 / 6;
 
 export const enemyMoveSpeed = (liveSpeed) => (liveSpeed + DF_WALK_BASE) * GLOBAL_SCALE;
@@ -258,6 +258,40 @@ export const WATER_HEAD_MARGIN = 100 * GLOBAL_SCALE;   // WaterMove: keep 2.5 un
 export const FLYER_FLOOR_CLEARANCE = 1;         // FindGroundPosition((height/2) + 1)
 export const FLYER_FLOOR_LIFT = 0.1;            // direction.y forced up when skimming
 
+// ---- THE DETOUR MACHINE (AUDIT 24 wave 34) ----------------------------
+// EnemyMotor's AttemptMove is not "move": it is probe, then move OR
+// detour (EnemyMotor.cs:975-996). None of it was ported, so a foe
+// pressed into a wall and slid along it, and walked off any ledge in
+// its path. DFU refuses the step and commits to a way around.
+/** ObstacleCheck's cast (:1143): `controller.radius / Mathf.Sqrt(2f)` -
+ *  "follow walls at 45 degrees incidence". */
+export const OBSTACLE_CHECK_DISTANCE = CAPSULE_RADIUS / Math.SQRT2;
+/** The cast capsule's radius (:1154) - HALF the controller's. */
+export const OBSTACLE_CAST_RADIUS = CAPSULE_RADIUS / 2;
+/** :1151-1152. p1 sits `originalHeight * 0.1388` BELOW the controller
+ *  centre ("climbable step for the player is around 0.65 of 1.8; the
+ *  same ratio for the enemy"), p2 half a crouch-height above it. */
+export const OBSTACLE_P1_BELOW_CENTRE = 0.1388;
+export const DOOR_CROUCHING_HEIGHT = 1.65;      // :37, "how low enemies dive to pass thru doors"
+/** The upward-slope re-cast (:1182-1189): a capsule from 0.25 below
+ *  the centre, 0.75 of the height tall, aimed at a point one unit
+ *  ahead and one unit UP. Clear = a climbable slope, not an obstacle. */
+export const OBSTACLE_SLOPE_P1_BELOW_CENTRE = 0.25;
+export const OBSTACLE_SLOPE_P2_ABOVE_P1 = 0.75;
+/** FallCheck (:1211-1218): a downward ray from one unit ahead of the
+ *  controller centre, reaching `originalHeight * 0.5 + 1.5`. */
+export const FALL_CHECK_AHEAD = 1;
+export const FALL_CHECK_DROP = 1.5;
+/** FindDetour's state (:1010, :1033, :1094, :1133-1136). */
+export const DETOUR_VERTICAL_DODGE = 0.3;       // flyers/swimmers try up or down first
+export const DETOUR_UNSTUCK_RESET = 2;          // seconds clear before the clockwise choice resets
+export const DETOUR_CLOCKWISE_TIMER = 5;        // seconds the chosen hand is committed for
+export const DETOUR_SWEEP_STEP_DEG = 45;
+export const DETOUR_SWEEP_MAX_TRIES = 7;        // `if (count > 7) break`
+export const DETOUR_REACH = 2;                  // detourDestination = position + testMove * 2
+export const DETOUR_TIMER = 0.75;               // avoidObstaclesTimer
+export const DETOUR_ARRIVAL = 0.3;              // UpdateTimers zeroes the timer inside this
+
 /**
  * Per-foe classic AI: senses on the system timer, decisions on the
  * classic update, movement applied continuously at the decided state.
@@ -267,8 +301,20 @@ export const FLYER_FLOOR_LIFT = 0.1;            // direction.y forced up when sk
  * waterSurfaceY(x, z), the 2.5 head margin, beached = frozen).
  */
 export class EnemyAI {
-  constructor(collider, feet, yawRad, { liveSpeed = 50, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null, spawnDistanceType = 0, playerInside = true } = {}) {
+  constructor(collider, feet, yawRad, { liveSpeed = 50, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null, spawnDistanceType = 0, playerInside = true, isActionDoor = null, rolls = Math.random } = {}) {
     this.collider = collider;
+    /** ObstacleCheck's DaggerfallActionDoor arm (:1167-1176). The AI
+     *  cannot resolve a collider bucket key to an action object - the
+     *  HOST owns that registry, exactly as it already does for the
+     *  OpenDoors seam - so it asks. A host with no action doors (the
+     *  two exterior pools) answers false and the arm is simply never
+     *  taken, which is correct for it. */
+    this.isActionDoor = isActionDoor ?? (() => false);
+    this.rolls = rolls;
+    /** IsLevitating - the port has no enemy levitation source yet
+     *  (no effect writes it on a foe), so it reads false and the arms
+     *  that consult it are written out rather than dropped. */
+    this.levitating = false;
     this.feet = [feet[0], feet[1], feet[2]];
     this.yaw = yawRad;
     this.height = height;
@@ -287,6 +333,20 @@ export class EnemyAI {
     this.spawnDistanceType = spawnDistanceType;
     this.playerInside = playerInside;
     this.giveUpTimer = 0;   // G1: blind-pursuit ticks (EnemyMotor.GiveUpTimer)
+    // The detour machine's whole state (wave 34), name-for-name with
+    // EnemyMotor's fields so the laws below read against the source.
+    this.obstacleDetected = false;
+    this.fallDetected = false;
+    this.foundUpwardSlope = false;
+    this.foundDoor = false;
+    this.avoidObstaclesTimer = 0;
+    this.detourDestination = [feet[0], feet[1], feet[2]];
+    this.destination = [feet[0], feet[1], feet[2]];
+    this.checkingClockwise = false;
+    this.checkingClockwiseTimer = 0;
+    this.didClockwiseCheck = false;
+    this.lastTimeWasStuck = -Infinity;
+    this._clock = 0;   // Time.time, accumulated on the fixed step
     this.flies = behaviour === 'Flying' || behaviour === 'Spectral';   // CanFly, verbatim
     this.swims = behaviour === 'Aquatic';
     // Flyers (and the slaughterfish) aim for the target FACE
@@ -416,6 +476,189 @@ export class EnemyAI {
     return Math.floor(rolls() * 100) >= chance;   // Dice100.FailedRoll(stealthChance) -> detected on a FAILED stealth roll
   }
 
+  /** The controller CENTRE - DFU's `transform.position` for a
+   *  CharacterController, which every probe below is written from. The
+   *  port stores FEET. */
+  _centre() { return [this.feet[0], this.feet[1] + this.height / 2, this.feet[2]]; }
+
+  /**
+   * EnemyMotor.ObstacleCheck (:1140-1201), verbatim, with the two
+   * exemptions the port's collider cannot express folded out:
+   * entities are not in the collider (canSeeTarget says so), so the
+   * "the obstacle is my combat target" arm and the DaggerfallLoot arm
+   * can never fire - they are documented here rather than written as
+   * dead branches. The DaggerfallActionDoor arm CAN fire: doors are
+   * their own collider buckets, keyed by the action object, which is
+   * the same key EnemySenses already reads for OpenDoors.
+   */
+  _obstacleCheck(dir) {
+    this.obstacleDetected = false;
+    this.foundUpwardSlope = false;
+    this.foundDoor = false;
+    const c = this._centre();
+    const p1 = [c[0], c[1] - this.height * OBSTACLE_P1_BELOW_CENTRE, c[2]];
+    const p2 = [p1[0], p1[1] + Math.min(this.height, DOOR_CROUCHING_HEIGHT) / 2, p1[2]];
+    const hit = this.collider.capsuleCast(p1, p2, OBSTACLE_CAST_RADIUS, dir, OBSTACLE_CHECK_DISTANCE);
+    if (!Number.isFinite(hit.dist)) return;
+    this.obstacleDetected = true;
+    if (this.isActionDoor(hit.key)) {
+      this.obstacleDetected = false;
+      this.foundDoor = true;
+      this.doorKey = hit.key;   // senses.LastKnownDoor, which OpenDoors consumes
+      return;
+    }
+    if (this.swims || this.flies || this.levitating) return;
+    // The climbable upward slope: re-cast a TALLER capsule at a point
+    // one unit ahead and one unit up. Clear = walk into it.
+    const up = [c[0] + dir[0], c[1] + dir[1] + 1, c[2] + dir[2]];
+    let ux = up[0] - c[0], uy = up[1] - c[1], uz = up[2] - c[2];
+    const ul = Math.hypot(ux, uy, uz) || 1;
+    ux /= ul; uy /= ul; uz /= ul;
+    const q1 = [c[0], c[1] - this.height * OBSTACLE_SLOPE_P1_BELOW_CENTRE, c[2]];
+    const q2 = [q1[0], q1[1] + this.height * OBSTACLE_SLOPE_P2_ABOVE_P1, q1[2]];
+    if (!Number.isFinite(this.collider.capsuleCast(q1, q2, OBSTACLE_CAST_RADIUS, [ux, uy, uz], OBSTACLE_CHECK_DISTANCE).dist)) {
+      this.obstacleDetected = false;
+      this.foundUpwardSlope = true;
+    }
+  }
+
+  /** EnemyMotor.FallCheck (:1204-1219), verbatim - including the early
+   *  return, which is why ObstacleCheck must run FIRST: an obstacle, a
+   *  slope or a door all cancel the fall test outright. */
+  _fallCheck(dir) {
+    if (this.flies || this.levitating || this.swims
+      || this.obstacleDetected || this.foundUpwardSlope || this.foundDoor) {
+      this.fallDetected = false;
+      return;
+    }
+    const c = this._centre();
+    const origin = [c[0] + dir[0] * FALL_CHECK_AHEAD, c[1] + dir[1] * FALL_CHECK_AHEAD, c[2] + dir[2] * FALL_CHECK_AHEAD];
+    const reach = this.height * 0.5 + FALL_CHECK_DROP;
+    this.fallDetected = !Number.isFinite(this.collider.raycast(origin, [0, -1, 0], reach));
+  }
+
+  /** Rotate a direction about world up by `deg` - Quaternion.AngleAxis
+   *  on Vector3.up. Unity is LEFT-handed with +y up, so a positive
+   *  angle turns x toward -z... which in this port's yaw convention
+   *  (x = sin, z = cos) is the same clockwise-from-above sense. */
+  static _rotY(dir, deg) {
+    const r = (deg * Math.PI) / 180;
+    const cs = Math.cos(r), sn = Math.sin(r);
+    return [dir[0] * cs + dir[2] * sn, dir[1], -dir[0] * sn + dir[2] * cs];
+  }
+
+  /**
+   * EnemyMotor.FindDetour (:1002-1138), verbatim. The order matters and
+   * every part of it is load-bearing:
+   *   1. flyers and swimmers try a +/-0.3 vertical dodge FIRST, one way
+   *      then the other, and skip the whole horizontal sweep if it works;
+   *   2. two seconds clear of obstacles resets the committed hand;
+   *   3. otherwise, once per five seconds, choose a hand - 45 degrees
+   *      one way (picked at random), then the other, and if both are
+   *      blocked, by the signed angle from the direction-to-destination;
+   *      a SECOND choice inside those five seconds simply flips it;
+   *   4. sweep in 45-degree steps in the committed hand until something
+   *      is clear, giving up after eight tries and using the last probe
+   *      whether it is clear or not.
+   * The destination is two units along whatever came out, and the foe
+   * is committed to walking at it for 0.75s (which UpdateTimers cuts
+   * short on arrival).
+   */
+  _findDetour(dir2d, rolls = this.rolls) {
+    let testMove = [0, 0, 0];
+    let foundUpDown = false;
+    if (this.flies || this.swims || this.levitating) {
+      let mult = rolls() < 0.5 ? DETOUR_VERTICAL_DODGE : -DETOUR_VERTICAL_DODGE;   // Random.Range(0, 2)
+      const tryDodge = (m) => {
+        const v = [dir2d[0], dir2d[1] + m, dir2d[2]];
+        const l = Math.hypot(v[0], v[1], v[2]) || 1;
+        return [v[0] / l, v[1] / l, v[2] / l];
+      };
+      testMove = tryDodge(mult);
+      this._obstacleCheck(testMove);
+      if (this.obstacleDetected) {
+        mult *= -1;
+        testMove = tryDodge(mult);
+        this._obstacleCheck(testMove);
+      }
+      if (!this.obstacleDetected) foundUpDown = true;
+    }
+    if (!foundUpDown && this._clock - this.lastTimeWasStuck > DETOUR_UNSTUCK_RESET) {
+      this.checkingClockwiseTimer = 0;
+      this.didClockwiseCheck = false;
+    }
+    if (!foundUpDown && this.checkingClockwiseTimer <= 0) {
+      if (!this.didClockwiseCheck) {
+        let angle = rolls() < 0.5 ? 45 : -45;   // Random.Range(0, 2)
+        testMove = EnemyAI._rotY(dir2d, angle);
+        this._obstacleCheck(testMove);
+        this._fallCheck(testMove);
+        if (!this.obstacleDetected && !this.fallDetected) {
+          this.checkingClockwise = angle === 45;
+        } else {
+          angle *= -1;
+          testMove = EnemyAI._rotY(dir2d, angle);
+          this._obstacleCheck(testMove);
+          this._fallCheck(testMove);
+          if (!this.obstacleDetected && !this.fallDetected) {
+            this.checkingClockwise = angle === 45;
+          } else {
+            // Both blocked: pick the hand by the signed angle from the
+            // direction to the destination round to the way we are
+            // facing (Vector3.SignedAngle(toTarget, direction2d, up)).
+            const t = this.destination;
+            const c = this._centre();
+            const tx = t[0] - c[0], tz = t[2] - c[2];
+            const tl = Math.hypot(tx, tz) || 1;
+            const signed = (Math.atan2(dir2d[0], dir2d[2]) - Math.atan2(tx / tl, tz / tl)) * (180 / Math.PI);
+            const norm = ((signed + 180) % 360 + 360) % 360 - 180;
+            this.checkingClockwise = norm > 0;
+          }
+        }
+        this.checkingClockwiseTimer = DETOUR_CLOCKWISE_TIMER;
+        this.didClockwiseCheck = true;
+      } else {
+        this.didClockwiseCheck = false;
+        this.checkingClockwise = !this.checkingClockwise;
+        this.checkingClockwiseTimer = DETOUR_CLOCKWISE_TIMER;
+      }
+    }
+    if (!foundUpDown) {
+      let angle = 0;
+      let count = 0;
+      do {
+        angle += this.checkingClockwise ? DETOUR_SWEEP_STEP_DEG : -DETOUR_SWEEP_STEP_DEG;
+        testMove = EnemyAI._rotY(dir2d, angle);
+        this._obstacleCheck(testMove);
+        this._fallCheck(testMove);
+        count++;
+        if (count > DETOUR_SWEEP_MAX_TRIES) break;
+      } while (this.obstacleDetected || this.fallDetected);
+    }
+    const c = this._centre();
+    this.detourDestination = [
+      c[0] + testMove[0] * DETOUR_REACH,
+      c[1] + testMove[1] * DETOUR_REACH,
+      c[2] + testMove[2] * DETOUR_REACH,
+    ];
+    if (this.avoidObstaclesTimer <= 0) this.avoidObstaclesTimer = DETOUR_TIMER;
+    this.lastTimeWasStuck = this._clock;
+  }
+
+  /** EnemyMotor.UpdateTimers (:389-410), the detour half: the timer
+   *  decays, and is CUT SHORT the moment the foe is within 0.3 of the
+   *  detour destination measured in the horizontal plane only. */
+  _updateDetourTimers(dt, canAct) {
+    if (this.avoidObstaclesTimer > 0) this.avoidObstaclesTimer -= dt;
+    if (this.avoidObstaclesTimer > 0 && canAct) {
+      const c = this._centre();
+      const dx = this.detourDestination[0] - c[0];
+      const dz = this.detourDestination[2] - c[2];
+      if (Math.hypot(dx, dz) <= DETOUR_ARRIVAL) this.avoidObstaclesTimer = 0;
+    }
+    if (this.checkingClockwiseTimer > 0) this.checkingClockwiseTimer -= dt;
+  }
+
   _classicTick(playerFeet) {
     // G1 (EnemyMotor verbatim): detection refills GiveUpTimer to 200
     // classic ticks; while undetected it counts down and the foe KEEPS
@@ -425,7 +668,28 @@ export class EnemyAI {
     if (this.detected) this.giveUpTimer = GIVE_UP_TICKS;
     else if (this.giveUpTimer > 0) this.giveUpTimer--;
     if (!this.detected && this.giveUpTimer <= 0) { this.moving = false; return; }
-    const dx = playerFeet[0] - this.feet[0], dz = playerFeet[2] - this.feet[2];
+    // GetDestination (EnemyMotor.cs:530-565). AUDIT 24 (wave 34) ports
+    // its FIRST arm only - the detour override - because that is what
+    // the detour machine needs. FLAGGED: the other two arms are the
+    // ClearPathToPosition gate on PredictedTargetPos and the
+    // LastKnownTargetPos + LastPositionDiff * searchMult search, and
+    // without them a foe still beelines at the player's LIVE position
+    // through walls rather than searching where it last saw them.
+    const detouring = this.avoidObstaclesTimer > 0;
+    this.destination = detouring ? this.detourDestination : playerFeet;
+    const dx = this.destination[0] - this.feet[0], dz = this.destination[2] - this.feet[2];
+    // "If detouring, always attempt to move" (:480-484) - TakeAction's
+    // FIRST branch, ahead of the stop-distance test entirely, which is
+    // why a detouring foe walks past its own melee range to get round.
+    if (detouring) {
+      if (!withinYaw(this.yaw, dx, dz, MOVE_YAW_GATE_DEG)) {
+        this.yaw = turnTowards(this.yaw, dx, dz);
+        this.moving = false;   // classic turns in place
+        return;
+      }
+      this.moving = true;
+      return;
+    }
     // classic stop: MeleeDistance vs the player; always moves in for
     // attack. CH4: the STOPPED turn rides the 22.5 "just look at
     // target" gate (EnemyMotor.cs:514), NOT AttemptMove's 5.625 -
@@ -476,6 +740,11 @@ export class EnemyAI {
     // stealth context (see _senses).
     // C15: knockback is CanAct=false - decisions skip, senses run.
     const knocked = this.knockbackSpeed > 0;
+    // EnemyMotor.UpdateTimers runs every FixedUpdate, after
+    // HandleParalysis and KnockbackMovement have settled CanAct, and
+    // BEFORE TakeAction reads avoidObstaclesTimer (:166-172).
+    this._clock += dt;
+    this._updateDetourTimers(dt, !paralyzed && !knocked);
     let classicTicks = 0;
     this._classicTimer += dt;
     while (this._classicTimer >= CLASSIC_UPDATE_INTERVAL) {
@@ -541,7 +810,12 @@ export class EnemyAI {
       const waterY = this.waterSurfaceY ? this.waterSurfaceY(this.feet[0], this.feet[2]) : null;
       const center = this.feet[1] + this.height / 2;
       if (waterY === null || center >= waterY) return;
-      const d = this._dir3(playerFeet);
+      const d = this._dir3(this.destination);
+      // AttemptMove's probe (wave 34). A swimmer keeps its y in
+      // direction2d - only grounded foes flatten it (:978-979).
+      this._obstacleCheck(d);
+      this._fallCheck(d);
+      if (this.fallDetected || this.obstacleDetected) { this._findDetour(d); return; }
       let my = d[1] * this.speed * dt;
       if (my > 0 && center + WATER_HEAD_MARGIN >= waterY) my = 0;
       this.collider.move(this.feet, d[0] * this.speed * dt, my, d[2] * this.speed * dt);
@@ -565,16 +839,22 @@ export class EnemyAI {
       // altitude; `flies && !flyerFalls` is exactly this branch,
       // knockback and paralysis both having returned above.
       if (!this.moving) { this.lastGroundedY = this.feet[1]; return; }   // hover in place (turning included)
-      const d = this._dir3(playerFeet);
+      const d = this._dir3(this.destination);
       // "Stop fliers from moving too near the floor during combat":
       // descending with ground inside (height/2 + 1) below the center
-      // forces direction.y up to 0.1 (not renormalized, as DFU).
-      if (d[1] < 0) {
+      // forces direction.y up to 0.1 (not renormalized, as DFU). Wave
+      // 34: the clause is gated on `avoidObstaclesTimer <= 0` (:925) -
+      // a flyer working its way round an obstacle is allowed to dive.
+      if (this.avoidObstaclesTimer <= 0 && d[1] < 0) {
         const hit = this.collider.raycast(
           [this.feet[0], this.feet[1] + this.height / 2, this.feet[2]], [0, -1, 0],
           this.height / 2 + FLYER_FLOOR_CLEARANCE);
         if (Number.isFinite(hit)) d[1] = FLYER_FLOOR_LIFT;
       }
+      // AttemptMove's probe (wave 34): a flyer keeps its y here too.
+      this._obstacleCheck(d);
+      this._fallCheck(d);
+      if (this.fallDetected || this.obstacleDetected) { this._findDetour(d); this.lastGroundedY = this.feet[1]; return; }
       this.collider.move(this.feet, d[0] * this.speed * dt, d[1] * this.speed * dt, d[2] * this.speed * dt);
       this.lastGroundedY = this.feet[1];   // the altitude-control anchor, post-move
       return;
@@ -593,12 +873,34 @@ export class EnemyAI {
     if (!this.moving && this._restGrounded) return;
     this.velY -= GRAVITY * dt;
     const dy = this.velY * dt;
-    const dxm = this.moving ? Math.sin(this.yaw) * this.speed * dt : 0;
-    const dzm = this.moving ? Math.cos(this.yaw) * this.speed * dt : 0;
+    let dxm = 0;
+    let dzm = 0;
+    let blocked = false;
+    if (this.moving) {
+      // AttemptMove's probe (wave 34). direction2d is the horizontal
+      // heading the foe is about to walk (:977-979 flattens y for a
+      // grounded foe); the port steers by yaw, which the 5.625 gate in
+      // _classicTick has already brought within 5.625 degrees of the
+      // direction to the destination.
+      const dir2d = [Math.sin(this.yaw), 0, Math.cos(this.yaw)];
+      this._obstacleCheck(dir2d);
+      this._fallCheck(dir2d);
+      if (this.fallDetected || this.obstacleDetected) {
+        // The translation is the ELSE arm (:989-996) - a blocked foe
+        // does not move this step at all, it picks a way round. Gravity
+        // is separate (ApplyGravity, :167) and still applies.
+        this._findDetour(dir2d);
+        blocked = true;
+      } else {
+        dxm = dir2d[0] * this.speed * dt;
+        dzm = dir2d[2] * this.speed * dt;
+      }
+    }
     const r = this.collider.move(this.feet, dxm, dy, dzm);
     if (r.grounded) this.velY = 0;
     this._trackFall(r.grounded);   // CH3 (characters-8): walkers and falling paralyzed flyers
     this._restGrounded = !this.moving && r.grounded;
+    void blocked;   // the probe's outcome is the detour state; the rest path keys on `moving`
   }
 
   /** ApplyFallDamage's tracking (EnemyMotor.cs:1383-1414): grounded

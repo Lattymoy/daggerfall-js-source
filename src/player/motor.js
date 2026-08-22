@@ -31,11 +31,16 @@
 
 export const CLASSIC_TO_UNITY_RATIO = 39.5;
 // AUDIT 24 (wave 24): the classic walk base is one DFU constant with
-// two declarations; enemyMotor.js is the home the enemy AI already
-// reads it from.
-import { DF_WALK_BASE } from '../characters/enemyMotor.js';
-
-export { DF_WALK_BASE };
+// two declarations. Wave 24 made enemyMotor.js the home and imported
+// it here; wave 34 turned that edge round. motor.js already owns its
+// sibling DF_CROUCH_BASE, enemyMotor.js already imports the capsule
+// and gravity constants FROM here, and the back-import closed a cycle
+// - which stayed invisible only while every use sat inside a function
+// body. The first module-level `CAPSULE_RADIUS / Math.SQRT2` in
+// enemyMotor.js turned it into
+// `ReferenceError: Cannot access 'CAPSULE_RADIUS' before initialization`
+// across twelve test files.
+export const DF_WALK_BASE = 150;
 export const DF_CROUCH_BASE = 50;
 export const JUMP_SPEED = 4.5;
 // PlayerMotor.systemTimerUpdatesDivisor (the 0x46C memory-timer

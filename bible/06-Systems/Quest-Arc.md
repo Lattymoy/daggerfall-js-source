@@ -3798,6 +3798,133 @@ latch invites.
 **Twenty-eight findings remain.**
 
 
+### Wave 34
+
+**AttemptMove is not "move".**
+
+The twelve-agent host-parity sweep landed while wave 32 was being
+written - 61 agents, two independent refuters per claim, and a
+synthesist that re-read every port cite against the working tree and
+opened its report by **voiding three of its own confirmed findings**
+because waves 32 and 33 had already closed them. Its number one, and
+the most player-visible thing on the list:
+
+```csharp
+ObstacleCheck(direction2d);
+FallCheck(direction2d);
+
+if (fallDetected || ObstacleDetected)
+{
+    if (!strafe && !backAway)
+        FindDetour(direction2d);
+}
+else
+// Clear to move
+{
+    if (swims) WaterMove(motion); else controller.Move(motion * Time.deltaTime);
+}
+```
+
+The translation is inside the `else`. None of the probe was ported -
+the port moved unconditionally and let the capsule slide - so a foe
+pressed into a wall and ground along it, and walked off any ledge in
+its path. DFU refuses the step and commits to a way around.
+
+**ObstacleCheck** (:1140-1201) casts a capsule of half the
+controller's radius over `radius / sqrt(2)` - "follow walls at 45
+degrees incidence" - from a point `0.1388` of the body below its
+centre, which is the climbable-step height. Three things clear the
+flag: the obstacle is the combat target, it is a `DaggerfallActionDoor`
+(which also records it for OpenDoors), or a taller capsule aimed a
+unit ahead and a unit UP is clear, which makes it a climbable slope
+rather than a wall.
+
+Two of those three cannot fire here and are documented rather than
+written as dead branches: entities are not in the port's collider at
+all, and neither is a loot pile. The door arm can and does - doors are
+their own collider buckets, keyed by the action object, which is the
+same key the senses already hand the host for OpenDoors. The AI cannot
+resolve a key to an action object, so it asks: `isActionDoor` is a
+dep, defaulting to false, and the dungeon host wires the registry it
+already owns.
+
+**FallCheck** (:1204-1218) is a downward ray from a unit ahead,
+reaching `height * 0.5 + 1.5` - and it early-outs on an obstacle, a
+slope or a door, which is why ObstacleCheck must run first. Because
+the ray starts at the controller CENTRE, which is `height / 2` above
+the feet, the two halves cancel: the real limit is a metre and a half
+below the foe's own soles, and the pin probes both sides of it.
+
+**FindDetour** (:1002-1137) is the interesting one. Flyers and
+swimmers try a +/-0.3 vertical dodge first, one way then the other,
+and skip the horizontal sweep entirely if it works. Two seconds clear
+of trouble resets the committed hand. Otherwise, once per five
+seconds, a hand is chosen - 45 degrees one way picked at random, then
+the other, and if both are blocked, by the signed angle from the
+direction to the destination; a second visit inside those five seconds
+simply flips it. Then the sweep steps 45 degrees at a time in the
+committed hand until something is clear, giving up after eight tries.
+
+That bound has a quirk worth stating, because it is the difference
+between the port being right and being merely plausible: `angle`
+starts at zero and moves 45 degrees per probe, so the **eighth probe
+is a full 360** - it is the original heading again. A boxed-in foe
+therefore commits to walking two units straight into the thing that
+blocked it and comes back here three-quarters of a second later. Raise
+the bound and the last probe lands somewhere else entirely, which is
+exactly what the mutant that raised it did, and what the pin now
+catches.
+
+**A capsule cast the engine did not have.** DFU delegates the geometry
+to Unity; `collider.js`'s header has always said the port owns it and
+must honour the contract. `capsuleCast` is a ray bundle - samples
+along the axis, each with four more at the cross-section radius -
+which is the same kind of approximation the two-sphere capsule beside
+it already is, sized for its one caller. The detail that mattered:
+a real `CapsuleCast` leads with its cap, so it touches an obstacle
+`radius` before the axis reaches it and reports the distance
+**travelled**. The first cut cast from the axis and reported the raw
+ray distance, and a foe walked up to a wall, stopped 0.1 short of
+being able to see it, and stood there. Both halves are pinned.
+
+**An import cycle, revealed by a constant.**
+
+```
+ReferenceError: Cannot access 'CAPSULE_RADIUS' before initialization
+```
+
+Twelve test files, from one new line. `player/motor.js` imported
+`DF_WALK_BASE` from `characters/enemyMotor.js` while `enemyMotor.js`
+imported the capsule constants back from `motor.js` - a cycle wave 24
+created deliberately, and which stayed invisible for as long as every
+use sat inside a function body. `OBSTACLE_CHECK_DISTANCE =
+CAPSULE_RADIUS / Math.SQRT2` is module-level, and the ring closed on
+it. The edge is turned round: `DF_WALK_BASE` now lives in `motor.js`
+beside its sibling `DF_CROUCH_BASE`, still declared exactly once. This
+is the second cycle in four waves - wave 31 hit `effects -> spellcast
+-> formulas` the same way - and both were invisible until something
+had to be evaluated at module scope.
+
+**Twenty-four mutants, twenty-four kills** - six of them only after
+the pins were rebuilt. The interesting failures: a pin that asserted a
+foe "stayed on the floor" could not tell the fall probe's reach from
+its existence until it probed both sides of the edge; a pin that
+watched a wall could not tell "did not translate" from "the capsule
+blocked it" until it counted what the move was actually asked for; and
+a pin on a boxed-in foe could not tell the eight-probe bound from an
+infinite one until it pinned which direction the last probe picks.
+
+**FLAGGED, and next.** `GetDestination`'s other two arms are still
+unported: the `ClearPathToPosition` gate on the predicted target
+position, and the `LastKnownTargetPos + LastPositionDiff * searchMult`
+search. A foe still beelines at the player's LIVE position through
+walls rather than searching where it last saw them - and
+`ClearPathToPosition` is literally ObstacleCheck plus FallCheck plus a
+sphere cast, so it could not have been written before this wave.
+
+**Twenty-seven findings remain**, plus thirteen the sweep added.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

@@ -427,6 +427,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  interruption builds through the SAME chain: entity, loot,
    *  equipment, AI, attack, sprite). Load-time flat fallbacks stay
    *  inside; a runtime caller passes fallbackFlat = false. */
+  /** ObstacleCheck's DaggerfallActionDoor arm (EnemyMotor.cs:1167-1176):
+   *  a door in the way is NOT an obstacle, it is a door - the foe walks
+   *  at it and OpenDoors deals with it. The AI holds collider bucket
+   *  KEYS and this host owns the registry that turns one into an action
+   *  object, which is the same resolution the OpenDoors arm below
+   *  already does with senses.LastKnownDoor. */
+  const isActionDoor = (key) => {
+    if (key == null) return false;
+    const o = actions?.objects.get(key);
+    return !!o && DOOR_VERB_FLAGS.has(o.actionFlag);
+  };
   async function buildFoeAt(e, fallbackFlat = true) {
     const basics = ENEMY_BASICS[e.mobileType];
     if (!basics) return;
@@ -463,6 +474,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         liveSpeed: entity.liveSpeed,
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,   // P13: the illusion-gate exemption
         spawnDistanceType: e.spawnDistanceType ?? 0,   // AUDIT 23 (characters-7): EnemySenses.cs:231 - the marker's band row
+        isActionDoor,   // wave 34: ObstacleCheck's DaggerfallActionDoor arm
       });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
       // Combat bows: EnemyMotor.cs:131-137 reads the MobileEnemy
@@ -522,6 +534,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         behaviour, mobileId: e.mobileType, waterSurfaceY: waterSurfaceYAt,
         spawnDistanceType: e.spawnDistanceType ?? 0,   // AUDIT 23 (characters-7)
+        isActionDoor,   // wave 34: ObstacleCheck's DaggerfallActionDoor arm
       });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
       // The same EnemyMotor.cs:131-137 flag test the class branch
