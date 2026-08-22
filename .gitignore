@@ -35,3 +35,7 @@ dagger-viewer.html
 # under it was copied into dist/ and uploaded to GitHub Pages by deploy.yml.
 # Regenerate galleries locally with tools/fpProbe.mjs; they do not ship.
 public/visual-changes/
+
+# transient audit scratch dropped in the repo root by tooling runs
+.ast*.mjs
+.eslint.audit*.config.js
