@@ -187,3 +187,76 @@ test('audit24: two async races - an abandoned pixel build and an in-flight loot 
   assert.equal((loot.match(/\.dead = true;/g) || []).length, 4,
     'collectPixel, releaseEmptied, restoreWorld and restorePiles all mark');
 });
+
+// ---- wave 9: four boot-and-host defects the bug hunt's verify pass confirmed ----
+
+test('audit24: LOAD GAME is read by the host that now boots', () => {
+  // main.js sets ?load when the menu resolves it, and its comment says
+  // "Load Game rides the dungeon host's OWN quickLoad" - true when the
+  // classic start booted scenes/dungeon.js, and U31 moved it to
+  // world.js. The flag arrived in a host with no reader and was
+  // discarded: the player got a brand-new character in Privateer's
+  // Hold, and the only route to their save was to start a new game and
+  // press F11.
+  const world = read('src/scenes/world.js');
+  assert.match(world, /if \(params\.has\('load'\)\) \{[\s\S]{0,200}await worldQuickLoad\(\);/,
+    'the world host reads `load`');
+  assert.match(world, /await worldQuickLoad\(\);\s*\n\s*\} else if \(params\.has\('classic'\)/,
+    'and a load takes the classic start\'s PLACE - a load is not a new game');
+  assert.match(world, /!playerEntity\.chargenDone && !params\.has\('load'\)/,
+    'nor does the wizard mount over the game being resumed');
+});
+
+test('audit24: exactly ONE chargen wizard - the outer host owns it', () => {
+  // world.js mounts the wizard when !chargenDone; the classic start
+  // then enters the dungeon, whose context mounted a SECOND,
+  // independently-rolled one. Both were drawn and both were driven -
+  // the two hosts register separate keydown listeners on the same
+  // target and neither stops propagation - so every arrow advanced
+  // both, and whichever finished LAST wrote the character. The
+  // classic-start probe never caught it because it boots with &class,
+  // which takes the headless branch in both.
+  assert.match(read('src/scenes/dungeonContext.js'),
+    /if \(!playerEntity\.chargenDone && opts\.chargen !== false\) \{/,
+    'the dungeon context can be told an outer host owns chargen');
+  assert.match(read('src/scenes/worldModes.js'), /chargen: false,/,
+    'and worldModes tells it');
+  // the STANDALONE dungeon scene must keep its own wizard
+  assert.doesNotMatch(read('src/scenes/dungeon.js'), /chargen: false/,
+    'scenes/dungeon.js is the single owner in its own host');
+});
+
+test('audit24: the floating-origin recenter reaches EVERY world-position pool', () => {
+  const world = read('src/scenes/world.js');
+  const i = world.indexOf('if (r.offset) {');
+  assert.ok(i > 0);
+  const block = world.slice(i, i + 2600);
+  for (const pool of ['cityGuards.offsetAll', 'exteriorFoes.offsetAll', 'droppedLoot.offsetAll',
+    'offsetArrows(arrows', 'magic.offsetAll']) {
+    assert.ok(block.includes(pool), `${pool} follows the origin`);
+  }
+  // the missiles were the fifth, and the one the block never reached:
+  // an 819.2-unit shift mid-flight put the billboard out of the world,
+  // made the wall raycast probe the OLD frame and left the foe sweep
+  // comparing a stale position against shifted feet
+  assert.match(read('src/scenes/hostMagic.js'),
+    /offsetAll\(offset\) \{[\s\S]{0,400}m\.pos\[a\] \+= offset\[a\];[\s\S]{0,200}m\.firePos\[a\] \+= offset\[a\];/,
+    'and both pos and firePos shift - the batch origin is their difference');
+});
+
+test('audit24: a quest item is found by QUEST IDENTITY, not object identity', () => {
+  // ItemCollection.Contains / RemoveItem look an item up by its UID,
+  // never by reference. The port used indexOf/includes, and that
+  // identity does not survive a load: the player's held record and the
+  // Item resource's daggerfallUnityItem are serialised and restored
+  // SEPARATELY, so afterwards they are two objects with equal content
+  // and nothing relinks them. The tombstone sweep and `give item to`
+  // silently no-opped on every quest item already carried.
+  const world = read('src/scenes/world.js');
+  assert.match(world, /const _heldItemIndex = \(dfItem\) => \{[\s\S]{0,600}it\.questUID === dfItem\.questUID[\s\S]{0,120}it\.questSymbol\?\.name === dfItem\.questSymbol\?\.name/,
+    'the fallback is the quest identity the sibling hooks already match on');
+  assert.match(world, /removeItemFromPlayer: \(dfItem\) => \{[\s\S]{0,160}_heldItemIndex\(dfItem\)/);
+  assert.match(world, /playerHasItem: \(dfItem\) => _heldItemIndex\(dfItem\) >= 0/);
+  assert.doesNotMatch(world, /playerHasItem: \(dfItem\) => \(playerEntity\.items \?\? \[\]\)\.includes\(dfItem\)/,
+    'the identity-only reads are gone');
+});

@@ -1869,6 +1869,63 @@ expand %pct all along.
 
 Four mutants, four kills.
 
+### Wave 9 - four the bug hunt's own verify pass confirmed with runtime probes
+
+The JS bug hunt finished with an adversarial verify stage - 30 agents,
+13 claims refuted (eight of them because the fix had already shipped in
+an earlier wave, which is its own confirmation), and these four
+confirmed by RUNNING them.
+
+**LOAD GAME BOOTED A NEW GAME.** main.js sets `?load` when the menu
+resolves it, under a comment that says *"Load Game rides the dungeon
+host's OWN quickLoad"* - true when the classic start booted
+`scenes/dungeon.js`, and U31 moved the classic start to `world.js`.
+`grep params.has('load')` finds exactly one reader in the whole tree,
+and it is dungeon.js. So the flag travelled into a host that never read
+it: the player clicked LOAD GAME, got a brand-new character in
+Privateer's Hold, and the only route to their save was to start a new
+game and press F11. A load takes the classic start's PLACE now, and the
+chargen wizard does not mount over the game being resumed.
+
+**AND NEW GAME MOUNTED TWO CHARACTER WIZARDS.** `world.js` mounts one
+when `!chargenDone`; the classic start then enters the dungeon, whose
+context mounted a SECOND, independently-rolled one. Both were drawn -
+the dungeon's, then townTalk's over it - and both were DRIVEN: the two
+hosts register separate keydown listeners on the same target and
+neither stops propagation, so every arrow and Enter advanced both, and
+whichever finished last wrote the character. Different rolled stats,
+class and starting kit than the player chose. The classic-start probe
+never caught it because it boots with `&class`, which takes the
+headless branch in both hosts. The outer host owns chargen now and says
+so (`chargen: false`); the standalone dungeon scene keeps its own.
+
+**SPELL MISSILES WERE THE ONE POOL THE RECENTER MISSED.** The
+floating-origin block offsets the guards, the encounter foes, the loot
+piles and the arrows under a comment reading *"everything else holding
+a WORLD position must follow the origin too, or it strands 819.2 units
+behind"* - and then listed four of five. A crossing fires an 819.2-unit
+shift and a missile lives 8 seconds at 25 units, so mid-flight
+crossings are easy: the billboard left the world, the wall raycast
+probed the old frame and never hit anything, and the foe sweep compared
+a stale position against shifted feet. The spell and its magicka went
+silently nowhere.
+
+**A QUEST ITEM STOPPED BEING THE ITEM IN THE PACK.**
+`ItemCollection.Contains` and `RemoveItem` look an item up by its UID,
+never by reference. The port used `indexOf` and `includes`, and that
+identity DOES NOT SURVIVE A LOAD: the player's held record and the Item
+resource's `daggerfallUnityItem` are serialised into the envelope
+separately and restored separately, so afterwards they are two distinct
+objects with equal content and nothing relinks them - contrast
+`Person.restoreSaveData`, which re-derives factionData from the live
+store for exactly this reason. The tombstone sweep and `give item to`
+silently no-opped on every quest item the player was already carrying.
+The port has no per-item UID allocator, so the stand-in is the QUEST
+identity the sibling hooks already match on, which for a quest item is
+what DFU's UID lookup resolves; object identity is still tried first.
+
+Four mutants, four kills.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

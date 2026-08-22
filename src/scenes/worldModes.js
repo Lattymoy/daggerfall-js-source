@@ -918,7 +918,22 @@ export function createWorldModes(host) {
     try {
       const ctx = await buildDungeonContext(
         { renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, palette },
-        dfLocation, blocks, dfLocation.climate.climateType, { foes: host.foes, playerClass: host.playerClass, playerSpell: host.playerSpell, playerWeapon: host.playerWeapon });
+        dfLocation, blocks, dfLocation.climate.climateType, {
+          foes: host.foes, playerClass: host.playerClass,
+          playerSpell: host.playerSpell, playerWeapon: host.playerWeapon,
+          // AUDIT 24 (the seven-slice sweep): THE OUTER HOST OWNS
+          // CHARGEN. world.js mounts the wizard itself when
+          // !chargenDone, and the classic start then enters the dungeon
+          // - which mounted a SECOND, independently-rolled wizard into
+          // its own overlay. Both were drawn (the dungeon's, then
+          // townTalk's on top) and both were driven: the two hosts
+          // register separate keydown listeners on the same target and
+          // neither stops propagation, so every arrow and Enter
+          // advanced both. Whichever finished LAST wrote the character.
+          // The classic-start probe never caught it because it boots
+          // with &class, which takes the headless branch in both.
+          chargen: false,
+        });
       dungeonCtx = ctx;
       // P10 host parity (2026-08-16 audit: only the standalone scene
       // installed the warp - a world-mode teleporter logged and

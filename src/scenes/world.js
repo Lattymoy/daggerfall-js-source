@@ -699,7 +699,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         questInitAtGameStart();   // Q4-v: OnStartGame for the headless character
       })
       .catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
-  } else if (!playerEntity.chargenDone) {
+  } else if (!playerEntity.chargenDone && !params.has('load')) {
+    // AUDIT 24: ...and not when a SAVE is about to be loaded. The save
+    // carries chargenDone, but it arrives after the boot walk, so the
+    // wizard would mount over the game the player asked to resume.
     // AUDIT 17i: ONE construction seam - the flow arrives with every
     // dependency already attached (careers, SPELLS.STD, the biography
     // question sets), so a host cannot forget one. Three separate bugs
@@ -1648,6 +1651,33 @@ export async function bootWorld(canvas, renderer, params, status) {
     rolls: Math.random,
   });
   talkEngineRef = { session: npcSession, pipeline: answerPipeline, tree: topicTree, mill: rumorMill };
+  /** ItemCollection.Contains / RemoveItem (ItemCollection.cs:157-163,
+   *  :278-287) look the item up by its UID - never by object identity.
+   *
+   *  AUDIT 24 (the seven-slice sweep): these two hooks used indexOf and
+   *  includes, and the identity they relied on DOES NOT SURVIVE A LOAD.
+   *  The player's held record and the Item resource's
+   *  daggerfallUnityItem are serialised into the envelope separately
+   *  (save.js's snap.items, item.js's own structuredClone) and restored
+   *  separately, so afterwards they are two distinct objects with equal
+   *  content and nothing relinks them. The tombstone sweep and
+   *  `give item to` then silently no-opped on every quest item the
+   *  player was already carrying.
+   *
+   *  The port has no per-item UID allocator yet, so the stand-in is the
+   *  QUEST identity the sibling hooks already match on - questUID plus
+   *  the symbol name, which for a quest item is exactly what DFU's UID
+   *  lookup resolves. Object identity is still tried first, so a
+   *  non-quest item (and the same-session case) behaves as before. */
+  const _heldItemIndex = (dfItem) => {
+    const items = playerEntity.items ?? [];
+    const direct = items.indexOf(dfItem);
+    if (direct >= 0) return direct;
+    if (!dfItem?.questItem) return -1;
+    return items.findIndex((it) => it.questItem
+      && it.questUID === dfItem.questUID
+      && it.questSymbol?.name === dfItem.questSymbol?.name);
+  };
   questBridge = createQuestBridge({
     data: questPack,
     world: questWorld,
@@ -1695,13 +1725,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     giveItemToPlayer: (dfItem) => { playerEntity.items = playerEntity.items || []; addItem(playerEntity.items, dfItem); surfacePlayer(); },
     removeItemFromPlayer: (dfItem) => {
       const items = playerEntity.items ?? [];
-      const i = items.indexOf(dfItem);
+      const i = _heldItemIndex(dfItem);
       if (i < 0) return;
       if (isEquipped(items[i])) unequipSlot(playerEntity, items[i].equipSlot);
       items.splice(i, 1);
       surfacePlayer();
     },
-    playerHasItem: (dfItem) => (playerEntity.items ?? []).includes(dfItem),
+    playerHasItem: (dfItem) => _heldItemIndex(dfItem) >= 0,
     carriesQuestItem: (res) => (playerEntity.items ?? []).some((it) =>
       it.questItem && it.questUID === res.parentQuest?.uid && it.questSymbol?.name === res.symbol?.name),
     releaseQuestItem: (uid, res) => {
@@ -1830,7 +1860,20 @@ export async function bootWorld(canvas, renderer, params, status) {
   // NEVER TRAPS: if the entrance cannot be found the player is left
   // standing on the exterior at the dungeon's door rather than in a
   // half-built mode, and the reason is said out loud.
-  if (params.has('classic') && getBool('Startup', 'StartInDungeon') && startLoc.hasDungeon) {
+  // AUDIT 24 (the seven-slice sweep): LOAD GAME BOOTED A NEW GAME.
+  // main.js sets ?load when the menu resolves it, and its comment says
+  // "Load Game rides the dungeon host's OWN quickLoad" - true when the
+  // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
+  // only reader of `load` in the whole tree is dungeon.js:84, so the
+  // flag arrived in this host and was discarded: the player got a
+  // brand-new character in Privateer's Hold and the only way to reach
+  // their save was to start a new game and press F11. A load is not a
+  // new game, so it takes the classic start's place rather than
+  // running after it.
+  if (params.has('load')) {
+    status('loading the saved game');
+    await worldQuickLoad();
+  } else if (params.has('classic') && getBool('Startup', 'StartInDungeon') && startLoc.hasDungeon) {
     status('entering the dungeon');
     const entered = await modes.startInDungeon();
     if (!entered) console.warn('[world] no dungeon entrance at the start cell; starting outside');
@@ -2068,6 +2111,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       // ArrowFlight has never had, so it was swallowed every time and
       // every in-flight arrow was stranded 819.2 units behind.
       offsetArrows(arrows, r.offset);
+      // AUDIT 24 (the seven-slice sweep): and the SPELL missiles, the
+      // one world-position pool this block never reached. The comment
+      // three lines up says "everything else holding a WORLD position
+      // must follow the origin too" and then listed four of five.
+      magic.offsetAll(r.offset);
     }
     if (r.pixelChanged) {
       queue.push(...r.load);

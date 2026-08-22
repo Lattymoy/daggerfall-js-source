@@ -938,7 +938,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foeSinks,
     absorbCtx: () => ({ inside: true, day: false }),
   });
-  if (!playerEntity.chargenDone) {
+  // AUDIT 24: `chargen: false` says an OUTER host already owns the
+  // wizard - worldModes passes it, the standalone dungeon scene does
+  // not. Without it the classic start ran two wizards at once.
+  if (!playerEntity.chargenDone && opts.chargen !== false) {
     if (Number.isInteger(opts.playerClass)) {
       // AUDIT 17f: the shared headless skip. This copy minted a
       // character with an EMPTY bag - no clothes, no weapon, no gold -

@@ -341,6 +341,29 @@ export function createPlayerMagic({
       pendingClickCast = false;
       return castInput(eye, dir);
     },
+    /** AUDIT 17e F23 / AUDIT 24 (the seven-slice sweep): the
+     *  floating-origin recenter shifts every pool that holds a WORLD
+     *  position, and the missiles were the one it never reached -
+     *  world.js offset the guards, the encounter foes, the loot piles
+     *  and the arrows, and nothing offset these. A pixel crossing
+     *  fires an 819.2-unit shift and a missile lives 8 seconds at 25
+     *  units, so it is easy to be mid-flight across one: the billboard
+     *  jumped out of the world, the wall raycast probed the OLD frame
+     *  so it never hit anything, and the foe sweep compared a stale
+     *  position against shifted feet so it could never connect. The
+     *  spell and its magicka went silently nowhere.
+     *
+     *  Both `pos` and `firePos` shift - the batch origin is their
+     *  DIFFERENCE, recomputed next update, so no GL churn is needed. */
+    offsetAll(offset) {
+      for (const m of missiles) {
+        if (m.dead) continue;
+        for (let a = 0; a < 3; a++) {
+          m.pos[a] += offset[a];
+          if (m.firePos) m.firePos[a] += offset[a];
+        }
+      }
+    },
     batches: () => batches,
     missileCount: () => missiles.length,   // M5 probe surface
     readied: () => readiedSpell,
