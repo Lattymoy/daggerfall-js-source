@@ -248,20 +248,33 @@ test("the individual broadcast ASSIGNS its result - an individual with no quest 
   assert.equal(b.doClick(), false, 'IsIndividualNPC(305) true but NO individual person matches - false OVERWRITES');
   assert.equal(person.hasPlayerClicked, true, 'the direct click still landed');
 
-  // Two quests carrying the individual: BOTH click (no complete-skip)
+  // Two quests carrying the individual, and a third that is DONE.
+  //
+  // AUDIT 24 (the seven-slice sweep): this block used to end
+  // `q3.questComplete = true;   // even a completed quest's individual
+  // clicks, C#` and assert exactly that. It is not C#.
+  // ClickAllIndividualNPCs opens with
+  // QuestMachine.Instance.GetAllActiveQuests() (:431), which is
+  // precisely the quests that are neither Complete nor Tombstoned
+  // (:849-859) - so a finished quest's King stops answering clicks. The
+  // port walked every quest in the machine and the comment above the
+  // loop asserted the no-complete-skip as if it were the source.
   const q2 = makeQuest(m);
   const q3 = makeQuest(m);
-  for (const qq of [q2, q3]) {
+  const q4 = makeQuest(m);
+  for (const qq of [q2, q3, q4]) {
     qq.resources.set('ind', {
       isPerson: true, symbol: { name: 'ind', original: '_ind_' },
       isIndividualNPC: true, factionData: { id: 305 },
       hasPlayerClicked: false, setPlayerClicked() { this.hasPlayerClicked = true; },
     });
   }
-  q3.questComplete = true;   // even a completed quest's individual clicks, C#
+  q3.questComplete = true;
+  q4.questTombstoned = true;
   assert.equal(b.doClick(), true);
-  assert.equal(q2.resources.get('ind').hasPlayerClicked, true);
-  assert.equal(q3.resources.get('ind').hasPlayerClicked, true);
+  assert.equal(q2.resources.get('ind').hasPlayerClicked, true, 'the ACTIVE quest clicks');
+  assert.equal(q3.resources.get('ind').hasPlayerClicked, false, 'a COMPLETED quest is out of the sweep');
+  assert.equal(q4.resources.get('ind').hasPlayerClicked, false, 'and so is a tombstoned one');
 });
 
 test('a hidden or destroyed person deactivates through the RESOURCE side even off-tick; the recouple heals a lost link', () => {
@@ -433,12 +446,24 @@ test('questNpcFlatData: individuals ALWAYS flat1, questors wear the clicked bill
   assert.deepEqual(getFlatData(0), { archive: 0, record: 0 });
 });
 
-test('isAlreadyInjected matches by SYMBOL NAME identity', () => {
-  const b = { targetSymbol: { name: 'npc' } };
-  assert.equal(isAlreadyInjected([b], { symbol: { name: 'npc' } }), true);
+test('isAlreadyInjected matches the SYMBOL OBJECT, not its name', () => {
+  // AUDIT 24 (the seven-slice sweep): `behaviour.TargetSymbol ==
+  // resource.Symbol` is a REFERENCE compare - Symbol overrides Equals
+  // and GetHashCode and does NOT overload operator==, so `==` on it is
+  // object identity, and CacheTarget assigns the resource's OWN Symbol
+  // instance. This pin used to assert the name compare, and the port
+  // matched the pin.
+  const sym = { name: 'npc' };
+  const b = { targetSymbol: sym };
+  assert.equal(isAlreadyInjected([b], { symbol: sym }), true, 'the same resource');
+  // the one that mattered: the snapshot is SCENE-WIDE, every quest at
+  // once, and the corpus reuses symbol names relentlessly. A second
+  // quest's _npc_ is a different Symbol object and must still be stood.
+  assert.equal(isAlreadyInjected([b], { symbol: { name: 'npc' } }), false,
+    "another quest's same-named resource is NOT already injected");
   assert.equal(isAlreadyInjected([b], { symbol: { name: 'other' } }), false);
-  assert.equal(isAlreadyInjected([], { symbol: { name: 'npc' } }), false);
-  assert.equal(isAlreadyInjected(null, { symbol: { name: 'npc' } }), false);
+  assert.equal(isAlreadyInjected([], { symbol: sym }), false);
+  assert.equal(isAlreadyInjected(null, { symbol: sym }), false);
 });
 
 test('markerScenePosition: dungeon block origin at RDB_SIDE strides; interiors (0,0) pass the flat through', () => {

@@ -54,24 +54,44 @@ test('audit24 formats: MapsFile.getRegionIndex is PlayerGPS\'s politic derivatio
   m.getPoliticIndex = () => politic;
 
   politic = 128 + 17;
-  assert.equal(m.getRegionIndex(0, 0), 17, 'the +128 band is the region');
+  assert.equal(m.getRegionIndexAt(0, 0), 17, 'the +128 band is the region');
   politic = 64;
-  assert.equal(m.getRegionIndex(0, 0), 31, 'the one exception: 64 is High Rock sea coast');
+  assert.equal(m.getRegionIndexAt(0, 0), 31, 'the one exception: 64 is High Rock sea coast');
   politic = 128 + 105;
-  assert.equal(m.getRegionIndex(0, 0), 16, 'the known bad value patches to Wrothgarian Mountains');
+  assert.equal(m.getRegionIndexAt(0, 0), 16, 'the known bad value patches to Wrothgarian Mountains');
   politic = 0;
-  assert.equal(m.getRegionIndex(0, 0), 0, 'below the band clamps to 0');
+  assert.equal(m.getRegionIndexAt(0, 0), 0, 'below the band clamps to 0');
   politic = 128 + 62;
-  assert.equal(m.getRegionIndex(0, 0), 0, 'and >= 62 clamps to 0');
+  assert.equal(m.getRegionIndexAt(0, 0), 0, 'and >= 62 clamps to 0');
   politic = 128 + 61;
-  assert.equal(m.getRegionIndex(0, 0), 61, '61 is the last real one');
+  assert.equal(m.getRegionIndexAt(0, 0), 61, '61 is the last real one');
   // NEVER -1: the derivation cannot answer "no region", which is the
   // whole point - the Breton fallback is unreachable through it.
   for (let p = 0; p < 256; p++) {
     politic = p;
-    const r = m.getRegionIndex(0, 0);
+    const r = m.getRegionIndexAt(0, 0);
     assert.ok(r >= 0 && r < 62, `politic ${p} -> ${r} stays in range`);
   }
+});
+
+test('audit24 formats: the by-NAME region lookup still exists - the -At suffix is load-bearing', () => {
+  // AUDIT 24's own bug. This derivation shipped as `getRegionIndex`,
+  // colliding with the getRegionIndex(NAME) at mapsFile.js:297 - and a
+  // JS class body keeps the LAST definition, so the by-name lookup
+  // simply vanished and getRegionByName / getLocationByName began
+  // handing a region NAME in as a map pixel x. Nothing failed, because
+  // nothing covered either one; the audit's own bug hunt found it.
+  // (The `reveal` seam wired one wave earlier calls getLocationByName,
+  // so 193 corpus lines went straight back to answering nothing.)
+  const m = Object.create(MapsFile.prototype);
+  m._bsa = { count: 62 * 4 };   // regionCount reads the BSA's record count / 4
+  assert.equal(m.getRegionIndex.length, 1, 'the by-name lookup takes ONE argument');
+  assert.equal(m.getRegionIndexAt.length, 2, 'and the pixel derivation takes two');
+  assert.notEqual(m.getRegionIndex, m.getRegionIndexAt, 'they are different methods');
+  // and the by-name one really answers names
+  assert.equal(m.getRegionIndex('Daggerfall'), 17);
+  assert.equal(m.getRegionIndex('Wrothgarian Mountains'), 16);
+  assert.equal(m.getRegionIndex('Nowhere At All'), -1);
 });
 
 test('audit24 formats: TextRsc.randomTextById is GetRandomText - a FLAT pool, not a variant pick', () => {

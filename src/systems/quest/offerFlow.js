@@ -170,7 +170,17 @@ export class QuestOfferFlow {
   _offerQuest() {
     let step = null;
     if (this.offeredQuest) {
-      if (this._guild.isMember()) this.offeredQuest.externalMCP = this._guild;
+      // Quest.ExternalMCP (Quest.cs:179) is an IMacroContextProvider.
+      // AUDIT 24: the port's engine reads a provider as the
+      // `{ quest, source }` bundle getContextValue builds for the
+      // primary - so the guild has to arrive in that shape or its
+      // source is invisible. Normalised here as well as supplied by
+      // the host, so a bare guild is still reachable.
+      if (this._guild.isMember()) {
+        this.offeredQuest.externalMCP = this._guild.source
+          ? { quest: this.offeredQuest, source: this._guild.source }
+          : this._guild;
+      }
       const prompt = this.machine.createMessagePrompt(this.offeredQuest, QUEST_MESSAGES.QuestorOffer);
       if (prompt) step = { kind: 'offer', prompt, respond: (yes) => this._offerResponse(yes) };
     } else {

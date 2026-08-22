@@ -1814,6 +1814,61 @@ LINE THAT IS NOT THERE IS A BUG WITH A WITNESS.
 
 Six mutants, six kills.
 
+### Wave 8 - two reference compares, a dead provider, and the audit's own bug
+
+**THE AUDIT BROKE SOMETHING AND THE AUDIT CAUGHT IT.** Wave 2's
+politic-derived region index shipped as `MapsFile.getRegionIndex` -
+colliding with the `getRegionIndex(NAME)` that has been in that class
+all along. A JS class body keeps the LAST definition, so the by-name
+lookup simply vanished, and `getRegionByName` / `getLocationByName`
+began handing a region NAME in as a map pixel x. That took the
+`discoverLocation` seam wave 4 had just wired straight back to
+answering nothing - 193 corpus `reveal` lines, live for one wave and
+dead again the next. **Nothing failed**, because nothing covered
+either method; the bug hunt's own read found it. Renamed
+`getRegionIndexAt`, and the pin now covers both.
+
+**ISALREADYINJECTED COMPARED NAMES.** `resourceBehaviour.TargetSymbol
+== resource.Symbol` (GameObjectHelper.cs:984) is a REFERENCE compare -
+Symbol overrides `Equals` and `GetHashCode` and does NOT overload
+`operator==`, so `==` on it is object identity, and identity here means
+THE SAME RESOURCE (`CacheTarget` assigns the resource's own instance).
+The port compared `.name`, and its comment asserted "C# Symbol equality
+is name equality" - true of `Equals`, and the wrong member. It matters
+because the snapshot is scene-wide, every quest at once, and the corpus
+reuses symbol names relentlessly: a second quest's `_king_` collided
+with the first's and was silently never stood. This is the wave-1
+spam-click bug's twin, down to the wrong-member comment.
+
+A C# quirk rides along and is kept: a RESTORED behaviour holds a
+DESERIALIZED Symbol, a different object, so after a load DFU stops
+recognising its own resource and stands a duplicate.
+
+**THE CLICK BROADCAST SWEPT DEAD QUESTS.** `ClickAllIndividualNPCs`
+opens with `GetAllActiveQuests()` - neither Complete nor Tombstoned
+(:849-859). The port walked `machine.quests` whole and the comment above
+the loop asserted "EVERY quest in the machine - no complete-skip" as if
+that were the source, with a pin that spelled it out
+(`q3.questComplete = true;   // even a completed quest's individual
+clicks, C#`). A finished quest's King went on answering clicks for the
+rest of the session. **The sixth pin in this audit to record the port
+instead of the source.**
+
+**%PCT'S SECOND PROVIDER WAS DEAD.** `Quest.ExternalMCP` is an
+`IMacroContextProvider` and `Guild` implements it
+(Guild.cs:355-380 - GuildTitle and Amount). The port's engine reads a
+provider as a `{ quest, source }` bundle, and `source(mcp) =
+mcp?.source ?? null` - so the RAW guild the offer flow lent had no
+source, and that `?? null` makes a wrong-shaped provider
+INDISTINGUISHABLE FROM NO PROVIDER. %pct degraded silently to its
+mcp-null arm, the player's name, in all 42 corpus quests that use it: a
+guild offer read *"Arkay be with you, Bob Smith."* where DFU says
+*"...Curate."* The port already owned the missing piece - `getTitle`,
+DFU's `Guild.GetTitle`, which the training window has been using to
+expand %pct all along.
+
+Four mutants, four kills.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

@@ -53,6 +53,7 @@ import { GENDERS } from '../characters/nameHelper.js';
 import { ZERO_NPC_DATA, NPC_CONTEXT, raceFromFaction } from '../characters/staticNpc.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
 import { getBool } from '../systems/settings.js';
+import { getTitle } from '../systems/guilds.js';
 import { addQuestResourceObjects } from '../systems/quest/sceneMount.js';
 
 /** GetPositionHash (StaticNPC.cs:333-336): int32 semantics via |0. */
@@ -122,13 +123,29 @@ export const SATISFY_QUEST_BY_LEVEL_GROUPS = Object.freeze([GUILD_GROUPS.MagesGu
  *  the U-series guild object (divine name), the membership record
  *  (rank), and the faction store (reputation on the guild's own
  *  faction). */
-export function offerGuildSurface({ guildGroup, guild, membership, reputation }) {
+export function offerGuildSurface({ guildGroup, guild, membership, reputation, playerEntity = null }) {
   return {
     isMember: () => membership != null,
     rank: membership?.rank ?? 0,
     deity: guild?.divine ?? '',
     getReputation: () => reputation ?? 0,
     isSatisfyQuestReqByLevel: () => SATISFY_QUEST_BY_LEVEL_GROUPS.includes(guildGroup),
+    // AUDIT 24 (the seven-slice sweep): THE SECOND MACRO PROVIDER.
+    // Guild implements IMacroContextProvider (Guild.cs:355-380) and
+    // the offer flow lends it to the quest as ExternalMCP, which
+    // MacroHelper.GetValue consults when the quest's own source answers
+    // NOT_IMPLEMENTED. The port's macro engine reads a provider as
+    // `{ quest, source }` and `source(mcp) = mcp?.source ?? null`, so
+    // the RAW guild object it was handed had no source at all - and
+    // that `?? null` makes a wrong-shaped provider indistinguishable
+    // from no provider, so %pct degraded silently to its mcp-null arm,
+    // the PLAYER'S NAME. 42 corpus quests use %pct; a guild offer read
+    // "Arkay be with you, Bob Smith." where DFU says "...Curate."
+    // GuildMacroDataSource answers exactly two macros.
+    source: {
+      guildTitle: () => getTitle(membership, playerEntity, guild),
+      amount: () => String(guild?.trainingPrice ?? 0),
+    },
   };
 }
 
@@ -288,7 +305,7 @@ export function createQuestBridge(ctx) {
     offerGuildQuest({ guildGroup, guild, membership, reputation, buildingFactionId = 0 }) {
       return offerFlow.offerGuildQuest({
         guildGroup,
-        guild: offerGuildSurface({ guildGroup, guild, membership, reputation }),
+        guild: offerGuildSurface({ guildGroup, guild, membership, reputation, playerEntity: ctx.playerEntity ?? null }),
         buildingFactionId,
       });
     },

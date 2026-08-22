@@ -436,8 +436,17 @@ export class MapsFile {
    *  wilderness, and getNameBankOfRegion(-1) is Breton - so every
    *  quest humanoid named outdoors came out Breton regardless of
    *  province. Where a location DOES exist the two agree
-   *  (politic === regionIndex + 128, this file's own law). */
-  getRegionIndex(mapPixelX, mapPixelY) {
+   *  (politic === regionIndex + 128, this file's own law).
+   *
+   *  NAMED -At, not getRegionIndex: this class already has a
+   *  getRegionIndex(NAME) (:297), and AUDIT 24 shipped this one under
+   *  that name for a day. A JS class body keeps the LAST definition,
+   *  so the by-name lookup vanished and getRegionByName /
+   *  getLocationByName started handing a region NAME in as a map pixel
+   *  x. The suite stayed green because nothing covered either - the
+   *  collision was found by the audit's own bug hunt, not by a test,
+   *  and the pin below closes that hole too. */
+  getRegionIndexAt(mapPixelX, mapPixelY) {
     const politicIndex = this.getPoliticIndex(mapPixelX, mapPixelY);
     // High Rock sea coast is the one politic value below the +128 band
     let result = politicIndex === 64 ? 31 : politicIndex - 128;

@@ -17,7 +17,8 @@ import { loadQuestTables } from '../src/systems/quest/tables.js';
 import { QuestMachine, QUEST_MESSAGES } from '../src/systems/quest/machine.js';
 import { QuestListsManager } from '../src/systems/quest/questLists.js';
 import { QuestOfferFlow, FAIL_QUEST_FLAVOUR_ID, GETTING_QUESTS_1, GETTING_QUESTS_2 } from '../src/systems/quest/offerFlow.js';
-import { expandLetterSignoff, MACRO_TYPES } from '../src/systems/quest/questMacros.js';
+import { expandLetterSignoff, MACRO_TYPES, getContextValue } from '../src/systems/quest/questMacros.js';
+import { offerGuildSurface } from '../src/scenes/questBridge.js';
 import { serviceDestination } from '../src/systems/guildServiceFlow.js';
 import { GUILD_GROUPS, SOCIAL_GROUPS } from '../src/formats/factionFile.js';
 import { GENDERS } from '../src/characters/nameHelper.js';
@@ -613,4 +614,36 @@ test('picking the index exactly one past the pool answers null, not an undefined
   const { flow } = makeRig({ rows, deps: { guildQuestListBox: true } });
   const pick = flow.offerGuildQuest({ guildGroup: GUILD_GROUPS.FightersGuild, guild: makeGuild() }).onClose();
   assert.equal(pick.onPick(flow.questPool.length), null, 'the < boundary is strict');
+});
+
+test('AUDIT 24: the guild lent as externalMCP really answers %pct - it was a dead provider', () => {
+  // Quest.ExternalMCP is an IMacroContextProvider and Guild implements
+  // it (Guild.cs:355-380, GuildMacroDataSource: GuildTitle and Amount).
+  // The port's engine reads a provider as a { quest, source } bundle
+  // and `source(mcp) = mcp?.source ?? null` - so the RAW guild the
+  // offer flow lent had no source, and that `?? null` makes a
+  // wrong-shaped provider indistinguishable from NO provider. %pct fell
+  // to its mcp-null arm, the PLAYER'S NAME, in all 42 corpus quests
+  // that use it.
+  const surface = offerGuildSurface({
+    guildGroup: 1,
+    guild: { divine: 'Arkay', rankTitles: { 4: 'Curate' } },
+    membership: { rank: 4 },
+    reputation: 30,
+    playerEntity: { name: 'Bob Smith', gender: 'male' },
+  });
+  assert.ok(surface.source, 'the surface carries a macro source at all');
+  assert.equal(surface.source.guildTitle(), 'Curate', 'GetTitle through the rank titles');
+
+  const quest = { uid: 1, factionId: 40, hooks: {}, rolls: Math.random };
+  const hooks = { playerName: () => 'Bob Smith' };
+  assert.equal(getContextValue('%pct', quest, hooks), 'Bob Smith',
+    'with NO second provider the ladder answers the player name - the C# chain, kept');
+  quest.externalMCP = { quest, source: surface.source };
+  assert.equal(getContextValue('%pct', quest, hooks), 'Curate',
+    'and with the guild lent it answers the RANK TITLE');
+  // the shape the bug had: a raw guild, no source
+  quest.externalMCP = { isMember: () => true, rank: 4 };
+  assert.equal(getContextValue('%pct', quest, hooks), 'Bob Smith',
+    'a source-less provider is indistinguishable from none - which is exactly why it hid');
 });

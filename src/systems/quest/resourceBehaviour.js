@@ -248,11 +248,22 @@ export class QuestResourceBehaviour {
     item.isHidden = true;
   }
 
-  /** ClickAllIndividualNPCs (:428-459): EVERY quest in the machine -
-   *  no complete-skip - clicks its matching individual Persons. */
+  /** ClickAllIndividualNPCs (:428-459): every ACTIVE quest clicks its
+   *  matching individual Persons.
+   *
+   *  AUDIT 24 (the seven-slice sweep): the loop used to walk
+   *  `machine.quests` whole, and the comment above it asserted "EVERY
+   *  quest in the machine - no complete-skip" as if that were the
+   *  source. It is not: C# opens with
+   *  `QuestMachine.Instance.GetAllActiveQuests()`, which is exactly
+   *  the quests that are neither Complete nor Tombstoned (:849-859).
+   *  A finished quest's King went on answering clicks - setPlayerClicked
+   *  on a resource whose quest has already tombstoned - for the rest
+   *  of the session. */
   _clickAllIndividualNPCs(factionID) {
     let matched = false;
     for (const quest of this.machine.quests.values()) {
+      if (quest.questComplete || quest.questTombstoned) continue;
       for (const resource of quest.resources.values()) {
         if (!resource.isPerson) continue;
         if (resource.isIndividualNPC && resource.factionData?.id === factionID) {

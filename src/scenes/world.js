@@ -1423,7 +1423,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // outdoors was a Breton whatever province he stood in.
   const _questRegionIndex = () => {
     const px = playerTravelPixel();
-    return maps.getRegionIndex(px.x, px.y);
+    return maps.getRegionIndexAt(px.x, px.y);
   };
   // Quest parchment boxes land in whichever overlay slot is LIVE:
   // exterior -> the townTalk overlay, interior -> the mode machine's

@@ -122,12 +122,31 @@ export function addMarkerResourceObjects(machine, adapter, siteType, enableNPCs,
   }
 }
 
-/** IsAlreadyInjected (:979-992): symbol identity against the scene
- *  snapshot (C# Symbol equality is name equality). */
+/** IsAlreadyInjected (GameObjectHelper.cs:978-991).
+ *
+ *  AUDIT 24 (the seven-slice sweep): `resourceBehaviour.TargetSymbol ==
+ *  resource.Symbol` is a REFERENCE compare, and the comment that used
+ *  to sit here - "C# Symbol equality is name equality" - was reading
+ *  the wrong member. Symbol overrides Equals and GetHashCode and does
+ *  NOT overload operator==, so `==` on it is object identity, and
+ *  identity here means THE SAME RESOURCE: CacheTarget assigns
+ *  `targetSymbol = questResource.Symbol`, the resource's own instance.
+ *
+ *  It matters because the snapshot is scene-wide -
+ *  `Resources.FindObjectsOfTypeAll<QuestResourceBehaviour>()`, every
+ *  quest at once - and the corpus reuses symbol names relentlessly
+ *  (_king_, _npc_, _item_). By NAME, a second quest's _king_ collided
+ *  with the first's and was silently never stood.
+ *
+ *  A C# QUIRK RIDES ALONG, kept: a RESTORED behaviour holds a
+ *  DESERIALIZED Symbol (RestoreSaveData :285), which is a different
+ *  object, so after a load the guard stops recognising its own
+ *  resource and DFU stands a duplicate. The port restores the same
+ *  way, so it inherits the same hole rather than quietly fixing it. */
 export function isAlreadyInjected(resourceBehaviours, resource) {
   if (!resourceBehaviours || resourceBehaviours.length === 0) return false;
   for (const behaviour of resourceBehaviours) {
-    if (behaviour.targetSymbol?.name === resource.symbol?.name) return true;
+    if (behaviour.targetSymbol === resource.symbol) return true;
   }
   return false;
 }
