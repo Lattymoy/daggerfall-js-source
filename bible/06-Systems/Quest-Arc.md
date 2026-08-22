@@ -1434,6 +1434,50 @@ no-undef errors across the Q4-iv quest files (the lint env lacks the
 ES2022 global) - tooling debt from before this slice, left for a
 tooling pass rather than smuggled into the arc's last diff.
 
+## QUEST AUDIT XIV (2026-08-22, the seven-slice sweep, wave 1)
+
+The whole-codebase parity audit re-read the quest arc end to end
+against the C# rather than against the port's own comments. Its first
+`bug`-severity finding was a guard that had never once fired.
+
+**THE SPAM-CLICK GUARD WAS DEAD.** WhenNpcIsAvailable.CheckTrigger:84
+is `if (lastClicked == clickMemory) return false;` - and both operands
+are `StaticNPC`, a MonoBehaviour. A scene holds exactly ONE StaticNPC
+per NPC, so a reference compare there is an IDENTITY compare: it reads
+"the player clicked this same NPC again", and it is the whole reason
+spamming the same questor does not re-pulse the task. DFU makes you go
+click someone else and come back.
+
+The port carries `lastNPCClicked` as an NPCData-shaped OBJECT LITERAL,
+and both hosts mint a fresh one at every click - worldModes.js:858's
+quest-flat arm builds `{ hash, flags, factionID, nameSeed, gender,
+buildingKey, mapID }` inline, and questBridge.clickNpc runs
+`staticNpcData(pn, sceneCtx)`. So `lastClicked === this.clickMemory`
+could never be true, for any click, ever. The guard was a line of dead
+code sitting where a rule belonged, and re-clicking one questor
+re-triggered the task on every tick that saw the click.
+
+The fix is the compare the machine ALREADY owns:
+`IsNPCDataEqual(a, b)` - hash, mapID, nameSeed, buildingKey, the four
+fields DFU itself uses to decide two NPCData refer to one NPC (it is
+what matches a questor). Exposed on the hooks table as
+`isNPCDataEqual`, consumed in CheckTrigger behind the
+`this.clickMemory &&` null guard the reference compare got for free.
+
+**The pin had encoded the bug** - the fifth time in two days. Its
+"a fresh click fires again" step built a second `{ factionID: 364 }`
+with no hash, no nameSeed, no mapID, no buildingKey; in DFU terms that
+is the SAME NPC as the first one, so the assertion demanded exactly the
+re-fire the C# forbids. Corrected, not extended: the fixture now names
+a real King (hash 111, nameSeed 7, mapID 3, buildingKey 9), asserts a
+same-identity re-click is REFUSED, and only a different hash fires.
+Verified by reintroduction - restoring `===` fails the pin.
+
+**Standing law, restated:** A PIN THAT RESTATES THE PORT INSTEAD OF THE
+SOURCE IS NOT A PIN. And its corollary, earned here: a reference
+compare in C# is not noise to be transliterated - ask what one
+reference MEANS in that scene before porting `==` to `===`.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

@@ -340,6 +340,14 @@ export class QuestMachine {
       // GetReputation (ReputeExceedsDo reads it; an unknown faction
       // reads 0, factionRep's own law).
       lastNPCClicked: () => this.getLastNPCClicked(),
+      // AUDIT 24 (the seven-slice sweep): StaticNPC identity. C#'s
+      // `lastClicked == clickMemory` is a REFERENCE compare on a scene
+      // MonoBehaviour, and one NPC has exactly one of those - so it
+      // means "the same NPC". The port's hosts mint a FRESH NPCData
+      // literal on every click, which no reference compare can ever
+      // match, so the consumer needs the identity compare the machine
+      // already owns (IsNPCDataEqual's four fields).
+      isNPCDataEqual: (a, b) => this.isNPCDataEqual(a, b),
       playerName: () => this.deps.playerName?.() ?? null,
       playerRaceName: () => this.deps.playerRaceName?.() ?? null,
       addFactionListener: (factionID, owner) => this.addFactionListener(factionID, owner),

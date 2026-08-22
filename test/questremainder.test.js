@@ -116,22 +116,36 @@ test('WhenNpcIsAvailable: the click PULSES the task once, the memory holds the s
   const q = schedule(m, ['_t_ task:', ' when King_Gothryd is available', '', 'variable _pad_']);
   m.tick();
   assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false, 'nothing clicked');
-  const click = { factionID: 364 };
-  m.clicked = click;
+  // AUDIT 24 (the seven-slice sweep): the spam-click guard is an NPC
+  // IDENTITY compare, not an object-reference one. C#'s
+  // `lastClicked == clickMemory` (WhenNpcIsAvailable.cs:84) compares
+  // two StaticNPC REFERENCES, and a scene holds exactly one StaticNPC
+  // per NPC - so it reads "the same NPC again". The port's hosts mint a
+  // fresh NPCData literal at every click, so `===` could never be true
+  // and this guard never fired at all.
+  const king = { factionID: 364, hash: 111, nameSeed: 7, mapID: 3, buildingKey: 9 };
+  m.clicked = king;
   m.tick();
   assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, 'clicked and unbound - available');
   assert.equal(m.factionListeners.get(364)?.constructor.name, 'WhenNpcIsAvailable', 'the listener slot claimed');
   m.tick();
-  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false, 'the SAME click (identity) does not re-fire');
-  m.clicked = { factionID: 364 };
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false, 'the same OBJECT does not re-fire');
+  // ...and neither does a fresh object naming the SAME NPC, which is
+  // what a second click on him actually produces.
+  m.clicked = { factionID: 364, hash: 111, nameSeed: 7, mapID: 3, buildingKey: 9 };
   m.tick();
-  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, 'a fresh click fires again');
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false,
+    'spam-clicking the same NPC is exactly what the memory holds off');
+  // a DIFFERENT NPC of the same faction clears the memory and fires
+  m.clicked = { factionID: 364, hash: 222, nameSeed: 8, mapID: 3, buildingKey: 9 };
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, 'someone else, then back again');
 
   // an ACTIVE Person of that faction locks the NPC out
   const m2 = makeMachine(makeWorld());
   schedule(m2, ['Person _king_ named King_Gothryd', '', 'variable _pad_']);
   const q2 = schedule(m2, ['_t_ task:', ' when King_Gothryd is available', '', 'variable _pad_']);
-  m2.clicked = { factionID: 364 };
+  m2.clicked = { factionID: 364, hash: 111, nameSeed: 7, mapID: 3, buildingKey: 9 };
   m2.tick();
   assert.equal(q2.getTask({ name: 't' }).getTriggerValue(), false, 'another quest binds the King');
 });

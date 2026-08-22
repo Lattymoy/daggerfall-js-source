@@ -2211,7 +2211,21 @@ export class WhenNpcIsAvailable extends ActionTemplate {
     hooks?.addFactionListener?.(this.npcFactionID, this);
     const lastClicked = hooks?.lastNPCClicked?.() ?? null;
     if (!lastClicked) return false;
-    if (lastClicked === this.clickMemory) return false;
+    // AUDIT 24 (the seven-slice sweep): the spam-click guard was DEAD.
+    // C#'s `lastClicked == clickMemory` (WhenNpcIsAvailable.cs:84)
+    // compares two StaticNPC REFERENCES, and a scene holds exactly one
+    // StaticNPC per NPC - so it reads "the player clicked this same
+    // NPC again". The port's hosts build a fresh NPCData object literal
+    // at every click (worldModes.js's quest-flat arm and
+    // questBridge.clickNpc both do), so `===` could never be true and
+    // the guard never fired: re-clicking the same NPC re-triggered the
+    // task every time, where DFU makes the player go and click someone
+    // else first. The identity compare is IsNPCDataEqual's, the one the
+    // machine already uses to match a questor.
+    const sameNPC = hooks?.isNPCDataEqual
+      ? hooks.isNPCDataEqual(lastClicked, this.clickMemory)
+      : lastClicked === this.clickMemory;
+    if (this.clickMemory && sameNPC) return false;
     this.clickMemory = null;
     if (lastClicked.factionID !== this.npcFactionID) return false;
     const foundActive = hooks?.activeFactionPersons?.(this.npcFactionID) ?? [];
