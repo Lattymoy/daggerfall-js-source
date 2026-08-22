@@ -42,6 +42,7 @@ import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE } from '../system
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';   // P-slice: the above-ground quicksave
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
+import { locationCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search
 import { seasonValue, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
 import { regionPriceAdjustment } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer)
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
@@ -1519,6 +1520,27 @@ export async function bootWorld(canvas, renderer, params, status) {
     showClocksAsCountdown: () => getBool('GUI', 'ShowQuestJournalClocksAsCountdown'),
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
+    /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265):
+     *  an EXACT type+region match returns immediately (the first one
+     *  wins); otherwise the LAST `region == -1` faction of that type
+     *  is the partial match, because the loop keeps overwriting it;
+     *  a total miss answers the zero struct, which reads as null here
+     *  and lets %rt/%nrn take C#'s zero-struct fallbacks.
+     *
+     *  AUDIT 24 (wave 26): %rn/%rt have called this since Q4-i and
+     *  nothing answered it - it was invisible to the seam gate, which
+     *  could not see through questMacros.js's `const w = hooks?.world`
+     *  alias. */
+    findFactionByTypeAndRegion: (type, regionIndex) => {
+      const s = _questStore();
+      return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
+    },
+    /** GetLocationCompassDirection (TalkManager.cs:1238-1281) - %di's
+     *  remote arm. Same wave, same alias hole. */
+    locationCompassDirection: (place) => locationCompassDirection(
+      { playerMapPixel: playerTravelPixel, maps },
+      place?.siteDetails?.locationName ?? '',
+    ),
     changeLegalRep: (amount) => changeLegalRep(playerEntity, _questLoc()?.regionIndex ?? 0, amount),
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
   };

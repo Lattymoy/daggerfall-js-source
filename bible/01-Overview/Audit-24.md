@@ -523,3 +523,42 @@ corrected rather than extended:
 A pin that restates the port instead of the source is not a pin. That
 is the standing lesson of this audit, and it is worth more than any
 single fix in it.
+
+## Reopened
+
+The audit did not stay closed. Seven more waves ran after the section
+above was written, driven by two multi-agent sweeps: the SEVEN-SLICE
+adversarial re-read of the quest slices (151 agents, three lenses per
+slice, two independent refuters per claim) and a twelve-slice sweep of
+the non-quest systems. Each wave is written up in full in
+`bible/06-Systems/Quest-Arc.md`; the short version:
+
+| wave | what it found |
+|---|---|
+| 20 | `StaticNPCClick`'s quest-resource early return was missing, and `setupIndividualStaticNPC` had **no caller anywhere in `src/`** - no building NPC ever carried a QuestResourceBehaviour |
+| 21 | `ShowMessagePopup` read its tokens at pop time, not queue time; no 22-line chunker; a host that kept one box out of every drain |
+| 22 | Six seams ported and never reached - the notebook message ring, the TG/DB map note, the 128-vs-256 reach, the `flatPosition` hash, `menu:false` + spymaster, and `{0:00}` rounding |
+| 23 | Generator gates. `enemyBasics.js` hid **nine columns** behind a tool nobody ran; then five duplicated tables, one of them written by wave 22 |
+| 24 | *One DFU member, one export* as a standing gate. Under a stale `SetLayoutData` twin: `GetDisplayName` ported and never called, so **every static NPC in the game was nameless** |
+| 25 | `StartQuest` dropped its tail (the questor carried no behaviour, so `hide npc` at startup did nothing); the rumour mill cloned where DFU freezes in place |
+| 26 | The seam gate's **alias hole** - it scanned for `world.` and `questMacros.js` writes `const w = hooks?.world`, hiding three unmounted seams |
+
+THE STANDING LESSON HELD, and grew a second half. "A pin that restates
+the port instead of the source is not a pin" was caught four more
+times, once in a pin that *argued its case* - it asserted that flooring
+`{0:00}` was right "because C#'s Hour/Minute/Second are ints", and
+`Second` is a `float`, so DFU really does print `13:30:60`.
+
+The second half is newer and cost more to learn:
+
+**A PORTED FUNCTION WITH NO CALLER IS A COMMENT.** Three times in seven
+waves - `setupIndividualStaticNPC`, `notebook.addMessage`,
+`staticNpcName` - each a careful, correct, fully-tested port of a named
+DFU member that nothing in the game ever invoked. The tests were green
+because the tests called them. Coverage counted the lines because the
+fixtures reached them. A fixture that reaches a line the game cannot
+reach tells you the function works, not that it runs.
+
+**AND A GATE HAS A BLIND SPOT UNTIL SOMEBODY LOOKS FOR IT FROM THE
+OTHER SIDE.** The seam gate exists precisely to catch that class of
+bug, and it had been missing an entire module since it was written.

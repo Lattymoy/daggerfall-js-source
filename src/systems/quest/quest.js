@@ -91,7 +91,24 @@ export class Quest {
   constructor({ rolls = Math.random, nowSeconds = null, hooks = null, actionFactory = null } = {}) {
     this.uid = nextUid();
     this.questName = '';
-    this.displayName = '';
+    // AUDIT 24 (wave 26): NULL, because Quest.cs:56 is a bare
+    // `string displayName;` with no initialiser and the property at
+    // :156-160 is a plain passthrough - so DisplayName is null until
+    // Parser.cs:86-89 assigns it, and only a source with a
+    // `displayname:` line ever gets one.
+    //
+    // DFU LEANS ON THAT NULL. DaggerfallGuildServicePopupWindow.cs:640
+    // labels each picker row `displayName ?? quest.QuestName`, and
+    // Parser.cs:152 tests `string.IsNullOrEmpty(quest.DisplayName)`.
+    // The port's `''` made `?? questName` dead code - `'' ?? x` is
+    // `''` - so a quest without a header would have offered a BLANK
+    // row. 28 of the 265 corpus quests carry no `displayname:`.
+    //
+    // questName above stays `''` deliberately: C# declares it the same
+    // way, but Parser THROWS on a quest with no name, so the default is
+    // unreachable and a null there would only add `?? ''` noise to the
+    // dozen template literals that print it.
+    this.displayName = null;
     this.factionId = 0;
     this.messages = new Map();     // id -> Message
     this.tasks = new Map();        // symbol name -> Task
@@ -229,7 +246,10 @@ export class Quest {
       throw new Error('AddQuestor() must receive a named symbol.');
     }
     if (this.questors.has(personSymbol.name)) {
-      console.warn(`[quest] Person ${personSymbol.original} is already a questor for quest ${this.uid} [${this.displayName}]`);
+      // `${null}` is the string "null" in JS where string.Format
+      // (Quest.cs:459) renders a null argument as EMPTY - so the ?? ''
+      // is what keeps this line 1:1 now that displayName can be null.
+      console.warn(`[quest] Person ${personSymbol.original} is already a questor for quest ${this.uid} [${this.displayName ?? ''}]`);
       return;
     }
     const person = this.getPerson(personSymbol);
@@ -422,7 +442,7 @@ export class Quest {
     this.questComplete = data.questComplete;
     this.questSuccess = data.questSuccess;
     this.questName = data.questName;
-    this.displayName = data.displayName;
+    this.displayName = data.displayName ?? null;   // an older envelope has no field; C# deserialises to null
     this.factionId = data.factionId;
     this.questStartTime = data.questStartTime;
     this.questTombstoned = data.questTombstoned;

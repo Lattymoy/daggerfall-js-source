@@ -326,26 +326,47 @@ const HANDLERS = {
     const gender = randomRangeInclusive(0, 1) === 1 ? GENDERS.Female : GENDERS.Male;
     return fullName(bank, gender);
   },
+  // %rt/%t: RegentTitle (MacroHelper.cs:644-650) DISCARDS
+  // FindFactionByTypeAndRegion's bool and reads the out struct
+  // regardless - and PersistentFactionData assigns
+  // `new FactionFile.FactionData()` BEFORE searching, so a miss hands
+  // back all zeros and GetRulerTitle(0) takes its `default:` arm and
+  // answers "Lord".
+  //
+  // AUDIT 24 (wave 26): the port gated its null on the LOOKUP
+  // (`if (!region) return null`), conflating two different nothings -
+  // "there is no world at all", which is the port's own headless
+  // charter, and "the world is here and the lookup missed", which in
+  // DFU is Lord. The sibling %rn above already separates them, gating
+  // on `!w`; these two did not. rulerTitle's own `?? 'Lord'` is
+  // already GetRulerTitle's default arm, so the zero struct falls
+  // through it exactly.
   '%rt': (mcp, hooks) => {
     const w = hooks?.world;
-    const region = w?.findFactionByTypeAndRegion?.(7, w.currentRegionIndex?.());
-    if (!region) return null;
-    return rulerTitle(region.ruler);
+    if (!w) return null;
+    const region = w.findFactionByTypeAndRegion?.(7, w.currentRegionIndex?.());
+    return rulerTitle(region?.ruler ?? 0);
   },
   '%t': (mcp, hooks) => HANDLERS['%rt'](mcp, hooks),
   // %nrn: the faction's first Individual child, else the SEEDED lord
   // name (rulerNameSeed & 0xffff; even rulers are female)
+  // %nrn: LordOfCurrentRegion -> GetLordNameForFaction
+  // (MacroHelper.cs:310-331), which drops GetFactionData's bool the
+  // same way and has NO null path at all. Wave 26: same conflation as
+  // %rt above. The zero struct gives ruler 0 -> gender (0+1)%2 = 1 =
+  // Female (Genders { Male, Female }), race 0 -> FactionRaces.Nord,
+  // and seed 0 & 0xffff = 0.
   '%nrn': (mcp, hooks) => {
     const w = hooks?.world;
-    const fd = w?.getFactionData?.(w?.currentRegionFaction?.());
-    if (!fd) return null;
-    if (fd.children?.length > 0) {
+    if (!w) return null;
+    const fd = w.getFactionData?.(w.currentRegionFaction?.());
+    if (fd?.children?.length > 0) {
       const firstChild = w.getFactionData?.(fd.children[0]);
       if (firstChild?.type === 4) return firstChild.name;
     }
-    const gender = (fd.ruler + 1) % 2;   // C#: (Genders)((ruler+1)%2) - even rulers are female
-    srand((fd.rulerNameSeed ?? 0) & 0xffff);
-    return fullName(getNameBank(FACTION_RACE_KEYS[fd.race]), gender);
+    const gender = ((fd?.ruler ?? 0) + 1) % 2;   // C#: (Genders)((ruler+1)%2) - even rulers are female
+    srand((fd?.rulerNameSeed ?? 0) & 0xffff);
+    return fullName(getNameBank(FACTION_RACE_KEYS[fd?.race ?? 0]), gender);
   },
   '%vam': (mcp, hooks) => hooks?.world?.playerVampireClanName?.() ?? '%vam[ERROR: PC not a vampire]',
   '%jok': (mcp, hooks) => hooks?.world?.getRandomText?.(200) ?? null,

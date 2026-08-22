@@ -802,8 +802,12 @@ export class QuestMachine {
         if (this.quests.has(quest.uid)) throw new Error('An item with the same key has already been added.');
         this.quests.set(quest.uid, quest);
       } catch (e) {
-        console.warn(`[quest] Failed to load quest data for '${questData.displayName} [${questData.questName}]' with UID ${questData.uid}. This is expected after removing a mod with custom quest actions. Exception message is '${e?.message ?? e}'`);
-        this.deps.addHUDText?.(`Failed to load quest '${questData.displayName} [${questData.questName}]'. This is expected if quest mod removed.`);
+        // QuestMachine.cs:1935-1938 uses LogWarningFormat / string.Format,
+        // which render a null argument as EMPTY; a bare `${null}` in JS
+        // is the four-letter string "null" (wave 26).
+        const dn = questData.displayName ?? '';
+        console.warn(`[quest] Failed to load quest data for '${dn} [${questData.questName}]' with UID ${questData.uid}. This is expected after removing a mod with custom quest actions. Exception message is '${e?.message ?? e}'`);
+        this.deps.addHUDText?.(`Failed to load quest '${dn} [${questData.questName}]'. This is expected if quest mod removed.`);
       }
     }
     this.removeStaleSiteLinks();

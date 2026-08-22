@@ -2920,6 +2920,107 @@ says whether any live quest owned the click, and the one
 Seven mutants, seven kills.
 
 
+### Wave 26
+
+**The two the refuters could not agree on - and the hole under both.**
+
+The seven-slice sweep sent five findings through with both refuters
+agreeing, and two where they SPLIT. Those two were mine to adjudicate,
+and the interesting part is that the disagreements were real: in each
+case one refuter had the C# right and the other had the reachability
+right.
+
+**Split 0: `%rt`/`%t` and `%nrn`.** One refuter verified, line for
+line, that `RegentTitle` discards `FindFactionByTypeAndRegion`'s bool
+and reads the out struct regardless - and that
+`PersistentFactionData.cs:239` assigns `new FactionFile.FactionData()`
+*before* searching, so a miss really does hand back all zeros, and
+`GetRulerTitle(0)` takes its `default:` and answers **Lord**. The
+port's `if (!region) return null` renders `[nullMCP]` instead.
+
+The other refuted it: the seam is mounted nowhere, so the handlers are
+in their *unmounted* state, not a miss state, and the port's charter is
+that an unmounted seam pends LOUDLY. Rendering a plausible silent
+"Lord" from a seam nobody answers is the exact trapdoor the seam gate
+exists to prevent.
+
+Both are right, and the second one's argument is what exposed the
+actual defect. **The seam gate could not see the seam at all.**
+
+```js
+for (const m of read(join(dir, f)).matchAll(/\bworld\??\.(\w+)/g)) names.add(m[1]);
+```
+
+It scanned for the literal `world.` / `world?.`. `questMacros.js` is
+written the other way throughout -
+
+```js
+const w = hooks?.world;
+return w?.findFactionByTypeAndRegion?.(7, w.currentRegionIndex?.());
+```
+
+- so an entire module's worth of seams was invisible to the gate. Three
+were unmounted behind the alias: `findFactionByTypeAndRegion`,
+`locationCompassDirection` and `buildingCompassDirection`. That is the
+fifth, sixth and seventh instance of the failure the gate's own header
+says had "happened four times over", sitting in the one module the gate
+could not see. *A GATE HAS A BLIND SPOT UNTIL SOMEBODY LOOKS FOR IT
+FROM THE OTHER SIDE.*
+
+So the resolution is all three at once: the gate resolves aliases; two
+of the three seams are **mounted**; the third gets a PENDING row with
+its reason; and `%rt`/`%nrn` become structurally 1:1 - gating on `!w`
+like `%rn` already does, and letting a lookup MISS take C#'s
+zero-struct fallback. The pending table owns "not mounted"; the macro
+owns "what DFU does".
+
+Tightening the alias scan mattered as much as widening it. The first
+draft matched any `const x = <anything containing world>`, which swept
+up `const loc = world?.currentLocation?.()` and duly reported
+`building` and `dungeon` as missing seams.
+
+**The compass law**, ported for the mount: eight half-open 45-degree
+bands off east (`TalkManager.cs:1163-1187`), reached by `Acos` plus
+C#'s longer road back to the lower half-plane rather than `atan2`. Two
+edges kept - a ZERO vector divides by a zero magnitude, and NaN fails
+every band comparison, so "exactly where you are" answers
+`...never mind...`; and the location lookup does not break on a match,
+so the LAST location of that name in the region wins.
+`buildingCompassDirection` stays pending: it needs the player
+transformed into the exterior automap's layout space, and a direction
+computed in the wrong space is a plausible wrong answer where the miss
+arm is loud.
+
+**Split 1: `Quest.displayName`.** Same shape of disagreement. `Quest.cs:56`
+is a bare `string displayName;`, so DFU's field is null and
+`DaggerfallGuildServicePopupWindow.cs:640` leans on it:
+`AddItem(displayName ?? quest.QuestName)`. The port initialised it to
+`''`, and `'' ?? x` is `''` - the fallback was dead code. One refuter
+confirmed all of that; the other showed the consequence is unreachable
+today, because every quest in both loaded lists carries a
+`displayname:` line.
+
+Unreachable today is how wave 20's journal regression looked too. Null
+now - with `?? ''` at the two template literals, because
+`string.Format` renders a null argument as empty and `${null}` in JS is
+the four-letter word.
+
+**Two pins had to be rebuilt after their first drafts survived
+mutation.** Weakening a band's `>=` to `>` passed everything: my probes
+at 22.4999 and 22.5001 straddle the seam but never land on it, and no
+vector I can build makes `acos` return exactly 22.5. The inclusivity is
+pinned on the source now, comparison for comparison. And dropping the
+faction search's partial-match arm passed too, because nothing
+exercised the mount - so the search moved into `talk.js` beside
+`findFactions`, where it can be driven directly.
+
+Six mutants killed, one equivalent mutant recorded as equivalent:
+swapping the two `if`s inside the search loop passes every pin, and it
+really is equivalent - the only item that could satisfy both is one
+with `region === -1` when the query is also -1, and the exact-match
+return fires either way.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

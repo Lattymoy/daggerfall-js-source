@@ -249,16 +249,16 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:174` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:191` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:644` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:674` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:680` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1219` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1442` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1588` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:1821` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:1840` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2111` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2382` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:645` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:675` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:681` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1220` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1443` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1610` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:1843` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:1862` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2133` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2404` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:190` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:231` - FLAGGED (Port-Ledger Q4-v): quest FOES pend the interior enemy
 - `src/scenes/worldModes.js:361` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
@@ -322,8 +322,8 @@ combat line numbers below are refreshed with it.
 - `src/systems/skills.js:83` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
-- `src/systems/talk.js:89` - *  FLAGGED to the crime slice - the state lands now, verbatim).
-- `src/systems/talk.js:102` - TallyCrimeGuildRequirements(true, 1) FLAGGED: the TG
+- `src/systems/talk.js:192` - *  FLAGGED to the crime slice - the state lands now, verbatim).
+- `src/systems/talk.js:205` - TallyCrimeGuildRequirements(true, 1) FLAGGED: the TG
 - `src/systems/talkSession.js:21` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
 - `src/systems/useItem.js:234` - lantern's and refuses when it would overflow. FLAGGED: DFU
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -

@@ -47,6 +47,18 @@ const PENDING = new Map([
   ['currentRegionVampireClan', 'GetCurrentRegionVampireClan - the vampirism arc'],
   ['playerVampireClan', 'the vampirism racial effect - the vampirism arc'],
   ['playerVampireClanName', 'rides the vampirism arc above'],
+  // AUDIT 24 (wave 26): found by closing the alias hole above. The
+  // other two the alias hid - findFactionByTypeAndRegion and
+  // locationCompassDirection - were MOUNTED in the same wave; this one
+  // cannot be. GetBuildingCompassDirection (TalkManager.cs:1203-1236)
+  // compares the target building's position against the PLAYER's,
+  // transformed into the exterior automap's layout space
+  // (ExteriorAutomap.blockSizeWidth * numMaxBlocksX * LayoutMultiplier,
+  // recentred on the block grid). The port has listBuildings and their
+  // positions but no automap layout to transform the player into, and
+  // a direction computed in the wrong space is a plausible WRONG
+  // answer where the miss arm is a loud '...never mind...'.
+  ['buildingCompassDirection', "%di's LOCAL arm - needs the player's position in the exterior automap's layout space"],
 ]);
 
 /** Bridge-ctx seams the HOST cannot answer yet. Same rule as PENDING
@@ -103,13 +115,48 @@ test('audit24 seams: every bridge ctx seam is SUPPLIED or declared PENDING', () 
   }
 });
 
-/** Every `world.<name>` the quest system reaches for. */
+/** Every `world.<name>` the quest system reaches for.
+ *
+ *  AUDIT 24 (wave 26): THE ALIAS HOLE. This scanned for the literal
+ *  `world.` / `world?.` and nothing else, so a module that binds the
+ *  seam to a local first -
+ *
+ *      const w = hooks?.world;
+ *      return w?.findFactionByTypeAndRegion?.(7, w.currentRegionIndex?.());
+ *
+ *  - was invisible to the gate ENTIRELY. questMacros.js is written
+ *  that way throughout, and it hid three unmounted seams behind the
+ *  alias: locationCompassDirection, buildingCompassDirection and
+ *  findFactionByTypeAndRegion. That is the fifth, sixth and seventh
+ *  instance of the exact failure this gate's own header says had
+ *  "happened four times over", sitting in the one module the gate
+ *  could not see.
+ *
+ *  So the scan resolves aliases: any `const <id> = <...>world<...>`
+ *  binding in a file makes `<id>.x` count as `world.x` in that file. */
 function calledSeams() {
   const dir = 'src/systems/quest';
   const names = new Set();
   for (const f of readdirSync(join(ROOT, dir))) {
     if (!f.endsWith('.js')) continue;
-    for (const m of read(join(dir, f)).matchAll(/\bworld\??\.(\w+)/g)) names.add(m[1]);
+    const src = read(join(dir, f));
+    for (const m of src.matchAll(/\bworld\??\.(\w+)/g)) names.add(m[1]);
+    // Locals bound to the world seam ITSELF - `const w = hooks?.world;`
+    // and `const w = world();`, the two shapes questMacros.js uses.
+    // The initialiser must END at `world` (or `world()`): a local bound
+    // to something world RETURNS - `const loc = world?.currentLocation?.()`
+    // - is a location, not the seam, and counting its properties would
+    // report `building` and `dungeon` as missing seams. The first draft
+    // of this scan did exactly that.
+    const aliases = new Set(
+      [...src.matchAll(/\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*([^;\n]*?)\s*;/g)]
+        .filter(([, , init]) => /^[\w$]*(\??\.[\w$]+)*\??\.?world(\?\.)?(\(\))?$/.test(init))
+        .map((m) => m[1])
+        .filter((a) => a !== 'world'),
+    );
+    for (const a of aliases) {
+      for (const m of src.matchAll(new RegExp(`\\b${a}\\??\\.(\\w+)`, 'g'))) names.add(m[1]);
+    }
   }
   return names;
 }

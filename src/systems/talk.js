@@ -20,6 +20,7 @@ import { SOCIAL_GROUP_COUNT, FACTION_TYPES, SOCIAL_GROUPS, GUILD_GROUPS } from '
 import { calculatePickpocketingChance, dice100 } from '../combat/formulas.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { goldStack } from './inventory.js';   // AUDIT 17f: one gold mint
+import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';   // wave 26: the compass law
 
 // PlayerActivate constants. AUDIT 24 (wave 23): these were a SECOND
 // declaration of PlayerActivate.cs:76-88, written out as bare
@@ -36,6 +37,108 @@ export {
 } from '../player/activate.js';
 import { MOBILE_NPC_ACTIVATION_DISTANCE, PICKPOCKET_DISTANCE } from '../player/activate.js';
 export const FOUND_NOTHING_VALUABLE_TEXT_ID = 8999;
+
+/** The eight compass words (Internal_Strings_en 383-390) and the
+ *  never-mind (425), the strings DirectionVector2DirectionHintString
+ *  answers with. */
+export const DIRECTION_HINTS = Object.freeze({
+  east: 'east', northeast: 'northeast', north: 'north', northwest: 'northwest',
+  west: 'west', southwest: 'southwest', south: 'south', southeast: 'southeast',
+  resolvingError: '...never mind...',
+  thisPlace: 'this place',
+});
+
+/** DirectionVector2DirectionHintString (TalkManager.cs:1163-1187),
+ *  verbatim. Eight 45-degree bands off EAST, measured
+ *  counter-clockwise.
+ *
+ *  Acos returns 0..180, so C# recovers the lower half-plane with
+ *  `if (y < 0) angle = 180 + (180 - angle)` rather than with atan2 -
+ *  the same number by a longer road, kept as written.
+ *
+ *  TWO C# EDGES KEPT. A ZERO vector divides by a zero magnitude:
+ *  0/0 is NaN, every band comparison against NaN is false, and the
+ *  chain falls to its `else` - so "the target is exactly where you
+ *  are" answers `...never mind...`, not a direction. And the bands are
+ *  half-open upwards (`>= 22.5 && < 67.5`), with east taking BOTH ends
+ *  (`>= 337.5 && <= 360`), so 337.5 is east and 22.5 is northeast.
+ *
+ *  @param {number} x  target.x - player.x
+ *  @param {number} y  target.y - player.y (already y-inverted by the
+ *                     caller where C# inverts it)
+ */
+export function directionHintString(x, y) {
+  const magnitude = Math.sqrt(x * x + y * y);
+  // Vector2.Dot(v, Vector2.right) is v.x
+  let angle = (Math.acos(x / magnitude) / Math.PI) * 180.0;
+  if (y < 0) angle = 180.0 + (180.0 - angle);
+  if ((angle >= 0.0 && angle < 22.5) || (angle >= 337.5 && angle <= 360.0)) return DIRECTION_HINTS.east;
+  if (angle >= 22.5 && angle < 67.5) return DIRECTION_HINTS.northeast;
+  if (angle >= 67.5 && angle < 112.5) return DIRECTION_HINTS.north;
+  if (angle >= 112.5 && angle < 157.5) return DIRECTION_HINTS.northwest;
+  if (angle >= 157.5 && angle < 202.5) return DIRECTION_HINTS.west;
+  if (angle >= 202.5 && angle < 247.5) return DIRECTION_HINTS.southwest;
+  if (angle >= 247.5 && angle < 292.5) return DIRECTION_HINTS.south;
+  if (angle >= 292.5 && angle < 337.5) return DIRECTION_HINTS.southeast;
+  return DIRECTION_HINTS.resolvingError;
+}
+
+/** GetLocationCompassDirection (TalkManager.cs:1238-1281): which way
+ *  the quest's remote Place lies, in MAP PIXELS.
+ *
+ *  The region is the POLITIC index at the player's own pixel (minus
+ *  128, and out-of-range reads -1), and the location is found by
+ *  case-insensitive NAME within that region's map names.
+ *
+ *  THREE C# SHAPES KEPT: the name loop does NOT break on a match, so
+ *  the LAST location of that name in the region wins; the "did we find
+ *  it" test is `positionLocation != Vector2.zero`, so a location whose
+ *  map pixel really is (0,0) reads as not-found; and the y axis is
+ *  INVERTED before the hint, because map pixels grow southwards while
+ *  the hint's bands are drawn on a normal y-up plane.
+ *
+ *  @param {object} deps
+ *  @param {function():{x:number,y:number}} deps.playerMapPixel
+ *  @param {object} deps.maps  the MapsFile reader
+ *  @param {string} locationName
+ */
+export function locationCompassDirection({ playerMapPixel, maps }, locationName) {
+  const player = playerMapPixel?.() ?? { x: 0, y: 0 };
+  let region = (maps?.getPoliticIndex?.(player.x, player.y) ?? 0) - 128;
+  if (region < 0 || region >= (maps?.regionCount ?? 0)) region = -1;
+  const dfRegion = maps?.getRegion?.(region) ?? null;
+  const names = dfRegion?.mapNames ?? [];
+  const wanted = String(locationName ?? '').toLowerCase();
+  let loc = { x: 0, y: 0 };
+  for (let i = 0; i < names.length; i++) {
+    if (String(names[i]).toLowerCase() !== wanted) continue;   // no break: the LAST match wins
+    const row = dfRegion.mapTable?.[i];
+    if (!row) continue;
+    loc = longitudeLatitudeToMapPixel(Math.trunc(row.longitude), Math.trunc(row.latitude));
+  }
+  if (loc.x === 0 && loc.y === 0) return DIRECTION_HINTS.resolvingError;
+  // `vecDirectionToTarget.y = -vecDirectionToTarget.y`
+  return directionHintString(loc.x - player.x, -(loc.y - player.y));
+}
+
+/** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265).
+ *
+ *  An EXACT type+region match returns IMMEDIATELY, so the first one in
+ *  dictionary order wins. Otherwise the loop keeps overwriting a
+ *  partial match on `region == -1`, so the LAST region-less faction of
+ *  that type is the fallback - not the first. A total miss answers the
+ *  zero struct with `false`; the port answers null and lets the
+ *  callers (%rt, %nrn) take their own zero-struct fallbacks, which is
+ *  what C#'s bool-discarding callers do with it.
+ */
+export function findFactionByTypeAndRegion(factionDict, type, regionIndex) {
+  let partial = null;
+  for (const item of factionDict.values()) {
+    if (type === item.type && regionIndex === item.region) return item;
+    if (type === item.type && item.region === -1) partial = item;
+  }
+  return partial;
+}
 
 /** PersistentFactionData.FindFactions, verbatim (-1 = any). */
 export function findFactions(factionDict, { type = -1, socialGroup = -1, guildGroup = -1, region = -1 } = {}) {
