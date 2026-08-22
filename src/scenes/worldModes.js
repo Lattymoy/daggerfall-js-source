@@ -1389,7 +1389,7 @@ export function createWorldModes(host) {
     if (hudArt) {
       const _hfw = [-view[2], -view[10]];
       drawHud(renderer, canvas, hudArt, playerEntity,
-        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1);
+        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt);
     }
     // MERGE AUDIT: the interior arm SAYS things - the static-NPC and
     // guild fallthroughs at :362/:368/:416 all speak through

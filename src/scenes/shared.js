@@ -20,6 +20,7 @@ import { decayEnemyAlert } from '../systems/encounters.js';   // AUDIT 24 (wave 
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';
+import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer } from '../characters/playerEntity.js';
 import { music } from '../systems/music.js';
@@ -374,6 +375,10 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null }
     // death screen instead of leaving you walking around at 0 HP.
     if (hurt) hurt(dmg);
     else hurtPlayer(entity, dmg);
+    // AUDIT 24 (wave 39): PlayerHealth.ApplyPlayerFallDamage calls
+    // RemoveHealth (:57), which is ShowPlayerDamage.Flash's only
+    // trigger. A fall flashes the screen; a poison does not.
+    flashPlayerDamage();
     sound?.(SOUND.FallDamage);
   } else if (distance > FALL_DAMAGE_THRESHOLD / 2) {
     sound?.(SOUND.FallHard);   // BadFallDetected

@@ -51,6 +51,7 @@ import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   //
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
 import { seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1)
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
+import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';   // G2
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
@@ -522,8 +523,13 @@ export async function bootExterior(canvas, renderer, params, status) {
   // G1: the city watch (SpawnCityGuards verbatim; Knight_CityWatch
   // class foes on the C11 stack). A guard's hit hurts the PLAYER
   // through the same entity the fall-damage path bills.
+  // AUDIT 24 (wave 39): ONE blood pool for the host, shared by both
+  // enemy pools - a splash is a world billboard and the host owns the
+  // draw. EnemyBlood is per-entity in DFU only because Unity hangs a
+  // component off each enemy; there is one archive and one clock.
+  const hitEffects = createHitEffects({ renderer, getTexture, uploadRecordFrame });
   const cityGuards = createCityGuards({
-    renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio,
+    renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): a guard's poison anchors at NOW, not 0
     onPlayerHurt: (dmg, wpn) => {
@@ -1253,6 +1259,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       personBatches.push(...guardBatches);
       droppedLoot.tickFlats(dt);   // FA1 slice 3
       personBatches.push(...droppedLoot.batches());   // U8e: the ground piles
+      // AUDIT 24 (wave 39): blood splashes ride the person axis too.
+      hitEffects.tick(dt);
+      personBatches.push(...hitEffects.batches());
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, new Float32Array([0, 1, 0]));
     }
     if (precip) {
@@ -1331,7 +1340,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (hudArt) {
       const _hfw = [-view[2], -view[10]];
       drawHud(renderer, canvas, hudArt, playerEntity,
-        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1);
+        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt);
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
 

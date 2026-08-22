@@ -36,12 +36,28 @@ test('ch3 characters-8: the fall tracker - grounded refreshes, a past-threshold 
   assert.equal(s.landedFall, 0, '4 units is under the 5.0 threshold');
 });
 
+/** The `{ ... }` block containing index `i`, matched rather than
+ *  guessed at by character count. */
+function braceBlock(text, i) {
+  const open = text.lastIndexOf('{', i);
+  let depth = 0;
+  for (let k = open; k < text.length; k++) {
+    if (text[k] === '{') depth++;
+    else if (text[k] === '}' && --depth === 0) return text.slice(open, k + 1);
+  }
+  return text.slice(open);
+}
+
 test('ch3 characters-8: both pools bill the landing through their damage doors with the clip', () => {
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/exteriorFoes.js']) {
     const t = src(f);
     const i = t.indexOf('f.ai.landedFall > 0');
     assert.ok(i > 0, `${f}: the landing report is consumed`);
-    const arm = t.slice(i, i + 500);
+    // AUDIT 24 (wave 39): this used to slice a fixed 500 characters,
+    // which is a window, not a block - one added comment pushed
+    // damageFoe out of it and the pin failed on unchanged behaviour.
+    // Brace-match the arm instead, so it cannot drift again.
+    const arm = braceBlock(t, i);
     assert.ok(arm.includes('FALL_HP_PER_METRE * (f.ai.landedFall - FALL_DAMAGE_THRESHOLD)'), `${f}: the shared formula`);
     assert.ok(arm.includes('SOUND.FallDamage'), `${f}: the landing rings`);
     assert.ok(arm.includes('damageFoe(f, '), `${f}: through the pool's damage door`);

@@ -4359,6 +4359,103 @@ Its other twenty-one claims stand, and are the queue below.
 plus the seventeen this scout confirmed that this wave did not close.
 
 
+### Wave 39 - nothing bled, and nothing hurt
+
+Two whole DFU components, neither of them ported.
+
+**`EnemyBlood.ShowBloodSplash`.** Twelve lines. The port had generated
+`bloodIndex` into `ENEMY_BASICS` *correctly* - the same six rows DFU
+gives a 2, everything else left at the struct default 0 - and then
+nothing read it. `grep -rn bloodIndex src/` returned six data lines and
+a test asserting the data existed. Not one splash, for any hit, in any
+pool, since the first enemy shipped.
+
+**`ShowPlayerDamage`.** Thirty-seven lines, of which the whole
+behaviour is three: alpha starts at `0.4`, falls at `0.7` a second,
+paints the screen red. The player took every hit in the game with no
+feedback at all.
+
+Both are cheap, and both were reachable the whole time: the one-shot
+billboard clock had already been ported for the missile impact
+(`render/flatAnimation.js`, DFU's display-then-advance coroutine
+verbatim), and `drawScreenQuad(null, ..., alpha < 1)` has been the
+renderer's blended solid since U10. What was missing was the wiring,
+which is the thing an audit finds and a feature never does.
+
+**Which hits flash is a law, not an omission.** This is the part worth
+getting right. The flash rides `PlayerHealth.RemoveHealth`, and the
+whole DFU tree sends that message from exactly three places:
+`EnemyAttack.cs:406` (an enemy's blow, gated on `damage > 0`),
+`DaggerfallAction.cs:739` and `:768` (the dungeon damage traps), and
+`PlayerHealth.cs:57` (its own fall arm). **Spell damage does not
+flash** - `DamageHealth`, `ContinuousDamageHealth` and `TransferHealth`
+all go through `DamageHealthFromSource` -> `Entity.DecreaseHealth`,
+which never touches `PlayerHealth`. Neither do poison, disease or
+starvation. Being set alight by a Fire Daedra flashes the screen
+because the *claw* lands, not because the burning does.
+
+The mutation campaign has an arm for that specific direction: adding
+`flashPlayerDamage` to the spell host is a mutant, and it is killed.
+**THE PORT MUST NOT BE MORE ACCURATE THAN THE THING IT IS A PORT OF**
+cuts both ways, and "more responsive" is a kind of more accurate.
+
+**Two more call sites are deliberately not ported**, for the same
+reason:
+
+- `DaggerfallEntityBehaviour.cs:173-176`, the `showBlood` arm. Every
+  caller in the tree passes `false`. It is dead code in the shipped
+  game, and porting it live would make spell damage bleed.
+- `EnemyHealth.cs:52`. `grep EnemyHealth` over the DFU tree returns
+  nothing outside that file - a DFTFU-era component no shipped scene
+  carries.
+
+A third, `EnemyAttack.cs:332`, is foe-vs-foe melee, which the port's
+pools do not do yet; it is written down against the day friendly fire
+lands rather than invented now.
+
+**`ShowMagicSparkles` is cut from this wave on purpose.** It is the
+same billboard at record 3, fired whenever a cast's target type is
+neither `SingleTargetAtRange` nor `AreaAtRange` - so rangeType 0, 1 and
+3, at the *target's* centre. Two of those three arms have a target foe
+to hang it on; the `CasterOnly` arm needs the player's feet, and
+`createPlayerMagic` is handed an eye, not a body. A function with no
+caller is a comment, and a function with two callers out of three is
+worse. The gate is recorded in the module header and the finding is in
+the queue.
+
+**Two positions, both DFU's.** A splash goes at
+`transform.position + controller.center` with `y += height / 8` - five
+eighths of the way up - which is DFU's own formula at the site where it
+has no raycast to work from. The port's melee resolves by yaw cone and
+distance rather than a sphere cast, so that formula stands in for
+`impactPosition` at the weapon-hit sites. Exactly one port site has
+DFU's real impact point: the civilian murder, where the ray already
+found the person at `bestD`. Fall damage is different again - DFU
+passes `transform.position`, the base, while its comment says "falling
+enemies bleed at the center". The line does not add `controller.center`.
+The feet are what DFU passes, so the feet are what the port passes, and
+the comment is noted as the thing it is.
+
+**THE FOUR HOSTS RULE, applied before the fact.** The flash could have
+been pasted into four frame bodies - `dungeonContext`, `world`,
+`exterior`, `worldModes` all draw the HUD - and would then have drifted
+in four directions. It rides `drawHud` instead, the one host-agnostic
+call all four already make "last, over the viewmodel", and it runs
+*before* that function's `if (!art) return`, because a host that never
+loaded the HUD art still takes damage.
+
+**Thirty-two mutants, thirty-two kills**, two equivalents recorded.
+
+One older pin had to move: `ch3` sliced a fixed 500 characters after
+`f.ai.landedFall > 0` and asserted `damageFoe` was inside the window.
+An added comment pushed it out, and the pin failed on behaviour that
+had not changed. A window is not a block; it brace-matches now.
+
+**Twenty-six findings remain**, plus seven from the host-parity sweep,
+plus fifteen the wave-38 scout confirmed that these two waves have not
+closed.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

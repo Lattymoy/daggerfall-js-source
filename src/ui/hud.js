@@ -16,6 +16,7 @@
 //   reference), min 1 - integer scaling keeps the art crisp.
 
 import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
+import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 
 export const COMPASS_BOX_OUTLINE = 2;
 export const COMPASS_BOX_INTERIOR = 64;
@@ -125,7 +126,15 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
 
 /** Draw the HUD. vitals = { health, maxHealth, magicka, maxMagicka };
  *  heading01 = camera yaw / 2pi with 0 facing +z. */
-export function drawHud(renderer, canvas, art, vitals, heading01) {
+export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0) {
+  // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
+  // THE FOUR HOSTS RULE, applied before the fact: drawHud is the one
+  // host-agnostic call all four make, "last, over the viewmodel", so
+  // the flash rides it instead of being pasted into four frame bodies
+  // that would then drift. It runs BEFORE the `!art` return because a
+  // host that never loaded the HUD art still takes damage.
+  playerDamageFlash.tick(dt);
+  playerDamageFlash.draw(renderer, canvas);
   if (!art) return;
   const s = hudScale(canvas.width, canvas.height);
   const bottom = canvas.height - HUD_BORDER;

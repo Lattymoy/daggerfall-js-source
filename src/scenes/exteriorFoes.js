@@ -37,7 +37,9 @@ import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';   // AUDIT 24 (wave 30): the monster special-attack rider, above ground
 import { MINUTES_PER_DAY } from '../systems/worldTick.js';
-import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied } from './corpseMarker.js';   // AUDIT 24 (wave 38): EnemyDeath's one home
+import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied } from './corpseMarker.js';
+import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 
 // The port's allocation-owner guards (classic self-limits through the
 // 144-minute cadence; these keep a long session bounded).
@@ -49,6 +51,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   playerSinks = null,   // AUDIT 24 (wave 30): the player's damage/drain doors - the nymph and lamia riders need drainFatigue
   onArrow = null,   // X2-slice: the host's arrow seam - (from, dir, foe) at the shoot frame
   spellsByIndex = null,   // X3-slice: () => the SPELLS.STD map (null until loaded) - casters need it
+  hitEffects = null,   // AUDIT 24 (wave 39): the host's one blood/effect pool
   magicHooks = null }) {  // X3-slice: { explodeAt, fireMissile } - the host's spell release seams
   const foes = [];        // { mobile, ai, attack, entity, batch, tex, archive, mobileType, dead, _encounter: true }
   const corpseBatches = [];
@@ -218,6 +221,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         f.ai.landedFall = 0;
         if (fdmg > 0) {
           audio?.play3d?.(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
+          // EnemyMotor.cs:1404-1407 - index 0, at `transform.position`.
+          // Its comment says "falling enemies bleed at the center",
+          // but transform.position on a CharacterController IS the
+          // base; the centre is `+ controller.center`, which this line
+          // does not add. The feet are what DFU passes, so the feet are
+          // what the port passes.
+          hitEffects?.showBloodSplash(0, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]]);
           damageFoe(f, fdmg, null, null);
         }
       }
@@ -295,7 +305,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
             onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(currentMinute()) }),
             say,
           });
-          if (dmg > 0) onPlayerHurt?.(dmg, wpn);
+          // AUDIT 24 (wave 39): EnemyAttack.cs:406 -
+          // `PlayerObject.SendMessage("RemoveHealth", damage)` - which
+          // is ShowPlayerDamage.Flash's trigger. An enemy's BLOW
+          // flashes the screen; the poison it carries does not.
+          if (dmg > 0) { onPlayerHurt?.(dmg, wpn); flashPlayerDamage(); }
           // C2-slice (combat-9): a connected attack that LOST the
           // roll rings the miss sound (ApplyDamageToPlayer's else)
           else audio?.play3d?.(enemyMissSound(wpn), mid, 1, { maxDistance: 16 });
@@ -349,6 +363,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       any = true;
       if (damage > 0) {
         onHitSound?.(foe);
+        // WeaponManager.cs:569-573 - the splash sits right beside the
+        // hit sound, and takes the struck foe's OWN BloodIndex, which
+        // is why the six rows DFU marks bleed differently. DFU has a
+        // raycast impactPosition here; this pool resolves melee by yaw
+        // cone and distance, so the body centre (DFU's own formula at
+        // its no-raycast site, EnemyAttack.cs:326-328) stands in.
+        hitEffects?.showBloodSplash(ENEMY_BASICS[foe.mobileType]?.bloodIndex ?? 0,
+          bloodCentre(foe.ai.feet, foe.ai.height));
         // C2-slice (combat-17): the struck class foe cries out 40%
         const pain = enemyPainVoice(foe, damage);
         if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16 });

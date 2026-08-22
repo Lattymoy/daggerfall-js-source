@@ -110,6 +110,8 @@ import { Collider } from '../player/collider.js';
 import { ActionSystem } from '../world/actionSystem.js';
 import { collectDungeonEnemies } from '../characters/dungeonEnemies.js';
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
+import { createHitEffects, bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 
 
 
@@ -1178,6 +1180,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   const flatAnims = new FlatAnimator();   // FA1
   const billboardBatches = [];
+  // AUDIT 24 (wave 39): the blood pool registers into the SAME
+  // persistent draw list the missile impact uses (:1395/:1404), so a
+  // splash appears and disappears the way an impact flash does.
+  const hitEffects = createHitEffects({
+    renderer, getTexture, uploadRecordFrame,
+    onSpawn: (b) => billboardBatches.push(b),
+    onRetire: (b) => { const i = billboardBatches.indexOf(b); if (i >= 0) billboardBatches.splice(i, 1); },
+  });
   for (const [key, centers] of flatGroups) {
     const [archive, record] = key.split('_').map(Number);
     // Flats keep their original archives (the table remaps walls);
@@ -1340,6 +1350,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       // EnemySounds.PlayHitSound at the struck foe, weapon-aware
       audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, 1.1, { maxDistance: 16 });   // rides the foe's source shape
+      // WeaponManager.cs:569-573 - the splash sits right beside the hit
+      // sound and takes the struck foe's OWN BloodIndex. DFU has a
+      // raycast impactPosition here; the port resolves melee by yaw
+      // cone and distance, so the body centre (DFU's own no-raycast
+      // formula, EnemyAttack.cs:326-328) stands in.
+      hitEffects?.showBloodSplash(ENEMY_BASICS[foe.mobileType]?.bloodIndex ?? 0,
+        bloodCentre(foe.ai.feet, foe.ai.height));
       // C2-slice (combat-17): a damaged CLASS foe cries out 40% of
       // the time (heavyDamage = a quarter of max health in one hit).
       const pain = enemyPainVoice(foe, damage);
@@ -1719,6 +1736,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // rings the miss sound too (ApplyDamageToPlayer's else arm).
     else audio.play3d(enemyMissSound(wpn), [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16 });
     hurtPlayer(dmg);
+    // AUDIT 24 (wave 39): EnemyAttack.cs:406 sends RemoveHealth, which
+    // is what ShowPlayerDamage listens to. Guarded on a LANDED blow -
+    // DFU's SendDamageToPlayer is only reached from the hit arm.
+    if (dmg > 0) flashPlayerDamage();
     foeAttackVoice(f);   // C2-slice (combat-17): after the fork, hit or miss
   }
 
@@ -1981,6 +2002,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         f.ai.landedFall = 0;
         if (dmg > 0) {
           audio.play3d(SOUND.FallDamage, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]], 1, { maxDistance: 16 });
+          // EnemyMotor.cs:1404-1407 - index 0 at `transform.position`,
+          // which on a CharacterController is the BASE. Its comment
+          // says "falling enemies bleed at the center"; the line does
+          // not add controller.center, so the feet are what DFU passes.
+          hitEffects?.showBloodSplash(0, [f.ai.feet[0], f.ai.feet[1], f.ai.feet[2]]);
           damageFoe(f, dmg, null, null);
         }
       }
@@ -2219,7 +2245,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // forward this file already derives (0 = +z, wrapped 0..1).
     const hfw = [-view[2], -view[10]];
     const heading01 = ((Math.atan2(hfw[0], hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1;
-    drawHud(renderer, canvas, hudArt, playerEntity, heading01);
+    drawHud(renderer, canvas, hudArt, playerEntity, heading01, dt);
     hudText.tick(dt);
     if (hudFont) hudText.draw(renderer, canvas, hudFont, hudScaleFor(canvas.width, canvas.height));
     // The CLICK TO LOOK banner retired with click-to-look itself: the
@@ -2279,6 +2305,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     texRemap,
     billboardBatches,
     flatAnims,   // FA1: the host ticks the flats it draws
+    hitEffects,  // AUDIT 24 (wave 39): and the blood splashes it draws
     lights,
     flicker,
     waterQuads,

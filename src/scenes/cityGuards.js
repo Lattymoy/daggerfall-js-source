@@ -58,7 +58,9 @@ import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { rayPersonDistance } from './townTalk.js';
-import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied } from './corpseMarker.js';   // AUDIT 24 (wave 38): EnemyDeath's one home
+import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayEnemyDied } from './corpseMarker.js';
+import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
+import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 
 // PlayerEntity.Crimes (the two this module levies - the enum lives
 // whole in systems/court.js).
@@ -73,7 +75,8 @@ export const GUARD_SEEN_ANGLE = 95;            // an NPC facing the player withi
 export const GUARD_FALLBACK_MIN_DIST = 12.8;   // CreateFoeSpawner ring
 export const GUARD_FALLBACK_MAX_DIST = 51.2;
 
-export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute, rand = Math.random, say = null }) {
+export function createCityGuards({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, onPlayerHurt, currentMinute, rand = Math.random, say = null,
+  hitEffects = null }) {   // AUDIT 24 (wave 39): the host's one blood/effect pool
   // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
   // let a guard's poisoned hit anchor at minute 0, and the next world
   // tick (absolute clock ~523,530) caught the whole course up at once.
@@ -388,7 +391,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
             onInflictPoison: (att, tgt, pt) => inflictPoison(playerEntity, pt, false, { currentMinute: Math.floor(currentMinute()) }),
             say,   // C-slice: equipment breaks speak
           });
-          if (dmg > 0) onPlayerHurt?.(dmg, wpn);   // G2: the host's arrest interception rides this
+          // AUDIT 24 (wave 39): EnemyAttack.cs:406 -
+          // `PlayerObject.SendMessage("RemoveHealth", damage)` - which
+          // is ShowPlayerDamage.Flash's trigger. An enemy's BLOW
+          // flashes the screen; the poison it carries does not.
+          if (dmg > 0) { onPlayerHurt?.(dmg, wpn); flashPlayerDamage(); }   // G2: the host's arrest interception rides this
           // C2-slice (combat-9): a connected attack that LOST the
           // roll rings the miss sound (ApplyDamageToPlayer's else)
           else audio?.play3d?.(enemyMissSound(wpn), gmid, 1, { maxDistance: 16 });
@@ -447,6 +454,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       any = true;
       if (damage > 0) {
         onHitSound?.(foe);
+        // WeaponManager.cs:569-573, beside the hit sound (see the note
+        // in exteriorFoes: no raycast impact point here, so the body
+        // centre stands in - DFU's own no-raycast formula).
+        hitEffects?.showBloodSplash(ENEMY_BASICS[GUARD_MOBILE_TYPE]?.bloodIndex ?? 0,
+          bloodCentre(foe.ai.feet, foe.ai.height));
         // C2-slice (combat-17): the struck watchman cries out 40%
         const pain = enemyPainVoice(foe, damage);
         if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16 });
@@ -488,6 +500,13 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     const wall = collider.raycast(eye, lookDir, bestD);
     if (Number.isFinite(wall) && wall < bestD - 1e-3) return false;   // occluded
     if (!best.guard) {
+      // WeaponManager.cs:504-508 - murdering a wandering civilian
+      // splashes record 0, NOT a BloodIndex: a MobilePersonNPC has no
+      // MobileEnemy to read one from. And this is the ONE port site
+      // that has DFU's actual impactPosition - the ray already found
+      // the person at bestD.
+      hitEffects?.showBloodSplash(0,
+        [eye[0] + lookDir[0] * bestD, eye[1] + lookDir[1] * bestD, eye[2] + lookDir[2] * bestD]);
       best.disable();   // one weapon hit kills a civilian (SetActive(false))
       playerEntity.crimeCommitted = CRIME_MURDER;
       onMurder();       // SpawnCityGuards(true)

@@ -49,6 +49,7 @@
 import { trs, multiply } from './mat4.js';
 import { ACTION_FLAGS, TRIGGER_FLAGS, MOVE_ACTION_FLAGS } from './rdbLayout.js';
 import { CASTSPELL_COOLDOWN_TICK } from '../systems/spellcast.js';   // single source (DaggerfallAction 45.454546)
+import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 
 // The RDB effect-action family (DaggerfallAction delegates that hurt
 // rather than move). Combat-arc row from Port-Ledger C:
@@ -254,10 +255,12 @@ export class ActionSystem {
       const a = Math.max(1, o.magnitude), b = Math.max(1, o.index);
       const span = Math.max(0, b - a);                      // int Range: exclusive upper; max<=min -> min
       const dmg = (a + Math.floor(this._rolls() * span)) * lvl;
-      if (this._damagePlayer) this._damagePlayer(dmg);
+      // AUDIT 24 (wave 39): DaggerfallAction.cs:739 sends RemoveHealth,
+      // so a damage trap flashes the screen (ShowPlayerDamage).
+      if (this._damagePlayer) { this._damagePlayer(dmg); flashPlayerDamage(); }
     } else if (o.actionFlag >= F.Hurt22 && o.actionFlag <= F.Hurt25) {
       const dmg = (o.isFlat ? o.magnitude : o.axisRaw) * lvl;
-      if (this._damagePlayer) this._damagePlayer(dmg);
+      if (this._damagePlayer) { this._damagePlayer(dmg); flashPlayerDamage(); }   // :768, the same message
     }
     else if (o.actionFlag === F.CastSpell) {
       // S4b verbatim: cooldown -= 45.454546 per Play; at <= 0 the

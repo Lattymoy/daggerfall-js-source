@@ -46,6 +46,7 @@ import { locationCompassDirection, findFactionByTypeAndRegion } from '../systems
 import { seasonValue, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
 import { regionPriceAdjustment } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer)
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
+import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold
@@ -800,8 +801,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _livePersons = [];
   // G1: the city watch (SpawnCityGuards verbatim) - the streaming
   // host's guards ride the world collider (terrain heightAt included).
+  // AUDIT 24 (wave 39): ONE blood pool for the host, shared by both
+  // enemy pools - a splash is a world billboard and the host owns the
+  // draw. EnemyBlood is per-entity in DFU only because Unity hangs a
+  // component off each enemy; there is one archive and one clock.
+  const hitEffects = createHitEffects({ renderer, getTexture, uploadRecordFrame });
   const cityGuards = createCityGuards({
-    renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio,
+    renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.classicMinutes),   // AUDIT 23 (hosts-3): the poison clock
     onPlayerHurt: (dmg, wpn) => {
@@ -819,7 +825,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // X-slice: the encounter-foe pool - S32's above-ground arms go
   // LIVE. Same damage door shape as the guards; no crime machinery.
   const exteriorFoes = createExteriorFoes({
-    renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio,
+    renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
     currentMinute: () => Math.floor(playerTicker.classicMinutes),
     playerSinks: playerTicker.sinks,   // AUDIT 24 (wave 30): OnMonsterHit's fatigue rider drains through the host's one set of doors
     say: (l) => townTalk.say(l),
@@ -2256,6 +2262,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       cityGuards.offsetAll(r.offset);
       exteriorFoes.offsetAll(r.offset);   // X-slice
       droppedLoot.offsetAll(r.offset);
+      hitEffects.offsetAll(r.offset);   // AUDIT 24 (wave 39): a splash mid-animation follows the origin too
       // AUDIT 18: this line used to be an optional call to a method
       // ArrowFlight has never had, so it was swallowed every time and
       // every in-flight arrow was stranded 819.2 units behind.
@@ -2417,6 +2424,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     droppedLoot.tickFlats(dt);   // FA1 slice 3
     livePersonBatches.push(...droppedLoot.batches());   // U8e: the ground piles
+    // AUDIT 24 (wave 39): the blood splashes, on the same axis. Their
+    // clock is REAL dt like every other one-shot, and it ENDS - a
+    // finished splash frees its batch inside tick().
+    hitEffects.tick(dt);
+    livePersonBatches.push(...hitEffects.batches());
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, new Float32Array([0, 1, 0]));
     if (precip) {
       precip.draw(precipMode, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
@@ -2523,7 +2535,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (hudArt) {
       const _hfw = [-view[2], -view[10]];
       drawHud(renderer, canvas, hudArt, playerEntity,
-        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1);
+        ((Math.atan2(_hfw[0], _hfw[1]) / (Math.PI * 2)) % 1 + 1) % 1, dt);
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
 
