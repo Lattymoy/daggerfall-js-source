@@ -4,7 +4,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EnemyAI } from '../src/characters/enemyMotor.js';
-import { EnemyAttack } from '../src/characters/enemyAttack.js';
+import {
+  EnemyAttack, BOW_SHOT_CHANCE, MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE,
+} from '../src/characters/enemyAttack.js';
+import { MELEE_DISTANCE } from '../src/characters/enemyMotor.js';
+import { STRIKES } from '../src/characters/anims.js';
 import { Collider } from '../src/player/collider.js';
 import { rand, setSeed, getSeed } from '../src/formats/dfRandom.js';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
@@ -108,6 +112,94 @@ test('audit24 characters-3: the bow band carries DetectedTarget and the CanAct/G
   assert.equal(shoot({}), true, 'a detected target inside the band is shot at');
   assert.equal(shoot({ detected: false }), false, 'a Chameleoned target is in sight but NOT detected');
   assert.equal(shoot({ giveUpTimer: 0 }), false, 'a foe that has given up cannot act at all');
+  // ...and the bar is `> 0`, not `> 1`: HandleNoAction:359 drops CanAct
+  // on `GiveUpTimer <= 0`, so the LAST tick before giving up still
+  // acts. (The mutation campaign found this: every fixture above sits
+  // at 200 or 0, and no fixture that never sits ON the bar can test
+  // which side of it the code is.)
+  assert.equal(shoot({ giveUpTimer: 1 }), true, 'one tick left is still a tick');
+});
+
+test('audit24 characters-3b: the bow roll is STRICT, and the strike index stays in range', () => {
+  // DoRangedAttack:587 is `Random.value < 1/32f`. A roll landing
+  // exactly ON the chance does NOT shoot - which no fixture at 0.0 or
+  // 0.99 can tell you.
+  const player = [0, 0, 10];
+  const ai = { _dist: 10, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200 };
+  const fire = (roll) => {
+    const a = new EnemyAttack({ liveSpeed: 200, playerLevel: 1, reflexes: 2, rolls: () => roll });
+    a.rangedAttack = true; a.meleeTimer = 0;
+    for (let i = 0; i < 20; i++) a.update(1 / 15, ai, player);
+    return a.firedRanged || a.machine.state !== 'Idle';
+  };
+  assert.equal(BOW_SHOT_CHANCE, 1 / 32);
+  assert.equal(fire(BOW_SHOT_CHANCE), false, 'exactly 1/32 is NOT less than 1/32');
+  assert.equal(fire(BOW_SHOT_CHANCE - 1e-12), true, 'a hair under it fires');
+  // the strike pick is the port's own stand-in for classic's single
+  // PrimaryAttack, and it must land inside STRIKES for EVERY roll in
+  // [0,1). Driving the real code with a roll at the top of the range is
+  // the only pin that says so: asserting Math.floor's arithmetic
+  // separately is a pin on the test's own expression, and a mutant that
+  // swapped the code to Math.round walked straight past it.
+  // (liveSpeed 50, not 200: at 200 a whole strike completes inside one
+  // 1/15 s update and the state is back to Idle before we can read it.)
+  for (const roll of [0, 0.5, 0.9, 0.999999]) {
+    const a = new EnemyAttack({ liveSpeed: 50, playerLevel: 1, reflexes: 2, rolls: () => roll });
+    a.rangedAttack = false; a.meleeTimer = 0;
+    setSeed(11);
+    for (let i = 0; i < 40 && a.machine.state === 'Idle'; i++) {
+      a.update(1 / 16, { ...ai, _dist: 1.0 }, player);
+    }
+    assert.notEqual(a.machine.state, 'Idle', `roll ${roll} started a strike`);
+    assert.ok(STRIKES.includes(a.machine.state), `roll ${roll} picked ${a.machine.state}, not a STRIKE`);
+  }
+});
+
+test('audit24 characters-3c: the band and the reach are STRICT at every bound', () => {
+  // EnemyAttack.cs:28-29 - minRangedDistance 240/2048 and
+  // maxRangedDistance 2048/2048 at GlobalScale, and DoRangedAttack:572
+  // reads `> min && < max`. MeleeAnimation:158 refuses on
+  // `DistanceToTarget > distance`. Every one of those bounds differs
+  // from its opposite ONLY when the distance sits exactly on it, which
+  // no fixture at 4 / 10 / 60 can arrange.
+  const player = [0, 0, 10];
+  const at = (dist, ranged) => {
+    const a = new EnemyAttack({ liveSpeed: 200, playerLevel: 1, reflexes: 2, rolls: () => 0.0 });
+    a.rangedAttack = ranged; a.meleeTimer = 0;
+    const ai2 = { _dist: dist, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200 };
+    setSeed(3);
+    let hit = false;
+    for (let i = 0; i < 60; i++) if (a.update(1 / 15, ai2, player).includes('hit')) hit = true;
+    return { hit, ranged: a.firedRanged };
+  };
+  // ON the band floor: NOT in the band (strict >), so the bow is silent
+  // and 6m is far past melee reach - nothing happens at all.
+  assert.equal(at(MIN_RANGED_DISTANCE, true).hit, false, 'exactly 6m is outside the band');
+  assert.equal(at(MIN_RANGED_DISTANCE + 0.01, true).ranged, true, 'a hair beyond it is inside');
+  // ON the band ceiling: also outside (strict <)
+  assert.equal(at(MAX_RANGED_DISTANCE, true).ranged, false, 'exactly 51.2m is outside the band');
+  assert.equal(at(MAX_RANGED_DISTANCE - 0.01, true).ranged, true, 'a hair inside it is inside');
+  // ON the melee reach: `dist > MeleeDistance` refuses only ABOVE it,
+  // so exactly 2.25 still swings.
+  assert.equal(at(MELEE_DISTANCE, false).hit, true, 'exactly 2.25 is within reach');
+  assert.equal(at(MELEE_DISTANCE + 0.01, false).hit, false, 'a hair beyond it is not');
+});
+
+test('audit24 characters-3d: the yaw vector reads X and Z, not X and Y', () => {
+  // `dx = playerFeet[0] - ai.feet[0], dz = playerFeet[2] - ai.feet[2]`
+  // feeds withinYaw. A fixture with the player straight ahead on +z and
+  // the foe at the origin cannot tell index 2 from index 1 - both read
+  // zero - so the foe stands OFF the axis here.
+  const a = new EnemyAttack({ liveSpeed: 200, playerLevel: 1, reflexes: 2, rolls: () => 0.0 });
+  a.rangedAttack = false; a.meleeTimer = 0;
+  // foe at the origin facing +x (yaw = PI/2), player 2m along +x and
+  // 5m UP: the yaw gate must read the XZ bearing (dead ahead) and
+  // ignore the height.
+  const ai2 = { _dist: 2.0, feet: [0, 0, 0], yaw: Math.PI / 2, inSight: true, detected: true, giveUpTimer: 200 };
+  setSeed(5);
+  let hit = false;
+  for (let i = 0; i < 60; i++) if (a.update(1 / 15, ai2, [2, 5, 0]).includes('hit')) hit = true;
+  assert.equal(hit, true, 'the XZ bearing is dead ahead, whatever the height difference');
 });
 
 test('audit24 characters-0: entry 39 (Horse) carries the MobileTeams struct default', () => {
