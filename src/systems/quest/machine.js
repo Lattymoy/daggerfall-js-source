@@ -172,10 +172,13 @@
 //                                SPELLS.STD record's effects array
 //                                (headless null: CastSpellDo idles,
 //                                exactly C#'s missing-record arm);
-//                                readiedSpell() - the player's
-//                                readied bundle | null;
-//                                readiedSpellHasMatchForClassicEffect
-//                                (effect) - HasMatchForClassicEffect
+//                                spellHasMatchForClassicEffect
+//                                (bundle, effect) - the BUNDLE's own
+//                                HasMatchForClassicEffect. The readied
+//                                bundle itself is NOT polled: the host
+//                                pushes it through
+//                                notifyNewReadySpell/notifyCastReadySpell
+//                                and CastSpellDo latches it, as C# does
 //   the machine's factionListeners map + addFactionListener/
 //   removeFactionListener/activeFactionPersons ride the hooks for
 //   WhenNpcIsAvailable (TalkManager reads the map at Q4)
@@ -578,6 +581,21 @@ export class QuestMachine {
    *  invalidates pending placements the same way. */
   notifyInitWorld() {
     this._forEachAction((action) => action.onInitWorld?.());
+  }
+
+  /** PlayerEffectManager.OnNewReadySpell (CastSpellDo.cs:44): the
+   *  player readied a bundle. AUDIT 24 (the seven-slice sweep): C#
+   *  LATCHES this on the action, and the latch is not the same thing
+   *  as the host's live readied state - an abort clears the host and
+   *  leaves the latch standing. Same door as the transitions. */
+  notifyNewReadySpell(spell) {
+    this._forEachAction((action) => action.onNewReadySpell?.(spell));
+  }
+
+  /** PlayerEffectManager.OnCastReadySpell (CastSpellDo.cs:45): the
+   *  readied bundle was CAST - the one event that clears the latch. */
+  notifyCastReadySpell(spell) {
+    this._forEachAction((action) => action.onCastReadySpell?.(spell));
   }
 
   _forEachAction(fn) {

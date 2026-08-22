@@ -437,3 +437,77 @@ test('the Foe state bits: kill sets deathTrigger; the cloned item queue keeps th
   assert.notEqual(clones[0], item, 'a CLONE crossed');
   assert.equal(rat.itemQueue[0], item, 'the original stays on the Foe');
 });
+
+// ---- AUDIT 24 (the seven-slice sweep): CreateFoe's three ----
+
+test('AUDIT 24: the msg option keeps the LAST match - C# walks the whole MatchCollection', () => {
+  const m = makeMachine(null);
+  const q = schedule(m, [
+    'Foe _rat_ is Giant_rat', '',
+    ' create foe _rat_ every 5 minutes 3 times with 40% success msg 1011 msg 1012',
+  ]);
+  const act = createFoeOf(q);
+  // C#: `foreach (Match option in options) { ... action.msgMessageID = ... }`
+  // reassigns on every hit, so the LAST msg is the one that survives.
+  // The port used a single .exec and kept the first.
+  assert.equal(act.msgMessageID, 1012, 'the second msg overwrites the first');
+});
+
+test('AUDIT 24: the backdate draw is UNCONDITIONAL - "every 0 minutes" still spends a roll', () => {
+  // CreateFoe.cs:110 calls Random.Range(0, spawnInterval) with no zero
+  // guard, and `every 0 minutes` is all over the corpus (S0000008,
+  // S0000503, M0B21Y19, N0B00Y16). A `n > 0 ?` guard skipped the draw
+  // on every one of them and slid the quest's whole roll stream.
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const drawn = [];
+  const rolls = () => { drawn.push(1); return 0.5; };
+  const q = schedule(m, [
+    'Foe _rat_ is Giant_rat', '',
+    ' create foe _rat_ every 0 minutes 1 times with 100% success',
+  ], rolls);
+  const act = createFoeOf(q);
+  assert.equal(act.spawnInterval, 0, 'zero-minute interval');
+  const before = drawn.length;
+  m.tick();
+  // two draws this tick: the (zero-width) backdate, then Dice100
+  assert.equal(drawn.length - before, 2, 'the backdate draw is taken even at interval 0');
+  assert.equal(act.lastSpawnTime, m.clock.t, 'floor(r * 0) is 0 - the value is unchanged');
+});
+
+test('AUDIT 24: RestoreSaveData re-stamps a zero lastSpawnTime with NOW, retiring the backdate', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, [
+    'Foe _rat_ is Giant_rat', '',
+    ' create foe _rat_ every 10 minutes 1 times with 100% success',
+  ]);
+  const act = createFoeOf(q);
+  const saved = act.getSaveData();
+  assert.equal(saved.lastSpawnTime, 0, 'saved before the first update');
+
+  // CreateFoe.cs:427-429 - the one non-pure line in any action's
+  // RestoreSaveData. Without it the port backdated after every such
+  // load, spawning early and spending a roll DFU never spends.
+  const world2 = makeWorld();
+  const m2 = makeMachine(world2);
+  m2.clock.t = 555000;
+  const q2 = schedule(m2, [
+    'Foe _rat_ is Giant_rat', '',
+    ' create foe _rat_ every 10 minutes 1 times with 100% success',
+  ], () => 0.999);
+  const act2 = createFoeOf(q2);
+  m2.tick();   // arm the task first - InitialiseOnSet zeroes the timer
+  act2.restoreSaveData(saved);
+  assert.equal(act2.lastSpawnTime, 555000, 'stamped NOW, not left at 0');
+  m2.tick();
+  assert.equal(act2.lastSpawnTime, 555000, 'Update never reaches the backdate again');
+  // the discriminator: a 0.999 backdate would have moved the timer to
+  // 555000-599, making the wave due at 555001 instead of 555600
+  m2.clock.t = 555100;
+  m2.tick();
+  assert.equal(world2.created.length, 0, 'the first wave waits a FULL interval from the load');
+  m2.clock.t = 555600;
+  m2.tick();
+  assert.equal(world2.created.length, 1, 'due exactly one interval after the load');
+});

@@ -427,6 +427,25 @@ export class MapsFile {
     return this.politicPak.getValue(mapPixelX + 1, mapPixelY);
   }
 
+  /** PlayerGPS.CurrentRegionIndex (PlayerGPS.cs:165-186) over this
+   *  pixel's politic index. AUDIT 24 (the seven-slice sweep): the
+   *  region the player is IN is a property of the POLITIC map, which
+   *  is defined on every pixel of the world - not of whether that
+   *  pixel happens to carry a location. The port had been reading
+   *  `currentLocation().regionIndex`, which is -1 across the whole
+   *  wilderness, and getNameBankOfRegion(-1) is Breton - so every
+   *  quest humanoid named outdoors came out Breton regardless of
+   *  province. Where a location DOES exist the two agree
+   *  (politic === regionIndex + 128, this file's own law). */
+  getRegionIndex(mapPixelX, mapPixelY) {
+    const politicIndex = this.getPoliticIndex(mapPixelX, mapPixelY);
+    // High Rock sea coast is the one politic value below the +128 band
+    let result = politicIndex === 64 ? 31 : politicIndex - 128;
+    if (result === 105) result = 16;   // known bad value -> Wrothgarian Mountains
+    if (result < 0 || result >= 62) result = 0;   // clamp out of range
+    return result;
+  }
+
   /** LocationId with minimal overhead. Region must be loaded. */
   readLocationIdFast(region, location) {
     const rec = this._regions[region];

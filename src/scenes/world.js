@@ -1390,6 +1390,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   console.log(`[quest] pack loaded: ${questPack.questCount} quests`);
   const _questStore = () => townTalk.factionDict ? ensureFactionRep(playerEntity, townTalk.factionDict) : null;
   const _questLoc = () => locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`) ?? null;
+  // AUDIT 24 (the seven-slice sweep): PlayerGPS.CurrentRegionIndex is
+  // derived from the POLITIC map at the player's pixel, which answers
+  // everywhere - it is NOT the current location's regionIndex, which
+  // is -1 across the whole wilderness. That -1 fell through
+  // getNameBankOfRegion to Breton, so every quest humanoid named
+  // outdoors was a Breton whatever province he stood in.
+  const _questRegionIndex = () => {
+    const px = playerTravelPixel();
+    return maps.getRegionIndex(px.x, px.y);
+  };
   // Quest parchment boxes land in whichever overlay slot is LIVE:
   // exterior -> the townTalk overlay, interior -> the mode machine's
   // slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
@@ -1411,9 +1421,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // PIXEL (in or out of the walls); IsPlayerInLocationRect is the
     // music director's own live rect flag.
     currentLocation: () => _questLoc(),
-    currentRegionIndex: () => _questLoc()?.regionIndex ?? -1,
+    currentRegionIndex: () => _questRegionIndex(),
     currentLocationIndex: () => _questLoc()?.locationIndex ?? -1,
-    currentRegionName: () => maps.getRegion(_questLoc()?.regionIndex ?? -1)?.name ?? '',
+    currentRegionName: () => maps.getRegion(_questRegionIndex())?.name ?? '',
     isPlayerInLocationRect: () => _musicInLocationRect(),
     playerPixel: () => playerTravelPixel(),
     playerInside: () => {
@@ -1437,7 +1447,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const rumorMill = new RumorMill({
     nowClassicMinutes: () => playerTicker.classicMinutes,
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
-    currentRegionIndex: () => _questLoc()?.regionIndex ?? -1,
+    currentRegionIndex: () => _questRegionIndex(),
     getRandomTokens: (textId) => townTalk.variantTokens(textId),
     expandQuestTokens: (questID, tokens) => {
       const quest = questBridge?.machine.getQuest(questID);
@@ -1455,7 +1465,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const topicTree = new TopicTree({
     getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
     getAllActiveQuestIds: () => [...(questBridge?.machine.quests.values() ?? [])].filter((q) => !q.questTombstoned).map((q) => q.uid),
-    currentRegionIndex: () => _questLoc()?.regionIndex ?? -1,
+    currentRegionIndex: () => _questRegionIndex(),
     currentRegionName: () => questWorld.currentRegionName(),
     currentLocationName: () => _questLoc()?.name ?? '',
     currentMapId: () => _questLoc()?.mapTableData?.mapId ?? 0,
@@ -1563,7 +1573,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     currentLocationName: () => _questLoc()?.name ?? '',
     currentRegionName: () => questWorld.currentRegionName(),
     currentRegion: () => null,          // the region walk rides the automap slice
-    currentRegionIndex: () => _questLoc()?.regionIndex ?? -1,
+    currentRegionIndex: () => _questRegionIndex(),
     currentExteriorDoorBuildingKey: () => modes?.interiorBuilding?.buildingKey ?? null,
     getAnyBuilding: (buildingKey) => discoveredBuildings(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`)
       .find((b) => b.buildingKey === buildingKey) ?? null,

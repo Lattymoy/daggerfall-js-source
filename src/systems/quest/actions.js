@@ -1968,13 +1968,29 @@ export class CreateFoe extends ActionTemplate {
       if (action.spawnMaxTimes === 0) action.spawnMaxTimes = -1;
     }
     // options ride source.Substring(match.Length) - C# slices by the
-    // match LENGTH regardless of where the match began, verbatim
-    const msg = /msg (?<msgId>\d+)/.exec(source.slice(match[0].length));
-    if (msg) action.msgMessageID = questParseInt(msg.groups.msgId);
+    // match LENGTH regardless of where the match began, verbatim.
+    // AUDIT 24 (the seven-slice sweep): C# walks the WHOLE
+    // MatchCollection - `foreach (Match option in options)` reassigns
+    // action.msgMessageID on every hit, so a line carrying two `msg`
+    // options keeps the LAST. The port had `.exec`, which keeps the
+    // first.
+    for (const msg of source.slice(match[0].length).matchAll(/msg (?<msgId>\d+)/g)) {
+      action.msgMessageID = questParseInt(msg.groups.msgId);
+    }
     return action;
   }
 
-  _range(n) { return n > 0 ? Math.floor((this.parentQuest?.rolls ?? Math.random)() * n) : 0; }
+  /** CreateFoe.cs:110 - `(uint)UnityEngine.Random.Range(0, spawnInterval)`.
+   *  spawnInterval is a uint, and uint has NO implicit conversion to
+   *  int, so overload resolution binds Range(FLOAT, float) (inclusive
+   *  max), not Range(int, int); the (uint) cast then truncates, which
+   *  lands the same 0..n-1 uniform the int overload would have. What
+   *  is NOT the same is the DRAW: C# calls Range unconditionally, and
+   *  the corpus is full of `every 0 minutes` (S0000008, S0000503,
+   *  M0B21Y19, N0B00Y16), so an `n > 0 ?` guard here skipped a draw on
+   *  every one of them and slid the quest's whole roll stream. The
+   *  draw is unconditional; floor(r * 0) is 0 either way. */
+  _range(n) { return Math.floor((this.parentQuest?.rolls ?? Math.random)() * n); }
 
   update(_caller) {
     const world = this.parentQuest.hooks?.world;
@@ -1983,7 +1999,8 @@ export class CreateFoe extends ActionTemplate {
     const gameSeconds = this.parentQuest.nowSeconds?.() ?? 0;
     // First update: backdate the timer a random distance into the
     // interval so the first spawn lands anywhere within one cycle
-    // (Range(0, interval) exclusive, on the quest's injectable rolls)
+    // (Range(0, interval) on the quest's injectable rolls - see _range
+    // for the overload and the unconditional draw)
     if (this.lastSpawnTime === 0) this.lastSpawnTime = gameSeconds - this._range(this.spawnInterval);
 
     // Max spawns reached - cleared only by a set/rearm
@@ -2019,6 +2036,21 @@ export class CreateFoe extends ActionTemplate {
       this._tryPlacement(world);
       world.raiseOnEncounterEvent?.();
     }
+  }
+
+  /** RestoreSaveData (CreateFoe.cs:412-430): the field walk plus ONE
+   *  trailing rule the generic walk cannot express -
+   *  `if (lastSpawnTime == 0) lastSpawnTime = now;`. It matters: a
+   *  quest saved before CreateFoe's first Update still carries
+   *  lastSpawnTime 0, and DFU stamps NOW on load, which permanently
+   *  retires Update's random backdate - the first wave then waits a
+   *  FULL interval and no draw is taken. Without this the port
+   *  backdated after every such load, spawning early and consuming a
+   *  roll DFU never spends. AUDIT 24 (the seven-slice sweep). */
+  restoreSaveData(dataIn) {
+    super.restoreSaveData(dataIn);
+    if (dataIn == null) return;
+    if (this.lastSpawnTime === 0) this.lastSpawnTime = this.parentQuest?.nowSeconds?.() ?? 0;
   }
 
   /** CreatePendingFoeSpawn (CreateFoe.cs:166-181). */
@@ -2092,7 +2124,12 @@ export class CastSpellOnFoe extends ActionTemplate {
 
 // ---- Q3-iv, THE REMAINDER SWEEP: the last six template owners ----
 
-const LOCATION_TYPE_NONE = -1;   // DFRegion.LocationTypes.None
+// DFRegion.LocationTypes.None (DFRegion.cs:99) - 0xffff, not -1.
+// AUDIT 24 (the seven-slice sweep): no Quests-Places p2 reaches 65535
+// (the table tops out at 23, with -1 the 'anywhere' wildcard), so both
+// sentinels read the same through the guards - but the value RIDES THE
+// SAVE, and a sentinel is only a sentinel if it is the source's.
+const LOCATION_TYPE_NONE = 0xffff;
 
 /** WhenPcEntersExits.cs: the exterior-type trigger. C# rides
  *  PlayerGPS's OnEnter/OnExitLocationRect events; the port POLLS the
@@ -2356,15 +2393,42 @@ export class CurePcDisease extends ActionTemplate {
 }
 
 /** CastSpellDo.cs: starts a task when the player READIES a spell
- *  whose bundle matches EVERY classic effect of the named spell. C#
- *  latches the bundle on OnNewReadySpell and clears it on cast; the
- *  port polls world.readiedSpell() each update - the readied state
- *  IS the window, so the gate reads identically per tick (the event
- *  latch itself rides Q4's host mount). BOTH miss arms carry the
- *  template-SetComplete quirk (CastSpellOnFoe's sibling): the minted
- *  action stands with spellID -1 or null effects and idles forever,
- *  never completing - which is also exactly the HEADLESS stance,
- *  since the classic spell records need ARENA2. */
+ *  whose bundle matches EVERY classic effect of the named spell.
+ *
+ *  AUDIT 24 (the seven-slice sweep): THE LATCH IS THE ACTION'S, NOT
+ *  THE HOST'S. The port used to poll world.readiedSpell() each update
+ *  and call the readied state "the window" - a recorded equivalence
+ *  that is not sound. C# holds `lastReadySpell` as ACTION state, set
+ *  by OnNewReadySpell and cleared by OnCastReadySpell, and the two do
+ *  not tile the readied state:
+ *    - AbortReadySpell (EntityEffectManager.cs:361-365) nulls the
+ *      host's readySpell WITHOUT raising OnCastReadySpell, so C#'s
+ *      latch SURVIVES an aborted ready and still fires the task; the
+ *      poll saw nothing and never fired.
+ *    - the action subscribes in its CONSTRUCTOR, so a ready landing
+ *      before the task ever runs is latched and fires on the task's
+ *      first tick; a ready that has since been aborted is invisible
+ *      to a poll.
+ *    - a MISMATCH consumes the latch (`lastReadySpell = null`), so C#
+ *      evaluates one readied bundle exactly ONCE; the poll re-tested
+ *      the same bundle every tick.
+ *  So the latch is ported here and the host raises it through the
+ *  machine's notifyNewReadySpell/notifyCastReadySpell doors, the same
+ *  fan-out CreateFoe's transitions ride.
+ *
+ *  ONE MORE C# QUIRK KEPT: SetComplete UNSUBSCRIBES both events and
+ *  RearmAction never resubscribes - a completed CastSpellDo that is
+ *  rearmed is deaf forever (_eventsBound, cleared and never restored),
+ *  and the STALE bundle it is still holding re-fires it on the next
+ *  tick.
+ *
+ *  BOTH miss arms carry the template-SetComplete quirk (CastSpellOnFoe's
+ *  sibling): the minted action stands with spellID -1 or null effects
+ *  and idles forever, never completing - which is also exactly the
+ *  HEADLESS stance, since the classic spell records need ARENA2. The
+ *  first arm's LOG carries it too: C# formats the unqualified
+ *  `spellID`, the TEMPLATE's field, which is never assigned and always
+ *  prints -1. */
 export class CastSpellDo extends ActionTemplate {
   static typeName = 'CastSpellDo';
   get saveShape() { return [['spellID'], ['classicEffects'], ['taskSymbol', 'sym']]; }
@@ -2373,8 +2437,27 @@ export class CastSpellDo extends ActionTemplate {
     this.spellID = -1;
     this.classicEffects = null;
     this.taskSymbol = null;
+    // transient, NOT saved (C#'s SaveData_v1 carries three fields):
+    this.lastReadySpell = null;
+    this._eventsBound = true;   // the ctor's two += subscriptions
   }
   get pattern() { return /cast (?<aSpell>[a-zA-Z0-9'_.-]+) spell do (?<aTask>[a-zA-Z0-9_.-]+)/; }
+
+  /** PlayerEffectManager_OnNewReadySpell (:127-131). */
+  onNewReadySpell(spell) { if (this._eventsBound) this.lastReadySpell = spell ?? null; }
+
+  /** PlayerEffectManager_OnCastReadySpell (:133-137): a CAST clears
+   *  the latch "so player can't queue it up before entering location".
+   *  An ABORT does not - EntityEffectManager.AbortReadySpell raises
+   *  nothing. */
+  onCastReadySpell(_spell) { if (this._eventsBound) this.lastReadySpell = null; }
+
+  /** SetComplete (:119-124): completing UNSUBSCRIBES, and the base
+   *  RearmAction does not put the handlers back. */
+  setComplete() {
+    super.setComplete();
+    this._eventsBound = false;
+  }
   createNew(source, parentQuest) {
     const match = this.test(source);
     if (!match) return null;
@@ -2388,7 +2471,9 @@ export class CastSpellDo extends ActionTemplate {
       if (effects) {
         action.classicEffects = effects;
       } else {
-        console.warn(`[quest] CastSpellDo could not find spell matching spellID '${action.spellID}' from spell '${sourceSpellName}'`);
+        // C# logs the unqualified `spellID` - the TEMPLATE's field,
+        // never assigned, so DFU always prints -1 here
+        console.warn(`[quest] CastSpellDo could not find spell matching spellID '${this.spellID}' from spell '${sourceSpellName}'`);
         this.setComplete();   // C#: the TEMPLATE completes - kept
       }
     } else {
@@ -2399,13 +2484,20 @@ export class CastSpellDo extends ActionTemplate {
   }
   update(_caller) {
     const world = this.parentQuest.hooks?.world;
-    const ready = world?.readiedSpell?.() ?? null;
-    if (this.spellID === -1 || !this.classicEffects?.length || !this.taskSymbol || !ready) return;
+    // Validate - and note C# clears the latch on the way out of this
+    // arm too, so an unresolvable action eats every ready it is handed
+    if (this.spellID === -1 || !this.classicEffects?.length || !this.taskSymbol || !this.lastReadySpell) {
+      this.lastReadySpell = null;
+      return;
+    }
     let foundEffects = 0;
     for (const effect of this.classicEffects) {
       if (effect.type === -1) continue;
       foundEffects++;
-      if (!world.readiedSpellHasMatchForClassicEffect?.(effect)) return;
+      if (!world?.spellHasMatchForClassicEffect?.(this.lastReadySpell, effect)) {
+        this.lastReadySpell = null;   // one bundle, one evaluation
+        return;
+      }
     }
     if (foundEffects === 0) {
       this.setComplete();

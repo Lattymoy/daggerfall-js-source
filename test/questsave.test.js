@@ -52,11 +52,31 @@ function makeMachine(deps = {}) {
 // THE CORPUS ROUND-TRIP GATE
 // ---------------------------------------------------------------
 
+// AUDIT 24 (the seven-slice sweep): the fixed point has ONE documented
+// hole, and it is DFU's. CreateFoe.RestoreSaveData ends with
+// `if (lastSpawnTime == 0) lastSpawnTime = now;` (CreateFoe.cs:427-429)
+// - the only non-pure restore in any shipped action. A quest saved
+// before CreateFoe's first Update carries 0, and the load stamps NOW,
+// which permanently retires the random backdate. So the second save of
+// such a quest is NOT equal to the first, in DFU as here, and this gate
+// normalises exactly that field and nothing else.
+const normaliseCreateFoeStamp = (data, now) => {
+  for (const task of data.tasks ?? []) {
+    for (const action of task.actions ?? []) {
+      if (action.type !== 'CreateFoe') continue;
+      const spec = action.actionSpecific;
+      if (spec && spec.lastSpawnTime === now) spec.lastSpawnTime = 0;
+    }
+  }
+  return data;
+};
+
 test('every corpus quest round-trips the envelope: save -> restore -> save is a fixed point', () => {
   const files = readdirSync(join(VENDOR, 'Quests')).filter((f) => f.endsWith('.txt')).sort();
   assert.ok(files.length >= 265);
   const m = makeMachine();
   let checked = 0;
+  let restamped = 0;
   for (const f of files) {
     resetUid();
     const quest = m.parseQuestForLists(readLines(join(VENDOR, 'Quests', f)), 0, { rolls: () => 0.5 });
@@ -66,10 +86,19 @@ test('every corpus quest round-trips the envelope: save -> restore -> save is a 
     m2.restoreSaveData({ siteLinks: [], quests: [data1] });
     const restored = m2.getQuest(quest.uid);
     assert.ok(restored, `${f} restored under its saved uid`);
-    assert.deepEqual(restored.getSaveData(), data1, `${f} round-trips exactly`);
+    const data2 = restored.getSaveData();
+    for (const task of data2.tasks ?? []) {
+      for (const action of task.actions ?? []) {
+        if (action.type === 'CreateFoe' && action.actionSpecific?.lastSpawnTime === m2.now) restamped++;
+      }
+    }
+    assert.deepEqual(normaliseCreateFoeStamp(data2, m2.now), data1, `${f} round-trips exactly`);
     checked++;
   }
   assert.equal(checked, files.length);
+  // the hole is REAL and the corpus exercises it - if this ever reads 0
+  // the normaliser above has gone blind and the gate is testing nothing
+  assert.ok(restamped > 0, 'the corpus carries CreateFoe actions that get re-stamped on load');
 });
 
 test('a STARTED quest with live state round-trips and its twin continues identically', () => {

@@ -733,12 +733,14 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
 - CASTSPELLDO: starts a task when the player READIES a spell
   matching EVERY classic effect of the named spell (type -1
   skipped; zero real effects completes without firing). C# latches
-  the bundle on OnNewReadySpell; the port polls
-  world.readiedSpell() - the readied state IS the window. BOTH miss
-  arms carry the TEMPLATE-SetComplete quirk (CastSpellOnFoe's
-  sibling): the minted action idles forever with spellID -1 or null
-  effects - which is also exactly the HEADLESS stance, since the
-  classic records (world.getClassicSpellEffects) need ARENA2.
+  the bundle on OnNewReadySpell, and the port LATCHES IT TOO -
+  see QUEST AUDIT XIV below, which killed this row's original
+  "the port polls world.readiedSpell(), the readied state IS the
+  window" equivalence. BOTH miss arms carry the TEMPLATE-SetComplete
+  quirk (CastSpellOnFoe's sibling): the minted action idles forever
+  with spellID -1 or null effects - which is also exactly the
+  HEADLESS stance, since the classic records
+  (world.getClassicSpellEffects) need ARENA2.
 
 Gate: `test/questremainder.test.js` (10 pins) + the coverage/
 ownership pin at 7231/4 and the P2 guard pin CLOSED (the when-shapes
@@ -1477,6 +1479,91 @@ Verified by reintroduction - restoring `===` fails the pin.
 SOURCE IS NOT A PIN. And its corollary, earned here: a reference
 compare in C# is not noise to be transliterated - ask what one
 reference MEANS in that scene before porting `==` to `===`.
+
+### Wave 2 - CreateFoe, CastSpellDo, and the region the player is in
+
+Six more the sweep raised and the re-read confirmed against the C#.
+
+**CreateFoe's `msg` kept the FIRST match.** C# runs
+`Regex.Matches` and then `foreach (Match option in options)`,
+reassigning `action.msgMessageID` on every hit - so a line carrying two
+`msg` options keeps the LAST. The port used a single `.exec`. Now a
+`matchAll` loop, one assignment per hit, same as the foreach.
+
+**The backdate draw was CONDITIONAL.** `CreateFoe.cs:110` is
+`(uint)UnityEngine.Random.Range(0, spawnInterval)` with no zero guard.
+Two things here. First, the overload: `spawnInterval` is a `uint`, and
+uint has NO implicit conversion to int, so resolution binds
+`Range(FLOAT, float)`, not the int one - the `(uint)` cast then
+truncates, landing the same 0..n-1 uniform, so the VALUE was never
+wrong. The DRAW was: the port guarded with `n > 0 ?` and `every 0
+minutes` is all over the corpus (S0000008, S0000503, M0B21Y19,
+N0B00Y16), so every one of those quests skipped a roll DFU spends and
+slid its whole stream. `floor(r * 0)` is 0 anyway; the guard bought
+nothing and cost the sequence.
+
+**CreateFoe.RestoreSaveData's trailing re-stamp was dropped.** The
+port's generic save walk assumes every action's C# restore is a pure
+field copy. CreateFoe's is not - it ends with
+`if (lastSpawnTime == 0) lastSpawnTime = now;`. A quest saved before
+CreateFoe's first Update carries lastSpawnTime 0, and DFU stamps NOW on
+load, permanently retiring Update's random backdate: the first wave then
+waits a FULL interval and no draw is taken. The port backdated after
+every such load - spawning early and spending a roll DFU never spends.
+The one non-pure restore in any shipped action, now an override.
+
+**CASTSPELLDO'S LATCH WAS THE HOST'S.** The port polled
+`world.readiedSpell()` each update and recorded "the readied state IS
+the window" as an equivalence. It is not one. C# holds `lastReadySpell`
+as ACTION state, and the host's readied slot and that latch come apart
+three ways:
+- `AbortReadySpell` (EntityEffectManager.cs:361-365) nulls the host's
+  readySpell and raises NOTHING - no OnCastReadySpell. So C#'s latch
+  survives an aborted ready and still fires the task on the next tick.
+  The poll saw an empty slot and never fired.
+- the action subscribes in its CONSTRUCTOR, so a ready that landed
+  before the task ever ran is latched and fires on the task's first
+  tick.
+- a MISMATCH consumes the latch, so C# evaluates one readied bundle
+  exactly ONCE; the poll re-tested the same bundle every tick.
+
+The latch is ported. The host now pushes through the machine's
+`notifyNewReadySpell` / `notifyCastReadySpell`, the same fan-out door
+CreateFoe's transitions ride, and the seam took the bundle it was always
+a method on (`spellHasMatchForClassicEffect(bundle, effect)`). Two more
+C# quirks came with it: SetComplete UNSUBSCRIBES and RearmAction never
+resubscribes - a rearmed CastSpellDo is deaf forever - and the success
+arm never clears the latch, so that deaf rearmed action re-fires off a
+bundle the player readied a cycle ago. Both pinned.
+
+**CastSpellDo's missing-spell log printed the real id.** C# formats the
+unqualified `spellID` inside `CreateNew` - the TEMPLATE's field, never
+assigned, always -1. Same family as the never-assigned `Symbol` in the
+throw two arms down, which the port already kept.
+
+**LOCATION_TYPE_NONE was -1 where DFRegion.LocationTypes.None is
+0xffff.** No Quests-Places p2 reaches 65535 (the table tops out at 23,
+with -1 the 'anywhere' wildcard), so both sentinels read identically
+through the guards - but the value RIDES THE SAVE, and a sentinel is
+only a sentinel if it is the source's.
+
+**THE REGION THE PLAYER IS IN WAS THE LOCATION'S.**
+`world.currentRegionIndex()` answered `currentLocation()?.regionIndex ??
+-1`. PlayerGPS.CurrentRegionIndex (:165-186) derives from the POLITIC
+map at the player's pixel, which answers on EVERY pixel of the world -
+the +128 band, 64 for the High Rock sea coast, 105 patched to
+Wrothgarian Mountains, everything else clamped to 0. It cannot answer
+"no region". The port's version answered -1 across the entire
+wilderness, and `getNameBankOfRegion(-1)` is Breton - so every quest
+humanoid named outdoors came out Breton whatever province he stood in,
+and %fn/%mn, the temple divine, and the region faction lookups all read
+the same hole. Now `MapsFile.getRegionIndex(x, y)`, wired at all four
+host seams plus `currentRegionName`. Where a location DOES exist the two
+agree - `politic === regionIndex + 128` is this file's own law.
+
+Ten mutants, ten kills: every pin was verified by putting its bug back,
+including reverting CastSpellDo to the old poll, which takes four of
+them down at once.
 
 ## Queue
 

@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parseBiog, DEFAULT_BACKSTORIES_START } from '../src/formats/biogFile.js';
 import { CifRciFile } from '../src/formats/cifRciFile.js';
+import { MapsFile } from '../src/formats/mapsFile.js';
 
 test('audit24 formats: the BIOG # id parses like int.TryParse, all-or-nothing', () => {
   // BiogFile.cs:74 - `if (!int.TryParse(value, out backstoryId))` falls
@@ -36,4 +37,36 @@ test('audit24 formats: a 1-frame weapon-anim record answers (0,0), not undefined
   assert.deepEqual(f.getSize(0), { width: 0, height: 0 });
   assert.deepEqual(f.getOffset(0), { x: 0, y: 0 });
   assert.equal(Number.isNaN(f.getSize(0).width + 1), false, 'and the arithmetic is a number');
+});
+
+test('audit24 formats: MapsFile.getRegionIndex is PlayerGPS\'s politic derivation, not the location\'s region', () => {
+  // PlayerGPS.CurrentRegionIndex (PlayerGPS.cs:165-186) reads the
+  // POLITIC map, which answers on EVERY pixel of the world - the port
+  // had been reading currentLocation().regionIndex, which is -1 across
+  // the whole wilderness, and getNameBankOfRegion(-1) is Breton. So
+  // every quest humanoid named outdoors came out Breton whatever
+  // province he stood in.
+  const m = Object.create(MapsFile.prototype);
+  let politic = 0;
+  m.getPoliticIndex = () => politic;
+
+  politic = 128 + 17;
+  assert.equal(m.getRegionIndex(0, 0), 17, 'the +128 band is the region');
+  politic = 64;
+  assert.equal(m.getRegionIndex(0, 0), 31, 'the one exception: 64 is High Rock sea coast');
+  politic = 128 + 105;
+  assert.equal(m.getRegionIndex(0, 0), 16, 'the known bad value patches to Wrothgarian Mountains');
+  politic = 0;
+  assert.equal(m.getRegionIndex(0, 0), 0, 'below the band clamps to 0');
+  politic = 128 + 62;
+  assert.equal(m.getRegionIndex(0, 0), 0, 'and >= 62 clamps to 0');
+  politic = 128 + 61;
+  assert.equal(m.getRegionIndex(0, 0), 61, '61 is the last real one');
+  // NEVER -1: the derivation cannot answer "no region", which is the
+  // whole point - the Breton fallback is unreachable through it.
+  for (let p = 0; p < 256; p++) {
+    politic = p;
+    const r = m.getRegionIndex(0, 0);
+    assert.ok(r >= 0 && r < 62, `politic ${p} -> ${r} stays in range`);
+  }
 });

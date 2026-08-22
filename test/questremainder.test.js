@@ -44,10 +44,12 @@ function makeWorld() {
     currentLocation: () => ({ loaded: true, mapTableData: { locationType: world._locType } }),
     getFactionData: (id) => FACTIONS.get(id) ?? null,
     getClassicSpellEffects: (id) => world._spells[id] ?? null,
-    readiedSpell: () => world._readied,
-    readiedSpellHasMatchForClassicEffect: (e) => world._readied?.effects?.some(
+    // AUDIT 24: the BUNDLE's own HasMatchForClassicEffect - the action
+    // holds the bundle now, so the seam takes it rather than reaching
+    // back into a host poll.
+    spellHasMatchForClassicEffect: (bundle, e) => bundle?.effects?.some(
       (r) => r.type === e.type && r.subType === e.subType) ?? false,
-    _inRect: true, _locType: 0, _readied: null,
+    _inRect: true, _locType: 0,
     _spells: { 17: [{ type: 5, subType: 1 }, { type: -1, subType: -1 }] },
   };
   return world;
@@ -229,15 +231,99 @@ test('CastSpellDo: the readied-spell gate matches EVERY classic effect, then sta
   ]);
   m.tick();
   assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false, 'nothing readied - the action idles');
-  world._readied = { effects: [{ type: 9, subType: 0 }] };
+  m.notifyNewReadySpell({ effects: [{ type: 9, subType: 0 }] });
   m.tick();
   assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false, 'a NON-matching readied spell does not fire');
-  world._readied = { effects: [{ type: 5, subType: 1 }] };
+  m.notifyNewReadySpell({ effects: [{ type: 5, subType: 1 }] });
   m.tick();
   assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true, 'every real effect matched (type -1 skipped)');
   const startup = [...q.tasks.values()][0];
   const act = startup.actions.find((a) => a.constructor.name === 'CastSpellDo');
   assert.equal(act.isComplete, true, 'fired once and completed');
+});
+
+// ---- AUDIT 24 (the seven-slice sweep): CastSpellDo's LATCH ----
+// The port used to poll world.readiedSpell() and call the readied
+// state "the window". It is not: C# holds lastReadySpell as ACTION
+// state, and the host's readied slot and that latch come apart in
+// three ways the poll could not see.
+
+test('CastSpellDo LATCH: an ABORTED ready still fires - AbortReadySpell raises nothing', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, [
+    ' cast Shield spell do _t_', '',
+    '_t_ task:', ' setvar _hit_', '',
+    'variable _hit_',
+  ]);
+  // the player readies the spell and then ABORTS it. DFU's
+  // AbortReadySpell (EntityEffectManager.cs:361-365) nulls the host's
+  // readySpell WITHOUT raising OnCastReadySpell, so the action's latch
+  // stands and the very next tick fires the task.
+  m.notifyNewReadySpell({ effects: [{ type: 5, subType: 1 }] });
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), true,
+    'the latch survives the abort - a poll of the host would have seen nothing');
+});
+
+test('CastSpellDo LATCH: a CAST clears it, and one bundle gets exactly ONE evaluation', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, [
+    ' cast Shield spell do _t_', '',
+    '_t_ task:', ' setvar _hit_', '',
+    'variable _hit_',
+  ]);
+  const bundle = { effects: [{ type: 5, subType: 1 }] };
+  m.notifyNewReadySpell(bundle);
+  m.notifyCastReadySpell(bundle);   // OnCastReadySpell - "so player can't queue it up"
+  m.tick();
+  assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false, 'the cast consumed the latch');
+
+  // and a MISMATCH consumes it too: C# nulls lastReadySpell on the way
+  // out, so the same bundle is never re-tested on a later tick.
+  const m2 = makeMachine(makeWorld());
+  const q2 = schedule(m2, [
+    ' cast Shield spell do _t_', '',
+    '_t_ task:', ' setvar _hit_', '',
+    'variable _hit_',
+  ]);
+  const startup2 = [...q2.tasks.values()][0];
+  const act2 = startup2.actions.find((a) => a.constructor.name === 'CastSpellDo');
+  m2.notifyNewReadySpell({ effects: [{ type: 9, subType: 0 }] });
+  m2.tick();
+  assert.equal(act2.lastReadySpell, null, 'the mismatch consumed the bundle');
+});
+
+test('CastSpellDo QUIRK: SetComplete unsubscribes and a rearm never puts the handlers back', () => {
+  const world = makeWorld();
+  const m = makeMachine(world);
+  const q = schedule(m, [
+    ' cast Shield spell do _t_', '',
+    '_t_ task:', ' setvar _hit_', '',
+    'variable _hit_',
+  ]);
+  const startup = [...q.tasks.values()][0];
+  const act = startup.actions.find((a) => a.constructor.name === 'CastSpellDo');
+  const first = { effects: [{ type: 5, subType: 1 }] };
+  m.notifyNewReadySpell(first);
+  m.tick();
+  assert.equal(act.isComplete, true, 'fired');
+  // the SUCCESS arm does not clear the latch - C# only nulls it on the
+  // three miss paths, so the fired bundle is still sitting there
+  assert.equal(act.lastReadySpell, first, 'a hit leaves the bundle latched');
+  act.rearmAction();
+  assert.equal(act.isComplete, false, 'the base rearm clears isComplete...');
+  const second = { effects: [{ type: 5, subType: 1 }] };
+  m.notifyNewReadySpell(second);
+  assert.equal(act.lastReadySpell, first,
+    '...but SetComplete unsubscribed and RearmAction never resubscribes - the new ready is not heard');
+  m.notifyCastReadySpell(second);
+  assert.equal(act.lastReadySpell, first, 'deaf to the cast event too');
+  // and because the STALE bundle is still latched, the rearmed action
+  // re-fires off a spell the player readied a cycle ago
+  m.tick();
+  assert.equal(act.isComplete, true, 'the stale latch fires the rearmed action');
 });
 
 test('CastSpellDo QUIRK: an unresolved spell completes the TEMPLATE - the minted action idles forever', () => {
@@ -264,6 +350,16 @@ test('WhenPcEntersExits: the create seed needs rect AND loaded - an out-of-rect 
   m.tick();
   assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false,
     'nothing was seeded - no phantom exit on the first poll');
+  // AUDIT 24 (the seven-slice sweep): the sentinel is
+  // DFRegion.LocationTypes.None = 0xffff (DFRegion.cs:99), not -1. No
+  // Quests-Places p2 reaches 65535 so both read the same through the
+  // guards - but the value RIDES THE SAVE, and a sentinel is only a
+  // sentinel if it is the source's.
+  const act = [...q.tasks.values()].flatMap((t) => t.actions)
+    .find((a) => a.constructor.name === 'WhenPcEntersExits');
+  assert.deepEqual(
+    [act.getSaveData().currentLocationType, act.getSaveData().previousLocationType],
+    [0xffff, 0xffff], 'None saves as 0xffff');
   world._inRect = true;
   m.tick();   // the poll observes None -> city
   assert.equal(q.getTask({ name: 't' }).getTriggerValue(), false, 'entering is not exiting');
