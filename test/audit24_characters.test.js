@@ -248,3 +248,53 @@ test('audit24 characters-2b: a PACIFIED foe still burns its byte, and reads blin
   assert.equal(a.machine.state, 'Idle', 'and nothing swung');
   assert.deepEqual(events, []);
 });
+
+test('audit24 characters-3e: the three gates a constant-roll fixture cannot separate', () => {
+  // Three mutants outlived every fixture above, each for its own
+  // reason. They are the campaign's whole point.
+  const player = [0, 0, 10];
+  const near = { _dist: 1.0, feet: [0, 0, 0], yaw: 0, inSight: true, detected: true, giveUpTimer: 200 };
+
+  // (1) `attackRollPasses(...) && this.meleeTimer === 0` - swapped to
+  // `||`, a foe whose timer is still running attacks anyway. Every
+  // fixture so far sets meleeTimer 0, where && and || agree.
+  const busy = new EnemyAttack({ liveSpeed: 50, playerLevel: 10, reflexes: 2, rolls: () => 0.0 });
+  busy.meleeTimer = 5;                       // seconds still to run
+  setSeed(11);
+  let started = false;
+  for (let i = 0; i < 30; i++) {
+    busy.update(1 / 16, near, player);
+    if (busy.machine.state !== 'Idle') { started = true; break; }
+  }
+  assert.equal(started, false, 'the timer gates the swing - both operands must hold');
+  assert.ok(busy.meleeTimer > 0 && busy.meleeTimer < 5, 'and it only counted down');
+
+  // (2) `dx = playerFeet[0] - ai.feet[0]` - swapped to index 1, the
+  // yaw gate reads the player's HEIGHT as its x. A player dead ahead on
+  // +z cannot tell the two apart (both read 0), and neither can one
+  // off-axis in x with no height difference (the bearing's ratio is all
+  // withinYaw sees). It takes height AND an off-axis bearing at once.
+  const tall = new EnemyAttack({ liveSpeed: 50, playerLevel: 10, reflexes: 2, rolls: () => 0.0 });
+  tall.meleeTimer = 0;
+  setSeed(11);
+  let hit = false;
+  for (let i = 0; i < 30; i++) if (tall.update(1 / 16, { ...near, _dist: 2.0 }, [0, 9, 2]).includes('hit')) hit = true;
+  assert.equal(hit, true, 'x=0, z=2 is dead ahead; the 9 units of height are not the x');
+
+  // (3) the BOW arm's strike pick shares `rolls` with the 1/32 shot
+  // gate, so a constant roll that opens the gate can only ever index
+  // STRIKES[0] - the top of the roll domain is unreachable without a
+  // SEQUENCE. Math.round there would index one past the end.
+  const seq = (vals) => { let i = 0; return () => vals[Math.min(i++, vals.length - 1)]; };
+  const archer = new EnemyAttack({
+    liveSpeed: 50, playerLevel: 10, reflexes: 2,
+    rolls: seq([0.0, 0.999999, 0.5]),        // gate opens, THEN the strike
+  });
+  archer.rangedAttack = true; archer.meleeTimer = 0;
+  setSeed(11);
+  const band = { ...near, _dist: 10 };
+  for (let i = 0; i < 30 && archer.machine.state === 'Idle'; i++) archer.update(1 / 16, band, player);
+  assert.equal(archer.firedRanged, true, 'the bow fired');
+  assert.ok(STRIKES.includes(archer.machine.state),
+    `the bow strike picked ${archer.machine.state}, not a STRIKE`);
+});
