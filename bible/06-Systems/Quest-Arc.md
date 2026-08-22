@@ -2632,12 +2632,13 @@ Both gates read the library's slicer now, and gate 2 asserts it found
 at least 25 columns before it will believe a clean result. *A PIN THAT
 FINDS NOTHING MUST PROVE IT LOOKED.*
 
-Eight mutants, eight kills - one cell edited by hand in the checked-in
+Eleven mutants, eleven kills - one cell edited by hand in the checked-in
 enemy table, the `SoulPts` column dropped from the extraction again,
 the `=== -1` guard removed, the glow alpha forced to 1, a whole enemy
 deleted; then one cell edited in encounter table 22, the comment strip
 removed, and a divergent second copy of the encounter table grown
-back.
+back; then the Nord's description id, the Nord's frost resistance
+turned to fire, and the female clothed/unclothed body art swapped.
 
 Also corrected: `loot.js`'s "21 keys" comment over a 22-row matrix
 (`-` plus A..U), and the same off-by-one in the LootTables gate's
@@ -2665,6 +2666,16 @@ character identical the day it was found, which is the only day that
 was ever guaranteed - and only one of them could ever be gated. One
 table now, imported and re-exported, pinned by object identity rather
 than by deep-equality so a future copy cannot pass by agreeing.
+
+**And the race templates.** `races.js` derives all seven paperdoll
+filenames per race from an art index, on the strength of "one regular
+scheme". `RaceTemplate.cs` spells every one of them out as a literal,
+one race at a time, which is exactly the shape a scheme goes to break
+in. The eight playable races are rebuilt from the source constructors
+now - filename for filename, plus `DescriptionID`, `ClipID` and all
+four `DFCareer.EffectFlags` channels. The scheme holds today; the
+point is that it will be told to stop holding rather than quietly
+stopping.
 
 FLAGGED: none of the eight new columns has a port consumer yet -
 there is no blood splash, no enemy point light, no Seducer transform,

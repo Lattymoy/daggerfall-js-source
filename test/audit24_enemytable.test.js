@@ -25,6 +25,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { ENCOUNTER_TABLES } from '../src/systems/encounters.js';
+import { RACE_TEMPLATES } from '../src/systems/races.js';
 import { ENCOUNTER_TABLES as ENCOUNTER_TABLES_SRC } from '../src/characters/encounterTables.js';
 import { extractEnemyBasics, sliceEnemyTable } from '../tools/extractEnemyBasics.lib.mjs';
 
@@ -197,4 +198,60 @@ test('audit24 wave23: there is exactly ONE encounter table', () => {
   assert.match(src, /^export \{ ENCOUNTER_TABLES \};$/m);
   assert.doesNotMatch(src, /export const ENCOUNTER_TABLES = Object\.freeze\(\[/,
     'and no second literal has grown back');
+});
+
+// ---- the RACE TEMPLATES -------------------------------------------
+// races.js DERIVES every paperdoll filename from a race's art index,
+// on the strength of "one regular scheme". RaceTemplate.cs spells all
+// seven filenames out per race, one literal at a time, which is
+// exactly where a scheme goes to break. Rebuild and compare.
+
+const RACE_CS = new URL('../tools/parity/dfu/Assets/Scripts/Game/Entities/RaceTemplate.cs', import.meta.url);
+const noRace = !existsSync(RACE_CS);
+
+test('audit24 wave23: RACE_TEMPLATES is REBUILT from RaceTemplate.cs, filename for filename', { skip: noRace }, () => {
+  const cs = readFileSync(RACE_CS, 'utf8');
+  const blocks = [...cs.matchAll(/public class (\w+) : RaceTemplate\s*\{[\s\S]*?public \1\(\)\s*\{([\s\S]*?)\n        \}/g)];
+  const fromSource = new Map();
+  for (const [, name, ctor] of blocks) {
+    const str = (k) => { const m = ctor.match(new RegExp(`${k} = "([^"]+)"`)); return m ? m[1] : null; };
+    const int = (k) => { const m = ctor.match(new RegExp(`${k} = (\\d+);`)); return m ? Number(m[1]) : null; };
+    const flag = (k) => {
+      const m = ctor.match(new RegExp(`${k} = DFCareer\\.EffectFlags\\.(\\w+);`));
+      return m ? ({ Paralysis: 1, Magic: 2, Poison: 4, Fire: 8, Frost: 16, Shock: 32, Disease: 64 })[m[1]] : 0;
+    };
+    fromSource.set(name, {
+      descriptionId: int('DescriptionID'),
+      clipId: int('ClipID'),
+      background: str('PaperDollBackground'),
+      bodyMale: [str('PaperDollBodyMaleUnclothed'), str('PaperDollBodyMaleClothed')],
+      bodyFemale: [str('PaperDollBodyFemaleUnclothed'), str('PaperDollBodyFemaleClothed')],
+      headsMale: str('PaperDollHeadsMale'),
+      headsFemale: str('PaperDollHeadsFemale'),
+      resistanceFlags: flag('ResistanceFlags'),
+      immunityFlags: flag('ImmunityFlags'),
+      lowToleranceFlags: flag('LowToleranceFlags'),
+      criticalWeaknessFlags: flag('CriticalWeaknessFlags'),
+    });
+  }
+  // RaceTemplate.cs defines exactly the eight playable races as
+  // subclasses. Exact, not >=, so a ninth arriving in a DFU update
+  // fails here instead of being silently ignored.
+  assert.equal(fromSource.size, 8, `found ${fromSource.size} RaceTemplate subclasses`);
+  for (const r of RACE_TEMPLATES) {
+    const cs_ = fromSource.get(r.key);
+    assert.ok(cs_, `RaceTemplate.cs still defines ${r.key}`);
+    assert.equal(r.descriptionId, cs_.descriptionId, `${r.key} DescriptionID`);
+    assert.equal(r.clipId, cs_.clipId, `${r.key} ClipID`);
+    assert.equal(r.background, cs_.background, `${r.key} PaperDollBackground`);
+    assert.deepEqual([...r.bodyMale], cs_.bodyMale, `${r.key} male body art`);
+    assert.deepEqual([...r.bodyFemale], cs_.bodyFemale, `${r.key} female body art`);
+    assert.equal(r.headsMale, cs_.headsMale, `${r.key} male heads`);
+    assert.equal(r.headsFemale, cs_.headsFemale, `${r.key} female heads`);
+    assert.equal(r.resistanceFlags, cs_.resistanceFlags, `${r.key} ResistanceFlags`);
+    assert.equal(r.immunityFlags, cs_.immunityFlags, `${r.key} ImmunityFlags`);
+    assert.equal(r.lowToleranceFlags, cs_.lowToleranceFlags, `${r.key} LowToleranceFlags`);
+    assert.equal(r.criticalWeaknessFlags, cs_.criticalWeaknessFlags, `${r.key} CriticalWeaknessFlags`);
+  }
+  assert.equal(RACE_TEMPLATES.length, 8, 'the eight playable races');
 });
