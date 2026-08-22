@@ -64,6 +64,7 @@
 
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';
 import { QUEST_MESSAGES } from './quest/quest.js';   // the message-id enum (QuestMachine.cs:260-270)
+import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 24: NPCData.context is a NUMBER
 
 /** ListItemType (:128-133). */
 export const LIST_ITEM_TYPE = Object.freeze({ Item: 0, ItemGroup: 1, NavigationBack: 2 });
@@ -558,7 +559,12 @@ export class TopicTree {
     const inside = this.deps.isPlayerInside?.() ?? false;
     const insideCastle = this.deps.isPlayerInsideCastle?.() ?? false;
     return (inside && !insideCastle && partner.buildingKey === (this.deps.currentBuildingKey?.() ?? -1))
-      || (insideCastle && person.isQuestor && (person.questorData?.context ?? null) === 'dungeon');
+      // AUDIT 24 (the seven-slice sweep): NPCData.context is a NUMBER
+      // (StaticNPC.Context: Custom 0, Dungeon 1, Building 2) - every
+      // writer stamps one and this was the only reader, comparing it
+      // to the STRING 'dungeon'. It could never be true, so the castle
+      // arm of the questor test was dead.
+      || (insideCastle && person.isQuestor && person.questorData?.context === NPC_CONTEXT.Dungeon);
   }
 
   /** AssembleTopiclistTellMeAbout (:3113-3198). */

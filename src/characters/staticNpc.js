@@ -106,8 +106,17 @@ export function staticNpcData({
  */
 export function raceFromFaction(factionId, getFaction, raceOfCurrentRegion) {
   if (factionId !== 0) {
+    // AUDIT 24 (the seven-slice sweep): C# IGNORES GetFactionData's
+    // bool (:362) and reads the `out` struct regardless - and a MISS
+    // leaves that struct at its default, whose `race` field is 0,
+    // which GetRaceFromFactionRace maps to FactionRaces.Nord. So an
+    // unresolvable faction id answers NORD in DFU, not the region's
+    // race: only a faction whose race really maps to None falls
+    // through. The port read `fd?.race` as undefined on a miss and
+    // sent it to the region, so an id the table does not hold produced
+    // a local instead of a Nord.
     const fd = getFaction?.(factionId) ?? null;
-    const race = raceFromFactionRace(fd?.race);
+    const race = raceFromFactionRace(fd?.race ?? 0);
     if (race !== null) return race;
   }
   return raceOfCurrentRegion();

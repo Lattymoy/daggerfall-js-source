@@ -213,6 +213,18 @@ export class PlayerNotebook {
 export function wrapLinesIntoNote(note, str, formatting) {
   while (str.length > MAX_LINE_LENGTH) {
     const pos = str.lastIndexOf(' ', MAX_LINE_LENGTH);
+    // AUDIT 24 (the seven-slice sweep): C# HANGS NOWHERE HERE - it
+    // THROWS. `LastIndexOf` answers -1 when the first 71 characters
+    // carry no space, and `Substring(0, -1)` is an
+    // ArgumentOutOfRangeException. In JS `slice(0, -1)` is a legal
+    // "drop the last character" and `slice(0)` is the SAME STRING, so
+    // the loop made no progress and spun for ever - a frozen tab where
+    // DFU shows an exception. A 71-character run with no space is
+    // reachable: a quest name, a URL-ish token, any pasted note.
+    if (pos < 0) {
+      throw new RangeError('wrapLinesIntoNote: no break point in the first '
+        + `${MAX_LINE_LENGTH + 1} characters (C#'s Substring(0, -1) throws here)`);
+    }
     note.push({ formatting, text: ' ' + str.slice(0, pos) });
     note.push(NOTHING);
     str = str.slice(pos + 1);

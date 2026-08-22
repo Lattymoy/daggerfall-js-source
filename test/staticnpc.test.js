@@ -83,7 +83,16 @@ test('StaticNPC: an unfactioned person is a LOCAL', () => {
   assert.equal(raceFromFaction(0, () => { throw new Error('must not look up faction 0'); }, region), RACES.Nord);
   assert.equal(raceFromFaction(42, () => ({ race: 3 }), region), RACES.Breton, 'a named faction lends its race');
   assert.equal(raceFromFaction(42, () => ({ race: -1 }), region), RACES.Nord, 'race None falls to the region');
-  assert.equal(raceFromFaction(42, () => null, region), RACES.Nord, 'an unknown faction too');
+  // AUDIT 24 (the seven-slice sweep): an UNKNOWN faction answers Nord -
+  // but not through the region. C# ignores GetFactionData's bool and
+  // reads the `out` struct anyway, and a miss leaves it at its default
+  // whose race field is 0 = FactionRaces.Nord. The port read undefined
+  // there and fell to the region, which happens to agree only when the
+  // region IS Nord - so pin it against a region that is not.
+  assert.equal(raceFromFaction(42, () => null, () => RACES.Breton), RACES.Nord,
+    "an unknown faction is a NORD, from the zero struct - not a local");
+  assert.equal(raceFromFaction(42, () => ({ race: -1 }), () => RACES.Breton), RACES.Breton,
+    'while a race that really maps to None does fall to the region');
 });
 
 test('StaticNPC: an INDIVIDUAL faction answers its own name; everyone else is seeded', () => {

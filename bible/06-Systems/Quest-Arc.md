@@ -2225,6 +2225,55 @@ waves 2 and 4 chased out of every other region seam.
 
 One mutant, one kill.
 
+### Wave 19 - a frozen tab, a lost main quest, and two dead enums
+
+**THE NOTEBOOK WRAP SPUN FOR EVER WHERE C# THROWS.**
+`WrapLinesIntoNote` breaks on the last space at or before column 70.
+`LastIndexOf` answers -1 when the first 71 characters carry no space,
+and C#'s `Substring(0, -1)` is an ArgumentOutOfRangeException - DFU
+shows an exception. In JS `slice(0, -1)` is a legal "drop the last
+character" and `slice(0)` is the SAME STRING, so the loop made no
+progress and spun: **a frozen tab**. A 71-character unbroken run is
+easy to reach - a long quest name, a pasted token, any note the player
+types.
+
+Its pin had to be built differently, and the test says so: a
+SYNCHRONOUS infinite loop is the one defect a behavioural pin cannot
+catch, because the pin never returns, node's per-test timeout never
+fires (the event loop gets no turn), and the whole suite hangs with no
+output instead of going red. So the source shape is asserted FIRST,
+before the call that would hang.
+
+**THE 64 GLOBALS WERE IN NO ENVELOPE AT ALL.** DFU keeps them on
+`PlayerEntity.GlobalVars` and serialises them with the PLAYER
+(SerializablePlayer.cs:134, :303). The port homed them on the machine,
+where `getSaveData` wrote two keys and `clearState` wiped four - and
+this store was in NEITHER. Every SAVEVARS.DAT flag a quest had set, the
+main quest's own progress among them, was lost on save and reset to
+false on load. They ride the envelope now, survive a `clearState`
+exactly as C#'s do (its ClearState wipes the machine's own four
+collections; the globals live elsewhere and the player restore replaces
+them wholesale), and an old save does not blank them.
+
+**TWO DEAD ENUMS.**
+- `NPCData.context` is a NUMBER - StaticNPC.Context, Custom 0 /
+  Dungeon 1 / Building 2. Every writer stamps one and topicTree's
+  castle-questor test, the ONLY reader, compared it against the STRING
+  `'dungeon'`. It could never be true, so that whole branch was dead -
+  and the pin carried the strings too, which is why it never said so.
+  The building mint stamps Context.Building now (StaticNPC.cs:178),
+  which is what it always should have; a dungeon caller passes Dungeon.
+- `GetRaceFromFaction` IGNORES `GetFactionData`'s bool (:362) and reads
+  the `out` struct regardless - and a MISS leaves that struct at its
+  default, whose `race` field is 0, which maps to FactionRaces.Nord. So
+  an unresolvable faction id answers **Nord** in DFU, not the region's
+  race; only a faction whose race really maps to None falls through.
+  The port read `fd?.race` as undefined and sent every unknown id to
+  the region, which agrees only when the region happens to be Nord -
+  which is exactly what the old pin's fixture used.
+
+Four mutants, four kills.
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

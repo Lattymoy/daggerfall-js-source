@@ -64,6 +64,11 @@ export const positionHash = (x, y, z) => ((x ^ (y << 2) ^ (z >> 2)) | 0);
 export function staticNpcData(pn, {
   mapId = 0, locationIndex = 0, buildingKey = 0,
   getFaction = null, raceOfCurrentRegion = null,
+  // StaticNPC.cs:165-179 - the RMB (building) overload stamps
+  // Context.Building; the RDB one two above it stamps Dungeon. This
+  // helper serves the building path, so that is the default, and a
+  // dungeon caller says so.
+  context = NPC_CONTEXT.Building,
 } = {}) {
   const factionID = pn.factionID ?? 0;
   return {
@@ -84,6 +89,10 @@ export function staticNpcData(pn, {
     // main quests lean on before a questor is set - read undefined and
     // fell through to the region every time.
     race: raceFromFaction(factionID, getFaction, raceOfCurrentRegion ?? (() => 0)),
+    // AUDIT 24: the port left every mint at the struct's 0 (Custom),
+    // and topicTree's castle-questor test - the only reader - compared
+    // it against the STRING 'dungeon', so both halves were dead.
+    context,
     buildingKey,
     mapID: mapId,
   };

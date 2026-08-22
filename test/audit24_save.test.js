@@ -9,6 +9,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { restoreFactionRep, restorePlayer, snapshotPlayer } from '../src/systems/save.js';
 
 /** A minimal live entity the snapshotter accepts. */
@@ -116,4 +117,76 @@ test('audit24 save: the light-source sentinel is -1, and only >= 0 relinks', () 
   const t4 = makeEntity();
   restorePlayer(t4, snap);
   assert.equal(t4.lightSource, null, 'any negative reads as nothing lit - the sentinel is a convention');
+});
+
+test('audit24 save: the 64 quest GLOBALS ride the envelope, and survive a clearState', async () => {
+  // DFU keeps the SAVEVARS.DAT globals on PlayerEntity.GlobalVars and
+  // serialises them with the PLAYER (SerializablePlayer.cs:134, :303).
+  // The port homed them on the machine, where getSaveData wrote two
+  // keys and clearState wiped four - and this store was in NEITHER. So
+  // every global a quest had set, the main quest's own progress among
+  // them, was lost on save and reset to false on load.
+  const { QuestMachine } = await import('../src/systems/quest/machine.js');
+  const m = new QuestMachine({ nowSeconds: () => 0 });
+  m.globalVars.set(11, true);
+  m.globalVars.set(42, false);
+  const snap = m.getSaveData();
+  assert.ok(Array.isArray(snap.globalVars), 'the envelope carries them');
+
+  const m2 = new QuestMachine({ nowSeconds: () => 0 });
+  assert.equal(m2.globalVars.size, 0, 'a fresh machine starts empty');
+  m2.restoreSaveData(snap);
+  assert.equal(m2.globalVars.get(11), true, 'a set global survives the round trip');
+  assert.equal(m2.globalVars.get(42), false, 'and an explicitly-cleared one is not lost');
+
+  // ClearState does NOT wipe them - C#'s wipes the machine's own four
+  // collections, and the globals live on PlayerEntity, replaced
+  // wholesale by the player restore that follows.
+  m2.clearState();
+  assert.equal(m2.globalVars.get(11), true, 'clearState leaves the globals standing');
+
+  // a pre-AUDIT-24 envelope carries none: the fresh all-false start
+  // holds, which is the additive-field shape DFU's serializer gives
+  const m3 = new QuestMachine({ nowSeconds: () => 0 });
+  m3.globalVars.set(7, true);
+  m3.restoreSaveData({ siteLinks: [], quests: [] });
+  assert.equal(m3.globalVars.get(7), true, 'an old save does not blank them');
+});
+
+// A TIMEOUT, deliberately: the defect this pins is an INFINITE LOOP, so
+// a regression does not fail an assertion - it hangs the whole suite
+// with no output. Five seconds turns that into a red test.
+test('audit24: the notebook wrap THROWS on an unbreakable run, where the port span for ever',
+  { timeout: 5000 }, async () => {
+  // WrapLinesIntoNote breaks on the last space at or before column 70.
+  // C# `LastIndexOf` answers -1 when the first 71 characters carry no
+  // space, and `Substring(0, -1)` is an ArgumentOutOfRangeException -
+  // DFU shows an exception. In JS `slice(0, -1)` is a legal "drop the
+  // last character" and `slice(0)` is the SAME STRING, so the loop
+  // made no progress and spun for ever: a frozen tab. A 71-character
+  // run with no space is reachable - a long quest name, a pasted
+  // token, any note the player types.
+  const { wrapLinesIntoNote, MAX_LINE_LENGTH } = await import('../src/systems/notebook.js');
+  assert.equal(MAX_LINE_LENGTH, 70);
+  // THE SHAPE FIRST, and it has to be. A synchronous infinite loop is
+  // the one defect a behavioural pin cannot catch: the pin never
+  // returns, so node's per-test timeout never fires (the event loop
+  // does not get a turn) and the whole suite hangs with no output
+  // instead of going red. This assertion runs BEFORE the call that
+  // would hang, so removing the guard fails here.
+  const src = readFileSync(new URL('../src/systems/notebook.js', import.meta.url), 'utf8');
+  assert.match(src, /if \(pos < 0\) \{[\s\S]{0,200}throw new RangeError\(/,
+    'the no-break-point guard is present - without it this test HANGS rather than fails');
+  const note = [];
+  assert.throws(() => wrapLinesIntoNote(note, 'x'.repeat(MAX_LINE_LENGTH + 1), 'text'), RangeError,
+    'no break point in the first 71 characters throws, as C# does');
+  // exactly 70 is fine - the loop never runs
+  const ok = [];
+  wrapLinesIntoNote(ok, 'y'.repeat(MAX_LINE_LENGTH), 'text');
+  assert.equal(ok.length, 2, 'one line and its NOTHING');
+  assert.equal(ok[0].text, ' ' + 'y'.repeat(MAX_LINE_LENGTH), 'with C#s leading space');
+  // and a breakable long run still wraps
+  const wrapped = [];
+  wrapLinesIntoNote(wrapped, `${'a'.repeat(40)} ${'b'.repeat(40)}`, 'text');
+  assert.equal(wrapped.length, 4, 'two lines, each with its NOTHING');
 });

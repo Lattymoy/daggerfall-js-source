@@ -677,6 +677,18 @@ export class QuestMachine {
     return {
       siteLinks: this.siteLinks.map((l) => structuredClone(l)),
       quests: [...this.quests.values()].map((q) => q.getSaveData()),
+      // AUDIT 24 (the seven-slice sweep): THE 64 GLOBALS WERE IN NO
+      // ENVELOPE AT ALL. DFU keeps them on PlayerEntity.GlobalVars and
+      // serialises them with the PLAYER
+      // (SerializablePlayer.cs:134, :303 -
+      // SerializeGlobalVars/DeserializeGlobalVars); the port homed
+      // them on the machine, where getSaveData wrote two keys and
+      // clearState wiped four, and this store was in neither. Every
+      // SAVEVARS.DAT flag a quest had set - the main quest's own
+      // progress among them - was lost on save and reset on load. They
+      // ride this envelope rather than the player's because that is
+      // where the port's store lives; the same file carries both.
+      globalVars: [...this.globalVars.entries()],
     };
   }
 
@@ -697,6 +709,10 @@ export class QuestMachine {
    *  C#'s dictionary does. Q4-v: the host's quickload calls this
    *  through the bridge. */
   clearState() {
+    // AUDIT 24: the globals are NOT cleared here, and that is C#'s
+    // shape - ClearState (:533-546) wipes the machine's own four
+    // collections, while the globals live on PlayerEntity and are
+    // replaced wholesale by the player restore that follows.
     this.quests.clear();
     this.siteLinks = [];
     this.questsToInvoke = [];
@@ -705,6 +721,11 @@ export class QuestMachine {
 
   restoreSaveData(data) {
     this.siteLinks = (data.siteLinks ?? []).map((l) => structuredClone(l));
+    // AUDIT 24: the globals ride the envelope now. A pre-AUDIT-24 save
+    // carries none, which leaves whatever the fresh machine holds -
+    // the all-false start, which is the additive-field shape DFU's own
+    // serializer gives a missing member.
+    if (data.globalVars) this.globalVars = new Map(data.globalVars);
     const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
     for (const questData of data.quests ?? []) {
       try {

@@ -10,6 +10,7 @@
 // with their orphan sweep and three-type relink.
 
 import { test } from 'node:test';
+import { NPC_CONTEXT } from '../src/characters/staticNpc.js';
 import assert from 'node:assert/strict';
 
 import {
@@ -656,15 +657,27 @@ test('the same-person test: the building arm, the CASTLE questor arm, and every 
   assert.equal(seamless._dialogPartnerIsSamePerson(person, 'Sirien'), false,
     'an absent isPlayerInside reads FALSE - the arm stays shut even with its key compare satisfied');
   // THE CASTLE ARM: inside a castle, a QUESTOR whose QuestorData
-  // context is the dungeon matches whatever the building key is
+  // context is the dungeon matches whatever the building key is.
+  //
+  // AUDIT 24 (the seven-slice sweep): NPCData.context is a NUMBER -
+  // StaticNPC.Context, Custom 0 / Dungeon 1 / Building 2 - and this
+  // was the ONLY reader, comparing it against the STRING 'dungeon'.
+  // Every writer stamps a number, so the arm could never be true and
+  // the whole castle-questor branch was dead. The pin carried the
+  // strings, which is why it never said so.
   const castle = { isPlayerInside: () => true, isPlayerInsideCastle: () => true, currentBuildingKey: () => 999, talkPartner: () => partner };
-  const castleQuestor = mkPerson('_q_', { displayName: 'Sirien', isQuestor: true, questorData: { mapID: 0, buildingKey: 0, context: 'dungeon' } });
+  const castleQuestor = mkPerson('_q_', { displayName: 'Sirien', isQuestor: true, questorData: { mapID: 0, buildingKey: 0, context: NPC_CONTEXT.Dungeon } });
   const { tree: tc } = makeTree(castle);
   assert.equal(tc._dialogPartnerIsSamePerson(castleQuestor, 'Sirien'), true);
   // ...but NOT a non-questor, and not a questor from a building context
   assert.equal(tc._dialogPartnerIsSamePerson(person, 'Sirien'), false, 'a castle non-questor never matches');
-  const buildingQuestor = mkPerson('_q2_', { displayName: 'Sirien', isQuestor: true, questorData: { mapID: 0, buildingKey: 0, context: 'building' } });
+  const buildingQuestor = mkPerson('_q2_', { displayName: 'Sirien', isQuestor: true, questorData: { mapID: 0, buildingKey: 0, context: NPC_CONTEXT.Building } });
   assert.equal(tc._dialogPartnerIsSamePerson(buildingQuestor, 'Sirien'), false, 'the context must be the dungeon');
+  // and the string that used to sit here matches NOTHING, which is
+  // exactly what made the arm dead
+  const stringQuestor = mkPerson('_q3_', { displayName: 'Sirien', isQuestor: true, questorData: { mapID: 0, buildingKey: 0, context: 'dungeon' } });
+  assert.equal(tc._dialogPartnerIsSamePerson(stringQuestor, 'Sirien'), false,
+    "a STRING context matches nothing - NPCData.context is StaticNPC.Context, a number");
 });
 
 test('the headless charter: absent gate seams read the C# defaults', () => {

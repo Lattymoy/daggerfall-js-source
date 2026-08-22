@@ -124,13 +124,21 @@ test('staticNpcData: the empty record in the empty context is the all-zeros stru
   // what the castle-questor topic gate reads.
   const zero = {
     hash: 0, flags: 0, factionID: 0, billboardArchiveIndex: 0, billboardRecordIndex: 0,
-    nameSeed: 0, gender: GENDERS.Male, race: 0, context: 0, mapID: 0,
+    nameSeed: 0, gender: GENDERS.Male, race: 0, mapID: 0,
     locationID: 0, buildingKey: 0, nameBank: 0,
+    // AUDIT 24: not the struct zero - the RMB (building) overload
+    // STAMPS Context.Building (StaticNPC.cs:178), and this helper is
+    // the building path. The port left it at 0 and topicTree's
+    // castle-questor test, the only reader, compared it against the
+    // STRING 'dungeon' - both halves dead.
+    context: NPC_CONTEXT.Building,
   };
   assert.deepEqual(staticNpcData({}, {}), zero);
   assert.deepEqual(staticNpcData({}), zero, 'the context itself defaults to the zero scene');
   assert.deepEqual(Object.keys(staticNpcData({})).sort(), Object.keys(ZERO_NPC_DATA).sort(),
     'and the mint answers exactly the struct - no field can be quietly dropped again');
+  assert.equal(staticNpcData({}, { context: NPC_CONTEXT.Dungeon }).context, NPC_CONTEXT.Dungeon,
+    'and a dungeon caller says so - the RDB overload stamps Dungeon');
   // and `race` is DERIVED, not left at the struct zero: a named faction
   // lends its own, which is what QuestMCP.Oath's clicked-NPC arm reads
   const named = staticNpcData({ factionID: 42 }, {
