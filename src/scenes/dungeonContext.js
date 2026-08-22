@@ -382,7 +382,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the loop once pointed at a name only in THIS block's scope -
     // caught in review, hoisted).
     const [shared, engineRig, { buildRaceCharacter },
-      { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster, castEnemySpell: castShared }] = await Promise.all([
+      { EnemyAI, withinYaw, isBackFacing, openDoorsStep }, { EnemyAttack }, { makeEnemyEntity, loadMonsterCareer }, { EnemyCaster, castEnemySpell: castShared, hasRangedSpell }] = await Promise.all([
       import('./shared.js'), import('../characters/engineRig.js'),
       import('../characters/raceCharacter.js'),
       import('../characters/enemyMotor.js'), import('../characters/enemyAttack.js'),
@@ -411,6 +411,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       bodyRamps: engineRig.deriveClassicRamps(palette, bodyImg.getDFBitmap()),
       buildRaceCharacter, floorLanding, EnemyAI, EnemyAttack, makeEnemyEntity, loadMonsterCareer, EnemyCaster, ClassFile, playerEntity,   // floorLanding/playerEntity/ClassFile/fetchBytes/generateItems ride the STATIC imports (audits 06c-06e)
       castEnemySpell: castShared,   // X3: the ONE cast executor (characters/enemyCasting.js)
+      hasRangedSpell,   // wave 35: the selection-free half of CanCastRangedSpell, for the stand-off band
     };
    } catch (err) {
      // The foe SUBSYSTEM failing to initialize (a dynamic import, the
@@ -475,6 +476,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,   // P13: the illusion-gate exemption
         spawnDistanceType: e.spawnDistanceType ?? 0,   // AUDIT 23 (characters-7): EnemySenses.cs:231 - the marker's band row
         isActionDoor,   // wave 34: ObstacleCheck's DaggerfallActionDoor arm
+        // wave 35: DoRangedAttack's band - a shooter inside 6..51.2 with
+        // the target in sight does NOT pursue (EnemyMotor.cs:468-470,
+        // :610 `return true`), it stands off and turns to face.
+        hasBowAttack: hasBowAttack(basics),
+        canCastRangedSpell: () => foeDeps.hasRangedSpell(entity),
       });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
       // Combat bows: EnemyMotor.cs:131-137 reads the MobileEnemy
@@ -535,6 +541,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         behaviour, mobileId: e.mobileType, waterSurfaceY: waterSurfaceYAt,
         spawnDistanceType: e.spawnDistanceType ?? 0,   // AUDIT 23 (characters-7)
         isActionDoor,   // wave 34: ObstacleCheck's DaggerfallActionDoor arm
+        // wave 35: DoRangedAttack's band - a shooter inside 6..51.2 with
+        // the target in sight does NOT pursue (EnemyMotor.cs:468-470,
+        // :610 `return true`), it stands off and turns to face.
+        hasBowAttack: hasBowAttack(basics),
+        canCastRangedSpell: () => foeDeps.hasRangedSpell(entity),
       });
       const attack = new D.EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: D.playerEntity.level, reflexes: D.playerEntity.reflexes });
       // The same EnemyMotor.cs:131-137 flag test the class branch
@@ -2124,9 +2135,23 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // C17: the ranged -1 (shootArrow) looses the arrow at the
           // player - the machine's hit event no longer fires it for
           // sprite archers.
-          // EnemyAttack.Update (:91-105): the early return while paralysed
-          // leaves the latch SET, so the swing lands when it clears.
-          if (playerFeet && !_fParalyzed && f.mobile.shootArrow) {
+          // C16: the -1 damage marker IS the damage moment (AnimateEnemy
+          // doMeleeDamage -> MeleeDamage). Paralysis does not reach it
+          // because EnemyAttack.Update returns at the top (:91-94) - and
+          // because that return happens BEFORE the clear at :100, the
+          // latch survives and the blow lands on the first unparalysed
+          // frame. (The comment here used to credit FreezeAnims, which
+          // is a dead store - wave 33.)
+          //
+          // MELEE FIRST, and the arrow as the ELSE-IF: DFU's
+          // EnemyAttack.Update is `if (mobile.DoMeleeDamage) {...} else
+          // if (mobile.ShootArrow) {...}` (:97-105). Wave 33 wrote two
+          // independent ifs in arrow-first order, so a foe that had
+          // latched both would loose an arrow AND land a blow in one
+          // frame, and would prefer the arrow. (Found by the wave-35
+          // re-read.)
+          if (playerFeet && !_fParalyzed && f.mobile.doMeleeDamage) { f.mobile.doMeleeDamage = false; resolveFoeMelee(f, playerFeet); }
+          else if (playerFeet && !_fParalyzed && f.mobile.shootArrow) {
             f.mobile.shootArrow = false;
             const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
             const d = [playerFeet[0] - from[0], playerFeet[1] + 0.9 - from[1], playerFeet[2] - from[2]];
@@ -2134,14 +2159,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             fireArrow(from, [d[0] / l, d[1] / l, d[2] / l], f.entity.weapon, false, f);
             audio.play3d(SOUND.ArrowShoot, from, 1, { maxDistance: 16 });   // C2-slice (combat-9): the loose rings from the archer (EnemyAttack Update)
           }
-          // C16: the -1 damage marker IS the damage moment
-          // (AnimateEnemy doMeleeDamage -> MeleeDamage). Paralysis does
-          // not reach it because EnemyAttack.Update returns at the top
-          // (:91-94) - and because that return happens BEFORE the clear
-          // at :100, the latch survives and the blow lands on the first
-          // unparalysed frame. The comment here used to credit
-          // FreezeAnims, which is a dead store.
-          if (playerFeet && !_fParalyzed && f.mobile.doMeleeDamage) { f.mobile.doMeleeDamage = false; resolveFoeMelee(f, playerFeet); }
         }
         const out = f._mout;
         const rkey = `${out.record}#${out.frame}`;

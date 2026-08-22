@@ -22,6 +22,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DEG = Math.PI / 180;
 const clearCollider = () => ({
   raycast: () => Infinity,
+  // wave 34/35: the motor probes before it moves and before it chooses a
+  // destination, so a stub world has to answer "nothing in the way".
+  capsuleCast: () => ({ dist: Infinity, key: null }),
   move: () => ({ grounded: true }),
 });
 const mkSenses = (extra = {}) => ({ gameMinutes: 0, playerStealth: 0, rolls: () => 0.5, ...extra });

@@ -3925,6 +3925,126 @@ sphere cast, so it could not have been written before this wave.
 **Twenty-seven findings remain**, plus thirteen the sweep added.
 
 
+### Wave 35
+
+**The archer walked up and shot you in the face.**
+
+```csharp
+// Ranged attacks
+if (DoRangedAttack(direction, moveSpeed, distance, isPlayingOneShot))
+    return;
+```
+
+`TakeAction:468-470`, ahead of the advance/retreat decision, and
+`DoRangedAttack` ends with `return true`. So a classic bow or
+ranged-spell enemy inside the 6 - 51.2 metre band, with the target in
+sight, **does not pursue at all**: it turns to face and rolls its shot.
+Unported, so the port's archers closed to 2.25 like everything else -
+and the port's own ranged band, which lives in the attack and cast
+components, then only fired during the charge, because 2.25 is under
+the 6-metre floor. The band was self-extinguishing.
+
+**And the destination was always the player, live.**
+
+Wave 34 ported the first of `GetDestination`'s three arms and flagged
+the other two. They are the ones that make a foe behave like something
+with eyes:
+
+```csharp
+else if (ClearPathToPosition(senses.PredictedTargetPos, (destination - transform.position).magnitude)
+      || (senses.TargetInSight && (hasBowAttack || entity.CurrentMagicka > 0)))
+{
+    destination = senses.PredictedTargetPos;
+    ...
+    searchMult = 0;
+}
+else
+{
+    Vector3 searchPosition = senses.LastKnownTargetPos + (senses.LastPositionDiff.normalized * searchMult);
+    if (searchMult <= 10 && (searchPosition - transform.position).magnitude <= stopDistance)
+        searchMult++;
+    destination = searchPosition;
+}
+```
+
+`ClearPathToPosition` is the wave-34 probe pair plus a sphere cast, and
+it could not have been written before that wave. The search arm needed
+a memory the port did not have at all: `LastKnownTargetPos`,
+refreshed by sight or earshot and **guarded** by a 200-tick LOS timer
+so that a bare stealth detection does not overwrite it - the source
+says why in as many words, "this gives better pursuit behavior since
+enemies will go to the last spot they saw the player instead of walking
+into walls". And `LastPositionDiff`, which is only differenced across
+two CONSECUTIVE prediction passes that both had sight.
+
+One thing the classic path does NOT have, and the port therefore does
+not either: prediction. `predictedTargetPos = lastKnownTargetPos` runs
+every pass under `|| !EnhancedCombatAI`, and `PredictNextTargetPos` is
+called only inside the Enhanced guard. The port writes the assignment
+and no lead. That is verbatim, not a gap.
+
+**The band moved house, to avoid a fourth cycle.** `enemyAttack.js`
+declared `MIN/MAX_RANGED_DISTANCE` and imports `MELEE_DISTANCE` from
+`enemyMotor.js`; the motor now needs the band, and importing it back
+would have closed the third import cycle in three waves. It is declared
+in the motor - beside `MELEE_DISTANCE`, which carries the same
+`EnemyAttack.cs` citation - and re-exported. Wave 31's leaf, wave 34's
+turned edge, this one's move: three shapes for the same problem, and
+the only reason any of them was visible is that something had to be
+evaluated at module scope.
+
+**A scout that ran while the wave was being written.**
+
+Three lenses, sixteen claims, one refuter each. Two lenses scouted this
+slice; the third re-read what waves 32, 33 and 34 had just shipped, and
+it found **four real defects in them**, which is why it existed:
+
+1. *A detouring flyer aims two units above its detour destination.*
+   `_dir3` applied the "aim for the target's face" offset to whatever
+   it was handed, and wave 34 started handing it the detour
+   destination. GetDestination is where DFU puts that offset (:542-545)
+   - and once it was ported there, the flyer got it twice and stopped
+   3.6 units short of melee range instead of at it. Both halves fixed;
+   `_dir3` returns the direction to the point it is given and nothing
+   more.
+
+2. *ObstacleCheck recorded a door with no yaw gate.* DFU only writes
+   `senses.LastKnownDoor` when the door is within 22.5 degrees of
+   facing (:1170-1175). Wave 34 recorded any door the probe struck -
+   and `FindDetour` probes 45, 90, 135 degrees off, so a foe working
+   its way round a corner would have the host open a door **behind**
+   it.
+
+3. *The stop distance measured to the player.* DFU measures to the
+   DESTINATION unless the target is in sight (:479-482), which during a
+   search is the last known position. Without it, a foe searching a
+   room it had lost you in would stop dead the moment you came within
+   2.25 metres of it - through the wall it could not see through.
+
+4. *The damage-frame consumers were two independent ifs, arrow first.*
+   `EnemyAttack.Update` is `if (DoMeleeDamage) {...} else if
+   (ShootArrow) {...}` (:97-105). Wave 33's latch made both survivable
+   at once, so a foe with both set would loose an arrow AND land a
+   blow in the same frame, and would prefer the arrow.
+
+It also observed that `capsuleCast`'s four-spoke rosette leaves the
+diagonal quadrants unsampled. Four more rays over a fifth of a metre;
+taken.
+
+**Twenty-eight mutants, twenty-eight kills** - three of them only after
+the pins were rebuilt, and one of those rebuilds mattered on its own
+account. The wall pin asserted that the detour destination was two
+units away *at the end of forty ticks*, which it is not: the foe walks
+to it, arrives, and buys another. It had been passing on the geometry
+of one particular collision, and the diagonal rays changed that
+geometry. The claim it should have been making all along is the one it
+makes now - the foe ends up **sideways** of where it started, which a
+capsule grinding into a flat wall it is walking straight at can never
+be.
+
+**Twenty-six findings remain**, plus ten the host-parity sweep added.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

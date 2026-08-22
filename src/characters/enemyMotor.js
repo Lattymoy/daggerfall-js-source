@@ -56,6 +56,26 @@ export const HEARING_RADIUS = 25;
 export const FIELD_OF_VIEW = 180;                    // deg
 export const MELEE_DISTANCE = 2.25;
 export const CLASSIC_MELEE_DISTANCE_VS_AI = 1.5;
+// EnemyAttack.cs:28-29 - the ranged band, 240/2048 classic units at
+// MeshReader.GlobalScale (= 6m / 51.2m), STRICT at both ends. AUDIT 24
+// (wave 35): declared HERE rather than in enemyAttack.js, because the
+// motor needs them for DoRangedAttack's stand-off and enemyAttack.js
+// already imports MELEE_DISTANCE from this module - declaring them
+// there and importing them here would close the third import cycle in
+// three waves. enemyAttack.js re-exports them for its own readers.
+export const MIN_RANGED_DISTANCE = 240 * GLOBAL_SCALE;
+export const MAX_RANGED_DISTANCE = 2048 * GLOBAL_SCALE;
+/** EnemySenses.lastHadLOSTimer (:455), refilled on sight or earshot and
+ *  decremented once per classic update. */
+export const LAST_HAD_LOS_TICKS = 200;
+/** GetDestination's search ramp (:553-556): searchMult climbs by one
+ *  per pass while it is <= 10 and the search position is inside the
+ *  stop distance, and is reset to 0 the moment the target is reachable
+ *  (:551) or the foe stops acting (HandleNoAction :362). */
+export const SEARCH_MULT_MAX = 10;
+/** ClearPathToPosition's default reach (:667) - GetDestination does NOT
+ *  use it, passing the distance to the PREVIOUS destination instead. */
+export const CLEAR_PATH_DEFAULT_DIST = 30;
 export const CLASSIC_TURN_DEG = 20;                  // per classic update (TurnToTarget's turnSpeed)
 // M3 / ONE DFU MEMBER ONE EXPORT: systemTimerUpdatesDivisor is a
 // PlayerMotor field in DFU (climbing divides by it too) - moved to
@@ -301,7 +321,7 @@ export const DETOUR_ARRIVAL = 0.3;              // UpdateTimers zeroes the timer
  * waterSurfaceY(x, z), the 2.5 head margin, beached = frozen).
  */
 export class EnemyAI {
-  constructor(collider, feet, yawRad, { liveSpeed = 50, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null, spawnDistanceType = 0, playerInside = true, isActionDoor = null, rolls = Math.random } = {}) {
+  constructor(collider, feet, yawRad, { liveSpeed = 50, height = CAPSULE_HEIGHT, seesThroughInvisibility = false, behaviour = 'General', mobileId = -1, waterSurfaceY = null, spawnDistanceType = 0, playerInside = true, isActionDoor = null, rolls = Math.random, hasBowAttack = false, canCastRangedSpell = null } = {}) {
     this.collider = collider;
     /** ObstacleCheck's DaggerfallActionDoor arm (:1167-1176). The AI
      *  cannot resolve a collider bucket key to an action object - the
@@ -347,6 +367,22 @@ export class EnemyAI {
     this.didClockwiseCheck = false;
     this.lastTimeWasStuck = -Infinity;
     this._clock = 0;   // Time.time, accumulated on the fixed step
+    // EnemySenses' target-position memory (wave 35). null stands in for
+    // DFU's ResetPlayerPos sentinel (float.MaxValue on all three axes),
+    // which HandleNoAction (:359) reads as "never seen, take no action".
+    this.lastKnownTargetPos = null;
+    this.oldLastKnownTargetPos = null;
+    this.predictedTargetPos = null;
+    this.lastPositionDiff = [0, 0, 0];
+    this.awareOfTargetForLastPrediction = false;
+    this.lastHadLOSTimer = 0;
+    this.searchMult = 0;
+    /** EnemyMotor.hasBowAttack (:131-137, off the MobileEnemy FLAGS) and
+     *  CanCastRangedSpell (:759). The motor needs both for
+     *  DoRangedAttack's band; the host owns the attack and cast
+     *  components that know the answers. */
+    this.hasBowAttack = hasBowAttack;
+    this.canCastRangedSpell = canCastRangedSpell ?? (() => false);
     this.flies = behaviour === 'Flying' || behaviour === 'Spectral';   // CanFly, verbatim
     this.swims = behaviour === 'Aquatic';
     // Flyers (and the slaughterfish) aim for the target FACE
@@ -382,6 +418,9 @@ export class EnemyAI {
    *  resolve every FixedUpdate (see _senses). This half runs per
    *  classic tick. */
   _classicSenses(playerFeet, senses = null) {
+    // EnemySenses.cs:445-449 - the LOS timer decays on the CLASSIC update,
+    // ahead of the detection block that refills it (wave 35).
+    if (this.lastHadLOSTimer > 0) this.lastHadLOSTimer--;
     if (!senses) return;
     const dxp = playerFeet[0] - this.feet[0], dzp = playerFeet[2] - this.feet[2];
     const dist = Math.hypot(dxp, playerFeet[1] - this.feet[1], dzp);
@@ -428,8 +467,16 @@ export class EnemyAI {
       return;
     }
     if (!senses) {
+      // The port's no-stealth-context path (there is no such mode in DFU).
+      // It still owes the target-position memory, or a foe driven this way
+      // never has a destination at all and HandleNoAction freezes it.
       this.detected = this.inSight || this._dist < HEARING_RADIUS;
-      if (this.detected && !this.hasEncounteredPlayer) { this.hasEncounteredPlayer = true; this.justEncountered = true; }
+      if (this.detected) {
+        this.lastKnownTargetPos = [playerFeet[0], playerFeet[1], playerFeet[2]];
+        this.lastHadLOSTimer = LAST_HAD_LOS_TICKS;
+        if (!this.hasEncounteredPlayer) { this.hasEncounteredPlayer = true; this.justEncountered = true; }
+      }
+      this._trackPredictedPos();
       return;
     }
     // hearing only once the target is already detected and unseen -
@@ -437,10 +484,59 @@ export class EnemyAI {
     const inEarshot = (this.detected && !this.inSight)
       ? canHearTarget(this.collider, this.feet, this.height, playerFeet, this._dist)
       : false;
-    if (!this._blocked && (this.inSight || inEarshot)) this.detected = true;
-    else if (!this._blocked && this._stealthCheck(senses)) this.detected = true;
-    else this.detected = false;
+    // AUDIT 24 (wave 35): the TARGET-POSITION MEMORY, which the port did
+    // not have at all - EnemySenses.cs:451-495. Sight or earshot writes
+    // the live position and refills lastHadLOSTimer; a bare STEALTH
+    // detection writes it only once that timer has run out, and the
+    // source says why in as many words: "this gives better pursuit
+    // behavior since enemies will go to the last spot they saw the
+    // player instead of walking into walls".
+    if (!this._blocked && (this.inSight || inEarshot)) {
+      this.detected = true;
+      this.lastKnownTargetPos = [playerFeet[0], playerFeet[1], playerFeet[2]];
+      this.lastHadLOSTimer = LAST_HAD_LOS_TICKS;
+    } else if (!this._blocked && this._stealthCheck(senses)) {
+      this.detected = true;
+      if (this.lastHadLOSTimer <= 0) this.lastKnownTargetPos = [playerFeet[0], playerFeet[1], playerFeet[2]];
+    } else this.detected = false;
     if (this.detected && !this.hasEncounteredPlayer) { this.hasEncounteredPlayer = true; this.justEncountered = true; }
+
+    this._trackPredictedPos();
+  }
+
+  /** EnemySenses.cs:472-495 - the tail of the detection block: the
+   *  prediction anchor, and the movement difference taken across two
+   *  consecutive prediction passes that both had sight. */
+  _trackPredictedPos() {
+    if (this.lastKnownTargetPos === null) return;
+    if (this.oldLastKnownTargetPos === null) this.oldLastKnownTargetPos = [...this.lastKnownTargetPos];
+    // :475-476. In the CLASSIC path the predicted position simply IS the
+    // last known one - `predictedTargetPos == ResetPlayerPos ||
+    // !EnhancedCombatAI` is true every pass, and PredictNextTargetPos is
+    // called only inside the Enhanced guard at :496-501. So the port has
+    // no lead prediction to write, and that is verbatim, not a gap.
+    this.predictedTargetPos = this.lastKnownTargetPos;
+    // :479-495, gated on targetPosPredict - a 0.0625s timer, which is the
+    // classic-update interval; the port folds it onto the classic tick.
+    // The DIFFERENCE is only taken across two CONSECUTIVE prediction
+    // passes that both had sight, which is what awareOfTargetForLast-
+    // Prediction is for; it survives the Enhanced guard because only the
+    // PredictNextTargetPos call sits inside it.
+    if (this._targetPosPredict) {
+      if (!this._blocked && this.inSight) {
+        if (this.awareOfTargetForLastPrediction) {
+          this.lastPositionDiff = [
+            this.lastKnownTargetPos[0] - this.oldLastKnownTargetPos[0],
+            this.lastKnownTargetPos[1] - this.oldLastKnownTargetPos[1],
+            this.lastKnownTargetPos[2] - this.oldLastKnownTargetPos[2],
+          ];
+        }
+        this.oldLastKnownTargetPos = [...this.lastKnownTargetPos];
+        this.awareOfTargetForLastPrediction = true;
+      } else {
+        this.awareOfTargetForLastPrediction = false;
+      }
+    }
   }
 
   /** EnemyMotor.MakeEnemyHostileToAttacker (G1): pre-load the give-up
@@ -504,7 +600,13 @@ export class EnemyAI {
     if (this.isActionDoor(hit.key)) {
       this.obstacleDetected = false;
       this.foundDoor = true;
-      this.doorKey = hit.key;   // senses.LastKnownDoor, which OpenDoors consumes
+      // :1170-1175 - the door is only RECORDED as senses.LastKnownDoor
+      // when it is within 22.5 degrees of the way the foe is facing.
+      // Wave 34 dropped that gate, and FindDetour probes 45, 90, 135
+      // degrees off: a foe working its way round an obstacle would
+      // record - and the host would then open - a door up to 180
+      // degrees behind it. (Found by the wave-35 re-read.)
+      if (withinYaw(this.yaw, dir[0], dir[2], STOP_YAW_GATE_DEG)) this.doorKey = hit.key;
       return;
     }
     if (this.swims || this.flies || this.levitating) return;
@@ -659,6 +761,128 @@ export class EnemyAI {
     if (this.checkingClockwiseTimer > 0) this.checkingClockwiseTimer -= dt;
   }
 
+  /**
+   * EnemyMotor.ClearPathToPosition (:667-693), verbatim: "true if clear
+   * or if the combat target is the first obstacle hit".
+   *
+   * It is ObstacleCheck + FallCheck on the FLATTENED direction, then a
+   * sphere cast of half the controller radius along the UNFLATTENED one.
+   * The port's collider holds no entities, so DFU's "the first thing hit
+   * is my target" arm can never be taken - a sphere cast that hits
+   * anything at all here is level geometry, and the answer is false.
+   * Note both probes WRITE the detour flags, exactly as DFU's do; the
+   * caller re-probes before it moves.
+   *
+   * `location` is in DFU's `transform.position` space - a CONTROLLER
+   * CENTRE, not feet. The caller converts. Passing feet tilts the cast
+   * downward by half a body over its whole length and it hits the floor
+   * a few metres out, which is how this was found.
+   */
+  _clearPathToPosition(location, dist = CLEAR_PATH_DEFAULT_DIST) {
+    const c = this._centre();
+    let dx = location[0] - c[0], dy = location[1] - c[1], dz = location[2] - c[2];
+    const l = Math.hypot(dx, dy, dz) || 1;
+    dx /= l; dy /= l; dz /= l;
+    const flat = [dx, 0, dz];
+    const fl = Math.hypot(flat[0], flat[2]);
+    if (fl > 1e-9) { flat[0] /= fl; flat[2] /= fl; }
+    this._obstacleCheck(flat);
+    this._fallCheck(flat);
+    if (this.obstacleDetected || this.fallDetected) return false;
+    const hit = this.collider.capsuleCast(c, c, OBSTACLE_CAST_RADIUS, [dx, dy, dz], dist);
+    return !Number.isFinite(hit.dist);
+  }
+
+  /**
+   * EnemyMotor.GetDestination (:528-565), all three arms.
+   *
+   * AUDIT 24 (wave 35). Wave 34 ported the detour override alone, and
+   * left the port beelining at the player's LIVE position through walls:
+   * no path gate, no memory of where the target was last seen, and no
+   * search. The middle arm is the one that makes a foe give up on a
+   * player it cannot reach; the last is the one that sends it to the
+   * doorway you went through instead of into the wall beside it.
+   */
+  _getDestination(playerFeet) {
+    const c = this._centre();
+    if (this.avoidObstaclesTimer > 0) {
+      this.destination = this.detourDestination;
+      return;
+    }
+    // The `dist` argument is the distance to the PREVIOUS destination -
+    // GetDestination passes `(destination - transform.position).magnitude`
+    // rather than the default 30, so the gate reaches exactly as far as
+    // the foe was already heading. Kept.
+    const prev = this.destination ?? playerFeet;
+    // DFU measures centre-to-centre; both sides of the port's subtraction
+    // are feet-space, which is the same difference.
+    const prevDist = Math.hypot(prev[0] - this.feet[0], prev[1] - this.feet[1], prev[2] - this.feet[2]);
+    const predicted = this.predictedTargetPos ?? playerFeet;
+    const predictedCentre = [predicted[0], predicted[1] + CAPSULE_HEIGHT / 2, predicted[2]];
+    // ...or the foe is a shooter with the target in sight, in which case
+    // it heads for the target whether the path is clear or not (:539-540
+    // - `senses.TargetInSight && (hasBowAttack || entity.CurrentMagicka > 0)`).
+    if (this._clearPathToPosition(predictedCentre, prevDist)
+      || (this.inSight && (this.hasBowAttack || this.canCastRangedSpell()))) {
+      const d = [predicted[0], predicted[1], predicted[2]];
+      // Flyers, levitators and the slaughterfish aim for the target FACE
+      // (:543-544). The port's _aimY already carries that split.
+      if (this.flies || this.levitating || this.swims) d[1] += this._aimY;
+      this.destination = d;
+      this.searchMult = 0;
+    } else {
+      // The SEARCH (:549-557): walk past the last known position along
+      // the direction the target was last moving, further each pass, and
+      // only while the search position is still inside the stop distance.
+      const diff = this.lastPositionDiff;
+      const dl = Math.hypot(diff[0], diff[1], diff[2]);
+      const n = dl > 1e-9 ? [diff[0] / dl, diff[1] / dl, diff[2] / dl] : [0, 0, 0];
+      const base = this.lastKnownTargetPos ?? playerFeet;
+      const search = [
+        base[0] + n[0] * this.searchMult,
+        base[1] + n[1] * this.searchMult,
+        base[2] + n[2] * this.searchMult,
+      ];
+      const sd = Math.hypot(search[0] - c[0], search[1] - c[1], search[2] - c[2]);
+      if (this.searchMult <= SEARCH_MULT_MAX && sd <= MELEE_DISTANCE) this.searchMult++;
+      this.destination = search;
+    }
+    // :559-564 - a GROUNDED foe aims at its own height, "otherwise short
+    // enemies' vector can aim up towards the target, which could
+    // interfere with distance-to-target calculations". Both controllers
+    // are the port's one capsule height, so the delta is zero and the
+    // line is written for the day they differ.
+    if (this.avoidObstaclesTimer <= 0 && !this.flies && !this.levitating && !this.swims) {
+      this.destination = [this.destination[0], this.destination[1] - (CAPSULE_HEIGHT - this.height) / 2, this.destination[2]];
+    }
+  }
+
+  /**
+   * EnemyMotor.DoRangedAttack (:568-614), the CLASSIC path - and the
+   * `return true` at the end of it, which is the whole point.
+   *
+   * AUDIT 24 (wave 35): unported, so an archer or a ranged caster walked
+   * all the way to melee range and shot you in the face. TakeAction calls
+   * this BEFORE the advance/retreat decision (:468-470) and returns on
+   * true, so a shooter inside the 6..51.2 band with the target in sight
+   * does not pursue AT ALL: it turns to face and rolls its shot.
+   *
+   * The ROLL is not here. DFU rolls 1/32 for a bow and 1/40 for a spell
+   * inside this method; the port's attack and cast components own those
+   * (enemyAttack's BOW_SHOT_CHANCE, enemyCasting's decision), and putting
+   * a second roll here would draw off the shared stream twice. What the
+   * motor owes is the stand-off and the turn.
+   */
+  _doRangedAttack(dx, dz) {
+    const inRange = this._dist > MIN_RANGED_DISTANCE && this._dist < MAX_RANGED_DISTANCE;
+    if (!(inRange && this.inSight && this.detected && (this.hasBowAttack || this.canCastRangedSpell()))) return false;
+    // Within 22.5 degrees of the destination it shoots (the components'
+    // job); outside it, TurnToTarget. Either way it does not advance.
+    if (!withinYaw(this.yaw, dx, dz, STOP_YAW_GATE_DEG)) this.yaw = turnTowards(this.yaw, dx, dz);
+    this.moving = false;
+    return true;
+  }
+
   _classicTick(playerFeet) {
     // G1 (EnemyMotor verbatim): detection refills GiveUpTimer to 200
     // classic ticks; while undetected it counts down and the foe KEEPS
@@ -668,15 +892,13 @@ export class EnemyAI {
     if (this.detected) this.giveUpTimer = GIVE_UP_TICKS;
     else if (this.giveUpTimer > 0) this.giveUpTimer--;
     if (!this.detected && this.giveUpTimer <= 0) { this.moving = false; return; }
-    // GetDestination (EnemyMotor.cs:530-565). AUDIT 24 (wave 34) ports
-    // its FIRST arm only - the detour override - because that is what
-    // the detour machine needs. FLAGGED: the other two arms are the
-    // ClearPathToPosition gate on PredictedTargetPos and the
-    // LastKnownTargetPos + LastPositionDiff * searchMult search, and
-    // without them a foe still beelines at the player's LIVE position
-    // through walls rather than searching where it last saw them.
+    // HandleNoAction (:357-366): no target, the give-up timer spent, or a
+    // position never seen, and the foe takes NO action - CanAct goes
+    // false and the search ramp resets. Wave 35 adds the third arm.
+    if (this.predictedTargetPos === null) { this.moving = false; this.searchMult = 0; return; }
+    // GetDestination (:528-565), all three arms since wave 35.
     const detouring = this.avoidObstaclesTimer > 0;
-    this.destination = detouring ? this.detourDestination : playerFeet;
+    this._getDestination(playerFeet);
     const dx = this.destination[0] - this.feet[0], dz = this.destination[2] - this.feet[2];
     // "If detouring, always attempt to move" (:480-484) - TakeAction's
     // FIRST branch, ahead of the stop-distance test entirely, which is
@@ -690,11 +912,28 @@ export class EnemyAI {
       this.moving = true;
       return;
     }
+    // Ranged attacks (:468-470) - AHEAD of the advance/retreat decision,
+    // and its `return true` is what keeps a shooter at its distance.
+    // (DoRangedAttack reads senses.DistanceToTarget itself, never the
+    // `distance` below - :571.)
+    if (this._doRangedAttack(dx, dz)) return;
+    // :479-482 - THE DISTANCE THE STOP TEST USES. It is the distance to
+    // the TARGET only while the target is in sight and no detour is
+    // running; otherwise it is the distance to the DESTINATION, which
+    // during a search is the last known position rather than wherever
+    // the player has since walked to. Wave 34 and the first cut of
+    // wave 35 both measured to the player unconditionally, so a foe
+    // searching a room it had lost you in would stop the moment YOU
+    // came within 2.25 of it - through the wall it could not see
+    // through. (Found by the wave-35 re-read.)
+    const distance = (this.avoidObstaclesTimer <= 0 && this.inSight)
+      ? this._dist
+      : Math.hypot(dx, this.destination[1] - this.feet[1], dz);
     // classic stop: MeleeDistance vs the player; always moves in for
     // attack. CH4: the STOPPED turn rides the 22.5 "just look at
     // target" gate (EnemyMotor.cs:514), NOT AttemptMove's 5.625 -
     // a melee foe stands up to 22.5deg off-face.
-    if (this._dist <= MELEE_DISTANCE) {
+    if (distance <= MELEE_DISTANCE) {
       this.moving = false;
       if (!withinYaw(this.yaw, dx, dz, STOP_YAW_GATE_DEG)) this.yaw = turnTowards(this.yaw, dx, dz);
       return;
@@ -752,6 +991,10 @@ export class EnemyAI {
       classicTicks++;
       this._classicSenses(playerFeet, senses);
     }
+    // EnemySenses.targetPosPredict (:249-257) is its own 0.0625s timer -
+    // the classic-update interval, independently phased. The port reads
+    // "a classic tick happened this step" as the same thing, and says so.
+    this._targetPosPredict = classicTicks > 0;
     this._senses(playerFeet, senses);
     for (let i = 0; i < classicTicks; i++) {
       // C-slice: a pacified foe (IsHostile false) keeps its senses
@@ -926,10 +1169,19 @@ export class EnemyAI {
 
   /** The 3D pursuit direction to the aim point (face for flyers +
    *  the slaughterfish, center for other swimmers), normalized. */
-  _dir3(playerFeet) {
-    const dx = playerFeet[0] - this.feet[0];
-    const dy = (playerFeet[1] + this._aimY) - this.feet[1];
-    const dz = playerFeet[2] - this.feet[2];
+  /** The unit direction to a point, as DFU's
+   *  `(destination - transform.position).normalized`.
+   *
+   *  AUDIT 24 (wave 35): the aim bump used to live HERE, added to
+   *  whatever it was handed. GetDestination is where DFU puts it
+   *  (:542-545), and once that was ported the flyer got it twice - it
+   *  aimed 1.8 above the target's head and stopped 3.6 short instead of
+   *  at melee range. One home: _getDestination applies _aimY, this
+   *  returns the direction to the point it is given. */
+  _dir3(point) {
+    const dx = point[0] - this.feet[0];
+    const dy = point[1] - this.feet[1];
+    const dz = point[2] - this.feet[2];
     const l = Math.hypot(dx, dy, dz) || 1;
     return [dx / l, dy / l, dz / l];
   }

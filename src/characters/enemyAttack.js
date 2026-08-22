@@ -34,7 +34,7 @@ import {
   MELEE_NUM_FRAMES, CLASSIC_UPDATE_INTERVAL,
 } from './weaponStates.js';
 import { STRIKES, ATTACKS_1H, sampleClip } from './anims.js';
-import { MELEE_DISTANCE, withinYaw } from './enemyMotor.js';
+import { MELEE_DISTANCE, withinYaw, MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE } from './enemyMotor.js';
 
 export const ATTACK_SPEED_FLOOR = 8;               // EnemyAttack.cs speedFloor
 export const ATTACK_YAW_DEG = 22.5;                // MeleeAnimation yaw gate
@@ -42,10 +42,11 @@ export const MELEE_TIMER_MIN_MS = 1500;            // ResetMeleeTimer Random.Ran
 export const MELEE_TIMER_MAX_MS = 3000;            // (inclusive)
 export const MELEE_TIMER_LEVEL_MS = 50;            // per player level above 10
 export const MELEE_TIMER_REFLEX_MS = 450;          // per reflexes step from average
-// EnemyAttack.cs:28-29 - the ranged band, 240/2048 classic units at
-// MeshReader.GlobalScale (= 6m / 51.2m), STRICT at both ends.
-export const MIN_RANGED_DISTANCE = 6;
-export const MAX_RANGED_DISTANCE = 51.2;
+// EnemyAttack.cs:28-29 - the ranged band. ONE HOME: enemyMotor.js, which
+// needs them for DoRangedAttack's stand-off and which this module already
+// imports from (wave 35 - declaring them here and importing them there
+// would close a cycle).
+export { MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE } from './enemyMotor.js';
 // EnemyMotor.DoRangedAttack:592 - the bow cadence inside the band.
 export const BOW_SHOT_CHANCE = 1 / 32;
 

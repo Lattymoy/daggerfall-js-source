@@ -207,13 +207,14 @@ export class Collider {
    *
    * ENGINE-SIDE, like everything else in this file: the capsule is
    * sampled as a bundle of rays - `axisSamples` points along the axis,
-   * each casting from the axis point and from four points at `radius`
-   * on the cross-section perpendicular to `dir`. That is an
-   * approximation of the true swept volume and it is the same kind of
-   * approximation the two-sphere capsule above already is. It is sized
-   * for its one caller: the enemy obstacle probe casts 0.175 over
-   * 0.247, where the bundle's widest gap between rays is smaller than
-   * the wall thickness of anything in an RMB or RDB block.
+   * each casting from the axis point and from eight points at `radius`
+   * on the cross-section perpendicular to `dir` (four axes, four
+   * diagonals). That is an approximation of the true swept volume and
+   * it is the same kind of approximation the two-sphere capsule above
+   * already is. It is sized for its one caller: the enemy obstacle
+   * probe casts 0.175 over 0.247, where the bundle's widest gap between
+   * rays is smaller than the wall thickness of anything in an RMB or
+   * RDB block.
    *
    * A note on what it CANNOT see, which matters for the parity of the
    * caller rather than of this method: entities are not in the
@@ -245,12 +246,23 @@ export class Collider {
     for (let i = 0; i < n; i++) {
       const t = n === 1 ? 0 : i / (n - 1);
       const bx = p1[0] + ax * t, by = p1[1] + ay * t, bz = p1[2] + az * t;
+      // Centre plus EIGHT points on the cross-section: the four axes and
+      // the four diagonals. The wave-35 re-read pointed out that a
+      // four-point rosette leaves the diagonal quadrants unsampled, so a
+      // corner arriving between two spokes could slip through. The
+      // diagonals sit at radius/sqrt(2) on each axis, which is the same
+      // circle, and cost four more DDA rays over a fifth of a metre.
+      const h = radius * Math.SQRT1_2;
       for (const [ox, oy, oz] of [
         [0, 0, 0],
         [ux * radius, uy * radius, uz * radius],
         [-ux * radius, -uy * radius, -uz * radius],
         [vx * radius, vy * radius, vz * radius],
         [-vx * radius, -vy * radius, -vz * radius],
+        [(ux + vx) * h, (uy + vy) * h, (uz + vz) * h],
+        [(ux - vx) * h, (uy - vy) * h, (uz - vz) * h],
+        [(-ux + vx) * h, (-uy + vy) * h, (-uz + vz) * h],
+        [(-ux - vx) * h, (-uy - vy) * h, (-uz - vz) * h],
       ]) {
         const h = this.raycastHit([bx + ox, by + oy, bz + oz], dir, reach);
         if (h.dist < best) { best = h.dist; bestKey = h.key; }

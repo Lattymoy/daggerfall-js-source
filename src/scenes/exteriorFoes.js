@@ -17,7 +17,7 @@ import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { EnemyAI, isBackFacing, withinYaw } from '../characters/enemyMotor.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE } from '../player/motor.js';   // CH3: the shared fall formula
 import { SOUND } from '../systems/soundClips.js';   // CH3: the FallDamage clip
-import { EnemyCaster, castEnemySpell } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
+import { EnemyCaster, castEnemySpell, hasRangedSpell } from '../characters/enemyCasting.js';   // X3: the shared decision + the ONE cast executor
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // X3
 import { applySpell, maxFatigue, entityIsParalyzed } from '../systems/effects.js';   // X3: self-casts land through the effect spine
 import { calculateCastCost } from '../systems/spellcost.js';   // X3: costs priced off the player (magic-15 note)
@@ -75,6 +75,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         behaviour, mobileId: mobileType,
         playerInside: false,   // the exterior despawn band (EnemySenses.cs:269)
+        // wave 35: DoRangedAttack's band - a shooter inside 6..51.2 with
+        // the target in sight stands off instead of closing.
+        hasBowAttack: hasBowAttack(basics),
+        canCastRangedSpell: () => hasRangedSpell(entity),
       });
       const attack = new EnemyAttack({ liveSpeed: entity.liveSpeed, playerLevel: playerEntity.level, reflexes: playerEntity.reflexes, rolls });
       // X2-slice: the arrow seam exists (the host's onArrow) - bow
@@ -232,20 +236,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // X2-slice: the ranged -1 marker looses a REAL arrow through
       // the host's seam, aimed at the player mid-capsule at fire
       // time (the dungeon's shootArrow arm shape).
-      // ...and the damage frames are gated too (wave 32). EnemyAttack.Update
-      // returns at the top while paralysed (:91-94), so MeleeDamage and
-      // BowDamage never run - the animation may still be mid-swing, but
-      // nothing lands. The dungeon host gets this by suppressing the whole
-      // mobile update; this pool resolves off the mobile's own frames, so it
-      // needs the gate written out.
-      if (!_fParalyzed && f.mobile.shootArrow && playerFeet && onArrow) {
-        f.mobile.shootArrow = false;
-        const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
-        const d = [playerFeet[0] - from[0], playerFeet[1] + 0.9 - from[1], playerFeet[2] - from[2]];
-        const l = Math.hypot(...d) || 1;
-        onArrow(from, [d[0] / l, d[1] / l, d[2] / l], f);
-      }
-      // the -1 damage marker vs the player (C16)
+      // MELEE FIRST, arrow as the ELSE-IF: EnemyAttack.Update is
+      // `if (DoMeleeDamage) {...} else if (ShootArrow) {...}` (:97-105).
+      // (Found by the wave-35 re-read.)
       if (!_fParalyzed && f.mobile.doMeleeDamage && playerFeet) {
         f.mobile.doMeleeDamage = false;
         const hdx = playerFeet[0] - f.ai.feet[0], hdz = playerFeet[2] - f.ai.feet[2];
@@ -292,6 +285,20 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         const v = enemyAttackVoice(f);
         if (v && v.clip >= 0) audio?.play3d?.(v.clip, mid, 1, { maxDistance: 16 });
       }
+      // ...and the damage frames are gated too (wave 32). EnemyAttack.Update
+      // returns at the top while paralysed (:91-94), so MeleeDamage and
+      // BowDamage never run - the animation may still be mid-swing, but
+      // nothing lands. The dungeon host gets this by suppressing the whole
+      // mobile update; this pool resolves off the mobile's own frames, so it
+      // needs the gate written out.
+      else if (!_fParalyzed && f.mobile.shootArrow && playerFeet && onArrow) {
+        f.mobile.shootArrow = false;
+        const from = [f.ai.feet[0], f.ai.feet[1] + 1.2, f.ai.feet[2]];
+        const d = [playerFeet[0] - from[0], playerFeet[1] + 0.9 - from[1], playerFeet[2] - from[2]];
+        const l = Math.hypot(...d) || 1;
+        onArrow(from, [d[0] / l, d[1] / l, d[2] / l], f);
+      }
+      // the -1 damage marker vs the player (C16)
     }
     for (let i = foes.length - 1; i >= 0; i--) if (foes[i].dead && !foes[i].corpse) foes.splice(i, 1);
   }

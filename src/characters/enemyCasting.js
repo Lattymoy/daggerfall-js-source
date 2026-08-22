@@ -26,7 +26,10 @@ import { resetMeleeTimer } from './enemyAttack.js';
 import { effectsAlreadyOnTarget } from '../systems/effects.js';
 
 // AUDIT 24 (wave 24): EnemyAttack.cs's two ranged bounds have one
-// home in enemyAttack.js; this module declared them again.
+// home; this module declared them again. Wave 35 MOVED that home to
+// enemyMotor.js (DoRangedAttack's stand-off needs them, and
+// enemyAttack.js already imports from the motor) - enemyAttack.js
+// re-exports, so this import still reads from the module it belongs to.
 import { MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE } from './enemyAttack.js';
 
 export { MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE };
@@ -43,6 +46,28 @@ export function pickRangedSpell(entity, target, rolls = Math.random) {
   const sp = ranged[Math.floor(rolls() * ranged.length)];
   return effectsAlreadyOnTarget(sp, target) ? null : sp;
 }
+
+/**
+ * The SELECTION-FREE half of CanCastRangedSpell (EnemyMotor.cs:759-789),
+ * for EnemyMotor.DoRangedAttack's band gate.
+ *
+ * AUDIT 24 (wave 35). DFU's CanCastRangedSpell is not a predicate: it
+ * picks a spell with `Random.Range(0, count)`, stores it as
+ * SelectedSpell, and vetoes on EffectsAlreadyOnTarget and on a clear
+ * shooting path - and DoRangedAttack calls it every frame the band
+ * condition is evaluated, so it also decides whether the foe STANDS
+ * OFF. The port's selection lives in EnemyCaster, one classic tick at a
+ * time, and calling pickRangedSpell from the motor as well would draw a
+ * second time off the shared stream every frame - the exact fault AUDIT
+ * 21 F5 wrote the roll-order law about.
+ *
+ * So the motor asks the half that has no side effect: has this entity
+ * the magicka and a ranged spell at all. FLAGGED, and narrow: in DFU
+ * the EffectsAlreadyOnTarget veto and the clear-path test can send a
+ * caster back to closing in, where here they gate only the cast.
+ */
+export const hasRangedSpell = (entity) => ((entity?.magicka ?? 0) > 0)
+  && (entity?.spells ?? []).some((sp) => sp.rangeType === 2 || sp.rangeType === 4);
 
 /** CanCastTouchSpell, classic AI: rangeType 1 (ByTouch) or 0
  *  (CasterOnly). */

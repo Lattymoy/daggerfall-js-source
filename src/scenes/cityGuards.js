@@ -33,6 +33,7 @@
 
 import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
 import { entityIsParalyzed } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too
+import { hasRangedSpell } from '../characters/enemyCasting.js';   // AUDIT 24 (wave 35): the stand-off band
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { EnemyAI, withinYaw, isBackFacing } from '../characters/enemyMotor.js';
@@ -114,6 +115,15 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       liveSpeed: entity.liveSpeed,
       seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
       playerInside: false,   // AUDIT 23 (characters-7): EnemySenses.cs:269 - exterior despawn band
+      // wave 35: DoRangedAttack's band. Knight_CityWatch has
+      // HasRangedAttack1 = false and CastsMagic = false
+      // (EnemyBasics.cs:2197-2212), which is why attack.rangedAttack
+      // below is the literal `false` and not a computed value - so the
+      // stand-off can never engage for the watch. Passed rather than
+      // defaulted, beside the same literal, so the two stay together if
+      // the table ever changes.
+      hasBowAttack: false,
+      canCastRangedSpell: () => hasRangedSpell(entity),
     });
     // MakeEnemyHostileToAttacker + GiveUpTimer *= 3, verbatim: a
     // crime-responding guard pursues without having seen the player.

@@ -78,10 +78,18 @@ test('audit24 wave34: a wall STOPS the foe and buys a detour, it does not get sl
   // the machine really engaged, rather than the capsule simply blocking
   assert.ok(ai.avoidObstaclesTimer > 0 || ai.lastTimeWasStuck > 0, 'the detour machine ran');
   assert.notDeepEqual(ai.detourDestination, [0, 0, 0], 'and it chose somewhere to go');
-  // the chosen destination is DETOUR_REACH from the controller centre
-  const centre = [ai.feet[0], ai.feet[1] + ai.height / 2, ai.feet[2]];
-  const d = Math.hypot(ai.detourDestination[0] - centre[0], ai.detourDestination[1] - centre[1], ai.detourDestination[2] - centre[2]);
-  assert.ok(Math.abs(d - DETOUR_REACH) < 0.35, `two units along the probe, got ${d.toFixed(2)}`);
+  // THE SIGNATURE of a detour rather than a slide: it worked its way
+  // SIDEWAYS along the wall. A capsule grinding into a flat wall it is
+  // walking straight at has no lateral force on it at all and would
+  // still be at x = 0.
+  assert.ok(Math.abs(ai.feet[0]) > 1, `it went around: x = ${ai.feet[0].toFixed(2)}`);
+  // and the destination is two units out AT THE MOMENT IT IS CHOSEN -
+  // measured later it is wherever the foe has walked to since, which is
+  // the whole point of the 0.75s commitment.
+  const at = [ai.feet[0], ai.feet[1] + ai.height / 2, ai.feet[2]];
+  ai._findDetour([Math.sin(ai.yaw), 0, Math.cos(ai.yaw)]);
+  const d = Math.hypot(ai.detourDestination[0] - at[0], ai.detourDestination[1] - at[1], ai.detourDestination[2] - at[2]);
+  assert.ok(Math.abs(d - DETOUR_REACH) < 1e-6, `two units along the probe, got ${d.toFixed(2)}`);
 });
 
 test('audit24 wave34: a blocked foe does not translate at all - the move is the ELSE arm', () => {
@@ -330,6 +338,10 @@ test('audit24 wave34: the detour is COMMITTED - it overrides the stop distance a
   ai.detected = true;
   ai.inSight = true;
   ai._dist = 0.5;                       // well inside melee range
+  // wave 35: HandleNoAction (:357-366) refuses to act at all until the
+  // target has a known position, so the fixture must have seen it.
+  ai.lastKnownTargetPos = [0, 0, 0.5];
+  ai.predictedTargetPos = ai.lastKnownTargetPos;
   ai.avoidObstaclesTimer = DETOUR_TIMER;
   ai.detourDestination = [0, 0, 5];
   ai._classicTick([0, 0, 0.5]);
