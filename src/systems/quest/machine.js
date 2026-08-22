@@ -184,7 +184,7 @@
 //                                and CastSpellDo latches it, as C# does
 //   the machine's factionListeners map + addFactionListener/
 //   removeFactionListener/activeFactionPersons ride the hooks for
-//   WhenNpcIsAvailable (TalkManager reads the map at Q4)
+//   WhenNpcIsAvailable (PlayerActivate.StaticNPCClick reads the map)
 //
 // Q4-i, the macro engine's seams (questMacros.js; every one optional
 // - a missing seam surfaces C#'s own error shapes LOUDLY):
@@ -257,7 +257,7 @@ export class QuestMachine {
     this.actionTemplates = [];
     this.globalVars = new Map();      // link id -> bool
     this.siteLinks = [];              // QuestMachine.cs siteLinks - the world<->marker bridge (Q3-i)
-    this.factionListeners = new Map();  // factionID -> action (Q3-iv; TalkManager's Q4 signal)
+    this.factionListeners = new Map();  // factionID -> action (Q3-iv; StaticNPCClick's shut-down signal)
     this.lastNPCClicked = null;       // QuestMachine.lastNPCClicked - the questor click (Q4-ii)
     this.parser = new Parser();
     for (const template of defaultActionTemplates()) this.registerAction(template);
@@ -419,13 +419,29 @@ export class QuestMachine {
    *  caller (the Tick invoke loop wraps its own try). InitAtGameStart
    *  quests come through here, as C#'s do (Q2b-ii VERIFY: the first
    *  draft only scheduled them, so they were absent from the live
-   *  table until the next tick). The questor-behaviour relink that
-   *  follows in C# is scene work (Q3). */
+   *  table until the next tick).
+   *
+   *  AUDIT 24 (wave 25): and the TAIL (:729-734), which the port waved
+   *  off as "scene work (Q3)" and never came back for:
+   *
+   *      // Assign QuestResourceBehaviour to questor NPC - this will
+   *      // be last NPC clicked. This will ensure quests actions like
+   *      // "hide npc" will operate on questor at quest startup
+   *      if (LastNPCClicked != null)
+   *          LastNPCClicked.AssignQuestResourceBehaviour();
+   *
+   *  Without it, the questor you have just accepted a quest from
+   *  carries no behaviour until the next layout, so every action that
+   *  reaches a Person through one - hide npc first among them, which
+   *  the corpus fires at startup all over - operated on nothing. */
   startQuestImmediate(quest) {
     quest.start();
     this.deps.addQuestTopics?.(quest);
     this.quests.set(quest.uid, quest);
     this.deps.onQuestStarted?.(quest);
+    if (this.lastNPCClicked != null) {
+      this.assignQuestResourceBehaviour(this.lastNPCClickedHost ?? null, this.lastNPCClicked);
+    }
     return quest;
   }
 
@@ -470,8 +486,14 @@ export class QuestMachine {
    *  verbatim. npcData is StaticNPC.NPCData's identity: { hash,
    *  mapID, nameSeed, buildingKey, factionID, gender } (equality
    *  reads the first four; the offer flow reads the last three). */
-  setLastNPCClicked(npcData) {
+  setLastNPCClicked(npcData, host = null) {
     this.lastNPCClicked = npcData;
+    // AUDIT 24 (wave 25): C#'s LastNPCClicked is the StaticNPC
+    // COMPONENT, so it still has its GameObject when StartQuest's tail
+    // reaches for AssignQuestResourceBehaviour (:729-734). The port
+    // stored the bare NPCData, so there was nothing to attach to; the
+    // scene half rides alongside now.
+    this.lastNPCClickedHost = host;
     for (const quest of this.quests.values()) {
       for (const resource of quest.resources.values()) {
         if (resource.isPerson && this.isNPCDataEqual(resource.questorData, npcData)) {
@@ -479,6 +501,49 @@ export class QuestMachine {
         }
       }
     }
+  }
+
+  /** ActiveQuestor (:1145-1169): the Person that a clicked StaticNPC
+   *  is the questor for, over the LIVE quests.
+   *
+   *  C# QUIRK KEPT: the inner loop breaks on a match but the OUTER one
+   *  does not, so a later quest's questor OVERWRITES an earlier match.
+   *  With two quests from the same NPC in flight, the one that
+   *  iterates last wins. */
+  activeQuestor(npcData) {
+    let found = null;
+    for (const quest of this.quests.values()) {
+      const questorSymbols = quest.getQuestors();
+      if (!questorSymbols || questorSymbols.length === 0) continue;
+      for (const symbol of questorSymbols) {
+        const person = quest.getPerson(symbol);
+        if (!person) continue;
+        if (this.isNPCDataEqual(npcData, person.questorData)) { found = person; break; }
+      }
+    }
+    return found;
+  }
+
+  /** AssignQuestResourceBehaviour (StaticNPC.cs:261-278): stand a
+   *  behaviour on the clicked NPC's host and point it at the questor
+   *  Person. A host that already carries one is left alone ("Can only
+   *  have a single QuestResourceBehaviour"), and an NPC who is nobody's
+   *  questor gets nothing.
+   *
+   *  Unlike SetupIndividualStaticNPC, C# does NOT write the back-link
+   *  `person.QuestResourceBehaviour` here - only AssignResource runs,
+   *  and the port's assignResource fills that link exactly when it is
+   *  empty, which is the same shape. */
+  assignQuestResourceBehaviour(host, npcData) {
+    const questorPerson = this.activeQuestor(npcData);
+    if (questorPerson == null) return null;
+    if (host?.questBehaviour) return null;
+    const behaviour = new QuestResourceBehaviour(this, host ?? null);
+    behaviour.assignResource(questorPerson);
+    behaviour.start();
+    if (host) host.questBehaviour = behaviour;
+    console.log(`[quest] Added new QuestResourceBehaviour and assigned Questor Person resource ${questorPerson.displayName}`);
+    return behaviour;
   }
 
   /** IsNPCDataEqual (:973-985): the four-field identity. C#'s NPCData
@@ -908,9 +973,20 @@ export class QuestMachine {
     return found;
   }
 
-  /** Add/RemoveFactionListener (QuestMachine.cs:1183-1200): first
-   *  claim wins, a missing claim is a no-op. TalkManager reads the
-   *  map to know a quest wants that individual (Q4 wires). */
+  /** Add/RemoveFactionListener (QuestMachine.cs:1174-1198): first
+   *  claim wins, a missing claim is a no-op.
+   *
+   *  AUDIT 24 (wave 25): three comments here named TALKMANAGER as the
+   *  reader and marked the wiring "(Q4 wires)". Neither is true.
+   *  `HasFactionListener` has exactly one consumer in the whole DFU
+   *  tree - PlayerActivate.StaticNPCClick:1534, which returns before
+   *  any routing when a quest is listening on the clicked NPC's
+   *  faction ("This effectively shuts down several named NPCs during
+   *  main quest") - and TalkManager.cs does not contain the word
+   *  Listener at all. The port already ships that reader, at
+   *  src/scenes/worldModes.js:451. A pending marker over shipped work
+   *  is worse than no marker: it sends the next reader looking for
+   *  work that is done, in a file that never had it. */
   addFactionListener(factionID, owner) {
     if (!this.factionListeners.has(factionID)) this.factionListeners.set(factionID, owner);
   }

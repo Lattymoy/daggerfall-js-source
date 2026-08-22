@@ -8,10 +8,8 @@
 // source (QuestMCP) with the machine's seams behind it.
 //
 // THE ERROR SHAPES ARE C#'s OWN (MacroHelper.GetValue): a token
-// missing from the table renders `%x[undefined]` - the corpus's 14
-// `%G3` and 1 `%G1` lines really do render that way in DFU, only %G
-// has a capitalized handler; a null table entry renders
-// `%x[unhandled]`; a handler answering null renders `%x[nullMCP]`;
+// missing from the table renders `%x[undefined]`; a null table entry
+// renders `%x[unhandled]`; a handler answering null renders `%x[nullMCP]`;
 // a NotImplemented source method falls to the SECOND context
 // provider (quest.externalMCP - the offer/talk window's NPC source,
 // Q4-ii) and renders `%x[srcDataUnknown]` when that misses too.

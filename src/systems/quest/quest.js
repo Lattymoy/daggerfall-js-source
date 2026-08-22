@@ -163,6 +163,11 @@ export class Quest {
   // Quest.cs GetPerson/GetItem/GetFoe - `as` casts answer null for a
   // wrong-typed resource, so a Foe symbol handed to GetPerson is null.
   getPerson(symbol) { const r = this.getResource(symbol); return r?.isPerson ? r : null; }
+
+  /** GetQuestors (Quest.cs:756-765): the questor SYMBOLS, in Map
+   *  order. ActiveQuestor walks these to find the Person a clicked
+   *  StaticNPC is the questor for. */
+  getQuestors() { return [...this.questors.values()].map((q) => q.symbol); }
   getItem(symbol) { const r = this.getResource(symbol); return r?.isItem ? r : null; }
   getFoe(symbol) { const r = this.getResource(symbol); return r?.isFoe ? r : null; }
 

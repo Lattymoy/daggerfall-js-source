@@ -714,8 +714,9 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
   that faction; the clickMemory holds the SAME click (identity) from
   re-firing, and every check claims the machine's NEW
   faction-listener slot (addFactionListener first-claim-wins /
-  removeFactionListener at dispose; TalkManager reads the map at
-  Q4). activeFactionPersons walks NON-COMPLETE quests only -
+  removeFactionListener at dispose; PlayerActivate.StaticNPCClick
+  reads the map - :1534, the only consumer in the DFU tree, and
+  wired at src/scenes/worldModes.js:451). activeFactionPersons walks NON-COMPLETE quests only -
   completed quests must not lock an NPC out (QuestMachine.cs:1085).
   The non-individual parse throw carries the TEMPLATE-SetComplete
   quirk; its sibling's does not.
@@ -2828,6 +2829,95 @@ needs a deliberate edit to rise.
 Three mutants, three kills: the string gender compare put back, the
 click stopped naming the NPC, and a fresh disagreeing duplicate
 landed in a third module.
+
+
+### Wave 25
+
+**What 151 agents found.**
+
+The seven-slice adversarial sweep - three lenses over each of the
+seven quest slices that had only ever been re-read by the main loop,
+every claim then handed to independent refuters - finished after
+eleven and a half hours and 11.8M subagent tokens. Five findings
+survived the refute pass. Two of them are real.
+
+**StartQuest drops its tail.**
+
+```csharp
+public void StartQuest(Quest quest)
+{
+    quest.Start();
+    GameManager.Instance.TalkManager.AddQuestTopicWithInfoAndRumors(quest);
+    quests.Add(quest.UID, quest);
+    RaiseOnQuestStartedEvent(quest);
+
+    // Assign QuestResourceBehaviour to questor NPC - this will be last NPC clicked
+    // This will ensure quests actions like "hide npc" will operate on questor at quest startup
+    if (LastNPCClicked != null)
+        LastNPCClicked.AssignQuestResourceBehaviour();
+}
+```
+
+The port has the first four lines. The fifth it waved off in a doc
+comment - *"The questor-behaviour relink that follows in C# is scene
+work (Q3)"* - and Q3 came and went. C# tells you in its own comment
+what breaks: `hide npc` on the questor, at quest startup, which the
+corpus fires constantly. The questor you have just accepted a quest
+from carries no behaviour until the next layout, so every action that
+reaches a Person through one operates on nothing.
+
+`ActiveQuestor` and `AssignQuestResourceBehaviour` came with it,
+including C#'s **last-quest-wins** overwrite: the inner loop breaks on
+a match, the outer one does not, so with two quests from the same NPC
+in flight the one that iterates last wins. And `setLastNPCClicked`
+carries the host now - C#'s `LastNPCClicked` is the *component*, so it
+still has its GameObject when the tail reaches for it, where the port
+had stored the bare `NPCData` and had nothing to attach to.
+
+**The rumor mill freezes its own text.**
+
+```csharp
+TextFile.Token[] tokens = entry.listRumorVariants[variant];
+macroHelper.ExpandQuestMessage(GetQuest(entry.questID), ref tokens, true);
+```
+
+`tokens` *is* the mill's stored variant, and `QuestMacroHelper.cs:158`
+writes each expansion back into it. So a quest rumor is fixed at the
+wording of its **first telling**: `%qdt`, the questor's name, a Place
+that has since been renamed - all of it frozen, for the rest of the
+game.
+
+The port cloned first, with an honest-looking comment: *"the mill's
+stored variants must not"* be mutated. That is the port being more
+correct than the game it is a port of, which is the one thing this arc
+has never allowed. Expanding in place now. (The caller-side
+`if (quest)` went too - C# calls `ExpandQuestMessage` whether or not
+`GetQuest` found anything, and the null-parent bail is a forum-bug fix
+*inside* the helper, which `questMacros.js:437` already carries.)
+
+**Three nits with teeth.**
+
+`HasFactionListener` has exactly one consumer in the DFU tree:
+`PlayerActivate.StaticNPCClick:1534`. `TalkManager.cs` does not
+contain the word `Listener`. Three port comments named TalkManager as
+the reader and marked the wiring `(Q4 wires)` - over a reader the port
+already ships, at `worldModes.js:451`. A pending marker over shipped
+work is worse than no marker at all: it sends the next reader looking
+for work that is done, in a file that never had it. Four sites
+corrected, the bible's copy included.
+
+`questMacros.js`'s module header still asserted that only `%G` has a
+capitalized handler and that the corpus's fourteen `%G3` lines render
+`%G3[undefined]` - a claim the *same audit* refuted forty lines below
+it, where all six capitalized forms are registered. *A COMMENT THAT
+DESCRIBES A LINE THAT IS NOT THERE IS A BUG WITH A WITNESS*, and this
+one had the witness in the same file.
+
+And the quest-flat click threw away `DoClick`'s bool - the value that
+says whether any live quest owned the click, and the one
+`StaticNPCClick` returns on.
+
+Seven mutants, seven kills.
 
 
 ## Queue

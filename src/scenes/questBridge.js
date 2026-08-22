@@ -245,7 +245,9 @@ export function createQuestBridge(ctx) {
      *  data for the caller's own use. */
     clickNpc(pn, sceneCtx) {
       const data = staticNpcData(pn, { ...sceneCtx, ...npcRaceLookups() });
-      machine.setLastNPCClicked(data);
+      // wave 25: the person record IS the GameObject on this side -
+      // StartQuest's tail attaches the questor behaviour to it.
+      machine.setLastNPCClicked(data, pn ?? null);
       return data;
     },
 

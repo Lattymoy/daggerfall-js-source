@@ -950,7 +950,18 @@ export function createWorldModes(host) {
               mapID: 0,
             }));
           }
-          s.behaviour?.doClick();
+          // AUDIT 24 (wave 25): PlayerActivate keeps DoClick's bool.
+          // The quest-resource arm (:326-339) calls it and FALLS
+          // THROUGH to the building/door/NPC checks either way, and
+          // StaticNPCClick (:1525-1528) returns only when it answered
+          // TRUE. Here the stand is the only thing under the ray, so
+          // there is nothing to fall through to - recorded rather than
+          // silently dropped, because the value is what says whether
+          // any live quest owned the click.
+          const foundInActiveQuest = s.behaviour?.doClick() ?? false;
+          if (!foundInActiveQuest) {
+            console.log('[quest] clicked a stand no active quest claims (DFU would fall through to the world here)');
+          }
         }
         return true;
       }

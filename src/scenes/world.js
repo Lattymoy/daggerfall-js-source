@@ -1536,10 +1536,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     currentRegionIndex: () => _questRegionIndex(),
     getRandomTokens: (textId) => townTalk.variantTokens(textId),
     expandQuestTokens: (questID, tokens) => {
-      const quest = questBridge?.machine.getQuest(questID);
-      const copy = tokens.map((t) => ({ ...t }));   // expandQuestMessage mutates; the mill's stored variants must not
-      if (quest) expandQuestMessage(quest, copy, true);
-      return tokensToString(copy);
+      // AUDIT 24 (wave 25): IN PLACE, over the mill's own stored
+      // variant, which is what TalkManager.cs:1425-1431 does -
+      // `ExpandQuestMessage(GetQuest(entry.questID), ref tokens, true)`
+      // where `tokens` IS `entry.listRumorVariants[variant]`, and
+      // QuestMacroHelper.cs:158 writes each result back into it. So a
+      // quest rumor is FROZEN at the wording of its first telling:
+      // %qdt, the questor's name, a Place that has since been renamed,
+      // all fixed forever. The port cloned first and re-expanded from
+      // source every time, which is the port being more correct than
+      // the game it is a port of. Also: C# calls this whether or not
+      // GetQuest found anything - the null-parent arm is a DFU
+      // forum-bug fix INSIDE ExpandQuestMessage, not a caller guard,
+      // and expandQuestMessage carries it (questMacros.js:437).
+      expandQuestMessage(questBridge?.machine.getQuest(questID) ?? null, tokens, true);
+      return tokensToString(tokens);
     },
     expandRandomTextRecord: (id) => townTalk.lines(id).map((r) => r.text ?? r).join(' '),
     rolls: Math.random,
