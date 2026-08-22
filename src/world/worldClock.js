@@ -30,8 +30,11 @@ export const DAWN_HOUR = 6;
 export const DUSK_HOUR = 18;
 export const LIGHTS_ON_HOUR = 17;
 export const LIGHTS_OFF_HOUR = 8;
-export const MINUTES_PER_HOUR = 60;
-export const MINUTES_PER_DAY = 1440;
+// AUDIT 24 (wave 24): DaggerfallDateTime's calendar constants have
+// one home in systems/gameDate.js.
+import { MINUTES_PER_HOUR, MINUTES_PER_DAY } from '../systems/gameDate.js';
+
+export { MINUTES_PER_HOUR, MINUTES_PER_DAY };
 
 export const SUN_RIG_INTENSITY = 0.6;
 export const SUN_RIG_COLOR = Object.freeze([0.8161765, 0.954361, 1]);

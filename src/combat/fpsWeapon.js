@@ -56,8 +56,11 @@ export const WEAPON_FILE = Object.freeze({
 export const ALIGN = Object.freeze({ Left: 0, Center: 1, Right: 2 });
 
 // The classic 320x200 design surface every weapon image overlays.
-export const NATIVE_W = 320;
-export const NATIVE_H = 200;
+// AUDIT 24 (wave 24): the classic 320x200 panel has one home in
+// ui/nativePanel.js.
+import { NATIVE_W, NATIVE_H } from '../ui/nativePanel.js';
+
+export { NATIVE_W, NATIVE_H };
 
 // WeaponStates order = the array index into every anim table (the
 // enum's comment IS the record mapping for most sets; MagicBattleAxe

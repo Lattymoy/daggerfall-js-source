@@ -216,4 +216,6 @@ export function playerAttackGrunt(playerEntity, isBow, rolls = Math.random) {
 /** CorpseActivationDistance = 150 * GlobalScale = 3.75. The hosts left
  *  corpses on activationTargets' 128-unit default (3.2), so a body was
  *  out of reach over half a metre before DFU says it is. */
-export const CORPSE_ACTIVATION_DISTANCE = 150 * GLOBAL_SCALE;
+// AUDIT 24 (wave 24): PlayerActivate.cs's reach constants have one
+// home in player/activate.js.
+export { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';

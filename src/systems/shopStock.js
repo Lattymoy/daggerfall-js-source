@@ -95,7 +95,11 @@ export const isShopShelfModel = (modelId) => SHOP_SHELF_MODEL_INDICES.has(modelI
 
 export const TRANSPORT_HORSE = 94;        // Transportation.Horse (template)
 export const TRANSPORT_SMALL_CART = 93;   // Transportation.Small_cart
-export const BOOK_TEMPLATE = 277;         // Books.Book0..Book3 all resolve here
+// AUDIT 24 (wave 24): Books.Book0..Book3 all resolve to 277 - one
+// constant, declared here and in loot.js.
+import { BOOK_TEMPLATE } from './loot.js';
+
+export { BOOK_TEMPLATE };
 
 /** ItemBuilder.RandomizeArmorVariant (:813-844) - the branch
  *  ApplyArmorSettings takes when CreateArmor is called with its

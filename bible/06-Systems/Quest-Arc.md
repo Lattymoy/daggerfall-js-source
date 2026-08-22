@@ -2763,6 +2763,73 @@ and no `CreateRandomSoulTrap` mint. They are data now, so the gate can
 see them and the slice that needs them will find them already correct.
 
 
+### Wave 24
+
+**The rule, as a gate.**
+
+Wave 23 found five duplicated tables. One of them this audit had
+written itself, two waves earlier. Every one of them agreed in value
+on the day it was found - which is the only guarantee a duplicate ever
+offers, and it expires overnight.
+
+*ONE DFU MEMBER, ONE EXPORT* has been an arc rule since AUDIT 17e. A
+rule people remember is a rule that gets broken by people who are
+concentrating on something else, which is exactly how I broke it in
+wave 22. So it is a gate now: scan `src/` for every symbol **declared**
+(not re-exported) in more than one module, load both homes, and demand
+either identical values or a listed reason. Forty-three pairs. Thirty-
+four agreed, nine disagreed, and eight of those nine are honest
+homonyms - two different `LABELS`, two different `ROW_SPACING`.
+
+The ninth was not.
+
+**`staticNpcData`.** `characters/staticNpc.js` carried a copy of
+`SetLayoutData` that predated the seven-slice sweep's corrections: no
+`race`, no `context`, no zero-struct base, and a gender written as the
+**string** `'female'` where C# writes the `Genders` enum. The corrected
+one lived in `questBridge.js`. Both exported under that name; nothing
+in production called the stale one, and its own module's
+`staticNpcName` compared `data.gender === 'female'` to accommodate it -
+so the workaround kept the bug looking correct.
+
+One implementation now, living in the `StaticNPC.cs` home, and
+`staticNpcName` hands `FullName` the enum the way `GetDisplayName`
+does (`:328`).
+
+**And the bug underneath it.** `staticNpcName` *is*
+`StaticNPC.GetDisplayName`, ported carefully, individual-faction arm
+and name-seed arm and all. Nothing called it.
+
+`openStaticNpc` read `pn.displayName` - a field
+`collectInteriorPeople` does not write. So every shopkeeper, priest,
+banker and guild clerk in Daggerfall reached `TalkManager` with an
+empty name. Two things read it:
+
+- the greeting says the NPC's name once reaction is above zero, and
+  "stranger" below it (`townTalk.js:467`). Every static NPC in the
+  game stayed a stranger no matter how well liked.
+- `topicTree`'s same-building-static test (`:558`) matches a topic
+  caption against that name, so it never matched.
+
+Mobile townspeople had names the whole time (`townPopulation.js:70`).
+Only the ones you can actually talk to were anonymous. *A PORTED
+FUNCTION WITH NO CALLER IS A COMMENT* - the second time in five waves,
+and this one had a workaround written to keep it plausible.
+
+**The collapse.** Seventeen of the forty-three pairs were one DFU
+member with two homes, and they are one home now: the calendar
+constants, `MeshReader.GlobalScale`, the eight `PlayerActivate`
+reaches, `ItemEnums.BodyParts`, `FormulaHelper.MaxStatValue`, the
+classic 320x200 panel, `EnemyAttack`'s ranged bounds, the walk base,
+the book template, `GetMaterialArmorValue`, `SetLayoutData`,
+`GetPositionHash`. The ratchet stands at 26; it may fall freely and
+needs a deliberate edit to rise.
+
+Three mutants, three kills: the string gender compare put back, the
+click stopped naming the NPC, and a fresh disagreeing duplicate
+landed in a third module.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

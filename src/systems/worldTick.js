@@ -29,7 +29,10 @@ import { CLASSIC_GAME_START_TIME } from './gameDate.js';
 import { RACES } from './races.js';
 
 /** PlayerEntity.cs:263 - the classic day is elapsed minutes / 1440. */
-export const MINUTES_PER_DAY = 1440;
+// AUDIT 24 (wave 24): one home, systems/gameDate.js.
+import { MINUTES_PER_DAY } from './gameDate.js';
+
+export { MINUTES_PER_DAY };
 
 /** Classic minutes advance 12x real seconds (one classic minute per 5s). */
 export const CLASSIC_MINUTES_PER_SECOND = 12 / 60;

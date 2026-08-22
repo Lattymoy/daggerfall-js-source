@@ -93,6 +93,7 @@ import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { positionHash } from './questBridge.js';
+import { staticNpcName } from '../characters/staticNpc.js';   // wave 24: StaticNPC.DisplayName
 import { GENDERS } from '../characters/nameHelper.js';
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
@@ -478,7 +479,7 @@ export function createWorldModes(host) {
     // Q4-v: PlayerActivate's questor half - EVERY static-NPC click
     // stamps LastNPCClicked before the routing decides what opens (the
     // Person questor sweep rides machine.setLastNPCClicked).
-    questBridge?.clickNpc(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0 });
+    const npcData = questBridge?.clickNpc(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0 }) ?? null;
     // AUDIT 24 (wave 20): PlayerActivate.cs:1523-1528, the return the
     // port never had. A clicked NPC whose GameObject carries a
     // QuestResourceBehaviour goes through DoClick FIRST, and a click
@@ -522,8 +523,23 @@ export function createWorldModes(host) {
     // that disables the guild greeting for a spymaster reached outside
     // the guild menu. staticNpcRoute has computed it since G8 and the
     // call site dropped it on the floor.
+    // AUDIT 24 (wave 24): StaticNPC.DisplayName (:315-328) - an
+    // INDIVIDUAL faction answers its own name, everybody else is
+    // generated from the name seed. staticNpcName has been the port of
+    // that since the static-NPC identity slice landed and NOTHING ever
+    // called it: `pn.displayName` is a field collectInteriorPeople
+    // does not write, so every shopkeeper, priest and guild clerk in
+    // the game reached TalkManager as ''. The visible half is
+    // TalkManager's greeting, which says the NPC's name once reaction
+    // is above zero and "stranger" below it (townTalk.js:467) - so
+    // every static NPC stayed a stranger no matter how well liked -
+    // and topicTree's same-building-static test (:558), which matches
+    // a topic caption against this name and therefore never matched.
+    const displayName = npcData
+      ? staticNpcName(npcData, { getFaction: (id) => dict?.get(id) ?? null })
+      : (pn.displayName ?? '');
     const talk = npcSession?.talkToStaticNPC(
-      { data: pn, isChildNPC: !!pn.isChildNPC, displayName: pn.displayName ?? '' },
+      { data: pn, isChildNPC: !!pn.isChildNPC, displayName },
       { menu: false, isSpyMaster: route.spymaster === true });
     if (talk?.kind === 'questOffer' && questBridge) {
       const step = questBridge.offerSocialQuest(talk.npc ?? pn, talk.socialGroup, talk.menu);

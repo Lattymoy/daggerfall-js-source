@@ -86,7 +86,10 @@ export const DEMOTION_TEXT_ID = 667;
 export const EXPULSION_TEXT_ID = 668;
 
 /** DaggerfallDateTime.DaysPerYear, for CalculateDaySinceZero. */
-export const DAYS_PER_YEAR = 360;
+// AUDIT 24 (wave 24): DaggerfallDateTime's year length, one home.
+import { DAYS_PER_YEAR } from './gameDate.js';
+
+export { DAYS_PER_YEAR };
 /** UpdateRank's gate: 28 days between rank changes. */
 export const DAYS_BETWEEN_RANK_CHANGES = 28;
 

@@ -40,7 +40,10 @@ import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './nativePanel.js';
 import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, classDescriptionLines, textRecordLines, DOUBLE_CLICK_DELAY_MS, CLASS_LIST_ROWS, ADV_PICKER_ITEM_COUNT, PLAYER_REFLEXES, REFLEX_COUNT, QUESTION_ROW_H, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES, startConstellationAnim, tickConstellationAnim, stopConstellationAnim } from './chargenArt.js';   // U10 / U17 / U18 / U20a
 
-export const MAX_STAT_VALUE = 100;   // FormulaHelper.MaxStatValue
+// AUDIT 24 (wave 24): FormulaHelper.MaxStatValue, one home.
+import { MAX_STAT_VALUE } from '../systems/statMods.js';
+
+export { MAX_STAT_VALUE };
 
 // ---- the verbatim pool rules (pure, tested) ----
 export function statUp(working, pool) {

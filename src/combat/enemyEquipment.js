@@ -34,7 +34,9 @@ export const ARMOR_ENUM = Object.freeze({
   Right_Pauldron: 106, Helm: 107, Boots: 108, Buckler: 109,
   Round_Shield: 110, Kite_Shield: 111, Tower_Shield: 112,
 });
-export const BODY_PARTS = Object.freeze({ Head: 0, RightArm: 1, LeftArm: 2, Chest: 3, Hands: 4, Legs: 5, Feet: 6 });
+// AUDIT 24 (wave 24): ItemEnums.BodyParts has one home in
+// systems/armorMaterials.js.
+export { BODY_PARTS } from '../systems/armorMaterials.js';
 // GetBodyPartForEquipSlot, expressed piece -> part (each piece owns one slot)
 const PIECE_BODY_PART = Object.freeze({
   107: 0,   // Helm -> Head

@@ -25,8 +25,11 @@ import { MELEE_DISTANCE, withinYaw } from './enemyMotor.js';
 import { resetMeleeTimer } from './enemyAttack.js';
 import { effectsAlreadyOnTarget } from '../systems/effects.js';
 
-export const MIN_RANGED_DISTANCE = 6;      // EnemyAttack.minRangedDistance (240 * GlobalScale)
-export const MAX_RANGED_DISTANCE = 51.2;   // EnemyAttack.maxRangedDistance (2048 * GlobalScale)
+// AUDIT 24 (wave 24): EnemyAttack.cs's two ranged bounds have one
+// home in enemyAttack.js; this module declared them again.
+import { MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE } from './enemyAttack.js';
+
+export { MIN_RANGED_DISTANCE, MAX_RANGED_DISTANCE };
 export const RANGED_SPELL_CHANCE = 1 / 40; // DoRangedAttack: Random.value < 1/40f
 export const SPELL_YAW_DEG = 22.5;
 

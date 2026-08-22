@@ -9,6 +9,7 @@ import {
   staticNpcName, bankForRace, FACTION_TYPE_INDIVIDUAL,
 } from '../src/characters/staticNpc.js';
 import { RACES } from '../src/systems/races.js';
+import { GENDERS } from '../src/characters/nameHelper.js';
 
 test('StaticNPC: the position hash is x ^ y<<2 ^ z>>2', () => {
   // GetPositionHash (:333-336). Shift binds tighter than xor in both
@@ -36,7 +37,11 @@ test('StaticNPC: the NAME SEED groups its terms the C# way', () => {
   // The inputs are chosen so the two readings DISAGREE. Most triples
   // give the same answer either way - the first draft of this pin used
   // one that did, and would have passed against the wrong grouping.
-  const d = staticNpcData({ x: 1, y: 2, z: 3, position: 0xFF, buildingKey: 1, locationIndex: 1 });
+  // wave 24: staticNpcData is the questBridge-corrected overload now -
+  // `(personRecord, sceneContext)`, over the ZERO struct, with race
+  // and context. The layout position rides rawX/rawY/rawZ, as
+  // collectInteriorPeople hands it over.
+  const d = staticNpcData({ rawX: 1, rawY: 2, rawZ: 3, position: 0xFF }, { buildingKey: 1, locationIndex: 1 });
   assert.equal(d.nameSeed, 0xFF ^ (1 + 1), 'position ^ (buildingKey + locationIndex)');
   assert.equal(d.nameSeed, 253);
   assert.notEqual(d.nameSeed, (0xFF ^ 1) + 1, 'and NOT (position ^ buildingKey) + locationIndex, which is 255');
@@ -45,10 +50,13 @@ test('StaticNPC: the NAME SEED groups its terms the C# way', () => {
 test('StaticNPC: gender is FLAG BIT 32, and nothing else', () => {
   // `((flags & 32) == 32) ? Female : Male` - so bit 5 alone decides,
   // and every other flag bit is irrelevant to it.
-  assert.equal(staticNpcData({ x: 0, y: 0, z: 0, flags: 32 }).gender, 'female');
-  assert.equal(staticNpcData({ x: 0, y: 0, z: 0, flags: 0 }).gender, 'male');
-  assert.equal(staticNpcData({ x: 0, y: 0, z: 0, flags: 32 | 1 | 64 }).gender, 'female');
-  assert.equal(staticNpcData({ x: 0, y: 0, z: 0, flags: 1 | 64 }).gender, 'male');
+  // wave 24: the Genders ENUM, as C# writes it - the port used to emit
+  // the strings 'female'/'male' here, which meant FullName could not
+  // be handed npcData.gender the way GetDisplayName does (:328).
+  assert.equal(staticNpcData({ flags: 32 }).gender, GENDERS.Female);
+  assert.equal(staticNpcData({ flags: 0 }).gender, GENDERS.Male);
+  assert.equal(staticNpcData({ flags: 32 | 1 | 64 }).gender, GENDERS.Female);
+  assert.equal(staticNpcData({ flags: 1 | 64 }).gender, GENDERS.Male);
 });
 
 test('StaticNPC: FACTION.TXT races are a DIFFERENT enum, not an offset', () => {
@@ -126,9 +134,9 @@ test('StaticNPC: the name bank follows the race, and an unknown race falls to Br
 
 test('StaticNPC: the layout record carries what the billboard needs', () => {
   const d = staticNpcData({
-    x: 5, y: 6, z: 7, flags: 32, factionId: 88, archive: 182, record: 4,
-    position: 4242, mapId: 17, locationIndex: 9, buildingKey: 300,
-  });
+    rawX: 5, rawY: 6, rawZ: 7, flags: 32, factionID: 88,
+    textureArchive: 182, textureRecord: 4, position: 4242,
+  }, { mapId: 17, locationIndex: 9, buildingKey: 300 });
   assert.equal(d.billboardArchiveIndex, 182);
   assert.equal(d.billboardRecordIndex, 4, 'the portrait resolves off THIS pair');
   assert.equal(d.factionID, 88);
