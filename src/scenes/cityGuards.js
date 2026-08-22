@@ -189,9 +189,15 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
           const hit = collider.raycast(eye, dir, dist);
           const clear = !Number.isFinite(hit) || hit >= dist - 1e-3;
           if (clear) seen = true;
-          // the ray is aimed at the player's eye from at most 77.5m, so
-          // "hit anything" is all but always true - a clear line counts.
-          if (p.guard && (clear || Number.isFinite(hit))) seenByGuard = true;
+          // ...and seenByGuard rides the RAYCAST ITSELF, not the clear
+          // line. DFU's `Physics.Raycast(ray, out hit, 77.5f)` is aimed
+          // at the player's eye from inside 77.5m, so it always hits
+          // SOMETHING - the player, or the wall between. The port's
+          // collider carries no player, so a clear line answers
+          // Infinity and a blocked one a finite distance: the two
+          // together are the same "hit something", which is why this
+          // is unconditional rather than a test that can only be true.
+          if (p.guard) seenByGuard = true;
         }
       }
       if (seenByGuard) {

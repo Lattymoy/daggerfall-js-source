@@ -18,12 +18,16 @@ test('audit24 scenes: seenByGuard rides ANY raycast hit, not a clear line', () =
   const t = rd('src/scenes/cityGuards.js');
   const i = t.indexOf('const hit = collider.raycast(eye, dir, dist);');
   assert.ok(i > 0);
-  const arm = t.slice(i, i + 600);
+  const arm = t.slice(i, i + 1100);
   assert.match(arm, /const clear = !Number\.isFinite\(hit\) \|\| hit >= dist - 1e-3;/);
   assert.match(arm, /if \(clear\) seen = true;/);
-  assert.match(arm, /if \(p\.guard && \(clear \|\| Number\.isFinite\(hit\)\)\) seenByGuard = true;/);
-  assert.equal(/if \(p\.guard\) seenByGuard = true;\s*\n\s*\}/.test(arm), false,
-    'seenByGuard no longer sits inside the cleared-LOS branch alone');
+  // DFU's raycast always hits SOMETHING (the player, or the wall
+  // between), so seenByGuard is unconditional once the NPC is a guard
+  // in range and facing. The port's collider carries no player, so a
+  // clear line and a blocked one are both "hit something".
+  assert.match(arm, /if \(p\.guard\) seenByGuard = true;/);
+  assert.equal(/if \(clear\) \{\s*\n\s*seen = true;\s*\n\s*if \(p\.guard\)/.test(arm), false,
+    'seenByGuard no longer sits inside the cleared-LOS branch');
 });
 
 test('audit24 scenes: the guard countdown is the INT Random.Range overload', () => {
