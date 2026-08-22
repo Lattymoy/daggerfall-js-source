@@ -37,6 +37,7 @@ import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorifi
 import { REGION_RACES } from '../formats/mapsFile.js';
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { buildBuildingDirectory, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint } from '../systems/talkTopics.js';
+import { LIST_ITEM_TYPE } from '../systems/topicTree.js';   // TK-vi: the window's rows are the tree's ListItems
 import { discoverBuilding } from '../systems/discovery.js';   // T4: %loc's mark side effect
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { FACTION_TYPES } from '../formats/factionFile.js';
@@ -314,12 +315,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // through the verbatim hit rects; the keyed chain is the fallback)
     if (talkArtLoaded() && directory.length) {
       showOverlay(new NativeTalkWindow(t.text, {
-        categories: () => TOPIC_CATEGORIES
-          .map((c) => ({ label: c.caption, buildings: directory.filter((b) => b.buildingType === c.type) }))
-          .filter((c) => c.buildings.length)
-          .map((c) => ({ label: c.label, buildings: c.buildings.map((b) => ({ label: b.name, ...b })) })),
-        answer: (b) => answerText(b),
-        question: (b) => { const q = questionText(b); _questionsAsked++; return q; },   // AUDIT 17e F13 (the engine's counter climbs in getAnswerText)
+        categories: () => treeCategories() ?? localCategories(),
+        answer: (row) => (row.listItem
+          ? eng.pipeline.getAnswerText(row.listItem, { npcSeed: _talkNpc?._talkSeed ?? 0 })
+          : answerText(row)),
+        question: (row) => {
+          if (row.listItem) return eng.pipeline.getQuestionText(row.listItem, tone);
+          const q = questionText(row); _questionsAsked++; return q;   // AUDIT 17e F13 (the engine's counter climbs in getAnswerText)
+        },
         tone: () => tone,
         setTone: (t2) => { tone = t2; },
         npcName: _talkNpc?.nameNPC ?? '',   // AUDIT 18 F5: the NPC's OWN name, not the People faction
@@ -327,6 +330,42 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       return;
     }
     showGreeting(t.text);
+  }
+
+  /** TK-vi: THE WINDOW ON THE TREE. DaggerfallTalkWindow's Where-is
+   *  page IS TalkManager.listTopicLocation - the list
+   *  AssembleTopicListLocation (:3200-3353) built - and its rows are
+   *  ListItems the question and the answer both take. That grouping is
+   *  DFU's own and the T3c category list never was it: the building
+   *  types walk in ENUM order behind CheckBuildingTypeInSkipList, the
+   *  quest-residence General section and the palace arm ride a shared
+   *  group variable, and a Regional group is appended ALWAYS, whether
+   *  or not the town has one of anything. Each group opens with a
+   *  NavigationBack row, which is the window's own back button here
+   *  rather than a topic, so it is dropped.
+   *
+   *  Null when no engine is mounted (no game data): the T3c directory
+   *  below is the fallback, and it answers through the host ladder as
+   *  it always did. */
+  function treeCategories() {
+    const tree = engine()?.tree;
+    if (!tree || !engine()?.pipeline) return null;
+    return (tree.listTopicLocation ?? [])
+      .map((group) => ({
+        label: group.caption,
+        buildings: (group.listChildItems ?? [])
+          .filter((child) => child.type !== LIST_ITEM_TYPE.NavigationBack)
+          .map((child) => ({ label: child.caption, listItem: child })),
+      }))
+      .filter((group) => group.buildings.length);
+  }
+
+  /** The pre-engine fallback: T3c's flat category directory. */
+  function localCategories() {
+    return TOPIC_CATEGORIES
+      .map((c) => ({ label: c.caption, buildings: directory.filter((b) => b.buildingType === c.type) }))
+      .filter((c) => c.buildings.length)
+      .map((c) => ({ label: c.label, buildings: c.buildings.map((b) => ({ label: b.name, ...b })) }));
   }
 
   let _talkNpc = null;

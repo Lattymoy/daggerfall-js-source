@@ -25,6 +25,17 @@ import { TALK_STRINGS } from './answerPipeline.js';
 export const TALK_MACROS = Object.freeze([
   '%n', '%fn', '%mn', '%di', '%hnt2', '%hnt', '%oth',
   '%g4', '%g3', '%g2', '%g', '%pqn', '%pqp',
+  // TK-vi: the three MacroHelper GLOBALS that read TalkManager's own
+  // fields. They are not "the talk MCP's" - DialogKeySubject
+  // (MacroHelper.cs:1059-1083), MarkLocationOnMap (:1085-1090) and
+  // LocationOfRegionalBuilding (:1097-1100) are static handlers that
+  // reach GameManager.Instance.TalkManager directly - but
+  // ExpandRandomTextRecord runs the WHOLE table, so a talk record
+  // carrying them resolves them. The port's expansion answered the
+  // empty string for all three, which silently deleted the building
+  // name from every direction and map-reveal answer and dropped %loc's
+  // map-marking SIDE EFFECT with it.
+  '%key', '%loc', '%fcn',
 ]);
 
 /** MacroHelper's oath base (:201 + the faction race id), the same
@@ -130,6 +141,47 @@ export function talkMacroHandlers(ctx) {
     '%g2': () => text(ctx.questorGender?.() === 'female' ? 'pronounHer' : 'pronounHim'),
     '%g3': () => text(ctx.questorGender?.() === 'female' ? 'pronounHer2' : 'pronounHis'),
     '%g4': () => text(ctx.questorGender?.() === 'female' ? 'pronounHers' : 'pronounHis2'),
+
+    /** DialogKeySubject (:1059-1083) - %key. The switch is on the
+     *  key-subject TYPE, and four of its six arms answer the same
+     *  field; Work goes through GetWorkString and QuestTopic prefers
+     *  the current list item's caption, falling back to the field when
+     *  there is no item. Unset (and C#'s shared `default:`) is ''. */
+    '%key': () => {
+      const p = ctx.pipeline;
+      if (!p) return '';
+      switch (p.currentKeySubjectType) {
+        case 'Building':
+        case 'Person':
+        case 'Thing':
+        case 'Organization':
+          return p.currentKeySubject;
+        case 'Work':
+          return p.getWorkString();
+        case 'QuestTopic':
+          return item() != null ? item().caption : p.currentKeySubject;
+        default:
+          return '';
+      }
+    },
+
+    /** MarkLocationOnMap (:1085-1090) - %loc. THE SIDE EFFECT LIVES IN
+     *  THE MACRO: the map is revealed only when the answer being
+     *  expanded is the map-reveal record, which is what
+     *  GetKeySubjectBuildingOnMap's flag says, and the macro answers
+     *  the key subject either way. Nystul's own comment on the table
+     *  row says it: "it seems to return the name of the building and
+     *  reveal the map only if a 7332 dialog was chosen". */
+    '%loc': () => {
+      const p = ctx.pipeline;
+      if (!p) return '';
+      if (p.markLocationOnMap) p.markKeySubjectLocationOnMap();
+      return p.currentKeySubject;
+    },
+
+    /** LocationOfRegionalBuilding (:1097-1100) - %fcn, the town the
+     *  regional-building answer named. */
+    '%fcn': () => ctx.pipeline?.locationOfRegionalBuilding ?? '',
 
     /** PotentialQuestorName / PotentialQuestorLocation (:197-205).
      *  The location's key is **%pqp** - MacroHelper.cs:163, "Potential

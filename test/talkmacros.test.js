@@ -16,6 +16,7 @@ import { NPCSession } from '../src/systems/npcSession.js';
 import { TopicTree, QUESTION_TYPE, newListItem, QUEST_INFO_RESOURCE_TYPE } from '../src/systems/topicTree.js';
 import { OATH_RACE_INDEX } from '../src/systems/talkSession.js';
 
+const h2 = (ctx) => talkMacroHandlers(ctx);
 const t = (text) => ({ text, formatting: 1, x: 0, y: 0 });
 
 function makeCtx(over = {}) {
@@ -44,11 +45,59 @@ function makeCtx(over = {}) {
   };
 }
 
-test('the macro token set is the talk MCP-s thirteen overrides', () => {
+test('the macro token set: the MCP-s thirteen overrides plus the three TalkManager globals', () => {
+  // TK-vi: %key, %loc and %fcn are MacroHelper's own static handlers
+  // (DialogKeySubject :1059, MarkLocationOnMap :1085,
+  // LocationOfRegionalBuilding :1097), not the MCP's - but they read
+  // TalkManager's fields, and ExpandRandomTextRecord runs the whole
+  // table over a talk record, so they belong to this expansion.
   assert.deepEqual([...TALK_MACROS].sort(), [
-    '%di', '%fn', '%g', '%g2', '%g3', '%g4', '%hnt', '%hnt2', '%mn', '%n', '%oth', '%pqn', '%pqp',
+    '%di', '%fcn', '%fn', '%g', '%g2', '%g3', '%g4', '%hnt', '%hnt2',
+    '%key', '%loc', '%mn', '%n', '%oth', '%pqn', '%pqp',
   ].sort());
   assert.equal(OATH_BASE_TEXT_ID, 201);
+});
+
+test('TK-vi: %key switches on the key-subject TYPE, %loc marks the map, %fcn names the town', () => {
+  const ctx = makeCtx();
+  const h = talkMacroHandlers(ctx);
+  const p = ctx.pipeline;
+  p.currentKeySubject = 'The Odd Blades';
+  // the four arms that answer the field itself
+  for (const t of ['Building', 'Person', 'Thing', 'Organization']) {
+    p.currentKeySubjectType = t;
+    assert.equal(h['%key'](), 'The Odd Blades', `${t} answers CurrentKeySubject`);
+  }
+  // Unset - and C#'s shared `default:` - is the empty string
+  p.currentKeySubjectType = 'Unset';
+  assert.equal(h['%key'](), '');
+  p.currentKeySubjectType = 'Nonsense';
+  assert.equal(h['%key'](), '', "the default arm C# shares with Unset");
+  // Work goes through GetWorkString
+  p.currentKeySubjectType = 'Work';
+  p.getWorkString = () => 'a job';
+  assert.equal(h['%key'](), 'a job');
+  // QuestTopic prefers the list item's caption, and falls back
+  p.currentKeySubjectType = 'QuestTopic';
+  p.currentQuestionListItem = { caption: 'the Sentinel job' };
+  assert.equal(h['%key'](), 'the Sentinel job');
+  p.currentQuestionListItem = null;
+  assert.equal(h['%key'](), 'The Odd Blades', 'no item: the field');
+
+  // %loc answers the key subject EITHER WAY, and marks the map only
+  // when the flag the map-reveal record raised is still up.
+  let marked = 0;
+  p.markKeySubjectLocationOnMap = () => { marked++; };
+  p.markLocationOnMap = false;
+  assert.equal(h2(ctx)['%loc'](), 'The Odd Blades');
+  assert.equal(marked, 0, 'the direction record reveals nothing');
+  p.markLocationOnMap = true;
+  assert.equal(h2(ctx)['%loc'](), 'The Odd Blades');
+  assert.equal(marked, 1, 'the map-reveal record marks it');
+
+  // %fcn is the regional answer's town
+  p.locationOfRegionalBuilding = 'Tulune';
+  assert.equal(h2(ctx)['%fcn'](), 'Tulune');
 });
 
 test('THE %n SLOT, finally read: the greeting name when it is live, a RANDOM name when it is not', () => {

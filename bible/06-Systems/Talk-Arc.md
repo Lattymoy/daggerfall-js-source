@@ -964,6 +964,75 @@ the sweep until coverage caught up, and the very first direct pin
 found a crash. Fixture the real module under any seam a slice
 introduces, in the same round that introduces it.
 
+## TK-vi (2026-08-22): THE WINDOW ON THE TREE - SHIPPED
+
+The two pieces TK-v left standing, both of them the same fault in
+different clothes: a law that belonged to the engine was being done by
+hand in the host.
+
+### The Where-is page is listTopicLocation
+
+DaggerfallTalkWindow's location page is not a directory of buildings -
+it is `TalkManager.listTopicLocation`, the list
+AssembleTopicListLocation (:3200-3353) builds, and its rows are
+ListItems that the question and the answer both take. The port's window
+drew the T3c category list instead, which is a different list in four
+ways:
+
+- the building types walk in **enum order**, behind
+  CheckBuildingTypeInSkipList - so residences, palaces, ships and the
+  Specials never appear as groups at all;
+- the **quest-residence General section** and the **palace arm** ride a
+  shared group variable, appending to whichever group that variable
+  last pointed at;
+- a **Regional group is appended ALWAYS**, whether or not the town has
+  one of anything - it is where "any tavern", "any bank" and the
+  knightly orders live;
+- every group opens with a **NavigationBack row**, which is the window's
+  own back button rather than a topic.
+
+The rows being ListItems is the point: `getQuestionText(listItem, tone)`
+latches currentKeySubject/Type/BuildingKey, and
+`getAnswerText(listItem)` dispatches on questionType - so the tone gate,
+%hnt's direction-or-map fork and %loc's map mark all run where C# runs
+them, instead of being re-implemented over a directory entry in the
+host. The flat T3c list survives as the no-engine fallback, for a host
+with no game data.
+
+### %key, %loc and %fcn were expanding to nothing
+
+The port's talk expansion carried the talk MCP's thirteen overrides and
+stopped there. But ExpandRandomTextRecord runs `macroHelper.ExpandMacros
+(ref tokens, this)` - the WHOLE MacroHelper table, with TalkManager as
+the context - and three of its static handlers read TalkManager's own
+fields:
+
+- `%key` -> DialogKeySubject (MacroHelper.cs:1059-1083), a switch on
+  CurrentKeySubjectType. Four arms answer CurrentKeySubject, Work goes
+  through GetWorkString, QuestTopic prefers CurrentQuestionListItem's
+  caption and falls back to the field, and Unset shares C#'s `default:`
+  at the empty string.
+- `%loc` -> MarkLocationOnMap (:1085-1090). **The side effect lives in
+  the macro**: `if (MarkLocationOnMap) MarkKeySubjectLocationOnMap();`
+  and then the key subject is returned either way. The flag is raised by
+  GetKeySubjectBuildingOnMap for exactly the length of the map-reveal
+  record's expansion, which is Nystul's own note on the table row - "it
+  seems to return the name of the building and reveal the map only if a
+  7332 dialog was chosen".
+- `%fcn` -> LocationOfRegionalBuilding (:1097-1100), the town the
+  regional answer named.
+
+The port's `expandTalkMacros` answers `''` for a macro it has no handler
+for, so all three were being deleted silently: every direction and
+map-reveal answer lost its building name, and the map was never marked
+from inside the expansion at all. The pipeline already carried every
+field the three read - they were three table rows away the whole time.
+
+**The arc's first standing law again, a fifth time.** The host was doing
+%loc's job (a hand-rolled `%hnt` fork with its own `discoverBuilding`
+call) and the window was doing AssembleTopicListLocation's. Both worked;
+neither was the port. A law left with the host is a law broken.
+
 ## Standing law
 
 Two of this arc's own, both learned the hard way:

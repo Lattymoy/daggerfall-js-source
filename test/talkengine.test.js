@@ -17,6 +17,11 @@ import { NPCSession, newNPCData } from '../src/systems/npcSession.js';
 import { AnswerPipeline, TALK_STRINGS } from '../src/systems/answerPipeline.js';
 import { TopicTree, QUESTION_TYPE, newListItem, NPC_KNOWLEDGE } from '../src/systems/topicTree.js';
 import { RumorMill, RUMOR_TYPE } from '../src/systems/rumorMill.js';
+import { LIST_ITEM_TYPE } from '../src/systems/topicTree.js';
+import { BUILDING_TYPES } from '../src/world/buildingNames.js';
+import { readFileSync } from 'node:fs';
+
+const EN_REGIONAL = 'Regional';
 
 const faction = (over = {}) => ({
   id: 0, parent: 0, type: 0, rep: 0, sgroup: 0, ggroup: 0, name: '',
@@ -189,4 +194,60 @@ test('the mount: the event handlers reach the tree and the mill', () => {
   m.session.onStartGame();
   assert.equal(m.mill.listRumorMill.length, 0, 'a new game inherits no rumors');
   assert.equal(m.tree.dictQuestInfo.size, 0, 'and no quest topics');
+});
+
+test('TK-vi: the window\'s Where-is page is the TREE\'s list, and its rows answer through the pipeline', () => {
+  // DaggerfallTalkWindow's location page IS listTopicLocation
+  // (AssembleTopicListLocation :3200-3353). The port's window drew the
+  // T3c directory's flat categories instead, which is not that list:
+  // the types walk in ENUM order behind the skip list, each group opens
+  // with a NavigationBack row, and a Regional group is appended ALWAYS.
+  const buildings = [
+    { name: 'The Odd Blades', buildingKey: 11, buildingType: BUILDING_TYPES.WeaponSmith },
+    { name: 'The Grey Mare', buildingKey: 12, buildingType: BUILDING_TYPES.Tavern },
+    { name: 'The Dusty Flask', buildingKey: 13, buildingType: BUILDING_TYPES.Alchemist },
+    { name: 'Someone\'s House', buildingKey: 14, buildingType: BUILDING_TYPES.House1 },
+  ];
+  const m = mount({ buildings });
+  m.session.talkToMobileNPC({ nameNPC: 'A Passerby' });
+  m.session.startNewConversation();          // spends the rebuild flag
+  const groups = m.tree.listTopicLocation;
+  assert.ok(groups.length >= 4, 'three named types plus Regional');
+  // ENUM ORDER, not the T3c category order: Alchemist(0) before
+  // WeaponSmith(13) before Tavern(15).
+  const captions = groups.map((g) => g.caption);
+  assert.ok(captions.indexOf('Alchemists') < captions.indexOf('Weapon smiths'), captions.join('|'));
+  assert.ok(captions.indexOf('Weapon smiths') < captions.indexOf('Taverns'), captions.join('|'));
+  // House1 is in the SKIP LIST - it never appears as a group
+  assert.equal(captions.some((c) => /house/i.test(c)), false, 'residences are skipped');
+  // ...and the Regional group is last, always
+  assert.equal(captions[captions.length - 1], EN_REGIONAL);
+  // every group opens with the NavigationBack row - which the window
+  // drops, because its own back button is that row
+  for (const g of groups) {
+    assert.equal(g.listChildItems[0].type, LIST_ITEM_TYPE.NavigationBack, `${g.caption} opens with Back`);
+  }
+  // a row answers through the PIPELINE, on the ListItem - so the tone
+  // gate, %hnt's fork and %loc's map mark all run where C# runs them
+  const smiths = groups.find((g) => g.caption === 'Weapon smiths');
+  const row = smiths.listChildItems[1];
+  assert.equal(row.questionType, QUESTION_TYPE.LocalBuilding);
+  assert.equal(row.caption, 'The Odd Blades');
+  assert.equal(row.buildingKey, 11);
+  m.pipeline.getQuestionText(row, 1);
+  assert.equal(m.pipeline.currentKeySubject, 'The Odd Blades', 'the question latched the key subject');
+  assert.equal(m.pipeline.currentKeySubjectType, 'Building');
+  assert.equal(m.pipeline.currentKeySubjectBuildingKey, 11, '...and the key the map mark reads');
+  const answer = m.pipeline.getAnswerText(row, { npcSeed: 7 });
+  assert.ok(answer.startsWith('record:'), answer);
+});
+
+test('TK-vi: the host builds the window rows off the tree, and keeps the T3c list only as the fallback', () => {
+  const src = readFileSync(new URL('../src/scenes/townTalk.js', import.meta.url), 'utf8');
+  assert.match(src, /categories: \(\) => treeCategories\(\) \?\? localCategories\(\)/);
+  assert.match(src, /child\.type !== LIST_ITEM_TYPE\.NavigationBack/, 'the Back row is dropped');
+  assert.match(src, /eng\.pipeline\.getAnswerText\(row\.listItem/, 'the answer is the pipeline\'s');
+  assert.match(src, /eng\.pipeline\.getQuestionText\(row\.listItem, tone\)/, 'and so is the question');
+  // the fallback survives for a host with no engine (no game data)
+  assert.match(src, /function localCategories\(\)/);
 });
