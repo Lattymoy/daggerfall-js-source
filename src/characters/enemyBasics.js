@@ -3,7 +3,8 @@
 // Enemies table (MIT, Daggerfall Workshop): textures + Behaviour
 // (C3, byte-identical parity asserted at generation) + affinity,
 // corpse texture, MinMetalToHit (material index, None=-1), monster
-// damage pairs 1-3 + health/level/armor, team, loot key, flags.
+// damage pairs 1-3 + health/level/armor, soul points, team, loot key,
+// flags.
 // Class entries (128+) carry no health/level/damage - those come
 // from the career (CLASS*.CFG) + FormulaHelper, per SetEnemyCareer.
 // Do not hand-edit; regenerate: node tools/extract-enemy-basics.mjs
@@ -59,6 +60,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 3,
   'weight': 40,
   'mapChance': 1,
+  'soulPts': 1000,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -104,6 +106,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': -4,
   'weight': 240,
   'mapChance': 0,
+  'soulPts': 1000,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -275,6 +278,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 7,
   'weight': 600,
   'mapChance': 0,
+  'soulPts': 1000,
   'chanceForAttack2': 50,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
@@ -320,6 +324,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 1200,
   'mapChance': 1,
+  'soulPts': 3000,
   'chanceForAttack2': 50,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
@@ -381,6 +386,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 5,
   'weight': 480,
   'mapChance': 0,
+  'soulPts': 1000,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -413,6 +419,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 0,
   'weight': 200,
   'mapChance': 1,
+  'soulPts': 10000,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -507,6 +514,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 5,
   'weight': 600,
   'mapChance': 1,
+  'soulPts': 1000,
   'chanceForAttack2': 50,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
@@ -555,6 +563,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 2,
   'weight': 200,
   'mapChance': 0,
+  'soulPts': 3000,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -591,6 +600,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 3,
   'weight': 560,
   'mapChance': 0,
+  'soulPts': 1000,
   'primaryAttackAnimFrames': [
    0,
    -1,
@@ -622,6 +632,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 2,
   'weight': 80,
   'mapChance': 1,
+  'bloodIndex': 2,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -659,6 +670,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 3,
   'weight': 3000,
   'mapChance': 1,
+  'soulPts': 3000,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -737,6 +749,8 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 0,
   'weight': 0,
   'mapChance': 1,
+  'soulPts': 30000,
+  'bloodIndex': 2,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -756,6 +770,7 @@ export const ENEMY_BASICS = Object.freeze({
   'lootTableKey': 'I',
   'canOpenDoors': true,
   'seesThroughInvisibility': true,
+  'noShadow': true,
   'moveSound': 169,
   'barkSound': 170,
   'attackSound': 171
@@ -778,6 +793,8 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 2,
   'weight': 300,
   'mapChance': 1,
+  'soulPts': 10000,
+  'bloodIndex': 2,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -845,6 +862,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 7,
   'weight': 400,
   'mapChance': 3,
+  'soulPts': 3000,
   'chanceForAttack2': 20,
   'chanceForAttack3': 20,
   'chanceForAttack4': 20,
@@ -937,6 +955,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 0,
   'weight': 300,
   'mapChance': 0,
+  'soulPts': 3000,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -972,6 +991,8 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 0,
   'weight': 0,
   'mapChance': 1,
+  'soulPts': 30000,
+  'bloodIndex': 2,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -990,6 +1011,7 @@ export const ENEMY_BASICS = Object.freeze({
   'lootTableKey': 'I',
   'canOpenDoors': true,
   'seesThroughInvisibility': true,
+  'noShadow': true,
   'moveSound': 183,
   'barkSound': 184,
   'attackSound': 185
@@ -1012,6 +1034,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 0,
   'weight': 700,
   'mapChance': 2,
+  'soulPts': 1000,
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
@@ -1071,6 +1094,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': -5,
   'weight': 800,
   'mapChance': 0,
+  'soulPts': 50000,
   'chanceForAttack2': 50,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
@@ -1101,6 +1125,13 @@ export const ENEMY_BASICS = Object.freeze({
   'canOpenDoors': true,
   'parrySounds': true,
   'seesThroughInvisibility': true,
+  'noShadow': true,
+  'glowColor': {
+   'r': 1.8,
+   'g': 6.800000000000001,
+   'b': 8.8,
+   'a': 0.1
+  },
   'moveSound': 189,
   'barkSound': 190,
   'attackSound': 191
@@ -1123,6 +1154,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 1,
   'weight': 800,
   'mapChance': 0,
+  'soulPts': 50000,
   'chanceForAttack2': 50,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
@@ -1150,6 +1182,13 @@ export const ENEMY_BASICS = Object.freeze({
   'canOpenDoors': true,
   'parrySounds': true,
   'seesThroughInvisibility': true,
+  'noShadow': true,
+  'glowColor': {
+   'r': 12.15,
+   'g': 11.950000000000001,
+   'b': 2.2,
+   'a': 0.05
+  },
   'moveSound': 192,
   'barkSound': 193,
   'attackSound': 194
@@ -1172,6 +1211,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 1,
   'weight': 400,
   'mapChance': 0,
+  'soulPts': 10000,
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
@@ -1239,6 +1279,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': -2,
   'weight': 400,
   'mapChance': 3,
+  'soulPts': 70000,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -1259,6 +1300,7 @@ export const ENEMY_BASICS = Object.freeze({
   'lootTableKey': 'Q',
   'canOpenDoors': true,
   'seesThroughInvisibility': true,
+  'noShadow': true,
   'moveSound': 198,
   'barkSound': 199,
   'attackSound': 200
@@ -1281,6 +1323,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 1,
   'weight': 200,
   'mapChance': 1,
+  'soulPts': 150000,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -1293,10 +1336,34 @@ export const ENEMY_BASICS = Object.freeze({
    1,
    2
   ],
+  'seducerTransform1Frames': [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8
+  ],
+  'seducerTransform2Frames': [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8
+  ],
   'team': 'Daedra',
   'lootTableKey': 'Q',
   'canOpenDoors': true,
   'seesThroughInvisibility': true,
+  'hasSeducerTransform1': true,
+  'hasSeducerTransform2': true,
   'moveSound': 201,
   'barkSound': 202,
   'attackSound': 203
@@ -1319,6 +1386,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': -5,
   'weight': 400,
   'mapChance': 3,
+  'soulPts': 100000,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -1339,6 +1407,7 @@ export const ENEMY_BASICS = Object.freeze({
   'lootTableKey': 'Q',
   'canOpenDoors': true,
   'seesThroughInvisibility': true,
+  'noShadow': true,
   'moveSound': 204,
   'barkSound': 205,
   'attackSound': 206
@@ -1361,6 +1430,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': -10,
   'weight': 1000,
   'mapChance': 0,
+  'soulPts': 800000,
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'hasIdle': true,
@@ -1434,6 +1504,8 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': -10,
   'weight': 300,
   'mapChance': 4,
+  'soulPts': 100000,
+  'bloodIndex': 2,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -1478,6 +1550,8 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': -12,
   'weight': 300,
   'mapChance': 4,
+  'soulPts': 250000,
+  'bloodIndex': 2,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -1551,6 +1625,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 1000,
   'mapChance': 0,
+  'soulPts': 30000,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -1562,6 +1637,13 @@ export const ENEMY_BASICS = Object.freeze({
   ],
   'team': 'Magic',
   'canOpenDoors': true,
+  'noShadow': true,
+  'glowColor': {
+   'r': 12.15,
+   'g': 7.5,
+   'b': 2.2,
+   'a': 0.05
+  },
   'moveSound': 219,
   'barkSound': 220,
   'attackSound': 221
@@ -1584,6 +1666,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 1000,
   'mapChance': 0,
+  'soulPts': 30000,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -1618,6 +1701,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 1000,
   'mapChance': 0,
+  'soulPts': 30000,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
    0,
@@ -1651,6 +1735,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 1000,
   'mapChance': 0,
+  'soulPts': 30000,
   'chanceForAttack2': 50,
   'hasIdle': true,
   'primaryAttackAnimFrames': [
@@ -1700,6 +1785,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 10000,
   'mapChance': 0,
+  'soulPts': 500000,
   'primaryAttackAnimFrames': [
    0,
    1,
@@ -1730,6 +1816,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 600,
   'mapChance': 0,
+  'soulPts': 10000,
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'primaryAttackAnimFrames': [
@@ -1784,6 +1871,7 @@ export const ENEMY_BASICS = Object.freeze({
   'armorValue': 6,
   'weight': 200,
   'mapChance': 0,
+  'soulPts': 10000,
   'chanceForAttack2': 33,
   'chanceForAttack3': 33,
   'primaryAttackAnimFrames': [
@@ -2751,6 +2839,7 @@ export const ENEMY_BASICS = Object.freeze({
   'lootTableKey': 'C',
   'canOpenDoors': true,
   'parrySounds': true,
+  'prefersRanged': true,
   'moveSound': 243,
   'barkSound': 244,
   'attackSound': 245

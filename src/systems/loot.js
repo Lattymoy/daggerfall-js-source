@@ -24,7 +24,7 @@ import { goldStack } from './inventory.js';
 import { ITEM_TEMPLATES, mintCondition, GROUP_TEMPLATE_INDICES, templateByIndex } from './itemTemplates.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 
-// LootChanceMatrix rows, verbatim (21 keys).
+// LootChanceMatrix rows, verbatim (22 keys, '-' included).
 export const LOOT_MATRICES = Object.freeze({
   '-': { MinGold: 0, MaxGold: 0, P1: 0, P2: 0, C1: 0, C2: 0, C3: 0, M1: 0, AM: 0, WP: 0, MI: 0, CL: 0, BK: 0, M2: 0, RL: 0 },
   A: { MinGold: 1, MaxGold: 10, P1: 0, P2: 0, C1: 0, C2: 0, C3: 0, M1: 0, AM: 5, WP: 5, MI: 2, CL: 4, BK: 0, M2: 2, RL: 0 },

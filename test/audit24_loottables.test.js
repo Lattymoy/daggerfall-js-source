@@ -26,7 +26,7 @@ const noDfu = !existsSync(LOOT_TABLES) || !existsSync(ITEM_ENUMS);
 test('audit24 tables: LOOT_MATRICES is REBUILT from LootTables.cs, cell for cell', { skip: noDfu }, () => {
   const cs = readFileSync(LOOT_TABLES, 'utf8');
   const rows = [...cs.matchAll(/new LootChanceMatrix\(\)\s*\{([^}]*)\}/g)];
-  assert.ok(rows.length >= 21, `found ${rows.length} matrix rows in the source`);
+  assert.equal(rows.length, 22, `found ${rows.length} matrix rows in the source - '-' plus A..U`);
   const fromSource = {};
   for (const [, inner] of rows) {
     const key = /key\s*=\s*"([^"]+)"/.exec(inner)[1];
@@ -35,7 +35,7 @@ test('audit24 tables: LOOT_MATRICES is REBUILT from LootTables.cs, cell for cell
     fromSource[key] = row;
   }
   assert.deepEqual(Object.keys(LOOT_MATRICES).sort(), Object.keys(fromSource).sort(),
-    'the same 21 keys, no more and no fewer');
+    'the same 22 keys, no more and no fewer');
   for (const [key, row] of Object.entries(fromSource)) {
     assert.deepEqual(LOOT_MATRICES[key], row, `matrix ${key} matches LootTables.cs cell for cell`);
   }

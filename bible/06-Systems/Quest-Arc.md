@@ -2570,6 +2570,84 @@ test rather than by code.
 Seven mutants, seven kills.
 
 
+### Wave 23
+
+**A generator nobody runs is a hand transcription with extra steps.**
+
+`src/characters/enemyBasics.js` is 3025 lines of `MobileEnemy` records
+and it is *generated*, from `EnemyBasics.cs`, by
+`tools/extract-enemy-basics.mjs`. That reads like the safe answer to
+the transcription law - and it is, right up until you ask when the
+generator last ran. It asserts C3 parity when a human invokes it.
+Nothing invoked it. There was no gate.
+
+Which means a column the extraction never *looked at* was invisible
+from both directions at once: absent from the port, and absent from
+every pin, because every pin read the port. You cannot notice a field
+you have never seen.
+
+Nine of them:
+
+| column | what it drives in DFU |
+|---|---|
+| `SoulPts` | `ItemBuilder.cs:303` - a filled soul trap is worth `5000 + SoulPts`. 32 of the 62 records set it |
+| `BloodIndex` | the TEXTURE.380 splash (`EnemyAttack.cs:332`, `WeaponManager.cs:572`, `EnemyHealth.cs:52`) |
+| `NoShadow`, `GlowColor` | the shadow caster and the point light (`SetupDemoEnemy.cs:137-148`) |
+| `HasSeducerTransform1/2` + frames | which transform anim set the Lamia plays (`DaggerfallMobileUnit.cs:850`) |
+| `PrefersRanged`, `PrefersNoise` | AI preference flags on the struct |
+
+`GlowColor` carries its own trap. Unity's `Color operator*` scales
+**every** channel including alpha, and the three-argument constructor
+leaves `a = 1` - so `new Color(18, 68, 88) * 0.1f` has alpha `0.1`,
+not `1`. Three enemies glow, and all three would have glowed wrong.
+
+The repair is two gates over a pure extraction library that the
+generator and the tests now share:
+
+1. re-extract from the vendored source and deep-equal the checked-in
+   module, cell for cell - the LootTables idiom;
+2. enumerate every field name the **source** assigns inside its
+   `MobileEnemy` initialisers and fail on any that has nowhere to
+   land, with an explicit allow-list of the falsy-omitted booleans.
+
+Gate 2 is the one that found the nine, and gate 2's first draft was a
+fake pin of a kind this audit had not seen before.
+
+**A pin that scans an empty string passes everything.** The draft
+hand-rolled the table slice:
+
+```js
+const table = cs.slice(start, cs.indexOf('};', cs.indexOf('// Custom enemies', start)));
+```
+
+The library it was copying from has a guard the copy dropped:
+`indexOf('// Custom enemies', …) === -1 ? tableStart : …`. That
+comment is not in the vendored tree. So `indexOf('};', -1)` searched
+from **zero** and answered a brace eighteen thousand characters
+*before* the table - a backwards slice, an empty string, zero columns
+found, and a confident "no dropped columns" verdict. It passed on the
+first run, which is what made me look.
+
+Both gates read the library's slicer now, and gate 2 asserts it found
+at least 25 columns before it will believe a clean result. *A PIN THAT
+FINDS NOTHING MUST PROVE IT LOOKED.*
+
+Five mutants, five kills - one cell edited by hand in the checked-in
+table, the `SoulPts` column dropped from the extraction again, the
+`=== -1` guard removed, the glow alpha forced to 1, and a whole enemy
+deleted from the table.
+
+Also corrected: `loot.js`'s "21 keys" comment over a 22-row matrix
+(`-` plus A..U), and the same off-by-one in the LootTables gate's
+message, which had been asserting `rows.length >= 21` where an exact
+22 is what the source has.
+
+FLAGGED: none of the eight new columns has a port consumer yet -
+there is no blood splash, no enemy point light, no Seducer transform,
+and no `CreateRandomSoulTrap` mint. They are data now, so the gate can
+see them and the slice that needs them will find them already correct.
+
+
 ## Queue
 
 THE Q4 CARVE (scouted 2026-08-21, sources sized): the remaining

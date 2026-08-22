@@ -4,97 +4,21 @@
 // the three C3 fields must come out byte-identical for every existing
 // key - asserted below against the current module before writing.
 // Usage: node tools/extract-enemy-basics.mjs /path/to/EnemyBasics.cs
+//
+// AUDIT 24 (wave 23): the extraction itself now lives in
+// extractEnemyBasics.lib.mjs as a pure function, so the SAME code the
+// gate in test/audit24_enemytable.test.js runs is the code that writes
+// this file. A column the extraction never looked at used to be
+// invisible from both sides - see the library header.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { dirname, join } from 'node:path';
+import { extractEnemyBasics } from './extractEnemyBasics.lib.mjs';
 
 const src = readFileSync(process.argv[2], 'utf8');
 // SoundClips.cs rides next to EnemyBasics.cs's tree (Assets/Scripts/SoundClips.cs)
-import { dirname, join } from 'node:path';
 const scPath = process.argv[3] || join(dirname(process.argv[2]), '..', 'SoundClips.cs');
-const SOUNDCLIPS = Object.fromEntries(
-  [...readFileSync(scPath, 'utf8').matchAll(/^\s*(\w+) = (\d+),/gm)].map((m) => [m[1], Number(m[2])]));
-const tableStart = src.indexOf('static MobileEnemy[] Enemies = new MobileEnemy[]');
-const tableEnd = src.indexOf('};', src.indexOf('// Custom enemies', tableStart) === -1 ? tableStart : src.indexOf('// Custom enemies', tableStart));
-const table = src.slice(tableStart, tableEnd);
-const blocks = table.split('new MobileEnemy()').slice(1);
-
-const MATERIALS = { None: -1, Iron: 0, Steel: 1, Silver: 2, Elven: 3, Dwarven: 4, Mithril: 5, Adamantium: 6, Ebony: 7, Orcish: 8, Daedric: 9 };
-const field = (b, k) => { const m = b.match(new RegExp(`\\b${k} = ([^,\\n]+),`)); return m ? m[1].trim() : null; };
-const num = (v) => (v === null ? null : Number(v));
-// An anim-frame element is a C# CONSTANT EXPRESSION, not a literal:
-// EnemyBasics.cs:1066 has a missing comma, so the Orc Warlord's
-// PrimaryAttackAnimFrames3 element `4 -1` is the binary expression
-// 4 - 1 = 3 (a DFU typo the compiler evaluates - reproduced, not
-// corrected). Bare Number('4 -1') is NaN, which JSON-serialises to
-// null; sum the whitespace-separated signed terms instead, and hard
-// fail on anything that is not an integer so a future regeneration
-// can never silently emit null again.
-function animFrame(s, id, key) {
-  const v = s.trim().split(/\s+/).map(Number).reduce((a, b) => a + b, 0);
-  if (!Number.isInteger(v)) throw new Error(`ASSERT FAIL: enemy ${id} ${key} element "${s.trim()}" -> ${v}`);
-  return v;
-}
-
-const out = {};
-for (const b of blocks) {
-  const id = num(field(b, 'ID'));
-  if (id === null) continue;
-  // Stub entries (e.g. 39 Horse, "unused") carry only an ID; C# struct
-  // defaults apply: textures 0, Behaviour General (first member),
-  // Affinity None, MinMetalToHit 0 (default(enum)) - matches what C3
-  // emitted for them.
-  const e = {
-    maleTexture: num(field(b, 'MaleTexture')) ?? 0,
-    femaleTexture: num(field(b, 'FemaleTexture')) ?? 0,
-    behaviour: (field(b, 'Behaviour') || 'MobileBehaviour.General').replace('MobileBehaviour.', ''),
-    affinity: (field(b, 'Affinity') || 'MobileAffinity.None').replace('MobileAffinity.', ''),
-  };
-  const corpse = b.match(/CorpseTexture = CorpseTexture\((\d+),\s*(\d+)\)/);
-  if (corpse) e.corpseTexture = { archive: Number(corpse[1]), record: Number(corpse[2]) };
-  const mm = field(b, 'MinMetalToHit');
-  e.minMetalToHit = mm ? MATERIALS[mm.replace('WeaponMaterialTypes.', '')] : 0;   // absent -> C# default(enum) = 0
-  for (const k of ['MinDamage', 'MaxDamage', 'MinDamage2', 'MaxDamage2', 'MinDamage3', 'MaxDamage3', 'MinHealth', 'MaxHealth', 'Level', 'ArmorValue', 'Weight', 'MapChance', 'ChanceForAttack2', 'ChanceForAttack3', 'ChanceForAttack4', 'ChanceForAttack5']) {
-    const v = num(field(b, k));
-    if (v !== null) e[k[0].toLowerCase() + k.slice(1)] = v;
-  }
-  // C11 mobile sprites: HasIdle + the attack frame SEQUENCES (the -1
-  // entry is the damage marker) with the chance-rolled variants 2-5.
-  if (/HasIdle = true/.test(b)) e.hasIdle = true;
-  // C14: the Spell anim state - HasSpellAnimation routes to records
-  // 20-24 (RangedAttack1Anims); everyone else casts over the primary
-  // records. Orc Shaman (21) is the only true-anim monster.
-  if (/HasSpellAnimation = true/.test(b)) e.hasSpellAnimation = true;
-  // C17: class-enemy archer anims (records 20-24 with the -1 shoot marker)
-  if (/HasRangedAttack1 = true/.test(b)) e.hasRangedAttack1 = true;
-  if (/HasRangedAttack2 = true/.test(b)) e.hasRangedAttack2 = true;
-  for (const k of ['PrimaryAttackAnimFrames', 'PrimaryAttackAnimFrames2', 'PrimaryAttackAnimFrames3', 'PrimaryAttackAnimFrames4', 'PrimaryAttackAnimFrames5', 'SpellAnimFrames', 'RangedAttackAnimFrames']) {
-    const m = b.match(new RegExp(`\\b${k} = new int\\[\\] \\{([^}]+)\\}`));
-    if (m) e[k[0].toLowerCase() + k.slice(1)] = m[1].split(',').map((s) => animFrame(s, id, k));
-  }
-  // AUDIT 24 characters-0: an entry that omits Team takes the STRUCT
-  // default, and MobileTeams' zero member is PlayerEnemy
-  // (DaggerfallUnityEnums.cs:262-264) - not "none". Only the Horse
-  // (ID 39, `new MobileEnemy() { ID = 39, }`) leaves it out.
-  const team = field(b, 'Team');
-  e.team = team ? team.replace('MobileTeams.', '') : 'PlayerEnemy';
-  const loot = b.match(/LootTableKey = "(.)"/);
-  if (loot) e.lootTableKey = loot[1];
-  if (/CanOpenDoors = true/.test(b)) e.canOpenDoors = true;
-  // AUDIT 18: ParrySounds ("plays parry sounds when attacks against
-  // this enemy miss", DaggerfallUnityStructs.cs:208) was dropped by
-  // the E3a extraction; it is the gate WeaponManager.cs:609-615 and
-  // EnemyAttack.cs:371-373 read on a zero-damage hit.
-  if (/ParrySounds = true/.test(b)) e.parrySounds = true;
-  if (/CastsMagic = true/.test(b)) e.castsMagic = true;
-  if (/SeesThroughInvisibility = true/.test(b)) e.seesThroughInvisibility = true;   // P13: the illusion-gate exemption
-  // A1: the sound columns (MoveSound/BarkSound/AttackSound) -
-  // (int)SoundClips.X resolved to DAGGER.SND indices via SoundClips.cs
-  for (const k of ['MoveSound', 'BarkSound', 'AttackSound']) {
-    const f = b.match(new RegExp(k + String.raw` = \(int\)SoundClips\.(\w+)`));
-    if (f && SOUNDCLIPS[f[1]] !== undefined) e[k[0].toLowerCase() + k.slice(1)] = SOUNDCLIPS[f[1]];
-  }
-  out[String(id)] = e;
-}
+const out = extractEnemyBasics(src, readFileSync(scPath, 'utf8'));
 
 // Assert C3 parity before writing
 const cur = (await import(pathToFileURL(new URL('../src/characters/enemyBasics.js', import.meta.url).pathname))).ENEMY_BASICS;
@@ -114,7 +38,8 @@ writeFileSync(new URL('../src/characters/enemyBasics.js', import.meta.url),
 // Enemies table (MIT, Daggerfall Workshop): textures + Behaviour
 // (C3, byte-identical parity asserted at generation) + affinity,
 // corpse texture, MinMetalToHit (material index, None=-1), monster
-// damage pairs 1-3 + health/level/armor, team, loot key, flags.
+// damage pairs 1-3 + health/level/armor, soul points, team, loot key,
+// flags.
 // Class entries (128+) carry no health/level/damage - those come
 // from the career (CLASS*.CFG) + FormulaHelper, per SetEnemyCareer.
 // Do not hand-edit; regenerate: node tools/extract-enemy-basics.mjs
