@@ -230,9 +230,10 @@ export function createWorldModes(host) {
   // behaviours drive every modal frame (Unity Update), an E-click
   // routes DoClick, and the interior teardown notifies destruction
   // exactly as Unity's OnDestroy does on a scene transition.
-  // FLAGGED (Port-Ledger Q4-v): quest FOES pend the interior enemy
-  // host - standFoe is absent, so the walk skips the stand and the law
-  // modules idle; the dungeon context's own mount pends with it.
+  // FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
+  // pend the INTERIOR enemy host alone - this adapter's standFoe stays
+  // absent, so the walk skips the stand inside a building. The dungeon
+  // mount SHIPPED (B2 below) and stands real foes through B1's chain.
   let questFlats = [];          // interior stands (the click sites index this list)
   let dungeonQuestFlats = [];   // B2: dungeon stands, same record shape
   function standQuestFlatIn(list, getCtx, toScene, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null) {
