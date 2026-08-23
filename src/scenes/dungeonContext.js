@@ -10,6 +10,8 @@
 
 import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { layoutDungeon } from '../world/dungeonLayout.js';
+import { enterDungeonAutomap, buildRevealIndex, automapRevealTick, automapEntranceTick, automapDungeonKey, SCAN_INTERVAL_S } from '../systems/automap.js';   // A1
+import { AutomapWindow } from '../ui/automapWindow.js';   // A1: the M window
 import { applyTextureTable } from '../world/dungeonTextures.js';
 import { collectDungeonLights } from '../world/dungeonLights.js';
 import { CityLightAnimator, MINUTES_PER_DAY } from '../world/worldClock.js';
@@ -146,6 +148,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   const drawList = [];
   const dynamicDraws = [];
+  const automapEntries = [];   // A1: { key, aabb } per draw entry - the reveal index's rows
   const collider = new Collider(() => -Infinity);
   // Effect actions (Hurt traps) damage the shared player entity;
   // health floors at 0 (death screen: UI arc). Traps work with or
@@ -254,6 +257,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!gpu) continue;
       await ensureRemap(p.modelIdNum);
       const cpu = cpuModels.get(p.modelIdNum);
+      // A1: every placement's world AABB, computed once - the action
+      // arms below and the automap reveal index both read it.
+      const aabb = worldAabb(cpu.positions, matrix);
       if (p.action) {
         // Verbatim AddActionModelHelper classification (audit
         // 2026-08-16: only move/effect registered before - every
@@ -266,9 +272,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // platforms (classic Collision01 elevators) collision-trigger;
           // the pass only tests movers while parked at 'start', where
           // the static AABB is truthful.
-          o.aabb = worldAabb(cpu.positions, matrix);
+          o.aabb = aabb;
           o.restOnlyTrigger = true;
           dynamicDraws.push({ gpu, object: o });
+          automapEntries.push({ key: o.key, aabb });   // A1: revealed at the AT-REST bounds (a moved platform's probe misses - recorded)
           continue;
         }
         if (cls === 'specialDoor') {
@@ -277,6 +284,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // own bucket, swings on the chain or the player's hand.
           const o = actions.addSpecialDoor(bi, p.position, cpu, matrix, p.action);
           dynamicDraws.push({ gpu, object: o });
+          automapEntries.push({ key: o.key, aabb });   // A1
           continue;
         }
         if (cls === 'effect') {
@@ -285,15 +293,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // below). Origin = the placement translation (CastSpell
           // fires missiles from here, +40*GlobalScale up, verbatim).
           const eo = actions.addEffect(bi, p.position, p.action, [matrix[12], matrix[13], matrix[14]]);
-          eo.aabb = worldAabb(cpu.positions, matrix);   // collision triggers test against this
+          eo.aabb = aabb;   // collision triggers test against this
         } else {
           // Relay: the delegate is routed (Teleport/text) or a
           // verbatim no-op; the CHAIN through it must live, and its
           // collider makes it a Direct/Attack/collision target.
-          actions.addRelay(bi, p.position, p.action, worldAabb(cpu.positions, matrix), [matrix[12], matrix[13], matrix[14]]);
+          actions.addRelay(bi, p.position, p.action, aabb, [matrix[12], matrix[13], matrix[14]]);
         }
       }
-      drawList.push({ mesh: gpu, matrix });
+      // A1: the entry carries its identity (the action system's own
+      // `${bi}:${position}` key) + world AABB so the automap window
+      // can filter the LIVE list by the revealed set - no duplicate
+      // geometry (Automap.cs duplicates the whole level instead).
+      drawList.push({ mesh: gpu, matrix, key: `${bi}:${p.position}`, aabb });
+      automapEntries.push({ key: `${bi}:${p.position}`, aabb });
       collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix);
       colliderTris += cpu.indices.length / 3;
     }
@@ -320,6 +333,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         ns: bi, positionKey: d.position, action: d.action, startingLockValue: d.startingLockValue,
       });
       dynamicDraws.push({ gpu, object: o });
+      automapEntries.push({ key: o.key, aabb: worldAabb(cpu.positions, matrix) });   // A1: doors reveal at their CLOSED bounds
     }
     for (const f of b.layout.flats) {
       const key = `${f.archive}_${f.record}`;
@@ -812,6 +826,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let lastPlayerFeet = null;   // S11: the save position
   let debugHud = false;   // F8 diagnostics
   let _motorState = '';
+  let _motorYaw = 0;   // A1: the automap window's player-arrow heading
   let _mouseState = 'no events';
   let _inputState = '';
   const _activity = { running: false, swimming: false, jumped: false, movingLessThanHalfSpeed: true };   // P11 fatigue state; P13 sneak state; C6 jump edge
@@ -2345,6 +2360,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // SongManager decides when a song changes, from a context the host feeds
   // it every frame. What this context owes it is the SEED, above.
 
+  // A1: THE AUTOMAP MOUNT. Identity + world AABBs were collected at
+  // the draw-entry push sites; the per-dungeon record enters here (a
+  // fresh entry resets visitedThisRun - the LOAD arm lives in
+  // quickLoad), the 5 Hz probe clock rides the hosts' automapTick,
+  // and M opens the window through toggleAutomap.
+  const automapKey = automapDungeonKey(dfLocation?.regionIndex ?? -1, dfLocation?.name ?? _locationKey);
+  let automapRec = enterDungeonAutomap(automapKey, classicMinutesRef.value);
+  const automapIndex = buildRevealIndex(automapEntries);
+  let automapScanT = SCAN_INTERVAL_S;   // the first tick probes at once (Automap.cs:993-1002's lazy-init scan)
+  let _automapEye = null;
+  // The player marker arrow, Daggerfall mesh 99900 (Automap.cs:1355).
+  // Absent from a stripped ARCH3D the window falls back to a red quad.
+  let automapArrow = null;
+  try { automapArrow = await getGpuMesh(99900); if (automapArrow) await ensureRemap(99900); } catch { automapArrow = null; }
+
   return {
     // AUDIT 19 / 1:1: SelectCurrentSong's dungeon arm seeds DFRandom with
     // the dungeon record header's Unknown2 XOR the region byte
@@ -2378,6 +2408,36 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     startMarker: dungeon.startMarker,
     enterMarker: dungeon.enterMarker,
     blockCount: dungeon.blocks.length,
+    /** A1: the 5 Hz reveal probes (CheckForNewlyDiscoveredMeshes'
+     *  cadence, Automap.cs:172/:1289). Hosts call this every gameplay
+     *  frame with the live eye + view direction; the interval gate
+     *  lives here, and the eye is cached for the window's slice. */
+    automapTick(dt, eye, fwd) {
+      _automapEye = eye;
+      automapScanT += dt;
+      if (automapScanT < SCAN_INTERVAL_S) return;
+      automapScanT = 0;
+      automapRevealTick(automapRec, { eye, fwd, collider, index: automapIndex });
+      // the entrance beacon sits on the START marker (Automap.cs:1447)
+      const sm = dungeon.startMarker;
+      automapEntranceTick(automapRec, sm ? [sm.x, sm.y, sm.z] : null, eye, collider);
+    },
+    automapRecord: () => automapRec,   // probe surface + the window's live view
+    /** A1: the M window, in the one overlay slot (toggleCharSheet's
+     *  idiom - an occupied slot refuses, the window closes itself). */
+    toggleAutomap() {
+      if (activeOverlay) return;
+      activeOverlay = new AutomapWindow({
+        record: () => automapRec,
+        drawList, dynamicDraws, texRemap,
+        player: () => ({ feet: lastPlayerFeet, eye: _automapEye, yaw: _motorYaw }),
+        startMarker: dungeon.startMarker,
+        blocks: dungeon.blocks.map((b) => ({ x: b.originX / RDB_SIDE, z: b.originZ / RDB_SIDE, name: b.name })),
+        arrowMesh: automapArrow,
+        dungeonName: dfLocation?.name ?? 'Dungeon',
+        indexSize: automapIndex.length,
+      });
+    },
     enemies,
     foes,
     spawnQuestFoe,   // B1: CreateFoe's dungeon arm stands foes through the one build chain
@@ -2413,7 +2473,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     get playerSlowFalling() { return hasActiveEffect(playerEntity, 'slowfall'); },   // S8: hosts feed their motor (P14: the -105 * dt constant-speed law lives in the motor)
     toggleDebugHud() { debugHud = !debugHud; },
-    reportMotor(grounded, velY, yaw) { _grounded = grounded; _motorState = `g:${grounded ? 1 : 0} vy:${velY.toFixed(1)} yaw:${yaw.toFixed(2)}`; },
+    reportMotor(grounded, velY, yaw) { _grounded = grounded; _motorYaw = yaw; _motorState = `g:${grounded ? 1 : 0} vy:${velY.toFixed(1)} yaw:${yaw.toFixed(2)}`; },
     // U7: the rest key. Pre-rest gates (the classic order): enemies
     // nearby -> TEXT.RSC 354; swimming or airborne -> 355 "You
     // cannot rest now."; else the rest window opens. A second press
@@ -2521,6 +2581,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave })) opts.onQuestRestored?.();
       if (extras.world && extras.locationKey === _locationKey) applyWorld(extras.world);
       else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends
+      // A1: restorePlayer replaced the automap store, so the live
+      // record reference is stale. Re-enter on the LOAD arm
+      // (initFromLoadingSave, Automap.cs:2492-2493): a load never
+      // resets visitedThisRun - only a fresh walk-in entry does.
+      automapRec = enterDungeonAutomap(automapKey, classicMinutesRef.value, { fromLoad: true });
       if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);
       surfacePlayer();
       // A loaded game supersedes whatever pre-game overlay is up.

@@ -17,6 +17,7 @@ import { restartHeldEnchantments } from './enchantments.js';   // E2: the held b
 import { snapshotWeather, restoreWeather } from './weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host
 import { goldStack } from './inventory.js';   // AUDIT 17f
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
+import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAutomapDungeonsDiscoveryState rides SaveData_v1
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 
 export const SAVE_VERSION = 1;
@@ -180,6 +181,10 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // DFU serialises it in SaveData_v1). Module-level world state, so
   // the snapshot reads the store, not the entity.
   snap.discovery = snapshotDiscovery();
+  // A1: the automap dungeon-discovery dictionary (Automap.GetState -
+  // DFU serialises it in SaveData_v1's sceneCache). Module-level world
+  // state beside the discovery store, LRU-pruned at entry time.
+  snap.automap = snapshotAutomap();
   // AUDIT 23 (items lane): RegionData.PriceAdjustment rides DFU's save
   // (SerializablePlayer.cs:168); without it every load rerolled the
   // 750..1250 band and shifted all shop prices mid-session.
@@ -326,6 +331,10 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // T4: a load replaces the discovery store; a pre-T4 save carries no
   // field and restores an empty one (nothing was discoverable then).
   restoreDiscovery(snap.discovery);
+  // A1: a load replaces the automap store too; a pre-A1 save carries
+  // no field and restores an empty one (nothing was revealed then).
+  // A dungeon context re-fetches its live record after this runs.
+  restoreAutomap(snap.automap ?? null);
   // AUDIT 23: the sticky per-region price band (see snapshot side); a
   // pre-fix save re-mints lazily, exactly as an unvisited region does.
   entity.regionPrices = snap.regionPrices ? { ...snap.regionPrices } : {};

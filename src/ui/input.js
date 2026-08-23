@@ -29,6 +29,7 @@ export function gameAction(e) {
   if (e.key === 'Backspace') return 'spellbook';   // DFU default
   if (e.code === 'KeyC') return 'castSpell';       // ours (classic click-to-cast also live)
   if (e.code === 'KeyR') return 'rest';            // DFU default (U7)
+  if (e.code === 'KeyM') return 'automap';         // DFU default (InputManager.Actions.AutoMap)
   if (e.key === 'F9') return 'quickSave';          // DFU default
   if (e.key === 'F11') return 'quickLoad';         // DFU default (InputManager.SetupDefaults:1032)
   if (e.key === 'F8') return 'debugHud';           // diagnostics
@@ -70,6 +71,7 @@ export function routeKey(e, ctx, castDir, setPlayerPos = null) {
     case 'spellbook': ctx.toggleSpellbook(); return true;
     case 'castSpell': { const d = castDir(); ctx.playerCastInput(d.eye, d.dir); return true; }
     case 'rest': ctx.toggleRest?.(); return true;
+    case 'automap': ctx.toggleAutomap?.(); return true;   // A1 (optional-chained: only the dungeon contexts carry one today)
     case 'quickSave': ctx.quickSave?.(); return true;
     case 'quickLoad': ctx.quickLoad?.(setPlayerPos); return true;
     case 'debugHud': ctx.toggleDebugHud?.(); return true;

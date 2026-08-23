@@ -46,6 +46,7 @@ uniform int uFogMode; // 0 off, 1 linear, 2 exp
 uniform float uFogDensity;
 uniform vec2 uFogRange; // start, end
 uniform vec3 uCamPos;
+uniform float uClipY;  // A1: the automap slice plane (_SclicingPositionY's law) - fragments above it discard; 1e9 = off
 out vec4 outColor;
 float fogFactorAt(vec3 worldPos) {
   if (uFogMode == 0) return 1.0;
@@ -56,6 +57,7 @@ float fogFactorAt(vec3 worldPos) {
   return exp(-uFogDensity * d);
 }
 void main() {
+  if (vWorldPos.y > uClipY) discard;   // A1: the ceiling cut (Automap.cs UpdateSlicingPositionY)
   vec4 tex = texture(uTex, vUV);
   if (tex.a < 0.5) discard;
   vec3 n = normalize(vNormal);
@@ -460,9 +462,11 @@ export class Renderer {
     this._fogRange = new Float32Array([0, 1]);
     this._fogColor = new Float32Array([0, 0, 0]);
     this._camPos = new Float32Array(3);
+    this._clipY = 1e9;   // A1: the automap slice, off by default
     const fogLocs = (program) => ({
       fogColor: gl.getUniformLocation(program, 'uFogColor'),
       fogMode: gl.getUniformLocation(program, 'uFogMode'),
+      clipY: gl.getUniformLocation(program, 'uClipY'),
       fogDensity: gl.getUniformLocation(program, 'uFogDensity'),
       fogRange: gl.getUniformLocation(program, 'uFogRange'),
       camPos: gl.getUniformLocation(program, 'uCamPos'),
@@ -1138,7 +1142,14 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1f(prog.fogDensity, this._fogDensity);
     gl.uniform2fv(prog.fogRange, this._fogRange);
     gl.uniform3fv(prog.camPos, this._camPos);
+    if (prog.clipY) gl.uniform1f(prog.clipY, this._clipY);   // A1: only the mesh shader carries the slice
   }
+
+  /** A1: the automap slice plane - fragments of the SOLID mesh pass
+   *  above this world-space Y discard (the global _SclicingPositionY,
+   *  Automap.cs:1296-1303). 1e9 = off; the automap window sets
+   *  playerY + eye height + bias and restores off after its pass. */
+  setClipY(y) { this._clipY = y ?? 1e9; }
 
   /** Scene-space point lights as flat vec4s [x,y,z,range], max 16. */
   setPointLights(data, color) {

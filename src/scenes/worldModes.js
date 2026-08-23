@@ -1658,6 +1658,7 @@ export function createWorldModes(host) {
 
     if (mode === 'dungeon') {
       if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:219's `if (!held)` - a paused game advances no movers
+      if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
       renderer.setLighting(new Float32Array(DUNGEON_AMBIENT), 0);
       renderer.setFog('exp', 0.005, 0, 0, new Float32Array([0, 0, 0]));

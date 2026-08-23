@@ -99,6 +99,17 @@ export const LIVE = Object.freeze({
   'ChildGuard/PlayerNudity': 'src/scenes/questBridge.js',
   'Enhancements/GuildQuestListBox': 'src/scenes/questBridge.js',
   'GUI/ShowQuestJournalClocksAsCountdown': 'src/scenes/world.js',
+  // A1: the dungeon automap - the LRU prune reads the remembered-
+  // dungeon count; the window reads the slice, micro-map and colour
+  // rows. (The four Automap*Color keys stay stored - they colour the
+  // EXTERIOR automap, which pends A2.)
+  'Map/AutomapNumberOfDungeons': 'src/systems/automap.js',
+  'Map/AutomapAlwaysMaxOutSliceLevel': 'src/ui/automapWindow.js',
+  'Map/AutomapRememberSliceLevel': 'src/ui/automapWindow.js',
+  'Map/AutomapDisableMicroMap': 'src/ui/automapWindow.js',
+  'Map/DungeonMicMapQoL': 'src/ui/automapWindow.js',
+  'Map/DunMicMapInnerColor': 'src/ui/automapWindow.js',
+  'Map/DunMicMapBorderColor': 'src/ui/automapWindow.js',
 });
 /** unavailable: meaningless in a browser, or the port implements only
  *  ONE side of the branch. The launcher shows these disabled WITH the

@@ -287,6 +287,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const held = ctx.uiOverlayActive;   // overlays HOLD the world: no movers, no motor - typing a name must not walk the player off the start ledge
     lookGate(held);   // a window up frees the cursor; closing re-locks
     if (!held) ctx.actions.update(dt);
+    if (!held) ctx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes (paused under overlays, as DFU's coroutine pauses under the open map)
     if (walkMode && !held) {
       // Platform riding (Ledger C row -> SHIPPED 2026-08-14): standing
       // on a mover applies its frame delta through the resolver
