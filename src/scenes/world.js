@@ -40,7 +40,7 @@ import { TravelMapWindow, buildTravelIndex } from '../ui/travelMap.js';   // F-s
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE } from '../systems/encounters.js';   // X-slice
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';   // P-slice: the above-ground quicksave
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search
@@ -1117,12 +1117,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     const snap = snapshotPlayer(playerEntity, {
       classicMinutes: Math.floor(playerTicker.classicMinutes),
       readiedSpellIndex: magic.readiedIndex(),
-      quest: questBridge.snapshot(),   // Q4-v: the machine + notebook + one-time list
-      // SaveDataConversation WHOLE (:368-375): the mill + the
-      // questor-post dict (TK-i), dictQuestInfo (TK-ii), and
-      // npcsWithWork + castleNPCsSpokenTo (TK-iv). One envelope, as
-      // C# has one class.
-      talk: { ...rumorMill.getSaveData(), ...topicTree.getSaveData(), ...npcSession.getSaveData() },
+      // B4: quest (Q4-v: machine + notebook + one-time list) and talk
+      // (SaveDataConversation WHOLE, :368-375: the mill + questor-post
+      // dict (TK-i), dictQuestInfo (TK-ii), npcsWithWork +
+      // castleNPCsSpokenTo (TK-iv)) through the ONE composer both
+      // hosts call - two inline copies of this envelope is exactly
+      // how the dungeon half drifted to saving neither.
+      ...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } }),
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -1145,22 +1146,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     try {
       setWorldMinutes(extras.classicMinutes ?? worldMinutes());
       magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
-      // Q4-v: the quest envelope rides the same slot. A pre-Q4-v save
-      // has no quest key - restore(null) is a no-op and the live
-      // machine stands (recorded). A restored session is never a NEW
-      // game, whatever the chargen flow later reports.
-      questBridge.restore(extras.quest ?? null);
-      if (extras.quest) _questStarted = true;
-      if (extras.talk) {   // TK-i/TK-ii: a pre-TK save leaves the live session standing (recorded)
-        rumorMill.restoreSaveData(extras.talk);
-        topicTree.restoreSaveData(extras.talk);   // the orphan sweep + relink + TellMeAbout tail run inside
-        // TK-iv: each of these two is restored only when the save
-        // CARRIES it (:2541-2546), so a pre-TK-iv save leaves the
-        // running pools standing rather than emptying them
-        npcSession.restoreSaveData(extras.talk);
-        // RestoreConversationData's mill-orphan sweep (:2522-2533)
-        rumorMill.removeOrphanedQuestRumors((id) => !!questBridge.machine.getQuest(id));
-      }
+      // Q4-v: the quest envelope rides the same slot; a pre-Q4-v save
+      // has no quest key and the live machine stands (recorded). A
+      // restored session is never a NEW game, whatever the chargen
+      // flow later reports. B4: the restore half moved into
+      // restoreSessionState (systems/save.js) so the dungeon host
+      // runs the identical law; the TK-i/TK-ii/TK-iv null-arm
+      // recordings moved with it.
+      if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })) _questStarted = true;
       if (extras.locationKey === 'world' && extras.world?.pixel) {
         const w = extras.world;
         await _teleportToPixel(w.pixel.x, w.pixel.y);
@@ -1946,6 +1939,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     questBridge,
     questSceneCtx: () => ({ mapId: _questLoc()?.mapTableData?.mapId ?? 0, locationIndex: _questLoc()?.locationIndex ?? 0 }),
     npcSession,   // TK-iv: the questor door on a static-NPC click
+    // B4: the dungeon context quicksaves through the same composer
+    // this host does - the trio + the bridge ride to it, and a
+    // restored quest envelope latches _questStarted here exactly as
+    // worldQuickLoad does (initAtGameStart must not re-run over a
+    // restored machine).
+    talkSave: { mill: rumorMill, tree: topicTree, session: npcSession },
+    onQuestRestored: () => { _questStarted = true; },
     // G8 (guilds-8): the DiscoverRandomLocation seam for the guild
     // promotion reveals - candidates are the CURRENT pixel's region
     // (PlayerGPS.CurrentRegion; guild services only run inside town

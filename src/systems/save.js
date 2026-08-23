@@ -307,6 +307,44 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   return { position: snap.position, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null };
 }
 
+/** AUDIT 25 B4: ONE quest+talk envelope composer, every quicksaving
+ *  host calls it. DFU saves quest and conversation state WHEREVER the
+ *  player stands - SaveLoadManager.cs:1113 builds
+ *  QuestMachine.GetSaveData() and :1119 TalkManager.
+ *  GetConversationSaveData() into every save, and :1433-1449 restores
+ *  both (conversation after quest, the C# comment's own order). The
+ *  port grew the envelope in world.js alone, so a dungeon quicksave
+ *  carried neither and a dungeon load handed back an empty quest
+ *  machine and rumor mill. `talk` is the trio world.js already
+ *  composes: { mill, tree, session } (rumorMill + topicTree +
+ *  npcSession = SaveDataConversation whole, TK-i/ii/iv). */
+export function composeSessionState({ questBridge = null, talk = null } = {}) {
+  return {
+    quest: questBridge ? questBridge.snapshot() : null,
+    talk: talk ? { ...talk.mill.getSaveData(), ...talk.tree.getSaveData(), ...talk.session.getSaveData() } : null,
+  };
+}
+
+/** The restore half. Keeps the port's RECORDED null-arm departure: DFU
+ *  calls RestoreConversationData(null) on a save with no conversation
+ *  block, which RESETS the mill (TalkManager.cs:2440-2443 mints a
+ *  fresh SaveDataConversation); the port leaves the live session
+ *  standing on a pre-TK save (world.js quickLoad, recorded there).
+ *  Returns whether a quest envelope was present, for the world host's
+ *  _questStarted latch. */
+export function restoreSessionState(extras, { questBridge = null, talk = null } = {}) {
+  // restore(null) is a no-op and the live machine stands (Q4-v law).
+  questBridge?.restore(extras?.quest ?? null);
+  if (extras?.talk && talk) {
+    talk.mill.restoreSaveData(extras.talk);
+    talk.tree.restoreSaveData(extras.talk);   // the orphan sweep + relink + TellMeAbout tail run inside
+    talk.session.restoreSaveData(extras.talk);
+    // RestoreConversationData's mill-orphan sweep (:2522-2533)
+    talk.mill.removeOrphanedQuestRumors((id) => !!questBridge?.machine.getQuest(id));
+  }
+  return !!extras?.quest;
+}
+
 /** localStorage backend (absent in headless - callers gate).
  *  setItem THROWS on real browsers - QuotaExceededError when storage
  *  is full, or a SecurityError under private-browsing modes that

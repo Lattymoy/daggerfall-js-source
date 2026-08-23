@@ -91,7 +91,7 @@ import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
-import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave } from '../systems/save.js';
+import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // B4: the ONE quest+talk composer
 import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4: the shared PlayRandomlyIfPlayerNear pass
@@ -2445,6 +2445,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const snap = snapshotPlayer(playerEntity, {
         position: lastPlayerFeet, classicMinutes: classicMinutesRef.value,
         readiedSpellIndex: magic.readiedIndex(),
+        // AUDIT 25 B4: DFU saves quest + conversation WHEREVER the
+        // player stands (SaveLoadManager.cs:1113-1121); this context
+        // saved neither, so a save made in a dungeon loaded back an
+        // empty quest machine and rumor mill. The world host's bridge
+        // and talk trio ride in as opts (null in the standalone
+        // ?dungeon scene, which mounts no quest machine - the composer
+        // writes nulls there, same as every pre-B4 save).
+        ...composeSessionState({ questBridge: opts.questBridge, talk: opts.talkSave }),
         locationKey: _locationKey,
         world: collectWorld(),
       });
@@ -2458,6 +2466,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (!extras) { hudText.add('Save version mismatch.'); return; }
       classicMinutesRef.value = extras.classicMinutes ?? classicMinutesRef.value;
       magic.setReadiedByIndex(extras.readiedSpellIndex ?? null, spellsByIndex);
+      // B4: quest after entity, conversation after quest (the C#'s own
+      // order, SaveLoadManager.cs:1433-1449). A restored quest
+      // envelope must latch the world host's _questStarted so
+      // initAtGameStart never re-runs over the restored machine.
+      if (restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave })) opts.onQuestRestored?.();
       if (extras.world && extras.locationKey === _locationKey) applyWorld(extras.world);
       else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends
       if (extras.position && extras.locationKey === _locationKey && setPlayerPos) setPlayerPos(extras.position);

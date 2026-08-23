@@ -54,14 +54,16 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   const fn = s.slice(i, i + 1000);   // TK-iv widened it (SaveDataConversation whole rides the talk slot)
   assert.ok(fn.includes('state.worldCoords(pf)'), 'the save stores NATIVES, not local scene positions');
   assert.ok(fn.includes('pf[1] - state.compensation[1]'), 'the height sheds the vertical compensation');
-  assert.ok(fn.includes('quest: questBridge.snapshot()'), 'Q4-v: the quest envelope rides the quicksave');
-  assert.ok(fn.includes('...npcSession.getSaveData()'), 'TK-iv: SaveDataConversation is ONE envelope, as C# has one class');
+  // B4: the quest+talk envelope moved into the ONE composer both hosts
+  // call (the laws themselves are pinned in sessionsave.test.js) - this
+  // host must still ride it, with the live bridge and the full trio
+  assert.ok(fn.includes('...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })'), 'Q4-v/TK-iv via B4: quest + SaveDataConversation ride the quicksave through the composer');
   const j = s.indexOf('async function worldQuickLoad');
   const lf = s.slice(j, j + 2800);   // Q4-v widened the function (the quest envelope restore); TK-iv widened it again (the conversation halves)
-  assert.ok(lf.includes('questBridge.restore(extras.quest ?? null)'), 'Q4-v: the quest envelope restores through the bridge');
+  assert.ok(lf.includes('restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession } })'), 'Q4-v via B4: the quest envelope restores through the composer');
+  assert.ok(lf.includes('_questStarted = true'), 'a restored quest latches the start guard - initAtGameStart must not re-run over it');
   assert.ok(lf.includes('await _teleportToPixel(w.pixel.x, w.pixel.y)'), 'the load teleports through the travel core');
   assert.ok(lf.includes('state.localFromWorld(w.nativeX, w.nativeZ)'), 'and lands at the exact native spot');
   assert.ok(lf.includes('_lastEncMinutes = Math.floor(playerTicker.classicMinutes)'), 'no encounter catch-up across a load (LoadInProgress parity)');
-  assert.ok(lf.includes('npcSession.restoreSaveData(extras.talk)'), 'TK-iv: the questor pools restore with the rest of SaveDataConversation');
   assert.ok(lf.includes("extras.locationKey !== 'world'"), 'a dungeon-side save restores the character and says so');
 });
