@@ -92,6 +92,7 @@ import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { calculateCastCost, effectSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // B4: the ONE quest+talk composer
+import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
 import { dungeonKey } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4: the shared PlayRandomlyIfPlayerNear pass
@@ -499,7 +500,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const t = await getTexture(archive);
       const mobile = new MobileUnit(e.mobileType, basics, (rec) => t.getFrameCount(rec), Math.random, e.gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      foes.push({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
+      const rec = { mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender };
+      foes.push(rec);
+      return rec;   // B1: the quest spawner binds its behaviour to the stood record
      } catch (err) {
        // One foe failing to build (a missing CLASS*.CFG, a rig or
        // equipment error on a specific mobile type) MUST NOT abort
@@ -565,7 +568,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // per frame (the batch geometry is a unit quad; size is a
       // uniform, origin a live translation - zero rebuilds).
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      foes.push({ mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender });
+      const rec = { mobile, mobileArchive: archive, mobileTex: t, batch, ai, attack, entity, mobileType: e.mobileType, gender: e.gender };
+      foes.push(rec);
+      return rec;   // B1: the quest spawner binds its behaviour to the stood record
      } catch (err) {
        // Same guard as the class branch: one bad monster must not
        // take the dungeon down - fall back to the static flat.
@@ -586,6 +591,33 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     flatGroups.get(key).push([e.x, e.y, e.z]);
   }
   for (const e of enemies) await buildFoeAt(e);
+
+  /** B1: one QUEST foe through the SAME build chain as the load loop
+   *  and the rest-encounter spawner, at the placement point CreateFoe's
+   *  raycast picked. Binds the QuestResourceBehaviour host at the
+   *  stand (the activation moment); faces the player (LookAt,
+   *  CreateFoe.cs:328) via yawRad. */
+  async function spawnQuestFoe({ mobileType, gender, position, yawRad = null, behaviour }) {
+    const f = await buildFoeAt({ mobileType, gender, x: position[0], y: position[1], z: position[2], spawnDistanceType: 0 }, false);
+    if (!f) { console.error(`[quest] foe ${mobileType} failed to stand in dungeon`); return null; }
+    if (yawRad != null && f.ai) f.ai.yaw = yawRad;
+    bindQuestFoeHost(f, behaviour, questPoolOps);
+    return f;
+  }
+  /** B1: the quest behaviour's pool surface (the questFoeHost
+   *  contract) - the dungeon twin of exteriorFoes' questPoolOps. */
+  const questPoolOps = {
+    removeFoe: (f) => {
+      if (f.dead) return;
+      f.dead = true;
+      if (f.batch) { renderer.destroyBillboardBatch(f.batch); f.batch = null; }
+      f.questBehaviour?.notifyDestroyed();
+    },
+    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null); },
+    spellsByIndex: () => spellsByIndex,
+    foeSinks: (f) => foeSinks(f),
+    rolls: Math.random,
+  };
 
   // S3: the REAL player entity - chargen rolls from a CLASS*.CFG
   // career before anything consumes the player. Career = ?class= (an
@@ -1876,6 +1908,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     _weaponCanvas = canvas;   // C10: the rig's late canvas (gesture dim + the overlay draw)
     const _mobileBatches = [];   // C11: the frame's live sprite-mobile quads
     if (playerFeet) lastPlayerFeet = [...playerFeet];
+    // B1: QuestResourceBehaviour.Update every frame the object lives
+    // (dead included - a corpse's component still runs in DFU, and the
+    // kill credit lands the update AFTER health hit zero).
+    for (const f of foes) f.questBehaviour?.update();
     // AUDIT 18 F5: the rest clock USED to tick here, which made it
     // unreachable - drawFoes only runs when NO overlay is up, and the
     // rest window IS an overlay. It ticks from tickOverlay now, called
@@ -2333,6 +2369,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     blockCount: dungeon.blocks.length,
     enemies,
     foes,
+    spawnQuestFoe,   // B1: CreateFoe's dungeon arm stands foes through the one build chain
     drawFoes,
     playerAttackInput,
     toggleSheath: weaponRig.toggleSheath,
@@ -2513,6 +2550,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  done on the death path and on a missing endLines, and until
      *  now only overlayInput/overlayClick cleared activeOverlay, so a
      *  rest that ended itself would latch a dead window on screen. */
+    /** B1: GameManager.OnEncounter's rest-abort route - a CreateFoe
+     *  wave placed while the rest window is up wakes the player
+     *  (AbortRestForEnemySpawn; the session answers enemies-nearby on
+     *  its next tick). */
+    abortRestForEnemySpawn() {
+      if (activeOverlay?.isRestWindow) activeOverlay.session?.abortForEnemySpawn?.();
+    },
     tickOverlay(dt) {
       if (!activeOverlay) return;
       activeOverlay.tick?.(dt);   // D1: the death sequence's clock
@@ -2701,6 +2745,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     exitDoors,
     colliderTris,
     destroy() {
+      // B1: OnDestroy for every quest foe standing in this dungeon -
+      // the resource uncouples exactly as Unity's scene teardown does.
+      for (const f of foes) f.questBehaviour?.notifyDestroyed();
       for (const b of billboardBatches) renderer.destroyBatch(b);
       // AUDIT 17e F29 / EVERY ALLOCATION HAS AN OWNER: foes and
       // corpses each own a live billboard batch that is NOT in

@@ -68,6 +68,7 @@ export class RestSession {
     this.totalHours = 0;
     this._minutesOfHour = 0;
     this._timer = 0;
+    this._abortEnemySpawn = false;   // B1: the OnEncounter latch, read at the next tick
     // waitTimePerHour / minutesPerTick, verbatim (NOT per-hour /
     // ticks-per-hour - see the header quirk note).
     this._subTickEvery = (mode === 'loiter' ? LOITER_WAIT_PER_HOUR : REST_WAIT_PER_HOUR) / MINUTES_PER_TICK;
@@ -78,6 +79,11 @@ export class RestSession {
   endEarly() {
     return { textId: this.mode === 'loiter' ? REST_TEXT.loiterDone : REST_TEXT.wakeUp, enemyBroke: false, died: false };
   }
+
+  /** GameManager.OnEncounter -> DaggerfallRestWindow.
+   *  AbortRestForEnemySpawn (:301-304): latch only; the next tick
+   *  answers the enemies-nearby break. */
+  abortForEnemySpawn() { this._abortEnemySpawn = true; }
 
   tick(dt) {
     // The per-frame checks, in DFU's Update order (:215-227): death
@@ -93,6 +99,15 @@ export class RestSession {
     if (this.mode === 'full' && this.deps.fullyHealed?.()) return { textId: REST_TEXT.healed, enemyBroke: false, died: false };
     if (this.mode !== 'full' && this.hoursRemaining < 1) {
       return { textId: this.mode === 'loiter' ? REST_TEXT.loiterDone : REST_TEXT.wakeUp, enemyBroke: false, died: false };
+    }
+
+    // B1: AbortRestForEnemySpawn (DaggerfallRestWindow.cs:301-304, read
+    // in Update) - GameManager.OnEncounter's ONE core consumer: a quest
+    // foe spawned by CreateFoe while resting wakes the player with the
+    // enemies-nearby text, exactly like the hourly check below.
+    if (this._abortEnemySpawn) {
+      this._abortEnemySpawn = false;
+      return { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };
     }
 
     this._timer += dt;

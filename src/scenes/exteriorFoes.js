@@ -41,6 +41,7 @@ import { mintCorpseMarker, playBodyFall, corpseLootTargets, takeCorpseLoot, sayE
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { EnemySoundSource } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
+import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
 
 // The port's allocation-owner guards (classic self-limits through the
 // 144-minute cadence; these keep a long session bounded).
@@ -61,9 +62,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   const activeCount = () => foes.filter((f) => !f.dead).length;
 
   /** One encounter foe at a world position - the dungeon load chain's
-   *  shape, host-owned. */
-  async function spawnFoe(mobileType, pos) {
-    if (activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
+   *  shape, host-owned. B1 opts: a QUEST foe rides the same chain -
+   *  `gender` forces the Foe resource's own humanoid gender (else the
+   *  pool's 0.5 roll stands), `yaw` faces the spawn (CreateFoe's
+   *  LookAt player, :328), `questBehaviour` binds the
+   *  QuestResourceBehaviour host at the stand. A quest foe is exempt
+   *  from the encounter self-limit: DFU's CreateFoe spawns
+   *  unconditionally, and the cap is the port's own encounter bound,
+   *  not a law. */
+  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null } = {}) {
+    if (!questBehaviour && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;
     const basics = ENEMY_BASICS[mobileType];
     if (!basics || !basics.maleTexture) return null;
     try {
@@ -75,9 +83,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       entity.items = generateLootItems(basics.lootTableKey ?? '-', { level: playerEntity.level, gender: playerEntity.gender });
       equipEnemy(entity, mobileType, playerEntity.level);
       addEnemyLootExtras(entity.items, basics, rolls);   // AUDIT 24 (wave 43): EnemyEntity.cs:388-397, after the equipment as DFU has it
-      const gender = basics.femaleTexture && rolls() < 0.5 ? 'female' : 'male';
+      const gender = forcedGender ?? (basics.femaleTexture && rolls() < 0.5 ? 'female' : 'male');
       const behaviour = basics.behaviour ?? 'General';
-      const ai = new EnemyAI(collider, [pos[0], pos[1] + 0.1, pos[2]], rolls() * Math.PI * 2, {
+      const ai = new EnemyAI(collider, [pos[0], pos[1] + 0.1, pos[2]], yaw ?? rolls() * Math.PI * 2, {
         liveSpeed: entity.liveSpeed,
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
         behaviour, mobileId: mobileType,
@@ -106,12 +114,33 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null,
         sounds: new EnemySoundSource(mobileType, rolls) };   // AUDIT 24 (wave 41): this pool made no sound at all
       foes.push(f);
+      // B1: the quest resource behaviour couples at the stand - the
+      // activation moment, where Unity runs the deferred Start.
+      if (questBehaviour) bindQuestFoeHost(f, questBehaviour, questPoolOps);
       return f;
     } catch (err) {
       console.error(`[encounter] mobileType ${mobileType} failed to spawn:`, err?.message ?? err);
       return null;
     }
   }
+
+  /** B1: the quest behaviour's pool surface (the questFoeHost
+   *  contract). zeroFoeHealth routes the DeathTrigger zeroing through
+   *  the one damage door so corpse, loot, alert and the kill notice
+   *  all run; removeFoe is Destroy(gameObject) - the isHidden
+   *  teardown - gone with no corpse, the cull's own shape. */
+  const questPoolOps = {
+    removeFoe: (f) => {
+      if (f.dead) return;
+      releaseFoeBatch(f);
+      f.dead = true;
+      f.questBehaviour?.notifyDestroyed();
+    },
+    zeroFoeHealth: (f) => { if (!f.dead) damageFoe(f, f.entity.health, null, null); },
+    spellsByIndex: () => spellsByIndex?.(),
+    foeSinks: (f) => foeSinks(f),
+    rolls,
+  };
 
   /** The one damage door: corpse + loot on death (no crime - these
    *  are monsters and brigands, not the watch). */
@@ -209,6 +238,12 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  the distance cull and the sight alert raise. */
   function update(dt, playerFeet, eye, senses = {}) {
     for (const f of foes) {
+      // B1: the QuestResourceBehaviour drives every frame the object
+      // lives (Unity Update on the component) - BEFORE the dead skip,
+      // because the kill credit lands on the update AFTER health hit
+      // zero (the injured-check return holds death to the next tick),
+      // and a corpse's component still runs in DFU.
+      f.questBehaviour?.update();
       if (f.dead) continue;
       // AUDIT 24 (wave 32): PARALYSIS. This pool passed the literal `false`
       // for the motor's paralyzed argument and ran the attack machine
@@ -246,6 +281,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (f.ai._dist > ENCOUNTER_CULL_DISTANCE && !f.ai.detected) {
         releaseFoeBatch(f);
         f.dead = true;
+        f.questBehaviour?.notifyDestroyed();   // B1: Destroy(gameObject) - the resource uncouples
         continue;
       }
       if (f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());   // EnemySenses:533-535

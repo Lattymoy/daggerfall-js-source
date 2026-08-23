@@ -91,6 +91,8 @@ import { goldAmount, deductGold, addGold } from '../systems/court.js';
 import { getReputation } from '../systems/factionRep.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { SITE_TYPES } from '../systems/quest/place.js';
+import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
+import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { positionHash } from './questBridge.js';
 import { staticNpcName } from '../characters/staticNpc.js';   // wave 24: StaticNPC.DisplayName
@@ -1621,6 +1623,45 @@ export function createWorldModes(host) {
   return {
     get mode() { return mode; },
     startInDungeon,
+    /** B1: CreateFoe's TryPlacement, this host's two INSIDE arms
+     *  (CreateFoe.cs:194-211). The dungeon arm runs PlaceFoeFreely
+     *  over the dungeon collider and stands the foe through the
+     *  context's one build chain; false = retry next machine tick,
+     *  verbatim. The INTERIOR arm answers false unconditionally -
+     *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+     *  the scene mount above), so a wave pending inside a building
+     *  waits, and leaving invalidates it exactly as DFU's
+     *  OnTransitionExterior handler does. */
+    tryPlaceQuestFoe(handle) {
+      if (mode !== 'dungeon' || !dungeonCtx) return false;
+      const feet = player.pos;
+      // origin lifted to the controller centre - DFU casts from
+      // PlayerObject.transform.position, not the feet
+      const env = placeFoeEnv({
+        collider: dungeonCtx.collider,
+        playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+        playerYawRad: cam.yaw,
+        fovDegrees: fieldOfView(),
+        isOccupied: entityOccupancy((f) => f.ai?.feet, () => dungeonCtx.foes, feet),
+      });
+      const spot = placeFoeFreely(env);
+      if (!spot) return false;
+      const foe = handle.foe;
+      dungeonCtx.spawnQuestFoe({
+        mobileType: foe.foeType, gender: questFoeGender(foe),
+        position: [spot.x, spot.y, spot.z],
+        yawRad: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player (CreateFoe.cs:328)
+        behaviour: handle.behaviour,
+      }).catch((e) => console.error('[quest] dungeon foe stand failed:', e?.message ?? e));
+      return true;
+    },
+    /** B1: GameManager.RaiseOnEncounterEvent's one core consumer is
+     *  the rest window's AbortRestForEnemySpawn - the machine raises
+     *  it per pending CreateFoe tick and this routes it to the live
+     *  rest overlay (dungeon mode is the only mode with one). */
+    raiseOnEncounterEvent() {
+      if (mode === 'dungeon') dungeonCtx?.abortRestForEnemySpawn?.();
+    },
     /** TP-slice: the Teleport effect leaves ANY mode - the exit
      *  cores of the door flows minus the landing (the caller owns
      *  the spawn; DFU's cross-scene arm transitions immediately,

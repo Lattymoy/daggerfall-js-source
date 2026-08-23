@@ -415,7 +415,12 @@ function pushInstantMarker(target, kind, stat = null) {
  */
 export function applySpell(spell, casterLevel, target, sinks, rolls = Math.random, caster = null, ctx = {}) {
   const flag = ELEMENT_EFFECT_FLAG[spell.element] ?? EFFECT_FLAGS.Magic;
-  const saveScaled = spell.rangeType !== 0;   // GetMagnitude's CasterOnly gate (S15)
+  // B1: ctx.bypassSavingThrows is AssignBundleFlags.BypassSavingThrows
+  // (EntityEffectManager.AssignBundle) - the quest machine's casts
+  // (CastSpellOnFoe's queue drain, CastSpellDo) land with no save
+  // rolled, which is exactly the CasterOnly no-save arm below.
+  // Immunities are NOT saves and still apply, as in DFU.
+  const saveScaled = spell.rangeType !== 0 && !ctx.bypassSavingThrows;   // GetMagnitude's CasterOnly gate (S15)
   // L2-slice (AUDIT 23 magic-11) - FormulaHelper.GetElementType
   // (:1630-1634): an effect whose AllowedElements is MAGIC-ONLY
   // always saves as MAGIC, whatever element the parent spell rode in

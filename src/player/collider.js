@@ -199,6 +199,46 @@ export class Collider {
   }
 
   /**
+   * Static-geometry half of Unity's `Physics.OverlapSphere` - true
+   * when any world triangle sits within `radius` of `center`. B1's
+   * caller is CreateFoe's spawn-spot rejection (PlaceFoeFreely,
+   * CreateFoe.cs:320-323: "Ensure this is open space"). Same 3x3-cell
+   * bucket scan as _resolveSphere, but a pure query - no pushing, and
+   * the first contact answers. What it cannot see, exactly like
+   * capsuleCast below: entities are not in the collider, so the
+   * caller supplies its own foe/player proximity term.
+   */
+  sphereOverlaps(center, radius) {
+    const r2 = radius * radius;
+    for (const [, bucket] of this._buckets) {
+      const t = bucket.t();
+      const lx = center[0] - t[0];
+      const ly = center[1] - t[1];
+      const lz = center[2] - t[2];
+      const gx = Math.floor(lx / CELL);
+      const gz = Math.floor(lz / CELL);
+      const visited = new Set();
+      for (let ox = -1; ox <= 1; ox++) {
+        for (let oz = -1; oz <= 1; oz++) {
+          const cell = bucket.grid.get(`${gx + ox},${gz + oz}`);
+          if (!cell) continue;
+          for (const ti of cell) {
+            if (visited.has(ti)) continue;
+            visited.add(ti);
+            const tri = bucket.tris[ti];
+            closestPointOnTriangle([lx, ly, lz], tri[0], tri[1], tri[2], TMP);
+            const dx = lx - TMP[0];
+            const dy = ly - TMP[1];
+            const dz = lz - TMP[2];
+            if (dx * dx + dy * dy + dz * dz < r2) return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * Swept-capsule query - the contract Unity's `Physics.CapsuleCast`
    * honors, which DFU's EnemyMotor.ObstacleCheck is written against
    * (EnemyMotor.cs:1154). Sweep a capsule of `radius` whose axis runs

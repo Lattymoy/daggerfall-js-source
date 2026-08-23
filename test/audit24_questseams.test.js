@@ -30,9 +30,10 @@ const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 /** Seams the machine declares that the HOST cannot answer yet, each
  *  with the slice that owns it. Removing a row means mounting it. */
 const PENDING = new Map([
-  ['createFoeGameObjects', 'quest foe spawning - GameObjectHelper.CreateFoeGameObjects (Port-Ledger)'],
-  ['tryPlaceFoe', 'quest foe placement - TryPlacement + PlaceFoeFreely (Port-Ledger)'],
-  ['raiseOnEncounterEvent', 'rides the foe spawn seam above'],
+  // B1 (AUDIT 25 blocker 1) MOUNTED the foe spawn trio -
+  // createFoeGameObjects, tryPlaceFoe, raiseOnEncounterEvent - after
+  // the placement law sat fully ported in sceneMount.js with no
+  // caller. A ported function with no caller is a comment.
   ['respawnPlayerAtSite', 'TeleportPc transport - PlayerEnterExit.RespawnPlayer'],
   ['isRespawning', 'rides the respawn seam above'],
   ['setPlayerScenePosition', 'rides the respawn seam above'],

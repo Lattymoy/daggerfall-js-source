@@ -39,6 +39,8 @@ import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { TravelMapWindow, buildTravelIndex } from '../ui/travelMap.js';   // F-slice
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
+import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
+import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE } from '../systems/encounters.js';   // X-slice
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
@@ -1596,6 +1598,48 @@ export async function bootWorld(canvas, renderer, params, status) {
     ),
     changeLegalRep: (amount) => changeLegalRep(playerEntity, _questLoc()?.regionIndex ?? 0, amount),
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
+    // ---- B1 (AUDIT 25 blocker 1): THE FOE SPAWN SEAMS. The machine
+    // has declared these since Q3-iii and no host answered - the
+    // placement law sat fully ported in sceneMount.js with no caller,
+    // so no quest that kills or meets a Foe could ever complete.
+    /** GameObjectHelper.CreateFoeGameObjects (:1243-1305), data side:
+     *  `count` inactive handles, one QuestResourceBehaviour each;
+     *  activation (bindHost + start) waits for placement. */
+    createFoeGameObjects: (foe, count) => mintQuestFoeWave(questBridge.machine, foe, count),
+    /** CreateFoe.TryPlacement (:183-211): the INSIDE arms live with
+     *  the modes host (dungeon places, interior pends - see the FLAG
+     *  there); outside, IsPlayerInLocationRect picks the location ring
+     *  (5/20) and the wilderness arm widens to 8/25 (:252-257).
+     *  DFU's wilderness arm also TrackLooseObject's the spawn into
+     *  the streaming world - the pool's cull owns that lifetime here. */
+    tryPlaceFoe: (handle) => {
+      const m = modes?.mode ?? 'exterior';
+      if (m !== 'exterior') return modes?.tryPlaceQuestFoe?.(handle) ?? false;
+      if (!(walkMode && playerSpawned)) return false;
+      const feet = player.pos;
+      const env = placeFoeEnv({
+        collider,
+        // origin at the controller centre - DFU casts from
+        // PlayerObject.transform.position, not the feet
+        playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
+        playerYawRad: cam.yaw,
+        fovDegrees: fieldOfView(),
+        isOccupied: entityOccupancy((f) => f.ai?.feet, () => exteriorFoes.foes, feet),
+      });
+      const spot = _musicInLocationRect() ? placeFoeFreely(env) : placeFoeFreely(env, { minDistance: 8, maxDistance: 25 });
+      if (!spot) return false;
+      const foe = handle.foe;
+      exteriorFoes.spawnFoe(foe.foeType, [spot.x, spot.y, spot.z], {
+        gender: questFoeGender(foe),
+        yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player (CreateFoe.cs:328)
+        questBehaviour: handle.behaviour,
+      }).catch((e) => console.error('[quest] exterior foe stand failed:', e?.message ?? e));
+      return true;
+    },
+    /** GameManager.RaiseOnEncounterEvent - its one core consumer is
+     *  the rest window's AbortRestForEnemySpawn, routed through the
+     *  modes host (dungeon mode owns the only rest overlay). */
+    raiseOnEncounterEvent: () => modes?.raiseOnEncounterEvent?.(),
   };
   // TK-i: THE RUMOR MILL beside the bridge. The mill's own consumers
   // (Any news?, bulletin boards, the questor-post greeting) mount
