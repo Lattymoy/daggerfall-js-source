@@ -237,7 +237,23 @@ export function createWorldModes(host) {
   // mount SHIPPED (B2 below) and stands real foes through B1's chain.
   let questFlats = [];          // interior stands (the click sites index this list)
   let dungeonQuestFlats = [];   // B2: dungeon stands, same record shape
-  function standQuestFlatIn(list, getCtx, toScene, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null) {
+  /** `inDungeon` is not decoration - it selects the ANCHOR.
+   *  AddQuestNPC raises the billboard by half its height
+   *  `if (!inDungeon)` (GameObjectHelper.cs:1032-1036), and DFU's
+   *  billboard is CENTRE-anchored, so the base ends up ON the marker
+   *  inside a building and half a height BELOW it inside a dungeon.
+   *  This port's billboard shader is BOTTOM-anchored (position = base,
+   *  the C11 law dungeonContext.js:1325 states), so the same visual
+   *  result needs the shift on the DUNGEON side - which is exactly the
+   *  shift the dungeon's own RDB flats already take
+   *  (dungeonContext.js:1243, `y - size.h / 2`), and which a building's
+   *  flats correctly do not (interiorContext.js passes its centers
+   *  straight through).
+   *
+   *  Without it every quest NPC and item in a dungeon hangs half a
+   *  sprite too high - and a distant screenshot passes that, exactly
+   *  as it passed a vertically flipped billboard for six milestones. */
+  function standQuestFlatIn(list, getCtx, toScene, inDungeon, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null) {
     const ctx = getCtx();   // capture: an async fill must not cross scenes
     if (!ctx) return null;
     // flatPosition is already scene units with -y (the Place marker
@@ -259,7 +275,18 @@ export function createWorldModes(host) {
       uploadRecord(archive, record);
       const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
       stand.width = size.w; stand.height = size.h;
-      stand.batch = renderer.createBillboardBatch(archive, record, size, [[x, y, z]]);
+      // The anchor (see the header), then AlignBillboardToGround
+      // (GameObjectHelper.cs:336-346), which AddQuestNPC/AddQuestItem
+      // both call with distance 4: a ray from 0.2 above, and on a hit
+      // the CENTRE goes to hit + size.y * 0.52 - so a bottom-anchored
+      // base sits size.y * 0.02 off the floor, the 2% lift that keeps
+      // it out of the ground plane. No floor within 4 and the marker
+      // position stands as-is, verbatim (C# returns without moving).
+      let by = inDungeon ? y - size.h / 2 : y;
+      const drop = ctx.collider?.raycast?.([x, by + 0.2, z], [0, -1, 0], 4);
+      if (Number.isFinite(drop)) by = (by + 0.2 - drop) + size.h * 0.02;
+      stand.y = by;
+      stand.batch = renderer.createBillboardBatch(archive, record, size, [[x, by, z]]);
       if (stand.active) ctx.billboardBatches.push(stand.batch);
     })().catch((e) => console.error('[quest] stand fill failed:', e));
     const unhook = () => {
@@ -289,9 +316,9 @@ export function createWorldModes(host) {
     return stand.host;
   }
   const standQuestFlat = (...args) =>
-    standQuestFlatIn(questFlats, () => interiorCtx, (ctx, p) => ctx.parentPt(p.x, p.y, p.z), ...args);
+    standQuestFlatIn(questFlats, () => interiorCtx, (ctx, p) => ctx.parentPt(p.x, p.y, p.z), false, ...args);
   const standDungeonQuestFlat = (...args) =>
-    standQuestFlatIn(dungeonQuestFlats, () => dungeonCtx, (_ctx, p) => [p.x, p.y, p.z], ...args);
+    standQuestFlatIn(dungeonQuestFlats, () => dungeonCtx, (_ctx, p) => [p.x, p.y, p.z], true, ...args);
   const questAdapter = {
     // PlayerGPS.CurrentMapID through the host's scene-context closure.
     currentMapId: () => questSceneCtx?.()?.mapId ?? 0,

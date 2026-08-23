@@ -133,6 +133,13 @@ export class NativeTalkWindow {
     // (:960-971), so Where-is after a People/Things/Work visit returns
     // to THAT page, not to Location. Location is the C# default arm.
     this._lastCategory = 'location';
+    // selectedTalkOption (DaggerfallTalkWindow.cs:335-357). It is not
+    // cosmetic: all four CATEGORY handlers open with
+    // `if (selectedTalkOption == TalkOption.WhereIs)` and play the
+    // click sound INSIDE that gate (:1465-1498), so while
+    // Tell-me-about is selected the greyed-out category buttons do
+    // nothing AND make no sound. The window still swallows the click.
+    this._talkOption = 'whereIs';
   }
 
   _openCategories() {
@@ -236,8 +243,11 @@ export class NativeTalkWindow {
     // the recorded no-op (the port's one-click-asks idiom has no
     // selected topic for it to ask).
     if (inRect(R.okay, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._askWork(); return true; }
-    if (inRect(R.whereIs, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._reopenCategory(); return true; }
-    if (inRect(R.categoryLocation, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._lastCategory = 'location'; this._openCategories(); return true; }
+    if (inRect(R.whereIs, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._talkOption = 'whereIs'; this._reopenCategory(); return true; }
+    if (inRect(R.categoryLocation, vx, vy)) {
+      if (this._talkOption !== 'whereIs') return true;   // greyed out: silent, per the gate above
+      audio.playOneShot(SOUND.ButtonClick, 1); this._lastCategory = 'location'; this._openCategories(); return true;
+    }
     if (inRect(R.tonePolite, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(0); return true; }
     if (inRect(R.toneNormal, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(1); return true; }
     if (inRect(R.toneBlunt, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(2); return true; }
@@ -249,10 +259,21 @@ export class NativeTalkWindow {
     // B5-6: the four pages that were INTERIM no-ops. Each falls back
     // to consuming the click when its hook is absent (the pre-engine
     // host), so an art-only session never half-opens a page.
-    if (inRect(R.tellMeAbout, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._openFlat(this.hooks.tellMeAboutTopics?.()); return true; }
-    if (inRect(R.categoryPeople, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); if (this._openFlat(this.hooks.peopleTopics?.())) this._lastCategory = 'people'; return true; }
-    if (inRect(R.categoryThings, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); if (this._openFlat(this.hooks.thingsTopics?.())) this._lastCategory = 'things'; return true; }
-    if (inRect(R.categoryWork, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); if (this._openWork()) this._lastCategory = 'work'; return true; }
+    if (inRect(R.tellMeAbout, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._talkOption = 'tellMeAbout'; this._openFlat(this.hooks.tellMeAboutTopics?.()); return true; }
+    // The three remaining CATEGORY buttons, behind the same gate as
+    // Location above - the sound sits inside it, as C# has it.
+    if (inRect(R.categoryPeople, vx, vy)) {
+      if (this._talkOption !== 'whereIs') return true;
+      audio.playOneShot(SOUND.ButtonClick, 1); if (this._openFlat(this.hooks.peopleTopics?.())) this._lastCategory = 'people'; return true;
+    }
+    if (inRect(R.categoryThings, vx, vy)) {
+      if (this._talkOption !== 'whereIs') return true;
+      audio.playOneShot(SOUND.ButtonClick, 1); if (this._openFlat(this.hooks.thingsTopics?.())) this._lastCategory = 'things'; return true;
+    }
+    if (inRect(R.categoryWork, vx, vy)) {
+      if (this._talkOption !== 'whereIs') return true;
+      audio.playOneShot(SOUND.ButtonClick, 1); if (this._openWork()) this._lastCategory = 'work'; return true;
+    }
     return false;
   }
 

@@ -113,6 +113,33 @@ memory. Residue still open from the blocker writeups: the interior
 foe-placement arm, TeleportPc's Building respawn arm, and clicks on
 dungeon quest NPC/item flats - each FLAGGED at its site.
 
+TWO MORE FOLDED IN AFTER THE MERGE (the audit lane re-read B1-B7
+against the same C# before its branch was closed, and found two laws
+the blocker work had missed):
+- THE DUNGEON QUEST-FLAT ANCHOR. AddQuestNPC raises the billboard by
+  half its height `if (!inDungeon)` (GameObjectHelper.cs:1032-1036)
+  and DFU's billboard is CENTRE-anchored, so the base sits ON the
+  marker in a building and half a height BELOW it in a dungeon. This
+  port's shader is BOTTOM-anchored, so the shift belongs on the
+  DUNGEON side - the same shift the dungeon's own RDB flats already
+  take. B2 stood dungeon quest flats at the raw marker y, so every
+  quest NPC and item in a dungeon hung half a sprite too high.
+  AlignBillboardToGround (:336-346, distance 4) was missing from both
+  arms with it. Pinned in `questflatanchor.test.js`, anchor on a
+  parameter so the two stands cannot drift.
+- THE TALK CATEGORY GATE. All four category handlers open with
+  `if (selectedTalkOption == TalkOption.WhereIs)` and play the click
+  sound INSIDE that gate (:1465-1498) - greyed-out category buttons
+  are silent, not merely unhelpful. B5-6 fired them unconditionally.
+
+The lesson the merge itself teaches, recorded because it cost a whole
+lane: TWO LANES BUILT THE SAME SEVEN BLOCKERS IN PARALLEL, hours
+apart, neither knowing. The reading was not wasted - five findings
+crossed over, and the two above were only found because a second pair
+of eyes read the shipped code against the source - but the CODE was.
+A lane that starts from an audit page should say so on the page
+before it starts writing.
+
 
 These are the items where the port is not merely incomplete but
 *unfinishable* - a player cannot get to the end of the thing.
