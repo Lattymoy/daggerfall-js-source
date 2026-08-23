@@ -466,6 +466,24 @@ a global GL-state change is reviewed against EVERY draw site, not the
 pass it was written for - node tests cannot see culling, so the probe
 is the regression's real gate.
 
+THE THIRD PLAYTEST REPORT (2026-08-23): "the entire dungeon layout
+has flipped orientation." Verified NOT a bug - it is the mirror fix
+SEEN FROM INSIDE. The dungeon pipeline's math is DFU-verbatim line
+for line (checked against the source at report time: block grid
+`block.x * RDB_SIDE, block.z * RDB_SIDE` = DaggerfallDungeon.cs:319;
+object placement `(x, -y, z)` = RDBLayout's (XPos, -YPos, ZPos);
+rotations `-x/-y/-z / RotationDivisor` = RDBLayout.cs:699-701; the
+RMB row lookup `y * width + x` = MapsFile.cs:829-832), and no audit
+ever baked a compensating flip into it. So pre-H1 the dungeons were
+presented as classic's mirror image exactly like the towns; the one
+mirror un-flipped them all in the same stroke. Towns carried signage
+to witness the new presentation as correct - dungeons flipped with no
+witness, and every layout memorized in this port before H1 now reads
+mirrored, WHICH IS WHAT FIXING A MIRRORED WORLD MUST DO. The check
+that settles it in-game: Privateer's Hold against DFU or a classic
+map - the port now matches. Data space never changed (positions,
+saves, colliders are untouched); only the camera's presentation did.
+
 STILL NEEDS ARENA2 EYES: the mirror itself - re-shoot the
 sprite-orientation close-ups and a signage crop; the historical
 orientation crops were validated under the mirror, and the process
