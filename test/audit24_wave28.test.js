@@ -52,7 +52,7 @@ test('audit24 wave28: the to-hit armour term has NO scalar fallback', () => {
   // describes the fallback, and a whole-file doesNotMatch would fail
   // on the explanation rather than the code (the wave-23e trap).
   const f = rd('src/combat/formulas.js');
-  assert.match(f, /chance \+= target\.armorValues\?\.\[struckBodyPart\] \?\? 0;/);
+  assert.match(f, /chance \+= \(target\.armorValues\?\.\[struckBodyPart\] \?\? 0\) \+ enchantArmorMod\(target\);/);   // E1 widened the term with the enchantment channel; the NO-SCALAR law stands
   assert.doesNotMatch(f, /chance \+= target\.armorValues \? /, 'the invented fallback is gone');
 });
 

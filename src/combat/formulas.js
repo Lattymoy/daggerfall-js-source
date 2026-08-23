@@ -14,7 +14,8 @@
 
 import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source (EnemyAttack.cs:30)
 import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback units
-import { rand } from '../formats/dfRandom.js';   // the monster multi-attack reflex gate (F2)
+import { rand } from '../formats/dfRandom.js';
+import { enchantArmorMod, enchantChanceToHitMod, doItemEnchantmentPayloads, PAYLOAD, isEnchantedItem } from '../systems/enchantments.js';   // E1: the enchantment channels + the Strikes payload   // the monster multi-attack reflex gate (F2)
 import { liveStat } from '../systems/statMods.js';   // S14: fortify-aware stat reads
 import { skillValue, SKILLS } from '../systems/skills.js';   // S3: real skills (enemies stay flat, verbatim)
 import { RACES } from '../systems/races.js';   // CalculateRacialModifiers reads the DFU-numbered race id
@@ -284,12 +285,17 @@ export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckB
   // the player, EnemyEntity.cs:264-267/:409-413 for enemies). It read
   // 0 for a fresh character whose chargen had nulled the array, and 0
   // is a hundred points of chance-to-hit below DFU's unarmoured 100.
-  chance += target.armorValues?.[struckBodyPart] ?? 0;
+  // E1: FormulaHelper.cs:1158 - armorValue = ArmorValues[part] +
+  // IncreasedArmorValueModifier + DecreasedArmorValueModifier. The
+  // channels are the enchantment fold's (Strengthens/WeakensArmor,
+  // BadReactionsFrom) - the audit-F5 zeros, live at last.
+  chance += (target.armorValues?.[struckBodyPart] ?? 0) + enchantArmorMod(target);
   // AUDIT 21 F2: the adrenaline rush is APPLIED now, in DFU's own slot
   // (FormulaHelper.cs:811, between the armour term and the stats term).
   chance += adrenalineRushToHit(attacker, target);
-  // attacker.ChanceToHitModifier (enchantments): pends the enchantment
-  // system - 0 (audit F4).
+  // E1: attacker.ChanceToHitModifier (FormulaHelper.cs:814) - the
+  // audit-F4 zero. BadReactionsFrom is its one core writer.
+  chance += enchantChanceToHitMod(attacker);
   chance += statsToHit(attacker, target);
   chance += skillsToHit(attacker, target, rolls());
   chance += adjustmentsToHit(target);   // the +40 monster mod and flat -50 (F1)
@@ -399,7 +405,7 @@ export function damageEquipment(attacker, target, damage, weapon, struckBodyPart
   }
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null } = {}) {
+export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null } = {}) {
   if (!attacker || !target) return 0;
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {
     // L-slice (AUDIT 23 combat-16): FormulaHelper.cs:576-583 - a
@@ -519,6 +525,22 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // by a Nightblade you can never see. The TRUE powers are untouched,
   // which is what the normal/true split exists for.
   if (damage > 0) breakNormalPowerConcealment(attacker);
+  // E1: the STRIKES enchantment payload, at the tail for the same
+  // one-home reason as OnMonsterHit above. DFU runs it at the callers
+  // with ASYMMETRIC gates: the player's strike runs it on any hit
+  // resolution, damage 0 included (WeaponManager.cs:618-625 - the
+  // block also owns the zero-damage swing sound), an enemy's only
+  // when damage > 0 (EnemyAttack.cs:263-269). CastWhenStrikes gates
+  // itself on sourceDamage == 0 either way; what the player gate
+  // admits at zero is HealthLeech's use-stamp. The payloads can
+  // modulate the damage (PotentVs +5, LowDamageVs -5) and the total
+  // clamps at 0 inside the dispatcher.
+  if (weapon && isEnchantedItem(weapon) && (attacker.isPlayer || damage > 0)) {
+    damage = doItemEnchantmentPayloads(PAYLOAD.Strikes, weapon, {
+      entity: attacker, target, damage,
+      nowMinutes: enchantCtx?.nowMinutes ?? 0, ctx: enchantCtx,
+    });
+  }
   return damage;
 }
 

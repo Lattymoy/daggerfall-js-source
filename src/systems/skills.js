@@ -61,8 +61,13 @@ export function skillValue(entity, skillId) {
   const o = entity.skillOverrides;
   if (o && o[skillId] != null) return o[skillId];
   const s = entity.skills;
-  if (typeof s === 'number') return s;
-  return s?.[skillId] ?? 0;
+  // E1: SetSkillMod's channel (EnhancesSkill +15) - DFU's
+  // Skills.GetLiveSkillValue adds the mod to every read, cleared and
+  // re-applied per round by the constant-effect pass. The fold is
+  // entity._enchantMods; a host that never pumps reads +0.
+  const mod = entity._enchantMods?.skillMods?.[skillId] ?? 0;
+  if (typeof s === 'number') return s + mod;
+  return (s?.[skillId] ?? 0) + mod;
 }
 
 /** TallySkill (the E3c flag clears): count a use toward advancement.

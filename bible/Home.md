@@ -224,10 +224,10 @@ combat line numbers below are refreshed with it.
 - `src/characters/playerEntity.js:29` - fatigue: 3200,    // (Str 50 + End 0) x 64 pre-chargen (INTERIM stats above); applyCharacter re-derives from the rolled stats (S15)
 - `src/combat/combatVoices.js:121` - * FLAGGED, both sites: DFU consults the racial override first -
 - `src/combat/formulas.js:10` - FLAGGED interims (all documented at their site): proficiency
-- `src/combat/formulas.js:82` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
-- `src/combat/formulas.js:159` - *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
-- `src/combat/formulas.js:425` - FLAGGED: CalculateProficiencyModifiers pends the career
-- `src/combat/formulas.js:581` - *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
+- `src/combat/formulas.js:83` - *  INTERIM_WEAPON ever baked. S3d's assignStartingGear mints its
+- `src/combat/formulas.js:160` - *  FLAGGED: DFU's player arm takes the UNDEAD modifier while the
+- `src/combat/formulas.js:431` - FLAGGED: CalculateProficiencyModifiers pends the career
+- `src/combat/formulas.js:603` - *  MobileEnemy.Weight, class = female 240 / male 350. FLAGGED: the
 - `src/combat/playerWeapon.js:13` - INTERIM_WEAPON is the PRE-CHARGEN fallback only (AUDIT 23: the
 - `src/combat/playerWeapon.js:47` - /** INTERIM starting weapon (items arc replaces): Iron Dagger.
 - `src/combat/playerWeapon.js:57` - export const INTERIM_WEAPON = Object.freeze({
@@ -285,11 +285,16 @@ combat line numbers below are refreshed with it.
 - `src/systems/court.js:28` - FLAGGED loud: guild rescues (Thieves/Dark Brotherhood) pend the
 - `src/systems/court.js:178` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
-- `src/systems/effects.js:41` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:457` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:739` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:42` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
+- `src/systems/effects.js:458` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:743` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/enchantments.js:33` - FLAGGED: no host computes them yet, so the conditional arms of
+- `src/systems/enchantments.js:35` - moonPhase() (FLAGGED: lunar phases are a Ledger C row),
+- `src/systems/enchantments.js:172` - *  condition holds. Params 0-3 seasons, 4-6 moons (FLAGGED: lunar
+- `src/systems/enchantments.js:431` - a MagicRound-FLAGGED row's is the payload callback :1767
+- `src/systems/enchantments.js:530` - edge fires the Breaks payloads. FLAGGED: with no ctx at the break
 - `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
-- `src/systems/equip.js:221` - /** INTERIM starting equipment (chargen's starting-gear roll
+- `src/systems/equip.js:223` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/factionRep.js:228` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
 - `src/systems/gameDate.js:23` - FLAGGED, deliberately: the two LUNAR PHASE getters (:134-150,
 - `src/systems/guildServiceActions.js:170` - *  turning into a vampire or werebeast - FLAGGED: the port has no
@@ -325,7 +330,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
 - `src/systems/shopStock.js:157` - if (group === 'MagicItems') continue;   // INTERIM loud (the loot MI interim)
-- `src/systems/skills.js:83` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
+- `src/systems/skills.js:88` - *  AUDIT 18: the +10% used to be INTERIM 0 behind a flag blaming a
 - `src/systems/startingGear.js:3` - seedStartingEquipment's INTERIM iron dagger: a new character now
 - `src/systems/talk.js:17` - crime/quest slices - FLAGGED there, not here).
 - `src/systems/talk.js:210` - *  FLAGGED to the crime slice - the state lands now, verbatim).

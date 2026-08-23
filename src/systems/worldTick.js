@@ -31,6 +31,7 @@ import { RACES } from './races.js';
 /** PlayerEntity.cs:263 - the classic day is elapsed minutes / 1440. */
 // AUDIT 24 (wave 24): one home, systems/gameDate.js.
 import { MINUTES_PER_DAY } from './gameDate.js';
+import { enchantmentMagicRound } from './enchantments.js';   // E1: the per-round item payload pump
 
 export { MINUTES_PER_DAY };
 
@@ -115,7 +116,7 @@ export function claimMagicRounds(fromMinute, toMinute) {
  *
  * @returns {number} rounds run
  */
-export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random, say = () => {} } = {}) {
+export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random, say = () => {} , enchantCtx = null } = {}) {
   if (!entity || !(to > from)) return 0;
   let rounds = 0;
   // S7/S18/S19b, verbatim order: diseases update FIRST so an ending
@@ -125,6 +126,16 @@ export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random
     updateDiseases(entity, Math.floor((r + 1) / MINUTES_PER_DAY), sinks, rolls, say);
     updatePoisons(entity, r + 1, sinks, rolls, say);
     tickActiveEffects(entity, sinks);
+    // E1: the enchantment pump rides the SAME round (DoMagicRound's
+    // tail runs the MagicRound item payloads, EntityEffectManager.cs
+    // :1755-1770) - one home here means every host's player AND foes
+    // get it, the wave-32 one-broker law. hurtSelf routes the round
+    // damage (UserTakesDamage/HealthLeech) through the caller's own
+    // damage sink so death fires.
+    enchantmentMagicRound(entity, r + 1, {
+      nowMinutes: r + 1,
+      ctx: { ...(enchantCtx ?? {}), hurtSelf: (n) => sinks?.hurt?.(n), say },
+    });
     rounds++;
   }
   return rounds;

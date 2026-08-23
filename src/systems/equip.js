@@ -64,6 +64,7 @@ export function unequipSlot(entity, slot) {
   delete item.equipSlot;
   updateEquippedArmorValues(entity, item, false);   // U8h: the armor table adds back
   if (slot === EQUIP_SLOTS.RightHand || slot === EQUIP_SLOTS.LeftHand) billEquipDelay(entity, item);   // CH3: the leaver's half
+  _hooks.onEquipChange?.(entity);   // E1: the fold follows the worn set
   return item;
 }
 
@@ -187,6 +188,7 @@ export function equipItem(entity, item) {
   if (slot === EQUIP_SLOTS.RightHand || slot === EQUIP_SLOTS.LeftHand) billEquipDelay(entity, item);   // CH3: the arriver's half
   slots[slot] = item;
   updateEquippedArmorValues(entity, item, true);   // U8h: the armor table subtracts
+  _hooks.onEquipChange?.(entity);   // E1: the fold follows the worn set
   return unequipped;
 }
 
@@ -310,6 +312,25 @@ export function lowerCondition(item, amount, owner = null, say = null) {
   item.currentCondition = 0;
   const name = item.name ?? templateByIndex(item.templateIndex)?.name ?? 'Item';
   say?.(`${name} ${PLURAL_BREAK_TEMPLATES.has(item.templateIndex) ? 'have' : 'has'} broken.`);
+  // E1: ItemBreaks' enchantment payload (DaggerfallUnityItem.cs:
+  // 1217-1222 fires Breaks from inside LowerCondition's zero edge,
+  // before the unequip) - through the hook so this leaf stays below
+  // the enchantment module. SoulBound's break releases the soul.
+  _hooks.onItemBroken?.(item, owner, say);
   if (owner && item.equipSlot != null) unequipSlot(owner, item.equipSlot);
   return true;
 }
+
+/** E1: the enchantment module's doors into this leaf (equip.js sits
+ *  BELOW enchantments.js in the import graph, so the coupling is a
+ *  registration, not an import). onEquipChange re-folds
+ *  entity._enchantMods the moment the worn set changes - DFU's
+ *  constant effects re-apply next frame (DoConstantEffects), and a
+ *  fold that waited for the next magic round would lag up to a
+ *  classic minute. onItemBroken is the Breaks payload edge above. */
+const _hooks = { onEquipChange: null, onItemBroken: null };
+export function setEnchantmentHooks({ onEquipChange = null, onItemBroken = null } = {}) {
+  _hooks.onEquipChange = onEquipChange;
+  _hooks.onItemBroken = onItemBroken;
+}
+export const notifyEquipChange = (entity) => _hooks.onEquipChange?.(entity);

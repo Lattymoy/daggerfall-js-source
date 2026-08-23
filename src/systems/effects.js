@@ -34,6 +34,7 @@ import { tryAbsorption } from './absorption.js';   // S24
 // formulas cycle. Re-exported here because this is the module its readers
 // already speak to.
 import { breakNormalPowerConcealment, handleAttackFromSource } from './concealment.js';
+import { entityAbsorbsSpells } from './enchantments.js';   // E1: the AbsorbsSpells fold feeds the absorption gate
 
 export { breakNormalPowerConcealment, handleAttackFromSource, NORMAL_POWER_CONCEALMENTS } from './concealment.js';
 
@@ -456,7 +457,10 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     // path only, so the caster check is the whole gate here; item and
     // enchantment bundles are FLAGGED to their own arc.
     if (caster) {
-      const sp = tryAbsorption(e, spell.rangeType ?? 0, target, ctx);
+      // E1: IsAbsorbingSpells (:1196) is LIVE - the AbsorbsSpells
+      // enchantment's constant fold on the target. The caller's own
+      // ctx.absorbing (probe surface) still wins when set.
+      const sp = tryAbsorption(e, spell.rangeType ?? 0, target, { ...ctx, absorbing: ctx?.absorbing ?? entityAbsorbsSpells(target) });
       if (sp > 0) {
         totalAbsorbed += sp;
         out.absorbed = (out.absorbed ?? 0) + sp;
