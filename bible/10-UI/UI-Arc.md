@@ -3031,3 +3031,64 @@ its text idiom), which rides its own slice the way the level-up
 screen's does.
 
 Pins: 7 in `charsheetnav.test.js`; 5 mutations, 5 killed.
+
+## U33 / I1 - THE INPUT REGISTRY: InputManager's binding law (2026-08-23)
+
+The port's keys were hardcoded twice over - `ui/input.js`'s
+`gameAction` if-chain, and every host reading `keys.has('KeyW')` raw -
+so nothing could ever be rebound, the settings window's controls
+section had nothing to edit, and the main-menu hotkeys row sat on the
+Ledger with no registry to land on. Port-Completion-Analysis called
+the input layer the highest-leverage move left; this slice is its law
+half. `systems/inputActions.js` cites `InputManager.cs` throughout.
+
+**What is DFU's, verbatim.** The `Actions` enum (:324-384), names and
+order. The 44-row `ResetDefaults` default table (:979-1032), KeyCode
+translated to `KeyboardEvent.code` for the same physical key
+('Mouse0'..'Mouse2' kept as Unity names them - left/right/middle).
+Both binding dicts are CODE -> ACTION, DFU's orientation, with
+SetBinding's exact order of operations (:727-758): steal the code from
+the other dict, clear the action's old code in this one, then bind -
+and binding a force-removed action un-removes it. The two clears
+(:803-846), `AddRemovedPrimaryAction` (:795-798), `GetBinding` /
+`GetBindings` (:641-724).
+
+**The reset quirk, kept.** `ResetDefaults` full-mode clears the
+primary dict and the removed list but NOT the secondary dict
+(:956-960) - each default then steals its own code back out of the
+secondary through SetBinding's alt-removal, and a secondary binding on
+a non-default code survives the reset. Tidying that into "clear both"
+reads more sensible and is not what DFU does; it is pinned as the
+quirk it is.
+
+**The autofill pass.** `TestSetBinding` (:1405-1422): a default lands
+only if the action is missing, its code is free in BOTH dicts, and the
+action was not force-removed. This is DFU's "push new actions into an
+old KeyBindings.txt" startup arm (:445-448), and the both-dicts guard
+earned its pin by surviving the first mutation round (M5).
+
+**The save file.** `KeyBindData_v1`'s shape (:871-930) minus the
+axis/joystick blocks the port has no engine for: `actionKeyBinds` /
+`secondaryActionKeyBinds` as {keyString: actionName} plus
+`removedPrimaryActions`. A NEWER build's unknown action names are held
+and re-serialized rather than stripped (:899-916), unless the key was
+rebound here - this build's meaning wins. Loading uses RAW adds
+(:1950-1969), never setBinding: a hand-edited file binding two keys to
+one action loads both, exactly as DFU's does. A removed-primary mark
+only loads for a known action not currently bound (:1985-1991).
+Persistence is its own localStorage key beside the settings store's,
+as KeyBindings.txt sits beside settings.ini.
+
+**The frame model.** currentActions/previousActions with
+HasAction/ActionStarted/ActionComplete (:610-637) and the LateUpdate
+swap, as `createActionState`/`endFrame` - the shape I2 wires the hosts
+through.
+
+FLAGGED at the module tail: key combos (GetComboCode :1165-1218 - no
+default uses one), the axis/joystick layer, and the port's four
+standing key departures (C cast, X crouch, E activate, V view) which
+reconcile against this table in I2 as adoptions or Ledger-A rows.
+
+Pins: 10 in `inputactions.test.js`; ten mutations, ten dead - two of
+them (the alt-dict autofill guard, the unknown round-trip) added after
+survivors proved the first pins too soft.

@@ -325,6 +325,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/guildServiceFlow.js:257` - ReceiveArmor: null,      // FLAGGED: the knightly armor gift
 - `src/systems/guildServiceFlow.js:258` - ReceiveHouse: null,      // FLAGGED: banking / house ownership
 - `src/systems/guildVariants.js:191` - Banking does not exist yet, so WHICH of the two is FLAGGED to the
+- `src/systems/inputActions.js:302` - FLAGGED, each with the slice it waits on:
 - `src/systems/inventory.js:43` - *  FLAGGED: classic keeps gold in playerEntity.GoldPieces, a counter
 - `src/systems/itemInfo.js:5` - U8e's inventory shipped an INTERIM info panel that made up its own
 - `src/systems/itemInfo.js:79` - if (isPotionRecipe(item)) return INFO_TEXT.misc;   // DFU builds recipe tokens by hand - FLAGGED
