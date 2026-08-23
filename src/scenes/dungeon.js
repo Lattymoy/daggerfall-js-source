@@ -20,7 +20,7 @@ import { MapsFile } from '../formats/mapsFile.js';
 import { DUNGEON_AMBIENT, DUNGEON_LIGHT_COLOR } from '../world/dungeonLights.js';
 import { INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { nearestLights } from '../world/cityLights.js';
-import { lookAt, perspective } from '../world/mat4.js';
+import { lookAt, perspective, mirrorProjectionX } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { PlayerMotor } from '../player/motor.js';
 import { jumpSpeedMultiplier } from '../systems/skills.js';
 import {
@@ -187,7 +187,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   addEventListener('mouseup', (e) => { if (e.button === 2) ctx.playerAttackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; look/attack ride the same seams as mouse
     look: (dx, dy) => {
-      cam.yaw -= dx * lookScale();
+      cam.yaw += dx * lookScale();   // HANDEDNESS (mat4's law)
       cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * lookScale() * lookInvert()));
     },
     attack: (dx, dy, held) => ctx.playerAttackInput(dx, dy, held),
@@ -197,7 +197,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     ctx.reportMouse?.(e.movementX, e.movementY, document.pointerLockElement === canvas);   // raw input truth for F8
     if (document.pointerLockElement === canvas && (e.buttons & 2)) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }
     if (document.pointerLockElement !== canvas) return;
-    cam.yaw -= e.movementX * lookScale();
+    cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
     cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
   });
 
@@ -274,7 +274,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-    const right = [-Math.cos(cam.yaw), 0, Math.sin(cam.yaw)];   // camera-right = up x back (lookAt handedness): D must move SCREEN-right - the +cos/-sin vector was screen-LEFT (A/D felt swapped)
+    const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
     const held = ctx.uiOverlayActive;   // overlays HOLD the world: no movers, no motor - typing a name must not walk the player off the start ledge
     lookGate(held);   // a window up frees the cursor; closing re-locks
     if (!held) ctx.actions.update(dt);
@@ -357,7 +357,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     }
 
     const target = [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]];
-    const proj = perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.05, 800);
+    const proj = mirrorProjectionX(perspective(fieldOfView(), canvas.clientWidth / canvas.clientHeight, 0.05, 800));   // HANDEDNESS (mat4's law)
     const view = lookAt(cam.pos, target, [0, 1, 0]);
 
     ctx.flicker.tick(dt);

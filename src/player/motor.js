@@ -481,9 +481,9 @@ export class PlayerMotor {
       // LevitateMotor.Update: camera-directed movement, NO gravity.
       this.velY = 0;
       const cp = Math.cos(pitch), sp = Math.sin(pitch);
-      let mx = (sin * cp * input.forward - cos * input.strafe) * factor;
+      let mx = (sin * cp * input.forward + cos * input.strafe) * factor;   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
       let my = sp * input.forward * factor;
-      let mz = (cos * cp * input.forward + sin * input.strafe) * factor;
+      let mz = (cos * cp * input.forward - sin * input.strafe) * factor;
       // Swimming without levitation: no vertical from the look
       // (AddMovement zeroes y unless a float key drives it).
       if (this.swimming && !this.levitating) my = 0;
@@ -582,18 +582,19 @@ export class PlayerMotor {
     this.speed = speed;   // UpdateSpeed writes the field the getter reads
     this._trackHalfSpeed(input, speed);
 
-    // fwd = (sin, 0, cos); camera-right = up x back per lookAt =
-    // (-cos, 0, sin). Verified to NDC through view x projection: world
-    // +x lands at NDC x < 0 (screen-LEFT), so screen-RIGHT is -cos =
-    // this camera-right vector. D (strafe +1) rides it. (A prior
-    // "fix" flipped this using view-space x WITHOUT the projection,
-    // which perspective negates - it would have swapped A/D. Reverted.)
+    // fwd = (sin, 0, cos); screen-right = (cos, 0, -sin) - Unity's
+    // own. HANDEDNESS (mat4's law): the projection now mirrors NDC x,
+    // so world +x lands at NDC x > 0 (screen-RIGHT) and D (strafe +1)
+    // rides +cos. The comment that used to stand here PROVED the old
+    // (-cos, sin) right from the unmirrored projection and reverted a
+    // prior flip - the proof was true, and the convention it proved
+    // was the mirror image of classic. Text on signage was the tell.
     // GROUNDED recomputes velocity from input; AIRBORNE keeps the
     // liftoff momentum verbatim (airControl false - see constructor).
     let vx, vz;
     if (this.grounded) {
-      vx = (sin * input.forward - cos * input.strafe) * factor * speed;
-      vz = (cos * input.forward + sin * input.strafe) * factor * speed;
+      vx = (sin * input.forward + cos * input.strafe) * factor * speed;
+      vz = (cos * input.forward - sin * input.strafe) * factor * speed;
     } else {
       vx = this._airVelX;
       vz = this._airVelZ;

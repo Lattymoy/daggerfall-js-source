@@ -660,7 +660,20 @@ export class EnemyAI {
     const c = this._centre();
     const origin = [c[0] + dir[0] * FALL_CHECK_AHEAD, c[1] + dir[1] * FALL_CHECK_AHEAD, c[2] + dir[2] * FALL_CHECK_AHEAD];
     const reach = this.height * 0.5 + FALL_CHECK_DROP;
-    this.fallDetected = !Number.isFinite(this.collider.raycast(origin, [0, -1, 0], reach));
+    // THE ANALYTIC FLOOR IS GROUND TOO (Mac's playtest: guards ran in
+    // place and never chased). The exterior collider holds only the
+    // location MODELS as triangles - terrain and the town surface are
+    // the collider's heightAt floor, which move() walks but this ray
+    // could not see. So on any open ground the probe found no floor
+    // ahead, fallDetected latched EVERY step, and every guard and
+    // encounter foe stood running against a phantom cliff (the detour
+    // sweep fall-detects the same way in all eight directions). In
+    // DFU the same Physics.Raycast hits the terrain collider. A
+    // heightAt at/above the origin still counts as ground - there is
+    // floor there, not a drop.
+    const tri = this.collider.raycast(origin, [0, -1, 0], reach);
+    const analyticDrop = origin[1] - (this.collider.heightAt?.(origin[0], origin[2]) ?? -Infinity);
+    this.fallDetected = !(Number.isFinite(tri) || analyticDrop <= reach);
   }
 
   /** Rotate a direction about world up by `deg` - Quaternion.AngleAxis

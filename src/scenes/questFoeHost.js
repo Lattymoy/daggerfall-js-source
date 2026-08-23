@@ -119,11 +119,23 @@ export function placeFoeEnv({ collider, playerFeet, playerYawRad, fovDegrees, ro
       const o = [origin.x, origin.y, origin.z];
       const d = [dir.x, dir.y, dir.z];
       const h = collider.raycastHit(o, d, maxDist);
-      if (!Number.isFinite(h.dist) || h.dist > maxDist) return null;
+      let dist = h.dist;
+      let normal = h.normal;
+      // THE ANALYTIC FLOOR IS GROUND TOO (the guards-run-in-place
+      // class of bug): the exterior collider's terrain and town
+      // surface live in heightAt, not in triangles, so the law's
+      // straight-down floor probe found no ground anywhere in the
+      // open and no exterior spot could ever place a foe. Same fix as
+      // the motor's FallCheck.
+      if (d[1] < -0.999 && Math.abs(d[0]) < 1e-6 && Math.abs(d[2]) < 1e-6) {
+        const drop = o[1] - (collider.heightAt?.(o[0], o[2]) ?? -Infinity);
+        if (drop >= 0 && drop <= maxDist && drop < dist) { dist = drop; normal = [0, 1, 0]; }
+      }
+      if (!Number.isFinite(dist) || dist > maxDist) return null;
       return {
-        point: { x: o[0] + d[0] * h.dist, y: o[1] + d[1] * h.dist, z: o[2] + d[2] * h.dist },
-        normal: h.normal ? { x: h.normal[0], y: h.normal[1], z: h.normal[2] } : { x: -d[0], y: -d[1], z: -d[2] },
-        distance: h.dist,
+        point: { x: o[0] + d[0] * dist, y: o[1] + d[1] * dist, z: o[2] + d[2] * dist },
+        normal: normal ? { x: normal[0], y: normal[1], z: normal[2] } : { x: -d[0], y: -d[1], z: -d[2] },
+        distance: dist,
       };
     },
     overlapSphere: (p, r) => collider.sphereOverlaps([p.x, p.y, p.z], r) || (isOccupied?.(p, r) ?? false),

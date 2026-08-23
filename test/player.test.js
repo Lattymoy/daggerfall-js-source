@@ -106,15 +106,17 @@ test('player: motor integrates gravity, jump, and heightAt floor', () => {
 });
 
 test('player: strafe basis is the true camera-right (D = screen-right)', () => {
-  // lookAt (mat4.js): back z = eye - center, right x = up x z. With
-  // fwd = (sin yaw, 0, cos yaw), camera-right = (-cos yaw, 0, sin yaw).
-  // strafe +1 (D) must move ALONG that vector - the old (+cos, -sin)
-  // basis moved screen-left and A/D felt swapped in play.
+  // HANDEDNESS (mat4's law): the projection mirrors NDC x, so
+  // screen-right = (cos yaw, 0, -sin yaw) - Unity's own. The version
+  // of this pin that stood here PROVED the (-cos, sin) right from the
+  // unmirrored projection; the proof was true and the convention it
+  // proved was the mirror image of classic (a pin that restates the
+  // port instead of the source is not a pin - signage was the tell).
   const m = new PlayerMotor(new Collider(() => 0));
   for (const yaw of [0, 0.7, Math.PI / 2, 2.4]) {
     m.spawn(0, 0, 0);
     for (let i = 0; i < 30; i++) m.update(1 / 60, { forward: 0, strafe: 1, run: false, jump: false }, yaw);
-    const right = [-Math.cos(yaw), 0, Math.sin(yaw)];
+    const right = [Math.cos(yaw), 0, -Math.sin(yaw)];
     const l = Math.hypot(m.pos[0], m.pos[2]);
     assert.ok(l > 0.5, `moved: ${l}`);
     const dot = (m.pos[0] * right[0] + m.pos[2] * right[2]) / l;

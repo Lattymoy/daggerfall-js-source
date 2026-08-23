@@ -748,7 +748,7 @@ export function createMusicDirector({ fm = false, play = null, stop = null, play
  *  line on `modeNow() === 'exterior'`, which READS as "am I outdoors"
  *  when its actual job is "is anybody else eating this drag". Indoors,
  *  worldModes fed the modal weapon rig and the streaming host fell
- *  through to `cam.yaw -= movementX` - so every swing inside a
+ *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
  *  `dungeon.js:198`, the standalone host, has always had the right

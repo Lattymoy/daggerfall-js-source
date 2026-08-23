@@ -29,7 +29,7 @@ import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/cityLights.js';
 import { applyClimate, getGroundArchive, getNatureArchive } from '../world/climateSwaps.js';
 import { RMB_SIDE, layoutLocation } from '../world/locationLayout.js';
-import { lookAt, multiply, perspective, transformPoint, trs } from '../world/mat4.js';
+import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, scaledBillboardSize } from '../world/rmbFlats.js';
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime } from '../world/worldClock.js';
@@ -791,14 +791,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       }
       return;
     }
-    cam.yaw -= e.movementX * lookScale();
+    cam.yaw += e.movementX * lookScale();   // HANDEDNESS (mat4's law): mouse-right turns toward +x = screen-right
     cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - e.movementY * lookScale() * lookInvert()));
   });
   addEventListener('mousedown', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') { if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); } });   // M2
   addEventListener('mouseup', (e) => { if (e.button === 2 && walkMode && modeNow() === 'exterior') weaponRig.attackInput(0, 0, false); });
   attachTouch(canvas, {   // mobile: stick synthesizes WASD; drag-look rides the mouse factor
     look: (dx, dy) => {
-      cam.yaw -= dx * lookScale();
+      cam.yaw += dx * lookScale();   // HANDEDNESS (mat4's law)
       cam.pitch = Math.max(-1.5, Math.min(1.5, cam.pitch - dy * lookScale() * lookInvert()));
     },
     attack: (dx, dy, held) => { if (walkMode && modeNow() === 'exterior') { if (held && magic.interceptAttack(true)) return; weaponRig.attackInput(dx, dy, held); } },   // M2
@@ -984,7 +984,7 @@ export async function bootExterior(canvas, renderer, params, status) {
 
 
     const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-    const right = [-Math.cos(cam.yaw), 0, Math.sin(cam.yaw)];   // camera-right = up x back (lookAt handedness): D must move SCREEN-right - the +cos/-sin vector was screen-LEFT (A/D felt swapped)
+    const right = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];   // HANDEDNESS (mat4's law): screen-right = (cos, 0, -sin) under the mirrored projection - Unity's own right
     if (walkMode) {
       // Grounded movement: verbatim speeds in the motor, Space edge-jumps.
       const jumpHeld = keys.has('Space');
@@ -1100,12 +1100,12 @@ export async function bootExterior(canvas, renderer, params, status) {
       : riding
         ? [cam.pos[0] - fwd[0] * TP_DIST, cam.pos[1] - fwd[1] * TP_DIST, cam.pos[2] - fwd[2] * TP_DIST]
         : cam.pos;
-    const proj = perspective(
+    const proj = mirrorProjectionX(perspective(   // HANDEDNESS (mat4's law)
       fieldOfView(),
       canvas.clientWidth / canvas.clientHeight,
       0.1,
       Math.max(2000, extentX * 4)
-    );
+    ));
     const view = lookAt(eye, target, [0, 1, 0]);
 
     // World clock (R5): sun direction/intensity and ambient follow the time
@@ -1229,8 +1229,8 @@ export async function bootExterior(canvas, renderer, params, status) {
       const dx = target[0] - eye[0];
       const dz = target[2] - eye[2];
       const l = Math.hypot(dx, dz) || 1;
-      camRight[0] = -dz / l;
-      camRight[2] = dx / l;
+      camRight[0] = dz / l;    // HANDEDNESS (mat4's law): right of fwd (dx,dz) is (dz, -dx)
+      camRight[2] = -dx / l;
     }
     // C13: exterior arrows fly with the scene meshes (lost on
     // geometry, as DFU misses are).

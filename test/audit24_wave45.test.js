@@ -14,7 +14,7 @@
 // `modeNow() === 'exterior'` - which READS as "am I outdoors" when its
 // real job is "is anybody else eating this drag". So indoors,
 // worldModes fed the modal weapon rig AND the streaming host fell
-// through to `cam.yaw -= e.movementX`. You swung and the view turned
+// through to `cam.yaw += e.movementX`. You swung and the view turned
 // with you, every time, in every building and every dungeon reached
 // from the town.
 //
@@ -94,7 +94,7 @@ test('audit24 wave45: the two streaming hosts route through it and RETURN on bot
       `${f}: the old mode-gated guard is gone`);
     // the camera lines must come AFTER that return, not inside the arm
     const ret = body.indexOf("      return;");
-    const look = body.indexOf('cam.yaw -=');
+    const look = body.indexOf('cam.yaw +=');
     assert.ok(ret > 0 && look > ret, `${f}: the look is downstream of the return`);
     // and only the exterior arm touches this host's own rig
     assert.ok(body.includes("if (drag === 'swing' && !magic.interceptAttack(true))"),
@@ -128,5 +128,5 @@ test('audit24 wave45: the standalone dungeon host keeps its own shape, and it is
     'attack, then RETURN - the shape');
   assert.doesNotMatch(body, /modeNow\(\)/, 'no mode gate - it has no modal sibling');
   const ret = body.indexOf('return;');
-  assert.ok(body.indexOf('cam.yaw -=') > ret, 'and the look is downstream');
+  assert.ok(body.indexOf('cam.yaw +=') > ret, 'and the look is downstream');
 });

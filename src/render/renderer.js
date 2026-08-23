@@ -586,6 +586,11 @@ export class Renderer {
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
     gl.cullFace(gl.BACK);
+    // HANDEDNESS (mat4's law): the projection mirrors NDC x, which
+    // flips every triangle's SCREEN winding - the world meshes' front
+    // faces now arrive clockwise. Only the always-culled world pass
+    // cares; every other pass brackets CULL_FACE off around itself.
+    gl.frontFace(gl.CW);
     gl.clearColor(0.53, 0.7, 0.92, 1.0); // pale Iliac Bay sky
   }
 

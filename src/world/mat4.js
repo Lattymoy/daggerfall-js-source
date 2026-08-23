@@ -83,6 +83,36 @@ export function perspective(fovYRad, aspect, near, far) {
 }
 
 /** Right-handed lookAt view matrix. */
+/** THE HANDEDNESS LAW (Mac's playtest: "signage is inverted").
+ *
+ *  The world DATA is Daggerfall Unity's, verbatim - x east, y up,
+ *  z north, LEFT-handed (the layout math in rmbLayout/rdbLayout is a
+ *  1:1 translation). The RIGHT-handed lookAt below then puts world +x
+ *  on screen-LEFT, so the port has presented the MIRROR IMAGE of
+ *  classic since M1: every town flipped east-west, every sign and
+ *  wall text reading backwards, every sprite's handedness swapped -
+ *  and the whole input layer (yaw sign, strafe sign, fly right) was
+ *  tuned against the mirror, so it PLAYED correctly and only text
+ *  could tell. (The motor even carried a comment proving the old
+ *  screen side from the projection and reverting a prior fix - the
+ *  proof was true, the convention it proved was the mirror.)
+ *
+ *  The fix is ONE mirror at the projection: negate the NDC x row.
+ *  Screen x flips for every world pass at once - meshes, billboards,
+ *  missiles, precipitation - and with it world +x lands screen-RIGHT,
+ *  Unity's own presentation of the same data. Consequences, each at
+ *  its site: triangle winding flips on screen (renderer init sets
+ *  frontFace(CW)); the input signs flip back to Unity's (yaw += dx,
+ *  strafe/fly right = (cos, -sin)); the billboard camRight and the
+ *  sky's screen ray were ALREADY written to this convention and
+ *  simply stop mismatching. The FP viewmodel keeps its own unmirrored
+ *  perspective (its pass never culls). */
+export function mirrorProjectionX(m) {
+  m[0] = -m[0];
+  m[8] = -m[8];   // col2row0 - zero for this perspective, kept general
+  return m;
+}
+
 export function lookAt(eye, center, up) {
   const zx = eye[0] - center[0], zy = eye[1] - center[1], zz = eye[2] - center[2];
   let zl = Math.hypot(zx, zy, zz);

@@ -417,6 +417,42 @@ flakes; flashtest brightens the storm scene mean by 3.23. Strobe
 determinism, the flash-then-off invariant, and clip classes are pinned
 in test/weather.test.js.
 
+## H1 (2026-08-23): THE HANDEDNESS LAW - the world was the mirror image (SHIPPED)
+
+Mac's playtest: "signage is inverted." The trail led all the way down:
+the world DATA is DFU's left-handed (x east, y up, z north; the layout
+math is a 1:1 translation), and the hand-rolled renderer's RIGHT-handed
+lookAt put world +x on screen-LEFT - so the port has presented the
+MIRROR IMAGE of classic since M1. Every town flipped east-west, every
+sign and wall text reading backwards, every sprite's handedness
+swapped. Nobody could tell because the whole input layer (yaw sign,
+strafe sign, fly right) had been tuned against the mirror, one
+"felt swapped" fix at a time - the motor even carried a comment PROVING
+the old screen side from the projection and reverting a prior flip. The
+proof was true; the convention it proved was the mirror. Text was the
+only asymmetric content in the world, and text told.
+
+The fix is ONE mirror at the projection (`mirrorProjectionX`, mat4.js -
+the law lives there) plus its consequences, each at its site: the world
+meshes' front faces arrive clockwise (renderer init frontFace(CW); every
+other pass brackets CULL_FACE off), and the input signs flip back to
+Unity's own (yaw += dx, strafe/fly right = (cos, -sin), the exterior
+shot-mode camRight). The billboard camRight and the SKY's screen ray
+were ALREADY written to the correct convention - they had been
+mismatching the mirrored world (the sky's east-west ran opposite the
+meshes') and simply stop mismatching. The FP viewmodel keeps its own
+unmirrored camera. MobileUnit's orientation/flip tables are verbatim
+DFU and were never re-tuned, so enemies come out DFU-correct in the
+same stroke.
+
+Pinned in `test/handedness.test.js` at the matrix level (world +x ->
+NDC x > 0, the input-web agreement, the deliberate viewmodel
+exception). NEEDS ARENA2 EYES: the next session with game data should
+re-shoot the sprite-orientation close-ups and a signage crop - the
+historical orientation crops were validated under the mirror, and the
+process rule (compare against the raw record art) now finally has a
+presentation that can match it.
+
 ## Queue
 
 Owned by `Rendering.md`, which says EMPTY - and that is the answer.
