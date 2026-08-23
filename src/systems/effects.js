@@ -34,7 +34,7 @@ import { tryAbsorption } from './absorption.js';   // S24
 // formulas cycle. Re-exported here because this is the module its readers
 // already speak to.
 import { breakNormalPowerConcealment, handleAttackFromSource } from './concealment.js';
-import { entityAbsorbsSpells } from './enchantments.js';   // E1: the AbsorbsSpells fold feeds the absorption gate
+import { entityAbsorbsSpells, setEnchantmentEffectDoors } from './enchantments.js';   // E1: the AbsorbsSpells fold feeds the absorption gate
 
 export { breakNormalPowerConcealment, handleAttackFromSource, NORMAL_POWER_CONCEALMENTS } from './concealment.js';
 
@@ -446,6 +446,20 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   const saveFlag = () => flag;
   const magnitude = (e) => effectMagnitude(e, casterLevel, saveScaled, saveElement(e), saveFlag(e), target, rolls);
   const out = { damage: 0, healed: 0, continuous: 0, skipped: 0 };
+  // E2: ctx.heldItem is CastWhenHeld's InstantiateSpellBundle - the
+  // whole apply is a HeldMagicItem bundle pinned to the worn item
+  // (bundle.FromEquippedItem, CastWhenHeld.cs:~165). A pinned apply
+  // NEVER merges into an incumbent and no later cast merges into a
+  // pinned entry - DFU keeps the held bundle its own LiveEffectBundle
+  // beside any spell bundle, where the port's F12 incumbent-stacking
+  // would otherwise weld them (and an unequip could then strip a
+  // spell's rounds, or a spell could immortalize itself). The entries
+  // are tagged at the tail; tickActiveEffects re-ticks them every
+  // round while the item stays worn (DoMagicRound :1733 "item effects
+  // are always ticked").
+  const heldItem = ctx.heldItem ?? null;
+  const pinStart = target.activeEffects?.length ?? 0;
+  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && pred(a)));
   // S24: absorption is tested PER EFFECT, before any of them lands
   // (EntityEffectManager :507-518), and an absorbed effect is skipped
   // entirely - `continue`, not a reduced magnitude.
@@ -499,7 +513,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // incumbent's own settings, fires no initial round.
       const rounds = rollDuration(e, casterLevel);
       if (rounds > 0) {
-        const inc = target.activeEffects?.find((a) => a.kind === 'continuousDamage');
+        const inc = findInc((a) => a.kind === 'continuousDamage');
         if (inc) inc.roundsRemaining += rounds;
         else pushActive(target, { kind: 'continuousDamage', effect: e, casterLevel, caster: caster?.entity ?? null, element: spell.element, flag, saveScaled, roundsRemaining: rounds }, sinks, rolls);
         out.continuous++;
@@ -517,7 +531,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       if (rounds > 0) {
         const stat = STAT_KEYS_ORDER[e.subType];
         const sKey = settingsKeyOf(e);
-        const inc = target.activeEffects?.find((a) => a.kind === 'fortifyAttribute' && a.stat === stat && a.settingsKey === sKey);
+        const inc = findInc((a) => a.kind === 'fortifyAttribute' && a.stat === stat && a.settingsKey === sKey);
         if (inc) inc.roundsRemaining += rounds;
         else pushActive(target, { kind: 'fortifyAttribute', stat, settingsKey: sKey, magnitude: magnitude(e), roundsRemaining: rounds }, sinks, rolls);
         out.fortified = (out.fortified ?? 0) + 1;
@@ -543,7 +557,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       const stat = STAT_KEYS_ORDER[e.subType];
       const amt = magnitude(e);
       if (amt > 0) {
-        let entry = target.activeEffects?.find((a) => !a.ended && a.stat === stat &&
+        let entry = findInc((a) => !a.ended && a.stat === stat &&
           (kind === 'transferAttribute'
             ? (a.kind === 'drainAttribute' || a.kind === 'transferAttribute')
             : a.kind === 'drainAttribute'));
@@ -616,7 +630,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     if (isContinuousDamageFatigue(e)) {
       const rounds = rollDuration(e, casterLevel);
       if (rounds > 0) {
-        const inc = target.activeEffects?.find((a) => a.kind === 'continuousDamageFatigue');
+        const inc = findInc((a) => a.kind === 'continuousDamageFatigue');
         if (inc) inc.roundsRemaining += rounds;   // settings-blind incumbent (F12)
         else pushActive(target, { kind: 'continuousDamageFatigue', effect: e, casterLevel, caster: caster?.entity ?? null, element: spell.element, flag, saveScaled, roundsRemaining: rounds }, sinks, rolls);
         out.continuous++;
@@ -636,7 +650,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     if (isContinuousDamageSpellPoints(e)) {
       const rounds = rollDuration(e, casterLevel);
       if (rounds > 0) {
-        const inc = target.activeEffects?.find((a) => a.kind === 'continuousDamageSpellPoints');
+        const inc = findInc((a) => a.kind === 'continuousDamageSpellPoints');
         if (inc) inc.roundsRemaining += rounds;   // settings-blind incumbent (F12)
         else pushActive(target, { kind: 'continuousDamageSpellPoints', effect: e, casterLevel, caster: caster?.entity ?? null, element: spell.element, flag, saveScaled, roundsRemaining: rounds }, sinks, rolls);
         out.continuous++;
@@ -649,7 +663,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       const rounds = rollDuration(e, casterLevel);
       if (rounds > 0) {
         const sKey = settingsKeyOf(e);
-        const inc = target.activeEffects?.find((a) => a.kind === 'regenerate' && a.settingsKey === sKey);
+        const inc = findInc((a) => a.kind === 'regenerate' && a.settingsKey === sKey);
         if (inc) inc.roundsRemaining += rounds;
         else pushActive(target, { kind: 'regenerate', effect: e, casterLevel, element: saveElement(e), flag: saveFlag(e), saveScaled, settingsKey: sKey, roundsRemaining: rounds }, sinks, rolls);   // magic-11
         out.continuous++;
@@ -673,10 +687,10 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // non-CasterOnly) the entity saves against the ENTIRE effect
       // on a FULL save. Flags = Paralysis | the spell's element.
       const rounds = rollDuration(e, casterLevel);
-      const chanceOk = dice100(chanceValue(e, casterLevel), rolls());
+      const chanceOk = ctx.bypassChance === true || dice100(chanceValue(e, casterLevel), rolls());   // E2: AssignBundleFlags.BypassChance (CastWhenUsed's CasterOnly arm)
       if (!chanceOk) out.chanceFailed = (out.chanceFailed ?? 0) + 1;   // "Spell effect failed."/"Save versus spell made."
       if (rounds > 0) {
-        const inc = target.activeEffects?.find((a) => a.kind === 'paralyze');
+        const inc = findInc((a) => a.kind === 'paralyze');
         if (inc) inc.roundsRemaining += rounds;
         else if (chanceOk) {
           if (!saveScaled || savingThrow(spell.element, EFFECT_FLAGS.Paralysis | flag, target, 0, rolls) !== 0) {
@@ -695,7 +709,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // skips with the failure message; non-CasterOnly no-magnitude
       // effects save against the ENTIRE effect on a FULL save; then
       // the initial MagicRound cures (immediate bundle removal).
-      const chanceOk = dice100(chanceValue(e, casterLevel), rolls());
+      const chanceOk = ctx.bypassChance === true || dice100(chanceValue(e, casterLevel), rolls());   // E2: BypassChance
       if (!chanceOk) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
       if (saveScaled && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {   // magic-11: cures save as MAGIC
         out.saved = (out.saved ?? 0) + 1;
@@ -720,9 +734,9 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // duration alone), on the OnCast default.
       const rounds = rollDuration(e, casterLevel);
       if (rounds > 0) {
-        const inc = target.activeEffects?.find((a) => a.kind === kind);
+        const inc = findInc((a) => a.kind === kind);
         if (inc) inc.roundsRemaining += rounds;             // incumbent STACKS (F12; = ConcealmentEffect.AddState)
-        const chanceOk = kind !== 'silenced' || dice100(chanceValue(e, casterLevel), rolls());
+        const chanceOk = kind !== 'silenced' || ctx.bypassChance === true || dice100(chanceValue(e, casterLevel), rolls());   // E2: BypassChance
         if (!chanceOk) { out.chanceFailed = (out.chanceFailed ?? 0) + 1; continue; }
         if (!inc) {
           if (saveScaled && savingThrow(saveElement(e), saveFlag(e), target, 0, rolls) === 0) {   // magic-11: concealments save as MAGIC
@@ -741,6 +755,18 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       continue;
     }
     out.skipped++;   // FLAGGED: the library grows one family at a time
+  }
+  // E2: pin the pushed entries to the held item (FromEquippedItem).
+  // Instant MARKERS stay unpinned - they are one-round probe residue,
+  // not the effect itself. FLAGGED (recorded divergence): DFU re-runs
+  // a held bundle's INSTANT effects every magic round too (:1733 - a
+  // cast-when-held Fireball burns its wearer per round); the port's
+  // instant families act inline at apply, so a held instant fires
+  // once per equip. The classic held list is dominated by duration
+  // effects, which re-tick exactly.
+  if (heldItem) {
+    const list = target.activeEffects ?? [];
+    for (let i = pinStart; i < list.length; i++) if (!list[i].instant) list[i].heldItem = heldItem;
   }
   // S24: refund the absorbed points (:596-608). A SELF-cast cannot
   // give back more than it cost - absorption is tallied per effect and
@@ -819,6 +845,21 @@ export function tickActiveEffects(entity, sinks, rolls = Math.random) {
   const list = entity.activeEffects;
   if (!list || !list.length) return;
   entity.activeEffects = list.filter((a) => {
+    // E2: an ITEM-PINNED entry (a held bundle's) is "always ticked" -
+    // DoMagicRound :1733 `RoundsRemaining > 0 || fromEquippedItem !=
+    // null` runs it whatever its rounds say, and :1739 keeps the
+    // bundle alive while the item IS EQUIPPED. The unequip/break doors
+    // strip pins through removeItemPinnedEffects; an entry whose item
+    // slipped out some other way (a restored save mid-surgery) dies
+    // here, DFU's own expiry once IsEquipped answers false. Rounds
+    // still count down (BaseEntityEffect.RemoveRound floors at 0) -
+    // they just never end the entry.
+    if (a.heldItem) {
+      if (a.heldItem.equipSlot == null || (a.heldItem.currentCondition ?? 1) <= 0) return false;
+      runEffectRound(a, entity, sinks, rolls);
+      if (a.roundsRemaining > 0) a.roundsRemaining--;
+      return true;
+    }
     if (a.permanent) return !a.ended;
     if (a.roundsRemaining <= 0) return false;   // End(): expired last pass
     runEffectRound(a, entity, sinks, rolls);
@@ -826,3 +867,20 @@ export function tickActiveEffects(entity, sinks, rolls = Math.random) {
     return true;
   });
 }
+
+/** E2: UnequipHeldItem's bundle sweep (EntityEffectManager.cs:
+ *  1074-1084) - every live entry pinned to THIS item goes, whatever
+ *  effect made it. Identity is the pin: the port's items are the one
+ *  live record each (DFU matches by UID). Removal IS the port's
+ *  End() for these kinds - their mods are read from list presence. */
+export function removeItemPinnedEffects(entity, item) {
+  const list = entity?.activeEffects;
+  if (!list?.length) return;
+  entity.activeEffects = list.filter((a) => a.heldItem !== item);
+}
+
+// E2: the cast doors, registered UPWARD - enchantments.js sits below
+// this module in the import graph (the absorption fold above), so it
+// cannot import applySpell; the registration runs once at load, the
+// setEnchantmentHooks shape. assignHeldSpell rides these.
+setEnchantmentEffectDoors({ applySpell, removeItemPinnedEffects });

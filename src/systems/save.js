@@ -13,6 +13,7 @@
 
 import { clampLegalReputations } from './court.js';   // AUDIT 23 (C4)
 import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
+import { restartHeldEnchantments } from './enchantments.js';   // E2: the held bundles' restore half
 import { goldStack } from './inventory.js';   // AUDIT 17f
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
@@ -99,7 +100,13 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // Teleport effect stores it on the entity, Teleport.cs:35).
   snap.anchorPosition = entity.anchorPosition ? { ...entity.anchorPosition } : null;
   snap.spells = (entity.spells ?? []).map((sp) => sp.index);   // resolve against SPELLS.STD on load
-  snap.activeEffects = (entity.activeEffects ?? []).map(copyEffectEntry);
+  // E2: ITEM-PINNED entries (held enchantments) are NOT serialized -
+  // the pin is a live item reference and the snapshot's items are
+  // fresh copies, so a saved pin could never re-link. DFU serializes
+  // the bundle with its item's UID and discards one that cannot
+  // resolve (:2240/:2312); the port re-instantiates from the worn set
+  // at restore (restartHeldEnchantments), the same outcome.
+  snap.activeEffects = (entity.activeEffects ?? []).filter((a) => !a.heldItem).map(copyEffectEntry);
   for (const k of REP_ARRAYS) snap[k] = entity[k] ? [...entity[k]] : null;
   // AUDIT 18 F3: the CRIME/LEGAL state DFU writes out one field at a
   // time - crimeCommitted and haveShownSurrenderToGuardsDialogue
@@ -233,7 +240,10 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // this field carries none, which reads as "nothing lit".
   const li = snap.lightSourceIndex ?? -1;
   entity.lightSource = li >= 0 ? (entity.items[li] ?? null) : null;
-  entity.activeEffects = snap.activeEffects.map(copyEffectEntry);
+  entity.activeEffects = (snap.activeEffects ?? []).filter((a) => !a.heldItem).map(copyEffectEntry);   // E2: a stale pin in an old snapshot cannot re-link - drop it (DFU :2312)
+  // E2: re-instantiate the held enchantments from the worn set the
+  // equip table just rebuilt - a recast, so no durability is billed.
+  restartHeldEnchantments(entity);
   // Missing on a pre-17h save: leave whatever the entity carries (a
   // fresh entity starts every group at zero, which is classic's own
   // starting state), the additive-field shape DFU's serializer gives.

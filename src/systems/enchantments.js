@@ -27,8 +27,14 @@
 // AmbientEffectsPlayer row).
 //
 // CTX SEAMS (all optional - an absent seam idles its arm, the headless
-// charter): spellsByIndex(), applySpellToTarget/applySpellToSelf/
-// assignHeldSpell/setReadySpell (the cast arms - E2 wires them),
+// charter). E2: a host mounts them ONCE with setDefaultEnchantCtx and
+// every dispatch folds that under any per-call ctx. The seams:
+// spellsByIndex(), applySpellToTarget/applySpellToSelf/setReadySpell
+// (the cast arms - hostMagic supplies them; assignHeldSpell defaults
+// to this module's own over the effects doors), now() (the classic
+// minute clock for equip stamps), sinks + rolls (the wearer's effect
+// doors for held applies), castingSkillOf(skillId) (the equip
+// durability bill's skill read - defaults to the wearer's),
 // inSunlight()/inDarkness()/inHolyPlace() (PlayerEnterExit flags -
 // FLAGGED: no host computes them yet, so the conditional arms of
 // RegensHealth/ItemDeteriorates/UserTakesDamage idle), season(),
@@ -42,6 +48,8 @@
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { equipTableOf, lowerCondition, setEnchantmentHooks } from './equip.js';
 import { MINUTES_PER_DAY } from './gameDate.js';   // the canonical home - worldTick re-exports it and imports the pump below, so this leaf must not close the cycle
+import { classicCastingCost } from './spellcost.js';   // E2: CastWhenHeld's equip durability hit IS the spell's classic casting cost
+import { skillValue } from './skills.js';
 
 /** EnchantmentTypes (ItemsFile.cs:111-141), verbatim. */
 export const ENCHANTMENT_TYPES = Object.freeze({
@@ -102,6 +110,72 @@ export function itemEnchantments(item) {
 
 export const isEnchantedItem = (item) => !!itemEnchantments(item);
 
+// ---- E2: the HOST ctx and the effects doors -------------------------
+// A host mounts ONE enchantCtx for its session (setDefaultEnchantCtx -
+// the port-singleton idiom; DFU's arms read GameManager singletons the
+// same way) and every dispatch below folds it UNDER any per-call ctx.
+// The cast doors (applySpell, the pin sweep) are REGISTERED by
+// effects.js at its module tail - effects.js imports this leaf for the
+// absorption fold, so the coupling must run upward as a registration,
+// the setEnchantmentHooks shape exactly. A consumer that never imports
+// effects.js gets idle cast arms, the headless charter.
+let _defaultCtx = null;
+export function setDefaultEnchantCtx(ctx) { _defaultCtx = ctx; }
+const mergeCtx = (ctx) => (ctx && _defaultCtx ? { ..._defaultCtx, ...ctx } : ctx ?? _defaultCtx);
+const _fx = { applySpell: null, removeItemPinnedEffects: null };
+export function setEnchantmentEffectDoors(doors) { Object.assign(_fx, doors); }
+
+/** rerollMinimumHours (EntityEffectManager.cs:42): a held bundle's
+ *  effects re-roll once the item has been worn this many classic
+ *  hours since the last roll. */
+export const REROLL_MINIMUM_HOURS = 6;
+const MINUTES_PER_HOUR = 60;
+
+/** InstantiateSpellBundle (CastWhenHeld.cs:~145-186): the classic
+ *  record lands on the WEARER as a HeldMagicItem bundle - pinned to
+ *  the item, BypassSavingThrows, caster the wearer itself. On a first
+ *  equip (not a recast/reroll) the item pays the spell's CLASSIC
+ *  casting cost in condition - at the PLAYER's live skills in DFU
+ *  (CalculateCastingCost(spell, false) reads PlayerEntity; the port
+ *  reads the WEARER, identical for the only entity that equips).
+ *  Either way the equip stamps timeEffectsLastRerolled. */
+export function assignHeldSpell(record, entity, item, { ctx = null, nowMinutes = 0, recast = false } = {}) {
+  ctx = mergeCtx(ctx);
+  _fx.removeItemPinnedEffects?.(entity, item);   // RerollItemEffects' remove-first half; idempotent on first equip
+  _fx.applySpell?.(record, entity.level ?? 1, entity, ctx?.sinks ?? {}, ctx?.rolls ?? Math.random, { entity }, { bypassSavingThrows: true, heldItem: item });
+  if (!recast) {
+    const skillOf = ctx?.castingSkillOf ?? ((sk) => skillValue(entity, sk));
+    enchantLowerCondition(item, classicCastingCost(record, skillOf), entity, ctx);
+  }
+  item.timeEffectsLastRerolled = nowMinutes;
+}
+
+/** UnequipHeldItem's bundle half, exported for hosts/probes - the
+ *  dispatcher's Unequipped arm runs it itself. */
+export function removeHeldSpell(entity, item) { _fx.removeItemPinnedEffects?.(entity, item); }
+
+function instantiateHeldSpell({ param, entity, item, ctx, nowMinutes }, recast) {
+  const record = ctx?.spellsByIndex?.()?.get?.(param);
+  if (!record) return;
+  (ctx?.assignHeldSpell ?? assignHeldSpell)(record, entity, item, { ctx, nowMinutes, recast });
+}
+
+/** Every DFU enchantment-payload durability site bills through
+ *  LowerCondition(amount, entity, entity.Items) - and LowerCondition's
+ *  collection arm REMOVES a broken item from that collection unless
+ *  the AllowMagicRepairs setting holds (DaggerfallUnityItem.cs:
+ *  LowerCondition). Combat wear passes no collection and keeps the
+ *  husk; enchantment wear consumes it. */
+function enchantLowerCondition(item, amount, entity, ctx, collection = null) {
+  const broke = lowerCondition(item, amount, entity, ctx?.say);
+  if (broke && !(ctx?.allowMagicRepairs ?? false)) {
+    const col = collection ?? entity?.items;
+    const i = col ? col.indexOf(item) : -1;
+    if (i >= 0) col.splice(i, 1);
+  }
+  return broke;
+}
+
 // ---- the affinity classifier (PotentVs/LowDamageVs/the nearby arms) --
 // MobileEnemy.Affinity off the generated basics table; class enemies
 // (128+) are Human in DFU's table.
@@ -140,19 +214,19 @@ const REGISTRY = new Map([
       return { durabilityLoss: DURABILITY_LOSS_ON_USE };
     },
   }],
-  /** CastWhenHeld.cs - Equipped assigns the held bundle (E2's seam);
-   *  MagicRound degrades 1 per 4 rounds (60 while resting) - the
-   *  magic-item wear law that makes a Cast-When-Held ring die of use. */
+  /** CastWhenHeld.cs - Equipped assigns the held bundle (E2:
+   *  instantiateHeldSpell - the spell rides target.activeEffects
+   *  pinned to the item; the dispatcher's Unequipped arm strips it);
+   *  RerollEffect recasts it fresh with no durability hit; MagicRound
+   *  degrades 1 per 4 rounds (60 while resting) - the magic-item wear
+   *  law that makes a Cast-When-Held ring die of use. */
   [T.CastWhenHeld, {
     flags: PAYLOAD.Equipped | PAYLOAD.MagicRound | PAYLOAD.RerollEffect,
-    equipped({ param, entity, item, ctx }) {
-      const record = ctx?.spellsByIndex?.()?.get?.(param);
-      if (record) ctx?.assignHeldSpell?.(record, entity, item);
-    },
-    unequipped({ entity, item, ctx }) { ctx?.removeHeldSpell?.(entity, item); },
+    equipped(env) { instantiateHeldSpell(env, false); },
+    reroll(env) { instantiateHeldSpell(env, true); },
     magicRound({ round, entity, item, ctx }) {
       const rate = ctx?.isResting?.() ? HELD_DEGRADE_RATE_RESTING : HELD_DEGRADE_RATE;
-      if (round % rate === 0) lowerCondition(item, 1, entity, ctx?.say);
+      if (round % rate === 0) enchantLowerCondition(item, 1, entity, ctx);
     },
   }],
   /** CastWhenStrikes.cs - Strikes: no target or zero damage = nothing
@@ -302,7 +376,7 @@ const REGISTRY = new Map([
       if (round % CONDITION_PER_ROUNDS !== 0) return;
       if (param === 0 && !(ctx?.inSunlight?.() ?? false)) return;
       if (param === 1 && !(ctx?.inHolyPlace?.() ?? false)) return;
-      lowerCondition(item, 1, entity, ctx?.say);
+      enchantLowerCondition(item, 1, entity, ctx);
     },
   }],
   /** UserTakesDamage.cs - MagicRound: -1 health every 4 rounds while
@@ -400,10 +474,17 @@ function anyNearbyOfAffinity(ctx, affinityParam, range) {
  *  Strikes. Answers the (possibly modulated) damage; durability losses
  *  land on the item through equip.js's lowerCondition, whose Breaks
  *  edge re-enters here with PAYLOAD.Breaks via the onBreak hook. */
-export function doItemEnchantmentPayloads(flags, item, { entity = null, target = null, damage = 0, round = 0, nowMinutes = 0, ctx = null } = {}) {
+export function doItemEnchantmentPayloads(flags, item, { entity = null, target = null, damage = 0, round = 0, nowMinutes = 0, ctx = null, collection = null } = {}) {
   let damageOut = damage;
+  ctx = mergeCtx(ctx);   // E2: the host's mounted ctx rides under any per-call one
   const enchantments = itemEnchantments(item);
   if (!enchantments) return damageOut;
+  // E2: UnequipHeldItem's bundle sweep (:1074-1084) runs for EVERY
+  // effect template, gated only by the flag - so it is one sweep per
+  // item here, before the row walk (and before the unknown-key abort
+  // can skip it: DFU aborts before its sweep too, but the abort keys
+  // - VisionProblems and friends - never pin bundles).
+  if (flags & PAYLOAD.Unequipped) _fx.removeItemPinnedEffects?.(entity, item);
   for (const e of enchantments) {
     const row = REGISTRY.get(e.type);
     if (!row) {
@@ -412,7 +493,7 @@ export function doItemEnchantmentPayloads(flags, item, { entity = null, target =
       // their classes exist, exactly as DFU logs-and-returns
       return Math.max(0, damageOut);
     }
-    const env = { param: e.param, entity, target, item, damage, round, nowMinutes, ctx };
+    const env = { param: e.param, entity, target, item, damage, round, nowMinutes, ctx, collection };
     if ((flags & PAYLOAD.Equipped) && (row.flags & PAYLOAD.Equipped)) row.equipped?.(env);
     // Unequipped runs UNGATED by the row's own flags (:1001-1003 -
     // UnequipHeldItem is called for every effect template)
@@ -421,7 +502,7 @@ export function doItemEnchantmentPayloads(flags, item, { entity = null, target =
     if ((flags & PAYLOAD.Strikes) && (row.flags & PAYLOAD.Strikes)) {
       const r = row.strikes?.(env);
       if (r?.strikesModulateDamage) damageOut += r.strikesModulateDamage;
-      applyResults(r, env, false);
+      applyResults(r, env);
     }
     if ((flags & PAYLOAD.Breaks) && (row.flags & PAYLOAD.Breaks)) row.breaks?.(env);
     if ((item.currentCondition ?? 1) > 0) {
@@ -433,14 +514,25 @@ export function doItemEnchantmentPayloads(flags, item, { entity = null, target =
       // port's pump walks equipped items once per round, so ONE gate
       // admits both - the flags stay verbatim per class.
       if ((flags & PAYLOAD.MagicRound) && (row.flags & (PAYLOAD.MagicRound | PAYLOAD.Held))) row.magicRound?.(env);
+      if ((flags & PAYLOAD.RerollEffect) && (row.flags & PAYLOAD.RerollEffect)) row.reroll?.(env);   // E2: RerollItemEffects' payload (:2026)
       if ((flags & PAYLOAD.Enchanted) && (row.flags & PAYLOAD.Enchanted)) row.enchanted?.(env);
     }
   }
   return Math.max(0, damageOut);
 }
 
-function applyResults(r, env, _used = true) {
-  if (r?.durabilityLoss) lowerCondition(env.item, r.durabilityLoss, env.entity, env.ctx?.say);
+/** UseItem's result contract (:1088-1101): removeItem wins over
+ *  durability (`else if`); a durability loss bills through the
+ *  collection so a break consumes the item (enchantLowerCondition). */
+function applyResults(r, env) {
+  if (!r) return;
+  if (r.removeItem) {
+    const col = env.collection ?? env.entity?.items;
+    const i = col ? col.indexOf(env.item) : -1;
+    if (i >= 0) col.splice(i, 1);
+  } else if (r.durabilityLoss) {
+    enchantLowerCondition(env.item, r.durabilityLoss, env.entity, env.ctx, env.collection);
+  }
 }
 
 /** The constant-effect FOLD (DoConstantEffects at the round cadence):
@@ -458,6 +550,7 @@ function applyResults(r, env, _used = true) {
  *  (:1700-1702) - the caller owning the magicka pool applies
  *  liveMaxMagicka below and clamps the same way. */
 export function computeEnchantmentMods(entity, ctx = null) {
+  ctx = mergeCtx(ctx);
   const mods = {
     maxMagicka: 0, armorMod: 0, chanceToHitMod: 0, absorbsSpells: false,
     weightAllowanceMult: 0, skillMods: {},
@@ -488,12 +581,47 @@ export function computeEnchantmentMods(entity, ctx = null) {
  *  per magic round for any entity that wears items - effects.js's
  *  runMagicRoundsFor owns the call, so every host gets it. */
 export function enchantmentMagicRound(entity, round, { nowMinutes = 0, ctx = null } = {}) {
+  ctx = mergeCtx(ctx);
   if (entity.isPlayer) (entity.reactionMods ??= new Array(5).fill(0)).fill(0);   // ClearReactionMods (:1713)
   const items = equippedEnchantedItems(entity);
   if (!items.length) { entity._enchantMods = null; return; }
   computeEnchantmentMods(entity, ctx);
   for (const item of items) {
     doItemEnchantmentPayloads(PAYLOAD.MagicRound, item, { entity, round, nowMinutes, ctx });
+  }
+  // E2: the REROLL scheduler (DoMagicRound :1745-1753 collects, player
+  // only, per held item with a live pinned bundle; RerollItemEffects
+  // :2001-2034 then strips those bundles and fires the RerollEffect
+  // payload if the item is still equipped, restamping the clock). The
+  // strip half lives in each row's recast (assignHeldSpell removes
+  // before it re-applies), so the port fires the payload directly.
+  if (entity.isPlayer && entity.activeEffects?.length) {
+    for (const item of items) {
+      if (!entity.activeEffects.some((a) => a.heldItem === item)) continue;
+      const hours = Math.floor((nowMinutes - (item.timeEffectsLastRerolled ?? nowMinutes)) / MINUTES_PER_HOUR);
+      if (hours < REROLL_MINIMUM_HOURS || item.equipSlot == null) continue;
+      doItemEnchantmentPayloads(PAYLOAD.RerollEffect, item, { entity, round, nowMinutes, ctx });
+      item.timeEffectsLastRerolled = nowMinutes;
+    }
+  }
+}
+
+/** E2: the RESTORE half of the held bundles. DFU serializes each
+ *  HeldMagicItem bundle with its item's UID and re-links on load
+ *  (:2240/:2307), discarding one whose item cannot resolve (:2312).
+ *  The port's save strips pinned entries instead (they carry a live
+ *  item reference) and this re-instantiates them from the worn set -
+ *  a RECAST, so no durability is billed; the reroll stamp resets to
+ *  the load minute (recorded phase drift, the Ledger A class). */
+export function restartHeldEnchantments(entity, ctx = null) {
+  ctx = mergeCtx(ctx);
+  const nowMinutes = ctx?.now?.() ?? 0;
+  for (const item of equippedEnchantedItems(entity)) {
+    for (const e of itemEnchantments(item)) {
+      const row = REGISTRY.get(e.type);
+      if (!row) break;   // the unknown-key abort, per item
+      if (e.type === T.CastWhenHeld) instantiateHeldSpell({ param: e.param, entity, item, ctx, nowMinutes }, true);
+    }
   }
 }
 
@@ -525,13 +653,26 @@ export const liveMaxMagicka = (entity) => {
 };
 
 // The equip leaf's doors (see setEnchantmentHooks there): the fold
-// follows the worn set the moment it changes - a no-ctx fold, so the
-// season/nearby conditions settle at the NEXT pump - and the broken
-// edge fires the Breaks payloads. FLAGGED: with no ctx at the break
-// edge, SoulBound's soul release idles until E2 threads the hosts'
-// enchantCtx through; the fold recompute is ctx-independent for every
-// channel but ExtraSpellPts' conditions and BadReactionsFrom's scan.
+// follows the worn set the moment it changes - a default-ctx fold, so
+// the season/nearby conditions settle where the host's seams answer
+// and at the NEXT pump otherwise - the broken edge fires the Breaks
+// payloads (E2: through the merged host ctx, so SoulBound's soul
+// release reaches the host's spawnFoe), and the per-item doors fire
+// the Equipped|Held / Unequipped payloads.
 setEnchantmentHooks({
   onEquipChange: (entity) => { if (entity?._enchantMods || equippedEnchantedItems(entity).length) computeEnchantmentMods(entity); },
   onItemBroken: (item, owner, say) => doItemEnchantmentPayloads(PAYLOAD.Breaks, item, { entity: owner, ctx: { say } }),
+  // E2: ItemEquipTable's payload doors - StartEquippedItem fires
+  // Equipped|Held on the arriving item (:149 -> :576) and
+  // StopEquippedItem fires Unequipped on every leaver (:163/:202/:231
+  // -> :586). nowMinutes is the ctx clock seam (ctx.now) - an
+  // unmounted host equips at minute 0, the headless charter.
+  onItemEquipped: (entity, item) => {
+    if (!isEnchantedItem(item)) return;
+    doItemEnchantmentPayloads(PAYLOAD.Equipped | PAYLOAD.Held, item, { entity, nowMinutes: mergeCtx(null)?.now?.() ?? 0 });
+  },
+  onItemUnequipped: (entity, item) => {
+    if (!isEnchantedItem(item)) return;
+    doItemEnchantmentPayloads(PAYLOAD.Unequipped, item, { entity });
+  },
 });

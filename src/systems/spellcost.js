@@ -174,3 +174,192 @@ export function calculateCastCost(spell, casterEntity) {
   if (sp < CAST_COST_FLOOR) sp = CAST_COST_FLOOR;
   return { gold, sp };
 }
+
+// ── E2: the CLASSIC-REVERSED casting cost ──────────────────────────
+// FormulaHelper.CalculateCastingCost(SpellRecordData, enchantingItem)
+// (:2411-2477) + getCostFromSettings (:2482-2541) - DFU's SECOND cost
+// formula, "reversed from classic", distinct from the effect-class one
+// above: it prices a RAW CLASSIC RECORD from its settings bytes, and
+// in DFU it backs classic-record costs, enchantment point costs and
+// magic item worth. The port's first consumer is CastWhenHeld's equip
+// durability hit (InstantiateSpellBundle bills LowerCondition
+// (CalculateCastingCost(spell, false)) - the wearer pays the spell's
+// own casting cost in item condition, :~175).
+//
+// The tables are verbatim, hex for hex. effectIndices maps
+// 12*type+subType (subType -1 reads slot 0) into COEFFICIENTS' rows of
+// four; SETTINGS_TYPES picks which of the seven duration/chance/
+// magnitude folds spends them.
+
+const CLASSIC_INDEX_ROWS = [
+  [0x00],                                    // Paralysis
+  [0x01, 0x02, 0x03],                        // Continuous Damage
+  [0x04],                                    // Create Item
+  [0x05, 0x05, 0x06],                        // Cure
+  [0x07, 0x07, 0x07],                        // Damage
+  [0x08],                                    // Disintegrate
+  [0x09, 0x08, 0x09],                        // Dispel
+  [0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A],   // Drain
+  [0x0B, 0x0B, 0x0B, 0x0B, 0x0B],            // Elemental Resistance
+  [0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C, 0x0C],   // Fortify Attribute
+  [0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x07, 0x0E],   // Heal
+  [0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F],   // Transfer
+  [0x26],                                    // Soul Trap
+  [0x10, 0x11],                              // Invisibility
+  [0x12],                                    // Levitate
+  [0x13],                                    // Light
+  [0x14],                                    // Lock
+  [0x28],                                    // Open
+  [0x15],                                    // Regenerate
+  [0x16],                                    // Silence
+  [0x17],                                    // Spell Absorption
+  [0x17],                                    // Spell Reflection
+  [0x16],                                    // Spell Resistance
+  [0x18, 0x10],                              // Chameleon
+  [0x18, 0x10],                              // Shadow
+  [0x14],                                    // Slowfall
+  [0x02],                                    // Climbing
+  [0x02],                                    // Jumping
+  [0x19],                                    // Free Action
+  [0x1A, 0x1A, 0x1A, 0x1A, 0x1A, 0x1A, 0x1A],   // Lycanthropy/Polymorph
+  [0x02],                                    // Water Breathing
+  [0x02],                                    // Water Walking
+  [0x1B],                                    // Dimunition
+  [0x1A, 0x1C, 0x1C, 0x1D],                  // Calm
+  [0x1E],                                    // Charm
+  [0x1F],                                    // Shield
+  [0x27],                                    // Telekinesis
+  [0x20],                                    // Astral Travel
+  [0x20],                                    // Etherealness
+  [0x21, 0x21, 0x22],                        // Detect
+  [0x23],                                    // Identify
+  [0x24],                                    // Wizard Sight
+  [0x07],                                    // Darkness
+  [0x25],                                    // Recall
+  [0x29],                                    // Comprehend Languages
+  [0x2A],                                    // Intensify Fire
+  [0x2A],                                    // Diminish Fire
+  [0x2A],                                    // Wall of Stone?
+  [0x2A],                                    // Wall of Fire?
+  [0x2A],                                    // Wall of Frost?
+  [0x2A],                                    // Wall of Poison?
+];
+const CLASSIC_EFFECT_INDICES = CLASSIC_INDEX_ROWS.map((r) => Object.assign(new Array(12).fill(0), r));
+
+const CLASSIC_COEFFICIENTS = [
+  [0x07, 0x19, 0x07, 0x19],   // 0x00 Paralysis / Cure Magic?
+  [0x07, 0x02, 0x0A, 0x07],   // 0x01 Continuous Damage - Health
+  [0x05, 0x02, 0x0A, 0x07],   // 0x02 CD-Stamina / Climbing / Jumping / Water Breathing / Water Walking
+  [0x0A, 0x02, 0x0A, 0x07],   // 0x03 CD-Spell Points
+  [0x0F, 0x1E, 0x00, 0x00],   // 0x04 Create Item
+  [0x02, 0x19, 0x00, 0x00],   // 0x05 Cure Disease / Cure Poison
+  [0x05, 0x23, 0x00, 0x00],   // 0x06 Cure Paralysis
+  [0x05, 0x07, 0x00, 0x00],   // 0x07 Damage H/S/SP / Heal Health / Darkness
+  [0x14, 0x23, 0x00, 0x00],   // 0x08 Disintegrate / Dispel Undead
+  [0x1E, 0x2D, 0x00, 0x00],   // 0x09 Dispel Magic / Dispel Daedra
+  [0x04, 0x19, 0x02, 0x19],   // 0x0A Drain Attribute
+  [0x19, 0x19, 0x02, 0x19],   // 0x0B Elemental Resistance
+  [0x07, 0x19, 0x0A, 0x1E],   // 0x0C Fortify Attribute
+  [0x0A, 0x07, 0x00, 0x00],   // 0x0D Heal Attribute
+  [0x02, 0x07, 0x00, 0x00],   // 0x0E Heal Stamina
+  [0x05, 0x05, 0x0F, 0x19],   // 0x0F Transfer
+  [0x0A, 0x1E, 0x00, 0x00],   // 0x10 Invisibility
+  [0x0F, 0x23, 0x00, 0x00],   // 0x11 True Invisibility
+  [0x0F, 0x19, 0x00, 0x00],   // 0x12 Levitate
+  [0x02, 0x0A, 0x00, 0x00],   // 0x13 Light
+  [0x05, 0x19, 0x07, 0x1E],   // 0x14 Lock / Slowfall
+  [0x19, 0x05, 0x02, 0x02],   // 0x15 Regenerate
+  [0x05, 0x19, 0x05, 0x19],   // 0x16 Silence / Spell Resistance
+  [0x07, 0x23, 0x07, 0x23],   // 0x17 Spell Absorption / Spell Reflection
+  [0x05, 0x14, 0x00, 0x00],   // 0x18 Chameleon / Shadow
+  [0x05, 0x05, 0x00, 0x00],   // 0x19 Free Action
+  [0x0F, 0x19, 0x0F, 0x19],   // 0x1A Lycanthropy / Polymorph / Calm Animal
+  [0x0A, 0x14, 0x14, 0x28],   // 0x1B Diminution
+  [0x0A, 0x05, 0x14, 0x23],   // 0x1C Calm Undead / Calm Humanoid
+  [0x07, 0x02, 0x0F, 0x1E],   // 0x1D Calm Daedra? (unused)
+  [0x05, 0x02, 0x0A, 0x0F],   // 0x1E Charm
+  [0x07, 0x02, 0x14, 0x0F],   // 0x1F Shield
+  [0x23, 0x02, 0x0A, 0x19],   // 0x20 Astral Travel / Etherealness
+  [0x05, 0x02, 0x14, 0x1E],   // 0x21 Detect Magic / Detect Enemy
+  [0x05, 0x02, 0x0F, 0x19],   // 0x22 Detect Treasure
+  [0x05, 0x02, 0x0A, 0x19],   // 0x23 Identify
+  [0x07, 0x0C, 0x05, 0x05],   // 0x24 Wizard Sight
+  [0x23, 0x2D, 0x00, 0x00],   // 0x25 Recall
+  [0x0F, 0x11, 0x0A, 0x11],   // 0x26 Soul Trap
+  [0x14, 0x11, 0x19, 0x23],   // 0x27 Telekinesis
+  [0x05, 0x19, 0x00, 0x00],   // 0x28 Open
+  [0x0F, 0x11, 0x0A, 0x11],   // 0x29 Comprehend Languages
+  [0x0F, 0x0F, 0x05, 0x05],   // 0x2A Intensify/Diminish Fire / the four Walls
+];
+
+// effectMagicSchools + magicSkills (:2500-2513): school index per
+// classic TYPE, then the school's skill.
+const CLASSIC_MAGIC_SCHOOLS = [
+  0, 2, 3, 1, 2, 2, 3, 2, 0, 1,
+  1, 2, 3, 5, 4, 5, 3, 3, 1, 3,
+  1, 4, 4, 5, 5, 0, 1, 0, 0, 5,
+  0, 4, 0, 4, 4, 0, 3, 3, 0, 4,
+  4, 4, 5, 3, 3, 0, 0, 4, 4, 4,
+  4];
+const CLASSIC_MAGIC_SKILLS = [SKILLS.Alteration, SKILLS.Restoration, SKILLS.Destruction, SKILLS.Mysticism, SKILLS.Thaumaturgy, SKILLS.Illusion];
+
+// settingsTypes (:2515-2524): which of the seven folds each TYPE uses.
+const CLASSIC_SETTINGS_TYPES = [
+  1, 2, 3, 4, 5, 4, 4, 2, 1, 6,
+  5, 6, 1, 3, 3, 3, 1, 4, 2, 1,
+  1, 1, 1, 3, 3, 3, 3, 3, 3, 1,
+  3, 3, 1, 1, 1, 2, 2, 1, 1, 1,
+  1, 1, 3, 4, 1, 2, 2, 2, 2, 2,
+  2];
+const CLASSIC_RANGE_MODIFIERS = [2, 2, 3, 4, 5];
+
+/** C# int division truncates; every field here is a u8, so floor and
+ *  trunc agree. The `|| 1` divisor guard is the port's: DFU would
+ *  throw DivideByZeroException on a zero per-level byte (settings type
+ *  1 reads the CHANCE fields of duration-only records, where classic
+ *  data really does write 0) - effects.js's duration fold guards the
+ *  same way at its :270. */
+const cdiv = (a, b) => Math.trunc(a / (b || 1));
+
+/** getCostFromSettings (:2482-2541), verbatim per settings type. */
+function classicCostFromSettings(settingsType, e, c) {
+  const magBase = Math.trunc((e.magnitudeBaseLow + e.magnitudeBaseHigh) / 2);
+  const magPlus = Math.trunc((e.magnitudeLevelBase + e.magnitudeLevelHigh) / 2);
+  switch (settingsType) {
+    case 1: return c[0] * e.durationBase + cdiv(e.durationMod, e.durationPerLevel) * c[1]
+      + c[2] * e.chanceBase + cdiv(e.chanceMod, e.chancePerLevel) * c[3];
+    case 2: return c[0] * e.durationBase + cdiv(e.durationMod, e.durationPerLevel) * c[1]
+      + magBase * c[2] + cdiv(magPlus, e.magnitudePerLevel) * c[3];
+    case 3: return c[0] * e.durationBase + cdiv(e.durationMod, e.durationPerLevel) * c[1];
+    case 4: return c[0] * e.chanceBase + cdiv(e.chanceMod, e.chancePerLevel) * c[1];
+    case 5: return c[0] * magBase + cdiv(magPlus, e.magnitudePerLevel) * c[1];
+    case 6: return c[0] * e.durationBase + cdiv(c[1] * e.durationMod, e.durationPerLevel)
+      + magBase * c[2] + cdiv(c[3], e.magnitudePerLevel) * magPlus;
+    case 7: return magBase * c[0]   // "supported in classic but no effect uses it"
+      + cdiv(cdiv(cdiv(c[1] * (e.magnitudeLevelBase + e.magnitudeLevelHigh), 2), e.magnitudePerLevel) * e.durationBase, e.durationMod);
+    default: return 0;
+  }
+}
+
+/**
+ * CalculateCastingCost (:2411-2477). skillOf(skillId) -> the caster's
+ * LIVE skill in the effect's school; omit it for the ITEM-ENCHANTMENT
+ * arm (enchantingItem=true), where the skill is pinned at 50 (:2440
+ * "50 is used for item enchantments"). DFU's non-enchanting arm reads
+ * GameManager.PlayerEntity - the caller binds whose skills apply.
+ * Only the record's FIRST THREE effects price (the classic layout has
+ * no more); `cost * rangeModifier >> 1` and the floor of 5 close it.
+ */
+export function classicCastingCost(spell, skillOf = null) {
+  let cost = 0;
+  for (let i = 0; i < 3; i++) {
+    const e = spell.effects?.[i];
+    if (!e || e.type === -1 || e.type == null) continue;
+    const sub = e.subType === -1 || e.subType == null ? 0 : e.subType;
+    const coef = CLASSIC_COEFFICIENTS[CLASSIC_EFFECT_INDICES[e.type]?.[sub] ?? 0] ?? CLASSIC_COEFFICIENTS[0];
+    const skill = skillOf ? skillOf(CLASSIC_MAGIC_SKILLS[CLASSIC_MAGIC_SCHOOLS[e.type] ?? 0]) : 50;
+    cost += Math.trunc(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef) * (110 - skill) / 100);
+  }
+  cost = (cost * (CLASSIC_RANGE_MODIFIERS[spell.rangeType] ?? 2)) >> 1;
+  return cost < 5 ? 5 : cost;
+}

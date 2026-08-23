@@ -30,6 +30,7 @@
 // unregistered type the same way rather than indexing past its
 // tables.
 import { templateByIndex } from './itemTemplates.js';
+import { doItemEnchantmentPayloads, PAYLOAD } from './enchantments.js';   // E2: the Used payload arm
 import { inflictPoison } from './poisons.js';
 
 /** The template indices the predicates name (ItemEnums.cs). */
@@ -257,7 +258,15 @@ export function useItem(item, collection, {
   // if/else ladder with no returns, so an enchanted potion is drunk
   // AND fires its Used payload. Every arm here used to return early,
   // which made this reachable only from the catch-all.
-  if (isEnchanted(item)) return { ...out, enchanted: true, pending: true, closesWindow: true };
+  // E2: the payload is LIVE - DoItemEnchantmentPayloads(Used, item,
+  // collection) with the collection so a Used result can consume the
+  // item or bill durability through it; the window closes behind it
+  // (:1815 CloseWindow), which is closesWindow to the caller. The
+  // cast arms ride the host's mounted enchantCtx.
+  if (isEnchanted(item)) {
+    doItemEnchantmentPayloads(PAYLOAD.Used, item, { entity, collection, nowMinutes: nowMinute });
+    return { ...out, enchanted: true, closesWindow: true };
+  }
   return out;
 }
 

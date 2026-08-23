@@ -27,6 +27,8 @@ import { TownPopulation } from '../systems/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES } from '../characters/mobilePerson.js';
 import { createTownTalk } from './townTalk.js';
 import { createPlayerMagic } from './hostMagic.js';   // M2: spellcasting above ground
+import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // E2: the host's enchantCtx mount
+import { applySpell } from '../systems/effects.js';   // E2: CastWhenStrikes' target arm
 import { ChoiceWindow } from '../ui/talkWindow.js';   // TP-slice: the anchor/teleport prompt
 import { SpellbookWindow, knownSpells } from '../ui/inventory.js';   // M2
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
@@ -1000,6 +1002,50 @@ export async function bootWorld(canvas, renderer, params, status) {
       }));
     },
   });
+  // E2: THE ENCHANTCTX MOUNT - the one place this host answers the
+  // enchantment system's seams (setDefaultEnchantCtx folds under every
+  // dispatch; the charter and the seam list live in enchantments.js).
+  // The cast arms ride the M2 engine: applySpellToSelf is
+  // CastWhenUsed's CasterOnly assign (castByItemSelf), setReadySpell
+  // its click-to-cast ready (SetReadySpell(bundle, true) - free, so no
+  // spell points), applySpellToTarget CastWhenStrikes' landing with
+  // saves rolled. nearbyFoes serves the affinity scans off the live
+  // pools; spawnFoe is SoulBound's break release. The interior mode
+  // shares this mount (its foes list is empty, so the scan arms answer
+  // none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+  // there with the rest of its enchant wiring. isResting stays absent
+  // above ground (no rest window here yet), and inSunlight/inHolyPlace
+  // stay the E1 FLAGGED seams no host computes.
+  {
+    const enchantFeet = () => (walkMode && playerSpawned ? player.pos : cam.pos);
+    const enchantFoes = () => ((modes?.mode ?? 'exterior') === 'exterior' ? [...cityGuards.guards, ...exteriorFoes.foes] : []);
+    setDefaultEnchantCtx({
+      spellsByIndex: () => spellsByIndex,
+      now: () => Math.floor(playerTicker.classicMinutes),
+      sinks: {
+        hurt: (n) => { if (n > 0) hurtPlayer(playerEntity, n); },
+        heal: (n) => { if (n > 0) { playerEntity.health = Math.min(playerEntity.maxHealth, playerEntity.health + n); surfacePlayer(); } },
+      },
+      say: (l) => townTalk.say(l),
+      applySpellToSelf: (record) => magic.castByItemSelf(record),
+      setReadySpell: (record) => magic.readySpell(record, { free: true }),
+      applySpellToTarget: (record, attacker, target) => {
+        if (target === playerEntity) { magic.applySpellToPlayer(record, attacker?.level ?? 1, attacker ? { entity: attacker } : null); return; }
+        const f = enchantFoes().find((x) => !x.dead && x.entity === target);
+        if (f) applySpell(record, attacker?.level ?? 1, target, foeSinks(f), Math.random, attacker ? { entity: attacker } : null);
+      },
+      nearbyFoes: (range) => {
+        const pf = enchantFeet();
+        return enchantFoes().filter((f) => !f.dead && f.ai
+          && Math.hypot(f.ai.feet[0] - pf[0], f.ai.feet[1] - pf[1], f.ai.feet[2] - pf[2]) <= range)
+          .map((f) => ({ mobileType: f.mobileType ?? f.entity?.mobileType ?? 128, hurt: (n) => foeSinks(f).hurt(n) }));
+      },
+      spawnFoe: (mobileType) => {
+        const pf = enchantFeet();
+        exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]]).catch(() => {});
+      },
+    });
+  }
   // AUDIT 24 (wave 32): the broker's foe subscribers - the watch and the encounter pool.
   // OnNewMagicRound is global and every EntityEffectManager handles it, so
   // these entities owe the same per-minute laws the player does. They got

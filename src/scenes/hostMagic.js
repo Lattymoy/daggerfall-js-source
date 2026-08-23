@@ -71,10 +71,10 @@ export function createPlayerMagic({
   /** Every spell landing ON THE PLAYER rides this: the S19 Paralyze
    *  awakeAlert ("You are paralyzed.", once per new instance) fires
    *  for player hosts only, exactly like DFU's StartParalyzation. */
-  function applySpellToPlayer(spell, casterLevel, caster = null) {
+  function applySpellToPlayer(spell, casterLevel, caster = null, extraCtx = null) {
     // S24: the absorption context, read from the HOST at landing.
     const base = absorbCtx();
-    const ctx = lastCastCost > 0 ? { ...base, selfCastCost: lastCastCost } : base;
+    const ctx = { ...(lastCastCost > 0 ? { ...base, selfCastCost: lastCastCost } : base), ...(extraCtx ?? {}) };
     const r = applySpell(spell, casterLevel, playerEntity, playerSinks, rolls, caster, ctx);
     if (r.paralyzed) say('You are paralyzed.');
     // S19c: AssignBundle's failure messages, player hosts only -
@@ -320,10 +320,24 @@ export function createPlayerMagic({
     for (let i = missiles.length - 1; i >= 0; i--) if (missiles[i].dead) missiles.splice(i, 1);
   }
 
+  /** E2: CastWhenUsed's CasterOnly arm (CastWhenUsed.cs:120-141) -
+   *  the item's spell lands on the USER as its own bundle with
+   *  BypassSavingThrows | BypassChance; no spell points spend, no
+   *  ready is consumed, and the absorb refund cap still reads the
+   *  LAST paid cast's cost (lastReadySpellCastingCost is untouched by
+   *  item casts). The caster is the player, casterLevel the player's. */
+  function castByItemSelf(spell) {
+    const r = applySpellToPlayer(spell, playerEntity.level, playerCaster(), { bypassSavingThrows: true, bypassChance: true });
+    if (r.healed > 0) say(`You are healed ${r.healed} points.`);
+    surfacePlayer();
+    return r;
+  }
+
   return {
     readySpell,
     castInput,
     update,
+    castByItemSelf,   // E2: the enchantCtx applySpellToSelf seam
     explodeAt,             // the dungeon's enemy half reuses these (M3)
     applySpellToPlayer,
     /** WeaponManager's HasReadySpell leg - the weapon hides while a

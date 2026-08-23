@@ -252,18 +252,20 @@ combat line numbers below are refreshed with it.
 - `src/scenes/shared.js:177` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:194` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:651` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:681` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:687` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1088` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1275` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1525` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1690` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:1767` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2000` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2019` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2302` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2596` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:653` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:683` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:689` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1015` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:1018` - stay the E1 FLAGGED seams no host computes.
+- `src/scenes/world.js:1134` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+- `src/scenes/world.js:1321` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1571` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1736` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:1813` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2046` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2065` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2348` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2642` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:193` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:234` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:382` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -286,15 +288,15 @@ combat line numbers below are refreshed with it.
 - `src/systems/court.js:178` - *  daysInPrison } (guild rescues FLAGGED). */
 - `src/systems/effects.js:25` - FLAGGED skipped (the library grows here).
 - `src/systems/effects.js:42` - *  effect (:515). FLAGGED: DFU pulls it from the localised string
-- `src/systems/effects.js:458` - enchantment bundles are FLAGGED to their own arc.
-- `src/systems/effects.js:743` - out.skipped++;   // FLAGGED: the library grows one family at a time
-- `src/systems/enchantments.js:33` - FLAGGED: no host computes them yet, so the conditional arms of
-- `src/systems/enchantments.js:35` - moonPhase() (FLAGGED: lunar phases are a Ledger C row),
-- `src/systems/enchantments.js:172` - *  condition holds. Params 0-3 seasons, 4-6 moons (FLAGGED: lunar
-- `src/systems/enchantments.js:431` - a MagicRound-FLAGGED row's is the payload callback :1767
-- `src/systems/enchantments.js:530` - edge fires the Breaks payloads. FLAGGED: with no ctx at the break
-- `src/systems/equip.js:15` - when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
-- `src/systems/equip.js:223` - /** INTERIM starting equipment (chargen's starting-gear roll
+- `src/systems/effects.js:472` - enchantment bundles are FLAGGED to their own arc.
+- `src/systems/effects.js:757` - out.skipped++;   // FLAGGED: the library grows one family at a time
+- `src/systems/effects.js:761` - not the effect itself. FLAGGED (recorded divergence): DFU re-runs
+- `src/systems/enchantments.js:39` - FLAGGED: no host computes them yet, so the conditional arms of
+- `src/systems/enchantments.js:41` - moonPhase() (FLAGGED: lunar phases are a Ledger C row),
+- `src/systems/enchantments.js:246` - *  condition holds. Params 0-3 seasons, 4-6 moons (FLAGGED: lunar
+- `src/systems/enchantments.js:512` - a MagicRound-FLAGGED row's is the payload callback :1767
+- `src/systems/equip.js:17` - hooks below. FLAGGED: equip sounds.
+- `src/systems/equip.js:226` - /** INTERIM starting equipment (chargen's starting-gear roll
 - `src/systems/factionRep.js:228` - *  pre-chargen INTERIM entity (characters/playerEntity.js) has no
 - `src/systems/gameDate.js:23` - FLAGGED, deliberately: the two LUNAR PHASE getters (:134-150,
 - `src/systems/guildServiceActions.js:170` - *  turning into a vampire or werebeast - FLAGGED: the port has no
@@ -325,7 +327,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/loot.js:212` - FLAGGED to the ENCHANTMENT-EFFECTS slice (the shops themselves
 - `src/systems/npcSession.js:628` - FLAGGED: no host calls this. C# populates the pool INSIDE
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
-- `src/systems/save.js:90` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:91` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
 - `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);
@@ -336,7 +338,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/talk.js:210` - *  FLAGGED to the crime slice - the state lands now, verbatim).
 - `src/systems/talk.js:223` - TallyCrimeGuildRequirements(true, 1) FLAGGED: the TG
 - `src/systems/talkSession.js:21` - FLAGGED: the guild greeting indexes (records 8550..8571) pend the
-- `src/systems/useItem.js:234` - lantern's and refuses when it would overflow. FLAGGED: DFU
+- `src/systems/useItem.js:235` - lantern's and refuses when it would overflow. FLAGGED: DFU
 - `src/ui/bookReader.js:25` - INTERIM, loud: lines draw in the host font at a fixed 10px row -
 - `src/ui/chargenArt.js:710` - *  AUDIT 17g FLAGGED: the scrollbar THUMB does not draw. Its geometry
 - `src/ui/chargenArt.js:842` - *  from the difficulty law). FLAGGED: the dagger's one-second fading

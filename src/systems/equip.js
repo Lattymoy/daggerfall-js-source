@@ -12,8 +12,9 @@
 // unequips BOTH hands; equipping a shield unequips a held 2H; the
 // destination slot swaps its occupant out (alwaysEquip); returns
 // the unequipped list. Items STAY in the bag and carry equipSlot
-// when worn (FilterLocalItems hides them). FLAGGED: equip sounds,
-// enchantment start/stop payloads (no enchanted items yet).
+// when worn (FilterLocalItems hides them). E2: the enchantment
+// start/stop payloads fire through the onItemEquipped/onItemUnequipped
+// hooks below. FLAGGED: equip sounds.
 
 import { mintCondition, templateByIndex } from './itemTemplates.js';   // AUDIT 23
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
@@ -65,6 +66,7 @@ export function unequipSlot(entity, slot) {
   updateEquippedArmorValues(entity, item, false);   // U8h: the armor table adds back
   if (slot === EQUIP_SLOTS.RightHand || slot === EQUIP_SLOTS.LeftHand) billEquipDelay(entity, item);   // CH3: the leaver's half
   _hooks.onEquipChange?.(entity);   // E1: the fold follows the worn set
+  _hooks.onItemUnequipped?.(entity, item);   // E2: StopEquippedItem - the Unequipped payloads (ItemEquipTable.cs:163/:202/:231)
   return item;
 }
 
@@ -189,6 +191,7 @@ export function equipItem(entity, item) {
   slots[slot] = item;
   updateEquippedArmorValues(entity, item, true);   // U8h: the armor table subtracts
   _hooks.onEquipChange?.(entity);   // E1: the fold follows the worn set
+  _hooks.onItemEquipped?.(entity, item);   // E2: StartEquippedItem - the Equipped|Held payloads (ItemEquipTable.cs:149)
   return unequipped;
 }
 
@@ -312,12 +315,13 @@ export function lowerCondition(item, amount, owner = null, say = null) {
   item.currentCondition = 0;
   const name = item.name ?? templateByIndex(item.templateIndex)?.name ?? 'Item';
   say?.(`${name} ${PLURAL_BREAK_TEMPLATES.has(item.templateIndex) ? 'have' : 'has'} broken.`);
-  // E1: ItemBreaks' enchantment payload (DaggerfallUnityItem.cs:
-  // 1217-1222 fires Breaks from inside LowerCondition's zero edge,
-  // before the unequip) - through the hook so this leaf stays below
-  // the enchantment module. SoulBound's break releases the soul.
-  _hooks.onItemBroken?.(item, owner, say);
+  // E2 corrected E1's order to ItemBreaks' own (DaggerfallUnityItem):
+  // the popup, THEN the unequip (which fires the Unequipped payloads
+  // and strips any held bundle), THEN the Breaks payload - both
+  // through hooks so this leaf stays below the enchantment module.
+  // SoulBound's break releases the soul.
   if (owner && item.equipSlot != null) unequipSlot(owner, item.equipSlot);
+  _hooks.onItemBroken?.(item, owner, say);
   return true;
 }
 
@@ -328,9 +332,11 @@ export function lowerCondition(item, amount, owner = null, say = null) {
  *  constant effects re-apply next frame (DoConstantEffects), and a
  *  fold that waited for the next magic round would lag up to a
  *  classic minute. onItemBroken is the Breaks payload edge above. */
-const _hooks = { onEquipChange: null, onItemBroken: null };
-export function setEnchantmentHooks({ onEquipChange = null, onItemBroken = null } = {}) {
+const _hooks = { onEquipChange: null, onItemBroken: null, onItemEquipped: null, onItemUnequipped: null };
+export function setEnchantmentHooks({ onEquipChange = null, onItemBroken = null, onItemEquipped = null, onItemUnequipped = null } = {}) {
   _hooks.onEquipChange = onEquipChange;
   _hooks.onItemBroken = onItemBroken;
+  _hooks.onItemEquipped = onItemEquipped;
+  _hooks.onItemUnequipped = onItemUnequipped;
 }
 export const notifyEquipChange = (entity) => _hooks.onEquipChange?.(entity);

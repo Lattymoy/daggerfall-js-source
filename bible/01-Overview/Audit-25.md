@@ -382,10 +382,17 @@ Item/Recall/Comprehend Languages), Shield, Elemental Resistance, the
 three Detects, Identify, Spell Reflection/Resistance. Mostly host
 adapters and effect-ladder arms over existing modules.
 
-**S-C. ENCHANTING (~3,700 LOC, P1).** The 24 payload classes, the
+**S-C. ENCHANTING (~3,700 LOC, P1).** ~~The 24 payload classes, the
 settings model, `DoItemEnchantmentPayloads` and its eight call sites,
-the four FormulaHelper power/multiplier methods. Depends on S-B's
-bundle work. Makes every magic item in the game mean something.
+the four FormulaHelper power/multiplier methods.~~ THE RUNTIME SHIPPED
+(E1+E2, 2026-08-23 - the registry, dispatcher, fold, pump, the cast
+seams with item-pinned held bundles, the classic casting cost, the
+equip/use/strike/break/save doors, world.js's ctx mount; the
+Port-Ledger row carries the residue: the dungeon ctx mount, the
+sunlight/holy/moon seams, the held-instant divergence, and the item
+maker's half - the power/multiplier methods - which rides S-E).
+Depends on S-B's bundle work only for effect classes the cast seams
+resolve as spells. Makes every magic item in the game mean something.
 
 **S-D. THE MONEY LAYER (~2,400 LOC, P1).** Banking core + window, the
 tavern window and room rental, transport (horse/cart) + its window,
