@@ -147,6 +147,23 @@ export function interiorLockpickingChance(level, lockValue, lockpickSkill) {
   const chance = 5 * (level - lockValue) + lockpickSkill;
   return Math.max(5, Math.min(95, chance));
 }
+
+/** CalculateExteriorLockpickingChance (FormulaHelper.cs:243-251):
+ *  the building-door formula has NO level term - skill against five
+ *  points per lock value, same 5..95 clamp. Classic's oversight rides
+ *  with it: the LOOK-AT difficulty text always uses the INTERIOR
+ *  formula, even on exterior doors (PlayerActivate.cs:987-991's own
+ *  comment), so lookAtLockText above serves both kinds. */
+export function exteriorLockpickingChance(lockValue, lockpickSkill) {
+  const chance = lockpickSkill - 5 * lockValue;
+  return Math.max(5, Math.min(95, chance));
+}
+
+/** The attempt lines (TextManager keys lockpickingSuccess /
+ *  lockpickingFailure - the localisation tables are not in the source
+ *  snapshot, so the prose is ours with the keys cited). */
+export const LOCKPICKING_SUCCESS_TEXT = 'You successfully pick the lock.';
+export const LOCKPICKING_FAILURE_TEXT = 'You fail to pick the lock.';
 export function lookAtLockText(lockValue, level, lockpickSkill) {
   if (lockValue >= MAGIC_LOCK_THRESHOLD) return 'This is a magically held lock...';
   const chance = interiorLockpickingChance(level, lockValue, lockpickSkill);
@@ -179,7 +196,7 @@ const DOOR_TEXT_REMAP = Object.freeze({ 7701: 7705, 7702: 7705, 7703: 7705, 7704
 const DOOR_TEXT_SKIP = new Set([7700, 7706, 7711, 7712, 7715, 7717, 7719]);
 
 export class ActionSystem {
-  constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, playerLevel = () => 1, rolls = Math.random } = {}) {
+  constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = null, playerLevel = () => 1, lockpickSkill = () => 0, rolls = Math.random } = {}) {
     this.collider = collider;
     this.objects = new Map(); // key -> runtime object
     this._links = new Map();  // `${ns}:${position}` -> object (the chain graph)
@@ -188,6 +205,7 @@ export class ActionSystem {
     this._drainMagicka = drainMagicka;
     this._castSpell = castSpell;
     this._playerLevel = playerLevel;
+    this._lockpickSkill = lockpickSkill;   // R1: GetLiveSkillValue(Lockpicking), the scene's live read
     this._rolls = rolls;
     // Scene seams (P10/U6/A2):
     //   resolvePosition(ns, positionKey) -> { pos: [x,y,z], yawDeg }
@@ -209,6 +227,11 @@ export class ActionSystem {
     this.onTrespass = null;
     this.onDoorState = null;
     this.onDoorBash = null;
+    // R1: onLockpickTally() - TallySkill(Lockpicking, 1) per attempt;
+    // onLockpickResult(o, success) - the attempt line + the
+    // ActivateLockUnlock sound on success
+    this.onLockpickTally = null;
+    this.onLockpickResult = null;
   }
 
   _register(ns, positionKey, o) {
@@ -412,6 +435,12 @@ export class ActionSystem {
       triggerFlag: a ? (a.triggerFlag ?? TRIGGER_FLAGS.None) : TRIGGER_FLAGS.None,
       startingLockValue: opts.startingLockValue ?? 0,
       currentLockValue: opts.startingLockValue ?? 0,
+      // R1: AttemptLockpicking's retry gate (DaggerfallActionDoor.cs:36
+      // FailedSkillLevel) - the skill the player FAILED at; a retry
+      // waits for the live skill to differ. DFU's own comment marks it
+      // "TODO: persist across save and load" and it is not serialized
+      // there; the port mirrors that (the S12 snapshot skips it).
+      failedSkillLevel: 0,
       matrix: baseMatrix,
     };
     this.objects.set(key, o);
@@ -684,11 +713,51 @@ export class ActionSystem {
    *  DaggerfallActionDoor component, so ActionDoorCheck misses it and
    *  only the Direct Receive lands - which its None/Collision01 trigger
    *  flag then rejects. That is why a secret door is lever-only. */
-  activate(key) {
+  activate(key, { steal = false } = {}) {
     const o = this.objects.get(key);
     if (!o) return false;
-    if (o.kind === 'door' && !o.special) this.toggleDoor(o, true);
+    // R1: ActivateActionDoor's mode routing (PlayerActivate.cs:698-703):
+    // Steal mode on a LOCKED, not-open door attempts the pick; every
+    // other combination toggles (whose lock gate speaks the look-at
+    // text). The Direct Receive still follows either arm - the two
+    // separate ifs of the ray tail.
+    if (o.kind === 'door' && !o.special) {
+      if (steal && o.currentLockValue > 0 && o.state !== 'end') this.attemptLockpicking(o);
+      else this.toggleDoor(o, true);
+    }
     this.receive(o, 'Direct');   // player activation = the Direct trigger type (the gate table applies)
+    return true;
+  }
+
+  /** DaggerfallActionDoor.AttemptLockpicking (:147-191), verbatim:
+   *  no-op while the door swings; a SILENT return while the live
+   *  Lockpicking skill still equals the recorded failure (the
+   *  C# == test, so a skill that moved EITHER way re-opens the
+   *  attempt); a magically held lock (>= 20) speaks the failure line
+   *  with NO tally, NO roll and NO record; otherwise the attempt
+   *  tallies Lockpicking BEFORE the roll, rolls d100 under
+   *  CalculateInteriorLockpickingChance, and on success zeroes the
+   *  lock and opens the door (ToggleDoor(true)), on failure records
+   *  the skill level. No lockpick ITEM is required - DFU checks no
+   *  inventory. */
+  attemptLockpicking(o) {
+    if (o.state === 'forward' || o.state === 'reverse') return false;   // IsMoving
+    const skill = this._lockpickSkill();
+    if (o.failedSkillLevel === skill) return false;   // the retry gate (:157) - == exactly, so a skill moved EITHER way re-opens it
+    if (o.currentLockValue >= MAGIC_LOCK_THRESHOLD) {
+      this.onLockpickResult?.(o, false);   // :187-190 - the magic arm is failure-with-no-roll
+      return false;
+    }
+    this.onLockpickTally?.();   // TallySkill(Lockpicking, 1) (:165)
+    const chance = interiorLockpickingChance(this._playerLevel(), o.currentLockValue, skill);
+    if (Math.floor(this._rolls() * 100) >= chance) {   // Dice100.FailedRoll(chance) - Range(0,100) >= chance, the attemptBash convention
+      this.onLockpickResult?.(o, false);
+      o.failedSkillLevel = skill;   // :171
+      return false;
+    }
+    this.onLockpickResult?.(o, true);
+    o.currentLockValue = 0;   // :176
+    this.toggleDoor(o, true);   // :184 - a successful pick opens the door
     return true;
   }
 

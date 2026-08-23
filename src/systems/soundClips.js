@@ -5,6 +5,7 @@ export const SOUND = {
   ArrowShoot: 3,            // SoundClips.ArrowShoot - the bow loose (frame 4)
   BodyFall: 15,             // AUDIT 24 wave 38: EnemyDeath plays it at the corpse, every death
   PlayerDoorBash: 7,
+  ActivateLockUnlock: 316,  // R1: the picked-lock chime (AttemptLockpicking + exterior success)
   DrawWeapon: 78,     // ToggleSheath's unsheathe sound (FPSWeapon.DrawWeaponSound default)
   DungeonDoorClose: 24,
   DungeonDoorOpen: 25,

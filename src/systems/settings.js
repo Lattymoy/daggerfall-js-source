@@ -66,6 +66,8 @@ export const LIVE = Object.freeze({
   'Enhancements/PlayerTorchFromItems': 'src/systems/startingGear.js',
   'Enhancements/LoiterLimitInHours': 'src/systems/restSession.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
+  'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
+  'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam
   'Controls/MusicVolume': 'src/systems/songPlayer.js',
   'Controls/MouseLookSensitivity': 'src/ui/lookSettings.js',
   'Controls/InvertMouseVertical': 'src/ui/lookSettings.js',

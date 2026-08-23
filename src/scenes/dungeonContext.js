@@ -17,7 +17,7 @@ import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { MobileUnit } from '../characters/mobileUnit.js';   // C11: classic sprite monsters
 import { dfMeshToModel, GLOBAL_SCALE } from '../world/meshReader.js';
 import { RDB_SIDE } from '../world/rdbLayout.js';
-import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText } from '../world/actionSystem.js';
+import { EFFECT_ACTION_FLAGS, COLLISION_TIMEOUT_S, DOOR_VERB_FLAGS, classifyPlacementAction, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
 import { TextRsc } from '../formats/textRsc.js';
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, setDeathPresenter } from '../characters/playerEntity.js';
@@ -158,6 +158,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       surfacePlayer();
     },
     playerLevel: () => playerEntity.level,
+    lockpickSkill: () => skillValue(playerEntity, SKILLS.Lockpicking),   // R1: GetLiveSkillValue at attempt time
   });
   // A1: sound. DAGGER.SND loads through the data seam; the context
   // starts on the first gesture (mobile discipline). Dungeon doors
@@ -763,6 +764,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // over the LIVE lockpicking skill).
   actions.resolvePosition = (ns, key) => positionIndex.get(`${ns}:${key}`) ?? null;
   actions.onLockedDoor = (o) => hudText.add(lookAtLockText(o.currentLockValue, playerEntity.level, skillValue(playerEntity, SKILLS.Lockpicking)));
+  // R1: the STEAL-mode pick attempt's doors - the tally
+  // (TallySkill(Lockpicking, 1), DaggerfallActionDoor.cs:165), and the
+  // attempt line + the picked-lock sound (ActivateLockUnlock :178-183;
+  // the door's own open sound follows through onDoorState).
+  actions.onLockpickTally = () => tallySkill(playerEntity, SKILLS.Lockpicking, 1);
+  actions.onLockpickResult = (o, success) => {
+    hudText.add(success ? LOCKPICKING_SUCCESS_TEXT : LOCKPICKING_FAILURE_TEXT);
+    if (success) audio.play3d(SOUND.ActivateLockUnlock, [o.matrix[12], o.matrix[13], o.matrix[14]]);
+  };
   // A2: DaggerfallAction.Play's sound - the RDB soundIndex fires from
   // the object on every Play (the default min1/max500 3D profile;
   // movers speak from their live matrix, effect objects from origin).
@@ -2356,6 +2366,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     drawList,
     dynamicDraws,
     actions,
+    hudSay: (t) => hudText.add(t),   // R1: the host's one-line channel (the F1-F4 mode line)
     collider,
     texRemap,
     billboardBatches,

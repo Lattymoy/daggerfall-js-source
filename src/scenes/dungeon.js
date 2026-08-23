@@ -9,6 +9,7 @@
 // and the frame loop.
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
+import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
 import { audio } from '../systems/audio.js';   // FS-slice: the stride plays flat 2D, as PlayerFootsteps' customAudioSource does
 import { requestLook, makeLookGate } from '../player/pointerLock.js';
@@ -134,7 +135,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       ctx.takeLoot(key);
       return key;
     }
-    if (key) ctx.actions.activate(key);
+    if (key) ctx.actions.activate(key, { steal: getInteractionMode() === 'steal' });   // R1: Steal mode picks a locked door
     return key;
   };
   const keys = new Set();
@@ -143,6 +144,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
   addEventListener('keydown', (e) => {
     keys.add(e.code);
     if (e.code === 'AltLeft') e.preventDefault();
+    // R1: F1-F4 switch the interaction mode here too - DFU's
+    // currentMode is global and the standalone dungeon has no townTalk
+    // to carry the keydown. Same keys, same line.
+    const im = { F1: 'steal', F2: 'grab', F3: 'info', F4: 'dialogue' }[e.code];
+    if (im && im !== getInteractionMode()) { setInteractionMode(im); ctx.hudSay?.(`Interaction is now in ${im} mode.`); e.preventDefault(); }
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
     if (!ctx.uiOverlayActive && document.pointerLockElement !== canvas) requestLook(canvas);

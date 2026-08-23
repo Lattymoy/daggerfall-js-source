@@ -96,6 +96,10 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // W-slice: the cart's own 750kg collection (PlayerEntity.WagonItems
   // - SerializablePlayer carries wagonItems beside items).
   snap.wagonItems = (entity.wagonItems ?? []).map((it) => ({ ...it }));
+  // R1: PlayerEntity.OtherItems - the in-repair collection
+  // (SerializablePlayer.cs:132/:300; each item's repairData rides the
+  // plain spread, present only while a job runs).
+  snap.otherItems = (entity.otherItems ?? []).map((it) => ({ ...it }));
   // TP-slice: the Recall anchor (PlayerEntity.AnchorPosition - the
   // Teleport effect stores it on the entity, Teleport.cs:35).
   snap.anchorPosition = entity.anchorPosition ? { ...entity.anchorPosition } : null;
@@ -220,6 +224,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.career = snap.career ? { ...snap.career } : entity.career;
   entity.items = snap.items.map((it) => ({ ...it }));
   entity.wagonItems = (snap.wagonItems ?? []).map((it) => ({ ...it }));   // W-slice (pre-W saves restore empty)
+  entity.otherItems = (snap.otherItems ?? []).map((it) => ({ ...it }));   // R1: the in-repair collection (pre-R1 saves restore empty)
   entity.anchorPosition = snap.anchorPosition ? { ...snap.anchorPosition } : null;   // TP-slice
   // AUDIT 17f: a Currency stack saved before gold gained its template
   // index carries none, and stacksWith compares templateIndex - a

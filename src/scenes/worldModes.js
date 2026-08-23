@@ -78,7 +78,22 @@ import { buildTrainingFlow, buildDonationFlow, buildCureDiseaseFlow } from '../u
 import { preloadListPickerArt } from '../ui/listPicker.js';
 import { getTitle } from '../systems/guilds.js';
 import { getDivine, DIVINES } from '../systems/guildVariants.js';
-import { BUILDING_TYPES } from '../world/buildingNames.js';
+import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';
+import { getInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
+import { buildingIsUnlocked, buildingLockValue, LOCKED_EXTERIOR_DOOR_TEXT } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder
+import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT } from '../world/actionSystem.js';
+import { discoverBuilding, getLastLockpickAttempt, setLastLockpickAttempt } from '../systems/discovery.js';
+import { getHolidayId } from '../systems/holidays.js';
+import { guildOfFaction, isMember } from '../systems/guilds.js';
+import { hallAccessAnytime } from '../systems/guildServices.js';
+import { resolveVariantGuild } from '../systems/guildVariants.js';
+import { getBool } from '../systems/settings.js';   // R1: InstantRepairs / AllowMagicRepairs go LIVE
+import { reducedRepairCost } from '../systems/guildServices.js';   // R1: FightersGuild.ReducedRepairCost finds its caller
+import {
+  calculateItemRepairCost, updateRepairTimes, repairJobsAt, repairRefusal, repairStatusLabel,
+  isBeingRepaired, isRepairFinished, collectRepaired,
+  MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, CANNOT_BE_REPAIRED_TEXT,
+} from '../systems/repairService.js';
 import { GuildServiceWindow, preloadGuildServiceArt, guildServiceArtLoaded } from '../ui/guildServiceWindow.js';
 import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';
@@ -176,7 +191,7 @@ export function createWorldModes(host) {
       if (!interiorOverlay) interiorOverlay = new LevelUpScreen(playerEntity);
     },
   });
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null } = host;   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, discoveryLocationId = null } = host;   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   const { getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame, arch, palette } = pipeline;
   // AUDIT 21 (hosts lane, F7): the HUD art for interior mode. A missing file
   // answers null and drawHud no-ops, so this host draws no HUD rather than
@@ -573,7 +588,7 @@ export function createWorldModes(host) {
     Promise.resolve(townTalk?.ensureFactions?.()).then(() => openStaticNpc(pn)).catch(() => {});
   }
 
-  function openStaticNpc(pn) {
+  function openStaticNpc(pn, { forceTalk = false } = {}) {
     // Q4-v: PlayerActivate's questor half - EVERY static-NPC click
     // stamps LastNPCClicked before the routing decides what opens (the
     // Person questor sweep rides machine.setLastNPCClicked).
@@ -606,6 +621,16 @@ export function createWorldModes(host) {
       isTavern: (t) => t === BUILDING_TYPES.Tavern,
     });
     if (route.kind === 'guildService') { openGuildService(pn, route); return; }
+    // R1: the repair-shop merchant (DaggerfallMerchantRepairPopupWindow
+    // - Armorer/GeneralStore/WeaponSmith per RMBLayout.IsRepairShop;
+    // the popup's two buttons are the window's Repair list and its
+    // T - talk, which re-runs this routing with the merchant arm
+    // skipped, DFU's TalkButton_OnMouseClick shape). The plain-merchant
+    // sell/banking/tavern arms stay FLAGGED below.
+    if (!forceTalk && route.kind === 'merchant' && route.service === 'repair') {
+      openRepairService({ onTalk: () => openStaticNpc(pn, { forceTalk: true }) });
+      return;
+    }
     // TK-iv: THE QUESTOR DOOR. TalkToStaticNPC's first act, before the
     // NPC type is even set (:758-770): an NPC the work pool is
     // carrying, or a castle NPC who wins its one 25% roll, opens the
@@ -776,6 +801,14 @@ export function createWorldModes(host) {
     const now = () => interiorTicker.classicMinutes;   // already CLASSIC minutes (AUDIT 21 F2)
     const godName = guild.divine ?? '';
     let flow = null;
+    // R1: the guild repair service - the same keyed flow the repair
+    // shops open, with guild.ReducedRepairCost bound (FightersGuild's
+    // rank scaling; the base guild returns the price unchanged, so
+    // binding it for every guild IS DFU's `guild != null` arm).
+    if (destination === 'guildServiceRepair') {
+      openRepairService({ reducedRepairCost: (price) => reducedRepairCost(guild, membership, price) });
+      return interiorOverlay;
+    }
     if (destination === 'guildServiceTraining') {
       flow = buildTrainingFlow(playerEntity, guild, membership, {
         rows, now, onClose: () => closeSelf(),
@@ -835,6 +868,127 @@ export function createWorldModes(host) {
     steps: () => [{ textId: guild.text.welcome, clickAnywhere: true, closesWindow: true }],
     onClose: () => { if (interiorOverlay === self()) interiorOverlay = null; },
   });
+
+  // ---- R1: THE REPAIR SERVICE (DaggerfallTradeWindow's Repair mode
+  // over the keyed-window idiom - the INVE12I0 native art mode pends
+  // with the trade window's own mode flow, the same INTERIM the
+  // buy/sell screen documents: transactions conclude AT THE CLICK,
+  // one item per payment, so the multi-item queue stretch engages
+  // only through the law module's own scheduler). The laws are
+  // systems/repairService.js's; this owns gold, the windows and the
+  // otherItems moves (PlayerEntity.OtherItems - the in-repair
+  // collection, :392). InstantRepairs heals in place; otherwise the
+  // item leaves the bag for the shop's queue and comes back through
+  // the collect list - finished free, in-progress only past the
+  // interrupt confirm, partial and unrefunded (:843-855). ----
+
+  const _rowsText = (rows, fallback) => {
+    const t = (rows ?? []).map((r) => r.text).filter((t2) => t2.trim() !== '');
+    return t.length ? t : [fallback];
+  };
+  function repairPrice(it, discount) {
+    const b = interiorBuilding;
+    const raw = calculateItemRepairCost(itemValue(it), b?.quality ?? 0, it.currentCondition ?? 0, it.maxCondition ?? 0, {
+      reducedRepairCost: discount ?? null,
+      priceAdjustment: regionPriceAdjustment(playerEntity, b?.regionIndex ?? 0),
+    }) * (it.stackCount ?? 1);
+    // GetTradePrice: Repair shares the Buy branch (:497-498)
+    return calculateTradePrice(raw, b?.quality ?? 0, { mercantile: skillValue(playerEntity, SKILLS.Mercantile), personality: playerEntity.stats?.personality ?? 50 }, false);
+  }
+  function openRepairService(ctx = {}) { showRepairList(0, ctx); }
+  function showRepairList(page, ctx) {
+    const now = Math.floor(worldMinutes());
+    const jobs = repairJobsAt(playerEntity, interiorBuilding?.buildingKey ?? 0, now);
+    // FilterLocalItems' one repair gate is !IsEquipped (:672-703);
+    // the condition/enchant/not-repairable refusals land at CLICK
+    const locals = (playerEntity.items ?? []).filter((it) => !isEquipped(it));
+    const per = 6;
+    const slice = locals.slice(page * per, (page + 1) * per);
+    const allowMagic = getBool('Controls', 'AllowMagicRepairs');
+    const options = slice.map((it, j) => ({
+      code: `Digit${j + 1}`,
+      label: `${j + 1} - ${_itemLabel(it)}${repairRefusal(it, { allowMagicRepairs: allowMagic }) ? '' : ` (${repairPrice(it, ctx.reducedRepairCost)} gold)`}`,
+      action: () => repairItem(it, ctx),
+    }));
+    if ((page + 1) * per < locals.length) options.push({ code: 'KeyN', label: 'N - more', action: () => showRepairList(page + 1, ctx) });
+    if (jobs.length) options.push({ code: 'KeyC', label: `C - collect (${jobs.length} in repair)`, action: () => showRepairJobs(ctx) });
+    if (ctx.onTalk) options.push({ code: 'KeyT', label: 'T - talk', action: () => ctx.onTalk() });
+    options.push({ code: 'Escape', label: 'Esc - close', action: () => {} });
+    interiorOverlay = new ChoiceWindow({
+      lines: [interiorBuilding?.name || 'Repairs', `Repair: (you have ${goldAmount(playerEntity)} gold)`],
+      options,
+    });
+  }
+  function repairItem(it, ctx) {
+    const rows = (id) => townTalk?.lines?.(id) ?? [];
+    const back = [{ code: 'Escape', label: 'Esc - back', action: () => showRepairList(0, ctx) }];
+    const refusal = repairRefusal(it, { allowMagicRepairs: getBool('Controls', 'AllowMagicRepairs') });
+    if (refusal) {
+      // the three refusals in DFU's click order (:808-818): TEXT.RSC
+      // 33 for a magic item, the cannotBeRepaired line for a flagged
+      // template, TEXT.RSC 24 for full condition
+      const lines = refusal === 'magic' ? _rowsText(rows(MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID), 'You cannot repair magic items.')
+        : refusal === 'undamaged' ? _rowsText(rows(DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID), 'This item does not need to be repaired.')
+        : [CANNOT_BE_REPAIRED_TEXT];
+      interiorOverlay = new ChoiceWindow({ lines, options: back });
+      return;
+    }
+    const price = repairPrice(it, ctx.reducedRepairCost);
+    if (goldAmount(playerEntity) < price) {
+      interiorOverlay = new ChoiceWindow({ lines: ['You do not have enough gold.'], options: back });
+      return;
+    }
+    deductGold(playerEntity, price);
+    tallySkill(playerEntity, SKILLS.Mercantile, 1);   // OnTrade's tally (:1088)
+    if (getBool('Controls', 'InstantRepairs')) {
+      it.currentCondition = it.maxCondition;   // the InstantRepairs branch (:1062-1065)
+    } else {
+      const now = Math.floor(worldMinutes());
+      updateRepairTimes([it], { commit: true, nowMinutes: now, buildingKey: interiorBuilding?.buildingKey ?? 0 });
+      const i = playerEntity.items.indexOf(it);
+      if (i >= 0) playerEntity.items.splice(i, 1);
+      (playerEntity.otherItems ??= []).push(it);
+      // the repairNote (:536-537 - key repairNote, prose ours)
+      questBridge?.notebook?.addNote?.(`Left ${_itemLabel(it)} to be repaired at ${interiorBuilding?.name ?? 'the shop'}.`);
+    }
+    surfacePlayer();
+    showRepairList(0, ctx);
+  }
+  function showRepairJobs(ctx) {
+    const now = Math.floor(worldMinutes());
+    const jobs = repairJobsAt(playerEntity, interiorBuilding?.buildingKey ?? 0, now);
+    if (!jobs.length) { showRepairList(0, ctx); return; }
+    const options = jobs.slice(0, 8).map((it, j) => ({
+      code: `Digit${j + 1}`,
+      label: `${j + 1} - ${_itemLabel(it)} (${repairStatusLabel(it, now)})`,
+      action: () => collectJob(it, ctx),
+    }));
+    options.push({ code: 'Escape', label: 'Esc - back', action: () => showRepairList(0, ctx) });
+    interiorOverlay = new ChoiceWindow({ lines: ['Items left for repair:'], options });
+  }
+  function collectJob(it, ctx) {
+    const now = Math.floor(worldMinutes());
+    const takeBack = () => {
+      const i = (playerEntity.otherItems ?? []).indexOf(it);
+      if (i >= 0) playerEntity.otherItems.splice(i, 1);
+      (playerEntity.items ??= []).push(it);
+      collectRepaired(it);
+      showRepairJobs(ctx);
+    };
+    if (isBeingRepaired(it) && !isRepairFinished(it, now)) {
+      // interruptRepair's Yes/No (:843-855): the item comes back
+      // partial, the gold stays spent
+      interiorOverlay = new ChoiceWindow({
+        lines: ['Do you want to interrupt the repair?'],   // key interruptRepair, prose ours
+        options: [
+          { code: 'KeyY', label: 'Y - yes', action: takeBack },
+          { code: 'KeyN', label: 'N - no', action: () => showRepairJobs(ctx) },
+        ],
+      });
+      return;
+    }
+    takeBack();
+  }
 
   function showShelfList(shelf, page) {
     const per = 8;
@@ -905,6 +1059,69 @@ export function createWorldModes(host) {
     // entrances into the RDB crawl.
     if (hit.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) return tryEnterDungeon(hit, entries);
     if (hit.door.doorType !== DOOR_TYPE.BUILDING || hit.recordIndex === undefined) return false;
+    // R1: THE EXTERIOR DOOR LOCK (ActivateStaticDoor, PlayerActivate.cs
+    // :512-568). Closed hours lock the town: the unlocked ladder runs
+    // first (owned houses and quest buildings FLAGGED/seamed per
+    // buildingLocks.js); a locked door in any mode but Steal speaks the
+    // refusal + the look-at text (classic's interior-formula oversight
+    // included); Steal mode picks - gated by the per-building
+    // anti-grind record (the skill must RISE past the last failure),
+    // tallying Lockpicking before the roll, entering ONCE on success
+    // (no persistent unlock - DFU's isBrokenIn is local) and recording
+    // the skill on failure. DiscoverBuilding fires on the activation
+    // (:515). FLAGGED: the Open-spell bypass (:519), the bash arms with
+    // their Breaking_And_Entering crimes (:571-583/:621-627 - no
+    // weapon-vs-static-door path exists yet), the house greeting
+    // (:585-628) and TallyCrimeGuildRequirements (the TG advancement
+    // arc).
+    {
+      const bd = buildingDataForDoor?.(hit) ?? null;
+      const locId = discoveryLocationId?.() ?? null;
+      if (bd && bd.buildingType != null) {
+        if (locId) discoverBuilding(locId, bd);
+        const minutes = Math.floor(worldMinutes());
+        const dict = townTalk?.factionDict ?? null;
+        const unlocked = buildingIsUnlocked(bd, {
+          hour: Math.floor((minutes % 1440) / 60),
+          holidayId: getHolidayId(minutes, bd.regionIndex ?? 0),
+          guildForBuilding: (factionId) => {
+            const guild = guildOfFaction(factionId, resolveVariantGuild(dict), dict);
+            if (!guild) return null;
+            const m = membershipOf((playerEntity.guildMemberships ??= {}), guild);
+            return { hallAccessAnytime: hallAccessAnytime(guild, m), isMember: isMember(m) };
+          },
+          isActiveQuestBuilding: (b) => {
+            if (!questBridge || !isResidence(b.buildingType)) return false;   // residencesOnly, DFU's default
+            const mapId = questSceneCtx?.()?.mapId ?? 0;
+            return questBridge.machine.getSiteLinks(SITE_TYPES.Building, mapId, b.buildingKey).length > 0;
+          },
+        });
+        if (!unlocked) {
+          const lockValue = buildingLockValue(bd.quality);
+          const lockpick = skillValue(playerEntity, SKILLS.Lockpicking);
+          if (getInteractionMode() !== 'steal') {
+            townTalk?.say?.(LOCKED_EXTERIOR_DOOR_TEXT);
+            townTalk?.say?.(lookAtLockText(lockValue, playerEntity.level, lockpick));
+            return true;
+          }
+          if (locId && lockpick <= getLastLockpickAttempt(locId, bd.buildingKey)) {
+            townTalk?.say?.(lookAtLockText(lockValue, playerEntity.level, lockpick));
+            return true;
+          }
+          tallySkill(playerEntity, SKILLS.Lockpicking, 1);
+          const chance = exteriorLockpickingChance(lockValue, lockpick);
+          const roll = 1 + Math.floor(Math.random() * 100);   // Random.Range(1, 101), success strictly chance > roll
+          if (chance > roll) {
+            townTalk?.say?.(LOCKPICKING_SUCCESS_TEXT);
+            audio.playOneShot(SOUND.ActivateLockUnlock, 1);
+          } else {
+            townTalk?.say?.(LOCKPICKING_FAILURE_TEXT);
+            if (locId) setLastLockpickAttempt(locId, bd.buildingKey, lockpick);
+            return true;
+          }
+        }
+      }
+    }
     transitioning = true;
     try {
       // P8: parent the interior at the entered building's world matrix
@@ -1102,7 +1319,7 @@ export function createWorldModes(host) {
         }
         return true;
       }
-      interiorCtx.actions.activate(key);
+      interiorCtx.actions.activate(key, { steal: getInteractionMode() === 'steal' });
       return true;
     }
     // Verbatim BuildingTransitionExteriorLogic: the closest exterior
@@ -1230,7 +1447,7 @@ export function createWorldModes(host) {
       return true;
     }
     if (!key.startsWith('exit:')) {
-      dungeonCtx.actions.activate(key);
+      dungeonCtx.actions.activate(key, { steal: getInteractionMode() === 'steal' });
       return true;
     }
     // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.

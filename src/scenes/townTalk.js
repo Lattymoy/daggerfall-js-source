@@ -47,13 +47,12 @@ import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U8b: p
 
 export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> index (DFU TalkToneToIndex)
 
-export const MODES = ['steal', 'grab', 'info', 'dialogue'];
+// R1: the mode itself moved to player/interactionMode.js (DFU's
+// currentMode is GLOBAL - the dungeon door ladder reads it too);
+// townTalk keeps the keydown, the HUD line and these re-exports.
+export { MODES, nextInteractionMode } from '../player/interactionMode.js';
+import { MODES, getInteractionMode, setInteractionMode, nextInteractionMode } from '../player/interactionMode.js';
 const MODE_KEYS = { F1: 'steal', F2: 'grab', F3: 'info', F4: 'dialogue' };
-
-/** NextInteractionMode, verbatim: Steal > Grab > Info > Talk > wrap. */
-export function nextInteractionMode(mode) {
-  return MODES[(MODES.indexOf(mode) + 1) % MODES.length];
-}
 export const PERSON_HIT_RADIUS = 0.45;   // MobilePersonNPC controller radius
 export const PERSON_HIT_HEIGHT = 1.8;
 
@@ -81,7 +80,6 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   const engine = () => (typeof talkEngine === 'function' ? talkEngine() : talkEngine);
   const hud = new HudText();
   let font = null, factions = null, textRsc = null, people = null;
-  let mode = 'grab';   // PlayerActivate default
   let overlay = null;
   let loaded = false, loading = null;
   let directory = [];   // T3c: the location's named buildings
@@ -176,8 +174,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   };
 
   function setMode(m) {
-    if (m === mode) return;   // ChangeInteractionMode: no-op on the same mode
-    mode = m;
+    if (m === getInteractionMode()) return;   // ChangeInteractionMode: no-op on the same mode
+    setInteractionMode(m);
     hud.add(`Interaction is now in ${m} mode.`);
   }
 
@@ -235,7 +233,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   function showOverlay(win, onClosed = null) { overlay = win; _onOverlayClosed = onClosed; }
 
   /** NextInteractionMode (the touch cycle button); returns the new mode. */
-  function nextMode() { setMode(nextInteractionMode(mode)); return mode; }
+  function nextMode() { setMode(nextInteractionMode(getInteractionMode())); return getInteractionMode(); }
 
   /** The activation ray (the host's E/use edge). persons =
    *  [{ person, pos }] world feet of LIVE townsfolk. Returns true if
@@ -253,14 +251,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // 3.2 alone). The old 6.4 pre-gate answered a person down a long
     // street with SILENCE and let E fall through to a door behind them.
     if (!best || bestDist > RAY_DISTANCE) return false;
-    if (mode !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { hud.add('You are too far away.'); return true; }
-    if (mode === 'steal' && bestDist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return true; }
+    if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { hud.add('You are too far away.'); return true; }
+    if (getInteractionMode() === 'steal' && bestDist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return true; }
     ensureLoaded().then(() => activate(best, bestDist));
     return true;
   }
 
   function activate(target, dist) {
-    if (mode === 'steal') {
+    if (getInteractionMode() === 'steal') {
       // PlayerActivate: pickpocket once per person, 3.2 max
       if (dist > PICKPOCKET_DISTANCE) { hud.add('You are too far away.'); return; }
       if (target.person.pickpocketAttempted) return;
@@ -642,11 +640,11 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     /** AUDIT 21 (hosts lane, F6): the live overlay, so a death presenter can
      *  refuse to stack a second death screen on the first. */
     get overlay() { return overlay; },
-    get mode() { return mode; },
+    get mode() { return getInteractionMode(); },
     get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
     get locationName() { return cityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)
     _debug: () => ({
-      mode, overlay: !!overlay, people: people?.name ?? null,
+      mode: getInteractionMode(), overlay: !!overlay, people: people?.name ?? null,
       buildings: directory.length, tone: TONE_NAMES[tone], toneSession: [...toneSession],
       native: !!overlay?.conversation, topicMode: overlay?.topicMode ?? null,
       topicCount: overlay?.topics?.length ?? null,

@@ -85,7 +85,7 @@ test('audit24 render: the two citations point at the lines they quote', () => {
 
 test('audit24 wave20: StaticNPCClick runs stamp -> DoClick return -> listener return, in that order', () => {
   const s = rd('src/scenes/worldModes.js');
-  const i = s.indexOf('function openStaticNpc(pn) {');
+  const i = s.indexOf('function openStaticNpc(pn, { forceTalk = false } = {}) {');   // R1: the merchant repair popup's talk re-entry rides the signature
   assert.ok(i > 0, 'openStaticNpc must exist');
   const body = s.slice(i, s.indexOf('const route = staticNpcRoute(', i));
 

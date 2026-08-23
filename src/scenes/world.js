@@ -1044,6 +1044,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         const pf = enchantFeet();
         exteriorFoes.spawnFoe(mobileType, [pf[0] + 2, pf[1] + 1, pf[2]]).catch(() => {});
       },
+      // R1: the AllowMagicRepairs seam goes LIVE - RepairsObjects'
+      // enchanted-item skip and the break-consumption arm both read it
+      get allowMagicRepairs() { return getBool('Controls', 'AllowMagicRepairs'); },
     });
   }
   // AUDIT 24 (wave 32): the broker's foe subscribers - the watch and the encounter pool.
@@ -2096,6 +2099,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // restored machine).
     talkSave: { mill: rumorMill, tree: topicTree, session: npcSession },
     onQuestRestored: () => { _questStarted = true; },
+    // R1: the discovery store's location key - the SAME string the
+    // quest bridge's discoverBuilding uses, so the exterior lockpick
+    // anti-grind record and the talk reveals share one namespace.
+    discoveryLocationId: () => `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,
     // G8 (guilds-8): the DiscoverRandomLocation seam for the guild
     // promotion reveals - candidates are the CURRENT pixel's region
     // (PlayerGPS.CurrentRegion; guild services only run inside town

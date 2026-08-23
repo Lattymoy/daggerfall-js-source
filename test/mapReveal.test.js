@@ -47,9 +47,11 @@ test('T4: the discovery store - the record lands whole, once, per location', () 
   assert.equal(discoverBuilding('17:Daggerfall', shelf), true);
   assert.equal(hasDiscoveredBuilding('17:Daggerfall', 66051), true);
   // The DiscoveredBuilding columns this port has sources for
-  // (PlayerGPS.cs:92-103 minus the quest/lockpick extras).
+  // (PlayerGPS.cs:92-103 minus the quest extras; R1 grew
+  // lastLockpickAttempt, the exterior anti-grind record).
   assert.deepEqual(discoveredBuildings('17:Daggerfall'), [{
     buildingKey: 66051, displayName: 'The Odd Blades', factionId: 0, quality: 12, buildingType: 9,
+    lastLockpickAttempt: 0,
   }]);
   // Already discovered is a no-op (:926-928 - the override arm pends quests).
   assert.equal(discoverBuilding('17:Daggerfall', { ...shelf, name: 'Renamed' }), false);

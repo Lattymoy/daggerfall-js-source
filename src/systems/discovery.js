@@ -2,9 +2,9 @@
 // writes and the town map will read. DiscoverBuilding
 // (PlayerGPS.cs:917-975) and the DiscoveredBuilding record (:92-103),
 // trimmed to the columns this port has sources for: the quest
-// name-override machinery (:947-971), UndiscoverBuilding (:980-1010)
-// and lastLockpickAttempt/customUserDisplayName all pend their arcs
-// (quests, the automap UI).
+// name-override machinery (:947-971) and customUserDisplayName pend
+// their arcs (quests, the automap UI). R1: lastLockpickAttempt is
+// LIVE - the exterior lockpicking anti-grind law (:1099-1126).
 //
 // ONE module-level store, because there is one world - the same call
 // worldTick's clock made (AUDIT 21 F2). DFU namespaces locations by
@@ -32,8 +32,26 @@ export function discoverBuilding(locationId, building) {
     factionId: building.factionId ?? 0,
     quality: building.quality ?? 0,
     buildingType: building.buildingType ?? 0,
+    lastLockpickAttempt: 0,   // R1: PlayerGPS.cs:101 - the failed-attempt skill record
   });
   return true;
+}
+
+/** GetLastLockpickAttempt (PlayerGPS.cs:1103-1110): the Lockpicking
+ *  skill at the last FAILED exterior attempt on this building; 0 for
+ *  a building not in the discovery store. The gate at the door is
+ *  `skill <= lastAttempt` - the live skill must RISE past the failure
+ *  before another roll is allowed; success never writes it and
+ *  nothing ever clears it, verbatim. */
+export function getLastLockpickAttempt(locationId, buildingKey) {
+  return _discovered.get(locationId)?.get(buildingKey)?.lastLockpickAttempt ?? 0;
+}
+
+/** SetLastLockpickAttempt (:1118-1126): failure records the skill;
+ *  a no-op for an undiscovered building, as DFU's lookup-guard is. */
+export function setLastLockpickAttempt(locationId, buildingKey, skillValue) {
+  const rec = _discovered.get(locationId)?.get(buildingKey);
+  if (rec) rec.lastLockpickAttempt = skillValue;
 }
 
 /** HasDiscoveredBuilding (:1038-1050). */
