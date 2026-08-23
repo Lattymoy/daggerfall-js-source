@@ -1544,6 +1544,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     isPlayerInLocationRect: () => _musicInLocationRect(),
     playerPixel: () => playerTravelPixel(),
     playerInside: () => {
+      // B2: the DUNGEON arm - PcAt / IsPlayerHere / ConfigureFrom-
+      // PlayerLocation never saw the player as inside one, which is
+      // where the majority of the quest corpus sends them.
+      if ((modes?.mode ?? 'exterior') === 'dungeon') {
+        return { dungeon: { name: modes?.dungeonLocation?.name ?? '' } };
+      }
       const b = modes?.interiorBuilding;
       if (!b) return null;
       return { building: { buildingKey: b.buildingKey, buildingType: b.buildingType, factionId: b.factionId, name: b.name ?? '' } };

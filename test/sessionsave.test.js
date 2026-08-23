@@ -73,7 +73,7 @@ test('B4 seam gate: both quicksaving hosts run the composer, and the dungeon con
   // and the world host must actually hand the dungeon context the
   // bridge + trio + latch when it builds one (a seam nobody mounts is
   // a ported law that evaporates silently - the standing lesson)
-  assert.match(modes, /questBridge, talkSave, onQuestRestored,\s*\}\);/);
+  assert.match(modes, /questBridge, talkSave,\s*\n\s*onQuestRestored: \(\) => \{ onQuestRestored\?\.\(\); mountQuestResources\(\); \},/);
   assert.match(world, /talkSave: \{ mill: rumorMill, tree: topicTree, session: npcSession \}/);
   assert.match(world, /onQuestRestored: \(\) => \{ _questStarted = true; \}/);
 });

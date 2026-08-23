@@ -233,13 +233,16 @@ export function createWorldModes(host) {
   // FLAGGED (Port-Ledger Q4-v): quest FOES pend the interior enemy
   // host - standFoe is absent, so the walk skips the stand and the law
   // modules idle; the dungeon context's own mount pends with it.
-  let questFlats = [];
-  function standQuestFlat(archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null) {
-    const ctx = interiorCtx;   // capture: an async fill must not cross interiors
+  let questFlats = [];          // interior stands (the click sites index this list)
+  let dungeonQuestFlats = [];   // B2: dungeon stands, same record shape
+  function standQuestFlatIn(list, getCtx, toScene, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null) {
+    const ctx = getCtx();   // capture: an async fill must not cross scenes
     if (!ctx) return null;
     // flatPosition is already scene units with -y (the Place marker
-    // law); parent it exactly as the interior's own flats are.
-    const [x, y, z] = ctx.parentPt(position.x, position.y, position.z);
+    // law); the interior parents it exactly as its own flats are, the
+    // dungeon's marker position IS scene space (dungeonX/Z * RDBSide
+    // + flatPosition, markerScenePosition's law).
+    const [x, y, z] = toScene(ctx, position);
     // AUDIT 24 (wave 22): `hashPosition` is marker.flatPosition, which
     // is what GameObjectHelper.cs:1062 hands SetLayoutData - NOT the
     // target position it stood the billboard at. The two are the same
@@ -250,7 +253,7 @@ export function createWorldModes(host) {
     const stand = { ctx, archive, record, x, y, z, marker: hashPosition ?? position, width: 0, height: 0, batch: null, active: true, dead: false, behaviour };
     (async () => {
       const t = await getTexture(archive);
-      if (!t || record >= t.recordCount || stand.dead || interiorCtx !== ctx) return;
+      if (!t || record >= t.recordCount || stand.dead || getCtx() !== ctx) return;
       uploadRecord(archive, record);
       const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
       stand.width = size.w; stand.height = size.h;
@@ -269,20 +272,24 @@ export function createWorldModes(host) {
         if (stand.active === active || stand.dead) return;
         stand.active = active;
         if (!active) unhook();
-        else if (stand.batch && interiorCtx === ctx) ctx.billboardBatches.push(stand.batch);
+        else if (stand.batch && getCtx() === ctx) ctx.billboardBatches.push(stand.batch);
       },
       destroy() {
         if (stand.dead) return;
         stand.dead = true;
         unhook();
         if (stand.batch) { renderer.destroyBatch(stand.batch); stand.batch = null; }
-        const i = questFlats.indexOf(stand);
-        if (i >= 0) questFlats.splice(i, 1);
+        const i = list.indexOf(stand);
+        if (i >= 0) list.splice(i, 1);
       },
     };
-    questFlats.push(stand);
+    list.push(stand);
     return stand.host;
   }
+  const standQuestFlat = (...args) =>
+    standQuestFlatIn(questFlats, () => interiorCtx, (ctx, p) => ctx.parentPt(p.x, p.y, p.z), ...args);
+  const standDungeonQuestFlat = (...args) =>
+    standQuestFlatIn(dungeonQuestFlats, () => dungeonCtx, (_ctx, p) => [p.x, p.y, p.z], ...args);
   const questAdapter = {
     // PlayerGPS.CurrentMapID through the host's scene-context closure.
     currentMapId: () => questSceneCtx?.()?.mapId ?? 0,
@@ -323,8 +330,68 @@ export function createWorldModes(host) {
    *  (deps.world.mountCurrentSiteQuestResources - Place.AssignQuest-
    *  Resource's isPlayerHere tail re-runs the walk mid-scene). */
   function mountQuestResources() {
-    if (!questBridge || !interiorCtx || !interiorBuilding?.buildingKey) return;
+    if (!questBridge) return;
+    // B2: the machine's hot-place callback is mode-aware - Place.
+    // AssignQuestResource's isPlayerHere tail re-runs the walk for
+    // whichever site the player stands in.
+    if (dungeonCtx && mode === 'dungeon') {
+      questBridge.mountScene(dungeonQuestAdapter, SITE_TYPES.Dungeon, 0);
+      return;
+    }
+    if (!interiorCtx || !interiorBuilding?.buildingKey) return;
     questBridge.mountScene(questAdapter, SITE_TYPES.Building, interiorBuilding.buildingKey);
+  }
+
+  // ---- B2 (AUDIT 25 blocker 2): THE DUNGEON HALF OF THE SCENE MOUNT.
+  // AddQuestResourceObjects(SiteTypes.Dungeon) (Place.cs:511-533): the
+  // same walk as the building mount over a dungeon-space adapter -
+  // markerScenePosition already spans blocks (dungeonX/Z * RDBSide),
+  // so the stand parents nowhere and the point IS scene space. Foes
+  // stand as REAL enemies through the context's one build chain (B1's
+  // spawnQuestFoe); the async build binds the behaviour host, and
+  // addQuestFoe's own start() covers the window before it lands.
+  // FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
+  // activation ray (the E-click routes only exit/loot/action keys), so
+  // "clicked npc/item" at a dungeon site does not fire yet - kills do.
+  let dungeonFoeStands = [];   // behaviours standFoe accepted, listed before the async build lands
+  const dungeonSceneBehaviours = () => {
+    const out = dungeonQuestFlats.map((s) => s.behaviour);
+    for (const b of dungeonFoeStands) out.push(b);
+    return out;
+  };
+  const dungeonQuestAdapter = {
+    currentMapId: () => questSceneCtx?.()?.mapId ?? 0,
+    findBehaviours: () => dungeonSceneBehaviours(),
+    loadInProgress: () => false,
+    standNPC: ({ marker, person, flatData, position, behaviour }) =>
+      standDungeonQuestFlat(flatData.archive, flatData.record, position, behaviour, person?.factionId ?? null, marker?.flatPosition ?? null),
+    standItem: ({ item, position, behaviour }) => {
+      const t = templateByIndex(item.daggerfallUnityItem?.templateIndex);
+      if (!t) return null;
+      return standDungeonQuestFlat(t.worldTextureArchive, t.worldTextureRecord, position, behaviour);
+    },
+    standFoe: ({ foe, gender, position, behaviour }) => {
+      if (!dungeonCtx) return null;
+      dungeonFoeStands.push(behaviour);
+      dungeonCtx.spawnQuestFoe({
+        mobileType: foe.foeType, gender,
+        position: [position.x, position.y, position.z], behaviour,
+      }).catch((e) => console.error('[quest] dungeon marker foe failed:', e?.message ?? e));
+      return null;   // the async build binds the host; addQuestFoe's start() runs either way
+    },
+  };
+  function teardownDungeonQuestFlats() {
+    for (const s of [...dungeonQuestFlats]) s.behaviour?.notifyDestroyed?.();
+    for (const s of dungeonQuestFlats) {
+      s.dead = true;
+      if (!s.batch) continue;
+      const i = s.ctx.billboardBatches.indexOf(s.batch);
+      if (i >= 0) s.ctx.billboardBatches.splice(i, 1);
+      renderer.destroyBatch(s.batch);
+      s.batch = null;
+    }
+    dungeonQuestFlats = [];
+    dungeonFoeStands = [];
   }
   function teardownQuestFlats() {
     // Unity's OnDestroy on scene transition: notify each behaviour (the
@@ -760,6 +827,7 @@ export function createWorldModes(host) {
   }
   let exitReturn = null;
   let dungeonCtx = null;
+  let dungeonLoc = null;    // B2: the mounted dungeon's dfLocation (playerInside's dungeon arm)
   let dungeonReturn = null; // entrance-door candidates of the group
   let transitioning = false;
 
@@ -1032,7 +1100,11 @@ export function createWorldModes(host) {
           // saves quest + conversation wherever the player stands
           // (SaveLoadManager.cs:1113-1121), and until this the F9
           // pressed in here wrote a snapshot with neither.
-          questBridge, talkSave, onQuestRestored,
+          // B2: a restored quest machine re-runs the scene mount (DFU's
+          // load path re-adds site resources) - including the
+          // restored-Symbol duplicate quirk sceneMount records.
+          questBridge, talkSave,
+          onQuestRestored: () => { onQuestRestored?.(); mountQuestResources(); },
         });
       dungeonCtx = ctx;
       // P10 host parity (2026-08-16 audit: only the standalone scene
@@ -1055,10 +1127,12 @@ export function createWorldModes(host) {
           e.group === hit.group && e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE),
       };
       mode = 'dungeon';
+      dungeonLoc = dfLocation;
       player.collider = ctx.collider;
       const spawn = ctx.startSpawn();   // ONE source: verbatim MovePlayerToMarker + FixStanding in the context
       player.spawn(spawn[0], spawn[1], spawn[2]);
       cam.pos = player.eye;
+      mountQuestResources();   // B2: AddQuestResourceObjects(SiteTypes.Dungeon) on the transition, as PlayerEnterExit raises it
       console.log(`dungeon: ${ctx.drawList.length} draws, ${ctx.exitDoors.length} exit doors, ` +
         `${ctx.lights.length} lights, ${ctx.waterQuads.length} water, ${ctx.colliderTris} tris, ${ctx.enemies.length} enemies`);
     } finally {
@@ -1105,8 +1179,10 @@ export function createWorldModes(host) {
     }
     // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
     const landing = dungeonEntranceLanding(dungeonReturn.candidates.map((e) => e.door));
+    teardownDungeonQuestFlats();   // B2: OnDestroy for the quest stands, before the batch teardown
     dungeonCtx.destroy();
     dungeonCtx = null;
+    dungeonLoc = null;
     mode = 'exterior';
     questBridge?.onExteriorTransition();   // Q4-v: the same invalidation on the dungeon door
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToDungeonExterior (:3605-3609)
@@ -1189,6 +1265,7 @@ export function createWorldModes(host) {
     // sets timeScale 0 and QuestMachine.Update accumulates
     // Time.deltaTime, which is 0 there - so the overlay gates it.
     if (mode === 'interior') for (const s of [...questFlats]) s.behaviour?.update();
+    if (mode === 'dungeon') for (const s of [...dungeonQuestFlats]) s.behaviour?.update();   // B2: foe behaviours drive inside drawFoes
     if (!overlayHeld) questBridge?.tick(dt);
     const inputHeld = paralyzed || overlayHeld;
     const crouchHeld = keys.has('KeyX');
@@ -1622,6 +1699,7 @@ export function createWorldModes(host) {
 
   return {
     get mode() { return mode; },
+    get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
     startInDungeon,
     /** B1: CreateFoe's TryPlacement, this host's two INSIDE arms
      *  (CreateFoe.cs:194-211). The dungeon arm runs PlaceFoeFreely
@@ -1683,7 +1761,7 @@ export function createWorldModes(host) {
         interiorCtx.destroy();
         interiorCtx = null; interiorBuilding = null; interiorOverlay = null;
       }
-      if (dungeonCtx) { dungeonCtx.destroy(); dungeonCtx = null; }
+      if (dungeonCtx) { teardownDungeonQuestFlats(); dungeonCtx.destroy(); dungeonCtx = null; dungeonLoc = null; }
       player.collider = baseCollider();
       mode = 'exterior';
       if (wasInside) questBridge?.onExteriorTransition();   // CreateFoe's pending-wave invalidation, as both real doors do

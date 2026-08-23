@@ -95,7 +95,10 @@ test('audit24 wave22: the quest NPC hash reads marker.flatPosition, not the stan
   // dungeon, which is a different hash, a different nameSeed fallback
   // and therefore a different generated name than DFU's.
   const s = rd('src/scenes/worldModes.js');
-  assert.match(s, /function standQuestFlat\(archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null\)/);
+  // B2 widened the stand to serve both scenes; the hash law rides the
+  // shared body and the interior wrapper keeps the original argument
+  // order, so the two reads below are the pin that matters.
+  assert.match(s, /function standQuestFlatIn\(list, getCtx, toScene, archive, record, position, behaviour, staticNpcFactionId = null, hashPosition = null\)/);
   assert.match(s, /marker: hashPosition \?\? position,/);
   assert.match(s, /standNPC: \(\{ marker, person, flatData, position, behaviour \}\) =>\s*\n\s*standQuestFlat\(flatData\.archive, flatData\.record, position, behaviour, person\?\.factionId \?\? null, marker\?\.flatPosition \?\? null\),/);
 });
