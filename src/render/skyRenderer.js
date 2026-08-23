@@ -274,9 +274,15 @@ export class SkyRenderer {
     gl.uniform1f(this.uVSpan, this.vSpan);
     gl.uniform1f(this.uFogMix, this.fogMix);
     gl.uniform3fv(this.uFogColor, this.fogColor);
+    // HANDEDNESS: the fullscreen triangle winds CCW and the renderer
+    // runs frontFace(CW) - without culling off, the whole sky culls
+    // away and the clear color shows through (the sky-blue-screen
+    // regression, 2026-08-23).
+    gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);
+    gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.depthMask(true);
     gl.useProgram(previousProgram);

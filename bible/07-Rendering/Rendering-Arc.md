@@ -447,10 +447,29 @@ same stroke.
 
 Pinned in `test/handedness.test.js` at the matrix level (world +x ->
 NDC x > 0, the input-web agreement, the deliberate viewmodel
-exception). NEEDS ARENA2 EYES: the next session with game data should
-re-shoot the sprite-orientation close-ups and a signage crop - the
-historical orientation crops were validated under the mirror, and the
-process rule (compare against the raw record art) now finally has a
+exception).
+
+THE FIRST ARENA2 EYES FOUND A REGRESSION, NOT THE MIRROR (2026-08-23,
+the second playtest): the game opened to nothing but the clear color -
+"a sky blue screen". frontFace(CW) is GLOBAL GL state, and two passes
+drew with culling ON and CCW winding: the 2D screen-quad pass (the
+ENTIRE UI - title screen, chargen, HUD, windows, fonts) and the sky's
+fullscreen triangle. Both culled to nothing; the pale Iliac Bay
+clearColor was all that survived. The init comment had asserted
+"every other pass brackets CULL_FACE off around itself" - it was
+wrong about exactly these two. Fixed with the brackets (the overlay
+pass's own idiom), reproduced and verified at the real-GL level by
+tools/cullProbe.mjs (headless chromium + swiftshader: draw one solid
+quad through drawScreenQuad, read the pixel back - culled before,
+draws after), and pinned in handedness.test.js. THE LESSON, arc law:
+a global GL-state change is reviewed against EVERY draw site, not the
+pass it was written for - node tests cannot see culling, so the probe
+is the regression's real gate.
+
+STILL NEEDS ARENA2 EYES: the mirror itself - re-shoot the
+sprite-orientation close-ups and a signage crop; the historical
+orientation crops were validated under the mirror, and the process
+rule (compare against the raw record art) now finally has a
 presentation that can match it.
 
 ## Queue

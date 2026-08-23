@@ -86,6 +86,26 @@ test('guards: the analytic heightAt floor is ground - chase works on triangle-le
   assert.ok(ai2.feet[1] > -5, 'and did not walk the void');
 });
 
+test('handedness: every non-world pass CULLS OFF - the sky-blue-screen regression stays dead', () => {
+  // 2026-08-23, Mac's second playtest: the game opened to nothing but
+  // the clear color. gl.frontFace(CW) is GLOBAL state, and the 2D
+  // screen-quad pass (the whole UI - title screen to fonts) and the
+  // sky's fullscreen triangle drew with culling ON and CCW winding -
+  // both culled to nothing. The law: only passes riding the MIRRORED
+  // projection (models, terrain) may draw with culling on; everything
+  // else brackets CULL_FACE off. tools/cullProbe.mjs is the real-GL
+  // repro; these pins keep the brackets present.
+  const rend = read('src/render/renderer.js');
+  const quad = rend.slice(rend.indexOf('drawScreenQuad(tex'), rend.indexOf('drawScreenOverlayQuad'));
+  assert.match(quad, /gl\.disable\(gl\.CULL_FACE\);/, 'the 2D screen-quad pass culls off');
+  assert.match(quad, /gl\.enable\(gl\.CULL_FACE\);/, '...and restores');
+  const sky = read('src/render/skyRenderer.js');
+  const skyDraw = sky.slice(sky.indexOf('draw(yaw'), sky.length);
+  assert.match(skyDraw, /gl\.disable\(gl\.CULL_FACE\);[\s\S]*drawArrays/, 'the sky triangle culls off');
+  // and the global swap itself stays (the world passes still need it)
+  assert.match(rend, /gl\.frontFace\(gl\.CW\);/);
+});
+
 test('guards: the quest placement floor probe sees the analytic floor too', () => {
   const c = new Collider(() => 0);   // no tris - open exterior ground
   const env = placeFoeEnv({ collider: c, playerFeet: [0, 1, 0], playerYawRad: 0, fovDegrees: 60, rolls: () => 0.5 });

@@ -588,8 +588,11 @@ export class Renderer {
     gl.cullFace(gl.BACK);
     // HANDEDNESS (mat4's law): the projection mirrors NDC x, which
     // flips every triangle's SCREEN winding - the world meshes' front
-    // faces now arrive clockwise. Only the always-culled world pass
-    // cares; every other pass brackets CULL_FACE off around itself.
+    // faces now arrive clockwise. Only the world passes (models,
+    // terrain) may draw with culling ON; EVERY pass that does not ride
+    // the mirrored projection MUST bracket CULL_FACE off around its
+    // draw - the screen-quad (2D UI) and sky passes learned that the
+    // hard way (the sky-blue-screen regression; tools/cullProbe.mjs).
     gl.frontFace(gl.CW);
     gl.clearColor(0.53, 0.7, 0.92, 1.0); // pale Iliac Bay sky
   }
@@ -898,6 +901,13 @@ void main() {
     gl.useProgram(this.screenQuadProgram);
     gl.bindVertexArray(this._screenQuadVao);
     gl.disable(gl.DEPTH_TEST);
+    // HANDEDNESS REGRESSION (2026-08-23, "the sky-blue screen"): a 2D
+    // blit has no facing, but with CULL_FACE left ON the global
+    // frontFace(CW) swap culled EVERY screen quad - the whole UI
+    // layer, title screen to fonts - leaving only the clear color.
+    // tools/cullProbe.mjs is the real-GL repro; the bracket is the
+    // overlay pass's own idiom.
+    gl.disable(gl.CULL_FACE);
     const ox = this._screenOffset?.[0] ?? 0, oy = this._screenOffset?.[1] ?? 0;
     gl.uniform4f(this._screenQuad.dst, dst.x + ox, dst.y + oy, dst.w, dst.h);
     gl.uniform2f(this._screenQuad.canvas, gl.drawingBufferWidth, gl.drawingBufferHeight);
@@ -919,6 +929,7 @@ void main() {
     if (blend) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); }
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
     if (blend) gl.disable(gl.BLEND);
+    gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.bindVertexArray(null);
   }
