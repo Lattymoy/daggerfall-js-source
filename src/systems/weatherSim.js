@@ -123,7 +123,11 @@ export function weatherTableFor(climateIndex) {
 export function rollWeather(climateIndex, season, rolls = Math.random) {
   const table = weatherTableFor(climateIndex);
   if (!table) return WEATHER_ENUM.sunny;
-  const row = table[season] ?? table[SEASONS.Summer];
+  const row = table[season];
+  if (!row) {
+    console.warn(`[weather] unknown season ${season} - Sunny`);   // WeatherClimate.GetWeather's own arm (Weather.cs:167-168)
+    return WEATHER_ENUM.sunny;
+  }
   let rand = rolls() * 100;
   for (let i = 0; i < row.length; i++) {
     rand -= row[i];
@@ -167,7 +171,26 @@ export function setClimateWeathers(season, rolls = Math.random) {
  *  picks its zone slot through TravelTimeCalculator.climateIndices. */
 export function weatherForClimate(climateIndex) {
   const zone = CLIMATE_INDICES[climateIndex - CLIMATES.Ocean];
+  // A bogus climate answers the CURRENT weather unchanged - DFU's
+  // :432-434 would throw IndexOutOfRange; the defensive arm is the
+  // port's, recorded (tickWeather then reports no change).
   return zone == null ? _current : _climateWeathers[zone];
+}
+
+/** StreamingWorld_OnInitWorld's application half (WeatherManager.cs:
+ *  524-543 -> SetWeatherFromWeatherClimateArray): a world re-init
+ *  (fast travel arrival) applies the destination climate's ARRAY
+ *  slot - no fresh roll. DEPARTURE (recorded): DFU suppresses this
+ *  for the rest of a session once any save has loaded
+ *  (startedFromLoadedSaveGame stays true), which exists to keep the
+ *  boot-time init from clobbering a loaded sky; the port applies on
+ *  every arrival instead of freezing travel weather forever after
+ *  the first load. Answers true when the weather changed. */
+export function applyClimateWeather(climateIndex) {
+  const next = weatherForClimate(climateIndex);
+  if (next === _current) return false;
+  _current = next;
+  return true;
 }
 
 /** THE DAILY TICK (PlayerEntity.cs:440-448 + the flag walk): when the
@@ -180,7 +203,10 @@ export function weatherForClimate(climateIndex) {
  *  (startedFromLoadedSaveGame, WeatherManager.cs:524-543). */
 export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
   const day = Math.floor(nowMinutes / MINUTES_PER_DAY);
-  if (day === _lastDay) return false;
+  // daysPast > 0 exactly (PlayerEntity.cs:444) - a clock that moves
+  // BACKWARD never re-rolls; only the fresh-boot null rolls forward
+  // from nothing.
+  if (_lastDay !== null && day <= _lastDay) return false;
   _lastDay = day;
   setClimateWeathers(seasonValue(dateFromClassicMinutes(nowMinutes)), rolls);
   const next = weatherForClimate(climateIndex);

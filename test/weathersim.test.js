@@ -10,8 +10,13 @@ import assert from 'node:assert/strict';
 import {
   WEATHER_TABLE, WEATHER_ENUM, weatherTableFor, rollWeather,
   setClimateWeathers, weatherForClimate, tickWeather, weatherRespawn,
-  setWeather, currentWeather, restoreWeather, resetWeatherSim,
+  applyClimateWeather, setWeather, currentWeather, restoreWeather, resetWeatherSim,
 } from '../src/systems/weatherSim.js';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const src = (p2) => readFileSync(join(ROOT, p2), 'utf8');
 import { CLIMATES } from '../src/formats/mapsFile.js';
 import { SEASONS, MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
@@ -132,4 +137,31 @@ test('W1 restore law: restoreWeather alone pins the value and the day', () => {
     assert.equal(tickWeather(3 * MINUTES_PER_DAY + 100, CLIMATES.Desert, () => 0.99), false, 'same day - no roll');
     assert.equal(tickWeather(4 * MINUTES_PER_DAY, CLIMATES.Desert, () => 0.99), true, 'the next day rolls');
   } finally { resetWeatherSim(); }
+});
+
+test('W1 review: fast travel applies the ARRAY slot (OnInitWorld), never a fresh roll; backward time never re-rolls', () => {
+  resetWeatherSim();
+  try {
+    // roll the zones once (winter, loud dice -> mountains snow)
+    tickWeather(100, CLIMATES.Woodlands, () => 0.99);
+    // a same-day arrival in the mountains applies slot 1 - NO dice consumed
+    let diceRolled = 0;
+    applyClimateWeather(CLIMATES.Mountain);
+    assert.equal(diceRolled, 0);
+    assert.equal(currentWeather(), 'snow');
+    // the clock moving BACKWARD never re-rolls (daysPast > 0 exactly)
+    assert.equal(tickWeather(100 - MINUTES_PER_DAY, CLIMATES.Woodlands, () => { diceRolled++; return 0.0; }), false);
+    assert.equal(diceRolled, 0);
+  } finally { resetWeatherSim(); }
+});
+
+test('W1 review: the precip draw gates on the MODE in both hosts - the renderer object outlives a clear-up', () => {
+  // applyWeather lazily creates the PrecipitationRenderer and never
+  // drops it; a draw gated on the object alone rained under clear
+  // skies forever after the first storm passed (the review's bug).
+  assert.match(src('src/scenes/world.js'), /if \(precipMode && precip\) \{/);
+  assert.match(src('src/scenes/exterior.js'), /if \(precipMode && precip\) \{/);
+  // and the respawner roll lives on the RESPAWNER path alone
+  assert.match(src('src/scenes/world.js'), /_respawnAtSite[\s\S]{0,900}weatherRespawn\(/);
+  assert.doesNotMatch(src('src/scenes/world.js').slice(0, src('src/scenes/world.js').indexOf('async function _respawnAtSite')), /weatherRespawn\(/, 'no earlier caller - not the teleport, not fast travel');
 });

@@ -134,7 +134,7 @@ import {
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
-import { setWeather, currentWeather, tickWeather, weatherRespawn, snapshotWeather, restoreWeather } from '../systems/weatherSim.js';   // W1: the live weather state
+import { setWeather, currentWeather, tickWeather, weatherRespawn, applyClimateWeather } from '../systems/weatherSim.js';   // W1: the live weather state (the save halves ride save.js)
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 
@@ -1149,13 +1149,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // new origin (fast travel, quickload); CreateFoe's pending waves
     // invalidate across live AND scheduled quests.
     questBridge?.onInitWorld();
-    // W1: PlayerEnterExit_OnRespawnerComplete (WeatherManager.cs:
-    // 514-522) - an arrival in a different climate BASE type rolls
-    // the destination's weather immediately. Walking across a
-    // boundary never does; only the respawner.
-    if (!weatherOverride && weatherRespawn(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(px, py))) {
-      applyWeather(currentWeather());
-    }
+
     // TK-v: TalkManager's OnMapPixelChanged / OnLoadEvent (:3593-3597,
     // :3616-3620) - a new world origin means a new building list and a
     // stale topic list
@@ -1180,6 +1174,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     modes?.forceExitToExterior();
     const px = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
     await _teleportToPixel(px.x, px.y);
+    // W1 review: PlayerEnterExit_OnRespawnerComplete (WeatherManager
+    // .cs:514-522) belongs to the RESPAWNER alone - quest teleports
+    // and respawns, not fast travel (OnInitWorld's array slot) and
+    // not quickload (the restored weather stands).
+    if (!weatherOverride && weatherRespawn(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(px.x, px.y))) {
+      applyWeather(currentWeather());
+    }
     if (siteType === SITE_TYPES.Dungeon) {
       const entered = await modes?.startInDungeon();
       if (!entered) console.warn('[quest] respawn: no dungeon entrance at site - exterior landing (the C# fallback arm)');
@@ -1204,6 +1205,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       // RaiseTime through the ONE clock: the U24 advance runs the same
       // tick, so magic rounds and disease days catch up inside the jump.
       playerTicker.advance(computed.minutes);
+      // W1 review: DFU fast travel never fires the respawner's direct
+      // re-roll - TeleportToCoordinates raises OnInitWorld, whose
+      // weather half applies the destination climate's ARRAY slot
+      // (WeatherManager.cs:524-543). Applied after the clock advance
+      // so a date-crossing trip lands on the arrival day's array (the
+      // frame tick re-rolls the zones first if the date moved).
+      if (!weatherOverride) {
+        tickWeather(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(pick.pixel.x, pick.pixel.y));
+        applyClimateWeather(maps.getClimateIndex(pick.pixel.x, pick.pixel.y));
+        if (currentWeather() !== weather) applyWeather(currentWeather());
+      }
       const clamp = arrivalClampMinutes(playerTicker.classicMinutes, {
         speedCautious: opts.speedCautious,
         sunAverse: false,   // vampirism / DamageFromSunlight ride their arcs
@@ -2651,7 +2663,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     hitEffects.tick(dt);
     livePersonBatches.push(...hitEffects.batches());
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, new Float32Array([0, 1, 0]));
-    if (precip) {
+    if (precipMode && precip) {   // W1 review: precipMode nulls on a clear-up; the renderer object outlives it
       precip.draw(precipMode, proj, view, new Float32Array(cam.pos), camRight, now / 1000);
     }
     // C13: streaming-world arrows fly against the live pixel

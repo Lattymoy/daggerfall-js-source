@@ -1310,7 +1310,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       personBatches.push(...hitEffects.batches());
       if (personBatches.length) renderer.drawBillboards(personBatches, camRight, new Float32Array([0, 1, 0]));
     }
-    if (precip) {
+    if (precipMode && precip) {   // W1 review: precipMode nulls on a clear-up; the renderer object outlives it
       precip.draw(precipMode, proj, view, new Float32Array(eye), camRight, now / 1000);
     }
     // C9: the exterior FP weapon (first-person walk only - the V
