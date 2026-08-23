@@ -89,6 +89,20 @@ test('B5-6: a page whose hook is absent consumes the click and opens nothing (th
   assert.equal(w.topicMode, 'none');
 });
 
+test('MERGE: Where-is remembers the selected category (SetTalkModeWhereIs :960-971 re-runs SetTalkCategory)', () => {
+  const h = mkHooks();
+  const w = new NativeTalkWindow('greeting', h);
+  w.click(...at(TALK_RECTS.categoryPeople));
+  assert.equal(w.topicMode, 'topics');
+  w.click(...at(TALK_RECTS.tellMeAbout));       // leave for Tell me about
+  w.click(...at(TALK_RECTS.whereIs));           // back to Where-is
+  assert.equal(w.topics[0].label, 'Lord Bridwell', 'People again, not Location - the C# category persists');
+  // and the default arm is Location for a fresh window
+  const w2 = new NativeTalkWindow('greeting', mkHooks());
+  w2.click(...at(TALK_RECTS.whereIs));
+  assert.equal(w2.topicMode, 'categories');
+});
+
 test('B7 seam gate: the static-NPC conversation opens the window instead of "You get no response."', () => {
   const modes = read('src/scenes/worldModes.js');
   const town = read('src/scenes/townTalk.js');

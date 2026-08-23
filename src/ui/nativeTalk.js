@@ -125,9 +125,14 @@ export class NativeTalkWindow {
     this.isChoiceWindow = true;      // raw codes through townTalk
     this.conversation = [greeting];  // classic: answers append here
     this.topics = [];                // current list rows
-    this.topicMode = 'none';         // none | categories | buildings
+    this.topicMode = 'none';         // none | categories | buildings | topics | work
     this.scroll = 0;
     this._category = null;
+    // MERGE (the S-A lane's shape): selectedTalkCategory persists -
+    // SetTalkModeWhereIs re-runs SetTalkCategory(selectedTalkCategory)
+    // (:960-971), so Where-is after a People/Things/Work visit returns
+    // to THAT page, not to Location. Location is the C# default arm.
+    this._lastCategory = 'location';
   }
 
   _openCategories() {
@@ -160,6 +165,13 @@ export class NativeTalkWindow {
     this.scroll = 0;
     this.question = q;   // the player-says panel shows it; OKAY asks
     return true;
+  }
+  /** SetTalkModeWhereIs (:960-971) -> SetTalkCategory(selected). */
+  _reopenCategory() {
+    if (this._lastCategory === 'people' && this._openFlat(this.hooks.peopleTopics?.())) return;
+    if (this._lastCategory === 'things' && this._openFlat(this.hooks.thingsTopics?.())) return;
+    if (this._lastCategory === 'work' && this._openWork()) return;
+    this._openCategories();   // the C# default arm
   }
   _askWork() {
     if (this.topicMode !== 'work' || !this.hooks.askWork) return;
@@ -224,7 +236,8 @@ export class NativeTalkWindow {
     // the recorded no-op (the port's one-click-asks idiom has no
     // selected topic for it to ask).
     if (inRect(R.okay, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._askWork(); return true; }
-    if (inRect(R.whereIs, vx, vy) || inRect(R.categoryLocation, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._openCategories(); return true; }
+    if (inRect(R.whereIs, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._reopenCategory(); return true; }
+    if (inRect(R.categoryLocation, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._lastCategory = 'location'; this._openCategories(); return true; }
     if (inRect(R.tonePolite, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(0); return true; }
     if (inRect(R.toneNormal, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(1); return true; }
     if (inRect(R.toneBlunt, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(2); return true; }
@@ -237,9 +250,9 @@ export class NativeTalkWindow {
     // to consuming the click when its hook is absent (the pre-engine
     // host), so an art-only session never half-opens a page.
     if (inRect(R.tellMeAbout, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._openFlat(this.hooks.tellMeAboutTopics?.()); return true; }
-    if (inRect(R.categoryPeople, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._openFlat(this.hooks.peopleTopics?.()); return true; }
-    if (inRect(R.categoryThings, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._openFlat(this.hooks.thingsTopics?.()); return true; }
-    if (inRect(R.categoryWork, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._openWork(); return true; }
+    if (inRect(R.categoryPeople, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); if (this._openFlat(this.hooks.peopleTopics?.())) this._lastCategory = 'people'; return true; }
+    if (inRect(R.categoryThings, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); if (this._openFlat(this.hooks.thingsTopics?.())) this._lastCategory = 'things'; return true; }
+    if (inRect(R.categoryWork, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); if (this._openWork()) this._lastCategory = 'work'; return true; }
     return false;
   }
 

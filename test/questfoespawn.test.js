@@ -145,6 +145,15 @@ test('B1 seam gate: the trio is mounted on questWorld and the pools drive + tear
   }
   // the wilderness arm widens the ring (TryPlacement :252-257)
   assert.match(world, /minDistance: 8, maxDistance: 25/);
+  // MERGE (the S-A lane's catch): fieldOfView() answers RADIANS and
+  // the law speaks DEGREES - both arms must convert, or every foe
+  // places ~1 degree off the view axis, dead ahead of the player
+  assert.match(world, /fovDegrees: fieldOfView\(\) \* 180 \/ Math\.PI/);
+  assert.match(modes, /fovDegrees: fieldOfView\(\) \* 180 \/ Math\.PI/);
+  // FinalizeFoe (:341-359): the Flying lift, in both arms - and only
+  // Flying, never Spectral (the one flag FinalizeFoe reads)
+  assert.match(world, /=== 'Flying'/);
+  assert.match(modes, /=== 'Flying'/);
   // the dungeon arm stands through the context's one build chain
   assert.match(modes, /dungeonCtx\.spawnQuestFoe\(/);
   // both pools drive the behaviour every frame the object lives

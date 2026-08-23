@@ -94,6 +94,26 @@ is 88,640 lines today.
 
 ## The seven blockers
 
+**ALL SEVEN CLOSED 2026-08-23, the same day** - shipped on the
+analysis lane (`claude/dfu-port-analysis-onckre`, merged to main with
+this page) as B1-B7: B1 quest foe spawning (the hosts answer the
+seams; `questFoeHost.js` + both pools), B2 the dungeon scene mount
+(+ `playerInside`'s dungeon arm), B3 the respawn primitive composed
+from the halves that all existed, B4 the ONE quicksave composer, B5-6
+the talk window's other pages over the engine's own lists, B7 the
+static-NPC conversation opening (the guild popup's TALK button
+included). Pinned in `questfoespawn` / `questdungeonmount` /
+`questrespawn` / `sessionsave` / `talkpages` test files. The audit
+lane's own S-A/1-4 fixes (a parallel implementation of blockers 1, 2,
+4 and 5-6, pushed hours after B1-B7) were superseded by this merge and
+did NOT land - one law, one home - except three pieces folded from
+its reading: the fieldOfView RADIANS-vs-DEGREES catch in the
+placement arms, FinalizeFoe's Flying lift, and the Where-is category
+memory. Residue still open from the blocker writeups: the interior
+foe-placement arm, TeleportPc's Building respawn arm, and clicks on
+dungeon quest NPC/item flats - each FLAGGED at its site.
+
+
 These are the items where the port is not merely incomplete but
 *unfinishable* - a player cannot get to the end of the thing.
 

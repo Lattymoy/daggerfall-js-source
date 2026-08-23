@@ -42,6 +42,7 @@ import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
 import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
+import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE } from '../systems/encounters.js';   // X-slice
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
@@ -1655,13 +1656,19 @@ export async function bootWorld(canvas, renderer, params, status) {
         // PlayerObject.transform.position, not the feet
         playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
         playerYawRad: cam.yaw,
-        fovDegrees: fieldOfView(),
+        // MERGE (the S-A lane's catch): fieldOfView() answers RADIANS,
+        // the law speaks DEGREES - raw, every foe placed dead ahead
+        // inside the view instead of just outside the cone.
+        fovDegrees: fieldOfView() * 180 / Math.PI,
         isOccupied: entityOccupancy((f) => f.ai?.feet, () => exteriorFoes.foes, feet),
       });
       const spot = _musicInLocationRect() ? placeFoeFreely(env) : placeFoeFreely(env, { minDistance: 8, maxDistance: 25 });
       if (!spot) return false;
       const foe = handle.foe;
-      exteriorFoes.spawnFoe(foe.foeType, [spot.x, spot.y, spot.z], {
+      // FinalizeFoe (CreateFoe.cs:341-359): a FLYING foe lifts 1.5
+      // from the test point; walkers land through the pool's own chain.
+      const _fly = (ENEMY_BASICS[foe.foeType]?.behaviour ?? 'General') === 'Flying';
+      exteriorFoes.spawnFoe(foe.foeType, [spot.x, _fly ? spot.y + 1.5 : spot.y, spot.z], {
         gender: questFoeGender(foe),
         yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player (CreateFoe.cs:328)
         questBehaviour: handle.behaviour,

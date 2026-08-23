@@ -93,6 +93,7 @@ import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
 import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)
+import { ENEMY_BASICS } from '../characters/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { positionHash, staticNpcData } from './questBridge.js';   // B7: the guild popup's TALK builds display data without re-registering the click
 import { staticNpcName } from '../characters/staticNpc.js';   // wave 24: StaticNPC.DisplayName
@@ -1747,15 +1748,24 @@ export function createWorldModes(host) {
         collider: dungeonCtx.collider,
         playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
         playerYawRad: cam.yaw,
-        fovDegrees: fieldOfView(),
+        // MERGE (the S-A lane's catch): fieldOfView() answers RADIANS
+        // and the law speaks DEGREES (MainCamera.fieldOfView) - raw,
+        // the direction angle was ~1 degree and every foe placed dead
+        // ahead INSIDE the view instead of just outside the cone.
+        fovDegrees: fieldOfView() * 180 / Math.PI,
         isOccupied: entityOccupancy((f) => f.ai?.feet, () => dungeonCtx.foes, feet),
       });
       const spot = placeFoeFreely(env);
       if (!spot) return false;
       const foe = handle.foe;
+      // FinalizeFoe (CreateFoe.cs:341-359): a walker aligns back onto
+      // the floor it found (the pool's own landing does that); a
+      // FLYING foe is lifted 1.5 from the test point instead - and
+      // only Flying, not Spectral (FinalizeFoe reads the one flag).
+      const _fly = (ENEMY_BASICS[foe.foeType]?.behaviour ?? 'General') === 'Flying';
       dungeonCtx.spawnQuestFoe({
         mobileType: foe.foeType, gender: questFoeGender(foe),
-        position: [spot.x, spot.y, spot.z],
+        position: [spot.x, _fly ? spot.y + 1.5 : spot.y, spot.z],
         yawRad: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player (CreateFoe.cs:328)
         behaviour: handle.behaviour,
       }).catch((e) => console.error('[quest] dungeon foe stand failed:', e?.message ?? e));
