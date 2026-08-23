@@ -25,8 +25,10 @@
 // with the session's keyboard accelerators preserved - W opens
 // Where-is > Location, T cycles tone, digits pick visible rows,
 // N/P page (OURS: DFU has no keyboard scroll here, so they step a
-// full listbox height), Esc/E goodbye. People/Things/Work are
-// INTERIM no-ops (their topic sources pend quests/work).
+// full listbox height), Esc/E goodbye. B5-6: Tell me about, People,
+// Things and Work are LIVE pages over the engine's own lists
+// (listTopicTellMeAbout / Person / Thing and the Work question);
+// each stays a consumed no-op on a host with no engine mounted.
 
 import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
@@ -133,6 +135,37 @@ export class NativeTalkWindow {
     this.topicMode = 'categories';
     this.scroll = 0;
   }
+  /** B5-6: the OTHER pages. Tell me about (SetTalkModeTellMeAbout,
+   *  DaggerfallTalkWindow.cs:935-958: ListTopicTellMeAbout, a FLAT
+   *  list - Any news, Where am I, org info, quest topics), People
+   *  (SetTalkCategoryPeople :1039-1060: ListTopicPerson, flat, often
+   *  empty), Things (SetTalkCategoryThings: ListTopicThings, EMPTY -
+   *  classic never implemented it, the port's tree is verbatim), and
+   *  Work (SetTalkCategoryWork :1079-1101: NO list - the question
+   *  goes straight to the player-says panel and OKAY asks it,
+   *  ButtonOkay_OnMouseClick :1534-1543). A page with no hook mounted
+   *  (the pre-engine fallback host) stays the old no-op. */
+  _openFlat(rows) {
+    if (!rows) return false;
+    this.topics = rows;
+    this.topicMode = 'topics';
+    this.scroll = 0;
+    return true;
+  }
+  _openWork() {
+    const q = this.hooks.workQuestion?.();
+    if (q == null) return false;
+    this.topics = [];
+    this.topicMode = 'work';
+    this.scroll = 0;
+    this.question = q;   // the player-says panel shows it; OKAY asks
+    return true;
+  }
+  _askWork() {
+    if (this.topicMode !== 'work' || !this.hooks.askWork) return;
+    this.conversation.push({ text: this.question, kind: 'question' });
+    this.conversation.push({ text: this.hooks.askWork(), kind: 'answer' });
+  }
   /** The index of the first row ListBox.Draw renders at this pixel
    *  scroll - what the port's digit accelerators address. */
   _firstVisible() { return Math.max(0, Math.ceil(this.scroll / TOPIC_ROW_H) - 1); }
@@ -145,12 +178,15 @@ export class NativeTalkWindow {
       this.topics = it.buildings;
       this.topicMode = 'buildings';
       this.scroll = 0;
-    } else if (this.topicMode === 'buildings') {
+    } else if (this.topicMode === 'buildings' || this.topicMode === 'topics') {
       // AUDIT 17e F13: the question is a TEXT.RSC record chosen by
       // tone, not an English literal. F-addendum: DFU pushes the
       // question/answer PAIR into the conversation
       // (SetQuestionAnswerPairInConversationListbox) - the question
       // was only ever shown in the player-says panel here.
+      // B5-6: the flat pages (Tell me about, People) ask through the
+      // SAME pair - their rows carry listItems and the hooks already
+      // speak them.
       this.question = this.hooks.question?.(it) ?? `Where is ${it.label ?? it.name}?`;
       this.conversation.push({ text: this.question, kind: 'question' });
       this.conversation.push({ text: this.hooks.answer(it), kind: 'answer' });
@@ -183,7 +219,11 @@ export class NativeTalkWindow {
     // Every talk-window button assigns ButtonClick (DaggerfallTalkWindow
     // :1315-1605); the topic ask itself clicks at the Q&A pair (:1253).
     if (inRect(R.goodbye, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
-    if (inRect(R.okay, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); return true; }
+    // B6: OKAY asks the WORK question when the Work page is up
+    // (ButtonOkay_OnMouseClick :1534-1543); everywhere else it stays
+    // the recorded no-op (the port's one-click-asks idiom has no
+    // selected topic for it to ask).
+    if (inRect(R.okay, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._askWork(); return true; }
     if (inRect(R.whereIs, vx, vy) || inRect(R.categoryLocation, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._openCategories(); return true; }
     if (inRect(R.tonePolite, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(0); return true; }
     if (inRect(R.toneNormal, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.setTone(1); return true; }
@@ -193,9 +233,14 @@ export class NativeTalkWindow {
     // ListBox.MouseClick's PixelWise branch: the hit row is found at
     // scrollIndex + clickY, not at the visible-row ordinal.
     if (inRect(R.topicList, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._pickIndex(Math.floor((vy - R.topicList[1] + this.scroll) / TOPIC_ROW_H)); return true; }
-    // Tell me about / People / Things / Work: INTERIM no-ops (pend)
-    return inRect(R.tellMeAbout, vx, vy) || inRect(R.categoryPeople, vx, vy)
-      || inRect(R.categoryThings, vx, vy) || inRect(R.categoryWork, vx, vy);
+    // B5-6: the four pages that were INTERIM no-ops. Each falls back
+    // to consuming the click when its hook is absent (the pre-engine
+    // host), so an art-only session never half-opens a page.
+    if (inRect(R.tellMeAbout, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._openFlat(this.hooks.tellMeAboutTopics?.()); return true; }
+    if (inRect(R.categoryPeople, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._openFlat(this.hooks.peopleTopics?.()); return true; }
+    if (inRect(R.categoryThings, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._openFlat(this.hooks.thingsTopics?.()); return true; }
+    if (inRect(R.categoryWork, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._openWork(); return true; }
+    return false;
   }
 
   draw(renderer, canvas, font) {

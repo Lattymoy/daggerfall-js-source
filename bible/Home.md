@@ -269,10 +269,9 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:430` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
 - `src/scenes/worldModes.js:523` - Person placed in a dungeon is the quest machine's, FLAGGED
 - `src/scenes/worldModes.js:631` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:650` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:694` - onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToStaticNPC pends the static-NPC conversation
-- `src/scenes/worldModes.js:701` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:1709` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:661` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:728` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:1736` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and
@@ -348,9 +347,8 @@ combat line numbers below are refreshed with it.
 - `src/ui/nativeInventory.js:247` - *  ClickAnywhereToClose message box. FLAGGED loud, exactly as the
 - `src/ui/nativeInventory.js:491` - field is INTERIM-pending with the local Remove split.
 - `src/ui/nativeInventory.js:645` - FLAGGED: the hover fill is the mouse-move seam's, not this
-- `src/ui/nativeTalk.js:29` - INTERIM no-ops (their topic sources pend quests/work).
-- `src/ui/nativeTalk.js:182` - lands with the Tell-me-about slice (FLAGGED).
-- `src/ui/nativeTalk.js:196` - Tell me about / People / Things / Work: INTERIM no-ops (pend)
+- `src/ui/nativeTalk.js:218` - lands with the Tell-me-about slice (FLAGGED).
+- `src/ui/nativeTalk.js:236` - B5-6: the four pages that were INTERIM no-ops. Each falls back
 - `src/ui/nativeTrade.js:16` - scroll. FLAGGED loud: the basket + mode-action flow (DFU
 - `src/ui/nativeTrade.js:71` - player's own gear. The REMOTE (shelf) list borrows it, FLAGGED at
 - `src/ui/paperDoll.js:18` - Human +2 - Breton INTERIM), record = playerTextureRecord

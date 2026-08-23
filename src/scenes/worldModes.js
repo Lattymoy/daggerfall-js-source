@@ -94,7 +94,7 @@ import { SITE_TYPES } from '../systems/quest/place.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called
 import { placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)
 import { scaledBillboardSize } from '../world/rmbFlats.js';
-import { positionHash } from './questBridge.js';
+import { positionHash, staticNpcData } from './questBridge.js';   // B7: the guild popup's TALK builds display data without re-registering the click
 import { staticNpcName } from '../characters/staticNpc.js';   // wave 24: StaticNPC.DisplayName
 import { GENDERS } from '../characters/nameHelper.js';
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
@@ -637,6 +637,17 @@ export function createWorldModes(host) {
     // Both fall through to TALK, which is DFU's own last arm for an
     // NPC with no special handling, so nothing is inert.
     console.log('[interior] static NPC route:', route.kind, route.service ?? '');
+    // B7 (AUDIT 25 blocker 7): the conversation OPENS. TalkToNpc's
+    // tail is pushTalkWindow (TalkManager.cs:2653) - the engine has
+    // computed the greeting, the resets and the topic rebuild since
+    // TK-v, and this host answered "You get no response." over the
+    // top of all of it. The window mounts through townTalk (its
+    // overlay draws and takes input in every mode - the hosts route
+    // townTalk first). A host with no session keeps the old line.
+    if (talk?.kind === 'talk' && townTalk?.openTalkWindow) {
+      townTalk.openTalkWindow(talk.greeting, { npcSeed: pn.nameSeed ?? 0, npcName: displayName });
+      return;
+    }
     townTalk?.say?.('You get no response.');
   }
 
@@ -691,7 +702,23 @@ export function createWorldModes(host) {
           },
         };
       },
-      onTalk: () => townTalk?.say?.('You get no response.'),   // FLAGGED: TalkToStaticNPC pends the static-NPC conversation
+      /** B7: the popup's TALK button is TalkToStaticNPC with menu
+       *  defaulted TRUE (DaggerfallGuildServicePopupWindow.cs:294) -
+       *  the same engine doors, then the window push. */
+      onTalk: () => {
+        const dict2 = townTalk?.factionDict ?? null;
+        const npcData2 = pn.factionID ? staticNpcData(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0 }) : null;
+        const displayName2 = npcData2 ? staticNpcName(npcData2, { getFaction: (id) => dict2?.get(id) ?? null }) : (pn.displayName ?? '');
+        const talk2 = npcSession?.talkToStaticNPC(
+          { data: pn, isChildNPC: !!pn.isChildNPC, displayName: displayName2 },
+          { menu: true, isSpyMaster: false });
+        if (talk2?.kind === 'talk' && townTalk?.openTalkWindow) {
+          interiorOverlay = null;   // the popup yields to the conversation, as DFU's CloseWindow-then-push does
+          townTalk.openTalkWindow(talk2.greeting, { npcSeed: pn.nameSeed ?? 0, npcName: displayName2 });
+          return;
+        }
+        if (!talk2) townTalk?.say?.('You get no response.');   // no session mounted - the old line
+      },
       onService: () => {
         const access = serviceAccess(guild, membershipOf(memberships, guild), service);
         if (!access.allowed) {

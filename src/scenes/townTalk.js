@@ -37,7 +37,7 @@ import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorifi
 import { REGION_RACES } from '../formats/mapsFile.js';
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { buildBuildingDirectory, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint } from '../systems/talkTopics.js';
-import { LIST_ITEM_TYPE } from '../systems/topicTree.js';   // TK-vi: the window's rows are the tree's ListItems
+import { LIST_ITEM_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';   // TK-vi: the window's rows are the tree's ListItems; B6: the Work question type
 import { discoverBuilding } from '../systems/discovery.js';   // T4: %loc's mark side effect
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { FACTION_TYPES } from '../formats/factionFile.js';
@@ -313,11 +313,38 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     _questionsAsked = 0;
     // U8b: the native TALK01I0 window when the art is up (clicks/taps
     // through the verbatim hit rects; the keyed chain is the fallback)
+    openTalkWindow(t.text, { npcSeed: _talkNpc?._talkSeed ?? 0, npcName: _talkNpc?.nameNPC ?? '' });
+  }
+
+  /** B7: THE ONE WINDOW-OPENER. The mobile path above and
+   *  TalkToStaticNPC's fall-through (the worldModes static-NPC click,
+   *  the guild popup's TALK button) both land here - DFU has one
+   *  DaggerfallTalkWindow and every conversation pushes it
+   *  (TalkManager.cs:2616-2663 ends in pushTalkWindow). The session
+   *  resets are NOT here: the mobile path runs its own above, and
+   *  talkToStaticNPC runs the C# ones inside the engine. Art-less or
+   *  building-less sessions keep the keyed greeting chain. */
+  function openTalkWindow(greeting, { npcSeed = 0, npcName = '' } = {}) {
+    const eng = engine();
     if (talkArtLoaded() && directory.length) {
-      showOverlay(new NativeTalkWindow(t.text, {
+      showOverlay(new NativeTalkWindow(greeting, {
         categories: () => treeCategories() ?? localCategories(),
+        // B5-6: the OTHER pages, off the engine's own lists - the
+        // whole reason they were blockers is that the tree computed
+        // all of this and the window threw it away. Null when no
+        // engine is mounted: the window keeps the consumed no-op.
+        tellMeAboutTopics: () => treeFlatTopics(engine()?.tree?.listTopicTellMeAbout),
+        peopleTopics: () => treeFlatTopics(engine()?.tree?.listTopicPerson),
+        thingsTopics: () => treeFlatTopics(engine()?.tree?.listTopicThing),
+        workQuestion: () => (eng?.pipeline ? eng.pipeline.getQuestionText(workListItem(), tone) : null),
+        askWork: () => eng.pipeline.getAnswerText(workListItem(), {
+          npcSeed,
+          // TalkManager.WorkAvailable - the town's npcsWithWork pool
+          // (TK-iv owns it); no work in town = record 8078 verbatim
+          workAvailable: eng.session?.workAvailable ?? false,
+        }),
         answer: (row) => (row.listItem
-          ? eng.pipeline.getAnswerText(row.listItem, { npcSeed: _talkNpc?._talkSeed ?? 0 })
+          ? eng.pipeline.getAnswerText(row.listItem, { npcSeed })
           : answerText(row)),
         question: (row) => {
           if (row.listItem) return eng.pipeline.getQuestionText(row.listItem, tone);
@@ -325,11 +352,11 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         },
         tone: () => tone,
         setTone: (t2) => { tone = t2; },
-        npcName: _talkNpc?.nameNPC ?? '',   // AUDIT 18 F5: the NPC's OWN name, not the People faction
+        npcName,   // AUDIT 18 F5: the NPC's OWN name, not the People faction
       }));
       return;
     }
-    showGreeting(t.text);
+    showGreeting(greeting);
   }
 
   /** TK-vi: THE WINDOW ON THE TREE. DaggerfallTalkWindow's Where-is
@@ -359,6 +386,23 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       }))
       .filter((group) => group.buildings.length);
   }
+
+  /** B5-6: a FLAT tree list (Tell me about, People, Things) as window
+   *  rows. Null when no engine stands (the window keeps its no-op);
+   *  NavigationBack rows drop exactly as the location groups drop
+   *  theirs. An EMPTY list opens an empty listbox - DFU's own Things
+   *  page, verbatim (classic never implemented it). */
+  function treeFlatTopics(list) {
+    if (!engine()?.pipeline || !list) return null;
+    return list
+      .filter((child) => child.type !== LIST_ITEM_TYPE.NavigationBack)
+      .map((child) => ({ label: child.caption, listItem: child }));
+  }
+
+  /** SetTalkCategoryWork's fake list item (DaggerfallTalkWindow.cs:
+   *  1097-1099): "create fake list item so that we can call function
+   *  and set its questionType to QuestionType.Work". */
+  const workListItem = () => ({ type: LIST_ITEM_TYPE.Item, questionType: QUESTION_TYPE.Work, caption: '' });
 
   /** The pre-engine fallback: T3c's flat category directory. */
   function localCategories() {
@@ -551,6 +595,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
 
   return {
     keydown, tryActivate, frame, ensureLoaded, nextMode, showOverlay, setTopics, pointerdown, wheel,
+    openTalkWindow,   // B7: TalkToStaticNPC's window push routes here (worldModes' click + the guild popup's TALK)
     /** TK-v: the two halves of the tone the ENGINE asks the host for -
      *  which tone button is selected, and the tier computation for a
      *  given question. The GATE that decides when to recompute is the
