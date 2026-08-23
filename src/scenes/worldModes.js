@@ -622,11 +622,13 @@ export function createWorldModes(host) {
     });
     if (route.kind === 'guildService') { openGuildService(pn, route); return; }
     // R1: the repair-shop merchant (DaggerfallMerchantRepairPopupWindow
-    // - Armorer/GeneralStore/WeaponSmith per RMBLayout.IsRepairShop;
-    // the popup's two buttons are the window's Repair list and its
-    // T - talk, which re-runs this routing with the merchant arm
-    // skipped, DFU's TalkButton_OnMouseClick shape). The plain-merchant
-    // sell/banking/tavern arms stay FLAGGED below.
+    // - Armorer/GeneralStore/WeaponSmith per RMBLayout.IsRepairShop).
+    // The popup carries THREE buttons (:82-97): Repair (the window's
+    // list), Talk (T - re-runs this routing with the merchant arm
+    // skipped and menu:true, TalkButton_OnMouseClick :143-148), and
+    // Sell - FLAGGED with the plain-merchant sell arm below (it opens
+    // the trade window's Sell mode, which needs the shelf flow's mode
+    // split). The banking/tavern arms stay FLAGGED below too.
     if (!forceTalk && route.kind === 'merchant' && route.service === 'repair') {
       openRepairService({ onTalk: () => openStaticNpc(pn, { forceTalk: true }) });
       return;
@@ -663,7 +665,11 @@ export function createWorldModes(host) {
       : (pn.displayName ?? '');
     const talk = npcSession?.talkToStaticNPC(
       { data: pn, isChildNPC: !!pn.isChildNPC, displayName },
-      { menu: false, isSpyMaster: route.spymaster === true });
+      // R1: StaticNPCClick's own arms pass menu:FALSE (:1633 et al);
+      // the repair popup's Talk button calls TalkToStaticNPC with the
+      // DEFAULT menu=true (DaggerfallMerchantRepairPopupWindow.cs:147)
+      // - forceTalk IS that button, so it carries the popup's flag.
+      { menu: forceTalk, isSpyMaster: route.spymaster === true });
     if (talk?.kind === 'questOffer' && questBridge) {
       const step = questBridge.offerSocialQuest(talk.npc ?? pn, talk.socialGroup, talk.menu);
       const boxes = questBridge.offerBoxes(step, (id) => townTalk?.lines?.(id) ?? []);
@@ -944,7 +950,12 @@ export function createWorldModes(host) {
       it.currentCondition = it.maxCondition;   // the InstantRepairs branch (:1062-1065)
     } else {
       const now = Math.floor(worldMinutes());
-      updateRepairTimes([it], { commit: true, nowMinutes: now, buildingKey: interiorBuilding?.buildingKey ?? 0 });
+      // DFU's commit pass runs over remoteItemsFiltered - EVERY job at
+      // this shop plus the new one - which is what makes the longest-job
+      // queue stretch and the never-decrease clamp real laws rather
+      // than dead arms of a one-item list (:1069 -> :514-568).
+      const bk = interiorBuilding?.buildingKey ?? 0;
+      updateRepairTimes([...repairJobsAt(playerEntity, bk, now), it], { commit: true, nowMinutes: now, buildingKey: bk });
       const i = playerEntity.items.indexOf(it);
       if (i >= 0) playerEntity.items.splice(i, 1);
       (playerEntity.otherItems ??= []).push(it);
@@ -954,15 +965,18 @@ export function createWorldModes(host) {
     surfacePlayer();
     showRepairList(0, ctx);
   }
-  function showRepairJobs(ctx) {
+  function showRepairJobs(ctx, page = 0) {
     const now = Math.floor(worldMinutes());
     const jobs = repairJobsAt(playerEntity, interiorBuilding?.buildingKey ?? 0, now);
     if (!jobs.length) { showRepairList(0, ctx); return; }
-    const options = jobs.slice(0, 8).map((it, j) => ({
+    const per = 8;
+    const slice = jobs.slice(page * per, (page + 1) * per);
+    const options = slice.map((it, j) => ({
       code: `Digit${j + 1}`,
       label: `${j + 1} - ${_itemLabel(it)} (${repairStatusLabel(it, now)})`,
       action: () => collectJob(it, ctx),
     }));
+    if ((page + 1) * per < jobs.length) options.push({ code: 'KeyN', label: 'N - more', action: () => showRepairJobs(ctx, page + 1) });
     options.push({ code: 'Escape', label: 'Esc - back', action: () => showRepairList(0, ctx) });
     interiorOverlay = new ChoiceWindow({ lines: ['Items left for repair:'], options });
   }
@@ -1077,6 +1091,10 @@ export function createWorldModes(host) {
     {
       const bd = buildingDataForDoor?.(hit) ?? null;
       const locId = discoveryLocationId?.() ?? null;
+      // A door whose building the directory cannot resolve FAILS OPEN
+      // (enters unconditionally) - the pre-R1 behavior, kept
+      // deliberately: refusing entry on missing data would strand a
+      // player where DFU always has BuildingSummary.
       if (bd && bd.buildingType != null) {
         if (locId) discoverBuilding(locId, bd);
         const minutes = Math.floor(worldMinutes());

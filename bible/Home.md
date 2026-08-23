@@ -247,8 +247,8 @@ combat line numbers below are refreshed with it.
 - `src/scenes/exterior.js:476` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
 - `src/scenes/exterior.js:602` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
 - `src/scenes/exterior.js:721` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:891` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1033` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:896` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1038` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:177` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:194` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
@@ -271,14 +271,15 @@ combat line numbers below are refreshed with it.
 - `src/scenes/worldModes.js:397` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
 - `src/scenes/worldModes.js:474` - if (!isShop(b.buildingType)) return;   // Library/Guild/Temple bookshelves + owned-house storage pend (FLAGGED)
 - `src/scenes/worldModes.js:567` - Person placed in a dungeon is the quest machine's, FLAGGED
-- `src/scenes/worldModes.js:629` - sell/banking/tavern arms stay FLAGGED below.
-- `src/scenes/worldModes.js:685` - FLAGGED, each with the slice it waits on:
-- `src/scenes/worldModes.js:715` - FactionData; the port's pre-chargen INTERIM entity does not, and
-- `src/scenes/worldModes.js:782` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
-- `src/scenes/worldModes.js:874` - with the trade window's own mode flow, the same INTERIM the
-- `src/scenes/worldModes.js:1064` - first (owned houses and quest buildings FLAGGED/seamed per
-- `src/scenes/worldModes.js:1072` - (:515). FLAGGED: the Open-spell bypass (:519), the bash arms with
-- `src/scenes/worldModes.js:1982` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
+- `src/scenes/worldModes.js:629` - Sell - FLAGGED with the plain-merchant sell arm below (it opens
+- `src/scenes/worldModes.js:631` - split). The banking/tavern arms stay FLAGGED below too.
+- `src/scenes/worldModes.js:691` - FLAGGED, each with the slice it waits on:
+- `src/scenes/worldModes.js:721` - FactionData; the port's pre-chargen INTERIM entity does not, and
+- `src/scenes/worldModes.js:788` - FLAGGED by name in guildServiceFlow.SERVICE_DESTINATION.
+- `src/scenes/worldModes.js:880` - with the trade window's own mode flow, the same INTERIM the
+- `src/scenes/worldModes.js:1078` - first (owned houses and quest buildings FLAGGED/seamed per
+- `src/scenes/worldModes.js:1086` - (:515). FLAGGED: the Open-spell bypass (:519), the bash arms with
+- `src/scenes/worldModes.js:2000` - *  FLAGGED: this host has no interior enemy pool (the Q4-v flag on
 - `src/systems/advancement.js:83` - * skill ids. The headless level-up applies immediately (INTERIM,
 - `src/systems/armorMaterials.js:70` - *  "other morphologies arrive with chargen (INTERIM)" note shipped
 - `src/systems/biography.js:14` - FLAGGED, exactly as DFU flags them: AE, AF and AO are parsed and

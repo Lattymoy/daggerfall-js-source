@@ -148,7 +148,10 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // currentMode is global and the standalone dungeon has no townTalk
     // to carry the keydown. Same keys, same line.
     const im = { F1: 'steal', F2: 'grab', F3: 'info', F4: 'dialogue' }[e.code];
-    if (im && im !== getInteractionMode()) { setInteractionMode(im); ctx.hudSay?.(`Interaction is now in ${im} mode.`); e.preventDefault(); }
+    if (im) {
+      e.preventDefault();   // ALWAYS consumed - a repeat press must not reach the browser (F1 = help)
+      if (im !== getInteractionMode()) { setInteractionMode(im); ctx.hudSay?.(`Interaction is now in ${im} mode.`); }
+    }
     // DFU parity: mouselook is the resting state - any gameplay
     // keypress re-engages a dropped lock (no click-to-look mode).
     if (!ctx.uiOverlayActive && document.pointerLockElement !== canvas) requestLook(canvas);

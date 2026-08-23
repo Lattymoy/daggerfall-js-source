@@ -111,9 +111,13 @@ test('audit24 wave22: StaticNPCClick talks with menu:false and carries the spyma
   // (:1633) is the one that passes `factionData.id == TG_Spymaster`,
   // which staticNpcRoute has computed since G8 and the call site threw
   // away.
+  // R1: the repair popup's Talk button is the ONE caller that talks
+  // with the DEFAULT menu=true (DaggerfallMerchantRepairPopupWindow.cs
+  // :147), so the call site now carries forceTalk - false on every
+  // plain StaticNPCClick arm, true only through the popup's re-entry.
   const s = rd('src/scenes/worldModes.js');
-  assert.match(s, /\{ menu: false, isSpyMaster: route\.spymaster === true \}\);/);
-  assert.doesNotMatch(s, /\{ menu: true \}\);/, 'and not the popup-menu form');
+  assert.match(s, /\{ menu: forceTalk, isSpyMaster: route\.spymaster === true \}\);/);
+  assert.doesNotMatch(s, /\{ menu: true \}\);/, 'and not the bare popup-menu form');
 });
 
 test("audit24 wave22: the {0:00} pad rounds, so DFU prints ':60'", () => {

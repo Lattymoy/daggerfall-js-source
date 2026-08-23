@@ -818,6 +818,11 @@ export async function bootExterior(canvas, renderer, params, status) {
     canvas, renderer, player, cam, keys, latch, blocks,
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
+    // R1: without this the exterior-lock anti-grind record and
+    // DiscoverBuilding silently no-op in the ?exterior host (locId
+    // null skips both) - the same `region:location` string the world
+    // host and townTalk's reveal use.
+    discoveryLocationId: () => `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`,
     // A5b: the tavern arm needs the host's clock, and leaving one has to
     // hand the street back its own song - the host owns both, so both
     // ride in as closures rather than worldModes reaching for a global.
