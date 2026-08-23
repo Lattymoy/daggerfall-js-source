@@ -41,6 +41,7 @@ import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   //
 import { createExteriorFoes } from './exteriorFoes.js';   // X-slice
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender } from './questFoeHost.js';   // B1
+import { SITE_TYPES } from '../systems/quest/place.js';   // B3: the respawn dispatch reads the site type
 import { intermittentEnemySpawn, MIN_WILDERNESS_SPAWN_DISTANCE } from '../systems/encounters.js';   // X-slice
 import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSessionState, restoreSessionState } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
@@ -1075,6 +1076,31 @@ export async function bootWorld(canvas, renderer, params, status) {
     // stale topic list
     npcSession.onWorldChanged();
   }
+
+  // ---- B3 (AUDIT 25 blocker 3): THE RESPAWN PRIMITIVE.
+  // PlayerEnterExit.RespawnPlayer + its Respawner coroutine
+  // (:430-556): destroy whatever context the player stands in, move
+  // the world to the target coordinates, and re-enter as exterior or
+  // dungeon. The port's halves all existed - forceExitToExterior,
+  // _teleportToPixel, startInDungeon - and nothing composed them, so
+  // every TeleportPc idled forever on its declared-pending seam.
+  // FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+  // Interior off exteriorDoors) pends a door-by-buildingKey entry
+  // helper - respawnPlayerAtSite answers false for Building sites and
+  // the action keeps retrying, the same idle as before for that one
+  // site type. Dungeon-less locations fall through to the exterior
+  // landing, which is C#'s own "all else fails" arm (:561-565).
+  let _respawning = false;
+  async function _respawnAtSite(loc, siteType) {
+    modes?.forceExitToExterior();
+    const px = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
+    await _teleportToPixel(px.x, px.y);
+    if (siteType === SITE_TYPES.Dungeon) {
+      const entered = await modes?.startInDungeon();
+      if (!entered) console.warn('[quest] respawn: no dungeon entrance at site - exterior landing (the C# fallback arm)');
+    }
+    surfacePlayer();
+  }
   let _traveling = false;
   async function fastTravelTo(pick, opts, computed) {
     if (_traveling) return;
@@ -1646,6 +1672,27 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  the rest window's AbortRestForEnemySpawn, routed through the
      *  modes host (dungeon mode owns the only rest overlay). */
     raiseOnEncounterEvent: () => modes?.raiseOnEncounterEvent?.(),
+    // ---- B3: THE RESPAWN SEAMS (TeleportPc's transport - see
+    // _respawnAtSite above for the composition and the Building flag).
+    /** GetLocation + RespawnPlayer (TeleportPc.cs:96-118): true =
+     *  the respawn STARTED (the action idles on isRespawning); false =
+     *  unresolvable location or an unsupported site type, retry. */
+    respawnPlayerAtSite: (place) => {
+      const sd = place?.siteDetails;
+      if (!sd || _respawning) return false;
+      if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+      const loc = maps.getLocationByName(sd.regionName, sd.locationName);
+      if (!loc?.loaded) return false;
+      _respawning = true;
+      _respawnAtSite(loc, sd.siteType)
+        .catch((e) => console.error('[quest] respawn failed:', e?.message ?? e))
+        .finally(() => { _respawning = false; });
+      return true;
+    },
+    isRespawning: () => _respawning,
+    /** The marker landing on the tick after the respawn completes
+     *  (TeleportPc.cs:120-135) - scene space per the mounted mode. */
+    setPlayerScenePosition: (p) => { if (p) modes?.setPlayerScenePosition?.(p); },
   };
   // TK-i: THE RUMOR MILL beside the bridge. The mill's own consumers
   // (Any news?, bulletin boards, the questor-post greeting) mount

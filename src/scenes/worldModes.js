@@ -1740,6 +1740,19 @@ export function createWorldModes(host) {
     raiseOnEncounterEvent() {
       if (mode === 'dungeon') dungeonCtx?.abortRestForEnemySpawn?.();
     },
+    /** B3: TeleportPc's marker landing (:120-135) - the marker's
+     *  scene position in whichever frame the mounted mode speaks
+     *  (markerScenePosition already spans dungeon blocks; the
+     *  interior parents exactly as its own flats are). */
+    setPlayerScenePosition(p) {
+      if (mode === 'interior' && interiorCtx) {
+        const [x, y, z] = interiorCtx.parentPt(p.x, p.y, p.z);
+        player.spawn(x, y, z);
+      } else {
+        player.spawn(p.x, p.y, p.z);
+      }
+      cam.pos = player.eye;
+    },
     /** TP-slice: the Teleport effect leaves ANY mode - the exit
      *  cores of the door flows minus the landing (the caller owns
      *  the spawn; DFU's cross-scene arm transitions immediately,

@@ -34,9 +34,9 @@ const PENDING = new Map([
   // createFoeGameObjects, tryPlaceFoe, raiseOnEncounterEvent - after
   // the placement law sat fully ported in sceneMount.js with no
   // caller. A ported function with no caller is a comment.
-  ['respawnPlayerAtSite', 'TeleportPc transport - PlayerEnterExit.RespawnPlayer'],
-  ['isRespawning', 'rides the respawn seam above'],
-  ['setPlayerScenePosition', 'rides the respawn seam above'],
+  // B3 (blocker 3) MOUNTED the respawn trio - respawnPlayerAtSite,
+  // isRespawning, setPlayerScenePosition (the Building arm alone
+  // stays FLAGGED at the mount and answers false).
   ['getClassicSpellEffects', 'CastSpellDo needs the SPELLS.STD classic records'],
   ['spellHasMatchForClassicEffect', 'rides the readied-bundle seam above'],
   ['readiedSpell', 'RETIRED by AUDIT 24 - the latch is the action\'s now; the name survives only in a comment'],
