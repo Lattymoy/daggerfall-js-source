@@ -50,7 +50,7 @@ import { snapshotPlayer, restorePlayer, writeQuicksave, readQuicksave, composeSe
 import { arrivalClampMinutes } from '../systems/travel.js';   // F-slice
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, findFactionByTypeAndRegion } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search
-import { seasonValue, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
+import { seasonValue, SEASONS, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
 import { regionPriceAdjustment } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer)
 import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5)
 import { createHitEffects } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -134,6 +134,7 @@ import {
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
+import { setWeather, currentWeather, tickWeather, weatherRespawn, snapshotWeather, restoreWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 
@@ -217,17 +218,36 @@ export async function bootWorld(canvas, renderer, params, status) {
   // World clock (R5) + sky controller: panorama follows the current pixel's
   // climate AND the time of day (async, frame-late at boundaries).
   const sky = createSkyController(renderer.gl, params);
-  // Weather (R12), same contract as the exterior scene.
-  const weather = WEATHER_TYPES.includes(params.get('weather'))
-    ? params.get('weather') : 'sunny';
-  const weatherFog = fogForWeather(weather);
-  const weatherSkyOffset = skyOffsetForWeather(
-    weather, weatherRng(Number(params.get('wseed')) || 1));
-  const weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
-  const precipMode = precipitationForWeather(weather);
-  const precip = precipMode ? new PrecipitationRenderer(renderer.gl) : null;
-  const lightning = weather === 'thunder'
+  // Weather (R12 presentation; W1 makes the STATE live). ?weather
+  // PINS the sky for shots/probes - the R12 contract - and without it
+  // the sim (systems/weatherSim.js: the Chronicles pg. 47 table, the
+  // six-zone daily re-roll, the respawn re-roll) drives; applyWeather
+  // re-derives every presentation half when the sim's answer changes.
+  // The winter term stays the TEXTURE season (?season) - the world
+  // that LOOKS wintry dims wintry; the calendar's own winter arrives
+  // when the texture season goes live with it.
+  const weatherOverride = WEATHER_TYPES.includes(params.get('weather'))
+    ? params.get('weather') : null;
+  if (weatherOverride) setWeather(weatherOverride);
+  const weatherSeed = weatherRng(Number(params.get('wseed')) || 1);
+  let weather = weatherOverride ?? currentWeather();
+  let weatherFog = fogForWeather(weather);
+  let weatherSkyOffset = skyOffsetForWeather(weather, weatherSeed);
+  let weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
+  let precipMode = precipitationForWeather(weather);
+  let precip = precipMode ? new PrecipitationRenderer(renderer.gl) : null;
+  let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
+  function applyWeather(w) {
+    weather = w;
+    weatherFog = fogForWeather(w);
+    weatherSkyOffset = skyOffsetForWeather(w, weatherSeed);   // SetRainOvercast's 50/50 pick, re-rolled per change
+    weatherSun = weatherSunlightScale(w, season === SEASON.Winter);
+    precipMode = precipitationForWeather(w);
+    if (precipMode && !precip) precip = new PrecipitationRenderer(renderer.gl);
+    lightning = w === 'thunder'
+      ? (lightning ?? new LightningPlayer(Number(params.get('wseed')) || 1)) : null;
+  }
   // AUDIT 23 (C2: hosts-8 = audio-1): ONE clock - see exterior.js's
   // twin note. ?tod SETS the world clock's time-of-day at boot,
   // ?timescale SCALES the world tick (DFU's TimeScale, default 12).
@@ -1047,6 +1067,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       // R1: the AllowMagicRepairs seam goes LIVE - RepairsObjects'
       // enchanted-item skip and the break-consumption arm both read it
       get allowMagicRepairs() { return getBool('Controls', 'AllowMagicRepairs'); },
+      // W1: the season seam goes LIVE - ExtraSpellPts' seasonal
+      // conditions compare against its OWN param order (DuringWinter=0
+      // ..DuringFall=3, ExtraSpellPts.cs:184-189), not the calendar
+      // enum (Fall=0..Winter=3) - the map is the two ends swapped.
+      season: () => {
+        const s = seasonValue(dateFromClassicMinutes(worldMinutes()));
+        return s === SEASONS.Winter ? 0 : s === SEASONS.Fall ? 3 : s;
+      },
     });
   }
   // AUDIT 24 (wave 32): the broker's foe subscribers - the watch and the encounter pool.
@@ -1121,6 +1149,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // new origin (fast travel, quickload); CreateFoe's pending waves
     // invalidate across live AND scheduled quests.
     questBridge?.onInitWorld();
+    // W1: PlayerEnterExit_OnRespawnerComplete (WeatherManager.cs:
+    // 514-522) - an arrival in a different climate BASE type rolls
+    // the destination's weather immediately. Walking across a
+    // boundary never does; only the respawner.
+    if (!weatherOverride && weatherRespawn(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(px, py))) {
+      applyWeather(currentWeather());
+    }
     // TK-v: TalkManager's OnMapPixelChanged / OnLoadEvent (:3593-3597,
     // :3616-3620) - a new world origin means a new building list and a
     // stale topic list
@@ -2463,6 +2498,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     const view = lookAt(cam.pos, [cam.pos[0] + fwd[0], cam.pos[1] + fwd[1], cam.pos[2] + fwd[2]], [0, 1, 0]);
     // World clock (R5): sun, ambient, window style, sky frame by time.
     const minute = minuteNow();
+    // W1: the sim ticks on the exterior frame - WeatherManager.Update
+    // returns while inside, so days passed indoors apply on the first
+    // frame back out. A pinned ?weather never ticks.
+    if (!weatherOverride) {
+      const _pp = playerTravelPixel();
+      tickWeather(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(_pp.x, _pp.y));
+      // drift-aware: a dungeon-side quickload restores the SIM but not
+      // this host's derived lets - re-derive whenever they disagree
+      if (currentWeather() !== weather) applyWeather(currentWeather());
+    }
     // A3: the exterior ambience (WeatherAmbientEffects 5/25) - the
     // weather/time preset per WeatherManager.SetAmbientEffects.
     audio.setListener(cam.pos, fwd);

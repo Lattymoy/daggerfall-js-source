@@ -243,29 +243,29 @@ combat line numbers below are refreshed with it.
 - `src/scenes/dungeonContext.js:631` - effects FLAGGED to the effect-library slice.
 - `src/scenes/dungeonContext.js:658` - "database FLAGGED" narrows to the skill/loot message ids).
 - `src/scenes/dungeonContext.js:1031` - onTeleport: () => hudText.add('(Recall pends in the standalone dungeon - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:470` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/exterior.js:476` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/exterior.js:602` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
-- `src/scenes/exterior.js:721` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/exterior.js:896` - (FLAGGED: the climate People table pends; the test city is
-- `src/scenes/exterior.js:1038` - FLAGGED here exactly as in world.js - no tile lookup yet).
+- `src/scenes/exterior.js:484` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/exterior.js:490` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/exterior.js:616` - onTeleport: () => townTalk.say('(Recall pends here - the anchor machinery lives in the streaming ?world host)'),   // TP-slice INTERIM
+- `src/scenes/exterior.js:735` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/exterior.js:910` - (FLAGGED: the climate People table pends; the test city is
+- `src/scenes/exterior.js:1052` - FLAGGED here exactly as in world.js - no tile lookup yet).
 - `src/scenes/shared.js:177` - *  The pre-chargen guard is load-bearing: playerEntity's INTERIM
 - `src/scenes/shared.js:194` - *  mirrors motorStats (the INTERIM entity carries no stats). */
 - `src/scenes/townTalk.js:16` - FLAGGED loud: Info mode opens the same talk window (DFU routes
-- `src/scenes/world.js:653` - FLAGGED loud: the People faction rides the START location's
-- `src/scenes/world.js:683` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
-- `src/scenes/world.js:689` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
-- `src/scenes/world.js:1015` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
-- `src/scenes/world.js:1018` - stay the E1 FLAGGED seams no host computes.
-- `src/scenes/world.js:1137` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
-- `src/scenes/world.js:1324` - (FLAGGED); swallowing the browser reload is not optional.
-- `src/scenes/world.js:1574` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
-- `src/scenes/world.js:1739` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
-- `src/scenes/world.js:1816` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
-- `src/scenes/world.js:2049` - FLAGGED: the QuestComplete loot window pends the UI arc - the
-- `src/scenes/world.js:2068` - castle interior (FLAGGED with the palace blocks).
-- `src/scenes/world.js:2355` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
-- `src/scenes/world.js:2649` - doors are the E-enter seam, not bashables - FLAGGED with the
+- `src/scenes/world.js:673` - FLAGGED loud: the People faction rides the START location's
+- `src/scenes/world.js:703` - S3d: the INTERIM dagger seed is the FALLBACK only - a character
+- `src/scenes/world.js:709` - pre-chargen INTERIM entity (flat skills 30, maxHealth 50) for the
+- `src/scenes/world.js:1035` - none); the dungeon-mode ctx is dungeonContext's to mount - FLAGGED
+- `src/scenes/world.js:1038` - stay the E1 FLAGGED seams no host computes.
+- `src/scenes/world.js:1172` - FLAGGED: the BUILDING arm (Respawner :559-567, StartBuilding-
+- `src/scenes/world.js:1359` - (FLAGGED); swallowing the browser reload is not optional.
+- `src/scenes/world.js:1609` - slot. Dungeon-mode popups pend the dungeon overlay seam (FLAGGED:
+- `src/scenes/world.js:1774` - if (sd.siteType === SITE_TYPES.Building) return false;   // FLAGGED above - the building arm pends
+- `src/scenes/world.js:1851` - PlayerGPS.GetCourtOfCurrentRegion is FLAGGED: the port has no
+- `src/scenes/world.js:2084` - FLAGGED: the QuestComplete loot window pends the UI arc - the
+- `src/scenes/world.js:2103` - castle interior (FLAGGED with the palace blocks).
+- `src/scenes/world.js:2390` - exemption (PlayerTileMapIndex == 0) is FLAGGED: this host
+- `src/scenes/world.js:2694` - doors are the E-enter seam, not bashables - FLAGGED with the
 - `src/scenes/worldModes.js:208` - say -> console FLAGGED: the interior HUD-text layer pends its arc.
 - `src/scenes/worldModes.js:249` - FLAGGED (Port-Ledger Q4-v, NARROWED by B1/B2): quest FOES still
 - `src/scenes/worldModes.js:397` - FLAGGED: clicks on dungeon quest NPC/item flats pend the dungeon
@@ -333,7 +333,7 @@ combat line numbers below are refreshed with it.
 - `src/systems/loot.js:212` - FLAGGED to the ENCHANTMENT-EFFECTS slice (the shops themselves
 - `src/systems/npcSession.js:628` - FLAGGED: no host calls this. C# populates the pool INSIDE
 - `src/systems/races.js:6` - port had only ever instantiated for Breton (the loud INTERIM the
-- `src/systems/save.js:91` - (playerEntity's INTERIM skills: 30) - spreading it threw.
+- `src/systems/save.js:97` - (playerEntity's INTERIM skills: 30) - spreading it threw.
 - `src/systems/settings.js:39` - INTERIM doctrine - named, not silently ignored)
 - `src/systems/shopStock.js:18` - drift is FLAGGED to the calendar/economy sim.
 - `src/systems/shopStock.js:20` - INTERIM (loud): MagicItems stock is SKIPPED (the loot MI interim);

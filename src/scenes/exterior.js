@@ -80,6 +80,7 @@ import {
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
+import { setWeather, currentWeather, tickWeather } from '../systems/weatherSim.js';   // W1: the live weather state
 import { SEASON } from '../world/climateSwaps.js';
 import { addGold } from '../systems/court.js';   // U10 probe surface
 import { lookScale, lookInvert } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
@@ -183,18 +184,31 @@ export async function bootExterior(canvas, renderer, params, status) {
   const cityLights = []; // archive-210 lantern point lights (R3)
   const CITY_LIGHT_COLOR_F32 = new Float32Array(CITY_LIGHT_COLOR);
   // World clock (R5): ?tod=HH:MM (default noon), ?timescale=game-min/sec.
-  // Weather (R12): ?weather=sunny|cloudy|overcast|fog|rain|thunder|snow,
-  // ?wseed for the deterministic Rain1/Rain2 (Snow1/Snow2) sky pick.
-  const weather = WEATHER_TYPES.includes(params.get('weather'))
-    ? params.get('weather') : 'sunny';
-  const weatherFog = fogForWeather(weather);
-  const weatherSkyOffset = skyOffsetForWeather(
-    weather, weatherRng(Number(params.get('wseed')) || 1));
-  const weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
-  const precipMode = precipitationForWeather(weather);
-  const precip = precipMode ? new PrecipitationRenderer(renderer.gl) : null;
-  const lightning = weather === 'thunder'
+  // Weather (R12 presentation; W1 live state - world.js's twin note).
+  // ?weather pins for shots; otherwise the sim drives and applyWeather
+  // re-derives the presentation on each change.
+  const weatherOverride = WEATHER_TYPES.includes(params.get('weather'))
+    ? params.get('weather') : null;
+  if (weatherOverride) setWeather(weatherOverride);
+  const weatherSeed = weatherRng(Number(params.get('wseed')) || 1);
+  let weather = weatherOverride ?? currentWeather();
+  let weatherFog = fogForWeather(weather);
+  let weatherSkyOffset = skyOffsetForWeather(weather, weatherSeed);
+  let weatherSun = weatherSunlightScale(weather, season === SEASON.Winter);
+  let precipMode = precipitationForWeather(weather);
+  let precip = precipMode ? new PrecipitationRenderer(renderer.gl) : null;
+  let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
+  function applyWeather(w) {
+    weather = w;
+    weatherFog = fogForWeather(w);
+    weatherSkyOffset = skyOffsetForWeather(w, weatherSeed);
+    weatherSun = weatherSunlightScale(w, season === SEASON.Winter);
+    precipMode = precipitationForWeather(w);
+    if (precipMode && !precip) precip = new PrecipitationRenderer(renderer.gl);
+    lightning = w === 'thunder'
+      ? (lightning ?? new LightningPlayer(Number(params.get('wseed')) || 1)) : null;
+  }
   // AUDIT 23 (C2: hosts-8 = audio-1): ONE clock. The time-of-day gates
   // (music night, city lights, window styles, sun) used a demo clock
   // frozen at noon by default while gameplay time advanced on
@@ -1116,6 +1130,16 @@ export async function bootExterior(canvas, renderer, params, status) {
     // World clock (R5): sun direction/intensity and ambient follow the time
     // of day; the sun is off at night leaving the 0.25 ambient floor.
     const minute = minuteNow();
+    // W1: the sim ticks on the exterior frame (this host is one
+    // location - locClimateIndex is the player's climate); a pinned
+    // ?weather never ticks. Loads restore through save.js's one law
+    // and re-present here on the next changed tick... which the day
+    // stamp suppresses, so the applied value re-derives each frame
+    // below from `weather` - refreshed when tickWeather answers true.
+    if (!weatherOverride) {
+      tickWeather(Math.floor(playerTicker.classicMinutes), locClimateIndex);
+      if (currentWeather() !== weather) applyWeather(currentWeather());   // drift-aware (world.js's twin note)
+    }
     // A3: the exterior ambience (WeatherAmbientEffects 5/25).
     audio.setListener(eye, [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]]);
     ambience.setPreset(presetForExterior(weather, isNight(minute)));

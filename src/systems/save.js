@@ -14,6 +14,7 @@
 import { clampLegalReputations } from './court.js';   // AUDIT 23 (C4)
 import { rebuildEquipState } from './equip.js';   // AUDIT 17e C1
 import { restartHeldEnchantments } from './enchantments.js';   // E2: the held bundles' restore half
+import { snapshotWeather, restoreWeather } from './weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host
 import { goldStack } from './inventory.js';   // AUDIT 17f
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
@@ -85,6 +86,11 @@ export function snapshotPlayer(entity, { position = null, classicMinutes = 0, re
   // mill's halves for now; TK-ii/TK-iv grow it) - the same shape of
   // slot.
   const snap = { v: SAVE_VERSION, position, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk };
+  // W1: DFU persists exactly ONE weather value (playerPosition.weather)
+  // and re-rolls the six-zone array on the next date change - the sim
+  // is a module singleton, so the envelope reads it here and every
+  // host's save carries it without a host edit.
+  snap.weather = snapshotWeather();
   for (const k of ENTITY_FIELDS) snap[k] = entity[k];
   snap.stats = { ...entity.stats };
   // AUDIT 17e: pre-chargen the entity carries a flat NUMBER here
@@ -249,6 +255,10 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // E2: re-instantiate the held enchantments from the worn set the
   // equip table just rebuilt - a recast, so no durability is billed.
   restartHeldEnchantments(entity);
+  // W1: the restored weather + the day stamp that keeps the boot tick
+  // from clobbering it (startedFromLoadedSaveGame, WeatherManager.cs:
+  // 524-543). A pre-W1 save carries none - the current sky stands.
+  restoreWeather(snap.weather ?? null, snap.classicMinutes ?? 0);
   // Missing on a pre-17h save: leave whatever the entity carries (a
   // fresh entity starts every group at zero, which is classic's own
   // starting state), the additive-field shape DFU's serializer gives.
