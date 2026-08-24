@@ -22,6 +22,7 @@ import { buildMapDict, locationSummaryAt, hasLocation } from '../src/systems/map
 import { REGION_NAMES, LOCATION_TYPES, CLIMATES, getMapPixelID } from '../src/formats/mapsFile.js';
 import { discoverLocation, restoreDiscovery } from '../src/systems/discovery.js';
 import { setValue, _resetForTests } from '../src/systems/settings.js';
+import { DFPalette } from '../src/formats/dfPalette.js';
 
 const DAGGERFALL = 17;                 // FMAP0I17.IMG, origin (39,106)
 const ORIGIN = OFFSET_LOOKUP['FMAP0I17.IMG'];
@@ -692,6 +693,49 @@ test('U41: a window that finishes in its own tick is cleared by the host', () =>
   assert.ok(frame.includes('if (overlay?.done)'), 'and a finished window is dropped in the same pass');
   assert.ok(frame.indexOf('overlay?.tick') < frame.indexOf('if (overlay?.done)'), 'in that order');
   assert.ok(frame.includes('overlay.dispose?.()'), 'freeing its textures');
+});
+
+test('U41: the preload asks for exactly the classic files, and a missing one closes the door', async () => {
+  const { preloadTravelMapArt, travelMapArtLoaded } = await import('../src/ui/travelMapWindow.js');
+  _setTravelMapArtForTests(null);
+  try {
+    const asked = [];
+    // every IMG decodes as a headerless 320x200 at 64000 bytes, which
+    // is all this contract test needs; the palette is a real 776-byte
+    // .COL and TEXT.RSC is allowed to fail (the window guards it)
+    const bytes = (n) => new Uint8Array(n);
+    const renderer = { uploadTexture: () => 'tex', releaseTexture: () => {}, drawScreenQuad: () => {} };
+    const palette = new DFPalette();
+    const deps = {
+      renderer, palette,
+      fetchBytes: async (name) => {
+        asked.push(name);
+        if (name.endsWith('.COL')) return bytes(776);
+        if (name === 'TEXT.RSC') throw new Error('no text');
+        return bytes(64000);
+      },
+    };
+    await preloadTravelMapArt(deps);
+    assert.equal(travelMapArtLoaded(), true);
+    assert.deepEqual(asked.filter((n) => n !== 'PICK00I0.IMG'), [
+      'FMAP_PAL.COL', 'TRAV0I01.IMG',
+      'TRAV0I00.IMG', 'TRAV0I03.IMG', 'TRAV01I0.IMG', 'TRAV01I1.IMG',
+      'TRAVAI05.IMG', 'TRAVBI05.IMG', 'TRAVCI05.IMG', 'TRAVDI05.IMG', 'MBRD00I0.IMG',
+      'TEXT.RSC', 'TRAV0I04.IMG',
+    ], 'the constants block, file for file');
+    _setTravelMapArtForTests(null);
+    // a missing overworld leaves the door shut rather than opening a
+    // blank map (world.js checks travelMapArtLoaded before it mounts)
+    await preloadTravelMapArt({
+      renderer, palette,
+      fetchBytes: async (name) => {
+        if (name.endsWith('.COL')) return bytes(776);
+        if (name === 'TRAV0I00.IMG') throw new Error('missing');
+        return bytes(64000);
+      },
+    }).then(() => assert.fail('a missing IMG must reject')).catch((e) => assert.match(String(e.message), /missing/));
+    assert.equal(travelMapArtLoaded(), false);
+  } finally { _setTravelMapArtForTests(null); }
 });
 
 test('U41: the source carries the laws it claims', () => {

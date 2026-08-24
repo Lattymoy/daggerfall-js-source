@@ -3792,7 +3792,7 @@ polls the window's own state through a new `__travelMap` probe
 surface rather than sleeping, because a click surface cannot be
 driven blind. It needs a box with game data; that pass is owed.
 
-Pins: 18 in `travelmapwindow.test.js`, 11 in `travelmap.test.js`, 6 in
+Pins: 19 in `travelmapwindow.test.js`, 11 in `travelmap.test.js`, 6 in
 `editdistance.test.js`, 2 re-pinned in `travelvisibility.test.js`.
 The offset table is diffed against the C# key for key and value for
 value. 44 mutations, 43 dead and one PROVEN equivalent (shifting the
